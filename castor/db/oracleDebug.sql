@@ -21,6 +21,7 @@ CREATE OR REPLACE PACKAGE castorDebug AS
     gcWeight NUMBER);
   TYPE DiskCopyDebug IS TABLE OF DiskCopyDebug_typ;
   TYPE SubRequestDebug IS TABLE OF SubRequest%ROWTYPE;
+  TYPE MigrationJobDebug IS TABLE OF MigrationJob%ROWTYPE;
   TYPE RequestDebug_typ IS RECORD (
     creationtime VARCHAR2(2048),
     SubReqId NUMBER,
@@ -32,20 +33,19 @@ CREATE OR REPLACE PACKAGE castorDebug AS
     ReqId NUMBER,
     ReqType VARCHAR2(20));
   TYPE RequestDebug IS TABLE OF RequestDebug_typ;
-  TYPE TapeCopyDebug_typ IS RECORD (
-    TCId NUMBER,
-    TCStatus NUMBER,
-    TCMissing NUMBER,
-    TCNbRetry NUMBER,
+  TYPE RecallJobDebug_typ IS RECORD (
+    RJId NUMBER,
+    RJStatus NUMBER,
+    RJMissing NUMBER,
+    RJNbRetry NUMBER,
     SegId NUMBER,
     SegStatus NUMBER,
     SegErrCode NUMBER,
     VID VARCHAR2(2048),
     tpMode NUMBER,
     TapeStatus NUMBER,
-    nbStreams NUMBER,
     SegErr VARCHAR2(2048));
-  TYPE TapeCopyDebug IS TABLE OF TapeCopyDebug_typ;
+  TYPE RecallJobDebug IS TABLE OF RecallJobDebug_typ;
 END;
 /
 
@@ -65,19 +65,22 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- SubRequest?
 BEGIN
   SELECT castorFile INTO cfId FROM SubRequest WHERE id = ref;
   RETURN cfId;
-EXCEPTION WHEN NO_DATA_FOUND THEN -- TapeCopy?
+EXCEPTION WHEN NO_DATA_FOUND THEN -- RecallJob?
 BEGIN
-  SELECT castorFile INTO cfId FROM TapeCopy WHERE id = ref;
+  SELECT castorFile INTO cfId FROM RecallJob WHERE id = ref;
+  RETURN cfId;
+EXCEPTION WHEN NO_DATA_FOUND THEN -- MigrationJob?
+BEGIN
+  SELECT castorFile INTO cfId FROM MigrationJob WHERE id = ref;
   RETURN cfId;
 EXCEPTION WHEN NO_DATA_FOUND THEN -- Segment?
 BEGIN
-  SELECT castorFile INTO cfId FROM TapeCopy, Segment
-   WHERE Segment.id = ref AND TapeCopy.id = Segment.copy;
+  SELECT castorFile INTO cfId FROM RecallJob, Segment
+   WHERE Segment.id = ref AND RecallJob.id = Segment.copy;
   RETURN cfId;
 EXCEPTION WHEN NO_DATA_FOUND THEN -- nothing found
-  RAISE_APPLICATION_ERROR (-20000, 'Could not find any CastorFile, SubRequest, DiskCopy, TapeCopy or Segment with id = ' || ref);
-END; END; END; END;
-END;
+  RAISE_APPLICATION_ERROR (-20000, 'Could not find any CastorFile, SubRequest, DiskCopy, MigrationJob, RecallJob or Segment with id = ' || ref);
+END; END; END; END; END; END;
 /
 
 
@@ -105,32 +108,37 @@ END;
 /
 
 
-/* Get the tapecopys, segments and streams associated with the reference number */
-CREATE OR REPLACE FUNCTION getTCs(ref number) RETURN castorDebug.TapeCopyDebug PIPELINED AS
+/* Get the recalljobs, segments and tapes associated with the reference number */
+CREATE OR REPLACE FUNCTION getRJs(ref number) RETURN castorDebug.RecallJobDebug PIPELINED AS
 BEGIN
-  FOR t IN (SELECT TapeCopy.id AS TCId, TapeCopy.status AS TCStatus,
-                   TapeCopy.missingCopies AS TCmissing, TapeCopy.nbRetry AS TCNbRetry,
+  FOR t IN (SELECT RecallJob.id AS RJId, RecallJob.status AS RJStatus,
+                   RecallJob.missingCopies AS RJmissing, RecallJob.nbRetry AS RJNbRetry,
                    Segment.Id, Segment.status AS SegStatus, Segment.errorCode AS SegErrCode,
                    Tape.vid AS VID, Tape.tpMode AS tpMode, Tape.Status AS TapeStatus,
-                   CASE WHEN Stream2TapeCopy.child IS NULL THEN 0 ELSE count(*) END AS nbStreams,
                    Segment.errMsgTxt AS SegErr
-              FROM TapeCopy, Segment, Tape, Stream2TapeCopy
-             WHERE TapeCopy.id = Segment.copy(+)
+              FROM RecallJob, Segment, Tape
+             WHERE RecallJob.id = Segment.copy(+)
                AND Segment.tape = Tape.id(+)
-               AND TapeCopy.castorfile = getCF(ref)
-               AND Stream2TapeCopy.child(+) = TapeCopy.id
-              GROUP BY TapeCopy.id, TapeCopy.status, TapeCopy.missingCopies, TapeCopy.nbRetry,
-                       Segment.id, Segment.status, Segment.errorCode, Tape.vid, Tape.tpMode,
-                       Tape.Status, Segment.errMsgTxt, Stream2TapeCopy.child) LOOP
+               AND RecallJob.castorfile = getCF(ref)) LOOP
      PIPE ROW(t);
   END LOOP;
 END;
 /
 
 
-/* Get the subrequests associated with the reference number. (By castorfile/diskcopy/
- * subrequest/tapecopy or fileid
- */
+/* Get the migration jobs associated with the reference number */
+CREATE OR REPLACE FUNCTION getMJs(ref number) RETURN castorDebug.MigrationJobDebug PIPELINED AS
+BEGIN
+  FOR t IN (SELECT *
+              FROM MigrationJob
+             WHERE castorfile = getCF(ref)) LOOP
+     PIPE ROW(t);
+  END LOOP;
+END;
+/
+
+
+/* Get the subrequests associated with the reference number. */
 CREATE OR REPLACE FUNCTION getSRs(ref number) RETURN castorDebug.SubRequestDebug PIPELINED AS
 BEGIN
   FOR d IN (SELECT * FROM SubRequest WHERE castorfile = getCF(ref)) LOOP
@@ -140,9 +148,7 @@ END;
 /
 
 
-/* Get the requests associated with the reference number. (By castorfile/diskcopy/
- * subrequest/tapecopy or fileid
- */
+/* Get the requests associated with the reference number. */
 CREATE OR REPLACE FUNCTION getRs(ref number) RETURN castorDebug.RequestDebug PIPELINED AS
 BEGIN
   FOR d IN (SELECT getTimeString(creationtime) AS creationtime,

@@ -185,26 +185,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_tapeCopyStatus
-       * Status of the tapeCopy(ies?) associated to the underlying CastorFile. Not used
-       * for the time being.
-       * @return the value of m_tapeCopyStatus
-       */
-      int tapeCopyStatus() const {
-        return m_tapeCopyStatus;
-      }
-
-      /**
-       * Set the value of m_tapeCopyStatus
-       * Status of the tapeCopy(ies?) associated to the underlying CastorFile. Not used
-       * for the time being.
-       * @param new_var the new value of m_tapeCopyStatus
-       */
-      void setTapeCopyStatus(int new_var) {
-        m_tapeCopyStatus = new_var;
-      }
-
-      /**
        * Get the value of m_hwStatus
        * Status of the hardware where the described diskCopy resides.
        * @return the value of m_hwStatus
@@ -384,9 +364,6 @@ namespace castor {
 
       /// Status of the DiskCopy described
       int m_diskCopyStatus;
-
-      /// Status of the tapeCopy(ies?) associated to the underlying CastorFile. Not used for the time being.
-      int m_tapeCopyStatus;
 
       /// Status of the hardware where the described diskCopy resides.
       int m_hwStatus;

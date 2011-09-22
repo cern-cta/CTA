@@ -268,34 +268,6 @@ castor::stager::RemoteJobSvc::putStart
 }
 
 //------------------------------------------------------------------------------
-// selectSvcClass
-//------------------------------------------------------------------------------
-castor::stager::SvcClass*
-castor::stager::RemoteJobSvc::selectSvcClass
-(const std::string)
-  throw (castor::exception::Exception) {
-  castor::exception::NotSupported ex;
-  ex.getMessage()
-    << "RemoteJobSvc implementation is not complete"
-    << std::endl << "This method is not supported.";
-  throw ex;
-}
-
-//------------------------------------------------------------------------------
-// selectFileClass
-//------------------------------------------------------------------------------
-castor::stager::FileClass*
-castor::stager::RemoteJobSvc::selectFileClass
-(const std::string)
-  throw (castor::exception::Exception) {
-  castor::exception::NotSupported ex;
-  ex.getMessage()
-    << "RemoteJobSvc implementation is not complete"
-    << std::endl << "This method is not supported.";
-  throw ex;
-}
-
-//------------------------------------------------------------------------------
 // DiskCopyStartResponseHandler
 //------------------------------------------------------------------------------
 

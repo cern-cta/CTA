@@ -248,7 +248,7 @@ bool castor::tape::rechandler::RecHandlerThread::applyRecallPolicy(const RecallP
   //apply the policy using a scoped lock as protection
   castor::tape::python::ScopedPythonLock scopedPythonLock;
 
-  // if we don't have any function available we always retry to recall the tapecopy
+  // if we don't have any function available we always retry
 
   if (m_pyFunction == NULL)
     return true;

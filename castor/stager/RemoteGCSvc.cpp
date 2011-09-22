@@ -134,34 +134,6 @@ castor::stager::RemoteGCSvc::requestToDo(std::string)
 }
 
 //------------------------------------------------------------------------------
-// selectSvcClass
-//------------------------------------------------------------------------------
-castor::stager::SvcClass*
-castor::stager::RemoteGCSvc::selectSvcClass
-(const std::string)
-  throw (castor::exception::Exception) {
-  castor::exception::NotSupported ex;
-  ex.getMessage()
-    << "RemoteGCSvc implementation is not complete"
-    << std::endl << "This method is not supported.";
-  throw ex;
-}
-
-//------------------------------------------------------------------------------
-// selectFileClass
-//------------------------------------------------------------------------------
-castor::stager::FileClass*
-castor::stager::RemoteGCSvc::selectFileClass
-(const std::string)
-  throw (castor::exception::Exception) {
-  castor::exception::NotSupported ex;
-  ex.getMessage()
-    << "RemoteGCSvc implementation is not complete"
-    << std::endl << "This method is not supported.";
-  throw ex;
-}
-
-//------------------------------------------------------------------------------
 // getRemoteGCClientTimeout
 //------------------------------------------------------------------------------
 int castor::stager::RemoteGCSvc::getRemoteGCClientTimeout() {

@@ -30,40 +30,29 @@ import castor_tools
 # usage function
 def usage(exitCode):
     '''prints usage'''
-    print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-a|--all] [<diskPoolName>[:...]]'
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] <diskPoolName> [...]'
     sys.exit(exitCode)
 
 # first parse the options
 try:
-    options, args = getopt.getopt(sys.argv[1:], 'hva', ['help', 'verbose', 'all'])
+    options, args = getopt.getopt(sys.argv[1:], 'hv', ['help', 'verbose'])
 except Exception, e:
     print e
     usage(1)
 verbose = False
-displayAll = False
 for f, v in options:
     if f == '-h' or f == '--help':
         usage(0)
     elif f == '-v' or f == '--verbose':
         verbose = True
-    if f == '-a' or f == '--all':
-        displayAll = True
     else:
         print "unknown option : " + f
         usage(1)
 
 # Deal with arguments
-diskPools = set([])
+diskPools = None
 if len(args) != 0:
-    if displayAll:
-        print "No argument should be given when -a/--all is used"
-        usage(1)
-    else:
-        diskPools = set(args[0].split(':'))
-else:
-    if not displayAll:
-        print "Missing arguments"
-        usage(1)
+    diskPools = set(args)
 
 try:
     # connect to stager and prepare statements
@@ -82,13 +71,14 @@ try:
              GROUP BY parent) SvcClasses
      WHERE DiskPools.id = SvcClasses.diskPoolId(+)
        AND DiskPools.id = FileSystems.diskPool(+)'''
-    if not displayAll:
+    if diskPools:
         sqlStatement = sqlStatement + " AND DiskPools.name IN ('" + "', '".join(diskPools) + "')"
     stcur.execute(sqlStatement)
     # get results
     rows = stcur.fetchall()
     existingDiskPools = set([row[0] for row in rows])
-    unknownDiskPools = diskPools - existingDiskPools
+    if diskPools:
+        unknownDiskPools = diskPools - existingDiskPools
     # loop over disk pools and print them
     if existingDiskPools:
         maxNameLen = max([4] + [len(row[0]) for row in rows])
@@ -103,7 +93,7 @@ try:
               svcClassStr = '-'
             print '%*s %13d %*s %*d' % (maxNameLen, name, nbfs, maxSvcClassNameLen, svcClassStr, maxIdLen, dpId)
     # check unknown disk pools
-    if unknownDiskPools:
+    if diskPools and unknownDiskPools:
         print 'WARNING : the following disk pools do not exist : ' + ', '.join(unknownDiskPools)
     # close DB connections
     try:

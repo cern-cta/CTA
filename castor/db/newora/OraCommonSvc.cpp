@@ -37,7 +37,6 @@
 #include "castor/stager/FileClass.hpp"
 #include "castor/stager/FileSystem.hpp"
 #include "castor/stager/DiskServer.hpp"
-#include "castor/stager/TapePool.hpp"
 #include "castor/db/newora/OraCommonSvc.hpp"
 #include "castor/db/newora/OraCnvSvc.hpp"
 #include "castor/db/newora/OraStatement.hpp"
@@ -77,14 +76,6 @@ const std::string castor::db::ora::OraCommonSvc::s_requestToDoStatementString =
 const std::string castor::db::ora::OraCommonSvc::s_selectTapeStatementString =
   "SELECT id FROM Tape WHERE vid = :1 AND side = :2 AND tpmode = :3";
 
-/// SQL statement for selectSvcClass
-const std::string castor::db::ora::OraCommonSvc::s_selectSvcClassStatementString =
-  "SELECT id, nbDrives, defaultFileSize, maxReplicaNb, migratorPolicy, recallerPolicy, disk1Behavior, failJobsWhenNoSpace, streamPolicy, gcPolicy, replicateOnClose FROM SvcClass WHERE name = :1";
-
-/// SQL statement for selectFileClass
-const std::string castor::db::ora::OraCommonSvc::s_selectFileClassStatementString =
-  "SELECT id, nbCopies FROM FileClass WHERE name = :1";
-
 
 //------------------------------------------------------------------------------
 // OraCommonSvc
@@ -93,9 +84,7 @@ castor::db::ora::OraCommonSvc::OraCommonSvc(const std::string name,
                                             castor::ICnvSvc* conversionService) :
   BaseSvc(name), DbBaseObj(conversionService),
   m_requestToDoStatement(0),
-  m_selectTapeStatement(0),
-  m_selectSvcClassStatement(0),
-  m_selectFileClassStatement(0) {
+  m_selectTapeStatement(0) {
   registerToCnvSvc(this);  // equivalent to conversionService->registerDepSvc(this);
 }
 
@@ -133,14 +122,10 @@ void castor::db::ora::OraCommonSvc::reset() throw() {
   try {
     if (m_requestToDoStatement) deleteStatement(m_requestToDoStatement);
     if (m_selectTapeStatement) deleteStatement(m_selectTapeStatement);
-    if (m_selectSvcClassStatement) deleteStatement(m_selectSvcClassStatement);
-    if (m_selectFileClassStatement) deleteStatement(m_selectFileClassStatement);
   } catch (castor::exception::Exception& ignored) {};
   // Now reset all pointers to 0
   m_requestToDoStatement = 0;
   m_selectTapeStatement = 0;
-  m_selectSvcClassStatement = 0;
-  m_selectFileClassStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -304,91 +289,6 @@ castor::db::ora::OraCommonSvc::selectTape(const std::string vid,
     throw ex;
   }
   // We should never reach this point
-}
-
-//------------------------------------------------------------------------------
-// selectSvcClass
-//------------------------------------------------------------------------------
-castor::stager::SvcClass*
-castor::db::ora::OraCommonSvc::selectSvcClass
-(const std::string name)
-  throw (castor::exception::Exception) {
-  // Check whether the statements are ok
-  if (0 == m_selectSvcClassStatement) {
-    m_selectSvcClassStatement =
-      createStatement(s_selectSvcClassStatementString);
-  }
-  // Execute statement and get result
-  try {
-    m_selectSvcClassStatement->setString(1, name);
-    oracle::occi::ResultSet *rset = m_selectSvcClassStatement->executeQuery();
-    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      // Nothing found, return 0
-      m_selectSvcClassStatement->closeResultSet(rset);
-      return 0;
-    }
-    // Found the SvcClass, so create it in memory
-    castor::stager::SvcClass* result =
-      new castor::stager::SvcClass();
-    result->setId((u_signed64)rset->getDouble(1));
-    result->setNbDrives(rset->getInt(2));
-    result->setDefaultFileSize((u_signed64)rset->getDouble(3));
-    result->setMaxReplicaNb(rset->getInt(4));
-    result->setMigratorPolicy(rset->getString(5));
-    result->setRecallerPolicy(rset->getString(6));
-    result->setDisk1Behavior(rset->getInt(7));
-    result->setFailJobsWhenNoSpace(rset->getInt(8));
-    result->setStreamPolicy(rset->getString(9));
-    result->setGcPolicy(rset->getString(10));
-    result->setReplicateOnClose(rset->getInt(11));
-    result->setName(name);
-    m_selectSvcClassStatement->closeResultSet(rset);
-    return result;
-  } catch (oracle::occi::SQLException e) {
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Unable to select SvcClass by name :"
-      << std::endl << e.getMessage();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// selectFileClass
-//------------------------------------------------------------------------------
-castor::stager::FileClass*
-castor::db::ora::OraCommonSvc::selectFileClass
-(const std::string name)
-  throw (castor::exception::Exception) {
-  // Check whether the statements are ok
-  if (0 == m_selectFileClassStatement) {
-    m_selectFileClassStatement =
-      createStatement(s_selectFileClassStatementString);
-  }
-  // Execute statement and get result
-  try {
-    m_selectFileClassStatement->setString(1, name);
-    oracle::occi::ResultSet *rset = m_selectFileClassStatement->executeQuery();
-    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      // Nothing found, return 0
-      m_selectFileClassStatement->closeResultSet(rset);
-      return 0;
-    }
-    // Found the FileClass, so create it in memory
-    castor::stager::FileClass* result =
-      new castor::stager::FileClass();
-    result->setId((u_signed64)rset->getDouble(1));
-    result->setNbCopies(rset->getInt(2));
-    result->setName(name);
-    m_selectFileClassStatement->closeResultSet(rset);
-    return result;
-  } catch (oracle::occi::SQLException e) {
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Unable to select FileClass by name :"
-      << std::endl << e.getMessage();
-    throw ex;
-  }
 }
 
 //------------------------------------------------------------------------------

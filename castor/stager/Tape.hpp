@@ -41,7 +41,6 @@ namespace castor {
   namespace stager {
 
     // Forward declarations
-    class Stream;
     class Segment;
 
     /**
@@ -307,22 +306,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_stream
-       * @return the value of m_stream
-       */
-      Stream* stream() const {
-        return m_stream;
-      }
-
-      /**
-       * Set the value of m_stream
-       * @param new_var the new value of m_stream
-       */
-      void setStream(Stream* new_var) {
-        m_stream = new_var;
-      }
-
-      /**
        * Get the value of m_status
        * @return the value of m_status
        */
@@ -398,8 +381,6 @@ namespace castor {
 
       /// The id of this object
       u_signed64 m_id;
-
-      Stream* m_stream;
 
       TapeStatusCodes m_status;
 

@@ -570,13 +570,7 @@ The Segment object contains all tape file (segment) information required to be s
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="H3CHEeYaBosp" initialValue="9" type="133771" name="TAPE_ATTACHEDTOSTREAM" />
            </UML:Classifier.feature>
           </UML:Class>
-          <UML:Class stereotype="53500" comment="A Pool of tapes" isSpecification="false" isLeaf="false" visibility="public" namespace="2105" xmi.id="1190" isRoot="false" isAbstract="false" name="TapePool" >
-           <UML:Classifier.feature>
-            <UML:Attribute comment="Name of this pool" isSpecification="false" visibility="public" xmi.id="15485" type="137289" name="name" />
-            <UML:Attribute stereotype="SqlOnly" comment="Policy ruling the selection of files during migration." isSpecification="false" visibility="public" xmi.id="eQaoCNy8u5MZ" type="137289" name="migrSelectPolicy" />
-           </UML:Classifier.feature>
-          </UML:Class>
-          <UML:Class stereotype="53500" comment="One copy of a given file on a tape" isSpecification="false" isLeaf="false" visibility="public" namespace="2105" xmi.id="1191" isRoot="false" isAbstract="false" name="TapeCopy" >
+          <UML:Class stereotype="53500" comment="One copy of a given file on a tape" isSpecification="false" isLeaf="false" visibility="public" namespace="2105" xmi.id="1191" isRoot="false" isAbstract="false" name="RecallJob" >
            <UML:Classifier.feature>
             <UML:Attribute comment="The copy number allows to identify the different copies on tape of a single file" isSpecification="false" visibility="public" xmi.id="46349" type="153389" name="copyNb" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="eBRpFTxwgxoX" initialValue="0" type="133771" name="errorCode" />
@@ -617,7 +611,6 @@ This information is only here for efficient and approximate querying. It should 
             <UML:Attribute comment="Physical path where the described diskCopy resides" isSpecification="false" visibility="public" xmi.id="86331" type="137289" name="diskCopyPath" />
             <UML:Attribute comment="Size of the underlying CastorFile" isSpecification="false" visibility="public" xmi.id="86333" type="131665" name="size" />
             <UML:Attribute comment="Status of the DiskCopy described" isSpecification="false" visibility="public" xmi.id="86335" type="133771" name="diskCopyStatus" />
-            <UML:Attribute comment="Status of the tapeCopy(ies?) associated to the underlying CastorFile" isSpecification="false" visibility="public" xmi.id="86336" type="133771" name="tapeCopyStatus" />
             <UML:Attribute comment="Status of the segment(s?) associated to the underlying CastorFile" isSpecification="false" visibility="public" xmi.id="86337" type="133771" name="segmentStatus" />
             <UML:Attribute comment="Id of the DiskCopy Described" isSpecification="false" visibility="public" xmi.id="86340" type="131665" name="diskCopyId" />
             <UML:Attribute comment="fileId of the underlying castorfile" isSpecification="false" visibility="public" xmi.id="91300" type="131665" name="fileId" />
@@ -670,18 +663,16 @@ This information is only here for efficient and approximate querying. It should 
           <UML:Class stereotype="53500" comment="A service, as seen by the user.
 A SvcClass is a container of resources and may be given as parameter of the request." isSpecification="false" isLeaf="false" visibility="public" namespace="2105" xmi.id="1237" isRoot="false" isAbstract="false" name="SvcClass" >
            <UML:Classifier.feature>
-            <UML:Attribute comment="Number of tape drives to use for this service class.
-This is the default number, but it could be that occasionnally more drives are used, if a resource is shared with another service class using more drives." isSpecification="false" visibility="public" xmi.id="15483" type="153389" name="nbDrives" />
             <UML:Attribute comment="The name of this SvcClass." isSpecification="false" visibility="public" xmi.id="34378" type="137289" name="name" />
             <UML:Attribute comment="Default size used for space allocation in the case of a stage put with no size explicitely given (ie size given was 0)." isSpecification="false" visibility="public" xmi.id="60766" type="131665" name="defaultFileSize" />
             <UML:Attribute comment="Maximum number of replicas for a file created with this service class. If 0, the replication is ruled by the replication policy. If there is none, then 0 means infinity." isSpecification="false" visibility="public" xmi.id="82483" type="133771" name="maxReplicaNb" />
-            <UML:Attribute comment="Policy ruling the migration of files." isSpecification="false" visibility="public" xmi.id="82488" type="137289" name="migratorPolicy" />
             <UML:Attribute comment="Policy ruling the recall of files." isSpecification="false" visibility="public" xmi.id="82489" type="137289" name="recallerPolicy" />
-            <UML:Attribute comment="Policy ruling the behavior of the streams to migrate files." isSpecification="false" visibility="public" xmi.id="aFgenqpyeFn7" type="137289" name="streamPolicy" />
             <UML:Attribute comment="Policy ruling the behavior of the garbage collector, when enabled." isSpecification="false" visibility="public" xmi.id="cbrySEImqXJL" type="137289" name="gcPolicy" />
             <UML:Attribute comment="Flag to indicate whether the diskpools under this service class should behave as Disk1 pools. This means no automatic GC, and failJobsWhenNoSpace set to true." isSpecification="false" visibility="public" xmi.id="1NHvpQmDEwi9" type="153392" name="disk1Behavior" />
             <UML:Attribute comment="Flag to indicate whether files in this service class are replicated on closure. The number of copies created is defined by the maxReplicaNb attribute." isSpecification="false" visibility="public" xmi.id="5GX9cZUkEcP8" type="153392" name="replicateOnClose" />
             <UML:Attribute comment="Flag to indicate whether jobs that require new space on disk shall be failed when the diskpools under this service class have run out of space. This flag is enabled by default, if disabled jobs are left pending in the scheduler." isSpecification="false" visibility="public" xmi.id="Eu6vn5kwNsCK" type="153392" name="failJobsWhenNoSpace" />
+            <UML:Attribute comment="Name of the last one that modified this service class." isSpecification="false" visibility="public" xmi.id="Eu6vn5kwNsCL" type="137289" name="lastEditor" />
+            <UML:Attribute comment="Time of the last modification of this service class." isSpecification="false" visibility="public" xmi.id="Eu6vn5kwNsCM" type="131665" name="lastEditionTime" />
            </UML:Classifier.feature>
           </UML:Class>
           <UML:Class stereotype="53500" comment="A Resource as seen by the Scheduler.
@@ -690,35 +681,13 @@ Resources can be allocated to one or many projects are are composed of a set of 
             <UML:Attribute comment="Name of this pool" isSpecification="false" visibility="public" xmi.id="15486" type="137289" name="name" />
            </UML:Classifier.feature>
           </UML:Class>
-          <UML:Class stereotype="53500" comment="A logical stream for the writing of DiskCopies on Tapes" isSpecification="false" isLeaf="false" visibility="public" namespace="2105" xmi.id="1580" isRoot="false" isAbstract="false" name="Stream" >
+          <UML:Class stereotype="53501" comment="Possible status codes for a RecallJob" isSpecification="false" isLeaf="false" visibility="public" namespace="2105" xmi.id="1661" isRoot="false" isAbstract="false" name="RecallJobStatusCodes" >
            <UML:Classifier.feature>
-            <UML:Attribute comment="Initial data volume to be migrated (needed by vmgr_gettape())" isSpecification="false" visibility="public" xmi.id="4706" type="131665" name="initialSizeToTransfer" />
-            <UML:Attribute stereotype="SqlOnly" comment="Time of the last change of filesystem for this stream. Given in seconds since the EPOCH (1st Jan 1970)" isSpecification="false" visibility="public" xmi.id="yMUljz5ggbpA" type="131665" name="lastFileSystemChange" />
-            <UML:Attribute stereotype="SqlOnly" isSpecification="false" visibility="public" xmi.id="OCXjskl6ZVD6" type="133771" name="vdqmVolReqId" />
-            <UML:Attribute stereotype="SqlOnly" isSpecification="false" visibility="public" xmi.id="irBHOkC6RpJw" type="133771" name="tapeGatewayRequestId" />
-           </UML:Classifier.feature>
-          </UML:Class>
-          <UML:Class stereotype="53501" comment="Possible status codes for a TapeCopy" isSpecification="false" isLeaf="false" visibility="public" namespace="2105" xmi.id="1661" isRoot="false" isAbstract="false" name="TapeCopyStatusCodes" >
-           <UML:Classifier.feature>
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="1662" initialValue="0" type="133771" name="TAPECOPY_CREATED" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="1713" initialValue="1" type="133771" name="TAPECOPY_TOBEMIGRATED" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="1799" initialValue="2" type="133771" name="TAPECOPY_WAITINSTREAMS" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="1800" initialValue="3" type="133771" name="TAPECOPY_SELECTED" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="1801" initialValue="4" type="133771" name="TAPECOPY_TOBERECALLED" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="1802" initialValue="5" type="133771" name="TAPECOPY_STAGED" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="98988" initialValue="6" type="133771" name="TAPECOPY_FAILED" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="pvDbzLEqdOTV" initialValue="7" type="133771" name="TAPECOPY_WAITPOLICY" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="Nhy6jNbNW0Am" initialValue="8" type="133771" name="TAPECOPY_REC_RETRY" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="iZmwC0xXfveO" initialValue="9" type="133771" name="TAPECOPY_MIG_RETRY" />
-           </UML:Classifier.feature>
-          </UML:Class>
-          <UML:Class stereotype="53500" comment="This class is a wrapper around a Tape Copy that represents a TapCopy ready for Migration. It thus has information about the physical file to be copied." isSpecification="false" isLeaf="false" visibility="public" namespace="2105" xmi.id="39137" isRoot="false" isAbstract="false" name="TapeCopyForMigration" >
-           <UML:GeneralizableElement.generalization>
-            <UML:Generalization xmi.idref="39940" />
-           </UML:GeneralizableElement.generalization>
-           <UML:Classifier.feature>
-            <UML:Attribute comment="The disk server on which the file to be migrated resides" isSpecification="false" visibility="public" xmi.id="39932" type="137289" name="diskServer" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="39934" type="137289" name="mountPoint" />
+            <UML:Attribute isSpecification="false" visibility="public" xmi.id="1800" initialValue="3" type="133771" name="RECALLJOB_SELECTED" />
+            <UML:Attribute isSpecification="false" visibility="public" xmi.id="1801" initialValue="4" type="133771" name="RECALLJOB_TOBERECALLED" />
+            <UML:Attribute isSpecification="false" visibility="public" xmi.id="1802" initialValue="5" type="133771" name="RECALLJOB_STAGED" />
+            <UML:Attribute isSpecification="false" visibility="public" xmi.id="98988" initialValue="6" type="133771" name="RECALLJOB_FAILED" />
+            <UML:Attribute isSpecification="false" visibility="public" xmi.id="Nhy6jNbNW0Am" initialValue="8" type="133771" name="RECALLJOB_RETRY" />
            </UML:Classifier.feature>
           </UML:Class>
           <UML:Class stereotype="53501" comment="Possible status codes for a SubRequest" isSpecification="false" isLeaf="false" visibility="public" namespace="2105" xmi.id="1664" isRoot="false" isAbstract="false" name="SubRequestStatusCodes" >
@@ -753,19 +722,6 @@ Resources can be allocated to one or many projects are are composed of a set of 
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="79182" initialValue="9" type="133771" name="DISKCOPY_BEINGDELETED" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="87429" initialValue="10" type="133771" name="DISKCOPY_CANBEMIGR" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="101189" initialValue="11" type="133771" name="DISKCOPY_WAITFS_SCHEDULING" />
-           </UML:Classifier.feature>
-          </UML:Class>
-          <UML:Class stereotype="53501" comment="Possible status codes for a Stream" isSpecification="false" isLeaf="false" visibility="public" namespace="2105" xmi.id="1714" isRoot="false" isAbstract="false" name="StreamStatusCodes" >
-           <UML:Classifier.feature>
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="1856" initialValue="0" type="133771" name="STREAM_PENDING" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="15481" initialValue="1" type="133771" name="STREAM_WAITDRIVE" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="30369" initialValue="2" type="133771" name="STREAM_WAITMOUNT" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="30370" initialValue="3" type="133771" name="STREAM_RUNNING" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="46351" initialValue="4" type="133771" name="STREAM_WAITSPACE" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="74051" initialValue="5" type="133771" name="STREAM_CREATED" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="qjNqHPaPDSfJ" initialValue="6" type="133771" name="STREAM_STOPPED" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="UchMszDoaGZe" initialValue="7" type="133771" name="STREAM_WAITPOLICY" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="CIArszt916QD" initialValue="8" type="133771" name="STREAM_TO_BE_SENT_TO_VDQM" />
            </UML:Classifier.feature>
           </UML:Class>
           <UML:Class stereotype="53500" comment="A disk server is a physical device handling some filesystems" isSpecification="false" isLeaf="false" visibility="public" namespace="2105" xmi.id="16310" isRoot="false" isAbstract="false" name="DiskServer" >
@@ -886,7 +842,6 @@ Resources can be allocated to one or many projects are are composed of a set of 
             <UML:Attribute comment="Physical path where the described diskCopy resides" isSpecification="false" visibility="public" xmi.id="qZsU7nQZc3Rr" type="137289" name="diskCopyPath" />
             <UML:Attribute comment="Size of the underlying CastorFile" isSpecification="false" visibility="public" xmi.id="ozWZEC0QhXdk" type="131665" name="size" />
             <UML:Attribute comment="Status of the DiskCopy described" isSpecification="false" visibility="public" xmi.id="LdhwPLgDsXgz" type="133771" name="diskCopyStatus" />
-            <UML:Attribute comment="Status of the tapeCopy(ies?) associated to the underlying CastorFile. Not used for the time being." isSpecification="false" visibility="public" xmi.id="K6Zu70kwzGTB" type="133771" name="tapeCopyStatus" />
             <UML:Attribute comment="Status of the hardware where the described diskCopy resides." isSpecification="false" visibility="public" xmi.id="53MPUGTDKYLR" type="133771" name="hwStatus" />
             <UML:Attribute comment="Name of the DiskServer on which the Diskcopy resides" isSpecification="false" visibility="public" xmi.id="nhXyw7HCSTO2" type="137289" name="diskServer" />
             <UML:Attribute comment="mount point of the file system where the DiskCopy resides on the diskserver" isSpecification="false" visibility="public" xmi.id="Bk2Hj7Mv5gxY" type="137289" name="mountPoint" />
@@ -1180,7 +1135,7 @@ Concerning the user list, an empty list means all users and all groups are conce
       <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="2136" name="" >
        <UML:Association.connection>
         <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="l8Kea5AxZzvR" aggregation="composite" type="1192" name="castorFile" multiplicity="1" />
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="Pg5tGLUGqmfw" aggregation="none" type="1191" name="tapeCopies" multiplicity="0..n" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="Pg5tGLUGqmfw" aggregation="none" type="1191" name="recallJobs" multiplicity="0..n" />
        </UML:Association.connection>
       </UML:Association>
       <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="2142" name="" >
@@ -1225,28 +1180,15 @@ Concerning the user list, an empty list means all users and all groups are conce
         <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="KWAX0xK0a6o3" aggregation="none" type="1240" name="parent" multiplicity="1" />
        </UML:Association.connection>
       </UML:Association>
-      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="2189" name="" >
-       <UML:Association.connection>
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="a7aMUJT6992n" aggregation="none" type="1192" name="" />
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="xkim01sKV0pT" aggregation="none" type="1237" name="svcClass" multiplicity="1" />
-       </UML:Association.connection>
-      </UML:Association>
       <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="2201" name="" >
        <UML:Association.connection>
         <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="w9TWDGZnN78r" aggregation="none" type="1192" name="" multiplicity="0..n" />
         <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="RbvYjxJghzQf" aggregation="none" type="1581" name="fileClass" multiplicity="1" />
        </UML:Association.connection>
       </UML:Association>
-      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="2207" name="" >
-       <UML:Association.connection>
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="yIzRGpuCwMi8" aggregation="none" type="1191" name="tapeCopy" multiplicity="0..n" />
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="cFtzN1pobkKI" aggregation="none" type="1580" name="stream" multiplicity="0..n" />
-       </UML:Association.connection>
-      </UML:Association>
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="2266" client="696" name="" supplier="960" />
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="2272" client="1030" name="" supplier="960" />
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="2274" client="1016" name="" supplier="960" />
-      <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="2278" client="1190" name="" supplier="960" />
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="2280" client="1192" name="" supplier="960" />
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="2282" client="1195" name="" supplier="960" />
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="2284" client="1196" name="" supplier="960" />
@@ -1260,7 +1202,6 @@ Concerning the user list, an empty list means all users and all groups are conce
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="2336" client="1010" name="" supplier="960" />
       <UML:Generalization isSpecification="false" child="1223" visibility="public" namespace="1" xmi.id="2342" parent="1212" discriminator="" name="" />
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="2346" client="696" name="" supplier="943" />
-      <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="2350" client="1190" name="" supplier="943" />
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="2352" client="1016" name="" supplier="943" />
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="2354" client="1030" name="" supplier="943" />
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="2358" client="1192" name="" supplier="943" />
@@ -1274,7 +1215,6 @@ Concerning the user list, an empty list means all users and all groups are conce
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="2380" client="1192" name="" supplier="1216" />
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="2384" client="1030" name="" supplier="1216" />
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="2386" client="1016" name="" supplier="1216" />
-      <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="2388" client="1190" name="" supplier="1216" />
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="8045" client="1240" name="" supplier="960" />
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="8078" client="1240" name="" supplier="1216" />
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="8079" client="1240" name="" supplier="943" />
@@ -1294,12 +1234,6 @@ Concerning the user list, an empty list means all users and all groups are conce
        <UML:Association.connection>
         <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="iqliCYrFCrHT" aggregation="composite" type="1191" name="" />
         <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="cdTx5hcxVFql" aggregation="none" type="1661" name="status" multiplicity="1" />
-       </UML:Association.connection>
-      </UML:Association>
-      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="10550" name="" >
-       <UML:Association.connection>
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="BJrVwN6fDrLN" aggregation="composite" type="1580" name="" />
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="OCaa1p3dSUbV" aggregation="none" type="1714" name="status" multiplicity="1" />
        </UML:Association.connection>
       </UML:Association>
       <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="10554" name="" >
@@ -1330,37 +1264,16 @@ Concerning the user list, an empty list means all users and all groups are conce
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="21285" client="16310" name="" supplier="960" />
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="22950" client="1239" name="" supplier="960" />
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="22955" client="1239" name="" supplier="943" />
-      <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="22964" client="1580" name="" supplier="960" />
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="22973" client="1237" name="" supplier="960" />
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="22978" client="1581" name="" supplier="960" />
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="22995" client="1237" name="" supplier="943" />
-      <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="22996" client="1580" name="" supplier="943" />
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="23001" client="1581" name="" supplier="943" />
-      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="35965" name="" >
-       <UML:Association.connection>
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="poh6zl3P1DBf" aggregation="aggregate" type="1190" name="tapePool" multiplicity="1" />
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="GKCHHGwtVhCH" aggregation="none" type="1580" name="streams" multiplicity="0..n" />
-       </UML:Association.connection>
-      </UML:Association>
-      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="38333" name="" >
-       <UML:Association.connection>
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="PaUVcCoPyUTy" aggregation="none" type="1190" name="tapePools" multiplicity="0..n" />
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="DWLEhVsyp4F5" aggregation="none" type="1237" name="svcClasses" multiplicity="0..n" />
-       </UML:Association.connection>
-      </UML:Association>
       <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="38335" name="" >
        <UML:Association.connection>
         <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="JAyopB5ElXhM" aggregation="none" type="1239" name="diskPools" multiplicity="0..n" />
         <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="kWjiyDeBj0NP" aggregation="none" type="1237" name="svcClasses" multiplicity="0..n" />
        </UML:Association.connection>
       </UML:Association>
-      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="38336" name="" >
-       <UML:Association.connection>
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="TFNIIaNbkMPY" aggregation="none" type="1580" name="stream" multiplicity="1" />
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="VUmEzSajwIQu" aggregation="none" type="1016" name="tape" multiplicity="1" />
-       </UML:Association.connection>
-      </UML:Association>
-      <UML:Generalization isSpecification="false" child="39137" visibility="public" namespace="1" xmi.id="39940" parent="1191" discriminator="" name="" />
       <UML:Generalization isSpecification="false" child="40742" visibility="public" namespace="1" xmi.id="41542" parent="1195" discriminator="" name="" />
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="43934" client="659" name="" supplier="1216" />
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="46348" client="1010" name="" supplier="1216" />
@@ -1707,12 +1620,6 @@ Concerning the user list, an empty list means all users and all groups are conce
       </UML:Association>
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="832ICVDH61uP" client="CkfEAlzdC0Ip" name="" supplier="960" />
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="aSN3ab78rN5h" client="CkfEAlzdC0Ip" name="" supplier="1216" />
-      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="a97TTqorQ5jE" name="" >
-       <UML:Association.connection>
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="kmaH2DMk7zz7" aggregation="none" type="1580" name="" />
-        <UML:AssociationEnd comment="SqlOnly" isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="c0JzgDr5InJl" aggregation="none" type="1196" name="lastFileSystemUsed" multiplicity="1" />
-       </UML:Association.connection>
-      </UML:Association>
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="vMrszIZwvrPY" client="T666fybyCjIp" name="" supplier="960" />
       <UML:Generalization isSpecification="false" child="LvxRQoKxCQwk" visibility="public" namespace="1" xmi.id="HQjNxjSk1SeM" parent="46354" discriminator="" name="" />
       <UML:Generalization isSpecification="false" child="N6oS2YMhLxcu" visibility="public" namespace="1" xmi.id="6fZ1vYXKLO4U" parent="50325" discriminator="" name="" />
@@ -1922,32 +1829,11 @@ Concerning the user list, an empty list means all users and all groups are conce
         <widgets>
          <classwidget usesdiagramfillcolor="0" width="219" showattsigs="601" x="150" fillcolor="#ffffc0" y="630" showopsigs="601" linewidth="none" height="367" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="1016" showoperations="1" showpackage="0" showscope="1" usesdiagramusefillcolor="0" font="Bitstream Charter,12,-1,5,75,0,0,0,0,0" linecolor="#ff0000" />
          <classwidget usesdiagramfillcolor="0" width="219" showattsigs="601" x="570" fillcolor="#ffffc0" y="280" showopsigs="601" linewidth="none" height="199" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="1191" showoperations="1" showpackage="0" showscope="1" usesdiagramusefillcolor="0" font="Bitstream Charter,12,-1,5,75,0,0,0,0,0" linecolor="#ff0000" />
-         <classwidget usesdiagramfillcolor="0" width="273" showattsigs="601" x="90" fillcolor="#ffffc0" y="300" showopsigs="601" linewidth="none" height="115" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="1580" showoperations="1" showpackage="0" showscope="1" usesdiagramusefillcolor="0" font="Bitstream Charter,12,-1,5,75,0,0,0,0,0" linecolor="#ff0000" />
          <classwidget usesdiagramfillcolor="1" width="239" showattsigs="601" x="520" fillcolor="none" y="40" showopsigs="601" linewidth="none" height="199" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="1195" showoperations="1" showpackage="0" showscope="1" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,75,0,0,0,0,0" linecolor="none" />
          <classwidget usesdiagramfillcolor="1" width="229" showattsigs="601" x="550" fillcolor="none" y="590" showopsigs="601" linewidth="none" height="332" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="1030" showoperations="1" showpackage="0" showscope="1" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
         </widgets>
         <messages/>
         <associations>
-         <assocwidget totalcounta="2" indexa="1" totalcountb="2" indexb="1" linewidth="none" widgetbid="1580" widgetaid="1191" xmi.id="2207" type="512" linecolor="none" >
-          <linepath>
-           <startpoint startx="570" starty="380" />
-           <endpoint endx="363" endy="360" />
-          </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="34" x="580" fillcolor="none" y="360" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="HTYTKHBZ7F6Q" text="0..n" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="34" x="290" fillcolor="none" y="360" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="W4Fl7BhefQmD" text="0..n" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="87" x="510" fillcolor="none" y="360" linewidth="none" posttext="" role="709" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="Fr5YJH0qE3ww" text="tapeCopy" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="68" x="300" fillcolor="none" y="360" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="XWj8XEkjzV7w" text="stream" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-         </assocwidget>
-         <assocwidget totalcounta="2" indexa="1" totalcountb="2" indexb="1" linewidth="none" widgetbid="1016" widgetaid="1580" xmi.id="38336" type="512" linecolor="none" >
-          <linepath>
-           <startpoint startx="230" starty="415" />
-           <endpoint endx="260" endy="630" />
-          </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="17" x="140" fillcolor="none" y="430" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="I1EyQz93R1dP" text="1" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="17" x="270" fillcolor="none" y="560" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="zAbQFHBa5U19" text="1" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="68" x="160" fillcolor="none" y="420" linewidth="none" posttext="" role="709" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="dUucxzZER5gl" text="stream" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="51" x="210" fillcolor="none" y="560" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="MpLT4PsbT7Ka" text="tape" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-         </assocwidget>
          <assocwidget totalcounta="2" indexa="1" totalcountb="2" indexb="1" linewidth="none" widgetbid="1030" widgetaid="1191" xmi.id="2130" type="510" linecolor="none" >
           <linepath>
            <startpoint startx="680" starty="479" />
@@ -1980,10 +1866,8 @@ Concerning the user list, an empty list means all users and all groups are conce
        <diagram snapgrid="1" showattsig="0" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="1" showopsig="0" usefillcolor="1" snapx="10" canvaswidth="1721" snapy="10" showatts="1" xmi.id="fMQlcGvXPRc5" documentation="" type="1" showops="0" showpackage="0" name="Catalog" localid="" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="1045" >
         <widgets>
          <classwidget usesdiagramfillcolor="1" width="182" showattsigs="600" x="630" fillcolor="none" y="0" showopsigs="600" linewidth="none" height="237" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="1237" showoperations="0" showpackage="0" showscope="1" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-         <classwidget usesdiagramfillcolor="1" width="145" showattsigs="600" x="130" fillcolor="none" y="130" showopsigs="600" linewidth="none" height="73" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="1190" showoperations="0" showpackage="0" showscope="1" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
          <classwidget usesdiagramfillcolor="1" width="74" showattsigs="600" x="1270" fillcolor="none" y="60" showopsigs="600" linewidth="none" height="47" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="1239" showoperations="0" showpackage="0" showscope="1" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
          <classwidget usesdiagramfillcolor="0" width="91" showattsigs="600" x="0" fillcolor="#ffffc0" y="300" showopsigs="600" linewidth="none" height="85" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="1581" showoperations="0" showpackage="0" showscope="1" usesdiagramusefillcolor="0" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="#ff0000" />
-         <classwidget usesdiagramfillcolor="1" width="188" showattsigs="600" x="140" fillcolor="none" y="780" showopsigs="600" linewidth="none" height="115" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="1580" showoperations="0" showpackage="0" showscope="1" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
          <classwidget usesdiagramfillcolor="1" width="188" showattsigs="600" x="210" fillcolor="none" y="270" showopsigs="600" linewidth="none" height="367" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="1016" showoperations="0" showpackage="0" showscope="1" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
          <classwidget usesdiagramfillcolor="1" width="178" showattsigs="600" x="440" fillcolor="none" y="220" showopsigs="600" linewidth="none" height="332" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="1030" showoperations="0" showpackage="0" showscope="1" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
          <classwidget usesdiagramfillcolor="0" width="188" showattsigs="600" x="450" fillcolor="#ffffc0" y="670" showopsigs="600" linewidth="none" height="199" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="1191" showoperations="0" showpackage="0" showscope="1" usesdiagramusefillcolor="0" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="#ff0000" />
@@ -1999,16 +1883,6 @@ Concerning the user list, an empty list means all users and all groups are conce
         </widgets>
         <messages/>
         <associations>
-         <assocwidget totalcounta="3" indexa="2" totalcountb="3" indexb="2" linewidth="none" widgetbid="1237" widgetaid="1190" xmi.id="38333" type="512" linecolor="none" >
-          <linepath>
-           <startpoint startx="275" starty="180" />
-           <endpoint endx="630" endy="160" />
-          </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="34" x="290" fillcolor="none" y="170" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="nzjcZVek0Aop" text="0..n" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="34" x="580" fillcolor="none" y="130" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="34NBgJHBjuHd" text="0..n" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="89" x="280" fillcolor="none" y="140" linewidth="none" posttext="" role="709" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="DXW4pvHZ8ew8" text="tapePools" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="91" x="540" fillcolor="none" y="160" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="WQf8v9cZMjj5" text="svcClasses" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-         </assocwidget>
          <assocwidget totalcounta="2" indexa="1" totalcountb="3" indexb="1" linewidth="none" widgetbid="1237" widgetaid="1239" xmi.id="38335" type="512" linecolor="none" >
           <linepath>
            <startpoint startx="1270" starty="80" />
@@ -2029,26 +1903,6 @@ Concerning the user list, an empty list means all users and all groups are conce
           <floatingtext usesdiagramfillcolor="1" width="17" x="50" fillcolor="none" y="240" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="Tjt1SDI7yNhX" text="1" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
           <floatingtext usesdiagramfillcolor="1" width="126" x="50" fillcolor="none" y="260" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="el6cY3EeH3SP" text="forcedFileClass" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
-         <assocwidget totalcounta="2" indexa="1" totalcountb="3" indexb="1" linewidth="none" widgetbid="1580" widgetaid="1190" xmi.id="35965" type="501" linecolor="none" >
-          <linepath>
-           <startpoint startx="200" starty="203" />
-           <endpoint endx="200" endy="780" />
-          </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="17" x="200" fillcolor="none" y="210" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="x30uQfRoaaTW" text="1" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="34" x="160" fillcolor="none" y="730" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="AVZY7gNoQ1Xi" text="0..n" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="83" x="110" fillcolor="none" y="210" linewidth="none" posttext="" role="709" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="Qv9fyb43Qc7p" text="tapePool" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="74" x="120" fillcolor="none" y="750" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="hmfkKjtnSkmt" text="streams" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-         </assocwidget>
-         <assocwidget totalcounta="3" indexa="2" totalcountb="2" indexb="1" linewidth="none" widgetbid="1016" widgetaid="1580" xmi.id="38336" type="512" linecolor="none" >
-          <linepath>
-           <startpoint startx="270" starty="780" />
-           <endpoint endx="300" endy="637" />
-          </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="17" x="230" fillcolor="none" y="750" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="yxMMwt5gFZoL" text="1" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="17" x="280" fillcolor="none" y="650" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="nsL7rHoYcImU" text="1" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="68" x="340" fillcolor="none" y="750" linewidth="none" posttext="" role="709" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="kOUA6G32J1wh" text="stream" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="51" x="300" fillcolor="none" y="650" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="gLVGtyk1SJZZ" text="tape" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-         </assocwidget>
          <assocwidget totalcounta="3" indexa="2" totalcountb="2" indexb="1" linewidth="none" widgetbid="1030" widgetaid="1016" xmi.id="2112" type="510" linecolor="none" >
           <linepath>
            <startpoint startx="398" starty="510" />
@@ -2068,16 +1922,6 @@ Concerning the user list, an empty list means all users and all groups are conce
           <floatingtext usesdiagramfillcolor="1" width="34" x="400" fillcolor="none" y="560" linewidth="none" posttext="" role="702" height="23" usefillcolor="1" pretext="" isinstance="0" xmi.id="C6bGHD1qUgKx" text="0..n" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
           <floatingtext usesdiagramfillcolor="1" width="54" x="430" fillcolor="none" y="640" linewidth="none" posttext="" role="709" height="23" usefillcolor="1" pretext="+" isinstance="0" xmi.id="CV3SqeYR4Aem" text="copy" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
           <floatingtext usesdiagramfillcolor="1" width="84" x="440" fillcolor="none" y="560" linewidth="none" posttext="" role="710" height="23" usefillcolor="1" pretext="+" isinstance="0" xmi.id="bJhUTGCl5f0U" text="segments" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-         </assocwidget>
-         <assocwidget totalcounta="2" indexa="1" totalcountb="2" indexb="1" linewidth="none" widgetbid="1580" widgetaid="1191" xmi.id="2207" type="512" linecolor="none" >
-          <linepath>
-           <startpoint startx="450" starty="770" />
-           <endpoint endx="328" endy="840" />
-          </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="34" x="430" fillcolor="none" y="800" linewidth="none" posttext="" role="701" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="ssfMYyKSTyTb" text="0..n" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="34" x="310" fillcolor="none" y="820" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="dwxUlMFOF9Kd" text="0..n" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="87" x="360" fillcolor="none" y="740" linewidth="none" posttext="" role="709" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="wVg1AfVOrpOm" text="tapeCopy" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="68" x="330" fillcolor="none" y="810" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="ftwyQU8cahrp" text="stream" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="2" indexa="1" totalcountb="2" indexb="1" linewidth="none" widgetbid="1240" widgetaid="1240" xmi.id="2183" type="512" linecolor="none" >
           <linepath>
@@ -2129,17 +1973,6 @@ Concerning the user list, an empty list means all users and all groups are conce
           <floatingtext usesdiagramfillcolor="1" width="98" x="1100" fillcolor="none" y="260" linewidth="none" posttext="" role="709" height="23" usefillcolor="1" pretext="+" isinstance="0" xmi.id="BhygcCwvBWOs" text="fileSystems" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
           <floatingtext usesdiagramfillcolor="1" width="80" x="1190" fillcolor="none" y="120" linewidth="none" posttext="" role="710" height="23" usefillcolor="1" pretext="+" isinstance="0" xmi.id="MDoLbSiqNQ2i" text="diskPool" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
-         <assocwidget totalcounta="3" indexa="1" totalcountb="4" indexb="2" linewidth="none" widgetbid="1196" widgetaid="1580" xmi.id="a97TTqorQ5jE" type="512" linecolor="none" >
-          <linepath>
-           <startpoint startx="200" starty="895" />
-           <endpoint endx="1406" endy="440" />
-           <point x="200" y="1010" />
-           <point x="1680" y="1010" />
-           <point x="1680" y="440" />
-          </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="17" x="1420" fillcolor="none" y="430" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="dwivvqo4tcMQ" text="1" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="154" x="1440" fillcolor="none" y="450" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="RxppLpXnz2wG" text="lastFileSystemUsed" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-         </assocwidget>
          <assocwidget totalcounta="2" indexa="1" totalcountb="4" indexb="1" linewidth="none" widgetbid="1196" widgetaid="16310" xmi.id="17131" type="501" linecolor="none" >
           <linepath>
            <startpoint startx="1540" starty="320" />
@@ -2167,16 +2000,6 @@ Concerning the user list, an empty list means all users and all groups are conce
           </linepath>
           <floatingtext usesdiagramfillcolor="1" width="17" x="870" fillcolor="none" y="710" linewidth="none" posttext="" role="702" height="23" usefillcolor="1" pretext="" isinstance="0" xmi.id="gOko3GwOzYyE" text="1" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
           <floatingtext usesdiagramfillcolor="1" width="88" x="770" fillcolor="none" y="710" linewidth="none" posttext="" role="710" height="23" usefillcolor="1" pretext="+" isinstance="0" xmi.id="doeAXfghMyXD" text="castorFile" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-         </assocwidget>
-         <assocwidget totalcounta="3" indexa="1" totalcountb="2" indexb="1" linewidth="none" widgetbid="1237" widgetaid="1192" xmi.id="2189" type="512" linecolor="none" >
-          <linepath>
-           <startpoint startx="770" starty="780" />
-           <endpoint endx="720" endy="237" />
-           <point x="670" y="760" />
-           <point x="670" y="330" />
-          </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="17" x="630" fillcolor="none" y="240" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="tcKDarRGD92G" text="1" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="77" x="530" fillcolor="none" y="240" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="3vc3CMdqAGyf" text="svcClass" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="2" indexa="1" totalcountb="2" indexb="1" linewidth="none" widgetbid="1581" widgetaid="1192" xmi.id="2201" type="512" linecolor="none" >
           <linepath>
@@ -2279,17 +2102,6 @@ Concerning the user list, an empty list means all users and all groups are conce
            <startpoint startx="1420" starty="750" />
            <endpoint endx="1050" endy="58" />
           </linepath>
-         </assocwidget>
-         <assocwidget totalcounta="3" indexa="2" totalcountb="4" indexb="3" linewidth="none" widgetbid="1196" widgetaid="1580" xmi.id="U4mavyhmsXo0" type="512" linecolor="none" >
-          <linepath>
-           <startpoint startx="270" starty="895" />
-           <endpoint endx="1406" endy="520" />
-           <point x="270" y="990" />
-           <point x="1660" y="990" />
-           <point x="1660" y="520" />
-          </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="17" x="1410" fillcolor="none" y="490" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="nAwOHoUVJeJb" text="1" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="207" x="1420" fillcolor="none" y="520" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="0bnkvt67V8OM" text="lastButOneFileSystemUsed" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
         </associations>
        </diagram>
@@ -3289,23 +3101,6 @@ Concerning the user list, an empty list means all users and all groups are conce
         <listitem open="0" type="814" id="9AlaPHdOWLmR" />
        </listitem>
        <listitem open="0" type="813" id="jNp4a5TZ2HNd" />
-       <listitem open="0" type="813" id="1580" >
-        <listitem open="0" type="814" id="4706" />
-        <listitem open="0" type="814" id="yMUljz5ggbpA" />
-        <listitem open="0" type="814" id="OCXjskl6ZVD6" />
-        <listitem open="0" type="814" id="irBHOkC6RpJw" />
-       </listitem>
-       <listitem open="0" type="813" id="1714" >
-        <listitem open="0" type="814" id="1856" />
-        <listitem open="0" type="814" id="15481" />
-        <listitem open="0" type="814" id="30369" />
-        <listitem open="0" type="814" id="30370" />
-        <listitem open="0" type="814" id="46351" />
-        <listitem open="0" type="814" id="74051" />
-        <listitem open="0" type="814" id="qjNqHPaPDSfJ" />
-        <listitem open="0" type="814" id="UchMszDoaGZe" />
-        <listitem open="1" type="814" id="CIArszt916QD" />
-       </listitem>
        <listitem open="0" type="813" id="1240" >
         <listitem open="0" type="814" id="1579" />
         <listitem open="0" type="814" id="6379" />
@@ -3387,10 +3182,6 @@ Concerning the user list, an empty list means all users and all groups are conce
         <listitem open="0" type="814" id="Vdbvwx2dkZtK" />
         <listitem open="0" type="814" id="BmK6iXeivii0" />
        </listitem>
-       <listitem open="0" type="813" id="39137" >
-        <listitem open="0" type="814" id="39932" />
-        <listitem open="0" type="814" id="39934" />
-       </listitem>
        <listitem open="0" type="813" id="1661" >
         <listitem open="0" type="814" id="1662" />
         <listitem open="0" type="814" id="1713" />
@@ -3402,10 +3193,6 @@ Concerning the user list, an empty list means all users and all groups are conce
         <listitem open="0" type="814" id="pvDbzLEqdOTV" />
         <listitem open="0" type="814" id="Nhy6jNbNW0Am" />
         <listitem open="0" type="814" id="iZmwC0xXfveO" />
-       </listitem>
-       <listitem open="0" type="813" id="1190" >
-        <listitem open="0" type="814" id="15485" />
-        <listitem open="0" type="814" id="eQaoCNy8u5MZ" />
        </listitem>
        <listitem open="0" type="813" id="1044" >
         <listitem open="0" type="814" id="1222" />

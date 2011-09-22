@@ -36,7 +36,6 @@
 #include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/stager/Segment.hpp"
-#include "castor/stager/Stream.hpp"
 #include "castor/stager/Tape.hpp"
 #include "castor/stager/TapeStatusCodes.hpp"
 #include "osdep.h"
@@ -172,7 +171,6 @@ void castor::io::StreamTapeCnv::marshalObject(castor::IObject* object,
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
-    cnvSvc()->marshalObject(obj->stream(), address, alreadyDone);
     address->stream() << obj->segments().size();
     for (std::vector<castor::stager::Segment*>::iterator it = obj->segments().begin();
          it != obj->segments().end();
@@ -198,9 +196,6 @@ castor::IObject* castor::io::StreamTapeCnv::unmarshalObject(castor::io::biniostr
   // Fill object with associations
   castor::stager::Tape* obj = 
     dynamic_cast<castor::stager::Tape*>(object);
-  ad.setObjType(castor::OBJ_INVALID);
-  castor::IObject* objStream = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setStream(dynamic_cast<castor::stager::Stream*>(objStream));
   unsigned int segmentsNb;
   ad.stream() >> segmentsNb;
   for (unsigned int i = 0; i < segmentsNb; i++) {

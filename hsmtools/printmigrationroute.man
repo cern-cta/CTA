@@ -1,0 +1,85 @@
+.TH PRINTSVCCLASS 1 "2011" CASTOR "Prints out the given migration route(s)"
+.SH NAME
+printmigrationroute
+.SH SYNOPSIS
+.B printmigrationroute
+[
+.BI -h
+]
+[
+.BI -s
+<svcClassName>
+]
+[
+.BI -f
+<fileClassName>
+]
+[
+.BI -t
+<tapePoolName>
+]
+
+.SH DESCRIPTION
+.B printmigrationroute
+prints out definitions of the migration routes matching the given criteria
+.LP
+.BI \-h,\ \-\-help
+Get usage information
+.TP
+.BI \-s,\ \-S,\ \-\-serviceclass <svcClassName>
+reduces the list of displayed rules to the ones concerning the given service class
+.TP
+.BI \-f,\ \-\-fileclass <fileClassName>
+reduces the list of displayed rules to the ones concerning the given file class
+.TP
+.BI \-t,\ \-\-tapepool <tapePoolName>
+reduces the list of displayed rules to the ones going to the given tape pool
+
+.SH EXAMPLES
+.nf
+.ft CW
+# printmigrationroute
+SVCCLASS       FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
+----------------------------------------------------------------------------------------
+ default       largeuser      1           - stager_dev01   sponcec3 31-Aug-2011 10:07:27
+ default           test2      1           - stager_dev01   sponcec3 31-Aug-2011 10:10:38
+ default           test2      2           - stager_dev02   sponcec3 31-Aug-2011 10:10:38
+ default threeCopyOnTape      1           - stager_dev01   sponcec3 31-Aug-2011 10:11:06
+ default threeCopyOnTape      2           - stager_dev02   sponcec3 31-Aug-2011 10:11:06
+ default threeCopyOnTape      3           - stager_dev01   sponcec3 31-Aug-2011 10:11:06
+     dev       largeuser      1       False stager_dev02   sponcec3 31-Aug-2011 10:13:14
+     dev       largeuser      1        True stager_dev01   sponcec3 31-Aug-2011 10:13:14
+
+# printmigrationroute -f largeuser
+SVCCLASS FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
+----------------------------------------------------------------------------------
+ default largeuser      1           - stager_dev01   sponcec3 31-Aug-2011 10:07:27
+     dev largeuser      1       False stager_dev02   sponcec3 31-Aug-2011 10:13:14
+     dev largeuser      1        True stager_dev01   sponcec3 31-Aug-2011 10:13:14
+
+# printmigrationroute -s default -f largeuser
+SVCCLASS FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
+----------------------------------------------------------------------------------
+ default largeuser      1           - stager_dev01   sponcec3 31-Aug-2011 10:07:27
+
+# printmigrationroute -t stager_dev01
+SVCCLASS FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
+----------------------------------------------------------------------------------
+ default largeuser      1           - stager_dev01   sponcec3 31-Aug-2011 10:07:27
+
+.SH NOTES
+This command requires database client access to the stager catalog DB.
+Configuration for the database access is taken from castor.conf.
+
+.SH SEE ALSO
+.BR entermigrationroute,
+.BR modifymigrationroute,
+.BR deletemigrationroute,
+.BR printtapepool,
+.BR printdiskpool,
+.BR printfileclass,
+.BR printsvcclass,
+.BR adminMultiInstance
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,26 +1,57 @@
 .TH MODIFYTAPEPOOL 1 "2011" CASTOR "stager catalogue administrative commands"
 .SH NAME
-modifytapepool \- modify an existing tape pool in the stager catalog
+modifytapepool \- modifies an existing tape pool in the stager catalog
 .SH SYNOPSIS
 .B modifytapepool
 [
 .BI -h
 ]
 [
-.BI -m
-.B <migrSelectPolicyName>
+.BI --nbdrives
+<nbDrives>
+]
+[
+.BI --minamountdata
+.B <minAmountDataForAMount>
+]
+[
+.BI --minnbfiles
+.B <minNbFilesForAMount>
+]
+[
+.BI --maxfileage
+.B <maxFileAgeBeforeForcedMount>
 ]
 <tapePoolName>
 
 .SH DESCRIPTION
 .B modifytapepool
 modifies an existing tape pool in the CASTOR stager catalog
+
+The parameters of the tapepool define the policy used to trigger tape mounts.
+The behavior is the following :
+  - never more than <nbDrives> drives can be used concurrently
+  - a new tape will be mounted whenever we have either more than <minAmountDataForAMount> of data or <minNbFilesForAMount> files waiting for migration. In practice, if some migrations are already running, a new one is trigerred if one of these 2 numbers will still be exceeded per mount, even with the new mount.
+  - a tape mount will be forced if nothing is mounted and one file becomes older than maxFileAgeBeforeForcedMount
 .TP
 .BI \-h,\ \-\-help
 Get usage information
 .TP
-.BI \-\-migrselectpolicy <migrSelectPolicyName>
-If given, modifies the migration policy of the tape pool.
+.BI \-\-nbdrives <nbDrives>
+The maximum number of tape drives this tape pool is allowed to use concurrently
+for migration. Default is 0 is not provided
+.TP
+.BI \-\-minamountdata <minAmountDataForAMount>
+The minimum amount of data needed to trigger a new mount in bytes. Default is 100GiB if not provided.
+The value can be given using the standard K/M/G/T extensions, with or without B (i.e. both KB and K are accepted).
+These have the ISO meaning of powers of 10. Ki/Mi/Gi/Ti[B] extensions are also accepted and deal with powers of 2.
+.TP
+.BI \-\-minnbfiles <minNbFilesForAMount>
+The minimum number of files needed to trigger a new mount. Default is 1000 if not provided.
+.TP
+.BI \-\-maxfileage <maxFileAgeBeforeForcedMount>
+The maximum age of a file before a new mount is triggered. Default is 12h if not provided.
+The value can be given using the extensions s/m/mn/h/d for seconds, minutes(both m and mn), hours and days.
 .TP
 .BI <tapePoolName>
 name of the tape pool to modify.
@@ -29,19 +60,19 @@ name of the tape pool to modify.
 .nf
 .ft CW
 # printtapepool -a
-        NAME     MIGRSELECTPOLICY SVCCLASSES       ID
------------------------------------------------------
-stager_dev01 defaultMigrSelPolicy    default        6
-testtapepool           testPolicy          - 93583889
+        NAME NBDRIVES MINAMOUNTDATA MINNBFILES MAXFILEAGE ID LASTEDITOR          LASTEDITION
+--------------------------------------------------------------------------------------------
+ newtapepool        0        100GiB       1000        12h  7   sponcec3 30-Aug-2011 16:32:15
+testtapepool        2         23MiB       1000    12h23mn  8   sponcec3 30-Aug-2011 16:42:32
 
-# modifytapepool -m prodPolicy testtapepool
-modified tape pool testtapepool successfully
+# modifytapepool --nbdrives 1 --minamountdata 57MiB --minnbfiles 234 --maxfileage 1d5h newtapepool
+modified tape pool newtapepool successfully
 
 # printtapepool -a
-        NAME     MIGRSELECTPOLICY SVCCLASSES       ID
------------------------------------------------------
-stager_dev01 defaultMigrSelPolicy    default        6
-testtapepool           prodPolicy          - 93583889
+        NAME NBDRIVES MINAMOUNTDATA MINNBFILES MAXFILEAGE ID LASTEDITOR          LASTEDITION
+--------------------------------------------------------------------------------------------
+ newtapepool        1         57MiB        234       1d5h  7   sponcec3 30-Aug-2011 16:45:28
+testtapepool        2         23MiB       1000    12h23mn  8   sponcec3 30-Aug-2011 16:42:32
 
 .SH NOTES
 This command requires database client access to the stager catalog and nameserver DBs.
@@ -52,6 +83,7 @@ Configuration for the database accesses is taken from castor.conf.
 .BR entertapepool,
 .BR printtapepool,
 .BR modifysvcclass,
+.BR modifymigrationroute,
 .BR adminMultiInstance
 
 .SH AUTHOR

@@ -194,67 +194,20 @@ BEGIN
 END;
 /
 
-/* PL/SQL method deleting tapecopies (and segments) of a castorfile */
-CREATE OR REPLACE PROCEDURE deleteTapeCopies(cfId NUMBER) AS
+/* PL/SQL method deleting migration jobs of a castorfile */
+CREATE OR REPLACE PROCEDURE deleteMigrationJobs(cfId NUMBER) AS
 BEGIN
-  -- Loop over the tapecopies
-  FOR t IN (SELECT id FROM TapeCopy WHERE castorfile = cfId) LOOP
-    FOR s IN (SELECT id FROM Segment WHERE copy = t.id) LOOP
-    -- Delete the segment(s)
-      DELETE FROM Segment WHERE id = s.id;
-    END LOOP;
-    -- Delete from Stream2TapeCopy
-    DELETE FROM Stream2TapeCopy WHERE child = t.id;
-    -- Delete the TapeCopy
-    DELETE FROM TapeCopy WHERE id = t.id;
-  END LOOP;
+  DELETE FROM MigrationJob WHERE castorfile = cfId;
 END;
 /
 
-/* PL/SQL method deleting a tapecopy (and related structures) */
-CREATE OR REPLACE PROCEDURE deleteSingleTapeCopy(tcId NUMBER) AS
+/* PL/SQL method deleting recall jobs (and segments) of a castorfile */
+CREATE OR REPLACE PROCEDURE deleteRecallJobs(cfId NUMBER) AS
 BEGIN
-  FOR s IN (SELECT id FROM Segment WHERE copy = tcId) LOOP
-  -- Delete the segment(s)
-    DELETE FROM Segment WHERE id = s.id;
-  END LOOP;
-  -- Delete from Stream2TapeCopy
-  DELETE FROM Stream2TapeCopy WHERE child = tcId;
-  -- Delete the TapeCopy
-  DELETE FROM TapeCopy WHERE id = tcId;
-END;
-/
-
-/* PL/SQL method deleting recall tapecopies (and related structures)
-   for a castorfile. Tapecopies do not go to failed in recalls (they get deleted) */
-CREATE OR REPLACE PROCEDURE deleteRecallTapeCopies(cfId NUMBER) AS
-BEGIN
-  -- Loop over the tapecopies
-  FOR t IN (SELECT id FROM TapeCopy WHERE castorfile = cfId 
-               AND status IN (tconst.TAPECOPY_TOBERECALLED, 
-                              tconst.TAPECOPY_REC_RETRY)
-           ) LOOP
-    deleteSingleTapeCopy(t.id);
-  END LOOP;
-END;
-/
-
-/* PL/SQL method deleting active migration tapecopies (and related structures)
-   for a castorfile. */
-CREATE OR REPLACE PROCEDURE deleteMigrationTapeCopies(cfId NUMBER) AS
-BEGIN
-  -- Loop over the tapecopies
-  FOR t IN (SELECT id FROM TapeCopy WHERE castorfile = cfId 
-               AND status IN ( tconst.TAPECOPY_CREATED,
-                               tconst.TAPECOPY_TOBEMIGRATED, 
-                               tconst.TAPECOPY_WAITINSTREAMS,
-                               tconst.TAPECOPY_SELECTED,
-                               tconst.TAPECOPY_STAGED,
-                               tconst.TAPECOPY_FAILED,
-                               tconst.TAPECOPY_WAITPOLICY,
-                               tconst.TAPECOPY_MIG_RETRY)
-           ) LOOP
-    deleteSingleTapeCopy(t.id);
+  -- Loop over the recall jobs
+  FOR t IN (SELECT id FROM RecallJob WHERE castorfile = cfId) LOOP
+    DELETE FROM Segment WHERE copy = t.id;
+    DELETE FROM RecallJob WHERE id = t.id;
   END LOOP;
 END;
 /
@@ -269,7 +222,7 @@ BEGIN
   SELECT id INTO unused FROM CastorFile
    WHERE id = cfId FOR UPDATE;
   -- Cancel the recall
-  deleteRecallTapeCopies(cfId);
+  deleteRecallJobs(cfId);
   -- Invalidate the DiskCopy
   UPDATE DiskCopy SET status = 7 WHERE id = dcId; -- INVALID
   -- Look for request associated to the recall and fail
@@ -287,38 +240,7 @@ BEGIN
 END;
 /
 
-/* PL/SQL method FOR canceling a recall by tape VID, The subrequests associated with
-   the recall with be FAILED */
-CREATE OR REPLACE PROCEDURE cancelRecallForTape (inVid IN VARCHAR2) AS
-BEGIN
-  -- Fail all the recalls for the tape
-  FOR a IN (SELECT DISTINCT(DiskCopy.id), DiskCopy.castorfile
-              FROM Segment, Tape, TapeCopy, DiskCopy
-             WHERE Segment.tape = Tape.id
-               AND Segment.copy = TapeCopy.id
-               AND DiskCopy.castorfile = TapeCopy.castorfile
-               AND DiskCopy.status = dconst.DISKCOPY_WAITTAPERECALL
-               AND Tape.vid = inVid
-             ORDER BY DiskCopy.id ASC)
-  LOOP
-    cancelRecall(a.castorfile, a.id, dconst.SUBREQUEST_FAILED);
-  END LOOP;
-  -- Change the tape's status to UNUSED (if we succeeded to
-  -- kill all the recalls
-  UPDATE Tape t
-     SET t.status = tconst.TAPE_UNUSED
-   WHERE t.vid = inVid
-     AND t.tpMode = tconst.TPMODE_READ
-     AND NOT EXISTS (
-           SELECT id
-             FROM Segment
-            WHERE tape = t.id
-              AND status != tconst.SEGMENT_FAILED);
-END;
-/
-
-
-/* PL/SQL method to delete a CastorFile only when no Disk|TapeCopies are left for it */
+/* PL/SQL method to delete a CastorFile only when no DiskCopy, no MigrationJob and no RecallJob are left for it */
 /* Internally used in filesDeletedProc, putFailedProc and deleteOutOfDateDiskCopies */
 CREATE OR REPLACE PROCEDURE deleteCastorFile(cfId IN NUMBER) AS
   nb NUMBER;
@@ -333,39 +255,47 @@ BEGIN
    WHERE castorFile = cfId;
   -- If any DiskCopy, give up
   IF nb = 0 THEN
-    -- See whether it has any TapeCopy
-    SELECT count(*) INTO nb FROM TapeCopy
-     WHERE castorFile = cfId AND status != 6; -- FAILED
-    -- If any TapeCopy, give up
+    -- See whether it has any RecallJob
+    SELECT count(*) INTO nb FROM RecallJob
+     WHERE castorFile = cfId AND status != tconst.RECALLJOB_FAILED;
+    -- If any RecallJob, give up
     IF nb = 0 THEN
-      -- See whether pending SubRequests exist
-      SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ count(*) INTO nb
-        FROM SubRequest
-       WHERE castorFile = cfId
-         AND status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14);   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
-      -- If any SubRequest, give up
+      -- See whether it has any MigrationJob
+      SELECT count(*) INTO nb FROM MigrationJob
+       WHERE castorFile = cfId AND status != tconst.RECALLJOB_FAILED;
+      -- If any MigrationJob, give up
       IF nb = 0 THEN
-        DECLARE
-          fid NUMBER;
-          fc NUMBER;
-          nsh VARCHAR2(2048);
-        BEGIN
-          -- Delete the failed TapeCopies
-          deleteTapeCopies(cfId);
-          -- Delete the CastorFile
-          DELETE FROM CastorFile WHERE id = cfId
-            RETURNING fileId, nsHost, fileClass
-            INTO fid, nsh, fc;
-          -- check whether this file potentially had TapeCopies
-          SELECT nbCopies INTO nb FROM FileClass WHERE id = fc;
-          IF nb = 0 THEN
-            -- This castorfile was created with no TapeCopy
-            -- So removing it from the stager means erasing
-            -- it completely. We should thus also remove it
-            -- from the name server
-            INSERT INTO FilesDeletedProcOutput VALUES (fid, nsh);
-          END IF;
-        END;
+        -- See whether pending SubRequests exist
+        SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ count(*) INTO nb
+          FROM SubRequest
+         WHERE castorFile = cfId
+           AND status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14);   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+        -- If any SubRequest, give up
+        IF nb = 0 THEN
+          DECLARE
+            fid NUMBER;
+            fc NUMBER;
+            nsh VARCHAR2(2048);
+          BEGIN
+            -- Delete the failed Recalls
+            deleteRecallJobs(cfId);
+            -- Delete the failed Migrations
+            deleteMigrationJobs(cfId);
+            -- Delete the CastorFile
+            DELETE FROM CastorFile WHERE id = cfId
+              RETURNING fileId, nsHost, fileClass
+              INTO fid, nsh, fc;
+            -- check whether this file potentially had copies on tape
+            SELECT nbCopies INTO nb FROM FileClass WHERE id = fc;
+            IF nb = 0 THEN
+              -- This castorfile was created with no copy on tape
+              -- So removing it from the stager means erasing
+              -- it completely. We should thus also remove it
+              -- from the name server
+              INSERT INTO FilesDeletedProcOutput VALUES (fid, nsh);
+            END IF;
+          END;
+        END IF;
       END IF;
     END IF;
   END IF;

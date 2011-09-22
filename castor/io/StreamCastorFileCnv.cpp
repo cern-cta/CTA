@@ -38,8 +38,7 @@
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/FileClass.hpp"
-#include "castor/stager/SvcClass.hpp"
-#include "castor/stager/TapeCopy.hpp"
+#include "castor/stager/RecallJob.hpp"
 #include "osdep.h"
 #include <string>
 #include <vector>
@@ -153,7 +152,6 @@ void castor::io::StreamCastorFileCnv::marshalObject(castor::IObject* object,
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
-    cnvSvc()->marshalObject(obj->svcClass(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->fileClass(), address, alreadyDone);
     address->stream() << obj->diskCopies().size();
     for (std::vector<castor::stager::DiskCopy*>::iterator it = obj->diskCopies().begin();
@@ -162,7 +160,7 @@ void castor::io::StreamCastorFileCnv::marshalObject(castor::IObject* object,
       cnvSvc()->marshalObject(*it, address, alreadyDone);
     }
     address->stream() << obj->tapeCopies().size();
-    for (std::vector<castor::stager::TapeCopy*>::iterator it = obj->tapeCopies().begin();
+    for (std::vector<castor::stager::RecallJob*>::iterator it = obj->tapeCopies().begin();
          it != obj->tapeCopies().end();
          it++) {
       cnvSvc()->marshalObject(*it, address, alreadyDone);
@@ -187,9 +185,6 @@ castor::IObject* castor::io::StreamCastorFileCnv::unmarshalObject(castor::io::bi
   castor::stager::CastorFile* obj = 
     dynamic_cast<castor::stager::CastorFile*>(object);
   ad.setObjType(castor::OBJ_INVALID);
-  castor::IObject* objSvcClass = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setSvcClass(dynamic_cast<castor::stager::SvcClass*>(objSvcClass));
-  ad.setObjType(castor::OBJ_INVALID);
   castor::IObject* objFileClass = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setFileClass(dynamic_cast<castor::stager::FileClass*>(objFileClass));
   unsigned int diskCopiesNb;
@@ -204,7 +199,7 @@ castor::IObject* castor::io::StreamCastorFileCnv::unmarshalObject(castor::io::bi
   for (unsigned int i = 0; i < tapeCopiesNb; i++) {
     ad.setObjType(castor::OBJ_INVALID);
     castor::IObject* objTapeCopies = cnvSvc()->unmarshalObject(ad, newlyCreated);
-    obj->addTapeCopies(dynamic_cast<castor::stager::TapeCopy*>(objTapeCopies));
+    obj->addTapeCopies(dynamic_cast<castor::stager::RecallJob*>(objTapeCopies));
   }
   return object;
 }

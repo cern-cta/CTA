@@ -44,8 +44,6 @@
 #include "castor/tape/python/SmartPyObjectPtr.hpp"
 #include "castor/tape/python/ScopedPythonLock.hpp"
 
-#include "castor/stager/TapeCopy.hpp"
-
 #include "castor/tape/tapegateway/TapeGatewayDlfMessageConstants.hpp"
 #include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"
 #include  "castor/tape/tapegateway/daemon/RecallerErrorHandlerThread.hpp"

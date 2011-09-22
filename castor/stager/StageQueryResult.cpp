@@ -40,7 +40,6 @@ castor::stager::StageQueryResult::StageQueryResult() throw() :
   m_diskCopyPath(""),
   m_size(0),
   m_diskCopyStatus(0),
-  m_tapeCopyStatus(0),
   m_hwStatus(0),
   m_diskServer(""),
   m_mountPoint(""),
@@ -76,7 +75,6 @@ void castor::stager::StageQueryResult::print(std::ostream& stream,
   stream << indent << "diskCopyPath : " << m_diskCopyPath << std::endl;
   stream << indent << "size : " << m_size << std::endl;
   stream << indent << "diskCopyStatus : " << m_diskCopyStatus << std::endl;
-  stream << indent << "tapeCopyStatus : " << m_tapeCopyStatus << std::endl;
   stream << indent << "hwStatus : " << m_hwStatus << std::endl;
   stream << indent << "diskServer : " << m_diskServer << std::endl;
   stream << indent << "mountPoint : " << m_mountPoint << std::endl;

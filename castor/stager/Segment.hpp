@@ -40,8 +40,8 @@ namespace castor {
   namespace stager {
 
     // Forward declarations
-    class TapeCopy;
     class Tape;
+    class RecallJob;
 
     /**
      * class Segment
@@ -396,7 +396,7 @@ namespace castor {
        * Get the value of m_copy
        * @return the value of m_copy
        */
-      TapeCopy* copy() const {
+      RecallJob* copy() const {
         return m_copy;
       }
 
@@ -404,7 +404,7 @@ namespace castor {
        * Set the value of m_copy
        * @param new_var the new value of m_copy
        */
-      void setCopy(TapeCopy* new_var) {
+      void setCopy(RecallJob* new_var) {
         m_copy = new_var;
       }
 
@@ -485,7 +485,7 @@ namespace castor {
       /// The id of this object
       u_signed64 m_id;
 
-      TapeCopy* m_copy;
+      RecallJob* m_copy;
 
       SegmentStatusCodes m_status;
 

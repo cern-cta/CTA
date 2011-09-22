@@ -1,7 +1,0 @@
-}; // enum MighunterDlfMessages
-} // namespace mighunter
-} // namespace tape
-} // namespace castor
-
-
-#endif // CASTOR_TAPE_MIGHUNTER_MIGHUNTERDLFMESSAGECONSTANTS_HPP

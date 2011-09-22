@@ -1,0 +1,181 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                      modifymigrationroute
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @author castor dev team
+# *****************************************************************************/
+
+'''allows to modify an existing migration route in the castor stager'''
+
+import sys, os, pwd
+import getopt
+import castor_tools
+
+# usage function
+def usage(exitCode):
+    '''prints usage'''
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] <svcClassName> <fileClassName> ' + \
+          '[<copyNb>[:<isSmallFile>]:]<tapePoolName>'
+    sys.exit(exitCode)
+
+def parsePositiveInt(name, svalue):
+    '''parses a positive int value and exits with proper error message in case the value does not fit'''
+    try:
+        value = int(svalue)
+        if value < 0:
+            raise ValueError
+        return value
+    except ValueError:
+        print 'Invalid %s %s' % (name, svalue)
+        usage(1)
+
+def parsePositiveNonNullInt(name, svalue):
+    '''parses a positive, non null int value and exits with proper error message in case the value does not fit'''
+    value = parsePositiveInt(name, svalue)
+    if value == 0:
+        print '%s cannot be set to 0' % name
+        usage(1)
+    return value
+
+def parseBool(name, svalue):
+    '''parses a boolean value and exits with proper error message in case the value does not fit'''
+    validTrues = ['true', '1', 't', 'y', 'yes']
+    validFalses = ['false', '0', 'f', 'n', 'no']
+    if svalue.lower() in validTrues:
+        return True
+    elif svalue.lower() in validFalses:
+        return False
+    else:
+        print 'Invalid %s %s' % (name, svalue)
+        print 'Note that accepted booleans are %s and %s' % (','.join(validTrues), ','.join(validFalses))
+        usage(1)
+
+def parseMapping(name, svalue):
+    '''parses a migration route target of the form <copyNb>[:<isSmallFile>]?:<tapePoolName>'''
+    try:
+        colonIndex = svalue.find(':')
+        if colonIndex >= 0:
+            copyNb = parsePositiveNonNullInt('copyNb', svalue[0:colonIndex])
+        else:
+            copyNb = 1
+        colonIndex2 = svalue.find(':', colonIndex + 1)
+        if colonIndex2 >= 0:
+            isSmallFile = parseBool('isSmallFile', svalue[colonIndex+1:colonIndex2])
+            colonIndex = colonIndex2
+        else:
+            isSmallFile = None
+        tapePoolName = svalue[colonIndex+1:]
+        return (copyNb, isSmallFile, tapePoolName)
+    except ValueError:
+        print 'Invalid %s %s' % (name, svalue)
+        usage(1)
+
+# first parse the options
+try:
+    options, args = getopt.getopt(sys.argv[1:], 'hv', ['help', 'verbose'])
+except Exception, e:
+    print e
+    usage(1)
+verbose = False
+for f, v in options:
+    if f == '-h' or f == '--help':
+        usage(0)
+    elif f == '-v' or f == '--verbose':
+        verbose = True
+    else:
+        print "unknown option : " + f
+        usage(1)
+
+# Deal with arguments
+if len(args) < 3:
+    print "Missing arguments"
+    usage(1)
+elif len(args) > 3:
+    print "Too many arguments"
+    usage(1)
+else:
+    svcclassname = args[0]
+    fileclassname = args[1]
+    copynb, issmallfile, tapepoolname = parseMapping('route', args[2])
+
+try:
+    # connect to stager
+    stconn = castor_tools.connectToStager()
+    stcur = stconn.cursor()
+    # check that the service class exists
+    stcur.execute('SELECT id FROM SvcClass WHERE name=:name', name=svcclassname)
+    rows = stcur.fetchall()
+    if len(rows) == 0:
+        print 'SvcClass %s does not exist in the stager DB' % svcclassname
+        print 'Giving up'
+        sys.exit(1)
+    svcClassId = rows[0][0]
+    # check that the file class exists
+    stcur.execute('SELECT id FROM FileClass WHERE name=:name', name=fileclassname)
+    rows = stcur.fetchall()
+    if len(rows) == 0:
+        print 'FileClass %s does not exist in the stager DB' % fileclassname
+        print 'Giving up'
+        sys.exit(1)
+    fileClassId = rows[0][0]
+    # check that the tape pool exists
+    stcur.execute('SELECT id FROM TapePool WHERE name=:name', name=tapepoolname)
+    rows = stcur.fetchall()
+    if len(rows) == 0:
+        print 'TapePool %s does not exist in the stager DB' % tapepoolname
+        print 'Giving up'
+        sys.exit(1)
+    tapePoolId = rows[0][0]
+    # check that a single route is targeted
+    selectSql = 'SELECT * FROM MigrationRouting'
+    updateSql = 'UPDATE MigrationRouting SET tapePool=:tapePool, lastEditor=:lastEditor, lastEditionTime=getTime()'
+    whereClause = ' WHERE svcClass=:svcClass AND fileClass=:fileClass AND copyNb=:copyNb'
+    varDict = {'svcClass':svcClassId, 'fileClass':fileClassId, 'copyNb':copynb}
+    if issmallfile:
+        whereClause += ' AND isSmallFile=:isSmallFile'
+        varDict['isSmallFile'] = issmallfile
+    else:
+        whereClause += ' AND isSmallFile IS NULL'
+    stcur.execute(selectSql + whereClause, varDict)
+    rows = stcur.fetchall()
+    if len(rows) == 0:
+        print 'The route to be modified does not exist. Giving up'
+        print 'Take care that when not given, isSmallFile is considered NULL and copyNb is considered 1.'
+        print 'In case you wanted to modify several routes in one go, you will have to delete and recreate'
+        sys.exit(1)
+    # get the name of the current user
+    lastEditor = pwd.getpwuid(os.getuid())[0]
+    # Do the actual update
+    varDict['tapePool'] = tapePoolId
+    varDict['lastEditor'] = lastEditor
+    stcur.execute(updateSql + whereClause, varDict)
+    # commit update and tell user
+    stconn.commit()
+    print 'modified route successfully'
+    # close DB connections
+    try:
+        castor_tools.disconnectDB(stconn)
+    except Exception:
+        pass
+except Exception, e:
+    print e
+    if verbose:
+        import traceback
+        traceback.print_exc()
+    sys.exit(-1)

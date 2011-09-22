@@ -30,10 +30,8 @@
 // Include Files
 #include "castor/Constants.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/stager/Stream.hpp"
 #include "castor/stager/Tape.hpp"
 #include "castor/stager/ICommonSvc.hpp"
-#include "castor/stager/TapeCopy.hpp"
 
 #include "castor/tape/tapegateway/EndNotification.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
@@ -59,7 +57,6 @@ namespace castor      {
 namespace tape        {
 namespace tapegateway {
 
- 
     /**
      * This class provides methods related to tape gateway handling
      */
@@ -68,13 +65,20 @@ namespace tapegateway {
       
       public:
 
+        /**
+         * Little nested struct to simplify the interface of getStreamsWithoutTapes
+         */
+        struct Stream {
+          u_signed64 streamId;
+          u_signed64 initialSizeToTransfer;
+          std::string tapePoolName;
+        };
 
 	/**
 	 * Get all the pending streams 
 	 */
 
-	virtual void  getStreamsWithoutTapes(std::list<castor::stager::Stream>& streams,
-					     std::list<castor::stager::TapePool>& tapes )
+	virtual void  getMigrationMountsWithoutTapes(std::list<Stream>& streams)
 	  throw (castor::exception::Exception)=0;
 
         /**
@@ -199,9 +203,7 @@ namespace tapegateway {
 						    int& copyNumber,
 						    u_signed64& lastModificationTime,
 						    std::string& repackVid,
-						    std::string& serviceClass,
-						    std::string& fileClass,
-						    std::string& tapePool)
+						    std::string& fileClass)
 	  throw (castor::exception::Exception)=0;
 
 
@@ -261,7 +263,7 @@ namespace tapegateway {
 
 	/* delete stream with wrong tapepool */
 
-	virtual void deleteStreamWithBadTapePool(const castor::stager::Stream& stream) 
+	virtual void deleteMigrationMountWithBadTapePool(const u_signed64 streamId) 
 	  throw (castor::exception::Exception)=0;
 	
 	/* delete tape request associated to a bad tape */

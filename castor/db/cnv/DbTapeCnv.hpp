@@ -193,14 +193,6 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Fill the database with objects of type Stream refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillRepStream(castor::stager::Tape* obj)
-          throw (castor::exception::Exception);
-
-        /**
          * Fill the database with objects of type Segment refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
@@ -218,14 +210,6 @@ namespace castor {
                              castor::IObject* object,
                              unsigned int type,
                              bool endTransaction)
-          throw (castor::exception::Exception);
-
-        /**
-         * Retrieve from the database objects of type Stream refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillObjStream(castor::stager::Tape* obj)
           throw (castor::exception::Exception);
 
         /**
@@ -273,36 +257,6 @@ namespace castor {
 
         /// SQL statement object for request update
         castor::db::IDbStatement *m_updateStatement;
-
-        /// SQL select statement for member stream
-        static const std::string s_selectStreamStatementString;
-
-        /// SQL select statement object for member stream
-        castor::db::IDbStatement *m_selectStreamStatement;
-
-        /// SQL delete statement for member stream
-        static const std::string s_deleteStreamStatementString;
-
-        /// SQL delete statement object for member stream
-        castor::db::IDbStatement *m_deleteStreamStatement;
-
-        /// SQL remote update statement for member stream
-        static const std::string s_remoteUpdateStreamStatementString;
-
-        /// SQL remote update statement object for member stream
-        castor::db::IDbStatement *m_remoteUpdateStreamStatement;
-
-        /// SQL checkExist statement for member stream
-        static const std::string s_checkStreamExistStatementString;
-
-        /// SQL checkExist statement object for member stream
-        castor::db::IDbStatement *m_checkStreamExistStatement;
-
-        /// SQL update statement for member stream
-        static const std::string s_updateStreamStatementString;
-
-        /// SQL update statement object for member stream
-        castor::db::IDbStatement *m_updateStreamStatement;
 
         /// SQL select statement for member segments
         static const std::string s_selectSegmentStatementString;

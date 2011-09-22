@@ -24,34 +24,34 @@ name of tape pools to delete. Several names can be given, colon separated
 .nf
 .ft CW
 # printtapepool -a
-        NAME     MIGRSELECTPOLICY SVCCLASSES       ID
------------------------------------------------------
-stager_dev01 defaultMigrSelPolicy    default        6
-testtapepool           testPolicy          - 93545831
- newtapepool defaultMigrSelPolicy          - 93543828
+        NAME NBDRIVES MINAMOUNTDATA MINNBFILES MAXFILEAGE ID LASTEDITOR          LASTEDITION
+--------------------------------------------------------------------------------------------
+stager_dev01        0        100GiB       1000        12h  9       root 30-Aug-2011 16:49:26
+ newtapepool        1         57MiB        234       1d5h  7   sponcec3 30-Aug-2011 16:45:28
+testtapepool        2         23MiB       1000    12h23mn  8   sponcec3 30-Aug-2011 16:42:32
 
 # deletetapepool newtapepool
 successfully dropped the following tape pools : newtapepool
 
 # printtapepool -a
-        NAME     MIGRSELECTPOLICY SVCCLASSES       ID
------------------------------------------------------
-stager_dev01 defaultMigrSelPolicy    default        6
-testtapepool           testPolicy          - 93545831
+        NAME NBDRIVES MINAMOUNTDATA MINNBFILES MAXFILEAGE ID LASTEDITOR          LASTEDITION
+--------------------------------------------------------------------------------------------
+stager_dev01        0        100GiB       1000        12h  9       root 30-Aug-2011 16:49:26
+testtapepool        2         23MiB       1000    12h23mn  8   sponcec3 30-Aug-2011 16:42:32
 
 # deletetapepool newtapepool:testtapepool
 successfully dropped the following tape pools : testtapepool
 WARNING : some tape pool(s) did not exist : newtapepool
 
 # printtapepool -a
-        NAME     MIGRSELECTPOLICY SVCCLASSES ID
------------------------------------------------
-stager_dev01 defaultMigrSelPolicy    default  6
+        NAME NBDRIVES MINAMOUNTDATA MINNBFILES MAXFILEAGE ID LASTEDITOR          LASTEDITION
+--------------------------------------------------------------------------------------------
+stager_dev01        0        100GiB       1000        12h  9       root 30-Aug-2011 16:49:26
 
 # deletetapepool stager_dev01
-TapePools cannot be dropped when used by some service classes and
-  - tape pool stager_dev01 is in use by service class default
-You may want to use modifysvcclass to correct this
+TapePools cannot be dropped when used by some migration routes :
+  - tape pool stager_dev01 is in use by at least one route of service class default
+You may want to use modifymigrationroute to correct this
 
 .SH NOTES
 This command requires database client access to the stager catalogue.
@@ -64,6 +64,7 @@ Configuration for the database access is taken from castor.conf.
 .BR deletediskpool,
 .BR deletesvcclass,
 .BR deletefileclass,
+.BR deletemigrationroute,
 .BR adminMultiInstance
 
 .SH AUTHOR

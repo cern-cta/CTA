@@ -39,11 +39,8 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/OutOfMemory.hpp"
 
-#include "castor/stager/Stream.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "castor/stager/Tape.hpp"
-#include "castor/stager/TapeCopy.hpp"
-#include "castor/stager/TapePool.hpp"
 
 #include "castor/tape/rechandler/RecallPolicyElement.hpp"
 

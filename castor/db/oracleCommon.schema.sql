@@ -121,38 +121,163 @@ CREATE INDEX I_SubRequest_CT_ID ON SubRequest(creationTime, id) LOCAL
   PARTITION P_STATUS_13_14,
   PARTITION P_STATUS_OTHER);
 
-/* Redefinition of table TapeCopy to make it partitioned by status */
-ALTER TABLE Stream2TapeCopy DROP CONSTRAINT FK_Stream2TapeCopy_C;
-DROP TABLE TapeCopy;
-CREATE TABLE TapeCopy 
-  (
-    copyNb NUMBER, errorCode NUMBER, nbRetry NUMBER, missingCopies NUMBER, 
-    fseq NUMBER, tapeGatewayRequestId NUMBER, vid VARCHAR2(2048), 
-    fileTransactionId NUMBER, id INTEGER CONSTRAINT PK_TapeCopy_Id PRIMARY KEY 
-    /* This one was not generated -> */ CONSTRAINT NN_TapeCopy_Id NOT NULL, 
-    castorFile INTEGER, status INTEGER
-  ) 
-    INITRANS 50 /* This one ported by hand as well -> */ PCTUSED 40 PCTFREE 50 ENABLE ROW MOVEMENT
-    PARTITION BY LIST (STATUS)
-  (
-    PARTITION P_STATUS_0_1   VALUES (0, 1),
-    PARTITION P_STATUS_OTHER VALUES (DEFAULT)
-   );
-
+/* Redefinition of table RecallJob to make it partitioned by status */
+DROP TABLE RecallJob;
+CREATE TABLE RecallJob(copyNb NUMBER,
+                       errorCode NUMBER,
+                       nbRetry NUMBER,
+                       missingCopies NUMBER, 
+                       fseq NUMBER,
+                       tapeGatewayRequestId NUMBER,
+                       vid VARCHAR2(2048), 
+                       fileTransactionId NUMBER,
+                       id INTEGER CONSTRAINT PK_RecallJob_Id PRIMARY KEY CONSTRAINT NN_RecallJob_Id NOT NULL, 
+                       castorFile INTEGER,
+                       status INTEGER) 
+INITRANS 50 PCTUSED 40 PCTFREE 50 ENABLE ROW MOVEMENT
+PARTITION BY LIST (STATUS) (
+  PARTITION P_STATUS_0_1   VALUES (0, 1),
+  PARTITION P_STATUS_OTHER VALUES (DEFAULT)
+);
 /* Add index to allow fast lookup by VID (use for preventing 2 tape copies on the same tape.) */
-CREATE INDEX I_TapeCopy_VID ON TapeCopy(VID);
-
+CREATE INDEX I_RecallJob_VID ON RecallJob(VID);
+CREATE INDEX I_RecallJob_Castorfile ON RecallJob (castorFile) LOCAL;
+CREATE INDEX I_RecallJob_Status ON RecallJob (status) LOCAL;
 /* This transaction id is the mean to track a migration, so it obviously needs to be unique */
-ALTER TABLE TapeCopy ADD CONSTRAINT UN_TAPECOPY_FILETRID 
+ALTER TABLE RecallJob ADD CONSTRAINT UN_RECALLJOB_FILETRID 
   UNIQUE (FileTransactionId) USING INDEX;
 
 /* Create sequence for the File request IDs. */
 CREATE SEQUENCE TG_FILETRID_SEQ START WITH 1 INCREMENT BY 1;
-  
-/* Recreate foreign key constraint between Stream2TapeCopy and TapeCopy */
-ALTER TABLE Stream2TapeCopy
-  ADD CONSTRAINT FK_Stream2TapeCopy_C FOREIGN KEY (Child) REFERENCES TapeCopy (id);
 
+/* Definition of the TapePool table
+ *   name : the name of the TapePool
+ *   minAmountDataForMount : the minimum amount of data needed to trigger a new mount, in bytes
+ *   minNbFilesForMount : the minimum number of files needed to trigger a new mount
+ *   maxFileAgeBeforeMount : the maximum file age before a tape in mounted, in seconds
+ *   lastEditor : the login from which the tapepool was last modified
+ *   lastEditionTime : the time at which the tapepool was last modified
+ * Note that a mount is attempted as soon as one of the three criterias is reached.
+ */
+CREATE TABLE TapePool (name VARCHAR2(2048) CONSTRAINT NN_TapePool_Name NOT NULL,
+                       nbDrives INTEGER CONSTRAINT NN_TapePool_NbDrives NOT NULL,
+                       minAmountDataForMount INTEGER CONSTRAINT NN_TapePool_MinAmountData NOT NULL,
+                       minNbFilesForMount INTEGER CONSTRAINT NN_TapePool_MinNbFiles NOT NULL,
+                       maxFileAgeBeforeMount INTEGER CONSTRAINT NN_TapePool_MaxFileAge NOT NULL,
+                       lastEditor VARCHAR2(2048) CONSTRAINT NN_TapePool_LastEditor NOT NULL,
+                       lastEditionTime NUMBER CONSTRAINT NN_TapePool_LastEditionTime NOT NULL,
+                       id INTEGER CONSTRAINT PK_TapePool_Id PRIMARY KEY CONSTRAINT NN_TapePool_Id NOT NULL)
+INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+/* Definition of the MigrationMount table
+ *   lastFileSystemChange : time of the last change of filesystem used for this migration
+ *   vdqmVolReqId : 
+ *   tapeGatewayRequestId : 
+ *   VID : tape currently mounted (when applicable)
+ *   label : label (i.e. format) of the currently mounted tape (when applicable)
+ *   density : density of the currently mounted tape (when applicable)
+ *   lastFseq : position of the last file written on the tape
+ *   lastVDQMPingTime : last time we've pinged VDQM
+ *   lastFileSystemUsed : last filesystem from which data was migrated
+ *   lastButOneFileSystemUsed : last but one filesystem from which data was migrated
+ *   tapePool : tapepool used by this migration
+ *   status : current status of the migration
+ */
+CREATE TABLE MigrationMount (lastFileSystemChange INTEGER CONSTRAINT NN_MigrationMount_LastFSChange NOT NULL,
+                             vdqmVolReqId INTEGER,
+                             tapeGatewayRequestId INTEGER,
+                             id INTEGER CONSTRAINT PK_MigrationMount_Id PRIMARY KEY CONSTRAINT NN_MigrationMount_Id NOT NULL,
+                             startTime NUMBER CONSTRAINT NN_MigrationMount_startTime NOT NULL,
+                             VID VARCHAR2(2048),
+                             label VARCHAR2(2048),
+                             density VARCHAR2(2048),
+                             lastFseq INTEGER,
+                             lastVDQMPingTime NUMBER CONSTRAINT NN_MigrationMount_lastVDQMPing NOT NULL,
+                             lastFileSystemUsed INTEGER,
+                             lastButOneFileSystemUsed INTEGER,
+                             tapePool INTEGER CONSTRAINT NN_MigrationMount_TapePool NOT NULL,
+                             status INTEGER CONSTRAINT NN_MigrationMount_Status NOT NULL)
+INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE INDEX I_MigrationMount_TapePool ON MigrationMount(tapePool); 
+ALTER TABLE MigrationMount ADD CONSTRAINT UN_MigrationMount_VDQM UNIQUE (vdqmVolReqId) USING INDEX;
+ALTER TABLE MigrationMount ADD CONSTRAINT UN_MigrationMount_VID UNIQUE (VID) USING INDEX;
+ALTER TABLE MigrationMount ADD CONSTRAINT FK_MigrationMount_TapePool
+   FOREIGN KEY (tapePool) REFERENCES TapePool(id);
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationMount', 'status', 0, 'MIGRATIONMOUNT_WAITTAPE');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationMount', 'status', 1, 'MIGRATIONMOUNT_WAITDRIVE');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationMount', 'status', 2, 'MIGRATIONMOUNT_MIGRATING');
+
+
+/* Definition of the MigrationJob table
+ *   fileSize : size of the file to be migrated, in bytes
+ *   VID : tape on which the file is being migrated (when applicable)
+ *   creationTime : time of creation of this MigrationJob, in seconds since the epoch
+ *   castorFile : the file to migrate
+ *   copyNb : the number of the copy of the file to migrate
+ *   tapePool : the tape pool where to migrate
+ *   nbRetry : the number of retries we already went through
+ *   errorcode : the error we got on last try (if any)
+ *   tapeGatewayRequestId : an identifier for the migration session that is handling this job (when applicable)
+ *   fileTransactionId : an identifier for this migration job
+ *   fSeq : the file sequence of the copy created on tape for this job (when applicable)
+ *   status : the status of the migration job
+ */
+CREATE TABLE MigrationJob (fileSize INTEGER CONSTRAINT NN_MigrationJob_FileSize NOT NULL,
+                           VID VARCHAR2(2048),
+                           creationTime NUMBER NN_MigrationJob_CreationTime NOT NULL,
+                           castorFile INTEGER NN_MigrationJob_CastorFile NOT NULL,
+                           copyNb INTEGER NN_MigrationJob_copyNb NOT NULL,
+                           tapePool INTEGER NN_MigrationJob_TapePool NOT NULL,
+                           nbRetry INTEGER CONSTRAINT NN_MigrationJob_nbRetry NOT NULL,
+                           errorcode INTEGER,
+                           tapeGatewayRequestId INTEGER CONSTRAINT NN_MigrationJob_tgRequestId NOT NULL,
+                           FileTransactionId INTEGER,
+                           fSeq INTEGER,
+                           status INTEGER NN_MigrationJob_Status NOT NULL,
+                           id INTEGER CONSTRAINT PK_MigrationJob_Id PRIMARY KEY CONSTRAINT NN_MigrationJob_Id NOT NULL)
+INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE INDEX I_MigrationJob_CFVID ON MigrationJob(CastorFile, VID);
+CREATE INDEX I_MigrationJob_CFCopyNb ON MigrationJob(CastorFile, copyNb);
+CREATE INDEX I_MigrationJob_TapePoolSize ON MigrationJob(tapePool, fileSize);
+CREATE INDEX I_MigrationJob_TPStatusCFId ON MigrationJob(tapePool, status, castorFile, id);
+ALTER TABLE MigrationJob ADD CONSTRAINT UN_MigrationMount_CopyNb UNIQUE (castorFile, copyNb) USING INDEX I_MigrationJob_CFCopyNb;
+ALTER TABLE MigrationJob ADD CONSTRAINT FK_MigrationJob_CastorFile
+   FOREIGN KEY (castorFile) REFERENCES CastorFile(id);
+ALTER TABLE MigrationJob ADD CONSTRAINT FK_MigrationJob_TapePool
+   FOREIGN KEY (tapePool) REFERENCES TapePool(id);
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationJob', 'status', 0, 'MIGRATIONJOB_PENDING');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationJob', 'status', 1, 'MIGRATIONJOB_SELECTED');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationJob', 'status', 2, 'MIGRATIONJOB_MIGRATED');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationJob', 'status', 6, 'MIGRATIONJOB_FAILED');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationJob', 'status', 8, 'MIGRATIONJOB_RETRY');
+
+
+/* Definition of the MigrationRouting table. Each line is a routing rule for migration jobs
+ *   isSmallFile : whether this routing rule applies to small files
+ *   copyNb : the copy number the routing rule applies to
+ *   svcClass : the service class the routing rule applies to
+ *   fileClass : the file class the routing rule applies to
+ *   lastEditor : name of the last one that modified this routing rule.
+ *   lastEditionTime : last time this routing rule was edited, in seconds since the epoch
+ *   tapePool : the tape pool where to migrate files matching the above criteria
+ */
+CREATE TABLE MigrationRouting (isSmallFile BOOLEAN CONSTRAINT NN_MigrationRouting_IsSmallFile NOT NULL,
+                               copyNb INTEGER CONSTRAINT NN_MigrationRouting_CopyNb NOT NULL,
+                               svcClass INTEGER CONSTRAINT NN_MigrationRouting_SvcClass NOT NULL,
+                               fileClass INTEGER CONSTRAINT NN_MigrationRouting_FileClass NOT NULL,
+                               lastEditor VARCHAR2(2048) CONSTRAINT NN_MigrationRouting_LastEditor NOT NULL,
+                               lastEditionTime NUMBER CONSTRAINT NN_MigrationRouting_LastEditionTime NOT NULL,
+                               tapePool INTEGER CONSTRAINT NN_MigrationRouting_TapePool NOT NULL)
+INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE INDEX I_MigrationRouting_Rules ON MigrationRouting(svcClass, fileClass, copyNb, isSmallFile);
+ALTER TABLE MigrationRouting ADD CONSTRAINT UN_MigrationRouting_Rules UNIQUE (svcClass, fileClass, copyNb, isSmallFile) USING INDEX I_MigrationRouting_Rules;
+ALTER TABLE MigrationRouting ADD CONSTRAINT FK_MigrationRouting_SvcClass
+   FOREIGN KEY (svcClass) REFERENCES SvcClass(id);
+ALTER TABLE MigrationRouting ADD CONSTRAINT FK_MigrationRouting_FileClass
+   FOREIGN KEY (fileClass) REFERENCES FileClass(id);
+ALTER TABLE MigrationRouting ADD CONSTRAINT FK_MigrationRouting_TapePool
+   FOREIGN KEY (tapePool) REFERENCES TapePool(id);
+ 
 /* Indexes related to most used entities */
 CREATE UNIQUE INDEX I_DiskServer_name ON DiskServer (name);
 
@@ -163,13 +288,8 @@ CREATE INDEX I_CastorFile_SvcClass ON CastorFile (svcClass);
 CREATE INDEX I_DiskCopy_Castorfile ON DiskCopy (castorFile);
 CREATE INDEX I_DiskCopy_FileSystem ON DiskCopy (fileSystem);
 CREATE INDEX I_DiskCopy_Status ON DiskCopy (status);
-CREATE INDEX I_DiskCopy_FS_Status_10 ON DiskCopy (fileSystem,decode(status,10,status,NULL));
 CREATE INDEX I_DiskCopy_Status_9 ON DiskCopy (decode(status,9,status,NULL));
 CREATE INDEX I_DiskCopy_FS_GCW ON DiskCopy (filesystem, status, gcweight, ID, castorFile);
-
-CREATE INDEX I_TapeCopy_Castorfile ON TapeCopy (castorFile) LOCAL;
-CREATE INDEX I_TapeCopy_Status ON TapeCopy (status) LOCAL;
-CREATE INDEX I_TapeCopy_CF_Status_2 ON TapeCopy (castorFile,decode(status,2,status,NULL)) LOCAL;
 
 CREATE INDEX I_FileSystem_DiskPool ON FileSystem (diskPool);
 CREATE INDEX I_FileSystem_DiskServer ON FileSystem (diskServer);
@@ -191,16 +311,6 @@ CREATE INDEX I_StageRepackRequest_ReqId ON StageRepackRequest (reqId);
 /* Improve query execution in the checkFailJobsWhenNoSpace function */
 CREATE INDEX I_StagePutRequest_SvcClass ON StagePutRequest (svcClass);
 
-/* A primary key index for better scan of Stream2TapeCopy */
-ALTER TABLE Stream2TapeCopy MODIFY
-  (parent CONSTRAINT NN_Stream2TapeCopy_Parent NOT NULL,
-   child  CONSTRAINT NN_Stream2TapeCopy_Child NOT NULL);
-
-CREATE UNIQUE INDEX I_Stream2TapeCopy_PC ON Stream2TapeCopy (parent, child);
-
-ALTER TABLE Stream2TapeCopy
-  ADD CONSTRAINTS PK_Stream2TapeCopy_PC PRIMARY KEY (parent, child) USING INDEX;
-
 /* Indexing GCFile by Request */
 CREATE INDEX I_GCFile_Request ON GCFile (request);
 
@@ -212,9 +322,6 @@ CREATE INDEX I_Segment_Tape ON Segment (tape);
 
 /* Indexing Segments by Tape and Status */
 CREATE INDEX I_Segment_TapeStatus ON Segment (tape, status);
-
-/* Indexing Stream by TapePool */
-CREATE INDEX I_Stream_TapePool ON Stream (tapePool); 
 
 /* FileSystem constraints */
 ALTER TABLE FileSystem ADD CONSTRAINT FK_FileSystem_DiskServer 
@@ -258,9 +365,6 @@ CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
 CREATE OR REPLACE TYPE strListTable AS TABLE OF VARCHAR2(2048);
 /
 
-/* Default policy for migration */
-ALTER TABLE TapePool MODIFY (migrSelectPolicy DEFAULT 'defaultMigrSelPolicy');
-
 /* SvcClass constraints */
 ALTER TABLE SvcClass
   MODIFY (name CONSTRAINT NN_SvcClass_Name NOT NULL);
@@ -269,6 +373,10 @@ ALTER TABLE SvcClass
   MODIFY (forcedFileClass CONSTRAINT NN_SvcClass_ForcedFileClass NOT NULL);
 
 ALTER TABLE SvcClass MODIFY (gcPolicy DEFAULT 'default');
+
+ALTER TABLE SvcClass MODIFY (lastEditor CONSTRAINT NN_SvcClass_LastEditor NOT NULL);
+
+ALTER TABLE SvcClass MODIFY (lastEditionTime CONSTRAINT NN_SvcClass_LastEditionTime NOT NULL);
 
 /* DiskCopy constraints */
 ALTER TABLE DiskCopy MODIFY (nbCopyAccesses DEFAULT 0);
@@ -295,9 +403,6 @@ ALTER TABLE CastorFile ADD CONSTRAINT UN_CastorFile_LKFileName UNIQUE (LastKnown
 
 ALTER TABLE CastorFile MODIFY (LastKnownFileName CONSTRAINT NN_CastorFile_LKFileName NOT NULL);
 
-/* Stream constraints */
-ALTER TABLE Stream ADD CONSTRAINT FK_Stream_TapePool
-  FOREIGN KEY (tapePool) REFERENCES TapePool (id);
 ALTER TABLE Tape MODIFY(lastVdqmPingTime CONSTRAINT NN_Tape_lastVdqmPingTime NOT NULL);
 
 /* DiskPool2SvcClass constraints */
@@ -308,18 +413,16 @@ ALTER TABLE DiskPool2SvcClass ADD CONSTRAINT PK_DiskPool2SvcClass_PC
 CREATE TABLE TapeGatewayRequest (accessMode NUMBER, startTime INTEGER, lastVdqmPingTime INTEGER, vdqmVolReqId NUMBER, nbRetry NUMBER, lastFseq NUMBER, id INTEGER CONSTRAINT PK_TapeGatewayRequest_Id PRIMARY KEY, streamMigration INTEGER, tapeRecall INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE TABLE TapeGatewaySubRequest (fseq NUMBER, id INTEGER CONSTRAINT PK_TapeGatewaySubRequest_Id PRIMARY KEY, tapecopy INTEGER, request INTEGER, diskcopy INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeGatewayRequest', 'status', 0, 'TO_BE_RESOLVED');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeGatewayRequest', 'status', 1, 'TO_BE_SENT_TO_VDQM');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeGatewayRequest', 'status', 1, 'SEND_TO_VDQM');
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeGatewayRequest', 'status', 2, 'WAITING_TAPESERVER');
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeGatewayRequest', 'status', 3, 'ONGOING');
 
 /* Index and Constraints for the tapegateway tables */
 CREATE INDEX I_TGSubRequest_Request ON TapeGatewaySubRequest(request);
-CREATE UNIQUE INDEX I_TGSubRequest_TapeCopy ON TapeGatewaySubRequest(tapeCopy);
 CREATE UNIQUE INDEX I_TGRequest_Tape ON TapeGatewayRequest(tapeRecall);
 CREATE UNIQUE INDEX I_TGRequest_Stream ON TapeGatewayRequest(streamMigration);
 CREATE UNIQUE INDEX I_TGRequest_VdqmVolReqId ON TapeGatewayRequest(vdqmVolReqId);
 
-ALTER TABLE TapeGatewaySubRequest ADD CONSTRAINT FK_TGSubRequest_TC FOREIGN KEY (tapeCopy) REFERENCES TapeCopy (id);
 ALTER TABLE TapeGatewaySubRequest ADD CONSTRAINT FK_TGSubRequest_DC FOREIGN KEY (diskCopy) REFERENCES DiskCopy (id);
 ALTER TABLE TapeGatewaySubRequest ADD CONSTRAINT FK_TGSubRequest_TGR FOREIGN KEY (request) REFERENCES TapeGatewayRequest(id);
 ALTER TABLE TapeGatewayRequest ADD CONSTRAINT FK_TapeGatewayRequest_SM FOREIGN KEY (streamMigration) REFERENCES Stream (id);
@@ -333,11 +436,6 @@ CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcOutput
 
 /* Global temporary table to store castor file ids temporarily in the filesDeletedProc procedure */
 CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcHelper
-  (cfId NUMBER)
-  ON COMMIT DELETE ROWS;
-
-/* Global temporary table for the filesClearedProc procedure */
-CREATE GLOBAL TEMPORARY TABLE FilesClearedProcHelper
   (cfId NUMBER)
   ON COMMIT DELETE ROWS;
 
@@ -513,8 +611,6 @@ INSERT INTO CastorConfig
   VALUES ('cleaning', 'outOfDateStageOutDCsTimeout', '72', 'Timeout for STAGEOUT diskCopies in hours');
 INSERT INTO CastorConfig
   VALUES ('cleaning', 'failedDCsTimeout', '72', 'Timeout for failed diskCopies in hours');
-INSERT INTO CastorConfig 
-  VALUES ('tape', 'interfaceDaemon', 'rtcpclientd', 'The name of the daemon used to interface to the tape system');
 INSERT INTO CastorConfig
   VALUES ('Repack', 'Protocol', 'rfio', 'The protocol that repack should use for writing files to disk');
 INSERT INTO CastorConfig

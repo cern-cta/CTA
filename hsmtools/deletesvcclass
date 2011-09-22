@@ -70,14 +70,14 @@ try:
     # drop svcclasses
     if existingSvcClasses:
         stcur.execute('DELETE FROM DiskPool2SvcClass WHERE child IN (' + svcClassIds + ')')
-        stcur.execute('DELETE FROM SvcClass2TapePool WHERE parent IN (' + svcClassIds + ')')
+        stcur.execute('DELETE FROM MigrationRouting WHERE svcclass IN (' + svcClassIds + ')')
         stcur.execute('DELETE FROM SvcClass WHERE id IN (' + svcClassIds + ')')
         stconn.commit()
         # loop over svcclasses and delete them from stager
-        print 'successfully dropped the following svc class(es) : %s' % (', '.join(existingSvcClasses))
+        print 'successfully dropped the following service class(es) : %s' % (', '.join(existingSvcClasses))
     # warn for non existing service classes
     if nonexitingSvcClasses:
-        print 'WARNING : some service class(es) : %s' % (', '.join(nonexitingSvcClasses))
+        print 'WARNING : some service class(es) do(es) not exist : %s' % (', '.join(nonexitingSvcClasses))
     # close DB connections
     try:
         castor_tools.disconnectDB(stconn)

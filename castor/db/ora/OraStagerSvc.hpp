@@ -263,7 +263,7 @@ namespace castor {
          * In all others cases, the method first
          * checks whether the recreation is possible.
          * A recreation is considered to be possible if
-         * no TapeCopy of the given file is in TAPECOPY_SELECTED
+         * no MigrationJob of the given file is in MIGRATIONJOB_SELECTED
          * status and no DiskCopy of the file is in either
          * WAITFS, WAITFS_SCHEDULING, WAITTAPERECALL or
          * WAITDISK2DISKCOPY status. When recreation is not
@@ -272,7 +272,7 @@ namespace castor {
          * for logging purposes.
          * Else, all DiskCopies for the given file are marked
          * INVALID (that is those not in DISKCOPY_FAILED and
-         * DISKCOPY_DELETED status) and all TapeCopies are
+         * DISKCOPY_DELETED status) and all Recall and MigrationJobs are
          * deleted. A new DiskCopy is then created in
          * DISKCOPY_WAITFS status, linked to the given
          * SubRequest returned.
@@ -299,20 +299,6 @@ namespace castor {
          */
         virtual void archiveSubReq(u_signed64 subReqId,
           castor::stager::SubRequestStatusCodes finalStatus)
-          throw (castor::exception::Exception);
-
-        /**
-         * Implements a single file stageRelease.
-         * It throws a Busy exception in case the file is
-         * used by any request or is waiting for migration.
-         * Otherwise, it marks all the copies of the file
-         * as candidate for the garbage collection.
-         * @param fileId the fileId of the CastorFile
-         * @param nsHost the name server to use
-         * @exception in case of error or if the file is busy
-         */
-        virtual void stageRelease
-        (const u_signed64 fileId, const std::string nsHost)
           throw (castor::exception::Exception);
 
         /**
@@ -372,7 +358,7 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Creates a candidate for a recall. This includes TapeCopy with
+         * Creates a candidate for a recall. This includes RecallJob with
          * its Segment(s), a DiskCopy and a SubRequest in WAITTAPERECALL.
          * @param subreq the subreq of the file to recall
          * @param svcClass svc class for recall policy
@@ -394,30 +380,6 @@ namespace castor {
         (castor::stager::SubRequest* subreq,
          castor::stager::SvcClass* svcClass,
          castor::stager::Tape* &tape)
-          throw (castor::exception::Exception);
-
-        /**
-         * Retrieves a DiskPool from the database based on name.
-         * Caller is in charge of the deletion of the allocated
-         * memory.
-         * @param name the name of the disk pool
-         * @return the DiskPool object or 0 if none found
-         * @exception Exception in case of error
-         */
-        virtual castor::stager::DiskPool* selectDiskPool
-        (const std::string name)
-          throw (castor::exception::Exception);
-
-        /**
-         * Retrieves a TapePool from the database based on name.
-         * Caller is in charge of the deletion of the allocated
-         * memory.
-         * @param name the name of the tape pool
-         * @return the TapePool object or 0 if none found
-         * @exception Exception in case of error
-         */
-        virtual castor::stager::TapePool* selectTapePool
-        (const std::string name)
           throw (castor::exception::Exception);
 
         /**
@@ -469,7 +431,7 @@ namespace castor {
       private:
 
         /**
-         * Creates a TapeCopy and corresponding Segment objects in the
+         * Creates a RecallJob and corresponding Segment objects in the
          * Stager catalogue. The segment information is fetched from the
          * Nameserver and vmgr with the given uid, gid.
          * @castorFile the Castorfile, from wich the fileid is taken for
@@ -491,7 +453,7 @@ namespace castor {
          * that should be recreated
          * @exception Exception in case of error
          */
-        int createTapeCopySegmentsForRecall
+        int createRecallJobSegments
         (castor::stager::CastorFile* castorFile,
          unsigned long euid,
          unsigned long egid,
@@ -584,12 +546,6 @@ namespace castor {
         /// SQL statement object for function archiveSubReq
         oracle::occi::Statement *m_archiveSubReqStatement;
 
-        /// SQL statement for function stageRelease
-        static const std::string s_stageReleaseStatementString;
-
-        /// SQL statement object for function stageRelease
-        oracle::occi::Statement *m_stageReleaseStatement;
-
         /// SQL statement for function stageRm
         static const std::string s_stageRmStatementString;
 
@@ -613,18 +569,6 @@ namespace castor {
 
         /// SQL statement object for function setFileGCWeight
         oracle::occi::Statement *m_setFileGCWeightStatement;
-
-        /// SQL statement for function selectDiskPool
-        static const std::string s_selectDiskPoolStatementString;
-
-        /// SQL statement object for function selectDiskPool
-        oracle::occi::Statement *m_selectDiskPoolStatement;
-
-        /// SQL statement for function selectTapePool
-        static const std::string s_selectTapePoolStatementString;
-
-        /// SQL statement object for function selectTapePool
-        oracle::occi::Statement *m_selectTapePoolStatement;
 
         /// SQL statement to selectTapePriority
         static const std::string s_selectPriorityStatementString;

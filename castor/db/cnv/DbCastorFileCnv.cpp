@@ -40,8 +40,7 @@
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/FileClass.hpp"
-#include "castor/stager/SvcClass.hpp"
-#include "castor/stager/TapeCopy.hpp"
+#include "castor/stager/RecallJob.hpp"
 #include <algorithm>
 #include <set>
 #include <stdlib.h>
@@ -58,11 +57,11 @@ static castor::CnvFactory<castor::db::cnv::DbCastorFileCnv>* s_factoryDbCastorFi
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbCastorFileCnv::s_insertStatementString =
-"INSERT INTO CastorFile (fileId, nsHost, fileSize, creationTime, lastAccessTime, lastKnownFileName, lastUpdateTime, id, svcClass, fileClass) VALUES (:1,:2,:3,:4,NULL,:5,:6,ids_seq.nextval,:7,:8) RETURNING id INTO :9";
+"INSERT INTO CastorFile (fileId, nsHost, fileSize, creationTime, lastAccessTime, lastKnownFileName, lastUpdateTime, id, fileClass) VALUES (:1,:2,:3,:4,NULL,:5,:6,ids_seq.nextval,:7) RETURNING id INTO :8";
 
 /// SQL statement for request bulk insertion
 const std::string castor::db::cnv::DbCastorFileCnv::s_bulkInsertStatementString =
-"INSERT /* bulk */ INTO CastorFile (fileId, nsHost, fileSize, creationTime, lastAccessTime, lastKnownFileName, lastUpdateTime, id, svcClass, fileClass) VALUES (:1,:2,:3,:4,NULL,:5,:6,ids_seq.nextval,:7,:8) RETURNING id INTO :9";
+"INSERT /* bulk */ INTO CastorFile (fileId, nsHost, fileSize, creationTime, lastAccessTime, lastKnownFileName, lastUpdateTime, id, fileClass) VALUES (:1,:2,:3,:4,NULL,:5,:6,ids_seq.nextval,:7) RETURNING id INTO :8";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbCastorFileCnv::s_deleteStatementString =
@@ -70,19 +69,19 @@ const std::string castor::db::cnv::DbCastorFileCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbCastorFileCnv::s_selectStatementString =
-"SELECT fileId, nsHost, fileSize, creationTime, lastAccessTime, lastKnownFileName, lastUpdateTime, id, svcClass, fileClass FROM CastorFile WHERE id = :1";
+"SELECT fileId, nsHost, fileSize, creationTime, lastAccessTime, lastKnownFileName, lastUpdateTime, id, fileClass FROM CastorFile WHERE id = :1";
 
 /// SQL statement for bulk request selection
 const std::string castor::db::cnv::DbCastorFileCnv::s_bulkSelectStatementString =
 "DECLARE \
-   TYPE RecordType IS RECORD (fileId INTEGER, nsHost VARCHAR2(2048), fileSize INTEGER, creationTime INTEGER, lastAccessTime INTEGER, lastKnownFileName VARCHAR2(2048), lastUpdateTime INTEGER, id INTEGER, svcClass INTEGER, fileClass INTEGER); \
+   TYPE RecordType IS RECORD (fileId INTEGER, nsHost VARCHAR2(2048), fileSize INTEGER, creationTime INTEGER, lastAccessTime INTEGER, lastKnownFileName VARCHAR2(2048), lastUpdateTime INTEGER, id INTEGER, fileClass INTEGER); \
    TYPE CurType IS REF CURSOR RETURN RecordType; \
    PROCEDURE bulkSelect(ids IN castor.\"cnumList\", \
                         objs OUT CurType) AS \
    BEGIN \
      FORALL i IN ids.FIRST..ids.LAST \
        INSERT INTO bulkSelectHelper VALUES(ids(i)); \
-     OPEN objs FOR SELECT fileId, nsHost, fileSize, creationTime, lastAccessTime, lastKnownFileName, lastUpdateTime, id, svcClass, fileClass \
+     OPEN objs FOR SELECT fileId, nsHost, fileSize, creationTime, lastAccessTime, lastKnownFileName, lastUpdateTime, id, fileClass \
                      FROM CastorFile t, bulkSelectHelper h \
                     WHERE t.id = h.objId; \
      DELETE FROM bulkSelectHelper; \
@@ -94,14 +93,6 @@ const std::string castor::db::cnv::DbCastorFileCnv::s_bulkSelectStatementString 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbCastorFileCnv::s_updateStatementString =
 "UPDATE CastorFile SET fileId = :1, nsHost = :2, fileSize = :3, lastKnownFileName = :4, lastUpdateTime = :5 WHERE id = :6";
-
-/// SQL existence statement for member svcClass
-const std::string castor::db::cnv::DbCastorFileCnv::s_checkSvcClassExistStatementString =
-"SELECT id FROM SvcClass WHERE id = :1";
-
-/// SQL update statement for member svcClass
-const std::string castor::db::cnv::DbCastorFileCnv::s_updateSvcClassStatementString =
-"UPDATE CastorFile SET svcClass = :1 WHERE id = :2";
 
 /// SQL existence statement for member fileClass
 const std::string castor::db::cnv::DbCastorFileCnv::s_checkFileClassExistStatementString =
@@ -124,16 +115,16 @@ const std::string castor::db::cnv::DbCastorFileCnv::s_remoteUpdateDiskCopyStatem
 "UPDATE DiskCopy SET castorFile = :1 WHERE id = :2";
 
 /// SQL select statement for member tapeCopies
-const std::string castor::db::cnv::DbCastorFileCnv::s_selectTapeCopyStatementString =
-"SELECT id FROM TapeCopy WHERE castorFile = :1 FOR UPDATE";
+const std::string castor::db::cnv::DbCastorFileCnv::s_selectRecallJobStatementString =
+"SELECT id FROM RecallJob WHERE castorFile = :1 FOR UPDATE";
 
 /// SQL delete statement for member tapeCopies
-const std::string castor::db::cnv::DbCastorFileCnv::s_deleteTapeCopyStatementString =
-"UPDATE TapeCopy SET castorFile = 0 WHERE id = :1";
+const std::string castor::db::cnv::DbCastorFileCnv::s_deleteRecallJobStatementString =
+"UPDATE RecallJob SET castorFile = 0 WHERE id = :1";
 
 /// SQL remote update statement for member tapeCopies
-const std::string castor::db::cnv::DbCastorFileCnv::s_remoteUpdateTapeCopyStatementString =
-"UPDATE TapeCopy SET castorFile = :1 WHERE id = :2";
+const std::string castor::db::cnv::DbCastorFileCnv::s_remoteUpdateRecallJobStatementString =
+"UPDATE RecallJob SET castorFile = :1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -146,16 +137,14 @@ castor::db::cnv::DbCastorFileCnv::DbCastorFileCnv(castor::ICnvSvc* cnvSvc) :
   m_selectStatement(0),
   m_bulkSelectStatement(0),
   m_updateStatement(0),
-  m_checkSvcClassExistStatement(0),
-  m_updateSvcClassStatement(0),
   m_checkFileClassExistStatement(0),
   m_updateFileClassStatement(0),
   m_selectDiskCopyStatement(0),
   m_deleteDiskCopyStatement(0),
   m_remoteUpdateDiskCopyStatement(0),
-  m_selectTapeCopyStatement(0),
-  m_deleteTapeCopyStatement(0),
-  m_remoteUpdateTapeCopyStatement(0) {}
+  m_selectRecallJobStatement(0),
+  m_deleteRecallJobStatement(0),
+  m_remoteUpdateRecallJobStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -170,16 +159,14 @@ castor::db::cnv::DbCastorFileCnv::~DbCastorFileCnv() throw() {
     if(m_selectStatement) delete m_selectStatement;
     if(m_bulkSelectStatement) delete m_bulkSelectStatement;
     if(m_updateStatement) delete m_updateStatement;
-    if(m_checkSvcClassExistStatement) delete m_checkSvcClassExistStatement;
-    if(m_updateSvcClassStatement) delete m_updateSvcClassStatement;
     if(m_checkFileClassExistStatement) delete m_checkFileClassExistStatement;
     if(m_updateFileClassStatement) delete m_updateFileClassStatement;
     if(m_deleteDiskCopyStatement) delete m_deleteDiskCopyStatement;
     if(m_selectDiskCopyStatement) delete m_selectDiskCopyStatement;
     if(m_remoteUpdateDiskCopyStatement) delete m_remoteUpdateDiskCopyStatement;
-    if(m_deleteTapeCopyStatement) delete m_deleteTapeCopyStatement;
-    if(m_selectTapeCopyStatement) delete m_selectTapeCopyStatement;
-    if(m_remoteUpdateTapeCopyStatement) delete m_remoteUpdateTapeCopyStatement;
+    if(m_deleteRecallJobStatement) delete m_deleteRecallJobStatement;
+    if(m_selectRecallJobStatement) delete m_selectRecallJobStatement;
+    if(m_remoteUpdateRecallJobStatement) delete m_remoteUpdateRecallJobStatement;
   } catch (castor::exception::Exception& ignored) {};
 }
 
@@ -209,17 +196,14 @@ void castor::db::cnv::DbCastorFileCnv::fillRep(castor::IAddress*,
     dynamic_cast<castor::stager::CastorFile*>(object);
   try {
     switch (type) {
-    case castor::OBJ_SvcClass :
-      fillRepSvcClass(obj);
-      break;
     case castor::OBJ_FileClass :
       fillRepFileClass(obj);
       break;
     case castor::OBJ_DiskCopy :
       fillRepDiskCopy(obj);
       break;
-    case castor::OBJ_TapeCopy :
-      fillRepTapeCopy(obj);
+    case castor::OBJ_RecallJob :
+      fillRepRecallJob(obj);
       break;
     default :
       castor::exception::InvalidArgument ex;
@@ -237,38 +221,6 @@ void castor::db::cnv::DbCastorFileCnv::fillRep(castor::IAddress*,
                     << std::endl << e.getMessage().str() << std::endl;
     throw ex;
   }
-}
-
-//------------------------------------------------------------------------------
-// fillRepSvcClass
-//------------------------------------------------------------------------------
-void castor::db::cnv::DbCastorFileCnv::fillRepSvcClass(castor::stager::CastorFile* obj)
-  throw (castor::exception::Exception) {
-  if (0 != obj->svcClass()) {
-    // Check checkSvcClassExist statement
-    if (0 == m_checkSvcClassExistStatement) {
-      m_checkSvcClassExistStatement = createStatement(s_checkSvcClassExistStatementString);
-    }
-    // retrieve the object from the database
-    m_checkSvcClassExistStatement->setUInt64(1, obj->svcClass()->id());
-    castor::db::IDbResultSet *rset = m_checkSvcClassExistStatement->executeQuery();
-    if (!rset->next()) {
-      castor::BaseAddress ad;
-      ad.setCnvSvcName("DbCnvSvc");
-      ad.setCnvSvcType(castor::SVC_DBCNV);
-      cnvSvc()->createRep(&ad, obj->svcClass(), false);
-    }
-    // Close resultset
-    delete rset;
-  }
-  // Check update statement
-  if (0 == m_updateSvcClassStatement) {
-    m_updateSvcClassStatement = createStatement(s_updateSvcClassStatementString);
-  }
-  // Update local object
-  m_updateSvcClassStatement->setUInt64(1, 0 == obj->svcClass() ? 0 : obj->svcClass()->id());
-  m_updateSvcClassStatement->setUInt64(2, obj->id());
-  m_updateSvcClassStatement->execute();
 }
 
 //------------------------------------------------------------------------------
@@ -357,38 +309,38 @@ void castor::db::cnv::DbCastorFileCnv::fillRepDiskCopy(castor::stager::CastorFil
 }
 
 //------------------------------------------------------------------------------
-// fillRepTapeCopy
+// fillRepRecallJob
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbCastorFileCnv::fillRepTapeCopy(castor::stager::CastorFile* obj)
+void castor::db::cnv::DbCastorFileCnv::fillRepRecallJob(castor::stager::CastorFile* obj)
   throw (castor::exception::Exception) {
   // check select statement
-  if (0 == m_selectTapeCopyStatement) {
-    m_selectTapeCopyStatement = createStatement(s_selectTapeCopyStatementString);
+  if (0 == m_selectRecallJobStatement) {
+    m_selectRecallJobStatement = createStatement(s_selectRecallJobStatementString);
   }
   // Get current database data
   std::set<u_signed64> tapeCopiesList;
-  m_selectTapeCopyStatement->setUInt64(1, obj->id());
-  castor::db::IDbResultSet *rset = m_selectTapeCopyStatement->executeQuery();
+  m_selectRecallJobStatement->setUInt64(1, obj->id());
+  castor::db::IDbResultSet *rset = m_selectRecallJobStatement->executeQuery();
   while (rset->next()) {
     tapeCopiesList.insert(rset->getUInt64(1));
   }
   delete rset;
   // update tapeCopies and create new ones
   std::vector<castor::IObject*> toBeCreated;
-  for (std::vector<castor::stager::TapeCopy*>::iterator it = obj->tapeCopies().begin();
+  for (std::vector<castor::stager::RecallJob*>::iterator it = obj->tapeCopies().begin();
        it != obj->tapeCopies().end();
        it++) {
     if (0 == (*it)->id()) {
       toBeCreated.push_back(*it);
     } else {
       // Check remote update statement
-      if (0 == m_remoteUpdateTapeCopyStatement) {
-        m_remoteUpdateTapeCopyStatement = createStatement(s_remoteUpdateTapeCopyStatementString);
+      if (0 == m_remoteUpdateRecallJobStatement) {
+        m_remoteUpdateRecallJobStatement = createStatement(s_remoteUpdateRecallJobStatementString);
       }
       // Update remote object
-      m_remoteUpdateTapeCopyStatement->setUInt64(1, obj->id());
-      m_remoteUpdateTapeCopyStatement->setUInt64(2, (*it)->id());
-      m_remoteUpdateTapeCopyStatement->execute();
+      m_remoteUpdateRecallJobStatement->setUInt64(1, obj->id());
+      m_remoteUpdateRecallJobStatement->setUInt64(2, (*it)->id());
+      m_remoteUpdateRecallJobStatement->execute();
       std::set<u_signed64>::iterator item;
       if ((item = tapeCopiesList.find((*it)->id())) != tapeCopiesList.end()) {
         tapeCopiesList.erase(item);
@@ -401,11 +353,11 @@ void castor::db::cnv::DbCastorFileCnv::fillRepTapeCopy(castor::stager::CastorFil
   for (std::set<u_signed64>::iterator it = tapeCopiesList.begin();
        it != tapeCopiesList.end();
        it++) {
-    if (0 == m_deleteTapeCopyStatement) {
-      m_deleteTapeCopyStatement = createStatement(s_deleteTapeCopyStatementString);
+    if (0 == m_deleteRecallJobStatement) {
+      m_deleteRecallJobStatement = createStatement(s_deleteRecallJobStatementString);
     }
-    m_deleteTapeCopyStatement->setUInt64(1, *it);
-    m_deleteTapeCopyStatement->execute();
+    m_deleteRecallJobStatement->setUInt64(1, *it);
+    m_deleteRecallJobStatement->execute();
   }
 }
 
@@ -420,17 +372,14 @@ void castor::db::cnv::DbCastorFileCnv::fillObj(castor::IAddress*,
   castor::stager::CastorFile* obj = 
     dynamic_cast<castor::stager::CastorFile*>(object);
   switch (type) {
-  case castor::OBJ_SvcClass :
-    fillObjSvcClass(obj);
-    break;
   case castor::OBJ_FileClass :
     fillObjFileClass(obj);
     break;
   case castor::OBJ_DiskCopy :
     fillObjDiskCopy(obj);
     break;
-  case castor::OBJ_TapeCopy :
-    fillObjTapeCopy(obj);
+  case castor::OBJ_RecallJob :
+    fillObjRecallJob(obj);
     break;
   default :
     castor::exception::InvalidArgument ex;
@@ -441,44 +390,6 @@ void castor::db::cnv::DbCastorFileCnv::fillObj(castor::IAddress*,
   }
   if (endTransaction) {
     cnvSvc()->commit();
-  }
-}
-
-//------------------------------------------------------------------------------
-// fillObjSvcClass
-//------------------------------------------------------------------------------
-void castor::db::cnv::DbCastorFileCnv::fillObjSvcClass(castor::stager::CastorFile* obj)
-  throw (castor::exception::Exception) {
-  // Check whether the statement is ok
-  if (0 == m_selectStatement) {
-    m_selectStatement = createStatement(s_selectStatementString);
-  }
-  // retrieve the object from the database
-  m_selectStatement->setUInt64(1, obj->id());
-  castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
-  if (!rset->next()) {
-    castor::exception::NoEntry ex;
-    ex.getMessage() << "No object found for id :" << obj->id();
-    throw ex;
-  }
-  u_signed64 svcClassId = rset->getInt64(9);
-  // Close ResultSet
-  delete rset;
-  // Check whether something should be deleted
-  if (0 != obj->svcClass() &&
-      (0 == svcClassId ||
-       obj->svcClass()->id() != svcClassId)) {
-    obj->setSvcClass(0);
-  }
-  // Update object or create new one
-  if (0 != svcClassId) {
-    if (0 == obj->svcClass()) {
-      obj->setSvcClass
-        (dynamic_cast<castor::stager::SvcClass*>
-         (cnvSvc()->getObjFromId(svcClassId, OBJ_SvcClass)));
-    } else {
-      cnvSvc()->updateObj(obj->svcClass());
-    }
   }
 }
 
@@ -499,7 +410,7 @@ void castor::db::cnv::DbCastorFileCnv::fillObjFileClass(castor::stager::CastorFi
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 fileClassId = rset->getInt64(10);
+  u_signed64 fileClassId = rset->getInt64(9);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -573,26 +484,26 @@ void castor::db::cnv::DbCastorFileCnv::fillObjDiskCopy(castor::stager::CastorFil
 }
 
 //------------------------------------------------------------------------------
-// fillObjTapeCopy
+// fillObjRecallJob
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbCastorFileCnv::fillObjTapeCopy(castor::stager::CastorFile* obj)
+void castor::db::cnv::DbCastorFileCnv::fillObjRecallJob(castor::stager::CastorFile* obj)
   throw (castor::exception::Exception) {
   // Check select statement
-  if (0 == m_selectTapeCopyStatement) {
-    m_selectTapeCopyStatement = createStatement(s_selectTapeCopyStatementString);
+  if (0 == m_selectRecallJobStatement) {
+    m_selectRecallJobStatement = createStatement(s_selectRecallJobStatementString);
   }
   // retrieve the object from the database
   std::vector<u_signed64> tapeCopiesList;
-  m_selectTapeCopyStatement->setUInt64(1, obj->id());
-  castor::db::IDbResultSet *rset = m_selectTapeCopyStatement->executeQuery();
+  m_selectRecallJobStatement->setUInt64(1, obj->id());
+  castor::db::IDbResultSet *rset = m_selectRecallJobStatement->executeQuery();
   while (rset->next()) {
     tapeCopiesList.push_back(rset->getUInt64(1));
   }
   // Close ResultSet
   delete rset;
   // Update objects and mark old ones for deletion
-  std::vector<castor::stager::TapeCopy*> toBeDeleted;
-  for (std::vector<castor::stager::TapeCopy*>::iterator it = obj->tapeCopies().begin();
+  std::vector<castor::stager::RecallJob*> toBeDeleted;
+  for (std::vector<castor::stager::RecallJob*>::iterator it = obj->tapeCopies().begin();
        it != obj->tapeCopies().end();
        it++) {
     std::vector<u_signed64>::iterator item =
@@ -605,7 +516,7 @@ void castor::db::cnv::DbCastorFileCnv::fillObjTapeCopy(castor::stager::CastorFil
     }
   }
   // Delete old objects
-  for (std::vector<castor::stager::TapeCopy*>::iterator it = toBeDeleted.begin();
+  for (std::vector<castor::stager::RecallJob*>::iterator it = toBeDeleted.begin();
        it != toBeDeleted.end();
        it++) {
     obj->removeTapeCopies(*it);
@@ -613,12 +524,12 @@ void castor::db::cnv::DbCastorFileCnv::fillObjTapeCopy(castor::stager::CastorFil
   }
   // Create new objects
   std::vector<castor::IObject*> newTapeCopies =
-    cnvSvc()->getObjsFromIds(tapeCopiesList, OBJ_TapeCopy);
+    cnvSvc()->getObjsFromIds(tapeCopiesList, OBJ_RecallJob);
   for (std::vector<castor::IObject*>::iterator it = newTapeCopies.begin();
        it != newTapeCopies.end();
        it++) {
-    castor::stager::TapeCopy* remoteObj = 
-      dynamic_cast<castor::stager::TapeCopy*>(*it);
+    castor::stager::RecallJob* remoteObj = 
+      dynamic_cast<castor::stager::RecallJob*>(*it);
     obj->addTapeCopies(remoteObj);
     remoteObj->setCastorFile(obj);
   }
@@ -641,7 +552,7 @@ void castor::db::cnv::DbCastorFileCnv::createRep(castor::IAddress*,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(9, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(8, castor::db::DBTYPE_UINT64);
     }
     // Now Save the current object
     m_insertStatement->setUInt64(1, obj->fileId());
@@ -650,10 +561,9 @@ void castor::db::cnv::DbCastorFileCnv::createRep(castor::IAddress*,
     m_insertStatement->setInt(4, time(0));
     m_insertStatement->setString(5, obj->lastKnownFileName());
     m_insertStatement->setUInt64(6, obj->lastUpdateTime());
-    m_insertStatement->setUInt64(7, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
-    m_insertStatement->setUInt64(8, (type == OBJ_FileClass && obj->fileClass() != 0) ? obj->fileClass()->id() : 0);
+    m_insertStatement->setUInt64(7, (type == OBJ_FileClass && obj->fileClass() != 0) ? obj->fileClass()->id() : 0);
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getUInt64(9));
+    obj->setId(m_insertStatement->getUInt64(8));
     if (endTransaction) {
       cnvSvc()->commit();
     }
@@ -676,7 +586,6 @@ void castor::db::cnv::DbCastorFileCnv::createRep(castor::IAddress*,
                     << "  lastKnownFileName : " << obj->lastKnownFileName() << std::endl
                     << "  lastUpdateTime : " << obj->lastUpdateTime() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  svcClass : " << (obj->svcClass() ? obj->svcClass()->id() : 0) << std::endl
                     << "  fileClass : " << (obj->fileClass() ? obj->fileClass()->id() : 0) << std::endl;
     throw ex;
   }
@@ -703,7 +612,7 @@ void castor::db::cnv::DbCastorFileCnv::bulkCreateRep(castor::IAddress*,
     // Check whether the statements are ok
     if (0 == m_bulkInsertStatement) {
       m_bulkInsertStatement = createStatement(s_bulkInsertStatementString);
-      m_bulkInsertStatement->registerOutParam(9, castor::db::DBTYPE_UINT64);
+      m_bulkInsertStatement->registerOutParam(8, castor::db::DBTYPE_UINT64);
     }
     // build the buffers for fileId
     double* fileIdBuffer = (double*) malloc(nb * sizeof(double));
@@ -829,25 +738,6 @@ void castor::db::cnv::DbCastorFileCnv::bulkCreateRep(castor::IAddress*,
     }
     m_bulkInsertStatement->setDataBuffer
       (6, lastUpdateTimeBuffer, castor::db::DBTYPE_UINT64, sizeof(lastUpdateTimeBuffer[0]), lastUpdateTimeBufLens);
-    // build the buffers for svcClass
-    double* svcClassBuffer = (double*) malloc(nb * sizeof(double));
-    if (svcClassBuffer == 0) {
-      castor::exception::OutOfMemory e;
-      throw e;
-    }
-    allocMem.push_back(svcClassBuffer);
-    unsigned short* svcClassBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
-    if (svcClassBufLens == 0) {
-      castor::exception::OutOfMemory e;
-      throw e;
-    }
-    allocMem.push_back(svcClassBufLens);
-    for (int i = 0; i < nb; i++) {
-      svcClassBuffer[i] = (type == OBJ_SvcClass && objs[i]->svcClass() != 0) ? objs[i]->svcClass()->id() : 0;
-      svcClassBufLens[i] = sizeof(double);
-    }
-    m_bulkInsertStatement->setDataBuffer
-      (7, svcClassBuffer, castor::db::DBTYPE_UINT64, sizeof(svcClassBuffer[0]), svcClassBufLens);
     // build the buffers for fileClass
     double* fileClassBuffer = (double*) malloc(nb * sizeof(double));
     if (fileClassBuffer == 0) {
@@ -866,7 +756,7 @@ void castor::db::cnv::DbCastorFileCnv::bulkCreateRep(castor::IAddress*,
       fileClassBufLens[i] = sizeof(double);
     }
     m_bulkInsertStatement->setDataBuffer
-      (8, fileClassBuffer, castor::db::DBTYPE_UINT64, sizeof(fileClassBuffer[0]), fileClassBufLens);
+      (7, fileClassBuffer, castor::db::DBTYPE_UINT64, sizeof(fileClassBuffer[0]), fileClassBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
     if (idBuffer == 0) {
@@ -881,7 +771,7 @@ void castor::db::cnv::DbCastorFileCnv::bulkCreateRep(castor::IAddress*,
     }
     allocMem.push_back(idBufLens);
     m_bulkInsertStatement->setDataBuffer
-      (9, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
+      (8, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
     m_bulkInsertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);
@@ -972,7 +862,7 @@ void castor::db::cnv::DbCastorFileCnv::deleteRep(castor::IAddress*,
     // Now Delete the object
     m_deleteStatement->setUInt64(1, obj->id());
     m_deleteStatement->execute();
-    for (std::vector<castor::stager::TapeCopy*>::iterator it = obj->tapeCopies().begin();
+    for (std::vector<castor::stager::RecallJob*>::iterator it = obj->tapeCopies().begin();
          it != obj->tapeCopies().end();
          it++) {
       cnvSvc()->deleteRep(0, *it, false);

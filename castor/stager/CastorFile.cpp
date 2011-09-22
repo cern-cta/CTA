@@ -29,8 +29,7 @@
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/FileClass.hpp"
-#include "castor/stager/SvcClass.hpp"
-#include "castor/stager/TapeCopy.hpp"
+#include "castor/stager/RecallJob.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -48,7 +47,6 @@ castor::stager::CastorFile::CastorFile() throw() :
   m_lastKnownFileName(""),
   m_lastUpdateTime(0),
   m_id(0),
-  m_svcClass(0),
   m_fileClass(0) {
 }
 
@@ -89,12 +87,6 @@ void castor::stager::CastorFile::print(std::ostream& stream,
   stream << indent << "lastUpdateTime : " << m_lastUpdateTime << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
-  stream << indent << "SvcClass : " << std::endl;
-  if (0 != m_svcClass) {
-    m_svcClass->print(stream, indent + "  ", alreadyPrinted);
-  } else {
-    stream << indent << "  null" << std::endl;
-  }
   stream << indent << "FileClass : " << std::endl;
   if (0 != m_fileClass) {
     m_fileClass->print(stream, indent + "  ", alreadyPrinted);
@@ -115,7 +107,7 @@ void castor::stager::CastorFile::print(std::ostream& stream,
   {
     stream << indent << "TapeCopies : " << std::endl;
     int i;
-    std::vector<TapeCopy*>::const_iterator it;
+    std::vector<RecallJob*>::const_iterator it;
     for (it = m_tapeCopiesVector.begin(), i = 0;
          it != m_tapeCopiesVector.end();
          it++, i++) {

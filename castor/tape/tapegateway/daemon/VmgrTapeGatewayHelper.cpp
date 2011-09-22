@@ -35,20 +35,18 @@
 
 #include "vmgr_api.h"
 #include "castor/Services.hpp"
-#include "castor/stager/TapePool.hpp"
 #include "castor/tape/tapegateway/daemon/VmgrTapeGatewayHelper.hpp"
 #include "castor/stager/TapeTpModeCodes.hpp"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/tape/tapegateway/TapeGatewayDlfMessageConstants.hpp"
 
-
 void castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream(
-    const castor::stager::Stream& streamToResolve,
-    const castor::stager::TapePool& tapepool,
+    const u_signed64 initialSizeToTransfer,
+    const std::string& tapepoolName,
     int& startFseq,castor:: stager::Tape& tapeToUse,
     const utils::BoolFunctor &shuttingDown) throw (castor::exception::Exception){
   // Sanity checks
-  if ( tapepool.name().empty() || streamToResolve.initialSizeToTransfer()==0) {
+  if ( tapepoolName.empty() || initialSizeToTransfer==0) {
     castor::exception::Exception ex(EINVAL);
     ex.getMessage()
     << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream"
@@ -56,7 +54,6 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream(
     throw ex;
   }
   // call to vmgr
-  const char* tpName = tapepool.name().c_str();
   u_signed64 estimatedFreeSpace;
   char vid[ CA_MAXVIDLEN + 1];
   *vid = '\0';
@@ -73,26 +70,26 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream(
   int side=-1;
   
   serrno=0;
-  int rc = vmgr_gettape(tpName, 
-		    streamToResolve.initialSizeToTransfer(),
-		    NULL,
-		    vid,
-		    vsn,
-		    dgn,
-		    density,
-		    label,
-		    model,
-		    &side,
-		    &startFseq,
-		    &estimatedFreeSpace
-		    );
+  int rc = vmgr_gettape(tapepoolName.c_str(), 
+                        initialSizeToTransfer,
+                        NULL,
+                        vid,
+                        vsn,
+                        dgn,
+                        density,
+                        label,
+                        model,
+                        &side,
+                        &startFseq,
+                        &estimatedFreeSpace
+                        );
   if (rc<0) {
     castor::exception::Exception ex(serrno);
     ex.getMessage() <<
       "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream"
       " vmgr_gettape failed"
-      ": poolname='" << tpName << "'"
-      " size=" << streamToResolve.initialSizeToTransfer();
+      ": poolname='" << tapepoolName << "'"
+      " size=" << initialSizeToTransfer;
     throw ex;
   }
   tapeToUse.setVid(vid);

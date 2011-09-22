@@ -40,7 +40,6 @@ namespace castor {
   namespace stager {
 
     // Forward declarations
-    class TapePool;
     class FileClass;
     class DiskPool;
 
@@ -102,28 +101,6 @@ namespace castor {
       /* End of IObject abstract class */
       /*********************************/
       /**
-       * Get the value of m_nbDrives
-       * Number of tape drives to use for this service class.
-       * This is the default number, but it could be that occasionnally more drives are
-       * used, if a resource is shared with another service class using more drives.
-       * @return the value of m_nbDrives
-       */
-      unsigned int nbDrives() const {
-        return m_nbDrives;
-      }
-
-      /**
-       * Set the value of m_nbDrives
-       * Number of tape drives to use for this service class.
-       * This is the default number, but it could be that occasionnally more drives are
-       * used, if a resource is shared with another service class using more drives.
-       * @param new_var the new value of m_nbDrives
-       */
-      void setNbDrives(unsigned int new_var) {
-        m_nbDrives = new_var;
-      }
-
-      /**
        * Get the value of m_name
        * The name of this SvcClass.
        * @return the value of m_name
@@ -184,24 +161,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_migratorPolicy
-       * Policy ruling the migration of files.
-       * @return the value of m_migratorPolicy
-       */
-      std::string migratorPolicy() const {
-        return m_migratorPolicy;
-      }
-
-      /**
-       * Set the value of m_migratorPolicy
-       * Policy ruling the migration of files.
-       * @param new_var the new value of m_migratorPolicy
-       */
-      void setMigratorPolicy(std::string new_var) {
-        m_migratorPolicy = new_var;
-      }
-
-      /**
        * Get the value of m_recallerPolicy
        * Policy ruling the recall of files.
        * @return the value of m_recallerPolicy
@@ -217,24 +176,6 @@ namespace castor {
        */
       void setRecallerPolicy(std::string new_var) {
         m_recallerPolicy = new_var;
-      }
-
-      /**
-       * Get the value of m_streamPolicy
-       * Policy ruling the behavior of the streams to migrate files.
-       * @return the value of m_streamPolicy
-       */
-      std::string streamPolicy() const {
-        return m_streamPolicy;
-      }
-
-      /**
-       * Set the value of m_streamPolicy
-       * Policy ruling the behavior of the streams to migrate files.
-       * @param new_var the new value of m_streamPolicy
-       */
-      void setStreamPolicy(std::string new_var) {
-        m_streamPolicy = new_var;
       }
 
       /**
@@ -318,6 +259,42 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_lastEditor
+       * Name of the last one that modified this service class.
+       * @return the value of m_lastEditor
+       */
+      std::string lastEditor() const {
+        return m_lastEditor;
+      }
+
+      /**
+       * Set the value of m_lastEditor
+       * Name of the last one that modified this service class.
+       * @param new_var the new value of m_lastEditor
+       */
+      void setLastEditor(std::string new_var) {
+        m_lastEditor = new_var;
+      }
+
+      /**
+       * Get the value of m_lastEditionTime
+       * Time of the last modification of this service class.
+       * @return the value of m_lastEditionTime
+       */
+      u_signed64 lastEditionTime() const {
+        return m_lastEditionTime;
+      }
+
+      /**
+       * Set the value of m_lastEditionTime
+       * Time of the last modification of this service class.
+       * @param new_var the new value of m_lastEditionTime
+       */
+      void setLastEditionTime(u_signed64 new_var) {
+        m_lastEditionTime = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -333,35 +310,6 @@ namespace castor {
        */
       void setId(u_signed64 new_var) {
         m_id = new_var;
-      }
-
-      /**
-       * Add a TapePool* object to the m_tapePoolsVector list
-       */
-      void addTapePools(TapePool* add_object) {
-        m_tapePoolsVector.push_back(add_object);
-      }
-
-      /**
-       * Remove a TapePool* object from m_tapePoolsVector
-       */
-      void removeTapePools(TapePool* remove_object) {
-        for (unsigned int i = 0; i < m_tapePoolsVector.size(); i++) {
-          TapePool* item = m_tapePoolsVector[i];
-          if (item == remove_object) {
-            std::vector<TapePool*>::iterator it = m_tapePoolsVector.begin() + i;
-            m_tapePoolsVector.erase(it);
-            return;
-          }
-        }
-      }
-
-      /**
-       * Get the list of TapePool* objects held by m_tapePoolsVector
-       * @return list of TapePool* objects held by m_tapePoolsVector
-       */
-      std::vector<TapePool*>& tapePools() {
-        return m_tapePoolsVector;
       }
 
       /**
@@ -411,12 +359,6 @@ namespace castor {
 
     private:
 
-      /*
-       * Number of tape drives to use for this service class.
-       * This is the default number, but it could be that occasionnally more drives are used, if a resource is shared with another service class using more drives.
-      */
-      unsigned int m_nbDrives;
-
       /// The name of this SvcClass.
       std::string m_name;
 
@@ -426,14 +368,8 @@ namespace castor {
       /// Maximum number of replicas for a file created with this service class. If 0, the replication is ruled by the replication policy. If there is none, then 0 means infinity.
       int m_maxReplicaNb;
 
-      /// Policy ruling the migration of files.
-      std::string m_migratorPolicy;
-
       /// Policy ruling the recall of files.
       std::string m_recallerPolicy;
-
-      /// Policy ruling the behavior of the streams to migrate files.
-      std::string m_streamPolicy;
 
       /// Policy ruling the behavior of the garbage collector, when enabled.
       std::string m_gcPolicy;
@@ -447,10 +383,14 @@ namespace castor {
       /// Flag to indicate whether jobs that require new space on disk shall be failed when the diskpools under this service class have run out of space. This flag is enabled by default, if disabled jobs are left pending in the scheduler.
       bool m_failJobsWhenNoSpace;
 
+      /// Name of the last one that modified this service class.
+      std::string m_lastEditor;
+
+      /// Time of the last modification of this service class.
+      u_signed64 m_lastEditionTime;
+
       /// The id of this object
       u_signed64 m_id;
-
-      std::vector<TapePool*> m_tapePoolsVector;
 
       std::vector<DiskPool*> m_diskPoolsVector;
 

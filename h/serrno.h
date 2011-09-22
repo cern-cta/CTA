@@ -288,7 +288,8 @@
 #define ESTTAPEOFFLINE  ESTBASEOFF+24   /* File is on an offline tape */
 #define ESTREQCANCELED  ESTBASEOFF+25   /* Request canceled while queuing */
 #define ESTTCNOTFOUND   ESTBASEOFF+26   /* Tape-copy not found */
-#define ESTMAXERR       ESTBASEOFF+26
+#define ESTNOTAPEROUTE  ESTBASEOFF+27   /* The file cannot be routed to tape */
+#define ESTMAXERR       ESTBASEOFF+27
 
 /*
  *------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #/******************************************************************************
-# *                      printSvcClass
+# *                      printsvcclass
 # *
 # * This file is part of the Castor project.
 # * See http://castor.web.cern.ch/castor
@@ -24,120 +24,109 @@
 '''command line printing the given service class(es)'''
 
 import sys
-import getopt
+import getopt, time
 import castor_tools
 
 # usage function
 def usage(exitCode):
     '''prints usage'''
-    print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-a|--all] [SvcClassName[:...]]'
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] <SvcClassName> [...]'
     sys.exit(exitCode)
+
+def secsToDate(s):
+    '''converts number of seconds since the epoch into readable date'''
+    return time.strftime('%d-%b-%Y %H:%M:%S', time.localtime(s))
+
+def nbToDataAmount(n):
+    '''converts a number into a readable amount of data'''
+    ext = ['', 'KiB', 'MiB', 'GiB', 'TiB']
+    magn = 0
+    while n / 1024 > 5:
+        magn += 1
+        n = n / 1024
+    return str(n) + ext[magn]
 
 # first parse the options
 try:
-    options, args = getopt.getopt(sys.argv[1:], 'hva', ['help', 'all', 'verbose'])
+    options, args = getopt.getopt(sys.argv[1:], 'hv', ['help', 'verbose'])
 except Exception, e:
     print e
     usage(1)
 verbose = False
-displayAll = False
 for f, v in options:
     if f == '-h' or f == '--help':
         usage(0)
     elif f == '-v' or f == '--verbose':
         verbose = True
-    elif f == '-a' or f == '--all':
-        displayAll = True
     else:
         print "unknown option : " + f
         usage(1)
 
 # Deal with arguments
-fileClasses = set([])
+fileClasses = None
 if len(args) != 0:
-    if displayAll:
-        print "No argument should be given when -a/--all is used"
-        usage(1)
-    else:
-        fileClasses = set(args[0].split(':'))
-else:
-    if not displayAll:
-        print "Missing arguments"
-        usage(1)
+    fileClasses = set(args)
 
 try:
     # connect to stager and prepare statements
     stconn = castor_tools.connectToStager()
     stcur = stconn.cursor()
     sqlstatement = '''
-    SELECT SvcClass.name, defaultfilesize, nbDrives, failjobswhennospace, streamPolicy, gcPolicy, maxReplicaNb, FileClass.name, replicateonclose, migratorPolicy, recallerPolicy, disk1behavior, SvcClass.id, DiskPools.names, TapePools.names
+    SELECT SvcClass.name, SvcClass.defaultfilesize, SvcClass.failjobswhennospace, SvcClass.gcPolicy,
+           SvcClass.maxReplicaNb, FileClass.name, SvcClass.replicateonclose, SvcClass.recallerPolicy,
+           SvcClass.disk1behavior, SvcClass.id, DiskPools.names, SvcClass.lastEditor, SvcClass.lastEditionTime
       FROM SvcClass, FileClass,
            (SELECT DiskPool2SvcClass.child AS svcClassId, collect(DiskPool.name) AS names
               FROM DiskPool2SvcClass, DiskPool
              WHERE DiskPool.id = DiskPool2SvcClass.parent
-             GROUP BY child) DiskPools,
-           (SELECT SvcClass2TapePool.parent AS svcClassId, collect(TapePool.name) AS names
-              FROM SvcClass2TapePool, TapePool
-             WHERE TapePool.id = SvcClass2TapePool.child
-             GROUP BY parent) TapePools
+             GROUP BY child) DiskPools
      WHERE SvcClass.id = DiskPools.svcClassId(+)
-       AND SvcClass.id = TapePools.svcClassId(+)
        AND SvcClass.forcedFileClass = FileClass.id(+)'''
-    if not displayAll:
-        sqlstatement = sqlstatement + "AND SvcClass.name IN ('" + "', '".join(fileClasses) + "')"
+    if fileClasses:
+        sqlstatement = sqlstatement + " AND SvcClass.name IN ('" + "', '".join(fileClasses) + "')"
     # get results
     stcur.execute(sqlstatement)
     rows = stcur.fetchall()
     existingSvcClasses = set([row[0] for row in rows])
-    unknownSvcClasses = fileClasses - existingSvcClasses
+    if fileClasses:
+        unknownSvcClasses = fileClasses - existingSvcClasses
     # loop over svcclasses and print them
     if existingSvcClasses:
         maxNameLen = max([4]+[len(row[0]) for row in rows if row[0]])
-        maxFileClassNameLen = max([15]+[len(row[7]) for row in rows if row[7]])
-        maxStreamPolicyLen = max([12]+[len(row[4]) for row in rows if row[4]])
-        maxGcPolicyLen = max([8]+[len(row[5]) for row in rows if row[5]])
-        maxMigratorPolicyLen = max([14]+[len(row[9]) for row in rows if row[9]])
-        maxRecallPolicyLen = max([14]+[len(row[10]) for row in rows if row[10]])
-        maxIdLen = max([2] + [len(str(row[12])) for row in rows])
-        maxDiskPoolsLen = max([9]+[len(','.join(row[13])) for row in rows if row[13]])
-        maxTapePoolsLen = max([9]+[len(','.join(row[14])) for row in rows if row[14]])
-        print '%*s DEFAULTFILESIZE NBDRIVES FAILJOBSWHENNOSPACE MAXREPLICANB %*s REPLICATEONCLOSE DISK1BEHAVIOR %*s %*s %*s %*s %*s %*s %*s' % \
+        maxFileClassNameLen = max([15]+[len(row[5]) for row in rows if row[5]])
+        maxGcPolicyLen = max([8]+[len(row[3]) for row in rows if row[3]])
+        maxRecallPolicyLen = max([14]+[len(row[7]) for row in rows if row[7]])
+        maxIdLen = max([2] + [len(str(row[9])) for row in rows])
+        maxDiskPoolsLen = max([9]+[len(','.join(row[10])) for row in rows if row[10]])
+        maxLastEditorLen = max([10] + [len(row[11]) for row in rows])
+        maxLastEditionTimeLen = max([11] + [len(secsToDate(row[12])) for row in rows])
+        print '%*s DEFAULTFILESIZE FAILJOBSWHENNOSPACE MAXREPLICANB %*s REPLICATEONCLOSE DISK1BEHAVIOR %*s %*s %*s %*s %*s %*s' % \
               (maxNameLen, 'NAME', maxFileClassNameLen, 'FORCEDFILECLASS', \
-               maxStreamPolicyLen, 'STREAMPOLICY', maxGcPolicyLen, 'GCPOLICY', \
-               maxMigratorPolicyLen, 'MIGRATORPOLICY', maxRecallPolicyLen, 'RECALLERPOLICY', \
-               maxDiskPoolsLen, 'DISKPOOLS', maxTapePoolsLen, 'TAPEPOOLS', maxIdLen, 'ID')
-        print '-' * (97 + maxNameLen + maxFileClassNameLen + maxStreamPolicyLen + \
-                     maxGcPolicyLen + maxMigratorPolicyLen + maxRecallPolicyLen + \
-                     maxDiskPoolsLen + maxTapePoolsLen + maxIdLen)
-        for name, defaultfilesize, nbDrives, failjobswhennospace, streamPolicy, gcPolicy, \
-            maxReplicaNb, forcedFileClass, replicateonclose, migratorPolicy, recallerPolicy, \
-            disk1behavior, scId, diskPools, tapePools in rows:
+               maxGcPolicyLen, 'GCPOLICY', maxRecallPolicyLen, 'RECALLERPOLICY', \
+               maxDiskPoolsLen, 'DISKPOOLS', maxIdLen, 'ID', maxLastEditorLen, 'LASTEDITOR', \
+               maxLastEditionTimeLen, 'LASTEDITION')
+        print '-' * (87 + maxNameLen + maxFileClassNameLen + maxGcPolicyLen + maxRecallPolicyLen + \
+                     maxDiskPoolsLen + maxIdLen + maxLastEditorLen + maxLastEditionTimeLen)
+        for name, defaultfilesize, failjobswhennospace, gcPolicy, maxReplicaNb, forcedFileClass, \
+            replicateonclose, recallerPolicy, disk1behavior, scId, diskPools, lastEditor, lastEdition in rows:
             if not forcedFileClass:
                 forcedFileClass = '-'
-            if not streamPolicy:
-                streamPolicy = '-'
             if not gcPolicy:
                 gcPolicy = '-'
-            if not migratorPolicy:
-                migratorPolicy = '-'
             if not recallerPolicy:
                 recallerPolicy = '-'
             if diskPools:
               diskPoolsStr = ','.join(diskPools)
             else:
               diskPoolsStr = '-'
-            if tapePools:
-              tapePoolsStr = ','.join(tapePools)
-            else:
-              tapePoolsStr = '-'
-            print '%*s %15d %8d %19s %12d %*s %16s %13s %*s %*s %*s %*s %*s %*s %*d' % \
-                  (maxNameLen, name, defaultfilesize, nbDrives, bool(failjobswhennospace), \
+            print '%*s %15s %19s %12d %*s %16s %13s %*s %*s %*s %*d %*s %*s' % \
+                  (maxNameLen, name, nbToDataAmount(defaultfilesize), bool(failjobswhennospace), \
                    maxReplicaNb, maxFileClassNameLen, forcedFileClass, bool(replicateonclose), \
-                   bool(disk1behavior), maxStreamPolicyLen, streamPolicy, maxGcPolicyLen, gcPolicy, \
-                   maxMigratorPolicyLen, migratorPolicy, maxRecallPolicyLen, recallerPolicy, \
-                   maxDiskPoolsLen, diskPoolsStr, maxTapePoolsLen, tapePoolsStr, maxIdLen, scId)
+                   bool(disk1behavior), maxGcPolicyLen, gcPolicy, maxRecallPolicyLen, recallerPolicy, \
+                   maxDiskPoolsLen, diskPoolsStr, maxIdLen, scId, maxLastEditorLen, lastEditor, \
+                   maxLastEditionTimeLen, secsToDate(lastEdition))
     # check unknown svcclasses
-    if unknownSvcClasses:
+    if fileClasses and unknownSvcClasses:
         print 'WARNING : the following service classes do not exist : ' + ', '.join(unknownSvcClasses)
     # close DB connections
     try:

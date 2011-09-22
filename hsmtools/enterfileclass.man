@@ -64,6 +64,7 @@ Configuration for the database accesses is taken from castor.conf.
 .BR entersvcclass,
 .BR enterdiskpool,
 .BR entertapepool,
+.BR entermigrationroute,
 .BR adminMultiInstance
 
 .SH AUTHOR

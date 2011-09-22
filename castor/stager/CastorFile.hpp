@@ -40,8 +40,7 @@ namespace castor {
   namespace stager {
 
     // Forward declarations
-    class TapeCopy;
-    class SvcClass;
+    class RecallJob;
     class FileClass;
     class DiskCopy;
 
@@ -249,22 +248,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_svcClass
-       * @return the value of m_svcClass
-       */
-      SvcClass* svcClass() const {
-        return m_svcClass;
-      }
-
-      /**
-       * Set the value of m_svcClass
-       * @param new_var the new value of m_svcClass
-       */
-      void setSvcClass(SvcClass* new_var) {
-        m_svcClass = new_var;
-      }
-
-      /**
        * Get the value of m_fileClass
        * @return the value of m_fileClass
        */
@@ -310,20 +293,20 @@ namespace castor {
       }
 
       /**
-       * Add a TapeCopy* object to the m_tapeCopiesVector list
+       * Add a RecallJob* object to the m_tapeCopiesVector list
        */
-      void addTapeCopies(TapeCopy* add_object) {
+      void addTapeCopies(RecallJob* add_object) {
         m_tapeCopiesVector.push_back(add_object);
       }
 
       /**
-       * Remove a TapeCopy* object from m_tapeCopiesVector
+       * Remove a RecallJob* object from m_tapeCopiesVector
        */
-      void removeTapeCopies(TapeCopy* remove_object) {
+      void removeTapeCopies(RecallJob* remove_object) {
         for (unsigned int i = 0; i < m_tapeCopiesVector.size(); i++) {
-          TapeCopy* item = m_tapeCopiesVector[i];
+          RecallJob* item = m_tapeCopiesVector[i];
           if (item == remove_object) {
-            std::vector<TapeCopy*>::iterator it = m_tapeCopiesVector.begin() + i;
+            std::vector<RecallJob*>::iterator it = m_tapeCopiesVector.begin() + i;
             m_tapeCopiesVector.erase(it);
             return;
           }
@@ -331,10 +314,10 @@ namespace castor {
       }
 
       /**
-       * Get the list of TapeCopy* objects held by m_tapeCopiesVector
-       * @return list of TapeCopy* objects held by m_tapeCopiesVector
+       * Get the list of RecallJob* objects held by m_tapeCopiesVector
+       * @return list of RecallJob* objects held by m_tapeCopiesVector
        */
-      std::vector<TapeCopy*>& tapeCopies() {
+      std::vector<RecallJob*>& tapeCopies() {
         return m_tapeCopiesVector;
       }
 
@@ -366,13 +349,11 @@ namespace castor {
       /// The id of this object
       u_signed64 m_id;
 
-      SvcClass* m_svcClass;
-
       FileClass* m_fileClass;
 
       std::vector<DiskCopy*> m_diskCopiesVector;
 
-      std::vector<TapeCopy*> m_tapeCopiesVector;
+      std::vector<RecallJob*> m_tapeCopiesVector;
 
     }; /* end of class CastorFile */
 

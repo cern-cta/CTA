@@ -23,31 +23,91 @@
 
 '''allows to modify an existing tape pool in the castor stager'''
 
-import sys
+import sys, re, os, pwd
 import getopt
 import castor_tools
 
 # usage function
 def usage(exitCode):
     '''prints usage'''
-    print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-m|--migrselectpolicy <migrSelectPolicyName>] <tapePoolName>'
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] [--nbdrives <nbDrives>] ' + \
+          '[--minamountdata <minAmountDataForAMount>] [--minnbfiles <minNbFilesForAMount>] ' + \
+          '[--maxfileage <maxFileAgeBeforeForcedMount>] <tapePoolName>'
     sys.exit(exitCode)
+
+def parsePositiveInt(name, svalue):
+    '''parses a positive int value and exits with proper error message in case the value does not fit'''
+    try:
+        value = int(svalue)
+        if value < 0:
+            raise ValueError
+        return value
+    except ValueError:
+        print 'Invalid %s %s' % (name, svalue)
+        usage(1)
+
+def parseDataAmount(name, svalue):
+    '''parses a value describing an amount of data. Exits with proper error message in case the value does not fit'''
+    try:
+        exts = {'K' : 1000, 'M' : 1000*1000, 'G' : 1000*1000*1000, 'T' : 1000*1000*1000*1000,
+                'Ki' : 1024, 'Mi' : 1024*1024, 'Gi' : 1024*1024*1024, 'Ti' : 1024*1024*1024*1024}
+        regexp = re.compile('^(?P<nb>\d+)(?P<ext>(?:[KMGT]i)?)B?$')
+        m = regexp.match(svalue)
+        if not m:
+            raise ValueError
+        value = int(m.group('nb'))
+        if m.group('ext'):
+            value *= exts[m.group('ext')]
+        return value
+    except ValueError:
+        print 'Invalid %s %s' % (name, svalue)
+        usage(1)
+
+def parseTimeDuration(name, svalue):
+    '''parses a value describing a time duration. Exits with proper error message in case the value does not fit'''
+    try:
+        # check validity
+        if not re.compile('^(\d+(s|mn?|h|d)?)+$').match(svalue):
+            raise ValueError
+        # parse
+        exts = {'s' : 1, 'm' : 60, 'mn' : 60, 'h' : 3600, 'd' : 86400}
+        regexp = re.compile('(\d+)(s|mn?|h|d)?')
+        value = 0
+        for nb, ext in regexp.findall(svalue):
+            partvalue = int(nb)
+            if ext:
+                partvalue *= exts[ext]
+            value += partvalue
+        return value
+    except ValueError:
+        print 'Invalid %s %s' % (name, svalue)
+        usage(1)
 
 # first parse the options
 try:
-    options, args = getopt.getopt(sys.argv[1:], 'hvm:', ['help', 'verbose', 'migrselectpolicy='])
+    options, args = getopt.getopt(sys.argv[1:], 'hvm:', ['help', 'verbose', 'nbdrives=', 'minamountdata=',
+                                                       'minnbfiles=', 'maxfileage='])
 except Exception, e:
     print e
     usage(1)
 verbose = False
-migrselectpolicy = None
+nbdrives = None
+minamountdata = None
+minnbfiles = None
+maxfileage = None
 for f, v in options:
     if f == '-h' or f == '--help':
         usage(0)
     elif f == '-v' or f == '--verbose':
         verbose = True
-    elif f == '-m' or f == '--migrselectpolicy':
-        migrselectpolicy = v
+    elif f == '--nbdrives':
+        nbdrives = parsePositiveInt('nbdrives', v)
+    elif f == '--minamountdata':
+        minamountdata = parseDataAmount('minamountdata', v)
+    elif f == '--minnbfiles':
+        minnbfiles = parsePositiveInt('minnbfiles', v)
+    elif f == '--maxfileage':
+        maxfileage = parseTimeDuration('maxfileage', v)
     else:
         print "unknown option : " + f
         usage(1)
@@ -63,7 +123,7 @@ else:
     tapepoolname = args[0]
 
 # check we have something to do
-if not migrselectpolicy:
+if not nbdrives and not minamountdata and not minnbfiles and not maxfileage:
     print 'Nothing to modify. Did you forget some argument ?'
     usage(1)
 
@@ -80,8 +140,18 @@ try:
         sys.exit(1)
     tapePoolId = rows[0][0]
     # deal with the update
-    if migrselectpolicy:
-        stcur.execute('UPDATE TapePool SET migrselectpolicy=:value WHERE id = :tapePoolId', value=migrselectpolicy, tapePoolId=tapePoolId)
+    if nbdrives:
+        stcur.execute('UPDATE TapePool SET nbDrives=:value WHERE id = :tapePoolId', value=nbdrives, tapePoolId=tapePoolId)
+    if minamountdata:
+        stcur.execute('UPDATE TapePool SET minAmountdataForMount=:value WHERE id = :tapePoolId', value=minamountdata, tapePoolId=tapePoolId)
+    if minnbfiles:
+        stcur.execute('UPDATE TapePool SET minNbFilesForMount=:value WHERE id = :tapePoolId', value=minnbfiles, tapePoolId=tapePoolId)
+    if maxfileage:
+        stcur.execute('UPDATE TapePool SET maxFileAgeBeforeMount=:value WHERE id = :tapePoolId', value=maxfileage, tapePoolId=tapePoolId)
+    # in all cases, update the lastEditor and lastEditionTime
+    lasteditor = pwd.getpwuid(os.getuid())[0]
+    stcur.execute('UPDATE TapePool SET lastEditor=:lasteditor, lastEditionTime=gettime() WHERE id = :tapePoolId', lasteditor=lasteditor, tapePoolId=tapePoolId)
+    # commit insertion and tell user
     stconn.commit()
     print 'modified tape pool %s successfully' % tapepoolname
     # close DB connections

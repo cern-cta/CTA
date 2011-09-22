@@ -12,6 +12,10 @@
 %attr(0755,root,root) usr/bin/modifytapepool
 %attr(0755,root,root) usr/bin/deletetapepool
 %attr(0755,root,root) usr/bin/printtapepool
+%attr(0755,root,root) usr/bin/entermigrationroute
+%attr(0755,root,root) usr/bin/modifymigrationroute
+%attr(0755,root,root) usr/bin/deletemigrationroute
+%attr(0755,root,root) usr/bin/printmigrationroute
 %attr(0755,root,root) usr/bin/cleanLostFiles
 %attr(0755,root,root) usr/bin/diskServer_qry
 %attr(0755,root,root) usr/bin/draindiskserver

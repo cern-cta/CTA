@@ -49,19 +49,16 @@ namespace castor {
     class Stream;
     class Request;
     class Segment;
-    class TapeCopy;
     class DiskCopy;
     class DiskCopyInfo;
     class DiskPool;
     class SvcClass;
     class FileClass;
-    class TapePool;
     class FileSystem;
     class DiskServer;
     class SubRequest;
     class CastorFile;
     class GCLocalFile;
-    class TapeCopyForMigration;
     class DiskCopyForRecall;
 
     /**
@@ -222,7 +219,7 @@ namespace castor {
        * but only updates its size in DB and name server.
        * Otherwise (stagePut with no prepare and putDone),
        * it also updates the filesystem free space and creates
-       * the needed TapeCopies according to the FileClass of the
+       * the needed MigrationJobs according to the FileClass of the
        * castorFile.
        * @param subReqId The id of the SubRequest to prepare
        * @param fileSize The actual size of the castor file

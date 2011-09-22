@@ -55,18 +55,15 @@ namespace castor {
     class Stream;
     class Request;
     class Segment;
-    class TapeCopy;
     class DiskCopy;
     class DiskPool;
     class SvcClass;
     class FileClass;
-    class TapePool;
     class FileSystem;
     class DiskServer;
     class SubRequest;
     class CastorFile;
     class GCLocalFile;
-    class TapeCopyForMigration;
     class DiskCopyForRecall;
     class PriorityMap;
     class BulkRequestResult;
@@ -265,7 +262,7 @@ namespace castor {
        * In all others cases, the method first
        * checks whether the recreation is possible.
        * A recreation is considered to be possible if
-       * no TapeCopy of the given file is in TAPECOPY_SELECTED
+       * no MigrationJob of the given file is in MIGRATIONJOB_SELECTED
        * status and no DiskCopy of the file is in either
        * WAITFS, WAITFS_SCHEDULING, WAITTAPERECALL or
        * WAITDISK2DISKCOPY status. When recreation is not
@@ -301,20 +298,6 @@ namespace castor {
        */
       virtual void archiveSubReq(u_signed64 subReqId,
         castor::stager::SubRequestStatusCodes finalStatus)
-        throw (castor::exception::Exception) = 0;
-
-      /**
-       * Implements a single file stageRelease.
-       * It throws a Busy exception in case the file is
-       * used by any request or is waiting for migration.
-       * Otherwise, it marks all the copies of the file
-       * as candidate for the garbage collection.
-       * @param fileId the fileId of the CastorFile
-       * @param nsHost the name server to use
-       * @exception in case of error or if the file is busy
-       */
-      virtual void stageRelease
-      (const u_signed64 fileId, const std::string nsHost)
         throw (castor::exception::Exception) = 0;
 
       /**
@@ -374,7 +357,7 @@ namespace castor {
         throw (castor::exception::Exception) = 0;
 
       /**
-       * Creates a candidate for a recall. This includes TapeCopy with
+       * Creates a candidate for a recall. This includes RecallJob with
        * its Segment(s), a DiskCopy and a SubRequest in WAITTAPERECALL.
        * @param subreq the subreq of the file to recall
        * @param svcClass svc class for recall policy
@@ -396,30 +379,6 @@ namespace castor {
      (castor::stager::SubRequest* subreq,
       castor::stager::SvcClass* svcClass,
       castor::stager::Tape* &tape)
-        throw (castor::exception::Exception) = 0;
-
-      /**
-       * Retrieves a DiskPool from the database based on name.
-       * Caller is in charge of the deletion of the allocated
-       * memory.
-       * @param name the name of the disk pool
-       * @return the DiskPool object or 0 if none found
-       * @exception Exception in case of error
-       */
-      virtual castor::stager::DiskPool* selectDiskPool
-      (const std::string name)
-        throw (castor::exception::Exception) = 0;
-
-      /**
-       * Retrieves a TapePool from the database based on name.
-       * Caller is in charge of the deletion of the allocated
-       * memory.
-       * @param name the name of the tape pool
-       * @return the TapePool object or 0 if none found
-       * @exception Exception in case of error
-       */
-      virtual castor::stager::TapePool* selectTapePool
-      (const std::string name)
         throw (castor::exception::Exception) = 0;
 
       /**

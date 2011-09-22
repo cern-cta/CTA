@@ -37,10 +37,10 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/exception/OutOfMemory.hpp"
+#include "castor/stager/RecallJob.hpp"
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/SegmentStatusCodes.hpp"
 #include "castor/stager/Tape.hpp"
-#include "castor/stager/TapeCopy.hpp"
 #include <stdlib.h>
 #include <vector>
 
@@ -93,11 +93,11 @@ const std::string castor::db::cnv::DbSegmentCnv::s_updateStatementString =
 "UPDATE Segment SET fseq = :1, offset = :2, bytes_in = :3, bytes_out = :4, host_bytes = :5, segmCksumAlgorithm = :6, segmCksum = :7, errMsgTxt = :8, errorCode = :9, severity = :10, blockId0 = :11, blockId1 = :12, blockId2 = :13, blockId3 = :14, priority = :15, status = :16 WHERE id = :17";
 
 /// SQL existence statement for member copy
-const std::string castor::db::cnv::DbSegmentCnv::s_checkTapeCopyExistStatementString =
-"SELECT id FROM TapeCopy WHERE id = :1";
+const std::string castor::db::cnv::DbSegmentCnv::s_checkRecallJobExistStatementString =
+"SELECT id FROM RecallJob WHERE id = :1";
 
 /// SQL update statement for member copy
-const std::string castor::db::cnv::DbSegmentCnv::s_updateTapeCopyStatementString =
+const std::string castor::db::cnv::DbSegmentCnv::s_updateRecallJobStatementString =
 "UPDATE Segment SET copy = :1 WHERE id = :2";
 
 /// SQL existence statement for member tape
@@ -119,8 +119,8 @@ castor::db::cnv::DbSegmentCnv::DbSegmentCnv(castor::ICnvSvc* cnvSvc) :
   m_selectStatement(0),
   m_bulkSelectStatement(0),
   m_updateStatement(0),
-  m_checkTapeCopyExistStatement(0),
-  m_updateTapeCopyStatement(0),
+  m_checkRecallJobExistStatement(0),
+  m_updateRecallJobStatement(0),
   m_checkTapeExistStatement(0),
   m_updateTapeStatement(0) {}
 
@@ -137,8 +137,8 @@ castor::db::cnv::DbSegmentCnv::~DbSegmentCnv() throw() {
     if(m_selectStatement) delete m_selectStatement;
     if(m_bulkSelectStatement) delete m_bulkSelectStatement;
     if(m_updateStatement) delete m_updateStatement;
-    if(m_checkTapeCopyExistStatement) delete m_checkTapeCopyExistStatement;
-    if(m_updateTapeCopyStatement) delete m_updateTapeCopyStatement;
+    if(m_checkRecallJobExistStatement) delete m_checkRecallJobExistStatement;
+    if(m_updateRecallJobStatement) delete m_updateRecallJobStatement;
     if(m_checkTapeExistStatement) delete m_checkTapeExistStatement;
     if(m_updateTapeStatement) delete m_updateTapeStatement;
   } catch (castor::exception::Exception& ignored) {};
@@ -170,8 +170,8 @@ void castor::db::cnv::DbSegmentCnv::fillRep(castor::IAddress*,
     dynamic_cast<castor::stager::Segment*>(object);
   try {
     switch (type) {
-    case castor::OBJ_TapeCopy :
-      fillRepTapeCopy(obj);
+    case castor::OBJ_RecallJob :
+      fillRepRecallJob(obj);
       break;
     case castor::OBJ_Tape :
       fillRepTape(obj);
@@ -195,18 +195,18 @@ void castor::db::cnv::DbSegmentCnv::fillRep(castor::IAddress*,
 }
 
 //------------------------------------------------------------------------------
-// fillRepTapeCopy
+// fillRepRecallJob
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbSegmentCnv::fillRepTapeCopy(castor::stager::Segment* obj)
+void castor::db::cnv::DbSegmentCnv::fillRepRecallJob(castor::stager::Segment* obj)
   throw (castor::exception::Exception) {
   if (0 != obj->copy()) {
-    // Check checkTapeCopyExist statement
-    if (0 == m_checkTapeCopyExistStatement) {
-      m_checkTapeCopyExistStatement = createStatement(s_checkTapeCopyExistStatementString);
+    // Check checkRecallJobExist statement
+    if (0 == m_checkRecallJobExistStatement) {
+      m_checkRecallJobExistStatement = createStatement(s_checkRecallJobExistStatementString);
     }
     // retrieve the object from the database
-    m_checkTapeCopyExistStatement->setUInt64(1, obj->copy()->id());
-    castor::db::IDbResultSet *rset = m_checkTapeCopyExistStatement->executeQuery();
+    m_checkRecallJobExistStatement->setUInt64(1, obj->copy()->id());
+    castor::db::IDbResultSet *rset = m_checkRecallJobExistStatement->executeQuery();
     if (!rset->next()) {
       castor::BaseAddress ad;
       ad.setCnvSvcName("DbCnvSvc");
@@ -217,13 +217,13 @@ void castor::db::cnv::DbSegmentCnv::fillRepTapeCopy(castor::stager::Segment* obj
     delete rset;
   }
   // Check update statement
-  if (0 == m_updateTapeCopyStatement) {
-    m_updateTapeCopyStatement = createStatement(s_updateTapeCopyStatementString);
+  if (0 == m_updateRecallJobStatement) {
+    m_updateRecallJobStatement = createStatement(s_updateRecallJobStatementString);
   }
   // Update local object
-  m_updateTapeCopyStatement->setUInt64(1, 0 == obj->copy() ? 0 : obj->copy()->id());
-  m_updateTapeCopyStatement->setUInt64(2, obj->id());
-  m_updateTapeCopyStatement->execute();
+  m_updateRecallJobStatement->setUInt64(1, 0 == obj->copy() ? 0 : obj->copy()->id());
+  m_updateRecallJobStatement->setUInt64(2, obj->id());
+  m_updateRecallJobStatement->execute();
 }
 
 //------------------------------------------------------------------------------
@@ -269,8 +269,8 @@ void castor::db::cnv::DbSegmentCnv::fillObj(castor::IAddress*,
   castor::stager::Segment* obj = 
     dynamic_cast<castor::stager::Segment*>(object);
   switch (type) {
-  case castor::OBJ_TapeCopy :
-    fillObjTapeCopy(obj);
+  case castor::OBJ_RecallJob :
+    fillObjRecallJob(obj);
     break;
   case castor::OBJ_Tape :
     fillObjTape(obj);
@@ -288,9 +288,9 @@ void castor::db::cnv::DbSegmentCnv::fillObj(castor::IAddress*,
 }
 
 //------------------------------------------------------------------------------
-// fillObjTapeCopy
+// fillObjRecallJob
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbSegmentCnv::fillObjTapeCopy(castor::stager::Segment* obj)
+void castor::db::cnv::DbSegmentCnv::fillObjRecallJob(castor::stager::Segment* obj)
   throw (castor::exception::Exception) {
   // Check whether the statement is ok
   if (0 == m_selectStatement) {
@@ -318,8 +318,8 @@ void castor::db::cnv::DbSegmentCnv::fillObjTapeCopy(castor::stager::Segment* obj
   if (0 != copyId) {
     if (0 == obj->copy()) {
       obj->setCopy
-        (dynamic_cast<castor::stager::TapeCopy*>
-         (cnvSvc()->getObjFromId(copyId, OBJ_TapeCopy)));
+        (dynamic_cast<castor::stager::RecallJob*>
+         (cnvSvc()->getObjFromId(copyId, OBJ_RecallJob)));
     } else {
       cnvSvc()->updateObj(obj->copy());
     }
@@ -403,7 +403,7 @@ void castor::db::cnv::DbSegmentCnv::createRep(castor::IAddress*,
     m_insertStatement->setInt(14, obj->blockId3());
     m_insertStatement->setInt(15, time(0));
     m_insertStatement->setUInt64(16, obj->priority());
-    m_insertStatement->setUInt64(17, (type == OBJ_TapeCopy && obj->copy() != 0) ? obj->copy()->id() : 0);
+    m_insertStatement->setUInt64(17, (type == OBJ_RecallJob && obj->copy() != 0) ? obj->copy()->id() : 0);
     m_insertStatement->setInt(18, (int)obj->status());
     m_insertStatement->setUInt64(19, (type == OBJ_Tape && obj->tape() != 0) ? obj->tape()->id() : 0);
     m_insertStatement->execute();
@@ -797,7 +797,7 @@ void castor::db::cnv::DbSegmentCnv::bulkCreateRep(castor::IAddress*,
     }
     allocMem.push_back(copyBufLens);
     for (int i = 0; i < nb; i++) {
-      copyBuffer[i] = (type == OBJ_TapeCopy && objs[i]->copy() != 0) ? objs[i]->copy()->id() : 0;
+      copyBuffer[i] = (type == OBJ_RecallJob && objs[i]->copy() != 0) ? objs[i]->copy()->id() : 0;
       copyBufLens[i] = sizeof(double);
     }
     m_bulkInsertStatement->setDataBuffer

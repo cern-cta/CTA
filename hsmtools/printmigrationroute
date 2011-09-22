@@ -1,0 +1,154 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                      printmigrationroute
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+
+'''command line printing the given migration route(s)'''
+
+import sys
+import getopt, time
+import castor_tools
+
+# usage function
+def usage(exitCode):
+    '''prints usage'''
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-s|-S|--serviceclass <svcClassName>] ' + \
+          '[-f|--fileclass <fileClassName] [-t|--tapepool <tapePoolName>]'
+    sys.exit(exitCode)
+
+def secsToDate(s):
+    '''converts number of seconds since the epoch into readable date'''
+    return time.strftime('%d-%b-%Y %H:%M:%S', time.localtime(s))
+
+def intToBool(b):
+    '''converts a boolean given as an int into a string, taking into account null values'''
+    if b == None:
+        return '-'
+    else:
+        return str(bool(b))
+
+# first parse the options
+try:
+    options, args = getopt.getopt(sys.argv[1:], 'hvs:S:f:t:',
+                                  ['help', 'verbose', 'serviceclass', 'fileclass', 'tapepool'])
+except Exception, e:
+    print e
+    usage(1)
+verbose = False
+svcclass = None
+fileclass = None
+tapepool = None
+for f, v in options:
+    if f == '-h' or f == '--help':
+        usage(0)
+    elif f == '-v' or f == '--verbose':
+        verbose = True
+    elif f == '-s' or f == '-S' or f == '--serviceclass':
+        svcclass = v
+    elif f == '-f' or f == '--fileclass':
+        fileclass = v
+    elif f == '-t' or f == '--tapepool':
+        tapepool = v
+    else:
+        print "unknown option : " + f
+        usage(1)
+
+# Deal with arguments
+if len(args) != 0:
+    print "No arguments allowed"
+    usage(1)
+
+try:
+    # connect to stager and prepare statements
+    stconn = castor_tools.connectToStager()
+    stcur = stconn.cursor()
+    sqlstatement = '''
+    SELECT MigrationRouting.isSmallFile, MigrationRouting.copyNb, MigrationRouting.lastEditor,
+           MigrationRouting.lastEditionTime, SvcClass.name, FileClass.name, TapePool.name
+      FROM MigrationRouting, FileClass, SvcClass, TapePool
+     WHERE MigrationRouting.svcClass = SvcClass.id
+       AND MigrationRouting.fileClass = FileClass.id
+       AND MigrationRouting.tapePool = TapePool.id'''
+    # amend statement depending on restrictions given on the command line
+    params = {}
+    if svcclass:
+        stcur.execute('SELECT id FROM SvcClass WHERE name=:name', name=svcclass)
+        rows = stcur.fetchall()
+        if len(rows) == 0:
+            print 'Invalid or non existent SvcClass %s' % svcclass
+            print 'Giving up'
+            sys.exit(1)
+        sqlstatement += ' AND SvcClass.id=:svcclassid'
+        params['svcclassid'] = rows[0][0]
+    if tapepool:
+        stcur.execute('SELECT id FROM TapePool WHERE name=:name', name=tapepool)
+        rows = stcur.fetchall()
+        if len(rows) == 0:
+            print 'Invalid or non existent TapePool %s' % tapepool
+            print 'Giving up'
+            sys.exit(1)
+        sqlstatement += ' AND TapePool.id=:tapepoolid'
+        params['tapepoolid'] = rows[0][0]
+    if fileclass:
+        stcur.execute('SELECT id FROM FileClass WHERE name=:name', name=fileclass)
+        rows = stcur.fetchall()
+        if len(rows) == 0:
+            print 'Invalid or non existent FileClass %s' % fileclass
+            print 'Giving up'
+            sys.exit(1)
+        sqlstatement += ' AND FileClass.id=:fileclassid'
+        params['fileclassid'] = rows[0][0]
+    # add ordering
+    sqlstatement += ' ORDER BY SvcClass.name, FileClass.name, MigrationRouting.copyNb, MigrationRouting.isSmallFile'
+    # get results
+    stcur.execute(sqlstatement, params)
+    rows = stcur.fetchall()
+    if len(rows) == 0:
+        print "No routes defined"
+        sys.exit(0)
+    # loop over svcclasses and print them
+    maxSvcClassNameLen = max([8]+[len(row[4]) for row in rows])
+    maxFileClassNameLen = max([9]+[len(row[5]) for row in rows])
+    maxTapePoolNameLen = max([8]+[len(row[6]) for row in rows])
+    maxLastEditorLen = max([10] + [len(row[2]) for row in rows])
+    maxLastEditionTimeLen = max([11] + [len(secsToDate(row[3])) for row in rows])
+    print '%*s %*s COPYNB ISSMALLFILE %*s %*s %*s' % \
+          (maxSvcClassNameLen, 'SVCCLASS', maxFileClassNameLen, 'FILECLASS', \
+           maxTapePoolNameLen, 'TAPEPOOL', maxLastEditorLen, 'LASTEDITOR', \
+           maxLastEditionTimeLen, 'LASTEDITION')
+    print '-' * (23 + maxSvcClassNameLen + maxFileClassNameLen + maxTapePoolNameLen + \
+                 maxLastEditorLen + maxLastEditionTimeLen)
+    for issmallfile, copynb, lasteditor, lastedition, svcclass, fileclass, tapepool in rows:
+        print '%*s %*s %6d %11s %*s %*s %*s' % \
+              (maxSvcClassNameLen, svcclass, maxFileClassNameLen, fileclass, copynb, intToBool(issmallfile), \
+               maxTapePoolNameLen, tapepool, maxLastEditorLen, lasteditor, maxLastEditionTimeLen, \
+               secsToDate(lastedition))
+    # close DB connections
+    try:
+        castor_tools.disconnectDB(stconn)
+    except Exception:
+        pass
+except Exception, e:
+    print e
+    if verbose:
+        import traceback
+        traceback.print_exc()
+    sys.exit(-1)

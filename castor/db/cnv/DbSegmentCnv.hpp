@@ -193,11 +193,11 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Fill the database with objects of type TapeCopy refered by a given object.
+         * Fill the database with objects of type RecallJob refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */
-        virtual void fillRepTapeCopy(castor::stager::Segment* obj)
+        virtual void fillRepRecallJob(castor::stager::Segment* obj)
           throw (castor::exception::Exception);
 
         /**
@@ -221,11 +221,11 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Retrieve from the database objects of type TapeCopy refered by a given object.
+         * Retrieve from the database objects of type RecallJob refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */
-        virtual void fillObjTapeCopy(castor::stager::Segment* obj)
+        virtual void fillObjRecallJob(castor::stager::Segment* obj)
           throw (castor::exception::Exception);
 
         /**
@@ -275,16 +275,16 @@ namespace castor {
         castor::db::IDbStatement *m_updateStatement;
 
         /// SQL checkExist statement for member copy
-        static const std::string s_checkTapeCopyExistStatementString;
+        static const std::string s_checkRecallJobExistStatementString;
 
         /// SQL checkExist statement object for member copy
-        castor::db::IDbStatement *m_checkTapeCopyExistStatement;
+        castor::db::IDbStatement *m_checkRecallJobExistStatement;
 
         /// SQL update statement for member copy
-        static const std::string s_updateTapeCopyStatementString;
+        static const std::string s_updateRecallJobStatementString;
 
         /// SQL update statement object for member copy
-        castor::db::IDbStatement *m_updateTapeCopyStatement;
+        castor::db::IDbStatement *m_updateRecallJobStatement;
 
         /// SQL checkExist statement for member tape
         static const std::string s_checkTapeExistStatementString;

@@ -28,8 +28,8 @@ BEGIN
   -- Check that the file is not busy, i.e. that we are not
   -- in the middle of migrating it. If we are, just stop and raise
   -- a user exception
-  SELECT count(*) INTO nbRes FROM TapeCopy
-    WHERE status = tconst.TAPECOPY_SELECTED
+  SELECT count(*) INTO nbRes FROM MigrationJob
+    WHERE status = tconst.MIGRATIONJOB_SELECTED
     AND castorFile = cfId;
   IF nbRes > 0 THEN
     raise_application_error(-20106, 'Trying to update a busy file (ongoing migration)');
@@ -50,8 +50,8 @@ BEGIN
     FROM Subrequest, StageUpdateRequest Request
    WHERE SubRequest.id = srId
      AND Request.id = SubRequest.request;
-  IF checkFailPutWhenTape0(sclassId, fclassId) = 1 THEN
-     raise_application_error(-20106, 'File update canceled since this service class doesn''t provide tape backend');
+  IF checkNoTapeRouting(sclassId, fclassId) = 1 THEN
+     raise_application_error(-20106, 'File update canceled since the file cannot be routed to tape');
   END IF;
   -- Otherwise, either we are alone or we are on the right copy and we
   -- only have to check that there is a prepareTo statement. We do the check
@@ -90,8 +90,8 @@ BEGIN
     UPDATE DiskCopy
        SET status = 6 -- STAGEOUT
      WHERE id = dcid;
-    -- Suppress all Tapecopies (avoid migration of previous version of the file)
-    deleteTapeCopies(cfId);
+    -- Suppress all Migration Jobs (avoid migration of previous version of the file)
+    deleteMigrationJobs(cfId);
   END IF;
   -- Invalidate any ongoing replications
   UPDATE DiskCopy SET status = 7 -- INVALID
@@ -681,7 +681,7 @@ BEGIN
        SELECT /*+ INDEX(StagePutDoneRequest PK_StagePutDoneRequest_Id) */ id, svcClass FROM StagePutDoneRequest) Request
    WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
   IF contextPIPP != 0 THEN
-    -- If not a put inside a PrepareToPut/Update, create TapeCopies
+    -- If not a put inside a PrepareToPut/Update, trigger migration
     -- and update DiskCopy status
     putDoneFunc(cfId, realFileSize, contextPIPP, svcId);
   ELSE

@@ -40,7 +40,6 @@ ORALIB_SRCS = OraCnvSvc.cpp \
             OraCommonSvc.cpp \
             ../ora/OraRHSvc.cpp \
             ../ora/OraStagerSvc.cpp \
-            ../ora/OraTapeSvc.cpp \
             ../ora/OraJobSvc.cpp \
             ../ora/OraGCSvc.cpp \
             ../ora/OraQuerySvc.cpp \

@@ -36,7 +36,6 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
-#include "castor/stager/Stream.hpp"
 
 #include "castor/tape/tapegateway/TapeGatewayDlfMessageConstants.hpp"
 #include "castor/stager/TapeTpModeCodes.hpp"

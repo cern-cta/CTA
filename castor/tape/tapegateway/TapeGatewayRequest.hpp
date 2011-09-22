@@ -46,7 +46,6 @@ namespace castor {
 
     // Forward declarations
     class Tape;
-    class Stream;
 
   } /* end of namespace stager */
 
@@ -223,38 +222,6 @@ namespace castor {
         }
 
         /**
-         * Get the value of m_streamMigration
-         * @return the value of m_streamMigration
-         */
-        castor::stager::Stream* streamMigration() const {
-          return m_streamMigration;
-        }
-
-        /**
-         * Set the value of m_streamMigration
-         * @param new_var the new value of m_streamMigration
-         */
-        void setStreamMigration(castor::stager::Stream* new_var) {
-          m_streamMigration = new_var;
-        }
-
-        /**
-         * Get the value of m_tapeRecall
-         * @return the value of m_tapeRecall
-         */
-        castor::stager::Tape* tapeRecall() const {
-          return m_tapeRecall;
-        }
-
-        /**
-         * Set the value of m_tapeRecall
-         * @param new_var the new value of m_tapeRecall
-         */
-        void setTapeRecall(castor::stager::Tape* new_var) {
-          m_tapeRecall = new_var;
-        }
-
-        /**
          * Get the value of m_status
          * @return the value of m_status
          */
@@ -286,10 +253,6 @@ namespace castor {
 
         /// The id of this object
         u_signed64 m_id;
-
-        castor::stager::Stream* m_streamMigration;
-
-        castor::stager::Tape* m_tapeRecall;
 
         TapeRequestStateCode m_status;
 

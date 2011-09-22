@@ -29,9 +29,7 @@
 #include "osdep.h"
 #include "vmgr_api.h"
 #include "castor/exception/Exception.hpp"
-#include "castor/stager/Stream.hpp"
 #include "castor/stager/Tape.hpp"
-#include "castor/stager/TapePool.hpp"
 #include "castor/tape/tapegateway/FileMigratedNotification.hpp"
 #include "castor/tape/utils/BoolFunctor.hpp"
 
@@ -40,7 +38,7 @@ namespace castor {
     namespace tapegateway {
       class VmgrTapeGatewayHelper {
         public:
-	void getTapeForStream(const castor::stager::Stream& streamToResolve, const castor::stager::TapePool& tapepool,
+	void getTapeForStream(const u_signed64 initialSizeToTransfer, const std::string& tapepoolName,
 	    int& startFseq, castor::stager::Tape& tapeToUse, const utils::BoolFunctor &shuttingDown) throw (castor::exception::Exception);
 
 	void getDataFromVmgr(castor::stager::Tape& tape, const utils::BoolFunctor &shuttingDown)

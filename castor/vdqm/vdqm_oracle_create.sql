@@ -78,7 +78,7 @@ AS
  *******************************************************************/
 
 /* SQL statement to populate the intial schema version */
-UPDATE UpgradeLog SET schemaVersion = '2_1_8_3';
+UPDATE UpgradeLog SET schemaVersion = '2_1_12_0';
 
 /* Sequence used to generate unique indentifies */
 CREATE SEQUENCE ids_seq CACHE 200;

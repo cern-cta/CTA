@@ -193,14 +193,6 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Fill the database with objects of type SvcClass refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillRepSvcClass(castor::stager::CastorFile* obj)
-          throw (castor::exception::Exception);
-
-        /**
          * Fill the database with objects of type FileClass refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
@@ -217,11 +209,11 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Fill the database with objects of type TapeCopy refered by a given object.
+         * Fill the database with objects of type RecallJob refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */
-        virtual void fillRepTapeCopy(castor::stager::CastorFile* obj)
+        virtual void fillRepRecallJob(castor::stager::CastorFile* obj)
           throw (castor::exception::Exception);
 
         /**
@@ -234,14 +226,6 @@ namespace castor {
                              castor::IObject* object,
                              unsigned int type,
                              bool endTransaction)
-          throw (castor::exception::Exception);
-
-        /**
-         * Retrieve from the database objects of type SvcClass refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillObjSvcClass(castor::stager::CastorFile* obj)
           throw (castor::exception::Exception);
 
         /**
@@ -261,11 +245,11 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Retrieve from the database objects of type TapeCopy refered by a given object.
+         * Retrieve from the database objects of type RecallJob refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */
-        virtual void fillObjTapeCopy(castor::stager::CastorFile* obj)
+        virtual void fillObjRecallJob(castor::stager::CastorFile* obj)
           throw (castor::exception::Exception);
 
       private:
@@ -306,18 +290,6 @@ namespace castor {
         /// SQL statement object for request update
         castor::db::IDbStatement *m_updateStatement;
 
-        /// SQL checkExist statement for member svcClass
-        static const std::string s_checkSvcClassExistStatementString;
-
-        /// SQL checkExist statement object for member svcClass
-        castor::db::IDbStatement *m_checkSvcClassExistStatement;
-
-        /// SQL update statement for member svcClass
-        static const std::string s_updateSvcClassStatementString;
-
-        /// SQL update statement object for member svcClass
-        castor::db::IDbStatement *m_updateSvcClassStatement;
-
         /// SQL checkExist statement for member fileClass
         static const std::string s_checkFileClassExistStatementString;
 
@@ -349,22 +321,22 @@ namespace castor {
         castor::db::IDbStatement *m_remoteUpdateDiskCopyStatement;
 
         /// SQL select statement for member tapeCopies
-        static const std::string s_selectTapeCopyStatementString;
+        static const std::string s_selectRecallJobStatementString;
 
         /// SQL select statement object for member tapeCopies
-        castor::db::IDbStatement *m_selectTapeCopyStatement;
+        castor::db::IDbStatement *m_selectRecallJobStatement;
 
         /// SQL delete statement for member tapeCopies
-        static const std::string s_deleteTapeCopyStatementString;
+        static const std::string s_deleteRecallJobStatementString;
 
         /// SQL delete statement object for member tapeCopies
-        castor::db::IDbStatement *m_deleteTapeCopyStatement;
+        castor::db::IDbStatement *m_deleteRecallJobStatement;
 
         /// SQL remote update statement for member tapeCopies
-        static const std::string s_remoteUpdateTapeCopyStatementString;
+        static const std::string s_remoteUpdateRecallJobStatementString;
 
         /// SQL remote update statement object for member tapeCopies
-        castor::db::IDbStatement *m_remoteUpdateTapeCopyStatement;
+        castor::db::IDbStatement *m_remoteUpdateRecallJobStatement;
 
       }; // end of class DbCastorFileCnv
 

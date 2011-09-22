@@ -149,24 +149,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_tapeCopyStatus
-       * Status of the tapeCopy(ies?) associated to the underlying CastorFile
-       * @return the value of m_tapeCopyStatus
-       */
-      int tapeCopyStatus() const {
-        return m_tapeCopyStatus;
-      }
-
-      /**
-       * Set the value of m_tapeCopyStatus
-       * Status of the tapeCopy(ies?) associated to the underlying CastorFile
-       * @param new_var the new value of m_tapeCopyStatus
-       */
-      void setTapeCopyStatus(int new_var) {
-        m_tapeCopyStatus = new_var;
-      }
-
-      /**
        * Get the value of m_segmentStatus
        * Status of the segment(s?) associated to the underlying CastorFile
        * @return the value of m_segmentStatus
@@ -430,9 +412,6 @@ namespace castor {
 
       /// Status of the DiskCopy described
       int m_diskCopyStatus;
-
-      /// Status of the tapeCopy(ies?) associated to the underlying CastorFile
-      int m_tapeCopyStatus;
 
       /// Status of the segment(s?) associated to the underlying CastorFile
       int m_segmentStatus;

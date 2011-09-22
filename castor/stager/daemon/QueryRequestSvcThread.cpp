@@ -56,7 +56,6 @@
 #include "castor/stager/StageQueryResult.hpp"
 #include "castor/stager/DiskCopyStatusCodes.hpp"
 #include "castor/stager/SegmentStatusCodes.hpp"
-#include "castor/stager/TapeCopyStatusCodes.hpp"
 #include "castor/stager/DiskServerStatusCode.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "castor/rh/BasicResponse.hpp"

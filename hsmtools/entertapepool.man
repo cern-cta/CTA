@@ -7,20 +7,50 @@ entertapepool \- enter a new tape pool in the stager catalog
 .BI -h
 ]
 [
-.BI -m
-.B <migrSelectPolicyName>
+.BI --nbdrives
+<nbDrives>
+]
+[
+.BI --minamountdata
+.B <minAmountDataForAMount>
+]
+[
+.BI --minnbfiles
+.B <minNbFilesForAMount>
+]
+[
+.BI --maxfileage
+.B <maxFileAgeBeforeForcedMount>
 ]
 .BI <tapePoolName>
 .SH DESCRIPTION
 .B entertapepool
-enters a new tape pool in the CASTOR stager catalog
+enters a new tape pool in the CASTOR stager catalog.
+
+The parameters of the tapepool define the policy used to trigger tape mounts.
+The behavior is the following :
+  - never more than <nbDrives> drives can be used concurrently
+  - a new tape will be mounted whenever we have either more than <minAmountDataForAMount> of data or <minNbFilesForAMount> files waiting for migration. In practice, if some migrations are already running, a new one is trigerred if one of these 2 numbers will still be exceeded per mount, even with the new mount.
+  - a tape mount will be forced if nothing is mounted and one file becomes older than maxFileAgeBeforeForcedMount
 .TP
 .BI \-h,\ \-\-help
 Get usage information
 .TP
-.BI \-m,\ \-\-migrselectpolicy\ <migrSelectPolicyName>
-If given, specifies the migration policy for this pool.
-If not specified, defaults to 'defaultMigrSelPolicy'
+.BI \-\-nbdrives <nbDrives>
+The maximum number of tape drives this tape pool is allowed to use concurrently
+for migration. Default is 0 is not provided
+.TP
+.BI \-\-minamountdata <minAmountDataForAMount>
+The minimum amount of data needed to trigger a new mount in bytes. Default is 100GiB if not provided.
+The value can be given using the standard K/M/G/T extensions, with or without B (i.e. both KB and K are accepted).
+These have the ISO meaning of powers of 10. Ki/Mi/Gi/Ti[B] extensions are also accepted and deal with powers of 2.
+.TP
+.BI \-\-minnbfiles <minNbFilesForAMount>
+The minimum number of files needed to trigger a new mount. Default is 1000 if not provided.
+.TP
+.BI \-\-maxfileage <maxFileAgeBeforeForcedMount>
+The maximum age of a file before a new mount is triggered. Default is 12h if not provided.
+The value can be given using the extensions s/m/mn/h/d for seconds, minutes(both m and mn), hours and days.
 .TP
 .BI <tapePoolName>
 name of a tape pool to create.
@@ -32,22 +62,22 @@ name of a tape pool to create.
 inserted tape pool newtapepool successfully
 
 # printtapepool -a
-        NAME     MIGRSELECTPOLICY SVCCLASSES       ID
------------------------------------------------------
- newtapepool defaultMigrSelPolicy          - 93543828
+       NAME NBDRIVES MINAMOUNTDATA MINNBFILES MAXFILEAGE ID LASTEDITOR          LASTEDITION
+-------------------------------------------------------------------------------------------
+newtapepool        0        100GiB       1000        12h  7   sponcec3 30-Aug-2011 16:32:15
 
-# entertapepool -m testPolicy newtapepool
+# entertapepool --nbdrives 2 newtapepool
 TapePool newtapepool already exists in the stager DB
 You may want to use modifytapepool
 
-# entertapepool -m testPolicy testtapepool
+# entertapepool --nbdrives 2 --minamountdata 23MiB --maxfileage 12h23mn testtapepool
 inserted tape pool testtapepool successfully
 
-# /tmp/printtapepool -a
-        NAME     MIGRSELECTPOLICY SVCCLASSES       ID
------------------------------------------------------
-testtapepool           testPolicy          - 93545831
- newtapepool defaultMigrSelPolicy          - 93543828
+# printtapepool -a
+        NAME NBDRIVES MINAMOUNTDATA MINNBFILES MAXFILEAGE ID LASTEDITOR          LASTEDITION
+--------------------------------------------------------------------------------------------
+ newtapepool        0        100GiB       1000        12h  7   sponcec3 30-Aug-2011 16:32:15
+testtapepool        2         23MiB       1000    12h23mn  8   sopncec3 30-Aug-2011 16:42:32
 
 .SH NOTES
 This command requires database client access to the stager catalog and nameserver DBs.
@@ -60,6 +90,7 @@ Configuration for the database accesses is taken from castor.conf.
 .BR enterdiskpool,
 .BR entersvcclass,
 .BR enterfileclass,
+.BR entermigrationroute,
 .BR adminMultiInstance
 
 .SH AUTHOR

@@ -444,8 +444,9 @@ BEGIN
          WHERE castorFile = cf.cfId;
         -- If any DiskCopy, give up
         IF nb = 0 THEN
-          -- Delete the TapeCopies
-          deleteTapeCopies(cf.cfId);
+          -- Delete the migrations and recalls
+          deleteMigrationJobs(cf.cfId);
+          deleteRecallJobs(cf.cfId);
           -- See whether pending SubRequests exist
           SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ count(*) INTO nb
             FROM SubRequest
@@ -462,10 +463,10 @@ BEGIN
               DELETE FROM CastorFile WHERE id = cf.cfId
               RETURNING fileId, nsHost, fileClass
                 INTO fid, nsh, fc;
-              -- Check whether this file potentially had TapeCopies
+              -- Check whether this file potentially had copies on tape
               SELECT nbCopies INTO nb FROM FileClass WHERE id = fc;
               IF nb = 0 THEN
-                -- This castorfile was created with no TapeCopy
+                -- This castorfile was created with no copy on tape
                 -- So removing it from the stager means erasing
                 -- it completely. We should thus also remove it
                 -- from the name server
@@ -490,47 +491,6 @@ BEGIN
   END IF;
   OPEN fileIds FOR
     SELECT fileId, nsHost FROM FilesDeletedProcOutput;
-END;
-/
-
-/*
- * PL/SQL method removing completely a file from the stager
- * including all its related objects (diskcopy, tapecopy, segments...)
- * The given files are supposed to already have been removed from the
- * name server
- * Note that we don't increase the freespace of the fileSystem.
- * This is done by the monitoring daemon, that knows the
- * exact amount of free space.
- * cfIds gives the list of files to delete.
- */
-CREATE OR REPLACE PROCEDURE filesClearedProc(cfIds IN castor."cnumList") AS
-  dcIds "numList";
-BEGIN
-  IF cfIds.COUNT <= 0 THEN
-    RETURN;
-  END IF;
-  -- first convert the input array into a temporary table
-  FORALL i IN cfIds.FIRST..cfIds.LAST
-    INSERT INTO FilesClearedProcHelper (cfId) VALUES (cfIds(i));
-  -- delete the DiskCopies in bulk
-  SELECT id BULK COLLECT INTO dcIds
-    FROM Diskcopy WHERE castorfile IN (SELECT cfId FROM FilesClearedProcHelper);
-  FORALL i IN dcIds.FIRST .. dcIds.LAST
-    DELETE FROM DiskCopy WHERE id = dcIds(i);
-  -- put SubRequests into FAILED (for non FINISHED ones)
-  UPDATE /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest
-     SET status = 7,  -- FAILED
-         errorCode = 16,  -- EBUSY
-         errorMessage = 'Request canceled by another user request'
-   WHERE castorfile IN (SELECT cfId FROM FilesClearedProcHelper)
-     AND status IN (4, 5, 6, 12, 13, 14);  -- being processed (WAIT*, READY, *SCHED)
-  -- Loop over the deleted files for cleaning the tape copies
-  FOR i in cfIds.FIRST .. cfIds.LAST LOOP
-    deleteTapeCopies(cfIds(i));
-  END LOOP;
-  -- Finally drop castorFiles in bulk
-  FORALL i IN cfIds.FIRST .. cfIds.LAST
-    DELETE FROM CastorFile WHERE id = cfIds(i);
 END;
 /
 

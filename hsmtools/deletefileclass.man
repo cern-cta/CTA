@@ -38,6 +38,7 @@ Configuration for the database access is taken from castor.conf.
 .BR deletesvcclass,
 .BR deletediskpool,
 .BR deletetapepool,
+.BR deletemigrationroute,
 .BR adminMultiInstance
 
 .SH AUTHOR

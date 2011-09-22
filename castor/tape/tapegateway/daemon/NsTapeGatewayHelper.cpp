@@ -346,7 +346,7 @@ throw (castor::exception::Exception){
     // of the file during repack, or an internal problem.
     // Let's confirm the positive case and finish with this outdated request.
     // As we don't have any other criteria, we compare the file's size and then checksum with this
-    // segment's checksum. If there is no match, this tapecopy does not match the file anymore:
+    // segment's checksum. If there is no match, this copy does not match the file anymore:
     // => warn and leave.
     // If the checksums matches, log an error (but leave anyway as the initial goal, repacking
     // the repackVID tape is reached.

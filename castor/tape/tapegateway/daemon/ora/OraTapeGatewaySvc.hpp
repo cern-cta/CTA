@@ -47,7 +47,7 @@ namespace tapegateway {
 namespace ora         {
   
   /**
-   * Implementation of the ITapeSvc for Oracle
+   * Implementation of the ITapeGatewaySvc for Oracle
    */
   class OraTapeGatewaySvc : 
     public castor::db::ora::OraCommonSvc,
@@ -64,13 +64,11 @@ namespace ora         {
   public:
 
     // To get all the stream without a Tape associated to it
-    virtual void  getStreamsWithoutTapes(
-			   std::list<castor::stager::Stream>& streams,
-			   std::list<castor::stager::TapePool>& tapePools )
+    virtual void  getMigrationMountsWithoutTapes(std::list<castor::tape::tapegateway::ITapeGatewaySvc::Stream>& streams)
       throw (castor::exception::Exception);
 
     // To create the db link between a Tape and a Stream
-   virtual void attachTapesToStreams(
+    virtual void attachTapesToStreams(
 			   const std::list<u_signed64>& strIds,
 			   const std::list<std::string>& vids,
 			   const std::list<int>& fseqs)
@@ -160,9 +158,7 @@ namespace ora         {
 	       int& copyNumber,
 	       u_signed64& lastModificationTime,
 	       std::string& repackVid,
-	       std::string& serviceClass,
-	       std::string& fileClass,
-	       std::string& tapePool)
+	       std::string& fileClass)
       throw (castor::exception::Exception);
 
     // To update the database when the tapebridge allows
@@ -204,8 +200,8 @@ namespace ora         {
       throw (castor::exception::Exception);
 
     // To delete stream with wrong tapepool 
-    virtual void deleteStreamWithBadTapePool(
-				    const castor::stager::Stream& stream) 
+    virtual void deleteMigrationMountWithBadTapePool(
+				    const u_signed64 streamId) 
       throw (castor::exception::Exception);
 
     // To delete taperequest 
@@ -227,8 +223,8 @@ namespace ora         {
     virtual void invalidateFile(const FileErrorReport& failure)
       throw (castor::exception::Exception);
 
-    static const std::string s_getStreamsWithoutTapesStatementString;
-    oracle::occi::Statement *m_getStreamsWithoutTapesStatement;
+    static const std::string s_getMigrationMountsWithoutTapesStatementString;
+    oracle::occi::Statement *m_getMigrationMountsWithoutTapesStatement;
     
     static const std::string s_attachTapesToStreamsStatementString;
     oracle::occi::Statement *m_attachTapesToStreamsStatement;
@@ -293,8 +289,8 @@ namespace ora         {
     static const std::string s_getTapeToReleaseStatementString;
     oracle::occi::Statement *m_getTapeToReleaseStatement;
     
-    static const std::string s_deleteStreamWithBadTapePoolStatementString;
-    oracle::occi::Statement *m_deleteStreamWithBadTapePoolStatement;
+    static const std::string s_deleteMigrationMountWithBadTapePoolStatementString;
+    oracle::occi::Statement *m_deleteMigrationMountWithBadTapePoolStatement;
 
     static const std::string s_deleteTapeRequestStatementString;
     oracle::occi::Statement *m_deleteTapeRequestStatement;

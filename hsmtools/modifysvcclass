@@ -23,21 +23,19 @@
 
 '''allows to modify an existing service class in the castor stager'''
 
-import sys
+import sys, re, os, pwd
 import getopt
 import castor_tools
 
 # usage function
 def usage(exitCode):
     '''prints usage'''
-    print 'Usage : ' + sys.argv[0] + ' [-h|--help] [--nbdrives <nbDrives>] ' + \
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] ' + \
           '[--defaultfilesize <defaultFileSize>] [--maxreplicanb <maxReplicaNb>] ' + \
           '[--failjobswhennospace <[yes|no]>] [--disk1behavior <[yes|no]>] ' + \
           '[--forcedfileclass <forcedFileClass>] [--replicateonclose <[yes|no]>] ' + \
-          '[--gcpolicy <gcPolicyName>] [--migratorpolicy <migratorPolicy>] ' + \
-          '[--streampolicy <streamPolicy>] [--recallerpolicy <recallerPolicy>] ' + \
-          '[--adddiskpools <diskPoolName>:[...]] [--removediskpools <diskPoolName>:[...]] ' + \
-          '[--addtapepools <tapePoolName>[:...]] [--removetapepools <tapePoolName>[:...]] <svcClassName>'
+          '[--gcpolicy <gcPolicyName>] [--recallerpolicy <recallerPolicy>] ' + \
+          '[--adddiskpools <diskPoolName>:[...]] [--removediskpools <diskPoolName>:[...]] <svcClassName>'
     sys.exit(exitCode)
 
 def parsePositiveInt(name, svalue):
@@ -72,19 +70,34 @@ def parseBool(name, svalue):
         print 'Note that accepted booleans are %s and %s' % (','.join(validTrues), ','.join(validFalses))
         usage(1)
 
+def parseDataAmount(name, svalue):
+    '''parses a value describing an amount of data. Exits with proper error message in case the value does not fit'''
+    try:
+        exts = {'K' : 1000, 'M' : 1000*1000, 'G' : 1000*1000*1000, 'T' : 1000*1000*1000*1000,
+                'Ki' : 1024, 'Mi' : 1024*1024, 'Gi' : 1024*1024*1024, 'Ti' : 1024*1024*1024*1024}
+        regexp = re.compile('^(?P<nb>\d+)(?P<ext>(?:[KMGT]i)?)B?$')
+        m = regexp.match(svalue)
+        if not m:
+            raise ValueError
+        value = int(m.group('nb'))
+        if m.group('ext'):
+            value *= exts[m.group('ext')]
+        return value
+    except ValueError:
+        print 'Invalid %s %s' % (name, svalue)
+        usage(1)
+
 # first parse the options
 try:
     options, args = getopt.getopt(sys.argv[1:], 'hv',
-                                  ['help', 'verbose', 'nbdrives=', 'defaultfilesize=', 'maxreplicanb=',
+                                  ['help', 'verbose', 'defaultfilesize=', 'maxreplicanb=',
                                    'failjobswhennospace=', 'disk1behavior=', 'forcedfileclass=',
-                                   'replicateonclose=', 'gcpolicy=' , 'migratorpolicy=' , 'streampolicy=',
-                                   'recallerpolicy=', 'adddiskpools=', 'removediskpools=', 'addtapepools=',
-                                   'removetapepools='])
+                                   'replicateonclose=', 'gcpolicy=', 'recallerpolicy=',
+                                   'adddiskpools=', 'removediskpools='])
 except Exception, e:
     print e
     usage(1)
 verbose = False
-nbdrives = None
 defaultfilesize = None
 maxreplicanb = None
 failjobswhennospace = None
@@ -93,22 +106,16 @@ forcedfileclass = None
 forcedfileclassset = False
 replicateonclose = None
 gcpolicy = None
-migratorpolicy = None
-streampolicy = None
 recallerpolicy = None
 adddiskpools = None
 removediskpools = None
-addtapepools = None
-removetapepools = None
 for f, v in options:
     if f == '-h' or f == '--help':
         usage(0)
     elif f == '-v' or f == '--verbose':
         verbose = True
-    elif f == '--nbdrives':
-        nbdrives = parsePositiveInt('nbdrives', v)
     elif f == '--defaultfilesize':
-        defaultfilesize = parsePositiveNonNullInt('defaultfilesize', v)
+        defaultfilesize = parseDataAmount('defaultfilesize', v)
     elif f == '--maxreplicanb':
         maxreplicanb = parsePositiveNonNullInt('maxreplicanb', v)
     elif f == '--failjobswhennospace':
@@ -122,20 +129,12 @@ for f, v in options:
         replicateonclose = parseBool('replicateonclose', v)
     elif f == '--gcpolicy':
         gcpolicy = v
-    elif f == '--migratorpolicy':
-        migratorpolicy = v
-    elif f == '--streampolicy':
-        streampolicy = v
     elif f == '--recallerpolicy':
         recallerpolicy = v
     elif f == '--adddiskpools':
         adddiskpools = set(v.split(':'))
     elif f == '--removediskpools':
         removediskpools = set(v.split(':'))
-    elif f == '--addtapepools':
-        addtapepools = set(v.split(':'))
-    elif f == '--removetapepools':
-        removetapepools = set(v.split(':'))
     else:
         print "unknown option : " + f
         usage(1)
@@ -151,10 +150,9 @@ else:
     svcclassname = args[0]
 
 # check we have something to do
-if not nbdrives and not defaultfilesize and not maxreplicanb and not failjobswhennospace and \
+if not defaultfilesize and not maxreplicanb and not failjobswhennospace and \
    not disk1behavior and not forcedfileclass and not replicateonclose and not gcpolicy and \
-   not migratorpolicy and not streampolicy and not recallerpolicy and not adddiskpools and \
-   not removediskpools and not addtapepools and not removetapepools:
+   not recallerpolicy and not adddiskpools and not removediskpools:
     print 'Nothing to modify. Did you forget some argument ?'
     usage(1)
 
@@ -171,9 +169,6 @@ try:
         sys.exit(1)
     svcClassId = rows[0][0]
     # deal with standard columns
-    if nbdrives:
-        stcur.execute('UPDATE SvcClass SET nbdrives=:value WHERE id = :svcClassId',
-                      value=nbdrives, svcClassId=svcClassId)
     if defaultfilesize:
         stcur.execute('UPDATE SvcClass SET defaultfilesize=:value WHERE id = :svcClassId',
                       value=defaultfilesize, svcClassId=svcClassId)
@@ -192,12 +187,6 @@ try:
     if gcpolicy:
         stcur.execute('UPDATE SvcClass SET gcpolicy=:value WHERE id = :svcClassId',
                       value=gcpolicy, svcClassId=svcClassId)
-    if migratorpolicy:
-        stcur.execute('UPDATE SvcClass SET migratorpolicy=:value WHERE id = :svcClassId',
-                      value=migratorpolicy, svcClassId=svcClassId)
-    if streampolicy:
-        stcur.execute('UPDATE SvcClass SET streampolicy=:value WHERE id = :svcClassId',
-                      value=streampolicy, svcClassId=svcClassId)
     if recallerpolicy:
         stcur.execute('UPDATE SvcClass SET recallerpolicy=:value WHERE id = :svcClassId',
                       value=recallerpolicy, svcClassId=svcClassId)
@@ -261,65 +250,6 @@ try:
             DELETE FROM DiskPool2SvcClass WHERE parent=diskPoolIds(i) AND child=:scId;
         END;'''
         stcur.execute(sql, diskPoolIds=removediskpools.keys(), scId=svcClassId)
-    # Deal with addtapepools
-    if addtapepools:
-        # check existence, and get ids
-        stcur.execute("SELECT name, id FROM TapePool WHERE name IN ('" + "', '".join(addtapepools) + "')")
-        rows = stcur.fetchall()
-        existingtapepools = set([row[0] for row in rows])
-        nonexistingtapepools = addtapepools - existingtapepools
-        if nonexistingtapepools:
-            print 'Invalid or non existent tapepool(s) given : %s' % (', '.join(nonexistingtapepools))
-            sys.exit(1)
-        addtapepools = dict([(tpId, tpName) for tpName, tpId in rows])
-        # check that they are not yet linked to the service class
-        stcur.execute("SELECT child FROM SvcClass2TapePool WHERE child IN (" + \
-                      ', '.join([str(k) for k in addtapepools.keys()]) + ") AND parent=:scId", scId=svcClassId)
-        rows = stcur.fetchall()
-        if len(rows) > 0:
-            print 'The following tapepool(s) is(are) already linked to %s service class : %s' % \
-                  (svcclassname, ', '.join([addtapepools[tpId] for tpId, in rows]))
-            sys.exit(1)
-        # add tapepools
-        sql = '''
-        DECLARE
-          tapePoolIds castor."cnumList" := :tapePoolIds;
-        BEGIN
-          FORALL i IN tapePoolIds.FIRST .. tapePoolIds.LAST
-            INSERT INTO SvcClass2TapePool (parent, child) VALUES (:scId, tapePoolIds(i));
-        END;'''
-        stcur.execute(sql, tapePoolIds=addtapepools.keys(), scId=svcClassId)
-    # Deal with removetapepools
-    if removetapepools:
-        # check existence, and get ids
-        stcur.execute("SELECT name, id FROM TapePool WHERE name IN ('" + "', '".join(removetapepools) + "')")
-        rows = stcur.fetchall()
-        existingtapepools = set([row[0] for row in rows])
-        nonexistingtapepools = removetapepools - existingtapepools
-        if nonexistingtapepools:
-            print 'Invalid or non existent tapepool(s) given : %s' % (', '.join(nonexistingtapepools))
-            sys.exit(1)
-        removetapepools = dict([(tpId, tpName) for tpName, tpId in rows])
-        # check that they are linked to the service class
-        stcur.execute("SELECT child FROM SvcClass2TapePool WHERE child IN (" + \
-                      ', '.join([str(k) for k in removetapepools.keys()]) + ") AND parent=:scId", scId=svcClassId)
-        rows = stcur.fetchall()
-        linkedtapepools = set([row[0] for row in rows])
-        nonlinkedtapepools = set(removetapepools.keys()) - linkedtapepools
-        if nonlinkedtapepools:
-            print 'The following tapepool(s) is(are) not linked to %s service class : %s' % \
-                  (svcclassname, ', '.join([removetapepools[tpId] for tpId in nonlinkedtapepools]))
-            print 'Thus they can not be unlinked'
-            sys.exit(1)
-        # remove tapepools
-        sql = '''
-        DECLARE
-          tapePoolIds castor."cnumList" := :tapePoolIds;
-        BEGIN
-          FORALL i IN tapePoolIds.FIRST .. tapePoolIds.LAST
-            DELETE FROM SvcClass2TapePool WHERE child=tapePoolIds(i) AND parent=:scId;
-        END;'''
-        stcur.execute(sql, tapePoolIds=removetapepools.keys(), scId=svcClassId)
     # check that the forced file class does exist, and retrieve its id
     if forcedfileclassset:
         if forcedfileclass:
@@ -333,6 +263,9 @@ try:
                           value=rows[0][0], svcClassId=svcClassId)
         else:
             stcur.execute('UPDATE SvcClass SET forcedfileclass=0 WHERE id = :svcClassId', svcClassId=svcClassId)
+    # in all cases, update the lastEditor and lastEditionTime
+    lasteditor = pwd.getpwuid(os.getuid())[0]
+    stcur.execute('UPDATE SvcClass SET lastEditor=:lasteditor, lastEditionTime=gettime() WHERE id = :svcClassId', lasteditor=lasteditor, svcClassId=svcClassId)
     # commit insertion and tell user
     stconn.commit()
     print 'modified service class %s successfully' % svcclassname

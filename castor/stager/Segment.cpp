@@ -26,10 +26,10 @@
 #include "castor/Constants.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
+#include "castor/stager/RecallJob.hpp"
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/SegmentStatusCodes.hpp"
 #include "castor/stager/Tape.hpp"
-#include "castor/stager/TapeCopy.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>

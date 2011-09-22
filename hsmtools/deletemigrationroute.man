@@ -1,0 +1,82 @@
+.TH DELETESVCCLASS 1 "2011" CASTOR "stager catalogue administrative commands"
+.SH NAME
+deletemigrationroute \- deletes existing migration route(s) from the stager catalogue
+
+.SH SYNOPSIS
+.B deletemigrationroute
+[
+.BI -h
+]
+.BI <svcClassName>,<fileClassName>
+[...]
+
+.SH DESCRIPTION
+.B deletesvcclass
+deletes migration routes for the given pair(s) of service class/file class from the CASTOR stager catalog
+.LP
+.BI \-h,\ \-\-help
+Get usage information
+.TP
+.BI <svcClassName>
+name of service class for which rules should be deleted
+.TP
+.BI <fileClassName>
+name of file class for which rules should be deleted
+
+.SH EXAMPLES
+.nf
+.ft CW
+
+#printmigrationroute
+SVCCLASS       FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
+----------------------------------------------------------------------------------------
+ default       largeuser      1           - stager_dev01   sponcec3 31-Aug-2011 10:07:27
+ default           test2      1           - stager_dev01   sponcec3 31-Aug-2011 10:10:38
+ default           test2      2           - stager_dev02   sponcec3 31-Aug-2011 10:10:38
+ default threeCopyOnTape      1           - stager_dev01   sponcec3 31-Aug-2011 10:11:06
+ default threeCopyOnTape      2           - stager_dev02   sponcec3 31-Aug-2011 10:11:06
+ default threeCopyOnTape      3           - stager_dev01   sponcec3 31-Aug-2011 10:11:06
+     dev       largeuser      1       False stager_dev02   sponcec3 31-Aug-2011 10:13:14
+     dev       largeuser      1        True stager_dev01   sponcec3 31-Aug-2011 10:13:14
+
+#deletemigrationroute default,threeCopyOnTape default,test2
+successfully dropped the route(s) for the following SvcClass,FileClass tuples :
+   default test2
+   default threeCopyOnTape
+
+#printmigrationroute
+SVCCLASS FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
+----------------------------------------------------------------------------------
+ default largeuser      1           - stager_dev01   sponcec3 31-Aug-2011 10:07:27
+     dev largeuser      1       False stager_dev02   sponcec3 31-Aug-2011 10:13:14
+     dev largeuser      1        True stager_dev01   sponcec3 31-Aug-2011 10:13:14
+
+#deletemigrationroute dev,largeuser badsvcclass,largeuser dev,badfileclass
+successfully dropped the route(s) for the following SvcClass,FileClass tuples :
+   dev largeuser
+WARNING : the service class(es) of the following rule(s) did not exist :
+   badsvcclass largeuser
+WARNING : the file class(es) of the following rule(s) did not exist :
+   dev badfileclass
+
+#printmigrationroute
+SVCCLASS FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
+----------------------------------------------------------------------------------
+ default largeuser      1           - stager_dev01   sponcec3 31-Aug-2011 10:07:27
+
+.SH NOTES
+This command requires database client access to the stager catalogue.
+Configuration for the database access is taken from castor.conf.
+
+.SH SEE ALSO
+.BR entermigrationroute,
+.BR modifymigrationroute,
+.BR printmigrationroute,
+.BR deletetapepool,
+.BR deletediskpool,
+.BR deletefileclass,
+.BR deletesvcclass,
+.BR adminMultiInstance
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

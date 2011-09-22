@@ -17,19 +17,16 @@ CREATE OR REPLACE PACKAGE castor AS
     mountPoint VARCHAR2(2048),
     diskServer VARCHAR2(2048));
   TYPE DiskCopy_Cur IS REF CURSOR RETURN DiskCopyCore;
-  TYPE TapeCopy IS RECORD (
-    castorFile NUMBER,
+  TYPE FailedMigrationJob IS RECORD (
     id NUMBER,
-    copyNb NUMBER,
-    status NUMBER,
     errorCode NUMBER,
-    nbRetry NUMBER,
-    fileTransActionId NUMBER,
-    fseq NUMBER,
-    missingCopies NUMBER,
-    tapeGatewayRequest NUMBER,
-    vid VARCHAR2(2048));
-  TYPE TapeCopy_Cur IS REF CURSOR RETURN TapeCopy;
+    nbRetry NUMBER);
+  TYPE FailedMigrationJob_Cur IS REF CURSOR RETURN FailedMigrationJob;
+  TYPE FailedRecallJob IS RECORD (
+    id NUMBER,
+    errorCode NUMBER,
+    nbRetry NUMBER);
+  TYPE FailedRecallJob_Cur IS REF CURSOR RETURN FailedRecallJob;
   TYPE Segment_Rec IS RECORD (
     fseq NUMBER,
     offset INTEGER,
@@ -403,35 +400,6 @@ END;
 /* Some triggers to prevent dead locks */
 /***************************************/
 
-/* Used to avoid LOCK TABLE TapeCopy whenever someone wants
-   to deal with the tapeCopies on a CastorFile.
-   XXX To be dropped when rtcpclientd is removed. */
-CREATE OR REPLACE TRIGGER tr_TapeCopy_CastorFile
-BEFORE INSERT OR UPDATE OF castorFile ON TapeCopy
-FOR EACH ROW WHEN (new.castorFile > 0)
-DECLARE
-  unused NUMBER;
-BEGIN
-  SELECT id INTO unused FROM CastorFile
-   WHERE id = :new.castorFile FOR UPDATE;
-END;
-/
-
-
-/* Used to avoid LOCK TABLE TapeCopy whenever someone wants
-   to deal with the tapeCopies on a CastorFile.
-   XXX To be dropped when rtcpclientd is removed. */
-CREATE OR REPLACE TRIGGER tr_DiskCopy_CastorFile
-BEFORE INSERT OR UPDATE OF castorFile ON DiskCopy
-FOR EACH ROW WHEN (new.castorFile > 0)
-DECLARE
-  unused NUMBER;
-BEGIN
-  SELECT id INTO unused FROM CastorFile
-   WHERE id = :new.castorFile FOR UPDATE;
-END;
-/
-
 CREATE OR REPLACE TRIGGER tr_Tape_Insert
   BEFORE INSERT ON Tape
 FOR EACH ROW
@@ -577,30 +545,19 @@ BEGIN
         segId INTEGER;
         unusedIds "numList";
       BEGIN
-        -- XXX First lock all segments for the file. Note that
-        -- XXX this step should be dropped once the tapeGateway
-        -- XXX is deployed. The current recaller does not take
-        -- XXX the proper lock on the castorFiles, hence we
-        -- XXX need this here
-        SELECT Segment.id BULK COLLECT INTO unusedIds
-          FROM Segment, TapeCopy
-         WHERE TapeCopy.castorfile = sr.cfId
-           AND TapeCopy.id = Segment.copy
-         ORDER BY Segment.id
-           FOR UPDATE OF Segment.id;
         -- Check whether we have any segment in SELECTED
         SELECT segment.id INTO segId
-          FROM Segment, TapeCopy
-         WHERE TapeCopy.castorfile = sr.cfId
-           AND TapeCopy.id = Segment.copy
-           AND Segment.status = 7 -- SELECTED
+          FROM Segment, RecallJob
+         WHERE RecallJob.castorfile = sr.cfId
+           AND RecallJob.id = Segment.copy
+           AND Segment.status = tconst.SEGMENT_SELECTED
            AND ROWNUM < 2;
         -- Something is running, so give up
         INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 16, 'Cannot abort ongoing recall'); -- EBUSY
       EXCEPTION WHEN NO_DATA_FOUND THEN
         -- Nothing running, we can cancel the recall  
         UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET status = 7 WHERE id = sr.srId;
-        deleteTapeCopies(sr.cfId);
+        deleteRecallJobs(sr.cfId);
         UPDATE DiskCopy SET status = dconst.DISKCOPY_FAILED
          WHERE castorfile = sr.cfid AND status = dconst.DISKCOPY_WAITTAPERECALL;
         INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 0, '');
@@ -733,23 +690,23 @@ BEGIN
             BEGIN
               -- Check whether we have any segment in SELECTED
               SELECT segment.id INTO segId
-                FROM Segment, TapeCopy
-               WHERE TapeCopy.castorfile = sr.cfId
-                 AND TapeCopy.id = Segment.copy
-                 AND Segment.status = 7 -- SELECTED
+                FROM Segment, RecallJob
+               WHERE RecallJob.castorfile = sr.cfId
+                 AND RecallJob.id = Segment.copy
+                 AND Segment.status = tconst.SEGMENT_SELECTED
                  AND ROWNUM < 2;
               -- Something is running, so give up
               INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 16, 'Cannot abort ongoing recall'); -- EBUSY
             EXCEPTION WHEN NO_DATA_FOUND THEN
               -- Nothing running, we can cancel the recall  
               INSERT INTO ProcessRepackAbortHelperSR VALUES (sr.srId);
-              deleteTapeCopies(sr.cfId);
+              deleteRecallJobs(sr.cfId);
               INSERT INTO ProcessRepackAbortHelperDCrec VALUES (sr.cfId);
             END;
           WHEN abortedSRstatus = dconst.SUBREQUEST_REPACK THEN
             -- stop the migration and put back the file to STAGED
             INSERT INTO ProcessRepackAbortHelperSR VALUES (sr.srId);
-            deleteTapeCopies(sr.cfId);
+            deleteMigrationJobs(sr.cfId);
             INSERT INTO ProcessRepackAbortHelperDCmigr VALUES (sr.cfId);
         END CASE;
         DELETE FROM processBulkAbortFileReqsHelper WHERE srId = sr.srId;
@@ -1126,14 +1083,14 @@ BEGIN
       -- too heavy. On the other hand, we still need to avoid dead locks.
       -- Note that we pass 0 for the subrequest id, thus the subrequest will not be attached to the
       -- CastorFile. We actually attach it when we create it.
-      selectCastorFileInternal(segment.s_fileid, nsHostName, svcClassId, segment.fileclass,
+      selectCastorFileInternal(segment.s_fileid, nsHostName, segment.fileclass,
                                segment.segSize, lastKnownFileName, 0, creationTime, firstCF, cfid, unused);
       firstCF := FALSE;
     EXCEPTION WHEN locked THEN
       -- commit what we've done so far
       COMMIT;
       -- And lock the castorfile (waiting this time)
-      selectCastorFileInternal(segment.s_fileid, nsHostName, svcClassId, segment.fileclass,
+      selectCastorFileInternal(segment.s_fileid, nsHostName, segment.fileclass,
                                segment.segSize, lastKnownFileName, 0, creationTime, TRUE, cfid, unused);
     END;
     nbFilesProcessed := nbFilesProcessed + 1;
@@ -1509,42 +1466,30 @@ BEGIN
 END;
 /
 
-/* PL/SQL method checking whether the given service class
- * doesn't provide tape backend and the given file class asks for tape copies.
- * Returns 1 in such a case, 0 else
+/* PL/SQL method checking whether we have an existing routing for this service class and file class.
+ * Returns 1 in case we do not have such a routing, 0 else
  */
-CREATE OR REPLACE FUNCTION checkFailPutWhenTape0(svcClassId NUMBER, fileClassId NUMBER)
+CREATE OR REPLACE FUNCTION checkNoTapeRouting(svcClassId NUMBER, fileClassId NUMBER)
 RETURN NUMBER AS
   nbTCs INTEGER;
-  nbForcedTCs INTEGER;
-  nbTPs INTEGER;
+  varTpId INTEGER;
 BEGIN
-  -- get #tapeCopies requested by this file
+  -- get number of copies on tape requested by this file
   SELECT nbCopies INTO nbTCs
     FROM FileClass WHERE id = fileClassId;
-  -- get #tapeCopies from the forcedFileClass: if no forcing
-  -- we assume we have tape backend and we let the job
-  SELECT nvl(nbCopies, nbTCs) INTO nbForcedTCs
-    FROM FileClass, SvcClass
-   WHERE SvcClass.forcedFileClass = FileClass.id(+)
-     AND SvcClass.id = svcClassId;
-  IF nbTCs > nbForcedTCs THEN
-    -- typically, when nbTCs = 1 and nbForcedTCs = 0: fail the job
-    RETURN 1;
-  ELSE
-    -- get #tapePools configured in this svcClass
-    SELECT COUNT(*) INTO nbTPs FROM SvcClass2TapePool
-     WHERE parent = svcClassId;
-    IF nbTCs > 0 AND nbTPs = 0 THEN
-      -- This is a configuration mistake, and we stop the user in this case.
-      -- However, many other conditions should be met to make sure the file
-      -- being written goes to tape (see e.g. bug #68020).
-      -- To be reviewed once the migration policy logic is refactored.
-      RETURN 1;
-    ELSE
-      RETURN 0;
-    END IF;
-  END IF;
+  -- loop over the copies and check the routing of each of them
+  FOR i IN 1..nbTCs LOOP
+    SELECT tapePool INTO varTpId FROM MigrationRouting
+     WHERE fileClass = fileClassId
+       AND svcClass = svcClassId
+       AND copyNb = i
+       AND ROWNUM < 2;
+  END LOOP;
+  -- all routes could be found. Everything is ok
+  RETURN 0;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- no route for at least one copy
+  RETURN 1;
 END;
 /
 
@@ -2184,9 +2129,34 @@ BEGIN
 END;
 /
 
+/*** initMigration ***/
+CREATE OR REPLACE PROCEDURE initMigration(cfId IN INTEGER, datasize IN INTEGER, nbTC IN INTEGER, scId IN INTEGER) AS
+  varTpId INTEGER;
+  varSizeThreshold INTEGER;
+BEGIN
+  varSizeThreshold := TO_NUMBER(getConfigOption('tape', 'sizeThreshold', '300000000'));
+  FOR i IN 1..nbTC LOOP
+    -- Find routing
+    BEGIN
+      SELECT tapePool INTO varTpId FROM MigrationRouting MR, CastorFile
+       WHERE MR.fileClass = CastorFile.fileClass
+         AND CastorFile.id = cfId
+         AND MR.svcClass = scId
+         AND MR.copyNb = i
+         AND (MR.isSmallFile = (CASE WHEN datasize < varSizeThreshold THEN 1 ELSE 0 END) OR MR.isSmallFile IS NULL);
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- No routing rule found means a user-visible error on the putDone or on the file close operation
+      raise_application_error(-20100, 'Cannot find an appropriate tape routing for this file in the current service class, aborting tape migration');
+    END;    
+    -- Create tape copy and attach to the appropriate tape pool
+    INSERT INTO MigrationJob (fileSize, creationTime, castorFile, copyNb, tapePool, nbRetry, status, id)
+      VALUES (datasize, getTime(), cfId, i, varTpId, 0, tconst.MIGRATIONJOB_PENDING, ids_seq.nextval);
+  END LOOP;
+END;
+/
 
-/* PL/SQL method internalPutDoneFunc, used by fileRecalled and putDoneFunc.
-   checks for diskcopies in STAGEOUT and creates the tapecopies for migration
+/* PL/SQL method internalPutDoneFunc, used by putDoneFunc.
+   checks for diskcopies in STAGEOUT and creates the migration jobs
  */
 CREATE OR REPLACE PROCEDURE internalPutDoneFunc (cfId IN INTEGER,
                                                  fs IN INTEGER,
@@ -2227,13 +2197,9 @@ BEGIN
      WHERE castorFile = cfId AND status = 6 -- STAGEOUT
      RETURNING id, owneruid, ownergid INTO dcId, ouid, ogid;
     IF dcId > 0 THEN
-      -- Only if we really found the relevant diskcopy, create TapeCopies
+      -- Only if we really found the relevant diskcopy, create migration jobs
       -- This is an extra sanity check, see also the deleteOutOfDateStageOutDCs procedure
-      FOR i IN 1..nbTC LOOP
-        INSERT INTO TapeCopy (id, copyNb, castorFile, status)
-             VALUES (ids_seq.nextval, i, cfId, 0) -- TAPECOPY_CREATED
-        RETURNING id INTO tcId;
-      END LOOP;
+      initMigration(cfId, fs, nbTC, svcClassId);
     END IF;
   END IF;
   -- If we are a real PutDone (and not a put outside of a prepareToPut/Update)
@@ -2271,10 +2237,10 @@ CREATE OR REPLACE PROCEDURE putDoneFunc (cfId IN INTEGER,
                                          svcClassId IN INTEGER) AS
   nc INTEGER;
 BEGIN
-  -- get number of TapeCopies to create
+  -- get number of migration jobs to create
   SELECT nbCopies INTO nc FROM FileClass, CastorFile
    WHERE CastorFile.id = cfId AND CastorFile.fileClass = FileClass.id;
-  -- and execute the internal putDoneFunc with the number of TapeCopies to be created
+  -- and execute the internal putDoneFunc with the number of migration jobs to be created
   internalPutDoneFunc(cfId, fs, context, nc, svcClassId);
 END;
 /
@@ -2303,7 +2269,7 @@ BEGIN
     FROM FileClass, CastorFile
    WHERE CastorFile.id = cfId
      AND FileClass.id = Castorfile.fileclass;
-  -- we are not allowed to create more TapeCopies than in the FileClass specified
+  -- we are not allowed to create more migration jobs than specified in the FileClass
   IF nbTCInFC < nbTC THEN
     nbTC := nbTCInFC;
   END IF;
@@ -2318,12 +2284,10 @@ BEGIN
     FROM StageRepackRequest R, SubRequest
    WHERE SubRequest.request = R.id
      AND SubRequest.id = srId;
-  -- create the required number of tapecopies for the files
+  -- create the required number of migration jobs for the files
   -- XXX For the time being, nbTC will be 1 for sure until we're able
   -- XXX to handle repacking of dual-copy files 
   internalPutDoneFunc(cfId, fs, 0, nbTC, svcClassId);
-  -- set svcClass in the CastorFile for the migration
-  UPDATE CastorFile SET svcClass = svcClassId WHERE id = cfId;
   -- update remaining STAGED diskcopies to CANBEMIGR too
   -- we may have them as result of disk2disk copies, and so far
   -- we only dealt with dcId
@@ -2332,7 +2296,7 @@ BEGIN
 END;
 /
 
-/* PL/SQL procedure implementing selectTape
+/* PL/SQL procedure implementing selectTapeForRecall
  * get the given tape or create it
  * Note that we run in an autonomous transaction.
  */
@@ -2372,11 +2336,11 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   COMMIT;
   RETURN tapeId;
 END;
-
+/
 
 /* PL/SQL procedure implementing triggerRepackRecall
  * this creates all rows needed to recall a given file in the repack context
- * that is Tape (if needed), Segment, TapeCopy, DiskCopy and updates
+ * that is Tape (if needed), Segment, RecallJob, DiskCopy and updates
  * the subrequest.
  */
 CREATE OR REPLACE PROCEDURE triggerRepackRecall
@@ -2405,9 +2369,9 @@ BEGIN
   block3 := TO_NUMBER(SUBSTR(hexblock,7,2),'XX');
   INSERT INTO Segment (id, blockId0, blockId1, blockId2, blockId3, fseq, creationTime, status, copy, tape, priority)
   VALUES (segId, block0, block1, block2, block3, fseq, getTime(), tconst.SEGMENT_UNPROCESSED, tcId, tapeId, priority);
-  -- insert a TapeCopy
-  INSERT INTO TapeCopy (id, copyNb, status, castorFile, fseq)
-  VALUES (tcId, copynb, tconst.TAPECOPY_TOBERECALLED, cfId, fseq);
+  -- insert a RecallJob
+  INSERT INTO RecallJob (id, copyNb, status, castorFile, fseq)
+  VALUES (tcId, copynb, tconst.RECALLJOB_TOBERECALLED, cfId, fseq);
   -- insert a DiskCopy
   buildPathFromFileId(fileId, nsHost, dcId, dcPath);
   INSERT INTO DiskCopy (id, status, creationTime, castorFile, ownerUid, ownerGid, path)
@@ -2687,7 +2651,7 @@ CREATE OR REPLACE PROCEDURE recreateCastorFile(cfId IN INTEGER,
   ogid INTEGER;
 BEGIN
   -- Get data and lock access to the CastorFile
-  -- This, together with triggers will avoid new TapeCopies
+  -- This, together with triggers will avoid new migration/recall jobs
   -- or DiskCopies to be added
   SELECT fileclass INTO fclassId FROM CastorFile WHERE id = cfId FOR UPDATE;
   -- Determine the context (Put inside PrepareToPut ?)
@@ -2791,21 +2755,20 @@ BEGIN
   END IF;
   IF contextPIPP = 0 THEN
     -- Puts inside PrepareToPuts don't need the following checks
-    -- check if the file existed in advance with a fileclass incompatible with this svcClass
-    IF checkFailPutWhenTape0(sclassId, fclassId) = 1 THEN
-      -- The svcClass is disk only and the file being overwritten asks for tape copy.
-      -- This is impossible, so we deny the operation
+    -- check if the file can be routed to tape
+    IF checkNoTapeRouting(sclassId, fclassId) = 1 THEN
+      -- We could not route the file to tape, so let's fail the opening
       dcId := 0;
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
          SET status = 7, -- FAILED
-             errorCode = 22, -- EINVAL
-             errorMessage = 'File recreation canceled since this service class doesn''t provide tape backend'
+             errorCode = 1727, -- ESTNOTAPEROUTE
+             errorMessage = 'File recreation canceled since the file cannot be routed to tape'
        WHERE id = srId;
       RETURN;
     END IF;
     -- check if recreation is possible for TapeCopies
-    SELECT count(*) INTO nbRes FROM TapeCopy
-     WHERE status = tconst.TAPECOPY_SELECTED
+    SELECT count(*) INTO nbRes FROM MigrationJob
+     WHERE status = tconst.MIGRATIONJOB_SELECTED
       AND castorFile = cfId;
     IF nbRes > 0 THEN
       -- We found something, thus we cannot recreate
@@ -2831,8 +2794,10 @@ BEGIN
        WHERE id = srId;
       RETURN;
     END IF;
-    -- delete all tapeCopies
-    deleteTapeCopies(cfId);
+    -- delete ongoing recalls
+    deleteRecallJobs(cfId);
+    -- delete ongoing migrations
+    deleteMigrationJobs(cfId);
     -- set DiskCopies to INVALID
     UPDATE DiskCopy SET status = 7 -- INVALID
      WHERE castorFile = cfId AND status IN (0, 10); -- STAGED, CANBEMIGR
@@ -2891,12 +2856,6 @@ BEGIN
       END IF;
     END;
   END IF;
-  -- Reset svcClass to the request's one as we want to use the new one for migration.
-  -- However, we don't reset the filesize, this will be done at prepareForMigration time
-  -- so that in case the old file needs to be recovered from tape after e.g. a failed
-  -- transfer, we correctly have the previous size.
-  UPDATE CastorFile SET svcClass = sclassId
-   WHERE id = cfId;
   -- link SubRequest and DiskCopy
   UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
      SET diskCopy = dcId,
@@ -2925,7 +2884,6 @@ END;
  */
 CREATE OR REPLACE PROCEDURE selectCastorFile (fId IN INTEGER,
                                               nh IN VARCHAR2,
-                                              sc IN INTEGER,
                                               fc IN INTEGER,
                                               fs IN INTEGER,
                                               fn IN VARCHAR2,
@@ -2938,14 +2896,13 @@ BEGIN
   -- Get the stager/nsHost configuration option
   nsHostName := getConfigOption('stager', 'nsHost', nh);
   -- call internal method
-  selectCastorFileInternal(fId, nsHostName, sc, fc, fs, fn, srId, lut, TRUE, rid, rfs);
+  selectCastorFileInternal(fId, nsHostName, fc, fs, fn, srId, lut, TRUE, rid, rfs);
 END;
 /
 
 /* PL/SQL method implementing selectCastorFile */
 CREATE OR REPLACE PROCEDURE selectCastorFileInternal (fId IN INTEGER,
                                                       nh IN VARCHAR2,
-                                                      sc IN INTEGER,
                                                       fc IN INTEGER,
                                                       fs IN INTEGER,
                                                       fn IN VARCHAR2,
@@ -3004,9 +2961,9 @@ BEGIN
     -- no dead lock can result from taking a second lock within this transaction
     dropReusedLastKnownFileName(fn);
     -- insert new row
-    INSERT INTO CastorFile (id, fileId, nsHost, svcClass, fileClass, fileSize,
+    INSERT INTO CastorFile (id, fileId, nsHost, fileClass, fileSize,
                             creationTime, lastAccessTime, lastUpdateTime, lastKnownFileName)
-      VALUES (ids_seq.nextval, fId, nh, sc, fcId, fs, getTime(), getTime(), lut, normalizePath(fn))
+      VALUES (ids_seq.nextval, fId, nh, fcId, fs, getTime(), getTime(), lut, normalizePath(fn))
       RETURNING id, fileSize INTO rid, rfs;
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET castorFile = rid
      WHERE id = srId;
@@ -3026,45 +2983,6 @@ EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
 END;
 /
 
-/* PL/SQL method implementing stageRelease */
-CREATE OR REPLACE PROCEDURE stageRelease (fid IN INTEGER,
-                                          nh IN VARCHAR2,
-                                          ret OUT INTEGER) AS
-  cfId INTEGER;
-  nbRes INTEGER;
-  nsHostName VARCHAR2(2048);
-BEGIN
-  -- Get the stager/nsHost configuration option
-  nsHostName := getConfigOption('stager', 'nsHost', nh);
-  -- Lock the access to the CastorFile
-  -- This, together with triggers will avoid new TapeCopies
-  -- or DiskCopies to be added
-  SELECT id INTO cfId FROM CastorFile
-   WHERE fileId = fid AND nsHost = nsHostName FOR UPDATE;
-  -- check if removal is possible for TapeCopies
-  SELECT count(*) INTO nbRes FROM TapeCopy
-   WHERE status = tconst.TAPECOPY_SELECTED
-     AND castorFile = cfId;
-  IF nbRes > 0 THEN
-    -- We found something, thus we cannot recreate
-    ret := 1;
-    RETURN;
-  END IF;
-  -- check if recreation is possible for SubRequests
-  SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ count(*) INTO nbRes FROM SubRequest
-   WHERE status != 11 AND castorFile = cfId;   -- ARCHIVED
-  IF nbRes > 0 THEN
-    -- We found something, thus we cannot recreate
-    ret := 2;
-    RETURN;
-  END IF;
-  -- set DiskCopies to INVALID
-  UPDATE DiskCopy SET status = 7 -- INVALID
-   WHERE castorFile = cfId AND status = 0; -- STAGED
-  ret := 0;
-END;
-/
-
 /* PL/SQL method implementing stageForcedRm */
 CREATE OR REPLACE PROCEDURE stageForcedRm (fid IN INTEGER,
                                            nh IN VARCHAR2,
@@ -3077,7 +2995,7 @@ BEGIN
   -- Get the stager/nsHost configuration option
   nsHostName := getConfigOption('stager', 'nsHost', nh);
   -- Lock the access to the CastorFile
-  -- This, together with triggers will avoid new TapeCopies
+  -- This, together with triggers will avoid new migration/recall jobs
   -- or DiskCopies to be added
   SELECT id INTO cfId FROM CastorFile
    WHERE fileId = fid AND nsHost = nsHostName FOR UPDATE;
@@ -3087,7 +3005,7 @@ BEGIN
    WHERE castorFile = cfId
      AND status IN (0, 5, 6, 10, 11);  -- STAGED, WAITFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
   -- Stop ongoing recalls
-  deleteTapeCopies(cfId);
+  deleteRecallJobs(cfId);
   -- mark all get/put requests for those diskcopies
   -- and the ones waiting on them as failed
   -- so that clients eventually get an answer
@@ -3133,9 +3051,9 @@ BEGIN
   nsHostName := getConfigOption('stager', 'nsHost', nh);
   BEGIN
     -- Lock the access to the CastorFile
-    -- This, together with triggers will avoid new TapeCopies
+    -- This, together with triggers will avoid new migration/recall jobs
     -- or DiskCopies to be added
-    SELECT id, svcClass INTO cfId, migSvcClass FROM CastorFile
+    SELECT id INTO cfId FROM CastorFile
      WHERE fileId = fid AND nsHost = nsHostName FOR UPDATE;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- This file does not exist in the stager catalog
@@ -3199,29 +3117,7 @@ BEGIN
     SELECT status INTO dcStatus
       FROM DiskCopy
      WHERE id = dcsToRm(1);
-    -- make sure we don't drop the last diskcopy of the original service class
-    -- as it is needed to migrate safely. Indeed, nothing can insure that other copies
-    -- are in service classes that can migrate to the requested tapepool(s)
-    -- In case it is not the case, give up with the deletion.
-    IF dcStatus = 10 THEN  -- CANBEMIGR
-      SELECT count(*) INTO nbRes
-        FROM DiskCopy, FileSystem, DiskPool2SvcClass 
-       WHERE DiskCopy.fileSystem = FileSystem.id
-         AND FileSystem.diskPool = DiskPool2SvcClass.parent
-         AND DiskCopy.castorFile = cfId
-         AND DiskCopy.status = 10  -- CANBEMIGR
-         AND diskpool2svcclass.child = migSvcClass
-         AND DiskCopy.id NOT IN
-          (SELECT /*+ CARDINALITY(dcidTable 5) */ * FROM TABLE(dcsToRm) dcidTable);
-      IF nbRes = 0 THEN
-        UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-           SET status = 7,  -- FAILED
-               errorCode = 16,  -- EBUSY
-               errorMessage = 'As the file is not yet migrated, we cannot drop the last copy in this service class'
-         WHERE id = srId;
-         RETURN;
-      END IF;
-    ELSE
+    IF dcStatus != dconst.DISKCOPY_CANBEMIGR THEN
       -- Check whether something else is left: if not, do as
       -- if we are performing a stageRm everywhere.
       SELECT count(*) INTO nbRes FROM DiskCopy
@@ -3239,75 +3135,38 @@ BEGIN
   END IF;
 
   IF scId = 0 THEN
-    -- full cleanup is to be performed, do all necessary checks beforehand
-    DECLARE
-      segId INTEGER;
-      unusedIds "numList";
-    BEGIN
-      -- check if removal is possible for migration
-      SELECT count(*) INTO nbRes FROM DiskCopy
-       WHERE status = 10 -- DISKCOPY_CANBEMIGR
-         AND castorFile = cfId;
-      IF nbRes > 0 THEN
-        -- We found something, thus we cannot remove
-        UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-           SET status = 7,  -- FAILED
-               errorCode = 16,  -- EBUSY
-               errorMessage = 'The file is not yet migrated'
-         WHERE id = srId;
-        RETURN;
-      END IF;
-      -- Stop ongoing recalls if stageRm either everywhere or the only available diskcopy.
-      -- This is not entirely clean: a proper operation here should be to
-      -- drop the SubRequest waiting for recall but keep the recall if somebody
-      -- else is doing it, and taking care of other WAITSUBREQ requests as well...
-      -- but it's fair enough, provided that the last stageRm will cleanup everything.
-      -- XXX First lock all segments for the file. Note that
-      -- XXX this step should be dropped once the tapeGateway
-      -- XXX is deployed. The current recaller does not take
-      -- XXX the proper lock on the castorFiles, hence we
-      -- XXX need this here
-      SELECT Segment.id BULK COLLECT INTO unusedIds
-        FROM Segment, TapeCopy
-       WHERE TapeCopy.castorfile = cfId
-         AND TapeCopy.id = Segment.copy
-       ORDER BY Segment.id
-      FOR UPDATE OF Segment.id;
-      -- Check whether we have any segment in SELECTED
-      SELECT segment.id INTO segId
-        FROM Segment, TapeCopy
-       WHERE TapeCopy.castorfile = cfId
-         AND TapeCopy.id = Segment.copy
-         AND Segment.status = 7 -- SELECTED
-         AND ROWNUM < 2;
-      -- Something is running, so give up
+    -- full cleanup is to be performed, check for migrations beforehand
+    SELECT count(*) INTO nbRes FROM DiskCopy
+     WHERE status = 10 -- DISKCOPY_CANBEMIGR
+       AND castorFile = cfId;
+    IF nbRes > 0 THEN
+      -- We found something, thus we cannot remove
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
          SET status = 7,  -- FAILED
              errorCode = 16,  -- EBUSY
-             errorMessage = 'The file is being recalled from tape'
+             errorMessage = 'The file is not yet migrated'
        WHERE id = srId;
       RETURN;
-    EXCEPTION WHEN NO_DATA_FOUND THEN
-      -- Nothing running. We still may have found nothing at all...
-      SELECT count(*) INTO nbRes FROM DiskCopy
-       WHERE castorFile = cfId
-         AND status NOT IN (4, 7, 9);  -- anything but FAILED, INVALID, BEINGDELETED
-      IF nbRes = 0 THEN
-        UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-           SET status = 7,  -- FAILED
-               errorCode = 2,  -- ENOENT
-               errorMessage = 'File not found on disk cache'
-         WHERE id = srId;
-        RETURN;
-      END IF;
-      
-      deleteTapeCopies(cfId);
-      -- Reselect what needs to be removed
-      SELECT id BULK COLLECT INTO dcsToRm
-        FROM DiskCopy
-       WHERE castorFile = cfId
-         AND status IN (0, 1, 2, 5, 6, 10, 11);  -- STAGED, WAIT*, STAGEOUT, CANBEMIGR
-    END;
+    END IF;
+    -- No migration running. Let's check if we have the file at all
+    SELECT count(*) INTO nbRes FROM DiskCopy
+     WHERE castorFile = cfId
+       AND status NOT IN (4, 7, 9);  -- anything but FAILED, INVALID, BEINGDELETED
+    IF nbRes = 0 THEN
+      UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
+         SET status = 7,  -- FAILED
+             errorCode = 2,  -- ENOENT
+             errorMessage = 'File not found on disk cache'
+       WHERE id = srId;
+      RETURN;
+    END IF;
+    -- nothing running and we have the file, let's cancel recalls
+    deleteRecallJobs(cfId);
+    -- Reselect what needs to be removed
+    SELECT id BULK COLLECT INTO dcsToRm
+      FROM DiskCopy
+     WHERE castorFile = cfId
+       AND status IN (0, 1, 2, 5, 6, 10, 11);  -- STAGED, WAIT*, STAGEOUT, CANBEMIGR
   END IF;
 
   -- Now perform the remove:
@@ -3326,6 +3185,9 @@ BEGIN
       srUuid VARCHAR(2048);
     BEGIN
       FOR i IN srIds.FIRST .. srIds.LAST LOOP
+        SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ subreqId INTO srUuid
+          FROM SubRequest
+         WHERE SubRequest.id = srIds(i);
         UPDATE SubRequest
            SET status = CASE
                  WHEN status IN (6, 13) AND reqType = 133 THEN 9 ELSE 7
@@ -3333,8 +3195,7 @@ BEGIN
                -- this so that user requests in status WAITSUBREQ are always marked FAILED even if they wait on a replication
                errorCode = 4,  -- EINTR
                errorMessage = 'Canceled by another user request'
-         WHERE id = srIds(i) OR parent = srIds(i)
-         RETURNING subreqId INTO srUuid;
+         WHERE id = srIds(i) OR parent = srIds(i);
         -- make the scheduler aware so that it can remove the transfer from the queues if needed
         INSERT INTO TransfersToAbort VALUES (srUuid);
       END LOOP;

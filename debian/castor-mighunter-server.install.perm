@@ -1,6 +1,0 @@
-%attr(0755,root,root) etc/init.d/mighunterd
-%attr(0644,root,root) etc/sysconfig/mighunterd.example
-%attr(0644,root,root) etc/logrotate.d/castor-mighunter-server
-%attr(0755,root,root) usr/bin/mighunterd
-%attr(0644,root,root) etc/castor/policies/migration.py.example
-%attr(0644,root,root) etc/castor/policies/stream.py.example

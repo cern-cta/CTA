@@ -27,7 +27,6 @@
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/Segment.hpp"
-#include "castor/stager/Stream.hpp"
 #include "castor/stager/Tape.hpp"
 #include "castor/stager/TapeStatusCodes.hpp"
 #include "osdep.h"
@@ -51,7 +50,6 @@ castor::stager::Tape::Tape() throw() :
   m_density(""),
   m_devtype(""),
   m_id(0),
-  m_stream(0),
   m_status(TapeStatusCodes(0)) {
 }
 
@@ -59,9 +57,6 @@ castor::stager::Tape::Tape() throw() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::Tape::~Tape() throw() {
-  if (0 != m_stream) {
-    m_stream->setTape(0);
-  }
   for (unsigned int i = 0; i < m_segmentsVector.size(); i++) {
     m_segmentsVector[i]->setTape(0);
     delete m_segmentsVector[i];
@@ -95,12 +90,6 @@ void castor::stager::Tape::print(std::ostream& stream,
   stream << indent << "devtype : " << m_devtype << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
-  stream << indent << "Stream : " << std::endl;
-  if (0 != m_stream) {
-    m_stream->print(stream, indent + "  ", alreadyPrinted);
-  } else {
-    stream << indent << "  null" << std::endl;
-  }
   stream << indent << "status : " << TapeStatusCodesStrings[m_status] << std::endl;
   {
     stream << indent << "Segments : " << std::endl;

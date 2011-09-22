@@ -30,7 +30,6 @@
 #include "castor/Constants.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
-#include "castor/stager/Stream.hpp"
 #include "castor/stager/Tape.hpp"
 #include "castor/tape/tapegateway/TapeGatewayRequest.hpp"
 #include "castor/tape/tapegateway/TapeRequestStateCode.hpp"
@@ -49,8 +48,6 @@ castor::tape::tapegateway::TapeGatewayRequest::TapeGatewayRequest() throw() :
   m_nbRetry(0),
   m_lastFseq(0),
   m_id(0),
-  m_streamMigration(0),
-  m_tapeRecall(0),
   m_status(TapeRequestStateCode(0)) {
 }
 
@@ -81,18 +78,6 @@ void castor::tape::tapegateway::TapeGatewayRequest::print(std::ostream& stream,
   stream << indent << "lastFseq : " << m_lastFseq << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
-  stream << indent << "StreamMigration : " << std::endl;
-  if (0 != m_streamMigration) {
-    m_streamMigration->print(stream, indent + "  ", alreadyPrinted);
-  } else {
-    stream << indent << "  null" << std::endl;
-  }
-  stream << indent << "TapeRecall : " << std::endl;
-  if (0 != m_tapeRecall) {
-    m_tapeRecall->print(stream, indent + "  ", alreadyPrinted);
-  } else {
-    stream << indent << "  null" << std::endl;
-  }
   stream << indent << "status : " << TapeRequestStateCodeStrings[m_status] << std::endl;
 }
 

@@ -35,10 +35,10 @@
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
+#include "castor/stager/RecallJob.hpp"
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/SegmentStatusCodes.hpp"
 #include "castor/stager/Tape.hpp"
-#include "castor/stager/TapeCopy.hpp"
 #include "osdep.h"
 #include <string>
 
@@ -214,7 +214,7 @@ castor::IObject* castor::io::StreamSegmentCnv::unmarshalObject(castor::io::binio
     dynamic_cast<castor::stager::Segment*>(object);
   ad.setObjType(castor::OBJ_INVALID);
   castor::IObject* objCopy = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setCopy(dynamic_cast<castor::stager::TapeCopy*>(objCopy));
+  obj->setCopy(dynamic_cast<castor::stager::RecallJob*>(objCopy));
   ad.setObjType(castor::OBJ_INVALID);
   castor::IObject* objTape = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setTape(dynamic_cast<castor::stager::Tape*>(objTape));

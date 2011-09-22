@@ -55,6 +55,7 @@ CNVSLIB_SRCS = DbBaseAddressCnv.cpp \
      DbPutFailedCnv.cpp \
      DbPutStartRequestCnv.cpp \
      DbQueryParameterCnv.cpp \
+     DbRecallJobCnv.cpp \
      DbRequestTypeCnv.cpp \
      DbSegmentCnv.cpp \
      DbSetFileGCWeightCnv.cpp \
@@ -69,16 +70,13 @@ CNVSLIB_SRCS = DbBaseAddressCnv.cpp \
      DbStageRmRequestCnv.cpp \
      DbStageUpdateRequestCnv.cpp \
      DbStgFilesDeletedCnv.cpp \
-     DbStreamCnv.cpp \
      DbSubRequestCnv.cpp \
      DbSvcClassCnv.cpp \
      DbTapeAccessSpecificationCnv.cpp \
      DbTapeCnv.cpp \
-     DbTapeCopyCnv.cpp \
      DbTapeDriveCnv.cpp \
      DbTapeDriveCompatibilityCnv.cpp \
      DbTapeDriveDedicationCnv.cpp \
-     DbTapePoolCnv.cpp \
      DbTapeRequestCnv.cpp \
      DbTapeServerCnv.cpp \
      DbBWUserCnv.cpp \

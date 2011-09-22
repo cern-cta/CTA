@@ -1,70 +1,50 @@
 .TH MODIFYSVCCLASS 1 "2011" CASTOR "stager catalogue administrative commands"
 .SH NAME
-modifysvcclass \- modify an existing service class in the stager catalog
+modifysvcclass \- modifies an existing service class in the stager catalog
 .SH SYNOPSIS
 .B modifysvcclass
 [
 .BI -h
 ]
 [
-.BI --nbdrives
-<nbDrives>
-]
-[
 .BI --defaultfilesize
 <defaultFileSize>
 ]
 [
-.BI --maxreplicanb 
+.BI --maxreplicanb
 <maxReplicaNb>
 ]
 [
-.BI --failjobswhennospace 
+.BI --failjobswhennospace
 <bool>
 ]
 [
-.BI --disk1behavior 
+.BI --disk1behavior
 <bool>
 ]
 [
-.BI --forcedfileclass 
+.BI --forcedfileclass
 <forcedFileClass>
 ]
 [
-.BI --replicateonclose 
+.BI --replicateonclose
 <bool>
 ]
 [
-.BI --gcpolicy 
+.BI --gcpolicy
 <gcPolicyName>
 ]
 [
-.BI --migratorpolicy 
-<migratorPolicy>
-]
-[
-.BI --streampolicy 
-<streamPolicy>
-]
-[
-.BI --recallerpolicy 
+.BI --recallerpolicy
 <recallerPolicy>
 ]
 [
-.BI --adddiskpools 
+.BI --adddiskpools
 <diskPoolName>:[...]
 ]
 [
-.BI --removediskpools 
+.BI --removediskpools
 <diskPoolName>:[...]
-]
-[
-.BI --addtapepools 
-<tapePoolName>[:...]
-]
-[
-.BI --removetapepools 
-<tapePoolName>[:...]
 ]
 <svcClassName>
 
@@ -76,12 +56,10 @@ modifies an existing service class in the CASTOR stager catalog
 .BI \-h,\ \-\-help
 Get usage information
 .TP
-.BI \-\-nbdrives <nbDrives>
-If given, modifies the number of tape drives this service class is allowed to use concurrently
-for migration.
-.TP
 .BI \-\-defaultfilesize <defaultFileSize>
 If given, modifies the default file size allocation for write requests not specifying any filesize.
+The value can be given using the standard K/M/G/T extensions, with or without B (i.e. both KB and K are accepted).
+These have the ISO meaning of powers of 10. Ki/Mi/Gi/Ti[B] extensions are also accepted and deal with powers of 2.
 .TP
 .BI \-\-maxreplicanb <maxReplicaNb>
 If given, modifies the maximum number of disk resident replicas for a given CASTOR file
@@ -116,14 +94,6 @@ diskservers which are no longer in production!
 If given, modifies the name of the garbage collection policy to be used for this service class.
 This value is irrelevant if Disk1Behavior is set to yes.
 .TP
-.BI \-\-migratorpolicy <migratorPolicy>
-If given, modifies the name of the migrator policy to be used for this service class.
-.TP
-.BI \-\-streampolicy <streamPolicy>
-If given, modifies the name of the stream policy to be used for this service class. The policy
-will be used to determine the number of streams that should be running based on the
-number of files and volume of data that should be written too tape.
-.TP
 .BI \-\-recallerpolicy <recallerPolicy>
 If given, modifies the name of the recaller policy to be used for this service class.
 .TP
@@ -137,42 +107,32 @@ If given, removes the given disk pools from the set that this service class is a
 More than one disk pool can be specified, colon separated. All specified disk
 pools must already exist.
 .TP
-.BI \-\-addtapepools <tapePool1:tapePool2:...>
-If given, adds the given tape pools to the set that this service class is allowed to use.
-More than one tape pool can be specified, colon separated. All specified tape
-pools must already exist.
-.TP
-.BI \-\-removetapepools <tapePool1:tapePool2:...>
-If given, removes the given tape pools from the set that this service class is allowed to use.
-More than one tape pool can be specified, colon separated. All specified tape
-pools must already exist.
-.TP
 .BI <svcClassName>
 name of the service class to modify.
 
 .SH EXAMPLES
 .nf
 .ft CW
-#printsvcclass test
-NAME DEFAULTFILESIZE NBDRIVES FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR STREAMPOLICY GCPOLICY MIGRATORPOLICY RECALLERPOLICY     DISKPOOLS    TAPEPOOLS           ID
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-test               1        0                True            1               -            False         False            -        -              -              - default,extra stager_dev01     91382934
+#printsvcclass default
+   NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR GCPOLICY RECALLERPOLICY DISKPOOLS ID LASTEDITOR          LASTEDITION
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+default           10MiB                True            1               -            False         False        -              -   default 15   sponcec3 30-Aug-2011 17:02:00
 
-# modifysvcclass --maxreplicanb 2 --gcpolicy dropall --forcedfileclass temp --removediskpools default test
-modified service class test successfully
-
-# printsvcclass test
-NAME DEFAULTFILESIZE NBDRIVES FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR STREAMPOLICY GCPOLICY MIGRATORPOLICY RECALLERPOLICY DISKPOOLS    TAPEPOOLS           ID
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-test               1        0                True            2            temp            False         False            -  dropall              -              -     extra stager_dev01     91382934
-
-# modifysvcclass --forcedfileclass '' --adddiskpools default test
-modified service class test successfully
+# modifysvcclass --defaultfilesize 20GiB --maxreplicanb 2 --gcpolicy dropall --forcedfileclass temp --removediskpools default default
+modified service class default successfully
 
 # printsvcclass test
-NAME DEFAULTFILESIZE NBDRIVES FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR STREAMPOLICY GCPOLICY MIGRATORPOLICY RECALLERPOLICY     DISKPOOLS    TAPEPOOLS           ID
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-test               1        0                True            2               -            False         False            -  dropall              -              - default,extra stager_dev01     91382934
+   NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR GCPOLICY RECALLERPOLICY DISKPOOLS ID LASTEDITOR          LASTEDITION
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+default           10MiB                True            2            temp            False         False  dropall              -         - 15   sponcec3 30-Aug-2011 17:09:44
+
+# modifysvcclass --forcedfileclass '' --adddiskpools default default
+modified service class default successfully
+
+# printsvcclass test
+   NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR GCPOLICY RECALLERPOLICY DISKPOOLS ID LASTEDITOR          LASTEDITION
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+default           10MiB                True            2               -            False         False  dropall              -   default 15   sponcec3 30-Aug-2011 17:10:39
 
 .SH NOTES
 This command requires database client access to the stager catalog and nameserver DBs.
@@ -183,6 +143,7 @@ Configuration for the database accesses is taken from castor.conf.
 .BR entersvcclass,
 .BR printsvcclass,
 .BR modifytapepool,
+.BR modifymigrationroute,
 .BR adminMultiInstance
 
 .SH AUTHOR

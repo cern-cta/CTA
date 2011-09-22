@@ -43,7 +43,6 @@ CppWriter::CppWriter( ) :
   streamhw = new CppHStreamCnvWriter(m_doc, "Stream converter generator");
   streamcppw = new CppCppStreamCnvWriter(m_doc, "Stream converter generator");
   m_noDBCnvs.insert(QString("DiskCopyForRecall"));
-  m_noDBCnvs.insert(QString("TapeCopyForMigration"));
 }
 
 CppWriter::~CppWriter() {

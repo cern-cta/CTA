@@ -24,83 +24,105 @@
 '''command line printing the given tape pool(s)'''
 
 import sys
-import getopt
+import getopt, time
 import castor_tools
 
 # usage function
 def usage(exitCode):
     '''prints usage'''
-    print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-a|--all] [<tapePoolName>[:...]]'
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] <tapePoolName> [...]'
     sys.exit(exitCode)
+
+def secsToDate(s):
+    '''converts number of seconds since the epoch into readable date'''
+    return time.strftime('%d-%b-%Y %H:%M:%S', time.localtime(s))
+
+def nbToDataAmount(n):
+    '''converts a number into a readable amount of data'''
+    ext = ['', 'KiB', 'MiB', 'GiB', 'TiB']
+    magn = 0
+    while n / 1024 > 5:
+        magn += 1
+        n = n / 1024
+    return str(n) + ext[magn]
+
+def nbToAge(n):
+    '''converts a number of seconds into a readable age'''
+    s = ''
+    if n >= 86400:
+        s = s + str(n/86400) + 'd'
+        n = n % 86400
+    if n >= 3600:
+        s = s + str(n/3600) + 'h'
+        n = n % 3600
+    if n >= 60:
+        s = s + str(n/60) + 'mn'
+        n = n % 60
+    if n > 0:
+        s = s + str(n) + 's'
+    if len(s) == 0:
+        s = '0s'
+    return s
 
 # first parse the options
 try:
-    options, args = getopt.getopt(sys.argv[1:], 'hva', ['help', 'verbose', 'all'])
+    options, args = getopt.getopt(sys.argv[1:], 'hv', ['help', 'verbose'])
 except Exception, e:
     print e
     usage(1)
 verbose = False
-displayAll = False
 for f, v in options:
     if f == '-h' or f == '--help':
         usage(0)
     elif f == '-v' or f == '--verbose':
         verbose = True
-    if f == '-a' or f == '--all':
-        displayAll = True
     else:
         print "unknown option : " + f
         usage(1)
 
 # Deal with arguments
-tapePools = set([])
+tapePools = None
 if len(args) != 0:
-    if displayAll:
-        print "No argument should be given when -a/--all is used"
-        usage(1)
-    else:
-        tapePools = set(args[0].split(':'))
-else:
-    if not displayAll:
-        print "Missing arguments"
-        usage(1)
+    tapePools = set(args)
 
 try:
     # connect to stager and prepare statements
     stconn = castor_tools.connectToStager()
     stcur = stconn.cursor()
     sqlStatement = '''
-    SELECT TapePools.name, TapePools.migrSelectPolicy, SvcClasses.names, TapePools.id
-      FROM (SELECT name, migrSelectPolicy, id
-              FROM TapePool) TapePools,
-           (SELECT SvcClass2TapePool.child AS tapePoolId, collect(SvcClass.name) AS names
-              FROM SvcClass2TapePool, SvcClass
-             WHERE SvcClass.id = SvcClass2TapePool.parent
-             GROUP BY child) SvcClasses
-     WHERE TapePools.id = SvcClasses.tapePoolId(+)'''
-    if not displayAll:
-        sqlStatement = sqlStatement + " AND TapePools.name IN ('" + "', '".join(tapePools) + "')"
+    SELECT name, nbDrives, minAmountDataForMount, minNbFilesForMount, maxFileAgeBeforeMount,
+           lastEditor, lastEditionTime, id
+      FROM TapePool'''
+    if tapePools:
+        sqlStatement = sqlStatement + " WHERE name IN ('" + "', '".join(tapePools) + "')"
     stcur.execute(sqlStatement)
     # get results
     rows = stcur.fetchall()
     existingTapePools = set([row[0] for row in rows])
-    unknownTapePools = tapePools - existingTapePools
+    if tapePools:
+        unknownTapePools = tapePools - existingTapePools
     # loop over tape pools and print them
     if existingTapePools:
         maxNameLen = max([4] + [len(row[0]) for row in rows])
-        maxMigrSelectPolicyLen = max([16] + [len(row[1]) for row in rows if row[1]])
-        maxSvcClassNameLen = max([10] + [len(', '.join(row[2])) for row in rows if row[2]])
-        maxIdLen = max([2] + [len(str(row[3])) for row in rows])
-        print '%*s %*s %*s %*s' % (maxNameLen, 'NAME', maxMigrSelectPolicyLen, 'MIGRSELECTPOLICY', maxSvcClassNameLen, 'SVCCLASSES', maxIdLen, 'ID')
-        print '-' * (3+maxNameLen+maxMigrSelectPolicyLen+maxSvcClassNameLen+maxIdLen)
-        for name, migrselectpolicy, svclasses, tpId in rows:
-            if svclasses:
-              svcClassStr = ','.join(svclasses)
-            else:
-              svcClassStr = '-'
-            print '%*s %*s %*s %*d' % (maxNameLen, name, maxMigrSelectPolicyLen, migrselectpolicy, maxSvcClassNameLen, svcClassStr, maxIdLen, tpId)
+        maxMinAmountDataLen = max([13] + [len(nbToDataAmount(row[2])) for row in rows])
+        maxMinNbFilesLen = max([10] + [len(str(row[3])) for row in rows])
+        maxMaxFileAgeLen = max([10] + [len(nbToAge(row[4])) for row in rows])
+        maxLastEditorLen = max([10] + [len(row[5]) for row in rows if row[5]])
+        maxLastEditionTimeLen = max([6] + [len(secsToDate(row[6])) for row in rows])
+        maxIdLen = max([2] + [len(str(row[7])) for row in rows])
+        print '%*s NBDRIVES %*s %*s %*s %*s %*s %*s' % \
+              (maxNameLen, 'NAME', maxMinAmountDataLen, 'MINAMOUNTDATA', maxMinNbFilesLen, \
+               'MINNBFILES', maxMaxFileAgeLen, 'MAXFILEAGE', maxIdLen, 'ID', \
+               maxLastEditorLen, 'LASTEDITOR', maxLastEditionTimeLen, 'LASTEDITION')
+        print '-' * (15 + maxNameLen + maxMinAmountDataLen + maxMinNbFilesLen + maxMaxFileAgeLen + \
+                     maxLastEditorLen + maxLastEditionTimeLen + maxIdLen)
+        for name, nbdrives, minamountdata, minnbfiles, maxfileage, lastEditor, lastEdition, tpid in rows:
+            print '%*s %8d %*s %*d %*s %*d %*s %*s' % \
+                  (maxNameLen, name, nbdrives, maxMinAmountDataLen, nbToDataAmount(minamountdata), \
+                   maxMinNbFilesLen, minnbfiles, maxMaxFileAgeLen, nbToAge(maxfileage), maxIdLen, tpid, \
+                   maxLastEditorLen, lastEditor, maxLastEditionTimeLen, secsToDate(lastEdition))
     # check unknown tape pools
-    if unknownTapePools:
+    if tapePools and unknownTapePools:
         print 'WARNING : the following tape pools do not exist : ' + ', '.join(unknownTapePools)
     # close DB connections
     try:

@@ -6,13 +6,8 @@ printtapepool
 [
 .BI -h
 ]
-[
-.BI -a
-]
-[
-.BI <tapePoolName>
-[:...]
-]
+<tapePoolName>
+[...]
 
 .SH DESCRIPTION
 .B printtapepool
@@ -21,26 +16,23 @@ prints out definitions of the given tape pools
 .BI \-h,\ \-\-help
 Get usage information
 .TP
-.BI \-a,\ \-\-all
-List all tape pools found in the stager catalog.
-.TP
 .BI <TapePoolName>
-name of tape pools to list. Several names can be given, colon separated. Note that
-no name should be given if -a/--all is used.
+when tape pool names are given, only the definitions of the listed tape pool are printed.
+If no tape pool name is given, all tape pool definitions are printed.
 
 .SH EXAMPLES
 .nf
 .ft CW
-# printtapepool -a
-        NAME     MIGRSELECTPOLICY SVCCLASSES ID
------------------------------------------------
-stager_dev01 defaultMigrSelPolicy    default  6
-stager_dev02                    -    default  7
+# printtapepool
+        NAME NBDRIVES MINAMOUNTDATA MINNBFILES MAXFILEAGE ID LASTEDITOR          LASTEDITION
+--------------------------------------------------------------------------------------------
+ newtapepool        0        100GiB       1000        12h  7   sponcec3 30-Aug-2011 16:32:15
+testtapepool        2         23MiB       1000    12h23mn  8   sopncec3 30-Aug-2011 16:42:32
 
-# printtapepool stager_dev01:nonexisting
-        NAME     MIGRSELECTPOLICY SVCCLASSES ID
------------------------------------------------
-stager_dev01 defaultMigrSelPolicy    default  6
+# printtapepool testtapepool nonexisting
+        NAME NBDRIVES MINAMOUNTDATA MINNBFILES MAXFILEAGE ID LASTEDITOR          LASTEDITION
+--------------------------------------------------------------------------------------------
+testtapepool        2         23MiB       1000    12h23mn  8   sponcec3 30-Aug-2011 16:42:32
 WARNING : the following tape pools do not exist : nonexisting
 
 .SH NOTES
@@ -54,6 +46,7 @@ Configuration for the database access is taken from castor.conf.
 .BR printdiskpool,
 .BR printsvcclass,
 .BR printfileclass,
+.BR printmigrationroute,
 .BR adminMultiInstance
 
 .SH AUTHOR

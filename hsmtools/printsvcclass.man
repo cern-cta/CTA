@@ -6,13 +6,9 @@ printsvcclass
 [
 .BI -h
 ]
-[
-.BI -a
-]
-[
-.BI <svcClassName>
-[:...]
-]
+<svcClassName>
+[...]
+
 
 .SH DESCRIPTION
 .B printsvcclass
@@ -21,27 +17,24 @@ prints out definitions of the given services classes
 .BI \-h,\ \-\-help
 Get usage information
 .TP
-.BI \-a,\ \-\-all
-List all service classes
-.TP
 .BI <svcClassName>
-name of service classes to list. Several names can be given, colon separated. Note that
-no name should be given if -a/--all is used.
+when service class names are given, only the definitions of the listed service class are printed.
+If no service class name is given, all service class definitions are printed.
 
 .SH EXAMPLES
 .nf
 .ft CW
-# printsvcclass -a
-    NAME DEFAULTFILESIZE NBDRIVES FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR        STREAMPOLICY GCPOLICY         MIGRATORPOLICY RECALLERPOLICY DISKPOOLS    TAPEPOOLS           ID
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-diskonly        10485760        0                True            1            temp            False          True                   -        - defaultMigrationPolicy              -     extra            -           10
-     dev        10485760        0                True            1               -            False         False                   -        - defaultMigrationPolicy              -     extra            -            8
- default        10485760        1                True            1               -            False         False defaultStreamPolicy        - defaultMigrationPolicy              -   default stager_dev01            5
+# printsvcclass
+    NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR GCPOLICY RECALLERPOLICY DISKPOOLS ID LASTEDITOR          LASTEDITION
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ default           10MiB                True            1               -            False         False        -              -   default 15   sponcec3 30-Aug-2011 17:02:00
+     dev           10MiB                True            1               -            False         False        -              -     extra 16   sponcec3 30-Aug-2011 17:02:05
+diskonly           10MiB                True            1            temp            False          True        -              -     extra 17   sponcec3 30-Aug-2011 17:02:10
 
-# printsvcclass dev:nonexisting
-NAME DEFAULTFILESIZE NBDRIVES FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR STREAMPOLICY GCPOLICY         MIGRATORPOLICY RECALLERPOLICY DISKPOOLS TAPEPOOLS           ID
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- dev        10485760        0                True            1               -            False         False            -        - defaultMigrationPolicy              -     extra         -            8
+# printsvcclass dev nonexisting
+NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR GCPOLICY RECALLERPOLICY DISKPOOLS ID LASTEDITOR          LASTEDITION
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ dev           10MiB                True            1               -            False         False        -              -     extra 16   sponcec3 30-Aug-2011 17:02:05
 WARNING : the following service classes do not exist : nonexisting
 
 .SH NOTES
@@ -55,6 +48,7 @@ Configuration for the database access is taken from castor.conf.
 .BR printtapepool,
 .BR printdiskpool,
 .BR printfileclass,
+.BR printmigrationroute,
 .BR adminMultiInstance
 
 .SH AUTHOR

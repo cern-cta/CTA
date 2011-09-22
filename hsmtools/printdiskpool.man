@@ -6,38 +6,30 @@ printdiskpool
 [
 .BI -h
 ]
-[
-.BI -a
-]
-[
-.BI <diskPoolName>
-[:...]
-]
+<diskPoolName>
+[...]
 
 .SH DESCRIPTION
 .B printdiskpool
-prints out definitions of the given disk pools
+prints out definitions of disk pools
 .LP
 .BI \-h,\ \-\-help
 Get usage information
 .TP
-.BI \-a,\ \-\-all
-List all disk pools found in the stager catalog.
-.TP
 .BI <DiskPoolName>
-name of disk pools to list. Several names can be given, colon separated. Note that
-no name should be given if -a/--all is used.
+when disk pool names are given, only the definitions of the listed disk pool are printed.
+If no disk pool name is given, all disk pool definitions are printed.
 
 .SH EXAMPLES
 .nf
 .ft CW
-# printdiskpool -a
+# printdiskpool
    NAME NSFILESYSTEMS    SVCCLASSES ID
 --------------------------------------
   extra            10 dev, diskonly  9
 default            10       default  7
 
-# printdiskpool extra:nonexisting
+# printdiskpool extra nonexisting
  NAME NSFILESYSTEMS    SVCCLASSES ID
 ------------------------------------
 extra            10 dev, diskonly  9
@@ -53,6 +45,7 @@ Configuration for the database access is taken from castor.conf.
 .BR printtapepool,
 .BR printsvcclass,
 .BR printfileclass,
+.BR printmigrationroute,
 .BR adminMultiInstance
 
 .SH AUTHOR

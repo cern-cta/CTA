@@ -7,10 +7,6 @@ entersvcclass \- define a new service class in the stager catalog
 .BI -h
 ]
 [
-.BI --nbdrives
-<nbDrives>
-]
-[
 .BI --defaultfilesize
 <defaultFileSize>
 ]
@@ -39,14 +35,6 @@ entersvcclass \- define a new service class in the stager catalog
 <gcPolicyName>
 ]
 [
-.BI --migratorpolicy 
-<migratorPolicy>
-]
-[
-.BI --streampolicy 
-<streamPolicy>
-]
-[
 .BI --recallerpolicy 
 <recallerPolicy>
 ]
@@ -54,26 +42,20 @@ entersvcclass \- define a new service class in the stager catalog
 .BI --diskpools 
 <diskPoolName>:[...]
 ]
-[
-.BI --tapepools 
-<tapePoolName>[:...]
-]
 <svcClassName>
 
 .SH DESCRIPTION
-.B enterSvcClass
+.B entersvcclass
 enters a new service class definition in the CASTOR stager catalog
 .TP
 .BI \-h,\ \-\-help
 Get usage information
 .TP
-.BI \-\-nbdrives <nbDrives>
-The number of tape drives this service class is allowed to use concurrently
-for migration. Default is 0 is not provided
-.TP
 .BI \-\-defaultfilesize <defaultFileSize>
 The default file size allocation for write requests not specifying any filesize.
 Default is 2 GiB if not specified.
+The value can be given using the standard K/M/G/T extensions, with or without B (i.e. both KB and K are accepted).
+These have the ISO meaning of powers of 10. Ki/Mi/Gi/Ti[B] extensions are also accepted and deal with powers of 2.
 .TP
 .BI \-\-maxreplicanb <maxReplicaNb>
 Specifies the maximum number of disk resident replicas for a given CASTOR file
@@ -112,14 +94,6 @@ Specifies the name of the garbage collection policy to be used for this service 
 This value is irrelevant if Disk1Behavior is set to yes.
 If not provided, the default policy will be used
 .TP
-.BI \-\-migratorpolicy <migratorPolicy>
-Specifies the name of the migrator policy to be used for this service class.
-.TP
-.BI \-\-streampolicy <streamPolicy>
-Specifies the name of the stream policy to be used for this service class. The policy
-will be used to determine the number of streams that should be running based on the
-number of files and volume of data that should be written too tape.
-.TP
 .BI \-\-recallerpolicy <recallerPolicy>
 Specifies the name of the recaller policy to be used for this service class.
 .TP
@@ -128,21 +102,21 @@ Lists the names of the disk pools that this service class is allowed to use.
 More than one disk pool can be specified, colon separated. All specified disk
 pools must already exist.
 .TP
-.BI \-\-tapepools <tapePool1:tapePool2:...>
-Lists the names of the tape pools that this service class is allowed to use.
-More than one tape pool can be specified, colon separated. All specified disk
-pools must already exist.
-.TP
 .BI <svcClassName>
 name of the service class to create.
 
 .SH EXAMPLES
 .nf
 .ft CW
-#entersvcclass --nbdrives 2 --tapepools user:largeuser --diskpools default public
+#entersvcclass --diskpools default --defaultfilesize 2GiB public
 inserted service class public successfully
 
-#entersvcclass --nbdrives 2 --tapepools user:largeuser --diskpools default public
+#printsvcclass -a
+  NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR GCPOLICY RECALLERPOLICY DISKPOOLS ID LASTEDITOR          LASTEDITION
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+public         2048MiB                True            1               -            False         False        -              -   default 13   sponcec3 30-Aug-2011 16:59:13
+
+#entersvcclass --diskpools default public
 SvcClass public already exists in the stager DB
 Giving up
 
@@ -157,6 +131,7 @@ Configuration for the database accesses is taken from castor.conf.
 .BR entertapepool,
 .BR enterdiskpool,
 .BR enterfileclass,
+.BR entermigrationroute,
 .BR adminMultiInstance
 
 .SH AUTHOR

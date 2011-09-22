@@ -28,7 +28,6 @@
 #ifndef TAPESTREAMLINKER_THREAD_HPP
 #define TAPESTREAMLINKER_THREAD_HPP 1
 
-#include "castor/stager/Stream.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/server/IThread.hpp"
 #include "castor/tape/utils/ShutdownBoolFunctor.hpp"

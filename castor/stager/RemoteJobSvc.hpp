@@ -295,26 +295,6 @@ namespace castor {
       /////// ICommonSvc part (not implemented)
 
       /**
-       * Retrieves a SvcClass from the database based on its name.
-       * Caller is in charge of the deletion of the allocated object
-       * @param name the name of the SvcClass
-       * @return the SvcClass, or 0 if none found
-       * @exception Exception in case of error
-       */
-      virtual castor::stager::SvcClass* selectSvcClass(const std::string name)
-        throw (castor::exception::Exception);
-
-      /**
-       * Retrieves a FileClass from the database based on its name.
-       * Caller is in charge of the deletion of the allocated object
-       * @param name the name of the FileClass
-       * @return the FileClass, or 0 if none found
-       * @exception Exception in case of error
-       */
-      virtual castor::stager::FileClass* selectFileClass(const std::string name)
-        throw (castor::exception::Exception);
-
-      /**
        * Retrieves a tape from the database based on its vid,
        * side and tpmode. If no tape is found, creates one.
        * Note that this method creates a lock on the row of the

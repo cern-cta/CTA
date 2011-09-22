@@ -193,14 +193,6 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Fill the database with objects of type TapePool refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillRepTapePool(castor::stager::SvcClass* obj)
-          throw (castor::exception::Exception);
-
-        /**
          * Fill the database with objects of type DiskPool refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
@@ -226,14 +218,6 @@ namespace castor {
                              castor::IObject* object,
                              unsigned int type,
                              bool endTransaction)
-          throw (castor::exception::Exception);
-
-        /**
-         * Retrieve from the database objects of type TapePool refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillObjTapePool(castor::stager::SvcClass* obj)
           throw (castor::exception::Exception);
 
         /**
@@ -289,24 +273,6 @@ namespace castor {
 
         /// SQL statement object for request update
         castor::db::IDbStatement *m_updateStatement;
-
-        /// SQL insert statement for member tapePools
-        static const std::string s_insertTapePoolStatementString;
-
-        /// SQL insert statement object for member tapePools
-        castor::db::IDbStatement *m_insertTapePoolStatement;
-
-        /// SQL delete statement for member tapePools
-        static const std::string s_deleteTapePoolStatementString;
-
-        /// SQL delete statement object for member tapePools
-        castor::db::IDbStatement *m_deleteTapePoolStatement;
-
-        /// SQL select statement for member tapePools
-        static const std::string s_selectTapePoolStatementString;
-
-        /// SQL select statement object for member tapePools
-        castor::db::IDbStatement *m_selectTapePoolStatement;
 
         /// SQL insert statement for member diskPools
         static const std::string s_insertDiskPoolStatementString;

@@ -23,12 +23,25 @@ name of service classes to delete. Several names can be given, colon separated
 .SH EXAMPLES
 .nf
 .ft CW
-# deletesvcclass test2:dev
-successfully dropped the following service class(es) : test2, dev
+
+#printsvcclass -a
+    NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR GCPOLICY RECALLERPOLICY DISKPOOLS ID LASTEDITOR          LASTEDITION
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ default           10MiB                True            2               -            False         False  dropall              -   default 15   sponcec3 30-Aug-2011 17:10:39
+     dev           10MiB                True            1               -            False         False        -              -     extra 16   sponcec3 30-Aug-2011 17:02:05
+diskonly           10MiB                True            1            temp            False          True        -              -     extra 17   sponcec3 30-Aug-2011 17:02:10
 
 # deletesvcclass default:dev
-successfully dropped the following service class(es) : default
-WARNING : some service class(es) did not exist : default
+successfully dropped the following service class(es) : default, dev
+
+#printsvcclass -a
+    NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR GCPOLICY RECALLERPOLICY DISKPOOLS ID LASTEDITOR          LASTEDITION
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+diskonly           10MiB                True            1            temp            False          True        -              -     extra 17   sponcec3 30-Aug-2011 17:02:10
+
+# deletesvcclass diskonly:dev
+successfully dropped the following service class(es) : diskonly
+WARNING : some service class(es) do(es) not exist : dev
 
 .SH NOTES
 This command requires database client access to the stager catalogue.
@@ -41,6 +54,7 @@ Configuration for the database access is taken from castor.conf.
 .BR deletetapepool,
 .BR deletediskpool,
 .BR deletefileclass,
+.BR deletemigrationroute,
 .BR adminMultiInstance
 
 .SH AUTHOR

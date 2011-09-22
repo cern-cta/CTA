@@ -34,7 +34,7 @@
 #include "castor/exception/TooBig.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/stager/DiskCopyStatusCodes.hpp"
-#include "castor/stager/TapeCopyStatusCodes.hpp"
+#include "castor/stager/RecallJobStatusCodes.hpp"
 #include "castor/stager/SegmentStatusCodes.hpp"
 #include "castor/query/DiskPoolQueryResponse.hpp"
 #include "castor/query/DiskServerDescription.hpp"
@@ -162,7 +162,6 @@ castor::db::ora::OraQuerySvc::gatherResults(oracle::occi::ResultSet *rset)
     item->setSize((u_signed64)rset->getDouble(5));
     item->setDiskCopyStatus((castor::stager::DiskCopyStatusCodes)
 			    rset->getInt(6));
-    item->setTapeCopyStatus((castor::stager::TapeCopyStatusCodes)0);
     item->setDiskServer(rset->getString(7));
     item->setMountPoint(rset->getString(8));
     item->setNbAccesses(rset->getInt(9));

@@ -32,7 +32,6 @@
 #include "castor/Constants.hpp"
 #include "castor/IClient.hpp"
 #include "castor/stager/Tape.hpp"
-#include "castor/stager/Stream.hpp"
 #include "castor/stager/Request.hpp"
 #include "castor/stager/FileRequest.hpp"
 #include "castor/stager/ErrorFileRequest.hpp"
@@ -50,8 +49,7 @@
 #include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/DiskPool.hpp"
 #include "castor/stager/SvcClass.hpp"
-#include "castor/stager/TapeCopy.hpp"
-#include "castor/stager/TapePool.hpp"
+#include "castor/stager/RecallJob.hpp"
 #include "castor/stager/FileClass.hpp"
 #include "castor/stager/DiskServer.hpp"
 #include "castor/stager/CastorFile.hpp"
@@ -66,7 +64,6 @@
 #include "castor/stager/GCLocalFile.hpp"
 #include "castor/stager/GCFile.hpp"
 #include "castor/stager/DiskCopyForRecall.hpp"
-#include "castor/stager/TapeCopyForMigration.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Busy.hpp"
@@ -77,8 +74,7 @@
 #include "castor/exception/SegmentNotAccessible.hpp"
 #include "castor/exception/TapeOffline.hpp"
 #include "castor/stager/TapeStatusCodes.hpp"
-#include "castor/stager/TapeCopyStatusCodes.hpp"
-#include "castor/stager/StreamStatusCodes.hpp"
+#include "castor/stager/RecallJobStatusCodes.hpp"
 #include "castor/stager/SegmentStatusCodes.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/stager/StageRepackRequest.hpp"
@@ -154,7 +150,7 @@ const std::string castor::db::ora::OraStagerSvc::s_createEmptyFileStatementStrin
 
 /// SQL statement for selectCastorFile
 const std::string castor::db::ora::OraStagerSvc::s_selectCastorFileStatementString =
-"BEGIN selectCastorFile(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10); END;";
+"BEGIN selectCastorFile(:1, :2, :3, :4, :5, :6, :7, :8, :9); END;";
 
 /// SQL statement for getBestDiskCopyToRead
 const std::string castor::db::ora::OraStagerSvc::s_getBestDiskCopyToReadStatementString =
@@ -172,10 +168,6 @@ const std::string castor::db::ora::OraStagerSvc::s_recreateCastorFileStatementSt
 const std::string castor::db::ora::OraStagerSvc::s_archiveSubReqStatementString =
   "BEGIN archiveSubReq(:1, :2); END;";
 
-/// SQL statement for stageRelease
-const std::string castor::db::ora::OraStagerSvc::s_stageReleaseStatementString =
-  "BEGIN stageRelease(:1, :2, :3); END;";
-
 /// SQL statement for stageRm
 const std::string castor::db::ora::OraStagerSvc::s_stageRmStatementString =
   "BEGIN stageRm(:1, :2, :3, :4, :5); END;";
@@ -191,14 +183,6 @@ const std::string castor::db::ora::OraStagerSvc::s_getCFByNameStatementString =
 /// SQL statement for setFileGCWeight
 const std::string castor::db::ora::OraStagerSvc::s_setFileGCWeightStatementString =
   "BEGIN setFileGCWeightProc(:1, :2, :3, :4, :5); END;";
-
-/// SQL statement for selectDiskPool
-const std::string castor::db::ora::OraStagerSvc::s_selectDiskPoolStatementString =
-  "SELECT id FROM DiskPool WHERE name = :1";
-
-/// SQL statement for selectTapePool
-const std::string castor::db::ora::OraStagerSvc::s_selectTapePoolStatementString =
-  "SELECT id FROM TapePool WHERE name = :1";
 
 /// SQL statement for selectPriority
 const std::string castor::db::ora::OraStagerSvc::s_selectPriorityStatementString =
@@ -235,13 +219,10 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_updateAndCheckSubRequestStatement(0),
   m_recreateCastorFileStatement(0),
   m_archiveSubReqStatement(0),
-  m_stageReleaseStatement(0),
   m_stageRmStatement(0),
   m_stageForcedRmStatement(0),
   m_getCFByNameStatement(0),
   m_setFileGCWeightStatement(0),
-  m_selectDiskPoolStatement(0),
-  m_selectTapePoolStatement(0),
   m_selectPriorityStatement(0),
   m_enterPriorityStatement(0),
   m_deletePriorityStatement(0),
@@ -291,13 +272,10 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     if (m_updateAndCheckSubRequestStatement) deleteStatement(m_updateAndCheckSubRequestStatement);
     if (m_recreateCastorFileStatement) deleteStatement(m_recreateCastorFileStatement);
     if (m_archiveSubReqStatement) deleteStatement(m_archiveSubReqStatement);
-    if (m_stageReleaseStatement) deleteStatement(m_stageReleaseStatement);
     if (m_stageRmStatement) deleteStatement(m_stageRmStatement);
     if (m_stageForcedRmStatement) deleteStatement(m_stageForcedRmStatement);
     if (m_getCFByNameStatement) deleteStatement(m_getCFByNameStatement);
     if (m_setFileGCWeightStatement) deleteStatement(m_setFileGCWeightStatement);
-    if (m_selectDiskPoolStatement) deleteStatement(m_selectDiskPoolStatement);
-    if (m_selectTapePoolStatement) deleteStatement(m_selectTapePoolStatement);
     if (m_selectPriorityStatement) deleteStatement(m_selectPriorityStatement);
     if (m_enterPriorityStatement) deleteStatement(m_enterPriorityStatement);
     if (m_deletePriorityStatement) deleteStatement(m_deletePriorityStatement);
@@ -319,13 +297,10 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_updateAndCheckSubRequestStatement = 0;
   m_recreateCastorFileStatement = 0;
   m_archiveSubReqStatement = 0;
-  m_stageReleaseStatement = 0;
   m_stageRmStatement = 0;
   m_stageForcedRmStatement = 0;
   m_getCFByNameStatement = 0;
   m_setFileGCWeightStatement = 0;
-  m_selectDiskPoolStatement = 0;
-  m_selectTapePoolStatement = 0;
   m_selectPriorityStatement = 0;
   m_enterPriorityStatement = 0;
   m_deletePriorityStatement = 0;
@@ -1015,7 +990,7 @@ int castor::db::ora::OraStagerSvc::createRecallCandidate
   try {
       castor::stager::CastorFile* cf = subreq->castorFile();
 
-      // Create needed TapeCopy(ies) and Segment(s). We already
+      // Create needed RecallJob(ies) and Segment(s). We already
       // have a lock on the castorfile and so we prevent the
       // concurrent creation of 2 recalls for a single file
       if (!subreq->request()) {
@@ -1023,7 +998,7 @@ int castor::db::ora::OraStagerSvc::createRecallCandidate
       }
       cnvSvc()->fillObj(&ad, cf, OBJ_FileClass, false);
       int nbCopies = cf->fileClass()->nbCopies();
-      createTapeCopySegmentsForRecall
+      createRecallJobSegments
         (cf, subreq->request()->euid(),
          subreq->request()->egid(), svcClass, tape,
          &nbCopies);
@@ -1118,21 +1093,20 @@ castor::db::ora::OraStagerSvc::selectCastorFile(castor::stager::SubRequest* subr
     m_selectCastorFileStatement =
       createStatement(s_selectCastorFileStatementString);
     m_selectCastorFileStatement->registerOutParam
-      (9, oracle::occi::OCCIDOUBLE);
+      (8, oracle::occi::OCCIDOUBLE);
     m_selectCastorFileStatement->registerOutParam
-      (10, oracle::occi::OCCIDOUBLE);
+      (9, oracle::occi::OCCIDOUBLE);
     m_selectCastorFileStatement->setAutoCommit(true);
   }
   // Execute statement and get result
   try {
     m_selectCastorFileStatement->setDouble(1, cnsFileId->fileid);
     m_selectCastorFileStatement->setString(2, cnsFileId->server);
-    m_selectCastorFileStatement->setDouble(3, subreq->request()->svcClass()->id());
-    m_selectCastorFileStatement->setDouble(4, cnsFileStat->fileclass);
-    m_selectCastorFileStatement->setDouble(5, cnsFileStat->filesize);
-    m_selectCastorFileStatement->setString(6, subreq->fileName());
-    m_selectCastorFileStatement->setDouble(7, subreq->id());
-    m_selectCastorFileStatement->setDouble(8, cnsFileStat->mtime);
+    m_selectCastorFileStatement->setDouble(3, cnsFileStat->fileclass);
+    m_selectCastorFileStatement->setDouble(4, cnsFileStat->filesize);
+    m_selectCastorFileStatement->setString(5, subreq->fileName());
+    m_selectCastorFileStatement->setDouble(6, subreq->id());
+    m_selectCastorFileStatement->setDouble(7, cnsFileStat->mtime);
 
     int nb  = m_selectCastorFileStatement->executeUpdate();
     if (0 == nb) {
@@ -1145,11 +1119,11 @@ castor::db::ora::OraStagerSvc::selectCastorFile(castor::stager::SubRequest* subr
     // Found the CastorFile, so create it in memory
     castor::stager::CastorFile* result =
       new castor::stager::CastorFile();
-    result->setId((u_signed64)m_selectCastorFileStatement->getDouble(9));
+    result->setId((u_signed64)m_selectCastorFileStatement->getDouble(8));
     result->setFileId(cnsFileId->fileid);
     result->setNsHost(cnsFileId->server);
     result->setLastKnownFileName(subreq->fileName());
-    result->setFileSize((u_signed64)m_selectCastorFileStatement->getDouble(10));
+    result->setFileSize((u_signed64)m_selectCastorFileStatement->getDouble(9));
     result->setLastUpdateTime(cnsFileStat->mtime);
     subreq->setCastorFile(result);    // executed in the PL/SQL procedure
     return result;
@@ -1344,52 +1318,6 @@ void castor::db::ora::OraStagerSvc::archiveSubReq
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to archive subRequest :"
-      << std::endl << e.what();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// stageRelease
-//------------------------------------------------------------------------------
-void castor::db::ora::OraStagerSvc::stageRelease
-(const u_signed64 fileId, const std::string nsHost)
-  throw (castor::exception::Exception) {
-  try {
-    // Check whether the statements are ok
-    if (0 == m_stageReleaseStatement) {
-      m_stageReleaseStatement =
-        createStatement(s_stageReleaseStatementString);
-      m_stageReleaseStatement->registerOutParam
-        (3, oracle::occi::OCCIINT);
-      m_stageReleaseStatement->setAutoCommit(true);
-    }
-    // execute the statement and see whether we found something
-    m_stageReleaseStatement->setDouble(1, fileId);
-    m_stageReleaseStatement->setString(2, nsHost);
-    unsigned int nb = m_stageReleaseStatement->executeUpdate();
-    if (0 == nb) {
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "stageRelease : No return code after PL/SQL call.";
-      throw ex;
-    }
-    // In case of EBUSY, throw exception
-    int returnCode = m_stageReleaseStatement->getInt(3);
-    if (returnCode != 0) {
-      castor::exception::Busy e;
-      if (returnCode == 1) {
-        e.getMessage() << "The file is being migrated.";
-      } else {
-        e.getMessage() << "There is/are ongoing request(s) on this file.";
-      }
-      throw e;
-    }
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in stageRelease."
       << std::endl << e.what();
     throw ex;
   }
@@ -1652,9 +1580,9 @@ int validateNsSegments(struct Cns_segattrs *nsSegments,
 }
 
 //------------------------------------------------------------------------------
-// createTapeCopySegmentsForRecall (private)
+// createRecallJobSegments (private)
 //------------------------------------------------------------------------------
-int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
+int castor::db::ora::OraStagerSvc::createRecallJobSegments
 (castor::stager::CastorFile* castorFile,
  unsigned long euid,
  unsigned long egid,
@@ -1666,7 +1594,7 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
   // Check argument
   if (0 == castorFile) {
     castor::exception::InvalidArgument e;
-    e.getMessage() << "createTapeCopySegmentsForRecall "
+    e.getMessage() << "createRecallJobSegments "
                    << "called with null argument";
     throw e;
   }
@@ -1677,7 +1605,7 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
   if (Cns_seterrbuf(cns_error_buffer, sizeof(cns_error_buffer)) != 0) {
     castor::exception::Internal ex;
     ex.getMessage()
-      << "createTapeCopySegmentsForRecall : Cns_seterrbuf failed";
+      << "createRecallJobSegments : Cns_seterrbuf failed";
     throw ex;
   }
 
@@ -1693,7 +1621,7 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
     (0, &fileid, &nbNsSegments, &nsSegmentAttrs);
   if (-1 == rc) {
     castor::exception::Exception e(serrno);
-    e.getMessage() << "createTapeCopySegmentsForRecall : "
+    e.getMessage() << "createRecallJobSegments : "
                    << "Cns_getsegattrs failed";
     throw e;
   }
@@ -1726,15 +1654,15 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
   ad.setCnvSvcName("DbCnvSvc");
   ad.setCnvSvcType(castor::SVC_DBCNV);
 
-  // Create TapeCopy
-  castor::stager::TapeCopy tapeCopy;
-  tapeCopy.setCopyNb(useCopyNb);
-  tapeCopy.setStatus(castor::stager::TAPECOPY_TOBERECALLED);
-  tapeCopy.setMissingCopies(*nbTapeCopies);
-  tapeCopy.setCastorFile(castorFile);
-  castorFile->addTapeCopies(&tapeCopy);
+  // Create RecallJob
+  castor::stager::RecallJob recallJob;
+  recallJob.setCopyNb(useCopyNb);
+  recallJob.setStatus(castor::stager::RECALLJOB_TOBERECALLED);
+  recallJob.setMissingCopies(*nbTapeCopies);
+  recallJob.setCastorFile(castorFile);
+  castorFile->addTapeCopies(&recallJob);
   cnvSvc()->fillRep(&ad, castorFile,
-                    castor::OBJ_TapeCopy, false);
+                    castor::OBJ_RecallJob, false);
 
   // Go through Segments
   u_signed64 totalSize = 0;
@@ -1759,8 +1687,8 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
 
     // Get tape for this segment
     tp = selectTape(nsSegmentAttrs[i].vid,
-		    nsSegmentAttrs[i].side,
-		    WRITE_DISABLE);
+                   nsSegmentAttrs[i].side,
+                   WRITE_DISABLE);
 
     // update priority
     std::vector<castor::stager::PriorityMap*> listPriority=selectPriority(euid,egid,-1);
@@ -1793,9 +1721,9 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
     segment->setTape(tp);
     tp->addSegments(segment);
 
-    // Link Segment with TapeCopy
-    segment->setCopy(&tapeCopy);
-    tapeCopy.addSegments(segment);
+    // Link Segment with RecallJob
+    segment->setCopy(&recallJob);
+    recallJob.addSegments(segment);
   }
 
   // Set the tape VID and status of the tape to be returned to the calling
@@ -1807,94 +1735,20 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
   tape->setStatus(tp->status());
 
   // Create Segments in DataBase
-  cnvSvc()->fillRep(&ad, &tapeCopy, castor::OBJ_Segment, false);
+  cnvSvc()->fillRep(&ad, &recallJob, castor::OBJ_Segment, false);
 
   // Fill Segment to Tape link
-  for (unsigned i = 0; i < tapeCopy.segments().size(); i++) {
-    castor::stager::Segment* seg = tapeCopy.segments()[i];
+  for (unsigned i = 0; i < recallJob.segments().size(); i++) {
+    castor::stager::Segment* seg = recallJob.segments()[i];
     cnvSvc()->fillRep(&ad, seg, castor::OBJ_Tape, false);
   }
 
   // Cleanup
-  for (unsigned i = 0; i < tapeCopy.segments().size(); i++)
-    delete tapeCopy.segments()[i]->tape();
+  for (unsigned i = 0; i < recallJob.segments().size(); i++)
+    delete recallJob.segments()[i]->tape();
   if (nsSegmentAttrs != NULL) free(nsSegmentAttrs);
 
   return 0;
-}
-
-//------------------------------------------------------------------------------
-// selectDiskPool
-//------------------------------------------------------------------------------
-castor::stager::DiskPool*
-castor::db::ora::OraStagerSvc::selectDiskPool
-(const std::string name)
-  throw (castor::exception::Exception) {
-  // Check whether the statements are ok
-  if (0 == m_selectDiskPoolStatement) {
-    m_selectDiskPoolStatement =
-      createStatement(s_selectDiskPoolStatementString);
-  }
-  // Execute statement and get result
-  try {
-    m_selectDiskPoolStatement->setString(1, name);
-    oracle::occi::ResultSet *rset = m_selectDiskPoolStatement->executeQuery();
-    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      // Nothing found, return 0
-      m_selectDiskPoolStatement->closeResultSet(rset);
-      return 0;
-    }
-    // Found the DiskPool, so create it in memory
-    castor::stager::DiskPool* result =
-      new castor::stager::DiskPool();
-    result->setId((u_signed64)rset->getDouble(1));
-    m_selectDiskPoolStatement->closeResultSet(rset);
-    return result;
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Unable to select DiskPool by name :"
-      << std::endl << e.getMessage();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// selectTapePool
-//------------------------------------------------------------------------------
-castor::stager::TapePool*
-castor::db::ora::OraStagerSvc::selectTapePool
-(const std::string name)
-  throw (castor::exception::Exception) {
-  // Check whether the statements are ok
-  if (0 == m_selectTapePoolStatement) {
-    m_selectTapePoolStatement =
-      createStatement(s_selectTapePoolStatementString);
-  }
-  // Execute statement and get result
-  try {
-    m_selectTapePoolStatement->setString(1, name);
-    oracle::occi::ResultSet *rset = m_selectTapePoolStatement->executeQuery();
-    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      // Nothing found, return 0
-      m_selectTapePoolStatement->closeResultSet(rset);
-      return 0;
-    }
-    // Found the TapePool, so create it in memory
-    castor::stager::TapePool* result =
-      new castor::stager::TapePool();
-    result->setId((u_signed64)rset->getDouble(1));
-    m_selectTapePoolStatement->closeResultSet(rset);
-    return result;
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Unable to select TapePool by name :"
-      << std::endl << e.getMessage();
-    throw ex;
-  }
 }
 
 //------------------------------------------------------------------------------

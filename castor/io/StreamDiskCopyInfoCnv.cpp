@@ -87,7 +87,6 @@ void castor::io::StreamDiskCopyInfoCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->diskCopyPath();
   ad->stream() << obj->size();
   ad->stream() << obj->diskCopyStatus();
-  ad->stream() << obj->tapeCopyStatus();
   ad->stream() << obj->segmentStatus();
   ad->stream() << obj->diskCopyId();
   ad->stream() << obj->fileId();
@@ -123,9 +122,6 @@ castor::IObject* castor::io::StreamDiskCopyInfoCnv::createObj(castor::IAddress* 
   int diskCopyStatus;
   ad->stream() >> diskCopyStatus;
   object->setDiskCopyStatus(diskCopyStatus);
-  int tapeCopyStatus;
-  ad->stream() >> tapeCopyStatus;
-  object->setTapeCopyStatus(tapeCopyStatus);
   int segmentStatus;
   ad->stream() >> segmentStatus;
   object->setSegmentStatus(segmentStatus);

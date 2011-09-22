@@ -1,0 +1,210 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                      entermigrationroute
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @author castor dev team
+# *****************************************************************************/
+
+'''allows to enter a new migration route into the castor stager'''
+
+import sys, os, pwd
+import getopt
+import castor_tools
+import cx_Oracle
+
+# usage function
+def usage(exitCode):
+    '''prints usage'''
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] <svcClassName> <fileClassName> ' + \
+          '<copyNb>[:<isSmallFile>]:<tapePoolName> [...]'
+    sys.exit(exitCode)
+
+def parsePositiveInt(name, svalue):
+    '''parses a positive int value and exits with proper error message in case the value does not fit'''
+    try:
+        value = int(svalue)
+        if value < 0:
+            raise ValueError
+        return value
+    except ValueError:
+        print 'Invalid %s %s' % (name, svalue)
+        usage(1)
+
+def parsePositiveNonNullInt(name, svalue):
+    '''parses a positive, non null int value and exits with proper error message in case the value does not fit'''
+    value = parsePositiveInt(name, svalue)
+    if value == 0:
+        print '%s cannot be set to 0' % name
+        usage(1)
+    return value
+
+def parseBool(name, svalue):
+    '''parses a boolean value and exits with proper error message in case the value does not fit'''
+    validTrues = ['true', '1', 't', 'y', 'yes']
+    validFalses = ['false', '0', 'f', 'n', 'no']
+    if svalue.lower() in validTrues:
+        return True
+    elif svalue.lower() in validFalses:
+        return False
+    else:
+        print 'Invalid %s %s' % (name, svalue)
+        print 'Note that accepted booleans are %s and %s' % (','.join(validTrues), ','.join(validFalses))
+        usage(1)
+
+def parseMapping(name, svalue):
+    '''parses a migration route target of the form <copyNb>[:<isSmallFile>]?:<tapePoolName>'''
+    try:
+        colonIndex = svalue.index(':')
+        copynb = parsePositiveNonNullInt('copynb', svalue[0:colonIndex])
+        colonIndex2 = svalue.find(':', colonIndex + 1)
+        if colonIndex2 >= 0:
+            issmallfile = parseBool('isSmallFile', svalue[colonIndex+1:colonIndex2])
+            colonIndex = colonIndex2
+        else:
+            issmallfile = None
+        tapepoolname = svalue[colonIndex+1:]
+        return (copynb, issmallfile, tapepoolname)
+    except ValueError:
+        print 'Invalid %s %s' % (name, svalue)
+        usage(1)
+
+# first parse the options
+try:
+    options, args = getopt.getopt(sys.argv[1:], 'hv', ['help', 'verbose'])
+except Exception, e:
+    print e
+    usage(1)
+verbose = False
+for f, v in options:
+    if f == '-h' or f == '--help':
+        usage(0)
+    elif f == '-v' or f == '--verbose':
+        verbose = True
+    else:
+        print "unknown option : " + f
+        usage(1)
+
+# Deal with arguments
+if len(args) < 3:
+    print "Missing arguments"
+    usage(1)
+svcclassname = args[0]
+fileclassname = args[1]
+mappings = [parseMapping('route', item) for item in args[2:]]
+
+try:
+    # connect to stager
+    stconn = castor_tools.connectToStager()
+    stcur = stconn.cursor()
+    # check that the service class exists and gets its id
+    stcur.execute('SELECT id FROM SvcClass WHERE name=:name', name=svcclassname)
+    rows = stcur.fetchall()
+    if len(rows) == 0:
+        print 'SvcClass %s does not exist in the stager DB' % svcclassname
+        print 'Giving up'
+        sys.exit(1)
+    svcClassId = int(rows[0][0])
+    # check that the file class exists and gets it id and number of copies
+    stcur.execute('SELECT id, nbCopies FROM FileClass WHERE name=:name', name=fileclassname)
+    rows = stcur.fetchall()
+    if len(rows) == 0:
+        print 'FileClass %s does not exist in the stager DB' % fileclassname
+        print 'Giving up'
+        sys.exit(1)
+    fileClassId = int(rows[0][0])
+    nbCopies = int(rows[0][1])
+    # check validity of copyNbs and tapePoolNames
+    routes = [[] for i in range(nbCopies)]
+    for copyNb, isSmallFile, tapePoolName in mappings:
+        # check that the tapepool exists
+        stcur.execute('SELECT id FROM TapePool WHERE name=:name', name=tapePoolName)
+        rows = stcur.fetchall()
+        if len(rows) == 0:
+            print 'TapePool %s does not exist in the stager DB' % tapePoolName
+            print 'Giving up'
+            sys.exit(1)
+        tapePoolId = int(rows[0][0])
+        # check copyNb
+        if copyNb > nbCopies:
+            print 'CopyNb %d too large for fileClass %s that has nbCopies=%d' % (copyNb, fileclassname, nbCopies)
+            print 'Giving up'
+            sys.exit(1)
+        # add the route to the list of checked ones
+        routes[copyNb-1].append((isSmallFile, tapePoolId, tapePoolName))
+    # check that we have a complete coverage of the possible pathes with this new rule
+    for copyNb in range(nbCopies):
+        if not routes[copyNb]:
+            print 'No route for copyNb %d while nbCopies=%d for fileClass %s.' % (copyNb+1, nbCopies, fileclassname)
+            print 'The migration route is thus incomplete, Giving up'
+            sys.exit(1)
+        if (routes[copyNb][0][0] == None and len(routes[copyNb]) > 1) or \
+           (len(routes[copyNb]) > 1 and \
+            ((routes[copyNb][1][0] == None) or \
+             (routes[copyNb][0][0] == routes[copyNb][1][0]))):
+            print 'Colliding routes for copyNb %d :' % (copyNb+1)
+            print '  isSmallFile=%s -> %s' % (routes[copyNb][0][0], routes[copyNb][0][2])
+            print '  isSmallFile=%s -> %s' % (routes[copyNb][1][0], routes[copyNb][1][2])
+            print 'Giving up'
+            sys.exit(1)
+        if len(routes[copyNb]) > 2:
+            print 'Too many routes given for copyNb %d :' % (copyNb+1)
+            for isSmallFile, tapePoolId, tapePoolName in routes[copyNb]:
+                print '  isSmallFile=%s -> %s' % (isSmallFile, tapePoolName)
+            print 'They are thus colliding. Giving up'
+            sys.exit(1)
+    # get info on user running this command
+    lasteditor = pwd.getpwuid(os.getuid())[0]
+    # insert new migration routes
+    insertSQL = '''INSERT INTO MigrationRouting
+                   (isSmallFile, copyNb, svcClass, fileClass, lastEditor, lastEditionTime, tapePool)
+                   VALUES
+                   (:isSmallFile, :copyNb, :svcClass, :fileClass, :lastEditor, getTime(), :tapePool)'''
+    try:
+        for copyNb in range(nbCopies):
+            for isSmallFile, tapePoolId, tapePoolName in routes[copyNb]:
+                stcur.execute(insertSQL, isSmallFile=isSmallFile, copyNb=copyNb+1, svcClass=svcClassId,
+                              fileClass=fileClassId, lastEditor=lasteditor, tapePool=tapePoolId)
+        # commit insertion and tell user
+        stconn.commit()
+        print 'inserted route(s) successfully for SvcClass %s and FileClass %s' % (svcclassname, fileclassname)
+    except cx_Oracle.Error, e:
+        if isinstance(e, cx_Oracle.Error):
+            error, = e.args
+            if isinstance(error, cx_Oracle._Error):
+                errorcode = error.code
+                if errorcode == 1:
+                    stconn.rollback()
+                    print 'Rule is colliding with an existing one. Giving up'
+                else:
+                    raise e
+            else:
+                raise e
+        else:
+            raise e
+    # close DB connections
+    try:
+        castor_tools.disconnectDB(stconn)
+    except Exception:
+        pass
+except Exception, e:
+    print e
+    if verbose:
+        import traceback
+        traceback.print_exc()
+    sys.exit(-1)

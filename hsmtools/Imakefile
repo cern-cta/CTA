@@ -50,6 +50,11 @@ InstallTarget(modifytapepool,755)
 InstallTarget(deletetapepool,755)
 InstallTarget(printtapepool,755)
 
+InstallTarget(entermigrationroute,755)
+InstallTarget(modifymigrationroute,755)
+InstallTarget(deletemigrationroute,755)
+InstallTarget(printmigrationroute,755)
+
 InstallTarget(fixFileSize,755)
 InstallTarget(cleanLostFiles,755)
 InstallTarget(diskServer_qry,755)
@@ -83,6 +88,11 @@ EXEMANPAGE(entertapepool)
 EXEMANPAGE(modifytapepool)
 EXEMANPAGE(deletetapepool)
 EXEMANPAGE(printtapepool)
+
+EXEMANPAGE(entermigrationroute)
+EXEMANPAGE(modifymigrationroute)
+EXEMANPAGE(deletemigrationroute)
+EXEMANPAGE(printmigrationroute)
 
 EXEMANPAGE(reclaim)
 EXEMANPAGE(cleanLostFiles)

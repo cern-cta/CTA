@@ -65,18 +65,18 @@ try:
     stcur.execute("SELECT name FROM TapePool WHERE name IN ('" + "', '".join(tapePools) + "')")
     existingTapePools = set([row[0] for row in stcur.fetchall()])
     nonexitingTapePools = tapePools - existingTapePools
-    # check that the tape pools are not used by service classes
-    stcur.execute('''SELECT SvcClass.name, TapePool.name
-                       FROM SvcClass, SvcClass2TapePool, TapePool
-                      WHERE SvcClass.id = SvcClass2TapePool.parent
-                        AND SvcClass2TapePool.child = TapePool.id
+    # check that the tape pools are not used by MigrationRouting
+    stcur.execute('''SELECT UNIQUE SvcClass.name, TapePool.name
+                       FROM SvcClass, MigrationRouting, TapePool
+                      WHERE SvcClass.id = MigrationRouting.svcClass
+                        AND MigrationRouting.tapePool = TapePool.id
                         AND TapePool.name IN (\'''' + "', '".join(existingTapePools) + "')")
     rows = stcur.fetchall()
     if len(rows) > 0:
-        print 'TapePools cannot be dropped when used by some service classes and'
+        print 'TapePools cannot be dropped when used by some migration routes :'
         for sc, tp in rows:
-            print '  - tape pool %s is in use by service class %s' % (tp, sc)
-        print 'You may want to use modifysvcclass to correct this'
+            print '  - tape pool %s is in use by at least one route of service class %s' % (tp, sc)
+        print 'You may want to use modifymigrationroute to correct this'
         sys.exit(1)
     # drop tape pools
     if existingTapePools:

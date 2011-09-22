@@ -105,9 +105,7 @@ STGLIB_SRCS = BaseAddress.cpp \
               io/StreamStringResponseCnv.cpp \
               io/StreamTapeCnv.cpp \
               io/StreamSubRequestCnv.cpp \
-              io/StreamTapeCopyCnv.cpp \
-              io/StreamTapeCopyForMigrationCnv.cpp \
-              io/StreamTapePoolCnv.cpp \
+              io/StreamRecallJobCnv.cpp \
               io/StreamStageAbortRequestCnv.cpp \
               io/StreamStageFileQueryRequestCnv.cpp \
               io/StreamStageGetRequestCnv.cpp \
@@ -179,7 +177,6 @@ STGLIB_SRCS = BaseAddress.cpp \
               metrics/MetricsCollector.cpp \
               metrics/UpdateThread.cpp \
               metrics/ObjTypeCounter.cpp \
-              stager/BaseTapeSvc.cpp \
               stager/CastorFile.cpp \
               stager/DiskCopy.cpp \
               stager/DiskCopyInfo.cpp \
@@ -241,17 +238,13 @@ STGLIB_SRCS = BaseAddress.cpp \
 	      stager/StageQueryResult.cpp \
               stager/StageRmRequest.cpp \
               stager/StageUpdateRequest.cpp \
-              stager/Stream.cpp \
-              stager/StreamStatusCodes.cpp \
               stager/SubRequest.cpp \
               stager/SubRequestStatusCodes.cpp \
               stager/SubRequestGetNextStatusCodes.cpp \
               stager/Tape.cpp \
-              stager/TapeCopy.cpp \
-              stager/TapeCopyForMigration.cpp \
-              stager/TapePool.cpp \
+              stager/RecallJob.cpp \
               stager/TapeStatusCodes.cpp \
-              stager/TapeCopyStatusCodes.cpp \
+              stager/RecallJobStatusCodes.cpp \
               stager/TapeVid.cpp \
               stager/NsFileId.cpp \
               stager/BulkRequestResult.cpp \
@@ -287,7 +280,6 @@ STGLIB_SRCS = BaseAddress.cpp \
               exception/RequestCanceled.cpp \
               exception/Security.cpp \
               exception/SQLError.cpp \
-              exception/TapeCopyNotFound.cpp \
               exception/TapeNetAcceptInterrupted.cpp \
               exception/TimeOut.cpp \
               exception/TooBig.cpp \
