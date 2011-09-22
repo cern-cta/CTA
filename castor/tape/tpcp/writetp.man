@@ -24,9 +24,8 @@ This command gives privileged users direct access to the tape system.
 .P
 The tape to be written is specified by the \fBVID\fP argument.  The position
 where the writing should start on the tape is specified by the \fBPOSITION\fP
-argument.  This argument should either have the value of "EOD" meaning append
-to End-Of-Data, or a tape file sequence number equal to or greater than 1.  The
-filenames of the source disk files can be specified using two
+argument.  This argument should be a tape-file sequence-number greater than 0.
+The filenames of the source disk files can be specified using two
 mutually-exclusive methods.  They can be entered on the command-line
 (\fB[FILE]\fP) or in a "file-list" file using the
 .B -f, --filelist
@@ -78,11 +77,6 @@ The name of the host on which the VDQM daemon is running.
 The name of the host on which the VMGR daemon is running.
 
 .SH EXAMPLE
-The following example appends all of the files specified in the file
-\fBfile_list\fP to the end of the data on the tape with VID \fBI02024\fP.
-.P
-writetp I02024 EOD -f file_list
-.P
 The following example writes the file \fBlxc2disk07:/tmp/test\fP to the tape
 with VID \fBI02024\fP.  The file will be written as the fifth file on the
 tape.  \fBCAUTION:\fP Any files that were on the tape after the fifth file

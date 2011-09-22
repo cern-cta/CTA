@@ -87,8 +87,7 @@ void castor::tape::tpcp::WriteTpCommand::usage(std::ostream &os) throw() {
     "Where:\n"
     "\n"
     "\tVID      The VID of the tape to be written to.\n"
-    "\tPOSITION Either \"EOD\" meaning append to End-Of-Tape, or a tape file\n"
-    "\t         sequence number equal to or greater than 1.\n"
+    "\tPOSITION A tape-file sequence-number greater than 0.\n"
     "\tFILE     A filename in RFIO notation [host:]local_path.\n"
     "\n"
     "Options:\n"
@@ -262,28 +261,22 @@ void castor::tape::tpcp::WriteTpCommand::parseCommandLine(const int argc,
     std::string tmp(argv[optind]);
     utils::toUpper(tmp);
 
-    if(tmp == "EOD") {
-      m_cmdLine.tapeFseqPosition = 0;
-    } else {
+    if(!utils::isValidUInt(argv[optind])) {
+      castor::exception::InvalidArgument ex;
+      ex.getMessage() <<
+        "\tSecond command-line argument must be a valid unsigned-integer\n"
+        "\tgreater than 0: Actual=\"" << argv[optind] << "\"";
+      throw ex;
+    }
 
-      if(!utils::isValidUInt(argv[optind])) {
-        castor::exception::InvalidArgument ex;
-        ex.getMessage() <<
-          "\tSecond command-line argument must either be the string \"EOD\" "
-          "or a valid\n\tunsigned integer greater than 0: Actual=\""
-          << argv[optind] << "\"";
-        throw ex;
-      }
+    m_cmdLine.tapeFseqPosition = atoi(tmp.c_str());
 
-      m_cmdLine.tapeFseqPosition = atoi(tmp.c_str());
-
-      if(m_cmdLine.tapeFseqPosition == 0) {
-        castor::exception::InvalidArgument ex;
-        ex.getMessage() <<
-          "\tSecond command-line argument must be a valid unsigned integer "
-          "greater\n\tthan 0: Actual=" << argv[optind];
-        throw ex;
-      }
+    if(0 == m_cmdLine.tapeFseqPosition) {
+      castor::exception::InvalidArgument ex;
+      ex.getMessage() <<
+        "\tSecond command-line argument must be a valid unsigned-integer\n"
+        "\tgreater than 0: Actual=" << argv[optind];
+      throw ex;
     }
   }
 
@@ -387,16 +380,8 @@ bool castor::tape::tpcp::WriteTpCommand::handleFilesToMigrateListRequest(
     file->setLastModificationTime(statBuf.st_mtime);
     file->setUmask(RTCOPYCONSERVATIVEUMASK);
     file->setPath(filename);
-
-    // If migrating to end-of-tape (EOD)
-    if(m_cmdLine.tapeFseqPosition == 0) {
-      file->setPositionCommandCode(tapegateway::TPPOSIT_EOI);
-      file->setFseq(-1);
-    // Else migrating to a specific tape file sequence number
-    } else {
-      file->setPositionCommandCode(tapegateway::TPPOSIT_FSEQ);
-      file->setFseq(m_nextTapeFseq++);
-    }
+    file->setPositionCommandCode(tapegateway::TPPOSIT_FSEQ);
+    file->setFseq(m_nextTapeFseq++);
 
     tapegateway::FilesToMigrateList fileList;
     fileList.setMountTransactionId(m_volReqId);
