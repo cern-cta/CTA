@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # guess version
-ver=`grep "^castor" debian/changelog | head -1 | awk '{print $2}' | sed 's/)//' | sed 's/(//'`
+ver=`grep -m 1 "^castor" debian/changelog | awk '{print $2}' | sed 's/)//' | sed 's/(//'`
 tag=`echo $ver | sed 's/\./_/g' | sed 's/-/_/g'`
 
 # generate creation scripts for the db-based CASTOR components
