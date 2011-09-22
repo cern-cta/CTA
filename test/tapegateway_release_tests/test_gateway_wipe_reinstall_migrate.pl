@@ -99,69 +99,13 @@ sub main ()
         die("ABORT: Unexpected host \"$host\"");
     }
     print "t=".CastorTapeTests::elapsed_time."s. ";
-    print "Wiping the DB for a run of rtcpclientd with classic schema  =============\n";
+    print "Wiping the DB for a run of tapegatewayd  =============\n";
     CastorTapeTests::reinstall_stager_db();
-   
-    print "t=".CastorTapeTests::elapsed_time."s\n";
-    my $seed_index = CastorTapeTests::make_seed ($file_size);  
-    
-    # On first run, clean house
-    print "Cleaning up test directories $castor_directory\{$single_subdir,$dual_subdir\}\n";
-    print `su $username -c "for p in $castor_directory\{$single_subdir,$dual_subdir\}; do nsrm -r -f \\\$p; done"`;
-
-    # Re-create the directories:
-    print `su $username -c "nsmkdir $castor_directory$single_subdir"`;
-    print `su $username -c "nschclass largeuser $castor_directory$single_subdir"`;
-    CastorTapeTests::register_remote ( $castor_directory.$single_subdir, "directory" );
-    print `su $username -c "nsmkdir $castor_directory$dual_subdir"`;
-    print `su $username -c "nschclass test2 $castor_directory$dual_subdir"`;
-    CastorTapeTests::register_remote ( $castor_directory.$dual_subdir, "directory" );
-
-    # Let the dust settle
-    print "t=".CastorTapeTests::elapsed_time."s\n";
-    CastorTapeTests::poll_fileserver_readyness (5,120);
-    
-    # Clean the disk servers
-    CastorTapeTests::clean_fileservers ();
-        
-    # Migrate to the new system, with tape gateway, still running rtcpclientd
-    $dbh=CastorTapeTests::open_db();
-    checkTapes();
-    CastorTapeTests::startDaemons();
-    print "t=".CastorTapeTests::elapsed_time."s. ";
-    print "Switched to new schema with rtcpclientd =============\n";
-    
-    # Start testsuite in the background
-    my ( $testsuite_pid, $testsuite_rd );
-    if ($run_testsuite) {
-        ( $testsuite_pid, $testsuite_rd ) = CastorTapeTests::spawn_testsuite ();
-        print "t=".CastorTapeTests::elapsed_time."s. ";
-        print "Started testsuite -------------\n";
-   }
-
-    # First iteration of the test
-    # No dual tape copies as rtcpclients is totally stupid with them.
-    SingleAndDualCopyTest ( $dbh, $seed_index, $file_number, 0);   
-    # Wait for testsuite to complete and print out the result
-    if ($run_testsuite) {
-        print "t=".CastorTapeTests::elapsed_time."s. ";
-        print "Waiting testsuite completion -------------\n";
-        print CastorTapeTests::wait_testsuite ( $testsuite_pid, $testsuite_rd );
-    }
-    # We can inject dual tape copies here as they will be handled by the tapegateway.
-    preparePreTransitionBacklog ( $seed_index, $file_number, 1);
-     
-    # Switch to tape gateway
-    CastorTapeTests::print_leftovers ( $dbh );
     CastorTapeTests::stopAndSwitchToTapeGatewayd ( $dbh );
-    CastorTapeTests::print_leftovers ( $dbh );
     CastorTapeTests::startDaemons();
     print "t=".CastorTapeTests::elapsed_time."s. ";
-    print "Switched to tapegatewayd ============================\n";
-
-    # Second iteration of the test
-    managePostTransitionBacklog( $dbh );
-    # Start testsuite in the background
+    print "Schema set to tapegatewayd mode ============================\n";
+    
     if ($run_testsuite) {
         ( $testsuite_pid, $testsuite_rd ) = CastorTapeTests::spawn_testsuite ();
         print "t=".CastorTapeTests::elapsed_time."s. ";
@@ -175,22 +119,6 @@ sub main ()
         print "Waiting testsuite completion -------------\n";
         print CastorTapeTests::wait_testsuite ( $testsuite_pid, $testsuite_rd );
     }
-    # No dual tape copies as rtcpclients is totally stupid with them.
-    preparePreTransitionBacklog ($seed_index, $file_number, 0);
-
-    # Switch back to tape gateway.
-    CastorTapeTests::print_leftovers ( $dbh );
-    CastorTapeTests::stopAndSwitchToRtcpclientd ( $dbh );
-    CastorTapeTests::print_leftovers ( $dbh );
-    CastorTapeTests::startDaemons();
-    print "t=".CastorTapeTests::elapsed_time."s. ";
-    print "Switched back to rtcpclientd  ========================\n";
-
-    # Fire 3rd iteration of the test
-    managePostTransitionBacklog( $dbh );
-    # No dual tape copies as rtcpclients is totally stupid with them.
-    SingleAndDualCopyTest ( $dbh, $seed_index, $file_number, 0);
-
     print "Cleaning up test directories $castor_directory\{$single_subdir,$dual_subdir\}\n";
     print `su $username -c "for p in $castor_directory\{$single_subdir,$dual_subdir\}; do nsrm -r -f \\\$p; done"`;
     exit 0;
