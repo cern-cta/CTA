@@ -820,10 +820,7 @@ BEGIN
              SubRequest.id, CastorFile.id, CastorFile.fileId, CastorFile.nsHost, SubRequest.subreqId
         FROM SubRequest, CastorFile
        WHERE SubRequest.castorFile = CastorFile.id
-         AND request = origReqId
-         AND status IN (dconst.SUBREQUEST_RESTART, dconst.SUBREQUEST_RETRY,
-                        dconst.SUBREQUEST_WAITSUBREQ, dconst.SUBREQUEST_WAITTAPERECALL,
-                        dconst.SUBREQUEST_REPACK));
+         AND request = origReqId);
   ELSE
     -- handle the case of selective abort
     FOR i IN fileIds.FIRST .. fileIds.LAST LOOP
@@ -1026,12 +1023,6 @@ BEGIN
           processBulkAbort(requestId, rIpAddress, rport, rReqUuid);
           reuid := -1;  -- not used
           regid := -1;  -- not used
-        WHEN 119 THEN -- Repack Request
-          SELECT ipAddress, port, reqId, euid, egid, repackVid
-            INTO rIpAddress, rport, rReqUuid, reuid, regid, freeParam
-            FROM StageRepackRequest, Client
-           WHERE StageRepackRequest.id = requestId
-             AND StageRepackRequest.client = Client.id;
       END CASE;
       -- open cursor on results
       OPEN rSubResults FOR
