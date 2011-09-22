@@ -218,7 +218,7 @@ int rtcpd_CheckClient (int, int, char *, char *, int *);
 int rtcpd_StartMonitor (int);
 int rtcpd_InitDiskIO  (int *);
 int rtcpd_CleanUpDiskIO  (int);
-int rtcpd_StartTapeIO  (rtcpClientInfo_t *const, tape_list_t *const, const int, const uint32_t, const uint64_t, const uint64_t);
+int rtcpd_StartTapeIO  (rtcpClientInfo_t *const, tape_list_t *const, const int, const uint32_t, const uint64_t, const uint64_t, int *const);
 int rtcpd_StartDiskIO  (rtcpClientInfo_t *, tape_list_t *, file_list_t *, int, int);
 int rtcpd_CheckProcError  (void);
 void rtcpd_SetProcError  (int);
@@ -279,5 +279,6 @@ int rtcpd_waitMoreWork (file_list_t *fl);
 int rtcpd_nbFullBufs (int);
 int rtcpd_jobID (void);
 int rtcpd_SerializeLock (int, int*, void*, int*, int*, int**);
+void rtcpd_ResetCtapeError();
 
 #endif /* RTCP_SERVER_H */

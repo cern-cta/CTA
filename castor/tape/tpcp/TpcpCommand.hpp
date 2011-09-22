@@ -30,6 +30,7 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/PermissionDenied.hpp"
 #include "castor/io/ServerSocket.hpp"
+#include "castor/tape/tapegateway/FileErrorReportStruct.hpp"
 #include "castor/tape/tpcp/Action.hpp"
 #include "castor/tape/tpcp/FilenameList.hpp"
 #include "castor/tape/tpcp/ParsedCommandLine.hpp"
@@ -273,7 +274,7 @@ protected:
    * @param sock The socket on which to reply to the tape-bridge.
    * @return     True if there is more work to be done else false.
    */
-  bool handlePingNotification(castor::IObject *obj,
+  bool handlePingNotification(castor::IObject *const obj,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
@@ -283,7 +284,7 @@ protected:
    * @param sock The socket on which to reply to the tape-bridge.
    * @return     True if there is more work to be done else false.
    */
-  bool handleEndNotification(castor::IObject *obj,
+  bool handleEndNotification(castor::IObject *const obj,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
@@ -293,18 +294,25 @@ protected:
    * @param sock The socket on which to reply to the tape-bridge.
    * @return     True if there is more work to be done else false.
    */
-  bool handleEndNotificationErrorReport(castor::IObject *obj,
+  bool handleEndNotificationErrorReport(castor::IObject *const obj,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
-   * EndNotificationFileErrorReport message handler.
+   * Handles the specified failed file-transfers.
    *
-   * @param obj  The tape-bridge message to be processed.
-   * @param sock The socket on which to reply to the tape-bridge.
-   * @return     True if there is more work to be done else false.
+   * @param files The failed file transfers.
    */
-  bool handleEndNotificationFileErrorReport(castor::IObject *obj,
-    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+  void handleFailedTransfers(
+    const std::vector<tapegateway::FileErrorReportStruct*> &files)
+    throw(castor::exception::Exception);
+
+  /**
+   * Handles the specified failed file-transfer.
+   *
+   * @param file The failed file-transfer.
+   */
+  void handleFailedTransfer(const tapegateway::FileErrorReportStruct &file)
+    throw(castor::exception::Exception);
 
   /**
    * Acknowledges the end of the session to the tape-bridge.
@@ -345,7 +353,7 @@ protected:
    * @param sock The socket on which to reply to the tape-bridge with an
    *             EndNotificationErrorReport message if the cast fails.
    */
-  template<class T> void castMessage(castor::IObject *obj, T *&msg,
+  template<class T> void castMessage(castor::IObject *const obj, T *&msg,
     castor::io::AbstractSocket &sock) throw() {
     msg = dynamic_cast<T*>(obj);
 

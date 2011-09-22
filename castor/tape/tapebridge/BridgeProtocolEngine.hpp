@@ -29,6 +29,7 @@
 #include "castor/tape/tapebridge/BridgeSocketCatalogue.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"
 #include "castor/tape/tapebridge/Counter.hpp"
+#include "castor/tape/tapebridge/FileWrittenNotificationList.hpp"
 #include "castor/tape/tapebridge/PendingMigrationsStore.hpp"
 #include "castor/tape/tapebridge/TapeFlushConfigParams.hpp"
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
@@ -114,15 +115,13 @@ private:
    * The catalogue of all the rtcpd and tapegateway connections used by the
    * bridge protocol engine.
    *
-   * The catalogue behaves like a smart pointer for the rtcpd disk/tape IO
-   * control-connections and the client connections in that its destructor will
-   * close them if they are still open.
+   * The catalogue behaves as a smart pointer for the initial rtcpd connection,
+   * the rtcpd disk/tape IO control-connections and the client connections.  In
+   * other words the destructor of the catalogue will close these connections
+   * if they are still open.
    *
    * The catalogue will not close the listen socket used to accept rtcpd
    * connections.  This is the responsibility of the VdqmRequestHandler.
-   *
-   * The catalogue will not close the initial rtcpd connection.  This is the
-   * responsibility of the VdqmRequestHandler.
    */
   BridgeSocketCatalogue m_sockCatalogue;
 
@@ -140,7 +139,7 @@ private:
    * If migrating and the client is the tape-gateway, then this is the next
    * expected tape file sequence, else this member is ignored.
    */
-  uint32_t m_nextDestinationFseq;
+  int32_t m_nextDestinationTapeFSeq;
 
   /**
    * Functor that returns true if the daemon is stopping gracefully.
@@ -194,6 +193,19 @@ private:
    * and written to tape but not yet flushed to tape.
    */
   PendingMigrationsStore m_pendingMigrationsStore;
+
+  /**
+   * A list of lists, where each sub-list represents a batch of files that were
+   * flushed to tape by a common flush.
+   */
+  std::list<FileWrittenNotificationList> m_flushedBatches;
+
+  /**
+   * This member variable is set to true when the session with the rtcpd
+   * daemon has been finished and therefore all connections with the rtcpd
+   * daemon, accept for the initial callback connection are closed.
+   */
+  bool m_sessionWithRtcpdIsFinished;
 
   /**
    * In-line helper function that returns a 64-bit rtcpd message body handler
@@ -252,7 +264,7 @@ private:
    */
   typedef void (BridgeProtocolEngine::*ClientMsgCallback)(
     const int            clientSock,
-    const IObject *const obj,
+    IObject *const       obj,
     const int            rtcpdSock,
     const uint32_t       rtcpdMagic,
     const uint32_t       rtcpdReqType,
@@ -289,9 +301,8 @@ private:
    * released from the catalogue and newly accepted connections added.
    *
    * @param readFdSet The read file-descriptor set from calling select().
-   * @return          True if the RTCOPY session should continue else false.
    */
-  bool processAPendingSocket(fd_set &readFdSet)
+  void processAPendingSocket(fd_set &readFdSet)
     throw (castor::exception::Exception);
 
   /**
@@ -301,7 +312,7 @@ private:
    * Please note that this method will modify the catalogue of
    * socket-descriptors as necessary.
    */
-  bool processPendingListenSocket() throw (castor::exception::Exception);
+  void processPendingListenSocket() throw (castor::exception::Exception);
 
   /**
    * Processes the specified socket which must be both pending and the initial
@@ -309,7 +320,7 @@ private:
    *
    * @param pendingSock the file descriptior of the pending socket.
    */
-  bool processPendingInitialRtcpdSocket(const int pendingSock)
+  void processPendingInitialRtcpdSocket(const int pendingSock)
     throw (castor::exception::Exception);
 
   /**
@@ -321,20 +332,33 @@ private:
    *
    * @param pendingSock the file descriptior of the pending socket.
    */
-  bool processPendingRtcpdDiskTapeIOControlSocket(const int pendingSock)
+  void processPendingRtcpdDiskTapeIOControlSocket(const int pendingSock)
     throw (castor::exception::Exception);
 
   /**
    * Processes the specified socket which must be both pending and a connection
-   * made from this tapebridged daemon to a client (readtp, writetp, dumtp or
-   * a tapebridged daemon).
+   * made from this tapebridged daemon to a client (readtp, writetp, dumptp or
+   * tapegatewayd).
    *
    * Please note that this method will modify the catalogue of
    * socket-descriptors as necessary.
    *
    * @param pendingSock the file descriptior of the pending socket.
    */
-  bool processPendingClientSocket(const int pendingSock)
+  void processPendingClientSocket(const int pendingSock)
+    throw (castor::exception::Exception);
+
+  /**
+   * Processes the specified socket which must be both pending and a connection
+   * made from this tapebridged daemon to a migration client (writetp or
+   * tapegatewayd).
+   *
+   * Please note that this method will modify the catalogue of
+   * socket-descriptors as necessary.
+   *
+   * @param pendingSock the file descriptior of the pending socket.
+   */
+  void processPendingClientMigrationReportSocket(const int pendingSock)
     throw (castor::exception::Exception);
 
   /**
@@ -511,14 +535,12 @@ private:
     throw(castor::exception::Exception);
 
   /**
-   * Sends the specified file-migrated notification to the client (the
-   * tapegatewayd daemon or the writetp command-line tool).
-   *
-   * This method sets the aggregatorTransactionId of each notification message
-   * ccordingly before sending the message.
+   * Sends the "file flushed to tape" notifications that correspond to the
+   * specified "file written to tape" notifications that have now received
+   * their corresponding "flushed to tape" message from the rtcpd daemon.
    */
   void sendFlushedMigrationsToClient(
-    std::list<tapegateway::FileMigratedNotification> &fileMigratedNotifications)
+    const FileWrittenNotificationList &notifications)
     throw (castor::exception::Exception);
 
   /**
@@ -556,14 +578,14 @@ private:
     throw(castor::exception::Exception);
 
   /**
-   * FileToMigrate client message handler.
+   * FilesToMigrateList client message handler.
    *
    * For full documenation please see the documentation of the type
    * BridgeProtocolEngine::ClientMsgCallback.
    */
-  void fileToMigrateClientCallback(
+  void filesToMigrateListClientCallback(
     const int            clientSock,
-    const IObject *const obj,
+    IObject *const       obj,
     const int            rtcpdSock,
     const uint32_t       rtcpdMagic,
     const uint32_t       rtcpdReqType,
@@ -573,14 +595,14 @@ private:
     throw(castor::exception::Exception);
 
   /**
-   * FileToRecall client message handler.
+   * FilesToRecallListClientCallback client message handler.
    *
    * For full documenation please see the documentation of the type
    * BridgeProtocolEngine::ClientMsgCallback.
    */
-  void fileToRecallClientCallback(
+  void filesToRecallListClientCallback(
     const int            clientSock,
-    const IObject *const obj,
+    IObject *const       obj,
     const int            rtcpdSock,
     const uint32_t       rtcpdMagic,
     const uint32_t       rtcpdReqType,
@@ -597,7 +619,7 @@ private:
    */
   void noMoreFilesClientCallback(
     const int            clientSock,
-    const IObject *const obj,
+    IObject *const       obj,
     const int            rtcpdSock,
     const uint32_t       rtcpdMagic,
     const uint32_t       rtcpdReqType,
@@ -614,7 +636,7 @@ private:
    */
   void endNotificationErrorReportClientCallback(
     const int            clientSock,
-    const IObject *const obj,
+    IObject *const       obj,
     const int            rtcpdSock,
     const uint32_t       rtcpdMagic,
     const uint32_t       rtcpdReqType,
@@ -631,13 +653,25 @@ private:
    */
   void notificationAcknowledge(
     const int            clientSock,
-    const IObject *const obj,
+    IObject *const       obj,
     const int            rtcpdSock,
     const uint32_t       rtcpdMagic,
     const uint32_t       rtcpdReqType,
     const char *const    rtcpdTapePath,
     const uint64_t       tapebridgeTransId,
     const struct timeval clientReqTimeStamp)
+    throw(castor::exception::Exception);
+
+  /**
+   * Notifies the client of the end of session.
+   */
+  void notifyClientEndOfSession();
+
+  /**
+   * Notifies the rtcpd daemon of the end of session using the initial
+   * rtcpd connection and the closes the initial rtcpd connection.
+   */
+  void notifyRtcpdEndOfSessionAndCloseInitialConnection()
     throw(castor::exception::Exception);
 
 }; // class BridgeProtocolEngine

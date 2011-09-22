@@ -22,9 +22,10 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TPCP_READTPCOMMAND_HPP
-#define CASTOR_TAPE_TPCP_READTPCOMMAND_HPP 1
+#ifndef CASTOR_TAPE_TPCP_WRITETPCOMMAND_HPP
+#define CASTOR_TAPE_TPCP_WRITETPCOMMAND_HPP 1
 
+#include "castor/tape/tapegateway/FileMigratedNotificationStruct.hpp"
 #include "castor/tape/tpcp/TpcpCommand.hpp"
 
 namespace castor {
@@ -99,23 +100,52 @@ private:
   uint64_t m_nbMigratedFiles;
 
   /**
-   * FileToMigrateRequest message handler.
+   * FilesToMigrateListRequest message handler.
    *
    * @param obj  The tapebridge message to be processed.
    * @param sock The socket on which to reply to the tapebridge.
    * @return     True if there is more work to be done else false.
    */
-  bool handleFileToMigrateRequest(castor::IObject *obj,
+  bool handleFilesToMigrateListRequest(castor::IObject *const obj,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
-   * FileMigratedNotification message handler.
+   * FileMigrationReportList message handler.
    *
    * @param obj  The tapebridge message to be processed.
    * @param sock The socket on which to reply to the tapebridge.
    * @return     True if there is more work to be done else false.
    */
-  bool handleFileMigratedNotification(castor::IObject *obj,
+  bool handleFileMigrationReportList(castor::IObject *const obj,
+    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+
+  /**
+   * Handles the specified successful migration of files to tape.
+   *
+   * @param aggregatorTransactionId The aggregator transaction Id of the
+   *                                enclosing FileMigrationReportList message.
+   * @param files                   The sucessful migrations to tape.
+   * @param sock                    The socket on which to reply to the
+   *                                tapebridge.
+   */
+  void handleSuccessfulMigrations(
+    const uint64_t aggregatorTransactionId,
+    const std::vector<tapegateway::FileMigratedNotificationStruct*> &files,
+    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+
+  /**
+   * Handles the successfull migration of a file to tape.
+   *
+   * @param aggregatorTransactionId The aggregator transaction Id of the
+   *                                enclosing FileMigrationReportList message.
+   * @param file                    The file that was successfully migrated to
+   *                                tape.
+   * @param sock                    The socket on which to reply to the
+   *                                tapebridge.
+   */
+  void handleSuccessfulMigration(
+    const uint64_t aggregatorTransactionId,
+    const tapegateway::FileMigratedNotificationStruct &file,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
@@ -125,7 +155,7 @@ private:
    * @param sock The socket on which to reply to the tapebridge.
    * @return     True if there is more work to be done else false.
    */
-  bool handleEndNotification(castor::IObject *obj,
+  bool handleEndNotification(castor::IObject *const obj,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
@@ -135,17 +165,7 @@ private:
    * @param sock The socket on which to reply to the tapebridge.
    * @return     True if there is more work to be done else false.
    */
-  bool handleEndNotificationErrorReport(castor::IObject *obj,
-    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
-
-  /**
-   * EndNotificationFileErrorReport message handler.
-   *
-   * @param obj  The tapebridge message to be processed.
-   * @param sock The socket on which to reply to the tapebridge.
-   * @return     True if there is more work to be done else false.
-   */
-  bool handleEndNotificationFileErrorReport(castor::IObject *obj,
+  bool handleEndNotificationErrorReport(castor::IObject *const obj,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
@@ -155,7 +175,7 @@ private:
    * @param sock The socket on which to reply to the tapebridge.
    * @return     True if there is more work to be done else false.
    */
-  bool handlePingNotification(castor::IObject *obj,
+  bool handlePingNotification(castor::IObject *const obj,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
 }; // class WriteTpCommand
@@ -165,4 +185,4 @@ private:
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_TPCP_READTPCOMMAND_HPP
+#endif // CASTOR_TAPE_TPCP_WRITETPCOMMAND_HPP

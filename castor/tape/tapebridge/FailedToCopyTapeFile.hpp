@@ -42,20 +42,56 @@ class FailedToCopyTapeFile : public castor::exception::Exception {
 public:
 
   /**
-   * Structure used to describe the failed file.
+   * Inner class used to describe the failed file.
    */
-  struct FailedFile {
-    uint64_t      fileTransactionId;
-    std::string   nsHost;
-    uint64_t      fileId;
-    int32_t       fSeq;
-    unsigned char blockId0;
-    unsigned char blockId1;
-    unsigned char blockId2;
-    unsigned char blockId3;
-    std::string   path;
-    int32_t       cprc;
-  };
+  class FailedFile {
+  private:
+    uint64_t    m_fileTransactionId;
+    std::string m_nsHost;
+    uint64_t    m_nsFileId;
+    int32_t     m_tapeFSeq;
+
+  public:
+    FailedFile():
+      m_fileTransactionId(0),
+      m_nsHost(""),
+      m_nsFileId(0),
+      m_tapeFSeq(0) {
+      // Do nothing
+    }
+
+    void setFileTransactionId(const uint64_t value) {
+      m_fileTransactionId = value;
+    }
+
+    uint64_t getFileTransactionId() const {
+      return m_fileTransactionId;
+    }
+
+    void setNsHost(const std::string &value) {
+      m_nsHost = value;
+    }
+
+    const std::string &getNsHost() const {
+      return m_nsHost;
+    }
+
+    void setNsFileId(const uint64_t value) {
+      m_nsFileId = value;
+    }
+
+    uint64_t getNsFileId() const {
+      return m_nsFileId;
+    }
+
+    void setTapeFSeq(const int32_t value) {
+      m_tapeFSeq = value;
+    }
+
+    int32_t getTapeFSeq() const {
+      return m_tapeFSeq;
+    }
+  }; // class FailedFile
       
   /**
    * Constructor
@@ -70,7 +106,12 @@ public:
    *
    * @return A constant reference to the information about the failed file.
    */
-  const FailedFile &failedFile();
+  const FailedFile &getFailedFile() const;
+
+  /**
+   * Pure virtual destructor to make this class abstract.
+   */
+  virtual ~FailedToCopyTapeFile() = 0;
 
 private:
 

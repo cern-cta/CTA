@@ -81,7 +81,7 @@ private:
    * @param sock The socket on which to reply to the tapebridge.
    * @return     True if there is more work to be done else false.
    */
-  bool handleDumpParametersRequest(castor::IObject *obj,
+  bool handleDumpParametersRequest(castor::IObject *const obj,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
@@ -91,7 +91,7 @@ private:
    * @param sock The socket on which to reply to the tapebridge.
    * @return     True if there is more work to be done else false.
    */
-  bool handleDumpNotification(castor::IObject *obj,
+  bool handleDumpNotification(castor::IObject *const obj,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
@@ -101,7 +101,7 @@ private:
    * @param sock The socket on which to reply to the tapebridge.
    * @return     True if there is more work to be done else false.
    */
-  bool handleEndNotification(castor::IObject *obj,
+  bool handleEndNotification(castor::IObject *const obj,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
@@ -111,7 +111,7 @@ private:
    * @param sock The socket on which to reply to the tapebridge.
    * @return     True if there is more work to be done else false.
    */
-  bool handleEndNotificationErrorReport(castor::IObject *obj,
+  bool handleEndNotificationErrorReport(castor::IObject *const obj,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
@@ -121,7 +121,7 @@ private:
    * @param sock The socket on which to reply to the tapebridge.
    * @return     True if there is more work to be done else false.
    */
-  bool handlePingNotification(castor::IObject *obj,
+  bool handlePingNotification(castor::IObject *const obj,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
 }; // class DumpTpCommand

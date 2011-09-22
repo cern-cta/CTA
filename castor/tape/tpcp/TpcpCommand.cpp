@@ -28,15 +28,15 @@
 #include "castor/exception/Internal.hpp" 
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/tape/net/net.hpp"
+#include "castor/tape/tapegateway/EndNotification.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
-#include "castor/tape/tapegateway/EndNotificationFileErrorReport.hpp"
+#include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
 #include "castor/tape/tapegateway/PingNotification.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/tapegateway/VolumeMode.hpp"
 #include "castor/tape/tapegateway/VolumeRequest.hpp"
 #include "castor/tape/tpcp/Constants.hpp"
 #include "castor/tape/tpcp/Helper.hpp"
-#include "castor/tape/tpcp/StreamHelper.hpp"
 #include "castor/tape/tpcp/StreamOperators.hpp"
 #include "castor/tape/tpcp/TapeFileSequenceParser.hpp"
 #include "castor/tape/tpcp/TapeFseqRangeListSequence.hpp"
@@ -1054,7 +1054,7 @@ bool castor::tape::tpcp::TpcpCommand::waitForAndDispatchMessage()
 // handlePingNotification
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::TpcpCommand::handlePingNotification(
-  castor::IObject *obj, castor::io::AbstractSocket &sock)
+  castor::IObject *const obj, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
 
   tapegateway::PingNotification *msg = NULL;
@@ -1080,7 +1080,7 @@ bool castor::tape::tpcp::TpcpCommand::handlePingNotification(
 // handleEndNotification
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::TpcpCommand::handleEndNotification(
-  castor::IObject *obj, castor::io::AbstractSocket &sock)
+  castor::IObject *const obj, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
 
   tapegateway::EndNotification *msg = NULL;
@@ -1103,10 +1103,56 @@ bool castor::tape::tpcp::TpcpCommand::handleEndNotification(
 
 
 //------------------------------------------------------------------------------
+// handleFailedTransfers
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::TpcpCommand::handleFailedTransfers(
+  const std::vector<tapegateway::FileErrorReportStruct*> &files)
+  throw(castor::exception::Exception) {
+  for(std::vector<tapegateway::FileErrorReportStruct*>::const_iterator
+    itor = files.begin(); itor != files.end(); itor++) {
+
+    if(NULL == *itor) {
+      TAPE_THROW_CODE(EBADMSG,
+        "Pointer to FileErrorReportStruct is NULL");
+    }
+
+    handleFailedTransfer(*(*itor));
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// handleFailedTransfer
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::TpcpCommand::handleFailedTransfer(
+  const tapegateway::FileErrorReportStruct &file)
+  throw(castor::exception::Exception) {
+
+  // Command-line user feedback
+  std::ostream &os = std::cout;
+  const time_t now = time(NULL);
+
+  utils::writeTime(os, now, TIMEFORMAT);
+  os <<
+    " Tapebridge encountered the following error concerning a specific file:"
+    "\n\n"
+    "Error code        = "   << file.errorCode()            <<   "\n"
+    "Error code string = \"" << sstrerror(file.errorCode()) << "\"\n"
+    "Error message     = \"" << file.errorMessage()         << "\"\n"
+    "\n"
+    "File fileTransactionId = "   << file.fileTransactionId() <<   "\n"
+    "File nsHost            = \"" << file.nshost()            << "\"\n"
+    "File nsFileId          = "   << file.fileid()            <<   "\n"
+    "File tapeFSeq          = "   << file.fseq()              <<   "\n" <<
+    std::endl;
+}
+
+
+//------------------------------------------------------------------------------
 // handleEndNotificationErrorReport
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::TpcpCommand::handleEndNotificationErrorReport(
-  castor::IObject *obj, castor::io::AbstractSocket &sock)
+  castor::IObject *const obj, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
 
   tapegateway::EndNotificationErrorReport *msg = NULL;
@@ -1127,57 +1173,6 @@ bool castor::tape::tpcp::TpcpCommand::handleEndNotificationErrorReport(
       "Error code string = \"" << sstrerror(msg->errorCode()) << "\"" <<
       std::endl <<
       "Error message     = \"" << msg->errorMessage() << "\"" << std::endl <<
-      std::endl;
-  }
-
-  // Create the NotificationAcknowledge message for the tapebridge
-  castor::tape::tapegateway::NotificationAcknowledge acknowledge;
-  acknowledge.setMountTransactionId(m_volReqId);
-  acknowledge.setAggregatorTransactionId(msg->aggregatorTransactionId());
-
-  // Send the NotificationAcknowledge message to the tapebridge
-  sock.sendObject(acknowledge);
-
-  Helper::displaySentMsgIfDebug(acknowledge, m_cmdLine.debugSet);
-
-  return false;
-}
-
-
-//------------------------------------------------------------------------------
-// handleEndNotificationFileErrorReport
-//------------------------------------------------------------------------------
-bool castor::tape::tpcp::TpcpCommand::handleEndNotificationFileErrorReport(
-  castor::IObject *obj, castor::io::AbstractSocket &sock)
-  throw(castor::exception::Exception) {
-
-  tapegateway::EndNotificationFileErrorReport *msg = NULL;
-
-  castMessage(obj, msg, sock);
-  Helper::displayRcvdMsgIfDebug(*msg, m_cmdLine.debugSet);
-
-  // Command-line user feedback
-  {
-    std::ostream &os = std::cout;
-    const time_t now = time(NULL);
-
-    utils::writeTime(os, now, TIMEFORMAT);
-    os <<
-      " Tapebridge encountered the following error concerning a specific file:"
-      "\n\n"
-      "Error code        = "   << msg->errorCode()            <<   "\n"
-      "Error code string = \"" << sstrerror(msg->errorCode()) << "\"\n"
-      "Error message     = \"" << msg->errorMessage()         << "\"\n"
-      "\n"
-      "File fileTransactionId = "   << msg->fileTransactionId()    <<   "\n"
-      "File nsHost            = \"" << msg->nsHost()               << "\"\n"
-      "File fileId            = "   << msg->fileId()               <<   "\n"
-      "File fSeq              = "   << msg->fSeq()                 <<   "\n"
-      "File blockId           = "   <<
-        utils::tapeBlockIdToString(msg->blockId0(), msg->blockId1(),
-          msg->blockId2(), msg->blockId3())                        <<   "\n"
-      "File path              = \"" << msg->path()                 << "\"\n"
-      "File cprc              = "   << msg->cprc()                 <<   "\n" <<
       std::endl;
   }
 

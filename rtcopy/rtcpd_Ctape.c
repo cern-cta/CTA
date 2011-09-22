@@ -1145,7 +1145,7 @@ int rtcpd_Release(tape_list_t *tape, file_list_t *file) {
     }
     if ( tape != NULL ) tapereq = &tape->tapereq;
 
-    rtcp_log(LOG_DEBUG,"rtcpd_Release() called with path=%s\n",
+    rtcp_log(LOG_INFO,"rtcpd_Release() called with path=%s\n",
         (path == NULL ? "(nil)" : path));
     tl_rtcpd.tl_log( &tl_rtcpd, 36, 5,
                      "func"   , TL_MSG_PARAM_STR  , "rtcpd_Release",

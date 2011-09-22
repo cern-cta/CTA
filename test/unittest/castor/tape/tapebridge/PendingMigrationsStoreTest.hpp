@@ -25,6 +25,7 @@
 #ifndef TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_PENDINGMIGRATIONSTEST_HPP
 #define TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_PENDINGMIGRATIONSTEST_HPP 1
 
+#include "castor/tape/tapebridge/FileWrittenNotificationList.hpp"
 #include "castor/tape/tapebridge/PendingMigrationsStore.hpp"
 #include "h/Cuuid.h"
 #include "h/rtcpd_constants.h"
@@ -55,32 +56,36 @@ public:
 
     // Tell the pending-migrations store all files are pending write-to-tape.
     for(uint32_t i = 1; i <= maxFseq; i++) {
-      castor::tape::tapegateway::FileToMigrate fileToMigrate;
-      fileToMigrate.setFseq(i);
-      fileToMigrate.setFileSize(1);
+      castor::tape::tapebridge::RequestToMigrateFile
+        request;
+      request.fileTransactionId = 10000 + i;
+      request.tapeFSeq = i;
+      request.fileSize = 1;
       CPPUNIT_ASSERT_NO_THROW_MESSAGE(
-        "store.add",
-        store.add(fileToMigrate));
+        "store.receivedRequestToMigrateFile",
+        store.receivedRequestToMigrateFile(request));
 
       CPPUNIT_ASSERT_EQUAL_MESSAGE(
         "store.getNbPendingMigrations after add",
         i,
-      store.getNbPendingMigrations());
+        store.getNbPendingMigrations());
     }
     store.noMoreFilesToMigrate();
 
     // Write files to tape, flushing every maxBytesBeforeFlush files
     for(uint32_t i=1; i<=maxFseq; i++) {
-      castor::tape::tapegateway::FileMigratedNotification notification;
-      notification.setFseq(i);
-      notification.setFileSize(1);
+      castor::tape::tapebridge::FileWrittenNotification
+        notification;
+      notification.fileTransactionId = 10000 + i;
+      notification.tapeFSeq = i;
+      notification.fileSize = 1;
       CPPUNIT_ASSERT_NO_THROW_MESSAGE(
-        "store.markAsWrittenWithoutFlush",
-        markAsWrittenWithoutFlush(store, notification));
+        "store.fileWrittenWithoutFlush",
+        fileWrittenWithoutFlush(store, notification));
 
       // If data should be flushed to tape
       if(0 == i % maxBytesBeforeFlush) {
-        std::list<castor::tape::tapegateway::FileMigratedNotification>
+        castor::tape::tapebridge::FileWrittenNotificationList
           notfications;
 
         CPPUNIT_ASSERT_NO_THROW_MESSAGE(
@@ -89,21 +94,21 @@ public:
 
         CPPUNIT_ASSERT_EQUAL_MESSAGE(
           "size of result of store.dataFlushedToTape",
-          (std::list<castor::tape::tapegateway::FileMigratedNotification>::
+          (castor::tape::tapebridge::FileWrittenNotificationList::
           size_type)maxBytesBeforeFlush,
           notfications.size());
 
         // Check the tape-file sequence-numbers of the flushed files
         {
           int32_t k = i-maxBytesBeforeFlush+1;
-          for(std::list<castor::tape::tapegateway::FileMigratedNotification>::
+          for(castor::tape::tapebridge::FileWrittenNotificationList::
             const_iterator itor = notfications.begin();
             itor != notfications.end(); itor++) {
 
             CPPUNIT_ASSERT_EQUAL_MESSAGE(
               "fseq of result of store.dataFlushedToTape",
               k,
-              itor->fseq());
+              itor->tapeFSeq);
 
             k++;
           }
@@ -127,32 +132,36 @@ public:
 
     // Tell the pending-migrations store all files are pending write-to-tape.
     for(uint32_t i = 1; i <= maxFseq; i++) {
-      castor::tape::tapegateway::FileToMigrate fileToMigrate;
-      fileToMigrate.setFseq(i);
-      fileToMigrate.setFileSize(1);
+      castor::tape::tapebridge::RequestToMigrateFile
+        request;
+      request.fileTransactionId = 10000 + i;
+      request.tapeFSeq = i;
+      request.fileSize = 1;
       CPPUNIT_ASSERT_NO_THROW_MESSAGE(
-        "store.add",
-        store.add(fileToMigrate));
+        "store.receivedRequestToMigrateFile",
+        store.receivedRequestToMigrateFile(request));
 
       CPPUNIT_ASSERT_EQUAL_MESSAGE(
         "store.getNbPendingMigrations after add",
         i,
-      store.getNbPendingMigrations());
+        store.getNbPendingMigrations());
     }
     store.noMoreFilesToMigrate();
 
     // Write files to tape, flushing every maxFilesBeforeFlush files
     for(uint32_t i=1; i<=maxFseq; i++) {
-      castor::tape::tapegateway::FileMigratedNotification notification;
-      notification.setFseq(i);
-      notification.setFileSize(1);
+      castor::tape::tapebridge::FileWrittenNotification
+        notification;
+      notification.fileTransactionId = 10000 + i;
+      notification.tapeFSeq = i;
+      notification.fileSize = 1;
       CPPUNIT_ASSERT_NO_THROW_MESSAGE(
-        "store.markAsWrittenWithoutFlush",
-        markAsWrittenWithoutFlush(store, notification));
+        "store.fileWrittenWithoutFlush",
+        fileWrittenWithoutFlush(store, notification));
 
       // If data should be flushed to tape
       if(0 == i % maxFilesBeforeFlush) {
-        std::list<castor::tape::tapegateway::FileMigratedNotification>
+        castor::tape::tapebridge::FileWrittenNotificationList
           notfications;
 
         CPPUNIT_ASSERT_NO_THROW_MESSAGE(
@@ -161,21 +170,21 @@ public:
 
         CPPUNIT_ASSERT_EQUAL_MESSAGE(
           "size of result of store.dataFlushedToTape",
-          (std::list<castor::tape::tapegateway::FileMigratedNotification>::
+          (castor::tape::tapebridge::FileWrittenNotificationList::
           size_type)maxFilesBeforeFlush,
           notfications.size());
 
         // Check the tape-file sequence-numbers of the flushed files
         {
           int32_t k = i-maxFilesBeforeFlush+1;
-          for(std::list<castor::tape::tapegateway::FileMigratedNotification>::
+          for(castor::tape::tapebridge::FileWrittenNotificationList::
             const_iterator itor = notfications.begin();
             itor != notfications.end(); itor++) {
 
             CPPUNIT_ASSERT_EQUAL_MESSAGE(
               "fseq of result of store.dataFlushedToTape",
               k,
-              itor->fseq());
+              itor->tapeFSeq);
 
             k++;
           }
@@ -199,34 +208,38 @@ public:
 
     // Tell the pending-migrations store all files are pending write-to-tape.
     for(uint32_t i=1; i<=maxFseq; i++) {
-      castor::tape::tapegateway::FileToMigrate fileToMigrate;
-      fileToMigrate.setFseq(i);
-      fileToMigrate.setFileSize(1);
+      castor::tape::tapebridge::RequestToMigrateFile
+        request;
+      request.fileTransactionId = 10000 + i;
+      request.tapeFSeq = i;
+      request.fileSize = 1;
       CPPUNIT_ASSERT_NO_THROW_MESSAGE(
-        "store.add",
-        store.add(fileToMigrate));
+        "store.receivedRequestToMigrateFile",
+        store.receivedRequestToMigrateFile(request));
 
       CPPUNIT_ASSERT_EQUAL_MESSAGE(
         "store.getNbPendingMigrations after add",
         i,
-      store.getNbPendingMigrations());
+        store.getNbPendingMigrations());
     }
     store.noMoreFilesToMigrate();
 
     // Write all files up to maxBytesBeforeFlush;
     for(uint32_t i=1; i <= maxBytesBeforeFlush; i++) {
-      castor::tape::tapegateway::FileMigratedNotification notification;
-      notification.setFseq(i);
-      notification.setFileSize(1);
+      castor::tape::tapebridge::FileWrittenNotification
+      notification;
+      notification.fileTransactionId = 10000 + i;
+      notification.tapeFSeq = i;
+      notification.fileSize = 1;
       CPPUNIT_ASSERT_NO_THROW_MESSAGE(
-        "store.markAsWrittenWithoutFlush",
-        markAsWrittenWithoutFlush(store, notification));
+        "store.fileWrittenWithoutFlush",
+        fileWrittenWithoutFlush(store, notification));
     }
 
     // Illegally flush to tape before maxBytesBeforeFlush
     {
       const uint32_t illegalFlushFseq = 50;
-      std::list<castor::tape::tapegateway::FileMigratedNotification>
+      castor::tape::tapebridge::FileWrittenNotificationList
         notfications;
 
       CPPUNIT_ASSERT_THROW_MESSAGE(
@@ -245,33 +258,37 @@ public:
 
     // Tell the pending-migrations store all files are pending write-to-tape.
     for(uint32_t i=1; i<=maxFseq; i++) {
-      castor::tape::tapegateway::FileToMigrate fileToMigrate;
-      fileToMigrate.setFseq(i);
-      fileToMigrate.setFileSize(1);
+      castor::tape::tapebridge::RequestToMigrateFile
+        request;
+      request.fileTransactionId = 10000 + i;
+      request.tapeFSeq = i;
+      request.fileSize = 1;
       CPPUNIT_ASSERT_NO_THROW_MESSAGE(
-        "store.add",
-        store.add(fileToMigrate));
+        "store.receivedRequestToMigrateFile",
+        store.receivedRequestToMigrateFile(request));
 
       CPPUNIT_ASSERT_EQUAL_MESSAGE(
         "store.getNbPendingMigrations after add",
         i,
-      store.getNbPendingMigrations());
+        store.getNbPendingMigrations());
     }
 
     // Write all files up to maxFilesBeforeFlush;
     for(uint32_t i=1; i <= maxFilesBeforeFlush; i++) {
-      castor::tape::tapegateway::FileMigratedNotification notification;
-      notification.setFseq(i);
-      notification.setFileSize(1);
+      castor::tape::tapebridge::FileWrittenNotification
+        notification;
+      notification.fileTransactionId = 10000 + i;
+      notification.tapeFSeq = i;
+      notification.fileSize = 1;
       CPPUNIT_ASSERT_NO_THROW_MESSAGE(
-        "store.markAsWrittenWithoutFlush",
-        markAsWrittenWithoutFlush(store, notification));
+        "store.fileWrittenWithoutFlush",
+        fileWrittenWithoutFlush(store, notification));
     }
 
     // Illegally flush to tape before maxFilesBeforeFlush
     {
       const uint32_t illegalFlushFseq = 20;
-      std::list<castor::tape::tapegateway::FileMigratedNotification>
+      castor::tape::tapebridge::FileWrittenNotificationList
         notfications;
 
       CPPUNIT_ASSERT_THROW_MESSAGE(
@@ -294,7 +311,7 @@ private:
    * Converts any thrown exception inheriting from castor::exception::Exception
    * into a std::exception.
    */
-  std::list<castor::tape::tapegateway::FileMigratedNotification>
+  castor::tape::tapebridge::FileWrittenNotificationList
     dataFlushedToTape(
     castor::tape::tapebridge::PendingMigrationsStore &store,
     const uint32_t tapeFseqOfFlush) throw(std::exception) {
@@ -310,13 +327,12 @@ private:
    * Converts any thrown exception inheriting from castor::exception::Exception
    * into a std::exception.
    */
-  void markAsWrittenWithoutFlush(
+  void fileWrittenWithoutFlush(
     castor::tape::tapebridge::PendingMigrationsStore &store,
-    const castor::tape::tapegateway::FileMigratedNotification
-      &fileMigratedNotification)
-    throw(std::exception) {
+    const castor::tape::tapebridge::FileWrittenNotification
+      &notification) throw(std::exception) {
     try {
-      store.markAsWrittenWithoutFlush(fileMigratedNotification);
+      store.fileWrittenWithoutFlush(notification);
     } catch(castor::exception::Exception &ex) {
       test_exception te(ex.getMessage().str());
       throw(te);

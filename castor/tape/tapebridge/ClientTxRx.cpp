@@ -33,13 +33,8 @@
 #include "castor/tape/tapegateway/DumpParametersRequest.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
-#include "castor/tape/tapegateway/EndNotificationFileErrorReport.hpp"
-#include "castor/tape/tapegateway/FileMigratedNotification.hpp"
-#include "castor/tape/tapegateway/FileRecalledNotification.hpp"
-#include "castor/tape/tapegateway/FileToMigrate.hpp"
-#include "castor/tape/tapegateway/FileToMigrateRequest.hpp"
-#include "castor/tape/tapegateway/FileToRecall.hpp"
-#include "castor/tape/tapegateway/FileToRecallRequest.hpp"
+#include "castor/tape/tapegateway/FilesToMigrateListRequest.hpp"
+#include "castor/tape/tapegateway/FilesToRecallListRequest.hpp"
 #include "castor/tape/tapegateway/NoMoreFiles.hpp"
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
 #include "castor/tape/tapegateway/PingNotification.hpp"
@@ -59,7 +54,7 @@ castor::tape::tapegateway::Volume
   const Cuuid_t        &cuuid,
   const uint32_t       mountTransactionId,
   const uint64_t       aggregatorTransactionId,
-  const char           *clientHost,
+  const char *const    clientHost,
   const unsigned short clientPort,
   const char (&unit)[CA_MAXUNMLEN+1])
   throw(castor::exception::Exception) {
@@ -173,20 +168,38 @@ castor::tape::tapegateway::Volume
 
 
 //-----------------------------------------------------------------------------
-// sendFileToMigrateRequest
+// sendFilesToMigrateListRequest
 //-----------------------------------------------------------------------------
-int castor::tape::tapebridge::ClientTxRx::sendFileToMigrateRequest(
+int castor::tape::tapebridge::ClientTxRx::sendFilesToMigrateListRequest(
   const uint32_t       mountTransactionId,
   const uint64_t       aggregatorTransactionId,
-  const char           *clientHost,
+  const char *const    clientHost,
   const unsigned short clientPort,
+  const uint64_t       maxFiles,
+  const uint64_t       maxBytes,
   time_t               &connectDuration)
   throw(castor::exception::Exception) {
 
+  // Check method arguments
+  if(NULL == clientHost) {
+    TAPE_THROW_EX(castor::exception::InvalidArgument,
+      ": clientHost is NULL");
+  }
+  if(maxFiles == 0) {
+    TAPE_THROW_EX(castor::exception::InvalidArgument,
+      ": maxFiles is 0");
+  }
+  if(maxBytes == 0) {
+    TAPE_THROW_EX(castor::exception::InvalidArgument,
+      ": maxBytes is 0");
+  }
+
   // Prepare the request
-  tapegateway::FileToMigrateRequest request;
+  tapegateway::FilesToMigrateListRequest request;
   request.setMountTransactionId(mountTransactionId);
   request.setAggregatorTransactionId(aggregatorTransactionId);
+  request.setMaxFiles(maxFiles);
+  request.setMaxBytes(maxBytes);
 
   // Send the request and return the socket-descriptor of the connection
   try {
@@ -194,17 +207,19 @@ int castor::tape::tapebridge::ClientTxRx::sendFileToMigrateRequest(
       connectDuration);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
-      ": Failed to send FileToMigrateRequest"
+      ": Failed to send FilesToMigrateListRequest"
+      ": maxFiles=" << maxFiles << " maxBytes=" << maxBytes <<
       ": " << ex.getMessage().str());
   }
 }
 
 
 //-----------------------------------------------------------------------------
-// receiveFileToMigrateReplyAndClose
+// receiveFilesToMigrateListRequestReplyAndClose
 //-----------------------------------------------------------------------------
-castor::tape::tapegateway::FileToMigrate
-  *castor::tape::tapebridge::ClientTxRx::receiveFileToMigrateReplyAndClose(
+castor::tape::tapegateway::FilesToMigrateList
+  *castor::tape::tapebridge::ClientTxRx::
+  receiveFilesToMigrateListRequestReplyAndClose(
   const uint32_t mountTransactionId,
   const uint64_t aggregatorTransactionId,
   const int      clientSock)
@@ -213,26 +228,174 @@ castor::tape::tapegateway::FileToMigrate
   std::auto_ptr<castor::IObject> obj(receiveReplyAndClose(clientSock,
     CLIENTNETRWTIMEOUT));
 
+  const char *const task = "receive reply to FilesToMigrateListRequest and"
+    " close connection";
+
   switch(obj->type()) {
-  case OBJ_FileToMigrate:
+  case OBJ_FilesToMigrateList:
     {
       // Down cast the reply to its specific class
-      tapegateway::FileToMigrate *reply =
-        dynamic_cast<tapegateway::FileToMigrate*>(obj.get());
+      tapegateway::FilesToMigrateList *reply =
+        dynamic_cast<tapegateway::FilesToMigrateList*>(obj.get());
 
       if(reply == NULL) {
         TAPE_THROW_EX(castor::exception::Internal,
-          ": Failed to receive file to migrate reply and close connection"
-          ": Failed to down cast reply object to tapegateway::FileToMigrate");
+          ": Failed to " << task <<
+          ": Failed to down cast reply object to"
+          " tapegateway::FilesToMigrateList");
       }
 
       try {
-        checkTransactionIds("FileToMigrate",
+        checkTransactionIds("FilesToMigrateList",
           mountTransactionId     , reply->mountTransactionId(),
           aggregatorTransactionId, reply->aggregatorTransactionId());
       } catch(castor::exception::Exception &ex) {
         TAPE_THROW_CODE(ex.code(),
-          ": Failed to receive file to migrate reply and close connection"
+          ": Failed to " << task <<
+          ": " << ex.getMessage().str());
+      }
+
+      // Check list contains at least 1 file
+      if(0 == reply->filesToMigrate().size()) {
+        TAPE_THROW_CODE(EBADMSG,
+          ": Failed to " << task <<
+          ": FilesToMigrateList message contains 0 files");
+      }
+
+      // Release the reply message from its smart pointer and return it
+      obj.release();
+      return reply;
+    }
+    break;
+
+  case OBJ_NoMoreFiles:
+    {
+      // Down cast the reply to its specific class
+      tapegateway::NoMoreFiles *reply =
+        dynamic_cast<tapegateway::NoMoreFiles*>(obj.get());
+
+      if(reply == NULL) {
+        TAPE_THROW_EX(castor::exception::Internal,
+          ": Failed to " << task <<
+          ": Failed to down cast reply object to tapegateway::NoMoreFiles");
+      }
+
+      try {
+        checkTransactionIds("NoMoreFiles",
+          mountTransactionId     , reply->mountTransactionId(),
+          aggregatorTransactionId, reply->aggregatorTransactionId());
+      } catch(castor::exception::Exception &ex) {
+        TAPE_THROW_CODE(ex.code(),
+          ": Failed to " << task <<
+          ": " << ex.getMessage().str());
+      }
+    }
+    return NULL;
+
+  case OBJ_EndNotificationErrorReport:
+    throwEndNotificationErrorReport(mountTransactionId,
+      aggregatorTransactionId, obj.get());
+    break;
+
+  default:
+    {
+      TAPE_THROW_CODE(EBADMSG,
+        ": Failed to " << task <<
+        ": Unknown reply type "
+        ": Reply type = " << obj->type());
+    }
+  } // switch(obj->type())
+
+  // This line should never be reached
+  return NULL;
+}
+
+
+//-----------------------------------------------------------------------------
+// sendFilesToRecallListRequest
+//-----------------------------------------------------------------------------
+int castor::tape::tapebridge::ClientTxRx::sendFilesToRecallListRequest(
+  const uint32_t       mountTransactionId,
+  const uint64_t       aggregatorTransactionId,
+  const char *const    clientHost,
+  const unsigned short clientPort,
+  const uint64_t       maxFiles,
+  const uint64_t       maxBytes,
+  time_t               &connectDuration)
+  throw(castor::exception::Exception) {
+
+  // Check method arguments
+  if(NULL == clientHost) {
+    TAPE_THROW_EX(castor::exception::InvalidArgument,
+      ": clientHost is NULL");
+  }
+  if(maxFiles == 0) {
+    TAPE_THROW_EX(castor::exception::InvalidArgument,
+      ": maxFiles is 0");
+  }
+  if(maxBytes == 0) {
+    TAPE_THROW_EX(castor::exception::InvalidArgument,
+      ": maxBytes is 0");
+  }
+
+  // Prepare the request
+  tapegateway::FilesToRecallListRequest request;
+  request.setMountTransactionId(mountTransactionId);
+  request.setAggregatorTransactionId(aggregatorTransactionId);
+  request.setMaxFiles(maxFiles);
+  request.setMaxBytes(maxBytes);
+
+  // Send the request and return the socket-descriptor of the connection
+  try {
+    return sendMessage(clientHost, clientPort, CLIENTNETRWTIMEOUT, request,
+      connectDuration);
+  } catch(castor::exception::Exception &ex) {
+    TAPE_THROW_CODE(ex.code(),
+      ": Failed to send FilesToRecallListRequest"
+      ": maxFiles=" << maxFiles << "maxBytes=" << maxBytes <<
+      ": " << ex.getMessage().str());
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// receiveFilesToRecallListRequestReplyAndClose
+//-----------------------------------------------------------------------------
+castor::tape::tapegateway::FilesToRecallList
+  *castor::tape::tapebridge::ClientTxRx::
+  receiveFilesToRecallListRequestReplyAndClose(
+  const uint32_t mountTransactionId,
+  const uint64_t aggregatorTransactionId,
+  const int      clientSock)
+  throw(castor::exception::Exception) {
+
+  std::auto_ptr<castor::IObject> obj(receiveReplyAndClose(clientSock,
+    CLIENTNETRWTIMEOUT));
+
+  const char *const task = "receive reply to FilesToRecallListRequest and"
+    " close connection";
+
+  switch(obj->type()) {
+  case OBJ_FilesToRecallList:
+    {
+      // Down cast the reply to its specific class
+      tapegateway::FilesToRecallList *reply =
+        dynamic_cast<tapegateway::FilesToRecallList*>(obj.get());
+
+      if(reply == NULL) {
+        TAPE_THROW_EX(castor::exception::Internal,
+          ": Failed to " << task <<
+          ": Failed to down cast reply object to"
+          " tapegateway::FilesToRecallList");
+      }
+
+      try {
+        checkTransactionIds("FilesToRecallList",
+          mountTransactionId     , reply->mountTransactionId(),
+          aggregatorTransactionId, reply->aggregatorTransactionId());
+      } catch(castor::exception::Exception &ex) {
+        TAPE_THROW_CODE(ex.code(),
+          ": Failed to " << task <<
           ": " << ex.getMessage().str());
       }
 
@@ -250,7 +413,7 @@ castor::tape::tapegateway::FileToMigrate
 
       if(reply == NULL) {
         TAPE_THROW_EX(castor::exception::Internal,
-          ": Failed to receive file to migrate reply and close connection"
+          ": Failed to " << task <<
           ": Failed to down cast reply object to tapegateway::NoMoreFiles");
       }
 
@@ -260,7 +423,7 @@ castor::tape::tapegateway::FileToMigrate
           aggregatorTransactionId, reply->aggregatorTransactionId());
       } catch(castor::exception::Exception &ex) {
         TAPE_THROW_CODE(ex.code(),
-          ": Failed to receive file to migrate reply and close connection"
+          ": Failed to " << task <<
           ": " << ex.getMessage().str());
       }
     }
@@ -274,7 +437,7 @@ castor::tape::tapegateway::FileToMigrate
   default:
     {
       TAPE_THROW_CODE(EBADMSG,
-        ": Failed to receive file to migrate reply and close connection"
+        ": Failed to " << task <<
         ": Unknown reply type "
         ": Reply type = " << obj->type());
     }
@@ -282,208 +445,6 @@ castor::tape::tapegateway::FileToMigrate
 
   // This line should never be reached
   return NULL;
-}
-
-
-//-----------------------------------------------------------------------------
-// sendFileToRecallRequest
-//-----------------------------------------------------------------------------
-int castor::tape::tapebridge::ClientTxRx::sendFileToRecallRequest(
-  const uint32_t       mountTransactionId,
-  const uint64_t       aggregatorTransactionId,
-  const char           *clientHost,
-  const unsigned short clientPort,
-  time_t               &connectDuration)
-  throw(castor::exception::Exception) {
-
-  // Prepare the request
-  tapegateway::FileToRecallRequest request;
-  request.setMountTransactionId(mountTransactionId);
-  request.setAggregatorTransactionId(aggregatorTransactionId);
-
-  // Send the request and return the socket-descriptor of the connection
-  try {
-    return sendMessage(clientHost, clientPort, CLIENTNETRWTIMEOUT, request,
-      connectDuration);
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(ex.code(),
-      ": Failed to send FileToRecallRequest"
-      ": " << ex.getMessage().str());
-  }
-}
-
-
-//-----------------------------------------------------------------------------
-// receiveFileToRecallReplyAndClose
-//-----------------------------------------------------------------------------
-castor::tape::tapegateway::FileToRecall
-  *castor::tape::tapebridge::ClientTxRx::receiveFileToRecallReplyAndClose(
-  const uint32_t mountTransactionId,
-  const uint64_t aggregatorTransactionId,
-  const int      clientSock)
-  throw(castor::exception::Exception) {
-
-  std::auto_ptr<castor::IObject> obj(receiveReplyAndClose(clientSock,
-    CLIENTNETRWTIMEOUT));
-
-  switch(obj->type()) {
-  case OBJ_FileToRecall:
-    {
-      // Down cast the reply to its specific class
-      tapegateway::FileToRecall *reply =
-        dynamic_cast<tapegateway::FileToRecall*>(obj.get());
-
-      if(reply == NULL) {
-        TAPE_THROW_EX(castor::exception::Internal,
-          ": Failed to receive file to recall reply and close connection"
-          ": Failed to down cast reply object to tapegateway::FileToRecall");
-      }
-
-      try {
-        checkTransactionIds("FileToRecall",
-          mountTransactionId     , reply->mountTransactionId(),
-          aggregatorTransactionId, reply->aggregatorTransactionId());
-      } catch(castor::exception::Exception &ex) {
-        TAPE_THROW_CODE(ex.code(),
-          ": Failed to receive file to recall reply and close connection"
-          ": " << ex.getMessage().str());
-      }
-
-      // Release the reply message from its smart pointer and return it
-      obj.release();
-      return reply;
-    }
-    break;
-
-  case OBJ_NoMoreFiles:
-    {
-      // Down cast the reply to its specific class
-      tapegateway::NoMoreFiles *reply =
-        dynamic_cast<tapegateway::NoMoreFiles*>(obj.get());
-
-      if(reply == NULL) {
-        TAPE_THROW_EX(castor::exception::Internal,
-          ": Failed to receive file to recall reply and close connection"
-          ": Failed to down cast reply object to tapegateway::NoMoreFiles");
-      }
-
-      try {
-        checkTransactionIds("NoMoreFiles",
-          mountTransactionId     , reply->mountTransactionId(),
-          aggregatorTransactionId, reply->aggregatorTransactionId());
-      } catch(castor::exception::Exception &ex) {
-        TAPE_THROW_CODE(ex.code(),
-          ": Failed to receive file to recall reply and close connection"
-          ": " << ex.getMessage().str());
-      }
-    }
-    return NULL;
-
-  case OBJ_EndNotificationErrorReport:
-    throwEndNotificationErrorReport(mountTransactionId,
-      aggregatorTransactionId, obj.get());
-    break;
-
-  default:
-    {
-      TAPE_THROW_CODE(EBADMSG,
-        ": Failed to receive file to recall reply and close connection"
-        ": Unknown reply type "
-        ": Reply type = " << obj->type());
-    }
-  } // switch(obj->type())
-
-  // This line should never be reached
-  return NULL;
-}
-
-
-//-----------------------------------------------------------------------------
-// sendFileRecalledNotification
-//-----------------------------------------------------------------------------
-int castor::tape::tapebridge::ClientTxRx::sendFileRecalledNotification(
-  const uint32_t       mountTransactionId,
-  const uint64_t       aggregatorTransactionId,
-  const char           *clientHost,
-  const unsigned short clientPort,
-  time_t               &connectDuration,
-  const uint64_t       fileTransactionId,
-  const char           (&nsHost)[CA_MAXHOSTNAMELEN+1],
-  const uint64_t       fileId,
-  const int32_t        tapeFileSeq,
-  const char           (&filePath)[CA_MAXPATHLEN+1],
-  const int32_t        positionCommandCode,
-  const char           (&checksumAlgorithm)[CA_MAXCKSUMNAMELEN+1],
-  const uint32_t       checksum,
-  const uint64_t       fileSize)
-  throw(castor::exception::Exception) {
-
-  // Prepare the notification
-  tapegateway::FileRecalledNotification notification;
-  notification.setMountTransactionId(mountTransactionId);
-  notification.setAggregatorTransactionId(aggregatorTransactionId);
-  notification.setFileTransactionId(fileTransactionId);
-  notification.setNshost(nsHost);
-  notification.setFileid(fileId);
-  notification.setFseq(tapeFileSeq);
-  notification.setPath(filePath);
-  notification.setPositionCommandCode(
-    (tapegateway::PositionCommandCode)positionCommandCode);
-  notification.setChecksumName(checksumAlgorithm);
-  notification.setChecksum(checksum);
-  notification.setFileSize(fileSize);
-
-  // Send the notification and return the socket-descriptor of the connection
-  try {
-    return sendMessage(clientHost, clientPort, CLIENTNETRWTIMEOUT,
-      notification, connectDuration);
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(ex.code(),
-      "Failed to send FileRecalledNotification"
-      ": " << ex.getMessage().str());
-  }
-}
-
-
-//-----------------------------------------------------------------------------
-// notifyEndOfSession
-//-----------------------------------------------------------------------------
-void castor::tape::tapebridge::ClientTxRx::notifyEndOfSession(
-  const Cuuid_t        &cuuid,
-  const uint32_t       mountTransactionId,
-  const uint64_t       aggregatorTransactionId,
-  const char           *clientHost,
-  const unsigned short clientPort)
-  throw(castor::exception::Exception) {
-
-  {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId", mountTransactionId     ),
-      castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
-      castor::dlf::Param("clientHost"        , clientHost             ),
-      castor::dlf::Param("clientPort"        , clientPort             )};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
-      TAPEBRIDGE_NOTIFY_CLIENT_END_OF_SESSION, params);
-  }
-
-  // Prepare the request
-  tapegateway::EndNotification request;
-  request.setMountTransactionId(mountTransactionId);
-  request.setAggregatorTransactionId(aggregatorTransactionId);
-
-  const char *requestTypeName = "EndNotification";
-  notifyClient(cuuid, mountTransactionId, aggregatorTransactionId,
-    requestTypeName, clientHost, clientPort, CLIENTNETRWTIMEOUT, request);
-
-  {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId", mountTransactionId     ),
-      castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
-      castor::dlf::Param("clientHost"        , clientHost             ),
-      castor::dlf::Param("clientPort"        , clientPort             )};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      TAPEBRIDGE_NOTIFIED_CLIENT_END_OF_SESSION, params);
-  }
 }
 
 
@@ -495,7 +456,7 @@ castor::tape::tapegateway::DumpParameters
   const Cuuid_t        &cuuid,
   const uint32_t       mountTransactionId,
   const uint64_t       aggregatorTransactionId,
-  const char           *clientHost,
+  const char *const    clientHost,
   const unsigned short clientPort)
   throw(castor::exception::Exception) {
 
@@ -578,7 +539,7 @@ void castor::tape::tapebridge::ClientTxRx::notifyDumpMessage(
   const Cuuid_t        &cuuid,
   const uint32_t       mountTransactionId,
   const uint64_t       aggregatorTransactionId,
-  const char           *clientHost,
+  const char *const    clientHost,
   const unsigned short clientPort,
   const char           (&message)[CA_MAXLINELEN+1])
   throw(castor::exception::Exception) {
@@ -600,7 +561,7 @@ void castor::tape::tapebridge::ClientTxRx::notifyDumpMessage(
   request.setAggregatorTransactionId(aggregatorTransactionId);
   request.setMessage(message);
 
-  const char *requestTypeName = "DumpNotification";
+  const char *const requestTypeName = "DumpNotification";
   notifyClient(cuuid, mountTransactionId, aggregatorTransactionId,
     requestTypeName, clientHost, clientPort, CLIENTNETRWTIMEOUT, request);
 
@@ -618,140 +579,12 @@ void castor::tape::tapebridge::ClientTxRx::notifyDumpMessage(
 
 
 //-----------------------------------------------------------------------------
-// notifyEndOfFailedSession
-//-----------------------------------------------------------------------------
-void castor::tape::tapebridge::ClientTxRx::notifyEndOfFailedSession(
-  const Cuuid_t                &cuuid,
-  const uint32_t               mountTransactionId,
-  const uint64_t               aggregatorTransactionId,
-  const char                   *clientHost,
-  const unsigned short         clientPort,
-  castor::exception::Exception &ex)
-  throw(castor::exception::Exception) {
-
-  {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId", mountTransactionId     ),
-      castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
-      castor::dlf::Param("clientHost"        , clientHost             ),
-      castor::dlf::Param("clientPort"        , clientPort             )};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
-      TAPEBRIDGE_NOTIFY_CLIENT_END_OF_FAILED_SESSION, params);
-  }
-
-  // Prepare the request
-  tapegateway::EndNotificationErrorReport request;
-  request.setMountTransactionId(mountTransactionId);
-  request.setAggregatorTransactionId(aggregatorTransactionId);
-  request.setErrorCode(ex.code());
-  request.setErrorMessage(ex.getMessage().str());
-
-  const char *requestTypeName = "EndNotificationErrorReport";
-  notifyClient(cuuid, mountTransactionId, aggregatorTransactionId,
-    requestTypeName, clientHost, clientPort, CLIENTNETRWTIMEOUT, request);
-
-  {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId", mountTransactionId     ),
-      castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
-      castor::dlf::Param("clientHost"        , clientHost             ),
-      castor::dlf::Param("clientPort"        , clientPort             ),
-      castor::dlf::Param("errorCode"         , ex.code()              ),
-      castor::dlf::Param("errorMessage"      , ex.getMessage().str()  )};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      TAPEBRIDGE_NOTIFIED_CLIENT_END_OF_FAILED_SESSION, params);
-  }
-}
-
-
-//-----------------------------------------------------------------------------
-// notifyEndOfFailedSessionDueToFile
-//-----------------------------------------------------------------------------
-void castor::tape::tapebridge::ClientTxRx::notifyEndOfFailedSessionDueToFile(
-  const Cuuid_t        &cuuid,
-  const uint32_t       mountTransactionId,
-  const uint64_t       aggregatorTransactionId,
-  const char           *clientHost,
-  const unsigned short clientPort,
-  FailedToCopyTapeFile &ex)
-  throw(castor::exception::Exception) {
-
-  {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId", mountTransactionId      ),
-      castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId ),
-      castor::dlf::Param("clientHost"        , clientHost              ),
-      castor::dlf::Param("clientPort"        , clientPort              ),
-      castor::dlf::Param("errorCode"         , ex.code()               ),
-      castor::dlf::Param("errorMessage"      , ex.getMessage().str()   ),
-      castor::dlf::Param("fileTransactionId" ,
-        ex.failedFile().fileTransactionId),
-      castor::dlf::Param("nsHost"            , ex.failedFile().nsHost  ),
-      castor::dlf::Param("fileId"            , ex.failedFile().fileId  ),
-      castor::dlf::Param("fSeq"              , ex.failedFile().fSeq    ),
-      castor::dlf::Param("blockId0"          , ex.failedFile().blockId0),
-      castor::dlf::Param("blockId1"          , ex.failedFile().blockId1),
-      castor::dlf::Param("blockId2"          , ex.failedFile().blockId2),
-      castor::dlf::Param("blockId3"          , ex.failedFile().blockId3),
-      castor::dlf::Param("path"              , ex.failedFile().path    ),
-      castor::dlf::Param("cprc"              , ex.failedFile().cprc    )};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
-      TAPEBRIDGE_NOTIFY_CLIENT_END_OF_FAILED_SESSION_DUE_TO_FILE, params);
-  }
-
-  // Prepare the request
-  tapegateway::EndNotificationFileErrorReport request;
-  request.setMountTransactionId(mountTransactionId);
-  request.setAggregatorTransactionId(aggregatorTransactionId);
-  request.setErrorCode(ex.code());
-  request.setErrorMessage(ex.getMessage().str());
-  request.setFileTransactionId(ex.failedFile().fileTransactionId);
-  request.setNsHost(ex.failedFile().nsHost);
-  request.setFileId(ex.failedFile().fileId);
-  request.setFSeq(ex.failedFile().fSeq);
-  request.setBlockId0(ex.failedFile().blockId0);
-  request.setBlockId1(ex.failedFile().blockId1);
-  request.setBlockId2(ex.failedFile().blockId2);
-  request.setBlockId3(ex.failedFile().blockId3);
-  request.setPath(ex.failedFile().path);
-  request.setCprc(ex.failedFile().cprc);
-
-  const char *requestTypeName = "EndNotificationFileErrorReport";
-  notifyClient(cuuid, mountTransactionId, aggregatorTransactionId,
-    requestTypeName, clientHost, clientPort, CLIENTNETRWTIMEOUT, request);
-
-  {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId", mountTransactionId      ),
-      castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId ),
-      castor::dlf::Param("clientHost"        , clientHost              ),
-      castor::dlf::Param("clientPort"        , clientPort              ),
-      castor::dlf::Param("errorCode"         , ex.code()               ),
-      castor::dlf::Param("errorMessage"      , ex.getMessage().str()   ),
-      castor::dlf::Param("fileTransactionId" ,
-        ex.failedFile().fileTransactionId),
-      castor::dlf::Param("nsHost"            , ex.failedFile().nsHost  ),
-      castor::dlf::Param("fileId"            , ex.failedFile().fileId  ),
-      castor::dlf::Param("fSeq"              , ex.failedFile().fSeq    ),
-      castor::dlf::Param("blockId0"          , ex.failedFile().blockId0),
-      castor::dlf::Param("blockId1"          , ex.failedFile().blockId1),
-      castor::dlf::Param("blockId2"          , ex.failedFile().blockId2),
-      castor::dlf::Param("blockId3"          , ex.failedFile().blockId3),
-      castor::dlf::Param("path"              , ex.failedFile().path    ),
-      castor::dlf::Param("cprc"              , ex.failedFile().cprc    )};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      TAPEBRIDGE_NOTIFIED_CLIENT_END_OF_FAILED_SESSION_DUE_TO_FILE, params);
-  }
-}
-
-
-//-----------------------------------------------------------------------------
 // ping
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::ClientTxRx::ping(const Cuuid_t &cuuid,
   const uint32_t       mountTransactionId,
   const uint64_t       aggregatorTransactionId,
-  const char           *clientHost,
+  const char *const    clientHost,
   const unsigned short clientPort)
   throw(castor::exception::Exception) {
 
@@ -770,7 +603,7 @@ void castor::tape::tapebridge::ClientTxRx::ping(const Cuuid_t &cuuid,
   request.setMountTransactionId(mountTransactionId);
   request.setAggregatorTransactionId(aggregatorTransactionId);
 
-  const char *requestTypeName = "PingNotification";
+  const char *const requestTypeName = "PingNotification";
   notifyClient(cuuid, mountTransactionId, aggregatorTransactionId,
     requestTypeName, clientHost, clientPort, CLIENTNETRWTIMEOUT, request);
 
@@ -790,7 +623,7 @@ void castor::tape::tapebridge::ClientTxRx::ping(const Cuuid_t &cuuid,
 // sendMessage
 //-----------------------------------------------------------------------------
 int castor::tape::tapebridge::ClientTxRx::sendMessage(
-  const char           *clientHost,
+  const char *const    clientHost,
   const unsigned short clientPort,
   const int            clientNetRWTimeout,
   IObject              &message,
@@ -884,8 +717,8 @@ castor::IObject *castor::tape::tapebridge::ClientTxRx::receiveReplyAndClose(
 //-----------------------------------------------------------------------------
 castor::IObject
   *castor::tape::tapebridge::ClientTxRx::sendRequestAndReceiveReply(
-  const char           *requestTypeName,
-  const char           *clientHost,
+  const char *const    requestTypeName,
+  const char *const    clientHost,
   const unsigned short clientPort,
   const int            clientNetRWTimeout,
   IObject              &request,
@@ -1011,11 +844,11 @@ void castor::tape::tapebridge::ClientTxRx::receiveNotificationReplyAndClose(
 // notifyClient
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::ClientTxRx::notifyClient(
-  const Cuuid_t&,
-  const uint32_t mountTransactionId,
-  const uint64_t aggregatorTransactionId,
-  const char* requestTypeName,
-  const char* clientHost,
+  const                Cuuid_t&,
+  const uint32_t       mountTransactionId,
+  const uint64_t       aggregatorTransactionId,
+  const char *const    requestTypeName,
+  const char *const    clientHost,
   const unsigned short clientPort,
   const int,
   IObject& request)
@@ -1122,5 +955,94 @@ void castor::tape::tapebridge::ClientTxRx::checkTransactionIds(
   if(nbErrors > 0) {
     TAPE_THROW_CODE(EBADMSG,
       errorMessage.str());
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// notifyEndOfSession
+//-----------------------------------------------------------------------------
+void castor::tape::tapebridge::ClientTxRx::notifyEndOfSession(
+  const Cuuid_t        &cuuid,
+  const uint32_t       mountTransactionId,
+  const uint64_t       aggregatorTransactionId,
+  const char           *clientHost,
+  const unsigned short clientPort)
+  throw(castor::exception::Exception) {
+
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("mountTransactionId", mountTransactionId     ),
+      castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
+      castor::dlf::Param("clientHost"        , clientHost             ),
+      castor::dlf::Param("clientPort"        , clientPort             )};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
+      TAPEBRIDGE_NOTIFY_CLIENT_END_OF_SESSION, params);
+  }
+
+  // Prepare the request
+  tapegateway::EndNotification request;
+  request.setMountTransactionId(mountTransactionId);
+  request.setAggregatorTransactionId(aggregatorTransactionId);
+
+  const char *requestTypeName = "EndNotification";
+  notifyClient(cuuid, mountTransactionId, aggregatorTransactionId,
+    requestTypeName, clientHost, clientPort, CLIENTNETRWTIMEOUT, request);
+
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("mountTransactionId", mountTransactionId     ),
+      castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
+      castor::dlf::Param("clientHost"        , clientHost             ),
+      castor::dlf::Param("clientPort"        , clientPort             )};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      TAPEBRIDGE_NOTIFIED_CLIENT_END_OF_SESSION, params);
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// notifyEndOfFailedSession
+//-----------------------------------------------------------------------------
+void castor::tape::tapebridge::ClientTxRx::notifyEndOfFailedSession(
+  const Cuuid_t                &cuuid,
+  const uint32_t               mountTransactionId,
+  const uint64_t               aggregatorTransactionId,
+  const char                   *clientHost,
+  const unsigned short         clientPort,
+  castor::exception::Exception &ex)
+  throw(castor::exception::Exception) {
+
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("mountTransactionId", mountTransactionId     ),
+      castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
+      castor::dlf::Param("clientHost"        , clientHost             ),
+      castor::dlf::Param("clientPort"        , clientPort             )};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
+      TAPEBRIDGE_NOTIFY_CLIENT_END_OF_FAILED_SESSION, params);
+  }
+
+  // Prepare the request
+  tapegateway::EndNotificationErrorReport request;
+  request.setMountTransactionId(mountTransactionId);
+  request.setAggregatorTransactionId(aggregatorTransactionId);
+  request.setErrorCode(ex.code());
+  request.setErrorMessage(ex.getMessage().str());
+
+  const char *requestTypeName = "EndNotificationErrorReport";
+  notifyClient(cuuid, mountTransactionId, aggregatorTransactionId,
+    requestTypeName, clientHost, clientPort, CLIENTNETRWTIMEOUT, request);
+
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("mountTransactionId", mountTransactionId     ),
+      castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
+      castor::dlf::Param("clientHost"        , clientHost             ),
+      castor::dlf::Param("clientPort"        , clientPort             ),
+      castor::dlf::Param("errorCode"         , ex.code()              ),
+      castor::dlf::Param("errorMessage"      , ex.getMessage().str()  )};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      TAPEBRIDGE_NOTIFIED_CLIENT_END_OF_FAILED_SESSION, params);
   }
 }

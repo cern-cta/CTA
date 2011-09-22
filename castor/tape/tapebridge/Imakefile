@@ -40,6 +40,8 @@ TAPEBRIDGEBIN_SRCS = \
   TapeFlushConfigParams.cpp \
   DlfMessageStrings.cpp \
   FailedToCopyTapeFile.cpp \
+  FailedToMigrateFileToTape.cpp \
+  FailedToRecallFileFromTape.cpp \
   LegacyTxRx.cpp \
   LogHelper.cpp \
   PendingMigrationsStore.cpp \

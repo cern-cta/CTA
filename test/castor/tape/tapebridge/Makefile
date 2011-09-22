@@ -32,29 +32,33 @@ tapebridgedaemontester: \
   exception_TapeNetAcceptInterrupted.o \
   exception_TimeOut.o \
   exception_TooBig.o \
-  tapegateway_FileToMigrateRequest.o \
-  tapegateway_FileToMigrate.o \
-  tapegateway_FileMigratedNotification.o \
-  tapegateway_FileToRecallRequest.o \
-  tapegateway_FileToRecall.o \
-  tapegateway_FileRecalledNotification.o \
   tapegateway_BaseFileInfo.o \
-  tapegateway_VolumeRequest.o \
-  tapegateway_Volume.o \
-  tapegateway_GatewayMessage.o \
-  tapegateway_PositionCommandCode.o \
-  tapegateway_PingNotification.o \
-  tapegateway_DumpParametersRequest.o \
-  tapegateway_DumpParameters.o \
+  tapegateway_BaseFileInfoStruct.o \
+  tapegateway_ClientType.o \
   tapegateway_DumpNotification.o \
-  tapegateway_FileToMigrate.o \
-  tapegateway_NoMoreFiles.o \
+  tapegateway_DumpParameters.o \
+  tapegateway_DumpParametersRequest.o \
   tapegateway_EndNotification.o \
   tapegateway_EndNotificationErrorReport.o \
   tapegateway_EndNotificationFileErrorReport.o \
+  tapegateway_FilesListRequest.o \
+  tapegateway_FileMigratedNotificationStruct.o \
+  tapegateway_FileMigrationReportList.o \
+  tapegateway_FileRecalledNotificationStruct.o \
+  tapegateway_FileRecallReportList.o \
+  tapegateway_FilesToMigrateList.o \
+  tapegateway_FilesToMigrateListRequest.o \
+  tapegateway_FilesToRecallList.o \
+  tapegateway_FilesToRecallListRequest.o \
+  tapegateway_FileToMigrateStruct.o \
+  tapegateway_GatewayMessage.o \
+  tapegateway_PositionCommandCode.o \
+  tapegateway_PingNotification.o \
+  tapegateway_NoMoreFiles.o \
   tapegateway_NotificationAcknowledge.o \
-  tapegateway_ClientType.o \
+  tapegateway_Volume.o \
   tapegateway_VolumeMode.o \
+  tapegateway_VolumeRequest.o \
   io_StreamCnvSvc.o \
   io_StreamEndNotificationCnv.o \
   io_StreamEndNotificationErrorReportCnv.o \
@@ -157,9 +161,6 @@ tapebridged: \
   io_StreamEndNotificationCnv.o \
   io_StreamEndNotificationErrorReportCnv.o \
   io_StreamEndNotificationFileErrorReportCnv.o \
-  io_StreamFileRecalledNotificationCnv.o \
-  io_StreamFileToRecallCnv.o \
-  io_StreamFileToRecallRequestCnv.o \
   io_StreamNoMoreFilesCnv.o \
   io_StreamNotificationAcknowledgeCnv.o \
   io_StreamPingNotificationCnv.o \
@@ -214,29 +215,33 @@ tapebridged: \
   tapebridge_tapeFlushModeToStr.o \
   tapebridge_VdqmRequestHandler.o \
   tapebridge_VmgrTxRx.o \
-  tapegateway_FileToMigrateRequest.o \
-  tapegateway_FileToMigrate.o \
-  tapegateway_FileMigratedNotification.o \
-  tapegateway_FileToRecallRequest.o \
-  tapegateway_FileToRecall.o \
-  tapegateway_FileRecalledNotification.o \
   tapegateway_BaseFileInfo.o \
-  tapegateway_VolumeRequest.o \
-  tapegateway_Volume.o \
-  tapegateway_GatewayMessage.o \
-  tapegateway_PositionCommandCode.o \
-  tapegateway_PingNotification.o \
-  tapegateway_DumpParametersRequest.o \
-  tapegateway_DumpParameters.o \
+  tapegateway_BaseFileInfoStruct.o \
+  tapegateway_ClientType.o \
   tapegateway_DumpNotification.o \
-  tapegateway_FileToMigrate.o \
-  tapegateway_NoMoreFiles.o \
+  tapegateway_DumpParameters.o \
+  tapegateway_DumpParametersRequest.o \
   tapegateway_EndNotification.o \
   tapegateway_EndNotificationErrorReport.o \
   tapegateway_EndNotificationFileErrorReport.o \
+  tapegateway_FilesListRequest.o \
+  tapegateway_FileMigratedNotificationStruct.o \
+  tapegateway_FileMigrationReportList.o \
+  tapegateway_FileRecalledNotificationStruct.o \
+  tapegateway_FileRecallReportList.o \
+  tapegateway_FilesToMigrateList.o \
+  tapegateway_FilesToMigrateListRequest.o \
+  tapegateway_FilesToRecallList.o \
+  tapegateway_FilesToRecallListRequest.o \
+  tapegateway_FileToMigrateStruct.o \
+  tapegateway_GatewayMessage.o \
+  tapegateway_PositionCommandCode.o \
+  tapegateway_PingNotification.o \
+  tapegateway_NoMoreFiles.o \
   tapegateway_NotificationAcknowledge.o \
-  tapegateway_ClientType.o \
+  tapegateway_Volume.o \
   tapegateway_VolumeMode.o \
+  tapegateway_VolumeRequest.o \
   utils_BoolFunctor.o \
   utils_SmartFd.o \
   utils_SmartFILEPtr.o \
@@ -590,76 +595,28 @@ dlf_Param.o: \
   $(ROOT_DIR)/castor/dlf/Param.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-tapegateway_FileToRecallRequest.o: \
-  $(ROOT_DIR)/castor/tape/tapegateway/FileToRecallRequest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tapegateway_FileToRecall.o: \
-  $(ROOT_DIR)/castor/tape/tapegateway/FileToRecall.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tapegateway_FileRecalledNotification.o: \
-  $(ROOT_DIR)/castor/tape/tapegateway/FileRecalledNotification.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tapegateway_VolumeRequest.o: \
-  $(ROOT_DIR)/castor/tape/tapegateway/VolumeRequest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tapegateway_Volume.o: \
-  $(ROOT_DIR)/castor/tape/tapegateway/Volume.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tapegateway_GatewayMessage.o: \
-  $(ROOT_DIR)/castor/tape/tapegateway/GatewayMessage.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tapegateway_FileToMigrateRequest.o: \
-  $(ROOT_DIR)/castor/tape/tapegateway/FileToMigrateRequest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tapegateway_FileToMigrate.o: \
-  $(ROOT_DIR)/castor/tape/tapegateway/FileToMigrate.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tapegateway_FileMigratedNotification.o: \
-  $(ROOT_DIR)/castor/tape/tapegateway/FileMigratedNotification.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tapegateway_NoMoreFiles.o: \
-  $(ROOT_DIR)/castor/tape/tapegateway/NoMoreFiles.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
 tapegateway_BaseFileInfo.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/BaseFileInfo.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_BaseFileInfoStruct.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/BaseFileInfoStruct.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapegateway_ClientType.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/ClientType.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-tapegateway_VolumeMode.o: \
-  $(ROOT_DIR)/castor/tape/tapegateway/VolumeMode.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tapegateway_DumpParametersRequest.o: \
-  $(ROOT_DIR)/castor/tape/tapegateway/DumpParametersRequest.cpp
+tapegateway_DumpNotification.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/DumpNotification.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapegateway_DumpParameters.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/DumpParameters.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-tapegateway_DumpNotification.o: \
-  $(ROOT_DIR)/castor/tape/tapegateway/DumpNotification.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tapegateway_PositionCommandCode.o: \
-  $(ROOT_DIR)/castor/tape/tapegateway/PositionCommandCode.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tapegateway_PingNotification.o: \
-  $(ROOT_DIR)/castor/tape/tapegateway/PingNotification.cpp
+tapegateway_DumpParametersRequest.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/DumpParametersRequest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapegateway_EndNotification.o: \
@@ -674,8 +631,76 @@ tapegateway_EndNotificationFileErrorReport.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/EndNotificationFileErrorReport.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
+tapegateway_FileMigratedNotificationStruct.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FileMigratedNotificationStruct.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_FileMigrationReportList.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FileMigrationReportList.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_FileRecalledNotificationStruct.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FileRecalledNotificationStruct.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_FileRecallReportList.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FileRecallReportList.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_FilesListRequest.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FilesListRequest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_FilesToMigrateList.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FilesToMigrateList.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_FilesToMigrateListRequest.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FilesToMigrateListRequest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_FileToMigrateStruct.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FileToMigrateStruct.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_FilesToRecallList.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FilesToRecallList.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_FilesToRecallListRequest.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FilesToRecallListRequest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_GatewayMessage.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/GatewayMessage.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_NoMoreFiles.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/NoMoreFiles.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
 tapegateway_NotificationAcknowledge.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/NotificationAcknowledge.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_PingNotification.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/PingNotification.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_PositionCommandCode.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/PositionCommandCode.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_Volume.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/Volume.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_VolumeMode.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/VolumeMode.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_VolumeRequest.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/VolumeRequest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 server_TCPListenerThreadPool.o: \
@@ -766,18 +791,6 @@ io_StreamEndNotificationFileErrorReportCnv.o: \
 
 io_StreamNotificationAcknowledgeCnv.o: \
   $(ROOT_DIR)/castor/io/StreamNotificationAcknowledgeCnv.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-io_StreamFileRecalledNotificationCnv.o: \
-  $(ROOT_DIR)/castor/io/StreamFileRecalledNotificationCnv.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-io_StreamFileToRecallCnv.o: \
-  $(ROOT_DIR)/castor/io/StreamFileToRecallCnv.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-io_StreamFileToRecallRequestCnv.o: \
-  $(ROOT_DIR)/castor/io/StreamFileToRecallRequestCnv.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 io_StreamNoMoreFilesCnv.o: \

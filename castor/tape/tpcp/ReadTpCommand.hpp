@@ -25,6 +25,8 @@
 #ifndef CASTOR_TAPE_TPCP_READTPCOMMAND_HPP
 #define CASTOR_TAPE_TPCP_READTPCOMMAND_HPP 1
 
+#include "castor/tape/tapegateway/FileErrorReportStruct.hpp"
+#include "castor/tape/tapegateway/FileRecalledNotificationStruct.hpp"
 #include "castor/tape/tpcp/TapeFseqRangeListSequence.hpp"
 #include "castor/tape/tpcp/TpcpCommand.hpp"
 
@@ -128,23 +130,52 @@ private:
   FileTransferMap m_pendingFileTransfers;
 
   /**
-   * FileToRecallRequest message handler.
+   * FilesToRecallListRequest message handler.
    *
    * @param obj  The tapebridge message to be processed.
    * @param sock The socket on which to reply to the tapebridge.
    * @return     True if there is more work to be done else false.
    */
-  bool handleFileToRecallRequest(castor::IObject *obj,
+  bool handleFilesToRecallListRequest(castor::IObject *const obj,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
-   * FileRecalledNotification message handler.
+   * FileRecallReportList message handler.
    *
    * @param obj  The tapebridge message to be processed.
    * @param sock The socket on which to reply to the tapebridge.
    * @return     True if there is more work to be done else false.
    */
-  bool handleFileRecalledNotification(castor::IObject *obj,
+  bool handleFileRecallReportList(castor::IObject *const obj,
+    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+
+  /**
+   * Handles the specified successful recalls of files from tape.
+   *
+   * @param aggregatorTransactionId The aggregator transaction Id of the
+   *                                enclosing FileRecallReportList message.
+   * @param files                   The sucessful recalls from tape.
+   * @param sock                    The socket on which to reply to the
+   *                                tapebridge.
+   */
+  void handleSuccessfulRecalls(
+    const uint64_t aggregatorTransactionId,
+    const std::vector<tapegateway::FileRecalledNotificationStruct*> &files,
+    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+
+  /**
+   * Handles the successfull recall of a file from tape.
+   *
+   * @param aggregatorTransactionId The aggregator transaction Id of the
+   *                                enclosing FileRecallReportList message.
+   * @param file                    The file that was successfully recalled
+   *                                from tape.
+   * @param sock                    The socket on which to reply to the
+   *                                tapebridge.
+   */
+  void handleSuccessfulRecall(
+    const uint64_t aggregatorTransactionId,
+    const tapegateway::FileRecalledNotificationStruct &file,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
@@ -154,7 +185,7 @@ private:
    * @param sock The socket on which to reply to the tapebridge.
    * @return     True if there is more work to be done else false.
    */
-  bool handleEndNotification(castor::IObject *obj,
+  bool handleEndNotification(castor::IObject *const obj,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
@@ -164,17 +195,7 @@ private:
    * @param sock The socket on which to reply to the tapebridge.
    * @return     True if there is more work to be done else false.
    */
-  bool handleEndNotificationErrorReport(castor::IObject *obj,
-    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
-
-  /**
-   * EndNotificationFileErrorReport message handler.
-   *
-   * @param obj  The tapebridge message to be processed.
-   * @param sock The socket on which to reply to the tapebridge.
-   * @return     True if there is more work to be done else false.
-   */
-  bool handleEndNotificationFileErrorReport(castor::IObject *obj,
+  bool handleEndNotificationErrorReport(castor::IObject *const obj,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
@@ -184,7 +205,7 @@ private:
    * @param sock The socket on which to reply to the tapebridge.
    * @return     True if there is more work to be done else false.
    */
-  bool handlePingNotification(castor::IObject *obj,
+  bool handlePingNotification(castor::IObject *const obj,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
 }; // class ReadTpCommand

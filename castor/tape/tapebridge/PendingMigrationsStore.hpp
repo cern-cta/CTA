@@ -26,12 +26,14 @@
 #define CASTOR_TAPE_TAPEBRIDGE_PENDINGMIGRATIONSSTORE_HPP 1
 
 #include "castor/exception/Exception.hpp"
-#include "castor/tape/tapegateway/FileMigratedNotification.hpp"
-#include "castor/tape/tapegateway/FileToMigrate.hpp"
+#include "castor/tape/tapebridge/FileWrittenNotification.hpp"
+#include "castor/tape/tapebridge/FileWrittenNotificationList.hpp"
+#include "castor/tape/tapebridge/RequestToMigrateFile.hpp"
 
 #include <list>
 #include <map>
 #include <stdint.h>
+#include <string>
 
 namespace castor     {
 namespace tape       {
@@ -62,12 +64,7 @@ public:
     const uint64_t maxFilesBeforeFlush);
 
   /**
-   * Adds the specified pending file-migration to the store.
-   *
-   * This method should be called immediately after receiving the positive
-   * acknowledgement from the rtcpd daemon that the specified pending
-   * file-migration request has been successfully submitted to the rtcpd
-   * daemon.
+   * Adds the specified file-migration request to the store.
    *
    * This method throws an exception if a file with the same tape-file
    * sequence-number has already been added to the store.
@@ -77,9 +74,9 @@ public:
    * previously added file.  This test is of course not applicable when the
    * pending migrations store is empty and the very first file is being added.
    *
-   * @param fileToMigrate The pending file-migration to be added to the store.
+   * @param request The request to migrate a file to tape.
    */
-  void add(const tapegateway::FileToMigrate &fileToMigrate)
+  void receivedRequestToMigrateFile(const RequestToMigrateFile &request)
     throw(castor::exception::Exception);
 
   /**
@@ -98,14 +95,12 @@ public:
    * file to migrate request and the file-migrated notification do not match
    * exactly.
    *
-   * @param fileMigratedNotification The file-migrated notification to be held
-   *                                 back from the client (tapegatewayd daemon
-   *                                 or writetp) until the rtcpd daemon has
-   *                                 notified the tapebridged daemon that the
-   *                                 file has been flushed to tape.
+   * @param notification The file-migrated notification to be held back from
+   *                     the client (tapegatewayd daemon or writetp) until the
+   *                     rtcpd daemon has notified the tapebridged daemon that
+   *                     the file has been flushed to tape.
    */
-  void markAsWrittenWithoutFlush(
-    const tapegateway::FileMigratedNotification &fileMigratedNotification)
+  void fileWrittenWithoutFlush(const FileWrittenNotification &notification)
     throw(castor::exception::Exception);
 
   /**
@@ -119,26 +114,24 @@ public:
   void noMoreFilesToMigrate() throw(castor::exception::Exception);
 
   /**
-   * Gets and removes the pending file-migrations that have a tape-file
-   * sequence-number less than or equal to the specified tape-file
-   * sequence-number of the flush to tape.
+   * Removes the pending file-migrations that have a tape-file sequence-number
+   * less than or equal to the specified tape-file sequence-number of the
+   * flush to tape.
    *
-   * The pending file-migrations are returned as a list of file-migrated
-   * notification messages that require their aggregatorTransactionId members
-   * to be set before being sent to the tapegatewayd daemon.  The list in
-   * ascending order of tape-file sequence-number.
+   * The pending file-migrations are returned as a list of "file written to
+   * tape" notifications.  The list is in ascending order of tape-file
+   * sequence-number.
    *
    * This method will throw an exception if there is at least one pending
    * file-migration with a tape-file sequence-number less than or equal to
    * the specified maximum that has not been marked as being written without a
    * flush.
    */
-  std::list<tapegateway::FileMigratedNotification>
-    dataFlushedToTape(const uint32_t tapeFseqOfFlush)
-    throw(castor::exception::Exception);
+  FileWrittenNotificationList dataFlushedToTape(
+    const int32_t tapeFSeqOfFlush) throw(castor::exception::Exception);
 
   /**
-   * Returns the total number of pending file-grations currently inside the
+   * Returns the total number of pending file-migrations currently inside the
    * store.
    */
   uint32_t getNbPendingMigrations() const;
@@ -174,20 +167,20 @@ private:
    * to tape at the end of the current tape session.  If the file is not yet
    * known then the value of this member-variable will be 0.
    */
-  uint32_t m_tapeFseqOfEndOfSessionFile;
+  int32_t m_tapeFSeqOfEndOfSessionFile;
 
   /**
    * The tape-file sequence-number of the last pending file-migration to be
    * marked as written without a flush, or 0 if no pending file-migration
    * has yet been marked as such.
    */
-  uint32_t m_tapeFseqOfLastFileWrittenWithoutFlush;
+  int32_t m_tapeFSeqOfLastFileWrittenWithoutFlush;
 
   /**
    * The tape-file sequence-number of the last pending file-migration added to
    * the store, or 0 if the store is currently empty.
    */
-  uint32_t m_tapeFseqOfLastFileAdded;
+  int32_t m_tapeFSeqOfLastFileAdded;
 
   /**
    * The sequence-number of the file written to tape that matched or
@@ -195,88 +188,131 @@ private:
    * before a flush.  If the file is not known then the value of this
    * member-variable is 0.
    */
-  uint32_t m_tapeFseqOfMaxBytesFile;
+  int32_t m_tapeFSeqOfMaxBytesFile;
 
   /**
    * The sequence-number of the file written to tape that matched the maximum
    * number of files to be written to tape before a flush.  If the file is not
    * known then the value of this member-variable is 0.
    */
-  uint32_t m_tapeFseqOfMaxFilesFile;
+  int32_t m_tapeFSeqOfMaxFilesFile;
 
   /**
-   * Data structure used to store a pending migration and its status.
+   * Tracks the migration of a file to tape.
    */
-  struct PendingMigration {
+  class Migration {
+  public:
     /**
-     * The possible states of a pending file-migration whilst it is within the
-     * pending migration store.
+     * The possible states of a file-migration whilst it is within the pending
+     * migration store.
      */
-    enum PendingMigrationStatus {
+    enum Status {
+      /**
+       * Status is not yet known.
+       */
+      UNKNOWN,
+
       /**
        * The request to carry out the pending file-migration has been sent to
        * the rtcpd daemon but not data has yet been written to tape.
        */
-      PENDINGMIGRATION_SENT_TO_RTCPD,
+      SENT_TO_RTCPD,
 
       /**
        * The contents of the file of the pending file-migration has been
        * written to tape but has not yet been flushed.
        */
-      PENDINGMIGRATION_WRITTEN_WITHOUT_FLUSH
+      WRITTEN_WITHOUT_FLUSH
     };
 
     /**
      * Constructor.
      */
-    PendingMigration();
+    Migration(): m_status(UNKNOWN) {
+      // Do nothing
+    }
 
     /**
      * Constructor.
      *
-     * @param s The status of the pending file-migration.
-     * @param f The pending file-migration.
+     * @param status  The status of the file-migration.
+     * @param request The request to migrate the file to tape.
      */
-    PendingMigration(
-      const PendingMigrationStatus s,
-      const tapegateway::FileToMigrate &f);
+    Migration(const Status status, const RequestToMigrateFile &request):
+      m_status(status),
+      m_request(request) {
+      // Do nothing
+    }
 
     /**
-     * The status of the file whilst within the pending migration store.
+     * Sets the status of the file-migration.
      */
-    PendingMigrationStatus status;
+    void setStatus(const Status status) {
+      m_status = status;
+    }
 
     /**
-     * The pending file to be migrated from disk to tape.
+     * Returns the status of the file-migration.
+     */
+    Status getStatus() const {
+      return m_status;
+    }
+
+    /**
+     * Returns the request to migrate the file to tape.
+     */
+    const RequestToMigrateFile &getRequest() const {
+      return m_request;
+    }
+
+    /**
+     * Sets the "file written to tape" notification.
+     */
+    void setFileWrittenNotification(const FileWrittenNotification
+      &notification) {
+      m_fileWrittenNotification = notification;
+    }
+
+    /**
+     * Gets the "file written to tape" notification.
+     */
+    const FileWrittenNotification &getFileWrittenNotification() const {
+      return m_fileWrittenNotification;
+    }
+
+  private:
+
+    /**
+     * The status of the file-migration whilst within the store.
+     */
+    Status m_status;
+
+    /**
+     * The request to migrate the file to tape.
+     */
+    RequestToMigrateFile m_request;
+
+    /**
+     * The "file written to tape" notification.
      *
-     * This field is set when the pending file-migration has been successfully
-     * sent to the rtcpd daemon.
-     */
-    tapegateway::FileToMigrate fileToMigrate;
-
-    /**
-     * The pending file-migrated notification.
-     *
-     * This field is set when the pending file-magration has been written but
-     * not yet flushed to tape.  The contsnts of this filed will be sent to the
-     * tapegatewayd daemon at the later stage when rtcpd has notified the
+     * This field is set when the pending file-migration has been written but
+     * not yet flushed to tape.  The contents of this field will be sent to
+     * the tapegatewayd daemon when the rtcpd daemon has notified the
      * tapebridged daemon that the file has been flushed to tape.
      */
-    tapegateway::FileMigratedNotification fileMigratedNotification;
+    FileWrittenNotification m_fileWrittenNotification;
 
-  }; // struct PendingMigration
-
-  /**
-   * Map datatype used to store pending file-migrations indexed by tape-file
-   * sequence-number.
-   */
-  typedef std::map<uint32_t, PendingMigration> PendingMigrationMap;
+  }; // struct Migration
 
   /**
-   * The pending migrations stored in a map indexed by the tape-file
-   * sequence-number.
+   * Map of file-migrations indexed by tape-file sequence-number.
    */
-  PendingMigrationMap m_pendingMigrations;
+  typedef std::map<uint32_t, Migration> MigrationMap;
+
+  /**
+   * The file-migrations in the store indexed by tape-file sequence-number.
+   */
+  MigrationMap m_migrations;
 
   /**
    * Private copy-constructor to prevent copies being made.
@@ -290,15 +326,15 @@ private:
 
   /**
    * This method throws an exception if one or more the fields common to the
-   * specified file to migrate request and file-migrated notification do not
+   * specified migrate-file request and file-migrated notification do not
    * match exactly.
    *
-   * @param fileToMigrate            The request to migrate the file.
-   * @param fileMigratedNotification The notification that the file has been
-   *                                 migrated.
+   * @param request      The request to migrate the file to tape.
+   * @param notification The notification that the file has been migrated to
+   *                     tape.
    */
-  void checkForMismatches(const tapegateway::FileToMigrate &fileToMigrate,
-    const tapegateway::FileMigratedNotification &fileMigratedNotification)
+  void checkForMismatches(const RequestToMigrateFile &request,
+    const FileWrittenNotification &notification)
     const throw(castor::exception::Exception);
 
   /**

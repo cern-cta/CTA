@@ -28,9 +28,10 @@
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
-#include "castor/tape/tapegateway/FileToRecall.hpp"
-#include "castor/tape/tapegateway/FileToRecallRequest.hpp"
-#include "castor/tape/tapegateway/FileRecalledNotification.hpp"
+#include "castor/tape/tapegateway/FileRecallReportList.hpp"
+#include "castor/tape/tapegateway/FilesToRecallList.hpp"
+#include "castor/tape/tapegateway/FilesToRecallListRequest.hpp"
+#include "castor/tape/tapegateway/FileToRecallStruct.hpp"
 #include "castor/tape/tapegateway/NoMoreFiles.hpp"
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
 #include "castor/tape/tapegateway/PositionCommandCode.hpp"
@@ -38,13 +39,13 @@
 #include "castor/tape/tpcp/Constants.hpp"
 #include "castor/tape/tpcp/Helper.hpp"
 #include "castor/tape/tpcp/ReadTpCommand.hpp"
-#include "castor/tape/tpcp/StreamHelper.hpp"
 #include "castor/tape/tpcp/TapeFileSequenceParser.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/rfio_api.h"
 
 #include <errno.h>
 #include <getopt.h>
+#include <memory>
 #include <sstream>
 #include <time.h>
 #include <sys/stat.h>
@@ -62,16 +63,14 @@ castor::tape::tpcp::ReadTpCommand::ReadTpCommand() throw() :
   umask(m_umask);
 
   // Register the Tapebridge message handler member functions
-  registerMsgHandler(OBJ_FileToRecallRequest, this,
-    &ReadTpCommand::handleFileToRecallRequest);
-  registerMsgHandler(OBJ_FileRecalledNotification, this,
-    &ReadTpCommand::handleFileRecalledNotification);
+  registerMsgHandler(OBJ_FilesToRecallListRequest, this,
+    &ReadTpCommand::handleFilesToRecallListRequest);
+  registerMsgHandler(OBJ_FileRecallReportList, this,
+    &ReadTpCommand::handleFileRecallReportList);
   registerMsgHandler(OBJ_EndNotification, this,
     &ReadTpCommand::handleEndNotification);
   registerMsgHandler(OBJ_EndNotificationErrorReport, this,
     &ReadTpCommand::handleEndNotificationErrorReport);
-  registerMsgHandler(OBJ_EndNotificationFileErrorReport, this,
-    &ReadTpCommand::handleEndNotificationFileErrorReport);
   registerMsgHandler(OBJ_PingNotification, this,
     &ReadTpCommand::handlePingNotification);
 }
@@ -401,13 +400,13 @@ unsigned int castor::tape::tpcp::ReadTpCommand::countNbRangesWithEnd()
 
 
 //------------------------------------------------------------------------------
-// handleFileToRecallRequest
+// handleFilesToRecallListRequest
 //------------------------------------------------------------------------------
-bool castor::tape::tpcp::ReadTpCommand::handleFileToRecallRequest(
-  castor::IObject *obj, castor::io::AbstractSocket &sock)
+bool castor::tape::tpcp::ReadTpCommand::handleFilesToRecallListRequest(
+  castor::IObject *const obj, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
 
-  tapegateway::FileToRecallRequest *msg = NULL;
+  const tapegateway::FilesToRecallListRequest *msg = NULL;
 
   castMessage(obj, msg, sock);
   Helper::displayRcvdMsgIfDebug(*msg, m_cmdLine.debugSet);
@@ -445,21 +444,24 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileToRecallRequest(
     // Get the tape file sequence number and RFIO filename
     const uint32_t tapeFseq = m_tapeFseqSequence.next();
 
-    // Create FileToRecall message for the tapebridge
-    tapegateway::FileToRecall fileToRecall;
-    fileToRecall.setMountTransactionId(m_volReqId);
-    fileToRecall.setAggregatorTransactionId(msg->aggregatorTransactionId());
-    fileToRecall.setFileTransactionId(m_fileTransactionId);
-    fileToRecall.setNshost("tpcp\0");
-    fileToRecall.setFileid(0);
-    fileToRecall.setFseq(tapeFseq);
-    fileToRecall.setPositionCommandCode(tapegateway::TPPOSIT_FSEQ);
-    fileToRecall.setPath(filename);
-    fileToRecall.setUmask(m_umask);
-    fileToRecall.setBlockId0(0);
-    fileToRecall.setBlockId1(0);
-    fileToRecall.setBlockId2(0);
-    fileToRecall.setBlockId3(0);
+    // Create a FilesToRecallList message for the tapebridge
+    std::auto_ptr<tapegateway::FileToRecallStruct> file(
+      new tapegateway::FileToRecallStruct());
+    file->setFileTransactionId(m_fileTransactionId);
+    file->setNshost("tpcp\0");
+    file->setFileid(0);
+    file->setFseq(tapeFseq);
+    file->setPositionCommandCode(tapegateway::TPPOSIT_FSEQ);
+    file->setPath(filename);
+    file->setUmask(m_umask);
+    file->setBlockId0(0);
+    file->setBlockId1(0);
+    file->setBlockId2(0);
+    file->setBlockId3(0);
+    tapegateway::FilesToRecallList fileList;
+    fileList.setMountTransactionId(m_volReqId);
+    fileList.setAggregatorTransactionId(msg->aggregatorTransactionId());
+    fileList.addFilesToRecall(file.release());
 
     // Update the map of current file transfers and increment the file
     // transaction ID
@@ -469,8 +471,8 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileToRecallRequest(
       m_fileTransactionId++;
     }
 
-    // Send the FileToRecall message to the tapebridge
-    sock.sendObject(fileToRecall);
+    // Send the FilesToRecallList message to the tapebridge
+    sock.sendObject(fileList);
 
     {
       // Command-line user feedback
@@ -484,7 +486,7 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileToRecallRequest(
         " fseq=" << tapeFseq <<  std::endl;
     }
 
-    Helper::displaySentMsgIfDebug(fileToRecall, m_cmdLine.debugSet);
+    Helper::displaySentMsgIfDebug(fileList, m_cmdLine.debugSet);
 
   // Else no more files
   } else {
@@ -505,21 +507,68 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileToRecallRequest(
 
 
 //------------------------------------------------------------------------------
-// handleFileRecalledNotification
+// handleFileRecallReportList
 //------------------------------------------------------------------------------
-bool castor::tape::tpcp::ReadTpCommand::handleFileRecalledNotification(
-  castor::IObject *obj, castor::io::AbstractSocket &sock)
+bool castor::tape::tpcp::ReadTpCommand::handleFileRecallReportList(
+  castor::IObject *const obj, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
 
-  tapegateway::FileRecalledNotification *msg = NULL;
+  tapegateway::FileRecallReportList *msg = NULL;
 
   castMessage(obj, msg, sock);
   Helper::displayRcvdMsgIfDebug(*msg, m_cmdLine.debugSet);
 
+  handleSuccessfulRecalls(msg->aggregatorTransactionId(),
+    msg->successfulRecalls(), sock);
+
+  TpcpCommand::handleFailedTransfers(msg->failedRecalls());
+
+  // Create the NotificationAcknowledge message for the tapebridge
+  castor::tape::tapegateway::NotificationAcknowledge acknowledge;
+  acknowledge.setMountTransactionId(m_volReqId);
+  acknowledge.setAggregatorTransactionId(msg->aggregatorTransactionId());
+
+  // Send the NotificationAcknowledge message to the tapebridge
+  sock.sendObject(acknowledge);
+
+  Helper::displaySentMsgIfDebug(acknowledge, m_cmdLine.debugSet);
+
+  return true;
+}
+
+
+//------------------------------------------------------------------------------
+// handleSuccessfulRecalls
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::ReadTpCommand::handleSuccessfulRecalls(
+  const uint64_t aggregatorTransactionId,
+  const std::vector<tapegateway::FileRecalledNotificationStruct*> &files,
+  castor::io::AbstractSocket &sock) 
+  throw(castor::exception::Exception) {
+  for(std::vector<tapegateway::FileRecalledNotificationStruct*>::const_iterator
+    itor = files.begin(); itor != files.end(); itor++) {
+
+    if(NULL == *itor) {
+      TAPE_THROW_CODE(EBADMSG,
+        "Pointer to FileRecalledNotificationStruct is NULL");
+    }
+
+    handleSuccessfulRecall(aggregatorTransactionId, *(*itor), sock);
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// handleSuccessfulRecall
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::ReadTpCommand::handleSuccessfulRecall(
+  const uint64_t aggregatorTransactionId,
+  const tapegateway::FileRecalledNotificationStruct &file,
+  castor::io::AbstractSocket &sock) throw(castor::exception::Exception) {
   // Check the file transaction ID
   {
     FileTransferMap::iterator itor =
-      m_pendingFileTransfers.find(msg->fileTransactionId());
+      m_pendingFileTransfers.find(file.fileTransactionId());
 
     // If the fileTransactionId is unknown
     if(itor == m_pendingFileTransfers.end()) {
@@ -527,9 +576,9 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileRecalledNotification(
 
       oss <<
         "Received unknown file transaction ID from the tapebridge"
-        ": fileTransactionId=" << msg->fileTransactionId();
+        ": fileTransactionId=" << file.fileTransactionId();
 
-      sendEndNotificationErrorReport(msg->aggregatorTransactionId(), EBADMSG,
+      sendEndNotificationErrorReport(aggregatorTransactionId, EBADMSG,
         oss.str(), sock);
 
       castor::exception::Exception ex(ECANCELED);
@@ -549,9 +598,9 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileRecalledNotification(
         " Recalled"
         " \"" << fileTransfer.filename << "\""
         " fseq=" << fileTransfer.tapeFseq <<
-        " size=" << msg->fileSize() <<
-        " checksumType=\"" << msg->checksumName() << "\"" <<
-        " checksum=0x" << std::hex << msg->checksum() << std::dec <<
+        " size=" << file.fileSize() <<
+        " checksumType=\"" << file.checksumName() << "\"" <<
+        " checksum=0x" << std::hex << file.checksum() << std::dec <<
         std::endl;
     }
 
@@ -562,18 +611,6 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileRecalledNotification(
 
   // Update the count of successfull recalls
   m_nbRecalledFiles++;
-
-  // Create the NotificationAcknowledge message for the tapebridge
-  castor::tape::tapegateway::NotificationAcknowledge acknowledge;
-  acknowledge.setMountTransactionId(m_volReqId);
-  acknowledge.setAggregatorTransactionId(msg->aggregatorTransactionId());
-
-  // Send the NotificationAcknowledge message to the tapebridge
-  sock.sendObject(acknowledge);
-
-  Helper::displaySentMsgIfDebug(acknowledge, m_cmdLine.debugSet);
-
-  return true;
 }
 
 
@@ -581,7 +618,7 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileRecalledNotification(
 // handleEndNotification
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::ReadTpCommand::handleEndNotification(
-  castor::IObject *obj, castor::io::AbstractSocket &sock)
+  castor::IObject *const obj, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
 
   return TpcpCommand::handleEndNotification(obj, sock);
@@ -592,7 +629,7 @@ bool castor::tape::tpcp::ReadTpCommand::handleEndNotification(
 // handleEndNotificationErrorReport
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::ReadTpCommand::handleEndNotificationErrorReport(
-  castor::IObject *obj, castor::io::AbstractSocket &sock)
+  castor::IObject *const obj, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
 
   return TpcpCommand::handleEndNotificationErrorReport(obj,sock);
@@ -600,21 +637,10 @@ bool castor::tape::tpcp::ReadTpCommand::handleEndNotificationErrorReport(
 
 
 //------------------------------------------------------------------------------
-// handleEndNotificationFileErrorReport
-//------------------------------------------------------------------------------
-bool castor::tape::tpcp::ReadTpCommand::handleEndNotificationFileErrorReport(
-  castor::IObject *obj, castor::io::AbstractSocket &sock)
-  throw(castor::exception::Exception) {
-
-  return TpcpCommand::handleEndNotificationFileErrorReport(obj,sock);
-}
-
-
-//------------------------------------------------------------------------------
 // handlePingNotification
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::ReadTpCommand::handlePingNotification(
-  castor::IObject *obj, castor::io::AbstractSocket &sock)
+  castor::IObject *const obj, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
 
   return TpcpCommand::handlePingNotification(obj,sock);

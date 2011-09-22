@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/tapebridge/FailedToCopyTapeFile.cpp
+ *                 castor/tape/tapebridge/FailedToMigrateFileToTape.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,31 +22,23 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/tapebridge/FailedToCopyTapeFile.hpp"
-#include "h/serrno.h"
+#include "castor/tape/tapebridge/FailedToMigrateFileToTape.hpp"
+
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapebridge::FailedToCopyTapeFile::FailedToCopyTapeFile(
-  const int se, const FailedFile &failedFile)
-  throw():
-  castor::exception::Exception(se),
-  m_failedFile(failedFile) {
+castor::tape::tapebridge::FailedToMigrateFileToTape::FailedToMigrateFileToTape(
+  const int se, const FailedFile &failedFile) throw():
+  FailedToCopyTapeFile(se, failedFile) {
   // Do nothing
 }
+
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::tape::tapebridge::FailedToCopyTapeFile::~FailedToCopyTapeFile() {
+castor::tape::tapebridge::FailedToMigrateFileToTape::
+  ~FailedToMigrateFileToTape() {
   // Do nothing
-}
-
-//------------------------------------------------------------------------------
-// failedFile
-//------------------------------------------------------------------------------
-const castor::tape::tapebridge::FailedToCopyTapeFile::FailedFile
-  &castor::tape::tapebridge::FailedToCopyTapeFile::getFailedFile() const {
-  return m_failedFile;
 }

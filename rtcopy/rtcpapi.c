@@ -2305,7 +2305,7 @@ int rtcpc_runReq_ext(
       break;
     case RTCP_ENDOF_REQ :
       rtcp_log(
-               LOG_DEBUG,
+               LOG_INFO,
                "rtcpc_runReq(): end of request received on socket %d\n",
                (*socks)->accept_socket
                );

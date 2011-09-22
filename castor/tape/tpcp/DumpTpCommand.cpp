@@ -364,7 +364,7 @@ void castor::tape::tpcp::DumpTpCommand::performTransfer()
 // handleDumpParametersRequest
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::DumpTpCommand::handleDumpParametersRequest(
-  castor::IObject *obj, castor::io::AbstractSocket &sock)
+  castor::IObject *const obj, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
 
   tapegateway::DumpParametersRequest *msg = NULL;
@@ -398,7 +398,7 @@ bool castor::tape::tpcp::DumpTpCommand::handleDumpParametersRequest(
 // handleDumpNotification
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::DumpTpCommand::handleDumpNotification(
-  castor::IObject *obj, castor::io::AbstractSocket &sock)
+  castor::IObject *const obj, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
 
   tapegateway::DumpNotification *msg = NULL;
@@ -429,7 +429,7 @@ bool castor::tape::tpcp::DumpTpCommand::handleDumpNotification(
 // handleEndNotification
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::DumpTpCommand::handleEndNotification(
-  castor::IObject *obj, castor::io::AbstractSocket &sock)
+  castor::IObject *const obj, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
 
   return TpcpCommand::handleEndNotification(obj, sock);
@@ -440,7 +440,7 @@ bool castor::tape::tpcp::DumpTpCommand::handleEndNotification(
 // handleEndNotificationErrorReport
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::DumpTpCommand::handleEndNotificationErrorReport(
-  castor::IObject *obj, castor::io::AbstractSocket &sock)
+  castor::IObject *const obj, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
 
   return TpcpCommand::handleEndNotificationErrorReport(obj,sock);
@@ -451,7 +451,7 @@ bool castor::tape::tpcp::DumpTpCommand::handleEndNotificationErrorReport(
 // handlePingNotification
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::DumpTpCommand::handlePingNotification(
-  castor::IObject *obj, castor::io::AbstractSocket &sock)
+  castor::IObject *const obj, castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
 
   return TpcpCommand::handlePingNotification(obj,sock);

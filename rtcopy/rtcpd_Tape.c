@@ -90,6 +90,14 @@ typedef struct thread_arg {
      * TAPEBRIDGE_ONE_FLUSH_PER_N_FILES.
      */
     uint64_t maxFilesBeforeFlush;
+
+    /**
+     * Pointer to a boolean indicating whether or not the tape still needs to
+     * be released from the drive after all of the work of rtcpd has been
+     * finished, in other words after the client has sent the "end of entire
+     * session" message (RTCP_ENDOF_REQ) on the main socket.
+     */
+    int *tapeNeedsToBeReleasedAtEndOfSession;
 } thread_arg_t;
 
 extern int Debug;
@@ -1445,6 +1453,8 @@ void *tapeIOthread(void *arg) {
     /* is TAPEBRIDGE_N_FLUSHES_PER_FILE                                     */
     uint64_t maxFilesBeforeFlush = 0;
 
+    int *tapeNeedsToBeReleasedAtEndOfSession = NULL;
+
     extern char *u64tostr (u_signed64, char *, int);
 
     if ( arg == NULL ) {
@@ -1462,6 +1472,7 @@ void *tapeIOthread(void *arg) {
     tapeFlushMode = ((thread_arg_t *)arg)->tapeFlushMode;
     maxBytesBeforeFlush = ((thread_arg_t *)arg)->maxBytesBeforeFlush;
     maxFilesBeforeFlush = ((thread_arg_t *)arg)->maxFilesBeforeFlush;
+    tapeNeedsToBeReleasedAtEndOfSession = ((thread_arg_t *)arg)->tapeNeedsToBeReleasedAtEndOfSession;
     free(arg);
 
     if ( tape == NULL ) {
@@ -1995,6 +2006,9 @@ void *tapeIOthread(void *arg) {
                         }
                         (void)WaitDiskIO();
                         (void)rtcpd_FreeBuffers();
+                        rtcp_log(LOG_INFO,
+                            "Asking taped to release the tape"
+                            ": event=file spanning two volumes\n");
                         TP_STATUS(RTCP_PS_RELEASE);
                         rtcpd_Release(nexttape,NULL);
                         TP_STATUS(RTCP_PS_NOBLOCKING);
@@ -2240,6 +2254,9 @@ void *tapeIOthread(void *arg) {
         } CLIST_ITERATE_END(nexttape->file,nextfile);
 
         if ( nexttape->next != tape ) {
+            rtcp_log(LOG_INFO,
+                "Asking taped to release the tape"
+                ": event=tape IO thread is moving on to next tape\n");
             TP_STATUS(RTCP_PS_RELEASE);
             rc = rtcpd_Release(nexttape,nexttape->file);
             TP_STATUS(RTCP_PS_NOBLOCKING);
@@ -2261,7 +2278,20 @@ void *tapeIOthread(void *arg) {
      * this drive.
      */
     (void)rtcpd_FreeBuffers();
-    (void)rtcpd_Release(nexttape->prev,NULL);
+    /*
+     * Only do the actual tape-release if the client is not the tape-bridge
+     */
+    if(clientIsTapeBridge) {
+      /*
+       * Remember the tape needs to be released at the very end of the session
+       */
+      *tapeNeedsToBeReleasedAtEndOfSession = 1;
+    } else {
+      rtcp_log(LOG_INFO,
+          "Asking taped to release the tape"
+          ": event=tape IO thread has finished all of its work\n");
+      (void)rtcpd_Release(nexttape->prev,NULL);
+    }
     TP_STATUS(RTCP_PS_NOBLOCKING);
     TapeIOfinished();
     (void)tellClient(&client_socket,NULL,NULL,0);
@@ -2275,7 +2305,8 @@ int rtcpd_StartTapeIO(
   const int               clientIsTapeBridge,
   const uint32_t          tapeFlushMode,
   const uint64_t          maxBytesBeforeFlush,
-  const uint64_t          maxFilesBeforeFlush) {
+  const uint64_t          maxFilesBeforeFlush,
+  int *const              tapeNeedsToBeReleasedAtEndOfSession) {
     int rc;
     thread_arg_t *tharg;
 
@@ -2299,6 +2330,8 @@ int rtcpd_StartTapeIO(
     tharg->tapeFlushMode       = tapeFlushMode;
     tharg->maxBytesBeforeFlush = maxBytesBeforeFlush;
     tharg->maxFilesBeforeFlush = maxFilesBeforeFlush;
+    tharg->tapeNeedsToBeReleasedAtEndOfSession =
+      tapeNeedsToBeReleasedAtEndOfSession;
 
     /*
      * Open a separate connection to client

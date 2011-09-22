@@ -74,14 +74,11 @@ public:
    * Destructor.
    *
    * Besides freeing the resources used by this object, this destructor also
-   * closes the rtcpd disk/tape IO control-connections and the client
-   * connections that are still open.
+   * closes the initila rtcpd connection, the rtcpd disk/tape IO
+   * control-connections and the client connections that are still open.
    *
    * The destructor does not close the listen socket used to accept rtcpd
    * connections.  This is the responsibility of the VdqmRequestHandler.
-   *
-   * The destructor does not close the initial rtpcd connection.  This is the
-   * responsibility of the VdqmRequestHandler.
    */
   ~BridgeSocketCatalogue();
 
@@ -114,6 +111,14 @@ public:
    */
   void addInitialRtcpdConn(const int initialRtcpdSock)
     throw(castor::exception::Exception);
+
+  /**
+   * Returns and releases the socket-descriptor of the iniial rtpcd-connection.
+   *
+   * This method throws an exception if the socket-descriptor of the initial
+   * rtpcd-connection is not set.
+   */
+  int releaseInitialRtcpdConn() throw(castor::exception::Exception);
 
   /**
    * Adds to the catalogue an rtcpd disk/tape IO control-connection.
@@ -179,7 +184,7 @@ public:
    * This method throws an exception if the socket-descriptor of the listen
    * socket does not exist in the catalogue.
    */
-  int getListenSock() throw(castor::exception::Exception);
+  int getListenSock() const throw(castor::exception::Exception);
 
   /**
    * Returns the socket-descriptor of the initial rtcpd connection.
@@ -187,7 +192,7 @@ public:
    * This method throws an exception if the socket-descriptor of the initial
    * rtcpd connection does not exist in the catalogue.
    */
-  int getInitialRtcpdConn() throw(castor::exception::Exception);
+  int getInitialRtcpdConn() const throw(castor::exception::Exception);
 
   /**
    * Releases the specified rtcpd disk/tape IO control-connection from the
@@ -269,9 +274,9 @@ public:
     int                   &rtcpdSock,
     uint32_t              &rtcpdReqMagic,
     uint32_t              &rtcpdReqType,
-    char                  *&rtcpdReqTapePath,
+    const char            *&rtcpdReqTapePath,
     uint64_t              &aggregatorTransactionId,
-    struct timeval        &clientReqTimeStamp)
+    struct timeval        &clientReqTimeStamp) const
     throw(castor::exception::Exception);
 
   /**
@@ -282,7 +287,7 @@ public:
    * @param maxFd     Output parameter: The maximum value of all of the file
    *                  descriptors in the set.
    */
-  void buildReadFdSet(fd_set &readFdSet, int &maxFd) throw();
+  void buildReadFdSet(fd_set &readFdSet, int &maxFd) const throw();
 
   /**
    * Enumeration of the three different types of socket-descriptor that can
@@ -307,9 +312,14 @@ public:
     RTCPD_DISK_TAPE_IO_CONTROL,
 
     /**
-     * A client connection socket.
+     * A client connection other than a migration-report connection.
      */
-    CLIENT
+    CLIENT,
+
+    /**
+     * A client migration-report connection.
+     */
+    CLIENT_MIGRATION_REPORT
   };
 
   /**
@@ -322,12 +332,12 @@ public:
    *                  if one was found, else undefined.
    * @return          A pending file-descriptor or -1 if none was found.
    */
-  int getAPendingSock(fd_set &readFdSet, SocketType &sockType) throw();
+  int getAPendingSock(fd_set &readFdSet, SocketType &sockType) const;
 
   /**
    * Returns the total number of disk/tape IO control-conenction.
    */
-  int getNbDiskTapeIOControlConns();
+  int getNbDiskTapeIOControlConns() const;
 
   /**
    * Checks the socket catalogue to see if an rtcpd disk/tape IO
@@ -335,8 +345,46 @@ public:
    *
    * This method throws a TimeOut exception if a timeout is found.
    */
-  void checkForTimeout() throw(castor::exception::TimeOut);
+  void checkForTimeout() const throw(castor::exception::TimeOut);
 
+  /**
+   * Sets the socket-descriptor of the pending client migration-report
+   * connection.
+   *
+   * There should only be one client migration-report connection open at any
+   * moment in time and therefore this method will throw an exception if the
+   * socket-descriptor is already set.
+   *
+   * @param sock                    The socket-descriptor of the client
+   *                                migration-report connection.
+   * @param aggregatorTransactionId The tapebridge transaction id of the
+   *                                migration-report message written to the
+   *                                client migration-report connection.
+   */
+  void addClientMigrationReportSock(const int sock,
+    const uint64_t aggregatorTransactionId)
+    throw(castor::exception::Exception);
+
+  /**
+   * This method returns true if the socket-descriptor of the client
+   * migration-report connection is set, else this method returns false.
+   */
+  bool clientMigrationReportSockIsSet() const;
+
+  /**
+   * Returns and releases the socket-descriptor of the client migration-report
+   * connection.
+   *
+   * This method throws an exception if the socket-descriptor of the client
+   * migration-report connection is not set.
+   *
+   * @param aggregatorTransactionId Output parameter: The tapebridge
+   *                                transaction id of the migration-report
+   *                                message written to the client
+   *                                migration-report connection.
+   */
+  int releaseClientMigrationReportSock(uint64_t &aggregatorTransactionId)
+    throw(castor::exception::Exception);
 
 private:
 
@@ -504,6 +552,41 @@ private:
    * timed out waiting for a reply from a client.
    */
   ClientReqHistoryList m_clientReqHistory;
+
+  /**
+   * Structure representing a pending client migration-report connection.  This
+   * is a connection that has been opened with the client and has had a
+   * migration-report message written into it.
+   */
+  struct ClientMigrationReportConnection {
+
+    /**
+     * Constructor.
+     */
+    ClientMigrationReportConnection():
+      clientSock(-1),
+      aggregatorTransactionId(0) {
+      // Do nothing
+    }
+
+    /**
+     * The socket-descriptor of the client-connection if there is one, else -1
+     * if there is not.
+     */
+    int clientSock;
+
+    /**
+     * The tapebridge transaction ID associated with the migration-report
+     * message that was sent to the client.  This member of the structure
+     * should be ignored if the clientSock member is set to -1.
+     */
+    uint64_t aggregatorTransactionId;
+  };
+
+  /**
+   * The client migration-report connection.
+   */
+  ClientMigrationReportConnection m_clientMigrationReportConnection;
 
 }; // class BridgeSocketCatalogue
 

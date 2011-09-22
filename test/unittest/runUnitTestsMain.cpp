@@ -23,6 +23,7 @@
  *****************************************************************************/
 
 #include "test/unittest/castor/tape/tapebridge/BridgeClientInfo2SenderTest.hpp"
+#include "test/unittest/castor/tape/tapebridge/BridgeSocketCatalogueTest.hpp"
 #include "test/unittest/castor/tape/tapebridge/TapeFlushConfigParamsTest.hpp"
 #include "test/unittest/castor/tape/tapebridge/PendingMigrationsStoreTest.hpp"
 #include "test/unittest/castor/tape/utils/IndexedContainerTest.hpp"

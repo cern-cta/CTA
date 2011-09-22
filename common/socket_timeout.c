@@ -345,7 +345,7 @@ int _net_isclosed(int fd)
 	fd_set         rset;
 	struct timeval tv;
 	char           buf[1];
-
+	
 	FD_ZERO(&rset);
 	FD_SET(fd,&rset);
 	

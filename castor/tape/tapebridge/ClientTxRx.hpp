@@ -28,8 +28,8 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/tapebridge/FailedToCopyTapeFile.hpp"
 #include "castor/tape/tapegateway/DumpParameters.hpp"
-#include "castor/tape/tapegateway/FileToMigrate.hpp"
-#include "castor/tape/tapegateway/FileToRecall.hpp"
+#include "castor/tape/tapegateway/FilesToMigrateList.hpp"
+#include "castor/tape/tapegateway/FilesToRecallList.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "h/Castor_limits.h"
 #include "h/Cuuid.h"
@@ -70,13 +70,13 @@ public:
     const Cuuid_t        &cuuid,
     const uint32_t       mountTransactionId,
     const uint64_t       aggregatorTransactionId,
-    const char           *clientHost,
+    const char *const    clientHost,
     const unsigned short clientPort,
     const char           (&unit)[CA_MAXUNMLEN+1])
     throw(castor::exception::Exception);
 
   /**
-   * Sends a FileToMigrateRequest to the client and returns the
+   * Sends a FilesToMigrateListRequest to the client and returns the
    * socket-descriptor of the client connection from which the reply will be
    * read later.
    *
@@ -86,43 +86,58 @@ public:
    *                           the client.
    * @param clientHost         The client host name.
    * @param clientPort         The client port number.
+   * @param maxFiles           The maximum number of files the client can send
+   *                           in the reply.
+   * @param maxBytes           The maximum number of files the client can send
+   *                           in the reply represented indirectly by the sum
+   *                           of their file-sizes.
    * @param connectDuration    Out parameter: The number of seconds it took to
    *                           connect to the client.
    * @return                   The socket-descriptor of the tape-gateway
    *                           connection from which the reply will be read
    *                           later.
    */
-  static int sendFileToMigrateRequest(
+  static int sendFilesToMigrateListRequest(
     const uint32_t       mountTransactionId,
     const uint64_t       aggregatorTransactionId,
-    const char           *clientHost,
+    const char *const    clientHost,
     const unsigned short clientPort,
+    const uint64_t       maxFiles,
+    const uint64_t       maxBytes,
     time_t               &connectDuration)
     throw(castor::exception::Exception);
 
   /**
-   * Receives the reply to a FileToMigrateRequest from the specified client
-   * socket and then closes the connection.
+   * Receives the reply to a FilesToMigrateListRequest from the specified
+   * client socket and then closes the connection.
+   *
+   * This method throws an exception if the either the mountTransactionId or
+   * aggregatorTransactionId of the reply from the client does not match those
+   * passed into this method.
+   *
+   * This method throws an exception if the client replies with a
+   * FilesToMigrateList containing 0 files.  If a client has no more files to
+   * migrate then it must send a NoMoreFiles message.
    *
    * @param mountTransactionId The mount transaction ID to be sent to the
    *                           client.
    * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
    *                           the client.
    * @param clientSock         The socket-descriptor of the client connection.
-   * @return                   A pointer to the file to migrate message
+   * @return                   A pointer to the FilesToMigrateList message
    *                           received from the client or NULL if there is no
    *                           file to be migrated.  The callee is responsible
    *                           for deallocating the message.
    */
-  static castor::tape::tapegateway::FileToMigrate
-    *receiveFileToMigrateReplyAndClose(
+  static castor::tape::tapegateway::FilesToMigrateList
+    *receiveFilesToMigrateListRequestReplyAndClose(
     const uint32_t mountTransactionId,
     const uint64_t aggregatorTransactionId,
     const int      clientSock)
     throw(castor::exception::Exception);
 
   /**
-   * Sends a FileToRecallRequest to the client and returns the
+   * Sends a FilesToRecallListRequest to the client and returns the
    * socket-descriptor of the client connection from which the reply will be
    * read later.
    *
@@ -132,23 +147,38 @@ public:
    *                           the client.
    * @param clientHost         The client host name.
    * @param clientPort         The client port number.
+   * @param maxFiles           The maximum number of files the client can send
+   *                           in the reply.
+   * @param maxBytes           The maximum number of files the client can send
+   *                           in the reply represented indirectly by the sum
+   *                           of their file-sizes.
    * @param connectDuration    Out parameter: The number of seconds it took to
    *                           connect to the client.
    * @return                   The socket-descriptor of the tape-gateway
    *                           connection from which the reply will be read
    *                           later.
    */
-  static int sendFileToRecallRequest(
+  static int sendFilesToRecallListRequest(
     const uint32_t       mountTransactionId,
     const uint64_t       aggregatorTransactionId,
-    const char           *clientHost,
+    const char *const    clientHost,
     const unsigned short clientPort,
+    const uint64_t       maxFiles,
+    const uint64_t       maxBytes,
     time_t               &connectDuration)
     throw(castor::exception::Exception);
 
   /**
-   * Receives the reply to a FileToRecallRequest from the specified client
+   * Receives the reply to a FilesToRecallListRequest from the specified client
    * socket and then closes the connection.
+   *
+   * This method throws an exception if the either the mountTransactionId or
+   * aggregatorTransactionId of the reply from the client does not match those
+   * passed into this method.
+   *
+   * This method throws an exception if the client replies with a
+   * FilesToRecallList containing 0 files.  If a client has no more files to
+   * recall then it must send a NoMoreFiles message.
    *
    * @param mountTransactionId The mount transaction ID to be sent to the
    *                           client.
@@ -160,58 +190,16 @@ public:
    *                           be recalled.  The callee is responsible for
    *                           deallocating the message.
    */
-  static castor::tape::tapegateway::FileToRecall
-    *receiveFileToRecallReplyAndClose(
+  static castor::tape::tapegateway::FilesToRecallList
+    *receiveFilesToRecallListRequestReplyAndClose(
     const uint32_t mountTransactionId,
     const uint64_t aggregatorTransactionId,
     const int      clientSock)
     throw(castor::exception::Exception);
 
   /**
-   * Sends a FileRecalledNotification to the client and returns the
-   * socket-descriptor of the client connection from which the reply will be
-   * read later.
-   *
-   * @param mountTransactionId  The mount transaction ID to be sent to the
-   *                            client.
-   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
-   *                            the client.
-   * @param clientHost          The client host name.
-   * @param clientPort          The client port number.
-   * @param connectDuration     Out parameter: The number of seconds it took to
-   *                            connect to the client.
-   * @param fileTransactionId   The file transaction ID.
-   * @param filePath            The path of the disk file.
-   * @param nsHost              The name server host.
-   * @param fileId              The CASTOR file ID.
-   * @param tapeFileSeq         The tape file seuence number.
-   * @param filePath            The path of the disk file.
-   * @param positionCommandCode The position method uesd by the drive.
-   * @param checksumAlgorithm   The name of the checksum algorithm.
-   * @param checksum            The file checksum.
-   * @param fileSize            The size of the file without compression.
-   */
-  static int sendFileRecalledNotification(
-    const uint32_t       mountTransactionId,
-    const uint64_t       aggregatorTransactionId,
-    const char           *clientHost,
-    const unsigned short clientPort,
-    time_t               &connectDuration,
-    const uint64_t       fileTransactionId,
-    const char           (&nsHost)[CA_MAXHOSTNAMELEN+1],
-    const uint64_t       fileId,
-    const int32_t        tapeFileSeq,
-    const char           (&filePath)[CA_MAXPATHLEN+1],
-    const int32_t        positionCommandCode,
-    const char           (&checksumAlgorithm)[CA_MAXCKSUMNAMELEN+1],
-    const uint32_t       checksum,
-    const uint64_t       fileSize)
-    throw(castor::exception::Exception);
-
-  /**
-   * Receives the reply to a FileToMigratedNotification or a
-   * FileToRecallNotification from the specified client socket and then closes
-   * the connection.
+   * Receives the reply to a FileMigrationReportList or a FileRecallReportList
+   * from the specified client socket and then closes the connection.
    *
    * @param mountTransactionId  The mount transaction ID to be sent to the
    *                            client.
@@ -223,6 +211,125 @@ public:
     const uint32_t mountTransactionId,
     const uint64_t aggregatorTransactionId,
     const int      clientSock)
+    throw(castor::exception::Exception);
+
+  /**
+   * Gets the parameters to be used when dumping a tape.
+   *
+   * @param cuuid               The ccuid to be used for logging.
+   * @param mountTransactionId  The mount transaction ID to be sent to the
+   *                            client.
+   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
+   *                            the client.
+   * @param clientHost          The client host name.
+   * @param clientPort          The client port number.
+   * @return                    A pointer to the DumpParamaters message.  The
+   *                            callee is responsible for deallocating the
+   *                            message.
+   */
+  static tapegateway::DumpParameters *getDumpParameters(
+    const Cuuid_t        &cuuid,
+    const uint32_t       mountTransactionId,
+    const uint64_t       aggregatorTransactionId,
+    const char *const    clientHost,
+    const unsigned short clientPort)
+    throw(castor::exception::Exception);
+
+  /**
+   * Notifies the client of a dump tape message string.
+   *
+   * @param cuuid               The ccuid to be used for logging.
+   * @param mountTransactionId  The mount transaction ID to be sent to the
+   *                            client.
+   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
+   *                            the client.
+   * @param clientHost          The client host name.
+   * @param clientPor        t  The client port number.
+   * @param message             The dump tape message string.
+   */
+  static void notifyDumpMessage(
+    const Cuuid_t        &cuuid,
+    const uint32_t       mountTransactionId,
+    const uint64_t       aggregatorTransactionId,
+    const char *const    clientHost,
+    const unsigned short clientPort,
+    const char           (&message)[CA_MAXLINELEN+1])
+    throw(castor::exception::Exception);
+
+  /**
+   * Pings the client and throws an exception if the ping has failed.
+   *
+   * @param cuuid               The ccuid to be used for logging.
+   * @param mountTransactionId  The mount transaction ID to be sent to the
+   *                            client.
+   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
+   *                            the client.
+   * @param clientHost          The client host name.
+   * @param clientPort          The client port number.
+   */
+  static void ping(
+    const Cuuid_t        &cuuid,
+    const uint32_t       mountTransactionId,
+    const uint64_t       aggregatorTransactionId,
+    const char *const    clientHost,
+    const unsigned short clientPort)
+    throw(castor::exception::Exception);
+
+  /**
+   * Receives a reply from the specified client socket and then closes the
+   * connection.
+   *
+   * @param clientSock         The socket-descriptor of the client connection.
+   * @param clientNetRWTimeout The timeout in seconds used when sending and
+   *                           receiving client network messages.
+   * @return                   A pointer to the reply object.  It is the
+   *                           responsibility of the caller to deallocate the
+   *                           memory of the reply object.
+   */
+  static IObject *receiveReplyAndClose(
+    const int clientSock,
+    const int clientNetRWTimeout)
+    throw(castor::exception::Exception);
+
+  /**
+   * Throws an exception if there is a mount transaction ID mismatch and/or
+   * an tapebridge transaction ID mismatch.
+   *
+   * @param messageTypeName                 The type name of the client message.
+   * @param expectedMountTransactionId      The expected mount transaction ID.
+   * @param actualMountTransactionIdA       The actual mount transaction ID.
+   * @param expectedTapeBridgeTransactionId The expected tapebridge transaction
+   *                                         ID.
+   * @param actualTapeBridgeTransactionId   The actualtapebridge transaction ID.
+   */
+  static void checkTransactionIds(
+    const char *const messageTypeName,
+    const uint32_t    expectedMountTransactionId,
+    const uint32_t    actualMountTransactionId,
+    const uint64_t    expectedTapeBridgeTransactionId,
+    const uint64_t    actualTapeBridgeTransactionId)
+    throw(castor::exception::Exception);
+
+  /**
+   * Sends the specified message to the client and returns the
+   * socket-descriptor of the client connection from which a reply will be read
+   * later.
+   *
+   * @param clientHost         The client host name.
+   * @param clientPort         The client port number.
+   * @param clientNetRWTimeout The timeout in seconds used when sending and
+   *                           receiving client network messages.
+   * @param request            Out parameter: The request to be sent to the
+   *                           client.
+   * @param connectDuration    Out parameter: The number of seconds it took to
+   *                           connect to the client.
+   */
+  static int sendMessage(
+    const char *const    clientHost,
+    const unsigned short clientPort,
+    const int            clientNetRWTimeout,
+    IObject              &message,
+    time_t               &connectDuration)
     throw(castor::exception::Exception);
 
   /**
@@ -277,136 +384,16 @@ public:
    *                            the client.
    * @param clientHost          The client host name.
    * @param clientPort          The client port number.
-   * @param ex                  The exception which failed the session.
+   * @param e                   The exception which failed the session.
    */
   static void notifyEndOfFailedSessionDueToFile(
     const Cuuid_t        &cuuid,
     const uint32_t       mountTransactionId,
     const uint64_t       aggregatorTransactionId,
-    const char           *clientHost,
+    const char *const    clientHost,
     const unsigned short clientPort,
-    FailedToCopyTapeFile &ex)
+    FailedToCopyTapeFile &e)
     throw(castor::exception::Exception);
-
-  /**
-   * Gets the parameters to be used when dumping a tape.
-   *
-   * @param cuuid               The ccuid to be used for logging.
-   * @param mountTransactionId  The mount transaction ID to be sent to the
-   *                            client.
-   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
-   *                            the client.
-   * @param clientHost          The client host name.
-   * @param clientPort          The client port number.
-   * @return                    A pointer to the DumpParamaters message.  The
-   *                            callee is responsible for deallocating the
-   *                            message.
-   */
-  static tapegateway::DumpParameters *getDumpParameters(
-    const Cuuid_t        &cuuid,
-    const uint32_t       mountTransactionId,
-    const uint64_t       aggregatorTransactionId,
-    const char           *clientHost,
-    const unsigned short clientPort)
-    throw(castor::exception::Exception);
-
-  /**
-   * Notifies the client of a dump tape message string.
-   *
-   * @param cuuid               The ccuid to be used for logging.
-   * @param mountTransactionId  The mount transaction ID to be sent to the
-   *                            client.
-   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
-   *                            the client.
-   * @param clientHost          The client host name.
-   * @param clientPor        t  The client port number.
-   * @param message             The dump tape message string.
-   */
-  static void notifyDumpMessage(
-    const Cuuid_t        &cuuid,
-    const uint32_t       mountTransactionId,
-    const uint64_t       aggregatorTransactionId,
-    const char           *clientHost,
-    const unsigned short clientPort,
-    const char           (&message)[CA_MAXLINELEN+1])
-    throw(castor::exception::Exception);
-
-  /**
-   * Pings the client and throws an exception if the ping has failed.
-   *
-   * @param cuuid               The ccuid to be used for logging.
-   * @param mountTransactionId  The mount transaction ID to be sent to the
-   *                            client.
-   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
-   *                            the client.
-   * @param clientHost          The client host name.
-   * @param clientPort          The client port number.
-   */
-  static void ping(
-    const Cuuid_t        &cuuid,
-    const uint32_t       mountTransactionId,
-    const uint64_t       aggregatorTransactionId,
-    const char           *clientHost,
-    const unsigned short clientPort)
-    throw(castor::exception::Exception);
-
-  /**
-   * Receives a reply from the specified client socket and then closes the
-   * connection.
-   *
-   * @param clientSock         The socket-descriptor of the client connection.
-   * @param clientNetRWTimeout The timeout in seconds used when sending and
-   *                           receiving client network messages.
-   * @return                   A pointer to the reply object.  It is the
-   *                           responsibility of the caller to deallocate the
-   *                           memory of the reply object.
-   */
-  static IObject *receiveReplyAndClose(
-    const int clientSock,
-    const int clientNetRWTimeout)
-    throw(castor::exception::Exception);
-
-  /**
-   * Throws an exception if there is a mount transaction ID mismatch and/or
-   * an tapebridge transaction ID mismatch.
-   *
-   * @param messageTypeName                 The type name of the client message.
-   * @param expectedMountTransactionId      The expected mount transaction ID.
-   * @param actualMountTransactionIdA       The actual mount transaction ID.
-   * @param expectedTapeBridgeTransactionId The expected tapebridge transaction
-   *                                         ID.
-   * @param actualTapeBridgeTransactionId   The actualtapebridge transaction ID.
-   */
-  static void checkTransactionIds(
-    const char *const messageTypeName,
-    const uint32_t    expectedMountTransactionId,
-    const uint32_t    actualMountTransactionId,
-    const uint64_t    expectedTapeBridgeTransactionId,
-    const uint64_t    actualTapeBridgeTransactionId)
-    throw(castor::exception::Exception);
-
-  /**
-   * Sends the specified message to the client and returns the
-   * socket-descriptor of the client connection from which a reply will be read
-   * later.
-   *
-   * @param clientHost         The client host name.
-   * @param clientPort         The client port number.
-   * @param clientNetRWTimeout The timeout in seconds used when sending and
-   *                           receiving client network messages.
-   * @param request            Out parameter: The request to be sent to the
-   *                           client.
-   * @param connectDuration    Out parameter: The number of seconds it took to
-   *                           connect to the client.
-   */
-  static int sendMessage(
-    const char           *clientHost,
-    const unsigned short clientPort,
-    const int            clientNetRWTimeout,
-    IObject              &message,
-    time_t               &connectDuration)
-    throw(castor::exception::Exception);
-
 
 private:
 
@@ -436,8 +423,8 @@ private:
    *                           memory of the reply object.
    */
   static IObject *sendRequestAndReceiveReply(
-    const char           *requestTypeName,
-    const char           *clientHost,
+    const char *const    requestTypeName,
+    const char *const    clientHost,
     const unsigned short clientPort,
     const int            clientNetRWTimeout,
     IObject              &request,
@@ -466,8 +453,8 @@ private:
     const Cuuid_t        &cuuid,
     const uint32_t       mountTransactionId,
     const uint64_t       aggregatorTransactionId,
-    const char           *requestTypeName,
-    const char           *clientHost,
+    const char *const    requestTypeName,
+    const char *const    clientHost,
     const unsigned short clientPort,
     const int            clientNetRWTimeout,
     IObject              &request)
@@ -489,7 +476,6 @@ private:
     const uint64_t aggregatorTransactionId,
     IObject *const obj)
     throw(castor::exception::Exception);
-
 }; // class ClientTxRx
 
 } // namespace tapebridge

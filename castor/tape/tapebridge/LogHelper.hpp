@@ -37,8 +37,6 @@
 #include "castor/tape/legacymsg/RtcpTapeRqstErrMsgBody.hpp"
 #include "castor/tape/legacymsg/VmgrTapeInfoMsgBody.hpp"
 #include "castor/tape/tapegateway/DumpParameters.hpp"
-#include "castor/tape/tapegateway/FileToRecall.hpp"
-#include "castor/tape/tapegateway/FileToMigrate.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "h/Cuuid.h"
 #include "h/tapeBridgeFlushedToTapeMsgBody.h"
@@ -323,46 +321,6 @@ public:
     const tapegateway::DumpParameters &msg,
     const time_t                      connectDuration,
     const time_t                      sendRecvDuration) throw();
-
-  /**
-   * Logs the specified Client message.
-   *
-   * @param cuuid            The uuid of the component issuing the message.
-   * @param severity         The severity of the message.
-   * @param message_no       The message number in the facility.
-   * @param msg              The message.
-   * @param connectDuration  The number of seconds it took to connect to the
-   *                         client.
-   * @param sendRecvDuration The number of seconds it took to send the request
-   *                         and receive the reply.
-   */
-  static void logMsg(
-    const Cuuid_t                   &cuuid,
-    const int                       severity, 
-    const int                       message_no, 
-    const tapegateway::FileToRecall &msg,
-    const time_t                    connectDuration,
-    const time_t                    sendRecvDuration) throw();
-
-  /**
-   * Logs the specified Client message.
-   *
-   * @param cuuid            The uuid of the component issuing the message.
-   * @param severity         The severity of the message.
-   * @param message_no       The message number in the facility.
-   * @param msg              The message.
-   * @param connectDuration  The number of seconds it took to connect to the
-   *                         client.
-   * @param sendRecvDuration The number of seconds it took to send the request
-   *                         and receive the reply.
-   */
-  static void logMsg(
-    const Cuuid_t                    &cuuid,
-    const int                        severity, 
-    const int                        message_no, 
-    const tapegateway::FileToMigrate &msg,
-    const time_t                     connectDuration,
-    const time_t                     sendRecvDuration) throw();
 };
 
 } // namespace tapebridge

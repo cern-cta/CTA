@@ -39,7 +39,6 @@ DUMPTPBIN_SRCS = \
   DumpTpCommand.cpp \
   DumpTpMain.cpp \
   Helper.cpp \
-  StreamHelper.cpp \
   StreamOperators.cpp \
   TapeFileSequenceParser.cpp \
   TapeFseqRange.cpp \
@@ -53,7 +52,6 @@ READTPBIN_SRCS = \
   Helper.cpp \
   ReadTpCommand.cpp \
   ReadTpMain.cpp \
-  StreamHelper.cpp \
   StreamOperators.cpp \
   TapeFileSequenceParser.cpp \
   TapeFseqRange.cpp \
@@ -65,7 +63,6 @@ READTPBIN_OBJS = $(READTPBIN_SRCS:.cpp=.o)
 WRITETPBIN_SRCS = \
   Action.cpp \
   Helper.cpp \
-  StreamHelper.cpp \
   StreamOperators.cpp \
   TapeFileSequenceParser.cpp \
   TapeFseqRange.cpp \

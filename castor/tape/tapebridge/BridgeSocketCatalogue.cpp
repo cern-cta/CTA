@@ -48,6 +48,9 @@ castor::tape::tapebridge::BridgeSocketCatalogue::~BridgeSocketCatalogue() {
 
   // Note this destructor does NOT close the initial rtcpd connection.  This is
   // the responsibility of the VdqmRequestHandler.
+  if(0 <= m_initialRtcpdSock) {
+    close(m_initialRtcpdSock);
+  }
 
   // For each rtcpd-connection
   for(RtcpdConnectionList::const_iterator itor = m_rtcpdConnections.begin();
@@ -57,9 +60,14 @@ castor::tape::tapebridge::BridgeSocketCatalogue::~BridgeSocketCatalogue() {
     close(itor->rtcpdSock);
 
     // If there is an associated client connection, then close it
-    if(itor->clientSock != -1) {
+    if(0 <= itor->clientSock) {
       close(itor->clientSock);
     }
+  }
+
+  // If there is an open client migration-report connection, then close it
+  if(0 <= m_clientMigrationReportConnection.clientSock) {
+    close(m_clientMigrationReportConnection.clientSock);
   }
 }
 
@@ -70,14 +78,14 @@ castor::tape::tapebridge::BridgeSocketCatalogue::~BridgeSocketCatalogue() {
 void castor::tape::tapebridge::BridgeSocketCatalogue::addListenSock(
   const int listenSock) throw(castor::exception::Exception) {
 
-  if(listenSock < 0) {
+  if(0 > listenSock) {
     TAPE_THROW_EX(castor::exception::InvalidArgument,
       ": Invalid socket-descriptor"
       ": Value is negative"
       ": listenSock=" << listenSock);
   }
 
-  if(m_listenSock != -1) {
+  if(0 <= m_listenSock) {
     TAPE_THROW_CODE(ECANCELED,
       ": Listen socket-descriptor is already set"
       ": current listenSock=" << m_listenSock <<
@@ -94,14 +102,14 @@ void castor::tape::tapebridge::BridgeSocketCatalogue::addListenSock(
 void castor::tape::tapebridge::BridgeSocketCatalogue::addInitialRtcpdConn(
   const int initialRtcpdSock) throw(castor::exception::Exception) {
 
-  if(initialRtcpdSock < 0) {
+  if(0 > initialRtcpdSock) {
     TAPE_THROW_EX(castor::exception::InvalidArgument,
       ": Invalid socket-descriptor"
       ": Value is negative"
       ": initialRtcpdSock=" << initialRtcpdSock);
   }
 
-  if(m_initialRtcpdSock != -1) {
+  if(0 <= m_initialRtcpdSock) {
     TAPE_THROW_CODE(ECANCELED,
       ": Initial rtcpd socket-descriptor is already set"
       ": current initialRtcpdSocket=" << m_initialRtcpdSock <<
@@ -113,13 +121,31 @@ void castor::tape::tapebridge::BridgeSocketCatalogue::addInitialRtcpdConn(
 
 
 //-----------------------------------------------------------------------------
+// releaseInitialRtcpdConn
+//-----------------------------------------------------------------------------
+int castor::tape::tapebridge::BridgeSocketCatalogue::releaseInitialRtcpdConn()
+  throw(castor::exception::Exception) {
+  // Throw an exception if the socket-descriptor has not been set
+  if(0 > m_initialRtcpdSock) {
+    TAPE_THROW_CODE(ENOENT,
+      ": Initial rtcpd socket-descriptor does not exist in the catalogue");
+  }
+
+  // Release and return the socket-descriptor
+  const int tmpSock = m_initialRtcpdSock;
+  m_initialRtcpdSock = -1;
+  return tmpSock;
+}
+
+
+//-----------------------------------------------------------------------------
 // addRtcpdDiskTapeIOControlConn
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeSocketCatalogue::
   addRtcpdDiskTapeIOControlConn(const int rtcpdSock)
   throw(castor::exception::Exception) {
 
-  if(rtcpdSock < 0) {
+  if(0 > rtcpdSock) {
     TAPE_THROW_EX(castor::exception::InvalidArgument,
       ": Invalid socket-descriptor"
       ": Value is negative"
@@ -155,14 +181,14 @@ void castor::tape::tapebridge::BridgeSocketCatalogue::addClientConn(
   const uint64_t aggregatorTransactionId)
   throw(castor::exception::Exception) {
 
-  if(rtcpdSock < 0) {
+  if(0 > rtcpdSock) {
     TAPE_THROW_EX(castor::exception::InvalidArgument,
       ": Invalid rtcpd socket-descriptor"
       ": Value is negative"
       ": rtcpdSock=" << rtcpdSock);
   }
 
-  if(clientSock < 0) {
+  if(0 > clientSock) {
     TAPE_THROW_EX(castor::exception::InvalidArgument,
       ": Invalid client socket-descriptor"
       ": Value is negative"
@@ -177,7 +203,7 @@ void castor::tape::tapebridge::BridgeSocketCatalogue::addClientConn(
     if(itor->rtcpdSock == rtcpdSock) {
 
       // Throw an exception if there is already an associated client connection
-      if(itor->clientSock != -1) {
+      if(0 <= itor->clientSock) {
         TAPE_THROW_CODE(ECANCELED,
           ": There is already an associated client connection"
           ": current clientSock=" << itor->clientSock <<
@@ -227,12 +253,12 @@ void castor::tape::tapebridge::BridgeSocketCatalogue::addClientConn(
 //-----------------------------------------------------------------------------
 // getListenSock
 //-----------------------------------------------------------------------------
-int castor::tape::tapebridge::BridgeSocketCatalogue::getListenSock()
+int castor::tape::tapebridge::BridgeSocketCatalogue::getListenSock() const
   throw(castor::exception::Exception) {
 
   // Throw an exception if the socket-descriptor of the listen socket does not
   // exist in the catalogue
-  if(m_listenSock == -1) {
+  if(0 > m_listenSock) {
     TAPE_THROW_CODE(ENOENT,
       ": Listen socket-descriptor does not exist in the catalogue");
   }
@@ -245,11 +271,11 @@ int castor::tape::tapebridge::BridgeSocketCatalogue::getListenSock()
 // getInitialRtcpdConn
 //-----------------------------------------------------------------------------
 int castor::tape::tapebridge::BridgeSocketCatalogue::getInitialRtcpdConn()
-  throw(castor::exception::Exception) {
+  const throw(castor::exception::Exception) {
 
   // Throw an exception if the socket-descriptor of the initial rtcpd
   // connection does not exist in the catalogue
-  if(m_initialRtcpdSock == -1) {
+  if(0 > m_initialRtcpdSock) {
     TAPE_THROW_CODE(ENOENT,
       ": Initial rtcpd socket-descriptor does not exist in the catalogue");
   }
@@ -265,7 +291,7 @@ int castor::tape::tapebridge::BridgeSocketCatalogue::
   releaseRtcpdDiskTapeIOControlConn(const int rtcpdSock)
   throw(castor::exception::Exception) {
 
-  if(rtcpdSock < 0) {
+  if(0 > rtcpdSock) {
     TAPE_THROW_EX(castor::exception::InvalidArgument,
       ": Invalid socket-descriptor"
       ": Value is negative"
@@ -308,14 +334,14 @@ int castor::tape::tapebridge::BridgeSocketCatalogue::releaseClientConn(
   const int rtcpdSock, const int clientSock)
   throw(castor::exception::Exception) {
 
-  if(rtcpdSock < 0) {
+  if(0 > rtcpdSock) {
     TAPE_THROW_EX(castor::exception::InvalidArgument,
       ": Invalid rtcpd socket-descriptor"
       ": Value is negative"
       ": rtcpdSock=" << rtcpdSock);
   }
 
-  if(clientSock < 0) {
+  if(0 > clientSock) {
     TAPE_THROW_EX(castor::exception::InvalidArgument,
       ": Invalid client socket-descriptor"
       ": Value is negative"
@@ -383,12 +409,12 @@ void castor::tape::tapebridge::BridgeSocketCatalogue::getRtcpdConn(
   int            &rtcpdSock,
   uint32_t       &rtcpdReqMagic,
   uint32_t       &rtcpdReqType,
-  char           *&rtcpdReqTapePath,
+  const char     *&rtcpdReqTapePath,
   uint64_t       &aggregatorTransactionId,
-  struct timeval &clientReqTimeStamp)
+  struct timeval &clientReqTimeStamp) const
   throw(castor::exception::Exception) {
 
-  if(clientSock < 0) {
+  if(0 > clientSock) {
     TAPE_THROW_EX(castor::exception::InvalidArgument,
       ": Invalid client socket-descriptor"
       ": Value is negative"
@@ -396,7 +422,7 @@ void castor::tape::tapebridge::BridgeSocketCatalogue::getRtcpdConn(
   }
 
   // For each rtcpd-connection
-  for(RtcpdConnectionList::iterator itor = m_rtcpdConnections.begin();
+  for(RtcpdConnectionList::const_iterator itor = m_rtcpdConnections.begin();
     itor != m_rtcpdConnections.end(); itor++) {
 
     // If the association has been found, then set the output parameters and
@@ -427,29 +453,38 @@ void castor::tape::tapebridge::BridgeSocketCatalogue::getRtcpdConn(
 // buildReadFdSet
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeSocketCatalogue::buildReadFdSet(
-  fd_set &readFdSet, int &maxFd) throw() {
+  fd_set &readFdSet, int &maxFd) const throw() {
 
   // Clear the file-descriptor set
   FD_ZERO(&readFdSet);
 
   // If the listen socket has been set, then add it to the descriptor set and
   // update maxFd accordingly
-  if(m_listenSock != -1) {
+  if(0 <= m_listenSock) {
     FD_SET(m_listenSock, &readFdSet);
     maxFd = m_listenSock;
   }
 
   // If the initial rtcpd connection socket has been set, then add it to the
   // descriptor set and update maxFd accordingly
-  if(m_initialRtcpdSock != -1) {
+  if(0 <= m_initialRtcpdSock) {
     FD_SET(m_initialRtcpdSock, &readFdSet);
     if(m_initialRtcpdSock > maxFd) {
       maxFd = m_initialRtcpdSock;
     }
   }
 
+  // If the client migration-report connection socket has been set, then add it
+  // to the descriptor set and update maxFd accordingly
+  if(0 <= m_clientMigrationReportConnection.clientSock) {
+    FD_SET(m_clientMigrationReportConnection.clientSock, &readFdSet);
+    if(m_clientMigrationReportConnection.clientSock > maxFd) {
+      maxFd = m_clientMigrationReportConnection.clientSock;
+    }
+  }
+
   // For each rtcpd-connection
-  for(RtcpdConnectionList::iterator itor = m_rtcpdConnections.begin();
+  for(RtcpdConnectionList::const_iterator itor = m_rtcpdConnections.begin();
     itor != m_rtcpdConnections.end(); itor++) {
 
     // Add the rtcpd socket-descriptor to the descriptor set and update maxFd
@@ -461,7 +496,7 @@ void castor::tape::tapebridge::BridgeSocketCatalogue::buildReadFdSet(
 
     // If there is an associated client socket-descriptor, then add it to
     // the descriptor set and update maxFd accordingly
-    if(itor->clientSock != -1) {
+    if(0 <= itor->clientSock) {
       FD_SET(itor->clientSock, &readFdSet);
       if(itor->clientSock > maxFd) {
         maxFd = itor->clientSock;
@@ -475,24 +510,32 @@ void castor::tape::tapebridge::BridgeSocketCatalogue::buildReadFdSet(
 // getAPendingSock
 //-----------------------------------------------------------------------------
 int castor::tape::tapebridge::BridgeSocketCatalogue::getAPendingSock(
-  fd_set &readFdSet, SocketType &sockType) throw() {
+  fd_set &readFdSet, SocketType &sockType) const {
 
-  // If the listen socket is pending, then set the socket type output parameter
-  // and return the socket
-  if(FD_ISSET(m_listenSock, &readFdSet)) {
+  // If the listen socket is set and is pending, then set the socket type
+  // output parameter and return the socket
+  if(0 <= m_listenSock && FD_ISSET(m_listenSock, &readFdSet)) {
     sockType = LISTEN;
     return m_listenSock;
   }
 
-  // If the initial rtcpd connection socket is pending, then set the socket
-  // type output parameter and return the socket
-  if(FD_ISSET(m_initialRtcpdSock, &readFdSet)) {
+  // If the initial rtcpd connection socket is set and pending, then set the
+  // socket type output parameter and return the socket
+  if(0 <= m_initialRtcpdSock && FD_ISSET(m_initialRtcpdSock, &readFdSet)) {
     sockType = INITIAL_RTCPD;
     return m_initialRtcpdSock;
   }
 
+  // If the client migration-report connection is set and pending, then set the
+  // socket type output parameter and return the socket
+  if(0 <= m_clientMigrationReportConnection.clientSock &&
+    FD_ISSET(m_clientMigrationReportConnection.clientSock, &readFdSet)) {
+    sockType = CLIENT_MIGRATION_REPORT;
+    return m_clientMigrationReportConnection.clientSock;
+  }
+
   // For each rtcpd-connection
-  for(RtcpdConnectionList::iterator itor = m_rtcpdConnections.begin();
+  for(RtcpdConnectionList::const_iterator itor = m_rtcpdConnections.begin();
     itor != m_rtcpdConnections.end(); itor++) {
 
     // If the rtcpd socket-descriptor is pending, then set the socket type
@@ -503,7 +546,7 @@ int castor::tape::tapebridge::BridgeSocketCatalogue::getAPendingSock(
     }
 
     // If there is an associated client socket-descriptor
-    if(itor->clientSock != -1) {
+    if(0 <= itor->clientSock) {
       // If the rtcpd socket-descriptor is pending, then set the socket type
       // output parameter and return the socket
       if(FD_ISSET(itor->clientSock, &readFdSet)) {
@@ -523,7 +566,7 @@ int castor::tape::tapebridge::BridgeSocketCatalogue::getAPendingSock(
 // getNbDiskTapeIOControlConnections
 //-----------------------------------------------------------------------------
 int castor::tape::tapebridge::BridgeSocketCatalogue::
-  getNbDiskTapeIOControlConns() {
+  getNbDiskTapeIOControlConns() const {
 
   return m_rtcpdConnections.size();
 }
@@ -532,7 +575,7 @@ int castor::tape::tapebridge::BridgeSocketCatalogue::
 //-----------------------------------------------------------------------------
 // checkForTimeout
 //-----------------------------------------------------------------------------
-void castor::tape::tapebridge::BridgeSocketCatalogue::checkForTimeout()
+void castor::tape::tapebridge::BridgeSocketCatalogue::checkForTimeout() const
   throw(castor::exception::TimeOut) {
 
   if(!m_clientReqHistory.empty()) {
@@ -543,7 +586,7 @@ void castor::tape::tapebridge::BridgeSocketCatalogue::checkForTimeout()
     gettimeofday(&now, NULL);
 
     // Get the oldest client request
-    ClientReqHistoryElement &clientRequest = m_clientReqHistory.front();
+    const ClientReqHistoryElement &clientRequest = m_clientReqHistory.front();
 
     // Calculate the age in seconds
     const int ageSecs = clientRequest.clientReqTimeStamp.tv_sec - now.tv_sec;
@@ -562,4 +605,67 @@ void castor::tape::tapebridge::BridgeSocketCatalogue::checkForTimeout()
       throw(te);
     }
   }
+}
+
+
+//-----------------------------------------------------------------------------
+// addClientMigrationReportSock
+//-----------------------------------------------------------------------------
+void castor::tape::tapebridge::BridgeSocketCatalogue::
+  addClientMigrationReportSock(const int sock,
+  const uint64_t aggregatorTransactionId) throw(castor::exception::Exception) {
+
+  // Throw an exception if the socket-descriptor is invalid
+  if(0 > sock) {
+    TAPE_THROW_EX(castor::exception::InvalidArgument,
+      ": Invalid socket-descriptor"
+      ": Value is negative"
+      ": sock=" << sock);
+  }
+
+  // Throw an exception if the client migraton-report socket-descriptor has
+  // already been set
+  if(0 <= m_clientMigrationReportConnection.clientSock) {
+    TAPE_THROW_CODE(EEXIST,
+      ": client migration-report socket-descriptor is already set"
+      ": current value=" << m_clientMigrationReportConnection.clientSock <<
+      ": new value =" << sock);
+  }
+
+  m_clientMigrationReportConnection.clientSock = sock;
+  m_clientMigrationReportConnection.aggregatorTransactionId =
+    aggregatorTransactionId;
+}
+
+
+//-----------------------------------------------------------------------------
+// clientMigrationReportSockIsSet
+//-----------------------------------------------------------------------------
+bool castor::tape::tapebridge::BridgeSocketCatalogue::
+  clientMigrationReportSockIsSet() const {
+  return 0 <= m_clientMigrationReportConnection.clientSock;
+}
+
+
+//-----------------------------------------------------------------------------
+// releaseClientMigrationReportSock
+//-----------------------------------------------------------------------------
+int castor::tape::tapebridge::BridgeSocketCatalogue::
+  releaseClientMigrationReportSock(uint64_t &aggregatorTransactionId)
+  throw(castor::exception::Exception) {
+
+  // Throw an exception if the socket-descriptor has not been set
+  if(0 > m_clientMigrationReportConnection.clientSock) {
+    TAPE_THROW_CODE(ENOENT,
+      ": Client migration-report socket-descriptor does not exist in the"
+      " catalogue");
+  }
+
+  // Release and return the socket-descriptor
+  aggregatorTransactionId =
+    m_clientMigrationReportConnection.aggregatorTransactionId;
+  const int tmpSock = m_clientMigrationReportConnection.clientSock;
+  m_clientMigrationReportConnection.clientSock = -1;
+  m_clientMigrationReportConnection.aggregatorTransactionId = 0;
+  return tmpSock;
 }

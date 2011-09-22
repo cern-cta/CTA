@@ -30,8 +30,6 @@
 #include "castor/tape/tapebridge/LegacyTxRx.hpp"
 #include "castor/tape/tapebridge/RtcpTxRx.hpp"
 #include "castor/tape/net/net.hpp"
-#include "castor/tape/tapegateway/FileToMigrate.hpp"
-#include "castor/tape/tapegateway/FileToMigrateRequest.hpp"
 #include "castor/tape/tapegateway/NoMoreFiles.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/common.h"

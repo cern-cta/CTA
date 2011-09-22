@@ -15,7 +15,7 @@ INCLUDE_OPS=-I$(ROOT_DIR) -I$(ROOT_DIR)/h $(MACPORTS_CPPUNIT_INCLUDE_OP)
 LIB_DIR_OPS=$(MACPORTS_CPPUNIT_LIB_OP)
 EXECUTABLES=rununittests
 CSEC_MECHLIST=KRB5 GSI ID
-COMMON_OPS=-DCSEC_DEFAULT_MECHS="\"$(CSEC_MECHLIST)\"" -DSTAGERSUPERUSER=\"stage\" -DSTAGERSUPERGROUP=\"st\" -DSTAGEMAP=\"/etc/castor/stagemap.conf\" -DCNS_HOST=\"castorns\" -DSCNS_HOST=\"scnsdev\" -DCNSHOSTPFX=\"cns\" -DSCNSHOSTPFX=\"scns\" -DACCTFILE=\"/var/log/castor/sacct\" -DCNS_ROOT=\"/castor\" -DNOMORETAPES=\"/var/run/nomoretapes\" -DTAPELOGFILE=\"/var/log/castor/taped_legacy.log\" -DSCSIINC=\"scsi/sg.h\" -DNOMORERFIO=\"/var/run/nomorerfio\" -DRFIOLOGFILE=\"/var/log/castor/rfiod.log\" -D_LARGEFILE64_SOURCE -Werror -Wno-long-long -pedantic -Wall -g -pthread
+COMMON_OPS=-DCNS_ROOT=\"/castor\" -DCSEC_DEFAULT_MECHS="\"$(CSEC_MECHLIST)\"" -DSTAGERSUPERUSER=\"stage\" -DSTAGERSUPERGROUP=\"st\" -DSTAGEMAP=\"/etc/castor/stagemap.conf\" -DCNS_HOST=\"castorns\" -DSCNS_HOST=\"scnsdev\" -DCNSHOSTPFX=\"cns\" -DSCNSHOSTPFX=\"scns\" -DACCTFILE=\"/var/log/castor/sacct\" -DNOMORETAPES=\"/var/run/nomoretapes\" -DTAPELOGFILE=\"/var/log/castor/taped_legacy.log\" -DSCSIINC=\"scsi/sg.h\" -DNOMORERFIO=\"/var/run/nomorerfio\" -DRFIOLOGFILE=\"/var/log/castor/rfiod.log\" -D_LARGEFILE64_SOURCE -Werror -Wno-long-long -pedantic -Wall -g -pthread
 
 all: $(EXECUTABLES)
 
@@ -207,6 +207,8 @@ rununittests: \
   tapebridge_ClientTxRx.o \
   tapebridge_DlfMessageStrings.o \
   tapebridge_FailedToCopyTapeFile.o \
+  tapebridge_FailedToMigrateFileToTape.o \
+  tapebridge_FailedToRecallFileFromTape.o \
   tapebridge_LegacyTxRx.o \
   tapebridge_LogHelper.o \
   tapebridge_marshall.o \
@@ -218,29 +220,35 @@ rununittests: \
   tapebridge_TapeFlushConfigParams.o \
   tapebridge_tapeFlushModeToStr.o \
   tapebridge_VmgrTxRx.o \
-  tapegateway_FileToMigrateRequest.o \
-  tapegateway_FileToMigrate.o \
-  tapegateway_FileMigratedNotification.o \
-  tapegateway_FileToRecallRequest.o \
-  tapegateway_FileToRecall.o \
-  tapegateway_FileRecalledNotification.o \
   tapegateway_BaseFileInfo.o \
-  tapegateway_VolumeRequest.o \
-  tapegateway_Volume.o \
-  tapegateway_GatewayMessage.o \
-  tapegateway_PositionCommandCode.o \
-  tapegateway_PingNotification.o \
-  tapegateway_DumpParametersRequest.o \
-  tapegateway_DumpParameters.o \
+  tapegateway_BaseFileInfoStruct.o \
+  tapegateway_ClientType.o \
   tapegateway_DumpNotification.o \
-  tapegateway_FileToMigrate.o \
-  tapegateway_NoMoreFiles.o \
+  tapegateway_DumpParameters.o \
+  tapegateway_DumpParametersRequest.o \
   tapegateway_EndNotification.o \
   tapegateway_EndNotificationErrorReport.o \
   tapegateway_EndNotificationFileErrorReport.o \
+  tapegateway_GatewayMessage.o \
+  tapegateway_FileErrorReportStruct.o \
+  tapegateway_FileMigratedNotificationStruct.o \
+  tapegateway_FileMigrationReportList.o \
+  tapegateway_FileRecalledNotificationStruct.o \
+  tapegateway_FileRecallReportList.o \
+  tapegateway_FilesListRequest.o \
+  tapegateway_FilesToMigrateList.o \
+  tapegateway_FilesToMigrateListRequest.o \
+  tapegateway_FilesToRecallList.o \
+  tapegateway_FilesToRecallListRequest.o \
+  tapegateway_FileToMigrateStruct.o \
+  tapegateway_FileToRecallStruct.o \
+  tapegateway_NoMoreFiles.o \
   tapegateway_NotificationAcknowledge.o \
-  tapegateway_ClientType.o \
+  tapegateway_PositionCommandCode.o \
+  tapegateway_PingNotification.o \
+  tapegateway_Volume.o \
   tapegateway_VolumeMode.o \
+  tapegateway_VolumeRequest.o \
   test_exception.o \
   upv_Cupv_check.o \
   upv_send2Cupv.o \
@@ -264,6 +272,7 @@ runUnitTestsMain.o: runUnitTestsMain.cpp
 
 runUnitTestsMain.cpp: \
   castor/tape/tapebridge/BridgeClientInfo2SenderTest.hpp \
+  castor/tape/tapebridge/BridgeSocketCatalogueTest.hpp \
   castor/tape/tapebridge/TapeFlushConfigParamsTest.hpp \
   castor/tape/tapebridge/PendingMigrationsStoreTest.hpp \
   castor/tape/utils/IndexedContainerTest.hpp \
@@ -541,22 +550,22 @@ ns_Cns_getpath.o: $(ROOT_DIR)/ns/Cns_getpath.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rfio_misc.o: $(ROOT_DIR)/rfio/misc.c
-	gcc -g -pthread -DCNS_ROOT=\"/castor\" -D_LARGEFILE64_SOURCE -c $(INCLUDE_OPS) -o $@ $^
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rfio_parse.o: $(ROOT_DIR)/rfio/parse.c
-	gcc -g -pthread -DCNS_ROOT=\"/castor\" -c $(INCLUDE_OPS) -o $@ $^
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rfio_RfioTURL.o: $(ROOT_DIR)/rfio/RfioTURL.c
-	gcc -g -pthread -DCNS_ROOT=\"/castor\" -D_LARGEFILE64_SOURCE -c $(INCLUDE_OPS) -o $@ $^
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rfio_rfio_HsmIf.o: $(ROOT_DIR)/rfio/rfio_HsmIf.c
-	gcc -g -pthread -DCNS_ROOT=\"/castor\" -D_LARGEFILE64_SOURCE -c $(INCLUDE_OPS) -o $@ $^
+	gcc -g -pthread -D_LARGEFILE64_SOURCE -DCNS_ROOT=\"/castor\" -c $(INCLUDE_OPS) -o $@ $^
 
 rfio_setopt.o: $(ROOT_DIR)/rfio/setopt.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rfio_switch_req.o: $(ROOT_DIR)/rfio/switch_req.c
-	gcc -g -pthread -DCNS_ROOT=\"/castor\" -D_LARGEFILE64_SOURCE -c $(INCLUDE_OPS) -o $@ $^
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rfio_xyread.o: $(ROOT_DIR)/rfio/xyread.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
@@ -565,61 +574,61 @@ rfio_error.o: $(ROOT_DIR)/rfio/error.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rfio_mstat.o: $(ROOT_DIR)/rfio/mstat.c
-	gcc -g -pthread -D_LARGEFILE64_SOURCE -c $(INCLUDE_OPS) -o $@ $^
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rfio_lseek.o: $(ROOT_DIR)/rfio/lseek.c
-	gcc -g -pthread -D_LARGEFILE64_SOURCE -c $(INCLUDE_OPS) -o $@ $^
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rfio_lseek64.o: $(ROOT_DIR)/rfio/lseek64.c
-	gcc -g -pthread -D_LARGEFILE64_SOURCE -c $(INCLUDE_OPS) -o $@ $^
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rfio_stream.o: $(ROOT_DIR)/rfio/stream.c
-	gcc -g -pthread -D_LARGEFILE64_SOURCE -DNOMORERFIO=\"/var/run/nomorerfio\" -c $(INCLUDE_OPS) -o $@ $^
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rfio_stream64.o: $(ROOT_DIR)/rfio/stream64.c
-	gcc -g -pthread -D_LARGEFILE64_SOURCE -c $(INCLUDE_OPS) -o $@ $^
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rfio_connect.o: $(ROOT_DIR)/rfio/connect.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rfio_open.o: $(ROOT_DIR)/rfio/open.c
-	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rfio_open64.o: $(ROOT_DIR)/rfio/open64.c
-	gcc -g -pthread -D_LARGEFILE64_SOURCE -c $(INCLUDE_OPS) -o $@ $^
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rfio_xyopen.o: $(ROOT_DIR)/rfio/xyopen.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rfio_close.o: $(ROOT_DIR)/rfio/close.c
-	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rfio_xyclose.o: $(ROOT_DIR)/rfio/xyclose.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rfio_read.o: $(ROOT_DIR)/rfio/read.c
-	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rfio_read64.o: $(ROOT_DIR)/rfio/read64.c
-	gcc -g -pthread -D_LARGEFILE64_SOURCE -c $(INCLUDE_OPS) -o $@ $^
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rfio_fio.o: $(ROOT_DIR)/rfio/fio.c
-	gcc -g -pthread -D_LARGEFILE64_SOURCE -c $(INCLUDE_OPS) -o $@ $^
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rfio_lun2fn.o: $(ROOT_DIR)/rfio/lun2fn.c
-	gcc -g -pthread -D_LARGEFILE64_SOURCE -c $(INCLUDE_OPS) -o $@ $^
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rfio_write.o: $(ROOT_DIR)/rfio/write.c
-	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rfio_write64.o: $(ROOT_DIR)/rfio/write64.c
-	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rfio_xywrite.o: $(ROOT_DIR)/rfio/xywrite.c
-	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rfio_rfio_rfilefdt.o: $(ROOT_DIR)/rfio/rfio_rfilefdt.c
-	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rh_Client.o: $(ROOT_DIR)/castor/rh/Client.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
@@ -668,7 +677,7 @@ rtcopy_rtcpd_GetClientInfoMsg.o: $(ROOT_DIR)/rtcopy/rtcpd_GetClientInfoMsg.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rtcopy_rtcpd_Ctape.o: $(ROOT_DIR)/rtcopy/rtcpd_Ctape.c
-	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rtcopy_rtcpd_ClientListen.o: $(ROOT_DIR)/rtcopy/rtcpd_ClientListen.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
@@ -724,7 +733,7 @@ security_Csec_protocol_policy.o: $(ROOT_DIR)/security/Csec_protocol_policy.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 security_Csec_api_loader.o: $(ROOT_DIR)/security/Csec_api_loader.c
-	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
+	gcc -g -pthread -D_LARGEFILE64_SOURCE -c $(INCLUDE_OPS) -o $@ $^
 
 security_Csec_api.o: $(ROOT_DIR)/security/Csec_api.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
@@ -819,7 +828,7 @@ stager_SubRequestGetNextStatusCodes.o: \
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tape_usrlbl.o: $(ROOT_DIR)/tape/usrlbl.c
-	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
+	gcc -g -pthread -D_LARGEFILE64_SOURCE -c $(INCLUDE_OPS) -o $@ $^
 
 tape_asc2ebc.o: $(ROOT_DIR)/tape/asc2ebc.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
@@ -867,7 +876,7 @@ tape_findpgrp.o: $(ROOT_DIR)/tape/findpgrp.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tape_getcompstat.o: $(ROOT_DIR)/tape/getcompstat.c
-	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
+	gcc -g -pthread -D_LARGEFILE64_SOURCE -c $(INCLUDE_OPS) -o $@ $^
 
 tape_net.o: $(ROOT_DIR)/castor/tape/net/net.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
@@ -900,7 +909,7 @@ tape_tperror.o: $(ROOT_DIR)/tape/tperror.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tape_tplogger.o: $(ROOT_DIR)/tape/tplogger.c
-	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
+	gcc -g -pthread -D_LARGEFILE64_SOURCE -c $(INCLUDE_OPS) -o $@ $^
 
 tape_tplogger_messages.o: $(ROOT_DIR)/tape/tplogger_messages.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
@@ -942,6 +951,14 @@ tapebridge_DlfMessageStrings.o: \
 
 tapebridge_FailedToCopyTapeFile.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/FailedToCopyTapeFile.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapebridge_FailedToMigrateFileToTape.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/FailedToMigrateFileToTape.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapebridge_FailedToRecallFileFromTape.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/FailedToRecallFileFromTape.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapebridge_LegacyTxRx.o: \
@@ -994,79 +1011,28 @@ tapebridge_TapeFlushConfigParams.o: \
 tapebridge_VmgrTxRx.o: $(ROOT_DIR)/castor/tape/tapebridge/VmgrTxRx.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-tapegateway_FileToRecallRequest.o: \
-  $(ROOT_DIR)/castor/tape/tapegateway/FileToRecallRequest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tapegateway_FileToRecall.o: \
-  $(ROOT_DIR)/castor/tape/tapegateway/FileToRecall.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tapegateway_FileRecalledNotification.o: \
-  $(ROOT_DIR)/castor/tape/tapegateway/FileRecalledNotification.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tapebridge_VdqmRequestHandler.o: \
-  $(ROOT_DIR)/castor/tape/tapebridge/VdqmRequestHandler.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tapegateway_VolumeRequest.o: \
-  $(ROOT_DIR)/castor/tape/tapegateway/VolumeRequest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tapegateway_Volume.o: \
-  $(ROOT_DIR)/castor/tape/tapegateway/Volume.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tapegateway_GatewayMessage.o: \
-  $(ROOT_DIR)/castor/tape/tapegateway/GatewayMessage.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tapegateway_FileToMigrateRequest.o: \
-  $(ROOT_DIR)/castor/tape/tapegateway/FileToMigrateRequest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tapegateway_FileToMigrate.o: \
-  $(ROOT_DIR)/castor/tape/tapegateway/FileToMigrate.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tapegateway_FileMigratedNotification.o: \
-  $(ROOT_DIR)/castor/tape/tapegateway/FileMigratedNotification.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tapegateway_NoMoreFiles.o: \
-  $(ROOT_DIR)/castor/tape/tapegateway/NoMoreFiles.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
 tapegateway_BaseFileInfo.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/BaseFileInfo.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
+tapegateway_BaseFileInfoStruct.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/BaseFileInfoStruct.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
 tapegateway_ClientType.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/ClientType.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-tapegateway_VolumeMode.o: \
-  $(ROOT_DIR)/castor/tape/tapegateway/VolumeMode.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tapegateway_DumpParametersRequest.o: \
-  $(ROOT_DIR)/castor/tape/tapegateway/DumpParametersRequest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tapegateway_DumpParameters.o: \
-  $(ROOT_DIR)/castor/tape/tapegateway/DumpParameters.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapegateway_DumpNotification.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/DumpNotification.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-tapegateway_PositionCommandCode.o: \
-  $(ROOT_DIR)/castor/tape/tapegateway/PositionCommandCode.cpp
+tapegateway_DumpParameters.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/DumpParameters.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-tapegateway_PingNotification.o: \
-  $(ROOT_DIR)/castor/tape/tapegateway/PingNotification.cpp
+tapegateway_DumpParametersRequest.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/DumpParametersRequest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapegateway_EndNotification.o: \
@@ -1081,8 +1047,112 @@ tapegateway_EndNotificationFileErrorReport.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/EndNotificationFileErrorReport.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
+tapegateway_FileErrorReportStruct.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FileErrorReportStruct.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_FilesList.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FilesListRequest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_FilesListRequest.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FilesListRequest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_FileMigratedNotificationStruct.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FileMigratedNotificationStruct.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_FileMigrationReportList.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FileMigrationReportList.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_FileRecalledNotificationStruct.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FileRecalledNotificationStruct.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_FileRecallReportList.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FileRecallReportList.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_FileRecallReportStruct.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FileRecallReportStruct.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_FilesToMigrateList.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FilesToMigrateList.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_FilesToMigrateListRequest.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FilesToMigrateListRequest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_FilesToRecallList.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FilesToRecallList.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_FilesToRecallListRequest.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FilesToRecallListRequest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_FileToMigrate.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FileToMigrate.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_FileToMigrateRequest.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FileToMigrateRequest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_FileToMigrateStruct.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FileToMigrateStruct.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_FileToRecall.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FileToRecall.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_FileToRecallRequest.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FileToRecallRequest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_FileToRecallStruct.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FileToRecallStruct.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_GatewayMessage.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/GatewayMessage.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_NoMoreFiles.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/NoMoreFiles.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
 tapegateway_NotificationAcknowledge.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/NotificationAcknowledge.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_PingNotification.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/PingNotification.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_PositionCommandCode.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/PositionCommandCode.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapebridge_VdqmRequestHandler.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/VdqmRequestHandler.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_Volume.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/Volume.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_VolumeMode.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/VolumeMode.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_VolumeRequest.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/VolumeRequest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 test_exception.o: test_exception.cpp
@@ -1092,13 +1162,13 @@ upv_Cupv_check.o: $(ROOT_DIR)/upv/Cupv_check.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 upv_send2Cupv.o: $(ROOT_DIR)/upv/send2Cupv.c
-	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
+	gcc -g -pthread -D_LARGEFILE64_SOURCE -c $(INCLUDE_OPS) -o $@ $^
 
 upv_Cupv_errmsg.o: $(ROOT_DIR)/upv/Cupv_errmsg.c
-	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
+	gcc -g -pthread -D_LARGEFILE64_SOURCE -c $(INCLUDE_OPS) -o $@ $^
 
 upv_Cupv_apiinit.o: $(ROOT_DIR)/upv/Cupv_apiinit.c
-	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
+	gcc -g -pthread -D_LARGEFILE64_SOURCE -c $(INCLUDE_OPS) -o $@ $^
 
 utils_BoolFunctor.o: $(ROOT_DIR)/castor/tape/utils/BoolFunctor.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
