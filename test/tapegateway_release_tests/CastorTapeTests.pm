@@ -290,8 +290,11 @@ sub poll_fileserver_readyness ( $$ )
 # Clean disk servers of files (to be done after dropping the stager DB).
 sub clean_fileservers ()
 {
-    print "Cleaning leftover files on the files servers\n";
+    print "Cleaning leftover files on the files servers. Creating /tmp/rfiod for testsuite. Setting permissions on it.\n";
     print `rmGetNodes  | grep name | perl -p -e 's/^.*name: //'  | xargs -i ssh root\@{} rm /srv/castor/*/*/* 2>&1`;
+    print `rmGetNodes  | grep name | perl -p -e 's/^.*name: //'  | xargs -i ssh root\@{} mkdir -p /tmp/rfiod 2>&1`;
+    print `rmGetNodes  | grep name | perl -p -e 's/^.*name: //'  | xargs -i ssh root\@{} chmod a+rw /tmp/rfiod 2>&1`;
+    print `rmGetNodes  | grep name | perl -p -e 's/^.*name: //'  | xargs -i ssh root\@{} "perl -p -i -e \'s|(RFIOD.*PathWhiteList).*\$|\\\$1 /var/tmp/rfiod /tmp/rfiod|\' /etc/castor/castor.conf" 2>&1`;
     print "Done\n";
 }
 
@@ -397,7 +400,7 @@ sub check_invalid ( $ )
 {
     my $file_name = shift;
     my $stager_qry=`su $environment{username} -c \"stager_qry -M $file_name\"`;
-    return ( $stager_qry=~ /INVALID/ || $stager_qry=~ /^$/);
+    return ( $stager_qry=~ /INVALID|No such file or directory/ || $stager_qry=~ /^$/);
 }
 
 # Returns true if the file is recalled
@@ -1997,7 +2000,23 @@ sub reinstall_stager_db()
     killDaemonWithTimeout('stagerd'     , 2);
     killDaemonWithTimeout('tapegatewayd', 2);
 
+    # Destroy the shared memory segment
+    print "Removing shared memory segment\n";
+    `ipcrm -M 0x00000946`;
 
+    # Print shared memory usage
+    print "Current shared memory usage:\n";
+    {
+	my $pm = `ps axh | cut -c 1-5 | egrep '[0-9]*' | xargs -i pmap -d {}`;
+	my  $current_proc;
+	foreach ( split /^/, $pm) { 
+	    if ( /^\d+:\s+/ ) { $current_proc = $_ } 
+	    elsif ( /\[\s+shmid=/ ) { 
+		print $current_proc; 
+		print $_; 
+	    } 
+	}
+    }
     # Re-create mighunterd daemon scripts
     print("Re-creating mighunterd daemon scripts\n");
     `echo "DAEMON_COREFILE_LIMIT=unlimited" >  /etc/sysconfig/mighunterd`;
@@ -2187,7 +2206,7 @@ sub spawn_testsuite ()
         die "Cannot fork: $!" unless defined $pid;
         close ($rd);
         print print "t=".elapsed_time()."s.About to run testsuite\n";
-        print $wr `( cd ../testsuite/; su $environment{username} -c \"py.test --configfile=$environment{testsuite_config_location} --verbose --rfio --client --root 2>&1\")`;
+        print $wr `( cd ../testsuite/; su $environment{username} -c \"py.test --configfile=$environment{testsuite_config_location} --verbose --rfio --client --root --tape 2>&1\")`;
         print "t=".elapsed_time()."s. testsuite run complete\n";
         close ($wr);
         POSIX::_exit(0);    
