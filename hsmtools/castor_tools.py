@@ -24,23 +24,15 @@
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
 
-import os, sys, time, dlf
+"""utility functions for castor tools written in python"""
 
-def checkValueFound(name, value, instance, configFile):
+import os, sys, time, dlf
+import subprocess
+
+def _checkValueFound(name, value, instance, configFile):
+    '''Checks whether value is empty and raise an exception if it is'''
     if len(value) == 0:
         raise ValueError, "No " + name + " found for " + instance + " in " + configFile
-
-#-------------------------------------------------------------------------------
-# importOracle
-#-------------------------------------------------------------------------------
-def importOracle():
-    global cx_Oracle
-    try:
-        import cx_Oracle
-    except Exception:
-        raise Exception, '''Fatal: could not load module cx_Oracle.
-Make sure it is installed and $PYTHONPATH includes the directory where cx_Oracle.so resides and that
-your ORACLE environment is setup properly.'''
 
 # DLF initialization
 DLF_BASE_CASTORTOOLSLIB = 1000
@@ -60,7 +52,13 @@ class DBConnection(object):
     
     def __init__(self, connString, schemaVersion):
         '''Constructor'''
-        importOracle()
+        try:
+            import cx_Oracle
+        except Exception:
+            raise Exception, '''Fatal: could not load module cx_Oracle.
+            Make sure it is installed, that $PYTHONPATH includes the directory where cx_Oracle.so resides and that
+            your ORACLE environment is setup properly.'''
+        self.cx_Oracle = cx_Oracle
         self.connString = connString
         self.schemaVersion = schemaVersion
         self._autocommit = False
@@ -71,7 +69,7 @@ class DBConnection(object):
     def initConnection(self):
         '''Instantiates an Oracle connection and checks the schema version defined in the db against the code one.
         Raises ValueError in case of mismatch, cx_Oracle.OperationalError for any other Oracle issue.'''
-        self.connection = cx_Oracle.Connection(self.connString)
+        self.connection = self.cx_Oracle.Connection(self.connString)
         self.connection.autocommit = self._autocommit
         cur = self.connection.cursor()
         cur.execute("SELECT schemaVersion FROM CastorVersion")
@@ -89,7 +87,7 @@ class DBConnection(object):
         try:
             # first close the connection
             self.connection.close()
-        except:
+        except Exception:
             # it may fail in some cases, but we anyway wanted to close it, so we ignore
             pass
         self.connection = None
@@ -98,11 +96,11 @@ class DBConnection(object):
         '''Given an exception, check whether we want to reconnect on that one.
         If yes, drop the existing connection'''
         # first check whether we have an Oracle exception. If not, exit
-        if not isinstance(e, cx_Oracle.Error):
+        if not isinstance(e, self.cx_Oracle.Error):
             return
         # extract ORACLE error code
         error, = e.args
-        if isinstance(error, cx_Oracle._Error):
+        if isinstance(error, self.cx_Oracle._Error):
             errorcode = error.code
             # check whether to reconnect
             if (errorcode in self.errorCodesForReconnect) or (errorcode >= 25401 and errorcode <= 25409):
@@ -111,11 +109,13 @@ class DBConnection(object):
 
     # autocommit property
     def set_autocommit(self, value):
+        '''Sets the autocommit property of this class'''
         self._autocommit = value
         if self.connection:
             self.connection.autocommit = value
     
     def get_autocommit(self):
+        '''Gets the autocommit property of this class'''
         return self._autocommit
         
     autocommit = property(get_autocommit, set_autocommit)
@@ -126,12 +126,13 @@ class DBConnection(object):
         if not self.connection:
             self.initConnection()
         def facade(*args):
+            '''internal method returned by getattr and wrapping the original one'''
             try:
                 if hasattr(self.connection, name):
                     return getattr(self.connection, name)(*args)
                 else:
                     return lambda: NotImplemented()
-            except cx_Oracle.Error, e:
+            except self.cx_Oracle.Error, e:
                 # we got an Oracle error, let's see if we have to reconnect
                 self.checkForReconnection(e)
                 raise
@@ -141,33 +142,43 @@ class DBConnection(object):
 # connectToDB
 #-------------------------------------------------------------------------------
 def connectToDB(user, passwd, dbname, schemaVersion):
+    '''returns a connection to the required database, and checks its version'''
     return DBConnection(user + '/' + passwd + '@' + dbname, schemaVersion)
 
 #-------------------------------------------------------------------------------
 # disconnectDB
 #-------------------------------------------------------------------------------
 def disconnectDB(connection):
+    '''disconnects from a database and logs the disconnection'''
     connection.close()
     # 'Oracle connection dropped'
     dlf.write(msgs.DROPPEDORACONN)
 
+def _openFileAsStage(fileName):
+    '''Tries to open the given file. If it fails, tried again as stage/st user (using sudo)'''
+    try:
+        return open(fileName)
+    except IOError:
+        # we failed reading the file as ourselves, try using sudo and be stage/st
+        return subprocess.Popen("sudo -n -u stage cat " + fileName, shell=True, stdout=subprocess.PIPE).stdout
 
 #-------------------------------------------------------------------------------
-# getStagerDBConnectParams
+# getDBConnectParams
 #-------------------------------------------------------------------------------
-def getStagerDBConnectParams():
+def getDBConnectParams(configFileName, dbType):
+    '''Gets the connection parameters for the given DB from environment and/or config file'''
     # find out the instance to use
     full_name = "DbCnvSvc"
     inst = "default"
     if os.environ.has_key('CASTOR_INSTANCE'):
         inst = os.environ['CASTOR_INSTANCE']
         full_name = full_name + '_' + inst
-        inst = "'" + inst + "' stager"
+        inst = "'" + inst + "' " + dbType
     # go through the lines of ORASTAGERCONFIG
     user = ""
     passwd = ""
     dbname = ""
-    for l in open ('/etc/castor/ORASTAGERCONFIG').readlines():
+    for l in _openFileAsStage(os.sep.join(['', 'etc', 'castor', configFileName])).readlines():
         if len(l.strip()) == 0 or l.strip()[0] == '#':
             continue
         try:
@@ -182,15 +193,30 @@ def getStagerDBConnectParams():
         except ValueError:
             # ignore line
             pass
-    checkValueFound("user name", user, inst, 'ORASTAGERCONFIG')
-    checkValueFound("password", passwd, inst, 'ORASTAGERCONFIG')
-    checkValueFound("DB name", dbname, inst, 'ORASTAGERCONFIG')
+    _checkValueFound("user name", user, inst, configFileName)
+    _checkValueFound("password", passwd, inst, configFileName)
+    _checkValueFound("DB name", dbname, inst, configFileName)
     return user, passwd, dbname
 
 #-------------------------------------------------------------------------------
 # getNSDBConnectParam
 #-------------------------------------------------------------------------------
+def getStagerDBConnectParams():
+    '''Gets the connection parameters for the stager DB'''
+    return getDBConnectParams('ORASTAGERCONFIG', 'stager')
+
+#-------------------------------------------------------------------------------
+# getVdqmDBConnectParams
+#-------------------------------------------------------------------------------
+def getVdqmDBConnectParams():
+    '''Gets the connection parameters for the vdqm DB'''
+    return getDBConnectParams('ORAVDQMCONFIG', 'vdqm')
+
+#-------------------------------------------------------------------------------
+# getNSDBConnectParam
+#-------------------------------------------------------------------------------
 def getNSDBConnectParam(filename):
+    '''Gets the connection parameters for nameserver like DBs from the given config file'''
     line = open('/etc/castor/' + filename).readline()
     line = line[0:len(line)-1] #drop trailing \n
     sl = line.find('/')
@@ -202,51 +228,16 @@ def getNSDBConnectParam(filename):
     user = line[0:sl]
     passwd = line[sl+1:ar]
     dbname = line[ar+1:]
-    checkValueFound("user name", user, 'nameserver', file)
-    checkValueFound("password", passwd, 'nameserver', file)
-    checkValueFound("DB name", dbname, 'nameserver', file)
+    _checkValueFound("user name", user, 'nameserver', file)
+    _checkValueFound("password", passwd, 'nameserver', file)
+    _checkValueFound("DB name", dbname, 'nameserver', file)
     return user, passwd, dbname
-
-#-------------------------------------------------------------------------------
-# getVdqmDBConnectParams
-#-------------------------------------------------------------------------------
-def getVdqmDBConnectParams():
-    # find out the instance to use
-    full_name = "DbCnvSvc"
-    inst      = "default"
-    if os.environ.has_key('CASTOR_INSTANCE'):
-        inst = os.environ['CASTOR_INSTANCE']
-        full_name = full_name + '_' + inst
-        inst = "'" + inst + "' vdqm"
-    # go through the lines of ORAVDQMCONFIG
-    user   = ""
-    passwd = ""
-    dbname = ""
-    for l in open ('/etc/castor/ORAVDQMCONFIG').readlines():
-        if len(l.strip()) == 0 or l.strip()[0] == '#':
-            continue
-        try:
-            instance, entry, value = l.split()
-            if instance == full_name:
-                if entry == 'user':
-                    user = value
-                elif entry == 'passwd':
-                    passwd = value
-                elif entry == 'dbName':
-                    dbname = value
-        except ValueError:
-            # ignore linei
-            pass
-    checkValueFound("user name", user,   inst, 'ORAVDQMCONFIG')
-    checkValueFound("password",  passwd, inst, 'ORAVDQMCONFIG')
-    checkValueFound("DB name",   dbname, inst, 'ORAVDQMCONFIG')
-    return user, passwd, dbname
-
 
 #-------------------------------------------------------------------------------
 # connectTo_ methods
 #-------------------------------------------------------------------------------
 def connectToVmgr():
+    '''Gets the connection parameters for the VMGR DB from environment and/or config file'''
     # find out the instance to use
     full_name = "DbCnvSvc"
     inst      = "default"
@@ -258,43 +249,21 @@ def connectToVmgr():
     for l in open ('/etc/castor/VMGRCONFIG').readlines():
         if len(l.strip()) == 0 or l.strip()[0] == '#':
             continue
-        try:
-            conn = DBConnection( l.strip() )
-            break
-        except cx_Oracle.DatabaseError:
-            print 'connectToVmgr Error:  Unexpected error while connecting to the VMGR db'
-            raise
+        conn = DBConnection( l.strip() )
+        break
     return conn
 
 def connectToStager():
+    '''Connects to the stager database'''
     STAGERSCHEMAVERSION = "2_1_12_0"
     user, passwd, dbname = getStagerDBConnectParams()
     return connectToDB(user, passwd, dbname, STAGERSCHEMAVERSION)
 
 def connectToNS():
+    '''Connects to the nameserver database'''
     NSSCHEMAVERSION = "2_1_9_3"
     user, passwd, dbname = getNSDBConnectParam('NSCONFIG')
     return connectToDB(user, passwd, dbname, NSSCHEMAVERSION)
-
-
-#-------------------------------------------------------------------------------
-# parseNsListClass
-#-------------------------------------------------------------------------------
-def parseNsListClass():
-    '''creates the nsFileCl dictionary from nslistclass'''
-    global nsFileCl 
-    nsFileCl = {'0' : 'null'}
-    print "Parsing nslistclass output..."
-    #nsout = open('nslistclass_output.txt', 'r')
-    nsout = os.popen("nslistclass | grep -C1 CLASS_ID | awk '{ print $2 }'", 'r')
-    while(1):
-        currentLine = nsout.readline()
-        if currentLine == '':
-            nsout.close()
-            return
-        nsFileCl[currentLine.strip('\n')] = nsout.readline().strip('\n')
-        nsout.readline()
-        nsout.readline()
 
 DiskCopyStatus = ["DISKCOPY_STAGED",
                   "DISKCOPY_WAITDISK2DISKCOPY",
@@ -322,6 +291,7 @@ areBooleans = ["aborted",
                "deferedallocation"]
 
 def intToBoolean(entry, value):
+    '''Converts a value to boolean if the entry is listed as being a boolean'''
     if entry.lower() in areBooleans:
         if value == 0:
             return 'No'
@@ -337,6 +307,7 @@ class castorObject(dict):
     '''A base object for CASTOR items.
     This includes clever printing and case insensitive member access'''
     def __init__(self, name):
+        dict.__init__(self)
         self.name = name
 
     def __str__(self):
