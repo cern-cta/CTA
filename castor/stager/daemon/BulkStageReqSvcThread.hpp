@@ -72,12 +72,6 @@ namespace castor {
          */
         virtual void process(castor::IObject* param) throw();
 
-      private:
-
-        castor::stager::BulkRequestResult* handleRepackFirstStep
-        (castor::stager::StageRepackRequest *req)
-          throw(castor::exception::Exception);
-
       };
 
     } // end namespace daemon

@@ -30,6 +30,7 @@
 import os, sys, time, pwd
 import getopt, socket
 import castor_tools
+import subprocess
 import cx_Oracle
 
 # usage function
@@ -120,6 +121,7 @@ if not since:
     since = 1.0
 
 def _getIdentity():
+    '''Retrieves identity of the user running this script'''
     machine = socket.getfqdn()
     euid = os.getuid()
     egid = os.getgid()
@@ -133,7 +135,9 @@ def _getIdentity():
 
 _powerSuf = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB']
 def _humanReadableSize(size):
-    if not size: size = 0
+    '''Converts a number of bytes into human readable format'''
+    if not size:
+        size = 0
     order = 0
     fsize = float(size)
     while fsize >= 1000:
@@ -144,7 +148,7 @@ def _humanReadableSize(size):
     else:
         return '%.2f' % fsize + _powerSuf[order]
 
-_repackRequestStatuses = ['STARTING','ONGOING','FINISHED','FAILED','ABORTING','ABORTED']
+_repackRequestStatuses = ['STARTING', 'ONGOING', 'FINISHED', 'FAILED', 'ABORTING', 'ABORTED']
 def _printStatusLine(subTime, user, machine, vid, status, total, size, toRecall, toMigr, failed, migrated):
     '''prints one status line'''
     # times need to be transformed in human readable strings
@@ -156,7 +160,7 @@ def _printStatusLine(subTime, user, machine, vid, status, total, size, toRecall,
     # actual printing
     print '%-18s%10s%30s%9s%11d%12s%10d%10d%10d%10d%10s' % (subTime, user, machine, vid, total, size, toRecall, toMigr, failed, migrated, status)
 
-def displayStatus(vids):
+def displayStatus():
     '''displays the ongoing repacks. If vids is not empty, the output is limited to these tapes'''
     try:
         # prepare DB connection
@@ -199,7 +203,7 @@ def displayStatus(vids):
         print e
         sys.exit(1)
 
-def startRepack(vids, svcClass):
+def startRepack():
     '''starts the repacking of the given tapes using the given service class'''
     try:
         # prepare DB connection
@@ -253,11 +257,16 @@ def startRepack(vids, svcClass):
                AND ROWNUM < 2'''
             stRepack = '''
             BEGIN
-              insertRepackRequest('', :pmachine, :peuid, :pegid, :ppid, 0, :pusername, 0, :psvcClass, uuidgen(), 119, :pip, 0, 0, 0, :pvid);
+              handleRepackRequest(:pmachine, :peuid, :pegid, :ppid, :pusername, :psvcClass, :pip, :pvid, :errors);
             END;'''
             # loop over the tapes we should deal with
             for tape in vids:
                 try:
+                    # check that the tape to be repacked is in a valid state
+                    tapeStatus = subprocess.Popen('vmgrlisttape -V ' + tape, shell=True, stdout=subprocess.PIPE).stdout.read().split()[-1]
+                    if tapeStatus.find('DISABLED') > -1 or tapeStatus.find('ARCHIVED') > -1 or tapeStatus.find('EXPORTED') > -1:
+                        print 'Tape ' + tape + ' has status ' + tapeStatus + ' which is not compatible with repack. Ignoring it'
+                        continue
                     # check that there are no repack on going for the given vids
                     stcur.execute(stCheckForOngoingRepack, vid=tape)
                     rows = stcur.fetchall() 
@@ -265,9 +274,21 @@ def startRepack(vids, svcClass):
                         print 'Tape ' + tape + ' is already being repacked. Ignoring it'
                     else:
                         # start repacking
+                        sterrorscur = stconn.cursor()
+                        sterrorscur.arraysize = 50
                         stcur.execute(stRepack, pmachine=machine, peuid=euid, pegid=egid, ppid=pid,
-                                      pusername=username, psvcClass=svcClass, pip=ip, pvid=tape)
+                                      pusername=username, psvcClass=svcClass, pip=ip, pvid=tape,
+                                      errors=sterrorscur)
                         print 'Repack started for tape ' + tape
+                        # display errors
+                        gotErrors = False
+                        errors = sterrorscur.fetchall()
+                        for fid, nshost, errorCode, errorMessage in errors:
+                            if not gotErrors:
+                                print '  The following files had errors :'
+                                gotErrors = True
+                            print "  %d@%s : (%d)%s" % (fid, nshost, errorCode, errorMessage)
+                        sterrorscur.close()
                     # commit this tape's repack
                     stconn.commit()
                 except cx_Oracle.Error, e:
@@ -275,6 +296,7 @@ def startRepack(vids, svcClass):
                     error, = e.args
                     print error.message
                     print 'Giving up with tape ' + tape
+                    print 'Note that repack may still be partially completed.'
                     # rollback this tape's repack
                     stconn.rollback()
         finally:
@@ -284,7 +306,7 @@ def startRepack(vids, svcClass):
         print e
         sys.exit(1)    
 
-def cancelRepack(vids):
+def cancelRepack():
     '''aborts the repacking of the given tapes'''
     try:
         # prepare DB connection
@@ -329,7 +351,7 @@ def cancelRepack(vids):
                         print 'Repack aborted for tape ' + tape
                         gotErrors = False
                         for fid, nshost, errorCode, errorMessage in answers:
-                            if errorCode !=0:
+                            if errorCode != 0:
                                 if not gotErrors:
                                     print 'The following files had errors :'
                                     gotErrors = True
@@ -351,7 +373,7 @@ def cancelRepack(vids):
         print e
         sys.exit(1)    
 
-def displayErrors(vids):
+def displayErrors():
     '''display the errors (if any) that happenned during the repacking of the given tapes'''
     try:
         # prepare DB connection
@@ -396,13 +418,13 @@ def displayErrors(vids):
 
 # process the request
 if vflag:
-    startRepack(vids, svcClass)
+    startRepack()
 elif sflag:
-    displayStatus(vids)
+    displayStatus()
 elif rflag:
-    cancelRepack(vids)
+    cancelRepack()
 elif eflag:
-    displayErrors(vids)
+    displayErrors()
 else:
     print "No option specified\n"
     usage(1)  

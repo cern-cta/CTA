@@ -103,16 +103,6 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * handles a repack request
-         * @param reqId the id of the repack request to be handled
-         * @return the result of the processing
-         * @exception Exception in case of error
-         */
-        virtual castor::stager::BulkRequestResult* handleRepackRequest
-        (const u_signed64 reqId)
-          throw (castor::exception::Exception);
-
-        /**
          * handles a repack subRequest
          * @param subReqId the id of the repack subRequest to be handled
          * @return the result of the processing
@@ -521,12 +511,6 @@ namespace castor {
 
         /// SQL statement object for function processBulkRequest
         oracle::occi::Statement *m_processBulkRequestStatement;
-
-        /// SQL statement for function handleRepackRequest
-        static const std::string s_handleRepackRequestStatementString;
-
-        /// SQL statement object for function handleRepackRequest
-        oracle::occi::Statement *m_handleRepackRequestStatement;
 
         /// SQL statement for function handleRepackSubRequest
         static const std::string s_handleRepackSubRequestStatementString;

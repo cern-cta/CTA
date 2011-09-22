@@ -1052,45 +1052,53 @@ END;
 /
 
 /* PL/SQL method to handle a repack request */
-CREATE OR REPLACE PROCEDURE handleRepackRequest(rid IN INTEGER, rIpAddress OUT INTEGER,
-                                                rport OUT INTEGER, rReqUuid OUT VARCHAR2,
-                                                rSubResults OUT castor.FileResult_Cur) AS
-  reqvid VARCHAR2(2048);
-  svcClassName VARCHAR2(2048);
+CREATE OR REPLACE PROCEDURE handleRepackRequest
+  (machine IN VARCHAR2,
+   euid IN INTEGER,
+   egid IN INTEGER,
+   pid IN INTEGER,
+   userName IN VARCHAR2,
+   svcClassName IN VARCHAR2,
+   clientIP IN INTEGER,
+   reqVID IN VARCHAR2,
+   rSubResults OUT castor.FileResult_Cur) AS
+  varReqId INTEGER;
+  clientId INTEGER;
+  creationTime NUMBER;
   svcClassId INTEGER;
   varSubreqId INTEGER;
   cfId INTEGER;
   dcId INTEGER;
   tapeId INTEGER;
   tapeStatus INTEGER;
-  protocol VARCHAR2(2048);
+  repackProtocol VARCHAR2(2048);
   recallPolicy VARCHAR2(2048);
-  creationTime NUMBER;
   result NUMBER;
   nsHostName VARCHAR2(2048);
   lastKnownFileName VARCHAR2(2048);
-  euid INTEGER;
-  egid INTEGER;
   priority INTEGER;
   unused INTEGER;
   firstCF boolean := True;
   nbFilesProcessed NUMBER := 0;
   nbFilesFailed NUMBER := 0;
+  isOngoing boolean := False;
 BEGIN
-  -- get the repack request's content
-  SELECT repackVid, svcClassName, ipAddress, port, reqId, euid, egid
-    INTO reqvid, svcClassName, rIpAddress, rport, rReqUuid, euid, egid
-    FROM StageRepackRequest, Client
-   WHERE StageRepackRequest.id = rid
-     AND StageRepackRequest.client = Client.id;
-  -- deal with the service class. May raise an application error
-  svcClassId := checkForValidSvcClass(svcClassName, 0, 1);
+  -- do prechecks and get the service class
+  svcClassId := insertPreChecks(euid, egid, svcClassName, 119);
+  -- insertion time
+  creationTime := getTime();
+  -- insert the client information
+  INSERT INTO Client (ipAddress, port, version, secure, id)
+  VALUES (clientIP,0,0,0,ids_seq.nextval)
+  RETURNING id INTO clientId;
+  -- insert the request itself
+  INSERT INTO StageRepackRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, repackVid, id, svcClass, client,status)
+  VALUES (0,userName,euid,egid,0,pid,machine,svcClassName,'',uuidgen(),creationTime,creationTime,reqVID,ids_seq.nextval,svcClassId,clientId,tconst.REPACK_STARTING)
+  RETURNING id INTO varReqId;
   -- Clear the temporary table for subresults
   DELETE FROM ProcessBulkRequestHelper;
   -- Check which protocol should be used for writing files to disk
-  protocol := getConfigOption('Repack', 'Protocol', 'rfio');
-  -- creation time of the subrequests
-  creationTime := getTime();
+  repackProtocol := getConfigOption('Repack', 'Protocol', 'rfio');
   -- name server host name
   nsHostName := getConfigOption('stager', 'nsHost', '');
   -- check and create the tape if needed. Its status depends on the presence of a recallerPolicy
@@ -1101,7 +1109,7 @@ BEGIN
   ELSE
     tapeStatus := tconst.TAPE_WAITPOLICY;
   END IF;
-  tapeId := selectTapeForRecall(reqvid, tapeStatus);
+  tapeId := selectTapeForRecall(reqVID, tapeStatus);
   -- compute the priority of this request
   BEGIN
     SELECT priority INTO priority FROM PriorityMap
@@ -1114,7 +1122,7 @@ BEGIN
   -- in the nameserver DB
   INSERT INTO RepackTapeSegments (SELECT s_fileid, blockid, fseq, segSize, copyno, fileclass
                                     FROM Cns_Seg_Metadata@remotens, Cns_File_Metadata@remotens
-                                   WHERE vid = reqvid
+                                   WHERE vid = reqVID
                                      AND s_fileid = fileid
                                      AND s_status = '-'
                                      AND status != 'D');
@@ -1155,33 +1163,38 @@ BEGIN
     -- needed is when some subrequests are put to WAITSUBREQ. The the PrepReqSvc will be
     -- in charge of handling them one by one when they can wake up
     INSERT INTO SubRequest (retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, creationTime, lastModificationTime, answered, errorCode, errorMessage, requestedFileSystems, svcHandler, id, diskcopy, castorFile, parent, status, request, getNextStatus, reqType)
-    VALUES (0, lastKnownFileName, protocol, segment.segSize, 0, uuidGen(), 0, 0, creationTime, creationTime, 0, 0, '', NULL, 'PrepReqSvc', ids_seq.nextval, 0, cfId, NULL, dconst.SUBREQUEST_START, rId, 0, 119)
+    VALUES (0, lastKnownFileName, repackProtocol, segment.segSize, 0, uuidGen(), 0, 0, creationTime, creationTime, 0, 0, '', NULL, 'PrepReqSvc', ids_seq.nextval, 0, cfId, NULL, dconst.SUBREQUEST_START, varReqId, 0, 119)
     RETURNING id INTO varSubreqId;
     -- find out whether this file is already staged or not
     processPrepareRequest(varSubreqId, result);
     CASE
       WHEN result = -2 OR result = 0 OR result = 1 THEN
-        -- SubRequest has been put in WAITSUBREQ, WAITDISK2DISKCOPY or directly to REPACK. Nothing to do, only log
-        INSERT INTO ProcessBulkRequestHelper VALUES (segment.s_fileid, nsHostName, 0, '');
+        -- SubRequest has been put in WAITSUBREQ, WAITDISK2DISKCOPY or directly to REPACK. Nothing to do
+        isOngoing := True;
       WHEN result = -1 THEN
         -- SubRequest has been failed, log the error
         INSERT INTO ProcessBulkRequestHelper
           (SELECT segment.s_fileid, nsHostName, errorCode, errorMessage
              FROM SubRequest WHERE id = varSubreqId);
         nbFilesFailed := nbFilesFailed + 1;
-      ELSE -- return value was 2
+      WHEN result = 2 THEN
         -- standard case : we need to log and to trigger the recall
-        INSERT INTO ProcessBulkRequestHelper VALUES (segment.s_fileid, nsHostName, 0, '');
         triggerRepackRecall(varSubreqId, cfId, tapeId, segment.s_fileid, nsHostName, segment.blockid, segment.fseq, segment.copyno, priority, euid, egid);
+        isOngoing := True;
     END CASE;
   END LOOP;
   -- cleanup RepackTapeSegments
   EXECUTE IMMEDIATE 'TRUNCATE TABLE RepackTapeSegments';
   -- update status of the RepackRequest
-  IF nbFilesFailed < nbFilesProcessed THEN
-    UPDATE StageRepackRequest SET status = tconst.REPACK_ONGOING WHERE StageRepackRequest.id = rid;
+  IF isOngoing THEN
+    UPDATE StageRepackRequest SET status = tconst.REPACK_ONGOING WHERE StageRepackRequest.id = varReqId;
   ELSE
-    UPDATE StageRepackRequest SET status = tconst.REPACK_FAILED WHERE StageRepackRequest.id = rid;
+    IF nbFilesFailed > 0 THEN
+      UPDATE StageRepackRequest SET status = tconst.REPACK_FAILED WHERE StageRepackRequest.id = varReqId;
+    ELSE
+      -- CASE of an 'empty' repack : the tape had no files at all
+      UPDATE StageRepackRequest SET status = tconst.REPACK_FINISHED WHERE StageRepackRequest.id = varReqId;
+    END IF;
   END IF;
   -- open cursor on results
   OPEN rSubResults FOR
