@@ -20,8 +20,8 @@
  * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
  * The monitoring resource master daemon is resonsible for collecting all
- * input from the diskservers and updating both the database and the LSF
- * scheduler shared memory. It also receives UDP messages migration and recall
+ * input from the diskservers and updating both the database and the rmmaster
+ * shared memory. It also receives UDP messages migration and recall
  * processes whenever a stream is open/closed
  *
  * @author castor-dev team

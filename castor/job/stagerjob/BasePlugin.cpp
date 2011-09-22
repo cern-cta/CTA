@@ -71,34 +71,31 @@ bool castor::job::stagerjob::BasePlugin::waitForChild
       if (WIFEXITED(term_status)) {
         int status = WEXITSTATUS(term_status);
         castor::dlf::Param params[] =
-          {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-           castor::dlf::Param("PID", childPid),
+          {castor::dlf::Param("PID", childPid),
            castor::dlf::Param("Status", status),
            castor::dlf::Param(args.subRequestUuid)};
         childFailed = (status != 0);
         if (childFailed) {
           castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
-                                  CHILDEXITED, 4, params, &args.fileId);
+                                  CHILDEXITED, 3, params, &args.fileId);
         } else {
           castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_DEBUG,
-                                  CHILDEXITED, 4, params, &args.fileId);
+                                  CHILDEXITED, 3, params, &args.fileId);
         }
       } else if (WIFSIGNALED(term_status)) {
         castor::dlf::Param params[] =
-          {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-           castor::dlf::Param("PID", childPid),
+          {castor::dlf::Param("PID", childPid),
            castor::dlf::Param("Signal", WTERMSIG(term_status)),
            castor::dlf::Param(args.subRequestUuid)};
         castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
-                                CHILDSIGNALED, 4, params, &args.fileId);
+                                CHILDSIGNALED, 3, params, &args.fileId);
         childFailed = true;
       } else {
         castor::dlf::Param params[] =
-          {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-           castor::dlf::Param("PID", childPid),
+          {castor::dlf::Param("PID", childPid),
            castor::dlf::Param(args.subRequestUuid)};
         castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
-                                CHILDSTOPPED, 3, params, &args.fileId);
+                                CHILDSTOPPED, 2, params, &args.fileId);
         childFailed = true;
       }
     }

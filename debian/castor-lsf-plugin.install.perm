@@ -1,4 +1,0 @@
-%attr(0644,root,root) usr/lib/schmod_shmem.so
-%attr(0644,root,root) usr/lib/schmod_python.so
-%attr(0644,root,root) etc/logrotate.d/castor-lsf-plugin
-%attr(0644,root,root) etc/castor/policies/scheduler.py.example

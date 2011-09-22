@@ -13,6 +13,29 @@ CREATE TABLE BaseAddress (objType NUMBER, cnvSvcName VARCHAR2(2048), cnvSvcType 
 /* SQL statements for type Client */
 CREATE TABLE Client (ipAddress NUMBER, port NUMBER, version NUMBER, secure NUMBER, id INTEGER CONSTRAINT PK_Client_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
+/* SQL statements for type SubRequest */
+CREATE TABLE SubRequest (retryCounter NUMBER, fileName VARCHAR2(2048), protocol VARCHAR2(2048), xsize INTEGER, priority NUMBER, subreqId VARCHAR2(2048), flags NUMBER, modeBits NUMBER, creationTime INTEGER, lastModificationTime INTEGER, answered NUMBER, errorCode NUMBER, errorMessage VARCHAR2(2048), requestedFileSystems VARCHAR2(2048), svcHandler VARCHAR2(2048), reqType NUMBER, id INTEGER CONSTRAINT PK_SubRequest_Id PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER, request INTEGER, getNextStatus INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'status', 0, 'SUBREQUEST_START');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'status', 1, 'SUBREQUEST_RESTART');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'status', 2, 'SUBREQUEST_RETRY');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'status', 3, 'SUBREQUEST_WAITSCHED');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'status', 4, 'SUBREQUEST_WAITTAPERECALL');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'status', 5, 'SUBREQUEST_WAITSUBREQ');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'status', 6, 'SUBREQUEST_READY');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'status', 7, 'SUBREQUEST_FAILED');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'status', 8, 'SUBREQUEST_FINISHED');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'status', 9, 'SUBREQUEST_FAILED_FINISHED');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'status', 10, 'SUBREQUEST_FAILED_ANSWERING');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'status', 11, 'SUBREQUEST_ARCHIVED');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'status', 12, 'SUBREQUEST_REPACK');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'status', 13, 'SUBREQUEST_READYFORSCHED');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'status', 14, 'SUBREQUEST_BEINGSCHED');
+
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'getNextStatus', 0, 'GETNEXTSTATUS_NOTAPPLICABLE');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'getNextStatus', 1, 'GETNEXTSTATUS_FILESTAGED');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'getNextStatus', 2, 'GETNEXTSTATUS_NOTIFIED');
+
 /* SQL statements for type Disk2DiskCopyDoneRequest */
 CREATE TABLE Disk2DiskCopyDoneRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskCopyId INTEGER, sourceDiskCopyId INTEGER, fileId INTEGER, nsHost VARCHAR2(2048), replicaFileSize INTEGER, id INTEGER CONSTRAINT PK_Disk2DiskCopyDoneRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
@@ -81,34 +104,8 @@ CREATE TABLE StageUpdateRequest (flags INTEGER, userName VARCHAR2(2048), euid NU
 /* SQL statements for type StageRmRequest */
 CREATE TABLE StageRmRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StageRmRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
-/* SQL statements for type StagePutDoneRequest */
-CREATE TABLE StagePutDoneRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, parentUuid VARCHAR2(2048), id INTEGER CONSTRAINT PK_StagePutDoneRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER, parent INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
 /* SQL statements for type StageFileQueryRequest */
 CREATE TABLE StageFileQueryRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, fileName VARCHAR2(2048), id INTEGER CONSTRAINT PK_StageFileQueryRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
-/* SQL statements for type SubRequest */
-CREATE TABLE SubRequest (retryCounter NUMBER, fileName VARCHAR2(2048), protocol VARCHAR2(2048), xsize INTEGER, priority NUMBER, subreqId VARCHAR2(2048), flags NUMBER, modeBits NUMBER, creationTime INTEGER, lastModificationTime INTEGER, answered NUMBER, errorCode NUMBER, errorMessage VARCHAR2(2048), requestedFileSystems VARCHAR2(2048), svcHandler VARCHAR2(2048), id INTEGER CONSTRAINT PK_SubRequest_Id PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER, request INTEGER, getNextStatus INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'status', 0, 'SUBREQUEST_START');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'status', 1, 'SUBREQUEST_RESTART');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'status', 2, 'SUBREQUEST_RETRY');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'status', 3, 'SUBREQUEST_WAITSCHED');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'status', 4, 'SUBREQUEST_WAITTAPERECALL');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'status', 5, 'SUBREQUEST_WAITSUBREQ');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'status', 6, 'SUBREQUEST_READY');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'status', 7, 'SUBREQUEST_FAILED');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'status', 8, 'SUBREQUEST_FINISHED');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'status', 9, 'SUBREQUEST_FAILED_FINISHED');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'status', 10, 'SUBREQUEST_FAILED_ANSWERING');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'status', 11, 'SUBREQUEST_ARCHIVED');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'status', 12, 'SUBREQUEST_REPACK');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'status', 13, 'SUBREQUEST_READYFORSCHED');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'status', 14, 'SUBREQUEST_BEINGSCHED');
-
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'getNextStatus', 0, 'GETNEXTSTATUS_NOTAPPLICABLE');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'getNextStatus', 1, 'GETNEXTSTATUS_FILESTAGED');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('SubRequest', 'getNextStatus', 2, 'GETNEXTSTATUS_NOTIFIED');
 
 /* SQL statements for type Tape */
 CREATE TABLE Tape (vid VARCHAR2(2048), side NUMBER, tpmode NUMBER, errMsgTxt VARCHAR2(2048), errorCode NUMBER, severity NUMBER, vwAddress VARCHAR2(2048), dgn VARCHAR2(2048), label VARCHAR2(2048), density VARCHAR2(2048), devtype VARCHAR2(2048), startTime NUMBER, lastVdqmPingTime NUMBER, vdqmVolReqId NUMBER, lastFseq NUMBER, tapeGatewayRequestId NUMBER, id INTEGER CONSTRAINT PK_Tape_Id PRIMARY KEY, stream INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
@@ -230,7 +227,14 @@ INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DiskServe
 CREATE TABLE SetFileGCWeight (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, weight NUMBER, id INTEGER CONSTRAINT PK_SetFileGCWeight_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type StageRepackRequest */
-CREATE TABLE StageRepackRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, repackVid VARCHAR2(2048), id INTEGER CONSTRAINT PK_StageRepackRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE StageRepackRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, repackVid VARCHAR2(2048), id INTEGER CONSTRAINT PK_StageRepackRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('StageRepackRequest', 'status', 0, 'REPACK_STARTING');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('StageRepackRequest', 'status', 1, 'REPACK_ONGOING');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('StageRepackRequest', 'status', 2, 'REPACK_FINISHED');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('StageRepackRequest', 'status', 3, 'REPACK_FAILED');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('StageRepackRequest', 'status', 4, 'REPACK_ABORTING');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('StageRepackRequest', 'status', 5, 'REPACK_ABORTED');
 
 /* SQL statements for type StageDiskCopyReplicaRequest */
 CREATE TABLE StageDiskCopyReplicaRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StageDiskCopyReplicaRequ_Id PRIMARY KEY, svcClass INTEGER, client INTEGER, sourceSvcClass INTEGER, destDiskCopy INTEGER, sourceDiskCopy INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
@@ -255,6 +259,9 @@ CREATE TABLE StageAbortRequest (flags INTEGER, userName VARCHAR2(2048), euid NUM
 
 /* SQL statements for type NsFileId */
 CREATE TABLE NsFileId (fileid INTEGER, nsHost VARCHAR2(2048), id INTEGER CONSTRAINT PK_NsFileId_Id PRIMARY KEY, request INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+/* SQL statements for type StagePutDoneRequest */
+CREATE TABLE StagePutDoneRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, parentUuid VARCHAR2(2048), id INTEGER CONSTRAINT PK_StagePutDoneRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER, parent INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type VersionQuery */
 CREATE TABLE VersionQuery (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_VersionQuery_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
@@ -467,7 +474,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_11_0');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_12_0');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -491,13 +498,10 @@ AS
  *******************************************************************/
 
 /* SQL statement to populate the intial schema version */
-UPDATE UpgradeLog SET schemaVersion = '2_1_11_0';
+UPDATE UpgradeLog SET schemaVersion = '2_1_12_0';
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
-
-/* SQL statements for object types */
-CREATE TABLE Id2Type (id INTEGER CONSTRAINT PK_Id2Type_Id PRIMARY KEY, type NUMBER) ENABLE ROW MOVEMENT;
 
 /* SQL statements for requests status */
 /* Partitioning enables faster response (more than indexing) for the most frequent queries - credits to Nilo Segura */
@@ -555,7 +559,8 @@ CREATE TABLE SubRequest
    errorMessage VARCHAR2(2048), id NUMBER CONSTRAINT NN_SubRequest_Id NOT NULL,
    diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER,
    request INTEGER, getNextStatus INTEGER, requestedFileSystems VARCHAR2(2048),
-   svcHandler VARCHAR2(2048) CONSTRAINT NN_SubRequest_SvcHandler NOT NULL
+   svcHandler VARCHAR2(2048) CONSTRAINT NN_SubRequest_SvcHandler NOT NULL,
+   reqType INTEGER CONSTRAINT NN_SubRequest_reqType NOT NULL
   )
   PCTFREE 50 PCTUSED 40 INITRANS 50
   ENABLE ROW MOVEMENT
@@ -650,6 +655,7 @@ CREATE INDEX I_DiskCopy_FileSystem ON DiskCopy (fileSystem);
 CREATE INDEX I_DiskCopy_Status ON DiskCopy (status);
 CREATE INDEX I_DiskCopy_FS_Status_10 ON DiskCopy (fileSystem,decode(status,10,status,NULL));
 CREATE INDEX I_DiskCopy_Status_9 ON DiskCopy (decode(status,9,status,NULL));
+CREATE INDEX I_DiskCopy_FS_GCW ON DiskCopy (filesystem, status, gcweight, ID, castorFile);
 
 CREATE INDEX I_TapeCopy_Castorfile ON TapeCopy (castorFile) LOCAL;
 CREATE INDEX I_TapeCopy_Status ON TapeCopy (status) LOCAL;
@@ -835,22 +841,23 @@ CREATE GLOBAL TEMPORARY TABLE StgFilesDeletedOrphans
   (diskCopyId NUMBER)
   ON COMMIT DELETE ROWS;
 
-/* Global temporary table to handle output of the jobFailed procedure
- * This table is deprecated and should go when the jobmanager and LSF are dropped.
- */
-CREATE GLOBAL TEMPORARY TABLE JobFailedProcHelper
-  (subReqId VARCHAR2(2048))
-  ON COMMIT PRESERVE ROWS;
-
 /* Global temporary table to handle output of the processBulkAbortForGet procedure */
 CREATE GLOBAL TEMPORARY TABLE ProcessBulkAbortFileReqsHelper
   (srId NUMBER, cfId NUMBER, fileId NUMBER, nsHost VARCHAR2(2048), uuid VARCHAR(2048))
-  ON COMMIT DELETE ROWS;
+  ON COMMIT PRESERVE ROWS;
+ALTER TABLE ProcessBulkAbortFileReqsHelper
+  ADD CONSTRAINT PK_ProcessBulkAbortFileRe_SrId PRIMARY KEY (srId);
 
 /* Global temporary table to handle output of the processBulkRequest procedure */
 CREATE GLOBAL TEMPORARY TABLE ProcessBulkRequestHelper
   (fileId NUMBER, nsHost VARCHAR2(2048), errorCode NUMBER, errorMessage VARCHAR2(2048))
   ON COMMIT PRESERVE ROWS;
+
+/* Global temporary table to handle bulk update of subrequests in processBulkAbortForRepack */
+CREATE GLOBAL TEMPORARY TABLE ProcessRepackAbortHelperSR (srId NUMBER) ON COMMIT DELETE ROWS;
+/* Global temporary table to handle bulk update of diskCopies in processBulkAbortForRepack */
+CREATE GLOBAL TEMPORARY TABLE ProcessRepackAbortHelperDCrec (cfId NUMBER) ON COMMIT DELETE ROWS;
+CREATE GLOBAL TEMPORARY TABLE ProcessRepackAbortHelperDCmigr (cfId NUMBER) ON COMMIT DELETE ROWS;
 
 /* Tables to log the activity performed by the cleanup job */
 CREATE TABLE CleanupJobLog
@@ -942,12 +949,12 @@ ACCEPT adminList CHAR PROMPT 'List of admins: ';
 
 /* Define the service handlers for the appropriate sets of stage request objects */
 UPDATE Type2Obj SET svcHandler = 'JobReqSvc' WHERE type IN (35, 40, 44);
-UPDATE Type2Obj SET svcHandler = 'PrepReqSvc' WHERE type IN (36, 37, 38, 119);
+UPDATE Type2Obj SET svcHandler = 'PrepReqSvc' WHERE type IN (36, 37, 38);
 UPDATE Type2Obj SET svcHandler = 'StageReqSvc' WHERE type IN (39, 42, 95);
 UPDATE Type2Obj SET svcHandler = 'QueryReqSvc' WHERE type IN (33, 34, 41, 103, 131, 152, 155, 195);
 UPDATE Type2Obj SET svcHandler = 'JobSvc' WHERE type IN (60, 64, 65, 67, 78, 79, 80, 93, 144, 147);
 UPDATE Type2Obj SET svcHandler = 'GCSvc' WHERE type IN (73, 74, 83, 142, 149);
-UPDATE Type2Obj SET svcHandler = 'BulkStageReqSvc' WHERE type IN (50);
+UPDATE Type2Obj SET svcHandler = 'BulkStageReqSvc' WHERE type IN (50, 119);
 
 /* Set default values for the StageDiskCopyReplicaRequest table */
 ALTER TABLE StageDiskCopyReplicaRequest MODIFY flags DEFAULT 0;
@@ -999,7 +1006,9 @@ INSERT INTO CastorConfig
 INSERT INTO CastorConfig 
   VALUES ('tape', 'interfaceDaemon', 'rtcpclientd', 'The name of the daemon used to interface to the tape system');
 INSERT INTO CastorConfig
-  VALUES ('RmMaster', 'NoLSFMode', 'no', 'Whether we are running in NoLSF mode');
+  VALUES ('Repack', 'Protocol', 'rfio', 'The protocol that repack should use for writing files to disk');
+INSERT INTO CastorConfig
+  VALUES ('Repack', 'MaxNbConcurrentClients', '5', 'The maximum number of repacks clients that are able to run concurrently. This are either clients atrting repacks or aborting running repacks. Providing that each of them will take a DB core, this number should roughtly be ~60% of the number of cores of the stager DB server');
 COMMIT;
 
 
@@ -1154,6 +1163,14 @@ ON COMMIT PRESERVE ROWS;
 /***************************************************/
 
 CREATE TABLE RmMasterLock (unused NUMBER);
+
+
+/*******************************************************/
+/* temporary table used for listing segments of a tape */
+/* efficiently via DB link when repacking              */
+/*******************************************************/
+
+CREATE GLOBAL TEMPORARY TABLE RepackTapeSegments (s_fileId NUMBER, blockid RAW(4), fseq NUMBER, segSize NUMBER, copyno NUMBER, fileClass NUMBER) ON COMMIT PRESERVE ROWS;
 /*******************************************************************
  * @(#)RCSfile: oracleDrain.schema.sql,v  Revision: 1.4  Date: 2009/07/05 13:49:08  Author: waldron 
  * Schema creation code for Draining FileSystems Logic
@@ -1403,6 +1420,13 @@ AS
   TAPECOPY_WAITPOLICY    CONSTANT PLS_INTEGER := 7;
   TAPECOPY_REC_RETRY     CONSTANT PLS_INTEGER := 8;
   TAPECOPY_MIG_RETRY     CONSTANT PLS_INTEGER := 9;
+
+  REPACK_STARTING        CONSTANT PLS_INTEGER := 0;
+  REPACK_ONGOING         CONSTANT PLS_INTEGER := 1;
+  REPACK_FINISHED        CONSTANT PLS_INTEGER := 2;
+  REPACK_FAILED          CONSTANT PLS_INTEGER := 3;
+  REPACK_ABORTING        CONSTANT PLS_INTEGER := 4;
+  REPACK_ABORTED         CONSTANT PLS_INTEGER := 5;
 
 END tconst;
 /
@@ -1667,13 +1691,11 @@ BEGIN
   FOR t IN (SELECT id FROM TapeCopy WHERE castorfile = cfId) LOOP
     FOR s IN (SELECT id FROM Segment WHERE copy = t.id) LOOP
     -- Delete the segment(s)
-      DELETE FROM Id2Type WHERE id = s.id;
       DELETE FROM Segment WHERE id = s.id;
     END LOOP;
     -- Delete from Stream2TapeCopy
     DELETE FROM Stream2TapeCopy WHERE child = t.id;
     -- Delete the TapeCopy
-    DELETE FROM Id2Type WHERE id = t.id;
     DELETE FROM TapeCopy WHERE id = t.id;
   END LOOP;
 END;
@@ -1761,7 +1783,6 @@ BEGIN
           -- Delete the failed TapeCopies
           deleteTapeCopies(cfId);
           -- Delete the CastorFile
-          DELETE FROM id2Type WHERE id = cfId;
           DELETE FROM CastorFile WHERE id = cfId
             RETURNING fileId, nsHost, fileClass
             INTO fid, nsh, fc;
@@ -2326,9 +2347,41 @@ CREATE OR REPLACE PACKAGE castor AS
     mountPoint VARCHAR2(2048),
     diskServer VARCHAR2(2048));
   TYPE DiskCopy_Cur IS REF CURSOR RETURN DiskCopyCore;
-  TYPE TapeCopy_Cur IS REF CURSOR RETURN TapeCopy%ROWTYPE;
-  TYPE Tape_Cur IS REF CURSOR RETURN Tape%ROWTYPE;
-  TYPE Segment_Cur IS REF CURSOR RETURN Segment%ROWTYPE;
+  TYPE TapeCopy IS RECORD (
+    castorFile NUMBER,
+    id NUMBER,
+    copyNb NUMBER,
+    status NUMBER,
+    errorCode NUMBER,
+    nbRetry NUMBER,
+    fileTransActionId NUMBER,
+    fseq NUMBER,
+    missingCopies NUMBER,
+    tapeGatewayRequest NUMBER,
+    vid VARCHAR2(2048));
+  TYPE TapeCopy_Cur IS REF CURSOR RETURN TapeCopy;
+  TYPE Segment_Rec IS RECORD (
+    fseq NUMBER,
+    offset INTEGER,
+    bytes_in INTEGER,
+    bytes_out INTEGER,
+    host_bytes INTEGER,
+    segmCksumAlgorithm VARCHAR2(2048),
+    segmCksum NUMBER,
+    errMsgTxt VARCHAR2(2048),
+    errorCode NUMBER,
+    severity NUMBER,
+    blockId0 INTEGER,
+    blockId1 INTEGER,
+    blockId2 INTEGER,
+    blockId3 INTEGER,
+    creationTime INTEGER,
+    id INTEGER,
+    tape INTEGER,
+    copy INTEGER,
+    status INTEGER,
+    priority INTEGER);
+  TYPE Segment_Cur IS REF CURSOR RETURN Segment_Rec;
   TYPE "strList" IS TABLE OF VARCHAR2(2048) index BY binary_integer;
   TYPE "cnumList" IS TABLE OF NUMBER index BY binary_integer;
   TYPE QueryLine IS RECORD (
@@ -2347,7 +2400,10 @@ CREATE OR REPLACE PACKAGE castor AS
     lastAccessTime INTEGER,
     hwStatus INTEGER);
   TYPE QueryLine_Cur IS REF CURSOR RETURN QueryLine;
-  TYPE FileList_Cur IS REF CURSOR RETURN FilesDeletedProcOutput%ROWTYPE;
+  TYPE FileList IS RECORD (
+    fileId NUMBER,
+    nsHost VARCHAR2(2048));
+  TYPE FileList_Cur IS REF CURSOR RETURN FileList;
   TYPE DiskPoolQueryLine IS RECORD (
     isDP INTEGER,
     isDS INTEGER,
@@ -2383,20 +2439,15 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE TransferRecord_Cur IS REF CURSOR RETURN TransferRecord;
   TYPE DiskServerName IS RECORD (diskServer VARCHAR(2048));
   TYPE DiskServerList_Cur IS REF CURSOR RETURN DiskServerName;
-  /* These types are deprecated and should go when the jobmanager and LSF are dropped*/
-  TYPE SchedulerJobLine IS RECORD (
-    subReqId VARCHAR(2048),
-    reqId VARCHAR(2048),
-    noSpace INTEGER,
-    noFSAvail INTEGER);
-  TYPE SchedulerJobs_Cur IS REF CURSOR RETURN SchedulerJobLine;
-  TYPE JobFailedSubReqList_Cur IS REF CURSOR RETURN JobFailedProcHelper%ROWTYPE;
-  /* end of deprecated code */
   TYPE FileEntry IS RECORD (
     fileid INTEGER,
     nshost VARCHAR2(2048));
   TYPE FileEntry_Cur IS REF CURSOR RETURN FileEntry;
-  TYPE PriorityMap_Cur IS REF CURSOR RETURN PriorityMap%ROWTYPE;
+  TYPE TapeAccessPriority IS RECORD (
+    euid INTEGER,
+    egid INTEGER,
+    priority INTEGER);
+  TYPE TapeAccessPriority_Cur IS REF CURSOR RETURN TapeAccessPriority;
   TYPE StreamReport IS RECORD (
    diskserver VARCHAR2(2048),
    mountPoint VARCHAR2(2048));
@@ -2628,6 +2679,9 @@ BEGIN
        WHERE id = b.id;
     END LOOP;
   END LOOP;
+  -- cleanup the table so that we do not accumulate lines. This would trigger
+  -- a n^2 behavior until the next commit.
+  DELETE FROM TooManyReplicasHelper;
 END;
 /
 
@@ -2680,8 +2734,7 @@ END;
 
 /* Used to avoid LOCK TABLE TapeCopy whenever someone wants
    to deal with the tapeCopies on a CastorFile.
-   Due to this trigger, locking the CastorFile is enough
-   to be safe */
+   XXX To be dropped when rtcpclientd is removed. */
 CREATE OR REPLACE TRIGGER tr_TapeCopy_CastorFile
 BEFORE INSERT OR UPDATE OF castorFile ON TapeCopy
 FOR EACH ROW WHEN (new.castorFile > 0)
@@ -2696,8 +2749,7 @@ END;
 
 /* Used to avoid LOCK TABLE TapeCopy whenever someone wants
    to deal with the tapeCopies on a CastorFile.
-   Due to this trigger, locking the CastorFile is enough
-   to be safe */
+   XXX To be dropped when rtcpclientd is removed. */
 CREATE OR REPLACE TRIGGER tr_DiskCopy_CastorFile
 BEFORE INSERT OR UPDATE OF castorFile ON DiskCopy
 FOR EACH ROW WHEN (new.castorFile > 0)
@@ -2725,34 +2777,92 @@ END;
 /* PL/SQL method to get the next SubRequest to do according to the given service */
 CREATE OR REPLACE PROCEDURE subRequestToDo(service IN VARCHAR2,
                                            srId OUT INTEGER, srRetryCounter OUT INTEGER, srFileName OUT VARCHAR2,
-                                           srProtocol OUT VARCHAR2, srXsize OUT INTEGER, srPriority OUT INTEGER,
-                                           srStatus OUT INTEGER, srModeBits OUT INTEGER, srFlags OUT INTEGER,
-                                           srSubReqId OUT VARCHAR2, srAnswered OUT INTEGER, srSvcHandler OUT VARCHAR2) AS
+                                           srProtocol OUT VARCHAR2, srXsize OUT INTEGER,
+                                           srModeBits OUT INTEGER, srFlags OUT INTEGER,
+                                           srSubReqId OUT VARCHAR2, srAnswered OUT INTEGER, srReqType OUT INTEGER,
+                                           rId OUT INTEGER, rFlags OUT INTEGER, rUsername OUT VARCHAR2, rEuid OUT INTEGER,
+                                           rEgid OUT INTEGER, rMask OUT INTEGER, rPid OUT INTEGER, rMachine OUT VARCHAR2,
+                                           rSvcClassName OUT VARCHAR2, rUserTag OUT VARCHAR2, rReqId OUT VARCHAR2,
+                                           rCreationTime OUT INTEGER, rLastModificationTime OUT INTEGER,
+                                           rRepackVid OUT VARCHAR2, rGCWeight OUT INTEGER,
+                                           clIpAddress OUT INTEGER, clPort OUT INTEGER, clVersion OUT INTEGER) AS
   CURSOR SRcur IS SELECT /*+ FIRST_ROWS(10) INDEX(SR I_SubRequest_RT_CT_ID) */ SR.id
                     FROM SubRequest PARTITION (P_STATUS_0_1_2) SR
                    WHERE SR.svcHandler = service
                    ORDER BY SR.creationTime ASC;
   SrLocked EXCEPTION;
   PRAGMA EXCEPTION_INIT (SrLocked, -54);
-  srIntId NUMBER;
+  varSrId NUMBER;
+  varRName VARCHAR2(100);
+  varClientId NUMBER;
 BEGIN
   OPEN SRcur;
   -- Loop on candidates until we can lock one
   LOOP
     -- Fetch next candidate
-    FETCH SRcur INTO srIntId;
+    FETCH SRcur INTO varSrId;
     EXIT WHEN SRcur%NOTFOUND;
     BEGIN
       -- Try to take a lock on the current candidate, and revalidate its status
-      SELECT /*+ INDEX(SR PK_SubRequest_ID) */ id INTO srIntId
+      SELECT /*+ INDEX(SR PK_SubRequest_ID) */ id INTO varSrId
         FROM SubRequest PARTITION (P_STATUS_0_1_2) SR
-       WHERE id = srIntId FOR UPDATE NOWAIT;
+       WHERE id = varSrId FOR UPDATE NOWAIT;
       -- Since we are here, we got the lock. We have our winner, let's update it
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-         SET status = 3, subReqId = nvl(subReqId, uuidGen()) -- WAITSCHED
-       WHERE id = srIntId
-      RETURNING id, retryCounter, fileName, protocol, xsize, priority, status, modeBits, flags, subReqId, answered, svcHandler
-        INTO srId, srRetryCounter, srFileName, srProtocol, srXsize, srPriority, srStatus, srModeBits, srFlags, srSubReqId, srAnswered, srSvcHandler;
+         SET status = dconst.SUBREQUEST_WAITSCHED, subReqId = nvl(subReqId, uuidGen())
+       WHERE id = varSrId
+      RETURNING id, retryCounter, fileName, protocol, xsize, modeBits, flags, subReqId,
+        answered, reqType, request, (SELECT object FROM Type2Obj WHERE type = reqType) 
+        INTO srId, srRetryCounter, srFileName, srProtocol, srXsize, srModeBits, srFlags, srSubReqId,
+        srAnswered, srReqType, rId, varRName;
+      -- XXX This could be done in a single EXECUTE IMMEDIATE statement, but to make it
+      -- XXX efficient we implement a CASE construct. At a later time the FileRequests should
+      -- XXX be merged in a single table (partitioned by reqType) to avoid the following block.
+      CASE
+        WHEN varRName = 'StagePrepareToPutRequest' THEN 
+          SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, client
+            INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, varClientId
+            FROM StagePrepareToPutRequest WHERE id = rId;
+        WHEN varRName = 'StagePrepareToGetRequest' THEN 
+          SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, client
+            INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, varClientId
+            FROM StagePrepareToGetRequest WHERE id = rId;
+        WHEN varRName = 'StagePrepareToUpdateRequest' THEN 
+          SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, client
+            INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, varClientId
+            FROM StagePrepareToUpdateRequest WHERE id = rId;
+        WHEN varRName = 'StageRepackRequest' THEN 
+          SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, repackVid, client
+            INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, rRepackVid, varClientId
+            FROM StageRepackRequest WHERE id = rId;
+        WHEN varRName = 'StagePutRequest' THEN 
+          SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, client
+            INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, varClientId
+            FROM StagePutRequest WHERE id = rId;
+        WHEN varRName = 'StageGetRequest' THEN 
+          SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, client
+            INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, varClientId
+            FROM StageGetRequest WHERE id = rId;
+        WHEN varRName = 'StageUpdateRequest' THEN 
+          SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, client
+            INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, varClientId
+            FROM StageUpdateRequest WHERE id = rId;
+        WHEN varRName = 'StagePutDoneRequest' THEN 
+          SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, client
+            INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, varClientId
+            FROM StagePutDoneRequest WHERE id = rId;
+        WHEN varRName = 'StageRmRequest' THEN 
+          SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, client
+            INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, varClientId
+            FROM StageRmRequest WHERE id = rId;
+        WHEN varRName = 'SetFileGCWeight' THEN 
+          SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, weight, client
+            INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, rGcWeight, varClientId
+            FROM SetFileGCWeight WHERE id = rId;
+      END CASE;
+      SELECT ipAddress, port, version
+        INTO clIpAddress, clPort, clVersion
+        FROM Client WHERE id = varClientId;
       EXIT;
     EXCEPTION
       WHEN NO_DATA_FOUND THEN
@@ -2890,25 +3000,148 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 END;
 /
 
+/* PL/SQL method to process bulk abort on a given Repack request */
+CREATE OR REPLACE PROCEDURE processBulkAbortForRepack(abortReqId IN INTEGER, origReqId IN INTEGER) AS
+  abortedSRstatus NUMBER;
+  srsToUpdate "numList";
+  dcrecsToUpdate "numList";
+  dcmigrsToUpdate "numList";
+  nbItems NUMBER;
+  nbItemsDone NUMBER := 0;
+  SrLocked EXCEPTION;
+  PRAGMA EXCEPTION_INIT (SrLocked, -54);
+  unused NUMBER;
+  firstOne BOOLEAN := TRUE;
+  commitWork BOOLEAN := FALSE;
+BEGIN
+  -- Gather the list of subrequests to abort
+  INSERT INTO ProcessBulkAbortFileReqsHelper (
+    SELECT /*+ INDEX(Subrequest I_Subrequest_CastorFile)*/
+           SubRequest.id, CastorFile.id, CastorFile.fileId, CastorFile.nsHost, SubRequest.subreqId
+      FROM SubRequest, CastorFile
+     WHERE SubRequest.castorFile = CastorFile.id
+       AND request = origReqId
+       AND status IN (dconst.SUBREQUEST_RESTART, dconst.SUBREQUEST_RETRY,
+                      dconst.SUBREQUEST_WAITSUBREQ, dconst.SUBREQUEST_WAITTAPERECALL,
+                      dconst.SUBREQUEST_REPACK));
+  SELECT COUNT(*) INTO nbItems FROM processBulkAbortFileReqsHelper;
+  -- handle aborts in bulk while avoiding deadlocks
+  WHILE nbItems > 0 LOOP
+    FOR sr IN (SELECT srId, cfId, fileId, nsHost, uuid FROM processBulkAbortFileReqsHelper) LOOP
+      BEGIN
+        IF firstOne THEN
+          -- on the first item, we take a blocking lock as we are sure that we will not
+          -- deadlock and we would like to process at least one item to not loop endlessly
+          SELECT id INTO unused FROM CastorFile WHERE id = sr.cfId FOR UPDATE;
+          firstOne := FALSE;
+        ELSE
+          -- on the other items, we go for a non blocking lock. If we get it, that's
+          -- good and we process this extra subrequest within the same session. If
+          -- we do not get the lock, then we close the session here and go for a new
+          -- one. This will prevent dead locks while ensuring that a minimal number of
+          -- commits is performed.
+          SELECT id INTO unused FROM CastorFile WHERE id = sr.cfId FOR UPDATE NOWAIT;
+        END IF;
+        -- note the revalidation of the status and even of the existence of the subrequest
+        -- as it may have changed before we got the lock on the Castorfile in processBulkAbortFileReqs
+        SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ status
+          INTO abortedSRstatus
+          FROM SubRequest
+         WHERE id = sr.srId;
+        CASE
+          WHEN abortedSRstatus = dconst.SUBREQUEST_RESTART
+            OR abortedSRstatus = dconst.SUBREQUEST_RETRY
+            OR abortedSRstatus = dconst.SUBREQUEST_WAITSUBREQ THEN
+            -- easy case, we only have to fail the subrequest
+            INSERT INTO ProcessRepackAbortHelperSR VALUES (sr.srId);
+          WHEN abortedSRstatus = dconst.SUBREQUEST_WAITTAPERECALL THEN
+            -- recall case, let's see whether we can cancel the recall
+            DECLARE
+              segId INTEGER;
+              unusedIds "numList";
+            BEGIN
+              -- Check whether we have any segment in SELECTED
+              SELECT segment.id INTO segId
+                FROM Segment, TapeCopy
+               WHERE TapeCopy.castorfile = sr.cfId
+                 AND TapeCopy.id = Segment.copy
+                 AND Segment.status = 7 -- SELECTED
+                 AND ROWNUM < 2;
+              -- Something is running, so give up
+              INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 16, 'Cannot abort ongoing recall'); -- EBUSY
+            EXCEPTION WHEN NO_DATA_FOUND THEN
+              -- Nothing running, we can cancel the recall  
+              INSERT INTO ProcessRepackAbortHelperSR VALUES (sr.srId);
+              deleteTapeCopies(sr.cfId);
+              INSERT INTO ProcessRepackAbortHelperDCrec VALUES (sr.cfId);
+            END;
+          WHEN abortedSRstatus = dconst.SUBREQUEST_REPACK THEN
+            -- stop the migration and put back the file to STAGED
+            INSERT INTO ProcessRepackAbortHelperSR VALUES (sr.srId);
+            deleteTapeCopies(sr.cfId);
+            INSERT INTO ProcessRepackAbortHelperDCmigr VALUES (sr.cfId);
+        END CASE;
+        DELETE FROM processBulkAbortFileReqsHelper WHERE srId = sr.srId;
+        nbItemsDone := nbItemsDone + 1;
+      EXCEPTION WHEN SrLocked THEN
+        commitWork := TRUE;
+      END;
+      -- commit anyway from time to time, to avoid too long redo logs
+      IF commitWork OR nbItemsDone >= 1000 THEN
+        -- exit the current loop and restart a new one, in order to commit without getting invalid ROWID errors
+        EXIT;
+      END IF;
+    END LOOP;
+    -- do the bulk updates
+    SELECT srId BULK COLLECT INTO srsToUpdate FROM ProcessRepackAbortHelperSR;
+    FORALL i IN srsToUpdate.FIRST .. srsToUpdate.LAST
+      UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
+         SET parent = NULL, diskCopy = NULL, lastModificationTime = getTime(),
+             status = 9, errorCode = 1701, errorMessage='Aborted explicitely'
+       WHERE id = srsToUpdate(i);
+    SELECT cfId BULK COLLECT INTO dcrecsToUpdate FROM ProcessRepackAbortHelperDCrec;
+    FORALL i IN dcrecsToUpdate.FIRST .. dcrecsToUpdate.LAST
+      UPDATE DiskCopy SET status = dconst.DISKCOPY_FAILED
+       WHERE castorfile = dcrecsToUpdate(i) AND status = dconst.DISKCOPY_WAITTAPERECALL;
+    SELECT cfId BULK COLLECT INTO dcmigrsToUpdate FROM ProcessRepackAbortHelperDCmigr;
+    FORALL i IN dcmigrsToUpdate.FIRST .. dcmigrsToUpdate.LAST
+      UPDATE DiskCopy SET status = dconst.DISKCOPY_STAGED
+       WHERE castorfile = dcmigrsToUpdate(i) AND status = dconst.DISKCOPY_CANBEMIGR;
+    -- commit
+    COMMIT;
+    -- reset all counters
+    nbItems := nbItems - nbItemsDone;
+    nbItemsDone := 0;
+    firstOne := TRUE;
+    commitWork := FALSE;
+  END LOOP;
+END;
+/
+
 /* PL/SQL method to process bulk abort on files related requests */
 CREATE OR REPLACE PROCEDURE processBulkAbortFileReqs
 (abortReqId IN INTEGER, origReqId IN INTEGER,
  fileIds IN "numList", nsHosts IN strListTable, reqType IN NUMBER) AS
   nbItems NUMBER;
+  nbItemsDone NUMBER := 0;
   SrLocked EXCEPTION;
   PRAGMA EXCEPTION_INIT (SrLocked, -54);
   unused NUMBER;
-  firstOne BOOLEAN;
+  firstOne BOOLEAN := TRUE;
+  commitWork BOOLEAN := FALSE;
 BEGIN
   -- Gather the list of subrequests to abort
   IF fileIds.count() = 0 THEN
     -- handle the case of an empty request, meaning that all files should be aborted
-    INSERT INTO processBulkAbortFileReqsHelper (
+    INSERT INTO ProcessBulkAbortFileReqsHelper (
       SELECT /*+ INDEX(Subrequest I_Subrequest_CastorFile)*/
              SubRequest.id, CastorFile.id, CastorFile.fileId, CastorFile.nsHost, SubRequest.subreqId
         FROM SubRequest, CastorFile
        WHERE SubRequest.castorFile = CastorFile.id
-         AND request = origReqId);
+         AND request = origReqId
+         AND status IN (dconst.SUBREQUEST_RESTART, dconst.SUBREQUEST_RETRY,
+                        dconst.SUBREQUEST_WAITSUBREQ, dconst.SUBREQUEST_WAITTAPERECALL,
+                        dconst.SUBREQUEST_REPACK));
   ELSE
     -- handle the case of selective abort
     FOR i IN fileIds.FIRST .. fileIds.LAST LOOP
@@ -2935,7 +3168,6 @@ BEGIN
   SELECT COUNT(*) INTO nbItems FROM processBulkAbortFileReqsHelper;
   -- handle aborts in bulk while avoiding deadlocks
   WHILE nbItems > 0 LOOP
-    firstOne := TRUE;
     FOR sr IN (SELECT srId, cfId, fileId, nsHost, uuid FROM processBulkAbortFileReqsHelper) LOOP
       BEGIN
         IF firstOne THEN
@@ -2959,15 +3191,25 @@ BEGIN
         DELETE FROM processBulkAbortFileReqsHelper WHERE srId = sr.srId;
         -- make the scheduler aware so that it can remove the transfer from the queues if needed
         INSERT INTO TransfersToAbort VALUES (sr.uuid);
-        nbItems := nbItems - 1;
+        nbItemsDone := nbItemsDone + 1;
       EXCEPTION WHEN SrLocked THEN
-        -- we close the session here and exit the inner loop
-        COMMIT;
-        EXIT;
+        commitWork := TRUE;
       END;
+      -- commit anyway from time to time, to avoid too long redo logs
+      IF commitWork OR nbItemsDone >= 1000 THEN
+        -- exit the current loop and restart a new one, in order to commit without getting invalid ROWID errors
+        EXIT;
+      END IF;
     END LOOP;
-    -- wake up the scheduler so that it can remove the transfer from the queues now
-    DBMS_ALERT.SIGNAL('transfersToAbort', ''); 
+    -- commit
+    COMMIT;
+    -- wake up the scheduler so that it can remove the transfer from the queues
+    DBMS_ALERT.SIGNAL('transfersToAbort', '');
+    -- reset all counters
+    nbItems := nbItems - nbItemsDone;
+    nbItemsDone := 0;
+    firstOne := TRUE;
+    commitWork := FALSE;
   END LOOP;
 END;
 /
@@ -2989,17 +3231,14 @@ BEGIN
   -- get request and client informations and drop them from the DB
   DELETE FROM StageAbortRequest WHERE id = abortReqId
     RETURNING reqId, parentUuid, client INTO rReqUuid, abortedReqUuid, clientId;
-  DELETE FROM Id2Type WHERE id = abortReqId;
   DELETE FROM Client WHERE id = clientId
     RETURNING ipAddress, port INTO rIpAddress, rport;
-  DELETE FROM Id2Type WHERE id = clientId;
   -- list fileids to process and drop them from the DB; override the
   -- nsHost in case it is defined in the configuration
   SELECT fileid, decode(nsHostName, '', nsHost, nsHostName), id
     BULK COLLECT INTO fileIds, nsHosts, ids
     FROM NsFileId WHERE request = abortReqId;
   FORALL i IN ids.FIRST .. ids.LAST DELETE FROM NsFileId WHERE id = ids(i);
-  FORALL i IN ids.FIRST .. ids.LAST DELETE FROM Id2Type WHERE id = ids(i);
   -- dispatch actual processing depending on request type
   BEGIN
     SELECT rType, id INTO reqType, requestId FROM
@@ -3010,21 +3249,70 @@ BEGIN
        SELECT /*+ INDEX(stagePutRequest I_stagePutRequest_ReqId) */
               reqId, id, 2 as rtype from StagePutRequest UNION ALL
        SELECT /*+ INDEX(StagePrepareToPutRequest I_StagePTPRequest_ReqId) */
-              reqId, id, 2 as rtype from StagePrepareToPutRequest)
+              reqId, id, 2 as rtype from StagePrepareToPutRequest UNION ALL
+       SELECT /*+ INDEX(StageRepackRequest I_RepackRequest_ReqId) */
+              reqId, id, 3 as rtype from StageRepackRequest)
      WHERE reqId = abortedReqUuid;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- abort on non supported request type
     INSERT INTO ProcessBulkRequestHelper VALUES (0, '', 2, 'Request not found, or abort not supported for this request type'); -- ENOENT
     RETURN;
   END;
-  processBulkAbortFileReqs(abortReqId, requestId, fileIds, nsHosts, reqType);
+  IF reqType IN (1,2) THEN
+    processBulkAbortFileReqs(abortReqId, requestId, fileIds, nsHosts, reqType);
+  ELSE
+    processBulkAbortForRepack(abortReqId, requestId);
+  END IF;
+END;
+/
+
+/* PL/SQL method to process bulk abort requests */
+CREATE OR REPLACE PROCEDURE abortRepackRequest
+  (machine IN VARCHAR2,
+   euid IN INTEGER,
+   egid IN INTEGER,
+   pid IN INTEGER,
+   userName IN VARCHAR2,
+   clientIP IN INTEGER,
+   parentUUID IN VARCHAR2,
+   rSubResults OUT castor.FileResult_Cur) AS
+  svcClassId NUMBER;
+  reqId NUMBER;
+  clientId NUMBER;
+  creationTime NUMBER;
+  rIpAddress INTEGER;
+  rport INTEGER;
+  rReqUuid VARCHAR2(2048);
+BEGIN
+  -- mark the repack request as being aborted
+  UPDATE StageRepackRequest SET status = tconst.REPACK_ABORTING WHERE reqId = parentUUID;
+  COMMIT;
+  -- get unique ids for the request and the client and get current time
+  SELECT ids_seq.nextval INTO reqId FROM DUAL;
+  SELECT ids_seq.nextval INTO clientId FROM DUAL;
+  creationTime := getTime();
+  -- insert the request itself
+  INSERT INTO StageAbortRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, parentUuid, id, svcClass, client)
+  VALUES (0,userName,euid,egid,0,pid,machine,'','',uuidgen(),creationTime,creationTime,parentUUID,reqId,0,clientId);
+  -- insert the client information
+  INSERT INTO Client (ipAddress, port, version, secure, id)
+  VALUES (clientIP,0,0,0,clientId);
+  -- process the abort
+  processBulkAbort(reqId, rIpAddress, rport, rReqUuid);
+  -- mark the repack request as ABORTED
+  UPDATE StageRepackRequest SET status = tconst.REPACK_ABORTED WHERE reqId = parentUUID;
+  -- return all results
+  OPEN rSubResults FOR
+    SELECT fileId, nsHost, errorCode, errorMessage FROM ProcessBulkRequestHelper;
 END;
 /
 
 /* PL/SQL method to process bulk requests */
-CREATE OR REPLACE PROCEDURE processBulkRequest(service IN VARCHAR2,
+CREATE OR REPLACE PROCEDURE processBulkRequest(service IN VARCHAR2, requestId OUT INTEGER,
                                                rtype OUT INTEGER, rIpAddress OUT INTEGER,
                                                rport OUT INTEGER, rReqUuid OUT VARCHAR2,
+                                               reuid OUT INTEGER, regid OUT INTEGER,
+                                               freeParam OUT VARCHAR2,
                                                rSubResults OUT castor.FileResult_Cur) AS
   CURSOR Rcur IS SELECT /*+ FIRST_ROWS(10) */ id
                    FROM NewRequests
@@ -3034,28 +3322,28 @@ CREATE OR REPLACE PROCEDURE processBulkRequest(service IN VARCHAR2,
                        AND svcHandler IS NOT NULL);
   SrLocked EXCEPTION;
   PRAGMA EXCEPTION_INIT (SrLocked, -54);
-  reqId NUMBER;
 BEGIN
   -- in case we do not find anything, rtype should be 0
-  rtype :=0;
+  rType := 0;
   OPEN Rcur;
   -- Loop on candidates until we can lock one
   LOOP
     -- Fetch next candidate
-    FETCH Rcur INTO reqId;
+    FETCH Rcur INTO requestId;
     EXIT WHEN Rcur%NOTFOUND;
     BEGIN
       -- Try to take a lock on the current candidate
-      SELECT id INTO reqId FROM NewRequests WHERE id = reqId FOR UPDATE NOWAIT;
+      SELECT type INTO rType FROM NewRequests WHERE id = requestId FOR UPDATE NOWAIT;
       -- Since we are here, we got the lock. We have our winner,
-      DELETE FROM NewRequests WHERE id = reqId;
+      DELETE FROM NewRequests WHERE id = requestId;
       -- Clear the temporary table for subresults
       DELETE FROM ProcessBulkRequestHelper;
       -- dispatch actual processing depending on request type
-      SELECT type INTO rType FROM id2Type WHERE id = reqId;
       CASE rType
         WHEN 50 THEN -- Abort Request
-          processBulkAbort(reqId, rIpAddress, rport, rReqUuid);
+          processBulkAbort(requestId, rIpAddress, rport, rReqUuid);
+          reuid := -1;  -- not used
+          regid := -1;  -- not used
       END CASE;
       -- open cursor on results
       OPEN rSubResults FOR
@@ -3075,44 +3363,338 @@ BEGIN
 END;
 /
 
+/* PL/SQL method to handle a repack request */
+CREATE OR REPLACE PROCEDURE handleRepackRequest
+  (machine IN VARCHAR2,
+   euid IN INTEGER,
+   egid IN INTEGER,
+   pid IN INTEGER,
+   userName IN VARCHAR2,
+   svcClassName IN VARCHAR2,
+   clientIP IN INTEGER,
+   reqVID IN VARCHAR2,
+   rSubResults OUT castor.FileResult_Cur) AS
+  varReqId INTEGER;
+  clientId INTEGER;
+  creationTime NUMBER;
+  svcClassId INTEGER;
+  varSubreqId INTEGER;
+  cfId INTEGER;
+  dcId INTEGER;
+  tapeId INTEGER;
+  tapeStatus INTEGER;
+  repackProtocol VARCHAR2(2048);
+  recallPolicy VARCHAR2(2048);
+  result NUMBER;
+  nsHostName VARCHAR2(2048);
+  lastKnownFileName VARCHAR2(2048);
+  priority INTEGER;
+  unused INTEGER;
+  firstCF boolean := True;
+  nbFilesProcessed NUMBER := 0;
+  nbFilesFailed NUMBER := 0;
+  isOngoing boolean := False;
+BEGIN
+  -- do prechecks and get the service class
+  svcClassId := insertPreChecks(euid, egid, svcClassName, 119);
+  -- insertion time
+  creationTime := getTime();
+  -- insert the client information
+  INSERT INTO Client (ipAddress, port, version, secure, id)
+  VALUES (clientIP,0,0,0,ids_seq.nextval)
+  RETURNING id INTO clientId;
+  -- insert the request itself
+  INSERT INTO StageRepackRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, repackVid, id, svcClass, client,status)
+  VALUES (0,userName,euid,egid,0,pid,machine,svcClassName,'',uuidgen(),creationTime,creationTime,reqVID,ids_seq.nextval,svcClassId,clientId,tconst.REPACK_STARTING)
+  RETURNING id INTO varReqId;
+  -- Clear the temporary table for subresults
+  DELETE FROM ProcessBulkRequestHelper;
+  -- Check which protocol should be used for writing files to disk
+  repackProtocol := getConfigOption('Repack', 'Protocol', 'rfio');
+  -- name server host name
+  nsHostName := getConfigOption('stager', 'nsHost', '');
+  -- check and create the tape if needed. Its status depends on the presence of a recallerPolicy
+  -- Note that selectTapeForRecall uses autonomous transaction so that we do not keep a lock
+  SELECT recallerPolicy INTO recallPolicy FROM SvcClass WHERE id = svcClassId;
+  IF recallPolicy IS NULL THEN
+    tapeStatus := tconst.TAPE_PENDING;
+  ELSE
+    tapeStatus := tconst.TAPE_WAITPOLICY;
+  END IF;
+  tapeId := selectTapeForRecall(reqVID, tapeStatus);
+  -- compute the priority of this request
+  BEGIN
+    SELECT priority INTO priority FROM PriorityMap
+     WHERE euid = euid AND egid = egid AND ROWNUM < 2;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    priority := 0;
+  END;
+  -- Get the list of files to repack from the NS DB via DBLink and store them in memory
+  -- in a temporary table. We do that so that we do not keep an open cursor for too long
+  -- in the nameserver DB
+  INSERT INTO RepackTapeSegments (SELECT s_fileid, blockid, fseq, segSize, copyno, fileclass
+                                    FROM Cns_Seg_Metadata@remotens, Cns_File_Metadata@remotens
+                                   WHERE vid = reqVID
+                                     AND s_fileid = fileid
+                                     AND s_status = '-'
+                                     AND status != 'D');
+  FOR segment IN (SELECT * FROM RepackTapeSegments) LOOP
+    -- Commit from time to time
+    IF nbFilesProcessed = 1000 THEN
+      COMMIT;
+      firstCF := TRUE;
+      nbFilesProcessed := 0;
+    END IF;
+    -- lastKnownFileName we will have in the DB
+    lastKnownFileName := CONCAT('Repack_', TO_CHAR(segment.s_fileid));
+    -- find the Castorfile (and take a lock on it)
+    DECLARE
+      locked EXCEPTION;
+      PRAGMA EXCEPTION_INIT (locked, -54);
+    BEGIN
+      -- This may raise a SrLocked exception as we do not want to wait for locks (except on first file).
+      -- In such a case, we commit what we've done so far and retry this file, this time waiting for the lock.
+      -- The reason for such a complex code is to avoid commiting each file separately, as it would be
+      -- too heavy. On the other hand, we still need to avoid dead locks.
+      -- Note that we pass 0 for the subrequest id, thus the subrequest will not be attached to the
+      -- CastorFile. We actually attach it when we create it.
+      selectCastorFileInternal(segment.s_fileid, nsHostName, svcClassId, segment.fileclass,
+                               segment.segSize, lastKnownFileName, 0, creationTime, firstCF, cfid, unused);
+      firstCF := FALSE;
+    EXCEPTION WHEN locked THEN
+      -- commit what we've done so far
+      COMMIT;
+      -- And lock the castorfile (waiting this time)
+      selectCastorFileInternal(segment.s_fileid, nsHostName, svcClassId, segment.fileclass,
+                               segment.segSize, lastKnownFileName, 0, creationTime, TRUE, cfid, unused);
+    END;
+    nbFilesProcessed := nbFilesProcessed + 1;
+    -- create  subrequest for this file.
+    -- Note that the svcHandler is set to PrepReqSvc. Most of the time, it will not be used,
+    -- as the rest of this procedure will handle the subrequests itself. The only case where it is
+    -- needed is when some subrequests are put to WAITSUBREQ. The the PrepReqSvc will be
+    -- in charge of handling them one by one when they can wake up
+    INSERT INTO SubRequest (retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, creationTime, lastModificationTime, answered, errorCode, errorMessage, requestedFileSystems, svcHandler, id, diskcopy, castorFile, parent, status, request, getNextStatus, reqType)
+    VALUES (0, lastKnownFileName, repackProtocol, segment.segSize, 0, uuidGen(), 0, 0, creationTime, creationTime, 0, 0, '', NULL, 'PrepReqSvc', ids_seq.nextval, 0, cfId, NULL, dconst.SUBREQUEST_START, varReqId, 0, 119)
+    RETURNING id INTO varSubreqId;
+    -- find out whether this file is already staged or not
+    processPrepareRequest(varSubreqId, result);
+    CASE
+      WHEN result = -2 OR result = 0 OR result = 1 THEN
+        -- SubRequest has been put in WAITSUBREQ, WAITDISK2DISKCOPY or directly to REPACK. Nothing to do
+        isOngoing := True;
+      WHEN result = -1 THEN
+        -- SubRequest has been failed, log the error
+        INSERT INTO ProcessBulkRequestHelper
+          (SELECT segment.s_fileid, nsHostName, errorCode, errorMessage
+             FROM SubRequest WHERE id = varSubreqId);
+        nbFilesFailed := nbFilesFailed + 1;
+      WHEN result = 2 THEN
+        -- standard case : we need to log and to trigger the recall
+        triggerRepackRecall(varSubreqId, cfId, tapeId, segment.s_fileid, nsHostName, segment.blockid, segment.fseq, segment.copyno, priority, euid, egid);
+        isOngoing := True;
+    END CASE;
+  END LOOP;
+  -- cleanup RepackTapeSegments
+  EXECUTE IMMEDIATE 'TRUNCATE TABLE RepackTapeSegments';
+  -- update status of the RepackRequest
+  IF isOngoing THEN
+    UPDATE StageRepackRequest SET status = tconst.REPACK_ONGOING WHERE StageRepackRequest.id = varReqId;
+  ELSE
+    IF nbFilesFailed > 0 THEN
+      UPDATE StageRepackRequest SET status = tconst.REPACK_FAILED WHERE StageRepackRequest.id = varReqId;
+    ELSE
+      -- CASE of an 'empty' repack : the tape had no files at all
+      UPDATE StageRepackRequest SET status = tconst.REPACK_FINISHED WHERE StageRepackRequest.id = varReqId;
+    END IF;
+  END IF;
+  -- open cursor on results
+  OPEN rSubResults FOR
+    SELECT fileId, nsHost, errorCode, errorMessage FROM ProcessBulkRequestHelper;
+END;
+/
+
+/* PL/SQL method to handle a repack subrequest.
+ * Repack requests are normally handled as a whole via the handleRepackRequest procedure.
+ * However, some subrequests may be put in WAITSUBREQ on that processing.
+ * They are further processed here, when the wait is over.
+ */
+CREATE OR REPLACE PROCEDURE handleRepackSubRequest(srId IN INTEGER, rIpAddress OUT INTEGER,
+                                                   rport OUT INTEGER, rReqUuid OUT VARCHAR2,
+                                                   rSubResults OUT castor.FileResult_Cur) AS
+  nsHostName VARCHAR2(2048);
+  varFileid NUMBER;
+  varReqid NUMBER;
+  varCfid NUMBER;
+  varReqvid VARCHAR2(2048);
+  varEuid INTEGER;
+  varEgid INTEGER;
+  varPriority INTEGER;
+  varBlockid RAW(4);
+  varFseq INTEGER;
+  varCopyno INTEGER;
+  varTapeId INTEGER;
+  varTapeStatus INTEGER;
+  varSvcClassId INTEGER;
+  varRecallPolicy VARCHAR2(2048);
+  varResult NUMBER;
+BEGIN
+  -- name server host name
+  nsHostName := getConfigOption('stager', 'nsHost', '');
+  -- Get the request id and the fileid of the file
+  SELECT fileid, request, CastorFile.id
+    INTO varFileid, varReqid, varCfId
+    FROM SubRequest, CastorFile
+   WHERE SubRequest.id = srId
+     AND SubRequest.castorFile = CastorFile.id;
+  -- get the repack request's content
+  SELECT repackVid, ipAddress, port, reqId, euid, egid, svcClass
+    INTO varReqvid, rIpAddress, rport, rReqUuid, varEuid, varEgid, varSvcClassId
+    FROM StageRepackRequest, Client
+   WHERE StageRepackRequest.id = varReqid
+     AND StageRepackRequest.client = Client.id;
+  -- find out whether this file is already staged or not
+  processPrepareRequest(srId, varResult);
+  CASE
+    WHEN varResult = -2 OR varResult = 0 THEN
+      -- SubRequest has been put in WAITSUBREQ or directly to REPACK. Nothing to do, only log
+      INSERT INTO ProcessBulkRequestHelper VALUES (varFileid, nsHostName, 0, '');
+    WHEN varResult = -1 THEN
+      -- SubRequest has been failed, log the error
+      INSERT INTO ProcessBulkRequestHelper
+        (SELECT varFileid, nsHostName, errorCode, errorMessage
+           FROM SubRequest WHERE id = srId);
+    ELSE
+      -- standard case : we need to log and to trigger the recall
+      INSERT INTO ProcessBulkRequestHelper VALUES (varFileid, nsHostName, 0, '');
+      -- compute the priority of this request
+      BEGIN
+        SELECT priority INTO varPriority FROM PriorityMap
+         WHERE euid = varEuid AND egid = varEgid AND ROWNUM < 2;
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        varPriority := 0;
+      END;
+      -- check and create the tape if needed. Its status depends on the presence of a recallerPolicy
+      -- Note that selectTapeForRecall uses autonomous transaction so that we do not keep a lock
+      SELECT recallerPolicy INTO varRecallPolicy FROM SvcClass WHERE id = varSvcClassId;
+      IF varRecallPolicy IS NULL THEN
+        varTapeStatus := tconst.TAPE_PENDING;
+      ELSE
+        varTapeStatus := tconst.TAPE_WAITPOLICY;
+      END IF;
+      varTapeId := selectTapeForRecall(varReqvid, varTapeStatus);
+      -- get all data we need for trigering a recall
+      SELECT blockid, fseq, copyno
+        INTO varBlockid, varFseq, varCopyno
+        FROM Cns_Seg_Metadata@remotens, Cns_File_Metadata@remotens
+       WHERE s_status = '-'
+         AND status != 'D'
+         AND vid = varReqvid
+         AND s_fileid = varFileid;
+      -- trigger the recall
+      triggerRepackRecall(srId, varCfid, varTapeId, varFileid, nsHostName, varBlockid, varFseq, varCopyno, varPriority, varEuid, varEgid);
+  END CASE;
+  -- open cursor on results
+  OPEN rSubResults FOR
+    SELECT fileId, nsHost, errorCode, errorMessage FROM ProcessBulkRequestHelper;
+END;
+/
 
 /* PL/SQL method to get the next failed SubRequest to do according to the given service */
 /* the service parameter is not used now, it will with the new stager */
-CREATE OR REPLACE PROCEDURE subRequestFailedToDo(srId OUT INTEGER, srRetryCounter OUT INTEGER, srFileName OUT VARCHAR2,
-                                                 srProtocol OUT VARCHAR2, srXsize OUT INTEGER, srPriority OUT INTEGER,
-                                                 srStatus OUT INTEGER, srModeBits OUT INTEGER, srFlags OUT INTEGER,
-                                                 srSubReqId OUT VARCHAR2, srErrorCode OUT NUMBER,
-                                                 srErrorMessage OUT VARCHAR2) AS
+CREATE OR REPLACE PROCEDURE subRequestFailedToDo(srId OUT NUMBER, srFileName OUT VARCHAR2, srSubReqId OUT VARCHAR2,
+                                                 srErrorCode OUT INTEGER, srErrorMessage OUT VARCHAR2, rReqId OUT VARCHAR2,
+                                                 clIpAddress OUT INTEGER, clPort OUT INTEGER, clVersion OUT INTEGER,
+                                                 srFileId OUT NUMBER) AS
   SrLocked EXCEPTION;
   PRAGMA EXCEPTION_INIT (SrLocked, -54);
   CURSOR c IS
      SELECT /*+ FIRST_ROWS(10) INDEX(SR I_SubRequest_RT_CT_ID) */ SR.id
        FROM SubRequest PARTITION (P_STATUS_7) SR; -- FAILED
-  srAnswered INTEGER;
-  srIntId NUMBER;
+  varSRId NUMBER;
+  varCFId NUMBER;
+  varRId NUMBER;
+  varSrAnswered INTEGER;
+  varRName VARCHAR2(100);
+  varClientId NUMBER;
 BEGIN
   OPEN c;
   LOOP
-    FETCH c INTO srIntId;
+    FETCH c INTO varSRId;
     EXIT WHEN c%NOTFOUND;
     BEGIN
-      SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ answered INTO srAnswered
+      SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ answered INTO varSrAnswered
         FROM SubRequest PARTITION (P_STATUS_7) 
-       WHERE id = srIntId FOR UPDATE NOWAIT;
-      IF srAnswered = 1 THEN
+       WHERE id = varSRId FOR UPDATE NOWAIT;
+      IF varSrAnswered = 1 THEN
         -- already answered, ignore it
-        archiveSubReq(srIntId, 9);  -- FAILED_FINISHED
+        archiveSubReq(varSRId, dconst.SUBREQUEST_FAILED_FINISHED);
       ELSE
-        -- we got our subrequest
+        -- we got our subrequest, select all relevant data
         UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ subrequest
-           SET status = 10   -- FAILED_ANSWERING
-         WHERE id = srIntId
-        RETURNING retryCounter, fileName, protocol, xsize, priority, status,
-                  modeBits, flags, subReqId, errorCode, errorMessage
-        INTO srRetryCounter, srFileName, srProtocol, srXsize, srPriority, srStatus,
-             srModeBits, srFlags, srSubReqId, srErrorCode, srErrorMessage;
-        srId := srIntId;
-        EXIT;
+           SET status = dconst.SUBREQUEST_FAILED_ANSWERING
+         WHERE id = varSRId
+        RETURNING fileName, subReqId, errorCode, errorMessage,
+          (SELECT object FROM Type2Obj WHERE type = reqType), request, castorFile
+        INTO srFileName, srSubReqId, srErrorCode, srErrorMessage, varRName, varRId, varCFId;
+        srId := varSRId;
+        srFileId := 0;
+        BEGIN
+          CASE
+            WHEN varRName = 'StagePrepareToPutRequest' THEN
+              SELECT reqId, client
+                INTO rReqId, varClientId
+                FROM StagePrepareToPutRequest WHERE id = varRId;
+            WHEN varRName = 'StagePrepareToGetRequest' THEN
+              SELECT reqId, client
+                INTO rReqId, varClientId
+                FROM StagePrepareToGetRequest WHERE id = varRId;
+            WHEN varRName = 'StagePrepareToUpdateRequest' THEN
+              SELECT reqId, client
+                INTO rReqId, varClientId
+                FROM StagePrepareToUpdateRequest WHERE id = varRId;
+            WHEN varRName = 'StageRepackRequest' THEN
+              SELECT reqId, client
+                INTO rReqId, varClientId
+                FROM StageRepackRequest WHERE id = varRId;
+            WHEN varRName = 'StagePutRequest' THEN
+              SELECT reqId, client
+                INTO rReqId, varClientId
+                FROM StagePutRequest WHERE id = varRId;
+            WHEN varRName = 'StageGetRequest' THEN
+              SELECT reqId, client
+                INTO rReqId, varClientId
+                FROM StageGetRequest WHERE id = varRId;
+            WHEN varRName = 'StageUpdateRequest' THEN
+              SELECT reqId, client
+                INTO rReqId, varClientId
+                FROM StageUpdateRequest WHERE id = varRId;
+            WHEN varRName = 'StagePutDoneRequest' THEN
+              SELECT reqId, client
+                INTO rReqId, varClientId
+                FROM StagePutDoneRequest WHERE id = varRId;
+            WHEN varRName = 'StageRmRequest' THEN
+              SELECT reqId, client
+                INTO rReqId, varClientId
+                FROM StageRmRequest WHERE id = varRId;
+            WHEN varRName = 'SetFileGCWeight' THEN
+              SELECT reqId, client
+                INTO rReqId, varClientId
+                FROM SetFileGCWeight WHERE id = varRId;
+          END CASE;
+          SELECT ipAddress, port, version
+            INTO clIpAddress, clPort, clVersion
+            FROM Client WHERE id = varClientId;
+          IF varCFId > 0 THEN
+            SELECT fileId INTO srFileId FROM CastorFile WHERE id = varCFId;
+          END IF;
+          EXIT;
+        EXCEPTION WHEN NO_DATA_FOUND THEN
+          -- This should never happen, we have an orphaned subrequest.
+          -- As we couldn't get the client, we just archive and move on.
+          srId := 0;
+          archiveSubReq(varSRId, dconst.SUBREQUEST_FAILED_FINISHED);
+        END;
       END IF;
     EXCEPTION
       WHEN NO_DATA_FOUND THEN
@@ -3129,7 +3711,7 @@ END;
 
 
 /* PL/SQL method to get the next request to do according to the given service */
-CREATE OR REPLACE PROCEDURE requestToDo(service IN VARCHAR2, rId OUT INTEGER) AS
+CREATE OR REPLACE PROCEDURE requestToDo(service IN VARCHAR2, rId OUT INTEGER, rType OUT INTEGER) AS
 BEGIN
   DELETE FROM NewRequests
    WHERE type IN (
@@ -3137,9 +3719,10 @@ BEGIN
       WHERE svcHandler = service
         AND svcHandler IS NOT NULL
      )
-   AND ROWNUM < 2 RETURNING id INTO rId;
+   AND ROWNUM < 2 RETURNING id, type INTO rId, rType;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   rId := 0;   -- nothing to do
+  rType := 0;
 END;
 /
 
@@ -3153,11 +3736,10 @@ BEGIN
   -- Cf. recreateCastorFile and the DiskCopy statuses 5 and 11
   UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
      SET parent = (SELECT SubRequest.id
-                     FROM SubRequest, DiskCopy, Id2Type
+                     FROM SubRequest, DiskCopy
                     WHERE SubRequest.diskCopy = DiskCopy.id
                       AND DiskCopy.id = dci
-                      AND SubRequest.request = Id2Type.id
-                      AND Id2Type.type <> 37  -- OBJ_PrepareToPut
+                      AND SubRequest.reqType <> 37  -- OBJ_PrepareToPut
                       AND SubRequest.parent = 0
                       AND DiskCopy.status IN (1, 2, 5, 6, 11) -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, STAGEOUT, WAITFS_SCHEDULING
                       AND SubRequest.status IN (0, 1, 2, 4, 13, 14, 6)), -- START, RESTART, RETRY, WAITTAPERECALL, READYFORSCHED, BEINGSCHED, READY
@@ -3172,60 +3754,49 @@ END;
 CREATE OR REPLACE PROCEDURE archiveSubReq(srId IN INTEGER, finalStatus IN INTEGER) AS
   unused INTEGER;
   rId INTEGER;
-  rname VARCHAR2(100);
-  srIds "numList";
+  rName VARCHAR2(100);
+  rType NUMBER := 0;
   clientId INTEGER;
 BEGIN
-  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ request INTO rId
-    FROM SubRequest
-   WHERE id = srId;
+  UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id) */ SubRequest
+     SET parent = NULL, diskCopy = NULL,  -- unlink this subrequest as it's dead now
+         lastModificationTime = getTime(),
+         status = finalStatus
+   WHERE id = srId
+   RETURNING request, reqType, (SELECT object FROM Type2Obj WHERE type = reqType) INTO rId, rType, rName;
   BEGIN
-    -- Lock the access to the Request
-    SELECT Id2Type.id INTO rId
-      FROM Id2Type
-     WHERE id = rId FOR UPDATE;
-    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-       SET parent = NULL, diskCopy = NULL,  -- unlink this subrequest as it's dead now
-           lastModificationTime = getTime(),
-           status = finalStatus
-     WHERE id = srId;
-    BEGIN
-      -- Try to see whether another subrequest in the same
-      -- request is still being processed
-      SELECT /*+ INDEX(Subrequest I_Subrequest_Request)*/ id INTO unused FROM SubRequest
-       WHERE request = rId AND status NOT IN (8, 9) AND ROWNUM < 2;  -- all but {FAILED_,}FINISHED
-    EXCEPTION WHEN NO_DATA_FOUND THEN
-      -- All subrequests have finished, we can archive
-      SELECT object INTO rname
-        FROM Id2Type, Type2Obj
-       WHERE id = rId
-         AND Type2Obj.type = Id2Type.type;
-      -- drop the associated Client entity and all Id2Type entries
-      EXECUTE IMMEDIATE
-        'BEGIN SELECT client INTO :cId FROM '|| rname ||' WHERE id = :rId; END;'
-        USING OUT clientId, IN rId;
-      DELETE FROM Client WHERE id = clientId;
-      DELETE FROM Id2Type WHERE id IN (rId, clientId);
-      SELECT /*+ INDEX(Subrequest I_Subrequest_Request)*/ id BULK COLLECT INTO srIds
-        FROM SubRequest
-       WHERE request = rId;
-      FORALL i IN srIds.FIRST .. srIds.LAST
-        DELETE FROM Id2Type WHERE id = srIds(i);
-      -- archive the successful subrequests      
-      UPDATE /*+ INDEX(SubRequest I_SubRequest_Request) */ SubRequest
-         SET status = 11    -- ARCHIVED
-       WHERE request = rId
-         AND status = 8;  -- FINISHED
-    END;
+    -- Try to see whether another subrequest in the same
+    -- request is still being processed
+    SELECT id INTO unused FROM SubRequest
+     WHERE request = rId AND status NOT IN (8, 9) AND ROWNUM < 2;  -- all but {FAILED_,}FINISHED
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- No data found here means that the Id2Type entry is not there
-    -- and the subrequest was already archived: just update this subrequest,
-    -- don't bother with the whole request. Note that this could
-    -- happen only if someone archives an already archived subrequest.
-    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-       SET lastModificationTime = getTime(),
-           status = finalStatus
-     WHERE id = srId;
+    -- All subrequests have finished, we can archive:
+    -- take lock on the request (it is enough the following be
+    -- executed serially, multiple executions are idempotent)
+    -- and drop the associated Client entity
+    EXECUTE IMMEDIATE
+      'BEGIN SELECT client INTO :clientId FROM '|| rName ||' WHERE id = :rId FOR UPDATE; END;'
+      USING OUT clientId, IN rId;
+    DELETE FROM Client WHERE id = clientId;
+    -- archive the successful subrequests
+    UPDATE /*+ INDEX(SubRequest I_SubRequest_Request) */ SubRequest
+       SET status = 11    -- ARCHIVED
+     WHERE request = rId
+       AND status = 8;  -- FINISHED
+    -- in case of repack, change the status of the request
+    IF rType = 119 THEN
+      DECLARE
+        nbfailures NUMBER;
+      BEGIN
+        SELECT count(*) INTO nbfailures FROM SubRequest
+         WHERE request = rId
+           AND status = dconst.SUBREQUEST_FAILED_FINISHED
+           AND ROWNUM < 2;
+        UPDATE StageRepackRequest
+           SET status = CASE nbfailures WHEN 1 THEN tconst.REPACK_FAILED ELSE tconst.REPACK_FINISHED END
+         WHERE id = rId;
+      END;
+    END IF;
   END;
 END;
 /
@@ -3265,22 +3836,6 @@ BEGIN
     IF (c = 0) THEN
       RETURN 1;
     END IF;
-    -- This is deprecated and should go when the jobmanager and LSF are dropped
-    DECLARE
-      noLSF VARCHAR2(2048);
-    BEGIN
-      noLSF := getConfigOption('RmMaster', 'NoLSFMode', 'no');
-      IF LOWER(noLSF) != 'yes' THEN
-        SELECT sum(xsize) INTO reservedSpace
-          FROM SubRequest, StagePutRequest
-         WHERE SubRequest.request = StagePutRequest.id
-           AND SubRequest.status = 6  -- READY
-           AND StagePutRequest.svcClass = svcClassId;
-        IF availSpace < reservedSpace THEN
-          RETURN 1;
-        END IF;
-      END IF;
-    END;
   END IF;
   RETURN 0;
 END;
@@ -3425,7 +3980,6 @@ BEGIN
            errorCode = 28, -- ENOSPC
            errorMessage = 'File creation canceled since diskPool is full'
      WHERE id = srId;
-    COMMIT;
     RETURN;
   END IF;
   -- Resolve the destination service class id to a name
@@ -3461,7 +4015,6 @@ BEGIN
            errorCode = 13, -- EACCES
            errorMessage = 'Insufficient user privileges to trigger a tape recall or file replication to the '''||destSvcClass||''' service class'
      WHERE id = srId;
-    COMMIT;
     RETURN;
   END IF;
   -- Try to find a diskcopy to replicate
@@ -3515,7 +4068,6 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
                'All copies of this file are unavailable for now. Please retry later'
            END
      WHERE id = srId;
-    COMMIT;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- Check whether the user has the rights to issue a tape recall to
     -- the destination service class.
@@ -3527,7 +4079,6 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
              errorCode = 13, -- EACCES
              errorMessage = 'Insufficient user privileges to trigger a tape recall to the '''||destSvcClass||''' service class'
        WHERE id = srId;
-      COMMIT;
     ELSE
       -- We did not find the very special case so trigger a tape recall.
       dcId := 0;
@@ -3589,12 +4140,9 @@ BEGIN
   INSERT INTO Client (ipaddress, port, id, version, secure)
     VALUES (0, 0, ids_seq.nextval, 0, 0)
   RETURNING id INTO clientId;
-  INSERT INTO Id2Type (id, type) VALUES (clientId, 129);  -- OBJ_Client
 
   -- Create the StageDiskCopyReplicaRequest. The euid and egid values default to
-  -- 0 here, this indicates the request came from the user root. When the
-  -- jobmanager daemon encounters the StageDiskCopyReplicaRequest it will
-  -- automatically use the stage:st account for submission into LSF.
+  -- 0 here, this indicates the request came from the user root.
   SELECT ids_seq.nextval INTO destDcId FROM Dual;
   INSERT INTO StageDiskCopyReplicaRequest
     (svcclassname, reqid, creationtime, lastmodificationtime, id, svcclass,
@@ -3602,7 +4150,6 @@ BEGIN
   VALUES ((SELECT name FROM SvcClass WHERE id = destSvcId), uuidgen(), gettime(),
      gettime(), ids_seq.nextval, destSvcId, clientId, sourceDcId, destDcId, sourceSvcId)
   RETURNING id INTO reqId;
-  INSERT INTO Id2Type (id, type) VALUES (reqId, 133);  -- OBJ_StageDiskCopyReplicaRequest;
 
   -- Determine the requested filesystem value
   SELECT DiskServer.name || ':' || FileSystem.mountpoint INTO rfs
@@ -3612,14 +4159,13 @@ BEGIN
      AND DiskCopy.id = sourceDcId;
 
   -- Create the SubRequest setting the initial status to READYFORSCHED for
-  -- immediate dispatching i.e no stager processing by the jobmanager daemon.
+  -- immediate dispatching i.e no stager processing
   INSERT INTO SubRequest
     (retrycounter, filename, protocol, xsize, priority, subreqid, flags, modebits,
      creationtime, lastmodificationtime, answered, id, diskcopy, castorfile, parent,
-     status, request, getnextstatus, errorcode, requestedfilesystems, svcHandler)
+     status, request, getnextstatus, errorcode, requestedfilesystems, svcHandler, reqType)
   VALUES (0, fileName, 'rfio', fileSize, 0, uuidgen(), 0, 0, gettime(), gettime(),
-     0, srId, destDcId, cfId, 0, 13, reqId, 0, 0, rfs, 'NotNullNeeded');
-  INSERT INTO Id2Type (id, type) VALUES (srId, 27);  -- OBJ_SubRequest
+     0, srId, destDcId, cfId, 0, 13, reqId, 0, 0, rfs, 'NotNullNeeded', 133); -- OBJ_StageDiskCopyReplicaRequest;
 
   -- Create the DiskCopy without filesystem
   buildPathFromFileId(fileId, nsHost, destDcId, rpath);
@@ -3627,7 +4173,6 @@ BEGIN
     (path, id, filesystem, castorfile, status, creationTime, lastAccessTime,
      gcWeight, diskCopySize, nbCopyAccesses, owneruid, ownergid)
   VALUES (rpath, destDcId, 0, cfId, 1, getTime(), getTime(), 0, fileSize, 0, ouid, ogid);  -- WAITDISK2DISKCOPY
-  INSERT INTO Id2Type (id, type) VALUES (destDcId, 5);  -- OBJ_DiskCopy
 END;
 /
 
@@ -3692,7 +4237,6 @@ BEGIN
      creationTime, lastAccessTime, gcWeight, diskCopySize, nbCopyAccesses, owneruid, ownergid)
   VALUES (dcPath, dcId, fsId, cfId, 0,   -- STAGED
           getTime(), getTime(), GCw, 0, 0, ouid, ogid);
-  INSERT INTO Id2Type (id, type) VALUES (dcId, 5);  -- OBJ_DiskCopy
   -- link to the SubRequest and schedule an access if requested
   IF schedule = 0 THEN
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET diskCopy = dcId WHERE id = srId;
@@ -3819,7 +4363,6 @@ BEGIN
     -- DiskCopy is in WAIT*, make SubRequest wait on previous subrequest and do not schedule
     makeSubRequestWait(srId, dcIds(1));
     result := -2;
-    COMMIT;
     RETURN;
   END IF;
 
@@ -3855,37 +4398,22 @@ BEGIN
     -- Yes, we have some
     -- List available diskcopies for job scheduling
     OPEN sources
-      FOR SELECT id, path, status, fsRate, mountPoint, name FROM (
-            SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ DiskCopy.id, DiskCopy.path, DiskCopy.status,
-                   FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
-                                  FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams,
-                                  FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) fsRate,
-                   FileSystem.mountPoint, DiskServer.name,
-                   -- Use the power of analytics to create a cumulative value of the length
-                   -- of the diskserver name and filesystem mountpoint. We do this because
-                   -- when there are many many copies of a file the requested filesystems
-                   -- string created by the stager from these results e.g. ds1:fs1|ds2:fs2|
-                   -- can exceed the maximum length allowed by LSF causing the submission
-                   -- process to fail.
-                   -- XXX to be reviewed once LSF is dropped.
-                   SUM(LENGTH(DiskServer.name) + LENGTH(FileSystem.mountPoint) + 2)
-                   OVER (ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate,
-                                                 FileSystem.nbReadStreams,
-                                                 FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams,
-                                                 FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams)
-                          DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) bytes
-              FROM DiskCopy, SubRequest, FileSystem, DiskServer, DiskPool2SvcClass
-             WHERE SubRequest.id = srId
-               AND SubRequest.castorfile = DiskCopy.castorfile
-               AND FileSystem.diskpool = DiskPool2SvcClass.parent
-               AND DiskPool2SvcClass.child = svcClassId
-               AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
-               AND FileSystem.id = DiskCopy.fileSystem
-               AND FileSystem.status = 0  -- PRODUCTION
-               AND DiskServer.id = FileSystem.diskServer
-               AND DiskServer.status = 0  -- PRODUCTION
-             ORDER BY fsRate DESC)
-         WHERE bytes <= 200;
+      FOR SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ DiskCopy.id, DiskCopy.path, DiskCopy.status,
+                 FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
+                                FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams,
+                                FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) fsRate,
+                 FileSystem.mountPoint, DiskServer.name,
+            FROM DiskCopy, SubRequest, FileSystem, DiskServer, DiskPool2SvcClass
+           WHERE SubRequest.id = srId
+             AND SubRequest.castorfile = DiskCopy.castorfile
+             AND FileSystem.diskpool = DiskPool2SvcClass.parent
+             AND DiskPool2SvcClass.child = svcClassId
+             AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
+             AND FileSystem.id = DiskCopy.fileSystem
+             AND FileSystem.status = 0  -- PRODUCTION
+             AND DiskServer.id = FileSystem.diskServer
+             AND DiskServer.status = 0  -- PRODUCTION
+           ORDER BY fsRate DESC;
     -- Internal replication processing
     IF upd = 1 OR (nbDCs = 1 AND dcStatus = 6) THEN -- DISKCOPY_STAGEOUT
       -- replication forbidden
@@ -3968,7 +4496,6 @@ BEGIN
          SET parent = d2dsrId, status = 5  -- WAITSUBREQ
        WHERE id = srId;
       result := -2;
-      COMMIT;
       RETURN;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- not found, we may have to schedule a disk to disk copy or trigger a recall
@@ -4038,7 +4565,6 @@ BEGIN
         INSERT INTO TapeCopy (id, copyNb, castorFile, status)
              VALUES (ids_seq.nextval, i, cfId, 0) -- TAPECOPY_CREATED
         RETURNING id INTO tcId;
-        INSERT INTO Id2Type (id, type) VALUES (tcId, 30); -- OBJ_TapeCopy
       END LOOP;
     END IF;
   END IF;
@@ -4138,6 +4664,90 @@ BEGIN
 END;
 /
 
+/* PL/SQL procedure implementing selectTape
+ * get the given tape or create it
+ * Note that we run in an autonomous transaction.
+ */
+CREATE OR REPLACE FUNCTION selectTapeForRecall(vid IN VARCHAR2, newStatus IN INTEGER)
+RETURN INTEGER AS
+  PRAGMA AUTONOMOUS_TRANSACTION;
+  CONSTRAINT_VIOLATED EXCEPTION;
+  PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -00001);
+  tapeId INTEGER;
+  status INTEGER;
+BEGIN
+  -- try to get the tape, assuming it exists
+  -- Note the hardcoded side, as this column is deprecated
+  SELECT id, status INTO tapeId, status FROM Tape WHERE vid = vid AND tpmode = tconst.TPMODE_READ AND side = 0;
+  IF status = tconst.TAPE_UNUSED OR status = tconst.TAPE_FINISHED OR
+     status = tconst.TAPE_FAILED OR status = tconst.TAPE_UNKNOWN THEN
+    UPDATE Tape SET status = newStatus WHERE id = tapeId;
+    COMMIT;
+  END IF;
+  RETURN tapeId;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- no tape found, create it
+  BEGIN
+    SELECT ids_seq.nextval INTO tapeId FROM DUAL;
+    INSERT INTO TAPE (id, vid, side, tpmode, status)
+    VALUES (tapeId, vid, 0, tconst.TPMODE_READ, newStatus);
+  EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
+    -- insertion failed with constraint violated.
+    -- This means that somebody else was faster.
+    -- So go back to select
+    SELECT id INTO tapeId FROM Tape WHERE vid = vid AND tpmode = tconst.TPMODE_READ AND side = 0;
+    IF status = tconst.TAPE_UNUSED OR status = tconst.TAPE_FINISHED OR
+       status = tconst.TAPE_FAILED OR status = tconst.TAPE_UNKNOWN THEN
+      UPDATE Tape SET status = newStatus WHERE id = tapeId;
+    END IF;
+  END;
+  COMMIT;
+  RETURN tapeId;
+END;
+
+
+/* PL/SQL procedure implementing triggerRepackRecall
+ * this creates all rows needed to recall a given file in the repack context
+ * that is Tape (if needed), Segment, TapeCopy, DiskCopy and updates
+ * the subrequest.
+ */
+CREATE OR REPLACE PROCEDURE triggerRepackRecall
+(srId IN INTEGER, cfId IN INTEGER, tapeId IN INTEGER, fileId IN INTEGER, nsHost IN VARCHAR2, block IN RAW,
+ fseq IN INTEGER, copynb IN INTEGER, priority IN INTEGER, euid IN INTEGER, egid IN INTEGER) AS
+  segId INTEGER;
+  tcId INTEGER;
+  dcId INTEGER;
+  recallPolicy VARCHAR2(2048);
+  dcpath VARCHAR2(2048);
+  hexblock VARCHAR2(8);
+  block0 INTEGER;
+  block1 INTEGER;
+  block2 INTEGER;
+  block3 INTEGER;
+BEGIN
+  -- get needed ids
+  SELECT ids_seq.nextval INTO segId FROM DUAL;
+  SELECT ids_seq.nextval INTO tcId FROM DUAL;
+  SELECT ids_seq.nextval INTO dcId FROM DUAL;
+  -- insert a Segment
+  hexblock := RAWTOHEX(block);
+  block0 := TO_NUMBER(SUBSTR(hexblock,1,2),'XX');
+  block1 := TO_NUMBER(SUBSTR(hexblock,3,2),'XX');
+  block2 := TO_NUMBER(SUBSTR(hexblock,5,2),'XX');
+  block3 := TO_NUMBER(SUBSTR(hexblock,7,2),'XX');
+  INSERT INTO Segment (id, blockId0, blockId1, blockId2, blockId3, fseq, creationTime, status, copy, tape, priority)
+  VALUES (segId, block0, block1, block2, block3, fseq, getTime(), tconst.SEGMENT_UNPROCESSED, tcId, tapeId, priority);
+  -- insert a TapeCopy
+  INSERT INTO TapeCopy (id, copyNb, status, castorFile, fseq)
+  VALUES (tcId, copynb, tconst.TAPECOPY_TOBERECALLED, cfId, fseq);
+  -- insert a DiskCopy
+  buildPathFromFileId(fileId, nsHost, dcId, dcPath);
+  INSERT INTO DiskCopy (id, status, creationTime, castorFile, ownerUid, ownerGid, path)
+  VALUES (dcId, dconst.DISKCOPY_WAITTAPERECALL, getTime(), cfId, euid, egid, dcPath);
+  -- udpate SubRequest
+  UPDATE SubRequest SET diskcopy = dcId, status = dconst.SUBREQUEST_WAITTAPERECALL WHERE id = srId;
+END;
+/
 
 /* PL/SQL method implementing processPrepareRequest */
 /* the result output is a DiskCopy status for STAGED, DISK2DISKCOPY or RECALL,
@@ -4188,7 +4798,7 @@ BEGIN
        AND FileSystem.status = 0 -- PRODUCTION
        AND FileSystem.diskserver = DiskServer.id
        AND DiskServer.status = 0 -- PRODUCTION
-       AND DiskCopy.status IN (0, 6, 10)  -- STAGED, STAGEOUT, CANBEMIGR
+       AND DiskCopy.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_STAGEOUT, dconst.DISKCOPY_CANBEMIGR)
      UNION ALL
     SELECT /*+ INDEX(StageDiskCopyReplicaRequest I_StageDiskCopyReplic_DestDC) */ DiskCopy.id
       FROM DiskCopy, StageDiskCopyReplicaRequest
@@ -4247,11 +4857,10 @@ BEGIN
           -- so we simply fail this repack and rely on Repack to submit
           -- such double tape repacks one by one.
           UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-             SET status = 7,  -- FAILED
+             SET status = 9,  -- FAILED
                  errorCode = 16,  -- EBUSY
                  errorMessage = 'File is currently being written or migrated'
            WHERE id = srId;
-          COMMIT;
           result := -1;  -- user error
         END;
       END;
@@ -4297,7 +4906,6 @@ BEGIN
                errorCode = 16,  -- EBUSY
                errorMessage = 'File is currently being repacked'
          WHERE id = srId;
-        COMMIT;
         result := -1;  -- user error
         RETURN;
       END IF;
@@ -4345,12 +4953,11 @@ BEGIN
   -- Check whether there is a Put|Update going on
   -- If any, we'll wait on one of them
   BEGIN
-    SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ subrequest.id INTO putSubReq
-      FROM SubRequest, Id2Type
-     WHERE SubRequest.castorfile = cfId
-       AND SubRequest.request = Id2Type.id
-       AND Id2Type.type IN (40, 44)  -- Put, Update
-       AND SubRequest.status IN (0, 1, 2, 3, 6, 13, 14) -- START, RESTART, RETRY, WAITSCHED, READY, READYFORSCHED, BEINGSCHED
+    SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ id INTO putSubReq
+      FROM SubRequest
+     WHERE castorfile = cfId
+       AND reqType IN (40, 44)  -- Put, Update
+       AND status IN (0, 1, 2, 3, 6, 13, 14) -- START, RESTART, RETRY, WAITSCHED, READY, READYFORSCHED, BEINGSCHED
        AND ROWNUM < 2;
     -- we've found one, we wait
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
@@ -4382,7 +4989,6 @@ BEGIN
         errorMessage = 'putDone without a put, or wrong service class'
       WHERE id = rsubReqId;
       result := 0;  -- no go
-      COMMIT;
       RETURN;
     END IF;
     -- All checks have been completed, let's do it
@@ -4450,7 +5056,6 @@ BEGIN
                errorCode = 16, -- EBUSY
                errorMessage = 'A prepareToPut is running in another service class for this file'
          WHERE id = srId;
-        COMMIT;
         RETURN;
       END IF;
       -- if we got here, we are a Put/Update inside a PrepareToPut
@@ -4484,7 +5089,6 @@ BEGIN
                errorCode = 16, -- EBUSY
                errorMessage = 'Another prepareToPut/Update is ongoing for this file'
          WHERE id = srId;
-        COMMIT;
         RETURN;
       END IF;
       -- Everything is ok then
@@ -4515,7 +5119,6 @@ BEGIN
            errorCode = 28, -- ENOSPC
            errorMessage = 'File creation canceled since disk pool is full'
      WHERE id = srId;
-    COMMIT;
     RETURN;
   END IF;
   IF contextPIPP = 0 THEN
@@ -4530,7 +5133,6 @@ BEGIN
              errorCode = 22, -- EINVAL
              errorMessage = 'File recreation canceled since this service class doesn''t provide tape backend'
        WHERE id = srId;
-      COMMIT;
       RETURN;
     END IF;
     -- check if recreation is possible for TapeCopies
@@ -4545,7 +5147,6 @@ BEGIN
              errorCode = 16, -- EBUSY
              errorMessage = 'File recreation canceled since file is being migrated'
         WHERE id = srId;
-      COMMIT;
       RETURN;
     END IF;
     -- check if recreation is possible for DiskCopies
@@ -4560,7 +5161,6 @@ BEGIN
              errorCode = 16, -- EBUSY
              errorMessage = 'File recreation canceled since file is either being recalled, or replicated or created by another user'
        WHERE id = srId;
-      COMMIT;
       RETURN;
     END IF;
     -- delete all tapeCopies
@@ -4574,7 +5174,6 @@ BEGIN
     buildPathFromFileId(fid, nh, dcId, rpath);
     INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status, creationTime, lastAccessTime, gcWeight, diskCopySize, nbCopyAccesses, owneruid, ownergid)
          VALUES (rpath, dcId, 0, cfId, 5, getTime(), getTime(), 0, 0, 0, ouid, ogid); -- status WAITFS
-    INSERT INTO Id2Type (id, type) VALUES (dcId, 5); -- OBJ_DiskCopy
     rstatus := 5; -- WAITFS
     rmountPoint := '';
     rdiskServer := '';
@@ -4602,10 +5201,9 @@ BEGIN
           srParent NUMBER;
         BEGIN
           -- look for it
-          SELECT /*+ INDEX(Subrequest I_Subrequest_DiskCopy)*/ SubRequest.id INTO srParent
-            FROM SubRequest, Id2Type
-           WHERE request = Id2Type.id
-             AND type IN (40, 44)  -- Put, Update
+          SELECT /*+ INDEX(Subrequest I_Subrequest_DiskCopy)*/ id INTO srParent
+            FROM SubRequest
+           WHERE reqType IN (40, 44)  -- Put, Update
              AND diskCopy = dcId
              AND status IN (13, 14, 6)  -- READYFORSCHED, BEINGSCHED, READY
              AND ROWNUM < 2;   -- if we have more than one just take one of them
@@ -4654,7 +5252,9 @@ BEGIN
 END;
 /
 
-/* PL/SQL method implementing selectCastorFile */
+/* PL/SQL method implementing selectCastorFile
+ * This is only a wrapper on selectCastorFileInternal
+ */
 CREATE OR REPLACE PROCEDURE selectCastorFile (fId IN INTEGER,
                                               nh IN VARCHAR2,
                                               sc IN INTEGER,
@@ -4665,14 +5265,32 @@ CREATE OR REPLACE PROCEDURE selectCastorFile (fId IN INTEGER,
                                               lut IN NUMBER,
                                               rid OUT INTEGER,
                                               rfs OUT INTEGER) AS
-  CONSTRAINT_VIOLATED EXCEPTION;
-  PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
   nsHostName VARCHAR2(2048);
-  previousLastKnownFileName VARCHAR2(2048);
-  fcId NUMBER;
 BEGIN
   -- Get the stager/nsHost configuration option
   nsHostName := getConfigOption('stager', 'nsHost', nh);
+  -- call internal method
+  selectCastorFileInternal(fId, nsHostName, sc, fc, fs, fn, srId, lut, TRUE, rid, rfs);
+END;
+/
+
+/* PL/SQL method implementing selectCastorFile */
+CREATE OR REPLACE PROCEDURE selectCastorFileInternal (fId IN INTEGER,
+                                                      nh IN VARCHAR2,
+                                                      sc IN INTEGER,
+                                                      fc IN INTEGER,
+                                                      fs IN INTEGER,
+                                                      fn IN VARCHAR2,
+                                                      srId IN NUMBER,
+                                                      lut IN NUMBER,
+                                                      waitForLock IN BOOLEAN,
+                                                      rid OUT INTEGER,
+                                                      rfs OUT INTEGER) AS
+  CONSTRAINT_VIOLATED EXCEPTION;
+  PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
+  previousLastKnownFileName VARCHAR2(2048);
+  fcId NUMBER;
+BEGIN
   -- Resolve the fileclass
   BEGIN
     SELECT id INTO fcId FROM FileClass WHERE classId = fc;
@@ -4684,7 +5302,7 @@ BEGIN
     SELECT id, fileSize, lastKnownFileName
       INTO rid, rfs, previousLastKnownFileName
       FROM CastorFile
-     WHERE fileId = fid AND nsHost = nsHostName;
+     WHERE fileId = fid AND nsHost = nh;
     -- In case its filename has changed, take care that the new name is
     -- not already the lastKnownFileName of another file, that was also
     -- renamed but for which the lastKnownFileName has not been updated
@@ -4697,7 +5315,11 @@ BEGIN
     -- take a lock on the file. Note that the file may have disappeared in the
     -- meantime, this is why we first select (potentially having a NO_DATA_FOUND
     -- exception) before we update.
-    SELECT id INTO rid FROM CastorFile WHERE id = rid FOR UPDATE;
+    IF waitForLock THEN
+      SELECT id INTO rid FROM CastorFile WHERE id = rid FOR UPDATE;
+    ELSE
+      SELECT id INTO rid FROM CastorFile WHERE id = rid FOR UPDATE NOWAIT;
+    END IF;
     -- The file is still there, so update lastAccessTime and lastKnownFileName.
     UPDATE CastorFile SET lastAccessTime = getTime(),
                           lastKnownFileName = normalizePath(fn)
@@ -4716,17 +5338,21 @@ BEGIN
     -- insert new row
     INSERT INTO CastorFile (id, fileId, nsHost, svcClass, fileClass, fileSize,
                             creationTime, lastAccessTime, lastUpdateTime, lastKnownFileName)
-      VALUES (ids_seq.nextval, fId, nsHostName, sc, fcId, fs, getTime(), getTime(), lut, normalizePath(fn))
+      VALUES (ids_seq.nextval, fId, nh, sc, fcId, fs, getTime(), getTime(), lut, normalizePath(fn))
       RETURNING id, fileSize INTO rid, rfs;
-    INSERT INTO Id2Type (id, type) VALUES (rid, 2); -- OBJ_CastorFile
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET castorFile = rid
      WHERE id = srId;
   END;
 EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
   -- the violated constraint indicates that the file was created by another client
   -- while we were trying to create it ourselves. We can thus use the newly created file
-  SELECT id, fileSize INTO rid, rfs FROM CastorFile
-    WHERE fileId = fid AND nsHost = nsHostName FOR UPDATE;
+  IF waitForLock THEN
+    SELECT id, fileSize INTO rid, rfs FROM CastorFile
+      WHERE fileId = fid AND nsHost = nh FOR UPDATE;
+  ELSE
+    SELECT id, fileSize INTO rid, rfs FROM CastorFile
+      WHERE fileId = fid AND nsHost = nh FOR UPDATE NOWAIT;
+  END IF;
   UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET castorFile = rid
    WHERE id = srId;
 END;
@@ -5029,22 +5655,18 @@ BEGIN
      AND status IN (0, 1, 2, 4, 5, 6, 13); -- START, RESTART, RETRY, WAITTAPERECALL, WAITSUBREQ, READY, READYFORSCHED
   IF srIds.COUNT > 0 THEN
     DECLARE
-      srType INTEGER;
       srUuid VARCHAR(2048);
     BEGIN
       FOR i IN srIds.FIRST .. srIds.LAST LOOP
-        SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ type, subreqId INTO srType, srUuid
-          FROM SubRequest, Id2Type
-         WHERE SubRequest.request = Id2Type.id
-           AND SubRequest.id = srIds(i);
         UPDATE SubRequest
            SET status = CASE
-               WHEN status IN (6, 13) AND srType = 133 THEN 9 ELSE 7
+                 WHEN status IN (6, 13) AND reqType = 133 THEN 9 ELSE 7
                END,  -- FAILED_FINISHED for DiskCopyReplicaRequests in status READYFORSCHED or READY, otherwise FAILED
                -- this so that user requests in status WAITSUBREQ are always marked FAILED even if they wait on a replication
                errorCode = 4,  -- EINTR
                errorMessage = 'Canceled by another user request'
-         WHERE id = srIds(i) OR parent = srIds(i);
+         WHERE id = srIds(i) OR parent = srIds(i)
+         RETURNING subreqId INTO srUuid;
         -- make the scheduler aware so that it can remove the transfer from the queues if needed
         INSERT INTO TransfersToAbort VALUES (srUuid);
       END LOOP;
@@ -5111,20 +5733,20 @@ END;
 /* PL/SQL method implementing updateAndCheckSubRequest */
 CREATE OR REPLACE PROCEDURE updateAndCheckSubRequest(srId IN INTEGER, newStatus IN INTEGER, result OUT INTEGER) AS
   reqId INTEGER;
+  rName VARCHAR2(100);
 BEGIN
-  -- Lock the access to the Request
-  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ Id2Type.id INTO reqId
-    FROM SubRequest, Id2Type
-   WHERE SubRequest.id = srId
-     AND Id2Type.id = SubRequest.request
-     FOR UPDATE OF Id2Type.id;
   -- Update Status
   UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
      SET status = newStatus,
          answered = 1,
          lastModificationTime = getTime(),
          getNextStatus = decode(newStatus, 6, 1, 8, 1, 9, 1, 0)  -- READY, FINISHED or FAILED_FINISHED -> GETNEXTSTATUS_FILESTAGED
-   WHERE id = srId;
+   WHERE id = srId
+   RETURNING request, (SELECT object FROM Type2Obj WHERE type = reqType) INTO reqId, rName;
+  -- Lock the access to the Request
+  EXECUTE IMMEDIATE
+    'BEGIN SELECT id INTO :reqId FROM '|| rName ||' WHERE id = :reqId FOR UPDATE; END;'
+    USING IN OUT reqId;
   -- Check whether it was the last subrequest in the request
   SELECT /*+ INDEX(Subrequest I_Subrequest_Request)*/ id INTO result FROM SubRequest
    WHERE request = reqId
@@ -5140,7 +5762,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 END;
 /
 
-/* PL/SQL function to elect a rmmaster daemon in NoLSFMode */
+/* PL/SQL function to elect a rmmaster master */
 CREATE OR REPLACE FUNCTION isMonitoringMaster RETURN NUMBER IS
   locked EXCEPTION;
   PRAGMA EXCEPTION_INIT (locked, -54);
@@ -5194,10 +5816,6 @@ BEGIN
         ELSE
           -- There is no outstanding process to drain the diskservers
           -- filesystems so we can now delete it.
-          DELETE FROM Id2Type WHERE id = dsId;
-          DELETE FROM Id2Type WHERE id IN
-            (SELECT /*+ CARDINALITY(fsIdTable 5) */ *
-               FROM TABLE (fsIds) fsIdTable);
           DELETE FROM FileSystem WHERE diskServer = dsId;
           DELETE FROM DiskServer WHERE name = machines(i);
         END IF;
@@ -5230,7 +5848,6 @@ BEGIN
                  machineValues(ind + 3), machineValues(ind + 4),
                  machineValues(ind + 5), machineValues(ind + 6),
                  machineValues(ind + 7), machineValues(ind + 8));
-        INSERT INTO Id2Type (id, type) VALUES (ids_seq.currval, 8); -- OBJ_DiskServer
       END;
     END IF;
     -- Release the lock on the DiskServer as soon as possible to prevent
@@ -5260,7 +5877,6 @@ BEGIN
           RETURNING fs INTO found;
           -- No entry found so delete the filesystem.
           IF found = 0 THEN
-            DELETE FROM Id2Type WHERE id = fs;
             DELETE FROM FileSystem WHERE id = fs;
           END IF;
         EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -5302,7 +5918,6 @@ BEGIN
                   fileSystemValues(ind + 5), fileSystemValues(ind + 6),
                   fileSystemValues(ind + 7), fileSystemValues(ind + 8),
                   ids_seq.nextval, 0, dsId, 2, 1); -- FILESYSTEM_DISABLED, ADMIN_FORCE
-          INSERT INTO Id2Type (id, type) VALUES (ids_seq.currval, 12); -- OBJ_FileSystem
         END;
       END IF;
       ind := ind + 14;
@@ -5320,7 +5935,7 @@ CREATE OR REPLACE PROCEDURE selectPriority(
   inUid IN INTEGER,
   inGid IN INTEGER,
   inPriority IN INTEGER,
-  dbInfo OUT castor.PriorityMap_Cur) AS
+  dbInfo OUT castor.TapeAccessPriority_Cur) AS
 BEGIN
   OPEN dbInfo FOR
     SELECT euid, egid, priority FROM PriorityMap
@@ -5478,7 +6093,6 @@ CREATE OR REPLACE PROCEDURE putStart
   srSvcClass INTEGER;
   fsId INTEGER;
   prevFsId INTEGER;
-  blah NUMBER;
 BEGIN
   -- Get diskCopy and subrequest related information
   SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/
@@ -5496,20 +6110,6 @@ BEGIN
   IF srStatus IN (7, 9, 10) THEN -- FAILED, FAILED_FINISHED, FAILED_ANSWERING
     raise_application_error(-20104, 'SubRequest canceled while queuing in scheduler. Giving up.');
   END IF;
-  -- Check to see if the proposed diskserver and filesystem selected by the
-  -- scheduler to run the job is in the correct service class.
-  -- XXX deprecated to be removed when LSF is dropped
-  BEGIN
-    SELECT FileSystem.id INTO fsId
-      FROM DiskServer, FileSystem, DiskPool2SvcClass
-     WHERE FileSystem.diskserver = DiskServer.id
-       AND FileSystem.diskPool = DiskPool2SvcClass.parent
-       AND DiskPool2SvcClass.child = srSvcClass
-       AND DiskServer.name = selectedDiskServer
-       AND FileSystem.mountPoint = selectedMountPoint;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    raise_application_error(-20114, 'Job scheduled to the wrong service class. Giving up.');
-  END;
   -- Check that a job has not already started for this diskcopy. Refer to
   -- bug #14358
   IF prevFsId > 0 AND prevFsId <> fsId THEN
@@ -5566,19 +6166,6 @@ BEGIN
     FROM CastorFile, SubRequest
    WHERE CastorFile.id = SubRequest.castorFile
      AND SubRequest.id = srId FOR UPDATE OF CastorFile;
-  -- Check to see if the proposed diskserver and filesystem selected by the
-  -- scheduler to run the job is in the correct service class.
-  BEGIN
-    SELECT FileSystem.id INTO fsId
-      FROM DiskServer, FileSystem, DiskPool2SvcClass
-     WHERE FileSystem.diskserver = DiskServer.id
-       AND FileSystem.diskPool = DiskPool2SvcClass.parent
-       AND DiskPool2SvcClass.child = srSvcClass
-       AND DiskServer.name = selectedDiskServer
-       AND FileSystem.mountPoint = selectedMountPoint;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    raise_application_error(-20114, 'Job scheduled to the wrong service class. Giving up.');
-  END;
   -- Try to find local DiskCopy
   SELECT /*+ INDEX(DiskCopy I_DiskCopy_Castorfile) */ id, nbCopyAccesses, gcWeight, creationTime
     INTO dcId, nbac, gcw, cTime
@@ -5588,7 +6175,7 @@ BEGIN
      AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
      AND ROWNUM < 2;
   -- We found it, so we are settled and we'll use the local copy.
-  -- It might happen that we have more than one, because LSF may have
+  -- It might happen that we have more than one, because the scheduling may have
   -- scheduled a replication on a fileSystem which already had a previous diskcopy.
   -- We don't care and we randomly took the first one.
   -- First we will compute the new gcWeight of the diskcopy
@@ -5967,7 +6554,6 @@ BEGIN
   -- without waiting for garbage collection as the transfer was never started
   IF fsId = 0 THEN
     DELETE FROM DiskCopy WHERE id = dcId;
-    DELETE FROM Id2Type WHERE id = dcId;
   END IF;
   -- Continue draining process
   drainFileSystem(srcFsId);
@@ -6059,15 +6645,11 @@ BEGIN
   ELSE
     -- If put inside PrepareToPut/Update, restart any PutDone currently
     -- waiting on this put/update
-    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
+    UPDATE /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest
        SET status = 1, parent = 0 -- RESTART
-     WHERE id IN
-      (SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest.id
-         FROM SubRequest, Id2Type
-        WHERE SubRequest.request = Id2Type.id
-          AND Id2Type.type = 39       -- PutDone
-          AND SubRequest.castorFile = cfId
-          AND SubRequest.status = 5); -- WAITSUBREQ
+     WHERE reqType = 39  -- PutDone
+       AND castorFile = cfId
+       AND status = 5; -- WAITSUBREQ
   END IF;
   -- Archive Subrequest
   archiveSubReq(srId, 8);  -- FINISHED
@@ -6152,7 +6734,6 @@ BEGIN
     -- thus cleanup DiskCopy and maybe the CastorFile
     -- (the physical file is dropped by the job)
     DELETE FROM DiskCopy WHERE id = dcId;
-    DELETE FROM Id2Type WHERE id = dcId;
     deleteCastorFile(cfId);
   END;
 END;
@@ -6162,98 +6743,6 @@ END;
 CREATE OR REPLACE PROCEDURE putFailedProc(srId IN NUMBER) AS
 BEGIN
   putFailedProcExt(srId, 1015, 'Job terminated with failure');  -- SEINTERNAL
-END;
-/
-
-/* PL/SQL function implementing checkAvailOfSchedulerRFS, this function can be
- * used to determine if any of the requested filesystems specified by a
- * transfer are available. Returns 0 if at least one requested filesystem is
- * available otherwise 1.
- * This is deprecated and should go when the jobmanager and LSF are dropped
- */
-CREATE OR REPLACE FUNCTION checkAvailOfSchedulerRFS
-  (rfs IN VARCHAR2, reqType IN NUMBER)
-RETURN NUMBER IS
-  rtn NUMBER;
-BEGIN
-  -- Count the number of requested filesystems which are available
-  SELECT count(*) INTO rtn
-    FROM DiskServer, FileSystem
-   WHERE DiskServer.id = FileSystem.diskServer
-     AND DiskServer.name || ':' || FileSystem.mountPoint IN
-       (SELECT /*+ CARDINALITY(rfsTable 10) */ *
-          FROM TABLE (strTokenizer(rfs, '|')) rfsTable)
-     -- For a requested filesystem to be available the following criteria
-     -- must be meet:
-     --  - The diskserver and filesystem must not be in a DISABLED state
-     --  - For StageDiskCopyReplicaRequests all other states are accepted
-     --  - For all other requests the diskserver and filesystem must be in
-     --    PRODUCTION
-     AND decode(DiskServer.status, 2, 1,    -- Exclude DISABLED Diskservers
-           decode(FileSystem.status, 2, 1,  -- Exclude DISABLED Filesystems
-             decode(reqType, 133, 0,
-                 decode(FileSystem.status + DiskServer.status, 0, 0, 1)))) = 0;
-  IF rtn > 0 THEN
-    RETURN 0;  -- We found some available requested filesystems
-  END IF;
-  RETURN 1;
-END;
-/
-
-
-/* PL/SQL method implementing getSchedulerJobs. This method lists all known
- * transfers and whether they should be terminated because no space exists
- * in the target service class or none of the requested filesystems are
- * available.
- * This is deprecated and should go when the jobmanager and LSF are dropped
- * It has been replaced by getSchedulerJobs2
- */
-CREATE OR REPLACE PROCEDURE getSchedulerJobs
-  (transfers OUT castor.SchedulerJobs_Cur) AS
-BEGIN
-  OPEN transfers FOR
-    -- Use the NO_MERGE hint to prevent Oracle from executing the
-    -- checkFailJobsWhenNoSpace function for every row in the output. In
-    -- situations where there are many PENDING transfers in the scheduler
-    -- this can be extremely inefficient and expensive.
-    SELECT /*+ NO_MERGE(NoSpSvc) */  -- NoSpSvc is a SvcClass table alias
-           SR.subReqId, Request.reqId, NoSpSvc.NoSpace,
-           -- If there are no requested filesystems, refer to the NFSSvc
-           -- output otherwise call the checkAvailOfSchedulerRFS function
-           decode(SR.requestedFileSystems, NULL, NoFSSvc.NoFSAvail,
-             checkAvailOfSchedulerRFS(SR.requestedFileSystems,
-                                      Request.reqType)) NoFSAvail
-      FROM SubRequest SR,
-        -- Union of all requests that could result in scheduler transfers
-        (SELECT id, svcClass, reqid, 40  AS reqType
-           FROM StagePutRequest                     UNION ALL
-         SELECT id, svcClass, reqid, 133 AS reqType
-           FROM StageDiskCopyReplicaRequest         UNION ALL
-         SELECT id, svcClass, reqid, 35  AS reqType
-           FROM StageGetRequest                     UNION ALL
-         SELECT id, svcClass, reqid, 44  AS reqType
-           FROM StageUpdateRequest) Request,
-        -- Table of all service classes with a boolean flag to indicate
-        -- if space is available
-        (SELECT id, checkFailJobsWhenNoSpace(id) NoSpace
-           FROM SvcClass) NoSpSvc,
-        -- Table of all service classes with a boolean flag to indicate
-        -- if there are any filesystems in PRODUCTION
-        (SELECT id, nvl(NoFSAvail, 1) NoFSAvail FROM SvcClass
-           LEFT JOIN
-             (SELECT DP2Svc.child, decode(count(*), 0, 1, 0) NoFSAvail
-                FROM DiskServer DS, FileSystem FS, DiskPool2SvcClass DP2Svc
-               WHERE DS.ID = FS.diskServer
-                 AND DS.status = 0  -- DISKSERVER_PRODUCTION
-                 AND FS.diskPool = DP2Svc.parent
-                 AND FS.status = 0  -- FILESYSTEM_PRODUCTION
-               GROUP BY DP2Svc.child) results
-             ON SvcClass.id = results.child) NoFSSvc
-     WHERE SR.status = 6  -- READY
-       AND SR.request = Request.id
-       AND SR.lastModificationTime < getTime() - 60
-       AND NoSpSvc.id = Request.svcClass
-       AND NoFSSvc.id = Request.svcClass;
 END;
 /
 
@@ -6313,68 +6802,6 @@ BEGIN
 END;
 /
 
-/* PL/SQL method implementing jobFailed, providing bulk termination of file
- * transfers.
- * This is deprecated and should go when the jobmanager and LSF are dropped.
- * It has been replaced by jobFailedLockedFile and jobFailedSafe
- */
-CREATE OR REPLACE
-PROCEDURE jobFailed(subReqIds IN castor."strList", errnos IN castor."cnumList",
-                    failedSubReqs OUT castor.JobFailedSubReqList_Cur)
-AS
-  srId  NUMBER;
-  dcId  NUMBER;
-  cfId  NUMBER;
-  rType NUMBER;
-BEGIN
-  -- Clear the temporary table
-  DELETE FROM JobFailedProcHelper;
-  -- Loop over all jobs to fail
-  FOR i IN subReqIds.FIRST .. subReqIds.LAST LOOP
-    BEGIN
-      -- Get the necessary information needed about the request.
-      SELECT /*+ INDEX(Subrequest I_Subrequest_SubreqId)*/ SubRequest.id, SubRequest.diskCopy,
-             Id2Type.type, SubRequest.castorFile
-        INTO srId, dcId, rType, cfId
-        FROM SubRequest, Id2Type
-       WHERE SubRequest.subReqId = subReqIds(i)
-         AND SubRequest.status IN (6, 14)  -- READY, BEINGSCHED
-         AND SubRequest.request = Id2Type.id;
-       -- Lock the CastorFile.
-       SELECT id INTO cfId FROM CastorFile
-        WHERE id = cfId FOR UPDATE;
-       -- Confirm SubRequest status hasn't changed after acquisition of lock
-       SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ id INTO srId FROM SubRequest
-        WHERE id = srId AND status IN (6, 14);  -- READY, BEINGSCHED
-       -- Call the relevant cleanup procedure for the job, procedures that
-       -- would have been called if the job failed on the remote execution host.
-       IF rType = 40 THEN      -- StagePutRequest
-         putFailedProc(srId);
-       ELSIF rType = 133 THEN  -- StageDiskCopyReplicaRequest
-         disk2DiskCopyFailed(dcId, 0);
-       ELSE                    -- StageGetRequest or StageUpdateRequest
-         getUpdateFailedProc(srId);
-       END IF;
-       -- Update the reason for termination, overriding the error code set above
-       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-          SET errorCode = decode(errnos(i), 0, errorCode, errnos(i)),
-              errorMessage = ''
-        WHERE id = srId;
-       -- Record in the JobFailedProcHelper temporary table that an action was
-       -- taken
-       INSERT INTO JobFailedProcHelper VALUES (subReqIds(i));
-       -- Release locks
-       COMMIT;
-    EXCEPTION WHEN NO_DATA_FOUND THEN
-      NULL;  -- The SubRequest may have be removed, nothing to be done.
-    END;
-  END LOOP;
-  -- Return the list of terminated jobs
-  OPEN failedSubReqs FOR
-    SELECT subReqId FROM JobFailedProcHelper;
-END;
-/
-
 /* PL/SQL method implementing transferFailedSafe, providing bulk termination of file
  * transfers.
  */
@@ -6393,13 +6820,11 @@ BEGIN
   FOR i IN subReqIds.FIRST .. subReqIds.LAST LOOP
     BEGIN
       -- Get the necessary information needed about the request.
-      SELECT /*+ INDEX(Subrequest I_Subrequest_SubreqId)*/ SubRequest.id, SubRequest.diskCopy,
-             Id2Type.type, SubRequest.castorFile
+      SELECT /*+ INDEX(Subrequest I_Subrequest_SubreqId)*/ id, diskCopy, reqType, castorFile
         INTO srId, dcId, rType, cfId
-        FROM SubRequest, Id2Type
-       WHERE SubRequest.subReqId = subReqIds(i)
-         AND SubRequest.status IN (6, 14)  -- READY, BEINGSCHED
-         AND SubRequest.request = Id2Type.id;
+        FROM SubRequest
+       WHERE subReqId = subReqIds(i)
+         AND status IN (6, 14);  -- READY, BEINGSCHED
        -- Lock the CastorFile.
        SELECT id INTO cfId FROM CastorFile
         WHERE id = cfId FOR UPDATE;
@@ -6444,12 +6869,11 @@ BEGIN
   FOR i IN subReqId.FIRST .. subReqId.LAST LOOP
     BEGIN
       -- Get the necessary information needed about the request.
-      SELECT SubRequest.id, SubRequest.diskCopy, Id2Type.type
+      SELECT id, diskCopy, reqType
         INTO srId, dcId, rType
-        FROM SubRequest, Id2Type
-       WHERE SubRequest.subReqId = subReqId(i)
-         AND SubRequest.status IN (6, 14)  -- READY, BEINGSCHED
-         AND SubRequest.request = Id2Type.id;
+        FROM SubRequest
+       WHERE subReqId = subReqId(i)
+         AND status IN (6, 14);  -- READY, BEINGSCHED
        -- Update the reason for termination.
        UPDATE SubRequest
           SET errorCode = decode(errno(i), 0, errorCode, errno(i)),
@@ -6468,144 +6892,6 @@ BEGIN
       NULL;  -- The SubRequest may have be removed, nothing to be done.
     END;
   END LOOP;
-END;
-/
-
-/* PL/SQL method implementing jobToSchedule
- * This is deprecated and should go when the jobmanager and LSF are dropped.
- * It has been replaced by transferToSchedule
- */
-CREATE OR REPLACE
-PROCEDURE jobToSchedule(srId OUT INTEGER,              srSubReqId OUT VARCHAR2,
-                        srProtocol OUT VARCHAR2,       srXsize OUT INTEGER,
-                        srRfs OUT VARCHAR2,            reqId OUT VARCHAR2,
-                        cfFileId OUT INTEGER,          cfNsHost OUT VARCHAR2,
-                        reqSvcClass OUT VARCHAR2,      reqType OUT INTEGER,
-                        reqEuid OUT INTEGER,           reqEgid OUT INTEGER,
-                        reqUsername OUT VARCHAR2,      srOpenFlags OUT VARCHAR2,
-                        clientIp OUT INTEGER,          clientPort OUT INTEGER,
-                        clientVersion OUT INTEGER,     clientType OUT INTEGER,
-                        reqSourceDiskCopy OUT INTEGER, reqDestDiskCopy OUT INTEGER,
-                        clientSecure OUT INTEGER,      reqSourceSvcClass OUT VARCHAR2,
-                        reqCreationTime OUT INTEGER,   reqDefaultFileSize OUT INTEGER,
-                        excludedHosts OUT castor.DiskServerList_Cur) AS
-  cfId NUMBER;
-  -- Cursor to select the next candidate for submission to the scheduler orderd
-  -- by creation time.
-  CURSOR c IS
-    SELECT /*+ FIRST_ROWS(10) INDEX(SR I_SubRequest_RT_CT_ID) */ SR.id
-      FROM SubRequest
- PARTITION (P_STATUS_13_14) SR  -- RESTART, READYFORSCHED, BEINGSCHED
-     ORDER BY SR.creationTime ASC;
-  SrLocked EXCEPTION;
-  PRAGMA EXCEPTION_INIT (SrLocked, -54);
-  srIntId NUMBER;
-BEGIN
-  -- Loop on all candidates for submission into LSF
-  OPEN c;
-  LOOP
-    -- Retrieve the next candidate
-    FETCH c INTO srIntId;
-    IF c%NOTFOUND THEN
-      -- There are no candidates available, return a srId of 0, this indicates
-      -- to the job manager that there is nothing to do. The jobt manager will
-      -- try again shortly.
-      RETURN;
-    END IF;
-    BEGIN
-      -- Try to lock the current candidate, verify that the status is valid. A
-      -- valid subrequest is either in READYFORSCHED or has been stuck in
-      -- BEINGSCHED for more than 1800 seconds (30 mins)
-      SELECT /*+ INDEX(SR PK_SubRequest_ID) */ id INTO srIntId
-        FROM SubRequest PARTITION (P_STATUS_13_14) SR
-       WHERE id = srIntId
-         AND ((status = 13)  -- READYFORSCHED
-          OR  (status = 14   -- BEINGSCHED
-         AND lastModificationTime < getTime() - 1800))
-         FOR UPDATE;
-      -- We have successfully acquired the lock, so we update the subrequest
-      -- status and modification time
-      UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-         SET status = 14,  -- BEINGSHCED
-             lastModificationTime = getTime()
-       WHERE id = srIntId
-      RETURNING id, subReqId, protocol, xsize, requestedFileSystems
-        INTO srId, srSubReqId, srProtocol, srXsize, srRfs;
-      EXIT;
-    EXCEPTION
-      -- Try again, either we failed to accquire the lock on the subrequest or
-      -- the subrequest being processed is not the correct state
-      WHEN NO_DATA_FOUND THEN
-        NULL;
-      WHEN SrLocked THEN
-        NULL;
-    END;
-  END LOOP;
-  CLOSE c;
-
-  -- Extract the rest of the information required to submit a job into the
-  -- scheduler through the job manager.
-  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/
-         CastorFile.id, CastorFile.fileId, CastorFile.nsHost, SvcClass.name,
-         Id2type.type, Request.reqId, Request.euid, Request.egid, Request.username,
-         Request.direction, Request.sourceDiskCopy, Request.destDiskCopy,
-         Request.sourceSvcClass, Client.ipAddress, Client.port, Client.version,
-         (SELECT type
-            FROM Id2type
-           WHERE id = Client.id) clientType, Client.secure, Request.creationTime,
-         decode(SvcClass.defaultFileSize, 0, 2000000000, SvcClass.defaultFileSize)
-    INTO cfId, cfFileId, cfNsHost, reqSvcClass, reqType, reqId, reqEuid, reqEgid,
-         reqUsername, srOpenFlags, reqSourceDiskCopy, reqDestDiskCopy, reqSourceSvcClass,
-         clientIp, clientPort, clientVersion, clientType, clientSecure, reqCreationTime,
-         reqDefaultFileSize
-    FROM SubRequest, CastorFile, SvcClass, Id2type, Client,
-         (SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */
-                 id, username, euid, egid, reqid, client, creationTime,
-                 'w' direction, svcClass, NULL sourceDiskCopy,
-                 NULL destDiskCopy, NULL sourceSvcClass
-            FROM StagePutRequest
-           UNION ALL
-          SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ 
-                 id, username, euid, egid, reqid, client, creationTime,
-                 'r' direction, svcClass, NULL sourceDiskCopy,
-                 NULL destDiskCopy, NULL sourceSvcClass
-            FROM StageGetRequest
-           UNION ALL
-          SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ 
-                 id, username, euid, egid, reqid, client, creationTime,
-                 'o' direction, svcClass, NULL sourceDiskCopy,
-                 NULL destDiskCopy, NULL sourceSvcClass
-            FROM StageUpdateRequest
-           UNION ALL
-          SELECT /*+ INDEX(StageDiskCopyReplicaRequest PK_StageDiskCopyReplicaRequ_Id) */
-                 id, username, euid, egid, reqid, client, creationTime,
-                 'w' direction, svcClass, sourceDiskCopy, destDiskCopy,
-                 (SELECT name FROM SvcClass WHERE id = sourceSvcClass)
-            FROM StageDiskCopyReplicaRequest) Request
-   WHERE SubRequest.id = srId
-     AND SubRequest.castorFile = CastorFile.id
-     AND Request.svcClass = SvcClass.id
-     AND Id2type.id = SubRequest.request
-     AND Request.id = SubRequest.request
-     AND Request.client = Client.id;
-
-  -- Extract additional information required for StageDiskCopyReplicaRequest's
-  IF reqType = 133 THEN
-    -- Provide the job manager with a list of hosts to exclude as destination
-    -- diskservers.
-    OPEN excludedHosts FOR
-      SELECT distinct(DiskServer.name)
-        FROM DiskCopy, DiskServer, FileSystem, DiskPool2SvcClass, SvcClass
-       WHERE DiskCopy.filesystem = FileSystem.id
-         AND FileSystem.diskserver = DiskServer.id
-         AND FileSystem.diskpool = DiskPool2SvcClass.parent
-         AND DiskPool2SvcClass.child = SvcClass.id
-         AND SvcClass.name = reqSvcClass
-         AND DiskCopy.castorfile = cfId
-         AND DiskCopy.id != reqSourceDiskCopy
-         AND DiskCopy.status IN (0, 1, 2, 10); -- STAGED, DISK2DISKCOPY, WAITTAPERECALL, CANBEMIGR
-  END IF;
-
 END;
 /
 
@@ -6808,7 +7094,8 @@ BEGIN
   -- we go back to python so that it can handle cases like signals and exit
   -- We will probably be back soon :-)
   DELETE FROM transfersToAbort RETURNING uuid BULK COLLECT INTO srUuids;
-  OPEN srUuidCur FOR SELECT * FROM TABLE(srUuids);
+  OPEN srUuidCur FOR 
+    SELECT * FROM TABLE(srUuids);
 END;
 /
 
@@ -6845,7 +7132,7 @@ BEGIN
                 AND DiskServer.name = machine) LOOP
     BEGIN
       -- check if they are running on the diskserver
-      SELECT * INTO unused FROM SyncRunningTransfersHelper
+      SELECT subReqId INTO unused FROM SyncRunningTransfersHelper
        WHERE subreqId = SR.subreqId;
       -- this one was still running, nothing to do then
     EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -8300,9 +8587,9 @@ CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER) AS
   svcClassId NUMBER;
   missingTCs INTEGER;
 BEGIN
-  SELECT SubRequest.id, SubRequest.request, DiskCopy.id,
+  SELECT SubRequest.id, SubRequest.reqType, SubRequest.request, DiskCopy.id,
          CastorFile.id, Castorfile.FileSize, TapeCopy.missingCopies
-    INTO subRequestId, requestId, dci, cfId, fs, missingTCs
+    INTO subRequestId, reqType, requestId, dci, cfId, fs, missingTCs
     FROM TapeCopy, SubRequest, DiskCopy, CastorFile
    WHERE TapeCopy.id = tapecopyId
      AND CastorFile.id = TapeCopy.castorFile
@@ -8310,7 +8597,6 @@ BEGIN
      AND SubRequest.diskcopy(+) = DiskCopy.id
      AND DiskCopy.status = dconst.DISKCOPY_WAITTAPERECALL;
   -- delete any previous failed diskcopy for this castorfile (due to failed recall attempts for instance)
-  DELETE FROM Id2Type WHERE id IN (SELECT id FROM DiskCopy WHERE castorFile = cfId AND status = dconst.DISKCOPY_FAILED);
   DELETE FROM DiskCopy WHERE castorFile = cfId AND status = dconst.DISKCOPY_FAILED;
   -- update diskcopy size and gweight
   SELECT Request.svcClass, euid, egid INTO svcClassId, ouid, ogid
@@ -8329,9 +8615,6 @@ BEGIN
          gcWeight = gcw,
          diskCopySize = fs
    WHERE id = dci;
-  -- determine the type of the request
-  SELECT type INTO reqType FROM Id2Type WHERE id =
-    (SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ request FROM SubRequest WHERE id = subRequestId);
   IF reqType = 119 THEN  -- OBJ_StageRepackRequest
     startRepackMigration(subRequestId, cfId, dci, ouid, ogid);
   ELSE
@@ -8353,7 +8636,6 @@ BEGIN
           INSERT INTO TapeCopy (id, copyNb, castorFile, status)
           VALUES (ids_seq.nextval, 0, cfId, tconst.TAPECOPY_CREATED)
           RETURNING id INTO tcId;
-          INSERT INTO Id2Type (id, type) VALUES (tcId, 30); -- OBJ_TapeCopy
         END LOOP;
       END;
     END IF;
@@ -8401,7 +8683,6 @@ BEGIN
   -- DEADLOCK_DETECTED exception.
   BEGIN
     DELETE FROM Stream  WHERE id = streamId;
-    DELETE FROM Id2Type WHERE id = streamId;
   EXCEPTION
     -- When the stream cannot be deleted
     WHEN CHILD_RECORD_FOUND OR DEADLOCK_DETECTED THEN
@@ -8453,9 +8734,26 @@ BEGIN
   END IF;
 
   OPEN segments FOR
-    SELECT fseq, offset, bytes_in, bytes_out, host_bytes, segmCksumAlgorithm,
-           segmCksum, errMsgTxt, errorCode, severity, blockId0, blockId1,
-           blockId2, blockId3, creationTime, id, tape, copy, status, priority
+    SELECT fseq,
+           offset,
+           bytes_in,
+           bytes_out,
+           host_bytes,
+           segmCksumAlgorithm,
+           segmCksum,
+           errMsgTxt,
+           errorCode,
+           severity,
+           blockId0,
+           blockId1,
+           blockId2,
+           blockId3,
+           creationTime,
+           id,
+           tape,
+           copy,
+           status,
+           priority
       FROM Segment
      WHERE id IN (SELECT /*+ CARDINALITY(segsTable 5) */ *
                     FROM TABLE(segs) segsTable);
@@ -8483,9 +8781,26 @@ CREATE OR REPLACE PROCEDURE failedSegments
 BEGIN
   -- JUST rtcpclientd
   OPEN segments FOR
-    SELECT fseq, offset, bytes_in, bytes_out, host_bytes, segmCksumAlgorithm,
-           segmCksum, errMsgTxt, errorCode, severity, blockId0, blockId1,
-           blockId2, blockId3, creationTime, id, tape, copy, status, priority
+    SELECT fseq,
+           offset,
+           bytes_in,
+           bytes_out,
+           host_bytes,
+           segmCksumAlgorithm,
+           segmCksum,
+           errMsgTxt,
+           errorCode,
+           severity,
+           blockId0,
+           blockId1,
+           blockId2,
+           blockId3,
+           creationTime,
+           id,
+           tape,
+           copy,
+           status,
+           priority
       FROM Segment
      WHERE Segment.status = tconst.SEGMENT_FAILED;
 END;
@@ -8952,7 +9267,6 @@ BEGIN
            lastButOneFileSystemUsed, tapepool, status)
         VALUES (ids_seq.nextval, initSize, NULL, NULL, NULL, NULL, tpId, tconst.STREAM_CREATED)
         RETURN id INTO strId;
-        INSERT INTO Id2Type (id, type) VALUES (strId,26); -- Stream type
     	IF doClone = 1 THEN
 	  BEGIN
 	    -- clone the new stream with one from the same tapepool
@@ -9313,12 +9627,10 @@ BEGIN
        SET status = decode(status, dconst.DISKCOPY_WAITTAPERECALL, dconst.DISKCOPY_FAILED, dconst.DISKCOPY_INVALID) -- WAITTAPERECALL->FAILED, otherwise INVALID
      WHERE id = dcIds(i);
 
-  -- delete tapecopy from id2type and get the ids
-  DELETE FROM id2type WHERE id IN 
-   (SELECT id FROM TAPECOPY
-     WHERE castorfile IN (SELECT /*+ CARDINALITY(cfIdsTable 5) */ *
-                            FROM TABLE(cfIds) cfIdsTable))
-  RETURNING id BULK COLLECT INTO tcIds;
+  -- get the ids
+  SELECT id BULK COLLECT INTO tcIds FROM TAPECOPY
+   WHERE castorfile IN (SELECT /*+ CARDINALITY(cfIdsTable 5) */ *
+                            FROM TABLE(cfIds) cfIdsTable);
 
   -- detach tapecopies from stream
   FORALL i IN tcids.FIRST .. tcids.LAST
@@ -9334,15 +9646,10 @@ BEGIN
       FROM TABLE(tcids) tcIdsTable)
   RETURNING id, tape BULK COLLECT INTO segIds, tapeIds;
 
-  FORALL i IN segIds.FIRST .. segIds.LAST
-    DELETE FROM id2type WHERE id = segIds(i);
-
   -- delete the orphan segments (this should not be necessary)
   DELETE FROM segment WHERE tape IN 
     (SELECT id FROM tape WHERE vid = inputVid) 
   RETURNING id BULK COLLECT INTO segIds;
-  FORALL i IN segIds.FIRST .. segIds.LAST
-    DELETE FROM id2type WHERE id = segIds(i);
 
   -- update the tape as not used
   UPDATE tape SET status = tconst.TAPE_UNUSED WHERE vid = inputVid AND tpmode = tconst.TPMODE_READ;
@@ -9855,7 +10162,6 @@ BEGIN
         varTape.lastVdqmPingTime := getTime();
         INSERT INTO Tape T
         VALUES varTape RETURNING T.id into varTapeId;
-        INSERT INTO id2type (id,type) values (varTape.Id,29);
       EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
       -- TODO: proper locking could prevent this.
       -- It could happen that the tape go created in the mean time. So now we
@@ -10081,11 +10387,12 @@ END;
 
 /* retrieve from the db all the tapecopies that faced a failure for migration */
 CREATE OR REPLACE
-PROCEDURE  tg_getFailedMigrations(outTapeCopies_c OUT castor.TapeCopy_Cur) AS
+PROCEDURE tg_getFailedMigrations(outTapeCopies_c OUT castor.TapeCopy_Cur) AS
 BEGIN
   -- get TAPECOPY_MIG_RETRY
   OPEN outTapeCopies_c FOR
-    SELECT *
+    SELECT castorFile, id, copyNb, status, errorCode, nbRetry,
+           fileTransActionId, fseq, missingCopies, tapeGatewayRequestId, vid
       FROM TapeCopy TC
      WHERE TC.status = tconst.TAPECOPY_MIG_RETRY
        AND ROWNUM < 1000 
@@ -10096,15 +10403,16 @@ END;
 
 /* retrieve from the db all the tapecopies that faced a failure for recall */
 CREATE OR REPLACE
-PROCEDURE  tg_getFailedRecalls(outTapeCopies_c OUT castor.TapeCopy_Cur) AS
+PROCEDURE tg_getFailedRecalls(outTapeCopies_c OUT castor.TapeCopy_Cur) AS
 BEGIN
   -- get TAPECOPY_REC_RETRY
   OPEN outTapeCopies_c FOR
-    SELECT *
+    SELECT castorFile, id, copyNb, status, errorCode, nbRetry,
+           fileTransActionId, fseq, missingCopies, tapeGatewayRequestId, vid
       FROM TapeCopy TC
      WHERE TC.status = tconst.TAPECOPY_REC_RETRY
-      AND ROWNUM < 1000 
-      FOR UPDATE SKIP LOCKED;
+       AND ROWNUM < 1000 
+       FOR UPDATE SKIP LOCKED;
 END;
 /
 
@@ -10821,13 +11129,14 @@ BEGIN
   END; 
   BEGIN
     -- Find the unprocessed segment of this tape with lowest fSeq
-    SELECT   SEG.id,   SEG.fSeq, SEG.Copy 
+    SELECT       id,       fSeq,    Copy 
       INTO varSegId, varNewFSeq, varTcId 
-      FROM Segment SEG
-     WHERE SEG.tape = varTapeId  
-       AND SEG.status = tconst.SEGMENT_UNPROCESSED
-       AND ROWNUM < 2
-     ORDER BY SEG.fseq ASC;
+      FROM (SELECT SEG.id id, SEG.fSeq fSeq, SEG.Copy Copy 
+              FROM Segment SEG
+             WHERE SEG.tape = varTapeId  
+               AND SEG.status = tconst.SEGMENT_UNPROCESSED
+             ORDER BY SEG.fseq ASC)
+     WHERE ROWNUM < 2;
     -- Lock the corresponding castorfile
     SELECT CF.id INTO varUnused 
       FROM Castorfile CF, TapeCopy TC
@@ -11273,7 +11582,6 @@ PROCEDURE TG_SetFileMigrated(
   varTapeCopyCount      INTEGER;
   varCfId               NUMBER;
   varTcId               NUMBER;
-  varTcIds              "numList";
   varTapeId             NUMBER;
   varStreamId           NUMBER;
 BEGIN
@@ -11319,19 +11627,15 @@ BEGIN
       WHERE DC.castorFile = varCfId
         AND DC.status= dconst.DISKCOPY_CANBEMIGR;
      DELETE FROM tapecopy TC
-      WHERE castorfile = varCfId 
-  RETURNING id BULK COLLECT INTO varTcIds;
-     FORALL i IN varTcIds.FIRST .. varTcIds.LAST
-       DELETE FROM id2type 
-         WHERE id=varTcIds(i);
+      WHERE castorfile = varCfId; 
   END IF;
   -- archive Repack requests should any be in the db
   FOR i IN (
     SELECT /*+ INDEX(SR I_Subrequest_Castorfile)*/ SR.id FROM SubRequest SR
     WHERE SR.castorfile = varCfId AND
-          SR.status= dconst.SUBREQUEST_REPACK
+          SR.status = dconst.SUBREQUEST_REPACK
     ) LOOP
-      archivesubreq(i.id, 8); -- SUBREQUEST_FINISHED
+    archiveSubReq(i.id, 8); -- SUBREQUEST_FINISHED
   END LOOP;
   COMMIT;
 END;
@@ -11341,17 +11645,17 @@ END;
 /* update the db after a successful recall */
 CREATE OR REPLACE
 PROCEDURE tg_setFileRecalled(
-  inTransId          IN  NUMBER, 
+  inTransId          IN  NUMBER,
   inFileId           IN  NUMBER,
-  inNsHost           IN  VARCHAR2, 
-  inFseq             IN  NUMBER, 
+  inNsHost           IN  VARCHAR2,
+  inFseq             IN  NUMBER,
   inFileTransaction  IN  NUMBER) AS
   varTcId               NUMBER;         -- TapeCopy Id
   varDcId               NUMBER;         -- DiskCopy Id
   varCfId               NUMBER;         -- CastorFile Id
-  srId NUMBER;
-  varSubrequestId       NUMBER; 
+  varSubrequestId       NUMBER;
   varRequestId          NUMBER;
+  varRequestType        NUMBER;
   varFileSize           NUMBER;
   varGcWeight           NUMBER;         -- Garbage collection weight
   varGcWeightProc       VARCHAR(2048);  -- Garbage collection weighting procedure name
@@ -11373,18 +11677,18 @@ BEGIN
   ELSIF (varStreamId IS NOT NULL) THEN
     SELECT S.Id INTO varUnused
       FROM Stream S WHERE S.Id = varStreamId
-       FOR UPDATE;  
+       FOR UPDATE;
   ELSE
     ROLLBACK TO SAVEPOINT TGReq_CFile_TCopy_Locking;
-    RAISE_APPLICATION_ERROR (-20119, 
-         'Could not find stream or tape read for VDQM request Id='|| 
+    RAISE_APPLICATION_ERROR (-20119,
+         'Could not find stream or tape read for VDQM request Id='||
          inTransId || ' in TG_SetFileMigrated');
   END IF;
   -- find and lock castor file for the nsHost/fileID
   SELECT CF.id, CF.fileSize INTO varCfId, varFileSize
-    FROM CastorFile CF 
-   WHERE CF.fileid = inFileId 
-     AND CF.nsHost = inNsHost 
+    FROM CastorFile CF
+   WHERE CF.fileid = inFileId
+     AND CF.nsHost = inNsHost
      FOR UPDATE;
   -- Find and lock the tape copy
   varTcId := NULL;
@@ -11410,8 +11714,8 @@ BEGIN
   -- delete tapecopies
   deleteTapeCopies(varCfId);
   -- update diskcopy status, size and gweight
-  SELECT /*+ INDEX(SR I_Subrequest_DiskCopy)*/ SR.id, SR.request
-    INTO varSubrequestId, varRequestId
+  SELECT /*+ INDEX(SR I_Subrequest_DiskCopy)*/ SR.id, SR.request, SR.reqType
+    INTO varSubrequestId, varRequestId, varRequestType
     FROM SubRequest SR
    WHERE SR.diskcopy = varDcId;
   SELECT REQ.svcClass, REQ.euid, REQ.egid INTO varSvcClassId, varEuid, varEgid
@@ -11432,22 +11736,22 @@ BEGIN
         DC.gcWeight = varGcWeight,
         DC.diskCopySize = varFileSize
     WHERE Dc.id = varDcId;
-  -- restart this subrequest so that the stager can follow it up
-  UPDATE /*+ INDEX(SR PK_Subrequest_Id)*/ SubRequest SR
-     SET SR.status = dconst.SUBREQUEST_RESTART, 
-         SR.getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED,
-         SR.lastModificationTime = getTime(), SR.parent = 0
-   WHERE SR.id = varSubrequestId;
+  -- determine the type of the request
+  IF varRequestType = 119 THEN  -- OBJ_StageRepackRequest
+    startRepackMigration(varSubrequestId, varCfId, varDcId, varEuid, varEgid);
+  ELSE  -- restart this subrequest so that the stager can follow it up
+    UPDATE /*+ INDEX(SR PK_Subrequest_Id)*/ SubRequest SR
+       SET SR.status = dconst.SUBREQUEST_RESTART,
+           SR.getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED,
+           SR.lastModificationTime = getTime(), SR.parent = 0
+     WHERE SR.id = varSubrequestId;
+  END IF;
   -- and trigger new migrations if missing tape copies were detected
   IF varMissingCopies > 0 THEN
-    DECLARE
-      newTcId INTEGER;
     BEGIN
       FOR i IN 1..varMissingCopies LOOP
         INSERT INTO TapeCopy (id, copyNb, castorFile, status, nbRetry, missingCopies)
-        VALUES (ids_seq.nextval, 0, varCfId, TCONST.TAPECOPY_CREATED, 0, 0)
-        RETURNING id INTO newTcId;
-        INSERT INTO Id2Type (id, type) VALUES (newTcId, 30); -- OBJ_TapeCopy
+        VALUES (ids_seq.nextval, 0, varCfId, TCONST.TAPECOPY_CREATED, 0, 0);
       END LOOP;
     END;
   END IF;
@@ -11565,7 +11869,7 @@ BEGIN
   IF tcToFail(tcToFail.FIRST) != -1 THEN
     FOR i IN tcToFail.FIRST .. tcToFail.LAST  LOOP
 
-      -- lock castorFile	
+      -- lock castorFile
       SELECT castorFile INTO cfId 
         FROM TapeCopy,CastorFile
         WHERE TapeCopy.id = tcToFail(i) 
@@ -11719,7 +12023,6 @@ BEGIN
        AND NOT EXISTS (SELECT 'x' FROM stream2tapecopy STTC 
                         WHERE STTC.child = varTcIds(i));
   -- Finally drop the stream itself
-  DELETE FROM id2type ITT where ITT.id = inStrId;
   DELETE FROM Stream S where S.id= inStrId;
 END;
 /
@@ -11752,7 +12055,7 @@ BEGIN
       FROM Segment SEG 
      WHERE SEG.tape = varTpReqId;
     FOR i IN varTcIds.FIRST .. varTcIds.LAST  LOOP
-      -- lock castorFile	
+      -- lock castorFile
       SELECT TC.castorFile INTO varCfId 
         FROM TapeCopy TC, CastorFile CF
         WHERE TC.id = varTcIds(i) 
@@ -12012,6 +12315,9 @@ PROCEDURE selectFiles2Delete(diskServerName IN VARCHAR2,
   dontGC INTEGER;
   totalCount INTEGER;
   unused INTEGER;
+  backoff INTEGER;
+  CastorFileLocked EXCEPTION;
+  PRAGMA EXCEPTION_INIT (CastorFileLocked, -54);
 BEGIN
   -- First of all, check if we are in a Disk1 pool
   dontGC := 0;
@@ -12046,6 +12352,12 @@ BEGIN
      WHERE DiskCopy.fileSystem = fs.id
        AND decode(DiskCopy.status, 9, DiskCopy.status, NULL) = 9; -- BEINGDELETED
 
+    -- estimate the number of GC running the "long" query, that is the one dealing with the GCing of
+    -- STAGED files.
+    SELECT COUNT(*) INTO backoff
+      FROM vsession s, vsqltext t
+     WHERE s.sql_id = t.sql_id AND t.sql_text LIKE '%I_DiskCopy_FS_GCW%';
+
     -- Process diskcopies that are in an INVALID state.
     UPDATE DiskCopy
        SET status = 9, -- BEINGDELETED
@@ -12074,12 +12386,12 @@ BEGIN
     -- requests and reduces the stager DB load. Furthermore, if too much data is
     -- sent back to the client, the transfer time between the stager and client
     -- becomes very long and the message may timeout or may not even fit in the
-    -- clients receive buffer!!!!
+    -- clients receive buffer!
     totalCount := totalCount + dcIds.COUNT();
     EXIT WHEN totalCount >= 10000;
 
-    -- Continue processing but with STAGED files
-    IF dontGC = 0 THEN
+    -- Continue processing but with STAGED files, only in case we are not already loaded
+    IF dontGC = 0 AND backoff < 4 THEN
       -- Do not delete STAGED files from non production hardware
       BEGIN
         SELECT FileSystem.id INTO unused
@@ -12108,41 +12420,54 @@ BEGIN
       -- If space is still required even after removal of INVALID files, consider
       -- removing STAGED files until we are below the free space watermark
       IF freed < toBeFreed THEN
-        -- Loop on file deletions. Select only enough files until we reach the
-        -- 10000 return limit.
-        FOR dc IN (SELECT id, castorFile FROM (
-                     SELECT /*+ INDEX(DiskCopy I_DiskCopy_FileSystem) */ id, castorFile FROM DiskCopy
-                      WHERE fileSystem = fs.id
-                        AND status = 0 -- STAGED
-                        AND NOT EXISTS (
-                          SELECT /*+ INDEX(SubRequest I_SubRequest_DiskCopy) */ 'x'
-                            FROM SubRequest
-                           WHERE SubRequest.diskcopy = DiskCopy.id
-                             AND SubRequest.status IN (4, 5, 6, 12, 13, 14)) -- being processed (WAIT*, READY, *SCHED)
-                        AND NOT EXISTS
-                          -- Ignore diskcopies with active replications
-                          (SELECT /*+ INDEX(DCRR I_StageDiskCopyReplic_DestDC) */ 'x'
-                             FROM StageDiskCopyReplicaRequest DCRR, DiskCopy DD
-                            WHERE DCRR.destDiskCopy = DD.id
-                              AND DCRR.sourceDiskCopy = DiskCopy.id
-                              AND DD.status = 1)  -- WAITD2D
-                        ORDER BY gcWeight ASC)
-                    WHERE rownum <= 10000 - totalCount) LOOP
-          -- Mark the DiskCopy
-          UPDATE DiskCopy
-             SET status = 9, -- BEINGDELETED
-                 gcType = 0  -- GCTYPE_AUTO
-           WHERE id = dc.id RETURNING diskCopySize INTO deltaFree;
-          totalCount := totalCount + 1;
-          -- Update freed space
-          freed := freed + deltaFree;
-          -- Shall we continue ?
-          IF toBeFreed <= freed THEN
-            EXIT;
-          END IF;
+        -- Loop on file deletions
+        FOR dc IN (SELECT /*+ INDEX(DiskCopy I_DiskCopy_FS_GCW) */ id, castorFile FROM DiskCopy
+                    WHERE fileSystem = fs.id
+                      AND status = 0 -- STAGED
+                      AND NOT EXISTS (
+                        SELECT /*+ INDEX(SubRequest I_SubRequest_DiskCopy) */ 'x'
+                          FROM SubRequest
+                         WHERE SubRequest.diskcopy = DiskCopy.id
+                           AND SubRequest.status IN (4, 5, 6, 12, 13, 14)) -- being processed (WAIT*, READY, *SCHED)
+                      AND NOT EXISTS
+                        -- Ignore diskcopies with active replications
+                        (SELECT /*+ INDEX(DCRR I_StageDiskCopyReplic_DestDC) */ 'x'
+                           FROM StageDiskCopyReplicaRequest DCRR, DiskCopy DD
+                          WHERE DCRR.destDiskCopy = DD.id
+                            AND DCRR.sourceDiskCopy = DiskCopy.id
+                            AND DD.status = 1)  -- WAITD2D
+                      ORDER BY gcWeight ASC) LOOP
+          BEGIN
+            -- Lock the CastorFile
+            SELECT id INTO unused FROM CastorFile
+             WHERE id = dc.castorFile FOR UPDATE NOWAIT;
+            -- Mark the DiskCopy as being deleted
+            UPDATE DiskCopy
+               SET status = 9, -- BEINGDELETED
+                   gcType = 0  -- GCTYPE_AUTO
+             WHERE id = dc.id RETURNING diskCopySize INTO deltaFree;
+            totalCount := totalCount + 1;
+            -- Update freed space
+            freed := freed + deltaFree;
+            -- Shall we continue ?
+            IF toBeFreed <= freed THEN
+              EXIT;
+            END IF;
+            IF totalCount >= 10000 THEN
+              EXIT;
+            END IF;           
+          EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+              -- The file no longer exists or has the wrong state
+              NULL;
+            WHEN CastorFileLocked THEN
+              -- Go to the next candidate, processing is taking place on the
+              -- file
+              NULL;
+          END;
+          COMMIT;
         END LOOP;
       END IF;
-      COMMIT;
     END IF;
     -- We have enough files to exit the loop ?
     EXIT WHEN totalCount >= 10000;
@@ -12193,8 +12518,6 @@ BEGIN
               WHERE id = dcIds(i)));
     -- Loop over the deleted files; first use FORALL for bulk operation
     FORALL i IN dcIds.FIRST .. dcIds.LAST
-      DELETE FROM Id2Type WHERE id = dcIds(i);
-    FORALL i IN dcIds.FIRST .. dcIds.LAST
       DELETE FROM DiskCopy WHERE id = dcIds(i);
     -- Then use a normal loop to clean castorFiles. Note: We order the list to
     -- prevent a deadlock
@@ -12227,7 +12550,6 @@ BEGIN
               nsh VARCHAR2(2048);
             BEGIN
               -- Delete the CastorFile
-              DELETE FROM id2Type WHERE id = cf.cfId;
               DELETE FROM CastorFile WHERE id = cf.cfId
               RETURNING fileId, nsHost, fileClass
                 INTO fid, nsh, fc;
@@ -12257,7 +12579,8 @@ BEGIN
       END;
     END LOOP;
   END IF;
-  OPEN fileIds FOR SELECT * FROM FilesDeletedProcOutput;
+  OPEN fileIds FOR
+    SELECT fileId, nsHost FROM FilesDeletedProcOutput;
 END;
 /
 
@@ -12284,8 +12607,6 @@ BEGIN
   SELECT id BULK COLLECT INTO dcIds
     FROM Diskcopy WHERE castorfile IN (SELECT cfId FROM FilesClearedProcHelper);
   FORALL i IN dcIds.FIRST .. dcIds.LAST
-    DELETE FROM Id2Type WHERE id = dcIds(i);
-  FORALL i IN dcIds.FIRST .. dcIds.LAST
     DELETE FROM DiskCopy WHERE id = dcIds(i);
   -- put SubRequests into FAILED (for non FINISHED ones)
   UPDATE /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest
@@ -12299,8 +12620,6 @@ BEGIN
     deleteTapeCopies(cfIds(i));
   END LOOP;
   -- Finally drop castorFiles in bulk
-  FORALL i IN cfIds.FIRST .. cfIds.LAST
-    DELETE FROM Id2Type WHERE id = cfIds(i);
   FORALL i IN cfIds.FIRST .. cfIds.LAST
     DELETE FROM CastorFile WHERE id = cfIds(i);
 END;
@@ -12522,8 +12841,6 @@ BEGIN
    WHERE id IN (SELECT /*+ CARDINALITY(ids 5) */ * FROM TABLE(dcIds) ids);
   -- drop the DiskCopies
   FORALL i IN dcIds.FIRST..dcIds.LAST
-    DELETE FROM Id2Type WHERE id = dcIds(i);
-  FORALL i IN dcIds.FIRST..dcIds.LAST
     DELETE FROM DiskCopy WHERE id = dcIds(i);
   COMMIT;
   -- maybe delete the CastorFiles if nothing is left for them
@@ -12556,12 +12873,11 @@ BEGIN
                AND d.creationTime < getTime() - timeOut
                AND d.status IN (5, 6, 11) -- WAITFS, STAGEOUT, WAITFS_SCHEDULING
                AND NOT EXISTS (
-                 SELECT /*+ INDEX(ID2TYPE PK_ID2TYPE_ID) */ 'x'
-                   FROM SubRequest, Id2Type
+                 SELECT 'x'
+                   FROM SubRequest
                   WHERE castorFile = c.id
-                    AND SubRequest.request = Id2Type.id
                     AND status IN (0, 1, 2, 3, 5, 6, 13, 14) -- all active
-                    AND type NOT IN (37, 38))) LOOP -- ignore PrepareToPut, PrepareToUpdate
+                    AND reqType NOT IN (37, 38))) LOOP -- ignore PrepareToPut, PrepareToUpdate
     IF (0 = f.fileSize) OR (f.dcStatus <> 6) THEN
       -- here we invalidate the diskcopy and let the GC run
       UPDATE DiskCopy SET status = 7  -- INVALID
@@ -12907,8 +13223,6 @@ BEGIN
     -- Break out of the loop when the cursor returns no results
     EXIT WHEN reqIds.count = 0;
     -- Delete data
-    FORALL i IN reqIds.FIRST .. reqIds.LAST
-      DELETE FROM Id2Type WHERE id IN (reqIds(i), clientIds(i), srIds(i));
     FORALL i IN clientIds.FIRST .. clientIds.LAST
       DELETE FROM Client WHERE id = clientIds(i);
     FORALL i IN srIds.FIRST .. srIds.LAST
@@ -13509,22 +13823,28 @@ CREATE OR REPLACE FUNCTION getCF(ref NUMBER) RETURN NUMBER AS
   t NUMBER;
   cfId NUMBER;
 BEGIN
-  SELECT type INTO t FROM id2Type WHERE id = ref;
-  IF (t = 2) THEN -- CASTORFILE
-    RETURN ref;
-  ELSIF (t = 5) THEN -- DiskCopy
-    SELECT castorFile INTO cfId FROM DiskCopy WHERE id = ref;
-  ELSIF (t = 27) THEN -- SubRequest
-    SELECT castorFile INTO cfId FROM SubRequest WHERE id = ref;
-  ELSIF (t = 30) THEN -- TapeCopy
-    SELECT castorFile INTO cfId FROM TapeCopy WHERE id = ref;
-  ELSIF (t = 18) THEN -- Segment
-    SELECT castorFile INTO cfId FROM TapeCopy, Segment WHERE Segment.id = ref AND TapeCopy.id = Segment.copy;
-  END IF;
+  SELECT id INTO cfId FROM CastorFile WHERE id = ref OR fileId = ref;
   RETURN cfId;
-EXCEPTION WHEN NO_DATA_FOUND THEN -- fileid ?
-  SELECT id INTO cfId FROM CastorFile WHERE fileId = ref;
+EXCEPTION WHEN NO_DATA_FOUND THEN -- DiskCopy?
+BEGIN
+  SELECT castorFile INTO cfId FROM DiskCopy WHERE id = ref;
   RETURN cfId;
+EXCEPTION WHEN NO_DATA_FOUND THEN -- SubRequest?
+BEGIN
+  SELECT castorFile INTO cfId FROM SubRequest WHERE id = ref;
+  RETURN cfId;
+EXCEPTION WHEN NO_DATA_FOUND THEN -- TapeCopy?
+BEGIN
+  SELECT castorFile INTO cfId FROM TapeCopy WHERE id = ref;
+  RETURN cfId;
+EXCEPTION WHEN NO_DATA_FOUND THEN -- Segment?
+BEGIN
+  SELECT castorFile INTO cfId FROM TapeCopy, Segment
+   WHERE Segment.id = ref AND TapeCopy.id = Segment.copy;
+  RETURN cfId;
+EXCEPTION WHEN NO_DATA_FOUND THEN -- nothing found
+  RAISE_APPLICATION_ERROR (-20000, 'Could not find any CastorFile, SubRequest, DiskCopy, TapeCopy or Segment with id = ' || ref);
+END; END; END; END;
 END;
 /
 
@@ -13606,7 +13926,7 @@ BEGIN
                      SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */ id, username, machine, svcClassName, 'Repack' AS type FROM StageRepackRequest UNION ALL
                      SELECT /*+ INDEX(StagePutDoneRequest PK_StagePutDoneRequest_Id) */ id, username, machine, svcClassName, 'PutDone' AS type FROM StagePutDoneRequest UNION ALL
                      SELECT /*+ INDEX(StageDiskCopyReplicaRequest PK_StageDiskCopyReplicaRequ_Id) */ id, username, machine, svcClassName, 'DCRepl' AS type FROM StageDiskCopyReplicaRequest UNION ALL
-                     SELECT /*+ INDEX(SetFileGCWeight PK_SetFileGCWeight_Id) */ id, username, machine, svcClassName, 'SetFileGCWeight' AS type FROM SetFileGCWeight) Request
+                     SELECT /*+ INDEX(SetFileGCWeight PK_SetFileGCWeight_Id) */ id, username, machine, svcClassName, 'SetGCW' AS type FROM SetFileGCWeight) Request
              WHERE castorfile = getCF(ref)
                AND Request.id = SubRequest.request) LOOP
      PIPE ROW(d);
@@ -13873,6 +14193,751 @@ BEGIN
 END;
 /
 
+/******************************************************************************
+ *                   oracleRH.sql
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2003  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * PL/SQL code dedicated to the Request Handler part of CASTOR
+ *
+ * @author Castor Dev team, castor-dev@cern.ch
+ *****************************************************************************/
+
+/* prechecks common to all insert*Request methods*/
+CREATE OR REPLACE FUNCTION insertPreChecks
+  (euid IN INTEGER,
+   egid IN INTEGER,
+   svcClassName IN VARCHAR2,
+   reqType IN INTEGER) RETURN NUMBER AS
+BEGIN
+  -- Check permissions
+  IF 0 != checkPermission(svcClassName, euid, egid, reqType) THEN
+    -- permission denied
+    raise_application_error(-20121, 'Permission denied');
+  END IF;  
+  -- check the validity of the given service class and return its internal id
+  RETURN checkForValidSvcClass(svcClassName, 1, 1);
+END;
+/
+
+/* inserts simple Requests in the stager DB.
+ * This handles FirstByteWritten, GetUpdateFailed, GetUpdateDone and PutFailed
+ * requests.
+ */ 	 
+CREATE OR REPLACE PROCEDURE insertSimpleRequest
+  (machine IN VARCHAR2,
+   euid IN INTEGER,
+   egid IN INTEGER,
+   pid IN INTEGER,
+   userName IN VARCHAR2,
+   svcClassName IN VARCHAR2,
+   reqUUID IN VARCHAR2,
+   reqType IN INTEGER,
+   clientIP IN INTEGER,
+   clientPort IN INTEGER,
+   clientVersion IN INTEGER,
+   clientSecure IN INTEGER,
+   subReqId IN INTEGER,
+   fileId IN INTEGER,
+   nsHost IN VARCHAR2) AS
+  svcClassId NUMBER;
+  reqId NUMBER;
+  clientId NUMBER;
+  creationTime NUMBER;
+BEGIN
+  -- do prechecks and get the service class
+  svcClassId := insertPreChecks(euid, egid, svcClassName, reqType);
+  -- get unique ids for the request and the client and get current time
+  SELECT ids_seq.nextval INTO reqId FROM DUAL;
+  SELECT ids_seq.nextval INTO clientId FROM DUAL;
+  creationTime := getTime();
+  -- insert the request itself
+  CASE
+    WHEN reqType = 78 THEN -- GetUpdateDone
+      INSERT INTO GetUpdateDone (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, subReqId, fileId, nsHost, id, svcClass, client)
+      VALUES (0,userName,euid,egid,0,pid,machine,svcClassName,'',reqUUID,creationTime,creationTime,subReqId,fileId,nsHost,reqId,svcClassId,clientId);
+    WHEN reqType = 79 THEN  -- GetUpdateFailed
+      INSERT INTO GetUpdateFailed (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, subReqId, fileId, nsHost, id, svcClass, client)
+      VALUES (0,userName,euid,egid,0,pid,machine,svcClassName,'',reqUUID,creationTime,creationTime,subReqId,fileId,nsHost,reqId,svcClassId,clientId);
+    WHEN reqType = 80 THEN  -- PutFailed
+      INSERT INTO PutFailed (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, subReqId, fileId, nsHost, id, svcClass, client)
+      VALUES (0,userName,euid,egid,0,pid,machine,svcClassName,'',reqUUID,creationTime,creationTime,subReqId,fileId,nsHost,reqId,svcClassId,clientId);
+    WHEN reqType = 147 THEN -- FirstByteWritten
+      INSERT INTO FirstByteWritten (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, subReqId, fileId, nsHost, id, svcClass, client)
+      VALUES (0,userName,euid,egid,0,pid,machine,svcClassName,'',reqUUID,creationTime,creationTime,subReqId,fileId,nsHost,reqId,svcClassId,clientId);
+    ELSE
+      raise_application_error(-20122, 'Unsupported request type in insertSimpleRequest : ' || TO_CHAR(reqType));
+  END CASE;
+  -- insert the client information
+  INSERT INTO Client (ipAddress, port, version, secure, id)
+  VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
+  -- insert a row into newRequests table to trigger the processing of the request
+  INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
+END;
+/
+
+/* inserts file Requests in the stager DB.
+ * This handles StageGetRequest, StagePrepareToGetRequest, StagePutRequest,
+ * StagePrepareToPutRequest, StageUpdateRequest, StagePrepareToUpdateRequest,
+ * StagePutDoneRequest, StagePrepareToUpdateRequest, and StageRmRequest requests.
+ */ 	 
+CREATE OR REPLACE PROCEDURE insertFileRequest
+  (userTag IN VARCHAR2,
+   machine IN VARCHAR2,
+   euid IN INTEGER,
+   egid IN INTEGER,
+   pid IN INTEGER,
+   mask IN INTEGER,
+   userName IN VARCHAR2,
+   flags IN INTEGER,
+   svcClassName IN VARCHAR2,
+   reqUUID IN VARCHAR2,
+   inReqType IN INTEGER,
+   clientIP IN INTEGER,
+   clientPort IN INTEGER,
+   clientVersion IN INTEGER,
+   clientSecure IN INTEGER,
+   freeStrParam IN VARCHAR2,
+   freeNumParam IN NUMBER,
+   srFileNames IN castor."strList",
+   srProtocols IN castor."strList",
+   srXsizes IN castor."cnumList",
+   srFlags IN castor."cnumList",
+   srModeBits IN castor."cnumList") AS
+  svcClassId NUMBER;
+  reqId NUMBER;
+  subreqId NUMBER;
+  clientId NUMBER;
+  creationTime NUMBER;
+  svcHandler VARCHAR2(100);
+BEGIN
+  -- do prechecks and get the service class
+  svcClassId := insertPreChecks(euid, egid, svcClassName, inReqType);
+  -- get unique ids for the request and the client and get current time
+  SELECT ids_seq.nextval INTO reqId FROM DUAL;
+  SELECT ids_seq.nextval INTO clientId FROM DUAL;
+  creationTime := getTime();
+  -- insert the request itself
+  CASE
+    WHEN inReqType = 35 THEN -- StageGetRequest
+      INSERT INTO StageGetRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client)
+      VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
+    WHEN inReqType = 36 THEN -- StagePrepareToGetRequest
+      INSERT INTO StagePrepareToGetRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client)
+      VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
+    WHEN inReqType = 40 THEN -- StagePutRequest
+      INSERT INTO StagePutRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client)
+      VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
+    WHEN inReqType = 37 THEN -- StagePrepareToPutRequest
+      INSERT INTO StagePrepareToPutRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client)
+      VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
+    WHEN inReqType = 44 THEN -- StageUpdateRequest
+      INSERT INTO StageUpdateRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client)
+      VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
+    WHEN inReqType = 38 THEN -- StagePrepareToUpdateRequest
+      INSERT INTO StagePrepareToUpdateRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client)
+      VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
+    WHEN inReqType = 42 THEN -- StageRmRequest
+      INSERT INTO StageRmRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client)
+      VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
+    WHEN inReqType = 39 THEN -- StagePutDoneRequest
+      INSERT INTO StagePutDoneRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, parentUuid, id, svcClass, client)
+      VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,freeStrParam,reqId,svcClassId,clientId);
+    WHEN inReqType = 95 THEN -- SetFileGCWeight
+      INSERT INTO SetFileGCWeight (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, weight, id, svcClass, client)
+      VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,freeNumParam,reqId,svcClassId,clientId);
+    ELSE
+      raise_application_error(-20122, 'Unsupported request type in insertFileRequest : ' || TO_CHAR(inReqType));
+  END CASE;
+  -- insert the client information
+  INSERT INTO Client (ipAddress, port, version, secure, id)
+  VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
+  -- get the request's service handler
+  SELECT svcHandler INTO svcHandler FROM Type2Obj WHERE type=inReqType;
+  -- Loop on subrequests
+  FOR i IN srFileNames.FIRST .. srFileNames.LAST LOOP
+    -- get unique ids for the subrequest
+    SELECT ids_seq.nextval INTO subreqId FROM DUAL;
+    -- insert the subrequest
+    INSERT INTO SubRequest (retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, creationTime, lastModificationTime, answered, errorCode, errorMessage, requestedFileSystems, svcHandler, id, diskcopy, castorFile, parent, status, request, getNextStatus, reqType)
+    VALUES (0, srFileNames(i), srProtocols(i), srXsizes(i), 0, NULL, srFlags(i), srModeBits(i), creationTime, creationTime, 0, 0, '', NULL, svcHandler, subreqId, NULL, NULL, NULL, 0, reqId, 0, inReqType);
+  END LOOP;
+END;
+/
+
+/* inserts start Requests in the stager DB.
+ * This handles PutStartRequest and GetUpdateStartRequest
+ * requests.
+ */ 	 
+CREATE OR REPLACE PROCEDURE insertStartRequest
+  (machine IN VARCHAR2,
+   euid IN INTEGER,
+   egid IN INTEGER,
+   pid IN INTEGER,
+   userName IN VARCHAR2,
+   svcClassName IN VARCHAR2,
+   reqUUID IN VARCHAR2,
+   reqType IN INTEGER,
+   clientIP IN INTEGER,
+   clientPort IN INTEGER,
+   clientVersion IN INTEGER,
+   clientSecure IN INTEGER,
+   subReqId IN INTEGER,
+   diskServer IN VARCHAR2,
+   fileSystem IN VARCHAR2,
+   fileId IN INTEGER,
+   nsHost IN VARCHAR2) AS
+  svcClassId NUMBER;
+  reqId NUMBER;
+  clientId NUMBER;
+  creationTime NUMBER;
+BEGIN
+  -- do prechecks and get the service class
+  svcClassId := insertPreChecks(euid, egid, svcClassName, reqType);
+  -- get unique ids for the request and the client and get current time
+  SELECT ids_seq.nextval INTO reqId FROM DUAL;
+  SELECT ids_seq.nextval INTO clientId FROM DUAL;
+  creationTime := getTime();
+  -- insert the request itself
+  CASE
+    WHEN reqType = 67 THEN -- PutStartRequest
+      INSERT INTO PutStartRequest (subReqId, diskServer, fileSystem, fileId, nsHost, flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client)
+      VALUES (subReqId,diskServer,fileSystem,fileId,nsHost,0,userName,euid,egid,0,pid,machine,svcClassName,'',reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
+    WHEN reqType = 60 THEN  -- GetUpdateStartRequest
+      INSERT INTO GetUpdateStartRequest (subReqId, diskServer, fileSystem, fileId, nsHost, flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client)
+      VALUES (subReqId,diskServer,fileSystem,fileId,nsHost,0,userName,euid,egid,0,pid,machine,svcClassName,'',reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
+    ELSE
+      raise_application_error(-20122, 'Unsupported request type in insertStartRequest : ' || TO_CHAR(reqType));
+  END CASE;
+  -- insert the client information
+  INSERT INTO Client (ipAddress, port, version, secure, id)
+  VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
+  -- insert a row into newRequests table to trigger the processing of the request
+  INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
+END;
+/
+
+/* inserts d2d Requests in the stager DB.
+ * This handles Disk2DiskCopyDoneRequest and Disk2DiskCopyStartRequest
+ * requests.
+ */ 	 
+CREATE OR REPLACE PROCEDURE insertD2dRequest
+  (machine IN VARCHAR2,
+   euid IN INTEGER,
+   egid IN INTEGER,
+   pid IN INTEGER,
+   userName IN VARCHAR2,
+   svcClassName IN VARCHAR2,
+   reqUUID IN VARCHAR2,
+   reqType IN INTEGER,
+   clientIP IN INTEGER,
+   clientPort IN INTEGER,
+   clientVersion IN INTEGER,
+   clientSecure IN INTEGER,
+   diskCopyId IN INTEGER,
+   srcDiskCopyId IN INTEGER,
+   fileSize IN INTEGER,
+   diskServerName IN VARCHAR2,
+   mountPoint IN VARCHAR2,
+   fileId IN INTEGER,
+   nsHost IN VARCHAR2) AS
+  svcClassId NUMBER;
+  reqId NUMBER;
+  clientId NUMBER;
+  creationTime NUMBER;
+BEGIN
+  -- do prechecks and get the service class
+  svcClassId := insertPreChecks(euid, egid, svcClassName, reqType);
+  -- get unique ids for the request and the client and get current time
+  SELECT ids_seq.nextval INTO reqId FROM DUAL;
+  SELECT ids_seq.nextval INTO clientId FROM DUAL;
+  creationTime := getTime();
+  -- insert the request itself
+  CASE
+    WHEN reqType = 64 THEN -- Disk2DiskCopyDoneRequest
+      INSERT INTO Disk2DiskCopyDoneRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, diskCopyId, sourceDiskCopyId, fileId, nsHost, replicaFileSize, id, svcClass, client)
+      VALUES (0,userName,euid,egid,0,pid,machine,svcClassName,'',reqUUID,creationTime,creationTime,diskCopyId,srcDiskCopyId,fileId,nsHost,fileSize,reqId,svcClassId,clientId);
+    WHEN reqType = 144 THEN  -- Disk2DiskCopyStartRequest
+      INSERT INTO Disk2DiskCopyStartRequest  (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, diskCopyId, sourceDiskCopyId, diskServer, mountPoint, fileId, nsHost, id, svcClass, client)
+      VALUES (0,userName,euid,egid,0,pid,machine,svcClassName,'',reqUUID,creationTime,creationTime,diskCopyId,srcDiskCopyId,diskServerName,mountPoint,fileId,nsHost,reqId,svcClassId,clientId);
+    ELSE
+      raise_application_error(-20122, 'Unsupported request type in insertD2dRequest : ' || TO_CHAR(reqType));
+  END CASE;
+  -- insert the client information
+  INSERT INTO Client (ipAddress, port, version, secure, id)
+  VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
+  -- insert a row into newRequests table to trigger the processing of the request
+  INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
+END;
+/
+
+/* inserts VersionQuery requests in the stager DB */ 	 
+CREATE OR REPLACE PROCEDURE insertVersionQueryRequest
+  (machine IN VARCHAR2,
+   euid IN INTEGER,
+   egid IN INTEGER,
+   pid IN INTEGER,
+   userName IN VARCHAR2,
+   svcClassName IN VARCHAR2,
+   reqUUID IN VARCHAR2,
+   reqType IN INTEGER,
+   clientIP IN INTEGER,
+   clientPort IN INTEGER,
+   clientVersion IN INTEGER,
+   clientSecure IN INTEGER) AS
+  svcClassId NUMBER;
+  reqId NUMBER;
+  queryParamId NUMBER;
+  clientId NUMBER;
+  creationTime NUMBER;
+BEGIN
+  -- do prechecks and get the service class
+  svcClassId := insertPreChecks(euid, egid, svcClassName, reqType);
+  -- get unique ids for the request and the client and get current time
+  SELECT ids_seq.nextval INTO reqId FROM DUAL;
+  SELECT ids_seq.nextval INTO clientId FROM DUAL;
+  creationTime := getTime();
+  -- insert the request itself
+  CASE
+    WHEN reqType = 131 THEN -- VersionQuery
+      INSERT INTO VersionQuery (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client)
+      VALUES (0,userName,euid,egid,0,pid,machine,svcClassName,'',reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
+    ELSE
+      raise_application_error(-20122, 'Unsupported request type in insertVersionQueryRequest : ' || TO_CHAR(reqType));
+  END CASE;
+  -- insert the client information
+  INSERT INTO Client (ipAddress, port, version, secure, id)
+  VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
+  -- insert a row into newRequests table to trigger the processing of the request
+  INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
+END;
+/
+
+/* inserts StageFileQueryRequest requests in the stager DB */ 	 
+CREATE OR REPLACE PROCEDURE insertStageFileQueryRequest
+  (machine IN VARCHAR2,
+   euid IN INTEGER,
+   egid IN INTEGER,
+   pid IN INTEGER,
+   userName IN VARCHAR2,
+   svcClassName IN VARCHAR2,
+   reqUUID IN VARCHAR2,
+   reqType IN INTEGER,
+   clientIP IN INTEGER,
+   clientPort IN INTEGER,
+   clientVersion IN INTEGER,
+   clientSecure IN INTEGER,
+   fileName IN VARCHAR2,
+   qpValues IN castor."strList",
+   qpTypes IN castor."cnumList") AS
+  svcClassId NUMBER;
+  reqId NUMBER;
+  queryParamId NUMBER;
+  clientId NUMBER;
+  creationTime NUMBER;
+BEGIN
+  -- do prechecks and get the service class
+  svcClassId := insertPreChecks(euid, egid, svcClassName, reqType);
+  -- get unique ids for the request and the client and get current time
+  SELECT ids_seq.nextval INTO reqId FROM DUAL;
+  SELECT ids_seq.nextval INTO clientId FROM DUAL;
+  creationTime := getTime();
+  -- insert the request itself
+  CASE
+    WHEN reqType = 33 THEN -- StageFileQueryRequest
+      INSERT INTO StageFileQueryRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, fileName, id, svcClass, client)
+      VALUES (0,userName,euid,egid,0,pid,machine,svcClassName,'',reqUUID,creationTime,creationTime,fileName,reqId,svcClassId,clientId);
+    ELSE
+      raise_application_error(-20122, 'Unsupported request type in insertFileQueryRequest : ' || TO_CHAR(reqType));
+  END CASE;
+  -- insert the client information
+  INSERT INTO Client (ipAddress, port, version, secure, id)
+  VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
+  -- Loop on query parameters
+  FOR i IN qpValues.FIRST .. qpValues.LAST LOOP
+    -- get unique ids for the query parameter
+    SELECT ids_seq.nextval INTO queryParamId FROM DUAL;
+    -- insert the query parameter
+    INSERT INTO QueryParameter (value, id, query, querytype)
+    VALUES (qpValues(i), queryParamId, reqId, qpTypes(i));
+  END LOOP;
+  -- insert a row into newRequests table to trigger the processing of the request
+  INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
+END;
+/
+
+/* inserts DiskPoolQuery requests in the stager DB. */ 	 
+CREATE OR REPLACE PROCEDURE insertDiskPoolQueryRequest
+  (machine IN VARCHAR2,
+   euid IN INTEGER,
+   egid IN INTEGER,
+   pid IN INTEGER,
+   userName IN VARCHAR2,
+   svcClassName IN VARCHAR2,
+   reqUUID IN VARCHAR2,
+   reqType IN INTEGER,
+   clientIP IN INTEGER,
+   clientPort IN INTEGER,
+   clientVersion IN INTEGER,
+   clientSecure IN INTEGER,
+   dpName IN VARCHAR2,
+   queryType IN NUMBER) AS
+  svcClassId NUMBER;
+  reqId NUMBER;
+  queryParamId NUMBER;
+  clientId NUMBER;
+  creationTime NUMBER;
+BEGIN
+  -- do prechecks and get the service class
+  svcClassId := insertPreChecks(euid, egid, svcClassName, reqType);
+  -- get unique ids for the request and the client and get current time
+  SELECT ids_seq.nextval INTO reqId FROM DUAL;
+  SELECT ids_seq.nextval INTO clientId FROM DUAL;
+  creationTime := getTime();
+  -- insert the request itself
+  CASE
+    WHEN reqType = 195 THEN -- DiskPoolQuery
+      INSERT INTO DiskPoolQuery (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, diskPoolName, id, svcClass, client,queryType)
+      VALUES (0,userName,euid,egid,0,pid,machine,svcClassName,'',reqUUID,creationTime,creationTime,dpName,reqId,svcClassId,clientId,queryType);
+    ELSE
+      raise_application_error(-20122, 'Unsupported request type in insertDiskPoolQueryRequest : ' || TO_CHAR(reqType));
+  END CASE;
+  -- insert the client information
+  INSERT INTO Client (ipAddress, port, version, secure, id)
+  VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
+  -- insert a row into newRequests table to trigger the processing of the request
+  INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
+END;
+/
+
+/* inserts MoverClose Requests in the stager DB */ 	 
+CREATE OR REPLACE PROCEDURE insertMoverCloseRequest
+  (machine IN VARCHAR2,
+   euid IN INTEGER,
+   egid IN INTEGER,
+   pid IN INTEGER,
+   userName IN VARCHAR2,
+   svcClassName IN VARCHAR2,
+   reqUUID IN VARCHAR2,
+   reqType IN INTEGER,
+   clientIP IN INTEGER,
+   clientPort IN INTEGER,
+   clientVersion IN INTEGER,
+   clientSecure IN INTEGER,
+   subReqId IN INTEGER,
+   fileId IN INTEGER,
+   nsHost IN VARCHAR2,
+   fileSize IN INTEGER,
+   timeStamp IN INTEGER,
+   checkSumType IN VARCHAR2,
+   checkSumValue IN VARCHAR2) AS
+  svcClassId NUMBER;
+  reqId NUMBER;
+  clientId NUMBER;
+  creationTime NUMBER;
+BEGIN
+  -- do prechecks and get the service class
+  svcClassId := insertPreChecks(euid, egid, svcClassName, reqType);
+  -- get unique ids for the request and the client and get current time
+  SELECT ids_seq.nextval INTO reqId FROM DUAL;
+  SELECT ids_seq.nextval INTO clientId FROM DUAL;
+  creationTime := getTime();
+  -- insert the request itself
+  CASE
+    WHEN reqType = 65 THEN -- MoverCloseRequest
+      INSERT INTO MoverCloseRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, subReqId, fileSize, timeStamp, fileId, nsHost, csumType, csumValue, id, svcClass, client)
+      VALUES (0,userName,euid,egid,0,pid,machine,svcClassName,'',reqUUID,creationTime,creationTime,subReqId,fileSize,timeStamp,fileId,nsHost,checkSumType,checkSumValue,reqId,svcClassId,clientId);
+    ELSE
+      raise_application_error(-20122, 'Unsupported request type in insertMoverClose : ' || TO_CHAR(reqType));
+  END CASE;
+  -- insert the client information
+  INSERT INTO Client (ipAddress, port, version, secure, id)
+  VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
+  -- insert a row into newRequests table to trigger the processing of the request
+  INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
+END;
+/
+
+/* inserts Files2Delete Requests in the stager DB */ 	 
+CREATE OR REPLACE PROCEDURE insertFiles2DeleteRequest
+  (machine IN VARCHAR2,
+   euid IN INTEGER,
+   egid IN INTEGER,
+   pid IN INTEGER,
+   userName IN VARCHAR2,
+   svcClassName IN VARCHAR2,
+   reqUUID IN VARCHAR2,
+   reqType IN INTEGER,
+   clientIP IN INTEGER,
+   clientPort IN INTEGER,
+   clientVersion IN INTEGER,
+   clientSecure IN INTEGER,
+   diskServerName IN VARCHAR2) AS
+  svcClassId NUMBER;
+  reqId NUMBER;
+  clientId NUMBER;
+  creationTime NUMBER;
+BEGIN
+  -- do prechecks and get the service class
+  svcClassId := insertPreChecks(euid, egid, svcClassName, reqType);
+  -- get unique ids for the request and the client and get current time
+  SELECT ids_seq.nextval INTO reqId FROM DUAL;
+  SELECT ids_seq.nextval INTO clientId FROM DUAL;
+  creationTime := getTime();
+  -- insert the request itself
+  CASE
+    WHEN reqType = 73 THEN -- Files2Delete
+      INSERT INTO Files2Delete (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, diskServer, id, svcClass, client)
+      VALUES (0,userName,euid,egid,0,pid,machine,svcClassName,'',reqUUID,creationTime,creationTime,diskServerName,reqId,svcClassId,clientId);
+    ELSE
+      raise_application_error(-20122, 'Unsupported request type in insertFiles2Delete : ' || TO_CHAR(reqType));
+  END CASE;
+  -- insert the client information
+  INSERT INTO Client (ipAddress, port, version, secure, id)
+  VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
+  -- insert a row into newRequests table to trigger the processing of the request
+  INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
+END;
+/
+
+/* inserts Files2Delete Requests in the stager DB */ 	 
+CREATE OR REPLACE PROCEDURE insertListPrivilegesRequest
+  (machine IN VARCHAR2,
+   euid IN INTEGER,
+   egid IN INTEGER,
+   pid IN INTEGER,
+   userName IN VARCHAR2,
+   svcClassName IN VARCHAR2,
+   reqUUID IN VARCHAR2,
+   reqType IN INTEGER,
+   clientIP IN INTEGER,
+   clientPort IN INTEGER,
+   clientVersion IN INTEGER,
+   clientSecure IN INTEGER,
+   userId IN INTEGER,
+   groupId IN INTEGER,
+   requestType IN INTEGER) AS
+  svcClassId NUMBER;
+  reqId NUMBER;
+  clientId NUMBER;
+  creationTime NUMBER;
+BEGIN
+  -- do prechecks and get the service class
+  svcClassId := insertPreChecks(euid, egid, svcClassName, reqType);
+  -- get unique ids for the request and the client and get current time
+  SELECT ids_seq.nextval INTO reqId FROM DUAL;
+  SELECT ids_seq.nextval INTO clientId FROM DUAL;
+  creationTime := getTime();
+  -- insert the request itself
+  CASE
+    WHEN reqType = 155 THEN -- ListPrivileges
+      INSERT INTO ListPrivileges (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, userId, groupId, requestType, id, svcClass, client)
+      VALUES (0,userName,euid,egid,0,pid,machine,svcClassName,'',reqUUID,creationTime,creationTime,userId,groupId,requestType,reqId,svcClassId,clientId);
+    ELSE
+      raise_application_error(-20122, 'Unsupported request type in insertListPrivileges : ' || TO_CHAR(reqType));
+  END CASE;
+  -- insert the client information
+  INSERT INTO Client (ipAddress, port, version, secure, id)
+  VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
+  -- insert a row into newRequests table to trigger the processing of the request
+  INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
+END;
+/
+
+/* inserts StageAbort Request in the stager DB */ 	 
+CREATE OR REPLACE PROCEDURE insertStageAbortRequest
+  (machine IN VARCHAR2,
+   euid IN INTEGER,
+   egid IN INTEGER,
+   pid IN INTEGER,
+   userName IN VARCHAR2,
+   svcClassName IN VARCHAR2,
+   reqUUID IN VARCHAR2,
+   reqType IN INTEGER,
+   clientIP IN INTEGER,
+   clientPort IN INTEGER,
+   clientVersion IN INTEGER,
+   clientSecure IN INTEGER,
+   parentUUID IN VARCHAR2,
+   fileids IN castor."cnumList",
+   nsHosts IN castor."strList") AS
+  svcClassId NUMBER;
+  reqId NUMBER;
+  clientId NUMBER;
+  creationTime NUMBER;
+  fileidId INTEGER;
+BEGIN
+  -- do prechecks and get the service class
+  svcClassId := insertPreChecks(euid, egid, svcClassName, reqType);
+  -- get unique ids for the request and the client and get current time
+  SELECT ids_seq.nextval INTO reqId FROM DUAL;
+  SELECT ids_seq.nextval INTO clientId FROM DUAL;
+  creationTime := getTime();
+  -- insert the request itself
+  CASE
+    WHEN reqType = 50 THEN -- StageAbortRequest
+      INSERT INTO StageAbortRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, parentUuid, id, svcClass, client)
+      VALUES (0,userName,euid,egid,0,pid,machine,svcClassName,'',reqUUID,creationTime,creationTime,parentUUID,reqId,svcClassId,clientId);
+    ELSE
+      raise_application_error(-20122, 'Unsupported request type in insertStageAbortRequest : ' || TO_CHAR(reqType));
+  END CASE;
+  -- insert the client information
+  INSERT INTO Client (ipAddress, port, version, secure, id)
+  VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
+  -- Loop on fileids
+  FOR i IN fileids.FIRST .. fileids.LAST LOOP
+    -- ignore fake items passed only because ORACLE does not like empty arrays
+    IF nsHosts(i) IS NULL THEN EXIT; END IF;
+    -- get unique ids for the fileid
+    SELECT ids_seq.nextval INTO fileidId FROM DUAL;
+    -- insert the fileid
+    INSERT INTO NsFileId (fileId, nsHost, id, request)
+    VALUES (fileids(i), nsHosts(i), fileidId, reqId);
+  END LOOP;
+  -- insert a row into newRequests table to trigger the processing of the request
+  INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
+END;
+/
+
+/* inserts GC Requests in the stager DB
+ * This handles NsFilesDeleted, FilesDeleted, FilesDeletionFailed and StgFilesDeleted 
+ * requests.
+ */
+CREATE OR REPLACE PROCEDURE insertGCRequest
+  (machine IN VARCHAR2,
+   euid IN INTEGER,
+   egid IN INTEGER,
+   pid IN INTEGER,
+   userName IN VARCHAR2,
+   svcClassName IN VARCHAR2,
+   reqUUID IN VARCHAR2,
+   reqType IN INTEGER,
+   clientIP IN INTEGER,
+   clientPort IN INTEGER,
+   clientVersion IN INTEGER,
+   clientSecure IN INTEGER,
+   nsHost IN VARCHAR2,
+   diskCopyIds IN castor."cnumList") AS
+  svcClassId NUMBER;
+  reqId NUMBER;
+  clientId NUMBER;
+  creationTime NUMBER;
+  gcFileId INTEGER;
+BEGIN
+  -- do prechecks and get the service class
+  svcClassId := insertPreChecks(euid, egid, svcClassName, reqType);
+  -- get unique ids for the request and the client and get current time
+  SELECT ids_seq.nextval INTO reqId FROM DUAL;
+  SELECT ids_seq.nextval INTO clientId FROM DUAL;
+  creationTime := getTime();
+  -- insert the request itself
+  CASE
+    WHEN reqType = 142 THEN -- NsFilesDeleted
+      INSERT INTO NsFilesDeleted (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, nsHost, id, svcClass, client)
+      VALUES (0,userName,euid,egid,0,pid,machine,svcClassName,'',reqUUID,creationTime,creationTime,nsHost,reqId,svcClassId,clientId);
+    WHEN reqType = 74 THEN -- FilesDeleted
+      INSERT INTO FilesDeleted (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client)
+      VALUES (0,userName,euid,egid,0,pid,machine,svcClassName,'',reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
+    WHEN reqType = 83 THEN -- FilesDeletionFailed
+      INSERT INTO FilesDeletionFailed (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client)
+      VALUES (0,userName,euid,egid,0,pid,machine,svcClassName,'',reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
+    WHEN reqType = 149 THEN -- StgFilesDeleted
+      INSERT INTO StgFilesDeleted (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, nsHost, id, svcClass, client)
+      VALUES (0,userName,euid,egid,0,pid,machine,svcClassName,'',reqUUID,creationTime,creationTime,nsHost,reqId,svcClassId,clientId);
+    ELSE
+      raise_application_error(-20122, 'Unsupported request type in insertGCRequest : ' || TO_CHAR(reqType));
+  END CASE;
+  -- insert the client information
+  INSERT INTO Client (ipAddress, port, version, secure, id)
+  VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
+  -- Loop on diskCopies
+  FOR i IN diskCopyIds.FIRST .. diskCopyIds.LAST LOOP
+    -- get unique ids for the diskCopy
+    SELECT ids_seq.nextval INTO gcFileId FROM DUAL;
+    -- insert the fileid
+    INSERT INTO GCFile (diskCopyId, id, request)
+    VALUES (diskCopyIds(i), gcFileId, reqId);
+  END LOOP;
+  -- insert a row into newRequests table to trigger the processing of the request
+  INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
+END;
+/
+
+/* inserts ChangePrivilege Request in the stager DB */ 	 
+CREATE OR REPLACE PROCEDURE insertChangePrivilegeRequest
+  (machine IN VARCHAR2,
+   euid IN INTEGER,
+   egid IN INTEGER,
+   pid IN INTEGER,
+   userName IN VARCHAR2,
+   svcClassName IN VARCHAR2,
+   reqUUID IN VARCHAR2,
+   reqType IN INTEGER,
+   clientIP IN INTEGER,
+   clientPort IN INTEGER,
+   clientVersion IN INTEGER,
+   clientSecure IN INTEGER,
+   isGranted IN INTEGER,
+   euids IN castor."cnumList",
+   egids IN castor."cnumList",
+   reqTypes IN castor."cnumList") AS
+  svcClassId NUMBER;
+  reqId NUMBER;
+  clientId NUMBER;
+  creationTime NUMBER;
+  subobjId INTEGER;
+BEGIN
+  -- do prechecks and get the service class
+  svcClassId := insertPreChecks(euid, egid, svcClassName, reqType);
+  -- get unique ids for the request and the client and get current time
+  SELECT ids_seq.nextval INTO reqId FROM DUAL;
+  SELECT ids_seq.nextval INTO clientId FROM DUAL;
+  creationTime := getTime();
+  -- insert the request itself
+  CASE
+    WHEN reqType = 152 THEN -- ChangePrivilege
+      INSERT INTO ChangePrivilege (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, isGranted, id, svcClass, client)
+      VALUES (0,userName,euid,egid,0,pid,machine,svcClassName,'',reqUUID,creationTime,creationTime,isGranted,reqId,svcClassId,clientId);
+    ELSE
+      raise_application_error(-20122, 'Unsupported request type in insertChangePrivilege : ' || TO_CHAR(reqType));
+  END CASE;
+  -- insert the client information
+  INSERT INTO Client (ipAddress, port, version, secure, id)
+  VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
+  -- Loop on request types
+  FOR i IN reqTypes.FIRST .. reqTypes.LAST LOOP
+    -- get unique ids for the request type
+    SELECT ids_seq.nextval INTO subobjId FROM DUAL;
+    -- insert the request type
+    INSERT INTO RequestType (reqType, id, request)
+    VALUES (reqTypes(i), subobjId, reqId);
+  END LOOP;
+  -- Loop on BWUsers
+  FOR i IN euids.FIRST .. euids.LAST LOOP
+    -- get unique ids for the request type
+    SELECT ids_seq.nextval INTO subobjId FROM DUAL;
+    -- insert the BWUser
+    INSERT INTO BWUser (euid, egid, id, request)
+    VALUES (euids(i), egids(i), subobjId, reqId);
+  END LOOP;
+  -- insert a row into newRequests table to trigger the processing of the request
+  INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
+END;
+/
 
 /* Flag the schema creation as COMPLETE */
 UPDATE UpgradeLog SET endDate = sysdate, state = 'COMPLETE';

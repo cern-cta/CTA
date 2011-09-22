@@ -22,18 +22,11 @@ namespace castor{
       public:
 
         OpenRequestHandler(RequestHelper* reqHelper) throw() :
-          RequestHandler(reqHelper), m_notifyJobManager(false) {};
+          RequestHandler(reqHelper) {};
+
         virtual ~OpenRequestHandler() throw() {};
         
         virtual void handle() throw(castor::exception::Exception);
-        
-        bool notifyJobManager() {
-          return m_notifyJobManager;
-        }
-
-      protected:
-        
-        bool m_notifyJobManager;
         
       }; //end class OpenRequestHandler
       

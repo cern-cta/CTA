@@ -6,7 +6,7 @@
 DLFWEB=/var/www/html/dlf
 DLFCONF=/var/www/conf/dlf
 
-.PHONY : install clean clobber checkDESTDIR checkORACLE checkLSF checkGLOBUS checkSTK checkXROOT checkVERSION client installclient tape installtape purge
+.PHONY : install clean clobber checkDESTDIR checkORACLE checkGLOBUS checkSTK checkXROOT checkVERSION client installclient tape installtape purge
 
 /**
  * Meaning of the different rules :
@@ -20,13 +20,13 @@ DLFCONF=/var/www/conf/dlf
  * - clobber is cleaning all files resulting from compilation
  * - purge is clobber + the drop of all Makefiles
  * - the check rules are testing the presence of one component and exiting if they fail
- *   + checkORACLE checkLSF checkGLOBUS checkSTK checkXROOT checkMEMCACHED checkXFS are obvious
+ *   + checkORACLE checkGLOBUS checkSTK checkXROOT checkMEMCACHED checkXFS are obvious
  *   + checkDESTDIR checks whether the DESTDIR environment variable is set
  *   + checkVERSION checks whether the MAJOR/MINOR_CASTOR_VERSION environment variables
  *     are set
  */
 
-all: checkORACLE checkLSF checkGLOBUS checkXROOT checkMEMCACHED checkXFS tape client
+all: checkORACLE checkGLOBUS checkXROOT checkMEMCACHED checkXFS tape client
 tape: checkSTK
 install: checkDESTDIR checkVERSION all installtape installclient
 
@@ -48,18 +48,6 @@ checkORACLE:
 	fi; \
 	if [ ! -r $(ORACLE_BIN)/proc ]; then \
 	  echo "Could not find proc executable in $(ORACLE_BIN). Giving up."; \
-	  exit 1; \
-	fi
-
-LSF_LIB_LOCATION ?= $(LIBDIR)
-LSF_LOCATION ?= $(dir $(LSF_LIB_LOCATION))
-checkLSF:
-	@if [ ! -r $(LSF_LOCATION)/include/lsf/lsbatch.h ]; then \
-	  echo "Unable to find LSF header files at $(LSF_LOCATION). Giving up."; \
-	  exit 1; \
-	fi; \
-	if [ ! -r $(LSF_LIB_LOCATION)/liblsf.so ]; then \
-	  echo "Unable to find LSF library files at $(LSF_LIB_LOCATION). Giving up."; \
 	  exit 1; \
 	fi
 

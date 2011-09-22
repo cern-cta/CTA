@@ -34,7 +34,7 @@ to load its configuration settings from the file pointed to by \fI<config-file>\
 
 The
 .B -m, --metrics
-option enables internal metrics collection, usually into \fI/var/spool/castor/jobmanagerd.xml\fR.
+option enables internal metrics collection, usually into \fI/var/spool/castor/gcd.xml\fR.
 
 .SH FILES
 All configuration settings for the

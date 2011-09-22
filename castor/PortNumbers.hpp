@@ -58,11 +58,6 @@ namespace castor {
   const unsigned short TAPEBRIDGE_RTCPDHIGHPORT = 30200;
 
   /**
-   * The default port on which the job manager listenes for notifications.
-   */
-  const int JOBMANAGER_DEFAULT_NOTIFYPORT = 15011;
-
-  /**
    * The default port on which rtcpclientd listens for notifications.
    */
   const int RTCPCLIENTD_DEFAULT_NOTIFYPORT = 5050;  // for future use

@@ -31,7 +31,7 @@
 // Include files
 #include "castor/server/IThread.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/monitoring/rmmaster/LSFStatus.hpp"
+#include "castor/monitoring/rmmaster/SchedulerStatus.hpp"
 
 namespace castor {
 
@@ -84,7 +84,7 @@ namespace castor {
         /// Machine Status List
         castor::monitoring::ClusterStatus* m_clusterStatus;
 
-	/// The previous recorded name of the LSF master
+	/// The previous recorded name of the rmmaster master
 	std::string m_prevMasterName;
 
       };

@@ -118,8 +118,8 @@ void castor::monitoring::rmmaster::CollectorThread::run(void* par) throw() {
     std::string hostName;
     bool production;
     try {
-      castor::monitoring::rmmaster::LSFStatus::getInstance()->
-	getLSFStatus(production, masterName, hostName, false);
+      castor::monitoring::rmmaster::SchedulerStatus::getInstance()->
+	getSchedulerStatus(production, masterName, hostName);
     } catch (castor::exception::Exception& e) {
       // Ignore error
     }
@@ -146,7 +146,7 @@ void castor::monitoring::rmmaster::CollectorThread::run(void* par) throw() {
 	    m_updater->handleDiskServerAdminUpdate(dss, ip);
 	  } else {
 	    // Send "Try again" back to the client setting the error message
-	    // to the name of production LSF master
+	    // to the name of production resource monitoring master
 	    ack.setStatus(false);
 	    ack.setErrorCode(EAGAIN);
 	    std::ostringstream stst;
@@ -164,7 +164,7 @@ void castor::monitoring::rmmaster::CollectorThread::run(void* par) throw() {
 	    m_updater->handleFileSystemAdminUpdate(dss, ip);
 	  } else {
 	    // Send "Try again" back to the client setting the error message
-	    // to the name of production LSF master
+	    // to the name of production resource monitoring master
 	    ack.setStatus(false);
 	    ack.setErrorCode(EAGAIN);
 	    std::ostringstream stst;

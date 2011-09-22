@@ -499,7 +499,7 @@ if($uid != 0 || $gid !=0) {
 }
 
 # Ensure all of the daemons accessing the stager-database are dead
-&killDaemonWithTimeout('jobmanagerd' , 2);
+&killDaemonWithTimeout('transfermanagerd' , 2);
 &killDaemonWithTimeout('mighunterd'  , 2);
 &killDaemonWithTimeout('rechandlerd' , 2);
 &killDaemonWithTimeout('rhd'         , 2);
@@ -560,7 +560,7 @@ print("SQLPLUS SCHEMA RESULT\n");
 print("=====================\n");
 print($sqlplusSchemaResult);
 
-`/etc/init.d/jobmanagerd start`;
+`/etc/init.d/transfermanagerd start`;
 #`/etc/init.d/mighunterd start`;
 `/etc/init.d/rechandlerd start`;
 `/etc/init.d/rhd start`;

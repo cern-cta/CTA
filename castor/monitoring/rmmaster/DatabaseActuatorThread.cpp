@@ -93,10 +93,9 @@ void castor::monitoring::rmmaster::DatabaseActuatorThread::run(void*)
   // Get the information about who is the current resource monitoring master
   bool production;
   try {
-    castor::monitoring::rmmaster::LSFStatus::getInstance()->
-      getLSFStatus(production, true);
+    castor::monitoring::rmmaster::SchedulerStatus::getInstance()->getSchedulerStatus(production);
   } catch (castor::exception::Exception& e) {
-    // "Failed to determine the status of LSF, skipping database synchronization"
+    // "Failed to determine the status of the scheduler, skipping database synchronization"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Details", e.getMessage().str())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 46, 1, params);

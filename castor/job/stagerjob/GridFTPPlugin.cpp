@@ -287,24 +287,22 @@ void castor::job::stagerjob::GridFTPPlugin::postForkHook
   sourcerange << env.tcp_source_range.first << ","
               << env.tcp_source_range.second;
   castor::dlf::Param params[] =
-    {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-     castor::dlf::Param("Command Line", cmdLine.str()),
+    {castor::dlf::Param("Command Line", cmdLine.str()),
      castor::dlf::Param("TCP Port Range", tcprange.str()),
      castor::dlf::Param("TCP Source Range", sourcerange.str()),
      castor::dlf::Param("Certificate", env.globus_x509_user_cert),
      castor::dlf::Param("User Key", env.globus_x509_user_key),
      castor::dlf::Param(args.subRequestUuid)};
   castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_DEBUG,
-                          MOVERFORK, 7, params, &args.fileId);
+                          MOVERFORK, 6, params, &args.fileId);
   // Check that the mover can be executed
   if (access(progfullpath.c_str(), X_OK) != 0) {
     // "Mover program cannot be executed. Check permissions"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-       castor::dlf::Param("Mover Path", progfullpath),
+      {castor::dlf::Param("Mover Path", progfullpath),
        castor::dlf::Param(args.subRequestUuid)};
     castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
-                            MOVERNOTEXEC, 3, params, &args.fileId);
+                            MOVERNOTEXEC, 2, params, &args.fileId);
   }
   // Call upper level
   RawMoverPlugin::postForkHook(args, context, true);

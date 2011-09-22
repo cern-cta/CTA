@@ -102,8 +102,7 @@ void castor::monitoring::rmmaster::UpdateThread::handleStreamReport
   // Get the information about who is the current resource monitoring master
   try {
     bool production;
-    castor::monitoring::rmmaster::LSFStatus::getInstance()->
-      getLSFStatus(production, false);
+    castor::monitoring::rmmaster::SchedulerStatus::getInstance()->getSchedulerStatus(production);
     if (!production) {
       return;
     }

@@ -49,12 +49,6 @@ namespace castor {
         
         virtual void process(castor::IObject* subRequestToProcess) throw();
         
-      private:
-      
-        /// jobmanager daemon host and port
-        std::string m_jobManagerHost;
-        unsigned m_jobManagerPort;
-  
       };
       
     } // end namespace daemon

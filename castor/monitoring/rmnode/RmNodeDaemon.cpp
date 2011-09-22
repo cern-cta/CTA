@@ -57,8 +57,7 @@ int main(int argc, char *argv[]) {
     std::ostringstream hosts;
 
     // Extract the list of hosts to send to. For reasons of redundancy we
-    // support sending information to multiple hosts i.e. the master and slave
-    // LSF masters.
+    // support sending information to multiple hosts
     char **values;
     int  count;
     if (getconfent_multi("RM", "HOST", 1, &values, &count) < 0) {

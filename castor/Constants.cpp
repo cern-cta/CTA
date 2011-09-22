@@ -304,7 +304,7 @@ const char* castor::ServicesIdStrings[ServicesIdsNb] = {
   "ORACLEANSVC",
   "ORARMMASTERSVC",
   "DBPARAMSSVC",
-  "ORAJOBMANAGERSVC",
+  "DELETED SERVICE",
 
   "DBRHSVC",
   "ORARHSVC",

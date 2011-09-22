@@ -38,9 +38,9 @@ linked to only one service class.
 .B -t,\ \-\-tansfers=\fINUM\fR
 The maximum number of transfers allowed to run concurrently per filesystem.
 (Default: 50). The value must be greater than 0. It is recommended when setting
-this value to set more transfers then job slots in LSF. This compensates for any
+this value to set more transfers than job slots in the scheduler. This compensates for any
 processing overhead that the diskserver draining logic introduces and makes sure
-that there are always transfers pending in the LSF queue.
+that there are always transfers pending in the scheduler queue.
 .TP
 .B --auto-delete
 Delete files automatically after replication. (Default: NO). Files deleted as a

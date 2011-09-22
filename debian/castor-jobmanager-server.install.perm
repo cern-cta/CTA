@@ -1,4 +1,0 @@
-%attr(0755,root,root) etc/init.d/jobmanagerd
-%attr(0644,root,root) etc/sysconfig/jobmanagerd.example
-%attr(0644,root,root) etc/logrotate.d/castor-jobmanager-server
-%attr(0755,root,root) usr/bin/jobmanagerd

@@ -232,20 +232,18 @@ void castor::job::stagerjob::RootPlugin::postForkHook
           << " (pid=" << context.childPid << ")";
   // "Mover fork uses the following command line"
   castor::dlf::Param params[] =
-    {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-     castor::dlf::Param("Command Line", cmdLine.str()),
+    {castor::dlf::Param("Command Line", cmdLine.str()),
      castor::dlf::Param(args.subRequestUuid)};
   castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_DEBUG,
-                          MOVERFORK, 3, params, &args.fileId);
+                          MOVERFORK, 2, params, &args.fileId);
   // Check that the mover can be executed
   if (access(progfullpath.c_str(), X_OK) != 0) {
     // "Mover program cannot be executed. Check permissions"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-       castor::dlf::Param("Mover Path", progfullpath),
+      {castor::dlf::Param("Mover Path", progfullpath),
        castor::dlf::Param(args.subRequestUuid)};
     castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
-                            MOVERNOTEXEC, 3, params, &args.fileId);
+                            MOVERNOTEXEC, 2, params, &args.fileId);
   }
 
   // Wait for children

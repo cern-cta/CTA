@@ -1,7 +1,0 @@
-/var/log/castor/schedulerd*.log {
-    compress
-    daily
-    missingok
-    rotate 200
-    delaycompress
-}

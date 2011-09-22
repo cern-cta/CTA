@@ -30,16 +30,11 @@
 #include "Cgetopt.h"
 #include "u64subr.h"
 #include "getconfent.h"
-
+#include <sys/time.h>
 #include <errno.h>
 #include <pwd.h>
 #include <grp.h>
 #include <unistd.h>
-
-// Defaults
-#define DEFAULT_RETRY_ATTEMPTS 60
-#define DEFAULT_RETRY_INTERVAL 10
-
 
 //-----------------------------------------------------------------------------
 // Constructor
@@ -116,42 +111,6 @@ void castor::job::d2dtransfer::MainThread::init() {
     terminate(0, EXIT_FAILURE);
   }
 
-  // Determine the number of times that the shared resource helper should try
-  // to download the resource file from the shared resource URL
-  char *value = getconfent("DiskCopy", "RetryAttempts", 0);
-  int attempts = DEFAULT_RETRY_ATTEMPTS;
-  if (value) {
-    attempts = strtol(value, 0, 10);
-    if (attempts == 0) {
-      attempts = 1;
-    } else if (attempts < 0) {
-      attempts = DEFAULT_RETRY_ATTEMPTS;
-
-      // "Invalid DiskCopy/RetryInterval option, using default"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("Default", attempts),
-         castor::dlf::Param(m_subRequestUuid)};
-      castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_WARNING, 12, 2, params, &m_fileId);
-    }
-  }
-
-  // Extract the value of the retry interval. This value determines how long
-  // we sleep between retry attempts
-  value = getconfent("DiskCopy", "RetryInterval", 0);
-  int interval = DEFAULT_RETRY_INTERVAL;
-  if (value) {
-    interval = strtol(value, 0, 10);
-    if (interval < 1) {
-      interval = DEFAULT_RETRY_INTERVAL;
-
-      // "Invalid DiskCopy/RetryAttempts option, value too small. Using default"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("Default", interval),
-         castor::dlf::Param(m_subRequestUuid)};
-      castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_WARNING, 13, 2, params, &m_fileId);
-    }
-  }
-
   // Initialize the mover. For now we only support RFIO!
   try {
     m_mover = new castor::job::d2dtransfer::RfioMover();
@@ -169,7 +128,7 @@ void castor::job::d2dtransfer::MainThread::init() {
   // Initialize the shared resource helper
   try {
     m_resHelper =
-      new castor::job::SharedResourceHelper(attempts, interval);
+      new castor::job::SharedResourceHelper();
   } catch (castor::exception::Exception& e) {
 
     // "Failed to create sharedResource helper"
@@ -299,7 +258,7 @@ void castor::job::d2dtransfer::MainThread::help(std::string programName) {
     "\t--destdc <id>           or -D  \tThe diskcopy id of the destination file to be created\n"
     "\t--srcdc <id>            or -X  \tThe diskcopy id of the source file to be copied\n"
     "\t--svcclass <name>       or -S  \tThe service class of the file to be created\n"
-    "\t--resfile <location>    or -R  \tThe location of the SharedLSFResource\n"
+    "\t--resfile <location>    or -R  \tThe location of the resource file\n"
     "\t--rcreationtime <time>  or -t  \tThe creation time of the disk copy replication request\n"
     "\n"
     "Comments to: Castor.Support@cern.ch\n";
@@ -317,13 +276,11 @@ void castor::job::d2dtransfer::MainThread::run(void*) {
     // "Downloading resource file"
     castor::dlf::Param params[] =
       {castor::dlf::Param("ResourceFile", m_resourceFile),
-       castor::dlf::Param("MaxAttempts", m_resHelper->retryAttempts()),
-       castor::dlf::Param("RetryInterval", m_resHelper->retryInterval()),
        castor::dlf::Param(m_subRequestUuid)};
-    castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_DEBUG, 35, 4, params, &m_fileId);
+    castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_DEBUG, 35, 2, params, &m_fileId);
 
     m_resHelper->setUrl(m_resourceFile);
-    content = m_resHelper->download(false);
+    content = m_resHelper->download();
   } catch (castor::exception::Exception& e) {
     if (e.code() == EINVAL) {
 
@@ -331,16 +288,6 @@ void castor::job::d2dtransfer::MainThread::run(void*) {
       castor::dlf::Param params[] =
         {castor::dlf::Param("URI", m_resourceFile.substr(0, 7))};
       castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_ERROR, 21, 1, params, &m_fileId);
-    } else if (e.code() == SERTYEXHAUST) {
-
-      // "Exceeded maximum number of attempts trying to download resource file"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("Error", m_resHelper->errorBuffer() != "" ?
-                            m_resHelper->errorBuffer() : "no message"),
-         castor::dlf::Param("MaxAttempts", m_resHelper->retryAttempts()),
-         castor::dlf::Param("URL", m_resourceFile),
-         castor::dlf::Param(m_subRequestUuid)};
-      castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_ERROR, 22, 4, params, &m_fileId);
     } else {
 
       // "Exception caught trying to download resource file"
@@ -392,9 +339,8 @@ void castor::job::d2dtransfer::MainThread::run(void*) {
   if (hostname != diskserver) {
     // "Starting source end of mover"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("JobId", getenv("LSB_JOBID") != NULL ? getenv("LSB_JOBID") : "Unknown"),
-       castor::dlf::Param(m_subRequestUuid)};
-    castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_DEBUG, 33, 2, params, &m_fileId);
+      {castor::dlf::Param(m_subRequestUuid)};
+    castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_DEBUG, 33, 1, params, &m_fileId);
 
     m_mover->source();
 
@@ -422,8 +368,7 @@ void castor::job::d2dtransfer::MainThread::run(void*) {
 
   // "DiskCopyTransfer started"
   castor::dlf::Param params[] =
-    {castor::dlf::Param("JobId", getenv("LSB_JOBID") != NULL ? getenv("LSB_JOBID") : "Unknown"),
-     castor::dlf::Param("DiskCopyId", m_diskCopyId),
+    {castor::dlf::Param("DiskCopyId", m_diskCopyId),
      castor::dlf::Param("SourceDiskCopyId", m_sourceDiskCopyId),
      castor::dlf::Param("Protocol", m_protocol),
      castor::dlf::Param("SvcClass", m_svcClass),
@@ -431,7 +376,7 @@ void castor::job::d2dtransfer::MainThread::run(void*) {
      castor::dlf::Param("TotalWaitTime",
                         totalWaitTime > 0 ? totalWaitTime * 0.000001 : 0),
      castor::dlf::Param(m_subRequestUuid)};
-  castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_SYSTEM, 25, 8, params, &m_fileId);
+  castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_SYSTEM, 25, 7, params, &m_fileId);
 
   // Call the disk2DiskCopyStart function to find out the information about the
   // destination and source diskcopy's. Note: disk2DiskCopyFailed will be

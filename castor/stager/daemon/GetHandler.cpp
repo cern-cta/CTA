@@ -28,8 +28,6 @@ namespace castor{
 
       /********************************************/
       /* for Get, Update                          */
-      /*     switch(getDiskCopyForJob):           */
-      /*        case 0,1: (staged) jobmanagerd    */
       /* to be overwriten in Repack, PrepareToGetHandler, PrepareToUpdateHandler  */
       bool GetHandler::switchDiskCopiesForJob() throw(castor::exception::Exception)
       {
@@ -38,8 +36,6 @@ namespace castor{
         switch(result) {
           case -3:
             reqHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_PREPARETOGET_DISK2DISKCOPY, &(reqHelper->cnsFileid));
-            // we notify the jobmanager daemon as we have to wait on diskcopy replication
-            m_notifyJobManager = true;
             break;
 
           case -2:
@@ -75,9 +71,6 @@ namespace castor{
               reqHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
               reqHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);
               reqHelper->dbSvc->updateRep(reqHelper->baseAddr, reqHelper->subrequest, true);
-
-              // and we notify the jobmanager daemon
-              m_notifyJobManager = true;
             }
             break;
 
@@ -102,8 +95,6 @@ namespace castor{
                   delete dc;
                   throw(e);
                 }
-                // and we notify the jobmanager daemon
-                m_notifyJobManager = true;
                 delete dc;
               }
               else {
@@ -121,8 +112,6 @@ namespace castor{
                 reqHelper->stagerService->createEmptyFile(reqHelper->subrequest, true);
                 // Note that all the process of updating the subrequest is done in PL/SQL,
                 // allowing to have a single round trip to the DB
-                // and we notify the jobmanager daemon
-                m_notifyJobManager = true;
                 break;
               }
               // Create recall candidates

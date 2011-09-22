@@ -50,15 +50,9 @@ Description: castor (Cern Advanced STORage system)
 Package: castor-job
 Architecture: any
 Depends: logrotate
-Build-Depends: libattr-devel, LSF-GLIBC-2.3-lib, LSF-GLIBC-2.3-devel
+Build-Depends: libattr-devel
 Description: castor (Cern Advanced STORage system)
  The job giving user access to data on the worder nodes
-
-Package: castor-jobmanager-server
-Architecture: any
-Depends: logrotate
-Description: castor (Cern Advanced STORage system)
- The Job Manager server used to submit jobs into the scheduler
 
 Package: castor-lib
 Architecture: any
@@ -74,13 +68,6 @@ XBS-Obsoletes: castor-sysconfig, castor-rtcopy-client, castor-lib-compat, castor
 XBS-Group: Client
 Description: castor (Cern Advanced STORage system)
  Static and shared libraries for end-users
-
-Package: castor-lsf-plugin
-Architecture: any
-Depends: logrotate, python
-Build-Depends: python-devel, LSF-GLIBC-2.3-lib, LSF-GLIBC-2.3-devel
-Description: castor (Cern Advanced STORage system)
- Scheduler plugin for LSF (6.1 minimum) framework
 
 Package: castor-transfer-manager
 Architecture: any

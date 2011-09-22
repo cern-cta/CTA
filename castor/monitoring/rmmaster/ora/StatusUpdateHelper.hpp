@@ -30,7 +30,7 @@
 
 // Include files
 #include "castor/monitoring/ClusterStatus.hpp"
-#include "castor/monitoring/rmmaster/LSFStatus.hpp"
+#include "castor/monitoring/rmmaster/SchedulerStatus.hpp"
 
 namespace castor {
 

@@ -72,9 +72,6 @@ namespace castor{
               reqHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
               reqHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);	      
               reqHelper->dbSvc->updateRep(reqHelper->baseAddr, reqHelper->subrequest, true);
-              
-              // we have to notify the jobmanager daemon
-              m_notifyJobManager = true;
             }
             delete dc;
           }

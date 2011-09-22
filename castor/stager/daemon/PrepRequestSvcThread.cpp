@@ -36,7 +36,6 @@
 #include "castor/stager/daemon/PrepareToUpdateHandler.hpp"
 
 #include "castor/BaseObject.hpp"
-#include "castor/PortNumbers.hpp"
 #include "castor/server/BaseServer.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 
@@ -83,31 +82,7 @@
 //-----------------------------------------------------------------------------
 castor::stager::daemon::PrepRequestSvcThread::PrepRequestSvcThread()
   throw(castor::exception::Exception) :
-  BaseRequestSvcThread("PrepReqSvc", "DbStagerSvc", castor::SVC_DBSTAGERSVC)
-{
-  // Determine the jobmanager host and notification port on which to send UDP
-  // messages too wake up the jobmanager to reduce processing latencies.
-  const char *value = NULL;
-
-  // First the host
-  m_jobManagerHost = "";
-  if ((value = getconfent("JOBMANAGER", "HOST", 0))) {
-    m_jobManagerHost = value;
-  }
-
-  // Second the port
-  m_jobManagerPort = castor::JOBMANAGER_DEFAULT_NOTIFYPORT;
-  if ((value = getconfent("JOBMANAGER", "NOTIFYPORT", 0))) {
-    try {
-      m_jobManagerPort = castor::System::porttoi((char *)value);
-    } catch (castor::exception::Exception& ex) {
-      castor::exception::InvalidArgument e;
-      e.getMessage() << "Invalid JOBMANAGER/NOTIFYPORT value: "
-		     << ex.getMessage().str() << std::endl;
-      throw e;
-    }
-  }
-}
+  BaseRequestSvcThread("PrepReqSvc", "DbStagerSvc", castor::SVC_DBSTAGERSVC){}
 
 //-----------------------------------------------------------------------------
 // process
@@ -146,10 +121,6 @@ void castor::stager::daemon::PrepRequestSvcThread::process(castor::IObject* subR
     }
 
     stgRequestHandler->handle();
-
-    if (stgRequestHandler->notifyJobManager() && (m_jobManagerHost != "")) {
-      castor::server::BaseServer::sendNotification(m_jobManagerHost, m_jobManagerPort, 'D');
-    }
 
     delete reqHelper;
     delete stgRequestHandler;

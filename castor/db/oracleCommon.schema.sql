@@ -351,13 +351,6 @@ CREATE GLOBAL TEMPORARY TABLE StgFilesDeletedOrphans
   (diskCopyId NUMBER)
   ON COMMIT DELETE ROWS;
 
-/* Global temporary table to handle output of the jobFailed procedure
- * This table is deprecated and should go when the jobmanager and LSF are dropped.
- */
-CREATE GLOBAL TEMPORARY TABLE JobFailedProcHelper
-  (subReqId VARCHAR2(2048))
-  ON COMMIT PRESERVE ROWS;
-
 /* Global temporary table to handle output of the processBulkAbortForGet procedure */
 CREATE GLOBAL TEMPORARY TABLE ProcessBulkAbortFileReqsHelper
   (srId NUMBER, cfId NUMBER, fileId NUMBER, nsHost VARCHAR2(2048), uuid VARCHAR(2048))
@@ -522,8 +515,6 @@ INSERT INTO CastorConfig
   VALUES ('cleaning', 'failedDCsTimeout', '72', 'Timeout for failed diskCopies in hours');
 INSERT INTO CastorConfig 
   VALUES ('tape', 'interfaceDaemon', 'rtcpclientd', 'The name of the daemon used to interface to the tape system');
-INSERT INTO CastorConfig
-  VALUES ('RmMaster', 'NoLSFMode', 'no', 'Whether we are running in NoLSF mode');
 INSERT INTO CastorConfig
   VALUES ('Repack', 'Protocol', 'rfio', 'The protocol that repack should use for writing files to disk');
 INSERT INTO CastorConfig

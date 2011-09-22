@@ -130,7 +130,6 @@ INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (17, 'taped');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (18, 'rtcpd');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (19, 'rmmasterd');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (20, 'rmnoded');
-INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (21, 'jobmanagerd');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (22, 'stagerd');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (23, 'd2dtransfer');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (24, 'mighunterd');
@@ -157,7 +156,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_11_0');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_12_0');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion

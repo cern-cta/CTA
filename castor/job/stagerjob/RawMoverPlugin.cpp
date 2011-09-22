@@ -174,21 +174,19 @@ void castor::job::stagerjob::RawMoverPlugin::postForkHook
       if (childFailed && (0 == statbuf.st_size)) {
         // "No data transferred"
         castor::dlf::Param params[] =
-          {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-           castor::dlf::Param("Path", context.fullDestPath),
+          {castor::dlf::Param("Path", context.fullDestPath),
            castor::dlf::Param(args.subRequestUuid)};
         castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_USER_ERROR,
-                                NODATAWRITTEN, 3, params, &args.fileId);
+                                NODATAWRITTEN, 2, params, &args.fileId);
         // try to drop the file
         errno = 0;
         if (unlink((char*)context.fullDestPath.c_str()) != 0) {
           castor::dlf::Param params[] =
-            {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-             castor::dlf::Param("Path", context.fullDestPath),
+            {castor::dlf::Param("Path", context.fullDestPath),
              castor::dlf::Param("Error", strerror(errno)),
              castor::dlf::Param(args.subRequestUuid)};
           castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
-                                  UNLINKFAIL, 4, params, &args.fileId);
+                                  UNLINKFAIL, 3, params, &args.fileId);
         }
         // and call putFailed
         context.jobSvc->putFailed
@@ -251,12 +249,11 @@ void castor::job::stagerjob::RawMoverPlugin::postForkHook
     } else {
       // No file found on disk, log an error
       castor::dlf::Param params[] =
-        {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-         castor::dlf::Param("Path", context.fullDestPath),
+        {castor::dlf::Param("Path", context.fullDestPath),
          castor::dlf::Param("Error", strerror(errno)),
          castor::dlf::Param(args.subRequestUuid)};
       castor::dlf::dlf_writep(args.requestUuid, DLF_LVL_ERROR,
-                              STAT64FAIL, 4, params, &args.fileId);
+                              STAT64FAIL, 3, params, &args.fileId);
       // and call putFailed
       context.jobSvc->putFailed
         (args.subRequestId, args.fileId.fileid, args.fileId.server);

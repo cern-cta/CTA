@@ -127,7 +127,6 @@ INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (17, 'taped');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (18, 'rtcpd');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (19, 'rmmasterd');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (20, 'rmnoded');
-INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (21, 'jobmanagerd');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (22, 'stagerd');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (23, 'd2dtransfer');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (24, 'mighunterd');

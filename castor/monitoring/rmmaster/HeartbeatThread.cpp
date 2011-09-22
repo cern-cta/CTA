@@ -85,8 +85,7 @@ void castor::monitoring::rmmaster::HeartbeatThread::run(void*) throw() {
     // Get the information about who is the current resource monitoring master
     try {
       bool production;
-      castor::monitoring::rmmaster::LSFStatus::getInstance()->
-	getLSFStatus(production, false);
+      castor::monitoring::rmmaster::SchedulerStatus::getInstance()->getSchedulerStatus(production);
       if (!production) {
 	m_lastPause = time(NULL);
 	return;

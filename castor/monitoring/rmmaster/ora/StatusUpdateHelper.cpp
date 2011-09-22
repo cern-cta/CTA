@@ -68,11 +68,10 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleStateUpdate
   // Get the information about who is the current resource monitoring master
   bool production = true;
   try {
-    // Do not connect to LSF if being called during the initialization phase
+    // Do not connect to database if being called during the initialization phase
     // as this can delay daemonization.
     if (!initializing) {
-      castor::monitoring::rmmaster::LSFStatus::getInstance()->
-        getLSFStatus(production, false);
+      castor::monitoring::rmmaster::SchedulerStatus::getInstance()->getSchedulerStatus(production);
     }
   } catch (castor::exception::Exception& e) {
     // Ignore error

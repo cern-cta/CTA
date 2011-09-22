@@ -496,7 +496,7 @@ Stop all daemons
 
 /etc/init.d/dlfserver stop
 /etc/init.d/expertd stop
-/etc/init.d/jobmanagerd stop
+/etc/init.d/transfermanagerd stop
 /etc/init.d/rhd stop
 /etc/init.d/rmmasterd stop
 /etc/init.d/stagerd stop
@@ -524,7 +524,7 @@ Start all daemons
 
 /etc/init.d/dlfserver start
 /etc/init.d/expertd start
-/etc/init.d/jobmanagerd start
+/etc/init.d/transfermanagerd start
 /etc/init.d/rhd start
 /etc/init.d/rmmasterd start
 /etc/init.d/stagerd start
@@ -557,38 +557,13 @@ modifySvcClass --Name default --AddTapePools vdqm2_test
 modifySvcClass --Name default --NbDrives 1
 
 
-How to configure LSF
-====================
-
-Add a new queue with the same name as the service class:
-  cd /usr/local/lsf/mnt/conf/lsbatch/c2test/configdir/
-  vi lsb.queues
-
-Add a new resource with the same name as the service class:
-  cd /usr/local/lsf/mnt/conf/
-  vi ego.shared
-
-Map one of the disk servers to the service class:
-  cd /usr/local/lsf/mnt/conf/
-  vi ego.cluster.c2test
-
-Load the new configuration
-  badmin reconfig
-  bqueues
-  lsadmin reconfig
-  bhosts
-  lshosts
-  moveDiskServer vdqm2_test lxfsrk5502.cern.ch
-  service lsf restart
-
-
 How to restart the CASTOR servers within a stager
 =================================================
 
 /etc/init.d/rechandlerd restart
 /etc/init.d/stagerd restart
 /etc/init.d/rtcpclientd restart
-/etc/init.d/jobmanagerd restart
+/etc/init.d/transfermanagerd restart
 /etc/init.d/mighunterd restart default
 
 
@@ -3495,7 +3470,7 @@ Preparing...                ########################################### [100%]
   19:castor-dbtools         ########################################### [ 66%]
   20:castor-vmgr-client     ########################################### [ 69%]
   21:castor-ns-client       ########################################### [ 72%]
-  22:castor-jobmanager-serve########################################### [ 76%]
+  22:castor-transfermanager-########################################### [ 76%]
   23:castor-policies        ########################################### [ 79%]
   24:castor-mighunter-server########################################### [ 83%]
   25:castor-lsf-plugin      ########################################### [ 86%]

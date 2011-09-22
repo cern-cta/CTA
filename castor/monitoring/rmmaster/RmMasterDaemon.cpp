@@ -19,9 +19,9 @@
  *
  * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
- * The monitoring resource master daemon is resonsible for collecting all
- * input from the diskservers and updating both the database and the LSF
- * scheduler shared memory. It also receives UDP messages migration and recall
+ * The monitoring resource master daemon is responsible for collecting all
+ * input from the diskservers and updating both the database and the rmmaster
+ * shared memory. It also receives UDP messages migration and recall
  * processes whenever a stream is open/closed
  *
  * @author castor-dev team
@@ -87,45 +87,11 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    // Check whether we should run in noLSF mode
-    char *noLSFValue = getconfent("RmMaster", "NoLSFMode", 0);
-    bool noLSF = (noLSFValue != NULL && strcasecmp(noLSFValue, "yes") == 0);
-
-    if (!noLSF) {
-        
-      // Attempt to find the LSF cluster and master name for logging purposes.
-      // This isn't really required but could be useful for future debugging
-      // efforts
-      std::string clusterName("Unknown");
-      std::string masterName("Unknown");
-      char **results = NULL;
-
-      // Errors are ignored here!
-      lsb_init((char*)"rmmasterd");
-      clusterInfo *cInfo = ls_clusterinfo(NULL, NULL, results, 0, 0);
-      if (cInfo != NULL) {
-        clusterName = cInfo[0].clusterName;
-        masterName  = cInfo[0].masterName;
-      }
-
-      // "RmMaster Daemon started"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("Port", listenPort),
-         castor::dlf::Param("UpdateInterval", updateInterval),
-         castor::dlf::Param("Cluster", clusterName),
-         castor::dlf::Param("Master", masterName),
-         castor::dlf::Param("LSFEnabled", "Yes")};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 2, 5, params);
-
-    } else {
-        
-      // "RmMaster Daemon started"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("Port", listenPort),
-         castor::dlf::Param("UpdateInterval", updateInterval),
-         castor::dlf::Param("LSFEnabled", "No")};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 2, 3, params);
-    }
+    // "RmMaster Daemon started"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Port", listenPort),
+       castor::dlf::Param("UpdateInterval", updateInterval)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 2, 2, params);
     
     // DB threadpool
     daemon.addThreadPool
@@ -198,7 +164,7 @@ castor::monitoring::rmmaster::RmMasterDaemon::RmMasterDaemon() :
     { 13, "Received unknown object from socket" },
     { 17, "General exception caught" },
     { 35, "Updating cluster status information from database to shared memory" },
-    { 46, "Failed to determine the status of LSF, skipping database synchronization" },
+    { 46, "Failed to determine the status of the scheduler, skipping database synchronization" },
 
     // Heartbeat thread
     { 18, "Invalid RmMaster/HeartbeatInterval option, using default" },

@@ -109,17 +109,6 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE TransferRecord_Cur IS REF CURSOR RETURN TransferRecord;
   TYPE DiskServerName IS RECORD (diskServer VARCHAR(2048));
   TYPE DiskServerList_Cur IS REF CURSOR RETURN DiskServerName;
-  /* These types are deprecated and should go when the jobmanager and LSF are dropped*/
-  TYPE SchedulerJobLine IS RECORD (
-    subReqId VARCHAR(2048),
-    reqId VARCHAR(2048),
-    noSpace INTEGER,
-    noFSAvail INTEGER);
-  TYPE SchedulerJobs_Cur IS REF CURSOR RETURN SchedulerJobLine;
-  TYPE JobFailedSubReqList IS RECORD (
-    subReqId VARCHAR2(2048));
-  TYPE JobFailedSubReqList_Cur IS REF CURSOR RETURN JobFailedSubReqList;
-  /* end of deprecated code */
   TYPE FileEntry IS RECORD (
     fileid INTEGER,
     nshost VARCHAR2(2048));
@@ -1515,22 +1504,6 @@ BEGIN
     IF (c = 0) THEN
       RETURN 1;
     END IF;
-    -- This is deprecated and should go when the jobmanager and LSF are dropped
-    DECLARE
-      noLSF VARCHAR2(2048);
-    BEGIN
-      noLSF := getConfigOption('RmMaster', 'NoLSFMode', 'no');
-      IF LOWER(noLSF) != 'yes' THEN
-        SELECT sum(xsize) INTO reservedSpace
-          FROM SubRequest, StagePutRequest
-         WHERE SubRequest.request = StagePutRequest.id
-           AND SubRequest.status = 6  -- READY
-           AND StagePutRequest.svcClass = svcClassId;
-        IF availSpace < reservedSpace THEN
-          RETURN 1;
-        END IF;
-      END IF;
-    END;
   END IF;
   RETURN 0;
 END;
@@ -1837,9 +1810,7 @@ BEGIN
   RETURNING id INTO clientId;
 
   -- Create the StageDiskCopyReplicaRequest. The euid and egid values default to
-  -- 0 here, this indicates the request came from the user root. When the
-  -- jobmanager daemon encounters the StageDiskCopyReplicaRequest it will
-  -- automatically use the stage:st account for submission into LSF.
+  -- 0 here, this indicates the request came from the user root.
   SELECT ids_seq.nextval INTO destDcId FROM Dual;
   INSERT INTO StageDiskCopyReplicaRequest
     (svcclassname, reqid, creationtime, lastmodificationtime, id, svcclass,
@@ -1856,7 +1827,7 @@ BEGIN
      AND DiskCopy.id = sourceDcId;
 
   -- Create the SubRequest setting the initial status to READYFORSCHED for
-  -- immediate dispatching i.e no stager processing by the jobmanager daemon.
+  -- immediate dispatching i.e no stager processing
   INSERT INTO SubRequest
     (retrycounter, filename, protocol, xsize, priority, subreqid, flags, modebits,
      creationtime, lastmodificationtime, answered, id, diskcopy, castorfile, parent,
@@ -2095,37 +2066,22 @@ BEGIN
     -- Yes, we have some
     -- List available diskcopies for job scheduling
     OPEN sources
-      FOR SELECT id, path, status, fsRate, mountPoint, name FROM (
-            SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ DiskCopy.id, DiskCopy.path, DiskCopy.status,
-                   FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
-                                  FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams,
-                                  FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) fsRate,
-                   FileSystem.mountPoint, DiskServer.name,
-                   -- Use the power of analytics to create a cumulative value of the length
-                   -- of the diskserver name and filesystem mountpoint. We do this because
-                   -- when there are many many copies of a file the requested filesystems
-                   -- string created by the stager from these results e.g. ds1:fs1|ds2:fs2|
-                   -- can exceed the maximum length allowed by LSF causing the submission
-                   -- process to fail.
-                   -- XXX to be reviewed once LSF is dropped.
-                   SUM(LENGTH(DiskServer.name) + LENGTH(FileSystem.mountPoint) + 2)
-                   OVER (ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate,
-                                                 FileSystem.nbReadStreams,
-                                                 FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams,
-                                                 FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams)
-                          DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) bytes
-              FROM DiskCopy, SubRequest, FileSystem, DiskServer, DiskPool2SvcClass
-             WHERE SubRequest.id = srId
-               AND SubRequest.castorfile = DiskCopy.castorfile
-               AND FileSystem.diskpool = DiskPool2SvcClass.parent
-               AND DiskPool2SvcClass.child = svcClassId
-               AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
-               AND FileSystem.id = DiskCopy.fileSystem
-               AND FileSystem.status = 0  -- PRODUCTION
-               AND DiskServer.id = FileSystem.diskServer
-               AND DiskServer.status = 0  -- PRODUCTION
-             ORDER BY fsRate DESC)
-         WHERE bytes <= 200;
+      FOR SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ DiskCopy.id, DiskCopy.path, DiskCopy.status,
+                 FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
+                                FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams,
+                                FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) fsRate,
+                 FileSystem.mountPoint, DiskServer.name
+            FROM DiskCopy, SubRequest, FileSystem, DiskServer, DiskPool2SvcClass
+           WHERE SubRequest.id = srId
+             AND SubRequest.castorfile = DiskCopy.castorfile
+             AND FileSystem.diskpool = DiskPool2SvcClass.parent
+             AND DiskPool2SvcClass.child = svcClassId
+             AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
+             AND FileSystem.id = DiskCopy.fileSystem
+             AND FileSystem.status = 0  -- PRODUCTION
+             AND DiskServer.id = FileSystem.diskServer
+             AND DiskServer.status = 0  -- PRODUCTION
+           ORDER BY fsRate DESC;
     -- Internal replication processing
     IF upd = 1 OR (nbDCs = 1 AND dcStatus = 6) THEN -- DISKCOPY_STAGEOUT
       -- replication forbidden
@@ -3470,7 +3426,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 END;
 /
 
-/* PL/SQL function to elect a rmmaster daemon in NoLSFMode */
+/* PL/SQL function to elect a rmmaster master */
 CREATE OR REPLACE FUNCTION isMonitoringMaster RETURN NUMBER IS
   locked EXCEPTION;
   PRAGMA EXCEPTION_INIT (locked, -54);

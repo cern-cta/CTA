@@ -19,7 +19,7 @@
  *
  * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
- * this is the job launched by LSF on the diskserver in order to allow some I/O
+ * this is the job launched by the scheduler on the diskserver in order to allow some I/O
  *
  * @author castor dev team
  *****************************************************************************/
@@ -147,11 +147,10 @@ std::string startAndGetPath
       // This happens in particular when a diskCopy gets invalidated
       // while the job waits in the scheduler queue
       castor::dlf::Param params[] =
-        {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-         castor::dlf::Param(args->subRequestUuid)};
+        {castor::dlf::Param(args->subRequestUuid)};
       castor::dlf::dlf_writep
         (args->requestUuid, DLF_LVL_SYSTEM,
-         castor::job::stagerjob::JOBNOOP, 2, params, &args->fileId);
+         castor::job::stagerjob::JOBNOOP, 1, params, &args->fileId);
       return "";
     }
     std::string fullDestPath = args->fileSystem + diskCopy->path();
@@ -165,13 +164,12 @@ std::string startAndGetPath
         if (thisfd < 0) {
           // "Failed to create empty file"
           castor::dlf::Param params[] =
-            {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-             castor::dlf::Param("Path", fullDestPath),
+            {castor::dlf::Param("Path", fullDestPath),
              castor::dlf::Param("Error", strerror(errno)),
              castor::dlf::Param(args->subRequestUuid)};
           castor::dlf::dlf_writep
             (args->requestUuid, DLF_LVL_ERROR,
-             castor::job::stagerjob::CREATFAILED, 4, params, &args->fileId);
+             castor::job::stagerjob::CREATFAILED, 3, params, &args->fileId);
           delete diskCopy;
           castor::exception::Exception e(errno);
           e.getMessage() << "Failed to create empty file";
@@ -179,13 +177,12 @@ std::string startAndGetPath
         }
         if (close(thisfd) != 0) {
           castor::dlf::Param params[] =
-            {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-             castor::dlf::Param("Path", fullDestPath),
+            {castor::dlf::Param("Path", fullDestPath),
              castor::dlf::Param("Error", strerror(errno)),
              castor::dlf::Param(args->subRequestUuid)};
           castor::dlf::dlf_writep
             (args->requestUuid, DLF_LVL_ERROR,
-             castor::job::stagerjob::FCLOSEFAILED, 4, params, &args->fileId);
+             castor::job::stagerjob::FCLOSEFAILED, 3, params, &args->fileId);
         }
       }
     }
@@ -391,11 +388,10 @@ void process(castor::job::stagerjob::PluginContext &context,
       {castor::dlf::Param("Protocol", args->protocol),
        castor::dlf::Param("Port range", sPortRange.str()),
        castor::dlf::Param("Port used", context.port),
-       castor::dlf::Param("JobId", getenv("LSB_JOBID")),
        castor::dlf::Param(args->subRequestUuid)};
     castor::dlf::dlf_writep
       (args->requestUuid, DLF_LVL_DEBUG,
-       castor::job::stagerjob::MOVERPORT, 5, params, &args->fileId);
+       castor::job::stagerjob::MOVERPORT, 4, params, &args->fileId);
     // Prefork hook for the different movers
     plugin->preForkHook(*args, context);
   } catch (castor::exception::RequestCanceled& e) {
@@ -418,13 +414,12 @@ void process(castor::job::stagerjob::PluginContext &context,
       // cleanup failed, log it
       // Unable to clean up stager DB for failed job
       castor::dlf::Param params[] =
-        {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-         castor::dlf::Param(args->subRequestUuid),
+        {castor::dlf::Param(args->subRequestUuid),
          castor::dlf::Param("ErrorCode", e2.code()),
          castor::dlf::Param("ErrorMessage", e2.getMessage().str())};
       castor::dlf::dlf_writep
         (args->requestUuid, DLF_LVL_ERROR,
-         castor::job::stagerjob::CLEANUPFAILED, 2, params, &args->fileId);
+         castor::job::stagerjob::CLEANUPFAILED, 3, params, &args->fileId);
     }
     // rethrow original exception. It will be caught in the main procedure,
     // logged properly and the client will be answered
@@ -435,11 +430,10 @@ void process(castor::job::stagerjob::PluginContext &context,
   // chdir into something else but the root system...
   if (chdir("/tmp") != 0) {
     castor::dlf::Param params[] =
-      {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-       castor::dlf::Param(args->subRequestUuid)};
+      {castor::dlf::Param(args->subRequestUuid)};
     castor::dlf::dlf_writep
       (args->requestUuid, DLF_LVL_ERROR,
-       castor::job::stagerjob::CHDIRFAILED, 2, params, &args->fileId);
+       castor::job::stagerjob::CHDIRFAILED, 1, params, &args->fileId);
     // Not fatal, we just ignore the error
   }
   // Fork and execute the mover. Note: For xroot based transfers there is no
@@ -525,13 +519,12 @@ void terminateMover(castor::job::stagerjob::PluginContext &context,
   
   // "Mover process still running after 10 seconds, killing process"
   castor::dlf::Param params[] =
-    {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-     castor::dlf::Param("PID", context.childPid),
+    {castor::dlf::Param("PID", context.childPid),
      castor::dlf::Param("Signal", "SIGKILL"),
      castor::dlf::Param(args->subRequestUuid)};
   castor::dlf::dlf_writep
     (args->requestUuid, DLF_LVL_DEBUG, castor::job::stagerjob::KILLMOVER,
-     4, params, &args->fileId);
+     3, params, &args->fileId);
   
   // After 10 seconds the mover is still running so kill it!
   kill(context.childPid, SIGKILL);
@@ -553,10 +546,8 @@ int main(int argc, char** argv) {
   castor::job::stagerjob::InputArguments* arguments = 0;
   castor::job::stagerjob::PluginContext context;
 
-  // detach from parent (except if we are usign LSF)
-  if (0 == strcmp(getenv("LSB_JOBID"), "unused for TM")) {
-    setsid();
-  }
+  // detach from parent
+  setsid();
 
   try {
     // Initializing logging
@@ -573,11 +564,8 @@ int main(int argc, char** argv) {
       { EXECFAILED,      "Failed to exec mover" },
 
       // Invalid configurations or parameters
-      { INVRETRYINT,     "Invalid Job/RetryInterval option, using default" },
-      { INVRETRYNBAT,    "Invalid Job/RetryAttempts option, using default" },
       { DOWNRESFILE,     "Downloading resource file" },
       { INVALIDURI,      "Invalid Uniform Resource Indicator, cannot download resource file" },
-      { MAXATTEMPTS,     "Exceeded maximum number of attempts trying to download resource file" },
       { DOWNEXCEPT,      "Exception caught trying to download resource file" },
       { INVALRESCONT,    "The content of the resource file is invalid" },
 
@@ -648,25 +636,10 @@ int main(int argc, char** argv) {
     // "Job failed before it could send an answer to client"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Error", sstrerror(e.code())),
-       castor::dlf::Param("Message", e.getMessage().str()),
-       castor::dlf::Param("JobId", getenv("LSB_JOBID"))};
+       castor::dlf::Param("Message", e.getMessage().str())};
     castor::dlf::dlf_writep
       (nullCuuid, DLF_LVL_ERROR,
-       castor::job::stagerjob::JOBFAILEDNOANS, 3, params);
-    dlf_shutdown();
-    return -1;
-  }
-
-  // Check that the intended host of the transfer is this host!
-  if (arguments->diskServer != castor::System::getHostName()) {
-    // not the case, LSF has failed...
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Error", sstrerror(ESTSCHEDERR)),
-       castor::dlf::Param("Message", "Hostname mismatch, job scheduled to the wrong host"),
-       castor::dlf::Param("JobId", getenv("LSB_JOBID"))};
-    castor::dlf::dlf_writep
-      (nullCuuid, DLF_LVL_ERROR,
-       castor::job::stagerjob::JOBFAILEDNOANS, 3, params);
+       castor::job::stagerjob::JOBFAILEDNOANS, 2, params);
     dlf_shutdown();
     return -1;
   }
@@ -690,7 +663,6 @@ int main(int argc, char** argv) {
     // "Job started"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Arguments", stagerConcatenatedArgv),
-       castor::dlf::Param("JobId", getenv("LSB_JOBID")),
        castor::dlf::Param("Type", castor::ObjectsIdStrings[arguments->type]),
        castor::dlf::Param("Protocol", arguments->protocol),
        castor::dlf::Param("SvcClass", arguments->svcClass),
@@ -698,7 +670,7 @@ int main(int argc, char** argv) {
        castor::dlf::Param(arguments->subRequestUuid)};
     castor::dlf::dlf_writep
       (arguments->requestUuid, DLF_LVL_SYSTEM,
-       castor::job::stagerjob::JOBSTARTED, 7, params, &arguments->fileId);
+       castor::job::stagerjob::JOBSTARTED, 6, params, &arguments->fileId);
 
     // Call stagerJobProcess
     process(context, arguments);
@@ -710,12 +682,11 @@ int main(int argc, char** argv) {
 
     // "Job finished successfully"
     castor::dlf::Param params2[] =
-      {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-       castor::dlf::Param("ElapsedTime", elapsedTime  * 0.000001),
+      {castor::dlf::Param("ElapsedTime", elapsedTime  * 0.000001),
        castor::dlf::Param(arguments->subRequestUuid)};
     castor::dlf::dlf_writep
       (arguments->requestUuid, DLF_LVL_SYSTEM,
-       castor::job::stagerjob::JOBENDED, 3, params2, &arguments->fileId);
+       castor::job::stagerjob::JOBENDED, 2, params2, &arguments->fileId);
 
     // Memory cleanup
     delete arguments;
@@ -730,17 +701,15 @@ int main(int argc, char** argv) {
       // to regular Exception objects by the internal remote procedure call
       // mechanism
       castor::dlf::Param params[] =
-        {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-         castor::dlf::Param(arguments->subRequestUuid)};
+        {castor::dlf::Param(arguments->subRequestUuid)};
       castor::dlf::dlf_writep
         (arguments->requestUuid, DLF_LVL_SYSTEM,
-         castor::job::stagerjob::REQCANCELED, 2, params, &arguments->fileId);
+         castor::job::stagerjob::REQCANCELED, 1, params, &arguments->fileId);
     } else {
       // "Job failed"
       castor::dlf::Param params[] =
         {castor::dlf::Param("Error", sstrerror(e.code())),
          castor::dlf::Param("Message", e.getMessage().str()),
-         castor::dlf::Param("JobId", getenv("LSB_JOBID")),
          castor::dlf::Param(arguments->subRequestUuid)};
       // A priori, we log an error
       int loglevel = DLF_LVL_ERROR;
@@ -755,7 +724,7 @@ int main(int argc, char** argv) {
       }
       castor::dlf::dlf_writep
         (arguments->requestUuid, loglevel,
-         castor::job::stagerjob::JOBFAILED, 4, params, &arguments->fileId);
+         castor::job::stagerjob::JOBFAILED, 3, params, &arguments->fileId);
       // Try to answer the client
       try {
         castor::rh::IOResponse ioResponse;
@@ -767,25 +736,23 @@ int main(int argc, char** argv) {
         castor::dlf::Param params[] =
           {castor::dlf::Param("Error", sstrerror(e2.code())),
            castor::dlf::Param("Message", e2.getMessage().str()),
-           castor::dlf::Param("JobId", getenv("LSB_JOBID")),
            castor::dlf::Param(arguments->subRequestUuid)};
         castor::dlf::dlf_writep
           (arguments->requestUuid, DLF_LVL_USER_ERROR,
-           castor::job::stagerjob::NOANSWERSENT, 4, params, &arguments->fileId);
+           castor::job::stagerjob::NOANSWERSENT, 3, params, &arguments->fileId);
       }
       // If the child process is still running kill it gracefully. This makes
-      // sure that the LSF job slot is liberated quickly and does not wait
+      // sure that the scheduler job slot is liberated quickly and does not wait
       // (#61085). Note: we ignore errors!
       if (context.childPid != 0) {
         // "Mover process still running, sending signal"
         castor::dlf::Param params[] =
-          {castor::dlf::Param("JobId", getenv("LSB_JOBID")),
-           castor::dlf::Param("PID", context.childPid),
+          {castor::dlf::Param("PID", context.childPid),
            castor::dlf::Param("Signal", "SIGTERM"),
            castor::dlf::Param(arguments->subRequestUuid)};
         castor::dlf::dlf_writep
           (arguments->requestUuid, DLF_LVL_DEBUG,
-           castor::job::stagerjob::TERMINATEMOVER, 4, params,
+           castor::job::stagerjob::TERMINATEMOVER, 3, params,
            &arguments->fileId);
         terminateMover(context, arguments, SIGKILL);
       }

@@ -1100,58 +1100,6 @@ Resources can be allocated to one or many projects are are composed of a set of 
           <UML:Class stereotype="53500" comment="Small object containing a filesystem mountpoint and a filesystem status, used by the MonitorMessage ack" isSpecification="false" isLeaf="false" visibility="public" namespace="178139" xmi.id="CkfEAlzdC0Ip" isRoot="false" isAbstract="false" name="FileSystemStateAck" />
          </UML:Namespace.ownedElement>
         </UML:Package>
-        <UML:Package isSpecification="false" isLeaf="false" visibility="public" namespace="2103" xmi.id="GpPjNk1FCKeq" isRoot="false" isAbstract="false" name="jobmanager" >
-         <UML:Namespace.ownedElement>
-          <UML:Class stereotype="53500" comment="A class to store the information required to submit a job into the scheduler through the job manager." isSpecification="false" isLeaf="false" visibility="public" namespace="GpPjNk1FCKeq" xmi.id="S0tnFH65fdFP" isRoot="false" isAbstract="false" name="JobSubmissionRequest" >
-           <UML:Classifier.feature>
-            <UML:Attribute comment="The Cuuid identifying the SubRequest, stored as a human readable string" isSpecification="false" visibility="public" xmi.id="i0TtkLzPF8nq" type="137289" name="subReqId" />
-            <UML:Attribute comment="The protocol that will be used to access the file" isSpecification="false" visibility="public" xmi.id="OvJv7GBIHrPr" type="137289" name="protocol" />
-            <UML:Attribute comment="The expected size of the castor file" isSpecification="false" visibility="public" xmi.id="MXHEX11NV3t4" type="131665" name="xsize" />
-            <UML:Attribute comment="The filesystems requested to fulfil the jobs resource requirements in the scheduler" isSpecification="false" visibility="public" xmi.id="ib8zdd2q4Dki" type="137289" name="requestedFileSystems" />
-            <UML:Attribute comment="The Cuuid identifying the Request, stored as a human readable string" isSpecification="false" visibility="public" xmi.id="H3ib102Hp2To" type="137289" name="reqId" />
-            <UML:Attribute comment="The version of the client initiating the request" isSpecification="false" visibility="public" xmi.id="Jnul1IEdK2cj" type="131665" name="clientVersion" />
-            <UML:Attribute comment="The id of this castor file. This identifies it uniquely" isSpecification="false" visibility="public" xmi.id="MwkCTVpl9vQu" type="131665" name="fileId" />
-            <UML:Attribute comment="The name server hosting this castor file" isSpecification="false" visibility="public" xmi.id="Fwev4F6Lc5hT" type="137289" name="nsHost" />
-            <UML:Attribute comment="The name of the service class for the castor file" isSpecification="false" visibility="public" xmi.id="cR3Jdjge793g" type="137289" name="svcClass" />
-            <UML:Attribute comment="The address of the machine where the client is running" isSpecification="false" visibility="public" xmi.id="r95nFWmlNQGh" type="153393" name="ipAddress" />
-            <UML:Attribute comment="The port associated with the clients request used for callback" isSpecification="false" visibility="public" xmi.id="N3VUDyM1LOFn" type="153394" name="port" />
-            <UML:Attribute comment="The type of the request e.g. OBJ_StagePutRequest" isSpecification="false" visibility="public" xmi.id="4tVykHsuHngV" type="133771" name="requestType" />
-            <UML:Attribute comment="Name of the user that submitted the request" isSpecification="false" visibility="public" xmi.id="qRuiDDSnoVmq" type="137289" name="username" />
-            <UML:Attribute comment="The user id of the user that submitted the request" isSpecification="false" visibility="public" xmi.id="seUrF9jScguD" type="153393" name="euid" />
-            <UML:Attribute comment="The group id of the user that submitted the request" isSpecification="false" visibility="public" xmi.id="IwXCxvElGwtQ" type="153393" name="egid" />
-            <UML:Attribute comment="The time that the job request was picked up from the database" isSpecification="false" visibility="public" xmi.id="n1JncGSkohUD" type="131665" name="selectTime" />
-            <UML:Attribute comment="The time the request started to be submitted into the scheduler" isSpecification="false" visibility="public" xmi.id="8k8YERJvaCks" type="131665" name="submitStartTime" />
-            <UML:Attribute comment="The Id2type of the client" isSpecification="false" visibility="public" xmi.id="851iUE1zmoko" type="131665" name="clientType" />
-            <UML:Attribute comment="The direction of the transfer, e.g. read, write, read/write" isSpecification="false" visibility="public" xmi.id="DwCZUFOmQ6h5" type="137289" name="openFlags" />
-            <UML:Attribute comment="The id of the source diskcopy" isSpecification="false" visibility="public" xmi.id="ICiUHpKczWkn" type="131665" name="sourceDiskCopyId" />
-            <UML:Attribute comment="A list of hosts to provide to LSF where the job could potentially run." isSpecification="false" visibility="public" xmi.id="Pmn6DUIXhzDt" type="137289" name="askedHosts" />
-            <UML:Attribute comment="The number of hosts defined in the askedHosts attribute" isSpecification="false" visibility="public" xmi.id="EoemzvaAoReT" initialValue="0" type="131665" name="numAskedHosts" />
-            <UML:Attribute comment="The id of the destination diskcopy" isSpecification="false" visibility="public" xmi.id="fHrHYtN3Zzr1" type="131665" name="destDiskCopyId" />
-            <UML:Attribute comment="The clientSecure specifies if the Client runs in secure mode" isSpecification="false" visibility="public" xmi.id="npgNN4GDgWJa" initialValue="0" type="133771" name="clientSecure" />
-            <UML:Attribute comment="The service class name of the source diskcopy" isSpecification="false" visibility="public" xmi.id="9T3wxX9XOiXi" type="137289" name="sourceSvcClass" />
-            <UML:Attribute comment="The time the request was created in the database" isSpecification="false" visibility="public" xmi.id="h6hPHZa3qJEp" type="131665" name="requestCreationTime" />
-            <UML:Attribute comment="The default size of the castor file as determined by the settings on the service class" isSpecification="false" visibility="public" xmi.id="WPmZci8RFGkD" type="131665" name="defaultFileSize" />
-            <UML:Attribute comment="The diskservers to be excluded in a StageDiskCopyReplicaRequest" isSpecification="false" visibility="public" xmi.id="CeZXcdthmVyi" type="137289" name="excludedHosts" />
-           </UML:Classifier.feature>
-          </UML:Class>
-          <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="GpPjNk1FCKeq" xmi.id="Guoo1GeUeAij" isRoot="false" isAbstract="false" name="JobInfo" >
-           <UML:Classifier.feature>
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="YzCmt0YvGBNs" type="137289" name="subReqId" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="76KZ3yFWsSvd" type="153392" name="noSpace" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="x70eCnIpVBeY" type="153392" name="noFileSystems" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="lRKKAKZV71fA" type="137289" name="reqId" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="VeFtWYEUDLWc" type="131665" name="fileId" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="ZTW47lxbHA3V" type="137289" name="nsHost" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="eaTzCszxPiUG" type="131665" name="requestType" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="a6KDoCnvloJW" type="131665" name="jobId" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="oWbzpOSwcqWg" type="137289" name="username" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="B8EkcluPHWO4" type="131665" name="submitTime" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="lh5uTbqRhs5l" type="137289" name="svcClass" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="ShaE4RrggC0a" type="133771" name="jobStatus" />
-           </UML:Classifier.feature>
-          </UML:Class>
-         </UML:Namespace.ownedElement>
-        </UML:Package>
         <UML:Package isSpecification="false" isLeaf="false" visibility="public" namespace="2103" xmi.id="AqPSmRjfOxLp" isRoot="false" isAbstract="false" name="server" >
          <UML:Namespace.ownedElement>
           <UML:Class comment="Notification message sent via UDP to wake up threads. Used by the NotificationDispatcher thread pool.
@@ -1766,8 +1714,6 @@ Concerning the user list, an empty list means all users and all groups are conce
        </UML:Association.connection>
       </UML:Association>
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="vMrszIZwvrPY" client="T666fybyCjIp" name="" supplier="960" />
-      <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="VNT3f4Z8EV61" client="S0tnFH65fdFP" name="" supplier="1216" />
-      <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="UoYNlq4XD1hZ" client="S0tnFH65fdFP" name="" supplier="960" />
       <UML:Generalization isSpecification="false" child="LvxRQoKxCQwk" visibility="public" namespace="1" xmi.id="HQjNxjSk1SeM" parent="46354" discriminator="" name="" />
       <UML:Generalization isSpecification="false" child="N6oS2YMhLxcu" visibility="public" namespace="1" xmi.id="6fZ1vYXKLO4U" parent="50325" discriminator="" name="" />
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="lCJUCtqVXYtu" client="zOogYpE5st4r" name="" supplier="960" />
@@ -2347,15 +2293,6 @@ Concerning the user list, an empty list means all users and all groups are conce
          </assocwidget>
         </associations>
        </diagram>
-       <diagram snapgrid="1" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="1" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1524" snapy="10" showatts="1" xmi.id="YsoxtU7yzPA0" documentation="" type="1" showops="1" showpackage="0" name="JobManager" localid="" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="1061" >
-        <widgets>
-         <classwidget usesdiagramfillcolor="1" width="217" showattsigs="601" x="620" fillcolor="none" y="320" showopsigs="601" linewidth="none" height="115" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="179343" showoperations="1" showpackage="0" showscope="1" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-         <classwidget usesdiagramfillcolor="1" width="223" showattsigs="601" x="160" fillcolor="none" y="40" showopsigs="601" linewidth="none" height="67" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="19616" showoperations="1" showpackage="0" showscope="1" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-         <classwidget usesdiagramfillcolor="1" width="221" showattsigs="601" x="160" fillcolor="none" y="500" showopsigs="601" linewidth="none" height="67" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="59466" showoperations="1" showpackage="0" showscope="1" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-        </widgets>
-        <messages/>
-        <associations/>
-       </diagram>
        <diagram snapgrid="1" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="1" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1524" snapy="10" showatts="1" xmi.id="DSjJCcWu4Nwy" documentation="" type="1" showops="1" showpackage="0" name="Message" localid="" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="1061" >
         <widgets>
          <classwidget usesdiagramfillcolor="1" width="174" showattsigs="601" x="260" fillcolor="none" y="110" showopsigs="601" linewidth="none" height="115" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="1010" showoperations="1" showpackage="0" showscope="1" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
@@ -2844,7 +2781,6 @@ Concerning the user list, an empty list means all users and all groups are conce
    <listitem open="1" type="800" label="Views" >
     <listitem open="1" type="801" id="1" >
      <listitem open="0" type="807" id="fMQlcGvXPRc5" label="Catalog" />
-     <listitem open="0" type="807" id="YsoxtU7yzPA0" label="JobManager" />
      <listitem open="0" type="807" id="DSjJCcWu4Nwy" label="Message" />
      <listitem open="0" type="807" id="XIkFhDYti2xM" label="Monitoring" />
      <listitem open="0" type="807" id="u8wyWPUN7yMk" label="Policies" />
@@ -2902,52 +2838,6 @@ Concerning the user list, an empty list means all users and all groups are conce
        </listitem>
        <listitem open="0" type="813" id="xTFkkzXCEMmf" >
         <listitem open="0" type="814" id="Redxp4j8O5br" />
-       </listitem>
-      </listitem>
-      <listitem open="0" type="818" id="GpPjNk1FCKeq" >
-       <listitem open="0" type="813" id="Guoo1GeUeAij" >
-        <listitem open="1" type="814" id="YzCmt0YvGBNs" />
-        <listitem open="1" type="814" id="76KZ3yFWsSvd" />
-        <listitem open="1" type="814" id="x70eCnIpVBeY" />
-        <listitem open="1" type="814" id="lRKKAKZV71fA" />
-        <listitem open="1" type="814" id="VeFtWYEUDLWc" />
-        <listitem open="1" type="814" id="ZTW47lxbHA3V" />
-        <listitem open="1" type="814" id="eaTzCszxPiUG" />
-        <listitem open="1" type="814" id="a6KDoCnvloJW" />
-        <listitem open="1" type="814" id="oWbzpOSwcqWg" />
-        <listitem open="1" type="814" id="B8EkcluPHWO4" />
-        <listitem open="1" type="814" id="lh5uTbqRhs5l" />
-        <listitem open="1" type="814" id="ShaE4RrggC0a" />
-       </listitem>
-       <listitem open="0" type="813" id="S0tnFH65fdFP" >
-        <listitem open="0" type="814" id="i0TtkLzPF8nq" />
-        <listitem open="0" type="814" id="OvJv7GBIHrPr" />
-        <listitem open="0" type="814" id="MXHEX11NV3t4" />
-        <listitem open="0" type="814" id="ib8zdd2q4Dki" />
-        <listitem open="0" type="814" id="H3ib102Hp2To" />
-        <listitem open="0" type="814" id="Jnul1IEdK2cj" />
-        <listitem open="0" type="814" id="MwkCTVpl9vQu" />
-        <listitem open="0" type="814" id="Fwev4F6Lc5hT" />
-        <listitem open="0" type="814" id="cR3Jdjge793g" />
-        <listitem open="0" type="814" id="r95nFWmlNQGh" />
-        <listitem open="0" type="814" id="N3VUDyM1LOFn" />
-        <listitem open="0" type="814" id="4tVykHsuHngV" />
-        <listitem open="0" type="814" id="qRuiDDSnoVmq" />
-        <listitem open="0" type="814" id="seUrF9jScguD" />
-        <listitem open="0" type="814" id="IwXCxvElGwtQ" />
-        <listitem open="0" type="814" id="n1JncGSkohUD" />
-        <listitem open="0" type="814" id="8k8YERJvaCks" />
-        <listitem open="0" type="814" id="851iUE1zmoko" />
-        <listitem open="0" type="814" id="DwCZUFOmQ6h5" />
-        <listitem open="0" type="814" id="ICiUHpKczWkn" />
-        <listitem open="0" type="814" id="Pmn6DUIXhzDt" />
-        <listitem open="0" type="814" id="EoemzvaAoReT" />
-        <listitem open="0" type="814" id="fHrHYtN3Zzr1" />
-        <listitem open="0" type="814" id="npgNN4GDgWJa" />
-        <listitem open="0" type="814" id="9T3wxX9XOiXi" />
-        <listitem open="0" type="814" id="h6hPHZa3qJEp" />
-        <listitem open="0" type="814" id="WPmZci8RFGkD" />
-        <listitem open="0" type="814" id="CeZXcdthmVyi" />
        </listitem>
       </listitem>
       <listitem open="0" type="818" id="178139" >

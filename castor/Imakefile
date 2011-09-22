@@ -480,7 +480,6 @@ include LOCAL_PATH/gc/Makefile
 include LOCAL_PATH/repack/Makefile
 include LOCAL_PATH/monitoring/Makefile
 include LOCAL_PATH/stager/daemon/Makefile
-include LOCAL_PATH/jobmanager/Makefile
 include LOCAL_PATH/job/Makefile
 include LOCAL_PATH/scheduler/Makefile
 include LOCAL_PATH/tape/Makefile

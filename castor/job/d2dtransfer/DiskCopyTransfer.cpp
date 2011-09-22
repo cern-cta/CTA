@@ -26,7 +26,7 @@
 #include "castor/job/d2dtransfer/DiskCopyTransfer.hpp"
 #include "castor/job/d2dtransfer/MainThread.hpp"
 #include "castor/server/SignalThreadPool.hpp"
-
+#include <stdio.h>
 
 //-----------------------------------------------------------------------------
 // Main
@@ -94,15 +94,12 @@ castor::job::d2dtransfer::DiskCopyTransfer::DiskCopyTransfer():
     // Constructor
     { 10, "Unable to get RemoteJobSvc, transfer terminated" },
     { 11, "Could not convert newly retrieved service into IJobSvc" },
-    { 12, "Invalid DiskCopy/RetryInterval option, value too small. Using default" },
-    { 13, "Invalid DiskCopy/RetryAttempts option, using default" },
     { 14, "Failed to initialize mover" },
     { 15, "Failed to create sharedResource helper" },
 
     // Run
     { 20, "Failed to change uid and gid" },
     { 21, "Invalid Uniform Resource Indicator, cannot download resource file" },
-    { 22, "Exceeded maximum number of attempts trying to download resource file" },
     { 23, "Exception caught trying to download resource file" },
     { 24, "Exception caught trying to getHostName, unable to determine which end of a disk2disk copy transfer is the destination" },
     { 25, "DiskCopyTransfer started" },

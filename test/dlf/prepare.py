@@ -29,8 +29,7 @@
 import sys, os, time
 
 # list of log files per facility, and whether it is a server log file
-logfiles = { 'JobManager' : ('jobmanager', 'log', True),
-             'Mighunter' : ('mighunter', 'log', True),
+logfiles = { 'Mighunter' : ('mighunter', 'log', True),
              'Rechandler' : ('rechandler', 'log', True),
              'RequestHandler' : ('rhserver', 'log', True),
              'migrator' : ('rtcpclientd', 'migrator', True),
@@ -44,6 +43,7 @@ logfiles = { 'JobManager' : ('jobmanager', 'log', True),
              'DiskCopy' : ('job', 'diskcopy', False),
              'GC' : ('gc', 'log', False),
              'RmNode' : ('rmnode', 'log', False)
+             'TransferManager' : ('transfermanagerd', 'log', True)
              }
 
 def usage():

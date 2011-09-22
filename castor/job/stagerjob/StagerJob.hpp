@@ -77,11 +77,8 @@ namespace castor {
         EXECFAILED =      7, /* Failed to exec mover */
 
         // Invalid configurations or parameters
-        INVRETRYINT =     13, /* Invalid Job/RetryInterval option, using default */
-        INVRETRYNBAT =    14, /* Invalid Job/RetryAttempts option, using default */
         DOWNRESFILE =     15, /* Downloading resource file */
         INVALIDURI =      16, /* Invalid Uniform Resource Indicator, cannot download resource file */
-        MAXATTEMPTS =     17, /* Exceeded maximum number of attempts trying to download resource file */
         DOWNEXCEPT =      18, /* Exception caught trying to download resource file */
         INVALRESCONT =    19, /* The content of the resource file is invalid */
 

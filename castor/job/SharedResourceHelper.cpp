@@ -24,7 +24,6 @@
 
 // Include files
 #include "castor/job/SharedResourceHelper.hpp"
-#include "castor/exception/Internal.hpp"
 #include <errno.h>
 #include <stdio.h>
 #include <istream>
@@ -38,101 +37,18 @@
 //-----------------------------------------------------------------------------
 // Constructor
 //-----------------------------------------------------------------------------
-castor::job::SharedResourceHelper::SharedResourceHelper
-(unsigned int retryAttempts, unsigned int retryInterval)
-  throw(castor::exception::Exception) :
-  m_curl(NULL),
-  m_errorCode(CURLE_OK),
-  m_retryAttempts(retryAttempts),
-  m_retryInterval(retryInterval),
-  m_url(""),
-  m_content("") {
-
-  // Initialize the environment that cURL needs. Multiple calls will have no
-  // effect here
-  curl_global_init(CURL_GLOBAL_ALL);
-
-  // Initialize the cURL handle.
-  m_curl = curl_easy_init();
-  if (m_curl == NULL) {
-    castor::exception::Exception e(SEINTERNAL);
-    e.getMessage() << "curl_easy_init library call failure" << std::endl;
-    throw e;
-  }
-}
-
-
-//-----------------------------------------------------------------------------
-// Destructor
-//-----------------------------------------------------------------------------
-castor::job::SharedResourceHelper::~SharedResourceHelper() throw() {
-  if (m_curl != NULL) {
-    curl_easy_cleanup(m_curl);
-  }
-  curl_global_cleanup();
-}
-
-
-//-----------------------------------------------------------------------------
-// WriteMemoryCallback
-//-----------------------------------------------------------------------------
-static size_t WriteMemoryCallback
-(void *ptr, size_t size, size_t nmemb, void *data) {
-  std::string *buf = static_cast<std::string *>(data);
-  *buf += reinterpret_cast<char *>(ptr);
-  return size * nmemb;
-}
-
+castor::job::SharedResourceHelper::SharedResourceHelper() throw():
+  m_url(""), m_content("") {}
 
 //-----------------------------------------------------------------------------
 // Download
 //-----------------------------------------------------------------------------
-std::string castor::job::SharedResourceHelper::download(bool debug) 
+std::string castor::job::SharedResourceHelper::download() 
   throw(castor::exception::Exception) {
 
-  // HTTP download required ?
-  memset(m_errorBuffer, 0, CURL_ERROR_SIZE);
-  if (m_url.substr(0, 7) == "http://") {
-    
-    // Set the cURL options
-    curl_easy_setopt(m_curl, CURLOPT_URL, m_url.c_str());
-    curl_easy_setopt(m_curl, CURLOPT_NOPROGRESS, 1);
-    curl_easy_setopt(m_curl, CURLOPT_HEADER, 0);
-    curl_easy_setopt(m_curl, CURLOPT_TIMEOUT, 600);
-    curl_easy_setopt(m_curl, CURLOPT_NOSIGNAL, 1);
-    curl_easy_setopt(m_curl, CURLOPT_FOLLOWLOCATION, 1);
-    curl_easy_setopt(m_curl, CURLOPT_ERRORBUFFER, m_errorBuffer);
-    curl_easy_setopt(m_curl, CURLOPT_FAILONERROR, 1);
-    curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
-    curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, &m_content);
-    curl_easy_setopt(m_curl, CURLOPT_VERBOSE, debug);
-    
-    // Download the file. We use a retry mechanism here to be able to deal
-    // with transient error situations from the remote http daemon such as
-    // restarts or reboots.
-    for (u_signed64 i = 0; i < m_retryAttempts; i++) {
-      m_errorCode = curl_easy_perform(m_curl);
-      if (m_errorCode == CURLE_OK) {
-	break; // Success
-      }
-      
-      // Maximum attempts exceeded
-      else if ((i + 1) == m_retryAttempts) {
-	castor::exception::Exception e(SERTYEXHAUST);
-	throw e;
-      }
-      sleep(m_retryInterval);
-    }
-  }
-
   // File request from a shared filesystem ?
-  else if (m_url.substr(0, 7) == "file://") {
+  if (m_url.substr(0, 7) == "file://") {
     
-    // We reset the maximum number of retry attempts for file based URI's as we
-    // don't allow multiple retries.
-    m_retryAttempts = 1;
-    m_retryInterval = 0;
-
     // Stat the file to make sure it exists and is a regular file
     struct stat statbuf;
     if (stat(m_url.substr(7).c_str(), &statbuf) < 0) {
@@ -169,48 +85,4 @@ std::string castor::job::SharedResourceHelper::download(bool debug)
   }
 
   return m_content;
-}
-
-
-//-----------------------------------------------------------------------------
-// SetUrl
-//-----------------------------------------------------------------------------
-void castor::job::SharedResourceHelper::setUrl(std::string url)
-  throw (castor::exception::Exception) {
-
-  // For file:// requests we do not perform any string subsitution of the
-  // LSB_MASTERNAME variable
-  if (url.substr(0, 7) == "file://") {
-    m_url = url;
-    return;
-  }
-
-  // Perform variable subsitution
-  std::string::size_type index = url.find("LSB_MASTERNAME");
-  if (index != std::string::npos) {
-   
-    // Initialize the LSF library
-    if (lsb_init((char*)"SharedResourceHelper") < 0) {
-      
-      // "Failed to initialize the LSF batch library (LSBLIB)"
-      castor::exception::Exception e(SEINTERNAL);
-      e.getMessage() << "Failed to initialize the LSF batch library (LSBLIB): "
-		     << lsberrno ? lsb_sysmsg() : "no message";
-      throw e;
-    }
-
-    // Fetch the LSF master name
-    char *masterName = ls_getmastername();
-    if (masterName == NULL) {
-
-      // "Failed to determine the name of the current LSF master"
-      castor::exception::Exception e(SEINTERNAL);
-      e.getMessage() << "Failed to determine the name of the current LSF master: "
-		     << lsberrno ? lsb_sysmsg() : "no message";
-      throw e;
-    }
-    m_url = url.substr(0, index) + masterName + url.substr(index + 14, url.length());
-  } else {
-    m_url = url;
-  }
 }

@@ -38,11 +38,6 @@
 #include "castor/job/stagerjob/StagerJob.hpp"
 #include "castor/job/stagerjob/InputArguments.hpp"
 
-// Default number of retries and interval between retries
-// for the sharedResourceHelper
-#define DEFAULT_RETRY_ATTEMPTS 60
-#define DEFAULT_RETRY_INTERVAL 10
-
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
@@ -220,55 +215,19 @@ castor::job::stagerjob::InputArguments::InputArguments(int argc, char** argv)
     throw e;
   }
 
-  // Determine the number of times that the shared resource helper should try
-  // to download the resource file from the shared resource URL
-  char *value = getconfent("Job", "RetryAttempts", 0);
-  int attempts = DEFAULT_RETRY_ATTEMPTS;
-  if (value) {
-    attempts = strtol(value, 0, 10);
-    if (attempts < 1) {
-      // "Invalid Job/RetryInterval option, using default"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("Default", attempts),
-         castor::dlf::Param(subRequestUuid)};
-      castor::dlf::dlf_writep
-        (requestUuid, DLF_LVL_WARNING,
-         castor::job::stagerjob::INVRETRYINT, 2, params, &fileId);
-    }
-  }
-
-  // Extract the value of the retry interval. This value determines how long
-  // we sleep between retry attempts
-  value = getconfent("Job", "RetryInterval", 0);
-  int interval = DEFAULT_RETRY_INTERVAL;
-  if (value) {
-    interval = strtol(value, 0, 10);
-    if (interval < 1) {
-      // "Invalid Job/RetryAttempts option, using default"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("Default", interval),
-         castor::dlf::Param(subRequestUuid)};
-      castor::dlf::dlf_writep
-        (requestUuid, DLF_LVL_WARNING,
-         castor::job::stagerjob::INVRETRYNBAT, 2, params, &fileId);
-    }
-  }
-
   // Download the resource file
   std::string content("");
-  castor::job::SharedResourceHelper resHelper(attempts, interval);
+  castor::job::SharedResourceHelper resHelper;
   try {
     // "Downloading resource file"
     castor::dlf::Param params[] =
       {castor::dlf::Param("ResourceFile", resourceFile),
-       castor::dlf::Param("MaxAttempts", resHelper.retryAttempts()),
-       castor::dlf::Param("RetryInterval", resHelper.retryInterval()),
        castor::dlf::Param(subRequestUuid)};
     castor::dlf::dlf_writep
-      (requestUuid, DLF_LVL_DEBUG, DOWNRESFILE, 4, params, &fileId);
+      (requestUuid, DLF_LVL_DEBUG, DOWNRESFILE, 2, params, &fileId);
 
     resHelper.setUrl(resourceFile);
-    content = resHelper.download(false);
+    content = resHelper.download();
   } catch (castor::exception::Exception& e) {
     if (e.code() == EINVAL) {
 
@@ -277,19 +236,7 @@ castor::job::stagerjob::InputArguments::InputArguments(int argc, char** argv)
         {castor::dlf::Param("URI", resourceFile.substr(0, 7))};
       castor::dlf::dlf_writep
         (requestUuid, DLF_LVL_ERROR, INVALIDURI, 1, params, &fileId);
-    } else if (e.code() == SERTYEXHAUST) {
-
-      // "Exceeded maximum number of attempts trying to download resource file"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("Error", resHelper.errorBuffer() != "" ?
-                            resHelper.errorBuffer() : "no message"),
-         castor::dlf::Param("MaxAttempts", resHelper.retryAttempts()),
-         castor::dlf::Param("URL", resourceFile),
-         castor::dlf::Param(subRequestUuid)};
-      castor::dlf::dlf_writep
-        (requestUuid, DLF_LVL_ERROR, MAXATTEMPTS, 4, params, &fileId);
     } else {
-
       // "Exception caught trying to download resource file"
       castor::dlf::Param params[] =
         {castor::dlf::Param("Message", e.getMessage().str()),

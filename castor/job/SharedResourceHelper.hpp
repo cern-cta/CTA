@@ -31,16 +31,6 @@
 #include "castor/exception/Exception.hpp"
 #include <string>
 #include <stdarg.h>
-#include <curl/curl.h>
-#include <curl/easy.h>
-#include <curl/types.h>
-
-extern "C" {
-  #ifndef LSBATCH_H
-    #include "lsf/lsbatch.h"
-    #include "lsf/lssched.h"
-  #endif
-}
 
 namespace castor {
 
@@ -54,91 +44,31 @@ namespace castor {
     public:
 
       /**
-       * Default constructor
+       * Default Constructor
        */
-      SharedResourceHelper();
-
-      /**
-       * Initialize the cURL interface and create a new cURL easy handle
-       * @param retryAttempts defines how many times the helper should retry
-       * to download a file upon failure.
-       * @param retryInterval defines how long the helper should sleep in
-       * seconds between failed attempts.
-       * @note Retries are only supported for HTTP based URI's
-       * @exception Exception in case of error
-       */
-      SharedResourceHelper
-      (unsigned int retryAttempts, unsigned int retryInterval)
-	throw(castor::exception::Exception);
+      SharedResourceHelper() throw();
 
       /**
        * Default destructor
        */
-      virtual ~SharedResourceHelper() throw();
+      virtual ~SharedResourceHelper() throw() {};
 
       /**
        * Download the data at the m_url location and return the result back
-       * to the callee. In case of failure the method will retry up to
-       * retryAttempt times.
-       * @param debug flag to indicate whether cURL debugging should be
-       * enabled
+       * to the callee.
        * @exception Exception in case of error
        */
-      virtual std::string download(bool debug)
-	throw(castor::exception::Exception);
+      virtual std::string download() throw(castor::exception::Exception);
 
       /**
-       * Returns the error text/description of the last cURL error.
-       * @return the value of m_errorBuffer
-       */
-      std::string errorBuffer() const {
-	return m_errorBuffer;
-      }
-
-      /**
-       * Returns the max number of retries the helper should perform upon
-       * encountering an error.
-       * @return the value of m_retryAttempts
-       */
-      unsigned int retryAttempts() const {
-	return m_retryAttempts;
-      }
-
-      /**
-       * Returns the retry interval in seconds between retry attempts.
-       * @return the value of m_retryInterval
-       */
-      unsigned int retryInterval() const {
-	return m_retryInterval;
-      }
-
-      /**
-       * Set the value of m_url. For http:// downloads the LSB_MASTERNAME
-       * variable will be replaced by the name of the current LSF master
+       * Set the value of m_url
        * @param url the new value of m_url
        */
-      virtual void setUrl(std::string url)
-	throw (castor::exception::Exception);
+      virtual void setUrl(std::string url) throw() { m_url = url;}
 
     private:
 
-      /// The cURL easy handle
-      CURL *m_curl;
-
-      /// The error code of the last call to libcurl
-      CURLcode m_errorCode;
-
-      /// The error message associated with the error code
-      char m_errorBuffer[CURL_ERROR_SIZE];
-
-      /// How many times should we attempt to download the m_url
-      unsigned int m_retryAttempts;
-
-      /// The interval to wait between download attempts
-      unsigned int m_retryInterval;
-
-      /// The location of the file to download into memory. file:// and
-      /// http:// are supported protocols
+      /// The location of the file to download into memory.
       std::string m_url;
 
       /// The content of data downloaded from m_url

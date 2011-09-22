@@ -25,7 +25,7 @@ COMM @author Castor Dev team, castor-dev@cern.ch
 COMM
 
 CPPFLAGS += $(ORACLE_CPPFLAGS)
-AddLdFlags(-L $(LSF_LIB_LOCATION) -lbat -llsf -llsbstream -L$(ORACLE_LIBDIR) -locci -lclntsh -lstdc++)
+AddLdFlags(-L$(ORACLE_LIBDIR) -locci -lclntsh -lstdc++)
 
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(dlf,castordlf)
@@ -34,7 +34,7 @@ DependsOnLibrary(castor/monitoring,castormonitor)
 DependsOnLibrary(castor/db/newora,castorcommonora)
 DependsOnLibrary(castor/db/cnv,castorcnvs)
 
-RMMASTERDAEMONBIN_SRCS = RmMasterDaemon.cpp CollectorThread.cpp DatabaseActuatorThread.cpp UpdateThread.cpp HeartbeatThread.cpp LSFStatus.cpp ora/OraRmMasterSvc.cpp ora/StatusUpdateHelper.cpp
+RMMASTERDAEMONBIN_SRCS = RmMasterDaemon.cpp CollectorThread.cpp DatabaseActuatorThread.cpp UpdateThread.cpp HeartbeatThread.cpp SchedulerStatus.cpp ora/OraRmMasterSvc.cpp ora/StatusUpdateHelper.cpp
 RMMASTERDAEMONBIN_OBJS = $(RMMASTERDAEMONBIN_SRCS:.cpp=.o)
 NormalProgramTarget(rmmasterd,$(RMMASTERDAEMONBIN_OBJS),,,755)
 MakeDir(LogPath,0755)
