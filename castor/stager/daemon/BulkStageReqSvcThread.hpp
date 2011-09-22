@@ -28,11 +28,16 @@
 #define STAGER_DAEMON_BULKSTAGEREQSVCTHREAD_HPP 1
 
 #include "castor/IObject.hpp"
+#include "castor/exception/Exception.hpp"
 #include "castor/server/SelectProcessThread.hpp"
 
 namespace castor {
 
   namespace stager {
+
+    // forward declarations
+    class BulkRequestResult;
+    class StageRepackRequest;
 
     namespace daemon {
 
@@ -66,6 +71,13 @@ namespace castor {
          * @param param The IObject returned by select
          */
         virtual void process(castor::IObject* param) throw();
+
+      private:
+
+        castor::stager::BulkRequestResult* handleRepackFirstStep
+        (castor::stager::StageRepackRequest *req)
+          throw(castor::exception::Exception);
+
       };
 
     } // end namespace daemon

@@ -22,3 +22,4 @@ debian/castor/usr/share/man/man1/deletePriority.1castor.gz
 debian/castor/usr/share/man/man1/enterPriority.1castor.gz
 debian/castor/usr/share/man/man1/listPriority.1castor.gz
 debian/castor/usr/share/man/man1/migrateNewCopy.1castor.gz
+debian/castor/usr/share/man/man1/repack.1castor.gz

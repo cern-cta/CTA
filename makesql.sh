@@ -9,7 +9,6 @@ tag=`echo $ver | sed 's/\./_/g' | sed 's/-/_/g'`
 tools/makeSqlScripts.sh cns $tag ns $1
 tools/makeSqlScripts.sh dlf $tag dlf $1
 tools/makeSqlScripts.sh mon $tag monitoring $1
-tools/makeSqlScripts.sh repack $tag castor/repack $1
 tools/makeSqlScripts.sh stager $tag castor/db $1
 tools/makeSqlScripts.sh cupv $tag upv $1
 tools/makeSqlScripts.sh vdqm $tag castor/vdqm $1

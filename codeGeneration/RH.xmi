@@ -932,6 +932,16 @@ Resources can be allocated to one or many projects are are composed of a set of 
             <UML:Attribute comment="UUID of the referenced request. Deprecated." isSpecification="false" visibility="public" xmi.id="SweoL0lKLBD0" type="137289" name="parentUuid" />
            </UML:Classifier.feature>
           </UML:Class>
+          <UML:Class stereotype="53501" isSpecification="false" isLeaf="false" visibility="public" namespace="2105" xmi.id="TLM3KBxc70iv" isRoot="false" isAbstract="false" name="StageRepackRequestStatusCodes" >
+           <UML:Classifier.feature>
+            <UML:Attribute isSpecification="false" visibility="public" xmi.id="XrRCkN5YTXUp" initialValue="0" type="2130" name="REPACK_STARTING" />
+            <UML:Attribute isSpecification="false" visibility="public" xmi.id="M7QH8AumHzI3" initialValue="1" type="2136" name="REPACK_ONGOING" />
+            <UML:Attribute isSpecification="false" visibility="public" xmi.id="zR4kuFIP6jZq" initialValue="2" type="2142" name="REPACK_FINISHED" />
+            <UML:Attribute isSpecification="false" visibility="public" xmi.id="4cPVAtIUyhl6" initialValue="3" type="2153" name="REPACK_FAILED" />
+            <UML:Attribute isSpecification="false" visibility="public" xmi.id="rfr7c78aWAKQ" initialValue="4" type="2165" name="REPACK_ABORTING" />
+            <UML:Attribute isSpecification="false" visibility="public" xmi.id="rfr7c78aWAKR" initialValue="5" type="2165" name="REPACK_ABORTED" />
+           </UML:Classifier.feature>
+          </UML:Class>
          </UML:Namespace.ownedElement>
         </UML:Package>
         <UML:Package isSpecification="false" isLeaf="false" visibility="public" namespace="2103" xmi.id="161822" isRoot="false" isAbstract="false" name="query" >
@@ -1957,7 +1967,6 @@ Concerning the user list, an empty list means all users and all groups are conce
         <UML:AssociationEnd comment="SqlOnly" isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="ClnPzmObCtjk" aggregation="none" type="1196" name="lastButOneFileSystemUsed" multiplicity="1" />
        </UML:Association.connection>
       </UML:Association>
-
 
 
      </UML:Namespace.ownedElement>

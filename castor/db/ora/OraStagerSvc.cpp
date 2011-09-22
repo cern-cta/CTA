@@ -81,10 +81,12 @@
 #include "castor/stager/StreamStatusCodes.hpp"
 #include "castor/stager/SegmentStatusCodes.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
+#include "castor/stager/StageRepackRequest.hpp"
 #include "castor/stager/DiskCopyStatusCodes.hpp"
 #include "castor/stager/PriorityMap.hpp"
 #include "castor/stager/BulkRequestResult.hpp"
 #include "castor/stager/FileResult.hpp"
+#include "castor/rh/Client.hpp"
 #include "castor/BaseAddress.hpp"
 #include "castor/dlf/Dlf.hpp"
 #include "OraStagerSvc.hpp"
@@ -120,7 +122,15 @@ const std::string castor::db::ora::OraStagerSvc::s_subRequestToDoStatementString
 
 /// SQL statement for processBulkRequest
 const std::string castor::db::ora::OraStagerSvc::s_processBulkRequestStatementString =
-  "BEGIN processBulkRequest(:1, :2, :3, :4, :5, :6); END;";
+  "BEGIN processBulkRequest(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10); END;";
+
+/// SQL statement for handleRepackRequest
+const std::string castor::db::ora::OraStagerSvc::s_handleRepackRequestStatementString =
+  "BEGIN handleRepackRequest(:1, :2, :3, :4, :5); END;";
+
+/// SQL statement for handleRepackSubRequest
+const std::string castor::db::ora::OraStagerSvc::s_handleRepackSubRequestStatementString =
+  "BEGIN handleRepackSubRequest(:1, :2, :3, :4, :5); END;";
 
 /// SQL statement for subRequestFailedToDo
 const std::string castor::db::ora::OraStagerSvc::s_subRequestFailedToDoStatementString =
@@ -217,6 +227,8 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   OraCommonSvc(name),
   m_subRequestToDoStatement(0),
   m_processBulkRequestStatement(0),
+  m_handleRepackRequestStatement(0),
+  m_handleRepackSubRequestStatement(0),
   m_subRequestFailedToDoStatement(0),
   m_getDiskCopiesForJobStatement(0),
   m_processPrepareRequestStatement(0),
@@ -272,6 +284,8 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   try {
     if (m_subRequestToDoStatement) deleteStatement(m_subRequestToDoStatement);
     if (m_processBulkRequestStatement) deleteStatement(m_processBulkRequestStatement);
+    if (m_handleRepackRequestStatement) deleteStatement(m_handleRepackRequestStatement);
+    if (m_handleRepackSubRequestStatement) deleteStatement(m_handleRepackSubRequestStatement);
     if (m_subRequestFailedToDoStatement) deleteStatement(m_subRequestFailedToDoStatement);
     if (m_getDiskCopiesForJobStatement) deleteStatement(m_getDiskCopiesForJobStatement);
     if (m_processPrepareRequestStatement) deleteStatement(m_processPrepareRequestStatement);
@@ -299,6 +313,8 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   // Now reset all pointers to 0
   m_subRequestToDoStatement = 0;
   m_processBulkRequestStatement = 0;
+  m_handleRepackRequestStatement = 0;
+  m_handleRepackSubRequestStatement = 0;
   m_subRequestFailedToDoStatement = 0;
   m_getDiskCopiesForJobStatement = 0;
   m_processPrepareRequestStatement = 0;
@@ -502,10 +518,11 @@ castor::db::ora::OraStagerSvc::subRequestToDo
 //------------------------------------------------------------------------------
 // processBulkRequest
 //------------------------------------------------------------------------------
-castor::stager::BulkRequestResult*
+castor::IObject*
 castor::db::ora::OraStagerSvc::processBulkRequest
 (const std::string service)
   throw (castor::exception::Exception) {
+  IObject *retObj = 0;
   try {
     // Check whether the statements are ok
     if (0 == m_processBulkRequestStatement) {
@@ -518,9 +535,17 @@ castor::db::ora::OraStagerSvc::processBulkRequest
       m_processBulkRequestStatement->registerOutParam
         (4, oracle::occi::OCCIINT);
       m_processBulkRequestStatement->registerOutParam
-        (5, oracle::occi::OCCISTRING, 2048);
+        (5, oracle::occi::OCCIINT);
       m_processBulkRequestStatement->registerOutParam
-        (6, oracle::occi::OCCICURSOR);
+        (6, oracle::occi::OCCISTRING, 2048);
+      m_processBulkRequestStatement->registerOutParam
+        (7, oracle::occi::OCCIINT);
+      m_processBulkRequestStatement->registerOutParam
+        (8, oracle::occi::OCCIINT);
+      m_processBulkRequestStatement->registerOutParam
+        (9, oracle::occi::OCCISTRING, 2048);
+      m_processBulkRequestStatement->registerOutParam
+        (10, oracle::occi::OCCICURSOR);
       m_processBulkRequestStatement->setAutoCommit(true);
     }
     m_processBulkRequestStatement->setString(1, service);
@@ -533,20 +558,173 @@ castor::db::ora::OraStagerSvc::processBulkRequest
         << "processBulkRequest : unable to process bulk request.";
       throw ex;
     }
-    int reqType = m_processBulkRequestStatement->getInt(2);
-    if (0 == reqType) {
-      // Found no request to process
-      return 0;
+    int reqType = m_processBulkRequestStatement->getInt(3);
+    switch (reqType) {
+    case castor::OBJ_StageAbortRequest:
+      {
+        // Create result
+        castor::stager::BulkRequestResult* result =
+          new castor::stager::BulkRequestResult();
+        result->setReqType((castor::ObjectsIds)reqType);
+        result->client().setIpAddress(m_processBulkRequestStatement->getInt(4));
+        result->client().setPort(m_processBulkRequestStatement->getInt(5));
+        result->setReqId(m_processBulkRequestStatement->getString(6));
+        oracle::occi::ResultSet *rset =
+          m_processBulkRequestStatement->getCursor(10);
+        while (rset->next() != oracle::occi::ResultSet::END_OF_FETCH) {
+          // create the new Object
+          castor::stager::FileResult fr;
+          // Now retrieve and set members
+          fr.setFileId((u_signed64)rset->getDouble(1));
+          fr.setNsHost(rset->getString(2));
+          fr.setErrorCode(rset->getInt(3));
+          fr.setErrorMessage(rset->getString(4));
+          result->subResults().push_back(fr);
+        }
+        delete rset;
+        retObj = result;
+      }
+      break;
+    case castor::OBJ_StageRepackRequest:
+      {
+        castor::stager::StageRepackRequest* req =
+          new castor::stager::StageRepackRequest();
+        castor::rh::Client* client = new castor::rh::Client();
+        client->setIpAddress(m_processBulkRequestStatement->getInt(4));
+        client->setPort(m_processBulkRequestStatement->getInt(5));
+        req->setClient(client);
+        req->setId(m_processBulkRequestStatement->getInt(2));
+        req->setReqId(m_processBulkRequestStatement->getString(6));
+        req->setEuid(m_processBulkRequestStatement->getInt(7));
+        req->setEgid(m_processBulkRequestStatement->getInt(8));
+        req->setRepackVid(m_processBulkRequestStatement->getString(9));
+        retObj = req;
+      }
+      break;
+    }
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in processBulkRequest."
+      << std::endl << e.what();
+    throw ex;
+  }
+  return retObj;
+}
+
+//------------------------------------------------------------------------------
+// handleRepackRequest
+//------------------------------------------------------------------------------
+castor::stager::BulkRequestResult*
+castor::db::ora::OraStagerSvc::handleRepackRequest (const u_signed64 reqId)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_handleRepackRequestStatement) {
+      m_handleRepackRequestStatement =
+        createStatement(s_handleRepackRequestStatementString);
+      m_handleRepackRequestStatement->registerOutParam
+        (2, oracle::occi::OCCIINT);
+      m_handleRepackRequestStatement->registerOutParam
+        (3, oracle::occi::OCCIINT);
+      m_handleRepackRequestStatement->registerOutParam
+        (4, oracle::occi::OCCISTRING, 2048);
+      m_handleRepackRequestStatement->registerOutParam
+        (5, oracle::occi::OCCICURSOR);
+      m_handleRepackRequestStatement->setAutoCommit(true);
+    }
+    m_handleRepackRequestStatement->setDouble(1, reqId);
+
+    // execute the statement and see whether we found something
+    unsigned int rc = m_handleRepackRequestStatement->executeUpdate();
+    if (0 == rc) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "handleRepackRequest : unable to handle repack request.";
+      throw ex;
     }
     // Create result
     castor::stager::BulkRequestResult* result =
       new castor::stager::BulkRequestResult();
-    result->setReqType((castor::ObjectsIds)reqType);
-    result->client().setIpAddress(m_processBulkRequestStatement->getInt(3));
-    result->client().setPort(m_processBulkRequestStatement->getInt(4));
-    result->setReqId(m_processBulkRequestStatement->getString(5));
+    result->setReqType(castor::OBJ_StageRepackRequest);
+    result->client().setIpAddress(m_handleRepackRequestStatement->getInt(2));
+    result->client().setPort(m_handleRepackRequestStatement->getInt(3));
+    result->setReqId(m_handleRepackRequestStatement->getString(4));
     oracle::occi::ResultSet *rset =
-      m_processBulkRequestStatement->getCursor(6);
+      m_handleRepackRequestStatement->getCursor(5);
+    while (rset->next() != oracle::occi::ResultSet::END_OF_FETCH) {
+      // create the new Object
+      castor::stager::FileResult fr;
+      // Now retrieve and set members
+      fr.setFileId((u_signed64)rset->getDouble(1));
+      fr.setNsHost(rset->getString(2));
+      fr.setErrorCode(rset->getInt(3));
+      fr.setErrorMessage(rset->getString(4));
+      result->subResults().push_back(fr);
+    }
+    delete rset;
+    return result;
+  } catch (oracle::occi::SQLException e) {
+    if(e.getErrorCode() == 20113) {
+      // the service class did not exist
+      std::string msg = e.what();
+      castor::exception::InvalidArgument ex;
+      // extract the original message sent by the PL/SQL code
+      // from the surrounding oracle additions
+      ex.getMessage() << msg.substr(11,msg.find('\n')-11) << "\n";
+      throw ex;
+    } else {
+      handleException(e);
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "Error caught in handleRepackRequest."
+        << std::endl << e.what();
+      throw ex;
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+// handleRepackSubRequest
+//------------------------------------------------------------------------------
+castor::stager::BulkRequestResult*
+castor::db::ora::OraStagerSvc::handleRepackSubRequest (const u_signed64 subReqId)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_handleRepackSubRequestStatement) {
+      m_handleRepackSubRequestStatement =
+        createStatement(s_handleRepackSubRequestStatementString);
+      m_handleRepackSubRequestStatement->registerOutParam
+        (2, oracle::occi::OCCIINT);
+      m_handleRepackSubRequestStatement->registerOutParam
+        (3, oracle::occi::OCCIINT);
+      m_handleRepackSubRequestStatement->registerOutParam
+        (4, oracle::occi::OCCISTRING, 2048);
+      m_handleRepackSubRequestStatement->registerOutParam
+        (5, oracle::occi::OCCICURSOR);
+      m_handleRepackSubRequestStatement->setAutoCommit(true);
+    }
+    m_handleRepackSubRequestStatement->setDouble(1, subReqId);
+
+    // execute the statement and see whether we found something
+    unsigned int rc = m_handleRepackSubRequestStatement->executeUpdate();
+    if (0 == rc) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "handleRepackSubRequest : unable to handle repack subrequest.";
+      throw ex;
+    }
+    // Create result
+    castor::stager::BulkRequestResult* result =
+      new castor::stager::BulkRequestResult();
+    result->setReqType(castor::OBJ_StageRepackRequest);
+    result->client().setIpAddress(m_handleRepackSubRequestStatement->getInt(2));
+    result->client().setPort(m_handleRepackSubRequestStatement->getInt(3));
+    result->setReqId(m_handleRepackSubRequestStatement->getString(4));
+    oracle::occi::ResultSet *rset =
+      m_handleRepackSubRequestStatement->getCursor(5);
     while (rset->next() != oracle::occi::ResultSet::END_OF_FETCH) {
       // create the new Object
       castor::stager::FileResult fr;
@@ -563,7 +741,7 @@ castor::db::ora::OraStagerSvc::processBulkRequest
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
-      << "Error caught in processBulkRequest."
+      << "Error caught in handleRepackSubRequest."
       << std::endl << e.what();
     throw ex;
   }
@@ -712,6 +890,9 @@ int castor::db::ora::OraStagerSvc::getDiskCopiesForJob
           throw e;
         }
       }
+    } else if (-1 == status || -2 == status) {
+      // In case of error, we can safely commit
+      commit();
     }
     return status;
      /* -2,-3 = SubRequest put in WAITSUBREQ (-3 for disk copy replication)
@@ -756,12 +937,15 @@ int castor::db::ora::OraStagerSvc::processPrepareRequest
       throw ex;
     }
     // return result
-    return m_processPrepareRequestStatement->getInt(2);
+    int result = m_processPrepareRequestStatement->getInt(2);
      /* -2 = SubRequest put in WAITSUBREQ (only in case of Repack)
       * -1 = user error
       *  0 = DISKCOPY_STAGED, disk copies available
       *  1 = DISKCOPY_WAITDISK2DISKCOPY, a disk copy replication is needed
       *  2 = DISKCOPY_WAITTAPERECALL, a tape recall is needed */
+    // In case of error, we can safely commit
+    if (-1 == result) commit();
+    return result;
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -798,7 +982,10 @@ int castor::db::ora::OraStagerSvc::processPutDoneRequest
       throw ex;
     }
     // return status
-    return m_processPutDoneRequestStatement->getInt(2);
+    int result = m_processPutDoneRequestStatement->getInt(2);
+    // In case of error, we can safely commit
+    if (0 == result) commit();
+    return result;
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -1188,8 +1375,11 @@ castor::db::ora::OraStagerSvc::recreateCastorFile
     // get the result
     u_signed64 id =
       (u_signed64)m_recreateCastorFileStatement->getDouble(3);
-    // case of no recreation due to user error, return 0
-    if (0 == id) return 0;
+    // case of no recreation due to user error, commit and return 0
+    if (0 == id) {
+      commit();
+      return 0;
+    }
     // Otherwise, build a DiskCopyForRecall.
     // The case of status == WAITFS_SCHEDULING means that
     // the subRequest has been put in wait: the stager will handle this case

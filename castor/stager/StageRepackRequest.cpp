@@ -28,6 +28,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/FileRequest.hpp"
 #include "castor/stager/StageRepackRequest.hpp"
+#include "castor/stager/StageRepackRequestStatusCodes.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -38,7 +39,8 @@
 castor::stager::StageRepackRequest::StageRepackRequest() throw() :
   FileRequest(),
   m_repackVid(""),
-  m_id(0) {
+  m_id(0),
+  m_status(StageRepackRequestStatusCodes(0)) {
 }
 
 //------------------------------------------------------------------------------
@@ -65,6 +67,7 @@ void castor::stager::StageRepackRequest::print(std::ostream& stream,
   stream << indent << "repackVid : " << m_repackVid << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
+  stream << indent << "status : " << StageRepackRequestStatusCodesStrings[m_status] << std::endl;
 }
 
 //------------------------------------------------------------------------------

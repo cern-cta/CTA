@@ -60,6 +60,7 @@ namespace castor{
         /***********************/
         /* BulkStageSvcThread  */
         STAGER_BLKSTGSVC_ABORT = 152, /* Abort processed */
+        STAGER_BLKSTGSVC_REPACK = 155, /* Repack initiated */
         STAGER_BLKSTGSVC_UNKREQ = 153, /* "Unknown request processed" */
 
         /******************/

@@ -98,8 +98,7 @@ END;
 /* inserts file Requests in the stager DB.
  * This handles StageGetRequest, StagePrepareToGetRequest, StagePutRequest,
  * StagePrepareToPutRequest, StageUpdateRequest, StagePrepareToUpdateRequest,
- * StageRmRequest, StagePutDoneRequest, StagePrepareToUpdateRequest,
- * and StageRmRequest requests.
+ * StagePutDoneRequest, StagePrepareToUpdateRequest, and StageRmRequest requests.
  */ 	 
 CREATE OR REPLACE PROCEDURE insertFileRequest
   (userTag IN VARCHAR2,
@@ -164,8 +163,8 @@ BEGIN
       INSERT INTO StagePutDoneRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, parentUuid, id, svcClass, client)
       VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,freeStrParam,reqId,svcClassId,clientId);
     WHEN inReqType = 119 THEN -- StageRepackRequest
-      INSERT INTO StageRepackRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, repackVid, id, svcClass, client)
-      VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,freeStrParam,reqId,svcClassId,clientId);
+      INSERT INTO StageRepackRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, repackVid, id, svcClass, client, status)
+      VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,freeStrParam,reqId,svcClassId,clientId,tconst.REPACK_STARTING);
     WHEN inReqType = 95 THEN -- SetFileGCWeight
       INSERT INTO SetFileGCWeight (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, weight, id, svcClass, client)
       VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,freeNumParam,reqId,svcClassId,clientId);
@@ -185,6 +184,53 @@ BEGIN
     INSERT INTO SubRequest (retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, creationTime, lastModificationTime, answered, errorCode, errorMessage, requestedFileSystems, svcHandler, id, diskcopy, castorFile, parent, status, request, getNextStatus, reqType)
     VALUES (0, srFileNames(i), srProtocols(i), srXsizes(i), 0, NULL, srFlags(i), srModeBits(i), creationTime, creationTime, 0, 0, '', NULL, svcHandler, subreqId, NULL, NULL, NULL, 0, reqId, 0, inReqType);
   END LOOP;
+END;
+/
+
+/* inserts StageRepackRequest in the stager DB. */ 	 
+CREATE OR REPLACE PROCEDURE insertRepackRequest
+  (userTag IN VARCHAR2,
+   machine IN VARCHAR2,
+   euid IN INTEGER,
+   egid IN INTEGER,
+   pid IN INTEGER,
+   mask IN INTEGER,
+   userName IN VARCHAR2,
+   flags IN INTEGER,
+   svcClassName IN VARCHAR2,
+   reqUUID IN VARCHAR2,
+   reqType IN INTEGER,
+   clientIP IN INTEGER,
+   clientPort IN INTEGER,
+   clientVersion IN INTEGER,
+   clientSecure IN INTEGER,
+   VID IN VARCHAR2) AS
+  svcClassId NUMBER;
+  reqId NUMBER;
+  subreqId NUMBER;
+  clientId NUMBER;
+  creationTime NUMBER;
+  svcHandler VARCHAR2(100);
+BEGIN
+  -- do prechecks and get the service class
+  svcClassId := insertPreChecks(euid, egid, svcClassName, reqType);
+  -- get unique ids for the request and the client and get current time
+  SELECT ids_seq.nextval INTO reqId FROM DUAL;
+  SELECT ids_seq.nextval INTO clientId FROM DUAL;
+  creationTime := getTime();
+  -- insert the request itself
+  CASE
+    WHEN reqType = 119 THEN -- StageRepackRequest
+      INSERT INTO StageRepackRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, repackVid, id, svcClass, client,status)
+      VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,VID,reqId,svcClassId,clientId,tconst.REPACK_STARTING);
+    ELSE
+      raise_application_error(-20122, 'Unsupported request type in insertFileRequest : ' || TO_CHAR(reqType));
+  END CASE;
+  -- insert the client information
+  INSERT INTO Client (ipAddress, port, version, secure, id)
+  VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
+  -- insert a row into newRequests table to trigger the processing of the request
+  INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
 END;
 /
 

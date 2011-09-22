@@ -57,6 +57,7 @@ namespace castor {
     class StageAbortRequest;
     class GCFileList;
     class StageFileQueryRequest;
+    class StageRepackRequest;
   }
 
   namespace query {
@@ -134,19 +135,29 @@ namespace castor {
          * stores a file request into the stager DB.
          * This includes StageGetRequest, StagePrepareToGetRequest, StagePutRequest,
          * StagePrepareToPutRequest, StageUpdateRequest, StagePrepareToUpdateRequest,
-         * StageRmRequest, StagePutDoneRequest, StageRepackRequest and SetFileGCWeight requests
+         * StageRmRequest, StagePutDoneRequest and SetFileGCWeight requests
          * @param request the FileRequest object
          * @param client the client object associated to the request
          * @param freeStrParam an extra string associated to the request.
-         * Only used for StagePutDoneRequest and StageRepackRequest requests.
+         * Only used for StagePutDoneRequest requests.
          * @param freeNumParam an extra float associated to the request.
-         * Only used for SetFileGCWeight reqeust.
+         * Only used for SetFileGCWeight request.
          * @exception throws Exception in case of errors, in particular in case of permission denial
          */
         virtual void storeFileRequest(castor::stager::FileRequest* req,
                                       const castor::rh::Client *client,
                                       const std::string freeStrParam = "",
                                       const float freeNumParam = 0)
+          throw (castor::exception::Exception, oracle::occi::SQLException);
+
+        /**
+         * stores a StageRepackRequest into the stager DB.
+         * @param request the StageRepackRequest object
+         * @param client the client object associated to the request
+         * @exception throws Exception in case of errors, in particular in case of permission denial
+         */
+        virtual void storeRepackRequest(castor::stager::StageRepackRequest* req,
+                                        const castor::rh::Client *client)
           throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
@@ -336,6 +347,12 @@ namespace castor {
 
         /// SQL statement object for function storeFileRequest
         oracle::occi::Statement *m_storeFileRequestStatement;
+
+        /// SQL statement for function storeRepackRequest
+        static const std::string s_storeRepackRequestStatementString;
+
+        /// SQL statement object for function storeRepackRequest
+        oracle::occi::Statement *m_storeRepackRequestStatement;
 
         /// SQL statement for function storeStartRequest
         static const std::string s_storeStartRequestStatementString;

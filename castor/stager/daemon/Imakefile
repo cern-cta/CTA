@@ -27,6 +27,7 @@ COMM
 AddLdFlags(-lstdc++)
 
 DependsOnLibrary(common,castorcommon)
+DependsOnLibrary(vmgr,castorvmgr)
 DependsOnLibrary(upv,castorupv)
 DependsOnLibrary(dlf,castordlf)
 DependsOnLibrary(ns,castorns)

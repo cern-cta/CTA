@@ -26,3 +26,4 @@
 %attr(0755,root,root) usr/bin/listPriority
 %attr(0755,root,root) usr/bin/migrateNewCopy
 %attr(0755,root,root) usr/bin/fixFileSize
+%attr(0755,root,root) usr/bin/repack

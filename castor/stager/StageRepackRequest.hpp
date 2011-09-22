@@ -27,6 +27,7 @@
 
 // Include Files
 #include "castor/stager/FileRequest.hpp"
+#include "castor/stager/StageRepackRequestStatusCodes.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -127,12 +128,30 @@ namespace castor {
         m_id = new_var;
       }
 
+      /**
+       * Get the value of m_status
+       * @return the value of m_status
+       */
+      StageRepackRequestStatusCodes status() const {
+        return m_status;
+      }
+
+      /**
+       * Set the value of m_status
+       * @param new_var the new value of m_status
+       */
+      void setStatus(StageRepackRequestStatusCodes new_var) {
+        m_status = new_var;
+      }
+
     private:
 
       std::string m_repackVid;
 
       /// The id of this object
       u_signed64 m_id;
+
+      StageRepackRequestStatusCodes m_status;
 
     }; /* end of class StageRepackRequest */
 

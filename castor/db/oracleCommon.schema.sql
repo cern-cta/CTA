@@ -361,12 +361,20 @@ CREATE GLOBAL TEMPORARY TABLE JobFailedProcHelper
 /* Global temporary table to handle output of the processBulkAbortForGet procedure */
 CREATE GLOBAL TEMPORARY TABLE ProcessBulkAbortFileReqsHelper
   (srId NUMBER, cfId NUMBER, fileId NUMBER, nsHost VARCHAR2(2048), uuid VARCHAR(2048))
-  ON COMMIT DELETE ROWS;
+  ON COMMIT PRESERVE ROWS;
+ALTER TABLE ProcessBulkAbortFileReqsHelper
+  ADD CONSTRAINT PK_ProcessBulkAbortFileRe_SrId PRIMARY KEY (srId);
 
 /* Global temporary table to handle output of the processBulkRequest procedure */
 CREATE GLOBAL TEMPORARY TABLE ProcessBulkRequestHelper
   (fileId NUMBER, nsHost VARCHAR2(2048), errorCode NUMBER, errorMessage VARCHAR2(2048))
   ON COMMIT PRESERVE ROWS;
+
+/* Global temporary table to handle bulk update of subrequests in processBulkAbortForRepack */
+CREATE GLOBAL TEMPORARY TABLE ProcessRepackAbortHelperSR (srId NUMBER) ON COMMIT DELETE ROWS;
+/* Global temporary table to handle bulk update of diskCopies in processBulkAbortForRepack */
+CREATE GLOBAL TEMPORARY TABLE ProcessRepackAbortHelperDCrec (cfId NUMBER) ON COMMIT DELETE ROWS;
+CREATE GLOBAL TEMPORARY TABLE ProcessRepackAbortHelperDCmigr (cfId NUMBER) ON COMMIT DELETE ROWS;
 
 /* Tables to log the activity performed by the cleanup job */
 CREATE TABLE CleanupJobLog
@@ -458,12 +466,12 @@ ACCEPT adminList CHAR PROMPT 'List of admins: ';
 
 /* Define the service handlers for the appropriate sets of stage request objects */
 UPDATE Type2Obj SET svcHandler = 'JobReqSvc' WHERE type IN (35, 40, 44);
-UPDATE Type2Obj SET svcHandler = 'PrepReqSvc' WHERE type IN (36, 37, 38, 119);
+UPDATE Type2Obj SET svcHandler = 'PrepReqSvc' WHERE type IN (36, 37, 38);
 UPDATE Type2Obj SET svcHandler = 'StageReqSvc' WHERE type IN (39, 42, 95);
 UPDATE Type2Obj SET svcHandler = 'QueryReqSvc' WHERE type IN (33, 34, 41, 103, 131, 152, 155, 195);
 UPDATE Type2Obj SET svcHandler = 'JobSvc' WHERE type IN (60, 64, 65, 67, 78, 79, 80, 93, 144, 147);
 UPDATE Type2Obj SET svcHandler = 'GCSvc' WHERE type IN (73, 74, 83, 142, 149);
-UPDATE Type2Obj SET svcHandler = 'BulkStageReqSvc' WHERE type IN (50);
+UPDATE Type2Obj SET svcHandler = 'BulkStageReqSvc' WHERE type IN (50, 119);
 
 /* Set default values for the StageDiskCopyReplicaRequest table */
 ALTER TABLE StageDiskCopyReplicaRequest MODIFY flags DEFAULT 0;
@@ -516,6 +524,10 @@ INSERT INTO CastorConfig
   VALUES ('tape', 'interfaceDaemon', 'rtcpclientd', 'The name of the daemon used to interface to the tape system');
 INSERT INTO CastorConfig
   VALUES ('RmMaster', 'NoLSFMode', 'no', 'Whether we are running in NoLSF mode');
+INSERT INTO CastorConfig
+  VALUES ('Repack', 'Protocol', 'rfio', 'The protocol that repack should use for writing files to disk');
+INSERT INTO CastorConfig
+  VALUES ('Repack', 'MaxNbConcurrentClients', '5', 'The maximum number of repacks clients that are able to run concurrently. This are either clients atrting repacks or aborting running repacks. Providing that each of them will take a DB core, this number should roughtly be ~60% of the number of cores of the stager DB server');
 COMMIT;
 
 
@@ -670,3 +682,11 @@ ON COMMIT PRESERVE ROWS;
 /***************************************************/
 
 CREATE TABLE RmMasterLock (unused NUMBER);
+
+
+/*******************************************************/
+/* temporary table used for listing segments of a tape */
+/* efficiently via DB link when repacking              */
+/*******************************************************/
+
+CREATE GLOBAL TEMPORARY TABLE RepackTapeSegments (s_fileId NUMBER, blockid RAW(4), fseq NUMBER, segSize NUMBER, copyno NUMBER, fileClass NUMBER) ON COMMIT PRESERVE ROWS;

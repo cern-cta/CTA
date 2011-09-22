@@ -118,7 +118,6 @@ STGLIB_SRCS = BaseAddress.cpp \
               io/StreamStagePutRequestCnv.cpp \
               io/StreamStageRmRequestCnv.cpp \
               io/StreamStageUpdateRequestCnv.cpp \
-              io/StreamStageRepackRequestCnv.cpp \
               io/StreamThreadNotificationCnv.cpp \
               io/StreamStgFilesDeletedCnv.cpp \
               io/StreamStgFilesDeletedResponseCnv.cpp \
@@ -235,6 +234,7 @@ STGLIB_SRCS = BaseAddress.cpp \
               stager/StagePrepareToPutRequest.cpp \
               stager/StagePrepareToUpdateRequest.cpp \
               stager/StageRepackRequest.cpp \
+              stager/StageRepackRequestStatusCodes.cpp \
               stager/StagePutDoneRequest.cpp \
               stager/StagePutRequest.cpp \
 	      stager/StageQueryResult.cpp \

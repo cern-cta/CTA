@@ -1826,7 +1826,6 @@ PROCEDURE tg_setFileRecalled(
   varTcId               NUMBER;         -- TapeCopy Id
   varDcId               NUMBER;         -- DiskCopy Id
   varCfId               NUMBER;         -- CastorFile Id
-  srId NUMBER;
   varSubrequestId       NUMBER;
   varRequestId          NUMBER;
   varRequestType        NUMBER;
@@ -1888,8 +1887,8 @@ BEGIN
   -- delete tapecopies
   deleteTapeCopies(varCfId);
   -- update diskcopy status, size and gweight
-  SELECT /*+ INDEX(SR I_Subrequest_DiskCopy)*/ SR.id, SR.request
-    INTO varSubrequestId, varRequestId
+  SELECT /*+ INDEX(SR I_Subrequest_DiskCopy)*/ SR.id, SR.request, SR.reqType
+    INTO varSubrequestId, varRequestId, varRequestType
     FROM SubRequest SR
    WHERE SR.diskcopy = varDcId;
   SELECT REQ.svcClass, REQ.euid, REQ.egid INTO varSvcClassId, varEuid, varEgid
@@ -1911,7 +1910,6 @@ BEGIN
         DC.diskCopySize = varFileSize
     WHERE Dc.id = varDcId;
   -- determine the type of the request
-  SELECT reqType INTO varRequestType FROM SubRequest WHERE id = varSubrequestId;
   IF varRequestType = 119 THEN  -- OBJ_StageRepackRequest
     startRepackMigration(varSubrequestId, varCfId, varDcId, varEuid, varEgid);
   ELSE  -- restart this subrequest so that the stager can follow it up

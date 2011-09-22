@@ -647,6 +647,8 @@ void castor::client::BaseClient::pollAnswersFromStager
     dynamic_cast<castor::stager::FileRequest *>(req);
   if (fr != 0) {
     nbReplies = fr->subRequests().size();
+    // special case when no subrequests. We still expect an answer
+    if (0 == nbReplies) nbReplies = 1;
   }
 
   stage_trace(3, "Waiting for callback from castor");

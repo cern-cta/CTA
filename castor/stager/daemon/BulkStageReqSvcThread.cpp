@@ -26,20 +26,28 @@
 
 #include "castor/stager/daemon/BulkStageReqSvcThread.hpp"
 #include "castor/IObject.hpp"
+#include "castor/System.hpp"
 #include "castor/IService.hpp"
 #include "castor/Services.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/stager/IStagerSvc.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/exception/InvalidArgument.hpp"
+#include "castor/exception/PermissionDenied.hpp"
 #include "castor/dlf/Param.hpp"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/stager/daemon/DlfMessages.hpp"
 #include "castor/stager/BulkRequestResult.hpp"
+#include "castor/stager/StageRepackRequest.hpp"
 #include "castor/replier/RequestReplier.hpp"
 #include <vector>
 #include "castor/stager/FileResult.hpp"
 #include "castor/Constants.hpp"
+#include "castor/rh/BasicResponse.hpp"
 #include "castor/rh/FileResponse.hpp"
+#include "Cupv_api.h"
+#include <vmgr_api.h>
+#include <errno.h>
 
 //-----------------------------------------------------------------------------
 // constructor
@@ -74,26 +82,107 @@ castor::IObject* castor::stager::daemon::BulkStageReqSvcThread::select() throw()
 }
 
 //-----------------------------------------------------------------------------
+// handleRepackFirstStep (private)
+//-----------------------------------------------------------------------------
+castor::stager::BulkRequestResult*
+castor::stager::daemon::BulkStageReqSvcThread::handleRepackFirstStep
+(castor::stager::StageRepackRequest *req)
+  throw(castor::exception::Exception) {
+  // Check if the user has ADMIN privileges so that they can perform repack requests
+  const castor::rh::Client *client = dynamic_cast<const castor::rh::Client*>(req->client());
+  std::string srcHostName = castor::System::ipAddressToHostname(client->ipAddress());
+  int rc = Cupv_check(req->euid(), req->egid(), srcHostName.c_str(), "", P_ADMIN);
+  if ((rc < 0) && (serrno != EACCES)) {
+    castor::exception::Exception e(serrno);
+    e.getMessage() << "Failed Cupv_check call for VID " << req->repackVid() << ", "
+                   << req->euid() << ":" << req->egid() << " (ADMIN)";
+    throw e;
+  } else if (rc < 0) {
+    castor::exception::PermissionDenied e;
+    e.getMessage() << "Not authorized to perform repack requests";
+    throw e;
+  }
+  // check vmgr to see whether the tape is available
+  struct vmgr_tape_info_byte_u64 vmgrTapeInfo;
+  // Note that the side is HARDCODED to 0, as this field is now deprecated
+  if (-1 == vmgr_querytape_byte_u64(req->repackVid().c_str(), 0, &vmgrTapeInfo, 0)) {
+    castor::exception::Exception e(serrno);
+    e.getMessage() << "Failed vmgr_querytape check for VID " << req->repackVid() << ", "
+                   << req->euid() << ":" << req->egid();
+    throw e;
+  } else {
+    // when STANDBY tapes will be supported, they will
+    // be let through, while we consider any of the following as permanent errors
+    if(((vmgrTapeInfo.status & DISABLED) == DISABLED) ||
+       ((vmgrTapeInfo.status & ARCHIVED) == ARCHIVED) ||
+       ((vmgrTapeInfo.status & EXPORTED) == EXPORTED)) {
+      // "Tape disabled, could not be used for recall"
+      castor::exception::InvalidArgument e;
+      e.getMessage() << "Tape disabled, could not be used for recall : " << req->repackVid();
+      throw e;
+    }
+  }
+  // handles the repack request directly at the DB level and returns result
+  castor::IService* svc = castor::BaseObject::services()->service("DbStageSvc", castor::SVC_DBSTAGERSVC);
+  castor::stager::IStagerSvc* stgSvc = dynamic_cast<castor::stager::IStagerSvc*>(svc);
+  return stgSvc->handleRepackRequest(req->id());
+}
+
+//-----------------------------------------------------------------------------
 // process
 //-----------------------------------------------------------------------------
 void castor::stager::daemon::BulkStageReqSvcThread::process
 (castor::IObject *param) throw() {
-
-  // Useful variables
-  Cuuid_t uuid = nullCuuid;
-
-  // Retrieving request information
-  // Note that casting the request will never give 0
-  // since select does return a request for sure
-  castor::stager::BulkRequestResult *result =
-    dynamic_cast<castor::stager::BulkRequestResult*>(param);
-
+  // the final result that will be used to answer the client
+  castor::stager::BulkRequestResult *result = 0;
   try {
-
-    // get request replier
-    castor::replier::RequestReplier *rr =
-      castor::replier::RequestReplier::getInstance();
-    
+    // get a pointer to the request replier
+    castor::replier::RequestReplier *rr = castor::replier::RequestReplier::getInstance();
+    // let's find out the type of object we got
+    switch (param->type()) {
+    case castor::OBJ_StageRepackRequest:
+      {
+        castor::stager::StageRepackRequest *req =
+          dynamic_cast<castor::stager::StageRepackRequest*>(param);
+        try {
+          // RepackRequest. We will preprocess it (check Cupv right and VMGR status)
+          // before we go back to the stager DB to get the final result
+          // "Repack initiated" message
+          castor::dlf::Param params[] = {castor::dlf::Param("TPVID", req->repackVid()),
+                                         castor::dlf::Param("REQID", req->reqId())};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+                                  castor::stager::daemon::STAGER_BLKSTGSVC_REPACK,
+                                  0, "", 2, params);
+          result = handleRepackFirstStep(req);
+          delete req;
+          break;
+        } catch (castor::exception::Exception e) {
+          // "Unexpected exception caught"
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("Function", "BulkStageReqSvcThread::process"),
+             castor::dlf::Param("Message", e.getMessage().str()),
+             castor::dlf::Param("Code", e.code()),
+             castor::dlf::Param("REQID", req->reqId())};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
+                                  0, "", 4, params);
+          // reply to client
+          castor::rh::BasicResponse res;
+          res.setReqAssociated(req->reqId());
+          res.setErrorCode(e.code());
+          res.setErrorMessage(e.getMessage().str());
+          rr->sendResponse(req->client(), &res, true);
+          // cleanup and return
+          delete req;
+          return;
+        }
+      }
+    case castor::OBJ_BulkRequestResult:
+      {
+        // We got directly a result (the request did not need preprocessing)
+        result = dynamic_cast<castor::stager::BulkRequestResult*>(param);
+        break;
+      }
+    }
     // Log and prepare client response
     for (std::vector<castor::stager::FileResult>::const_iterator it =
            result->subResults().begin();
@@ -101,18 +190,31 @@ void castor::stager::daemon::BulkStageReqSvcThread::process
          it++) {
       switch (result->reqType()) {
       case castor::OBJ_StageAbortRequest:
-        // "Abort processed"
-        castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM,
+        // "Abort processed" message
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
                                 castor::stager::daemon::STAGER_BLKSTGSVC_ABORT,
                                 it->fileId(), it->nsHost());
         break;
+      case castor::OBJ_StageRepackRequest:
+        {
+          // "Repack initiated" message
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("REQID", result->reqId())};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+                                  castor::stager::daemon::STAGER_BLKSTGSVC_REPACK,
+                                  it->fileId(), it->nsHost(), 1, params);
+        }
+        break;
       default:
-        // "Unknown request processed"
-        castor::dlf::Param params[] =
-          {castor::dlf::Param("Type", result->reqType())};
-        castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, 
-                                castor::stager::daemon::STAGER_BLKSTGSVC_UNKREQ,
-                                it->fileId(), it->nsHost(), 1, params);
+        {
+          // "Unknown request processed"
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("Type", result->reqType()),
+             castor::dlf::Param("REQID", result->reqId())};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 
+                                  castor::stager::daemon::STAGER_BLKSTGSVC_UNKREQ,
+                                  it->fileId(), it->nsHost(), 2, params);
+        }
       }
       // reply to client
       castor::rh::FileResponse res;
@@ -125,22 +227,28 @@ void castor::stager::daemon::BulkStageReqSvcThread::process
       rr->sendResponse(&result->client(), &res, false);
     }
     rr->sendEndResponse(&result->client(), result->reqId());
-
   } catch (castor::exception::Exception& e) {
-    for (std::vector<castor::stager::FileResult>::const_iterator it =
-           result->subResults().begin();
-         it != result->subResults().end();
-         it++) {
+    if (0 != result) {
+      for (std::vector<castor::stager::FileResult>::const_iterator it =
+             result->subResults().begin();
+           it != result->subResults().end();
+           it++) {
+        // "Unexpected exception caught"
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("Function", "BulkStageReqSvcThread::process"),
+           castor::dlf::Param("Message", e.getMessage().str()),
+           castor::dlf::Param("Code", e.code())};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
+                                it->fileId(), it->nsHost(), 3, params);
+      }
+    } else {
       // "Unexpected exception caught"
       castor::dlf::Param params[] =
-        {castor::dlf::Param("Function", "BulkStageReqSvcThread::process"),
-         castor::dlf::Param("Message", e.getMessage().str()),
-         castor::dlf::Param("Code", e.code())};
-      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
-                              it->fileId(), it->nsHost(), 3, params);
+        {castor::dlf::Param("Function", "BulkStageReqSvcThread::process")};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
+                              0, "", 1, params);
     }
   }
-
   // Final cleanup
   delete result;
 }

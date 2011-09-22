@@ -43,6 +43,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-dbtools
 Architecture: any
+XBS-Obsoletes: castor-repack-client, castor-repack-server
 Description: castor (Cern Advanced STORage system)
  DB Administration tools
 
@@ -144,17 +145,6 @@ Depends: logrotate, castor-lib-oracle, vdt_globus_essentials
 Build-Depends: libmemcached-devel
 Description: castor (Cern Advanced STORage system)
  Request Handler server
-
-Package: castor-repack-server
-Architecture: any
-Depends: logrotate, castor-lib-oracle
-Description: castor (Cern Advanced STORage system)
- Repack server
-
-Package: castor-repack-client
-Architecture: any
-Description: castor (Cern Advanced STORage system)
- Repack client
 
 Package: castor-rmc-server
 Architecture: any

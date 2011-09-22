@@ -220,6 +220,7 @@ castor::stager::daemon::StagerDaemon::StagerDaemon()
     /***********************/
     /* BulkStageReqSvcThread  */
     { STAGER_BLKSTGSVC_ABORT, "Abort processed"},
+    { STAGER_BLKSTGSVC_REPACK, "Repack initiated"},
     { STAGER_BLKSTGSVC_UNKREQ, "Unknown request processed"},
 
     /*  SYSTEM LEVEL */

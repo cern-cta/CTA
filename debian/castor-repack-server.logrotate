@@ -1,7 +1,0 @@
-/var/log/castor/repackd*.log {
-    compress
-    daily
-    missingok
-    rotate 60
-    delaycompress
-}

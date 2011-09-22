@@ -1,175 +1,192 @@
-.\" Copyright (C) 2001-2006 by CERN/IT/FIO/FD
-.\" All rights reserved
+.\" ******************************************************************************
+.\"                      repack
 .\"
-.TH "REPACK" "2" "July, 2006" "CASTOR" "vmgr Administrator Commands"
-.SH "NAME"
+.\" This file is part of the Castor project.
+.\" See http://castor.web.cern.ch/castor
+.\"
+.\" Copyright (C) 2003  CERN
+.\" This program is free software; you can redistribute it and/or
+.\" modify it under the terms of the GNU General Public License
+.\" as published by the Free Software Foundation; either version 2
+.\" of the License, or (at your option) any later version.
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program; if not, write to the Free Software
+.\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+.\"
+.\" man page for the repack command.
+.\"
+.\" @author Castor Dev team, castor-dev@cern.ch
+.\" *****************************************************************************/
+.TH repack 8 "July, 2011" CASTOR "Moves data away from a tape"
+.SH NAME
 repack \- Move files from tape(s) to other tape destination
-.SH "SYNOPSIS"
-
-
-.B repack [option]
-
-options:
-.B
-.br
-.BI \-V " VID1[:VID2[:VID3... ]] ["\-o " OutputServiceClass ][ "\-m " numberRetry ][" \-c "]["\-n " newPoolName ]
-.br
-.BI \-P " SourcePoolname"  [\-o " OutputServiceClass ] [" \-m " retryNumber ][ " \-c " ]["\-n " newPoolName ][ " \-o " OutputServiceClass ]
-.br
-.BI  \-r " VID1[:VID2[:VID3...]]"
-.br
-.BI \-A " VID1[:VID2[:VID3...]]"
-.br
-.br
-.BI  \-R " VID1[:VID2[:VID3...]]"
-.br
-.B \-s
-.br
-.BI \-S " VID1[:VID2[:VID3...]]"
-.br
-.BI \-x " VID1[:VID2[:VID3...]]"
-.br
-.BI \-e " VID1[:VID2[:VID3...]]"
-.br
-.BI \-A " VID1[:VID2[:VID3...]]"
-.br
-.BI \-a
-.br
-.BI  \-h
-
-.SH "DESCRIPTION"
+.SH SYNOPSIS
 .B repack
-moves files of active segments from a set of tape(s) to a target tape pool and gives
-a status overview of the tapes in the repack system.
-Only volumes having
-.B FULL
-status may be repacked. One can either specify a single volume using
-.B \-V
-option, a list of volumes by sperating them by ':'
-or a given tape pool (option
-\fB\-P\fR). repack sends a request to the repack server and returns immediately.
-If an error occurs on the server side during the submission an error message
-is returned.
-The repack server to contact, has to be provided by adding the line
-
-REPACK HOST <hostname>
-
-in the castor config file. Additionally the following environment
-variables can be specified to override the default port (6800) and host defaults.
-
-REPACK_HOST=<hostname>
+.BI -h
 .br
-REPACK_PORT=<port>
+.B repack
+.BI \-V\ <VID>[:<VID>[...]]\ \-o\ OutputServiceClass
+.br
+.B repack
+.BI \-R\ <VID>[:<VID>[...]]
+.br
+.B repack
+.BI \-s\ [\-a\ <nb\ days>]
+.br
+.B repack
+.BI \-S\ <VID>[:<VID>[...]]\ [\-a\ <nb\ days>]
+.br
+.B repack
+.BI \-e\ <VID>[:<VID>[...]]\ [\-n\ <nbErrorsDisplayed>]
+.br
+
+.SH DESCRIPTION
+.B repack
+allows to move files from one or several tapes to new media.
+It also allows to get the status overview of the ongoing repack activity in the system.
+Note that only volumes having
+.B FULL
+status may be repacked.
 
 When the repack process has been successfully completed (FINISHED status), the volume can be
 reclaimed using the reclaim command.
-.LP
-This command requires ADMIN privilege in the Cupv database. In case an error
-occurs during a repack, messages can be found on the server side in
-/var/log/castor/repackd.log.
+
+.SH OPTIONS
 
 .TP
-.I VID
-The volume visual identifier of the single volume to be repacked.
-It must be at most CA_MAXVIDLEN characters long. The status in the VMGR has to be
-.BR FULL
+.BI \-h,\ \-\-help
+displays command usage help.
 .TP
-.I OutputServiceClass
-The name of the service class which is used for writing back the files to tape.
-The tape pool information in this service class is taken by the CASTOR II
-migrator to get a destination tape from the VMGR. To write to one specific tape, this
-service class has to have a tape pool containing this tape.
-.br
-.B Note that this service class has to be known by the stager given in the castor config file.
+.BI \-V,\ \-\-volumeid
+launches the repacking of the given tapes. The tapes are given by their VID and the list is colon separated.
+Note that the laucnching may be refused in case too many repacks are already being launched or aborted.
+The maximum number is defined in the Repack/MaxNbConcurrentClients entry of the CastorConfig table
+in the stager database. The default value is 5.
 .TP
-.I SourcePoolname
-The name of the tape pool which is to be repacked . It must be at most CA_MAXPOOLNAMELEN characters long.
-The list of pools can be obtained with vmgrlistpool .
+.BI \-o,\ \-\-svcclass
+the service class to be used for repacking the given tapes.
 .TP
-.I retryNumber
-Maximum number of automatic retry allowed. If this option is not used the default is zero.
+.BI \-R,\ \-\-delete
+cancels the repacking of the given tapes. The tapes are given by their VID and the list is colon separated.
+Note that the cancelation may be refused in case too many repacks are already being launched or aborted.
+The maximum number is defined in the Repack/MaxNbConcurrentClients entry of the CastorConfig table
+in the stager database. The default value is 5.
 .TP
-.I newTapePool
-New tapepool in with should be moved the tape after a successful repack.
+.BI \-s,\ \-\-statusAll
+shows the status of ongoing and finished repacks. By default, displays all ongoing repacks plus the finished
+ones that have been started less than 24h ago. This limit can be changed using the \-a option.
 .TP
-.SH "OPTIONS"
-\fB\-V\fR
-specifies the volumes to repack seperated by :.
+.BI \-S,\ \-\-status
+shows the status of ongoing and finished repacks for the given tape(s). The tape(s is(are) given by their
+VID and the list is colon separated. By default, displays all ongoing repacks plus the finished
+ones that have been started less than 24h ago for that(these) tape(s). This limit can be changed using
+the \-a option.
+.TP
+.BI \-a,\ \-\-after\ <nb\ days>
+in conjunction with \-s or \-S, changes the display of finished repacks to all those started within
+the given number of days. The number of days can be given as float, e.g. 1.5 for 36 hours.
+.TP
+.BI \-e,\ \-\-errors
+displays the errors that occured during the repack of a given tape, file by file. By default, the number of
+errors displayed is limited to 10. This can be changed using the \-n option
+.TP
+.BI \-n,\ \-\-nbErrorsDisplayed
+in conjunction with \-e, sets the maximum number of errors to display.
 
-\fB\-P\fR
-specifies the source pool  to repack
-
-\fB\-o\fR
-The service class used for migration (see obove). If none specified, the default is taken from the castor config file on the repack server
-machine.
-
-\fB\-r\fR
-To restart the repack of the tape which is finished but with failures.
-
-\fB\-R\fR
-To abort a repack of a tape.
-
-\fB\-s\fR
-Prints information about all tapes in an active repack process.
-
-\fB\-S\fR
-Prints information about a given set of tapes in an active repack process.
-
-\fB\-x\fR
-Prints detailed information of the given volume. It lists the nameserver information of the files which were on that tape when repack has been started.
-
-\fB\-a\fR
-Archives all the FINISHED tapes. They are not listed anymore when the \fB\-s\fR option is
-given
-
-\fB\-A\fR
-Archives the FINISHED-FAILED tapes given by command line
-
-\fB\-e\fR
-For each given tape, it list the error reported by the stager when repack have been issued.
-
-\fB\-m\fR
-To set the maximum number of automatic retry which should be issued in case of failure.
-
-\fB\-c\fR
-To issue vmgr_reclaim of the tape if repack does not report any failure.
-
-\fB\-n\fR
-To change the pool of the tape with the given one ,if repack does not report any failure.
-
-\fB\-h\fR
-Help
-
-.SH "EXAMPLE"
+.SH EXAMPLE
 .nf
 .ft CW
-Repack to default service class:
-repack \-V L30076
+> repack -V I10551:I10552 -o default
+Repack started for tape I10551
+Repack started for tape I10552
 
-Repack of two tapes to service class alicemdc:
-repack \-V L30076:L30077 \-o alicemdc
+> repack -s
+============================================================================================================================================
+SubmitTime              User                       Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated    Status
+--------------------------------------------------------------------------------------------------------------------------------------------
+23-Jun-11 14:34     sponcec3         lxcastordev01.cern.ch   I10551         44    47.41KiB         0        43         1         0  STARTING
+23-Jun-11 14:34     sponcec3         lxcastordev01.cern.ch   I10552          1        721B         1         0         0         0   ONGOING
+22-Jun-11 17:19     sponcec3         lxcastordev01.cern.ch   I10552          1        721B         0         0         0         1  FINISHED
+22-Jun-11 17:16     sponcec3         lxcastordev01.cern.ch   I10552         66    47.41KiB         0         0         1        65    FAILED
 
-Repack of a tape pool to service class alicemdc:
-repack \-P alicemdc3_9940 \-o alicemdc
+> repack -R I10551
 
-.ft
-.fi
-.SH "EXIT STATUS"
-This program returns 0 if the operation was successful or >0 if the operation failed:
+> repack -s
+============================================================================================================================================
+SubmitTime              User                       Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated    Status
+--------------------------------------------------------------------------------------------------------------------------------------------
+23-Jun-11 14:34     sponcec3         lxcastordev01.cern.ch   I10551         66    47.41KiB         0        65         1         0   ONGOING
+23-Jun-11 14:34     sponcec3         lxcastordev01.cern.ch   I10552          1        721B         0         0         1         0   ABORTED 
+22-Jun-11 17:19     sponcec3         lxcastordev01.cern.ch   I10552          1        721B         0         0         0         1  FINISHED
+22-Jun-11 17:16     sponcec3         lxcastordev01.cern.ch   I10552         66    47.41KiB         0         0         1        65    FAILED
 
-.br
-0	Ok.
-.br
-1	An error occured.
+> repack -s -a 0.5
+============================================================================================================================================
+SubmitTime              User                       Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated    Status
+--------------------------------------------------------------------------------------------------------------------------------------------
+23-Jun-11 14:34     sponcec3         lxcastordev01.cern.ch   I10551         66    47.41KiB         0        65         1         0   ONGOING
+23-Jun-11 14:34     sponcec3         lxcastordev01.cern.ch   I10552          1        721B         0         0         1         0   ABORTED 
 
-.SH KNOWN BUGS
-repack -x and repack -e can display maximum 1300 entries.
+> repack -S I10551 -a 0.5
+============================================================================================================================================
+SubmitTime              User                       Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated    Status
+--------------------------------------------------------------------------------------------------------------------------------------------
+23-Jun-11 14:34     sponcec3         lxcastordev01.cern.ch   I10551         66    47.41KiB         0        65         1         0   ONGOING
 
-.SH "SEE ALSO"
-.BR Castor_limits(4) ,
-.BR Cns_listtape(3) ,
-.BR reclaim(1) ,
-.BR vmgr_listtape(3) ,
-.BR vmgr_querypool(3) ,
-.BR vmgr_modifytape(3) ,
-.B vmgr_querytape(3)
+> repack -R I10551
+
+> repack -S I10551 -a 0.5
+============================================================================================================================================
+SubmitTime              User                       Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated    Status
+--------------------------------------------------------------------------------------------------------------------------------------------
+23-Jun-11 14:34     sponcec3         lxcastordev01.cern.ch   I10551         66    47.41KiB         0        25        41         0  ABORTING
+
+> repack -S I10551 -a 0.5
+============================================================================================================================================
+SubmitTime              User                       Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated    Status
+--------------------------------------------------------------------------------------------------------------------------------------------
+23-Jun-11 14:34     sponcec3         lxcastordev01.cern.ch   I10551         66    47.41KiB         0         0        66         0   ABORTED
+
+> repack -e I10551
+
+     *** Tape  I10551  ***
+
+--------------------------------------------------------------------------------------------
+Fileid         CopyNo         ErrorCode      ErrorMessage
+--------------------------------------------------------------------------------------------
+5000053222     n/a            16             File is currently being written or migrated
+5000157562     n/a            1701           Aborted explicitely
+5000157580     n/a            1701           Aborted explicitely
+5000156311     n/a            1701           Aborted explicitely
+5000157587     n/a            1701           Aborted explicitely
+5000157605     n/a            1701           Aborted explicitely
+5000157611     n/a            1701           Aborted explicitely
+5000157625     n/a            1701           Aborted explicitely
+5000157632     n/a            1701           Aborted explicitely
+5000157638     n/a            1701           Aborted explicitely
+
+Output restricted to 10 errors. There are more errors for this tape
+
+> repack -e I10551 -n 3
+
+     *** Tape  I10551  ***
+
+--------------------------------------------------------------------------------------------
+Fileid         CopyNo         ErrorCode      ErrorMessage
+--------------------------------------------------------------------------------------------
+5000053222     n/a            16             File is currently being written or migrated
+5000157562     n/a            1701           Aborted explicitely
+5000157580     n/a            1701           Aborted explicitely
+
+Output restricted to 3 errors. There are more errors for this tape
+
+.SH NOTES
+This command requires database client access to the stager catalogue.
+Configuration for the database access is taken from castor.conf.
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch

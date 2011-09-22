@@ -1,2 +1,0 @@
-/sbin/chkconfig --add repackd
-/sbin/service repackd condrestart > /dev/null 2>&1 || :

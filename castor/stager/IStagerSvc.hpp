@@ -100,8 +100,28 @@ namespace castor {
        * @return the result of the processing
        * @exception Exception in case of error
        */
-      virtual castor::stager::BulkRequestResult* processBulkRequest
+      virtual castor::IObject* processBulkRequest
       (const std::string service)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * handles a repack request
+       * @param reqId the id of the repack request to be handled
+       * @return the result of the processing
+       * @exception Exception in case of error
+       */
+      virtual castor::stager::BulkRequestResult* handleRepackRequest
+      (const u_signed64 reqId)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * handles a repack subRequest
+       * @param subReqId the id of the repack subRequest to be handled
+       * @return the result of the processing
+       * @exception Exception in case of error
+       */
+      virtual castor::stager::BulkRequestResult* handleRepackSubRequest
+      (const u_signed64 subReqId)
         throw (castor::exception::Exception) = 0;
 
       /**

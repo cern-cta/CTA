@@ -24,58 +24,5 @@ COMM
 COMM @author Castor Dev team, castor-dev@cern.ch
 COMM
 
-AddLdFlags(-lstdc++)
-CPPFLAGS += -DDEFAULT_CNS=castorns -DORAREPACKCONFIGFILE=RepackConfigFile $(ORACLE_CPPFLAGS)
-SERVDEPLIB = DepSharedLibraryTargetName(castor/db/newora,castorcommonora)
-SERVLIBS = $(SERVDEPLIB) -Wl,-rpath-link,$(CASTOR_ROOT)/shlib -L$(ORACLE_LIBDIR) -locci -lclntsh
-
-DependsOnLibrary(common,castorcommon)
-DependsOnLibrary(dlf,castordlf)
-DependsOnLibrary(castor,castorclient)
-DependsOnLibrary(vmgr,castorvmgr)
-DependsOnLibrary(ns,castorns)
-DependsOnLibrary(castor/db/cnv,castorcnvs)
-DependsOnLibrary(castor/db/newora,castorcommonora)
-
-REPACKCOMMON_SRC = ../io/StreamRepackRequestCnv.cpp \
-		../io/StreamRepackSubRequestCnv.cpp \
-		../io/StreamRepackSegmentCnv.cpp \
-		../io/StreamRepackResponseCnv.cpp \
-                ../io/StreamRepackAckCnv.cpp \
-		RepackSubRequestStatusCode.cpp \
-                RepackCommandCode.cpp \
-		RepackRequest.cpp \
-		RepackSubRequest.cpp \
-		RepackSegment.cpp \
-                RepackAck.cpp \
-		RepackResponse.cpp \
-                FileListHelper.cpp \
-                RepackUtility.cpp
-
-REPACKDBIN_SRCS =  RepackServer.cpp \
-		RepackWorker.cpp \
-		RepackFileStager.cpp \
-	        RepackKiller.cpp \
-	        RepackRestarter.cpp \
-		RepackMonitor.cpp \
-		RepackCleaner.cpp \
-		RepackFileChecker.cpp \
-		ora/OraRepackSvc.cpp \
-		../db/cnv/DbRepackRequestCnv.cpp \
-		../db/cnv/DbRepackSegmentCnv.cpp \
-		../db/cnv/DbRepackSubRequestCnv.cpp \
-		$(REPACKCOMMON_SRC)
-REPACKDBIN_OBJS = $(REPACKDBIN_SRCS:.cpp=.o)
-NormalProgramTarget(repackd,$(REPACKDBIN_OBJS),$(SERVDEPLIB),$(SERVLIBS),755)
-MakeDir(LogPath,0755)
-LOGROTATE(castor-repack-server,install)
-SYSCONFIG(repackd,install)
-INITSCRIPT(repackd,install)
-CONFIGFILE(ORAREPACK,install)
-
-REPACKBIN_SRCS =  RepackClient.cpp ../io/ClientSocket.cpp $(REPACKCOMMON_SRC)
-REPACKBIN_OBJS = $(REPACKBIN_SRCS:.cpp=.o)
-NormalProgramTarget(repack,$(REPACKBIN_OBJS),,,755)
-
+InstallTarget(repack,755)
 EXEMANPAGE(repack)
-ADMMANPAGE(repackd)

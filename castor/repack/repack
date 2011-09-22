@@ -1,0 +1,408 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                   repack
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @(#)$RCSfile: castor_tools.py,v $ $Revision: 1.9 $ $Release$ $Date: 2009/03/23 15:47:41 $ $Author: sponcec3 $
+# *
+# * repack command line of the CASTOR project
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+
+"""repack command line of CASTOR."""
+
+import os, sys, time, pwd
+import getopt, socket
+import castor_tools
+import cx_Oracle
+
+# usage function
+def usage(exitCode):
+    '''prints usage'''
+    print 'Usage :'
+    print '  repack -h/--help'
+    print '  repack -V <VID>[:<VID>[:...]] -o serviceclass'
+    print '  repack -R <VID>[:<VID>[:...]]'
+    print '  repack -s [-a <nb days>]'
+    print '  repack -S <VID>:<VID>[:...]] [-a <nb days>]'
+    print '  repack -e <VID>[:<VID>[:...]] [-n <nbErrorsDisplayed>]'
+    sys.exit(exitCode)
+    
+# first parse the options
+try:
+    options, arguments = getopt.getopt(sys.argv[1:], 'V:o:sS:R:e:hn:Aa:', ['volumeid=', 'svcclass=', 'statusAll', 'status=', 'delete=', 'errors=', 'help', 'nbErrorsDisplayed=', 'since='])
+except Exception, parsingException:
+    print parsingException
+    usage(1)
+vids = []
+vflag = False
+sflag = False
+rflag = False
+eflag = False
+svcClass = None
+maxNbErrors = None
+since = None
+for f, v in options:
+    if f == '-h' or f == '--help':
+        usage(0)
+    elif f == '-V' or f == '--volumeid':
+        vids.extend(v.split(':'))
+        vflag = True
+    elif f == '-s' or f == '--statusAll':
+        sflag = True
+    elif f == '-a' or f == '--since':
+        try:
+            since = float(v)
+        except ValueError:
+            print 'Invalid number of days :', v
+            usage(1)
+    elif f == '-S' or f == '--status':
+        vids.extend(v.split(':'))
+        sflag = True
+    elif f == '-R' or f == '--delete':
+        vids.extend(v.split(':'))
+        rflag = True
+    elif f == '-e' or f == '--errors':
+        vids.extend(v.split(':'))
+        eflag = True
+    elif f == '-n' or f == '--nbErrorsDisplayed':
+        try:
+            maxNbErrors = int(v)
+        except ValueError:
+            print 'Invalid number :', v
+            usage(1)
+    elif f == '-o' or f == '--svcclass':
+        svcClass = v
+    else:
+        print "unknown option : " + f
+        usage(1)
+
+# If any arg, complain and stop
+if len(arguments) != 0:
+    print "Unknown arguments : " + ' '.join(arguments) + "\n"
+    usage(1)
+
+# check consistency of arguments
+if [vflag, sflag, rflag, eflag].count(True) > 1:
+    print "Conflicting options : " + ' '.join(arguments) + "\n"
+    usage(1)
+if since and not sflag:
+    print "-a/--since is only meaningful in conjunction with -s/--statusAll or -S/--status\n"
+    usage(1)
+if svcClass and not vflag:
+    print "-o/--output_svcclass is only meaningful in conjunction with -V/--volumeid\n"
+    usage(1)
+if not svcClass and vflag:
+    print "-o/--output_svcclass is mandatory when using -V/--volumeid\n"
+    usage(1)
+if maxNbErrors and not eflag:
+    print "-n/--nbErrorsDisplayed is only meaningful in conjunction with -e/--errors\n"
+    usage(1)
+if eflag and not maxNbErrors:
+    maxNbErrors = 10
+if not since:
+    since = 1.0
+
+def _getIdentity():
+    machine = socket.getfqdn()
+    euid = os.getuid()
+    egid = os.getgid()
+    pid = os.getpid()
+    username = pwd.getpwuid(euid)[0]
+    sip = socket.gethostbyname(machine).split('.')
+    ip = (int(sip[0]) << 24 | int(sip[1]) << 16 | int(sip[2]) << 8 | int(sip[3]))
+    if ip & 0x80000000 != 0:
+        ip = ip - 0x100000000
+    return machine, euid, egid, pid, username, ip
+
+_powerSuf = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB']
+def _humanReadableSize(size):
+    if not size: size = 0
+    order = 0
+    fsize = float(size)
+    while fsize >= 1000:
+        fsize = fsize / 1024
+        order = order + 1
+    if order == 0:
+        return str(size) + _powerSuf[order]
+    else:
+        return '%.2f' % fsize + _powerSuf[order]
+
+_repackRequestStatuses = ['STARTING','ONGOING','FINISHED','FAILED','ABORTING','ABORTED']
+def _printStatusLine(subTime, user, machine, vid, status, total, size, toRecall, toMigr, failed, migrated):
+    '''prints one status line'''
+    # times need to be transformed in human readable strings
+    subTime = time.strftime('%d-%b-%y %H:%M', time.localtime(subTime))
+    # dealing with global status
+    status = _repackRequestStatuses[status]
+    # human readable size
+    size = _humanReadableSize(size)
+    # actual printing
+    print '%-18s%10s%30s%9s%11d%12s%10d%10d%10d%10d%10s' % (subTime, user, machine, vid, total, size, toRecall, toMigr, failed, migrated, status)
+
+def displayStatus(vids):
+    '''displays the ongoing repacks. If vids is not empty, the output is limited to these tapes'''
+    try:
+        # prepare DB connection
+        stconn = castor_tools.connectToStager()
+        stcur = stconn.cursor()
+        stcur.arraysize = 50
+        stGetStatus = '''
+        SELECT StageRepackRequest.creationTime, StageRepackRequest.username, StageRepackRequest.machine,
+               StageRepackRequest.repackVID, StageRepackRequest.status,
+               SUM(CASE WHEN SubRequest.status IS NULL THEN 0 ELSE 1 END) total,
+               SUM(SubRequest.xsize) totsize,
+               SUM(CASE WHEN SubRequest.status IN (4, 5) THEN 1 ELSE 0 END) toRecall,
+               SUM(CASE SubRequest.status WHEN 12 THEN 1 ELSE 0 END) toMigr,
+               SUM(CASE WHEN SubRequest.status IN (7, 9, 10) THEN 1 ELSE 0 END) failed,
+               SUM(CASE WHEN SubRequest.status IN (8, 11) THEN 1 ELSE 0 END) migrated
+          FROM StageRepackRequest, SubRequest
+         WHERE SubRequest.request(+) = StageRepackRequest.id
+         GROUP BY StageRepackRequest.creationTime, StageRepackRequest.username, StageRepackRequest.machine,
+                  StageRepackRequest.repackVID, StageRepackRequest.status
+         HAVING StageRepackRequest.status IN (0, 1, 4)
+             OR StageRepackRequest.creationTime > getTime() - 86400*:nbdays
+         ORDER BY StageRepackRequest.creationTime DESC'''
+        # go to DB and get back the data
+        stcur.execute(stGetStatus, nbdays=since)
+        rows = stcur.fetchall()
+        # build a consistent view o
+        if len(rows) == 0:
+            print 'No repack activity found'
+            return
+        # print out results
+        print '='*140
+        print 'SubmitTime              User                       Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated    Status'
+        print '-'*140
+        for subTime, user, machine, vid, status, total, size, toRecall, toMigr, failed, migrated in rows:
+            if not vids or vid in vids:
+                _printStatusLine(subTime, user, machine, vid, status, total, size, toRecall, toMigr, failed, migrated)
+        # close DB connection
+        castor_tools.disconnectDB(stconn)
+    except Exception, e:
+        print e
+        sys.exit(1)
+
+def startRepack(vids, svcClass):
+    '''starts the repacking of the given tapes using the given service class'''
+    try:
+        # prepare DB connection
+        stconn = castor_tools.connectToStager()
+        try:
+            stcur = stconn.cursor()
+            stcur.arraysize = 50
+            # check the number of repack clients on the stager and deny repacking if too high
+            stCheckNbClients = '''
+            SELECT count(*)
+              FROM StageRepackRequest
+             WHERE status IN (0, 4)'''
+            stCheckLimit = '''
+            SELECT value
+              FROM CastorConfig
+             WHERE class = 'Repack'
+               AND key = 'MaxNbConcurrentClients' '''
+            # check whether we have reached the maximum number of concurrent repack starts in the stager DB
+            stcur.execute(stCheckNbClients)
+            nbClients = stcur.fetchone()[0]
+            stcur.execute(stCheckLimit)
+            row = stcur.fetchone()
+            if not row:
+                print 'Unable to check stager repack load. Giving up. Please report.'
+                sys.exit(1)
+            if nbClients >= int(row[0]):
+                print 'At least %s repacks are already concurrently starting or aborting right now.' % (row[0])
+                print 'This is the maximum, so new repacks are temporarily impossible. please retry later'
+                sys.exit(1)
+            # precompute some useful values about us
+            machine, euid, egid, pid, username, ip = _getIdentity()
+            # check the service class
+            stCheckSvcClass = '''
+            DECLARE
+              svcClassId NUMBER;
+            BEGIN
+              svcClassId := checkForValidSvcClass(:svcClassName, 0, 1);
+            END;'''
+            try:
+                stcur.execute(stCheckSvcClass, svcClassName=svcClass)
+            except cx_Oracle.Error, e:
+                print 'Unknown service class "%s". Giving up' % svcClass
+                sys.exit(1)
+            # statements for checking and starting repacks
+            stCheckForOngoingRepack = '''
+            SELECT StageRepackRequest.id
+              FROM StageRepackRequest, SubRequest
+             WHERE SubRequest.request = StageRepackRequest.id
+               AND StageRepackRequest.RepackVID = :vid
+               AND SubRequest.status IN (4,5,12)
+               AND ROWNUM < 2'''
+            stRepack = '''
+            BEGIN
+              insertRepackRequest('', :pmachine, :peuid, :pegid, :ppid, 0, :pusername, 0, :psvcClass, uuidgen(), 119, :pip, 0, 0, 0, :pvid);
+            END;'''
+            # loop over the tapes we should deal with
+            for tape in vids:
+                try:
+                    # check that there are no repack on going for the given vids
+                    stcur.execute(stCheckForOngoingRepack, vid=tape)
+                    rows = stcur.fetchall() 
+                    if len(rows) > 0:
+                        print 'Tape ' + tape + ' is already being repacked. Ignoring it'
+                    else:
+                        # start repacking
+                        stcur.execute(stRepack, pmachine=machine, peuid=euid, pegid=egid, ppid=pid,
+                                      pusername=username, psvcClass=svcClass, pip=ip, pvid=tape)
+                        print 'Repack started for tape ' + tape
+                    # commit this tape's repack
+                    stconn.commit()
+                except cx_Oracle.Error, e:
+                    print 'Caught exception when starting repack of ' + tape + ' :'
+                    error, = e.args
+                    print error.message
+                    print 'Giving up with tape ' + tape
+                    # rollback this tape's repack
+                    stconn.rollback()
+        finally:
+            # close DB connection
+            castor_tools.disconnectDB(stconn)
+    except Exception, e:
+        print e
+        sys.exit(1)    
+
+def cancelRepack(vids):
+    '''aborts the repacking of the given tapes'''
+    try:
+        # prepare DB connection
+        stconn = castor_tools.connectToStager()
+        stcur = stconn.cursor()
+        stcur.arraysize = 50
+        stFindRepackRequest = '''
+        SELECT reqId
+          FROM StageRepackRequest
+         WHERE StageRepackRequest.RepackVID = :vid
+           AND EXISTS (SELECT id FROM SubRequest
+                        WHERE request=StageRepackRequest.id
+                          AND status IN (4,5,12))
+        '''
+        stAbort = '''
+        BEGIN
+          abortRepackRequest(:pmachine, :peuid, :pegid, :ppid, :pusername, :pip, :preqid, :results);
+        END;
+        '''
+        # precompute some useful values about us
+        machine, euid, egid, pid, username, ip = _getIdentity()
+        # loop over the tapes we should deal with
+        for tape in vids:
+            try:
+                # find the ongoing repack for that tape
+                stcur.execute(stFindRepackRequest, vid=tape)
+                rows = stcur.fetchall() 
+                if len(rows) == 0:
+                    print 'Tape ' + tape + ' is not being repacked. Nothing to cancel.'
+                else:
+                    # abort the ongoing repack
+                    strescur = stconn.cursor()
+                    strescur.arraysize = 50
+                    stcur.execute(stAbort, pmachine=machine, peuid=euid, pegid=egid, ppid=pid,
+                                  pusername=username, pip=ip, preqid=rows[0][0], results=strescur)
+                    # display outcome
+                    answers = strescur.fetchall()
+                    if len(answers) == 1 and answers[0][2] != 0:
+                        print 'Failed to abort repack for tape ' + tape + ' :'
+                        print answers[0][3]
+                    else:
+                        print 'Repack aborted for tape ' + tape
+                        gotErrors = False
+                        for fid, nshost, errorCode, errorMessage in answers:
+                            if errorCode !=0:
+                                if not gotErrors:
+                                    print 'The following files had errors :'
+                                    gotErrors = True
+                                print "%d@%s : (%d)%s" % (fid, nshost, errorCode, errorMessage)
+                    # close cursor
+                    strescur.close()
+                # commit this tape's repack
+                stconn.commit()
+            except cx_Oracle.Error, e:
+                print 'Caught exception when aborting repack of ' + tape + ' :'
+                error, = e.args
+                print error.message
+                print 'Giving up with abort of tape ' + tape
+                # rollback this tape's repack
+                stconn.rollback()
+        # close DB connection
+        castor_tools.disconnectDB(stconn)
+    except Exception, e:
+        print e
+        sys.exit(1)    
+
+def displayErrors(vids):
+    '''display the errors (if any) that happenned during the repacking of the given tapes'''
+    try:
+        # prepare DB connection
+        stconn = castor_tools.connectToStager()
+        stcur = stconn.cursor()
+        stcur.arraysize = 50
+        stGetErrors = '''
+        SELECT CastorFile.fileId, TapeCopy.copynb, SubRequest.errorCode, Subrequest.errorMessage
+          FROM SubRequest, CastorFile, TapeCopy
+         WHERE SubRequest.request = (SELECT MAX(id) FROM StageRepackRequest
+                                      WHERE RepackVID = :vid)
+           AND CastorFile.id = SubRequest.castorFile
+           AND TapeCopy.castorFile(+) = CastorFile.id
+           AND SubRequest.status IN (7, 9, 10)
+           AND ROWNUM <= %d''' % (maxNbErrors+1)
+        # loop over the tapes we should deal with
+        for tape in vids:
+            # go to DB and get back the data
+            stcur.execute(stGetErrors, vid=tape)
+            rows = stcur.fetchall()
+            # print out results
+            print '\n     *** Tape  ' + tape + '  ***\n'
+            if len(rows) == 0:
+                print 'no errors found\n'
+                continue
+            print '-'*92
+            print 'Fileid         CopyNo         ErrorCode      ErrorMessage'
+            print '-'*92
+            for fileId, copyNo, errorCode, errorMessage in rows[:maxNbErrors]:
+                if not copyNo:
+                    copyNo = 'n/a'
+                else:
+                    copyNo = str(copyNo)
+                print '%-15d%-15s%-15d%s' % (fileId, copyNo, errorCode, errorMessage)
+            if len(rows) == maxNbErrors+1:
+                print '\nOutput restricted to %d errors. There are more errors for this tape' % (maxNbErrors)
+        # close DB connection
+        castor_tools.disconnectDB(stconn)
+    except Exception, e:
+        print e
+        sys.exit(1)
+
+# process the request
+if vflag:
+    startRepack(vids, svcClass)
+elif sflag:
+    displayStatus(vids)
+elif rflag:
+    cancelRepack(vids)
+elif eflag:
+    displayErrors(vids)
+else:
+    print "No option specified\n"
+    usage(1)  
