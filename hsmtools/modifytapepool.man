@@ -1,0 +1,58 @@
+.TH MODIFYTAPEPOOL 1 "2011" CASTOR "stager catalogue administrative commands"
+.SH NAME
+modifytapepool \- modify an existing tape pool in the stager catalog
+.SH SYNOPSIS
+.B modifytapepool
+[
+.BI -h
+]
+[
+.BI -m
+.B <migrSelectPolicyName>
+]
+<tapePoolName>
+
+.SH DESCRIPTION
+.B modifytapepool
+modifies an existing tape pool in the CASTOR stager catalog
+.TP
+.BI \-h,\ \-\-help
+Get usage information
+.TP
+.BI \-\-migrselectpolicy <migrSelectPolicyName>
+If given, modifies the migration policy of the tape pool.
+.TP
+.BI <tapePoolName>
+name of the tape pool to modify.
+
+.SH EXAMPLES
+.nf
+.ft CW
+# printtapepool -a
+        NAME     MIGRSELECTPOLICY SVCCLASSES       ID
+-----------------------------------------------------
+stager_dev01 defaultMigrSelPolicy    default        6
+testtapepool           testPolicy          - 93583889
+
+# modifytapepool -m prodPolicy testtapepool
+modified tape pool testtapepool successfully
+
+# printtapepool -a
+        NAME     MIGRSELECTPOLICY SVCCLASSES       ID
+-----------------------------------------------------
+stager_dev01 defaultMigrSelPolicy    default        6
+testtapepool           prodPolicy          - 93583889
+
+.SH NOTES
+This command requires database client access to the stager catalog and nameserver DBs.
+Configuration for the database accesses is taken from castor.conf.
+
+.SH SEE ALSO
+.BR deletetapepool,
+.BR entertapepool,
+.BR printtapepool,
+.BR modifysvcclass,
+.BR adminMultiInstance
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,0 +1,223 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                      entersvcclass
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @author castor dev team
+# *****************************************************************************/
+
+'''allows to enter a new service class into the castor stager'''
+
+import sys
+import getopt
+import castor_tools
+
+# usage function
+def usage(exitCode):
+    '''prints usage'''
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] [--nbdrives <nbDrives>] ' + \
+          '[--defaultfilesize <defaultFileSize>] [--maxreplicanb <maxReplicaNb>] ' + \
+          '[--failjobswhennospace <[yes|no]>] [--disk1behavior <[yes|no]>] ' + \
+          '[--forcedfileclass <forcedFileClass>] [--replicateonclose <[yes|no]>] ' + \
+          '[--gcpolicy <gcPolicyName>] [--migratorpolicy <migratorPolicy>] ' + \
+          '[--streampolicy <streamPolicy>] [--recallerpolicy <recallerPolicy>] ' + \
+          '[--diskpools <diskPoolName>:[...]] [--tapepools <tapePoolName>[:...]] <svcClassName>'
+    sys.exit(exitCode)
+
+def parsePositiveInt(name, svalue):
+    '''parses a positive int value and exits with proper error message in case the value does not fit'''
+    try:
+        value = int(svalue)
+        if value < 0:
+            raise ValueError
+        return value
+    except ValueError:
+        print 'Invalid %s %s' % (name, svalue)
+        usage(1)
+
+def parsePositiveNonNullInt(name, svalue):
+    '''parses a positive, non null int value and exits with proper error message in case the value does not fit'''
+    value = parsePositiveInt(name, svalue)
+    if value == 0:
+        print '%s cannot be set to 0' % name
+        usage(1)
+    return value
+
+def parseBool(name, svalue):
+    '''parses a boolean value and exits with proper error message in case the value does not fit'''
+    validTrues = ['true', '1', 't', 'y', 'yes']
+    validFalses = ['false', '0', 'f', 'n', 'no']
+    if svalue.lower() in validTrues:
+        return True
+    elif svalue.lower() in validFalses:
+        return False
+    else:
+        print 'Invalid %s %s' % (name, svalue)
+        print 'Note that accepted booleans are %s and %s' % (','.join(validTrues), ','.join(validFalses))
+        usage(1)
+
+# first parse the options
+try:
+    options, args = getopt.getopt(sys.argv[1:], 'hv',
+                                  ['help', 'verbose', 'nbdrives=', 'defaultfilesize=', 'maxreplicanb=',
+                                   'failjobswhennospace=', 'disk1behavior=', 'forcedfileclass=',
+                                   'replicateonclose=', 'gcpolicy=' , 'migratorpolicy=' , 'streampolicy=',
+                                   'recallerpolicy=', 'diskpools=', 'tapepools='])
+except Exception, e:
+    print e
+    usage(1)
+verbose = False
+nbdrives = 0
+defaultfilesize = 2147483648 # 2GiB
+maxreplicanb = 1
+failjobswhennospace = True
+disk1behavior = False
+forcedfileclass = None
+replicateonclose = False
+gcpolicy = None
+migratorpolicy = None
+streampolicy = None
+recallerpolicy = None
+diskpools = []
+tapepools = []
+for f, v in options:
+    if f == '-h' or f == '--help':
+        usage(0)
+    elif f == '-v' or f == '--verbose':
+        verbose = True
+    elif f == '--nbdrives':
+        nbdrives = parsePositiveInt('nbdrives', v)
+    elif f == '--defaultfilesize':
+        defaultfilesize = parsePositiveNonNullInt('defaultfilesize', v)
+    elif f == '--maxreplicanb':
+        maxreplicanb = parsePositiveNonNullInt('maxreplicanb', v)
+    elif f == '--failjobswhennospace':
+        failjobswhennospace = parseBool('failjobswhennospace', v)
+    elif f == '--disk1behavior':
+        disk1behavior = parseBool('disk1behavior', v)
+    elif f == '--forcedfileclass':
+        forcedfileclass = v
+    elif f == '--replicateonclose':
+        replicateonclose = parseBool('replicateonclose', v)
+    elif f == '--gcpolicy':
+        gcpolicy = v
+    elif f == '--migratorpolicy':
+        migratorpolicy = v
+    elif f == '--streampolicy':
+        streampolicy = v
+    elif f == '--recallerpolicy':
+        recallerpolicy = v
+    elif f == '--diskpools':
+        diskpools = set(v.split(':'))
+    elif f == '--tapepools':
+        tapepools = set(v.split(':'))
+    else:
+        print "unknown option : " + f
+        usage(1)
+
+# Deal with arguments
+if len(args) == 0:
+    print "Missing arguments"
+    usage(1)
+elif len(args) > 1:
+    print "Too many arguments"
+    usage(1)
+else:
+    svcclassname = args[0]
+
+try:
+    # connect to stager
+    stconn = castor_tools.connectToStager()
+    stcur = stconn.cursor()
+    # check that the service class does exist
+    stcur.execute('SELECT id FROM SvcClass WHERE name=:name', name=svcclassname)
+    rows = stcur.fetchall()
+    if len(rows) != 0:
+        print 'SvcClass %s already exists in the stager DB' % svcclassname
+        print 'Giving up'
+        sys.exit(1)
+    # Get DiskPool info (and check existence)
+    if diskpools:
+        stcur.execute("SELECT name, id FROM DiskPool WHERE name IN ('" + "', '".join(diskpools) + "')")
+        rows = stcur.fetchall()
+        existingdiskpools = set([row[0] for row in rows])
+        nonexistingdiskpools = diskpools - existingdiskpools
+        if nonexistingdiskpools:
+            print 'Invalid or non existent diskpool(s) given : %s' % (', '.join(nonexistingdiskpools))
+            sys.exit(1)
+        diskpools = [row[1] for row in rows]
+    # Get TapePool info (and check existence)
+    if tapepools:
+        stcur.execute("SELECT name, id FROM TapePool WHERE name IN ('" + "', '".join(tapepools) + "')")
+        rows = stcur.fetchall()
+        existingtapepools = set([row[0] for row in rows])
+        nonexistingtapepools = tapepools - existingtapepools
+        if nonexistingtapepools:
+            print 'Invalid or non existent tapepool(s) given : %s' % (', '.join(nonexistingtapepools))
+            sys.exit(1)
+        tapepools = [row[1] for row in rows]
+    # check that the forced file class does exist, and retrieve its id
+    if forcedfileclass:
+        stcur.execute('SELECT id FROM FileClass WHERE name=:name', name=forcedfileclass)
+        rows = stcur.fetchall()
+        if len(rows) == 0:
+            print 'Invalid or non existent FileClass %s' % forcedfileclass
+            print 'Giving up'
+            sys.exit(1)
+        else:
+            forcedfileclass = rows[0][0]
+    else:
+        forcedfileclass = 0
+    # insert new SvcClass
+    insertFCSQL = '''
+    DECLARE
+      scId NUMBER;
+      diskPoolIds castor."cnumList" := :diskPoolIds;
+      tapePoolIds castor."cnumList" := :tapePoolIds;
+    BEGIN
+      INSERT INTO SvcClass (nbDrives, name, defaultFileSize, maxReplicaNb, migratorPolicy,
+                            recallerPolicy, streamPolicy, gcPolicy, disk1Behavior, replicateOnClose,
+                            failJobsWhenNoSpace, id, forcedFileClass)
+             VALUES (:nbDrives, :name, :defaultFileSize, :maxReplicaNb, :migratorPolicy,
+                     :recallerPolicy, :streamPolicy, :gcPolicy, :disk1Behavior, :replicateOnClose,
+                     :failJobsWhenNoSpace, ids_seq.nextval, :forcedFileClass)
+             RETURNING id INTO scId;
+      FORALL i IN diskPoolIds.FIRST .. diskPoolIds.LAST
+        INSERT INTO DiskPool2SvcClass (parent, child) VALUES (diskPoolIds(i), scId);
+      FORALL i IN tapePoolIds.FIRST .. tapePoolIds.LAST
+        INSERT INTO SvcClass2TapePool (parent, child) VALUES (scId, tapePoolIds(i));
+    END;'''
+    stcur.execute(insertFCSQL, nbDrives=nbdrives, name=svcclassname, defaultFileSize=defaultfilesize,
+                  maxReplicaNb=maxreplicanb, migratorPolicy=migratorpolicy, recallerPolicy=recallerpolicy,
+                  streamPolicy=streampolicy, gcPolicy=gcpolicy, disk1Behavior=disk1behavior,
+                  replicateOnClose=replicateonclose, failJobsWhenNoSpace=failjobswhennospace,
+                  forcedFileClass=forcedfileclass, diskPoolIds=diskpools, tapePoolIds=tapepools)
+    # commit insertion and tell user
+    stconn.commit()
+    print 'inserted service class %s successfully' % svcclassname
+    # close DB connections
+    try:
+        castor_tools.disconnectDB(stconn)
+    except Exception:
+        pass
+except Exception, e:
+    print e
+    if verbose:
+        import traceback
+        traceback.print_exc()
+    sys.exit(-1)

@@ -1,0 +1,189 @@
+.TH MODIFYSVCCLASS 1 "2011" CASTOR "stager catalogue administrative commands"
+.SH NAME
+modifysvcclass \- modify an existing service class in the stager catalog
+.SH SYNOPSIS
+.B modifysvcclass
+[
+.BI -h
+]
+[
+.BI --nbdrives
+<nbDrives>
+]
+[
+.BI --defaultfilesize
+<defaultFileSize>
+]
+[
+.BI --maxreplicanb 
+<maxReplicaNb>
+]
+[
+.BI --failjobswhennospace 
+<bool>
+]
+[
+.BI --disk1behavior 
+<bool>
+]
+[
+.BI --forcedfileclass 
+<forcedFileClass>
+]
+[
+.BI --replicateonclose 
+<bool>
+]
+[
+.BI --gcpolicy 
+<gcPolicyName>
+]
+[
+.BI --migratorpolicy 
+<migratorPolicy>
+]
+[
+.BI --streampolicy 
+<streamPolicy>
+]
+[
+.BI --recallerpolicy 
+<recallerPolicy>
+]
+[
+.BI --adddiskpools 
+<diskPoolName>:[...]
+]
+[
+.BI --removediskpools 
+<diskPoolName>:[...]
+]
+[
+.BI --addtapepools 
+<tapePoolName>[:...]
+]
+[
+.BI --removetapepools 
+<tapePoolName>[:...]
+]
+<svcClassName>
+
+
+.SH DESCRIPTION
+.B modifysvcclass
+modifies an existing service class in the CASTOR stager catalog
+.TP
+.BI \-h,\ \-\-help
+Get usage information
+.TP
+.BI \-\-nbdrives <nbDrives>
+If given, modifies the number of tape drives this service class is allowed to use concurrently
+for migration.
+.TP
+.BI \-\-defaultfilesize <defaultFileSize>
+If given, modifies the default file size allocation for write requests not specifying any filesize.
+.TP
+.BI \-\-maxreplicanb <maxReplicaNb>
+If given, modifies the maximum number of disk resident replicas for a given CASTOR file
+in this service class.
+.TP
+.BI \-\-failjobswhennospace <boolean value>
+If given, modifies whether jobs requesting new space are failed when the pool(s) connected
+with this service class is(are) full. Example of supported values are yes/no, y/n, true/false, t/f, 1/0.
+.TP
+.BI \-\-disk1behavior <boolean value>
+If given, modifies whether this service class has Disk1 behavior, which means that garbage
+collection is disabled and the flag FailJobsWhenNoSpace is set to yes.
+Example of supported values are yes/no, y/n, true/false, t/f, 1/0.
+.TP
+.BI \-\-forcedfileclass <forcedFileClassName>
+If given, modifies the forced file class of files written to this service class to the given value.
+The forced file class overrides the file class that the user specifies. This parameter allows
+specifying for this service class any TapeN retention policy, where N is the number of
+tape copies of the forced file class.
+In order to disable the forcing, just provide an empty class name. Do not for get the quotes
+so that the shell sees that empty argument
+.TP
+.BI \-\-replicateonclose <boolean value>
+If given, enables or disables replication on close is enabled for this service class.
+When enabled, once a file is created and finalized/closed it will be replicated
+so that MaxReplicaNb copies exist in the pool where the file resides.
+Example of supported values are yes/no, y/n, true/false, t/f, 1/0.
+Note: this functionality will not rebalance the number copies in the pool in response to
+diskservers which are no longer in production!
+.TP
+.BI \-\-gcpolicy <gcPolicyName>
+If given, modifies the name of the garbage collection policy to be used for this service class.
+This value is irrelevant if Disk1Behavior is set to yes.
+.TP
+.BI \-\-migratorpolicy <migratorPolicy>
+If given, modifies the name of the migrator policy to be used for this service class.
+.TP
+.BI \-\-streampolicy <streamPolicy>
+If given, modifies the name of the stream policy to be used for this service class. The policy
+will be used to determine the number of streams that should be running based on the
+number of files and volume of data that should be written too tape.
+.TP
+.BI \-\-recallerpolicy <recallerPolicy>
+If given, modifies the name of the recaller policy to be used for this service class.
+.TP
+.BI \-\-adddiskpools <diskPool1:diskPool2:...>
+If given, adds the given disk pools to the set that this service class is allowed to use.
+More than one disk pool can be specified, colon separated. All specified disk
+pools must already exist.
+.TP
+.BI \-\-removediskpools <diskPool1:diskPool2:...>
+If given, removes the given disk pools from the set that this service class is allowed to use.
+More than one disk pool can be specified, colon separated. All specified disk
+pools must already exist.
+.TP
+.BI \-\-addtapepools <tapePool1:tapePool2:...>
+If given, adds the given tape pools to the set that this service class is allowed to use.
+More than one tape pool can be specified, colon separated. All specified tape
+pools must already exist.
+.TP
+.BI \-\-removetapepools <tapePool1:tapePool2:...>
+If given, removes the given tape pools from the set that this service class is allowed to use.
+More than one tape pool can be specified, colon separated. All specified tape
+pools must already exist.
+.TP
+.BI <svcClassName>
+name of the service class to modify.
+
+.SH EXAMPLES
+.nf
+.ft CW
+#printsvcclass test
+NAME DEFAULTFILESIZE NBDRIVES FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR STREAMPOLICY GCPOLICY MIGRATORPOLICY RECALLERPOLICY     DISKPOOLS    TAPEPOOLS           ID
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+test               1        0                True            1               -            False         False            -        -              -              - default,extra stager_dev01     91382934
+
+# modifysvcclass --maxreplicanb 2 --gcpolicy dropall --forcedfileclass temp --removediskpools default test
+modified service class test successfully
+
+# printsvcclass test
+NAME DEFAULTFILESIZE NBDRIVES FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR STREAMPOLICY GCPOLICY MIGRATORPOLICY RECALLERPOLICY DISKPOOLS    TAPEPOOLS           ID
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+test               1        0                True            2            temp            False         False            -  dropall              -              -     extra stager_dev01     91382934
+
+# modifysvcclass --forcedfileclass '' --adddiskpools default test
+modified service class test successfully
+
+# printsvcclass test
+NAME DEFAULTFILESIZE NBDRIVES FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR STREAMPOLICY GCPOLICY MIGRATORPOLICY RECALLERPOLICY     DISKPOOLS    TAPEPOOLS           ID
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+test               1        0                True            2               -            False         False            -  dropall              -              - default,extra stager_dev01     91382934
+
+.SH NOTES
+This command requires database client access to the stager catalog and nameserver DBs.
+Configuration for the database accesses is taken from castor.conf.
+
+.SH SEE ALSO
+.BR deletesvcclass,
+.BR entersvcclass,
+.BR printsvcclass,
+.BR modifytapepool,
+.BR adminMultiInstance
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

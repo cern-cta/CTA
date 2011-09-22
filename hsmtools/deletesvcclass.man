@@ -1,0 +1,47 @@
+.TH DELETESVCCLASS 1 "2011" CASTOR "stager catalogue administrative commands"
+.SH NAME
+deletesvcclass \- deletes an existing svc class from the stager catalogue
+
+.SH SYNOPSIS
+.B deletesvcclass
+[
+.BI -h
+]
+.BI <svcClassName>
+[:...]
+
+.SH DESCRIPTION
+.B deletesvcclass
+deletes existing service classes from the CASTOR stager catalog
+.LP
+.BI \-h,\ \-\-help
+Get usage information
+.TP
+.BI <svcClassName>
+name of service classes to delete. Several names can be given, colon separated
+
+.SH EXAMPLES
+.nf
+.ft CW
+# deletesvcclass test2:dev
+successfully dropped the following service class(es) : test2, dev
+
+# deletesvcclass default:dev
+successfully dropped the following service class(es) : default
+WARNING : some service class(es) did not exist : default
+
+.SH NOTES
+This command requires database client access to the stager catalogue.
+Configuration for the database access is taken from castor.conf.
+
+.SH SEE ALSO
+.BR entersvcclass,
+.BR modifysvcclass,
+.BR printsvcclass,
+.BR deletetapepool,
+.BR deletediskpool,
+.BR deletefileclass,
+.BR adminMultiInstance
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

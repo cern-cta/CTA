@@ -1,0 +1,66 @@
+.TH ENTERTAPEPOOL 1 "2011" CASTOR "stager catalog administrative commands"
+.SH NAME
+entertapepool \- enter a new tape pool in the stager catalog
+.SH SYNOPSIS
+.B entertapepool
+[
+.BI -h
+]
+[
+.BI -m
+.B <migrSelectPolicyName>
+]
+.BI <tapePoolName>
+.SH DESCRIPTION
+.B entertapepool
+enters a new tape pool in the CASTOR stager catalog
+.TP
+.BI \-h,\ \-\-help
+Get usage information
+.TP
+.BI \-m,\ \-\-migrselectpolicy\ <migrSelectPolicyName>
+If given, specifies the migration policy for this pool.
+If not specified, defaults to 'defaultMigrSelPolicy'
+.TP
+.BI <tapePoolName>
+name of a tape pool to create.
+
+.SH EXAMPLES
+.nf
+.ft CW
+# entertapepool newtapepool
+inserted tape pool newtapepool successfully
+
+# printtapepool -a
+        NAME     MIGRSELECTPOLICY SVCCLASSES       ID
+-----------------------------------------------------
+ newtapepool defaultMigrSelPolicy          - 93543828
+
+# entertapepool -m testPolicy newtapepool
+TapePool newtapepool already exists in the stager DB
+You may want to use modifytapepool
+
+# entertapepool -m testPolicy testtapepool
+inserted tape pool testtapepool successfully
+
+# /tmp/printtapepool -a
+        NAME     MIGRSELECTPOLICY SVCCLASSES       ID
+-----------------------------------------------------
+testtapepool           testPolicy          - 93545831
+ newtapepool defaultMigrSelPolicy          - 93543828
+
+.SH NOTES
+This command requires database client access to the stager catalog and nameserver DBs.
+Configuration for the database accesses is taken from castor.conf.
+
+.SH SEE ALSO
+.BR deletetapepool,
+.BR modifytapepool,
+.BR printtapepool,
+.BR enterdiskpool,
+.BR entersvcclass,
+.BR enterfileclass,
+.BR adminMultiInstance
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

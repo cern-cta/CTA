@@ -1,0 +1,89 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                      entertapepool
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @author castor dev team
+# *****************************************************************************/
+
+'''allows to enter a new tape pool into the castor stager'''
+
+import sys
+import getopt
+import castor_tools
+
+# usage function
+def usage(exitCode):
+    '''prints usage'''
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-m|--migrselectpolicy <migreSelectPolicyName>] <tapePoolName>'
+    sys.exit(exitCode)
+
+# first parse the options
+try:
+    options, args = getopt.getopt(sys.argv[1:], 'hvm:', ['help', 'verbose', 'migrselectpolicy='])
+except Exception, e:
+    print e
+    usage(1)
+verbose = False
+migrselectpolicy = 'defaultMigrSelPolicy'
+for f, v in options:
+    if f == '-h' or f == '--help':
+        usage(0)
+    elif f == '-v' or f == '--verbose':
+        verbose = True
+    elif f == '-m' or f == '--migrselectpolicy':
+        migrselectpolicy = v
+    else:
+        print "unknown option : " + f
+        usage(1)
+
+# Deal with arguments
+if len(args) == 0:
+    print "Missing arguments"
+    usage(1)
+elif len(args) > 1:
+    print "Too many arguments"
+    usage(1)
+tapePoolName = args[0]
+
+try:
+    # connect to stager
+    stconn = castor_tools.connectToStager()
+    stcur = stconn.cursor()
+    # check that the tape pool does exist
+    stcur.execute('SELECT id FROM TapePool WHERE name=:name', name=tapePoolName)
+    rows = stcur.fetchall()
+    if len(rows) != 0:
+        print 'TapePool %s already exists in the stager DB' % tapePoolName
+        print 'You may want to use modifytapepool'
+        sys.exit(1)
+    # insert new tapepool
+    stcur.execute('INSERT INTO TapePool (name, migrSelectPolicy, id) VALUES (:name, :policy, ids_seq.nextval)', name=tapePoolName, policy=migrselectpolicy)
+    stconn.commit()
+    print 'inserted tape pool %s successfully' % tapePoolName
+    # close DB connection
+    try:
+        castor_tools.disconnectDB(stconn)
+    except Exception:
+        pass
+except Exception, e:
+    print e
+    if verbose:
+        import traceback
+        traceback.print_exc()
+    sys.exit(-1)

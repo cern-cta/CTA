@@ -1,0 +1,115 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                      printtapepool
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+
+'''command line printing the given tape pool(s)'''
+
+import sys
+import getopt
+import castor_tools
+
+# usage function
+def usage(exitCode):
+    '''prints usage'''
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-a|--all] [<tapePoolName>[:...]]'
+    sys.exit(exitCode)
+
+# first parse the options
+try:
+    options, args = getopt.getopt(sys.argv[1:], 'hva', ['help', 'verbose', 'all'])
+except Exception, e:
+    print e
+    usage(1)
+verbose = False
+displayAll = False
+for f, v in options:
+    if f == '-h' or f == '--help':
+        usage(0)
+    elif f == '-v' or f == '--verbose':
+        verbose = True
+    if f == '-a' or f == '--all':
+        displayAll = True
+    else:
+        print "unknown option : " + f
+        usage(1)
+
+# Deal with arguments
+tapePools = set([])
+if len(args) != 0:
+    if displayAll:
+        print "No argument should be given when -a/--all is used"
+        usage(1)
+    else:
+        tapePools = set(args[0].split(':'))
+else:
+    if not displayAll:
+        print "Missing arguments"
+        usage(1)
+
+try:
+    # connect to stager and prepare statements
+    stconn = castor_tools.connectToStager()
+    stcur = stconn.cursor()
+    sqlStatement = '''
+    SELECT TapePools.name, TapePools.migrSelectPolicy, SvcClasses.names, TapePools.id
+      FROM (SELECT name, migrSelectPolicy, id
+              FROM TapePool) TapePools,
+           (SELECT SvcClass2TapePool.child AS tapePoolId, collect(SvcClass.name) AS names
+              FROM SvcClass2TapePool, SvcClass
+             WHERE SvcClass.id = SvcClass2TapePool.parent
+             GROUP BY child) SvcClasses
+     WHERE TapePools.id = SvcClasses.tapePoolId(+)'''
+    if not displayAll:
+        sqlStatement = sqlStatement + " AND TapePools.name IN ('" + "', '".join(tapePools) + "')"
+    stcur.execute(sqlStatement)
+    # get results
+    rows = stcur.fetchall()
+    existingTapePools = set([row[0] for row in rows])
+    unknownTapePools = tapePools - existingTapePools
+    # loop over tape pools and print them
+    if existingTapePools:
+        maxNameLen = max([4] + [len(row[0]) for row in rows])
+        maxMigrSelectPolicyLen = max([16] + [len(row[1]) for row in rows if row[1]])
+        maxSvcClassNameLen = max([10] + [len(', '.join(row[2])) for row in rows if row[2]])
+        maxIdLen = max([2] + [len(str(row[3])) for row in rows])
+        print '%*s %*s %*s %*s' % (maxNameLen, 'NAME', maxMigrSelectPolicyLen, 'MIGRSELECTPOLICY', maxSvcClassNameLen, 'SVCCLASSES', maxIdLen, 'ID')
+        print '-' * (3+maxNameLen+maxMigrSelectPolicyLen+maxSvcClassNameLen+maxIdLen)
+        for name, migrselectpolicy, svclasses, tpId in rows:
+            if svclasses:
+              svcClassStr = ','.join(svclasses)
+            else:
+              svcClassStr = '-'
+            print '%*s %*s %*s %*d' % (maxNameLen, name, maxMigrSelectPolicyLen, migrselectpolicy, maxSvcClassNameLen, svcClassStr, maxIdLen, tpId)
+    # check unknown tape pools
+    if unknownTapePools:
+        print 'WARNING : the following tape pools do not exist : ' + ', '.join(unknownTapePools)
+    # close DB connections
+    try:
+        castor_tools.disconnectDB(stconn)
+    except Exception:
+        pass
+except Exception, e:
+    print e
+    if verbose:
+        import traceback
+        traceback.print_exc()
+    sys.exit(-1)

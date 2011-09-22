@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #/******************************************************************************
-# *                      listFileClass
+# *                      enterdiskpool
 # *
 # * This file is part of the Castor project.
 # * See http://castor.web.cern.ch/castor
@@ -18,12 +18,10 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: listFileClass,v $ $Revision: 1.2 $ $Release$ $Date: 2008/10/16 14:50:27 $ $Author: sponcec3 $
-# *
-# * Lists existing service classes
-# *
-# * @author Castor Dev team, castor-dev@cern.ch
+# * @author castor dev team
 # *****************************************************************************/
+
+'''allows to enter a new disk pool into the castor stager'''
 
 import sys
 import getopt
@@ -31,35 +29,58 @@ import castor_tools
 
 # usage function
 def usage(exitCode):
-  print 'Usage : ' + sys.argv[0] + ' [-h|--help]'
-  sys.exit(exitCode)
+    '''prints usage'''
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] <diskPoolName>'
+    sys.exit(exitCode)
 
 # first parse the options
 try:
-    options, args = getopt.getopt(sys.argv[1:], 'h', ['help'])
+    options, args = getopt.getopt(sys.argv[1:], 'hv', ['help', 'verbose'])
 except Exception, e:
     print e
     usage(1)
+verbose = False
 for f, v in options:
     if f == '-h' or f == '--help':
         usage(0)
+    elif f == '-v' or f == '--verbose':
+        verbose = True
     else:
         print "unknown option : " + f
         usage(1)
 
-# If any arg, warn they are ignored
-if len(args) != 0:
-    print "Ignoring arguments\n"
+# Deal with arguments
+if len(args) == 0:
+    print "Missing arguments"
+    usage(1)
+elif len(args) > 1:
+    print "Too many arguments"
+    usage(1)
+diskPoolName = args[0]
 
-# connect to the nameserver and fix files
 try:
+    # connect to stager
     stconn = castor_tools.connectToStager()
     stcur = stconn.cursor()
-    stcur.arraysize = 50
-    stcur.execute('SELECT name FROM FileClass')
-    for res in stcur.fetchall():
-        print res[0]
-    castor_tools.disconnectDB(stconn)
+    # check that the disk pool does exist
+    stcur.execute('SELECT id FROM DiskPool WHERE name=:name', name=diskPoolName)
+    rows = stcur.fetchall()
+    if len(rows) != 0:
+        print 'DiskPool %s already exists in the stager DB' % diskPoolName
+        print 'You may want to use modifydiskpool'
+        sys.exit(1)
+    # insert new diskpool
+    stcur.execute('INSERT INTO DiskPool (name, id) VALUES (:name, ids_seq.nextval)', name=diskPoolName)
+    stconn.commit()
+    print 'inserted disk pool %s successfully' % diskPoolName
+    # close DB connection
+    try:
+        castor_tools.disconnectDB(stconn)
+    except Exception:
+        pass
 except Exception, e:
     print e
+    if verbose:
+        import traceback
+        traceback.print_exc()
     sys.exit(-1)

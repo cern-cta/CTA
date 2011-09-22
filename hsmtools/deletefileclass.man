@@ -1,0 +1,44 @@
+.TH DELETEFILECLASS 1 "2011" CASTOR "stager catalogue administrative commands"
+.SH NAME
+deletefileclass \- deletes an existing file class from the stager catalogue
+
+.SH SYNOPSIS
+.B deletefileclass
+[
+.BI -h
+]
+.BI <fileClassName>
+[:...]
+
+.SH DESCRIPTION
+.B deletefileclass
+deletes existing file classes from the CASTOR stager catalog
+.LP
+.BI \-h,\ \-\-help
+Get usage information
+.TP
+.BI <fileClassName>
+name of file classes to delete. Several names can be given, colon separated
+
+.SH EXAMPLES
+.nf
+.ft CW
+# deletefileclass test2:nonexiting
+successfully dropped the following file classes :
+  test2
+WARNING : some file classes did not exist and were thus not dropped : nonexiting
+
+.SH NOTES
+This command requires database client access to the stager catalogue.
+Configuration for the database access is taken from castor.conf.
+
+.SH SEE ALSO
+.BR enterfileclass,
+.BR printfileclass,
+.BR deletesvcclass,
+.BR deletediskpool,
+.BR deletetapepool,
+.BR adminMultiInstance
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

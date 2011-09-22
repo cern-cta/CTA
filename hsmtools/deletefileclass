@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #/******************************************************************************
-# *                      listSvcClass
+# *                      deletefileclass
 # *
 # * This file is part of the Castor project.
 # * See http://castor.web.cern.ch/castor
@@ -18,12 +18,10 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: listSvcClass,v $ $Revision: 1.5 $ $Release$ $Date: 2008/10/16 14:50:27 $ $Author: sponcec3 $
-# *
-# * Lists existing service classes
-# *
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
+
+'''command line deleting the given file class(es)'''
 
 import sys
 import getopt
@@ -31,35 +29,59 @@ import castor_tools
 
 # usage function
 def usage(exitCode):
-  print 'Usage : ' + sys.argv[0] + ' [-h|--help]'
-  sys.exit(exitCode)
+    '''prints usage'''
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] <fileClassName>[:...]'
+    sys.exit(exitCode)
 
 # first parse the options
 try:
-    options, args = getopt.getopt(sys.argv[1:], 'h', ['help'])
+    options, args = getopt.getopt(sys.argv[1:], 'hv', ['help', 'verbose'])
 except Exception, e:
     print e
     usage(1)
+verbose = False
 for f, v in options:
     if f == '-h' or f == '--help':
         usage(0)
+    elif f == '-v' or f == '--verbose':
+        verbose = True
     else:
         print "unknown option : " + f
         usage(1)
 
-# If any arg, warn they are ignored
+# Deal with arguments
+fileClasses = set([])
 if len(args) != 0:
-    print "Ignoring arguments\n"
+    fileClasses = set(args[0].split(':'))
+else:
+    print "Missing arguments"
+    usage(1)
 
-# connect to the nameserver and fix files
 try:
+    # connect to stager
     stconn = castor_tools.connectToStager()
     stcur = stconn.cursor()
-    stcur.arraysize = 50
-    stcur.execute('SELECT name FROM SvcClass')
-    for res in stcur.fetchall():
-        print res[0]
-    castor_tools.disconnectDB(stconn)
+    # check file class existence
+    stcur.execute("SELECT name FROM FileClass WHERE name IN ('" + "', '".join(fileClasses) + "')")
+    existingFileClasses = set([row[0] for row in stcur.fetchall()])
+    nonexitingFileClasses = fileClasses - existingFileClasses
+    # drop fileclasses
+    if existingFileClasses:
+        stcur.execute("DELETE FROM FileClass WHERE name IN ('" + "', '".join(existingFileClasses) + "')")
+        stconn.commit()
+        # loop over fileclasses and delete them from stager
+        print 'successfully dropped the following file classes : ' + ', '.join(existingFileClasses)
+    # warn for non existing file classes
+    if nonexitingFileClasses:
+        print 'WARNING : some file classes did not exist : ' + ', '.join(nonexitingFileClasses)
+    # close DB connections
+    try:
+        castor_tools.disconnectDB(stconn)
+    except Exception:
+        pass
 except Exception, e:
     print e
+    if verbose:
+        import traceback
+        traceback.print_exc()
     sys.exit(-1)

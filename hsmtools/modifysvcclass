@@ -1,0 +1,349 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                      modifysvcclass
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @author castor dev team
+# *****************************************************************************/
+
+'''allows to modify an existing service class in the castor stager'''
+
+import sys
+import getopt
+import castor_tools
+
+# usage function
+def usage(exitCode):
+    '''prints usage'''
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] [--nbdrives <nbDrives>] ' + \
+          '[--defaultfilesize <defaultFileSize>] [--maxreplicanb <maxReplicaNb>] ' + \
+          '[--failjobswhennospace <[yes|no]>] [--disk1behavior <[yes|no]>] ' + \
+          '[--forcedfileclass <forcedFileClass>] [--replicateonclose <[yes|no]>] ' + \
+          '[--gcpolicy <gcPolicyName>] [--migratorpolicy <migratorPolicy>] ' + \
+          '[--streampolicy <streamPolicy>] [--recallerpolicy <recallerPolicy>] ' + \
+          '[--adddiskpools <diskPoolName>:[...]] [--removediskpools <diskPoolName>:[...]] ' + \
+          '[--addtapepools <tapePoolName>[:...]] [--removetapepools <tapePoolName>[:...]] <svcClassName>'
+    sys.exit(exitCode)
+
+def parsePositiveInt(name, svalue):
+    '''parses a positive int value and exits with proper error message in case the value does not fit'''
+    try:
+        value = int(svalue)
+        if value < 0:
+            raise ValueError
+        return value
+    except ValueError:
+        print 'Invalid %s %s' % (name, svalue)
+        usage(1)
+
+def parsePositiveNonNullInt(name, svalue):
+    '''parses a positive, non null int value and exits with proper error message in case the value does not fit'''
+    value = parsePositiveInt(name, svalue)
+    if value == 0:
+        print '%s cannot be set to 0' % name
+        usage(1)
+    return value
+
+def parseBool(name, svalue):
+    '''parses a boolean value and exits with proper error message in case the value does not fit'''
+    validTrues = ['true', '1', 't', 'y', 'yes']
+    validFalses = ['false', '0', 'f', 'n', 'no']
+    if svalue.lower() in validTrues:
+        return True
+    elif svalue.lower() in validFalses:
+        return False
+    else:
+        print 'Invalid %s %s' % (name, svalue)
+        print 'Note that accepted booleans are %s and %s' % (','.join(validTrues), ','.join(validFalses))
+        usage(1)
+
+# first parse the options
+try:
+    options, args = getopt.getopt(sys.argv[1:], 'hv',
+                                  ['help', 'verbose', 'nbdrives=', 'defaultfilesize=', 'maxreplicanb=',
+                                   'failjobswhennospace=', 'disk1behavior=', 'forcedfileclass=',
+                                   'replicateonclose=', 'gcpolicy=' , 'migratorpolicy=' , 'streampolicy=',
+                                   'recallerpolicy=', 'adddiskpools=', 'removediskpools=', 'addtapepools=',
+                                   'removetapepools='])
+except Exception, e:
+    print e
+    usage(1)
+verbose = False
+nbdrives = None
+defaultfilesize = None
+maxreplicanb = None
+failjobswhennospace = None
+disk1behavior = None
+forcedfileclass = None
+forcedfileclassset = False
+replicateonclose = None
+gcpolicy = None
+migratorpolicy = None
+streampolicy = None
+recallerpolicy = None
+adddiskpools = None
+removediskpools = None
+addtapepools = None
+removetapepools = None
+for f, v in options:
+    if f == '-h' or f == '--help':
+        usage(0)
+    elif f == '-v' or f == '--verbose':
+        verbose = True
+    elif f == '--nbdrives':
+        nbdrives = parsePositiveInt('nbdrives', v)
+    elif f == '--defaultfilesize':
+        defaultfilesize = parsePositiveNonNullInt('defaultfilesize', v)
+    elif f == '--maxreplicanb':
+        maxreplicanb = parsePositiveNonNullInt('maxreplicanb', v)
+    elif f == '--failjobswhennospace':
+        failjobswhennospace = parseBool('failjobswhennospace', v)
+    elif f == '--disk1behavior':
+        disk1behavior = parseBool('disk1behavior', v)
+    elif f == '--forcedfileclass':
+        forcedfileclass = v
+        forcedfileclassset = True
+    elif f == '--replicateonclose':
+        replicateonclose = parseBool('replicateonclose', v)
+    elif f == '--gcpolicy':
+        gcpolicy = v
+    elif f == '--migratorpolicy':
+        migratorpolicy = v
+    elif f == '--streampolicy':
+        streampolicy = v
+    elif f == '--recallerpolicy':
+        recallerpolicy = v
+    elif f == '--adddiskpools':
+        adddiskpools = set(v.split(':'))
+    elif f == '--removediskpools':
+        removediskpools = set(v.split(':'))
+    elif f == '--addtapepools':
+        addtapepools = set(v.split(':'))
+    elif f == '--removetapepools':
+        removetapepools = set(v.split(':'))
+    else:
+        print "unknown option : " + f
+        usage(1)
+
+# Deal with arguments
+if len(args) == 0:
+    print "Missing arguments"
+    usage(1)
+elif len(args) > 1:
+    print "Too many arguments"
+    usage(1)
+else:
+    svcclassname = args[0]
+
+# check we have something to do
+if not nbdrives and not defaultfilesize and not maxreplicanb and not failjobswhennospace and \
+   not disk1behavior and not forcedfileclass and not replicateonclose and not gcpolicy and \
+   not migratorpolicy and not streampolicy and not recallerpolicy and not adddiskpools and \
+   not removediskpools and not addtapepools and not removetapepools:
+    print 'Nothing to modify. Did you forget some argument ?'
+    usage(1)
+
+try:
+    # connect to stager
+    stconn = castor_tools.connectToStager()
+    stcur = stconn.cursor()
+    # check that the service class exists
+    stcur.execute('SELECT id FROM SvcClass WHERE name=:name', name=svcclassname)
+    rows = stcur.fetchall()
+    if len(rows) == 0:
+        print 'SvcClass %s does not exist in the stager DB' % svcclassname
+        print 'Please use entersvcclass if you would like to create it'
+        sys.exit(1)
+    svcClassId = rows[0][0]
+    # deal with standard columns
+    if nbdrives:
+        stcur.execute('UPDATE SvcClass SET nbdrives=:value WHERE id = :svcClassId',
+                      value=nbdrives, svcClassId=svcClassId)
+    if defaultfilesize:
+        stcur.execute('UPDATE SvcClass SET defaultfilesize=:value WHERE id = :svcClassId',
+                      value=defaultfilesize, svcClassId=svcClassId)
+    if maxreplicanb:
+        stcur.execute('UPDATE SvcClass SET maxreplicanb=:value WHERE id = :svcClassId',
+                      value=maxreplicanb, svcClassId=svcClassId)
+    if failjobswhennospace:
+        stcur.execute('UPDATE SvcClass SET failjobswhennospace=:value WHERE id = :svcClassId',
+                      value=failjobswhennospace, svcClassId=svcClassId)
+    if disk1behavior:
+        stcur.execute('UPDATE SvcClass SET disk1behavior=:value WHERE id = :svcClassId',
+                      value=disk1behavior, svcClassId=svcClassId)
+    if replicateonclose:
+        stcur.execute('UPDATE SvcClass SET replicateonclose=:value WHERE id = :svcClassId',
+                      value=replicateonclose, svcClassId=svcClassId)
+    if gcpolicy:
+        stcur.execute('UPDATE SvcClass SET gcpolicy=:value WHERE id = :svcClassId',
+                      value=gcpolicy, svcClassId=svcClassId)
+    if migratorpolicy:
+        stcur.execute('UPDATE SvcClass SET migratorpolicy=:value WHERE id = :svcClassId',
+                      value=migratorpolicy, svcClassId=svcClassId)
+    if streampolicy:
+        stcur.execute('UPDATE SvcClass SET streampolicy=:value WHERE id = :svcClassId',
+                      value=streampolicy, svcClassId=svcClassId)
+    if recallerpolicy:
+        stcur.execute('UPDATE SvcClass SET recallerpolicy=:value WHERE id = :svcClassId',
+                      value=recallerpolicy, svcClassId=svcClassId)
+    # Deal with adddiskpools
+    if adddiskpools:
+        # check existence, and get ids
+        stcur.execute("SELECT name, id FROM DiskPool WHERE name IN ('" + "', '".join(adddiskpools) + "')")
+        rows = stcur.fetchall()
+        existingdiskpools = set([row[0] for row in rows])
+        nonexistingdiskpools = adddiskpools - existingdiskpools
+        if nonexistingdiskpools:
+            print 'Invalid or non existent diskpool(s) given : %s' % (', '.join(nonexistingdiskpools))
+            sys.exit(1)
+        adddiskpools = dict([(dpId, dpName) for dpName, dpId in rows])
+        # check that they are not yet linked to the service class
+        stcur.execute("SELECT parent FROM DiskPool2SvcClass WHERE parent IN (" + \
+                      ', '.join([str(k) for k in adddiskpools.keys()]) + ") AND child=:scId", scId=svcClassId)
+        rows = stcur.fetchall()
+        if len(rows) > 0:
+            print 'The following diskpool(s) is(are) already linked to %s service class : %s' % \
+                  (svcclassname, ', '.join([adddiskpools[dpId] for dpId, in rows]))
+            sys.exit(1)
+        # add diskpools
+        sql = '''
+        DECLARE
+          diskPoolIds castor."cnumList" := :diskPoolIds;
+        BEGIN
+          FORALL i IN diskPoolIds.FIRST .. diskPoolIds.LAST
+            INSERT INTO DiskPool2SvcClass (parent, child) VALUES (diskPoolIds(i), :scId);
+        END;'''
+        stcur.execute(sql, diskPoolIds=adddiskpools.keys(), scId=svcClassId)
+    # Deal with removediskpools
+    if removediskpools:
+        # check existence, and get ids
+        stcur.execute("SELECT name, id FROM DiskPool WHERE name IN ('" + "', '".join(removediskpools) + "')")
+        rows = stcur.fetchall()
+        existingdiskpools = set([row[0] for row in rows])
+        nonexistingdiskpools = removediskpools - existingdiskpools
+        if nonexistingdiskpools:
+            print 'Invalid or non existent diskpool(s) given : %s' % (', '.join(nonexistingdiskpools))
+            sys.exit(1)
+        removediskpools = dict([(dpId, dpName) for dpName, dpId in rows])
+        # check that they are linked to the service class
+        stcur.execute("SELECT parent FROM DiskPool2SvcClass WHERE parent IN (" + \
+                      ', '.join([str(k) for k in removediskpools.keys()]) + ") AND child=:scId",
+                      scId=svcClassId)
+        rows = stcur.fetchall()
+        linkeddiskpools = set([row[0] for row in rows])
+        nonlinkeddiskpools = set(removediskpools.keys()) - linkeddiskpools
+        if nonlinkeddiskpools:
+            print 'The following diskpool(s) is(are) not linked to %s service class : %s' % \
+                  (svcclassname, ', '.join([removediskpools[dpId] for dpId in nonlinkeddiskpools]))
+            print 'Thus they can not be unlinked'
+            sys.exit(1)
+        # remove diskpools
+        sql = '''
+        DECLARE
+          diskPoolIds castor."cnumList" := :diskPoolIds;
+        BEGIN
+          FORALL i IN diskPoolIds.FIRST .. diskPoolIds.LAST
+            DELETE FROM DiskPool2SvcClass WHERE parent=diskPoolIds(i) AND child=:scId;
+        END;'''
+        stcur.execute(sql, diskPoolIds=removediskpools.keys(), scId=svcClassId)
+    # Deal with addtapepools
+    if addtapepools:
+        # check existence, and get ids
+        stcur.execute("SELECT name, id FROM TapePool WHERE name IN ('" + "', '".join(addtapepools) + "')")
+        rows = stcur.fetchall()
+        existingtapepools = set([row[0] for row in rows])
+        nonexistingtapepools = addtapepools - existingtapepools
+        if nonexistingtapepools:
+            print 'Invalid or non existent tapepool(s) given : %s' % (', '.join(nonexistingtapepools))
+            sys.exit(1)
+        addtapepools = dict([(tpId, tpName) for tpName, tpId in rows])
+        # check that they are not yet linked to the service class
+        stcur.execute("SELECT child FROM SvcClass2TapePool WHERE child IN (" + \
+                      ', '.join([str(k) for k in addtapepools.keys()]) + ") AND parent=:scId", scId=svcClassId)
+        rows = stcur.fetchall()
+        if len(rows) > 0:
+            print 'The following tapepool(s) is(are) already linked to %s service class : %s' % \
+                  (svcclassname, ', '.join([addtapepools[tpId] for tpId, in rows]))
+            sys.exit(1)
+        # add tapepools
+        sql = '''
+        DECLARE
+          tapePoolIds castor."cnumList" := :tapePoolIds;
+        BEGIN
+          FORALL i IN tapePoolIds.FIRST .. tapePoolIds.LAST
+            INSERT INTO SvcClass2TapePool (parent, child) VALUES (:scId, tapePoolIds(i));
+        END;'''
+        stcur.execute(sql, tapePoolIds=addtapepools.keys(), scId=svcClassId)
+    # Deal with removetapepools
+    if removetapepools:
+        # check existence, and get ids
+        stcur.execute("SELECT name, id FROM TapePool WHERE name IN ('" + "', '".join(removetapepools) + "')")
+        rows = stcur.fetchall()
+        existingtapepools = set([row[0] for row in rows])
+        nonexistingtapepools = removetapepools - existingtapepools
+        if nonexistingtapepools:
+            print 'Invalid or non existent tapepool(s) given : %s' % (', '.join(nonexistingtapepools))
+            sys.exit(1)
+        removetapepools = dict([(tpId, tpName) for tpName, tpId in rows])
+        # check that they are linked to the service class
+        stcur.execute("SELECT child FROM SvcClass2TapePool WHERE child IN (" + \
+                      ', '.join([str(k) for k in removetapepools.keys()]) + ") AND parent=:scId", scId=svcClassId)
+        rows = stcur.fetchall()
+        linkedtapepools = set([row[0] for row in rows])
+        nonlinkedtapepools = set(removetapepools.keys()) - linkedtapepools
+        if nonlinkedtapepools:
+            print 'The following tapepool(s) is(are) not linked to %s service class : %s' % \
+                  (svcclassname, ', '.join([removetapepools[tpId] for tpId in nonlinkedtapepools]))
+            print 'Thus they can not be unlinked'
+            sys.exit(1)
+        # remove tapepools
+        sql = '''
+        DECLARE
+          tapePoolIds castor."cnumList" := :tapePoolIds;
+        BEGIN
+          FORALL i IN tapePoolIds.FIRST .. tapePoolIds.LAST
+            DELETE FROM SvcClass2TapePool WHERE child=tapePoolIds(i) AND parent=:scId;
+        END;'''
+        stcur.execute(sql, tapePoolIds=removetapepools.keys(), scId=svcClassId)
+    # check that the forced file class does exist, and retrieve its id
+    if forcedfileclassset:
+        if forcedfileclass:
+            stcur.execute('SELECT id FROM FileClass WHERE name=:name', name=forcedfileclass)
+            rows = stcur.fetchall()
+            if len(rows) == 0:
+                print 'Invalid or non existent FileClass %s' % forcedfileclass
+                print 'Giving up'
+                sys.exit(1)
+            stcur.execute('UPDATE SvcClass SET forcedfileclass=:value WHERE id = :svcClassId',
+                          value=rows[0][0], svcClassId=svcClassId)
+        else:
+            stcur.execute('UPDATE SvcClass SET forcedfileclass=0 WHERE id = :svcClassId', svcClassId=svcClassId)
+    # commit insertion and tell user
+    stconn.commit()
+    print 'modified service class %s successfully' % svcclassname
+    # close DB connections
+    try:
+        castor_tools.disconnectDB(stconn)
+    except Exception:
+        pass
+except Exception, e:
+    print e
+    if verbose:
+        import traceback
+        traceback.print_exc()
+    sys.exit(-1)

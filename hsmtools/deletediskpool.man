@@ -1,0 +1,60 @@
+.TH DELETEDISKPOOL 1 "2011" CASTOR "stager catalogue administrative commands"
+.SH NAME
+deletediskpool \- deletes existing disk pools from the stager catalogue
+
+.SH SYNOPSIS
+.B deletediskpool
+[
+.BI -h
+]
+.BI <diskPoolName>
+[:...]
+
+.SH DESCRIPTION
+.B deletediskpool
+deletes existing disk pools from the CASTOR stager catalog
+.LP
+.BI \-h,\ \-\-help
+Get usage information
+.TP
+.BI <diskPoolName>
+name of disk pools to delete. Several names can be given, colon separated
+
+.SH EXAMPLES
+.nf
+.ft CW
+# printdiskpool -a
+   NAME NBFILESYSTEMS    SVCCLASSES       ID
+--------------------------------------------
+newpool             0             - 93353546
+default            10             -        7
+  extra            10  dev,diskonly        9
+
+# deletediskpool newpool
+successfully dropped the following disk pools : newpool
+
+# deletediskpool extra
+DiskPools cannot be dropped when used by some service classes and
+  - disk pool extra is in use by service class dev
+  - disk pool extra is in use by service class diskonly
+You may want to use modifysvcclass to correct this
+
+# deletediskpool default
+DiskPools cannot be dropped if not empty and
+  - disk pool default still has 10 filesystem(s)
+You may want to use modeDiskServer to correct this
+
+.SH NOTES
+This command requires database client access to the stager catalogue.
+Configuration for the database access is taken from castor.conf.
+
+.SH SEE ALSO
+.BR enterdiskpool,
+.BR printdiskpool,
+.BR deletetapepool,
+.BR deletesvcclass,
+.BR deletefileclass,
+.BR adminMultiInstance
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

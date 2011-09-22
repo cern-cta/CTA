@@ -1,0 +1,70 @@
+.TH ENTERFILECLASS 1 "2011" CASTOR "stager catalog administrative commands"
+.SH NAME
+enterfileclass \- enter new file classes in the stager catalog
+.SH SYNOPSIS
+.B enterfileclass
+[
+.BI -h
+]
+[
+.BI -a
+]
+[
+.BI -f
+]
+[
+.BI <fileClassName>
+[:...]
+]
+.SH DESCRIPTION
+.B enterfileclass
+enters a new file class definition in the CASTOR stager catalog, taking the data from the nameserver database
+.TP
+.BI \-h,\ \-\-help
+Get usage information
+.TP
+.BI \-a,\ \-\-all
+Enter all fileclasses found in the nameserver into the stager catalog.
+.TP
+.BI \-f,\ \-\-force
+Force updates of existing file classes rather than ignoring them.
+.TP
+.BI <fileClassName>
+name of a file classes to enter. Several names can be given, colon separated. Note that
+no name should be given if -a/--all is used.
+
+.SH EXAMPLES
+.nf
+.ft CW
+# enterFileClass largeuser:temp
+inserted largeuser successfully
+inserted temp successfully
+
+# enterFileClass -a
+Ignoring fileClass largeuser as it already exists in the stager DB
+Ignoring fileClass temp as it already exists in the stager DB
+inserted test2 successfully
+
+# enterFileClass -a -f
+largeuser already existed in the stager DB. Updated successfully
+temp already existed in the stager DB. Updated successfully
+test2 already existed in the stager DB. Updated successfully
+
+# enterfileclass nonexisting:mistyped:test2
+Ignoring fileClass test2 as it already exists in the stager DB
+WARNING : some fileclasses have been ignored as they were not found in the nameserver : nonexisting, mistyped
+
+.SH NOTES
+This command requires database client access to the stager catalog and nameserver DBs.
+Configuration for the database accesses is taken from castor.conf.
+
+.SH SEE ALSO
+.BR deletefileclass,
+.BR printfileclass,
+.BR entersvcclass,
+.BR enterdiskpool,
+.BR entertapepool,
+.BR adminMultiInstance
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

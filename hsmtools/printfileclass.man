@@ -1,0 +1,62 @@
+.TH PRINTFILECLASS 1 "2011" CASTOR "Prints out the given file class(es)"
+.SH NAME
+printfileclass
+.SH SYNOPSIS
+.B printfileclass
+[
+.BI -h
+]
+[
+.BI -a
+]
+[
+.BI <fileClassName>
+[:...]
+]
+
+.SH DESCRIPTION
+.B printfileclass
+prints out definitions of the given file classes, according to the stager database
+.LP
+.BI \-h,\ \-\-help
+Get usage information
+.TP
+.BI \-a,\ \-\-all
+List all file classes found in the stager catalog.
+.TP
+.BI <fileClassName>
+name of file classes to list. Several names can be given, colon separated. Note that
+no name should be given if -a/--all is used.
+
+.SH EXAMPLES
+.nf
+.ft CW
+# printfileclass -a
+           NAME CLASSID NBCOPIES           ID
+---------------------------------------------
+           temp      58        0            2
+      largeuser      95        1            3
+threeCopyOnTape      96        3            4
+          test2      27        2     88801474
+
+# printfileclass temp:test2:nonexisting
+ NAME CLASSID NBCOPIES           ID
+-----------------------------------
+ temp      58        0            2
+test2      27        2     88801474
+WARNING : the following file classes do not exist : nonexisting
+
+.SH NOTES
+This command requires database client access to the stager catalogue.
+Configuration for the database access is taken from castor.conf.
+
+.SH SEE ALSO
+.BR enterfileclass,
+.BR deletefileclass,
+.BR printsvcclass,
+.BR printdiskpool,
+.BR printtapepool,
+.BR adminMultiInstance
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

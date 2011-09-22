@@ -1,0 +1,44 @@
+.TH ENTERDISKPOOL 1 "2011" CASTOR "stager catalog administrative commands"
+.SH NAME
+enterdiskpool \- enter a new disk pool in the stager catalog
+.SH SYNOPSIS
+.B enterdiskpool
+[
+.BI -h
+]
+.BI <diskPoolName>
+.SH DESCRIPTION
+.B enterdiskpool
+enters a new disk pool in the CASTOR stager catalog
+.TP
+.BI \-h,\ \-\-help
+Get usage information
+.TP
+.BI <diskPoolName>
+name of a disk pool to create.
+
+.SH EXAMPLES
+.nf
+.ft CW
+# enterdiskpool newpool
+inserted disk pool newpool successfully
+
+# printdiskpool newpool
+   NAME NBFILESYSTEMS SVCCLASSES       ID
+-----------------------------------------
+newpool             0          - 93301471
+
+.SH NOTES
+This command requires database client access to the stager catalog and nameserver DBs.
+Configuration for the database accesses is taken from castor.conf.
+
+.SH SEE ALSO
+.BR deletediskpool,
+.BR printdiskpool,
+.BR entertapepool,
+.BR entersvcclass,
+.BR enterfileclass,
+.BR adminMultiInstance
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
