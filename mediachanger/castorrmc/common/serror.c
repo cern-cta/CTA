@@ -282,6 +282,7 @@ char *sys_sterrlist[ESTMAXERR-ESTBASEOFF+2] =
    "File is on an offline tape",
    "Request canceled while queuing",
    "Tape-copy not found",
+   "The file cannot be routed to tape",
    "BAD ERROR NUMBER"
   };
 
