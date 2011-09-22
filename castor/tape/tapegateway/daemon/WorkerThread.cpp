@@ -33,6 +33,8 @@
 #include <u64subr.h>
 #include <memory>
 #include <typeinfo>
+#include <algorithm>
+#include <queue>
 
 #include "Cns_api.h" // for log only
 
@@ -58,6 +60,19 @@
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
 #include "castor/tape/tapegateway/VolumeRequest.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
+#include "castor/tape/tapegateway/BaseFileInfoStruct.hpp"
+#include "castor/tape/tapegateway/FileMigratedNotificationStruct.hpp"
+#include "castor/tape/tapegateway/FileErrorReportStruct.hpp"
+#include "castor/tape/tapegateway/FileRecalledNotificationStruct.hpp"
+#include "castor/tape/tapegateway/FilesListRequest.hpp"
+#include "castor/tape/tapegateway/FileMigrationReportList.hpp"
+#include "castor/tape/tapegateway/FilesToMigrateList.hpp"
+#include "castor/tape/tapegateway/FilesToRecallList.hpp"
+#include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
+#include "castor/tape/tapegateway/FileToRecallStruct.hpp"
+#include "castor/tape/tapegateway/FileRecallReportList.hpp"
+#include "castor/tape/tapegateway/FilesToMigrateListRequest.hpp"
+#include "castor/tape/tapegateway/FilesToRecallListRequest.hpp"
 #include "castor/stager/TapeTpModeCodes.hpp"
 
 #include "castor/tape/tapegateway/daemon/NsTapeGatewayHelper.hpp"
@@ -71,7 +86,6 @@
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-
 castor::tape::tapegateway::WorkerThread::WorkerThread():BaseObject(){}
 
 //------------------------------------------------------------------------------
@@ -156,8 +170,21 @@ void castor::tape::tapegateway::WorkerThread::run(void* arg)
         case OBJ_EndNotificationFileErrorReport:
           handler_response = handleFileFailWorker(*obj,*oraSvc,requester);
           break;
+        case OBJ_FileMigrationReportList:
+          handler_response = handleFileMigrationReportList(*obj,*oraSvc,requester);
+          break;
+        case OBJ_FileRecallReportList:
+          handler_response = handleFileRecallReportList(*obj,*oraSvc,requester);
+          break;
+        case OBJ_FilesToMigrateListRequest:
+          handler_response = handleFilesToMigrateListRequest(*obj,*oraSvc,requester);
+          break;
+        case OBJ_FilesToRecallListRequest:
+          handler_response = handleFilesToRecallListRequest(*obj,*oraSvc,requester);
+          break;
         default:
           //object not valid
+          delete handler_response;
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_INVALID_REQUEST, params);
           return;
       }
@@ -212,7 +239,6 @@ void castor::tape::tapegateway::WorkerThread::run(void* arg)
   }
 
 }
-
 
 castor::IObject* castor::tape::tapegateway::WorkerThread::handleStartWorker(
     castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc,
@@ -318,7 +344,6 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleStartWorker(
   return response;
 
 }
-
 
 castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate(
     castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc,
@@ -1382,7 +1407,6 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleMigrationMoreWor
 
 }
 
-
 castor::IObject*  castor::tape::tapegateway::WorkerThread::handleEndWorker(
     castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc,
     requesterInfo& requester) throw(){
@@ -1539,8 +1563,6 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleEndWorker(
 	// TODO review SQL.
 	return  response;
 }
-
-
 
 castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker(
     castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc,
@@ -1777,7 +1799,9 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileFailWorker(
     fileError.setMountTransactionId(endRequest.mountTransactionId());
     fileError.setNshost(endRequest.nsHost());
     try {
+      // This procedure does not commit
       oraSvc.failFileTransfer(fileError);
+      oraSvc.commit();
     } catch (castor::exception::Exception& e){
       castor::dlf::Param params[] ={
           castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
@@ -1809,4 +1833,600 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileFailWorker(
     return errorReport;
   }
   return NULL; // We should not get here.
+}
+
+castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileMigrationReportList(
+    castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc,
+    requesterInfo& requester ) throw(){
+
+  // first check we are called with the proper class
+  FileMigrationReportList* rep = dynamic_cast<FileMigrationReportList *>(&obj);
+  if (!rep) {
+    // "Invalid Request" message
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_INVALID_CAST, 0, NULL);
+
+    EndNotificationErrorReport* errorReport=new EndNotificationErrorReport();
+    errorReport->setErrorCode(EINVAL);
+    errorReport->setErrorMessage("invalid object");
+    return errorReport;
+  }
+  FileMigrationReportList & fileMigrationReportList = *rep;
+  rep = NULL;
+
+  // Log a summary for the report
+  {
+    castor::dlf::Param params[] ={
+        castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
+        castor::dlf::Param("Port",requester.port),
+        castor::dlf::Param("HostName",requester.hostName),
+        castor::dlf::Param("mountTransactionId", fileMigrationReportList.mountTransactionId()),
+        castor::dlf::Param("tapebridgeTransId", fileMigrationReportList.aggregatorTransactionId()),
+        castor::dlf::Param("successes", fileMigrationReportList.successfulMigrations().size()),
+        castor::dlf::Param("failures", fileMigrationReportList.failedMigrations().size()),
+    };
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_MIG_REPORT_LIST_RECEIVED, params);
+  }
+
+  // We have 2 lists of both successes and errors.
+  // As a first implementation, we just loop-call the two single action handlers
+  // The error handler is simple as there is no specific return for errors besides
+  // acknowledgement.
+  // The success report handling is more tricky, as it can lead to an error
+  // due to an issue in the name server or the VMGR, leading to a per-file error (or success).
+  // In order to match the current process as closely as possible, we
+  // have to handle the success reports in fseq order, and stop the session on the first
+  // error.
+  // TODO A later implementation pushing the loop deeper towards the DB will then be able to distinguish
+  // between the session fatal VMGR errors (checks or updates) and the per file benign NS errors
+  // (typically a file being deleted from namespace as it gets migrated)
+
+  // First the hard part: we record the successful migration in fseq order, and stop the session on the
+  // first failed one.
+  // The non-recorded ones will simply be remigrated on a subsequent request (going back from SELECTED to
+  // TOBEMIGRATED.
+
+  // Check we are not confronted too early with a future feature of the tape bridge (update of fseq in
+  // VMGR from tape server side instead of from gateway side).
+  if (fileMigrationReportList.fseqSet()) {
+    // fseq should not have been set by tape server. Error and end tape session.
+    // We got an unexpected message type. Internal error. Better stop here.
+    std::string report = "fseqSet flag set by tape bridge.";
+    report += "This is not supported yet in this version of the tape gateway. ";
+    report += "Please check deployment release notes. ";
+    report += "In handleFileMigrationReportList: aborting the session.";
+    castor::dlf::Param params[] ={
+        castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
+        castor::dlf::Param("Port",requester.port),
+        castor::dlf::Param("HostName",requester.hostName),
+        castor::dlf::Param("mountTransactionId", fileMigrationReportList.mountTransactionId()),
+        castor::dlf::Param("tapebridgeTransId", fileMigrationReportList.aggregatorTransactionId()),
+        castor::dlf::Param("errorCode",SEINTERNAL),
+        castor::dlf::Param("errorMessage",report)
+    };
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, INTERNAL_ERROR, params);
+    // Abort all the rest.
+    EndNotificationErrorReport * errorReport = new EndNotificationErrorReport();
+    errorReport->setErrorCode(SEINTERNAL);
+    errorReport->setErrorMessage(report);
+    return errorReport;
+  }
+
+  // Get hold of the list and fseq-order it
+  std::vector<FileMigratedNotificationStruct *>&successes=fileMigrationReportList.successfulMigrations();
+  std::sort (successes.begin(), successes.end(), m_fileMigratedFseqComparator);
+  // Loop on the now ordered vector
+  std::vector<FileMigratedNotificationStruct *>::iterator migedfile;
+  EndNotificationErrorReport * endErrorReport = NULL;
+  for (migedfile = successes.begin(); migedfile!=successes.end(); migedfile++) {
+    // Copy contents to the old structure
+    FileMigratedNotification notif;
+    // Session-related info.
+    notif.setAggregatorTransactionId(fileMigrationReportList.aggregatorTransactionId());
+    notif.setMountTransactionId(fileMigrationReportList.mountTransactionId());
+    // File related info
+    notif.setFileid((*migedfile)->fileid());
+    notif.setNshost((*migedfile)->nshost());
+    notif.setFseq((*migedfile)->fseq());
+    notif.setFileTransactionId((*migedfile)->fileTransactionId());
+    notif.setFileSize((*migedfile)->fileSize());
+    notif.setChecksumName((*migedfile)->checksumName());
+    notif.setChecksum((*migedfile)->checksum());
+    notif.setCompressedFileSize((*migedfile)->compressedFileSize());
+    notif.setBlockId0((*migedfile)->blockId0());
+    notif.setBlockId1((*migedfile)->blockId1());
+    notif.setBlockId2((*migedfile)->blockId2());
+    notif.setBlockId3((*migedfile)->blockId3());
+    notif.setPositionCommandCode((*migedfile)->positionCommandCode());
+    // Call the per-file
+    castor::IObject* ret_obj = handleMigrationUpdate(notif, oraSvc, requester);
+    // Interpret the result: we expect either NotificationAcknowledge or
+    // EndNotificationErrorReport
+    if (OBJ_NotificationAcknowledge == ret_obj->type()) {
+      // We are happy, nothing to do.
+      delete ret_obj;
+    } else if (OBJ_EndNotificationErrorReport == ret_obj->type()) {
+      // Something went wrong. We stop the session, and we'll pass on the result (later)
+      // We are sure of the type, so checks are not necessary
+      endErrorReport = dynamic_cast <EndNotificationErrorReport *>(&obj);
+      break;
+    } else {
+      // We got an unexpected message type. Internal error. Better stop here.
+      std::string report = "Unexpected return type from handleMigrationUpdate ";
+      report += "in handleFileMigrationReportList :";
+      report += castor::ObjectsIdStrings[obj.type()];
+      castor::dlf::Param params[] ={
+          castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
+          castor::dlf::Param("Port",requester.port),
+          castor::dlf::Param("HostName",requester.hostName),
+          castor::dlf::Param("mountTransactionId", fileMigrationReportList.mountTransactionId()),
+          castor::dlf::Param("tapebridgeTransId", fileMigrationReportList.aggregatorTransactionId()),
+          castor::dlf::Param("errorCode",SEINTERNAL),
+          castor::dlf::Param("errorMessage",report)
+      };
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, INTERNAL_ERROR, params);
+      // Abort all the rest.
+      EndNotificationErrorReport * errorReport = new EndNotificationErrorReport();
+      errorReport->setErrorCode(SEINTERNAL);
+      errorReport->setErrorMessage(report);
+      return errorReport;
+    }
+  }
+
+  // Second, the easy bit: we fail the migrations that need to be failed.
+  // No reply analysis needed here, just blindly loop.
+  std::vector<FileErrorReportStruct *>& failures = fileMigrationReportList.failedMigrations();
+  std::vector<FileErrorReportStruct *>::iterator failedfile;
+  for (failedfile = failures.begin(); failedfile!= failures.end(); failedfile++) {
+    // We received a a failed file information. We will fail the file transfer first in the DB.
+    FileErrorReport fileError;
+    fileError.setAggregatorTransactionId(fileMigrationReportList.aggregatorTransactionId());
+    fileError.setMountTransactionId(fileMigrationReportList.mountTransactionId());
+    fileError.setErrorCode((*failedfile)->errorCode());
+    fileError.setErrorMessage((*failedfile)->errorMessage());
+    fileError.setFileTransactionId((*failedfile)->fileTransactionId());
+    fileError.setFileid((*failedfile)->fileid());
+    fileError.setFseq((*failedfile)->fseq());
+    fileError.setNshost((*failedfile)->nshost());
+    fileError.setPositionCommandCode((*failedfile)->positionCommandCode());
+    try {
+      // This SQL does not commit. Commit outside of the loop for efficiency
+      oraSvc.failFileTransfer(fileError);
+    } catch (castor::exception::Exception& e){
+      castor::dlf::Param params[] ={
+          castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
+          castor::dlf::Param("Port",requester.port),
+          castor::dlf::Param("HostName",requester.hostName),
+          castor::dlf::Param("mountTransactionId", fileMigrationReportList.mountTransactionId()),
+          castor::dlf::Param("tapebridgeTransId", fileMigrationReportList.aggregatorTransactionId()),
+          castor::dlf::Param("errorCode",sstrerror(e.code())),
+          castor::dlf::Param("errorMessage",e.getMessage().str())
+      };
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_FAIL_DB_ERROR, params);
+    }
+  }
+  // Commit if there was any failed migration recorded
+  if (!failures.empty()) oraSvc.commit();
+
+  // Now send the result of all this (migrations and recalls) to the tape server.
+  // If there was an error, the reply is ready
+  if (endErrorReport) return endErrorReport;
+  // Else return Ack
+  NotificationAcknowledge * ack = new NotificationAcknowledge();
+  ack->setAggregatorTransactionId(fileMigrationReportList.aggregatorTransactionId());
+  ack->setMountTransactionId(fileMigrationReportList.mountTransactionId());
+
+  // Log completion of the processing
+  {
+    castor::dlf::Param params[] ={
+        castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
+        castor::dlf::Param("Port",requester.port),
+        castor::dlf::Param("HostName",requester.hostName),
+        castor::dlf::Param("mountTransactionId", fileMigrationReportList.mountTransactionId()),
+        castor::dlf::Param("tapebridgeTransId", fileMigrationReportList.aggregatorTransactionId())
+    };
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_MIG_REPORT_LIST_PROCESSED, params);
+  }
+
+  return ack;
+}
+
+castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileRecallReportList(
+    castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc,
+    requesterInfo& requester ) throw(){
+  // Unlike the migrations, which are linked by the sequential writing, the recalls
+  // Can be considered as independent entities.
+  // We can then push the data to the DB blindly in both success and failure cases.
+
+  // first check we are called with the proper class
+  FileRecallReportList * recRep = dynamic_cast <FileRecallReportList *>(&obj);
+  if (!recRep) {
+    // We did not get the expected class
+    // "Invalid Request" message
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_INVALID_CAST, 0, NULL);
+    EndNotificationErrorReport* errorReport=new EndNotificationErrorReport();
+    errorReport->setErrorCode(EINVAL);
+    errorReport->setErrorMessage("invalid object");
+    return errorReport;
+  }
+  FileRecallReportList &fileRecallReportList = *recRep;
+  recRep = NULL;
+
+  // Log a summary for the report
+  {
+    castor::dlf::Param params[] ={
+        castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
+        castor::dlf::Param("Port",requester.port),
+        castor::dlf::Param("HostName",requester.hostName),
+        castor::dlf::Param("mountTransactionId", fileRecallReportList.mountTransactionId()),
+        castor::dlf::Param("tapebridgeTransId", fileRecallReportList.aggregatorTransactionId()),
+        castor::dlf::Param("successes", fileRecallReportList.successfulRecalls().size()),
+        castor::dlf::Param("failures", fileRecallReportList.failedRecalls().size()),
+    };
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_REC_REPORT_LIST_RECEIVED, params);
+  }
+
+  // Record the successes
+  std::vector<FileRecalledNotificationStruct *> successes = fileRecallReportList.successfulRecalls();
+  std::vector<FileRecalledNotificationStruct *>::iterator recfile;
+  for (recfile = successes.begin(); recfile != successes.end(); recfile++) {
+    FileRecalledNotification recNotif;
+    // Session-related information
+    recNotif.setAggregatorTransactionId(fileRecallReportList.aggregatorTransactionId());
+    recNotif.setMountTransactionId(fileRecallReportList.mountTransactionId());
+    // File-related information
+    recNotif.setFileTransactionId((*recfile)->fileTransactionId());
+    recNotif.setNshost((*recfile)->nshost());
+    recNotif.setFileid((*recfile)->fileid());
+    recNotif.setFseq((*recfile)->fseq());
+    recNotif.setPath((*recfile)->path());
+    recNotif.setChecksumName((*recfile)->checksumName());
+    recNotif.setChecksum((*recfile)->checksum());
+    recNotif.setFileSize((*recfile)->fileSize());
+    recNotif.setPositionCommandCode((*recfile)->positionCommandCode());
+    castor::IObject * ret = handleRecallUpdate(recNotif, oraSvc, requester);
+    delete ret;
+  }
+
+  // Record the failures
+  std::vector<FileErrorReportStruct *> failures = fileRecallReportList.failedRecalls();
+  std::vector<FileErrorReportStruct *>::iterator failedfile;
+  for (failedfile = failures.begin(); failedfile!=failures.end();failedfile++) {
+    // We received a a failed file information. We will fail the file transfer first in the DB.
+    FileErrorReport fileError;
+    fileError.setAggregatorTransactionId(fileRecallReportList.aggregatorTransactionId());
+    fileError.setMountTransactionId(fileRecallReportList.mountTransactionId());
+    fileError.setErrorCode((*failedfile)->errorCode());
+    fileError.setErrorMessage((*failedfile)->errorMessage());
+    fileError.setFileTransactionId((*failedfile)->fileTransactionId());
+    fileError.setFileid((*failedfile)->fileid());
+    fileError.setFseq((*failedfile)->fseq());
+    fileError.setNshost((*failedfile)->nshost());
+    fileError.setPositionCommandCode((*failedfile)->positionCommandCode());
+    try {
+      // This SQL does not commit. Commit outside of the loop for efficiency
+      oraSvc.failFileTransfer(fileError);
+    } catch (castor::exception::Exception& e){
+      castor::dlf::Param params[] ={
+          castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
+          castor::dlf::Param("Port",requester.port),
+          castor::dlf::Param("HostName",requester.hostName),
+          castor::dlf::Param("mountTransactionId", fileRecallReportList.mountTransactionId()),
+          castor::dlf::Param("tapebridgeTransId", fileRecallReportList.aggregatorTransactionId()),
+          castor::dlf::Param("errorCode",sstrerror(e.code())),
+          castor::dlf::Param("errorMessage",e.getMessage().str())
+      };
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_FAIL_DB_ERROR, params);
+    }
+    // Commit if there was any failed migration recorded
+    if (!failures.empty()) oraSvc.commit();
+  }
+
+  // Acknowledge
+  NotificationAcknowledge * ack = new NotificationAcknowledge();
+  ack->setAggregatorTransactionId(fileRecallReportList.aggregatorTransactionId());
+  ack->setMountTransactionId(fileRecallReportList.mountTransactionId());
+
+  // Log completion of the processing
+  {
+    castor::dlf::Param params[] ={
+        castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
+        castor::dlf::Param("Port",requester.port),
+        castor::dlf::Param("HostName",requester.hostName),
+        castor::dlf::Param("mountTransactionId", fileRecallReportList.mountTransactionId()),
+        castor::dlf::Param("tapebridgeTransId", fileRecallReportList.aggregatorTransactionId())
+    };
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_REC_REPORT_LIST_PROCESSED, params);
+  }
+
+  return ack;
+}
+
+castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFilesToMigrateListRequest(
+    castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc,
+    requesterInfo& requester ) throw(){
+  // first check we are called with the proper class
+  FilesToMigrateListRequest * req = dynamic_cast <FilesToMigrateListRequest *>(&obj);
+  if (!req) {
+    // We did not get the expected class
+    // "Invalid Request" message
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_INVALID_CAST, 0, NULL);
+    EndNotificationErrorReport* errorReport=new EndNotificationErrorReport();
+    errorReport->setErrorCode(EINVAL);
+    errorReport->setErrorMessage("invalid object");
+    return errorReport;
+  }
+  FilesToMigrateListRequest &filesToMigrateListRequest = *req;
+  req = NULL;
+
+  // Try to fulfil the request. We count here.
+  uint64_t files = 0;
+  uint64_t bytes = 0;
+  // We try to find filesToMigrateListRequest.maxFiles().
+  // If we get over the bytes threshold, we stop before this limit.
+  std::queue <FileToMigrateStruct> files_list;
+  // We can keep the upstream answer in some situations.
+  // It will be stored here:
+  castor::IObject * response = NULL;
+  while (files < filesToMigrateListRequest.maxFiles()) {
+    // Get new file to migrate
+    FileToMigrateRequest fileReq;
+    fileReq.setAggregatorTransactionId(filesToMigrateListRequest.aggregatorTransactionId());
+    fileReq.setMountTransactionId(filesToMigrateListRequest.mountTransactionId());
+    castor::IObject * fileResp = handleMigrationMoreWork (fileReq, oraSvc, requester);
+    // handleMigrationMoreWork can return:
+    // - FileToMigrate (nortmal case)
+    // - EndNotificationErrorReport (in case of problems with the DB)
+    // - NoMoreFiles (when there is nothing new to return).
+    if (OBJ_FileToMigrate == fileResp->type()) {
+      // We found a file
+      // We are sure of the type, so checks are not necessary
+      FileToMigrate * file_response = dynamic_cast<FileToMigrate *>(fileResp);
+      FileToMigrateStruct ftm;
+      ftm.setFileTransactionId(file_response->fileTransactionId());
+      ftm.setNshost(file_response->nshost());
+      ftm.setFileid(file_response->fileid());
+      ftm.setFseq(file_response->fseq());
+      ftm.setFileSize(file_response->fileSize());
+      ftm.setLastKnownFilename(file_response->lastKnownFilename());
+      ftm.setLastModificationTime(file_response->lastModificationTime());
+      ftm.setPath(file_response->path());
+      ftm.setUmask(file_response->umask());
+      ftm.setPositionCommandCode(file_response->positionCommandCode());
+      // Record the file
+      files_list.push(ftm);
+      // Accounting for the request
+      files++;
+      bytes+=file_response->fileSize();
+      delete file_response;
+      // We're done if we reached the byte quota
+      if (bytes >= filesToMigrateListRequest.maxBytes()) break;
+    } else if (OBJ_NoMoreFiles == fileResp->type()) {
+      // We won't get more files.
+      // If the list is empty, we can just pass the NoMoreFiles.
+      // If not, we'll build the reply now (break without reaching the quota).
+      if (files_list.empty()) {
+        response = fileResp;
+      } else {
+        delete fileResp;
+      }
+      break;
+    } else if  (OBJ_EndNotificationErrorReport == fileResp->type()) {
+      // We abandon here the few files (if any) that were put in SELECTED, but not yet
+      // tranmitted to the tapebridge. They will be recovered at the end of the session,
+      // which will happen right now, as we transmit the EndNotitficationErrorReport.
+      // Jettison the files!
+      while (!files_list.empty()) files_list.pop();
+      response = fileResp;
+      break;
+    } else {
+      // Panic! Panic! Unexpected response. Internal error. Better stop here.
+      // If some files are now SELECTED, we won't transmit them, like in the previous case.
+      // They will eventually be resurrected at the end of the session (which
+      // will come soon as we prepare an EndNotification.)
+      std::string report = "Unexpected return type from handleMigrationMoreWork ";
+      report += "in handleFilesToMigrateListRequest :";
+      report += castor::ObjectsIdStrings[obj.type()];
+      castor::dlf::Param params[] ={
+          castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
+          castor::dlf::Param("Port",requester.port),
+          castor::dlf::Param("HostName",requester.hostName),
+          castor::dlf::Param("mountTransactionId", filesToMigrateListRequest.mountTransactionId()),
+          castor::dlf::Param("tapebridgeTransId", filesToMigrateListRequest.aggregatorTransactionId()),
+          castor::dlf::Param("errorCode",SEINTERNAL),
+          castor::dlf::Param("errorMessage",report)
+      };
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, INTERNAL_ERROR, params);
+      // Abandon ship!
+      while (!files_list.empty()) files_list.pop();
+      EndNotificationErrorReport * endReport = new EndNotificationErrorReport();
+      endReport->setAggregatorTransactionId(filesToMigrateListRequest.aggregatorTransactionId());
+      endReport->setMountTransactionId(filesToMigrateListRequest.mountTransactionId());
+      endReport->setErrorCode(SEINTERNAL);
+      endReport->setErrorMessage(report);
+      response = endReport;
+      break;
+    }
+  }
+
+  // We got out of the loop. Should now have either a list of files in the files_list
+  // queue, or an already cooked response pointed to by response.
+  if (response) {
+    // already cooked response. Just make sure there is nothing in the files queue
+    if (!files_list.empty()) {
+      std::string report = "Non-empty files queue ";
+      report += "in handleFilesToMigrateListRequest when response is ready.";
+      castor::dlf::Param params[] ={
+          castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
+          castor::dlf::Param("Port",requester.port),
+          castor::dlf::Param("HostName",requester.hostName),
+          castor::dlf::Param("mountTransactionId", filesToMigrateListRequest.mountTransactionId()),
+          castor::dlf::Param("tapebridgeTransId", filesToMigrateListRequest.aggregatorTransactionId()),
+          castor::dlf::Param("errorCode",SEINTERNAL),
+          castor::dlf::Param("errorMessage",report)
+      };
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, INTERNAL_ERROR, params);
+    }
+    /* while (!files_list.empty()) files_list.pop(); */ /* This is done automatically on return */
+    return response;
+  }
+  // Standard case: we create the response and populate it with the queue of files.
+  FilesToMigrateList * files_response = new FilesToMigrateList();
+  files_response->setAggregatorTransactionId(filesToMigrateListRequest.aggregatorTransactionId());
+  files_response->setMountTransactionId(filesToMigrateListRequest.mountTransactionId());
+  int i=0;
+  // We know the number of files. Let's allocate the vector's memory efficiently.
+  files_response->filesToMigrate().resize(files);
+  while (!files_list.empty()) {
+    FileToMigrateStruct * ftm = new FileToMigrateStruct();
+    *ftm = files_list.front();
+    files_response->filesToMigrate()[i++]=ftm;
+    files_list.pop();
+  }
+  return files_response;
+}
+
+castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFilesToRecallListRequest(
+    castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc,
+    requesterInfo& requester ) throw(){
+  // first check we are called with the proper class
+  FilesToRecallListRequest * req = dynamic_cast <FilesToRecallListRequest *>(&obj);
+  if (!req) {
+    // We did not get the expected class
+    // "Invalid Request" message
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_INVALID_CAST, 0, NULL);
+    EndNotificationErrorReport* errorReport=new EndNotificationErrorReport();
+    errorReport->setErrorCode(EINVAL);
+    errorReport->setErrorMessage("invalid object");
+    return errorReport;
+  }
+  FilesToRecallListRequest &filesToRecallListRequest = *req;
+  req = NULL;
+
+  // Try to fulfil the request. We count here.
+  uint64_t files = 0;
+  uint64_t bytes = 0;
+  // We will count in a later version. Make the compiler shut up
+  bytes = bytes;
+  // We try to find filesToRecallListRequest.maxFiles().
+  // If we get over the bytes threshold, we stop before this limit. (Not implemented
+  // right now: upstream call to not pass the file size (TODO).
+  std::queue <FileToRecallStruct> files_list;
+  // We can keep the upstream answer in some situations.
+  // It will be stored here:
+  castor::IObject * response = NULL;
+  while (files < filesToRecallListRequest.maxFiles()) {
+    // Get new file to recall
+    FileToRecallRequest fileReq;
+    fileReq.setAggregatorTransactionId(filesToRecallListRequest.aggregatorTransactionId());
+    fileReq.setMountTransactionId(filesToRecallListRequest.mountTransactionId());
+    castor::IObject * fileResp = handleRecallMoreWork (fileReq, oraSvc, requester);
+    // handleRecallMoreWork can return:
+    // - FileTorecall (normal case)
+    // - EndNotificationErrorReport (in case of problems with the DB)
+    // - NoMoreFiles (when there is nothing new to return).
+    if (OBJ_FileToRecall == fileResp->type()) {
+      // We found a file
+      // We are sure of the type, so checks are not necessary
+      FileToRecall * file_response = dynamic_cast<FileToRecall *>(fileResp);
+      FileToRecallStruct ftr;
+      ftr.setFileTransactionId(file_response->fileTransactionId());
+      ftr.setNshost(file_response->nshost());
+      ftr.setFileid(file_response->fileid());
+      ftr.setFseq(file_response->fseq());
+      ftr.setPath(file_response->path());
+      ftr.setBlockId0(file_response->blockId0());
+      ftr.setBlockId1(file_response->blockId1());
+      ftr.setBlockId2(file_response->blockId2());
+      ftr.setBlockId3(file_response->blockId3());
+      ftr.setUmask(file_response->umask());
+      ftr.setPositionCommandCode(file_response->positionCommandCode());
+      // Record the file
+      files_list.push(ftr);
+      // Accounting for the request. We can only do it by number right now.
+      // File size is missing in the current implementation.
+      files++;
+      delete file_response;
+    } else if (OBJ_NoMoreFiles == fileResp->type()) {
+      // We won't get more files.
+      // If the list is empty, we can just pass the NoMoreFiles.
+      // If not, we'll build the reply now (break without reaching the quota).
+      if (files_list.empty()) {
+        response = fileResp;
+      } else {
+        delete fileResp;
+      }
+      break;
+    } else if  (OBJ_EndNotificationErrorReport == fileResp->type()) {
+      // We abandon here the few files (if any) that were put in SELECTED, but not yet
+      // tranmitted to the tapebridge. They will be recovered at the end of the session,
+      // which will happen right now, as we transmit the EndNotitficationErrorReport.
+      // Jettison the files!
+      while (!files_list.empty()) files_list.pop();
+      response = fileResp;
+      break;
+    } else {
+      // Panic! Panic! Unexpected response. Internal error. Better stop here.
+      // If some files are now SELECTED, we won't transmit them, like in the previous case.
+      // They will eventually be resurrected at the end of the session (which
+      // will come soon as we prepare an EndNotification.)
+      std::string report = "Unexpected return type from handleRecallMoreWork ";
+      report += "in handleFilesToRecallListRequest :";
+      report += castor::ObjectsIdStrings[obj.type()];
+      castor::dlf::Param params[] ={
+          castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
+          castor::dlf::Param("Port",requester.port),
+          castor::dlf::Param("HostName",requester.hostName),
+          castor::dlf::Param("mountTransactionId", filesToRecallListRequest.mountTransactionId()),
+          castor::dlf::Param("tapebridgeTransId", filesToRecallListRequest.aggregatorTransactionId()),
+          castor::dlf::Param("errorCode",SEINTERNAL),
+          castor::dlf::Param("errorMessage",report)
+      };
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, INTERNAL_ERROR, params);
+      // Abandon ship!
+      while (!files_list.empty()) files_list.pop();
+      EndNotificationErrorReport * endReport = new EndNotificationErrorReport();
+      endReport->setAggregatorTransactionId(filesToRecallListRequest.aggregatorTransactionId());
+      endReport->setMountTransactionId(filesToRecallListRequest.mountTransactionId());
+      endReport->setErrorCode(SEINTERNAL);
+      endReport->setErrorMessage(report);
+      response = endReport;
+      break;
+    }
+  }
+
+  // We got out of the loop. Should now have either a list of files in the files_list
+  // queue, or an already cooked response pointed to by response.
+  if (response) {
+    // already cooked response. Just make sure there is nothing in the files queue
+    if (!files_list.empty()) {
+      std::string report = "Non-empty files queue ";
+      report += "in handleFilesToRecallListRequest when response is ready.";
+      castor::dlf::Param params[] ={
+          castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
+          castor::dlf::Param("Port",requester.port),
+          castor::dlf::Param("HostName",requester.hostName),
+          castor::dlf::Param("mountTransactionId", filesToRecallListRequest.mountTransactionId()),
+          castor::dlf::Param("tapebridgeTransId", filesToRecallListRequest.aggregatorTransactionId()),
+          castor::dlf::Param("errorCode",SEINTERNAL),
+          castor::dlf::Param("errorMessage",report)
+      };
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, INTERNAL_ERROR, params);
+    }
+    /* while (!files_list.empty()) files_list.pop(); */ /* This is done automatically on return */
+    return response;
+  }
+  // Standard case: we create the response and populate it with the queue of files.
+  FilesToRecallList * files_response = new FilesToRecallList();
+  files_response->setAggregatorTransactionId(filesToRecallListRequest.aggregatorTransactionId());
+  files_response->setMountTransactionId(filesToRecallListRequest.mountTransactionId());
+  int i=0;
+  // We know the number of files. Let's allocate the vector's memory efficiently.
+  files_response->filesToRecall().resize(files);
+  while (!files_list.empty()) {
+    FileToRecallStruct* ftr = new FileToRecallStruct();
+    *ftr = files_list.front();
+    files_response->filesToRecall()[i++]=ftr;
+    files_list.pop();
+  }
+  return files_response;
 }

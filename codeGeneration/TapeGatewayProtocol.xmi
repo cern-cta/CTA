@@ -28,13 +28,15 @@
         <UML:DataType stereotype="131663" isSpecification="false" isLeaf="false" visibility="public" namespace="130844" xmi.id="153395" isRoot="false" isAbstract="false" name="unsigned char" />
         <UML:DataType stereotype="131663" isSpecification="false" isLeaf="false" visibility="public" namespace="130844" xmi.id="133771" isRoot="false" isAbstract="false" name="int" />
         <UML:DataType stereotype="131663" isSpecification="false" isLeaf="false" visibility="public" namespace="130844" xmi.id="131665" isRoot="false" isAbstract="false" name="u_signed64" />
+        <UML:DataType stereotype="131663" isSpecification="false" isLeaf="false" visibility="public" namespace="130844" xmi.id="153392" isRoot="false" isAbstract="false" name="bool" />
         <UML:DataType stereotype="131663" isSpecification="false" isLeaf="false" visibility="public" namespace="130844" xmi.id="153391" isRoot="false" isAbstract="false" name="IObject*" />
        </UML:Namespace.ownedElement>
       </UML:Package>
 
       <UML:Package isSpecification="false" isLeaf="false" visibility="public" namespace="1" xmi.id="2103" isRoot="false" isAbstract="false" name="castor" >
        <UML:Namespace.ownedElement>
-        <UML:Interface stereotype="53499" comment="Base class for all objects Implements the id methods" isSpecification="false" isLeaf="false" visibility="public" namespace="2103" xmi.id="960" isRoot="false" isAbstract="true" name="IObject" >
+        <UML:Interface stereotype="53499" comment="Base class for all objects
+Implements the id methods" isSpecification="false" isLeaf="false" visibility="public" namespace="2103" xmi.id="960" isRoot="false" isAbstract="true" name="IObject" >
          <UML:Classifier.feature>
           <UML:Operation comment="Sets the id of the object" isSpecification="false" isLeaf="false" visibility="public" xmi.id="961" isRoot="false" isAbstract="true" isQuery="false" name="setId" >
            <UML:BehavioralFeature.parameter>
@@ -354,6 +356,10 @@
             <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="FilesToRecallList_xmiid" isRoot="false" isAbstract="false" name="FilesToRecallList" >
             </UML:Class>
             <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="FileMigrationReportList_xmiid" isRoot="false" isAbstract="false" name="FileMigrationReportList" >
+             <UML:Classifier.feature>
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="01FileMigrationReportList_fseqSet_xmiid" type="153392" name="fseqSet" />
+              <UML:Attribute isSpecification="false" visibility="public" xmi.id="02FileMigrationReportList_fseq_xmiid" type="133771" name="fseq" />
+             </UML:Classifier.feature>
             </UML:Class>
             <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="DTC53p2pEoO4" xmi.id="FileRecallReportList_xmiid" isRoot="false" isAbstract="false" name="FileRecallReportList" >
             </UML:Class>

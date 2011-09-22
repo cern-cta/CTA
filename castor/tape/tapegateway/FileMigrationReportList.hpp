@@ -101,6 +101,38 @@ namespace castor {
         /* End of IObject abstract class */
         /*********************************/
         /**
+         * Get the value of m_fseqSet
+         * @return the value of m_fseqSet
+         */
+        bool fseqSet() const {
+          return m_fseqSet;
+        }
+
+        /**
+         * Set the value of m_fseqSet
+         * @param new_var the new value of m_fseqSet
+         */
+        void setFseqSet(bool new_var) {
+          m_fseqSet = new_var;
+        }
+
+        /**
+         * Get the value of m_fseq
+         * @return the value of m_fseq
+         */
+        int fseq() const {
+          return m_fseq;
+        }
+
+        /**
+         * Set the value of m_fseq
+         * @param new_var the new value of m_fseq
+         */
+        void setFseq(int new_var) {
+          m_fseq = new_var;
+        }
+
+        /**
          * Get the value of m_id
          * The id of this object
          * @return the value of m_id
@@ -181,6 +213,10 @@ namespace castor {
         }
 
       private:
+
+        bool m_fseqSet;
+
+        int m_fseq;
 
         /// The id of this object
         u_signed64 m_id;

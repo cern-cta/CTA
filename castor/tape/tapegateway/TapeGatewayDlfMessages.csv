@@ -116,3 +116,7 @@
 116,WORKER_FAIL_NOTIFICATION_FOR_FILE,"Worker: received end notification error report for file"
 117,CHECKER_CANNOT_RELEASE_TAPE,"VdqmRequestsChecker: cannot release BUSY tape after end transaction"
 118,VMGR_GATEWAY_HELPER_RETRYING,"VmgrTapeGatewayHelper::TapeInfo: will retry VMGR query"
+119,WORKER_MIG_REPORT_LIST_RECEIVED,"Worker: received a migration report list"
+120,WORKER_MIG_REPORT_LIST_PROCESSED,"Worker: finished processing a migration report list"
+121,WORKER_REC_REPORT_LIST_RECEIVED,"Worker: received a recall report list"
+122,WORKER_REC_REPORT_LIST_PROCESSED,"Worker: finished processing a recall report list"

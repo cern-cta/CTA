@@ -40,6 +40,8 @@
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::FileMigrationReportList::FileMigrationReportList() throw() :
   GatewayMessage(),
+  m_fseqSet(false),
+  m_fseq(0),
   m_id(0) {
 }
 
@@ -74,6 +76,8 @@ void castor::tape::tapegateway::FileMigrationReportList::print(std::ostream& str
   // Call print on the parent class(es)
   this->GatewayMessage::print(stream, indent, alreadyPrinted);
   // Output of all members
+  stream << indent << "fseqSet : " << (m_fseqSet ? "Yes" : "No") << std::endl;
+  stream << indent << "fseq : " << m_fseq << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   {

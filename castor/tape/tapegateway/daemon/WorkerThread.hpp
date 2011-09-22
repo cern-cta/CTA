@@ -35,6 +35,7 @@
 #include "castor/server/IThread.hpp"
 #include "castor/tape/net/Constants.hpp"
 #include "castor/tape/utils/ShutdownBoolFunctor.hpp"
+#include "castor/tape/tapegateway/FileMigratedNotificationStruct.hpp"
 
 
 namespace castor     {
@@ -89,8 +90,18 @@ namespace tapegateway{
     castor::IObject* handleEndWorker        (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw();
     castor::IObject* handleFailWorker       (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw();
     castor::IObject* handleFileFailWorker   (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw();
+    castor::IObject* handleFileMigrationReportList   (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw();
+    castor::IObject* handleFileRecallReportList  (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw();
+    castor::IObject* handleFilesToMigrateListRequest (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw();
+    castor::IObject* handleFilesToRecallListRequest  (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw();
 
     utils::ShutdownBoolFunctor m_shuttingDown;
+
+    // Utility class for sorting migration reports in fseq order.
+    class FileMigratedFseqComparator { public:
+      bool operator()(const FileMigratedNotificationStruct *a, const FileMigratedNotificationStruct *b) const
+        { return a->fseq() < b->fseq(); }
+    } m_fileMigratedFseqComparator;
   };
   
 } // end of tapegateway  

@@ -88,6 +88,8 @@ void castor::io::StreamFileMigrationReportListCnv::createRep(castor::IAddress* a
   ad->stream() << obj->type();
   ad->stream() << obj->mountTransactionId();
   ad->stream() << obj->aggregatorTransactionId();
+  ad->stream() << obj->fseqSet();
+  ad->stream() << obj->fseq();
   ad->stream() << obj->id();
 }
 
@@ -107,6 +109,12 @@ castor::IObject* castor::io::StreamFileMigrationReportListCnv::createObj(castor:
   u_signed64 aggregatorTransactionId;
   ad->stream() >> aggregatorTransactionId;
   object->setAggregatorTransactionId(aggregatorTransactionId);
+  bool fseqSet;
+  ad->stream() >> fseqSet;
+  object->setFseqSet(fseqSet);
+  int fseq;
+  ad->stream() >> fseq;
+  object->setFseq(fseq);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
