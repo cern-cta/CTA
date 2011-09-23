@@ -2822,54 +2822,6 @@ following web url:
 https://twiki.cern.ch/twiki/bin/view/FIOgroup/CastorV2HowToUseRepack
 
 
-How to modify version 2.1.9-0 of the stager database ready for the tape gateway
-===============================================================================
-
-Add the TapeGatewayRequest and TapeGatewaySubRequest tables to the stager
-database by running the corresponding "CREATE TABLE" statements from the
-following file:
-
-    castor/db/oracleSchema.sql
-
-An example statement:
-
-CREATE TABLE TapeGatewayRequest (accessMode NUMBER, startTime INTEGER,
-lastVdqmPingTime INTEGER, vdqmVolReqId NUMBER, nbRetry NUMBER, lastFseq
-NUMBER, id INTEGER CONSTRAINT PK_TapeGatewayRequest_Id PRIMARY KEY,
-streamMigration INTEGER, tapeRecall INTEGER, status INTEGER) INITRANS 50
-PCTFREE 50 ENABLE ROW MOVEMENT;
-
-Add the possible states of a TapeGatewayRequest object to the ObjStatus table
-by executing the necessary SQL inserts also found in the above file.  An
-example statement:
-
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES
-('TapeGatewayRequest', 'status', 0, 'TO_BE_RESOLVED');
-
-Add the Type2Obj rows for TapeGatewayRequest, TapeGatewaySubRequest,
-GatewayMessage, VdqmTapeGatewayRequest.  An example statement:
-
-INSERT INTO Type2Obj (type, object) VALUES (170, 'TapeGatewayRequest');
-
-Add the database indicies and constraints of the TapeGatewayRequest and
-TapeGatewaySubRequest tables by executing the necessary SQL statements from
-the following file:
-
-    castor/db/oracleCommon.schema.sql
-
-Create the PL/SQL procedures and triggers used by the tape gateway by executing
-the entirety of the following file:
-
-    castor/db/oracleTapeGateway.sql
-
-Create the restartStuckRecalls PL/SQL procedure if it does not already exist.
-Also create the restartStuckRecallsJob if it too does not exist.  Create the
-tr_tapegateway_switchover trigger, again if it does not already exist.  The
-code for all three of these can be found in the following file:
-
-    castor/db/oracleTape.sql
-
-
 How to create and reset a group of tape copies ready for testing the migunter
 =============================================================================
 

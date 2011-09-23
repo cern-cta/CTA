@@ -411,23 +411,18 @@ ALTER TABLE DiskPool2SvcClass ADD CONSTRAINT PK_DiskPool2SvcClass_PC
 
 /* TapeGateway tables */
 CREATE TABLE TapeGatewayRequest (accessMode NUMBER, startTime INTEGER, lastVdqmPingTime INTEGER, vdqmVolReqId NUMBER, nbRetry NUMBER, lastFseq NUMBER, id INTEGER CONSTRAINT PK_TapeGatewayRequest_Id PRIMARY KEY, streamMigration INTEGER, tapeRecall INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-CREATE TABLE TapeGatewaySubRequest (fseq NUMBER, id INTEGER CONSTRAINT PK_TapeGatewaySubRequest_Id PRIMARY KEY, tapecopy INTEGER, request INTEGER, diskcopy INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeGatewayRequest', 'status', 0, 'TO_BE_RESOLVED');
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeGatewayRequest', 'status', 1, 'SEND_TO_VDQM');
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeGatewayRequest', 'status', 2, 'WAITING_TAPESERVER');
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeGatewayRequest', 'status', 3, 'ONGOING');
 
 /* Index and Constraints for the tapegateway tables */
-CREATE INDEX I_TGSubRequest_Request ON TapeGatewaySubRequest(request);
 CREATE UNIQUE INDEX I_TGRequest_Tape ON TapeGatewayRequest(tapeRecall);
 CREATE UNIQUE INDEX I_TGRequest_Stream ON TapeGatewayRequest(streamMigration);
 CREATE UNIQUE INDEX I_TGRequest_VdqmVolReqId ON TapeGatewayRequest(vdqmVolReqId);
 
-ALTER TABLE TapeGatewaySubRequest ADD CONSTRAINT FK_TGSubRequest_DC FOREIGN KEY (diskCopy) REFERENCES DiskCopy (id);
-ALTER TABLE TapeGatewaySubRequest ADD CONSTRAINT FK_TGSubRequest_TGR FOREIGN KEY (request) REFERENCES TapeGatewayRequest(id);
 ALTER TABLE TapeGatewayRequest ADD CONSTRAINT FK_TapeGatewayRequest_SM FOREIGN KEY (streamMigration) REFERENCES Stream (id);
 ALTER TABLE TapeGatewayRequest ADD CONSTRAINT FK_TapeGatewayRequest_TR FOREIGN KEY (tapeRecall) REFERENCES Tape (id);
-ALTER TABLE TapeGatewaySubRequest ADD CONSTRAINT UN_TGSubRequest_TR_DC UNIQUE (request, diskcopy);
 
 /* Global temporary table to handle output of the filesDeletedProc procedure */
 CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcOutput
