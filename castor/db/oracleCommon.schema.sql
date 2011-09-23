@@ -270,7 +270,7 @@ INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('Migration
  *   lastEditionTime : last time this routing rule was edited, in seconds since the epoch
  *   tapePool : the tape pool where to migrate files matching the above criteria
  */
-CREATE TABLE MigrationRouting (isSmallFile BOOLEAN CONSTRAINT NN_MigrationRouting_IsSmallFile NOT NULL,
+CREATE TABLE MigrationRouting (isSmallFile BOOLEAN CONSTRAINT NN_MigrationRouting_IsSFile NOT NULL,
                                copyNb INTEGER CONSTRAINT NN_MigrationRouting_CopyNb NOT NULL,
                                svcClass INTEGER CONSTRAINT NN_MigrationRouting_SvcClass NOT NULL,
                                fileClass INTEGER CONSTRAINT NN_MigrationRouting_FileClass NOT NULL,
