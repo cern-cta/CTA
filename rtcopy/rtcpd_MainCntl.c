@@ -2422,8 +2422,9 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
       sizeof(clientHostname));
     clientHostname[sizeof(clientHostname) - 1] = '\0';
   } else {
-    if(NULL != client && NULL != client->name && '\0' != client->name[0]) {
-      strncpy(clientHostname, client->name, sizeof(clientHostname));
+    if(NULL != client && NULL != client->clienthost &&
+      '\0' != client->clienthost[0]) {
+      strncpy(clientHostname, client->clienthost, sizeof(clientHostname));
       clientHostname[sizeof(clientHostname) - 1] = '\0';
     }
   }
