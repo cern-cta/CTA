@@ -224,17 +224,26 @@ INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('Migration
  */
 CREATE TABLE MigrationJob (fileSize INTEGER CONSTRAINT NN_MigrationJob_FileSize NOT NULL,
                            VID VARCHAR2(2048),
-                           creationTime NUMBER NN_MigrationJob_CreationTime NOT NULL,
-                           castorFile INTEGER NN_MigrationJob_CastorFile NOT NULL,
-                           copyNb INTEGER NN_MigrationJob_copyNb NOT NULL,
-                           tapePool INTEGER NN_MigrationJob_TapePool NOT NULL,
-                           nbRetry INTEGER CONSTRAINT NN_MigrationJob_nbRetry NOT NULL,
+                           creationTime NUMBER 
+                                CONSTRAINT NN_MigrationJob_CreationTime NOT NULL,
+                           castorFile INTEGER 
+                                CONSTRAINT NN_MigrationJob_CastorFile NOT NULL,
+                           copyNb INTEGER 
+                                CONSTRAINT NN_MigrationJob_copyNb NOT NULL,
+                           tapePool INTEGER 
+                                CONSTRAINT NN_MigrationJob_TapePool NOT NULL,
+                           nbRetry INTEGER
+                                CONSTRAINT NN_MigrationJob_nbRetry NOT NULL,
                            errorcode INTEGER,
-                           tapeGatewayRequestId INTEGER CONSTRAINT NN_MigrationJob_tgRequestId NOT NULL,
+                           tapeGatewayRequestId INTEGER
+                                CONSTRAINT NN_MigrationJob_tgRequestId NOT NULL,
                            FileTransactionId INTEGER,
                            fSeq INTEGER,
-                           status INTEGER NN_MigrationJob_Status NOT NULL,
-                           id INTEGER CONSTRAINT PK_MigrationJob_Id PRIMARY KEY CONSTRAINT NN_MigrationJob_Id NOT NULL)
+                           status INTEGER 
+                                CONSTRAINT NN_MigrationJob_Status NOT NULL,
+                           id INTEGER
+                                CONSTRAINT PK_MigrationJob_Id PRIMARY KEY 
+                                CONSTRAINT NN_MigrationJob_Id NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE INDEX I_MigrationJob_CFVID ON MigrationJob(CastorFile, VID);
 CREATE INDEX I_MigrationJob_CFCopyNb ON MigrationJob(CastorFile, copyNb);

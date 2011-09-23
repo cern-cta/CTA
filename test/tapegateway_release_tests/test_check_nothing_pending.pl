@@ -71,16 +71,19 @@ sub print_leftovers ( $ )
 {
     my $dbh = shift;
     # Print by castofile with corresponding tapecopies
-    my $sth = $dbh -> prepare ("SELECT cf.lastknownfilename, dc.id, dc.status, tc.id, tc.status 
+    my $sth = $dbh -> prepare ("SELECT cf.lastknownfilename, dc.id, dc.status, mj.id, mj.status,
+                                        rj.id, rj.status 
                                   FROM castorfile cf
                                   LEFT OUTER JOIN diskcopy dc ON dc.castorfile = cf.id
-                                  LEFT OUTER JOIN tapecopy tc ON tc.castorfile = cf.id
+                                  LEFT OUTER JOIN migrationJob mj ON mj.castorfile = cf.id
+                                  LEFT OUTER JOIN recallJob rj ON rj.castorfile = cf.id
                                  WHERE dc.status NOT IN ( 0 )");
     $sth -> execute();
     while ( my @row = $sth->fetchrow_array() ) {
 	nullize_arrays_undefs ( \@row );
 	print( "Remaining catorfile for $row[0]\n\twith diskcopy (id=$row[1], ".
-	       "status=$row[2]) and tapecopy (id=$row[3], status=$row[4])\n" );
+	       "status=$row[2]), migrationJob (id=$row[3], status=$row[4]) ".
+	       "and recallJob (id=$row[5], status=$row[6])\n" );
     }
     # print any other tapecopy not covered previously
     $sth = $dbh -> prepare ("SELECT cf.lastknownfilename, dc.id, dc.status, tc.id, tc.status 

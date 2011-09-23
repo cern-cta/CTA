@@ -1850,28 +1850,32 @@ sub print_leftovers ( $ )
 {
     my $dbh = shift;
     # Print by castofile with corresponding tapecopies
-    my $sth = $dbh -> prepare ("SELECT cf.lastknownfilename, dc.id, dc.status, tc.id, tc.status 
+    my $sth = $dbh -> prepare ("SELECT cf.lastknownfilename, dc.id, dc.status, mj.id, mj.status,
+                                    rj.id, rj.status
                                   FROM castorfile cf
                                   LEFT OUTER JOIN diskcopy dc ON dc.castorfile = cf.id
-                                  LEFT OUTER JOIN tapecopy tc ON tc.castorfile = cf.id
+                                  LEFT OUTER JOIN migrationJob mj ON mj.castorfile = cf.id
+                                  LEFT OUTER JOIN recallJob rj ON rj.castorfile = cf.id
                                  WHERE dc.status NOT IN ( 0, 7, 4)"); # Discopy_staged diskcopy_invalid diskcopy_failed
     $sth -> execute();
     while ( my @row = $sth->fetchrow_array() ) {
         nullize_arrays_undefs ( \@row );
         print( "Remaining catorfile for $row[0]\n\twith diskcopy (id=$row[1], ".
-               "status=$row[2]) and tapecopy (id=$row[3], status=$row[4])\n" );
+               "status=$row[2]), migrationJob (id=$row[3], status=$row[4]) ".
+               "and recallJob (id=$row[5], status=$row[6])\n" );
     }
-    # print any other tapecopy not covered previously
-    $sth = $dbh -> prepare ("SELECT cf.lastknownfilename, dc.id, dc.status, tc.id, tc.status 
+    # print any other migration and recall jobs not covered previously
+    $sth = $dbh -> prepare ("SELECT cf.lastknownfilename, dc.id, dc.status, mj.id, mj.status, rj.id, rj.status
                                   FROM castorfile cf
                                  RIGHT OUTER JOIN diskcopy dc ON dc.castorfile = cf.id
-                                 RIGHT OUTER JOIN tapecopy tc ON tc.castorfile = cf.id
+                                 RIGHT OUTER JOIN migrationJob mj ON mj.castorfile = cf.id
+                                 RIGHT OUTER JOIN recallJob rj ON rj.castorfile = cf.id
                                  WHERE dc.status IS NULL OR dc.status IN ( 0 )");
     $sth -> execute();
     while ( my @row = $sth->fetchrow_array() ) {
         nullize_arrays_undefs ( \@row );
         print( "Remaining tapecopy for $row[0]\n\twith diskcopy (id=$row[1], ".
-               "status=$row[2]) and tapecopy (id=$row[3], status=$row[4])\n" );
+               "status=$row[2]), migrationJob (id=$row[3], status=$row[4]), recallJob (id=$row[5], status=$row[6])\n" );
     }
 }
 
@@ -1906,35 +1910,31 @@ sub print_file_info ( $$ )
         print  "    dc.id=$row[0], dc.status=$row[1]\n";
     }
     # Then dump the migration-related info
-    $stmt = $dbh -> prepare ("SELECT tc.id, tc.status, s.id, s.status, t.vid, t.tpmode, t.status, tp.name, seg.id, seg.status, seg.errorcode, seg.errmsgtxt, seg.tape 
+    $stmt = $dbh -> prepare ("SELECT mj.id, mj.status, mm.id, mm.status, mm.vid, tp.name, seg.id, seg.status, seg.errorcode, seg.errmsgtxt, seg.tape 
                                   FROM castorfile cf
-                                  LEFT OUTER JOIN TapeCopy tc on tc.castorfile = cf.id
-                                  LEFT OUTER JOIN Stream2Tapecopy sttc on sttc.child = tc.id
-                                  LEFT OUTER JOIN Stream s on s.id = sttc.parent
-                                  LEFT OUTER JOIN Tape t on t.id = s.tape
-                                  LEFT OUTER JOIN TapePool tp on tp.id = s.tapepool
-                                  LEFT OUTER JOIN Segment seg on seg.copy = tc.id
-                                 WHERE cf.lastKnownFileName = :FILENAME
-                                   AND tc.status NOT IN ( 4 ) -- TAPECOPY_TO_BE RECALLED");
+                                  LEFT OUTER JOIN migrationJob mj on mj.castorfile = cf.id
+                                  LEFT OUTER JOIN migrationMount mm on mm.tapegatewayRequestId = mj.tapegatewayRequestId
+                                  LEFT OUTER JOIN TapePool tp on tp.id = mm.tapepool
+                                  LEFT OUTER JOIN Segment seg on seg.copy = mj.id
+                                 WHERE cf.lastKnownFileName = :FILENAME");
     $stmt->bind_param (":FILENAME", $filename);
     $stmt->execute();
     while ( my @row = $stmt->fetchrow_array() ) {
         nullize_arrays_undefs ( \@row );
-        print  "    tc.id=$row[0], tc.status=$row[1] s.id=$row[2] s.status=$row[3] t.vid=$row[4] t.tpmode=$row[5] t.status=$row[6] tp.name=$row[7] seg.id=$row[8] seg.status=$row[9] seg.errorcode=$row[10] seg.errmsgtxt=$row[11] seg.tape=$row[12]\n";
+        print  "    mj.id=$row[0], mj.status=$row[1] mm.id=$row[2] mm.status=$row[3] mm.vid=$row[4] tp.name=$row[5] seg.id=$row[6] seg.status=$row[7] seg.errorcode=$row[8] seg.errmsgtxt=$row[9] seg.tape=$row[10]\n";
     }
     # Finally dump the recall-related into
-    $stmt = $dbh -> prepare ("SELECT tc.id, tc.status, seg.id, seg.status, t.id, t.tpmode, t.status, seg.errorcode, seg.errmsgtxt, seg.tape
+    $stmt = $dbh -> prepare ("SELECT rj.id, rj.status, seg.id, seg.status, t.id, t.tpmode, t.status, seg.errorcode, seg.errmsgtxt, seg.tape
                                   FROM castorfile cf
-                                  LEFT OUTER JOIN TapeCopy tc on tc.castorfile = cf.id
-                                  LEFT OUTER JOIN Segment seg on seg.copy = tc.id
+                                  LEFT OUTER JOIN recallJob rj on rj.castorfile = cf.id
+                                  LEFT OUTER JOIN Segment seg on seg.copy = rj.id
                                   LEFT OUTER JOIN Tape t on t.id = seg.tape
-                                 WHERE cf.lastKnownFileName = :FILENAME
-                                   AND tc.status IN ( 4 ) -- TAPECOPY_TO_BE RECALLED");
+                                 WHERE cf.lastKnownFileName = :FILENAME");
     $stmt->bind_param (":FILENAME", $filename);
     $stmt->execute();
     while ( my @row = $stmt->fetchrow_array() ) {
         nullize_arrays_undefs ( \@row );
-        print  "    tc.id=$row[0], tc.status=$row[1] seg.id=$row[2] seg.status=$row[3] t.id=$row[4] t.tpmode=$row[5] t.status=$row[6] seg.errorcode=$row[7] seg.errmsgtxt=$row[8] seg.tape=$row[9]\n";
+        print  "    rj.id=$row[0], rj.status=$row[1] seg.id=$row[2] seg.status=$row[3] t.id=$row[4] t.tpmode=$row[5] t.status=$row[6] seg.errorcode=$row[7] seg.errmsgtxt=$row[8] seg.tape=$row[9]\n";
     }
 }
 
