@@ -1465,11 +1465,13 @@ void castor::db::ora::OraRHSvc::changePrivilege
       if (0 == m_addPrivilegeStatement) {
         m_addPrivilegeStatement =
           createStatement(s_addPrivilegeStatementString);
+        m_addPrivilegeStatement->setAutoCommit(true);
       }
     } else {
       if (0 == m_removePrivilegeStatement) {
         m_removePrivilegeStatement =
           createStatement(s_removePrivilegeStatementString);
+        m_removePrivilegeStatement->setAutoCommit(true);
       }
     }
     // deal with the type of change
@@ -1507,7 +1509,6 @@ void castor::db::ora::OraRHSvc::changePrivilege
       // loop on the request types if any and call DB
       handleChangePrivilegeTypeLoop(requestTypes, stmt);
     }
-    commit();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     if (e.getErrorCode() == 20108) {
