@@ -69,6 +69,7 @@ def getConfinc():
     for directory in INCDIRS:
         if os.path.isfile(os.sep.join([directory, 'globus_config.h'])):
             return directory
+    raise EnvironmentError('No globus install found')
 
 #------------------------------------------------------------------------------
 # getInc
@@ -77,6 +78,7 @@ def getInc():
     for directory in INCDIRS:
         if os.path.isfile(os.sep.join([directory, 'globus_common.h'])):
             return directory
+    raise EnvironmentError('No globus install found')
 
 #------------------------------------------------------------------------------
 # getLibstyle
@@ -89,6 +91,7 @@ def getLibstyle():
             return directory, False
         if os.path.isfile(os.sep.join([directory, 'libglobus_common_' + FLAVOUR + '.so'])):
             return directory, True
+    raise EnvironmentError('No globus install found')
 
 #------------------------------------------------------------------------------
 # getLibdir
@@ -139,19 +142,22 @@ except getopt.GetoptError:
     sys.exit(2)
 
 # Construct the return value based on the command line arguments.
-for opt, arg in opts:
-    if opt == "--help" or opt == "-h":
-        usage()
-    if opt == "--confinc":
-        print getConfinc()
-    if opt == "--inc":
-        print getInc()
-    if opt == "--libdir":
-        print getLibdir()
-    if opt == "--gsslib":
-        print getGsslib(False)
-    if opt == "--gsslibthr":
-        print getGsslib(True)
-    if opt == "--ftplib":
-        print getFtplib()
-
+try:
+    for opt, arg in opts:
+        if opt == "--help" or opt == "-h":
+            usage()
+        if opt == "--confinc":
+            print getConfinc()
+        if opt == "--inc":
+            print getInc()
+        if opt == "--libdir":
+            print getLibdir()
+        if opt == "--gsslib":
+            print getGsslib(False)
+        if opt == "--gsslibthr":
+            print getGsslib(True)
+        if opt == "--ftplib":
+            print getFtplib()
+except EnvironmentError, e:
+    print >> sys.stderr, e
+    sys.exit(1)

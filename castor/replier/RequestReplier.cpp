@@ -60,6 +60,11 @@
  * process could exit before all requests are sent.
  */
 
+// Apple platform does not support the POLLRDHUP event of poll
+// but POLLHUP can be used instead
+#ifdef __APPLE__
+#define POLLRDHUP POLLHUP
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 //

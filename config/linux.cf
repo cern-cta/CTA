@@ -11,4 +11,6 @@ COMM  Default rules for Make          Linux
 #define RPATHLINKEROPTION -rpath-link
 #define SONAMELINKEROPTION -soname
 #define DYLIBLINKEROPTION -shared
+#define NOUNDEFLINKEROPTION -Wl,-no-undefined
+#define UUIDLIBNAME uuid
 LDFLAGS += -Wl,--defsym,CastorVersion_v$(MAJOR_CASTOR_VERSION).$(MINOR_CASTOR_VERSION)=0

@@ -162,7 +162,7 @@ checkVERSION:
  *  /home/sponcec3/DEVEL/trunk/castor/BaseAddress.hpp \
  *  /home/sponcec3/DEVEL/trunk/castor/IAddress.hpp
  */
-create_d = gcc -MM $(CPPFLAGS) $< | sed -n "H;$$ {g;s,\($*\)\.o[ :]*,\1.o $@ : ,;p}" > $@
+create_d = gcc -MM $(CPPFLAGS) $< | sed -n "H;$$ {g;s,\($*\)\.o[ :]*,\1.o $@ : ,;p;}" > $@
 
 /*
  * this rules use the create_d macro to build dependency files from source files.

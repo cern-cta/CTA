@@ -9,4 +9,6 @@ COMM  Default rules for Make          APPLE
 #define RPATHLINKEROPTION -rpath
 #define SONAMELINKEROPTION -install_name
 #define DYLIBLINKEROPTION -dynamiclib
+#define NOUNDEFLINKEROPTION 
+#define UUIDLIBNAME System
 LDFLAGS += -Wl,-current_version,$(subst .,,$(MAJOR_CASTOR_VERSION)).$(MINOR_CASTOR_VERSION)

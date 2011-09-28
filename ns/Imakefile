@@ -7,7 +7,7 @@ COMM       @(#)Imakefile,v 1.51 2004/06/09 16:10:35 CERN IT-PDP/DM Jean-Philippe
 COMM    Make name server programs.
 
 NSLIB = DepSharedLibraryTargetName(ns,castorns)
-AddLdFlags(-luuid)
+AddLdFlags(-l UUIDLIBNAME)
 
 #if UseGSI
 NSLIBCSEC += -lcrypto

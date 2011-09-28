@@ -7,7 +7,7 @@ COMM
 COMM		Make common routines library
 
 CPPFLAGS += -DPATH_CONFIG=CastorConfigFile -DLOCALHOSTSFILE=LocalHostsList -DMAPPING_FILE=MappingFile -DRTHOSTSFILE=RemoteHostsList -DADMIN_HOSTS=AdminHosts
-AddLdFlags(-luuid)
+AddLdFlags(-l UUIDLIBNAME)
 
 COMMONLIB_OBJS = $(SYSDEP_OBJS) \
 		 compat.o getacct.o getacctent.o getconfent.o \

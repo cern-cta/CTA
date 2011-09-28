@@ -105,7 +105,7 @@ libname: LOCAL_PATH/SharedLibraryName(libname)                                  
 BareSharedLibraryTargetName(libname): LOCAL_PATH/SharedLibraryName(libname)                        @@\
 LOCAL_PATH/SharedLibraryName(libname): objects deplibs                                             @@\
 	@echo "  Linking" $@                                                                       @@\
-	$(CC) DYLIBLINKEROPTION -Wl,-no-undefined -o $@ $(LDFLAGS) $(PREFIX(LDFLAGS)) -Wl,SONAMELINKEROPTION,SharedLibraryName(libname) objects $(LIBS) libs              @@\
+	$(CC) DYLIBLINKEROPTION NOUNDEFLINKEROPTION -o $@ $(LDFLAGS) $(PREFIX(LDFLAGS)) -Wl,SONAMELINKEROPTION,SharedLibraryName(libname) objects $(LIBS) libs              @@\
 $(DESTDIR)/directory/BareSharedLibraryTargetName(libname): LOCAL_PATH/SharedLibraryName(libname) InstallLibraryTargetNames(deplibs) InstallLibraryTargetNames(deplibs) @@\
 	install -d $(DESTDIR)/directory                                                            @@\
 	install $< $(DESTDIR)/directory/SharedLibraryFullName(libname)                             @@\
@@ -277,14 +277,14 @@ LOCAL_PATH/$(patsubst %.cpp,%.o,file): LOCAL_PATH/file @@\
 	@echo Compiling $@                             @@\
 	$(COMPILE.cpp) $(OUTPUT_OPTION) flags $<       @@\
 LOCAL_PATH/$(patsubst %.cpp,%.d,file): LOCAL_PATH/file @@\
-	gcc -MM $(CPPFLAGS) flags $< | sed -n "H;$$ {g;s,\($*\)\.o[ :]*,\1.o $@ : ,;p}" > $@
+	gcc -MM $(CPPFLAGS) flags $< | sed -n "H;$$ {g;s,\($*\)\.o[ :]*,\1.o $@ : ,;p;}" > $@
 
 #define COMPILEC(file,flags)                           \
 LOCAL_PATH/$(patsubst %.c,%.o,file): LOCAL_PATH/file @@\
 	@echo Compiling $@                           @@\
 	$(COMPILE.c) $(OUTPUT_OPTION) flags $<       @@\
 LOCAL_PATH/$(patsubst %.c,%.d,file): LOCAL_PATH/file @@\
-	gcc -MM $(CPPFLAGS) flags $< | sed -n "H;$$ {g;s,\($*\)\.o[ :]*,\1.o $@ : ,;p}" > $@
+	gcc -MM $(CPPFLAGS) flags $< | sed -n "H;$$ {g;s,\($*\)\.o[ :]*,\1.o $@ : ,;p;}" > $@
 
 COMM Replacement for the default rules, in order to not display all compilation commands by default
 
