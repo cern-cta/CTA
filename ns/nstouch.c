@@ -27,8 +27,8 @@ void usage(int status, char *name) {
     printf ("  -a               change only the access time\n");
     printf ("  -c, --no-create  do not create any files\n");
     printf ("  -m               change only the modification time\n");
-    printf ("  -t=STAMP         use [[CC]YY]MMDDhhmm instead of current time\n");
-    printf ("      --help       display this help and exit\n\n");
+    printf ("  -t STAMP         use [[CC]YY]MMDDhhmm instead of current time\n");
+    printf ("  --help           display this help and exit\n\n");
     printf ("Report bugs to <castor.support@cern.ch>.\n");
   }
   exit (status);
@@ -75,6 +75,10 @@ int main(int argc,char **argv)
     case 't':
       tflag++;
       newtime = cvt_datime (Coptarg);
+      if (-1 == newtime) {
+        errflg++;
+        fprintf (stderr, "Bad time format : %s\n", Coptarg);
+      }
       break;
     case '?':
       errflg++;

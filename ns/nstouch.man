@@ -33,7 +33,7 @@ do not create any files
 .B -m
 change only the modification time
 .TP
-.B -t=STAMP
+.B -t STAMP
 use [[CC]YY]MMDDhhmm instead of current time
 .TP
 .B \-\-help
