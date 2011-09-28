@@ -18,7 +18,7 @@ COMMONLIB_OBJS = $(SYSDEP_OBJS) \
 		 Cdlopen.o Cthread.o Cglobals.o Cgrp.o Cmutex.o Cuuid.o \
 		 Cdomainname.o Cnetdb.o Cpool.o Cpwd.o Cstrerror.o \
 		 socket_timeout.o u64subr.o Cinitdaemon.o Cgetopt.o \
-		 Cregexp.o Csetprocname.o Cexportconf.o Csnprintf.o util.o \
+		 Cregexp.o Cexportconf.o Csnprintf.o util.o \
 		 Csecloader.o castor1compat.o
 
 ClientSharedLibraryTarget(castorcommon,$(COMMONLIB_OBJS),,-ldl)
@@ -37,5 +37,4 @@ CLIENTLIBMANPAGE(Cuuid)
 CLIENTLIBMANPAGE(Cmutex)
 CLIENTLIBMANPAGE(Cpool)
 CLIENTLIBMANPAGE(Cpwd)
-CLIENTLIBMANPAGE(Csetprocname)
 CLIENTLIBMANPAGE(Cthread)

@@ -22,7 +22,6 @@
 %attr(0644,root,root) usr/include/shift/Csec_constants.h
 %attr(0644,root,root) usr/include/shift/Csec_plugin.h
 %attr(0644,root,root) usr/include/shift/Csemaphore.h
-%attr(0644,root,root) usr/include/shift/Csetprocname.h
 %attr(0644,root,root) usr/include/shift/Csnprintf.h
 %attr(0644,root,root) usr/include/shift/Cstrerror.h
 %attr(0644,root,root) usr/include/shift/Ctape.h

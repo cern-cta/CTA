@@ -66,7 +66,6 @@ debian/castor/usr/share/man/man3/Cns_symlink.3castor.gz
 debian/castor/usr/share/man/man3/Csec_api.3castor.gz
 debian/castor/usr/share/man/man3/Cpool.3castor.gz
 debian/castor/usr/share/man/man3/Cpwd.3castor.gz
-debian/castor/usr/share/man/man3/Csetprocname.3castor.gz
 debian/castor/usr/share/man/man3/Ctape_dmpfil.3castor.gz
 debian/castor/usr/share/man/man3/Ctape_info.3castor.gz
 debian/castor/usr/share/man/man3/Ctape_kill.3castor.gz
