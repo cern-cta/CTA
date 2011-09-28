@@ -81,7 +81,7 @@ class ConnectionPool(object):
       # but as rpyc does it in a blocking manner, we had to do it "by hand" with
       # proper timeout functionality
       remote_root_ref = rpcconn.async_request(rpyc.core.consts.HANDLE_GETROOT)
-      remote_root_ref.set_expiry(self.config.getValue('TransferManager', 'ConnectionTimeout', 0.1, float))
+      remote_root_ref.set_expiry(self.config.getValue('TransferManager', 'ConnectionTimeout', 1.0, float))
       rpcconn._remote_root = remote_root_ref.value
       # cache it
       self.connections[machine] = rpcconn
@@ -129,7 +129,7 @@ class ConnectionPool(object):
           timeout = kwargs['timeout']
           del kwargs['timeout']
         except KeyError:
-          timeout = self.config.getValue('TransferManager', 'ConnectionTimeout', 0.1, float)
+          timeout = self.config.getValue('TransferManager', 'ConnectionTimeout', 1.0, float)
         if len(kwargs) > 0:
           raise TypeError("got unexpected keyword argument %r" % (kwargs.keys()[0],))
         # we may want to retry in case we get an exception
@@ -139,7 +139,7 @@ class ConnectionPool(object):
             # try existing connection
             conn = self.getConnection(machine)
             remote_attr = asyncreq(conn, rpyc.core.consts.HANDLE_GETATTR, name)
-            remote_attr.set_expiry(self.config.getValue('TransferManager', 'ConnectionTimeout', 0.1, float))
+            remote_attr.set_expiry(self.config.getValue('TransferManager', 'ConnectionTimeout', 1.0, float))
             result = asyncreq(remote_attr.value, rpyc.core.consts.HANDLE_CALL, args)
             result.set_expiry(timeout)
             return result.value
