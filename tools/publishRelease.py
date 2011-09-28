@@ -249,6 +249,11 @@ def main(argv):
         if not os.path.isdir(filepath):
             continue
 
+        # drop the log-report directory
+        if name.endswith("log-report"):
+            os.rmdir(os.path.join(tmpdir, name))
+            continue
+
         # Extract the linux distribution, version and architecture from the
         # directory name.
         (dist, version, arch) = name.split("-")
@@ -265,43 +270,9 @@ def main(argv):
         shutil.move(filepath, dstdir)
 
     # Remove all RPMs from the SL4 distribution which are not considered as
-    # part of the clientonly distribution
-    print "[STEP 6/11] - Restricting SL4 builds to CLIENT only packages"
-
-    # Construct a list of client packages from the control file. Essentially
-    # this is a filter of package names which belong to the XBS-Group: Client
-    f = open(os.path.join(rootdir, "../debian/control"), "r")
-    clientpackages = []
-    pkgname = None
-    for line in f.readlines():
-        if line.startswith("Package:"):
-            pkgname = line[8:].strip()
-        if line.startswith("XBS-Group: Client"):
-            clientpackages.append(pkgname)
-    f.close()
-
-    # Loop over the contents of the SL4 directory
-    dstdir = os.path.join(tmpdir, "SL4")
-    for arch in os.listdir(dstdir):
-        archpath = os.path.join(dstdir, arch);
-        if not os.path.isdir(archpath):
-            continue
-
-        # Loop over architecture directory
-        for name in os.listdir(archpath):
-            filepath = os.path.join(archpath, name)
-            if not os.path.isfile(filepath):
-                continue  # Not a file
-            if not filepath.endswith(".rpm"):
-                continue  # Ignore non rpm base files
-            if filepath.endswith(".src.rpm"):
-                continue  # Ignore source rpms
-            if name.startswith("castor-debuginfo"):
-                continue  # Ignore debuginfo
-            pkgname = name.split(".")[0][0:-2]
-            if pkgname in clientpackages:
-                continue  # This is a client package
-            os.unlink(filepath)
+    # part of the clientonly distribution. This is now dropped as of 2.1.11-6
+    # and might reappear when SL5 will be phased out.
+    print "[STEP 6/11] - Restricting non-certified builds to Client only packages. Skipped for now"
 
     # Extract the source tarball from one of the source rpms. The first step to
     # achieve this is to find a source RPM.
