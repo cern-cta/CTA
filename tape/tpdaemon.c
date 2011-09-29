@@ -111,6 +111,7 @@ int tpd_main() {
 	struct hostent *hp;
 	int magic;
 	int msglen;
+	int n;
 	int on = 1;	/* for REUSEADDR */
 	char *p;
 	char *rbp;
@@ -294,9 +295,30 @@ int tpd_main() {
 					netclose (rqfd);
 					continue;
 				}
-				rpfd = rqfd;
 				l = msglen - sizeof(req_hdr);
-				netread_timeout (rqfd, req_data, l, TPTIMEOUT);
+				n = netread_timeout (rqfd, req_data, l, TPTIMEOUT);
+				if(n != l) {
+					const char *errMsg = "UNKNOWN";
+					switch(n) {
+					case 0:
+						errMsg = "Connection closed by the remote end";
+						break;
+					case -1:
+						errMsg = neterror();
+						break;
+					default:
+						errMsg = "Read wrong number of bytes";
+					}
+					tplogit (func, TP002, "netread_timeout",
+						errMsg);
+                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 3,
+                                                            "func",    TL_MSG_PARAM_STR, func,
+                                                            "Message", TL_MSG_PARAM_STR, "netread_timeout",
+                                                            "Value",   TL_MSG_PARAM_STR, errMsg);
+					netclose (rqfd);
+					continue;
+				}
+				rpfd = rqfd;
 				if (getpeername (rqfd, (struct sockaddr *) &from,
 				    &fromlen) < 0) {
 					tplogit (func, TP002, "getpeername",
