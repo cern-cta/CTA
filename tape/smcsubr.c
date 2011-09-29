@@ -25,7 +25,7 @@ static void
 save_error(rc, nb_sense, sense, msgaddr)
 int rc;
 int nb_sense;
-unsigned char *sense;
+char *sense;
 char *msgaddr;
 {
 	smc_msgaddr = msgaddr;

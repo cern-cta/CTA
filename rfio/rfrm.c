@@ -34,7 +34,6 @@ int main(int argc,
          char *argv[])
 {
   int c, status;
-  extern char * optarg ;
   extern int    optind ;
   char *path,*root_path;
   int recursive = 0;

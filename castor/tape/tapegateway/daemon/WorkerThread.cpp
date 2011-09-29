@@ -2273,9 +2273,8 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFilesToRecallLi
 
   // Try to fulfil the request. We count here.
   uint64_t files = 0;
-  uint64_t bytes = 0;
-  // We will count in a later version. Make the compiler shut up
-  bytes = bytes;
+  // We will count in a later version
+  // uint64_t bytes = 0;
   // We try to find filesToRecallListRequest.maxFiles().
   // If we get over the bytes threshold, we stop before this limit. (Not implemented
   // right now: upstream call to not pass the file size (TODO).

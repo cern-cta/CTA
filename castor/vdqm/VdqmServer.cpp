@@ -89,8 +89,7 @@ void castor::vdqm::VdqmServer::logStart(Cuuid_t &cuuid, const int argc,
 //------------------------------------------------------------------------------
 // parseCommandLine
 //------------------------------------------------------------------------------
-void castor::vdqm::VdqmServer::parseCommandLine(Cuuid_t &cuuid,
-  const int argc, char **argv) throw() {
+void castor::vdqm::VdqmServer::parseCommandLine(const int argc, char **argv) throw() {
 
   static struct Coptions longopts[] = {
     {"foreground"             , NO_ARGUMENT      , NULL, 'f'},
@@ -101,9 +100,9 @@ void castor::vdqm::VdqmServer::parseCommandLine(Cuuid_t &cuuid,
     {"schedulerThreads"       , REQUIRED_ARGUMENT, NULL, 's'},
     {NULL                     , 0                , NULL,  0 }
   };
-
   Coptind = 1;
   Copterr = 0;
+  Cuuid_t cuuid = nullCuuid;
 
   char c;
   while((c=Cgetopt_long(argc, argv, "fc:hr:j:s:", longopts, NULL)) != -1) {

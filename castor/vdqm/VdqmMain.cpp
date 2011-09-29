@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
     Cuuid_create(&cuuid);
 
     server.logStart(cuuid, argc, argv);
-    server.parseCommandLine(cuuid, argc, argv);
+    server.parseCommandLine(argc, argv);
     server.initDatabaseService(cuuid);
 
 

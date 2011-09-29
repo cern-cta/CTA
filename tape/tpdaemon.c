@@ -111,7 +111,6 @@ int tpd_main() {
 	struct hostent *hp;
 	int magic;
 	int msglen;
-	int n;
 	int on = 1;	/* for REUSEADDR */
 	char *p;
 	char *rbp;
@@ -297,7 +296,7 @@ int tpd_main() {
 				}
 				rpfd = rqfd;
 				l = msglen - sizeof(req_hdr);
-				n = netread_timeout (rqfd, req_data, l, TPTIMEOUT);
+				netread_timeout (rqfd, req_data, l, TPTIMEOUT);
 				if (getpeername (rqfd, (struct sockaddr *) &from,
 				    &fromlen) < 0) {
 					tplogit (func, TP002, "getpeername",

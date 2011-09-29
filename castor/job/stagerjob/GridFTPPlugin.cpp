@@ -262,7 +262,8 @@ void castor::job::stagerjob::GridFTPPlugin::preForkHook
 // postForkHook
 //------------------------------------------------------------------------------
 void castor::job::stagerjob::GridFTPPlugin::postForkHook
-(InputArguments &args, PluginContext &context)
+(InputArguments &args, PluginContext &context,
+ bool /*useChksSum*/, int /*moverStatus*/)
   throw(castor::exception::Exception) {
   // Get environment
   Environment env;

@@ -336,7 +336,7 @@ common_setnetio.o: $(ROOT_DIR)/common/setnetio.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 common_Cpool.o: $(ROOT_DIR)/common/Cpool.c
-	gcc -pthread -g -c $(INCLUDE_OPS) -o $@ $^
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 common_getacctent.o: $(ROOT_DIR)/common/getacctent.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^

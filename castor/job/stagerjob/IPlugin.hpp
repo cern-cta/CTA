@@ -37,7 +37,7 @@ namespace castor {
     namespace stagerjob {
 
       // Forward declarations
-      struct InputArguments;
+      class InputArguments;
       struct PluginContext;
 
       /**
@@ -84,9 +84,19 @@ namespace castor {
          * in the parent process. Empty by default.
          * @param args the arguments given to the stager job
          * @param context the current context (localhost, port, etc...)
+         * @param useChkSum flag to indicate whether checksum information
+         * should be sent in the prepareForMigration call.
+         * @param moverStatus status of the mover process. By default the
+         * value is -1, indicating that the function should wait for child
+         * processes to exit. If moverStatus > -1, the function will not
+         * wait for child processes and the value of moverStatus 
+         * argument will be used to indicate whether the transfer was
+         * successful or not.
          */
         virtual void postForkHook(InputArguments &args,
-                                  PluginContext &context)
+                                  PluginContext &context,
+                                  bool useChksSum = false,
+                                  int moverStatus = -1)
           throw (castor::exception::Exception) = 0;
 
       }; // end of class IPlugin

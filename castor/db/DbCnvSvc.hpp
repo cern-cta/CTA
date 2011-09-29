@@ -98,7 +98,7 @@ namespace castor {
          * Default implementation does nothing
          * @param e the database exception
          */
-        virtual void handleException(std::exception) {};
+        virtual void handleException(std::exception&) {};
           
         /**
          * Get the physical representation type from the

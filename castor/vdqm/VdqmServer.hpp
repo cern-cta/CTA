@@ -62,13 +62,12 @@ namespace castor {
        * In case of an error this method writes the appriopriate error messages
        * to both standard error and DLF and then calls exit with a value of 1.
        *
-       * @param cuuid the cuuid to be used for logging
        * @param argc Argument count from the executable's entry function:
        * main().
        * @param argv Argument vector from the executable's entry function:
        * main().
        */
-      void parseCommandLine(Cuuid_t &cuuid, const int argc, char **argv)
+      void parseCommandLine(const int argc, char **argv)
         throw();
 
       /**

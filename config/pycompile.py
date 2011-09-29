@@ -75,7 +75,7 @@ sysconfig = distutils.sysconfig.get_config_vars()
 if cflags:
     flags = "%s" % (sysconfig['CFLAGS'])
 if inc:
-    flags += "-I%s -L%s/config " % (sysconfig['INCLUDEPY'], sysconfig['BINLIBDEST'])
+    flags += "-I%s " % (sysconfig['INCLUDEPY'])
 if libs:
     flags += "-L%s -lpython%s %s %s" % (sysconfig['LIBDIR'], sysconfig['VERSION'], sysconfig['LIBS'], sysconfig['LIBM'])
 

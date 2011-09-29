@@ -243,7 +243,8 @@ void castor::job::stagerjob::RfioPlugin::getEnvironment
 // postForkHook
 //------------------------------------------------------------------------------
 void castor::job::stagerjob::RfioPlugin::postForkHook
-(InputArguments &args, PluginContext &context)
+(InputArguments &args, PluginContext &context,
+ bool /*useChksSum*/, int /*moverStatus*/)
   throw(castor::exception::Exception) {
 
   // Log the mover command line on behalf of the mover process that cannot log

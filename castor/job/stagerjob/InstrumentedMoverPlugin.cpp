@@ -55,7 +55,8 @@ castor::job::stagerjob::InstrumentedMoverPlugin::InstrumentedMoverPlugin
 // postForkHook
 //------------------------------------------------------------------------------
 void castor::job::stagerjob::InstrumentedMoverPlugin::postForkHook
-(InputArguments &args, PluginContext &context)
+(InputArguments &args, PluginContext &context,
+ bool /*useChksSum*/, int /*moverStatus*/)
   throw(castor::exception::Exception) {
   // Answer the client so that it can connect to the mover
   castor::rh::IOResponse ioResponse;

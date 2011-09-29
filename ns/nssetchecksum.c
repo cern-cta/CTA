@@ -78,7 +78,7 @@ int main(int argc,
         errflg++;
       }
       strncpy(chksumname, Coptarg, CA_MAXCKSUMNAMELEN);
-      chksumname[CA_MAXCKSUMLEN] = '\0';
+      chksumname[CA_MAXCKSUMNAMELEN] = '\0';
       if (strcmp(chksumname, "AD") == 0 ||
           strcmp(chksumname, "adler32") == 0) {
         if (strcmp(chksumname, "adler32") == 0)

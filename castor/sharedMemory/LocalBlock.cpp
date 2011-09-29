@@ -33,10 +33,14 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
+// This declaration would be much better with 2 typedefs for the two pointers
+// to functions. Sadly, typedefs cannot have a throw clause
 castor::sharedMemory::LocalBlock::LocalBlock
 (castor::sharedMemory::BasicBlock* basicBlock,
- void* (*mallocMethod)(castor::sharedMemory::BasicBlock* obj, size_t nbBytes),
- void (*freeMethod)(castor::sharedMemory::BasicBlock* obj, void* pointer, size_t nbBytes))
+ void* (*mallocMethod)(castor::sharedMemory::BasicBlock* obj, size_t nbBytes)
+   throw (castor::exception::Exception),
+ void (*freeMethod)(castor::sharedMemory::BasicBlock* obj, void* pointer, size_t nbBytes)
+    throw (castor::exception::Exception))
   throw (castor::exception::Exception) :
   m_block(basicBlock), m_mallocMethod(mallocMethod),
   m_freeMethod(freeMethod) {}

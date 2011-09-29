@@ -2224,7 +2224,7 @@ int rtcpd_GetRequestList(SOCKET *client_socket,
       tot_reqlen += sizeof(file_list_t);
       nextfile->end_index = -1;
       nextfile->filereq = filereq;
-      if ( (nextfile->filereq.proc_status == RTCP_REQUEST_MORE_WORK) ) {
+      if (nextfile->filereq.proc_status == RTCP_REQUEST_MORE_WORK) {
         /*
          * vdqm_tapereq is non-NULL only at startup when the
          * original request is being received. To avoid locking

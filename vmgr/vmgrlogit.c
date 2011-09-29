@@ -47,7 +47,7 @@ int openlog(const char *ident, const char *logfile) {
   memset(app_ident, '\0', sizeof(app_ident));
   if (ident != NULL) {
     strncpy(app_ident, ident, sizeof(app_ident));
-    app_ident[sizeof(app_ident)] = '\0';
+    app_ident[sizeof(app_ident)-1] = '\0';
     for (i = 0; i < strlen(app_ident); i++) {
       app_ident[i] = tolower(app_ident[i]);
     }
@@ -55,7 +55,7 @@ int openlog(const char *ident, const char *logfile) {
 
   /* Copy the location of the logfile. */
   strncpy(app_logfile, logfile, sizeof(app_logfile));
-  app_logfile[sizeof(app_logfile)] = '\0';
+  app_logfile[sizeof(app_logfile)-1] = '\0';
 
   /* Get the name of the localhost. IMHO, the logic to get the local hostname
    * is far more complex than it should be!
@@ -223,7 +223,7 @@ int vmgrlogreq(struct vmgr_srv_request_info *reqinfo,
 
   /* Append the log buffer associated to the request. */
   if (reqinfo->logbuf[0] != '\0') {
-    reqinfo->logbuf[sizeof(reqinfo->logbuf)] = '\0';
+    reqinfo->logbuf[sizeof(reqinfo->logbuf)-1] = '\0';
     len += snprintf(buffer + len, sizeof(buffer) - len, "%s ", reqinfo->logbuf);
   }
 

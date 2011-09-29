@@ -50,7 +50,6 @@ static char *ckpath();
 int main(int argc,
          char *argv[])
 {
-  extern char * optarg;
   extern int optind;
   struct stat64 st;
   char *dir;

@@ -211,7 +211,8 @@ void castor::job::stagerjob::RootPlugin::preForkHook
 // postForkHook
 //------------------------------------------------------------------------------
 void castor::job::stagerjob::RootPlugin::postForkHook
-(InputArguments &args, PluginContext &context)
+(InputArguments &args, PluginContext &context,
+ bool /*useChksSum*/, int /*moverStatus*/)
   throw(castor::exception::Exception) {
   // Get ROOTSYS
   const char *rootsys_default = "/usr/local/bin";

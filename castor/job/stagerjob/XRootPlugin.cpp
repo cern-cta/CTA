@@ -221,7 +221,8 @@ void castor::job::stagerjob::XRootPlugin::preForkHook
 // postForkHook
 //------------------------------------------------------------------------------
 void castor::job::stagerjob::XRootPlugin::postForkHook
-(InputArguments &args, PluginContext &context)
+(InputArguments &args, PluginContext &context,
+ bool /*useChksSum*/, int /*moverStatus*/)
   throw(castor::exception::Exception) {
 
   // Variables
