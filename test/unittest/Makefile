@@ -2,8 +2,8 @@ UNAME := $(shell uname)
 
 ifeq ($(UNAME), Darwin)
 UUID_LIB=
-MACPORTS_CPPUNIT_INCLUDE_OP=-I/opt/local/var/macports/software/cppunit/1.12.1_0/opt/local/include
-MACPORTS_CPPUNIT_LIB_OP=-L/opt/local/var/macports/software/cppunit/1.12.1_0/opt/local/lib
+MACPORTS_CPPUNIT_INCLUDE_OP=-I/opt/local/include
+MACPORTS_CPPUNIT_LIB_OP=-L/opt/local/lib
 else
 UUID_LIB=-luuid
 MACPORTS_CPPUNIT_INCLUDE_OP=
