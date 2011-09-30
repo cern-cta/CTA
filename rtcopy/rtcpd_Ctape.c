@@ -55,7 +55,8 @@ static char tape_path[CA_MAXPATHLEN+1];  /* Needed for Ctape_kill */
 int rtcpd_CtapeInit() {
     int errbufsiz = CA_MAXLINELEN+1;
 
-    // Ensure there is thread-specific storage for tape library error messages
+    /* Ensure there is thread-specific storage for tape library error */
+    /* messages                                                       */
     {
       char *Ctape_errbuf = NULL;
       Cglobals_get(&Ctape_key,(void **)&Ctape_errbuf,errbufsiz);
@@ -64,7 +65,8 @@ int rtcpd_CtapeInit() {
       Ctape_seterrbuf(Ctape_errbuf,errbufsiz);
     }
 
-    // Ensure there is thread-specific storage for vmgr library error messages
+    /* Ensure there is thread-specific storage for vmgr library error */
+    /* messages                                                       */
     {
       char *vmgr_errbuf = NULL;
       Cglobals_get(&vmgr_errbuf_key,(void **)&vmgr_errbuf,errbufsiz);
@@ -473,7 +475,7 @@ int rtcpd_Mount(tape_list_t *tape) {
                          (*tapereq->label != '\0' ? tapereq->label : NULL),
                          tapereq->VolReqID);
 
-        // Log an error message if there has been a VMGR library error
+        /* Log an error message if there has been a VMGR library error */
         {
           char *errbuf = rtcpd_GetVmgrErrBuf();
           if(errbuf != NULL && errbuf[0] != '\0') {
