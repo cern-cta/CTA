@@ -693,7 +693,7 @@ rtcopy_rtcp_CallVMGR.o: $(ROOT_DIR)/rtcopy/rtcp_CallVMGR.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rtcopy_rtcp_CheckReq.o: $(ROOT_DIR)/rtcopy/rtcp_CheckReq.c
-	gcc $(COMMON_OPS) -DRTCP_SERVER -c $(INCLUDE_OPS) -o $@ $^
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rtcopy_rtcp_Listen.o: $(ROOT_DIR)/rtcopy/rtcp_Listen.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
@@ -718,16 +718,16 @@ rtcopy_client_rtcp_log.o: $(ROOT_DIR)/rtcopy/rtcp_log.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rtcopy_server_rtcp_log.o: $(ROOT_DIR)/rtcopy/rtcp_log.c
-	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -DRTCP_SERVER -o $@ $^
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rtcopy_client_rtcp_SendRecv.o: $(ROOT_DIR)/rtcopy/rtcp_SendRecv.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rtcopy_server_rtcp_SendRecv.o: $(ROOT_DIR)/rtcopy/rtcp_SendRecv.c
-	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -DRTCP_SERVER -o $@ $^
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rtcopy_rtcpd_ConvertData.o: $(ROOT_DIR)/rtcopy/rtcpd_ConvertData.c
-	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -DRTCP_SERVER -o $@ $^
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 security_Csec_protocol_policy.o: $(ROOT_DIR)/security/Csec_protocol_policy.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
