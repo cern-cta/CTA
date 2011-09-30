@@ -46,6 +46,11 @@ public:
 
   void testConstructor() {
     castor::tape::tapebridge::BridgeSocketCatalogue catalogue;
+
+    CPPUNIT_ASSERT_THROW(catalogue.getInitialRtcpdConn(),
+      castor::exception::Exception);
+    CPPUNIT_ASSERT_THROW(catalogue.getListenSock(),
+      castor::exception::Exception);
   }
 
   CPPUNIT_TEST_SUITE(BridgeSocketCatalogueTest);
