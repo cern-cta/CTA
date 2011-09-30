@@ -130,22 +130,36 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
              nvl(sum(a.diskCopySize), 0) totalFileSize, nvl(sum(a.found), 0) nbFiles
         FROM (
           -- Determine the service class of all tapecopies and their associated
-          -- status.
+          -- status (in a summarized form)
+          -- In castor 2.1.11:
+          -- Output is 'Pending' for 'PENDING' or 'TOBEMIGRATED',
+          --           'Selected' for 'WAITINSTREAMS' or 'SELECTED'
+          --           'Failed' for 'FAILED'
+          -- Other states are ignored ('TOBERECALLED', 'STAGED', 'WAITPOLICY', 'REC_RETRY', 'MIG_RETRY')
+          -- New version (2.1.12) will be:
+          --          'Pending' for 'PENDING'
+          --          'Selected' for 'SELECTED'
+          --          'Failed' for 'FAILED'
+          --          'MIGRATED' and 'RETRY' will be ignored.
           SELECT svcClass, status, waitTime, diskCopySize, found FROM (
-            SELECT /*+ USE_NL(TapeCopy DiskCopy CastorFile) */
+            SELECT /*+ USE_NL(MigrationJob DiskCopy CastorFile) */
                    SvcClass.name svcClass,
-                   decode(sign(TapeCopy.status - 2), -1, 'PENDING',
-                     decode(TapeCopy.status, 6, 'FAILED', 'SELECTED')) status,
+                   decode(MigrationJob.status, tconst.MIGRATIONJOB_PENDING, 'PENDING',
+                      decode(MigrationJob.status, tconst.MIGRATIONJOB_SELECTED, 'SELECTED', 
+                          decode(MigrationJob.status, tconst.MIGRATIONJOB_FAILED, 'FAILED','UNKNOWN')
+                       )
+                   ) status,
                    (getTime() - DiskCopy.creationTime) waitTime,
                    DiskCopy.diskCopySize, 1 found, RANK() OVER (PARTITION BY
                    DiskCopy.castorFile ORDER BY DiskCopy.id ASC) rank
-              FROM DiskCopy, CastorFile, TapeCopy, SvcClass
+              FROM DiskCopy, CastorFile, MigrationJob, SvcClass
              WHERE DiskCopy.castorFile = CastorFile.id
-               AND CastorFile.id = TapeCopy.castorFile
+               AND CastorFile.id = MigrationJob.castorFile
                AND CastorFile.svcClass = SvcClass.id
                AND decode(DiskCopy.status, 10, DiskCopy.status, NULL) = 10  -- CANBEMIGR
-               AND TapeCopy.status IN (0, 1, 2, 3, 6)) -- CREATED, TOBEMIGRATED, WAITINSTREAMS,
-                                                       -- SELECTED, FAILED
+               AND MigrationJob.status IN (tconst.MIGRATIONJOB_PENDING, 
+                                           tconst.MIGRATIONJOB_SELECTED,
+                                           tconst.MIGRATIONJOB_FAILED))
            WHERE rank = 1
         ) a
         -- Attach a list of all service classes and possible states (PENDING,
