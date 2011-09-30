@@ -2511,12 +2511,12 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
   /* then set the tape-flush mode to TAPEBRIDGE_ONE_FLUSH_PER_N_FILES, else  */
   /* set the tape-flush mode to TAPEBRIDGE_N_FLUSHES_PER_FILE.               */
   if(!clientIsTapeBridge) {
+    const char *const useBuffTpm = getconfent("TAPE","BUFFER_TAPEMARK",0);
+    const char *useOfTapeBufferTapeMark = "UNKNOWN";
 
     tapeBridgeClientInfo2MsgBody.maxBytesBeforeFlush = 1;
     tapeBridgeClientInfo2MsgBody.maxFilesBeforeFlush = 1;
 
-    const char *const useBuffTpm = getconfent("TAPE","BUFFER_TAPEMARK",0);
-    const char *useOfTapeBufferTapeMark = "UNKNOWN";
     if (NULL != useBuffTpm && 0 == strcasecmp(useBuffTpm,"YES")) {
       tapeBridgeClientInfo2MsgBody.tapeFlushMode =
         TAPEBRIDGE_ONE_FLUSH_PER_N_FILES;
