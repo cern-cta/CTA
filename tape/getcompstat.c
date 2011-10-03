@@ -215,6 +215,10 @@ int get_compression_stats(int tapefd,
 	comp_stats->from_tape = kbytes_from_tape;
 	comp_stats->to_host = kbytes_to_host;  
 #endif
+	(void)tapefd;
+	(void)path;
+	(void)devtype;
+	(void)comp_stats;
 	return (0);
 }
 
@@ -222,7 +226,6 @@ int clear_compression_stats(int tapefd,
                             char *path,
                             char *devtype)
 {
-  (void)devtype;
 #if defined(linux)
 	unsigned char cdb[10];
 	char *msgaddr;
@@ -239,5 +242,8 @@ int clear_compression_stats(int tapefd,
 		return (-1);
 
 #endif
+	(void)tapefd;
+	(void)path;
+	(void)devtype;
 	return (0);
 }
