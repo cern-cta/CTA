@@ -91,7 +91,8 @@ public:
     const tapegateway::Volume           &volume,
     const uint32_t                      nbFilesOnDestinationTape,
     utils::BoolFunctor                  &stoppingGracefully,
-    Counter<uint64_t>                   &tapebridgeTransactionCounter) throw();
+    Counter<uint64_t>                   &tapebridgeTransactionCounter)
+    throw(castor::exception::Exception);
 
   /**
    * Run a recall/migration session.
