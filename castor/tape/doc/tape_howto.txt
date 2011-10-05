@@ -4020,3 +4020,17 @@ Cupvadd --user root --group root --src '^tpsrv971.cern.ch$'  --tgt '^lxcastordev
 Cupvadd --user root --group root --src '^tpsrv982.cern.ch$'  --tgt '^lxcastordev04.cern.ch$' --priv 'TP_SYSTEM'
 Cupvadd --user stage --group st --src '^lxcastordev04.cern.ch$'  --tgt '^lxcastordev04.cern.ch$' --priv 'TP_OPER'
 Cupvadd --user murrayc3 --group c3 --src '^lxcastordev04.cern.ch$'  --tgt '^lxcastordev04.cern.ch$' --priv 'TP_OPER|UPV_ADMIN|ADMIN'
+
+How to overcome "remote access attempted" errors reported by the vdqm
+=====================================================================
+
+If the vdqm is not configured correctly you may see error messages in the vdqm
+log file of the following format:
+
+2011-10-04T21:19:51.327907+02:00 lxcastordev04 vdqmd[16538]: LVL=Error TID=16554 MSG="Unable to read Request from socket" REQID=af4ebba0-9b1f-475b-a5e7-f471997720d2 Message="OldProtocolInterpreter::readProtocol(): remote access attempted, host = tpsrv674.cern.ch"
+
+To correct this problem please make sure you have the correct entries in the
+following CASTOR configuration file that is used to determine which IP
+addresses should be considered as local to the vdqm's network:
+
+/etc/castor/castor.localhosts
