@@ -1010,7 +1010,8 @@ void castor::tape::tapebridge::ClientTxRx::notifyEndOfFailedSession(
   const uint64_t               aggregatorTransactionId,
   const char                   *clientHost,
   const unsigned short         clientPort,
-  castor::exception::Exception &ex)
+  const int                    errorCode,
+  const std::string            &errorMessage)
   throw(castor::exception::Exception) {
 
   {
@@ -1027,8 +1028,8 @@ void castor::tape::tapebridge::ClientTxRx::notifyEndOfFailedSession(
   tapegateway::EndNotificationErrorReport request;
   request.setMountTransactionId(mountTransactionId);
   request.setAggregatorTransactionId(aggregatorTransactionId);
-  request.setErrorCode(ex.code());
-  request.setErrorMessage(ex.getMessage().str());
+  request.setErrorCode(errorCode);
+  request.setErrorMessage(errorMessage);
 
   const char *requestTypeName = "EndNotificationErrorReport";
   notifyClient(cuuid, mountTransactionId, aggregatorTransactionId,
@@ -1040,8 +1041,8 @@ void castor::tape::tapebridge::ClientTxRx::notifyEndOfFailedSession(
       castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
       castor::dlf::Param("clientHost"        , clientHost             ),
       castor::dlf::Param("clientPort"        , clientPort             ),
-      castor::dlf::Param("errorCode"         , ex.code()              ),
-      castor::dlf::Param("errorMessage"      , ex.getMessage().str()  )};
+      castor::dlf::Param("errorCode"         , errorCode              ),
+      castor::dlf::Param("errorMessage"      , errorMessage           )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       TAPEBRIDGE_NOTIFIED_CLIENT_END_OF_FAILED_SESSION, params);
   }

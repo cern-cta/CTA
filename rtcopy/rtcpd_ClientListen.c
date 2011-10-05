@@ -118,8 +118,8 @@ void *rtcpd_CLThread(void *arg) {
                         stop_request = 1;
                         break;
                     case RTCP_ENDOF_REQ:
-                        rtcp_log(LOG_DEBUG,"rtcp_CLThread() End Of Request received on main socket\n");
-                        tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, 
+                        rtcp_log(LOG_INFO,"rtcp_CLThread() End Of Request received on main socket\n");
+                        tl_rtcpd.tl_log( &tl_rtcpd, TL_LVL_MONITORING, 2, 
                                          "func"    , TL_MSG_PARAM_STR, "rtcpd_CLThread", 
                                          "Message" , TL_MSG_PARAM_STR, "End Of Request received on main socket" );
                         stop_request = 1;

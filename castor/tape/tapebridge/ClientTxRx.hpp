@@ -26,7 +26,6 @@
 #define CASTOR_TAPE_TAPEBRIDGE_CLIENTTXRX_HPP 1
 
 #include "castor/exception/Exception.hpp"
-#include "castor/tape/tapebridge/FailedToCopyTapeFile.hpp"
 #include "castor/tape/tapegateway/DumpParameters.hpp"
 #include "castor/tape/tapegateway/FilesToMigrateList.hpp"
 #include "castor/tape/tapegateway/FilesToRecallList.hpp"
@@ -362,7 +361,8 @@ public:
    *                            the client.
    * @param clientHost          The client host name.
    * @param clientPort          The client port number.
-   * @param ex                  The exception which failed the session.
+   * @param errorCode           The error code to be reported to the client.
+   * @patam errorMessage        The error message to be reported to the client.
    */
   static void notifyEndOfFailedSession(
     const Cuuid_t        &cuuid,
@@ -370,29 +370,8 @@ public:
     const uint64_t       aggregatorTransactionId,
     const char           *clientHost,
     const unsigned short clientPort,
-    castor::exception::Exception &e)
-    throw(castor::exception::Exception);
-
-  /**
-   * Notifies the client of the end of the recall/migration session due to an
-   * error cause by a specific file.
-   *
-   * @param cuuid               The ccuid to be used for logging.
-   * @param mountTransactionId  The mount transaction ID to be sent to the
-   *                            client.
-   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
-   *                            the client.
-   * @param clientHost          The client host name.
-   * @param clientPort          The client port number.
-   * @param e                   The exception which failed the session.
-   */
-  static void notifyEndOfFailedSessionDueToFile(
-    const Cuuid_t        &cuuid,
-    const uint32_t       mountTransactionId,
-    const uint64_t       aggregatorTransactionId,
-    const char *const    clientHost,
-    const unsigned short clientPort,
-    FailedToCopyTapeFile &e)
+    const int            errorCode,
+    const std::string    &errorMessage)
     throw(castor::exception::Exception);
 
 private:

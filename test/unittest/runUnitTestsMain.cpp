@@ -26,6 +26,7 @@
 #include "test/unittest/castor/tape/tapebridge/BridgeSocketCatalogueTest.hpp"
 #include "test/unittest/castor/tape/tapebridge/TapeFlushConfigParamsTest.hpp"
 #include "test/unittest/castor/tape/tapebridge/PendingMigrationsStoreTest.hpp"
+#include "test/unittest/castor/tape/tapebridge/RtcpdErrorTest.hpp"
 #include "test/unittest/castor/tape/utils/IndexedContainerTest.hpp"
 #include "test/unittest/castor/tape/utils/UtilsTest.hpp"
 #include "test/unittest/rtcopy/RtcopyTest.hpp"

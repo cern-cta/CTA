@@ -1403,7 +1403,13 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                  (void)rtcp_WriteAccountRecord(client,nexttape,(tmpfile!=NULL?tmpfile:nextfile),RTCPEMSG); \
              } \
              (void)rtcpd_FreeBuffers(); \
-             (void)rtcpd_Release((X),NULL); \
+             if(clientIsTapeBridge && ENOSPC == save_errno) { \
+                 rtcp_log(LOG_ERR, \
+                   "Deferring release of tape due to ENOSPC\n"); \
+                 *tapeNeedsToBeReleasedAtEndOfSession = 1; \
+             } else { \
+                 (void)rtcpd_Release((X),NULL); \
+             } \
          } else { \
              tape->local_retry++; \
              if ( mode == WRITE_ENABLE ) { \

@@ -31,6 +31,7 @@
 #include "castor/tape/tapebridge/Counter.hpp"
 #include "castor/tape/tapebridge/FileWrittenNotificationList.hpp"
 #include "castor/tape/tapebridge/PendingMigrationsStore.hpp"
+#include "castor/tape/tapebridge/RtcpdError.hpp"
 #include "castor/tape/tapebridge/TapeFlushConfigParams.hpp"
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"
@@ -209,6 +210,25 @@ private:
   bool m_sessionWithRtcpdIsFinished;
 
   /**
+   * Starts the session with the rtcpd daemon.
+   *
+   * Please note that this method does not throw any exceptions.
+   *
+   * @return true if the session was started else false.
+   */
+  bool startRtcpdSession() throw();
+
+  /**
+   * Ends the session with the rtcpd daemon.
+   *
+   * Please note that this method does not close the initial-rtcpd connection;
+   * this is the responsibility of the caller.
+   *
+   * Please note that this method does not throw any exceptions.
+   */
+  void endRtcpdSession() throw();
+
+  /**
    * In-line helper function that returns a 64-bit rtcpd message body handler
    * key to be used in the m_rtcpdHandler map.
    *
@@ -284,8 +304,45 @@ private:
   ClientCallbackMap m_clientHandlers;
 
   /**
+   * The list of errors received from the rtcpd daemon in chronological order.
+   * The front of the list is the first and oldest error received from the
+   * rtcpd daemon. The back of the list is the last and youngest error received
+   * from the rtcpd daemon.
+   */
+  std::list<RtcpdError> m_rtcpdErrors;
+
+  /**
+   * If set to true then an exception has been throw whilst running the rtcpd
+   * session.
+   */
+  bool m_exceptionThrownRunningRtcpdSession;
+
+  /**
+   * If an exception has been throw whilst running the rtcpd session, then
+   * this variable contains the error code.
+   */
+  int m_rtcpdSessionErrorCode;
+
+  /**
+   * If an exception has been throw whilst running the rtcpd session, then
+   * this variable contains the error message.
+   */
+  std::string m_rtcpdSessionErrorMessage;
+
+  /**
    * Processes the rtcpd and client sockets in a loop until the end of the
-   * rtcpd session has been reached.
+   * rtcpd session has been reached and then if possible sends the final
+   * "end-of-session" message to the rtcpd daemon.
+   *
+   * Please note that this method does not throw any exceptions.
+   */
+  void runRtcpdSessionToCompletion() throw();
+
+  /**
+   * Processes the rtcpd and client sockets in a loop until the end of the
+   * rtcpd session has been reached.  This method does not send the final
+   * "end-of-session" message to the rtcpd daemon; the caller is reponsible for
+   * sending the message and closing the initial rtcpd-connection.
    */
   void processSocks() throw(castor::exception::Exception);
 
@@ -477,6 +534,19 @@ private:
     throw(castor::exception::Exception);
 
   /**
+   * Processes the specified successful (no embedded error message) RTCP file
+   * transfer finished request.
+   *
+   * @param fileTransactonId The file transaction ID that was sent by the
+   *                         client (the tapegatewayd daemon or the readtp or
+   *                         writetp command-line tool)
+   * @param body             The body of the RTCP request.
+   */
+  void processSuccessfullRtcpFileFinishedRequest(
+    const uint64_t fileTransactonId, legacymsg::RtcpFileRqstErrMsgBody &body)
+    throw(castor::exception::Exception);
+
+  /**
    * RTCP_TAPEREQ rtcpd message-body handler.
    *
    * For full documenation please see the documentation of the type
@@ -555,19 +625,21 @@ private:
     throw(castor::exception::Exception);
 
   /**
-   * Runs a migration session.
+   * Starts a migration session.
+   *
+   * @return true if the session was started, else false
    */
-  void runMigrationSession() throw(castor::exception::Exception);
+  bool startMigrationSession() throw(castor::exception::Exception);
 
   /**
-   * Runs a recall or dump session.
+   * Starts a recall session.
    */
-  void runRecallSession() throw(castor::exception::Exception);
+  void startRecallSession() throw(castor::exception::Exception);
 
   /**
-   * Runs a dump session.
+   * Starts a dump session.
    */
-  void runDumpSession() throw(castor::exception::Exception);
+  void startDumpSession() throw(castor::exception::Exception);
 
   /**
    * Throws an exception if the peer host associated with the specified
@@ -630,6 +702,26 @@ private:
     throw(castor::exception::Exception);
 
   /**
+   * Tells the rtcpd daemon that there are no for files to transfer.  In the
+   * case of migrating files to tape, this method first notifies the internal
+   * pending-migration store that there are no more files to migrate.
+   *
+   * @param rtcpdSock          The file descriptor of the rtcpd socket which is
+   *                           awaiting a reply.
+   * @param rtcpdMagic         The magic number of the initiating rtcpd request.
+   *                           This magic number will be used in any acknowledge
+   *                           message to be sent to rtcpd.
+   * @param rtcpdReqType       The request type of the initiating rtcpd
+   *                           request. This request type will be used in any
+   *                           acknowledge message to be sent to rtcpd.
+   */
+  void tellRtcpdThereAreNoMoreFiles(
+    const int      rtcpdSock,
+    const uint32_t rtcpdMagic,
+    const uint32_t rtcpdReqType)
+  throw(castor::exception::Exception);
+
+  /**
    * EndNotificationErrorReport client message handler.
    *
    * For full documenation please see the documentation of the type
@@ -665,16 +757,44 @@ private:
 
   /**
    * Notifies the client of the end of session.
+   *
+   * Please note that this method does not throw an exception.
    */
-  void notifyClientEndOfSession();
+  void notifyClientEndOfSession() throw();
 
   /**
    * Notifies the rtcpd daemon of the end of session using the initial
-   * rtcpd connection and the closes the initial rtcpd connection.
+   * rtcpd connection.
    */
-  void notifyRtcpdEndOfSessionAndCloseInitialConnection()
+  void notifyRtcpdEndOfSession() throw(castor::exception::Exception);
+
+  /**
+   * Notifies the client of any file-specific errors that were received from the
+   * rtcpd daemon.
+   *
+   * Please note that this method does not throw any exceptions.
+   */
+  void notifyClientOfAnyFileSpecificErrors() throw();
+
+  /**
+   * Notifies the client of a failure to migrate a file to tape.
+   *
+   * @param cuuid The ccuid to be used for logging.
+   * @param e     The error received from the rtcpd daemon.
+   */
+  void notifyClientOfFailedMigrations(const Cuuid_t &cuuid,
+    const std::list<RtcpdError> &rtcpdErrors)
     throw(castor::exception::Exception);
 
+  /**
+   * Notifies the client of a failure to recall a file from tape.
+   *
+   * @param cuuid The ccuid to be used for logging.
+   * @param e     The error received from the rtcpd daemon.
+   */
+  void notifyClientOfFailedRecalls(const Cuuid_t &cuuid,
+    const std::list<RtcpdError> &rtcpdErrors)
+    throw(castor::exception::Exception);
 }; // class BridgeProtocolEngine
 
 } // namespace tapebridge

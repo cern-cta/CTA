@@ -30,8 +30,6 @@
 #include "castor/tape/tapebridge/Counter.hpp"
 #include "castor/tape/tapebridge/TapeFlushConfigParams.hpp"
 #include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
-#include "castor/tape/tapebridge/FailedToMigrateFileToTape.hpp"
-#include "castor/tape/tapebridge/FailedToRecallFileFromTape.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/utils/BoolFunctor.hpp"
 #include "castor/tape/utils/SmartFdList.hpp"
@@ -137,14 +135,6 @@ private:
    * The entry point of this thread delegates its work to this method with a
    * try and catch around the call so that we can throw exceptions.
    *
-   * This method throws a FailedToMigrateFileToTape exception if the session
-   * was ended due to the failure of an individual file being migrated to
-   * tape.
-   *
-   * This method throws a FailedToRecallFileFromTape exception if the session
-   * was ended due to the failure of an individual file being recalled from
-   * tape.
-   *
    * @param cuuid                The ccuid to be used for logging.
    * @param jobRequest           The RTCOPY job request from the VDQM.
    * @param tapebridgeTransactionCounter The counter used to generate
@@ -202,40 +192,6 @@ private:
     utils::BoolFunctor                  &stoppingGracefully,
     Counter<uint64_t>                   &tapebridgeTransactionCounter)
   throw(castor::exception::Exception);
-
-  /**
-   * Notifies the client of the end of session due to the failure to migrate a
-   * file to tape.
-   *
-   * @param cuuid             The ccuid to be used for logging.
-   * @param tapebridgeTransId The tape-bridge transaction id.
-   * @param jobRequest        The RTCOPY job request from the VDQM.
-   * @param e                 The exception thrown due to the failure to
-   *                          migrate a file to tape.
-   */
-  void notifyClientEndOfSessionDueToFailedMigration(
-    const Cuuid_t                       &cuuid,
-    const uint64_t                      tapebridgeTransId,
-    const legacymsg::RtcpJobRqstMsgBody &jobRequest,
-    FailedToMigrateFileToTape           &e)
-    throw(castor::exception::Exception);
-
-  /**
-   * Notifies the client of the end of session due to the failure to recall a
-   * file from tape.
-   *
-   * @param cuuid             The ccuid to be used for logging.
-   * @param tapebridgeTransId The tape-bridge transaction id.
-   * @param jobRequest        The RTCOPY job request from the VDQM.
-   * @param e                 The exception thrown due to the failure to
-   *                          recall a file from tape.
-   */
-  void notifyClientEndOfSessionDueToFailedRecall(
-    const Cuuid_t                       &cuuid,
-    const uint64_t                      tapebridgeTransId,
-    const legacymsg::RtcpJobRqstMsgBody &jobRequest,
-    FailedToRecallFileFromTape          &e)
-    throw(castor::exception::Exception);
 }; // class VdqmRequestHandler
 
 } // namespace tapebridge

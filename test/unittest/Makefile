@@ -206,14 +206,12 @@ rununittests: \
   tapebridge_BridgeSocketCatalogue.o \
   tapebridge_ClientTxRx.o \
   tapebridge_DlfMessageStrings.o \
-  tapebridge_FailedToCopyTapeFile.o \
-  tapebridge_FailedToMigrateFileToTape.o \
-  tapebridge_FailedToRecallFileFromTape.o \
   tapebridge_LegacyTxRx.o \
   tapebridge_LogHelper.o \
   tapebridge_marshall.o \
   tapebridge_PendingMigrationsStore.o \
   tapebridge_recvTapeBridgeFlushedToTapeAck.o \
+  tapebridge_RtcpdError.o \
   tapebridge_RtcpTxRx.o \
   tapebridge_sendTapeBridgeClientInfo2Ack.o \
   tapebridge_sendTapeBridgeFlushedToTape.o \
@@ -275,6 +273,7 @@ runUnitTestsMain.cpp: \
   castor/tape/tapebridge/BridgeSocketCatalogueTest.hpp \
   castor/tape/tapebridge/TapeFlushConfigParamsTest.hpp \
   castor/tape/tapebridge/PendingMigrationsStoreTest.hpp \
+  castor/tape/tapebridge/RtcpdErrorTest.hpp \
   castor/tape/utils/IndexedContainerTest.hpp \
   castor/tape/utils/UtilsTest.hpp \
   rtcopy/RtcopyTest.hpp \
@@ -949,18 +948,6 @@ tapebridge_DlfMessageStrings.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/DlfMessageStrings.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-tapebridge_FailedToCopyTapeFile.o: \
-  $(ROOT_DIR)/castor/tape/tapebridge/FailedToCopyTapeFile.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tapebridge_FailedToMigrateFileToTape.o: \
-  $(ROOT_DIR)/castor/tape/tapebridge/FailedToMigrateFileToTape.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tapebridge_FailedToRecallFileFromTape.o: \
-  $(ROOT_DIR)/castor/tape/tapebridge/FailedToRecallFileFromTape.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
 tapebridge_LegacyTxRx.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/LegacyTxRx.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
@@ -979,6 +966,10 @@ tapebridge_PendingMigrationsStore.o: \
 tapebridge_recvTapeBridgeFlushedToTapeAck.o: \
   $(ROOT_DIR)/tapebridge/tapebridge_recvTapeBridgeFlushedToTapeAck.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapebridge_RtcpdError.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/RtcpdError.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapebridge_RtcpTxRx.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/RtcpTxRx.cpp
@@ -1006,6 +997,10 @@ tapebridge_tapeFlushModeToStr.o: \
 
 tapebridge_TapeFlushConfigParams.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/TapeFlushConfigParams.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapebridge_VdqmRequestHandler.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/VdqmRequestHandler.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapebridge_VmgrTxRx.o: $(ROOT_DIR)/castor/tape/tapebridge/VmgrTxRx.cpp
@@ -1137,10 +1132,6 @@ tapegateway_PingNotification.o: \
 
 tapegateway_PositionCommandCode.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/PositionCommandCode.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tapebridge_VdqmRequestHandler.o: \
-  $(ROOT_DIR)/castor/tape/tapebridge/VdqmRequestHandler.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapegateway_Volume.o: \
