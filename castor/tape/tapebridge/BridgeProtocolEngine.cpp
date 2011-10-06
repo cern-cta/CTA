@@ -226,6 +226,9 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
       TAPE_THROW_EX(castor::exception::Internal,
         ": Caught a std::exception"
         ": what=" << se.what());
+    } catch(castor::exception::Exception &ex) {
+      // Simply rethrow as there is no need to convert exception type
+      throw ex;
     } catch(...) {
       TAPE_THROW_EX(castor::exception::Internal,
         ": Caught an unknown exception");
@@ -763,6 +766,9 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::startRtcpdSession()
       TAPE_THROW_EX(castor::exception::Internal,
         ": Caught a std::exception"
         ": what=" << se.what());
+    } catch(castor::exception::Exception &ex) {
+      // Simply rethrow as there is no need to convert exception type
+      throw ex;
     } catch(...) {
       TAPE_THROW_EX(castor::exception::Internal,
         ": Caught an unknown exception");
@@ -1128,6 +1134,9 @@ void castor::tape::tapebridge::BridgeProtocolEngine::endRtcpdSession() throw() {
       TAPE_THROW_EX(castor::exception::Internal,
         ": Caught a std::exception"
         ": what=" << se.what());
+    } catch(castor::exception::Exception &ex) {
+      // Simply rethrow as there is no need to convert exception type
+      throw ex;
     } catch(...) {
       TAPE_THROW_EX(castor::exception::Internal,
         ": Caught an unknown exception");
@@ -2804,6 +2813,9 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
       TAPE_THROW_EX(castor::exception::Internal,
         ": Caught a std::exception"
         ": what=" << se.what());
+    } catch(castor::exception::Exception &ex) {
+      // Simply rethrow as there is no need to convert exception type
+      throw ex;
     } catch(...) {
       TAPE_THROW_EX(castor::exception::Internal,
         ": Caught an unknown exception");
@@ -3012,6 +3024,9 @@ void castor::tape::tapebridge::BridgeProtocolEngine::notifyClientEndOfSession()
       TAPE_THROW_EX(castor::exception::Internal,
         ": Caught a std::exception"
         ": what=" << se.what());
+    } catch(castor::exception::Exception &ex) {
+      // Simply rethrow as there is no need to convert exception type
+      throw ex;
     } catch(...) {
       TAPE_THROW_EX(castor::exception::Internal,
         ": Caught an unknown exception");
