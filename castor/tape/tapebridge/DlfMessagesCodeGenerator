@@ -27,11 +27,25 @@ sub writeConstantsFile {
   }
   close(CONSTANTSHEAD);
 
-  # Count the number of messages
+  my $const_name;
+  my $const_val;
+  my $msg;
+
+  # Count the number of messages and check message constants
   open(MESSAGES, "<$messages_filename")
     or die("Could not open $messages_filename for reading: $!\n");
   my $nbMessages = 0;
   while(<MESSAGES>) {
+    m/^(\d*),([A-Z0-9_]*),(.*)/;
+    $const_val  = $1;
+    $const_name = $2;
+    $msg        = $3;
+
+    if($const_val != $nbMessages) {
+      close(MESSAGES);
+      die("Message constant not in sequence: actual=$const_val expected=$nbMessages\n");
+    }
+
     $nbMessages = $nbMessages + 1;
   }
   close(MESSAGES);
@@ -39,9 +53,6 @@ sub writeConstantsFile {
   # Write the body text
   open(MESSAGES, "<$messages_filename")
     or die("Could not open $messages_filename for reading: $!\n");
-  my $const_name;
-  my $const_val;
-  my $msg;
   my $currentMessageNb = 0;
   while(<MESSAGES>) {
     $currentMessageNb = $currentMessageNb + 1;

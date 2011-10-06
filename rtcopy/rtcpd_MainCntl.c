@@ -3061,7 +3061,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
 
       rtcp_log(LOG_INFO,
           "Asking taped to release the tape"
-          ": event=client has sent RTCP_ENDOF_REQ message\n");
+          ": event=end of rtcpd-session\n");
 
       if(NULL != tape) {
           tape->tapereq.TStartUnmount = (int)time(NULL);

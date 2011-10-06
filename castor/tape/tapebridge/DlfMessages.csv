@@ -142,3 +142,7 @@
 141,TAPEBRIDGE_FAILED_TO_NOTIFY_CLIENT_OF_FILE_ERRORS,"Failed to notify client of file-specific errors"
 142,TAPEBRIDGE_EXCEPTION_RUNNING_RTCPD_SESSION,"Exception thrown whilst running session with rtcpd-daemon"
 143,TAPEBRIDGE_FAILED_TO_CLOSE_INITIAL_RTCPD_CONNECTION,"Failed to close the initial connection with the rtcpd daemon"
+144,TAPEBRIDGE_DROPPING_CLIENT_REPLY_RTCPD_CONNECTION_CLOSED,"Dropping client reply as the associated rtcpd-connection has been closed"
+145,TAPEBRIDGE_CLOSED_RTCPD_DISK_TAPE_CONNECTION_DUE_TO_ENDOF_REQ,"Closed rtcpd disk/tape IO control connection due to ENDOF_REQ"
+146,TAPEBRIDGE_FINISHED_PROCESSING_SOCKETS,"Finished processing sockets"
+147,TAPEBRIDGE_RETURNED_FROM_MAIN_SELECT,"Returned from main select"

@@ -52,15 +52,13 @@ namespace tapebridge {
  *
  * The BridgeSocketCatalogue is responsible for cataloguing the above sockets.
  *
- * The BridgeSocketCatalogue behaves like a smart pointer for the rtcpd
- * disk/tape IO control-connections and the client connections in that
- * its destructor will close them if they are still open.
+ * The BridgeSocketCatalogue behaves like a smart pointer for the initital
+ * rtcpd-connection the rtcpd disk/tape IO control-connections and the client
+ * connections.  This means the destructor of the BridgeSocketCatalogue will
+ * close them if they are still open.
  *
  * The BridgeSocketCatalogue will not close the listen socket used to accept
  * rtcpd connections.  This is the responsibility of the VdqmRequestHandler.
- *
- * The BridgeSocketCatalogue will not close the initial rtpcd connection.  This
- * is the responsibility of the VdqmRequestHandler.
  */
 class BridgeSocketCatalogue {
 public:
@@ -74,7 +72,7 @@ public:
    * Destructor.
    *
    * Besides freeing the resources used by this object, this destructor also
-   * closes the initila rtcpd connection, the rtcpd disk/tape IO
+   * closes the initial rtcpd-connection, the rtcpd disk/tape IO
    * control-connections and the client connections that are still open.
    *
    * The destructor does not close the listen socket used to accept rtcpd
@@ -198,6 +196,15 @@ public:
    * Releases the specified rtcpd disk/tape IO control-connection from the
    * catalogue.
    *
+   * If the there is an associated client-connection then the underlying
+   * rtcpd-connection entry is kept within the socket-catalogue so that the
+   * getRtcpdConn() method will still return successfully.  In this case the
+   * rtcpd socket file-descriptor of the rtcpd-connectione ntry to -1 to
+   * indicate that it has been released from the socket-catalogue.
+   *
+   * If there is no associated client-connection then the underlying
+   * rtcpd-connection entry is erased from the socket-catalogue.
+   *
    * This method throws an exception if the specifed socket-descriptor is
    * negative.
    *
@@ -250,7 +257,8 @@ public:
    *
    * @param clientSock         The socket-descriptor of the client-connection.
    * @param rtcpdSock          Output parameter: The socket-descriptor of the
-   *                           rtcpd disk/tape IO control-connection.
+   *                           rtcpd disk/tape IO control-connection if it is
+   *                           still open else -1.
    * @param rtcpdReqMagic      Output parameter: The magic number of the
    *                           initiating rtcpd request.  This magic number
    *                           will be used in any acknowledge message to be
@@ -409,7 +417,7 @@ private:
     /**
      * The socket-descriptor of an rtcpd-connection.
      */
-    const int rtcpdSock;
+    int rtcpdSock;
 
     /**
      * The magic number of the rtcpd request message awaiting a reply from the

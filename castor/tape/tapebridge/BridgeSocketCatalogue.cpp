@@ -46,8 +46,6 @@ castor::tape::tapebridge::BridgeSocketCatalogue::~BridgeSocketCatalogue() {
   // Note this destructor does NOT close the listen socket used to accept rtcpd
   // connections.  This is the responsibility of the VdqmRequestHandler.
 
-  // Note this destructor does NOT close the initial rtcpd connection.  This is
-  // the responsibility of the VdqmRequestHandler.
   if(0 <= m_initialRtcpdSock) {
     close(m_initialRtcpdSock);
   }
@@ -305,16 +303,22 @@ int castor::tape::tapebridge::BridgeSocketCatalogue::
     // If the rtcpd socket-descriptor has been found
     if(itor->rtcpdSock == rtcpdSock) {
 
-      // Throw an exception if there is an associated client connection
-      if(itor->clientSock != -1) {
-        TAPE_THROW_CODE(ECANCELED,
-          ": Rtcpd socket-descriptor has an associated client connection"
-          ": rtcpdSock=" << rtcpdSock <<
-          ": clientSock=" << itor->clientSock);
+      // If there is an associated client-connection
+      if(-1 != itor->clientSock) {
+        // Keep the rtcpd-connection entry in the socket-catalogue so that
+        // the getRtcpdConn() method will still return successfully.
+        //
+        // Set the rtcpd socket file-descriptor of the rtcpd-connection
+        // entry to -1 to indicate that it has been released from the
+        // socket-catalogue
+        itor->rtcpdSock = -1;
+
+      // Else there is no associated client connection
+      } else {
+        // Erase the association from the socket-catalogue
+        m_rtcpdConnections.erase(itor);
       }
 
-      // Erase the association from the list and return the release socket
-      m_rtcpdConnections.erase(itor);
       return rtcpdSock;
     }
   }
@@ -333,13 +337,6 @@ int castor::tape::tapebridge::BridgeSocketCatalogue::
 int castor::tape::tapebridge::BridgeSocketCatalogue::releaseClientConn(
   const int rtcpdSock, const int clientSock)
   throw(castor::exception::Exception) {
-
-  if(0 > rtcpdSock) {
-    TAPE_THROW_EX(castor::exception::InvalidArgument,
-      ": Invalid rtcpd socket-descriptor"
-      ": Value is negative"
-      ": rtcpdSock=" << rtcpdSock);
-  }
 
   if(0 > clientSock) {
     TAPE_THROW_EX(castor::exception::InvalidArgument,
@@ -487,11 +484,14 @@ void castor::tape::tapebridge::BridgeSocketCatalogue::buildReadFdSet(
   for(RtcpdConnectionList::const_iterator itor = m_rtcpdConnections.begin();
     itor != m_rtcpdConnections.end(); itor++) {
 
-    // Add the rtcpd socket-descriptor to the descriptor set and update maxFd
-    // accordingly
-    FD_SET(itor->rtcpdSock, &readFdSet);
-    if(itor->rtcpdSock > maxFd) {
-      maxFd = itor->rtcpdSock;
+    // If the rtcpd connection is still open
+    if(0 <= itor->rtcpdSock) {
+      // Add the rtcpd socket-descriptor to the descriptor set and update
+      // maxFd accordingly
+      FD_SET(itor->rtcpdSock, &readFdSet);
+      if(itor->rtcpdSock > maxFd) {
+        maxFd = itor->rtcpdSock;
+      }
     }
 
     // If there is an associated client socket-descriptor, then add it to
@@ -538,9 +538,10 @@ int castor::tape::tapebridge::BridgeSocketCatalogue::getAPendingSock(
   for(RtcpdConnectionList::const_iterator itor = m_rtcpdConnections.begin();
     itor != m_rtcpdConnections.end(); itor++) {
 
-    // If the rtcpd socket-descriptor is pending, then set the socket type
-    // output parameter and return the socket
-    if(FD_ISSET(itor->rtcpdSock, &readFdSet)) {
+    // If the rtcpd connection is still open and if the corresponding rtcpd
+    // socket-descriptor is pending, then set the socket type output parameter
+    // and return the socket
+    if(0 <= itor->rtcpdSock && FD_ISSET(itor->rtcpdSock, &readFdSet)) {
       sockType = RTCPD_DISK_TAPE_IO_CONTROL;
       return itor->rtcpdSock;
     }
@@ -568,7 +569,18 @@ int castor::tape::tapebridge::BridgeSocketCatalogue::getAPendingSock(
 int castor::tape::tapebridge::BridgeSocketCatalogue::
   getNbDiskTapeIOControlConns() const {
 
-  return m_rtcpdConnections.size();
+  int nbDiskTapeIOControlConns = 0;
+
+  for(RtcpdConnectionList::const_iterator itor = m_rtcpdConnections.begin();
+    itor != m_rtcpdConnections.end(); itor++) {
+
+    // If the rtcpd-connection is still open then include it in the count
+    if(-1 != itor->rtcpdSock) {
+      nbDiskTapeIOControlConns++;
+    }
+  }
+
+  return nbDiskTapeIOControlConns;
 }
 
 

@@ -255,6 +255,19 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
     m_rtcpdSessionErrorMessage           = ex.getMessage().str();
     m_exceptionThrownRunningRtcpdSession = true;
   }
+
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("mountTransActionId", m_jobRequest.volReqId  ),
+    castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
+    castor::dlf::Param("TPVID"             , m_volume.vid()         ),
+    castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+    castor::dlf::Param("dgn"               , m_jobRequest.dgn       ),
+    castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
+    castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+    castor::dlf::Param("clientType",
+      utils::volumeClientTypeToString(m_volume.clientType()))};
+  castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+    TAPEBRIDGE_FINISHED_PROCESSING_SOCKETS, params);
 }
 
 
@@ -264,8 +277,6 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 void castor::tape::tapebridge::BridgeProtocolEngine::processSocks()
   throw(castor::exception::Exception) {
 
-  int          selectRc            = 0;
-  int          selectErrno         = 0;
   unsigned int nbOneSecondTimeouts = 0;
   int          maxFd               = 0;
   fd_set       readFdSet;
@@ -288,8 +299,23 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processSocks()
     timeout.tv_usec = 0;
 
     // Wait for up to 1 second to see if any read file descriptors are ready
-    selectRc = select(maxFd + 1, &readFdSet, NULL, NULL, &timeout);
-    selectErrno = errno;
+    const int selectRc = select(maxFd + 1, &readFdSet, NULL, NULL, &timeout);
+    const int selectErrno = errno;
+//  {
+//    castor::dlf::Param params[] = {
+//      castor::dlf::Param("mountTransActionId", m_jobRequest.volReqId  ),
+//      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
+//      castor::dlf::Param("TPVID"             , m_volume.vid()         ),
+//      castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+//      castor::dlf::Param("dgn"               , m_jobRequest.dgn       ),
+//      castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
+//      castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+//      castor::dlf::Param("clientType",
+//    utils::volumeClientTypeToString(m_volume.clientType())),
+//      castor::dlf::Param("selectRc"          , selectRc               )};
+//    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+//      TAPEBRIDGE_RETURNED_FROM_MAIN_SELECT, params);
+//  }
 
     switch(selectRc) {
     case 0: // Select timed out
@@ -544,18 +570,39 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
       castor::dlf::Param("clientPort"          , m_jobRequest.clientPort),
       castor::dlf::Param("clientType",
         utils::volumeClientTypeToString(m_volume.clientType())),
-      castor::dlf::Param("socketFd"            , pendingSock           ),
-      castor::dlf::Param("nbReceivedENDOF_REQs", m_nbReceivedENDOF_REQs)};
+      castor::dlf::Param("socketFd"            , pendingSock            ),
+      castor::dlf::Param("nbReceivedENDOF_REQs", m_nbReceivedENDOF_REQs )};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       TAPEBRIDGE_RECEIVED_RTCP_ENDOF_REQ, params);
   }
 
-  close(m_sockCatalogue.releaseRtcpdDiskTapeIOControlConn(pendingSock));
+  const int closeRc = close(m_sockCatalogue.releaseRtcpdDiskTapeIOControlConn(
+    pendingSock));
+  const int nbDiskTapeIOControlConnsAfterClose =
+    m_sockCatalogue.getNbDiskTapeIOControlConns();
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
+      castor::dlf::Param("TPVID"             , m_volume.vid()         ),
+      castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+      castor::dlf::Param("dgn"               , m_jobRequest.dgn       ),
+      castor::dlf::Param("clientHost "       , m_jobRequest.clientHost),
+      castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+      castor::dlf::Param("clientType",
+        utils::volumeClientTypeToString(m_volume.clientType())),
+      castor::dlf::Param("socketFd"          , pendingSock            ),
+      castor::dlf::Param("closeRc"           , closeRc                ),
+      castor::dlf::Param("nbIOControlConns"  ,
+        nbDiskTapeIOControlConnsAfterClose)};
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+      TAPEBRIDGE_CLOSED_RTCPD_DISK_TAPE_CONNECTION_DUE_TO_ENDOF_REQ, params);
+  }
 
   // If only the initial callback connection is open, then record the fact that
   // the session with the rtcpd daemon is over and the rtcpd daemon is awaiting
   // the final RTCP_ENDOF_REQ message from the tapebridged daemon
-  if(0 == m_sockCatalogue.getNbDiskTapeIOControlConns()) {
+  if(0 == nbDiskTapeIOControlConnsAfterClose) {
     m_sessionWithRtcpdIsFinished = true;
 
     castor::dlf::Param params[] = {
@@ -619,6 +666,23 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 
   std::auto_ptr<IObject> obj(ClientTxRx::receiveReplyAndClose(pendingSock,
     remainingClientTimeout));
+
+  // Drop the client reply if the associated rtcpd-connection has been closed
+  if(-1 == rtcpdSock) {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("mountTransactionId"  , m_jobRequest.volReqId  ),
+      castor::dlf::Param("volReqId"            , m_jobRequest.volReqId  ),
+      castor::dlf::Param("TPVID"               , m_volume.vid()         ),
+      castor::dlf::Param("driveUnit"           , m_jobRequest.driveUnit ),
+      castor::dlf::Param("dgn"                 , m_jobRequest.dgn       ),
+      castor::dlf::Param("clientHost"          , m_jobRequest.clientHost),
+      castor::dlf::Param("clientPort"          , m_jobRequest.clientPort),
+      castor::dlf::Param("clientType",
+        utils::volumeClientTypeToString(m_volume.clientType()))};
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+      TAPEBRIDGE_DROPPING_CLIENT_REPLY_RTCPD_CONNECTION_CLOSED, params);
+    return;
+  }
 
   // Find the message type's corresponding handler
   ClientCallbackMap::iterator itor = m_clientHandlers.find(obj->type());
@@ -1159,10 +1223,9 @@ void castor::tape::tapebridge::BridgeProtocolEngine::endRtcpdSession() throw() {
       TAPEBRIDGE_FAILED_TO_END_RTCPD_SESSION, params);
   }
 
-  // Close the initial rtcpd connection
-  if(0 != close(m_sockCatalogue.releaseInitialRtcpdConn())) {
-    const int         errorCode    = errno;
-    const std::string errorMessage = sstrerror(errorCode);
+  // Close the initial rtcpd-connection
+  {
+    const int closeRc = close(m_sockCatalogue.releaseInitialRtcpdConn());
 
     castor::dlf::Param params[] = {
       castor::dlf::Param("mountTransActionId", m_jobRequest.volReqId  ),
@@ -1174,10 +1237,9 @@ void castor::tape::tapebridge::BridgeProtocolEngine::endRtcpdSession() throw() {
       castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
       castor::dlf::Param("clientType",
         utils::volumeClientTypeToString(m_volume.clientType())),
-      castor::dlf::Param("errorCode"         , errorCode              ),
-      castor::dlf::Param("errorMessage"      , errorMessage           )};
+      castor::dlf::Param("closeRc"           , closeRc                )};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
-      TAPEBRIDGE_FAILED_TO_CLOSE_INITIAL_RTCPD_CONNECTION, params);
+      TAPEBRIDGE_CLOSED_INITIAL_CALLBACK_CONNECTION, params);
   }
 }
 
