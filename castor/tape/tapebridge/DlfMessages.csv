@@ -140,4 +140,5 @@
 139,TAPEBRIDGE_FAILED_TO_START_RTCPD_SESSION,"Failed to start session with rtcpd"
 140,TAPEBRIDGE_FAILED_TO_END_RTCPD_SESSION,"Failed to end session with rtcpd"
 141,TAPEBRIDGE_FAILED_TO_NOTIFY_CLIENT_OF_FILE_ERRORS,"Failed to notify client of file-specific errors"
-142,TAPEBRIDGE_EXCEPTION_RUNNING_RTCPD_SESSION,"Exception throw whilst running running session with rtcpd-daemon"
+142,TAPEBRIDGE_EXCEPTION_RUNNING_RTCPD_SESSION,"Exception thrown whilst running session with rtcpd-daemon"
+143,TAPEBRIDGE_FAILED_TO_CLOSE_INITIAL_RTCPD_CONNECTION,"Failed to close the initial connection with the rtcpd daemon"

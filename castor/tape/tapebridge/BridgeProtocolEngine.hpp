@@ -96,9 +96,9 @@ public:
     throw(castor::exception::Exception);
 
   /**
-   * Run a recall/migration session.
+   * Run a dump/migration/recall session.
    */
-  void run() throw(castor::exception::Exception);
+  void run() throw();
 
 private:
 
@@ -219,10 +219,8 @@ private:
   bool startRtcpdSession() throw();
 
   /**
-   * Ends the session with the rtcpd daemon.
-   *
-   * Please note that this method does not close the initial-rtcpd connection;
-   * this is the responsibility of the caller.
+   * Ends the session with the rtcpd daemon including closing the initial-rtcpd
+   * connection.
    *
    * Please note that this method does not throw any exceptions.
    */
@@ -331,18 +329,23 @@ private:
 
   /**
    * Processes the rtcpd and client sockets in a loop until the end of the
-   * rtcpd session has been reached and then if possible sends the final
-   * "end-of-session" message to the rtcpd daemon.
+   * rtcpd-session has been reached.
+   *
+   * Please note that this method does not send the final "end-of-session"
+   * message to the rtcpd daemon and close the initial rtcpd-connection; these
+   * are the responsibilities of the caller.
    *
    * Please note that this method does not throw any exceptions.
    */
-  void runRtcpdSessionToCompletion() throw();
+  void runRtcpdSession() throw();
 
   /**
    * Processes the rtcpd and client sockets in a loop until the end of the
-   * rtcpd session has been reached.  This method does not send the final
-   * "end-of-session" message to the rtcpd daemon; the caller is reponsible for
-   * sending the message and closing the initial rtcpd-connection.
+   * rtcpd session has been reached.
+   *
+   * Please note that this method does not send the final "end-of-session"
+   * message to the rtcpd daemon and close the initial rtcpd-connection; these
+   * are the responsibilities of the caller.
    */
   void processSocks() throw(castor::exception::Exception);
 
