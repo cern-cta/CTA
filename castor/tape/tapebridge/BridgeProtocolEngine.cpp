@@ -1238,7 +1238,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::endRtcpdSession() throw() {
       castor::dlf::Param("clientType",
         utils::volumeClientTypeToString(m_volume.clientType())),
       castor::dlf::Param("closeRc"           , closeRc                )};
-    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       TAPEBRIDGE_CLOSED_INITIAL_CALLBACK_CONNECTION, params);
   }
 }
