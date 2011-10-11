@@ -270,12 +270,12 @@ INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('Migration
  *   lastEditionTime : last time this routing rule was edited, in seconds since the epoch
  *   tapePool : the tape pool where to migrate files matching the above criteria
  */
-CREATE TABLE MigrationRouting (isSmallFile BOOLEAN CONSTRAINT NN_MigrationRouting_IsSFile NOT NULL,
+CREATE TABLE MigrationRouting (isSmallFile INTEGER,
                                copyNb INTEGER CONSTRAINT NN_MigrationRouting_CopyNb NOT NULL,
                                svcClass INTEGER CONSTRAINT NN_MigrationRouting_SvcClass NOT NULL,
                                fileClass INTEGER CONSTRAINT NN_MigrationRouting_FileClass NOT NULL,
                                lastEditor VARCHAR2(2048) CONSTRAINT NN_MigrationRouting_LastEditor NOT NULL,
-                               lastEditionTime NUMBER CONSTRAINT NN_MigrationRouting_LastEditionTime NOT NULL,
+                               lastEditionTime NUMBER CONSTRAINT NN_MigrationRouting_LastEdTime NOT NULL,
                                tapePool INTEGER CONSTRAINT NN_MigrationRouting_TapePool NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE INDEX I_MigrationRouting_Rules ON MigrationRouting(svcClass, fileClass, copyNb, isSmallFile);
@@ -292,7 +292,6 @@ CREATE UNIQUE INDEX I_DiskServer_name ON DiskServer (name);
 
 CREATE UNIQUE INDEX I_CastorFile_FileIdNsHost ON CastorFile (fileId, nsHost);
 CREATE UNIQUE INDEX I_CastorFile_LastKnownFileName ON CastorFile (lastKnownFileName);
-CREATE INDEX I_CastorFile_SvcClass ON CastorFile (svcClass);
 
 CREATE INDEX I_DiskCopy_Castorfile ON DiskCopy (castorFile);
 CREATE INDEX I_DiskCopy_FileSystem ON DiskCopy (fileSystem);
@@ -400,10 +399,6 @@ ALTER TABLE DiskCopy
   MODIFY (status CONSTRAINT NN_DiskCopy_Status NOT NULL);
 
 /* CastorFile constraints */
-ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_SvcClass
-  FOREIGN KEY (svcClass) REFERENCES SvcClass (id)
-  INITIALLY DEFERRED DEFERRABLE;
-
 ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_FileClass
   FOREIGN KEY (fileClass) REFERENCES FileClass (id)
   INITIALLY DEFERRED DEFERRABLE;
@@ -417,21 +412,6 @@ ALTER TABLE Tape MODIFY(lastVdqmPingTime CONSTRAINT NN_Tape_lastVdqmPingTime NOT
 /* DiskPool2SvcClass constraints */
 ALTER TABLE DiskPool2SvcClass ADD CONSTRAINT PK_DiskPool2SvcClass_PC
   PRIMARY KEY (parent, child);
-
-/* TapeGateway tables */
-CREATE TABLE TapeGatewayRequest (accessMode NUMBER, startTime INTEGER, lastVdqmPingTime INTEGER, vdqmVolReqId NUMBER, nbRetry NUMBER, lastFseq NUMBER, id INTEGER CONSTRAINT PK_TapeGatewayRequest_Id PRIMARY KEY, streamMigration INTEGER, tapeRecall INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeGatewayRequest', 'status', 0, 'TO_BE_RESOLVED');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeGatewayRequest', 'status', 1, 'SEND_TO_VDQM');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeGatewayRequest', 'status', 2, 'WAITING_TAPESERVER');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeGatewayRequest', 'status', 3, 'ONGOING');
-
-/* Index and Constraints for the tapegateway tables */
-CREATE UNIQUE INDEX I_TGRequest_Tape ON TapeGatewayRequest(tapeRecall);
-CREATE UNIQUE INDEX I_TGRequest_Stream ON TapeGatewayRequest(streamMigration);
-CREATE UNIQUE INDEX I_TGRequest_VdqmVolReqId ON TapeGatewayRequest(vdqmVolReqId);
-
-ALTER TABLE TapeGatewayRequest ADD CONSTRAINT FK_TapeGatewayRequest_SM FOREIGN KEY (streamMigration) REFERENCES Stream (id);
-ALTER TABLE TapeGatewayRequest ADD CONSTRAINT FK_TapeGatewayRequest_TR FOREIGN KEY (tapeRecall) REFERENCES Tape (id);
 
 /* Global temporary table to handle output of the filesDeletedProc procedure */
 CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcOutput
@@ -593,7 +573,7 @@ ALTER TABLE CastorConfig ADD CONSTRAINT UN_CastorConfig_class_key UNIQUE (class,
 
 /* Prompt for the value of the general/instance options */
 UNDEF instanceName
-ACCEPT instanceName DEFAULT castorstager PROMPT 'Enter the name of the castor instance: (default: castor_stager, example: castoratlas) '
+ACCEPT instanceName DEFAULT castor_stager PROMPT 'Enter the name of the castor instance: (default: castor_stager, example: castoratlas) '
 SET VER OFF
 
 INSERT INTO CastorConfig
@@ -775,9 +755,21 @@ ON COMMIT PRESERVE ROWS;
 CREATE TABLE RmMasterLock (unused NUMBER);
 
 
-/*******************************************************/
+/**********/
+/* Repack */
+/**********/
+
+/* DB link to the nameserver db */
+PROMPT Configuration of the database link to the CASTOR name space
+UNDEF cnsUser
+ACCEPT cnsUser STRING PROMPT 'Enter the nameserver db username: ';
+UNDEF cnsPasswd
+ACCEPT cnsPasswd STRING PROMPT 'Enter the nameserver db password: ';
+UNDEF cnsDbName
+ACCEPT cnsDbName STRING PROMPT 'Enter the nameserver db TNS name: ';
+CREATE DATABASE LINK remotens
+  CONNECT TO &cnsUser IDENTIFIED BY &cnsPasswd USING '&cnsDbName';
+
 /* temporary table used for listing segments of a tape */
 /* efficiently via DB link when repacking              */
-/*******************************************************/
-
 CREATE GLOBAL TEMPORARY TABLE RepackTapeSegments (s_fileId NUMBER, blockid RAW(4), fseq NUMBER, segSize NUMBER, copyno NUMBER, fileClass NUMBER) ON COMMIT PRESERVE ROWS;

@@ -2147,10 +2147,11 @@ BEGIN
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- No routing rule found means a user-visible error on the putDone or on the file close operation
       raise_application_error(-20100, 'Cannot find an appropriate tape routing for this file in the current service class, aborting tape migration');
-    END;    
+    END;
     -- Create tape copy and attach to the appropriate tape pool
-    INSERT INTO MigrationJob (fileSize, creationTime, castorFile, copyNb, tapePool, nbRetry, status, id)
-      VALUES (datasize, getTime(), cfId, i, varTpId, 0, tconst.MIGRATIONJOB_PENDING, ids_seq.nextval);
+    -- XXX TODO investigate whether/how to drop tapeGatewayRequestId
+    INSERT INTO MigrationJob (fileSize, creationTime, castorFile, copyNb, tapePool, nbRetry, status, id, tapeGatewayRequestId)
+      VALUES (datasize, getTime(), cfId, i, varTpId, 0, tconst.MIGRATIONJOB_PENDING, ids_seq.nextval, ids_seq.nextval);
   END LOOP;
 END;
 /

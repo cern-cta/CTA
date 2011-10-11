@@ -419,6 +419,18 @@ INSERT INTO Type2Obj (type, object) VALUES (193, 'BulkRequestResult');
 INSERT INTO Type2Obj (type, object) VALUES (194, 'FileResult');
 INSERT INTO Type2Obj (type, object) VALUES (195, 'DiskPoolQuery');
 INSERT INTO Type2Obj (type, object) VALUES (196, 'EndNotificationFileErrorReport');
+INSERT INTO Type2Obj (type, object) VALUES (197, 'FileMigrationReportList');
+INSERT INTO Type2Obj (type, object) VALUES (198, 'FileRecallReportList');
+INSERT INTO Type2Obj (type, object) VALUES (199, 'FilesToMigrateList');
+INSERT INTO Type2Obj (type, object) VALUES (200, 'FilesToMigrateListRequest');
+INSERT INTO Type2Obj (type, object) VALUES (201, 'FilesToRecallListRequest');
+INSERT INTO Type2Obj (type, object) VALUES (202, 'FileErrorReportStruct');
+INSERT INTO Type2Obj (type, object) VALUES (203, 'FileMigratedNotificationStruct');
+INSERT INTO Type2Obj (type, object) VALUES (204, 'FileRecalledNotificationStruct');
+INSERT INTO Type2Obj (type, object) VALUES (205, 'FilesToRecallList');
+INSERT INTO Type2Obj (type, object) VALUES (206, 'FileToMigrateStruct');
+INSERT INTO Type2Obj (type, object) VALUES (207, 'FileToRecallStruct');
+INSERT INTO Type2Obj (type, object) VALUES (208, 'FilesListRequest');
 COMMIT;
 
 
@@ -675,17 +687,26 @@ INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('Migration
  */
 CREATE TABLE MigrationJob (fileSize INTEGER CONSTRAINT NN_MigrationJob_FileSize NOT NULL,
                            VID VARCHAR2(2048),
-                           creationTime NUMBER NN_MigrationJob_CreationTime NOT NULL,
-                           castorFile INTEGER NN_MigrationJob_CastorFile NOT NULL,
-                           copyNb INTEGER NN_MigrationJob_copyNb NOT NULL,
-                           tapePool INTEGER NN_MigrationJob_TapePool NOT NULL,
-                           nbRetry INTEGER CONSTRAINT NN_MigrationJob_nbRetry NOT NULL,
+                           creationTime NUMBER 
+                                CONSTRAINT NN_MigrationJob_CreationTime NOT NULL,
+                           castorFile INTEGER 
+                                CONSTRAINT NN_MigrationJob_CastorFile NOT NULL,
+                           copyNb INTEGER 
+                                CONSTRAINT NN_MigrationJob_copyNb NOT NULL,
+                           tapePool INTEGER 
+                                CONSTRAINT NN_MigrationJob_TapePool NOT NULL,
+                           nbRetry INTEGER
+                                CONSTRAINT NN_MigrationJob_nbRetry NOT NULL,
                            errorcode INTEGER,
-                           tapeGatewayRequestId INTEGER,
+                           tapeGatewayRequestId INTEGER
+                                CONSTRAINT NN_MigrationJob_tgRequestId NOT NULL,
                            FileTransactionId INTEGER,
                            fSeq INTEGER,
-                           status INTEGER NN_MigrationJob_Status NOT NULL,
-                           id INTEGER CONSTRAINT PK_MigrationJob_Id PRIMARY KEY CONSTRAINT NN_MigrationJob_Id NOT NULL)
+                           status INTEGER 
+                                CONSTRAINT NN_MigrationJob_Status NOT NULL,
+                           id INTEGER
+                                CONSTRAINT PK_MigrationJob_Id PRIMARY KEY 
+                                CONSTRAINT NN_MigrationJob_Id NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE INDEX I_MigrationJob_CFVID ON MigrationJob(CastorFile, VID);
 CREATE INDEX I_MigrationJob_CFCopyNb ON MigrationJob(CastorFile, copyNb);
@@ -712,12 +733,12 @@ INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('Migration
  *   lastEditionTime : last time this routing rule was edited, in seconds since the epoch
  *   tapePool : the tape pool where to migrate files matching the above criteria
  */
-CREATE TABLE MigrationRouting (isSmallFile BOOLEAN CONSTRAINT NN_MigrationRouting_IsSmallFile NOT NULL,
+CREATE TABLE MigrationRouting (isSmallFile INTEGER,
                                copyNb INTEGER CONSTRAINT NN_MigrationRouting_CopyNb NOT NULL,
                                svcClass INTEGER CONSTRAINT NN_MigrationRouting_SvcClass NOT NULL,
                                fileClass INTEGER CONSTRAINT NN_MigrationRouting_FileClass NOT NULL,
                                lastEditor VARCHAR2(2048) CONSTRAINT NN_MigrationRouting_LastEditor NOT NULL,
-                               lastEditionTime NUMBER CONSTRAINT NN_MigrationRouting_LastEditionTime NOT NULL,
+                               lastEditionTime NUMBER CONSTRAINT NN_MigrationRouting_LastEdTime NOT NULL,
                                tapePool INTEGER CONSTRAINT NN_MigrationRouting_TapePool NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE INDEX I_MigrationRouting_Rules ON MigrationRouting(svcClass, fileClass, copyNb, isSmallFile);
@@ -734,7 +755,6 @@ CREATE UNIQUE INDEX I_DiskServer_name ON DiskServer (name);
 
 CREATE UNIQUE INDEX I_CastorFile_FileIdNsHost ON CastorFile (fileId, nsHost);
 CREATE UNIQUE INDEX I_CastorFile_LastKnownFileName ON CastorFile (lastKnownFileName);
-CREATE INDEX I_CastorFile_SvcClass ON CastorFile (svcClass);
 
 CREATE INDEX I_DiskCopy_Castorfile ON DiskCopy (castorFile);
 CREATE INDEX I_DiskCopy_FileSystem ON DiskCopy (fileSystem);
@@ -842,10 +862,6 @@ ALTER TABLE DiskCopy
   MODIFY (status CONSTRAINT NN_DiskCopy_Status NOT NULL);
 
 /* CastorFile constraints */
-ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_SvcClass
-  FOREIGN KEY (svcClass) REFERENCES SvcClass (id)
-  INITIALLY DEFERRED DEFERRABLE;
-
 ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_FileClass
   FOREIGN KEY (fileClass) REFERENCES FileClass (id)
   INITIALLY DEFERRED DEFERRABLE;
@@ -859,26 +875,6 @@ ALTER TABLE Tape MODIFY(lastVdqmPingTime CONSTRAINT NN_Tape_lastVdqmPingTime NOT
 /* DiskPool2SvcClass constraints */
 ALTER TABLE DiskPool2SvcClass ADD CONSTRAINT PK_DiskPool2SvcClass_PC
   PRIMARY KEY (parent, child);
-
-/* TapeGateway tables */
-CREATE TABLE TapeGatewayRequest (accessMode NUMBER, startTime INTEGER, lastVdqmPingTime INTEGER, vdqmVolReqId NUMBER, nbRetry NUMBER, lastFseq NUMBER, id INTEGER CONSTRAINT PK_TapeGatewayRequest_Id PRIMARY KEY, streamMigration INTEGER, tapeRecall INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-CREATE TABLE TapeGatewaySubRequest (fseq NUMBER, id INTEGER CONSTRAINT PK_TapeGatewaySubRequest_Id PRIMARY KEY, tapecopy INTEGER, request INTEGER, diskcopy INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeGatewayRequest', 'status', 0, 'TO_BE_RESOLVED');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeGatewayRequest', 'status', 1, 'SEND_TO_VDQM');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeGatewayRequest', 'status', 2, 'WAITING_TAPESERVER');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('TapeGatewayRequest', 'status', 3, 'ONGOING');
-
-/* Index and Constraints for the tapegateway tables */
-CREATE INDEX I_TGSubRequest_Request ON TapeGatewaySubRequest(request);
-CREATE UNIQUE INDEX I_TGRequest_Tape ON TapeGatewayRequest(tapeRecall);
-CREATE UNIQUE INDEX I_TGRequest_Stream ON TapeGatewayRequest(streamMigration);
-CREATE UNIQUE INDEX I_TGRequest_VdqmVolReqId ON TapeGatewayRequest(vdqmVolReqId);
-
-ALTER TABLE TapeGatewaySubRequest ADD CONSTRAINT FK_TGSubRequest_DC FOREIGN KEY (diskCopy) REFERENCES DiskCopy (id);
-ALTER TABLE TapeGatewaySubRequest ADD CONSTRAINT FK_TGSubRequest_TGR FOREIGN KEY (request) REFERENCES TapeGatewayRequest(id);
-ALTER TABLE TapeGatewayRequest ADD CONSTRAINT FK_TapeGatewayRequest_SM FOREIGN KEY (streamMigration) REFERENCES Stream (id);
-ALTER TABLE TapeGatewayRequest ADD CONSTRAINT FK_TapeGatewayRequest_TR FOREIGN KEY (tapeRecall) REFERENCES Tape (id);
-ALTER TABLE TapeGatewaySubRequest ADD CONSTRAINT UN_TGSubRequest_TR_DC UNIQUE (request, diskcopy);
 
 /* Global temporary table to handle output of the filesDeletedProc procedure */
 CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcOutput
@@ -1040,7 +1036,7 @@ ALTER TABLE CastorConfig ADD CONSTRAINT UN_CastorConfig_class_key UNIQUE (class,
 
 /* Prompt for the value of the general/instance options */
 UNDEF instanceName
-ACCEPT instanceName DEFAULT castorstager PROMPT 'Enter the name of the castor instance: (default: castor_stager, example: castoratlas) '
+ACCEPT instanceName DEFAULT castor_stager PROMPT 'Enter the name of the castor instance: (default: castor_stager, example: castoratlas) '
 SET VER OFF
 
 INSERT INTO CastorConfig
@@ -1222,11 +1218,23 @@ ON COMMIT PRESERVE ROWS;
 CREATE TABLE RmMasterLock (unused NUMBER);
 
 
-/*******************************************************/
+/**********/
+/* Repack */
+/**********/
+
+/* DB link to the nameserver db */
+PROMPT Configuration of the database link to the CASTOR name space
+UNDEF cnsUser
+ACCEPT cnsUser STRING PROMPT 'Enter the nameserver db username: ';
+UNDEF cnsPasswd
+ACCEPT cnsPasswd STRING PROMPT 'Enter the nameserver db password: ';
+UNDEF cnsDbName
+ACCEPT cnsDbName STRING PROMPT 'Enter the nameserver db TNS name: ';
+CREATE DATABASE LINK remotens
+  CONNECT TO &cnsUser IDENTIFIED BY &cnsPasswd USING '&cnsDbName';
+
 /* temporary table used for listing segments of a tape */
 /* efficiently via DB link when repacking              */
-/*******************************************************/
-
 CREATE GLOBAL TEMPORARY TABLE RepackTapeSegments (s_fileId NUMBER, blockid RAW(4), fseq NUMBER, segSize NUMBER, copyno NUMBER, fileClass NUMBER) ON COMMIT PRESERVE ROWS;
 /*******************************************************************
  * @(#)RCSfile: oracleDrain.schema.sql,v  Revision: 1.4  Date: 2009/07/05 13:49:08  Author: waldron 
@@ -2575,7 +2583,8 @@ BEGIN
     RETURN;
   END IF;
   -- Look for recalls concerning files that are STAGED or CANBEMIGR
-  -- on all filesystems scheduled to be checked.
+  -- on all filesystems scheduled to be checked, and restart their
+  -- subrequests (reconsidering the recall source).
   FOR cf IN (SELECT /*+ USE_NL(E D)
                      INDEX_RS_ASC(E I_DiskCopy_Status)
                      INDEX_RS_ASC(D I_DiskCopy_CastorFile) */
@@ -4519,10 +4528,11 @@ BEGIN
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- No routing rule found means a user-visible error on the putDone or on the file close operation
       raise_application_error(-20100, 'Cannot find an appropriate tape routing for this file in the current service class, aborting tape migration');
-    END;    
+    END;
     -- Create tape copy and attach to the appropriate tape pool
-    INSERT INTO MigrationJob (id, copyNb, castorFile, status, tapePool)
-      VALUES (ids_seq.nextval, i, cfId, tconst.MIGRATIONJOB_PENDING, varTpId);
+    -- XXX TODO investigate whether/how to drop tapeGatewayRequestId
+    INSERT INTO MigrationJob (fileSize, creationTime, castorFile, copyNb, tapePool, nbRetry, status, id, tapeGatewayRequestId)
+      VALUES (datasize, getTime(), cfId, i, varTpId, 0, tconst.MIGRATIONJOB_PENDING, ids_seq.nextval, ids_seq.nextval);
   END LOOP;
 END;
 /
@@ -5557,6 +5567,9 @@ BEGIN
       srUuid VARCHAR(2048);
     BEGIN
       FOR i IN srIds.FIRST .. srIds.LAST LOOP
+        SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ subreqId INTO srUuid
+          FROM SubRequest
+         WHERE SubRequest.id = srIds(i);
         UPDATE SubRequest
            SET status = CASE
                  WHEN status IN (6, 13) AND reqType = 133 THEN 9 ELSE 7
@@ -5564,8 +5577,7 @@ BEGIN
                -- this so that user requests in status WAITSUBREQ are always marked FAILED even if they wait on a replication
                errorCode = 4,  -- EINTR
                errorMessage = 'Canceled by another user request'
-         WHERE id = srIds(i) OR parent = srIds(i)
-         RETURNING subreqId INTO srUuid;
+         WHERE id = srIds(i) OR parent = srIds(i);
         -- make the scheduler aware so that it can remove the transfer from the queues if needed
         INSERT INTO TransfersToAbort VALUES (srUuid);
       END LOOP;
@@ -5579,14 +5591,10 @@ BEGIN
     SELECT status INTO dcStatus
       FROM DiskCopy
      WHERE id = dcsToRm(i);
-    IF dcStatus = 1 THEN
-      NULL;  -- Do nothing
-    ELSE
-      UPDATE DiskCopy
-         -- WAITTAPERECALL,WAITFS[_SCHED] -> FAILED, others -> INVALID
-         SET status = decode(status, 2,4, 5,4, 11,4, 7)
-       WHERE id = dcsToRm(i);
-    END IF;
+    UPDATE DiskCopy
+       -- WAITTAPERECALL,WAITFS[_SCHED] -> FAILED, others -> INVALID
+       SET status = decode(status, 2,4, 5,4, 11,4, 7)
+     WHERE id = dcsToRm(i);
   END LOOP;
   ret := 1;  -- ok
 END;
@@ -6285,8 +6293,8 @@ BEGIN
   -- occurred and the new copy should not be kept
   --
   -- In all cases we invalidate the new copy!
-  IF (srcFsId IS NULL) OR
-     (srcFsId IS NOT NULL AND fileSize != replicaFileSize) THEN
+  IF (srcFsId = -1) OR
+     (srcFsId != -1 AND fileSize != replicaFileSize) THEN
     -- Begin the process of invalidating the file replica
     UPDATE DiskCopy SET status = 7 WHERE id = dcId -- INVALID
     RETURNING CastorFile INTO cfId;
@@ -7841,11 +7849,10 @@ END;
 CREATE OR REPLACE PROCEDURE checkAndDeleteMigrationMount(migId IN INTEGER) AS
   -- If the specified migration mount has no migration job then this procedure deletes it,
   targetTapePool NUMBER;
-  targetVID NUMBER;
 BEGIN
   BEGIN
     -- Try to take a lock on the migration mount
-    SELECT tapePool, VID INTO targetTapePool, targetVID FROM MigrationMount WHERE id = migId FOR UPDATE;
+    SELECT tapePool INTO targetTapePool FROM MigrationMount WHERE id = migId FOR UPDATE;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- the migration mount has already been deleted
     RETURN;
@@ -7967,7 +7974,7 @@ BEGIN
                tapeGatewayRequestId, id, startTime, VID, label, density,
                lastFseq, lastVDQMPingTime, lastFileSystemUsed,
                lastButOneFileSystemUsed, tapePool, status)
-       VALUES (0, NULL, NULL, ids_seq.nextval, gettime(), NULL, NULL, NULL,
+       VALUES (0, NULL, ids_seq.nextval, ids_seq.nextval, gettime(), NULL, NULL, NULL,
                NULL, 0, NULL, NULL, inTapePoolId, tconst.MIGRATIONMOUNT_WAITTAPE);
 END;
 /
@@ -7980,30 +7987,35 @@ CREATE OR REPLACE PROCEDURE startMigrationMounts AS
   varOldestCreationTime NUMBER;
 BEGIN
   -- loop through tapepools
-  FOR t IN (SELECT TapePool.id, TapePool.nbDrives, TapePool.minAmountDataForMount,
-                   TapePool.minNbFilesForMount, TapePool.maxFileAgeBeforeMount,
-                   count(*) nbRunningMounts
-              FROM MigrationMount, TapePool
-             WHERE MigrationMount.tapePool = TapePool.id
-             GROUP BY TapePool.id, TapePool.nbDrives, TapePool.minAmountDataForMount,
-                      TapePool.minNbFilesForMount, TapePool.maxFileAgeBeforeMount) LOOP
+  FOR t IN (SELECT id, nbDrives, minAmountDataForMount,
+                   minNbFilesForMount, maxFileAgeBeforeMount
+              FROM TapePool) LOOP
+    -- get number of mount already running for this tapepool
+    SELECT count(*) INTO varNbMounts
+      FROM MigrationMount
+     WHERE tapePool = t.id;
     -- get the amount of data and number of files to migrate, plus the age of the oldest file
-    SELECT SUM(fileSize), COUNT(*), MIN(creationTime) INTO varDataAmount, varNbFiles, varOldestCreationTime
-      FROM MigrationJob
-     WHERE tapePool = t.id
-     GROUP BY tapePool;
-    varNbMounts := t.nbRunningMounts;
-    -- Create as many mounts as needed according to amount of data and number of files
-    WHILE (varNbMounts < t.nbDrives) AND
-          ((varDataAmount/(varNbMounts+1) >= t.minAmountDataForMount) OR
-           (varNbFiles/(varNbMounts+1) >= t.minNbFilesForMount)) LOOP
-      insertMigrationMount(t.id);
-      varNbMounts := varNbMounts + 1;
-    END LOOP;
-    -- force creation of a unique mount in case no mount was created at all and some files are too old
-    IF varNbMounts = 0 AND gettime() - varOldestCreationTime > t.maxFileAgeBeforeMount THEN
-      insertMigrationMount(t.id);
-    END IF;
+    BEGIN
+      SELECT SUM(fileSize), COUNT(*), MIN(creationTime) INTO varDataAmount, varNbFiles, varOldestCreationTime
+        FROM MigrationJob
+       WHERE tapePool = t.id
+       GROUP BY tapePool;
+      -- Create as many mounts as needed according to amount of data and number of files
+      WHILE (varNbMounts < t.nbDrives) AND
+            ((varDataAmount/(varNbMounts+1) >= t.minAmountDataForMount) OR
+             (varNbFiles/(varNbMounts+1) >= t.minNbFilesForMount)) LOOP
+        insertMigrationMount(t.id);
+        varNbMounts := varNbMounts + 1;
+      END LOOP;
+      -- force creation of a unique mount in case no mount was created at all and some files are too old
+      IF varNbMounts = 0 AND gettime() - varOldestCreationTime > t.maxFileAgeBeforeMount THEN
+        insertMigrationMount(t.id);
+      END IF;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- there is no file to migrate, so nothing to do
+      NULL;
+    END;
+    COMMIT;
   END LOOP;
 END;
 /
@@ -8544,7 +8556,7 @@ PROCEDURE tg_defaultMigrSelPolicy(inMountId IN INTEGER,
                                   outFileId OUT INTEGER,
                                   outNsHost OUT NOCOPY VARCHAR2, 
                                   outFileSize OUT INTEGER,
-                                  ourMigJobId OUT INTEGER, 
+                                  outMigJobId OUT INTEGER, 
                                   outLastUpdateTime OUT INTEGER) AS
   /* Find the next file to migrate for a given migration mount.
    *
@@ -8563,18 +8575,14 @@ PROCEDURE tg_defaultMigrSelPolicy(inMountId IN INTEGER,
    * this TapeGatewayRequest, and prevent the selection of migration jobs whose 
    * siblings already live on the same tape.
    */
-  varFileSystemId INTEGER := 0;
-  varDiskServerId NUMBER;
   LockError EXCEPTION;
   PRAGMA EXCEPTION_INIT (LockError, -54);
 BEGIN
   SELECT /*+ FIRST_ROWS(1) LEADING(MigrationMount MigrationJob DiskCopy FileSystem DiskServer CastorFile) */
          DiskServer.name, FileSystem.mountPoint, DiskCopy.path, DiskCopy.id, CastorFile.id,
-         CastorFile.fileId, CastorFile.nsHost, CastorFile.fileSize, MigrationJob.id, CastorFile.lastUpdateTime,
-         FileSystem.id, DiskServer.id
+         CastorFile.fileId, CastorFile.nsHost, CastorFile.fileSize, MigrationJob.id, CastorFile.lastUpdateTime
     INTO outDiskServerName, outMountPoint, outPath, outDiskCopyId, outCastorFileId,
-         outFileId, outNsHost, outFileSize, ourMigJobId, outLastUpdateTime,
-         varFileSystemId, varDiskServerId
+         outFileId, outNsHost, outFileSize, outMigJobId, outLastUpdateTime
     FROM MigrationMount, MigrationJob, DiskCopy, FileSystem, DiskServer, CastorFile
    WHERE MigrationMount.id = inMountId
      AND MigrationJob.tapePool = MigrationMount.tapepool
@@ -8611,12 +8619,12 @@ PROCEDURE tg_getFileToMigrate(
   varDiskServer VARCHAR2(2048);
   varMountPoint VARCHAR2(2048);
   varPath  VARCHAR2(2048);
-  varDiskCopyId NUMBER:=0;
+  varDiskCopyId NUMBER;
   varCastorFileId NUMBER;
   varFileId NUMBER;
   varNsHost VARCHAR2(2048);
   varFileSize  INTEGER;
-  varMigJobId  INTEGER:=0;
+  varMigJobId  INTEGER;
   varLastUpdateTime NUMBER;
   varLastKnownName VARCHAR2(2048);
   varTgRequestId NUMBER;
@@ -8633,22 +8641,12 @@ BEGIN
     outRet:=-2;   -- migration mount is over
     RETURN;
   END;
-  -- Check for existence of migration jobs for this migration mount
-  BEGIN
-    SELECT 1 INTO varUnused FROM dual
-      WHERE EXISTS (SELECT 'x' FROM MigrationJob
-                      WHERE tapepool=varTapePool);
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    outRet:=-1;   -- no more files
-    RETURN;
-  END;
   -- default policy is used in all cases in version 2.1.12
   tg_defaultMigrSelPolicy(varMountId,varDiskServer,varMountPoint,varPath,
     varDiskCopyId ,varCastorFileId,varFileId,varNsHost,varFileSize,
     varMigJobId,varLastUpdateTime);
-  IF varMigJobId = 0 OR varDiskCopyId=0 THEN
+  IF varMigJobId IS NULL THEN
     outRet := -1; -- the migration selection policy didn't find any candidate
-    COMMIT; -- TODO: Check if ROLLBACK is not better...
     RETURN;
   END IF;
 
@@ -8918,6 +8916,21 @@ BEGIN
          inTransId || ',TapeId='||varTapeId||' TapeGatewayReqId='||varTrId||
          ' in tg_getSegmentInfo');
   END;
+END;
+/
+
+/* get the migration mounts without any tape associated */
+CREATE OR REPLACE
+PROCEDURE tg_getMigMountsWithoutTapes(outStrList OUT castorTape.MigrationMount_Cur) AS
+BEGIN
+  -- get migration mounts  in state WAITTAPE with a non-NULL TapeGatewayRequestId
+  OPEN outStrList FOR
+    SELECT M.id, TP.name
+      FROM MigrationMount M,Tapepool TP
+     WHERE M.status = tconst.MIGRATIONMOUNT_WAITTAPE
+       AND M.TapeGatewayRequestId IS NOT NULL
+       AND M.tapepool=TP.id 
+       FOR UPDATE OF M.id SKIP LOCKED;   
 END;
 /
 
@@ -9465,15 +9478,6 @@ BEGIN
 END;
 /
 
-/* Check configuration */
-CREATE OR REPLACE PROCEDURE tg_checkConfiguration AS
-  unused VARCHAR2(2048);
-BEGIN
-  -- This fires an exception if the db is configured not to run the tapegateway
-  SELECT value INTO unused FROM castorconfig WHERE class='tape' AND key='interfaceDaemon' AND value='tapegatewayd';
-END;
-/
-
 /* delete MigrationMount */
 CREATE OR REPLACE
 PROCEDURE tg_deleteMigrationMount(inMountId IN NUMBER) AS
@@ -9854,7 +9858,7 @@ BEGIN
     -- estimate the number of GC running the "long" query, that is the one dealing with the GCing of
     -- STAGED files.
     SELECT COUNT(*) INTO backoff
-      FROM vsession s, vsqltext t
+      FROM v$session s, v$sqltext t
      WHERE s.sql_id = t.sql_id AND t.sql_text LIKE '%I_DiskCopy_FS_GCW%';
 
     -- Process diskcopies that are in an INVALID state.
@@ -11530,22 +11534,36 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
              nvl(sum(a.diskCopySize), 0) totalFileSize, nvl(sum(a.found), 0) nbFiles
         FROM (
           -- Determine the service class of all tapecopies and their associated
-          -- status.
+          -- status (in a summarized form)
+          -- In castor 2.1.11:
+          -- Output is 'Pending' for 'PENDING' or 'TOBEMIGRATED',
+          --           'Selected' for 'WAITINSTREAMS' or 'SELECTED'
+          --           'Failed' for 'FAILED'
+          -- Other states are ignored ('TOBERECALLED', 'STAGED', 'WAITPOLICY', 'REC_RETRY', 'MIG_RETRY')
+          -- New version (2.1.12) will be:
+          --          'Pending' for 'PENDING'
+          --          'Selected' for 'SELECTED'
+          --          'Failed' for 'FAILED'
+          --          'MIGRATED' and 'RETRY' will be ignored.
           SELECT svcClass, status, waitTime, diskCopySize, found FROM (
-            SELECT /*+ USE_NL(TapeCopy DiskCopy CastorFile) */
+            SELECT /*+ USE_NL(MigrationJob DiskCopy CastorFile) */
                    SvcClass.name svcClass,
-                   decode(sign(TapeCopy.status - 2), -1, 'PENDING',
-                     decode(TapeCopy.status, 6, 'FAILED', 'SELECTED')) status,
+                   decode(MigrationJob.status, tconst.MIGRATIONJOB_PENDING, 'PENDING',
+                      decode(MigrationJob.status, tconst.MIGRATIONJOB_SELECTED, 'SELECTED', 
+                          decode(MigrationJob.status, tconst.MIGRATIONJOB_FAILED, 'FAILED','UNKNOWN')
+                       )
+                   ) status,
                    (getTime() - DiskCopy.creationTime) waitTime,
                    DiskCopy.diskCopySize, 1 found, RANK() OVER (PARTITION BY
                    DiskCopy.castorFile ORDER BY DiskCopy.id ASC) rank
-              FROM DiskCopy, CastorFile, TapeCopy, SvcClass
+              FROM DiskCopy, CastorFile, MigrationJob, SvcClass
              WHERE DiskCopy.castorFile = CastorFile.id
-               AND CastorFile.id = TapeCopy.castorFile
+               AND CastorFile.id = MigrationJob.castorFile
                AND CastorFile.svcClass = SvcClass.id
                AND decode(DiskCopy.status, 10, DiskCopy.status, NULL) = 10  -- CANBEMIGR
-               AND TapeCopy.status IN (0, 1, 2, 3, 6)) -- CREATED, TOBEMIGRATED, WAITINSTREAMS,
-                                                       -- SELECTED, FAILED
+               AND MigrationJob.status IN (tconst.MIGRATIONJOB_PENDING, 
+                                           tconst.MIGRATIONJOB_SELECTED,
+                                           tconst.MIGRATIONJOB_FAILED))
            WHERE rank = 1
         ) a
         -- Attach a list of all service classes and possible states (PENDING,
