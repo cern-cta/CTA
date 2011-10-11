@@ -4034,3 +4034,14 @@ following CASTOR configuration file that is used to determine which IP
 addresses should be considered as local to the vdqm's network:
 
 /etc/castor/castor.localhosts
+
+How to create a virtual tape, load it into the MAP and transfer it to a slot
+============================================================================
+
+mktape -m V00001 -s 1 -t data -d T10KC
+vtlcmd 10 open map
+vtlcmd 10 load map V00001
+vtlcmd 10 close map
+mtx -f /dev/sg4 status
+mtx -f /dev/sg4 eepos 0 transfer 40 24
+mtx -f /dev/sg4 status
