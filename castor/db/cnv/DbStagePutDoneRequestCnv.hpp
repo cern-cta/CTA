@@ -309,12 +309,6 @@ namespace castor {
         /// SQL statement object for request update
         castor::db::IDbStatement *m_updateStatement;
 
-        /// SQL statement for request insertion into newRequests table
-        static const std::string s_insertNewReqStatementString;
-
-        /// SQL statement object for request status insertion into newRequests table
-        castor::db::IDbStatement *m_insertNewReqStatement;
-
         /// SQL select statement for member subRequests
         static const std::string s_selectSubRequestStatementString;
 

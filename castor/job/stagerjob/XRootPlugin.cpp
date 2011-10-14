@@ -272,7 +272,7 @@ void castor::job::stagerjob::XRootPlugin::postForkHook
 
     // Notify xrootd to the successful close of the file from CASTOR's
     // perspective.
-    strcpy(buf, "0 Success\n");
+    strncpy(buf, "0 Success\n", CA_MAXLINELEN+1);
     netwrite_timeout(context.socket, buf, strlen(buf), 5);
   } catch (castor::exception::Exception& e) {
 

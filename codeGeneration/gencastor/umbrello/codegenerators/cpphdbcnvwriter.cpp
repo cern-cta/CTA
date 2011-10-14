@@ -274,7 +274,7 @@ void CppHDbCnvWriter::writeMembers() {
   // Dealing with request needed to be stored in newRequests table
   UMLObject* obj = getClassifier(QString("Request"));
   const UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
-  UMLObject* obj2 = getClassifier(QString("SubRequest"));
+  UMLObject* obj2 = getClassifier(QString("FileRequest"));
   const UMLClassifier *concept2 = dynamic_cast<UMLClassifier*>(obj2);
   if (m_classInfo->allSuperclasses.contains(concept) &&
       !m_classInfo->allSuperclasses.contains(concept2)) {

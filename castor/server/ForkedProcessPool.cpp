@@ -53,6 +53,7 @@ castor::server::ForkedProcessPool::ForkedProcessPool
 (const std::string poolName, castor::server::IThread* thread)
   throw(castor::exception::Exception) :
   BaseThreadPool(poolName, thread),
+  m_childPid(0),
   m_writeHighFd(0) {
   FD_ZERO(&m_writePipes);
   m_stopped = true;   // dispatch is closed until real start

@@ -1615,6 +1615,7 @@ int castor::db::ora::OraStagerSvc::createRecallJobSegments
   strncpy(fileid.server,
           castorFile->nsHost().c_str(),
           CA_MAXHOSTNAMELEN+1);
+  fileid.server[CA_MAXHOSTNAMELEN] = '\0';
   struct Cns_segattrs *nsSegmentAttrs = 0;
   int nbNsSegments = 0;
   int rc = Cns_getsegattrs
