@@ -51,7 +51,7 @@ def parseDataAmount(name, svalue):
     try:
         exts = {'K' : 1000, 'M' : 1000*1000, 'G' : 1000*1000*1000, 'T' : 1000*1000*1000*1000,
                 'Ki' : 1024, 'Mi' : 1024*1024, 'Gi' : 1024*1024*1024, 'Ti' : 1024*1024*1024*1024}
-        regexp = re.compile('^(?P<nb>\d+)(?P<ext>(?:[KMGT]i)?)B?$')
+        regexp = re.compile('^(?P<nb>\d+)(?P<ext>(?:[KMGT]i?)?)B?$')
         m = regexp.match(svalue)
         if not m:
             raise ValueError
@@ -123,7 +123,7 @@ else:
     tapepoolname = args[0]
 
 # check we have something to do
-if not nbdrives and not minamountdata and not minnbfiles and not maxfileage:
+if nbdrives == None and minamountdata == None and minnbfiles == None and maxfileage == None:
     print 'Nothing to modify. Did you forget some argument ?'
     usage(1)
 
@@ -140,13 +140,13 @@ try:
         sys.exit(1)
     tapePoolId = rows[0][0]
     # deal with the update
-    if nbdrives:
+    if nbdrives != None:
         stcur.execute('UPDATE TapePool SET nbDrives=:value WHERE id = :tapePoolId', value=nbdrives, tapePoolId=tapePoolId)
-    if minamountdata:
+    if minamountdata != None:
         stcur.execute('UPDATE TapePool SET minAmountdataForMount=:value WHERE id = :tapePoolId', value=minamountdata, tapePoolId=tapePoolId)
-    if minnbfiles:
+    if minnbfiles != None:
         stcur.execute('UPDATE TapePool SET minNbFilesForMount=:value WHERE id = :tapePoolId', value=minnbfiles, tapePoolId=tapePoolId)
-    if maxfileage:
+    if maxfileage != None:
         stcur.execute('UPDATE TapePool SET maxFileAgeBeforeMount=:value WHERE id = :tapePoolId', value=maxfileage, tapePoolId=tapePoolId)
     # in all cases, update the lastEditor and lastEditionTime
     lasteditor = pwd.getpwuid(os.getuid())[0]

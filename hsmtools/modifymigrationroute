@@ -147,7 +147,7 @@ try:
     updateSql = 'UPDATE MigrationRouting SET tapePool=:tapePool, lastEditor=:lastEditor, lastEditionTime=getTime()'
     whereClause = ' WHERE svcClass=:svcClass AND fileClass=:fileClass AND copyNb=:copyNb'
     varDict = {'svcClass':svcClassId, 'fileClass':fileClassId, 'copyNb':copynb}
-    if issmallfile:
+    if issmallfile != None:
         whereClause += ' AND isSmallFile=:isSmallFile'
         varDict['isSmallFile'] = issmallfile
     else:

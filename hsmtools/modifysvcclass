@@ -75,7 +75,7 @@ def parseDataAmount(name, svalue):
     try:
         exts = {'K' : 1000, 'M' : 1000*1000, 'G' : 1000*1000*1000, 'T' : 1000*1000*1000*1000,
                 'Ki' : 1024, 'Mi' : 1024*1024, 'Gi' : 1024*1024*1024, 'Ti' : 1024*1024*1024*1024}
-        regexp = re.compile('^(?P<nb>\d+)(?P<ext>(?:[KMGT]i)?)B?$')
+        regexp = re.compile('^(?P<nb>\d+)(?P<ext>(?:[KMGT]i?)?)B?$')
         m = regexp.match(svalue)
         if not m:
             raise ValueError
@@ -150,9 +150,9 @@ else:
     svcclassname = args[0]
 
 # check we have something to do
-if not defaultfilesize and not maxreplicanb and not failjobswhennospace and \
-   not disk1behavior and not forcedfileclass and not replicateonclose and not gcpolicy and \
-   not recallerpolicy and not adddiskpools and not removediskpools:
+if defaultfilesize == None and maxreplicanb == None and failjobswhennospace == None and \
+   disk1behavior == None and forcedfileclass == None and replicateonclose == None and gcpolicy == None and \
+   recallerpolicy == None and adddiskpools == None and removediskpools == None:
     print 'Nothing to modify. Did you forget some argument ?'
     usage(1)
 
@@ -169,29 +169,29 @@ try:
         sys.exit(1)
     svcClassId = rows[0][0]
     # deal with standard columns
-    if defaultfilesize:
+    if defaultfilesize != None:
         stcur.execute('UPDATE SvcClass SET defaultfilesize=:value WHERE id = :svcClassId',
                       value=defaultfilesize, svcClassId=svcClassId)
-    if maxreplicanb:
+    if maxreplicanb != None:
         stcur.execute('UPDATE SvcClass SET maxreplicanb=:value WHERE id = :svcClassId',
                       value=maxreplicanb, svcClassId=svcClassId)
-    if failjobswhennospace:
+    if failjobswhennospace != None:
         stcur.execute('UPDATE SvcClass SET failjobswhennospace=:value WHERE id = :svcClassId',
                       value=failjobswhennospace, svcClassId=svcClassId)
-    if disk1behavior:
+    if disk1behavior != None:
         stcur.execute('UPDATE SvcClass SET disk1behavior=:value WHERE id = :svcClassId',
                       value=disk1behavior, svcClassId=svcClassId)
-    if replicateonclose:
+    if replicateonclose != None:
         stcur.execute('UPDATE SvcClass SET replicateonclose=:value WHERE id = :svcClassId',
                       value=replicateonclose, svcClassId=svcClassId)
-    if gcpolicy:
+    if gcpolicy != None:
         stcur.execute('UPDATE SvcClass SET gcpolicy=:value WHERE id = :svcClassId',
                       value=gcpolicy, svcClassId=svcClassId)
-    if recallerpolicy:
+    if recallerpolicy != None:
         stcur.execute('UPDATE SvcClass SET recallerpolicy=:value WHERE id = :svcClassId',
                       value=recallerpolicy, svcClassId=svcClassId)
     # Deal with adddiskpools
-    if adddiskpools:
+    if adddiskpools != None:
         # check existence, and get ids
         stcur.execute("SELECT name, id FROM DiskPool WHERE name IN ('" + "', '".join(adddiskpools) + "')")
         rows = stcur.fetchall()
@@ -219,7 +219,7 @@ try:
         END;'''
         stcur.execute(sql, diskPoolIds=adddiskpools.keys(), scId=svcClassId)
     # Deal with removediskpools
-    if removediskpools:
+    if removediskpools != None:
         # check existence, and get ids
         stcur.execute("SELECT name, id FROM DiskPool WHERE name IN ('" + "', '".join(removediskpools) + "')")
         rows = stcur.fetchall()
