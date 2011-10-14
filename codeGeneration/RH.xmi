@@ -1593,6 +1593,12 @@ Concerning the user list, an empty list means all users and all groups are conce
         <UML:AssociationEnd comment="Admin status of the DiskServer" isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="eRv9xs8lq4gL" aggregation="none" type="179343" name="adminStatus" multiplicity="1" />
        </UML:Association.connection>
       </UML:Association>
+      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="AssocRepackStatus" name="" >
+       <UML:Association.connection>
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="9glZ97FOMCJP2" aggregation="composite" type="175262" name="" />
+        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="eRv9xs8lq4gL2" aggregation="none" type="TLM3KBxc70iv" name="status" multiplicity="1" />
+       </UML:Association.connection>
+      </UML:Association>
       <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="jgl37Y0mg2gS" name="" >
        <UML:Association.connection>
         <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="JGFvBdBKJwrS" aggregation="composite" type="1196" name="" />
@@ -1814,13 +1820,6 @@ Concerning the user list, an empty list means all users and all groups are conce
         <UML:AssociationEnd comment="Type of diskpool query, that is type of space to report (default, available or total)" isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="eQW8XOANLSER" aggregation="none" type="8PsonmLlRomU" name="queryType" multiplicity="1" />
        </UML:Association.connection>
       </UML:Association>
-      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="U4mavyhmsXo0" name="" >
-       <UML:Association.connection>
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="Zz56iWZma3Xc" aggregation="none" type="1580" name="" />
-        <UML:AssociationEnd comment="SqlOnly" isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="ClnPzmObCtjk" aggregation="none" type="1196" name="lastButOneFileSystemUsed" multiplicity="1" />
-       </UML:Association.connection>
-      </UML:Association>
-
 
      </UML:Namespace.ownedElement>
      <XMI.extension xmi.extender="umbrello" >
