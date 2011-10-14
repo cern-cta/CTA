@@ -406,7 +406,7 @@ BEGIN
       START_DATE      => SYSDATE + 60/1440,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=1',
       ENABLED         => TRUE,
-      COMMENTS        => 'Creating MigrationMounts entries when new migrations shoudl start');
+      COMMENTS        => 'Creates MigrationMount entries when new migrations should start');
 END;
 /
 
