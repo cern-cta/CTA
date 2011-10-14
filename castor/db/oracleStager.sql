@@ -2149,9 +2149,9 @@ BEGIN
       raise_application_error(-20100, 'Cannot find an appropriate tape routing for this file in the current service class, aborting tape migration');
     END;
     -- Create tape copy and attach to the appropriate tape pool
-    -- XXX TODO investigate whether/how to drop tapeGatewayRequestId
+    -- XXX TODO tapeGatewayRequestId should be renamed migrationMount and made Foreign Key
     INSERT INTO MigrationJob (fileSize, creationTime, castorFile, copyNb, tapePool, nbRetry, status, id, tapeGatewayRequestId)
-      VALUES (datasize, getTime(), cfId, i, varTpId, 0, tconst.MIGRATIONJOB_PENDING, ids_seq.nextval, ids_seq.nextval);
+      VALUES (datasize, getTime(), cfId, i, varTpId, 0, tconst.MIGRATIONJOB_PENDING, ids_seq.nextval, NULL);
   END LOOP;
 END;
 /
