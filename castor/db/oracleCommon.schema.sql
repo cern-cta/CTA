@@ -170,7 +170,6 @@ CREATE TABLE TapePool (name VARCHAR2(2048) CONSTRAINT NN_TapePool_Name NOT NULL,
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* Definition of the MigrationMount table
- *   lastFileSystemChange : time of the last change of filesystem used for this migration
  *   vdqmVolReqId : 
  *   tapeGatewayRequestId : 
  *   VID : tape currently mounted (when applicable)
@@ -178,13 +177,10 @@ INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
  *   density : density of the currently mounted tape (when applicable)
  *   lastFseq : position of the last file written on the tape
  *   lastVDQMPingTime : last time we've pinged VDQM
- *   lastFileSystemUsed : last filesystem from which data was migrated
- *   lastButOneFileSystemUsed : last but one filesystem from which data was migrated
  *   tapePool : tapepool used by this migration
  *   status : current status of the migration
  */
-CREATE TABLE MigrationMount (lastFileSystemChange INTEGER CONSTRAINT NN_MigrationMount_LastFSChange NOT NULL,
-                             vdqmVolReqId INTEGER,
+CREATE TABLE MigrationMount (vdqmVolReqId INTEGER,
                              tapeGatewayRequestId INTEGER,
                              id INTEGER CONSTRAINT PK_MigrationMount_Id PRIMARY KEY CONSTRAINT NN_MigrationMount_Id NOT NULL,
                              startTime NUMBER CONSTRAINT NN_MigrationMount_startTime NOT NULL,
@@ -193,8 +189,6 @@ CREATE TABLE MigrationMount (lastFileSystemChange INTEGER CONSTRAINT NN_Migratio
                              density VARCHAR2(2048),
                              lastFseq INTEGER,
                              lastVDQMPingTime NUMBER CONSTRAINT NN_MigrationMount_lastVDQMPing NOT NULL,
-                             lastFileSystemUsed INTEGER,
-                             lastButOneFileSystemUsed INTEGER,
                              tapePool INTEGER CONSTRAINT NN_MigrationMount_TapePool NOT NULL,
                              status INTEGER CONSTRAINT NN_MigrationMount_Status NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
