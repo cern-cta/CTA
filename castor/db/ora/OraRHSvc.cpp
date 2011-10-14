@@ -57,7 +57,6 @@
 #include "castor/stager/Files2Delete.hpp"
 #include "castor/stager/StageAbortRequest.hpp"
 #include "castor/stager/StagePutDoneRequest.hpp"
-#include "castor/stager/StageRepackRequest.hpp"
 #include "castor/stager/SetFileGCWeight.hpp"
 #include "castor/stager/NsFileId.hpp"
 #include "castor/stager/GCFileList.hpp"
@@ -88,10 +87,6 @@ const std::string castor::db::ora::OraRHSvc::s_storeSimpleRequestStatementString
 /// SQL statement for storeFileRequest
 const std::string castor::db::ora::OraRHSvc::s_storeFileRequestStatementString =
   "BEGIN insertFileRequest(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15, :16, :17, :18, :19, :20, :21, :22); END;";
-
-/// SQL statement for storeRepackRequest
-const std::string castor::db::ora::OraRHSvc::s_storeRepackRequestStatementString =
-  "BEGIN insertRepackRequest(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15, :16); END;";
 
 /// SQL statement for storeStartRequest
 const std::string castor::db::ora::OraRHSvc::s_storeStartRequestStatementString =
@@ -156,7 +151,6 @@ castor::db::ora::OraRHSvc::OraRHSvc(const std::string name) :
   OraCommonSvc(name),
   m_storeSimpleRequestStatement(0),
   m_storeFileRequestStatement(0),
-  m_storeRepackRequestStatement(0),
   m_storeStartRequestStatement(0),
   m_storeD2dRequestStatement(0),
   m_storeVersionQueryStatement(0),
@@ -204,7 +198,6 @@ void castor::db::ora::OraRHSvc::reset() throw() {
   try {
     if (m_storeSimpleRequestStatement) deleteStatement(m_storeSimpleRequestStatement);
     if (m_storeFileRequestStatement) deleteStatement(m_storeFileRequestStatement);
-    if (m_storeRepackRequestStatement) deleteStatement(m_storeRepackRequestStatement);
     if (m_storeStartRequestStatement) deleteStatement(m_storeStartRequestStatement);
     if (m_storeD2dRequestStatement) deleteStatement(m_storeD2dRequestStatement);
     if (m_storeVersionQueryStatement) deleteStatement(m_storeVersionQueryStatement);
@@ -223,7 +216,6 @@ void castor::db::ora::OraRHSvc::reset() throw() {
   // Now reset all pointers to 0
   m_storeSimpleRequestStatement = 0;
   m_storeFileRequestStatement = 0;
-  m_storeRepackRequestStatement = 0;
   m_storeStartRequestStatement = 0;
   m_storeD2dRequestStatement = 0;
   m_storeVersionQueryStatement = 0;
@@ -308,14 +300,6 @@ void castor::db::ora::OraRHSvc::storeRequest
         castor::stager::StagePutDoneRequest* freq = dynamic_cast<castor::stager::StagePutDoneRequest*>(req);
         // and store it
         storeFileRequest(freq, client, freq->parentUuid());
-      }
-      break;
-    case castor::OBJ_StageRepackRequest:
-      {
-        // get the StagerRepackRequest
-        castor::stager::StageRepackRequest* freq = dynamic_cast<castor::stager::StageRepackRequest*>(req);
-        // and store it
-        storeRepackRequest(freq, client);
       }
       break;
     case castor::OBJ_SetFileGCWeight:
@@ -700,56 +684,6 @@ void castor::db::ora::OraRHSvc::storeFileRequest (castor::stager::FileRequest* r
     free(bufferModeBits);
     // rethrow, the handling is done one level up
     throw e;
-  }
-}
-
-//------------------------------------------------------------------------------
-// storeRepackRequest
-//------------------------------------------------------------------------------
-void castor::db::ora::OraRHSvc::storeRepackRequest (castor::stager::StageRepackRequest* req,
-                                                    const castor::rh::Client* client)
-  throw (castor::exception::Exception, oracle::occi::SQLException) {
-  try {
-    // Check whether the statement is ok
-    if (0 == m_storeRepackRequestStatement) {
-      m_storeRepackRequestStatement =
-        createStatement(s_storeRepackRequestStatementString);
-      m_storeRepackRequestStatement->setAutoCommit(true);
-    }
-  } catch (oracle::occi::SQLException e) {
-    // Deal with exception (in particular see whether we should reconnect)
-    handleException(e);
-    // Send generic errors
-    castor::exception::Internal ex;
-    ex.getMessage() << "Error caught in storeRepackRequest."
-                    << std::endl << e.what();
-    throw ex;
-  }
-  // link all input parameters to the statement
-  m_storeRepackRequestStatement->setString(1, req->userTag());
-  m_storeRepackRequestStatement->setString(2, req->machine());
-  m_storeRepackRequestStatement->setInt(3, req->euid());
-  m_storeRepackRequestStatement->setInt(4, req->egid());
-  m_storeRepackRequestStatement->setInt(5, req->pid());
-  m_storeRepackRequestStatement->setInt(6, req->mask());
-  m_storeRepackRequestStatement->setString(7, req->userName());
-  m_storeRepackRequestStatement->setInt(8, req->flags());
-  m_storeRepackRequestStatement->setString(9, req->svcClassName());
-  m_storeRepackRequestStatement->setString(10, req->reqId());
-  m_storeRepackRequestStatement->setInt(11, req->type());
-  m_storeRepackRequestStatement->setInt(12, client->ipAddress());
-  m_storeRepackRequestStatement->setInt(13, client->port());
-  m_storeRepackRequestStatement->setInt(14, client->version());
-  m_storeRepackRequestStatement->setInt(15, client->secure());
-  m_storeRepackRequestStatement->setString(16, req->repackVid());
-  // execute the statement
-  unsigned int rc = m_storeRepackRequestStatement->executeUpdate();
-  // check whether the statement was successful
-  if (0 == rc) {
-    // throw exception
-    castor::exception::Internal ex;
-    ex.getMessage() << "storeRepackRequest : unable to store repack request";
-    throw ex;
   }
 }
 
