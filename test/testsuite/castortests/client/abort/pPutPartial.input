@@ -1,5 +1,6 @@
 stager_put -M <noTapeFileName> -M <noTapeFileName1>
-stager_qry -M <noTapeFileName> -M <noTapeFileName1>
+stager_qry -M <noTapeFileName>
+stager_qry -M <noTapeFileName1>
 stager_abort -r <uuid0> -M <fileid1>@<ns>
 stager_qry -M <noTapeFileName>
 stager_qry -M <noTapeFileName1>
