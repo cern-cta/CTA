@@ -628,12 +628,11 @@ CREATE TABLE TapePool (name VARCHAR2(2048) CONSTRAINT NN_TapePool_Name NOT NULL,
                        minNbFilesForMount INTEGER CONSTRAINT NN_TapePool_MinNbFiles NOT NULL,
                        maxFileAgeBeforeMount INTEGER CONSTRAINT NN_TapePool_MaxFileAge NOT NULL,
                        lastEditor VARCHAR2(2048) CONSTRAINT NN_TapePool_LastEditor NOT NULL,
-                       lastEditionTime NUMBER CONSTRAINT NN_TapePool_LastEditionTime NOT NULL,
+                       lastEditionTime NUMBER CONSTRAINT NN_TapePool_LastEdTime NOT NULL,
                        id INTEGER CONSTRAINT PK_TapePool_Id PRIMARY KEY CONSTRAINT NN_TapePool_Id NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* Definition of the MigrationMount table
- *   lastFileSystemChange : time of the last change of filesystem used for this migration
  *   vdqmVolReqId : 
  *   tapeGatewayRequestId : 
  *   VID : tape currently mounted (when applicable)
@@ -641,23 +640,19 @@ INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
  *   density : density of the currently mounted tape (when applicable)
  *   lastFseq : position of the last file written on the tape
  *   lastVDQMPingTime : last time we've pinged VDQM
- *   lastFileSystemUsed : last filesystem from which data was migrated
- *   lastButOneFileSystemUsed : last but one filesystem from which data was migrated
  *   tapePool : tapepool used by this migration
  *   status : current status of the migration
  */
-CREATE TABLE MigrationMount (lastFileSystemChange INTEGER CONSTRAINT NN_MigrationMount_LastFSChange NOT NULL,
-                             vdqmVolReqId INTEGER,
-                             tapeGatewayRequestId INTEGER,
-                             id INTEGER CONSTRAINT PK_MigrationMount_Id PRIMARY KEY CONSTRAINT NN_MigrationMount_Id NOT NULL,
+CREATE TABLE MigrationMount (vdqmVolReqId INTEGER,
+                             tapeGatewayRequestId INTEGER CONSTRAINT NN_MigrationMount_tgRequestId NOT NULL,
+                             id INTEGER CONSTRAINT PK_MigrationMount_Id PRIMARY KEY
+                                        CONSTRAINT NN_MigrationMount_Id NOT NULL,
                              startTime NUMBER CONSTRAINT NN_MigrationMount_startTime NOT NULL,
                              VID VARCHAR2(2048),
                              label VARCHAR2(2048),
                              density VARCHAR2(2048),
                              lastFseq INTEGER,
                              lastVDQMPingTime NUMBER CONSTRAINT NN_MigrationMount_lastVDQMPing NOT NULL,
-                             lastFileSystemUsed INTEGER,
-                             lastButOneFileSystemUsed INTEGER,
                              tapePool INTEGER CONSTRAINT NN_MigrationMount_TapePool NOT NULL,
                              status INTEGER CONSTRAINT NN_MigrationMount_Status NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
@@ -687,26 +682,18 @@ INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('Migration
  */
 CREATE TABLE MigrationJob (fileSize INTEGER CONSTRAINT NN_MigrationJob_FileSize NOT NULL,
                            VID VARCHAR2(2048),
-                           creationTime NUMBER 
-                                CONSTRAINT NN_MigrationJob_CreationTime NOT NULL,
-                           castorFile INTEGER 
-                                CONSTRAINT NN_MigrationJob_CastorFile NOT NULL,
-                           copyNb INTEGER 
-                                CONSTRAINT NN_MigrationJob_copyNb NOT NULL,
-                           tapePool INTEGER 
-                                CONSTRAINT NN_MigrationJob_TapePool NOT NULL,
-                           nbRetry INTEGER
-                                CONSTRAINT NN_MigrationJob_nbRetry NOT NULL,
+                           creationTime NUMBER CONSTRAINT NN_MigrationJob_CreationTime NOT NULL,
+                           castorFile INTEGER CONSTRAINT NN_MigrationJob_CastorFile NOT NULL,
+                           copyNb INTEGER CONSTRAINT NN_MigrationJob_copyNb NOT NULL,
+                           tapePool INTEGER CONSTRAINT NN_MigrationJob_TapePool NOT NULL,
+                           nbRetry INTEGER CONSTRAINT NN_MigrationJob_nbRetry NOT NULL,
                            errorcode INTEGER,
-                           tapeGatewayRequestId INTEGER
-                                CONSTRAINT NN_MigrationJob_tgRequestId NOT NULL,
+                           tapeGatewayRequestId INTEGER,
                            FileTransactionId INTEGER,
                            fSeq INTEGER,
-                           status INTEGER 
-                                CONSTRAINT NN_MigrationJob_Status NOT NULL,
-                           id INTEGER
-                                CONSTRAINT PK_MigrationJob_Id PRIMARY KEY 
-                                CONSTRAINT NN_MigrationJob_Id NOT NULL)
+                           status INTEGER CONSTRAINT NN_MigrationJob_Status NOT NULL,
+                           id INTEGER CONSTRAINT PK_MigrationJob_Id PRIMARY KEY 
+                                      CONSTRAINT NN_MigrationJob_Id NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE INDEX I_MigrationJob_CFVID ON MigrationJob(CastorFile, VID);
 CREATE INDEX I_MigrationJob_CFCopyNb ON MigrationJob(CastorFile, copyNb);
@@ -725,7 +712,7 @@ INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('Migration
 
 
 /* Definition of the MigrationRouting table. Each line is a routing rule for migration jobs
- *   isSmallFile : whether this routing rule applies to small files
+ *   isSmallFile : whether this routing rule applies to small files. Null means it applies to all files
  *   copyNb : the copy number the routing rule applies to
  *   svcClass : the service class the routing rule applies to
  *   fileClass : the file class the routing rule applies to
@@ -1225,11 +1212,11 @@ CREATE TABLE RmMasterLock (unused NUMBER);
 /* DB link to the nameserver db */
 PROMPT Configuration of the database link to the CASTOR name space
 UNDEF cnsUser
-ACCEPT cnsUser STRING PROMPT 'Enter the nameserver db username: ';
+ACCEPT cnsUser CHAR DEFAULT 'castorns' PROMPT 'Enter the nameserver db username (default castorns): ';
 UNDEF cnsPasswd
-ACCEPT cnsPasswd STRING PROMPT 'Enter the nameserver db password: ';
+ACCEPT cnsPasswd CHAR PROMPT 'Enter the nameserver db password: ';
 UNDEF cnsDbName
-ACCEPT cnsDbName STRING PROMPT 'Enter the nameserver db TNS name: ';
+ACCEPT cnsDbName CHAR DEFAULT PROMPT 'Enter the nameserver db TNS name: ';
 CREATE DATABASE LINK remotens
   CONNECT TO &cnsUser IDENTIFIED BY &cnsPasswd USING '&cnsDbName';
 
@@ -7970,12 +7957,10 @@ END;
 CREATE OR REPLACE PROCEDURE insertMigrationMount(inTapePoolId IN NUMBER) AS
 BEGIN 
   INSERT INTO MigrationMount
-              (lastFileSystemChange, vdqmVolReqId,
-               tapeGatewayRequestId, id, startTime, VID, label, density,
-               lastFseq, lastVDQMPingTime, lastFileSystemUsed,
-               lastButOneFileSystemUsed, tapePool, status)
-       VALUES (0, NULL, ids_seq.nextval, ids_seq.nextval, gettime(), NULL, NULL, NULL,
-               NULL, 0, NULL, NULL, inTapePoolId, tconst.MIGRATIONMOUNT_WAITTAPE);
+              (vdqmVolReqId, tapeGatewayRequestId, id, startTime, VID, label, density,
+               lastFseq, lastVDQMPingTime, tapePool, status)
+       VALUES (NULL, ids_seq.nextval, ids_seq.nextval, gettime(), NULL, NULL, NULL,
+               NULL, 0, inTapePoolId, tconst.MIGRATIONMOUNT_WAITTAPE);
 END;
 /
 

@@ -338,12 +338,10 @@ END;
 CREATE OR REPLACE PROCEDURE insertMigrationMount(inTapePoolId IN NUMBER) AS
 BEGIN 
   INSERT INTO MigrationMount
-              (lastFileSystemChange, vdqmVolReqId,
-               tapeGatewayRequestId, id, startTime, VID, label, density,
-               lastFseq, lastVDQMPingTime, lastFileSystemUsed,
-               lastButOneFileSystemUsed, tapePool, status)
-       VALUES (0, NULL, ids_seq.nextval, ids_seq.nextval, gettime(), NULL, NULL, NULL,
-               NULL, 0, NULL, NULL, inTapePoolId, tconst.MIGRATIONMOUNT_WAITTAPE);
+              (vdqmVolReqId, tapeGatewayRequestId, id, startTime, VID, label, density,
+               lastFseq, lastVDQMPingTime, tapePool, status)
+       VALUES (NULL, ids_seq.nextval, ids_seq.nextval, gettime(), NULL, NULL, NULL,
+               NULL, 0, inTapePoolId, tconst.MIGRATIONMOUNT_WAITTAPE);
 END;
 /
 

@@ -83,7 +83,7 @@ CREATE TABLE newTapePool (name VARCHAR2(2048) CONSTRAINT NN_TapePool_Name NOT NU
                           minNbFilesForMount INTEGER CONSTRAINT NN_TapePool_MinNbFiles NOT NULL,
                           maxFileAgeBeforeMount INTEGER CONSTRAINT NN_TapePool_MaxFileAge NOT NULL,
                           lastEditor VARCHAR2(2048) CONSTRAINT NN_TapePool_LastEditor NOT NULL,
-                          lastEditionTime NUMBER CONSTRAINT NN_TapePool_LastEditionTime NOT NULL,
+                          lastEditionTime NUMBER CONSTRAINT NN_TapePool_LastEdTime NOT NULL,
                           id INTEGER CONSTRAINT PK_TapePool_Id PRIMARY KEY CONSTRAINT NN_TapePool_Id NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 INSERT INTO newTapePool (SELECT TapePool.name, SUM(SvcClassToNbDrives.nbDrives), 300000000000, 1000, 14400, '2.1.12 upgrade script', getTime(), TapePool.id
@@ -205,18 +205,16 @@ INSERT INTO Type2Obj (type, object) VALUES (30, 'RecallJob');
  *   tapePool : tapepool used by this migration
  *   status : current status of the migration
  */
-CREATE TABLE MigrationMount (lastFileSystemChange INTEGER CONSTRAINT NN_MigrationMount_LastFSChange NOT NULL,
-                             vdqmVolReqId INTEGER,
-                             tapeGatewayRequestId INTEGER,
-                             id INTEGER CONSTRAINT PK_MigrationMount_Id PRIMARY KEY CONSTRAINT NN_MigrationMount_Id NOT NULL,
+CREATE TABLE MigrationMount (vdqmVolReqId INTEGER,
+                             tapeGatewayRequestId INTEGER CONSTRAINT NN_MigrationMount_tgRequestId NOT NULL,
+                             id INTEGER CONSTRAINT PK_MigrationMount_Id PRIMARY KEY
+                                        CONSTRAINT NN_MigrationMount_Id NOT NULL,
                              startTime NUMBER CONSTRAINT NN_MigrationMount_startTime NOT NULL,
                              VID VARCHAR2(2048),
                              label VARCHAR2(2048),
                              density VARCHAR2(2048),
                              lastFseq INTEGER,
                              lastVDQMPingTime NUMBER CONSTRAINT NN_MigrationMount_lastVDQMPing NOT NULL,
-                             lastFileSystemUsed INTEGER,
-                             lastButOneFileSystemUsed INTEGER,
                              tapePool INTEGER CONSTRAINT NN_MigrationMount_TapePool NOT NULL,
                              status INTEGER CONSTRAINT NN_MigrationMount_Status NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
@@ -252,11 +250,12 @@ CREATE TABLE MigrationJob (fileSize INTEGER CONSTRAINT NN_MigrationJob_FileSize 
                            tapePool INTEGER CONSTRAINT NN_MigrationJob_TapePool NOT NULL,
                            nbRetry INTEGER CONSTRAINT NN_MigrationJob_nbRetry NOT NULL,
                            errorcode INTEGER,
-                           tapeGatewayRequestId INTEGER CONSTRAINT NN_MigrationJob_tgRequestId NOT NULL,
+                           tapeGatewayRequestId INTEGER,
                            FileTransactionId INTEGER,
                            fSeq INTEGER,
                            status INTEGER CONSTRAINT NN_MigrationJob_Status NOT NULL,
-                           id INTEGER CONSTRAINT PK_MigrationJob_Id PRIMARY KEY CONSTRAINT NN_MigrationJob_Id NOT NULL)
+                           id INTEGER CONSTRAINT PK_MigrationJob_Id PRIMARY KEY
+                                      CONSTRAINT NN_MigrationJob_Id NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE INDEX I_MigrationJob_CFVID ON MigrationJob(CastorFile, VID);
 CREATE INDEX I_MigrationJob_CFCopyNb ON MigrationJob(CastorFile, copyNb);
@@ -275,7 +274,7 @@ INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('Migration
 
 
 /* Definition of the MigrationRouting table. Each line is a routing rule for migration jobs
- *   isSmallFile : whether this routing rule applies to small files
+ *   isSmallFile : whether this routing rule applies to small files. NULL means it applied to all files
  *   copyNb : the copy number the routing rule applies to
  *   svcClass : the service class the routing rule applies to
  *   fileClass : the file class the routing rule applies to
@@ -283,7 +282,7 @@ INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('Migration
  *   lastEditionTime : last time this routing rule was edited, in seconds since the epoch
  *   tapePool : the tape pool where to migrate files matching the above criteria
  */
-CREATE TABLE MigrationRouting (isSmallFile INTEGER CONSTRAINT NN_MigrationRouting_IsFile NOT NULL,
+CREATE TABLE MigrationRouting (isSmallFile INTEGER,
                                copyNb INTEGER CONSTRAINT NN_MigrationRouting_CopyNb NOT NULL,
                                svcClass INTEGER CONSTRAINT NN_MigrationRouting_SvcClass NOT NULL,
                                fileClass INTEGER CONSTRAINT NN_MigrationRouting_FileClass NOT NULL,

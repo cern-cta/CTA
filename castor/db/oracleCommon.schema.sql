@@ -165,7 +165,7 @@ CREATE TABLE TapePool (name VARCHAR2(2048) CONSTRAINT NN_TapePool_Name NOT NULL,
                        minNbFilesForMount INTEGER CONSTRAINT NN_TapePool_MinNbFiles NOT NULL,
                        maxFileAgeBeforeMount INTEGER CONSTRAINT NN_TapePool_MaxFileAge NOT NULL,
                        lastEditor VARCHAR2(2048) CONSTRAINT NN_TapePool_LastEditor NOT NULL,
-                       lastEditionTime NUMBER CONSTRAINT NN_TapePool_LastEditionTime NOT NULL,
+                       lastEditionTime NUMBER CONSTRAINT NN_TapePool_LastEdTime NOT NULL,
                        id INTEGER CONSTRAINT PK_TapePool_Id PRIMARY KEY CONSTRAINT NN_TapePool_Id NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
@@ -181,8 +181,9 @@ INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
  *   status : current status of the migration
  */
 CREATE TABLE MigrationMount (vdqmVolReqId INTEGER,
-                             tapeGatewayRequestId INTEGER,
-                             id INTEGER CONSTRAINT PK_MigrationMount_Id PRIMARY KEY CONSTRAINT NN_MigrationMount_Id NOT NULL,
+                             tapeGatewayRequestId INTEGER CONSTRAINT NN_MigrationMount_tgRequestId NOT NULL,
+                             id INTEGER CONSTRAINT PK_MigrationMount_Id PRIMARY KEY
+                                        CONSTRAINT NN_MigrationMount_Id NOT NULL,
                              startTime NUMBER CONSTRAINT NN_MigrationMount_startTime NOT NULL,
                              VID VARCHAR2(2048),
                              label VARCHAR2(2048),
@@ -218,26 +219,18 @@ INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('Migration
  */
 CREATE TABLE MigrationJob (fileSize INTEGER CONSTRAINT NN_MigrationJob_FileSize NOT NULL,
                            VID VARCHAR2(2048),
-                           creationTime NUMBER 
-                                CONSTRAINT NN_MigrationJob_CreationTime NOT NULL,
-                           castorFile INTEGER 
-                                CONSTRAINT NN_MigrationJob_CastorFile NOT NULL,
-                           copyNb INTEGER 
-                                CONSTRAINT NN_MigrationJob_copyNb NOT NULL,
-                           tapePool INTEGER 
-                                CONSTRAINT NN_MigrationJob_TapePool NOT NULL,
-                           nbRetry INTEGER
-                                CONSTRAINT NN_MigrationJob_nbRetry NOT NULL,
+                           creationTime NUMBER CONSTRAINT NN_MigrationJob_CreationTime NOT NULL,
+                           castorFile INTEGER CONSTRAINT NN_MigrationJob_CastorFile NOT NULL,
+                           copyNb INTEGER CONSTRAINT NN_MigrationJob_copyNb NOT NULL,
+                           tapePool INTEGER CONSTRAINT NN_MigrationJob_TapePool NOT NULL,
+                           nbRetry INTEGER CONSTRAINT NN_MigrationJob_nbRetry NOT NULL,
                            errorcode INTEGER,
-                           tapeGatewayRequestId INTEGER
-                                CONSTRAINT NN_MigrationJob_tgRequestId NOT NULL,
+                           tapeGatewayRequestId INTEGER,
                            FileTransactionId INTEGER,
                            fSeq INTEGER,
-                           status INTEGER 
-                                CONSTRAINT NN_MigrationJob_Status NOT NULL,
-                           id INTEGER
-                                CONSTRAINT PK_MigrationJob_Id PRIMARY KEY 
-                                CONSTRAINT NN_MigrationJob_Id NOT NULL)
+                           status INTEGER CONSTRAINT NN_MigrationJob_Status NOT NULL,
+                           id INTEGER CONSTRAINT PK_MigrationJob_Id PRIMARY KEY 
+                                      CONSTRAINT NN_MigrationJob_Id NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE INDEX I_MigrationJob_CFVID ON MigrationJob(CastorFile, VID);
 CREATE INDEX I_MigrationJob_CFCopyNb ON MigrationJob(CastorFile, copyNb);
@@ -256,7 +249,7 @@ INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('Migration
 
 
 /* Definition of the MigrationRouting table. Each line is a routing rule for migration jobs
- *   isSmallFile : whether this routing rule applies to small files
+ *   isSmallFile : whether this routing rule applies to small files. Null means it applies to all files
  *   copyNb : the copy number the routing rule applies to
  *   svcClass : the service class the routing rule applies to
  *   fileClass : the file class the routing rule applies to
@@ -756,11 +749,11 @@ CREATE TABLE RmMasterLock (unused NUMBER);
 /* DB link to the nameserver db */
 PROMPT Configuration of the database link to the CASTOR name space
 UNDEF cnsUser
-ACCEPT cnsUser STRING PROMPT 'Enter the nameserver db username: ';
+ACCEPT cnsUser CHAR DEFAULT 'castorns' PROMPT 'Enter the nameserver db username (default castorns): ';
 UNDEF cnsPasswd
-ACCEPT cnsPasswd STRING PROMPT 'Enter the nameserver db password: ';
+ACCEPT cnsPasswd CHAR PROMPT 'Enter the nameserver db password: ';
 UNDEF cnsDbName
-ACCEPT cnsDbName STRING PROMPT 'Enter the nameserver db TNS name: ';
+ACCEPT cnsDbName CHAR DEFAULT PROMPT 'Enter the nameserver db TNS name: ';
 CREATE DATABASE LINK remotens
   CONNECT TO &cnsUser IDENTIFIED BY &cnsPasswd USING '&cnsDbName';
 
