@@ -250,16 +250,21 @@ def extractVersions(component):
         if latestVersion < newVersion:
             latestVersion = newVersion
             latestScript = script
+    newVersion = latestVersion.next()
     # find out the DB schema version
-    schemaVersion = Version('0.0.0-0')
-    for l in open(latestScript).readlines():
+    if latestScript:
+      for l in open(latestScript).readlines():
         if l.strip().startswith('WHERE schemaVersion = '):
-            schemaVersion = Version(l.split("'")[1])
-            break
+          schemaVersion = Version(l.split("'")[1])
+          break
+    else:
+      latestVersion = Version(raw_input('latest version for %s (2.1.x-y): ' % component))
+      newVersion = Version(raw_input('new version for %s  (2.1.x-y): ' % component))
+      schemaVersion = Version(raw_input('SchemaVersion for %s  (2.1.x-y): ' % component))
     # find out the type of release
     releaseType = 'TRANSPARENT'
     # return all versions
-    return component.upper(), schemaVersion, latestVersion, latestVersion.next(), releaseType
+    return component.upper(), schemaVersion, latestVersion, newVersion, releaseType
 
 # main method going through the creation of all upgrade scripts
 for gcomponent in components:

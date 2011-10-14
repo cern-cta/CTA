@@ -44,7 +44,7 @@ DECLARE
 BEGIN
   SELECT release INTO unused FROM CastorVersion
    WHERE schemaName = 'STAGER'
-     AND release LIKE '2_1_11_2%';
+     AND release LIKE '2_1_11_6%';
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- Error, we cannot apply this script
   raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts for the STAGER before this one.');
@@ -100,6 +100,29 @@ ALTER TABLE newTapePool RENAME TO TapePool;
 
 -- modification of the SubRequest Table
 ALTER TABLE SubRequest ADD (reqType INTEGER DEFAULT 0 CONSTRAINT NN_SubRequest_reqType NOT NULL);
+-- cleanup subrequests for which the type cannot be retrieved from Id2Type
+BEGIN
+  FOR sr IN (SELECT SubRequest.id
+               FROM SubRequest, Id2Type
+              WHERE subrequest.request = Id2Type.id(+)
+                AND Id2Type.id IS NULL) LOOP
+    DELETE FROM SubRequest WHERE id = sr.id;
+  END LOOP;
+  -- and the related Requests
+  bulkDeleteRequests('StageGetRequest');
+  bulkDeleteRequests('StagePutRequest');
+  bulkDeleteRequests('StageUpdateRequest');
+  bulkDeleteRequests('StagePrepareToGetRequest');
+  bulkDeleteRequests('StagePrepareToPutRequest');
+  bulkDeleteRequests('StagePrepareToUpdateRequest');
+  bulkDeleteRequests('StagePutDoneRequest');
+  bulkDeleteRequests('StageRmRequest');
+  bulkDeleteRequests('StageRepackRequest');
+  bulkDeleteRequests('StageDiskCopyReplicaRequest');
+  bulkDeleteRequests('SetFileGCWeight');
+END;
+/
+-- set the reqType column for all subrequests
 UPDATE SubRequest SET reqType = (SELECT type FROM Id2Type WHERE id = request);
 
 -- table and column drops
@@ -167,7 +190,6 @@ INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallJob
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallJob', 'status', 6, 'RECALLJOB_FAILED');
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallJob', 'status', 8, 'RECALLJOB_RETRY');
 INSERT INTO Type2Obj (type, object) VALUES (30, 'RecallJob');
-INSERT INTO Type2Obj (type, object) VALUES (196, 'EndNotificationFileErrorReport');
 
 /* Definition of the MigrationMount table
  *   lastFileSystemChange : time of the last change of filesystem used for this migration
@@ -261,7 +283,7 @@ INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('Migration
  *   lastEditionTime : last time this routing rule was edited, in seconds since the epoch
  *   tapePool : the tape pool where to migrate files matching the above criteria
  */
-CREATE TABLE MigrationRouting (isSmallFile BOOLEAN CONSTRAINT NN_MigrationRouting_IsFile NOT NULL,
+CREATE TABLE MigrationRouting (isSmallFile INTEGER CONSTRAINT NN_MigrationRouting_IsFile NOT NULL,
                                copyNb INTEGER CONSTRAINT NN_MigrationRouting_CopyNb NOT NULL,
                                svcClass INTEGER CONSTRAINT NN_MigrationRouting_SvcClass NOT NULL,
                                fileClass INTEGER CONSTRAINT NN_MigrationRouting_FileClass NOT NULL,
@@ -353,12 +375,17 @@ BEGIN
   dropProcedureSafe('TG_DELETESTREAM');
   dropProcedureSafe('DEFAULTMIGRSELPOLICY');
   dropProcedureSafe('INPUTFORMIGRATIONPOLICY');
+  dropProcedureSafe('DELETEMIGRATIONTAPECOPIES');
+  dropProcedureSafe('DELETERECALLTAPECOPIES');
+  dropProcedureSafe('DELETESINGLETAPECOPY');
   dropProcedureSafe('STAGERELEASE');
   dropProcedureSafe('TG_DRAINDISKMIGRSELPOLICY');
   dropProcedureSafe('TG_REPACKMIGRSELPOLICY');
   dropProcedureSafe('TG_GETSTREAMSWITHOUTTAPES');
   dropProcedureSafe('UPDATEFSMIGRATOROPENED');
   dropProcedureSafe('UPDATEFSRECALLEROPENED');
+  dropProcedureSafe('INSERTCHANGEPRIVILEGE');
+  dropProcedureSafe('INSERTLISTPRIVILEGE');
   dropFunctionSafe('GETTCS');
   dropFunctionSafe('CHECKAVAILOFSCHEDULERRFS');
   dropFunctionSafe('CHECKFAILPUTWHENTAPE0');
@@ -391,16 +418,11 @@ DROP PROCEDURE dropSafe;
 BEGIN
   FOR a IN (SELECT object_name, object_type
               FROM user_objects
-             WHERE object_type IN ('PROCEDURE', 'TRIGGER', 'FUNCTION')
+             WHERE object_type IN ('PROCEDURE', 'TRIGGER', 'FUNCTION', 'VIEW', 'PACKAGE BODY')
                AND status = 'INVALID')
   LOOP
-    IF a.object_type = 'PROCEDURE' THEN
-      EXECUTE IMMEDIATE 'ALTER PROCEDURE '||a.object_name||' COMPILE';
-    ELSIF a.object_type = 'TRIGGER' THEN
-      EXECUTE IMMEDIATE 'ALTER TRIGGER '||a.object_name||' COMPILE';
-    ELSE
-      EXECUTE IMMEDIATE 'ALTER FUNCTION '||a.object_name||' COMPILE';
-    END IF;
+    IF a.object_type = 'PACKAGE BODY' THEN a.object_type := 'PACKAGE'; END IF;
+    EXECUTE IMMEDIATE 'ALTER ' ||a.object_type||' '||a.object_name||' COMPILE';
   END LOOP;
 END;
 /
