@@ -117,7 +117,7 @@ def main(argv):
              'InSvcClass':     None,
              'InFileMask':     1,
              'InAutoDelete':   0,
-             'InMaxTransfers': 50,
+             'InMaxTransfers': 1,
              'InRestart':      0,
              'InComments':     'N/A' }
 
