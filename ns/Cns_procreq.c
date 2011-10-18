@@ -3962,7 +3962,7 @@ int Cns_srv_setacl(char *req_data,
   /* Check if the user is authorized to setacl for this entry */
   if (reqinfo->uid != fmd_entry.uid &&
       Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost,
-                  localhost, P_ADMIN))
+                  localhost, P_GRP_ADMIN))
     RETURN (EPERM);
 
   qsort (acl, nentries, sizeof(struct Cns_acl), Cns_acl_compare);
