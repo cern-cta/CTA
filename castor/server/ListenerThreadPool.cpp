@@ -97,7 +97,7 @@ bool castor::server::ListenerThreadPool::shutdown(bool wait) throw() {
 // threadAssign
 //------------------------------------------------------------------------------
 void castor::server::ListenerThreadPool::threadAssign(void *param) {
-  if (m_nbThreads == 0) {
+  if (m_nbThreads == 1) {
     // In this case we run the user thread code in the same thread of the producer/listener.
     // Note that during the user thread execution we cannot accept connections.
     try {

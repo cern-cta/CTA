@@ -438,9 +438,8 @@ void castor::server::DynamicThreadPool::addTask(void *data, bool wait)
   
   // Check to see if additional threads need to be started
   pthread_mutex_lock(&m_lock);
-  if ((m_nbThreads == 1) ||
-      ((m_nbThreads < m_maxThreads) &&
-       (m_taskQueue.size() > m_threshold))) {
+  if ((m_nbThreads < m_maxThreads) &&
+       (m_taskQueue.size() > m_threshold)) {
     rv = pthread_create(&t, &m_attr, (void *(*)(void *))&castor::server::DynamicThreadPool::_consumer, this);
     if (rv == 0) {
       m_nbThreads++;
