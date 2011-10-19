@@ -396,14 +396,18 @@ BEGIN
     END;
     -- Check to see if the mountpoint is already being drained. Note: we do not
     -- allow the resubmission of a mountpoint without a prior DELETION unless
-    -- the previous process was not in a FAILED or COMPLETED state
+    -- the previous process was not in a FAILED or COMPLETED state. An exception
+    -- is made for the cases where no mountpoint was given and the whole box
+    -- should be drained
     BEGIN
       SELECT fileSystem INTO unused
         FROM DrainingFileSystem
        WHERE fileSystem = fsIds(i)
          AND status NOT IN (4, 5);  -- FAILED, COMPLETED
-      raise_application_error
-        (-20118, 'Mountpoint: '||mntPnt||' is already being drained');
+      IF inMountPoint IS NOT NULL THEN
+        raise_application_error
+          (-20118, 'Mountpoint: '||mntPnt||' is already being drained');
+      END IF;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- Cleanup
       removeFailedDrainingTransfers(fsIds(i));
