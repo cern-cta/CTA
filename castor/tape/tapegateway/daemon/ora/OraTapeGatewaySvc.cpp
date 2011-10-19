@@ -1064,13 +1064,13 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFailedMigrations(std
     rs = m_getFailedMigrationsStatement->getCursor(1);
     // Find columns in the cursor
     resultSetIntrospector resIntros (rs);
-    int TapecopyIdIndex = resIntros.findColumnIndex(       "ID", oracle::occi::OCCI_SQLT_NUM);
+    int MigrationJobIdIndex = resIntros.findColumnIndex(       "ID", oracle::occi::OCCI_SQLT_NUM);
     int ErrorCodeIndex  = resIntros.findColumnIndex("ERRORCODE", oracle::occi::OCCI_SQLT_NUM);
     int NbRetryIndex    = resIntros.findColumnIndex(  "NBRETRY", oracle::occi::OCCI_SQLT_NUM);
     // Run through the cursor
     while (rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
       castor::tape::tapegateway::RetryPolicyElement item;
-      item.tapeCopyId = (u_signed64)rs->getDouble(TapecopyIdIndex);
+      item.migrationOrRecallJobId = (u_signed64)rs->getDouble(MigrationJobIdIndex);
       item.errorCode  = rs->getInt(ErrorCodeIndex);
       item.nbRetry    = rs->getInt(NbRetryIndex);
       candidates.push_back(item);
@@ -1099,7 +1099,7 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFailedMigrations(std
 // setMigRetryResult
 //----------------------------------------------------------------------------
 
-void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setMigRetryResult(const std::list<u_signed64>& tcToRetry, const std::list<u_signed64>&  tcToFail ) throw (castor::exception::Exception) {
+void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setMigRetryResult(const std::list<u_signed64>& mjToRetry, const std::list<u_signed64>&  mjToFail ) throw (castor::exception::Exception) {
 
   
  unsigned char (*bufferRetry)[21]=NULL;
@@ -1116,7 +1116,7 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setMigRetryResult(const
 
     // success
 
-    ub4 nbRetry= tcToRetry.size();
+    ub4 nbRetry= mjToRetry.size();
     nbRetry=nbRetry==0?1:nbRetry;
     bufferRetry=(unsigned char(*)[21]) calloc((nbRetry) * 21, sizeof(unsigned char));
     lensRetry=(ub2 *)malloc (sizeof(ub2)*nbRetry);
@@ -1130,8 +1130,8 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setMigRetryResult(const
 
     int i=0;
     
-    for (std::list<u_signed64>::const_iterator elem= tcToRetry.begin(); 
-	 elem != tcToRetry.end();
+    for (std::list<u_signed64>::const_iterator elem= mjToRetry.begin(); 
+	 elem != mjToRetry.end();
 	 elem++, i++){
 	oracle::occi::Number n = (double)(*elem);
 	oracle::occi::Bytes b = n.toBytes();
@@ -1139,8 +1139,8 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setMigRetryResult(const
 	lensRetry[i] = b.length();
     }
 
-    // if there where no successfull tapecopy
-    if (tcToRetry.size() == 0){
+    // if there where no successfull migration
+    if (mjToRetry.size() == 0){
       //let's put -1
       oracle::occi::Number n = (double)(-1);
       oracle::occi::Bytes b = n.toBytes();
@@ -1153,7 +1153,7 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setMigRetryResult(const
 
     // failures
 
-    ub4 nbFail = tcToFail.size();
+    ub4 nbFail = mjToFail.size();
     nbFail = nbFail == 0 ? 1 : nbFail; 
     bufferFail=(unsigned char(*)[21]) calloc((nbFail) * 21, sizeof(unsigned char));
     lensFail = (ub2 *)malloc (sizeof(ub2)*nbFail);
@@ -1169,8 +1169,8 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setMigRetryResult(const
     
     i=0;
 
-    for (std::list<u_signed64>::const_iterator elem=tcToFail.begin();
-	  elem != tcToFail.end();
+    for (std::list<u_signed64>::const_iterator elem=mjToFail.begin();
+	  elem != mjToFail.end();
 	  elem++,i++){
       
 	oracle::occi::Number n = (double)(*elem);
@@ -1180,9 +1180,9 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setMigRetryResult(const
 
     }
 
-    // if there where no failed tapecopy
+    // if there where no failed migration
 
-    if (tcToFail.size() == 0){
+    if (mjToFail.size() == 0){
       //let's put -1
       oracle::occi::Number n = (double)(-1);
       oracle::occi::Bytes b = n.toBytes();
@@ -1242,13 +1242,13 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFailedRecalls( std::l
     rs = m_getFailedRecallsStatement->getCursor(1);
     // Find columns for the cursor
     resultSetIntrospector resIntros (rs);
-    int TapecopyIdIndex = resIntros.findColumnIndex(       "ID", oracle::occi::OCCI_SQLT_NUM);
+    int RecallIdIndex = resIntros.findColumnIndex(       "ID", oracle::occi::OCCI_SQLT_NUM);
     int ErrorCodeIndex  = resIntros.findColumnIndex("ERRORCODE", oracle::occi::OCCI_SQLT_NUM);
     int NbRetryIndex    = resIntros.findColumnIndex(  "NBRETRY", oracle::occi::OCCI_SQLT_NUM);
     // Run through the cursor 
     while (rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
       castor::tape::tapegateway::RetryPolicyElement item;
-      item.tapeCopyId = (u_signed64)rs->getDouble(TapecopyIdIndex);
+      item.migrationOrRecallJobId = (u_signed64)rs->getDouble(RecallIdIndex);
       item.errorCode  = rs->getInt(ErrorCodeIndex);
       item.nbRetry    = rs->getInt(NbRetryIndex);
       candidates.push_back(item);
@@ -1276,7 +1276,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFailedRecalls( std::l
 // setRecRetryResult
 //----------------------------------------------------------------------------
 
-void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setRecRetryResult(const std::list<u_signed64>& tcToRetry,const std::list<u_signed64>& tcToFail) throw (castor::exception::Exception) {
+void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setRecRetryResult(const std::list<u_signed64>& mjToRetry,const std::list<u_signed64>& mjToFail) throw (castor::exception::Exception) {
 
 
   unsigned char (*bufferRetry)[21]=NULL;
@@ -1296,7 +1296,7 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setRecRetryResult(const
 
     // success
 
-    ub4 nbRetry= tcToRetry.size();
+    ub4 nbRetry= mjToRetry.size();
     nbRetry=nbRetry==0?1:nbRetry;
     bufferRetry=(unsigned char(*)[21]) calloc((nbRetry) * 21, sizeof(unsigned char));
     lensRetry=(ub2 *)malloc (sizeof(ub2)*nbRetry);
@@ -1309,8 +1309,8 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setRecRetryResult(const
     }
 
     int i=0;
-    for (std::list<u_signed64>::const_iterator elem=tcToRetry.begin();
-	 elem != tcToRetry.end();
+    for (std::list<u_signed64>::const_iterator elem=mjToRetry.begin();
+	 elem != mjToRetry.end();
 	 elem++, i++){
       
       oracle::occi::Number n = (double)(*elem);
@@ -1321,7 +1321,7 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setRecRetryResult(const
 
     }
   
-    if (tcToRetry.size() == 0){
+    if (mjToRetry.size() == 0){
       //let's put -1
       oracle::occi::Number n = (double)(-1);
       oracle::occi::Bytes b = n.toBytes();
@@ -1336,7 +1336,7 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setRecRetryResult(const
     // failure 
     
 
-    ub4 nbFail= tcToFail.size();
+    ub4 nbFail= mjToFail.size();
     nbFail=nbFail==0?1:nbFail;
     bufferFail = (unsigned char(*)[21]) calloc((nbFail) * 21, sizeof(unsigned char));
     lensFail = (ub2 *)malloc (sizeof(ub2)*nbFail);
@@ -1353,8 +1353,8 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setRecRetryResult(const
     
     i=0;
 
-    for (std::list<u_signed64>::const_iterator elem=tcToFail.begin();
-	 elem != tcToFail.end();
+    for (std::list<u_signed64>::const_iterator elem=mjToFail.begin();
+	 elem != mjToFail.end();
 	 elem++, i++){
       oracle::occi::Number n = (double)(*elem);
       oracle::occi::Bytes b = n.toBytes();
@@ -1364,7 +1364,7 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setRecRetryResult(const
     }
 
     
-    if (tcToFail.size() == 0){
+    if (mjToFail.size() == 0){
       //let's put -1
       oracle::occi::Number n = (double)(-1);
       oracle::occi::Bytes b = n.toBytes();

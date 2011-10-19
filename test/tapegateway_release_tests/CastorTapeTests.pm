@@ -65,8 +65,6 @@ our @export   = qw(
                    deleteCastorFile 
                    setFileClassNbCopies 
                    overrideCheckPermission 
-                   insertTapeCopy 
-                   deleteTapeCopy 
                    deleteAllStreamsTapeCopiesAndCastorFiles 
                    executeSQLPlusScript 
                    executeSQLPlusScriptNoError 
@@ -514,29 +512,26 @@ sub remove_serviceclass( $$ )
     print "t=".elapsed_time()."s. Removed serviceclass reference for file: $name\n";
 }
 
-sub remove_stream( $$ )
+sub remove_migration_mount( $$ )
 {
     my ($dbh, $name) = (shift, shift);
     my $stmt = $dbh->prepare(
        "DECLARE
-          varStreamIds \"numList\";
+          varMigrationMountIds \"numList\";
         BEGIN
-          SELECT s.id
-            BULK COLLECT INTO varStreamIds
-            FROM Stream s
-           INNER JOIN Stream2TapeCopy sttc ON s.id = sttc.parent
-           INNER JOIN TapeCopy tc ON tc.id = sttc.child
-           INNER JOIN Castorfile cf ON cf.id = tc.castorFile
+          SELECT mm.id
+            BULK COLLECT INTO varMigrationMountIds
+            FROM MigrationMount mm
+           INNER JOIN MigrationJob mj ON mj.tapegatewayrequestid = mm.tapegatewayrequestid
+           INNER JOIN Castorfile cf ON cf.id = mj.castorFile
            WHERE cf.lastKnownFileName = :NSNAME;
-          DELETE FROM Stream2TapeCopy sttc 
-           WHERE sttc.parent IN (SELECT * FROM TABLE (varStreamIds));
-          DELETE FROM Stream s
-           WHERE s.id IN (SELECT * FROM TABLE (varStreamIds));
+          DELETE FROM MigrationMount mm
+           WHERE mm.id IN (SELECT * FROM TABLE (varMigrationMountIds));
           COMMIT;
         END;");
     $stmt->bind_param(":NSNAME", $name);
     $stmt->execute();
-    print "t=".elapsed_time()."s. Removed stream for file: $name\n";
+    print "t=".elapsed_time()."s. Removed migration mount(s) for file: $name\n";
 }
 
 sub remove_tapepool( $$ )
@@ -544,16 +539,15 @@ sub remove_tapepool( $$ )
     my ($dbh, $name) = (shift, shift);
     my $stmt = $dbh->prepare(
        "DECLARE
-          varStreamIds \"numList\";
+          varMigrationMountIds \"numList\";
           varFakeTPId  NUMBER;
         BEGIN
           SELECT ids_seq.nextval INTO varFakeTPId FROM DUAL;
-          SELECT s.id
-            BULK COLLECT INTO varStreamIds
-            FROM Stream s
-           INNER JOIN Stream2TapeCopy sttc ON s.id = sttc.parent
-           INNER JOIN TapeCopy tc ON tc.id = sttc.child
-           INNER JOIN Castorfile cf ON cf.id = tc.castorFile
+          SELECT mm.id
+            BULK COLLECT INTO varMigrationMountIds
+            FROM MigrationMount mm
+           INNER JOIN MigrationJob mj ON mj.tapeGatewayRequestId = mm.tapeGatewayRequestId
+           INNER JOIN Castorfile cf ON cf.id = mj.castorFile
            WHERE cf.lastKnownFileName = :NSNAME;
           UPDATE Stream s
              SET s.tapePool = varFakeTPId
@@ -570,15 +564,15 @@ sub remove_segment( $$ )
     my ($dbh, $name) = (shift, shift);
     my $stmt = $dbh->prepare(
        "DECLARE
-          varTapeCopyIds \"numList\";
+          varRecallJobIds \"numList\";
         BEGIN
           SELECT tc.id
-            BULK COLLECT INTO varTapeCopyIds
+            BULK COLLECT INTO varRecallJobIds
             FROM TapeCopy tc
            INNER JOIN Castorfile cf ON cf.id = tc.castorFile
            WHERE cf.lastKnownFileName = :NSNAME;
           DELETE FROM Segment seg
-           WHERE seg.copy IN (SELECT * FROM TABLE (varTapeCopyIds));
+           WHERE seg.copy IN (SELECT * FROM TABLE (varRecallJobIds));
           COMMIT;
         END;");
     $stmt->bind_param(":NSNAME", $name);
@@ -682,8 +676,8 @@ sub error_injector ( $$$ )
         } elsif ($file{breaking_type} =~ /^missing serviceclass/) {
              remove_serviceclass($dbh, $file{name});
              $remote_files[$index]->{breaking_done} = 1;
-        } elsif ($file{breaking_type} =~ /^missing stream/) {
-             remove_stream($dbh, $file{name});
+        } elsif ($file{breaking_type} =~ /^missing migration mount/) {
+             remove_migration_mount($dbh, $file{name});
              $remote_files[$index]->{breaking_done} = 1;
         } elsif ($file{breaking_type} =~ /^missing tapepool/) {
              remove_tapepool($dbh, $file{name});
@@ -1595,112 +1589,6 @@ sub overrideCheckPermission ( $ )
   my $sth = $dbh->prepare($stmt);
   $sth->execute();
 }
-
-
-# Inserts a row into the TapeCopy table and returns the database ID.
-#
-# @param dbh          The handle to the stager-database.
-# @param castorFileId The database ID of the associated castor-file.
-# @param status       The initial status of the tape-copy.
-# @return             The database ID of the newly inserted tape-copy.
-sub insertTapeCopy ( $$$ )
-{
-  my $dbh          = $_[0];
-  my $castorFileId = $_[1];
-  my $status       = $_[2];
-
-  my $stmt = "
-    DECLARE
-      varTapeCopyId NUMBER(38) := NULL;
-    BEGIN
-      INSERT INTO TapeCopy(id, copyNb, castorFile, status)
-           VALUES (ids_seq.nextval, 1, :CASTORFILEID, :STATUS)
-        RETURNING id INTO varTapeCopyId;
-
-      INSERT INTO Id2Type(id, type) VALUES (varTapeCopyId, 30);
-
-      :TAPECOPYID := varTapeCopyId;
-    END;";
-
-  # The tape-copy database ID will be the return value
-  my $tapeCopyId;
-
-  my $sth = $dbh->prepare($stmt);
-  $sth->bind_param_inout(":CASTORFILEID", \$castorFileId, 20) or die $sth->errstr;
-  $sth->bind_param_inout(":STATUS"      , \$status      , 20) or die $sth->errstr;
-  $sth->bind_param_inout(":TAPECOPYID"  , \$tapeCopyId  , 20) or die $sth->errstr;
-  $sth->execute();
-
-  return $tapeCopyId;
-}
-
-
-# Inserts the specified number of rows into the TapeCopy table all pointing to
-# the specified castor-file and all with the specified status.
-#
-# @param dbh          The handle to the stager-database.
-# @param castorFileId The database ID of the associated castor-file.
-# @param status       The initial status of the tape-copies.
-# @param nbTapeCopies The number of rows to insert into the TapeCopy table.
-sub insertTapeCopies ( $$$$ )
-{
-  my $dbh          = $_[0];
-  my $castorFileId = $_[1];
-  my $status       = $_[2];
-  my $nbTapeCopies = $_[3];
-
-  my $stmt = "
-    DECLARE
-      varTapeCopyId NUMBER(38) := NULL;
-    BEGIN
-      FOR i IN 1 .. :NBTAPECOPIES LOOP
-        INSERT INTO TapeCopy(id, copyNb, castorFile, status)
-             VALUES (ids_seq.nextval, 1, :CASTORFILEID, :STATUS)
-          RETURNING id INTO varTapeCopyId;
-
-        INSERT INTO Id2Type(id, type) VALUES (varTapeCopyId, 30);
-      END LOOP;
-    END;";
-
-  # The tape-copy database ID will be the return value
-  my $tapeCopyId;
-
-  my $sth = $dbh->prepare($stmt);
-  $sth->bind_param_inout(":NBTAPECOPIES", \$nbTapeCopies, 20)
-    or die $sth->errstr;
-  $sth->bind_param_inout(":CASTORFILEID", \$castorFileId, 20)
-    or die $sth->errstr;
-  $sth->bind_param_inout(":STATUS"      , \$status      , 20)
-    or die $sth->errstr;
-  $sth->execute();
-
-  return $tapeCopyId;
-}
-
-
-# Deletes the row from the TapeCopy table with the specified database ID.
-#
-# @param dbh        The handle to the stager-database.
-# @param tapeCopyId The castor database ID.
-sub deleteTapeCopy ( $$ )
-{
-  my $dbh        = $_[0];
-  my $tapeCopyId = $_[1];
-
-  my $stmt = "
-    DECLARE
-      varTapeCopyId NUMBER(38) := :TAPECOPYID;
-    BEGIN
-      DELETE FROM Stream2TapeCopy WHERE child = varTapeCopyId;
-      DELETE FROM TapeCopy        WHERE id    = varTapeCopyId;
-      DELETE FROM Id2Type         WHERE id    = varTapeCopyId;
-    END;";
-
-  my $sth = $dbh->prepare($stmt);
-  $sth->bind_param_inout(":TAPECOPYID", \$tapeCopyId, 20) or die $sth->errstr;
-  $sth->execute();
-}
-
 
 # Deletes all Stream2TapeCopy, Stream, TapeCopy and CastorFile rows from the
 # stager database.

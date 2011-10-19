@@ -43,7 +43,7 @@ namespace tapegateway {
 
       int errorCode;
 
-      u_signed64 tapeCopyId;
+      u_signed64 migrationOrRecallJobId;
 
     }; /* end of class RetryPolicyElement */
   

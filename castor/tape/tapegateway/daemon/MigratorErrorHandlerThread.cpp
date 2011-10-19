@@ -81,24 +81,24 @@ void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void*)
   timeval tvStart,tvEnd;
   gettimeofday(&tvStart, NULL);
 
-  std::list<RetryPolicyElement> tcList;
+  std::list<RetryPolicyElement> mjList;
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,MIG_ERROR_GETTING_FILES, 0, NULL);
 
   try {
     // Find all the failed migrations (tapecopies) and lock them
-    oraSvc->getFailedMigrations(tcList);
+    oraSvc->getFailedMigrations(mjList);
   } catch (castor::exception::Exception& e){
 
     castor::dlf::Param params[] =
       {castor::dlf::Param("errorCode",sstrerror(e.code())),
        castor::dlf::Param("errorMessage",e.getMessage().str())
       };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,MIG_ERROR_NO_TAPECOPY, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,MIG_ERROR_NO_JOB, params);
     return;
   }
 
-  if (tcList.empty()){
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,MIG_ERROR_NO_TAPECOPY, 0, NULL);
+  if (mjList.empty()){
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,MIG_ERROR_NO_JOB, 0, NULL);
     scpTrans.rollback();
     return;
 
@@ -114,45 +114,45 @@ void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void*)
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, MIG_ERROR_TAPECOPIES_FOUND, paramsDb);
 
 
-  std::list<u_signed64> tcIdsToRetry;
-  std::list<u_signed64> tcIdsToFail;
+  std::list<u_signed64> mjIdsToRetry;
+  std::list<u_signed64> mjIdsToFail;
 
-  std::list<RetryPolicyElement>::iterator tcItem= tcList.begin();
+  std::list<RetryPolicyElement>::iterator migJob= mjList.begin();
 
-  while (tcItem != tcList.end()){
+  while (migJob != mjList.end()){
     
 
     //apply the policy
 
     castor::dlf::Param params[] =
-      {castor::dlf::Param("tapecopyId",(*tcItem).tapeCopyId)
+      {castor::dlf::Param("migrationJobId",(*migJob).migrationOrRecallJobId)
       };
 
     try {
 
-      if ( applyRetryMigrationPolicy(*tcItem)) {
+      if ( applyRetryMigrationPolicy(*migJob)) {
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,MIG_ERROR_RETRY, params);
-	tcIdsToRetry.push_back( (*tcItem).tapeCopyId);
+	mjIdsToRetry.push_back( (*migJob).migrationOrRecallJobId);
       } else {
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,MIG_ERROR_FAILED, params);
-	tcIdsToFail.push_back( (*tcItem).tapeCopyId);
+	mjIdsToFail.push_back( (*migJob).migrationOrRecallJobId);
       }
 
 
     } catch (castor::exception::Exception& e){
 
       castor::dlf::Param paramsEx[] =
-	{castor::dlf::Param("tapecopyId",(*tcItem).tapeCopyId),
+	{castor::dlf::Param("migrationJobId",(*migJob).migrationOrRecallJobId),
 	 castor::dlf::Param("errorCode",sstrerror(e.code())),
 	 castor::dlf::Param("errorMessage",e.getMessage().str())
 	};
       
       // retry in case of error
-      tcIdsToRetry.push_back( (*tcItem).tapeCopyId);
+      mjIdsToRetry.push_back( (*migJob).migrationOrRecallJobId);
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, MIG_ERROR_RETRY_BY_DEFAULT, paramsEx);
     }
 
-    tcItem++;
+    migJob++;
 
   }
 
@@ -162,7 +162,7 @@ void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void*)
   try {
     // TODO This function does a commit in SQL for the moment but it should be
     // fixed (when having a single convention)
-    oraSvc->setMigRetryResult(tcIdsToRetry,tcIdsToFail);
+    oraSvc->setMigRetryResult(mjIdsToRetry,mjIdsToFail);
     scpTrans.commit();
     gettimeofday(&tvEnd, NULL);
     procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
@@ -170,8 +170,8 @@ void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void*)
     castor::dlf::Param paramsDbUpdate[] =
     {
       castor::dlf::Param("ProcessingTime", procTime * 0.000001),
-      castor::dlf::Param("tapecopies to retry",tcIdsToRetry.size()),
-      castor::dlf::Param("tapecopies to fail",tcIdsToFail.size())
+      castor::dlf::Param("tapecopies to retry",mjIdsToRetry.size()),
+      castor::dlf::Param("tapecopies to fail",mjIdsToFail.size())
     };
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, MIG_ERROR_RESULT_SAVED, paramsDbUpdate);
   
@@ -185,9 +185,9 @@ void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void*)
   }
 
   
-  tcList.clear();
-  tcIdsToRetry.clear();
-  tcIdsToFail.clear();
+  mjList.clear();
+  mjIdsToRetry.clear();
+  mjIdsToFail.clear();
 
 }
 

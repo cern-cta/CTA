@@ -381,13 +381,22 @@ def displayErrors():
         stcur = stconn.cursor()
         stcur.arraysize = 50
         stGetErrors = '''
-        SELECT CastorFile.fileId, TapeCopy.copynb, SubRequest.errorCode, Subrequest.errorMessage
-          FROM SubRequest, CastorFile, TapeCopy
-         WHERE SubRequest.request = (SELECT MAX(id) FROM StageRepackRequest
-                                      WHERE RepackVID = :vid)
-           AND CastorFile.id = SubRequest.castorFile
-           AND TapeCopy.castorFile(+) = CastorFile.id
-           AND SubRequest.status IN (7, 9, 10)
+        SELECT * FROM (
+          SELECT CastorFile.fileId, MigrationJob.copynb, SubRequest.errorCode, Subrequest.errorMessage
+            FROM SubRequest, CastorFile, MigrationJob
+           WHERE SubRequest.request = (SELECT MAX(id) FROM StageRepackRequest
+                                        WHERE RepackVID = :vid)
+             AND CastorFile.id = SubRequest.castorFile
+             AND MigrationJob.castorFile(+) = CastorFile.id
+             AND SubRequest.status IN (7, 9, 10)
+           UNION
+          SELECT CastorFile.fileId, RecallJob.copynb, SubRequest.errorCode, Subrequest.errorMessage
+            FROM SubRequest, CastorFile, RecallJob
+           WHERE SubRequest.request = (SELECT MAX(id) FROM StageRepackRequest
+                                        WHERE RepackVID = :vid)
+             AND CastorFile.id = SubRequest.castorFile
+             AND RecallJob.castorFile(+) = CastorFile.id
+             AND SubRequest.status IN (7, 9, 10))
            AND ROWNUM <= %d''' % (maxNbErrors+1)
         # loop over the tapes we should deal with
         for tape in vids:

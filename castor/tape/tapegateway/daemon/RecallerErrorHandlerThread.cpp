@@ -79,23 +79,23 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void*)
   gettimeofday(&tvStart, NULL);
 
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, REC_ERROR_GETTING_FILES, 0, NULL);
-  std::list<RetryPolicyElement> tcList;
+  std::list<RetryPolicyElement> rjList;
 
   try {
     // Following SQL takes locks
-    oraSvc->getFailedRecalls(tcList);
+    oraSvc->getFailedRecalls(rjList);
   }  catch (castor::exception::Exception& e){
 
     castor::dlf::Param params[] =
       {castor::dlf::Param("errorCode",sstrerror(e.code())),
        castor::dlf::Param("errorMessage",e.getMessage().str())
       };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, REC_ERROR_NO_TAPECOPY, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, REC_ERROR_NO_JOB, params);
     return;
   }
 
-  if (tcList.empty()) {
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, REC_ERROR_NO_TAPECOPY, 0, NULL);
+  if (rjList.empty()) {
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, REC_ERROR_NO_JOB, 0, NULL);
     return;
   }
 
@@ -106,43 +106,43 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void*)
     {
       castor::dlf::Param("ProcessingTime", procTime * 0.000001)
     };
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, REC_ERROR_TAPECOPIES_FOUND, paramsDb);
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, REC_ERROR_JOBS_FOUND, paramsDb);
 
 
-  std::list<u_signed64> tcIdsToRetry;
-  std::list<u_signed64> tcIdsToFail;
+  std::list<u_signed64> rjIdsToRetry;
+  std::list<u_signed64> rjIdsToFail;
 
-  std::list<RetryPolicyElement>::iterator tcItem= tcList.begin();
+  std::list<RetryPolicyElement>::iterator tcItem= rjList.begin();
 
 
 
-  while (tcItem != tcList.end()){
+  while (tcItem != rjList.end()){
 
 
     //apply the policy
 
     castor::dlf::Param params[] =
-      {castor::dlf::Param("tapecopyId",(*tcItem).tapeCopyId)
+      {castor::dlf::Param("recallJobId",(*tcItem).migrationOrRecallJobId)
       };
     
     try {
 
       if ( applyRetryRecallPolicy(*tcItem)) {
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, REC_ERROR_RETRY, params);
-	tcIdsToRetry.push_back( (*tcItem).tapeCopyId);
+	rjIdsToRetry.push_back( (*tcItem).migrationOrRecallJobId);
       }    else  {
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, REC_ERROR_FAILED, params);
-	tcIdsToFail.push_back( (*tcItem).tapeCopyId);
+	rjIdsToFail.push_back( (*tcItem).migrationOrRecallJobId);
       }
     } catch (castor::exception::Exception& e) {
       castor::dlf::Param paramsEx[] =
-	{castor::dlf::Param("tapecopyId",(*tcItem).tapeCopyId),
+	{castor::dlf::Param("recallJobId",(*tcItem).migrationOrRecallJobId),
 	 castor::dlf::Param("errorCode",sstrerror(e.code())),
 	 castor::dlf::Param("errorMessage",e.getMessage().str())
 	};
 
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, REC_ERROR_RETRY_BY_DEFAULT, paramsEx);
-      tcIdsToRetry.push_back( (*tcItem).tapeCopyId);
+      rjIdsToRetry.push_back( (*tcItem).migrationOrRecallJobId);
     }
 
     tcItem++;
@@ -154,7 +154,7 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void*)
   try {
     // Function is a genuine wrapper with no hidden hooks
     // SQL commit in the end.
-    oraSvc->setRecRetryResult(tcIdsToRetry,tcIdsToFail);
+    oraSvc->setRecRetryResult(rjIdsToRetry,rjIdsToFail);
     // Last possible SQL call before. We're fine from here.
     scpTrans.release();
 
@@ -164,8 +164,8 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void*)
     castor::dlf::Param paramsDbUpdate[] =
 	{
 	  castor::dlf::Param("ProcessingTime", procTime * 0.000001),
-	  castor::dlf::Param("tapecopies to retry",tcIdsToRetry.size()),
-	  castor::dlf::Param("tapecopies to fail",tcIdsToFail.size())
+	  castor::dlf::Param("tapecopies to retry",rjIdsToRetry.size()),
+	  castor::dlf::Param("tapecopies to fail",rjIdsToFail.size())
 	};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, REC_ERROR_RESULT_SAVED, paramsDbUpdate);
     
@@ -178,10 +178,10 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void*)
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, REC_ERROR_CANNOT_UPDATE_DB, params);
   }
   
-  tcList.clear();
+  rjList.clear();
   
-  tcIdsToRetry.clear();
-  tcIdsToFail.clear();
+  rjIdsToRetry.clear();
+  rjIdsToFail.clear();
   
 }
 
@@ -196,7 +196,7 @@ bool castor::tape::tapegateway::RecallerErrorHandlerThread::applyRetryRecallPoli
 
 
   castor::tape::python::ScopedPythonLock scopedPythonLock;
-  // if we don't have any function available we always retry to recall the tapecopy
+  // if we don't have any function available we always retry to the recall job
 
   // Create the input tuple for retry migration policy Python-function
   //

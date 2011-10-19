@@ -173,8 +173,8 @@ namespace tapegateway {
 	 * Update the db using the retry migration policy returned values
 	 */
 	
-	virtual void  setMigRetryResult(const std::list<u_signed64>& tcToRetry,
-					const std::list<u_signed64>& tcToFail ) 
+	virtual void  setMigRetryResult(const std::list<u_signed64>& mjToRetry,
+					const std::list<u_signed64>& mjToFail ) 
 	  throw (castor::exception::Exception)=0;
 
 	/**
@@ -189,8 +189,8 @@ namespace tapegateway {
 	 * Update the db using the retry recall policy returned values
 	 */
 
-        virtual void  setRecRetryResult(const std::list<u_signed64>& tcToRetry,
-					const std::list<u_signed64>& tcToFail) 
+        virtual void  setRecRetryResult(const std::list<u_signed64>& rjToRetry,
+					const std::list<u_signed64>& rjToFail) 
 	  throw (castor::exception::Exception)=0;
 
 
