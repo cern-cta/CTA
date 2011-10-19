@@ -111,7 +111,7 @@ void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void*)
     {
       castor::dlf::Param("ProcessingTime", procTime * 0.000001)
     };
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, MIG_ERROR_TAPECOPIES_FOUND, paramsDb);
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, MIG_ERROR_JOBS_FOUND, paramsDb);
 
 
   std::list<u_signed64> mjIdsToRetry;
