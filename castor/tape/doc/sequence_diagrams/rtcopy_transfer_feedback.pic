@@ -37,6 +37,11 @@ message(W,C,"ack");
 
 step();
 
+message(C,W,"flushed to tape");
+message(W,C,"ack");
+
+step();
+
 inactive(W);
 inactive(C);
 
