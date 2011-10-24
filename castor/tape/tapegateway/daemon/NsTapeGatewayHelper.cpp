@@ -308,17 +308,19 @@ throw (castor::exception::Exception){
     throw ex;
   }
       
-  if ( nsFileClass.nbcopies != 1 ){
-    // check if there is already a copy of this file in the new tape
-    for ( int i=0; i< oldNbSegms ;i++) {
-      if ( strcmp(oldSegattrs[i].vid , vid.c_str()) == 0 ) { 
-	if (oldSegattrs) free(oldSegattrs);
-	castor::exception::Exception ex(EEXIST);
-	ex.getMessage()
-	  << "castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile:"
-	  << "this file have already a copy on that tape";
-	throw ex;
-      }
+  // Check if there is already a copy of this file in the new tape.
+  // We don't want the new copy to be on this tape in any case:
+  // we would be migrating a second copy to the same tape (forbidden)
+  // or repacking a tape to itself (this should not happen by construction
+  // but we would block it at that level).
+  for ( int i=0; i< oldNbSegms ;i++) {
+    if ( strcmp(oldSegattrs[i].vid , vid.c_str()) == 0 ) {
+      if (oldSegattrs) free(oldSegattrs);
+      castor::exception::Exception ex(EEXIST);
+      ex.getMessage()
+	      << "castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile:"
+	      << "this file have already a copy on that tape";
+      throw ex;
     }
   }
 
