@@ -190,9 +190,8 @@ namespace ora         {
       throw (castor::exception::Exception);
 
     // To get tapes to release in vmgr */
-
     virtual void  getTapeToRelease(const u_signed64& mountTransactionId,
-				   castor::stager::Tape& tape)
+      castor::tape::tapegateway::ITapeGatewaySvc::TapeToReleaseInfo& tape)
       throw (castor::exception::Exception);
 
     // To commit a  transaction 
@@ -206,6 +205,13 @@ namespace ora         {
 
     // To delete taperequest 
     virtual void deleteTapeRequest(const u_signed64& tapeRequestId)
+      throw (castor::exception::Exception);
+
+    // Mark tape full for the tape session.
+    // This is typically called when a file migration gets a tape full
+    // error so that we remember to make the tape as full at the end of
+    // the session. Session is passed by VDQM request id (like for end/failSession).
+    virtual void flagTapeFullForMigrationSession(const u_signed64& tapeRequestId)
       throw (castor::exception::Exception);
 
     // To directly commit 
@@ -223,111 +229,31 @@ namespace ora         {
     virtual void invalidateFile(const FileErrorReport& failure)
       throw (castor::exception::Exception);
 
-    static const std::string s_getMigrationMountsWithoutTapesStatementString;
     oracle::occi::Statement *m_getMigrationMountsWithoutTapesStatement;
-    
-    static const std::string s_attachTapesToStreamsStatementString;
     oracle::occi::Statement *m_attachTapesToStreamsStatement;
-    
-    static const std::string s_getTapeWithoutDriveReqStatementString;
     oracle::occi::Statement *m_getTapeWithoutDriveReqStatement;
-    
-    static const std::string s_attachDriveReqToTapeStatementString;
     oracle::occi::Statement *m_attachDriveReqToTapeStatement;
-    
-    static const std::string s_getTapesWithDriveReqsStatementString;
     oracle::occi::Statement *m_getTapesWithDriveReqsStatement;
-    
-    static const std::string s_restartLostReqsStatementString;
     oracle::occi::Statement *m_restartLostReqsStatement;
-	
-    static const std::string s_getFileToMigrateStatementString;
     oracle::occi::Statement *m_getFileToMigrateStatement;
-
-    static const std::string s_setFileMigratedStatementString;
     oracle::occi::Statement *m_setFileMigratedStatement;
-	
-    static const std::string s_setFileStaleInMigrationStatementString;
     oracle::occi::Statement *m_setFileStaleInMigrationStatement;
-
-    static const std::string s_getFileToRecallStatementString;
     oracle::occi::Statement *m_getFileToRecallStatement;
-	
-    static const std::string s_setFileRecalledStatementString;
     oracle::occi::Statement *m_setFileRecalledStatement;
-
-    static const std::string s_getFailedMigrationsStatementString;
     oracle::occi::Statement *m_getFailedMigrationsStatement;
-
-    static const std::string s_setMigRetryResultStatementString;
     oracle::occi::Statement *m_setMigRetryResultStatement;
-
-    static const std::string s_getFailedRecallsStatementString;
     oracle::occi::Statement *m_getFailedRecallsStatement;
-
-    static const std::string s_setRecRetryResultStatementString;	
-    oracle::occi::Statement *m_setRecRetryResultStatement;	
-	
-    static const std::string s_getRepackVidAndFileInfoStatementString;
+    oracle::occi::Statement *m_setRecRetryResultStatement;
     oracle::occi::Statement *m_getRepackVidAndFileInfoStatement;
-    
-    static const std::string s_startTapeSessionStatementString;
     oracle::occi::Statement *m_startTapeSessionStatement;
-
-    static const std::string s_endTapeSessionStatementString;
     oracle::occi::Statement *m_endTapeSessionStatement;
-    
-    static const std::string s_getSegmentInfoStatementString;
     oracle::occi::Statement *m_getSegmentInfoStatement;
-
-    static const std::string s_failFileTransferStatementString;
     oracle::occi::Statement *m_failFileTransferStatement;
-
-    static const std::string s_invalidateFileStatementString;
     oracle::occi::Statement *m_invalidateFileStatement;
-	
-    static const std::string s_getTapeToReleaseStatementString;
     oracle::occi::Statement *m_getTapeToReleaseStatement;
-    
-    static const std::string s_deleteMigrationMountWithBadTapePoolStatementString;
     oracle::occi::Statement *m_deleteMigrationMountWithBadTapePoolStatement;
-
-    static const std::string s_deleteTapeRequestStatementString;
     oracle::occi::Statement *m_deleteTapeRequestStatement;
-
-    // Private helper class used to introspect cursors, making the OCCI code independent of the order of elements
-    // in the cursor (especially with %ROWTYPE contexts).
-    class resultSetIntrospector {
-    public:
-      // At construction time, extract the metadata from result set.
-      // both STL and OCCI throw (sub classes of) std::exception.
-      resultSetIntrospector(oracle::occi::ResultSet *rs) throw (std::exception): m_rsStruct(rs->getColumnListMetaData()){}
-      // Trivial destructor.
-      virtual ~resultSetIntrospector() {};
-      // Look for a given column in the metadata array.
-      int findColumnIndex (const std::string& colName, int colType)
-      // We could throw std::exception for the STL, or a castor exception.
-      const throw (std::exception, castor::exception::Internal) {
-        for (unsigned int i=0; i<m_rsStruct.size(); i++) {
-          if (colName == m_rsStruct[i].getString(oracle::occi::MetaData::ATTR_NAME) &&
-              colType == m_rsStruct[i].getInt(oracle::occi::MetaData::ATTR_DATA_TYPE))
-            return i+1; // The indexes in OCCI are counted from 1, not 0.
-        }
-        // getting here means we did not find the column.
-        // We will dump all names and type (in numeric form) in the exception to ease diagnostic.
-        castor::exception::Internal ex;
-        ex.getMessage() << "resultSetIntrospector could not find column " << colName << " of type " << colType
-            << " columns are: ";
-        for (unsigned int i=0; i<m_rsStruct.size(); i++) {
-          if (i) ex.getMessage() << ", ";
-          ex.getMessage() << i << ":(" << m_rsStruct[i].getString(oracle::occi::MetaData::ATTR_NAME) << ","
-              << m_rsStruct[i].getInt(oracle::occi::MetaData::ATTR_DATA_TYPE) << ")";
-        }
-        throw ex;
-      }
-    private:
-      std::vector<oracle::occi::MetaData> m_rsStruct;
-    };
+    oracle::occi::Statement *m_flagTapeFullForMigrationSession;
   }; // end of class OraTapeGateway
   
 } // end of namespace ora

@@ -189,6 +189,7 @@ CREATE TABLE MigrationMount (vdqmVolReqId INTEGER CONSTRAINT UN_MigrationMount_V
                              label VARCHAR2(2048),
                              density VARCHAR2(2048),
                              lastFseq INTEGER,
+                             full INTEGER,
                              lastVDQMPingTime NUMBER CONSTRAINT NN_MigrationMount_lastVDQMPing NOT NULL,
                              tapePool INTEGER CONSTRAINT NN_MigrationMount_TapePool NOT NULL,
                              status INTEGER CONSTRAINT NN_MigrationMount_Status NOT NULL)

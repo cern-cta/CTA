@@ -97,7 +97,7 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream(
   tapeToUse.setTpmode(castor::stager::TPMODE_WRITE);
   
   //Check that the returned start fseq is OK.
-  if (label == NULL) {
+  if (label[0] == '\0') {
     resetBusyTape(tapeToUse, shuttingDown);
     castor::exception::Exception ex(EINVAL);
     ex.getMessage()

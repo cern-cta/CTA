@@ -258,7 +258,7 @@ END;
 CREATE OR REPLACE
 PROCEDURE tg_attachTapesToStreams (
   inStartFseqs IN castor."cnumList",
-  inMountIds     IN castor."cnumList",
+  inMountIds   IN castor."cnumList",
   inTapeVids   IN castor."strList") AS
   CONSTRAINT_VIOLATED EXCEPTION;
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
@@ -1022,8 +1022,9 @@ CREATE OR REPLACE
 PROCEDURE tg_getTapeToRelease(
   inVdqmReqId IN  INTEGER, 
   outVID      OUT NOCOPY VARCHAR2, 
-  outMode     OUT INTEGER ) AS
-  varMountId        NUMBER;
+  outMode     OUT INTEGER,
+  outFull     OUT INTEGER ) AS
+  varStrId        NUMBER;
   varTpId         NUMBER;
 BEGIN
   -- Find Tape read or migration mount for this vdqm request
@@ -1036,7 +1037,8 @@ BEGIN
        WHERE T.id = varTpId; 
    ELSIF (varMountId IS NOT NULL) THEN -- write case
      outMode := 1;
-     SELECT vid INTO outVID 
+     SELECT vid, full
+     INTO outVID, outFull
        FROM MigrationMount
       WHERE id = varMountId;
    END IF;
@@ -1545,4 +1547,29 @@ BEGIN
 END;
 /
 
+/* flag tape as full for a given session */
+CREATE OR REPLACE
+PROCEDURE tg_flagTapeFull ( inTGReqId IN NUMBER ) AS
+  /* The tape gateway request does not exist per se, but 
+   * references to its ID should be removed (with needed consequences
+   * from the structures pointing to it) */
+  CONSTRAINT_VIOLATED EXCEPTION;
+  PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -02292);
+  varUnused NUMBER;
+  varMJId NUMBER;
+BEGIN
+  -- Find the relevant migration or recall mount id.
+  tg_findFromVDQMReqId (inTGReqId, varUnused, varMJId);
+  -- Find out whether this is a read or a write
+  IF (varMJId IS NOT NULL) THEN
+    UPDATE MigrationMount
+       SET full = 1
+     WHERE id = varMJId;
+  ELSE
+    -- Wrong Access Mode encountered. Notify.
+    RAISE_APPLICATION_ERROR(-20292, 'tg_flagTapeFullForMigrationSession: '||
+      'no migration mount found for TapeGatewayRequestId: '|| inTGReqId);
+  END IF;
+END;
+/
 

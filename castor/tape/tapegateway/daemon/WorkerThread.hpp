@@ -36,6 +36,10 @@
 #include "castor/tape/net/Constants.hpp"
 #include "castor/tape/utils/ShutdownBoolFunctor.hpp"
 #include "castor/tape/tapegateway/FileMigratedNotificationStruct.hpp"
+#include "castor/tape/tapegateway/FileErrorReport.hpp"
+#include "castor/tape/tapegateway/FileMigrationReportList.hpp"
+#include "castor/tape/tapegateway/FileRecallReportList.hpp"
+#include <list>
 
 
 namespace castor     {
@@ -94,6 +98,56 @@ namespace tapegateway{
     castor::IObject* handleFileRecallReportList  (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw();
     castor::IObject* handleFilesToMigrateListRequest (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw();
     castor::IObject* handleFilesToRecallListRequest  (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw();
+
+    // Helpers for managing file lists
+    // We cover fatal and non-fatal cases, for both recalls and migrations
+    // That's 4 functions.
+    void failFileMigrationsList(castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc,
+        castor::tape::tapegateway::WorkerThread::requesterInfo& requester,
+        std::list<castor::tape::tapegateway::FileErrorReport>& filesToFailForRetry) 
+        throw (castor::exception::Exception);
+
+    void failFileRecallsList   (castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc,
+        castor::tape::tapegateway::WorkerThread::requesterInfo& requester,
+        std::list<castor::tape::tapegateway::FileErrorReport>& filesToFailForRetry) 
+        throw (castor::exception::Exception);
+
+    void permanentlyFailFileMigrationsList(castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc,
+        castor::tape::tapegateway::WorkerThread::requesterInfo& requester,
+        std::list<castor::tape::tapegateway::FileErrorReport>& filesToFailPermanently)
+        throw (castor::exception::Exception);
+
+    void permanentlyFailFileRecallsList   (castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc,
+        castor::tape::tapegateway::WorkerThread::requesterInfo& requester,
+        std::list<castor::tape::tapegateway::FileErrorReport>& filesToFailPermanently) 
+        throw (castor::exception::Exception);
+
+    // Error classifiers. They return a class with booleans indicating the decision.
+    // They are used for dispatch criteria in handle report list functions.
+    // The default values reflect the usual behavior: just retry the file.
+    struct fileErrorClassification {
+      fileErrorClassification():
+        fileInvolved(true),
+        fileRetryable(true),
+        tapeIsFull(false) {};
+      virtual ~fileErrorClassification() {};
+      bool fileInvolved;
+      bool fileRetryable;
+      bool tapeIsFull;
+    };
+    fileErrorClassification classifyBridgeMigrationFileError(int errorCode) throw ();
+    fileErrorClassification classifyBridgeRecallFileError(int errorCode) throw ();
+
+    // Helper functions for logging database errors (overloaded variants with different
+    // parameters.
+    void logDbError (castor::exception::Exception e, requesterInfo& requester,
+        FileMigrationReportList & fileMigrationReportList) throw ();
+    void logDbError (castor::exception::Exception e, requesterInfo& requester,
+        FileRecallReportList &fileRecallReportList) throw ();
+    void logInternalError (castor::exception::Exception e, requesterInfo& requester,
+        FileMigrationReportList & fileMigrationReportList) throw ();
+    void logInternalError (castor::exception::Exception e, requesterInfo& requester,
+        FileRecallReportList &fileRecallReportList) throw ();
 
     utils::ShutdownBoolFunctor m_shuttingDown;
 
