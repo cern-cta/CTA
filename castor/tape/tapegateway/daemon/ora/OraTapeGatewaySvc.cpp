@@ -974,7 +974,7 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFailedMigrations(std
     // Check whether the statements are ok
     if (!m_getFailedMigrationsStatement) {
       m_getFailedMigrationsStatement =
-        createStatement(s_getFailedMigrationsStatementString);
+        createStatement("BEGIN tg_getFailedMigrations(:1);END;");
       m_getFailedMigrationsStatement->registerOutParam
         (1, oracle::occi::OCCICURSOR);
     }
@@ -1152,7 +1152,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFailedRecalls( std::l
     // Check whether the statements are ok
     if (!m_getFailedRecallsStatement) {
       m_getFailedRecallsStatement =
-          createStatement(s_getFailedRecallsStatementString);
+          createStatement("BEGIN tg_getFailedRecalls(:1);END;");
       m_getFailedRecallsStatement->registerOutParam
       (1, oracle::occi::OCCICURSOR);
     }

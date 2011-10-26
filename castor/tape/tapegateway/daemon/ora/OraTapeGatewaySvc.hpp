@@ -254,6 +254,40 @@ namespace ora         {
     oracle::occi::Statement *m_deleteMigrationMountWithBadTapePoolStatement;
     oracle::occi::Statement *m_deleteTapeRequestStatement;
     oracle::occi::Statement *m_flagTapeFullForMigrationSession;
+
+    // Private helper class used to introspect cursors, making the OCCI code independent of the order of elements
+    // in the cursor (especially with %ROWTYPE contexts).
+    class resultSetIntrospector {
+    public:
+      // At construction time, extract the metadata from result set.
+      // both STL and OCCI throw (sub classes of) std::exception.
+      resultSetIntrospector(oracle::occi::ResultSet *rs) throw (std::exception): m_rsStruct(rs->getColumnListMetaData()){}
+      // Trivial destructor.
+      virtual ~resultSetIntrospector() {};
+      // Look for a given column in the metadata array.
+      int findColumnIndex (const std::string& colName, int colType)
+      // We could throw std::exception for the STL, or a castor exception.
+      const throw (std::exception, castor::exception::Internal) {
+        for (unsigned int i=0; i<m_rsStruct.size(); i++) {
+          if (colName == m_rsStruct[i].getString(oracle::occi::MetaData::ATTR_NAME) &&
+              colType == m_rsStruct[i].getInt(oracle::occi::MetaData::ATTR_DATA_TYPE))
+            return i+1; // The indexes in OCCI are counted from 1, not 0.
+        }
+        // getting here means we did not find the column.
+        // We will dump all names and type (in numeric form) in the exception to ease diagnostic.
+        castor::exception::Internal ex;
+        ex.getMessage() << "resultSetIntrospector could not find column " << colName << " of type " << colType
+            << " columns are: ";
+        for (unsigned int i=0; i<m_rsStruct.size(); i++) {
+          if (i) ex.getMessage() << ", ";
+          ex.getMessage() << i << ":(" << m_rsStruct[i].getString(oracle::occi::MetaData::ATTR_NAME) << ","
+              << m_rsStruct[i].getInt(oracle::occi::MetaData::ATTR_DATA_TYPE) << ")";
+        }
+        throw ex;
+      }
+    private:
+      std::vector<oracle::occi::MetaData> m_rsStruct;
+    };
   }; // end of class OraTapeGateway
   
 } // end of namespace ora
