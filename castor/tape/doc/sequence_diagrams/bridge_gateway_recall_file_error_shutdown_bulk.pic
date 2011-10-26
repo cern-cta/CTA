@@ -25,9 +25,20 @@ inactive(C);
 
 step();
 
-message(B,G,"last successful transfers");
+message(B,G,"connect");
 active(G);
+message(B,G,"FileRecallReportList of successes");
+message(G,B,"NotificationAcknowledge");
+message(B,G,"close connection");
+inactive(G);
+
 step();
+
+message(B,G,"connect");
+active(G);
+message(B,G,"FileRecallReportList of failures");
+message(G,B,"NotificationAcknowledge");
+message(B,G,"close connection");
 inactive(G);
 
 message(B,C,"end of entire session");
