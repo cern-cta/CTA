@@ -68,8 +68,6 @@ our @export   = qw(
                    deleteAllStreamsTapeCopiesAndCastorFiles 
                    executeSQLPlusScript 
                    executeSQLPlusScriptNoError 
-                   stopAndSwitchToTapeGatewayd 
-                   stopAndSwitchToRtcpclientd 
                    getLdLibraryPathFromSrcPath
                    check_leftovers
                    check_leftovers_poll_timeout
@@ -166,11 +164,9 @@ sub read_config ( $ )
     my @per_host_vars = ( 'username', 'file_size', 'file_number', 'castor_directory',
                           'migration_timeout', 'poll_interval', 'tapepool', 'svcclass', 
 			  'local_transfermanagerd',
-			  'local_mighunterd',
 			  'local_rechandlerd',
 			  'local_rhd',
 			  'local_rmmasterd',
-			  'local_rtcpclientd',
 			  'local_stagerd',
 			  'local_tapegatewayd',
                           'local_expertd',
@@ -181,8 +177,7 @@ sub read_config ( $ )
                           'run_testsuite');
     my @global_vars   = ( 'dbDir' , 'tstDir', 'adminList', 'originalDbSchema',
                           'originalDropSchema', 'originalSetPermissionsSQL', 
-                          'castor_single_subdirectory', 'castor_dual_subdirectory', 
-                          'switchoverToTapeGateway', 'switchoverToRtcpClientd');
+                          'castor_single_subdirectory', 'castor_dual_subdirectory');
     for my $i ( @per_host_vars ) {
         $environment{$i}=getConfParam('TAPETEST', $i.'_'.$local_host, $config_file );
     }
@@ -1340,11 +1335,9 @@ sub startDaemons ()
     my %castor_deamons_locations =
 	(
          'transfermanagerd' => './castor/scheduler/transfermanagerd',
-	 'mighunterd'  => './castor/tape/mighunter/mighunterd',
 	 'rechandlerd' => './castor/tape/rechandler/rechandlerd',
 	 'rhd'         => './castor/rh/rhd',
 	 'rmmasterd'   => './castor/monitoring/rmmaster/rmmasterd',
-	 'rtcpclientd' => './rtcopy/rtcpclientd',
 #         'stagerd'     => 'valgrind --log-file=/var/log/castor/stagerd-valgrind.%p --trace-children=yes ./castor/stager/daemon/stagerd',
 #	 'stagerd'     => 'valgrind --log-file=/var/log/castor/stagerd-valgrind.%p --leak-check=full --track-origins=yes --suppressions=./tools/castor.supp --trace-children=yes ./castor/stager/daemon/stagerd',
          'stagerd'     => './castor/stager/daemon/stagerd',
@@ -1373,11 +1366,9 @@ sub startSingleDaemon ( $ )
     my %castor_deamons_locations =
 	(
          'transfermanagerd' => './castor/scheduler/transfermanagerd',
-	 'mighunterd'  => './castor/tape/mighunter/mighunterd',
 	 'rechandlerd' => './castor/tape/rechandler/rechandlerd',
 	 'rhd'         => './castor/rh/rhd',
 	 'rmmasterd'   => './castor/monitoring/rmmaster/rmmasterd',
-	 'rtcpclientd' => './rtcopy/rtcpclientd',
 	 'stagerd'     => 'valgrind --log-file=/var/log/castor/stagerd-valgrind.%p --suppressions=./tools/castor.supp --trace-children=yes ./castor/stager/daemon/stagerd',
 #'./castor/stager/daemon/stagerd',
 	 'tapegatewayd'=> './castor/tape/tapegateway/tapegatewayd',
@@ -1880,11 +1871,9 @@ sub reinstall_stager_db()
 
     # Ensure all of the daemons accessing the stager-database are dead
     killDaemonWithTimeout('transfermanagerd' , 2);
-    killDaemonWithTimeout('mighunterd'  , 2);
     killDaemonWithTimeout('rechandlerd' , 2);
     killDaemonWithTimeout('rhd'         , 2);
     killDaemonWithTimeout('rmmasterd'   , 2);
-    killDaemonWithTimeout('rtcpclientd' , 2);
     killDaemonWithTimeout('stagerd'     , 2);
     killDaemonWithTimeout('tapegatewayd', 2);
 
@@ -1905,13 +1894,6 @@ sub reinstall_stager_db()
 	    } 
 	}
     }
-    # Re-create mighunterd daemon scripts
-    print("Re-creating mighunterd daemon scripts\n");
-    `echo "DAEMON_COREFILE_LIMIT=unlimited" >  /etc/sysconfig/mighunterd`;
-    `echo 'SVCCLASSES="default dev"'        >> /etc/sysconfig/mighunterd`;
-    `echo 'MIGHUNTERD_OPTIONS="-t 5"'       >  /etc/sysconfig/mighunterd.default`;
-    `echo 'MIGHUNTERD_OPTIONS="-t 5"'       >  /etc/sysconfig/mighunterd.dev`;
-  
     # Ensure there is no leftover in the DB
     my $dbh = open_db ();
     if ( check_leftovers ( $dbh ) ) {
@@ -1955,11 +1937,9 @@ sub reinstall_stager_db()
 
     # Restart some daemons (not all yet)
     startSingleDaemon ( 'transfermanagerd' );
-    #startSingleDaemon ( 'mighunterd' );
     startSingleDaemon ( 'rechandlerd' );
     startSingleDaemon ( 'rhd' );
     startSingleDaemon ( 'rmmasterd' );
-    #startSingleDaemon ( 'rtcpclientd' );
     startSingleDaemon ( 'stagerd' );
     #startSingleDaemon ( 'tapegatewayd' );
 
@@ -1994,61 +1974,6 @@ sub reinstall_stager_db()
     `modifySvcClass --Name default --NbDrives 1`;
     `modifySvcClass --Name dev     --NbDrives 2`;
 }
-
-# Switch to tapegatewayd (in DB, stop demons before, massages the DB as required)
-sub stopAndSwitchToTapeGatewayd ( $ )
-{
-    my $dbh = shift;
-
-    # Stop the mighunter, rechandler, tapegateway, rtcpclientd
-    for my $i ('mighunterd', 'rechandlerd', 'tapegatewayd', 'rtcpclientd') {
-        if (killDaemonWithTimeout ($i, 5)) {
-            die "Failed to stop a daemon. Call an exorcist.";
-        }
-    }    
-    #$dbh->do("UPDATE castorconfig SET value='tapegatewayd' WHERE class='tape' AND key='interfaceDaemon'");
-    #$dbh->commit();
-    # Migrate to tapegateway by script.
-    my $dbUser   = &getOrastagerconfigParam("user");
-    my $dbPasswd = &getOrastagerconfigParam("passwd");
-    my $dbName   = &getOrastagerconfigParam("dbName");
-    my $checkout_location   = $environment{checkout_location};
-    my $dbDir               = $environment{dbDir};
-    my $switch_to_tapegateway = $environment{switchoverToTapeGateway};
-    
-    my $switch_to_tapegateway_full_path = $checkout_location.'/'.$dbDir.'/'.$switch_to_tapegateway;
-    executeSQLPlusScript ( $dbUser, $dbPasswd, $dbName, 
-                           $switch_to_tapegateway_full_path,
-                           "Switching to Tape gateway");
-}
-
-# Switch from rtcpclientd (in DB, stops demons before, massages the DB as required)
-sub stopAndSwitchToRtcpclientd ( $ )
-{
-    my $dbh = shift;
-
-    # Stop the mighunter, rechandler, tapegateway, rtcpclientd
-    for my $i ('mighunterd', 'rechandlerd', 'tapegatewayd', 'rtcpclientd') {
-        if (killDaemonWithTimeout ($i, 5)) {
-            die "Failed to stop a daemon. Call an exorcist.";
-        }
-    }
-    #$dbh->do("UPDATE castorconfig SET value='rtcpclientd' WHERE class='tape' AND key='interfaceDaemon'");
-    #$dbh->commit();
-    # Migrate to rtcpclientd by script.
-    my $dbUser   = &getOrastagerconfigParam("user");
-    my $dbPasswd = &getOrastagerconfigParam("passwd");
-    my $dbName   = &getOrastagerconfigParam("dbName");
-    my $checkout_location   = $environment{checkout_location};
-    my $dbDir               = $environment{dbDir};
-    my $switch_to_rtcpclientd = $environment{switchoverToRtcpClientd};
-    
-    my $switch_to_rtcpclientd_full_path = $checkout_location.'/'.$dbDir.'/'.$switch_to_rtcpclientd;
-    executeSQLPlusScript ( $dbUser, $dbPasswd, $dbName, 
-                           $switch_to_rtcpclientd_full_path,
-                           "Switching to RtcpClientd");
-}
-
 
 # Returns the LD_LIBRARY_PATH locating all of the *.so* files found in the
 # specified root CASTOR source path
