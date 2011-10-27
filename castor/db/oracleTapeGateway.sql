@@ -1024,7 +1024,7 @@ PROCEDURE tg_getTapeToRelease(
   outVID      OUT NOCOPY VARCHAR2, 
   outMode     OUT INTEGER,
   outFull     OUT INTEGER ) AS
-  varStrId        NUMBER;
+  varMountId      NUMBER;
   varTpId         NUMBER;
 BEGIN
   -- Find Tape read or migration mount for this vdqm request
