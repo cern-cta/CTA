@@ -60,7 +60,6 @@ our @export   = qw(
                    startDaemons
                    startSingleDaemon
                    genBackupFileName 
-                   getNbTapeCopiesInStagerDb 
                    insertCastorFile 
                    deleteCastorFile 
                    setFileClassNbCopies 
@@ -561,10 +560,10 @@ sub remove_segment( $$ )
        "DECLARE
           varRecallJobIds \"numList\";
         BEGIN
-          SELECT tc.id
+          SELECT rc.id
             BULK COLLECT INTO varRecallJobIds
-            FROM TapeCopy tc
-           INNER JOIN Castorfile cf ON cf.id = tc.castorFile
+            FROM RecallJob rj
+           INNER JOIN Castorfile cf ON cf.id = rj.castorFile
            WHERE cf.lastKnownFileName = :NSNAME;
           DELETE FROM Segment seg
            WHERE seg.copy IN (SELECT * FROM TABLE (varRecallJobIds));
@@ -573,29 +572,6 @@ sub remove_segment( $$ )
     $stmt->bind_param(":NSNAME", $name);
     $stmt->execute();
     print "t=".elapsed_time()."s. Removed segement for file: $name\n";
-}
-
-sub remove_tape( $$ )
-{
-    my ($dbh, $name) = (shift, shift);
-    my $stmt = $dbh->prepare(
-       "DECLARE
-          varTapeIds \"numList\";
-        BEGIN
-          SELECT s.tape
-            BULK COLLECT INTO varTapeIds
-            FROM Stream s
-           INNER JOIN Stream2TapeCopy sttc ON s.id = sttc.parent
-           INNER JOIN TapeCopy tc ON sttc.child = tc.id
-           INNER JOIN Castorfile cf ON cf.id = tc.castorFile
-           WHERE cf.lastKnownFileName = :NSNAME;
-          DELETE FROM Tape t
-           WHERE t.id IN (SELECT * FROM TABLE (varTapeIds));
-          COMMIT;
-        END;");
-    $stmt->bind_param(":NSNAME", $name);
-    $stmt->execute();
-    print "t=".elapsed_time()."s. Removed tape for file: $name\n";
 }
 
 sub remove_ns_entry( $$ )
@@ -679,9 +655,6 @@ sub error_injector ( $$$ )
              $remote_files[$index]->{breaking_done} = 1;
         } elsif ($file{breaking_type} =~ /^missing segment/) {
              remove_segment($dbh, $file{name});
-             $remote_files[$index]->{breaking_done} = 1;
-        } elsif ($file{breaking_type} =~ /^missing tape/) {
-             remove_tape($dbh, $file{name});
              $remote_files[$index]->{breaking_done} = 1;
         } elsif ($file{breaking_type} =~ /^missing ns entry/) {
              remove_ns_entry($dbh, $file{name});
@@ -986,34 +959,40 @@ sub unblock_stuck_files ()
                 # Step one, artificially declare the job done on migrations. Given the way tests work (no moves), we suppose we can find the file by last_known_name in castor file table.
                 if (!defined $dbh) { $dbh = open_db(); }
                 my $stmt = $dbh->prepare ("DECLARE
-                                  varCastorFileId NUMBER;
-                                  varTapeCopyIds  \"numList\";
-                                  varDiskCopyIds  \"numList\";
+                                  varCastorFileId     NUMBER;
+                                  varMigrationJobIds  \"numList\";
+                                  varRecallJobIds     \"numList\";
+                                  varDiskCopyIds      \"numList\";
                                 BEGIN
                                   SELECT cf.Id INTO varCastorFileId
                                     FROM CastorFile cf
                                    WHERE cf.lastKnownFileName = :NSNAME
                                      FOR UPDATE;
                                      
-                                  SELECT tc.Id
-                                    BULK COLLECT INTO varTapeCopyIds
-                                    FROM TapeCopy tc
-                                   WHERE tc.CastorFile = varCastorFileId
+                                  SELECT mj.Id
+                                    BULK COLLECT INTO varMigrationJobIds
+                                    FROM MigrationJob mj
+                                   WHERE mj.CastorFile = varCastorFileId
                                      FOR UPDATE;
-                                  
+                                     
+                                  SELECT rj.Id
+                                    BULK COLLECT INTO varRecallJobIds
+                                    FROM RecallJob rj
+                                   WHERE rj.CastorFile = varCastorFileId
+                                     FOR UPDATE;
+                                     
                                   SELECT dc.Id
                                     BULK COLLECT INTO varDiskCopyIds
                                     FROM DiskCopy dc
                                    WHERE dc.CastorFile = varCastorFileId
                                      FOR UPDATE;
                                      
-                                  DELETE FROM Stream2TapeCopy sttc
-                                   WHERE sttc.child in (SELECT * FROM TABLE (varTapeCopyIds));
+                                  DELETE FROM MigrationJob mj
+                                   WHERE mj.id in (SELECT * FROM TABLE (varMigrationJobIds));
                                    
-                                  DELETE FROM TapeCopy tc
-                                   WHERE tc.id in (SELECT * FROM TABLE (varTapeCopyIds));
-                                   
-                                  UPDATE DiskCopy dc
+                                  DELETE FROM RecallJob rj
+                                   WHERE rj.id in (SELECT * FROM TABLE (varRecallJobIds));
+                                                                     UPDATE DiskCopy dc
                                      SET dc.status = 0 -- DISKCOPY_STAGED
                                    WHERE dc.id IN (SELECT * FROM TABLE (varDiskCopyIds));
                                    
@@ -1047,9 +1026,10 @@ sub unblock_stuck_files ()
                     print "Full information:\n".Dumper (\%entry);
                     print_file_info ($dbh, $entry{name});
                     my $stmt = $dbh->prepare ("DECLARE
-                                      varCastorFileId NUMBER;
-                                      varTapeCopyIds  \"numList\";
-                                      varDiskCopyIds  \"numList\";
+                                      varCastorFileId     NUMBER;
+                                      varMigrationJobIds  \"numList\";
+                                      varRecallJobIds     \"numList\";
+                                      varDiskCopyIds      \"numList\";
                                     BEGIN
                                       BEGIN
                                         SELECT cf.Id INTO varCastorFileId
@@ -1061,23 +1041,29 @@ sub unblock_stuck_files ()
                                       END;
                                       
                                       IF varCastorFileId IS NOT NULL THEN
-                                        SELECT tc.Id
-                                          BULK COLLECT INTO varTapeCopyIds
-                                          FROM TapeCopy tc
-                                         WHERE tc.CastorFile = varCastorFileId
+                                        SELECT mj.Id
+                                          BULK COLLECT INTO varMigrationJobIds
+                                          FROM MigrationJob mj
+                                         WHERE mj.CastorFile = varCastorFileId
                                            FOR UPDATE;
                                         
+                                        SELECT rj.Id
+                                          BULK COLLECT INTO varRecallJobIds
+                                          FROM RecallJob rj
+                                         WHERE rj.CastorFile = varCastorFileId
+                                           FOR UPDATE;
+                                           
                                         SELECT dc.Id
                                           BULK COLLECT INTO varDiskCopyIds
                                           FROM DiskCopy dc
                                          WHERE dc.CastorFile = varCastorFileId
                                            FOR UPDATE;
                                            
-                                        DELETE FROM Stream2TapeCopy sttc
-                                         WHERE sttc.child IN (SELECT * FROM TABLE (varTapeCopyIds));
+                                        DELETE FROM MigrationJob mj
+                                         WHERE mj.id IN (SELECT * FROM TABLE (varMigrationJobIds));
                                          
-                                        DELETE FROM TapeCopy tc
-                                         WHERE tc.id IN (SELECT * FROM TABLE (varTapeCopyIds));
+                                        DELETE FROM RecallJob rj
+                                         WHERE rj.id IN (SELECT * FROM TABLE (varRecallJobIds));
                                          
                                         DELETE FROM DiskCopy dc
                                          WHERE dc.id IN (SELECT * FROM TABLE (varDiskCopyIds));
@@ -1414,24 +1400,6 @@ sub genBackupFileName ( $ )
   return($backupFilename);
 }
 
-
-
-# Returns the number of tape-copies in the stager-database.
-#
-# @param dbh The handle to the stager-database.
-# @return    The number of tape-copies in the stager database.
-sub getNbTapeCopiesInStagerDb ( $ ) 
-{
-  my $dbh = $_[0];
-
-  my $stmt = "SELECT COUNT(*) FROM TapeCopy";
-  my $rows = $dbh->selectall_arrayref($stmt);
-  my $nbTapeCopies = $$rows[0][0];
-
-  return($nbTapeCopies);
-}
-
-
 # Inserts a row into the CastorFile table and returns its database ID.
 #
 # This subroutine does not insert a row into the id2type table.
@@ -1581,7 +1549,7 @@ sub overrideCheckPermission ( $ )
   $sth->execute();
 }
 
-# Deletes all Stream2TapeCopy, Stream, TapeCopy and CastorFile rows from the
+# Deletes all Migration and Recall Jobs, Segments, Tapes and CastorFile rows from the
 # stager database.
 #
 # TO BE USED WITH CAUTION.
@@ -1593,13 +1561,13 @@ sub deleteAllStreamsTapeCopiesAndCastorFiles ( $ )
 
   my $stmt = "
     BEGIN
-      DELETE FROM Stream2TapeCopy;
-      DELETE FROM Stream;
-      DELETE FROM TapeCopy;
+      DELETE FROM MigrationJob;
+      DELETE FROM RecallJob;
+      DELETE FROM Segment;
+      DELETE FROM MigrationMount;
+      DELETE FROM Tape;
+      DELETE FROM Diskcopy;
       DELETE FROM CastorFile;
-      DELETE FROM Id2Type WHERE type = 26; /* OBJ_STREAM     */
-      DELETE FROM Id2Type WHERE type = 30; /* OBJ_TAPECOPY   */
-      DELETE FROM Id2Type WHERE type =  2; /* OBJ_CASTORFILE */
     END;";
 
   my $sth = $dbh->prepare($stmt);
@@ -1694,7 +1662,8 @@ sub check_leftovers ( $ )
                               SELECT dc.id from diskcopy dc where
                                 dc.status NOT IN ( 0, 7, 4 )
                               UNION ALL
-                              SELECT tc.id from tapecopy tc)"); # Discopy_staged diskcopy_invalid diskcopy_failed
+                              SELECT mj.id from MigrationJob jc)");
+                              # Discopy_staged diskcopy_invalid diskcopy_failed
     $sth -> execute ();
     @row = $sth->fetchrow_array();
     return $row[0];
@@ -1753,7 +1722,7 @@ sub print_leftovers ( $ )
     $sth -> execute();
     while ( my @row = $sth->fetchrow_array() ) {
         nullize_arrays_undefs ( \@row );
-        print( "Remaining tapecopy for $row[0]\n\twith diskcopy (id=$row[1], ".
+        print( "Remaining tape job for $row[0]\n\twith diskcopy (id=$row[1], ".
                "status=$row[2]), migrationJob (id=$row[3], status=$row[4]), recallJob (id=$row[5], status=$row[6])\n" );
     }
 }
@@ -2051,9 +2020,12 @@ END {
     if ( $initial_green_light ) {
         print "t=".elapsed_time()."s. Nuking leftovers, if any.\n";
         my $stmt = $dbh->prepare("BEGIN
-                                    DELETE FROM Stream2TapeCopy;
+                                    DELETE FROM MigrationJob;
+                                    DELETE FROM RecallJob;
+                                    DELETE FROM Segment;
                                     DELETE FROM DiskCopy;
-                                    DELETE FROM TapeCopy;
+                                    DELETE FROM MigrationJob;
+                                    DELETE FROM RecallJob;
                                     COMMIT;
                                   END;");
         $stmt->execute();
