@@ -86,12 +86,12 @@ sub main ()
     
     my $dbh = CastorTapeTests::open_db();
     my $ret = 0;
-    if (CastorTapeTests::check_leftovers ( $dbh )) {
-        my $userless; # workaround to prevent emacs from fscking the indentation.
-        #CastorTapeTests::print_leftovers ( $dbh );
-        $dbh->disconnect();
-        die "FATAL: Leftovers found in the database. Aborting test.";
-    }
+#    if (CastorTapeTests::check_leftovers ( $dbh )) {
+#        my $userless; # workaround to prevent emacs from fscking the indentation.
+#        #CastorTapeTests::print_leftovers ( $dbh );
+#        $dbh->disconnect();
+#        die "FATAL: Leftovers found in the database. Aborting test.";
+#    }
     $dbh->disconnect();
     # Nuke and start clean
     my $host = `hostname -s`; chomp $host;
@@ -101,7 +101,6 @@ sub main ()
     print "t=".CastorTapeTests::elapsed_time."s. ";
     print "Wiping the DB for a run of tapegatewayd  =============\n";
     CastorTapeTests::reinstall_stager_db();
-    CastorTapeTests::stopAndSwitchToTapeGatewayd ( $dbh );
     CastorTapeTests::startDaemons();
     print "t=".CastorTapeTests::elapsed_time."s. ";
     print "Schema set to tapegatewayd mode ============================\n";

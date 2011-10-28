@@ -75,6 +75,7 @@ our @export   = qw(
                    print_file_info
                    reinstall_stager_db
                    getOrastagerconfigParam
+                   getOraCNSLoginInfo
                    cleanup
 		   elapsed_time
                    spawn_testsuite
@@ -1173,6 +1174,32 @@ sub getOrastagerconfigParam ( $ )
   return $paramValue;
 }
 
+# Returns the triplet of username, password, dbname for NS DB.
+#
+# This subroutine prints an error message and aborts the entire tes script if
+# it fails to get the value of the specified parameter.
+#
+# @return           The triplet of username, password, dbname.
+sub getOraCNSLoginInfo ( $ )
+{
+  open(CONFIG, "</etc/castor/NSCONFIG")
+    or die "Failed to open /etc/castor/NSCONFIG: $!";
+
+  while(<CONFIG>) {
+    chomp;
+    if(m/^([^\/]+)\/([^@]+)@(.*)/) {
+        close CONFIG;
+        return ( $1, $2, $3 );
+    }
+  }
+
+  close CONFIG;
+
+  die("ABORT: Failed to get NS Db credentials\n");
+  return 0;
+}
+
+
 # open_db : find connection parameters and open db connection
 sub open_db()
 {
@@ -1662,7 +1689,7 @@ sub check_leftovers ( $ )
                               SELECT dc.id from diskcopy dc where
                                 dc.status NOT IN ( 0, 7, 4 )
                               UNION ALL
-                              SELECT mj.id from MigrationJob jc)");
+                              SELECT mj.id from MigrationJob mj)");
                               # Discopy_staged diskcopy_invalid diskcopy_failed
     $sth -> execute ();
     @row = $sth->fetchrow_array();
@@ -1734,17 +1761,15 @@ sub print_file_info ( $$ )
     # Print as many infomation as can be regarding this file
     # Bypass stager and just dump from the DB.
     # First dump general file-related info
-    my $stmt = $dbh -> prepare ("SELECT cf.lastknownfilename, cf.nsHost, cf.fileId, cf.id, 
-                                        sc.name, fc.name
+    my $stmt = $dbh -> prepare ("SELECT cf.lastknownfilename, cf.nsHost, cf.fileId, cf.id, fc.name
                                    FROM castorfile cf
-                                   LEFT OUTER JOIN svcClass sc ON sc.id = cf.svcClass
                                    LEFT OUTER JOIN fileClass fc ON fc.id = cf.fileClass
                                   WHERE cf.lastKnownFileName = :FILENAME");
     $stmt->bind_param (":FILENAME", $filename);
     $stmt->execute();
     while ( my @row = $stmt->fetchrow_array() ) {
         nullize_arrays_undefs ( \@row );
-        print  "Remaining catorfile for $row[0], NSID=$row[2] on SRV=$row[1] (DB id=$row[3], svcclass=$row[4], fileclass=$row[5]\n";
+        print  "Remaining catorfile for $row[0], NSID=$row[2] on SRV=$row[1] (DB id=$row[3], fileclass=$row[4]\n";
     }
     # Then dump the disk-related info
     $stmt = $dbh -> prepare ("SELECT dc.id, dc.status
@@ -1875,6 +1900,8 @@ sub reinstall_stager_db()
     my $dbUser   = &getOrastagerconfigParam("user");
     my $dbPasswd = &getOrastagerconfigParam("passwd");
     my $dbName   = &getOrastagerconfigParam("dbName");
+
+    my ( $NsDbUser, $NsDbPasswd, $NsDbName ) = &getOraCNSLoginInfo ();
     
     executeSQLPlusScript ( $dbUser, $dbPasswd, $dbName, 
                            $originalDropSchemaFullpath,
@@ -1897,6 +1924,10 @@ sub reinstall_stager_db()
     `sed -i s/\\&adminList/$adminList/g $hacked_creation`;
     `sed -i s/\\&instanceName/$instanceName/g $hacked_creation`;
     `sed -i s/\\&stagerNsHost/$CNSName/g $hacked_creation`;
+    `sed -i s/\\&cnsUser/$NsDbUser/g $hacked_creation`;
+    `sed -i s/\\&cnsPasswd/$NsDbPasswd/g $hacked_creation`;
+    `sed -i s/\\&cnsDbName/$NsDbName/g $hacked_creation`;
+
     executeSQLPlusScript ( $dbUser, $dbPasswd, $dbName, 
                            $hacked_creation, "Re-creating schema");
     unlink $hacked_creation;
@@ -1923,25 +1954,39 @@ sub reinstall_stager_db()
     print($rmGetNodesResult);
     
     # Fill database with the standard set-up for a dev-box
-    `nslistclass | grep NAME | awk '{print \$2}' | xargs -i enterFileClass --Name {} --GetFromCns`;
+    print `nslistclass | grep NAME | awk '{print \$2}' | xargs -i enterfileclass {}`;
+
+    print `enterdiskpool default`;
+    print `enterdiskpool extra`;
     
-    `enterSvcClass --Name default --DiskPools default --DefaultFileSize 10485760 --FailJobsWhenNoSpace yes --NbDrives 1 --TapePool stager_dev03 --MigratorPolicy defaultMigrationPolicy --StreamPolicy defaultStreamPolicy`;
-    `enterSvcClass --Name dev --DiskPools extra --DefaultFileSize 10485760 --FailJobsWhenNoSpace yes`;
-    `enterSvcClass --Name diskonly --DiskPools extra --ForcedFileClass temp --DefaultFileSize 10485760 --Disk1Behavior yes --FailJobsWhenNoSpace yes`;
+    print `entersvcclass --diskpools default --defaultfilesize 10485760 --failjobswhennospace yes default`;
+    my $main_tapepool=`vmgrlistpool  | head -1  | awk '{print \$1}' | tr -d "\\n"`;
+    print `entertapepool --nbdrives 10 --minamountdata 0 --minnbfiles 0 --maxfileage 0 $main_tapepool`;
+    print `entersvcclass --diskpools extra --defaultfilesize 10485760 --failjobswhennospace yes dev`;
+    print `entersvcclass --diskpools extra --forcedfileclass temp --defaultfilesize 10485760 --disk1behavior yes --failjobswhennospace yes diskonly`;
     
-    `rmAdminNode -r -R -n $diskServers[0]`;
-    `rmAdminNode -r -R -n $diskServers[1]`;
+    print `rmAdminNode -r -R -n $diskServers[0]`;
+    print `rmAdminNode -r -R -n $diskServers[1]`;
     sleep 10;
-    `moveDiskServer default $diskServers[0]`;
-    `moveDiskServer extra $diskServers[1]`;
+    print `moveDiskServer default $diskServers[0]`;
+    print `moveDiskServer extra $diskServers[1]`;
+
+    # Add the tapecopy routing rules
+    my $single_copy_dir = $environment{castor_directory} . $environment{castor_single_subdirectory};
+    my $dual_copy_dir = $environment{castor_directory} . $environment{castor_dual_subdirectory};
+    my $single_file_class_number = `nsls -d --class $single_copy_dir |  awk '{print \$1}'`;
+    my $single_copy_class = `printfileclass  | perl -e 'while (<>) { if (/\\s*(\\w+)\\s+(\\w+)\\s+(\\w+)\\s+(\\w+)/ && \$2 eq $single_file_class_number) { print \$1 }}'`;
+    my $dual_file_class_number = `nsls -d --class $dual_copy_dir |  awk '{print \$1}'`;
+    my $dual_copy_class = `printfileclass  | perl -e 'while (<>) { if (/\\s*(\\w+)\\s+(\\w+)\\s+(\\w+)\\s+(\\w+)/ && \$2 eq $dual_file_class_number) { print \$1 }}'`;
+    my $svcclass = $environment{svcclass};
+    my $tapepool = $environment{tapepool};
+    print `entertapepool --nbdrives 10 --minamountdata 0 --minnbfiles 0 --maxfileage 0 $tapepool`;
+    print `entermigrationroute $svcclass $single_copy_class 1:$tapepool`;
+    print `entermigrationroute $svcclass $dual_copy_class 1:$tapepool 2:$tapepool`;
     
-    # Add a tape-pool to $environment{svcclass} service-class
-    my $tapePool = get_environment('tapepool');
-    `modifySvcClass --Name $environment{svcclass} --AddTapePool $tapePool --MigratorPolicy defaultMigrationPolicy --StreamPolicy defaultStreamPolicy`;
-    
-    # Set the number of drives on the default and dev service-classes to desired number for each
-    `modifySvcClass --Name default --NbDrives 1`;
-    `modifySvcClass --Name dev     --NbDrives 2`;
+    # Add a single copy default-default route using first pool name
+    my $default_pool = `vmgrlistpool | head -1  | awk '{print \$1}'`;
+    print `entermigrationroute default largeuser 1:$default_pool`;
 }
 
 # Returns the LD_LIBRARY_PATH locating all of the *.so* files found in the
