@@ -30,7 +30,7 @@ import castor_tools
 # usage function
 def usage(exitCode):
     '''prints usage'''
-    print 'Usage : ' + sys.argv[0] + ' [-h|--help] <tapePoolName> [...]'
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] [<tapePoolName> [...]]'
     sys.exit(exitCode)
 
 def secsToDate(s):
@@ -39,7 +39,7 @@ def secsToDate(s):
 
 def nbToDataAmount(n):
     '''converts a number into a readable amount of data'''
-    ext = ['', 'KiB', 'MiB', 'GiB', 'TiB']
+    ext = ['B', 'KiB', 'MiB', 'GiB', 'TiB']
     magn = 0
     while n / 1024 > 5:
         magn += 1

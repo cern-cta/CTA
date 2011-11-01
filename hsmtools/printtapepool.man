@@ -6,8 +6,10 @@ printtapepool
 [
 .BI -h
 ]
+[
 <tapePoolName>
 [...]
+]
 
 .SH DESCRIPTION
 .B printtapepool
@@ -27,7 +29,7 @@ If no tape pool name is given, all tape pool definitions are printed.
         NAME NBDRIVES MINAMOUNTDATA MINNBFILES MAXFILEAGE ID LASTEDITOR          LASTEDITION
 --------------------------------------------------------------------------------------------
  newtapepool        0        100GiB       1000        12h  7   sponcec3 30-Aug-2011 16:32:15
-testtapepool        2         23MiB       1000    12h23mn  8   sopncec3 30-Aug-2011 16:42:32
+testtapepool        2         23MiB       1000    12h23mn  8   sponcec3 30-Aug-2011 16:42:32
 
 # printtapepool testtapepool nonexisting
         NAME NBDRIVES MINAMOUNTDATA MINNBFILES MAXFILEAGE ID LASTEDITOR          LASTEDITION
