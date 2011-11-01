@@ -52,7 +52,7 @@ int main(int argc,
     errflg++;
   }
   if (errflg) {
-    fprintf (stderr, "usage: %s -d density --mo model [--ml media_letter]\n",
+    fprintf (stderr, "usage: %s -d density --mo model --ml media_letter\n",
              argv[0]);
     exit (USERR);
   }
