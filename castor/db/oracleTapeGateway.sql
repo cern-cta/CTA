@@ -378,6 +378,7 @@ BEGIN
       UPDATE MigrationJob
          SET status=tconst.MIGRATIONJOB_RETRY,
              VID=NULL,
+             TapeGatewayRequestId = NULL,
              errorcode=inErrorCode,
              nbretry=0
        WHERE id IN (SELECT * FROM TABLE(varTcIds));
@@ -385,12 +386,13 @@ BEGIN
       -- just resurrect them if they were lost
       UPDATE MigrationJob
          SET status = tconst.MIGRATIONJOB_PENDING,
-             VID = NULL
+             VID = NULL,
+             TapeGatewayRequestId = NULL
        WHERE id IN (SELECT * FROM TABLE(varTcIds))
          AND status = tconst.MIGRATIONJOB_SELECTED;
     END IF;
-    -- check whether the MigrationMount is over and delete it if needed
-    checkAndDeleteMigrationMount(varMountId);
+    -- delete the migration mount
+    DELETE FROM MigrationMount  WHERE tapegatewayrequestid = varMountId;
   ELSE
 
     -- Small infusion of paranoia ;-) We should never reach that point...
@@ -506,7 +508,7 @@ PROCEDURE tg_defaultMigrSelPolicy(inMountId IN INTEGER,
                                   outMountPoint OUT NOCOPY VARCHAR2,
                                   outPath OUT NOCOPY VARCHAR2,
                                   outDiskCopyId OUT INTEGER,
-                                  outCastorFileId OUT INTEGER,
+                                  outLastKnownFileName OUT NOCOPY VARCHAR2, 
                                   outFileId OUT INTEGER,
                                   outNsHost OUT NOCOPY VARCHAR2, 
                                   outFileSize OUT INTEGER,
@@ -531,31 +533,33 @@ PROCEDURE tg_defaultMigrSelPolicy(inMountId IN INTEGER,
    */
   LockError EXCEPTION;
   PRAGMA EXCEPTION_INIT (LockError, -54);
+  CURSOR c IS
+    SELECT /*+ FIRST_ROWS(1) LEADING(MigrationMount MigrationJob DiskCopy FileSystem DiskServer CastorFile) */
+           DiskServer.name, FileSystem.mountPoint, DiskCopy.path, DiskCopy.id, CastorFile.lastKnownFilename,
+           CastorFile.fileId, CastorFile.nsHost, CastorFile.fileSize, MigrationJob.id, CastorFile.lastUpdateTime
+      FROM MigrationMount, MigrationJob, DiskCopy, FileSystem, DiskServer, CastorFile
+     WHERE MigrationMount.id = inMountId
+       AND MigrationJob.tapePool = MigrationMount.tapepool
+       AND MigrationJob.status = tconst.MIGRATIONJOB_PENDING
+       AND DiskCopy.castorFile = MigrationJob.castorFile
+       AND FileSystem.id = DiskCopy.fileSystem
+       AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING)
+       AND DiskServer.id = FileSystem.diskServer
+       AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING)
+       AND CastorFile.id = MigrationJob.castorFile
+       AND MigrationMount.VID NOT IN (SELECT DISTINCT M2.VID FROM MigrationJob M2
+                                       WHERE M2.castorFile = MigrationJob.castorfile
+                                         AND M2.status IN (tconst.MIGRATIONJOB_SELECTED,
+                                                           tconst.MIGRATIONJOB_MIGRATED))
+       FOR UPDATE OF MigrationJob.id SKIP LOCKED;
 BEGIN
-  SELECT /*+ FIRST_ROWS(1) LEADING(MigrationMount MigrationJob DiskCopy FileSystem DiskServer CastorFile) */
-         DiskServer.name, FileSystem.mountPoint, DiskCopy.path, DiskCopy.id, CastorFile.id,
-         CastorFile.fileId, CastorFile.nsHost, CastorFile.fileSize, MigrationJob.id, CastorFile.lastUpdateTime
-    INTO outDiskServerName, outMountPoint, outPath, outDiskCopyId, outCastorFileId,
-         outFileId, outNsHost, outFileSize, outMigJobId, outLastUpdateTime
-    FROM MigrationMount, MigrationJob, DiskCopy, FileSystem, DiskServer, CastorFile
-   WHERE MigrationMount.id = inMountId
-     AND MigrationJob.tapePool = MigrationMount.tapepool
-     AND MigrationJob.status = tconst.MIGRATIONJOB_PENDING
-     AND DiskCopy.castorFile = MigrationJob.castorFile
-     AND FileSystem.id = DiskCopy.fileSystem
-     AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING)
-     AND DiskServer.id = FileSystem.diskServer
-     AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING)
-     AND CastorFile.id = MigrationJob.castorFile
-     AND MigrationMount.VID NOT IN (SELECT DISTINCT M2.VID FROM MigrationJob M2
-                                     WHERE M2.castorFile = MigrationJob.castorfile
-                                       AND M2.status IN (tconst.MIGRATIONJOB_SELECTED,
-                                                         tconst.MIGRATIONJOB_MIGRATED))
-     AND ROWNUM < 2 FOR UPDATE OF MigrationJob.id
-    SKIP LOCKED;
+  OPEN c;
+  FETCH c INTO outDiskServerName, outMountPoint, outPath, outDiskCopyId, outLastKnownFileName,
+               outFileId, outNsHost, outFileSize, outMigJobId, outLastUpdateTime;
+  CLOSE c;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- Nothing to migrate. Simply return
-  NULL;
+  CLOSE c;
 END;
 /
 
@@ -574,7 +578,6 @@ PROCEDURE tg_getFileToMigrate(
   varMountPoint VARCHAR2(2048);
   varPath  VARCHAR2(2048);
   varDiskCopyId NUMBER;
-  varCastorFileId NUMBER;
   varFileId NUMBER;
   varNsHost VARCHAR2(2048);
   varFileSize  INTEGER;
@@ -583,12 +586,11 @@ PROCEDURE tg_getFileToMigrate(
   varLastKnownName VARCHAR2(2048);
   varTgRequestId NUMBER;
   varUnused INTEGER;
-  varTapePool INTEGER;
 BEGIN
   outRet:=0;
   BEGIN
     -- Extract id and tape gateway request and VID from the migration mount
-    SELECT id, TapeGatewayRequestId, vid, tapepool INTO varMountId, varTgRequestId, outVid, varTapePool
+    SELECT id, TapeGatewayRequestId, vid INTO varMountId, varTgRequestId, outVid
       FROM MigrationMount
      WHERE VDQMVolReqId = inVDQMtransacId;
   EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -597,38 +599,12 @@ BEGIN
   END;
   -- default policy is used in all cases in version 2.1.12
   tg_defaultMigrSelPolicy(varMountId,varDiskServer,varMountPoint,varPath,
-    varDiskCopyId ,varCastorFileId,varFileId,varNsHost,varFileSize,
+    varDiskCopyId ,varLastKnownName, varFileId, varNsHost,varFileSize,
     varMigJobId,varLastUpdateTime);
   IF varMigJobId IS NULL THEN
     outRet := -1; -- the migration selection policy didn't find any candidate
     RETURN;
   END IF;
-
-  -- Here we found a migration job and we process it
-  -- update status of selected migration job and migration mount
-  -- Sanity check: There should be no migration mount for the same castor file where
-  -- the volume ID is the same.
-  DECLARE
-    varConflicts NUMBER;
-  BEGIN
-    SELECT COUNT(*) INTO varConflicts
-      FROM MigrationJob
-     WHERE CastorFile = varCastorFileId
-       AND VID = outVID
-       AND id != varMigJobId
-       AND status NOT IN (tconst.MIGRATIONJOB_RETRY,
-                          tconst.MIGRATIONJOB_FAILED);
-    IF (varConflicts != 0) THEN
-      RAISE_APPLICATION_ERROR (-20119, 'About to move a second copy to the same tape!');
-    END IF;
-  END;
-  UPDATE MigrationJob
-     SET status = tconst.MIGRATIONJOB_SELECTED,
-         VID = outVID
-   WHERE id = varMigJobId;
-  SELECT CF.lastKnownFileName INTO varLastKnownName
-    FROM CastorFile CF
-   WHERE CF.Id = varCastorFileId; -- we rely on the check done before TODO: which check?
 
   DECLARE
     varNewFseq NUMBER;
@@ -642,7 +618,9 @@ BEGIN
 
    -- Update the migration job and attach it to a newly created file transaction ID
    UPDATE MigrationJob
-      SET fSeq = varNewFseq,
+      SET status = tconst.MIGRATIONJOB_SELECTED,
+          VID = outVID,
+          fSeq = varNewFseq,
           tapeGatewayRequestId = varTgRequestId,
           fileTransactionId = TG_FileTrId_Seq.NEXTVAL
     WHERE id = varMigJobId;
@@ -930,7 +908,7 @@ BEGIN
   -- Find all the migration mounts and lock
   SELECT id BULK COLLECT INTO varMigMountIds
     FROM MigrationMount
-   WHERE tapeGatewayRequestId IS NOT NULL
+   WHERE status IN ( tconst.MIGRATIONMOUNT_WAITDRIVE, tconst.MIGRATIONMOUNT_MIGRATING )
      AND varNow - lastVdqmPingTime > inTimeLimit
      FOR UPDATE SKIP LOCKED;
      
@@ -1537,8 +1515,8 @@ BEGIN
          AND SR.status IN (dconst.SUBREQUEST_WAITTAPERECALL, dconst.SUBREQUEST_WAITSUBREQ);
     END LOOP;
   ELSIF (varMountId IS NOT NULL) THEN
-    -- In case of a write, reset the migration mount
-    checkAndDeleteMigrationMount(varMountId);
+    -- In case of a write, delete the migration mount
+    DELETE FROM MigrationMount  WHERE vdqmVolReqId = varMountId;
   ELSE
     -- Wrong Access Mode encountered. Notify.
     RAISE_APPLICATION_ERROR(-20292, 'tg_deleteTapeRequest: no read tape or '||

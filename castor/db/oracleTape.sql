@@ -214,27 +214,6 @@ BEGIN
 END;
 /
 
-CREATE OR REPLACE PROCEDURE checkAndDeleteMigrationMount(migId IN INTEGER) AS
-  -- If the specified migration mount has no migration job then this procedure deletes it,
-  targetTapePool NUMBER;
-BEGIN
-  BEGIN
-    -- Try to take a lock on the migration mount
-    SELECT tapePool INTO targetTapePool FROM MigrationMount WHERE id = migId FOR UPDATE;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- the migration mount has already been deleted
-    RETURN;
-  END;
-  BEGIN
-    -- Check for remaining migration jobs
-    SELECT tapepool INTO targetTapePool FROM MigrationJob WHERE tapepool = targetTapePool AND ROWNUM < 2;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- No migration job left, we can drop this migration mount
-    DELETE FROM MigrationMount  WHERE id = migId;
-  END;
-END checkAndDeleteMigrationMount;
-/
-
 /** Functions for the RecHandlerDaemon **/
 
 /* Get input for python recall policy */
@@ -314,22 +293,12 @@ CREATE OR REPLACE PROCEDURE resurrectTapes
 (tapeIds IN castor."cnumList")
 AS
 BEGIN
-  IF (TapegatewaydIsRunning) THEN
-    FOR i IN tapeIds.FIRST .. tapeIds.LAST LOOP
-      UPDATE Tape T
-         SET T.TapegatewayRequestId = ids_seq.nextval,
-             T.status = tconst.TAPE_PENDING
-       WHERE T.status = tconst.TAPE_WAITPOLICY AND T.id = tapeIds(i);
-      -- XXX FIXME TODO this is a hack needed to add the TapegatewayRequestId which was missing.
-      UPDATE Tape T
-         SET T.TapegatewayRequestId = ids_seq.nextval
-       WHERE T.status = tconst.TAPE_PENDING AND T.TapegatewayRequestId IS NULL 
-         AND T.id = tapeIds(i);
-    END LOOP; 
-  ELSE
-    FORALL i IN tapeIds.FIRST .. tapeIds.LAST
-      UPDATE Tape SET status = tconst.TAPE_PENDING WHERE status = tconst.TAPE_WAITPOLICY AND id = tapeIds(i);
-  END IF;
+  FOR i IN tapeIds.FIRST .. tapeIds.LAST LOOP
+    UPDATE Tape T
+       SET T.TapegatewayRequestId = ids_seq.nextval,
+           T.status = tconst.TAPE_PENDING
+     WHERE T.status = tconst.TAPE_WAITPOLICY AND T.id = tapeIds(i);
+  END LOOP; 
   COMMIT;
 END;	
 /
@@ -374,7 +343,7 @@ BEGIN
         varNbMounts := varNbMounts + 1;
       END LOOP;
       -- force creation of a unique mount in case no mount was created at all and some files are too old
-      IF varNbMounts = 0 AND gettime() - varOldestCreationTime > t.maxFileAgeBeforeMount THEN
+      IF varNbMounts = 0 AND t.nbDrives > 0 AND gettime() - varOldestCreationTime > t.maxFileAgeBeforeMount THEN
         insertMigrationMount(t.id);
       END IF;
     EXCEPTION WHEN NO_DATA_FOUND THEN
