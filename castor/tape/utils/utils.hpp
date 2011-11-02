@@ -43,6 +43,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <vector>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -595,6 +596,34 @@ std::string tapeBlockIdToString(
  */
 void appendPathToEnvVar(const std::string &envVarName,
   const std::string &pathToBeAppended) throw(castor::exception::Exception);
+
+
+/**
+ * Compares two time-values, a and b, and returns true if time value a is
+ * greater than time-value b, else returns false.
+ *
+ * @param a Time-value a.
+ * @param b Time-value b.
+ * @return True if time value a is greater than time value b, else false.
+ */
+bool timevalGreaterThan(const timeval &a, const timeval &b) throw();
+
+/**
+ * Calculates the absolute difference of the two specified time-values.
+ *
+ * @param a Time-value a.
+ * @param b Time-value b.
+ * @return The difference between time-values a and b.
+ */
+timeval timevalAbsDiff(const timeval &a, const timeval &b) throw();
+
+/**
+ * Returns the double version of the specified time-value.
+ *
+ * @param tv The time-value from which the double is to be calculated.
+ * @param    The double version of the specified time-value.
+ */
+double timevalToDouble(const timeval &tv) throw();
 
 } // namespace utils
 } // namespace tape

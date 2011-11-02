@@ -30,33 +30,44 @@
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <list>
+#include <sstream>
 #include <stdlib.h>
 #include <string>
+#include <sys/time.h>
 #include <vector>
 
-void readFileIntoList_stdException(const char *const filename,
-  std::list<std::string> &lines) {
-  try {
-    castor::tape::utils::readFileIntoList(filename, lines);
-  } catch(castor::exception::Exception &ex) {
-    test_exception te(ex.getMessage().str());
-
-    throw te;
-  }
-}
-
-void appendPathToEnvVar_stdException(const std::string &envVarName,
-  const std::string &pathToBeAppended) {
-  try {
-    castor::tape::utils::appendPathToEnvVar(envVarName, pathToBeAppended);
-  } catch(castor::exception::Exception &ex) {
-    test_exception te(ex.getMessage().str());
-
-    throw te;
-  }
-}
-
 class TapeUtilsTest: public CppUnit::TestFixture {
+private:
+  void readFileIntoList_stdException(const char *const filename,
+    std::list<std::string> &lines) {
+    try {
+      castor::tape::utils::readFileIntoList(filename, lines);
+    } catch(castor::exception::Exception &ex) {
+      test_exception te(ex.getMessage().str());
+
+      throw te;
+    }
+  }
+
+  void appendPathToEnvVar_stdException(const std::string &envVarName,
+    const std::string &pathToBeAppended) {
+    try {
+      castor::tape::utils::appendPathToEnvVar(envVarName, pathToBeAppended);
+    } catch(castor::exception::Exception &ex) {
+      test_exception te(ex.getMessage().str());
+
+    throw te;
+    }
+  }
+
+  std::string timevalToString(const timeval &tv) {
+    std::ostringstream oss;
+
+    oss << "{tv_sec=" << tv.tv_sec << ", tv_usec=" << tv.tv_usec << "}";
+
+    return oss.str();
+  }
+
 public:
 
   void setUp() {
@@ -317,6 +328,149 @@ public:
       std::string("col8"), columns[7]);
   }
 
+  void testTimevalGreaterThan_BigSecSmallSec_BigUsecSmallUsec() {
+    const timeval bigger   = {6, 5};
+    const timeval smaller  = {5, 4};
+    const bool    expected = true;
+
+    std::ostringstream oss;
+    oss << "timevalGreaterThan(" << timevalToString(bigger) << ", " <<
+      timevalToString(smaller) << ") = " << expected;
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(oss.str(), expected,
+      castor::tape::utils::timevalGreaterThan(bigger, smaller));
+  }
+
+  void testTimevalGreaterThan_BigSecSmallSec_BigUsecSmallUsec_swapped() {
+    const timeval bigger   = {6, 5};
+    const timeval smaller  = {5, 4};
+    const bool    expected = false;
+
+    std::ostringstream oss;
+    oss << "timevalGreaterThan(" << timevalToString(smaller) << ", " <<
+      timevalToString(bigger) << ") = " << expected;
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(oss.str(), expected,
+      castor::tape::utils::timevalGreaterThan(smaller, bigger));
+  }
+
+  void testTimevalGreaterThan_BigSecSmallSec_SmallUsecBigUsec() {
+    const timeval bigger   = {4, 3};
+    const timeval smaller  = {2, 7};
+    const bool    expected = true;
+
+    std::ostringstream oss;
+    oss << "timevalGreaterThan(" << timevalToString(bigger) << ", " <<
+      timevalToString(smaller) << ") = " << expected;
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(oss.str(), expected,
+      castor::tape::utils::timevalGreaterThan(bigger, smaller));
+  }
+
+  void testTimevalGreaterThan_BigSecSmallSec_SmallUsecBigUsec_swapped() {
+    const timeval bigger   = {4, 3};
+    const timeval smaller  = {2, 7};
+    const bool    expected = false;
+
+    std::ostringstream oss;
+    oss << "timevalGreaterThan(" << timevalToString(smaller) << ", " <<
+      timevalToString(bigger) << ") = false";
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(oss.str(), expected,
+      castor::tape::utils::timevalGreaterThan(smaller, bigger));
+  }
+
+  void testTimevalGreaterThan_EqualSec_EqualUsec()  {
+    const timeval a         = {8, 9};
+    const timeval b         = {8, 9};
+    const bool    expected  = false;
+  
+    std::ostringstream oss;
+    oss << "timevalGreaterThan(" << timevalToString(a) << ", " <<
+      timevalToString(b) << ") = " << expected;
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(oss.str(), expected, castor::tape::utils::timevalGreaterThan(a, b));
+  }
+
+  void testTimevalAbsDiff_BigSecSmallSec_BigUsecSmallUsec() {
+    const timeval bigger   = {6, 5};
+    const timeval smaller  = {5, 4};
+    const timeval expected = {1, 1};
+    const timeval actual   = castor::tape::utils::timevalAbsDiff(bigger,
+      smaller);
+    const bool    isAMatch = expected.tv_sec == actual.tv_sec &&
+      expected.tv_usec == actual.tv_usec;
+
+    std::ostringstream oss;
+    oss << "timevalAbsDiff(" << timevalToString(bigger) << ", " <<
+      timevalToString(smaller) << ") = " << timevalToString(expected);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(oss.str(), true, isAMatch);
+  }
+
+  void testTimevalAbsDiff_BigSecSmallSec_BigUsecSmallUsec_swapped() {
+    const timeval bigger   = {6, 5};
+    const timeval smaller  = {5, 4};
+    const timeval expected = {1, 1};
+    const timeval actual   = castor::tape::utils::timevalAbsDiff(smaller,
+      bigger);
+    const bool    isAMatch = expected.tv_sec == actual.tv_sec &&
+      expected.tv_usec == actual.tv_usec;
+
+    std::ostringstream oss;
+    oss << "timevalAbsDiff(" << timevalToString(smaller) << ", " <<
+      timevalToString(bigger) << ") = " << timevalToString(expected);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(oss.str(), true, isAMatch);
+  }
+
+  void testTimevalAbsDiff_BigSecSmallSec_SmallUsecBigUsec() {
+    const timeval bigger   = {4, 3};
+    const timeval smaller  = {2, 7};
+    const timeval expected = {1, 999996};
+    const timeval actual   = castor::tape::utils::timevalAbsDiff(bigger,
+      smaller);
+    const bool    isAMatch = expected.tv_sec == actual.tv_sec &&
+      expected.tv_usec == actual.tv_usec;
+
+    std::ostringstream oss;
+    oss << "timevalAbsDiff(" << timevalToString(bigger) << ", " <<
+      timevalToString(smaller) << ") = " << timevalToString(expected);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(oss.str(), true, isAMatch);
+  }
+
+  void testTimevalAbsDiff_BigSecSmallSec_SmallUsecBigUsec_swapped() {
+    const timeval bigger   = {4, 3};
+    const timeval smaller  = {2, 7};
+    const timeval expected = {1, 999996};
+    const timeval actual   = castor::tape::utils::timevalAbsDiff(smaller,
+      bigger);
+    const bool    isAMatch = expected.tv_sec == actual.tv_sec &&
+      expected.tv_usec == actual.tv_usec;
+
+    std::ostringstream oss;
+    oss << "timevalAbsDiff(" << timevalToString(smaller) << ", " <<
+      timevalToString(bigger) << ") = " << timevalToString(expected);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(oss.str(), true, isAMatch);
+  }
+
+  void testTimevalAbsDiff_EqualSec_EqualUsec()  {
+    const timeval a        = {8, 9};
+    const timeval b        = {8, 9};
+    const timeval expected = {0, 0};
+    const timeval actual   = castor::tape::utils::timevalAbsDiff(a, b);
+    const bool    isAMatch = expected.tv_sec == actual.tv_sec &&
+      expected.tv_usec == actual.tv_usec;
+  
+    std::ostringstream oss;
+    oss << "timevalAbsDiff(" << timevalToString(a) << ", " <<
+      timevalToString(b) << ") = " << timevalToString(expected);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(oss.str(), true, isAMatch);
+  }
+
+  void testTimevalToDouble() {
+    const timeval tv       = {1234, 999992};
+    const double  expected = 1234.999992;
+    const double  actual   = castor::tape::utils::timevalToDouble(tv);
+
+    std::ostringstream oss;
+    oss << "timevalToDouble(" << timevalToString(tv) << ") = " << expected;
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(oss.str(), expected, actual);
+  }
+
   CPPUNIT_TEST_SUITE(TapeUtilsTest);
   CPPUNIT_TEST(testToHex);
   CPPUNIT_TEST(testCopyStringNullDst);
@@ -330,6 +484,17 @@ public:
   CPPUNIT_TEST(testAppendPathToEmptyEnvVar);
   CPPUNIT_TEST(testAppendPathToNonEmptyEnvVar);
   CPPUNIT_TEST(testSplitString);
+  CPPUNIT_TEST(testTimevalGreaterThan_BigSecSmallSec_BigUsecSmallUsec);
+  CPPUNIT_TEST(testTimevalGreaterThan_BigSecSmallSec_BigUsecSmallUsec_swapped);
+  CPPUNIT_TEST(testTimevalGreaterThan_BigSecSmallSec_SmallUsecBigUsec);
+  CPPUNIT_TEST(testTimevalGreaterThan_BigSecSmallSec_SmallUsecBigUsec_swapped);
+  CPPUNIT_TEST(testTimevalGreaterThan_EqualSec_EqualUsec);
+  CPPUNIT_TEST(testTimevalAbsDiff_BigSecSmallSec_BigUsecSmallUsec);
+  CPPUNIT_TEST(testTimevalAbsDiff_BigSecSmallSec_BigUsecSmallUsec_swapped);
+  CPPUNIT_TEST(testTimevalAbsDiff_BigSecSmallSec_SmallUsecBigUsec);
+  CPPUNIT_TEST(testTimevalAbsDiff_BigSecSmallSec_SmallUsecBigUsec_swapped);
+  CPPUNIT_TEST(testTimevalAbsDiff_EqualSec_EqualUsec);
+  CPPUNIT_TEST(testTimevalToDouble);
   CPPUNIT_TEST_SUITE_END();
 };
 

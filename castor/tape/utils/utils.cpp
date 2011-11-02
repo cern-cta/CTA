@@ -1006,3 +1006,65 @@ void castor::tape::utils::appendPathToEnvVar(const std::string &envVarName,
       ": Unknown error");
   }
 }
+
+
+//---------------------------------------------------------------------------
+// timevalGreaterThan
+//---------------------------------------------------------------------------
+bool castor::tape::utils::timevalGreaterThan(const timeval &a, const timeval &b)
+  throw() {
+  if(a.tv_sec != b.tv_sec) {
+    return a.tv_sec > b.tv_sec;
+  } else {
+    return a.tv_usec > b.tv_usec;
+  }
+}
+
+
+//---------------------------------------------------------------------------
+// timevalAbsDiff
+//---------------------------------------------------------------------------
+timeval castor::tape::utils::timevalAbsDiff(const timeval &a, const timeval &b)
+  throw() {
+  timeval bigger  = {0, 0};
+  timeval smaller = {0, 0};
+  timeval result  = {0, 0};
+
+  // If time-values a and b are equal
+  if(a.tv_sec == b.tv_sec && a.tv_usec == b.tv_usec) {
+    return result; // Result was initialised to {0, 0}
+  }
+
+  // The time-values are not equal, determine which is the bigger and which is
+  // the smaller time-value
+  if(timevalGreaterThan(a, b)) {
+    bigger  = a;
+    smaller = b;
+  } else {
+    bigger  = b;
+    smaller = a;
+  }
+
+  // Subtract the smaller time-value from the bigger time-value carrying over
+  // 1000000 micro-seconds from the seconds to the micro-seconds and never
+  // using a value greater than 1000000 - 1.
+  if(bigger.tv_usec >= smaller.tv_usec) {
+    result.tv_usec = bigger.tv_usec - smaller.tv_usec;
+    result.tv_sec  = bigger.tv_sec  - smaller.tv_sec;
+  } else {
+    const timeval oneMillionUsecMinusOne = {0, 999999};
+    result.tv_usec = oneMillionUsecMinusOne.tv_usec -
+      smaller.tv_usec + 1 + bigger.tv_usec;
+    result.tv_sec = bigger.tv_sec - 1 - smaller.tv_sec;
+  }
+
+  return result;
+}
+
+
+//---------------------------------------------------------------------------
+// timevalToDouble
+//---------------------------------------------------------------------------
+double castor::tape::utils::timevalToDouble(const timeval &tv) throw() {
+  return tv.tv_sec + tv.tv_usec / 1000000.0;
+}
