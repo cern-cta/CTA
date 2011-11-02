@@ -42,6 +42,7 @@ tapebridgedaemontester: \
   tapegateway_EndNotificationErrorReport.o \
   tapegateway_EndNotificationFileErrorReport.o \
   tapegateway_FilesListRequest.o \
+  tapegateway_FileErrorReportStruct.o \
   tapegateway_FileMigratedNotificationStruct.o \
   tapegateway_FileMigrationReportList.o \
   tapegateway_FileRecalledNotificationStruct.o \
@@ -77,10 +78,10 @@ tapebridgedaemontester: \
   rtcpd_SendAckToVdqmOrTapeBridge.o \
   rtcp_marshallVdqmClientInfoMsg.o \
   rtcp_recvRtcpHdr.o \
-  tapebridge_FailedToCopyTapeFile.o \
   tapebridge_LegacyTxRx.o \
   tapebridge_marshall.o \
   tapebridge_PendingMigrationsStore.o \
+  tapebridge_RtcpdError.o \
   tapebridge_sendTapeBridgeClientInfo2Ack.o \
   tapebridge_sendTapeBridgeFlushedToTape.o \
   tapebridge_tapeFlushModeToStr.o \
@@ -203,11 +204,11 @@ tapebridged: \
   tapebridge_BridgeSocketCatalogue.o \
   tapebridge_ClientTxRx.o \
   tapebridge_DlfMessageStrings.o \
-  tapebridge_FailedToCopyTapeFile.o \
   tapebridge_LegacyTxRx.o \
   tapebridge_LogHelper.o \
   tapebridge_marshall.o \
   tapebridge_PendingMigrationsStore.o \
+  tapebridge_RtcpdError.o \
   tapebridge_RtcpTxRx.o \
   tapebridge_TapeBridgeMain.o \
   tapebridge_TapeBridgeDaemon.o \
@@ -224,11 +225,12 @@ tapebridged: \
   tapegateway_EndNotification.o \
   tapegateway_EndNotificationErrorReport.o \
   tapegateway_EndNotificationFileErrorReport.o \
-  tapegateway_FilesListRequest.o \
+  tapegateway_FileErrorReportStruct.o \
   tapegateway_FileMigratedNotificationStruct.o \
   tapegateway_FileMigrationReportList.o \
   tapegateway_FileRecalledNotificationStruct.o \
   tapegateway_FileRecallReportList.o \
+  tapegateway_FilesListRequest.o \
   tapegateway_FilesToMigrateList.o \
   tapegateway_FilesToMigrateListRequest.o \
   tapegateway_FilesToRecallList.o \
@@ -282,6 +284,9 @@ tapebridge_BridgeClientInfo2Sender.o: \
 $(ROOT_DIR)/castor/tape/tapebridge/BridgeClientInfo2Sender.cpp: \
   $(ROOT_DIR)/castor/tape/tapebridge/BridgeClientInfo2Sender.hpp
 	touch $@
+
+tapebridge_RtcpdError.o: $(ROOT_DIR)/castor/tape/tapebridge/RtcpdError.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapebridge_tapeFlushModeToStr.o: \
   $(ROOT_DIR)/tapebridge/tapebridge_tapeFlushModeToStr.c
@@ -421,10 +426,6 @@ dlf_lib.o: $(ROOT_DIR)/dlf/dlf_lib.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 Constants.o: $(ROOT_DIR)/castor/Constants.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tapebridge_FailedToCopyTapeFile.o: \
-  $(ROOT_DIR)/castor/tape/tapebridge/FailedToCopyTapeFile.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapebridge_marshall.o: $(ROOT_DIR)/tapebridge/tapebridge_marshall.c
@@ -629,6 +630,10 @@ tapegateway_EndNotificationErrorReport.o: \
 
 tapegateway_EndNotificationFileErrorReport.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/EndNotificationFileErrorReport.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapegateway_FileErrorReportStruct.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FileErrorReportStruct.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapegateway_FileMigratedNotificationStruct.o: \
