@@ -1068,3 +1068,19 @@ timeval castor::tape::utils::timevalAbsDiff(const timeval &a, const timeval &b)
 double castor::tape::utils::timevalToDouble(const timeval &tv) throw() {
   return tv.tv_sec + tv.tv_usec / 1000000.0;
 }
+
+
+//---------------------------------------------------------------------------
+// getTimeOfDay
+//---------------------------------------------------------------------------
+void castor::tape::utils::getTimeOfDay(struct timeval *const tv,
+  struct timezone *const tz) throw(castor::exception::Exception) {
+  if(0 != gettimeofday(tv, tz)) {
+    const int saved_errno = errno;
+
+    // Convert the error into an exception
+    TAPE_THROW_CODE(errno,
+      ": Call to gettimeofday failed"
+      ": " << sstrerror(saved_errno));
+  }
+}

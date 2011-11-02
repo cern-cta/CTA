@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <string>
 #include <sys/time.h>
+#include <unistd.h>
 #include <vector>
 
 class TapeUtilsTest: public CppUnit::TestFixture {
@@ -471,6 +472,28 @@ public:
     CPPUNIT_ASSERT_EQUAL_MESSAGE(oss.str(), expected, actual);
   }
 
+  void testGetTimeOfDay() {
+    timeval startTime    = {0, 0};
+    timeval endTime      = {0, 0};
+    timeval testDuration = {0, 0};
+    const unsigned int sleepDuration = 1;
+
+    castor::tape::utils::getTimeOfDay(&startTime, NULL);
+    sleep(sleepDuration);
+    castor::tape::utils::getTimeOfDay(&endTime, NULL);
+
+    const bool startTimeIsBeforeEndTime =
+      castor::tape::utils::timevalGreaterThan(endTime, startTime);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("startTime is before endTime",
+      true, startTimeIsBeforeEndTime);
+
+    testDuration = castor::tape::utils::timevalAbsDiff(startTime, endTime);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Test duration is accuracte to the second",
+      true, sleepDuration == testDuration.tv_sec);
+  }
+
   CPPUNIT_TEST_SUITE(TapeUtilsTest);
   CPPUNIT_TEST(testToHex);
   CPPUNIT_TEST(testCopyStringNullDst);
@@ -495,6 +518,7 @@ public:
   CPPUNIT_TEST(testTimevalAbsDiff_BigSecSmallSec_SmallUsecBigUsec_swapped);
   CPPUNIT_TEST(testTimevalAbsDiff_EqualSec_EqualUsec);
   CPPUNIT_TEST(testTimevalToDouble);
+  CPPUNIT_TEST(testGetTimeOfDay);
   CPPUNIT_TEST_SUITE_END();
 };
 

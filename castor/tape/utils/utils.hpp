@@ -625,6 +625,16 @@ timeval timevalAbsDiff(const timeval &a, const timeval &b) throw();
  */
 double timevalToDouble(const timeval &tv) throw();
 
+/**
+ * Simple C++ wrapper around the C function named gettimeofday.  The wrapper
+ * simply converts the return of -1 and the setting of errno to an exception.
+ *
+ * @param tv See the manual page for gettimeofday.
+ * @param tz See the manual page for gettimeofday.
+ */
+void getTimeOfDay(struct timeval *const tv, struct timezone *const tz)
+  throw(castor::exception::Exception);
+
 } // namespace utils
 } // namespace tape
 } // namespace castor
