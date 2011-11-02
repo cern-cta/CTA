@@ -52,6 +52,7 @@ tapebridgedaemontester: \
   tapegateway_FilesToRecallList.o \
   tapegateway_FilesToRecallListRequest.o \
   tapegateway_FileToMigrateStruct.o \
+  tapegateway_FileToRecallStruct.o \
   tapegateway_GatewayMessage.o \
   tapegateway_PositionCommandCode.o \
   tapegateway_PingNotification.o \
@@ -60,14 +61,27 @@ tapebridgedaemontester: \
   tapegateway_Volume.o \
   tapegateway_VolumeMode.o \
   tapegateway_VolumeRequest.o \
+  io_StreamBaseCnv.o \
   io_StreamCnvSvc.o \
   io_StreamEndNotificationCnv.o \
   io_StreamEndNotificationErrorReportCnv.o \
   io_StreamEndNotificationFileErrorReportCnv.o \
+  io_StreamFilesListRequestCnv.o \
+  io_StreamFileErrorReportStructCnv.o \
+  io_StreamFileMigratedNotificationStructCnv.o \
+  io_StreamFileMigrationReportListCnv.o \
+  io_StreamFileRecalledNotificationStructCnv.o \
+  io_StreamFileRecallReportListCnv.o \
+  io_StreamFilesToMigrateListCnv.o \
+  io_StreamFilesToMigrateListRequestCnv.o \
+  io_StreamFilesToRecallListCnv.o \
+  io_StreamFilesToRecallListRequestCnv.o \
+  io_StreamFileToMigrateStructCnv.o \
+  io_StreamNoMoreFilesCnv.o \
   io_StreamNotificationAcknowledgeCnv.o \
+  io_StreamPtrCnv.o \
   io_StreamVolumeRequestCnv.o \
   io_StreamVolumeCnv.o \
-  io_StreamBaseCnv.o \
   castor_BaseCnvSvc.o \
   castor_Converters.o \
   castor_BaseSvc.o \
@@ -158,16 +172,27 @@ tapebridged: \
   exception_TapeNetAcceptInterrupted.o \
   exception_TimeOut.o \
   exception_TooBig.o \
+  io_StreamBaseCnv.o \
   io_StreamCnvSvc.o \
   io_StreamEndNotificationCnv.o \
   io_StreamEndNotificationErrorReportCnv.o \
   io_StreamEndNotificationFileErrorReportCnv.o \
+  io_StreamFilesListRequestCnv.o \
+  io_StreamFileErrorReportStructCnv.o \
+  io_StreamFileMigratedNotificationStructCnv.o \
+  io_StreamFileMigrationReportListCnv.o \
+  io_StreamFileRecalledNotificationStructCnv.o \
+  io_StreamFileRecallReportListCnv.o \
+  io_StreamFilesToMigrateListCnv.o \
+  io_StreamFilesToMigrateListRequestCnv.o \
+  io_StreamFilesToRecallListCnv.o \
+  io_StreamFilesToRecallListRequestCnv.o \
+  io_StreamFileToMigrateStructCnv.o \
   io_StreamNoMoreFilesCnv.o \
   io_StreamNotificationAcknowledgeCnv.o \
-  io_StreamPingNotificationCnv.o \
+  io_StreamPtrCnv.o \
   io_StreamVolumeRequestCnv.o \
   io_StreamVolumeCnv.o \
-  io_StreamBaseCnv.o \
   legacymsg_CommonMarshal.o \
   legacymsg_RtcpMarshal.o \
   legacymsg_TapeBridgeMarshal.o \
@@ -236,6 +261,7 @@ tapebridged: \
   tapegateway_FilesToRecallList.o \
   tapegateway_FilesToRecallListRequest.o \
   tapegateway_FileToMigrateStruct.o \
+  tapegateway_FileToRecallStruct.o \
   tapegateway_GatewayMessage.o \
   tapegateway_PositionCommandCode.o \
   tapegateway_PingNotification.o \
@@ -668,6 +694,10 @@ tapegateway_FileToMigrateStruct.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/FileToMigrateStruct.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
+tapegateway_FileToRecallStruct.o: \
+  $(ROOT_DIR)/castor/tape/tapegateway/FileToRecallStruct.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
 tapegateway_FilesToRecallList.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/FilesToRecallList.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
@@ -794,6 +824,50 @@ io_StreamEndNotificationFileErrorReportCnv.o: \
   $(ROOT_DIR)/castor/io/StreamEndNotificationFileErrorReportCnv.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
+io_StreamFilesListRequestCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamFilesListRequestCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamFileErrorReportStructCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamFileErrorReportStructCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamFileMigratedNotificationStructCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamFileMigratedNotificationStructCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamFileMigrationReportListCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamFileMigrationReportListCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamFileRecalledNotificationStructCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamFileRecalledNotificationStructCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamFileRecallReportListCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamFileRecallReportListCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamFilesToMigrateListCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamFilesToMigrateListCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamFilesToMigrateListRequestCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamFilesToMigrateListRequestCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamFilesToRecallListCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamFilesToRecallListCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamFilesToRecallListRequestCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamFilesToRecallListRequestCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamFileToMigrateStructCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamFileToMigrateStructCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
 io_StreamNotificationAcknowledgeCnv.o: \
   $(ROOT_DIR)/castor/io/StreamNotificationAcknowledgeCnv.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
@@ -804,6 +878,9 @@ io_StreamNoMoreFilesCnv.o: \
 
 io_StreamPingNotificationCnv.o: \
   $(ROOT_DIR)/castor/io/StreamPingNotificationCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamPtrCnv.o: $(ROOT_DIR)/castor/io/StreamPtrCnv.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 io_StreamVolumeRequestCnv.o: $(ROOT_DIR)/castor/io/StreamVolumeRequestCnv.cpp
