@@ -41,6 +41,7 @@
 #include "h/Cuuid.h"
 #include "h/tapeBridgeFlushedToTapeMsgBody.h"
 
+#include <sys/time.h>
 #include <time.h>
 
 
@@ -245,10 +246,9 @@ public:
    * @param socketFd         The file descriptor of the associated TCP/IP
    *                         socket.
    * @param body             The message body.
-   * @param connectDuration  The number of seconds it took to connect to the
-   *                         client.
-   * @param sendRecvDuration The number of seconds it took to send the request
-   *                         and receive the reply.
+   * @param connectDuration  The time it took to connect to the client.
+   * @param sendRecvDuration The time it took to send the request and receive
+   *                         the reply.
    */
   static void logMsgBody(
     const Cuuid_t                        &cuuid,
@@ -257,11 +257,11 @@ public:
     const uint32_t                       volReqId,
     const int                            socketFd,
     const legacymsg::VmgrTapeInfoMsgBody &body,
-    const time_t                         connectDuration,
-    const time_t                         sendRecvDuration) throw();
+    const timeval                        &connectDuration,
+    const timeval                        &sendRecvDuration) throw();
 
   /**
-   * Logs the specified TAPEBRIDGE message body.
+   * Logs the specified client message body.
    *
    * @param cuuid      The uuid of the component issuing the message.
    * @param severity   The severity of the message.
@@ -269,10 +269,6 @@ public:
    * @param volReqId   The volume request ID.
    * @param socketFd   The file descriptor of the associated TCP/IP socket.
    * @param body       The message body.
-   * @param connectDuration  The number of seconds it took to connect to the
-   *                         client.
-   * @param sendRecvDuration The number of seconds it took to send the request
-   *                         and receive the reply.
    */
   static void logMsgBody(
     const Cuuid_t                          &cuuid,
@@ -289,18 +285,17 @@ public:
    * @param severity         The severity of the message.
    * @param message_no       The message number in the facility.
    * @param msg              The message.
-   * @param connectDuration  The number of seconds it took to connect to the
-   *                         client.
-   * @param sendRecvDuration The number of seconds it took to send the request
-   *                         and receive the reply.
+   * @param connectDuration  The time it took to connect to the client.
+   * @param sendRecvDuration The time it took to send the request and receive
+   *                         the reply.
    */
   static void logMsg(
     const Cuuid_t             &cuuid,
     const int                 severity,
     const int                 message_no,
     const tapegateway::Volume &msg,
-    const time_t              connectDuration,
-    const time_t              sendRecvDuration) throw();
+    const timeval             &connectDuration,
+    const timeval             &sendRecvDuration) throw();
 
   /**
    * Logs the specified Client message.
@@ -309,18 +304,17 @@ public:
    * @param severity         The severity of the message.
    * @param message_no       The message number in the facility.
    * @param msg              The message.
-   * @param connectDuration  The number of seconds it took to connect to the
-   *                         client.
-   * @param sendRecvDuration The number of seconds it took to send the request
-   *                         and receive the reply.
+   * @param connectDuration  The time it took to connect to the client.
+   * @param sendRecvDuration The time it took to send the request and receive
+   *                         the reply.
    */
   static void logMsg(
     const Cuuid_t                     &cuuid,
     const int                         severity,
     const int                         message_no,
     const tapegateway::DumpParameters &msg,
-    const time_t                      connectDuration,
-    const time_t                      sendRecvDuration) throw();
+    const timeval                     &connectDuration,
+    const timeval                     &sendRecvDuration) throw();
 };
 
 } // namespace tapebridge

@@ -36,6 +36,7 @@
 #include "h/vmgr.h"
 
 #include <stdlib.h>
+#include <sys/time.h>
 
 
 //-----------------------------------------------------------------------------
@@ -87,11 +88,14 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
   // Connect to the VMGR
   castor::io::ClientSocket sock(vmgrPort, vmgrHost);
   sock.setTimeout(netReadWriteTimeout);
-  time_t connectDuration = 0;
+  timeval connectDuration = {0, 0};
   try {
-    const size_t connectStartTime = time(NULL);
+    timeval connectStartTime = {0, 0};
+    timeval connectEndTime   = {0, 0};
+    utils::getTimeOfDay(&connectStartTime, NULL);
     sock.connect();
-    connectDuration = time(NULL) - connectStartTime;
+    utils::getTimeOfDay(&connectEndTime, NULL);
+    connectDuration = utils::timevalAbsDiff(connectStartTime, connectEndTime);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
       ": Failed to connect to the VMGR "
@@ -120,7 +124,10 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
   }
 
   // Send the request
-  time_t sendAndReceiveStartTime = time(NULL);
+  timeval sendAndReceiveStartTime = {0, 0};
+  timeval sendAndReceiveEndTime   = {0, 0};
+  timeval sendRecvDuration        = {0, 0};
+  utils::getTimeOfDay(&sendAndReceiveStartTime, NULL);
   try {
     net::writeBytes(sock.socket(), netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
@@ -243,11 +250,12 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
       }
 
       // Receive the message body
-      time_t sendRecvDuration = 0;
       try {
         net::readBytes(sock.socket(), netReadWriteTimeout, header.lenOrStatus,
           bodyBuf);
-        sendRecvDuration = time(NULL) - sendAndReceiveStartTime;
+        utils::getTimeOfDay(&sendAndReceiveEndTime, NULL);
+        sendRecvDuration = utils::timevalAbsDiff(sendAndReceiveStartTime,
+          sendAndReceiveEndTime);
       } catch (castor::exception::Exception &ex) {
         TAPE_THROW_CODE(EIO,
           ": Failed to receive message body from VMGR" <<

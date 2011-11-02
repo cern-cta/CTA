@@ -375,10 +375,16 @@ void castor::tape::tapebridge::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 void castor::tape::tapebridge::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
   const int socketFd, const legacymsg::VmgrTapeInfoMsgBody &body,
-  const time_t, const time_t) throw() {
+  const timeval &connectDuration, const timeval &sendRecvDuration) throw() {
+
+  const double connectDurationDouble = utils::timevalToDouble(connectDuration);
+  const double sendRecvDurationDouble =
+    utils::timevalToDouble(sendRecvDuration);
 
   castor::dlf::Param params[] = {
     castor::dlf::Param("mountTransactionId", volReqId               ),
+    castor::dlf::Param("connectDuration"   , connectDurationDouble  ),
+    castor::dlf::Param("sendRecvDuration"  , sendRecvDurationDouble ),
     castor::dlf::Param("volReqId"          , volReqId               ),
     castor::dlf::Param("socketFd"          , socketFd               ),
     castor::dlf::Param("vsn"               , body.vsn               ),
@@ -431,13 +437,17 @@ void castor::tape::tapebridge::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::LogHelper::logMsg(const Cuuid_t &cuuid,
   const int severity, const int message_no,
-  const tapegateway::Volume &msg, const time_t connectionDuration,
-  const time_t sendRecvDuration) throw() {
+  const tapegateway::Volume &msg, const timeval &connectDuration,
+  const timeval &sendRecvDuration) throw() {
+
+  const double connectDurationDouble = utils::timevalToDouble(connectDuration);
+  const double sendRecvDurationDouble =
+    utils::timevalToDouble(sendRecvDuration);
 
   castor::dlf::Param params[] = {
     castor::dlf::Param("mountTransactionId", msg.mountTransactionId()),
-    castor::dlf::Param("connectDuration"   , connectionDuration      ),
-    castor::dlf::Param("sendRecvDuration"  , sendRecvDuration        ),
+    castor::dlf::Param("connectDuration"   , connectDurationDouble   ),
+    castor::dlf::Param("sendRecvDuration"  , sendRecvDurationDouble  ),
     castor::dlf::Param("TPVID"             , msg.vid()               ),
     castor::dlf::Param("density"           , msg.density()           ),
     castor::dlf::Param("label"             , msg.label()             ),
@@ -455,13 +465,17 @@ void castor::tape::tapebridge::LogHelper::logMsg(const Cuuid_t &cuuid,
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::LogHelper::logMsg(const Cuuid_t &cuuid,
   const int severity, const int message_no,
-  const tapegateway::DumpParameters &msg, const time_t connectionDuration,
-  const time_t sendRecvDuration) throw() {
+  const tapegateway::DumpParameters &msg, const timeval &connectDuration,
+  const timeval &sendRecvDuration) throw() {
+
+  const double connectDurationDouble = utils::timevalToDouble(connectDuration);
+  const double sendRecvDurationDouble =
+    utils::timevalToDouble(sendRecvDuration);
 
   castor::dlf::Param params[] = {
     castor::dlf::Param("mountTransactionId", msg.mountTransactionId()),
-    castor::dlf::Param("connectDuration"   , connectionDuration      ),
-    castor::dlf::Param("sendRecvDuration"  , sendRecvDuration        ),
+    castor::dlf::Param("connectDuration"   , connectDurationDouble   ),
+    castor::dlf::Param("sendRecvDuration"  , sendRecvDurationDouble  ),
     castor::dlf::Param("maxBytes"          , msg.maxBytes()          ),
     castor::dlf::Param("blockSize"         , msg.blockSize()         ),
     castor::dlf::Param("converter"         , msg.converter()         ),

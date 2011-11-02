@@ -34,6 +34,7 @@
 #include "h/Cuuid.h"
 
 #include <stdint.h>
+#include <sys/time.h>
 
 
 namespace castor     {
@@ -393,10 +394,10 @@ private:
    *                           receiving client network messages.
    * @param request            Out parameter: The request to be sent to the
    *                           client.
-   * @param connectDuration    Out parameter: The number of seconds it took to
-   *                           connect to the client.
-   * @param sendRecvDuration   Out parameter: The number of seconds it took to
-   *                           send the request and receive the reply.
+   * @param connectDuration    Out parameter: The time it took to connect to
+   *                           the client.
+   * @param sendRecvDuration   Out parameter: The time it took to send the
+   *                           request and receive the reply.
    * @return                   A pointer to the reply object.  It is the
    *                           responsibility of the caller to deallocate the
    *                           memory of the reply object.
@@ -407,8 +408,8 @@ private:
     const unsigned short clientPort,
     const int            clientNetRWTimeout,
     IObject              &request,
-    time_t               &connectDuration,
-    time_t               &sendRecvDuration)
+    timeval              &connectDuration,
+    timeval              &sendRecvDuration)
     throw(castor::exception::Exception);
 
   /**

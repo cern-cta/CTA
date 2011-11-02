@@ -77,8 +77,8 @@ castor::tape::tapegateway::Volume
   request.setUnit(unit);
 
   // Send the request and receive the reply
-  time_t connectDuration  = 0;
-  time_t sendRecvDuration = 0;
+  timeval connectDuration  = {0, 0};
+  timeval sendRecvDuration = {0, 0};
   std::auto_ptr<castor::IObject> obj(sendRequestAndReceiveReply(
     "VolumeRequest", clientHost, clientPort, CLIENTNETRWTIMEOUT, request,
     connectDuration, sendRecvDuration));
@@ -476,8 +476,8 @@ castor::tape::tapegateway::DumpParameters
   request.setAggregatorTransactionId(aggregatorTransactionId);
 
   // Send the request and receive the reply
-  time_t connectDuration  = 0;
-  time_t sendRecvDuration = 0;
+  timeval connectDuration  = {0, 0};
+  timeval sendRecvDuration = {0, 0};
   std::auto_ptr<castor::IObject> obj(sendRequestAndReceiveReply(
     "DumpParametersRequest", clientHost, clientPort, CLIENTNETRWTIMEOUT,
     request, connectDuration, sendRecvDuration));
@@ -722,17 +722,20 @@ castor::IObject
   const unsigned short clientPort,
   const int            clientNetRWTimeout,
   IObject              &request,
-  time_t               &connectDuration,
-  time_t               &sendRecvDuration)
+  timeval              &connectDuration,
+  timeval              &sendRecvDuration)
   throw(castor::exception::Exception) {
 
   // Connect to the client
   castor::io::ClientSocket sock(clientPort, clientHost);
   sock.setTimeout(clientNetRWTimeout);
   try {
-    const size_t connectStartTime = time(NULL);
+    timeval connectStartTime = {0, 0};
+    timeval connectEndTime   = {0, 0};
+    utils::getTimeOfDay(&connectStartTime, NULL);
     sock.connect();
-    connectDuration = time(NULL) - connectStartTime;
+    utils::getTimeOfDay(&connectEndTime, NULL);
+    connectDuration = utils::timevalAbsDiff(connectStartTime, connectEndTime);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
       ": Failed to send request and receive reply"
@@ -741,7 +744,9 @@ castor::IObject
   }
 
   // Send the request
-  const size_t sendAndReceiveStartTime = time(NULL);
+  timeval sendAndReceiveStartTime = {0, 0};
+  timeval sendAndReceiveEndTime   = {0, 0};
+  utils::getTimeOfDay(&sendAndReceiveStartTime, NULL);
   try {
     sock.sendObject(request);
   } catch(castor::exception::Exception &ex) {
@@ -762,7 +767,9 @@ castor::IObject
         ": Failed to send request and receive reply"
         ": ClientSocket::readObject() returned null");
     }
-    sendRecvDuration = time(NULL) - sendAndReceiveStartTime;
+    utils::getTimeOfDay(&sendAndReceiveEndTime, NULL);
+    sendRecvDuration = utils::timevalAbsDiff(sendAndReceiveStartTime,
+      sendAndReceiveEndTime);
   } catch(castor::exception::Exception &ex) {
 
     std::stringstream oss;
@@ -855,8 +862,8 @@ void castor::tape::tapebridge::ClientTxRx::notifyClient(
   throw(castor::exception::Exception) {
 
   // Send the request and receive the reply
-  time_t connectDuration  = 0;
-  time_t sendRecvDuration = 0;
+  timeval connectDuration  = {0, 0};
+  timeval sendRecvDuration = {0, 0};
   std::auto_ptr<castor::IObject> obj(sendRequestAndReceiveReply(
     requestTypeName, clientHost, clientPort, CLIENTNETRWTIMEOUT,
     request, connectDuration, sendRecvDuration));
