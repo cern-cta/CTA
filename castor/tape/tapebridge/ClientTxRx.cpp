@@ -177,7 +177,7 @@ int castor::tape::tapebridge::ClientTxRx::sendFilesToMigrateListRequest(
   const unsigned short clientPort,
   const uint64_t       maxFiles,
   const uint64_t       maxBytes,
-  time_t               &connectDuration)
+  timeval              &connectDuration)
   throw(castor::exception::Exception) {
 
   // Check method arguments
@@ -321,7 +321,7 @@ int castor::tape::tapebridge::ClientTxRx::sendFilesToRecallListRequest(
   const unsigned short clientPort,
   const uint64_t       maxFiles,
   const uint64_t       maxBytes,
-  time_t               &connectDuration)
+  timeval              &connectDuration)
   throw(castor::exception::Exception) {
 
   // Check method arguments
@@ -627,16 +627,19 @@ int castor::tape::tapebridge::ClientTxRx::sendMessage(
   const unsigned short clientPort,
   const int            clientNetRWTimeout,
   IObject              &message,
-  time_t               &connectDuration)
+  timeval              &connectDuration)
   throw(castor::exception::Exception) {
 
   // Connect to the client
   castor::io::ClientSocket sock(clientPort, clientHost);
   sock.setTimeout(clientNetRWTimeout);
   try {
-    const size_t connectStartTime = time(NULL);
+    timeval connectStartTime = {0, 0};
+    timeval connectEndTime   = {0, 0};
+    utils::getTimeOfDay(&connectStartTime, NULL);
     sock.connect();
-    connectDuration = time(NULL) - connectStartTime;
+    utils::getTimeOfDay(&connectEndTime, NULL);
+    connectDuration = utils::timevalAbsDiff(connectStartTime, connectEndTime);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
       ": Failed to send message"

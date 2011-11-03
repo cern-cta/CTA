@@ -91,8 +91,8 @@ public:
    * @param maxBytes           The maximum number of files the client can send
    *                           in the reply represented indirectly by the sum
    *                           of their file-sizes.
-   * @param connectDuration    Out parameter: The number of seconds it took to
-   *                           connect to the client.
+   * @param connectDuration    Out parameter: The time it took to connect to
+   *                           the client.
    * @return                   The socket-descriptor of the tape-gateway
    *                           connection from which the reply will be read
    *                           later.
@@ -104,7 +104,7 @@ public:
     const unsigned short clientPort,
     const uint64_t       maxFiles,
     const uint64_t       maxBytes,
-    time_t               &connectDuration)
+    timeval              &connectDuration)
     throw(castor::exception::Exception);
 
   /**
@@ -152,8 +152,8 @@ public:
    * @param maxBytes           The maximum number of files the client can send
    *                           in the reply represented indirectly by the sum
    *                           of their file-sizes.
-   * @param connectDuration    Out parameter: The number of seconds it took to
-   *                           connect to the client.
+   * @param connectDuration    Out parameter: The time it took to connect to
+   *                           the client.
    * @return                   The socket-descriptor of the tape-gateway
    *                           connection from which the reply will be read
    *                           later.
@@ -165,7 +165,7 @@ public:
     const unsigned short clientPort,
     const uint64_t       maxFiles,
     const uint64_t       maxBytes,
-    time_t               &connectDuration)
+    timeval              &connectDuration)
     throw(castor::exception::Exception);
 
   /**
@@ -321,15 +321,15 @@ public:
    *                           receiving client network messages.
    * @param request            Out parameter: The request to be sent to the
    *                           client.
-   * @param connectDuration    Out parameter: The number of seconds it took to
-   *                           connect to the client.
+   * @param connectDuration    Out parameter: The time it took to connect to
+   *                           the client.
    */
   static int sendMessage(
     const char *const    clientHost,
     const unsigned short clientPort,
     const int            clientNetRWTimeout,
     IObject              &message,
-    time_t               &connectDuration)
+    timeval              &connectDuration)
     throw(castor::exception::Exception);
 
   /**

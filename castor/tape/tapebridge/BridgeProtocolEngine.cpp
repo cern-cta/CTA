@@ -868,7 +868,7 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::startMigrationSession()
   throw(castor::exception::Exception) {
 
   // Send the request for the first file to migrate to the client
-  time_t connectDuration = 0;
+  timeval connectDuration = {0, 0};
   const uint64_t tapebridgeTransId =
     m_tapebridgeTransactionCounter.next();
   const uint64_t maxFiles = 1;
@@ -877,6 +877,9 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::startMigrationSession()
     m_jobRequest.volReqId, tapebridgeTransId, m_jobRequest.clientHost,
     m_jobRequest.clientPort, maxFiles, maxBytes, connectDuration));
   {
+    const double connectDurationDouble =
+      utils::timevalToDouble(connectDuration);
+
     castor::dlf::Param params[] = {
       castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId      ),
       castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
@@ -891,7 +894,7 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::startMigrationSession()
       castor::dlf::Param("clientType"        ,
         utils::volumeClientTypeToString(m_volume.clientType())),
       castor::dlf::Param("clientSock"        , clientSock.get()       ),
-      castor::dlf::Param("connectDuration"   , connectDuration        )};
+      castor::dlf::Param("connectDuration"   , connectDurationDouble  )};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       TAPEBRIDGE_SENT_FILESTOMIGRATELISTREQUEST, params);
   }
@@ -1535,7 +1538,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpRequestMoreWork(
   // If migrating
   if(m_volume.mode() == tapegateway::WRITE) {
     // Send a FilesToMigrateListRequest to the client
-    time_t connectDuration = 0;
+    timeval connectDuration = {0, 0};
     const uint64_t tapebridgeTransId = m_tapebridgeTransactionCounter.next();
     const uint64_t maxFiles = 1;
     const uint64_t maxBytes = 1;
@@ -1543,6 +1546,8 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpRequestMoreWork(
       m_jobRequest.volReqId, tapebridgeTransId, m_jobRequest.clientHost,
       m_jobRequest.clientPort, maxFiles, maxBytes, connectDuration));
     {
+      const double connectDurationDouble =
+        utils::timevalToDouble(connectDuration);
       castor::dlf::Param params[] = {
         castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId      ),
         castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
@@ -1557,7 +1562,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpRequestMoreWork(
         castor::dlf::Param("clientType",
           utils::volumeClientTypeToString(m_volume.clientType())),
         castor::dlf::Param("clientSock"        , clientSock.get()       ),
-        castor::dlf::Param("connectDuration"   , connectDuration        )};
+        castor::dlf::Param("connectDuration"   , connectDurationDouble  )};
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
         TAPEBRIDGE_SENT_FILESTOMIGRATELISTREQUEST, params);
     }
@@ -1571,7 +1576,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpRequestMoreWork(
   } else {
 
     // Send a FilesToRecallListRequest to the client
-    time_t connectDuration = 0;
+    timeval connectDuration = {0, 0};
     const uint64_t tapebridgeTransId = m_tapebridgeTransactionCounter.next();
     const uint64_t maxFiles = 1;
     const uint64_t maxBytes = 1;
@@ -1579,6 +1584,8 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpRequestMoreWork(
       m_jobRequest.volReqId, tapebridgeTransId, m_jobRequest.clientHost,
       m_jobRequest.clientPort, maxFiles, maxBytes, connectDuration));
     {
+      const double connectDurationDouble =
+        utils::timevalToDouble(connectDuration);
       castor::dlf::Param params[] = {
         castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId      ),
         castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
@@ -1593,7 +1600,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpRequestMoreWork(
         castor::dlf::Param("clientType",
           utils::volumeClientTypeToString(m_volume.clientType())),
         castor::dlf::Param("clientSock"        , clientSock.get()       ),
-        castor::dlf::Param("connectDuration"   , connectDuration        )};
+        castor::dlf::Param("connectDuration"   , connectDurationDouble  )};
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
         TAPEBRIDGE_SENT_FILESTORECALLLISTREQUEST, params);
     }
@@ -1875,10 +1882,12 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
     report.addSuccessfulRecalls(recalledFile.release());
 
     // Send the report to the client
-    time_t connectDuration = 0;
+    timeval connectDuration = {0, 0};
     utils::SmartFd clientSock(ClientTxRx::sendMessage(m_jobRequest.clientHost,
       m_jobRequest.clientPort, CLIENTNETRWTIMEOUT, report, connectDuration));
     {
+      const double connectDurationDouble =
+        utils::timevalToDouble(connectDuration);
       castor::dlf::Param params[] = {
         castor::dlf::Param("tapebridgeTransId", tapebridgeTransId),
         castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId),
@@ -1891,7 +1900,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
         castor::dlf::Param("clientType",
           utils::volumeClientTypeToString(m_volume.clientType())),
         castor::dlf::Param("clientSock", clientSock.get()),
-        castor::dlf::Param("connectDuration", connectDuration),
+        castor::dlf::Param("connectDuration", connectDurationDouble),
         castor::dlf::Param("nbSuccessful", report.successfulRecalls().size()),
         castor::dlf::Param("nbFailed", report.failedRecalls().size())};
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
@@ -1913,8 +1922,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
         castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
         castor::dlf::Param("clientType",
           utils::volumeClientTypeToString(m_volume.clientType())),
-        castor::dlf::Param("clientSock"        , closedClientSock       ),
-        castor::dlf::Param("connectDuration"   , connectDuration        )};
+        castor::dlf::Param("clientSock"        , closedClientSock       )};
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
         TAPEBRIDGE_RECEIVED_ACK_OF_NOTIFICATION, params);
     }
@@ -2144,10 +2152,12 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 
   // Send the report message to the client (the tapegewayd daemon or the
   // writetp command-line tool
-  time_t connectDuration = 0;
+  timeval connectDuration = {0, 0};
   utils::SmartFd clientSock(ClientTxRx::sendMessage(m_jobRequest.clientHost,
     m_jobRequest.clientPort, CLIENTNETRWTIMEOUT, report, connectDuration));
   {
+    const double connectDurationDouble =
+      utils::timevalToDouble(connectDuration);
     castor::dlf::Param params[] = {
       castor::dlf::Param("tapebridgeTransId", tapebridgeTransId),
       castor::dlf::Param("mountTransActionId", m_jobRequest.volReqId),
@@ -2160,7 +2170,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
       castor::dlf::Param("clientType",
         utils::volumeClientTypeToString(m_volume.clientType())),
       castor::dlf::Param("clientSock", clientSock.get()),
-      castor::dlf::Param("connectDuration", connectDuration),
+      castor::dlf::Param("connectDuration", connectDurationDouble),
       castor::dlf::Param("nbSuccessful", report.successfulMigrations().size()),
       castor::dlf::Param("nbFailed", report.failedMigrations().size())};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
@@ -2941,13 +2951,15 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   }
 
   // Send the report to the client and receive the reply
-  time_t connectDuration = 0;
+  timeval connectDuration = {0, 0};
   utils::SmartFd clientSock(ClientTxRx::sendMessage(
     m_jobRequest.clientHost, m_jobRequest.clientPort, CLIENTNETRWTIMEOUT,
     listReport, connectDuration));
   ClientTxRx::receiveNotificationReplyAndClose(m_jobRequest.volReqId,
     tapebridgeTransId, clientSock.release());
   {
+    const double connectDurationDouble =
+      utils::timevalToDouble(connectDuration);
     castor::dlf::Param params[] = {
       castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId       ),
       castor::dlf::Param("mountTransActionId", m_jobRequest.volReqId   ),
@@ -2960,7 +2972,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
       castor::dlf::Param("clientType"        ,
         utils::volumeClientTypeToString(m_volume.clientType())),
       castor::dlf::Param("clientSock"        , clientSock.get()        ),
-      castor::dlf::Param("connectDuration"   , connectDuration         ),
+      castor::dlf::Param("connectDuration"   , connectDurationDouble   ),
       castor::dlf::Param("nbSuccessful"      ,
         listReport.successfulMigrations().size()),
       castor::dlf::Param("nbFailed"          ,
@@ -3010,13 +3022,15 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   }
 
   // Send the report to the client and receive the reply
-  time_t connectDuration = 0;
+  timeval connectDuration = {0, 0};
   utils::SmartFd clientSock(ClientTxRx::sendMessage(
     m_jobRequest.clientHost, m_jobRequest.clientPort, CLIENTNETRWTIMEOUT,
     listReport, connectDuration));
   ClientTxRx::receiveNotificationReplyAndClose(m_jobRequest.volReqId,
     tapebridgeTransId, clientSock.release());
   {
+    const double connectDurationDouble =
+      utils::timevalToDouble(connectDuration);
     castor::dlf::Param params[] = {
       castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId       ),
       castor::dlf::Param("mountTransActionId", m_jobRequest.volReqId   ),
@@ -3029,7 +3043,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
       castor::dlf::Param("clientType"        ,
         utils::volumeClientTypeToString(m_volume.clientType())),
       castor::dlf::Param("clientSock"        , clientSock.get()        ),
-      castor::dlf::Param("connectDuration"   , connectDuration         ),
+      castor::dlf::Param("connectDuration"   , connectDurationDouble   ),
       castor::dlf::Param("nbSuccessful"      ,
         listReport.successfulRecalls().size()),
       castor::dlf::Param("nbFailed"          ,
