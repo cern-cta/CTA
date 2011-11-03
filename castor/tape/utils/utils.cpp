@@ -1046,16 +1046,13 @@ timeval castor::tape::utils::timevalAbsDiff(const timeval &a, const timeval &b)
   }
 
   // Subtract the smaller time-value from the bigger time-value carrying over
-  // 1000000 micro-seconds from the seconds to the micro-seconds and never
-  // using a value greater than 1000000 - 1.
+  // 1000000 micro-seconds from the seconds to the micro-seconds if necessay
   if(bigger.tv_usec >= smaller.tv_usec) {
     result.tv_usec = bigger.tv_usec - smaller.tv_usec;
     result.tv_sec  = bigger.tv_sec  - smaller.tv_sec;
   } else {
-    const timeval oneMillionUsecMinusOne = {0, 999999};
-    result.tv_usec = oneMillionUsecMinusOne.tv_usec -
-      smaller.tv_usec + 1 + bigger.tv_usec;
-    result.tv_sec = bigger.tv_sec - 1 - smaller.tv_sec;
+    result.tv_usec = bigger.tv_usec + 1000000 - smaller.tv_usec;
+    result.tv_sec  = bigger.tv_sec - 1 - smaller.tv_sec;
   }
 
   return result;
