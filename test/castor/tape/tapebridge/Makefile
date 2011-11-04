@@ -77,6 +77,7 @@ tapebridgedaemontester: \
   io_StreamFilesToRecallListCnv.o \
   io_StreamFilesToRecallListRequestCnv.o \
   io_StreamFileToMigrateStructCnv.o \
+  io_StreamFileToRecallStructCnv.o \
   io_StreamNoMoreFilesCnv.o \
   io_StreamNotificationAcknowledgeCnv.o \
   io_StreamPtrCnv.o \
@@ -188,6 +189,7 @@ tapebridged: \
   io_StreamFilesToRecallListCnv.o \
   io_StreamFilesToRecallListRequestCnv.o \
   io_StreamFileToMigrateStructCnv.o \
+  io_StreamFileToRecallStructCnv.o \
   io_StreamNoMoreFilesCnv.o \
   io_StreamNotificationAcknowledgeCnv.o \
   io_StreamPtrCnv.o \
@@ -866,6 +868,10 @@ io_StreamFilesToRecallListRequestCnv.o: \
 
 io_StreamFileToMigrateStructCnv.o: \
   $(ROOT_DIR)/castor/io/StreamFileToMigrateStructCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamFileToRecallStructCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamFileToRecallStructCnv.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 io_StreamNotificationAcknowledgeCnv.o: \

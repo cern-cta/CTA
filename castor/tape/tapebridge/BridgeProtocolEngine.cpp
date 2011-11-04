@@ -737,8 +737,13 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 
   // Receive reply from client and close the connection
   const int closedClientSock = catalogueSock.release();
-  ClientTxRx::receiveNotificationReplyAndClose(m_jobRequest.volReqId,
-    tapebridgeTransId, closedClientSock);
+  try {
+    ClientTxRx::receiveNotificationReplyAndClose(m_jobRequest.volReqId,
+      tapebridgeTransId, closedClientSock);
+  } catch(castor::exception::Exception &ex) {
+    // Add some context information and rethrow exception
+    TAPE_THROW_CODE(ex.code(), ": " << ex.getMessage().str());
+  }
   {
     castor::dlf::Param params[] = {
       castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId      ),
@@ -1908,8 +1913,13 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
     }
 
     const int closedClientSock = clientSock.release();
-    ClientTxRx::receiveNotificationReplyAndClose(m_jobRequest.volReqId,
-      tapebridgeTransId, closedClientSock);
+    try {
+      ClientTxRx::receiveNotificationReplyAndClose(m_jobRequest.volReqId,
+        tapebridgeTransId, closedClientSock);
+    } catch(castor::exception::Exception &ex) {
+      // Add some context information and rethrow exception
+      TAPE_THROW_CODE(ex.code(), ": " << ex.getMessage().str());
+    }
     {
       castor::dlf::Param params[] = {
         castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId      ),
@@ -2955,8 +2965,13 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   utils::SmartFd clientSock(ClientTxRx::sendMessage(
     m_jobRequest.clientHost, m_jobRequest.clientPort, CLIENTNETRWTIMEOUT,
     listReport, connectDuration));
-  ClientTxRx::receiveNotificationReplyAndClose(m_jobRequest.volReqId,
-    tapebridgeTransId, clientSock.release());
+  try {
+    ClientTxRx::receiveNotificationReplyAndClose(m_jobRequest.volReqId,
+      tapebridgeTransId, clientSock.release());
+  } catch(castor::exception::Exception &ex) {
+    // Add some context information and rethrow exception
+    TAPE_THROW_CODE(ex.code(), ": " << ex.getMessage().str());
+  }
   {
     const double connectDurationDouble =
       utils::timevalToDouble(connectDuration);
@@ -3026,8 +3041,13 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   utils::SmartFd clientSock(ClientTxRx::sendMessage(
     m_jobRequest.clientHost, m_jobRequest.clientPort, CLIENTNETRWTIMEOUT,
     listReport, connectDuration));
-  ClientTxRx::receiveNotificationReplyAndClose(m_jobRequest.volReqId,
-    tapebridgeTransId, clientSock.release());
+  try {
+    ClientTxRx::receiveNotificationReplyAndClose(m_jobRequest.volReqId,
+      tapebridgeTransId, clientSock.release());
+  } catch(castor::exception::Exception &ex) {
+    // Add some context information and rethrow exception
+    TAPE_THROW_CODE(ex.code(), ": " << ex.getMessage().str());
+  }
   {
     const double connectDurationDouble =
       utils::timevalToDouble(connectDuration);
@@ -3101,8 +3121,8 @@ void castor::tape::tapebridge::BridgeProtocolEngine::notifyClientEndOfSession()
         ": Caught a std::exception"
         ": what=" << se.what());
     } catch(castor::exception::Exception &ex) {
-      // Simply rethrow as there is no need to convert exception type
-      throw ex;
+      // Add some context information and rethrow exception
+      TAPE_THROW_CODE(ex.code(), ": " << ex.getMessage().str());
     } catch(...) {
       TAPE_THROW_EX(castor::exception::Internal,
         ": Caught an unknown exception");
