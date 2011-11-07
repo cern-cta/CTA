@@ -749,11 +749,11 @@ CREATE TABLE RmMasterLock (unused NUMBER);
 /* DB link to the nameserver db */
 PROMPT Configuration of the database link to the CASTOR name space
 UNDEF cnsUser
-ACCEPT cnsUser CHAR DEFAULT 'castorns' PROMPT 'Enter the nameserver db username (default castorns): ';
+ACCEPT cnsUser CHAR DEFAULT 'castor' PROMPT 'Enter the nameserver db username (default castor): ';
 UNDEF cnsPasswd
 ACCEPT cnsPasswd CHAR PROMPT 'Enter the nameserver db password: ';
 UNDEF cnsDbName
-ACCEPT cnsDbName CHAR DEFAULT PROMPT 'Enter the nameserver db TNS name: ';
+ACCEPT cnsDbName CHAR PROMPT 'Enter the nameserver db TNS name: ';
 CREATE DATABASE LINK remotens
   CONNECT TO &cnsUser IDENTIFIED BY &cnsPasswd USING '&cnsDbName';
 
