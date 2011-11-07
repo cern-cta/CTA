@@ -234,7 +234,7 @@ CREATE TABLE MigrationJob (fileSize INTEGER CONSTRAINT NN_MigrationJob_FileSize 
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE INDEX I_MigrationJob_CFVID ON MigrationJob(CastorFile, VID);
 CREATE INDEX I_MigrationJob_TapePoolSize ON MigrationJob(tapePool, fileSize);
-CREATE INDEX I_MigrationJob_TPStatusCFId ON MigrationJob(tapePool, status, castorFile, id);
+CREATE INDEX I_MigrationJob_StatusTP ON MigrationJob(status, tapePool);
 CREATE INDEX I_MigrationJob_CFCopyNb ON MigrationJob(CastorFile, copyNb);
 ALTER TABLE MigrationJob ADD CONSTRAINT UN_MigrationMount_CopyNb UNIQUE (castorFile, copyNb) USING INDEX I_MigrationJob_CFCopyNb;
 ALTER TABLE MigrationJob ADD CONSTRAINT FK_MigrationJob_CastorFile
