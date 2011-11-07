@@ -235,7 +235,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
     }
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransActionId", m_jobRequest.volReqId  ),
+      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
       castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
       castor::dlf::Param("TPVID"             , m_volume.vid()         ),
       castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
@@ -257,7 +257,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   }
 
   castor::dlf::Param params[] = {
-    castor::dlf::Param("mountTransActionId", m_jobRequest.volReqId  ),
+    castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
     castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
     castor::dlf::Param("TPVID"             , m_volume.vid()         ),
     castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
@@ -303,7 +303,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processSocks()
     const int selectErrno = errno;
 //  {
 //    castor::dlf::Param params[] = {
-//      castor::dlf::Param("mountTransActionId", m_jobRequest.volReqId  ),
+//      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
 //      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
 //      castor::dlf::Param("TPVID"             , m_volume.vid()         ),
 //      castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
@@ -747,7 +747,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   {
     castor::dlf::Param params[] = {
       castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId      ),
-      castor::dlf::Param("mountTransActionId", m_jobRequest.volReqId  ),
+      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
       castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
       castor::dlf::Param("TPVID"             , m_volume.vid()         ),
       castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
@@ -845,7 +845,7 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::startRtcpdSession()
 
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransActionId", m_jobRequest.volReqId  ),
+      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
       castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
       castor::dlf::Param("TPVID"             , m_volume.vid()         ),
       castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
@@ -1216,7 +1216,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::endRtcpdSession() throw() {
 
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransActionId", m_jobRequest.volReqId  ),
+      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
       castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
       castor::dlf::Param("TPVID"             , m_volume.vid()         ),
       castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
@@ -1236,7 +1236,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::endRtcpdSession() throw() {
     const int closeRc = close(m_sockCatalogue.releaseInitialRtcpdConn());
 
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransActionId", m_jobRequest.volReqId  ),
+      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
       castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
       castor::dlf::Param("TPVID"             , m_volume.vid()         ),
       castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
@@ -2170,7 +2170,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
       utils::timevalToDouble(connectDuration);
     castor::dlf::Param params[] = {
       castor::dlf::Param("tapebridgeTransId", tapebridgeTransId),
-      castor::dlf::Param("mountTransActionId", m_jobRequest.volReqId),
+      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId),
       castor::dlf::Param("volReqId", m_jobRequest.volReqId),
       castor::dlf::Param("TPVID", m_volume.vid()),
       castor::dlf::Param("driveUnit", m_jobRequest.driveUnit ),
@@ -2905,7 +2905,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransActionId", m_jobRequest.volReqId  ),
+      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
       castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
       castor::dlf::Param("TPVID"             , m_volume.vid()         ),
       castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
@@ -2977,7 +2977,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
       utils::timevalToDouble(connectDuration);
     castor::dlf::Param params[] = {
       castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId       ),
-      castor::dlf::Param("mountTransActionId", m_jobRequest.volReqId   ),
+      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId   ),
       castor::dlf::Param("volReqId"          , m_jobRequest.volReqId   ),
       castor::dlf::Param("TPVID"             , m_volume.vid()          ),
       castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit  ),
@@ -3053,7 +3053,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
       utils::timevalToDouble(connectDuration);
     castor::dlf::Param params[] = {
       castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId       ),
-      castor::dlf::Param("mountTransActionId", m_jobRequest.volReqId   ),
+      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId   ),
       castor::dlf::Param("volReqId"          , m_jobRequest.volReqId   ),
       castor::dlf::Param("TPVID"             , m_volume.vid()          ),
       castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit  ),
@@ -3129,7 +3129,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::notifyClientEndOfSession()
     }
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransActionId", m_jobRequest.volReqId  ),
+      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
       castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
       castor::dlf::Param("TPVID"             , m_volume.vid()         ),
       castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
