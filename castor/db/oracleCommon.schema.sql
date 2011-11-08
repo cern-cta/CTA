@@ -143,6 +143,7 @@ PARTITION BY LIST (STATUS) (
 CREATE INDEX I_RecallJob_VID ON RecallJob(VID);
 CREATE INDEX I_RecallJob_Castorfile ON RecallJob (castorFile) LOCAL;
 CREATE INDEX I_RecallJob_Status ON RecallJob (status) LOCAL;
+CREATE INDEX I_RecallJob_TG_RequestId on RecallJob(tapeGatewayRequestId);
 /* This transaction id is the mean to track a migration, so it obviously needs to be unique */
 ALTER TABLE RecallJob ADD CONSTRAINT UN_RECALLJOB_FILETRID 
   UNIQUE (FileTransactionId) USING INDEX;
@@ -236,6 +237,7 @@ CREATE INDEX I_MigrationJob_CFVID ON MigrationJob(CastorFile, VID);
 CREATE INDEX I_MigrationJob_TapePoolSize ON MigrationJob(tapePool, fileSize);
 CREATE INDEX I_MigrationJob_StatusTP ON MigrationJob(status, tapePool);
 CREATE INDEX I_MigrationJob_CFCopyNb ON MigrationJob(CastorFile, copyNb);
+CREATE INDEX I_MigrationJob_TG_RequestId on MigrationJob(tapeGatewayRequestId);
 ALTER TABLE MigrationJob ADD CONSTRAINT UN_MigrationMount_CopyNb UNIQUE (castorFile, copyNb) USING INDEX I_MigrationJob_CFCopyNb;
 ALTER TABLE MigrationJob ADD CONSTRAINT FK_MigrationJob_CastorFile
    FOREIGN KEY (castorFile) REFERENCES CastorFile(id);
