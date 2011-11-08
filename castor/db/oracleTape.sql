@@ -372,7 +372,7 @@ BEGIN
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'BEGIN startMigrationMounts(); END;',
       JOB_CLASS       => 'CASTOR_JOB_CLASS',
-      START_DATE      => SYSDATE + 60/1440,
+      START_DATE      => SYSDATE + 1/1440,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=1',
       ENABLED         => TRUE,
       COMMENTS        => 'Creates MigrationMount entries when new migrations should start');
