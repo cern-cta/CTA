@@ -28,6 +28,7 @@
 #include "castor/exception/InvalidArgument.hpp"
 
 #include <string>
+#include <stdint.h>
 
 
 namespace castor     {
