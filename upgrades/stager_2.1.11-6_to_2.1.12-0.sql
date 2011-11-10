@@ -182,6 +182,7 @@ PARTITION BY LIST (STATUS) (
 CREATE INDEX I_RecallJob_VID ON RecallJob(VID);
 CREATE INDEX I_RecallJob_Castorfile ON RecallJob (castorFile) LOCAL;
 CREATE INDEX I_RecallJob_Status ON RecallJob (status) LOCAL;
+CREATE INDEX I_RecallJob_TG_RequestId on RecallJob(tapeGatewayRequestId);
 ALTER TABLE RecallJob ADD CONSTRAINT UN_RECALLJOB_FILETRID 
    UNIQUE (FileTransactionId) USING INDEX;
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallJob', 'status', 3, 'RECALLJOB_SELECTED');
@@ -229,12 +230,31 @@ INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('Migration
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationMount', 'status', 3, 'MIGRATIONMOUNT_MIGRATING');
 
 
+/* Definition of the MigratedSegment table
+ * This table lists segments existing on tape for the files being
+ * migrating. This allows to avoid putting two copies of a given
+ * file on the same tape.
+ *   castorFile : the file concerned
+ *   copyNb : the copy number of this segment
+ *   VID : the tape on which this segment resides
+ */
+CREATE TABLE MigratedSegment(castorFile INTEGER CONSTRAINT NN_MigratedSegment_CastorFile NOT NULL,
+                             copyNb INTEGER CONSTRAINT NN_MigratedSegment_destcopyNb NOT NULL,
+                             VID VARCHAR2(2048) CONSTRAINT NN_MigratedSegment_VID NOT NULL)
+INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE INDEX I_MigratedSegment_CFCopyNbVID ON MigratedSegment(CastorFile, copyNb, VID);
+ALTER TABLE MigratedSegment ADD CONSTRAINT FK_MigratedSegment_CastorFile
+   FOREIGN KEY (castorFile) REFERENCES CastorFile(id);
+
+
 /* Definition of the MigrationJob table
  *   fileSize : size of the file to be migrated, in bytes
  *   VID : tape on which the file is being migrated (when applicable)
  *   creationTime : time of creation of this MigrationJob, in seconds since the epoch
  *   castorFile : the file to migrate
- *   copyNb : the number of the copy of the file to migrate
+ *   originalVID :  in case of repack, the VID of the tape where the original copy is leaving
+ *   originalCopyNb : in case of repack, the number of the original copy being replaced
+ *   destCopyNb : the number of the new copy of the file to migrate to tape
  *   tapePool : the tape pool where to migrate
  *   nbRetry : the number of retries we already went through
  *   errorcode : the error we got on last try (if any)
@@ -247,37 +267,39 @@ CREATE TABLE MigrationJob (fileSize INTEGER CONSTRAINT NN_MigrationJob_FileSize 
                            VID VARCHAR2(2048),
                            creationTime NUMBER CONSTRAINT NN_MigrationJob_CreationTime NOT NULL,
                            castorFile INTEGER CONSTRAINT NN_MigrationJob_CastorFile NOT NULL,
-                           copyNb INTEGER CONSTRAINT NN_MigrationJob_copyNb NOT NULL,
+                           originalVID VARCHAR2(20),
+                           originalCopyNb INTEGER,
+                           destCopyNb INTEGER CONSTRAINT NN_MigrationJob_destcopyNb NOT NULL,
                            tapePool INTEGER CONSTRAINT NN_MigrationJob_TapePool NOT NULL,
                            nbRetry INTEGER CONSTRAINT NN_MigrationJob_nbRetry NOT NULL,
                            errorcode INTEGER,
                            tapeGatewayRequestId INTEGER,
-                           FileTransactionId INTEGER,
+                           fileTransactionId INTEGER CONSTRAINT UN_MigrationJob_FileTrId UNIQUE USING INDEX,
                            fSeq INTEGER,
                            status INTEGER CONSTRAINT NN_MigrationJob_Status NOT NULL,
-                           id INTEGER CONSTRAINT PK_MigrationJob_Id PRIMARY KEY
+                           id INTEGER CONSTRAINT PK_MigrationJob_Id PRIMARY KEY 
                                       CONSTRAINT NN_MigrationJob_Id NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE INDEX I_MigrationJob_CFVID ON MigrationJob(CastorFile, VID);
-CREATE INDEX I_MigrationJob_CFCopyNb ON MigrationJob(CastorFile, copyNb);
 CREATE INDEX I_MigrationJob_TapePoolSize ON MigrationJob(tapePool, fileSize);
+<<<<<<< HEAD
 CREATE INDEX I_MigrationJob_StatusTP ON MigrationJob(status, tapePool);
-ALTER TABLE MigrationJob ADD CONSTRAINT UN_MigrationMount_CopyNb UNIQUE (castorFile, copyNb) USING INDEX I_MigrationJob_CFCopyNb;
+CREATE INDEX I_MigrationJob_TPStatusCFId ON MigrationJob(tapePool, status, castorFile, id);
+CREATE INDEX I_MigrationJob_CFCopyNb ON MigrationJob(CastorFile, destCopyNb);
+CREATE INDEX I_MigrationJob_TG_RequestId on MigrationJob(tapeGatewayRequestId);
+ALTER TABLE MigrationJob ADD CONSTRAINT UN_MigrationJob_CopyNb UNIQUE (castorFile, destCopyNb) USING INDEX I_MigrationJob_CFCopyNb;
 ALTER TABLE MigrationJob ADD CONSTRAINT FK_MigrationJob_CastorFile
    FOREIGN KEY (castorFile) REFERENCES CastorFile(id);
 ALTER TABLE MigrationJob ADD CONSTRAINT FK_MigrationJob_TapePool
    FOREIGN KEY (tapePool) REFERENCES TapePool(id);
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationJob', 'status', 0, 'MIGRATIONJOB_PENDING');
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationJob', 'status', 1, 'MIGRATIONJOB_SELECTED');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationJob', 'status', 2, 'MIGRATIONJOB_MIGRATED');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationJob', 'status', 6, 'MIGRATIONJOB_FAILED');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationJob', 'status', 3, 'MIGRATIONJOB_WAITINGONRECALL');
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationJob', 'status', 8, 'MIGRATIONJOB_RETRY');
 
-
 /* Definition of the MigrationRouting table. Each line is a routing rule for migration jobs
- *   isSmallFile : whether this routing rule applies to small files. NULL means it applied to all files
+ *   isSmallFile : whether this routing rule applies to small files. Null means it applies to all files
  *   copyNb : the copy number the routing rule applies to
- *   svcClass : the service class the routing rule applies to
  *   fileClass : the file class the routing rule applies to
  *   lastEditor : name of the last one that modified this routing rule.
  *   lastEditionTime : last time this routing rule was edited, in seconds since the epoch
@@ -285,16 +307,13 @@ INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('Migration
  */
 CREATE TABLE MigrationRouting (isSmallFile INTEGER,
                                copyNb INTEGER CONSTRAINT NN_MigrationRouting_CopyNb NOT NULL,
-                               svcClass INTEGER CONSTRAINT NN_MigrationRouting_SvcClass NOT NULL,
                                fileClass INTEGER CONSTRAINT NN_MigrationRouting_FileClass NOT NULL,
                                lastEditor VARCHAR2(2048) CONSTRAINT NN_MigrationRouting_LastEditor NOT NULL,
-                               lastEditionTime NUMBER CONSTRAINT NN_MigrationRouting_LastEdit NOT NULL,
+                               lastEditionTime NUMBER CONSTRAINT NN_MigrationRouting_LastEdTime NOT NULL,
                                tapePool INTEGER CONSTRAINT NN_MigrationRouting_TapePool NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-CREATE INDEX I_MigrationRouting_Rules ON MigrationRouting(svcClass, fileClass, copyNb, isSmallFile);
-ALTER TABLE MigrationRouting ADD CONSTRAINT UN_MigrationRouting_Rules UNIQUE (svcClass, fileClass, copyNb, isSmallFile) USING INDEX I_MigrationRouting_Rules;
-ALTER TABLE MigrationRouting ADD CONSTRAINT FK_MigrationRouting_SvcClass
-   FOREIGN KEY (svcClass) REFERENCES SvcClass(id);
+CREATE INDEX I_MigrationRouting_Rules ON MigrationRouting(fileClass, copyNb, isSmallFile);
+ALTER TABLE MigrationRouting ADD CONSTRAINT UN_MigrationRouting_Rules UNIQUE (fileClass, copyNb, isSmallFile) USING INDEX I_MigrationRouting_Rules;
 ALTER TABLE MigrationRouting ADD CONSTRAINT FK_MigrationRouting_FileClass
    FOREIGN KEY (fileClass) REFERENCES FileClass(id);
 ALTER TABLE MigrationRouting ADD CONSTRAINT FK_MigrationRouting_TapePool
@@ -314,7 +333,10 @@ CREATE GLOBAL TEMPORARY TABLE ProcessRepackAbortHelperSR (srId NUMBER) ON COMMIT
 CREATE GLOBAL TEMPORARY TABLE ProcessRepackAbortHelperDCrec (cfId NUMBER) ON COMMIT DELETE ROWS;
 CREATE GLOBAL TEMPORARY TABLE ProcessRepackAbortHelperDCmigr (cfId NUMBER) ON COMMIT DELETE ROWS;
 
-CREATE GLOBAL TEMPORARY TABLE RepackTapeSegments (s_fileId NUMBER, blockid RAW(4), fseq NUMBER, segSize NUMBER, copyno NUMBER, fileClass NUMBER) ON COMMIT PRESERVE ROWS;
+CREATE GLOBAL TEMPORARY TABLE RepackTapeSegments
+ (fileId NUMBER, blockid RAW(4), fseq NUMBER, segSize NUMBER,
+  copyNb NUMBER, fileClass NUMBER, otherSegments VARCHAR2(2048))
+ ON COMMIT PRESERVE ROWS;
  
 UPDATE Type2Obj SET svcHandler = 'BulkStageReqSvc' WHERE type = 119;
 INSERT INTO CastorConfig
@@ -386,6 +408,7 @@ BEGIN
   dropProcedureSafe('UPDATEFSRECALLEROPENED');
   dropProcedureSafe('INSERTCHANGEPRIVILEGE');
   dropProcedureSafe('INSERTLISTPRIVILEGE');
+  dropProcedureSafe('HANDLEREPACKSUBREQUEST');
   dropFunctionSafe('GETTCS');
   dropFunctionSafe('CHECKAVAILOFSCHEDULERRFS');
   dropFunctionSafe('CHECKFAILPUTWHENTAPE0');

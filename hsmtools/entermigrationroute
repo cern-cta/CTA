@@ -31,7 +31,7 @@ import cx_Oracle
 # usage function
 def usage(exitCode):
     '''prints usage'''
-    print 'Usage : ' + sys.argv[0] + ' [-h|--help] <svcClassName> <fileClassName> ' + \
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] <fileClassName> ' + \
           '<copyNb>[:<isSmallFile>]:<tapePoolName> [...]'
     sys.exit(exitCode)
 
@@ -101,25 +101,16 @@ for f, v in options:
         usage(1)
 
 # Deal with arguments
-if len(args) < 3:
+if len(args) < 2:
     print "Missing arguments"
     usage(1)
-svcclassname = args[0]
-fileclassname = args[1]
-mappings = [parseMapping('route', item) for item in args[2:]]
+fileclassname = args[0]
+mappings = [parseMapping('route', item) for item in args[1:]]
 
 try:
     # connect to stager
     stconn = castor_tools.connectToStager()
     stcur = stconn.cursor()
-    # check that the service class exists and gets its id
-    stcur.execute('SELECT id FROM SvcClass WHERE name=:name', name=svcclassname)
-    rows = stcur.fetchall()
-    if len(rows) == 0:
-        print 'SvcClass %s does not exist in the stager DB' % svcclassname
-        print 'Giving up'
-        sys.exit(1)
-    svcClassId = int(rows[0][0])
     # check that the file class exists and gets it id and number of copies
     stcur.execute('SELECT id, nbCopies FROM FileClass WHERE name=:name', name=fileclassname)
     rows = stcur.fetchall()
@@ -172,17 +163,17 @@ try:
     lasteditor = pwd.getpwuid(os.getuid())[0]
     # insert new migration routes
     insertSQL = '''INSERT INTO MigrationRouting
-                   (isSmallFile, copyNb, svcClass, fileClass, lastEditor, lastEditionTime, tapePool)
+                   (isSmallFile, copyNb, fileClass, lastEditor, lastEditionTime, tapePool)
                    VALUES
-                   (:isSmallFile, :copyNb, :svcClass, :fileClass, :lastEditor, getTime(), :tapePool)'''
+                   (:isSmallFile, :copyNb, :fileClass, :lastEditor, getTime(), :tapePool)'''
     try:
         for copyNb in range(nbCopies):
             for isSmallFile, tapePoolId, tapePoolName in routes[copyNb]:
-                stcur.execute(insertSQL, isSmallFile=isSmallFile, copyNb=copyNb+1, svcClass=svcClassId,
+                stcur.execute(insertSQL, isSmallFile=isSmallFile, copyNb=copyNb+1,
                               fileClass=fileClassId, lastEditor=lasteditor, tapePool=tapePoolId)
         # commit insertion and tell user
         stconn.commit()
-        print 'inserted route(s) successfully for SvcClass %s and FileClass %s' % (svcclassname, fileclassname)
+        print 'inserted route(s) successfully for FileClass %s' % (fileclassname)
     except cx_Oracle.Error, e:
         if isinstance(e, cx_Oracle.Error):
             error, = e.args

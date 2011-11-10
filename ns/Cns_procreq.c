@@ -3592,9 +3592,10 @@ int Cns_srv_replaceseg(int magic,
 }
 
 /* Cns_srv_replacetapecopy - replace a tapecopy
+ * XXXX To be dropped when all clients older than 2.1.12-0 are gone
  *
  * This function replaces a tapecopy by another one.
- * For compatibility reasons, it is also able to recieve
+ * For compatibility reasons, it is also able to receive
  * >1 segs for replacement, although the new stager policy
  * is not to segment file anymore.
  * ! It deletes the old entries in the DB (no!! update to status 'D') !
@@ -3809,6 +3810,186 @@ int Cns_srv_replacetapecopy(int magic,
     if (Cns_insert_smd_entry (&thip->dbfd, &new_smd_entry[i])){
       RETURN (serrno);
     }
+  }
+
+  RETURN (0);
+}
+
+/* Cns_srv_replaceormovetapecopy - replaces or moves a tapecopy
+ *
+ * This function replaces a tapecopy by another one. This can be a one
+ * to one replacement (same copy number) or a move, if the original copy
+ * had a different copy number than the new one. In this last case,
+ * the new copy may actually replace 2 old copies as the new copy number
+ * may correspond to a second copy that will be replaced. Note that this
+ * last case is only accepted if the second replaced copy was invalid.
+ */
+int Cns_srv_replaceormovetapecopy(int magic,
+                                  char *req_data,
+                                  struct Cns_srv_thread_info *thip,
+                                  struct Cns_srv_request_info *reqinfo)
+{
+  u_signed64 fileid = 0;
+  int rc;
+  time_t last_mod_time = 0;
+
+  struct Cns_seg_metadata new_smd_entry;
+  struct Cns_seg_metadata old_smd_entry;
+  struct Cns_seg_metadata replaced_smd_entry;
+  struct Cns_file_metadata filentry;
+
+  Cns_dbrec_addr old_smd_rec_addr; /* DB keys of old segment */
+  Cns_dbrec_addr replaced_smd_rec_addr; /* DB keys of replaced segment */
+  Cns_dbrec_addr rec_addr;   /* DB key for file */
+
+  char *rbp;
+  char *func = "replacetapecopy";
+  char oldvid[CA_MAXVIDLEN+1];
+  int oldcopyno;
+
+  (void)magic;
+
+  /* Unmarshall message body */
+  rbp = req_data;
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
+  unmarshall_HYPER (rbp, fileid);
+  if (fileid > 0)
+    reqinfo->fileid = fileid;
+  unmarshall_TIME_T (rbp, last_mod_time);
+  if (unmarshall_STRINGN (rbp, oldvid, CA_MAXVIDLEN+1))
+    RETURN (EINVAL);
+  unmarshall_LONG (rbp, oldcopyno);
+
+  /* Get the new segment from stream */
+  memset ((char *) &new_smd_entry, 0, sizeof(struct Cns_seg_metadata));
+  /* Same fileid for all segs */
+  new_smd_entry.s_fileid = filentry.fileid;
+  unmarshall_WORD (rbp, new_smd_entry.copyno);
+  unmarshall_WORD (rbp, new_smd_entry.fsec);
+  unmarshall_HYPER (rbp, new_smd_entry.segsize);
+  unmarshall_LONG (rbp, new_smd_entry.compression);
+  unmarshall_BYTE (rbp, new_smd_entry.s_status);
+  if (unmarshall_STRINGN (rbp, new_smd_entry.vid, CA_MAXVIDLEN+1))
+    RETURN (EINVAL);
+  unmarshall_WORD (rbp, new_smd_entry.side);
+  unmarshall_LONG (rbp, new_smd_entry.fseq);
+  unmarshall_OPAQUE (rbp, new_smd_entry.blockid, 4);
+  unmarshall_STRINGN (rbp, new_smd_entry.checksum_name, CA_MAXCKSUMNAMELEN);
+  new_smd_entry.checksum_name[CA_MAXCKSUMNAMELEN] = '\0';
+  unmarshall_LONG (rbp, new_smd_entry.checksum);
+
+  /* Construct log message */
+  sprintf (reqinfo->logbuf, "LastModTime=%lld NewVid=\"%s\" OldVid=\"%s\"",
+           (long long int)last_mod_time, new_smd_entry.vid, oldvid);
+
+  /* Check if the user is authorized to replacetapecopy */
+  if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost,
+                  localhost, P_ADMIN))
+    RETURN (serrno);
+
+  /* Start transaction */
+  (void) Cns_start_tr (&thip->dbfd);
+
+  /* Get/lock basename entry */
+  if (Cns_get_fmd_by_fileid (&thip->dbfd, fileid, &filentry, 1, &rec_addr))
+    RETURN (serrno);
+
+  /* Check if the entry is a regular file */
+  if (filentry.filemode & S_IFDIR)
+    RETURN (EISDIR);
+
+  /* Check that the file in nameserver is not newer than what is given. This
+   * can happen in case of multiple stagers concurrently modifying a file. In
+   * such a case, raise the appropriate error and ignore the request.
+   */
+  if ((filentry.mtime > last_mod_time) && (last_mod_time > 0)) {
+    RETURN (ENSFILECHG);
+  }
+
+  /* Get the old segment. Note that there can be only one as segmented files have been dropped */
+  rc = Cns_get_smd_by_copyno (&thip->dbfd, 1,
+                              filentry.fileid,
+                              oldcopyno,
+                              &old_smd_entry,
+                              1,
+                              &old_smd_rec_addr,
+                              0);
+  if (rc < 0) {
+    RETURN (serrno);
+  } else if (rc == 1) {
+    nslogit("MSG=\"Cannot find old segment for copyno\" REQID=%s "
+            "NSHOSTNAME=%s NSFILEID=%llu CopyNo=%d",
+            reqinfo->requuid, nshostname, filentry.fileid, oldcopyno);
+    RETURN (ENSNOSEG);
+  }
+
+  /* get the replaced segment if any, check it and drop it */
+  rc = Cns_get_smd_by_copyno (&thip->dbfd, 1,
+                              filentry.fileid,
+                              new_smd_entry.copyno,
+                              &replaced_smd_entry,
+                              1,
+                              &replaced_smd_rec_addr,
+                              0);
+  if (rc < 0) {
+    RETURN (serrno);
+  }
+  if (rc == 0) {
+    /* we found a segment that will be replaced */
+    /* Let's check that it is invalid */
+    if (replaced_smd_entry.s_status == '-') {
+      RETURN (ENSOVERWHENREP);
+    }
+    /* it is ok, we can drop the segment to replace */
+    nslogit("MSG=\"Unlinking segment (overwritten)\" REQID=%s NSHOSTNAME=%s NSFILEID=%llu "
+            "CopyNo=%d Fsec=%d SegmentSize=%llu Compression=%d Status=\"%c\" "
+            "TPVID=%s Side=%d Fseq=%d BlockId=\"%02x%02x%02x%02x\" "
+            "ChecksumType=\"%s\" ChecksumValue=\"%lx\"",
+            thip->reqinfo.requuid, nshostname, replaced_smd_entry.s_fileid,
+            replaced_smd_entry.copyno, replaced_smd_entry.fsec, replaced_smd_entry.segsize,
+            replaced_smd_entry.compression, replaced_smd_entry.s_status, replaced_smd_entry.vid,
+            replaced_smd_entry.side, replaced_smd_entry.fseq, replaced_smd_entry.blockid[0],
+            replaced_smd_entry.blockid[1], replaced_smd_entry.blockid[2], replaced_smd_entry.blockid[3],
+            replaced_smd_entry.checksum_name, replaced_smd_entry.checksum);
+    if (Cns_delete_smd_entry (&thip->dbfd, &replaced_smd_rec_addr)) {
+      RETURN (serrno);
+    }
+  }
+  
+  /* Remove old segment */
+  if (Cns_delete_smd_entry (&thip->dbfd, &old_smd_rec_addr)) {
+  nslogit("MSG=\"Unlinking segment (replaced)\" REQID=%s NSHOSTNAME=%s NSFILEID=%llu "
+          "CopyNo=%d Fsec=%d SegmentSize=%llu Compression=%d Status=\"%c\" "
+          "TPVID=%s Side=%d Fseq=%d BlockId=\"%02x%02x%02x%02x\" "
+          "ChecksumType=\"%s\" ChecksumValue=\"%lx\"",
+          thip->reqinfo.requuid, nshostname, old_smd_entry.s_fileid,
+          old_smd_entry.copyno, old_smd_entry.fsec, old_smd_entry.segsize,
+          old_smd_entry.compression, old_smd_entry.s_status, old_smd_entry.vid,
+          old_smd_entry.side, old_smd_entry.fseq, old_smd_entry.blockid[0],
+          old_smd_entry.blockid[1], old_smd_entry.blockid[2], old_smd_entry.blockid[3],
+          old_smd_entry.checksum_name, old_smd_entry.checksum);
+    RETURN (serrno);
+  }
+
+  /* Insert new segs */
+  nslogit("MSG=\"New segment information\" REQID=%s NSHOSTNAME=%s "
+          "NSFILEID=%llu CopyNo=%d Fsec=%d SegmentSize=%llu "
+          "Compression=%d Status=\"%c\" TPVID=%s Side=%d Fseq=%d "
+          "BlockId=\"%02x%02x%02x%02x\" ChecksumType=\"%s\" "
+          "ChecksumValue=\"%lx\"",
+          reqinfo->requuid, nshostname, new_smd_entry.s_fileid,
+          new_smd_entry.copyno, new_smd_entry.fsec,
+          new_smd_entry.segsize, new_smd_entry.compression,
+          new_smd_entry.s_status, new_smd_entry.vid,
+          new_smd_entry.side, new_smd_entry.fseq,
+          new_smd_entry.blockid[0], new_smd_entry.blockid[1],
+          new_smd_entry.blockid[2], new_smd_entry.blockid[3],
+          new_smd_entry.checksum_name, new_smd_entry.checksum);
+  /* Insert new file segment entry */
+  if (Cns_insert_smd_entry (&thip->dbfd, &new_smd_entry)){
+    RETURN (serrno);
   }
 
   RETURN (0);

@@ -30,7 +30,7 @@ import castor_tools
 # usage function
 def usage(exitCode):
     '''prints usage'''
-    print 'Usage : ' + sys.argv[0] + ' [-h|--help] <svcClassName>,<fileClassName> [...]'
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] <fileClassName> [...]'
     sys.exit(exitCode)
 
 # first parse the options
@@ -51,7 +51,7 @@ for f, v in options:
 
 # Deal with arguments
 if len(args) != 0:
-    inputs = set([tuple(arg.split(',')) for arg in args])
+    fileclasses = set(args)
 else:
     print "Missing arguments"
     usage(1)
@@ -60,42 +60,31 @@ try:
     # connect to stager
     stconn = castor_tools.connectToStager()
     stcur = stconn.cursor()
-    # check service class and file class existences
-    nonexistingSvcClasses = []
+    # check file class existences
     nonexistingFileClasses = []
     existingRoutes = []
-    for svcClassName, fileClassName in inputs:
-        stcur.execute("SELECT id FROM SvcClass WHERE name=:name", name=svcClassName)
-        rows = stcur.fetchall()
-        if len(rows) == 0:
-            nonexistingSvcClasses.append((svcClassName, fileClassName))
-            continue
-        svcClassId = int(rows[0][0])
+    for fileClassName in fileclasses:
         stcur.execute("SELECT id FROM FileClass WHERE name=:name", name=fileClassName)
         rows = stcur.fetchall()
         if len(rows) == 0:
-            nonexistingFileClasses.append((svcClassName, fileClassName))
+            nonexistingFileClasses.append(fileClassName)
             continue
         fileClassId = int(rows[0][0])
-        existingRoutes.append((svcClassName, fileClassName))
+        existingRoutes.append(fileClassName)
         # drop route(s)
-        stcur.execute('DELETE FROM MigrationRouting WHERE svcClass=:svcClass and fileClass=:fileClass',
-                      svcClass=svcClassId, fileClass=fileClassId)
+        stcur.execute('DELETE FROM MigrationRouting WHERE fileClass=:fileClass',
+                      fileClass=fileClassId)
     # commit work
     stconn.commit()
     # Inform user
     if existingRoutes:
-        print 'successfully dropped the route(s) for the following SvcClass,FileClass tuples :'
-        for svcClassName, fileClassName in existingRoutes:
-            print '  ', svcClassName, fileClassName
-    if nonexistingSvcClasses:
-        print 'WARNING : the service class(es) of the following rule(s) did not exist :'
-        for svcClassName, fileClassName in nonexistingSvcClasses:
-            print '  ', svcClassName, fileClassName
+        print 'successfully dropped the route(s) for the following FileClass(es) :'
+        for fileClassName in existingRoutes:
+            print '  ', fileClassName
     if nonexistingFileClasses:
         print 'WARNING : the file class(es) of the following rule(s) did not exist :'
-        for svcClassName, fileClassName in nonexistingFileClasses:
-            print '  ', svcClassName, fileClassName
+        for fileClassName in nonexistingFileClasses:
+            print '  ', fileClassName
     # close DB connections
     try:
         castor_tools.disconnectDB(stconn)

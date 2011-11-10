@@ -102,16 +102,6 @@ namespace castor {
         throw (castor::exception::Exception) = 0;
 
       /**
-       * handles a repack subRequest
-       * @param subReqId the id of the repack subRequest to be handled
-       * @return the result of the processing
-       * @exception Exception in case of error
-       */
-      virtual castor::stager::BulkRequestResult* handleRepackSubRequest
-      (const u_signed64 subReqId)
-        throw (castor::exception::Exception) = 0;
-
-      /**
        * Selects the next SubRequest in FAILED status the stager
        * should deal with.
        * Selects a SubRequest in FAILED status and move its status
@@ -156,7 +146,7 @@ namespace castor {
         throw (castor::exception::Exception) = 0;
 
       /**
-       * Processes a PToGet, PToUpdate, or Repack subrequest.
+       * Processes a PToGet and PToUpdate subrequest.
        * @param subreq the SubRequest to consider
        * @return -2,-1,0,1,2, cf. return value for getDiskCopiesForJob.
        * @exception Exception in case of system error

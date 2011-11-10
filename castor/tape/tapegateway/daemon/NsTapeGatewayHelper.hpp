@@ -43,25 +43,48 @@ namespace castor {
     namespace tapegateway {
 
       class NsTapeGatewayHelper {
+
         public:
-	void updateMigratedFile( tape::tapegateway::FileMigratedNotification& file, int copyNumber, std::string vid, u_signed64 lastModificationTime) throw (castor::exception::Exception);
-	void updateRepackedFile( tape::tapegateway::FileMigratedNotification& file, std::string repackVid, int copyNumber, std::string vid, u_signed64 lastModificationTime) throw (castor::exception::Exception);
-	void  checkRecalledFile(castor::tape::tapegateway::FileRecalledNotification& file, std::string vid, int copyNb) throw (castor::exception::Exception);
-	void  checkFileSize(castor::tape::tapegateway::FileRecalledNotification& file) throw (castor::exception::Exception);
-	void  getBlockIdToRecall(tape::tapegateway::FileToRecall& file, std::string vid) throw (castor::exception::Exception);
-	void checkFseqForWrite (const std::string &vid, int side, int Fseq) throw (castor::exception::Exception);
+
+	void updateMigratedFile(tape::tapegateway::FileMigratedNotification& file,
+                                int copyNumber, std::string vid,
+                                u_signed64 lastModificationTime)
+          throw (castor::exception::Exception);
+
+	void updateRepackedFile(tape::tapegateway::FileMigratedNotification& file,
+                                int originalCopyNumber, std::string originalVid,
+                                int copyNumber, std::string vid,
+                                u_signed64 lastModificationTime)
+          throw (castor::exception::Exception);
+
+	void checkRecalledFile(castor::tape::tapegateway::FileRecalledNotification& file,
+                               std::string vid, int copyNb)
+          throw (castor::exception::Exception);
+
+	void checkFileSize(castor::tape::tapegateway::FileRecalledNotification& file)
+          throw (castor::exception::Exception);
+
+	void getBlockIdToRecall(tape::tapegateway::FileToRecall& file, std::string vid)
+          throw (castor::exception::Exception);
+
+	void checkFseqForWrite (const std::string &vid, int side, int Fseq)
+          throw (castor::exception::Exception);
+
 	/* Ad-hoc exceptions */
 	class NoSuchFileException: public castor::exception::Exception {
 	  public:
 	  NoSuchFileException():castor::exception::Exception(ENOENT){};
 	};
+
 	class FileMutatedException: public castor::exception::Exception {
         public:
 	  FileMutatedException():castor::exception::Exception(ESTALE){};
 	};
+
         class FileMutationUnconfirmedException: public castor::exception::Exception {
         public:
           FileMutationUnconfirmedException():castor::exception::Exception(ESTALE){};
+
         };
       };
     } // end of namespace tapegateway

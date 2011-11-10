@@ -547,10 +547,9 @@ PROCEDURE tg_defaultMigrSelPolicy(inMountId IN INTEGER,
        AND DiskServer.id = FileSystem.diskServer
        AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING)
        AND CastorFile.id = MigrationJob.castorFile
-       AND MigrationMount.VID NOT IN (SELECT DISTINCT M2.VID FROM MigrationJob M2
-                                       WHERE M2.castorFile = MigrationJob.castorfile
-                                         AND M2.status IN (tconst.MIGRATIONJOB_SELECTED,
-                                                           tconst.MIGRATIONJOB_MIGRATED))
+       AND MigrationMount.VID NOT IN (SELECT VID FROM MigratedSegment
+                                       WHERE castorFile = MigrationJob.castorfile
+                                         AND copyNb != MigrationJob.destCopyNb)
        FOR UPDATE OF MigrationJob.id SKIP LOCKED;
 BEGIN
   OPEN c;
@@ -728,17 +727,19 @@ PROCEDURE tg_getRepackVidAndFileInfo(
   inFseq            IN  INTEGER, 
   inTransId         IN  NUMBER, 
   inBytesTransfered IN  NUMBER,
-  outRepackVid     OUT NOCOPY VARCHAR2, 
-  outVID           OUT NOCOPY VARCHAR2,
-  outCopyNb        OUT INTEGER, 
-  outLastTime      OUT NUMBER,
-  outFileClass     OUT NOCOPY VARCHAR2,
-  outRet           OUT INTEGER) AS 
+  outOriginalVID    OUT NOCOPY VARCHAR2,
+  outOriginalCopyNb OUT NUMBER,
+  outDestVID        OUT NOCOPY VARCHAR2,
+  outDestCopyNb     OUT INTEGER, 
+  outLastTime       OUT NUMBER,
+  outFileClass      OUT NOCOPY VARCHAR2,
+  outRet            OUT INTEGER) AS 
   varCfId              NUMBER;  -- CastorFile Id
   varFileSize          NUMBER;  -- Expected file size
   varTgrId             NUMBER;  -- Tape gateway request Id
 BEGIN
-  outRepackVid:=NULL;
+  outOriginalVID := NULL;
+  outOriginalCopyNb := NULL;
    -- ignore the repack state
   BEGIN
     SELECT CF.lastupdatetime, CF.id, CF.fileSize,      FC.name 
@@ -768,7 +769,8 @@ BEGIN
   tg_RequestIdFromVDQMReqId(inTransId, varTgrId);
   IF (varTgrId IS NOT NULL) THEN
     BEGIN
-      SELECT copyNb INTO outcopynb 
+      SELECT originalCopyNb, originalVID, destcopyNb, VID
+        INTO outOriginalCopyNb, outOriginalVID, outDestCopyNb, outDestVID
         FROM MigrationJob
        WHERE TapeGatewayRequestId = varTgrId
          AND castorfile = varCfId
@@ -778,32 +780,7 @@ BEGIN
          'MigrationJob not found for castorfile='||varCFId||'(File ID='||inFileId||' and nshost = '||
            inNsHost||') and fSeq='||inFseq||' in tg_getRepackVidAndFileInfo.');
     END;
-    BEGIN
-      SELECT MigrationMount.vid
-        INTO outVID
-        FROM MigrationMount
-       WHERE MigrationMount.tapeGatewayRequestId = varTgrId;
-      EXCEPTION WHEN NO_DATA_FOUND THEN
-        RAISE_APPLICATION_ERROR (-20119,
-           'Tape not found for tapeGatewayRequestId='||varTgrId||'(File ID='||inFileId||' and nshost = '||
-             inNsHost||' and castorfile='||varCFId||'and fSeq='||inFseq||') in tg_getRepackVidAndFileInfo.');
-    END;
-  END IF;
-  
-  BEGIN 
-   --REPACK case
-    -- Get the repackvid field from the existing request (if none, then we are not in a repack process
-     SELECT /*+ INDEX(sR I_Subrequest_Castorfile) INDEX(SRR PK_StageRepackRequest_Id) */
-            SRR.repackvid INTO outRepackVid
-       FROM SubRequest sR, StageRepackRequest SRR
-      WHERE SRR.id = SR.request
-        AND sR.status = dconst.SUBREQUEST_REPACK
-        AND sR.castorFile = varCfId
-        AND ROWNUM < 2;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-   -- standard migration
-    NULL;
-  END;
+  END IF;  
 END;
 /
 
@@ -1073,30 +1050,32 @@ PROCEDURE TG_SetFileMigrated(
   inFileTransaction IN  NUMBER) AS
   varMigJobCount      INTEGER;
   varCfId               NUMBER;
+  varCopyNb             NUMBER;
+  varVID                VARCHAR2(2048);
 BEGIN
   -- Lock the CastorFile
   SELECT CF.id INTO varCfId FROM CastorFile CF
    WHERE CF.fileid = inFileId 
      AND CF.nsHost = inNsHost 
      FOR UPDATE;
-  -- Update the corresponding migration job
-  UPDATE MigrationJob
-     SET status = tconst.MIGRATIONJOB_MIGRATED
+  -- delete the corresponding migration job, create the new migrated segment
+  DELETE FROM MigrationJob
    WHERE FileTransactionId = inFileTransaction
-     AND fSeq = inFseq;
-  -- let's check if another migration should be performed, if not, we're done for this file.
+     AND fSeq = inFseq
+  RETURNING destCopyNb, VID INTO varCopyNb, varVID;
+  INSERT INTO MigratedSegment VALUES (varCfId, varCopyNb, varVID);
+  -- check if another migration should be performed
   SELECT count(*) INTO varMigJobCount
     FROM MigrationJob
-    WHERE castorfile = varCfId  
-     AND STATUS != tconst.MIGRATIONJOB_MIGRATED;
+    WHERE castorfile = varCfId;
   IF varMigJobCount = 0 THEN
-     -- Mark all disk copies as staged and delete all migration jobs together.
+     -- Mark all disk copies as staged and delete all migrated segments together.
      UPDATE DiskCopy
         SET status= dconst.DISKCOPY_STAGED
       WHERE castorFile = varCfId
         AND status= dconst.DISKCOPY_CANBEMIGR;
-     DELETE FROM MigrationJob
-      WHERE castorfile = varCfId; 
+     DELETE FROM MigratedSegment
+      WHERE castorfile = varCfId;
   END IF;
   -- archive Repack requests should any be in the db
   FOR i IN (
@@ -1119,18 +1098,17 @@ PROCEDURE tg_setFileRecalled(
   inNsHost           IN  VARCHAR2,
   inFseq             IN  NUMBER,
   inFileTransaction  IN  NUMBER) AS
-  varDcId               NUMBER;         -- DiskCopy Id
-  varCfId               NUMBER;         -- CastorFile Id
-  varSubrequestId       NUMBER;
-  varRequestId          NUMBER;
-  varRequestType        NUMBER;
-  varFileSize           NUMBER;
-  varGcWeight           NUMBER;         -- Garbage collection weight
-  varGcWeightProc       VARCHAR(2048);  -- Garbage collection weighting procedure name
-  varEuid               INTEGER;        -- Effective user Id
-  varEgid               INTEGER;        -- Effective Group Id
-  varSvcClassId         NUMBER;         -- Service Class Id
-  varMissingCopies      INTEGER;
+  varDcId                NUMBER;         -- DiskCopy Id
+  varCfId                NUMBER;         -- CastorFile Id
+  varSubrequestId        NUMBER;
+  varRequestId           NUMBER;
+  varFileSize            NUMBER;
+  varGcWeight            NUMBER;         -- Garbage collection weight
+  varGcWeightProc        VARCHAR(2048);  -- Garbage collection weighting procedure name
+  varEuid                INTEGER;        -- Effective user Id
+  varEgid                INTEGER;        -- Effective Group Id
+  varSvcClassId          NUMBER;         -- Service Class Id
+  varNbMigrationsStarted INTEGER;
 BEGIN
   -- find and lock castor file for the nsHost/fileID
   SELECT CF.id, CF.fileSize INTO varCfId, varFileSize
@@ -1138,23 +1116,19 @@ BEGIN
    WHERE CF.fileid = inFileId
      AND CF.nsHost = inNsHost
      FOR UPDATE;
-  -- Find and lock the RecallJob, plus get the number of missing copies
-  SELECT missingCopies INTO varMissingCopies
-    FROM Recalljob
-   WHERE FileTransactionId = inFileTransaction
-     AND fSeq = inFseq;
-  -- find and lock the disk copy. There should be only one.
+  -- find the disk copy. There should be only one.
   SELECT DC.id INTO varDcId
     FROM DiskCopy DC
    WHERE DC.castorFile = varCfId
      AND DC.status = dconst.DISKCOPY_WAITTAPERECALL;
-  -- delete reacll jobs
+  -- delete recall jobs
   deleteRecallJobs(varCfId);
   -- update diskcopy status, size and gweight
-  SELECT /*+ INDEX(SR I_Subrequest_DiskCopy)*/ SR.id, SR.request, SR.reqType
-    INTO varSubrequestId, varRequestId, varRequestType
+  SELECT /*+ INDEX(SR I_Subrequest_DiskCopy)*/ SR.id, SR.request
+    INTO varSubrequestId, varRequestId
     FROM SubRequest SR
    WHERE SR.diskcopy = varDcId;
+  -- get information about the request
   SELECT REQ.svcClass, REQ.euid, REQ.egid INTO varSvcClassId, varEuid, varEgid
     FROM (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, svcClass, euid, egid FROM StageGetRequest                                  UNION ALL
           SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */ id, svcClass, euid, egid FROM StagePrepareToGetRequest       UNION ALL
@@ -1162,39 +1136,55 @@ BEGIN
           SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcClass, euid, egid FROM StagePrepareToUpdateRequest UNION ALL
           SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */ id, svcClass, euid, egid FROM StageRepackRequest) REQ
     WHERE REQ.id = varRequestId;
+  -- compute GC weight of the recalled diskcopy
   varGcWeightProc := castorGC.getRecallWeight(varSvcClassId);
   EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || varGcWeightProc || '(:size); END;'
     USING OUT varGcWeight, IN varFileSize;
+  -- trigger the migration of additionnal/repack copies
+  UPDATE MigrationJob SET status = tconst.MIGRATIONJOB_PENDING
+   WHERE status = tconst.MIGRATIONJOB_WAITINGONRECALL
+     AND castorFile = varCfId;
+  varNbMigrationsStarted := SQL%ROWCOUNT;
+  -- update diskcopy
   UPDATE DiskCopy DC
-    SET DC.status = decode(varMissingCopies,
-                           0, dconst.DISKCOPY_STAGED,
-                              dconst.DISKCOPY_CANBEMIGR), -- DISKCOPY_STAGED if varMissingCopies = 0, otherwise CANBEMIGR
+    SET DC.status = decode(varNbMigrationsStarted,
+                           0, dconst.DISKCOPY_STAGED,      -- STAGED if no migrations
+                              dconst.DISKCOPY_CANBEMIGR),  -- otherwise CANBEMIGR
         DC.lastAccessTime = getTime(),  -- for the GC, effective lifetime of this diskcopy starts now
         DC.gcWeight = varGcWeight,
         DC.diskCopySize = varFileSize
     WHERE Dc.id = varDcId;
   -- determine the type of the request
-  IF varRequestType = 119 THEN  -- OBJ_StageRepackRequest
-    startRepackMigration(varSubrequestId, varCfId, varDcId, varEuid, varEgid);
-  ELSE  -- restart this subrequest so that the stager can follow it up
-    UPDATE /*+ INDEX(SR PK_Subrequest_Id)*/ SubRequest SR
-       SET SR.status = dconst.SUBREQUEST_RESTART,
-           SR.getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED,
-           SR.lastModificationTime = getTime(), SR.parent = 0
-     WHERE SR.id = varSubrequestId;
+  IF varNbMigrationsStarted > 0 THEN
+    -- update remaining STAGED diskcopies to CANBEMIGR too
+    -- we may have them as result of disk2disk copies, and so far
+    -- we only dealt with dcId
+    UPDATE DiskCopy SET status = 10  -- DISKCOPY_CANBEMIGR
+     WHERE castorFile = varCfId AND status = 0;  -- DISKCOPY_STAGED
   END IF;
-  -- and trigger new migrations if missing tape copies were detected
-  IF varMissingCopies > 0 THEN
-    initMigration(varCfId, varFileSize, varMissingCopies, varSvcClassId);
-  END IF;
+  -- restart the subrequest so that the stager can follow it up or repack can proceed
+  UPDATE /*+ INDEX(SR PK_Subrequest_Id)*/ SubRequest
+     SET status = decode(reqType,
+                         119, dconst.SUBREQUEST_REPACK, -- repack case
+                         dconst.SUBREQUEST_RESTART),    -- standard case
+         getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED,
+         lastModificationTime = getTime(),
+         parent = 0,
+         diskCopy = varDcId
+   WHERE id = varSubrequestId;
   -- restart other requests waiting on this recall
-  UPDATE /*+ INDEX(SR I_Subrequest_Parent)*/ SubRequest SR
-     SET SR.status = dconst.SUBREQUEST_RESTART,
-         SR.getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED,
-         SR.lastModificationTime = getTime(), SR.parent = 0
-   WHERE SR.parent = varSubrequestId;
+  UPDATE /*+ INDEX(SR I_Subrequest_Parent)*/ SubRequest
+     SET status = decode(reqType,
+                         119, dconst.SUBREQUEST_REPACK, -- repack case
+                         dconst.SUBREQUEST_RESTART),    -- standard case
+         getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED,
+         lastModificationTime = getTime(),
+         parent = 0,
+         diskCopy = varDcId
+   WHERE parent = varSubrequestId;
   -- trigger the creation of additional copies of the file, if necessary.
   replicateOnClose(varCfId, varEuid, varEgid);
+  -- commit
   COMMIT;
 END;
 /
@@ -1204,13 +1194,13 @@ CREATE OR REPLACE
 PROCEDURE tg_setMigRetryResult(
   mjToRetry IN castor."cnumList",
   mjToFail  IN castor."cnumList" ) AS
-  srId NUMBER;
-  cfId NUMBER;
-
+  varSrIds "numList";
+  varCfId NUMBER;
+  varOriginalCopyNb NUMBER;
+  varMigJobCount NUMBER;
 BEGIN
-   -- check because oracle cannot handle empty buffer
+  -- check because oracle cannot handle empty buffer
   IF mjToRetry( mjToRetry.FIRST) != -1 THEN
-    
     -- restarted the one to be retried
     FOR i IN mjToRetry.FIRST .. mjToRetry.LAST LOOP
       UPDATE MigrationJob SET
@@ -1223,36 +1213,38 @@ BEGIN
 
   -- check because oracle cannot handle empty buffer
   IF mjToFail(mjToFail.FIRST) != -1 THEN
-    -- fail the migration jobs
-    FORALL i IN mjToFail.FIRST .. mjToFail.LAST
-      UPDATE MigrationJob SET
-        status = tconst.MIGRATIONJOB_FAILED
-      WHERE id = mjToFail(i);
-
-    -- fail repack subrequests
+    -- go through failed migration jobs
     FOR i IN mjToFail.FIRST .. mjToFail.LAST LOOP
-        BEGIN
-        -- we don't need a lock on castorfile because we cannot have a parallel migration of the same file using repack
-          SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/
-                 SubRequest.id, SubRequest.castorfile into srId, cfId
-            FROM SubRequest, MigrationJob
-            WHERE MigrationJob.id = mjToFail(i)
-            AND SubRequest.castorfile = MigrationJob.castorfile
-            AND subrequest.status = dconst.SUBREQUEST_REPACK;
-
-          -- STAGED because the copy on disk most probably is valid and the failure of repack happened during the migration
-
-          UPDATE DiskCopy
-            SET status = dconst.DISKCOPY_STAGED
-            WHERE castorfile = cfId
-            AND status=dconst.DISKCOPY_CANBEMIGR; -- otherwise repack will wait forever
-
-          archivesubreq(srId,9);
-
-        EXCEPTION WHEN NO_DATA_FOUND THEN
-          NULL;
-        END;
-     END LOOP;
+      -- delete migration job
+      DELETE FROM MigrationJob WHERE id = mjToFail(i)
+      RETURNING originalCopyNb, castorfile INTO varOriginalCopyNb, varCfId;
+      -- check if another migration should be performed
+      SELECT count(*) INTO varMigJobCount
+        FROM MigrationJob
+       WHERE castorfile = varCfId;
+      IF varMigJobCount = 0 THEN
+         -- no other migration, delete all migrated segments together.
+         DELETE FROM MigratedSegment
+          WHERE castorfile = varCfId;
+      END IF;
+      -- fail repack subrequests
+      IF varOriginalCopyNb IS NOT NULL THEN
+        -- find and archive the repack subrequest(s)
+        SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/
+               SubRequest.id BULK COLLECT INTO varSrIds
+          FROM SubRequest
+          WHERE SubRequest.castorfile = varCfId
+          AND subrequest.status = dconst.SUBREQUEST_REPACK;
+        FOR i IN varSrIds.FIRST .. varSrIds.LAST LOOP
+          archivesubreq(varSrIds(i), 9);
+        END LOOP;
+        -- set back the diskcopies to STAGED otherwise repack will wait forever
+        UPDATE DiskCopy
+          SET status = dconst.DISKCOPY_STAGED
+          WHERE castorfile = varCfId
+          AND status = dconst.DISKCOPY_CANBEMIGR;
+      END IF;
+    END LOOP;
   END IF;
 
   COMMIT;

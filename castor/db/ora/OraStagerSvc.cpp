@@ -41,7 +41,6 @@
 #include "castor/stager/StagePrepareToGetRequest.hpp"
 #include "castor/stager/StagePrepareToPutRequest.hpp"
 #include "castor/stager/StagePrepareToUpdateRequest.hpp"
-#include "castor/stager/StageRepackRequest.hpp"
 #include "castor/stager/StagePutDoneRequest.hpp"
 #include "castor/stager/StageRmRequest.hpp"
 #include "castor/stager/SetFileGCWeight.hpp"
@@ -77,7 +76,6 @@
 #include "castor/stager/RecallJobStatusCodes.hpp"
 #include "castor/stager/SegmentStatusCodes.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
-#include "castor/stager/StageRepackRequest.hpp"
 #include "castor/stager/DiskCopyStatusCodes.hpp"
 #include "castor/stager/PriorityMap.hpp"
 #include "castor/stager/BulkRequestResult.hpp"
@@ -119,10 +117,6 @@ const std::string castor::db::ora::OraStagerSvc::s_subRequestToDoStatementString
 /// SQL statement for processBulkRequest
 const std::string castor::db::ora::OraStagerSvc::s_processBulkRequestStatementString =
   "BEGIN processBulkRequest(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10); END;";
-
-/// SQL statement for handleRepackSubRequest
-const std::string castor::db::ora::OraStagerSvc::s_handleRepackSubRequestStatementString =
-  "BEGIN handleRepackSubRequest(:1, :2, :3, :4, :5); END;";
 
 /// SQL statement for subRequestFailedToDo
 const std::string castor::db::ora::OraStagerSvc::s_subRequestFailedToDoStatementString =
@@ -207,7 +201,6 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   OraCommonSvc(name),
   m_subRequestToDoStatement(0),
   m_processBulkRequestStatement(0),
-  m_handleRepackSubRequestStatement(0),
   m_subRequestFailedToDoStatement(0),
   m_getDiskCopiesForJobStatement(0),
   m_processPrepareRequestStatement(0),
@@ -260,7 +253,6 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   try {
     if (m_subRequestToDoStatement) deleteStatement(m_subRequestToDoStatement);
     if (m_processBulkRequestStatement) deleteStatement(m_processBulkRequestStatement);
-    if (m_handleRepackSubRequestStatement) deleteStatement(m_handleRepackSubRequestStatement);
     if (m_subRequestFailedToDoStatement) deleteStatement(m_subRequestFailedToDoStatement);
     if (m_getDiskCopiesForJobStatement) deleteStatement(m_getDiskCopiesForJobStatement);
     if (m_processPrepareRequestStatement) deleteStatement(m_processPrepareRequestStatement);
@@ -285,7 +277,6 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   // Now reset all pointers to 0
   m_subRequestToDoStatement = 0;
   m_processBulkRequestStatement = 0;
-  m_handleRepackSubRequestStatement = 0;
   m_subRequestFailedToDoStatement = 0;
   m_getDiskCopiesForJobStatement = 0;
   m_processPrepareRequestStatement = 0;
@@ -428,14 +419,6 @@ castor::db::ora::OraStagerSvc::subRequestToDo
       case castor::OBJ_StagePrepareToUpdateRequest:
         req = new castor::stager::StagePrepareToUpdateRequest();
         break;
-      case castor::OBJ_StageRepackRequest:
-        {
-          castor::stager::StageRepackRequest* rreq =
-            new castor::stager::StageRepackRequest();
-          rreq->setRepackVid(m_subRequestToDoStatement->getString(25));
-          req = rreq;
-          break;
-        }
       case castor::OBJ_StagePutDoneRequest:
         req = new castor::stager::StagePutDoneRequest();
         break;
@@ -553,22 +536,6 @@ castor::db::ora::OraStagerSvc::processBulkRequest
         retObj = result;
       }
       break;
-    case castor::OBJ_StageRepackRequest:
-      {
-        castor::stager::StageRepackRequest* req =
-          new castor::stager::StageRepackRequest();
-        castor::rh::Client* client = new castor::rh::Client();
-        client->setIpAddress(m_processBulkRequestStatement->getInt(4));
-        client->setPort(m_processBulkRequestStatement->getInt(5));
-        req->setClient(client);
-        req->setId(m_processBulkRequestStatement->getInt(2));
-        req->setReqId(m_processBulkRequestStatement->getString(6));
-        req->setEuid(m_processBulkRequestStatement->getInt(7));
-        req->setEgid(m_processBulkRequestStatement->getInt(8));
-        req->setRepackVid(m_processBulkRequestStatement->getString(9));
-        retObj = req;
-      }
-      break;
     }
   } catch (oracle::occi::SQLException e) {
     handleException(e);
@@ -579,68 +546,6 @@ castor::db::ora::OraStagerSvc::processBulkRequest
     throw ex;
   }
   return retObj;
-}
-
-//------------------------------------------------------------------------------
-// handleRepackSubRequest
-//------------------------------------------------------------------------------
-castor::stager::BulkRequestResult*
-castor::db::ora::OraStagerSvc::handleRepackSubRequest (const u_signed64 subReqId)
-  throw (castor::exception::Exception) {
-  try {
-    // Check whether the statements are ok
-    if (0 == m_handleRepackSubRequestStatement) {
-      m_handleRepackSubRequestStatement =
-        createStatement(s_handleRepackSubRequestStatementString);
-      m_handleRepackSubRequestStatement->registerOutParam
-        (2, oracle::occi::OCCIINT);
-      m_handleRepackSubRequestStatement->registerOutParam
-        (3, oracle::occi::OCCIINT);
-      m_handleRepackSubRequestStatement->registerOutParam
-        (4, oracle::occi::OCCISTRING, 2048);
-      m_handleRepackSubRequestStatement->registerOutParam
-        (5, oracle::occi::OCCICURSOR);
-      m_handleRepackSubRequestStatement->setAutoCommit(true);
-    }
-    m_handleRepackSubRequestStatement->setDouble(1, subReqId);
-
-    // execute the statement and see whether we found something
-    unsigned int rc = m_handleRepackSubRequestStatement->executeUpdate();
-    if (0 == rc) {
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "handleRepackSubRequest : unable to handle repack subrequest.";
-      throw ex;
-    }
-    // Create result
-    castor::stager::BulkRequestResult* result =
-      new castor::stager::BulkRequestResult();
-    result->setReqType(castor::OBJ_StageRepackRequest);
-    result->client().setIpAddress(m_handleRepackSubRequestStatement->getInt(2));
-    result->client().setPort(m_handleRepackSubRequestStatement->getInt(3));
-    result->setReqId(m_handleRepackSubRequestStatement->getString(4));
-    oracle::occi::ResultSet *rset =
-      m_handleRepackSubRequestStatement->getCursor(5);
-    while (rset->next() != oracle::occi::ResultSet::END_OF_FETCH) {
-      // create the new Object
-      castor::stager::FileResult fr;
-      // Now retrieve and set members
-      fr.setFileId((u_signed64)rset->getDouble(1));
-      fr.setNsHost(rset->getString(2));
-      fr.setErrorCode(rset->getInt(3));
-      fr.setErrorMessage(rset->getString(4));
-      result->subResults().push_back(fr);
-    }
-    delete rset;
-    return result;
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in handleRepackSubRequest."
-      << std::endl << e.what();
-    throw ex;
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -834,7 +739,7 @@ int castor::db::ora::OraStagerSvc::processPrepareRequest
     }
     // return result
     int result = m_processPrepareRequestStatement->getInt(2);
-     /* -2 = SubRequest put in WAITSUBREQ (only in case of Repack)
+     /* -2 = SubRequest put in WAITSUBREQ
       * -1 = user error
       *  0 = DISKCOPY_STAGED, disk copies available
       *  1 = DISKCOPY_WAITDISK2DISKCOPY, a disk copy replication is needed
@@ -1466,15 +1371,9 @@ int validateNsSegments(struct Cns_segattrs *nsSegments,
                        int nbNsSegments, struct Cns_fileid *fileid,
                        const char* vid, int *nbTapeCopies)
   throw (castor::exception::Exception) {
-  // list of temporarily and permanently invalid copies
-  std::set<int> tmpInvalidCopies;
-  std::set<int> permInvalidCopies;
   // number of unique copies
   std::set<int> nbCopies;
   // list of valid and the tape there are on
-  // Note that the case of multi segmented tapes is not well supported
-  // and only the last tape found will be kept.
-  // Multi segmented files are anyway disappearing
   std::map<int,char*> validCopies;
   // Loop through the segments for this file
   for(short i = 0; i < nbNsSegments; i++) {
@@ -1485,13 +1384,11 @@ int validateNsSegments(struct Cns_segattrs *nsSegments,
     // Checks that the segment is associated to a tape
     if (nsSegments[i].vid == '\0') {
       // "Segment has no tape associated"
-      permInvalidCopies.insert(nsSegments[i].copyno);
       errmsg = 19;
     }
     // Check segment status
     if (0 == errmsg && nsSegments[i].s_status != '-') {
       // "Segment is in bad status, could not be used for recall"
-      permInvalidCopies.insert(nsSegments[i].copyno);
       errmsg = 20;
     }
     // Check Tape status
@@ -1500,7 +1397,6 @@ int validateNsSegments(struct Cns_segattrs *nsSegments,
       if (-1 == vmgr_querytape_byte_u64(nsSegments[i].vid, nsSegments[i].side,
         &vmgrTapeInfo, 0)) {
         // "Error while contacting VMGR"
-        tmpInvalidCopies.insert(nsSegments[i].copyno);
         errmsg = 21;
       } else {
         // when STANDBY tapes will be supported, they will
@@ -1509,7 +1405,6 @@ int validateNsSegments(struct Cns_segattrs *nsSegments,
            ((vmgrTapeInfo.status & ARCHIVED) == ARCHIVED) ||
            ((vmgrTapeInfo.status & EXPORTED) == EXPORTED)) {
           // "Tape disabled, could not be used for recall"
-          tmpInvalidCopies.insert(nsSegments[i].copyno);
           errmsg = 22;
         }
       }
@@ -1528,16 +1423,6 @@ int validateNsSegments(struct Cns_segattrs *nsSegments,
       validCopies[nsSegments[i].copyno] = nsSegments[i].vid;
     }
   }
-  // Reduce the list of valid copies by droping permanently invalid ones
-  // Note that this can be dropped when multi segment files are gone
-  for (std::set<int>::const_iterator it = permInvalidCopies.begin();
-       it != permInvalidCopies.end();
-       it++) {
-    std::map<int,char*>::iterator it2 = validCopies.find(*it);
-    if (it2 != validCopies.end()) {
-      validCopies.erase(it2);
-    }
-  }
 
   // Update the number of missing copies if we have less copies than expected
   *nbTapeCopies -= nbCopies.size();
@@ -1547,17 +1432,6 @@ int validateNsSegments(struct Cns_segattrs *nsSegments,
     *nbTapeCopies = 0;
   } 
 
-  // Reduce the list of valid copies by droping temporarily invalid ones
-  // Note that this can be dropped when multi segment files are gone
-  // Actually, the whole tmpInvalidCopies vector can be dropped !
-  for (std::set<int>::const_iterator it = tmpInvalidCopies.begin();
-       it != tmpInvalidCopies.end();
-       it++) {
-    std::map<int,char*>::iterator it2 = validCopies.find(*it);
-    if (it2 != validCopies.end()) {
-      validCopies.erase(it2);
-    }
-  }
   // deal with the case where no segment was found
   if (validCopies.begin() == validCopies.end()) {
     free(nsSegments);

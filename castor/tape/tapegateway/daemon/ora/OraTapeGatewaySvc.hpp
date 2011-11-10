@@ -152,12 +152,13 @@ namespace ora         {
       throw (castor::exception::Exception);
 
     // To access the db to retrieve the information about a completed migration
-    virtual void getRepackVidAndFileInfo(
+    virtual void getMigratedFileInfo(
 	       const castor::tape::tapegateway::FileMigratedNotification& file,
 	       std::string& vid,
 	       int& copyNumber,
 	       u_signed64& lastModificationTime,
-	       std::string& repackVid,
+	       std::string& originalVid,
+	       int& originalCopyNumber,
 	       std::string& fileClass)
       throw (castor::exception::Exception);
 

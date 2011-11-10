@@ -241,6 +241,7 @@ EXTERN_C int Cns_srv_readlink (char *, struct Cns_srv_thread_info *, struct Cns_
 EXTERN_C int Cns_srv_rename (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_replaceseg (int, char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_replacetapecopy (int, char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
+EXTERN_C int Cns_srv_replaceormovetapecopy (int, char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_rmdir (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_setacl (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_setatime (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);

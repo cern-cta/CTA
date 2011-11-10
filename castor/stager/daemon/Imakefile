@@ -43,7 +43,6 @@ DBSERVICEDAEMONBIN_SRCS = \
 	PrepareToUpdateHandler.cpp \
 	PutDoneHandler.cpp \
 	PutHandler.cpp \
-	RepackHandler.cpp \
 	ReplyHelper.cpp \
 	RequestHelper.cpp \
 	RmHandler.cpp \

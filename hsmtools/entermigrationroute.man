@@ -1,4 +1,4 @@
-.TH ENTERSVCCLASS 1 "2011" CASTOR "stager catalogue administrative commands"
+.TH ENTERMIGRATIONROUTE 1 "2011" CASTOR "stager catalogue administrative commands"
 .SH NAME
 entermigrationroute \- define (a) new migration route(s) in the stager catalog
 .SH SYNOPSIS
@@ -6,7 +6,6 @@ entermigrationroute \- define (a) new migration route(s) in the stager catalog
 [
 .BI -h
 ]
-<svcClassName>
 <fileClassName>
 <copyNb>[:<isSmallFile>]:<tapePoolName>
 [\.\.\.]
@@ -14,13 +13,10 @@ entermigrationroute \- define (a) new migration route(s) in the stager catalog
 .B entermigrationroute
 enters (a) new migration route(s) in the CASTOR stager catalog.
 
-The routes entered are concerning one couple of service class and file class and must cover all cases for this couple. For example, if the given file class is configured to have 3 copies on tape, the routes for all three copies must be given in one go. Similarly, if distinction is made between small and big files for a given copy, both routes for small and big files must be given.
+The routes entered are concerning a given file class and must cover all cases for this file class. For example, if the given file class is configured to have 3 copies on tape, the routes for all three copies must be given in one go. Similarly, if distinction is made between small and big files for a given copy, both routes for small and big files must be given.
 .TP
 .BI \-h,\ \-\-help
 Get usage information
-.TP
-.BI <svcClassName>
-name of the service class concerned by the new route(s)
 .TP
 .BI <fileClassName>
 name of the file class concerned by the new route(s)
@@ -41,69 +37,64 @@ name of the destination tape pool for files matching this route
 inserted route(s) successfully for SvcClass default and FileClass largeuser
 
 #printmigrationroute
-SVCCLASS FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
-----------------------------------------------------------------------------------
- default largeuser      1           - stager_dev01   sponcec3 31-Aug-2011 10:07:27
+FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
+-------------------------------------------------------------------------
+largeuser      1           - stager_dev01   sponcec3 31-Aug-2011 10:07:27
 
-#entermigrationroute default test2 1:stager_dev01 2:stager_dev02
-
-#printmigrationroute
-SVCCLASS FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
-----------------------------------------------------------------------------------
- default largeuser      1           - stager_dev01   sponcec3 31-Aug-2011 10:07:27
- default     test2      1           - stager_dev01   sponcec3 31-Aug-2011 10:10:38
- default     test2      2           - stager_dev02   sponcec3 31-Aug-2011 10:10:38
-
-#entermigrationroute default threeCopyOnTape 1:stager_dev01 2:stager_dev02 3:stager_dev01
+#entermigrationroute test2 1:stager_dev01 2:stager_dev02
 
 #printmigrationroute
-SVCCLASS       FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
-----------------------------------------------------------------------------------------
- default       largeuser      1           - stager_dev01   sponcec3 31-Aug-2011 10:07:27
- default           test2      1           - stager_dev01   sponcec3 31-Aug-2011 10:10:38
- default           test2      2           - stager_dev02   sponcec3 31-Aug-2011 10:10:38
- default threeCopyOnTape      1           - stager_dev01   sponcec3 31-Aug-2011 10:11:06
- default threeCopyOnTape      2           - stager_dev02   sponcec3 31-Aug-2011 10:11:06
- default threeCopyOnTape      3           - stager_dev01   sponcec3 31-Aug-2011 10:11:06
+FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
+-------------------------------------------------------------------------
+largeuser      1           - stager_dev01   sponcec3 31-Aug-2011 10:07:27
+    test2      1           - stager_dev01   sponcec3 31-Aug-2011 10:10:38
+    test2      2           - stager_dev02   sponcec3 31-Aug-2011 10:10:38
 
+#entermigrationroute threeCopyOnTape 1:stager_dev01 2:stager_dev02 3:stager_dev01
 
-#entermigrationroute dev largeuser 1:yes:stager_dev01 1:no:stager_dev02
+#printmigrationroute
+      FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
+-------------------------------------------------------------------------------
+      largeuser      1           - stager_dev01   sponcec3 31-Aug-2011 10:07:27
+          test2      1           - stager_dev01   sponcec3 31-Aug-2011 10:10:38
+          test2      2           - stager_dev02   sponcec3 31-Aug-2011 10:10:38
+threeCopyOnTape      1           - stager_dev01   sponcec3 31-Aug-2011 10:11:06
+threeCopyOnTape      2           - stager_dev02   sponcec3 31-Aug-2011 10:11:06
+threeCopyOnTape      3           - stager_dev01   sponcec3 31-Aug-2011 10:11:06
+
+#entermigrationroute filesizebased 1:yes:stager_dev01 1:no:stager_dev02
 inserted route(s) successfully for SvcClass dev and FileClass largeuser
 
 #printmigrationroute
-SVCCLASS       FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
-----------------------------------------------------------------------------------------
- default       largeuser      1           - stager_dev01   sponcec3 31-Aug-2011 10:07:27
- default           test2      1           - stager_dev01   sponcec3 31-Aug-2011 10:10:38
- default           test2      2           - stager_dev02   sponcec3 31-Aug-2011 10:10:38
- default threeCopyOnTape      1           - stager_dev01   sponcec3 31-Aug-2011 10:11:06
- default threeCopyOnTape      2           - stager_dev02   sponcec3 31-Aug-2011 10:11:06
- default threeCopyOnTape      3           - stager_dev01   sponcec3 31-Aug-2011 10:11:06
-     dev       largeuser      1       False stager_dev02   sponcec3 31-Aug-2011 10:13:14
-     dev       largeuser      1        True stager_dev01   sponcec3 31-Aug-2011 10:13:14
+      FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
+-------------------------------------------------------------------------------
+  filesizebased      1       False stager_dev02   sponcec3 31-Aug-2011 10:13:14
+  filesizebased      1        True stager_dev01   sponcec3 31-Aug-2011 10:13:14
+      largeuser      1           - stager_dev01   sponcec3 31-Aug-2011 10:07:27
+          test2      1           - stager_dev01   sponcec3 31-Aug-2011 10:10:38
+          test2      2           - stager_dev02   sponcec3 31-Aug-2011 10:10:38
+threeCopyOnTape      1           - stager_dev01   sponcec3 31-Aug-2011 10:11:06
+threeCopyOnTape      2           - stager_dev02   sponcec3 31-Aug-2011 10:11:06
+threeCopyOnTape      3           - stager_dev01   sponcec3 31-Aug-2011 10:11:06
 
-#entermigrationroute default largeuser 1:stager_dev01
+#entermigrationroute largeuser 1:stager_dev01
 Rule is colliding with an existing one. Giving up
 
-#entermigrationroute nonexisting largeuser 1:stager_dev01
-SvcClass nonexisting does not exist in the stager DB
-Giving up
-
-#entermigrationroute default temp 1:stager_dev01
+#entermigrationroute temp 1:stager_dev01
 CopyNb 1 too large for fileClass temp that has nbCopies=0
 Giving up
 
-#entermigrationroute dev test2 1:stager_dev01
+#entermigrationroute test2 1:stager_dev01
 No route for copyNb 2 while nbCopies=2 for fileClass test2.
 The migration route is thus incomplete, Giving up
 
-#entermigrationroute dev test2 1:stager_dev01 1:no:stager_dev02 2:stager_dev02
+#entermigrationroute test2 1:stager_dev01 1:no:stager_dev02 2:stager_dev02
 Colliding routes for copyNb 1 :
   isSmallFile=None -> stager_dev01
   isSmallFile=False -> stager_dev02
 Giving up
 
-#entermigrationroute dev test2 1:yes:stager_dev01 1:no:stager_dev02 1:stager_dev02 2:stager_dev02
+#entermigrationroute test2 1:yes:stager_dev01 1:no:stager_dev02 1:stager_dev02 2:stager_dev02
 Too many routes given for copyNb 1 :
   isSmallFile=True -> stager_dev01
   isSmallFile=False -> stager_dev02

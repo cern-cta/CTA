@@ -30,7 +30,7 @@ import castor_tools
 # usage function
 def usage(exitCode):
     '''prints usage'''
-    print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-s|-S|--serviceclass <svcClassName>] ' + \
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] ' + \
           '[-f|--fileclass <fileClassName] [-t|--tapepool <tapePoolName>]'
     sys.exit(exitCode)
 
@@ -48,12 +48,11 @@ def intToBool(b):
 # first parse the options
 try:
     options, args = getopt.getopt(sys.argv[1:], 'hvs:S:f:t:',
-                                  ['help', 'verbose', 'serviceclass', 'fileclass', 'tapepool'])
+                                  ['help', 'verbose', 'fileclass', 'tapepool'])
 except Exception, e:
     print e
     usage(1)
 verbose = False
-svcclass = None
 fileclass = None
 tapepool = None
 for f, v in options:
@@ -61,8 +60,6 @@ for f, v in options:
         usage(0)
     elif f == '-v' or f == '--verbose':
         verbose = True
-    elif f == '-s' or f == '-S' or f == '--serviceclass':
-        svcclass = v
     elif f == '-f' or f == '--fileclass':
         fileclass = v
     elif f == '-t' or f == '--tapepool':
@@ -82,22 +79,12 @@ try:
     stcur = stconn.cursor()
     sqlstatement = '''
     SELECT MigrationRouting.isSmallFile, MigrationRouting.copyNb, MigrationRouting.lastEditor,
-           MigrationRouting.lastEditionTime, SvcClass.name, FileClass.name, TapePool.name
-      FROM MigrationRouting, FileClass, SvcClass, TapePool
-     WHERE MigrationRouting.svcClass = SvcClass.id
-       AND MigrationRouting.fileClass = FileClass.id
+           MigrationRouting.lastEditionTime, FileClass.name, TapePool.name
+      FROM MigrationRouting, FileClass, TapePool
+     WHERE MigrationRouting.fileClass = FileClass.id
        AND MigrationRouting.tapePool = TapePool.id'''
     # amend statement depending on restrictions given on the command line
     params = {}
-    if svcclass:
-        stcur.execute('SELECT id FROM SvcClass WHERE name=:name', name=svcclass)
-        rows = stcur.fetchall()
-        if len(rows) == 0:
-            print 'Invalid or non existent SvcClass %s' % svcclass
-            print 'Giving up'
-            sys.exit(1)
-        sqlstatement += ' AND SvcClass.id=:svcclassid'
-        params['svcclassid'] = rows[0][0]
     if tapepool:
         stcur.execute('SELECT id FROM TapePool WHERE name=:name', name=tapepool)
         rows = stcur.fetchall()
@@ -117,7 +104,7 @@ try:
         sqlstatement += ' AND FileClass.id=:fileclassid'
         params['fileclassid'] = rows[0][0]
     # add ordering
-    sqlstatement += ' ORDER BY SvcClass.name, FileClass.name, MigrationRouting.copyNb, MigrationRouting.isSmallFile'
+    sqlstatement += ' ORDER BY FileClass.name, MigrationRouting.copyNb, MigrationRouting.isSmallFile'
     # get results
     stcur.execute(sqlstatement, params)
     rows = stcur.fetchall()
@@ -125,20 +112,18 @@ try:
         print "No routes defined"
         sys.exit(0)
     # loop over svcclasses and print them
-    maxSvcClassNameLen = max([8]+[len(row[4]) for row in rows])
     maxFileClassNameLen = max([9]+[len(row[5]) for row in rows])
     maxTapePoolNameLen = max([8]+[len(row[6]) for row in rows])
     maxLastEditorLen = max([10] + [len(row[2]) for row in rows])
     maxLastEditionTimeLen = max([11] + [len(secsToDate(row[3])) for row in rows])
-    print '%*s %*s COPYNB ISSMALLFILE %*s %*s %*s' % \
-          (maxSvcClassNameLen, 'SVCCLASS', maxFileClassNameLen, 'FILECLASS', \
-           maxTapePoolNameLen, 'TAPEPOOL', maxLastEditorLen, 'LASTEDITOR', \
-           maxLastEditionTimeLen, 'LASTEDITION')
-    print '-' * (23 + maxSvcClassNameLen + maxFileClassNameLen + maxTapePoolNameLen + \
+    print '%*s COPYNB ISSMALLFILE %*s %*s %*s' % \
+          (maxFileClassNameLen, 'FILECLASS', maxTapePoolNameLen, 'TAPEPOOL', \
+           maxLastEditorLen, 'LASTEDITOR', maxLastEditionTimeLen, 'LASTEDITION')
+    print '-' * (22 + maxFileClassNameLen + maxTapePoolNameLen + \
                  maxLastEditorLen + maxLastEditionTimeLen)
-    for issmallfile, copynb, lasteditor, lastedition, svcclass, fileclass, tapepool in rows:
-        print '%*s %*s %6d %11s %*s %*s %*s' % \
-              (maxSvcClassNameLen, svcclass, maxFileClassNameLen, fileclass, copynb, intToBool(issmallfile), \
+    for issmallfile, copynb, lasteditor, lastedition, fileclass, tapepool in rows:
+        print '%*s %6d %11s %*s %*s %*s' % \
+              (maxFileClassNameLen, fileclass, copynb, intToBool(issmallfile), \
                maxTapePoolNameLen, tapepool, maxLastEditorLen, lasteditor, maxLastEditionTimeLen, \
                secsToDate(lastedition))
     # close DB connections

@@ -7,18 +7,15 @@ deletemigrationroute \- deletes existing migration route(s) from the stager cata
 [
 .BI -h
 ]
-.BI <svcClassName>,<fileClassName>
+.BI <fileClassName>
 [...]
 
 .SH DESCRIPTION
 .B deletesvcclass
-deletes migration routes for the given pair(s) of service class/file class from the CASTOR stager catalog
+deletes migration routes for the given file class from the CASTOR stager catalog
 .LP
 .BI \-h,\ \-\-help
 Get usage information
-.TP
-.BI <svcClassName>
-name of service class for which rules should be deleted
 .TP
 .BI <fileClassName>
 name of file class for which rules should be deleted
@@ -28,41 +25,36 @@ name of file class for which rules should be deleted
 .ft CW
 
 #printmigrationroute
-SVCCLASS       FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
-----------------------------------------------------------------------------------------
- default       largeuser      1           - stager_dev01   sponcec3 31-Aug-2011 10:07:27
- default           test2      1           - stager_dev01   sponcec3 31-Aug-2011 10:10:38
- default           test2      2           - stager_dev02   sponcec3 31-Aug-2011 10:10:38
- default threeCopyOnTape      1           - stager_dev01   sponcec3 31-Aug-2011 10:11:06
- default threeCopyOnTape      2           - stager_dev02   sponcec3 31-Aug-2011 10:11:06
- default threeCopyOnTape      3           - stager_dev01   sponcec3 31-Aug-2011 10:11:06
-     dev       largeuser      1       False stager_dev02   sponcec3 31-Aug-2011 10:13:14
-     dev       largeuser      1        True stager_dev01   sponcec3 31-Aug-2011 10:13:14
+      FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
+-------------------------------------------------------------------------------
+      largeuser      1       False stager_dev02   sponcec3 31-Aug-2011 10:13:14
+      largeuser      1        True stager_dev01   sponcec3 31-Aug-2011 10:13:14
+          test2      1           - stager_dev01   sponcec3 31-Aug-2011 10:10:38
+          test2      2           - stager_dev02   sponcec3 31-Aug-2011 10:10:38
+threeCopyOnTape      1           - stager_dev01   sponcec3 31-Aug-2011 10:11:06
+threeCopyOnTape      2           - stager_dev02   sponcec3 31-Aug-2011 10:11:06
+threeCopyOnTape      3           - stager_dev01   sponcec3 31-Aug-2011 10:11:06
 
-#deletemigrationroute default,threeCopyOnTape default,test2
-successfully dropped the route(s) for the following SvcClass,FileClass tuples :
-   default test2
-   default threeCopyOnTape
+#deletemigrationroute threeCopyOnTape test2
+successfully dropped the route(s) for the following FileClass(es) :
+   test2
+   threeCopyOnTape
 
 #printmigrationroute
-SVCCLASS FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
-----------------------------------------------------------------------------------
- default largeuser      1           - stager_dev01   sponcec3 31-Aug-2011 10:07:27
-     dev largeuser      1       False stager_dev02   sponcec3 31-Aug-2011 10:13:14
-     dev largeuser      1        True stager_dev01   sponcec3 31-Aug-2011 10:13:14
+FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
+-------------------------------------------------------------------------
+largeuser      1       False stager_dev02   sponcec3 31-Aug-2011 10:13:14
+largeuser      1        True stager_dev01   sponcec3 31-Aug-2011 10:13:14
 
-#deletemigrationroute dev,largeuser badsvcclass,largeuser dev,badfileclass
-successfully dropped the route(s) for the following SvcClass,FileClass tuples :
-   dev largeuser
-WARNING : the service class(es) of the following rule(s) did not exist :
-   badsvcclass largeuser
+#deletemigrationroute largeuser badfileclass
+successfully dropped the route(s) for the following FileClass(es) :
+   largeuser
 WARNING : the file class(es) of the following rule(s) did not exist :
-   dev badfileclass
+   badfileclass
 
 #printmigrationroute
 SVCCLASS FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
 ----------------------------------------------------------------------------------
- default largeuser      1           - stager_dev01   sponcec3 31-Aug-2011 10:07:27
 
 .SH NOTES
 This command requires database client access to the stager catalogue.

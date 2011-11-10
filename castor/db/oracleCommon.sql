@@ -129,6 +129,26 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 END;
 /
 
+/* Function to concatenate values into a string using a specified delimiter.
+ * If no delimiter is specified the default is ','.
+ */
+CREATE OR REPLACE FUNCTION strConcat(p_cursor SYS_REFCURSOR, p_del VARCHAR2 := ',')
+RETURN VARCHAR2 IS
+  l_value   VARCHAR2(2048);
+  l_result  VARCHAR2(2048);
+BEGIN
+  LOOP
+    FETCH p_cursor INTO l_value;
+    EXIT WHEN p_cursor%NOTFOUND;
+    IF l_result IS NOT NULL THEN
+      l_result := l_result || p_del;
+    END IF;
+    l_result := l_result || l_value;
+  END LOOP;
+  RETURN l_result;
+END;
+/
+
 /* Function to tokenize a string using a specified delimiter. If no delimiter
  * is specified the default is ','. The results are returned as a table e.g.
  * SELECT * FROM TABLE (strTokenizer(inputValue, delimiter))
@@ -262,7 +282,7 @@ BEGIN
     IF nb = 0 THEN
       -- See whether it has any MigrationJob
       SELECT count(*) INTO nb FROM MigrationJob
-       WHERE castorFile = cfId AND status != tconst.RECALLJOB_FAILED;
+       WHERE castorFile = cfId;
       -- If any MigrationJob, give up
       IF nb = 0 THEN
         -- See whether pending SubRequests exist

@@ -66,6 +66,8 @@ namespace castor{
               break;
             }
             // answer client only if success
+            // XXXX the creation of the recall candidate should also create potential
+            //      remigrations of missing copies. This is broken in current relase
             castor::stager::Tape *tape = 0;
             reply = reqHelper->stagerService->createRecallCandidate(reqHelper->subrequest, reqHelper->svcClass, tape);
             if (reply) {

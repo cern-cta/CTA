@@ -18,7 +18,6 @@ CREATE OR REPLACE PROCEDURE firstByteWrittenProc(srId IN INTEGER) AS
   nbres NUMBER;
   stat NUMBER;
   fclassId NUMBER;
-  sclassId NUMBER;
 BEGIN
   -- Get data and lock the CastorFile
   SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ castorfile, diskCopy
@@ -46,11 +45,7 @@ BEGIN
     raise_application_error(-20106, 'Trying to update an invalid copy of a file (file has been modified by somebody else concurrently)');
   END IF;
   -- Then the disk only check
-  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id) INDEX(Request PK_StageUpdateRequest_Id) */ svcClass INTO sclassId
-    FROM Subrequest, StageUpdateRequest Request
-   WHERE SubRequest.id = srId
-     AND Request.id = SubRequest.request;
-  IF checkNoTapeRouting(sclassId, fclassId) = 1 THEN
+  IF checkNoTapeRouting(fclassId) = 1 THEN
      raise_application_error(-20106, 'File update canceled since the file cannot be routed to tape');
   END IF;
   -- Otherwise, either we are alone or we are on the right copy and we

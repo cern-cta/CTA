@@ -136,6 +136,7 @@
 #define CNS_DELSEGBYCOPYNO      89
 #define CNS_OPENX               90
 #define CNS_CLOSEX              91
+#define CNS_REPLACEORMOVETAPECOPY 92
 
                         /* name server reply types */
 

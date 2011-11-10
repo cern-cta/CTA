@@ -1,4 +1,4 @@
-.TH MODIFYSVCCLASS 1 "2011" CASTOR "stager catalogue administrative commands"
+.TH MODIFYMIGRATIONROUTE 1 "2011" CASTOR "stager catalogue administrative commands"
 .SH NAME
 modifymigrationroute \- modifies the target of an existing migration route in the stager catalog
 .SH SYNOPSIS
@@ -6,7 +6,6 @@ modifymigrationroute \- modifies the target of an existing migration route in th
 [
 .BI -h
 ]
-<svcClassName>
 <fileClassName>
 [<copyNb>[:<isSmallFile>]:]<tapePoolName>
 
@@ -19,9 +18,6 @@ Only one route can be modified at a time. For refactoring of existing routes, e.
 .TP
 .BI \-h,\ \-\-help
 Get usage information
-.TP
-.BI <svcClassName>
-name of service class for which a rule should be modified
 .TP
 .BI <fileClassName>
 name of file class for which a rule should be modified
@@ -41,59 +37,59 @@ name of the new destination tape pool for files matching this route
 .nf
 .ft CW
 #printmigrationroute
-SVCCLASS       FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
-----------------------------------------------------------------------------------------
- default       largeuser      1           - stager_dev01   sponcec3 31-Aug-2011 10:07:27
- default threeCopyOnTape      1           - stager_dev01   sponcec3 31-Aug-2011 15:00:45
- default threeCopyOnTape      2           - stager_dev02   sponcec3 31-Aug-2011 15:00:45
- default threeCopyOnTape      3           - stager_dev01   sponcec3 31-Aug-2011 15:00:45
-     dev       largeuser      1       False stager_dev02   sponcec3 31-Aug-2011 15:00:52
-     dev       largeuser      1        True stager_dev01   sponcec3 31-Aug-2011 15:00:52
+      FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
+-------------------------------------------------------------------------------
+    filesizedep      1       False stager_dev02   sponcec3 31-Aug-2011 15:00:52
+    filesizedep      1        True stager_dev01   sponcec3 31-Aug-2011 15:00:52
+      largeuser      1           - stager_dev01   sponcec3 31-Aug-2011 10:07:27
+threeCopyOnTape      1           - stager_dev01   sponcec3 31-Aug-2011 15:00:45
+threeCopyOnTape      2           - stager_dev02   sponcec3 31-Aug-2011 15:00:45
+threeCopyOnTape      3           - stager_dev01   sponcec3 31-Aug-2011 15:00:45
 
-#modifymigrationroute default largeuser stager_dev02
+#modifymigrationroute largeuser stager_dev02
 modified route successfully
 
 #printmigrationroute
-SVCCLASS       FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
-----------------------------------------------------------------------------------------
- default       largeuser      1           - stager_dev02   sponcec3 31-Aug-2011 15:16:57
- default threeCopyOnTape      1           - stager_dev01   sponcec3 31-Aug-2011 15:00:45
- default threeCopyOnTape      2           - stager_dev02   sponcec3 31-Aug-2011 15:00:45
- default threeCopyOnTape      3           - stager_dev01   sponcec3 31-Aug-2011 15:00:45
-     dev       largeuser      1       False stager_dev02   sponcec3 31-Aug-2011 15:00:52
-     dev       largeuser      1        True stager_dev01   sponcec3 31-Aug-2011 15:00:52
+      FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
+-------------------------------------------------------------------------------
+    filesizedep      1       False stager_dev02   sponcec3 31-Aug-2011 15:00:52
+    filesizedep      1        True stager_dev01   sponcec3 31-Aug-2011 15:00:52
+      largeuser      1           - stager_dev02   sponcec3 31-Aug-2011 15:16:57
+threeCopyOnTape      1           - stager_dev01   sponcec3 31-Aug-2011 15:00:45
+threeCopyOnTape      2           - stager_dev02   sponcec3 31-Aug-2011 15:00:45
+threeCopyOnTape      3           - stager_dev01   sponcec3 31-Aug-2011 15:00:45
 
-#modifymigrationroute dev largeuser 1:True:stager_dev02
+#modifymigrationroute filesizedep 1:True:stager_dev02
 modified route successfully
 
 #printmigrationroute
-SVCCLASS       FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
-----------------------------------------------------------------------------------------
- default       largeuser      1           - stager_dev02   sponcec3 31-Aug-2011 15:16:57
- default threeCopyOnTape      1           - stager_dev01   sponcec3 31-Aug-2011 15:00:45
- default threeCopyOnTape      2           - stager_dev02   sponcec3 31-Aug-2011 15:00:45
- default threeCopyOnTape      3           - stager_dev01   sponcec3 31-Aug-2011 15:00:45
-     dev       largeuser      1       False stager_dev02   sponcec3 31-Aug-2011 15:00:52
-     dev       largeuser      1        True stager_dev02   sponcec3 31-Aug-2011 15:18:09
+      FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
+-------------------------------------------------------------------------------
+    filesizedep      1       False stager_dev02   sponcec3 31-Aug-2011 15:00:52
+    filesizedep      1        True stager_dev02   sponcec3 31-Aug-2011 15:18:09
+      largeuser      1           - stager_dev02   sponcec3 31-Aug-2011 15:16:57
+threeCopyOnTape      1           - stager_dev01   sponcec3 31-Aug-2011 15:00:45
+threeCopyOnTape      2           - stager_dev02   sponcec3 31-Aug-2011 15:00:45
+threeCopyOnTape      3           - stager_dev01   sponcec3 31-Aug-2011 15:00:45
 
-#modifymigrationroute default threeCopyOnTape stager_dev02
+#modifymigrationroute threeCopyOnTape stager_dev02
 modified route successfully
 
 #printmigrationroute
-SVCCLASS       FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
-----------------------------------------------------------------------------------------
- default       largeuser      1           - stager_dev02   sponcec3 31-Aug-2011 15:16:57
- default threeCopyOnTape      1           - stager_dev02   sponcec3 31-Aug-2011 15:24:51
- default threeCopyOnTape      2           - stager_dev02   sponcec3 31-Aug-2011 15:00:45
- default threeCopyOnTape      3           - stager_dev01   sponcec3 31-Aug-2011 15:00:45
-     dev       largeuser      1       False stager_dev02   sponcec3 31-Aug-2011 15:00:52
-     dev       largeuser      1        True stager_dev02   sponcec3 31-Aug-2011 15:18:09
+      FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
+-------------------------------------------------------------------------------
+    filesizedep      1       False stager_dev02   sponcec3 31-Aug-2011 15:00:52
+    filesizedep      1        True stager_dev02   sponcec3 31-Aug-2011 15:18:09
+      largeuser      1           - stager_dev02   sponcec3 31-Aug-2011 15:16:57
+threeCopyOnTape      1           - stager_dev02   sponcec3 31-Aug-2011 15:24:51
+threeCopyOnTape      2           - stager_dev02   sponcec3 31-Aug-2011 15:00:45
+threeCopyOnTape      3           - stager_dev01   sponcec3 31-Aug-2011 15:00:45
 
-#modifymigrationroute dev largeuser 1:True:stager_dev03
+#modifymigrationroute filesizedep 1:True:stager_dev03
 TapePool stager_dev03 does not exist in the stager DB
 Giving up
 
-#modifymigrationroute dev largeuser 1:stager_dev01
+#modifymigrationroute filesizedep 1:stager_dev01
 The route to be modified does not exist. Giving up
 Take care that when not given, isSmallFile is considered NULL and copyNb is considered 1.
 In case you wanted to modify several routes in one go, you will have to delete and recreate

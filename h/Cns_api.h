@@ -286,6 +286,7 @@ EXTERN_C struct Cns_direntape *Cns_readdirxt (Cns_DIR *);
 EXTERN_C int Cns_readlink (const char *, char *, size_t);
 EXTERN_C int Cns_rename (const char *, const char *);
 EXTERN_C int Cns_replacetapecopy (struct Cns_fileid *, const char*, const char*, int, struct Cns_segattrs *, time_t last_mod_time);
+EXTERN_C int Cns_replaceormovetapecopy (struct Cns_fileid *, const char*, int, struct Cns_segattrs *, time_t last_mod_time);
 EXTERN_C int Cns_replaceseg (char *, u_signed64, struct Cns_segattrs *, struct Cns_segattrs *, time_t last_mod_time);
 EXTERN_C int Cns_updateseg_checksum (char *, u_signed64, struct Cns_segattrs *, struct Cns_segattrs *);
 EXTERN_C int Cns_updateseg_status (char *, u_signed64, struct Cns_segattrs *, const char);

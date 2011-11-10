@@ -655,7 +655,11 @@ int procreq(int magic,
     c = Cns_srv_replaceseg (magic, req_data, thip, &thip->reqinfo);
     break;
   case CNS_REPLACETAPECOPY:
+    // XXX To be dropped once no client older than 2.1.12-0 remain
     c = Cns_srv_replacetapecopy (magic, req_data, thip, &thip->reqinfo);
+    break;
+  case CNS_REPLACEORMOVETAPECOPY:
+    c = Cns_srv_replaceormovetapecopy (magic, req_data, thip, &thip->reqinfo);
     break;
   case CNS_UPDATESEG_CHECKSUM:
     c = Cns_srv_updateseg_checksum (magic, req_data, thip, &thip->reqinfo);

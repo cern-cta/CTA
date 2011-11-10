@@ -764,14 +764,16 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
   // CHECK DB
   timeval tvStart,tvEnd;
   gettimeofday(&tvStart, NULL);
-  std::string repackVid;
-  int copyNumber;
+  std::string originalVid;
+  int originalCopyNumber;
   std::string vid;
+  int copyNumber;
   std::string fileClass;
   u_signed64 lastModificationTime;
   try {
     // This SQL procedure does not do any lock/updates.
-    oraSvc.getRepackVidAndFileInfo(fileMigrated,vid,copyNumber,lastModificationTime,repackVid, fileClass);
+    oraSvc.getMigratedFileInfo(fileMigrated,vid,copyNumber,lastModificationTime,
+                               originalVid,originalCopyNumber,fileClass);
   } catch (castor::exception::Exception& e){
     castor::dlf::Param params[] ={
         castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
@@ -889,10 +891,10 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
   // an overwritten file.
   bool fileStale = false;
   try {
-    if (repackVid.empty()) {
+    if (originalVid.empty()) {
       gettimeofday(&tvStart, NULL);
       // update the name server (standard migration)
-      nsHelper.updateMigratedFile( fileMigrated, copyNumber, vid, lastModificationTime);
+      nsHelper.updateMigratedFile( fileMigrated, copyNumber, vid, lastModificationTime );
       gettimeofday(&tvEnd, NULL);
       procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
       castor::dlf::Param paramsNs[] ={
@@ -919,7 +921,8 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
     } else {
       // update the name server (repacked file)
       gettimeofday(&tvStart, NULL);
-      nsHelper.updateRepackedFile( fileMigrated, repackVid, copyNumber, vid, lastModificationTime);
+      nsHelper.updateRepackedFile( fileMigrated, originalCopyNumber, originalVid,
+                                   copyNumber, vid, lastModificationTime);
       gettimeofday(&tvEnd, NULL);
       procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
       castor::dlf::Param paramsRepack[] ={
@@ -940,7 +943,8 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
           castor::dlf::Param("blockid", blockid),
           castor::dlf::Param("checksum name",fileMigrated.checksumName()),
           castor::dlf::Param("checksum",checksumHex),
-          castor::dlf::Param("repack vid",repackVid),
+          castor::dlf::Param("original vid",originalVid),
+          castor::dlf::Param("original copyNb",originalCopyNumber),
           castor::dlf::Param("ProcessingTime", procTime * 0.000001)
       };
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_REPACK_NS_UPDATE, paramsRepack,&castorFileId);
@@ -965,7 +969,8 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
         castor::dlf::Param("blockid", blockid),
         castor::dlf::Param("checksum name",fileMigrated.checksumName()),
         castor::dlf::Param("checksum",checksumHex),
-        castor::dlf::Param("repack vid",repackVid),
+        castor::dlf::Param("original vid",originalVid),
+        castor::dlf::Param("original copyNb",originalCopyNumber),
         castor::dlf::Param("ProcessingTime", procTime * 0.000001)
     };
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_REPACK_FILE_REMOVED, paramsStaleFile,&castorFileId);
@@ -989,7 +994,8 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
         castor::dlf::Param("blockid", blockid),
         castor::dlf::Param("checksum name",fileMigrated.checksumName()),
         castor::dlf::Param("checksum",checksumHex),
-        castor::dlf::Param("repack vid",repackVid),
+        castor::dlf::Param("original vid",originalVid),
+        castor::dlf::Param("original copyNb",originalCopyNumber),
         castor::dlf::Param("ProcessingTime", procTime * 0.000001)
     };
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_REPACK_STALE_FILE, paramsStaleFile,&castorFileId);
@@ -1013,7 +1019,8 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
         castor::dlf::Param("blockid", blockid),
         castor::dlf::Param("checksum name",fileMigrated.checksumName()),
         castor::dlf::Param("checksum",checksumHex),
-        castor::dlf::Param("repack vid",repackVid),
+        castor::dlf::Param("original vid",originalVid),
+        castor::dlf::Param("original copyNb",originalCopyNumber),
         castor::dlf::Param("ProcessingTime", procTime * 0.000001)
     };
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, WORKER_REPACK_UNCONFIRMED_STALE_FILE, paramsStaleFile,&castorFileId);
@@ -1036,7 +1043,8 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
         castor::dlf::Param("blockid", blockid),
         castor::dlf::Param("checksum name",fileMigrated.checksumName()),
         castor::dlf::Param("checksum",checksumHex),
-        castor::dlf::Param("repack vid",repackVid),
+        castor::dlf::Param("original vid",originalVid),
+        castor::dlf::Param("original copyNb",originalCopyNumber),
         castor::dlf::Param("ProcessingTime", procTime * 0.000001),
         castor::dlf::Param("errorCode",sstrerror(e.code())),
         castor::dlf::Param("errorMessage",e.getMessage().str())

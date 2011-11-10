@@ -103,16 +103,6 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * handles a repack subRequest
-         * @param subReqId the id of the repack subRequest to be handled
-         * @return the result of the processing
-         * @exception Exception in case of error
-         */
-        virtual castor::stager::BulkRequestResult* handleRepackSubRequest
-        (const u_signed64 subReqId)
-          throw (castor::exception::Exception);
-
-        /**
          * Selects the next SubRequest in FAILED status the stager
          * should deal with.
          * Selects a SubRequest in FAILED status and move its status
@@ -157,7 +147,7 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Processes a PToGet, PToUpdate, or Repack subrequest.
+         * Processes a PToGet, PToUpdate subrequest.
          * @param subreq the SubRequest to consider
          * @return -2,-1,0,1,2, cf. return value for getDiskCopiesForJob.
          * @exception Exception in case of system error
@@ -473,12 +463,6 @@ namespace castor {
 
         /// SQL statement object for function processBulkRequest
         oracle::occi::Statement *m_processBulkRequestStatement;
-
-        /// SQL statement for function handleRepackSubRequest
-        static const std::string s_handleRepackSubRequestStatementString;
-
-        /// SQL statement object for function handleRepackSubRequest
-        oracle::occi::Statement *m_handleRepackSubRequestStatement;
 
         /// SQL statement for function subRequestFailedToDo
         static const std::string s_subRequestFailedToDoStatementString;

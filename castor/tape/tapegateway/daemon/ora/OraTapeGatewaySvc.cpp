@@ -275,6 +275,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::attachTapesToStreams(con
     if (0 == m_attachTapesToStreamsStatement) {
       m_attachTapesToStreamsStatement =
         createStatement("BEGIN tg_attachTapesToStreams(:1,:2,:3);END;");
+      m_attachTapesToStreamsStatement->setAutoCommit(true);
     }
 
     // input
@@ -1327,9 +1328,10 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setRecRetryResult(const
 // getRepackVidAndFileInfo
 //----------------------------------------------------------------------------
   
-void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getRepackVidAndFileInfo(const castor::tape::tapegateway::FileMigratedNotification& resp,
-      std::string& vid, int& copyNumber, u_signed64& lastModificationTime, std::string& repackVid,
-      std::string& fileClass)
+void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getMigratedFileInfo
+(const castor::tape::tapegateway::FileMigratedNotification& resp,
+ std::string& vid, int& copyNumber, u_signed64& lastModificationTime,
+ std::string& originalVid, int& originalCopyNumber, std::string& fileClass)
   throw (castor::exception::Exception){
   
   try {
@@ -1337,19 +1339,21 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getRepackVidAndFileInfo
 
     if (0 == m_getRepackVidAndFileInfoStatement) {
       m_getRepackVidAndFileInfoStatement =
-        createStatement("BEGIN tg_getRepackVidAndFileInfo(:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11);END;");
+        createStatement("BEGIN tg_getRepackVidAndFileInfo(:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12);END;");
       m_getRepackVidAndFileInfoStatement->registerOutParam
         (6, oracle::occi::OCCISTRING, 2048 );
       m_getRepackVidAndFileInfoStatement->registerOutParam
-        (7, oracle::occi::OCCISTRING, 2048 );
+        (7, oracle::occi::OCCIINT);
       m_getRepackVidAndFileInfoStatement->registerOutParam
-        (8, oracle::occi::OCCIINT);
+        (8, oracle::occi::OCCISTRING, 2048 );
       m_getRepackVidAndFileInfoStatement->registerOutParam
-	(9, oracle::occi::OCCIDOUBLE);
+        (9, oracle::occi::OCCIINT);
       m_getRepackVidAndFileInfoStatement->registerOutParam
-        (10, oracle::occi::OCCISTRING, 2048 );
+	(10, oracle::occi::OCCIDOUBLE);
       m_getRepackVidAndFileInfoStatement->registerOutParam
-        (11, oracle::occi::OCCIINT);
+        (11, oracle::occi::OCCISTRING, 2048 );
+      m_getRepackVidAndFileInfoStatement->registerOutParam
+        (12, oracle::occi::OCCIINT);
     }
 
     m_getRepackVidAndFileInfoStatement->setDouble(1,(double)resp.fileid());
@@ -1362,7 +1366,7 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getRepackVidAndFileInfo
 
     m_getRepackVidAndFileInfoStatement->executeUpdate();
     
-    int ret=m_getRepackVidAndFileInfoStatement->getInt(11);
+    int ret=m_getRepackVidAndFileInfoStatement->getInt(12);
     if (ret==-1){
       //wrong file size
       castor::exception::Exception ex(ERTWRONGSIZE);
@@ -1370,11 +1374,12 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getRepackVidAndFileInfo
       throw ex;
     }
       
-    repackVid = m_getRepackVidAndFileInfoStatement->getString(6);
-    vid = m_getRepackVidAndFileInfoStatement->getString(7);
-    copyNumber = m_getRepackVidAndFileInfoStatement->getInt(8);
-    lastModificationTime= (u_signed64)m_getRepackVidAndFileInfoStatement->getDouble(9);
-    fileClass = m_getRepackVidAndFileInfoStatement->getString(10);
+    originalVid = m_getRepackVidAndFileInfoStatement->getString(6);
+    originalCopyNumber = m_getRepackVidAndFileInfoStatement->getInt(7);
+    vid = m_getRepackVidAndFileInfoStatement->getString(8);
+    copyNumber = m_getRepackVidAndFileInfoStatement->getInt(9);
+    lastModificationTime= (u_signed64)m_getRepackVidAndFileInfoStatement->getDouble(10);
+    fileClass = m_getRepackVidAndFileInfoStatement->getString(11);
 
   } catch (oracle::occi::SQLException e) {
     handleException(e);

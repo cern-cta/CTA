@@ -30,7 +30,6 @@
 #include "castor/stager/daemon/OpenRequestHandler.hpp"
 #include "castor/stager/daemon/PrepRequestSvcThread.hpp"
 
-#include "castor/stager/daemon/RepackHandler.hpp"
 #include "castor/stager/daemon/PrepareToGetHandler.hpp"
 #include "castor/stager/daemon/PrepareToPutHandler.hpp"
 #include "castor/stager/daemon/PrepareToUpdateHandler.hpp"
@@ -99,10 +98,6 @@ void castor::stager::daemon::PrepRequestSvcThread::process(castor::IObject* subR
     switch(typeRequest){
       case OBJ_StagePrepareToGetRequest:
         stgRequestHandler = new PrepareToGetHandler(reqHelper);
-        break;
-
-      case OBJ_StageRepackRequest:
-        stgRequestHandler = new RepackHandler(reqHelper);
         break;
 
       case OBJ_StagePrepareToPutRequest:

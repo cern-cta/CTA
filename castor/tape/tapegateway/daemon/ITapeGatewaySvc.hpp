@@ -179,12 +179,13 @@ namespace tapegateway {
 	/**
 	 * Access the db to retrieve the information about a completed migration
 	 */
-	virtual void getRepackVidAndFileInfo(const castor::tape::tapegateway::FileMigratedNotification& file,
-						    std::string& vid,
-						    int& copyNumber,
-						    u_signed64& lastModificationTime,
-						    std::string& repackVid,
-						    std::string& fileClass)
+	virtual void getMigratedFileInfo(const castor::tape::tapegateway::FileMigratedNotification& file,
+                                         std::string& vid,
+                                         int& copyNumber,
+                                         u_signed64& lastModificationTime,
+                                         std::string& originalVid,
+                                         int& originalCopyNumber,
+                                         std::string& fileClass)
 	  throw (castor::exception::Exception)=0;
 
 	/*
