@@ -208,6 +208,7 @@ char *sys_nserrlist[ENSMAXERR-ENSBASEOFF+2] =
    "Is a link",
    "File class does not allow a copy on tape",
    "Too many copies on tape",
+   "Cannot overwrite valid segment when replacing",
    "BAD ERROR NUMBER"
   };
 

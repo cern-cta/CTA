@@ -216,7 +216,8 @@
 #define ENSISLINK      ENSBASEOFF+4	/* Is a link */
 #define ENSCLASSNOSEGS ENSBASEOFF+5	/* File class does not allow a copy on tape */
 #define ENSTOOMANYSEGS ENSBASEOFF+6	/* Too many copies on tape */
-#define ENSMAXERR      ENSBASEOFF+6
+#define ENSOVERWHENREP ENSBASEOFF+7	/* Cannot overwrite valid segment when replacing */
+#define ENSMAXERR      ENSBASEOFF+7
 
 /*
  *------------------------------------------------------------------------
