@@ -112,8 +112,8 @@ try:
         print "No routes defined"
         sys.exit(0)
     # loop over svcclasses and print them
-    maxFileClassNameLen = max([9]+[len(row[5]) for row in rows])
-    maxTapePoolNameLen = max([8]+[len(row[6]) for row in rows])
+    maxFileClassNameLen = max([9]+[len(row[4]) for row in rows])
+    maxTapePoolNameLen = max([8]+[len(row[5]) for row in rows])
     maxLastEditorLen = max([10] + [len(row[2]) for row in rows])
     maxLastEditionTimeLen = max([11] + [len(secsToDate(row[3])) for row in rows])
     print '%*s COPYNB ISSMALLFILE %*s %*s %*s' % \
