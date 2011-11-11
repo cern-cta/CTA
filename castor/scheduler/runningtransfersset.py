@@ -29,13 +29,29 @@
 '''runningtransferset module of the CASTOR disk server manager.
 Handle a set of running transfers on a given diskserver'''
 
-import os, pwd, socket
+import os, pwd, socket, re
 import threading
 import time
 import dlf
 from diskmanagerdlf import msgs
 import castor_tools
 import connectionpool
+import subprocess
+
+def getProcessStartTime(pid):
+  '''Little utility able to get the start time of a process
+  Note that this is linux specific code'''
+  timeasstr = subprocess.Popen(['ps','-o','etime=','-p',str(pid)], stdout=subprocess.PIPE).stdout.read().strip()
+  m = re.match('(?:(?:(\d+)?-)?(\d+):)?(\d+):(\d+)', timeasstr)
+  if m:
+    elapsed = int(m.group(3))*60+int(m.group(4))
+    if m.group(1):
+      elapsed += int(m.group(1))*86400
+    if m.group(2):
+      elapsed += int(m.group(2))*3600
+    return time.time() - elapsed
+  else:
+    raise ValueError('No such process')
 
 class RunningTransfersSet(object):
   '''handles a list of running transfers and is able to poll them regularly and list the ones that ended'''
@@ -173,8 +189,8 @@ class RunningTransfersSet(object):
           transfertype = 'standard'
           if args[0] == '/usr/bin/d2dtransfer':
             transfertype = 'd2ddest'
-          arrivalTime = os.stat(os.path.sep+os.path.join('proc', pid, 'cmdline'))[-2]
-          startTime = arrivalTime
+          startTime = getProcessStartTime(pid)
+          arrivalTime = startTime
           # create the entry in the list of running transfers, associated to the first scheduler we find
           self.transfers.add((transferid, scheduler, tuple(args), notifFileName, None, transfertype, arrivalTime, startTime))
           # keep in memory that this was a rebuilt entry
