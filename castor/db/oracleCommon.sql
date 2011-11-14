@@ -220,6 +220,7 @@ END;
 CREATE OR REPLACE PROCEDURE deleteMigrationJobs(cfId NUMBER) AS
 BEGIN
   DELETE FROM MigrationJob WHERE castorfile = cfId;
+  DELETE FROM MigratedSegment WHERE castorfile = cfId;
 END;
 /
 
