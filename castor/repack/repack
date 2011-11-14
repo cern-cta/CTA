@@ -267,7 +267,9 @@ def startRepack():
                     if tapeStatus.find('DISABLED') > -1 or tapeStatus.find('ARCHIVED') > -1 or tapeStatus.find('EXPORTED') > -1:
                         print 'Tape ' + tape + ' has status ' + tapeStatus + ' which is not compatible with repack. Ignoring it'
                         continue
-                    # check that there are no repack on going for the given vids
+                    if tapeStatus.find('FULL') < 0:
+                        print 'Tape ' + tape + ' is not marked FULL. Ignoring it'
+                        continue                        
                     stcur.execute(stCheckForOngoingRepack, vid=tape)
                     rows = stcur.fetchall() 
                     if len(rows) > 0:
