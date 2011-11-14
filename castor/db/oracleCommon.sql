@@ -165,7 +165,9 @@ BEGIN
       PIPE ROW(ltrim(rtrim(substr(l_list, 1, l_idx - 1))));
       l_list := substr(l_list, l_idx + length(p_del));
     ELSE
-      PIPE ROW(ltrim(rtrim(l_list)));
+      IF l_list IS NOT NULL THEN
+        PIPE ROW(ltrim(rtrim(l_list)));
+      END IF;
       EXIT;
     END IF;
   END LOOP;

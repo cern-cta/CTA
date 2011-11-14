@@ -778,5 +778,5 @@ CREATE DATABASE LINK remotens
 /* efficiently via DB link when repacking              */
 CREATE GLOBAL TEMPORARY TABLE RepackTapeSegments
  (fileId NUMBER, blockid RAW(4), fseq NUMBER, segSize NUMBER,
-  copyNb NUMBER, fileClass NUMBER, otherSegments VARCHAR2(2048))
+  copyNb NUMBER, fileClass NUMBER, allSegments VARCHAR2(2048))
  ON COMMIT PRESERVE ROWS;

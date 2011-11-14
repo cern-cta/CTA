@@ -1070,13 +1070,12 @@ BEGIN
                                          strConcat(CURSOR(SELECT TO_CHAR(oseg.copyno)||','||oseg.vid
                                                             FROM Cns_Seg_Metadata@remotens oseg
                                                            WHERE oseg.s_fileid = seg.s_fileid
-                                                             AND oseg.copyno != seg.copyno
                                                              AND oseg.s_status = '-'))
-                                    FROM Cns_Seg_Metadata@remotens seg, Cns_File_Metadata@remotens file
+                                    FROM Cns_Seg_Metadata@remotens seg, Cns_File_Metadata@remotens fileEntry
                                    WHERE seg.vid = reqVID
-                                     AND seg.s_fileid = file.fileid
+                                     AND seg.s_fileid = fileEntry.fileid
                                      AND seg.s_status = '-'
-                                     AND file.status != 'D');
+                                     AND fileEntry.status != 'D');
   FOR segment IN (SELECT * FROM RepackTapeSegments) LOOP
     -- Commit from time to time
     IF nbFilesProcessed = 1000 THEN
@@ -1111,7 +1110,7 @@ BEGIN
     -- create  subrequest for this file.
     -- Note that the svcHandler is not set. It will actually never be used as repacks are handled purely in PL/SQL
     INSERT INTO SubRequest (retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, creationTime, lastModificationTime, answered, errorCode, errorMessage, requestedFileSystems, svcHandler, id, diskcopy, castorFile, parent, status, request, getNextStatus, reqType)
-    VALUES (0, lastKnownFileName, repackProtocol, segment.segSize, 0, uuidGen(), 0, 0, creationTime, creationTime, 0, 0, '', NULL, NULL, ids_seq.nextval, 0, cfId, NULL, dconst.SUBREQUEST_START, varReqId, 0, 119)
+    VALUES (0, lastKnownFileName, repackProtocol, segment.segSize, 0, uuidGen(), 0, 0, creationTime, creationTime, 0, 0, '', NULL, 'NotNullNeeded', ids_seq.nextval, 0, cfId, NULL, dconst.SUBREQUEST_START, varReqId, 0, 119)
     RETURNING id INTO varSubreqId;
     -- if the file is being overwritten, fail
     SELECT count(DiskCopy.id) INTO varNbCopies
@@ -1156,12 +1155,25 @@ BEGIN
          varSrStatus = dconst.SUBREQUEST_WAITSUBREQ THEN
         varMJStatus := tconst.MIGRATIONJOB_WAITINGONRECALL;
       END IF;
-      triggerRepackMigration(cfId, reqVID, segment.fileid, segment.copyNb, segment.fileclass,
-                             segment.segSize, segment.otherSegments, varMJStatus);
-      -- update STAGED diskcopies to CANBEMIGR
-      UPDATE DiskCopy SET status = 10  -- DISKCOPY_CANBEMIGR
-       WHERE castorFile = cfId AND status = 0;  -- DISKCOPY_STAGED
-      isOngoing := True;
+      DECLARE
+        noValidCopyNbFound EXCEPTION;
+        PRAGMA EXCEPTION_INIT (noValidCopyNbFound, -20123);
+      BEGIN
+        triggerRepackMigration(cfId, reqVID, segment.fileid, segment.copyNb, segment.fileclass,
+                               segment.segSize, segment.allSegments, varMJStatus, isOngoing);
+        IF isOngoing THEN
+          -- update STAGED diskcopies to CANBEMIGR
+          UPDATE DiskCopy SET status = 10  -- DISKCOPY_CANBEMIGR
+           WHERE castorFile = cfId AND status = 0;  -- DISKCOPY_STAGED
+        END IF;
+      EXCEPTION WHEN noValidCopyNbFound THEN
+        varSrStatus := dconst.SUBREQUEST_FAILED;
+        varSrErrorCode := 22; -- EINVAL
+        varSrErrorMsg := SQLERRM;
+        INSERT INTO ProcessBulkRequestHelper VALUES
+          (segment.fileid, nsHostName, varSrErrorCode, varSrErrorMsg);
+        nbFilesFailed := nbFilesFailed + 1;
+      END;
     END IF;
     -- update SubRequest
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
@@ -2216,65 +2228,84 @@ END;
 /* PL/SQL procedure implementing triggerMigration */
 CREATE OR REPLACE PROCEDURE triggerRepackMigration
 (cfId IN INTEGER, vid IN VARCHAR2, fileid IN INTEGER, copyNb IN INTEGER,
- fileclass IN INTEGER, fileSize IN INTEGER, otherSegments IN VARCHAR2,
- MJStatus IN INTEGER) AS
+ fileclass IN INTEGER, fileSize IN INTEGER, allSegments IN VARCHAR2,
+ MJStatus IN INTEGER, isOngoing OUT boolean) AS
   varMjId INTEGER;
   varNb INTEGER;
   varDestCopyNb INTEGER;
   varNbCopies INTEGER;
-  varOtherCopyNbs "numList";
-  varOtherVIDs strListTable;
-  varOtherSegments strListTable;
+  varAllSegments strListTable;
 BEGIN
   -- check whether we already have a migrationJob for this copy of the file
   SELECT id INTO varMjId
     FROM MigrationJob
    WHERE castorFile = cfId
      AND destCopyNb = copyNb;
-  -- we have a migrationJob for this copy ! This should never happen so complain heavily !
-  RAISE_APPLICATION_ERROR (-20123,
-    'Found existing MigrationJob while triggering the migration of repacked segment ' ||
-    TO_CHAR(copyNb) || ' of file ' || TO_CHAR (fileid) || ' in triggerRepackMigration');
+  -- we have a migrationJob for this copy ! This means that the file has been overwritten
+  -- and the new version is about to go to tape. We thus don't have anything to do
+  -- for this file
+  isOngoing := False;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- no migration job for this copyNb, we can proceed
-  -- first let's parse the list of other segments
-  SELECT * BULK COLLECT INTO varOtherSegments
-    FROM TABLE(strTokenizer(otherSegments));
-  FOR i IN varOtherSegments.FIRST .. varOtherSegments.LAST/2 LOOP
-    varOtherCopyNbs(i) := TO_NUMBER(varOtherSegments(2*i));
-    varOtherSegments(i) := varOtherSegments(2*i+1);
-  END LOOP;
-  -- find the new copy number to be used. This is the minimal one
-  -- that is lower than the allowed number of copies and is not
-  -- already used by an ongoing migration or by a valid migrated copy
-  SELECT nbCopies INTO varNbCopies FROM FileClass WHERE classId = fileclass;
-  FOR i IN 1 .. varNbCopies LOOP
-    SELECT COUNT(*) INTO varNb FROM 
-      (SELECT destCopyNb FROM MigrationJob WHERE castorFile = cfId UNION ALL
-       SELECT * FROM TABLE(varOtherCopyNbs));
-    IF varNb > 0 THEN
-      varDestCopyNb := i;
-      EXIT;
-    END IF;
-  END LOOP;
-  IF varDestCopyNb IS NULL THEN
-    RAISE_APPLICATION_ERROR (-20123,
-      'Unable to find a valid copy number for the migration of file ' ||
-      TO_CHAR (fileid) || ' in triggerRepackMigration. ' ||
-      'The file probably has too many valid copies.');    
-  END IF;
-  -- create new migration
-  initMigration(cfId, fileSize, vid, copyNb, varDestCopyNb);
-  -- create migrated segments for the existing segments if there are none
-  SELECT count(*) INTO varNb
-    FROM MigratedSegment
-   WHERE castorFile = cfId;
-  IF varNb = 0 THEN
-    FOR i IN varOtherCopyNbs.FIRST .. varOtherCopyNbs.LAST LOOP
-        INSERT INTO MigratedSegment (castorFile, copyNb, VID)
-        VALUES (cfId, varOtherCopyNbs(i), varOtherVIDs(i));
+  -- first let's parse the list of all segments
+  SELECT * BULK COLLECT INTO varAllSegments
+    FROM TABLE(strTokenizer(allSegments));
+  DECLARE
+    varAllCopyNbs "numList" := "numList"(varAllSegments.COUNT/2);
+    varAllVIDs strListTable := strListTable(varAllSegments.COUNT/2);
+  BEGIN
+    FOR i IN varAllSegments.FIRST .. varAllSegments.LAST/2 LOOP
+      varAllCopyNbs(i) := TO_NUMBER(varAllSegments(2*i-1));
+      varAllVIDs(i) := varAllSegments(2*i);
     END LOOP;
-  END IF;
+    -- find the new copy number to be used. This is the minimal one
+    -- that is lower than the allowed number of copies and is not
+    -- already used by an ongoing migration or by a valid migrated copy
+    SELECT nbCopies INTO varNbCopies FROM FileClass WHERE classId = fileclass;
+    FOR i IN 1 .. varNbCopies LOOP
+      -- if we are reusing the original copy number, it's ok
+      IF i = copyNb THEN
+        varDestCopyNb := i;
+      ELSE
+        BEGIN
+          -- check whether this copy number is already in use by a valid copy
+          SELECT * INTO varNb FROM TABLE(varAllCopyNbs)
+           WHERE COLUMN_VALUE=i;
+          -- this copy number is in use, go to next one
+        EXCEPTION WHEN NO_DATA_FOUND THEN
+          BEGIN
+            -- check whether this copy number is in use by an ongoing migration
+            SELECT destCopyNb INTO varNb FROM MigrationJob WHERE castorFile = cfId AND destCopyNb = i;
+            -- this copy number is in use, go to next one
+          EXCEPTION WHEN NO_DATA_FOUND THEN
+            -- copy number is not in use, we take it
+            varDestCopyNb := i;
+            EXIT;
+          END;
+        END;
+      END IF;
+    END LOOP;
+    IF varDestCopyNb IS NULL THEN
+      RAISE_APPLICATION_ERROR (-20123,
+        'Unable to find a valid copy number for the migration of file ' ||
+        TO_CHAR (fileid) || ' in triggerRepackMigration. ' ||
+        'The file probably has too many valid copies.');
+    END IF;
+    -- create new migration
+    initMigration(cfId, fileSize, vid, copyNb, varDestCopyNb);
+    -- create migrated segments for the existing segments if there are none
+    SELECT count(*) INTO varNb
+      FROM MigratedSegment
+     WHERE castorFile = cfId;
+    IF varNb = 0 THEN
+      FOR i IN varAllCopyNbs.FIRST .. varAllCopyNbs.LAST LOOP
+        INSERT INTO MigratedSegment (castorFile, copyNb, VID)
+        VALUES (cfId, varAllCopyNbs(i), varAllVIDs(i));
+      END LOOP;
+    END IF;
+    -- all is fine, migration is ongoing
+    isOngoing := True;
+  END;
 END;
 /
 
@@ -2282,7 +2313,7 @@ END;
  * get the given tape or create it
  * Note that we run in an autonomous transaction.
  */
-CREATE OR REPLACE FUNCTION selectTapeForRecall(vid IN VARCHAR2, newStatus IN INTEGER)
+CREATE OR REPLACE FUNCTION selectTapeForRecall(reqvid IN VARCHAR2, newStatus IN INTEGER)
 RETURN INTEGER AS
   PRAGMA AUTONOMOUS_TRANSACTION;
   CONSTRAINT_VIOLATED EXCEPTION;
@@ -2292,7 +2323,7 @@ RETURN INTEGER AS
 BEGIN
   -- try to get the tape, assuming it exists
   -- Note the hardcoded side, as this column is deprecated
-  SELECT id, status INTO tapeId, status FROM Tape WHERE vid = vid AND tpmode = tconst.TPMODE_READ AND side = 0;
+  SELECT id, status INTO tapeId, status FROM Tape WHERE vid = reqvid AND tpmode = tconst.TPMODE_READ AND side = 0;
   IF status = tconst.TAPE_UNUSED OR status = tconst.TAPE_FINISHED OR
      status = tconst.TAPE_FAILED OR status = tconst.TAPE_UNKNOWN THEN
     UPDATE Tape SET status = newStatus WHERE id = tapeId;
@@ -2304,12 +2335,12 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   BEGIN
     SELECT ids_seq.nextval INTO tapeId FROM DUAL;
     INSERT INTO TAPE (id, vid, side, tpmode, status)
-    VALUES (tapeId, vid, 0, tconst.TPMODE_READ, newStatus);
+    VALUES (tapeId, reqvid, 0, tconst.TPMODE_READ, newStatus);
   EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
     -- insertion failed with constraint violated.
     -- This means that somebody else was faster.
     -- So go back to select
-    SELECT id INTO tapeId FROM Tape WHERE vid = vid AND tpmode = tconst.TPMODE_READ AND side = 0;
+    SELECT id INTO tapeId FROM Tape WHERE vid = reqvid AND tpmode = tconst.TPMODE_READ AND side = 0;
     IF status = tconst.TAPE_UNUSED OR status = tconst.TAPE_FINISHED OR
        status = tconst.TAPE_FAILED OR status = tconst.TAPE_UNKNOWN THEN
       UPDATE Tape SET status = newStatus WHERE id = tapeId;

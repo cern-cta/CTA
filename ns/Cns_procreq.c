@@ -3835,15 +3835,13 @@ int Cns_srv_replaceormovetapecopy(int magic,
 
   struct Cns_seg_metadata new_smd_entry;
   struct Cns_seg_metadata old_smd_entry;
-  struct Cns_seg_metadata replaced_smd_entry;
   struct Cns_file_metadata filentry;
 
   Cns_dbrec_addr old_smd_rec_addr; /* DB keys of old segment */
-  Cns_dbrec_addr replaced_smd_rec_addr; /* DB keys of replaced segment */
   Cns_dbrec_addr rec_addr;   /* DB key for file */
 
   char *rbp;
-  char *func = "replacetapecopy";
+  char *func = "replaceormovetapecopy";
   char oldvid[CA_MAXVIDLEN+1];
   int oldcopyno;
 
@@ -3865,7 +3863,7 @@ int Cns_srv_replaceormovetapecopy(int magic,
   /* Get the new segment from stream */
   memset ((char *) &new_smd_entry, 0, sizeof(struct Cns_seg_metadata));
   /* Same fileid for all segs */
-  new_smd_entry.s_fileid = filentry.fileid;
+  new_smd_entry.s_fileid = fileid;
   unmarshall_WORD (rbp, new_smd_entry.copyno);
   unmarshall_WORD (rbp, new_smd_entry.fsec);
   unmarshall_HYPER (rbp, new_smd_entry.segsize);
@@ -3925,36 +3923,43 @@ int Cns_srv_replaceormovetapecopy(int magic,
     RETURN (ENSNOSEG);
   }
 
-  /* get the replaced segment if any, check it and drop it */
-  rc = Cns_get_smd_by_copyno (&thip->dbfd, 1,
-                              filentry.fileid,
-                              new_smd_entry.copyno,
-                              &replaced_smd_entry,
-                              1,
-                              &replaced_smd_rec_addr,
-                              0);
-  if (rc < 0) {
-    RETURN (serrno);
-  }
-  if (rc == 0) {
-    /* we found a segment that will be replaced */
-    /* Let's check that it is invalid */
-    if (replaced_smd_entry.s_status == '-') {
-      RETURN (ENSOVERWHENREP);
-    }
-    /* it is ok, we can drop the segment to replace */
-    nslogit("MSG=\"Unlinking segment (overwritten)\" REQID=%s NSHOSTNAME=%s NSFILEID=%llu "
-            "CopyNo=%d Fsec=%d SegmentSize=%llu Compression=%d Status=\"%c\" "
-            "TPVID=%s Side=%d Fseq=%d BlockId=\"%02x%02x%02x%02x\" "
-            "ChecksumType=\"%s\" ChecksumValue=\"%lx\"",
-            thip->reqinfo.requuid, nshostname, replaced_smd_entry.s_fileid,
-            replaced_smd_entry.copyno, replaced_smd_entry.fsec, replaced_smd_entry.segsize,
-            replaced_smd_entry.compression, replaced_smd_entry.s_status, replaced_smd_entry.vid,
-            replaced_smd_entry.side, replaced_smd_entry.fseq, replaced_smd_entry.blockid[0],
-            replaced_smd_entry.blockid[1], replaced_smd_entry.blockid[2], replaced_smd_entry.blockid[3],
-            replaced_smd_entry.checksum_name, replaced_smd_entry.checksum);
-    if (Cns_delete_smd_entry (&thip->dbfd, &replaced_smd_rec_addr)) {
+  /* In case old and new segment do not have the same copynb, we need to check
+     if we are overwriting another segment that was using the new copynb */
+  if (new_smd_entry.copyno != old_smd_entry.copyno) {
+    struct Cns_seg_metadata overwritten_smd_entry;
+    Cns_dbrec_addr overwritten_smd_rec_addr; /* DB keys of overwritten segment */
+    /* get the overwritten segment if any, check it and drop it */
+    rc = Cns_get_smd_by_copyno (&thip->dbfd, 1,
+                                filentry.fileid,
+                                new_smd_entry.copyno,
+                                &overwritten_smd_entry,
+                                1,
+                                &overwritten_smd_rec_addr,
+                                0);
+    if (rc < 0) {
       RETURN (serrno);
+    }
+    if (rc == 0) {
+      /* we found a segment that will be overwritten */
+      /* Let's check that it is invalid */
+      if (overwritten_smd_entry.s_status == '-') {
+        /* The overwritten segment was valid. This should not be the case ! */
+        RETURN (ENSOVERWHENREP);
+      }
+      /* it is ok, we can drop the segment to overwrite */
+      nslogit("MSG=\"Unlinking segment (overwritten)\" REQID=%s NSHOSTNAME=%s NSFILEID=%llu "
+              "CopyNo=%d Fsec=%d SegmentSize=%llu Compression=%d Status=\"%c\" "
+              "TPVID=%s Side=%d Fseq=%d BlockId=\"%02x%02x%02x%02x\" "
+              "ChecksumType=\"%s\" ChecksumValue=\"%lx\"",
+              thip->reqinfo.requuid, nshostname, overwritten_smd_entry.s_fileid,
+              overwritten_smd_entry.copyno, overwritten_smd_entry.fsec, overwritten_smd_entry.segsize,
+              overwritten_smd_entry.compression, overwritten_smd_entry.s_status, overwritten_smd_entry.vid,
+              overwritten_smd_entry.side, overwritten_smd_entry.fseq, overwritten_smd_entry.blockid[0],
+              overwritten_smd_entry.blockid[1], overwritten_smd_entry.blockid[2], overwritten_smd_entry.blockid[3],
+              overwritten_smd_entry.checksum_name, overwritten_smd_entry.checksum);
+      if (Cns_delete_smd_entry (&thip->dbfd, &overwritten_smd_rec_addr)) {
+        RETURN (serrno);
+      }
     }
   }
   
