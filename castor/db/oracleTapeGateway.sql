@@ -548,7 +548,8 @@ PROCEDURE tg_defaultMigrSelPolicy(inMountId IN INTEGER,
        AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING)
        AND CastorFile.id = MigrationJob.castorFile
        AND MigrationMount.VID NOT IN (SELECT VID FROM MigratedSegment
-                                       WHERE castorFile = MigrationJob.castorfile)
+                                       WHERE castorFile = MigrationJob.castorfile
+                                         AND copyNb != MigrationJob.destCopyNb)
        FOR UPDATE OF MigrationJob.id SKIP LOCKED;
 BEGIN
   OPEN c;
