@@ -418,6 +418,9 @@ DROP PROCEDURE dropProcedureSafe;
 DROP PROCEDURE dropFunctionSafe;
 DROP PROCEDURE dropSafe;
 
+INSERT INTO CastorConfig (class, key, value, description)
+ VALUES ('tape', 'sizeThreshold', '300000000', 'max size of files considered as small for routing purposes')
+
 /* Update and revalidation of PL-SQL code */
 /******************************************/
 

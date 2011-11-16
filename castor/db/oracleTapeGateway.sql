@@ -1122,7 +1122,10 @@ BEGIN
    WHERE DC.castorFile = varCfId
      AND DC.status = dconst.DISKCOPY_WAITTAPERECALL;
   -- delete recall jobs
-  deleteRecallJobs(varCfId);
+  FOR t IN (SELECT id FROM RecallJob WHERE castorfile = varCfId) LOOP
+    DELETE FROM Segment WHERE copy = t.id;
+    DELETE FROM RecallJob WHERE id = t.id;
+  END LOOP;
   -- update diskcopy status, size and gweight
   SELECT /*+ INDEX(SR I_Subrequest_DiskCopy)*/ SR.id, SR.request
     INTO varSubrequestId, varRequestId
@@ -1494,7 +1497,6 @@ BEGIN
        WHERE DC.castorFile = varCfId 
          AND DC.status = dconst.DISKCOPY_WAITTAPERECALL;
       deleteRecallJobs(varCfId);
-      deleteMigrationJobs(varCfId);
       -- Fail the subrequest
       UPDATE /*+ INDEX(SR I_Subrequest_Castorfile)*/ SubRequest SR
          SET SR.status = dconst.SUBREQUEST_FAILED,

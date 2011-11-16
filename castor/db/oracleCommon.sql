@@ -232,6 +232,16 @@ BEGIN
     DELETE FROM Segment WHERE copy = t.id;
     DELETE FROM RecallJob WHERE id = t.id;
   END LOOP;
+  -- delete migration jobs waiting on this recall
+  DELETE FROM MigrationJob WHERE castorfile = cfId AND status = tconst.MIGRATIONJOB_WAITINGONRECALL;
+  -- delete migrated segments if no migration jobs remain
+  DECLARE
+    unused NUMBER;
+  BEGIN
+    SELECT id INTO unused FROM MigrationJob WHERE castorfile = cfId;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    DELETE FROM MigratedSegment WHERE castorfile = cfId;
+  END;
 END;
 /
 
