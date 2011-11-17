@@ -754,7 +754,7 @@ BEGIN
               WHERE fileSystem IN
                 (SELECT /*+ CARDINALITY(fsIdTable 5) */ *
                    FROM TABLE (fsIds) fsIdTable)
-            CONNECT BY CONNECT_BY_ROOT fileSystem = fileSystem
+            CONNECT BY PRIOR fileSystem = fileSystem
                 AND LEVEL <= maxTransfers
                 AND PRIOR sys_guid() IS NOT NULL
               ORDER BY totalBytes ASC, fileSystem)
