@@ -1050,6 +1050,8 @@ BEGIN
   INSERT INTO StageRepackRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, repackVid, id, svcClass, client,status)
   VALUES (0,userName,euid,egid,0,pid,machine,svcClassName,'',uuidgen(),creationTime,creationTime,reqVID,ids_seq.nextval,svcClassId,clientId,tconst.REPACK_STARTING)
   RETURNING id INTO varReqId;
+  -- commit so that the repack request is visible, even if empty for the moment
+  COMMIT;
   -- Clear the temporary table for subresults
   DELETE FROM ProcessBulkRequestHelper;
   -- Check which protocol should be used for writing files to disk
