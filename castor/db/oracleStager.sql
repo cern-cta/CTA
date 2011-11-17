@@ -1077,16 +1077,12 @@ BEGIN
   -- in the nameserver DB
   INSERT INTO RepackTapeSegments (SELECT s_fileid, blockid, fseq, segSize,
                                          copyno, fileclass,
---                                         (SELECT LISTAGG(TO_CHAR(oseg.copyno)||','||oseg.vid, ',') 
---                                          WITHIN GROUP (ORDER BY copyno)
---                                            FROM Cns_Seg_Metadata@remotens oseg
---                                           WHERE oseg.s_fileid = seg.s_fileid
---                                             AND oseg.s_status = '-'
---                                           GROUP BY oseg.s_fileid)
-                                         strConcat(CURSOR(SELECT TO_CHAR(oseg.copyno)||','||oseg.vid
-                                                            FROM Cns_Seg_Metadata@remotens oseg
-                                                           WHERE oseg.s_fileid = seg.s_fileid
-                                                             AND oseg.s_status = '-'))
+                                         (SELECT LISTAGG(TO_CHAR(oseg.copyno)||','||oseg.vid, ',') 
+                                          WITHIN GROUP (ORDER BY copyno)
+                                            FROM Cns_Seg_Metadata@remotens oseg
+                                           WHERE oseg.s_fileid = seg.s_fileid
+                                             AND oseg.s_status = '-'
+                                           GROUP BY oseg.s_fileid)
                                     FROM Cns_Seg_Metadata@remotens seg, Cns_File_Metadata@remotens fileEntry
                                    WHERE seg.vid = reqVID
                                      AND seg.s_fileid = fileEntry.fileid
