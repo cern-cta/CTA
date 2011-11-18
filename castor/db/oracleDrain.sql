@@ -746,20 +746,16 @@ BEGIN
    WHERE fileSystem IN
      (SELECT /*+ CARDINALITY(fsIdTable 5) */ *
         FROM TABLE (fsIds) fsIdTable);
-  -- Start the process of draining the filesystems. For an explanation of the
-  -- query refer to: "Creating N Copies of a Row":
-  -- http://forums.oracle.com/forums/message.jspa?messageID=1953433#1953433
-  FOR a IN ( SELECT fileSystem
-               FROM DrainingFileSystem
-              WHERE fileSystem IN
+  -- Start the process of draining the filesystems.
+  FOR f IN (SELECT fileSystem, maxTransfers
+              FROM DrainingFileSystem
+             WHERE fileSystem IN
                 (SELECT /*+ CARDINALITY(fsIdTable 5) */ *
                    FROM TABLE (fsIds) fsIdTable)
-            CONNECT BY PRIOR fileSystem = fileSystem
-                AND LEVEL <= maxTransfers
-                AND PRIOR sys_guid() IS NOT NULL
-              ORDER BY totalBytes ASC, fileSystem)
-  LOOP
-    drainFileSystem(a.fileSystem);
+             ORDER BY totalBytes ASC, fileSystem) LOOP
+    FOR i IN 1 .. f.maxTransfers LOOP
+      drainFileSystem(f.fileSystem);
+    END LOOP;
   END LOOP;
 END;
 /
