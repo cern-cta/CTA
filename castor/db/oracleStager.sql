@@ -1132,7 +1132,7 @@ BEGIN
       -- create  subrequest for this file.
       -- Note that the svcHandler is not set. It will actually never be used as repacks are handled purely in PL/SQL
       INSERT INTO SubRequest (retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, creationTime, lastModificationTime, answered, errorCode, errorMessage, requestedFileSystems, svcHandler, id, diskcopy, castorFile, parent, status, request, getNextStatus, reqType)
-      VALUES (0, lastKnownFileName, repackProtocol, segment.segSize, 0, uuidGen(), 0, 0, creationTime, creationTime, 0, 0, '', NULL, 'NotNullNeeded', ids_seq.nextval, 0, cfId, NULL, dconst.SUBREQUEST_START, varReqId, 0, 119)
+      VALUES (0, lastKnownFileName, repackProtocol, segment.segSize, 0, uuidGen(), 0, 0, creationTime, creationTime, 1, 0, '', NULL, 'NotNullNeeded', ids_seq.nextval, 0, cfId, NULL, dconst.SUBREQUEST_START, varReqId, 0, 119)
       RETURNING id INTO varSubreqId;
       -- if the file is being overwritten, fail
       SELECT count(DiskCopy.id) INTO varNbCopies
@@ -1188,14 +1188,16 @@ BEGIN
           PRAGMA EXCEPTION_INIT (noValidCopyNbFound, -20123);
           noMigrationRoute EXCEPTION;
           PRAGMA EXCEPTION_INIT (noMigrationRoute, -20100);
+          migrationTriggered boolean := False;
         BEGIN
           triggerRepackMigration(cfId, reqVID, segment.fileid, segment.copyNb, segment.fileclass,
-                                 segment.segSize, segment.allSegments, varMJStatus, isOngoing);
-          IF isOngoing THEN
+                                 segment.segSize, segment.allSegments, varMJStatus, migrationTriggered);
+          IF migrationTriggered THEN
             -- update STAGED diskcopies to CANBEMIGR
             UPDATE DiskCopy SET status = 10  -- DISKCOPY_CANBEMIGR
              WHERE castorFile = cfId AND status = 0;  -- DISKCOPY_STAGED
           END IF;
+          isOngoing := True;
         EXCEPTION WHEN noValidCopyNbFound OR noMigrationRoute THEN
           -- cleanup recall part if needed
           FOR t IN (SELECT id FROM RecallJob WHERE castorfile = cfId) LOOP
@@ -1411,8 +1413,10 @@ BEGIN
   BEGIN
     -- Try to see whether another subrequest in the same
     -- request is still being processed
-    SELECT id INTO unused FROM SubRequest
-     WHERE request = rId AND status NOT IN (8, 9) AND ROWNUM < 2;  -- all but {FAILED_,}FINISHED
+    -- note the decode trick to use the dedicated index I_SubRequest_Req_Stat_no89
+    SELECT request INTO unused FROM SubRequest
+     WHERE request = rId AND decode(status,8,NULL,9,NULL,status) IS NOT NULL
+       AND ROWNUM < 2;  -- all but {FAILED_,}FINISHED
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- All subrequests have finished, we can archive:
     -- take lock on the request (it is enough the following be
@@ -2271,7 +2275,7 @@ END;
 CREATE OR REPLACE PROCEDURE triggerRepackMigration
 (cfId IN INTEGER, vid IN VARCHAR2, fileid IN INTEGER, copyNb IN INTEGER,
  fileclass IN INTEGER, fileSize IN INTEGER, allSegments IN VARCHAR2,
- MJStatus IN INTEGER, isOngoing OUT boolean) AS
+ MJStatus IN INTEGER, migrationTriggered OUT boolean) AS
   varMjId INTEGER;
   varNb INTEGER;
   varDestCopyNb INTEGER;
@@ -2286,7 +2290,7 @@ BEGIN
   -- we have a migrationJob for this copy ! This means that the file has been overwritten
   -- and the new version is about to go to tape. We thus don't have anything to do
   -- for this file
-  isOngoing := False;
+  migrationTriggered := False;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- no migration job for this copyNb, we can proceed
   -- first let's parse the list of all segments
@@ -2347,8 +2351,8 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
         VALUES (cfId, varAllCopyNbs(i), varAllVIDs(i));
       END LOOP;
     END IF;
-    -- all is fine, migration is ongoing
-    isOngoing := True;
+    -- all is fine, migration was triggered
+    migrationTriggered := True;
   END;
 END;
 /

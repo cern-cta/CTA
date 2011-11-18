@@ -238,7 +238,8 @@ BEGIN
   DECLARE
     unused NUMBER;
   BEGIN
-    SELECT id INTO unused FROM MigrationJob WHERE castorfile = cfId;
+    SELECT /*+ INDEX_RS_ASC(MigrationJob I_MigrationJob_CFCopyNb) */ castorfile INTO unused
+      FROM MigrationJob WHERE castorfile = cfId;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     DELETE FROM MigratedSegment WHERE castorfile = cfId;
   END;
