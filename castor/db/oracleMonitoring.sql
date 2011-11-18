@@ -99,12 +99,12 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
     EXECUTE IMMEDIATE 'DELETE FROM MonWaitTapeMigrationStats';
     -- Populate the MonWaitTapeMigrationStats table
     INSERT INTO MonWaitTapeMigrationStats
-      (timestamp, interval, svcClass, status, minWaitTime, maxWaitTime,
+      (timestamp, interval, tapePool, status, minWaitTime, maxWaitTime,
        avgWaitTime, minFileSize, maxFileSize, avgFileSize, bin_LT_1,
        bin_1_To_6, bin_6_To_12, bin_12_To_24, bin_24_To_48, bin_GT_48,
        totalFileSize, nbFiles)
       -- Gather data
-      SELECT sysdate timestamp, interval, b.svcClass, nvl(b.status, '-') status,
+      SELECT sysdate timestamp, interval, b.tapePool, nvl(b.status, '-') status,
              -- File age statistics
              round(nvl(min(a.waitTime), 0), 0) minWaitTime,
              round(nvl(max(a.waitTime), 0), 0) maxWaitTime,
@@ -141,9 +141,9 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
           --          'Selected' for 'SELECTED'
           --          'Failed' for 'FAILED'
           --          'MIGRATED' and 'RETRY' will be ignored.
-          SELECT svcClass, status, waitTime, diskCopySize, found FROM (
+          SELECT tapePool, status, waitTime, diskCopySize, found FROM (
             SELECT /*+ USE_NL(MigrationJob DiskCopy CastorFile) */
-                   SvcClass.name svcClass,
+                   TapePool.name tapePool,
                    decode(MigrationJob.status, tconst.MIGRATIONJOB_PENDING, 'PENDING',
                       decode(MigrationJob.status, tconst.MIGRATIONJOB_SELECTED, 'SELECTED', 
                           decode(MigrationJob.status, tconst.MIGRATIONJOB_FAILED, 'FAILED','UNKNOWN')
@@ -152,10 +152,10 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
                    (getTime() - DiskCopy.creationTime) waitTime,
                    DiskCopy.diskCopySize, 1 found, RANK() OVER (PARTITION BY
                    DiskCopy.castorFile ORDER BY DiskCopy.id ASC) rank
-              FROM DiskCopy, CastorFile, MigrationJob, SvcClass
+              FROM DiskCopy, CastorFile, MigrationJob, TapePool
              WHERE DiskCopy.castorFile = CastorFile.id
-               AND CastorFile.id = MigrationJob.castorFile
-               AND CastorFile.svcClass = SvcClass.id
+               AND MigrationJob.castorFile = CastorFile.id
+               AND MigrationJob.tapePool = TapePool.id
                AND decode(DiskCopy.status, 10, DiskCopy.status, NULL) = 10  -- CANBEMIGR
                AND MigrationJob.status IN (tconst.MIGRATIONJOB_PENDING, 
                                            tconst.MIGRATIONJOB_SELECTED,
@@ -165,14 +165,14 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
         -- Attach a list of all service classes and possible states (PENDING,
         -- SELECTED) to the results above.
         RIGHT JOIN (
-          SELECT SvcClass.name svcClass, a.status
-            FROM SvcClass,
+          SELECT TapePool.name tapePool, a.status
+            FROM TapePool,
              (SELECT 'PENDING'  status FROM Dual UNION ALL
               SELECT 'SELECTED' status FROM Dual UNION ALL
               SELECT 'FAILED'   status FROM Dual) a) b
-           ON (a.svcClass = b.svcClass AND a.status = b.status)
-       GROUP BY GROUPING SETS (b.svcClass, b.status), (b.svcClass)
-       ORDER BY b.svcClass, b.status;
+           ON (a.tapePool = b.tapePool AND a.status = b.status)
+       GROUP BY GROUPING SETS (b.tapePool, b.status), (b.tapePool)
+       ORDER BY b.tapePool, b.status;
   END waitTapeMigrationStats;
 
 
