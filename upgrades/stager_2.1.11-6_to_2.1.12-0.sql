@@ -124,6 +124,8 @@ END;
 /
 -- set the reqType column for all subrequests
 UPDATE SubRequest SET reqType = (SELECT type FROM Id2Type WHERE id = request);
+-- create new index dedicated to archivesubreq
+CREATE INDEX I_SubRequest_Req_Stat_no89 ON SubRequest (request, decode(status,8,NULL,9,NULL,status));
 
 -- table and column drops
 ALTER TABLE Tape DROP COLUMN Stream;
@@ -182,7 +184,7 @@ PARTITION BY LIST (STATUS) (
 CREATE INDEX I_RecallJob_VID ON RecallJob(VID);
 CREATE INDEX I_RecallJob_Castorfile ON RecallJob (castorFile) LOCAL;
 CREATE INDEX I_RecallJob_Status ON RecallJob (status) LOCAL;
-CREATE INDEX I_RecallJob_TG_RequestId on RecallJob(tapeGatewayRequestId);
+CREATE INDEX I_RecallJob_TG_RequestIdFseq on RecallJob(tapeGatewayRequestId, fseq);
 ALTER TABLE RecallJob ADD CONSTRAINT UN_RECALLJOB_FILETRID 
    UNIQUE (FileTransactionId) USING INDEX;
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallJob', 'status', 3, 'RECALLJOB_SELECTED');

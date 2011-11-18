@@ -121,6 +121,9 @@ CREATE INDEX I_SubRequest_CT_ID ON SubRequest(creationTime, id) LOCAL
   PARTITION P_STATUS_13_14,
   PARTITION P_STATUS_OTHER);
 
+/* this index is dedicated to archivesubreq */
+CREATE INDEX I_SubRequest_Req_Stat_no89 ON SubRequest (request, decode(status,8,NULL,9,NULL,status));
+
 /* Redefinition of table RecallJob to make it partitioned by status */
 DROP TABLE RecallJob;
 CREATE TABLE RecallJob(copyNb NUMBER,
@@ -143,7 +146,7 @@ PARTITION BY LIST (STATUS) (
 CREATE INDEX I_RecallJob_VID ON RecallJob(VID);
 CREATE INDEX I_RecallJob_Castorfile ON RecallJob (castorFile) LOCAL;
 CREATE INDEX I_RecallJob_Status ON RecallJob (status) LOCAL;
-CREATE INDEX I_RecallJob_TG_RequestId on RecallJob(tapeGatewayRequestId);
+CREATE INDEX I_RecallJob_TG_RequestIdFseq on RecallJob(tapeGatewayRequestId, fseq);
 /* This transaction id is the mean to track a migration, so it obviously needs to be unique */
 ALTER TABLE RecallJob ADD CONSTRAINT UN_RECALLJOB_FILETRID 
   UNIQUE (FileTransactionId) USING INDEX;
@@ -329,11 +332,8 @@ CREATE INDEX I_GCFile_Request ON GCFile (request);
 /* Indexing Tape by Status */
 CREATE INDEX I_Tape_Status ON Tape (status);
 
-/* Indexing Segments by Tape */
-CREATE INDEX I_Segment_Tape ON Segment (tape);
-
-/* Indexing Segments by Tape and Status */
-CREATE INDEX I_Segment_TapeStatus ON Segment (tape, status);
+/* Indexing Segments by Tape and Status and fseq */
+CREATE INDEX I_Segment_TapeStatusFseq ON Segment (tape, status, fseq);
 
 /* FileSystem constraints */
 ALTER TABLE FileSystem ADD CONSTRAINT FK_FileSystem_DiskServer 
