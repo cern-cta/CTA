@@ -165,6 +165,9 @@ ALTER TABLE SvcClass ADD (lastEditor VARCHAR2(2048) DEFAULT '2.1.12 upgrade scri
                                      CONSTRAINT NN_SvcClass_LastEditionTime NOT NULL);
 UPDATE SvcClass SET lastEditionTime = getTime();
 
+-- improve repack or recall performances
+CREATE INDEX I_Segment_TapeStatusFseq ON Segment (tape, status, fseq);
+
 CREATE TABLE RecallJob(copyNb NUMBER,
                        errorCode NUMBER,
                        nbRetry NUMBER,
@@ -284,7 +287,6 @@ CREATE TABLE MigrationJob (fileSize INTEGER CONSTRAINT NN_MigrationJob_FileSize 
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE INDEX I_MigrationJob_CFVID ON MigrationJob(CastorFile, VID);
 CREATE INDEX I_MigrationJob_TapePoolSize ON MigrationJob(tapePool, fileSize);
-<<<<<<< HEAD
 CREATE INDEX I_MigrationJob_StatusTP ON MigrationJob(status, tapePool);
 CREATE INDEX I_MigrationJob_TPStatusCFId ON MigrationJob(tapePool, status, castorFile, id);
 CREATE INDEX I_MigrationJob_CFCopyNb ON MigrationJob(CastorFile, destCopyNb);
@@ -339,7 +341,7 @@ CREATE GLOBAL TEMPORARY TABLE RepackTapeSegments
  (fileId NUMBER, blockid RAW(4), fseq NUMBER, segSize NUMBER,
   copyNb NUMBER, fileClass NUMBER, otherSegments VARCHAR2(2048))
  ON COMMIT PRESERVE ROWS;
- 
+
 UPDATE Type2Obj SET svcHandler = 'BulkStageReqSvc' WHERE type = 119;
 INSERT INTO CastorConfig
 VALUES ('Repack', 'Protocol', 'rfio', 'The protocol that repack should use for writing files to disk');
