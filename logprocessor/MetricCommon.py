@@ -1113,7 +1113,8 @@ class Metric:
         # b) on the data (if not empty)
         for keyword in self.datakeys:
             
-            if (keyword!='KEYVALUES' or keyword!=''):
+            # Skip the test if we have a special keyword:
+            if (keyword=='KEYVALUES' or keyword==''):
                 pass
                 
             else:
