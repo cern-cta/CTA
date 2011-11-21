@@ -534,7 +534,11 @@ PROCEDURE tg_defaultMigrSelPolicy(inMountId IN INTEGER,
   LockError EXCEPTION;
   PRAGMA EXCEPTION_INIT (LockError, -54);
   CURSOR c IS
-    SELECT /*+ FIRST_ROWS(1) LEADING(MigrationMount MigrationJob DiskCopy FileSystem DiskServer CastorFile) */
+    SELECT /*+ FIRST_ROWS_1 
+               INDEX(CastorFile  PK_CastorFile_Id)
+               INDEX(DiskCopy I_DiskCopy_CastorFile)
+               INDEX(TapePool I_MigrationJob_TPStatusCFId)
+               LEADING(MigrationMount MigrationJob CastorFile DiskCopy FileSystem DiskServer) */
            DiskServer.name, FileSystem.mountPoint, DiskCopy.path, DiskCopy.id, CastorFile.lastKnownFilename,
            CastorFile.fileId, CastorFile.nsHost, CastorFile.fileSize, MigrationJob.id, CastorFile.lastUpdateTime
       FROM MigrationMount, MigrationJob, DiskCopy, FileSystem, DiskServer, CastorFile
