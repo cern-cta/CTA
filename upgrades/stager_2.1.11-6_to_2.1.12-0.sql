@@ -346,7 +346,7 @@ UPDATE Type2Obj SET svcHandler = 'BulkStageReqSvc' WHERE type = 119;
 INSERT INTO CastorConfig
 VALUES ('Repack', 'Protocol', 'rfio', 'The protocol that repack should use for writing files to disk');
 INSERT INTO CastorConfig
-VALUES ('Repack', 'MaxNbConcurrentClients', '5', 'The maximum number of repacks clients that are able to run concurrently. This are either clients atrting repacks or aborting running repacks. Providing that each of them will take a DB core, this number should roughtly be ~60% of the number of cores of the stager DB server');
+VALUES ('Repack', 'MaxNbConcurrentClients', '3', 'The maximum number of repacks clients that are able to start or abort concurrently. This are either clients starting repacks or aborting running repacks. Providing that each of them will take a DB core, this number should not exceed ~50% of the number of cores of the stager DB server');
 COMMIT;
 
 -- cleanup old PL/SQL code
