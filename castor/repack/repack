@@ -158,7 +158,7 @@ def _printStatusLine(subTime, user, machine, vid, status, total, size, toRecall,
     # human readable size
     size = _humanReadableSize(size)
     # actual printing
-    print '%-18s%10s%30s%9s%11d%12s%10d%10d%10d%10d%10s' % (subTime, user, machine, vid, total, size, toRecall, toMigr, failed, migrated, status)
+    print '%-18s%10s%30s%9s%11d%12s%10d%10d%10d%10d%7d%%%11s' % (subTime, user, machine, vid, total, size, toRecall, toMigr, failed, migrated, 100-(toRecall+toMigr)*100.0/total, status)
 
 def displayStatus():
     '''displays the ongoing repacks. If vids is not empty, the output is limited to these tapes'''
@@ -191,9 +191,9 @@ def displayStatus():
             print 'No repack activity found'
             return
         # print out results
-        print '='*140
-        print 'SubmitTime              User                       Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated    Status'
-        print '-'*140
+        print '='*149
+        print 'SubmitTime              User                       Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated  Compl%     Status'
+        print '-'*149
         for subTime, user, machine, vid, status, total, size, toRecall, toMigr, failed, migrated in rows:
             if not vids or vid in vids:
                 _printStatusLine(subTime, user, machine, vid, status, total, size, toRecall, toMigr, failed, migrated)
