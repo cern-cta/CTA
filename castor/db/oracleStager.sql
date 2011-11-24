@@ -447,8 +447,8 @@ BEGIN
         FROM SubRequest PARTITION (P_STATUS_0_1_2) SR
        WHERE id = varSrId FOR UPDATE NOWAIT;
       -- Since we are here, we got the lock. We have our winner, let's update it
-      UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-         SET status = dconst.SUBREQUEST_WAITSCHED, subReqId = nvl(subReqId, uuidGen())
+      UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id) */ SubRequest
+         SET subReqId = nvl(subReqId, uuidGen())
        WHERE id = varSrId
       RETURNING id, retryCounter, fileName, protocol, xsize, modeBits, flags, subReqId,
         answered, reqType, request, (SELECT object FROM Type2Obj WHERE type = reqType) 
@@ -1277,12 +1277,11 @@ BEGIN
         archiveSubReq(varSRId, dconst.SUBREQUEST_FAILED_FINISHED);
       ELSE
         -- we got our subrequest, select all relevant data
-        UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ subrequest
-           SET status = dconst.SUBREQUEST_FAILED_ANSWERING
-         WHERE id = varSRId
-        RETURNING fileName, subReqId, errorCode, errorMessage,
+        SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ fileName, subReqId, errorCode, errorMessage,
           (SELECT object FROM Type2Obj WHERE type = reqType), request, castorFile
-        INTO srFileName, srSubReqId, srErrorCode, srErrorMessage, varRName, varRId, varCFId;
+          INTO srFileName, srSubReqId, srErrorCode, srErrorMessage, varRName, varRId, varCFId
+          FROM SubRequest
+         WHERE id = varSRId;
         srId := varSRId;
         srFileId := 0;
         BEGIN
@@ -1299,10 +1298,6 @@ BEGIN
               SELECT reqId, client
                 INTO rReqId, varClientId
                 FROM StagePrepareToUpdateRequest WHERE id = varRId;
-            WHEN varRName = 'StageRepackRequest' THEN
-              SELECT reqId, client
-                INTO rReqId, varClientId
-                FROM StageRepackRequest WHERE id = varRId;
             WHEN varRName = 'StagePutRequest' THEN
               SELECT reqId, client
                 INTO rReqId, varClientId
@@ -2876,14 +2871,15 @@ CREATE OR REPLACE PROCEDURE selectCastorFile (fId IN INTEGER,
                                               fn IN VARCHAR2,
                                               srId IN NUMBER,
                                               lut IN NUMBER,
-                                              rid OUT INTEGER,
-                                              rfs OUT INTEGER) AS
+                                              outId OUT INTEGER,
+                                              outFS OUT INTEGER,
+                                              outNH OUT VARCHAR2) AS
   nsHostName VARCHAR2(2048);
 BEGIN
   -- Get the stager/nsHost configuration option
   nsHostName := getConfigOption('stager', 'nsHost', nh);
   -- call internal method
-  selectCastorFileInternal(fId, nsHostName, fc, fs, fn, srId, lut, TRUE, rid, rfs);
+  selectCastorFileInternal(fId, nsHostName, fc, fs, fn, srId, lut, TRUE, outId, outFS, outNH);
 END;
 /
 
@@ -2896,8 +2892,9 @@ CREATE OR REPLACE PROCEDURE selectCastorFileInternal (fId IN INTEGER,
                                                       srId IN NUMBER,
                                                       lut IN NUMBER,
                                                       waitForLock IN BOOLEAN,
-                                                      rid OUT INTEGER,
-                                                      rfs OUT INTEGER) AS
+                                                      outId OUT INTEGER,
+                                                      outFS OUT INTEGER,
+                                                      outNH OUT VARCHAR2) AS
   CONSTRAINT_VIOLATED EXCEPTION;
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
   previousLastKnownFileName VARCHAR2(2048);
