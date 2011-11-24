@@ -144,7 +144,7 @@ const std::string castor::db::ora::OraStagerSvc::s_createEmptyFileStatementStrin
 
 /// SQL statement for selectCastorFile
 const std::string castor::db::ora::OraStagerSvc::s_selectCastorFileStatementString =
-"BEGIN selectCastorFile(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10); END;";
+"BEGIN selectCastorFile(:1, :2, :3, :4, :5, :6, :7, :8, :9); END;";
 
 /// SQL statement for getBestDiskCopyToRead
 const std::string castor::db::ora::OraStagerSvc::s_getBestDiskCopyToReadStatementString =
@@ -1001,8 +1001,6 @@ castor::db::ora::OraStagerSvc::selectCastorFile(castor::stager::SubRequest* subr
       (8, oracle::occi::OCCIDOUBLE);
     m_selectCastorFileStatement->registerOutParam
       (9, oracle::occi::OCCIDOUBLE);
-    m_selectCastorFileStatement->registerOutParam
-      (10, oracle::occi::OCCISTRING);
     m_selectCastorFileStatement->setAutoCommit(true);
   }
   // Execute statement and get result
@@ -1028,7 +1026,7 @@ castor::db::ora::OraStagerSvc::selectCastorFile(castor::stager::SubRequest* subr
       new castor::stager::CastorFile();
     result->setId((u_signed64)m_selectCastorFileStatement->getDouble(8));
     result->setFileId(cnsFileId->fileid);
-    result->setNsHost(m_selectCastorFileStatement->getString(10));
+    result->setNsHost(cnsFileId->server);
     result->setLastKnownFileName(subreq->fileName());
     result->setFileSize((u_signed64)m_selectCastorFileStatement->getDouble(9));
     result->setLastUpdateTime(cnsFileStat->mtime);
