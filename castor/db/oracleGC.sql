@@ -590,10 +590,11 @@ END;
 /
 
 /* A generic method to delete requests of a given type */
-CREATE OR REPLACE Procedure bulkDeleteRequests(reqType IN VARCHAR) AS
+CREATE OR REPLACE Procedure bulkDeleteRequests(reqType IN VARCHAR, timeOut IN INTEGER) AS
 BEGIN
   bulkDelete('SELECT id FROM '|| reqType ||' R WHERE
-    NOT EXISTS (SELECT 1 FROM SubRequest WHERE request = R.id);',
+    NOT EXISTS (SELECT 1 FROM SubRequest WHERE request = R.id) AND lastModificationTime < getTime() - '
+    || timeOut ||';',
     reqType);
 END;
 /
@@ -612,8 +613,8 @@ BEGIN
     FROM SubRequest
    WHERE status IN (9, 11)  -- FAILED_FINISHED, ARCHIVED
      AND lastModificationTime > getTime() - 1800;
-  IF rate > 0 AND (500000 / rate * 1800) < timeOut THEN
-    timeOut := 500000 / rate * 1800;  -- keep 500k requests max
+  IF rate > 0 AND (1000000 / rate * 1800) < timeOut THEN
+    timeOut := 1000000 / rate * 1800;  -- keep 1M requests max
   END IF;
   
   -- delete castorFiles if nothing is left for them. Here we use
@@ -662,29 +663,33 @@ BEGIN
   END;
   EXECUTE IMMEDIATE 'TRUNCATE TABLE DeleteTermReqHelper';
 
-  -- and then related Requests
+  -- And then related Requests, now orphaned.
+  -- The timeout makes sure we keep very recent requests,
+  -- even if they have no subrequests. This may actually
+  -- be the case only for Repack requests, as they're
+  -- created empty and filled after querying the NS.
     ---- Get ----
-  bulkDeleteRequests('StageGetRequest');
+  bulkDeleteRequests('StageGetRequest', timeOut);
     ---- Put ----
-  bulkDeleteRequests('StagePutRequest');
+  bulkDeleteRequests('StagePutRequest', timeOut);
     ---- Update ----
-  bulkDeleteRequests('StageUpdateRequest');
+  bulkDeleteRequests('StageUpdateRequest', timeOut);
     ---- PrepareToGet -----
-  bulkDeleteRequests('StagePrepareToGetRequest');
+  bulkDeleteRequests('StagePrepareToGetRequest', timeOut);
     ---- PrepareToPut ----
-  bulkDeleteRequests('StagePrepareToPutRequest');
+  bulkDeleteRequests('StagePrepareToPutRequest', timeOut);
     ---- PrepareToUpdate ----
-  bulkDeleteRequests('StagePrepareToUpdateRequest');
+  bulkDeleteRequests('StagePrepareToUpdateRequest', timeOut);
     ---- PutDone ----
-  bulkDeleteRequests('StagePutDoneRequest');
+  bulkDeleteRequests('StagePutDoneRequest', timeOut);
     ---- Rm ----
-  bulkDeleteRequests('StageRmRequest');
+  bulkDeleteRequests('StageRmRequest', timeOut);
     ---- Repack ----
-  bulkDeleteRequests('StageRepackRequest');
+  bulkDeleteRequests('StageRepackRequest', timeOut);
     ---- DiskCopyReplica ----
-  bulkDeleteRequests('StageDiskCopyReplicaRequest');
+  bulkDeleteRequests('StageDiskCopyReplicaRequest', timeOut);
     ---- SetGCWeight ----
-  bulkDeleteRequests('SetFileGCWeight');
+  bulkDeleteRequests('SetFileGCWeight', timeOut);
 END;
 /
 
@@ -747,7 +752,7 @@ BEGIN
                   WHERE castorFile = c.id
                     AND status IN (0, 1, 2, 3, 5, 6, 13, 14) -- all active
                     AND reqType NOT IN (37, 38))) LOOP -- ignore PrepareToPut, PrepareToUpdate
-    IF (0 = f.fileSize) OR (f.dcStatus <> 6) THEN
+    IF (0 = f.fileSize) OR (f.dcStatus <> 6) THEN  -- DISKCOPY_STAGEOUT
       -- here we invalidate the diskcopy and let the GC run
       UPDATE DiskCopy SET status = 7  -- INVALID
        WHERE id = f.dcid;
