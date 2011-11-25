@@ -302,30 +302,12 @@ private:
   ClientCallbackMap m_clientHandlers;
 
   /**
-   * The list of errors received from the rtcpd daemon in chronological order.
-   * The front of the list is the first and oldest error received from the
-   * rtcpd daemon. The back of the list is the last and youngest error received
-   * from the rtcpd daemon.
+   * The list of errors generated during the session with the rtcpd daemon.
+   * The list is ordered chronologically ordered with the front of the list
+   * being the first and oldest error and the back of the list being the last
+   * and youngest error.
    */
   std::list<RtcpdError> m_rtcpdErrors;
-
-  /**
-   * If set to true then an exception has been throw whilst running the rtcpd
-   * session.
-   */
-  bool m_exceptionThrownRunningRtcpdSession;
-
-  /**
-   * If an exception has been throw whilst running the rtcpd session, then
-   * this variable contains the error code.
-   */
-  int m_rtcpdSessionErrorCode;
-
-  /**
-   * If an exception has been throw whilst running the rtcpd session, then
-   * this variable contains the error message.
-   */
-  std::string m_rtcpdSessionErrorMessage;
 
   /**
    * Processes the rtcpd and client sockets in a loop until the end of the
@@ -798,6 +780,12 @@ private:
   void notifyClientOfFailedRecalls(const Cuuid_t &cuuid,
     const std::list<RtcpdError> &rtcpdErrors)
     throw(castor::exception::Exception);
+
+  /**
+   * Returns true if for any reason the session with the rtcpd daemon is being
+   * shutdown.
+   */
+  bool shuttingDownRtcpdSession() const;
 }; // class BridgeProtocolEngine
 
 } // namespace tapebridge

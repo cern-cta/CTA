@@ -86,7 +86,7 @@ public:
    * This method throws an exception if the specified pending file-migration
    * cannot be found in the pending file-migration store.
    *
-   * his method throws an exception if at least one file has already been
+   * This method throws an exception if at least one file has already been
    * marked as being written but not yet flushed to tape and the tape-file
    * sequence-number of the specified file to be marked is not 1 plus that of
    * the previously marked file.

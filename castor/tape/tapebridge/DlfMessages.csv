@@ -146,3 +146,4 @@
 145,TAPEBRIDGE_CLOSED_RTCPD_DISK_TAPE_CONNECTION_DUE_TO_ENDOF_REQ,"Closed rtcpd disk/tape IO control connection due to ENDOF_REQ"
 146,TAPEBRIDGE_FINISHED_PROCESSING_SOCKETS,"Finished processing sockets"
 147,TAPEBRIDGE_RETURNED_FROM_MAIN_SELECT,"Returned from main select"
+148,TAPEBRIDGE_TELLING_RTCPD_NO_MORE_FILES_DUE_TO_SHUTTING_DOWN,"Telling rtcpd there are no more files to transfer because the rtcpd session is being shutdown"

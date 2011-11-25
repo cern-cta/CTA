@@ -159,7 +159,7 @@ void castor::tape::tapebridge::PendingMigrationsStore::fileWrittenWithoutFlush(
     TAPE_THROW_CODE(EBADMSG,
     ": Failed to " << task <<
     ": File migrated message contains an invalid fseq"
-    ": value=" << notification.tapeFSeq);
+    ": fseq=" << notification.tapeFSeq);
   }
 
   // Throw an exception if the file size of the file migrated message is
@@ -167,7 +167,8 @@ void castor::tape::tapebridge::PendingMigrationsStore::fileWrittenWithoutFlush(
   if(0 == notification.fileSize) {
     TAPE_THROW_CODE(EBADMSG,
     ": Failed to " << task <<
-    ": File migrated message contains the invalid file-size of 0");
+    ": File migrated message contains the invalid file-size of 0" <<
+    ": fseq=" << notification.tapeFSeq);
   }
 
   // Try to find the pending file-migration whose state is to be updated
