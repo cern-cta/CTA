@@ -47,9 +47,9 @@ namespace tapegateway {
    * Default parameters to initialize the Dynamic Thread pool
    */
 
-  const uint64_t MIN_WORKER_THREADS = 20;
+  const uint64_t MIN_WORKER_THREADS = 5;
   const uint64_t MAX_WORKER_THREADS = 20;
-  const uint64_t TG_THRESHOLD = 50;
+  const uint64_t TG_THRESHOLD = 5;   // if the pending tasks go above 5% (i.e. 3 or more), a thread is spawn
   const uint64_t TG_MAXTASKS = 50;
 
 
