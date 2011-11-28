@@ -2,13 +2,17 @@ UNAME := $(shell uname)
 
 ifeq ($(UNAME), Darwin)
 UUID_LIB=
+MACPORTS_CPPUNIT_INCLUDE_OP=-I/opt/local/include
+MACPORTS_CPPUNIT_LIB_OP=-L/opt/local/lib
 else
 UUID_LIB=-luuid
+MACPORTS_CPPUNIT_INCLUDE_OP=
+MACPORTS_CPPUNIT_LIB_OP=
 endif
 
 ROOT_DIR=../../../..
-INCLUDE_OPS=-I$(ROOT_DIR) -I$(ROOT_DIR)/h
-LIB_DIR_OPS=-L/opt/local/var/macports/software/cppunit/1.12.1_0/opt/local/lib
+INCLUDE_OPS=-I$(ROOT_DIR) -I$(ROOT_DIR)/h $(MACPORTS_CPPUNIT_INCLUDE_OP)
+LIB_DIR_OPS=$(MACPORTS_CPPUNIT_LIB_OP)
 EXECUTABLES=tapebridgedaemontester tapebridged
 COMMON_OPS=-Werror -Wall -pedantic -Wno-long-long -g -pthread
 

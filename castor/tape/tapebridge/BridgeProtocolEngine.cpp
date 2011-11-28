@@ -873,6 +873,8 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::startRtcpdSession()
 bool castor::tape::tapebridge::BridgeProtocolEngine::startMigrationSession()
   throw(castor::exception::Exception) {
 
+  const char *const task = "start migration session";
+
   // Send the request for the first file to migrate to the client
   timeval connectDuration = {0, 0};
   const uint64_t tapebridgeTransId =
@@ -956,6 +958,7 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::startMigrationSession()
   // should only contain one file
   if(1 != filesFromClient->filesToMigrate().size()) {
     TAPE_THROW_CODE(ENOTSUP,
+      ": Failed to " << task <<
       ": The FilesToMigrateList message for the first file to migrate should"
       " only contain one file"
       ": nbFiles=" << filesFromClient->filesToMigrate().size());
@@ -971,7 +974,8 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::startMigrationSession()
       castor::exception::Exception ex(ECANCELED);
 
       ex.getMessage() <<
-        "Invalid tape file sequence number from client"
+        ": Failed to " << task <<
+        ": Invalid tape file sequence number from client"
         ": expected=" << (m_nextDestinationTapeFSeq) <<
         ": actual=" << firstFileToMigrate->fseq();
 
@@ -983,8 +987,18 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::startMigrationSession()
 
   // Remember the file transaction ID and get its unique index to be passed
   // to rtcpd through the "rtcpFileRequest.disk_fseq" message field
-  const uint32_t diskFSeq = m_pendingTransferIds.insert(
-    firstFileToMigrate->fileTransactionId());
+  uint32_t diskFSeq = 0;
+  try {
+    diskFSeq = m_pendingTransferIds.insert(
+      firstFileToMigrate->fileTransactionId());
+  } catch(castor::exception::Exception &ex) {
+    // Add context and rethrow
+    castor::exception::Exception ex2(ex.code());
+    ex2.getMessage() <<
+      "Failed to " << task <<
+      ": " << ex.getMessage().str();
+    throw(ex2);
+  }
 
   // Give volume to rtcpd
   legacymsg::RtcpTapeRqstErrMsgBody rtcpVolume;
@@ -2381,8 +2395,17 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   // Remember the file transaction ID and get its unique index to be
   // passed to rtcpd through the "rtcpFileRequest.disk_fseq" message
   // field
-  const int diskFSeq =
-    m_pendingTransferIds.insert(fileToMigrate->fileTransactionId());
+  int diskFSeq = 0;
+  try {
+    diskFSeq = m_pendingTransferIds.insert(fileToMigrate->fileTransactionId());
+  } catch(castor::exception::Exception &ex) {
+    // Add context and rethrow
+    castor::exception::Exception ex2(ex.code());
+    ex2.getMessage() <<
+      "Failed to " << task <<
+      ": " << ex.getMessage().str();
+    throw(ex2);
+  }
 
   // If the client is the tape gateway
   if(m_volume.clientType() == tapegateway::TAPE_GATEWAY) {
@@ -2599,8 +2622,17 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   // Remember the file transaction ID and get its unique index to be
   // passed to rtcpd through the "rtcpFileRequest.disk_fseq" message
   // field
-  const int diskFSeq =
-    m_pendingTransferIds.insert(fileToRecall->fileTransactionId());
+  int diskFSeq = 0;
+  try {
+    diskFSeq = m_pendingTransferIds.insert(fileToRecall->fileTransactionId());
+  } catch(castor::exception::Exception &ex) {
+    // Add context and rethrow
+    castor::exception::Exception ex2(ex.code());
+    ex2.getMessage() <<
+      "Failed to " << task <<
+      ": " << ex.getMessage().str();
+    throw(ex2);
+  }
 
   // Give file to recall to rtcpd
   {
