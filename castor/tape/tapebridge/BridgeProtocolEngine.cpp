@@ -1834,8 +1834,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
       // If this is a file-specific error
       if(0 < body.rqst.tapeFseq) {
         rtcpdError.setErrorScope(RtcpdError::FILE_SCOPE);
-        rtcpdError.setFileTransactionId(
-          m_pendingTransferIds.get(body.rqst.diskFseq));
+        rtcpdError.setFileTransactionId(fileTransactonId);
         rtcpdError.setNsHost(body.rqst.segAttr.nameServerHostName);
         rtcpdError.setNsFileId(body.rqst.segAttr.castorFileId);
         rtcpdError.setTapeFSeq(body.rqst.tapeFseq);
