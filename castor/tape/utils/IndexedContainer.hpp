@@ -96,7 +96,7 @@ public:
   }
 
   /**
-   * Inserts the specified data and returns the index of the elements used to
+   * Inserts the specified data and returns the index of the element used to
    * store a copy of that data.
    *
    * Throws an OutOfMemory exception if there are no free elements.
@@ -105,12 +105,15 @@ public:
    * @return The index of the element used to store the data.
    */
   int insert(const T &data) throw(exception::OutOfMemory) {
+    const char *const task = "insert data into IndexedContainer";
 
     if(m_free == NULL) {
       exception::OutOfMemory ex;
 
-      ex.getMessage() << "No more free elements to store data pointer: "
-        "Maximum number of elements=" << m_nbElements;
+      ex.getMessage() <<
+        "Failed to " << task <<
+        ": No more free elements to store data pointer: "
+        ": maxElements=" << m_nbElements;
 
       throw(ex);
     }
@@ -140,16 +143,17 @@ public:
    */
   T &get(const int index)
     throw(exception::InvalidArgument, exception::NoEntry) {
-
+    const char *const task = "get reference to data stored in IndexedContainer";
     Element *element = getElement(index);
 
     // Throw an exception if the element is free
     if(element->isFree) {
       exception::NoEntry ex;
 
-      ex.getMessage()
-        << "Element is free"
-           ": Index=" << index;
+      ex.getMessage() <<
+        "Failed to " << task <<
+        ": Element is free"
+        ": index=" << index;
 
       throw ex;
     }
@@ -174,16 +178,17 @@ public:
    */
   T &remove(const int index) throw(exception::InvalidArgument,
     exception::NoEntry) {
-
+    const char *const task = "remove data from IndexedContainer using index";
     Element *element = getElement(index);
 
     // Throw an exception if the element is free
     if(element->isFree) {
       exception::NoEntry ex;
 
-      ex.getMessage()
-        << "Element is free"
-           ": Index=" << index;
+      ex.getMessage() <<
+        "Failed to " << task <<
+        ": Element is free"
+        ": index=" << index;
 
       throw ex;
     }
@@ -276,15 +281,17 @@ private:
    * @return The data pointer.
    */
   Element *getElement(const int index) throw(exception::InvalidArgument) {
+    const char *const task = "get element from IndexContainer using index";
 
     // Throw an exception if the index is invalid
     if(index < 0 || index >=m_nbElements) {
       exception::InvalidArgument ex;
 
-      ex.getMessage()
-        << "Invalid index"
-           ": Actual=" << index
-        << " Minimum=0 Maximum=" << (m_nbElements-1);
+      ex.getMessage() <<
+        "Failed to " << task <<
+        ": Invalid index"
+        ": Actual=" << index <<
+        ": min=0 Max=" << (m_nbElements-1);
 
       throw ex;
     }
