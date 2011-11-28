@@ -1009,8 +1009,8 @@ END;
 /* PL/SQL method to handle a repack request */
 CREATE OR REPLACE PROCEDURE handleRepackRequest
   (machine IN VARCHAR2,
-   euid IN INTEGER,
-   egid IN INTEGER,
+   inEuid IN INTEGER,
+   inEgid IN INTEGER,
    pid IN INTEGER,
    userName IN VARCHAR2,
    svcClassName IN VARCHAR2,
@@ -1031,7 +1031,7 @@ CREATE OR REPLACE PROCEDURE handleRepackRequest
   result NUMBER;
   nsHostName VARCHAR2(2048);
   lastKnownFileName VARCHAR2(2048);
-  priority INTEGER;
+  varPriority INTEGER;
   unused INTEGER;
   firstCF boolean := True;
   nbFilesProcessed NUMBER := 0;
@@ -1039,7 +1039,7 @@ CREATE OR REPLACE PROCEDURE handleRepackRequest
   isOngoing boolean := False;
 BEGIN
   -- do prechecks and get the service class
-  svcClassId := insertPreChecks(euid, egid, svcClassName, 119);
+  svcClassId := insertPreChecks(inEuid, inEgid, svcClassName, 119);
   -- insertion time
   creationTime := getTime();
   -- insert the client information
@@ -1048,7 +1048,7 @@ BEGIN
   RETURNING id INTO clientId;
   -- insert the request itself
   INSERT INTO StageRepackRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, repackVid, id, svcClass, client,status)
-  VALUES (0,userName,euid,egid,0,pid,machine,svcClassName,'',uuidgen(),creationTime,creationTime,reqVID,ids_seq.nextval,svcClassId,clientId,tconst.REPACK_STARTING)
+  VALUES (0,userName,inEuid,inEgid,0,pid,machine,svcClassName,'',uuidgen(),creationTime,creationTime,reqVID,ids_seq.nextval,svcClassId,clientId,tconst.REPACK_STARTING)
   RETURNING id INTO varReqId;
   -- commit so that the repack request is visible, even if empty for the moment
   COMMIT;
@@ -1067,10 +1067,10 @@ BEGIN
   END IF;
   -- compute the priority of this request
   BEGIN
-    SELECT priority INTO priority FROM PriorityMap
-     WHERE euid = euid AND egid = egid AND ROWNUM < 2;
+    SELECT priority INTO varPriority FROM PriorityMap
+     WHERE euid = inEuid AND egid = inEgid AND ROWNUM < 2;
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    priority := 0;
+    varPriority := 0;
   END;
   -- Get the list of files to repack from the NS DB via DBLink and store them in memory
   -- in a temporary table. We do that so that we do not keep an open cursor for too long
@@ -1174,7 +1174,7 @@ BEGIN
             END IF;
             -- trigger the recall
             varSrStatus := dconst.SUBREQUEST_WAITTAPERECALL;
-            varSrDcId := triggerRepackRecall(cfId, tapeId, segment.fileid, nsHostName, segment.blockid, segment.fseq, segment.copyNb, priority, euid, egid);
+            varSrDcId := triggerRepackRecall(cfId, tapeId, segment.fileid, nsHostName, segment.blockid, segment.fseq, segment.copyNb, varPriority, inEuid, inEgid);
           END;
           isOngoing := TRUE;
         END IF;
