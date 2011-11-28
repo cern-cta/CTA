@@ -370,7 +370,7 @@ void castor::tape::tapegateway::TapeGatewayDaemon::logStart(const int argc,
 // parseCommandLine
 //------------------------------------------------------------------------------
 
-
+/*
 
 void castor::tape::tapegateway::TapeGatewayDaemon::parseCommandLine(int argc, char* argv[]){
   if (argc < 1 ) {
@@ -396,7 +396,7 @@ void castor::tape::tapegateway::TapeGatewayDaemon::parseCommandLine(int argc, ch
 
 }
 
-
+*/
 
 //------------------------------------------------------------------------------
 // Usage

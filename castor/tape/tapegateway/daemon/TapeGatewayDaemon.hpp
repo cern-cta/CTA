@@ -64,7 +64,7 @@ namespace castor {
 
 
       int exceptionThrowingMain(int argc,char **argv) 
-	throw(castor::exception::Exception);
+        throw(castor::exception::Exception);
 
 
       /**
@@ -85,7 +85,7 @@ namespace castor {
        * @param argv Argument vector from the executable's entry function: main().
        */
       
-      void parseCommandLine(int argc, char* argv[]);
+      //void parseCommandLine(int argc, char* argv[]);
   
     public:
 
