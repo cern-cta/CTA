@@ -520,38 +520,34 @@ PROCEDURE tg_defaultMigrSelPolicy(inMountId IN INTEGER,
    * Procedure's output: non-zero MigrationJob ID
    *
    * Lock taken on the migration job if it selects one.
-   * Lock taken on the diskserver and FileSystem.
    * 
    * Per policy we should only propose a migration job for a file that does not 
-   * already have another migration job attached for or migrated to the same tape.
-   * The already migrated migration jobs are kept until the whole set of siblings 
-   * have been migrated. Nothing else is guaranteed to be.
-   * 
-   * From this we can find a list of our potential siblings (by castorfile) from
-   * this TapeGatewayRequest, and prevent the selection of migration jobs whose 
-   * siblings already live on the same tape.
+   * already have another copy migrated to the same tape.
+   * The already migrated copies are kept in MigratedSegment until the whole set
+   * of siblings has been migrated.
    */
   LockError EXCEPTION;
   PRAGMA EXCEPTION_INIT (LockError, -54);
   CURSOR c IS
     SELECT /*+ FIRST_ROWS_1 
-               INDEX(CastorFile  PK_CastorFile_Id)
+               LEADING(MigrationMount MigrationJob CastorFile DiskCopy FileSystem DiskServer)
+               INDEX(CastorFile PK_CastorFile_Id)
                INDEX(DiskCopy I_DiskCopy_CastorFile)
-               INDEX(MigrationJob I_MigrationJob_TPStatusCFId)
-               LEADING(MigrationMount MigrationJob CastorFile DiskCopy FileSystem DiskServer) */
+               INDEX(MigrationJob I_MigrationJob_TapePoolStatus) */
            DiskServer.name, FileSystem.mountPoint, DiskCopy.path, DiskCopy.id, CastorFile.lastKnownFilename,
            CastorFile.fileId, CastorFile.nsHost, CastorFile.fileSize, MigrationJob.id, CastorFile.lastUpdateTime
       FROM MigrationMount, MigrationJob, DiskCopy, FileSystem, DiskServer, CastorFile
      WHERE MigrationMount.id = inMountId
-       AND MigrationJob.tapePool = MigrationMount.tapepool
+       AND MigrationJob.tapePool = MigrationMount.tapePool
        AND MigrationJob.status = tconst.MIGRATIONJOB_PENDING
+       AND CastorFile.id = MigrationJob.castorFile
        AND DiskCopy.castorFile = MigrationJob.castorFile
        AND FileSystem.id = DiskCopy.fileSystem
        AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING)
        AND DiskServer.id = FileSystem.diskServer
        AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING)
-       AND CastorFile.id = MigrationJob.castorFile
-       AND MigrationMount.VID NOT IN (SELECT VID FROM MigratedSegment
+       AND MigrationMount.VID NOT IN (SELECT /*+ INDEX_RS_ASC(MigratedSegment I_MigratedSegment_CFCopyNBVID) */ vid 
+                                        FROM MigratedSegment
                                        WHERE castorFile = MigrationJob.castorfile
                                          AND copyNb != MigrationJob.destCopyNb)
        FOR UPDATE OF MigrationJob.id SKIP LOCKED;
