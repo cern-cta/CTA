@@ -141,6 +141,9 @@ class DiskServerListCache:
     return self.diskServer2DiskPool.keys()
 
   def getDiskServerPool(self, diskserver):
+    # check whether we need to refresh our data first
+    if self.refreshDelay >= 0 and time.time() > self.lastRefresh + self.refreshDelay:
+      self.refresh()
     '''returns the pool in which a given diskserver lives'''
     return self.diskServer2DiskPool[diskserver]
 
@@ -262,7 +265,7 @@ class TransferManagerService(rpyc.Service):
         # 'Could not contact transfer manager' message
         dlf.writenotice(msgs.COULDNOTCONTACTTM, Function='listPendingTransfersCentrally',
                         TransferManager=scheduler, Type=str(e.__class__), Message=str(e))
-        raise IOError
+        raise IOError('Could not contact transfer manager on %s' % scheduler)
     return tuple(transfers)
 
   def exposed_summarizeTransfersPerPool(self, diskPool=None, user=None, detailed=False):

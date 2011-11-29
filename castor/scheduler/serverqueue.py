@@ -344,10 +344,17 @@ class ServerQueue(dict):
     # pick a random machine (we loop and break straight, due to lack of "getrandomitem" on a set
     for diskserver in self.transfersLocations[transferid]:
       # get diskpool
-      diskpool = diskServerList.getDiskServerPool(diskserver)
-      # are we interested in this diskpool ?
-      if reqdiskpool and reqdiskpool != diskpool:
-        return False
+      try:
+        diskpool = diskServerList.getDiskServerPool(diskserver)
+        # are we interested in this diskpool ?
+        if reqdiskpool and reqdiskpool != diskpool:
+          return False
+      except KeyError:
+        # no diskserver found with this name. It must have disappeared while the associated
+        # transfer was queuein. Let's use the diskpool '???'
+        if reqdiskpool:
+          return False
+        diskpool = '???'
       # are we interested in this user ?
       if reqUser:
         rawtransfer = self[diskserver][transferid][0]
@@ -366,7 +373,8 @@ class ServerQueue(dict):
       # for each transfer
       for transferid in self.transfersLocations:
         # check that we are interested in it
-        if self._isTransferMatchingAndGetPool(transferid, diskServerList, reqdiskpool, reqUser):
+        diskpool = self._isTransferMatchingAndGetPool(transferid, diskServerList, reqdiskpool, reqUser)
+        if diskpool:
           # go through the different instances of this transfer
           for diskserver in self.transfersLocations[transferid]:
             # get information about the transfer
@@ -378,7 +386,7 @@ class ServerQueue(dict):
             # add the transfer to list of results
             res.append((transferid, transfer[6], socket.getfqdn(),
                         self._transfer2user(transfertype, transfer),
-                        'PEND', diskServerList.getDiskServerPool(diskserver),
+                        'PEND', diskpool,
                         diskserver, protocol, arrivaltime, None))
     finally:
       self.lock.release()
