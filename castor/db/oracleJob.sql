@@ -862,31 +862,31 @@ BEGIN
         FROM SubRequest
        WHERE subReqId = subReqIds(i)
          AND status IN (6, 14);  -- READY, BEINGSCHED
-       -- Lock the CastorFile.
-       SELECT id INTO cfId FROM CastorFile
-        WHERE id = cfId FOR UPDATE;
-       -- Confirm SubRequest status hasn't changed after acquisition of lock
-       SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ id INTO srId FROM SubRequest
-        WHERE id = srId AND status IN (6, 14);  -- READY, BEINGSCHED
-       -- Call the relevant cleanup procedure for the transfer, procedures that
-       -- would have been called if the transfer failed on the remote execution host.
-       IF rType = 40 THEN      -- StagePutRequest
-         putFailedProc(srId);
-       ELSIF rType = 133 THEN  -- StageDiskCopyReplicaRequest
-         disk2DiskCopyFailed(dcId, 0);
-       ELSE                    -- StageGetRequest or StageUpdateRequest
-         getUpdateFailedProc(srId);
-       END IF;
-       -- Update the reason for termination, overriding the error code set above
-       UPDATE SubRequest
-          SET errorCode = decode(errnos(i), 0, errorCode, errnos(i)),
-              errorMessage = decode(errmsg(i), NULL, errorMessage, errmsg(i))
-        WHERE id = srId;
-       -- Release locks
-       COMMIT;
+      -- Lock the CastorFile.
+      SELECT id INTO cfId FROM CastorFile
+      WHERE id = cfId FOR UPDATE;
+      -- Confirm SubRequest status hasn't changed after acquisition of lock
+      SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ id INTO srId FROM SubRequest
+      WHERE id = srId AND status IN (6, 14);  -- READY, BEINGSCHED
+      -- Call the relevant cleanup procedure for the transfer, procedures that
+      -- would have been called if the transfer failed on the remote execution host.
+      IF rType = 40 THEN      -- StagePutRequest
+       putFailedProc(srId);
+      ELSIF rType = 133 THEN  -- StageDiskCopyReplicaRequest
+       disk2DiskCopyFailed(dcId, 0);
+      ELSE                    -- StageGetRequest or StageUpdateRequest
+       getUpdateFailedProc(srId);
+      END IF;
+      -- Update the reason for termination, overriding the error code set above
+      UPDATE SubRequest
+         SET errorCode = decode(errnos(i), 0, errorCode, errnos(i)),
+             errorMessage = decode(errmsg(i), NULL, errorMessage, errmsg(i))
+       WHERE id = srId;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       NULL;  -- The SubRequest may have be removed, nothing to be done.
     END;
+    -- Release locks
+    COMMIT;
   END LOOP;
 END;
 /
