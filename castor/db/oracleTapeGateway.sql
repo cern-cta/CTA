@@ -1507,6 +1507,8 @@ BEGIN
              SR.parent = 0
        WHERE SR.castorFile = varCfId 
          AND SR.status IN (dconst.SUBREQUEST_WAITTAPERECALL, dconst.SUBREQUEST_WAITSUBREQ);
+       -- Release lock on castorFile
+       COMMIT;
     END LOOP;
   ELSIF (varMountId IS NOT NULL) THEN
     -- In case of a write, delete the migration mount
