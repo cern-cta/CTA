@@ -22,7 +22,7 @@
  * Not the best code in the world but it works!
  *  - Still need to add race condition test, same file random operations
  *
- * @author Dennis Waldron
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // Include files
@@ -50,6 +50,8 @@
 #include "castor/stager/QueryParameter.hpp"
 #include "castor/stager/StageFileQueryRequest.hpp"
 #include "castor/stager/StagePrepareToPutRequest.hpp"
+#include "castor/stager/StagePrepareToGetRequest.hpp"
+#include "castor/stager/StageRmRequest.hpp"
 #include "castor/stager/StagePutDoneRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
 
@@ -65,6 +67,7 @@
 // Definitions (Defaults)
 #define DEFAULT_NUM_THREADS       1
 #define DEFAULT_NUM_ITERATIONS    10
+#define DEFAULT_NUM_FILES         20
 
 #define DEFAULT_RFCP_BUFFERSIZE   128 * 1024
 #define DEFAULT_FILESIZE          3 * 1024
@@ -74,7 +77,7 @@
 
 // Definitions (Options)
 #define OPTION_SIZE               1
-#define OPTION_WRITERS            2
+#define OPTION_NBTHREADS          2
 #define OPTION_STAGER             3
 #define OPTION_SVCCLASS           4
 #define OPTION_BUFFERSIZE         5
@@ -85,6 +88,8 @@
 #define OPTION_NBREADS            10
 #define OPTION_FILESTAT           11
 #define OPTION_DAEMONIZE          12
+#define OPTION_RACECOND           13
+#define OPTION_RANDOM             14
 
 // Definitions (Maximum)
 #define MAX_NBTHREADS             50
@@ -100,28 +105,27 @@ static std::string stagerHost     = DEFAULT_STAGER_HOST;
 static std::string stagerSvcClass = DEFAULT_STAGER_SVCCLASS;
 static uint64_t    rfioBufferSize = DEFAULT_RFCP_BUFFERSIZE;
 static uint64_t    iterations     = DEFAULT_NUM_ITERATIONS;
+static uint64_t    nbfiles        = DEFAULT_NUM_FILES;
 static uint64_t    writeFileSize  = DEFAULT_FILESIZE;
 static int64_t     writeDelay     = 0;
 static int64_t     nbReads        = 0;
 static bool        putDoneCycle   = false;
 static bool        fileQuery      = false;
 static bool        fileStat       = false;
+static bool        delayArgGiven  = false;
+static bool        nbReadsArgGiven= false;
+static bool        nbfilesArgGiven= false;
 static bool        daemonize      = false;
+static bool        racecondMode   = false;
+static bool        randomMode     = false;
+static pthread_mutex_t globalMutex = PTHREAD_MUTEX_INITIALIZER;;
 
-// Macros (Logging and Timing)
-#define IDENT "[" << stagerHost << "/" << stagerSvcClass << " "  << tid << "] "
-#define ELAPSED_TIME " (elapsed: " << elapsed * 0.000001 << ")"
-
-#define PROCESSING_START                        \
-  {                                             \
-    gettimeofday(&tv, NULL);                    \
-  }                                               
-#define PROCESSING_END                                  \
-  {                                                     \
-    gettimeofday(&end, NULL);                           \
-    elapsed = (((end.tv_sec * 1000000) + end.tv_usec) - \
-               (tv.tv_sec * 1000000) + tv.tv_usec);     \
-  }
+// some useful types
+typedef int (*stagerFunc_t) (const std::string &filepath,
+			     std::string &requestId,
+			     std::string &requestStatus,
+                             const uint64_t fileSize);
+typedef std::pair<stagerFunc_t, std::string> cmd_t;
 
 //-----------------------------------------------------------------------------
 // CreateParentDirectories
@@ -142,7 +146,8 @@ int createParentDirectories(const std::string &dirpath,
     // and try the next directory.
     int rc = Cns_mkdir(dirpath.substr(0, index).c_str(), 0755);
     if ((rc != 0) && (serrno != EEXIST)) {
-      std::cerr << IDENT << "[ERROR] "
+      std::cerr << "[" << stagerHost << "/" << stagerSvcClass
+		<< " "  << tid << "] " << "[ERROR] "
                 << "Failed to createParentDirectories()"
                 << " - Path: "  << dirpath
                 << " - Errno: " << sstrerror(serrno)
@@ -162,7 +167,8 @@ int unlinkFile(const std::string &filepath,
 
   if (Cns_unlink(filepath.c_str()) != 0) {
     if (serrno != ENOENT) {
-      std::cerr << IDENT << "[ERROR] "
+      std::cerr << "[" << stagerHost << "/" << stagerSvcClass
+		<< " "  << tid << "] " << "[ERROR] "
                 << "Failed to unlinkFile()"
                 << " - Path: "  << filepath
                 << " - Errno: " << sstrerror(serrno)
@@ -187,8 +193,11 @@ char randAlnum() {
 // ReadFileUsingRFIO
 //-----------------------------------------------------------------------------
 int readFileUsingRFIO(const std::string &filepath,
+                      std::string &requestId,
+                      std::string &requestStatus,
                       const uint64_t expectedFileSize) {
-
+  (void) requestId;
+  (void) requestStatus;
   // Setup the RFIO transfer options
   int v = RFIO_STREAM;
   rfiosetopt(RFIO_READOPT, &v, 4);
@@ -237,7 +246,7 @@ int readFileUsingRFIO(const std::string &filepath,
 }
 
 //-----------------------------------------------------------------------------
-// WriteFileUsingRFIO
+// writeRFIOBuffer
 //-----------------------------------------------------------------------------
 int writeRFIOBuffer(int fd,
                     const std::string buffer,
@@ -265,8 +274,11 @@ int writeRFIOBuffer(int fd,
 // WriteFileUsingRFIO
 //-----------------------------------------------------------------------------
 int writeFileUsingRFIO(const std::string &filepath,
-                       const uint64_t filesize) {
-
+                       std::string &requestId,
+                       std::string &requestStatus,
+                       const uint64_t fileSize) {
+  (void) requestId;
+  (void) requestStatus;
   // Setup the RFIO transfer options
   int v = RFIO_STREAM;
   rfiosetopt(RFIO_READOPT, &v, 4);
@@ -283,10 +295,10 @@ int writeFileUsingRFIO(const std::string &filepath,
   std::string buffer;
   std::string::size_type bufsize = (size_t)rfioBufferSize;
 
-  // If the filesize is less than the buffer reset the size and then reserve
+  // If the fileSize is less than the buffer reset the size and then reserve
   // the amount of storage required.
-  if (bufsize > filesize) {
-    bufsize = filesize;
+  if (bufsize > fileSize) {
+    bufsize = fileSize;
   }
   buffer.reserve(bufsize);
 
@@ -312,7 +324,7 @@ int writeFileUsingRFIO(const std::string &filepath,
 
   // If the amount of data sent in the first buffer is enough to satisfy the
   // total file size, close the file and return to the callee.
-  if (bytessent == filesize) {
+  if (bytessent == fileSize) {
     rfio_errno = serrno = 0;
     rfio_close(fd);
     return 0;
@@ -322,24 +334,24 @@ int writeFileUsingRFIO(const std::string &filepath,
   // to generate random buffers every time but the CPU cost is too expensive
   // and results in poor bandwidth.
   buffer.clear();
-  if (bufsize > (filesize - bytessent)) {
-    bufsize = (filesize - bytessent);
+  if (bufsize > (fileSize - bytessent)) {
+    bufsize = (fileSize - bytessent);
   }
   generate_n(std::back_inserter(buffer), bufsize, randAlnum);
   
-  // Write the second buffer to the file until we reach the desired filesize or
+  // Write the second buffer to the file until we reach the desired fileSize or
   // an error is encountered.
   do {
     uint64_t nbbytes = 
       writeRFIOBuffer(fd, buffer,
-                      (bufsize < (filesize - bytessent)) ? bufsize :
-                      (filesize - bytessent));
+                      (bufsize < (fileSize - bytessent)) ? bufsize :
+                      (fileSize - bytessent));
     if (nbbytes < 0) {
       rfio_close(fd);
       return -1;
     }
     bytessent += nbbytes;
-  } while ((filesize - bytessent) != 0);
+  } while ((fileSize - bytessent) != 0);
 
   // Close the file
   rfio_errno = serrno = 0;
@@ -376,7 +388,7 @@ void PrepareStagerRequest(castor::stager::SubRequest **subRequest,
 }
 
 //-----------------------------------------------------------------------------
-// SendStagerRequest
+// ProcessStagerResponse
 //-----------------------------------------------------------------------------
 int ProcessStagerResponse(castor::stager::SubRequest *subRequest,
                           std::vector<castor::rh::Response *> &responses,
@@ -415,12 +427,13 @@ int ProcessStagerResponse(castor::stager::SubRequest *subRequest,
 }
 
 //-----------------------------------------------------------------------------
-// SendPrepareToPutRequest
+// sendPrepareToPutRequest
 //-----------------------------------------------------------------------------
-int SendPrepareToPutRequest(const std::string &filepath,
+int sendPrepareToPutRequest(const std::string &filepath,
                             std::string &requestId,
-                            std::string &requestStatus) {
-
+                            std::string &requestStatus,
+                            const uint64_t fileSize) {
+  (void) fileSize;
   // Variables
   castor::stager::StagePrepareToPutRequest request;
   castor::stager::SubRequest *subRequest = new castor::stager::SubRequest();
@@ -460,12 +473,101 @@ int SendPrepareToPutRequest(const std::string &filepath,
 }
 
 //-----------------------------------------------------------------------------
-// SendPutDoneRequest
+// sendPrepareToPutRequest
 //-----------------------------------------------------------------------------
-int SendPutDoneRequest(const std::string &filepath,
-                       std::string &requestId,
-                       std::string &requestStatus) {
+int sendPrepareToGetRequest(const std::string &filepath,
+                            std::string &requestId,
+                            std::string &requestStatus,
+                            const uint64_t fileSize) {
+  (void) fileSize;
+  // Variables
+  castor::stager::StagePrepareToGetRequest request;
+  castor::stager::SubRequest *subRequest = new castor::stager::SubRequest();
+  castor::client::BaseClient client(stage_getClientTimeout());
+  std::vector<castor::rh::Response *> responses;
+  castor::client::VectorResponseHandler rh(&responses);
 
+  // Prepare the stager request
+  PrepareStagerRequest(&subRequest, client, filepath);
+
+  // Complete the SubRequest object
+  subRequest->setRequest(&request);
+
+  // Prepare the StagePrepareToGetRequest object
+  mode_t mask;
+  umask(mask = umask(0));
+
+  request.setSvcClassName(stagerSvcClass);
+  request.setEuid(geteuid());
+  request.setEgid(getegid());
+  request.setMask(mask);
+  
+  // Add the SubRequest to the StagePrepareToGetRequest request
+  request.addSubRequests(subRequest);
+
+  // Send the request
+  try {
+    requestId = client.sendRequest(&request, &rh);
+  } catch (castor::exception::Exception& e) {
+    serrno = e.code();
+    delete subRequest;  // Free resources
+    return -1;
+  }
+
+  // Processing the stager response
+  return (ProcessStagerResponse(subRequest, responses, requestStatus));
+}
+
+//-----------------------------------------------------------------------------
+// sendRmRequest
+//-----------------------------------------------------------------------------
+int sendRmRequest(const std::string &filepath,
+                  std::string &requestId,
+                  std::string &requestStatus,
+                  const uint64_t fileSize) {
+  (void) fileSize;
+  // Variables
+  castor::stager::StageRmRequest request;
+  castor::stager::SubRequest *subRequest = new castor::stager::SubRequest();
+  castor::client::BaseClient client(stage_getClientTimeout());
+  std::vector<castor::rh::Response *> responses;
+  castor::client::VectorResponseHandler rh(&responses);
+
+  // Prepare the stager request
+  PrepareStagerRequest(&subRequest, client, filepath);
+
+  // Complete the SubRequest object
+  subRequest->setRequest(&request);
+
+  // Complete the StageRmRequest object
+  request.setSvcClassName(stagerSvcClass);
+  request.setEuid(geteuid());
+  request.setEgid(getegid());
+  
+  // Add the SubRequest to the StageRmRequest request
+  request.addSubRequests(subRequest);
+
+  // Send the request
+  try {
+    requestId = client.sendRequest(&request, &rh);
+  } catch (castor::exception::Exception& e) {
+    serrno = e.code();
+    delete subRequest;  // Free resources
+    return -1;
+  }  
+
+  // Processing the stager response
+  return (ProcessStagerResponse(subRequest, responses, requestStatus));
+}
+
+//-----------------------------------------------------------------------------
+// sendPutDoneRequest
+//-----------------------------------------------------------------------------
+int sendPutDoneRequest(const std::string &filepath,
+                       std::string &requestId,
+                       std::string &requestStatus,
+                       const uint64_t fileSize) {
+  (void) fileSize;
   // Variables
   castor::stager::StagePutDoneRequest request;
   castor::stager::SubRequest *subRequest = new castor::stager::SubRequest();
@@ -501,12 +603,13 @@ int SendPutDoneRequest(const std::string &filepath,
 }
 
 //-----------------------------------------------------------------------------
-// SendFileQueryRequest
+// sendFileQueryRequest
 //-----------------------------------------------------------------------------
-int SendFileQueryRequest(const std::string &filepath,
+int sendFileQueryRequest(const std::string &filepath,
                          std::string &requestId,
-                         std::string &requestStatus) {
-  
+                         std::string &requestStatus,
+                         const uint64_t fileSize) {
+  (void) fileSize;
   // Variables
   castor::stager::StageFileQueryRequest request;
   castor::stager::QueryParameter *par = new castor::stager::QueryParameter();
@@ -571,267 +674,273 @@ int SendFileQueryRequest(const std::string &filepath,
 }
 
 //-----------------------------------------------------------------------------
-// Worker
+// sendStatRequest
 //-----------------------------------------------------------------------------
-void worker(void) {
+int sendStatRequest(const std::string &filepath,
+                    std::string &requestId,
+                    std::string &requestStatus,
+                    const uint64_t fileSize) {
+  (void) fileSize;
+  (void) requestId;
+  (void) requestStatus;
+  Cns_filestatcs statbuf;
+  int rc = Cns_statcs(filepath.c_str(), &statbuf);
+  if (0 == rc ) {
+    // Log the result of the stat operation
+    std::cout << "[" << stagerHost << "/" << stagerSvcClass
+              << "] " << "[INFO[ --- CnsStat:"
+              << " FileMode: " << statbuf.filemode
+              << " Uid: " << statbuf.uid
+              << " Gid: " << statbuf.gid
+              << " FileSize: " << statbuf.filesize
+              << " FileClass: " << statbuf.fileclass
+              << " Status: " << statbuf.status
+              << " ChecksumType: " << statbuf.csumtype
+              << " ChecksumValue: " << statbuf.csumvalue << std::endl;
+  }
+  return rc;
+}
 
-  // Variables
-  unsigned int i, j;
-  unsigned int emlinkoffset = 0;
-  int      tid = (int)syscall(__NR_gettid);
+//-----------------------------------------------------------------------------
+// issueCommand
+//-----------------------------------------------------------------------------
+int issueCommand(const std::string &dirpath,
+                 const std::string &filepath,
+                 const int tid,
+                 stagerFunc_t stagerFunc,
+                 std::string stagerFuncName,
+                 const uint64_t fileSize = 0,
+                 bool unlinkWhenFail = true) {
+  struct timeval tv, end;
+  gettimeofday(&tv, NULL);      // PROCESSING_START
+  std::string requestId = "";
+  std::string requestStatus = "";
+  int rc = stagerFunc(filepath, requestId, requestStatus, fileSize);
+  if (rc != 0 && serrno == ENOENT) {
+    // Create the parent directory on ENOENT (No such file or directory).
+    if (0 == createParentDirectories(dirpath, tid)) {
+      rc = stagerFunc(filepath, requestId, requestStatus, fileSize);
+    }
+  }
+  if (rc != 0) {
+    int savedSerrno = serrno;
+    // An unexpected error, sleep a while and try again later.
+    std::cerr << "[" << stagerHost << "/" << stagerSvcClass
+	      << " "  << tid << "] " << "[ERROR] "
+	      << "Failed to " << stagerFuncName << "()"
+	      << " - Path: " << filepath
+	      << " - Errno: " << sstrerror(savedSerrno)
+	      << std::endl;
+    if (unlinkWhenFail) {
+      // Unlink the target file from the namespace
+      unlinkFile(filepath, tid);
+    }
+    return savedSerrno;
+  } else {
+    // Log the StagePutRequest completion
+    gettimeofday(&end, NULL);      // PROCESSING_END
+    int64_t elapsed = (((end.tv_sec*1000000)+end.tv_usec)-
+		       (tv.tv_sec*1000000)+tv.tv_usec);
+    std::cout << "[" << stagerHost << "/" << stagerSvcClass
+	      << " "  << tid << "] " << "[INFO] --- " << stagerFuncName << ": "
+	      << " - Path: " << filepath << " "
+	      << requestId << " " << requestStatus
+	      << " (elapsed: " << elapsed * 0.000001 << ")" << std::endl;
+    return 0;
+  }
+}
+
+//------------------------------------------------------------------------------
+// Construct the directory path
+//------------------------------------------------------------------------------
+std::string buildDirPath(const int tid, char* hostname, struct timeval &tv) {
+  // build base directory
+  std::ostringstream dirpath("");
+  dirpath << baseDirectory;              // Base directory
+  dirpath << "/";
+  dirpath << hostname;                   // Hostname
+  dirpath << "/";
+  dirpath << tid;                        // Thread id
+  dirpath << "/";
+  // Get the current time information. A) To construct the date and hour
+  // components of the directory name and B) to record elapsed time.
+  struct tm *tm;
+  struct tm tm_buf;
   char     buffer[1024];
-  char     errbuf[ERRBUFSIZE + 1];
-  char     hostname[1024];
+  tm = localtime_r((time_t *) &(tv.tv_sec), &tm_buf);
+  sprintf(buffer, "%04d%02d%02d/%02d/",
+	  tm->tm_year + 1900,
+	  tm->tm_mon  + 1,
+	  tm->tm_mday,
+	  tm->tm_hour);
+  dirpath << buffer;                     // Date and Hour
+  return dirpath.str();
+}
 
-  int      rc;
-  int64_t  elapsed;
-
-  std::string requestId;
-  std::string requestStatus;
-
+//-----------------------------------------------------------------------------
+// Standard Worker
+//-----------------------------------------------------------------------------
+void standardWorker(void) {
+  int tid = (int)syscall(__NR_gettid);
   // Set the error buffers for stager related errors
-  stager_seterrbuf(errbuf, ERRBUFSIZE + 1);
-  
+  char errbuf[ERRBUFSIZE + 1];
+  stager_seterrbuf(errbuf, ERRBUFSIZE + 1);  
   // Get the hostname of the machine
+  char hostname[1024];
   gethostname(hostname, 1024);
-
   // Main transfer loop
-  for (i = 0; (i < iterations) || (iterations == 0); i++) {
-
-    // Reset key variables
-    errbuf[0] = 0;
-    requestId = "";
-    requestStatus = "";
-
+  for (unsigned int i = 0; (i < iterations) || (iterations == 0); i++) {
     // Generate a UUID
     Cuuid_t cuuid = nullCuuid;
     Cuuid_create(&cuuid);
     char uuid[CUUID_STRING_LEN];
     Cuuid2string(uuid, CUUID_STRING_LEN + 1, &cuuid);
-
-    // Construct the directory path
-    // Example: BASE_DIR/hostname/1432/20110406/01
-    std::ostringstream dirpath("");
-    dirpath << baseDirectory;              // Base directory
-    dirpath << "/";
-    dirpath << hostname;                   // Hostname
-    dirpath << "/";
-    dirpath << tid;                        // Thread id
-    dirpath << "/";
-
-    // Get the current time information. A) To construct the date and hour
-    // components of the directory name and B) to record elapsed time.
-    struct timeval tv, end;
-    struct tm *tm;
-    struct tm tm_buf;
-    gettimeofday(&tv, NULL);
-    tm = localtime_r((time_t *) &(tv.tv_sec), &tm_buf);
-    sprintf(buffer, "%04d%02d%02d/%02d%d/",
-            tm->tm_year + 1900,
-            tm->tm_mon  + 1,
-            tm->tm_mday,
-            tm->tm_hour,
-            emlinkoffset);
-
-    dirpath << buffer;                     // Date and Hour
-
     // Construct the filepath
-    std::ostringstream filepath("");
-    filepath << dirpath.str();
-    filepath << uuid;                      // Universal Unique Identifier
-
-    // If we are in a PrepareToPut, Put, PutDone mode invoke PrepareToPut
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    std::string dirpath = buildDirPath(tid, hostname, tv);
+    std::ostringstream filepath;
+    filepath << dirpath << uuid;
+    // Invoke PrepareToPut if needed
     if (putDoneCycle) {
-      PROCESSING_START;
-      rc = SendPrepareToPutRequest(filepath.str(), requestId, requestStatus);
-      if (rc != 0) {
-        // If the error message is ENOENT (No such file or directory) it's most
-        // likely that A) This is the first time any file has been written by
-        // the test program and the parent directories haven yet to be created
-        // or B) The hour or date component of the filepath have changed.
-        // Create the parent directory on ENOENT (No such file or directory)
-        if (serrno == ENOENT) {
-          if (createParentDirectories(dirpath.str(), tid) == 0) {
-            i--;
-            continue;
-          }
-          // Unrecoverable error
-          break;
-        } 
-
-        // If the error message is EMLINK (Too many links) this indicates that
-        // the target directory is full, i.e. has more than 999,999 files in it.
-        // This is highly unlikely but we cover the user case anyway by updating
-        // the directory emlinkoffset. This will cause the next write to fail
-        // resulting in a new directory being created.
-        else if (serrno == EMLINK) {
-          emlinkoffset++;
-        }
-        
-        // An unexpected error, sleep a while and try again later.
-        else {
-          std::cerr << IDENT << "[ERROR] "
-                    << "Failed to SendPrepareToPutRequest()"
-                    << " - Path: " << filepath.str()
-                    << " - Errno: " << sstrerror(serrno)
-                    << std::endl;
-          sleep(10);
-        }
-        
-        // Unlink the target file from the namespace
-        unlinkFile(filepath.str(), tid);
-        continue;
+      if (0 != issueCommand(dirpath, filepath.str(), tid,
+                            sendPrepareToPutRequest,
+                            "sendPrepareToPutRequest")) {
+	break;
       }
-      
-      // Log the StagePutRequest completion
-      PROCESSING_END
-        std::cout << IDENT << "[INFO] --- StagePutRequest: "
-                  << requestId << " " << requestStatus
-                  << ELAPSED_TIME << std::endl;
     }
-
     // Write the file
-    PROCESSING_START;
-    rc = writeFileUsingRFIO(filepath.str(), writeFileSize);
-    if (rc != 0) {
-      // Create the parent directory on ENOENT (No such file or directory). See
-      // comment in putDoneCyclye block above.
-      if (serrno == ENOENT) {
-        if (createParentDirectories(dirpath.str(), tid) == 0) {
-          i--;
-          continue;
-        }
-        // Unrecoverable error
-        break;
-      }
-
-      // If the error message is ENOSPC (No space left on device) then there
-      // isn't much we can do but sleep a while and try again later.
-      else if (serrno == ENOSPC) {
-        sleep(10);
-      }
-
-      // If the error message is EMLINK (Too many links) this indicates that
-      // the target directory is full, i.e. has more than 999,999 files in it.
-      // This is highly unlikely but we cover the user case anyway by updating
-      // the directory emlinkoffset. This will cause the next write to fail
-      // resulting in a new directory being created.
-      else if (serrno == EMLINK) {
-        emlinkoffset++;
-      }
-
-      // An unexpected error, sleep a while and try again later.
-      else {
-        std::cerr << IDENT << "[ERROR] "
-                  << "Failed to writeFileUsingRFIO()"
-                  << " - Path: "    << filepath.str()
-                  << " - Errno: "   << sstrerror(serrno)
-                  << " - Message: " << errbuf
-                  << std::endl;
-        sleep(10);
-      }
-      
-      // Unlink the target file from the namespace
-      unlinkFile(filepath.str(), tid);
-      continue;
+    if (0 != issueCommand(dirpath, filepath.str(), tid,
+                          writeFileUsingRFIO, "writeFileUsingRFIO",
+                          writeFileSize)) {
+      break;
     }
-        
-    // Log the writeFileUsingRFIO completion
-    PROCESSING_END;
-    std::cout << IDENT << "[INFO] --> RfioWrite: " << filepath.str()
-              << ELAPSED_TIME << std::endl;
-
-    // If we are in a PrepareToPut, Put, PutDone mode invoke PutDone
+    // Invoke PutDone if needed
     if (putDoneCycle) {
-      PROCESSING_START;
-      rc = SendPutDoneRequest(filepath.str(), requestId, requestStatus);
-      if (rc != 0) {
-        // Unlink the previous calls to the stager and rfio the handling of
-        // error conditions is much simpler as we have already taken care of
-        // parent directory creation and too many files in a directory.
-        unlinkFile(filepath.str(), tid);
-        sleep(10);
-        continue;
+      if (0 != issueCommand(dirpath, filepath.str(), tid,
+                            sendPutDoneRequest, "sendPutDoneRequest")) {
+	break;
       }
-
-      // Log the StagePutDonerequest completion
-      PROCESSING_END
-        std::cout << IDENT << "[INFO] --- StagePutDoneRequest: "
-                  << requestId << " " << requestStatus
-                  << ELAPSED_TIME << std::endl;
     }
-
     // Stat the file
     if (fileStat) {
-      PROCESSING_START;
-      Cns_filestatcs statbuf;
-      rc = Cns_statcs(filepath.str().c_str(), &statbuf);
-      if (rc != 0) {
-        sleep(10);
-        continue;
+      if (0 != issueCommand(dirpath, filepath.str(), tid,
+                            sendStatRequest, "sendStatRequest",
+                            0, false)) {
+	break;
       }
-      
-      // Log the result of the stat operation
-      PROCESSING_END;
-      std::cout << IDENT << "[INFO[ --- CnsStat:"
-                << " FileMode: " << statbuf.filemode
-                << " Uid: " << statbuf.uid
-                << " Gid: " << statbuf.gid
-                << " FileSize: " << statbuf.filesize
-                << " FileClass: " << statbuf.fileclass
-                << " Status: " << statbuf.status
-                << " ChecksumType: " << statbuf.csumtype
-                << " ChecksumValue: " << statbuf.csumvalue
-                << ELAPSED_TIME << std::endl;
     }
-
     // Perform a file query if needed
     if (fileQuery) {
-      PROCESSING_START;
-      rc = SendFileQueryRequest(filepath.str(), requestId, requestStatus);
-      if (rc != 0) {
-        sleep(10);
-        continue;
+      if (0 != issueCommand(dirpath, filepath.str(), tid,
+                            sendFileQueryRequest, "sendFileQueryRequest",
+                            0, false)) {
+	break;
       }
-
-      // Log the StageFileQueryRequest completion
-      PROCESSING_END;
-      std::cout << IDENT << "[INFO] --- StageFileQueryRequest: "
-                << requestId << " " << requestStatus
-                << ELAPSED_TIME << std::endl;
     }
-
-    // Read the file back
-    for (j = 0; j < nbReads; j++) {
-      PROCESSING_START;
-      rc = readFileUsingRFIO(filepath.str(), writeFileSize);
-      if (rc != 0) {
-        std::cerr << IDENT << "[ERROR] "
-                  << "Failed to readFileUsingRFIO()"
-                  << " - Path: "    << filepath.str()
-                  << " - Errno: "   << sstrerror(serrno)
-                  << " - Message: " << errbuf
-                  << std::endl;
-        sleep(10);
-        continue;
+    // Read the file back n times
+    for (int j = 0; j < nbReads; j++) {
+      if (0 != issueCommand(dirpath, filepath.str(), tid,
+                            readFileUsingRFIO, "readFileUsingRFIO",
+                            writeFileSize, false)) {
+        break;
       }
-      
-      // Log the writeFileUsingRFIO completion
-      PROCESSING_END;
-      std::cout << IDENT << "[INFO] <-- RfioRead: " << filepath.str()
-                << ELAPSED_TIME << std::endl;
     }
-
     // Sleep a bit if delay is greater than 0
     if (writeDelay > 0) {
       sleep(writeDelay);
     }
   }
-
   // Exit
   pthread_exit(0);
 }
 
+//-----------------------------------------------------------------------------
+// Race conditions Worker
+//-----------------------------------------------------------------------------
+void racecondWorker(void) {
+  int tid = (int)syscall(__NR_gettid);
+  // Set the error buffers for stager related errors
+  char errbuf[ERRBUFSIZE + 1];
+  stager_seterrbuf(errbuf, ERRBUFSIZE + 1);  
+  // Construct the dirpath
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  std::string dirpath = buildDirPath(0, "racecond", tv);
+  // initialize random generator. Serialize as rand in not thread safe
+  pthread_mutex_lock (&globalMutex);
+  unsigned int seed = rand();
+  pthread_mutex_unlock (&globalMutex);
+  // Main transfer loop
+  for (unsigned int i = 0; (i < iterations) || (iterations == 0); i++) {
+    // randomly select a file
+    unsigned int fileNumber = rand_r(&seed) % nbfiles;
+    // Construct the filepath
+    std::ostringstream filepath;
+    filepath << dirpath << "file" << fileNumber;
+    // Write the file
+    int rc = issueCommand(dirpath, filepath.str(), tid,
+                          writeFileUsingRFIO, "writeFileUsingRFIO",
+                          writeFileSize, false);
+    if ((0 != rc) && (EBUSY != rc)) {
+      break;
+    }
+    // Read the file back n times
+    rc = issueCommand(dirpath, filepath.str(), tid,
+                      readFileUsingRFIO, "readFileUsingRFIO",
+                      writeFileSize, false);
+    if ((0 != rc) && (ENOENT != rc) && (EBUSY != rc)) {
+      break;
+    }
+  }
+  // Exit
+  pthread_exit(0);
+}
+
+//-----------------------------------------------------------------------------
+// Random Worker
+//-----------------------------------------------------------------------------
+void randomWorker(void) {
+  int tid = (int)syscall(__NR_gettid);
+  // Set the error buffers for stager related errors
+  char errbuf[ERRBUFSIZE + 1];
+  stager_seterrbuf(errbuf, ERRBUFSIZE + 1);  
+  // Construct the dirpath
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  std::string dirpath = buildDirPath(0, "random", tv);
+  // initialize random generator. Serialize as rand in not thread safe
+  pthread_mutex_lock (&globalMutex);
+  unsigned int seed = rand();
+  pthread_mutex_unlock (&globalMutex);
+  // build a static command list
+  std::vector<cmd_t> availableCommands;
+  availableCommands.push_back(cmd_t(sendPrepareToPutRequest,"sendPrepareToPutRequest"));
+  availableCommands.push_back(cmd_t(sendPrepareToGetRequest,"sendPrepareToGetRequest"));
+  availableCommands.push_back(cmd_t(sendFileQueryRequest, "sendFileQueryRequest"));
+  availableCommands.push_back(cmd_t(sendRmRequest, "sendRmRequest"));
+  availableCommands.push_back(cmd_t(sendPutDoneRequest, "sendPutDoneRequest"));
+  availableCommands.push_back(cmd_t(writeFileUsingRFIO, "writeFileUsingRFIO"));
+  availableCommands.push_back(cmd_t(readFileUsingRFIO, "readFileUsingRFIO"));
+  unsigned int nbAvailableCommands = availableCommands.size();
+  // Main transfer loop
+  for (unsigned int i = 0; (i < iterations) || (iterations == 0); i++) {
+    // randomly select a file
+    unsigned int fileNumber = rand_r(&seed) % nbfiles;
+    // Construct the filepath
+    std::ostringstream filepath;
+    filepath << dirpath << "file" << fileNumber;
+    // randomly select a command
+    unsigned int cmdNumber = rand_r(&seed) % nbAvailableCommands;
+    cmd_t command = availableCommands[cmdNumber];
+    // issue the command; ignore any error !
+    issueCommand(dirpath, filepath.str(), tid,
+                 command.first, command.second,
+                 writeFileSize, false);
+  }
+  // Exit
+  pthread_exit(0);
+}
 //-----------------------------------------------------------------------------
 // Usage
 //-----------------------------------------------------------------------------
@@ -841,19 +950,26 @@ void usage(const std::string programname) {
     << std::endl << " -h, --help                Display this help and exit"
     << std::endl << " -d, --basedir <path>      The CASTOR HSM directory where files will be written"
     << std::endl << "                           too and/or read from"
-    << std::endl << "     --size <bytes>        The size of the file to transfer"
-    << std::endl << "     --writers <nbthreads> The number of threads to use writing file into CASTOR"
-    << std::endl << "     --nbfiles <count>     The number of files to create per thread, set to 0"
-    << std::endl << "                           for infinite"
+    << std::endl << "     --size <bytes>        The size of the files to transfer"
+    << std::endl << "     --nbthreads <nbthreads> The number of threads to use writing file into CASTOR"
     << std::endl << "     --stager <hostname>   The name of the STAGER_HOST"
     << std::endl << "     --svcclass <name>     The name of the STAGE_SVCCCLASS"
+    << std::endl << "     --buffer-size <size>  the size of the buffer to be used for rfio transfers"
+    << std::endl << "     --daemonize           Run in the background"
+    << std::endl << " -n, --nbiterations <count>The number of iterations in each thread, set to 0 for infinite"
+    << std::endl << "modes :"
+    << std::endl << "     --racecond            Switch to race condition mode"
+    << std::endl << "     --random              Switch to random mode"
+    << std::endl << "default mode options :"
     << std::endl << "     --delay <seconds>     Delay in seconds between each file transfer"
     << std::endl << "     --putdone             Enable PrepareToPut, Put, PutDone cycle"
     << std::endl << "     --fileqry             Perform a file query at the end of each transfer"
-    << std::endl << "     --readers <times>     The number of times to read back a file"
+    << std::endl << "     --nbreads <times>     The number of times to read back each file"
     << std::endl << "     --stat                Stat the file in the namespace after creation"
-    << std::endl << "     --daemonize           Run in the background"
-    << std::endl
+    << std::endl << "racecond mode options :"
+    << std::endl << "     --nbfiles <count>     The number total number of files to create"
+    << std::endl << "random mode options :"
+    << std::endl << "     --nbfiles <count>     The number total number of files to create"
     << std::endl << "Report bugs to <castor-dev@cern.ch>"
     << std::endl;
 }
@@ -866,7 +982,6 @@ int main (int argc, char **argv) {
   // Variables
   std::vector<pthread_t> threads;
   unsigned int nbthreads = DEFAULT_NUM_THREADS;
-  unsigned int i = 0;
   int rc   = 0;
   int pid  = 0;
   char c   = 0;
@@ -877,22 +992,25 @@ int main (int argc, char **argv) {
     { "help",        no_argument,       NULL, 'h'                   },
     { "basedir",     required_argument, NULL, 'd'                   },
     { "size",        required_argument, NULL,  OPTION_SIZE          },
-    { "writers",     required_argument, NULL,  OPTION_WRITERS       },
+    { "nbthreads",   required_argument, NULL,  OPTION_NBTHREADS     },
     { "stager",      required_argument, NULL,  OPTION_STAGER        },
     { "svcclass",    required_argument, NULL,  OPTION_SVCCLASS      },
     { "buffer-size", required_argument, NULL,  OPTION_BUFFERSIZE    },
     { "delay",       required_argument, NULL,  OPTION_DELAY         },
-    { "nbfiles",     required_argument, NULL,  OPTION_NBFILES       },
+    { "nbiterations",required_argument, NULL,  'n'                  },
     { "putdone",     no_argument,       NULL,  OPTION_PUTDONECYCLE  },
     { "fileqry",     no_argument,       NULL,  OPTION_FILEQUERY     },
-    { "readers",     required_argument, NULL,  OPTION_NBREADS       },
+    { "nbreads",     required_argument, NULL,  OPTION_NBREADS       },
     { "stat",        no_argument,       NULL,  OPTION_FILESTAT      },
     { "daemonize",   no_argument,       NULL,  OPTION_DAEMONIZE     },
+    { "racecond",    no_argument,       NULL,  OPTION_RACECOND      },
+    { "random",      no_argument,       NULL,  OPTION_RANDOM        },
+    { "nbfiles",     required_argument, NULL,  OPTION_NBFILES       },
     { NULL,          0,                 NULL,  0                    }
   };
 
   // Parse command line options
-  while ((c = getopt_long(argc, argv, "hd:", longopts, NULL)) != EOF) {
+  while ((c = getopt_long(argc, argv, "hn:d:", longopts, NULL)) != EOF) {
     switch(c) {
       // Commands with no short option
     case OPTION_SIZE:
@@ -904,11 +1022,11 @@ int main (int argc, char **argv) {
         return 2;
       }
       break;
-    case OPTION_WRITERS:
+    case OPTION_NBTHREADS:
       nbthreads = atoi(optarg);
       if ((nbthreads < 0) || (nbthreads > MAX_NBTHREADS)) {
         std::cerr << "Invalid argument: " << optarg
-                  << " for option --writers, must be > 0 and < "
+                  << " for option --nbthreads, must be > 0 and < "
                   << MAX_NBTHREADS
                   << std::endl;
         return 2;
@@ -932,15 +1050,17 @@ int main (int argc, char **argv) {
       break;
     case OPTION_DELAY:
       writeDelay = atoi(optarg);
+      delayArgGiven = true;
       break;
     case OPTION_NBFILES:
-      if (((iterations = strtoull(optarg, &dp, 0)) < 0) ||
+      if (((nbfiles = strtoull(optarg, &dp, 0)) <= 0) ||
           (*dp != '\0') || (errno == ERANGE)) {
         std::cerr << "Invalid argument: " << optarg
                   << " for option --nbfiles, not a valid number"
                   << std::endl;
         return 2;
       }
+      nbfilesArgGiven = true;
       break;
     case OPTION_PUTDONECYCLE:
       putDoneCycle = true;
@@ -952,17 +1072,24 @@ int main (int argc, char **argv) {
       nbReads = atoi(optarg);
       if ((nbReads < 0) || (nbReads > MAX_NBREADS)) {
         std::cerr << "Invalid argument: " << optarg
-                  << " for option --readers, must be >= 0 and < "
+                  << " for option --nbreads, must be >= 0 and < "
                   << MAX_NBREADS
                   << std::endl;
         return 2;
       }
+      nbReadsArgGiven = true;
       break;
     case OPTION_FILESTAT:
       fileStat = true;
       break;
     case OPTION_DAEMONIZE:
       daemonize = true;
+      break;
+    case OPTION_RACECOND:
+      racecondMode = true;
+      break;
+    case OPTION_RANDOM:
+      randomMode = true;
       break;
 
       // Commands with short option
@@ -971,6 +1098,15 @@ int main (int argc, char **argv) {
       return 0;
     case 'd':  // --basedir
       baseDirectory = optarg;
+      break;
+    case 'n':  // --nbiterations
+      if (((iterations = strtoull(optarg, &dp, 0)) < 0) ||
+          (*dp != '\0') || (errno == ERANGE)) {
+        std::cerr << "Invalid argument: " << optarg
+                  << " for option --nbiterations, not a valid number"
+                  << std::endl;
+        return 2;
+      }
       break;
 
       // Default
@@ -997,6 +1133,46 @@ int main (int argc, char **argv) {
     return 2;
   }
 
+  // Check consistency of provided options
+  if (racecondMode and randomMode) {
+    std::cerr << "Options --racecond and --random are mutually exclusive" << std::endl;
+    usage(argv[0]);
+    return 2;    
+  }
+  if (racecondMode or randomMode) {
+    if (delayArgGiven) {
+      std::cerr << "Option --delay is only supported in standard mode" << std::endl;
+      usage(argv[0]);
+      return 2;
+    }
+    if (putDoneCycle) {
+      std::cerr << "Option --putdone is only supported in standard mode" << std::endl;
+      usage(argv[0]);
+      return 2;
+    }
+    if (fileQuery) {
+      std::cerr << "Option --fileqry is only supported in standard mode" << std::endl;
+      usage(argv[0]);
+      return 2;
+    }
+    if (fileStat) {
+      std::cerr << "Option --stat is only supported in standard mode" << std::endl;
+      usage(argv[0]);
+      return 2;
+    }
+    if (nbReadsArgGiven) {
+      std::cerr << "Option --nbreads is only supported in standard mode" << std::endl;
+      usage(argv[0]);
+      return 2;
+    }
+  } else {
+    if (nbfilesArgGiven) {
+      std::cerr << "Option --nbfiles is not supported in standard mode" << std::endl;
+      usage(argv[0]);
+      return 2;
+    }
+  }
+
   // Initialize CASTOR threading library
   Cthread_init();
   
@@ -1009,8 +1185,11 @@ int main (int argc, char **argv) {
             << std::endl << "HSM Base Directory: " << baseDirectory
             << std::endl << "File Size:          " << writeFileSize
             << std::endl << "Nb Threads:         " << nbthreads
-            << std::endl << "Loops per thread:   " << iterations
-            << std::endl;
+            << std::endl << "Nb Iterations:      " << iterations;
+  if (racecondMode or randomMode) {
+    std::cout << std::endl << "Nb Files:           " << nbfiles;
+  }
+  std::cout << std::endl;
 
   // Run in the background if requested to do so
   if (daemonize) {
@@ -1040,10 +1219,19 @@ int main (int argc, char **argv) {
     setenv("CNS_HOST", stagerHost.c_str(), 1);
   }
 
+  // choose our worker
+  void *(*worker)(void *) = (void *(*)(void *))standardWorker;
+  if (racecondMode) {
+    worker = (void *(*)(void *))racecondWorker;
+  }
+  if (randomMode) {
+    worker = (void *(*)(void *))randomWorker;
+  }
+
   // Create a set of threads
   threads.reserve(nbthreads);
-  for (i = 0; i < nbthreads; i++) {
-    rc = pthread_create(&threads[i], NULL, (void *(*)(void *))worker, NULL);
+  for (unsigned int i = 0; i < nbthreads; i++) {
+    rc = pthread_create(&threads[i], NULL, worker, NULL);
     if (rc != 0) {
       std::cerr << "[ERROR] " << strerror(errno) << std::endl;
       return 1;
@@ -1051,7 +1239,7 @@ int main (int argc, char **argv) {
   }
 
   // Wait for the threads to end
-  for (i = 0; i < nbthreads; i++) {
+  for (unsigned int i = 0; i < nbthreads; i++) {
     pthread_join(threads[i], NULL);
   }
 
