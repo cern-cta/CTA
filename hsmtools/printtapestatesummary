@@ -1,0 +1,180 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                      printtapestatesummary
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @author castor dev team
+# *****************************************************************************/
+
+'''This script prints a summary of the states of the tapes mounted for recall or to be mounted for recall.'''
+
+import sys
+import getopt
+import castor_tools
+
+scriptExitCode = 0
+
+# usage function
+def usage(exitCode):
+    '''prints usage'''
+    print 'Usage : printtapestatesummary [-h|--help]'
+    print 'Prints a summary of the states of the tapes in the stager database.'
+    sys.exit(exitCode)
+
+# first parse the options
+try:
+    options, args = getopt.getopt(sys.argv[1:], 'h', ['help'])
+except Exception, e:
+    print e
+    usage(1)
+for f, v in options:
+    if f == '-h' or f == '--help':
+        usage(0)
+    else:
+        print "unknown option : " + f
+        usage(1)
+
+try:
+    conn = castor_tools.connectToStager()
+except Exception, e:
+    print "Failed to connect to the stager"
+    print e
+    sys.exit(-1)
+
+selectStmtSQL = 'SELECT Tape.tpMode tapeAccessMode, Tape.status tapeStatus, COUNT(*) nbTapes FROM Tape GROUP BY tape.tpMode, tape.status'
+
+nbRecallTapes_TAPE_PENDING          = 0
+nbRecallTapes_TAPE_WAITDRIVE        = 0
+nbRecallTapes_TAPE_WAITMOUNT        = 0
+nbRecallTapes_TAPE_MOUNTED          = 0
+nbRecallTapes_TAPE_FINISHED         = 0
+nbRecallTapes_TAPE_FAILED           = 0
+nbRecallTapes_TAPE_UNKNOWN          = 0
+nbRecallTapes_TAPE_WAITPOLICY       = 0
+nbRecallTapes_TAPE_ATTACHEDTOSTREAM = 0
+
+nbMigrationTapes_TAPE_PENDING          = 0
+nbMigrationTapes_TAPE_WAITDRIVE        = 0
+nbMigrationTapes_TAPE_WAITMOUNT        = 0
+nbMigrationTapes_TAPE_MOUNTED          = 0
+nbMigrationTapes_TAPE_FINISHED         = 0
+nbMigrationTapes_TAPE_FAILED           = 0
+nbMigrationTapes_TAPE_UNKNOWN          = 0
+nbMigrationTapes_TAPE_WAITPOLICY       = 0
+nbMigrationTapes_TAPE_ATTACHEDTOSTREAM = 0
+
+try:
+    cur = conn.cursor()
+    cur.execute(selectStmtSQL)
+    data = cur.fetchall()
+    for row in data:
+        tapeAccessMode = row[0]
+        tapeStatus     = row[1]
+        nbTapes        = row[2]
+
+        if tapeAccessMode == 0: # RECALL = 0
+            if tapeStatus == 1: # TAPE_PENDING = 1
+                nbRecallTapes_TAPE_PENDING = nbTapes
+
+            if tapeStatus == 2: # TAPE_WAITDRIVE = 2
+                nbRecallTapes_TAPE_WAITDRIVE = nbTapes
+
+            if tapeStatus == 3: # TAPE_WAITMOUNT = 3
+                nbRecallTapes_TAPE_WAITMOUNT = nbTapes
+
+            if tapeStatus == 4: # TAPE_MOUNTED = 4
+                nbRecallTapes_TAPE_MOUNTED = nbTapes
+
+            if tapeStatus == 5: # TAPE_FINISHED = 5
+                nbRecallTapes_TAPE_FINISHED = nbTapes
+
+            if tapeStatus == 6: # TAPE_FAILED = 6
+                nbRecallTapes_TAPE_FAILED = nbTapes
+
+            if tapeStatus == 7: # TAPE_UNKNOWN = 7
+                nbRecallTapes_TAPE_UNKNOWN = nbTapes
+
+            if tapeStatus == 8: # TAPE_WAITPOLICY = 8
+                nbRecallTapes_TAPE_WAITPOLICY = nbTapes
+
+            if tapeStatus == 9: # TAPE_ATTACHEDTOSTREAM = 9
+                nbRecallTapes_TAPE_ATTACHEDTOSTREAM = nbTapes
+
+        if tapeAccessMode == 1: # MIGRATION = 1
+            if tapeStatus == 1: # TAPE_PENDING = 1
+                nbMigrationTapes_TAPE_PENDING = nbTapes
+
+            if tapeStatus == 2: # TAPE_WAITDRIVE = 2
+                nbMigrationTapes_TAPE_WAITDRIVE = nbTapes
+
+            if tapeStatus == 3: # TAPE_WAITMOUNT = 3
+                nbMigrationTapes_TAPE_WAITMOUNT = nbTapes
+
+            if tapeStatus == 4: # TAPE_MOUNTED = 4
+                nbMigrationTapes_TAPE_MOUNTED = nbTapes
+
+            if tapeStatus == 5: # TAPE_FINISHED = 5
+                nbMigrationTapes_TAPE_FINISHED = nbTapes
+
+            if tapeStatus == 6: # TAPE_FAILED = 6
+                nbMigrationTapes_TAPE_FAILED = nbTapes
+
+            if tapeStatus == 7: # TAPE_UNKNOWN = 7
+                nbMigrationTapes_TAPE_UNKNOWN = nbTapes
+
+            if tapeStatus == 8: # TAPE_WAITPOLICY = 8
+                nbMigrationTapes_TAPE_WAITPOLICY = nbTapes
+
+            if tapeStatus == 9: # TAPE_ATTACHEDTOSTREAM = 9
+                nbMigrationTapes_TAPE_ATTACHEDTOSTREAM = nbTapes
+
+    cur.close()
+except Exception, e:
+    print "Failed to execute statement"
+    print e
+    scriptExitCode = -1
+
+# close DB connection
+try:
+    castor_tools.disconnectDB(conn)
+except Exception, e:
+    print e
+    scriptExitCode = -1
+
+if scriptExitCode == -1:
+    sys.exit(scriptExitCode)
+
+# print summary
+print "Number of RECALL    tapes in status TAPE_PENDING          = %d" % nbRecallTapes_TAPE_PENDING
+print "Number of RECALL    tapes in status TAPE_WAITDRIVE        = %d" % nbRecallTapes_TAPE_WAITDRIVE
+print "Number of RECALL    tapes in status TAPE_WAITMOUNT        = %d" % nbRecallTapes_TAPE_WAITMOUNT
+print "Number of RECALL    tapes in status TAPE_MOUNTED          = %d" % nbRecallTapes_TAPE_MOUNTED
+print "Number of RECALL    tapes in status TAPE_FINISHED         = %d" % nbRecallTapes_TAPE_FINISHED
+print "Number of RECALL    tapes in status TAPE_FAILED           = %d" % nbRecallTapes_TAPE_FAILED
+print "Number of RECALL    tapes in status TAPE_UNKNOWN          = %d" % nbRecallTapes_TAPE_UNKNOWN
+print "Number of RECALL    tapes in status TAPE_WAITPOLICY       = %d" % nbRecallTapes_TAPE_WAITPOLICY
+print "Number of RECALL    tapes in status TAPE_ATTACHEDTOSTREAM = %d" % nbRecallTapes_TAPE_ATTACHEDTOSTREAM
+print "Number of MIGRATION tapes in status TAPE_PENDING          = %d" % nbMigrationTapes_TAPE_PENDING
+print "Number of MIGRATION tapes in status TAPE_WAITDRIVE        = %d" % nbMigrationTapes_TAPE_WAITDRIVE
+print "Number of MIGRATION tapes in status TAPE_WAITMOUNT        = %d" % nbMigrationTapes_TAPE_WAITMOUNT
+print "Number of MIGRATION tapes in status TAPE_MOUNTED          = %d" % nbMigrationTapes_TAPE_MOUNTED
+print "Number of MIGRATION tapes in status TAPE_FINISHED         = %d" % nbMigrationTapes_TAPE_FINISHED
+print "Number of MIGRATION tapes in status TAPE_FAILED           = %d" % nbMigrationTapes_TAPE_FAILED
+print "Number of MIGRATION tapes in status TAPE_UNKNOWN          = %d" % nbMigrationTapes_TAPE_UNKNOWN
+print "Number of MIGRATION tapes in status TAPE_WAITPOLICY       = %d" % nbMigrationTapes_TAPE_WAITPOLICY
+print "Number of MIGRATION tapes in status TAPE_ATTACHEDTOSTREAM = %d" % nbMigrationTapes_TAPE_ATTACHEDTOSTREAM

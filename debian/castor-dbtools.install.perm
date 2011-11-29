@@ -5,6 +5,7 @@
 %attr(0755,root,root) usr/bin/modifysvcclass
 %attr(0755,root,root) usr/bin/deletesvcclass
 %attr(0755,root,root) usr/bin/printsvcclass
+%attr(0755,root,root) usr/bin/printtapestatesummary
 %attr(0755,root,root) usr/bin/enterdiskpool
 %attr(0755,root,root) usr/bin/deletediskpool
 %attr(0755,root,root) usr/bin/printdiskpool

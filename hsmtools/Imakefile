@@ -41,6 +41,8 @@ InstallTarget(modifysvcclass,755)
 InstallTarget(deletesvcclass,755)
 InstallTarget(printsvcclass,755)
 
+InstallTarget(printtapestatesummary,755)
+
 InstallTarget(enterdiskpool,755)
 InstallTarget(deletediskpool,755)
 InstallTarget(printdiskpool,755)
@@ -79,6 +81,8 @@ EXEMANPAGE(entersvcclass)
 EXEMANPAGE(modifysvcclass)
 EXEMANPAGE(deletesvcclass)
 EXEMANPAGE(printsvcclass)
+
+EXEMANPAGE(printtapestatesummary)
 
 EXEMANPAGE(enterdiskpool)
 EXEMANPAGE(deletediskpool)
