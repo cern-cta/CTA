@@ -5,7 +5,6 @@ debian/castor/usr/share/man/man1/entersvcclass.1castor.gz
 debian/castor/usr/share/man/man1/modifysvcclass.1castor.gz
 debian/castor/usr/share/man/man1/deletesvcclass.1castor.gz
 debian/castor/usr/share/man/man1/printsvcclass.1castor.gz
-debian/castor/usr/share/man/man1/printtapestatesummary.1castor.gz
 debian/castor/usr/share/man/man1/enterdiskpool.1castor.gz
 debian/castor/usr/share/man/man1/deletediskpool.1castor.gz
 debian/castor/usr/share/man/man1/printdiskpool.1castor.gz
