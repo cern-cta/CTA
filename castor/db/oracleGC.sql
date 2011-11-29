@@ -418,6 +418,10 @@ END;
 CREATE OR REPLACE PROCEDURE filesDeletedProc
 (dcIds IN castor."cnumList",
  fileIds OUT castor.FileList_Cur) AS
+  fid NUMBER;
+  fc NUMBER;
+  nsh VARCHAR2(2048);
+  nb INTEGER;
 BEGIN
   IF dcIds.COUNT > 0 THEN
     -- List the castorfiles to be cleaned up afterwards
@@ -433,52 +437,44 @@ BEGIN
     FOR cf IN (SELECT DISTINCT(cfId)
                  FROM filesDeletedProcHelper
                 ORDER BY cfId ASC) LOOP
-      DECLARE
-        nb NUMBER;
       BEGIN
-        -- First try to lock the castorFile
-        SELECT id INTO nb FROM CastorFile
+        -- Get data and lock the castorFile
+        SELECT fileId, nsHost, fileClass
+          INTO fid, nsh, fc
+          FROM CastorFile
          WHERE id = cf.cfId FOR UPDATE;
+        -- Check whether this file potentially had copies on tape
+        SELECT nbCopies INTO nb FROM FileClass WHERE id = fc;
+        IF nb = 0 THEN
+          -- This castorfile was created with no copy on tape
+          -- So removing it from the stager means erasing
+          -- it completely. We should thus also remove it
+          -- from the name server
+          INSERT INTO FilesDeletedProcOutput VALUES (fid, nsh);
+        END IF;
+        -- Cleanup:
         -- See whether it has any DiskCopy
         SELECT count(*) INTO nb FROM DiskCopy
          WHERE castorFile = cf.cfId;
-        -- If any DiskCopy, give up
+        -- If any DiskCopy, nothing to do
         IF nb = 0 THEN
           -- Delete the migrations and recalls
           deleteMigrationJobs(cf.cfId);
           deleteRecallJobs(cf.cfId);
-          -- See whether pending SubRequests exist
+          -- Check for existing subrequests
           SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ count(*) INTO nb
             FROM SubRequest
            WHERE castorFile = cf.cfId
-             AND status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14);  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+             AND status IN (1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14);  -- all but START, FINISHED, FAILED_FINISHED, ARCHIVED
           IF nb = 0 THEN
-            -- No Subrequest, delete the CastorFile
-            DECLARE
-              fid NUMBER;
-              fc NUMBER;
-              nsh VARCHAR2(2048);
-            BEGIN
-              -- Delete the CastorFile
-              DELETE FROM CastorFile WHERE id = cf.cfId
-              RETURNING fileId, nsHost, fileClass
-                INTO fid, nsh, fc;
-              -- Check whether this file potentially had copies on tape
-              SELECT nbCopies INTO nb FROM FileClass WHERE id = fc;
-              IF nb = 0 THEN
-                -- This castorfile was created with no copy on tape
-                -- So removing it from the stager means erasing
-                -- it completely. We should thus also remove it
-                -- from the name server
-                INSERT INTO FilesDeletedProcOutput VALUES (fid, nsh);
-              END IF;
-            END;
+            -- Nothing left, delete the CastorFile
+            DELETE FROM CastorFile WHERE id = cf.cfId;
           ELSE
-            -- SubRequests exist, fail them
+            -- Fail existing subrequests for this file
             UPDATE /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest
-               SET status = 7 -- FAILED
+               SET status = dconst.SUBREQUEST_FAILED
              WHERE castorFile = cf.cfId
-               AND status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14);
+               AND status IN (1, 2, 3, 4, 5, 6, 12, 13, 14);  -- same as above
           END IF;
         END IF;
       EXCEPTION WHEN NO_DATA_FOUND THEN
