@@ -47,7 +47,12 @@ void castor::stager::daemon::CleaningThread::run(void*) throw() {
     castor::IService* svc = svcs->service("DbGCSvc", castor::SVC_DBGCSVC);
     castor::stager::IGCSvc *gcSvc = dynamic_cast<castor::stager::IGCSvc*>(svc);
 
-    // actual work: dump the cleanup logs to DLF (cf. cleaningDaemon)
+    // as dlopen is not reentrant (i.e., symbols might be still loading now due to the dlopen
+    // of another thread), it may happen that the service is not yet valid or dynamic_cast fails.
+    // In such a case we simply give up for this round.
+    if(gcSvc == 0) return;
+
+    // actual work: dump the cleanup logs to DLF
     gcSvc->dumpCleanupLogs();
     
     // log we're done
