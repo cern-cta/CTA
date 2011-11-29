@@ -58,19 +58,14 @@ namespace castor {
   const unsigned short TAPEBRIDGE_RTCPDHIGHPORT = 30200;
 
   /**
-   * The default port on which rtcpclientd listens for notifications.
-   */
-  const int RTCPCLIENTD_DEFAULT_NOTIFYPORT = 5050;  // for future use
-
-  /**
    * The default port on which the stager listens for notifications.
    */
   const int STAGER_DEFAULT_NOTIFYPORT = 55015;
 
   /**
-   * The default port on which tapegateway listens for notifications.
+   * The default port on which tapegateway listens for tapebridge messages.
    */
-  const int TAPEGATEWAY_DEFAULT_NOTIFYPORT = 62801;  // for future use
+  const int TAPEGATEWAY_DEFAULT_NOTIFYPORT = 62801;
 
 } // namespace castor
 
