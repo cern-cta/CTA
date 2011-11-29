@@ -397,6 +397,7 @@ void process(castor::job::stagerjob::PluginContext &context,
   } catch (castor::exception::RequestCanceled& e) {
     // if we got a request cancelled exception, we are done, as the request has been
     // canceled in the meantime. Logging will be done at the upper level
+    throw e;
   } catch (castor::exception::Exception& e) {
     // If we got any other exception before the fork, we need to cleanup
     // before letting the exception go further
