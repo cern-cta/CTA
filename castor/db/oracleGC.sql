@@ -259,7 +259,7 @@ BEGIN
       INTO totalCount, freed
       FROM DiskCopy
      WHERE DiskCopy.fileSystem = fs.id
-       AND decode(DiskCopy.status, 9, DiskCopy.status, NULL) = 9; -- BEINGDELETED
+       AND decode(status, 9, status, NULL) = 9;  -- BEINGDELETED (decode used to use function-based index)
 
     -- estimate the number of GC running the "long" query, that is the one dealing with the GCing of
     -- STAGED files.
@@ -268,11 +268,11 @@ BEGIN
      WHERE s.sql_id = t.sql_id AND t.sql_text LIKE '%I_DiskCopy_FS_GCW%';
 
     -- Process diskcopies that are in an INVALID state.
-    UPDATE DiskCopy
+    UPDATE /*+ INDEX(DiskCopy I_DiskCopy_Status_7) */ DiskCopy
        SET status = 9, -- BEINGDELETED
            gcType = decode(gcType, NULL, 1, gcType)
      WHERE fileSystem = fs.id
-       AND status = 7  -- INVALID
+       AND decode(status, 7, status, NULL) = 7  -- INVALID (decode used to use function-based index)
        AND NOT EXISTS
          -- Ignore diskcopies with active subrequests
          (SELECT /*+ INDEX(SubRequest I_SubRequest_DiskCopy) */ 'x'

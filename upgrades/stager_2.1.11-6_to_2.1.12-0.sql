@@ -149,6 +149,10 @@ DELETE FROM CastorConfig WHERE class = 'tape' and key = 'interfaceDaemon';
 DELETE FROM CastorConfig WHERE class = 'RmMaster' and key = 'NoLSFMode';
 DELETE FROM Tape WHERE tpmode = 1;
 DROP INDEX I_DiskCopy_FS_Status_10;
+DROP INDEX I_DiskCopy_Status;
+DROP INDEX I_DiskCopy_FS_GCW;
+CREATE INDEX I_DiskCopy_FS_GCW ON DiskCopy (fileSystem, gcWeight);
+CREATE INDEX I_DiskCopy_Status_7 ON DiskCopy (decode(status,7,status,NULL));
 
 -- some temporary table changes
 DROP TABLE ProcessBulkAbortFileReqsHelper;
