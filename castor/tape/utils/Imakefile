@@ -30,6 +30,7 @@ TAPEUTILSLIB_SRCS = \
   SmartFILEPtr.cpp \
   SmartFd.cpp \
   SmartFdList.cpp \
+  Timer.cpp \
   utils.cpp
 
 TAPEUTILSLIB_OBJS = $(TAPEUTILSLIB_SRCS:.cpp=.o)

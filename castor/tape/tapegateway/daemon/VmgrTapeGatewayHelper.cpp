@@ -40,7 +40,7 @@
 #include "castor/dlf/Dlf.hpp"
 #include "castor/tape/tapegateway/TapeGatewayDlfMessageConstants.hpp"
 
-void castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream(
+void castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForMigration(
     const u_signed64 initialSizeToTransfer,
     const std::string& tapepoolName,
     int& startFseq,castor:: stager::Tape& tapeToUse,
@@ -49,7 +49,7 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream(
   if ( tapepoolName.empty() || initialSizeToTransfer==0) {
     castor::exception::Exception ex(EINVAL);
     ex.getMessage()
-    << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream"
+    << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForMigration"
     << " invalid input";
     throw ex;
   }
@@ -86,7 +86,7 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream(
   if (rc<0) {
     castor::exception::Exception ex(serrno);
     ex.getMessage() <<
-      "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream"
+      "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForMigration"
       " vmgr_gettape failed"
       ": poolname='" << tapepoolName << "'"
       " size=" << initialSizeToTransfer;
@@ -101,7 +101,7 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream(
     resetBusyTape(tapeToUse, shuttingDown);
     castor::exception::Exception ex(EINVAL);
     ex.getMessage()
-      << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream"
+      << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForMigration"
       << " invalid label";
     throw ex;
   }
@@ -121,14 +121,14 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream(
       resetBusyTape(tapeToUse, shuttingDown);
       castor::exception::Exception ex(serrno);
       ex.getMessage()
-	<< "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream"
+	<< "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForMigration"
 	<< " vmgr_updatetape failed when updating due to too big fseq: " << startFseq
         << ". For label type \"" << label << "\" maximum is "
         << maxPossible;
       throw ex;
     }
     castor::exception::Exception ex(ERTMAXERR);
-    ex.getMessage() << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForStream"
+    ex.getMessage() << "castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForMigration"
       << " too big fseq: " << startFseq
       << ". For label type \"" << label << "\" maximum is "
       << maxPossible;

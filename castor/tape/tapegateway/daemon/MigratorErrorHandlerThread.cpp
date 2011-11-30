@@ -170,8 +170,8 @@ void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void*)
     castor::dlf::Param paramsDbUpdate[] =
     {
       castor::dlf::Param("ProcessingTime", procTime * 0.000001),
-      castor::dlf::Param("tapecopies to retry",mjIdsToRetry.size()),
-      castor::dlf::Param("tapecopies to fail",mjIdsToFail.size())
+      castor::dlf::Param("migration jobs to retry",mjIdsToRetry.size()),
+      castor::dlf::Param("migration jobs to fail",mjIdsToFail.size())
     };
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, MIG_ERROR_RESULT_SAVED, paramsDbUpdate);
   

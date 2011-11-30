@@ -367,7 +367,7 @@ BEGIN
     DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
   END LOOP;
 
-  -- Create a db job to be run every 20 minutes executing the deleteTerminatedRequests procedure
+  -- Create a db job to be run every minute executing the deleteTerminatedRequests procedure
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'MigrationMountsJob',
       JOB_TYPE        => 'PLSQL_BLOCK',

@@ -1,6 +1,6 @@
 
 /******************************************************************************
- *                      TapeStreamLinkerThread.hpp
+ *                      TapeMigrationMountLinkerThread.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,15 +18,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TapeStreamLinkerThread.hpp,v $ $Author: gtaur $
+ * @(#)$RCSfile: TapeMigrationMountLinkerThread.hpp,v $ $Author: gtaur $
  *
  *
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef TAPESTREAMLINKER_THREAD_HPP
-#define TAPESTREAMLINKER_THREAD_HPP 1
+#ifndef TAPEMIGRATIONMOUNTLINKER_THREAD_HPP
+#define TAPEMIGRATIONMOUNTLINKER_THREAD_HPP 1
 
 #include "castor/BaseObject.hpp"
 #include "castor/server/IThread.hpp"
@@ -37,17 +37,17 @@ namespace tape       {
 namespace tapegateway{
 
     /**
-     *   TapeStreamLinkerThread tread.
+     *   TapeMigrationMountLinkerThread tread.
      */
     
-  class  TapeStreamLinkerThread : public virtual castor::server::IThread,
+  class  TapeMigrationMountLinkerThread : public virtual castor::server::IThread,
                                   public castor::BaseObject {
     
   public:
     
-    TapeStreamLinkerThread();
+    TapeMigrationMountLinkerThread();
 
-    virtual ~TapeStreamLinkerThread() throw() {};
+    virtual ~TapeMigrationMountLinkerThread() throw() {};
     
    /**
      * Initialization of the thread.
@@ -72,4 +72,4 @@ namespace tapegateway{
 } // end of namespace tape
 } // end of namespace castor
 
-#endif //TAPESTREAMLINKER_THREAD_HPP
+#endif //TAPEMIGRATIONMOUNTLINKER_THREAD_HPP

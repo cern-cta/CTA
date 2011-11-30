@@ -148,6 +148,85 @@ namespace tapegateway{
         FileMigrationReportList & fileMigrationReportList) throw ();
     void logInternalError (castor::exception::Exception e, requesterInfo& requester,
         FileRecallReportList &fileRecallReportList) throw ();
+    void logFatalError (Cuuid_t uuid,
+        struct Cns_fileid* castorFileId,
+        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
+        castor::exception::Exception & e);
+    void logMigrationNotified (Cuuid_t uuid,
+        struct Cns_fileid* castorFileId,
+        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
+        const char (&checksumHex)[19], const std::string &blockid);
+    void logMigrationFileNotfound (Cuuid_t uuid,
+        struct Cns_fileid* castorFileId,
+        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
+        castor::exception::Exception & e);
+    void logMigrationGetDbInfo (Cuuid_t uuid, struct Cns_fileid* castorFileId,
+        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
+        const std::string & serviceClass, const std::string & fileClass,
+        const std::string & tapePool, const std::string & blockid,
+        const std::string & vid, int copyNumber, u_signed64 lastModificationTime,
+        signed64 procTime);
+    void logMigrationVmgrUpdate (Cuuid_t uuid, struct Cns_fileid* castorFileId,
+        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
+        const std::string & tapePool, const std::string & vid, signed64 procTime);
+    void logMigrationVmgrFailure (Cuuid_t uuid, struct Cns_fileid* castorFileId,
+        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
+        const std::string & tapePool, castor::exception::Exception & e);
+    void logMigrationCannotUpdateDb (Cuuid_t uuid, struct Cns_fileid* castorFileId,
+        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
+        const std::string & serviceClass, const std::string & fileClass,
+        const std::string & tapePool, castor::exception::Exception & e);
+    void logMigrationNsUpdate(Cuuid_t uuid, struct Cns_fileid* castorFileId,
+        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
+        const std::string & serviceClass, const std::string & fileClass,
+        const std::string & tapePool, const std::string & blockid,
+        const std::string & vid, int copyNumber, u_signed64 lastModificationTime,
+        const char (&checksumHex)[19], signed64 procTime);
+    void logRepackNsUpdate (Cuuid_t uuid, struct Cns_fileid* castorFileId,
+        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
+        const std::string & serviceClass, const std::string & fileClass,
+        const std::string & tapePool, const std::string & blockid,
+        const std::string & vid, int copyNumber, u_signed64 lastModificationTime,
+        const char (&checksumHex)[19],const std::string & repackVid, signed64 procTime);
+    void logRepackFileRemoved (Cuuid_t uuid, struct Cns_fileid* castorFileId,
+        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
+        const std::string & serviceClass, const std::string & fileClass,
+        const std::string & tapePool, const std::string & blockid,
+        const std::string & vid, int copyNumber, u_signed64 lastModificationTime,
+        const char (&checksumHex)[19], const std::string & RepackVid, signed64 procTime);
+    void logRepackStaleFile (Cuuid_t uuid, struct Cns_fileid* castorFileId,
+        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
+        const std::string & serviceClass, const std::string & fileClass,
+        const std::string & tapePool, const std::string & blockid,
+        const std::string & vid, int copyNumber, u_signed64 lastModificationTime,
+        const char (&checksumHex)[19],const std::string & repackVid, signed64 procTime);
+    void logRepackUncomfirmedStaleFile (Cuuid_t uuid, struct Cns_fileid* castorFileId,
+        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
+        const std::string & serviceClass, const std::string & fileClass,
+        const std::string & tapePool, const std::string & blockid,
+        const std::string & vid, int copyNumber, u_signed64 lastModificationTime,
+        const char (&checksumHex)[19],const std::string & repackVid, signed64 procTime);
+    void logMigrationNsFailure (Cuuid_t uuid, struct Cns_fileid* castorFileId,
+        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
+        const std::string & serviceClass, const std::string & fileClass,
+        const std::string & tapePool, const std::string & blockid,
+        const std::string & vid, int copyNumber, u_signed64 lastModificationTime,
+        const char (&checksumHex)[19],const std::string & repackVid, signed64 procTime,
+        castor::exception::Exception & e);
+    void logMigrationDbUpdate (Cuuid_t uuid, struct Cns_fileid* castorFileId,
+        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
+        const std::string & serviceClass, const std::string & fileClass,
+        const std::string & tapePool, const std::string & blockid,
+        const std::string & vid, int copyNumber, signed64 procTime);
+    void logMigrationCannotFindVid (Cuuid_t uuid, struct Cns_fileid* castorFileId,
+        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
+        castor::exception::Exception & e);
+    void logTapeReadOnly (Cuuid_t uuid, struct Cns_fileid* castorFileId,
+        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
+        const std::string & vid);
+    void logCannotReadOnly (Cuuid_t uuid, struct Cns_fileid* castorFileId,
+        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
+        const std::string & vid, castor::exception::Exception & e);
 
     utils::ShutdownBoolFunctor m_shuttingDown;
 

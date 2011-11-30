@@ -38,7 +38,7 @@ namespace castor {
     namespace tapegateway {
       class VmgrTapeGatewayHelper {
         public:
-	void getTapeForStream(const u_signed64 initialSizeToTransfer, const std::string& tapepoolName,
+	void getTapeForMigration(const u_signed64 initialSizeToTransfer, const std::string& tapepoolName,
 	    int& startFseq, castor::stager::Tape& tapeToUse, const utils::BoolFunctor &shuttingDown) throw (castor::exception::Exception);
 
 	void getDataFromVmgr(castor::stager::Tape& tape, const utils::BoolFunctor &shuttingDown)

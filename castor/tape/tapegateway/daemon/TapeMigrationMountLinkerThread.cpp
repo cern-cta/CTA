@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      TapeStreamLinkerThread.cpp
+ *                      TapeMigrationMountLinkerThread.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TapeStreamLinkerThread.cpp,v $ $Author: waldron $
+ * @(#)$RCSfile: TapeMigrationMountLinkerThread.cpp,v $ $Author: waldron $
  *
  *
  *
@@ -42,7 +42,7 @@
 #include "castor/tape/tapegateway/TapeGatewayDlfMessageConstants.hpp"
 
 #include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"
-#include "castor/tape/tapegateway/daemon/TapeStreamLinkerThread.hpp"
+#include "castor/tape/tapegateway/daemon/TapeMigrationMountLinkerThread.hpp"
 #include "castor/tape/tapegateway/daemon/VmgrTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/daemon/NsTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/ScopedTransaction.hpp"
@@ -50,16 +50,16 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapegateway::TapeStreamLinkerThread::TapeStreamLinkerThread(){
+castor::tape::tapegateway::TapeMigrationMountLinkerThread::TapeMigrationMountLinkerThread(){
 
 }
 
 //------------------------------------------------------------------------------
 // runs the thread
 //------------------------------------------------------------------------------
-void castor::tape::tapegateway::TapeStreamLinkerThread::run(void*)
+void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
 {
-  std::list<castor::tape::tapegateway::ITapeGatewaySvc::Stream> streamsToResolve;
+  std::list<castor::tape::tapegateway::ITapeGatewaySvc::migrationMountParameters> migrationMountToResolve;
 
   // service to access the database
   castor::IService* dbSvc =
@@ -78,10 +78,10 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void*)
   timeval tvStart,tvEnd;
   gettimeofday(&tvStart, NULL);
 
-  // get streams to check from the db
+  // get migration mounts to check from the db
   try {
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, LINKER_GETTING_STREAMS, 0, NULL);
-    oraSvc->getMigrationMountsWithoutTapes(streamsToResolve);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, LINKER_GETTING_MIGRATION_MOUNTS, 0, NULL);
+    oraSvc->getMigrationMountsWithoutTapes(migrationMountToResolve);
 
   } catch (castor::exception::Exception& e) {
     // error in getting new tape to submit
@@ -89,12 +89,12 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void*)
     {castor::dlf::Param("errorCode",sstrerror(e.code())),
         castor::dlf::Param("errorMessage",e.getMessage().str())
     };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, LINKER_NO_STREAM, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, LINKER_NO_MIGRATION_MOUNT, params);
     return;
   }
 
-  if (streamsToResolve.empty()){
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, LINKER_NO_STREAM, 0, NULL);
+  if (migrationMountToResolve.empty()){
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, LINKER_NO_MIGRATION_MOUNT, 0, NULL);
     return;
   }
 
@@ -105,23 +105,23 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void*)
   {
       castor::dlf::Param("ProcessingTime", procTime * 0.000001)
   };
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, LINKER_STREAMS_FOUND, paramsTapes);
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, LINKER_MOUNTS_FOUND, paramsTapes);
 
   // ask tapes to vmgr
   VmgrTapeGatewayHelper vmgrHelper;
 
-  std::list<u_signed64> strIds;
+  std::list<u_signed64> MMIds;
   std::list<std::string> vids;
   std::list<int> fseqs;
   std::list<castor::stager::Tape> tapesUsed;
 
-  for (std::list<castor::tape::tapegateway::ITapeGatewaySvc::Stream>::iterator item = streamsToResolve.begin();
-      item != streamsToResolve.end();
+  for (std::list<castor::tape::tapegateway::ITapeGatewaySvc::migrationMountParameters>::iterator item = migrationMountToResolve.begin();
+      item != migrationMountToResolve.end();
       item++){
 
     // get tape from vmgr
     castor::dlf::Param paramsVmgr[] =
-      {castor::dlf::Param("StreamId", item->streamId),
+      {castor::dlf::Param("MigationMountId", item->migrationMountId),
        castor::dlf::Param("TapePool", item->tapePoolName)
       };
 
@@ -131,7 +131,7 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void*)
 
     try {
       // last Fseq is the value which should be used for the first file
-      vmgrHelper.getTapeForStream(item->initialSizeToTransfer, item->tapePoolName, lastFseq, tapeToUse, m_shuttingDown);
+      vmgrHelper.getTapeForMigration(item->initialSizeToTransfer, item->tapePoolName, lastFseq, tapeToUse, m_shuttingDown);
 
       // Validate the value received from the vmgr with the nameserver: for this given tape
       // fseq should be strictly greater than the highest referenced segment on the tape
@@ -145,7 +145,7 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void*)
       nsHelper.checkFseqForWrite (tapeToUse.vid(), tapeToUse.side(), lastFseq);
     } catch(castor::exception::Exception& e) {
       castor::dlf::Param params[] = {
-          castor::dlf::Param("StreamId", item->streamId),
+          castor::dlf::Param("MigationMountId", item->migrationMountId),
           castor::dlf::Param("errorCode", sstrerror(e.code())),
           castor::dlf::Param("errorMessage", e.getMessage().str())
       };
@@ -157,11 +157,11 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void*)
         //tapepool doesn't exists anymore
         try {
           // This PL/SQL does not commit yet. Commit will happen only on global
-          // completion after calling oraSvc->attachTapesToStreams
+          // completion after calling oraSvc->attachTapesToMigrationMounts
           // TODO: can probably be improved by adding autonomous transaction
           // in this SQL procedure.
           // Wrapper has no side-effect
-          oraSvc->deleteMigrationMountWithBadTapePool(item->streamId);
+          oraSvc->deleteMigrationMountWithBadTapePool(item->migrationMountId);
         } catch (castor::exception::Exception e){
           castor::dlf::Param params[] = {
               castor::dlf::Param("errorCode",sstrerror(e.code())),
@@ -183,7 +183,7 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void*)
         }
         // Major problem, the vmgr told us to write on an fseq still referenced in the NS
         castor::dlf::Param params[] = {
-            castor::dlf::Param("StreamId", item->streamId),
+            castor::dlf::Param("MigationMountId", item->migrationMountId),
             castor::dlf::Param("TapePool", item->tapePoolName),
             castor::dlf::Param("errorCode", sstrerror(e.code())),
             castor::dlf::Param("errorMessage", e.getMessage().str()),
@@ -200,12 +200,12 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void*)
     if ( !tapeToUse.vid().empty()){
       // got the tape
       castor::dlf::Param params[] = {
-          castor::dlf::Param("StreamId", item->streamId),
+          castor::dlf::Param("MigationMountId", item->migrationMountId),
           castor::dlf::Param("TPVID", tapeToUse.vid())
       };
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, LINKER_LINKING_TAPE_STREAM, params);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, LINKER_LINKING_TAPE_MIGRATION_MOUNT, params);
 
-      strIds.push_back(item->streamId);
+      MMIds.push_back(item->migrationMountId);
       vids.push_back(tapeToUse.vid());
       fseqs.push_back(lastFseq);
       tapesUsed.push_back(tapeToUse);
@@ -216,7 +216,7 @@ void castor::tape::tapegateway::TapeStreamLinkerThread::run(void*)
   // update the db
   try {
     // This is where the commit happens (finally)
-    oraSvc->attachTapesToStreams(strIds, vids, fseqs);
+    oraSvc->attachTapesToMigrationMounts(MMIds, vids, fseqs);
   } catch (castor::exception::Exception e){
     castor::dlf::Param params[] =  {
         castor::dlf::Param("errorCode",sstrerror(e.code())),

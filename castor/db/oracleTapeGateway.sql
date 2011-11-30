@@ -256,7 +256,7 @@ END;
         
 /* attach the tapes to the migration mounts  */
 CREATE OR REPLACE
-PROCEDURE tg_attachTapesToStreams (
+PROCEDURE tg_attachTapesToMigrationMounts (
   inStartFseqs IN castor."cnumList",
   inMountIds   IN castor."cnumList",
   inTapeVids   IN castor."strList") AS
@@ -1523,7 +1523,7 @@ END;
 
 /* flag tape as full for a given session */
 CREATE OR REPLACE
-PROCEDURE tg_flagTapeFull ( inTGReqId IN NUMBER ) AS
+PROCEDURE tg_flagTapeFull ( inVDQMReqId IN NUMBER ) AS
   /* The tape gateway request does not exist per se, but 
    * references to its ID should be removed (with needed consequences
    * from the structures pointing to it) */
@@ -1533,7 +1533,7 @@ PROCEDURE tg_flagTapeFull ( inTGReqId IN NUMBER ) AS
   varMJId NUMBER;
 BEGIN
   -- Find the relevant migration or recall mount id.
-  tg_findFromVDQMReqId (inTGReqId, varUnused, varMJId);
+  tg_findFromVDQMReqId (inVDQMReqId, varUnused, varMJId);
   -- Find out whether this is a read or a write
   IF (varMJId IS NOT NULL) THEN
     UPDATE MigrationMount
@@ -1542,8 +1542,33 @@ BEGIN
   ELSE
     -- Wrong Access Mode encountered. Notify.
     RAISE_APPLICATION_ERROR(-20292, 'tg_flagTapeFullForMigrationSession: '||
-      'no migration mount found for TapeGatewayRequestId: '|| inTGReqId);
+      'no migration mount found for VDQMRequestId: '|| inVDQMReqId);
   END IF;
 END;
 /
 
+/* Find the VID of the tape used in a tape session */
+CREATE OR REPLACE
+PROCEDURE tg_getMigrationMountVid (
+    inVDQMReqId     IN NUMBER,
+    outVid          OUT NOCOPY VARCHAR2,
+    outTapePool     OUT NOCOPY VARCHAR2) AS
+    varMMId         NUMBER;
+    varUnused       NUMBER;
+BEGIN
+  -- Find the relevant stream.
+  tg_findFromVDQMReqId (inVDQMReqId, varUnused, varMMId);
+  -- Return migration mount and tapepool information
+  IF (varMMId IS NOT NULL) THEN
+    SELECT MM.vid,     TP.name
+      INTO outVid, outTapePool
+      FROM MigrationMount MM
+     INNER JOIN TapePool TP ON TP.id = MM.tapePool
+     WHERE MM.id = varMMId;
+  ELSE
+    -- Wrong Access Mode encountered. Notify.
+    RAISE_APPLICATION_ERROR(-20292, 'tg_getMigrationMountVid: '||
+      'no migration mount found for VDQMRequestId: '|| inVDQMReqId);
+  END IF;
+END;
+/

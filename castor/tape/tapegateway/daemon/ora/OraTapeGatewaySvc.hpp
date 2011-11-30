@@ -63,12 +63,12 @@ namespace ora         {
     
   public:
 
-    // To get all the stream without a Tape associated to it
-    virtual void  getMigrationMountsWithoutTapes(std::list<castor::tape::tapegateway::ITapeGatewaySvc::Stream>& streams)
+    // To get all the migration mount without a Tape associated to it
+    virtual void  getMigrationMountsWithoutTapes(std::list<castor::tape::tapegateway::ITapeGatewaySvc::migrationMountParameters>& migrationMounts)
       throw (castor::exception::Exception);
 
-    // To create the db link between a Tape and a Stream
-    virtual void attachTapesToStreams(
+    // To create the db link between a Tape and a migrationMountParameters
+    virtual void attachTapesToMigrationMounts(
 			   const std::list<u_signed64>& strIds,
 			   const std::list<std::string>& vids,
 			   const std::list<int>& fseqs)
@@ -199,9 +199,9 @@ namespace ora         {
     virtual void  endTransaction() 
       throw (castor::exception::Exception);
 
-    // To delete stream with wrong tapepool 
+    // To delete migartion mounts with wrong tapepool
     virtual void deleteMigrationMountWithBadTapePool(
-				    const u_signed64 streamId) 
+				    const u_signed64 migrationMountId)
       throw (castor::exception::Exception);
 
     // To delete taperequest 
@@ -231,7 +231,7 @@ namespace ora         {
       throw (castor::exception::Exception);
 
     oracle::occi::Statement *m_getMigrationMountsWithoutTapesStatement;
-    oracle::occi::Statement *m_attachTapesToStreamsStatement;
+    oracle::occi::Statement *m_attachTapesToMigrationMountsStatement;
     oracle::occi::Statement *m_getTapeWithoutDriveReqStatement;
     oracle::occi::Statement *m_attachDriveReqToTapeStatement;
     oracle::occi::Statement *m_getTapesWithDriveReqsStatement;

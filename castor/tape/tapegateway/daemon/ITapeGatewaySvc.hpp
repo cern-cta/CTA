@@ -63,24 +63,23 @@ namespace tapegateway {
       public:
 
         /**
-         * Little nested struct to simplify the interface of getStreamsWithoutTapes
+         * Little nested struct to simplify the interface of getMigrationMountsWithoutTapes
          */
-        /* TODO: Stream name should be gone */
-        struct Stream {
-          u_signed64 streamId;
+        struct migrationMountParameters {
+          u_signed64 migrationMountId;
           u_signed64 initialSizeToTransfer;
           std::string tapePoolName;
         };
 	/**
-	 * Get all the pending streams 
+	 * Get all the pending migration mounts
 	 */
-	virtual void  getMigrationMountsWithoutTapes(std::list<Stream>& streams)
+	virtual void  getMigrationMountsWithoutTapes(std::list<migrationMountParameters>& migrationMounts)
 	  throw (castor::exception::Exception)=0;
 
         /**
-         * Associate to each Stream a Tape
+         * Associate to each migrationMountParameters a Tape
          */
-        virtual void attachTapesToStreams(const std::list<u_signed64>& strIds,
+        virtual void attachTapesToMigrationMounts(const std::list<u_signed64>& strIds,
 					  const std::list<std::string>& vids,
 					  const std::list<int>& fseqs)
           throw (castor::exception::Exception)=0;
@@ -240,8 +239,8 @@ namespace tapegateway {
 	virtual void endTransaction() 
 	  throw (castor::exception::Exception)=0;
 
-	/* delete stream with wrong tapepool */
-	virtual void deleteMigrationMountWithBadTapePool(const u_signed64 streamId) 
+	/* delete migration mounts with wrong tapepool */
+	virtual void deleteMigrationMountWithBadTapePool(const u_signed64 migrationMountId)
 	  throw (castor::exception::Exception)=0;
 	
 	/* delete tape request associated to a bad tape */
@@ -253,6 +252,12 @@ namespace tapegateway {
 	// the session. Session is passed by VDQM request id (like for end/failSession).
 	virtual void flagTapeFullForMigrationSession(const u_signed64& tapeRequestId)
 	throw (castor::exception::Exception) = 0;
+
+	// Find the VID (and just it) for a migration mount.
+	// This allows a safer update for the VMGR's fseq on this tape.
+	// Past that update, fiddling with a file will only affect the file itself
+	virtual void getMigrationMountVid(FileMigratedNotification & fileMigrated,
+	    std::string& vid, std::string& tapePool) = 0;
 
     /* Bypass access the the underlying DB accessor allowing safe handling from the caller */
     virtual void commit() = 0;

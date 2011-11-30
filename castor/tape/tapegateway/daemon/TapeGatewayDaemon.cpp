@@ -50,7 +50,7 @@
 #include "castor/tape/tapegateway/daemon/MigratorErrorHandlerThread.hpp"
 #include "castor/tape/tapegateway/daemon/RecallerErrorHandlerThread.hpp"
 #include "castor/tape/tapegateway/daemon/TapeGatewayDaemon.hpp"
-#include "castor/tape/tapegateway/daemon/TapeStreamLinkerThread.hpp"
+#include "castor/tape/tapegateway/daemon/TapeMigrationMountLinkerThread.hpp"
 #include "castor/tape/tapegateway/daemon/VdqmRequestsCheckerThread.hpp"
 #include "castor/tape/tapegateway/daemon/VdqmRequestsProducerThread.hpp"
 #include "castor/tape/tapegateway/daemon/WorkerThread.hpp"
@@ -272,9 +272,9 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
   
   // query vmgr for tape and tapepools
   
-  std::auto_ptr<castor::tape::tapegateway::TapeStreamLinkerThread> tsThread(new castor::tape::tapegateway::TapeStreamLinkerThread());
-  std::auto_ptr<castor::server::SignalThreadPool> tsPool(new castor::server::SignalThreadPool("TapeStreamLinkerThread", tsThread.release(), DEFAULT_SLEEP_INTERVAL));
-  addThreadPool(tsPool.release());
+  std::auto_ptr<castor::tape::tapegateway::TapeMigrationMountLinkerThread> tsThread(new castor::tape::tapegateway::TapeMigrationMountLinkerThread());
+  std::auto_ptr<castor::server::SignalThreadPool> tmmPool(new castor::server::SignalThreadPool("TapeMigrationMountLinkerThread", tsThread.release(), DEFAULT_SLEEP_INTERVAL));
+  addThreadPool(tmmPool.release());
   getThreadPool('T')->setNbThreads(1);
 
     // migration error handler

@@ -18,13 +18,6 @@ CREATE OR REPLACE PACKAGE CastorMon AS
 
   /**
    * This procedure generates statistics on files which are waiting to be
-   * migrated to tape.
-   * @param interval The frequency at which the data is refreshed.
-   */
-  PROCEDURE waitTapeMigrationStats(interval IN NUMBER);
-
-  /**
-   * This procedure generates statistics on files which are waiting to be
    * recalled from tape.
    * @param interval The frequency at which the data is refreshed.
    */
@@ -261,7 +254,6 @@ BEGIN
                             interval NUMBER := 3600;
                           BEGIN
                             castorMon.diskCopyStats(interval);
-                            castorMon.waitTapeMigrationStats(interval);
                             castorMon.waitTapeRecallStats(interval);
                           END;',
       JOB_CLASS       => 'CASTOR_MON_JOB_CLASS',
