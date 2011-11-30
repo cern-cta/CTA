@@ -56,6 +56,9 @@ namespace castor {
         void setTapeAsReadonlyAndUnbusy(const castor::stager::Tape& tape, const utils::BoolFunctor &shuttingDown)
         throw (castor::exception::Exception);
 
+        void setTapeAsReadonlyAndUnbusy(const std::string& vid, const utils::BoolFunctor &shuttingDown)
+        throw (castor::exception::Exception);
+
         int maxFseqFromLabel(const char* label);
 
         /* This class will extract the tape information from the vdqm at construction time.

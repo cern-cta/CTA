@@ -98,7 +98,8 @@ castor::tape::tapegateway::ora::OraTapeGatewaySvc::OraTapeGatewaySvc(const std::
   m_getTapeToReleaseStatement(0),
   m_deleteMigrationMountWithBadTapePoolStatement(0),
   m_deleteTapeRequestStatement(0),
-  m_flagTapeFullForMigrationSession(0)
+  m_flagTapeFullForMigrationSession(0),
+  m_getMigrationMountVid(0)
 {
 }
 
@@ -156,6 +157,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
     if ( m_deleteMigrationMountWithBadTapePoolStatement) deleteStatement(m_deleteMigrationMountWithBadTapePoolStatement);    
     if ( m_deleteTapeRequestStatement) deleteStatement(m_deleteTapeRequestStatement);
     if ( m_flagTapeFullForMigrationSession) deleteStatement(m_flagTapeFullForMigrationSession);
+    if ( m_getMigrationMountVid) deleteStatement(m_getMigrationMountVid);
   } catch (castor::exception::Exception& ignored) {};
   // Now reset all pointers to 0
   m_getMigrationMountsWithoutTapesStatement= 0; 
@@ -182,7 +184,8 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
   m_getTapeToReleaseStatement=0;
   m_deleteMigrationMountWithBadTapePoolStatement=0;
   m_deleteTapeRequestStatement=0;
-    m_flagTapeFullForMigrationSession=0;
+  m_flagTapeFullForMigrationSession=0;
+  m_getMigrationMountVid=0;
 }
 
 //----------------------------------------------------------------------------
@@ -1707,6 +1710,35 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::flagTapeFullForMigration
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in flagTapeFullForMigrationSession"
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+//----------------------------------------------------------------------------
+// getMigrationMountVid
+//----------------------------------------------------------------------------
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getMigrationMountVid(FileMigratedNotification & fileMigrated,
+    std::string &vid, std::string &tapePool)
+{
+  try {
+    if (!m_getMigrationMountVid) {
+      m_getMigrationMountVid =
+          createStatement("BEGIN tg_getMigrationMountVid(:1,:2,:3);END;");
+      m_getMigrationMountVid->registerOutParam
+      (2, oracle::occi::OCCISTRING, 2048 );
+      m_getMigrationMountVid->registerOutParam
+      (3, oracle::occi::OCCISTRING, 2048 );
+    }
+    m_getMigrationMountVid->setDouble(1,(double)fileMigrated.mountTransactionId());
+    m_getMigrationMountVid->executeUpdate();
+    vid      = m_getMigrationMountVid->getString(2);
+    tapePool = m_getMigrationMountVid->getString(3);
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in getMigrationMountVid"
       << std::endl << e.what();
     throw ex;
   }

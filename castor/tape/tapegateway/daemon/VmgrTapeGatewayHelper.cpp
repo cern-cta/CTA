@@ -255,6 +255,15 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::setTapeAsReadonlyAndUnbus
   }
 }
 
+void castor::tape::tapegateway::VmgrTapeGatewayHelper::setTapeAsReadonlyAndUnbusy(const std::string& vid,
+    const utils::BoolFunctor &shuttingDown) throw (castor::exception::Exception)
+{
+  castor::stager::Tape tape;
+  tape.setVid(vid);
+  tape.setSide(0); // HARDCODED
+  setTapeAsReadonlyAndUnbusy(tape,shuttingDown);
+}
+
 int castor::tape::tapegateway::VmgrTapeGatewayHelper::maxFseqFromLabel(const char* label)
 {
   int maxPossible = 0;

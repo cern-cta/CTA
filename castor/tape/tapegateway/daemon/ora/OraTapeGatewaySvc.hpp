@@ -215,6 +215,12 @@ namespace ora         {
     virtual void flagTapeFullForMigrationSession(const u_signed64& tapeRequestId)
       throw (castor::exception::Exception);
 
+    // Find the VID (and just it) for a migration mount.
+    // This allows a safer update for the VMGR's fseq on this tape.
+    // Past that update, fiddling with a file will only affect the file itself
+    virtual void getMigrationMountVid(FileMigratedNotification & fileMigrated,
+        std::string& vid, std::string& tapePool);
+
     // To directly commit 
     virtual void commit()
       throw (castor::exception::Exception);
@@ -255,6 +261,7 @@ namespace ora         {
     oracle::occi::Statement *m_deleteMigrationMountWithBadTapePoolStatement;
     oracle::occi::Statement *m_deleteTapeRequestStatement;
     oracle::occi::Statement *m_flagTapeFullForMigrationSession;
+    oracle::occi::Statement *m_getMigrationMountVid;
 
     // Private helper class used to introspect cursors, making the OCCI code independent of the order of elements
     // in the cursor (especially with %ROWTYPE contexts).

@@ -802,16 +802,16 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
   logMigrationNotified(nullCuuid, &castorFileId,
       requester, fileMigrated, checksumHex, blockid);
   // CHECK DB
-  std::string repackVid;
+  std::string originalVid;
+  int originalCopyNumber;
   int copyNumber;
   std::string serviceClass;
   std::string fileClass;
   u_signed64 lastModificationTime;
   try {
     // This SQL procedure does not do any lock/updates.
-    timer.reset();
-    oraSvc.getRepackVidAndFileInfo(fileMigrated,vid,copyNumber,lastModificationTime,repackVid,
-        serviceClass, fileClass, tapePool);
+    oraSvc.getMigratedFileInfo(fileMigrated,vid,copyNumber,lastModificationTime,
+                               originalVid,originalCopyNumber,fileClass);
   } catch (castor::exception::Exception& e){
     logMigrationFileNotfound (nullCuuid, &castorFileId, requester, fileMigrated, e);
     // The migrated file can not be found in the system: this is non-fatal: it could have been deleted by the user
@@ -829,32 +829,33 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
   bool fileStale = false;
   try {
     timer.reset();
-    if (repackVid.empty()) {
+    if (originalVid.empty()) {
       // update the name server (standard migration)
       nsHelper.updateMigratedFile( fileMigrated, copyNumber, vid, lastModificationTime);
       logMigrationNsUpdate(nullCuuid, &castorFileId, requester, fileMigrated, serviceClass, fileClass,
       tapePool, blockid, vid, copyNumber, lastModificationTime, checksumHex, timer.getusecs());
     } else {
       // update the name server (repacked file)
-      nsHelper.updateRepackedFile( fileMigrated, repackVid, copyNumber, vid, lastModificationTime);
+      nsHelper.updateRepackedFile( fileMigrated, originalCopyNumber, originalVid,
+                                   copyNumber, vid, lastModificationTime);
       logRepackNsUpdate(nullCuuid, &castorFileId, requester, fileMigrated, serviceClass, fileClass,
-          tapePool, blockid, vid, copyNumber, lastModificationTime, checksumHex, repackVid, timer.getusecs());
+          tapePool, blockid, vid, copyNumber, lastModificationTime, checksumHex, originalVid, timer.getusecs());
     }
   } catch (castor::tape::tapegateway::NsTapeGatewayHelper::NoSuchFileException) {
     fileStale = true;
     logRepackFileRemoved(nullCuuid, &castorFileId, requester, fileMigrated, serviceClass, fileClass,
-          tapePool, blockid, vid, copyNumber, lastModificationTime, checksumHex, repackVid, timer.getusecs());
+          tapePool, blockid, vid, copyNumber, lastModificationTime, checksumHex, originalVid, timer.getusecs());
   } catch (castor::tape::tapegateway::NsTapeGatewayHelper::FileMutatedException) {
     fileStale = true;
     logRepackStaleFile (nullCuuid, &castorFileId, requester, fileMigrated, serviceClass, fileClass,
-        tapePool, blockid, vid, copyNumber, lastModificationTime, checksumHex, repackVid, timer.getusecs());
+        tapePool, blockid, vid, copyNumber, lastModificationTime, checksumHex, originalVid, timer.getusecs());
   } catch (castor::tape::tapegateway::NsTapeGatewayHelper::FileMutationUnconfirmedException) {
     fileStale = true;
     logRepackUncomfirmedStaleFile(nullCuuid, &castorFileId, requester, fileMigrated, serviceClass, fileClass,
-        tapePool, blockid, vid, copyNumber, lastModificationTime, checksumHex, repackVid, timer.getusecs());
+        tapePool, blockid, vid, copyNumber, lastModificationTime, checksumHex, originalVid, timer.getusecs());
   } catch (castor::exception::Exception& e) {
     logMigrationNsFailure(nullCuuid, &castorFileId, requester, fileMigrated, serviceClass, fileClass,
-        tapePool, blockid, vid, copyNumber, lastModificationTime, checksumHex, repackVid, timer.getusecs(),e);
+        tapePool, blockid, vid, copyNumber, lastModificationTime, checksumHex, originalVid, timer.getusecs(),e);
     try {
       FileErrorReport failure;
       failure.setMountTransactionId(fileMigrated.mountTransactionId());
@@ -2498,7 +2499,7 @@ void castor::tape::tapegateway::WorkerThread::logRepackNsUpdate (Cuuid_t uuid, s
         const std::string & serviceClass, const std::string & fileClass,
         const std::string & tapePool, const std::string & blockid,
         const std::string & vid, int copyNumber, u_signed64 lastModificationTime,
-        const char (&checksumHex)[19],const std::string & repackVid, signed64 procTime)
+        const char (&checksumHex)[19],const std::string & originalVid, signed64 procTime)
 {
   castor::dlf::Param paramsRepack[] ={
       castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
@@ -2520,7 +2521,7 @@ void castor::tape::tapegateway::WorkerThread::logRepackNsUpdate (Cuuid_t uuid, s
       castor::dlf::Param("blockid", blockid),
       castor::dlf::Param("checksum name",fileMigrated.checksumName()),
       castor::dlf::Param("checksum",checksumHex),
-      castor::dlf::Param("repack vid",repackVid),
+      castor::dlf::Param("original vid",originalVid),
       castor::dlf::Param("ProcessingTime", procTime * 0.000001)
   };
   castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, WORKER_REPACK_NS_UPDATE, paramsRepack,castorFileId);
@@ -2531,7 +2532,7 @@ void castor::tape::tapegateway::WorkerThread::logRepackFileRemoved (Cuuid_t uuid
         const std::string & serviceClass, const std::string & fileClass,
         const std::string & tapePool, const std::string & blockid,
         const std::string & vid, int copyNumber, u_signed64 lastModificationTime,
-        const char (&checksumHex)[19], const std::string & repackVid, signed64 procTime)
+        const char (&checksumHex)[19], const std::string & originalVid, signed64 procTime)
 {
   castor::dlf::Param paramsStaleFile[] ={
       castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
@@ -2553,7 +2554,7 @@ void castor::tape::tapegateway::WorkerThread::logRepackFileRemoved (Cuuid_t uuid
       castor::dlf::Param("blockid", blockid),
       castor::dlf::Param("checksum name",fileMigrated.checksumName()),
       castor::dlf::Param("checksum",checksumHex),
-      castor::dlf::Param("repack vid",repackVid),
+      castor::dlf::Param("original vid",originalVid),
       castor::dlf::Param("ProcessingTime", procTime * 0.000001)
   };
   castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, WORKER_REPACK_FILE_REMOVED, paramsStaleFile,castorFileId);
@@ -2564,7 +2565,7 @@ void castor::tape::tapegateway::WorkerThread::logRepackStaleFile (Cuuid_t uuid, 
         const std::string & serviceClass, const std::string & fileClass,
         const std::string & tapePool, const std::string & blockid,
         const std::string & vid, int copyNumber, u_signed64 lastModificationTime,
-        const char (&checksumHex)[19],const std::string & repackVid, signed64 procTime)
+        const char (&checksumHex)[19],const std::string & originalVid, signed64 procTime)
 {
   castor::dlf::Param paramsStaleFile[] ={
       castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
@@ -2586,7 +2587,7 @@ void castor::tape::tapegateway::WorkerThread::logRepackStaleFile (Cuuid_t uuid, 
       castor::dlf::Param("blockid", blockid),
       castor::dlf::Param("checksum name",fileMigrated.checksumName()),
       castor::dlf::Param("checksum",checksumHex),
-      castor::dlf::Param("repack vid",repackVid),
+      castor::dlf::Param("original vid",originalVid),
       castor::dlf::Param("ProcessingTime", procTime * 0.000001)
   };
   castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, WORKER_REPACK_STALE_FILE, paramsStaleFile,castorFileId);
@@ -2597,7 +2598,7 @@ void castor::tape::tapegateway::WorkerThread::logRepackUncomfirmedStaleFile (Cuu
     const std::string & serviceClass, const std::string & fileClass,
     const std::string & tapePool, const std::string & blockid,
     const std::string & vid, int copyNumber, u_signed64 lastModificationTime,
-    const char (&checksumHex)[19],const std::string & repackVid, signed64 procTime)
+    const char (&checksumHex)[19],const std::string & originalVid, signed64 procTime)
 {
   castor::dlf::Param paramsStaleFile[] ={
       castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
@@ -2619,7 +2620,7 @@ void castor::tape::tapegateway::WorkerThread::logRepackUncomfirmedStaleFile (Cuu
       castor::dlf::Param("blockid", blockid),
       castor::dlf::Param("checksum name",fileMigrated.checksumName()),
       castor::dlf::Param("checksum",checksumHex),
-      castor::dlf::Param("repack vid",repackVid),
+      castor::dlf::Param("original vid",originalVid),
       castor::dlf::Param("ProcessingTime", procTime * 0.000001)
   };
   castor::dlf::dlf_writep(uuid, DLF_LVL_WARNING, WORKER_REPACK_UNCONFIRMED_STALE_FILE, paramsStaleFile,castorFileId);
@@ -2630,7 +2631,7 @@ void castor::tape::tapegateway::WorkerThread::logMigrationNsFailure (Cuuid_t uui
         const std::string & serviceClass, const std::string & fileClass,
         const std::string & tapePool, const std::string & blockid,
         const std::string & vid, int copyNumber, u_signed64 lastModificationTime,
-        const char (&checksumHex)[19],const std::string & repackVid, signed64 procTime,
+        const char (&checksumHex)[19],const std::string & originalVid, signed64 procTime,
         castor::exception::Exception & e)
 {
   castor::dlf::Param params[] ={
@@ -2653,7 +2654,7 @@ void castor::tape::tapegateway::WorkerThread::logMigrationNsFailure (Cuuid_t uui
       castor::dlf::Param("blockid", blockid),
       castor::dlf::Param("checksum name",fileMigrated.checksumName()),
       castor::dlf::Param("checksum",checksumHex),
-      castor::dlf::Param("repack vid",repackVid),
+      castor::dlf::Param("repack vid",originalVid),
       castor::dlf::Param("ProcessingTime", procTime * 0.000001),
       castor::dlf::Param("errorCode",sstrerror(e.code())),
       castor::dlf::Param("errorMessage",e.getMessage().str())

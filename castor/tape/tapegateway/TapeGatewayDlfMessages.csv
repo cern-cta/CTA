@@ -120,3 +120,6 @@
 120,WORKER_MIG_REPORT_LIST_PROCESSED,"Worker: finished processing a migration report list"
 121,WORKER_REC_REPORT_LIST_RECEIVED,"Worker: received a recall report list"
 122,WORKER_REC_REPORT_LIST_PROCESSED,"Worker: finished processing a recall report list"
+123,WORKER_MIG_CANNOT_FIND_VID,"Worker: cannot find VID for migration mount"
+124,WORKER_MIG_TAPE_RDONLY,"Worker: tape set to readonly after failed fSeq update"
+125,WORKER_MIG_CANNOT_RDONLY,"Worker: failed to set tape to readonly after failed fSeq update"

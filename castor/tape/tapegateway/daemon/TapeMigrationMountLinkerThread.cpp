@@ -203,7 +203,7 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
           castor::dlf::Param("MigationMountId", item->migrationMountId),
           castor::dlf::Param("TPVID", tapeToUse.vid())
       };
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, LINKER_LINKING_TAPE_MIGRATION_MOUNT, params);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, LINKER_LINKING_TAPE_MOUNT, params);
 
       MMIds.push_back(item->migrationMountId);
       vids.push_back(tapeToUse.vid());
