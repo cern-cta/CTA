@@ -11,7 +11,7 @@ CREATE TABLE MonDiskCopyStats
 
 /* SQL statement for table MonWaitTapeMigrationStats */
 CREATE TABLE MonWaitTapeMigrationStats
-  (timestamp DATE, interval NUMBER, svcClass VARCHAR2(255), status VARCHAR2(10), minWaitTime NUMBER, maxWaitTime NUMBER, avgWaitTime NUMBER, minFileSize NUMBER, maxFileSize NUMBER, avgFileSize NUMBER, bin_LT_1 NUMBER, bin_1_To_6 NUMBER, bin_6_To_12 NUMBER, bin_12_To_24 NUMBER, bin_24_To_48 NUMBER, bin_GT_48 NUMBER, totalFileSize NUMBER, nbFiles NUMBER);
+  (timestamp DATE, interval NUMBER, tapePool VARCHAR2(255), status VARCHAR2(10), minWaitTime NUMBER, maxWaitTime NUMBER, avgWaitTime NUMBER, minFileSize NUMBER, maxFileSize NUMBER, avgFileSize NUMBER, bin_LT_1 NUMBER, bin_1_To_6 NUMBER, bin_6_To_12 NUMBER, bin_12_To_24 NUMBER, bin_24_To_48 NUMBER, bin_GT_48 NUMBER, totalFileSize NUMBER, nbFiles NUMBER);
 
 /* SQL statement for table MonWaitTapeRecallStats  */
 CREATE TABLE MonWaitTapeRecallStats

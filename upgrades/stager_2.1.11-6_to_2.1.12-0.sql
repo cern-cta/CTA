@@ -321,6 +321,9 @@ ALTER TABLE MigrationRouting ADD CONSTRAINT FK_MigrationRouting_FileClass
 ALTER TABLE MigrationRouting ADD CONSTRAINT FK_MigrationRouting_TapePool
    FOREIGN KEY (tapePool) REFERENCES TapePool(id);
 
+-- Monitoring
+ALTER TABLE MonWaitTapeMigrationStats RENAME COLUMN svcClass TO tapePool;
+
 -- New repack implementation
 ALTER TABLE StageRepackRequest ADD (status INTEGER);
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('StageRepackRequest', 'status', 0, 'REPACK_STARTING');
