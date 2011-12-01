@@ -421,6 +421,7 @@ BEGIN
   dropFunctionSafe('GETTCS');
   dropFunctionSafe('CHECKAVAILOFSCHEDULERRFS');
   dropFunctionSafe('CHECKFAILPUTWHENTAPE0');
+  dropProcedureSafe('TG_ATTACHTAPESTOSTREAMS');
 END;
 /
 DROP PROCEDURE dropProcedureSafe;
