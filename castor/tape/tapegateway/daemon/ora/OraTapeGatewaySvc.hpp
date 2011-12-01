@@ -68,7 +68,7 @@ namespace ora         {
       throw (castor::exception::Exception);
 
     // To create the db link between a Tape and a migrationMountParameters
-    virtual void attachTapesToMigrationMounts(
+    virtual void attachTapesToMigMounts(
 			   const std::list<u_signed64>& strIds,
 			   const std::list<std::string>& vids,
 			   const std::list<int>& fseqs)
@@ -237,7 +237,7 @@ namespace ora         {
       throw (castor::exception::Exception);
 
     oracle::occi::Statement *m_getMigrationMountsWithoutTapesStatement;
-    oracle::occi::Statement *m_attachTapesToMigrationMountsStatement;
+    oracle::occi::Statement *m_attachTapesToMigMountsStatement;
     oracle::occi::Statement *m_getTapeWithoutDriveReqStatement;
     oracle::occi::Statement *m_attachDriveReqToTapeStatement;
     oracle::occi::Statement *m_getTapesWithDriveReqsStatement;

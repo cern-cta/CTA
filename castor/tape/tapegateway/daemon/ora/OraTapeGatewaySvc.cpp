@@ -75,7 +75,7 @@ castor::tape::tapegateway::ora::OraTapeGatewaySvc::OraTapeGatewaySvc(const std::
   ITapeGatewaySvc(),
   OraCommonSvc(name),
   m_getMigrationMountsWithoutTapesStatement(0),
-  m_attachTapesToMigrationMountsStatement(0),
+  m_attachTapesToMigMountsStatement(0),
   m_getTapeWithoutDriveReqStatement(0),
   m_attachDriveReqToTapeStatement(0),
   m_getTapesWithDriveReqsStatement(0),
@@ -133,7 +133,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
   OraCommonSvc::reset();
   try {
     if ( m_getMigrationMountsWithoutTapesStatement ) deleteStatement(m_getMigrationMountsWithoutTapesStatement);
-    if ( m_attachTapesToMigrationMountsStatement ) deleteStatement(m_attachTapesToMigrationMountsStatement);
+    if ( m_attachTapesToMigMountsStatement ) deleteStatement(m_attachTapesToMigMountsStatement);
     if ( m_getTapeWithoutDriveReqStatement ) deleteStatement(m_getTapeWithoutDriveReqStatement); 
     if ( m_attachDriveReqToTapeStatement ) deleteStatement(m_attachDriveReqToTapeStatement);
     if ( m_getTapesWithDriveReqsStatement ) deleteStatement(m_getTapesWithDriveReqsStatement);
@@ -161,7 +161,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
   } catch (castor::exception::Exception& ignored) {};
   // Now reset all pointers to 0
   m_getMigrationMountsWithoutTapesStatement= 0; 
-  m_attachTapesToMigrationMountsStatement = 0;
+  m_attachTapesToMigMountsStatement = 0;
   m_getTapeWithoutDriveReqStatement= 0;
   m_attachDriveReqToTapeStatement= 0;
   m_getTapesWithDriveReqsStatement = 0;
@@ -245,10 +245,10 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getMigrationMountsWithou
 }
 
 //----------------------------------------------------------------------------
-// attachTapesToMigrationMounts
+// attachTapesToMigMounts
 //----------------------------------------------------------------------------
 
-void castor::tape::tapegateway::ora::OraTapeGatewaySvc::attachTapesToMigrationMounts(const std::list<u_signed64>& MMIds,const std::list<std::string>& vids, const std::list<int>& fseqs)
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::attachTapesToMigMounts(const std::list<u_signed64>& MMIds,const std::list<std::string>& vids, const std::list<int>& fseqs)
           throw (castor::exception::Exception){
   unsigned char (*bufferFseqs)[21]=NULL;
   ub2 *lensFseqs=NULL;
@@ -269,10 +269,10 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::attachTapesToMigrationMo
       throw e;
     }
     // Check whether the statements are ok
-    if (0 == m_attachTapesToMigrationMountsStatement) {
-      m_attachTapesToMigrationMountsStatement =
-        createStatement("BEGIN tg_attachTapesToMigrationMounts(:1,:2,:3);END;");
-      m_attachTapesToMigrationMountsStatement->setAutoCommit(true);
+    if (0 == m_attachTapesToMigMountsStatement) {
+      m_attachTapesToMigMountsStatement =
+        createStatement("BEGIN tg_attachTapesToMigMounts(:1,:2,:3);END;");
+      m_attachTapesToMigMountsStatement->setAutoCommit(true);
     }
     // input
     ub4 nb=MMIds.size();
@@ -310,7 +310,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::attachTapesToMigrationMo
       if (lensFseqs != 0 ) free(lensFseqs);
       if (bufferFseqs != 0 ) free(bufferFseqs);
       castor::exception::Internal ex;
-      ex.getMessage() << "invalid VID in attachTapesToMigrationMounts"
+      ex.getMessage() << "invalid VID in attachTapesToMigMounts"
 		      << std::endl;
       throw ex;
     }
@@ -355,14 +355,14 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::attachTapesToMigrationMo
     }
     ub4 unused=nb;
     /* Attach buffer to inStartFseqs */
-    m_attachTapesToMigrationMountsStatement->setDataBufferArray(1,bufferFseqs, oracle::occi::OCCI_SQLT_NUM, nb, &unused, 21, lensFseqs);
+    m_attachTapesToMigMountsStatement->setDataBufferArray(1,bufferFseqs, oracle::occi::OCCI_SQLT_NUM, nb, &unused, 21, lensFseqs);
     /* Attach array to inMountIds */
-    m_attachTapesToMigrationMountsStatement->setDataBufferArray(2,bufferMigrationMountIds, oracle::occi::OCCI_SQLT_NUM, nb, &unused, 21, lensMMIds);
+    m_attachTapesToMigMountsStatement->setDataBufferArray(2,bufferMigrationMountIds, oracle::occi::OCCI_SQLT_NUM, nb, &unused, 21, lensMMIds);
     ub4 len=nb;
     /* Attach array to inTapeVids */
-    m_attachTapesToMigrationMountsStatement->setDataBufferArray(3, bufferVids, oracle::occi::OCCI_SQLT_CHR,len, &len, maxLen, lensVids);
+    m_attachTapesToMigMountsStatement->setDataBufferArray(3, bufferVids, oracle::occi::OCCI_SQLT_CHR,len, &len, maxLen, lensVids);
     // execute the statement and see whether we found something
-    m_attachTapesToMigrationMountsStatement->executeUpdate();
+    m_attachTapesToMigMountsStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     if (lensMMIds != 0 ) free(lensMMIds);
     if (bufferMigrationMountIds != 0) free(bufferMigrationMountIds);
@@ -373,7 +373,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::attachTapesToMigrationMo
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
-      << "Error caught in attachTapesToMigrationMounts"
+      << "Error caught in attachTapesToMigMounts"
       << std::endl << e.what();
     throw ex;
   }

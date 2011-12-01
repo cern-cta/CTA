@@ -157,7 +157,7 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
         //tapepool doesn't exists anymore
         try {
           // This PL/SQL does not commit yet. Commit will happen only on global
-          // completion after calling oraSvc->attachTapesToMigrationMounts
+          // completion after calling oraSvc->attachTapesToMigMounts
           // TODO: can probably be improved by adding autonomous transaction
           // in this SQL procedure.
           // Wrapper has no side-effect
@@ -216,7 +216,7 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
   // update the db
   try {
     // This is where the commit happens (finally)
-    oraSvc->attachTapesToMigrationMounts(MMIds, vids, fseqs);
+    oraSvc->attachTapesToMigMounts(MMIds, vids, fseqs);
   } catch (castor::exception::Exception e){
     castor::dlf::Param params[] =  {
         castor::dlf::Param("errorCode",sstrerror(e.code())),

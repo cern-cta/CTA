@@ -79,7 +79,7 @@ namespace tapegateway {
         /**
          * Associate to each migrationMountParameters a Tape
          */
-        virtual void attachTapesToMigrationMounts(const std::list<u_signed64>& strIds,
+        virtual void attachTapesToMigMounts(const std::list<u_signed64>& strIds,
 					  const std::list<std::string>& vids,
 					  const std::list<int>& fseqs)
           throw (castor::exception::Exception)=0;

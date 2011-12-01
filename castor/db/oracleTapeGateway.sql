@@ -256,7 +256,7 @@ END;
         
 /* attach the tapes to the migration mounts  */
 CREATE OR REPLACE
-PROCEDURE tg_attachTapesToMigrationMounts (
+PROCEDURE tg_attachTapesToMigMounts (
   inStartFseqs IN castor."cnumList",
   inMountIds   IN castor."cnumList",
   inTapeVids   IN castor."strList") AS
