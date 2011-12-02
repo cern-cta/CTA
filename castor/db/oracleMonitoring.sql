@@ -139,16 +139,13 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
           -- New version (2.1.12) will be:
           --          'Pending' for 'PENDING'
           --          'Selected' for 'SELECTED'
-          --          'Failed' for 'FAILED'
           --          'MIGRATED' and 'RETRY' will be ignored.
           SELECT tapePool, status, waitTime, diskCopySize, found FROM (
             SELECT /*+ USE_NL(MigrationJob DiskCopy CastorFile) */
                    TapePool.name tapePool,
                    decode(MigrationJob.status, tconst.MIGRATIONJOB_PENDING, 'PENDING',
-                      decode(MigrationJob.status, tconst.MIGRATIONJOB_SELECTED, 'SELECTED', 
-                          decode(MigrationJob.status, tconst.MIGRATIONJOB_FAILED, 'FAILED','UNKNOWN')
-                       )
-                   ) status,
+                                               tconst.MIGRATIONJOB_SELECTED, 'SELECTED','UNKNOWN')
+                   status,
                    (getTime() - DiskCopy.creationTime) waitTime,
                    DiskCopy.diskCopySize, 1 found, RANK() OVER (PARTITION BY
                    DiskCopy.castorFile ORDER BY DiskCopy.id ASC) rank
@@ -158,8 +155,7 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
                AND MigrationJob.tapePool = TapePool.id
                AND decode(DiskCopy.status, 10, DiskCopy.status, NULL) = 10  -- CANBEMIGR
                AND MigrationJob.status IN (tconst.MIGRATIONJOB_PENDING, 
-                                           tconst.MIGRATIONJOB_SELECTED,
-                                           tconst.MIGRATIONJOB_FAILED))
+                                           tconst.MIGRATIONJOB_SELECTED))
            WHERE rank = 1
         ) a
         -- Attach a list of all service classes and possible states (PENDING,
@@ -168,8 +164,7 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
           SELECT TapePool.name tapePool, a.status
             FROM TapePool,
              (SELECT 'PENDING'  status FROM Dual UNION ALL
-              SELECT 'SELECTED' status FROM Dual UNION ALL
-              SELECT 'FAILED'   status FROM Dual) a) b
+              SELECT 'SELECTED' status FROM Dual) a) b
            ON (a.tapePool = b.tapePool AND a.status = b.status)
        GROUP BY GROUPING SETS (b.tapePool, b.status), (b.tapePool)
        ORDER BY b.tapePool, b.status;

@@ -124,6 +124,17 @@
     in the following instructions. You can safely stop the repackd and dismantle the repack DB
 
 
+  ORACLE Version 11
+  -----------------
+
+  - ORACLE version 11 is the prefered ORACLE version for castor 2.1.12. ORACLE 10 is still
+    supported for the core of CASTOR but repack will not be functionnal if ORACLE 10 is used.
+    Note that if you're upgrading from CASTOR 2.1.11 to CASTOR 2.1.12 under ORACLE 10, you will
+    end up with one invalid procedure after the upgrade : handleRepackRequest. This is not
+    an issue as long as you do not use repack on the instance. If you later upgrade to
+    ORACLE 11, you only have to revalidate this procedure to make repack fully functionnal.
+
+
   Upgrade Instructions from 2.1.11-0
   ----------------------------------
 

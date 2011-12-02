@@ -682,7 +682,7 @@ CREATE TABLE MigratedSegment(castorFile INTEGER CONSTRAINT NN_MigratedSegment_Ca
                              copyNb INTEGER CONSTRAINT NN_MigratedSegment_CopyNb NOT NULL,
                              VID VARCHAR2(2048) CONSTRAINT NN_MigratedSegment_VID NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-CREATE UNIQUE INDEX I_MigratedSegment_CFCopyNbVID ON MigratedSegment(CastorFile, copyNb);
+CREATE UNIQUE INDEX I_MigratedSegment_CFCopyNbVID ON MigratedSegment(CastorFile, copyNb, VID);
 ALTER TABLE MigratedSegment ADD CONSTRAINT FK_MigratedSegment_CastorFile
    FOREIGN KEY (castorFile) REFERENCES CastorFile(id);
 
@@ -764,9 +764,9 @@ CREATE UNIQUE INDEX I_CastorFile_LastKnownFileName ON CastorFile (lastKnownFileN
 
 CREATE INDEX I_DiskCopy_Castorfile ON DiskCopy (castorFile);
 CREATE INDEX I_DiskCopy_FileSystem ON DiskCopy (fileSystem);
-CREATE INDEX I_DiskCopy_Status ON DiskCopy (status);
+CREATE INDEX I_DiskCopy_FS_GCW ON DiskCopy (fileSystem, gcWeight);
+CREATE INDEX I_DiskCopy_Status_7 ON DiskCopy (decode(status,7,status,NULL));
 CREATE INDEX I_DiskCopy_Status_9 ON DiskCopy (decode(status,9,status,NULL));
-CREATE INDEX I_DiskCopy_FS_GCW ON DiskCopy (filesystem, status, gcweight, ID, castorFile);
 
 CREATE INDEX I_FileSystem_DiskPool ON FileSystem (diskPool);
 CREATE INDEX I_FileSystem_DiskServer ON FileSystem (diskServer);
@@ -1410,7 +1410,7 @@ CREATE TABLE MonDiskCopyStats
 
 /* SQL statement for table MonWaitTapeMigrationStats */
 CREATE TABLE MonWaitTapeMigrationStats
-  (timestamp DATE, interval NUMBER, svcClass VARCHAR2(255), status VARCHAR2(10), minWaitTime NUMBER, maxWaitTime NUMBER, avgWaitTime NUMBER, minFileSize NUMBER, maxFileSize NUMBER, avgFileSize NUMBER, bin_LT_1 NUMBER, bin_1_To_6 NUMBER, bin_6_To_12 NUMBER, bin_12_To_24 NUMBER, bin_24_To_48 NUMBER, bin_GT_48 NUMBER, totalFileSize NUMBER, nbFiles NUMBER);
+  (timestamp DATE, interval NUMBER, tapePool VARCHAR2(255), status VARCHAR2(10), minWaitTime NUMBER, maxWaitTime NUMBER, avgWaitTime NUMBER, minFileSize NUMBER, maxFileSize NUMBER, avgFileSize NUMBER, bin_LT_1 NUMBER, bin_1_To_6 NUMBER, bin_6_To_12 NUMBER, bin_12_To_24 NUMBER, bin_24_To_48 NUMBER, bin_GT_48 NUMBER, totalFileSize NUMBER, nbFiles NUMBER);
 
 /* SQL statement for table MonWaitTapeRecallStats  */
 CREATE TABLE MonWaitTapeRecallStats
@@ -6768,31 +6768,31 @@ BEGIN
         FROM SubRequest
        WHERE subReqId = subReqIds(i)
          AND status IN (6, 14);  -- READY, BEINGSCHED
-       -- Lock the CastorFile.
-       SELECT id INTO cfId FROM CastorFile
-        WHERE id = cfId FOR UPDATE;
-       -- Confirm SubRequest status hasn't changed after acquisition of lock
-       SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ id INTO srId FROM SubRequest
-        WHERE id = srId AND status IN (6, 14);  -- READY, BEINGSCHED
-       -- Call the relevant cleanup procedure for the transfer, procedures that
-       -- would have been called if the transfer failed on the remote execution host.
-       IF rType = 40 THEN      -- StagePutRequest
-         putFailedProc(srId);
-       ELSIF rType = 133 THEN  -- StageDiskCopyReplicaRequest
-         disk2DiskCopyFailed(dcId, 0);
-       ELSE                    -- StageGetRequest or StageUpdateRequest
-         getUpdateFailedProc(srId);
-       END IF;
-       -- Update the reason for termination, overriding the error code set above
-       UPDATE SubRequest
-          SET errorCode = decode(errnos(i), 0, errorCode, errnos(i)),
-              errorMessage = decode(errmsg(i), NULL, errorMessage, errmsg(i))
-        WHERE id = srId;
-       -- Release locks
-       COMMIT;
+      -- Lock the CastorFile.
+      SELECT id INTO cfId FROM CastorFile
+      WHERE id = cfId FOR UPDATE;
+      -- Confirm SubRequest status hasn't changed after acquisition of lock
+      SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ id INTO srId FROM SubRequest
+      WHERE id = srId AND status IN (6, 14);  -- READY, BEINGSCHED
+      -- Call the relevant cleanup procedure for the transfer, procedures that
+      -- would have been called if the transfer failed on the remote execution host.
+      IF rType = 40 THEN      -- StagePutRequest
+       putFailedProc(srId);
+      ELSIF rType = 133 THEN  -- StageDiskCopyReplicaRequest
+       disk2DiskCopyFailed(dcId, 0);
+      ELSE                    -- StageGetRequest or StageUpdateRequest
+       getUpdateFailedProc(srId);
+      END IF;
+      -- Update the reason for termination, overriding the error code set above
+      UPDATE SubRequest
+         SET errorCode = decode(errnos(i), 0, errorCode, errnos(i)),
+             errorMessage = decode(errmsg(i), NULL, errorMessage, errmsg(i))
+       WHERE id = srId;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       NULL;  -- The SubRequest may have be removed, nothing to be done.
     END;
+    -- Release locks
+    COMMIT;
   END LOOP;
 END;
 /
@@ -7880,7 +7880,7 @@ BEGIN
     SELECT
        /*+ NO_USE_MERGE(TAPE SEGMENT RECALLJOB CASTORFILE)
            NO_USE_HASH(TAPE SEGMENT RECALLJOB CASTORFILE)
-           INDEX_RS_ASC(SEGMENT I_SEGMENT_TAPE)
+           INDEX_RS_ASC(SEGMENT I_SEGMENT_TAPESTATUSFSEQ)
            INDEX_RS_ASC(TAPE I_TAPE_STATUS)
            INDEX_RS_ASC(RECALLJOB PK_RECALLJOB_ID)
            INDEX_RS_ASC(CASTORFILE PK_CASTORFILE_ID) */
@@ -7921,7 +7921,7 @@ BEGIN
      AND TPMODE = tconst.TPMODE_READ;
 
     OPEN outRecallMounts
-     FOR SELECT /*+ NO_USE_MERGE(TAPE SEGMENT RECALLJOB CASTORFILE) NO_USE_HASH(TAPE SEGMENT RECALLJOB CASTORFILE) INDEX_RS_ASC(SEGMENT I_SEGMENT_TAPE) INDEX_RS_ASC(TAPE I_TAPE_STATUS) INDEX_RS_ASC(TAPE
+     FOR SELECT /*+ NO_USE_MERGE(TAPE SEGMENT RECALLJOB CASTORFILE) NO_USE_HASH(TAPE SEGMENT RECALLJOB CASTORFILE) INDEX_RS_ASC(SEGMENT I_SEGMENT_TAPESTATUSFSEQ) INDEX_RS_ASC(TAPE I_TAPE_STATUS) INDEX_RS_ASC(TAPE
 COPY PK_RECALLJOB_ID) INDEX_RS_ASC(CASTORFILE PK_CASTORFILE_ID) */ Tape.id,
                 Tape.vid,
                 count ( distinct segment.id ),
@@ -8023,7 +8023,7 @@ BEGIN
     DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
   END LOOP;
 
-  -- Create a db job to be run every 20 minutes executing the deleteTerminatedRequests procedure
+  -- Create a db job to be run every minute executing the deleteTerminatedRequests procedure
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'MigrationMountsJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
@@ -8294,7 +8294,7 @@ END;
         
 /* attach the tapes to the migration mounts  */
 CREATE OR REPLACE
-PROCEDURE tg_attachTapesToStreams (
+PROCEDURE tg_attachTapesToMigMounts (
   inStartFseqs IN castor."cnumList",
   inMountIds   IN castor."cnumList",
   inTapeVids   IN castor."strList") AS
@@ -9545,6 +9545,8 @@ BEGIN
              SR.parent = 0
        WHERE SR.castorFile = varCfId 
          AND SR.status IN (dconst.SUBREQUEST_WAITTAPERECALL, dconst.SUBREQUEST_WAITSUBREQ);
+       -- Release lock on castorFile
+       COMMIT;
     END LOOP;
   ELSIF (varMountId IS NOT NULL) THEN
     -- In case of a write, delete the migration mount
@@ -9559,7 +9561,7 @@ END;
 
 /* flag tape as full for a given session */
 CREATE OR REPLACE
-PROCEDURE tg_flagTapeFull ( inTGReqId IN NUMBER ) AS
+PROCEDURE tg_flagTapeFull ( inVDQMReqId IN NUMBER ) AS
   /* The tape gateway request does not exist per se, but 
    * references to its ID should be removed (with needed consequences
    * from the structures pointing to it) */
@@ -9569,7 +9571,7 @@ PROCEDURE tg_flagTapeFull ( inTGReqId IN NUMBER ) AS
   varMJId NUMBER;
 BEGIN
   -- Find the relevant migration or recall mount id.
-  tg_findFromVDQMReqId (inTGReqId, varUnused, varMJId);
+  tg_findFromVDQMReqId (inVDQMReqId, varUnused, varMJId);
   -- Find out whether this is a read or a write
   IF (varMJId IS NOT NULL) THEN
     UPDATE MigrationMount
@@ -9578,11 +9580,36 @@ BEGIN
   ELSE
     -- Wrong Access Mode encountered. Notify.
     RAISE_APPLICATION_ERROR(-20292, 'tg_flagTapeFullForMigrationSession: '||
-      'no migration mount found for TapeGatewayRequestId: '|| inTGReqId);
+      'no migration mount found for VDQMRequestId: '|| inVDQMReqId);
   END IF;
 END;
 /
 
+/* Find the VID of the tape used in a tape session */
+CREATE OR REPLACE
+PROCEDURE tg_getMigrationMountVid (
+    inVDQMReqId     IN NUMBER,
+    outVid          OUT NOCOPY VARCHAR2,
+    outTapePool     OUT NOCOPY VARCHAR2) AS
+    varMMId         NUMBER;
+    varUnused       NUMBER;
+BEGIN
+  -- Find the relevant stream.
+  tg_findFromVDQMReqId (inVDQMReqId, varUnused, varMMId);
+  -- Return migration mount and tapepool information
+  IF (varMMId IS NOT NULL) THEN
+    SELECT MM.vid,     TP.name
+      INTO outVid, outTapePool
+      FROM MigrationMount MM
+     INNER JOIN TapePool TP ON TP.id = MM.tapePool
+     WHERE MM.id = varMMId;
+  ELSE
+    -- Wrong Access Mode encountered. Notify.
+    RAISE_APPLICATION_ERROR(-20292, 'tg_getMigrationMountVid: '||
+      'no migration mount found for VDQMRequestId: '|| inVDQMReqId);
+  END IF;
+END;
+/
 /*******************************************************************
  *
  * @(#)RCSfile: oracleGC.sql,v  Revision: 1.698  Date: 2009/08/17 15:08:33  Author: sponcec3 
@@ -9844,7 +9871,7 @@ BEGIN
       INTO totalCount, freed
       FROM DiskCopy
      WHERE DiskCopy.fileSystem = fs.id
-       AND decode(DiskCopy.status, 9, DiskCopy.status, NULL) = 9; -- BEINGDELETED
+       AND decode(status, 9, status, NULL) = 9;  -- BEINGDELETED (decode used to use function-based index)
 
     -- estimate the number of GC running the "long" query, that is the one dealing with the GCing of
     -- STAGED files.
@@ -9853,11 +9880,11 @@ BEGIN
      WHERE s.sql_id = t.sql_id AND t.sql_text LIKE '%I_DiskCopy_FS_GCW%';
 
     -- Process diskcopies that are in an INVALID state.
-    UPDATE DiskCopy
+    UPDATE /*+ INDEX(DiskCopy I_DiskCopy_Status_7) */ DiskCopy
        SET status = 9, -- BEINGDELETED
            gcType = decode(gcType, NULL, 1, gcType)
      WHERE fileSystem = fs.id
-       AND status = 7  -- INVALID
+       AND decode(status, 7, status, NULL) = 7  -- INVALID (decode used to use function-based index)
        AND NOT EXISTS
          -- Ignore diskcopies with active subrequests
          (SELECT /*+ INDEX(SubRequest I_SubRequest_DiskCopy) */ 'x'
@@ -10003,6 +10030,10 @@ END;
 CREATE OR REPLACE PROCEDURE filesDeletedProc
 (dcIds IN castor."cnumList",
  fileIds OUT castor.FileList_Cur) AS
+  fid NUMBER;
+  fc NUMBER;
+  nsh VARCHAR2(2048);
+  nb INTEGER;
 BEGIN
   IF dcIds.COUNT > 0 THEN
     -- List the castorfiles to be cleaned up afterwards
@@ -10018,52 +10049,44 @@ BEGIN
     FOR cf IN (SELECT DISTINCT(cfId)
                  FROM filesDeletedProcHelper
                 ORDER BY cfId ASC) LOOP
-      DECLARE
-        nb NUMBER;
       BEGIN
-        -- First try to lock the castorFile
-        SELECT id INTO nb FROM CastorFile
+        -- Get data and lock the castorFile
+        SELECT fileId, nsHost, fileClass
+          INTO fid, nsh, fc
+          FROM CastorFile
          WHERE id = cf.cfId FOR UPDATE;
+        -- Check whether this file potentially had copies on tape
+        SELECT nbCopies INTO nb FROM FileClass WHERE id = fc;
+        IF nb = 0 THEN
+          -- This castorfile was created with no copy on tape
+          -- So removing it from the stager means erasing
+          -- it completely. We should thus also remove it
+          -- from the name server
+          INSERT INTO FilesDeletedProcOutput VALUES (fid, nsh);
+        END IF;
+        -- Cleanup:
         -- See whether it has any DiskCopy
         SELECT count(*) INTO nb FROM DiskCopy
          WHERE castorFile = cf.cfId;
-        -- If any DiskCopy, give up
+        -- If any DiskCopy, nothing to do
         IF nb = 0 THEN
           -- Delete the migrations and recalls
           deleteMigrationJobs(cf.cfId);
           deleteRecallJobs(cf.cfId);
-          -- See whether pending SubRequests exist
+          -- Check for existing subrequests
           SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ count(*) INTO nb
             FROM SubRequest
            WHERE castorFile = cf.cfId
-             AND status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14);  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+             AND status IN (1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14);  -- all but START, FINISHED, FAILED_FINISHED, ARCHIVED
           IF nb = 0 THEN
-            -- No Subrequest, delete the CastorFile
-            DECLARE
-              fid NUMBER;
-              fc NUMBER;
-              nsh VARCHAR2(2048);
-            BEGIN
-              -- Delete the CastorFile
-              DELETE FROM CastorFile WHERE id = cf.cfId
-              RETURNING fileId, nsHost, fileClass
-                INTO fid, nsh, fc;
-              -- Check whether this file potentially had copies on tape
-              SELECT nbCopies INTO nb FROM FileClass WHERE id = fc;
-              IF nb = 0 THEN
-                -- This castorfile was created with no copy on tape
-                -- So removing it from the stager means erasing
-                -- it completely. We should thus also remove it
-                -- from the name server
-                INSERT INTO FilesDeletedProcOutput VALUES (fid, nsh);
-              END IF;
-            END;
+            -- Nothing left, delete the CastorFile
+            DELETE FROM CastorFile WHERE id = cf.cfId;
           ELSE
-            -- SubRequests exist, fail them
+            -- Fail existing subrequests for this file
             UPDATE /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest
-               SET status = 7 -- FAILED
+               SET status = dconst.SUBREQUEST_FAILED
              WHERE castorFile = cf.cfId
-               AND status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14);
+               AND status IN (1, 2, 3, 4, 5, 6, 12, 13, 14);  -- same as above
           END IF;
         END IF;
       EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -11539,16 +11562,13 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
           -- New version (2.1.12) will be:
           --          'Pending' for 'PENDING'
           --          'Selected' for 'SELECTED'
-          --          'Failed' for 'FAILED'
           --          'MIGRATED' and 'RETRY' will be ignored.
           SELECT tapePool, status, waitTime, diskCopySize, found FROM (
             SELECT /*+ USE_NL(MigrationJob DiskCopy CastorFile) */
                    TapePool.name tapePool,
                    decode(MigrationJob.status, tconst.MIGRATIONJOB_PENDING, 'PENDING',
-                      decode(MigrationJob.status, tconst.MIGRATIONJOB_SELECTED, 'SELECTED', 
-                          decode(MigrationJob.status, tconst.MIGRATIONJOB_FAILED, 'FAILED','UNKNOWN')
-                       )
-                   ) status,
+                                               tconst.MIGRATIONJOB_SELECTED, 'SELECTED','UNKNOWN')
+                   status,
                    (getTime() - DiskCopy.creationTime) waitTime,
                    DiskCopy.diskCopySize, 1 found, RANK() OVER (PARTITION BY
                    DiskCopy.castorFile ORDER BY DiskCopy.id ASC) rank
@@ -11558,8 +11578,7 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
                AND MigrationJob.tapePool = TapePool.id
                AND decode(DiskCopy.status, 10, DiskCopy.status, NULL) = 10  -- CANBEMIGR
                AND MigrationJob.status IN (tconst.MIGRATIONJOB_PENDING, 
-                                           tconst.MIGRATIONJOB_SELECTED,
-                                           tconst.MIGRATIONJOB_FAILED))
+                                           tconst.MIGRATIONJOB_SELECTED))
            WHERE rank = 1
         ) a
         -- Attach a list of all service classes and possible states (PENDING,
@@ -11568,8 +11587,7 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
           SELECT TapePool.name tapePool, a.status
             FROM TapePool,
              (SELECT 'PENDING'  status FROM Dual UNION ALL
-              SELECT 'SELECTED' status FROM Dual UNION ALL
-              SELECT 'FAILED'   status FROM Dual) a) b
+              SELECT 'SELECTED' status FROM Dual) a) b
            ON (a.tapePool = b.tapePool AND a.status = b.status)
        GROUP BY GROUPING SETS (b.tapePool, b.status), (b.tapePool)
        ORDER BY b.tapePool, b.status;

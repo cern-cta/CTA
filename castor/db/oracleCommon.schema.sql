@@ -219,7 +219,7 @@ CREATE TABLE MigratedSegment(castorFile INTEGER CONSTRAINT NN_MigratedSegment_Ca
                              copyNb INTEGER CONSTRAINT NN_MigratedSegment_CopyNb NOT NULL,
                              VID VARCHAR2(2048) CONSTRAINT NN_MigratedSegment_VID NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-CREATE UNIQUE INDEX I_MigratedSegment_CFCopyNbVID ON MigratedSegment(CastorFile, copyNb);
+CREATE UNIQUE INDEX I_MigratedSegment_CFCopyNbVID ON MigratedSegment(CastorFile, copyNb, VID);
 ALTER TABLE MigratedSegment ADD CONSTRAINT FK_MigratedSegment_CastorFile
    FOREIGN KEY (castorFile) REFERENCES CastorFile(id);
 
