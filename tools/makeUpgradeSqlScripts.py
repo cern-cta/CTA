@@ -51,7 +51,7 @@ for f, v in options:
 
 # All arguments are supposed to be components
 # if none, this means all
-allcomponents = ['cns', 'dlf', 'mon', 'repack', 'stager', 'cupv', 'vdqm', 'vmgr']
+allcomponents = ['cns', 'dlf', 'mon', 'stager', 'cupv', 'vdqm', 'vmgr']
 if not arguments:
     components = set(allcomponents)
 else:
