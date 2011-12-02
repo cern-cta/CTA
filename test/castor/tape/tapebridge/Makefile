@@ -100,7 +100,7 @@ tapebridgedaemontester: \
   tapebridge_LegacyTxRx.o \
   tapebridge_marshall.o \
   tapebridge_PendingMigrationsStore.o \
-  tapebridge_RtcpdError.o \
+  tapebridge_SessionError.o \
   tapebridge_sendTapeBridgeClientInfo2Ack.o \
   tapebridge_sendTapeBridgeFlushedToTape.o \
   tapebridge_tapeFlushModeToStr.o \
@@ -239,7 +239,7 @@ tapebridged: \
   tapebridge_LogHelper.o \
   tapebridge_marshall.o \
   tapebridge_PendingMigrationsStore.o \
-  tapebridge_RtcpdError.o \
+  tapebridge_SessionError.o \
   tapebridge_RtcpTxRx.o \
   tapebridge_TapeBridgeMain.o \
   tapebridge_TapeBridgeDaemon.o \
@@ -317,7 +317,7 @@ $(ROOT_DIR)/castor/tape/tapebridge/BridgeClientInfo2Sender.cpp: \
   $(ROOT_DIR)/castor/tape/tapebridge/BridgeClientInfo2Sender.hpp
 	touch $@
 
-tapebridge_RtcpdError.o: $(ROOT_DIR)/castor/tape/tapebridge/RtcpdError.cpp
+tapebridge_SessionError.o: $(ROOT_DIR)/castor/tape/tapebridge/SessionError.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapebridge_tapeFlushModeToStr.o: \

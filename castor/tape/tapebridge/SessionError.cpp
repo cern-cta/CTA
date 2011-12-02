@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/tapebridge/RtcpdError.cpp
+ *                      castor/tape/tapebridge/SessionError.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,13 +22,13 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/tapebridge/RtcpdError.hpp"
+#include "castor/tape/tapebridge/SessionError.hpp"
 #include "h/serrno.h"
 
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::tapebridge::RtcpdError::RtcpdError() :
+castor::tape::tapebridge::SessionError::SessionError() :
   m_errorScope(UNKNOWN_SCOPE),
   m_errorCode(SEINTERNAL),
   m_errorMessage("UNKNOWN"),
@@ -42,14 +42,14 @@ castor::tape::tapebridge::RtcpdError::RtcpdError() :
 //-----------------------------------------------------------------------------
 // setErrorScope
 //-----------------------------------------------------------------------------
-void castor::tape::tapebridge::RtcpdError::setErrorScope(
+void castor::tape::tapebridge::SessionError::setErrorScope(
   const ErrorScope value) throw(castor::exception::InvalidArgument) {
 
   // Check the method arguments
-  if(0 > value || RTCPDERRORSCOPE_MAX < value) {
+  if(0 > value || SESSIONERRORSCOPE_MAX < value) {
     castor::exception::InvalidArgument ex;
     ex.getMessage() <<
-      "Invalid RtcpdErrorScope"
+      "Invalid SessionErrorScope"
       ": value=" << value;
     throw ex;
   }
@@ -60,29 +60,29 @@ void castor::tape::tapebridge::RtcpdError::setErrorScope(
 //-----------------------------------------------------------------------------
 // getErrorScope
 //-----------------------------------------------------------------------------
-castor::tape::tapebridge::RtcpdError::ErrorScope
-  castor::tape::tapebridge::RtcpdError::getErrorScope() const {
+castor::tape::tapebridge::SessionError::ErrorScope
+  castor::tape::tapebridge::SessionError::getErrorScope() const {
   return m_errorScope;
 }
 
 //-----------------------------------------------------------------------------
 // setErrorCode
 //-----------------------------------------------------------------------------
-void castor::tape::tapebridge::RtcpdError::setErrorCode(const int value) {
+void castor::tape::tapebridge::SessionError::setErrorCode(const int value) {
   m_errorCode = value;
 }
 
 //-----------------------------------------------------------------------------
 // getErrorCode
 //-----------------------------------------------------------------------------
-int castor::tape::tapebridge::RtcpdError::getErrorCode() const {
+int castor::tape::tapebridge::SessionError::getErrorCode() const {
   return m_errorCode;
 }
 
 //-----------------------------------------------------------------------------
 // setErrorMessage
 //-----------------------------------------------------------------------------
-void castor::tape::tapebridge::RtcpdError::setErrorMessage(
+void castor::tape::tapebridge::SessionError::setErrorMessage(
   const std::string &value) {
   m_errorMessage = value;
 }
@@ -90,7 +90,7 @@ void castor::tape::tapebridge::RtcpdError::setErrorMessage(
 //-----------------------------------------------------------------------------
 // getErrorMessage
 //-----------------------------------------------------------------------------
-const std::string &castor::tape::tapebridge::RtcpdError::getErrorMessage()
+const std::string &castor::tape::tapebridge::SessionError::getErrorMessage()
   const {
   return m_errorMessage;
 }
@@ -98,7 +98,7 @@ const std::string &castor::tape::tapebridge::RtcpdError::getErrorMessage()
 //-----------------------------------------------------------------------------
 // setFileTransactionId
 //-----------------------------------------------------------------------------
-void castor::tape::tapebridge::RtcpdError::setFileTransactionId(
+void castor::tape::tapebridge::SessionError::setFileTransactionId(
   const uint64_t value) {
   m_fileTransactionId = value;
 }
@@ -106,48 +106,48 @@ void castor::tape::tapebridge::RtcpdError::setFileTransactionId(
 //-----------------------------------------------------------------------------
 // getFileTransactionId
 //-----------------------------------------------------------------------------
-uint64_t castor::tape::tapebridge::RtcpdError::getFileTransactionId() const {
+uint64_t castor::tape::tapebridge::SessionError::getFileTransactionId() const {
   return m_fileTransactionId;
 }
 
 //-----------------------------------------------------------------------------
 // setNsHost
 //-----------------------------------------------------------------------------
-void castor::tape::tapebridge::RtcpdError::setNsHost(const std::string &value) {
+void castor::tape::tapebridge::SessionError::setNsHost(const std::string &value) {
   m_nsHost = value;
 }
 
 //-----------------------------------------------------------------------------
 // getNsHost
 //-----------------------------------------------------------------------------
-const std::string &castor::tape::tapebridge::RtcpdError::getNsHost() const {
+const std::string &castor::tape::tapebridge::SessionError::getNsHost() const {
   return m_nsHost;
 }
 
 //-----------------------------------------------------------------------------
 // setNsFileId
 //-----------------------------------------------------------------------------
-void castor::tape::tapebridge::RtcpdError::setNsFileId(const uint64_t value) {
+void castor::tape::tapebridge::SessionError::setNsFileId(const uint64_t value) {
   m_nsFileId = value;
 }
 
 //-----------------------------------------------------------------------------
 // getNsFileId
 //-----------------------------------------------------------------------------
-uint64_t castor::tape::tapebridge::RtcpdError::getNsFileId() const {
+uint64_t castor::tape::tapebridge::SessionError::getNsFileId() const {
   return m_nsFileId;
 }
 
 //-----------------------------------------------------------------------------
 // setTapeFSeq
 //-----------------------------------------------------------------------------
-void castor::tape::tapebridge::RtcpdError::setTapeFSeq(const int32_t value) {
+void castor::tape::tapebridge::SessionError::setTapeFSeq(const int32_t value) {
   m_tapeFSeq = value;
 }
 
 //-----------------------------------------------------------------------------
 // getTapeFSeq
 //-----------------------------------------------------------------------------
-int32_t castor::tape::tapebridge::RtcpdError::getTapeFSeq() const {
+int32_t castor::tape::tapebridge::SessionError::getTapeFSeq() const {
   return m_tapeFSeq;
 }

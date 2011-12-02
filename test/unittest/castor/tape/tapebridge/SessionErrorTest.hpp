@@ -1,5 +1,5 @@
 /******************************************************************************
- *    test/unittest/castor/tape/tapebridge/RtcpdErrorTest.hpp
+ *    test/unittest/castor/tape/tapebridge/SessionErrorTest.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,10 +22,10 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_RTCPDERRORTEST_HPP
-#define TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_RTCPDERRORTEST_HPP 1
+#ifndef TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_SESSIONERRORTEST_HPP
+#define TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_SESSIONERRORTEST_HPP 1
 
-#include "castor/tape/tapebridge/RtcpdError.hpp"
+#include "castor/tape/tapebridge/SessionError.hpp"
 #include "h/serrno.h"
 
 #include <cppunit/extensions/HelperMacros.h>
@@ -33,10 +33,10 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-class RtcpdErrorTest: public CppUnit::TestFixture {
+class SessionErrorTest: public CppUnit::TestFixture {
 public:
 
-  RtcpdErrorTest() {
+  SessionErrorTest() {
   }
 
   void setUp() {
@@ -46,10 +46,10 @@ public:
   }
 
   void testConstructor() {
-    castor::tape::tapebridge::RtcpdError rtcpdError;
+    castor::tape::tapebridge::SessionError rtcpdError;
 
     CPPUNIT_ASSERT_EQUAL(
-      castor::tape::tapebridge::RtcpdError::UNKNOWN_SCOPE,
+      castor::tape::tapebridge::SessionError::UNKNOWN_SCOPE,
       rtcpdError.getErrorScope());
 
     CPPUNIT_ASSERT_EQUAL(
@@ -78,28 +78,28 @@ public:
   }
 
   void testAttributes() {
-    castor::tape::tapebridge::RtcpdError rtcpdError;
+    castor::tape::tapebridge::SessionError rtcpdError;
 
-    rtcpdError.setErrorScope(castor::tape::tapebridge::RtcpdError::FILE_SCOPE);
+    rtcpdError.setErrorScope(castor::tape::tapebridge::SessionError::FILE_SCOPE);
     CPPUNIT_ASSERT_EQUAL(
-      castor::tape::tapebridge::RtcpdError::FILE_SCOPE,
+      castor::tape::tapebridge::SessionError::FILE_SCOPE,
       rtcpdError.getErrorScope());
 
     rtcpdError.setErrorScope(
-      castor::tape::tapebridge::RtcpdError::SESSION_SCOPE);
+      castor::tape::tapebridge::SessionError::SESSION_SCOPE);
     CPPUNIT_ASSERT_EQUAL(
-      castor::tape::tapebridge::RtcpdError::SESSION_SCOPE,
+      castor::tape::tapebridge::SessionError::SESSION_SCOPE,
       rtcpdError.getErrorScope());
 
     rtcpdError.setErrorScope(
-      castor::tape::tapebridge::RtcpdError::UNKNOWN_SCOPE);
+      castor::tape::tapebridge::SessionError::UNKNOWN_SCOPE);
     CPPUNIT_ASSERT_EQUAL(
-      castor::tape::tapebridge::RtcpdError::UNKNOWN_SCOPE,
+      castor::tape::tapebridge::SessionError::UNKNOWN_SCOPE,
       rtcpdError.getErrorScope());
 
     {
-      const castor::tape::tapebridge::RtcpdError::ErrorScope crazyScopeValue =
-          (castor::tape::tapebridge::RtcpdError::ErrorScope)12345;
+      const castor::tape::tapebridge::SessionError::ErrorScope crazyScopeValue =
+          (castor::tape::tapebridge::SessionError::ErrorScope)12345;
 
       CPPUNIT_ASSERT_THROW(
         rtcpdError.setErrorScope(crazyScopeValue),
@@ -155,7 +155,7 @@ public:
     }
   }
 
-  CPPUNIT_TEST_SUITE(RtcpdErrorTest);
+  CPPUNIT_TEST_SUITE(SessionErrorTest);
 
   CPPUNIT_TEST(testConstructor);
   CPPUNIT_TEST(testAttributes);
@@ -163,6 +163,6 @@ public:
   CPPUNIT_TEST_SUITE_END();
 };
 
-CPPUNIT_TEST_SUITE_REGISTRATION(RtcpdErrorTest);
+CPPUNIT_TEST_SUITE_REGISTRATION(SessionErrorTest);
 
-#endif // TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_RTCPDERRORTEST_HPP
+#endif // TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_SESSIONERRORTEST_HPP

@@ -246,15 +246,15 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
       TAPEBRIDGE_EXCEPTION_RUNNING_RTCPD_SESSION, params);
 
-    // Gather the error information into an RtcpdError object
-    RtcpdError rtcpdError;
-    rtcpdError.setErrorCode(ex.code());
-    rtcpdError.setErrorMessage(ex.getMessage().str());
-    rtcpdError.setErrorScope(RtcpdError::SESSION_SCOPE);
+    // Gather the error information into an SessionError object
+    SessionError sessionError;
+    sessionError.setErrorCode(ex.code());
+    sessionError.setErrorMessage(ex.getMessage().str());
+    sessionError.setErrorScope(SessionError::SESSION_SCOPE);
 
     // Push the error onto the back of the list of errors generated during the
     // sesion with the rtcpd daemon
-    m_rtcpdErrors.push_back(rtcpdError);
+    m_sessionErrors.push_back(sessionError);
   }
 
   castor::dlf::Param params[] = {
@@ -1421,7 +1421,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpFileErrReq(
 void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpFileErrReqDump(
   const legacymsg::MessageHeader &header, const int rtcpdSock)
   throw(castor::exception::Exception) {
-  // Simply reply with a positive acknowledgement
+  // Reply to rtcpd with a positive acknowledgement
   legacymsg::MessageHeader ackMsg;
   ackMsg.magic       = header.magic;
   ackMsg.reqType     = header.reqType;
@@ -1438,6 +1438,14 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpWaiting(
   const legacymsg::MessageHeader &header,
   legacymsg::RtcpFileRqstErrMsgBody &body, const int rtcpdSock)
   throw(castor::exception::Exception) {
+
+  // Reply to rtcpd with a positive acknowledgement
+  legacymsg::MessageHeader ackMsg;
+  ackMsg.magic       = header.magic;
+  ackMsg.reqType     = header.reqType;
+  ackMsg.lenOrStatus = 0;
+  LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, rtcpdSock,
+    RTCPDNETRWTIMEOUT, ackMsg);
 
   // Determine the error code and message if there is an error embedded in the
   // message
@@ -1490,38 +1498,30 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpWaiting(
       TAPEBRIDGE_RECEIVED_RTCP_WAITING_ERROR, params);
   }
 
-  // Send an acknowledge to rtcpd
-  legacymsg::MessageHeader ackMsg;
-  ackMsg.magic       = header.magic;
-  ackMsg.reqType     = header.reqType;
-  ackMsg.lenOrStatus = 0;
-  LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, rtcpdSock,
-    RTCPDNETRWTIMEOUT, ackMsg);
-
   // If the message contains an error
   if(0 != body.rqst.cprc) {
-    // Gather the error information into an RtcpdError object
-    RtcpdError rtcpdError;
-    rtcpdError.setErrorCode(errorCode);
-    rtcpdError.setErrorMessage(errorMessage);
+    // Gather the error information into an SessionError object
+    SessionError sessionError;
+    sessionError.setErrorCode(errorCode);
+    sessionError.setErrorMessage(errorMessage);
 
     // If this is a file-specific error
     if(0 < body.rqst.tapeFseq) {
-      rtcpdError.setErrorScope(RtcpdError::FILE_SCOPE);
-      rtcpdError.setFileTransactionId(
+      sessionError.setErrorScope(SessionError::FILE_SCOPE);
+      sessionError.setFileTransactionId(
         m_pendingTransferIds.get(body.rqst.diskFseq));
-      rtcpdError.setNsHost(body.rqst.segAttr.nameServerHostName);
-      rtcpdError.setNsFileId(body.rqst.segAttr.castorFileId);
-      rtcpdError.setTapeFSeq(body.rqst.tapeFseq);
+      sessionError.setNsHost(body.rqst.segAttr.nameServerHostName);
+      sessionError.setNsFileId(body.rqst.segAttr.castorFileId);
+      sessionError.setTapeFSeq(body.rqst.tapeFseq);
 
     // Else this is a session error - don't need to fill in file specifics
     } else {
-      rtcpdError.setErrorScope(RtcpdError::SESSION_SCOPE);
+      sessionError.setErrorScope(SessionError::SESSION_SCOPE);
     }
 
     // Push the error onto the back of the list of errors generated during the
     // session with the rtcpd daemon
-    m_rtcpdErrors.push_back(rtcpdError);
+    m_sessionErrors.push_back(sessionError);
   }
 }
 
@@ -1637,6 +1637,14 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   legacymsg::RtcpFileRqstErrMsgBody &body, const int rtcpdSock)
   throw(castor::exception::Exception) {
 
+  // Reply to rtcpd with a positive acknowledgement
+  legacymsg::MessageHeader ackMsg;
+  ackMsg.magic       = header.magic;
+  ackMsg.reqType     = header.reqType;
+  ackMsg.lenOrStatus = 0;
+  LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, rtcpdSock,
+    RTCPDNETRWTIMEOUT, ackMsg);
+
   // Determine the error code and message if there is an error embedded in the
   // message
   int32_t     errorCode    = SEINTERNAL;
@@ -1682,38 +1690,33 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
       TAPEBRIDGE_RECEIVED_RTCP_POSITIONED_ERROR, params);
   }
 
-  // Send an acknowledgment to rtcpd
-  legacymsg::MessageHeader ackMsg;
-  ackMsg.magic       = header.magic;
-  ackMsg.reqType     = header.reqType;
-  ackMsg.lenOrStatus = 0;
-  LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, rtcpdSock,
-    RTCPDNETRWTIMEOUT, ackMsg);
-
   // If the message contains an error
   if(0 != body.rqst.cprc) {
-    // Gather the error information into an RtcpdError object
-    RtcpdError rtcpdError;
-    rtcpdError.setErrorCode(errorCode);
-    rtcpdError.setErrorMessage(errorMessage);
+    // Gather the error information into an SessionError object
+    SessionError sessionError;
+    sessionError.setErrorCode(errorCode);
+    sessionError.setErrorMessage(errorMessage);
 
     // If this is a file-specific error
     if(0 < body.rqst.tapeFseq) {
-      rtcpdError.setErrorScope(RtcpdError::FILE_SCOPE);
-      rtcpdError.setFileTransactionId(
+      sessionError.setErrorScope(SessionError::FILE_SCOPE);
+      sessionError.setFileTransactionId(
         m_pendingTransferIds.get(body.rqst.diskFseq));
-      rtcpdError.setNsHost(body.rqst.segAttr.nameServerHostName);
-      rtcpdError.setNsFileId(body.rqst.segAttr.castorFileId);
-      rtcpdError.setTapeFSeq(body.rqst.tapeFseq);
+      sessionError.setNsHost(body.rqst.segAttr.nameServerHostName);
+      sessionError.setNsFileId(body.rqst.segAttr.castorFileId);
+      sessionError.setTapeFSeq(body.rqst.tapeFseq);
 
     // Else this is a session error - don't need to fill in file specifics
     } else {
-      rtcpdError.setErrorScope(RtcpdError::SESSION_SCOPE);
+      sessionError.setErrorScope(SessionError::SESSION_SCOPE);
     }
 
     // Push the error onto the back of the list of errors received from the
     // rtcpd daemon
-    m_rtcpdErrors.push_back(rtcpdError);
+    m_sessionErrors.push_back(sessionError);
+
+    // There is nothing else to be done
+    return;
   }
 }
 
@@ -1725,6 +1728,31 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   processRtcpFileFinishedRequest(const legacymsg::MessageHeader &header,
   legacymsg::RtcpFileRqstErrMsgBody &body, const int rtcpdSock)
   throw(castor::exception::Exception) {
+
+  // Reply to rtcpd with a positive acknowledgement
+  legacymsg::MessageHeader ackMsg;
+  ackMsg.magic       = header.magic;
+  ackMsg.reqType     = header.reqType;
+  ackMsg.lenOrStatus = 0;
+  LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, rtcpdSock,
+    RTCPDNETRWTIMEOUT, ackMsg);
+
+  // Drop the message from rtcpd and return if the session is being shutdown
+  if(shuttingDownRtcpdSession()) {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
+      castor::dlf::Param("TPVID"             , m_volume.vid()         ),
+      castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+      castor::dlf::Param("dgn"               , m_jobRequest.dgn       ),
+      castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
+      castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+      castor::dlf::Param("clientType",
+        utils::volumeClientTypeToString(m_volume.clientType()))};
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+      TAPEBRIDGE_DROPPING_RTCP_FINISHED_DUE_TO_SHUTTING_DOWN, params);
+    return;
+  }
 
   // Determine the error code and message if there is an error embedded in the
   // message
@@ -1781,72 +1809,67 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
       TAPEBRIDGE_RECEIVED_RTCP_FINISHED_ERROR, params);
   }
 
-  // Send an acknowledge to rtcpd
-  legacymsg::MessageHeader ackMsg;
-  ackMsg.magic       = header.magic;
-  ackMsg.reqType     = header.reqType;
-  ackMsg.lenOrStatus = 0;
-  LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, rtcpdSock,
-    RTCPDNETRWTIMEOUT, ackMsg);
-
   // If the message contains an error
   if(0 != body.rqst.cprc) {
-    // Gather the error information into an RtcpdError object
-    RtcpdError rtcpdError;
-    rtcpdError.setErrorCode(errorCode);
-    rtcpdError.setErrorMessage(errorMessage);
+    // Gather the error information into an SessionError object
+    SessionError sessionError;
+    sessionError.setErrorCode(errorCode);
+    sessionError.setErrorMessage(errorMessage);
 
     // If this is a file-specific error
     if(0 < body.rqst.tapeFseq) {
-      rtcpdError.setErrorScope(RtcpdError::FILE_SCOPE);
-      rtcpdError.setFileTransactionId(
+      sessionError.setErrorScope(SessionError::FILE_SCOPE);
+      sessionError.setFileTransactionId(
         m_pendingTransferIds.get(body.rqst.diskFseq));
-      rtcpdError.setNsHost(body.rqst.segAttr.nameServerHostName);
-      rtcpdError.setNsFileId(body.rqst.segAttr.castorFileId);
-      rtcpdError.setTapeFSeq(body.rqst.tapeFseq);
+      sessionError.setNsHost(body.rqst.segAttr.nameServerHostName);
+      sessionError.setNsFileId(body.rqst.segAttr.castorFileId);
+      sessionError.setTapeFSeq(body.rqst.tapeFseq);
 
     // Else this is a session error - don't need to fill in file specifics
     } else {
-      rtcpdError.setErrorScope(RtcpdError::SESSION_SCOPE);
+      sessionError.setErrorScope(SessionError::SESSION_SCOPE);
     }
 
     // Push the error onto the back of the list of errors received from the
     // rtcpd daemon
-    m_rtcpdErrors.push_back(rtcpdError);
-  }
+    m_sessionErrors.push_back(sessionError);
 
-  // Get and remove from the pending transfer ids, the file transaction ID
-  // that was sent by the client (the tapegatewayd daemon or the readtp or
-  // writetp command-line tool)
-  const uint64_t fileTransactonId =
-    m_pendingTransferIds.remove(body.rqst.diskFseq);
+    // There is nothing else to be done
+    return;
 
-  // If there was no error
-  if(0 == body.rqst.cprc) {
+  // Else the message does not contain an error
+  } else {
+
+    // Get and remove from the pending transfer ids, the file transaction ID
+    // that was sent by the client (the tapegatewayd daemon or the readtp or
+    // writetp command-line tool)
+    const uint64_t fileTransactonId =
+      m_pendingTransferIds.remove(body.rqst.diskFseq);
+
     try {
       processSuccessfullRtcpFileFinishedRequest(fileTransactonId, body);
     } catch(castor::exception::Exception &ex) {
-      // Gather the error information into an RtcpdError object
-      RtcpdError rtcpdError;
-      rtcpdError.setErrorCode(ex.code());
-      rtcpdError.setErrorMessage(ex.getMessage().str());
+      // Gather the error information into an SessionError object
+      SessionError sessionError;
+      sessionError.setErrorCode(ex.code());
+      sessionError.setErrorMessage(ex.getMessage().str());
 
       // If this is a file-specific error
       if(0 < body.rqst.tapeFseq) {
-        rtcpdError.setErrorScope(RtcpdError::FILE_SCOPE);
-        rtcpdError.setFileTransactionId(fileTransactonId);
-        rtcpdError.setNsHost(body.rqst.segAttr.nameServerHostName);
-        rtcpdError.setNsFileId(body.rqst.segAttr.castorFileId);
-        rtcpdError.setTapeFSeq(body.rqst.tapeFseq);
+        sessionError.setErrorScope(SessionError::FILE_SCOPE);
+        sessionError.setFileTransactionId(fileTransactonId);
+        sessionError.setNsHost(body.rqst.segAttr.nameServerHostName);
+        sessionError.setNsFileId(body.rqst.segAttr.castorFileId);
+        sessionError.setTapeFSeq(body.rqst.tapeFseq);
 
       // Else this is a session error - don't need to fill in file specifics
       } else {
-        rtcpdError.setErrorScope(RtcpdError::SESSION_SCOPE);
+        sessionError.setErrorScope(SessionError::SESSION_SCOPE);
       }
 
       // Push the error onto the back of the list of errors received from the
       // rtcpd daemon
-      m_rtcpdErrors.push_back(rtcpdError);
+      m_sessionErrors.push_back(sessionError);
 
       // There is nothing else to be done
       return;
@@ -1989,11 +2012,16 @@ void castor::tape::tapebridge::BridgeProtocolEngine::rtcpTapeReqRtcpdCallback(
   bool &receivedENDOF_REQ) throw(castor::exception::Exception) {
 
   legacymsg::RtcpTapeRqstMsgBody body;
-
   RtcpTxRx::receiveMsgBody(m_cuuid, m_jobRequest.volReqId, socketFd,
     RTCPDNETRWTIMEOUT, header, body);
 
-  return(processRtcpTape(header, body, socketFd, receivedENDOF_REQ));
+  // Reply to rtcpd with a positive acknowledgement
+  legacymsg::MessageHeader ackMsg;
+  ackMsg.magic       = RTCOPY_MAGIC;
+  ackMsg.reqType     = RTCP_TAPE_REQ;
+  ackMsg.lenOrStatus = 0;
+  LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, socketFd,
+    RTCPDNETRWTIMEOUT, ackMsg);
 }
 
 
@@ -2008,9 +2036,16 @@ void
   throw(castor::exception::Exception) {
 
   legacymsg::RtcpTapeRqstErrMsgBody body;
-
   RtcpTxRx::receiveMsgBody(m_cuuid, m_jobRequest.volReqId, socketFd,
     RTCPDNETRWTIMEOUT, header, body);
+
+  // Reply to rtcpd with a positive acknowledgement
+  legacymsg::MessageHeader ackMsg;
+  ackMsg.magic       = RTCOPY_MAGIC;
+  ackMsg.reqType     = RTCP_TAPE_REQ;
+  ackMsg.lenOrStatus = 0;
+  LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, socketFd,
+    RTCPDNETRWTIMEOUT, ackMsg);
 
   if(body.err.errorCode != 0) {
     TAPE_THROW_CODE(body.err.errorCode,
@@ -2019,28 +2054,6 @@ void
       ": errorMsg=" << body.err.errorMsg <<
       ": sstrerror=" << sstrerror(body.err.errorCode));
   }
-
-  return(processRtcpTape(header, body, socketFd, receivedENDOF_REQ));
-}
-
-
-//-----------------------------------------------------------------------------
-// processRtcpTape
-//-----------------------------------------------------------------------------
-void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpTape(
-  const legacymsg::MessageHeader&,
-  legacymsg::RtcpTapeRqstMsgBody&,
-  const int socketFd,
-  bool&)
-  throw(castor::exception::Exception) {
-
-  // Acknowledge tape request
-  legacymsg::MessageHeader ackMsg;
-  ackMsg.magic       = RTCOPY_MAGIC;
-  ackMsg.reqType     = RTCP_TAPE_REQ;
-  ackMsg.lenOrStatus = 0;
-  LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, socketFd,
-    RTCPDNETRWTIMEOUT, ackMsg);
 }
 
 
@@ -2055,7 +2068,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::rtcpEndOfReqRtcpdCallback(
 
   receivedENDOF_REQ = true;
 
-  // Acknowledge RTCP_ENDOF_REQ message
+  // Reply to rtcpd with a positive acknowledgement
   legacymsg::MessageHeader ackMsg;
   ackMsg.magic       = RTCOPY_MAGIC;
   ackMsg.reqType     = RTCP_ENDOF_REQ;
@@ -2082,14 +2095,6 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   RtcpTxRx::receiveMsgBody(m_cuuid, m_jobRequest.volReqId, socketFd,
     RTCPDNETRWTIMEOUT, header, body);
 
-  // Acknowledge TAPEBRIDGE_FLUSHEDTOTAPE message
-  legacymsg::MessageHeader ackMsg;
-  ackMsg.magic       = RTCOPY_MAGIC;
-  ackMsg.reqType     = TAPEBRIDGE_FLUSHEDTOTAPE;
-  ackMsg.lenOrStatus = 0;
-  LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, socketFd,
-    RTCPDNETRWTIMEOUT, ackMsg);
-
   {
     castor::dlf::Param params[] = {
       castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
@@ -2107,23 +2112,49 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
       TAPEBRIDGE_RECEIVED_TAPEBRIDGE_FLUSHEDTOTAPE, params);
   }
 
+  // Reply to rtcpd with a positive acknowledgement
+  legacymsg::MessageHeader ackMsg;
+  ackMsg.magic       = RTCOPY_MAGIC;
+  ackMsg.reqType     = TAPEBRIDGE_FLUSHEDTOTAPE;
+  ackMsg.lenOrStatus = 0;
+  LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, socketFd,
+    RTCPDNETRWTIMEOUT, ackMsg);
+
+  // Drop the message from rtcpd and return if the session is being shutdown
+  if(shuttingDownRtcpdSession()) {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
+      castor::dlf::Param("TPVID"             , m_volume.vid()         ),
+      castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+      castor::dlf::Param("dgn"               , m_jobRequest.dgn       ),
+      castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
+      castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+      castor::dlf::Param("clientType",
+        utils::volumeClientTypeToString(m_volume.clientType()))};
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+      TAPEBRIDGE_DROPPING_TAPEBRIDGE_FLUSHEDTOTAPE_DUE_TO_SHUTTING_DOWN,
+      params);
+    return;
+  }
+
   // If there is a volume request ID mismatch
   if(m_jobRequest.volReqId != body.volReqId) {
-    // Gather the error information into an RtcpdError object
+    // Gather the error information into an SessionError object
     std::ostringstream oss;
     oss <<
       "Failed to " << task <<
       ": message contains an unexpected volReqId"
       ": expected=" << m_jobRequest.volReqId <<
       ": actual=" << body.volReqId;
-    RtcpdError rtcpdError;
-    rtcpdError.setErrorCode(EBADMSG);
-    rtcpdError.setErrorMessage(oss.str());
-    rtcpdError.setErrorScope(RtcpdError::SESSION_SCOPE);
+    SessionError sessionError;
+    sessionError.setErrorCode(EBADMSG);
+    sessionError.setErrorMessage(oss.str());
+    sessionError.setErrorScope(SessionError::SESSION_SCOPE);
 
     // Push the error onto the back of the list of errors generated during the
     // session with the rtcpd daemon
-    m_rtcpdErrors.push_back(rtcpdError);
+    m_sessionErrors.push_back(sessionError);
 
     // There is nothing else to do
     return;
@@ -2131,19 +2162,19 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 
   // If the tape-file sequence-number is invalid
   if(0 == body.tapeFseq) {
-    // Gather the error information into an RtcpdError object
+    // Gather the error information into an SessionError object
     std::ostringstream oss;
     oss <<
       "Failed to " << task <<
       ": message contains an fseq with the illegal value of 0";
-    RtcpdError rtcpdError;
-    rtcpdError.setErrorCode(EBADMSG);
-    rtcpdError.setErrorMessage(oss.str());
-    rtcpdError.setErrorScope(RtcpdError::SESSION_SCOPE);
+    SessionError sessionError;
+    sessionError.setErrorCode(EBADMSG);
+    sessionError.setErrorMessage(oss.str());
+    sessionError.setErrorScope(SessionError::SESSION_SCOPE);
 
     // Push the error onto the back of the list of errors generated during the
     // session with the rtcpd daemon
-    m_rtcpdErrors.push_back(rtcpdError);
+    m_sessionErrors.push_back(sessionError);
 
     // There is nothing else to do
     return;
@@ -2152,19 +2183,19 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   // It is an error to receive a TAPEBRIDGE_FLUSHEDTOTAPE message if the
   // current tape mount is anything other than WRITE
   if(tapegateway::WRITE != m_volume.mode()) {
-    // Gather the error information into an RtcpdError object
+    // Gather the error information into an SessionError object
     std::ostringstream oss;
     oss <<
       "Failed to " << task <<
       ": Tape is not mounted for write";
-    RtcpdError rtcpdError;
-    rtcpdError.setErrorCode(EINVAL);
-    rtcpdError.setErrorMessage(oss.str());
-    rtcpdError.setErrorScope(RtcpdError::SESSION_SCOPE);
+    SessionError sessionError;
+    sessionError.setErrorCode(EINVAL);
+    sessionError.setErrorMessage(oss.str());
+    sessionError.setErrorScope(SessionError::SESSION_SCOPE);
 
     // Push the error onto the back of the list of errors generated during the
     // session with the rtcpd daemon
-    m_rtcpdErrors.push_back(rtcpdError);
+    m_sessionErrors.push_back(sessionError);
 
     // There is nothing else to do
     return;
@@ -2186,19 +2217,19 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
       m_flushedBatches.push_back(migrations);
     }
   } catch(castor::exception::Exception &ex) {
-    // Gather the error information into an RtcpdError object
+    // Gather the error information into an SessionError object
     std::ostringstream oss;
     oss <<
       "Failed to " << task <<
       ": " << ex.getMessage().str();
-    RtcpdError rtcpdError;
-    rtcpdError.setErrorCode(ECANCELED);
-    rtcpdError.setErrorMessage(oss.str());
-    rtcpdError.setErrorScope(RtcpdError::SESSION_SCOPE);
+    SessionError sessionError;
+    sessionError.setErrorCode(ECANCELED);
+    sessionError.setErrorMessage(oss.str());
+    sessionError.setErrorScope(SessionError::SESSION_SCOPE);
 
     // Push the error onto the back of the list of errors generated during the
     // session with the rtcpd daemon
-    m_rtcpdErrors.push_back(rtcpdError);
+    m_sessionErrors.push_back(sessionError);
 
     // There is nothing else to do
     return;
@@ -2968,25 +2999,26 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 
       // Create the list of file-specific errors from the list of all errors
       // received from rtcpd
-      std::list<RtcpdError> fileSpecificRtcpdErrors;
-      for(std::list<RtcpdError>::const_iterator itor = m_rtcpdErrors.begin();
-        itor != m_rtcpdErrors.end(); itor++) {
-        if(RtcpdError::FILE_SCOPE == itor->getErrorScope()) {
-          fileSpecificRtcpdErrors.push_back(*itor);
+      std::list<SessionError> fileSpecificSessionErrors;
+      for(
+        std::list<SessionError>::const_iterator itor = m_sessionErrors.begin();
+        itor != m_sessionErrors.end(); itor++) {
+        if(SessionError::FILE_SCOPE == itor->getErrorScope()) {
+          fileSpecificSessionErrors.push_back(*itor);
         }
       }
 
       // If there are any file-specific errors, then notify the client
-      if(!fileSpecificRtcpdErrors.empty()) {
+      if(!fileSpecificSessionErrors.empty()) {
 
         // How the client is notified of file-specific error is different
         // depending on the tape access-mode
         switch(m_volume.mode()) {
         case tapegateway::READ:
-          notifyClientOfFailedRecalls(m_cuuid, fileSpecificRtcpdErrors);
+          notifyClientOfFailedRecalls(m_cuuid, fileSpecificSessionErrors);
           break;
         case tapegateway::WRITE:
-          notifyClientOfFailedMigrations(m_cuuid, fileSpecificRtcpdErrors);
+          notifyClientOfFailedMigrations(m_cuuid, fileSpecificSessionErrors);
           break;
         case tapegateway::DUMP:
           // Do nothing
@@ -3033,11 +3065,11 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeProtocolEngine::
   notifyClientOfFailedMigrations(const Cuuid_t &cuuid,
-  const std::list<RtcpdError> &rtcpdErrors)
+  const std::list<SessionError> &sessionErrors)
   throw(castor::exception::Exception) {
 
   // Return if there are no errors to report
-  if(rtcpdErrors.empty()) {
+  if(sessionErrors.empty()) {
     return;
   }
 
@@ -3048,12 +3080,12 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   listReport.setAggregatorTransactionId(tapebridgeTransId);
 
   // Add the individual file error-reports
-  for(std::list<RtcpdError>::const_iterator itor = rtcpdErrors.begin();
-    itor != rtcpdErrors.end(); itor++) {
-    if(RtcpdError::FILE_SCOPE != itor->getErrorScope()) {
+  for(std::list<SessionError>::const_iterator itor = sessionErrors.begin();
+    itor != sessionErrors.end(); itor++) {
+    if(SessionError::FILE_SCOPE != itor->getErrorScope()) {
       TAPE_THROW_EX(castor::exception::Internal,
         ": Failed to notifyClientOfFailedMigrations"
-        ": Scope of RtcpdError is not FILE_SCOPE");
+        ": Scope of SessionError is not FILE_SCOPE");
     }
     std::auto_ptr<tapegateway::FileErrorReportStruct> fileReport(
       new tapegateway::FileErrorReportStruct());
@@ -3109,11 +3141,11 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeProtocolEngine::
   notifyClientOfFailedRecalls(const Cuuid_t &cuuid,
-  const std::list<RtcpdError> &rtcpdErrors)
+  const std::list<SessionError> &sessionErrors)
   throw(castor::exception::Exception) {
 
   // Return if there are no errors to report
-  if(rtcpdErrors.empty()) {
+  if(sessionErrors.empty()) {
     return;
   }
 
@@ -3124,12 +3156,12 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   listReport.setAggregatorTransactionId(tapebridgeTransId);
 
   // Add the individual file error-reports
-  for(std::list<RtcpdError>::const_iterator itor = rtcpdErrors.begin();
-    itor != rtcpdErrors.end(); itor++) {
-    if(RtcpdError::FILE_SCOPE != itor->getErrorScope()) {
+  for(std::list<SessionError>::const_iterator itor = sessionErrors.begin();
+    itor != sessionErrors.end(); itor++) {
+    if(SessionError::FILE_SCOPE != itor->getErrorScope()) {
       TAPE_THROW_EX(castor::exception::Internal,
         ": Failed to notifyClientOfFailedMigrations"
-        ": Scope of RtcpdError is not FILE_SCOPE");
+        ": Scope of SessionError is not FILE_SCOPE");
     }
     std::auto_ptr<tapegateway::FileErrorReportStruct> fileReport(
       new tapegateway::FileErrorReportStruct());
@@ -3194,17 +3226,17 @@ void castor::tape::tapebridge::BridgeProtocolEngine::notifyClientEndOfSession()
       // thrown whilst running the session with the rtcpd daemon
 
       // If an error was generated during the session with the rtcpd daemon
-      if(!m_rtcpdErrors.empty()) {
+      if(!m_sessionErrors.empty()) {
 
         // Get the oldest and first error to have occurred
-        const RtcpdError rtcpdError = m_rtcpdErrors.front();
+        const SessionError sessionError = m_sessionErrors.front();
 
         // Notify the client the session ended due to the error
         const uint64_t tapebridgeTransId =
           m_tapebridgeTransactionCounter.next();
         ClientTxRx::notifyEndOfFailedSession(m_cuuid, m_jobRequest.volReqId,
           tapebridgeTransId, m_jobRequest.clientHost, m_jobRequest.clientPort,
-          rtcpdError.getErrorCode(), rtcpdError.getErrorMessage());
+          sessionError.getErrorCode(), sessionError.getErrorMessage());
       } else {
         // Notify the client the session has ended with success
         const uint64_t tapebridgeTransId =
@@ -3249,5 +3281,5 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::shuttingDownRtcpdSession()
   const {
   // The session with the rtcpd daemon should be shut down if the rtcpd daemon
   // has sent us any errors
-  return !m_rtcpdErrors.empty();
+  return !m_sessionErrors.empty();
 }

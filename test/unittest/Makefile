@@ -211,7 +211,7 @@ rununittests: \
   tapebridge_marshall.o \
   tapebridge_PendingMigrationsStore.o \
   tapebridge_recvTapeBridgeFlushedToTapeAck.o \
-  tapebridge_RtcpdError.o \
+  tapebridge_SessionError.o \
   tapebridge_RtcpTxRx.o \
   tapebridge_sendTapeBridgeClientInfo2Ack.o \
   tapebridge_sendTapeBridgeFlushedToTape.o \
@@ -273,7 +273,7 @@ runUnitTestsMain.cpp: \
   castor/tape/tapebridge/BridgeSocketCatalogueTest.hpp \
   castor/tape/tapebridge/TapeFlushConfigParamsTest.hpp \
   castor/tape/tapebridge/PendingMigrationsStoreTest.hpp \
-  castor/tape/tapebridge/RtcpdErrorTest.hpp \
+  castor/tape/tapebridge/SessionErrorTest.hpp \
   castor/tape/utils/IndexedContainerTest.hpp \
   castor/tape/utils/UtilsTest.hpp \
   rtcopy/RtcopyTest.hpp \
@@ -967,8 +967,8 @@ tapebridge_recvTapeBridgeFlushedToTapeAck.o: \
   $(ROOT_DIR)/tapebridge/tapebridge_recvTapeBridgeFlushedToTapeAck.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-tapebridge_RtcpdError.o: \
-  $(ROOT_DIR)/castor/tape/tapebridge/RtcpdError.cpp
+tapebridge_SessionError.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/SessionError.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapebridge_RtcpTxRx.o: \

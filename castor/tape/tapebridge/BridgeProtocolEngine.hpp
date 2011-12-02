@@ -31,7 +31,7 @@
 #include "castor/tape/tapebridge/Counter.hpp"
 #include "castor/tape/tapebridge/FileWrittenNotificationList.hpp"
 #include "castor/tape/tapebridge/PendingMigrationsStore.hpp"
-#include "castor/tape/tapebridge/RtcpdError.hpp"
+#include "castor/tape/tapebridge/SessionError.hpp"
 #include "castor/tape/tapebridge/TapeFlushConfigParams.hpp"
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"
@@ -302,12 +302,13 @@ private:
   ClientCallbackMap m_clientHandlers;
 
   /**
-   * The list of errors generated during the session with the rtcpd daemon.
+   * The list of errors generated during the tape session.
+   *
    * The list is ordered chronologically ordered with the front of the list
    * being the first and oldest error and the back of the list being the last
    * and youngest error.
    */
-  std::list<RtcpdError> m_rtcpdErrors;
+  std::list<SessionError> m_sessionErrors;
 
   /**
    * Processes the rtcpd and client sockets in a loop until the end of the
@@ -422,6 +423,8 @@ private:
   /**
    * RTCP_FILE_REQ rtcpd message-body handler.
    *
+   * This method calls processRtcpFileErrReq() with "no error".
+   *
    * For full documenation please see the documentation of the type
    * BridgeProtocolEngine::MsgBodyCallback.
    */
@@ -431,6 +434,9 @@ private:
 
   /**
    * RTCP_FILEERR_REQ rtcpd message-body handler.
+   *
+   * This method throws an exception if the RTCP_FILEERR_REQ message signals an
+   * error, else this method calls processRtcpFileErrReq().
    *
    * For full documenation please see the documentation of the type
    * BridgeProtocolEngine::MsgBodyCallback.
@@ -442,8 +448,12 @@ private:
   /**
    * Processes the specified RTCP file request.
    *
-   * This function implements the common logic of the rtcpFileReqRtcpdCallback
+   * This method implements the common logic of the rtcpFileReqRtcpdCallback
    * and rtcpFileErrReqRtcpdCallback functions.
+   *
+   * This method calls the appropriate message processing method based on the
+   * type of message (processRtcpFileErrReqDump(), processRtcpWaiting(),
+   * processRtcpRequestMoreWork(), etc.).
    *
    * @param header    The header of the request.
    * @param body      The body of the request.
@@ -459,6 +469,9 @@ private:
    * Processes the specified RTCP file request in the context of dumping a
    * tape.
    *
+   * This method simply replies to the rtcpd daemon with a positive
+   * acknowledgement.
+   *
    * @param header    The header of the request.
    * @param rtcpdSock The file descriptor of the socket from which both the
    *                  header and the body of the message have already been read
@@ -469,6 +482,12 @@ private:
 
   /**
    * Processes the specified RTCP waiting request.
+   *
+   * This method first replies to the rtpcd daemon with a positive
+   * acknowledgement.
+   *
+   * If the RTCP waiting request signals an error then this method pushes the
+   * error onto the back of the list of session errors.
    *
    * @param header    The header of the request.
    * @param rtcpdSock The file descriptor of the socket from which both the
@@ -481,6 +500,14 @@ private:
 
   /**
    * Processes the specified RTCP file request for more work.
+   *
+   * If the rtcpd session is being shutdown, then this method replies with a no
+   * more work message and returns.
+   *
+   * If the rtcpd session is continuing, then this method sends a request for
+   * more work to the client (readtp, tapegatewayd or writetp) and stores the
+   * resulting connection with in the socket-catalogue ready to receive the
+   * reply in a future interation of the main select loop.
    *
    * @param header    The header of the request.
    * @param body      The body of the request.
@@ -495,6 +522,12 @@ private:
   /**
    * Processes the specified RTCP file positioned request.
    *
+   * This method first replies to the rtpcd daemon with a positive
+   * acknowledgement.
+   *
+   * If the RTCP waiting request signals an error then this method pushes the
+   * error onto the back of the list of session errors.
+   *
    * @param header    The header of the request.
    * @param body      The body of the request.
    * @param rtcpdSock The file descriptor of the socket from which both the
@@ -507,6 +540,22 @@ private:
 
   /**
    * Processes the specified RTCP file transfer finished request.
+   *
+   * This method first replies to the rtpcd daemon with a positive
+   * acknowledgement.
+   *
+   * If the rtcpd session is being shutdown, then this method drops the
+   * RTCP_FINISHED message and returns.
+   *
+   * If the RTCP_FINISHED message signals an error, then this method pushes the
+   * error onto the back of the list of session errors and returns.
+   *
+   * If the RTCP_FINISHED message does not signal an error, then this method
+   * calls processSuccessfullRtcpFileFinishedRequest().
+   *
+   * If processSuccessfullRtcpFileFinishedRequest() throws an exception then
+   * this method pushes the error onto the back of the list of session errors
+   * and returns.
    *
    * @param header    The header of the request.
    * @param body      The body of the request.
@@ -522,6 +571,13 @@ private:
    * Processes the specified successful (no embedded error message) RTCP file
    * transfer finished request.
    *
+   * If the current tape-mount is for migration then this method adds the
+   * file-written notification to the pending migrations store as the
+   * associated data has not yet been flushed to the physical tape.
+   *
+   * If the current tape-mount is for recall then this method tries to notify
+   * the client (readtp, tapegatewayd or writetp) of the successful recall.
+   *
    * @param fileTransactonId The file transaction ID that was sent by the
    *                         client (the tapegatewayd daemon or the readtp or
    *                         writetp command-line tool)
@@ -534,6 +590,9 @@ private:
   /**
    * RTCP_TAPEREQ rtcpd message-body handler.
    *
+   * This receives the rtcp tape request message from the rtcpd daemon and
+   * replies with a positive acknowledgement.
+   *
    * For full documenation please see the documentation of the type
    * BridgeProtocolEngine::MsgBodyCallback.
    */
@@ -544,6 +603,12 @@ private:
   /**
    * RTCP_TAPEERR rtcpd message-body handler.
    *
+   * This method first receives the rtcp tape request message from the rtcpd
+   * daemon and replies with a positive acknowledgement.
+   *
+   * If the rtcp tape request message signals an error then this method
+   * throws an exception.
+   *
    * For full documenation please see the documentation of the type
    * BridgeProtocolEngine::MsgBodyCallback.
    */
@@ -552,26 +617,10 @@ private:
     throw(castor::exception::Exception);
 
   /**
-   * Processes the specified RTCP tape request.
-   *
-   * This function implements the common logic of the rtcpTapeReqRtcpdCallback
-   * and rtcpTapeErrReqRtcpdCallback functions.
-   *
-   * @param header The header of the request.
-   * @param body The body of the request which maybe either of type
-   * RtcpTapeRqstMsgBody or RtcpTapeRqstErrMsgBody, as RtcpTapeRqstErrMsgBody
-   * inherits from RtcpTapeRqstMsgBody.
-   * @param socketFd The file descriptor of the socket from which both the
-   * header and the body of the message have already been read from.
-   * @param receivedENDOF_REQ Out parameter: Will be set to true by this
-   * function of an RTCP_ENDOF_REQ was received.
-   */
-  void processRtcpTape(const legacymsg::MessageHeader &header,
-    legacymsg::RtcpTapeRqstMsgBody &body, const int socketFd, 
-    bool &receivedENDOF_REQ) throw(castor::exception::Exception);
-
-  /**
    * RTCP_ENDOF_REQ rtcpd message-body handler.
+   *
+   * This method records the fact the RTCP_ENDOF_REQ message was received and
+   * then replies to the rtcpd daemon with a positive acknowledgement.
    *
    * For full documenation please see the documentation of the type
    * BridgeProtocolEngine::MsgBodyCallback.
@@ -582,6 +631,15 @@ private:
 
   /**
    * TAPEBRIDGE_FLUSHEDTOTAPE tape-bridge message-body handler.
+   *
+   * This method first recieves the rtcp tape request message from the rtcpd
+   * daemon and replies with a positive acknowledgement.
+   *
+   * If the rtcpd session is being shutdown, then this method drops the
+   * TAPEBRIDGE_FLUSHEDTOTAPE message and returns.
+   *
+   * This method then processes the files that were migrated to tape by the
+   * flush.
    *
    * For full documenation please see the documentation of the type
    * BridgeProtocolEngine::MsgBodyCallback.
@@ -601,6 +659,9 @@ private:
 
   /**
    * GIVE_OUTP rtcpd message-body handler.
+   *
+   * This method receives the GIVE_OUTP message from the rtcpd daemon and then
+   * relays it to the client (dumptp).
    *
    * For full documenation please see the documentation of the type
    * BridgeProtocolEngine::MsgBodyCallback.
@@ -765,20 +826,20 @@ private:
    * Notifies the client of a failure to migrate a file to tape.
    *
    * @param cuuid The ccuid to be used for logging.
-   * @param e     The error received from the rtcpd daemon.
+   * @param e     The error.
    */
   void notifyClientOfFailedMigrations(const Cuuid_t &cuuid,
-    const std::list<RtcpdError> &rtcpdErrors)
+    const std::list<SessionError> &sessionErrors)
     throw(castor::exception::Exception);
 
   /**
    * Notifies the client of a failure to recall a file from tape.
    *
    * @param cuuid The ccuid to be used for logging.
-   * @param e     The error received from the rtcpd daemon.
+   * @param e     The error.
    */
   void notifyClientOfFailedRecalls(const Cuuid_t &cuuid,
-    const std::list<RtcpdError> &rtcpdErrors)
+    const std::list<SessionError> &sessionErrors)
     throw(castor::exception::Exception);
 
   /**
