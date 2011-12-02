@@ -2,3 +2,5 @@ STAGE_SVCCLASS=<tapeServiceClass> rfcp <localFileName> <tapeFileName>
 STAGE_SVCCLASS=<diskOnlyServiceClass> rfcp <tapeFileName> <tmpLocalFileName>
 stager_rm -S <tapeServiceClass> -M <tapeFileName>
 stager_rm -S <diskOnlyServiceClass> -M <tapeFileName>
+stager_qry -S <tapeServiceClass> -M <tapeFileName>
+stager_qry -S <diskOnlyServiceClass> -M <tapeFileName>

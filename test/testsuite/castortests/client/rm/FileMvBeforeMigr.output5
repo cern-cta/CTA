@@ -1,0 +1,14 @@
+    **** : trace level set to 3
+    stager: Looking up RH host - Using <rhhost>
+    stager: Looking up RH port - Using <rhport>
+    stager: stage_filequery type=0 param=<tapeFileName>
+    stager: Setting euid: <userid>
+    stager: Setting egid: <groupid>
+    stager: Localhost is: <localhost>
+    stager: Creating socket for castor callback - Using port <callback port5>
+    stager: <sending time2> Sending request
+    stager: <uuid5> SND <send duration2> s to send the request
+    stager: Waiting for callback from castor
+    stager: <uuid5> CBK <answer duration4> s before callback from <server ip2> was received
+Received 1 responses
+<tapeFileName> <fileid@ns> CANBEMIGR
