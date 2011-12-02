@@ -58,11 +58,6 @@ static castor::SvcFactory<castor::tape::rechandler::ora::OraRecHandlerSvc>* s_fa
 // Static constants initialization
 //------------------------------------------------------------------------------
 
-/// SQL statement for inputForRecallPolicy
-
-const std::string castor::tape::rechandler::ora::OraRecHandlerSvc::s_inputForRecallPolicyStatementString = 
-  "BEGIN  inputForRecallPolicy(:1);END;";
-
 /// SQL statement for resurrectTapes
 
 const std::string castor::tape::rechandler::ora::OraRecHandlerSvc::s_resurrectTapesStatementString = 
@@ -81,7 +76,6 @@ const std::string castor::tape::rechandler::ora::OraRecHandlerSvc::s_tapesAndMou
 castor::tape::rechandler::ora::OraRecHandlerSvc::OraRecHandlerSvc(const std::string name) :
   IRecHandlerSvc(),  
   OraCommonSvc(name), 
-  m_inputForRecallPolicyStatement(0),
   m_resurrectTapesStatement(0),
   m_tapesAndMountsForRecallPolicyStatement(0){
 }
@@ -115,67 +109,15 @@ void castor::tape::rechandler::ora::OraRecHandlerSvc::reset() throw() {
   // If something goes wrong, we just ignore it
   OraCommonSvc::reset();
   try {
-    if  (m_inputForRecallPolicyStatement)deleteStatement(m_inputForRecallPolicyStatement);
     if  (m_resurrectTapesStatement) deleteStatement(m_resurrectTapesStatement);
     if  (m_tapesAndMountsForRecallPolicyStatement) deleteStatement(m_tapesAndMountsForRecallPolicyStatement);
   } catch (castor::exception::Exception& ignored) {};
   // Now reset all pointers to 0
-  m_inputForRecallPolicyStatement=0;
   m_resurrectTapesStatement=0;
   m_tapesAndMountsForRecallPolicyStatement=0;
 }
 
 
-//---------------------------------------------------------------------
-// inputForRecallPolicy
-//---------------------------------------------------------------------
-
-void  castor::tape::rechandler::ora::OraRecHandlerSvc::inputForRecallPolicy(std::list<castor::tape::rechandler::RecallPolicyElement>& candidates) throw (castor::exception::Exception){
-
-  try {
-    // Check whether the statements are ok
-    if (0 ==  m_inputForRecallPolicyStatement) {
-      m_inputForRecallPolicyStatement  =
-        createStatement(s_inputForRecallPolicyStatementString);
-      m_inputForRecallPolicyStatement->registerOutParam
-        (1, oracle::occi::OCCICURSOR);
-      m_inputForRecallPolicyStatement->setAutoCommit(true);
-    }   
-    
-    m_inputForRecallPolicyStatement->executeUpdate();
-
-    oracle::occi::ResultSet *rs =
-      m_inputForRecallPolicyStatement->getCursor(1);
-   
-    // Run through the cursor
-    
-    oracle::occi::ResultSet::Status status = rs->next();
-    while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
-      castor::tape::rechandler::RecallPolicyElement item;
-     
-      item.tapeId             = (u_signed64)rs->getDouble(1);
-      item.vid                = rs->getString(2);
-      item.numSegments        = (u_signed64)rs->getDouble(3);
-      item.totalBytes         = (u_signed64)rs->getDouble(4);
-      item.ageOfOldestSegment = (u_signed64)rs->getDouble(5);
-      item.priority           = (u_signed64)rs->getDouble(6);     
- 
-      candidates.push_back(item);
-      status = rs->next();
-    }
-    m_inputForRecallPolicyStatement->closeResultSet(rs);
-
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in  inputForRecallPolicy."
-      << std::endl << e.what();
-    throw ex;
-  }
- 
-        
-}
 //---------------------------------------------------------------------
 //    resurrectTapes 
 //---------------------------------------------------------------------

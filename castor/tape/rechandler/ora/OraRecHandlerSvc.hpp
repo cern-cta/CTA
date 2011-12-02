@@ -82,12 +82,6 @@ namespace ora        {
       public:
 	
 
-	/**                    
-	 * inputForRecallPolicy 
-	 */
-
-        virtual void  inputForRecallPolicy(std::list<RecallPolicyElement>& candidates) throw (castor::exception::Exception);
-
         /**
          * Resurrect Tapes
          */
@@ -100,12 +94,6 @@ namespace ora        {
         virtual void tapesAndMountsForRecallPolicy(std::list<RecallPolicyElement>& candidates, int& nbMountsForRecall) throw (castor::exception::Exception);
 
       private:
-
-        /// SQL statement for inputForRecallPolicy  
-        static const std::string s_inputForRecallPolicyStatementString;
-
-        /// SQL statement object for function inputForRecallPolicy 
-	oracle::occi::Statement *m_inputForRecallPolicyStatement;
 
         /// SQL statement for resurrectTapes
         static const std::string s_resurrectTapesStatementString;

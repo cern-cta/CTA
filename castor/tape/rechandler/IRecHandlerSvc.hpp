@@ -53,13 +53,6 @@ namespace rechandler {
     public:
      
 
-	/**                    
-	 * inputForRecallPolicy 
-	 */
-
-        virtual void  inputForRecallPolicy(std::list<RecallPolicyElement>& candidates) 
-	  throw (castor::exception::Exception)=0;
-
         /**
          * Resurrect Tapes
          */

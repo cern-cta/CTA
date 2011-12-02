@@ -6925,35 +6925,6 @@ END;
 
 /** Functions for the RecHandlerDaemon **/
 
-/* Get input for python recall policy */
-CREATE OR REPLACE PROCEDURE inputForRecallPolicy(dbInfo OUT castorTape.DbRecallInfo_Cur) AS
-  svcId NUMBER;
-BEGIN
-  OPEN dbInfo FOR
-    SELECT
-       /*+ NO_USE_MERGE(TAPE SEGMENT RECALLJOB CASTORFILE)
-           NO_USE_HASH(TAPE SEGMENT RECALLJOB CASTORFILE)
-           INDEX_RS_ASC(SEGMENT I_SEGMENT_TAPESTATUSFSEQ)
-           INDEX_RS_ASC(TAPE I_TAPE_STATUS)
-           INDEX_RS_ASC(RECALLJOB PK_RECALLJOB_ID)
-           INDEX_RS_ASC(CASTORFILE PK_CASTORFILE_ID) */
-       Tape.id,
-       Tape.vid,
-       count(distinct segment.id),
-       sum(CastorFile.fileSize),
-       getTime() - min(Segment.creationTime) age,
-       max(Segment.priority)
-      FROM RecallJob, CastorFile, Segment, Tape
-     WHERE Tape.id = Segment.tape
-       AND RecallJob.id = Segment.copy
-       AND CastorFile.id = RecallJob.castorfile
-       AND Tape.status IN (tconst.TAPE_PENDING, tconst.TAPE_WAITDRIVE, tconst.TAPE_WAITPOLICY)
-       AND Segment.status = tconst.SEGMENT_UNPROCESSED
-     GROUP BY Tape.id, Tape.vid
-     ORDER BY age DESC;
-END;
-/
-
 CREATE OR REPLACE PROCEDURE tapesAndMountsForRecallPolicy (
   outRecallMounts      OUT castorTape.RecallMountsForPolicy_Cur,
   outNbMountsForRecall OUT NUMBER)
