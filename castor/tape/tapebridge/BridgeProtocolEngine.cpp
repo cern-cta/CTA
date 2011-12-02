@@ -2032,7 +2032,7 @@ void
   castor::tape::tapebridge::BridgeProtocolEngine::rtcpTapeErrReqRtcpdCallback(
   const legacymsg::MessageHeader &header,
   const int                      socketFd, 
-  bool                           &receivedENDOF_REQ)
+  bool                           &)
   throw(castor::exception::Exception) {
 
   legacymsg::RtcpTapeRqstErrMsgBody body;
