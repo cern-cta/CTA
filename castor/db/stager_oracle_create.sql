@@ -7971,7 +7971,8 @@ BEGIN
         varNbMounts := varNbMounts + 1;
       END LOOP;
       -- force creation of a unique mount in case no mount was created at all and some files are too old
-      IF varNbMounts = 0 AND t.nbDrives > 0 AND gettime() - varOldestCreationTime > t.maxFileAgeBeforeMount THEN
+      IF varNbFiles > 0 AND varNbMounts = 0 AND t.nbDrives > 0 AND
+         gettime() - varOldestCreationTime > t.maxFileAgeBeforeMount THEN
         insertMigrationMount(t.id);
       END IF;
     EXCEPTION WHEN NO_DATA_FOUND THEN
