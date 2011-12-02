@@ -191,16 +191,16 @@
           - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.12-*/2.1.12-0/dbupgrades
           Note that this script can be used for 2.1.11-8 and 2.1.11-9 databases.
 
-       4. Check configuration of the tapepools. A default configuration has been created
+       4. Upgrade the software on the headnodes and diskservers to 2.1.12-0.
+
+       5. Check configuration of the tapepools. A default configuration has been created
           taking into account the previous setup, but some complex configuration may not
           be handled properly
           - printtapepool
           - modifytapepool if needed
 
-       5. Create the migration routes, from the old migration policies
+       6. Create the migration routes, from the old migration policies
           - entermigrationroute 
-
-       6. Upgrade the software on the headnodes and diskservers to 2.1.12-0.
 
        7. If you have an independent monitoring system to monitor CASTOR such
           as LEMON. Please make sure to update the monitoring configuration to
