@@ -2009,7 +2009,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeProtocolEngine::rtcpTapeReqRtcpdCallback(
   const legacymsg::MessageHeader &header, const int socketFd, 
-  bool &receivedENDOF_REQ) throw(castor::exception::Exception) {
+  bool &) throw(castor::exception::Exception) {
 
   legacymsg::RtcpTapeRqstMsgBody body;
   RtcpTxRx::receiveMsgBody(m_cuuid, m_jobRequest.volReqId, socketFd,
