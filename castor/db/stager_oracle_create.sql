@@ -5524,20 +5524,18 @@ BEGIN
     SELECT status INTO dcStatus
       FROM DiskCopy
      WHERE id = dcsToRm(1);
-    IF dcStatus != dconst.DISKCOPY_CANBEMIGR THEN
-      -- Check whether something else is left: if not, do as
-      -- if we are performing a stageRm everywhere.
-      SELECT count(*) INTO nbRes FROM DiskCopy
-         WHERE castorFile = cfId
-           AND status IN (0, 2, 5, 6, 10, 11)  -- STAGED, WAITTAPERECALL, STAGEOUT, CANBEMIGR, WAITFS, WAITFS_SCHEDULING
-           AND id NOT IN (SELECT /*+ CARDINALITY(dcidTable 5) */ *
-                            FROM TABLE(dcsToRm) dcidTable);
-      IF nbRes = 0 THEN
-        -- nothing found, so we're dropping the last copy; then
-        -- we need to perform all the checks to make sure we can
-        -- allow the removal.
-        scId := 0;
-      END IF;
+    -- Check whether something else is left: if not, do as
+    -- if we are performing a stageRm everywhere.
+    SELECT count(*) INTO nbRes FROM DiskCopy
+       WHERE castorFile = cfId
+         AND status IN (0, 2, 5, 6, 10, 11)  -- STAGED, WAITTAPERECALL, STAGEOUT, CANBEMIGR, WAITFS, WAITFS_SCHEDULING
+         AND id NOT IN (SELECT /*+ CARDINALITY(dcidTable 5) */ *
+                          FROM TABLE(dcsToRm) dcidTable);
+    IF nbRes = 0 THEN
+      -- nothing found, so we're dropping the last copy; then
+      -- we need to perform all the checks to make sure we can
+      -- allow the removal.
+      scId := 0;
     END IF;
   END IF;
 
