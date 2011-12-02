@@ -42,9 +42,9 @@ TAPEBRIDGEBIN_SRCS = \
   LegacyTxRx.cpp \
   LogHelper.cpp \
   PendingMigrationsStore.cpp \
-  RtcpdError.cpp \
   RtcpJobSubmitter.cpp \
   RtcpTxRx.cpp \
+  SessionError.cpp \
   TapeBridgeDaemon.cpp \
   TapeBridgeMain.cpp \
   VdqmRequestHandler.cpp \
