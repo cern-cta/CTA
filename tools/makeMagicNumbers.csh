@@ -1,7 +1,8 @@
-#!/usr/bin/tcsh
+#!/bin/tcsh
 
 if !($?CASTOR_ROOT) then
-  setenv CASTOR_ROOT /usr/local/src/CASTOR2
+  echo "ERROR: The environment variable CASTOR_ROOT is not set"
+  exit 1
 endif
 
 echo CASTOR_ROOT = $CASTOR_ROOT
@@ -20,7 +21,7 @@ grep REP_ $CASTOR_ROOT/castor/Constants.hpp | grep '=' | sed 's/ *\([^ ]*\) = \(
 echo >> MagicNumbers
 
 foreach f ( `find $CASTOR_ROOT/castor/stager $CASTOR_ROOT/castor/monitoring $CASTOR_ROOT/castor/vdqm $CASTOR_ROOT/castor/repack -name '*.hpp' | grep -v DlfMessage` )
-  set output=`grep -H '_' $f | grep '=' | grep -v 'm_' | grep -v "if" | grep -v 'static' | grep -v 'throw' | grep -v '(' | sed 's/\/\/.*$//' | sed 's/^.*\/\([a-zA-Z]*\).hpp:/\1/'`
+  set output=`grep -H '_' $f | grep '=' | grep -v 'm_' | grep -v "if" | grep -v 'static' | grep -v 'throw' | sed 's/\/\/.*$//' | grep -v '(' | sed 's/^.*\/\([a-zA-Z]*\).hpp:/\1/'`
   if !("$output" == "") then
     echo $output | sed 's/^ *\([^ ]*\).*$/    \1\n/' | sed 's/StatusCodes*//' | awk '{print "    ", toupper($1);}' >> MagicNumbers
     echo $output | sed 's/,/\n/g' | sed 's/ *[^ ]* *\([^ ]*\) = \([0-9]*\).*$/\2  \1/' >> MagicNumbers
