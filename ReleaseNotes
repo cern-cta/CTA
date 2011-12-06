@@ -79,6 +79,8 @@
     - #88560: Correct capitalisation mistake in tapebridged logs - mountTransActionId
     - #89253: tapebridged sends end-of-session before the tapegatewayd has finished
               processing the session
+    - #89492: The tapebridged daemon loses migration report messages when it cannot
+              connect to the tapegatewayd daemon
 
   [Features]
     - #82593: RFE: implement unique migration routing and optimize tape-related
