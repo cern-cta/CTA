@@ -166,16 +166,13 @@ void Cupv_util_time(time_t this,
 int Cupv_parse_privstring(char *privstr) {
 
   char *p;
-  char buf[MAXPRIVSTRLEN + 1];
   int priv = 0;
 
-  memset(buf, 0, sizeof(buf));
-
-  if (strlen (privstr) >= sizeof (buf)) {
+  char *buf = strndup(privstr, strlen(privstr)+1);
+  if (NULL == buf) {
     return(-1);
   }
 
-  strcpy (buf, privstr);
   p = strtok (buf, STR_SEP);
   while (p) {
     if (strcmp (p, STR_NONE) == 0)
@@ -199,53 +196,70 @@ int Cupv_parse_privstring(char *privstr) {
     }
     p = strtok (NULL, STR_SEP);
   }
+  free (buf);
   return(priv);
 }
 
-/* Builds the privilege string  */
-void Cupv_build_privstring(int priv, char *privstring) {
+/* safely concatenate 2 strings, reallocating destination if needed */
+char* strsafecat(char* dest, int *destLen, char* src) {
+  int needed = strlen(dest) + strlen(src) + 1;
+  while (*destLen < needed) {
+    *destLen *= 2;
+    dest = realloc(dest, *destLen);
+  }
+  return strncat(dest, src, strlen(src));
+}
 
-  char buf[MAXPRIVSTRLEN +1];
-  char *p;
+/* concatenate 2 strings with '|' as separator (if first entry),
+   reallocating the destination if needed. */
+char* write_str(char* dest, int *destlen, char* src, int *firstentry) {
+  char* ret = 0;
+  if (!(*firstentry)) {
+    ret = strsafecat(dest, destlen, STR_SEP);
+  }
+  ret = strsafecat(dest, destlen, src);
+  *firstentry = 0;
+  return ret;
+}
+
+
+/* Builds the privilege string
+ * note that the string is allocated here and that
+ * the caller is responsible for its deallocation
+ */
+char* Cupv_build_privstring(int priv) {
   int firstentry = 1;
-
+  int buflen = 64;
+  char *buf = calloc(1, buflen);
   if (priv <= 0) {
-    strcpy(buf, STR_NONE);
-    return;
+    buf = strsafecat(buf, &buflen, STR_NONE);
   } else {
-
-    p = buf;
-
     if (priv & P_OPERATOR) {
-      WRITE_STR(p, STR_OPERATOR, firstentry);
+      buf = write_str(buf, &buflen, STR_OPERATOR, &firstentry);
     }
     if (priv & P_TAPE_OPERATOR) {
-      WRITE_STR(p, STR_TAPE_OPERATOR, firstentry);
+      buf = write_str(buf, &buflen, STR_TAPE_OPERATOR, &firstentry);
     }
     if (priv & P_TAPE_SYSTEM) {
-      WRITE_STR(p, STR_TAPE_SYSTEM, firstentry);
+      buf = write_str(buf, &buflen, STR_TAPE_SYSTEM, &firstentry);
     }
     if (priv & P_STAGE_SYSTEM) {
-      WRITE_STR(p, STR_STAGE_SYSTEM, firstentry);
+      buf = write_str(buf, &buflen, STR_STAGE_SYSTEM, &firstentry);
     }
     if (priv & P_GRP_ADMIN) {
-      WRITE_STR(p, STR_GRP_ADMIN, firstentry);
+      buf = write_str(buf, &buflen, STR_GRP_ADMIN, &firstentry);
     }
     if (priv & P_UPV_ADMIN) {
-      WRITE_STR(p, STR_UPV_ADMIN, firstentry);
+      buf = write_str(buf, &buflen, STR_UPV_ADMIN, &firstentry);
     }
     if (priv & P_ADMIN) {
-      WRITE_STR(p, STR_ADMIN, firstentry);
+      buf = write_str(buf, &buflen, STR_ADMIN, &firstentry);
     }
     if (firstentry == 1) {
-      strcpy(buf, STR_NONE);
+      buf = strsafecat(buf, &buflen, STR_NONE);
     }
   }
-
-  *p = '\0';
-
-  strcpy(privstring, buf);
-  return;
+  return buf;
 }
 
 

@@ -59,7 +59,7 @@
 #define STR_NONE            "NONE"
 #define STR_OPERATOR        "OPER"
 #define STR_TAPE_OPERATOR   "TP_OPER"
-#define STR_GRP_ADMIN      "GRP_ADMIN"
+#define STR_GRP_ADMIN       "GRP_ADMIN"
 #define STR_ADMIN           "ADMIN"
 #define STR_UPV_ADMIN       "UPV_ADMIN"
 #define STR_TAPE_SYSTEM     "TP_SYSTEM"
@@ -72,7 +72,6 @@
 #define REGEXP_END_CHAR     '$'
 #define REGEXP_END_STR      "$"
 
-#define MAXPRIVSTRLEN      30
 #define MAXSQLSTMENTLEN    500
 
 #endif

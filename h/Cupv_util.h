@@ -32,7 +32,7 @@ int Cupv_errmsg(char *func, char *msg, ...);
 EXTERN_C int  Cupv_strtoi (int *,char *,char **, int);
 EXTERN_C void Cupv_util_time (time_t, char *);
 EXTERN_C int Cupv_parse_privstring (char *);
-EXTERN_C void Cupv_build_privstring (int , char *);
+EXTERN_C char* Cupv_build_privstring (int);
 EXTERN_C int Cupv_getuid (const char *name);
 EXTERN_C int Cupv_getgid (const char *name);
 EXTERN_C char *Cupv_getuname (uid_t);

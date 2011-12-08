@@ -176,11 +176,10 @@ int displayLine(struct Cupv_userpriv *lp, int verbose) {
 
   char usr[CA_MAXUSRNAMELEN + 50];
   char grp[MAXGRPNAMELEN + 50];
-  char buf[MAXPRIVSTRLEN + 1];
+  char *buf;
   char *c, *p;
 
-
-  Cupv_build_privstring(lp->privcat, buf);
+  buf = Cupv_build_privstring(lp->privcat);
 
   if ( (c = Cupv_getuname(lp->uid)) == NULL) {
     if (verbose) {
@@ -218,7 +217,7 @@ int displayLine(struct Cupv_userpriv *lp, int verbose) {
     printf ("%10s %10s %40s %40s    %s\n", usr, grp,
 	    lp->srchost, lp->tgthost, buf);
   }
-
+  free(buf);
   return(0);
 }
 
