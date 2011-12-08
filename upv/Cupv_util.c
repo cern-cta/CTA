@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <limits.h>                     /* For INT_MIN and INT_MAX */
 #include <stdio.h>
+#define _GNU_SOURCE
 #include <string.h>
 #include <errno.h>
 #include <time.h>
