@@ -84,9 +84,15 @@ namespace castor {
         class FileMutationUnconfirmedException: public castor::exception::Exception {
         public:
           FileMutationUnconfirmedException():castor::exception::Exception(ESTALE){};
-
         };
+
+        class SuperfluousSegmentException: public castor::exception::Exception {
+          public:
+          SuperfluousSegmentException(int error_number):castor::exception::Exception(error_number){};
+        };
+    
       };
+    
     } // end of namespace tapegateway
 
   } // end of namespace tape

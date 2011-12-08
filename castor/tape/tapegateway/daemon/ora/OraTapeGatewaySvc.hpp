@@ -112,6 +112,11 @@ namespace ora         {
 	      const castor::tape::tapegateway::FileMigratedNotification& resp)
       throw (castor::exception::Exception);
 
+    // Update the db for a semgent whose migration was rejected as non-necessary by the name server
+    virtual  void  dropSuperfluousSegment(
+              const castor::tape::tapegateway::FileMigratedNotification& resp)
+      throw (castor::exception::Exception);
+
     // To update the db for a file which can't be referenced in the
     // name server anymore after a successful migration (file changed in the mean time)
     virtual  void  setFileStaleInMigration(
@@ -262,6 +267,7 @@ namespace ora         {
     oracle::occi::Statement *m_deleteTapeRequestStatement;
     oracle::occi::Statement *m_flagTapeFullForMigrationSession;
     oracle::occi::Statement *m_getMigrationMountVid;
+    oracle::occi::Statement *m_dropSuperfluousSegmentStatement;
 
     // Private helper class used to introspect cursors, making the OCCI code independent of the order of elements
     // in the cursor (especially with %ROWTYPE contexts).

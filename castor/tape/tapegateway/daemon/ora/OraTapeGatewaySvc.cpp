@@ -99,7 +99,8 @@ castor::tape::tapegateway::ora::OraTapeGatewaySvc::OraTapeGatewaySvc(const std::
   m_deleteMigrationMountWithBadTapePoolStatement(0),
   m_deleteTapeRequestStatement(0),
   m_flagTapeFullForMigrationSession(0),
-  m_getMigrationMountVid(0)
+  m_getMigrationMountVid(0),
+  m_dropSuperfluousSegmentStatement(0)
 {
 }
 
@@ -158,6 +159,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
     if ( m_deleteTapeRequestStatement) deleteStatement(m_deleteTapeRequestStatement);
     if ( m_flagTapeFullForMigrationSession) deleteStatement(m_flagTapeFullForMigrationSession);
     if ( m_getMigrationMountVid) deleteStatement(m_getMigrationMountVid);
+    if ( m_dropSuperfluousSegmentStatement) deleteStatement(m_dropSuperfluousSegmentStatement);
   } catch (castor::exception::Exception& ignored) {};
   // Now reset all pointers to 0
   m_getMigrationMountsWithoutTapesStatement= 0; 
@@ -186,6 +188,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
   m_deleteTapeRequestStatement=0;
   m_flagTapeFullForMigrationSession=0;
   m_getMigrationMountVid=0;
+  m_dropSuperfluousSegmentStatement=0;
 }
 
 //----------------------------------------------------------------------------
@@ -740,6 +743,34 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileMigrated(const ca
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in setFileMigrated"
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+//----------------------------------------------------------------------------
+// dropSuperfluousSegment
+//----------------------------------------------------------------------------
+
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::dropSuperfluousSegment(const castor::tape::tapegateway::FileMigratedNotification& resp)
+  throw (castor::exception::Exception){
+  try {
+    // Check whether the statements are ok
+    if (0 == m_dropSuperfluousSegmentStatement) {
+      m_dropSuperfluousSegmentStatement =
+        createStatement("BEGIN tg_dropSuperfluousSegment(:inTransId,:inFileId,:inNsHost,:inFseq,:inFileTransaction);END;");
+    }
+    m_dropSuperfluousSegmentStatement->setDouble(1,(double)resp.mountTransactionId()); // inTransId
+    m_dropSuperfluousSegmentStatement->setDouble(2,(double)resp.fileid()); // inFileId
+    m_dropSuperfluousSegmentStatement->setString(3,resp.nshost()); // inNsHost
+    m_dropSuperfluousSegmentStatement->setInt(4,resp.fseq()); // inFseq
+    m_dropSuperfluousSegmentStatement->setDouble(5,(double)resp.fileTransactionId());  // inFileTransaction
+    m_dropSuperfluousSegmentStatement->executeUpdate();
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in dropSuperfluousSegment"
       << std::endl << e.what();
     throw ex;
   }

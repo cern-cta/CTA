@@ -827,6 +827,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
   // We'll flag this if the migration turned out to be of an old version of
   // an overwritten file.
   bool fileStale = false;
+  bool segmentSuperfluous = false;
   try {
     timer.reset();
     if (originalVid.empty()) {
@@ -852,6 +853,10 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
   } catch (castor::tape::tapegateway::NsTapeGatewayHelper::FileMutationUnconfirmedException) {
     fileStale = true;
     logRepackUncomfirmedStaleFile(nullCuuid, &castorFileId, requester, fileMigrated, serviceClass, fileClass,
+        tapePool, blockid, vid, copyNumber, lastModificationTime, checksumHex, originalVid, timer.getusecs());
+  } catch (castor::tape::tapegateway::NsTapeGatewayHelper::SuperfluousSegmentException ssex) {
+    segmentSuperfluous = true;
+    logSuperfluousSegment(nullCuuid, &castorFileId, requester, fileMigrated, serviceClass, fileClass,
         tapePool, blockid, vid, copyNumber, lastModificationTime, checksumHex, originalVid, timer.getusecs());
   } catch (castor::exception::Exception& e) {
     logMigrationNsFailure(nullCuuid, &castorFileId, requester, fileMigrated, serviceClass, fileClass,
@@ -887,6 +892,9 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
     if (fileStale) {
       // The underlying SQL DOES commit.
       oraSvc.setFileStaleInMigration(fileMigrated);
+    } else if (segmentSuperfluous){
+      // The underlying SQL DOES commit.
+      oraSvc.dropSuperfluousSegment(fileMigrated);
     } else {
       // The underlying SQL DOES commit.
       oraSvc.setFileMigrated(fileMigrated);
@@ -2591,6 +2599,39 @@ void castor::tape::tapegateway::WorkerThread::logRepackStaleFile (Cuuid_t uuid, 
       castor::dlf::Param("ProcessingTime", procTime * 0.000001)
   };
   castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, WORKER_REPACK_STALE_FILE, paramsStaleFile,castorFileId);
+}
+
+void castor::tape::tapegateway::WorkerThread::logSuperfluousSegment (Cuuid_t uuid, struct Cns_fileid* castorFileId,
+        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
+        const std::string & serviceClass, const std::string & fileClass,
+        const std::string & tapePool, const std::string & blockid,
+        const std::string & vid, int copyNumber, u_signed64 lastModificationTime,
+        const char (&checksumHex)[19],const std::string & originalVid, signed64 procTime)
+{
+  castor::dlf::Param paramsStaleFile[] ={
+      castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
+      castor::dlf::Param("Port",requester.port),
+      castor::dlf::Param("HostName",requester.hostName),
+      castor::dlf::Param("mountTransactionId",fileMigrated.mountTransactionId()),
+      castor::dlf::Param("tapebridgeTransId",fileMigrated.aggregatorTransactionId()),
+      castor::dlf::Param("serviceClass",serviceClass),
+      castor::dlf::Param("fileClass",fileClass),
+      castor::dlf::Param("tapePool",tapePool),
+      castor::dlf::Param("fseq",fileMigrated.fseq()),
+      castor::dlf::Param("blockid", blockid),
+      castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId()),
+      castor::dlf::Param("TPVID",vid),
+      castor::dlf::Param("copyNb",copyNumber),
+      castor::dlf::Param("lastModificationTime",lastModificationTime),
+      castor::dlf::Param("fileSize",fileMigrated.fileSize()),
+      castor::dlf::Param("compressedFileSize",fileMigrated.compressedFileSize()),
+      castor::dlf::Param("blockid", blockid),
+      castor::dlf::Param("checksum name",fileMigrated.checksumName()),
+      castor::dlf::Param("checksum",checksumHex),
+      castor::dlf::Param("original vid",originalVid),
+      castor::dlf::Param("ProcessingTime", procTime * 0.000001)
+  };
+  castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, WORKER_SUPERFLUOUS_SEGMENT, paramsStaleFile,castorFileId);
 }
 
 void castor::tape::tapegateway::WorkerThread::logRepackUncomfirmedStaleFile (Cuuid_t uuid, struct Cns_fileid* castorFileId,

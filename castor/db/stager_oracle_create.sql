@@ -447,7 +447,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_12_0');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_12_234112');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -6169,10 +6169,6 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
     END;
   END IF;
   -- It was not an update creating a file, so we fail
-  UPDATE SubRequest
-     SET status = 7, errorCode = 1725, errorMessage='Request canceled while queuing'
-   WHERE id = srId;
-  COMMIT;
   raise_application_error(-20114, 'File invalidated while queuing in the scheduler, please try again');
 END;
 /
@@ -8284,6 +8280,7 @@ BEGIN
            startTime = getTime(),
            status = tconst.MIGRATIONMOUNT_SEND_TO_VDQM
      WHERE id = inMountIds(i);
+  COMMIT;
 END;
 /
 
@@ -9047,7 +9044,6 @@ BEGIN
 END;
 /
 
-
 /* update the db after a successful migration */
 CREATE OR REPLACE
 PROCEDURE TG_SetFileMigrated(
@@ -9091,12 +9087,59 @@ BEGIN
     WHERE SR.castorfile = varCfId AND
           SR.status = dconst.SUBREQUEST_REPACK
     ) LOOP
-    archiveSubReq(i.id, 8); -- SUBREQUEST_FINISHED
+    archiveSubReq(i.id, dconst.SUBREQUEST_FINISHED);
   END LOOP;
   COMMIT;
 END;
 /
 
+/* update the db after a successful migration */
+CREATE OR REPLACE
+PROCEDURE TG_DropSuperfluousSegment(
+  inTransId         IN  NUMBER, 
+  inFileId          IN  NUMBER,
+  inNsHost          IN  VARCHAR2, 
+  inFseq            IN  INTEGER, 
+  inFileTransaction IN  NUMBER) AS
+  varMigJobCount      INTEGER;
+  varCfId               NUMBER;
+  varCopyNb             NUMBER;
+  varVID                VARCHAR2(2048);
+BEGIN
+  -- Lock the CastorFile
+  SELECT CF.id INTO varCfId FROM CastorFile CF
+   WHERE CF.fileid = inFileId 
+     AND CF.nsHost = inNsHost 
+     FOR UPDATE;
+  -- delete the corresponding migration job, but skip creating the new migrated segment
+  DELETE FROM MigrationJob
+   WHERE FileTransactionId = inFileTransaction
+     AND fSeq = inFseq
+  RETURNING destCopyNb, VID INTO varCopyNb, varVID;
+  -- check if another migration should be performed
+  SELECT count(*) INTO varMigJobCount
+    FROM MigrationJob
+    WHERE castorfile = varCfId;
+  IF varMigJobCount = 0 THEN
+     -- Mark all disk copies as staged and delete all migrated segments together.
+     UPDATE DiskCopy
+        SET status= dconst.DISKCOPY_STAGED
+      WHERE castorFile = varCfId
+        AND status= dconst.DISKCOPY_CANBEMIGR;
+     DELETE FROM MigratedSegment
+      WHERE castorfile = varCfId;
+  END IF;
+  -- archive Repack requests should any be in the db
+  FOR i IN (
+    SELECT /*+ INDEX(SR I_Subrequest_Castorfile)*/ SR.id FROM SubRequest SR
+    WHERE SR.castorfile = varCfId AND
+          SR.status = dconst.SUBREQUEST_REPACK
+    ) LOOP
+    archiveSubReq(i.id, 8); -- SUBREQUEST_FINISHED
+  END LOOP;
+  COMMIT;
+END;
+/
 
 /* update the db after a successful recall */
 CREATE OR REPLACE
@@ -9247,7 +9290,7 @@ BEGIN
           WHERE SubRequest.castorfile = varCfId
           AND subrequest.status = dconst.SUBREQUEST_REPACK;
         FOR i IN varSrIds.FIRST .. varSrIds.LAST LOOP
-          archivesubreq(varSrIds(i), 9);
+          archivesubreq(varSrIds(i), dconst.SUBREQUEST_FAILED_FINISHED);
         END LOOP;
         -- set back the diskcopies to STAGED otherwise repack will wait forever
         UPDATE DiskCopy

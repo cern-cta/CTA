@@ -206,6 +206,12 @@ namespace tapegateway{
         const std::string & tapePool, const std::string & blockid,
         const std::string & vid, int copyNumber, u_signed64 lastModificationTime,
         const char (&checksumHex)[19],const std::string & repackVid, signed64 procTime);
+    void logSuperfluousSegment (Cuuid_t uuid, struct Cns_fileid* castorFileId,
+        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
+        const std::string & serviceClass, const std::string & fileClass,
+        const std::string & tapePool, const std::string & blockid,
+        const std::string & vid, int copyNumber, u_signed64 lastModificationTime,
+        const char (&checksumHex)[19],const std::string & repackVid, signed64 procTime);
     void logMigrationNsFailure (Cuuid_t uuid, struct Cns_fileid* castorFileId,
         const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
         const std::string & serviceClass, const std::string & fileClass,

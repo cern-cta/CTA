@@ -36,6 +36,7 @@
 #include "rfio_api.h"
 
 #include "castor/exception/OutOfMemory.hpp"
+#include "castor/exception/Internal.hpp"
 
 #include "castor/tape/tapegateway/PositionCommandCode.hpp"
 
@@ -45,12 +46,9 @@
 void castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile
 (tape::tapegateway::FileMigratedNotification& file, int copyNumber, std::string vid,
  u_signed64 lastModificationTime) throw (castor::exception::Exception){ 
-
   // fill in the castor file id structure
   int nbSegs=0;
   struct Cns_segattrs *nsSegAttrs = NULL;
-
-
   struct Cns_fileid castorFileId;
   memset(&castorFileId,'\0',sizeof(castorFileId));
   strncpy(
@@ -60,9 +58,7 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile
           );
   castorFileId.fileid = file.fileid();
 
-
   // let's get the number of copies allowed
-
   char castorFileName[CA_MAXPATHLEN+1];
   struct Cns_filestat statbuf;
   memset(&statbuf,'\0',sizeof(statbuf));
@@ -77,70 +73,39 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile
       << "impossible to stat the file";
     throw ex;
   }
-
-  struct Cns_fileclass fileClass;
-  memset(&fileClass,'\0',sizeof(fileClass));
-  
+  // get segments for this fileid
   serrno=0;
-  rc = Cns_queryclass( castorFileId.server,
-		       statbuf.fileclass,
-		       NULL,
-		       &fileClass
-		       );
-      
+  rc = Cns_getsegattrs(NULL,&castorFileId,&nbSegs,&nsSegAttrs);
   if ( rc == -1 ) {
+    free(nsSegAttrs);
     castor::exception::Exception ex(serrno);
     ex.getMessage()
-      << "castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile:"
-      << "impossible to get file class";
+	    << "castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile:"
+	    << "impossible to get the file";
     throw ex;
   }
-      
-  if ( fileClass.nbcopies != 1 ){
-    // get segments for this fileid
-    
-    serrno=0;
-    int rc = Cns_getsegattrs(NULL,&castorFileId,&nbSegs,&nsSegAttrs);
-    if ( rc == -1 ) {
-      if (nsSegAttrs != NULL ) free(nsSegAttrs);
-      nsSegAttrs=NULL;
-      castor::exception::Exception ex(serrno);
-      ex.getMessage()
-	<< "castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile:"
-	<< "impossible to get the file";
-      throw ex;
-    }
-
-    // check done just if there is the chance of multiple copies
-    
-    for ( int i=0; i< nbSegs ;i++) {
+  // check we are not migrating a new copy to the same tape as another one
+  // (overwriting the same copy number of course is not an issue)
+  for ( int i=0; i< nbSegs ;i++) {
+    if ( nsSegAttrs[i].copyno != copyNumber) {
       if ( strcmp(nsSegAttrs[i].vid , vid.c_str()) == 0 ) { 
-	if (nsSegAttrs != NULL ) free(nsSegAttrs);
-	nsSegAttrs=NULL;
-	castor::exception::Exception ex(EEXIST);
-	ex.getMessage()
-	  << "castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile:"
-	  << "this file have already a copy on that tape";
-	throw ex;
+        free(nsSegAttrs);
+        castor::exception::Exception ex(EEXIST);
+        ex.getMessage()
+	          << "castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile:"
+	          << "this file have already a copy on that tape";
+        throw ex;
       }
     }
-    
-    if (nsSegAttrs != NULL ) free(nsSegAttrs);
-    nsSegAttrs=NULL;
-
   }
-  
-
-
+  free(nsSegAttrs);
   // fill in the information of the tape file to update the nameserver
-
   nbSegs = 1; // NEVER more than one segment
-
   nsSegAttrs = (struct Cns_segattrs *)calloc(
                                              nbSegs,
                                              sizeof(struct Cns_segattrs)
                                              );
-  if ( nsSegAttrs == NULL ) {
+  if ( !nsSegAttrs ) {
     castor::exception::Exception ex(-1);
     ex.getMessage()
       << "castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile:"
@@ -148,8 +113,6 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile
     throw ex;
 
   } 
-  
-
   nsSegAttrs->copyno = copyNumber; 
   nsSegAttrs->fsec = 1; // always one
   u_signed64 nsSize=file.fileSize();
@@ -159,16 +122,12 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile
   strncpy(nsSegAttrs->vid, vid.c_str(),CA_MAXVIDLEN);
   nsSegAttrs->side = 0; //HARDCODED
   nsSegAttrs->s_status = '-';
-  
   //  convert the blockid
-  
   nsSegAttrs->blockid[3]=file.blockId3(); 
   nsSegAttrs->blockid[2]=file.blockId2();
   nsSegAttrs->blockid[1]=file.blockId1();
   nsSegAttrs->blockid[0]=file.blockId0();
-
   nsSegAttrs->fseq = file.fseq();
-
   strncpy(
 	  nsSegAttrs->checksum_name,
 	  file.checksumName().c_str(),
@@ -176,8 +135,6 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile
 	  );
   nsSegAttrs->checksum = file.checksum();
   int save_serrno=0;
-
-  // removed the logic of "retry 5 times to update"
   serrno=0;
   rc = Cns_setsegattrs(
 		       (char *)NULL, // CASTOR file name 
@@ -186,43 +143,66 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile
 		       nsSegAttrs,
 		       lastModificationTime
 		       );
-      
+  free(nsSegAttrs); nsSegAttrs=NULL;
   if (rc ==0 ) { 
     //update fine
-    if ( nsSegAttrs != NULL ) free(nsSegAttrs);
     return;
   }
-
   save_serrno = serrno; 
-  if ( save_serrno == ENOENT ) {
+  switch ( save_serrno ) {
+    case ENOENT:
     // check if the file is still there
-    char *castorFileName = '\0';
-    struct Cns_filestat statbuf;
-    rc = Cns_statx(castorFileName,&castorFileId,&statbuf);
-    if (rc==0) {
-      //the file is there the update failed
-      if ( nsSegAttrs != NULL ) free(nsSegAttrs);
-      castor::exception::Exception ex(EINVAL);
-      ex.getMessage()
-	<< "castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile:"
-	<< "false enoent received the update failed";
-      throw ex;
-    } else {
-      // the file is not there the update is considered successfull 
-      if ( nsSegAttrs != NULL ) free(nsSegAttrs);
-      return;
-    }    
-  }
-  // all the other possible serrno cause the failure
-  if ( nsSegAttrs != NULL ) free(nsSegAttrs);
-  castor::exception::Exception ex(save_serrno);
-  ex.getMessage()
-    << "castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile:"
-    << "Cns_setsegattrs failed";
-  throw ex;
-  
-}
+    {
+      char *castorFileName = '\0';
+      struct Cns_filestat statbuf;
+      rc = Cns_statx(castorFileName,&castorFileId,&statbuf);
+      if (rc==0) {
+        //the file is there the update failed
+        castor::exception::Exception ex(EINVAL);
+        ex.getMessage()
+	    << "castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile:"
+	    << "false enoent received the update failed";
+        throw ex;
+      } else {
+        // the file is not there the update is considered successfull
+        return;
+      }
+    }
+    break;
 
+    case ENSCLASSNOSEGS:
+    case ENSTOOMANYSEGS:
+      /* We ignore ENSCLASSNOSEGS. This means that the segment created belongs
+       * to a file that should not be on tape. Thus migration can be considered
+       * as completed.
+       * We ignore ENSTOOMANYSEGS. This means that the segment created belongs
+       * to a file that already has enough copy on tape. So this segment is one too
+       * much. Thus migration can be considered as completed. */
+    {
+      SuperfluousSegmentException ex(save_serrno);
+      ex.getMessage()
+        << "castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile:"
+        << "name server determined this segment was not necessary.";
+      throw ex;
+    }
+      break;
+
+    default:
+     // all the other possible serrno cause the failure
+    {
+      castor::exception::Exception ex(save_serrno);
+      ex.getMessage()
+        << "castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile:"
+        << "Cns_setsegattrs failed";
+      throw ex;
+    }
+  }
+  // We should never get here (all case should be covered above).
+  castor::exception::Internal ex;
+  ex.getMessage()<< "Internal error: Uncovered case in castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile:"
+      "save_errno=" << save_serrno;
+  throw ex;
+}
 
 void castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile(
     tape::tapegateway::FileMigratedNotification& file,
@@ -277,7 +257,7 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile(
     throw ex;
   }
 
-  // get the file class
+  // get the file information
   char castorFileName[CA_MAXPATHLEN+1]; *castorFileName = '\0';
   struct Cns_filestatcs nsFileAttrs;
   memset(&nsFileAttrs,'\0',sizeof(nsFileAttrs));
@@ -288,22 +268,6 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile(
     ex.getMessage()
       << "castor::tape::tapegateway::NsTapeGatewayHelper::checkRepackedFile:"
       << "impossible to stat the file: rc=-1, serrno=" << serrno;
-    throw ex;
-  }
-
-  struct Cns_fileclass nsFileClass;
-  memset(&nsFileClass,'\0',sizeof(nsFileClass));
-  serrno=0;
-  rc = Cns_queryclass( castorFileId.server,
-      nsFileAttrs.fileclass,
-      NULL,
-      &nsFileClass
-  );
-  if ( rc == -1 ) {
-    castor::exception::Exception ex(serrno);
-    ex.getMessage()
-      << "castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile:"
-      << "impossible to get file class";
     throw ex;
   }
       
@@ -374,13 +338,37 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile(
   if (oldSegattrs) free(oldSegattrs);
   oldSegattrs = NULL;
   if (rc<0) {
-    castor::exception::Exception ex(serrno);
-    ex.getMessage()
-      << "castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile:"
-      << " impossible to replace tapecopy originalcopynb=" << originalCopyNumber
-      << " originalvid=" <<  originalVid << " newcopynb=" <<  copyNumber
-      << " newvid=" << vid << " rc=" << rc;
-    throw ex; 
+    int save_serrno = serrno;
+    switch (save_serrno) {
+      case ENSCLASSNOSEGS:
+      case ENSTOOMANYSEGS:
+        /* We ignore ENSCLASSNOSEGS. This means that the segment created belongs
+         * to a file that should not be on tape. Thus migration can be considered
+         * as completed.
+         * We ignore ENSTOOMANYSEGS. This means that the segment created belongs
+         * to a file that already has enough copy on tape. So this segment is one too
+         * much. Thus migration can be considered as completed. */
+      {
+        SuperfluousSegmentException ex (save_serrno);
+        ex.getMessage()
+              << "castor::tape::tapegateway::NsTapeGatewayHelper::updateMigratedFile:"
+              << "name server determined this segment was not necessary.";
+        throw ex;
+      }
+        break;
+
+      default:
+      {
+        castor::exception::Exception ex(serrno);
+        ex.getMessage()
+              << "castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile:"
+              << " impossible to replace tapecopy originalcopynb=" << originalCopyNumber
+              << " originalvid=" <<  originalVid << " newcopynb=" <<  copyNumber
+              << " newvid=" << vid << " rc=" << rc;
+        throw ex;
+      }
+        break;
+    }
   }
 }
 

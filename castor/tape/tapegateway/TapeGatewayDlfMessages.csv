@@ -123,3 +123,4 @@
 123,WORKER_MIG_CANNOT_FIND_VID,"Worker: cannot find VID for migration mount"
 124,WORKER_MIG_TAPE_RDONLY,"Worker: tape set to readonly after failed fSeq update"
 125,WORKER_MIG_CANNOT_RDONLY,"Worker: failed to set tape to readonly after failed fSeq update"
+126,WORKER_SUPERFLUOUS_SEGMENT,"Worker: Name server declared segment was extra/unnecessary: considering migration done"
