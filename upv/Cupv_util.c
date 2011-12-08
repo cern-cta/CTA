@@ -2,12 +2,12 @@
  * $Id: Cupv_util.c,v 1.7 2009/03/20 10:38:15 waldron Exp $
  */
 
+#define _GNU_SOURCE
+#include <string.h>
 #include <sys/types.h>
 #include <stdlib.h>
 #include <limits.h>                     /* For INT_MIN and INT_MAX */
 #include <stdio.h>
-#define _GNU_SOURCE
-#include <string.h>
 #include <errno.h>
 #include <time.h>
 #include <ctype.h>
