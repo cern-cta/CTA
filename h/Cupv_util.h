@@ -17,15 +17,6 @@
 #include "Cupv_constants.h" 
 #include "Cupv_struct.h"
 
-#define INC_PTR(ptr,n)		(ptr) = (char*)(ptr) + (n)
-
-#define  WRITE_STR(ptr,str, first)     { if (!first) { \
-                                     (void) strcpy((char*)(ptr),(char*)(STR_SEP)); INC_PTR(ptr,strlen(STR_SEP)); } \
-                                        (void) strcpy((char*)(ptr),(char*)(str)); \
-					  INC_PTR(ptr,strlen(str)); \
-                                          first = 0; }
-					
-
 /* Funtions fron Cupv_util.c */
 int send2Cupv(int *socketp,char *reqp,int reql,char *user_repbuf,int user_repbuf_len);
 int Cupv_errmsg(char *func, char *msg, ...);
