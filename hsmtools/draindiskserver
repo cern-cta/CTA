@@ -123,7 +123,7 @@ def main(argv):
 
     # Parse command line arguments
     try:
-        options, args = getopt.getopt(argv, 'adqn:m:S:tcfr',
+        options, args = getopt.getopt(argv, 'adqn:m:S:t:cfr',
                                       ['add', 'delete', 'query', 'help',
                                        'nodename=', 'mountpoint=', 'svcclass=',
                                        'file-mask=', 'auto-delete', 'transfers=',
