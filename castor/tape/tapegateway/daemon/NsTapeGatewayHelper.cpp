@@ -627,7 +627,7 @@ void  castor::tape::tapegateway::NsTapeGatewayHelper::checkFileSize(castor::tape
     castor::exception::Exception ex(ERTWRONGSIZE);
     ex.getMessage()
       << "castor::tape::tapegateway::NsTapeGatewayHelper::checkFileSize:"
-      << " file size mismatch: ns filesize is "<< statBuf.filesizee <<" while rfstat reports a discopy size of "<< st.st_siz;
+      << " file size mismatch: ns filesize is "<< statBuf.filesize <<" while rfstat reports a discopy size of "<< st.st_size;
     throw ex;  
 
   }
