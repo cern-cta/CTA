@@ -370,12 +370,12 @@ class LocalQueue(Queue.Queue):
     finally:
       self.lock.release()
 
-  def listQueueingTransfers(self):
+  def listQueueingTransfers(self, scheduler):
     '''lists pending transfers'''
     self.lock.acquire()
     try:
       # return transferid, transfer, transfertype, arrivaltime
-      return [(transferid, transfertuple[1], transfertuple[2], transfertuple[3]) for transferid, transfertuple in self.queueingTransfers.iteritems()]
+      return [(transferid, transfertuple[1], transfertuple[2], transfertuple[3]) for transferid, transfertuple in self.queueingTransfers.iteritems() if transfertuple[0] == scheduler]
     finally:
       self.lock.release()
 

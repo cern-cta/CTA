@@ -126,12 +126,12 @@ class DiskServerManagerService(rpyc.Service):
   def exposed_getQueueingTransfers(self, scheduler):
     '''returns the list of transfers in the queue'''
     dlf.writedebug(msgs.INVOKINGGETQUEUEINGTRANSFERS, Scheduler=scheduler)
-    return tuple(transferQueue.listQueueingTransfers())
+    return tuple(transferQueue.listQueueingTransfers(scheduler))
 
   def exposed_getRunningD2dSource(self, scheduler):
     '''returns the list of running d2dsrc transfers'''
     dlf.writedebug(msgs.INVOKINGGETRUNNINGD2DSOURCE, Scheduler=scheduler)
-    return tuple(runningTransfers.listRunningD2dSources())
+    return tuple(runningTransfers.listRunningD2dSources(scheduler))
 
   def exposed_retryD2dDest(self, transferid, reqid):
     '''called when a d2d copy source has just started and the destination should be started'''

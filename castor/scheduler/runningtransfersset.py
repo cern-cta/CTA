@@ -451,12 +451,12 @@ class RunningTransfersSet(object):
     finally:
       self.lock.release()
 
-  def listRunningD2dSources(self):
+  def listRunningD2dSources(self, scheduler):
     '''lists running d2dsrc transfers'''
     self.lock.acquire()
     try:
       # retrieve transferid, transfer and arrivalTime for transfertype 'd2dsrc'
-      return [(transfertuple[0], transfertuple[2], transfertuple[6]) for transfertuple in self.transfers if transfertuple[5] == 'd2dsrc']
+      return [(transfertuple[0], transfertuple[2], transfertuple[6]) for transfertuple in self.transfers if transfertuple[5] == 'd2dsrc' and transfertuple[1] == scheduler]
     finally:
       self.lock.release()
 
