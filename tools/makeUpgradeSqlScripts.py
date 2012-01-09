@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #******************************************************************************
-#                      publishRelease.py
+#                      makeUpgradeSqlScripts.py
 #
 # Copyright (C) 2003  CERN
 # This program is free software; you can redistribute it and/or
@@ -213,16 +213,16 @@ def writePLSQLRevalidation(fd):
 BEGIN
   FOR a IN (SELECT object_name, object_type
               FROM user_objects
-             WHERE object_type IN ('PROCEDURE', 'TRIGGER', 'FUNCTION')
+             WHERE object_type IN ('PROCEDURE', 'TRIGGER', 'FUNCTION', 'VIEW', 'PACKAGE BODY')
                AND status = 'INVALID')
   LOOP
-    IF a.object_type = 'PROCEDURE' THEN
-      EXECUTE IMMEDIATE 'ALTER PROCEDURE '||a.object_name||' COMPILE';
-    ELSIF a.object_type = 'TRIGGER' THEN
-      EXECUTE IMMEDIATE 'ALTER TRIGGER '||a.object_name||' COMPILE';
-    ELSE
-      EXECUTE IMMEDIATE 'ALTER FUNCTION '||a.object_name||' COMPILE';
-    END IF;
+    IF a.object_type = 'PACKAGE BODY' THEN a.object_type := 'PACKAGE'; END IF;
+    BEGIN
+      EXECUTE IMMEDIATE 'ALTER ' ||a.object_type||' '||a.object_name||' COMPILE';
+    EXCEPTION WHEN OTHERS THEN
+      -- ignore, so that we continue compiling the other invalid items
+      NULL;
+    END;
   END LOOP;
 END;
 /\n\n''')
