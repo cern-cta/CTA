@@ -533,8 +533,8 @@ PROCEDURE tg_defaultMigrSelPolicy(inMountId IN INTEGER,
     SELECT /*+ FIRST_ROWS_1 
                LEADING(MigrationMount MigrationJob CastorFile DiskCopy FileSystem DiskServer)
                INDEX(CastorFile PK_CastorFile_Id)
-               INDEX(DiskCopy I_DiskCopy_CastorFile)
-               INDEX(MigrationJob I_MigrationJob_TapePoolStatus) */
+               INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile)
+               INDEX_RS_ASC(MigrationJob I_MigrationJob_TapePoolStatus) */
            DiskServer.name, FileSystem.mountPoint, DiskCopy.path, DiskCopy.id, CastorFile.lastKnownFilename,
            CastorFile.fileId, CastorFile.nsHost, CastorFile.fileSize, MigrationJob.id, CastorFile.lastUpdateTime
       FROM MigrationMount, MigrationJob, DiskCopy, FileSystem, DiskServer, CastorFile
