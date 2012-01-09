@@ -702,7 +702,6 @@ Resources can be allocated to one or many projects are are composed of a set of 
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="1673" initialValue="7" type="133771" name="SUBREQUEST_FAILED" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="87451" initialValue="8" type="133771" name="SUBREQUEST_FINISHED" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="92399" initialValue="9" type="133771" name="SUBREQUEST_FAILED_FINISHED" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="98980" initialValue="10" type="133771" name="SUBREQUEST_FAILED_ANSWERING" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="159064" initialValue="11" type="133771" name="SUBREQUEST_ARCHIVED" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="171301" initialValue="12" type="133771" name="SUBREQUEST_REPACK" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="e5EcIShJnwCc" initialValue="13" type="133771" name="SUBREQUEST_READYFORSCHED" />

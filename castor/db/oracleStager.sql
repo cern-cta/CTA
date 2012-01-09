@@ -1276,13 +1276,12 @@ BEGIN
         -- already answered, ignore it
         archiveSubReq(varSRId, dconst.SUBREQUEST_FAILED_FINISHED);
       ELSE
-        -- we got our subrequest, select all relevant data
-        UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ subrequest
-           SET status = dconst.SUBREQUEST_FAILED_ANSWERING
-         WHERE id = varSRId
-        RETURNING fileName, subReqId, errorCode, errorMessage,
+        -- we got our subrequest, select all relevant data and hold the lock
+        SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ fileName, subReqId, errorCode, errorMessage,
           (SELECT object FROM Type2Obj WHERE type = reqType), request, castorFile
-        INTO srFileName, srSubReqId, srErrorCode, srErrorMessage, varRName, varRId, varCFId;
+          INTO srFileName, srSubReqId, srErrorCode, srErrorMessage, varRName, varRId, varCFId
+          FROM SubRequest
+         WHERE id = varSRId;
         srId := varSRId;
         srFileId := 0;
         BEGIN
@@ -1340,6 +1339,7 @@ BEGIN
           -- As we couldn't get the client, we just archive and move on.
           srId := 0;
           archiveSubReq(varSRId, dconst.SUBREQUEST_FAILED_FINISHED);
+          COMMIT;
         END;
       END IF;
     EXCEPTION

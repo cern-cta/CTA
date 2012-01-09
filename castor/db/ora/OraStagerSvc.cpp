@@ -579,7 +579,6 @@ castor::db::ora::OraStagerSvc::subRequestFailedToDo()
         (9, oracle::occi::OCCIINT);
       m_subRequestFailedToDoStatement->registerOutParam
         (10, oracle::occi::OCCIDOUBLE);
-      m_subRequestFailedToDoStatement->setAutoCommit(true);
     }
     // execute the statement and see whether we found something
     unsigned int rc =
@@ -601,7 +600,7 @@ castor::db::ora::OraStagerSvc::subRequestFailedToDo()
       new castor::stager::SubRequest();
     result->setId((u_signed64)m_subRequestFailedToDoStatement->getDouble(1));
     result->setFileName(m_subRequestFailedToDoStatement->getString(2));
-    result->setStatus(castor::stager::SUBREQUEST_FAILED_ANSWERING);
+    result->setStatus(castor::stager::SUBREQUEST_FAILED_FINISHED);
     result->setSubreqId(m_subRequestFailedToDoStatement->getString(3));
     result->setErrorCode(m_subRequestFailedToDoStatement->getInt(4));
     result->setErrorMessage(m_subRequestFailedToDoStatement->getString(5));
