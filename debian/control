@@ -58,7 +58,7 @@ BuildRequires: libuuid-devel
 %else
 BuildRequires: e2fsprogs-devel
 %endif
-XBS-Obsoletes: castor-sysconfig, castor-rtcopy-client, castor-lib-compat, castor-dlf-server, castor-doc, castor-commands, CASTOR-client, castor-stager-clientold, castor-rtcopy-messages, castor-tape-client
+XBS-Obsoletes: castor-sysconfig, castor-rtcopy-client, castor-lib-compat, castor-dlf-server, castor-doc, castor-commands, CASTOR-client, castor-stager-clientold, castor-rtcopy-messages, castor-tape-client, castor-mighunter-server
 XBS-Group: Client
 Description: castor (Cern Advanced STORage system)
  Static and shared libraries for end-users
@@ -273,12 +273,6 @@ Depends: castor-lib, castor-gridftp-dsi-common, xrootd-server, vdt_globus_data_s
 Build-Depends: vdt_packaging_fixes, gpt, globus-config, vdt_compile_globus_core, vdt_globus_essentials, vdt_globus_data_server, xrootd-server, xrootd-devel
 Description: castor (Cern Advanced STORage system)
  External CASTOR2 gridftp2 DSI module with xroot support
-
-Package: castor-mighunter-server
-Architecture: any
-Depends: logrotate, castor-lib-tape
-Description: castor (Cern Advanced STORage system)
- Migration Hunter Daemon
 
 Package: castor-rechandler-server
 Architecture: any
