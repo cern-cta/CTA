@@ -37,6 +37,9 @@ TAPEBRIDGEBIN_SRCS = \
   BridgeProtocolEngine.cpp \
   BridgeSocketCatalogue.cpp \
   ClientTxRx.cpp \
+  ConfigParams.cpp \
+  FileToMigrate.cpp \
+  FileToRecall.cpp \
   TapeFlushConfigParams.cpp \
   DlfMessageStrings.cpp \
   LegacyTxRx.cpp \

@@ -47,10 +47,10 @@ castor::tape::tapebridge::TapeFlushConfigParams::TapeFlushConfigParams():
 
 
 //------------------------------------------------------------------------------
-// determineTapeFlushConfigParams
+// determineConfigParams
 //------------------------------------------------------------------------------
-void castor::tape::tapebridge::TapeFlushConfigParams::
-  determineTapeFlushConfigParams() throw(castor::exception::Exception) {
+void castor::tape::tapebridge::TapeFlushConfigParams::determineConfigParams()
+  throw(castor::exception::Exception) {
 
   determineTapeFlushMode();
 
@@ -111,38 +111,8 @@ void castor::tape::tapebridge::TapeFlushConfigParams::determineTapeFlushMode()
 //------------------------------------------------------------------------------
 void castor::tape::tapebridge::TapeFlushConfigParams::
   determineMaxBytesBeforeFlush() throw(castor::exception::Exception) {
-  const std::string envVarName = m_maxBytesBeforeFlush.category + "_" +
-    m_maxBytesBeforeFlush.name;
-  const char *paramCStr  = NULL;
-
-  // Try to get the value from the environment variables, else try to get it
-  // from castor.conf
-  if(NULL != (paramCStr = getenv(envVarName.c_str()))) {
-    m_maxBytesBeforeFlush.source = "environment variable";
-  } else if(NULL != (paramCStr = getconfent(
-    m_maxBytesBeforeFlush.category.c_str(), m_maxBytesBeforeFlush.name.c_str(),
-    0))) {
-    m_maxBytesBeforeFlush.source = "castor.conf";
-  }
-
-  // If we got the value, then try to convert it to a uint32_t, else use the
-  // compile-time default
-  if(NULL != paramCStr) {
-    if(!utils::isValidUInt(paramCStr)) {
-      castor::exception::InvalidArgument ex;
-      ex.getMessage() <<
-        "Configuration parameter is not a valid unsigned integer"
-        ": category=" << m_maxBytesBeforeFlush.category <<
-        " name=" << m_maxBytesBeforeFlush.name <<
-        " value=" << paramCStr <<
-        " source=" << m_maxBytesBeforeFlush.source;
-      throw(ex);
-    }
-    m_maxBytesBeforeFlush.value = strtou64(paramCStr);
-  } else {
-    m_maxBytesBeforeFlush.source = "compile-time default";
-    m_maxBytesBeforeFlush.value  = TAPEBRIDGE_MAXBYTESBEFOREFLUSH;
-  }
+  determineUint64ConfigParam(m_maxBytesBeforeFlush,
+    TAPEBRIDGE_MAXBYTESBEFOREFLUSH);
 }
 
 
@@ -151,47 +121,19 @@ void castor::tape::tapebridge::TapeFlushConfigParams::
 //------------------------------------------------------------------------------
 void castor::tape::tapebridge::TapeFlushConfigParams::
   determineMaxFilesBeforeFlush() throw(castor::exception::Exception) {
-  const std::string envVarName = m_maxFilesBeforeFlush.category + "_" +
-    m_maxFilesBeforeFlush.name;
-  const char *paramCStr = NULL;
-
-  // Try to get the value from the environment variables, else try to get it
-  // from castor.conf
-  if(NULL != (paramCStr = getenv(envVarName.c_str()))) {
-    m_maxFilesBeforeFlush.source = "environment variable";
-  } else if(NULL != (paramCStr = getconfent(
-    m_maxFilesBeforeFlush.category.c_str(), m_maxFilesBeforeFlush.name.c_str(),
-      0))) {
-    m_maxFilesBeforeFlush.source = "castor.conf";
-  }
-
-  // If we got the value, then try to convert it to a uint32_t, else use the
-  // compile-time default
-  if(NULL != paramCStr) {
-    if(!utils::isValidUInt(paramCStr)) {
-      castor::exception::InvalidArgument ex;
-      ex.getMessage() <<
-        "Configuration parameter is not a valid unsigned integer"
-        ": category=" << m_maxFilesBeforeFlush.category <<
-        " name=" << m_maxFilesBeforeFlush.name <<
-        " value=" << paramCStr <<
-        " source=" << m_maxFilesBeforeFlush.source;
-      throw(ex);
-    }
-    m_maxFilesBeforeFlush.value = strtou64(paramCStr);
-  } else {
-    m_maxFilesBeforeFlush.source = "compile-time default";
-    m_maxFilesBeforeFlush.value  = TAPEBRIDGE_MAXFILESBEFOREFLUSH;
-  }
+  determineUint64ConfigParam(m_maxFilesBeforeFlush,
+    TAPEBRIDGE_MAXFILESBEFOREFLUSH);
 }
 
+
 //-----------------------------------------------------------------------------
-//
+// getTapeFlushMode
 //-----------------------------------------------------------------------------
 const castor::tape::tapebridge::ConfigParamAndSource<uint32_t>
   &castor::tape::tapebridge::TapeFlushConfigParams::getTapeFlushMode() const {
   return m_tapeFlushMode;
 }
+
 
 //-----------------------------------------------------------------------------
 //
@@ -201,6 +143,7 @@ const castor::tape::tapebridge::ConfigParamAndSource<uint64_t>
   getMaxBytesBeforeFlush() const {
   return m_maxBytesBeforeFlush;
 }
+
 
 //-----------------------------------------------------------------------------
 //

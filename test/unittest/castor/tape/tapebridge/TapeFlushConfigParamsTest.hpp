@@ -36,7 +36,19 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+namespace castor     {
+namespace tape       {
+namespace tapebridge {
+
 class TapeFlushConfigParamsTest: public CppUnit::TestFixture {
+private:
+  class TestingTapeFlushConfigParams: public TapeFlushConfigParams {
+  public:
+    using TapeFlushConfigParams::determineTapeFlushMode;
+    using TapeFlushConfigParams::determineMaxBytesBeforeFlush;
+    using TapeFlushConfigParams::determineMaxFilesBeforeFlush;
+  }; // TapeFlushConfigParamsTest
+
 public:
 
   TapeFlushConfigParamsTest() {
@@ -55,7 +67,7 @@ public:
   }
 
   void testDetermineTapeFlushModeInvalidEnv() {
-    castor::tape::tapebridge::TapeFlushConfigParams params;
+    TestingTapeFlushConfigParams params;
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "setenv TAPEBRIDGE_TAPEFLUSHMODE",
@@ -85,7 +97,7 @@ public:
   }
 
   void testDetermineTapeFlushModeEnvN_FLUSHES_PER_FILE() {
-    castor::tape::tapebridge::TapeFlushConfigParams params;
+    TestingTapeFlushConfigParams params;
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "setenv TAPEBRIDGE_TAPEFLUSHMODE",
@@ -114,7 +126,7 @@ public:
   }
 
   void testDetermineTapeFlushModeEnvONE_FLUSH_PER_N_FILES() {
-    castor::tape::tapebridge::TapeFlushConfigParams params;
+    TestingTapeFlushConfigParams params;
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "setenv TAPEBRIDGE_TAPEFLUSHMODE",
@@ -143,7 +155,7 @@ public:
   }
 
   void testDetermineTapeFlushModeInvalidPathConfig() {
-    castor::tape::tapebridge::TapeFlushConfigParams params;
+    TestingTapeFlushConfigParams params;
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv PATH_CONFIG",
       0,
@@ -171,7 +183,7 @@ public:
   }
 
   void testDetermineTapeFlushModeInvalidLocalCastorConf() {
-    castor::tape::tapebridge::TapeFlushConfigParams params;
+    TestingTapeFlushConfigParams params;
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv PATH_CONFIG",
       0,
@@ -199,7 +211,7 @@ public:
   }
 
   void testDetermineTapeFlushModeLocalCastorConfN_FLUSHES_PER_FILE() {
-    castor::tape::tapebridge::TapeFlushConfigParams params;
+    TestingTapeFlushConfigParams params;
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv PATH_CONFIG",
       0,
@@ -228,7 +240,7 @@ public:
   }
 
   void testDetermineTapeFlushModeLocalCastorConfONE_FLUSH_PER_N_FILES() {
-    castor::tape::tapebridge::TapeFlushConfigParams params;
+    TestingTapeFlushConfigParams params;
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv PATH_CONFIG",
       0,
@@ -257,7 +269,7 @@ public:
   }
 
   void testDetermineMaxBytesBeforeFlushInvalidEnv() {
-    castor::tape::tapebridge::TapeFlushConfigParams params;
+    TestingTapeFlushConfigParams params;
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv TAPEBRIDGE_MAXBYTESBEFOREFLUSH",
       0,
@@ -283,7 +295,7 @@ public:
   }
 
   void testDetermineMaxBytesBeforeFlushEnv() {
-    castor::tape::tapebridge::TapeFlushConfigParams params;
+    TestingTapeFlushConfigParams params;
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv TAPEBRIDGE_MAXBYTESBEFOREFLUSH",
       0,
@@ -311,7 +323,7 @@ public:
   }
 
   void testDetermineMaxBytesBeforeFlushInvalidPathConfig() {
-    castor::tape::tapebridge::TapeFlushConfigParams params;
+    TestingTapeFlushConfigParams params;
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv PATH_CONFIG",
       0,
@@ -338,7 +350,7 @@ public:
   }
 
   void testDetermineMaxBytesBeforeFlushInvalidLocalCastorConf() {
-    castor::tape::tapebridge::TapeFlushConfigParams params;
+    TestingTapeFlushConfigParams params;
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv PATH_CONFIG",
       0,
@@ -365,7 +377,7 @@ public:
   }
 
   void testDetermineMaxBytesBeforeFlushLocalCastorConf() {
-    castor::tape::tapebridge::TapeFlushConfigParams params;
+    TestingTapeFlushConfigParams params;
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv PATH_CONFIG",
       0,
@@ -393,7 +405,7 @@ public:
   }
 
   void testDetermineMaxFilesBeforeFlushInvalidEnv() {
-    castor::tape::tapebridge::TapeFlushConfigParams params;
+    TestingTapeFlushConfigParams params;
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv TAPEBRIDGE_MAXFILESBEFOREFLUSH",
       0,
@@ -419,7 +431,7 @@ public:
   }
 
   void testDetermineMaxFilesBeforeFlushEnv() {
-    castor::tape::tapebridge::TapeFlushConfigParams params;
+    TestingTapeFlushConfigParams params;
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv TAPEBRIDGE_MAXFILESBEFOREFLUSH",
       0,
@@ -447,7 +459,7 @@ public:
   }
 
   void testDetermineMaxFilesBeforeFlushInvalidPathConfig() {
-    castor::tape::tapebridge::TapeFlushConfigParams params;
+    TestingTapeFlushConfigParams params;
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv PATH_CONFIG",
       0,
@@ -474,7 +486,7 @@ public:
   }
 
   void testDetermineMaxFilesBeforeFlushInvalidLocalCastorConf() {
-    castor::tape::tapebridge::TapeFlushConfigParams params;
+    TestingTapeFlushConfigParams params;
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv PATH_CONFIG",
       0,
@@ -501,7 +513,7 @@ public:
   }
 
   void testDetermineMaxFilesBeforeFlushLocalCastorConf() {
-    castor::tape::tapebridge::TapeFlushConfigParams params;
+    TestingTapeFlushConfigParams params;
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv PATH_CONFIG",
       0,
@@ -529,15 +541,15 @@ public:
   }
 
   void testDetermineTapeFlushConfigParamsCastorConf() {
-    castor::tape::tapebridge::TapeFlushConfigParams params;
+    TapeFlushConfigParams params;
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv PATH_CONFIG",
       0,
       setenv("PATH_CONFIG", "determineTapeFlushConfigParams_castor.conf", 1));
 
     CPPUNIT_ASSERT_NO_THROW_MESSAGE(
-      "determineTapeFlushConfigParams",
-      params.determineTapeFlushConfigParams());
+      "determineConfigParams",
+      params.determineConfigParams());
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
       std::string("TAPEBRIDGE"),
@@ -616,5 +628,9 @@ public:
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION(TapeFlushConfigParamsTest);
+
+} // namespace tapebridge
+} // namespace tape
+} // namespace castor
 
 #endif // TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_TAPEFLUSHCONFIGPARAMSTEST_HPP

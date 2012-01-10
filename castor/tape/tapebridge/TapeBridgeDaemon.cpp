@@ -130,7 +130,7 @@ int castor::tape::tapebridge::TapeBridgeDaemon::exceptionThrowingMain(
   // the tape flush mode requires them.
   TapeFlushConfigParams tapeFlushConfigParams;
 
-  tapeFlushConfigParams.determineTapeFlushConfigParams();
+  tapeFlushConfigParams.determineConfigParams();
   {
     const char *const tapeFlushModeStr = tapebridge_tapeFlushModeToStr(
       tapeFlushConfigParams.getTapeFlushMode().value);

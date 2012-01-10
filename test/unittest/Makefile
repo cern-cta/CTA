@@ -204,8 +204,12 @@ rununittests: \
   tapebridge_BridgeClientInfo2Sender.o \
   tapebridge_BridgeProtocolEngine.o \
   tapebridge_BridgeSocketCatalogue.o \
+  tapebridge_BulkRequestConfigParams.o \
   tapebridge_ClientTxRx.o \
+  tapebridge_ConfigParams.o \
   tapebridge_DlfMessageStrings.o \
+  tapebridge_FileToMigrate.o \
+  tapebridge_FileToRecall.o \
   tapebridge_LegacyTxRx.o \
   tapebridge_LogHelper.o \
   tapebridge_marshall.o \
@@ -271,6 +275,9 @@ runUnitTestsMain.o: runUnitTestsMain.cpp
 runUnitTestsMain.cpp: \
   castor/tape/tapebridge/BridgeClientInfo2SenderTest.hpp \
   castor/tape/tapebridge/BridgeSocketCatalogueTest.hpp \
+  castor/tape/tapebridge/BulkRequestConfigParamsTest.hpp \
+  castor/tape/tapebridge/FileToMigrateTest.hpp \
+  castor/tape/tapebridge/FileToRecallTest.hpp \
   castor/tape/tapebridge/TapeFlushConfigParamsTest.hpp \
   castor/tape/tapebridge/PendingMigrationsStoreTest.hpp \
   castor/tape/tapebridge/SessionErrorTest.hpp \
@@ -940,12 +947,28 @@ tapebridge_BridgeSocketCatalogue.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/BridgeSocketCatalogue.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
+tapebridge_BulkRequestConfigParams.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/BulkRequestConfigParams.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
 tapebridge_ClientTxRx.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/ClientTxRx.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
+tapebridge_ConfigParams.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/ConfigParams.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
 tapebridge_DlfMessageStrings.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/DlfMessageStrings.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapebridge_FileToMigrate.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/FileToMigrate.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapebridge_FileToRecall.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/FileToRecall.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapebridge_LegacyTxRx.o: \

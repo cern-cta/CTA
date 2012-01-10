@@ -22,11 +22,12 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPEBRIDGE_PAEFLUSHCONFIGPARAMS_HPP
-#define CASTOR_TAPE_TAPEBRIDGE_PAEFLUSHCONFIGPARAMS_HPP 1
+#ifndef CASTOR_TAPE_TAPEBRIDGE_TAPEFLUSHCONFIGPARAMS_HPP
+#define CASTOR_TAPE_TAPEBRIDGE_TAPEFLUSHCONFIGPARAMS_HPP 1
 
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/tapebridge/ConfigParamAndSource.hpp"
+#include "castor/tape/tapebridge/ConfigParams.hpp"
 
 #include <stdint.h>
 
@@ -37,9 +38,10 @@ namespace tapebridge {
 
 /**
  * Class used to determine and store the configuration parameters used by the
- * tape-bridge to configure the mode of flush behaviour when writing to tape.
+ * tapebridged daemon to configure the mode of flush behaviour when writing to
+ * tape.
  */
-class TapeFlushConfigParams {
+class TapeFlushConfigParams: public ConfigParams {
 public:
 
   /**
@@ -56,50 +58,7 @@ public:
    * files before a tape flush, then the value of these configuration
    * parameters are given the value of 0 and their source set to "UNKNOWN".
    */
-  void determineTapeFlushConfigParams() throw(castor::exception::Exception);
-
-  /**
-   * Determines the mode of the flush behaviour to be used when writing data to
-   * tape.
-   *
-   * All users of this class accept for unit testers should not call this
-   * method, but instead call determineTapeFlushConfigParams().
-   *
-   * This method determines the required value by first reading the
-   * environment variables, then if unsuccessful by reading castor.conf and
-   * finally if still unsuccessfull by using the compile-time default.
-   */
-  void determineTapeFlushMode() throw(castor::exception::Exception);
-
-  /**
-   * With respect to using buffered tape-marks over multiple files, this
-   * method determines the maximum number of bytes to be written to tape before
-   * a flush to tape.  Please note that the flushes occur at file boaundaries
-   * so most of the time more data will be written to tape before the actual
-   * flush occurs.
-   *
-   * All users of this class accept for unit testers should not call this
-   * method, but instead call determineTapeFlushConfigParams().
-   *
-   * This method determines the required value by first reading the
-   * environment variables, then if unsuccessful by reading castor.conf and
-   * finally if still unsuccessfull by using the compile-time default.
-   */
-  void determineMaxBytesBeforeFlush() throw(castor::exception::Exception);
-
-  /**
-   * With respect to using buffered tape-marks over multiple files, this
-   * method determines the maximum number of files to be written to tape before
-   * a flush to tape.
-   *
-   * All users of this class accept for unit testers should not call this
-   * method, but instead call determineTapeFlushConfigParams().
-   *
-   * This method determines the required value by first reading the
-   * environment variables, then if unsuccessful by reading castor.conf and
-   * finally if still unsuccessfull by using the compile-time default.
-   */
-  void determineMaxFilesBeforeFlush() throw(castor::exception::Exception);
+  void determineConfigParams() throw(castor::exception::Exception);
 
   /**
    * Returns the tapeFlushMode configuration parameter.
@@ -115,6 +74,51 @@ public:
    * Returns the maxFilesBeforeFlush configuration parameter.
    */
   const ConfigParamAndSource<uint64_t> &getMaxFilesBeforeFlush() const;
+
+protected:
+
+  /**
+   * Determines the mode of the flush behaviour to be used when writing data to
+   * tape.
+   *
+   * All users of this class accept for unit testers should not call this
+   * method, but instead call determineConfigParams().
+   *
+   * This method determines the required value by first reading the
+   * environment variables, then if unsuccessful by reading castor.conf and
+   * finally if still unsuccessfull by using the compile-time default.
+   */
+  void determineTapeFlushMode() throw(castor::exception::Exception);
+
+  /**
+   * With respect to using buffered tape-marks over multiple files, this
+   * method determines the maximum number of bytes to be written to tape before
+   * a flush to tape.  Please note that the flushes occur at file boaundaries
+   * so most of the time more data will be written to tape before the actual
+   * flush occurs.
+   *
+   * All users of this class accept for unit testers should not call this
+   * method, but instead call determineConfigParams().
+   *
+   * This method determines the required value by first reading the
+   * environment variables, then if unsuccessful by reading castor.conf and
+   * finally if still unsuccessfull by using the compile-time default.
+   */
+  void determineMaxBytesBeforeFlush() throw(castor::exception::Exception);
+
+  /**
+   * With respect to using buffered tape-marks over multiple files, this
+   * method determines the maximum number of files to be written to tape before
+   * a flush to tape.
+   *
+   * All users of this class accept for unit testers should not call this
+   * method, but instead call determineConfigParams().
+   *
+   * This method determines the required value by first reading the
+   * environment variables, then if unsuccessful by reading castor.conf and
+   * finally if still unsuccessfull by using the compile-time default.
+   */
+  void determineMaxFilesBeforeFlush() throw(castor::exception::Exception);
 
 private:
 
@@ -143,4 +147,4 @@ private:
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPEBRIDGE_PAEFLUSHCONFIGPARAMS_HPP
+#endif // CASTOR_TAPE_TAPEBRIDGE_TAPEFLUSHCONFIGPARAMS_HPP
