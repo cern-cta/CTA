@@ -267,39 +267,39 @@ void castor::tape::tapebridge::PendingMigrationsStore::checkForMismatches(
   const FileWrittenNotification &notification)
   const throw(castor::exception::Exception) {
 
-  castor::exception::Exception ex(ECANCELED);
   bool foundMismatch = false;
+  std::ostringstream oss;
 
   if(request.fileTransactionId != notification.fileTransactionId) {
-    ex.getMessage() <<
+    oss <<
       ": fileTransactionId mismatch"
       " request.fileTransactionId="  << request.fileTransactionId <<
       " notification.fileTransactionId=" << notification.fileTransactionId;
     foundMismatch = true;
   }
   if(request.nsHost != notification.nsHost) {
-    ex.getMessage() <<
+    oss <<
       ": nshost mismatch"
       " request.nsHost=" << request.nsHost <<
       " notification.nsHost=" << notification.nsHost;
     foundMismatch = true;
   }
   if(request.nsFileId != notification.nsFileId) {
-    ex.getMessage() <<
+    oss <<
       ": fileid mismatch"
       " request.nsFileId="  << request.nsFileId <<
       " notification.nsFileId=" << notification.nsFileId;
     foundMismatch = true;
   }
   if(request.tapeFSeq != notification.tapeFSeq) {
-    ex.getMessage() <<
+    oss <<
       ": fseq mismatch"
       " request.tapeFSeq=" << request.tapeFSeq <<
       " notification.tapeFSeq=" << notification.tapeFSeq;
     foundMismatch = true;
   }
   if(request.positionCommandCode != notification.positionCommandCode) {
-    ex.getMessage() <<
+    oss <<
       ": positionCommandCode mismatch"
       " request.positionCommandCode=" << request.positionCommandCode <<
       " notification.positionCommandCode=" <<
@@ -307,7 +307,7 @@ void castor::tape::tapebridge::PendingMigrationsStore::checkForMismatches(
     foundMismatch = true;
   }
   if(request.fileSize != notification.fileSize) {
-    ex.getMessage() <<
+    oss <<
       ": fileSize mismatch"
       " request.fileSize=" << request.fileSize <<
       " notification.fileSize=" << notification.fileSize;
@@ -315,6 +315,12 @@ void castor::tape::tapebridge::PendingMigrationsStore::checkForMismatches(
   }
 
   if(foundMismatch) {
+    castor::exception::Exception ex(ECANCELED);
+    ex.getMessage() <<
+      "Mismatch(es) found"
+      ": request.nsFileId="  << request.nsFileId <<
+      " notification.nsFileId=" << notification.nsFileId <<
+      oss.str();
     throw ex;
   }
 }
