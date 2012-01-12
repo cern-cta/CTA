@@ -130,7 +130,7 @@ if maxNbErrors and not eflag:
 if eflag and not maxNbErrors:
     maxNbErrors = 10
 if not since:
-    since = 1.0
+    since = 3.0
 
 def _getIdentity():
     '''Retrieves identity of the user running this script'''
