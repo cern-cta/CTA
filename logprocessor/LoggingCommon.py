@@ -365,8 +365,8 @@ def createObject( moduleName, className ):
     if not moduleName in sys.modules.keys():
         try:
             module = __import__( moduleName )
-        except ImportError:
-            raise ConfigError( 'Unable to load module: ' + module )
+        except ImportError, e:
+            raise ConfigError( 'Unable to load module: ' + moduleName + ': ' + str(e) )
     else:
         module = sys.modules[moduleName]
 
