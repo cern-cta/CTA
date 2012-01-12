@@ -39,15 +39,21 @@ def usage(exitCode):
     print 'Usage :'
     print '  repack -h/--help'
     print '  repack -V <VID>[:<VID>[:...]] -o serviceclass'
+    print '  repack --bulkvolumeid <filename> -o serviceclass'
     print '  repack -R <VID>[:<VID>[:...]]'
+    print '  repack --bulkdelete <filename>'
     print '  repack -s [-a <nb days>]'
     print '  repack -S <VID>:<VID>[:...]] [-a <nb days>]'
     print '  repack -e <VID>[:<VID>[:...]] [-n <nbErrorsDisplayed>]'
     sys.exit(exitCode)
+
+def parseInputFile(fileName):
+    '''parse the content of a file that should be a list of VIDs'''
+    return [l.split('#',1)[0].strip() for l in open(fileName).readlines() if len(l.split('#',1)[0].strip()) > 0]
     
 # first parse the options
 try:
-    options, arguments = getopt.getopt(sys.argv[1:], 'V:o:sS:R:e:hn:Aa:', ['volumeid=', 'svcclass=', 'statusAll', 'status=', 'delete=', 'errors=', 'help', 'nbErrorsDisplayed=', 'since='])
+    options, arguments = getopt.getopt(sys.argv[1:], 'V:o:sS:R:e:hn:Aa:', ['volumeid=', 'bulkvolumeid=', 'svcclass=', 'statusAll', 'status=', 'delete=', 'bulkdelete=', 'errors=', 'help', 'nbErrorsDisplayed=', 'since='])
 except Exception, parsingException:
     print parsingException
     usage(1)
@@ -65,6 +71,9 @@ for f, v in options:
     elif f == '-V' or f == '--volumeid':
         vids.extend(v.split(':'))
         vflag = True
+    elif f == '--bulkvolumeid':
+        vids.extend(parseInputFile(v))
+        vflag = True
     elif f == '-s' or f == '--statusAll':
         sflag = True
     elif f == '-a' or f == '--since':
@@ -78,6 +87,9 @@ for f, v in options:
         sflag = True
     elif f == '-R' or f == '--delete':
         vids.extend(v.split(':'))
+        rflag = True
+    elif f == '--bulkdelete':
+        vids.extend(parseInputFile(v))
         rflag = True
     elif f == '-e' or f == '--errors':
         vids.extend(v.split(':'))

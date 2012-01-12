@@ -32,7 +32,13 @@ repack \- Move files from tape(s) to other tape destination
 .BI \-V\ <VID>[:<VID>[...]]\ \-o\ OutputServiceClass
 .br
 .B repack
+.BI \-\-bulkvolumeid\ <file>\ \-o\ OutputServiceClass
+.br
+.B repack
 .BI \-R\ <VID>[:<VID>[...]]
+.br
+.B repack
+.BI \-\-bulkdelete\ <file>
 .br
 .B repack
 .BI \-s\ [\-a\ <nb\ days>]
@@ -67,11 +73,25 @@ Note that the laucnching may be refused in case too many repacks are already bei
 The maximum number is defined in the Repack/MaxNbConcurrentClients entry of the CastorConfig table
 in the stager database. The default value is 5.
 .TP
+.BI \-\-bulkvolumeid
+launches the repacking of the tapes given in the provided file. The file must contain a list of VIDs,
+one per line. Spaces and anything appearing after the '#' sign on a given line are ignored.
+Note that the laucnching may be refused in case too many repacks are already being launched or aborted.
+The maximum number is defined in the Repack/MaxNbConcurrentClients entry of the CastorConfig table
+in the stager database. The default value is 5.
+.TP
 .BI \-o,\ \-\-svcclass
 the service class to be used for repacking the given tapes.
 .TP
 .BI \-R,\ \-\-delete
 cancels the repacking of the given tapes. The tapes are given by their VID and the list is colon separated.
+Note that the cancelation may be refused in case too many repacks are already being launched or aborted.
+The maximum number is defined in the Repack/MaxNbConcurrentClients entry of the CastorConfig table
+in the stager database. The default value is 5.
+.TP
+.BI \-\-bulkdelete
+cancels the repacking of the tapes given in the provided file. The file must contain alist of VIDs,
+one per line. Spaces and anything appearing after the '#' sign on a given line are ignored.
 Note that the cancelation may be refused in case too many repacks are already being launched or aborted.
 The maximum number is defined in the Repack/MaxNbConcurrentClients entry of the CastorConfig table
 in the stager database. The default value is 5.
