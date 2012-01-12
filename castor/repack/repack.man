@@ -108,7 +108,8 @@ the \-a option.
 .TP
 .BI \-a,\ \-\-after\ <nb\ days>
 in conjunction with \-s or \-S, changes the display of finished repacks to all those started within
-the given number of days. The number of days can be given as float, e.g. 1.5 for 36 hours.
+the given number of days. The number of days can be given as float, e.g. 1.5 for 36 hours. The default
+value is 3.
 .TP
 .BI \-e,\ \-\-errors
 displays the errors that occured during the repack of a given tape, file by file. By default, the number of
