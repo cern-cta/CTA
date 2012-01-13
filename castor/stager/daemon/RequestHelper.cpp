@@ -74,6 +74,7 @@ namespace castor {
           if(string2Cuuid(&subrequestUuid, (char *)subrequest->subreqId().c_str()) != 0) {
             subrequestUuid = nullCuuid;
           }
+          memset(&cnsFileid, 0, sizeof(cnsFileid));
         }
         catch(castor::exception::Exception& e){
           // should never happen: the db service is initialized in the main as well
@@ -211,7 +212,6 @@ namespace castor {
       
       /* Stats the file in the NameServer, throws exception in case of error, except ENOENT */
       void RequestHelper::statNameServerFile() throw(castor::exception::Exception) {
-        memset(&cnsFileid, 0, sizeof(cnsFileid));
         // Check the existence of the file. Don't throw exception if ENOENT
         Cns_setid(fileRequest->euid(), fileRequest->egid());
         serrno = 0;
