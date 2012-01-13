@@ -276,12 +276,34 @@ END;
 
 /* insert new Migration Mount */
 CREATE OR REPLACE PROCEDURE insertMigrationMount(inTapePoolId IN NUMBER) AS
-BEGIN 
+  varMountId NUMBER;
+  varDiskServer VARCHAR2(2048);
+  varMountPoint VARCHAR2(2048);
+  varPath VARCHAR2(2048);
+  varDiskCopyId NUMBER;
+  varLastKnownName VARCHAR2(2048);
+  varFileId NUMBER;
+  varNsHost VARCHAR2(2048);
+  varFileSize INTEGER;
+  varMigJobId INTEGER;
+  varLastUpdateTime NUMBER;
+BEGIN
+  -- try to create a mount
   INSERT INTO MigrationMount
               (vdqmVolReqId, tapeGatewayRequestId, id, startTime, VID, label, density,
                lastFseq, lastVDQMPingTime, tapePool, status)
-       VALUES (NULL, ids_seq.nextval, ids_seq.nextval, gettime(), NULL, NULL, NULL,
-               NULL, 0, inTapePoolId, tconst.MIGRATIONMOUNT_WAITTAPE);
+   VALUES (NULL, ids_seq.nextval, ids_seq.nextval, gettime(), NULL, NULL, NULL,
+           NULL, 0, inTapePoolId, tconst.MIGRATIONMOUNT_WAITTAPE)
+   RETURNING id INTO varMountId;
+  -- check that the mount will be honoured
+  tg_defaultMigrSelPolicy(varMountId, varDiskServer, varMountPoint, varPath,
+    varDiskCopyId, varLastKnownName, varFileId, varNsHost,varFileSize,
+    varMigJobId, varLastUpdateTime);
+  IF varMigJobId IS NULL THEN
+    -- No valid candidate found: this could happen e.g. when candidates exist
+    -- but reside on non-available hardware. In this case we drop the mount.
+    DELETE FROM MigrationMount WHERE id = varMountId;
+  END IF;
 END;
 /
 
@@ -296,7 +318,7 @@ BEGIN
   FOR t IN (SELECT id, nbDrives, minAmountDataForMount,
                    minNbFilesForMount, maxFileAgeBeforeMount
               FROM TapePool) LOOP
-    -- get number of mount already running for this tapepool
+    -- get number of mounts already running for this tapepool
     SELECT count(*) INTO varNbMounts
       FROM MigrationMount
      WHERE tapePool = t.id;
