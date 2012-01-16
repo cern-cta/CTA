@@ -1273,8 +1273,10 @@ BEGIN
         FROM SubRequest PARTITION (P_STATUS_7) 
        WHERE id = varSRId FOR UPDATE NOWAIT;
       IF varSrAnswered = 1 THEN
-        -- already answered, ignore it
+        -- already answered, archive and move on
         archiveSubReq(varSRId, dconst.SUBREQUEST_FAILED_FINISHED);
+        -- release the lock on this request as it's completed
+        COMMIT;
       ELSE
         -- we got our subrequest, select all relevant data and hold the lock
         SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ fileName, subReqId, errorCode, errorMessage,
