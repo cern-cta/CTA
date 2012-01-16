@@ -1388,9 +1388,8 @@ BEGIN
                     WHERE SubRequest.diskCopy = DiskCopy.id
                       AND DiskCopy.id = dci
                       AND SubRequest.reqType <> 37  -- OBJ_PrepareToPut
-                      AND SubRequest.parent = 0
                       AND DiskCopy.status IN (1, 2, 5, 6, 11) -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, STAGEOUT, WAITFS_SCHEDULING
-                      AND SubRequest.status IN (0, 1, 2, 4, 13, 14, 6)), -- START, RESTART, RETRY, WAITTAPERECALL, READYFORSCHED, BEINGSCHED, READY
+                      AND SubRequest.status IN (4, 13, 14, 6)), -- WAITTAPERECALL, READYFORSCHED, BEINGSCHED, READY
         status = 5, -- WAITSUBREQ
         lastModificationTime = getTime()
   WHERE SubRequest.id = srId;
