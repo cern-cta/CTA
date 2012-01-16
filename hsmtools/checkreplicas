@@ -238,10 +238,10 @@ END {
 for $arg (@ARGV) {
   my $Sth = $Dbh->prepare(qq{
 			  select id, status, filesystem, path, castorfile
-			  from castor_stager.diskcopy
+			  from diskcopy
 			 where castorfile in (
 				select id
-				from castor_stager.castorfile
+				from castorfile
 				where fileid=$arg)
 			 });
   $Sth->execute;
@@ -295,10 +295,10 @@ while (@results) {
     if (! $server{$fsystem} ){
       my $Sth = $Dbh->prepare(qq{
 			  select name, status
-			  from castor_stager.diskserver
+			  from diskserver
 			  where id in (
 				  select diskserver
-				  from castor_stager.filesystem
+				  from filesystem
 				  where id=$fsystem)
                            });
       $Sth->execute;
@@ -313,11 +313,11 @@ while (@results) {
   
     if (! $mountpoint{$fsystem} ){
       my $Sth = $Dbh->prepare(qq{
-                          select castor_stager.FileSystem.mountPoint, castor_stager.FileSystem.status, castor_stager.diskpool.name, castor_stager.svcclass.id
-                          from castor_stager.FileSystem, castor_stager.diskpool, castor_stager.svcclass
-                          where castor_stager.FileSystem.id=$fsystem
-                          and   castor_stager.FileSystem.diskpool=castor_stager.diskpool.id
-                          and   castor_stager.svcclass.name=castor_stager.diskpool.name
+                          select FileSystem.mountPoint, FileSystem.status, diskpool.name, svcclass.id
+                          from FileSystem, diskpool, svcclass
+                          where FileSystem.id=$fsystem
+                          and   FileSystem.diskpool=diskpool.id
+                          and   svcclass.name=diskpool.name
                            });
       $Sth->execute;
       while (my @list = $Sth->fetchrow_array) {
@@ -405,10 +405,10 @@ while (@results) {
     if ($readable eq 'DISKCOPY_CANBEMIGR') {
       my $Sth = $Dbh->prepare(qq{
         select id, status
-        from castor_stager.tapecopy
+        from tapecopy
         where castorfile in (
           select id
-          from castor_stager.castorfile
+          from castorfile
           where fileid=$fileid)
                });
       $Sth->execute;
@@ -447,7 +447,7 @@ while (@results) {
           if (($streamstatus == 3) or ($streamstatus == 6)){
             my $Sth2 = $Dbh->prepare(qq{
                 select id, vid, status
-                from castor_stager.tape
+                from tape
                 where tpmode=1 and id in
                 ( select tape from stream where id=$stream)
               });
@@ -568,10 +568,10 @@ while (@results) {
     } elsif ($readable eq 'DISKCOPY_WAITDISK2DISKCOPY') {
       my $Sth = $Dbh->prepare(qq{
         select status,count(*)
-        from castor_stager.subrequest
+        from subrequest
         where castorfile in (
           select id
-          from castor_stager.castorfile
+          from castorfile
           where fileid=$fileid) group by status
                });
       $Sth->execute;
@@ -587,7 +587,7 @@ while (@results) {
       print ("diskcopyid=$diskcopyid\n") if ($debug);
       $Sth = $Dbh->prepare(qq{
         select id, status
-        from castor_stager.subrequest
+        from subrequest
         where diskcopy=$diskcopyid 
                });
       $Sth->execute;
@@ -617,7 +617,7 @@ while (@results) {
         }
         my $Sth = $Dbh->prepare(qq{
           select id, vid, status
-          from castor_stager.tape
+          from tape
           where vid='$vid'
           and tpmode=0
                          });
@@ -641,10 +641,10 @@ while (@results) {
       }
       my $Sth = $Dbh->prepare(qq{
         select id, status
-        from castor_stager.tapecopy
+        from tapecopy
         where castorfile in (
           select id
-          from castor_stager.castorfile
+          from castorfile
           where fileid=$fileid)
                });
       $Sth->execute;
@@ -669,10 +669,10 @@ while (@results) {
       while (@tcids) {
         my $tapecopyid = shift(@tcids);
         $Sth = $Dbh->prepare(qq{
-          select castor_stager.segment.id, castor_stager.segment.status, castor_stager.tape.vid, castor_stager.tape.id
-          from castor_stager.segment, castor_stager.tape
-          where castor_stager.segment.copy = $tapecopyid
-          and castor_stager.tape.id = castor_stager.segment.tape
+          select segment.id, segment.status, tape.vid, tape.id
+          from segment, tape
+          where segment.copy = $tapecopyid
+          and tape.id = segment.tape
                });
         $Sth->execute;
         my $readableSegment;
@@ -694,10 +694,10 @@ while (@results) {
       }
       $Sth = $Dbh->prepare(qq{
         select status,count(*)
-        from castor_stager.subrequest
+        from subrequest
         where castorfile in (
           select id
-          from castor_stager.castorfile
+          from castorfile
           where fileid=$fileid) group by status
                });
       $Sth->execute;
@@ -713,7 +713,7 @@ while (@results) {
       print ("diskcopyid=$diskcopyid\n") if ($debug);
       $Sth = $Dbh->prepare(qq{
         select id, status
-        from castor_stager.subrequest
+        from subrequest
         where diskcopy=$diskcopyid 
                });
       $Sth->execute;
