@@ -33,12 +33,14 @@ BEGIN
                  CASE WHEN DC.svcClass IS NULL THEN
                    (SELECT /*+ INDEX(Subrequest I_Subrequest_DiskCopy)*/ UNIQUE Req.svcClassName
                       FROM SubRequest,
-                        (SELECT /*+ INDEX(StageGetRequest PK_StagePrepareToGetRequest_Id) */ id, svcClassName FROM StagePrepareToGetRequest    UNION ALL
-                         SELECT /*+ INDEX(StageGetRequest PK_StagePrepareToPutRequest_Id) */ id, svcClassName FROM StagePrepareToPutRequest    UNION ALL
-                         SELECT /*+ INDEX(StageGetRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcClassName FROM StagePrepareToUpdateRequest UNION ALL
-                         SELECT /*+ INDEX(StageGetRequest PK_StageRepackRequest_Id) */ id, svcClassName FROM StageRepackRequest                UNION ALL
+                        (SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */ id, svcClassName FROM StagePrepareToGetRequest    UNION ALL
+                         SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id, svcClassName FROM StagePrepareToPutRequest    UNION ALL
+                         SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcClassName FROM StagePrepareToUpdateRequest UNION ALL
+                         SELECT /*+ INDEX(StageDiskCopyReplicaRequest PK_StageDiskCopyReplicaRequ_Id) */ id, svcClassName FROM StageDiskCopyReplicaRequest UNION ALL
+                         SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */ id, svcClassName FROM StageRepackRequest                      UNION ALL
                          SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, svcClassName FROM StageGetRequest) Req
                           WHERE SubRequest.diskCopy = DC.id
+                            AND SubRequest.status IN (4, 5, 6, 13)  -- WAITTAPERECALL, WAITSUBREQ, READY, BEINGSCHED
                             AND request = Req.id)              
                    ELSE DC.svcClass END AS svcClass,
                  DC.machine, DC.mountPoint, DC.nbCopyAccesses, CastorFile.lastKnownFileName,
@@ -82,10 +84,12 @@ BEGIN
                             (SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */ id, svcclass, svcClassName FROM StagePrepareToGetRequest       UNION ALL
                              SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id, svcclass, svcClassName FROM StagePrepareToPutRequest       UNION ALL
                              SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcclass, svcClassName FROM StagePrepareToUpdateRequest UNION ALL
+                             SELECT /*+ INDEX(StageDiskCopyReplicaRequest PK_StageDiskCopyReplicaRequ_Id) */ id, svcclass, svcClassName FROM StageDiskCopyReplicaRequest UNION ALL
                              SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */ id, svcclass, svcClassName FROM StageRepackRequest                         UNION ALL
                              SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, svcclass, svcClassName FROM StageGetRequest) Req
                          WHERE SubRequest.CastorFile = CastorFile.id
                            AND SubRequest.request = Req.id
+                           AND SubRequest.status IN (4, 5, 6, 13)  -- WAITTAPERECALL, WAITSUBREQ, READY, BEINGSCHED
                            AND svcClass = svcClassId)
                       END AS status,
                  DC.machine, DC.mountPoint, DC.nbCopyAccesses, CastorFile.lastKnownFileName,
