@@ -47,8 +47,8 @@
 #include <algorithm>
 
 // Definitions
-#define DEFAULT_SYNCINTERVAL       1800
-#define DEFAULT_CHUNKINTERVAL      120
+#define DEFAULT_SYNCINTERVAL       3600
+#define DEFAULT_CHUNKINTERVAL      240
 #define DEFAULT_CHUNKSIZE          2000
 #define DEFAULT_DISABLESTAGERSYNC  false
 
@@ -114,31 +114,31 @@ void castor::gc::SynchronizationThread::run(void*) {
       DIR *dirs = opendir(fs[fsIt]);
       if (0 == dirs) {
         // "Could not list filesystem directories"
-	castor::dlf::Param params[] =
-	  {castor::dlf::Param("FileSystem", fs[fsIt]),
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("FileSystem", fs[fsIt]),
            castor::dlf::Param("Error", strerror(errno))};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 24, 2, params);
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 24, 2, params);
         continue;
       }
       struct dirent *dir;
       while ((dir = readdir(dirs))) {
-	struct stat64 file;
-	std::ostringstream filepath;
-	filepath << fs[fsIt] << dir->d_name;
-	if (stat64(filepath.str().c_str(), &file) < 0) {
-	  continue;
-	} else if (!(file.st_mode & S_IFDIR)) {
-	  continue;  // not a directory
-	} else if (!strcmp(dir->d_name, ".") || !strcmp(dir->d_name, "..")) {
-	  continue;
-	} else if (strspn(dir->d_name, "0123456789") != strlen(dir->d_name)
-		   || (strlen(dir->d_name) != 2)) {
-	  continue;  // not a numbered directory name between 00 and 99
-	}
-	int offset = (int) ((1 + directories.size()) *
-			    (rand() / (RAND_MAX + 1.0)));
-	directories.insert
-	  (directories.begin() + offset, filepath.str().c_str());
+        struct stat64 file;
+        std::ostringstream filepath;
+        filepath << fs[fsIt] << dir->d_name;
+        if (stat64(filepath.str().c_str(), &file) < 0) {
+          continue;
+        } else if (!(file.st_mode & S_IFDIR)) {
+          continue;  // not a directory
+        } else if (!strcmp(dir->d_name, ".") || !strcmp(dir->d_name, "..")) {
+          continue;
+        } else if (strspn(dir->d_name, "0123456789") != strlen(dir->d_name)
+                   || (strlen(dir->d_name) != 2)) {
+          continue;  // not a numbered directory name between 00 and 99
+        }
+        int offset = (int) ((1 + directories.size()) *
+                            (rand() / (RAND_MAX + 1.0)));
+        directories.insert
+          (directories.begin() + offset, filepath.str().c_str());
       }
       closedir(dirs);
 
@@ -161,57 +161,57 @@ void castor::gc::SynchronizationThread::run(void*) {
         }
         // List files in this directory
         struct dirent *file;
-	while ((file = readdir(files))) {
+        while ((file = readdir(files))) {
 
           // Ignore non regular files
-	  struct stat64 filebuf;
-	  std::string filepath (*it + "/" + file->d_name);
-	  if (stat64(filepath.c_str(), &filebuf) < 0) {
-	    continue;
-	  } else if (!(filebuf.st_mode & S_IFREG)) {
-	    continue;  // not a file
-	  }
+          struct stat64 filebuf;
+          std::string filepath (*it + "/" + file->d_name);
+          if (stat64(filepath.c_str(), &filebuf) < 0) {
+            continue;
+          } else if (!(filebuf.st_mode & S_IFREG)) {
+            continue;  // not a file
+          }
 
-	  // Extract the nameserver host and diskcopy id from the filename
-	  std::pair<std::string, u_signed64> fid;
-	  try {
-	    fid = diskCopyIdFromFileName(file->d_name);
-	  } catch (castor::exception::Exception& e) {
-	    // "Ignoring filename that does not conform to castor naming
-	    // conventions"
-	    castor::dlf::Param params[] =
-	      {castor::dlf::Param("Filename", file->d_name)};
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 39, 1, params);
-	    continue;
-	  }
+          // Extract the nameserver host and diskcopy id from the filename
+          std::pair<std::string, u_signed64> fid;
+          try {
+            fid = diskCopyIdFromFileName(file->d_name);
+          } catch (castor::exception::Exception& e) {
+            // "Ignoring filename that does not conform to castor naming
+            // conventions"
+            castor::dlf::Param params[] =
+              {castor::dlf::Param("Filename", file->d_name)};
+            castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 39, 1, params);
+            continue;
+          }
 
           try {
-	    diskCopyIds[fid.first].push_back(fid.second);
+            diskCopyIds[fid.first].push_back(fid.second);
             paths[fid.first][fid.second] = *it + "/" + file->d_name;
 
-	    // In the case of a large number of files, synchronize them in
-	    // chunks so to not overwhelming central services
-	    if (diskCopyIds[fid.first].size() >= chunkSize) {
+            // In the case of a large number of files, synchronize them in
+            // chunks so to not overwhelming central services
+            if (diskCopyIds[fid.first].size() >= chunkSize) {
 
-	      // "Synchronizing files with nameserver and stager catalog"
+              // "Synchronizing files with nameserver and stager catalog"
               castor::dlf::Param params[] =
                 {castor::dlf::Param("NbFiles", diskCopyIds[fid.first].size()),
                  castor::dlf::Param("Nameserver", fid.first)};
-	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 31, 2, params);
+              castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 31, 2, params);
 
-	      synchronizeFiles(fid.first, diskCopyIds[fid.first],
+              synchronizeFiles(fid.first, diskCopyIds[fid.first],
                                paths[fid.first], disableStagerSync);
-	      diskCopyIds[fid.first].clear();
-	      paths[fid.first].clear();
-	      sleep(chunkInterval);
-	    }
-	  } catch (castor::exception::Exception& e) {
-	    // "Unexpected exception caught in synchronizeFiles"
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 40, 0, 0);
-	    sleep(chunkInterval);
-	  }
-	}
-	closedir(files);
+              diskCopyIds[fid.first].clear();
+              paths[fid.first].clear();
+              sleep(chunkInterval);
+            }
+          } catch (castor::exception::Exception& e) {
+            // "Unexpected exception caught in synchronizeFiles"
+            castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 40, 0, 0);
+            sleep(chunkInterval);
+          }
+        }
+        closedir(files);
       }
       free(fs[fsIt]);
       fsIt = (fsIt + 1) % nbFs;
@@ -219,25 +219,25 @@ void castor::gc::SynchronizationThread::run(void*) {
 
     // Synchronize the remaining files not yet checked
     for (std::map<std::string, std::vector<u_signed64> >::const_iterator it2 =
-	   diskCopyIds.begin();
-	 it2 != diskCopyIds.end();
-	 it2++) {
+           diskCopyIds.begin();
+         it2 != diskCopyIds.end();
+         it2++) {
       try {
-	if (it2->second.size() > 0) {
-	  // "Synchronizing files with nameserver and stager catalog"
-	  castor::dlf::Param params[] =
-	    {castor::dlf::Param("NbFiles", it2->second.size()),
-	     castor::dlf::Param("Nameserver", it2->first)};
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 31, 2, params);
+        if (it2->second.size() > 0) {
+          // "Synchronizing files with nameserver and stager catalog"
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("NbFiles", it2->second.size()),
+             castor::dlf::Param("Nameserver", it2->first)};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 31, 2, params);
 
-	  synchronizeFiles(it2->first, it2->second,
+          synchronizeFiles(it2->first, it2->second,
                            paths[it2->first], disableStagerSync);
-	  sleep(chunkInterval);
-	}
+          sleep(chunkInterval);
+        }
       } catch (castor::exception::Exception& e) {
-	// "Unexpected exception caught in synchronizeFiles"
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 40, 0, 0);
-	sleep(chunkInterval);
+        // "Unexpected exception caught in synchronizeFiles"
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 40, 0, 0);
+        sleep(chunkInterval);
       }
     }
 
@@ -266,13 +266,13 @@ void castor::gc::SynchronizationThread::readConfigFile
     intervalnew = atoi(value);
     if (intervalnew >= 0) {
       if ((unsigned int)intervalnew != *syncInterval) {
-	*syncInterval = intervalnew;
-	if (!firstTime) {
-	  // "New synchronization interval"
-	  castor::dlf::Param params[] =
-	    {castor::dlf::Param("Interval", *syncInterval)};
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 21, 1, params);
-	}
+        *syncInterval = intervalnew;
+        if (!firstTime) {
+          // "New synchronization interval"
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("Interval", *syncInterval)};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 21, 1, params);
+        }
       }
     } else {
       *syncInterval = DEFAULT_SYNCINTERVAL;
@@ -289,13 +289,13 @@ void castor::gc::SynchronizationThread::readConfigFile
     intervalnew = atoi(value);
     if (intervalnew >= 0) {
       if ((unsigned int)intervalnew != *chunkInterval) {
-	*chunkInterval = intervalnew;
-	if (!firstTime) {
-	  // "New chunk interval"
-	  castor::dlf::Param params[] =
-	    {castor::dlf::Param("Interval", *chunkInterval)};
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 37, 1, params);
-	}
+        *chunkInterval = intervalnew;
+        if (!firstTime) {
+          // "New chunk interval"
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("Interval", *chunkInterval)};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 37, 1, params);
+        }
       }
     } else {
       *chunkInterval = DEFAULT_CHUNKINTERVAL;
@@ -313,13 +313,13 @@ void castor::gc::SynchronizationThread::readConfigFile
     chunkSizenew = atoi(value);
     if (chunkSizenew >= 0) {
       if (*chunkSize != (unsigned int)chunkSizenew) {
-	*chunkSize = (unsigned int)chunkSizenew;
-	if (!firstTime) {
-	  // "New synchronization chunk size"
-	  castor::dlf::Param params[] =
-	    {castor::dlf::Param("ChunkSize", *chunkSize)};
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 22, 1, params);
-	}
+        *chunkSize = (unsigned int)chunkSizenew;
+        if (!firstTime) {
+          // "New synchronization chunk size"
+          castor::dlf::Param params[] =
+            {castor::dlf::Param("ChunkSize", *chunkSize)};
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 22, 1, params);
+        }
       }
     } else {
       *chunkSize = DEFAULT_CHUNKSIZE;
@@ -487,8 +487,11 @@ void castor::gc::SynchronizationThread::synchronizeFiles
   u_signed64 spaceFreed = 0;
   std::vector<u_signed64> orphans;
 
-  // Synchronize the diskcopys with the stager catalog if needed
-  if (!disableStagerSync) {
+  // Synchronize the diskcopys with the stager catalog if needed.
+  // The stager synchronization exists only to compensate from physical
+  // file losses on the diskservers or bugs: as such, we deliberately
+  // slow it down by a factor of 10 to not overwhelm the stager database.
+  if (!disableStagerSync && (rand()/(RAND_MAX + 1.0) < 0.1)) {
     orphans = gcSvc->stgFilesDeleted(dcIds, nameServer);
 
   // Remove orphaned files
@@ -613,28 +616,28 @@ void castor::gc::SynchronizationThread::synchronizeFiles
     struct stat64 fileinfo;
     if (stat64(cnsFilePaths.find(*it)->second.c_str(), &fileinfo) < 0) {
       if (errno != ENOENT) {
-	// "Failed to stat file"
-	castor::dlf::Param params[] =
-	  {castor::dlf::Param("Filename", cnsFilePaths.find(*it)->second),
-	   castor::dlf::Param("Error", strerror(errno))};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 41, 2, params, &fileId);
+        // "Failed to stat file"
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("Filename", cnsFilePaths.find(*it)->second),
+           castor::dlf::Param("Error", strerror(errno))};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 41, 2, params, &fileId);
       }
     }
 
     if (unlink(cnsFilePaths.find(*it)->second.c_str()) < 0) {
       if (errno != ENOENT) {
-	// "Deletion of orphaned local file failed"
-	castor::dlf::Param params[] =
-	  {castor::dlf::Param("Filename", cnsFilePaths.find(*it)->second),
-	   castor::dlf::Param("Error", strerror(errno))};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 28, 2, params, &fileId);
+        // "Deletion of orphaned local file failed"
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("Filename", cnsFilePaths.find(*it)->second),
+           castor::dlf::Param("Error", strerror(errno))};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 28, 2, params, &fileId);
       }
     } else {
       // "Deleting local file which is no longer in the nameserver"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Filename", cnsFilePaths.find(*it)->second),
-	 castor::dlf::Param("FileSize", (u_signed64)fileinfo.st_size),
-	 castor::dlf::Param("FileAge", time(NULL) - fileinfo.st_ctime)};
+        {castor::dlf::Param("Filename", cnsFilePaths.find(*it)->second),
+         castor::dlf::Param("FileSize", (u_signed64)fileinfo.st_size),
+         castor::dlf::Param("FileAge", time(NULL) - fileinfo.st_ctime)};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 27, 3, params, &fileId);
       spaceFreed += fileinfo.st_size;
       nbOrphanFiles++;
