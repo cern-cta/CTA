@@ -35,6 +35,7 @@
 #include <typeinfo>
 #include <algorithm>
 #include <queue>
+#include <cstring>
 
 #include "Cns_api.h" // for log only
 
@@ -1703,7 +1704,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileMigrationRe
     // We received a a failed file information.
     // Evaluate the error
     fileErrorClassification classification = classifyBridgeMigrationFileError((*failedfile)->errorCode());
-    // The problem invoves the file
+    // The problem involves the file
     if (classification.fileInvolved) {
       // We package the information about this file into an individual
       // FileErrorReport
@@ -1717,6 +1718,8 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileMigrationRe
       fileError.setFseq((*failedfile)->fseq());
       fileError.setNshost((*failedfile)->nshost());
       fileError.setPositionCommandCode((*failedfile)->positionCommandCode());
+      // Log the error (error level for all cases, could be made more detailed)
+      logFileError(nullCuuid, requester, DLF_LVL_ERROR, fileError, "Migration", classification);
       if (classification.fileRetryable) {
         // We will fail the file transfer first in the DB.
         filesToFailForRetry.push_back(fileError);
@@ -1852,6 +1855,8 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileRecallRepor
       fileError.setFseq((*failedfile)->fseq());
       fileError.setNshost((*failedfile)->nshost());
       fileError.setPositionCommandCode((*failedfile)->positionCommandCode());
+      // Log the error (error level for all cases, could be made more detailed)
+      logFileError(nullCuuid, requester, DLF_LVL_ERROR, fileError, "Recall", classification);
       if (classification.fileRetryable) {
         // We will fail the file transfer first in the DB.
         filesToFailForRetry.push_back(fileError);
@@ -2779,3 +2784,32 @@ void castor::tape::tapegateway::WorkerThread::logCannotReadOnly (Cuuid_t uuid, s
   castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, WORKER_MIG_CANNOT_RDONLY, params,castorFileId);
 }
 
+void castor::tape::tapegateway::WorkerThread::logFileError (Cuuid_t uuid,
+    const requesterInfo& requester, int logLevel,
+    const FileErrorReport & fileError,
+    const std::string & migRecContext,
+    const fileErrorClassification & classification)
+{
+  struct Cns_fileid castorFileId;
+  std::strncpy (castorFileId.server, fileError.nshost().c_str(),CA_MAXHOSTNAMELEN);
+  castorFileId.server[CA_MAXHOSTNAMELEN] = '\0';
+  castorFileId.fileid =  fileError.fileid();
+  castor::dlf::Param params[] ={
+      castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
+      castor::dlf::Param("Port",requester.port),
+      castor::dlf::Param("HostName",requester.hostName),
+      castor::dlf::Param("Context",migRecContext),
+      castor::dlf::Param("NSHOSTNAME",response->nshost()),
+      castor::dlf::Param("NSFILEID",response->fileid()),
+      castor::dlf::Param("mountTransactionId",fileError.mountTransactionId()),
+      castor::dlf::Param("tapebridgeTransId",fileError.aggregatorTransactionId()),
+      castor::dlf::Param("fileTransactionId",fileError.fileTransactionId()),
+      castor::dlf::Param("errorCode",sstrerror(fileError.errorCode())),
+      castor::dlf::Param("errorMessage",fileError.errorMessage()),
+      castor::dlf::Param("fileInvolved",classification.fileInvolved?"Involved":"Not involved"),
+      castor::dlf::Param("errorRetryable",classification.fileRetryable?"Retryable":"Not retryable"),
+      castor::dlf::Param("fseq",fileError.fseq()),
+      castor::dlf::Param("positionCommandCode",fileError.positionCommandCode())
+  };
+  castor::dlf::dlf_writep(uuid, logLevel, WORKER_FILE_ERROR_REPORT, params, &castorFileId);
+}

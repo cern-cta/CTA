@@ -233,6 +233,11 @@ namespace tapegateway{
     void logCannotReadOnly (Cuuid_t uuid, struct Cns_fileid* castorFileId,
         const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
         const std::string & vid, castor::exception::Exception & e);
+    void logFileError (Cuuid_t uuid,
+        const requesterInfo& requester, int logLevel,
+        const FileErrorReport & fileError,
+        const std::string & migRecContext,
+        const fileErrorClassification & classification);
 
     utils::ShutdownBoolFunctor m_shuttingDown;
 

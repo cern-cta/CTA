@@ -124,3 +124,4 @@
 124,WORKER_MIG_TAPE_RDONLY,"Worker: tape set to readonly after failed fSeq update"
 125,WORKER_MIG_CANNOT_RDONLY,"Worker: failed to set tape to readonly after failed fSeq update"
 126,WORKER_SUPERFLUOUS_SEGMENT,"Worker: Name server declared segment was extra/unnecessary: considering migration done"
+127,WORKER_FILE_ERROR_REPORT,"Worker: Tape server reported a file error"
