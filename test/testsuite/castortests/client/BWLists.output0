@@ -1,13 +1,13 @@
     **** : trace level set to 3
     stager: Looking up RH host - Using <rhhost>
     stager: Looking up RH port - Using <rhport>
-    stager: Setting euid: <userid>
-    stager: Setting egid: <groupid>
+    stager: Setting euid: <unprivUid>
+    stager: Setting egid: <unprivGid>
     stager: Localhost is: <localhost>
-    stager: Creating socket for castor callback - Using port <callback port>
-    stager: <sending time> Sending request
-    stager: <uuid> SND <send duration> s to send the request
+    stager: Creating socket for castor callback - Using port <callback port1>
+    stager: <sending time1> Sending request
+    stager: <uuid1> SND <send duration1> s to send the request
     stager: Waiting for callback from castor
-    stager: <uuid> CBK <answer duration> s before callback from <server ip> was received
-ServiceClass    User     Group    RequestType                    Status
-*               <unprivUser> <unprivGroup>  *                              Granted
+    stager: <uuid1> CBK <answer duration1> s before callback from <server ip1> was received
+Error: Permission denied
+stage_addPrivilege: Not authorized to change permissions. Please ask your group admin

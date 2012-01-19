@@ -1,0 +1,1 @@
+stager_listprivileges -U <unprivUid> -G <unprivGid>
