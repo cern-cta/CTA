@@ -35,6 +35,7 @@ import time
 import pickle as pk
 import sys
 import math
+import glob
 
 # Nedeed for debugging (human-readable dates):
 import datetime
@@ -171,7 +172,8 @@ class Avg(list):
 
             stddev=math.sqrt(variance)
 
-            return [n, Sum, mean, Min, Max, stddev]
+            #return [n, Sum, mean, Min, Max, stddev]
+            return [mean, n, Sum , Min, Max, stddev]
 
 
 
@@ -429,8 +431,58 @@ class Counter(int):
 
     def getData(self):
         return self.count
+        
+        
+#######################################################################
+#   Class CounterHz (inherits from int)                                 #
+#######################################################################
+class CounterHz(int):
+    """
+    Count how many times it is called. The argoument can be whatever.
+    """
 
+    def __init__(self,init_to=0):
+        self.count=init_to
 
+    def __add__(self, other):
+        return CounterHz(self.count+other.count)
+
+    def add(self, element):       
+        # Here we increase the counter discarding the element,
+        # which can be whatever thing.
+        self.count+=1
+
+    def getData(self):
+        return self.count/300
+        
+        
+#######################################################################
+#   Class Max (inherits from int)                                 #
+#######################################################################
+class Max(int):
+    """
+    Count how many times it is called. The argoument can be whatever.
+    """
+
+    def __init__(self,init_to=0):
+        self.count=init_to
+
+    def __add__(self, other):
+    
+        if self.count>other.count:        
+            return Max(self.count)
+            
+        else:
+            return Max(other.count)
+
+    def add(self, element):       
+        # Here we increase the counter discarding the element,
+        # which can be whatever thing.
+        self.count+=1
+
+    def getData(self):
+        return self.count
+        
  
 #######################################################################
 #   Class Adder (inherits from int)                                 #
@@ -451,8 +503,47 @@ class Adder(float):
 
     def getData(self):
         return self.partialsum
+        
+        
+#######################################################################
+#   Class AdderMB (inherits from int)                                 #
+#######################################################################
+class AdderMB(float):
+    """
+    Sum up the values passed as argouments, dividing by 1024*1024 when returning data.
+    """
 
+    def __init__(self,init_to=0):
+        self.partialsum=init_to
 
+    def __add__(self, other):
+        return AdderMB(self.partialsum+other.partialsum)
+
+    def add(self, element):       
+        self.partialsum+=float(element)
+
+    def getData(self):
+        return self.partialsum/(1024*1024)
+
+#######################################################################
+#   Class AdderGB (inherits from int)                                 #
+#######################################################################
+class AdderGB(float):
+    """
+    Sum up the values passed as argouments, dividing by 1024*1024 when returning data.
+    """
+
+    def __init__(self,init_to=0):
+        self.partialsum=init_to
+
+    def __add__(self, other):
+        return AdderGB(self.partialsum+other.partialsum)
+
+    def add(self, element):       
+        self.partialsum+=float(element)
+
+    def getData(self):
+        return self.partialsum/(1024*1024*1024)
 
 #######################################################################
 #                                                                     #
@@ -603,6 +694,7 @@ class Bin:
         return self.data
 
 
+
     #---------------------------------------------------------------------------
     def mergeWith(self, anotherBin):
 
@@ -638,31 +730,51 @@ class Bin:
             # Then, sum evry data object. The overloading of the '+' will take care of doing it
             # in the right way. :)
 
-            curlevel=self.data
+            # This is now a list od data objects:
+            anotherBin_data=anotherBin_subtree
             
-            # Check if *this* bin has the needed structure to be merged with the anotherBin.
-            # In other words, are there the righ dictionaries (path)?
-            just_created_path=0
+            # Now, check if *this* bin has the needed structure to be merged with the anotherBin.
+            # In other words, are there the righ dictionaries (path)? Watch out: self.data is the entire
+            # data structure, not only the data objects! That's why we loop over it.          
+            thisBin_curlevel=self.data
+            
+	    # Hard debug..
+            #print "thisBin_curlevel="+str(thisBin_curlevel)
+            
+            # Support vars...            
+            something_created_in_path=0
             i=0            
+                 
+            # parents is a (ordered) list of the parents encountered during the recoursive 
+            # exploration of this barnach of anotherBin, which brought us to this data level:
+            # we have to chech that in this bin we have all the parents.         
             for parent in parents:
-                if not curlevel.has_key(parent):
-                    if (i==len(self.groupbykeys)-1):
-                        # Data level, add a list:
-                        curlevel[parent]=[]
-                    else:
-                        # Still in the path, add a dictionary:
-                        curlevel[parent]={}
-                    just_created_path=1
-                curlevel=curlevel[parent]
-                i+=1
+                # Since the list is ordered, we are going trought it in the right sequence.
+                # But we have to skup the last one, since it has a list of data:
+                if len(self.groupbykeys) != i:
+                #if len(self.groupbykeys)-1 == i: break
+                    if not thisBin_curlevel.has_key(parent):                
+                    	# We didn/t find the right structure at this step, handle it:
+                        if (i==len(self.groupbykeys)-1):
+                            # Data level, add a list:
+                            thisBin_curlevel[parent]=[]
+                        else:
+                            # Still in the path, add a dictionary:
+                            thisBin_curlevel[parent]={}
+                        
+                        # Set that we have created something
+                        something_created_in_path=1
+                        
+                    thisBin_curlevel=thisBin_curlevel[parent]
+                    i+=1            
 
             # Now that we are gone throught *this* bin, the curlevel variable points automagically 
             # to the level where to insert data:
-            wheretoinsertdata=curlevel
+            wheretoinsertdata=thisBin_curlevel
 
             # If this path has just been created, it means that the data level it's empty,
             # so we have to initialize it (adding the right data objects in the right place):
-            if just_created_path:
+            if something_created_in_path:
 
                 # Create the objects that will accept data 
                 for dataobject in self.dataobjects:
@@ -676,13 +788,12 @@ class Bin:
             # Okay, we now have the right structure. We can merge, and we do it by adding the data objects of *this*
             # bin with the data objects of the anotherBin. Data objects know how to sum themselves in the right way.
             
-            # Note: we left anotherBin_subtree pointing to the data level of anotherBin
-             
+   
             for i in range(0,len(self.dataobjects)):
             
                 # For every data object of this bin sum it with the other one.
                 # Note: '+=' is not overloaded, just the '+' it is.
-                wheretoinsertdata[i]=wheretoinsertdata[i]+anotherBin_subtree[i] 
+                wheretoinsertdata[i]=wheretoinsertdata[i]+anotherBin_data[i] 
 
 
 
@@ -788,6 +899,9 @@ class Bins:
         for i in (range(0,resolution)):
             self.bins.append(Bin(self.groupbykeys,self.dataobjects))
             
+        # Initialize the saved "bin" (the last outdated one)
+        self.savedBin=Bin(self.groupbykeys,self.dataobjects)
+            
 
     #---------------------------------------------------------------------------
     def addData(self, groupbyvalues, datavalues, msg_timestamp, msg_epoch=None):
@@ -844,11 +958,60 @@ class Bins:
             # This policy will add to the right (old) bin, if still exists, otherwise will trash the message.
             
             if self.handle_unordered == 'rewrite_history':
-                debug(self.parentmetric + 
-                      ": rewrite_history not yet implemented (epoch_delta: "+str(epoch_delta) + " timestamp: " + str(msg_timestamp))
-                print "ERROR: rewrite_history not yet implemented"
-                sys.exit(1)
+                #debug(self.parentmetric + 
+                #      ": rewrite_history not yet implemented (epoch_delta: "+str(epoch_delta) + " timestamp: " + str(msg_timestamp))
+                #print "ERROR: rewrite_history not yet implemented"
+                #sys.exit(1)
+                #return
+                
+                
+                # So we have a late arrival.
+                
+                # - current message timestamp is: msg_epoch_timestamp
+                # - current validity is: self.binValidFrom
+                # - window is : self.window
+                # - bin lenght in seconds is: self.window/self.resolution
+
+                # Compute which should be the right bin:
+                # -1 bin: self.binValidFrom - (self.window/self.resolution)
+                
+                #print ""
+                #print "[rewrite history]: self.currentBin= " +str(self.currentBin)
+                #print "[rewrite history]: msg_epoch_timestamp= " +str(msg_epoch_timestamp)
+                #print "[rewrite history]: self.binValidFrom= " +str(self.binValidFrom) 
+                        
+                i=1
+                while (msg_epoch_timestamp < (self.binValidFrom - (self.window/self.resolution)*i)):
+                    #print "[rewrite history]: prev bin.."
+                    i=i+1
+                
+
+                # The bin we were lookign for is cur_bin-1
+                # First: is this number grater than self.resolution-1?
+                #print "[rewrite history]: ----- right bin(i): cur-"+str(i)
+
+                if i > (self.resolution-1):
+                    print "[rewrite history]: msg too old, giving up"
+                    # Message too old, give up.. 
+                    return
+                
+                # Else, go backward untill the right bin:
+                
+                rightBin_index=self.currentBin-i
+                #print "[rewrite history]: right bin: "+str(rightBin_index)
+                # We have a circular list, we have to take care about it...                
+                if rightBin_index<0:
+                    rightBin_index=self.resolution+rightBin_index
+                
+                #print "[rewrite history]: right bin: "+str(rightBin_index)
+                # 3) Add the data to the right bin
+                self.bins[rightBin_index].addData(groupbyvalues, datavalues)
+                
                 return
+
+                
+                
+                
 
             #______________________
             # c) percent_threshold:
@@ -869,7 +1032,7 @@ class Bins:
             #
             # Scribe flush timeout is 30 seconds, so this is the default setting.
             
-            time_threshold=24
+            time_threshold=31
             
             if self.handle_unordered == 'time_threshold':
                 if (abs(epoch_delta) <= time_threshold):
@@ -894,6 +1057,9 @@ class Bins:
         # 2) Check if we need to shift the bins (because the the message is too new for this bin).
         while ( msg_epoch_timestamp >= self.binValidUntil ):
         
+            # Yes, we need to shift. First of all save the bin
+        
+        
             # Set current bin validity
             self.binValidFrom  = self.binValidUntil
             self.binValidUntil = self.binValidFrom + self.binDuration
@@ -902,9 +1068,15 @@ class Bins:
             self.currentBin += 1
 
             # Overflow? Go back to the bin #0 and start cycling
+            # PLUS: instead of trashing the bin, save it (the last one)
+            # to give bins: (-1) (0) (1) (n-1) for a total of n.
             if (self.currentBin >= self.resolution):
                 self.currentBin=0
 
+            # Save the bin that is going to be trashed (which is the just outdated one!)
+            self.savedBin.reset()
+            self.savedBin.mergeWith(self.bins[self.currentBin])
+            
             # Reset the current bin
             self.bins[self.currentBin].reset()
 
@@ -930,17 +1102,78 @@ class Bins:
         # For every bin, merge it with the newly created one
         for i in range(0,self.resolution):
             resultBin.mergeWith(self.bins[i])
+    
         return resultBin
+        
+    #---------------------------------------------------------------------------
+    def mergeAllShiftedByOne(self):
+    
+        # Create an empty result bin (in wich to merge all the other bins)
+        resultBin=Bin(self.groupbykeys,self.dataobjects)
+    
+        # For every bin except the last one, merge it with the newly created one
+        for i in range(0,self.resolution):
+        
+            # Merge, except the current:
+            if self.currentBin != i: 
+                resultBin.mergeWith(self.bins[i])
+                
+        # And now merge with the saved one (the minus one)
+                
+        resultBin.mergeWith(self.savedBin)
+        
+        
+        # THE MISSING STEP (IDIOT!)
+        # Compute the data inside the bin!!!
+     
+        self.recursive_compute_data(resultBin.data, 0, self.groupbykeys)
+
+        return resultBin
+
+        
+    #---------------------------------------------------------------------------        
+    def recursive_compute_data(self, bin, depth, groupbykeys):
+    
+        for subdic in bin:           
+            if not depth==len(groupbykeys)-1:
+                # Again        
+                self.recursive_compute_data(self, bin[subdic], depth+1, groupbykeys) 
+            else:
+                pos=0
+                
+                # Here we are at the datalevel
+                for dataobject in bin[subdic]:
+
+
+                    #for more verobose printing, unvomment the following
+                    #print self.dataobjects[pos]+"("+self.datakeys[pos]+"):",
+                    #print str(dataobject.getData())
+                    
+                    bin[subdic][pos]=dataobject.getData()
+                    
+                    pos+=1
 
 
 
     #---------------------------------------------------------------------------
-    def getData(self):
+    def getData(self, method='All'):
     
-        # Merge every bin into a object of type "Bin", consistent with
-        # the other bins (parameters are the same, they are stored in the 
-        # Bins object of every metric).
-        resultBin=self.mergeAll()
+        if method=='All':
+        
+            # Merge every bin into a object of type "Bin", consistent with
+            # the other bins (parameters are the same, they are stored in the 
+            # Bins object of every metric).
+            resultBin=self.mergeAll()
+            
+        elif method=='AllShiftedByOne':
+        
+            # Merge every bin into a object of type "Bin", except the last one to avoid 
+            # having incomplete data
+            resultBin=self.mergeAllShiftedByOne()
+            
+        else:
+            return {}
+                
                
         # Extract and return the aggregated data
         return resultBin.getData()
@@ -1082,7 +1315,10 @@ class Metric:
         # a python dictionary, in which bins are already merged and final data (like averages) is already computed
 
         if method=='returnDict':
-            return self.metricBins.getData()
+            return self.metricBins.getData('All')
+            
+        if method=='AllShiftedByOne':
+            return self.metricBins.getData('AllShiftedByOne')
 
         # The next functions are here for debugging / proof of concepts.
         # The idea is that the metric should give just the dictionary
@@ -1116,6 +1352,9 @@ class Metric:
             # Skip the test if we have a special keyword:
             if (keyword=='KEYVALUES' or keyword==''):
                 pass
+            
+            # Switch to the next one, please...    
+            # if keyword not in ['KEYVALUES','']:        
                 
             else:
                 if not msg.has_key(keyword):
@@ -1170,7 +1409,7 @@ class Metric:
             # Ok, now add some custom keywords:
 
             # For Count and Delay special object
-            msg['COUNT']='+1'
+            msg['COUNT']='+1'       # Deprecated...
             msg['DELAY']='0'
                      
             # For grouping by nothing:
@@ -1320,6 +1559,49 @@ def loadMetrics(metricsfile):
 
 
     return metrics
+
+
+
+
+## Parse a file and load metrics data...
+#---------------------------------------------------------------------------
+def createMetrics(path):
+
+    # Prepare the array..
+    metrics=[]
+
+
+    for metricfile in glob.glob(path):
+
+        # Load the metric from file
+        read_metrics=loadMetrics(metricfile)
+
+        # For every metric read..
+        for metric in read_metrics:
+
+            # Debugging...
+            #print metric
+
+            # Create the metric
+            #def __init__( self, name, window, resolution, conditions, groupbykeys, data, handle_unordered):
+            metrics.append(Metric(metric['name'],
+                                    metric['window'],
+                                    metric['resolution'],
+                                    metric['conditions'],
+                                    metric['groupbykeys'],
+                                    metric['data'],
+                                    metric['handle_unordered']))
+                                                    
+                                                
+    return metrics
+
+
+
+
+
+
+
+
 
 
 
