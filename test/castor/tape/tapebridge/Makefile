@@ -99,8 +99,6 @@ tapebridgedaemontester: \
   rtcp_recvRtcpHdr.o \
   tapebridge_LegacyTxRx.o \
   tapebridge_marshall.o \
-  tapebridge_PendingMigrationsStore.o \
-  tapebridge_SessionError.o \
   tapebridge_sendTapeBridgeClientInfo2Ack.o \
   tapebridge_sendTapeBridgeFlushedToTape.o \
   tapebridge_tapeFlushModeToStr.o \
@@ -234,6 +232,7 @@ tapebridged: \
   tapebridge_BridgeProtocolEngine.o \
   tapebridge_BridgeSocketCatalogue.o \
   tapebridge_ClientTxRx.o \
+  tapebridge_ConfigParams.o \
   tapebridge_DlfMessageStrings.o \
   tapebridge_LegacyTxRx.o \
   tapebridge_LogHelper.o \
@@ -590,6 +589,10 @@ tapebridge_BridgeSocketCatalogue.o: \
 
 tapebridge_ClientTxRx.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/ClientTxRx.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapebridge_ConfigParams.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/ConfigParams.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapebridge_DlfMessageStrings.o: \
