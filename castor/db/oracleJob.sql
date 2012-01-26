@@ -132,7 +132,7 @@ BEGIN
      AND SubRequest.id = srId
      AND SubRequest.request = Request.id;
   -- Check that we did not cancel the SubRequest in the mean time
-  IF srStatus IN (7, 9, 10) THEN -- FAILED, FAILED_FINISHED, FAILED_ANSWERING
+  IF srStatus IN (7, 9) THEN -- FAILED, FAILED_FINISHED
     raise_application_error(-20104, 'SubRequest canceled while queuing in scheduler. Giving up.');
   END IF;
   -- Get selected filesystem

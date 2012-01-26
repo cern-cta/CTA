@@ -563,8 +563,7 @@ BEGIN
         INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 0, '');
       END;
     WHEN abortedSRstatus = dconst.SUBREQUEST_FAILED
-      OR abortedSRstatus = dconst.SUBREQUEST_FAILED_FINISHED
-      OR abortedSRstatus = dconst.SUBREQUEST_FAILED_ANSWERING THEN
+      OR abortedSRstatus = dconst.SUBREQUEST_FAILED_FINISHED THEN
       -- subrequest has failed, nothing to abort
       INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 22, 'Cannot abort failed subRequest'); -- EINVAL
     WHEN abortedSRstatus = dconst.SUBREQUEST_FINISHED
@@ -609,8 +608,7 @@ BEGIN
                                                  dconst.DISKCOPY_WAITFS_SCHEDULING);
       INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 0, '');
     WHEN abortedSRstatus = dconst.SUBREQUEST_FAILED
-      OR abortedSRstatus = dconst.SUBREQUEST_FAILED_FINISHED
-      OR abortedSRstatus = dconst.SUBREQUEST_FAILED_ANSWERING THEN
+      OR abortedSRstatus = dconst.SUBREQUEST_FAILED_FINISHED THEN
       -- subrequest has failed, nothing to abort
       INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 22, 'Cannot abort failed subRequest'); -- EINVAL
     WHEN abortedSRstatus = dconst.SUBREQUEST_FINISHED
@@ -723,7 +721,6 @@ BEGIN
            WHEN abortedSRstatus IN (dconst.SUBREQUEST_FAILED,
                                     dconst.SUBREQUEST_FINISHED,
                                     dconst.SUBREQUEST_FAILED_FINISHED,
-                                    dconst.SUBREQUEST_FAILED_ANSWERING,
                                     dconst.SUBREQUEST_ARCHIVED) THEN 
              -- nothing to be done here
              NULL;
