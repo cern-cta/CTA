@@ -443,15 +443,6 @@ BEGIN
           INTO fid, nsh, fc
           FROM CastorFile
          WHERE id = cf.cfId FOR UPDATE;
-        -- Check whether this file potentially had copies on tape
-        SELECT nbCopies INTO nb FROM FileClass WHERE id = fc;
-        IF nb = 0 THEN
-          -- This castorfile was created with no copy on tape
-          -- So removing it from the stager means erasing
-          -- it completely. We should thus also remove it
-          -- from the name server
-          INSERT INTO FilesDeletedProcOutput VALUES (fid, nsh);
-        END IF;
         -- Cleanup:
         -- See whether it has any DiskCopy
         SELECT count(*) INTO nb FROM DiskCopy
@@ -475,6 +466,15 @@ BEGIN
                SET status = dconst.SUBREQUEST_FAILED
              WHERE castorFile = cf.cfId
                AND status IN (1, 2, 3, 4, 5, 6, 12, 13, 14);  -- same as above
+          END IF;
+          -- Check whether this file potentially had copies on tape
+          SELECT nbCopies INTO nb FROM FileClass WHERE id = fc;
+          IF nb = 0 THEN
+            -- This castorfile was created with no copy on tape
+            -- So removing it from the stager means erasing
+            -- it completely. We should thus also remove it
+            -- from the name server
+            INSERT INTO FilesDeletedProcOutput VALUES (fid, nsh);
           END IF;
         END IF;
       EXCEPTION WHEN NO_DATA_FOUND THEN
