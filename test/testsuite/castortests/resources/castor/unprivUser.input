@@ -1,1 +1,1 @@
-stager_listprivileges -U <unprivUid> -G <unprivGid>
+stager_listprivileges -U <unprivUid> -G <unprivGid> | grep -c Granted | grep 0
