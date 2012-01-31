@@ -28,7 +28,7 @@ The
 command has the following options:
 .TP
 .B -m,\ \-\-mode=MODE
-specifies the mode to be used. Default mode is 777.
+specifies the mode to be used. Default mode is 777, minus the user umask.
 .TP
 .B -p,\ \-\-parents
 creates all the non-existing parent directories first.
