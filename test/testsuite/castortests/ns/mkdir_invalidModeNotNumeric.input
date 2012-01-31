@@ -1,0 +1,2 @@
+nsmkdir --mode=abc <tapeFileName>; echo $?
+nsls -ld <tapeFileName>; echo $?
