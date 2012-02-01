@@ -1,0 +1,2 @@
+umask 0222; nsmkdir -p <tapeFileName>/child; echo $?
+nsls -ld <tapeFileName>; echo $?

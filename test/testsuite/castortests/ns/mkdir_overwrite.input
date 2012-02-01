@@ -1,0 +1,2 @@
+nsmkdir <tapeFileName>; echo $?
+nsmkdir <tapeFileName>; echo $?
