@@ -1040,18 +1040,18 @@ BEGIN
 END;
 /
 
-/* update the db after a successful migration */
+/* update the db after a successful migration - tape side */
 CREATE OR REPLACE
-PROCEDURE TG_SetFileMigrated(
+PROCEDURE tg_setFileMigrated(
   inTransId         IN  NUMBER, 
   inFileId          IN  NUMBER,
   inNsHost          IN  VARCHAR2, 
   inFseq            IN  INTEGER, 
   inFileTransaction IN  NUMBER) AS
-  varMigJobCount      INTEGER;
-  varCfId               NUMBER;
-  varCopyNb             NUMBER;
-  varVID                VARCHAR2(2048);
+  varMigJobCount  INTEGER;
+  varCfId         NUMBER;
+  varCopyNb       NUMBER;
+  varVID          VARCHAR2(2048);
 BEGIN
   -- Lock the CastorFile
   SELECT CF.id INTO varCfId FROM CastorFile CF
@@ -1060,34 +1060,54 @@ BEGIN
      FOR UPDATE;
   -- delete the corresponding migration job, create the new migrated segment
   DELETE FROM MigrationJob
-   WHERE FileTransactionId = inFileTransaction
+   WHERE fileTransactionId = inFileTransaction
      AND fSeq = inFseq
   RETURNING destCopyNb, VID INTO varCopyNb, varVID;
-  INSERT INTO MigratedSegment VALUES (varCfId, varCopyNb, varVID);
   -- check if another migration should be performed
   SELECT count(*) INTO varMigJobCount
     FROM MigrationJob
     WHERE castorfile = varCfId;
   IF varMigJobCount = 0 THEN
-     -- Mark all disk copies as staged and delete all migrated segments together.
-     UPDATE DiskCopy
-        SET status= dconst.DISKCOPY_STAGED
-      WHERE castorFile = varCfId
-        AND status= dconst.DISKCOPY_CANBEMIGR;
-     DELETE FROM MigratedSegment
-      WHERE castorfile = varCfId;
+    -- no more migrations, delete all migrated segments 
+    DELETE FROM MigratedSegment
+     WHERE castorfile = varCfId;
+  ELSE
+    -- another migration ongoing, keep track of this one 
+    INSERT INTO MigratedSegment VALUES (varCfId, varCopyNb, varVID);
   END IF;
-  -- archive Repack requests should any be in the db
-  FOR i IN (
-    SELECT /*+ INDEX(SR I_Subrequest_Castorfile)*/ SR.id FROM SubRequest SR
-    WHERE SR.castorfile = varCfId AND
-          SR.status = dconst.SUBREQUEST_REPACK
-    ) LOOP
-    archiveSubReq(i.id, dconst.SUBREQUEST_FINISHED);
-  END LOOP;
+  -- Tell the Disk Cache that migration is over
+  dc_setFileMigrated(varCfId, varVID, (varMigJobCount = 0));
   COMMIT;
 END;
 /
+
+/* update the db after a successful migration - disk side */
+CREATE OR REPLACE PROCEDURE dc_setFileMigrated(
+  inCfId          NUMBER,
+  inOriginVID     NUMBER,       -- NOT NULL only for repacked files
+  inLastMigration BOOLEAN) AS   -- whether this is the last required copy on tape
+  varSrId NUMBER;
+BEGIN
+  IF inLastMigration THEN
+     -- Mark all disk copies as staged
+     UPDATE DiskCopy
+        SET status= dconst.DISKCOPY_STAGED
+      WHERE castorFile = inCfId
+        AND status= dconst.DISKCOPY_CANBEMIGR;
+  END IF;
+  IF inOriginVID IS NOT NULL THEN
+    -- archive the repack subrequest associated to this migrationJob
+    SELECT /*+ INDEX(SR I_Subrequest_Castorfile) */ SubRequest.id INTO varSrId
+      FROM SubRequest, StageRepackRequest
+      WHERE SubRequest.castorfile = inCfId
+        AND SubRequest.status = dconst.SUBREQUEST_REPACK
+        AND SubRequest.request = StageRepackRequest.id
+        AND StageRepackRequest.RepackVID = inOriginVID;
+    archiveSubReq(varSrId, dconst.SUBREQUEST_FINISHED);
+  END IF;  
+END;
+/
+
 
 /* update the db after a successful migration */
 CREATE OR REPLACE
