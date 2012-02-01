@@ -1042,7 +1042,7 @@ END;
 
 /* update the db after a successful migration - tape side */
 CREATE OR REPLACE
-PROCEDURE tg_setFileMigrated(
+PROCEDURE TG_SetFileMigrated(
   inTransId         IN  NUMBER, 
   inFileId          IN  NUMBER,
   inNsHost          IN  VARCHAR2, 
@@ -1051,7 +1051,8 @@ PROCEDURE tg_setFileMigrated(
   varMigJobCount  INTEGER;
   varCfId         NUMBER;
   varCopyNb       NUMBER;
-  varVID          VARCHAR2(2048);
+  varVID          VARCHAR2(10);
+  varOrigVID      VARCHAR2(10);
 BEGIN
   -- Lock the CastorFile
   SELECT CF.id INTO varCfId FROM CastorFile CF
@@ -1062,7 +1063,8 @@ BEGIN
   DELETE FROM MigrationJob
    WHERE fileTransactionId = inFileTransaction
      AND fSeq = inFseq
-  RETURNING destCopyNb, VID INTO varCopyNb, varVID;
+  RETURNING destCopyNb, VID, originalVID
+    INTO varCopyNb, varVID, varOrigVID;
   -- check if another migration should be performed
   SELECT count(*) INTO varMigJobCount
     FROM MigrationJob
@@ -1076,16 +1078,16 @@ BEGIN
     INSERT INTO MigratedSegment VALUES (varCfId, varCopyNb, varVID);
   END IF;
   -- Tell the Disk Cache that migration is over
-  dc_setFileMigrated(varCfId, varVID, (varMigJobCount = 0));
+  dc_setFileMigrated(varCfId, varOrigVID, (varMigJobCount = 0));
   COMMIT;
 END;
 /
 
 /* update the db after a successful migration - disk side */
 CREATE OR REPLACE PROCEDURE dc_setFileMigrated(
-  inCfId          NUMBER,
-  inOriginVID     NUMBER,       -- NOT NULL only for repacked files
-  inLastMigration BOOLEAN) AS   -- whether this is the last required copy on tape
+  inCfId          IN NUMBER,
+  inOriginVID     IN VARCHAR2,       -- NOT NULL only for repacked files
+  inLastMigration IN BOOLEAN) AS   -- whether this is the last copy on tape
   varSrId NUMBER;
 BEGIN
   IF inLastMigration THEN
