@@ -171,7 +171,9 @@ def _printStatusLine(subTime, user, machine, vid, status, total, size, toRecall,
     size = _humanReadableSize(size)
     # actual printing
     if total > 0:
-      print '%-18s%10s%30s%9s%11d%12s%10d%10d%10d%10d%7d%%%11s' % (subTime, user, machine, vid, total, size, toRecall, toMigr, failed, migrated, 100-(toRecall+toMigr)*100.0/total, status)
+      # Completion % takes into account each operation (recall and migration) as 1, so that e.g. a tape with half files recalled and none migrated counts as 25% done;
+      # no weight is given to recalls vs. migrations nor is the file size taken into account.
+      print '%-18s%10s%30s%9s%11d%12s%10d%10d%10d%10d%7d%%%11s' % (subTime, user, machine, vid, total, size, toRecall, toMigr, failed, migrated, 100-(2*toRecall+toMigr)*50.0/total, status)
     else:
       print '%-18s%10s%30s%9s%11d%12s%10d%10d%10d%10d    N/A %11s' % (subTime, user, machine, vid, total, size, toRecall, toMigr, failed, migrated, status)
 
