@@ -505,7 +505,9 @@ class Setup:
             i = 0
             localTags = {}
             for cmd in cmds.split(os.linesep):
-                # skip empty lines in the input file
+                # skip empty lines and comments in the input file
+                if cmd.find('#') != -1:
+                    cmd = cmd[0:cmd.find('#')]
                 if len(cmd) > 0:
                     cmd = parseAndReplaceLocals(cmd, localTags)
                     print "Executing ", cmd
