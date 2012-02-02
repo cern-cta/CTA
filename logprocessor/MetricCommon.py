@@ -13,7 +13,7 @@
 #   groupbykeys: INSTANCE, HOSTNAME
 #   data: Counter(MSG), Avg(USECS)
 #   handle_unordered: time_threshold
-#   resolution: 10
+#   nbins: 10
 #  </metric>
 #  
 # Execution times on lxbrb1916:
@@ -485,6 +485,56 @@ class Max(int):
         
  
 #######################################################################
+#   Class MaxMsgsPerSecOverMinute (inherits from int)                                 #
+#######################################################################
+class MaxMsgsPerSecOverMinute(int):
+    """
+    Over one minute interval, count the messages on one second interval. Then get the maximum value
+    """
+
+    first_time=True
+    offset=0
+
+    def __init__(self):
+        self.minute=[]
+        for i in range(0,60):
+            self.minute.append(0)
+
+    def __add__(self, other):
+        # This is meant to be an object used with one bin. Since whe calculating the result
+        # to give from this data object we merge a empty resultBin with a realBin with the data,
+        # we basically retrn realBin (other) which has data inside it. Yes. it's tricky.. :/
+        return other
+
+    def add(self, TIMESTAMP):       
+
+        #We have the TIMESTAMP, like: 2012-01-27T16:06:11+01:00
+        
+        #Get the second of the timestamp: 
+        second=int(TIMESTAMP.split(':')[2][:2])
+
+        if self.first_time:
+            self.first_time=False
+            self.offset=second
+            
+        # mod 60 math..
+        if second-self.offset<0:
+            second+=60
+            
+        # Increase the counter for this second..     
+        self.minute[second-self.offset]+=1
+        
+
+    def getData(self):
+        Max=0
+        for i in range(0,60):
+            if self.minute[i] > Max:
+                Max=self.minute[i]
+                
+        return Max 
+ 
+ 
+#######################################################################
 #   Class Adder (inherits from int)                                 #
 #######################################################################
 class Adder(float):
@@ -878,12 +928,12 @@ class Bins:
     """
 
     #---------------------------------------------------------------------------
-    def __init__(self, parentmetric, window, resolution, groupbykeys, dataobjects, handle_unordered):
+    def __init__(self, parentmetric, window, nbins, groupbykeys, dataobjects, handle_unordered):
 
         # Local vars..
         self.parentmetric=parentmetric
         self.window=window
-        self.resolution=resolution
+        self.nbins=nbins
         self.groupbykeys=groupbykeys
         self.dataobjects=dataobjects
         self.handle_unordered=handle_unordered
@@ -892,15 +942,18 @@ class Bins:
         self.currentBin=0
         self.binValidFrom=None;
         self.binValidTo=None;
-        self.binDuration=(self.window/self.resolution)
+        self.binDuration=(self.window/self.nbins)
 
         # Initialize every bin
         self.bins=[]
-        for i in (range(0,resolution)):
+        for i in (range(0,nbins)):
             self.bins.append(Bin(self.groupbykeys,self.dataobjects))
             
         # Initialize the saved "bin" (the last outdated one)
         self.savedBin=Bin(self.groupbykeys,self.dataobjects)
+        
+        # Ready flag:
+        self.ready=False
             
 
     #---------------------------------------------------------------------------
@@ -970,10 +1023,10 @@ class Bins:
                 # - current message timestamp is: msg_epoch_timestamp
                 # - current validity is: self.binValidFrom
                 # - window is : self.window
-                # - bin lenght in seconds is: self.window/self.resolution
+                # - bin lenght in seconds is: self.window/self.nbins
 
                 # Compute which should be the right bin:
-                # -1 bin: self.binValidFrom - (self.window/self.resolution)
+                # -1 bin: self.binValidFrom - (self.window/self.nbins)
                 
                 #print ""
                 #print "[rewrite history]: self.currentBin= " +str(self.currentBin)
@@ -981,16 +1034,16 @@ class Bins:
                 #print "[rewrite history]: self.binValidFrom= " +str(self.binValidFrom) 
                         
                 i=1
-                while (msg_epoch_timestamp < (self.binValidFrom - (self.window/self.resolution)*i)):
+                while (msg_epoch_timestamp < (self.binValidFrom - (self.window/self.nbins)*i)):
                     #print "[rewrite history]: prev bin.."
                     i=i+1
                 
 
                 # The bin we were lookign for is cur_bin-1
-                # First: is this number grater than self.resolution-1?
+                # First: is this number grater than self.nbins-1?
                 #print "[rewrite history]: ----- right bin(i): cur-"+str(i)
 
-                if i > (self.resolution-1):
+                if i > (self.nbins-1):
                     print "[rewrite history]: msg too old, giving up"
                     # Message too old, give up.. 
                     return
@@ -1001,7 +1054,7 @@ class Bins:
                 #print "[rewrite history]: right bin: "+str(rightBin_index)
                 # We have a circular list, we have to take care about it...                
                 if rightBin_index<0:
-                    rightBin_index=self.resolution+rightBin_index
+                    rightBin_index=self.nbins+rightBin_index
                 
                 #print "[rewrite history]: right bin: "+str(rightBin_index)
                 # 3) Add the data to the right bin
@@ -1068,12 +1121,15 @@ class Bins:
             self.currentBin += 1
 
             # Overflow? Go back to the bin #0 and start cycling
-            # PLUS: instead of trashing the bin, save it (the last one)
-            # to give bins: (-1) (0) (1) (n-1) for a total of n.
-            if (self.currentBin >= self.resolution):
+            # PLUS: set the ready flag!! We can now start taking data out from the bins.
+            if (self.currentBin >= self.nbins):
                 self.currentBin=0
+                if not self.ready:
+                    debug(self.parentmetric + ": Ready to give data")
+                    self.ready=True
 
-            # Save the bin that is going to be trashed (which is the just outdated one!)
+            # Save the bin that is going to be trashed, this is done 
+            # to be able to give back data for bins -1, 0, 1, 2,..., n-1: for a total of n.
             self.savedBin.reset()
             self.savedBin.mergeWith(self.bins[self.currentBin])
             
@@ -1100,7 +1156,7 @@ class Bins:
         resultBin=Bin(self.groupbykeys,self.dataobjects)
     
         # For every bin, merge it with the newly created one
-        for i in range(0,self.resolution):
+        for i in range(0,self.nbins):
             resultBin.mergeWith(self.bins[i])
     
         return resultBin
@@ -1112,7 +1168,7 @@ class Bins:
         resultBin=Bin(self.groupbykeys,self.dataobjects)
     
         # For every bin except the last one, merge it with the newly created one
-        for i in range(0,self.resolution):
+        for i in range(0,self.nbins):
         
             # Merge, except the current:
             if self.currentBin != i: 
@@ -1168,7 +1224,8 @@ class Bins:
         elif method=='AllShiftedByOne':
         
             # Merge every bin into a object of type "Bin", except the last one to avoid 
-            # having incomplete data
+            # having incomplete data, and with the previously trahed one ( we are shifting
+            # by one)
             resultBin=self.mergeAllShiftedByOne()
             
         else:
@@ -1188,7 +1245,7 @@ class Bins:
 class Metric:
 
     #---------------------------------------------------------------------------
-    def __init__( self, name, window, resolution, conditions, groupbykeys, data, handle_unordered):
+    def __init__( self, name, window, nbins, conditions, groupbykeys, data, handle_unordered):
 
         # Local vars..
 
@@ -1198,8 +1255,8 @@ class Metric:
         # - window, int
         self.window=int(window)
         
-        # - resolution, int
-        self.resolution=int(resolution)
+        # - nbins, int
+        self.nbins=int(nbins)
 
         # - conditions, string    
         self.conditions=conditions
@@ -1248,7 +1305,7 @@ class Metric:
         self.accepted=0
 
         # Create the bins
-        self.metricBins=Bins(self.name, self.window, self.resolution, self.groupbykeys, self.dataobjects, self.handle_unordered)
+        self.metricBins=Bins(self.name, self.window, self.nbins, self.groupbykeys, self.dataobjects, self.handle_unordered)
         
         # Debug...
         # print self.metricBins.bins
@@ -1327,7 +1384,7 @@ class Metric:
         if method=='print':
             print ""
             print "====== "+self.name+" ======"
-            recursive_print(self.metricBins.getData(),0, self.groupbykeys)
+            recursive_print(self.metricBins.getData(),0, self.groupbykeys, self.datakeys)
 
         if method=='print_std':
             print ""
@@ -1445,7 +1502,7 @@ class Metric:
      
 ## Parse a file and load metrics data...
 #---------------------------------------------------------------------------
-def loadMetrics(metricsfile):
+def parseMetrics(metricsfile):
                 
 
     # THIS IS THE WORST PARSER __EVER__ .  Sorry. It has to be fixed soon.
@@ -1475,7 +1532,7 @@ def loadMetrics(metricsfile):
 
             
             # The metric is ended, lety's check that we have all the needed keywords:
-            if metric.has_key('name') and metric.has_key('window') and metric.has_key('conditions') and metric.has_key('groupbykeys') and metric.has_key('data') and metric.has_key('handle_unordered') and metric.has_key('resolution'):
+            if metric.has_key('name') and metric.has_key('window') and metric.has_key('conditions') and metric.has_key('groupbykeys') and metric.has_key('data') and metric.has_key('handle_unordered') and metric.has_key('nbins'):
 
                 debug('MetricCommon.loadMetrics: Found valid metric "' + metric['name'] + '"')
 
@@ -1563,9 +1620,9 @@ def loadMetrics(metricsfile):
 
 
 
-## Parse a file and load metrics data...
+# Parse a file and load metrics data...
 #---------------------------------------------------------------------------
-def createMetrics(path):
+def loadMetrics(path):
 
     # Prepare the array..
     metrics=[]
@@ -1574,25 +1631,24 @@ def createMetrics(path):
     for metricfile in glob.glob(path):
 
         # Load the metric from file
-        read_metrics=loadMetrics(metricfile)
+        parsed_metrics=parseMetrics(metricfile)
 
         # For every metric read..
-        for metric in read_metrics:
+        for metric in parsed_metrics:
 
             # Debugging...
             #print metric
 
             # Create the metric
-            #def __init__( self, name, window, resolution, conditions, groupbykeys, data, handle_unordered):
+            #def __init__( self, name, window, nbins, conditions, groupbykeys, data, handle_unordered):
             metrics.append(Metric(metric['name'],
                                     metric['window'],
-                                    metric['resolution'],
+                                    metric['nbins'],
                                     metric['conditions'],
                                     metric['groupbykeys'],
                                     metric['data'],
                                     metric['handle_unordered']))
-                                                    
-                                                
+                                            
     return metrics
 
 
@@ -1607,7 +1663,7 @@ def createMetrics(path):
 
 ## Pretty printing...
 #---------------------------------------------------------------------------
-def recursive_print(bin, depth, groupbykeys):
+def recursive_print(bin, depth, groupbykeys, datakeys):
     for subdic in bin:           
         print ""
         for i in range(0,depth):
@@ -1618,7 +1674,7 @@ def recursive_print(bin, depth, groupbykeys):
             
 
             # Again          
-            recursive_print(bin[subdic], depth+1, groupbykeys) 
+            recursive_print(bin[subdic], depth+1, groupbykeys, datakeys) 
         else:
 
             pos=0
@@ -1634,7 +1690,7 @@ def recursive_print(bin, depth, groupbykeys):
                     # Align it
                     for i in range(0,depth+1):
                         print "\t",
-                    print str(type(dataobject)).split('.')[1].split("'")[0]+"("+self.datakeys[pos]+"):" #.split('.')[1].split("'")[0]
+                    print str(type(dataobject)).split('.')[1].split("'")[0]+"("+datakeys[pos]+"):" #.split('.')[1].split("'")[0]
 
                     for item in dataobject.getData():                        
                         # Align it
@@ -1648,7 +1704,7 @@ def recursive_print(bin, depth, groupbykeys):
                     # Align it
                     for i in range(0,depth+1):
                         print "\t",   
-                    print str(type(dataobject)).split('.')[1].split("'")[0]+"("+self.datakeys[pos]+"):"
+                    print str(type(dataobject)).split('.')[1].split("'")[0]+"("+datakeys[pos]+"):"
 
                     # Align it
                     for i in range(0,depth+1):
