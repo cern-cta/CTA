@@ -1,3 +1,5 @@
+# Test for bug #90548: Broken logic when restarting subrequests waiting on recalls
+# and bug #87426: stager_qry may not show STAGEIN when it should
 rfcp <localFileName> <tapeFileName>
 status=`stager_qry -M <tapeFileName> | tail -1 | awk '{print $NF;}'`; while [[ $status == 'CANBEMIGR' ]]; do sleep 10; status=`stager_qry -M <tapeFileName> | tail -1 | awk '{print $NF;}'` ; done
 stager_qry -M <tapeFileName>

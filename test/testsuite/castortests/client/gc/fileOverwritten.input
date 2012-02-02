@@ -1,3 +1,4 @@
+# Test for bug #90938: GC drops disk-only files if they are overwritten
 STAGE_SVCCLASS=<tapeServiceClass> <rfcp> <localFileName> <noTapeFileName>
 STAGE_SVCCLASS=<diskOnlyServiceClass> <rfcp> <localFileName> <noTapeFileName> #same filename
 while [ $? = 0 ]; stager_qry -M <noTapeFileName> -S <tapeServiceClass> &> /dev/null; do sleep 15; done # keep checking until the first file gets deleted
