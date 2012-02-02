@@ -77,6 +77,19 @@ try:
             print '  - tape pool %s is in use by at least one route' % (tp)
         print 'You may want to use modifymigrationroute to correct this'
         sys.exit(1)
+    # check that the tape pools are not used by MigrationJobs
+    stcur.execute('''SELECT TapePool.name, count(*)
+                       FROM MigrationJob, TapePool
+                      WHERE MigrationJob.tapePool = TapePool.id
+                        AND TapePool.name IN (\'''' + "', '".join(existingTapePools) + '''\')
+                      GROUP BY TapePool.name''')
+    rows = stcur.fetchall()
+    if len(rows) > 0:
+        print 'TapePools cannot be dropped when used by some migration jobs :'
+        for tp, nb in rows:
+            print '  - tape pool %s is in use by %d migration jobs' % (tp, nb)
+        print 'You probably have to wait that the migration of these files is over'
+        sys.exit(1)
     # drop tape pools
     if existingTapePools:
         stcur.execute("DELETE FROM TapePool WHERE name IN ('" + "', '".join(existingTapePools) + "')")
