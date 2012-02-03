@@ -434,11 +434,11 @@ class Counter(int):
         
         
 #######################################################################
-#   Class CounterHz (inherits from int)                                 #
+#   Class CounterHz
 #######################################################################
 class CounterHz(int):
     """
-    Count how many times it is called. The argoument can be whatever.
+    Count how many times it is called. The argoument can be whatever. When retourning data it divides by 300 (for a 5 min window)
     """
 
     def __init__(self,init_to=0):
@@ -455,37 +455,10 @@ class CounterHz(int):
     def getData(self):
         return self.count/300
         
-        
-#######################################################################
-#   Class Max (inherits from int)                                 #
-#######################################################################
-class Max(int):
-    """
-    Count how many times it is called. The argoument can be whatever.
-    """
-
-    def __init__(self,init_to=0):
-        self.count=init_to
-
-    def __add__(self, other):
-    
-        if self.count>other.count:        
-            return Max(self.count)
-            
-        else:
-            return Max(other.count)
-
-    def add(self, element):       
-        # Here we increase the counter discarding the element,
-        # which can be whatever thing.
-        self.count+=1
-
-    def getData(self):
-        return self.count
-        
+  
  
 #######################################################################
-#   Class MaxMsgsPerSecOverMinute (inherits from int)                                 #
+#   Class MaxMsgsPerSecOverMinute
 #######################################################################
 class MaxMsgsPerSecOverMinute(int):
     """
@@ -556,11 +529,11 @@ class Adder(float):
         
         
 #######################################################################
-#   Class AdderMB (inherits from int)                                 #
+#   Class AdderMB
 #######################################################################
 class AdderMB(float):
     """
-    Sum up the values passed as argouments, dividing by 1024*1024 when returning data.
+    Sum up the values passed as argouments in bytes and returns in MB.
     """
 
     def __init__(self,init_to=0):
@@ -576,11 +549,11 @@ class AdderMB(float):
         return self.partialsum/(1024*1024)
 
 #######################################################################
-#   Class AdderGB (inherits from int)                                 #
+#   Class AdderGB
 #######################################################################
 class AdderGB(float):
     """
-    Sum up the values passed as argouments, dividing by 1024*1024 when returning data.
+    Sum up the values passed as argouments in bytes and returns in GB.
     """
 
     def __init__(self,init_to=0):
@@ -594,6 +567,167 @@ class AdderGB(float):
 
     def getData(self):
         return self.partialsum/(1024*1024*1024)
+        
+        
+        
+
+#######################################################################
+#   Class Max
+#######################################################################
+class Max(int):
+    """
+    Keeps the maximum value.
+    """
+
+    def __init__(self,init_to=None):
+        self.max_value=init_to
+
+    def __add__(self, other):
+    
+        # The following if will handle the case in 
+        # which we are merging with an empty bin.        
+        if self.max_value==None and other.max_value==None:
+            return Max()
+        
+        if self.max_value==None:
+            return Max(other.max_value)
+            
+        if other.max_value==None:
+            return Max(self.max_value)
+    
+        # Compute the maximum over the two merged bins...    
+        if self.max_value>other.max_value:        
+            return Max(self.max_value)
+            
+        else:
+            return Max(other.max_value)
+
+
+    def add(self, element):
+    
+        # Make sure that we are adding a numeric type    
+        if type(element) not in ['int','float']:
+            # If we are trying to add a non-numeric value, try to convert it to float
+            element=float(element)
+      
+        # Here we are at the first addedd value
+        if self.max_value==None:
+            self.max_value=element
+        
+        # Check for the maximum
+        if element>self.max_value:        
+            self.max_value=element
+            
+
+    def getData(self):
+        return self.max_value
+        
+        
+        
+#######################################################################
+#   Class Min
+#######################################################################
+class Min(int):
+    """
+    Keeps the minimum value.
+    """
+
+    def __init__(self,init_to=None):
+        self.min_value=init_to
+
+    def __add__(self, other):
+    
+        # The following if will handle the case in 
+        # which we are merging with an empty bin.        
+        if self.min_value==None and other.min_value==None:
+            return Min()
+        
+        if self.min_value==None:
+            return Min(other.min_value)
+            
+        if other.min_value==None:
+            return Min(self.min_value)
+            
+        # Compute the minimum over the two merged bins...
+        if self.min_value<other.min_value:        
+            return Min(self.min_value)
+            
+        else:
+            return Min(other.min_value)
+
+
+    def add(self, element):
+    
+        # Make sure that we are adding a numeric type    
+        if type(element) not in ['int','float']:
+            # If we are trying to add a non-numeric value, try to convert it to float
+            element=float(element)
+      
+        # Here we are at the first addedd value
+        if self.min_value==None:
+            self.min_value=element
+        
+        # Check for the maximum
+        if element<self.min_value:        
+            self.min_value=element
+            
+    def getData(self):
+        return self.min_value          
+        
+
+#######################################################################
+#   Class MaxGB
+#######################################################################
+class MaxGB(int):
+    """
+    Keeps the maximum value in bytes and returns in GB.
+    """
+
+    def __init__(self,init_to=None):
+        self.max_value=init_to
+
+
+    def __add__(self, other):
+    
+        # The following if will handle the case in 
+        # which we are merging with an empty bin.        
+        if self.max_value==None and other.max_value==None:
+            return Max()
+        
+        if self.max_value==None:
+            return Max(other.max_value)
+            
+        if other.max_value==None:
+            return Max(self.max_value)
+    
+        # Compute the maximum over the two merged bins...    
+        if self.max_value>other.max_value:        
+            return Max(self.max_value)
+            
+        else:
+            return Max(other.max_value)
+
+
+    def add(self, element):
+    
+        # Make sure that we are adding a numeric type    
+        if type(element) not in ['int','float']:
+            # If we are trying to add a non-numeric value, try to convert it to float
+            element=float(element)
+      
+        # Here we are at the first addedd value
+        if self.max_value==None:
+            self.max_value=element
+        
+        # Check for the maximum
+        if element>self.max_value:        
+            self.max_value=element
+            
+
+    def getData(self):
+        return self.max_value/(1024*1024*1024)
+
+
 
 #######################################################################
 #                                                                     #
@@ -1507,7 +1641,7 @@ def parseMetrics(metricsfile):
 
     # THIS IS THE WORST PARSER __EVER__ .  Sorry. It has to be fixed soon.
 
-    debug("MetricCommon.loadMetrics: Loading metrics from " + metricsfile)
+    debug("MetricsAnalysisEngine.loadMetrics: Loading metrics from " + metricsfile)
     
     # Load the metric from the def file
     f = open(metricsfile)
@@ -1534,7 +1668,7 @@ def parseMetrics(metricsfile):
             # The metric is ended, lety's check that we have all the needed keywords:
             if metric.has_key('name') and metric.has_key('window') and metric.has_key('conditions') and metric.has_key('groupbykeys') and metric.has_key('data') and metric.has_key('handle_unordered') and metric.has_key('nbins'):
 
-                debug('MetricCommon.loadMetrics: Found valid metric "' + metric['name'] + '"')
+                debug('MetricsAnalysisEngine.loadMetrics: Found valid metric "' + metric['name'] + '"')
 
 
                 # Perfect, we have all the keys. Let's now rearrange the data array:

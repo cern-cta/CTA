@@ -1,13 +1,14 @@
 #!/usr/bin/env python -u
 import LoggingCommon
 import time
-import MetricCommon
+import MetricsAnalysisEngine
 import glob
 import threading
 import datetime
 import os
 import pickle as pk
 import sys
+import traceback
 
 ##############################################################################
 # Note: metrics will be loaded from the Metricspath folder and the computed. #
@@ -123,7 +124,7 @@ class ComputeMetrics(LoggingCommon.MsgDestination):
                 print str(cur_time)+": Analyzer started."
             
                 # Load the metrics
-                self.metrics=MetricCommon.loadMetrics(MetricsPath+'/*.metric')
+                self.metrics=MetricsAnalysisEngine.loadMetrics(MetricsPath+'/*.metric')
                 print str(cur_time)+": Starting with metrics:"
                 for metric in self.metrics: 
                     print "                                "+metric.name
@@ -137,8 +138,11 @@ class ComputeMetrics(LoggingCommon.MsgDestination):
                         metric.apply(msg)
                         
                     # catch *all* exceptions
-                    except Exception, e:
-                        print "Error in processing metric "+metric.name+": "+str(e)
+                    except Exception:
+                        print "Error in processing metric "+metric.name+":"
+                        print traceback.format_exc()
+
+                        
 
 
 
@@ -190,7 +194,7 @@ class ComputeMetrics(LoggingCommon.MsgDestination):
                     debug(str(cur_time)+": Timer event")
       
                     # Reload the metrics:
-                    new_metrics=MetricCommon.loadMetrics(MetricsPath+'/*.metric')
+                    new_metrics=MetricsAnalysisEngine.loadMetrics(MetricsPath+'/*.metric')
       
                     # Cross check for added or removed metrics
 
@@ -288,8 +292,17 @@ class ComputeMetrics(LoggingCommon.MsgDestination):
                             # Check if we have a new one or if it is the same:
                             if last_metric_updated_to[metricName]!=metric.metricBins.binValidFrom:
                                
-                               # Shortcut...
-                                metricData=metric.getData("AllShiftedByOne")
+                               # get the data from the metrics                            
+                                try:                               
+                                    metricData=metric.getData("AllShiftedByOne")
+                                
+                                except Exception:
+                                    print "Error in processing metric "+metric.name+":"
+                                    print traceback.format_exc()
+                                    
+                                    # Skip the rest...
+                                    continue
+                                    
                                
                                 # HARD debugging:
                                 #debug(str(cur_time)+": Metric " + metricName + " has new data ("+str(metric.metricBins.binValidFrom)+")")
