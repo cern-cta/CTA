@@ -705,34 +705,6 @@ INSERT INTO GcPolicy VALUES ('LRU',
                              'castorGC.LRUAccessHook',
                              NULL);
 
-
-/*********************/
-/* FileSystem rating */
-/*********************/
-
-/* Computes a 'rate' for the filesystem which is an agglomeration
-   of weight and fsDeviation. The goal is to be able to classify
-   the fileSystems using a single value and to put an index on it */
-CREATE OR REPLACE FUNCTION fileSystemRate
-(readRate IN NUMBER,
- writeRate IN NUMBER,
- nbReadStreams IN NUMBER,
- nbWriteStreams IN NUMBER,
- nbReadWriteStreams IN NUMBER,
- nbMigratorStreams IN NUMBER,
- nbRecallerStreams IN NUMBER)
-RETURN NUMBER DETERMINISTIC IS
-BEGIN
-  RETURN - nbReadStreams - nbWriteStreams - nbReadWriteStreams - nbMigratorStreams - nbRecallerStreams;
-END;
-/
-
-/* FileSystem index based on the rate. */
-CREATE INDEX I_FileSystem_Rate
-    ON FileSystem(fileSystemRate(readRate, writeRate,
-	          nbReadStreams,nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams));
-
-
 /************/
 /* Aborting */
 /************/
@@ -779,3 +751,4 @@ CREATE GLOBAL TEMPORARY TABLE RepackTapeSegments
  (fileId NUMBER, blockid RAW(4), fseq NUMBER, segSize NUMBER,
   copyNb NUMBER, fileClass NUMBER, allSegments VARCHAR2(2048))
  ON COMMIT PRESERVE ROWS;
+

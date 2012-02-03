@@ -1851,14 +1851,7 @@ BEGIN
              AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
              AND DiskServer.id = FileSystem.diskServer
              AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
-        ORDER BY -- first prefer DSs without concurrent migrators/recallers
-                 DiskServer.nbRecallerStreams ASC, FileSystem.nbMigratorStreams ASC,
-                 -- then order by rate as defined by the function
-                 fileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
-                                FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams, FileSystem.nbMigratorStreams,
-                                FileSystem.nbRecallerStreams) DESC,
-                 -- finally use randomness to avoid preferring always the same FS
-                 DBMS_Random.value)
+        ORDER BY DBMS_Random.value)   -- use randomness to avoid preferring always the same FS
    WHERE ROWNUM < 2;
   -- compute it's gcWeight
   gcwProc := castorGC.getRecallWeight(svcClassId);
