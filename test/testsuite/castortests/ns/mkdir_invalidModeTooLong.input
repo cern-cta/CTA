@@ -1,2 +1,2 @@
-nsmkdir --mode=777777777 <tapeFileName>; echo $?
-nsls -ld <tapeFileName>; echo $?
+nsmkdir --mode=777777777 <nsDir>; echo $?
+nsls -ld <nsDir>; echo $?

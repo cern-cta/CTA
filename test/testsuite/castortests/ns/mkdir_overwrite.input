@@ -1,2 +1,2 @@
-nsmkdir <tapeFileName>; echo $?
-nsmkdir <tapeFileName>; echo $?
+nsmkdir <nsDir>; echo $?
+nsmkdir <nsDir>; echo $?

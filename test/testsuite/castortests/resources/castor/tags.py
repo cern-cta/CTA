@@ -1,16 +1,3 @@
-############
-### uuid ###
-############
-UUID = None
-def sessionuuid(self):
-    global UUID
-    if UUID == None :
-        sys.path.append(str(self.config.topdir))
-        import uuid
-        UUID = str(uuid.uuid4())
-    return UUID
-Setup.getTag_sessionuuid = sessionuuid
-             
 ########################
 ### stageHost & tags ###
 ########################
@@ -94,18 +81,7 @@ def tapeFileName(self, nb=0):
     return (lambda test : self.getTag(test, 'tapePath')+os.sep+test+str(nb))
 Setup.getTag_tapeFileName = tapeFileName
 
-def nsCleanup(self):
-    # get rid of all files used in castor by droping the namespace temporary directories
-    for entry in ['noTapePath', 'tapePath']:
-        if self.tags.has_key(entry):
-            path = self.tags[entry]
-            output = Popen('nsrm -r ' + path)
-            assert len(output) == 0, \
-                'Failed to cleanup working directory ' + path + \
-                '. You may have to do manual cleanup' + os.linesep + \
-                "Error :" + os.linesep + output
-            del self.tags[entry]
-Setup.cleanup_nameserver = nsCleanup
+
 
 ##################################
 ###  svcClass related methods  ###
@@ -161,31 +137,3 @@ Setup.getTag_tapeServiceClass = tapeServiceClass
 def diskOnlyServiceClass(self, nb=0):
     return lambda test : self._getAndCheckSvcClassTag(test, 'diskOnlyServiceClassList', nb, 'disk only')
 Setup.getTag_diskOnlyServiceClass = diskOnlyServiceClass
-
-#####################################
-###  local files related methods  ###
-#####################################
-
-def tmpLocalDir(self):
-    d = tempfile.mkdtemp(prefix='CastorTestSuite')
-    print os.linesep+'Temporary files will be stored in directory ' + d
-    return d
-Setup.getTag_tmpLocalDir = tmpLocalDir
-
-def tmpLocalFileName(self, nb=0):
-    return (lambda test : self.getTag(test, 'tmpLocalDir') + os.sep + test + '.' + str(nb))
-Setup.getTag_tmpLocalFileName = tmpLocalFileName
-
-def localCleanup(self):
-    # also get rid of local files created
-    if self.tags.has_key('tmpLocalDir'):
-        # recursive deletion of all files and directories
-        for root, dirs, files in os.walk(self.tags['tmpLocalDir'], topdown=False):
-            for name in files:
-                os.remove(os.path.join(root, name))
-            for name in dirs:
-                os.rmdir(os.path.join(root, name))
-        # remove the directory itself
-        os.rmdir(self.tags['tmpLocalDir'])
-        del self.tags['tmpLocalDir']
-Setup.cleanup_local = localCleanup
