@@ -22,6 +22,7 @@
 # castor directories to use for temporary files created by the test suite
 CastorNoTapeDir = /castor/cern.ch/dev/s/sponcec3/notape
 CastorTapeDir = /castor/cern.ch/dev/s/sponcec3/tape
+CastorTestDir = /castor/cern.ch/dev/s/sponcec3
 
 # Put this to true if you want the test suite to skip tests when resources are missing
 # Default behavior is to fail
