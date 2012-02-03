@@ -546,7 +546,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate(
           castor::dlf::Param("mountTransactionId",fileRecalled.mountTransactionId()),
           castor::dlf::Param("tapebridgeTransId",fileRecalled.aggregatorTransactionId()),
           castor::dlf::Param("fileTransactionId",fileRecalled.fileTransactionId()),
-          castor::dlf::Param("file size",fileRecalled.fileSize()),
+          castor::dlf::Param("fileSize",fileRecalled.fileSize()),
           castor::dlf::Param("fseq",fileRecalled.fseq()),
           castor::dlf::Param("ProcessingTime", procTime * 0.000001),
           castor::dlf::Param("TPVID",vid)
@@ -617,7 +617,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate(
           castor::dlf::Param("tapebridgeTransId",fileRecalled.aggregatorTransactionId()),
           castor::dlf::Param("fileTransactionId",fileRecalled.fileTransactionId()),
           castor::dlf::Param("fseq",fileRecalled.fseq()),
-          castor::dlf::Param("ProcessingTime", procTime * 0.000001),
+          castor::dlf::Param("fileSize",fileRecalled.fileSize()),
           castor::dlf::Param("TPVID",vid),
           castor::dlf::Param("copyNumber",copyNb),
           castor::dlf::Param("ProcessingTime", procTime * 0.000001)
