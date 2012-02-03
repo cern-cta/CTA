@@ -170,18 +170,17 @@ BEGIN
                  AND Request.id = SubRequest.request
                  AND Request.svcclass = DiskPool2SvcClass.child
                  AND FileSystem.diskpool = DiskPool2SvcClass.parent
-                 AND FileSystem.free - FileSystem.minAllowedFreeSpace * FileSystem.totalSize > CastorFile.fileSize
+                 -- a priori, we want to have enough free space. However, if we don't, we accept to start writing
+                 -- if we have a minimum of 30GB free and count on gerbage collection to liberate space while writing
+                 -- We still check that the file fit on the disk, and actually keep a 30% margin so that very recent
+                 -- files can be kept
+                 AND (FileSystem.free - FileSystem.minAllowedFreeSpace * FileSystem.totalSize > CastorFile.fileSize
+                   OR (FileSystem.free - FileSystem.minAllowedFreeSpace * FileSystem.totalSize > 30000000000
+                   AND FileSystem.totalSize * 0.7 > CastorFile.fileSize))
                  AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
                  AND DiskServer.id = FileSystem.diskServer
                  AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
-            ORDER BY -- first prefer DSs without concurrent migrators/recallers
-                     DiskServer.nbRecallerStreams ASC, FileSystem.nbMigratorStreams ASC,
-                     -- then order by rate as defined by the function
-                     fileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
-                                    FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams, FileSystem.nbMigratorStreams,
-                                    FileSystem.nbRecallerStreams) DESC,
-                     -- finally use randomness to avoid preferring always the same FS
-                     DBMS_Random.value)
+            ORDER BY DBMS_Random.value)
     LOOP
       diskServerName := a.name;
       rmountPoint    := a.mountPoint;
