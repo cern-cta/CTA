@@ -10,6 +10,9 @@ import pickle as pk
 import sys
 import traceback
 
+last_slash_index=sys.argv[0].rfind('/')
+script_path=sys.argv[0][:last_slash_index]
+
 ##############################################################################
 # Note: metrics will be loaded from the Metricspath folder and the computed. #
 # If a metric is malformed it just won't be loaded. If the metric raises an  #
@@ -17,13 +20,15 @@ import traceback
 # operations will continue.                                                  #
 ##############################################################################
 
-MetricsPath="/cockpit/metrics"
+
+MetricsPath=script_path+"/metrics"
 
 debug_switch=False
 
 # This is used by the Analyzer thread to write data for the Cockpit;having the 
 # data for the cockpit saved from this plugin is a temporary solution.
-CockpitDataPath="/cockpit/data"
+
+CockpitDataPath=script_path+"/data"
 
 ##############################################################################
 #                               Code starts                                  #
