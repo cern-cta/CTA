@@ -1,2 +1,2 @@
-umask 0222; nsmkdir -p <nsDir>/child; echo $?
+umask 0472; nsmkdir -p <nsDir>/child; echo $?
 nsls -ld <nsDir>; echo $?
