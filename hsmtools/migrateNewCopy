@@ -31,7 +31,7 @@ import castor_tools
 
 # usage function
 def usage(exitCode):
-  print 'Usage : ' + sys.argv[0] + ' [-h|--help] fileId [...]'
+  print 'Usage : ' + sys.argv[0] + ' [-h|--help] fileId[:copynb] [...]'
   sys.exit(exitCode)
 
 # first parse the options
@@ -56,7 +56,12 @@ if len(args) == 0:
 fileids = []
 for arg in args:
   try:
-      fileids.append(int(arg))
+    if ':' in arg:
+      fid, copynb = arg.split(':')
+      fileids.append((int(fid), int(copynb)))
+    else:
+      fid = int(arg)
+      fileids.append((int(fid), 1))
   except ValueError:
       print 'Invalid argument : "' + arg + '"'
       usage(1)
@@ -66,25 +71,25 @@ try:
     stconn = castor_tools.connectToStager()
     stcur = stconn.cursor()
     stcur.arraysize = 50
-    stCheckSQL = 'SELECT Castorfile.Id FROM DiskCopy, CastorFile WHERE fileId = :fid and Castorfile.Id = DiskCopy.castorfile and status = 0'
+    stCheckSQL = 'SELECT Castorfile.Id, CastorFile.fileSize FROM DiskCopy, CastorFile WHERE fileId = :fid and Castorfile.Id = DiskCopy.castorfile and status = 0'
     cfs = []
-    for f in fileids:
-        stcur.execute(stCheckSQL, fid=f)
+    for fileid, copynb in fileids:
+        stcur.execute(stCheckSQL, fid=fileid)
         rows = stcur.fetchall()
         if len(rows) == 0:
-          print 'Fileid ' + str(f) + ' has no staged copy on disk. Giving up with the whole request'
+          print 'Fileid ' + str(fileid) + ' has no staged copy on disk. Giving up with the whole request'
           sys.exit(1)
-        cfs.append(rows[0][0])
+        cfid, fs = rows[0]
+        cfs.append((cfid, fs, copynb))
     print 'All files have been found on disk, triggering migrations'
     stMigSQL = '''DECLARE
                     tcId INTEGER;
                   BEGIN
                     UPDATE DiskCopy SET status = 10 WHERE castorFile = :cf AND status = 0;
-                    INSERT INTO TapeCopy (id, copyNb, castorFile, status) VALUES (ids_seq.nextval, 0, :cf, 0) RETURNING id INTO tcId;
-                    INSERT INTO Id2Type (id, type) VALUES (tcId, 30); -- OBJ_TapeCopy
+                    initMigration(:cf, :fs, NULL, NULL, :cn, tconst.MIGRATIONJOB_PENDING);
                   END;'''
-    for f in cfs:
-        stcur.execute(stMigSQL, cf=f)
+    for cfid, fs, copynb in cfs:
+        stcur.execute(stMigSQL, cf=cfid, fs=fs, cn=copynb)
     stconn.commit()
     castor_tools.disconnectDB(stconn)
     print "Done"
