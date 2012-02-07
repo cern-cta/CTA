@@ -1148,9 +1148,9 @@ BEGIN
                           END;',
       JOB_CLASS       => 'DLF_JOB_CLASS',
       START_DATE      => SYSDATE,
-      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=5',
+      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=10',
       ENABLED         => TRUE,
-      COMMENTS        => 'CASTOR2 Monitoring Statistics (OLD) (5 Minute Frequency)');
+      COMMENTS        => 'CASTOR2 Monitoring Statistics (OLD) (10 Minute Frequency)');
 
   -- Create a job to execute the procedures that create statistical information (NEW)
   DBMS_SCHEDULER.CREATE_JOB (
@@ -1169,10 +1169,10 @@ BEGIN
                             statsGcFiles(now);
                           END;',
       JOB_CLASS       => 'DLF_JOB_CLASS',
-      START_DATE      => SYSDATE + 10/1440,
-      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=5',
+      START_DATE      => SYSDATE + 5/1440,
+      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=10',
       ENABLED         => TRUE,
-      COMMENTS        => 'CASTOR2 Monitoring Statistics (NEW) (5 Minute Frequency)');
+      COMMENTS        => 'CASTOR2 Monitoring Statistics (NEW) (10 Minute Frequency)');
 
 END;
 /
