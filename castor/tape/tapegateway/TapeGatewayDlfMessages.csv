@@ -3,7 +3,7 @@
 3,NO_RETRY_POLICY_FOUND,"Incomplete parameters for retry policy"
 4,FATAL_ERROR,"Fatal error"
 5,PRODUCER_GETTING_TAPE,"VdqmRequestsProducer: getting a tape to submit"
-6,PRODUCER_NO_TAPE,"VdqmRequestsProducer: no tape retrieved"
+6,PRODUCER_NO_TAPE_REPL_6,"VdqmRequestsProducer: no tape retrieved"
 7,PRODUCER_TAPE_FOUND,"VdqmRequestsProducer: no tape to submit"
 8,PRODUCER_CANNOT_UPDATE_DB,"VdqmRequestsProducer: cannot update db"
 9,PRODUCER_QUERYING_VMGR,"VdqmRequestsProducer: querying vmgr"
