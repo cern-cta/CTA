@@ -1344,7 +1344,11 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker(
       castor::dlf::Param("errorcode", endRequest.errorCode()),
       castor::dlf::Param("errorMessage", endRequest.errorMessage())
   };
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_FAIL_NOTIFICATION,params);
+  // Depending on the error we get, this can be an innocent end of tape or something else.
+  // The ENOSPC case is business as usual. Rest remains an error.
+  castor::dlf::dlf_writep(nullCuuid,
+      (endRequest.errorCode() == ENOSPC)?DLF_LVL_SYSTEM:DLF_LVL_ERROR,
+      WORKER_FAIL_NOTIFICATION,paramis);
 
   response->setMountTransactionId(endRequest.mountTransactionId());
   response->setAggregatorTransactionId(endRequest.aggregatorTransactionId());
@@ -2705,7 +2709,7 @@ void castor::tape::tapegateway::WorkerThread::logMigrationNsFailure (Cuuid_t uui
       castor::dlf::Param("errorCode",sstrerror(e.code())),
       castor::dlf::Param("errorMessage",e.getMessage().str())
   };
-  castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, WORKER_MIGRATION_NS_FAILURE, params,castorFileId);
+  castor::dlf::dlf_writep(uuid, DLF_LVL_WARN, WORKER_MIGRATION_NS_FAILURE, params,castorFileId);
 }
 
 void castor::tape::tapegateway::WorkerThread::logMigrationDbUpdate (Cuuid_t uuid, struct Cns_fileid* castorFileId,
