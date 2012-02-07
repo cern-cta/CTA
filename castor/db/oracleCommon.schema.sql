@@ -491,12 +491,6 @@ CREATE GLOBAL TEMPORARY TABLE DeleteTermReqHelper
   (srId NUMBER, cfId NUMBER)
   ON COMMIT PRESERVE ROWS;
 
-/* Global temporary table used in streamsToDo to temporarily
- * store interesting streams.
- */
-CREATE GLOBAL TEMPORARY TABLE StreamsToDoHelper (id NUMBER)
-  ON COMMIT DELETE ROWS;
-
 /* Global temporary table to handle output of the processBulkRequest procedure */
 CREATE GLOBAL TEMPORARY TABLE getFileIdsForSrsHelper (rowno NUMBER, fileId NUMBER, nsHost VARCHAR(2048))
   ON COMMIT DELETE ROWS;
