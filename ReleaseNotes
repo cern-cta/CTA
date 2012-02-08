@@ -1,4 +1,135 @@
 ------------
+- 2.1.12-1 -
+------------
+
+  Summary
+  -------
+
+  - this release is a bug fix release on top of 2.1.12-0
+    No new major feature has been included. The list of bug fixes and minor improvements is given below.
+
+  Note
+  ----
+
+  - the test suite has been improved in this release, in particular around the nameserver tests
+    This revealed an ancient bug that has not yet been fixed :
+      bug #91280: nstouch cannot selectively update access or modification time
+    As a consequence, it is considered normal that the test cases touch_updateFileAccess and
+    touch_updateFileModification are failing.
+
+
+  CASTOR Central daemons
+  ----------------------
+
+  [Features]
+    - #89708 limitations on privileges length in Cupv commands
+
+
+  CASTOR Stager
+  -------------
+
+  [Bug]
+    - #91317: Allow huge files to be recalled
+    - #91316: Fixed migrateNewCopy for 2.1.12 schema
+    - #91261: DLF chokes on changed log messages
+    - #90938: GC drops disk-only files if they are overwritten
+    - #90548: Broken logic when restarting subrequests waiting on recalls
+    - #89630: stager leaves failed subrequests behind in status 10
+    - #87426: stager_qry may not show STAGEIN when it should
+
+
+  CASTOR Scheduler
+  -------------
+
+  [Bug]
+    - #90083: transfermanager wrongly rebuilds its list of running d2dsrc
+
+
+  CASTOR Tape Gateway
+  -------------------
+
+  [Bug]
+    - #90425: Lack of logs for files in retry in tapegateway
+
+  [Features]
+    - #90343: RFE: Add name-server file-id to mismatch error message
+    - #73546: RFE: Tape-gateway worker-thread should handle ENSTOOMANYSEGS and ENSCLASSNOSEGS
+
+
+  Upgrade Instructions from 2.1.12-0
+  ----------------------------------
+
+    Before upgrading to a 2.1.12-1 instance of CASTOR2 please make sure to read
+    the upgrade instructions fully before proceeding.
+
+    Stager, DLF and Repack
+    ----------------------
+
+    The upgrade of the stager database to 2.1.12-1 can be performed online while the system is running.
+    The RPM upgrade can also be performed on a running system, with 2 restrictions:
+      - the restart of the RH servers may be noticable by few clients (< 1s downtime);
+      - the restart of the transfermanagers and diskmanagers should not be done concurrently.
+
+      Instructions
+      ------------
+
+       1. Upgrade the STAGER database using the stager_2.1.12-0_to_2.1.12-1.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.12-*/2.1.12-1/dbupgrades
+
+       2. Upgrade the DLF database using the dlf_2.1.12-0_to_2.1.12-1.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.12-*/2.1.12-1/dbupgrades
+       
+       3. Upgrade the software on the headnodes.
+          Note: All daemons involved in the upgrade will be restarted automatically.
+
+       5. Upgrade the software on the diskservers.
+          Note: All daemons involved in the upgrade will be restarted automatically.
+
+       6. Test the instance by running the test suite available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.12-*/2.1.12-1/testsuite
+
+       7. Congratulations you have successfully upgraded to the 2.1.12-1 release
+          of CASTOR.
+
+
+    Central services (CUPV, VMGR, VDQM, Nameserver)
+    -----------------------------
+
+      The upgrade of the central databases to 2.1.12-1 can be performed online while
+      the system is running.
+
+      Instructions 
+      ------------
+
+       1. Apply the appropriate database upgrade script from:
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.12-*/2.1.12-1/dbupgrades
+
+       2. Update the software to use the 2.1.12-1 RPMS. Note: All
+          daemons involved in the upgrade will be restarted automatically.
+
+       3. Upgrade complete.
+
+
+    Monitoring
+    ----------
+
+      The upgrade of the MONITORING database can be performed online while the
+      system is running.
+
+      Instructions
+      ------------
+
+       1. Upgrade the MONITORING database using the mon_2.1.12-0_to_2.1.12-1.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.12-*/2.1.12-1/dbupgrades
+
+       2. Upgrade complete.
+
+
+
+------------
 - 2.1.12-0 -
 ------------
 
