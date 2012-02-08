@@ -37,6 +37,17 @@ def nsDir(self, nb=0):
     return (lambda test :  self.getTag(test, 'genericPath') + os.sep + test + str(nb))
 Setup.getTag_nsDir = nsDir
 
+def nsFile(self, nb=0):
+    print 'inside nsFile',self,self.getTag
+    try: 
+	return (lambda test :  self.getTag(test, 'nsDir'))
+    except Exception,e:
+	import traceback
+	traceback.print_stack()
+	print e
+	raise e
+Setup.getTag_nsFile = nsFile
+
 
 ##################
 ### ns cleanup ###
