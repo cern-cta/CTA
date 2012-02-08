@@ -1,0 +1,2 @@
+nstouch <nsFile>; nschmod 754 <nsFile>; echo $?
+nsls -l <nsFile>

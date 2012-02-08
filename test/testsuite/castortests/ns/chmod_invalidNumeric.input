@@ -1,0 +1,2 @@
+umask 0022; nstouch <nsFile>; nschmod 789 <nsFile>; echo $?
+nsls -l <nsFile>

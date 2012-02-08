@@ -1,0 +1,6 @@
+umask 0022; nstouch <nsFile>; echo $?
+# Touch the file but print the year so that it may be caught and saved in the output tag.
+# Must be on the same line as vars are reset between lines
+futureYear=`expr 10 + \`date +%Y\``; nstouch -t "$futureYear"01010101 <nsFile>; echo $?; echo $futureYear
+nsls -l <nsFile>
+nsls -lu <nsFile>

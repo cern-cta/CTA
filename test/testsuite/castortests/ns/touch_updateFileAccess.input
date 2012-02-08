@@ -1,0 +1,5 @@
+umask 0022; date +%R && nstouch <nsFile>; echo $?
+sleep `expr 60 - \`date +%S\` + 1` 			# Must wait for the minutes to change, plus an extra second just to be sure
+date +%R && nstouch -a <nsFile>; echo $?
+nsls -l <nsFile>
+nsls -lu <nsFile>
