@@ -1,2 +1,2 @@
-echo 'printf("Hello World !\n");#.q' | sed 's/#/\n/g' > <tmpLocalFileName>
+echo 'printf("Hello World !");.q' | sed 's/;/;\n/g' > <tmpLocalFileName>
 cat <tmpLocalFileName> | <rootbin>
