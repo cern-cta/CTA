@@ -1,2 +1,2 @@
 nsmkdir <nsDir>; nstouch <nsDir>/child; nschmod -R 7777 <nsDir>; echo $?
-nsls -l <nsDir>/child
+nsls -l <nsDir>/child | sed "s/  */ /g"

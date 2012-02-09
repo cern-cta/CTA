@@ -1,2 +1,2 @@
 umask 0022; nstouch <nsFile>; echo $?
-nsls -l <nsFile>
+nsls -l <nsFile> | sed "s/  */ /g"

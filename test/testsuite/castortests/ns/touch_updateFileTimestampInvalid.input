@@ -1,4 +1,4 @@
 umask 0022; nstouch <nsFile>; echo $?
 nstouch -t 987654456789 <nsFile>; echo $?
-nsls -l <nsFile>
-nsls -lu <nsFile>
+nsls -l <nsFile> | sed "s/  */ /g"
+nsls -lu <nsFile> | sed "s/  */ /g"
