@@ -180,7 +180,11 @@ BEGIN
                  AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
                  AND DiskServer.id = FileSystem.diskServer
                  AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
-            ORDER BY DBMS_Random.value)
+            ORDER BY -- order by rate as defined by the function
+                     fileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
+                                    FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams) DESC,
+                     -- use randomness to avoid preferring always the same FS when everything is idle
+                     DBMS_Random.value)
     LOOP
       diskServerName := a.name;
       rmountPoint    := a.mountPoint;

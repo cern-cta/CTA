@@ -258,7 +258,7 @@ CREATE TABLE MigrationJob (fileSize INTEGER CONSTRAINT NN_MigrationJob_FileSize 
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE INDEX I_MigrationJob_CFVID ON MigrationJob(castorFile, VID);
 CREATE INDEX I_MigrationJob_TapePoolSize ON MigrationJob(tapePool, fileSize);
-CREATE UNIQUE INDEX I_MigrationJob_TapePoolStatusId ON MigrationJob(tapePool, status, id);
+CREATE UNIQUE INDEX I_MigrationJob_TPStatusId ON MigrationJob(tapePool, status, id);
 CREATE UNIQUE INDEX I_MigrationJob_CFCopyNb ON MigrationJob(castorFile, destCopyNb);
 ALTER TABLE MigrationJob ADD CONSTRAINT UN_MigrationJob_CopyNb UNIQUE (castorFile, destCopyNb) USING INDEX I_MigrationJob_CFCopyNb;
 ALTER TABLE MigrationJob ADD CONSTRAINT FK_MigrationJob_CastorFile
@@ -698,6 +698,31 @@ INSERT INTO GcPolicy VALUES ('LRU',
                              'castorGC.LRUFirstAccessHook',
                              'castorGC.LRUAccessHook',
                              NULL);
+
+/*********************/
+/* FileSystem rating */
+/*********************/
+
+/* Computes a 'rate' for the filesystem which is an agglomeration
+   of weight and fsDeviation. The goal is to be able to classify
+   the fileSystems using a single value and to put an index on it */
+CREATE OR REPLACE FUNCTION fileSystemRate
+(readRate IN NUMBER,
+ writeRate IN NUMBER,
+ nbReadStreams IN NUMBER,
+ nbWriteStreams IN NUMBER,
+ nbReadWriteStreams IN NUMBER)
+RETURN NUMBER DETERMINISTIC IS
+BEGIN
+  RETURN - nbReadStreams - nbWriteStreams - nbReadWriteStreams;
+END;
+/
+
+/* FileSystem index based on the rate. */
+CREATE INDEX I_FileSystem_Rate
+    ON FileSystem(fileSystemRate(readRate, writeRate,
+                                 nbReadStreams, nbWriteStreams, nbReadWriteStreams));
+
 
 /************/
 /* Aborting */

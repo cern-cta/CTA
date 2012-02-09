@@ -55,6 +55,99 @@ INSERT INTO UpgradeLog (schemaVersion, release, type)
 VALUES ('2_1_9_7', '2_1_12_1', 'TRANSPARENT');
 COMMIT;
 
+/* Update and revalidation of PL-SQL code */
+/******************************************/
+
+BEGIN
+  -- Remove scheduler jobs before recreation
+  FOR a IN (SELECT job_name FROM user_scheduler_jobs)
+  LOOP
+    DBMS_SCHEDULER.DROP_JOB(a.job_name, TRUE);
+  END LOOP;
+
+  -- Create a db job to be run every day and create new partitions
+  DBMS_SCHEDULER.CREATE_JOB(
+      JOB_NAME        => 'createPartitionsJob',
+      JOB_TYPE        => 'STORED_PROCEDURE',
+      JOB_ACTION      => 'createPartitions',
+      JOB_CLASS       => 'DLF_JOB_CLASS',
+      START_DATE      => TRUNC(SYSDATE) + 1/24,
+      REPEAT_INTERVAL => 'FREQ=DAILY',
+      ENABLED         => TRUE,
+      COMMENTS        => 'Daily partitioning creation');
+
+  -- Create a db job to be run every day and drop old data from the database
+  DBMS_SCHEDULER.CREATE_JOB(
+      JOB_NAME        => 'dropPartitionsJob',
+      JOB_TYPE        => 'PLSQL_BLOCK',
+      JOB_ACTION      => 'BEGIN
+                            dropPartitions();
+                            FOR a IN (SELECT table_name FROM user_tables
+                                       WHERE table_name LIKE ''ERR_%'')
+                            LOOP
+                              EXECUTE IMMEDIATE ''TRUNCATE TABLE ''||a.table_name;
+                            END LOOP;
+                          END;',
+      JOB_CLASS       => 'DLF_JOB_CLASS',
+      START_DATE      => TRUNC(SYSDATE) + 2/24,
+      REPEAT_INTERVAL => 'FREQ=DAILY',
+      ENABLED         => TRUE,
+      COMMENTS        => 'Daily data removal');
+
+  -- Create a job to execute the procedures that create statistical information (OLD)
+  DBMS_SCHEDULER.CREATE_JOB (
+      JOB_NAME        => 'statisticJob',
+      JOB_TYPE        => 'PLSQL_BLOCK',
+      JOB_ACTION      => 'DECLARE
+                            now DATE := SYSDATE;
+                            interval NUMBER := 300;
+                          BEGIN
+                            statsLatency(now, interval);
+                            statsQueueTime(now, interval);
+                            statsGarbageCollection(now, interval);
+                            statsRequest(now, interval);
+                            statsDiskCacheEfficiency(now, interval);
+                            statsMigratedFiles(now, interval);
+                            statsRecalledFiles(now, interval);
+                            statsReplication(now, interval);
+                            statsTapeRecalled(now, interval);
+                            statsProcessingTime(now, interval);
+                            statsClientVersion(now, interval);
+                            statsTapeMounts(now, interval);
+                            statsTop10Errors(now, interval);
+                          END;',
+      JOB_CLASS       => 'DLF_JOB_CLASS',
+      START_DATE      => SYSDATE,
+      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=10',
+      ENABLED         => TRUE,
+      COMMENTS        => 'CASTOR2 Monitoring Statistics (OLD) (10 Minute Frequency)');
+
+  -- Create a job to execute the procedures that create statistical information (NEW)
+  DBMS_SCHEDULER.CREATE_JOB (
+      JOB_NAME        => 'populateJob',
+      JOB_TYPE        => 'PLSQL_BLOCK',
+      JOB_ACTION      => 'DECLARE
+                            now DATE := SYSDATE - 10/1440;
+                          BEGIN
+                            EXECUTE IMMEDIATE ''TRUNCATE TABLE ERR_Requests'';
+                            statsReqs(now);
+                            statsDiskCopy(now);
+                            statsInternalDiskCopy(now);
+                            statsTapeRecall(now);
+                            statsMigs(now);
+                            statsTotalLat(now);
+                            statsGcFiles(now);
+                          END;',
+      JOB_CLASS       => 'DLF_JOB_CLASS',
+      START_DATE      => SYSDATE + 5/1440,
+      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=10',
+      ENABLED         => TRUE,
+      COMMENTS        => 'CASTOR2 Monitoring Statistics (NEW) (10 Minute Frequency)');
+
+END;
+/
+
+
 /* Recompile all invalid procedures, triggers and functions */
 /************************************************************/
 BEGIN

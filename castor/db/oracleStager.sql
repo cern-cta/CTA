@@ -1551,8 +1551,7 @@ BEGIN
               AND SubRequest.status = 9 -- FAILED_FINISHED
            HAVING COUNT(*) >= 10)
        ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
-                               FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams,
-                               FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC,
+                               FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams) DESC,
                 DBMS_Random.value)
    WHERE ROWNUM < 2;
 EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -1583,8 +1582,7 @@ BEGIN
        AND DiskServer.status = 0 -- PRODUCTION
        AND DiskCopy.status IN (0, 6, 10)  -- STAGED, STAGEOUT, CANBEMIGR
      ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
-                             FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams,
-                             FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC,
+                             FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams) DESC,
               DBMS_Random.value)
    WHERE rownum < 2;
 EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -1851,7 +1849,11 @@ BEGIN
              AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
              AND DiskServer.id = FileSystem.diskServer
              AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
-        ORDER BY DBMS_Random.value)   -- use randomness to avoid preferring always the same FS
+        ORDER BY -- order by rate as defined by the function
+                 fileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
+                                FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams) DESC,
+                 -- finally use randomness to avoid preferring always the same FS
+                 DBMS_Random.value)
    WHERE ROWNUM < 2;
   -- compute it's gcWeight
   gcwProc := castorGC.getRecallWeight(svcClassId);
@@ -2026,8 +2028,7 @@ BEGIN
     OPEN sources
       FOR SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ DiskCopy.id, DiskCopy.path, DiskCopy.status,
                  FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
-                                FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams,
-                                FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) fsRate,
+                                FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams) fsRate,
                  FileSystem.mountPoint, DiskServer.name
             FROM DiskCopy, SubRequest, FileSystem, DiskServer, DiskPool2SvcClass
            WHERE SubRequest.id = srId
