@@ -249,7 +249,7 @@ def compareOutput(setup, output, gold, testName, localTags):
         # check if there is any tag to process in gold
         tagIndex = gold.find('<', goldIndex)
         if tagIndex == -1:
-            assert output[outIndex:] == gold[goldIndex:], \
+            assert output[outIndex:].rstrip() == gold[goldIndex:].rstrip(), \
                    buildErrorMsg(setup, "Mismatch in output", output, gold, outIndex, len(output), goldIndex, len(gold))
             break
         # else compare texts before the tag
