@@ -12,10 +12,11 @@
   ----
 
   - the test suite has been improved in this release, in particular around the nameserver tests
-    This revealed an ancient bug that has not yet been fixed :
-      bug #91280: nstouch cannot selectively update access or modification time
-    As a consequence, it is considered normal that the test cases touch_updateFileAccess and
-    touch_updateFileModification are failing.
+    This revealed ancient bugs that have not yet been fixed :
+      + bug #91280: nstouch cannot selectively update access or modification time
+      + bug #91080: nsmkdir truncates mode if it's somewhat valid but too long
+    As a consequence, it is considered normal that the test cases touch_updateFileAccess,
+    touch_updateFileModification and ns_mkdir_invalidModeTooLong are failing.
 
 
   CASTOR Central daemons
