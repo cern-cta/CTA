@@ -73,6 +73,7 @@ rununittests: \
   exception_TimeOut.o \
   exception_TooBig.o \
   exception_NoPortInRange.o \
+  exception_NoValue.o \
   exception_TapeNetAcceptInterrupted.o \
   exception_PermissionDenied.o \
   exception_OutOfMemory.o \
@@ -210,15 +211,18 @@ rununittests: \
   tapebridge_DlfMessageStrings.o \
   tapebridge_FileToMigrate.o \
   tapebridge_FileToRecall.o \
+  tapebridge_GetMoreWorkConnection.o \
   tapebridge_LegacyTxRx.o \
   tapebridge_LogHelper.o \
   tapebridge_marshall.o \
+  tapebridge_MigrationReportConnection.o \
   tapebridge_PendingMigrationsStore.o \
   tapebridge_recvTapeBridgeFlushedToTapeAck.o \
-  tapebridge_SessionError.o \
   tapebridge_RtcpTxRx.o \
+  tapebridge_SessionError.o \
   tapebridge_sendTapeBridgeClientInfo2Ack.o \
   tapebridge_sendTapeBridgeFlushedToTape.o \
+  tapebridge_SystemFileCloser.o \
   tapebridge_TapeFlushConfigParams.o \
   tapebridge_tapeFlushModeToStr.o \
   tapebridge_VmgrTxRx.o \
@@ -278,6 +282,8 @@ runUnitTestsMain.cpp: \
   castor/tape/tapebridge/BulkRequestConfigParamsTest.hpp \
   castor/tape/tapebridge/FileToMigrateTest.hpp \
   castor/tape/tapebridge/FileToRecallTest.hpp \
+  castor/tape/tapebridge/GetMoreWorkConnectionTest.hpp \
+  castor/tape/tapebridge/MigrationReportConnectionTest.hpp \
   castor/tape/tapebridge/TapeFlushConfigParamsTest.hpp \
   castor/tape/tapebridge/PendingMigrationsStoreTest.hpp \
   castor/tape/tapebridge/SessionErrorTest.hpp \
@@ -440,6 +446,9 @@ exception_TooBig.o: $(ROOT_DIR)/castor/exception/TooBig.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 exception_NoPortInRange.o: $(ROOT_DIR)/castor/exception/NoPortInRange.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+exception_NoValue.o: $(ROOT_DIR)/castor/exception/NoValue.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 exception_TapeNetAcceptInterrupted.o: \
@@ -971,6 +980,10 @@ tapebridge_FileToRecall.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/FileToRecall.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
+tapebridge_GetMoreWorkConnection.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/GetMoreWorkConnection.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
 tapebridge_LegacyTxRx.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/LegacyTxRx.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
@@ -981,6 +994,10 @@ tapebridge_LogHelper.o: \
 
 tapebridge_marshall.o: $(ROOT_DIR)/tapebridge/tapebridge_marshall.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapebridge_MigrationReportConnection.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/MigrationReportConnection.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapebridge_PendingMigrationsStore.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/PendingMigrationsStore.cpp
@@ -1005,6 +1022,10 @@ tapebridge_sendTapeBridgeClientInfo2Ack.o: \
 tapebridge_sendTapeBridgeFlushedToTape.o: \
   $(ROOT_DIR)/tapebridge/tapebridge_sendTapeBridgeFlushedToTape.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapebridge_SystemFileCloser.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/SystemFileCloser.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapebridge_TapeBridgeDaemon.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/TapeBridgeDaemon.cpp

@@ -33,6 +33,10 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+namespace castor     {
+namespace tape       {
+namespace tapebridge {
+
 class SessionErrorTest: public CppUnit::TestFixture {
 public:
 
@@ -164,5 +168,9 @@ public:
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION(SessionErrorTest);
+
+} // namespace tapebridge
+} // namespace tape
+} // namespace castor
 
 #endif // TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_SESSIONERRORTEST_HPP

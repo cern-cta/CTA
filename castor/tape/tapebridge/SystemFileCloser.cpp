@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/tapebridge/RtcpdControlConnFSM.hpp
+ *                castor/tape/tapebridge/SystemFileCloser.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,46 +19,22 @@
  *
  *
  *
- *
- * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
-#ifndef _CASTOR_TAPE_TAPEBRIDGE_RTCPDCONTROLCONNFSM_HPP_
-#define _CASTOR_TAPE_TAPEBRIDGE_RTCPDCONTROLCONNFSM_HPP_
 
-namespace castor     {
-namespace tape       {
-namespace tapebridge {
-    
-/**
- */
-class RtcpdControlConnFSM {
-public:
+#include "castor/tape/tapebridge/SystemFileCloser.hpp"
 
-  enum State {
-    IDLE,
-    SENDING_REQUEST_FOR_FILE_TO_CLIENT,
-    WAITING_FOR_FILE_FROM_CLIENT,
-    SENDING_FILE_TO_RTCPD,
-    SENDING_NO_MORE_FILES_TO_RTCPD,
-    SENDING_ACK_OF_TRANSFERED_TO_RTCPD,
-    SENDING_TRANSFERED_TO_CLIENT,
-    WAITING_FOR_ACK_FROM_CLIENT
-  };
+//-----------------------------------------------------------------------------
+// destructor
+//-----------------------------------------------------------------------------
+castor::tape::tapebridge::SystemFileCloser::~SystemFileCloser() throw() {
+  // Do nothing
+}
 
-  /**
-   * operator() which takes no parameters and returns a boolean.
-   */
-  virtual bool operator()() = 0;
 
-  /**
-   * Virtual destructor.
-   */
-  virtual ~RtcpdControlConnFSM() throw();
-
-}; // class RtcpdControlConnFSM
-
-} // namespace tapebridge
-} // namespace tape
-} // namespace castor      
-
-#endif // _CASTOR_TAPE_TAPEBRIDGE_RTCPDCONTROLCONNFSM_HPP_
+//-----------------------------------------------------------------------------
+// close
+//-----------------------------------------------------------------------------
+int castor::tape::tapebridge::SystemFileCloser::close(const int fd) {
+  return close(fd);
+}

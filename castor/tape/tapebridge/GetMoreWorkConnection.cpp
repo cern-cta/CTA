@@ -1,5 +1,5 @@
 /******************************************************************************
- *                h/tapebridge_tapeFlushModeToStr.h
+ *                      castor/tape/tapebridge/GetMoreWorkConnection.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,27 +18,31 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- *
+ * 
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef H_TAPEBRIDGE_TAPEFLUSHMODETOSTR_H
-#define H_TAPEBRIDGE_TAPEFLUSHMODETOSTR_H 1
+#include "castor/tape/tapebridge/GetMoreWorkConnection.hpp"
 
-#include "h/osdep.h"
 
-#include <stdint.h>
+//-----------------------------------------------------------------------------
+// constructor
+//-----------------------------------------------------------------------------
+castor::tape::tapebridge::GetMoreWorkConnection::GetMoreWorkConnection() {
+  clear();
+}
 
-/**
- * Returns a pointer to the string literal representing the specified
- * tape-flush mode.  If the tape-flush mode is unknown then a pointer to the
- * string literal "UNKNOWN" is returned.
- *
- * @return A pointer to the string literal representing the specified
- *         tape-flush mode, or a pointer to the string literal "UNKNOWN" if the
- *         tape-flush mode is unknown.
- */
-EXTERN_C const char *tapebridge_tapeFlushModeToStr(
-  const uint32_t tapeFlushMode);
 
-#endif /* H_TAPEBRIDGE_TAPEFLUSHMODETOSTR_H */
+//----------------------------------------------------------------------------
+// clear
+//----------------------------------------------------------------------------
+void castor::tape::tapebridge::GetMoreWorkConnection::clear() {
+  rtcpdSock                  = -1;
+  rtcpdReqMagic              = 0;
+  rtcpdReqType               = 0;
+  clientSock                 = -1;
+  aggregatorTransactionId    = 0;
+  rtcpdReqTapePath           = "";
+  clientReqTimeStamp.tv_sec  = 0;
+  clientReqTimeStamp.tv_usec = 0;
+}

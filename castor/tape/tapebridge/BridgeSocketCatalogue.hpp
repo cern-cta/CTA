@@ -22,14 +22,20 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPEBRIDGE_BRIDGESOCKETCATALOGUE
-#define CASTOR_TAPE_TAPEBRIDGE_BRIDGESOCKETCATALOGUE
+#ifndef CASTOR_TAPE_TAPEBRIDGE_BRIDGESOCKETCATALOGUE_HPP
+#define CASTOR_TAPE_TAPEBRIDGE_BRIDGESOCKETCATALOGUE_HPP 1
 
 #include "castor/exception/Exception.hpp"
+#include "castor/exception/InvalidArgument.hpp"
+#include "castor/exception/NoValue.hpp"
 #include "castor/exception/TimeOut.hpp"
+#include "castor/tape/tapebridge/GetMoreWorkConnection.hpp"
+#include "castor/tape/tapebridge/IFileCloser.hpp"
+#include "castor/tape/tapebridge/MigrationReportConnection.hpp"
 #include "h/Castor_limits.h"
 
 #include <list>
+#include <set>
 #include <stdint.h>
 #include <string.h>
 #include <sys/select.h>
@@ -65,8 +71,12 @@ public:
 
   /**
    * Constructor.
+   *
+   * @param fileCloser The object used to close file-descriptors.  The main
+   *                   goal of this object to facilitate in unit-testing the
+   *                   BridgeSocketCatalogue.
    */
-  BridgeSocketCatalogue();
+  BridgeSocketCatalogue(IFileCloser &fileCloser);
 
   /**
    * Destructor.
@@ -84,8 +94,9 @@ public:
    * Adds to the catalogue the listen socket used to listen for and accept
    * RTCPD callback connections.
    *
-   * This method throws an exception if the specifed socket-descriptor is
-   * negative.
+   * This method throws a castor::exception::InvalidArgument exception if the
+   * specified socket-descriptor is negative or equal to or greater than
+   * FD_SETSIZE.
    *
    * This method throws an exception if the socket-descriptor of the listen
    * socket has already been entered into the catalogue.
@@ -93,13 +104,14 @@ public:
    * @param listenSock The socket-descriptor of the listen socket.
    */
   void addListenSock(const int listenSock)
-    throw(castor::exception::Exception);
+    throw(castor::exception::InvalidArgument, castor::exception::Exception);
 
   /**
    * Adds to the catalogue the initial rtpcd-connection.
    *
-   * This method throws an exception if the specifed socket-descriptor is
-   * negative.
+   * This method throws a castor::exception::InvalidArgument exception if the
+   * specified socket-descriptor is negative or equal to or greater than
+   * FD_SETSIZE.
    *
    * This method throws an exception if the socket-descriptor of the initial
    * rtcpd connection has already been entered into the catalogue.
@@ -108,7 +120,7 @@ public:
    *                         connection.
    */
   void addInitialRtcpdConn(const int initialRtcpdSock)
-    throw(castor::exception::Exception);
+    throw(castor::exception::InvalidArgument, castor::exception::Exception);
 
   /**
    * Returns and releases the socket-descriptor of the iniial rtpcd-connection.
@@ -121,8 +133,9 @@ public:
   /**
    * Adds to the catalogue an rtcpd disk/tape IO control-connection.
    *
-   * This method throws an exception if the specifed socket-descriptor is
-   * negative.
+   * This method throws a castor::exception::InvalidArgument exception if the
+   * specified socket-descriptor is negative or equal to or greater than
+   * FD_SETSIZE.
    *
    * This method throws an exception if the specified socket-descriptor has
    * already been added to the catalogue as that of an rtcpd disk or tape IO
@@ -132,48 +145,7 @@ public:
    *                  control-connection.
    */
   void addRtcpdDiskTapeIOControlConn(const int rtcpdSock)
-    throw(castor::exception::Exception);
-
-  /**
-   * Associates the specified client connection with that of the
-   * specified rtcpd disk/tape IO control-connection.  The association means
-   * the rtcpd control-connection is awaiting a reply from the client
-   * connection.
-   *
-   * This method throws an exception if either of the specified
-   * socket-descriptors are negative.
-   *
-   * This method throws an exception if the specified socket-descriptor of
-   * the rtcpd disk/tape IO control-connection is not known to the catalogue.
-   *
-   * This method throws an exception if the specified association already
-   * exists in the catalogue.
-   *
-   * @param rtpcdSock        The socket-descriptor of the rtcpd disk/tape IO
-   *                         control-connection that is awaiting a reply from
-   *                         the specified client connection.
-   * @param rtcpdReqMagic    The magic number of the rtcpd request.  This magic
-   *                         number will be used in any acknowledge message to
-   *                         be sent to rtcpd.
-   * @param rtpcdReqTapePath The tape path associated with the rtcpd request.
-   *                         If there is no such tape path then this parameter
-   *                         should be passed NULL.
-   * @param rtcpdReqType     The request type of the rtcpd request. The request
-   *                         type will be used in any acknowledge message to be
-   *                         sent to rtcpd.
-   * @param clientSock       The socket-descriptor of the client connection
-   *                         from which a reply is expected.
-   * @param aggregatorTransactionId The tapebridge transaction ID associated
-   *                         with the client request.
-   */
-  void addClientConn(
-    const int      rtcpdSock,
-    const uint32_t rtcpdReqMagic,
-    const uint32_t rtcpdReqType,
-    const char     (&rtcpdReqTapePath)[CA_MAXPATHLEN+1],
-    const int      clientSock,
-    const uint64_t aggregatorTransactionId)
-    throw(castor::exception::Exception);
+    throw(castor::exception::InvalidArgument, castor::exception::Exception);
 
   /**
    * Returns the socket-descriptor of the listen socket used to listen for and
@@ -196,17 +168,16 @@ public:
    * Releases the specified rtcpd disk/tape IO control-connection from the
    * catalogue.
    *
-   * If the there is an associated client-connection then the underlying
-   * rtcpd-connection entry is kept within the socket-catalogue so that the
-   * getRtcpdConn() method will still return successfully.  In this case the
-   * rtcpd socket file-descriptor of the rtcpd-connectione ntry to -1 to
-   * indicate that it has been released from the socket-catalogue.
+   * The specified rtcpd disk/tape IO control-connection is removed from the
+   * set of all rtcpd connections.
    *
-   * If there is no associated client-connection then the underlying
-   * rtcpd-connection entry is erased from the socket-catalogue.
+   * If the specified rtcpd disk/tape IO control-connection is associated with
+   * the client "get more work" connection then the rtcpd socket
+   * file-descriptor of the association will be set to -1 to indicate that it
+   * has been released from the socket-catalogue.
    *
-   * This method throws an exception if the specifed socket-descriptor is
-   * negative.
+   * This method throws a castor::exception::InvalidArgument exception if the
+   * specified socket-descriptor is negative.
    *
    * This method throws an exception if the specified socket-descriptor does
    * not exist in the catalogue as an rtcpd disk/tape IO control-connection.
@@ -220,88 +191,125 @@ public:
    *                  control-connection.
    */
   int releaseRtcpdDiskTapeIOControlConn(const int rtcpdSock)
-    throw(castor::exception::Exception);
+    throw(castor::exception::InvalidArgument, castor::exception::Exception);
 
   /**
-   * Unassociates the specified client connection from the specified
-   * rtcpd disk/tape IO control-connection and releases it from the catalogue.
-   * The release means the destructor of the catalogue will no longer close the
-   * client connection.
+   * Sets the socket-descriptor of the pending client "get more work"
+   * connection.
    *
-   * The status of the rtcpd disk/tape IO control-connection is not changed by
-   * this method.
+   * A pending client "get more work" connection is a connection that has been
+   * made with the client and then had a FilesToMigrateListRequest or a
+   * FilesToRecallListRequest sent over it.
    *
-   * This method throws an exception if either of the specified
-   * socket-descriptors are negative.
+   * There can only be one pending client "get more work" connection at any
+   * single moment in time.  The rtcpd daemon will only ask for the next file
+   * to work on after it has first received the reply to its current request.
    *
-   * This method throws an exception if the specified association does not
-   * exist in the catalogue.
+   * This method also associates the specified client connection with that of
+   * the specified rtcpd disk/tape IO control-connection.  The association
+   * means the rtcpd control-connection is awaiting a reply from the client
+   * connection.
    *
-   * @param rtcpdSock  The socket-descriptor of the rtcpd connection.
-   * @param clientSock The socket-descriptor of the client connection.
-   * @return           The socket-descriptor of the released client
-   *                   connection.
+   * This method throws a castor::exception::InvalidArgument exception if
+   * either of the specified socket-descriptors are negative or are equal to
+   * or greater than FD_SETSIZE.
+   *
+   * This method throws a castor::exception::Exception exception if both of the
+   * socket-descriptors are positive but the rtcpd disk/tape IO
+   * control-connection is not known to the catalogue.
+   *
+   * This method throws an exception if the "get more work" connection has
+   * already been set and not yet released.
+   *
+   * @param rtpcdSock        The socket-descriptor of the rtcpd disk/tape IO
+   *                         control-connection that is awaiting a reply from
+   *                         the specified client connection.
+   * @param rtcpdReqMagic    The magic number of the rtcpd request.  This magic
+   *                         number will be used in any acknowledge message to
+   *                         be sent to rtcpd.
+   * @param rtpcdReqTapePath The tape path associated with the rtcpd request.
+   *                         If there is no such tape path then this parameter
+   *                         should be passed NULL.
+   * @param rtcpdReqType     The request type of the rtcpd request. The request
+   *                         type will be used in any acknowledge message to be
+   *                         sent to rtcpd.
+   * @param clientSock       The socket-descriptor of the client connection
+   *                         from which a reply is expected.
+   * @param aggregatorTransactionId The tapebridge transaction ID associated
+   *                         with the client request.
    */
-  int releaseClientConn(const int rtcpdSock, const int clientSock)
-    throw(castor::exception::Exception);
+  void addGetMoreWorkConnection(
+    const int         rtcpdSock,
+    const uint32_t    rtcpdReqMagic,
+    const uint32_t    rtcpdReqType,
+    const std::string &rtcpdReqTapePath,
+    const int         clientSock,
+    const uint64_t    aggregatorTransactionId)
+    throw(castor::exception::InvalidArgument, castor::exception::Exception);
 
   /**
-   * Gets the rtcpd disk/tape IO control-connection associated with the
-   * specified client connection.
+   * This method returns true if the socket-descriptor of the pending client
+   * "get more work" connection is set, else this method returns false.
    *
-   * This method throws an exception if the specified socket-descriptor is
-   * is negative.
-   *
-   * This method throws an exception if the specified client connection
-   * socket-descriptor does not exist in the catalogue.
-   *
-   * @param clientSock         The socket-descriptor of the client-connection.
-   * @param rtcpdSock          Output parameter: The socket-descriptor of the
-   *                           rtcpd disk/tape IO control-connection if it is
-   *                           still open else -1.
-   * @param rtcpdReqMagic      Output parameter: The magic number of the
-   *                           initiating rtcpd request.  This magic number
-   *                           will be used in any acknowledge message to be
-   *                           sent to rtcpd.
-   * @param rtcpdReqType       Output parameter: The request type of the
-   *                           initiating rtcpd request. This request type will
-   *                           be used in any acknowledge message to be sent to
-   *                           rtcpd.
-   * @param rtcpdReqTapePath   Output parameter: The tape path associated with
-   *                           the initiating rtcpd request.  If there is no
-   *                           such tape path, then this parameter is set to
-   *                           NULL.
-   * @param aggregatorTransactionId Output parameter: The tapebridge
-   *                           transaction ID associated with the request sent
-   *                           to the client.
-   * @param clientReqTimeStamp Output parameter: The time at which the request
-   *                           was sent to the client.
+   * A pending client "get more work" connection is a connection that has been
+   * made with the client and then had a FilesToMigrateListRequest or a
+   * FilesToRecallListRequest sent over it.
    */
-  void getRtcpdConn(
-    const int             clientSock,
-    int                   &rtcpdSock,
-    uint32_t              &rtcpdReqMagic,
-    uint32_t              &rtcpdReqType,
-    const char            *&rtcpdReqTapePath,
-    uint64_t              &aggregatorTransactionId,
-    struct timeval        &clientReqTimeStamp) const
+  bool getMoreWorkConnectionIsSet() const;
+
+  /**
+   * Gets the all the information stored in the catalgue about the "get more
+   * work" connection with the client including the rtcpd disk/tape IO control
+   * connection that initiated its construction.
+   *
+   * This method throws a castor::exception::NoValue exception if the client
+   * "get more work" connection is not set
+   *
+   * @return The information about the "get more work" connection.
+   */
+  const GetMoreWorkConnection &getGetMoreWorkConnection() const
+    throw(castor::exception::NoValue, castor::exception::Exception);
+
+  /**
+   * Returns and releases the socket-descriptor of the pending client
+   * "get more work" connection.
+   *
+   * A pending client "get more work" connection is a connection that has been
+   * made with the client and then had a FilesToMigrateListRequest or a
+   * FilesToRecallListRequest sent over it.
+   *
+   * This method throws an exception if the socket-descriptor of the pending
+   * client "get more work" connection is not set.
+   */
+  int releaseGetMoreWorkClientSock()
     throw(castor::exception::Exception);
 
   /**
    * Builds the set of file descriptors to be passed to select() to see if any
    * of them are ready to read.
    *
+   * This method throws a castor::exception::NoValue exception if the
+   * socket catalogue does not contain any file-descriptors to build the set.
+   * If this exception is throw then the values of readFdSet and maxFd will be
+   * non-deterministic and should therefore be discarded by the caller.
+   *
    * @param readFdSet Output parameter: The built set of file descriptors.
    * @param maxFd     Output parameter: The maximum value of all of the file
    *                  descriptors in the set.
    */
-  void buildReadFdSet(fd_set &readFdSet, int &maxFd) const throw();
+  void buildReadFdSet(fd_set &readFdSet, int &maxFd) const
+    throw(castor::exception::NoValue, castor::exception::Exception);
 
   /**
-   * Enumeration of the three different types of socket-descriptor that can
-   * stored in the catalogue.
+   * Enumeration of the different types of socket-descriptor that can be stored
+   * in the catalogue.
    */
   enum SocketType {
+
+    /**
+     * Unknown socket type.
+     */
+    UNKNOWN,
 
     /**
      * The listen socket used to listen for and accept RTCPD callback
@@ -320,15 +328,18 @@ public:
     RTCPD_DISK_TAPE_IO_CONTROL,
 
     /**
-     * A client connection other than a migration-report connection.
+     * A pending client "get more work" connection.  This is a connection that
+     * has been made with the client and then had a FilesToMigrateListRequest
+     * or a FilesToRecallListRequest sent over it.
      */
-    CLIENT,
+    CLIENT_GET_MORE_WORK,
 
     /**
      * A client migration-report connection.
      */
     CLIENT_MIGRATION_REPORT
-  };
+
+  }; //enum SocketType
 
   /**
    * If the specified read file-descriptor set has one or more pending
@@ -359,6 +370,10 @@ public:
    * Sets the socket-descriptor of the pending client migration-report
    * connection.
    *
+   * This method will throw a castor::exception::InvalidArgument exception if
+   * the specified socket-descriptor is negative or equal to or greater than
+   * FD_SETSIZE.
+   *
    * There should only be one client migration-report connection open at any
    * moment in time and therefore this method will throw an exception if the
    * socket-descriptor is already set.
@@ -371,7 +386,7 @@ public:
    */
   void addClientMigrationReportSock(const int sock,
     const uint64_t aggregatorTransactionId)
-    throw(castor::exception::Exception);
+    throw(castor::exception::InvalidArgument, castor::exception::Exception);
 
   /**
    * This method returns true if the socket-descriptor of the client
@@ -394,7 +409,28 @@ public:
   int releaseClientMigrationReportSock(uint64_t &aggregatorTransactionId)
     throw(castor::exception::Exception);
 
+protected:
+
+  /**
+   * If the specified file-descriptor is valid (=> 0), then this method inserts
+   * file-descriptor into the specified descriptor-set and updates the
+   * specified max file-descriptor accordingly.
+   *
+   * @return True if the file-descriptor was valid and therefore inserted into
+   *         the set, else false.
+   */
+  bool ifValidInsertFdIntoSet(const int fd, fd_set &fdSet, int &maxFd) const
+    throw();
+
 private:
+
+  /**
+   * The object used to close file-descriptors.
+   *
+   * The main goal of this object to facilitate in unit-testing the
+   * BridgeSocketCatalogue.
+   */
+  IFileCloser &m_fileCloser;
 
   /**
    * The socket-descriptor of the listen socket used to listen for and accept
@@ -409,107 +445,10 @@ private:
   int m_initialRtcpdSock;
 
   /**
-   * The information stored in the socket catalogue about an individual
-   * rtcpd disk/tape IO control-connection.
-   */
-  struct RtcpdConnection {
-
-    /**
-     * The socket-descriptor of an rtcpd-connection.
-     */
-    int rtcpdSock;
-
-    /**
-     * The magic number of the rtcpd request message awaiting a reply from the
-     * client.  If there is no such rtcpd request message, then the value of
-     * this member will be 0.
-     *
-     * The primary goal of this member is to enable the tapebridge to send
-     * acknowledgement messages to rtcpd with the correct magic number, i.e.
-     * the same magic number as the initiating rtcpd request message.
-     */
-    uint32_t rtcpdReqMagic;
-
-    /**
-     * Type of the type of the rtcpd message awaiting a reply from the client.
-     * If there is no such rtcpd request message, then the value of this member
-     * will be 0.
-     *
-     * The primary goal of this member is to enable the tapebridge to send
-     * acknowledgement messages to rtcpd with the correct request type, i.e.
-     * the same request type as the initiating rtcpd request message.
-     */
-    uint32_t rtcpdReqType;
-
-    /**
-     * The value of this memeber is true if the rtcpd request message awaiting
-     * a reply has an associated tape path, else the value is false.
-     */
-    bool rtcpdReqHasTapePath;
-
-    /**
-     * The tape path associated with the rtcpd request message awaiting a reply
-     * from the client.  If there is no such tape path, then the value of this
-     * member is an empty string.
-     *
-     * Please note the rtcpdReqHasTapePath member should be used to determine
-     * whether or not the rtcpd request message has an associated tape path.
-     * The fact that this string is empty should not.
-     */
-    char rtcpdReqTapePath[CA_MAXPATHLEN+1];
-
-    /**
-     * The socket-descriptor of an associated client-connection.
-     *
-     * If the rtcpd-connection is waiting for a reply from the client, then
-     * this the value of this member is the client-connection socket-descriptor,
-     * else the value of this member is -1.
-     */
-    int clientSock;
-
-    /**
-     * If a request has been resent to the client, then this is the tapebridge
-     * transaction ID associated with that request.  If no message has been
-     * sent, then the value of this member is 0.
-     */
-    uint64_t aggregatorTransactionId;
-
-    /**
-     * If a request has been resent to the client, then this is the absolute
-     * time when the request was sent.  If no message has been sent, then the
-     * value of this member is all zeros.
-     */
-    struct timeval clientReqTimeStamp;
-
-    /**
-     * Constructor.
-     *
-     * @param rSock The socket-descriptor of the rtcpd disk/tape IO
-     *              control-connection.
-     */
-    RtcpdConnection(const int rSock) :
-      rtcpdSock(rSock),
-      rtcpdReqMagic(0),
-      rtcpdReqType(0),
-      rtcpdReqHasTapePath(false),
-      clientSock(-1),
-      aggregatorTransactionId(0) {
-      rtcpdReqTapePath[0] = '\0';
-      clientReqTimeStamp.tv_sec  = 0;
-      clientReqTimeStamp.tv_usec = 0;
-    }
-  };
-
-  /**
-   * Type used to define a list of rtcpd connections.
-   */
-  typedef std::list<RtcpdConnection> RtcpdConnectionList;
-
-  /**
-   * The list used to store information about the rtcpd disk/tape IO
-   * contol-connections.
+   * The set of the connections the rtcpd daemon has made with the tapebridged
+   * daemon.
    *
-   * The size of this list is equal to the total number of disk/tape IO
+   * The size of this set is equal to the total number of disk/tape IO
    * control-connections.  This value is used to control the "good day"
    * shutdown sequence of an rtcpd session.
    *
@@ -526,7 +465,7 @@ private:
    * <li>The rtcpd session is now successfully shutdown.
    * </ol>
    */
-  RtcpdConnectionList m_rtcpdConnections;
+  std::set<int> m_rtcpdIOControlConns;
 
   /**
    * Information about a single client request to be used to create a history
@@ -562,39 +501,14 @@ private:
   ClientReqHistoryList m_clientReqHistory;
 
   /**
-   * Structure representing a pending client migration-report connection.  This
-   * is a connection that has been opened with the client and has had a
-   * migration-report message written into it.
+   * The pending client migration-report connection.
    */
-  struct ClientMigrationReportConnection {
-
-    /**
-     * Constructor.
-     */
-    ClientMigrationReportConnection():
-      clientSock(-1),
-      aggregatorTransactionId(0) {
-      // Do nothing
-    }
-
-    /**
-     * The socket-descriptor of the client-connection if there is one, else -1
-     * if there is not.
-     */
-    int clientSock;
-
-    /**
-     * The tapebridge transaction ID associated with the migration-report
-     * message that was sent to the client.  This member of the structure
-     * should be ignored if the clientSock member is set to -1.
-     */
-    uint64_t aggregatorTransactionId;
-  };
+  MigrationReportConnection m_migrationReportConnection;
 
   /**
-   * The client migration-report connection.
+   * The pending client "get more work" connection.
    */
-  ClientMigrationReportConnection m_clientMigrationReportConnection;
+  GetMoreWorkConnection m_getMoreWorkConnection;
 
 }; // class BridgeSocketCatalogue
 
@@ -603,4 +517,4 @@ private:
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_TAPEBRIDGE_BRIDGESOCKETCATALOGUE
+#endif // CASTOR_TAPE_TAPEBRIDGE_BRIDGESOCKETCATALOGUE_HPP

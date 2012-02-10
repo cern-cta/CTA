@@ -77,8 +77,11 @@ castor::tape::tapebridge::VdqmRequestHandler::StoppingGracefullyFunctor
 // constructor
 //-----------------------------------------------------------------------------
 castor::tape::tapebridge::VdqmRequestHandler::VdqmRequestHandler(
-  const TapeFlushConfigParams &tapeFlushConfigParams, const uint32_t nbDrives)
+  const BulkRequestConfigParams &bulkRequestConfigParams,
+  const TapeFlushConfigParams   &tapeFlushConfigParams,
+  const uint32_t                nbDrives)
   throw() :
+  m_bulkRequestConfigParams(bulkRequestConfigParams),
   m_tapeFlushConfigParams(tapeFlushConfigParams),
   m_nbDrives(nbDrives) {
 }
@@ -503,9 +506,16 @@ void castor::tape::tapebridge::VdqmRequestHandler::exceptionThrowingRun(
       throw ex;
     }
 
-    BridgeProtocolEngine bridgeProtocolEngine(m_tapeFlushConfigParams, cuuid,
-      bridgeCallbackSockFd, rtcpdInitialSock.release(), jobRequest, *volume,
-      tapeInfo.nbFiles, s_stoppingGracefullyFunctor,
+    BridgeProtocolEngine bridgeProtocolEngine(
+      m_bulkRequestConfigParams,
+      m_tapeFlushConfigParams,
+      cuuid,
+      bridgeCallbackSockFd,
+      rtcpdInitialSock.release(),
+      jobRequest,
+      *volume,
+      tapeInfo.nbFiles,
+      s_stoppingGracefullyFunctor,
       tapebridgeTransactionCounter);
     bridgeProtocolEngine.run();
 
@@ -513,9 +523,16 @@ void castor::tape::tapebridge::VdqmRequestHandler::exceptionThrowingRun(
   } else {
     const uint32_t nbFilesOnDestinationTape = 0;
 
-    BridgeProtocolEngine bridgeProtocolEngine(m_tapeFlushConfigParams, cuuid,
-      bridgeCallbackSockFd, rtcpdInitialSock.release(), jobRequest, *volume,
-      nbFilesOnDestinationTape, s_stoppingGracefullyFunctor,
+    BridgeProtocolEngine bridgeProtocolEngine(
+      m_bulkRequestConfigParams,
+      m_tapeFlushConfigParams,
+      cuuid,
+      bridgeCallbackSockFd,
+      rtcpdInitialSock.release(),
+      jobRequest,
+      *volume,
+      nbFilesOnDestinationTape,
+      s_stoppingGracefullyFunctor,
       tapebridgeTransactionCounter);
     bridgeProtocolEngine.run();
   }

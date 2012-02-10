@@ -1,5 +1,5 @@
 /******************************************************************************
- *                h/tapebridge_tapeFlushModeToStr.h
+ *                      castor/tape/tapebridge/MigrationReportConnection.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,27 +18,18 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- *
+ * 
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef H_TAPEBRIDGE_TAPEFLUSHMODETOSTR_H
-#define H_TAPEBRIDGE_TAPEFLUSHMODETOSTR_H 1
+#include "castor/tape/tapebridge/MigrationReportConnection.hpp"
 
-#include "h/osdep.h"
-
-#include <stdint.h>
-
-/**
- * Returns a pointer to the string literal representing the specified
- * tape-flush mode.  If the tape-flush mode is unknown then a pointer to the
- * string literal "UNKNOWN" is returned.
- *
- * @return A pointer to the string literal representing the specified
- *         tape-flush mode, or a pointer to the string literal "UNKNOWN" if the
- *         tape-flush mode is unknown.
- */
-EXTERN_C const char *tapebridge_tapeFlushModeToStr(
-  const uint32_t tapeFlushMode);
-
-#endif /* H_TAPEBRIDGE_TAPEFLUSHMODETOSTR_H */
+//-----------------------------------------------------------------------------
+// contructor
+//-----------------------------------------------------------------------------
+castor::tape::tapebridge::MigrationReportConnection::
+  MigrationReportConnection():
+  clientSock(-1),
+  aggregatorTransactionId(0) {
+  // Do nothing
+}

@@ -35,6 +35,10 @@
 #include <exception>
 #include <stdlib.h>
 
+namespace castor     {
+namespace tape       {
+namespace tapebridge {
+
 class PendingMigrationsStoreTest: public CppUnit::TestFixture {
 
 public:
@@ -341,5 +345,9 @@ private:
 }; // class PendingMigrationsStoreTest
 
 CPPUNIT_TEST_SUITE_REGISTRATION(PendingMigrationsStoreTest);
+
+} // namespace tapebridge
+} // namespace tape
+} // namespace castor
 
 #endif // TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_PENDINGMIGRATIONSTEST_HPP

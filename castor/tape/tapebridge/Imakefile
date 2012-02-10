@@ -36,20 +36,24 @@ TAPEBRIDGEBIN_SRCS = \
   BridgeClientInfo2Sender.cpp \
   BridgeProtocolEngine.cpp \
   BridgeSocketCatalogue.cpp \
+  BulkRequestConfigParams.cpp \
   ClientTxRx.cpp \
   ConfigParams.cpp \
   FileToMigrate.cpp \
   FileToRecall.cpp \
-  TapeFlushConfigParams.cpp \
+  GetMoreWorkConnection.cpp \
   DlfMessageStrings.cpp \
   LegacyTxRx.cpp \
   LogHelper.cpp \
+  MigrationReportConnection.cpp \
   PendingMigrationsStore.cpp \
   RtcpJobSubmitter.cpp \
   RtcpTxRx.cpp \
   SessionError.cpp \
+  SystemFileCloser.cpp \
   TapeBridgeDaemon.cpp \
   TapeBridgeMain.cpp \
+  TapeFlushConfigParams.cpp \
   VdqmRequestHandler.cpp \
   VmgrTxRx.cpp \
   $(TAPEGATEWAY_MESSAGES_SRCS) \

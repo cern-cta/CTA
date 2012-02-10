@@ -1,5 +1,5 @@
 /******************************************************************************
- *                h/tapebridge_tapeFlushModeToStr.h
+ *                castor/tape/tapebridge/SystemFileCloser.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,23 +22,41 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef H_TAPEBRIDGE_TAPEFLUSHMODETOSTR_H
-#define H_TAPEBRIDGE_TAPEFLUSHMODETOSTR_H 1
+#ifndef CASTOR_TAPE_TAPEBRIDGE_SYSTEMCLOSER_HPP
+#define CASTOR_TAPE_TAPEBRIDGE_SYSTEMCLOSER_HPP 1
 
-#include "h/osdep.h"
+#include "castor/tape/tapebridge/IFileCloser.hpp"
 
-#include <stdint.h>
+
+namespace castor     {
+namespace tape       {
+namespace tapebridge {
 
 /**
- * Returns a pointer to the string literal representing the specified
- * tape-flush mode.  If the tape-flush mode is unknown then a pointer to the
- * string literal "UNKNOWN" is returned.
+ * Wrapper around the system close() function.
  *
- * @return A pointer to the string literal representing the specified
- *         tape-flush mode, or a pointer to the string literal "UNKNOWN" if the
- *         tape-flush mode is unknown.
+ * The main goal of thei class to facilitate unit-testing.
  */
-EXTERN_C const char *tapebridge_tapeFlushModeToStr(
-  const uint32_t tapeFlushMode);
+class SystemFileCloser: public IFileCloser {
+public:
 
-#endif /* H_TAPEBRIDGE_TAPEFLUSHMODETOSTR_H */
+  /**
+   * Destructor.
+   */
+  ~SystemFileCloser() throw();
+
+  /**
+   * Closes the specified file-descriptor using the system close() function.
+   *
+   * @param fd The file-descriptor to be closed.
+   * @return   The return value of the system close() function.
+   */
+  int close(const int fd);
+
+}; // class SystemFileCloser
+
+} // namespace tapebridge
+} // namespace tape
+} // namespace castor
+
+#endif // CASTOR_TAPE_TAPEBRIDGE_SYSTEMCLOSER_HPP

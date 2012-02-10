@@ -76,6 +76,7 @@
 // constructor
 //-----------------------------------------------------------------------------
 castor::tape::tapebridge::BridgeProtocolEngine::BridgeProtocolEngine(
+  const BulkRequestConfigParams       &bulkRequestConfigParams,
   const TapeFlushConfigParams         &tapeFlushConfigParams,
   const Cuuid_t                       &cuuid,
   const int                           listenSock,
@@ -86,8 +87,10 @@ castor::tape::tapebridge::BridgeProtocolEngine::BridgeProtocolEngine(
   utils::BoolFunctor                  &stoppingGracefully,
   Counter<uint64_t>                   &tapebridgeTransactionCounter)
   throw(castor::exception::Exception) :
+  m_bulkRequestConfigParams(bulkRequestConfigParams),
   m_tapeFlushConfigParams(tapeFlushConfigParams),
   m_cuuid(cuuid),
+  m_sockCatalogue(m_systemFileCloser),
   m_jobRequest(jobRequest),
   m_volume(volume),
   m_nextDestinationTapeFSeq(nbFilesOnDestinationTape + 1),
@@ -121,16 +124,6 @@ castor::tape::tapebridge::BridgeProtocolEngine::BridgeProtocolEngine(
     &BridgeProtocolEngine::tapeBridgeFlushedToTapeCallback;
   m_rtcpdHandlers[createRtcpdHandlerKey(RTCOPY_MAGIC_SHIFT, GIVE_OUTP )] =
     &BridgeProtocolEngine::giveOutpRtcpdCallback;
-
-  // Build the map of client message handlers
-  m_clientHandlers[OBJ_FilesToMigrateList] =
-    &BridgeProtocolEngine::filesToMigrateListClientCallback;
-  m_clientHandlers[OBJ_FilesToRecallList]  =
-    &BridgeProtocolEngine::filesToRecallListClientCallback;
-  m_clientHandlers[OBJ_NoMoreFiles]  =
-    &BridgeProtocolEngine::noMoreFilesClientCallback;
-  m_clientHandlers[OBJ_EndNotificationErrorReport]  =
-    &BridgeProtocolEngine::endNotificationErrorReportClientCallback;
 }
 
 
@@ -279,7 +272,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processSocks()
   throw(castor::exception::Exception) {
 
   unsigned int nbOneSecondTimeouts = 0;
-  int          maxFd               = 0;
+  int          maxFd               = -1;
   fd_set       readFdSet;
   timeval      timeout;
 
@@ -429,8 +422,8 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processAPendingSocket(
   case BridgeSocketCatalogue::RTCPD_DISK_TAPE_IO_CONTROL:
     processPendingRtcpdDiskTapeIOControlSocket(pendingSock);
     break;
-  case BridgeSocketCatalogue::CLIENT:
-    processPendingClientSocket(pendingSock);
+  case BridgeSocketCatalogue::CLIENT_GET_MORE_WORK:
+    processPendingClientGetMoreWorkSocket(pendingSock);
     break;
   case BridgeSocketCatalogue::CLIENT_MIGRATION_REPORT:
     processPendingClientMigrationReportSocket(pendingSock);
@@ -625,10 +618,10 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 
 
 //------------------------------------------------------------------------------
-// processPendingClientSocket
+// processPendingClientGetMoreWorkSocket
 //------------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeProtocolEngine::
-  processPendingClientSocket(const int pendingSock)
+  processPendingClientGetMoreWorkSocket(const int pendingSock)
   throw(castor::exception::Exception) {
 
   // Check function arguments
@@ -639,19 +632,24 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
       ": value=" << pendingSock);
   }
 
-  // Get information about the rtcpd disk/tape IO control-connection that
-  // is waiting for the reply from the pending client-connection
-  int            rtcpdSock          = 0;
-  uint32_t       rtcpdReqMagic      = 0;
-  uint32_t       rtcpdReqType       = 0;
-  const char     *rtcpdReqTapePath  = NULL;
-  uint64_t       tapebridgeTransId  = 0;
-  struct timeval clientReqTimeStamp = {0, 0};
-  m_sockCatalogue.getRtcpdConn(pendingSock, rtcpdSock, rtcpdReqMagic,
-    rtcpdReqType, rtcpdReqTapePath, tapebridgeTransId, clientReqTimeStamp);
+  // Make a copy of the information about the "get more work" connection
+  const GetMoreWorkConnection getMoreWorkConnection =
+    m_sockCatalogue.getGetMoreWorkConnection();
 
-  // Release the client-connection from the catalogue
-  m_sockCatalogue.releaseClientConn(rtcpdSock, pendingSock);
+  // Check the pending socket is the one to be expected
+  if(pendingSock != getMoreWorkConnection.clientSock) {
+    // This should never happen
+    TAPE_THROW_EX(castor::exception::Internal,
+      ": pendingSock is not equal to getMoreWorkConnection.clientSock"
+      ": pendingSock=" << pendingSock <<
+      " getMoreWorkConnection.clientSock=" <<
+      getMoreWorkConnection.clientSock);
+  }
+
+  // Release the client-connection from the catalogue.  A copy of the value of
+  // the socket-descriptor is stored in the getMoreWorkConnection local
+  // variable.
+  m_sockCatalogue.releaseGetMoreWorkClientSock();
 
   // Get the current time
   struct timeval now = {0, 0};
@@ -660,7 +658,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   // Calculate the number of remaining seconds before timing out the
   // client-connection
   int remainingClientTimeout = CLIENTNETRWTIMEOUT -
-    (now.tv_sec - clientReqTimeStamp.tv_sec);
+    (now.tv_sec - getMoreWorkConnection.clientReqTimeStamp.tv_sec);
   if(remainingClientTimeout <= 0) {
     remainingClientTimeout = 1;
   }
@@ -669,7 +667,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
     remainingClientTimeout));
 
   // Drop the client reply if the associated rtcpd-connection has been closed
-  if(-1 == rtcpdSock) {
+  if(-1 == getMoreWorkConnection.rtcpdSock) {
     castor::dlf::Param params[] = {
       castor::dlf::Param("mountTransactionId"  , m_jobRequest.volReqId  ),
       castor::dlf::Param("volReqId"            , m_jobRequest.volReqId  ),
@@ -685,23 +683,39 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
     return;
   }
 
-  // Find the message type's corresponding handler
-  ClientCallbackMap::iterator itor = m_clientHandlers.find(obj->type());
-  if(itor == m_clientHandlers.end()) {
-    TAPE_THROW_CODE(EBADMSG,
-      ": Unknown client message object type"
-      ": object type=0x"   << std::hex << obj->type() << std::dec);
-  }
-  const ClientMsgCallback handler = itor->second;
+  dispatchClientReplyCallback(obj.get(), getMoreWorkConnection);
+}
 
-  // Invoke the handler
+
+//-----------------------------------------------------------------------------
+// dispatchClientReplyCallback
+//-----------------------------------------------------------------------------
+void castor::tape::tapebridge::BridgeProtocolEngine::
+  dispatchClientReplyCallback(
+  IObject *const              obj,
+  const GetMoreWorkConnection &getMoreWorkConnection)
+  throw(castor::exception::Exception) {
   try {
-    (this->*handler)(pendingSock, obj.get(), rtcpdSock, rtcpdReqMagic,
-      rtcpdReqType, rtcpdReqTapePath, tapebridgeTransId,
-      clientReqTimeStamp);
+    switch(obj->type()) {
+    case OBJ_FilesToMigrateList:
+      filesToMigrateListClientCallback(obj, getMoreWorkConnection);
+      break;
+    case OBJ_FilesToRecallList:
+      filesToRecallListClientCallback(obj, getMoreWorkConnection);
+      break;
+    case OBJ_NoMoreFiles:
+      noMoreFilesClientCallback(obj, getMoreWorkConnection);
+      break;
+    case OBJ_EndNotificationErrorReport:
+      endNotificationErrorReportClientCallback(obj, getMoreWorkConnection);
+      break;
+    default:
+      TAPE_THROW_CODE(EBADMSG,
+        ": Unknown client message object type"
+        ": object type=0x"   << std::hex << obj->type() << std::dec);
+    }
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ECANCELED,
-      ": Client message handler failed"
       ": message type=" << utils::objectTypeToString(obj->type()) <<
       ": " << ex.getMessage().str());
   }
@@ -1090,13 +1104,13 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::startMigrationSession()
       blockId);
   }
 
-  char tapePath[CA_MAXPATHLEN+1];
-  utils::setBytes(tapePath, '\0');
-
   // Ask rtcpd to request more work
-  RtcpTxRx::askRtcpdToRequestMoreWork(m_cuuid, m_jobRequest.volReqId,
-    tapePath, m_sockCatalogue.getInitialRtcpdConn(), RTCPDNETRWTIMEOUT,
-    WRITE_ENABLE);
+  {
+    const char *const tapePath = "";
+    RtcpTxRx::askRtcpdToRequestMoreWork(m_cuuid, m_jobRequest.volReqId,
+      tapePath, m_sockCatalogue.getInitialRtcpdConn(), RTCPDNETRWTIMEOUT,
+      WRITE_ENABLE);
+  }
 
   // Tell rtcpd end of file list
   RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_jobRequest.volReqId,
@@ -1111,9 +1125,6 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::startMigrationSession()
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeProtocolEngine::startRecallSession()
   throw(castor::exception::Exception) {
-
-  char tapePath[CA_MAXPATHLEN+1];
-  utils::setBytes(tapePath, '\0');
 
   // Give volume to rtcpd
   legacymsg::RtcpTapeRqstErrMsgBody rtcpVolume;
@@ -1133,9 +1144,12 @@ void castor::tape::tapebridge::BridgeProtocolEngine::startRecallSession()
     m_sockCatalogue.getInitialRtcpdConn(), RTCPDNETRWTIMEOUT, rtcpVolume);
 
   // Ask rtcpd to request more work
-  RtcpTxRx::askRtcpdToRequestMoreWork(m_cuuid, m_jobRequest.volReqId,
-    tapePath, m_sockCatalogue.getInitialRtcpdConn(), RTCPDNETRWTIMEOUT,
-    WRITE_DISABLE);
+  {
+     const char *const tapePath = "";
+    RtcpTxRx::askRtcpdToRequestMoreWork(m_cuuid, m_jobRequest.volReqId,
+      tapePath, m_sockCatalogue.getInitialRtcpdConn(), RTCPDNETRWTIMEOUT,
+      WRITE_DISABLE);
+  }
 
   // Tell rtcpd end of file list
   RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_jobRequest.volReqId,
@@ -1553,78 +1567,367 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpRequestMoreWork(
 
   // If migrating
   if(m_volume.mode() == tapegateway::WRITE) {
-    // Send a FilesToMigrateListRequest to the client
-    timeval connectDuration = {0, 0};
-    const uint64_t tapebridgeTransId = m_tapebridgeTransactionCounter.next();
-    const uint64_t maxFiles = 1;
-    const uint64_t maxBytes = 1;
-    utils::SmartFd clientSock(ClientTxRx::sendFilesToMigrateListRequest(
-      m_jobRequest.volReqId, tapebridgeTransId, m_jobRequest.clientHost,
-      m_jobRequest.clientPort, maxFiles, maxBytes, connectDuration));
-    {
-      const double connectDurationDouble =
-        utils::timevalToDouble(connectDuration);
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId      ),
-        castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
-        castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
-        castor::dlf::Param("TPVID"             , m_volume.vid()         ),
-        castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
-        castor::dlf::Param("dgn"               , m_jobRequest.dgn       ),
-        castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
-        castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
-        castor::dlf::Param("maxFiles"          , maxFiles               ),
-        castor::dlf::Param("maxBytes"          , maxBytes               ),
-        castor::dlf::Param("clientType",
-          utils::volumeClientTypeToString(m_volume.clientType())),
-        castor::dlf::Param("clientSock"        , clientSock.get()       ),
-        castor::dlf::Param("connectDuration"   , connectDurationDouble  )};
-      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-        TAPEBRIDGE_SENT_FILESTOMIGRATELISTREQUEST, params);
-    }
-
-    // Add the client connection to the socket catalogue so that the
-    // association with the rtcpd connection is made
-    m_sockCatalogue.addClientConn(rtcpdSock, header.magic, header.reqType,
-      body.rqst.tapePath, clientSock.release(), tapebridgeTransId);
-
+    processRtcpRequestMoreMigrationWork(header, body, rtcpdSock);
   // Else recalling
   } else {
+    processRtcpRequestMoreRecallWork(header, body, rtcpdSock);
+  }
+}
 
-    // Send a FilesToRecallListRequest to the client
-    timeval connectDuration = {0, 0};
-    const uint64_t tapebridgeTransId = m_tapebridgeTransactionCounter.next();
-    const uint64_t maxFiles = 1;
-    const uint64_t maxBytes = 1;
-    utils::SmartFd clientSock(ClientTxRx::sendFilesToRecallListRequest(
-      m_jobRequest.volReqId, tapebridgeTransId, m_jobRequest.clientHost,
-      m_jobRequest.clientPort, maxFiles, maxBytes, connectDuration));
-    {
-      const double connectDurationDouble =
-        utils::timevalToDouble(connectDuration);
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId      ),
-        castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
-        castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
-        castor::dlf::Param("TPVID"             , m_volume.vid()         ),
-        castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
-        castor::dlf::Param("dgn"               , m_jobRequest.dgn       ),
-        castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
-        castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
-        castor::dlf::Param("maxFiles"          , maxFiles               ),
-        castor::dlf::Param("maxBytes"          , maxBytes               ),
-        castor::dlf::Param("clientType",
-          utils::volumeClientTypeToString(m_volume.clientType())),
-        castor::dlf::Param("clientSock"        , clientSock.get()       ),
-        castor::dlf::Param("connectDuration"   , connectDurationDouble  )};
-      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-        TAPEBRIDGE_SENT_FILESTORECALLLISTREQUEST, params);
+
+//-----------------------------------------------------------------------------
+// processRtcpRequestMoreMigrationWork
+//-----------------------------------------------------------------------------
+void castor::tape::tapebridge::BridgeProtocolEngine::
+  processRtcpRequestMoreMigrationWork(
+  const legacymsg::MessageHeader    &header,
+  legacymsg::RtcpFileRqstErrMsgBody &body, 
+  const int                         rtcpdSock)
+  throw(castor::exception::Exception) {
+
+  // If the cache of files to migrate is empty then request another set of
+  // files, else send to the rtcpd daemon a file to migrate from the cache.
+  //
+  // The rtcpd daemon will not request another file to migrate until the
+  // current request has been answered by the tapebridged daemon.
+  if(m_filesToMigrate.empty()) {
+    if(m_sockCatalogue.getMoreWorkConnectionIsSet()) {
+      // This should never happen
+      TAPE_THROW_CODE(ECANCELED,
+        ": The rtcpd daemon has requested a file to migrate before receiving"
+        " the previous one");
     }
 
-    // Add the client connection to the socket catalogue so that the
-    // association with the rtcpd connection is made
-    m_sockCatalogue.addClientConn(rtcpdSock, header.magic, header.reqType,
-      body.rqst.tapePath, clientSock.release(), tapebridgeTransId);
+    sendFilesToMigrateListRequestToClient(header, body, rtcpdSock);
+  } else {
+    sendCachedFileToMigrateToRtcpd(
+      rtcpdSock,
+      header.magic,
+      header.reqType);
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// sendFilesToMigrateListRequestToClient
+//-----------------------------------------------------------------------------
+void castor::tape::tapebridge::BridgeProtocolEngine::
+  sendFilesToMigrateListRequestToClient(
+  const legacymsg::MessageHeader    &header,
+  legacymsg::RtcpFileRqstErrMsgBody &body,
+  const int                         rtcpdSock)
+  throw(castor::exception::Exception) {
+
+  timeval connectDuration = {0, 0};
+  const uint64_t tapebridgeTransId = m_tapebridgeTransactionCounter.next();
+  // Only the tapegatewayd daemon supports the bulk prototcol
+  const uint64_t maxFiles =
+    tapegateway::TAPE_GATEWAY == m_volume.clientType() ?
+      m_bulkRequestConfigParams.getBulkRequestMigrationMaxFiles().value :
+      1;
+  // Only the tapegatewayd daemon supports the bulk prototcol
+  const uint64_t maxBytes =
+    tapegateway::TAPE_GATEWAY == m_volume.clientType() ?
+      m_bulkRequestConfigParams.getBulkRequestMigrationMaxBytes().value :
+      1;
+  utils::SmartFd clientSock(ClientTxRx::sendFilesToMigrateListRequest(
+    m_jobRequest.volReqId, tapebridgeTransId, m_jobRequest.clientHost,
+    m_jobRequest.clientPort, maxFiles, maxBytes, connectDuration));
+  {
+    const double connectDurationDouble =
+      utils::timevalToDouble(connectDuration);
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId      ),
+    castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
+      castor::dlf::Param("TPVID"             , m_volume.vid()         ),
+      castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+      castor::dlf::Param("dgn"               , m_jobRequest.dgn       ),
+      castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
+      castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+      castor::dlf::Param("maxFiles"          , maxFiles               ),
+      castor::dlf::Param("maxBytes"          , maxBytes               ),
+      castor::dlf::Param("clientType",
+        utils::volumeClientTypeToString(m_volume.clientType())),
+      castor::dlf::Param("clientSock"        , clientSock.get()       ),
+      castor::dlf::Param("connectDuration"   , connectDurationDouble  )};
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+      TAPEBRIDGE_SENT_FILESTOMIGRATELISTREQUEST, params);
+  }
+
+  // Add the client connection to the socket catalogue so that the
+  // association with the rtcpd connection is made
+  m_sockCatalogue.addGetMoreWorkConnection(rtcpdSock, header.magic,
+    header.reqType, body.rqst.tapePath, clientSock.release(),
+    tapebridgeTransId);
+}
+
+
+//-----------------------------------------------------------------------------
+// sendCachedFileToMigrateToRtcpd
+//-----------------------------------------------------------------------------
+void castor::tape::tapebridge::BridgeProtocolEngine::
+  sendCachedFileToMigrateToRtcpd(
+  const int      rtcpdSock,
+  const uint32_t rtcpdReqMagic,
+  const uint32_t rtcpdReqType)
+  throw(castor::exception::Exception) {
+
+  if(m_filesToMigrate.empty()) {
+    // This should never happen
+    TAPE_THROW_EX(castor::exception::Internal,
+      ": There are no files to migrate in the cache");
+  }
+
+  const FileToMigrate fileToMigrate = m_filesToMigrate.front();
+  m_filesToMigrate.pop_front();
+
+  sendFileToMigrateToRtcpd(
+    fileToMigrate,
+    rtcpdSock,
+    rtcpdReqMagic,
+    rtcpdReqType);
+}
+
+
+//-----------------------------------------------------------------------------
+// processRtcpRequestMoreRecallWork
+//-----------------------------------------------------------------------------
+void castor::tape::tapebridge::BridgeProtocolEngine::
+  processRtcpRequestMoreRecallWork(
+  const legacymsg::MessageHeader    &header,
+  legacymsg::RtcpFileRqstErrMsgBody &body, 
+  const int                         rtcpdSock)
+  throw(castor::exception::Exception) {
+
+  // If the cache of files to recall is empty then request another set of
+  // files, else send to the rtcpd daemon a file to recall from the cache.
+  //
+  // The rtcpd daemon will not request another file to recall until the current
+  // request has been answered by the tapebridged daemon.
+  if(m_filesToRecall.empty()) {
+    if(m_sockCatalogue.getMoreWorkConnectionIsSet()) {
+      // This should never happen
+      TAPE_THROW_CODE(ECANCELED,
+        ": The rtcpd daemon has requested a file to recall before receiving"
+        " the previous one");
+    }
+
+    sendFilesToRecallListRequestToClient(header, body, rtcpdSock);
+  } else {
+    sendCachedFileToRecallToRtcpd(
+      rtcpdSock,
+      header.magic,
+      header.reqType,
+      body.rqst.tapePath);
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// sendFilesToRecallListRequestToClient
+//-----------------------------------------------------------------------------
+void castor::tape::tapebridge::BridgeProtocolEngine::
+  sendFilesToRecallListRequestToClient(
+  const legacymsg::MessageHeader    &header,
+  legacymsg::RtcpFileRqstErrMsgBody &body,
+  const int                         rtcpdSock)
+  throw(castor::exception::Exception) {
+
+  timeval connectDuration = {0, 0};
+  const uint64_t tapebridgeTransId = m_tapebridgeTransactionCounter.next();
+  // Only the tapegatewayd daemon supports the bulk prototcol
+  const uint64_t maxFiles =
+    tapegateway::TAPE_GATEWAY == m_volume.clientType() ?
+      m_bulkRequestConfigParams.getBulkRequestRecallMaxFiles().value :
+      1;
+  // Only the tapegatewayd daemon supports the bulk prototcol
+  const uint64_t maxBytes =
+    tapegateway::TAPE_GATEWAY == m_volume.clientType() ?
+      m_bulkRequestConfigParams.getBulkRequestRecallMaxBytes().value :
+      1;
+  utils::SmartFd clientSock(ClientTxRx::sendFilesToRecallListRequest(
+    m_jobRequest.volReqId, tapebridgeTransId, m_jobRequest.clientHost,
+    m_jobRequest.clientPort, maxFiles, maxBytes, connectDuration));
+  {
+    const double connectDurationDouble =
+      utils::timevalToDouble(connectDuration);
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId      ),
+      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
+      castor::dlf::Param("TPVID"             , m_volume.vid()         ),
+      castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+      castor::dlf::Param("dgn"               , m_jobRequest.dgn       ),
+      castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
+      castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+      castor::dlf::Param("maxFiles"          , maxFiles               ),
+      castor::dlf::Param("maxBytes"          , maxBytes               ),
+      castor::dlf::Param("clientType",
+        utils::volumeClientTypeToString(m_volume.clientType())),
+      castor::dlf::Param("clientSock"        , clientSock.get()       ),
+      castor::dlf::Param("connectDuration"   , connectDurationDouble  )};
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+      TAPEBRIDGE_SENT_FILESTORECALLLISTREQUEST, params);
+  }
+
+  // Add the client connection to the socket catalogue so that the
+  // association with the rtcpd connection is made
+  m_sockCatalogue.addGetMoreWorkConnection(
+    rtcpdSock,
+    header.magic,
+    header.reqType,
+    body.rqst.tapePath,
+    clientSock.release(),
+    tapebridgeTransId);
+}
+
+
+//-----------------------------------------------------------------------------
+// sendCachedFileToRecallToRtcpd
+//-----------------------------------------------------------------------------
+void castor::tape::tapebridge::BridgeProtocolEngine::
+  sendCachedFileToRecallToRtcpd(
+  const int         rtcpdSock,
+  const uint32_t    rtcpdReqMagic,
+  const uint32_t    rtcpdReqType,
+  const std::string &rtcpdReqTapePath)
+  throw(castor::exception::Exception) {
+
+  if(m_filesToRecall.empty()) {
+    // This should never happen
+    TAPE_THROW_EX(castor::exception::Internal,
+      ": There are no files to recall in the cache");
+  }
+
+  const FileToRecall fileToRecall = m_filesToRecall.front();
+  m_filesToRecall.pop_front();
+
+  sendFileToRecallToRtcpd(
+    fileToRecall,
+    rtcpdSock,
+    rtcpdReqMagic,
+    rtcpdReqType,
+    rtcpdReqTapePath);
+}
+
+
+//-----------------------------------------------------------------------------
+// sendFileToRecallToRtcpd
+//-----------------------------------------------------------------------------
+void castor::tape::tapebridge::BridgeProtocolEngine::sendFileToRecallToRtcpd(
+  const FileToRecall &fileToRecall,
+  const int          rtcpdSock,
+  const uint32_t     rtcpdReqMagic,
+  const uint32_t     rtcpdReqType,
+  const std::string  &rtcpdReqTapePath)
+  throw(castor::exception::Exception) {
+
+  // Remember the file transaction ID and get its unique index to be
+  // passed to rtcpd through the "rtcpFileRequest.disk_fseq" message
+  // field
+  int diskFSeq = 0;
+  try {
+    diskFSeq = m_pendingTransferIds.insert(fileToRecall.fileTransactionId);
+  } catch(castor::exception::Exception &ex) {
+    // Add context and rethrow
+    TAPE_THROW_CODE(ex.code(),
+      ": " << ex.getMessage().str());
+  }
+
+  // Give file to recall to rtcpd
+  {
+    char tapeFileId[CA_MAXPATHLEN+1];
+    utils::setBytes(tapeFileId, '\0');
+    unsigned char blockId[4] = {
+      fileToRecall.blockId0,
+      fileToRecall.blockId1,
+      fileToRecall.blockId2,
+      fileToRecall.blockId3};
+    char nshost[CA_MAXHOSTNAMELEN+1];
+    utils::copyString(nshost, fileToRecall.nsHost.c_str());
+
+    // The file size is not specified when recalling
+    const uint64_t fileSize = 0;
+
+    RtcpTxRx::giveFileToRtcpd(
+      m_cuuid,
+      m_jobRequest.volReqId,
+      rtcpdSock,
+      RTCPDNETRWTIMEOUT,
+      WRITE_DISABLE,
+      fileToRecall.path.c_str(),
+      fileSize,
+      rtcpdReqTapePath.c_str(),
+      RECORDFORMAT,
+      tapeFileId,
+      (uint32_t)fileToRecall.umask,
+      fileToRecall.positionMethod,
+      fileToRecall.fseq,
+      diskFSeq,
+      nshost,
+      fileToRecall.fileId,
+      blockId);
+  }
+
+  // Ask rtcpd to request more work
+  RtcpTxRx::askRtcpdToRequestMoreWork(
+    m_cuuid,
+    m_jobRequest.volReqId,
+    rtcpdReqTapePath.c_str(),
+    rtcpdSock,
+    RTCPDNETRWTIMEOUT,
+    WRITE_DISABLE);
+
+  // Tell rtcpd end of file list
+  RtcpTxRx::tellRtcpdEndOfFileList(
+    m_cuuid,
+    m_jobRequest.volReqId,
+    rtcpdSock,
+    RTCPDNETRWTIMEOUT);
+
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
+      castor::dlf::Param("TPVID"             , m_volume.vid()         ),
+      castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+      castor::dlf::Param("dgn"               , m_jobRequest.dgn       ),
+      castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
+      castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+      castor::dlf::Param("clientType",
+        utils::volumeClientTypeToString(m_volume.clientType())),
+      castor::dlf::Param("rtcpdSock"         , rtcpdSock              )};
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG,
+      TAPEBRIDGE_SEND_DELAYED_REQUEST_MORE_WORK_ACK_TO_RTCPD, params);
+  }
+
+  // Send delayed acknowledge of the request for more work
+  legacymsg::MessageHeader ackMsg;
+  ackMsg.magic       = rtcpdReqMagic;
+  ackMsg.reqType     = rtcpdReqType;
+  ackMsg.lenOrStatus = 0;
+  LegacyTxRx::sendMsgHeader(
+    m_cuuid,
+    m_jobRequest.volReqId,
+    rtcpdSock,
+    RTCPDNETRWTIMEOUT,
+    ackMsg);
+
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
+      castor::dlf::Param("TPVID"             , m_volume.vid()         ),
+      castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+      castor::dlf::Param("dgn"               , m_jobRequest.dgn       ),
+      castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
+      castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+      castor::dlf::Param("clientType",
+        utils::volumeClientTypeToString(m_volume.clientType())),
+      castor::dlf::Param("rtcpdSock"         , rtcpdSock              )};
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+      TAPEBRIDGE_SENT_DELAYED_REQUEST_MORE_WORK_ACK_TO_RTCPD, params);
   }
 }
 
@@ -2365,20 +2668,14 @@ void castor::tape::tapebridge::BridgeProtocolEngine::checkPeerIsLocalhost(
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeProtocolEngine::
   filesToMigrateListClientCallback(
-  const int            clientSock,
-  IObject *const       obj,
-  const int            rtcpdSock,
-  const uint32_t       rtcpdReqMagic,
-  const uint32_t       rtcpdReqType,
-  const char *const,
-  const uint64_t       tapebridgeTransId,
-  const struct         timeval)
+  IObject *const              obj,
+  const GetMoreWorkConnection &getMoreWorkConnection)
   throw(castor::exception::Exception) {
 
   const char *const task = "process FilesToMigrateList message from client";
 
   // Down cast the reply to its specific class
-  tapegateway::FilesToMigrateList * reply =
+  tapegateway::FilesToMigrateList *const reply =
     dynamic_cast<tapegateway::FilesToMigrateList*>(obj);
 
   if(reply == NULL) {
@@ -2401,82 +2698,143 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
       castor::dlf::Param("clientPort"        , m_jobRequest.clientPort       ),
       castor::dlf::Param("clientType",
         utils::volumeClientTypeToString(m_volume.clientType())               ),
-      castor::dlf::Param("clientSock"        , clientSock                    ),
+      castor::dlf::Param("clientSock"        ,
+        getMoreWorkConnection.clientSock                                     ),
       castor::dlf::Param("nbFiles"           , reply->filesToMigrate().size())};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       TAPEBRIDGE_RECEIVED_FILESTOMIGRATELIST, params);
   }
 
-  ClientTxRx::checkTransactionIds("FileToMigrateList",
-    m_jobRequest.volReqId, reply->mountTransactionId(),
-    tapebridgeTransId    , reply->aggregatorTransactionId());
+  ClientTxRx::checkTransactionIds(
+    "FileToMigrateList",
+    m_jobRequest.volReqId,
+    reply->mountTransactionId(),
+    getMoreWorkConnection.aggregatorTransactionId,
+    reply->aggregatorTransactionId());
 
-  if(1 != reply->filesToMigrate().size()) {
+  if(0 == reply->filesToMigrate().size()) {
+    // Should never happen
     TAPE_THROW_CODE(EBADMSG,
       ": Failed to " << task <<
-      ": This version of tapebridged only accepts FilesToMigrateList messages"
-      " containing exactly one file to migrate"
-      ": nbFiles=" << reply->filesToMigrate().size());
+      ": FilesToMigrateList message contains 0 files to migrate");
   }
 
-  const tapegateway::FileToMigrateStruct *const fileToMigrate =
-    reply->filesToMigrate()[0];
+  addFilesToMigrateToCache(reply->filesToMigrate());
 
-  // Remember the file transaction ID and get its unique index to be
-  // passed to rtcpd through the "rtcpFileRequest.disk_fseq" message
-  // field
-  int diskFSeq = 0;
-  try {
-    diskFSeq = m_pendingTransferIds.insert(fileToMigrate->fileTransactionId());
-  } catch(castor::exception::Exception &ex) {
-    // Add context and rethrow
-    castor::exception::Exception ex2(ex.code());
-    ex2.getMessage() <<
-      "Failed to " << task <<
-      ": " << ex.getMessage().str();
-    throw(ex2);
+  // Write the first file of the cache to the rtcpd disk/tape IO
+  // control-connection that requested a file to migrate and triggered the
+  // request to the client for a list of files to migrate
+  sendCachedFileToMigrateToRtcpd(
+    getMoreWorkConnection.rtcpdSock,
+    getMoreWorkConnection.rtcpdReqMagic,
+    getMoreWorkConnection.rtcpdReqType);
+}
+
+
+//-----------------------------------------------------------------------------
+// addFilesToMigrateToCache
+//-----------------------------------------------------------------------------
+void castor::tape::tapebridge::BridgeProtocolEngine::addFilesToMigrateToCache(
+  const std::vector<tapegateway::FileToMigrateStruct*> &clientFilesToMigrate)
+  throw(castor::exception::Exception) {
+
+  for(std::vector<tapegateway::FileToMigrateStruct*>::const_iterator itor =
+    clientFilesToMigrate.begin(); itor != clientFilesToMigrate.end(); itor++) {
+    const tapegateway::FileToMigrateStruct *const clientFileToMigrate = *itor;
+
+    if(NULL == clientFileToMigrate) {
+      // Should never happen
+      TAPE_THROW_EX(castor::exception::Internal,
+        ": fileToMigrate is a null pointer");
+    }
+
+    addFileToMigrateToCache(*clientFileToMigrate);
   }
+}
+
+
+//-----------------------------------------------------------------------------
+// addFileToMigrateToCache
+//-----------------------------------------------------------------------------
+void castor::tape::tapebridge::BridgeProtocolEngine::addFileToMigrateToCache(
+  const tapegateway::FileToMigrateStruct &clientFileToMigrate)
+  throw(castor::exception::Exception) {
 
   // If the client is the tape gateway
   if(m_volume.clientType() == tapegateway::TAPE_GATEWAY) {
 
     // Throw an exception if the tape file sequence number from the client is
     // invalid
-    if(fileToMigrate->fseq() != m_nextDestinationTapeFSeq) {
+    if(clientFileToMigrate.fseq() != m_nextDestinationTapeFSeq) {
       TAPE_THROW_CODE(ECANCELED,
-        ": Failed to " << task <<
-        "Invalid tape-file sequence-number from client"
+        ": Invalid tape-file sequence-number from client"
         ": expected=" << (m_nextDestinationTapeFSeq) <<
-        ": actual=" << fileToMigrate->fseq());
+        ": actual=" << clientFileToMigrate.fseq());
     }
 
     // Update the next expected tape file sequence number
     m_nextDestinationTapeFSeq++;
   }
 
+  // Push the file to migrate onto the back of the cache
+  FileToMigrate fileToMigrate;
+  fileToMigrate.fileTransactionId = clientFileToMigrate.fileTransactionId();
+  fileToMigrate.nsHost = clientFileToMigrate.nshost();
+  fileToMigrate.fileId = clientFileToMigrate.fileid();
+  fileToMigrate.fseq = clientFileToMigrate.fseq();
+  fileToMigrate.positionMethod = clientFileToMigrate.positionCommandCode();
+  fileToMigrate.fileSize = clientFileToMigrate.fileSize();
+  fileToMigrate.lastKnownFilename = clientFileToMigrate.lastKnownFilename();
+  fileToMigrate.lastModificationTime =
+    clientFileToMigrate.lastModificationTime();
+  fileToMigrate.path = clientFileToMigrate.path();
+  fileToMigrate.umask = clientFileToMigrate.umask();
+  m_filesToMigrate.push_back(fileToMigrate);
+}
+
+
+//-----------------------------------------------------------------------------
+// sendFileToMigrateToRtcpd
+//-----------------------------------------------------------------------------
+void castor::tape::tapebridge::BridgeProtocolEngine::sendFileToMigrateToRtcpd(
+  const FileToMigrate &fileToMigrate,
+  const int           rtcpdSock,
+  const uint32_t      rtcpdReqMagic,
+  const uint32_t      rtcpdReqType)
+  throw(castor::exception::Exception) {
+
+  // Remember the file transaction ID and get its unique index to be
+  // passed to rtcpd through the "rtcpFileRequest.disk_fseq" message
+  // field
+  int diskFSeq = 0;
+  try {
+    diskFSeq = m_pendingTransferIds.insert(fileToMigrate.fileTransactionId);
+  } catch(castor::exception::Exception &ex) {
+    // Add context and rethrow
+    TAPE_THROW_CODE(ex.code(),
+      ": " << ex.getMessage().str());
+  }
+
   // Add the file to the pending migrations store
   {
     RequestToMigrateFile request;
 
-    request.fileTransactionId = fileToMigrate->fileTransactionId();
-    request.nsHost = fileToMigrate->nshost();
-    request.nsFileId = fileToMigrate->fileid();
-    request.positionCommandCode = fileToMigrate->positionCommandCode();
-    request.tapeFSeq = fileToMigrate->fseq();
-    request.fileSize = fileToMigrate->fileSize();
-    request.lastKnownFilename = fileToMigrate->lastKnownFilename();
-    request.lastModificationTime = fileToMigrate->lastModificationTime();
-    request.path = fileToMigrate->path();
-    request.umask = fileToMigrate->umask();
+    request.fileTransactionId = fileToMigrate.fileTransactionId;
+    request.nsHost = fileToMigrate.nsHost;
+    request.nsFileId = fileToMigrate.fileId;
+    request.positionCommandCode = fileToMigrate.positionMethod;
+    request.tapeFSeq = fileToMigrate.fseq;
+    request.fileSize = fileToMigrate.fileSize;
+    request.lastKnownFilename = fileToMigrate.lastKnownFilename;
+    request.lastModificationTime = fileToMigrate.lastModificationTime;
+    request.path = fileToMigrate.path;
+    request.umask = fileToMigrate.umask;
 
     m_pendingMigrationsStore.receivedRequestToMigrateFile(request);
   }
 
-
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("tapebridgeTransId", reply->aggregatorTransactionId()),
-      castor::dlf::Param("mountTransactionId", reply->mountTransactionId()),
       castor::dlf::Param("volReqId", m_jobRequest.volReqId),
       castor::dlf::Param("TPVID", m_volume.vid()),
       castor::dlf::Param("driveUnit", m_jobRequest.driveUnit),
@@ -2485,12 +2843,11 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
       castor::dlf::Param("clientPort", m_jobRequest.clientPort),
       castor::dlf::Param("clientType",
         utils::volumeClientTypeToString(m_volume.clientType())),
-      castor::dlf::Param("clientSock", clientSock),
       castor::dlf::Param("fileTransactionId",
-        fileToMigrate->fileTransactionId()),
-      castor::dlf::Param("NSHOSTNAME", fileToMigrate->nshost()),
-      castor::dlf::Param("NSFILEID", fileToMigrate->fileid()),
-      castor::dlf::Param("tapeFSeq", fileToMigrate->fseq())};
+        fileToMigrate.fileTransactionId),
+      castor::dlf::Param("NSHOSTNAME", fileToMigrate.nsHost),
+      castor::dlf::Param("NSFILEID", fileToMigrate.fileId),
+      castor::dlf::Param("tapeFSeq", fileToMigrate.fseq)};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       TAPEBRIDGE_ADDED_PENDING_MIGRATION_TO_STORE, params);
   }
@@ -2498,11 +2855,11 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   // Give file to migrate to rtcpd
   {
     char migrationTapeFileId[CA_MAXPATHLEN+1];
-    utils::toHex((uint64_t)fileToMigrate->fileid(), migrationTapeFileId);
+    utils::toHex(fileToMigrate.fileId, migrationTapeFileId);
     unsigned char blockId[4];
     utils::setBytes(blockId, '\0');
     char nshost[CA_MAXHOSTNAMELEN+1];
-    utils::copyString(nshost, fileToMigrate->nshost().c_str());
+    utils::copyString(nshost, fileToMigrate.nsHost.c_str());
 
     RtcpTxRx::giveFileToRtcpd(
       m_cuuid,
@@ -2510,30 +2867,38 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
       rtcpdSock,
       RTCPDNETRWTIMEOUT,
       WRITE_ENABLE,
-      fileToMigrate->path().c_str(),
-      fileToMigrate->fileSize(),
+      fileToMigrate.path.c_str(),
+      fileToMigrate.fileSize,
       "",
       RECORDFORMAT,
       migrationTapeFileId,
       RTCOPYCONSERVATIVEUMASK,
-      (int32_t)fileToMigrate->positionCommandCode(),
-      (int32_t)fileToMigrate->fseq(),
+      fileToMigrate.positionMethod,
+      fileToMigrate.fseq,
       diskFSeq,
       nshost,
-      (uint64_t)fileToMigrate->fileid(),
+      fileToMigrate.fileId,
       blockId);
   }
 
-  char tapePath[CA_MAXPATHLEN+1];
-  utils::setBytes(tapePath, '\0');
-
-  // Ask rtcpd to request more work
-  RtcpTxRx::askRtcpdToRequestMoreWork(m_cuuid, m_jobRequest.volReqId,
-    tapePath, rtcpdSock, RTCPDNETRWTIMEOUT, WRITE_ENABLE);
+  // Ask rtcpd to request more work, sending an empty string for the tape path
+  {
+    const char *tapePath = "";
+    RtcpTxRx::askRtcpdToRequestMoreWork(
+      m_cuuid,
+      m_jobRequest.volReqId,
+      tapePath,
+      rtcpdSock,
+      RTCPDNETRWTIMEOUT,
+      WRITE_ENABLE);
+  }
 
   // Tell rtcpd end of file list
-  RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_jobRequest.volReqId,
-    rtcpdSock, RTCPDNETRWTIMEOUT);
+  RtcpTxRx::tellRtcpdEndOfFileList(
+    m_cuuid,
+    m_jobRequest.volReqId,
+    rtcpdSock,
+    RTCPDNETRWTIMEOUT);
 
   {
     castor::dlf::Param params[] = {
@@ -2556,7 +2921,10 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   ackMsg.magic       = rtcpdReqMagic;
   ackMsg.reqType     = rtcpdReqType;
   ackMsg.lenOrStatus = 0;
-  LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, rtcpdSock,
+  LegacyTxRx::sendMsgHeader(
+    m_cuuid,
+    m_jobRequest.volReqId,
+    rtcpdSock,
     RTCPDNETRWTIMEOUT,ackMsg);
 
   {
@@ -2582,17 +2950,18 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeProtocolEngine::
   filesToRecallListClientCallback(
-  const int            clientSock,
-  IObject *const       obj,
-  const int            rtcpdSock,
-  const uint32_t       rtcpdReqMagic,
-  const uint32_t       rtcpdReqType,
-  const char *const    rtcpdReqTapePath,
-  const uint64_t       tapebridgeTransId,
-  const struct         timeval)
+  IObject *const              obj,
+  const GetMoreWorkConnection &getMoreWorkConnection)
   throw(castor::exception::Exception) {
 
   const char *const task = "process FilesToRecallList message from client";
+
+  // Throw an exception if there is no tape path associated with the
+  // initiating rtcpd request
+  if(getMoreWorkConnection.rtcpdReqTapePath.empty()) {
+    TAPE_THROW_CODE(ECANCELED,
+      ": The initiating rtcpd request has no associated tape path");
+  }
 
   // Down cast the reply to its specific class
   tapegateway::FilesToRecallList *reply =
@@ -2617,7 +2986,8 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
       castor::dlf::Param("clientPort"        , m_jobRequest.clientPort      ),
       castor::dlf::Param("clientType",
         utils::volumeClientTypeToString(m_volume.clientType())              ),
-      castor::dlf::Param("clientSock"        , clientSock                   ),
+      castor::dlf::Param("clientSock"        ,
+        getMoreWorkConnection.clientSock),
       castor::dlf::Param("nbFiles"           , reply->filesToRecall().size())};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       TAPEBRIDGE_RECEIVED_FILESTORECALLLIST, params);
@@ -2625,143 +2995,82 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 
   ClientTxRx::checkTransactionIds("FileToRecallList",
      m_jobRequest.volReqId, reply->mountTransactionId(),
-     tapebridgeTransId    , reply->aggregatorTransactionId());
+     getMoreWorkConnection.aggregatorTransactionId,
+       reply->aggregatorTransactionId());
 
-  // Throw an exception if there is no tape path associated with the
-  // initiating rtcpd request
-  if(NULL == rtcpdReqTapePath) {
-    castor::exception::Exception ce(ECANCELED);
-
-    ce.getMessage() <<
-      "The initiating rtcpd request has no associated tape path";
-
-    throw(ce);
-  }
-
-  if(1 != reply->filesToRecall().size()) {
-    TAPE_THROW_CODE(EBADMSG,
+  if(0 == reply->filesToRecall().size()) {
+    // Should never happen
+    TAPE_THROW_EX(castor::exception::Internal,
       ": Failed to " << task <<
-      ": This version of tapebridged only accepts FilesToRecallList messages"
-      " containing exactly one file to recall"
-      ": nbFiles=" << reply->filesToRecall().size());
+      ": FilesToRecallList contains 0 files to recall");
   }
 
-  const tapegateway::FileToRecallStruct *const fileToRecall =
-    reply->filesToRecall()[0];
+  addFilesToRecallToCache(reply->filesToRecall());
 
-  // Remember the file transaction ID and get its unique index to be
-  // passed to rtcpd through the "rtcpFileRequest.disk_fseq" message
-  // field
-  int diskFSeq = 0;
-  try {
-    diskFSeq = m_pendingTransferIds.insert(fileToRecall->fileTransactionId());
-  } catch(castor::exception::Exception &ex) {
-    // Add context and rethrow
-    castor::exception::Exception ex2(ex.code());
-    ex2.getMessage() <<
-      "Failed to " << task <<
-      ": " << ex.getMessage().str();
-    throw(ex2);
+  // Write the first file of the cache to the rtcpd disk/tape IO
+  // control-connection that requested a file to recall and triggered the
+  // request to the client for a list of files to recall
+  sendCachedFileToRecallToRtcpd(
+    getMoreWorkConnection.rtcpdSock,
+    getMoreWorkConnection.rtcpdReqMagic,
+    getMoreWorkConnection.rtcpdReqType,
+    getMoreWorkConnection.rtcpdReqTapePath);
+}
+
+
+//-----------------------------------------------------------------------------
+// addFilesToRecallToCache
+//-----------------------------------------------------------------------------
+void castor::tape::tapebridge::BridgeProtocolEngine::addFilesToRecallToCache(
+  const std::vector<tapegateway::FileToRecallStruct*> &clientFilesToRecall)
+  throw(castor::exception::Exception) {
+
+  for(std::vector<tapegateway::FileToRecallStruct*>::const_iterator itor =
+    clientFilesToRecall.begin(); itor != clientFilesToRecall.end(); itor++) {
+    const tapegateway::FileToRecallStruct *const clientFileToRecall = *itor;
+
+    if(NULL == clientFileToRecall) {
+      // Should never happen
+      TAPE_THROW_EX(castor::exception::Internal,
+        ": fileToRecall is a null pointer");
+    }
+
+    addFileToRecallToCache(*clientFileToRecall);
   }
+}
 
-  // Give file to recall to rtcpd
-  {
-    char tapeFileId[CA_MAXPATHLEN+1];
-    utils::setBytes(tapeFileId, '\0');
-    unsigned char blockId[4] = {
-      fileToRecall->blockId0(),
-      fileToRecall->blockId1(),
-      fileToRecall->blockId2(),
-      fileToRecall->blockId3()};
-    char nshost[CA_MAXHOSTNAMELEN+1];
-    utils::copyString(nshost, fileToRecall->nshost().c_str());
 
-    // The file size is not specified when recalling
-    const uint64_t fileSize = 0;
+//-----------------------------------------------------------------------------
+// addFileToRecallToCache
+//-----------------------------------------------------------------------------
+void castor::tape::tapebridge::BridgeProtocolEngine::addFileToRecallToCache(
+  const tapegateway::FileToRecallStruct &clientFileToRecall)
+  throw(castor::exception::Exception) {
 
-    RtcpTxRx::giveFileToRtcpd(
-      m_cuuid,
-      m_jobRequest.volReqId,
-      rtcpdSock,
-      RTCPDNETRWTIMEOUT,
-      WRITE_DISABLE,
-      fileToRecall->path().c_str(),
-      fileSize,
-      rtcpdReqTapePath,
-      RECORDFORMAT,
-      tapeFileId,
-      (uint32_t)fileToRecall->umask(),
-      (int32_t)fileToRecall->positionCommandCode(),
-      (int32_t)fileToRecall->fseq(),
-      diskFSeq,
-      nshost,
-      (uint64_t)fileToRecall->fileid(),
-      blockId);
-  }
-
-  // Ask rtcpd to request more work
-  RtcpTxRx::askRtcpdToRequestMoreWork(m_cuuid, m_jobRequest.volReqId,
-    rtcpdReqTapePath, rtcpdSock, RTCPDNETRWTIMEOUT, WRITE_DISABLE);
-
-  // Tell rtcpd end of file list
-  RtcpTxRx::tellRtcpdEndOfFileList(m_cuuid, m_jobRequest.volReqId,
-    rtcpdSock, RTCPDNETRWTIMEOUT);
-
-  {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
-      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
-      castor::dlf::Param("TPVID"             , m_volume.vid()         ),
-      castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
-      castor::dlf::Param("dgn"               , m_jobRequest.dgn       ),
-      castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
-      castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
-      castor::dlf::Param("clientType",
-        utils::volumeClientTypeToString(m_volume.clientType())),
-      castor::dlf::Param("rtcpdSock"         , rtcpdSock              )};
-    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG,
-      TAPEBRIDGE_SEND_DELAYED_REQUEST_MORE_WORK_ACK_TO_RTCPD, params);
-  }
-
-  // Send delayed acknowledge of the request for more work
-  legacymsg::MessageHeader ackMsg;
-  ackMsg.magic       = rtcpdReqMagic;
-  ackMsg.reqType     = rtcpdReqType;
-  ackMsg.lenOrStatus = 0;
-  LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, rtcpdSock,
-    RTCPDNETRWTIMEOUT,ackMsg);
-
-  {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
-      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
-      castor::dlf::Param("TPVID"             , m_volume.vid()         ),
-      castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
-      castor::dlf::Param("dgn"               , m_jobRequest.dgn       ),
-      castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
-      castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
-      castor::dlf::Param("clientType",
-        utils::volumeClientTypeToString(m_volume.clientType())),
-      castor::dlf::Param("rtcpdSock"         , rtcpdSock              )};
-    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-      TAPEBRIDGE_SENT_DELAYED_REQUEST_MORE_WORK_ACK_TO_RTCPD, params);
-  }
+  // Push the file to migrate onto the back of the cache
+  FileToRecall fileToRecall;
+  fileToRecall.fileTransactionId = clientFileToRecall.fileTransactionId();
+  fileToRecall.nsHost = clientFileToRecall.nshost();
+  fileToRecall.fileId = clientFileToRecall.fileid();
+  fileToRecall.fseq = clientFileToRecall.fseq();
+  fileToRecall.positionMethod = clientFileToRecall.positionCommandCode();
+  fileToRecall.path = clientFileToRecall.path();
+  fileToRecall.blockId0 = clientFileToRecall.blockId0();
+  fileToRecall.blockId1 = clientFileToRecall.blockId1();
+  fileToRecall.blockId2 = clientFileToRecall.blockId2();
+  fileToRecall.blockId3 = clientFileToRecall.blockId3();
+  fileToRecall.umask = clientFileToRecall.umask();
+  m_filesToRecall.push_back(fileToRecall);
 }
 
 
 //-----------------------------------------------------------------------------
 // noMoreFilesClientCallback
 //-----------------------------------------------------------------------------
-void
-  castor::tape::tapebridge::BridgeProtocolEngine::noMoreFilesClientCallback(
-  const int            clientSock,
-  IObject *const       obj,
-  const int            rtcpdSock,
-  const uint32_t       rtcpdReqMagic,
-  const uint32_t       rtcpdReqType,
-  const char *const,
-  const uint64_t       tapebridgeTransId,
-  const struct         timeval)
+void castor::tape::tapebridge::BridgeProtocolEngine::
+  noMoreFilesClientCallback(
+  IObject *const              obj,
+  const GetMoreWorkConnection &getMoreWorkConnection)
   throw(castor::exception::Exception) {
 
   // Down cast the reply to its specific class
@@ -2784,15 +3093,22 @@ void
     castor::dlf::Param("clientPort"        , m_jobRequest.clientPort         ),
     castor::dlf::Param("clientType",
       utils::volumeClientTypeToString(m_volume.clientType())),
-    castor::dlf::Param("clientSock"        , clientSock                      )};
+    castor::dlf::Param("clientSock"        ,
+     getMoreWorkConnection.clientSock)};
   castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
     TAPEBRIDGE_RECEIVED_NOMOREFILES, params);
 
-  ClientTxRx::checkTransactionIds("NoMoreFiles",
-    m_jobRequest.volReqId, reply->mountTransactionId(),
-    tapebridgeTransId    , reply->aggregatorTransactionId());
+  ClientTxRx::checkTransactionIds(
+    "NoMoreFiles",
+    m_jobRequest.volReqId,
+    reply->mountTransactionId(),
+    getMoreWorkConnection.aggregatorTransactionId,
+    reply->aggregatorTransactionId());
 
-  tellRtcpdThereAreNoMoreFiles(rtcpdSock, rtcpdReqMagic, rtcpdReqType);
+  tellRtcpdThereAreNoMoreFiles(
+    getMoreWorkConnection.rtcpdSock,
+    getMoreWorkConnection.rtcpdReqMagic,
+    getMoreWorkConnection.rtcpdReqType);
 }
 
 
@@ -2845,17 +3161,10 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 //-----------------------------------------------------------------------------
 // endNotificationErrorReportClientCallback
 //-----------------------------------------------------------------------------
-void
-  castor::tape::tapebridge::BridgeProtocolEngine::
+void castor::tape::tapebridge::BridgeProtocolEngine::
   endNotificationErrorReportClientCallback(
-  const int            clientSock,
-  IObject *const       obj,
-  const int,
-  const uint32_t,
-  const uint32_t,
-  const char*,
-  const uint64_t,
-  const struct timeval)
+  IObject *const              obj,
+  const GetMoreWorkConnection &getMoreWorkConnection)
   throw(castor::exception::Exception) {
 
   // Down cast the reply to its specific class
@@ -2879,7 +3188,8 @@ void
     castor::dlf::Param("clientPort"        , m_jobRequest.clientPort         ),
     castor::dlf::Param("clientType",
       utils::volumeClientTypeToString(m_volume.clientType())),
-    castor::dlf::Param("clientSock"        , clientSock                      ),
+    castor::dlf::Param("clientSock"        ,
+      getMoreWorkConnection.clientSock),
     castor::dlf::Param("errorCode"         , reply->errorCode()              ),
     castor::dlf::Param("errorMessage"      , reply->errorMessage()           )};
   castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,

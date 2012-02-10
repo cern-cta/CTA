@@ -37,12 +37,16 @@
 #include <unistd.h>
 #include <vector>
 
+namespace castor {
+namespace tape   {
+namespace utils {
+
 class TapeUtilsTest: public CppUnit::TestFixture {
 private:
   void readFileIntoList_stdException(const char *const filename,
     std::list<std::string> &lines) {
     try {
-      castor::tape::utils::readFileIntoList(filename, lines);
+      readFileIntoList(filename, lines);
     } catch(castor::exception::Exception &ex) {
       test_exception te(ex.getMessage().str());
 
@@ -53,7 +57,7 @@ private:
   void appendPathToEnvVar_stdException(const std::string &envVarName,
     const std::string &pathToBeAppended) {
     try {
-      castor::tape::utils::appendPathToEnvVar(envVarName, pathToBeAppended);
+      appendPathToEnvVar(envVarName, pathToBeAppended);
     } catch(castor::exception::Exception &ex) {
       test_exception te(ex.getMessage().str());
 
@@ -85,13 +89,13 @@ public:
       char buf[8];
       CPPUNIT_ASSERT_THROW_MESSAGE(
         "Failed to detect a buffer that is too small",
-        castor::tape::utils::toHex(number, buf),
+        toHex(number, buf),
         castor::exception::InvalidArgument);
     }
 
     {
       char buf[9];
-      castor::tape::utils::toHex(number, buf);
+      toHex(number, buf);
 
       CPPUNIT_ASSERT_MESSAGE(
         "toHex did not give the expected result",
@@ -100,15 +104,15 @@ public:
   }
 
   void testParseTpconfig() {
-    castor::tape::utils::TpconfigLines lines;
+    TpconfigLines lines;
 
     CPPUNIT_ASSERT_THROW_MESSAGE(
       "Failed to detect invalid path",
-      castor::tape::utils::parseTpconfigFile("/SillyPath", lines),
+      parseTpconfigFile("/SillyPath", lines),
       castor::exception::Exception);
 
     CPPUNIT_ASSERT_NO_THROW_MESSAGE("Failed to parse TPCONFIG",
-      castor::tape::utils::parseTpconfigFile(castor::tape::TPCONFIGPATH,
+      parseTpconfigFile(castor::tape::TPCONFIGPATH,
       lines));
   }
 
@@ -116,7 +120,7 @@ public:
     char dummy[6] = "Dummy";
 
     CPPUNIT_ASSERT_THROW_MESSAGE("NULL dst",
-      castor::tape::utils::copyString(NULL, 0, dummy),
+      copyString(NULL, 0, dummy),
       castor::exception::Exception);
   }
 
@@ -124,7 +128,7 @@ public:
     char dummy[6] = "Dummy";
 
     CPPUNIT_ASSERT_THROW_MESSAGE("NULL src",
-      castor::tape::utils::copyString(dummy, sizeof(dummy), NULL),
+      copyString(dummy, sizeof(dummy), NULL),
       castor::exception::Exception);
   }
 
@@ -132,7 +136,7 @@ public:
     char src[12]  = "Hello World";
     char dst[12];
 
-    castor::tape::utils::copyString(dst, src);
+    copyString(dst, src);
     CPPUNIT_ASSERT_MESSAGE("Copying \"Hello World\"",
       strcmp(dst, src) == 0);
   }
@@ -307,7 +311,7 @@ public:
     const std::string line("col1 col2 col3 col4 col5 col6 col7 col8");
     std::vector<std::string> columns;
 
-    castor::tape::utils::splitString(line, ' ', columns);
+    splitString(line, ' ', columns);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("columns.size()",
       (std::vector<std::string>::size_type)8, columns.size());
@@ -338,7 +342,7 @@ public:
     oss << "timevalGreaterThan(" << timevalToString(bigger) << ", " <<
       timevalToString(smaller) << ") = " << expected;
     CPPUNIT_ASSERT_EQUAL_MESSAGE(oss.str(), expected,
-      castor::tape::utils::timevalGreaterThan(bigger, smaller));
+      timevalGreaterThan(bigger, smaller));
   }
 
   void testTimevalGreaterThan_BigSecSmallSec_BigUsecSmallUsec_swapped() {
@@ -350,7 +354,7 @@ public:
     oss << "timevalGreaterThan(" << timevalToString(smaller) << ", " <<
       timevalToString(bigger) << ") = " << expected;
     CPPUNIT_ASSERT_EQUAL_MESSAGE(oss.str(), expected,
-      castor::tape::utils::timevalGreaterThan(smaller, bigger));
+      timevalGreaterThan(smaller, bigger));
   }
 
   void testTimevalGreaterThan_BigSecSmallSec_SmallUsecBigUsec() {
@@ -362,7 +366,7 @@ public:
     oss << "timevalGreaterThan(" << timevalToString(bigger) << ", " <<
       timevalToString(smaller) << ") = " << expected;
     CPPUNIT_ASSERT_EQUAL_MESSAGE(oss.str(), expected,
-      castor::tape::utils::timevalGreaterThan(bigger, smaller));
+      timevalGreaterThan(bigger, smaller));
   }
 
   void testTimevalGreaterThan_BigSecSmallSec_SmallUsecBigUsec_swapped() {
@@ -374,7 +378,7 @@ public:
     oss << "timevalGreaterThan(" << timevalToString(smaller) << ", " <<
       timevalToString(bigger) << ") = false";
     CPPUNIT_ASSERT_EQUAL_MESSAGE(oss.str(), expected,
-      castor::tape::utils::timevalGreaterThan(smaller, bigger));
+      timevalGreaterThan(smaller, bigger));
   }
 
   void testTimevalGreaterThan_EqualSec_EqualUsec()  {
@@ -385,14 +389,14 @@ public:
     std::ostringstream oss;
     oss << "timevalGreaterThan(" << timevalToString(a) << ", " <<
       timevalToString(b) << ") = " << expected;
-    CPPUNIT_ASSERT_EQUAL_MESSAGE(oss.str(), expected, castor::tape::utils::timevalGreaterThan(a, b));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(oss.str(), expected, timevalGreaterThan(a, b));
   }
 
   void testTimevalAbsDiff_BigSecSmallSec_BigUsecSmallUsec() {
     const timeval bigger   = {6, 5};
     const timeval smaller  = {5, 4};
     const timeval expected = {1, 1};
-    const timeval actual   = castor::tape::utils::timevalAbsDiff(bigger,
+    const timeval actual   = timevalAbsDiff(bigger,
       smaller);
     const bool    isAMatch = expected.tv_sec == actual.tv_sec &&
       expected.tv_usec == actual.tv_usec;
@@ -407,7 +411,7 @@ public:
     const timeval bigger   = {6, 5};
     const timeval smaller  = {5, 4};
     const timeval expected = {1, 1};
-    const timeval actual   = castor::tape::utils::timevalAbsDiff(smaller,
+    const timeval actual   = timevalAbsDiff(smaller,
       bigger);
     const bool    isAMatch = expected.tv_sec == actual.tv_sec &&
       expected.tv_usec == actual.tv_usec;
@@ -422,7 +426,7 @@ public:
     const timeval bigger   = {4, 3};
     const timeval smaller  = {2, 7};
     const timeval expected = {1, 999996};
-    const timeval actual   = castor::tape::utils::timevalAbsDiff(bigger,
+    const timeval actual   = timevalAbsDiff(bigger,
       smaller);
     const bool    isAMatch = expected.tv_sec == actual.tv_sec &&
       expected.tv_usec == actual.tv_usec;
@@ -437,7 +441,7 @@ public:
     const timeval bigger   = {4, 3};
     const timeval smaller  = {2, 7};
     const timeval expected = {1, 999996};
-    const timeval actual   = castor::tape::utils::timevalAbsDiff(smaller,
+    const timeval actual   = timevalAbsDiff(smaller,
       bigger);
     const bool    isAMatch = expected.tv_sec == actual.tv_sec &&
       expected.tv_usec == actual.tv_usec;
@@ -452,7 +456,7 @@ public:
     const timeval a        = {8, 9};
     const timeval b        = {8, 9};
     const timeval expected = {0, 0};
-    const timeval actual   = castor::tape::utils::timevalAbsDiff(a, b);
+    const timeval actual   = timevalAbsDiff(a, b);
     const bool    isAMatch = expected.tv_sec == actual.tv_sec &&
       expected.tv_usec == actual.tv_usec;
   
@@ -465,7 +469,7 @@ public:
   void testTimevalToDouble() {
     const timeval tv       = {1234, 999992};
     const double  expected = 1234.999992;
-    const double  actual   = castor::tape::utils::timevalToDouble(tv);
+    const double  actual   = timevalToDouble(tv);
 
     std::ostringstream oss;
     oss << "timevalToDouble(" << timevalToString(tv) << ") = " << expected;
@@ -478,17 +482,17 @@ public:
     timeval testDuration = {0, 0};
     const unsigned int sleepDuration = 1;
 
-    castor::tape::utils::getTimeOfDay(&startTime, NULL);
+    getTimeOfDay(&startTime, NULL);
     sleep(sleepDuration);
-    castor::tape::utils::getTimeOfDay(&endTime, NULL);
+    getTimeOfDay(&endTime, NULL);
 
     const bool startTimeIsBeforeEndTime =
-      castor::tape::utils::timevalGreaterThan(endTime, startTime);
+      timevalGreaterThan(endTime, startTime);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("startTime is before endTime",
       true, startTimeIsBeforeEndTime);
 
-    testDuration = castor::tape::utils::timevalAbsDiff(startTime, endTime);
+    testDuration = timevalAbsDiff(startTime, endTime);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Test duration is accuracte to the second",
       true, sleepDuration == testDuration.tv_sec);
@@ -523,5 +527,9 @@ public:
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION(TapeUtilsTest);
+
+} // namespace utils
+} // namespace tape
+} // namespace castor
 
 #endif // TTEST_UNITTEST_CASTOR_TAPE_UTILS_UTILSTEST_HPP

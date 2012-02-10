@@ -29,7 +29,7 @@
 #include "castor/server/TCPListenerThreadPool.hpp"
 #include "castor/tape/tapebridge/DlfMessageConstants.hpp"
 #include "castor/tape/tapebridge/TapeBridgeDaemon.hpp"
-#include "castor/tape/tapebridge/TapeFlushConfigParams.hpp"
+#include "castor/tape/tapebridge/ConfigParamLogger.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/tape/tapebridge/VdqmRequestHandler.hpp"
@@ -125,54 +125,43 @@ int castor::tape::tapebridge::TapeBridgeDaemon::exceptionThrowingMain(
   // Pass the foreground option to the super class BaseDaemon
   m_foreground = m_parsedCommandLine.foregroundOptionSet;
 
+  // Determine and log the configuration parameters used by the tapebridged
+  // daemon to know how many files should be bulk requested per request for
+  // migration to or recall from tape.
+  BulkRequestConfigParams bulkRequestConfigParams;
+  bulkRequestConfigParams.determineConfigParams();
+  ConfigParamLogger::writeToDlf(nullCuuid,
+    bulkRequestConfigParams.getBulkRequestMigrationMaxBytes());
+  ConfigParamLogger::writeToDlf(nullCuuid,
+    bulkRequestConfigParams.getBulkRequestMigrationMaxFiles());
+  ConfigParamLogger::writeToDlf(nullCuuid,
+    bulkRequestConfigParams.getBulkRequestRecallMaxBytes());
+  ConfigParamLogger::writeToDlf(nullCuuid,
+    bulkRequestConfigParams.getBulkRequestRecallMaxFiles());
+
   // Determine and log the values of the tape-bridge configuration-parameters.
   // Only log the maximum number of bytes and files before a flush to tape if
   // the tape flush mode requires them.
   TapeFlushConfigParams tapeFlushConfigParams;
-
   tapeFlushConfigParams.determineConfigParams();
+  ConfigParamLogger::writeToDlf(nullCuuid,
+    tapeFlushConfigParams.getTapeFlushMode());
   {
     const char *const tapeFlushModeStr = tapebridge_tapeFlushModeToStr(
       tapeFlushConfigParams.getTapeFlushMode().value);
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("category",
-        tapeFlushConfigParams.getTapeFlushMode().category),
-      castor::dlf::Param("name"    ,
-        tapeFlushConfigParams.getTapeFlushMode().name    ),
-      castor::dlf::Param("value"   , tapeFlushModeStr    ),
-      castor::dlf::Param("source"  ,
-        tapeFlushConfigParams.getTapeFlushMode().source  )};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, TAPEBRIDGE_CONFIG_PARAM,
-      params);
+    ConfigParamLogger::writeToDlf(
+      nullCuuid,
+      tapeFlushConfigParams.getTapeFlushMode().category,
+      tapeFlushConfigParams.getTapeFlushMode().name,
+      tapeFlushModeStr,
+      tapeFlushConfigParams.getTapeFlushMode().source);
   }
   if(TAPEBRIDGE_ONE_FLUSH_PER_N_FILES ==
     tapeFlushConfigParams.getTapeFlushMode().value) {
-    {
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("category",
-          tapeFlushConfigParams.getMaxBytesBeforeFlush().category),
-        castor::dlf::Param("name",
-          tapeFlushConfigParams.getMaxBytesBeforeFlush().name),
-        castor::dlf::Param("value",
-          tapeFlushConfigParams.getMaxBytesBeforeFlush().value),
-        castor::dlf::Param("source",
-          tapeFlushConfigParams.getMaxBytesBeforeFlush().source)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
-        TAPEBRIDGE_CONFIG_PARAM, params);
-    }
-    {
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("category",
-          tapeFlushConfigParams.getMaxFilesBeforeFlush().category),
-        castor::dlf::Param("name",
-          tapeFlushConfigParams.getMaxFilesBeforeFlush().name),
-        castor::dlf::Param("value",
-          tapeFlushConfigParams.getMaxFilesBeforeFlush().value),
-        castor::dlf::Param("source",
-          tapeFlushConfigParams.getMaxFilesBeforeFlush().source)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
-        TAPEBRIDGE_CONFIG_PARAM, params);
-    }
+    ConfigParamLogger::writeToDlf(nullCuuid,
+      tapeFlushConfigParams.getMaxBytesBeforeFlush());
+    ConfigParamLogger::writeToDlf(nullCuuid,
+      tapeFlushConfigParams.getMaxFilesBeforeFlush());
   }
 
   // Extract the tape-drive names from the TPCONFIG file
@@ -202,7 +191,10 @@ int castor::tape::tapebridge::TapeBridgeDaemon::exceptionThrowingMain(
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
     TAPEBRIDGE_PARSED_TPCONFIG, params);
 
-  createVdqmRequestHandlerPool(tapeFlushConfigParams, driveNames.size());
+  createVdqmRequestHandlerPool(
+    bulkRequestConfigParams,
+    tapeFlushConfigParams,
+    driveNames.size());
 
   // Start the threads
   start();
@@ -361,7 +353,9 @@ void castor::tape::tapebridge::TapeBridgeDaemon::parseCommandLine(
 //------------------------------------------------------------------------------
 void castor::tape::tapebridge::TapeBridgeDaemon::
   createVdqmRequestHandlerPool(
-  const TapeFlushConfigParams &tapeFlushConfigParams, const uint32_t nbDrives)
+  const BulkRequestConfigParams &bulkRequestConfigParams,
+  const TapeFlushConfigParams   &tapeFlushConfigParams,
+  const uint32_t                nbDrives)
   throw(castor::exception::Exception) {
 
   const int vdqmListenPort = utils::getPortFromConfig("TAPEBRIDGE", "VDQMPORT",
@@ -369,7 +363,9 @@ void castor::tape::tapebridge::TapeBridgeDaemon::
 
   std::auto_ptr<server::IThread>
     thread(new castor::tape::tapebridge::VdqmRequestHandler(
-      tapeFlushConfigParams, nbDrives));
+      bulkRequestConfigParams,
+      tapeFlushConfigParams,
+      nbDrives));
 
   std::auto_ptr<server::BaseThreadPool>
     threadPool(new castor::server::TCPListenerThreadPool(

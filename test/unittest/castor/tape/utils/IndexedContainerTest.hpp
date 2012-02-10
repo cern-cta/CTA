@@ -34,9 +34,13 @@
 #include <string>
 #include <vector>
 
+namespace castor {
+namespace tape   {
+namespace utils  {
+
 class IndexedContainerTest: public CppUnit::TestFixture {
 public:
-  castor::tape::utils::IndexedContainer<const void *> *m_container;
+  IndexedContainer<const void *> *m_container;
 
   const void *m_ptr1;
   const void *m_ptr2;
@@ -58,7 +62,7 @@ public:
   }
 
   void setUp() {
-    m_container = new castor::tape::utils::IndexedContainer<const void *>(3);
+    m_container = new IndexedContainer<const void *>(3);
     m_ptr1Index = m_container->insert(m_ptr1);
     m_ptr2Index = m_container->insert(m_ptr2);
     m_ptr3Index = m_container->insert(m_ptr3);
@@ -112,5 +116,9 @@ public:
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION(IndexedContainerTest);
+
+} // namespace utils
+} // namespace tape
+} // namespace castor
 
 #endif // TEST_UNITTEST_CASTOR_TAPE_UTILS_INDEXEDCONTAINERTEST_HPP

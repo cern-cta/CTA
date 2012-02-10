@@ -37,8 +37,9 @@ namespace tape       {
 namespace tapebridge {
 
 /**
- * Class used to determine and store the configuration parameters used by the
- * tapebridged daemon to request in bulk files for migration and recall.
+ * Class used to determine the configuration parameters used by the tapebridged
+ * daemon to know how many files should be bulk requested per request for
+ * migration to or recall from tape.
  */
 class BulkRequestConfigParams: public ConfigParams {
 public:

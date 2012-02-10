@@ -135,7 +135,7 @@ public:
    * @param mode The access mode.
    */ 
   static void askRtcpdToRequestMoreWork(const Cuuid_t &cuuid,
-    const uint32_t volReqId, const char *tapePath, const int socketFd,
+    const uint32_t volReqId, const char *const tapePath, const int socketFd,
     const int netReadWriteTimeout, const uint32_t mode)
     throw(castor::exception::Exception);
 

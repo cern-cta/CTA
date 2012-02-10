@@ -625,8 +625,9 @@ void castor::tape::tapebridge::RtcpTxRx::receiveRtcpJobRqst(const Cuuid_t &cuuid
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::RtcpTxRx::askRtcpdToRequestMoreWork(
   const Cuuid_t &cuuid, const uint32_t volReqId, 
-  const char *tapePath, const int socketFd, const int netReadWriteTimeout,
-  const uint32_t mode) throw(castor::exception::Exception) {
+  const char *const tapePath, const int socketFd,
+  const int netReadWriteTimeout, const uint32_t mode)
+  throw(castor::exception::Exception) {
 
   {
     castor::dlf::Param params[] = {

@@ -29,6 +29,7 @@
 #include "castor/exception/InvalidConfigEntry.hpp"
 #include "castor/server/BaseDaemon.hpp"
 #include "castor/server/BaseThreadPool.hpp"
+#include "castor/tape/tapebridge/BulkRequestConfigParams.hpp"
 #include "castor/tape/tapebridge/TapeFlushConfigParams.hpp"
 
 #include <stdint.h>
@@ -140,16 +141,21 @@ private:
   /**
    * Creates the VDQM request handler thread pool.
    *
-   * @param tapeFlushConfigParams The values of the tape-flush
-   *                              configuration-parameters to be used by the
-   *                              tape-bridge.
-   * @param nbDrives              The number of tape drives attached to the
-   *                              tape server that the tapebridged daemon is
-   *                              running on.
+   * @param bulkRequestConfigParams The values of the bul-request
+   *                                configuration-parameters to be used by the
+   *                                tapebridged daemon.
+   * @param tapeFlushConfigParams   The values of the tape-flush
+   *                                configuration-parameters to be used by the
+   *                                tapebridged daemon.
+   * @param nbDrives                The number of tape drives attached to the
+   *                                tape server that the tapebridged daemon is
+   *                                running on.
    */
   void createVdqmRequestHandlerPool(
-    const TapeFlushConfigParams &tapeFlushConfigParams,
-    const uint32_t nbDrives) throw (castor::exception::Exception);
+    const BulkRequestConfigParams &bulkRequestConfigParams,
+    const TapeFlushConfigParams   &tapeFlushConfigParams,
+    const uint32_t                nbDrives)
+    throw (castor::exception::Exception);
 
   /**
    * DLF message strings.

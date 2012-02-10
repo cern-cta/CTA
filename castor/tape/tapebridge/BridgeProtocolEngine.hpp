@@ -27,12 +27,19 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/tapebridge/BridgeSocketCatalogue.hpp"
+#include "castor/tape/tapebridge/BulkRequestConfigParams.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"
 #include "castor/tape/tapebridge/Counter.hpp"
+#include "castor/tape/tapebridge/FileToMigrate.hpp"
+#include "castor/tape/tapebridge/FileToRecall.hpp"
 #include "castor/tape/tapebridge/FileWrittenNotificationList.hpp"
+#include "castor/tape/tapebridge/GetMoreWorkConnection.hpp"
 #include "castor/tape/tapebridge/PendingMigrationsStore.hpp"
 #include "castor/tape/tapebridge/SessionError.hpp"
+#include "castor/tape/tapebridge/SystemFileCloser.hpp"
 #include "castor/tape/tapebridge/TapeFlushConfigParams.hpp"
+#include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
+#include "castor/tape/tapegateway/FileToRecallStruct.hpp"
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
@@ -61,9 +68,12 @@ public:
   /**
    * Constructor.
    *
+   * @param bulkRequestConfigParams  The values of the bulk-request
+   *                                 configuration-parameters to be used by the
+   *                                 tapebridged daemon.
    * @param tapeFlushConfigParams    The values of the tape-flush
    *                                 configuration-parameters to be used by the
-   *                                 tape-bridge.
+   *                                 tapebridged daemon.
    * @param cuuid                    The ccuid to be used for logging.
    * @param listenSock               The socket-descriptor of the listen socket
    *                                 to be used to accept callback connections
@@ -84,6 +94,7 @@ public:
    *                                 IDS used in requests to the clients.
    */
   BridgeProtocolEngine(
+    const BulkRequestConfigParams       &bulkRequestConfigParams,
     const TapeFlushConfigParams         &tapeFlushConfigParams,
     const Cuuid_t                       &cuuid,
     const int                           rtcpdListenSock,
@@ -103,8 +114,14 @@ public:
 private:
 
   /**
+   * The values of the bulk-request configuration-parameters to be used by the
+   * tapebridged daemon.
+   */
+  const BulkRequestConfigParams m_bulkRequestConfigParams;
+
+  /**
    * The values of the tape-flush configuration-parameters to be used by the
-   * tape-bridge.
+   * tapebridged daemon.
    */
   const TapeFlushConfigParams m_tapeFlushConfigParams;
 
@@ -112,6 +129,14 @@ private:
    * The cuuid to be used for logging.
    */
   const Cuuid_t &m_cuuid;
+
+  /**
+   * Wrapper around the system close() function.  This object is used to
+   * construct the m_sockCatalogue member variable.
+   *
+   * The main goal of thei class to facilitate unit-testing.
+   */
+  SystemFileCloser m_systemFileCloser;
 
   /**
    * The catalogue of all the rtcpd and tapegateway connections used by the
@@ -210,6 +235,18 @@ private:
   bool m_sessionWithRtcpdIsFinished;
 
   /**
+   * The files to be migrated to tape that have been returned by the
+   * tapegatewayd daemon but have not yet been consumed by the rtcpd daemon.
+   */
+  std::list<FileToMigrate> m_filesToMigrate;
+
+  /**
+   * The files to be recalled from tape that have been returned by the
+   * tapegatewayd daemon but have not yet been consumed by the rtcpd daemon.
+   */
+  std::list<FileToRecall> m_filesToRecall;
+
+  /**
    * Starts the session with the rtcpd daemon.
    *
    * Please note that this method does not throw any exceptions.
@@ -252,54 +289,6 @@ private:
 
     return key;
   }
-
-  /**
-   * Pointer to a client message handler function, where the handler function
-   * is a member of this class.
-   *
-   * @param clientSock         The socket-descriptor of the client-connection
-   *                           which has already been released from the socket
-   *                           catalogue and has already been closed.  The
-   *                           value of this parameter is only used for logging
-   *                           and the creation of error messages.
-   * @param obj                The message object received from the client.
-   * @param rtcpdSock          The file descriptor of the rtcpd socket which is
-   *                           awaiting a reply.
-   * @param rtcpdMagic         The magic number of the initiating rtcpd request.
-   *                           This magic number will be used in any acknowledge
-   *                           message to be sent to rtcpd.
-   * @param rtcpdReqType       The request type of the initiating rtcpd
-   *                           request. This request type will be used in any
-   *                           acknowledge message to be sent to rtcpd.
-   * @param rtcpdTapePath      The tape path associated with the initiating
-   *                           rtcpd request.  If there is no such tape path,
-   *                           then the value of this parameter should be set
-   *                           to NULL.
-   * @param tapebridgeTransId  The tapebridge transaction ID associated
-   *                           with the request sent to the client.  If no
-   *                           request was sent then this parameter should be
-   *                           set to 0.
-   * @param clientReqTimeStamp The time at which the client request was sent.
-   */
-  typedef void (BridgeProtocolEngine::*ClientMsgCallback)(
-    const int            clientSock,
-    IObject *const       obj,
-    const int            rtcpdSock,
-    const uint32_t       rtcpdMagic,
-    const uint32_t       rtcpdReqType,
-    const char *const    rtcpdTapePath,
-    const uint64_t       tapebridgeTransId,
-    const struct timeval clientReqTimeStamp);
-
-  /**
-   * Datatype for the map of IObject types to client message handler.
-   */
-  typedef std::map<int, ClientMsgCallback> ClientCallbackMap;
-
-  /**
-   * Map of client message handlers.
-   */
-  ClientCallbackMap m_clientHandlers;
 
   /**
    * The list of errors generated during the tape session.
@@ -380,17 +369,33 @@ private:
     throw (castor::exception::Exception);
 
   /**
-   * Processes the specified socket which must be both pending and a connection
-   * made from this tapebridged daemon to a client (readtp, writetp, dumptp or
-   * tapegatewayd).
+   * Processes the specified socket which must be both pending and a
+   * "get more work" connection made from the tapebridged daemon to a client
+   * (readtp, writetp, dumptp or tapegatewayd).
    *
    * Please note that this method will modify the catalogue of
    * socket-descriptors as necessary.
    *
    * @param pendingSock the file descriptior of the pending socket.
    */
-  void processPendingClientSocket(const int pendingSock)
+  void processPendingClientGetMoreWorkSocket(const int pendingSock)
     throw (castor::exception::Exception);
+
+  /**
+   * Dispatches the appropriate client-reply callback-method.
+   *
+   * @param obj                   The message object received from the client.
+   * @param getMoreWorkConnection Information about the "get more work"
+   *                              connection with the client.  This includes
+   *                              among other things, the socket-descriptor of
+   *                              the rtcpd disk/tape IO control-connection
+   *                              that effectively requested the creation of
+   *                              the connection with the client.
+   */
+  void dispatchClientReplyCallback(
+    IObject *const              obj,
+    const GetMoreWorkConnection &getMoreWorkConnection)
+    throw(castor::exception::Exception);
 
   /**
    * Processes the specified socket which must be both pending and a connection
@@ -504,11 +509,6 @@ private:
    * If the rtcpd session is being shutdown, then this method replies with a no
    * more work message and returns.
    *
-   * If the rtcpd session is continuing, then this method sends a request for
-   * more work to the client (readtp, tapegatewayd or writetp) and stores the
-   * resulting connection with in the socket-catalogue ready to receive the
-   * reply in a future interation of the main select loop.
-   *
    * @param header    The header of the request.
    * @param body      The body of the request.
    * @param rtcpdSock The file descriptor of the socket from which both the
@@ -517,6 +517,109 @@ private:
    */
   void processRtcpRequestMoreWork(const legacymsg::MessageHeader &header,
     legacymsg::RtcpFileRqstErrMsgBody &body, const int rtcpdSock)
+    throw(castor::exception::Exception);
+
+  /**
+   * Processes the specified RTCP file request for more migration work.
+   *
+   * @param header    The header of the request.
+   * @param body      The body of the request.
+   * @param rtcpdSock The file descriptor of the socket from which both the
+   *                  header and the body of the message have already been read
+   *                  from.
+   */
+  void processRtcpRequestMoreMigrationWork(
+    const legacymsg::MessageHeader    &header,
+    legacymsg::RtcpFileRqstErrMsgBody &body,
+    const int                         rtcpdSock)
+    throw(castor::exception::Exception);
+
+  /**
+   * Sends a FilesToMigrateListRequest message to the client.
+   */
+  void sendFilesToMigrateListRequestToClient(
+    const legacymsg::MessageHeader    &header,
+    legacymsg::RtcpFileRqstErrMsgBody &body,
+    const int                         rtcpdSock)
+    throw(castor::exception::Exception);
+
+  /**
+   * Takes a file to migrate request from the cache and sends it to the rtcpd
+   * daemon.
+   *
+   * @param rtcpdSock     The socket-descriptor of the rtcpd-connection.
+   * @param rtcpdReqMagic The magic number of the rtcpd request message
+   *                      awaiting a reply from the client.
+   * @param rtcpdReqType  The type of the rtcpd message awaiting a reply from
+   *                      the client.
+   */
+  void sendCachedFileToMigrateToRtcpd(
+    const int      rtcpdSock,
+    const uint32_t rtcpdReqMagic,
+    const uint32_t rtcpdReqType)
+    throw(castor::exception::Exception);
+
+  /**
+   * Processes the specified RTCP file request for more recall work.
+   *
+   * @param header    The header of the request.
+   * @param body      The body of the request.
+   * @param rtcpdSock The file descriptor of the socket from which both the
+   *                  header and the body of the message have already been read
+   *                  from.
+   */
+  void processRtcpRequestMoreRecallWork(
+    const legacymsg::MessageHeader    &header,
+    legacymsg::RtcpFileRqstErrMsgBody &body,
+    const int                         rtcpdSock)
+    throw(castor::exception::Exception);
+
+  /**
+   * Sends a FilesToRecallListRequest message to the client.
+   */
+  void sendFilesToRecallListRequestToClient(
+    const legacymsg::MessageHeader    &header,
+    legacymsg::RtcpFileRqstErrMsgBody &body,
+    const int                         rtcpdSock)
+    throw(castor::exception::Exception);
+
+  /**
+   * Takes a file to recall request from the cache and sends it to the rtcpd
+   * daemon.
+   *
+   * @param rtcpdSock        The socket-descriptor of the rtcpd-connection.
+   * @param rtcpdReqMagic    The magic number of the rtcpd request message
+   *                         awaiting a reply from the client.
+   * @param rtcpdReqType     The type of the rtcpd message awaiting a reply
+   *                         from the client.
+   * @param rtcpdReqTapePath The tape path associated with the rtcpd request
+   *                         message awaiting a reply from the client.
+   */
+  void sendCachedFileToRecallToRtcpd(
+    const int         rtcpdSock,
+    const uint32_t    rtcpdReqMagic,
+    const uint32_t    rtcpdReqType,
+    const std::string &rtcpdReqTapePath)
+    throw(castor::exception::Exception);
+
+  /**
+   * Sends the specified file to recall to the rtcpd daemon.
+   *
+   * @param fileToRecall     The file to be recalled.
+   * @param rtcpdSock        The socket-descriptor of the rtcpd-connection.
+   * @param rtcpdReqMagic    The magic number of the rtcpd request message
+   *                         awaiting a reply from the client.
+   * @param rtcpdReqType     The type of the rtcpd message awaiting a reply
+   *                         from the client.
+   * @param rtcpdReqTapePath The tape path associated with the rtcpd request
+   *                         message awaiting a reply from the client.
+   */
+  void sendFileToRecallToRtcpd(
+    const FileToRecall &fileToRecall,
+    const int          rtcpdSock,
+    const uint32_t     rtcpdReqMagic,
+    const uint32_t     rtcpdReqType,
+    const std::string  &rtcpdReqTapePath)
     throw(castor::exception::Exception);
 
   /**
@@ -699,52 +802,110 @@ private:
   /**
    * FilesToMigrateList client message handler.
    *
-   * For full documenation please see the documentation of the type
-   * BridgeProtocolEngine::ClientMsgCallback.
+   * @param obj                   The message object received from the client.
+   * @param getMoreWorkConnection Information about the "get more work"
+   *                              connection with the client.  This includes
+   *                              among other things, the socket-descriptor of
+   *                              the rtcpd disk/tape IO control-connection
+   *                              that effectively requested the creation of
+   *                              the connection with the client.
    */
   void filesToMigrateListClientCallback(
-    const int            clientSock,
-    IObject *const       obj,
-    const int            rtcpdSock,
-    const uint32_t       rtcpdMagic,
-    const uint32_t       rtcpdReqType,
-    const char *const    rtcpdTapePath,
-    const uint64_t       tapebridgeTransId,
-    const struct timeval clientReqTimeStamp)
+    IObject *const              obj,
+    const GetMoreWorkConnection &getMoreWorkConnection)
+    throw(castor::exception::Exception);
+
+  /**
+   * Adds the specified files to be migrated that have been received from the
+   * the client to the cache of files to be migrated.
+   *
+   * @param filesToMigrate The files to be migrated that have been received
+   *                       from the client.
+   */
+  void addFilesToMigrateToCache(
+    const std::vector<tapegateway::FileToMigrateStruct*> &clientFilesToMigrate)
+    throw(castor::exception::Exception);
+
+  /**
+   * Adds the specified file to be migrated that has been received from the
+   * the client to the cache of files to be migrated.
+   *
+   * @param clientFileToMigrate The file to be migrated that has been received
+   *                            from the client.
+   */
+  void addFileToMigrateToCache(
+    const tapegateway::FileToMigrateStruct &clientFileToMigrate)
+    throw(castor::exception::Exception);
+
+  /**
+   * Sends the specified file to migrate to the rtcpd daemon.
+   *
+   * @param fileToMigrate The file to be migrated.
+   * @param rtcpdSock     The socket-descriptor of the rtcpd-connection.
+   * @param rtcpdReqMagic The magic number of the rtcpd request message
+   *                      awaiting a reply from the client.
+   * @param rtcpdReqType  The type of the rtcpd message awaiting a reply from
+   *                      the client.
+   */
+  void sendFileToMigrateToRtcpd(
+    const FileToMigrate &fileToMigrate,
+    const int           rtcpdSock,
+    const uint32_t      rtcpdReqMagic,
+    const uint32_t      rtcpdReqType)
     throw(castor::exception::Exception);
 
   /**
    * FilesToRecallListClientCallback client message handler.
    *
-   * For full documenation please see the documentation of the type
-   * BridgeProtocolEngine::ClientMsgCallback.
+   * @param obj                   The message object received from the client.
+   * @param getMoreWorkConnection Information about the "get more work"
+   *                              connection with the client.  This includes
+   *                              among other things, the socket-descriptor of
+   *                              the rtcpd disk/tape IO control-connection
+   *                              that effectively requested the creation of
+   *                              the connection with the client.
    */
   void filesToRecallListClientCallback(
-    const int            clientSock,
-    IObject *const       obj,
-    const int            rtcpdSock,
-    const uint32_t       rtcpdMagic,
-    const uint32_t       rtcpdReqType,
-    const char *const    rtcpdTapePath,
-    const uint64_t       tapebridgeTransId,
-    const struct timeval clientReqTimeStamp)
+    IObject *const              obj,
+    const GetMoreWorkConnection &getMoreWorkConnection)
+    throw(castor::exception::Exception);
+
+  /**
+   * Adds the specified files to be recalled that have been received from the
+   * the client to the cache of files to be recalled.
+   *
+   * @param filesToRecall The files to be recalled that have been received
+   *                      from the client.
+   */
+  void addFilesToRecallToCache(
+    const std::vector<tapegateway::FileToRecallStruct*> &clientFilesToRecall)
+    throw(castor::exception::Exception);
+
+  /**
+   * Adds the specified file to be migrated that has been received from the
+   * the client to the cache of files to be recalled.
+   *
+   * @param clientFileToRecall The file to be recalled that has been received
+   *                           from the client.
+   */
+  void addFileToRecallToCache(
+    const tapegateway::FileToRecallStruct &clientFileToRecall)
     throw(castor::exception::Exception);
 
   /**
    * NoMoreFiles client message handler.
    *
-   * For full documenation please see the documentation of the type
-   * BridgeProtocolEngine::ClientMsgCallback.
+   * @param obj                   The message object received from the client.
+   * @param getMoreWorkConnection Information about the "get more work"
+   *                              connection with the client.  This includes
+   *                              among other things, the socket-descriptor of
+   *                              the rtcpd disk/tape IO control-connection
+   *                              that effectively requested the creation of
+   *                              the connection with the client.
    */
   void noMoreFilesClientCallback(
-    const int            clientSock,
-    IObject *const       obj,
-    const int            rtcpdSock,
-    const uint32_t       rtcpdMagic,
-    const uint32_t       rtcpdReqType,
-    const char *const    rtcpdTapePath,
-    const uint64_t       tapebridgeTransId,
-    const struct timeval clientReqTimeStamp)
+    IObject *const              obj,
+    const GetMoreWorkConnection &getMoreWorkConnection)
     throw(castor::exception::Exception);
 
   /**
@@ -770,18 +931,17 @@ private:
   /**
    * EndNotificationErrorReport client message handler.
    *
-   * For full documenation please see the documentation of the type
-   * BridgeProtocolEngine::ClientMsgCallback.
+   * @param obj                   The message object received from the client.
+   * @param getMoreWorkConnection Information about the "get more work"
+   *                              connection with the client.  This includes
+   *                              among other things, the socket-descriptor of
+   *                              the rtcpd disk/tape IO control-connection
+   *                              that effectively requested the creation of
+   *                              the connection with the client.
    */
   void endNotificationErrorReportClientCallback(
-    const int            clientSock,
-    IObject *const       obj,
-    const int            rtcpdSock,
-    const uint32_t       rtcpdMagic,
-    const uint32_t       rtcpdReqType,
-    const char *const    rtcpdTapePath,
-    const uint64_t       tapebridgeTransId,
-    const struct timeval clientReqTimeStamp)
+    IObject *const              obj,
+    const GetMoreWorkConnection &getMoreWorkConnection)
     throw(castor::exception::Exception);
 
   /**
@@ -847,6 +1007,7 @@ private:
    * shutdown.
    */
   bool shuttingDownRtcpdSession() const;
+
 }; // class BridgeProtocolEngine
 
 } // namespace tapebridge

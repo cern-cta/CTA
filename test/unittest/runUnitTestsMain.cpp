@@ -27,6 +27,8 @@
 #include "test/unittest/castor/tape/tapebridge/BulkRequestConfigParamsTest.hpp"
 #include "test/unittest/castor/tape/tapebridge/FileToMigrateTest.hpp"
 #include "test/unittest/castor/tape/tapebridge/FileToRecallTest.hpp"
+#include "test/unittest/castor/tape/tapebridge/GetMoreWorkConnectionTest.hpp"
+#include "test/unittest/castor/tape/tapebridge/MigrationReportConnectionTest.hpp"
 #include "test/unittest/castor/tape/tapebridge/TapeFlushConfigParamsTest.hpp"
 #include "test/unittest/castor/tape/tapebridge/PendingMigrationsStoreTest.hpp"
 #include "test/unittest/castor/tape/tapebridge/SessionErrorTest.hpp"

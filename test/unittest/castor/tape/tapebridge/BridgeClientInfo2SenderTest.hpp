@@ -51,11 +51,15 @@
 
 #define FAKE_RTCPD_LISTEN_PORT 65000
 
+namespace castor     {
+namespace tape       {
+namespace tapebridge {
+
 int createListenerSock_stdException(const char *addr,
   const unsigned short lowPort, const unsigned short highPort,
   unsigned short &chosenPort) {
   try {
-    return castor::tape::net::createListenerSock(addr, lowPort, highPort,
+    return net::createListenerSock(addr, lowPort, highPort,
       chosenPort);
   } catch(castor::exception::Exception &ex) {
     test_exception te(ex.getMessage().str());
@@ -75,11 +79,11 @@ void *rtcpd_thread(void *arg) {
   try {
     rtcpd_thread_params *threadParams =
       (rtcpd_thread_params*)arg;
-    castor::tape::utils::SmartFd listenSock(threadParams->inListenSocketFd);
+    utils::SmartFd listenSock(threadParams->inListenSocketFd);
 
     const time_t acceptTimeout = 10; // Timeout is in seconds
-    castor::tape::utils::SmartFd connectionSockFd(
-      castor::tape::net::acceptConnection(listenSock.get(), acceptTimeout));
+    utils::SmartFd connectionSockFd(
+      net::acceptConnection(listenSock.get(), acceptTimeout));
 
     const int netReadWriteTimeout = 10; // Timeout is in seconds
     rtcpClientInfo_t client;
@@ -133,14 +137,14 @@ public:
   }
 
 
-  void test_submit_std_exception(castor::tape::legacymsg::RtcpJobReplyMsgBody
+  void test_submit_std_exception(legacymsg::RtcpJobReplyMsgBody
     &reply) throw(std::exception) {
     const std::string  rtcpdHost("127.0.0.1");;
     const unsigned int rtcpdPort = FAKE_RTCPD_LISTEN_PORT;
     const int          netReadWriteTimeout = 0;
 
     try {
-      castor::tape::tapebridge::BridgeClientInfo2Sender::send(
+      BridgeClientInfo2Sender::send(
         rtcpdHost,
         rtcpdPort,
         netReadWriteTimeout,
@@ -154,7 +158,6 @@ public:
   }
 
   void setUp() {
-    using namespace castor::tape;
     setenv("PATH_CONFIG", "localhostIsAdminHost_castor.conf", 1);
 
     memset(&m_clientInfoMsgBody, '\0', sizeof(m_clientInfoMsgBody));
@@ -181,36 +184,18 @@ public:
     const std::string  rtcpdHost;
     const unsigned int rtcpdPort = 0;
     const int          netReadWriteTimeout = 0;
-    castor::tape::legacymsg::RtcpJobReplyMsgBody reply;
+    legacymsg::RtcpJobReplyMsgBody reply;
 
     memset(&reply, '\0', sizeof(reply));
 
     CPPUNIT_ASSERT_THROW_MESSAGE("rtcpdHost = \"\"",
-      castor::tape::tapebridge::BridgeClientInfo2Sender::send(
+      BridgeClientInfo2Sender::send(
         rtcpdHost,
         rtcpdPort,
         netReadWriteTimeout,
         m_clientInfoMsgBody,
         reply),
       castor::exception::InvalidArgument);
-  }
-
-  void testSubmitUnknownRtcpdHost() {
-    const std::string  rtcpdHost("UNKNOWN");
-    const unsigned int rtcpdPort = 0;
-    const int          netReadWriteTimeout = 0;
-    castor::tape::legacymsg::RtcpJobReplyMsgBody reply;
-
-    memset(&reply, '\0', sizeof(reply));
-
-    CPPUNIT_ASSERT_THROW_MESSAGE("rtcpdHost = \"UNKNOWN\"",
-      castor::tape::tapebridge::BridgeClientInfo2Sender::send(
-        rtcpdHost,
-        rtcpdPort,
-        netReadWriteTimeout,
-        m_clientInfoMsgBody,
-        reply),
-      castor::exception::Exception);
   }
 
   void testSubmit() {
@@ -224,7 +209,7 @@ public:
       "tapebridge_tapeBridgeClientInfo2MsgBodyMarshalledSize",
       threadParams.inMarshalledMsgBodyLen > 0);
 
-    castor::tape::utils::SmartFd listenSock;
+    utils::SmartFd listenSock;
     {
       const unsigned short lowPort    = FAKE_RTCPD_LISTEN_PORT;
       const unsigned short highPort   = FAKE_RTCPD_LISTEN_PORT;
@@ -245,7 +230,7 @@ public:
     CPPUNIT_ASSERT_EQUAL_MESSAGE("pthread_create", 0,
       pthread_create(&rtcpd_thread_id, NULL, rtcpd_thread, &threadParams));
 
-    castor::tape::legacymsg::RtcpJobReplyMsgBody reply;
+    legacymsg::RtcpJobReplyMsgBody reply;
     memset(&reply, '\0', sizeof(reply));
     bool caughtSubmitException = false;
     test_exception submitException("UNKNOWN");
@@ -314,11 +299,14 @@ public:
 
   CPPUNIT_TEST_SUITE(BridgeClientInfo2SenderTest);
   CPPUNIT_TEST(testSubmitZeroLengthRtcpdHost);
-  CPPUNIT_TEST(testSubmitUnknownRtcpdHost);
   CPPUNIT_TEST(testSubmit);
   CPPUNIT_TEST_SUITE_END();
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION(BridgeClientInfo2SenderTest);
+
+} // namespace tapebridge
+} // namespace tape
+} // namespace castor
 
 #endif // TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_BRIDGECLIENTINFO2SENDERTEST_HPP
