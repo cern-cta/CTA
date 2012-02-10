@@ -16,7 +16,7 @@ Setup.getTag_sessionuuid = sessionuuid
 ### basic tags ###
 ##################
 
-def _createCastorDir(self, path):
+def _createCastorNSDir(self, path):
     # create the path in the namespace
     output = Popen('nsmkdir ' + path)
     # check it went fine
@@ -24,13 +24,13 @@ def _createCastorDir(self, path):
         'Failed to create working directory ' + path + os.linesep + "Error :" + os.linesep + output
     # return the created dir
     return path
-Setup._createCastorDir = _createCastorDir
+Setup._createCastorNSDir = _createCastorNSDir
 
 def genericPath(self):
     # get the test path
     testpath = self.options.get('Generic','CastorTestDir')
     # create a unique directory
-    return self._createCastorDir(testpath + os.sep + self.getTag(None, 'sessionuuid'))
+    return self._createCastorNSDir(testpath + os.sep + self.getTag(None, 'sessionuuid'))
 Setup.getTag_genericPath = genericPath
 
 def nsDir(self, nb=0):
