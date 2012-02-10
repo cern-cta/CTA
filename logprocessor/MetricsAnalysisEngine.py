@@ -50,6 +50,7 @@ import pickle as pk
 import sys
 import math
 import glob
+import math
 
 # Nedeed for debugging (human-readable dates):
 import datetime
@@ -523,9 +524,9 @@ class MaxMsgsPerSecOverMinute(int):
  
 
 #######################################################################
-#   Class EstimateTroughputOverMinute
+#   Class EstimateThroughputOverMinute
 #######################################################################
-class EstimateTroughputOverMinute(int):
+class EstimateThroughputOverMinute(int):
     """
     Over one minute interval, count the messages on one second interval. Then get the difference between the maximum and the mean values.
     """
@@ -696,6 +697,58 @@ class Max(int):
         
         
 #######################################################################
+#   Class Max
+#######################################################################
+class MaxGB(int):
+    """
+    Keeps the maximum value and returns it in GB provided it is stored in bytes.
+    """
+
+    def __init__(self,init_to=None):
+        self.max_value=init_to
+
+    def __add__(self, other):
+    
+        # The following if will handle the case in 
+        # which we are merging with an empty bin.        
+        if self.max_value==None and other.max_value==None:
+            return MaxGB()
+        
+        if self.max_value==None:
+            return MaxGB(other.max_value)
+            
+        if other.max_value==None:
+            return MaxGB(self.max_value)
+    
+        # Compute the maximum over the two merged bins...    
+        if self.max_value>other.max_value:        
+            return MaxGB(self.max_value)
+            
+        else:
+            return MaxGB(other.max_value)
+
+
+    def add(self, element):
+    
+        # Make sure that we are adding a numeric type    
+        if type(element) not in ['int','float']:
+            # If we are trying to add a non-numeric value, try to convert it to float
+            element=float(element)
+      
+        # Here we are at the first addedd value
+        if self.max_value==None:
+            self.max_value=element
+        
+        # Check for the maximum
+        if element>self.max_value:        
+            self.max_value=element
+            
+
+    def getData(self):
+        return self.max_value/(1024*1024*1024)        
+        
+        
+#######################################################################
 #   Class Min
 #######################################################################
 class Min(int):
@@ -746,8 +799,7 @@ class Min(int):
         return self.min_value
         
         
-        
-        
+    
 #######################################################################
 #   Class InverseMin
 #######################################################################
@@ -796,15 +848,70 @@ class InverseMin(int):
             self.min_value=element
             
     def getData(self):
-        return 1/self.min_value               
+        return 1/self.min_value        
         
+        
+#######################################################################
+#   Class LogMin
+#######################################################################
+class LogMin(int):
+    """
+    Keeps the minimum value and return the base 10 logarithm
+    """
+
+    def __init__(self,init_to=None):
+        self.min_value=init_to
+
+    def __add__(self, other):
+    
+        # The following if will handle the case in 
+        # which we are merging with an empty bin.        
+        if self.min_value==None and other.min_value==None:
+            return LogMin()
+        
+        if self.min_value==None:
+            return LogMin(other.min_value)
+            
+        if other.min_value==None:
+            return LogMin(self.min_value)
+            
+        # Compute the minimum over the two merged bins...
+        if self.min_value<other.min_value:        
+            return LogMin(self.min_value)
+            
+        else:
+            return LogMin(other.min_value)
+
+
+    def add(self, element):
+    
+        # Make sure that we are adding a numeric type    
+        if type(element) not in ['int','float']:
+            # If we are trying to add a non-numeric value, try to convert it to float
+            element=float(element)
+      
+        # Here we are at the first addedd value
+        if self.min_value==None:
+            self.min_value=element
+        
+        # Check for the maximum
+        if element<self.min_value:        
+            self.min_value=element
+            
+    def getData(self):
+    
+        if self.min_value<=0:
+            return 0
+        else:    
+            return math.log10(self.min_value)
+
 
 #######################################################################
-#   Class MaxGB
+#   Class LogMax
 #######################################################################
-class MaxGB(int):
+class LogMax(int):
     """
-    Keeps the maximum value in bytes and returns in GB.
+    Keeps the maximum value in bytes and returns the logaithm.
     """
 
     def __init__(self,init_to=None):
@@ -816,20 +923,20 @@ class MaxGB(int):
         # The following if will handle the case in 
         # which we are merging with an empty bin.        
         if self.max_value==None and other.max_value==None:
-            return Max()
+            return LogMax()
         
         if self.max_value==None:
-            return MaxGB(other.max_value)
+            return LogMax(other.max_value)
             
         if other.max_value==None:
-            return MaxGB(self.max_value)
+            return LogMax(self.max_value)
     
         # Compute the maximum over the two merged bins...    
         if self.max_value>other.max_value:        
-            return MaxGB(self.max_value)
+            return LogMax(self.max_value)
             
         else:
-            return MaxGB(other.max_value)
+            return LogMax(other.max_value)
 
 
     def add(self, element):
@@ -849,7 +956,7 @@ class MaxGB(int):
             
 
     def getData(self):
-        return self.max_value/(1024*1024*1024)
+        return math.log10(self.max_value)
 
 
 
