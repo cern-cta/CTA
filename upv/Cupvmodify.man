@@ -43,7 +43,7 @@ the regular expression for the new source host.
 the regular expression for the new target host.
 .IP 
 .BR OPERATOR, 
-.BR TAPE_OPERATOR, 
+.BR TP_OPER, 
 .BR GRP_ADMIN, 
 .BR ADMIN, 
 .BR UPV_ADMIN, 

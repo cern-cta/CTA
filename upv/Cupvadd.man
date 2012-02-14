@@ -38,7 +38,7 @@ is the privilege requested. It must be one of the following:
 .BR OPERATOR 
 (normal operator), 
 .TP
-.BR TAPE_OPERATOR 
+.BR TP_OPER 
 (tape operator), 
 .TP
 .BR GRP_ADMIN 

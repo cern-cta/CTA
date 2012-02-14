@@ -35,7 +35,7 @@ the target host.
 is the privilege requested. It must be one of the following:
 .IP 
 .BR OPERATOR, 
-.BR TAPE_OPERATOR, 
+.BR TP_OPER, 
 .BR GRP_ADMIN, 
 .BR ADMIN, 
 .BR UPV_ADMIN, 
