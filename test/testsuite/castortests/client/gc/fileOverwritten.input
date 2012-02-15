@@ -1,9 +1,9 @@
 # Test for bug #90938: GC drops disk-only files if they are overwritten
+#
+# Note that in the 3rd line we exploit a feature of stager_qry whereby we return
+# INVALID (and rc == 0) for not yet garbage collected files and ENOENT (rc == 2)
+# for 'really' not existing ones.
 STAGE_SVCCLASS=<tapeServiceClass> <rfcp> <localFileName> <noTapeFileName>
-STAGE_SVCCLASS=<diskOnlyServiceClass> <rfcp> <localFileName> <noTapeFileName> #same filename
-while [ $? = 0 ]; stager_qry -M <noTapeFileName> -S <tapeServiceClass> &> /dev/null; do sleep 15; done # keep checking until the first file gets deleted
+STAGE_SVCCLASS=<diskOnlyServiceClass> <rfcp> <localFileName> <noTapeFileName> # same filename
+while [ $? = 0 ]; stager_qry -M <noTapeFileName> -S <tapeServiceClass> &> /dev/null; do sleep 15; done # keep checking until the first file gets garbage collected
 stager_qry -M <noTapeFileName> -S <diskOnlyServiceClass> # the second file should still be there
-
-
-
-
