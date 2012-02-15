@@ -1,8 +1,8 @@
-echo 'TFile *f = TFile::Open("<xrootRootURLparam>svcClass=<diskOnlyServiceClass>&mkpath=1&filetype=raw","RECREATE");#f->WriteBuffer("garbage",7);#f->Close();#.q' | sed 's/#/\n/g' > <tmpLocalFileName>
+echo 'TFile *f = TFile::Open("<xrootRootURLparam>svcClass=<diskOnlyServiceClass>&mkpath=1&filetype=raw","RECREATE");f->WriteBuffer("garbage",7);f->Close();.q' | sed 's/;/;\n/g' > <tmpLocalFileName>
 cat <tmpLocalFileName> | <rootbin>
 nsls -l <noTapeFileName> | awk '{print $5" "$NF}'
 stager_qry -M <noTapeFileName>
-echo 'TFile *f = TFile::Open("<xrootRootURLparam>svcClass=<diskOnlyServiceClass>&mkpath=1&filetype=raw","UPDATE");#f->WriteBuffer("a bit more garbage",18);#f->Close();#.q' | sed 's/#/\n/g' > <tmpLocalFileName1>
+echo 'TFile *f = TFile::Open("<xrootRootURLparam>svcClass=<diskOnlyServiceClass>&mkpath=1&filetype=raw","UPDATE");f->WriteBuffer("a bit more garbage",18);f->Close();.q' | sed 's/;/;\n/g' > <tmpLocalFileName1>
 cat <tmpLocalFileName1> | <rootbin>
 nsls -l <noTapeFileName> | awk '{print $5" "$NF}'
 
