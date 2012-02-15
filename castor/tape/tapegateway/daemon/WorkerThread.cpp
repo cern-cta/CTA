@@ -2387,7 +2387,7 @@ void castor::tape::tapegateway::WorkerThread::logMigrationFileNotfound (Cuuid_t 
       castor::dlf::Param("errorCode",sstrerror(e.code())),
       castor::dlf::Param("errorMessage",e.getMessage().str())
   };
-  castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, WORKER_MIGRATION_FILE_NOT_FOUND, params, castorFileId);
+  castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, WORKER_MIGRATION_FILE_NOT_FOUND, params, castorFileId);
 }
 
 void castor::tape::tapegateway::WorkerThread::logMigrationGetDbInfo (Cuuid_t uuid,
