@@ -1,1 +1,2 @@
-nsmkdir <nsDir>; nstouch <nsDir>/child; nschmod 000 <nsDir>; nschmod 555 <nsDir>/child; echo $?
+nsmkdir <nsDir>; nstouch <nsDir>/child; nschmod 000 <nsDir>;
+nschmod 555 <nsDir>/child; echo $?
