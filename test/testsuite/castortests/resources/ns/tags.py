@@ -58,7 +58,7 @@ def nsCleanup(self):
     for entry in ['genericPath', 'noTapePath', 'tapePath']:
         if self.tags.has_key(entry):
             path = self.tags[entry]
-            output = Popen('nsrm -r ' + path)
+            output = Popen('nschmod -R 777 ' + path + '; nsrm -r ' + path)
             assert len(output) == 0, \
                 'Failed to cleanup working directory ' + path + \
                 '. You may have to do manual cleanup' + os.linesep + \
