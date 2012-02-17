@@ -1,4 +1,0 @@
-nstouch <noTapeFileName>
-nssetchecksum -n adler32 -k `echo "obase=16; $RANDOM" | bc` <noTapeFileName>
-<xrdcp> <localFileName> <xrootURL> -f -d 10 2>&1 | grep 'Bad checksum'
-stager_qry -M <noTapeFileName>
