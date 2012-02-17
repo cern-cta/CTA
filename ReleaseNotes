@@ -142,7 +142,7 @@
   Summary of major features
   -------------------------
 
-  - the tape schema of the stager DB has been cleaned up fro migrations.
+  - the tape schema of the stager DB has been cleaned up for migrations.
     + tapepools have now a nbDrives, minAmountData, minNbFiles and maxFileAge to
       replace previous stream policy
     + migration policy has been replaced by a migrationRouting table.
@@ -158,7 +158,7 @@
   - Id2Type has been dropped from the stager DB, reducing by almost two the number of
     actions in the DB. Thus 2.1.12 is able to handle 2x more files per second than 2.1.11
     (order of 250 to be compared to 120)
-  - new admin tools are provide with more intuitive interface and much better output
+  - new admin tools are provided with more intuitive interface and much better output
     + see print/insert/delete svcclass/tapepool/diskpool/migrationroute/... and their man pages
       for more details
   - a major code cleanup has been realized to remove unsupported componenents (LSF, jobmanager,
@@ -266,12 +266,13 @@
   ORACLE Version 11
   -----------------
 
-  - ORACLE version 11 is the prefered ORACLE version for castor 2.1.12. ORACLE 10 is still
-    supported for the core of CASTOR but repack will not be functionnal if ORACLE 10 is used.
-    Note that if you're upgrading from CASTOR 2.1.11 to CASTOR 2.1.12 under ORACLE 10, you will
+  - Oracle version 11gR2 (11.2.0.3) is the prefered Oracle version for castor 2.1.12.
+    Oracle 10.2.0.5 is still supported for the core of CASTOR but repack will not be functional
+    if Oracle 10 is used.
+    Note that if you're upgrading from CASTOR 2.1.11 to CASTOR 2.1.12 under Oracle 10, you will
     end up with one invalid procedure after the upgrade : handleRepackRequest. This is not
     an issue as long as you do not use repack on the instance. If you later upgrade to
-    ORACLE 11, you only have to revalidate this procedure to make repack fully functionnal.
+    Oracle 11, you only have to revalidate this procedure to make repack fully functionnal.
 
 
   Upgrade Instructions from 2.1.11-0
