@@ -34,9 +34,9 @@
 #include "castor/tape/tapebridge/FileToRecall.hpp"
 #include "castor/tape/tapebridge/FileWrittenNotificationList.hpp"
 #include "castor/tape/tapebridge/GetMoreWorkConnection.hpp"
+#include "castor/tape/tapebridge/IFileCloser.hpp"
 #include "castor/tape/tapebridge/PendingMigrationsStore.hpp"
 #include "castor/tape/tapebridge/SessionError.hpp"
-#include "castor/tape/tapebridge/SystemFileCloser.hpp"
 #include "castor/tape/tapebridge/TapeFlushConfigParams.hpp"
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include "castor/tape/tapegateway/FileToRecallStruct.hpp"
@@ -68,6 +68,9 @@ public:
   /**
    * Constructor.
    *
+   * @param fileCloser               The object used to close file-descriptors.
+   *                                 The main goal of this object to facilitate
+   *                                 in unit-testing the BridgeProtocolEngine.
    * @param bulkRequestConfigParams  The values of the bulk-request
    *                                 configuration-parameters to be used by the
    *                                 tapebridged daemon.
@@ -94,6 +97,7 @@ public:
    *                                 IDS used in requests to the clients.
    */
   BridgeProtocolEngine(
+    IFileCloser                         &fileCloser,
     const BulkRequestConfigParams       &bulkRequestConfigParams,
     const TapeFlushConfigParams         &tapeFlushConfigParams,
     const Cuuid_t                       &cuuid,
@@ -114,6 +118,14 @@ public:
 private:
 
   /**
+   * The object used to close file-descriptors.
+   *
+   * The main goal of this object to facilitate in unit-testing the
+   * BridgeProtocolEngine.
+   */
+  IFileCloser &m_fileCloser;
+
+  /**
    * The values of the bulk-request configuration-parameters to be used by the
    * tapebridged daemon.
    */
@@ -129,14 +141,6 @@ private:
    * The cuuid to be used for logging.
    */
   const Cuuid_t &m_cuuid;
-
-  /**
-   * Wrapper around the system close() function.  This object is used to
-   * construct the m_sockCatalogue member variable.
-   *
-   * The main goal of thei class to facilitate unit-testing.
-   */
-  SystemFileCloser m_systemFileCloser;
 
   /**
    * The catalogue of all the rtcpd and tapegateway connections used by the

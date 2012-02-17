@@ -52,7 +52,7 @@ private:
       // Do nothing
     }
 
-    int close(const int fd) {
+    int closeFd(const int fd) {
       m_closedFds.push_back(fd);
       return 0;
     }

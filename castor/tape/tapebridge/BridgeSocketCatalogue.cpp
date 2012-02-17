@@ -51,23 +51,23 @@ castor::tape::tapebridge::BridgeSocketCatalogue::~BridgeSocketCatalogue() {
   // connections.  This is the responsibility of the VdqmRequestHandler.
 
   if(0 <= m_initialRtcpdSock) {
-    m_fileCloser.close(m_initialRtcpdSock);
+    m_fileCloser.closeFd(m_initialRtcpdSock);
   }
 
   // Close each of the rtcpd-connections
   for(std::set<int>::const_iterator itor = m_rtcpdIOControlConns.begin();
     itor != m_rtcpdIOControlConns.end(); itor++) {
-    m_fileCloser.close(*itor);
+    m_fileCloser.closeFd(*itor);
   }
 
   // If there is an open client "get more work" connection, then close it
   if(0 <= m_getMoreWorkConnection.clientSock) {
-    m_fileCloser.close(m_getMoreWorkConnection.clientSock);
+    m_fileCloser.closeFd(m_getMoreWorkConnection.clientSock);
   }
 
   // If there is an open client migration-report connection, then close it
   if(0 <= m_migrationReportConnection.clientSock) {
-    m_fileCloser.close(m_migrationReportConnection.clientSock);
+    m_fileCloser.closeFd(m_migrationReportConnection.clientSock);
   }
 }
 

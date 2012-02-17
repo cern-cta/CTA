@@ -24,6 +24,8 @@
 
 #include "castor/tape/tapebridge/SystemFileCloser.hpp"
 
+#include <unistd.h>
+
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
@@ -33,8 +35,8 @@ castor::tape::tapebridge::SystemFileCloser::~SystemFileCloser() throw() {
 
 
 //-----------------------------------------------------------------------------
-// close
+// closeFd
 //-----------------------------------------------------------------------------
-int castor::tape::tapebridge::SystemFileCloser::close(const int fd) {
-  return close(fd);
+int castor::tape::tapebridge::SystemFileCloser::closeFd(const int fd) {
+  return ::close(fd);
 }

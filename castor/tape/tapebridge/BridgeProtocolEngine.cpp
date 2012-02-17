@@ -76,6 +76,7 @@
 // constructor
 //-----------------------------------------------------------------------------
 castor::tape::tapebridge::BridgeProtocolEngine::BridgeProtocolEngine(
+  IFileCloser                         &fileCloser,
   const BulkRequestConfigParams       &bulkRequestConfigParams,
   const TapeFlushConfigParams         &tapeFlushConfigParams,
   const Cuuid_t                       &cuuid,
@@ -87,10 +88,11 @@ castor::tape::tapebridge::BridgeProtocolEngine::BridgeProtocolEngine(
   utils::BoolFunctor                  &stoppingGracefully,
   Counter<uint64_t>                   &tapebridgeTransactionCounter)
   throw(castor::exception::Exception) :
+  m_fileCloser(fileCloser),
   m_bulkRequestConfigParams(bulkRequestConfigParams),
   m_tapeFlushConfigParams(tapeFlushConfigParams),
   m_cuuid(cuuid),
-  m_sockCatalogue(m_systemFileCloser),
+  m_sockCatalogue(fileCloser),
   m_jobRequest(jobRequest),
   m_volume(volume),
   m_nextDestinationTapeFSeq(nbFilesOnDestinationTape + 1),
@@ -517,7 +519,8 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
     // If the peer closed its side of the connection, then close this side
     // of the connection and return in order to continue the RTCOPY session
     if(peerClosed) {
-      close(m_sockCatalogue.releaseRtcpdDiskTapeIOControlConn(pendingSock));
+      m_fileCloser.closeFd(
+        m_sockCatalogue.releaseRtcpdDiskTapeIOControlConn(pendingSock));
 
       castor::dlf::Param params[] = {
         castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
@@ -570,8 +573,8 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
       TAPEBRIDGE_RECEIVED_RTCP_ENDOF_REQ, params);
   }
 
-  const int closeRc = close(m_sockCatalogue.releaseRtcpdDiskTapeIOControlConn(
-    pendingSock));
+  const int closeRc = m_fileCloser.closeFd(
+    m_sockCatalogue.releaseRtcpdDiskTapeIOControlConn(pendingSock));
   const int nbDiskTapeIOControlConnsAfterClose =
     m_sockCatalogue.getNbDiskTapeIOControlConns();
   {
@@ -1262,7 +1265,8 @@ void castor::tape::tapebridge::BridgeProtocolEngine::endRtcpdSession() throw() {
 
   // Close the initial rtcpd-connection
   {
-    const int closeRc = close(m_sockCatalogue.releaseInitialRtcpdConn());
+    const int closeRc = m_fileCloser.closeFd(
+      m_sockCatalogue.releaseInitialRtcpdConn());
 
     castor::dlf::Param params[] = {
       castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),

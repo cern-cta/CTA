@@ -51,7 +51,7 @@ public:
    * @param fd The file-descriptor to be closed.
    * @return   The return value of the system close() function.
    */
-  int close(const int fd);
+  int closeFd(const int fd);
 
 }; // class SystemFileCloser
 

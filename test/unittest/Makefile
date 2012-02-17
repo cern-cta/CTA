@@ -278,6 +278,7 @@ runUnitTestsMain.o: runUnitTestsMain.cpp
 
 runUnitTestsMain.cpp: \
   castor/tape/tapebridge/BridgeClientInfo2SenderTest.hpp \
+  castor/tape/tapebridge/BridgeProtocolEngineTest.hpp \
   castor/tape/tapebridge/BridgeSocketCatalogueTest.hpp \
   castor/tape/tapebridge/BulkRequestConfigParamsTest.hpp \
   castor/tape/tapebridge/FileToMigrateTest.hpp \

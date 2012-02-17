@@ -51,7 +51,7 @@ public:
    * @param fd The file-descriptor to be closed.
    * @return   The return value as defined by the the system close() function.
    */
-  virtual int close(const int fd) = 0;
+  virtual int closeFd(const int fd) = 0;
 
 }; // class IFileCloser
 

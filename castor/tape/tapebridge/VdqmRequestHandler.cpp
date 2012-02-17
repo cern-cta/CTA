@@ -33,6 +33,7 @@
 #include "castor/tape/tapebridge/ClientTxRx.hpp"
 #include "castor/tape/tapebridge/RtcpJobSubmitter.hpp"
 #include "castor/tape/tapebridge/RtcpTxRx.hpp"
+#include "castor/tape/tapebridge/SystemFileCloser.hpp"
 #include "castor/tape/tapebridge/VdqmRequestHandler.hpp"
 #include "castor/tape/tapebridge/VmgrTxRx.hpp"
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"
@@ -506,7 +507,9 @@ void castor::tape::tapebridge::VdqmRequestHandler::exceptionThrowingRun(
       throw ex;
     }
 
+    SystemFileCloser systemFileCloser;
     BridgeProtocolEngine bridgeProtocolEngine(
+      systemFileCloser,
       m_bulkRequestConfigParams,
       m_tapeFlushConfigParams,
       cuuid,
@@ -521,9 +524,11 @@ void castor::tape::tapebridge::VdqmRequestHandler::exceptionThrowingRun(
 
   // Else recalling
   } else {
+    SystemFileCloser systemFileCloser;
     const uint32_t nbFilesOnDestinationTape = 0;
 
     BridgeProtocolEngine bridgeProtocolEngine(
+      systemFileCloser,
       m_bulkRequestConfigParams,
       m_tapeFlushConfigParams,
       cuuid,
