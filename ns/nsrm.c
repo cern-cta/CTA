@@ -22,6 +22,7 @@ int iflag  = 0;
 int rflag  = 0;
 
 int isyes();
+int removepath(char *path);
 int removedir (char *dir);
 
 void usage(int status, char *name) {
@@ -43,12 +44,9 @@ int main(int argc,
          char **argv)
 {
   int c;
-  char fullpath[CA_MAXPATHLEN+1];
   int i;
   int hflg = 0;
-  char *p;
   char *path;
-  struct Cns_filestat statbuf;
 
   Coptions_t longopts[] = {
     { "recursive",   NO_ARGUMENT, NULL, 'r' },
@@ -60,6 +58,7 @@ int main(int argc,
 
   Coptind = 1;
   Copterr = 1;
+
   while ((c = Cgetopt_long (argc, argv, "fiRr", longopts, NULL)) != EOF) {
     switch (c) {
     case 'f':
@@ -85,49 +84,15 @@ int main(int argc,
   if (errflg || Coptind >= argc) {
     usage (USERR, argv[0]);
   }
+  /* Scan the items to remove */
   for (i = Coptind; i < argc; i++) {
     path = argv[i];
-    if (*path != '/' && strstr (path, ":/") == NULL) {
-      if ((p = getenv (CNS_HOME_ENV)) == NULL ||
-          strlen (p) + strlen (path) + 1 > CA_MAXPATHLEN) {
-        fprintf (stderr, "%s: invalid path\n", path);
-        errflg++;
-        continue;
-      } else
-        sprintf (fullpath, "%s/%s", p, path);
-    } else {
-      if (strlen (path) > CA_MAXPATHLEN) {
-        fprintf (stderr, "%s: %s\n", path,
-                 sstrerror(SENAMETOOLONG));
-        errflg++;
-        continue;
-      } else
-        strcpy (fullpath, path);
-    }
-    if ((c = Cns_lstat (fullpath, &statbuf)) == 0) {
-      if (statbuf.filemode & S_IFDIR) {
-        if (rflag) {
-          c = removedir (fullpath);
-        } else {
-          serrno = EISDIR;
-          c = -1;
-        }
-      } else {
-        if ((statbuf.filemode & S_IFLNK) != S_IFLNK &&
-            ! fflag && Cns_access (fullpath, W_OK) &&
-            isatty (fileno (stdin))) {
-          printf ("override write protection for %s? ", fullpath);
-          if (! isyes())
-            continue;
-        } else if (iflag) {
-          printf ("remove %s? ", fullpath);
-          if (! isyes())
-            continue;
-        }
-        c = Cns_unlink (fullpath);
-      }
-    }
-    if (c && (serrno != ENOENT || fflag == 0)) {
+
+    /* Actually remove the item */
+    int returnCode = removepath(path);
+
+    /* Print errors if any */
+    if (returnCode && (serrno != ENOENT || fflag == 0)) {
       fprintf (stderr, "%s: %s\n", path,
                sstrerror(serrno));
       errflg++;
@@ -136,6 +101,79 @@ int main(int argc,
   if (errflg)
     exit (USERR);
   exit (0);
+}
+
+int removepath(char *path)
+{
+	char *p;
+	char fullpath[CA_MAXPATHLEN+1];
+	struct Cns_filestat statbuf;
+	int returnCode;
+
+	/* Expand the path */
+	if (path[0] != '/' && strstr (path, ":/") == NULL) {
+		if ((p = getenv (CNS_HOME_ENV)) == NULL || strlen (p) + strlen (path) + 1 > CA_MAXPATHLEN) {
+			fprintf (stderr, "%s: invalid path\n", path);
+			errflg++;
+			returnCode = USERR;
+		} else {
+			sprintf (fullpath, "%s/%s", p, path);
+		}
+	} else {
+		if (strlen (path) > CA_MAXPATHLEN) {
+			fprintf (stderr, "%s: %s\n", path,
+					 sstrerror(SENAMETOOLONG));
+			errflg++;
+			returnCode = USERR;
+		} else strcpy (fullpath, path);
+	}
+
+	/* What are we going to remove? */
+	if (!errflg && (returnCode = Cns_lstat (fullpath, &statbuf)) == 0) {
+		/* a directory */
+		if (statbuf.filemode & S_IFDIR) {
+			if (rflag) {
+				if (! fflag && Cns_access (fullpath, W_OK) && isatty (fileno (stdin))) {
+					printf ("override write protection for %s? ", fullpath);
+					if (!isyes()) return (0);
+				} else if (iflag) {
+					printf ("remove files in %s? ", fullpath);
+					if (!isyes()) return (0);
+				}
+
+				/* If the directory is empty just remove it right away */
+				if (statbuf.nlink == 0) {
+					returnCode = Cns_rmdir(fullpath);
+					if (returnCode) {
+						fprintf (stderr, "%s: %s\n", fullpath, (serrno == EEXIST) ?
+									"Directory not empty" : sstrerror(serrno));
+					    errflg++;
+					}
+				/* ...otherwise attempt to access it and remove all contained objects */
+				} else {
+					returnCode = removedir(fullpath);
+				}
+			} else {
+				serrno = EISDIR;
+				returnCode = -1;
+			}
+		/* a file */
+		} else {
+			if ((statbuf.filemode & S_IFLNK) != S_IFLNK
+					&& ! fflag
+					&& Cns_access (fullpath, W_OK)
+					&& isatty (fileno (stdin))) {
+				printf ("override write protection for %s? ", fullpath);
+				returnCode = (isyes() ? Cns_unlink (fullpath) : 0);
+			} else if (iflag) {
+				printf ("remove %s? ", fullpath);
+				returnCode = (isyes() ? Cns_unlink (fullpath) : 0);
+			} else {
+				returnCode = Cns_unlink (fullpath);
+			}
+		}
+	}
+	return returnCode;
 }
 
 int isyes()
@@ -149,6 +187,7 @@ int isyes()
   return (fchar == 'y');
 }
 
+/* Recursive procedure to descend into the directory and remove all elements one by one */
 int removedir (char *dir)
 {
   char curdir[CA_MAXPATHLEN+1];
@@ -163,16 +202,6 @@ int removedir (char *dir)
   struct Cns_direnstat *dxp;
   char fullpath[CA_MAXPATHLEN+1];
 
-  if (! fflag && Cns_access (dir, W_OK) &&
-      isatty (fileno (stdin))) {
-    printf ("override write protection for %s? ", dir);
-    if (! isyes())
-      return (0);
-  } else if (iflag) {
-    printf ("remove files in %s? ", dir);
-    if (! isyes())
-      return (0);
-  }
   if ((dirp = Cns_opendir (dir)) == NULL)
     return (-1);
 
@@ -215,7 +244,7 @@ int removedir (char *dir)
   (void) Cns_closedir (dirp);
   while (dlf) {
     sprintf (curdir, "%s/%s", dir, dlf->d_name);
-    if (removedir (curdir) < 0)
+    if (removepath (curdir) < 0)
       fprintf (stderr, "%s: %s\n", curdir, sstrerror(serrno));
     free (dlf->d_name);
     dlc = dlf;
