@@ -56,6 +56,11 @@
     - #90343: RFE: Add name-server file-id to mismatch error message
     - #73546: RFE: Tape-gateway worker-thread should handle ENSTOOMANYSEGS and ENSCLASSNOSEGS
 
+  Package changes
+  ---------------
+  
+  - castor-mighunter-server RPM has been dropped as part of the end-of-support for rtcpclientd
+
 
   Upgrade Instructions from 2.1.12-0
   ----------------------------------
