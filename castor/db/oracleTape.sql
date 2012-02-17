@@ -335,7 +335,8 @@ BEGIN
       -- Create as many mounts as needed according to amount of data and number of files
       WHILE (varNbMounts < t.nbDrives) AND
             ((varDataAmount/(varNbMounts+1) >= t.minAmountDataForMount) OR
-             (varNbFiles/(varNbMounts+1) >= t.minNbFilesForMount)) LOOP
+             (varNbFiles/(varNbMounts+1) >= t.minNbFilesForMount)) AND
+            (varNbMounts < varNbFiles) LOOP   -- in case minAmountDataForMount << avgFileSize, stop creating more than one mount per file
         insertMigrationMount(t.id);
         varNbMounts := varNbMounts + 1;
       END LOOP;
@@ -364,7 +365,7 @@ BEGIN
     DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
   END LOOP;
 
-  -- Create a db job to be run every minute executing the deleteTerminatedRequests procedure
+  -- Create a db job to be run every minute executing the startMigrationMounts procedure
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'MigrationMountsJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
