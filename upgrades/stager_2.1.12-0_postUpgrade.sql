@@ -6,7 +6,7 @@ DECLARE
 BEGIN
   SELECT release INTO unused FROM CastorVersion
    WHERE schemaName = 'STAGER'
-     AND release LIKE '2_1_12_1%';
+     AND release LIKE '2_1_12_0%';
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- Error, we cannot apply this script
   raise_application_error(-20000, 'PL/SQL release mismatch. Please check that you are applying this post-upgrade script to the proper release.');
