@@ -34,6 +34,15 @@ defaultNormalRetries = 5
 defaultMaxRetries    = 1000
 
 def migrationRetry(errorCode,nbRetry):
+   # When a file is not present anymore in the name server, we get
+   # this error code after a successful migration of the now-obsolete
+   # file. There is no point in retrying, so we fail immediately.
+   # The diskcopy will remain in the stager until the garbage
+   # collector picks it up.
+   if errorCode == ENOENT:
+      return 0
+  
+   # Default strategy is to retry indefinitely.
    return 1
 
 #def migrationRetry(errorCode,nbRetry):
