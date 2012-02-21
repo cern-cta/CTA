@@ -221,7 +221,7 @@ class ActivityControl(threading.Thread):
                 cmd.append('file://'+notifFileName)
                 # start the transfer
                 if not fake:
-                  process = subprocess.Popen(cmd, close_fds=True)
+                  process = subprocess.Popen(cmd, close_fds=True, stderr=subprocess.PIPE)
                 else:
                   process = 0
                 runningTransfers.add(transferid, scheduler, transfer, notifFileName, process, transfertype, arrivalTime)

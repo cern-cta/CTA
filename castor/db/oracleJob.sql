@@ -269,6 +269,10 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
     END;
   END IF;
   -- It was not an update creating a file, so we fail
+  UPDATE SubRequest
+     SET status = 7, errorCode = 1725, errorMessage='Request canceled while queuing'
+   WHERE id = srId;
+  COMMIT;
   raise_application_error(-20114, 'File invalidated while queuing in the scheduler, please try again');
 END;
 /

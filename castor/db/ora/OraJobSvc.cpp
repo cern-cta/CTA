@@ -264,7 +264,6 @@ castor::db::ora::OraJobSvc::getUpdateStart
     // return
     return result;
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
     // Application specific errors
     if (e.getErrorCode() == 20114) {
       castor::exception::RequestCanceled ex;
@@ -273,6 +272,7 @@ castor::db::ora::OraJobSvc::getUpdateStart
                                       error.find("ORA-", 4) - 12);
       throw ex;
     }
+    handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in getUpdateStart."
