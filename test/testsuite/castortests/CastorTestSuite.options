@@ -37,7 +37,7 @@ TapeServiceClasses = default, dev
 DiskOnlyServiceClasses = diskonly
 
 # Remote machine and directory to be used for testing transfers outside CASTOR
-remoteSpace = lxc2disk01.cern.ch:/var/tmp/rfiod
+remoteSpace = yourdiskserver.cern.ch:/var/tmp/rfiod
 
 
 # Environment to be used for the tests
@@ -45,7 +45,7 @@ remoteSpace = lxc2disk01.cern.ch:/var/tmp/rfiod
 [Environment]
 
 # Stager related
-STAGE_HOST = lxcastordev01
+STAGE_HOST = yourstager.cern.ch
 STAGE_PORT = 9002
 STAGER_TRACE = 3
 STAGE_SVCCLASS =
