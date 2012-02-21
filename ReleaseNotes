@@ -312,6 +312,13 @@
         Instructions for moving to the transfermanager are available at : 
         http://twiki.cern.ch/twiki/bin/view/DataManagement/RtcpclientdTapeGatewaySwitchover
 
+      - the removal of the mighunter has potential consequences on the migrations
+        on files that have been removed from the namespace before they are migrated.
+        With the mighunter, a deletion before the mighunter acts on the file would
+        not lead to any migration attempt. In 2.1.12-0, the migration will be attempted
+        and will fail with ENOENT. In order to avoid looping migrations, one has to
+        make sure to have a proper migrationRetry policy.
+
       Instructions
       ------------
 
@@ -340,27 +347,33 @@
           - modifytapepool if needed
 
        6. Create the migration routes, from the old migration policies
-          - entermigrationroute 
+          - entermigrationroute
 
-       7. If you have an independent monitoring system to monitor CASTOR such
+       7. Run the stager_2.1.12-0_postUpgrade script on the STAGER database. It is available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.12-*/2.1.12-0/dbupgrades
+          Note that this script prints appropriate errors if migrations couldn't be routed.
+          In such a case, fix the missing routes and rerun the script.
+          Repeat this until the output is clean.
+
+       8. If you have an independent monitoring system to monitor CASTOR such
           as LEMON. Please make sure to update the monitoring configuration to
           reflect any changes in this release.
 
-       8. Start all the daemons which were stopped in step 2.
+       9. Start all the daemons which were stopped in step 2.
 
           Note: If you have a concept of private and public request handlers
                 you should start only the private ones to test/validate the
                 installation without user interference.
 
-       9. Wait 60 seconds to give time for the diskservers to send a heartbeat
+      10. Wait 60 seconds to give time for the diskservers to send a heartbeat
           message to the rmmaster daemon.
 
-      10. Test the instance by running the test suite available from:
+      11. Test the instance by running the test suite available from:
           - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.11-*/2.1.11-0/testsuite
 
-      11. Start the public request handlers (if applicable)
+      12. Start the public request handlers (if applicable)
 
-      12. Congratulations you have successfully upgraded to the 2.1.12-0 release
+      13. Congratulations you have successfully upgraded to the 2.1.12-0 release
           of CASTOR.
 
 
