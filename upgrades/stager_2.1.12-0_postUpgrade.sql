@@ -62,7 +62,7 @@ DECLARE
   dcids "numList";
 BEGIN
   DELETE FROM DiskCopy WHERE status = 2 RETURNING id BULK COLLECT INTO dcids;
-  UPDATE SubRequest SET status = 1
+  UPDATE SubRequest SET status = 1, answered = 0, diskcopy = NULL
    WHERE status IN (4, 5) -- WAITTAPERECALL, WAITSUBREQ
      AND diskcopy IN (SELECT * FROM TABLE(dcids));
   COMMIT;
