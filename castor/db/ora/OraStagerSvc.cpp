@@ -480,7 +480,7 @@ castor::db::ora::OraStagerSvc::processBulkRequest
       m_processBulkRequestStatement =
         createStatement(s_processBulkRequestStatementString);
       m_processBulkRequestStatement->registerOutParam
-        (2, oracle::occi::OCCIINT);
+        (2, oracle::occi::OCCIDOUBLE);
       m_processBulkRequestStatement->registerOutParam
         (3, oracle::occi::OCCIINT);
       m_processBulkRequestStatement->registerOutParam
