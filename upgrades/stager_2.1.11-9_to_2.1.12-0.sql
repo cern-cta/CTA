@@ -51,6 +51,19 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 END;
 /
 
+/* Ask for the database link configuration. Stopping here will not commit any change in the database. */
+PROMPT Configuration of the database link to the CASTOR name space
+UNDEF cnsUser
+ACCEPT cnsUser CHAR DEFAULT 'castorns' PROMPT 'Enter the nameserver db username (default castorns): ';
+UNDEF cnsPasswd
+ACCEPT cnsPasswd CHAR PROMPT 'Enter the nameserver db password: ';
+UNDEF cnsDbName
+ACCEPT cnsDbName CHAR PROMPT 'Enter the nameserver db TNS name: ';
+CREATE DATABASE LINK remotens
+  CONNECT TO &cnsUser IDENTIFIED BY &cnsPasswd USING '&cnsDbName';
+
+
+/* Starting the upgrade */
 INSERT INTO UpgradeLog (schemaVersion, release, type)
 VALUES ('2_1_12_0', '2_1_12_0', 'NON TRANSPARENT');
 COMMIT;
@@ -356,16 +369,6 @@ CREATE GLOBAL TEMPORARY TABLE RepackTapeSegments
  (fileId NUMBER, blockid RAW(4), fseq NUMBER, segSize NUMBER,
   copyNb NUMBER, fileClass NUMBER, allSegments VARCHAR2(2048))
  ON COMMIT PRESERVE ROWS;
-
-PROMPT Configuration of the database link to the CASTOR name space
-UNDEF cnsUser
-ACCEPT cnsUser CHAR DEFAULT 'castorns' PROMPT 'Enter the nameserver db username (default castorns): ';
-UNDEF cnsPasswd
-ACCEPT cnsPasswd CHAR PROMPT 'Enter the nameserver db password: ';
-UNDEF cnsDbName
-ACCEPT cnsDbName CHAR PROMPT 'Enter the nameserver db TNS name: ';
-CREATE DATABASE LINK remotens
-  CONNECT TO &cnsUser IDENTIFIED BY &cnsPasswd USING '&cnsDbName';
 
 UPDATE Type2Obj SET svcHandler = 'BulkStageReqSvc' WHERE type = 119;
 INSERT INTO CastorConfig
