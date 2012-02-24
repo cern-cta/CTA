@@ -70,7 +70,6 @@ try:
     # drop svcclasses
     if existingSvcClasses:
         stcur.execute('DELETE FROM DiskPool2SvcClass WHERE child IN (' + svcClassIds + ')')
-        stcur.execute('DELETE FROM MigrationRouting WHERE svcclass IN (' + svcClassIds + ')')
         stcur.execute('DELETE FROM SvcClass WHERE id IN (' + svcClassIds + ')')
         stconn.commit()
         # loop over svcclasses and delete them from stager
