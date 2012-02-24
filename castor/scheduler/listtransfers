@@ -292,7 +292,7 @@ def processDiskPoolListing():
     #  (unreachableMachine,...))
     # Note that we do not send the list of unreachableMachines as it would break
     # the (very weak) parsing of _buildProtocolList
-    protocols = _buildProtocolList(summaryreport[:-1])
+    protocols = _buildProtocolList(summaryreport)
     # build title, subtitle and format strings
     title, subtitle, dataformat = _buildTitleAndCoStrings(diskpoolHead + 'NBSLOTS  NBUTPEND', '%-*s%5d%9s', '%-*s%5s%9s', protocols)[0:3]
     # display title and subtitle
