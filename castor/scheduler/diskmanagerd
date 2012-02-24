@@ -231,7 +231,9 @@ class ActivityControl(threading.Thread):
                 runningTransfers.add(transferid, scheduler, transfer, notifFileName, process, transfertype, arrivalTime)
           except connectionpool.Timeout:
             # we timed out in the call to transfersCanceled or transferStarting. We need to try again
-            # thus we put the transfer into the priority queue
+            # thus we put the transfer into the priority queue and inform the scheduler
+            transferList = (socket.getfqdn(), transfer)
+            connections.transferBackToQueue(scheduler, transferid, arrivalTime, transferList, transfertype)
             transferQueue.putPriority(scheduler, transferid, transfer, transfertype, arrivalTime)
             # 'Timeout when trying to start/cancel transfer. Putting it back to the queue' message
             dlf.writenotice(msgs.TRANSFERSTARTTIMEOUT, subreqid=transferid, reqid=transfer[2], fileid=fileid)
@@ -248,7 +250,9 @@ class ActivityControl(threading.Thread):
             transferQueue.d2dDestReady(scheduler, transferid, transfer, arrivalTime, transfertype)
           except Exception, e:
             # startup of the transfer failed with unexpected error
-            # We need to try again thus we put the transfer into the priority queue
+            # We need to try again thus we put the transfer into the priority queue and inform the scheduler
+            transferList = list([(socket.getfqdn(), transfer)])
+            connections.transferBackToQueue(scheduler, transferid, arrivalTime, transferList, transfertype)
             transferQueue.putPriority(scheduler, transferid, transfer, transfertype, arrivalTime)
             # 'Failed to start transfer. Putting it back to the queue' message
             dlf.writeerr(msgs.TRANSFERSTARTINGFAILED, subreqid=transferid, reqid=transfer[2], fileid=fileid, Type=str(e.__class__), Message=str(e))

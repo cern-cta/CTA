@@ -450,6 +450,12 @@ class TransferManagerService(rpyc.Service):
     dlf.writedebug(msgs.INVOKINGTRANSFERSTARTING, DiskServer=diskserver, subreqid=transferid, reqid=reqid, TransferType=transfertype)
     queueingTransfers.transferStarting(diskserver, transferid, reqid, transfertype)
 
+  def exposed_transferBackToQueue(self, transferid, arrivaltime, transferList, transfertype):
+    '''puts a transfer back to the server queue when a transfer could not be started and was queued back'''
+    dlf.writedebug(msgs.INVOKINGTRANSFERBACKTOQUEUE, subreqid=transferid, arrivalTime=arrivaltime,
+                                                     transferList=str(transferList), TransferType=transfertype)
+    queueingTransfers.put(transferid, arrivaltime, transferList, transfertype)
+
   def exposed_getQueueingTransfers(self, diskserver):
     '''called on the (re)start of the diskManager to rebuild the queue of transfers'''
     dlf.writedebug(msgs.INVOKINGGETQUEUEINGTRANSFERS, DiskServer=diskserver)
