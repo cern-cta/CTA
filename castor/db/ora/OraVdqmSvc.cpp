@@ -370,6 +370,8 @@ unsigned int castor::db::ora::OraVdqmSvc::ID() {
 void castor::db::ora::OraVdqmSvc::reset() throw() {
   // Call upper level reset
   this->castor::BaseSvc::reset();
+  this->castor::db::DbBaseObj::reset();
+
   // Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
   for(std::map<int, oracle::occi::Statement *>::iterator itor =
