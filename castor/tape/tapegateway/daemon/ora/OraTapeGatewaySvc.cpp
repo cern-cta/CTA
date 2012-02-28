@@ -966,7 +966,8 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setFileRecalled(const c
 // getFailedMigrations
 //----------------------------------------------------------------------------
 
-void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFailedMigrations(std::list<castor::tape::tapegateway::RetryPolicyElement>& candidates)
+void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFailedMigrations(
+    std::list<castor::tape::tapegateway::RetryPolicyElement>& candidates)
 	  throw (castor::exception::Exception)
 {
   oracle::occi::ResultSet *rs = NULL;
@@ -990,12 +991,18 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFailedMigrations(std
     int MigrationJobIdIndex = resIntros.findColumnIndex(       "ID", oracle::occi::OCCI_SQLT_NUM);
     int ErrorCodeIndex  =     resIntros.findColumnIndex("ERRORCODE", oracle::occi::OCCI_SQLT_NUM);
     int NbRetryIndex    =     resIntros.findColumnIndex(  "NBRETRY", oracle::occi::OCCI_SQLT_NUM);
+    int NsHostIndex     =     resIntros.findColumnIndex(   "NSHOST", oracle::occi::OCCI_SQLT_CHR);
+    int FileIdIndex     =     resIntros.findColumnIndex(   "FILEID", oracle::occi::OCCI_SQLT_NUM);
     // Run through the cursor
     while (rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
       castor::tape::tapegateway::RetryPolicyElement item;
-      item.migrationOrRecallJobId = (u_signed64)rs->getDouble(MigrationJobIdIndex);
-      item.errorCode  = rs->getInt(ErrorCodeIndex);
-      item.nbRetry    = rs->getInt(NbRetryIndex);
+      item.migrationOrRecallJobId = (u_signed64) rs->getDouble(MigrationJobIdIndex);
+      item.errorCode              =        (int) rs->getDouble(ErrorCodeIndex);
+      item.nbRetry                =        (int) rs->getDouble(NbRetryIndex);
+      item.nsHost                 =              rs->getString(NsHostIndex);
+      item.fileId                 = (u_signed64) rs->getDouble(FileIdIndex);
+      item.tape                   = "";
+      item.fSeq                   = 0;
       candidates.push_back(item);
     }
     m_getFailedMigrationsStatement->closeResultSet(rs);

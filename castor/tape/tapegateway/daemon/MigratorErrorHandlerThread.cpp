@@ -48,6 +48,7 @@
 
 #include "castor/tape/python/ScopedPythonLock.hpp"
 #include "castor/tape/python/SmartPyObjectPtr.hpp"
+#include "castor/tape/utils/Timer.hpp"
 #include "castor/tape/tapegateway/ScopedTransaction.hpp"
 
 //------------------------------------------------------------------------------
@@ -63,132 +64,101 @@ castor::tape::tapegateway::MigratorErrorHandlerThread::MigratorErrorHandlerThrea
 void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void*)
 {
   // get failed migration tapecopies
-
   // service to access the database
   castor::IService* dbSvc = castor::BaseObject::services()->service("OraTapeGatewaySvc", castor::SVC_ORATAPEGATEWAYSVC);
   castor::tape::tapegateway::ITapeGatewaySvc* oraSvc = dynamic_cast<castor::tape::tapegateway::ITapeGatewaySvc*>(dbSvc);
-
-
   if (0 == oraSvc) {
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR, 0,  NULL);
     return;
   }
-  // Open a scoped transaction that will rollback is any exception is thrown.
+  // Open a scoped transaction that will rollback if any exception is thrown.
   // Explicit commits and rollbacks will be done through it also.
   // (To avoid unnecessary call to the DB)
   ScopedTransaction scpTrans (oraSvc);
-
-  timeval tvStart,tvEnd;
-  gettimeofday(&tvStart, NULL);
+  castor::tape::utils::Timer timer;
 
   std::list<RetryPolicyElement> mjList;
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,MIG_ERROR_GETTING_FILES, 0, NULL);
-
+  // Find all the failed migrations (tapecopies) and lock them
   try {
-    // Find all the failed migrations (tapecopies) and lock them
     oraSvc->getFailedMigrations(mjList);
   } catch (castor::exception::Exception& e){
-
     castor::dlf::Param params[] =
       {castor::dlf::Param("errorCode",sstrerror(e.code())),
        castor::dlf::Param("errorMessage",e.getMessage().str())
       };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,MIG_ERROR_NO_JOB, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,MIG_ERROR_DB_ERROR, params);
     return;
   }
-
   if (mjList.empty()){
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,MIG_ERROR_NO_JOB, 0, NULL);
     scpTrans.rollback();
     return;
-
   }
-
-  gettimeofday(&tvEnd, NULL);
-  signed64 procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
-  
   castor::dlf::Param paramsDb[] =
     {
-      castor::dlf::Param("ProcessingTime", procTime * 0.000001)
+      castor::dlf::Param("ProcessingTime", timer.getusecs() * 0.000001)
     };
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, MIG_ERROR_JOBS_FOUND, paramsDb);
 
-
+  // Sort the migrations in error into migrations to retry and to failed
   std::list<u_signed64> mjIdsToRetry;
   std::list<u_signed64> mjIdsToFail;
-
-  std::list<RetryPolicyElement>::iterator migJob= mjList.begin();
-
-  while (migJob != mjList.end()){
-    
-
+  std::list<RetryPolicyElement>::iterator migJob;
+  for (migJob = mjList.begin(); migJob != mjList.end(); migJob++){
     //apply the policy
-
     castor::dlf::Param params[] =
-      {castor::dlf::Param("migrationJobId",(*migJob).migrationOrRecallJobId)
+      {
+          castor::dlf::Param("migrationJobId",migJob->migrationOrRecallJobId),
+          castor::dlf::Param("NSFILEID",      migJob->fileId),
+          castor::dlf::Param("NSHOSTNAME",    migJob->fileId),
+          castor::dlf::Param("errorCode",     sstrerror(migJob->errorCode)),
+          castor::dlf::Param("nbRetry",       migJob->nbRetry),
       };
-
     try {
-
       if ( applyRetryMigrationPolicy(*migJob)) {
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,MIG_ERROR_RETRY, params);
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,MIG_ERROR_RETRY, params);
 	mjIdsToRetry.push_back( (*migJob).migrationOrRecallJobId);
       } else {
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,MIG_ERROR_FAILED, params);
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING,MIG_ERROR_FAILED, params);
 	mjIdsToFail.push_back( (*migJob).migrationOrRecallJobId);
       }
-
-
     } catch (castor::exception::Exception& e){
-
-      castor::dlf::Param paramsEx[] =
-	{castor::dlf::Param("migrationJobId",(*migJob).migrationOrRecallJobId),
-	 castor::dlf::Param("errorCode",sstrerror(e.code())),
-	 castor::dlf::Param("errorMessage",e.getMessage().str())
-	};
-      
+      castor::dlf::Param paramsEx[] = {
+          castor::dlf::Param("migrationJobId",(*migJob).migrationOrRecallJobId),
+          castor::dlf::Param("NSFILEID",      migJob->fileId),
+          castor::dlf::Param("NSHOSTNAME",    migJob->fileId),
+          castor::dlf::Param("errorCode",     sstrerror(migJob->errorCode)),
+          castor::dlf::Param("nbRetry",       migJob->nbRetry),
+          castor::dlf::Param("policyErrorCode",sstrerror(e.code())),
+          castor::dlf::Param("policyErrorMessage",e.getMessage().str())
+      };
       // retry in case of error
       mjIdsToRetry.push_back( (*migJob).migrationOrRecallJobId);
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, MIG_ERROR_RETRY_BY_DEFAULT, paramsEx);
     }
-
-    migJob++;
-
   }
 
-  gettimeofday(&tvStart, NULL); 
+  timer.reset();
   // update the db
-
   try {
     // TODO This function does a commit in SQL for the moment but it should be
     // fixed (when having a single convention)
     oraSvc->setMigRetryResult(mjIdsToRetry,mjIdsToFail);
     scpTrans.commit();
-    gettimeofday(&tvEnd, NULL);
-    procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
-    
-    castor::dlf::Param paramsDbUpdate[] =
-    {
-      castor::dlf::Param("ProcessingTime", procTime * 0.000001),
+    castor::dlf::Param paramsDbUpdate[] = {
+      castor::dlf::Param("ProcessingTime", timer.getusecs() * 0.000001),
       castor::dlf::Param("migration jobs to retry",mjIdsToRetry.size()),
       castor::dlf::Param("migration jobs to fail",mjIdsToFail.size())
     };
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, MIG_ERROR_RESULT_SAVED, paramsDbUpdate);
-  
-
-} catch (castor::exception::Exception& e) {
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("errorCode",sstrerror(e.code())),
-       castor::dlf::Param("errorMessage",e.getMessage().str())
+  } catch (castor::exception::Exception& e) {
+    castor::dlf::Param params[] = {
+        castor::dlf::Param("errorCode",sstrerror(e.code())),
+        castor::dlf::Param("errorMessage",e.getMessage().str())
       };
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, MIG_ERROR_CANNOT_UPDATE_DB, params);
   }
-
-  
-  mjList.clear();
-  mjIdsToRetry.clear();
-  mjIdsToFail.clear();
-
 }
 
 

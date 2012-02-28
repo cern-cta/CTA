@@ -38,13 +38,14 @@ namespace tapegateway {
      * class RetryPolicyElement
      */
     struct RetryPolicyElement{
-
       int nbRetry;
-
       int errorCode;
-
+      std::string tapepool;
+      std::string tape;
       u_signed64 migrationOrRecallJobId;
-
+      std::string nsHost;
+      u_signed64 fileId;
+      u_signed64 fSeq;
     }; /* end of class RetryPolicyElement */
   
 } /* end of namespace tapegateway */

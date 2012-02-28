@@ -32,7 +32,9 @@ sub writeConstantsFile {
     or die("Could not open $messages_filename for reading: $!\n");
   my $nbMessages = 0;
   while(<MESSAGES>) {
-    $nbMessages = $nbMessages + 1;
+    if (m/^(\d*),([A-Z0-9_]*),(.*)/) {
+	$nbMessages = $nbMessages + 1;
+    }
   }
   close(MESSAGES);
 
@@ -44,19 +46,18 @@ sub writeConstantsFile {
   my $msg;
   my $currentMessageNb = 0;
   while(<MESSAGES>) {
-    $currentMessageNb = $currentMessageNb + 1;
-    m/^(\d*),([A-Z0-9_]*),(.*)/;
-    $const_val  = $1;
-    $const_name = $2;
-    $msg        = $3;
-
-    # If this is not the last message
-    if($currentMessageNb != $nbMessages) {
-      # Terminate the enumeration item with a comma
-      print(CONSTANTS "${const_name}=${const_val}, /* ${msg} */\n");
-    } else {
-      # Don't terminate the enumeration item with a comma
-      print(CONSTANTS "${const_name}=${const_val} /* ${msg} */\n");
+    if (m/^(\d*),([A-Z0-9_]*),(.*)/) {
+      $currentMessageNb = $currentMessageNb + 1;
+      $const_val  = $1;
+      $const_name = $2;
+      $msg        = $3;
+      if($currentMessageNb != $nbMessages) {
+        # Terminate the enumeration item with a comma
+        print(CONSTANTS "${const_name}=${const_val}, /* ${msg} */\n");
+      } else {
+        # Don't terminate the enumeration item with a comma
+        print(CONSTANTS "${const_name}=${const_val} /* ${msg} */\n");
+      }
     }
   }
   close(MESSAGES);
@@ -98,12 +99,12 @@ sub writeStringsFile {
   my $const_val;
   my $msg;
   while(<MESSAGES>) {
-    m/^(\d*),([A-Z0-9_]*),(".*")$/;
-    $const_val  = $1;
-    $const_name = $2;
-    $msg        = $3;
-
-    print(STRINGS "{${const_name}, ${msg}},\n");
+    if (m/^(\d*),([A-Z0-9_]*),(".*")$/) {
+      $const_val  = $1;
+      $const_name = $2;
+      $msg        = $3;
+      print(STRINGS "{${const_name}, ${msg}},\n");
+    }
   }
   close(MESSAGES);
 

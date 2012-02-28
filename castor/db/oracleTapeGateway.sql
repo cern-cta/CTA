@@ -477,14 +477,22 @@ END;
 
 /* retrieve from the db all the migration jobs that faced a failure */
 CREATE OR REPLACE
-PROCEDURE tg_getFailedMigrations(outFailedMigrationJob_c OUT castor.FailedMigrationJob_Cur) AS
+PROCEDURE tg_getFailedMigrations(outFailedMigrationJob_c OUT SYS_REFCURSOR) AS
+  TYPE failedIdsTab_t IS TABLE OF NUMBERS;
+  failedIds failedIdsTab_t;
 BEGIN
+  /* Find and lock the migration mounts we will work on */
+  SELECT id FROM MigrationJob
+    BULK COLLECT INTO failedIds
+   WHERE MigrationJob.status = tconst.MIGRATIONJOB_RETRY
+     AND ROWNUM < 1000 
+     FOR UPDATE SKIP LOCKED;
+  /* Report theirs Id, joined with other information */
   OPEN outFailedMigrationJob_c FOR
-    SELECT id, errorCode, nbRetry
-      FROM MigrationJob
-     WHERE MigrationJob.status = tconst.MIGRATIONJOB_RETRY
-       AND ROWNUM < 1000 
-       FOR UPDATE SKIP LOCKED; 
+    SELECT mj.id, mj.errorCode, mj.nbRetry, cf.fileId, cf.nsHost
+      FROM MigrationJob mj
+      LEFT OUTER JOIN castorfile cf ON cf.id = mj.castorfile
+     WHERE mj.id IN (SELECT * FROM TABLE (failedIds));
 END;
 /
 
