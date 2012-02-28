@@ -53,6 +53,7 @@
 #include "castor/tape/tapegateway/daemon/TapeMigrationMountLinkerThread.hpp"
 #include "castor/tape/tapegateway/daemon/VdqmRequestsCheckerThread.hpp"
 #include "castor/tape/tapegateway/daemon/VdqmRequestsProducerThread.hpp"
+#include "castor/tape/tapegateway/daemon/MigrationMountProducerThread.hpp"
 #include "castor/tape/tapegateway/daemon/WorkerThread.hpp"
 #include "castor/tape/tapegateway/TapeGatewayDlfMessageConstants.hpp"
 

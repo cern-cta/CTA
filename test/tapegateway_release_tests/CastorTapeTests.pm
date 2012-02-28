@@ -59,25 +59,22 @@ our @export   = qw(
                    killDaemonWithTimeout
                    startDaemons
                    startSingleDaemon
-                   genBackupFileName 
-                   insertCastorFile 
-                   deleteCastorFile 
-                   setFileClassNbCopies 
-                   overrideCheckPermission 
-                   deleteAllStreamsTapeCopiesAndCastorFiles 
                    executeSQLPlusScript 
-                   executeSQLPlusScriptNoError 
-                   getLdLibraryPathFromSrcPath
                    check_leftovers
                    check_leftovers_poll_timeout
                    nullize_arrays_undefs
                    print_leftovers
                    print_file_info
                    reinstall_stager_db
+                   reinstall_stager_db_from_checkout
+                   reinstall_vdqm_db_from_checkout
+                   upgradeStagerDb
+                   upgradeVDQMDb
                    getOrastagerconfigParam
+                   getOraVdqmConfigParam
                    getOraCNSLoginInfo
                    cleanup
-		   elapsed_time
+		           elapsed_time
                    spawn_testsuite
                    wait_testsuite
                    ); # Symbols to autoexport (:DEFAULT tag)
@@ -163,21 +160,15 @@ sub read_config ( $ )
     $environment{hostname} = $local_host;
     my @per_host_vars = ( 'username', 'file_size', 'file_number', 'castor_directory',
                           'migration_timeout', 'poll_interval', 'tapepool', 'svcclass', 
-			  'local_transfermanagerd',
-			  'local_rechandlerd',
-			  'local_rhd',
-			  'local_rmmasterd',
-			  'local_stagerd',
-			  'local_tapegatewayd',
-                          'local_expertd',
-                          'local_logprocessord',
-                          'testsuite_config_location',
-                          'instance_name',
-                          'cns_name',
-                          'run_testsuite');
+		             	  'local_transfermanagerd', 'local_rechandlerd', 'local_rhd',
+			              'local_rmmasterd', 'local_stagerd', 'local_tapegatewayd',
+                          'local_logprocessord', 'testsuite_config_location', 'instance_name',
+                          'cns_name', 'run_testsuite');
+                          
     my @global_vars   = ( 'dbDir' , 'tstDir', 'adminList', 'originalDbSchema',
                           'originalDropSchema', 'originalSetPermissionsSQL', 
-                          'castor_single_subdirectory', 'castor_dual_subdirectory');
+                          'castor_single_subdirectory', 'castor_dual_subdirectory',
+                          'vdqmScript', 'stagerUpgrade', 'VDQMUpgrade');
     for my $i ( @per_host_vars ) {
         $environment{$i}=getConfParam('TAPETEST', $i.'_'.$local_host, $config_file );
     }
@@ -718,9 +709,9 @@ sub rfcp_localfile ( $$ )
     push @remote_files, \%remote_entry;
     print "t=".elapsed_time()."s. rtcp'ed $local => $remote:\n";
     for ( split /^/, $rfcp_ret ) {
-	if ( ! /bytes in/ ) {
-	    print $_."\n";
-	}
+	   if ( ! /bytes in/ ) {
+	       print $_."\n";
+	   }
     }
 }
 
@@ -931,6 +922,9 @@ sub unblock_stuck_files ()
 {
     my $dbh;
     my @dropped_files_indexes;
+    if (!defined $dbh) { $dbh = open_db(); }
+    print_migration_and_recall_structures( $dbh );
+    print "Will unblock stuck files.\n";
     for  my $i ( 0 .. scalar (@remote_files) - 1 ) {
         my %entry = %{$remote_files[$i]};
         # check presence
@@ -1174,6 +1168,34 @@ sub getOrastagerconfigParam ( $ )
   return $paramValue;
 }
 
+# Returns the value of the specified ORAVDQMCONFIG parameter.
+#
+# This subroutine prints an error message and aborts the entire tes script if
+# it fails to get the value of the specified parameter.
+#
+# @param  paramName The name of the parameter whose value is to be retrieved.
+# @return           The value of the parameter.
+sub getOraVdqmConfigParam ( $ )
+{
+  my $paramName = $_[0];
+  my $foundParamValue = 0;
+  my $paramValue = "";
+
+  open(CONFIG, "</etc/castor/ORAVDQMCONFIG")
+    or die "Failed to open /etc/castor/ORAVDQMCONFIG: $!";
+
+  while(<CONFIG>) {
+    chomp;
+    if(m/^DbCnvSvc\s+$paramName\s+(\w+)/) {
+      $paramValue = $1;
+      $foundParamValue = 1;
+    }
+  }
+  close CONFIG;
+  die("ABORT: Failed to get ORAVDQMCONFIG parameter: paramName=$paramName\n")
+    if(! $foundParamValue);
+  return $paramValue;
+}
 # Returns the triplet of username, password, dbname for NS DB.
 #
 # This subroutine prints an error message and aborts the entire tes script if
@@ -1355,7 +1377,6 @@ sub startDaemons ()
 #	 'stagerd'     => 'valgrind --log-file=/var/log/castor/stagerd-valgrind.%p --leak-check=full --track-origins=yes --suppressions=./tools/castor.supp --trace-children=yes ./castor/stager/daemon/stagerd',
          'stagerd'     => './castor/stager/daemon/stagerd',
 	 'tapegatewayd'=> './castor/tape/tapegateway/tapegatewayd',
-         'expertd'     => './expert/expertd',
          'logprocessord' => './logprocessor/logprocessord'
 	 );
 
@@ -1385,7 +1406,6 @@ sub startSingleDaemon ( $ )
 	 'stagerd'     => 'valgrind --log-file=/var/log/castor/stagerd-valgrind.%p --suppressions=./tools/castor.supp --trace-children=yes ./castor/stager/daemon/stagerd',
 #'./castor/stager/daemon/stagerd',
 	 'tapegatewayd'=> './castor/tape/tapegateway/tapegatewayd',
-         'expertd'     => './expert/expertd',
          'logprocessord' => './logprocessor/logprocessord'
 	 );
 
@@ -1402,206 +1422,6 @@ sub startSingleDaemon ( $ )
 	}        
     }
 }
-
-
-# Returns a back-up filename based on the specified original filename.
-#
-# Please note that this subroutine does not create or modify any files.
-#
-# The back-up filename is the original plus a unique extension.
-#
-# @param  originalFilename The full path-name of the original file.
-# @return                  The full path-name of the back-up copy.
-sub genBackupFileName ( $ ) 
-{
-  my $originalFilename = $_[0];
-
-  my $uuid = `uuidgen`;
-  chomp($uuid);
-  my $date = `date | sed 's/ /_/g;s/:/_/g'`;
-  chomp($date);
-  my $hostname = `hostname`;
-  chomp($hostname);
-  my $backupFilename = "${originalFilename}_${uuid}_${hostname}_${date}_backup";
-
-  return($backupFilename);
-}
-
-# Inserts a row into the CastorFile table and returns its database ID.
-#
-# This subroutine does not insert a row into the id2type table.
-#
-# @param  dbh                The handle to the stager-database.
-# @param  nsHost             The name-server hostname.
-# @param  fileId
-# @param  fileSize
-# @param  creationTime
-# @param  lastUpdateTime
-# @param  lastAccessTime
-# @param  lastKnownFilename
-# @param  svcClassName
-# @param  fileClassName
-# @return The database ID of the newly inserted CastorFile.
-sub insertCastorFile ( $$$$$$$$$$ )
-{
-  my $dbh               = $_[0];
-  my $nsHost            = $_[1];
-  my $fileId            = $_[2];
-  my $fileSize          = $_[3];
-  my $creationTime      = $_[4];
-  my $lastUpdateTime    = $_[5];
-  my $lastAccessTime    = $_[6];
-  my $lastKnownFilename = $_[7];
-  my $svcClassName      = $_[8];
-  my $fileClassName     = $_[9];
-
-  my $stmt = "
-    DECLARE
-      varSvcClassId   NUMBER(38) := NULL;
-      varFileClassId  NUMBER(38) := NULL;
-      varCastorFileId NUMBER(38) := NULL;
-    BEGIN
-      /* Deteremine the database IDs of the service and file classes */
-      SELECT id INTO varSvcClassId  FROM SvcClass  WHERE name = :SVCCLASSNAME;
-      SELECT id INTO varFileClassId FROM FileClass WHERE name = :FILECLASSNAME;
-
-      INSERT INTO CastorFile(id, nsHost, fileId, fileSize, creationTime,
-                  lastUpdateTime, lastAccessTime, lastKnownFilename, svcClass,
-                  fileClass)
-           VALUES (ids_seq.NEXTVAL, :NSHOST, :FILEID, :FILESIZE,
-                  :CREATIONTIME, :LASTUPDATETIME, :LASTACCESSTIME,
-                  :LASTKNOWNFILENAME, varSvcClassId, varFileClassId)
-        RETURNING id INTO varCastorFileId;
-
-      INSERT INTO Id2Type(id, type) VALUES(varCastorFileId, 2);
-
-      :CASTORFILEID := varCastorFileId;
-    END;";
-
-  # The castor-file database ID will be the return value
-  my $castorFileId;
-
-  my $sth = $dbh->prepare($stmt);
-  $sth->bind_param_inout(":SVCCLASSNAME",\$svcClassName,2048)
-    or die $sth->errstr;
-  $sth->bind_param_inout(":FILECLASSNAME",\$fileClassName,2048)
-    or die $sth->errstr;
-  $sth->bind_param_inout(":NSHOST",\$nsHost,2048) or die $sth->errstr;
-  $sth->bind_param_inout(":FILEID",\$fileId,20) or die $sth->errstr;
-  $sth->bind_param_inout(":FILESIZE",\$fileSize,20) or die $sth->errstr;
-  $sth->bind_param_inout(":CREATIONTIME",\$creationTime,20) or die $sth->errstr;
-  $sth->bind_param_inout(":LASTUPDATETIME",\$lastUpdateTime,20)
-    or die $sth->errstr;
-  $sth->bind_param_inout(":LASTACCESSTIME",\$lastAccessTime,20)
-    or die $sth->errstr;
-  $sth->bind_param_inout(":LASTKNOWNFILENAME",\$lastKnownFilename,2048)
-    or die $sth->errstr;
-  $sth->bind_param_inout(":CASTORFILEID",\$castorFileId,20) or die $sth->errstr;
-  $sth->execute();
-
-  return $castorFileId;
-}
-
-
-# Deletes the row from the CastorFile table with the specified database ID.
-#
-# @param dbh          The handle to the stager-database.
-# @param castorFileId The castor database ID.
-sub deleteCastorFile ( $$ )
-{
-  my $dbh          = $_[0];
-  my $castorFileId = $_[1];
-
-  my $stmt = "
-    DECLARE
-      varCastorFileId NUMBER(38) := :CASTORFILEID;
-    BEGIN
-      DELETE FROM CastorFile WHERE id = varCastorFileId;
-      DELETE FROM Id2Type    WHERE id = varCastorFileId;
-    END;";
-
-  my $sth = $dbh->prepare($stmt);
-  $sth->bind_param_inout(":CASTORFILEID", \$castorFileId, 20) or die $sth->errstr;
-  $sth->execute();
-}
-
-
-# Sets the nbCopies attribute of the specified file-class to the specified
-# value.
-#
-# @param dbh           The handle to the stager-database.
-# @param fileClassName The name of the file-class.
-# @param nbCopies      The new number of tape-copies.
-sub setFileClassNbCopies ( $$$ )
-{
-  my $dbh           = $_[0];
-  my $fileClassName = $_[1];
-  my $nbCopies      = $_[2];
-
-  my $stmt = "
-    BEGIN
-      UPDATE FileClass
-         SET nbCopies = :NBCOPIES
-       WHERE name = :FILECLASSNAME;
-    END;";
-
-  my $sth = $dbh->prepare($stmt);
-  $sth->bind_param_inout(":NBCOPIES", \$nbCopies, 20)
-    or die $sth->errstr;
-  $sth->bind_param_inout(":FILECLASSNAME", \$fileClassName, 2048)
-    or die $sth->errstr;
-  $sth->execute();
-}
-
-
-# Override checkPermission
-#
-# @param dbh           The handle to the stager-database.
-sub overrideCheckPermission ( $ )
-{
-  my $dbh = $_[0];
-
-  my $stmt = "
-    CREATE OR REPLACE FUNCTION checkPermission(
-      reqSvcClass IN VARCHAR2,
-      reqEuid     IN NUMBER,
-      reqEgid     IN NUMBER,
-      reqTypeI    IN NUMBER)
-    RETURN NUMBER AS
-    BEGIN
-      RETURN 0;
-    END;";
-
-  my $sth = $dbh->prepare($stmt);
-  $sth->execute();
-}
-
-# Deletes all Migration and Recall Jobs, Segments, Tapes and CastorFile rows from the
-# stager database.
-#
-# TO BE USED WITH CAUTION.
-#
-# @param dbh The handle to the stager-database.
-sub deleteAllStreamsTapeCopiesAndCastorFiles ( $ )
-{
-  my $dbh        = $_[0];
-
-  my $stmt = "
-    BEGIN
-      DELETE FROM MigrationJob;
-      DELETE FROM RecallJob;
-      DELETE FROM Segment;
-      DELETE FROM MigrationMount;
-      DELETE FROM Tape;
-      DELETE FROM Diskcopy;
-      DELETE FROM CastorFile;
-    END;";
-
-  my $sth = $dbh->prepare($stmt);
-  print("Deleting all streams, tape-copies and castor-files\n");
-  $sth->execute();
-}
-
 
 # Creates and calls an external script that calls sqlplus with the script name as a parameter
 sub executeSQLPlusScript ( $$$$$ )
@@ -1634,42 +1454,6 @@ sub executeSQLPlusScript ( $$$$$ )
     if ( $result =~/ERROR/ ) {
         print $result;
         die "Error encountered in SQL script";
-    } else {
-        print "SUCCESS\n";
-    }
-}
-
-
-# Creates and calls an external script that calls sqlplus with the script name as a parameter
-sub executeSQLPlusScriptNoError ( $$$$$ )
-{
-    my ( $u, $p , $db, $f, $title ) = ( shift,  shift,  shift,  shift, shift );
-    if ( ! -e $f ) { die "ABORT: $f: file not found."; }
-    my $tmpScript = `mktemp`;  # This creates and empty 0600 file.
-    chomp $tmpScript;
-    `echo "WHENEVER SQLERROR EXIT FAILURE;" > $tmpScript`;
-    #`echo "SET ECHO ON;" >> $tmpScript`;
-    `echo "CONNECT $u/$p\@$db" >> $tmpScript`;
-    `echo >> $tmpScript`;
-    `cat $f >> $tmpScript`;
-    `echo >> $tmpScript`;
-    `echo "EXIT;" >> $tmpScript`;
-    print ("$title\n");
-    my $result = `'sqlplus' /NOLOG \@$tmpScript`;
-    unlink $tmpScript;
-    print("\n");
-    print("$title RESULT\n");
-    print("===================\n");
-    my @result_array = split(/\n/, $result);
-    $result = "";
-    for (@result_array) {
-        # Pass on the boring "everything's fine" messages.
-        if (! /^((Package(| body)|Function|Table|Index|Trigger|Procedure|View|\d row(|s)) (created|altered|updated)\.|)$/) {
-            $result .= $_."\n";
-        }
-    }
-    if ( $result =~/ERROR/ ) {
-        print $result;
     } else {
         print "SUCCESS\n";
     }
@@ -1783,9 +1567,10 @@ sub print_file_info ( $$ )
         print  "    dc.id=$row[0], dc.status=$row[1]\n";
     }
     # Then dump the migration-related info
-    $stmt = $dbh -> prepare ("SELECT mj.id, mj.status, mm.id, mm.status, mm.vid, tp.name, seg.id, seg.status, seg.errorcode, seg.errmsgtxt, seg.tape 
+    $stmt = $dbh -> prepare ("SELECT mj.id, mj.status, mjtp.name, mm.id, mm.status, mm.vid, tp.name, seg.id, seg.status, seg.errorcode, seg.errmsgtxt, seg.tape 
                                   FROM castorfile cf
-                                  LEFT OUTER JOIN migrationJob mj on mj.castorfile = cf.id
+                                  INNER JOIN migrationJob mj on mj.castorfile = cf.id
+                                  LEFT OUTER JOIN tapepool mjtp on mjtp.id = mj.tapepool
                                   LEFT OUTER JOIN migrationMount mm on mm.tapegatewayRequestId = mj.tapegatewayRequestId
                                   LEFT OUTER JOIN TapePool tp on tp.id = mm.tapepool
                                   LEFT OUTER JOIN Segment seg on seg.copy = mj.id
@@ -1794,12 +1579,12 @@ sub print_file_info ( $$ )
     $stmt->execute();
     while ( my @row = $stmt->fetchrow_array() ) {
         nullize_arrays_undefs ( \@row );
-        print  "    mj.id=$row[0], mj.status=$row[1] mm.id=$row[2] mm.status=$row[3] mm.vid=$row[4] tp.name=$row[5] seg.id=$row[6] seg.status=$row[7] seg.errorcode=$row[8] seg.errmsgtxt=$row[9] seg.tape=$row[10]\n";
+        print  "    mj.id=$row[0], mj.status=$row[1] mjtp.name=$row[2] mm.id=$row[3] mm.status=$row[4] mm.vid=$row[5] tp.name=$row[6] seg.id=$row[7] seg.status=$row[8] seg.errorcode=$row[9] seg.errmsgtxt=$row[10] seg.tape=$row[11]\n";
     }
     # Finally dump the recall-related into
     $stmt = $dbh -> prepare ("SELECT rj.id, rj.status, seg.id, seg.status, t.id, t.tpmode, t.status, seg.errorcode, seg.errmsgtxt, seg.tape
                                   FROM castorfile cf
-                                  LEFT OUTER JOIN recallJob rj on rj.castorfile = cf.id
+                                  INNER JOIN recallJob rj on rj.castorfile = cf.id
                                   LEFT OUTER JOIN Segment seg on seg.copy = rj.id
                                   LEFT OUTER JOIN Tape t on t.id = seg.tape
                                  WHERE cf.lastKnownFileName = :FILENAME");
@@ -1811,8 +1596,191 @@ sub print_file_info ( $$ )
     }
 }
 
-sub reinstall_stager_db()
+# print_migration_and_recall_structures
+sub print_migration_and_recall_structures ( $ )
 {
+    my ( $dbh ) = (shift);
+    # print all the migration mounts (with tapepool info).
+    print "Migration mounts snapshot:\n";
+    my $stmt = $dbh -> prepare ("SELECT mm.id, mm.status, mm.tapegatewayrequestid, mm.vid, tp.name
+                                FROM MigrationMount mm
+                                LEFT OUTER JOIN TapePool tp ON tp.id = mm.tapepool");
+    $stmt->execute();
+    while ( my @row = $stmt->fetchrow_array() ) {
+        nullize_arrays_undefs ( \@row );
+        print  "    mm.id=$row[0], mm.status=$row[1] mm.tapegatewayrequestid=$row[2] mm.vid=$row[3] tp.name=$row[4]\n";
+    }
+    # Print all the tape structures (recalls)
+    print "Tapes snapshot:\n";
+    $stmt =  $dbh -> prepare ("SELECT t.id, t.vid, t.status
+                                FROM tape t");
+    $stmt->execute();
+    while ( my @row = $stmt->fetchrow_array() ) {
+        nullize_arrays_undefs ( \@row );
+        print  "    t.id=$row[0], t.vid=$row[1] t.status=$row[2]\n";
+    }
+}
+
+
+# print_migration_and_recall_structures
+sub print_migration_and_recall_structures ( $ )
+{
+    my ( $dbh ) = (shift);\
+    # print all the migration mounts (with tapepool info).
+    print "Migration mounts snapshot:\n";
+    my $stmt = $dbh -> prepare ("SELECT mm.id, mm.status, mm.tapegatewayrequestid, mm.vid, tp.name
+                                FROM MigrationMount mm
+                                LEFT OUTER JOIN TapePool tp ON tp.id = mm.tapepool");
+    $stmt->execute();
+    while ( my @row = $stmt->fetchrow_array() ) {
+        nullize_arrays_undefs ( \@row );
+        print  "    mm.id=$row[0], mm.status=$row[1] mm.tapegatewayrequestid=$row[2] mm.vid=$row[3] tp.name=$row[4]\n";
+    }
+    $stmt =  $dbh -> prepare ("SELECT t.id, t.vid, t.status
+                                FROM tape t");
+    $stmt->execute();
+    while ( my @row = $stmt->fetchrow_array() ) {
+        nullize_arrays_undefs ( \@row );
+        print  "    t.id=$row[0], t.vid=$row[1] t.status=$row[2]\n";
+    }
+}
+
+sub upgradeStagerDb ()
+{
+    my $checkout_location = shift;
+    
+    my $vdqm_host = getCastorConfParam('STAGER', 'HOST');
+
+    # Print error message and abort if the user is not root
+    my $uid = POSIX::getuid;
+    my $gid = POSIX::getgid;
+    if($uid != 0 || $gid !=0) {
+        print("ABORT: This script must be ran as root\n");
+        exit(-1);
+    }
+    
+    my $stager_upgrade_script     = $environment{stagerUpgrade};
+
+    my $originalUpgradeStagerFullpath=$checkout_location.'/'.$stager_upgrade_script;
+    
+    # check upgrade script's existance
+    die "ABORT: $originalUpgradeStagerFullpath does not exist\n"
+       if ! -e $originalUpgradeStagerFullpath;
+       
+    # Stop any daemon accessing the database
+    killDaemonWithTimeout('transfermanagerd' , 2);
+    killDaemonWithTimeout('rechandlerd' , 2);
+    killDaemonWithTimeout('rhd'         , 2);
+    killDaemonWithTimeout('rmmasterd'   , 2);
+    killDaemonWithTimeout('stagerd'     , 2);
+    killDaemonWithTimeout('tapegatewayd', 2);
+
+    # Run the upgrade script
+    my $dbUser   = &getOrastagerconfigParam("user");
+    my $dbPasswd = &getOrastagerconfigParam("passwd");
+    my $dbName   = &getOrastagerconfigParam("dbName");
+    executeSQLPlusScript ( $dbUser, $dbPasswd, $dbName, 
+                           $originalUpgradeStagerFullpath,
+                           "Upgrading Stager's schema");
+}
+
+sub upgradeVDQMDb ()
+{
+    my $checkout_location = shift;
+    
+    my $vdqm_host = getCastorConfParam('VDQM', 'HOST');
+
+    # Print error message and abort if the user is not root
+    my $uid = POSIX::getuid;
+    my $gid = POSIX::getgid;
+    if($uid != 0 || $gid !=0) {
+        print("ABORT: This script must be ran as root\n");
+        exit(-1);
+    }
+    
+    my $stager_upgrade_script     = $environment{VDQMUpgrade};
+
+    my $originalUpgradeVDQMFullpath=$checkout_location.'/'.$stager_upgrade_script;
+    
+    # check upgrade script's existance
+    die "ABORT: $originalUpgradeVDQMFullpath does not exist\n"
+       if ! -e $originalUpgradeVDQMFullpath;
+       
+    # Stop any daemon accessing the database
+    killDaemonWithTimeout('vdqmd' , 2);
+
+    # Run the upgrade script
+    my $dbUser   = &getOrastagerconfigParam("user");
+    my $dbPasswd = &getOrastagerconfigParam("passwd");
+    my $dbName   = &getOrastagerconfigParam("dbName");
+    executeSQLPlusScript ( $dbUser, $dbPasswd, $dbName, 
+                           $originalUpgradeVDQMFullpath,
+                           "Upgrading VDQM's schema");
+    # As the name server is not running on the 
+}
+
+
+sub reinstall_vdqm_db_from_checkout ( $ )
+{
+    my $checkout_location = shift;
+    
+    my $vdqm_host = getCastorConfParam('VDQM', 'HOST');
+
+    # Print error message and abort if the user is not root
+    my $uid = POSIX::getuid;
+    my $gid = POSIX::getgid;
+    if($uid != 0 || $gid !=0) {
+        print("ABORT: This script must be ran as root\n");
+        exit(-1);
+    }
+    
+    my $dbDir               = $environment{dbDir};
+    my $originalDropSchema  = $environment{originalDropSchema};
+    my $vdqmScript          = $environment{vdqmScript};
+    my $tstDir              = $environment{tstDir};
+
+    my $originalDropSchemaFullpath=$checkout_location.'/'.$dbDir.'/'.$originalDropSchema;
+    my $originalDbSchemaFullpath=$checkout_location.'/'.$vdqmScript;
+
+    die "ABORT: $originalDropSchema does not exist\n"
+       if ! -e $originalDropSchemaFullpath;
+    
+    die "ABORT: $originalDbSchema does not exist\n"
+        if ! -e $originalDbSchemaFullpath;
+    
+    # Make sure we're running on the proper machine.
+    my $host = `uname -n`;
+    die('ABORT: This script is only made to be run on host $stager_host\n')
+      if ( ! $host =~ /^$vdqm_host($|\.)/i );
+
+    # This is where the final go/no go decsion is taken. Record that we got green light.
+    $initial_green_light = 1;
+
+    # Ensure all of the daemons accessing the stager-database are dead
+    killDaemonWithTimeout('vdqmd' , 2);
+
+    my $dbUser   = &getOrastagerconfigParam("user");
+    my $dbPasswd = &getOrastagerconfigParam("passwd");
+    my $dbName   = &getOrastagerconfigParam("dbName");
+    
+    executeSQLPlusScript ( $dbUser, $dbPasswd, $dbName, 
+                           $originalDropSchemaFullpath,
+                           "Dropping VDQM schema");
+    
+    my $stageUid = &get_uid_for_username('stage');
+    my $stageGid = &get_gid_for_username('stage');
+    my $adminList = $environment{adminList};
+    my $instanceName = $environment{instance_name};
+    my $CNSName = $environment{cns_name};
+
+    executeSQLPlusScript ( $dbUser, $dbPasswd, $dbName, 
+                           $originalDbSchemaFullpath, "Re-creating VDQM schema");
+}
+
+sub reinstall_stager_db_from_checkout ( $ )
+{
+    my $checkout_location = shift;
+    
     my $stager_host = getCastorConfParam('STAGER', 'HOST');
 
     # Print error message and abort if the user is not root
@@ -1822,8 +1790,7 @@ sub reinstall_stager_db()
         print("ABORT: This script must be ran as root\n");
         exit(-1);
     }
-
-    my $checkout_location   = $environment{checkout_location};
+    
     my $dbDir               = $environment{dbDir};
     my $originalDropSchema  = $environment{originalDropSchema};
     my $originalDbSchema    = $environment{originalDbSchema};
@@ -1878,15 +1845,14 @@ sub reinstall_stager_db()
     # Print shared memory usage
     print "Current shared memory usage:\n";
     {
-	my $pm = `ps axh | cut -c 1-5 | egrep '[0-9]*' | xargs -i pmap -d {}`;
-	my  $current_proc;
-	foreach ( split /^/, $pm) { 
-	    if ( /^\d+:\s+/ ) { $current_proc = $_ } 
-	    elsif ( /\[\s+shmid=/ ) { 
-		print $current_proc; 
-		print $_; 
-	    } 
-	}
+    my $pm = `ps axh | cut -c 1-5 | egrep '[0-9]*' | xargs -i pmap -d {}`;
+    my  $current_proc;
+    foreach ( split (/^/, $pm) ) { 
+        if ( /^\d+:\s+/ ) { $current_proc = $_ } 
+        elsif ( /\[\s+shmid=/ ) { 
+           print $current_proc; 
+           print $_; 
+        } 
     }
     # Ensure there is no leftover in the DB
     my $dbh = open_db ();
@@ -1961,7 +1927,7 @@ sub reinstall_stager_db()
     
     print `entersvcclass --diskpools default --defaultfilesize 10485760 --failjobswhennospace yes default`;
     my $main_tapepool=`vmgrlistpool  | head -1  | awk '{print \$1}' | tr -d "\\n"`;
-    print `entertapepool --nbdrives 10 --minamountdata 0 --minnbfiles 0 --maxfileage 0 $main_tapepool`;
+    print `entertapepool --nbdrives 2 --minamountdata 0 --minnbfiles 0 --maxfileage 0 $main_tapepool`;
     print `entersvcclass --diskpools extra --defaultfilesize 10485760 --failjobswhennospace yes dev`;
     print `entersvcclass --diskpools extra --forcedfileclass temp --defaultfilesize 10485760 --disk1behavior yes --failjobswhennospace yes diskonly`;
     
@@ -1974,33 +1940,26 @@ sub reinstall_stager_db()
     # Add the tapecopy routing rules
     my $single_copy_dir = $environment{castor_directory} . $environment{castor_single_subdirectory};
     my $dual_copy_dir = $environment{castor_directory} . $environment{castor_dual_subdirectory};
-    my $single_file_class_number = `nsls -d --class $single_copy_dir |  awk '{print \$1}'`;
-    my $single_copy_class = `printfileclass  | perl -e 'while (<>) { if (/\\s*(\\w+)\\s+(\\w+)\\s+(\\w+)\\s+(\\w+)/ && \$2 eq $single_file_class_number) { print \$1 }}'`;
-    my $dual_file_class_number = `nsls -d --class $dual_copy_dir |  awk '{print \$1}'`;
-    my $dual_copy_class = `printfileclass  | perl -e 'while (<>) { if (/\\s*(\\w+)\\s+(\\w+)\\s+(\\w+)\\s+(\\w+)/ && \$2 eq $dual_file_class_number) { print \$1 }}'`;
+    #my $single_file_class_number = `nsls -d --class $single_copy_dir |  awk '{print \$1}'`;
+    #my $single_copy_class = `printfileclass  | perl -e 'while (<>) { if (/\\s*(\\w+)\\s+(\\w+)\\s+(\\w+)\\s+(\\w+)/ && \$2 eq $single_file_class_number) { print \$1 }}'`;
+    my  $single_copy_class = 'largeuser';
+    #my $dual_file_class_number = `nsls -d --class $dual_copy_dir |  awk '{print \$1}'`;
+    #my $dual_copy_class = `printfileclass  | perl -e 'while (<>) { if (/\\s*(\\w+)\\s+(\\w+)\\s+(\\w+)\\s+(\\w+)/ && \$2 eq $dual_file_class_number) { print \$1 }}'`;
+    my $dual_copy_class ='test2';
     my $svcclass = $environment{svcclass};
     my $tapepool = $environment{tapepool};
-    print `entertapepool --nbdrives 10 --minamountdata 0 --minnbfiles 0 --maxfileage 0 $tapepool`;
-    print `entermigrationroute $svcclass $single_copy_class 1:$tapepool`;
-    print `entermigrationroute $svcclass $dual_copy_class 1:$tapepool 2:$tapepool`;
+    print `entertapepool --nbdrives 2 --minamountdata 0 --minnbfiles 0 --maxfileage 0 $tapepool`;
+    print `entermigrationroute $single_copy_class 1:$tapepool`;
+    print `entermigrationroute $dual_copy_class 1:$tapepool 2:$tapepool`;
     
     # Add a single copy default-default route using first pool name
     my $default_pool = `vmgrlistpool | head -1  | awk '{print \$1}'`;
-    print `entermigrationroute default largeuser 1:$default_pool`;
+    print `entermigrationroute largeuser 1:$default_pool`;
 }
 
-# Returns the LD_LIBRARY_PATH locating all of the *.so* files found in the
-# specified root CASTOR source path
-#
-# @param  srcPath The root CASTOR source path containing the *.so* files
-# @return         The LD_LIBRARY_PATH
-sub getLdLibraryPathFromSrcPath ( $ ) {
-  my $srcPath = $_[0];
-
-  my $ldLibraryPath = `find $srcPath -follow -name '*.so*' | sed 's|/[^/]*\$||' | sort | uniq | xargs | sed 's/ /:/g'`;
-  chomp($ldLibraryPath);
-
-  return $ldLibraryPath;
+sub reinstall_stager_db()
+{
+    reinstall_stager_db_from_checkout ( $environment{checkout_location} );
 }
 
 sub cleanup () {

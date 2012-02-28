@@ -52,6 +52,7 @@
 #include "castor/tape/tapegateway/RetryPolicyElement.hpp"
 #include "castor/tape/tapegateway/TapeGatewayDlfMessageConstants.hpp"
 #include "castor/tape/tapegateway/VolumeMode.hpp"
+#include "castor/db/ora/SmartOcciResultSet.hpp"
 
 #include "castor/tape/tapegateway/daemon/NsTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/daemon/ora/OraTapeGatewaySvc.hpp"
@@ -225,8 +226,8 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getMigrationMountsWithou
     // Run through the cursor
     while( rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
       castor::tape::tapegateway::ITapeGatewaySvc::migrationMountParameters item;
-      item.migrationMountId     = (u_signed64)rs->getNumber(idIdx);
-      item.tapegatewayRequestID = (u_signed64)rs->getNumber(ReqIdIdx);
+      item.migrationMountId     = (u_signed64) (double) rs->getNumber(idIdx);
+      item.tapegatewayRequestID = (u_signed64) (double) rs->getNumber(ReqIdIdx);
       // Note that we hardcode 1 for the initialSizeToTransfer. This parameter should actually
       // be dropped and the call to VMGR changed accordingly.
       item.initialSizeToTransfer = 1;
@@ -1797,13 +1798,13 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::startMigrationMounts (st
       m_startMigrationMounts->registerOutParam
       (1, oracle::occi::OCCICURSOR);
     }
-    // The data is committed in SQL, but we need a final commit (or rollback, whatever) to clean up
-    // the temporary table that contains the report.
-    ScopedTransaction scpTrans (oraSvc);
+    // The data is committed in SQL, but we need a final commit (or rollback) to clean up
+    // the temporary table that contains the reports.
+    scopedRollback scpRollback (this);
     // Execute the query
     m_getMigrationMountVid->executeUpdate();
     // Identify the structure of the cursor.
-    castor::db::ora::SmartOcciResultSet::SmartOcciResultSet rs (m_startMigrationMounts, m_startMigrationMounts->getCursor(1));
+    castor::db::ora::SmartOcciResultSet rs (m_startMigrationMounts, m_startMigrationMounts->getCursor(1));
     resultSetIntrospector resIntros(rs.get());
     int tpIdx = resIntros.findColumnIndex(     "TAPEPOOL", oracle::occi::OCCI_SQLT_CHR);
     int rqIdx = resIntros.findColumnIndex(    "REQUESTID", oracle::occi::OCCI_SQLT_NUM);
@@ -1813,22 +1814,24 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::startMigrationMounts (st
     int mcIdx = resIntros.findColumnIndex("MOUNTSCREATED", oracle::occi::OCCI_SQLT_NUM);
     int maIdx = resIntros.findColumnIndex(  "MOUNTSAFTER", oracle::occi::OCCI_SQLT_NUM);
     // Create the vector
-    std::auto_ptr<std::vector<StartMigrationMountReport> ap_result(new std::vector<StartMigrationMountReport);
+    std::auto_ptr< std::vector<StartMigrationMountReport> > ap_result;
+    ap_result.reset(new std::vector<StartMigrationMountReport>);
     // run through the cursor
     while( rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
-      StartMigrationMountReport smmReport;
-      smmReport.tapepool   =               rs->getString(tpIdx);
-      smmReport.requestId =      (int64_t) rs->getNumber(rqIdx);
-      smmReport.sizeQueued =    (uint64_t) rs->getNumber(sqIdx);
-      smmReport.filesQueued =   (uint64_t) rs->getNumber(fqIdx);
-      smmReport.mountsBefore =       (int) rs->getNumber(mbIdx);
-      smmReport.mountsCreated =      (int) rs->getNumber(mcIdx);
-      smmReport.mountsAfter =        (int) rs->getNumber(maIdx);
+      castor::tape::tapegateway::ITapeGatewaySvc::StartMigrationMountReport smmReport;
+      smmReport.tapepool   =                        rs->getString(tpIdx);
+      smmReport.requestId =      (int64_t) (double) rs->getNumber(rqIdx);
+      smmReport.sizeQueued =    (uint64_t) (double) rs->getNumber(sqIdx);
+      smmReport.filesQueued =   (uint64_t) (double) rs->getNumber(fqIdx);
+      smmReport.mountsBefore =                (int) rs->getNumber(mbIdx);
+      smmReport.mountsCreated =               (int) rs->getNumber(mcIdx);
+      smmReport.mountsAfter =                 (int) rs->getNumber(maIdx);
       ap_result->push_back(smmReport);
     }
-    // Close result set and transaction
+    // Close result set and transaction. clean temp DB table.
     rs.close();
-    scpTrans.commit();
+    commit();
+    scpRollback.disengage();
     // report and return.
     result = ap_result.release();
     return;
@@ -1841,7 +1844,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::startMigrationMounts (st
     throw ex;
   }
 }
-}
+
 //----------------------------------------------------------------------------
 // commit
 //----------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 ###############################################################################
-#      test/tapegateway_release_tests/test_gateway_wipe_reinstall_migrate.pl
+#      test/tapegateway_release_tests/test_install_wipe_upgrade.pl
 # 
 #  This file is part of the Castor project.
 #  See http://castor.web.cern.ch/castor
@@ -20,12 +20,40 @@
 # 
 # 
 # 
-#  @author Steven.Murray@cern.ch, Eric.Cano@cern.ch and castor tape team.
+#  @author Castor tape team.
 ###############################################################################
 
 # This perl script that has to be run as root on the stager host will connect to
-# the DB and report wether there are any pending mogrations for this stager
-# On first version, it will report to both standard output and as an exit value.
+# the DB and report wether there are any pending mogrations for this stager.
+#
+# The script, after some sanity checks will wipe the develpment box's vdqm and
+# stager Dbs in order to bring them back to version 2.1.11-9  (or latest).
+#
+# spma will be disabled at that point.
+# It will then install the corresponding castor binaries from a fixed list, in
+# stager and tape/disk servers.
+# The stager will be started (in tape gateway mode). The script will test the
+# functionning of this stager for migrations and recalls, and run the testsuite
+# (optionnal).
+#
+# Migartions will be injected in the system, with all tapes disabled in order
+# to make sure the migrations are still pending.
+#
+# Once this is done, the daemons will be stopped, the Db upgraded, the binaries
+# upgraded to 2.1.12, and the the remaining migrations will be followed up.
+#
+# Then the test suite and migrate recall test will be run again with the new
+# version.
+
+# Inputs needed:
+# Binaries for both version
+# latest drop_oracle_schema.sql
+# 2.1.11 version of castor/vdqm/vdqm_oracle_create.sql and castor/db/stager_oracle_create.sql
+# package list for both versions.
+#
+# Memory to be kept:
+# List of tape servers and in order to restart them for vdqm listing.
+
 
 # Imports
 use strict;
@@ -207,7 +235,7 @@ sub badDayFileCreation ( $$$$ )
     #           on tape
     #           recalled
 
- #    my @error_list = ( #"missing ns entry on rfcp",
+#    my @error_list = ( #"missing ns entry on rfcp",
 #                       #"missing filesystem on rfcp",
 #                       #"missing stream on rfcp",
 #                       "missing tapepool on rfcp",
