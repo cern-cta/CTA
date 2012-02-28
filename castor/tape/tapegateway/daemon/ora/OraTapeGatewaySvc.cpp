@@ -1820,7 +1820,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::startMigrationMounts (st
     while( rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
       castor::tape::tapegateway::ITapeGatewaySvc::StartMigrationMountReport smmReport;
       smmReport.tapepool   =                        rs->getString(tpIdx);
-      smmReport.requestId =      (int64_t) (double) rs->getNumber(rqIdx);
+      smmReport.requestId =     (uint64_t) (double) rs->getNumber(rqIdx);
       smmReport.sizeQueued =    (uint64_t) (double) rs->getNumber(sqIdx);
       smmReport.filesQueued =   (uint64_t) (double) rs->getNumber(fqIdx);
       smmReport.mountsBefore =                (int) rs->getNumber(mbIdx);

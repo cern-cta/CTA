@@ -269,7 +269,7 @@ namespace tapegateway {
 	class StartMigrationMountReport {
 	public:
 	  std::string tapepool;
-	  int64_t  requestId;
+	  uint64_t  requestId;
 	  uint64_t sizeQueued;
 	  uint64_t filesQueued;
 	  int mountsBefore;
