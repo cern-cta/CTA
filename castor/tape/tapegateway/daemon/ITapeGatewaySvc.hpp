@@ -68,6 +68,7 @@ namespace tapegateway {
         struct migrationMountParameters {
           u_signed64 migrationMountId;
           u_signed64 initialSizeToTransfer;
+          u_signed64 tapegatewayRequestID;
           std::string tapePoolName;
         };
 	/**
@@ -264,6 +265,28 @@ namespace tapegateway {
 	// Past that update, fiddling with a file will only affect the file itself
 	virtual void getMigrationMountVid(FileMigratedNotification & fileMigrated,
 	    std::string& vid, std::string& tapePool) = 0;
+
+	class StartMigrationMountReport {
+	public:
+	  std::string tapepool;
+	  int64_t  requestId;
+	  uint64_t sizeQueued;
+	  uint64_t filesQueued;
+	  int mountsBefore;
+	  int mountsCreated;
+	  int mountsAfter;
+	  StartMigrationMountReport(): tapepool(""),
+	      sizeQueued(0), filesQueued (0), mountsBefore(0),
+              mountsCreated (0), mountsAfter(0) {};
+	};
+
+        // Scan all the tapepools in the database and create new
+	// migration mounts where tapepool policy allows (depending on the
+	// pending migrations).
+	// The result of the policy for each tapepool is returned as a pointer to
+	// a vector of StartMigrationMountReport.
+	// The de-allocation of the vector is the duty of the caller.
+        virtual void startMigrationMounts (std::vector<StartMigrationMountReport> * result) = 0;
 
     /* Bypass access the the underlying DB accessor allowing safe handling from the caller */
     virtual void commit() = 0;

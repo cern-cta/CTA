@@ -93,6 +93,14 @@ public:
   oracle::occi::ResultSet *operator->() const
     throw(castor::exception::Exception);
 
+  /**
+   * Bypasses the smart pointer by returning the pointer to the owned
+   * result-set.
+   *
+   * This method throws an exception if the owned result set has been closed.
+   */
+  oracle::occi::ResultSet * get() const
+    throw(castor::exception::Exception);
 
 private:
 

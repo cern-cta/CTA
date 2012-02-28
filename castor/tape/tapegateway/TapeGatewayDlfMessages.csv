@@ -146,3 +146,8 @@
 146,LINKER_VMGR_NS_DISCREPANCY,"TapeMigrationMountLinker: NS/VMGR mismatch for highest FSEQ. Putting the tape readonly"
 147,WORKER_SUPERFLUOUS_SEGMENT,"Worker: Name server declared segment was extra/unnecessary: considering migration done"
 148,WORKER_RECALL_CANNOT_UPDATE_DB,"Worker: cannot update db for recalled file"
+149,MOUNT_PRODUCER_START,"MigrationMountProducer: calling the DB procedure"
+150,MOUNT_PRODUCER_DB_ERROR,"MigrationMountProducer: failure calling the DB procedure"
+151,MOUNT_PRODUCER_REPORT,"MigrationMountProducer: created new migration mount"
+152,MOUNT_PRODUCER_REPORT_NO_ACTION,"MigrationMountProducer: no need for new migration mount"
+153,LINKER_CANNOT_RELEASE_TAPE,"TapeMigrationMountLinker: cannot release BUSY tape after failed DB update"

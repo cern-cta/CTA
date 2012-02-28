@@ -137,6 +137,15 @@ void castor::db::ora::SmartOcciResultSet::close()
 oracle::occi::ResultSet
   *castor::db::ora::SmartOcciResultSet::operator->() const
   throw(castor::exception::Exception) {
+  return get();
+}
+
+//-----------------------------------------------------------------------------
+// SmartOcciResultSet get()
+//-----------------------------------------------------------------------------
+oracle::occi::ResultSet
+  *castor::db::ora::SmartOcciResultSet::get() const
+  throw(castor::exception::Exception) {
 
   // Throw an exception if 
   if(!m_resultSetIsOpen) {

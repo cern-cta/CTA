@@ -100,7 +100,8 @@ castor::tape::tapegateway::ora::OraTapeGatewaySvc::OraTapeGatewaySvc(const std::
   m_deleteTapeRequestStatement(0),
   m_flagTapeFullForMigrationSession(0),
   m_getMigrationMountVid(0),
-  m_dropSuperfluousSegmentStatement(0)
+  m_dropSuperfluousSegmentStatement(0),
+  m_startMigrationMounts(0)
 {
 }
 
@@ -160,6 +161,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
     if ( m_flagTapeFullForMigrationSession) deleteStatement(m_flagTapeFullForMigrationSession);
     if ( m_getMigrationMountVid) deleteStatement(m_getMigrationMountVid);
     if ( m_dropSuperfluousSegmentStatement) deleteStatement(m_dropSuperfluousSegmentStatement);
+    if ( m_startMigrationMounts) deleteStatement(m_startMigrationMounts);
   } catch (castor::exception::Exception& ignored) {};
   // Now reset all pointers to 0
   m_getMigrationMountsWithoutTapesStatement= 0; 
@@ -189,6 +191,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
   m_flagTapeFullForMigrationSession=0;
   m_getMigrationMountVid=0;
   m_dropSuperfluousSegmentStatement=0;
+  m_startMigrationMounts = 0;
 }
 
 //----------------------------------------------------------------------------
@@ -218,10 +221,12 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getMigrationMountsWithou
     resultSetIntrospector resIntros (rs);
     int idIdx       = resIntros.findColumnIndex(                   "ID", oracle::occi::OCCI_SQLT_NUM);
     int TPNameIdx   = resIntros.findColumnIndex(                 "NAME", oracle::occi::OCCI_SQLT_CHR);
+    int ReqIdIdx    = resIntros.findColumnIndex( "TAPEGATEWAYREQUESTID", oracle::occi::OCCI_SQLT_NUM);
     // Run through the cursor
     while( rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
       castor::tape::tapegateway::ITapeGatewaySvc::migrationMountParameters item;
-      item.migrationMountId = (u_signed64)rs->getDouble(idIdx);
+      item.migrationMountId     = (u_signed64)rs->getNumber(idIdx);
+      item.tapegatewayRequestID = (u_signed64)rs->getNumber(ReqIdIdx);
       // Note that we hardcode 1 for the initialSizeToTransfer. This parameter should actually
       // be dropped and the call to VMGR changed accordingly.
       item.initialSizeToTransfer = 1;
@@ -1775,6 +1780,68 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getMigrationMountVid(Fil
   }
 }
 
+
+// Scan all the tapepools in the database and create new
+// migration mounts where tapepool policy allows (depending on the
+// pending migrations).
+// The result of the policy for each tapepool is returned as a pointer to
+// a vector of StartMigrationMountReport.
+// The de-allocation of the vector is the duty of the caller.
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::startMigrationMounts (std::vector<StartMigrationMountReport> * result)
+{
+  try {
+    result = NULL;
+    if (!m_startMigrationMounts) {
+      m_startMigrationMounts =
+          createStatement("BEGIN tg_startMigrationMounts(:1);END;");
+      m_startMigrationMounts->registerOutParam
+      (1, oracle::occi::OCCICURSOR);
+    }
+    // The data is committed in SQL, but we need a final commit (or rollback, whatever) to clean up
+    // the temporary table that contains the report.
+    ScopedTransaction scpTrans (oraSvc);
+    // Execute the query
+    m_getMigrationMountVid->executeUpdate();
+    // Identify the structure of the cursor.
+    castor::db::ora::SmartOcciResultSet::SmartOcciResultSet rs (m_startMigrationMounts, m_startMigrationMounts->getCursor(1));
+    resultSetIntrospector resIntros(rs.get());
+    int tpIdx = resIntros.findColumnIndex(     "TAPEPOOL", oracle::occi::OCCI_SQLT_CHR);
+    int rqIdx = resIntros.findColumnIndex(    "REQUESTID", oracle::occi::OCCI_SQLT_NUM);
+    int sqIdx = resIntros.findColumnIndex(   "SIZEQUEUED", oracle::occi::OCCI_SQLT_NUM);
+    int fqIdx = resIntros.findColumnIndex(  "FILESQUEUED", oracle::occi::OCCI_SQLT_NUM);
+    int mbIdx = resIntros.findColumnIndex( "MOUNTSBEFORE", oracle::occi::OCCI_SQLT_NUM);
+    int mcIdx = resIntros.findColumnIndex("MOUNTSCREATED", oracle::occi::OCCI_SQLT_NUM);
+    int maIdx = resIntros.findColumnIndex(  "MOUNTSAFTER", oracle::occi::OCCI_SQLT_NUM);
+    // Create the vector
+    std::auto_ptr<std::vector<StartMigrationMountReport> ap_result(new std::vector<StartMigrationMountReport);
+    // run through the cursor
+    while( rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
+      StartMigrationMountReport smmReport;
+      smmReport.tapepool   =               rs->getString(tpIdx);
+      smmReport.requestId =      (int64_t) rs->getNumber(rqIdx);
+      smmReport.sizeQueued =    (uint64_t) rs->getNumber(sqIdx);
+      smmReport.filesQueued =   (uint64_t) rs->getNumber(fqIdx);
+      smmReport.mountsBefore =       (int) rs->getNumber(mbIdx);
+      smmReport.mountsCreated =      (int) rs->getNumber(mcIdx);
+      smmReport.mountsAfter =        (int) rs->getNumber(maIdx);
+      ap_result->push_back(smmReport);
+    }
+    // Close result set and transaction
+    rs.close();
+    scpTrans.commit();
+    // report and return.
+    result = ap_result.release();
+    return;
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in startMigrationMounts"
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+}
 //----------------------------------------------------------------------------
 // commit
 //----------------------------------------------------------------------------

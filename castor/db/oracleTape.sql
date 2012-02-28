@@ -310,50 +310,6 @@ BEGIN
 END;
 /
 
-/* resurrect tapes */
-CREATE OR REPLACE PROCEDURE startMigrationMounts AS
-  varNbMounts INTEGER;
-  varDataAmount INTEGER;
-  varNbFiles INTEGER;
-  varOldestCreationTime NUMBER;
-BEGIN
-  -- loop through tapepools
-  FOR t IN (SELECT id, nbDrives, minAmountDataForMount,
-                   minNbFilesForMount, maxFileAgeBeforeMount
-              FROM TapePool) LOOP
-    -- get number of mounts already running for this tapepool
-    SELECT count(*) INTO varNbMounts
-      FROM MigrationMount
-     WHERE tapePool = t.id;
-    -- get the amount of data and number of files to migrate, plus the age of the oldest file
-    BEGIN
-      SELECT SUM(fileSize), COUNT(*), MIN(creationTime) INTO varDataAmount, varNbFiles, varOldestCreationTime
-        FROM MigrationJob
-       WHERE tapePool = t.id
-         AND status IN (tconst.MIGRATIONJOB_PENDING, tconst.MIGRATIONJOB_SELECTED)
-       GROUP BY tapePool;
-      -- Create as many mounts as needed according to amount of data and number of files
-      WHILE (varNbMounts < t.nbDrives) AND
-            ((varDataAmount/(varNbMounts+1) >= t.minAmountDataForMount) OR
-             (varNbFiles/(varNbMounts+1) >= t.minNbFilesForMount)) AND
-            (varNbMounts < varNbFiles) LOOP   -- in case minAmountDataForMount << avgFileSize, stop creating more than one mount per file
-        insertMigrationMount(t.id);
-        varNbMounts := varNbMounts + 1;
-      END LOOP;
-      -- force creation of a unique mount in case no mount was created at all and some files are too old
-      IF varNbFiles > 0 AND varNbMounts = 0 AND t.nbDrives > 0 AND
-         gettime() - varOldestCreationTime > t.maxFileAgeBeforeMount THEN
-        insertMigrationMount(t.id);
-      END IF;
-    EXCEPTION WHEN NO_DATA_FOUND THEN
-      -- there is no file to migrate, so nothing to do
-      NULL;
-    END;
-    COMMIT;
-  END LOOP;
-END;
-/
-
 /*
  * Database jobs
  */
@@ -365,16 +321,6 @@ BEGIN
     DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
   END LOOP;
 
-  -- Create a db job to be run every minute executing the startMigrationMounts procedure
-  DBMS_SCHEDULER.CREATE_JOB(
-      JOB_NAME        => 'MigrationMountsJob',
-      JOB_TYPE        => 'PLSQL_BLOCK',
-      JOB_ACTION      => 'BEGIN startMigrationMounts(); END;',
-      JOB_CLASS       => 'CASTOR_JOB_CLASS',
-      START_DATE      => SYSDATE + 1/1440,
-      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=1',
-      ENABLED         => TRUE,
-      COMMENTS        => 'Creates MigrationMount entries when new migrations should start');
 END;
 /
 

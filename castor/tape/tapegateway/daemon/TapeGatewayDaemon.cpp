@@ -73,43 +73,31 @@ extern "C" {
 //------------------------------------------------------------------------------
 
 int castor::tape::tapegateway::TapeGatewayDaemon::main(int argc, char* argv[]){
-
-
 // Try to initialize the DLF logging system, quitting with an error message
   // to stderr if the initialization fails
   try {
-    
     castor::server::BaseServer::dlfInit(s_dlfMessages);
-
   } catch(castor::exception::Exception& ex) {
     std::cerr << std::endl <<
       "Failed to start daemon"
       ": Failed to initialize DLF"
       ": " << ex.getMessage().str() << std::endl << std::endl;
-
     return 1;
   }
-
   // Try to start the daemon, quitting with an error message to stderr and DLF
   // if the start fails
-  
 try {
-
     exceptionThrowingMain(argc, argv);
-
   } catch (castor::exception::Exception& ex) {
     std::cerr << std::endl << "Failed to start daemon: "
       << ex.getMessage().str() << std::endl << std::endl;
-
     castor::dlf::Param params[] = {
       castor::dlf::Param("Message", ex.getMessage().str()),
       castor::dlf::Param("Code"   , ex.code()            )};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
       TAPE_GATEWAY_FAILED_TO_START, params);
-
     return 1;
   }
-
   return 0;
 }
 
@@ -117,31 +105,21 @@ try {
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
 int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc,char **argv) throw(castor::exception::Exception) {
-
   // Log the start of the daemon
   logStart(argc, argv);
-
   // Check the service to access the database can be obtained
-
   // load the TapeGateway service to check that everything is fine with it
-
   castor::IService* dbSvc = castor::BaseObject::services()->service("OraTapeGatewaySvc", castor::SVC_ORATAPEGATEWAYSVC);
   castor::tape::tapegateway::ITapeGatewaySvc* oraSvc = dynamic_cast<castor::tape::tapegateway::ITapeGatewaySvc*>(dbSvc);
-  
   // Throw an exception if the Oracle database service could not
   // be obtained
-
   if (0 == oraSvc) {
-
     castor::exception::Internal ex;
     ex.getMessage() <<
       "Failed to get  TapeGateway Oracle database service";
     throw(ex);
-
   }
-
   //Retrive the retry policies
-
   std::string migrationPolicyName;
   char* tmpStr=NULL;
   tmpStr = getconfent("TAPEGATEWAY","MIG_RETRY_POLICY",0);
@@ -152,73 +130,43 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
   } else {
     migrationPolicyName = tmpStr;
   }
-
   std::string recallPolicyName;
   tmpStr = getconfent("TAPEGATEWAY","REC_RETRY_POLICY",0);
   if (tmpStr == NULL){
     castor::dlf::Param params[] =
       {castor::dlf::Param("message","No policy for recall retry in castor.conf")};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, castor::tape::tapegateway::NO_RETRY_POLICY_FOUND, params);
-    
   } else {
     recallPolicyName = tmpStr;
   }
-  
   // Initialize Python
-
   castor::tape::python::initializePython();
-
   // Load the policies
-
   castor::tape::python::ScopedPythonLock scopedLock;
-
-
   PyObject* migrationDict = NULL;
-  
   if (!migrationPolicyName.empty()){
-  
     migrationDict = castor::tape::python::importPolicyPythonModule(migrationPolicyName.c_str());
-
   }
-
-
   PyObject* recallDict = NULL;
-
   if (!recallPolicyName.empty()){
-
     recallDict = castor::tape::python::importPolicyPythonModule(recallPolicyName.c_str());
-
   }
-
-
   // Get the functions from the dictionaries to be used by the threads
   // name of the function is the same as the module
-    
   PyObject * migrationFunction=NULL;
-
   if (migrationDict && !migrationPolicyName.empty())
     migrationFunction = castor::tape::python::getPythonFunction(migrationDict,migrationPolicyName.c_str());
-
   if (migrationFunction == NULL){
-
     castor::dlf::Param params[] =
       {castor::dlf::Param("message", "No migration retry function found in the python module"),
        castor::dlf::Param("functionName",migrationPolicyName.c_str())
       };
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, castor::tape::tapegateway::NO_RETRY_POLICY_FOUND, params);
-
   }
-
-
-  
   PyObject * recallFunction=NULL;
-
   if (recallDict && !recallPolicyName.empty())
     recallFunction = castor::tape::python::getPythonFunction(recallDict,recallPolicyName.c_str());
-
-
   if (recallFunction == NULL){
-
       castor::dlf::Param params[] =
       {castor::dlf::Param("message", "No recall retry function found in the python module"),
        castor::dlf::Param("functionName",recallPolicyName.c_str())
@@ -226,14 +174,9 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, castor::tape::tapegateway::NO_RETRY_POLICY_FOUND, params);
   }
 
-
-
-
   // Get the min and max number of thread used by the Worker
-
   int minThreadsNumber = MIN_WORKER_THREADS;
   int maxThreadsNumber = MAX_WORKER_THREADS;
-
   char* tmp=NULL;
   if ( (tmp= getconfent("TAPEGATEWAY","MINWORKERTHREADS",0)) != NULL ){
     char* dp = tmp;
@@ -242,7 +185,6 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
       minThreadsNumber = MIN_WORKER_THREADS;
     }
   }
-
   if ( (tmp= getconfent("TAPEGATEWAY","MAXWORKERTHREADS",0)) != NULL ){
     char* dp = tmp;
     maxThreadsNumber= strtoul(tmp, &dp, 0);
@@ -250,63 +192,57 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
       maxThreadsNumber = MAX_WORKER_THREADS;
     }
   }
-
   parseCommandLine(argc, argv);
-
   // run as stage st
-
   runAsStagerSuperuser();
 
-  // send request to vdmq
+  // The order of the thread here match the lifecycle of the tape migration action
+  // Migration mount producer thread
+  std::auto_ptr<castor::tape::tapegateway::MigrationMountProducerThread> mmThread(new castor::tape::tapegateway::MigrationMountProducerThread());
+  std::auto_ptr<castor::server::SignalThreadPool> mmPool(new castor::server::SignalThreadPool("A-MigrationMountProducerThread", mmThread.release(), DEFAULT_SLEEP_INTERVAL));
+  addThreadPool(mmPool.release());
+  getThreadPool('A')->setNbThreads(1);
 
+  // query vmgr for tape and tapepools
+  std::auto_ptr<castor::tape::tapegateway::TapeMigrationMountLinkerThread> tsThread(new castor::tape::tapegateway::TapeMigrationMountLinkerThread());
+  std::auto_ptr<castor::server::SignalThreadPool> tmmPool(new castor::server::SignalThreadPool("B-TapeMigrationMountLinkerThread", tsThread.release(), DEFAULT_SLEEP_INTERVAL));
+  addThreadPool(tmmPool.release());
+  getThreadPool('B')->setNbThreads(1);
+
+  // send request to vdqm
   std::auto_ptr<castor::tape::tapegateway::VdqmRequestsProducerThread> vpThread(new castor::tape::tapegateway::VdqmRequestsProducerThread(listenPort()));// port used just to be sent to vdqm
-  std::auto_ptr<castor::server::SignalThreadPool> vpPool(new castor::server::SignalThreadPool("ProducerOfVdqmRequestsThread", vpThread.release(), DEFAULT_SLEEP_INTERVAL));
+  std::auto_ptr<castor::server::SignalThreadPool> vpPool(new castor::server::SignalThreadPool("C-ProducerOfVdqmRequestsThread", vpThread.release(), DEFAULT_SLEEP_INTERVAL));
   addThreadPool(vpPool.release()); 
-  getThreadPool('P')->setNbThreads(1);
+  getThreadPool('C')->setNbThreads(1);
 
   // check requests for vdqm
   std::auto_ptr<castor::tape::tapegateway::VdqmRequestsCheckerThread> vcThread(new castor::tape::tapegateway::VdqmRequestsCheckerThread(VDQM_TIME_OUT_INTERVAL));
-  std::auto_ptr<castor::server::SignalThreadPool> vcPool(new castor::server::SignalThreadPool("CheckerOfVdqmRequestsThread", vcThread.release(), DEFAULT_SLEEP_INTERVAL));
+  std::auto_ptr<castor::server::SignalThreadPool> vcPool(new castor::server::SignalThreadPool("D-CheckerOfVdqmRequestsThread", vcThread.release(), DEFAULT_SLEEP_INTERVAL));
   addThreadPool(vcPool.release());
-  getThreadPool('C')->setNbThreads(1);
-  
-  // query vmgr for tape and tapepools
-  
-  std::auto_ptr<castor::tape::tapegateway::TapeMigrationMountLinkerThread> tsThread(new castor::tape::tapegateway::TapeMigrationMountLinkerThread());
-  std::auto_ptr<castor::server::SignalThreadPool> tmmPool(new castor::server::SignalThreadPool("TapeMigrationMountLinkerThread", tsThread.release(), DEFAULT_SLEEP_INTERVAL));
-  addThreadPool(tmmPool.release());
-  getThreadPool('T')->setNbThreads(1);
+  getThreadPool('D')->setNbThreads(1);
 
-    // migration error handler
-        
-    std::auto_ptr<castor::tape::tapegateway::MigratorErrorHandlerThread> mThread(new castor::tape::tapegateway::MigratorErrorHandlerThread(migrationFunction));
-    std::auto_ptr<castor::server::SignalThreadPool> mPool(new castor::server::SignalThreadPool("MigrationErrorHandlerThread", mThread.release(),  DEFAULT_SLEEP_INTERVAL));
-    addThreadPool(mPool.release());
-    getThreadPool('M')->setNbThreads(1);
-    
-    // recaller error handler
+  // recaller/migration dynamic thread pool
+  std::auto_ptr<castor::tape::tapegateway::WorkerThread> wThread(new castor::tape::tapegateway::WorkerThread());
+  std::auto_ptr<castor::server::TCPListenerThreadPool> wPool(new castor::server::TCPListenerThreadPool("K-WorkerThread", wThread.release(),listenPort(),true, minThreadsNumber, maxThreadsNumber,TG_THRESHOLD, TG_MAXTASKS ));
+  addThreadPool(wPool.release());
 
-    std::auto_ptr<castor::tape::tapegateway::RecallerErrorHandlerThread> rThread(new castor::tape::tapegateway::RecallerErrorHandlerThread(recallFunction));
-    std::auto_ptr<castor::server::SignalThreadPool> rPool(new castor::server::SignalThreadPool("RecallerErrorHandlerThread", rThread.release(), DEFAULT_SLEEP_INTERVAL));
-    addThreadPool(rPool.release());
-    getThreadPool('R')->setNbThreads(1);
+  // migration error handler
+  std::auto_ptr<castor::tape::tapegateway::MigratorErrorHandlerThread> mThread(new castor::tape::tapegateway::MigratorErrorHandlerThread(migrationFunction));
+  std::auto_ptr<castor::server::SignalThreadPool> mPool(new castor::server::SignalThreadPool("R-MigrationErrorHandlerThread", mThread.release(),  DEFAULT_SLEEP_INTERVAL));
+  addThreadPool(mPool.release());
+  getThreadPool('R')->setNbThreads(1);
 
-    // recaller/migration dynamic thread pool
+  // recaller error handler
+  std::auto_ptr<castor::tape::tapegateway::RecallerErrorHandlerThread> rThread(new castor::tape::tapegateway::RecallerErrorHandlerThread(recallFunction));
+  std::auto_ptr<castor::server::SignalThreadPool> rPool(new castor::server::SignalThreadPool("S-RecallerErrorHandlerThread", rThread.release(), DEFAULT_SLEEP_INTERVAL));
+  addThreadPool(rPool.release());
+  getThreadPool('S')->setNbThreads(1);
 
-    std::auto_ptr<castor::tape::tapegateway::WorkerThread> wThread(new castor::tape::tapegateway::WorkerThread());
-    std::auto_ptr<castor::server::TCPListenerThreadPool> wPool(new castor::server::TCPListenerThreadPool("WorkerThread", wThread.release(),listenPort(),true, minThreadsNumber, maxThreadsNumber,TG_THRESHOLD, TG_MAXTASKS ));
-    addThreadPool(wPool.release());
-
-    // start the daemon
-
-    start();
-
-    // Finalize Python
-
-    castor::tape::python::finalizePython();
-
-    return 0;
-    
+  // start the daemon
+  start();
+  // Finalize Python
+  castor::tape::python::finalizePython();
+  return 0;
 }
 
 //------------------------------------------------------------------------------
