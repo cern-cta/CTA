@@ -1501,7 +1501,8 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
     -- scheduler algorithm
     SELECT id INTO schedulerLockIdVar
       FROM VdqmLock
-      WHERE id = 1;
+      WHERE id = 1
+      FOR UPDATE;
 
     -- For each potential drive allocation, i.e. a drive allocation for which
     -- no dedications have been taken into account
