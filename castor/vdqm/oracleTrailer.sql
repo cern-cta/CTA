@@ -914,9 +914,9 @@ CREATE OR REPLACE PACKAGE castorVdqm AS
   /**
    * This procedure gets a new matched request to be submitted to rtcpd.
    *
-   * @tapeReqId the ID of the matched request.
+   * @outTapeReqId the ID of the matched request.
    */
-  PROCEDURE getRequestToSubmit(tapeReqId OUT NUMBER);
+  PROCEDURE getRequestToSubmit(outTapeReqId OUT NUMBER);
 
   /**
    * This procedure tries to reuse a drive allocation.
@@ -1591,29 +1591,36 @@ CREATE OR REPLACE PACKAGE BODY castorVdqm AS
   /**
    * See the castorVdqm package specification for documentation.
    */
-  PROCEDURE getRequestToSubmit(tapeReqId OUT NUMBER) AS
-  LockError EXCEPTION;
-  PRAGMA EXCEPTION_INIT (LockError, -54);
-  CURSOR c IS
-     SELECT id
-       FROM TapeRequest
-      WHERE status = 1  -- MATCHED
-      FOR UPDATE SKIP LOCKED;
+  PROCEDURE getRequestToSubmit(outTapeReqId OUT NUMBER) AS
+    RowLocked EXCEPTION;
+    PRAGMA EXCEPTION_INIT (RowLocked, -54);
+    CURSOR varCur IS SELECT id FROM TapeRequest WHERE status = 1;  -- 1=MATCHED
   BEGIN
-    tapeReqId := 0;
-    OPEN c;
-    FETCH c INTO tapeReqId;
-    UPDATE TapeRequest SET status = 2 WHERE id = tapeReqId;  -- BEINGSUBMITTED
-    CLOSE c;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- just return reqId = 0, nothing to do
-    NULL;
-  WHEN LockError THEN
-    -- We have observed ORA-00054 errors (resource busy and acquire with
-    -- NOWAIT) even with the SKIP LOCKED clause. This is a workaround to ignore
-    -- the error until we understand what to do, another thread will pick up
-    -- the request so we don't do anything.
-    NULL;
+    outTapeReqId := 0;
+
+    OPEN varCur;
+    LOOP
+      FETCH varCur INTO outTapeReqId;
+
+      IF varCur%NOTFOUND THEN -- The value of outTapeReqId is now indeterminate
+        outTapeReqId := 0;
+        EXIT; -- Exit the loop
+      END IF;
+
+      BEGIN
+        SELECT id INTO outTapeReqId FROM TapeRequest
+          WHERE id = outTapeReqId AND STATUS = 1 -- 1=MATCHED
+          FOR UPDATE NOWAIT;
+
+        UPDATE TapeRequest SET STATUS = 2 -- 2=BEINGSUBMITTED
+          WHERE id = outTapeReqId;
+
+        EXIT; -- Exit the loop
+      EXCEPTION
+        WHEN RowLocked     THEN outTapeReqId := 0;
+        WHEN NO_DATA_FOUND THEN outTapeReqId := 0;
+      END;
+    END LOOP;
   END getRequestToSubmit;
 
 
