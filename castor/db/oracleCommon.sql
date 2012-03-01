@@ -259,10 +259,10 @@ BEGIN
   deleteRecallJobs(cfId);
   -- Invalidate the DiskCopy
   UPDATE DiskCopy SET status = 7 WHERE id = dcId; -- INVALID
-  -- Look for request associated to the recall and fail
-  -- it and all the waiting ones
+  -- Look for and update requests associated to the recall plus dependent ones
   UPDATE /*+ INDEX(Subrequest I_Subrequest_Diskcopy)*/ SubRequest
-     SET status = newSubReqStatus
+     SET status = newSubReqStatus,
+         answered = 0
    WHERE diskCopy = dcId RETURNING id BULK COLLECT INTO srIds;
   UPDATE /*+ INDEX(Subrequest I_Subrequest_Parent)*/ SubRequest
      SET status = newSubReqStatus, parent = 0 -- FAILED
