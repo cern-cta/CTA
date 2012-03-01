@@ -261,22 +261,32 @@ stage_apiInit(struct stager_client_api_thread_info **thip) {
 
 
 
-#define STBUFSIZE 200
 EXTERN_C void stage_trace(int level, const char *format, ...) {
   va_list args;           /* arguments */
   struct stager_client_api_thread_info *thip;
   const char *label = "stager";
-  char buffer[STBUFSIZE+1];
+  std::string buffer;
+  int size = 200;
 
-  va_start(args, format);
   if(stage_apiInit(&thip)) {
-    va_end(args);
     return;
   }
-  buffer[STBUFSIZE] = '\0';
-  Cvsnprintf(buffer, STBUFSIZE, format, args);
-  va_end(args);
-  print_trace_r(thip->trace, level, label, "%s", buffer);
+  // write to the string using C interface and making sure that it fits 
+  while (true) {
+    buffer.resize(size);
+    va_start(args, format);
+    int n = Cvsnprintf((char*)buffer.c_str(), size, format, args);
+    va_end(args);
+    if (n > -1 && n < size) {
+      // it fits in the current buffer size, we are done
+      break;
+    } else if (n > -1) { /* glibc 2.1 */
+      size = n+1;/* precisely what is needed */
+    } else { /* glibc 2.0 */
+      size *= 2; /* twice the old size */
+    }
+  }
+  print_trace_r(thip->trace, level, label, "%s", buffer.c_str());
 
 }
 
