@@ -23,6 +23,7 @@
   -------------
 
   [Bug]
+    - #92132 the migration policy allows to migrate files that are not yet fully written to disk
     - #92096 Incorrect handling of pending requests when a diskserver comes back online
     - #91890 deletesvcclass is broken
     - #91823 stager_abort blocked with Oracle 11g
