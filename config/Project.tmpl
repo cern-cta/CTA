@@ -79,7 +79,7 @@ checkSTK:
 	  fi; \
 	fi
 
-XROOT_LIB_LOCATION ?= $(LIBDIR)
+XROOT_LIB_LOCATION ?= /opt/xrootd/lib
 XROOT_LOCATION ?= $(dir $(XROOT_LIB_LOCATION))
 checkXROOT:
 	@if [ ! -r $(XROOT_LOCATION)/include/xrootd/XrdPosix/XrdPosixXrootd.hh ]; then \
