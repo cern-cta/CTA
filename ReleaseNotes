@@ -34,21 +34,30 @@
     - #91880 listtransfers -p forgets the last pool when listing protocols
     - #91866 transfers may be lost after a restart of the diskmanagerd
 
-  CASTOR Tape Gateway
-  -------------------
+  CASTOR Tape
+  -----------
 
   [Bug]
     - #91586 "Tapecopy not found for castorfile" should be an info level.
 
   [Features]
     - #91761 RFE: default migration retry policy should not retry when the file is gone from the name server
+    - #90313 RFE: tapebridged should request more files to transfer in bulk
 
   CASTOR Central Daemons
   ----------------------
 
   [Bug]
+    - #91992 VDQM reports Deadlock error
     - #91956 VDQM crashes on shutdown
     - #91084 nsrm incorrectly handles mode=000 directories
+
+  [Features]
+    - #91997 RFE: Implement VDQM getRequestToSubmit the same way as the stager
+
+  CASTOR test suite
+  -----------------
+    - #90288 Add the -f option to the xrdcp command of the xrdcpBadChecksum test of the CASTOR test-suite
 
 
   Upgrade Instructions from 2.1.12-1
