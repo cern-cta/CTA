@@ -551,6 +551,7 @@ PROCEDURE tg_defaultMigrSelPolicy(inMountId IN INTEGER,
        AND MigrationJob.status = tconst.MIGRATIONJOB_PENDING
        AND CastorFile.id = MigrationJob.castorFile
        AND DiskCopy.castorFile = MigrationJob.castorFile
+       AND DiskCopy.status = dconst.DISKCOPY_CANBEMIGR
        AND FileSystem.id = DiskCopy.fileSystem
        AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING)
        AND DiskServer.id = FileSystem.diskServer
