@@ -230,6 +230,68 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 END;
 /
 
+/* default migration candidate selection policy */
+CREATE OR REPLACE
+PROCEDURE tg_defaultMigrSelPolicy(inMountId IN INTEGER,
+                                  outDiskServerName OUT NOCOPY VARCHAR2,
+                                  outMountPoint OUT NOCOPY VARCHAR2,
+                                  outPath OUT NOCOPY VARCHAR2,
+                                  outDiskCopyId OUT INTEGER,
+                                  outLastKnownFileName OUT NOCOPY VARCHAR2, 
+                                  outFileId OUT INTEGER,
+                                  outNsHost OUT NOCOPY VARCHAR2, 
+                                  outFileSize OUT INTEGER,
+                                  outMigJobId OUT INTEGER, 
+                                  outLastUpdateTime OUT INTEGER) AS
+  /* Find the next file to migrate for a given migration mount.
+   *
+   * Procedure's input: migration mount id
+   * Procedure's output: non-zero MigrationJob ID
+   *
+   * Lock taken on the migration job if it selects one.
+   * 
+   * Per policy we should only propose a migration job for a file that does not 
+   * already have another copy migrated to the same tape.
+   * The already migrated copies are kept in MigratedSegment until the whole set
+   * of siblings has been migrated.
+   */
+  LockError EXCEPTION;
+  PRAGMA EXCEPTION_INIT (LockError, -54);
+  CURSOR c IS
+    SELECT /*+ FIRST_ROWS_1 
+               LEADING(MigrationMount MigrationJob CastorFile DiskCopy FileSystem DiskServer)
+               INDEX(CastorFile PK_CastorFile_Id)
+               INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile)
+               INDEX_RS_ASC(MigrationJob I_MigrationJob_TPStatusId) */
+           DiskServer.name, FileSystem.mountPoint, DiskCopy.path, DiskCopy.id, CastorFile.lastKnownFilename,
+           CastorFile.fileId, CastorFile.nsHost, CastorFile.fileSize, MigrationJob.id, CastorFile.lastUpdateTime
+      FROM MigrationMount, MigrationJob, DiskCopy, FileSystem, DiskServer, CastorFile
+     WHERE MigrationMount.id = inMountId
+       AND MigrationJob.tapePool = MigrationMount.tapePool
+       AND MigrationJob.status = tconst.MIGRATIONJOB_PENDING
+       AND CastorFile.id = MigrationJob.castorFile
+       AND DiskCopy.castorFile = MigrationJob.castorFile
+       AND DiskCopy.status = dconst.DISKCOPY_CANBEMIGR
+       AND FileSystem.id = DiskCopy.fileSystem
+       AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING)
+       AND DiskServer.id = FileSystem.diskServer
+       AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING)
+       AND MigrationMount.VID NOT IN (SELECT /*+ INDEX_RS_ASC(MigratedSegment I_MigratedSegment_CFCopyNBVID) */ vid 
+                                        FROM MigratedSegment
+                                       WHERE castorFile = MigrationJob.castorfile
+                                         AND copyNb != MigrationJob.destCopyNb)
+       FOR UPDATE OF MigrationJob.id SKIP LOCKED;
+BEGIN
+  OPEN c;
+  FETCH c INTO outDiskServerName, outMountPoint, outPath, outDiskCopyId, outLastKnownFileName,
+               outFileId, outNsHost, outFileSize, outMigJobId, outLastUpdateTime;
+  CLOSE c;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- Nothing to migrate. Simply return
+  CLOSE c;
+END;
+/
+
 /* Recompile all invalid procedures, triggers and functions */
 /************************************************************/
 BEGIN
