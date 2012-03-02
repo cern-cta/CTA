@@ -1,4 +1,140 @@
 ------------
+- 2.1.12-4 -
+------------
+
+  Summary
+  -------
+
+  - this release is a bug fix release on top of 2.1.12-1
+    No new major feature has been included. The list of bug fixes and minor improvements is given below.
+
+
+  CASTOR Stager
+  -------------
+
+  [Bug]
+    - #92096 Incorrect handling of pending requests when a diskserver comes back online
+    - #91890 deletesvcclass is broken
+    - #91823 stager_abort blocked with Oracle 11g
+
+  CASTOR Scheduler
+  -------------
+
+  [Bug]
+    - #91880 listtransfers -p forgets the last pool when listing protocols
+    - #91866 transfers may be lost after a restart of the diskmanagerd
+
+  CASTOR Tape Gateway
+  -------------------
+
+  [Bug]
+    - #91586 "Tapecopy not found for castorfile" should be an info level.
+
+  [Features]
+    - #91761 RFE: default migration retry policy should not retry when the file is gone from the name server
+
+  CASTOR Central Daemons
+  ----------------------
+
+  [Bug]
+    - #91956 VDQM crashes on shutdown
+    - #91084 nsrm incorrectly handles mode=000 directories
+
+
+  Upgrade Instructions from 2.1.12-1
+  ----------------------------------
+
+    Before upgrading to a 2.1.12-4 instance of CASTOR2 please make sure to read
+    the upgrade instructions fully before proceeding.
+
+    Stager, DLF and Repack
+    ----------------------
+
+    The upgrade of the stager database to 2.1.12-4 can be performed online while the system is running.
+    The RPM upgrade can also be performed on a running system, with 2 restrictions:
+      - the restart of the RH servers may be noticable by few clients (< 1s downtime);
+      - the restart of the transfermanagers and diskmanagers should not be done concurrently.
+
+      Instructions
+      ------------
+
+       1. Upgrade the STAGER database using the stager_2.1.12-1_to_2.1.12-4.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.12-*/2.1.12-4/dbupgrades
+
+       2. Upgrade the DLF database using the dlf_2.1.12-1_to_2.1.12-4.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.12-*/2.1.12-4/dbupgrades
+       
+       3. Upgrade the software on the headnodes.
+          Note: All daemons involved in the upgrade will be restarted automatically.
+
+       5. Upgrade the software on the diskservers.
+          Note: All daemons involved in the upgrade will be restarted automatically.
+
+       6. Test the instance by running the test suite available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.12-*/2.1.12-4/testsuite
+
+       7. Congratulations you have successfully upgraded to the 2.1.12-4 release
+          of CASTOR.
+
+
+    VDQM
+    ----
+
+      The upgrade of the VDQM databases to 2.1.12-4 cannot be performed online.
+
+      Instructions 
+      ------------
+
+       1. Stop the vdqm daemon.
+
+       2. Apply the appropriate database upgrade script from:
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.12-*/2.1.12-4/dbupgrades
+
+       3. Update the software to use the 2.1.12-4 RPMS.
+
+       4. Start the vdqm daemon.
+
+       5. Upgrade complete.
+
+
+    Other Central services (CUPV, VMGR, Nameserver)
+    -----------------------------------------------
+
+      The upgrade of the CUPV, VMGR, and Nameserver databases to 2.1.12-4 can be performed online while
+      the system is running.
+
+      Instructions 
+      ------------
+
+       1. Apply the appropriate database upgrade script from:
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.12-*/2.1.12-4/dbupgrades
+
+       2. Update the software to use the 2.1.12-4 RPMS. Note: All
+          daemons involved in the upgrade will be restarted automatically.
+
+       3. Upgrade complete.
+
+
+    Monitoring
+    ----------
+
+      The upgrade of the MONITORING database can be performed online while the
+      system is running.
+
+      Instructions
+      ------------
+
+       1. Upgrade the MONITORING database using the mon_2.1.12-1_to_2.1.12-4.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.12-*/2.1.12-4/dbupgrades
+
+       2. Upgrade complete.
+
+
+
+------------
 - 2.1.12-1 -
 ------------
 
