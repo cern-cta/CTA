@@ -8,6 +8,16 @@
   - this release is a bug fix release on top of 2.1.12-1
     No new major feature has been included. The list of bug fixes and minor improvements is given below.
 
+  Note
+  ----
+
+  - similarly to release 2.1.12-1, the test suite some test cases will fail, namely :
+       touch_updateFileAccess,
+       touch_updateFileModification
+       ns_mkdir_invalidModeTooLong
+    see details in the release notes of release 2.1.12-1
+  - the test noWritePermsParentDir will only pass if the user launching the test suite is
+    not an ns admin in the cupv database
 
   CASTOR Stager
   -------------
