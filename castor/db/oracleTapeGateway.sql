@@ -1679,7 +1679,7 @@ BEGIN
         SELECT SUM(fileSize), COUNT(*), MIN(creationTime) INTO varDataAmount, varNbFiles, varOldestCreationTime
           FROM MigrationJob
          WHERE tapePool = t.id
-           AND status IN (tconst.MIGRATIONJOB_PENDING, tconst.MIGRATIONJOB_SELECTED)
+           AND status = tconst.MIGRATIONJOB_PENDING
          GROUP BY tapePool;
         -- Create as many mounts as needed according to amount of data and number of files
         WHILE (varNbMounts < t.nbDrives) AND
