@@ -1,3 +1,31 @@
+--------------
+- 2.1.12-4-1 -
+--------------
+
+  Summary
+  -------
+
+  - this release is a hot fix release on top of 2.1.12-4 for the stager DB
+    It fixes 2 bugs :
+     + bug #92194: Tape gateway marks all files with an error when the migration session fails
+     + bug #92211: Too many migrationmounts created
+
+  Upgrade Instructions from 2.1.12-4
+  ----------------------------------
+
+    Stager
+    ------
+
+    The upgrade of the stager database to 2.1.12-4 can be performed online while the system is running.
+    Upgrade the STAGER database using the stager_2.1.12-4_to_2.1.12-4-1.sql available from
+      http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.12-*/2.1.12-4/dbupgrades
+
+    Other components
+    ---------------- 
+
+    Nothing to be done.
+
+    
 ------------
 - 2.1.12-4 -
 ------------
