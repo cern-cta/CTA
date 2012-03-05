@@ -374,24 +374,13 @@ BEGIN
      WHERE TapeGatewayRequestId = varTgrId
        FOR UPDATE;
     -- Process the write case
-    IF inErrorCode != 0 THEN
-      -- if a failure is reported, retry
-      UPDATE MigrationJob
-         SET status=tconst.MIGRATIONJOB_RETRY,
-             VID=NULL,
-             TapeGatewayRequestId = NULL,
-             errorcode=inErrorCode,
-             nbretry=0
-       WHERE id IN (SELECT * FROM TABLE(varTcIds));
-    ELSE
-      -- just resurrect them if they were lost
-      UPDATE MigrationJob
-         SET status = tconst.MIGRATIONJOB_PENDING,
-             VID = NULL,
-             TapeGatewayRequestId = NULL
-       WHERE id IN (SELECT * FROM TABLE(varTcIds))
-         AND status = tconst.MIGRATIONJOB_SELECTED;
-    END IF;
+    -- just resurrect the remaining migrations
+    UPDATE MigrationJob
+       SET status = tconst.MIGRATIONJOB_PENDING,
+           VID = NULL,
+           TapeGatewayRequestId = NULL
+     WHERE id IN (SELECT * FROM TABLE(varTcIds))
+       AND status = tconst.MIGRATIONJOB_SELECTED;
     -- delete the migration mount
     DELETE FROM MigrationMount  WHERE tapegatewayrequestid = varMountId;
   ELSE
