@@ -19,9 +19,7 @@
 # generic info about the context in which the test suite will run
 [Generic]
 
-# castor directories to use for temporary files created by the test suite
-CastorNoTapeDir = /castor/cern.ch/dev/s/sponcec3/notape
-CastorTapeDir = /castor/cern.ch/dev/s/sponcec3/tape
+# castor directory to use for temporary files created by the test suite
 CastorTestDir = /castor/cern.ch/dev/s/sponcec3
 
 # Put this to true if you want the test suite to skip tests when resources are missing
@@ -36,6 +34,10 @@ CastorTestDir = /castor/cern.ch/dev/s/sponcec3
 TapeServiceClasses = default, dev
 DiskOnlyServiceClasses = diskonly
 
+# file classes to be used by the test suite. Either names or ids are valid values
+TapeFileClass = 95 
+DiskOnlyFileClass = 58
+
 # Remote machine and directory to be used for testing transfers outside CASTOR
 remoteSpace = yourdiskserver.cern.ch:/var/tmp/rfiod
 
@@ -43,6 +45,10 @@ remoteSpace = yourdiskserver.cern.ch:/var/tmp/rfiod
 # Environment to be used for the tests
 # Each line will be translated into an environment variable setting
 [Environment]
+
+# Nameserver related
+# Must use full hostname
+CNS_HOST = lxc2dev9.cern.ch
 
 # Stager related
 STAGE_HOST = yourstager.cern.ch

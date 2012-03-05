@@ -16,7 +16,11 @@ Setup.getTag_sessionuuid = sessionuuid
 ### basic tags ###
 ##################
 
-def _createCastorNSDir(self, path):
+def cnsHost(self):
+    return self.options.get('Environment','CNS_HOST')
+Setup.getTag_cnsHost = cnsHost
+
+def _createDir(self, path):
     # create the path in the namespace
     output = Popen('nsmkdir ' + path)
     # check it went fine
@@ -24,28 +28,22 @@ def _createCastorNSDir(self, path):
         'Failed to create working directory ' + path + os.linesep + "Error :" + os.linesep + output
     # return the created dir
     return path
-Setup._createCastorNSDir = _createCastorNSDir
+Setup._createDir = _createDir
 
-def genericPath(self):
+def _testSessionPath(self):
     # get the test path
     testpath = self.options.get('Generic','CastorTestDir')
     # create a unique directory
-    return self._createCastorNSDir(testpath + os.sep + self.getTag(None, 'sessionuuid'))
-Setup.getTag_genericPath = genericPath
+    return self._createDir(testpath + os.sep + self.getTag(None, 'sessionuuid'))
+Setup.getTag__testSessionPath = _testSessionPath
 
-def nsDir(self, nb=0):
-    return (lambda test :  self.getTag(test, 'genericPath') + os.sep + test + str(nb))
+def nsDir(self):
+    return (lambda test :  self.getTag(test, '_testSessionPath') + os.sep + test)
 Setup.getTag_nsDir = nsDir
 
 def nsFile(self, nb=0):
-    print 'inside nsFile',self,self.getTag
-    try: 
-	return (lambda test :  self.getTag(test, 'nsDir'))
-    except Exception,e:
-	import traceback
-	traceback.print_stack()
-	print e
-	raise e
+    return (lambda test : self._createDir(self.getTag(test, 'nsDir')) + \
+            os.sep + test + str(nb))
 Setup.getTag_nsFile = nsFile
 
 
@@ -54,8 +52,8 @@ Setup.getTag_nsFile = nsFile
 ##################
 
 def nsCleanup(self):
-    # get rid of all files used in castor by dropping the namespace temporary directories
-    for entry in ['genericPath', 'noTapePath', 'tapePath']:
+    # TODO: must review this
+    for entry in ['_testSessionPath']:
         if self.tags.has_key(entry):
             path = self.tags[entry]
             output = Popen('nschmod -R 777 ' + path + '; nsrm -r ' + path)

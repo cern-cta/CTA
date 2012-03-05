@@ -48,13 +48,23 @@ Extra tags.py files can be provided at any level of the resources directory hier
 Note that other files (including documentation as for this one) can be present at any level. They will be ignored by the test suite.
 
 
-
 Syntax of the input/output files
 
 These are text files where "tags" can be present. A tag is any string within '<' and '>', e.g. "<fileName>".
 In input files, tags will be parsed and replaced by proper values, either coming from the config file, section Tags or from the test suite itself (e.g. filenames will be automatically generated).
 
 In output files, tags are placeholders for varying parts of the output. If input tags are reused, their value will be checked. Similarly, if a tag is used several times in the same file, this means that the same value is expected in the different places.
+
+All tests will be placed under CASTORTESTDIR/UUID, where CASTORTESTDIR is the directory specified in the config file and UUID is a unique session id.
+
+(some) predefined tags:
+
+<nsDir>:		this will return a generic path UUID/testname
+<nsFile>:		this will return a generic path UUID/testname/testname. UUID/testname will be created.
+<tapeFileName>:		this will return a path UUID/testname/testname.
+			UUID/testname will be created with the 'tape' fileclass and the correct ACL will be set to allow write privileges to <unprivUid>.
+<noTapeFileName>:	this will return a path UUID/testname/testname.
+			UUID/testname will be created with the 'notape' fileclass and the correct ACL will be set to allow write privileges to <unprivUid>.
 
 
 
