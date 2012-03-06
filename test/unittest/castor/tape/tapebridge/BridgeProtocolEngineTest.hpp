@@ -127,9 +127,13 @@ public:
       fileCloser.m_closedFds.front());
   }
 
+  void testUnixDomain() {
+  }
+
   CPPUNIT_TEST_SUITE(BridgeProtocolEngineTest);
 
   CPPUNIT_TEST(testConstructor);
+  CPPUNIT_TEST(testUnixDomain);
 
   CPPUNIT_TEST_SUITE_END();
 };

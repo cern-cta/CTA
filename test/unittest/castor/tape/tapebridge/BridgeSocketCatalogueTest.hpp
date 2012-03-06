@@ -1304,9 +1304,8 @@ public:
         "Checking ifValidInsertFdIntoSet inserted valid fd",
         catalogue.ifValidInsertFdIntoSet(fd, fdSet, maxFd));
 
-      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      CPPUNIT_ASSERT_MESSAGE(
         "Checking set contains fd after calling ifValidInsertFdIntoSet",
-        true,
         FD_ISSET(fd, &fdSet));
 
       CPPUNIT_ASSERT_EQUAL_MESSAGE(
@@ -1338,9 +1337,8 @@ public:
         "Checking ifValidInsertFdIntoSet inserted valid fd",
         catalogue.ifValidInsertFdIntoSet(fd, fdSet, maxFd));
 
-      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      CPPUNIT_ASSERT_MESSAGE(
         "Checking set contains fd after calling ifValidInsertFdIntoSet",
-        true,
         FD_ISSET(fd, &fdSet));
 
       CPPUNIT_ASSERT_EQUAL_MESSAGE(
