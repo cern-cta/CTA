@@ -176,108 +176,46 @@ BEGIN
 END;
 /
 
-CREATE OR REPLACE PROCEDURE tg_startMigrationMounts (
-  out outResCur sys_refcursor ) AS
-  TYPE startMigrationMountReport_t IS RECORD (
-    tapePool       VARCHAR2(2048),
-    requestID      NUMBER,
-    sizeQueued     NUMBER,
-    filesQueued    NUMBER,
-    mountsBefore   NUMBER,
-    mountsCreated  NUMBER,
-    mountsAfter    NUMBER);
-  TYPE startMigMountRepTab_t IS TABLE OF startMigrationMountReport_t;
-  varReportEntry   NUMBER :=1;
-  varMigMountRepTable  startMigMountRepTab_t := startMigMountRepTab_t();
+CREATE OR REPLACE PROCEDURE startMigrationMounts AS
+  varNbMounts INTEGER;
+  varDataAmount INTEGER;
+  varNbFiles INTEGER;
+  varOldestCreationTime NUMBER;
 BEGIN
   -- loop through tapepools
-  FOR t IN (SELECT id, name, nbDrives, minAmountDataForMount,
+  FOR t IN (SELECT id, nbDrives, minAmountDataForMount,
                    minNbFilesForMount, maxFileAgeBeforeMount
               FROM TapePool) LOOP
-    DECLARE
-      varNbMounts INTEGER;
-      varDataAmount INTEGER;
-      varNbFiles INTEGER;
-      varOldestCreationTime NUMBER;
-      varMountCreated  NUMBER := 0;
+    -- get number of mounts already running for this tapepool
+    SELECT count(*) INTO varNbMounts
+      FROM MigrationMount
+     WHERE tapePool = t.id;
+    -- get the amount of data and number of files to migrate, plus the age of the oldest file
     BEGIN
-      -- get number of mounts already running for this tapepool
-      SELECT count(*) INTO varNbMounts
-        FROM MigrationMount
-       WHERE tapePool = t.id;
-      -- get the amount of data and number of files to migrate, plus the age of the oldest file
-      DECLARE
-        varTGRequestId   NUMBER := -1;
-      BEGIN
-        SELECT SUM(fileSize), COUNT(*), MIN(creationTime) INTO varDataAmount, varNbFiles, varOldestCreationTime
-          FROM MigrationJob
-         WHERE tapePool = t.id
-           AND status = tconst.MIGRATIONJOB_PENDING
-         GROUP BY tapePool;
-        -- Create as many mounts as needed according to amount of data and number of files
-        WHILE (varNbMounts < t.nbDrives) AND
-              ((varDataAmount/(varNbMounts+1) >= t.minAmountDataForMount) OR
-               (varNbFiles/(varNbMounts+1) >= t.minNbFilesForMount)) AND
-              (varNbMounts < varNbFiles) LOOP   -- in case minAmountDataForMount << avgFileSize, stop creating more than one mount per file
-          insertMigrationMount(t.id, varTGRequestId);
-          varNbMounts := varNbMounts + 1;
-          -- Locally record the action
-          varMountCreated := 1;
-          varMigMountRepTable.EXTEND(1);
-          varMigMountRepTable(varReportEntry).tapePool      := t.name;
-          varMigMountRepTable(varReportEntry).requestID     := varTGReqId;
-          varMigMountRepTable(varReportEntry).sizeQueued    := varDataAmount;
-          varMigMountRepTable(varReportEntry).filesQueued   := varNbFiles;
-          varMigMountRepTable(varReportEntry).mountsBefore  := varNbMounts - 1;
-          varMigMountRepTable(varReportEntry).mountsCreated := 1;
-          varMigMountRepTable(varReportEntry).mountsAfter   := varNbMounts;
-          varReportEntry:= varReportEntry+1;
-        END LOOP;
-        -- force creation of a unique mount in case no mount was created at all and some files are too old
-        IF varNbFiles > 0 AND varNbMounts = 0 AND t.nbDrives > 0 AND
-           gettime() - varOldestCreationTime > t.maxFileAgeBeforeMount THEN
-          insertMigrationMount(t.id, varTGRequestId);
-          varMountCreated := 1;
-          varMigMountRepTable.EXTEND(1);
-          varMigMountRepTable(varReportEntry).tapePool      := t.name;
-          varMigMountRepTable(varReportEntry).requestID     := varTGReqId;
-          varMigMountRepTable(varReportEntry).sizeQueued    := varDataAmount;
-          varMigMountRepTable(varReportEntry).filesQueued   := varNbFiles;
-          varMigMountRepTable(varReportEntry).mountsBefore  := varNbMounts - 1;
-          varMigMountRepTable(varReportEntry).mountsCreated := 1;
-          varMigMountRepTable(varReportEntry).mountsAfter   := varNbMounts;
-          varReportEntry:= varReportEntry+1;
-        END IF;
-      EXCEPTION WHEN NO_DATA_FOUND THEN
-        -- there is no file to migrate, so nothing to do
-        NULL;
-      END;
-      COMMIT;
-      -- Record the non-creation of migration mount
-      IF (varMountCreated = 0) THEN
-        varMigMountRepTable.EXTEND(1);
-        varMigMountRepTable(varReportEntry).tapePool      := t.name;
-        varMigMountRepTable(varReportEntry).requestID     := varTGReqId;
-        varMigMountRepTable(varReportEntry).sizeQueued    := varDataAmount;
-        varMigMountRepTable(varReportEntry).filesQueued   := varNbFiles;
-        varMigMountRepTable(varReportEntry).mountsBefore  := varNbMounts;
-        varMigMountRepTable(varReportEntry).mountsCreated := 0;
-        varMigMountRepTable(varReportEntry).mountsAfter   := varNbMounts;
-        varReportEntry:= varReportEntry+1;
+      SELECT SUM(fileSize), COUNT(*), MIN(creationTime) INTO varDataAmount, varNbFiles, varOldestCreationTime
+        FROM MigrationJob
+       WHERE tapePool = t.id
+         AND status = tconst.MIGRATIONJOB_PENDING
+       GROUP BY tapePool;
+      -- Create as many mounts as needed according to amount of data and number of files
+      WHILE (varNbMounts < t.nbDrives) AND
+            ((varDataAmount/(varNbMounts+1) >= t.minAmountDataForMount) OR
+             (varNbFiles/(varNbMounts+1) >= t.minNbFilesForMount)) AND
+            (varNbMounts < varNbFiles) LOOP   -- in case minAmountDataForMount << avgFileSize, stop creating more than one mount per file
+        insertMigrationMount(t.id);
+        varNbMounts := varNbMounts + 1;
+      END LOOP;
+      -- force creation of a unique mount in case no mount was created at all and some files are too old
+      IF varNbFiles > 0 AND varNbMounts = 0 AND t.nbDrives > 0 AND
+         gettime() - varOldestCreationTime > t.maxFileAgeBeforeMount THEN
+        insertMigrationMount(t.id);
       END IF;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- there is no file to migrate, so nothing to do
+      NULL;
     END;
+    COMMIT;
   END LOOP;
-  -- Each loop comited. We can not store the result in a temporary table without
-  -- loosing the content on commit, and return a cursor to it.
-  FOR i IN varMigMountRepTable.FIRST .. varMigMountRepTable.LAST LOOP
-    insert into startMigMountReportHelper (tapePool, requestID, sizeQueued, 
-                      filesQueued, mountsBefore, mountsCreated, mountsAfter)
-  VALUES (varMigMountRepTable(i).tapePool , varMigMountRepTable(i).requestID , 
-          varMigMountRepTable(i).sizeQueued , varMigMountRepTable(i).filesQueued ,
-          varMigMountRepTable(i).mountsBefore , varMigMountRepTable(i).mountsCreated ,
-          varMigMountRepTable(i).mountsCreated);
-  END LOOP;
-  open outResCur for select * from startMigMountReportHelper;
 END;
 /
 
