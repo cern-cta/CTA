@@ -24,14 +24,17 @@ DECLARE
 BEGIN
   -- loop over files to be migrated
   FOR file IN (
-    SELECT DC.castorFile, DC.diskcopysize, CastorFile.fileid FROM
-     (SELECT DiskCopy.castorFile AS castorFile, MigrationJob.castorFile AS mj, DiskCopy.diskcopysize
-        FROM DiskCopy, MigrationJob
-       WHERE DiskCopy.status = 10
-         AND MigrationJob.castorFile(+) = DiskCopy.castorFile) DC, CastorFile, Cns_file_metadata@remoteNS
-      WHERE DC.mj is NULL
-        AND DC.castorFile = CastorFile.id
-        AND CastorFile.fileid = Cns_file_metadata.fileid) LOOP
+    SELECT /*+ USE_NL(CF NSEntry) LEADING(DC CF NSEntry)
+               INDEX(CF PK_CastorFile_ID) INDEX(CastorFile I_CastorFile_fileid) */
+           DC.castorFile, DC.diskcopysize, CF.fileid
+      FROM (SELECT DiskCopy.castorFile AS castorFile, MigrationJob.castorFile AS mj, DiskCopy.diskcopysize
+            FROM DiskCopy, MigrationJob
+           WHERE DiskCopy.status = 10
+             AND MigrationJob.castorFile(+) = DiskCopy.castorFile) DC,
+         CastorFile CF, Cns_file_metadata@remoteNS NSEntry
+   WHERE DC.mj is NULL
+     AND DC.castorFile = CF.ID
+     AND CF.fileid = NSEntry.fileid) LOOP
     BEGIN
       -- get the number of tape copies to create
       SELECT nbCopies INTO nbTC FROM FileClass, CastorFile
