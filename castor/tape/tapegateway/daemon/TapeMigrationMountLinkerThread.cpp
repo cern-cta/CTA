@@ -151,7 +151,7 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
           castor::dlf::Param("errorCode", sstrerror(e.code())),
           castor::dlf::Param("errorMessage", e.getMessage().str())
       };
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, LINKER_NO_TAPE_AVAILABLE, params);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, LINKER_NO_TAPE_AVAILABLE, params);
 
       // different errors from vmgr
       if (e.code()== ENOENT){
