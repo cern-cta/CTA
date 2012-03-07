@@ -129,6 +129,10 @@ sub main ()
     print "t=".CastorTapeTests::elapsed_time."s. ";
     print "Wiping the DB for a run of tapegatewayd  =============\n";
     CastorTapeTests::reinstall_stager_db();
+    CastorTapeTests::poll_rm_readyness ( 1, 15 );
+    print "Sleeping extra 15 seconds\n";
+    sleep (15);
+    CastorTapeTests::configure_headnode_2112();
     CastorTapeTests::startDaemons();
     print "t=".CastorTapeTests::elapsed_time."s. ";
     print "Schema set to tapegatewayd mode ============================\n";

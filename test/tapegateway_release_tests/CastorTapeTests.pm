@@ -59,7 +59,9 @@ our @export   = qw(
                    killDaemonWithTimeout
                    startDaemons
                    startSingleDaemon
-                   executeSQLPlusScript 
+                   executeSQLPlusScript
+                   executeSQLPlusScriptNoFilter
+                   stopAndSwitchToTapeGatewayd
                    check_leftovers
                    check_leftovers_poll_timeout
                    nullize_arrays_undefs
@@ -69,12 +71,13 @@ our @export   = qw(
                    reinstall_stager_db_from_checkout
                    reinstall_vdqm_db_from_checkout
                    upgradeStagerDb
+                   postUpgradeStagerDb
                    upgradeVDQMDb
                    getOrastagerconfigParam
                    getOraVdqmConfigParam
                    getOraCNSLoginInfo
                    cleanup
-		           elapsed_time
+                   elapsed_time
                    spawn_testsuite
                    wait_testsuite
                    ); # Symbols to autoexport (:DEFAULT tag)
@@ -87,7 +90,7 @@ my @remote_files;
 
 # keep track of the test environment (and definition of the defaults).
 my %environment = (
-    allowed_stagers => [ 'lxcastordev03', 'lxcastordev04' ]
+                   allowed_stagers => [ 'lxcastordev03', 'lxcastordev04', 'lxc2dev3', 'lxc2dev4']
 );
 
 my $time_reference;
@@ -129,11 +132,11 @@ sub get_gid_for_username( $ )
 }
 
 
-# Based on the output of bhosts, this subroutine returns the hostnames of the
+# Based on the output of rmGetNodes, this subroutine returns the hostnames of the
 # disk-servers sorted alphabetically.
 sub get_disk_servers()
 {
-  my @servers = `bhosts | egrep -v 'HOST_NAME|closed' | awk '{print \$1;}' | sort`;
+  my @servers = split ( /,/, $environment{diskservers});
   chomp(@servers);
 
   return @servers;
@@ -163,12 +166,13 @@ sub read_config ( $ )
 		             	  'local_transfermanagerd', 'local_rechandlerd', 'local_rhd',
 			              'local_rmmasterd', 'local_stagerd', 'local_tapegatewayd',
                           'local_logprocessord', 'testsuite_config_location', 'instance_name',
-                          'cns_name', 'run_testsuite');
+                          'cns_name', 'run_testsuite', 'diskservers');
                           
     my @global_vars   = ( 'dbDir' , 'tstDir', 'adminList', 'originalDbSchema',
                           'originalDropSchema', 'originalSetPermissionsSQL', 
                           'castor_single_subdirectory', 'castor_dual_subdirectory',
-                          'vdqmScript', 'stagerUpgrade', 'VDQMUpgrade');
+                          'vdqmScript', 'stagerUpgrade', 'stagerUpgrade_1', 
+                          'stagerUpgrade_2', 'stagerUpgrade_3', 'VDQMUpgrade');
     for my $i ( @per_host_vars ) {
         $environment{$i}=getConfParam('TAPETEST', $i.'_'.$local_host, $config_file );
     }
@@ -1132,7 +1136,7 @@ sub poll_moving_entries ( $$$$ )
 	print "t=".elapsed_time()."s. WARNING. All files successfully unblocked after timeout. Carrying on.\n";
         return;
     }
-    die "Timeout with ".count_to_be_moved()." files to be migrated after $timeout s.";
+    warn "Timeout with ".count_to_be_moved()." files to be migrated after $timeout s.";
 }
 
 # Returns the value of the specified ORASTAGERCONFIG parameter.
@@ -1459,6 +1463,96 @@ sub executeSQLPlusScript ( $$$$$ )
     }
 }
 
+
+# Creates and calls an external script that calls sqlplus with the script name as a parameter
+sub executeSQLPlusScriptNoFilter ( $$$$$ )
+{
+    my ( $u, $p , $db, $f, $title ) = ( shift,  shift,  shift,  shift, shift );
+    if ( ! -e $f ) { die "ABORT: $f: file not found."; }
+    my $tmpScript = `mktemp`;  # This creates and empty 0600 file.
+    chomp $tmpScript;
+    `echo "WHENEVER SQLERROR EXIT FAILURE;" > $tmpScript`;
+    #`echo "SET ECHO ON;" >> $tmpScript`;
+    `echo "CONNECT $u/$p\@$db" >> $tmpScript`;
+    `echo >> $tmpScript`;
+    `cat $f >> $tmpScript`;
+    `echo >> $tmpScript`;
+    `echo "EXIT;" >> $tmpScript`;
+    print ("$title\n");
+    my $result = `'sqlplus' /NOLOG \@$tmpScript`;
+    unlink $tmpScript;
+    print("\n");
+    print("$title RESULT\n");
+    print("===================\n");
+    print $result;
+}
+# Switch to tapegatewayd (in DB, stop demons before, massages the DB as required)
+sub stopAndSwitchToTapeGatewayd ( $ )
+{
+    my $dbh = shift;
+
+    # Stop the mighunter, rechandler, tapegateway, rtcpclientd
+    for my $i ('mighunterd', 'rechandlerd', 'tapegatewayd', 'rtcpclientd') {
+        if (killDaemonWithTimeout ($i, 5)) {
+            die "Failed to stop a daemon. Call an exorcist.";
+        }
+    }    
+    #$dbh->do("UPDATE castorconfig SET value='tapegatewayd' WHERE class='tape' AND key='interfaceDaemon'");
+    #$dbh->commit();
+    # Migrate to tapegateway by script.
+    my $dbUser   = &getOrastagerconfigParam("user");
+    my $dbPasswd = &getOrastagerconfigParam("passwd");
+    my $dbName   = &getOrastagerconfigParam("dbName");
+    my $checkout_location   = $environment{checkout_location};
+    my $dbDir               = $environment{dbDir};
+    my $switch_to_tapegateway = $environment{switchoverToTapeGateway};
+    
+    my $switch_to_tapegateway_full_path = $checkout_location.'/'.$dbDir.'/'.$switch_to_tapegateway;
+    executeSQLPlusScript ( $dbUser, $dbPasswd, $dbName, 
+                           $switch_to_tapegateway_full_path,
+                           "Switching to Tape gateway");
+}
+
+# Switch to tapegatewayd (in DB, stop demons before, massages the DB as required)
+sub stopAndSwitchToTapeGatewaydFromCheckout ( $$ )
+{
+    my ( $dbh, $checkout_location ) = ( shift, shift );
+
+    # Stop the mighunter, rechandler, tapegateway, rtcpclientd
+    for my $i ('mighunterd', 'rechandlerd', 'tapegatewayd', 'rtcpclientd') {
+        if (killDaemonWithTimeout ($i, 5)) {
+            die "Failed to stop a daemon. Call an exorcist.";
+        }
+    }    
+    #$dbh->do("UPDATE castorconfig SET value='tapegatewayd' WHERE class='tape' AND key='interfaceDaemon'");
+    #$dbh->commit();
+    # Migrate to tapegateway by script.
+    my $dbUser   = &getOrastagerconfigParam("user");
+    my $dbPasswd = &getOrastagerconfigParam("passwd");
+    my $dbName   = &getOrastagerconfigParam("dbName");
+    my $dbDir               = $environment{dbDir};
+    my $switch_to_tapegateway = "switchToTapegatewayd.sql";
+    
+    my $switch_to_tapegateway_full_path = $checkout_location.'/'.$dbDir.'/'.$switch_to_tapegateway;
+    executeSQLPlusScript ( $dbUser, $dbPasswd, $dbName, 
+                           $switch_to_tapegateway_full_path,
+                           "Switching to Tape gateway");
+}
+
+# get_db_version: pull out the db version in order to use the proper schema in queries
+sub get_db_version ( $ )
+{
+    my $dbh = shift;
+    my $sth = $dbh -> prepare ("SELECT COUNT(*) FROM user_objects WHERE object_name = 'CASTORVERSION'");
+    $sth->execute();
+    my @row = $sth->fetchrow_array();
+    if ( $row[0] == 0 ) { return "No Version"; }
+    $sth = $dbh -> prepare ("SELECT schemaversion FROM CastorVersion");
+    $sth->execute();
+    @row = $sth->fetchrow_array();
+    return $row[0];
+}
+
 # check_leftovers : find wether there are any leftover unmigrated data in the stager
 sub check_leftovers ( $ )
 {
@@ -1469,12 +1563,27 @@ sub check_leftovers ( $ )
     if ($row[0] == 0) {
         return 0;
     }
-    $sth = $dbh -> prepare("SELECT count (*) from ( 
+    
+    my $schemaversion = get_db_version ( $dbh );
+    if ( $schemaversion =~ /^2_1_12/ ) {
+        $sth = $dbh -> prepare("SELECT count (*) from ( 
                               SELECT dc.id from diskcopy dc where
                                 dc.status NOT IN ( 0, 7, 4 )
                               UNION ALL
                               SELECT mj.id from MigrationJob mj)");
                               # Discopy_staged diskcopy_invalid diskcopy_failed
+    } elsif ( $schemaversion =~ /^2_1_11/ ) {
+        $sth = $dbh -> prepare("SELECT count (*) from ( 
+                              SELECT dc.id from diskcopy dc where
+                                dc.status NOT IN ( 0, 7, 4 )
+                              UNION ALL
+                              SELECT tc.id from TapeCopy tc)");
+    } elsif ( $schemaversion =~ /No Version/ ) {
+        $sth = $dbh->prepare("SELECT 0 FROM DUAL");
+        warn "Could no find schema version. Assuming no leftover.";
+    } else {
+        die "Unexpected schema version: $schemaversion";
+    }
     $sth -> execute ();
     @row = $sth->fetchrow_array();
     return $row[0];
@@ -1508,40 +1617,78 @@ sub nullize_arrays_undefs ( $ )
 sub print_leftovers ( $ )
 {
     my $dbh = shift;
-    # Print by castofile with corresponding tapecopies
-    my $sth = $dbh -> prepare ("SELECT cf.lastknownfilename, dc.id, dc.status, mj.id, mj.status,
+    my $schemaversion = get_db_version ( $dbh );
+    if ( $schemaversion =~ /^2_1_12/ ) {
+        # Print by castofile with corresponding tapecopies
+        my $sth = $dbh -> prepare ("SELECT cf.lastknownfilename, dc.id, dc.status, mj.id, mj.status,
                                     rj.id, rj.status
                                   FROM castorfile cf
                                   LEFT OUTER JOIN diskcopy dc ON dc.castorfile = cf.id
                                   LEFT OUTER JOIN migrationJob mj ON mj.castorfile = cf.id
                                   LEFT OUTER JOIN recallJob rj ON rj.castorfile = cf.id
                                  WHERE dc.status NOT IN ( 0, 7, 4)"); # Discopy_staged diskcopy_invalid diskcopy_failed
-    $sth -> execute();
-    while ( my @row = $sth->fetchrow_array() ) {
-        nullize_arrays_undefs ( \@row );
-        print( "Remaining catorfile for $row[0]\n\twith diskcopy (id=$row[1], ".
+        $sth -> execute();
+        while ( my @row = $sth->fetchrow_array() ) {
+            nullize_arrays_undefs ( \@row );
+            print( "Remaining catorfile for $row[0]\n\twith diskcopy (id=$row[1], ".
                "status=$row[2]), migrationJob (id=$row[3], status=$row[4]) ".
                "and recallJob (id=$row[5], status=$row[6])\n" );
-    }
-    # print any other migration and recall jobs not covered previously
-    $sth = $dbh -> prepare ("SELECT cf.lastknownfilename, dc.id, dc.status, mj.id, mj.status, rj.id, rj.status
+        }
+    } elsif ($schemaversion =~ /^2_1_11/ ) {
+        my $sth = $dbh -> prepare ("SELECT cf.lastknownfilename, dc.id, dc.status, tc.id, tc.status 
                                   FROM castorfile cf
+                                  LEFT OUTER JOIN diskcopy dc ON dc.castorfile = cf.id
+                                  LEFT OUTER JOIN tapecopy tc ON tc.castorfile = cf.id
+                                 WHERE dc.status NOT IN ( 0, 7, 4)"); # Discopy_staged diskcopy_invalid diskcopy_failed
+        $sth -> execute();
+        while ( my @row = $sth->fetchrow_array() ) {
+            nullize_arrays_undefs ( \@row );
+            print( "Remaining catorfile for $row[0]\n\twith diskcopy (id=$row[1], ".
+               "status=$row[2]) and tapecopy (id=$row[3], status=$row[4])\n" );
+        }
+    } elsif ( $schemaversion =~ /No Version/ ) {
+        warn "Could no find schema version. Assuming no leftover.";
+    } else {
+        die "Unexpected schema version: $schemaversion";
+    }
+    if ( $schemaversion =~ /^2_1_12/ ) {
+        # print any other migration and recall jobs not covered previously
+        my $sth = $dbh -> prepare ("SELECT cf.lastknownfilename, dc.id, dc.status, mj.id, mj.status, rj.id, rj.status
+                                 FROM castorfile cf
                                  RIGHT OUTER JOIN diskcopy dc ON dc.castorfile = cf.id
                                  RIGHT OUTER JOIN migrationJob mj ON mj.castorfile = cf.id
                                  RIGHT OUTER JOIN recallJob rj ON rj.castorfile = cf.id
                                  WHERE dc.status IS NULL OR dc.status IN ( 0 )");
-    $sth -> execute();
-    while ( my @row = $sth->fetchrow_array() ) {
-        nullize_arrays_undefs ( \@row );
-        print( "Remaining tape job for $row[0]\n\twith diskcopy (id=$row[1], ".
-               "status=$row[2]), migrationJob (id=$row[3], status=$row[4]), recallJob (id=$row[5], status=$row[6])\n" );
-    }
+        $sth -> execute();
+        while ( my @row = $sth->fetchrow_array() ) {
+            nullize_arrays_undefs ( \@row );
+            print( "Remaining tape job for $row[0]\n\twith diskcopy (id=$row[1], ".
+                   "status=$row[2]), migrationJob (id=$row[3], status=$row[4]), recallJob (id=$row[5], status=$row[6])\n" );
+        }
+    }  elsif ($schemaversion =~ /^2_1_11/ ) {
+        my $sth = $dbh -> prepare ("SELECT cf.lastknownfilename, dc.id, dc.status, tc.id, tc.status 
+                                 FROM castorfile cf
+                                 LEFT OUTER JOIN diskcopy dc ON dc.castorfile = cf.id
+                                 LEFT OUTER JOIN tapecopy tc ON tc.castorfile = cf.id
+                                 WHERE dc.status NOT IN ( 0, 7, 4)");
+        $sth -> execute();
+        while ( my @row = $sth->fetchrow_array() ) {
+            nullize_arrays_undefs ( \@row );
+            print( "Remaining tapecopy for $row[0]\n\twith diskcopy (id=$row[1], ".
+                   "status=$row[2]) and tapecopy (id=$row[3], status=$row[4])\n" );
+        }    
+    } elsif ( $schemaversion =~ /No Version/ ) {
+        warn "Could no find schema version. Assuming no leftover.";
+    } else {
+        die "Unexpected schema version: $schemaversion";
+    }    
 }
 
 # print_file_info
 sub print_file_info ( $$ )
 {
     my ( $dbh, $filename ) = ( shift, shift );
+    my $schemaversion = get_db_version ( $dbh );
     # Print as many infomation as can be regarding this file
     # Bypass stager and just dump from the DB.
     # First dump general file-related info
@@ -1567,32 +1714,67 @@ sub print_file_info ( $$ )
         print  "    dc.id=$row[0], dc.status=$row[1]\n";
     }
     # Then dump the migration-related info
-    $stmt = $dbh -> prepare ("SELECT mj.id, mj.status, mjtp.name, mm.id, mm.status, mm.vid, tp.name, seg.id, seg.status, seg.errorcode, seg.errmsgtxt, seg.tape 
-                                  FROM castorfile cf
-                                  INNER JOIN migrationJob mj on mj.castorfile = cf.id
-                                  LEFT OUTER JOIN tapepool mjtp on mjtp.id = mj.tapepool
-                                  LEFT OUTER JOIN migrationMount mm on mm.tapegatewayRequestId = mj.tapegatewayRequestId
-                                  LEFT OUTER JOIN TapePool tp on tp.id = mm.tapepool
-                                  LEFT OUTER JOIN Segment seg on seg.copy = mj.id
-                                 WHERE cf.lastKnownFileName = :FILENAME");
-    $stmt->bind_param (":FILENAME", $filename);
-    $stmt->execute();
-    while ( my @row = $stmt->fetchrow_array() ) {
-        nullize_arrays_undefs ( \@row );
-        print  "    mj.id=$row[0], mj.status=$row[1] mjtp.name=$row[2] mm.id=$row[3] mm.status=$row[4] mm.vid=$row[5] tp.name=$row[6] seg.id=$row[7] seg.status=$row[8] seg.errorcode=$row[9] seg.errmsgtxt=$row[10] seg.tape=$row[11]\n";
-    }
-    # Finally dump the recall-related into
-    $stmt = $dbh -> prepare ("SELECT rj.id, rj.status, seg.id, seg.status, t.id, t.tpmode, t.status, seg.errorcode, seg.errmsgtxt, seg.tape
-                                  FROM castorfile cf
-                                  INNER JOIN recallJob rj on rj.castorfile = cf.id
-                                  LEFT OUTER JOIN Segment seg on seg.copy = rj.id
-                                  LEFT OUTER JOIN Tape t on t.id = seg.tape
-                                 WHERE cf.lastKnownFileName = :FILENAME");
-    $stmt->bind_param (":FILENAME", $filename);
-    $stmt->execute();
-    while ( my @row = $stmt->fetchrow_array() ) {
-        nullize_arrays_undefs ( \@row );
-        print  "    rj.id=$row[0], rj.status=$row[1] seg.id=$row[2] seg.status=$row[3] t.id=$row[4] t.tpmode=$row[5] t.status=$row[6] seg.errorcode=$row[7] seg.errmsgtxt=$row[8] seg.tape=$row[9]\n";
+    if ( $schemaversion =~ /^2_1_12/ ) {
+        $stmt = $dbh -> prepare ("SELECT mj.id, mj.status, mjtp.name, mm.id, mm.status, mm.vid, tp.name, seg.id, seg.status, seg.errorcode, seg.errmsgtxt, seg.tape 
+                                      FROM castorfile cf
+                                      INNER JOIN migrationJob mj on mj.castorfile = cf.id
+                                      LEFT OUTER JOIN tapepool mjtp on mjtp.id = mj.tapepool
+                                      LEFT OUTER JOIN migrationMount mm on mm.tapegatewayRequestId = mj.tapegatewayRequestId
+                                      LEFT OUTER JOIN TapePool tp on tp.id = mm.tapepool
+                                      LEFT OUTER JOIN Segment seg on seg.copy = mj.id
+                                     WHERE cf.lastKnownFileName = :FILENAME");
+        $stmt->bind_param (":FILENAME", $filename);
+        $stmt->execute();
+        while ( my @row = $stmt->fetchrow_array() ) {
+            nullize_arrays_undefs ( \@row );
+            print  "    mj.id=$row[0], mj.status=$row[1] mjtp.name=$row[2] mm.id=$row[3] mm.status=$row[4] mm.vid=$row[5] tp.name=$row[6] seg.id=$row[7] seg.status=$row[8] seg.errorcode=$row[9] seg.errmsgtxt=$row[10] seg.tape=$row[11]\n";
+        }
+        # Finally dump the recall-related into
+        $stmt = $dbh -> prepare ("SELECT rj.id, rj.status, seg.id, seg.status, t.id, t.tpmode, t.status, seg.errorcode, seg.errmsgtxt, seg.tape
+                                      FROM castorfile cf
+                                      INNER JOIN recallJob rj on rj.castorfile = cf.id
+                                      LEFT OUTER JOIN Segment seg on seg.copy = rj.id
+                                      LEFT OUTER JOIN Tape t on t.id = seg.tape
+                                     WHERE cf.lastKnownFileName = :FILENAME");
+        $stmt->bind_param (":FILENAME", $filename);
+        $stmt->execute();
+        while ( my @row = $stmt->fetchrow_array() ) {
+            nullize_arrays_undefs ( \@row );
+            print  "    rj.id=$row[0], rj.status=$row[1] seg.id=$row[2] seg.status=$row[3] t.id=$row[4] t.tpmode=$row[5] t.status=$row[6] seg.errorcode=$row[7] seg.errmsgtxt=$row[8] seg.tape=$row[9]\n";
+        }
+    } elsif ($schemaversion =~ /^2_1_11/ ) {
+        $stmt = $dbh -> prepare ("SELECT tc.id, tc.status, tctp.name, s.id, s.status, s.vid, tp.name, seg.id, seg.status, seg.errorcode, seg.errmsgtxt, seg.tape 
+                                      FROM castorfile cf
+                                      INNER JOIN tapecopy tc on tc.castorfile = cf.id
+                                      LEFT OUTER JOIN tapepool tctp on tctp.id = tc.tapepool
+                                      LEFT OUTER JOIN stream2tapecopy sttc on sttc.child = tc.id
+                                      LEFT OUTER JOIN stream s on sttc.parent = s.id
+                                      LEFT OUTER JOIN TapePool tp on tp.id = s.tapepool
+                                      LEFT OUTER JOIN Segment seg on seg.copy = tc.id
+                                     WHERE cf.lastKnownFileName = :FILENAME
+                                       AND tc.status not in (4,8)");
+        $stmt->bind_param (":FILENAME", $filename);
+        $stmt->execute();
+        while ( my @row = $stmt->fetchrow_array() ) {
+            nullize_arrays_undefs ( \@row );
+            print  "    tc.id=$row[0], tc.status=$row[1] tctp.name=$row[2] s.id=$row[3] s.status=$row[4] s.vid=$row[5] tp.name=$row[6] seg.id=$row[7] seg.status=$row[8] seg.errorcode=$row[9] seg.errmsgtxt=$row[10] seg.tape=$row[11]\n";
+        }
+        # Finally dump the recall-related into
+        $stmt = $dbh -> prepare ("SELECT tc.id, tc.status, seg.id, seg.status, t.id, t.tpmode, t.status, seg.errorcode, seg.errmsgtxt, seg.tape
+                                      FROM castorfile cf
+                                      INNER JOIN tapecopy tc on tc.castorfile = cf.id
+                                      LEFT OUTER JOIN Segment seg on seg.copy = rj.id
+                                      LEFT OUTER JOIN Tape t on t.id = seg.tape
+                                     WHERE cf.lastKnownFileName = :FILENAME
+                                       AND tc.status in (4,8)");
+        $stmt->bind_param (":FILENAME", $filename);
+        $stmt->execute();
+        while ( my @row = $stmt->fetchrow_array() ) {
+            nullize_arrays_undefs ( \@row );
+            print  "    tc.id=$row[0], tc.status=$row[1] seg.id=$row[2] seg.status=$row[3] t.id=$row[4] t.tpmode=$row[5] t.status=$row[6] seg.errorcode=$row[7] seg.errmsgtxt=$row[8] seg.tape=$row[9]\n";
+        }
+    } else { 
+        warn "Could no find schema version. Skipping migration and recall structures display.";
     }
 }
 
@@ -1600,19 +1782,35 @@ sub print_file_info ( $$ )
 sub print_migration_and_recall_structures ( $ )
 {
     my ( $dbh ) = (shift);
-    # print all the migration mounts (with tapepool info).
-    print "Migration mounts snapshot:\n";
-    my $stmt = $dbh -> prepare ("SELECT mm.id, mm.status, mm.tapegatewayrequestid, mm.vid, tp.name
+    my $schemaversion = get_db_version ( $dbh );
+    if ( $schemaversion =~ /^2_1_12/ ) {
+        # print all the migration mounts (with tapepool info).
+        print "Migration mounts snapshot:\n";
+        my $stmt = $dbh -> prepare ("SELECT mm.id, mm.status, mm.tapegatewayrequestid, mm.vid, tp.name
                                 FROM MigrationMount mm
                                 LEFT OUTER JOIN TapePool tp ON tp.id = mm.tapepool");
-    $stmt->execute();
-    while ( my @row = $stmt->fetchrow_array() ) {
-        nullize_arrays_undefs ( \@row );
-        print  "    mm.id=$row[0], mm.status=$row[1] mm.tapegatewayrequestid=$row[2] mm.vid=$row[3] tp.name=$row[4]\n";
+        $stmt->execute();
+        while ( my @row = $stmt->fetchrow_array() ) {
+            nullize_arrays_undefs ( \@row );
+            print  "    mm.id=$row[0], mm.status=$row[1] mm.tapegatewayrequestid=$row[2] mm.vid=$row[3] tp.name=$row[4]\n";
+        }
+    } elsif ($schemaversion =~ /^2_1_11/ ) {
+        # print all the streams (with tapepool info).
+        print "Streams snapshot:\n";
+        my $stmt = $dbh -> prepare ("SELECT s.id, s.status, s.tapegatewayrequestid, t.vid, tp.name
+                                FROM Stream s
+                                LEFT OUTER JOIN Tape t on t.id = s.tape
+                                LEFT OUTER JOIN TapePool tp ON tp.id = s.tapepool");
+        $stmt->execute();
+        while ( my @row = $stmt->fetchrow_array() ) {
+            nullize_arrays_undefs ( \@row );
+            print  "    mm.id=$row[0], s.status=$row[1] s.tapegatewayrequestid=$row[2] t.vid=$row[3] tp.name=$row[4]\n";
+        }
+        
+    } else { 
+        warn "Could no find schema version. Skipping migrationa and recall structures display.";
     }
-    # Print all the tape structures (recalls)
-    print "Tapes snapshot:\n";
-    $stmt =  $dbh -> prepare ("SELECT t.id, t.vid, t.status
+    my $stmt =  $dbh -> prepare ("SELECT t.id, t.vid, t.status
                                 FROM tape t");
     $stmt->execute();
     while ( my @row = $stmt->fetchrow_array() ) {
@@ -1621,31 +1819,7 @@ sub print_migration_and_recall_structures ( $ )
     }
 }
 
-
-# print_migration_and_recall_structures
-sub print_migration_and_recall_structures ( $ )
-{
-    my ( $dbh ) = (shift);\
-    # print all the migration mounts (with tapepool info).
-    print "Migration mounts snapshot:\n";
-    my $stmt = $dbh -> prepare ("SELECT mm.id, mm.status, mm.tapegatewayrequestid, mm.vid, tp.name
-                                FROM MigrationMount mm
-                                LEFT OUTER JOIN TapePool tp ON tp.id = mm.tapepool");
-    $stmt->execute();
-    while ( my @row = $stmt->fetchrow_array() ) {
-        nullize_arrays_undefs ( \@row );
-        print  "    mm.id=$row[0], mm.status=$row[1] mm.tapegatewayrequestid=$row[2] mm.vid=$row[3] tp.name=$row[4]\n";
-    }
-    $stmt =  $dbh -> prepare ("SELECT t.id, t.vid, t.status
-                                FROM tape t");
-    $stmt->execute();
-    while ( my @row = $stmt->fetchrow_array() ) {
-        nullize_arrays_undefs ( \@row );
-        print  "    t.id=$row[0], t.vid=$row[1] t.status=$row[2]\n";
-    }
-}
-
-sub upgradeStagerDb ()
+sub upgradeStagerDb ( $ )
 {
     my $checkout_location = shift;
     
@@ -1662,11 +1836,11 @@ sub upgradeStagerDb ()
     my $stager_upgrade_script     = $environment{stagerUpgrade};
 
     my $originalUpgradeStagerFullpath=$checkout_location.'/'.$stager_upgrade_script;
-    
-    # check upgrade script's existance
+            
+    # check upgrade scripts existance
     die "ABORT: $originalUpgradeStagerFullpath does not exist\n"
-       if ! -e $originalUpgradeStagerFullpath;
-       
+       if ! -e $originalUpgradeStagerFullpath;  
+               
     # Stop any daemon accessing the database
     killDaemonWithTimeout('transfermanagerd' , 2);
     killDaemonWithTimeout('rechandlerd' , 2);
@@ -1675,16 +1849,177 @@ sub upgradeStagerDb ()
     killDaemonWithTimeout('stagerd'     , 2);
     killDaemonWithTimeout('tapegatewayd', 2);
 
+    my $stageUid = &get_uid_for_username('stage');
+    my $stageGid = &get_gid_for_username('stage');
+    my $adminList = $environment{adminList};
+    my $instanceName = $environment{instance_name};
+    my $CNSName = $environment{cns_name};
+    my ( $NsDbUser, $NsDbPasswd, $NsDbName ) = &getOraCNSLoginInfo ();
+        
+    my $hacked_creation= `mktemp`;
+    chomp $hacked_creation;
+    `cat $originalUpgradeStagerFullpath > $hacked_creation`;
+    `sed -i s/^ACCEPT/--ACCEPT/ $hacked_creation`;
+    `sed -i s/^PROMPT/--PROMPT/ $hacked_creation`;
+    `sed -i s/^UNDEF/--UNDEF/ $hacked_creation`;
+    `sed -i s/\\&stageUid/$stageUid/g $hacked_creation`;
+    `sed -i s/\\&stageGid/$stageGid/g $hacked_creation`;
+    `sed -i s/\\&adminList/$adminList/g $hacked_creation`;
+    `sed -i s/\\&instanceName/$instanceName/g $hacked_creation`;
+    `sed -i s/\\&stagerNsHost/$CNSName/g $hacked_creation`;
+    `sed -i s/\\&cnsUser/$NsDbUser/g $hacked_creation`;
+    `sed -i s/\\&cnsPasswd/$NsDbPasswd/g $hacked_creation`;
+    `sed -i s/\\&cnsDbName/$NsDbName/g $hacked_creation`;
+
     # Run the upgrade script
     my $dbUser   = &getOrastagerconfigParam("user");
     my $dbPasswd = &getOrastagerconfigParam("passwd");
     my $dbName   = &getOrastagerconfigParam("dbName");
-    executeSQLPlusScript ( $dbUser, $dbPasswd, $dbName, 
-                           $originalUpgradeStagerFullpath,
+    executeSQLPlusScriptNoFilter ( $dbUser, $dbPasswd, $dbName, 
+                           $hacked_creation,
                            "Upgrading Stager's schema");
+    unlink $hacked_creation;
 }
 
-sub upgradeVDQMDb ()
+sub postUpgradeStagerDb ( $ )
+{
+    my $checkout_location = shift;
+    
+    my $vdqm_host = getCastorConfParam('STAGER', 'HOST');
+
+    # Print error message and abort if the user is not root
+    my $uid = POSIX::getuid;
+    my $gid = POSIX::getgid;
+    if($uid != 0 || $gid !=0) {
+        print("ABORT: This script must be ran as root\n");
+        exit(-1);
+    }
+    
+    my $stager_upgrade_script_1   = $environment{stagerUpgrade_1};
+    my $stager_upgrade_script_2   = $environment{stagerUpgrade_2};
+    my $stager_upgrade_script_3   = $environment{stagerUpgrade_3};
+    my $stager_upgrade_script_4   = $environment{stagerUpgrade_4};
+
+    my $originalUpgradeStagerFullpath_1 =$checkout_location.'/'.$stager_upgrade_script_1;
+    my $originalUpgradeStagerFullpath_2 =$checkout_location.'/'.$stager_upgrade_script_2;
+    my $originalUpgradeStagerFullpath_3 =$checkout_location.'/'.$stager_upgrade_script_3;
+    my $originalUpgradeStagerFullpath_4 =$checkout_location.'/'.$stager_upgrade_script_4;
+            
+    # check upgrade scripts existance
+    die "ABORT: $originalUpgradeStagerFullpath_1 does not exist\n"
+       if ! -e $originalUpgradeStagerFullpath_1;   
+    die "ABORT: $originalUpgradeStagerFullpath_2 does not exist\n"
+       if ! -e $originalUpgradeStagerFullpath_2;
+    die "ABORT: $originalUpgradeStagerFullpath_3 does not exist\n"
+       if ! -e $originalUpgradeStagerFullpath_3;         
+    die "ABORT: $originalUpgradeStagerFullpath_4 does not exist\n"
+       if ! -e $originalUpgradeStagerFullpath_4;     
+               
+    # Stop any daemon accessing the database
+    killDaemonWithTimeout('transfermanagerd' , 2);
+    killDaemonWithTimeout('rechandlerd' , 2);
+    killDaemonWithTimeout('rhd'         , 2);
+    killDaemonWithTimeout('rmmasterd'   , 2);
+    killDaemonWithTimeout('stagerd'     , 2);
+    killDaemonWithTimeout('tapegatewayd', 2);
+
+    my $stageUid = &get_uid_for_username('stage');
+    my $stageGid = &get_gid_for_username('stage');
+    my $adminList = $environment{adminList};
+    my $instanceName = $environment{instance_name};
+    my $CNSName = $environment{cns_name};
+    my ( $NsDbUser, $NsDbPasswd, $NsDbName ) = &getOraCNSLoginInfo ();
+    
+    my $hacked_creation= `mktemp`;
+    chomp $hacked_creation;
+    `cat $originalUpgradeStagerFullpath_1 > $hacked_creation`;
+    `sed -i s/^ACCEPT/--ACCEPT/ $hacked_creation`;
+    `sed -i s/^PROMPT/--PROMPT/ $hacked_creation`;
+    `sed -i s/^UNDEF/--UNDEF/ $hacked_creation`;
+    `sed -i s/\\&stageUid/$stageUid/g $hacked_creation`;
+    `sed -i s/\\&stageGid/$stageGid/g $hacked_creation`;
+    `sed -i s/\\&adminList/$adminList/g $hacked_creation`;
+    `sed -i s/\\&instanceName/$instanceName/g $hacked_creation`;
+    `sed -i s/\\&stagerNsHost/$CNSName/g $hacked_creation`;
+    `sed -i s/\\&cnsUser/$NsDbUser/g $hacked_creation`;
+    `sed -i s/\\&cnsPasswd/$NsDbPasswd/g $hacked_creation`;
+    `sed -i s/\\&cnsDbName/$NsDbName/g $hacked_creation`;
+
+    # Run the upgrade script
+    # Run the upgrade script
+    my $dbUser   = &getOrastagerconfigParam("user");
+    my $dbPasswd = &getOrastagerconfigParam("passwd");
+    my $dbName   = &getOrastagerconfigParam("dbName");
+    executeSQLPlusScriptNoFilter ( $dbUser, $dbPasswd, $dbName, 
+                           $hacked_creation,
+                           "Applying 2.1.12-0 postupgrade on stager db");
+    unlink $hacked_creation;
+    
+    $hacked_creation= `mktemp`;
+    chomp $hacked_creation;
+    `cat $originalUpgradeStagerFullpath_2 > $hacked_creation`;
+    `sed -i s/^ACCEPT/--ACCEPT/ $hacked_creation`;
+    `sed -i s/^PROMPT/--PROMPT/ $hacked_creation`;
+    `sed -i s/^UNDEF/--UNDEF/ $hacked_creation`;
+    `sed -i s/\\&stageUid/$stageUid/g $hacked_creation`;
+    `sed -i s/\\&stageGid/$stageGid/g $hacked_creation`;
+    `sed -i s/\\&adminList/$adminList/g $hacked_creation`;
+    `sed -i s/\\&instanceName/$instanceName/g $hacked_creation`;
+    `sed -i s/\\&stagerNsHost/$CNSName/g $hacked_creation`;
+    `sed -i s/\\&cnsUser/$NsDbUser/g $hacked_creation`;
+    `sed -i s/\\&cnsPasswd/$NsDbPasswd/g $hacked_creation`;
+    `sed -i s/\\&cnsDbName/$NsDbName/g $hacked_creation`;
+
+    # Run the upgrade script
+    executeSQLPlusScriptNoFilter ( $dbUser, $dbPasswd, $dbName, 
+                           $hacked_creation,
+                           "Applying upgrade to 2.1.12-1 on stager db");
+    unlink $hacked_creation;
+    
+    $hacked_creation= `mktemp`;
+    chomp $hacked_creation;
+    `cat $originalUpgradeStagerFullpath_3 > $hacked_creation`;
+    `sed -i s/^ACCEPT/--ACCEPT/ $hacked_creation`;
+    `sed -i s/^PROMPT/--PROMPT/ $hacked_creation`;
+    `sed -i s/^UNDEF/--UNDEF/ $hacked_creation`;
+    `sed -i s/\\&stageUid/$stageUid/g $hacked_creation`;
+    `sed -i s/\\&stageGid/$stageGid/g $hacked_creation`;
+    `sed -i s/\\&adminList/$adminList/g $hacked_creation`;
+    `sed -i s/\\&instanceName/$instanceName/g $hacked_creation`;
+    `sed -i s/\\&stagerNsHost/$CNSName/g $hacked_creation`;
+    `sed -i s/\\&cnsUser/$NsDbUser/g $hacked_creation`;
+    `sed -i s/\\&cnsPasswd/$NsDbPasswd/g $hacked_creation`;
+    `sed -i s/\\&cnsDbName/$NsDbName/g $hacked_creation`;
+
+    # Run the upgrade script
+    executeSQLPlusScriptNoFilter ( $dbUser, $dbPasswd, $dbName, 
+                           $hacked_creation,
+                           "Applying upgrade to 2.1.12-4 on stager db");
+    unlink $hacked_creation;
+
+    $hacked_creation= `mktemp`;
+    chomp $hacked_creation;
+    `cat $originalUpgradeStagerFullpath_4 > $hacked_creation`;
+    `sed -i s/^ACCEPT/--ACCEPT/ $hacked_creation`;
+    `sed -i s/^PROMPT/--PROMPT/ $hacked_creation`;
+    `sed -i s/^UNDEF/--UNDEF/ $hacked_creation`;
+    `sed -i s/\\&stageUid/$stageUid/g $hacked_creation`;
+    `sed -i s/\\&stageGid/$stageGid/g $hacked_creation`;
+    `sed -i s/\\&adminList/$adminList/g $hacked_creation`;
+    `sed -i s/\\&instanceName/$instanceName/g $hacked_creation`;
+    `sed -i s/\\&stagerNsHost/$CNSName/g $hacked_creation`;
+    `sed -i s/\\&cnsUser/$NsDbUser/g $hacked_creation`;
+    `sed -i s/\\&cnsPasswd/$NsDbPasswd/g $hacked_creation`;
+    `sed -i s/\\&cnsDbName/$NsDbName/g $hacked_creation`;
+
+    # Run the upgrade script
+    executeSQLPlusScriptNoFilter ( $dbUser, $dbPasswd, $dbName, 
+                           $hacked_creation,
+                           "Applying upgrade to 2.1.12-HEAD on stager db");
+    unlink $hacked_creation;
+}
+
+sub upgradeVDQMDb ( $ )
 {
     my $checkout_location = shift;
     
@@ -1710,9 +2045,9 @@ sub upgradeVDQMDb ()
     killDaemonWithTimeout('vdqmd' , 2);
 
     # Run the upgrade script
-    my $dbUser   = &getOrastagerconfigParam("user");
-    my $dbPasswd = &getOrastagerconfigParam("passwd");
-    my $dbName   = &getOrastagerconfigParam("dbName");
+    my $dbUser   = &getOraVdqmConfigParam("user");
+    my $dbPasswd = &getOraVdqmConfigParam("passwd");
+    my $dbName   = &getOraVdqmConfigParam("dbName");
     executeSQLPlusScript ( $dbUser, $dbPasswd, $dbName, 
                            $originalUpgradeVDQMFullpath,
                            "Upgrading VDQM's schema");
@@ -1738,14 +2073,13 @@ sub reinstall_vdqm_db_from_checkout ( $ )
     my $originalDropSchema  = $environment{originalDropSchema};
     my $vdqmScript          = $environment{vdqmScript};
     my $tstDir              = $environment{tstDir};
-
     my $originalDropSchemaFullpath=$checkout_location.'/'.$dbDir.'/'.$originalDropSchema;
     my $originalDbSchemaFullpath=$checkout_location.'/'.$vdqmScript;
 
     die "ABORT: $originalDropSchema does not exist\n"
        if ! -e $originalDropSchemaFullpath;
     
-    die "ABORT: $originalDbSchema does not exist\n"
+    die "ABORT: $originalDbSchemaFullpath does not exist\n"
         if ! -e $originalDbSchemaFullpath;
     
     # Make sure we're running on the proper machine.
@@ -1759,9 +2093,9 @@ sub reinstall_vdqm_db_from_checkout ( $ )
     # Ensure all of the daemons accessing the stager-database are dead
     killDaemonWithTimeout('vdqmd' , 2);
 
-    my $dbUser   = &getOrastagerconfigParam("user");
-    my $dbPasswd = &getOrastagerconfigParam("passwd");
-    my $dbName   = &getOrastagerconfigParam("dbName");
+    my $dbUser   = &getOraVdqmConfigParam("user");
+    my $dbPasswd = &getOraVdqmConfigParam("passwd");
+    my $dbName   = &getOraVdqmConfigParam("dbName");
     
     executeSQLPlusScript ( $dbUser, $dbPasswd, $dbName, 
                            $originalDropSchemaFullpath,
@@ -1824,7 +2158,7 @@ sub reinstall_stager_db_from_checkout ( $ )
     }
     print("\n");
 
-    die("ABORT: Reinstall requires at least 2 disk-servers")
+    warn("WARNING: Reinstall requires at least 2 disk-servers")
       if($nbDiskServers < 2);
 
     # This is where the final go/no go decsion is taken. Record that we got green light.
@@ -1845,14 +2179,15 @@ sub reinstall_stager_db_from_checkout ( $ )
     # Print shared memory usage
     print "Current shared memory usage:\n";
     {
-    my $pm = `ps axh | cut -c 1-5 | egrep '[0-9]*' | xargs -i pmap -d {}`;
-    my  $current_proc;
-    foreach ( split (/^/, $pm) ) { 
-        if ( /^\d+:\s+/ ) { $current_proc = $_ } 
-        elsif ( /\[\s+shmid=/ ) { 
-           print $current_proc; 
-           print $_; 
-        } 
+       my $pm = `ps axh | cut -c 1-5 | egrep '[0-9]*' | xargs -i pmap -d {}`;
+       my  $current_proc;
+       foreach ( split (/^/, $pm) ) { 
+          if ( /^\d+:\s+/ ) { $current_proc = $_ } 
+          elsif ( /\[\s+shmid=/ ) { 
+             print $current_proc; 
+             print $_; 
+          } 
+       }
     }
     # Ensure there is no leftover in the DB
     my $dbh = open_db ();
@@ -1908,7 +2243,44 @@ sub reinstall_stager_db_from_checkout ( $ )
     startSingleDaemon ( 'rmmasterd' );
     startSingleDaemon ( 'stagerd' );
     #startSingleDaemon ( 'tapegatewayd' );
+}
 
+sub configure_headnode_2111 ( )
+{
+    my @diskServers = get_disk_servers();   
+
+    my $rmGetNodesResult = `rmGetNodes | egrep 'name:'`;
+    print("\n");
+    print("rmGetNodes RESULTS\n");
+    print("==================\n");
+    print($rmGetNodesResult);
+    
+    # Fill database with the standard set-up for a dev-box
+    print `nslistclass | grep NAME | awk '{print \$2}' | xargs -i enterFileClass --Name {} --GetFromCns`;
+    
+    print `enterSvcClass --Name default --DiskPools default --DefaultFileSize 10485760 --FailJobsWhenNoSpace yes --NbDrives 1 --TapePool stager_dev03_3 --MigratorPolicy defaultMigrationPolicy --StreamPolicy defaultStreamPolicy`;
+    print `enterSvcClass --Name dev --DiskPools extra --DefaultFileSize 10485760 --FailJobsWhenNoSpace yes`;
+    print `enterSvcClass --Name diskonly --DiskPools extra --ForcedFileClass temp --DefaultFileSize 10485760 --Disk1Behavior yes --FailJobsWhenNoSpace yes`;
+    
+    print `rmAdminNode -r -R -n $diskServers[0]`;
+    print `rmAdminNode -r -R -n $diskServers[1]`;
+    sleep 10;
+    print `moveDiskServer default $diskServers[0]`;
+    print `moveDiskServer extra $diskServers[1]`;
+    
+    # Add a tape-pool to $environment{svcclass} service-class
+    my $tapePool = get_environment('tapepool');
+    print `modifySvcClass --Name $environment{svcclass} --AddTapePool $tapePool --MigratorPolicy defaultMigrationPolicy --StreamPolicy defaultStreamPolicy`;
+    
+    # Set the number of drives on the default and dev service-classes to desired number for each
+    print `modifySvcClass --Name default --NbDrives 1`;
+    print `modifySvcClass --Name dev     --NbDrives 2`;
+}
+
+sub configure_headnode_2112 ( )
+{
+    my @diskServers = get_disk_servers();
+    my $nbDiskServers = @diskServers;
     poll_rm_readyness ( 1, 15 );
     print "Sleeping extra 15 seconds\n";
     sleep (15);
@@ -2023,7 +2395,10 @@ END {
     print "t=".elapsed_time()."s. End of leftovers\n";
     if ( $initial_green_light ) {
         print "t=".elapsed_time()."s. Nuking leftovers, if any.\n";
-        my $stmt = $dbh->prepare("BEGIN
+        my $stmt;
+        my $schemaversion = get_db_version ( $dbh );
+        if ( $schemaversion =~ /^2_1_12/ ) {
+            $stmt = $dbh->prepare("BEGIN
                                     DELETE FROM MigrationJob;
                                     DELETE FROM RecallJob;
                                     DELETE FROM Segment;
@@ -2032,6 +2407,20 @@ END {
                                     DELETE FROM RecallJob;
                                     COMMIT;
                                   END;");
+        } elsif ( $schemaversion =~ /^2_1_11/ ) {
+            $stmt = $dbh->prepare("BEGIN
+                                    DELETE FROM Stream2TapeCopy;
+                                    DELETE FROM Segment;
+                                    DELETE FROM DiskCopy;
+                                    DELETE FROM TapeCopy;
+                                    COMMIT;
+                                  END;");
+        } elsif ( $schemaversion =~ /No Version/ ) {
+            warn "Could no find schema version. Assuming no leftover.";
+            $stmt = $dbh->prepare("SELECT 1 FROM DUAL");
+        } else {
+            die "Unexpected schema version: $schemaversion";
+        }        
         $stmt->execute();
     }
     $dbh->disconnect();

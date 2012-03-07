@@ -50,44 +50,6 @@ use Cwd 'abs_path';
 use File::Basename;
 use CastorTapeTests;
 
-my @packages_headnode_2111=  
-(
- "castor-csec",
- "castor-mighunter-server",
- "castor-tape-tools",
- "castor-vmgr-client",
- "castor-lib-oracle",
- "castor-policies",
- "castor-debuginfo",
- "castor-vdqm2-client",
- "castor-hsmtools",
- "castor-lib",
- "castor-dbtools",
- "castor-rechandler-server",
- "castor-expert-server",
- "castor-repack-client",
- "castor-rmmaster-client",
- "castor-rmmaster-server",
- "castor-vmgr-server",
- "castor-rh-server",
- "castor-lib-monitor",
- "castor-tapegateway-server",
- "castor-config",
- "castor-ns-client",
- "castor-vdqm2-server",
- "castor-stager-client",
- "castor-rtcopy-clientserver",
- "castor-logprocessor-server",
- "castor-lib-tape",
- "castor-transfer-manager",
- "castor-stager-server",
- "castor-transfer-manager-client",
- "castor-upv-server",
- "castor-vdqm2-lib-oracle",
- "castor-upv-client",
- "castor-rfio-client",
- "castor-repack-server"
- );
 
 my @packages_headnode_2112=  
 (
@@ -154,22 +116,6 @@ my @packages_disktape_server=
  "castor-rfio-client"
  );
 
-my @services_headnode_2111 =
-(
- "mighunterd",
- "rechandlerd",
- "expertd",
- "rmmasterd",
- "vmgrd",
- "rhd",
- "tapegatewayd",
- "vdqmd",
- "logprocessord",
- "transfermanagerd",
- "stagerd",
- "cupvd"
- );
-
 my @services_headnode_2112 =
 (
  "rechandlerd",
@@ -196,7 +142,23 @@ my @services_disktape_server=
  "rtcpd"
  );
 
-sub main ( $$ );
+my @services_headnode_2111 =
+(
+ "mighunterd",
+ "rechandlerd",
+ "expertd",
+ "rmmasterd",
+ "vmgrd",
+ "rhd",
+ "tapegatewayd",
+ "vdqmd",
+ "logprocessord",
+ "transfermanagerd",
+ "stagerd",
+ "cupvd"
+ );
+ 
+sub main ( $ );
 sub set_checkout_location ();
 sub get_current_castor_packages ();
 sub get_current_castor_packages_remote ( $ );
@@ -206,13 +168,11 @@ sub deploy_packages ( $ );
 sub deploy_packages_remote ( $$ );
 sub upgrade_cluster ( $$$ );
 sub downgrade_cluster ( $$$$$ );
-sub stop_daemons_2111();
 sub stop_daemons_remote( $ );
+sub stop_daemons_2111();
 sub stop_daemons_2112();
-sub start_daemons_2111();
 sub start_daemons_remote ( $ );
 sub start_daemons_2112();
-sub check_daemons_2111();
 sub check_daemons_remote ( $ );
 sub check_daemons_2112();
 sub wipe_reinstall_stager_Db ();
@@ -317,11 +277,12 @@ sub deploy_packages_remote ( $$ )
     print `ssh $host ldconfig`;
 }
 
-sub downgrade_cluster ( $$$$$ )
+sub reinstall_cluster ( $$$$ )
 {
     # Get parameters
-    my ( $targeted_version, $RPMS_directory, $old_version_directory, $old_version, $dbh ) = ( shift, shift, shift, shift, shift );
-    defined $RPMS_directory or die "Missing parameter in downgrade_cluster";
+    my ( $targeted_version, $RPMS_directory, $checkout_directory, $dbh ) 
+           = ( shift, shift, shift, shift );
+    defined $RPMS_directory or die "Missing parameter in renstall_cluster";
 
     # get test parameters
     my $castor_directory = CastorTapeTests::get_environment('castor_directory');
@@ -341,7 +302,7 @@ sub downgrade_cluster ( $$$$$ )
     stop_daemons_2111 ();
     stop_daemons_2112 ();
     
-    # Downgrade software on disk servers then server
+    # Reinstall software on disk servers then server
     my @current_packages;
     my $change_list;
     for my $ds ( @disk_servers ) {
@@ -352,21 +313,20 @@ sub downgrade_cluster ( $$$$$ )
         deploy_packages_remote ( $change_list, $ds );
     }
     @current_packages  = get_current_castor_packages ();
-    $change_list = build_change_list ( \@current_packages, \@packages_headnode_2111, 
+    $change_list = build_change_list ( \@current_packages, \@packages_headnode_2112, 
         $targeted_version,  $RPMS_directory );
     deploy_packages ( $change_list );
 
-    # Downgrade the DBs: wipe and reinstall the stager Db and the vdqm Db.
-    CastorTapeTests::reinstall_stager_db_from_checkout  ( $old_version_directory );
-    CastorTapeTests::stopAndSwitchToTapeGatewaydFromCheckout ( $dbh, $old_version_directory );
-    CastorTapeTests::reinstall_vdqm_db_from_checkout ( $old_version_directory );
+    # Reinstall the DBs: wipe and reinstall the stager Db and the vdqm Db.
+    CastorTapeTests::reinstall_stager_db_from_checkout  ( $checkout_directory );
+    CastorTapeTests::reinstall_vdqm_db_from_checkout ( $checkout_directory );
     print `service vmgrd start`;
     sleep 2;
     # Now feed the VDQM with defaults (name server runs outside of the test environment)
     print `vdqmDBInit`;
     
     # Restart daemons on the headnode (some will fail)
-    start_daemons_2111 ();
+    start_daemons_2112 ();
     # Restart the daemons on the disk/tape servers
     # Start daemons
     for my $ds ( @disk_servers ) {
@@ -375,10 +335,10 @@ sub downgrade_cluster ( $$$$$ )
 
     # Configure the fileclasses, service classes, fileclasses, etc... 
     # (diskservers are needed at that point)
-    CastorTapeTests::configure_headnode_2111 ( );
+    CastorTapeTests::configure_headnode_2112 ( );
 
     # Second pass to start daemons
-    start_daemons_2111 ();
+    start_daemons_2112 ();
     
     # On first run, clean house
     print "Cleaning up test directories $castor_directory\{$single_subdir,$dual_subdir\}\n";
@@ -396,67 +356,6 @@ sub downgrade_cluster ( $$$$$ )
     for my $ds ( @disk_servers ) {
         start_daemons_remote ( $ds );
     }   
-}
-
-
-sub upgrade_cluster ( $$$ )
-{
-    # Get parameters
-    my ( $targeted_version, $RPMS_directory, $dbh )  = ( shift, shift, shift );
-
-    # Get the list of the targeted diskservers
-    my @disk_servers = CastorTapeTests::get_disk_servers();
-    
-    # Stop daemons
-    for my $ds ( @disk_servers ) {
-        stop_daemons_remote ( $ds );
-    }
-    stop_daemons_2111 ();
-    stop_daemons_2112 ();
-    
-    # Upgrade software on disk servers then server
-    my @current_packages;
-    my $change_list;
-    for my $ds ( @disk_servers ) {
-        @current_packages  = get_current_castor_packages_remote ( $ds );
-        $change_list = build_change_list ( \@current_packages, \@packages_disktape_server, 
-            $targeted_version, "RPMS/" );
-        send_packages ( $change_list, $ds, $RPMS_directory );
-        deploy_packages_remote ( $change_list, $ds );
-    }
-    @current_packages  = get_current_castor_packages ();
-    $change_list = build_change_list ( \@current_packages, \@packages_headnode_2112, 
-         $targeted_version, $RPMS_directory  );
-    deploy_packages ( $change_list );
-    print `rpm -qa | grep castor`;
-
-    # Apply the upgrade script on the server (stager and vdqm)
-    CastorTapeTests::upgradeStagerDb ( CastorTapeTests::get_environment('checkout_location') );
-    CastorTapeTests::upgradeVDQMDb ( CastorTapeTests::get_environment('checkout_location') );
-    
-    # Install the migration routes
-    my  $single_copy_class = 'largeuser';
-    my $dual_copy_class ='test2';
-    my $svcclass = CastorTapeTests::get_environment('svcclass');
-    my $tapepool = CastorTapeTests::get_environment('tapepool');
-    print `entertapepool --nbdrives 2 --minamountdata 0 --minnbfiles 0 --maxfileage 0 $tapepool`;
-    # second pass will cover the already existing tapepool case
-    print `modifytapepool --nbdrives 2 --minamountdata 0 --minnbfiles 0 --maxfileage 0 $tapepool`;
-    print `entermigrationroute $single_copy_class 1:$tapepool`;
-    print `entermigrationroute $dual_copy_class 1:$tapepool 2:$tapepool`;
-    print `printmigrationroute`;
-    CastorTapeTests::postUpgradeStagerDb ( CastorTapeTests::get_environment('checkout_location') );
-    
-    # Restart everything
-    start_daemons_2112 ();
-    # Restart the daemons on the disk/tape servers
-    # Start daemons
-    check_daemons_2112 ();
-    for my $ds ( @disk_servers ) {
-        start_daemons_remote ( $ds );
-        check_daemons_remote ( $ds );
-    }
-    start_daemons_2112 ();    
 }
 
 sub stop_daemons_2111()
@@ -478,13 +377,6 @@ sub stop_daemons_2112()
 {
     for my $d ( @services_headnode_2112 ) {
        print `service $d stop`; 
-    }
-}
-
-sub start_daemons_2111()
-{
-    for my $d ( @services_headnode_2111 ) {
-       print `service $d start`; 
     }
 }
 
@@ -535,18 +427,7 @@ sub check_daemons_2112()
     }
 }
 
-# Follow up on the files injected in the system after the configuration switchover.
-sub managePostTransitionBacklog ( $ )
-{
-    my $dbh = shift;
-
-    checkTapes();
-    my $poll = CastorTapeTests::get_environment('poll_interval');
-    my $timeout = CastorTapeTests::get_environment('migration_timeout');    
-    CastorTapeTests::poll_moving_entries ( $dbh, $poll, $timeout, "cleanup_migrated stager_reget_from_tape" );
-}
-
-# Check that the tapes in the cmgr are not busy. Reset them if needed.
+# Check that the tapes in the vmgr are not busy. Reset them if needed.
 sub checkTapes ( )
 {
     # Check that the tapes from the tape pool have been left in a proper state.
@@ -564,23 +445,23 @@ sub checkTapes ( )
     }
 }
 
-my ( $old_version_checkout, $RPM_repository ) = ( shift, shift );
-main( $old_version_checkout, $RPM_repository );
+my $RPM_repository = shift;
+main ($RPM_repository);
 
-sub main ( $$ )
+sub main ( $ )
 {
+    # Get the path to the RPMS.
+    my $RPM_repository = ( shift );
+    
     # Nuke and start clean, but make sure we're where we should be
     my $host = `hostname -s`; chomp $host;
     if ( ($host ne 'lxcastordev03') && ($host ne 'lxcastordev04') && ($host ne 'lxc2dev3') ) {
         die("ABORT: Unexpected host \"$host\"");
     }
 
-    # Get the command line parameters
-    my ( $old_version_checkout, $RPM_repository ) = ( shift, shift );
-    my $old_version = get_release_number ( $old_version_checkout );
-    my $new_version = get_release_number ( "../.." );
-    die "Expected new version, old version, directoriy of old checkout and RPMs repository as 4 command line argument" 
-        unless defined $RPM_repository;
+    # Get the version number
+    my $version = get_release_number ( "../.." );
+    
     # Set ulimit to infinite
     setrlimit (RLIMIT_CORE, RLIM_INFINITY, RLIM_INFINITY);
     # Check we are running in ulimit -c unlimited
@@ -607,7 +488,7 @@ sub main ( $$ )
     }
     
     # Past this point, we are good to go.
-    downgrade_cluster ( $old_version, $RPM_repository, $old_version_checkout, $old_version, $dbh  );
+    reinstall_cluster ( $version, $RPM_repository, "../..", $dbh  );
     my $file_size =  CastorTapeTests::get_environment('file_size');
     my $seed_index = CastorTapeTests::make_seed ($file_size);
 
@@ -632,7 +513,7 @@ sub main ( $$ )
     # Sleep a bit
     sleep 5;
     # We can inject dual tape copies here as they will be handled by the tapegateway.
-    #SingleAndDualCopyTest ( $dbh, $seed_index, $file_number, 1);
+    SingleAndDualCopyTest ( $dbh, $seed_index, $file_number, 1);
     # Wait for testsuite to complete and print out the result
     if ($run_testsuite) {
         print "t=".CastorTapeTests::elapsed_time."s. ";
@@ -642,33 +523,10 @@ sub main ( $$ )
     
     $dbh->disconnect();
     $dbh = CastorTapeTests::open_db();
-    print "t=".CastorTapeTests::elapsed_time."s. ";
-    print "Preparing backlog\n";
-    preparePreTransitionBacklog ($seed_index, $file_number, 1);
-
-    # Switch to new release
     CastorTapeTests::print_leftovers ( $dbh );
     print "t=".CastorTapeTests::elapsed_time."s. ";
-    print "Switching over to version $new_version -------------\n";
-    upgrade_cluster($new_version, $RPM_repository, $dbh);
-    CastorTapeTests::print_leftovers ( $dbh );
-    CastorTapeTests::startDaemons();
-    print "t=".CastorTapeTests::elapsed_time."s. ";
-
-    # Fire 2nd iteration of the test
-    if ($run_testsuite) {
-        ( $testsuite_pid, $testsuite_rd ) = CastorTapeTests::spawn_testsuite ();
-        print "t=".CastorTapeTests::elapsed_time."s. ";
-        print "Started testsuite -------------\n";
-    }
-    managePostTransitionBacklog( $dbh );
-    SingleAndDualCopyTest ( $dbh, $seed_index, $file_number, 1);
-    # Wait for testsuite to complete and print out the result
-    if ($run_testsuite) {
-        print "t=".CastorTapeTests::elapsed_time."s. ";
-        print "Waiting testsuite completion -------------\n";
-        print CastorTapeTests::wait_testsuite ( $testsuite_pid, $testsuite_rd );
-    }
+    print "Test done.\n";
+    
     print "Cleaning up test directories $castor_directory\{$single_subdir,$dual_subdir\}\n";
     print `su $username -c "for p in $castor_directory\{$single_subdir,$dual_subdir\}; do nsrm -r -f \\\$p; done"`;
     exit 0;
@@ -693,7 +551,7 @@ sub get_release_number ( $ )
         if (/^castor \(([[:digit:]\.-]*)\)/) {
             $release  = $1;
             print "release =  $release\n";
-            print "svnversion = `(cd ${checkout_dir} ; svnversion)`";
+            print "svnversion = ".`(cd ${checkout_dir} ; svnversion)`;
             last;
         }
     }
