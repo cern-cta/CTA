@@ -253,6 +253,6 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
 
   castor::dlf::Param paramsAttached[] =
     { castor::dlf::Param("ProcessingTime", procTime * 0.000001) };
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, LINKER_TAPES_ATTACHED, paramsAttached);
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, LINKER_TAPES_ATTACHED, paramsAttached);
 }
 
