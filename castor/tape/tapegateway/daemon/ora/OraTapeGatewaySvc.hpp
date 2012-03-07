@@ -232,7 +232,7 @@ namespace ora         {
     // The result of the policy for each tapepool is returned as a pointer to
     // a vector of StartMigrationMountReport.
     // The de-allocation of the vector is the duty of the caller.
-    virtual void startMigrationMounts (std::vector<StartMigrationMountReport> * result);
+    virtual void startMigrationMounts (std::vector<StartMigrationMountReport> & result);
 
     // To directly commit 
     virtual void commit()
@@ -330,6 +330,26 @@ namespace ora         {
     private:
       OraTapeGatewaySvc * m_client;
       bool m_active;
+    };
+
+    /* Small wrapper class for occi number, protecting from null values.
+     * (Casting from null occi numbers trigger run time exceptions)
+     */
+    class occiNumber {
+    public:
+      occiNumber (const oracle::occi::Number & n): m_n(n) {};
+      ~occiNumber () {};
+      occiNumber (const occiNumber & oN): m_n(oN.m_n) {};
+      template <typename T>
+      operator T () {
+        if (m_n.isNull()) {
+          return ~0;
+        } else {
+          return (T) m_n;
+        }
+      }
+    private:
+      oracle::occi::Number m_n;
     };
 
     }; // end of class OraTapeGateway

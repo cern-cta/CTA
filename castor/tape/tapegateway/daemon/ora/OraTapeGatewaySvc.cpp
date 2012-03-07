@@ -1795,21 +1795,19 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getMigrationMountVid(Fil
 // The result of the policy for each tapepool is returned as a pointer to
 // a vector of StartMigrationMountReport.
 // The de-allocation of the vector is the duty of the caller.
-void castor::tape::tapegateway::ora::OraTapeGatewaySvc::startMigrationMounts (std::vector<StartMigrationMountReport> * result)
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::startMigrationMounts (std::vector<StartMigrationMountReport> & result)
 {
   try {
-    result = NULL;
     if (!m_startMigrationMounts) {
       m_startMigrationMounts =
           createStatement("BEGIN tg_startMigrationMounts(:1);END;");
-      m_startMigrationMounts->registerOutParam
-      (1, oracle::occi::OCCICURSOR);
+      m_startMigrationMounts->registerOutParam (1, oracle::occi::OCCICURSOR);
     }
     // The data is committed in SQL, but we need a final commit (or rollback) to clean up
     // the temporary table that contains the reports.
     scopedRollback scpRollback (this);
     // Execute the query
-    m_getMigrationMountVid->executeUpdate();
+    m_startMigrationMounts->executeUpdate();
     // Identify the structure of the cursor.
     castor::db::ora::SmartOcciResultSet rs (m_startMigrationMounts, m_startMigrationMounts->getCursor(1));
     resultSetIntrospector resIntros(rs.get());
@@ -1820,27 +1818,22 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::startMigrationMounts (st
     int mbIdx = resIntros.findColumnIndex( "MOUNTSBEFORE", oracle::occi::OCCI_SQLT_NUM);
     int mcIdx = resIntros.findColumnIndex("MOUNTSCREATED", oracle::occi::OCCI_SQLT_NUM);
     int maIdx = resIntros.findColumnIndex(  "MOUNTSAFTER", oracle::occi::OCCI_SQLT_NUM);
-    // Create the vector
-    std::auto_ptr< std::vector<StartMigrationMountReport> > ap_result;
-    ap_result.reset(new std::vector<StartMigrationMountReport>);
     // run through the cursor
     while( rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
       castor::tape::tapegateway::ITapeGatewaySvc::StartMigrationMountReport smmReport;
       smmReport.tapepool   =                        rs->getString(tpIdx);
-      smmReport.requestId =     (uint64_t) (double) rs->getNumber(rqIdx);
-      smmReport.sizeQueued =    (uint64_t) (double) rs->getNumber(sqIdx);
-      smmReport.filesQueued =   (uint64_t) (double) rs->getNumber(fqIdx);
-      smmReport.mountsBefore =                (int) rs->getNumber(mbIdx);
-      smmReport.mountsCreated =               (int) rs->getNumber(mcIdx);
-      smmReport.mountsAfter =                 (int) rs->getNumber(maIdx);
-      ap_result->push_back(smmReport);
+      smmReport.requestId =     (uint64_t) (double) occiNumber(rs->getNumber(rqIdx));
+      smmReport.sizeQueued =    (uint64_t) (double) occiNumber(rs->getNumber(sqIdx));
+      smmReport.filesQueued =   (uint64_t) (double) occiNumber(rs->getNumber(fqIdx));
+      smmReport.mountsBefore =                (int) occiNumber(rs->getNumber(mbIdx));
+      smmReport.mountsCreated =               (int) occiNumber(rs->getNumber(mcIdx));
+      smmReport.mountsAfter =                 (int) occiNumber(rs->getNumber(maIdx));
+      result.push_back(smmReport);
     }
     // Close result set and transaction. clean temp DB table.
     rs.close();
     commit();
     scpRollback.disengage();
-    // report and return.
-    result = ap_result.release();
     return;
   } catch (oracle::occi::SQLException e) {
     handleException(e);

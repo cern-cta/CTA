@@ -467,21 +467,21 @@ END;
 /* retrieve from the db all the migration jobs that faced a failure */
 CREATE OR REPLACE
 PROCEDURE tg_getFailedMigrations(outFailedMigrationJob_c OUT SYS_REFCURSOR) AS
-  TYPE failedIdsTab_t IS TABLE OF NUMBERS;
-  failedIds failedIdsTab_t;
+  varFailedIds "numList";
 BEGIN
   /* Find and lock the migration mounts we will work on */
-  SELECT id FROM MigrationJob
-    BULK COLLECT INTO failedIds
-   WHERE MigrationJob.status = tconst.MIGRATIONJOB_RETRY
-     AND ROWNUM < 1000 
+  SELECT mj.id
+    BULK COLLECT INTO varFailedIds
+    FROM MigrationJob mj
+   WHERE mj.status = tconst.MIGRATIONJOB_RETRY
+     AND ROWNUM < 1000
      FOR UPDATE SKIP LOCKED;
   /* Report theirs Id, joined with other information */
   OPEN outFailedMigrationJob_c FOR
     SELECT mj.id, mj.errorCode, mj.nbRetry, cf.fileId, cf.nsHost
       FROM MigrationJob mj
       LEFT OUTER JOIN castorfile cf ON cf.id = mj.castorfile
-     WHERE mj.id IN (SELECT * FROM TABLE (failedIds));
+     WHERE mj.id IN (SELECT * FROM TABLE (varFailedIds));
 END;
 /
 
@@ -829,7 +829,7 @@ END;
 
 /* get the migration mounts without any tape associated */
 CREATE OR REPLACE
-PROCEDURE tg_getMigMountsWithoutTapes(outStrList OUT castorTape.MigrationMount_Cur) AS
+PROCEDURE tg_getMigMountsWithoutTapes(outStrList OUT SYS_REFCURSOR) AS
 BEGIN
   -- get migration mounts  in state WAITTAPE with a non-NULL TapeGatewayRequestId
   OPEN outStrList FOR
@@ -1553,12 +1553,17 @@ BEGIN
       FROM Segment SEG 
      WHERE SEG.tape = varTpReqId;
     FOR i IN varRjIds.FIRST .. varRjIds.LAST  LOOP
-      -- lock castorFile
-      SELECT RJ.castorFile INTO varCfId 
-        FROM RecallJob RJ, CastorFile CF
-        WHERE RJ.id = varRjIds(i) 
-        AND CF.id = RJ.castorfile 
-        FOR UPDATE OF CF.id;
+      -- lock castorFile, skip if it's missing
+      BEGIN
+        SELECT RJ.castorFile INTO varCfId 
+          FROM RecallJob RJ, CastorFile CF
+          WHERE RJ.id = varRjIds(i) 
+          AND CF.id = RJ.castorfile 
+          FOR UPDATE OF CF.id;
+      EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+          NULL; 
+      END;
       -- fail diskcopy, drop recall and migration jobs
       UPDATE DiskCopy DC SET DC.status = dconst.DISKCOPY_FAILED
        WHERE DC.castorFile = varCfId 
@@ -1644,7 +1649,7 @@ END;
   and determine if, per time/count/size criterias, we should mount additional 
   tapes for migration. This is translated into the creation of that migrationMount */
 CREATE OR REPLACE PROCEDURE tg_startMigrationMounts (
-  out outResCur sys_refcursor ) AS
+  outResCur out sys_refcursor ) AS
   TYPE startMigrationMountReport_t IS RECORD (
     tapePool       VARCHAR2(2048),
     requestID      NUMBER,
@@ -1656,6 +1661,7 @@ CREATE OR REPLACE PROCEDURE tg_startMigrationMounts (
   TYPE startMigMountRepTab_t IS TABLE OF startMigrationMountReport_t;
   varReportEntry   NUMBER :=1;
   varMigMountRepTable  startMigMountRepTab_t := startMigMountRepTab_t();
+  varUnused        NUMBER;
 BEGIN
   -- loop through tapepools
   FOR t IN (SELECT id, name, nbDrives, minAmountDataForMount,
@@ -1668,13 +1674,18 @@ BEGIN
       varOldestCreationTime NUMBER;
       varMountCreated  NUMBER := 0;
     BEGIN
+      -- Lock of the tapepool to prevent two instance from stepping on each other's toes
+      SELECT NULL INTO varUnused
+        FROM Tapepool tpl
+       WHERE tpl.id = t.id
+         FOR UPDATE;
       -- get number of mounts already running for this tapepool
       SELECT count(*) INTO varNbMounts
         FROM MigrationMount
        WHERE tapePool = t.id;
       -- get the amount of data and number of files to migrate, plus the age of the oldest file
       DECLARE
-        varTGRequestId   NUMBER := -1;
+        varTGRequestId   NUMBER := NULL;
       BEGIN
         SELECT SUM(fileSize), COUNT(*), MIN(creationTime) INTO varDataAmount, varNbFiles, varOldestCreationTime
           FROM MigrationJob
@@ -1686,13 +1697,19 @@ BEGIN
               ((varDataAmount/(varNbMounts+1) >= t.minAmountDataForMount) OR
                (varNbFiles/(varNbMounts+1) >= t.minNbFilesForMount)) AND
               (varNbMounts < varNbFiles) LOOP   -- in case minAmountDataForMount << avgFileSize, stop creating more than one mount per file
+          -- Create the migartion mount. This has the caveat of locking one migartion job.
+          -- This will return NULL as varTGRequestId id the check for file availability fails
+          -- The end result will be a varTGRequestId of 0 in the report.
+          -- C++ caller will have to log accordingly.
           insertMigrationMount(t.id, varTGRequestId);
+          -- We keep increasing the count here even if file availability check fails.
+          -- Otherwise, we would go in an infinite loop.
           varNbMounts := varNbMounts + 1;
           -- Locally record the action
           varMountCreated := 1;
           varMigMountRepTable.EXTEND(1);
           varMigMountRepTable(varReportEntry).tapePool      := t.name;
-          varMigMountRepTable(varReportEntry).requestID     := varTGReqId;
+          varMigMountRepTable(varReportEntry).requestID     := varTGRequestId;
           varMigMountRepTable(varReportEntry).sizeQueued    := varDataAmount;
           varMigMountRepTable(varReportEntry).filesQueued   := varNbFiles;
           varMigMountRepTable(varReportEntry).mountsBefore  := varNbMounts - 1;
@@ -1707,7 +1724,7 @@ BEGIN
           varMountCreated := 1;
           varMigMountRepTable.EXTEND(1);
           varMigMountRepTable(varReportEntry).tapePool      := t.name;
-          varMigMountRepTable(varReportEntry).requestID     := varTGReqId;
+          varMigMountRepTable(varReportEntry).requestID     := varTGRequestId;
           varMigMountRepTable(varReportEntry).sizeQueued    := varDataAmount;
           varMigMountRepTable(varReportEntry).filesQueued   := varNbFiles;
           varMigMountRepTable(varReportEntry).mountsBefore  := varNbMounts - 1;
@@ -1716,15 +1733,18 @@ BEGIN
           varReportEntry:= varReportEntry+1;
         END IF;
       EXCEPTION WHEN NO_DATA_FOUND THEN
-        -- there is no file to migrate, so nothing to do
-        NULL;
+        varDataAmount := 0;
+        varNbFiles    := 0;
+        varNbMounts   := 0;
       END;
+      -- At this point we release both locks on the tapepool and on the probe
+      -- migration jobs, and launch the migration jobs.
       COMMIT;
       -- Record the non-creation of migration mount
       IF (varMountCreated = 0) THEN
         varMigMountRepTable.EXTEND(1);
         varMigMountRepTable(varReportEntry).tapePool      := t.name;
-        varMigMountRepTable(varReportEntry).requestID     := varTGReqId;
+        varMigMountRepTable(varReportEntry).requestID     := 0;
         varMigMountRepTable(varReportEntry).sizeQueued    := varDataAmount;
         varMigMountRepTable(varReportEntry).filesQueued   := varNbFiles;
         varMigMountRepTable(varReportEntry).mountsBefore  := varNbMounts;
@@ -1737,12 +1757,12 @@ BEGIN
   -- Each loop comited. We can not store the result in a temporary table without
   -- loosing the content on commit, and return a cursor to it.
   FOR i IN varMigMountRepTable.FIRST .. varMigMountRepTable.LAST LOOP
-    insert into startMigMountReportHelper (tapePool, requestID, sizeQueued, 
+    insert into startMigMountReportHelper (tapePool, requestID, sizeQueued,
                       filesQueued, mountsBefore, mountsCreated, mountsAfter)
-  VALUES (varMigMountRepTable(i).tapePool , varMigMountRepTable(i).requestID , 
+  VALUES (varMigMountRepTable(i).tapePool , varMigMountRepTable(i).requestID ,
           varMigMountRepTable(i).sizeQueued , varMigMountRepTable(i).filesQueued ,
           varMigMountRepTable(i).mountsBefore , varMigMountRepTable(i).mountsCreated ,
-          varMigMountRepTable(i).mountsCreated);
+          varMigMountRepTable(i).mountsAfter);
   END LOOP;
   open outResCur for select * from startMigMountReportHelper;
 END;

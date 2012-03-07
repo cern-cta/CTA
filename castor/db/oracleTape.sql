@@ -22,10 +22,6 @@ CREATE OR REPLACE PACKAGE castorTape AS
     vid VARCHAR2(2048),
     tapeRequestId NUMBER);
   TYPE TapeGatewayRequestCore_Cur IS REF CURSOR RETURN TapeGatewayRequestCore;
-  TYPE MigrationMountCore IS RECORD (
-    id INTEGER,
-    tapePoolName VARCHAR2(2048));
-  TYPE MigrationMount_Cur IS REF CURSOR RETURN MigrationMountCore; 
   TYPE DbMigrationInfo IS RECORD (
     id NUMBER,
     copyNb NUMBER,

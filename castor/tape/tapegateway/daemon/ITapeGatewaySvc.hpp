@@ -286,7 +286,7 @@ namespace tapegateway {
 	// The result of the policy for each tapepool is returned as a pointer to
 	// a vector of StartMigrationMountReport.
 	// The de-allocation of the vector is the duty of the caller.
-        virtual void startMigrationMounts (std::vector<StartMigrationMountReport> * result) = 0;
+        virtual void startMigrationMounts (std::vector<StartMigrationMountReport> & result) = 0;
 
     /* Bypass access the the underlying DB accessor allowing safe handling from the caller */
     virtual void commit() = 0;

@@ -17,11 +17,6 @@ CREATE OR REPLACE PACKAGE castor AS
     mountPoint VARCHAR2(2048),
     diskServer VARCHAR2(2048));
   TYPE DiskCopy_Cur IS REF CURSOR RETURN DiskCopyCore;
-  TYPE FailedMigrationJob IS RECORD (
-    id NUMBER,
-    errorCode NUMBER,
-    nbRetry NUMBER);
-  TYPE FailedMigrationJob_Cur IS REF CURSOR RETURN FailedMigrationJob;
   TYPE FailedRecallJob IS RECORD (
     id NUMBER,
     errorCode NUMBER,
