@@ -274,7 +274,7 @@ END;
 /
 
 /* insert new Migration Mount */
-CREATE OR REPLACE PROCEDURE insertMigrationMount(inTapePoolId IN NUMBER) AS
+CREATE OR REPLACE PROCEDURE insertMigrationMount(inTapePoolId IN NUMBER, outTgRequestId OUT NUMBER) AS
   varMountId NUMBER;
   varDiskServer VARCHAR2(2048);
   varMountPoint VARCHAR2(2048);
@@ -293,8 +293,9 @@ BEGIN
                lastFseq, lastVDQMPingTime, tapePool, status)
    VALUES (NULL, ids_seq.nextval, ids_seq.nextval, gettime(), NULL, NULL, NULL,
            NULL, 0, inTapePoolId, tconst.MIGRATIONMOUNT_WAITTAPE)
-   RETURNING id INTO varMountId;
-  -- check that the mount will be honoured
+   RETURNING id, tapeGatewayRequestId INTO varMountId, outTgRequestId;
+  -- check that the mount will be honoured by running a dry-run file selection
+  -- Caveat: this will select for update a file for migartion.
   tg_defaultMigrSelPolicy(varMountId, varDiskServer, varMountPoint, varPath,
     varDiskCopyId, varLastKnownName, varFileId, varNsHost,varFileSize,
     varMigJobId, varLastUpdateTime);
@@ -302,6 +303,7 @@ BEGIN
     -- No valid candidate found: this could happen e.g. when candidates exist
     -- but reside on non-available hardware. In this case we drop the mount.
     DELETE FROM MigrationMount WHERE id = varMountId;
+    outTgRequestId := 0;
   END IF;
 END;
 /
