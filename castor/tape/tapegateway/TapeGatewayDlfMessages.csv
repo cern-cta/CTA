@@ -153,4 +153,4 @@
 153,LINKER_CANNOT_RELEASE_TAPE,"TapeMigrationMountLinker: cannot release BUSY tape after failed DB update"
 154,MIG_ERROR_DB_ERROR,"MigratorErrorHandlerThread: error fetching from the DB"
 155,MOUNT_PRODUCER_REPORT_NO_FILE,"MigrationMountProducer: rolled back migration mount creation due to lack of jobs"
-
+156,REC_ERROR_DB_ERROR,"RecallerErrorHandlerThread: error fetching from the DB"

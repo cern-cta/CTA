@@ -44,6 +44,8 @@
 #include "castor/tape/python/SmartPyObjectPtr.hpp"
 #include "castor/tape/python/ScopedPythonLock.hpp"
 
+#include "castor/tape/utils/Timer.hpp"
+
 #include "castor/tape/tapegateway/TapeGatewayDlfMessageConstants.hpp"
 #include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"
 #include  "castor/tape/tapegateway/daemon/RecallerErrorHandlerThread.hpp"
@@ -62,127 +64,95 @@ castor::tape::tapegateway::RecallerErrorHandlerThread::RecallerErrorHandlerThrea
 void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void*)
 {
   // get failed recall tapecopies
-
-
  // service to access the database
   castor::IService* dbSvc = castor::BaseObject::services()->service("OraTapeGatewaySvc", castor::SVC_ORATAPEGATEWAYSVC);
   castor::tape::tapegateway::ITapeGatewaySvc* oraSvc = dynamic_cast<castor::tape::tapegateway::ITapeGatewaySvc*>(dbSvc);
-
-
   if (0 == oraSvc) {
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, FATAL_ERROR, 0, NULL);
     return;
   }
   // Create the scopes auto-rollback for exceptions
   ScopedTransaction scpTrans(oraSvc);
-  timeval tvStart,tvEnd;
-  gettimeofday(&tvStart, NULL);
-
+  castor::tape::utils::Timer timer;
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, REC_ERROR_GETTING_FILES, 0, NULL);
   std::list<RetryPolicyElement> rjList;
-
   try {
     // Following SQL takes locks
     oraSvc->getFailedRecalls(rjList);
   }  catch (castor::exception::Exception& e){
-
     castor::dlf::Param params[] =
       {castor::dlf::Param("errorCode",sstrerror(e.code())),
        castor::dlf::Param("errorMessage",e.getMessage().str())
       };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, REC_ERROR_NO_JOB, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, REC_ERROR_DB_ERROR, params);
     return;
   }
-
   if (rjList.empty()) {
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, REC_ERROR_NO_JOB, 0, NULL);
     return;
   }
-
-  gettimeofday(&tvEnd, NULL);
-  signed64 procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
-
-  castor::dlf::Param paramsDb[] =
-    {
-      castor::dlf::Param("ProcessingTime", procTime * 0.000001)
-    };
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, REC_ERROR_JOBS_FOUND, paramsDb);
-
-
+  castor::dlf::Param paramsDb[] = {
+      castor::dlf::Param("ProcessingTime", timer.getusecs() * 0.000001)
+  };
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, REC_ERROR_JOBS_FOUND, paramsDb);
   std::list<u_signed64> rjIdsToRetry;
   std::list<u_signed64> rjIdsToFail;
-
-  std::list<RetryPolicyElement>::iterator tcItem= rjList.begin();
-
-
-
-  while (tcItem != rjList.end()){
-
-
+  std::list<RetryPolicyElement>::iterator recJob;
+  for (recJob = rjList.begin(); recJob != rjList.end(); recJob++) {
     //apply the policy
-
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("recallJobId",(*tcItem).migrationOrRecallJobId)
-      };
-    
+    castor::dlf::Param params[] = {
+        castor::dlf::Param("recallJobId",   recJob->migrationOrRecallJobId),
+        castor::dlf::Param("NSFILEID",      recJob->fileId),
+        castor::dlf::Param("NSHOSTNAME",    recJob->nsHost),
+        castor::dlf::Param("errorCode",     sstrerror(recJob->errorCode)),
+        castor::dlf::Param("nbRetry",       recJob->nbRetry),
+        castor::dlf::Param("fseq",          recJob->fSeq),
+        castor::dlf::Param("TPVID",         recJob->tape)
+    };
     try {
-
-      if ( applyRetryRecallPolicy(*tcItem)) {
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, REC_ERROR_RETRY, params);
-	rjIdsToRetry.push_back( (*tcItem).migrationOrRecallJobId);
-      }    else  {
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, REC_ERROR_FAILED, params);
-	rjIdsToFail.push_back( (*tcItem).migrationOrRecallJobId);
+      if ( applyRetryRecallPolicy(*recJob)) {
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, REC_ERROR_RETRY, params);
+        rjIdsToRetry.push_back( (*recJob).migrationOrRecallJobId);
+      } else {
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, REC_ERROR_FAILED, params);
+        rjIdsToFail.push_back( (*recJob).migrationOrRecallJobId);
       }
     } catch (castor::exception::Exception& e) {
-      castor::dlf::Param paramsEx[] =
-	{castor::dlf::Param("recallJobId",(*tcItem).migrationOrRecallJobId),
-	 castor::dlf::Param("errorCode",sstrerror(e.code())),
-	 castor::dlf::Param("errorMessage",e.getMessage().str())
-	};
-
+      castor::dlf::Param paramsEx[] = {
+          castor::dlf::Param("recallJobId",   recJob->migrationOrRecallJobId),
+          castor::dlf::Param("NSFILEID",      recJob->fileId),
+          castor::dlf::Param("NSHOSTNAME",    recJob->nsHost),
+          castor::dlf::Param("errorCode",     sstrerror(recJob->errorCode)),
+          castor::dlf::Param("nbRetry",       recJob->nbRetry),
+          castor::dlf::Param("fseq",          recJob->fSeq),
+          castor::dlf::Param("TPVID",         recJob->tape),
+          castor::dlf::Param("errorCode",     sstrerror(e.code())),
+          castor::dlf::Param("errorMessage",  e.getMessage().str())
+      };
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, REC_ERROR_RETRY_BY_DEFAULT, paramsEx);
-      rjIdsToRetry.push_back( (*tcItem).migrationOrRecallJobId);
+      rjIdsToRetry.push_back( (*recJob).migrationOrRecallJobId);
     }
-
-    tcItem++;
-
   }
-
-  gettimeofday(&tvStart, NULL); 
-  // update the db
+  timer.reset();
   try {
     // Function is a genuine wrapper with no hidden hooks
     // SQL commit in the end.
     oraSvc->setRecRetryResult(rjIdsToRetry,rjIdsToFail);
     // Last possible SQL call before. We're fine from here.
     scpTrans.release();
-
-    gettimeofday(&tvEnd, NULL);
-    procTime = ((tvEnd.tv_sec * 1000000) + tvEnd.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
-
-    castor::dlf::Param paramsDbUpdate[] =
-	{
-	  castor::dlf::Param("ProcessingTime", procTime * 0.000001),
-	  castor::dlf::Param("tapecopies to retry",rjIdsToRetry.size()),
-	  castor::dlf::Param("tapecopies to fail",rjIdsToFail.size())
-	};
+    castor::dlf::Param paramsDbUpdate[] = {
+        castor::dlf::Param("ProcessingTime", timer.getusecs() * 0.000001),
+        castor::dlf::Param("recall jobs to retry",rjIdsToRetry.size()),
+        castor::dlf::Param("recall jobs to fail",rjIdsToFail.size())
+    };
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, REC_ERROR_RESULT_SAVED, paramsDbUpdate);
-    
-
   } catch (castor::exception::Exception& e) {
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("errorCode",sstrerror(e.code())),
-       castor::dlf::Param("errorMessage",e.getMessage().str())
-      };
+    castor::dlf::Param params[] = {
+        castor::dlf::Param("errorCode",sstrerror(e.code())),
+        castor::dlf::Param("errorMessage",e.getMessage().str())
+    };
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, REC_ERROR_CANNOT_UPDATE_DB, params);
   }
-  
-  rjList.clear();
-  
-  rjIdsToRetry.clear();
-  rjIdsToFail.clear();
-  
 }
 
 bool castor::tape::tapegateway::RecallerErrorHandlerThread::applyRetryRecallPolicy(const RetryPolicyElement& elem)

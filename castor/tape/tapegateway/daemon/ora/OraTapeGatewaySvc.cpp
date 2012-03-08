@@ -996,11 +996,11 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFailedMigrations(
     // Run through the cursor
     while (rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
       castor::tape::tapegateway::RetryPolicyElement item;
-      item.migrationOrRecallJobId = (u_signed64) rs->getDouble(MigrationJobIdIndex);
-      item.errorCode              =        (int) rs->getDouble(ErrorCodeIndex);
-      item.nbRetry                =        (int) rs->getDouble(NbRetryIndex);
-      item.nsHost                 =              rs->getString(NsHostIndex);
-      item.fileId                 = (u_signed64) rs->getDouble(FileIdIndex);
+      item.migrationOrRecallJobId = (u_signed64) (double) occiNumber(rs->getNumber(MigrationJobIdIndex));
+      item.errorCode              =                 (int) occiNumber(rs->getNumber(ErrorCodeIndex));
+      item.nbRetry                =                 (int) occiNumber(rs->getNumber(NbRetryIndex));
+      item.nsHost                 =                                  rs->getString(NsHostIndex);
+      item.fileId                 = (u_signed64) (double) occiNumber(rs->getNumber(FileIdIndex));
       item.tape                   = "";
       item.fSeq                   = 0;
       candidates.push_back(item);
@@ -1175,12 +1175,20 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFailedRecalls( std::l
     int RecallIdIndex =   resIntros.findColumnIndex(       "ID", oracle::occi::OCCI_SQLT_NUM);
     int ErrorCodeIndex  = resIntros.findColumnIndex("ERRORCODE", oracle::occi::OCCI_SQLT_NUM);
     int NbRetryIndex    = resIntros.findColumnIndex(  "NBRETRY", oracle::occi::OCCI_SQLT_NUM);
-    // Run through the cursor 
+    int NsHostIndex     = resIntros.findColumnIndex(   "NSHOST", oracle::occi::OCCI_SQLT_CHR);
+    int FileIdIndex     = resIntros.findColumnIndex(   "FILEID", oracle::occi::OCCI_SQLT_NUM);
+    int TapeIndex       = resIntros.findColumnIndex(     "TAPE", oracle::occi::OCCI_SQLT_CHR);
+    int FSeqIndex       = resIntros.findColumnIndex(     "FSEQ", oracle::occi::OCCI_SQLT_NUM);
+    // Run through the cursor
     while (rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
       castor::tape::tapegateway::RetryPolicyElement item;
-      item.migrationOrRecallJobId = (u_signed64)rs->getDouble(RecallIdIndex);
-      item.errorCode  = rs->getInt(ErrorCodeIndex);
-      item.nbRetry    = rs->getInt(NbRetryIndex);
+      item.migrationOrRecallJobId = (u_signed64) (double) occiNumber(rs->getNumber(RecallIdIndex));
+      item.errorCode              =                 (int) occiNumber(rs->getNumber(ErrorCodeIndex));
+      item.nbRetry                =                 (int) occiNumber(rs->getNumber(NbRetryIndex));
+      item.nsHost                 =                                  rs->getString(NsHostIndex);
+      item.fileId                 = (u_signed64) (double) occiNumber(rs->getNumber(FileIdIndex));
+      item.tape                   =                                  rs->getString(TapeIndex);
+      item.fSeq                   = (u_signed64) (double) occiNumber(rs->getNumber(FSeqIndex));
       candidates.push_back(item);
     }
     m_getFailedRecallsStatement->closeResultSet(rs);

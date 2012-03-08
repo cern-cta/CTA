@@ -469,7 +469,7 @@ CREATE OR REPLACE
 PROCEDURE tg_getFailedMigrations(outFailedMigrationJob_c OUT SYS_REFCURSOR) AS
   varFailedIds "numList";
 BEGIN
-  /* Find and lock the migration mounts we will work on */
+  /* Find and lock the migration jobs we will work on */
   SELECT mj.id
     BULK COLLECT INTO varFailedIds
     FROM MigrationJob mj
@@ -488,14 +488,24 @@ END;
 
 /* retrieve from the db all the recall jobs that faced a failure */
 CREATE OR REPLACE
-PROCEDURE tg_getFailedRecalls(outFailedRecallJob_c OUT castor.FailedRecallJob_Cur) AS
+PROCEDURE tg_getFailedRecalls(outFailedRecallJob_c OUT SYS_REFCURSOR) AS
+  varFailedIds "numList";
 BEGIN
+  /* Find and lock the recall jobs we will work on */
+  SELECT rj.id
+    BULK COLLECT INTO varFailedIds
+    FROM RecallJob rj
+   WHERE rj.status = tconst.RECALLJOB_RETRY
+     AND ROWNUM < 1000
+     FOR UPDATE SKIP LOCKED;
   OPEN outFailedRecallJob_c FOR
-    SELECT id, errorCode, nbRetry
-      FROM RecallJob
-     WHERE RecallJob.status = tconst.RECALLJOB_RETRY
-       AND ROWNUM < 1000 
-       FOR UPDATE SKIP LOCKED;
+    SELECT rj.id, rj.errorCode, rj.nbRetry, cf.fileId, cf.nsHost, 
+           t.VID AS TAPE, seg.fseq
+      FROM RecallJob rj
+      LEFT OUTER JOIN castorfile cf ON cf.id = rj.castorfile
+      LEFT OUTER JOIN segment seg ON seg.copy = rj.id
+      LEFT OUTER JOIN tape t ON t.id = seg.tape
+     WHERE rj.id IN (SELECT * FROM TABLE (varFailedIds));
 END;
 /
 

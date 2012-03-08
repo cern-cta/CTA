@@ -99,7 +99,7 @@ void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void*)
     {
       castor::dlf::Param("ProcessingTime", timer.getusecs() * 0.000001)
     };
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, MIG_ERROR_JOBS_FOUND, paramsDb);
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, MIG_ERROR_JOBS_FOUND, paramsDb);
 
   // Sort the migrations in error into migrations to retry and to failed
   std::list<u_signed64> mjIdsToRetry;
@@ -111,9 +111,9 @@ void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void*)
       {
           castor::dlf::Param("migrationJobId",migJob->migrationOrRecallJobId),
           castor::dlf::Param("NSFILEID",      migJob->fileId),
-          castor::dlf::Param("NSHOSTNAME",    migJob->fileId),
+          castor::dlf::Param("NSHOSTNAME",    migJob->nsHost),
           castor::dlf::Param("errorCode",     sstrerror(migJob->errorCode)),
-          castor::dlf::Param("nbRetry",       migJob->nbRetry),
+          castor::dlf::Param("nbRetry",       migJob->nbRetry)
       };
     try {
       if ( applyRetryMigrationPolicy(*migJob)) {
@@ -127,7 +127,7 @@ void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void*)
       castor::dlf::Param paramsEx[] = {
           castor::dlf::Param("migrationJobId",(*migJob).migrationOrRecallJobId),
           castor::dlf::Param("NSFILEID",      migJob->fileId),
-          castor::dlf::Param("NSHOSTNAME",    migJob->fileId),
+          castor::dlf::Param("NSHOSTNAME",    migJob->nsHost),
           castor::dlf::Param("errorCode",     sstrerror(migJob->errorCode)),
           castor::dlf::Param("nbRetry",       migJob->nbRetry),
           castor::dlf::Param("policyErrorCode",sstrerror(e.code())),
