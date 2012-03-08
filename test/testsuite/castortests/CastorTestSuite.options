@@ -48,7 +48,7 @@ remoteSpace = yourdiskserver.cern.ch:/var/tmp/rfiod
 
 # Nameserver related
 # Must use full hostname
-CNS_HOST = lxc2dev9.cern.ch
+CNS_HOST = yournameserver.cern.ch
 
 # Stager related
 STAGE_HOST = yourstager.cern.ch
