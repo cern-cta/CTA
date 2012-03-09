@@ -361,7 +361,7 @@ def cancelRepack():
                                   pusername=username, pip=ip, preqid=rows[0][0], results=strescur)
                     # display outcome
                     answers = strescur.fetchall()
-                    if len(answers) == 1 and answers[0][2] != 0:
+                    if len(answers) == 1 and answers[0][0] == 0:
                         print 'Failed to abort repack for tape ' + tape + ' :'
                         print answers[0][3]
                     else:
