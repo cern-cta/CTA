@@ -104,7 +104,7 @@ CREATE TABLE StageRmRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER
 CREATE TABLE StageFileQueryRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, fileName VARCHAR2(2048), id INTEGER CONSTRAINT PK_StageFileQueryRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type Tape */
-CREATE TABLE Tape (vid VARCHAR2(2048), side NUMBER, tpmode NUMBER, errMsgTxt VARCHAR2(2048), errorCode NUMBER, severity NUMBER, vwAddress VARCHAR2(2048), dgn VARCHAR2(2048), label VARCHAR2(2048), density VARCHAR2(2048), devtype VARCHAR2(2048), startTime NUMBER, lastVdqmPingTime NUMBER, vdqmVolReqId NUMBER, lastFseq NUMBER, tapeGatewayRequestId NUMBER, id INTEGER CONSTRAINT PK_Tape_Id PRIMARY KEY, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE Tape (vid VARCHAR2(2048), side NUMBER, tpmode NUMBER, errMsgTxt VARCHAR2(2048), errorCode NUMBER, severity NUMBER, vwAddress VARCHAR2(2048), dgn VARCHAR2(2048), label VARCHAR2(2048), density VARCHAR2(2048), devtype VARCHAR2(2048), startTime NUMBER, lastVdqmPingTime NUMBER, vdqmVolReqId NUMBER, lastFseq NUMBER, tapeGatewayRequestId NUMBER, id INTEGER CONSTRAINT PK_Tape_Id PRIMARY KEY, status INTEGER, lastProcessedFseq NUMBER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('Tape', 'status', 0, 'TAPE_UNUSED');
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('Tape', 'status', 1, 'TAPE_PENDING');

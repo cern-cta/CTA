@@ -128,7 +128,7 @@ CREATE INDEX I_SubRequest_Req_Stat_no89 ON SubRequest (request, decode(status,8,
 DROP TABLE RecallJob;
 CREATE TABLE RecallJob(copyNb NUMBER,
                        errorCode NUMBER,
-                       nbRetry NUMBER,
+                       nbRetry NUMBER DEFAULT 0 CONSTRAINT NN_RecallJob_nbRetry NOT NULL,
                        missingCopies NUMBER, 
                        fseq NUMBER,
                        tapeGatewayRequestId NUMBER,

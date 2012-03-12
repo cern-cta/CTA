@@ -659,6 +659,7 @@ PROCEDURE tg_getFileToRecall (inTransId IN  NUMBER, outRet OUT INTEGER,
   varTapeId         NUMBER; -- Tape Id
   varNewFSeq       INTEGER; -- new FSeq
   varUnused         NUMBER;
+  varPreviousFseq   NUMBER;
 BEGIN 
   outRet:=0;
   BEGIN
@@ -670,7 +671,9 @@ BEGIN
       RETURN;
     END IF;
     -- Take lock on tape
-    SELECT T.TapeGatewayRequestId, T.vid INTO varTgrId, outVid
+    SELECT T.TapeGatewayRequestId, T.vid, 
+           CASE WHEN T.lastProcessedFseq IS NOT NULL THEN T.lastProcessedFseq ELSE -1 END
+      INTO varTgrId, outVid, varPreviousFseq
       FROM Tape T
      WHERE T.id = varTapeId
        FOR UPDATE;
@@ -680,13 +683,16 @@ BEGIN
   END; 
   BEGIN
     -- Find the unprocessed segment of this tape with lowest fSeq
+    -- that is above the previous one.
+    -- Otherwise, revert to the lowest one.
     SELECT       id,       fSeq,    Copy 
       INTO varSegId, varNewFSeq, varRjId 
       FROM (SELECT SEG.id id, SEG.fSeq fSeq, SEG.Copy Copy 
               FROM Segment SEG
              WHERE SEG.tape = varTapeId  
                AND SEG.status = tconst.SEGMENT_UNPROCESSED
-             ORDER BY SEG.fseq ASC)
+             ORDER BY CASE WHEN SEG.fseq > varPreviousFseq THEN 1 ELSE 0 END DESC,
+                      SEG.fseq ASC)
      WHERE ROWNUM < 2;
     -- Lock the corresponding castorfile
     SELECT CF.id INTO varUnused 
@@ -720,6 +726,10 @@ BEGIN
      SET SEG.status = tconst.SEGMENT_SELECTED
    WHERE SEG.id=varSegId 
      AND SEG.status = tconst.SEGMENT_UNPROCESSED;
+  -- Record this recall at the tape level
+  UPDATE Tape t
+     SET t.lastProcessedFseq = varNewFSeq
+   WHERE t.id = varTapeId;
   OPEN outFile FOR 
     SELECT CF.fileid, CF.nshost, varDSName, varMPoint, varPath, varNewFSeq , 
            RJ.FileTransactionID

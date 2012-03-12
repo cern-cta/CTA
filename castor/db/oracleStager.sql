@@ -2410,8 +2410,8 @@ BEGIN
   INSERT INTO Segment (id, blockId0, blockId1, blockId2, blockId3, fseq, creationTime, status, copy, tape, priority)
   VALUES (segId, block0, block1, block2, block3, fseq, getTime(), tconst.SEGMENT_UNPROCESSED, tcId, tapeId, priority);
   -- insert a RecallJob
-  INSERT INTO RecallJob (id, copyNb, status, castorFile, fseq)
-  VALUES (tcId, copynb, tconst.RECALLJOB_TOBERECALLED, cfId, fseq);
+  INSERT INTO RecallJob (id, copyNb,                  status, castorFile, fseq, nbRetry)
+  VALUES              (tcId, copynb, tconst.RECALLJOB_TOBERECALLED, cfId, fseq,       0);
   -- insert a DiskCopy
   buildPathFromFileId(fileId, nsHost, dcId, dcPath);
   INSERT INTO DiskCopy (id, status, creationTime, castorFile, ownerUid, ownerGid, path)
