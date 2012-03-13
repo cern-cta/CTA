@@ -191,7 +191,7 @@ def displayStatus():
                SUM(SubRequest.xsize) totsize,
                SUM(CASE WHEN SubRequest.status IN (4, 5) THEN 1 ELSE 0 END) toRecall,
                SUM(CASE SubRequest.status WHEN 12 THEN 1 ELSE 0 END) toMigr,
-               SUM(CASE WHEN SubRequest.status IN (7, 9, 10) THEN 1 ELSE 0 END) failed,
+               SUM(CASE WHEN SubRequest.status IN (7, 9) THEN 1 ELSE 0 END) failed,
                SUM(CASE WHEN SubRequest.status IN (8, 11) THEN 1 ELSE 0 END) migrated
           FROM StageRepackRequest, SubRequest
          WHERE SubRequest.request(+) = StageRepackRequest.id
@@ -203,7 +203,6 @@ def displayStatus():
         # go to DB and get back the data
         stcur.execute(stGetStatus, nbdays=since)
         rows = stcur.fetchall()
-        # build a consistent view o
         if len(rows) == 0:
             print 'No repack activity found'
             return
@@ -211,9 +210,25 @@ def displayStatus():
         print '='*149
         print 'SubmitTime              User                       Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated  Compl%     Status'
         print '-'*149
+        sumTotal = sumSize = sumToRecall = sumToMigr = sumFailed = sumMigrated = 0
         for subTime, user, machine, vid, status, total, size, toRecall, toMigr, failed, migrated in rows:
             if not vids or vid in vids:
                 _printStatusLine(subTime, user, machine, vid, status, total, size, toRecall, toMigr, failed, migrated)
+                sumTotal += total
+                if size > 0:
+                    sumSize += size
+                sumToRecall += toRecall
+                sumToMigr += toMigr
+                sumFailed += failed
+                sumMigrated += migrated
+        print '-'*149
+        # print out summary line
+        if sumTotal > 0:
+            if sumToRecall + sumToMigr > 0:
+                globalStatus = 1  # ONGOING
+            else:
+                globalStatus = 2  # FINISHED
+            _printStatusLine(time.time(), '-', '-', 'TOTAL', globalStatus, sumTotal, sumSize, sumToRecall, sumToMigr, sumFailed, sumMigrated)
         # close DB connection
         castor_tools.disconnectDB(stconn)
     except Exception, e:
