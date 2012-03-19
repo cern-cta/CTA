@@ -176,7 +176,9 @@ BEGIN
                  AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
                  AND DiskServer.id = FileSystem.diskServer
                  AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
-            ORDER BY -- order by rate as defined by the function
+            ORDER BY -- first prefer DSs without concurrent migrators/recallers
+                     DiskServer.nbRecallerStreams ASC, FileSystem.nbMigratorStreams ASC,
+                     -- order by rate as defined by the function
                      fileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
                                     FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams) DESC,
                      -- use randomness to avoid preferring always the same FS when everything is idle
