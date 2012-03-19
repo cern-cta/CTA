@@ -138,7 +138,7 @@ void castor::tape::tapegateway::VdqmRequestsCheckerThread::run(void*)
           castor::dlf::Param("errorCode",sstrerror(e.code())),
           castor::dlf::Param("errorMessage",e.getMessage().str()),
           castor::dlf::Param("TPVID", *vid) };
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, CHECKER_LOST_VDQM_REQUEST, params);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, CHECKER_LOST_VDQM_REQUEST, params);
       if ( e.code() == EPERM ) {
 	tapesToRetry.push_back(*tapeRequest);
 	if ((*tapeRequest).accessMode() == 1 ){
