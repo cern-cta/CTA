@@ -30,6 +30,7 @@
 #include <map>
 #include <pthread.h>
 #include <stdint.h>
+#include <inttypes.h>
 
 
 namespace castor      {

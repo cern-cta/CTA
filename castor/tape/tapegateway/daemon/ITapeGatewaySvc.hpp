@@ -52,6 +52,7 @@
 
 #include <list>
 #include <string>
+#include <inttypes.h>
 
 namespace castor      {
 namespace tape        {

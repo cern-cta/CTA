@@ -28,6 +28,7 @@
 #include <getconfent.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <u64subr.h>

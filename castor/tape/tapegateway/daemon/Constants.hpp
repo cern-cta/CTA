@@ -26,6 +26,8 @@
 #ifndef GATEWAY_CONSTANTS_HPP
 #define GATEWAY_CONSTANTS_HPP 1
 
+#include <inttypes.h>
+
 
 namespace castor      {
 namespace tape        {
