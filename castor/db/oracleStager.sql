@@ -172,7 +172,7 @@ BEGIN
     UPDATE DiskCopy 	 
        SET status = 7  -- INVALID 	 
      WHERE id = cf.id;
-  END LOOP; 	 
+  END LOOP;
 END; 	 
 /
 
@@ -194,19 +194,19 @@ BEGIN
   -- Look for recalls concerning files that are STAGED or CANBEMIGR
   -- on all filesystems scheduled to be checked, and restart their
   -- subrequests (reconsidering the recall source).
-  FOR cf IN (SELECT /*+ USE_NL(E D)
-                     INDEX_RS_ASC(E I_DiskCopy_Status)
-                     INDEX_RS_ASC(D I_DiskCopy_CastorFile) */
+  FOR dc IN (SELECT /*+ USE_NL(D E)
+                     INDEX_RS_ASC(D I_DiskCopy_FileSystem)
+                     INDEX_RS_ASC(E I_DiskCopy_CastorFile) */
                     UNIQUE D.castorfile, E.id
                FROM DiskCopy D, DiskCopy E
               WHERE D.castorfile = E.castorfile
                 AND D.fileSystem IN
                   (SELECT /*+ CARDINALITY(fsidTable 5) */ *
                      FROM TABLE(fsIds) fsidTable)
-                AND D.status IN (0, 10)
-                AND E.status = 2) LOOP
-    -- Cancel recall and restart subrequests
-    cancelRecall(cf.castorfile, cf.id, 1); -- RESTART
+                AND D.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR)
+                AND E.status = dconst.DISKCOPY_WAITTAPERECALL) LOOP
+    -- Cancel recall
+    cancelRecall(dc.castorfile, dc.id);
   END LOOP;
 END;
 /
@@ -1398,21 +1398,20 @@ BEGIN
          status = finalStatus
    WHERE id = srId
    RETURNING request, reqType, (SELECT object FROM Type2Obj WHERE type = reqType) INTO rId, rType, rName;
+  -- Try to see whether another subrequest in the same
+  -- request is still being processed. For this, we
+  -- need a master lock on the request but for easiness we use the Client
+  EXECUTE IMMEDIATE
+    'BEGIN SELECT client INTO :clientId FROM '|| rName ||' WHERE id = :rId FOR UPDATE; END;'
+    USING OUT clientId, IN rId;
   BEGIN
-    -- Try to see whether another subrequest in the same
-    -- request is still being processed
     -- note the decode trick to use the dedicated index I_SubRequest_Req_Stat_no89
     SELECT request INTO unused FROM SubRequest
      WHERE request = rId AND decode(status,8,NULL,9,NULL,status) IS NOT NULL
        AND ROWNUM < 2;  -- all but {FAILED_,}FINISHED
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- All subrequests have finished, we can archive:
-    -- take lock on the request (it is enough the following be
-    -- executed serially, multiple executions are idempotent)
-    -- and drop the associated Client entity
-    EXECUTE IMMEDIATE
-      'BEGIN SELECT client INTO :clientId FROM '|| rName ||' WHERE id = :rId FOR UPDATE; END;'
-      USING OUT clientId, IN rId;
+    -- drop the associated Client entity
     DELETE FROM Client WHERE id = clientId;
     -- archive the successful subrequests
     UPDATE /*+ INDEX(SubRequest I_SubRequest_Request) */ SubRequest

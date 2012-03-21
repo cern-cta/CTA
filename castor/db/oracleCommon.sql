@@ -245,10 +245,7 @@ BEGIN
   END;
 END;
 /
-
-/* PL/SQL method canceling a given recall */
-CREATE OR REPLACE PROCEDURE cancelRecall
-(cfId NUMBER, dcId NUMBER, newSubReqStatus NUMBER) AS
+CREATE OR REPLACE PROCEDURE cancelRecall(cfId NUMBER, dcId NUMBER) AS
   srIds "numList";
   unused NUMBER;
 BEGIN
@@ -258,15 +255,18 @@ BEGIN
   -- Cancel the recall
   deleteRecallJobs(cfId);
   -- Invalidate the DiskCopy
-  UPDATE DiskCopy SET status = 7 WHERE id = dcId; -- INVALID
+  UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID WHERE id = dcId;
   -- Look for and update requests associated to the recall plus dependent ones
-  UPDATE /*+ INDEX(Subrequest I_Subrequest_Diskcopy)*/ SubRequest
-     SET status = newSubReqStatus,
+  UPDATE /*+ INDEX(Subrequest I_Subrequest_Diskcopy) */ SubRequest
+     SET status = dconst.SUBREQUEST_RESTART,
          answered = 0
-   WHERE diskCopy = dcId RETURNING id BULK COLLECT INTO srIds;
+   WHERE diskCopy = dcId
+     AND status = dconst.SUBREQUEST_WAITTAPERECALL
+  RETURNING id BULK COLLECT INTO srIds;
   UPDATE /*+ INDEX(Subrequest I_Subrequest_Parent)*/ SubRequest
-     SET status = newSubReqStatus, parent = 0 -- FAILED
-   WHERE status = 5 -- WAITSUBREQ
+     SET status = dconst.SUBREQUEST_RESTART,
+         parent = 0
+   WHERE status = dconst.SUBREQUEST_WAITSUBREQ
      AND parent IN
        (SELECT /*+ CARDINALITY(sridTable 5) */ *
           FROM TABLE(srIds) sridTable)
