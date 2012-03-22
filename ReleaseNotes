@@ -1,4 +1,30 @@
 --------------
+- 2.1.12-4-2 -
+--------------
+
+  Summary
+  -------
+
+  - this release is a hot fix release on top of 2.1.12-4-1 for the stager DB
+    It fixes bug #92721: bestFileSystemForSegment ignores running tape transfers
+
+  Upgrade Instructions from 2.1.12-4-1
+  ------------------------------------
+
+    Stager
+    ------
+
+    The upgrade of the stager database to 2.1.12-4-2 can be performed online while the system is running.
+    Upgrade the STAGER database using the stager_2.1.12-4-1_to_2.1.12-4-2.sql available from
+      http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.12-*/2.1.12-4/dbupgrades
+
+    Other components
+    ---------------- 
+
+    Nothing to be done.
+
+
+--------------
 - 2.1.12-4-1 -
 --------------
 
