@@ -55,6 +55,7 @@
 #define DLF_MSG_PARAM_UUID    5     /* Subrequest identifier */
 #define DLF_MSG_PARAM_FLOAT   6     /* Single precision floating point value */
 #define DLF_MSG_PARAM_INT     7     /* Integer parameter */
+#define DLF_MSG_PARAM_RAW     8     /* raw (set of) parameters, in key=value format */
 
 /* Message number ranges (0-999) reserved for local messages */
 #define DLF_BASE_SHAREDMEMORY 1000  /* Shared Memory related code */
@@ -177,6 +178,7 @@ EXTERN_C int dlf_write (Cuuid_t reqid,
  *                  associated with the message the value should be NULL.
  * @param numparams The number of log message parameters
  * @param params    An array of dlf_write_param_t structures
+ * @param tv        The timestamp of the log message
  *
  * @return On success zero is returned, On error, -1 is returned, and error is
  *         set appropriately.
@@ -198,6 +200,18 @@ EXTERN_C int dlf_write (Cuuid_t reqid,
  * @note Log messages with a length longer than DLF_MAX_LINELEN will be
  *       silently truncated.
  * @see syslog(), dlf_write()
+ */
+EXTERN_C int dlf_writept (Cuuid_t reqid,
+                          unsigned int priority,
+                          unsigned int msgno,
+                          struct Cns_fileid *ns,
+                          unsigned int numparams,
+                          dlf_write_param_t params[],
+                          struct timeval *tv);
+
+/* This function writes a log message to syslog using the LOG_LOCAL3 facility.
+ * See dlf_writep for the details. The only difference is that this function
+ * takes no timestamp and will log with the current time
  */
 EXTERN_C int dlf_writep (Cuuid_t reqid,
 			 unsigned int priority,

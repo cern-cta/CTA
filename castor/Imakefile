@@ -323,6 +323,8 @@ STGLIB_OBJS = $(STGLIB_SRCS:.cpp=.o)
 ClientSharedLibraryTarget(castorclient,$(STGLIB_OBJS) $(STAGERLIB_OBJS),,-lm)
 
 EXAMPLEFILE(castor.conf,/etc/castor,install)
+EXAMPLEFILE(rsyslog.conf.client,/etc/castor,install)
+EXAMPLEFILE(rsyslog.conf.server,/etc/castor,install)
 
 TOPINCLUDE=InstallIncludeDir
 BUILDHEADERSDIRHPP=$(TOPINCLUDE)/castor/castor

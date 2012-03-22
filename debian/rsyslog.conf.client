@@ -22,6 +22,9 @@ $ActionForwardDefaultTemplate RSYSLOG_ForwardFormat
 local3.*                                    -?DynaFile
 local3.*;local3.!=debug;local2.info         @headnode.domain.com:514
 
+# respect the timestamps given in local messages
+$SystemLogSocketIgnoreMsgTimestamp off
+
 # If the message has been processed by one of the filters above stop
 # any further processing. This avoids duplicate logging!
 & ~

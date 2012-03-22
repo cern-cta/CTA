@@ -25,21 +25,37 @@
 /* Include files */
 #include "dlf_lib.h"
 #include "dlf_api.h"
+#include <unistd.h>
+#include <fcntl.h>
 #include <string.h>
 #include <pthread.h>
+#include <sys/un.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 #ifdef __APPLE__
 #include <mach/mach.h>
 #endif
 
+#define	_PATH_LOG	"/dev/log"
+
 /* Global variables */
 static char *messages[DLF_MAX_MSGTEXTS];
-static int  initialized = 0;
-static int  maxmsglen   = DEFAULT_SYSLOG_MSGLEN;
-static int  logmask     = 0xff;
-
+static int   initialized = 0;
+static int   maxmsglen   = DEFAULT_SYSLOG_MSGLEN;
+static int   logmask     = 0xff;
+static const char* progname = 0;
+static int   LogFile = -1;           /* fd for log */
+static int   connected;              /* have done connect */
+static pthread_mutex_t syslog_lock;  /* synchronization of syslog clients */
 static pthread_key_t  reg_key;
 static pthread_once_t reg_key_once = PTHREAD_ONCE_INIT;
+static struct sockaddr_un SyslogAddr;	/* AF_UNIX address of local logger */
 
+/* local functions */
+static void dlf_openlog();
+static void dlf_closelog();
+static void dlf_syslog(char* msg, int msglen);
 
 /*---------------------------------------------------------------------------
  * _tls_reg_key_alloc & _tls_req_data_free
@@ -159,6 +175,7 @@ int dlf_init(const char *ident, int maskpri) {
     (void)setlogmask(maskpri);
   }
   logmask = setlogmask(0);
+  progname = ident;
 
   /* Determine the maximum message size that the client syslog server can
    * handle.
@@ -201,9 +218,14 @@ int dlf_init(const char *ident, int maskpri) {
 
   /* Create the thread-specific data key */
   pthread_once(&reg_key_once, _tls_reg_key_alloc);
+  /* create the syslog serialization lock */
+  if (pthread_mutex_init(&syslog_lock, NULL)) {
+    errno = ENOMEM;
+    return (-1);
+  }
 
   /* Open syslog */
-  openlog(ident, LOG_PID, LOG_LOCAL3);
+  dlf_openlog();
   initialized = 1;
 
   return (0);
@@ -235,6 +257,8 @@ int dlf_shutdown(void) {
 
   /* Delete the thread-specific data key */
   pthread_key_delete(reg_key);
+  /* destroy the syslog serialization lock */
+  pthread_mutex_destroy(&syslog_lock);
 
   /* Reset the defaults */
   maxmsglen   = DEFAULT_SYSLOG_MSGLEN;
@@ -390,6 +414,22 @@ int dlf_write(Cuuid_t reqid,
   return (rv);
 }
 
+/*---------------------------------------------------------------------------
+ * build_syslog_header
+ *---------------------------------------------------------------------------*/
+static int build_syslog_header(char *buffer,
+                               int buflen,
+                               int priority,
+                               struct timeval *tv) {
+  struct tm tmp;
+  int len = snprintf(buffer, buflen, "<%d>", priority);
+  localtime_r(&(tv->tv_sec), &tmp);
+  len += strftime(buffer + len, buflen - len, "%Y-%m-%dT%T", &tmp);
+  len += snprintf(buffer + len, buflen - len, ".%ld", tv->tv_usec);
+  len += strftime(buffer + len, buflen - len, "%z ", &tmp);
+  len += snprintf(buffer + len, buflen - len, "%s[%d]: ", progname, getpid());
+  return len;
+}
 
 /*---------------------------------------------------------------------------
  * dlf_writep
@@ -400,6 +440,28 @@ int dlf_writep(Cuuid_t reqid,
                struct Cns_fileid *ns,
                unsigned int numparams,
                dlf_write_param_t params[]) {
+  // get the current time
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  // and call actual logging method
+  return dlf_writept(reqid, priority, msgno, ns, numparams, params, &tv);
+}
+
+/*---------------------------------------------------------------------------
+ * dlf_writept
+ * Note that we do here part of the work of the real syslog call, by building
+ * the message ourselves. We then only call a reduced version of syslog
+ * (namely dlf_syslog). The reason behind it is to be able to set the
+ * message timestamp ourselves, in case we log messages asynchronously, as
+ * we do when retrieving logs from the DB
+ *---------------------------------------------------------------------------*/
+int dlf_writept(Cuuid_t reqid,
+                unsigned int priority,
+                unsigned int msgno,
+                struct Cns_fileid *ns,
+                unsigned int numparams,
+                dlf_write_param_t params[],
+                struct timeval *tv) {
 
   /* Variables */
   char   uuidstr[CUUID_STRING_LEN + 1];
@@ -446,15 +508,18 @@ int dlf_writep(Cuuid_t reqid,
     return (-1);
   }
 
-  buffer[0] = '\0';
+  /* start message with priority, time, program and PID (syslog standard format) */
+  len += build_syslog_header(buffer, maxmsglen - len, priority | LOG_LOCAL3, tv);
+
+  /* append the log level, the thread id and the message text */
 #ifdef __APPLE__
-  len = snprintf(buffer, maxmsglen - len, "LVL=%s TID=%d MSG=\"%s\" ",
-                 prioritylist[priority].text,(int)mach_thread_self(),
-                 messages[msgno]);
+  len += snprintf(buffer + len, maxmsglen - len, "LVL=%s TID=%d MSG=\"%s\" ",
+                  prioritylist[priority].text,(int)mach_thread_self(),
+                  messages[msgno]);
 #else
-  len = snprintf(buffer, maxmsglen - len, "LVL=%s TID=%d MSG=\"%s\" ",
-                 prioritylist[priority].text,(int)syscall(__NR_gettid),
-                 messages[msgno]);
+  len += snprintf(buffer + len, maxmsglen - len, "LVL=%s TID=%d MSG=\"%s\" ",
+                  prioritylist[priority].text,(int)syscall(__NR_gettid),
+                  messages[msgno]);
 #endif
 
   /* Append the request uuid if defined */
@@ -475,16 +540,18 @@ int dlf_writep(Cuuid_t reqid,
     /* Check the parameter name, if it's NULL or an empty string set the value
      * to 'Undefined'.
      */
-    p = params[i].name;
-    if (!p || (p && !strcmp(p, ""))) {
-      name = strdup("Undefined"); /* Default value */
-    } else {
-      name = strdup(p);
-    }
-
-    /* Check for memory allocation failure */
-    if (name == NULL) {
-      return (-1);
+    if (params[i].type != DLF_MSG_PARAM_RAW) {
+      p = params[i].name;
+      if (!p || (p && !strcmp(p, ""))) {
+        name = strdup("Undefined"); /* Default value */
+      } else {
+        name = strdup(p);
+      }
+      
+      /* Check for memory allocation failure */
+      if (name == NULL) {
+        return (-1);
+      }
     }
 
     /* Process the data type associated to the parameter */
@@ -545,6 +612,11 @@ int dlf_writep(Cuuid_t reqid,
       len += snprintf(buffer + len, maxmsglen - len, "SUBREQID=%.*s ",
                       CUUID_STRING_LEN, uuidstr);
       break;
+
+    case DLF_MSG_PARAM_RAW:
+      len += snprintf(buffer + len, maxmsglen - len, "%s ", params[i].value.par_string);
+      break;
+
     default:
       break; /* Nothing */
     }
@@ -577,17 +649,21 @@ int dlf_writep(Cuuid_t reqid,
       return (-1);
     }
     if (registered[msgno] == 0) {
-      syslog(LOG_INFO | LOG_LOCAL2, "MSGNO=%u MSGTEXT=\"%s\"", msgno, messages[msgno]);
+      char tmpbuffer[DLF_MAX_LINELEN * 2];
+      int tmpbuflen = build_syslog_header(tmpbuffer, DLF_MAX_LINELEN * 2, LOG_INFO | LOG_LOCAL2, tv);
+      tmpbuflen += snprintf(tmpbuffer + tmpbuflen, DLF_MAX_LINELEN * 2 - tmpbuflen,
+                            "MSGNO=%u MSGTEXT=\"%s\"\n", msgno, messages[msgno]);
+      dlf_syslog(tmpbuffer, tmpbuflen);
       registered[msgno] = 1;
     }
   }
 
   /* Terminate the string */
   if ((int)len < maxmsglen) {
-    snprintf(buffer + (len - 1), maxmsglen - len, "\n");
+    len += snprintf(buffer + (len - 1), maxmsglen - len, "\n");
   }
 
-  syslog(priority, "%s", buffer);
+  dlf_syslog(buffer, len);
 
   return (0);
 }
@@ -598,3 +674,65 @@ int dlf_writep(Cuuid_t reqid,
 int dlf_isinitialized(void) {
   return (initialized);
 }
+
+/*---------------------------------------------------------------------------
+ * dlf_openlog
+ *---------------------------------------------------------------------------*/
+static void dlf_openlog() {
+  if (LogFile == -1) {
+    SyslogAddr.sun_family = AF_UNIX;
+    (void)strncpy(SyslogAddr.sun_path, _PATH_LOG,
+                  sizeof(SyslogAddr.sun_path));
+    LogFile = socket(AF_UNIX, SOCK_DGRAM, 0);
+    fcntl(LogFile, F_SETFD, FD_CLOEXEC);
+    if (LogFile == -1)
+      return;
+  }
+  if (!connected) {
+    if (connect(LogFile, (struct sockaddr *)&SyslogAddr, sizeof(SyslogAddr)) == -1) {
+      (void)close(LogFile);
+      LogFile = -1;
+    } else
+      connected = 1;
+  }
+}
+
+/*---------------------------------------------------------------------------
+ * dlf_closelog
+ *---------------------------------------------------------------------------*/
+static void dlf_closelog(void) {
+  if (!connected) return;
+  close (LogFile);
+  LogFile = -1;
+  connected = 0;
+}
+
+/*---------------------------------------------------------------------------
+ * dlf_syslog
+ * this function is a simplified equivalent of syslog that directly deals
+ * with the /dev/syslog device so that we can send our own messages and
+ * especially play with the timestamp
+ *---------------------------------------------------------------------------*/
+static void dlf_syslog(char* msg, int msglen) {
+        
+  /* enter critical section */
+  pthread_mutex_lock(&syslog_lock);
+
+  /* Get connected, output the message to the local logger. */
+  if (!connected) dlf_openlog();
+
+  if (!connected || send(LogFile, msg, msglen, MSG_NOSIGNAL) < 0) {
+    if (connected) {
+      /* Try to reopen the syslog connection.  Maybe it went down.  */
+      dlf_closelog ();
+      dlf_openlog();
+    }
+    if (!connected || send(LogFile, msg, msglen, MSG_NOSIGNAL) < 0) {
+      dlf_closelog ();	/* attempt re-open next time */
+    }
+  }
+
+  /* End of critical section.  */
+  pthread_mutex_unlock(&syslog_lock);
+}
+
