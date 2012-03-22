@@ -37,8 +37,6 @@
 #include <mach/mach.h>
 #endif
 
-#define	_PATH_LOG	"/dev/log"
-
 /* Global variables */
 static char *messages[DLF_MAX_MSGTEXTS];
 static int   initialized = 0;
@@ -425,7 +423,7 @@ static int build_syslog_header(char *buffer,
   int len = snprintf(buffer, buflen, "<%d>", priority);
   localtime_r(&(tv->tv_sec), &tmp);
   len += strftime(buffer + len, buflen - len, "%Y-%m-%dT%T", &tmp);
-  len += snprintf(buffer + len, buflen - len, ".%ld", tv->tv_usec);
+  len += snprintf(buffer + len, buflen - len, ".%06ld", (unsigned long)tv->tv_usec);
   len += strftime(buffer + len, buflen - len, "%z: ", &tmp);
   // dirty trick to have the proper timezone format (':' between hh and mm)
   buffer[len-2] = buffer[len-3];
@@ -717,7 +715,17 @@ static void dlf_openlog() {
       (void)close(LogFile);
       LogFile = -1;
     } else
-      connected = 1;
+#ifdef __APPLE__
+      // MAC has has no MSG_NOSIGNAL
+      // but >= 10.2 comes with SO_NOSIGPIPE
+      int set = 1;
+    if (0 != setsockopt(LogFile, SOL_SOCKET, SO_NOSIGPIPE, &set, sizeof(int))) {
+      (void)close(LogFile);
+      LogFile = -1;
+      return;
+    }
+#endif
+    connected = 1;
   }
 }
 
@@ -738,20 +746,25 @@ static void dlf_closelog(void) {
  * especially play with the timestamp
  *---------------------------------------------------------------------------*/
 static void dlf_syslog(char* msg, int msglen) {
-        
+  int send_flags = MSG_NOSIGNAL;
+#ifdef __APPLE__
+  // MAC has has no MSG_NOSIGNAL
+  // but >= 10.2 comes with SO_NOSIGPIPE
+  send_flags = 0;
+#endif
   /* enter critical section */
   pthread_mutex_lock(&syslog_lock);
 
   /* Get connected, output the message to the local logger. */
   if (!connected) dlf_openlog();
 
-  if (!connected || send(LogFile, msg, msglen, MSG_NOSIGNAL) < 0) {
+  if (!connected || send(LogFile, msg, msglen, send_flags) < 0) {
     if (connected) {
       /* Try to reopen the syslog connection.  Maybe it went down.  */
       dlf_closelog ();
       dlf_openlog();
     }
-    if (!connected || send(LogFile, msg, msglen, MSG_NOSIGNAL) < 0) {
+    if (!connected || send(LogFile, msg, msglen, send_flags) < 0) {
       dlf_closelog ();	/* attempt re-open next time */
     }
   }
