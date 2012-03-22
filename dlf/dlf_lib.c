@@ -747,11 +747,11 @@ static void dlf_closelog(void) {
  * especially play with the timestamp
  *---------------------------------------------------------------------------*/
 static void dlf_syslog(char* msg, int msglen) {
-  int send_flags = MSG_NOSIGNAL;
-#ifdef __APPLE__
+  int send_flags = 0;
+#ifndef __APPLE__
   // MAC has has no MSG_NOSIGNAL
   // but >= 10.2 comes with SO_NOSIGPIPE
-  send_flags = 0;
+  send_flags = MSG_NOSIGNAL;
 #endif
   /* enter critical section */
   pthread_mutex_lock(&syslog_lock);
