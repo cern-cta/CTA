@@ -426,7 +426,11 @@ static int build_syslog_header(char *buffer,
   localtime_r(&(tv->tv_sec), &tmp);
   len += strftime(buffer + len, buflen - len, "%Y-%m-%dT%T", &tmp);
   len += snprintf(buffer + len, buflen - len, ".%ld", tv->tv_usec);
-  len += strftime(buffer + len, buflen - len, "%z ", &tmp);
+  len += strftime(buffer + len, buflen - len, "%z: ", &tmp);
+  // dirty trick to have the proper timezone format (':' between hh and mm)
+  buffer[len-2] = buffer[len-3];
+  buffer[len-3] = buffer[len-4];
+  buffer[len-4] = ':';
   len += snprintf(buffer + len, buflen - len, "%s[%d]: ", progname, getpid());
   return len;
 }
@@ -440,11 +444,72 @@ int dlf_writep(Cuuid_t reqid,
                struct Cns_fileid *ns,
                unsigned int numparams,
                dlf_write_param_t params[]) {
+  char *msg;
+  int deallocate = 0;
+  // Verify that the msgno argument is valid and exists
+  if (msgno > DLF_MAX_MSGTEXTS || messages[msgno] == NULL) {
+    // invalid message number, give a static default message
+    msg = calloc(40,1);
+    if (0 == msg) {
+      msg = "Unknown Error number and could not log number (out of memory)";
+    } else {
+      snprintf(msg, 40, "Unknown Error number %d", msgno);
+      deallocate = 1;
+    }
+  } else {
+    msg = messages[msgno];
+    // If this is the first time the current thread has processed a message of type
+    // msgno then record a registration message. (See #77741)
+    // Deprecated : this can be dropped once the DLF DB is revisited
+    {
+      unsigned int *registered = pthread_getspecific(reg_key);
+      if (registered == NULL) {
+        unsigned int *tls = (unsigned int *)
+          calloc(DLF_MAX_MSGTEXTS, sizeof(unsigned int));
+        if (tls == NULL) {
+          return (-1);
+        }
+        pthread_setspecific(reg_key, (void *)tls);
+        registered = pthread_getspecific(reg_key);
+      }
+
+      /* Sanity check: This should never happen! */
+      if (registered == NULL) {
+        return (-1);
+      }
+      if (registered[msgno] == 0) {
+        char tmpbuffer[DLF_MAX_LINELEN * 2];
+        int tmpbuflen;
+        struct timeval tv;
+        gettimeofday(&tv, NULL);
+        tmpbuflen = build_syslog_header(tmpbuffer, DLF_MAX_LINELEN * 2, LOG_INFO | LOG_LOCAL2, &tv);
+        tmpbuflen += snprintf(tmpbuffer + tmpbuflen, DLF_MAX_LINELEN * 2 - tmpbuflen,
+                              "MSGNO=%u MSGTEXT=\"%s\"\n", msgno, msg);
+        dlf_syslog(tmpbuffer, tmpbuflen);
+        registered[msgno] = 1;
+      }
+    }
+  }
+  // and call actual logging method
+  int ret = dlf_writepm(reqid, priority, msg, ns, numparams, params);
+  if (deallocate) free(msg);
+  return ret;
+}
+
+/*---------------------------------------------------------------------------
+ * dlf_writepm
+ *---------------------------------------------------------------------------*/
+int dlf_writepm(Cuuid_t reqid,
+                unsigned int priority,
+                char* msg,
+                struct Cns_fileid *ns,
+                unsigned int numparams,
+                dlf_write_param_t params[]) {
   // get the current time
   struct timeval tv;
   gettimeofday(&tv, NULL);
   // and call actual logging method
-  return dlf_writept(reqid, priority, msgno, ns, numparams, params, &tv);
+  return dlf_writept(reqid, priority, msg, ns, numparams, params, &tv);
 }
 
 /*---------------------------------------------------------------------------
@@ -457,7 +522,7 @@ int dlf_writep(Cuuid_t reqid,
  *---------------------------------------------------------------------------*/
 int dlf_writept(Cuuid_t reqid,
                 unsigned int priority,
-                unsigned int msgno,
+                const char* msg,
                 struct Cns_fileid *ns,
                 unsigned int numparams,
                 dlf_write_param_t params[],
@@ -482,16 +547,6 @@ int dlf_writept(Cuuid_t reqid,
   memset(uuidstr, '\0', CUUID_STRING_LEN + 1);
   memset(buffer,  '\0', sizeof(buffer));
 
-  /* Verify that the msgno argument is valid and exists */
-  if (msgno > DLF_MAX_MSGTEXTS) {
-    errno = EINVAL;
-    return (-1);
-  }
-  if (messages[msgno] == NULL) {
-    errno = EINVAL;
-    return (-1);
-  }
-
   if (priority > LOG_DEBUG) {
     errno = EINVAL;
     return (-1);
@@ -514,12 +569,10 @@ int dlf_writept(Cuuid_t reqid,
   /* append the log level, the thread id and the message text */
 #ifdef __APPLE__
   len += snprintf(buffer + len, maxmsglen - len, "LVL=%s TID=%d MSG=\"%s\" ",
-                  prioritylist[priority].text,(int)mach_thread_self(),
-                  messages[msgno]);
+                  prioritylist[priority].text,(int)mach_thread_self(), msg);
 #else
   len += snprintf(buffer + len, maxmsglen - len, "LVL=%s TID=%d MSG=\"%s\" ",
-                  prioritylist[priority].text,(int)syscall(__NR_gettid),
-                  messages[msgno]);
+                  prioritylist[priority].text,(int)syscall(__NR_gettid), msg);
 #endif
 
   /* Append the request uuid if defined */
@@ -626,35 +679,6 @@ int dlf_writept(Cuuid_t reqid,
     if ((int)len >= maxmsglen) {
       buffer[maxmsglen - 1] = '\n';
       break;
-    }
-  }
-
-  /* If this is the first time the current thread has processed a message of type
-   * msgno then record a registration message. (See #77741)
-   */
-  {
-    unsigned int *registered = pthread_getspecific(reg_key);
-    if (registered == NULL) {
-      unsigned int *tls = (unsigned int *)
-        calloc(DLF_MAX_MSGTEXTS, sizeof(unsigned int));
-      if (tls == NULL) {
-        return (-1);
-      }
-      pthread_setspecific(reg_key, (void *)tls);
-      registered = pthread_getspecific(reg_key);
-    }
-
-    /* Sanity check: This should never happen! */
-    if (registered == NULL) {
-      return (-1);
-    }
-    if (registered[msgno] == 0) {
-      char tmpbuffer[DLF_MAX_LINELEN * 2];
-      int tmpbuflen = build_syslog_header(tmpbuffer, DLF_MAX_LINELEN * 2, LOG_INFO | LOG_LOCAL2, tv);
-      tmpbuflen += snprintf(tmpbuffer + tmpbuflen, DLF_MAX_LINELEN * 2 - tmpbuflen,
-                            "MSGNO=%u MSGTEXT=\"%s\"\n", msgno, messages[msgno]);
-      dlf_syslog(tmpbuffer, tmpbuflen);
-      registered[msgno] = 1;
     }
   }
 

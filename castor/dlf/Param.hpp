@@ -187,6 +187,16 @@ namespace castor {
       };
 
       /**
+       * Constructor for Raw parameters
+       */
+      Param(const char* rawParams) :
+        m_deallocate(true) {
+        m_cParam.name = (char*)"";
+        m_cParam.type = DLF_MSG_PARAM_RAW;
+        m_cParam.value.par_string = strdup(rawParams);
+      };
+
+      /**
        * Constructor for IPAddress
        */
       Param(const char* name, castor::dlf::IPAddress value);

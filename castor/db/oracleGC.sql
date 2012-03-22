@@ -20,11 +20,6 @@ CREATE OR REPLACE PACKAGE castorGC AS
         gcTriggeredBy VARCHAR2(2048),
         svcClassName VARCHAR2(2048));
   TYPE SelectFiles2DeleteLine_Cur IS REF CURSOR RETURN SelectFiles2DeleteLine;
-  TYPE JobLogEntry IS RECORD (
-    fileid NUMBER,
-    nshost VARCHAR2(2048),
-    operation INTEGER);
-  TYPE JobLogEntry_Cur IS REF CURSOR RETURN JobLogEntry;
   -- find out a gc function to be used from a given serviceClass
   FUNCTION getUserWeight(svcClassId NUMBER) RETURN VARCHAR2;
   FUNCTION getRecallWeight(svcClassId NUMBER) RETURN VARCHAR2;
@@ -762,14 +757,14 @@ BEGIN
       EXCEPTION WHEN NO_DATA_FOUND THEN
         NULL;
       END;
-      INSERT INTO CleanupJobLog VALUES (f.fileId, f.nsHost, 0);
+      logToDLF(NULL, dlf.LVL_WARNING, dlf.FILE_DROPPED_BY_CLEANING, f.fileId, f.nsHost, '');
     ELSE
       -- here we issue a putDone
       -- context 2 : real putDone. Missing PPut requests are ignored.
       -- svcClass 0 since we don't know it. This will trigger a
       -- default behavior in the putDoneFunc
       putDoneFunc(f.id, f.fileSize, 2, 0);
-      INSERT INTO CleanupJobLog VALUES (f.fileId, f.nsHost, 1);
+      logToDLF(NULL, dlf.LVL_WARNING, dlf.PUTDONE_ENFORCED_BY_CLEANING, f.fileId, f.nsHost, '');
     END IF;
   END LOOP;
   COMMIT;
@@ -788,23 +783,6 @@ BEGIN
   deleteFailedDiskCopies(t*3600);
 END;
 /
-
-
-/* PL/SQL method used by the stager to log what it has been done by the cleanup job */
-CREATE OR REPLACE PROCEDURE dumpCleanupLogs(jobLog OUT castorGC.JobLogEntry_Cur) AS
-  unused NUMBER;
-BEGIN
-  SELECT fileid INTO unused FROM CleanupJobLog WHERE ROWNUM < 2;
-  -- if we got here, we have something in the log table, let's lock it and dump it
-  LOCK TABLE CleanupJobLog IN EXCLUSIVE MODE;
-  OPEN jobLog FOR
-    SELECT * FROM CleanupJobLog;
-EXCEPTION WHEN NO_DATA_FOUND THEN
-  -- nothing to do
-  NULL;
-END;
-/
-
 
 /*
  * Database jobs

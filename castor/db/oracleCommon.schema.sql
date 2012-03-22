@@ -464,11 +464,15 @@ CREATE GLOBAL TEMPORARY TABLE startMigMountReportHelper (
     mountsCreated  NUMBER,
     mountsAfter    NUMBER) ON COMMIT DELETE ROWS;
 
-/* Tables to log the activity performed by the cleanup job */
-CREATE TABLE CleanupJobLog
-  (fileId NUMBER CONSTRAINT NN_CleanupJobLog_FileId NOT NULL, 
-   nsHost VARCHAR2(2048) CONSTRAINT NN_CleanupJobLog_NsHost NOT NULL,
-   operation INTEGER CONSTRAINT NN_CleanupJobLog_Operation NOT NULL);
+/* Table to log the DB activity */
+CREATE TABLE DLFLogs
+  (timeinfo NUMBER,
+   uuid VARCHAR2(2048),
+   priority INTEGER CONSTRAINT NN_DLFLogs_Priority NOT NULL,
+   msg VARCHAR2(2048) CONSTRAINT NN_DLFLogs_Msg NOT NULL,
+   fileId NUMBER CONSTRAINT NN_DLFLogs_FileId NOT NULL,
+   nsHost VARCHAR2(2048) CONSTRAINT NN_DLFLogs_NsHost NOT NULL,
+   params VARCHAR2(2048));
  
 /* Temporary table to handle removing of priviledges */
 CREATE GLOBAL TEMPORARY TABLE RemovePrivilegeTmpTable

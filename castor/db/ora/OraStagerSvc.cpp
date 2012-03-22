@@ -98,6 +98,7 @@
 #include <errno.h>
 #include <time.h>
 #include <string.h>
+#include <math.h>
 
 
 //------------------------------------------------------------------------------
@@ -194,6 +195,14 @@ const std::string castor::db::ora::OraStagerSvc::s_deletePriorityStatementString
 const std::string castor::db::ora::OraStagerSvc::s_getConfigOptionStatementString =
   "SELECT getConfigOption(:1, :2, :3) FROM Dual";
 
+/// SQL statements for function dumpDBLogs
+const std::string castor::db::ora::OraStagerSvc::s_dumpDBLogsString =
+  "BEGIN dumpDBLogs(:1); END;";
+
+const std::string castor::db::ora::OraStagerSvc::s_truncateDBLogsString =
+  "DELETE FROM DLFLogs";
+// here a TRUNCATE statement won't work because we locked the table
+
 //------------------------------------------------------------------------------
 // OraStagerSvc
 //------------------------------------------------------------------------------
@@ -219,7 +228,9 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_selectPriorityStatement(0),
   m_enterPriorityStatement(0),
   m_deletePriorityStatement(0),
-  m_getConfigOptionStatement(0) {
+  m_getConfigOptionStatement(0),
+  m_dumpDBLogsStatement(0),
+  m_truncateDBLogsStatement(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -272,6 +283,8 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     if (m_enterPriorityStatement) deleteStatement(m_enterPriorityStatement);
     if (m_deletePriorityStatement) deleteStatement(m_deletePriorityStatement);
     if (m_getConfigOptionStatement) deleteStatement(m_getConfigOptionStatement);
+    if (m_dumpDBLogsStatement) deleteStatement(m_dumpDBLogsStatement);
+    if (m_truncateDBLogsStatement) deleteStatement(m_truncateDBLogsStatement);
   } catch (castor::exception::Exception& ignored) {};
 
   // Now reset all pointers to 0
@@ -296,6 +309,8 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_enterPriorityStatement = 0;
   m_deletePriorityStatement = 0;
   m_getConfigOptionStatement = 0;
+  m_dumpDBLogsStatement = 0;
+  m_truncateDBLogsStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -1770,6 +1785,67 @@ std::string castor::db::ora::OraStagerSvc::getConfigOption(std::string confClass
       << "Error caught in getConfigOption(): confClass = "
       << confClass << ", confKey = " << confKey
       << std::endl << e.what();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// dumpDBLogs
+//------------------------------------------------------------------------------
+void castor::db::ora::OraStagerSvc::dumpDBLogs()
+  throw (castor::exception::Exception) {
+  try {
+    if (0 == m_dumpDBLogsStatement) {
+      m_dumpDBLogsStatement = createStatement(s_dumpDBLogsString);
+      m_dumpDBLogsStatement->registerOutParam(1, oracle::occi::OCCICURSOR);
+      m_truncateDBLogsStatement = createStatement(s_truncateDBLogsString);
+      m_truncateDBLogsStatement->setAutoCommit(true);
+    }
+    // execute the statement
+    unsigned int nb = m_dumpDBLogsStatement->executeUpdate();
+    if (nb == 0) {
+      rollback();
+      castor::exception::NoEntry e;
+      e.getMessage() << "dumpDBLogs function not found";
+      throw e;
+    }
+    // Run through the log entries
+    struct Cns_fileid fileid;
+    memset(&fileid, '\0', sizeof(Cns_fileid));
+    oracle::occi::ResultSet *rs = m_dumpDBLogsStatement->getCursor(1);
+    oracle::occi::ResultSet::Status status = rs->next();
+    while (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
+      // get data for this log entry
+      double secSinceEpoch = rs->getDouble(1);
+      struct timeval tv;
+      tv.tv_sec = (int)floor(secSinceEpoch);
+      secSinceEpoch -= tv.tv_sec;
+      secSinceEpoch *= 1000000;
+      tv.tv_usec = (int)floor(secSinceEpoch);
+      Cuuid_t uuid = nullCuuid;
+      std::string strUuid  = rs->getString(2);
+      if (strUuid.length() > 0) {
+        string2Cuuid(&uuid, (char*)strUuid.c_str());
+      }
+      int priority = rs->getInt(3);
+      std::string msg = rs->getString(4);
+      fileid.fileid = (u_signed64)rs->getDouble(5);
+      strncpy(fileid.server, rs->getString(6).c_str(), CA_MAXHOSTNAMELEN);
+      std::string parameters = rs->getString(7);
+      // log to DLF
+      dlf_write_param_t params[] = {{(char*)"", DLF_MSG_PARAM_RAW, {(char*)parameters.c_str()}}};
+      ::dlf_writept(uuid, priority, msg.c_str(), &fileid, 1, params, &tv);
+      status = rs->next();
+    }
+    m_dumpDBLogsStatement->closeResultSet(rs);
+    // Now truncate the log table and commit. Note that we're sure
+    // no one else could have picked up data from this table
+    // as the previous statement took a table lock.
+    m_truncateDBLogsStatement->executeUpdate();
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage() << "Oracle exception caught: " << e.what();
     throw ex;
   }
 }

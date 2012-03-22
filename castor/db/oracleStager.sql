@@ -115,6 +115,15 @@ CREATE OR REPLACE PACKAGE castor AS
    errorcode INTEGER,
    errormessage VARCHAR2(2048));
   TYPE FileResult_Cur IS REF CURSOR RETURN FileResult;  
+  TYPE LogEntry IS RECORD (
+    timeinfo NUMBER,
+    uuid VARCHAR2(2048),
+    priority INTEGER,
+    msg VARCHAR2(2048),
+    fileId NUMBER,
+    nsHost VARCHAR2(2048),
+    params VARCHAR2(2048));
+  TYPE LogEntry_Cur IS REF CURSOR RETURN LogEntry;
 END castor;
 /
 
@@ -3457,5 +3466,17 @@ BEGIN
   DELETE FROM PriorityMap
    WHERE (euid = inUid OR inUid = -1)
      AND (egid = inGid OR inGid = -1);
+END;
+/
+
+
+/* PL/SQL method used by the stager to collect the logging made in the DB */
+CREATE OR REPLACE PROCEDURE dumpDBLogs(logEntries OUT castor.LogEntry_Cur) AS
+  unused NUMBER;
+BEGIN
+  -- if we got here, we have something in the log table, let's lock it and dump it
+  LOCK TABLE DLFLogs IN EXCLUSIVE MODE;
+  OPEN logEntries FOR
+    SELECT timeinfo, uuid, priority, msg, fileId, nsHost, params FROM DLFLogs;
 END;
 /

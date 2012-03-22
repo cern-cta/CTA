@@ -420,6 +420,13 @@ namespace castor {
                                           std::string defaultValue)
         throw (castor::exception::Exception) = 0;
 
+      /**
+       * Dumps the current logs from the db.
+       * The content is logged in DLF and then deleted.
+       */
+      virtual void dumpDBLogs()
+        throw (castor::exception::Exception) = 0;
+      
     }; // end of class IStagerSvc
 
   } // end of namespace stager

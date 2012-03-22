@@ -418,6 +418,13 @@ namespace castor {
                                             std::string defaultValue)
           throw (castor::exception::Exception);
 
+        /**
+         * Dumps the current logs from the db.
+         * The content is logged in DLF and then deleted.
+         */
+        virtual void dumpDBLogs()
+          throw (castor::exception::Exception);
+
       private:
 
         /**
@@ -577,6 +584,15 @@ namespace castor {
 
         /// SQL statement object for function getConfigOption
         oracle::occi::Statement *m_getConfigOptionStatement;
+
+        /// SQL statement for dumpDBLogs function
+        static const std::string s_dumpDBLogsString;
+        static const std::string s_truncateDBLogsString;
+
+        /// SQL statement object for dumpDBLogs function
+        oracle::occi::Statement *m_dumpDBLogsStatement;
+        oracle::occi::Statement *m_truncateDBLogsStatement;
+
       }; // end of class OraStagerSvc
 
     } // end of namespace ora

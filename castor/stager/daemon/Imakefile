@@ -58,7 +58,7 @@ DBSERVICEDAEMONBIN_SRCS = \
 	GcSvcThread.cpp \
 	ErrorSvcThread.cpp \
         JobSvcThread.cpp \
-	CleaningThread.cpp \
+	LoggingThread.cpp \
 	NsOverride.cpp
 
 DBSERVICEDAEMONBIN_OBJS = $(DBSERVICEDAEMONBIN_SRCS:.cpp=.o)

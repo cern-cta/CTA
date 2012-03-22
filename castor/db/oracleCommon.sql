@@ -343,3 +343,32 @@ WHEN LockError THEN
   NULL;
 END;
 /
+
+/* automatic logging procedure. The logs are then processed by the stager and sent to the rsyslog streams.
+   Note that the log will be commited at the same time as the rest of the transaction */
+CREATE OR REPLACE PROCEDURE logToDLF(uuid VARCHAR2,
+                                     priority INTEGER,
+                                     msg VARCHAR2,
+                                     fileId NUMBER,
+                                     nsHost VARCHAR2,
+                                     params VARCHAR2) AS
+BEGIN
+  INSERT INTO DLFLogs (timeinfo, uuid, priority, msg, fileId, nsHost, params)
+         VALUES (getTime(), uuid, priority, msg, fileId, nsHost, params);
+END;
+/
+
+/* automatic logging procedure. The logs are then processed by the stager and sent to the rsyslog streams.
+   This version runs in an autonomous transaction, so that logs are immediately commited */
+CREATE OR REPLACE PROCEDURE logToDLFAuto(uuid VARCHAR2,
+                                         priority INTEGER,
+                                         msg VARCHAR2,
+                                         fileId NUMBER,
+                                         nsHost VARCHAR2,
+                                         params VARCHAR2) AS
+  PRAGMA AUTONOMOUS_TRANSACTION;
+BEGIN
+  logToDLF(uuid, priority, msg, fileId, nsHost, params);
+  COMMIT;
+END;
+/

@@ -119,8 +119,6 @@ namespace castor {
       (std::vector<u_signed64> &diskCopyIds,
        std::string nsHost) throw() = 0;
        
-      // Formerly in the Cleaning service
-      
       /**
        * Removes requests older than a given timeout.
        * The timeout is retrieved from the configuration table in the db
@@ -128,13 +126,6 @@ namespace castor {
       virtual void removeTerminatedRequests()
         throw (castor::exception::Exception) = 0;
 
-      /**
-       * Dumps the current log table produced by the cleaning db job.
-       * The content is logged in DLF and then deleted.
-       */
-      virtual void dumpCleanupLogs()
-        throw (castor::exception::Exception) = 0;
-      
     }; // end of class IGCSvc
 
   } // end of namespace stager

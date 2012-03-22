@@ -153,25 +153,11 @@ EXTERN_C int dlf_regtext (unsigned int msgno,
 
 
 /* This function writes a log message to syslog using the LOG_LOCAL3 facility.
- * It essentially takes a variable argument list '...' and converts it to an
- * array of dlf_write_param_t structures which is passed to dlf_writep() along
- * with all the other arguments.
- *
- * @see syslog(), dlf_writep()
- */
-EXTERN_C int dlf_write (Cuuid_t reqid,
-			unsigned int priority,
-			unsigned int msgno,
-			struct Cns_fileid *ns,
-			int numparams,
-			...);
-
-
-/* This function writes a log message to syslog using the LOG_LOCAL3 facility.
+ * it is the core of the DLF API
  *
  * @param reqid     The unique request identifier associated with the message
  * @param priority  The priority of the message. One of DLF_LVL_*
- * @param msgno     The message number associated with the message to be logged
+ * @param msg       The message itself
  * @param ns        A pointer to a structure containing the CASTOR name server
  *                  invariant associated with the message. This consists of the
  *                  name server hostname and file id. If no invariant is
@@ -203,15 +189,27 @@ EXTERN_C int dlf_write (Cuuid_t reqid,
  */
 EXTERN_C int dlf_writept (Cuuid_t reqid,
                           unsigned int priority,
-                          unsigned int msgno,
+                          const char* msg,
                           struct Cns_fileid *ns,
                           unsigned int numparams,
                           dlf_write_param_t params[],
                           struct timeval *tv);
 
-/* This function writes a log message to syslog using the LOG_LOCAL3 facility.
- * See dlf_writep for the details. The only difference is that this function
- * takes no timestamp and will log with the current time
+/* This is a wrapper around dlf_writept
+ * The only difference is that this function takes no timestamp and will log with the current time
+ * This is deprecated
+ */
+EXTERN_C int dlf_writepm (Cuuid_t reqid,
+                          unsigned int priority,
+                          char* msg,
+                          struct Cns_fileid *ns,
+                          unsigned int numparams,
+                          dlf_write_param_t params[]);
+
+/* This is a wrapper around dlf_writepm
+ * The only difference is that this function takes a message number that will be translated
+ * to a string using preregistered messages.
+ * This is deprecated
  */
 EXTERN_C int dlf_writep (Cuuid_t reqid,
 			 unsigned int priority,
@@ -219,6 +217,19 @@ EXTERN_C int dlf_writep (Cuuid_t reqid,
 			 struct Cns_fileid *ns,
 			 unsigned int numparams,
 			 dlf_write_param_t params[]);
+
+/* This function is a wrapper around the dlf_writep function.
+ * the only difference is that it takes a variable argument list '...'
+ * rather than an array of dlf_write_param_t structures
+ * This is deprecated
+ */
+EXTERN_C int dlf_write (Cuuid_t reqid,
+			unsigned int priority,
+			unsigned int msgno,
+			struct Cns_fileid *ns,
+			int numparams,
+			...);
+
 
 /* Check to see if the DLF interface has been initialized
  * @returns 1 if the interface is initialized, 0 if not

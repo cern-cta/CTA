@@ -124,7 +124,6 @@ namespace castor{
         STAGER_GCSVC_FNSDEL = 120, /* "File deleted since it disappeared from nameserver" */
         STAGER_GCSVC_STGFILDEL = 125, /* "Invoking stgFilesDeleted" */
         STAGER_GCSVC_FSTGDEL = 126 , /* "File to be unlinked since it dissapeared from the stager" */
-        STAGER_GCSVC_CLEANUPDONE = 127, /* "Dump of the cleanup log completed, dropping db connection" */
 
         /************/
         /* ErrorSvc */
@@ -152,7 +151,12 @@ namespace castor{
         STAGER_JOBSVC_D2DCS = 146, /* Invoking disk2DiskCopyStart" */
         STAGER_JOBSVC_1STBWR = 147, /* "Invoking firstByteWritten"*/
         STAGER_JOBSVC_DELWWR = 148, /* "File was removed by another user while being modified" */
-        STAGER_JOBSVC_CHKMISMATCH = 154 /* "Preset checksum mismatch detected, invoking putFailed" */
+        STAGER_JOBSVC_CHKMISMATCH = 154, /* "Preset checksum mismatch detected, invoking putFailed" */
+
+        /**************/
+        /* LoggingSvc */
+        STAGER_LOGGING_DONE = 127,/* "Dump of the DB logs completed, dropping db connection" */
+        STAGER_LOGGING_EXCEPT = 156 /* "Unexpected exception caught" */
 
       };
     }// end namespace daemon

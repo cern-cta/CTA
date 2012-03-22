@@ -139,13 +139,6 @@ namespace castor {
          std::string nsHost) throw();
 	
         /**
-         * Dumps the current log table produced by the cleaning db job.
-         * The content is logged in DLF and then deleted.
-         */
-        virtual void dumpCleanupLogs()
-          throw (castor::exception::Exception);
-
-        /**
          * Removes requests older than a given timeout.
          * The timeout is retrieved from the configuration table in the db
          */
@@ -190,14 +183,6 @@ namespace castor {
         /// SQL statement for function stgFilesDeleted
         static const std::string s_stgFilesDeletedStatementString;
 	
-        /// SQL statement for dumpCleanupLogs function
-        static const std::string s_dumpCleanupLogsString;
-        static const std::string s_truncateCleanupLogsString;
-
-        /// SQL statement object for dumpCleanupLogs function
-        oracle::occi::Statement *m_dumpCleanupLogsStatement;
-        oracle::occi::Statement *m_truncateCleanupLogsStatement;
-
         /// SQL statement for removeTerminatedRequests function
         static const std::string s_removeTerminatedRequestsString;
 

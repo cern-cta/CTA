@@ -51,7 +51,7 @@
 #include "castor/stager/daemon/ErrorSvcThread.hpp"
 #include "castor/stager/daemon/JobSvcThread.hpp"
 #include "castor/stager/daemon/GcSvcThread.hpp"
-#include "castor/stager/daemon/CleaningThread.hpp"
+#include "castor/stager/daemon/LoggingThread.hpp"
 #include "castor/stager/daemon/NsOverride.hpp"
 #include "castor/stager/daemon/DlfMessages.hpp"
 
@@ -114,11 +114,11 @@ int main(int argc, char* argv[]){
        ("GcSvcThread",
 	new castor::stager::daemon::GcSvcThread()));
 
-    // This thread dumps the logs from the cleanup table
+    // This thread dumps the logs from the DB
     stagerDaemon.addThreadPool
       (new castor::server::SignalThreadPool
-       ("CleaningThread",
-	new castor::stager::daemon::CleaningThread(), 4000));
+       ("LoggingThread",
+	new castor::stager::daemon::LoggingThread(), 5));
 
     stagerDaemon.getThreadPool('J')->setNbThreads(10);
     stagerDaemon.getThreadPool('P')->setNbThreads(6);
@@ -128,7 +128,7 @@ int main(int argc, char* argv[]){
     stagerDaemon.getThreadPool('E')->setNbThreads(2);
     stagerDaemon.getThreadPool('j')->setNbThreads(6);
     stagerDaemon.getThreadPool('G')->setNbThreads(4);
-    stagerDaemon.getThreadPool('C')->setNbThreads(1);
+    stagerDaemon.getThreadPool('L')->setNbThreads(1);
 
     // Determine the notification port for the notifier thread pool. The port
     // will be used to recieve UDP notifications from the request handler to
@@ -284,7 +284,6 @@ castor::stager::daemon::StagerDaemon::StagerDaemon()
     { STAGER_GCSVC_STGFILDEL, "Invoking stgFilesDeleted"},
     { STAGER_GCSVC_FSTGDEL, "File to be unlinked since it disappeared from the stager"},
     { STAGER_GCSVC_FNSDEL, "File deleted since it disappeared from nameserver"},
-    { STAGER_GCSVC_CLEANUPDONE, "Dump of the cleanup log completed, dropping db connection"},
 
     /************/
     /* ErrorSvc */
@@ -313,6 +312,11 @@ castor::stager::daemon::StagerDaemon::StagerDaemon()
     { STAGER_JOBSVC_1STBWR,  "Invoking firstByteWritten"},
     { STAGER_JOBSVC_DELWWR,  "File was removed by another user while being modified"},
     { STAGER_JOBSVC_CHKMISMATCH, "Preset checksum mismatch detected, invoking putFailed"},
+
+    /**************/
+    /* LoggingSvc */
+    { STAGER_LOGGING_DONE,   "Dump of the DB logs completed"},
+    { STAGER_LOGGING_EXCEPT, "Unexpected exception caught"},
 
     { -1, "" }
 

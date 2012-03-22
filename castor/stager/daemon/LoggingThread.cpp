@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/stager/daemon/CleaningThread.cpp
+ *                castor/stager/daemon/LoggingThread.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,9 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: CleaningThread.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2009/03/05 11:45:42 $ $Author: itglp $
- *
- * Thread for logging database cleaning operations
+ * Thread for dumping database logs to DLF
  *
  * @author castor dev team
  *****************************************************************************/
@@ -31,43 +29,39 @@
 
 #include "castor/Constants.hpp"
 #include "castor/IService.hpp"
-#include "castor/stager/IGCSvc.hpp"
+#include "castor/stager/IStagerSvc.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/stager/daemon/DlfMessages.hpp"
 #include "castor/db/DbCnvSvc.hpp"
-#include "castor/stager/daemon/CleaningThread.hpp"
+#include "castor/stager/daemon/LoggingThread.hpp"
 
 //-----------------------------------------------------------------------------
 // run
 //-----------------------------------------------------------------------------
-void castor::stager::daemon::CleaningThread::run(void*) throw() {
+void castor::stager::daemon::LoggingThread::run(void*) throw() {
   try {
-    // get the GCSvc
+    // get the StagerSvc
     castor::Services* svcs = castor::BaseObject::services();
-    castor::IService* svc = svcs->service("DbGCSvc", castor::SVC_DBGCSVC);
-    castor::stager::IGCSvc *gcSvc = dynamic_cast<castor::stager::IGCSvc*>(svc);
+    castor::IService* svc = svcs->service("DbStagerSvc", castor::SVC_DBSTAGERSVC);
+    castor::stager::IStagerSvc *gcSvc = dynamic_cast<castor::stager::IStagerSvc*>(svc);
 
     // as dlopen is not reentrant (i.e., symbols might be still loading now due to the dlopen
     // of another thread), it may happen that the service is not yet valid or dynamic_cast fails.
     // In such a case we simply give up for this round.
     if(gcSvc == 0) return;
 
-    // actual work: dump the cleanup logs to DLF
-    gcSvc->dumpCleanupLogs();
+    // actual work: dump the DB logs to DLF
+    gcSvc->dumpDBLogs();
     
     // log we're done
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, STAGER_GCSVC_CLEANUPDONE);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, STAGER_LOGGING_DONE);
 
-    // now let's free up the database connection, which otherwise remains idle
-    svc = svcs->service("DbCnvSvc", castor::SVC_DBCNV);
-    castor::db::DbCnvSvc* dbSvc = dynamic_cast<castor::db::DbCnvSvc*>(svc);
-    dbSvc->reset();    
   } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("Function", "CleaningThread::run"),
+      {castor::dlf::Param("Function", "LoggingThread::run"),
        castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param("Code", e.code())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_GCSVC_EXCEPT, 3, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_LOGGING_EXCEPT, 3, params);
   }
 }

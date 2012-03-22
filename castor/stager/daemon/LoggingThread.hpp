@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/stager/daemon/CleaningThread.hpp
+ *                castor/stager/daemon/LoggingThread.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,15 +17,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: CleaningThread.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2008/05/30 07:30:42 $ $Author: itglp $
- *
- * Thread for logging database cleaning operations
+ * Thread for dumping database logs to DLF
  *
  * @author castor dev team
  *****************************************************************************/
 
-#ifndef STAGER_DAEMON_CLEANINGTHREAD_HPP
-#define STAGER_DAEMON_CLEANINGTHREAD_HPP 1
+#ifndef STAGER_DAEMON_LOGGINGTHREAD_HPP
+#define STAGER_DAEMON_LOGGINGTHREAD_HPP 1
 
 #include "castor/IObject.hpp"
 #include "castor/Services.hpp"
@@ -40,8 +38,8 @@ namespace castor {
     
     namespace daemon {
       
-      class CleaningThread : public virtual castor::server::IThread,
-                             public castor::BaseObject {
+      class LoggingThread : public virtual castor::server::IThread,
+                            public castor::BaseObject {
 	
       public:
 
@@ -51,7 +49,7 @@ namespace castor {
         virtual void init() {}
 
         /**
-         * Main work for this thread: dump the db cleaning activity to DLF
+         * Main work for this thread: dump the db logs to DLF
          */
         virtual void run(void* param) throw();
 
@@ -68,4 +66,4 @@ namespace castor {
   
 } //end namespace castor
 
-#endif
+#endif // STAGER_DAEMON_LOGGINGTHREAD_HPP
