@@ -714,18 +714,19 @@ static void dlf_openlog() {
     if (connect(LogFile, (struct sockaddr *)&SyslogAddr, sizeof(SyslogAddr)) == -1) {
       (void)close(LogFile);
       LogFile = -1;
-    } else
+    } else {
 #ifdef __APPLE__
       // MAC has has no MSG_NOSIGNAL
       // but >= 10.2 comes with SO_NOSIGPIPE
       int set = 1;
-    if (0 != setsockopt(LogFile, SOL_SOCKET, SO_NOSIGPIPE, &set, sizeof(int))) {
-      (void)close(LogFile);
-      LogFile = -1;
-      return;
-    }
+      if (0 != setsockopt(LogFile, SOL_SOCKET, SO_NOSIGPIPE, &set, sizeof(int))) {
+        (void)close(LogFile);
+        LogFile = -1;
+        return;
+      }
 #endif
-    connected = 1;
+      connected = 1;
+    }
   }
 }
 
