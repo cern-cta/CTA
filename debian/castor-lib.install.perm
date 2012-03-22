@@ -8,5 +8,3 @@
 %attr(-,root,root) usr/lib/libcastorclient.so.*
 %attr(-,root,root) usr/lib/libcastorvdqm.so.*
 %attr(-,root,root) usr/lib/libcastorvmgr.so.*
-%attr(0644,root,root) etc/castor/rsyslog.conf.client.example
-%attr(0644,root,root) etc/castor/rsyslog.conf.server.example
