@@ -50,7 +50,6 @@ import pickle as pk
 import sys
 import math
 import glob
-import math
 
 # Nedeed for debugging (human-readable dates):
 import datetime
@@ -453,7 +452,9 @@ class Counter(int):
 #######################################################################
 class CounterHz(int):
     """
-    Count how many times it is called. The argoument can be whatever. When returning data it divides by 300 (for a 5 min window)
+    Count how many times it is called. The argoument can be whatever.
+    NB : the division by the windows has to be handle later,
+    so we just return the count
     """
 
     def __init__(self,init_to=0):
@@ -468,7 +469,7 @@ class CounterHz(int):
         self.count+=1
 
     def getData(self):
-        return self.count/300
+        return self.count
         
   
  
@@ -1558,7 +1559,7 @@ class Bins:
         for subdic in bin:           
             if not depth==len(groupbykeys)-1:
                 # Again        
-                self.recursive_compute_data(self, bin[subdic], depth+1, groupbykeys) 
+                self.recursive_compute_data(bin[subdic], depth+1, groupbykeys) 
             else:
                 pos=0
                 
@@ -1608,7 +1609,10 @@ class Bins:
 #######################################################################
 
 class Metric:
-
+    
+    def __repr__(self):
+        return "<\'"+self.name+"\' metric instance>"
+    
     #---------------------------------------------------------------------------
     def __init__( self, name, window, nbins, conditions, groupbykeys, data, handle_unordered):
 
