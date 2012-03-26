@@ -31,7 +31,7 @@ BEGIN
   ROLLBACK;
   UPDATE UpgradeLog
      SET failureCount = failureCount + 1
-   WHERE schemaVersion = '2_1_8_3'
+   WHERE schemaVersion = '2_1_12_0'
      AND release = '2_1_12_1'
      AND state != 'COMPLETE';
   COMMIT;
@@ -52,7 +52,7 @@ END;
 /
 
 INSERT INTO UpgradeLog (schemaVersion, release, type)
-VALUES ('2_1_8_3', '2_1_12_1', 'TRANSPARENT');
+VALUES ('2_1_12_0', '2_1_12_1', 'TRANSPARENT');
 COMMIT;
 
 /* Recompile all invalid procedures, triggers and functions */
