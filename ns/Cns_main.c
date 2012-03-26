@@ -249,6 +249,12 @@ int Cns_main(struct main_args *main_args)
     if (!handle) {
       fprintf (stderr, "%s\n", dlerror());
     }
+    snprintf(filename, CA_MAXNAMELEN, "libCsec_plugin_GSI.so.%d.%d",
+             MAJORVERSION, MINORVERSION);
+    handle = dlopen (filename, RTLD_LAZY);
+    if (!handle) {
+      fprintf (stderr, "%s\n", dlerror());
+    }
   } else {
     if ((p = getenv (CNS_PORT_ENV)) ||
         ((p = getconfent (CNS_SCE, "PORT", 0)))) {
@@ -352,17 +358,11 @@ int getreq(struct Cns_srv_thread_info *thip,
   struct sockaddr_in from;
   socklen_t fromlen = sizeof(from);
   struct hostent *hp;
-  struct timeval tv;
   int l;
   unsigned int msglen;
   int n;
   char *rbp;
   char req_hdr[3*LONGSIZE];
-
-  /* Record the start time of the request */
-  gettimeofday(&tv, NULL);
-  thip->reqinfo.starttime =
-    ((double)tv.tv_sec * 1000) + ((double)tv.tv_usec / 1000);
 
   serrno = 0;
   l = netread_timeout (thip->s, req_hdr, sizeof(req_hdr), CNS_TIMEOUT);
@@ -720,26 +720,34 @@ void *
 doit(void *arg)
 {
   int c;
-  const char *clienthost = NULL;
-  const char *clientip = NULL;
   int magic;
   char *req_data;
   char reqbuf[REQBUFSZ-3*LONGSIZE];
   int req_type = 0;
   struct Cns_srv_thread_info *thip = (struct Cns_srv_thread_info *) arg;
+  struct timeval tv;
 
   /* There is a field in the Cns_srv_thread to specify if the socket is the
    * secure or not.It should be removed once the unsecure mode is not supported
    * anymore, and next "if" as well
    */
   char username[CA_MAXUSRNAMELEN+1];
-  int clientport;
-  struct sockaddr_in from;
-  socklen_t fromlen = sizeof(from);
-  struct hostent *hp;
-  char ipbuf[INET_ADDRSTRLEN];
+
+  /* Record the start time of the request */
+  gettimeofday(&tv, NULL);
+  thip->reqinfo.starttime =
+    ((double)tv.tv_sec * 1000) + ((double)tv.tv_usec / 1000);
 
   if (thip->secure) {
+    /* In secure mode, we try and extract info from the client for logging purposes */
+    const char *clientip = NULL;
+    int clientport;
+    const char *clienthost = NULL;
+    struct sockaddr_in from;
+    socklen_t fromlen = sizeof(from);
+    struct hostent *hp;
+    char ipbuf[INET_ADDRSTRLEN];
+    
     if (getpeername (thip->s, (struct sockaddr *) &from, &fromlen) < 0) {
       nslogit("MSG=\"Error: Failed to getpeername\" Function=\"getpeername\" "
               "Error=\"%s\" File=\"%s\" Line=%d",
@@ -761,9 +769,8 @@ doit(void *arg)
 
     Csec_server_reinitContext (&thip->sec_ctx, CSEC_SERVICE_TYPE_HOST, NULL);
     if (Csec_server_establishContext (&thip->sec_ctx, thip->s) < 0) {
-      nslogit("MSG=\"Error: Could not establish security context\" "
-              "IP=\"%s\" Port=%d Error=\"%s\"",
-              clientip, clientport, Csec_getErrorMessage());
+      nslogit("MSG=\"Error: Could not establish security context\" Error=\"%s\"",
+              Csec_getErrorMessage());
       sendrep (thip->s, CNS_RC, ESEC_NO_CONTEXT);
       thip->s = -1;
       return NULL;
@@ -773,9 +780,8 @@ doit(void *arg)
     if (Csec_mapToLocalUser (thip->Csec_mech, thip->Csec_auth_id,
                              username,CA_MAXUSRNAMELEN, &thip->Csec_uid
                              , &thip->Csec_gid) < 0) {
-      nslogit("MSG=\"Error: Could not map to local user\" IP=\"%s\" Port=%d "
-              "Error=\"%s\"",
-              clientip, clientport, sstrerror(serrno));
+      nslogit("MSG=\"Error: Could not map to local user\" Error=\"%s\"",
+              sstrerror(serrno));
       sendrep (thip->s, CNS_RC, serrno);
       thip->s = -1;
       return NULL;
