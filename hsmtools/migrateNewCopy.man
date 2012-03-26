@@ -11,7 +11,7 @@ fileId[:copynb]
 [...]
 .SH DESCRIPTION
 .B migrateNewCopy
-creates an extra copy of a file on tape for files that are already on disk
+creates/replaces a copy of a file on tape for files that are already on disk
 .LP
 .BI \-h,\ \-\-help
 Get usage information
@@ -25,8 +25,8 @@ the number of the copy to (re)create. If not given, this is set to 1.
 This program returns 0 if the operation was successful or 1 if the operation failed.
 .SH ERRORS
 This command will fail in case there is at least one of the files that is not on disk,
-in status STAGED. E.g. it will not trigger new migrations if one is already ongoing
-and it will not recall the file for you.
+in status STAGED or CANBEMIGR. In other words, no recall will be triggered.
+On top it will fail if a migration is already ongoing for one of the files and the for copy concerned.
 Note also that you need to have the proper migration routes defined in order to migrate the new copy.
 .SH EXAMPLES
 .nf
@@ -54,6 +54,9 @@ Done
 # migrateNewCopy 5001051293:2    # this is creating copy 2
 All files have been found on disk, triggering migrations
 Done
+
+# migrateNewCopy 5001051293:2    # this is trying to create copy 2 again
+Fileid 5001051293 already has a migration job for that copy. Giving up with the whole request
 
 <wait a bit>
 

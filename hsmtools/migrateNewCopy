@@ -71,16 +71,25 @@ try:
     stconn = castor_tools.connectToStager()
     stcur = stconn.cursor()
     stcur.arraysize = 50
-    stCheckSQL = 'SELECT Castorfile.Id, CastorFile.fileSize FROM DiskCopy, CastorFile WHERE fileId = :fid and Castorfile.Id = DiskCopy.castorfile and status = 0'
+    stCheckDCSQL = 'SELECT UNIQUE Castorfile.Id, CastorFile.fileSize, DiskCopy.status FROM DiskCopy, CastorFile WHERE fileId = :fid and Castorfile.Id = DiskCopy.castorfile AND status in (0, 10)'
+    stCheckMJSQL = 'SELECT MigrationJob.Id FROM MigrationJob WHERE castorFile=:cfId and destCopyNb=:copyNb'
     cfs = []
     for fileid, copynb in fileids:
-        stcur.execute(stCheckSQL, fid=fileid)
+        # check existence of a copy on disk
+        stcur.execute(stCheckDCSQL, fid=fileid)
         rows = stcur.fetchall()
         if len(rows) == 0:
           print 'Fileid ' + str(fileid) + ' has no staged copy on disk. Giving up with the whole request'
           sys.exit(1)
-        cfid, fs = rows[0]
-        cfs.append((cfid, fs, copynb))
+        # in case of CANBEMIGR files, check absence of Migration job
+        cfId, fs, status = rows[0]
+        if status == 10:
+          stcur.execute(stCheckMJSQL, cfId=cfId, copyNb=copynb)
+          rows = stcur.fetchall()
+          if len(rows) != 0:
+            print 'Fileid ' + str(fileid) + ' already has a migration job for that copy. Giving up with the whole request'
+            sys.exit(1)
+        cfs.append((cfId, fs, copynb))
     print 'All files have been found on disk, triggering migrations'
     stMigSQL = '''DECLARE
                     tcId INTEGER;
