@@ -239,21 +239,14 @@ int Cns_main(struct main_args *main_args)
     } else {
       sin.sin_port = htons ((unsigned short)CNS_SEC_PORT);
     }
-    /* Temporary workaround till we come up with something more clever to fix
-     * bug related with the KRB5 and GSI mixed libraries
-     */
+    /* Pre-load the KRB5 plugin library */
     char filename[CA_MAXNAMELEN];
     snprintf(filename, CA_MAXNAMELEN, "libCsec_plugin_KRB5.so.%d.%d",
              MAJORVERSION, MINORVERSION);
     void *handle = dlopen (filename, RTLD_LAZY);
     if (!handle) {
-      fprintf (stderr, "%s\n", dlerror());
-    }
-    snprintf(filename, CA_MAXNAMELEN, "libCsec_plugin_GSI.so.%d.%d",
-             MAJORVERSION, MINORVERSION);
-    handle = dlopen (filename, RTLD_LAZY);
-    if (!handle) {
-      fprintf (stderr, "%s\n", dlerror());
+      nslogit("MSG=\"Error: failed to load the KRB5 plugin library\" "
+              "Error=\"%s\"", dlerror());
     }
   } else {
     if ((p = getenv (CNS_PORT_ENV)) ||
