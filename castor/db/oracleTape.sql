@@ -310,17 +310,3 @@ BEGIN
 END;
 /
 
-/*
- * Database jobs
- */
-BEGIN
-  -- Remove database jobs before recreating them
-  FOR j IN (SELECT job_name FROM user_scheduler_jobs
-             WHERE job_name IN ('MIGRATIONMOUNTSJOB'))
-  LOOP
-    DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
-  END LOOP;
-
-END;
-/
-

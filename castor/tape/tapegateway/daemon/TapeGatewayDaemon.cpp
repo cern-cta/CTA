@@ -53,7 +53,6 @@
 #include "castor/tape/tapegateway/daemon/TapeMigrationMountLinkerThread.hpp"
 #include "castor/tape/tapegateway/daemon/VdqmRequestsCheckerThread.hpp"
 #include "castor/tape/tapegateway/daemon/VdqmRequestsProducerThread.hpp"
-#include "castor/tape/tapegateway/daemon/MigrationMountProducerThread.hpp"
 #include "castor/tape/tapegateway/daemon/WorkerThread.hpp"
 #include "castor/tape/tapegateway/TapeGatewayDlfMessageConstants.hpp"
 
@@ -198,11 +197,7 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
   runAsStagerSuperuser();
 
   // The order of the thread here match the lifecycle of the tape migration action
-  // Migration mount producer thread
-  std::auto_ptr<castor::tape::tapegateway::MigrationMountProducerThread> mmThread(new castor::tape::tapegateway::MigrationMountProducerThread());
-  std::auto_ptr<castor::server::SignalThreadPool> mmPool(new castor::server::SignalThreadPool("A-MigrationMountProducerThread", mmThread.release(), DEFAULT_SLEEP_INTERVAL));
-  addThreadPool(mmPool.release());
-  getThreadPool('A')->setNbThreads(1);
+  // Migration mount ('A' is running as a DB job)
 
   // query vmgr for tape and tapepools
   std::auto_ptr<castor::tape::tapegateway::TapeMigrationMountLinkerThread> tsThread(new castor::tape::tapegateway::TapeMigrationMountLinkerThread());

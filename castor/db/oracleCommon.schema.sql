@@ -454,16 +454,6 @@ CREATE GLOBAL TEMPORARY TABLE ProcessRepackAbortHelperSR (srId NUMBER) ON COMMIT
 CREATE GLOBAL TEMPORARY TABLE ProcessRepackAbortHelperDCrec (cfId NUMBER) ON COMMIT DELETE ROWS;
 CREATE GLOBAL TEMPORARY TABLE ProcessRepackAbortHelperDCmigr (cfId NUMBER) ON COMMIT DELETE ROWS;
 
-/* Global temporary table to store reports from tg_startMigrationMounts */
-CREATE GLOBAL TEMPORARY TABLE startMigMountReportHelper (
-    tapePool       VARCHAR2(2048),
-    requestID      NUMBER,
-    sizeQueued     NUMBER,
-    filesQueued    NUMBER,
-    mountsBefore   NUMBER,
-    mountsCreated  NUMBER,
-    mountsAfter    NUMBER) ON COMMIT DELETE ROWS;
-
 /* Table to log the DB activity */
 CREATE TABLE DLFLogs
   (timeinfo NUMBER,

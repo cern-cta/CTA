@@ -101,8 +101,7 @@ castor::tape::tapegateway::ora::OraTapeGatewaySvc::OraTapeGatewaySvc(const std::
   m_deleteTapeRequestStatement(0),
   m_flagTapeFullForMigrationSession(0),
   m_getMigrationMountVid(0),
-  m_dropSuperfluousSegmentStatement(0),
-  m_startMigrationMounts(0)
+  m_dropSuperfluousSegmentStatement(0)
 {
 }
 
@@ -162,7 +161,6 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
     if ( m_flagTapeFullForMigrationSession) deleteStatement(m_flagTapeFullForMigrationSession);
     if ( m_getMigrationMountVid) deleteStatement(m_getMigrationMountVid);
     if ( m_dropSuperfluousSegmentStatement) deleteStatement(m_dropSuperfluousSegmentStatement);
-    if ( m_startMigrationMounts) deleteStatement(m_startMigrationMounts);
   } catch (castor::exception::Exception& ignored) {};
   // Now reset all pointers to 0
   m_getMigrationMountsWithoutTapesStatement= 0; 
@@ -192,7 +190,6 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
   m_flagTapeFullForMigrationSession=0;
   m_getMigrationMountVid=0;
   m_dropSuperfluousSegmentStatement=0;
-  m_startMigrationMounts = 0;
 }
 
 //----------------------------------------------------------------------------
@@ -1791,63 +1788,6 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getMigrationMountVid(Fil
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in getMigrationMountVid"
-      << std::endl << e.what();
-    throw ex;
-  }
-}
-
-
-// Scan all the tapepools in the database and create new
-// migration mounts where tapepool policy allows (depending on the
-// pending migrations).
-// The result of the policy for each tapepool is returned as a pointer to
-// a vector of StartMigrationMountReport.
-// The de-allocation of the vector is the duty of the caller.
-void castor::tape::tapegateway::ora::OraTapeGatewaySvc::startMigrationMounts (std::vector<StartMigrationMountReport> & result)
-{
-  try {
-    if (!m_startMigrationMounts) {
-      m_startMigrationMounts =
-          createStatement("BEGIN tg_startMigrationMounts(:1);END;");
-      m_startMigrationMounts->registerOutParam (1, oracle::occi::OCCICURSOR);
-    }
-    // The data is committed in SQL, but we need a final commit (or rollback) to clean up
-    // the temporary table that contains the reports.
-    scopedRollback scpRollback (this);
-    // Execute the query
-    m_startMigrationMounts->executeUpdate();
-    // Identify the structure of the cursor.
-    castor::db::ora::SmartOcciResultSet rs (m_startMigrationMounts, m_startMigrationMounts->getCursor(1));
-    resultSetIntrospector resIntros(rs.get());
-    int tpIdx = resIntros.findColumnIndex(     "TAPEPOOL", oracle::occi::OCCI_SQLT_CHR);
-    int rqIdx = resIntros.findColumnIndex(    "REQUESTID", oracle::occi::OCCI_SQLT_NUM);
-    int sqIdx = resIntros.findColumnIndex(   "SIZEQUEUED", oracle::occi::OCCI_SQLT_NUM);
-    int fqIdx = resIntros.findColumnIndex(  "FILESQUEUED", oracle::occi::OCCI_SQLT_NUM);
-    int mbIdx = resIntros.findColumnIndex( "MOUNTSBEFORE", oracle::occi::OCCI_SQLT_NUM);
-    int mcIdx = resIntros.findColumnIndex("MOUNTSCREATED", oracle::occi::OCCI_SQLT_NUM);
-    int maIdx = resIntros.findColumnIndex(  "MOUNTSAFTER", oracle::occi::OCCI_SQLT_NUM);
-    // run through the cursor
-    while( rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
-      castor::tape::tapegateway::ITapeGatewaySvc::StartMigrationMountReport smmReport;
-      smmReport.tapepool   =                        rs->getString(tpIdx);
-      smmReport.requestId =     (uint64_t) (double) occiNumber(rs->getNumber(rqIdx));
-      smmReport.sizeQueued =    (uint64_t) (double) occiNumber(rs->getNumber(sqIdx));
-      smmReport.filesQueued =   (uint64_t) (double) occiNumber(rs->getNumber(fqIdx));
-      smmReport.mountsBefore =                (int) occiNumber(rs->getNumber(mbIdx));
-      smmReport.mountsCreated =               (int) occiNumber(rs->getNumber(mcIdx));
-      smmReport.mountsAfter =                 (int) occiNumber(rs->getNumber(maIdx));
-      result.push_back(smmReport);
-    }
-    // Close result set and transaction. clean temp DB table.
-    rs.close();
-    commit();
-    scpRollback.disengage();
-    return;
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in startMigrationMounts"
       << std::endl << e.what();
     throw ex;
   }

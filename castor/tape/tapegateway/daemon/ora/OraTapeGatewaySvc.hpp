@@ -226,14 +226,6 @@ namespace ora         {
     virtual void getMigrationMountVid(FileMigratedNotification & fileMigrated,
         std::string& vid, std::string& tapePool);
 
-    // Scan all the tapepools in the database and create new
-    // migration mounts where tapepool policy allows (depending on the
-    // pending migrations).
-    // The result of the policy for each tapepool is returned as a pointer to
-    // a vector of StartMigrationMountReport.
-    // The de-allocation of the vector is the duty of the caller.
-    virtual void startMigrationMounts (std::vector<StartMigrationMountReport> & result);
-
     // To directly commit 
     virtual void commit()
       throw (castor::exception::Exception);
@@ -276,7 +268,6 @@ namespace ora         {
     oracle::occi::Statement *m_flagTapeFullForMigrationSession;
     oracle::occi::Statement *m_getMigrationMountVid;
     oracle::occi::Statement *m_dropSuperfluousSegmentStatement;
-    oracle::occi::Statement *m_startMigrationMounts;
 
     // Private helper class used to introspect cursors, making the OCCI code independent of the order of elements
     // in the cursor (especially with %ROWTYPE contexts).

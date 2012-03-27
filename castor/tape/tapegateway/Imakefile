@@ -51,7 +51,6 @@ TAPEGATEWAYDBIN_SRCS = \
 	daemon/RecallerErrorHandlerThread.cpp \
 	daemon/TapeGatewayDaemon.cpp \
 	daemon/TapeGatewayMain.cpp \
-	daemon/MigrationMountProducerThread.cpp \
 	daemon/TapeMigrationMountLinkerThread.cpp  \
 	daemon/VdqmRequestsCheckerThread.cpp  \
 	daemon/VdqmRequestsProducerThread.cpp \
