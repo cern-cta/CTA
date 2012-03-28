@@ -65,7 +65,7 @@ try:
            (SELECT diskPool, count(*) nbFileSystems
               FROM FileSystem
              GROUP BY diskPool) FileSystems,
-           (SELECT DiskPool2SvcClass.parent AS diskPoolId, collect(SvcClass.name) AS names
+           (SELECT DiskPool2SvcClass.parent AS diskPoolId, cast(collect(SvcClass.name) AS strListTable) AS names
               FROM DiskPool2SvcClass, SvcClass
              WHERE SvcClass.id = DiskPool2SvcClass.child
              GROUP BY parent) SvcClasses

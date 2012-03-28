@@ -76,7 +76,7 @@ try:
            SvcClass.maxReplicaNb, FileClass.name, SvcClass.replicateonclose, SvcClass.recallerPolicy,
            SvcClass.disk1behavior, SvcClass.id, DiskPools.names, SvcClass.lastEditor, SvcClass.lastEditionTime
       FROM SvcClass, FileClass,
-           (SELECT DiskPool2SvcClass.child AS svcClassId, collect(DiskPool.name) AS names
+           (SELECT DiskPool2SvcClass.child AS svcClassId, cast(collect(DiskPool.name) AS strListTable) AS names
               FROM DiskPool2SvcClass, DiskPool
              WHERE DiskPool.id = DiskPool2SvcClass.parent
              GROUP BY child) DiskPools
