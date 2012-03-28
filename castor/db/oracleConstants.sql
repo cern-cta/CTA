@@ -152,6 +152,11 @@ AS
   /* messages */
   FILE_DROPPED_BY_CLEANING CONSTANT     VARCHAR2(2048) := 'File was dropped by internal cleaning';
   PUTDONE_ENFORCED_BY_CLEANING CONSTANT VARCHAR2(2048) := 'PutDone enforced by internal cleaning';
+  MOUNT_PRODUCER_NO_FILE CONSTANT       VARCHAR2(2048) := 'startMigrationMounts: failed migration mount creation due to lack of files';
+  MOUNT_PRODUCER_AGE_NO_FILE CONSTANT   VARCHAR2(2048) := 'startMigrationMounts: failed migration mount creation base on age due to lack of files';
+  MOUNT_PRODUCER_NEW_MOUNT CONSTANT     VARCHAR2(2048) := 'startMigrationMounts: created new migration mount';
+  MOUNT_PRODUCER_NEW_MOUNT_AGE CONSTANT VARCHAR2(2048) := 'startMigrationMounts: created new migration mount based on age';
+  MOUNT_PRODUCER_NOACTION CONSTANT      VARCHAR2(2048) := 'startMigrationMounts: no need for new migration mount';
 
 END dlf;
 /

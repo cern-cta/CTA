@@ -177,12 +177,7 @@ castor::dlf::Message castor::tape::tapegateway::TapeGatewayDaemon::s_dlfMessages
 {LINKER_VMGR_NS_DISCREPANCY, "TapeMigrationMountLinker: NS/VMGR mismatch for highest FSEQ. Putting the tape readonly"},
 {WORKER_SUPERFLUOUS_SEGMENT, "Worker: Name server declared segment was extra/unnecessary: considering migration done"},
 {WORKER_RECALL_CANNOT_UPDATE_DB, "Worker: cannot update db for recalled file"},
-{MOUNT_PRODUCER_START, "MigrationMountProducer: calling the DB procedure"},
-{MOUNT_PRODUCER_DB_ERROR, "MigrationMountProducer: failure calling the DB procedure"},
-{MOUNT_PRODUCER_REPORT, "MigrationMountProducer: created new migration mount"},
-{MOUNT_PRODUCER_REPORT_NO_ACTION, "MigrationMountProducer: no need for new migration mount"},
 {LINKER_CANNOT_RELEASE_TAPE, "TapeMigrationMountLinker: cannot release BUSY tape after failed DB update"},
 {MIG_ERROR_DB_ERROR, "MigratorErrorHandlerThread: error fetching from the DB"},
-{MOUNT_PRODUCER_REPORT_NO_FILE, "MigrationMountProducer: rolled back migration mount creation due to lack of jobs"},
 {REC_ERROR_DB_ERROR, "RecallerErrorHandlerThread: error fetching from the DB"},
 {-1, ""}};

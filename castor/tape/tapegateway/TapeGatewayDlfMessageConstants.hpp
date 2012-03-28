@@ -181,13 +181,8 @@ LINKER_VMGRSETTOREADONLY_FAILED=145, /* "TapeMigrationMountLinker: failed to set
 LINKER_VMGR_NS_DISCREPANCY=146, /* "TapeMigrationMountLinker: NS/VMGR mismatch for highest FSEQ. Putting the tape readonly" */
 WORKER_SUPERFLUOUS_SEGMENT=147, /* "Worker: Name server declared segment was extra/unnecessary: considering migration done" */
 WORKER_RECALL_CANNOT_UPDATE_DB=148, /* "Worker: cannot update db for recalled file" */
-MOUNT_PRODUCER_START=149, /* "MigrationMountProducer: calling the DB procedure" */
-MOUNT_PRODUCER_DB_ERROR=150, /* "MigrationMountProducer: failure calling the DB procedure" */
-MOUNT_PRODUCER_REPORT=151, /* "MigrationMountProducer: created new migration mount" */
-MOUNT_PRODUCER_REPORT_NO_ACTION=152, /* "MigrationMountProducer: no need for new migration mount" */
 LINKER_CANNOT_RELEASE_TAPE=153, /* "TapeMigrationMountLinker: cannot release BUSY tape after failed DB update" */
 MIG_ERROR_DB_ERROR=154, /* "MigratorErrorHandlerThread: error fetching from the DB" */
-MOUNT_PRODUCER_REPORT_NO_FILE=155, /* "MigrationMountProducer: rolled back migration mount creation due to lack of jobs" */
 REC_ERROR_DB_ERROR=156 /* "RecallerErrorHandlerThread: error fetching from the DB" */
 }; // enum TapeGatewayDlfMessages
 } // namespace tapegateway
