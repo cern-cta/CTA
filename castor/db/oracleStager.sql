@@ -122,6 +122,7 @@ CREATE OR REPLACE PACKAGE castor AS
     msg VARCHAR2(2048),
     fileId NUMBER,
     nsHost VARCHAR2(2048),
+    source VARCHAR2(2048),
     params VARCHAR2(2048));
   TYPE LogEntry_Cur IS REF CURSOR RETURN LogEntry;
 END castor;
@@ -3477,6 +3478,6 @@ BEGIN
   -- if we got here, we have something in the log table, let's lock it and dump it
   LOCK TABLE DLFLogs IN EXCLUSIVE MODE;
   OPEN logEntries FOR
-    SELECT timeinfo, uuid, priority, msg, fileId, nsHost, params FROM DLFLogs;
+    SELECT timeinfo, uuid, priority, msg, fileId, nsHost, source, params FROM DLFLogs;
 END;
 /

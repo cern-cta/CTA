@@ -1734,7 +1734,7 @@ BEGIN
       varNbExtraMounts := varNbExtraMounts + 1;
       IF varTGRequestId = 0 THEN
         -- log "startMigrationMounts: failed migration mount creation due to lack of files"
-        logToDLF(NULL, dlf.LVL_WARNING, dlf.MOUNT_PRODUCER_NO_FILE, 0, '',
+        logToDLF(NULL, dlf.LVL_WARNING, dlf.MOUNT_PRODUCER_NO_FILE, 0, '', 'tapegatewayd',
                  'tapePool=' || t.name ||
                  ' nbExistingMounts=' || TO_CHAR(varNbMounts) ||
                  ' dataAmountInQueue=' || TO_CHAR(varDataAmount) ||
@@ -1745,7 +1745,7 @@ BEGIN
         EXIT;
       ELSE
         -- log "startMigrationMounts: created new migration mount"
-        logToDLF(NULL, dlf.LVL_SYSTEM, dlf.MOUNT_PRODUCER_NEW_MOUNT, 0, '',
+        logToDLF(NULL, dlf.LVL_SYSTEM, dlf.MOUNT_PRODUCER_NEW_MOUNT, 0, '', 'tapegatewayd',
                  'mountTransactionId=' || TO_CHAR(varTGRequestId) ||
                  ' tapePool=' || t.name ||
                  ' nbExistingMounts=' || TO_CHAR(varNbMounts) ||
@@ -1760,7 +1760,7 @@ BEGIN
       insertMigrationMount(t.id, varTGRequestId);
       IF varTGRequestId = 0 THEN
         -- log "startMigrationMounts: failed migration mount creation due to lack of files"
-        logToDLF(NULL, dlf.LVL_WARNING, dlf.MOUNT_PRODUCER_AGE_NO_FILE, 0, '',
+        logToDLF(NULL, dlf.LVL_WARNING, dlf.MOUNT_PRODUCER_AGE_NO_FILE, 0, '', 'tapegatewayd',
                  'tapePool=' || t.name ||
                  ' nbExistingMounts=' || TO_CHAR(varNbMounts) ||
                  ' dataAmountInQueue=' || TO_CHAR(varDataAmount) ||
@@ -1768,7 +1768,7 @@ BEGIN
                  ' oldestCreationTime=' || TO_CHAR(varOldestCreationTime));
       ELSE
         -- log "startMigrationMounts: created new migration mount based on age"
-        logToDLF(NULL, dlf.LVL_SYSTEM, dlf.MOUNT_PRODUCER_NEW_MOUNT_AGE, 0, '',
+        logToDLF(NULL, dlf.LVL_SYSTEM, dlf.MOUNT_PRODUCER_NEW_MOUNT_AGE, 0, '', 'tapegatewayd',
                  'mountTransactionId=' || TO_CHAR(varTGRequestId) ||
                  ' tapePool=' || t.name ||
                  ' nbExistingMounts=' || TO_CHAR(varNbMounts) ||
@@ -1779,7 +1779,7 @@ BEGIN
     ELSE
       IF varNbExtraMounts = 0 THEN 
         -- log "startMigrationMounts: no need for new migration mount"
-        logToDLF(NULL, dlf.LVL_DEBUG, dlf.MOUNT_PRODUCER_NOACTION, 0, '',
+        logToDLF(NULL, dlf.LVL_DEBUG, dlf.MOUNT_PRODUCER_NOACTION, 0, '', 'tapegatewayd',
                  'tapePool=' || t.name ||
                  ' nbExistingMounts=' || TO_CHAR(varNbMounts) ||
                  ' dataAmountInQueue=' || TO_CHAR(nvl(varDataAmount,0)) ||

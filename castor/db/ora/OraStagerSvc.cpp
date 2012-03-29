@@ -1831,10 +1831,11 @@ void castor::db::ora::OraStagerSvc::dumpDBLogs()
       std::string msg = rs->getString(4);
       fileid.fileid = (u_signed64)rs->getDouble(5);
       strncpy(fileid.server, rs->getString(6).c_str(), CA_MAXHOSTNAMELEN);
-      std::string parameters = rs->getString(7);
+      std::string source = rs->getString(7);
+      std::string parameters = rs->getString(8);
       // log to DLF
       dlf_write_param_t params[] = {{(char*)"", DLF_MSG_PARAM_RAW, {(char*)parameters.c_str()}}};
-      ::dlf_writept(uuid, priority, msg.c_str(), &fileid, 1, params, &tv);
+      ::dlf_writept(uuid, priority, msg.c_str(), &fileid, 1, params, &tv, source.c_str(), 0);
       status = rs->next();
     }
     m_dumpDBLogsStatement->closeResultSet(rs);

@@ -165,6 +165,8 @@ EXTERN_C int dlf_regtext (unsigned int msgno,
  * @param numparams The number of log message parameters
  * @param params    An array of dlf_write_param_t structures
  * @param tv        The timestamp of the log message
+ * @param source    The log source
+ * @param sourcepid The log source's pid
  *
  * @return On success zero is returned, On error, -1 is returned, and error is
  *         set appropriately.
@@ -193,10 +195,13 @@ EXTERN_C int dlf_writept (Cuuid_t reqid,
                           struct Cns_fileid *ns,
                           unsigned int numparams,
                           dlf_write_param_t params[],
-                          struct timeval *tv);
+                          struct timeval *tv,
+                          const char* source,
+                          unsigned int sourcepid);
 
 /* This is a wrapper around dlf_writept
- * The only difference is that this function takes no timestamp and will log with the current time
+ * The only difference is that this function takes no timestamp and no source.
+ * It will log with the current time and use program name and process id of the logging thread
  * This is deprecated
  */
 EXTERN_C int dlf_writepm (Cuuid_t reqid,

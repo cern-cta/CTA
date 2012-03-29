@@ -351,10 +351,11 @@ CREATE OR REPLACE PROCEDURE logToDLF(uuid VARCHAR2,
                                      msg VARCHAR2,
                                      fileId NUMBER,
                                      nsHost VARCHAR2,
+                                     source VARCHAR2,
                                      params VARCHAR2) AS
 BEGIN
-  INSERT INTO DLFLogs (timeinfo, uuid, priority, msg, fileId, nsHost, params)
-         VALUES (getTime(), uuid, priority, msg, fileId, nsHost, params);
+  INSERT INTO DLFLogs (timeinfo, uuid, priority, msg, fileId, nsHost, source, params)
+         VALUES (getTime(), uuid, priority, msg, fileId, nsHost, source, params);
 END;
 /
 
@@ -365,10 +366,11 @@ CREATE OR REPLACE PROCEDURE logToDLFAuto(uuid VARCHAR2,
                                          msg VARCHAR2,
                                          fileId NUMBER,
                                          nsHost VARCHAR2,
+                                         source VARCHAR2,
                                          params VARCHAR2) AS
   PRAGMA AUTONOMOUS_TRANSACTION;
 BEGIN
-  logToDLF(uuid, priority, msg, fileId, nsHost, params);
+  logToDLF(uuid, priority, msg, fileId, nsHost, source, params);
   COMMIT;
 END;
 /

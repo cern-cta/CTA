@@ -460,8 +460,9 @@ CREATE TABLE DLFLogs
    uuid VARCHAR2(2048),
    priority INTEGER CONSTRAINT NN_DLFLogs_Priority NOT NULL,
    msg VARCHAR2(2048) CONSTRAINT NN_DLFLogs_Msg NOT NULL,
-   fileId NUMBER CONSTRAINT NN_DLFLogs_FileId NOT NULL,
-   nsHost VARCHAR2(2048) CONSTRAINT NN_DLFLogs_NsHost NOT NULL,
+   fileId NUMBER,
+   nsHost VARCHAR2(2048),
+   source VARCHAR2(2048),
    params VARCHAR2(2048));
  
 /* Temporary table to handle removing of priviledges */

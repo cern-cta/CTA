@@ -418,7 +418,10 @@ int dlf_write(Cuuid_t reqid,
 static int build_syslog_header(char *buffer,
                                int buflen,
                                int priority,
-                               struct timeval *tv) {
+                               struct timeval *tv,
+                               const char* source,
+                               const unsigned int sourcepid) {
+  const char* usedsource;
   struct tm tmp;
   int len = snprintf(buffer, buflen, "<%d>", priority);
   localtime_r(&(tv->tv_sec), &tmp);
@@ -429,7 +432,11 @@ static int build_syslog_header(char *buffer,
   buffer[len-2] = buffer[len-3];
   buffer[len-3] = buffer[len-4];
   buffer[len-4] = ':';
-  len += snprintf(buffer + len, buflen - len, "%s[%d]: ", progname, getpid());
+  // if no source given, you by default the name of the process in which we run
+  usedsource = source;
+  if (!usedsource) usedsource = progname;
+  // print source and pid
+  len += snprintf(buffer + len, buflen - len, "%s[%d]: ", usedsource, sourcepid);
   return len;
 }
 
@@ -480,7 +487,7 @@ int dlf_writep(Cuuid_t reqid,
         int tmpbuflen;
         struct timeval tv;
         gettimeofday(&tv, NULL);
-        tmpbuflen = build_syslog_header(tmpbuffer, DLF_MAX_LINELEN * 2, LOG_INFO | LOG_LOCAL2, &tv);
+        tmpbuflen = build_syslog_header(tmpbuffer, DLF_MAX_LINELEN * 2, LOG_INFO | LOG_LOCAL2, &tv,0,getpid());
         tmpbuflen += snprintf(tmpbuffer + tmpbuflen, DLF_MAX_LINELEN * 2 - tmpbuflen,
                               "MSGNO=%u MSGTEXT=\"%s\"\n", msgno, msg);
         dlf_syslog(tmpbuffer, tmpbuflen);
@@ -507,7 +514,7 @@ int dlf_writepm(Cuuid_t reqid,
   struct timeval tv;
   gettimeofday(&tv, NULL);
   // and call actual logging method
-  return dlf_writept(reqid, priority, msg, ns, numparams, params, &tv);
+  return dlf_writept(reqid, priority, msg, ns, numparams, params, &tv, 0, getpid());
 }
 
 /*---------------------------------------------------------------------------
@@ -524,7 +531,9 @@ int dlf_writept(Cuuid_t reqid,
                 struct Cns_fileid *ns,
                 unsigned int numparams,
                 dlf_write_param_t params[],
-                struct timeval *tv) {
+                struct timeval *tv,
+                const char* source,
+                unsigned int sourcepid) {
 
   /* Variables */
   char   uuidstr[CUUID_STRING_LEN + 1];
@@ -562,7 +571,7 @@ int dlf_writept(Cuuid_t reqid,
   }
 
   /* start message with priority, time, program and PID (syslog standard format) */
-  len += build_syslog_header(buffer, maxmsglen - len, priority | LOG_LOCAL3, tv);
+  len += build_syslog_header(buffer, maxmsglen - len, priority | LOG_LOCAL3, tv, source, sourcepid);
 
   /* append the log level, the thread id and the message text */
 #ifdef __APPLE__
