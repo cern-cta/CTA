@@ -226,7 +226,9 @@ ALTER TABLE MigratedSegment ADD CONSTRAINT FK_MigratedSegment_CastorFile
 /* Definition of the MigrationJob table
  *   fileSize : size of the file to be migrated, in bytes
  *   VID : tape on which the file is being migrated (when applicable)
- *   creationTime : time of creation of this MigrationJob, in seconds since the epoch
+ *   creationTime : time of creation of this MigrationJob, in seconds since the epoch.
+ *                  In case the MigrationJob went through a "WAITINGONRECALL" status,
+ *                  time when it (re)entered the "PENDING" state
  *   castorFile : the file to migrate
  *   originalVID :  in case of repack, the VID of the tape where the original copy is leaving
  *   originalCopyNb : in case of repack, the number of the original copy being replaced

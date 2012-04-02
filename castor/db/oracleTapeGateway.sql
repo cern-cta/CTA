@@ -1231,8 +1231,13 @@ BEGIN
   varGcWeightProc := castorGC.getRecallWeight(varSvcClassId);
   EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || varGcWeightProc || '(:size); END;'
     USING OUT varGcWeight, IN varFileSize;
-  -- trigger the migration of additionnal/repack copies
-  UPDATE MigrationJob SET status = tconst.MIGRATIONJOB_PENDING
+  -- trigger the migration of additionnal/repack copies.
+  -- Note that we reset the creation time as if the MigrationJob was created right now
+  -- this is because "creationTime" is actually the time of entering the "PENDING" state
+  -- in the cases where the migrationJob went through a WAITINGONRECALL state
+  UPDATE MigrationJob
+     SET status = tconst.MIGRATIONJOB_PENDING,
+         creationTime = getTime()
    WHERE status = tconst.MIGRATIONJOB_WAITINGONRECALL
      AND castorFile = varCfId;
   varNbMigrationsStarted := SQL%ROWCOUNT;
