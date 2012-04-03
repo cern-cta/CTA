@@ -23,7 +23,7 @@ COMM Makefile for the CASTOR2 scheduler
 COMM
 COMM @author Castor Dev team, castor-dev@cern.ch
 
-InstallSubTree(castormon,/var/www,0644,install)
+InstallSubTree(castormon,/var/www,0755,install)
 
 LOGROTATE(castor-cockpit,install)
 

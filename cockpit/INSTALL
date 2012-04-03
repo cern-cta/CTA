@@ -12,6 +12,7 @@
 
 4*) change database login/password in castormon/settings.py (marked with @TODO)
 4bis*) change the SECRET_KEY in castormon/settings.py !! (marked with @TODO)
+4ter*) change the server name in httpd cokcpit config file (by default /etc/httpd/conf.d/cockpit.conf)
 
 5*) create cockpit database using :
 
