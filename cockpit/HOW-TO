@@ -1,0 +1,34 @@
+HOW TO :
+
+
+*) ADD A METRIC IN THE COCKPIT :
+
+    - write the metric file and put it in "logprocessord/metrics"
+    - avoid the words "-lemon" and "-test"  in the name (both file and metric name), as it is used to determine whether a metric is used by the lemon sensor
+
+
+
+*) UPDATE COCKPIT RPM : (process not tested yet, but should work fine)
+
+    - update the RPM
+    - run in cockpit directory (/var/www/castormon by default) :
+        
+        $ python manage.py migrate cockpit
+
+    - restart apache :
+        
+        # /etc/init.d/httpd restart -d
+
+
+
+*) ADD A LEMON METRIC :
+
+    - write the metric file for the MAE and put it in "logprocessord/metrics"
+    - put "-lemon" at the end of the name (both file and metric names)
+    - write the metric class for lemon sensor, using RPyC server (cf sensor)
+    - CF http://lemon-monitoring.web.cern.ch/pythonapi
+    - test the lemon-sensor with :
+
+        $ python /usr/libexec/sensors/lemon-sensor.py sensor-example
+
+    - see lemon guy for informations on release

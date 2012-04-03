@@ -1,0 +1,74 @@
+###################################################################################################
+#   INSTALATION NOTES FOR CASTOR MONITORING COCKPIT
+###################################################################################################
+
+1*) include {'cluster/ahc/roles/django-server'};  in the profile template => spma + ncm
+
+2*) start mysqld then change root password of mysql
+    
+    # /etc/init.d/mysqld start
+
+3*) check that cockpit django files are correctly installed in /var/www ...
+
+4*) change database login/password in castormon/settings.py (marked with @TODO)
+4bis*) change the SECRET_KEY in castormon/settings.py !! (marked with @TODO)
+
+5*) create cockpit database using :
+
+    $ mysql -u root -p
+    mysql> CREATE DATABASE cockpit CHARACTER SET utf8;
+
+7*) in the directory of the application type :
+
+    $ python manage.py syncdb
+    $ python manage.py migrate cockpit
+
+8*) finally start apache :
+
+    # /etc/init.d/httpd start -d
+
+
+
+###################################################################################################
+#   DJANGO STEPS : should not be necessary if installed from provided RPM !!!
+###################################################################################################
+3*) upload cockpit django application files to /var/www
+4bis*) change TEMPLATE_DIRS in castormon/settings.py if needed (marked with @TODO)
+4ter*) change path of application in castormon/django.wsgi if needed (marked with @TODO)
+
+
+
+###################################################################################################
+#   NCM STEPS : should not be necessary !!!!
+###################################################################################################
+
+*) set "/etc/httpd/conf.d/cockpit.conf" to :
+
+NameVirtualHost *:80
+WSGISocketPrefix /var/run/wsgi
+<VirtualHost *:80>
+        ServerName lxc2dev8d1.cern.ch
+        DocumentRoot /var/www/castormon/
+        Alias /static/ /var/www/castormon/staticfiles/
+        <Directory /var/www/castormon/>
+                Order deny,allow
+                Allow from all
+                Options -Indexes
+        </Directory>
+        WSGIDaemonProcess cockpit user=apache group=apache threads=25
+        WSGIProcessGroup cockpit
+        WSGIScriptAlias / /var/www/castormon/django.wsgi
+</VirtualHost>
+
+*) switch on wsgi module : set "/etc/httpd/conf.d/wsgi.conf" to
+
+LoadModule wsgi_module modules/mod_wsgi.so
+
+*) set SE-linux boolean : 
+    httpd_can_network_connect=true
+    httpd_can_network_connect_db=true
+
+    if needed : allow_user_mysql_connect
+
+    using : 
+        # setsebool httpd_can_network_connect="on" httpd_can_network_connect_db="on"

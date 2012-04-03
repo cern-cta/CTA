@@ -317,3 +317,9 @@ Package: castor-build-headers
 Architecture: any
 Description: castor (Cern Advanced STORage system)
  Header files required by the build system
+
+Package: castor-cockpit
+Architecture: any
+Depends: logrotate, python, python-rpyc, Django
+Description: castor (Cern Advanced STORage system)
+ Castor monitoring Cockpit

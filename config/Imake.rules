@@ -140,6 +140,15 @@ InternalInstallTarget(file,mode,dest,install,,)
 #define InstallNonExecFileSubdir(file,dest,mode,subdir) \
 InternalInstallTarget(file,mode,dest,install,,subdir)
 
+#define InstallSubTree(dir,dest,mode,insttarget) \
+$(DESTDIR)/dest/dir: LOCAL_PATH/dir            @@\
+	@echo Installing $@                        @@\
+	install -d $(DESTDIR)/dest -m 0755         @@\
+	cp -R $< $(DESTDIR)/dest                   @@\
+	find $@ -type f -exec chmod mode \{\} \;   @@\
+	find $@ -type d -exec chmod 0755 \{\} \;   @@\
+insttarget: $(DESTDIR)/dest/dir
+
 #define GenericMakeDir(dirname,mode,insttarget) \
 ifndef dirname                                @@\
   dirname = 1                                 @@\

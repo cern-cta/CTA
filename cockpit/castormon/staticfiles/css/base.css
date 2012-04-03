@@ -1,0 +1,342 @@
+html {
+    font-family: arial, helvetica, sans-serif;
+    font-size: 10pt;
+}
+
+body {
+    margin: 10px 10px 10px 10px;
+}
+
+img {
+    border: none;
+}
+
+a.current {
+    color: #f77b21;
+}
+
+a {
+    color: black;
+    text-decoration: none;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+a:hover {
+    color: #f77b21;
+}
+
+a:visited {
+}
+
+a:active {
+}
+
+p {
+    padding-left : 5px;
+}
+
+p.rpyc-up {
+    color: green;
+}
+
+p.rpyc-down {
+    color: red;
+    font-weight: bold;
+}
+
+#sidebar {
+    width: 250px;
+    height: 400px;
+    float: left;
+    background-color: transparent;
+    border: 1px solid #CCC;
+}
+
+#sidebar h1 {
+    background-color: #CCC;
+    margin-top:13px;
+    margin-bottom:0px;
+    padding-top: 3px;
+    padding-left: 5px;
+}
+
+#sidebar ul {
+    padding-left:5px;
+    list-style-type:none;
+}
+
+#sidebar li {
+    padding-bottom: 5px;
+}
+
+#main {
+    margin-left: 262px;
+}
+
+#header {
+    /*height: 97px;*/
+    margin-bottom: 12px;
+    background-color: transparent; 
+    border: 1px solid #CCC;
+    padding-left: 5px;
+}
+
+
+#content {
+    border: 1px solid #CCC;
+    min-width: 700px;
+    overflow: auto;
+}
+
+#messages {
+    z-index: 999;
+    position:absolute;
+    border:10px solid #CCCCCC;
+    top:25%;
+    left:50%;
+    margin-left:-100px;
+    width:200px;
+    background-color:white;
+    padding: 30px;
+    display:none;
+}
+
+div#metric-display {
+    height: 510px;
+    clear:left;
+}
+
+div#metric-display img {
+    margin-left: auto;
+    margin-right: auto;
+    overflow: hidden;
+}
+
+div.filter-container {
+    height: 50px;
+    margin: 5px;
+    width: 450px;
+    float: left;
+}
+
+div.advanced-filter {
+   display: none; 
+}
+
+div.metric-options {
+}
+
+div.plot-options {
+    height: 50px;
+    margin: 5px;
+    float: left;
+}
+
+div.plot-misc {
+    height: 50px;
+    margin: 5px;
+    float: right;
+    overflow: hidden;
+}
+
+input.do-advanced-filter {
+    padding: 5px;
+    border: 1px solid #aaa;
+    cursor: pointer;
+    background-image: linear-gradient(bottom, rgb(204,204,204) 0%, rgb(255,255,255) 100%);
+    background-image: -o-linear-gradient(bottom, rgb(204,204,204) 0%, rgb(255,255,255) 100%);
+    background-image: -moz-linear-gradient(bottom, rgb(204,204,204) 0%, rgb(255,255,255) 100%);
+    background-image: -webkit-linear-gradient(bottom, rgb(204,204,204) 0%, rgb(255,255,255) 100%);
+    background-image: -ms-linear-gradient(bottom, rgb(204,204,204) 0%, rgb(255,255,255) 100%);
+
+    background-image: -webkit-gradient(
+        linear,
+        left bottom,
+        left top,
+        color-stop(0, rgb(204,204,204)),
+        color-stop(1, rgb(255,255,255))
+    );
+}
+
+input.do-advanced-filter:hover {
+    background-image: linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
+    background-image: -o-linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
+    background-image: -moz-linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
+    background-image: -webkit-linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
+    background-image: -ms-linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
+
+    background-image: -webkit-gradient(
+        linear,
+        left bottom,
+        left top,
+        color-stop(1, rgb(204,204,204)),
+        color-stop(0, rgb(255,255,255))
+    );
+}
+
+input.do-advanced-filter:active {
+    background-image: linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
+    background-image: -o-linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
+    background-image: -moz-linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
+    background-image: -webkit-linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
+    background-image: -ms-linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
+
+    background-image: -webkit-gradient(
+        linear,
+        left bottom,
+        left top,
+        color-stop(1, rgb(204,204,204)),
+        color-stop(0, rgb(255,255,255))
+    );
+}
+
+input.data-filter {
+    padding: 5px;
+    border: 1px solid #aaa;
+    cursor: pointer;
+    background-image: linear-gradient(bottom, rgb(204,204,204) 0%, rgb(255,255,255) 100%);
+    background-image: -o-linear-gradient(bottom, rgb(204,204,204) 0%, rgb(255,255,255) 100%);
+    background-image: -moz-linear-gradient(bottom, rgb(204,204,204) 0%, rgb(255,255,255) 100%);
+    background-image: -webkit-linear-gradient(bottom, rgb(204,204,204) 0%, rgb(255,255,255) 100%);
+    background-image: -ms-linear-gradient(bottom, rgb(204,204,204) 0%, rgb(255,255,255) 100%);
+
+    background-image: -webkit-gradient(
+        linear,
+        left bottom,
+        left top,
+        color-stop(0, rgb(204,204,204)),
+        color-stop(1, rgb(255,255,255))
+    );   
+}
+
+input.data-filter:hover {
+    background-image: linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
+    background-image: -o-linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
+    background-image: -moz-linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
+    background-image: -webkit-linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
+    background-image: -ms-linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
+
+    background-image: -webkit-gradient(
+        linear,
+        left bottom,
+        left top,
+        color-stop(1, rgb(204,204,204)),
+        color-stop(0, rgb(255,255,255))
+    );
+}
+
+input.data-filter.selected {
+    background-image: linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
+    background-image: -o-linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
+    background-image: -moz-linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
+    background-image: -webkit-linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
+    background-image: -ms-linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
+
+    background-image: -webkit-gradient(
+        linear,
+        left bottom,
+        left top,
+        color-stop(0, rgb(255,255,255)),
+        color-stop(1, rgb(247,122,33))
+    );
+    color: black;
+}
+
+input.data-filter:active {
+    background-image: linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
+    background-image: -o-linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
+    background-image: -moz-linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
+    background-image: -webkit-linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
+    background-image: -ms-linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
+
+    background-image: -webkit-gradient(
+        linear,
+        left bottom,
+        left top,
+        color-stop(0, rgb(255,255,255)),
+        color-stop(1, rgb(247,122,33))
+    );
+    color: black;
+}
+
+
+
+
+input.toggle-log-scale {
+    padding: 5px;
+    border: 1px solid #aaa;
+    cursor: pointer;
+    background-image: linear-gradient(bottom, rgb(204,204,204) 0%, rgb(255,255,255) 100%);
+    background-image: -o-linear-gradient(bottom, rgb(204,204,204) 0%, rgb(255,255,255) 100%);
+    background-image: -moz-linear-gradient(bottom, rgb(204,204,204) 0%, rgb(255,255,255) 100%);
+    background-image: -webkit-linear-gradient(bottom, rgb(204,204,204) 0%, rgb(255,255,255) 100%);
+    background-image: -ms-linear-gradient(bottom, rgb(204,204,204) 0%, rgb(255,255,255) 100%);
+
+    background-image: -webkit-gradient(
+        linear,
+        left bottom,
+        left top,
+        color-stop(0, rgb(204,204,204)),
+        color-stop(1, rgb(255,255,255))
+    );   
+}
+
+input.toggle-log-scale:hover{
+    background-image: linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
+    background-image: -o-linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
+    background-image: -moz-linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
+    background-image: -webkit-linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
+    background-image: -ms-linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
+
+    background-image: -webkit-gradient(
+        linear,
+        left bottom,
+        left top,
+        color-stop(1, rgb(204,204,204)),
+        color-stop(0, rgb(255,255,255))
+    );  
+}
+
+input.toggle-log-scale:active {
+    background-image: linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
+    background-image: -o-linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
+    background-image: -moz-linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
+    background-image: -webkit-linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
+    background-image: -ms-linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
+
+    background-image: -webkit-gradient(
+        linear,
+        left bottom,
+        left top,
+        color-stop(0, rgb(255,255,255)),
+        color-stop(1, rgb(247,122,33))
+    );
+    color: black;  
+}
+
+input.toggle-log-scale.selected {
+    background-image: linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
+    background-image: -o-linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
+    background-image: -moz-linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
+    background-image: -webkit-linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
+    background-image: -ms-linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
+
+    background-image: -webkit-gradient(
+        linear,
+        left bottom,
+        left top,
+        color-stop(0, rgb(255,255,255)),
+        color-stop(1, rgb(247,122,33))
+    );
+    color: black;  
+}
+
+
+a.refresh-plot img:hover{
+    transform:rotate(20deg);
+    -ms-transform:rotate(20deg); /* IE 9 */
+    -moz-transform:rotate(20deg); /* Firefox */
+    -webkit-transform:rotate(45deg); /* Safari and Chrome */
+    -o-transform:rotate(20deg); /* Opera */
+}

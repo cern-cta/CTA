@@ -1,0 +1,67 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+    <meta http-equiv="Content-Language" content="en-us" />
+    <meta name="Keywords" content="Cockpit" />
+
+    <link href="/static/css/base.css" rel="stylesheet" />
+    <link href="/static/css/jquery-ui-1.8.18.custom.css" rel="Stylesheet" />
+
+    <script type="text/javascript" src="/static/js/jquery-1.7.2.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery-ui-1.8.18.custom.min.js"></script>    
+    <script type="text/javascript" src="/static/js/highstock.js"></script>
+    <script type="text/javascript" src="/static/js/scripts.js"></script>
+
+    {% block extrahead %}{% endblock %}
+
+    <title>{% block title %}CASTOR Cockpit{% endblock %}</title>
+  </head>
+  <body>
+    <div id="sidebar">
+        <div id="logo">
+            <a href="/"><img class="logo" src="/static/img/CASTOR_logo_250.png" alt="CASTOR Logo"/></a>
+        </div>
+        <div id="sidebar-content">
+            <h1>
+                Metrics
+            </h1>
+            <ul>
+                {% for metric in metrics %}
+                {% if metric_name and metric_name == metric %}
+                    <li><a href="/metric/{{ metric }}" class="current">{{ metric }}</a></li>
+                {% else %}
+                    <li><a href="/metric/{{ metric }}">{{ metric }}</a></li>
+                {% endif %}
+                {% endfor %}
+            </ul>
+            <h1>
+                Info
+            </h1>
+            {% if rpyc_status %}
+                <p class="rpyc-up">RPyC Server : <img src="/static/img/button_ok.png" alt="UP" style="vertical-align:middle;width:20px" /></p>
+            {% else %}
+                <p class="rpyc-down">RPyC Server : <img src="/static/img/button_cancel.png" alt="DOWN" style="vertical-align:middle;width:20px" /></p>
+                <p>Data not up-to-date !</p>
+            {% endif %}
+        </div>
+    </div>
+    <div id="main">
+        <div id="container">
+            <div id="header">
+                {% block header %}{% endblock %}
+            </div>
+            <div id="content">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+    {% if messages %}
+        <div id="messages">
+        {% for message in messages %}
+        {{ message }}
+        {% endfor %}
+        </div>
+    {% endif %}
+  </body>
+</html>

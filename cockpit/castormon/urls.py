@@ -1,0 +1,20 @@
+from django.conf.urls.defaults import patterns, include, url
+
+# Uncomment the next two lines to enable the admin:
+# from django.contrib import admin
+# admin.autodiscover()
+
+urlpatterns = patterns('',
+    url(r'^$', 'castormon.cockpit.views.index'), # home
+    url(r'^metric/(?P<metric_name>\w+)$', 'castormon.cockpit.views.display_metric'), # display a specific metric
+    url(r'^data/metric/(?P<metric_name>\w+)$', 'castormon.cockpit.views.get_metric_data'), # used by ajax to get data
+    url(r'^data/metric/(?P<metric_name>\w+)/(?P<timestamp_from>\d+)$', 'castormon.cockpit.views.get_metric_data'), # used by ajax to get data
+    url(r'^data/metric/(?P<metric_name>\w+)/(?P<timestamp_from>\d+)/(?P<timestamp_to>\d+)$', 'castormon.cockpit.views.get_metric_data'), # used by ajax to get data
+    url(r'^pushdata$', 'castormon.cockpit.views.pushdata'), # used by the logprocessord to push data right into the cockpit
+
+    # Uncomment the admin/doc line below to enable admin documentation:
+    # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
+
+    # Uncomment the next line to enable the admin:
+    # url(r'^admin/', include(admin.site.urls)),
+)
