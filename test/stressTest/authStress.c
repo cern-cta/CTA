@@ -18,7 +18,8 @@ void usage(int status, char *name) {
     printf ("Usage: %s [OPTION]\n", name);
     printf ("Perform nsping as fast as possible and report results.\n\n");
     printf ("  -h, --host=HOSTNAME  the name server to ping\n");
-    printf ("      --help           display this help and exit\n\n");
+    printf ("      --help           display this help and exit\n");
+    printf ("  -r, --repeat=N       repeat the ping N times\n\n");
     printf ("Report bugs to <andrea.ieri@cern.ch>.\n");
   }
   exit (status);
@@ -36,24 +37,28 @@ int main(int argc,
   int c;
   int errflg = 0;
   int hflg = 0;
-  int repetitions = 2000;
+  int repetitions = 1;
   char info[256];
   static char retryenv[16];
   char *server = "localhost";
 
   Coptions_t longopts[] = {
     { "host", REQUIRED_ARGUMENT, NULL, 'h' },
+    { "repeat", REQUIRED_ARGUMENT,NULL, 'r'},
     { "help", NO_ARGUMENT,       &hflg, 1  },
     { NULL,   0,                 NULL,  0  }
   };
 
   Coptind = 1;
   Copterr = 1;
-  while ((c = Cgetopt_long (argc, argv, "h:", longopts, NULL)) != EOF) {
+  while ((c = Cgetopt_long (argc, argv, "h:r:", longopts, NULL)) != EOF) {
     switch (c) {
     case 'h':
       server = Coptarg;
       setenv(CNS_HOST_ENV, server, 1);
+      break;
+    case 'r':
+      repetitions = atoi(Coptarg);
       break;
     case '?':
     case ':':
