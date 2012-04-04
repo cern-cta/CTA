@@ -8,11 +8,11 @@
     
     # /etc/init.d/mysqld start
 
-3*) check that cockpit django files are correctly installed in /var/www ...
+3*) check that cockpit django files are correctly installed in /var/www/castormon ...
 
 4*) change database login/password in castormon/settings.py (marked with @TODO)
 4bis*) change the SECRET_KEY in castormon/settings.py !! (marked with @TODO)
-4ter*) change the server name in httpd cokcpit config file (by default /etc/httpd/conf.d/cockpit.conf)
+4ter*) change the server name in httpd cockpit config file (by default /etc/httpd/conf.d/cockpit-httpd.conf)
 
 5*) create cockpit database using :
 
@@ -34,8 +34,6 @@
 #   DJANGO STEPS : should not be necessary if installed from provided RPM !!!
 ###################################################################################################
 3*) upload cockpit django application files to /var/www
-4bis*) change TEMPLATE_DIRS in castormon/settings.py if needed (marked with @TODO)
-4ter*) change path of application in castormon/django.wsgi if needed (marked with @TODO)
 
 
 

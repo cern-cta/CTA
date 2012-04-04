@@ -45,7 +45,7 @@
 #######################################################################
 
 # Imports
-import time
+import time, calendar
 import pickle as pk
 import sys
 import math
@@ -1002,49 +1002,29 @@ def timestamp_to_epoch(msg_timestamp, msg_epoch=None):
     # it is the number of seconds elapsed since midnight UTC on the morning 
     # of January 1, 1970, not counting leap seconds
     
-    # ..so, we have a timestamp in the form: 2011-08-23T10:27:35+02:00. 
-    # let's split it, since Python support for epoch with timezone sucks
-
-    msg_timezone_sign  = msg_timestamp[-6] 
-    msg_timezone       = msg_timestamp[-5:]
-    msg_timestamp      = msg_timestamp[:-6]
-
-    # Convert the timezone into seconds, preserve the sign, invert it (for Python internal data handling)
-    # and subtract the local timezone (since Python keep it in account for time conversions)
-    msg_timezone_hour, msg_timezone_minutes = msg_timezone.split(':')
-    msg_timezone_epoch = (-1) * int(msg_timezone_sign+'1') * ( (int(msg_timezone_hour) * 3600) + (int(msg_timezone_minutes) * 60) )
-    
-    # Previus approach (too expensive) was:     
-    # Convert the timezone into seconds in the same way (dirty trick but works more than fine :) )
-    # timezone_epoch  = (-1) * float(sign+str(time.mktime(time.strptime("1970-01-01T"+timezone+":00","%Y-%m-%dT%H:%M:%S")) - local_timezone_epoch))
-
-
     if ( msg_epoch==None ):
-    
         # There is no epoch filed that we can use, we have to calculate the epoch from the timestamp...
-           
-        # Convert the timestamp (without the timezone) to a time object and then to EPOCH seconds
-        msg_timestamp_epoch = time.mktime(time.strptime(msg_timestamp,"%Y-%m-%dT%H:%M:%S"))
+        # ..so, we have a timestamp in the form: 2011-08-23T10:27:35+02:00. 
+        # let's split it, since Python support for epoch with timezone sucks
+        msg_timezone_sign  = msg_timestamp[-6] 
+        msg_timezone       = msg_timestamp[-5:]
+        msg_timestamp      = msg_timestamp[:-6]
 
-        # get the local timezone -> Python internal one! We have to take care also about it since Python
-        # use it in the conversions from timestamps to epoch et vice versa.
-        local_timezone_epoch = time.timezone
-       
+        # Convert the timezone into seconds, preserve the sign
+        msg_timezone_hour, msg_timezone_minutes = msg_timezone.split(':')
+        msg_timezone_epoch = int(msg_timezone_sign+'1') * ( (int(msg_timezone_hour) * 3600) + (int(msg_timezone_minutes) * 60) )
 
-        # And finally calculate the epoch in UTC: get the epoch of the timestamp withouth the timezone,
-        # correct it by subtracting the local time zone, since Python adds it by default;
-        # and then add the timezone of the original timestamp. 
-        msg_timestamp_utc_epoch = ( msg_timestamp_epoch - local_timezone_epoch ) + msg_timezone_epoch 
-
-        # Debugging...
-        # print "msg_timestamp_epoch:      " + str(msg_timestamp_epoch)
-        # print "local_timezone_epoch: " + str(local_timezone_epoch)
-        # print "msg_timezone_epoch:       " + str(msg_timezone_epoch)
-        # print "msg_utc_epoch:            " + str(utc_epoch)
-        # print "TIMESTAMP (original)       : " + timestamp
-        # print "TIMESTAMP (from utc_epoch) : " + str(datetime.datetime.fromtimestamp(utc_epoch))
-        
-        return msg_timestamp_utc_epoch
+        # compute the epoch
+        epoch = calendar.timegm((int(msg_timestamp[0:4]),   # tm_year
+                                 int(msg_timestamp[5:7]),   # tm_mon
+                                 int(msg_timestamp[8:10]),  # tm_mday
+                                 int(msg_timestamp[11:13]), # tm_hour
+                                 int(msg_timestamp[14:16]), # tm_min
+                                 int(msg_timestamp[17:19]), # tm_sec
+                                 -1,                    # tm_wday
+                                 -1,                    # tm_yday
+                                 -1)) - msg_timezone_epoch # tm_isdst
+        return epoch
         
     else:
      
@@ -1052,16 +1032,7 @@ def timestamp_to_epoch(msg_timestamp, msg_epoch=None):
         # EPOCH field it has been calculated by Scribe injectors on every node.
         # This trick pulls down execution time on the test data set from 14 to 10 seconds!!
         
-        # ..but we have to correct it, taking into account the timezone in which the epoch was generated.
-        # IMHO, this is a python bug. By definition, EPOCH is from 1st Jan 1970, 00:00, UTC. So it should be computed
-        # in respect to UTC, and not be affected by the local timezone, or summertime like the two following messages
-        #
-        # TIMESTAMP=2011-10-30T02:58:42+02:00 USECS=921295 EPOCH=1319939922 HOSTNAME=lxfsrc54a03 DAEMON=gcd PID=2957 ...
-        # TIMESTAMP=2011-10-30T02:18:43+01:00 USECS=310435 EPOCH=1319937523 HOSTNAME=lxfsrc54a03 DAEMON=gcd PID=2957 ...
-        #
-        # Epoch difference, newer-older: 1319937523-1319939922 = -2399 (Should never happen with epoch time!)
-
-        return ( int(msg_epoch) + msg_timezone_epoch )
+        return int(msg_epoch)
         
 
 
@@ -1427,8 +1398,6 @@ class Bins:
                 self.bins[rightBin_index].addData(groupbyvalues, datavalues)
                 
                 return
-
-                
                 
                 
 
@@ -1473,7 +1442,7 @@ class Bins:
                 sys.exit(1)
 
         
-        # 2) Check if we need to shift the bins (because the the message is too new for this bin).
+        # 2) Check if we need to shift the bins (because the message is too new for this bin).
         while ( msg_epoch_timestamp >= self.binValidUntil ):
         
             # Yes, we need to shift. First of all save the bin
@@ -1506,8 +1475,8 @@ class Bins:
                   ": Shifting bins, now using bin #" + str(self.currentBin) +
                   ", valid from " + str(datetime.datetime.fromtimestamp(self.binValidFrom)) +
                   " to " + str(datetime.datetime.fromtimestamp(self.binValidUntil)) +                  
-                  " (msg_timestamp: " + str(msg_timestamp) + ")")
-    
+                  " (timestamp: " + str(msg_epoch_timestamp) + ")")
+            
         # 3) Add the data to the right bin
         self.bins[self.currentBin].addData(groupbyvalues, datavalues)
         
@@ -1529,9 +1498,13 @@ class Bins:
         
     #---------------------------------------------------------------------------
     def mergeAllShiftedByOne(self):
+
+        # 2) Check if we need to shift the bins (because the the message is too new for this bin).
+        # epoch_timestamp = time.time() - time.altzone - self.binDuration - 3600
+        # self.shiftIfNeeded(epoch_timestamp)
     
         # Create an empty result bin (in wich to merge all the other bins)
-        resultBin=Bin(self.groupbykeys,self.dataobjects)
+        resultBin=Bin(self.groupbykeys, self.dataobjects)
     
         # For every bin except the last one, merge it with the newly created one
         for i in range(0,self.nbins):
@@ -1579,7 +1552,45 @@ class Bins:
 
     #---------------------------------------------------------------------------
     def getData(self, method='All'):
-    
+        """
+        @TODO 
+            timestamp
+
+        # Check if we need to shift the bins
+        while ( timestamp >= self.binValidUntil ):
+        
+            # Yes, we need to shift. First of all save the bin
+        
+        
+            # Set current bin validity
+            self.binValidFrom  = self.binValidUntil
+            self.binValidUntil = self.binValidFrom + self.binDuration
+
+            # We need to use a new bin: a circular list has been implemented for this.    
+            self.currentBin += 1
+
+            # Overflow? Go back to the bin #0 and start cycling
+            # PLUS: set the ready flag!! We can now start taking data out from the bins.
+            if (self.currentBin >= self.nbins):
+                self.currentBin=0
+                if not self.ready:
+                    debug(self.parentmetric + ": Ready to give data")
+                    self.ready=True
+
+            # Save the bin that is going to be trashed, this is done 
+            # to be able to give back data for bins -1, 0, 1, 2,..., n-1: for a total of n.
+            self.savedBin.reset()
+            self.savedBin.mergeWith(self.bins[self.currentBin])
+            
+            # Reset the current bin
+            self.bins[self.currentBin].reset()
+
+            debug(self.parentmetric +
+                  ": Shifting bins, now using bin #" + str(self.currentBin) +
+                  ", valid from " + str(datetime.datetime.fromtimestamp(self.binValidFrom)) +
+                  " to " + str(datetime.datetime.fromtimestamp(self.binValidUntil)) +                  
+                  " (timestamp: " + str(timestamp) + ")")
+        """
         if method=='All':
         
             # Merge every bin into a object of type "Bin", consistent with
@@ -1604,6 +1615,8 @@ class Bins:
 
 
 
+
+
 #######################################################################
 #   Class Metric                                                      #
 #######################################################################
@@ -1614,7 +1627,7 @@ class Metric:
         return "<\'"+self.name+"\' metric instance>"
     
     #---------------------------------------------------------------------------
-    def __init__( self, name, window, nbins, conditions, groupbykeys, data, handle_unordered):
+    def __init__(self, name, window, nbins, conditions, groupbykeys, data, handle_unordered):
 
         # Local vars..
 
@@ -1829,7 +1842,7 @@ class Metric:
             return
 
 
-        # Check that there is the TIMESTAMP keyword, which it's mandatory:        
+        # Check that there is the TIMESTAMP keyword, which is mandatory:        
         if msg.has_key('TIMESTAMP'):
 
             # Ok, now add some custom keywords:
@@ -2026,6 +2039,7 @@ def loadMetrics(path):
 
 
 
+# used by ajax to get data
 
 
 

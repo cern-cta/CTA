@@ -1,8 +1,11 @@
 import os
 import sys
 
-sys.path.append('/var/www') # @TODO to be changed !!
-sys.path.append('/var/www/castormon') # @TODO to be changed !!
+SITE_ROOT = os.path.dirname(os.path.realpath(__file__))
+SITE_PARENT = os.path.normpath(os.path.join(SITE_ROOT, '..'))
+
+sys.path.append(SITE_PARENT)
+sys.path.append(SITE_ROOT)
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'castormon.settings'
 

@@ -1,4 +1,9 @@
-# Django settings for castormon project.
+# Django settings for castor-cockpit project.
+import os
+import django
+
+DJANGO_ROOT = os.path.dirname(os.path.realpath(django.__file__))
+SITE_ROOT = os.path.dirname(os.path.realpath(__file__))
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -83,7 +88,7 @@ STATICFILES_FINDERS = (
 )
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = '**************************************************' # @TODO
+SECRET_KEY = '****'  # @TODO
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -106,7 +111,7 @@ TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
-    '/var/www/castormon/templates', # @TODO
+    os.path.join(SITE_ROOT, 'templates'),
 )
 
 INSTALLED_APPS = (
@@ -120,7 +125,9 @@ INSTALLED_APPS = (
     # 'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
+    # Migration tool for the DB
     'south',
+    # Product
     'cockpit',
 )
 
@@ -146,3 +153,6 @@ LOGGING = {
         },
     }
 }
+
+#import logging
+#logging.basicConfig(format='%(asctime)s:%(levelname)-8s: %(message)s',filename='/var/log/castor/cockpit.log',level=logging.DEBUG)
