@@ -97,7 +97,7 @@ void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void*)
   }
   castor::dlf::Param paramsDb[] =
     {
-      castor::dlf::Param("ProcessingTime", timer.getusecs() * 0.000001)
+      castor::dlf::Param("ProcessingTime", timer.secs())
     };
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, MIG_ERROR_JOBS_FOUND, paramsDb);
 
@@ -147,7 +147,7 @@ void castor::tape::tapegateway::MigratorErrorHandlerThread::run(void*)
     oraSvc->setMigRetryResult(mjIdsToRetry,mjIdsToFail);
     scpTrans.commit();
     castor::dlf::Param paramsDbUpdate[] = {
-      castor::dlf::Param("ProcessingTime", timer.getusecs() * 0.000001),
+      castor::dlf::Param("ProcessingTime", timer.secs()),
       castor::dlf::Param("migration jobs to retry",mjIdsToRetry.size()),
       castor::dlf::Param("migration jobs to fail",mjIdsToFail.size())
     };

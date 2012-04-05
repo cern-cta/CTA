@@ -17,9 +17,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile$
- *
- *
+ * Helper object for writing safe code with respect to DB transactions
+ * Basically calls rollback in the destructor if commit was not called
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -31,27 +30,51 @@
 
 namespace castor {
 
-namespace tape {
+  namespace tape {
 
-namespace tapegateway {
+    namespace tapegateway {
 
-class ScopedTransaction {
-public:
-    ScopedTransaction(castor::tape::tapegateway::ITapeGatewaySvc * OraSvc):
-        m_OraSvc(OraSvc), m_transactionClosed(false) {};
-    virtual ~ScopedTransaction();
-    void commit () throw (castor::exception::Exception);
-    void rollback() throw (castor::exception::Exception);
-    void release();
-private:
-    castor::tape::tapegateway::ITapeGatewaySvc * m_OraSvc;
-    bool m_transactionClosed;
-};
+      /*
+       * Helper object for writing safe code with respect to DB transactions
+       * Basically calls rollback in the destructor if commit was not called
+       * XXX This should be generalized to any object implementing some
+       * XXX transaction interface (to be defined).
+       */
+      class ScopedTransaction {
 
-}
+      public:
 
-}
+        /* constructor
+         * @param OraSvc the underlying ITapeGatewaySvc
+         */
+        ScopedTransaction(castor::tape::tapegateway::ITapeGatewaySvc * OraSvc):
+          m_OraSvc(OraSvc), m_transactionClosed(false) {};
 
-}
+        /* destructor */
+        virtual ~ScopedTransaction();
+
+        /* commits the transaction */
+        void commit() throw (castor::exception::Exception);
+
+        /* explicitely rollbacks the transaction */
+        void rollback() throw (castor::exception::Exception);
+
+        /* pretends the transaction is over, without commitint neither rolling back 
+         * XXX should be dropped !
+         */
+        void release();
+
+      private:
+
+        /* the underlying ITapeGatewaySvc object */
+        castor::tape::tapegateway::ITapeGatewaySvc * m_OraSvc;
+
+        /* whether the transaction was closed */
+        bool m_transactionClosed;
+
+      };
+    } // namespace tapegateway
+  } // namespace tape
+} // namespace castor
 
 #endif /* SCOPEDTRANSACTION_HPP_ */

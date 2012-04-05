@@ -759,7 +759,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
     timer.reset();
     vmgrHelper.updateTapeInVmgr(fileMigrated, vid, m_shuttingDown);
     logMigrationVmgrUpdate(nullCuuid, &castorFileId, requester, fileMigrated,
-      tapePool, vid, timer.getusecs());
+      tapePool, vid, timer.usecs());
   } catch (castor::exception::Exception& e){
     logMigrationVmgrFailure(nullCuuid, &castorFileId, requester, fileMigrated,
       tapePool, e);
@@ -823,7 +823,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
     return response;
   }
   logMigrationGetDbInfo (nullCuuid, &castorFileId, requester, fileMigrated, serviceClass, fileClass,
-      tapePool, blockid, vid, copyNumber, lastModificationTime, timer.getusecs());
+      tapePool, blockid, vid, copyNumber, lastModificationTime, timer.usecs());
 
   // UPDATE NAMESERVER
   // We'll flag this if the migration turned out to be of an old version of
@@ -836,33 +836,33 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
       // update the name server (standard migration)
       nsHelper.updateMigratedFile( fileMigrated, copyNumber, vid, lastModificationTime);
       logMigrationNsUpdate(nullCuuid, &castorFileId, requester, fileMigrated, serviceClass, fileClass,
-      tapePool, blockid, vid, copyNumber, lastModificationTime, checksumHex, timer.getusecs());
+      tapePool, blockid, vid, copyNumber, lastModificationTime, checksumHex, timer.usecs());
     } else {
       // update the name server (repacked file)
       nsHelper.updateRepackedFile( fileMigrated, originalCopyNumber, originalVid,
                                    copyNumber, vid, lastModificationTime);
       logRepackNsUpdate(nullCuuid, &castorFileId, requester, fileMigrated, serviceClass, fileClass,
-          tapePool, blockid, vid, copyNumber, lastModificationTime, checksumHex, originalVid, timer.getusecs());
+          tapePool, blockid, vid, copyNumber, lastModificationTime, checksumHex, originalVid, timer.usecs());
     }
   } catch (castor::tape::tapegateway::NsTapeGatewayHelper::NoSuchFileException) {
     fileStale = true;
     logRepackFileRemoved(nullCuuid, &castorFileId, requester, fileMigrated, serviceClass, fileClass,
-          tapePool, blockid, vid, copyNumber, lastModificationTime, checksumHex, originalVid, timer.getusecs());
+          tapePool, blockid, vid, copyNumber, lastModificationTime, checksumHex, originalVid, timer.usecs());
   } catch (castor::tape::tapegateway::NsTapeGatewayHelper::FileMutatedException) {
     fileStale = true;
     logRepackStaleFile (nullCuuid, &castorFileId, requester, fileMigrated, serviceClass, fileClass,
-        tapePool, blockid, vid, copyNumber, lastModificationTime, checksumHex, originalVid, timer.getusecs());
+        tapePool, blockid, vid, copyNumber, lastModificationTime, checksumHex, originalVid, timer.usecs());
   } catch (castor::tape::tapegateway::NsTapeGatewayHelper::FileMutationUnconfirmedException) {
     fileStale = true;
     logRepackUncomfirmedStaleFile(nullCuuid, &castorFileId, requester, fileMigrated, serviceClass, fileClass,
-        tapePool, blockid, vid, copyNumber, lastModificationTime, checksumHex, originalVid, timer.getusecs());
+        tapePool, blockid, vid, copyNumber, lastModificationTime, checksumHex, originalVid, timer.usecs());
   } catch (castor::tape::tapegateway::NsTapeGatewayHelper::SuperfluousSegmentException ssex) {
     segmentSuperfluous = true;
     logSuperfluousSegment(nullCuuid, &castorFileId, requester, fileMigrated, serviceClass, fileClass,
-        tapePool, blockid, vid, copyNumber, lastModificationTime, checksumHex, originalVid, timer.getusecs());
+        tapePool, blockid, vid, copyNumber, lastModificationTime, checksumHex, originalVid, timer.usecs());
   } catch (castor::exception::Exception& e) {
     logMigrationNsFailure(nullCuuid, &castorFileId, requester, fileMigrated, serviceClass, fileClass,
-        tapePool, blockid, vid, copyNumber, lastModificationTime, checksumHex, originalVid, timer.getusecs(),e);
+        tapePool, blockid, vid, copyNumber, lastModificationTime, checksumHex, originalVid, timer.usecs(),e);
     try {
       FileErrorReport failure;
       failure.setMountTransactionId(fileMigrated.mountTransactionId());
@@ -923,7 +923,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
     }
   }
   logMigrationDbUpdate(nullCuuid, &castorFileId, requester, fileMigrated, serviceClass, fileClass,
-      tapePool, blockid, vid, copyNumber, timer.getusecs());
+      tapePool, blockid, vid, copyNumber, timer.usecs());
 
   // Commit for added safety as the SQL is not to be trusted. (maybe a dupe, though)
   scpTrans.commit();

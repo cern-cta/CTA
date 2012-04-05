@@ -17,27 +17,40 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- *
- *
+ * This little class allows to easily time some piece of code
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #include "castor/tape/utils/Timer.hpp"
 
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
 castor::tape::utils::Timer::Timer() {
   reset();
 }
 
-signed64 castor::tape::utils::Timer::getusecs()
-{
+//------------------------------------------------------------------------------
+// usecs
+//------------------------------------------------------------------------------
+signed64 castor::tape::utils::Timer::usecs() {
   timeval now;
   gettimeofday(&now, 0);
   return ((now.tv_sec * 1000000) + now.tv_usec) - ((m_reference.tv_sec * 1000000) + m_reference.tv_usec);
 }
 
-void castor::tape::utils::Timer::reset()
-{
+//------------------------------------------------------------------------------
+// secs
+//------------------------------------------------------------------------------
+double castor::tape::utils::Timer::secs() {
+  return usecs() * 0.000001;
+}
+
+//------------------------------------------------------------------------------
+// reset
+//------------------------------------------------------------------------------
+void castor::tape::utils::Timer::reset() {
   gettimeofday(&m_reference, 0);
 }
 

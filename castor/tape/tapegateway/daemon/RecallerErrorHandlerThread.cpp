@@ -92,7 +92,7 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void*)
     return;
   }
   castor::dlf::Param paramsDb[] = {
-      castor::dlf::Param("ProcessingTime", timer.getusecs() * 0.000001)
+      castor::dlf::Param("ProcessingTime", timer.secs())
   };
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, REC_ERROR_JOBS_FOUND, paramsDb);
   std::list<u_signed64> rjIdsToRetry;
@@ -141,7 +141,7 @@ void castor::tape::tapegateway::RecallerErrorHandlerThread::run(void*)
     // Last possible SQL call before. We're fine from here.
     scpTrans.release();
     castor::dlf::Param paramsDbUpdate[] = {
-        castor::dlf::Param("ProcessingTime", timer.getusecs() * 0.000001),
+        castor::dlf::Param("ProcessingTime", timer.secs()),
         castor::dlf::Param("recall jobs to retry",rjIdsToRetry.size()),
         castor::dlf::Param("recall jobs to fail",rjIdsToFail.size())
     };

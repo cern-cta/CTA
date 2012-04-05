@@ -17,13 +17,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- *
- *
+ * This little class allows to easily time some piece of code
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
-
-
 
 #ifndef _CASTOR_TAPE_UTILS_TIMER_HPP_
 #define _CASTOR_TAPE_UTILS_TIMER_HPP_
@@ -32,21 +29,46 @@
 #include "osdep.h"
 
 namespace castor {
-namespace tape {
-namespace utils {
+  namespace tape {
+    namespace utils {
 
-class Timer {
-public:
-  Timer();
-  virtual ~Timer() {}
-  signed64 getusecs();
-  void reset();
-private:
-  timeval m_reference;
-};
+      /* A small timing class.
+       * It basically remembers a reference time (by default the time of
+       * its construction) and gives the elapsed time since then.
+       * The reset method allows to reset the reference time to the current time
+       */
+      class Timer {
 
-} // namespace utils
-} // namespace tape
+      public:
+
+        /* constructor */
+        Timer();
+
+        /* destructor */
+        virtual ~Timer() {}
+
+        /* usecs
+         * Gives elapsed time in microseconds with respect to the reference time
+         */
+        signed64 usecs();
+
+        /* secs
+         * Gives elapsed time in seconds (with microsecond precision)
+         * with respect to the reference time
+         */
+        double secs();
+
+        /* resets the Timer reference's time to the current time */
+        void reset();
+
+      private:
+
+        /* reference time for this timer*/
+        timeval m_reference;
+
+      };
+    } // namespace utils
+  } // namespace tape
 } // namespace castor
 
 #endif /* _CASTOR_TAPE_UTILS_TIMER_HPP_ */
