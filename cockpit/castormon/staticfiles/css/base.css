@@ -47,7 +47,7 @@ p.rpyc-down {
 
 #sidebar {
     width: 250px;
-    height: 400px;
+    min-height: 400px;
     float: left;
     background-color: transparent;
     border: 1px solid #CCC;
@@ -75,17 +75,20 @@ p.rpyc-down {
 }
 
 #header {
-    /*height: 97px;*/
+    height: 65px;
     margin-bottom: 12px;
     background-color: transparent; 
     border: 1px solid #CCC;
     padding-left: 5px;
+    overflow: hidden;
+    min-width:700px;
 }
 
 
 #content {
     border: 1px solid #CCC;
     min-width: 700px;
+    min-height: 321px;
     overflow: auto;
 }
 

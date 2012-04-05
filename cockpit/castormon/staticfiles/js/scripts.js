@@ -1,5 +1,19 @@
 var log = '';
 var filter_type = 'quick';
+var chart;
+var hiddenSeries = {};
+
+function updateHiddenSeries() {
+    /*
+     * function used to keep track of the hidden series, when refreshing the chart
+     */
+    hiddenSeries = {};
+    for (var i = 0 ; i < chart.series.length ; i++) {
+        if ( !chart.series[i].visible ) {
+            hiddenSeries[chart.series[i].name] = true;
+        }
+    }
+}
 
 function refreshChart(input) {
     /*
@@ -44,7 +58,7 @@ function getPythonTimestamp(tmp) {
      * python timestamp in seconds
      * so we truncate !
      */
-    var str = "" + tmp;
+    var str = ['', tmp].join('');
     var str = str.substring(0, str.length-3);
     return parseInt(str);
 }
@@ -97,6 +111,7 @@ function drawChart(metric_container, from, to) {
                     },
                 zoomType: 'x',
                 animation: false,
+                marginTop: 20,
                 type: 'spline'
             },
             rangeSelector: {
@@ -116,27 +131,20 @@ function drawChart(metric_container, from, to) {
                         text: 'All'
                     }
                 ],
-                selected: 3,
+                selected: 2,
                 inputEnabled: false
             },
             navigator: {
                 enabled : false
             },
             exporting: {
-                enabled : false
+                enabled : true
             },
             xAxis: {
-                type: 'datetime',
-                text: 'Time',
                 ordinal: true
             },
             yAxis: {
-                type: log, // 'logarithmic'
-                plotLines: [{
-                    value: 0,
-                    width: 2,
-                    color: 'silver'
-                }]
+                type: log // 'logarithmic'
             },
             tooltip: {
                 pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b><br/>',
@@ -153,18 +161,6 @@ function drawChart(metric_container, from, to) {
                         y: 100,
                         shadow: true
             },
-            /*scrollbar: {
-                barBackgroundColor: 'gray',
-                barBorderRadius: 7,
-                barBorderWidth: 0,
-                buttonBackgroundColor: 'gray',
-                buttonBorderWidth: 0,
-                buttonBorderRadius: 7,
-                trackBackgroundColor: 'none',
-                trackBorderWidth: 1,
-                trackBorderRadius: 8,
-                trackBorderColor: '#CCC'
-            },*/
             credits: {
                 enabled: false
             },
@@ -174,29 +170,34 @@ function drawChart(metric_container, from, to) {
         // now get JSON and compute it
         if(from) {
             if(to) {
-                url = '/data/metric/'+ metric_name +'/'+ from +'/'+ to ;
+                url = ['/data/metric/', metric_name, '/', from, '/', to].join('') ;
             } else {
-                url = '/data/metric/'+ metric_name +'/'+ from ;
+                url = ['/data/metric/', metric_name, '/', from].join('') ;
             }
         } else {
-            url = '/data/metric/'+ metric_name
+            url = ['/data/metric/', metric_name].join('') ; // we use join instead of string concatenation, for performance purpose
         }
+        //json["data"] = sortObj(json["data"]);
         $.getJSON(url, function(json) {
-            json["data"] = sortObj(json["data"]);
             switch (json["groupby"]) {
                 case 0:
                     $.each(json["datakeys"], function (i, datakey) {
                         // initialisation
                         var seriesOptions = {
                             name : datakey,
+                            //animation: false,
+                            //enableMouseTracking : false,
                             dataGrouping:{
                                 groupPixelWidth: 12
                             },
                             data : [],
                         };
-                        $.each(json["data"], function(timestamp, d) {
+                        if (hiddenSeries[datakey]) {
+                            seriesOptions.visible = false;
+                        }
+                        $.each(json["data"], function() {
                             seriesOptions.data.push(
-                                [ timestamp * 1000 , d[i] ]
+                                [ this[0] * 1000 , this[1][i] ]
                             );
                         });
                         options.series.push( seriesOptions );
@@ -212,13 +213,16 @@ function drawChart(metric_container, from, to) {
                             },
                             data : []
                         };
+                        if (hiddenSeries[groupkey]) {
+                            seriesOptions.visible = false;
+                        }
                         $.each(json["data"], function(timestamp, d) {
                             var tmp = null;
-                            if(d[groupkey][0] != null){
-                                tmp = d[groupkey][0];
+                            if (this[1][groupkey][0] != null){
+                                tmp = this[1][groupkey][0];
                             }
                             seriesOptions.data.push(
-                                [ timestamp * 1000, tmp ]
+                                [ this[0] * 1000, tmp ]
                             );
                         });
                         options.series.push( seriesOptions );
@@ -227,7 +231,7 @@ function drawChart(metric_container, from, to) {
                 default:
                     break;
             } // switch end
-            new Highcharts.StockChart(options);
+            chart = new Highcharts.StockChart(options);
         });
     }
 } // end drawChart
@@ -237,10 +241,10 @@ function drawChart(metric_container, from, to) {
 $(document).ready(function () {
 
     Highcharts.setOptions({
-        global: {
-            useUTC: false
-        }
-    });
+		global: {
+			useUTC: false
+		}
+	});
 
     /****************
      * messages box *
@@ -258,7 +262,11 @@ $(document).ready(function () {
         metric_display = metric_container.find('div#metric-display');
         metric_container.find('input.data-filter.selected').removeClass('selected');
         $(this).attr('class', 'data-filter selected');
-        metric_display.empty().css('background', 'url(/static/img/loading1.gif) top center no-repeat');
+        if (chart) {
+            updateHiddenSeries();
+            chart.destroy();
+        }
+        metric_display.empty().html('<center><img src="/static/img/loading1.gif" /></center>');
         filter_type = 'quick';
         drawChart(metric_container, getTimestamp($(this).attr('value')), null);
     });
@@ -287,9 +295,12 @@ $(document).ready(function () {
         }
         metric_container = $(this).closest('.metric_container');
         metric_display = metric_container.find('div#metric-display');
-        metric_display.empty().css('background', 'url(/static/img/loading1.gif) top center no-repeat');
         filter_type = 'advanced';
-
+        if (chart) {
+            updateHiddenSeries();
+            chart.destroy();
+        }
+        metric_display.empty().html('<center><img src="/static/img/loading1.gif" /></center>');
         drawChart(metric_container, timestamp_from, timestamp_to);
     });
     

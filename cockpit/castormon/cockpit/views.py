@@ -160,22 +160,22 @@ def get_metric_data(request, metric_name, timestamp_from=None, timestamp_to=None
     
     if timestamp_from:
         if timestamp_to:
-            metric_data = MetricData.objects.filter(name=metric_name).filter(timestamp__gt=timestamp_from).filter(timestamp__lt=timestamp_to)
+            metric_data = MetricData.objects.filter(name=metric_name).filter(timestamp__gt=timestamp_from).filter(timestamp__lt=timestamp_to).order_by('timestamp')
         else:
-            metric_data = MetricData.objects.filter(name=metric_name).filter(timestamp__gt=timestamp_from)
+            metric_data = MetricData.objects.filter(name=metric_name).filter(timestamp__gt=timestamp_from).order_by('timestamp')
     else:
         # no from nor to : we take all the data for this metric
-        metric_data = MetricData.objects.filter(name=metric_name)
+        metric_data = MetricData.objects.filter(name=metric_name).order_by('timestamp')
 
    
     ###############################################################################################
     #   we need to know how many groupby keys there are
     ###############################################################################################
-    #   1) No group keys, we plot the data "as is"
+    #   1) No group key, we plot the data "as is"
     ###############################################################################################
     if len(groupkeys)==1 and groupkeys[0]=="NONE":
         res['groupby'] = 0
-        res['data'] = dict()
+        res['data'] = list()
         for md in metric_data:
             l = list()
             try:
@@ -184,51 +184,52 @@ def get_metric_data(request, metric_name, timestamp_from=None, timestamp_to=None
                 continue
             else:
                 for e in entries: 
-                    if type(e)==list:
+                    if type(e) is list:
                         l.append(e[0])
                     else:
                         l.append(e)
-                res['data'][md.timestamp] = l
+                res['data'].append([md.timestamp, l])
         # here we handle counterhz datakey
         if "CounterHz" in res['datakeys']:
             position = res['datakeys'].index("CounterHz") # get position in the list
-            for time, d in res['data'].iteritems():
-                tmp = res['data'][time].pop(position)
+            for d in res['data']:
+                tmp = d[1].pop(position)
                 freq = tmp / float(metric.window)
-                res['data'][time].insert(position, freq)
+                d[1].insert(position, freq)
    
     ###############################################################################################
-    #   2) one group keys
+    #   2) one group key
     ###############################################################################################
     elif len(groupkeys)==1 and groupkeys[0]!="NONE":
         res['debug']['begin process'] = str(datetime.datetime.now())# debug
         res['groupby'] = 1
-        res['data'] = dict()
+        res['data'] = list()
         res['groupkeys'] = list()
-        # get ALL the groupby keyword for future process
+        # get ALL the groupby keywords for future process (we don't want to miss a groupby)
         for md in metric_data:
             for groupk in simplejson.loads(md.data).keys():
                 if groupk not in res['groupkeys']:
                     res['groupkeys'].append(groupk)
         ## add the data
-        res['debug']['besin add data'] = str(datetime.datetime.now())# debug
+        res['debug']['begin add data'] = str(datetime.datetime.now())# debug
         for md in metric_data:
-            res['data'][md.timestamp] = simplejson.loads(md.data)
+            l = [md.timestamp, simplejson.loads(md.data)]
             # check if we didnt miss a groupkey, if so fill it with null (None)
             for groupk in res['groupkeys']:
-                if groupk not in res['data'][md.timestamp].keys():
-                    res['data'][md.timestamp][groupk] = [None]
+                if groupk not in l[1].keys():
+                    l[1][groupk] = [None]
+            res['data'].append(l)
         # here we handle counterhz datakey
         res['debug']['begin counterhz'] = str(datetime.datetime.now())# debug
         if "CounterHz" in res['datakeys']:
             position = res['datakeys'].index("CounterHz") # get position in the list
-            for time, d in res['data'].iteritems():
+            for l in res['data']:
                 for groupk in res['groupkeys']:
-                    if res['data'][time][groupk][position] == None: # skip if None
+                    if l[1][groupk][position] == None: # skip if None
                         continue
-                    tmp = res['data'][time][groupk].pop(position)
+                    tmp = l[1][groupk].pop(position)
                     freq = tmp / float(metric.window)
-                    res['data'][time][groupk].insert(position, freq)
+                    l[1][groupk].insert(position, freq)
     
     elif len(groupkeys)>1:
         pass
