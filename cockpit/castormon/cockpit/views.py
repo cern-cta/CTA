@@ -25,6 +25,7 @@ def _get_rpyc_connexion():
     """
     return rpyc.connect("lxbsq1204.cern.ch", 18861, config = {"allow_public_attrs" : True})
 
+
 def _get_metrics_names():
     """
     return the names of all running metrics in the logprocessor
@@ -37,16 +38,6 @@ def _get_metrics_names():
         names.append(m.name)
     return names
 
-def _get_metric_data_by_name(metric_name):
-    """
-    return the data of the given metric
-    NB : you should check if the metric is running before calling this function
-    :param metric: 
-    """
-    conn = _get_rpyc_connexion()
-    m = conn.root.get_metric(metric_name)
-    d = conn.root.get_json_data(m)
-    return simplejson.loads(d)
 
 def _get_metric_file(metric_name):
     """
@@ -56,6 +47,7 @@ def _get_metric_file(metric_name):
     """
     conn = _get_rpyc_connexion()
     return conn.root.get_metric_file(metric_name)
+
 
 def _get_server_status():
     try:
@@ -73,7 +65,7 @@ def _get_server_status():
 
 def _update_metrics_info():
     """
-    update the infos about the running metrics
+    update the local infos about the running metrics
     """
     conn = _get_rpyc_connexion()
     ## firs step : add new metric
@@ -118,6 +110,7 @@ def index(request):
                               {'metrics' : metrics_names,
                                'rpyc_status' : rpyc_status},
                               context_instance=RequestContext(request))
+
 
 def display_metric(request, metric_name = None):
     """
@@ -246,8 +239,11 @@ def pushdata(request):
     begin_time=datetime.datetime.now() # debug
     debug = dict() # debug
 
-    if request.method == 'POST':
+    if request.method is not 'POST':
+        return HttpResponse('NON', status=403) # 403 Forbidden
+    else:
         try:
+            # decode the data sent by post
             data = simplejson.loads(urllib.unquote_plus(request.POST['data']))
         except:
             return HttpResponse('invalid json', status=400) # 400 Bad Request
@@ -255,6 +251,7 @@ def pushdata(request):
         metrics_names = data.keys()
 
         if set([m.name for m in Metric.objects.all()]) != set(metrics_names):
+            # check if we have new/removed metrics (set are unordered)
             _update_metrics_info()
 
         for m in metrics_names:
@@ -280,5 +277,4 @@ def pushdata(request):
         delta = finish_time - begin_time # debug
         msg = "delta : "+str(delta)+" -- "+simplejson.dumps(debug)+" -- "+simplejson.dumps(data) # debug
         return HttpResponse('ok '+msg, status=200) # 200 OK
-    else:
-        return HttpResponse('NON', status=403) # 403 Forbidden
+

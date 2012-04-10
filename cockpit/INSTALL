@@ -1,3 +1,4 @@
+
 ###################################################################################################
 #   INSTALATION NOTES FOR CASTOR MONITORING COCKPIT
 ###################################################################################################
@@ -8,23 +9,21 @@
     
     # /etc/init.d/mysqld start
 
-3*) check that cockpit django files are correctly installed in /var/www/castormon ...
+3*) change database login/password in castormon/settings.py (marked with @TODO)
+3bis*) change the SECRET_KEY in castormon/settings.py !! (marked with @TODO)
+3ter*) change the server name in httpd cockpit config file (by default /etc/httpd/conf.d/cockpit-httpd.conf)
 
-4*) change database login/password in castormon/settings.py (marked with @TODO)
-4bis*) change the SECRET_KEY in castormon/settings.py !! (marked with @TODO)
-4ter*) change the server name in httpd cockpit config file (by default /etc/httpd/conf.d/cockpit-httpd.conf)
-
-5*) create cockpit database using :
+4*) create cockpit database using :
 
     $ mysql -u root -p
     mysql> CREATE DATABASE cockpit CHARACTER SET utf8;
 
-7*) in the directory of the application type :
+5*) in the directory of the application, use :
 
     $ python manage.py syncdb
     $ python manage.py migrate cockpit
 
-8*) finally start apache :
+6*) finally start apache :
 
     # /etc/init.d/httpd start -d
 
@@ -41,7 +40,7 @@
 #   NCM STEPS : should not be necessary !!!!
 ###################################################################################################
 
-*) set "/etc/httpd/conf.d/cockpit.conf" to :
+*) set "/etc/httpd/conf.d/cockpit-httpd.conf" to :
 
 NameVirtualHost *:80
 WSGISocketPrefix /var/run/wsgi
@@ -59,9 +58,11 @@ WSGISocketPrefix /var/run/wsgi
         WSGIScriptAlias / /var/www/castormon/django.wsgi
 </VirtualHost>
 
+
 *) switch on wsgi module : set "/etc/httpd/conf.d/wsgi.conf" to
 
 LoadModule wsgi_module modules/mod_wsgi.so
+
 
 *) set SE-linux boolean : 
     httpd_can_network_connect=true
