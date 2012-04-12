@@ -48,14 +48,6 @@ Comments to: Castor.Support@cern.ch'''
 
 
 #-------------------------------------------------------------------------------
-# connectToVdqm
-#-------------------------------------------------------------------------------
-def connectToVdqm():
-    user, passwd, dbname = castor_tools.getVdqmDBConnectParams()
-    return castor_tools.connectToDB(user, passwd, dbname)
-
-
-#-------------------------------------------------------------------------------
 # getVdqmRequests
 #-------------------------------------------------------------------------------
 def getVdqmRequests(rsCursor, verbose):
@@ -126,13 +118,14 @@ def vdqmListRequest(verbose):
     priorities = 0
     stconn = None
     try:
-        stconn = connectToVdqm()
+        stconn = castor_tools.connectToVdqm()
         rsCursor = stconn.cursor()
         rsCursor.arraysize = 50
         priorities = getVdqmRequests(rsCursor,  verbose)
 
     except Exception, e:
-        print COMMANDNAME+' Internal Error: \n'+error.message
+        print COMMANDNAME+' Internal Error: \n'
+        print e
 
     if stconn != None:
         rsCursor.close()

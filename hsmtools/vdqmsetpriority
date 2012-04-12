@@ -54,14 +54,6 @@ Comments to: Castor.Support@cern.ch'''
 
 
 #-------------------------------------------------------------------------------
-# connectToVdqm
-#-------------------------------------------------------------------------------
-def connectToVdqm():
-    user, passwd, dbname = castor_tools.getVdqmDBConnectParams()
-    return castor_tools.connectToDB(user, passwd, dbname)
-
-
-#-------------------------------------------------------------------------------
 # setVdqmPriorities
 #-------------------------------------------------------------------------------
 def  setVdqmPriorities(rsCursor, vid, tpMode, lifespanType, priority):
@@ -83,7 +75,7 @@ def vdqmSetPriority(vid, mode, lifespanType, priority):
 
     stconn = None 
     try:
-        stconn = connectToVdqm()
+        stconn = castor_tools.connectToVdqm()
         rsCursor = stconn.cursor()
         rsCursor.arraysize = 50
         setVdqmPriorities(rsCursor, vid, mode, lifespanType, priority)
@@ -93,8 +85,8 @@ def vdqmSetPriority(vid, mode, lifespanType, priority):
     except Exception, e:
         if stconn != None:
             stconn.rollback()
-        error, = e.args
-        print COMMANDNAME+' Internal Error: \n'+error.message
+        print COMMANDNAME+' Internal Error: \n'
+        print e.args
 
     if stconn != None:
         rsCursor.close()
@@ -133,9 +125,9 @@ def vmgrQueryVid(vid):
         rsCursor.arraysize = 50
         result = queryVmgr(rsCursor, vid)
 
-    except Exception, e:
-        error, = e.args
-        print COMMANDNAME+' Internal Error: \n'+error.message
+    except Exception, e:        
+        print COMMANDNAME+' Internal Error: \n'
+        print e
 
     if stconn != None:
         rsCursor.close()

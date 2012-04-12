@@ -53,14 +53,6 @@ Comments to: Castor.Support@cern.ch'''
 
 
 #-------------------------------------------------------------------------------
-# connectToVdqm
-#-------------------------------------------------------------------------------
-def connectToVdqm():
-    user, passwd, dbname = castor_tools.getVdqmDBConnectParams()
-    return castor_tools.connectToDB(user, passwd, dbname)
-
-
-#-------------------------------------------------------------------------------
 # delVdqmPriorities
 #-------------------------------------------------------------------------------
 def  delVdqmPriorities(rsCursor, vid, tpMode, lifespanType):
@@ -89,7 +81,7 @@ def vdqmDeletePriority(vid, mode, lifespanType):
 
     stconn = None
     try:
-        stconn = connectToVdqm()
+        stconn = castor_tools.connectToVdqm()
         rsCursor = stconn.cursor()
         rsCursor.arraysize = 50
         delVdqmPriorities(rsCursor, vid, mode, lifespanType)
@@ -99,8 +91,8 @@ def vdqmDeletePriority(vid, mode, lifespanType):
     except Exception, e:
         if stconn != None:
             stconn.rollback()
-        error, = e.args
-        print COMMANDNAME+' Internal Error: \n'+error.message
+        print COMMANDNAME+' Internal Error: \n'
+        print e;
 
     if stconn != None:
         rsCursor.close()

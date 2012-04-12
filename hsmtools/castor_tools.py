@@ -236,9 +236,15 @@ def getNSDBConnectParam(filename):
 #-------------------------------------------------------------------------------
 # connectTo_ methods
 #-------------------------------------------------------------------------------
+def connectToVdqm():
+    VDQMSCHEMAVERSION = "2_1_12_0"
+    user, passwd, dbname = getVdqmDBConnectParams()
+    return connectToDB(user, passwd, dbname, VDQMSCHEMAVERSION)
+
 def connectToVmgr():
     '''Gets the connection parameters for the VMGR DB from environment and/or config file'''
     # find out the instance to use
+    VMGRSCHEMAVERSION = "2_1_10_1"
     full_name = "DbCnvSvc"
     inst      = "default"
     if os.environ.has_key('CASTOR_INSTANCE'):
@@ -249,7 +255,7 @@ def connectToVmgr():
     for l in open ('/etc/castor/VMGRCONFIG').readlines():
         if len(l.strip()) == 0 or l.strip()[0] == '#':
             continue
-        conn = DBConnection( l.strip() )
+        conn = DBConnection( l.strip(), VMGRSCHEMAVERSION )
         break
     return conn
 
