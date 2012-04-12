@@ -34,7 +34,7 @@
 #include "castor/server/SignalThreadPool.hpp"
 
 #include "TestMTServer.hpp"
-#include "TestCnsStatThread.hpp"
+#include "TestThread.hpp"
 
 #include <iostream>
 
@@ -46,6 +46,7 @@ int main(int argc, char *argv[]) {
     TestMTServer server;
 
     // Create a db parameters service and fill with appropriate defaults
+    // (only needed when direct access to the NS database is required)
     castor::IService* s = castor::BaseObject::sharedServices()->service("DbParamsSvc", castor::SVC_DBPARAMSSVC);
     castor::db::DbParamsSvc* params = dynamic_cast<castor::db::DbParamsSvc*>(s);
     if(params == 0) {
@@ -56,10 +57,12 @@ int main(int argc, char *argv[]) {
     params->setSchemaVersion("2_1_9_0");
     params->setDbAccessConfFile("/etc/castor/ORANSCONFIG");
     
+    // Create a standard thread pool for the testing code.
+    // XXX The last argument is a hack to make all threads start immediately as opposed
+    // to the default behavior of Castor daemons whereby only one thread starts
+    // at startup and the others follow after the first timeout.
     server.addThreadPool(
-      new castor::server::SignalThreadPool("Test", new TestCnsStatThread(), 10, 20, 300));
-    //server->addThreadPool(
-    //  new castor::server::SignalThreadPool("Test", new TestThread()));
+      new castor::server::SignalThreadPool("Test", new TestThread(), 1, 5, 100));
     server.setForeground(true);
     server.parseCommandLine(argc, argv);
     server.start();
@@ -86,4 +89,20 @@ TestMTServer::TestMTServer() :
   // Initializes the DLF logging
   castor::dlf::Message nomsgs[1];
   dlfInit(nomsgs);
+}
+
+//-----------------------------------------------------------------------------
+// help
+//-----------------------------------------------------------------------------
+void TestMTServer::help(std::string programName)
+{
+  std::cout << "Usage: " << programName << " [options]\n"
+    "\n"
+    "where options can be:\n"
+    "\n"
+    "\t--Tthreads n            or -T n       \tRun <n> threads (default is 5)\n"
+    "\t--metrics               or -m         \tEnable metrics collection\n"
+    "\t--help                  or -h         \tPrint this help and exit\n"
+    "\n"
+    "Comments to: Castor.Support@cern.ch\n";
 }

@@ -27,15 +27,18 @@
 #include "castor/server/BaseDaemon.hpp"
 #include "castor/exception/Exception.hpp"
 
-    class TestMTServer : public castor::server::BaseDaemon {
+class TestMTServer : public castor::server::BaseDaemon {
 
-    public:
+  public:
 
-      /**
-       * Constructor
-       */
-      TestMTServer();
+    /**
+     * Constructor
+     */
+    TestMTServer();
+    
+    /**
+     * command line help
+     */
+    void help(std::string programName);
 
-    }; // class Server
-
-
+}; // class TestMTServer

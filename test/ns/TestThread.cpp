@@ -46,21 +46,6 @@ TestThread::TestThread() :
   m_procTime(0), m_wallTime(0), m_reqCount(0), m_nbThreads(0) {
   m = new castor::server::Mutex(0);
   m_timeStart.tv_usec = 0;
-  
-  // load list of files to stat
-  std::ifstream f("castordump");
-  if(f.is_open()) {    
-    while(!f.eof()) {
-      std::string line;
-      getline(f, line);
-      m_files.push_back(line);
-    }
-    f.close();
-    std::cout << "Dump file read successfully." << std::endl;
-  }
-  else {
-    std::cout << "Couldn't read dump file castordump." << std::endl;
-  }
 }
 
 
@@ -68,20 +53,13 @@ TestThread::TestThread() :
 // run
 //------------------------------------------------------------------------------
 void TestThread::run(void* param) {
-  //char filename[] =    // fileid = 541713
-  //  "/castor/cern.ch/cms/reconstruction/muonDIGI0300/THits/muonSignal0300/MB1mu_pt1/EVD32.muonHitPU.s/cern.ch/cms/reconstruction/jetDIGI0300/Digis/1033Pileup/h200_2tau_emu";
-  //char filename[] = "/castor/cern.ch/user/i/itglp/stresstest/00000";
-  //char* filename = NULL;
-  u_signed64 i = 0;
-  int op;
-  //char server[] = "c2itdcns";   // for getpath
-  u_signed64 maxNb = (m_files.size() ? m_files.size() : 200000000);
+  //u_signed64 i = 0;
+  char server[] = "lxc2dev2";   // for nsping
+  char buf[10];
 
   u_signed64 c = 0;
   u_signed64 reqProcTime = 0, timeStdDev = 0;
-  struct Cns_fileid cnsFileid;
-  struct Cns_filestat cnsFilestat;
-  //char filepath[CA_MAXPATHLEN + 1];
+  //struct Cns_filestat cnsFilestat;
   
   castor::server::SignalThreadPool* p = (castor::server::SignalThreadPool*)param; 
 
@@ -93,31 +71,15 @@ void TestThread::run(void* param) {
   
   timeval reqStart, reqEnd;
   while(!p->stopped()) {
-    //filepath[0] = 0;
-    //i = rand() % 10000;
-    op = rand() % 10;
-    i = rand() % maxNb;
+    //i = rand() % maxNb;
     //sprintf(filename + strlen(filename) - 5, "%05lld", i);
-    memset(&cnsFileid, 0, sizeof(cnsFileid));
-    memset(&cnsFilestat, 0, sizeof(cnsFilestat));
+    //memset(&cnsFilestat, 0, sizeof(cnsFilestat));
 
     gettimeofday(&reqStart, 0);
 
     // *** Do something here ***
-    
-    //Cns_getpath(server, i, filepath);
-    Cns_statx(m_files[i].c_str(), &cnsFileid, &cnsFilestat);
-    /*if(op < 6) {
-      Cns_statx(filename, &cnsFileid, &cnsFilestat);
-    }
-    else {
-      if(op < 8) {
-        Cns_creatx(filename, 0664, &cnsFileid);
-      }
-      else {
-        Cns_unlink(filename);
-      }
-    }*/
+    Cns_ping(server, buf);
+    //Cns_statx(m_files[i].c_str(), &cnsFileid, &cnsFilestat);
     
     // collect statistics    
     gettimeofday(&reqEnd, 0);
@@ -129,7 +91,8 @@ void TestThread::run(void* param) {
   // print some statistics for this thread; uncertainty range = 1 sigma
   std::cout.precision(3);
   std::cout << "Thread #" << syscall(__NR_gettid) << " : req.count = " << c << "  avgProcTime = " << reqProcTime * 0.000001/c
-            << " sec  +/- " << 0.000001*(c-1)/c*sqrt(timeStdDev*1.0/c - (reqProcTime*1.0/c)*(reqProcTime*1.0/c)) << " sec" << std::endl;
+            << " sec  +/- " << 0.000001*(c-1)/c*sqrt(timeStdDev*1.0/c - (reqProcTime*1.0/c)*(reqProcTime*1.0/c))
+            << " sec" << std::endl;
   
   if(!m_wallTime) {
     // hopefully only one thread computes it
@@ -149,7 +112,9 @@ void TestThread::run(void* param) {
   if(m_nbThreads == p->getNbThreads()) {
     // we're the last one, let's print the overall statistics
     std::cout.precision(4);
-    std::cout << "Total req.count = " << m_reqCount << "  wallTime = " << m_wallTime * 0.000001 << " sec  avgProcTime = " << m_procTime * 0.000001/m_reqCount
-              << " sec  p/wTime = " << m_procTime/m_wallTime << "  throughput = " << m_reqCount*1000000.0/m_wallTime << " req/sec" << std::endl;
+    std::cout << "Total req.count = " << m_reqCount << "  wallTime = " << m_wallTime * 0.000001 
+              << " sec  avgProcTime = " << m_procTime * 0.000001/m_reqCount
+              << " sec  p/wTime = " << m_procTime/m_wallTime << "  throughput = " << m_reqCount*1000000.0/m_wallTime
+              << " req/sec" << std::endl;
   }
 }
