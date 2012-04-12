@@ -415,7 +415,7 @@ dlf_Param.o: $(ROOT_DIR)/castor/dlf/Param.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 dlf_dlf_lib.o: $(ROOT_DIR)/dlf/dlf_lib.c
-	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
 
 exception_Exception.o: $(ROOT_DIR)/castor/exception/Exception.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^

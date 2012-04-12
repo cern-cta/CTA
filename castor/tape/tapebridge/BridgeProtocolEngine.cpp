@@ -69,6 +69,7 @@
 #include <exception>
 #include <list>
 #include <memory>
+#include <sstream>
 #include <sys/time.h>
 
 
@@ -1080,7 +1081,7 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::startMigrationSession()
   // Give first file to migrate to rtcpd
   {
     char migrationTapeFileId[CA_MAXPATHLEN+1];
-    utils::toHex((uint64_t)firstFileToMigrate->fileid(),
+    generateMigrationTapeFileId((uint64_t)firstFileToMigrate->fileid(),
       migrationTapeFileId);
     unsigned char blockId[4];
     utils::setBytes(blockId, '\0');
@@ -1293,17 +1294,13 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpdRequest(
   bool &receivedENDOF_REQ) throw(castor::exception::Exception) {
 
   {
-    char magicHex[2 + 17]; // 0 + x + FFFFFFFFFFFFFFFF + '\0'
-    magicHex[0] = '0';
-    magicHex[1] = 'x';
-    utils::toHex(header.magic, &(magicHex[2]), 17);
+    std::ostringstream magicHexStream;
+    magicHexStream << "0x" << std::hex << header.magic;
 
     const char *magicName = utils::magicToString(header.magic);
 
-    char reqTypeHex[2 + 17]; // 0 + x + FFFFFFFFFFFFFFFF + '\0'
-    reqTypeHex[0] = '0';
-    reqTypeHex[1] = 'x';
-    utils::toHex(header.reqType, &(reqTypeHex[2]), 17);
+    std::ostringstream reqTypeHexStream;
+    reqTypeHexStream << "0x" << std::hex << header.reqType;
 
     const char *reqTypeName = utils::rtcopyReqTypeToString(header.reqType);
 
@@ -1318,9 +1315,9 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpdRequest(
       castor::dlf::Param("clientType",
         utils::volumeClientTypeToString(m_volume.clientType())),
       castor::dlf::Param("socketFd"          , socketFd               ),
-      castor::dlf::Param("magic"             , magicHex               ),
+      castor::dlf::Param("magic"             , magicHexStream.str()   ),
       castor::dlf::Param("magicName"         , magicName              ),
-      castor::dlf::Param("reqType"           , reqTypeHex             ),
+      castor::dlf::Param("reqType"           , reqTypeHexStream.str() ),
       castor::dlf::Param("reqTypeName"       , reqTypeName            ),
       castor::dlf::Param("len"               , header.lenOrStatus     )};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG,
@@ -2859,7 +2856,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::sendFileToMigrateToRtcpd(
   // Give file to migrate to rtcpd
   {
     char migrationTapeFileId[CA_MAXPATHLEN+1];
-    utils::toHex(fileToMigrate.fileId, migrationTapeFileId);
+    generateMigrationTapeFileId(fileToMigrate.fileId, migrationTapeFileId);
     unsigned char blockId[4];
     utils::setBytes(blockId, '\0');
     char nshost[CA_MAXHOSTNAMELEN+1];
@@ -3596,4 +3593,39 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::shuttingDownRtcpdSession()
   // The session with the rtcpd daemon should be shut down if the rtcpd daemon
   // has sent us any errors
   return !m_sessionErrors.empty();
+}
+
+
+//-----------------------------------------------------------------------------
+// generateMigrationTapeFileId
+//-----------------------------------------------------------------------------
+void castor::tape::tapebridge::BridgeProtocolEngine::
+  generateMigrationTapeFileId(
+  const uint64_t i, 
+  char           (&dst)[CA_MAXPATHLEN+1])
+  const throw(castor::exception::Exception) {
+
+  const char hexDigits[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+    'A', 'B', 'C', 'D', 'E', 'F'};
+  char backwardsHexDigits[16];
+  utils::setBytes(backwardsHexDigits, '\0');
+  uint64_t exponent = 0;
+  uint64_t quotient = i;
+  int nbDigits = 0;
+
+  for(exponent=0; exponent<16; exponent++) {
+    backwardsHexDigits[exponent] = hexDigits[quotient % 16];
+    nbDigits++;
+
+    quotient = quotient / 16;
+
+    if(quotient== 0) {
+      break;
+    }
+  }
+
+  for(int d=0; d<nbDigits;d++) {
+    dst[d] = backwardsHexDigits[nbDigits-1-d];
+  }
+  dst[nbDigits] = '\0';
 }

@@ -1012,6 +1012,24 @@ private:
    */
   bool shuttingDownRtcpdSession() const;
 
+public:
+
+  /**
+   * Uses the specified unsigned 64-bit integer to generate and write the
+   * corresponding migration tape-file-id into the specified destination
+   * character array.
+   *
+   * The migration tape-file-id is in fact a hexadecimal string where the
+   * letter digits are all capital letters.
+   *
+   * @param i   The unsigned 64-bit integer.
+   * @param dst The destination character array.
+   */
+  void generateMigrationTapeFileId(
+    const uint64_t i,
+    char           (&dst)[CA_MAXPATHLEN+1])
+    const throw(castor::exception::Exception);
+
 }; // class BridgeProtocolEngine
 
 } // namespace tapebridge

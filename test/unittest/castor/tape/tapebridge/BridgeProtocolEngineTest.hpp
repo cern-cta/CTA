@@ -26,6 +26,7 @@
 #define TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_BRIDGEPROTOCOLENGINETEST_HPP 1
 
 #include "castor/tape/tapebridge/BridgeProtocolEngine.hpp"
+#include "h/Castor_limits.h"
 #include "h/serrno.h"
 
 #include <cppunit/extensions/HelperMacros.h>
@@ -33,6 +34,7 @@
 #include <memory>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 namespace castor     {
 namespace tape       {
@@ -130,10 +132,62 @@ public:
   void testUnixDomain() {
   }
 
+  void testGenerateMigrationTapeFileId() {
+    DummyFileCloser fileCloser;
+    const int initialRtcpdSock = 12;
+
+    {
+      const BulkRequestConfigParams bulkRequestConfigParams;
+      const TapeFlushConfigParams   tapeFlushConfigParams;
+      const Cuuid_t                 &cuuid = nullCuuid;      const int                     rtcpdListenSock  = 11;
+      const legacymsg::RtcpJobRqstMsgBody jobRequest = {        0, // volReqId
+        0, // clientPort;
+        0, // clientEuid;
+        0, // clientEgid;
+        "clientHost", // clientHost
+        "dgn", // dgn
+        "unit", // driveUnit
+        "user", // clientUserName
+      };
+      const tapegateway::Volume volume;
+      const uint32_t            nbFilesOnDestinationTape = 0;
+      AlwaysFalseBoolFunctor    stoppingGracefully;
+      Counter<uint64_t>         tapebridgeTransactionCounter(0);
+
+      BridgeProtocolEngine engine(
+        fileCloser,
+        bulkRequestConfigParams,
+        tapeFlushConfigParams,
+        cuuid,
+        rtcpdListenSock,
+        initialRtcpdSock,
+        jobRequest,
+        volume,
+        nbFilesOnDestinationTape,
+        stoppingGracefully,
+        tapebridgeTransactionCounter);
+
+      const uint64_t i               = 0xdeadfacedeadface;
+      const char     *expectedResult =  "DEADFACEDEADFACE";
+      char dst[CA_MAXPATHLEN+1];
+      memset(dst, '\0', sizeof(dst));
+
+      CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+        "Checking engine.generateMigrationTapeFileId()",
+        engine.generateMigrationTapeFileId(i, dst));
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Check result of engine.generateMigrationTapeFileId()",
+        std::string(expectedResult),
+        std::string(dst));
+    }
+  }
+
   CPPUNIT_TEST_SUITE(BridgeProtocolEngineTest);
 
   CPPUNIT_TEST(testConstructor);
   CPPUNIT_TEST(testUnixDomain);
+  CPPUNIT_TEST(testGenerateMigrationTapeFileId);
 
   CPPUNIT_TEST_SUITE_END();
 };
