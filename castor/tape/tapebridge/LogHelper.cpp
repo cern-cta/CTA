@@ -154,11 +154,8 @@ void castor::tape::tapebridge::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
   const int socketFd, const legacymsg::RtcpFileRqstErrMsgBody &body) throw() {
 
-  // 32-bits = 1 x '0' + 1 x 'x' + 8 x hex + 1 x '/0' = 11 byte string
-  char checksumHex[11];
-  checksumHex[0] = '0';
-  checksumHex[1] = 'x';
-  utils::toHex(body.rqst.segAttr.segmCksum, &checksumHex[2], 9);
+  std::ostringstream checksumHexStream;
+  checksumHexStream << "0x" << std::hex << body.rqst.segAttr.segmCksum;
 
   castor::dlf::Param params[] = {
     castor::dlf::Param("mountTransactionId"  , volReqId                      ),
@@ -210,7 +207,7 @@ void castor::tape::tapebridge::LogHelper::logMsgBody(const Cuuid_t &cuuid,
       body.rqst.segAttr.nameServerHostName),
     castor::dlf::Param("segAttr.segmCksumAlgorithm",
       body.rqst.segAttr.segmCksumAlgorithm),
-    castor::dlf::Param("segAttr.segmCksum"   , checksumHex                   ),
+    castor::dlf::Param("segAttr.segmCksum"   , checksumHexStream.str()       ),
     castor::dlf::Param("segAttr.castorFileId", body.rqst.segAttr.castorFileId),
     castor::dlf::Param("stgReqId"            , body.rqst.stgReqId            ),
     castor::dlf::Param("err.errorMsg"        , body.err.errorMsg             ),
@@ -232,11 +229,8 @@ void castor::tape::tapebridge::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
   const int socketFd, const legacymsg::RtcpFileRqstMsgBody &body) throw() {
 
-  // 32-bits = 1 x '0' + 1 x 'x' + 8 x hex + 1 x '/0' = 11 byte string
-  char checksumHex[11];
-  checksumHex[0] = '0';
-  checksumHex[1] = 'x';
-  utils::toHex(body.rqst.segAttr.segmCksum, &checksumHex[2], 9);
+  std::ostringstream checksumHexStream;
+  checksumHexStream << "0x" << std::hex << body.rqst.segAttr.segmCksum;
 
   castor::dlf::Param params[] = {
     castor::dlf::Param("mountTransactionId"  , volReqId                      ),
@@ -289,7 +283,7 @@ void castor::tape::tapebridge::LogHelper::logMsgBody(const Cuuid_t &cuuid,
       body.rqst.segAttr.nameServerHostName),
     castor::dlf::Param("segAttr.segmCksumAlgorithm",
       body.rqst.segAttr.segmCksumAlgorithm),
-    castor::dlf::Param("segAttr.segmCksum"   , checksumHex                   ),
+    castor::dlf::Param("segAttr.segmCksum"   , checksumHexStream.str()       ),
     castor::dlf::Param("segAttr.castorFileId", body.rqst.segAttr.castorFileId),
     castor::dlf::Param("stgReqId"            , body.rqst.stgReqId            )};
 
