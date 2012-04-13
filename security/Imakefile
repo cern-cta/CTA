@@ -24,9 +24,9 @@ ClientSharedLibraryTarget(castorsecurity,$(SECLIB_OBJS),$(GLOBLIB),$(LIBS) -ldl)
 
 #if UseGSI
 GSITLIB_OBJS = Csec_plugin_GSI_pthr.o Csec_plugin_GSI_pthr_mapper.o
-ClientSharedLibraryTarget(Csec_plugin_GSI_thread,$(GSITLIB_OBJS),,$(GLOBUS_GSSLIB_THR) -lssl -lc -ldl)
+SharedLibraryTarget(Csec_plugin_GSI_thread,$(GSITLIB_OBJS),,$(GLOBUS_GSSLIB_THR) -lssl -lc -ldl)
 GSILIB_OBJS = Csec_plugin_GSI.o Csec_plugin_GSI_mapper.o
-ClientSharedLibraryTarget(Csec_plugin_GSI,$(GSILIB_OBJS),,$(GLOBUS_GSSLIB) -lssl -lc -ldl)
+SharedLibraryTarget(Csec_plugin_GSI,$(GSILIB_OBJS),,$(GLOBUS_GSSLIB) -lssl -lc -ldl)
 
 LOCAL_PATH/Csec_plugin_GSI.o: LOCAL_PATH/Csec_plugin_GSS.c
 	@echo Compiling $@
