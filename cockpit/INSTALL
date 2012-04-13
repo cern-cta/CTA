@@ -14,13 +14,17 @@
 3ter*) change the server name in httpd cockpit config file (by default /etc/httpd/conf.d/cockpit-httpd.conf)
 
 4*) create cockpit database using :
+NB : if not already done, change root password of mysql !
 
     $ mysql -u root -p
     mysql> CREATE DATABASE cockpit CHARACTER SET utf8;
 
-5*) in the directory of the application, use :
+5*) in the directory of the application (by default /var/www/castormon ), use :
 
     $ python manage.py syncdb
+        
+        Here you may be asked to create a superuser for django.
+
     $ python manage.py migrate cockpit
 
 6*) finally start apache :
@@ -32,7 +36,8 @@
 ###################################################################################################
 #   DJANGO STEPS : should not be necessary if installed from provided RPM !!!
 ###################################################################################################
-3*) upload cockpit django application files to /var/www
+3*) upload cockpit django application files to /var/www/castormon
+ -> http://svnweb.cern.ch/world/wsvn/CASTOR/CASTOR2/trunk/cockpit/castormon/
 
 
 
@@ -66,9 +71,9 @@ LoadModule wsgi_module modules/mod_wsgi.so
 
 *) set SE-linux boolean : 
     httpd_can_network_connect=true
-    httpd_can_network_connect_db=true
-
-    if needed : allow_user_mysql_connect
+    allow_user_mysql_connect=true
 
     using : 
-        # setsebool httpd_can_network_connect="on" httpd_can_network_connect_db="on"
+        # setsebool httpd_can_network_connect="on" allow_user_mysql_connect="on"
+
+

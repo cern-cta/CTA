@@ -354,6 +354,7 @@ class ComputeMetrics(LoggingCommon.MsgDestination):
                         # the buffer, wait 5sec and then loop to send again
                         COCKPIT_BUFFER.appendleft(to_push_data)
                         logging.error("Pusher : could not send data to cockpit, buffer has : "+str(len(list(COCKPIT_BUFFER)))+" entries")
+                        logging.debug("Exception : " + str(e))
                         time.sleep(5)
                         continue
                     else:

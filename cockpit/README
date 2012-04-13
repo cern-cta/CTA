@@ -1,1 +1,3 @@
-cockpit-httpd.conf is the configuration file of Apache (httpd) for the cockpit
+*   cockpit-httpd.conf is the configuration file of Apache (httpd) for the cockpit
+*   Do not enable mod_python and mod_wsgi in the same apache process
+
