@@ -498,37 +498,9 @@ void  castor::tape::tapegateway::NsTapeGatewayHelper::checkRecalledFile(castor::
       return; //no checksum given
     }
 
+    // If the segment does not have a checkum in the name server then do nothing and
+    // return
     if (segattrs[i].checksum_name[0] == '\0') {
-      // old segment without checksum we set the new one
-
-      struct Cns_segattrs *newSegattrs;
-      memcpy(&newSegattrs,&segattrs[i],sizeof(segattrs));
-      strncpy(
-              newSegattrs->checksum_name,
-              file.checksumName().c_str(),
-              CA_MAXCKSUMNAMELEN
-              );
-      newSegattrs->checksum = file.checksum(); 
-      serrno=0;
-      int rc = Cns_updateseg_checksum(
-                                  castorFileId.server,
-                                  castorFileId.fileid,
-                                  &segattrs[i],
-                                  newSegattrs
-                                  );
-      if (segattrs != NULL ) free(segattrs);
-      segattrs=NULL;
-      if (newSegattrs)free(newSegattrs);
-      newSegattrs=NULL;
-      
-      if (rc<0) {
-	castor::exception::Exception ex(serrno);
-	ex.getMessage()
-	  << "castor::tape::tapegateway::NsTapeGatewayHelper::checkRecalledFile:"
-	  << "Cns_updateseg_checksum failed";
-	throw ex;
-      }
-
       return;
     }
 
