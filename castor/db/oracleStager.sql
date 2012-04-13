@@ -1325,6 +1325,9 @@ BEGIN
               SELECT reqId, client
                 INTO rReqId, varClientId
                 FROM SetFileGCWeight WHERE id = varRId;
+            ELSE
+              -- Unsupported request type, should never happen
+              RAISE NO_DATA_FOUND;
           END CASE;
           SELECT ipAddress, port, version
             INTO clIpAddress, clPort, clVersion
@@ -1334,8 +1337,10 @@ BEGIN
           END IF;
           EXIT;
         EXCEPTION WHEN NO_DATA_FOUND THEN
-          -- This should never happen, we have an orphaned subrequest.
+          -- This should never happen, we have either an orphaned subrequest
+          -- or a request with an unsupported type.
           -- As we couldn't get the client, we just archive and move on.
+          -- XXX For next version, call logToDLF() instead of silently archive. 
           srId := 0;
           archiveSubReq(varSRId, dconst.SUBREQUEST_FAILED_FINISHED);
           COMMIT;
