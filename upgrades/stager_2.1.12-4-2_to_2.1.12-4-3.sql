@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 stager_2.1.12-4-1_to_2.1.12-4-2.sql
+ *                 stager_2.1.12-4-2_to_2.1.12-4-3.sql
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
