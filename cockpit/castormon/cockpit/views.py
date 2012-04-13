@@ -239,7 +239,7 @@ def pushdata(request):
     begin_time=datetime.datetime.now() # debug
     debug = dict() # debug
 
-    if request.method is not 'POST':
+    if request.method != 'POST':
         return HttpResponse('NON', status=403) # 403 Forbidden
     else:
         try:
