@@ -33,14 +33,14 @@ a:active {
 }
 
 p {
-    padding-left : 5px;
+    padding-left: 5px;
 }
 
-p.rpyc-up {
+.rpyc-up {
     color: green;
 }
 
-p.rpyc-down {
+.rpyc-down {
     color: red;
     font-weight: bold;
 }
@@ -53,16 +53,18 @@ p.rpyc-down {
     border: 1px solid #CCC;
 }
 
+#sidebar-content {
+    padding: 5px;
+}
+
 #sidebar h1 {
     background-color: #CCC;
-    margin-top:13px;
-    margin-bottom:0px;
-    padding-top: 3px;
-    padding-left: 5px;
+    padding: 3px 5px 0px 5px;
+    margin: 13px -5px 0px -5px;
 }
 
 #sidebar ul {
-    padding-left:5px;
+    padding-left:0px;
     list-style-type:none;
 }
 

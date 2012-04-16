@@ -1,9 +1,10 @@
 Installation notes for Scribe :
 
 1*) Install the RPM (with --nodeps options if needed)
+1*bis) IMPORTANT : Scribe version of logprocessor needs the dependency python-simplejson !
 
 2*) Change line 289 of /usr/lib/log-processor/LoggingCommon.py to :
-   path += "%d%02d%02d/c2aggregated_00000" % (p.year, p.month, p.day))
+   path += "%d%02d%02d/c2aggregated_00000" % (p.year, p.month, p.day)
 
    (stefano's hack to let if work with Scribe)
 
@@ -13,3 +14,4 @@ Installation notes for Scribe :
 
 5*) Start the daemon :
     # /etc/init.d/logprocessord start
+

@@ -13,6 +13,7 @@ class MetricData(models.Model):
         """
         return '<MetricData: %s %s>' % (self.name, self.timestamp)
 
+
 class Metric(models.Model):
     """
     metric object, representing a running metric

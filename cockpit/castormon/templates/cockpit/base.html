@@ -39,12 +39,15 @@
             <h1>
                 Info
             </h1>
+            <ul>
+                <li><a href="https://twiki.cern.ch/twiki/bin/view/DSSGroup/CockpitWebInterface">Twiki page</a></li>
             {% if rpyc_status %}
-                <p class="rpyc-up">RPyC Server : <img src="/static/img/button_ok.png" alt="UP" style="vertical-align:middle;width:20px" /></p>
+                <li class="rpyc-up">RPyC Server : <img src="/static/img/button_ok.png" alt="UP" style="vertical-align:middle;width:20px" /></li>
             {% else %}
-                <p class="rpyc-down">RPyC Server : <img src="/static/img/button_cancel.png" alt="DOWN" style="vertical-align:middle;width:20px" /></p>
+                <li class="rpyc-down">RPyC Server : <img src="/static/img/button_cancel.png" alt="DOWN" style="vertical-align:middle;width:20px" /></li>
                 <p>Data not up-to-date !</p>
             {% endif %}
+            </ul>
         </div>
     </div>
     <div id="main">

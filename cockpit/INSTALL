@@ -9,8 +9,8 @@
     
     # /etc/init.d/mysqld start
 
-3*) change database login/password in castormon/settings.py (marked with @TODO)
-3bis*) change the SECRET_KEY in castormon/settings.py !! (marked with @TODO)
+3*) change database login/password in /var/www/castormon/settings.py (marked with @TODO)
+3bis*) change the SECRET_KEY in /var/www/castormon/settings.py !! (marked with @TODO)
 3ter*) change the server name in httpd cockpit config file (by default /etc/httpd/conf.d/cockpit-httpd.conf)
 
 4*) create cockpit database using :
@@ -30,6 +30,8 @@ NB : if not already done, change root password of mysql !
 6*) finally start apache :
 
     # /etc/init.d/httpd start -d
+
+After these steps, you should see the cockpit web interface when you visit the right URL.
 
 
 
