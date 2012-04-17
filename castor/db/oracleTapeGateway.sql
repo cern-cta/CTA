@@ -1588,7 +1588,14 @@ BEGIN
           FOR UPDATE OF CF.id;
       EXCEPTION
         WHEN NO_DATA_FOUND THEN
-          NULL; 
+          /* We have a recall orphaned of it castofile (usually with castorfile = 0)
+           * We just drop the segment and recalljob as all the rest is castorfile
+           * driven and hence will fail. Setting varCfId to NULL makes the remainder
+           * of the loop neutral. */
+          varCfId := NULL;
+          DELETE FROM Segment WHERE copy = varRjIds(i);
+          DELETE FROM RecallJob WHERE id = varRjIds(i);
+          COMMIT;
       END;
       -- fail diskcopy, drop recall and migration jobs
       UPDATE DiskCopy DC SET DC.status = dconst.DISKCOPY_FAILED
