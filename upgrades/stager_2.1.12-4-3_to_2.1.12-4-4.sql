@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 stager_2.1.12-4-2_to_2.1.12-4-3.sql
+ *                 stager_2.1.12-4-3_to_2.1.12-4-4.sql
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,10 +17,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * This script upgrades a CASTOR v2.1.12-4-2 STAGER database to v2.1.12-4-3
+ * This script upgrades a CASTOR v2.1.12-4-3 STAGER database to v2.1.12-4-4
  *
  * It fixes the following bug :
- *    bug #92384: Incorrect restarting of replication requests when a diskserver comes back online
+ *    bug #93786: tg_deleteTapeRequest spins when the castorfile is missing.
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
