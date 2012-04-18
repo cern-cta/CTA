@@ -2844,6 +2844,8 @@ BEGIN
      SET diskCopy = dcId,
          lastModificationTime = getTime()
    WHERE id = srId;
+  -- reset file size to 0 as the file has been truncated
+  UPDATE CastorFile set fileSize = 0 WHERE id = cfId;
   -- we don't commit here, the stager will do that when
   -- the subRequest status will be updated to 6
 END;
