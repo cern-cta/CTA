@@ -1145,14 +1145,15 @@ BEGIN
         nbFilesFailed := nbFilesFailed + 1;
       ELSE
         -- find out whether this file is already staged
-        SELECT count(DiskCopy.id) INTO varNbCopies
-          FROM DiskCopy, FileSystem, DiskServer
-         WHERE DiskCopy.castorfile = cfId
-           AND DiskCopy.fileSystem = FileSystem.id
-           AND FileSystem.status = 0 -- PRODUCTION
+        SELECT /*+ INDEX(DC I_DiskCopy_CastorFile) */ count(DC.id)
+          INTO varNbCopies
+          FROM DiskCopy DC, FileSystem, DiskServer
+         WHERE DC.castorfile = cfId
+           AND DC.fileSystem = FileSystem.id
+           AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
            AND FileSystem.diskserver = DiskServer.id
-           AND DiskServer.status = 0 -- PRODUCTION
-           AND DiskCopy.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR);
+           AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+           AND DC.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR);
         IF varNbCopies = 0 THEN
           -- find out whether this file is already being recalled
           BEGIN
