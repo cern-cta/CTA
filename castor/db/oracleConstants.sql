@@ -135,6 +135,9 @@ AS
 END dconst;
 /
 
+/**
+ * Package containing the definition of all DLF levels and messages logged from the SQL-to-DLF API
+ */
 CREATE OR REPLACE PACKAGE dlf
 AS
   /* message levels */
