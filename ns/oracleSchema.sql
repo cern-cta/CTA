@@ -96,3 +96,10 @@ CREATE INDEX I_seg_metadata_tapesum ON Cns_seg_metadata (vid, s_fileid, segsize,
 -- Temporary table to support Cns_bulkexist calls
 CREATE GLOBAL TEMPORARY TABLE Cns_files_exist_tmp
   (tmpFileId NUMBER) ON COMMIT DELETE ROWS;
+
+-- Temporary table to store intermediate log data to be passed to the stager.
+-- We keep the data on commit and truncate it explicitly afterwards as we
+-- want to use it over multiple commits (e.g. on bulk multi-file operations).
+CREATE GLOBAL TEMPORARY TABLE ResultsLogHelper
+  (timeinfo NUMBER, lvl INTEGER, msg VARCHAR2(2048), fileId NUMBER, params VARCHAR2(4000))
+  ON COMMIT PRESERVE ROWS;
