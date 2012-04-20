@@ -15,6 +15,10 @@ ifndef IMAKETMPL
 #define YES	1
 #include <site.def>
 
+CASTOR_ROOT = __back_to_root__
+MAJOR_CASTOR_VERSION := $(shell egrep "^castor" $(CASTOR_ROOT)/debian/changelog | head -1 | awk '{ print $$2 }' | cut -d . -f 1,2 | cut -c 2-)
+MINOR_CASTOR_VERSION := $(shell egrep "^castor" $(CASTOR_ROOT)/debian/changelog | head -1 | awk '{ print $$2 }' | cut -d . -f 3 | head -c -2 | sed 's/-/./')
+
 #ifdef linux
 #include <linux.cf>
 #else
@@ -28,7 +32,7 @@ ifndef IMAKETMPL
 DEBUG = -O0 -g
 #define LOCAL_PATH $(CASTOR_ROOT)/__local_path__
 #define PREFIX(VAR) __root_prefix__/**/_/**/VAR
-CASTOR_ROOT = __back_to_root__
+
 CC += -fPIC -D_LARGEFILE64_SOURCE -Wall -Wextra -Werror
 CXX += -fPIC -D_LARGEFILE64_SOURCE -Wall -Wextra -Werror
 CXXFLAGS += -I$(CASTOR_ROOT) -I$(CASTOR_ROOT)/h $(DEBUG)
