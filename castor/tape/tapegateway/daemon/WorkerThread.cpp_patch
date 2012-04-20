@@ -1,0 +1,7 @@
+
+// Update internal monitoring if enabled
+castor::metrics::MetricsCollector* mc = castor::metrics::MetricsCollector::getInstance();
+if(mc) {
+  mc->updateHistograms(obj.get());
+}
+
