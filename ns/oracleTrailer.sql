@@ -285,9 +285,9 @@ BEGIN
   COMMIT;
   -- Log
   msg := 'CopyNo='|| segEntry.copyNo ||' Fsec=1 SegmentSize='|| segEntry.segSize
-    ||' Compression='|| trunc(segEntry.segSize*100/segEntry.comprSize) ||' VID='|| segEntry.vid
+    ||' Compression='|| trunc(segEntry.segSize*100/segEntry.comprSize) ||' TPVID='|| segEntry.vid
     ||' Fseq='|| segEntry.fseq ||' BlockId='-- || to_char(cast(segEntry.blockId as NUMBER), 'XXXX')  -- XXX need to find how to convert a RAW type (and wondering why to use RAW for a 32-bit word in the first place...)
-    ||' ChecksumType='|| segEntry.checksum_name ||' ChecksumValue=' || fCkSum;
+    ||' ChecksumType="'|| segEntry.checksum_name ||'" ChecksumValue=' || fCkSum;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- The file entry was not found, just give up
   rc := dlf.ENOENT;
@@ -313,12 +313,12 @@ BEGIN
   FOR i IN segs.FIRST .. segs.LAST LOOP
     setSegmentForFile(segs(i), varRC, varParams);
     INSERT INTO ResultsLogHelper (timeinfo, lvl, reqid, msg, fileId, params)
-      VALUES (getTime(), CASE rc WHEN 0 THEN dlf.LVL_SYSTEM ELSE dlf.LVL_ERROR END, varReqid, 
+      VALUES (getTime(), CASE varRC WHEN 0 THEN dlf.LVL_SYSTEM ELSE dlf.LVL_ERROR END, varReqid,
               CASE varRC WHEN 0 THEN 'New segment information' ELSE 'Error creating/updating segment' END,
               segs(i).fileId, varParams);
   END LOOP;
   -- Final logging
-  varParams := 'Function=setSegmentsForFiles NbFiles='|| segs.COUNT ||' ElapsedTime='|| getSecs(varStartTime, SYSTIMESTAMP);
+  varParams := 'Function="setSegmentsForFiles" NbFiles='|| segs.COUNT ||' ElapsedTime='|| getSecs(varStartTime, SYSTIMESTAMP);
   INSERT INTO ResultsLogHelper (timeinfo, lvl, reqid, msg, fileId, params)
     VALUES (getTime(), dlf.LVL_SYSTEM, varReqid, 'Bulk processing complete', 0, varParams);
   -- Return logs to the stager
