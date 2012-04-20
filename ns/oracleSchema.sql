@@ -101,5 +101,5 @@ CREATE GLOBAL TEMPORARY TABLE Cns_files_exist_tmp
 -- We keep the data on commit and truncate it explicitly afterwards as we
 -- want to use it over multiple commits (e.g. on bulk multi-file operations).
 CREATE GLOBAL TEMPORARY TABLE ResultsLogHelper
-  (timeinfo NUMBER, lvl INTEGER, msg VARCHAR2(2048), fileId NUMBER, params VARCHAR2(4000))
+  (timeinfo NUMBER, lvl INTEGER, reqid VARCHAR2(36), msg VARCHAR2(2048), fileId NUMBER, params VARCHAR2(4000))
   ON COMMIT PRESERVE ROWS;
