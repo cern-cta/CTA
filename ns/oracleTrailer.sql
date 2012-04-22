@@ -109,6 +109,7 @@ BEGIN
 END;
 /
 
+/* Returns a time interval in seconds */
 CREATE OR REPLACE FUNCTION getSecs(startTime IN TIMESTAMP, endTime IN TIMESTAMP) RETURN NUMBER IS
 BEGIN
   RETURN EXTRACT(SECOND FROM (endTime - startTime));
@@ -155,17 +156,17 @@ END;
  * The returned REF CURSOR is of type Segment.
  */
 CREATE OR REPLACE FUNCTION getValidSegmentsForRecall(fid IN NUMBER) RETURN castorns.Segment_Cur IS
-  CURSOR res IS
+  res castorns.Segment_Cur;
+BEGIN
+  OPEN res FOR
     SELECT s_fileId as fileId, 0 as lastModTime, copyNo, segSize, 0 as comprSize,
            Cns_seg_metadata.vid, fseq, blockId, checksum_name, nvl(checksum, 0) as checksum
       FROM Cns_seg_metadata, Vmgr_tape_side
      WHERE Cns_seg_metadata.s_fileid = fid
-       AND cns_seg_metadata.s_status = '-'
+       AND Cns_seg_metadata.s_status = '-'
        AND Vmgr_tape_side.VID = Cns_seg_metadata.VID
        AND Vmgr_tape_side.status NOT IN (1, 2, 32)  -- DISABLED, EXPORTED, ARCHIVED
-     ORDER BY copyNo, fsec;
-BEGIN
-  OPEN res;
+     ORDER BY copyno, fsec;
   RETURN res;
 END;
 /
