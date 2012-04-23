@@ -5,12 +5,9 @@ COMM
 COMM  Make CASTOR tests for "ns" directory
 
 CPPFLAGS += $(ORACLE_CPPFLAGS)
-AddLdFlags(-L$(ORACLE_LIBDIR) -locci -lclntsh)                                                                                       
 
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(castor,castorclient)
-DependsOnLibrary(castor/db/cnv,castorcnvs)
-DependsOnLibrary(castor/db/newora,castorcommonora)
 
 NSTESTSRCS = TestThread.cpp \
              TestMTServer.cpp

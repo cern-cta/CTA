@@ -45,7 +45,7 @@ class TestThread : public castor::server::IThread {
     ~TestThread() throw() {};
     
   private:
-    u_signed64 m_procTime, m_wallTime, m_reqCount;
+    u_signed64 m_procTime, m_wallTime, m_reqCount, m_timeStdDev;
     timeval m_timeStart;
     unsigned m_nbThreads;
     

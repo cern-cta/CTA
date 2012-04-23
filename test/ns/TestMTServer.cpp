@@ -29,7 +29,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/Services.hpp"
-#include "castor/db/DbParamsSvc.hpp"
+//#include "castor/db/DbParamsSvc.hpp"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/server/SignalThreadPool.hpp"
 
@@ -47,6 +47,7 @@ int main(int argc, char *argv[]) {
 
     // Create a db parameters service and fill with appropriate defaults
     // (only needed when direct access to the NS database is required)
+    /*
     castor::IService* s = castor::BaseObject::sharedServices()->service("DbParamsSvc", castor::SVC_DBPARAMSSVC);
     castor::db::DbParamsSvc* params = dynamic_cast<castor::db::DbParamsSvc*>(s);
     if(params == 0) {
@@ -56,7 +57,10 @@ int main(int argc, char *argv[]) {
     }
     params->setSchemaVersion("2_1_9_0");
     params->setDbAccessConfFile("/etc/castor/ORANSCONFIG");
-    
+    */
+
+    //server.addThreadPool(
+    //  new castor::server::SignalThreadPool("Test", new TestCnsStatThread(), 10, 20, 300));
     // Create a standard thread pool for the testing code.
     // XXX The last argument is a hack to make all threads start immediately as opposed
     // to the default behavior of Castor daemons whereby only one thread starts
@@ -87,7 +91,7 @@ TestMTServer::TestMTServer() :
   castor::server::BaseDaemon("MTTest") {
   
   // Initializes the DLF logging
-  castor::dlf::Message nomsgs[1];
+  castor::dlf::Message nomsgs[] = {{-1, ""}};
   dlfInit(nomsgs);
 }
 
