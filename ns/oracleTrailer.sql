@@ -25,6 +25,7 @@ UPDATE UpgradeLog SET schemaVersion = '2_1_13_0';
 
 /* Package holding type declarations for the NameServer PL/SQL API */
 CREATE OR REPLACE PACKAGE castorns AS
+  TYPE cnumList IS TABLE OF INTEGER INDEX BY BINARY_INTEGER;
   TYPE Log_Cur IS REF CURSOR RETURN ResultsLogHelper%ROWTYPE;
   TYPE Segment_Rec IS RECORD (
     fileId NUMBER,
@@ -47,8 +48,6 @@ END castorns;
 CREATE OR REPLACE TYPE strList IS TABLE OF VARCHAR2(2048);
 /
 CREATE OR REPLACE TYPE numList IS TABLE OF INTEGER;
-/
-CREATE OR REPLACE TYPE cnumList IS TABLE OF INTEGER INDEX BY BINARY_INTEGER;
 /
 
 /**
@@ -140,6 +139,15 @@ BEGIN
 END;
 /
 
+/* A small procedure to add a line to the temporary DLF log */
+CREATE OR REPLACE PROCEDURE tmpDlfLog(inLvl IN INTEGER, inReqid IN VARCHAR2, inMsg IN VARCHAR2,
+                                      inFileId IN NUMBER, inParams IN VARCHAR2) AS
+BEGIN
+  INSERT INTO ResultsLogHelper (timeinfo, lvl, reqid, msg, fileId, params)
+    VALUES (getTime(), inLvl, inReqid, inMsg, inFileId, inParams);
+END;
+/
+
 /* A function to extract the full path of a file in one go */
 CREATE OR REPLACE FUNCTION getPathForFileid(fid IN NUMBER) RETURN VARCHAR2 IS
   CURSOR c IS
@@ -162,6 +170,7 @@ BEGIN
    RETURN p;
 END;
 /
+
 
 /* This function returns a list of valid segments for a given file.
  * By valid, we mean valid segments on non disable tapes. So VMGR
@@ -206,6 +215,8 @@ CREATE OR REPLACE PROCEDURE setSegmentForFile(segEntry IN castorns.Segment_Rec,
   fCkSumName VARCHAR2(2);
   fCkSum VARCHAR2(32);
   varNb INTEGER;
+  varBlockId VARCHAR2(8);
+  varParams VARCHAR2(2048);
   -- Trap `ORA-00001: unique constraint violated` errors
   CONSTRAINT_VIOLATED EXCEPTION;
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -00001);
@@ -291,18 +302,19 @@ BEGIN
    WHERE s_fileid = fid AND s_status = '-';
   IF varNb > fcNbCopies THEN
     rc := dlf.ENSTOOMANYSEGS;
-    msg := dlf.ENSTOOMANYSEG_MSG ||', VID='|| segEntry.vid;
+    msg := dlf.ENSTOOMANYSEGS_MSG ||', VID='|| segEntry.vid;
     ROLLBACK;
     RETURN;
   END IF;
   -- Update file status
   UPDATE Cns_file_metadata SET status = 'm' WHERE fileid = fid;
   COMMIT;
-  -- Log
-  msg := 'CopyNo='|| segEntry.copyNo ||' Fsec=1 SegmentSize='|| segEntry.segSize
+  SELECT segEntry.blockId INTO varBlockId FROM Dual;  -- to_char() of a RAW type does not work. This does the trick...
+  varParams := 'CopyNo='|| segEntry.copyNo ||' Fsec=1 SegmentSize='|| segEntry.segSize
     ||' Compression='|| trunc(segEntry.segSize*100/segEntry.comprSize) ||' TPVID='|| segEntry.vid
-    ||' Fseq='|| segEntry.fseq ||' BlockId='-- || to_char(cast(segEntry.blockId as NUMBER), 'XXXX')  -- XXX need to find how to convert a RAW type (and wondering why to use RAW for a 32-bit word in the first place...)
+    ||' Fseq='|| segEntry.fseq ||' BlockId=' || varBlockId
     ||' ChecksumType="'|| segEntry.checksum_name ||'" ChecksumValue=' || fCkSum;
+  tmpDlfLog(dlf.LVL_SYSTEM, uuidGen(), 'New segment information', fid, varParams);
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- The file entry was not found, just give up
   rc := dlf.ENOENT;
@@ -329,16 +341,13 @@ BEGIN
     setSegmentForFile(segs(i), varRC, varParams);
     IF varRC != 0 THEN
       varParams := 'ErrorCode='|| to_char(varRC) ||' ErrorMessage="'|| varParams || '"';
+      tmpDlfLog(dlf.LVL_ERROR, varReqid, 'Error creating/updating segment', segs(i).fileId, varParams);
     END IF;
-    INSERT INTO ResultsLogHelper (timeinfo, lvl, reqid, msg, fileId, params)
-      VALUES (getTime(), CASE varRC WHEN 0 THEN dlf.LVL_SYSTEM ELSE dlf.LVL_ERROR END, varReqid,
-              CASE varRC WHEN 0 THEN 'New segment information' ELSE 'Error creating/updating segment' END,
-              segs(i).fileId, varParams);
   END LOOP;
   -- Final logging
+  UPDATE ResultsLogHelper SET reqid = varReqid;
   varParams := 'Function="setSegmentsForFiles" NbFiles='|| segs.COUNT ||' ElapsedTime='|| getSecs(varStartTime, SYSTIMESTAMP);
-  INSERT INTO ResultsLogHelper (timeinfo, lvl, reqid, msg, fileId, params)
-    VALUES (getTime(), dlf.LVL_SYSTEM, varReqid, 'Bulk processing complete', 0, varParams);
+  tmpDlfLog(dlf.LVL_SYSTEM, varReqid, 'Bulk processing complete', 0, varParams);
   -- Return logs to the stager
   OPEN logs FOR SELECT * FROM ResultsLogHelper;
 END;
@@ -363,6 +372,7 @@ END;
  */
 CREATE OR REPLACE PROCEDURE repackSegmentForFile(oldCopyNo IN INTEGER, segEntry IN castorns.Segment_Rec,
                                                  rc OUT INTEGER, msg OUT NOCOPY VARCHAR2) AS
+  varReqid VARCHAR2(36);
   fid NUMBER;
   fmode NUMBER(6);
   fLastMTime NUMBER;
@@ -371,13 +381,18 @@ CREATE OR REPLACE PROCEDURE repackSegmentForFile(oldCopyNo IN INTEGER, segEntry 
   fCkSumName VARCHAR2(2);
   fCkSum VARCHAR2(32);
   varNb INTEGER;
-  varOldStatus INTEGER;
+  varStatus INTEGER;
+  varBlockId VARCHAR2(8);
+  varOwSeg castorns.Segment_Rec;
+  varRepSeg castorns.Segment_Rec;
+  varParams VARCHAR2(2048);
   -- Trap `ORA-00001: unique constraint violated` errors
   CONSTRAINT_VIOLATED EXCEPTION;
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -00001);
 BEGIN
   rc := 0;
   msg := '';
+  varReqid := uuidGen();
   -- Get file data and lock the entry, exit if not found
   SELECT fileId, filemode, mtime, fileClass, csumType, csumValue
     INTO fid, fmode, fLastMTime, fClassId, fCkSumName, fCkSum
@@ -437,10 +452,17 @@ BEGIN
       END IF;
       -- OK, the segment being overwritten is invalid
       DELETE FROM Cns_seg_metadata
-       WHERE s_fileid = fid AND copyNo = segEntry.copyNo;
-      RETURNING ... INTO ...;
+       WHERE s_fileid = fid AND copyNo = segEntry.copyNo
+      RETURNING copyNo, segSize, compression, vid, fseq, blockId, checksum_name, checksum
+           INTO varOwSeg.copyNo, varOwSeg.segSize, varOwSeg.comprSize, varOwSeg.vid,
+                varOwSeg.fseq, varOwSeg.blockId, varOwSeg.checksum_name, varOwSeg.checksum;
       -- Log overwritten segment metadata
-      
+      SELECT varOwSeg.blockId INTO varBlockId FROM Dual;
+      varParams := 'CopyNo='|| varOwSeg.copyNo ||' Fsec=1 SegmentSize='|| varOwSeg.segSize
+        ||' Compression='|| varOwSeg.comprSize ||' TPVID='|| varOwSeg.vid
+        ||' Fseq='|| varOwSeg.fseq ||' BlockId=' || varBlockId
+        ||' ChecksumType="'|| varOwSeg.checksum_name ||'" ChecksumValue=' || varOwSeg.checksum;
+      tmpDlfLog(dlf.LVL_SYSTEM, varReqid, 'Unlinking segment (overwritten)', fid, varParams);
     END IF;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     rc := dlf.ENSNOSEG;
@@ -451,9 +473,16 @@ BEGIN
   
   -- We're done with the pre-checks. Remove and log old segment metadata
   DELETE FROM Cns_seg_metadata
-   WHERE s_fileid = fid AND copyNo = oldCopyNo;
-  RETURNING ... INTO ...;
-  
+   WHERE s_fileid = fid AND copyNo = oldCopyNo
+  RETURNING copyNo, segSize, compression, vid, fseq, blockId, checksum_name, checksum
+       INTO varRepSeg.copyNo, varRepSeg.segSize, varRepSeg.comprSize, varRepSeg.vid,
+            varRepSeg.fseq, varRepSeg.blockId, varRepSeg.checksum_name, varRepSeg.checksum;
+  SELECT varRepSeg.blockId INTO varBlockId FROM Dual;
+  varParams := 'CopyNo='|| varRepSeg.copyNo ||' Fsec=1 SegmentSize='|| varRepSeg.segSize
+    ||' Compression='|| varRepSeg.comprSize ||' TPVID='|| varRepSeg.vid
+    ||' Fseq='|| varRepSeg.fseq ||' BlockId=' || varBlockId
+    ||' ChecksumType="'|| varRepSeg.checksum_name ||'" ChecksumValue=' || varRepSeg.checksum;
+  tmpDlfLog(dlf.LVL_SYSTEM, varReqid, 'Unlinking segment (replaced)', fid, varParams);
   -- Insert new segment metadata and deal with possible collisions with the fseq position
   BEGIN
     INSERT INTO Cns_seg_metadata (s_fileId, copyNo, fsec, segSize, s_status,
@@ -462,7 +491,7 @@ BEGIN
       segEntry.vid, segEntry.fseq, segEntry.blockId, trunc(segEntry.segSize*100/segEntry.comprSize),
       0, segEntry.checksum_name, segEntry.checksum);
   EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
-    -- There is already an existing segment at that fseq position.
+    -- There must already be an existing segment at that fseq position for a different file.
     -- This is forbidden! Abort the entire operation.
     rc := dlf.SEINTERNAL;
     msg := 'A file already exists at fseq '|| segEntry.fseq ||' on VID '|| segEntry.vid;
@@ -471,10 +500,12 @@ BEGIN
   END;
   -- All right, commit and log
   COMMIT;
-  msg := 'CopyNo='|| segEntry.copyNo ||' Fsec=1 SegmentSize='|| segEntry.segSize
+  SELECT segEntry.blockId INTO varBlockId FROM Dual;  -- to_char() of a RAW type does not work. This does the trick...
+  varParams := 'CopyNo='|| segEntry.copyNo ||' Fsec=1 SegmentSize='|| segEntry.segSize
     ||' Compression='|| trunc(segEntry.segSize*100/segEntry.comprSize) ||' TPVID='|| segEntry.vid
-    ||' Fseq='|| segEntry.fseq ||' BlockId='-- || to_char(cast(segEntry.blockId as NUMBER), 'XXXX')  -- XXX need to find how to convert a RAW type (and wondering why to use RAW for a 32-bit word in the first place...)
+    ||' Fseq='|| segEntry.fseq ||' BlockId=' || varBlockId
     ||' ChecksumType="'|| segEntry.checksum_name ||'" ChecksumValue=' || fCkSum;
+  tmpDlfLog(dlf.LVL_SYSTEM, varReqid, 'New segment information', fid, varParams);
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- The file entry was not found, just give up
   rc := dlf.ENOENT;
@@ -486,7 +517,7 @@ END;
  * This procedure replaces segments for multiple files by calling repackSegmentForFile in a loop.
  * The output is a log table ready to be sent to DLF from a stager database.
  */
-CREATE OR REPLACE PROCEDURE repackSegmentsForFiles(oldCopyNos IN cnumList, segs IN castorns.SegmentList,
+CREATE OR REPLACE PROCEDURE repackSegmentsForFiles(oldCopyNos IN castorns.cnumList, segs IN castorns.SegmentList,
                                                    logs OUT castorns.Log_Cur) AS
   varRC INTEGER;
   varParams VARCHAR2(1000);
@@ -500,15 +531,15 @@ BEGIN
   -- Loop over all files. Each call commits or rollbacks each file.
   FOR i IN segs.FIRST .. segs.LAST LOOP
     repackSegmentForFile(oldCopyNos(i), segs(i), varRC, varParams);
-    INSERT INTO ResultsLogHelper (timeinfo, lvl, reqid, msg, fileId, params)
-      VALUES (getTime(), CASE varRC WHEN 0 THEN dlf.LVL_SYSTEM ELSE dlf.LVL_ERROR END, varReqid,
-              CASE varRC WHEN 0 THEN 'Replaced segment information' ELSE 'Error replacing segment' END,
-              segs(i).fileId, varParams);
+    IF varRC != 0 THEN
+      varParams := 'ErrorCode='|| to_char(varRC) ||' ErrorMessage="'|| varParams || '"';
+      tmpDlfLog(dlf.LVL_ERROR, varReqid, 'Error replacing segment', segs(i).fileId, varParams);
+    END IF;
   END LOOP;
   -- Final logging
+  UPDATE ResultsLogHelper SET reqid = varReqid;
   varParams := 'Function="repackSegmentsForFiles" NbFiles='|| segs.COUNT ||' ElapsedTime='|| getSecs(varStartTime, SYSTIMESTAMP);
-  INSERT INTO ResultsLogHelper (timeinfo, lvl, reqid, msg, fileId, params)
-    VALUES (getTime(), dlf.LVL_SYSTEM, varReqid, 'Bulk processing complete', 0, varParams);
+  tmpDlfLog(dlf.LVL_SYSTEM, varReqid, 'Bulk processing complete', 0, varParams);
   -- Return logs to the stager
   OPEN logs FOR SELECT * FROM ResultsLogHelper;
 END;
