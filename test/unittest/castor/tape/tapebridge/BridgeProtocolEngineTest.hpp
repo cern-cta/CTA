@@ -898,11 +898,11 @@ public:
         CPPUNIT_ASSERT_EQUAL_MESSAGE(
           "Check maxFiles of request for more migration-work",
           bulkRequestConfigParams.getBulkRequestMigrationMaxFiles().getValue(),
-          moreWorkRequest->maxFiles());
+          (uint64_t)moreWorkRequest->maxFiles());
         CPPUNIT_ASSERT_EQUAL_MESSAGE(
           "Check maxBytes of request for more migration-work",
           bulkRequestConfigParams.getBulkRequestMigrationMaxBytes().getValue(),
-          moreWorkRequest->maxBytes());
+          (uint64_t)moreWorkRequest->maxBytes());
       }
 
       // Act as the client and send back the first file to be migrated

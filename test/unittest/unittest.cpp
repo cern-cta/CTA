@@ -23,7 +23,7 @@
  *****************************************************************************/
 
 #include "castor/tape/Constants.hpp"
-#include "castor/tape/legacyMsg/CommonMarshal.hpp"
+#include "castor/tape/legacymsg/CommonMarshal.hpp"
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"

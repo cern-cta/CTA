@@ -22,7 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "test/unittest/castor/tape/net/netTest.hpp"
+#include "test/unittest/castor/tape/net/NetTest.hpp"
 #include "test/unittest/castor/tape/tapebridge/BridgeClientInfo2SenderTest.hpp"
 #include "test/unittest/castor/tape/tapebridge/BridgeProtocolEngineTest.hpp"
 #include "test/unittest/castor/tape/tapebridge/BridgeSocketCatalogueTest.hpp"
