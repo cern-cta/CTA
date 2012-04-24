@@ -30,6 +30,7 @@
 #include "castor/tape/tapebridge/TapeFlushConfigParams.hpp"
 #include "h/rtcpd_constants.h"
 #include "h/tapebridge_constants.h"
+#include "test/unittest/castor/tape/tapebridge/TestingTapeFlushConfigParams.hpp"
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <exception>
@@ -41,14 +42,6 @@ namespace tape       {
 namespace tapebridge {
 
 class TapeFlushConfigParamsTest: public CppUnit::TestFixture {
-private:
-  class TestingTapeFlushConfigParams: public TapeFlushConfigParams {
-  public:
-    using TapeFlushConfigParams::determineTapeFlushMode;
-    using TapeFlushConfigParams::determineMaxBytesBeforeFlush;
-    using TapeFlushConfigParams::determineMaxFilesBeforeFlush;
-  }; // TapeFlushConfigParamsTest
-
 public:
 
   TapeFlushConfigParamsTest() {
@@ -75,25 +68,10 @@ public:
       setenv("TAPEBRIDGE_TAPEFLUSHMODE",
         "INVALID_ENUM_VALUE", 1));
 
-    CPPUNIT_ASSERT_THROW_MESSAGE("Invalid environment variable",
+    CPPUNIT_ASSERT_THROW_MESSAGE(
+      "Invalid environment variable",
       params.determineTapeFlushMode(),
       castor::exception::InvalidArgument);
-
-    std::string exceptionMsg = "UNKNOWN";
-    try {
-      params.determineTapeFlushMode();
-    } catch(castor::exception::InvalidArgument &ex) {
-      exceptionMsg = ex.getMessage().str();
-    }
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("exceptionMsg",
-      std::string(
-        "Value of configuration parameter is not valid"
-        ": expected N_FLUSHES_PER_FILE or ONE_FLUSH_PER_N_FILES"
-        ": category=TAPEBRIDGE"
-        " name=TAPEFLUSHMODE"
-        " value=INVALID_ENUM_VALUE"
-        " source=environment variable"),
-      exceptionMsg);
   }
 
   void testDetermineTapeFlushModeEnvN_FLUSHES_PER_FILE() {
@@ -108,21 +86,24 @@ public:
       "determineTapeFlushMode",
       params.determineTapeFlushMode());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getCategory()",
       std::string("TAPEBRIDGE"),
-      params.getTapeFlushMode().category);
+      params.getTapeFlushMode().getCategory());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getName()",
       std::string("TAPEFLUSHMODE"),
-      params.getTapeFlushMode().name);
+      params.getTapeFlushMode().getName());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getValue()",
       TAPEBRIDGE_N_FLUSHES_PER_FILE,
-      params.getTapeFlushMode().value);
+      params.getTapeFlushMode().getValue());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
-      std::string("environment variable"),
-      params.getTapeFlushMode().source);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getSource()",
+      ConfigParamSource::ENVIRONMENT_VARIABLE,
+      params.getTapeFlushMode().getSource());
   }
 
   void testDetermineTapeFlushModeEnvONE_FLUSH_PER_N_FILES() {
@@ -137,27 +118,31 @@ public:
       "determineTapeFlushMode",
       params.determineTapeFlushMode());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getCategory()",
       std::string("TAPEBRIDGE"),
-      params.getTapeFlushMode().category);
+      params.getTapeFlushMode().getCategory());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getName()",
       std::string("TAPEFLUSHMODE"),
-      params.getTapeFlushMode().name);
+      params.getTapeFlushMode().getName());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getValue()",
       TAPEBRIDGE_ONE_FLUSH_PER_N_FILES,
-      params.getTapeFlushMode().value);
+      params.getTapeFlushMode().getValue());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
-      std::string("environment variable"),
-      params.getTapeFlushMode().source);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getSource()",
+      ConfigParamSource::ENVIRONMENT_VARIABLE,
+      params.getTapeFlushMode().getSource());
   }
 
   void testDetermineTapeFlushModeInvalidPathConfig() {
     TestingTapeFlushConfigParams params;
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv PATH_CONFIG",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "setenv PATH_CONFIG",
       0,
       setenv("PATH_CONFIG", "INVALID PATH CONFIG", 1));
 
@@ -165,55 +150,46 @@ public:
       "determineTapeFlushMode",
       params.determineTapeFlushMode());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getCategory()",
       std::string("TAPEBRIDGE"),
-      params.getTapeFlushMode().category);
+      params.getTapeFlushMode().getCategory());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getName()",
       std::string("TAPEFLUSHMODE"),
-      params.getTapeFlushMode().name);
+      params.getTapeFlushMode().getName());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getValue()",
       castor::tape::tapebridge::TAPEBRIDGE_TAPEFLUSHMODE,
-      params.getTapeFlushMode().value);
+      params.getTapeFlushMode().getValue());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
-      std::string("compile-time default"),
-      params.getTapeFlushMode().source);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getSource()",
+      ConfigParamSource::COMPILE_TIME_DEFAULT,
+      params.getTapeFlushMode().getSource());
   }
 
   void testDetermineTapeFlushModeInvalidLocalCastorConf() {
     TestingTapeFlushConfigParams params;
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv PATH_CONFIG",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "setenv PATH_CONFIG",
       0,
       setenv("PATH_CONFIG", "determineTapeFlushMode_invalid_castor.conf", 1));
 
-    CPPUNIT_ASSERT_THROW_MESSAGE("Invalid local castor.conf variable",
+    CPPUNIT_ASSERT_THROW_MESSAGE(
+      "Invalid local castor.conf variable",
       params.determineTapeFlushMode(),
       castor::exception::InvalidArgument);
-
-    std::string exceptionMsg = "UNKNOWN";
-    try {
-      params.determineTapeFlushMode();
-    } catch(castor::exception::InvalidArgument &ex) {
-      exceptionMsg = ex.getMessage().str();
-    }
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("exceptionMsg",
-      std::string(
-        "Value of configuration parameter is not valid"
-        ": expected N_FLUSHES_PER_FILE or ONE_FLUSH_PER_N_FILES"
-        ": category=TAPEBRIDGE"
-        " name=TAPEFLUSHMODE"
-        " value=INVALID_ENUM_VALUE"
-        " source=castor.conf"),
-      exceptionMsg);
   }
 
   void testDetermineTapeFlushModeLocalCastorConfN_FLUSHES_PER_FILE() {
     TestingTapeFlushConfigParams params;
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv PATH_CONFIG",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "setenv PATH_CONFIG",
       0,
       setenv("PATH_CONFIG",
         "determineTapeFlushModeN_FLUSHES_PER_FILE_castor.conf", 1));
@@ -222,27 +198,32 @@ public:
       "determineTapeFlushMode",
       params.determineTapeFlushMode());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getCategory()",
       std::string("TAPEBRIDGE"),
-      params.getTapeFlushMode().category);
+      params.getTapeFlushMode().getCategory());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getName()",
       std::string("TAPEFLUSHMODE"),
-      params.getTapeFlushMode().name);
+      params.getTapeFlushMode().getName());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getValue()",
       TAPEBRIDGE_N_FLUSHES_PER_FILE,
-      params.getTapeFlushMode().value);
+      params.getTapeFlushMode().getValue());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
-      std::string("castor.conf"),
-      params.getTapeFlushMode().source);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getSource()",
+      ConfigParamSource::CASTOR_CONF,
+      params.getTapeFlushMode().getSource());
   }
 
   void testDetermineTapeFlushModeLocalCastorConfONE_FLUSH_PER_N_FILES() {
     TestingTapeFlushConfigParams params;
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv PATH_CONFIG",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "setenv PATH_CONFIG",
       0,
       setenv("PATH_CONFIG",
         "determineTapeFlushModeONE_FLUSH_PER_N_FILES_castor.conf", 1));
@@ -251,53 +232,45 @@ public:
       "determineTapeFlushMode",
       params.determineTapeFlushMode());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getCategory()",
       std::string("TAPEBRIDGE"),
-      params.getTapeFlushMode().category);
+      params.getTapeFlushMode().getCategory());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getName()",
       std::string("TAPEFLUSHMODE"),
-      params.getTapeFlushMode().name);
+      params.getTapeFlushMode().getName());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getValue()",
       TAPEBRIDGE_ONE_FLUSH_PER_N_FILES,
-      params.getTapeFlushMode().value);
+      params.getTapeFlushMode().getValue());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
-      std::string("castor.conf"),
-      params.getTapeFlushMode().source);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getSource()",
+      ConfigParamSource::CASTOR_CONF,
+      params.getTapeFlushMode().getSource());
   }
 
   void testDetermineMaxBytesBeforeFlushInvalidEnv() {
     TestingTapeFlushConfigParams params;
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv TAPEBRIDGE_MAXBYTESBEFOREFLUSH",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "setenv TAPEBRIDGE_MAXBYTESBEFOREFLUSH",
       0,
       setenv("TAPEBRIDGE_MAXBYTESBEFOREFLUSH", "INVALID_UINT_VALUE", 1));
 
     CPPUNIT_ASSERT_THROW_MESSAGE("Invalid environment variable",
       params.determineMaxBytesBeforeFlush(),
       castor::exception::InvalidArgument);
-
-    std::string exceptionMsg = "UNKNOWN";
-    try {
-      params.determineMaxBytesBeforeFlush();
-    } catch(castor::exception::InvalidArgument &ex) {
-      exceptionMsg = ex.getMessage().str();
-    }
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("exceptionMsg",
-      std::string("Configuration parameter is not a valid unsigned integer"
-        ": category=TAPEBRIDGE"
-        " name=MAXBYTESBEFOREFLUSH"
-        " value=INVALID_UINT_VALUE"
-        " source=environment variable"),
-      exceptionMsg);
   }
 
   void testDetermineMaxBytesBeforeFlushEnv() {
     TestingTapeFlushConfigParams params;
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv TAPEBRIDGE_MAXBYTESBEFOREFLUSH",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "setenv TAPEBRIDGE_MAXBYTESBEFOREFLUSH",
       0,
       setenv("TAPEBRIDGE_MAXBYTESBEFOREFLUSH", "11111", 1));
 
@@ -305,81 +278,80 @@ public:
       "determineMaxBytesBeforeFlush",
       params.determineMaxBytesBeforeFlush());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getCategory()",
       std::string("TAPEBRIDGE"),
-      params.getMaxBytesBeforeFlush().category);
+      params.getMaxBytesBeforeFlush().getCategory());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getName()",
       std::string("MAXBYTESBEFOREFLUSH"),
-      params.getMaxBytesBeforeFlush().name);
+      params.getMaxBytesBeforeFlush().getName());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getValue()",
       (uint64_t)11111,
-      params.getMaxBytesBeforeFlush().value);
+      params.getMaxBytesBeforeFlush().getValue());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
-      std::string("environment variable"),
-      params.getMaxBytesBeforeFlush().source);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getSource()",
+      ConfigParamSource::ENVIRONMENT_VARIABLE,
+      params.getMaxBytesBeforeFlush().getSource());
   }
 
   void testDetermineMaxBytesBeforeFlushInvalidPathConfig() {
     TestingTapeFlushConfigParams params;
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv PATH_CONFIG",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "setenv PATH_CONFIG",
       0,
       setenv("PATH_CONFIG", "INVALID PATH CONFIG", 1));
 
-    CPPUNIT_ASSERT_NO_THROW_MESSAGE("determineMaxBytesBeforeFlush",
+    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+      "determineMaxBytesBeforeFlush()",
       params.determineMaxBytesBeforeFlush());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getCategory()",
       std::string("TAPEBRIDGE"),
-      params.getMaxBytesBeforeFlush().category);
+      params.getMaxBytesBeforeFlush().getCategory());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getName()",
       std::string("MAXBYTESBEFOREFLUSH"),
-      params.getMaxBytesBeforeFlush().name);
+      params.getMaxBytesBeforeFlush().getName());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getValue()",
       castor::tape::tapebridge::TAPEBRIDGE_MAXBYTESBEFOREFLUSH,
-      params.getMaxBytesBeforeFlush().value);
+      params.getMaxBytesBeforeFlush().getValue());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
-      std::string("compile-time default"),
-      params.getMaxBytesBeforeFlush().source);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getSource()",
+      ConfigParamSource::COMPILE_TIME_DEFAULT,
+      params.getMaxBytesBeforeFlush().getSource());
   }
 
   void testDetermineMaxBytesBeforeFlushInvalidLocalCastorConf() {
     TestingTapeFlushConfigParams params;
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv PATH_CONFIG",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "setenv PATH_CONFIG",
       0,
       setenv("PATH_CONFIG", "determineMaxBytesBeforeFlush_invalid_castor.conf",
         1));
 
-    CPPUNIT_ASSERT_THROW_MESSAGE("Invalid local castor.conf variable",
+    CPPUNIT_ASSERT_THROW_MESSAGE(
+      "Invalid local castor.conf variable",
       params.determineMaxBytesBeforeFlush(),
       castor::exception::InvalidArgument);
-
-    std::string exceptionMsg = "UNKNOWN";
-    try {
-      params.determineMaxBytesBeforeFlush();
-    } catch(castor::exception::InvalidArgument &ex) {
-      exceptionMsg = ex.getMessage().str();
-    }
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("exceptionMsg",
-      std::string("Configuration parameter is not a valid unsigned integer"
-        ": category=TAPEBRIDGE"
-        " name=MAXBYTESBEFOREFLUSH"
-        " value=INVALID_UINT_VALUE"
-        " source=castor.conf"),
-      exceptionMsg);
   }
 
   void testDetermineMaxBytesBeforeFlushLocalCastorConf() {
     TestingTapeFlushConfigParams params;
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv PATH_CONFIG",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "setenv PATH_CONFIG",
       0,
       setenv("PATH_CONFIG", "determineMaxBytesBeforeFlush_castor.conf", 1));
 
@@ -387,163 +359,160 @@ public:
       "determineMaxBytesBeforeFlush",
       params.determineMaxBytesBeforeFlush());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getCategory()",
       std::string("TAPEBRIDGE"),
-      params.getMaxBytesBeforeFlush().category);
+      params.getMaxBytesBeforeFlush().getCategory());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getName()",
       std::string("MAXBYTESBEFOREFLUSH"),
-      params.getMaxBytesBeforeFlush().name);
+      params.getMaxBytesBeforeFlush().getName());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getValue()",
       (uint64_t)33333,
-      params.getMaxBytesBeforeFlush().value);
+      params.getMaxBytesBeforeFlush().getValue());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
-      std::string("castor.conf"),
-      params.getMaxBytesBeforeFlush().source);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getSource()",
+      ConfigParamSource::CASTOR_CONF,
+      params.getMaxBytesBeforeFlush().getSource());
   }
 
   void testDetermineMaxFilesBeforeFlushInvalidEnv() {
     TestingTapeFlushConfigParams params;
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv TAPEBRIDGE_MAXFILESBEFOREFLUSH",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "setenv TAPEBRIDGE_MAXFILESBEFOREFLUSH",
       0,
       setenv("TAPEBRIDGE_MAXFILESBEFOREFLUSH", "INVALID_UINT_VALUE", 1));
 
-    CPPUNIT_ASSERT_THROW_MESSAGE("Invalid environment variable",
+    CPPUNIT_ASSERT_THROW_MESSAGE(
+      "Invalid environment variable",
       params.determineMaxFilesBeforeFlush(),
       castor::exception::InvalidArgument);
-
-    std::string exceptionMsg = "UNKNOWN";
-    try {
-      params.determineMaxFilesBeforeFlush();
-    } catch(castor::exception::InvalidArgument &ex) {
-      exceptionMsg = ex.getMessage().str();
-    }
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("exceptionMsg",
-      std::string("Configuration parameter is not a valid unsigned integer"
-        ": category=TAPEBRIDGE"
-        " name=MAXFILESBEFOREFLUSH"
-        " value=INVALID_UINT_VALUE"
-        " source=environment variable"),
-      exceptionMsg);
   }
 
   void testDetermineMaxFilesBeforeFlushEnv() {
     TestingTapeFlushConfigParams params;
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv TAPEBRIDGE_MAXFILESBEFOREFLUSH",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "setenv TAPEBRIDGE_MAXFILESBEFOREFLUSH",
       0,
       setenv("TAPEBRIDGE_MAXFILESBEFOREFLUSH", "11111", 1));
 
     CPPUNIT_ASSERT_NO_THROW_MESSAGE(
-      "determineMaxFilesBeforeFlush",
+      "determineMaxFilesBeforeFlush()",
       params.determineMaxFilesBeforeFlush());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getCategory()",
       std::string("TAPEBRIDGE"),
-      params.getMaxFilesBeforeFlush().category);
+      params.getMaxFilesBeforeFlush().getCategory());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getName()",
       std::string("MAXFILESBEFOREFLUSH"),
-      params.getMaxFilesBeforeFlush().name);
+      params.getMaxFilesBeforeFlush().getName());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getValue()",
       (uint64_t)11111,
-      params.getMaxFilesBeforeFlush().value);
+      params.getMaxFilesBeforeFlush().getValue());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
-      std::string("environment variable"),
-      params.getMaxFilesBeforeFlush().source);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getSource()",
+      ConfigParamSource::ENVIRONMENT_VARIABLE,
+      params.getMaxFilesBeforeFlush().getSource());
   }
 
   void testDetermineMaxFilesBeforeFlushInvalidPathConfig() {
     TestingTapeFlushConfigParams params;
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv PATH_CONFIG",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "setenv PATH_CONFIG",
       0,
       setenv("PATH_CONFIG", "INVALID PATH CONFIG", 1));
 
-    CPPUNIT_ASSERT_NO_THROW_MESSAGE("determineMaxFilesBeforeFlush",
+    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+      "determineMaxFilesBeforeFlush()",
       params.determineMaxFilesBeforeFlush());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getCategory()",
       std::string("TAPEBRIDGE"),
-      params.getMaxFilesBeforeFlush().category);
+      params.getMaxFilesBeforeFlush().getCategory());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getName()",
       std::string("MAXFILESBEFOREFLUSH"),
-      params.getMaxFilesBeforeFlush().name);
+      params.getMaxFilesBeforeFlush().getName());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getValue()",
       castor::tape::tapebridge::TAPEBRIDGE_MAXFILESBEFOREFLUSH,
-      params.getMaxFilesBeforeFlush().value);
+      params.getMaxFilesBeforeFlush().getValue());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
-      std::string("compile-time default"),
-      params.getMaxFilesBeforeFlush().source);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getSource()",
+      ConfigParamSource::COMPILE_TIME_DEFAULT,
+      params.getMaxFilesBeforeFlush().getSource());
   }
 
   void testDetermineMaxFilesBeforeFlushInvalidLocalCastorConf() {
     TestingTapeFlushConfigParams params;
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv PATH_CONFIG",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "setenv PATH_CONFIG",
       0,
       setenv("PATH_CONFIG", "determineMaxFilesBeforeFlush_invalid_castor.conf",
         1));
 
-    CPPUNIT_ASSERT_THROW_MESSAGE("Invalid local castor.conf variable",
+    CPPUNIT_ASSERT_THROW_MESSAGE(
+      "Invalid local castor.conf variable",
       params.determineMaxFilesBeforeFlush(),
       castor::exception::InvalidArgument);
-
-    std::string exceptionMsg = "UNKNOWN";
-    try {
-      params.determineMaxFilesBeforeFlush();
-    } catch(castor::exception::InvalidArgument &ex) {
-      exceptionMsg = ex.getMessage().str();
-    }
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("exceptionMsg",
-      std::string("Configuration parameter is not a valid unsigned integer"
-        ": category=TAPEBRIDGE"
-        " name=MAXFILESBEFOREFLUSH"
-        " value=INVALID_UINT_VALUE"
-        " source=castor.conf"),
-      exceptionMsg);
   }
 
   void testDetermineMaxFilesBeforeFlushLocalCastorConf() {
     TestingTapeFlushConfigParams params;
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv PATH_CONFIG",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "setenv PATH_CONFIG",
       0,
       setenv("PATH_CONFIG", "determineMaxFilesBeforeFlush_castor.conf", 1));
 
     CPPUNIT_ASSERT_NO_THROW_MESSAGE(
-      "determineMaxFilesBeforeFlush",
+      "determineMaxFilesBeforeFlush()",
       params.determineMaxFilesBeforeFlush());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getCategory()",
       std::string("TAPEBRIDGE"),
-      params.getMaxFilesBeforeFlush().category);
+      params.getMaxFilesBeforeFlush().getCategory());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getName()",
       std::string("MAXFILESBEFOREFLUSH"),
-      params.getMaxFilesBeforeFlush().name);
+      params.getMaxFilesBeforeFlush().getName());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getValue()",
       (uint64_t)44444,
-      params.getMaxFilesBeforeFlush().value);
+      params.getMaxFilesBeforeFlush().getValue());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
-      std::string("castor.conf"),
-      params.getMaxFilesBeforeFlush().source);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getSource()",
+      ConfigParamSource::CASTOR_CONF,
+      params.getMaxFilesBeforeFlush().getSource());
   }
 
   void testDetermineTapeFlushConfigParamsCastorConf() {
     TapeFlushConfigParams params;
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("setenv PATH_CONFIG",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "setenv PATH_CONFIG",
       0,
       setenv("PATH_CONFIG", "determineTapeFlushConfigParams_castor.conf", 1));
 
@@ -551,53 +520,65 @@ public:
       "determineConfigParams",
       params.determineConfigParams());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getCategory()",
       std::string("TAPEBRIDGE"),
-      params.getMaxBytesBeforeFlush().category);
+      params.getMaxBytesBeforeFlush().getCategory());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getName()",
       std::string("MAXBYTESBEFOREFLUSH"),
-      params.getMaxBytesBeforeFlush().name);
+      params.getMaxBytesBeforeFlush().getName());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getValue()",
       (uint64_t)12345,
-      params.getMaxBytesBeforeFlush().value);
+      params.getMaxBytesBeforeFlush().getValue());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
-      std::string("castor.conf"),
-      params.getMaxBytesBeforeFlush().source);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getSource()",
+      ConfigParamSource::CASTOR_CONF,
+      params.getMaxBytesBeforeFlush().getSource());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getCategory()",
       std::string("TAPEBRIDGE"),
-      params.getMaxFilesBeforeFlush().category);
+      params.getMaxFilesBeforeFlush().getCategory());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getName()",
       std::string("MAXFILESBEFOREFLUSH"),
-      params.getMaxFilesBeforeFlush().name);
+      params.getMaxFilesBeforeFlush().getName());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getValue()",
       (uint64_t)67890,
-      params.getMaxFilesBeforeFlush().value);
+      params.getMaxFilesBeforeFlush().getValue());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
-      std::string("castor.conf"),
-      params.getMaxFilesBeforeFlush().source);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getSource()",
+      ConfigParamSource::CASTOR_CONF,
+      params.getMaxFilesBeforeFlush().getSource());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getCategory()",
       std::string("TAPEBRIDGE"),
-      params.getTapeFlushMode().category);
+      params.getTapeFlushMode().getCategory());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getName()",
       std::string("TAPEFLUSHMODE"),
-      params.getTapeFlushMode().name);
+      params.getTapeFlushMode().getName());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getValue()",
       TAPEBRIDGE_ONE_FLUSH_PER_N_FILES,
-      params.getTapeFlushMode().value);
+      params.getTapeFlushMode().getValue());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
-      std::string("castor.conf"),
-      params.getTapeFlushMode().source);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "getSource()",
+      ConfigParamSource::CASTOR_CONF,
+      params.getTapeFlushMode().getSource());
   }
 
   CPPUNIT_TEST_SUITE(TapeFlushConfigParamsTest);

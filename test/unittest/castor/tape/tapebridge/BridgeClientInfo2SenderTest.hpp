@@ -41,6 +41,7 @@
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <exception>
+#include <pthread.h>
 #include <sstream>
 #include <stdint.h>
 #include <stdlib.h>

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                test/castor/tape/tapebridge/testTapeMain.cpp
+ *                test/castor/tape/tapebridge/runUnitTestsMain.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,17 +22,25 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
+#include "test/unittest/castor/tape/net/netTest.hpp"
 #include "test/unittest/castor/tape/tapebridge/BridgeClientInfo2SenderTest.hpp"
 #include "test/unittest/castor/tape/tapebridge/BridgeProtocolEngineTest.hpp"
 #include "test/unittest/castor/tape/tapebridge/BridgeSocketCatalogueTest.hpp"
 #include "test/unittest/castor/tape/tapebridge/BulkRequestConfigParamsTest.hpp"
+#include "test/unittest/castor/tape/tapebridge/ClientAddressLocalTest.hpp"
+#include "test/unittest/castor/tape/tapebridge/ClientAddressTcpIpTest.hpp"
+#include "test/unittest/castor/tape/tapebridge/ClientProxyTest.hpp"
+#include "test/unittest/castor/tape/tapebridge/ConfigParamTest.hpp"
 #include "test/unittest/castor/tape/tapebridge/FileToMigrateTest.hpp"
 #include "test/unittest/castor/tape/tapebridge/FileToRecallTest.hpp"
 #include "test/unittest/castor/tape/tapebridge/GetMoreWorkConnectionTest.hpp"
 #include "test/unittest/castor/tape/tapebridge/MigrationReportConnectionTest.hpp"
+#include "test/unittest/castor/tape/tapebridge/TapeBridgeDaemonTest.hpp"
 #include "test/unittest/castor/tape/tapebridge/TapeFlushConfigParamsTest.hpp"
 #include "test/unittest/castor/tape/tapebridge/PendingMigrationsStoreTest.hpp"
 #include "test/unittest/castor/tape/tapebridge/SessionErrorTest.hpp"
+#include "test/unittest/castor/tape/tapebridge/SessionErrorListTest.hpp"
+#include "test/unittest/castor/tape/tapebridge/VdqmRequestHandlerTest.hpp"
 #include "test/unittest/castor/tape/utils/IndexedContainerTest.hpp"
 #include "test/unittest/castor/tape/utils/UtilsTest.hpp"
 #include "test/unittest/rtcopy/RtcopyTest.hpp"
@@ -40,7 +48,6 @@
 #include "test/unittest/tapebridge/MarshallTapeBridgeFlushedToTapeTest.hpp"
 #include "test/unittest/tapebridge/RecvTapeBridgeFlushedToTapeAckTest.hpp"
 #include "test/unittest/tapebridge/SendTapeBridgeFlushedToTapeTest.hpp"
-
 #include "castor/tape/utils/SmartFILEPtr.hpp"
 #include "h/net.h"
 

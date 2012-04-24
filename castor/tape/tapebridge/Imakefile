@@ -37,12 +37,18 @@ TAPEBRIDGEBIN_SRCS = \
   BridgeProtocolEngine.cpp \
   BridgeSocketCatalogue.cpp \
   BulkRequestConfigParams.cpp \
-  ClientTxRx.cpp \
+  ClientAddress.cpp \
+  ClientAddressLocal.cpp \
+  ClientAddressTcpIp.cpp \
+  ClientProxy.cpp \
   ConfigParams.cpp \
+  ConfigParamSource.cpp \
   FileToMigrate.cpp \
   FileToRecall.cpp \
   GetMoreWorkConnection.cpp \
   DlfMessageStrings.cpp \
+  IClientProxy.cpp \
+  IFileCloser.cpp \
   LegacyTxRx.cpp \
   LogHelper.cpp \
   MigrationReportConnection.cpp \
@@ -50,6 +56,7 @@ TAPEBRIDGEBIN_SRCS = \
   RtcpJobSubmitter.cpp \
   RtcpTxRx.cpp \
   SessionError.cpp \
+  SessionErrorList.cpp \
   SystemFileCloser.cpp \
   TapeBridgeDaemon.cpp \
   TapeBridgeMain.cpp \

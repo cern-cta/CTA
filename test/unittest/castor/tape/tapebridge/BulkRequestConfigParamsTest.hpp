@@ -30,6 +30,7 @@
 #include "castor/tape/tapebridge/Constants.hpp"
 #include "h/rtcpd_constants.h"
 #include "h/tapebridge_constants.h"
+#include "test/unittest/castor/tape/tapebridge/TestingBulkRequestConfigParams.hpp"
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <exception>
@@ -41,15 +42,6 @@ namespace tape       {
 namespace tapebridge {
 
 class BulkRequestConfigParamsTest: public CppUnit::TestFixture {
-private:
-  class TestingBulkRequestConfigParams: public BulkRequestConfigParams {
-  public:
-    using BulkRequestConfigParams::determineBulkRequestMigrationMaxBytes;
-    using BulkRequestConfigParams::determineBulkRequestMigrationMaxFiles;
-    using BulkRequestConfigParams::determineBulkRequestRecallMaxBytes;
-    using BulkRequestConfigParams::determineBulkRequestRecallMaxFiles;
-  }; // BulkRequestConfigParamsTest
-
 public:
 
   BulkRequestConfigParamsTest() {
@@ -93,21 +85,21 @@ public:
       "determineBulkRequestMigrationMaxBytes",
       params.determineBulkRequestMigrationMaxBytes());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getCategory()",
       std::string("TAPEBRIDGE"),
-      params.getBulkRequestMigrationMaxBytes().category);
+      params.getBulkRequestMigrationMaxBytes().getCategory());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getName()",
       std::string("BULKREQUESTMIGRATIONMAXBYTES"),
-      params.getBulkRequestMigrationMaxBytes().name);
+      params.getBulkRequestMigrationMaxBytes().getName());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getValue()",
       (uint64_t)10000,
-      params.getBulkRequestMigrationMaxBytes().value);
+      params.getBulkRequestMigrationMaxBytes().getValue());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
-      std::string("environment variable"),
-      params.getBulkRequestMigrationMaxBytes().source);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getSource()",
+      ConfigParamSource::ENVIRONMENT_VARIABLE,
+      params.getBulkRequestMigrationMaxBytes().getSource());
   }
 
   void testDetermineBulkRequestMigrationMaxBytesInvalidPathConfig() {
@@ -120,21 +112,21 @@ public:
     CPPUNIT_ASSERT_NO_THROW_MESSAGE("determineBulkRequestMigrationMaxBytes",
       params.determineBulkRequestMigrationMaxBytes());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getCategory()",
       std::string("TAPEBRIDGE"),
-      params.getBulkRequestMigrationMaxBytes().category);
+      params.getBulkRequestMigrationMaxBytes().getCategory());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getName()",
       std::string("BULKREQUESTMIGRATIONMAXBYTES"),
-      params.getBulkRequestMigrationMaxBytes().name);
+      params.getBulkRequestMigrationMaxBytes().getName());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getValue()",
       castor::tape::tapebridge::TAPEBRIDGE_BULKREQUESTMIGRATIONMAXBYTES,
-      params.getBulkRequestMigrationMaxBytes().value);
+      params.getBulkRequestMigrationMaxBytes().getValue());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
-      std::string("compile-time default"),
-      params.getBulkRequestMigrationMaxBytes().source);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getSource()",
+      ConfigParamSource::COMPILE_TIME_DEFAULT,
+      params.getBulkRequestMigrationMaxBytes().getSource());
   }
 
   void testDetermineBulkRequestMigrationMaxBytesInvalidLocalCastorConf() {
@@ -166,21 +158,21 @@ public:
       "determineBulkRequestMigrationMaxBytes",
       params.determineBulkRequestMigrationMaxBytes());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getCategory()",
       std::string("TAPEBRIDGE"),
-      params.getBulkRequestMigrationMaxBytes().category);
+      params.getBulkRequestMigrationMaxBytes().getCategory());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getName()",
       std::string("BULKREQUESTMIGRATIONMAXBYTES"),
-      params.getBulkRequestMigrationMaxBytes().name);
+      params.getBulkRequestMigrationMaxBytes().getName());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getValue()",
       (uint64_t)11111,
-      params.getBulkRequestMigrationMaxBytes().value);
+      params.getBulkRequestMigrationMaxBytes().getValue());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
-      std::string("castor.conf"),
-      params.getBulkRequestMigrationMaxBytes().source);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getSource()",
+      ConfigParamSource::CASTOR_CONF,
+      params.getBulkRequestMigrationMaxBytes().getSource());
   }
 
   void testDetermineBulkRequestMigrationMaxFilesInvalidEnv() {
@@ -209,21 +201,21 @@ public:
       "determineBulkRequestMigrationMaxFiles",
       params.determineBulkRequestMigrationMaxFiles());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getCategory()",
       std::string("TAPEBRIDGE"),
-      params.getBulkRequestMigrationMaxFiles().category);
+      params.getBulkRequestMigrationMaxFiles().getCategory());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getName()",
       std::string("BULKREQUESTMIGRATIONMAXFILES"),
-      params.getBulkRequestMigrationMaxFiles().name);
+      params.getBulkRequestMigrationMaxFiles().getName());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getValue()",
       (uint64_t)12222,
-      params.getBulkRequestMigrationMaxFiles().value);
+      params.getBulkRequestMigrationMaxFiles().getValue());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
-      std::string("environment variable"),
-      params.getBulkRequestMigrationMaxFiles().source);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getSource()",
+      ConfigParamSource::ENVIRONMENT_VARIABLE,
+      params.getBulkRequestMigrationMaxFiles().getSource());
   }
 
   void testDetermineBulkRequestMigrationMaxFilesInvalidPathConfig() {
@@ -236,21 +228,21 @@ public:
     CPPUNIT_ASSERT_NO_THROW_MESSAGE("determineBulkRequestMigrationMaxFiles",
       params.determineBulkRequestMigrationMaxFiles());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getCategory()",
       std::string("TAPEBRIDGE"),
-      params.getBulkRequestMigrationMaxFiles().category);
+      params.getBulkRequestMigrationMaxFiles().getCategory());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getName()",
       std::string("BULKREQUESTMIGRATIONMAXFILES"),
-      params.getBulkRequestMigrationMaxFiles().name);
+      params.getBulkRequestMigrationMaxFiles().getName());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getValue()",
       castor::tape::tapebridge::TAPEBRIDGE_BULKREQUESTMIGRATIONMAXFILES,
-      params.getBulkRequestMigrationMaxFiles().value);
+      params.getBulkRequestMigrationMaxFiles().getValue());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
-      std::string("compile-time default"),
-      params.getBulkRequestMigrationMaxFiles().source);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getSource()",
+      ConfigParamSource::COMPILE_TIME_DEFAULT,
+      params.getBulkRequestMigrationMaxFiles().getSource());
   }
 
   void testDetermineBulkRequestMigrationMaxFilesInvalidLocalCastorConf() {
@@ -282,21 +274,21 @@ public:
       "determineBulkRequestMigrationMaxFiles",
       params.determineBulkRequestMigrationMaxFiles());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getCategory()",
       std::string("TAPEBRIDGE"),
-      params.getBulkRequestMigrationMaxFiles().category);
+      params.getBulkRequestMigrationMaxFiles().getCategory());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getName()",
       std::string("BULKREQUESTMIGRATIONMAXFILES"),
-      params.getBulkRequestMigrationMaxFiles().name);
+      params.getBulkRequestMigrationMaxFiles().getName());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getValue()",
       (uint64_t)13333,
-      params.getBulkRequestMigrationMaxFiles().value);
+      params.getBulkRequestMigrationMaxFiles().getValue());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
-      std::string("castor.conf"),
-      params.getBulkRequestMigrationMaxFiles().source);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getSource()",
+      ConfigParamSource::CASTOR_CONF,
+      params.getBulkRequestMigrationMaxFiles().getSource());
   }
 
   void testDetermineBulkRequestRecallMaxBytesInvalidEnv() {
@@ -325,21 +317,21 @@ public:
       "determineBulkRequestRecallMaxBytes",
       params.determineBulkRequestRecallMaxBytes());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getCategory()",
       std::string("TAPEBRIDGE"),
-      params.getBulkRequestRecallMaxBytes().category);
+      params.getBulkRequestRecallMaxBytes().getCategory());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getName()",
       std::string("BULKREQUESTRECALLMAXBYTES"),
-      params.getBulkRequestRecallMaxBytes().name);
+      params.getBulkRequestRecallMaxBytes().getName());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getValue()",
       (uint64_t)14444,
-      params.getBulkRequestRecallMaxBytes().value);
+      params.getBulkRequestRecallMaxBytes().getValue());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
-      std::string("environment variable"),
-      params.getBulkRequestRecallMaxBytes().source);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getSource()",
+      ConfigParamSource::ENVIRONMENT_VARIABLE,
+      params.getBulkRequestRecallMaxBytes().getSource());
   }
 
   void testDetermineBulkRequestRecallMaxBytesInvalidPathConfig() {
@@ -352,21 +344,21 @@ public:
     CPPUNIT_ASSERT_NO_THROW_MESSAGE("determineBulkRequestRecallMaxBytes",
       params.determineBulkRequestRecallMaxBytes());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getCategory()",
       std::string("TAPEBRIDGE"),
-      params.getBulkRequestRecallMaxBytes().category);
+      params.getBulkRequestRecallMaxBytes().getCategory());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getName()",
       std::string("BULKREQUESTRECALLMAXBYTES"),
-      params.getBulkRequestRecallMaxBytes().name);
+      params.getBulkRequestRecallMaxBytes().getName());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getValue()",
       castor::tape::tapebridge::TAPEBRIDGE_BULKREQUESTRECALLMAXBYTES,
-      params.getBulkRequestRecallMaxBytes().value);
+      params.getBulkRequestRecallMaxBytes().getValue());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
-      std::string("compile-time default"),
-      params.getBulkRequestRecallMaxBytes().source);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getSource()",
+      ConfigParamSource::COMPILE_TIME_DEFAULT,
+      params.getBulkRequestRecallMaxBytes().getSource());
   }
 
   void testDetermineBulkRequestRecallMaxBytesInvalidLocalCastorConf() {
@@ -398,21 +390,21 @@ public:
       "determineBulkRequestRecallMaxBytes",
       params.determineBulkRequestRecallMaxBytes());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getCategory()",
       std::string("TAPEBRIDGE"),
-      params.getBulkRequestRecallMaxBytes().category);
+      params.getBulkRequestRecallMaxBytes().getCategory());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getName()",
       std::string("BULKREQUESTRECALLMAXBYTES"),
-      params.getBulkRequestRecallMaxBytes().name);
+      params.getBulkRequestRecallMaxBytes().getName());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getValue()",
       (uint64_t)15555,
-      params.getBulkRequestRecallMaxBytes().value);
+      params.getBulkRequestRecallMaxBytes().getValue());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
-      std::string("castor.conf"),
-      params.getBulkRequestRecallMaxBytes().source);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getSource()",
+      ConfigParamSource::CASTOR_CONF,
+      params.getBulkRequestRecallMaxBytes().getSource());
   }
 
   void testDetermineBulkRequestRecallMaxFilesInvalidEnv() {
@@ -441,21 +433,21 @@ public:
       "determineBulkRequestRecallMaxFiles",
       params.determineBulkRequestRecallMaxFiles());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getCategory()",
       std::string("TAPEBRIDGE"),
-      params.getBulkRequestRecallMaxFiles().category);
+      params.getBulkRequestRecallMaxFiles().getCategory());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getName()",
       std::string("BULKREQUESTRECALLMAXFILES"),
-      params.getBulkRequestRecallMaxFiles().name);
+      params.getBulkRequestRecallMaxFiles().getName());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getValue()",
       (uint64_t)16666,
-      params.getBulkRequestRecallMaxFiles().value);
+      params.getBulkRequestRecallMaxFiles().getValue());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
-      std::string("environment variable"),
-      params.getBulkRequestRecallMaxFiles().source);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getSource()",
+      ConfigParamSource::ENVIRONMENT_VARIABLE,
+      params.getBulkRequestRecallMaxFiles().getSource());
   }
 
   void testDetermineBulkRequestRecallMaxFilesInvalidPathConfig() {
@@ -468,21 +460,21 @@ public:
     CPPUNIT_ASSERT_NO_THROW_MESSAGE("determineBulkRequestRecallMaxFiles",
       params.determineBulkRequestRecallMaxFiles());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getCategory()",
       std::string("TAPEBRIDGE"),
-      params.getBulkRequestRecallMaxFiles().category);
+      params.getBulkRequestRecallMaxFiles().getCategory());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getName()",
       std::string("BULKREQUESTRECALLMAXFILES"),
-      params.getBulkRequestRecallMaxFiles().name);
+      params.getBulkRequestRecallMaxFiles().getName());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getValue()",
       castor::tape::tapebridge::TAPEBRIDGE_BULKREQUESTRECALLMAXFILES,
-      params.getBulkRequestRecallMaxFiles().value);
+      params.getBulkRequestRecallMaxFiles().getValue());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
-      std::string("compile-time default"),
-      params.getBulkRequestRecallMaxFiles().source);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getSource()",
+      ConfigParamSource::COMPILE_TIME_DEFAULT,
+      params.getBulkRequestRecallMaxFiles().getSource());
   }
 
   void testDetermineBulkRequestRecallMaxFilesInvalidLocalCastorConf() {
@@ -514,21 +506,21 @@ public:
       "determineBulkRequestRecallMaxFiles",
       params.determineBulkRequestRecallMaxFiles());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getCategory()",
       std::string("TAPEBRIDGE"),
-      params.getBulkRequestRecallMaxFiles().category);
+      params.getBulkRequestRecallMaxFiles().getCategory());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getName()",
       std::string("BULKREQUESTRECALLMAXFILES"),
-      params.getBulkRequestRecallMaxFiles().name);
+      params.getBulkRequestRecallMaxFiles().getName());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getValue()",
       (uint64_t)17777,
-      params.getBulkRequestRecallMaxFiles().value);
+      params.getBulkRequestRecallMaxFiles().getValue());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
-      std::string("castor.conf"),
-      params.getBulkRequestRecallMaxFiles().source);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getSource()",
+      ConfigParamSource::CASTOR_CONF,
+      params.getBulkRequestRecallMaxFiles().getSource());
   }
 
   void testDetermineBulkRequestConfigParamsCastorConf() {
@@ -545,61 +537,61 @@ public:
       "determineConfigParams",
       params.determineConfigParams());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getCategory()",
       std::string("TAPEBRIDGE"),
-      params.getBulkRequestMigrationMaxBytes().category);
+      params.getBulkRequestMigrationMaxBytes().getCategory());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getName()",
       std::string("BULKREQUESTMIGRATIONMAXBYTES"),
-      params.getBulkRequestMigrationMaxBytes().name);
+      params.getBulkRequestMigrationMaxBytes().getName());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getValue()",
       (uint64_t)18888,
-      params.getBulkRequestMigrationMaxBytes().value);
+      params.getBulkRequestMigrationMaxBytes().getValue());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
-      std::string("castor.conf"),
-      params.getBulkRequestMigrationMaxBytes().source);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getSource()",
+      ConfigParamSource::CASTOR_CONF,
+      params.getBulkRequestMigrationMaxBytes().getSource());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getCategory()",
       std::string("TAPEBRIDGE"),
-      params.getBulkRequestMigrationMaxFiles().category);
+      params.getBulkRequestMigrationMaxFiles().getCategory());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getName()",
       std::string("BULKREQUESTMIGRATIONMAXFILES"),
-      params.getBulkRequestMigrationMaxFiles().name);
+      params.getBulkRequestMigrationMaxFiles().getName());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getValue()",
       (uint64_t)19999,
-      params.getBulkRequestMigrationMaxFiles().value);
+      params.getBulkRequestMigrationMaxFiles().getValue());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getCategory()",
       std::string("TAPEBRIDGE"),
-      params.getBulkRequestRecallMaxBytes().category);
+      params.getBulkRequestRecallMaxBytes().getCategory());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getName()",
       std::string("BULKREQUESTRECALLMAXBYTES"),
-      params.getBulkRequestRecallMaxBytes().name);
+      params.getBulkRequestRecallMaxBytes().getName());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getValue()",
       (uint64_t)20000,
-      params.getBulkRequestRecallMaxBytes().value);
+      params.getBulkRequestRecallMaxBytes().getValue());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("source",
-      std::string("castor.conf"),
-      params.getBulkRequestRecallMaxBytes().source);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getSource()",
+      ConfigParamSource::CASTOR_CONF,
+      params.getBulkRequestRecallMaxBytes().getSource());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("category",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getCategory()",
       std::string("TAPEBRIDGE"),
-      params.getBulkRequestRecallMaxFiles().category);
+      params.getBulkRequestRecallMaxFiles().getCategory());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("name",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getName()",
       std::string("BULKREQUESTRECALLMAXFILES"),
-      params.getBulkRequestRecallMaxFiles().name);
+      params.getBulkRequestRecallMaxFiles().getName());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("value",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("getValue()",
       (uint64_t)21111,
-      params.getBulkRequestRecallMaxFiles().value);
+      params.getBulkRequestRecallMaxFiles().getValue());
   }
 
   CPPUNIT_TEST_SUITE(BulkRequestConfigParamsTest);

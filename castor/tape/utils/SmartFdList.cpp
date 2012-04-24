@@ -110,7 +110,7 @@ int castor::tape::utils::SmartFdList::release(const int fd)
     castor::exception::Exception ex(EPERM);
 
     ex.getMessage() <<
-      "Smart file descriptor does not own file descriptor"
+      "Smart file-descriptor does not own file descriptor"
       ": fd=" << fd;
 
     throw(ex);

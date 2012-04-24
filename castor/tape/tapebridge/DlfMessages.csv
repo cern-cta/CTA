@@ -149,3 +149,4 @@
 148,TAPEBRIDGE_TELLING_RTCPD_NO_MORE_FILES_DUE_TO_SHUTTING_DOWN,"Telling rtcpd there are no more files to transfer because the rtcpd session is being shutdown"
 149,TAPEBRIDGE_DROPPING_RTCP_FINISHED_DUE_TO_SHUTTING_DOWN,"Dropping RTCP_FINISHED message from rtcpd daemon because the rtcpd session is being shutdown"
 150,TAPEBRIDGE_DROPPING_TAPEBRIDGE_FLUSHEDTOTAPE_DUE_TO_SHUTTING_DOWN,"Dropping TAPEBRIDGE_FLUSHEDTOTAPE message from rtcpd daemon because the rtcpd session is being shutdown"
+151,TAPEBRIDGE_FIRST_SESSION_ERROR,"The first session-error has occurred"

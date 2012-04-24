@@ -30,8 +30,8 @@
 #include <stdint.h>
 
 
-namespace castor     {
-namespace tape       {
+namespace castor    {
+namespace tape      {
 namespace legacymsg {
 
   /**

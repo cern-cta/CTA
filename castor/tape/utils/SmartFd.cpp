@@ -134,7 +134,7 @@ int castor::tape::utils::SmartFd::release()
     castor::exception::Exception ex(EPERM);
 
     ex.getMessage() <<
-      "Smart file descriptor does not own a basic file descriptor";
+      "Smart file-descriptor does not own a file-descriptor";
 
     throw(ex);
   }

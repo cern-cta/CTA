@@ -1,5 +1,5 @@
 /******************************************************************************
- *                test/tapeunittests/test_exception.hpp
+ *                test/unittest/test_exception.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_TAPEUNITTESTS_TESTEXCEPTION_HPP
-#define TEST_TAPEUNITTESTS_TESTEXCEPTION_HPP 1
+#ifndef TEST_UNITTEST_TESTEXCEPTION_HPP
+#define TEST_UNITTEST_TESTEXCEPTION_HPP 1
 
 #include <exception>
 #include <string>
@@ -44,4 +44,4 @@ public:
   const char* what() const throw();
 };
 
-#endif // TEST_TAPEUNITTESTS_TESTEXCEPTION_HPP
+#endif // TEST_UNITTEST_TESTEXCEPTION_HPP

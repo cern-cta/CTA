@@ -41,9 +41,7 @@ public:
   /**
    * Virtual destructor.
    */
-  virtual ~IFileCloser() throw() {
-    // Do nothing
-  }
+  virtual ~IFileCloser() throw();
 
   /**
    * Closes the specified file-descriptor.

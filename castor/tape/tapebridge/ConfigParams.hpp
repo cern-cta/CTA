@@ -26,7 +26,8 @@
 #define CASTOR_TAPE_TAPEBRIDGE_CONFIGPARAMS_HPP 1
 
 #include "castor/exception/Exception.hpp"
-#include "castor/tape/tapebridge/ConfigParamAndSource.hpp"
+#include "castor/exception/InvalidArgument.hpp"
+#include "castor/tape/tapebridge/ConfigParam.hpp"
 
 #include <stdint.h>
 
@@ -50,14 +51,19 @@ public:
 protected:
 
   /**
-   * Determines the values of the tapebridged-daemon configuration-parameters
-   * for which this object is responsible.
+   * Determines the values of the configuration-parameters for which this
+   * object is responsible.
    *
    * This method determines each required value by first reading the
    * environment variables, then if unsuccessful by reading castor.conf and
    * finally if still unsuccessfull by using the compile-time default.
+   *
+   * This method throws a castor::exception::InvalidArgument exception if the
+   * source-value of one the configuration parameters for which this object
+   * is responsible is invalid.
    */
-  virtual void determineConfigParams() throw(castor::exception::Exception) = 0;
+  virtual void determineConfigParams()
+    throw(castor::exception::InvalidArgument, castor::exception::Exception) = 0;
 
   /**
    * Determines the value of the specified configuration parameter.
@@ -66,15 +72,18 @@ protected:
    * environment variables, then if unsuccessful by reading castor.conf and
    * finally if still unsuccessfull by using the compile-time default.
    *
+   * This method throws a castor::exception::InvalidArgument exception if the
+   * source-value of the configuration parameter is invalid.
+   *
    * @param param              In/Out Parameter: The configuration parameter to
    *                           be determined and set.
    * @param compileTimeDefault The compile-time default value for the
    *                           configuration parameter.
    */
   void determineUint64ConfigParam(
-    ConfigParamAndSource<uint64_t> &param,
-    const uint64_t                 compileTimeDefault)
-    throw(castor::exception::Exception);
+    ConfigParam<uint64_t> &param,
+    const uint64_t        compileTimeDefault)
+    throw(castor::exception::InvalidArgument, castor::exception::Exception);
 
 }; // class ConfigParams
 

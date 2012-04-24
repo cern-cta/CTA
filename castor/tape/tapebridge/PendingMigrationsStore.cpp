@@ -319,7 +319,6 @@ void castor::tape::tapebridge::PendingMigrationsStore::checkForMismatches(
     ex.getMessage() <<
       "Mismatch(es) found"
       ": request.nsFileId="  << request.nsFileId <<
-      " notification.nsFileId=" << notification.nsFileId <<
       oss.str();
     throw ex;
   }

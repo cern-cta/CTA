@@ -42,37 +42,46 @@ castor::tape::tapebridge::ConfigParams::~ConfigParams() {
 //------------------------------------------------------------------------------
 void
   castor::tape::tapebridge::ConfigParams::determineUint64ConfigParam(
-  ConfigParamAndSource<uint64_t> &param,
-  const uint64_t                 compileTimeDefault)
-  throw(castor::exception::Exception) {
-  const std::string envVarName = param.category + "_" + param.name;
+  ConfigParam<uint64_t> &param,
+  const uint64_t        compileTimeDefault)
+  throw(castor::exception::InvalidArgument, castor::exception::Exception) {
+  const std::string envVarName = param.getCategory() + "_" + param.getName();
   const char *valueCStr = NULL;
 
   // Try to get the value from the environment variables, else try to get it
-  // from castor.conf
+  // from castor.conf, else use the compile-time default
   if(NULL != (valueCStr = getenv(envVarName.c_str()))) {
-    param.source = "environment variable";
-  } else if(NULL != (valueCStr = getconfent(param.category.c_str(),
-    param.name.c_str(), 0))) {
-    param.source = "castor.conf";
-  }
-
-  // If we got the value, then try to convert it to a uint64_t, else use the
-  // compile-time default
-  if(NULL != valueCStr) {
+    const ConfigParamSource::Enum source =
+      ConfigParamSource::ENVIRONMENT_VARIABLE;
     if(!utils::isValidUInt(valueCStr)) {
-      castor::exception::InvalidArgument ex;
-      ex.getMessage() <<
-        "Configuration parameter is not a valid unsigned integer"
-        ": category=" << param.category <<
-        " name=" << param.name <<
+      TAPE_THROW_EX(castor::exception::InvalidArgument,
+        ": Configuration parameter is not a valid unsigned integer"
+        ": category=" << param.getCategory() <<
+        " name=" << param.getName() <<
         " value=" << valueCStr <<
-        " source=" << param.source;
-      throw(ex);
+        " source=" << source);
     }
-    param.value = strtou64(valueCStr);
+    const uint64_t value = strtou64(valueCStr);
+    param.setValueAndSource(value, source);
+
+  } else if(NULL != (valueCStr = getconfent(param.getCategory().c_str(),
+    param.getName().c_str(), 0))) {
+    const ConfigParamSource::Enum source = ConfigParamSource::CASTOR_CONF;
+    if(!utils::isValidUInt(valueCStr)) {
+      TAPE_THROW_EX(castor::exception::InvalidArgument,
+        ": Configuration parameter is not a valid unsigned integer"
+        ": category=" << param.getCategory() <<
+        " name=" << param.getName() <<
+        " value=" << valueCStr <<
+        " source=" << source);
+    }
+    const uint64_t value = strtou64(valueCStr);
+    param.setValueAndSource(value, source);
+
   } else {
-    param.source = "compile-time default";
-    param.value  = compileTimeDefault;
+    const ConfigParamSource::Enum source =
+      ConfigParamSource::COMPILE_TIME_DEFAULT;
+    const uint64_t value = compileTimeDefault;
+    param.setValueAndSource(value, source);
   }
 }

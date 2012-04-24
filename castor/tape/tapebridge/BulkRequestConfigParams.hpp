@@ -26,7 +26,7 @@
 #define CASTOR_TAPE_TAPEBRIDGE_BULKREQUESTCONFIGPARAMS_HPP 1
 
 #include "castor/exception/Exception.hpp"
-#include "castor/tape/tapebridge/ConfigParamAndSource.hpp"
+#include "castor/tape/tapebridge/ConfigParam.hpp"
 #include "castor/tape/tapebridge/ConfigParams.hpp"
 
 #include <stdint.h>
@@ -45,7 +45,7 @@ class BulkRequestConfigParams: public ConfigParams {
 public:
 
   /**
-   * Constructor.
+   * Default constructor.
    */
   BulkRequestConfigParams();
 
@@ -53,28 +53,33 @@ public:
    * Determines the values of the tape-bridge configuration parameters by
    * searching the environment variables, followed by castor.conf file and then
    * by using the compile-time defaults.
+   *
+   * This method throws a castor::exception::InvalidArgument exception if the
+   * source-value of one the configuration parameters for which this object
+   * is responsible is invalid.
    */
-  void determineConfigParams() throw(castor::exception::Exception);
+  void determineConfigParams()
+    throw(castor::exception::InvalidArgument, castor::exception::Exception);
 
   /**
    * Returns the bulkRequestMigrationMaxBytes configuration parameter.
    */
-  const ConfigParamAndSource<uint64_t> &getBulkRequestMigrationMaxBytes() const;
+  const ConfigParam<uint64_t> &getBulkRequestMigrationMaxBytes() const;
 
   /**
    * Returns the bulkRequestMigrationMaxFiles configuration parameter.
    */
-  const ConfigParamAndSource<uint64_t> &getBulkRequestMigrationMaxFiles() const;
+  const ConfigParam<uint64_t> &getBulkRequestMigrationMaxFiles() const;
 
   /**
    * Returns the bulkRequestRecallMaxBytes configuration parameter.
    */
-  const ConfigParamAndSource<uint64_t> &getBulkRequestRecallMaxBytes() const;
+  const ConfigParam<uint64_t> &getBulkRequestRecallMaxBytes() const;
 
   /**
    * Returns the bulkRequestRecallMaxFiles configuration parameter.
    */
-  const ConfigParamAndSource<uint64_t> &getBulkRequestRecallMaxFiles() const;
+  const ConfigParam<uint64_t> &getBulkRequestRecallMaxFiles() const;
 
 protected:
 
@@ -90,7 +95,7 @@ protected:
    * finally if still unsuccessfull by using the compile-time default.
    */
   void determineBulkRequestMigrationMaxBytes()
-    throw(castor::exception::Exception);
+    throw(castor::exception::InvalidArgument, castor::exception::Exception);
 
   /**
    * Determines the value of the bulkRequestMigrationMaxFiles configuration
@@ -102,9 +107,12 @@ protected:
    * This method determines the required value by first reading the
    * environment variables, then if unsuccessful by reading castor.conf and
    * finally if still unsuccessfull by using the compile-time default.
+   *
+   * This method throws a castor::exception::InvalidArgument exception if the
+   * source-value of the configuration parameter is invalid.
    */
   void determineBulkRequestMigrationMaxFiles()
-    throw(castor::exception::Exception);
+    throw(castor::exception::InvalidArgument, castor::exception::Exception);
 
   /**
    * Determines the value of the bulkRequestRecallMaxBytes configuration
@@ -116,9 +124,12 @@ protected:
    * This method determines the required value by first reading the
    * environment variables, then if unsuccessful by reading castor.conf and
    * finally if still unsuccessfull by using the compile-time default.
+   *
+   * This method throws a castor::exception::InvalidArgument exception if the
+   * source-value of the configuration parameter is invalid.
    */
   void determineBulkRequestRecallMaxBytes()
-    throw(castor::exception::Exception);
+    throw(castor::exception::InvalidArgument, castor::exception::Exception);
 
   /**
    * Determines the value of the bulkRequestRecallMaxFiles configuration
@@ -130,9 +141,72 @@ protected:
    * This method determines the required value by first reading the
    * environment variables, then if unsuccessful by reading castor.conf and
    * finally if still unsuccessfull by using the compile-time default.
+   *
+   * This method throws a castor::exception::InvalidArgument exception if the
+   * source-value of the configuration parameter is invalid.
    */
   void determineBulkRequestRecallMaxFiles()
-    throw(castor::exception::Exception);
+    throw(castor::exception::InvalidArgument, castor::exception::Exception);
+
+  /**
+   * Sets the bulkRequestMigrationMaxBytes configuration parameter.
+   *
+   * Please note that this method was developed for the sole purpose of
+   * facilitating unit-testing. Apart from unit-tests, a
+   * configuration-parameter of this class should only be set using the
+   * appropriate determineXXXX() method.
+   *
+   * @param value  The value of the configuration parameter.
+   * @param source The source of the configuration parameter.
+   */
+  void setBulkRequestMigrationMaxBytes(
+    const uint64_t                value,
+    const ConfigParamSource::Enum source);
+
+  /**
+   * Sets the bulkRequestMigrationMaxFiles configuration parameter.
+   *
+   * Please note that this method was developed for the sole purpose of
+   * facilitating unit-testing. Apart from unit-tests, a
+   * configuration-parameter of this class should only be set using the
+   * appropriate determineXXXX() method.
+   *
+   * @param value  The value of the configuration parameter.
+   * @param source The source of the configuration parameter.
+   */
+  void setBulkRequestMigrationMaxFiles(
+    const uint64_t                value,
+    const ConfigParamSource::Enum source);
+
+  /**
+   * Sets the bulkRequestRecallMaxBytes configuration parameter.
+   *
+   * Please note that this method was developed for the sole purpose of
+   * facilitating unit-testing. Apart from unit-tests, a
+   * configuration-parameter of this class should only be set using the
+   * appropriate determineXXXX() method.
+   *
+   * @param value  The value of the configuration parameter.
+   * @param source The source of the configuration parameter.
+   */
+  void setBulkRequestRecallMaxBytes(
+    const uint64_t                value,
+    const ConfigParamSource::Enum source);
+
+  /**
+   * Sets the bulkRequestRecallMaxFiles configuration parameter.
+   *
+   * Please note that this method was developed for the sole purpose of
+   * facilitating unit-testing. Apart from unit-tests, a
+   * configuration-parameter of this class should only be set using the
+   * appropriate determineXXXX() method.
+   *
+   * @param value  The value of the configuration parameter.
+   * @param source The source of the configuration parameter.
+   */
+  void setBulkRequestRecallMaxFiles(
+    const uint64_t                value,
+    const ConfigParamSource::Enum source);
 
 private:
 
@@ -142,14 +216,14 @@ private:
    * the resulting set can represent.  This number may be exceeded when the set
    * contains a single file.
    */
-  ConfigParamAndSource<uint64_t> m_bulkRequestMigrationMaxBytes;
+  ConfigParam<uint64_t> m_bulkRequestMigrationMaxBytes;
 
   /**
    * When the tapegatewayd daemon is asked for a set of files to migrate to
    * tape, this configuration parameter specifies the maximum number of files
    * that can be in that set.
    */
-  ConfigParamAndSource<uint64_t> m_bulkRequestMigrationMaxFiles;
+  ConfigParam<uint64_t> m_bulkRequestMigrationMaxFiles;
 
   /**
    * When the tapegatewayd daemon is asked for a set of files to recall from
@@ -157,14 +231,14 @@ private:
    * the resulting set can represent.  This number may be exceeded when the set
    * contains a single file.
    */
-  ConfigParamAndSource<uint64_t> m_bulkRequestRecallMaxBytes;
+  ConfigParam<uint64_t> m_bulkRequestRecallMaxBytes;
 
   /**
    * When the tapegatewayd daemon is asked for a set of files to recall from
    * tape, this configuration parameter specifies the maximum number of files
    * that can be in that set.
    */
-  ConfigParamAndSource<uint64_t> m_bulkRequestRecallMaxFiles;
+  ConfigParam<uint64_t> m_bulkRequestRecallMaxFiles;
 
 }; // class BulkRequestConfigParams
 

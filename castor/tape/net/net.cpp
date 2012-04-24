@@ -33,6 +33,7 @@
 #include "h/socket_timeout.h"
 
 #include <arpa/inet.h>
+#include <fcntl.h>
 #include <netdb.h>
 #include <sstream>
 #include <sys/select.h>
@@ -217,9 +218,9 @@ int castor::tape::net::acceptConnection(const int listenSocketFd,
       ": listenSocketFd=" << listenSocketFd);
   }
 
-  const time_t startTime = time(NULL);
-  fd_set       fdSet;
-  timeval      selectTimeout;
+  const time_t   startTime = time(NULL);
+  fd_set         fdSet;
+  struct timeval selectTimeout;
 
   FD_ZERO(&fdSet);
   FD_SET(listenSocketFd, &fdSet);
@@ -679,4 +680,138 @@ void castor::tape::net::writeBytes(const int socketFd, const int timeout,
       TAPE_THROW_CODE(SECOMERR, oss.str());
     }
   }
+}
+
+
+//-----------------------------------------------------------------------------
+// connectWithTimeout
+//-----------------------------------------------------------------------------
+int castor::tape::net::connectWithTimeout(
+  const int             sockDomain,
+  const int             sockType,
+  const int             sockProtocol,
+  const struct sockaddr *address,
+  const socklen_t       address_len,
+  const int             timeout)
+  throw(castor::exception::TimeOut, castor::exception::Exception) {
+
+  // Create the socket for the new connection
+  utils::SmartFd smartSock(socket(sockDomain, sockType, sockProtocol));
+  if(-1 == smartSock.get()) {
+    const int socketErrno = errno;
+    TAPE_THROW_CODE(errno,
+      ": Failed to create socket for new connection"
+      ": Call to socket() failed"
+      ": " << sstrerror(socketErrno));
+  }
+
+  // Get the orginal file-control flags of the socket
+  const int orginalFileControlFlags = fcntl(smartSock.get(), F_GETFL, 0);
+  if(-1 == orginalFileControlFlags) {
+    const int fcntlErrno = errno;
+    TAPE_THROW_CODE(fcntlErrno,
+      ": Failed to get the original file-control flags of the socket"
+      ": Call to fcntl() failed"
+      ": " << sstrerror(fcntlErrno));
+  }
+
+  // Set the O_NONBLOCK file-control flag of the socket
+  if(-1 == fcntl(smartSock.get(), F_SETFL,
+    orginalFileControlFlags | O_NONBLOCK)) {
+    const int fcntlErrno = errno;
+    TAPE_THROW_CODE(fcntlErrno,
+      ": Failed to set the O_NONBLOCK file-control flag"
+      ": Call to fcntl() failed"
+      ": " << sstrerror(fcntlErrno));
+  }
+
+  // Start connecting
+  const int connectRc = connect(smartSock.get(), address, address_len);
+  const int connectErrno = errno;
+
+  // If the connection completed immediately then restore the original
+  // file-control flags of the socket and return it
+  if(0 == connectRc) {
+    if(-1 == fcntl(smartSock.get(), F_SETFL, orginalFileControlFlags)) {
+      const int fcntlErrno = errno;
+      TAPE_THROW_CODE(fcntlErrno,
+        ": Failed to restore the file-control flags of the socket"
+        ": " << sstrerror(fcntlErrno));
+    }
+    return smartSock.release();
+  }
+
+  // Throw an exception if there was any other error than
+  // "operation in progress" when trying to start to connect
+  if(EINPROGRESS != connectErrno) {
+    TAPE_THROW_CODE(connectErrno,
+      ": Call to connect() failed"
+      ": " << sstrerror(connectErrno));
+  }
+
+  // Create a read set and a write set for select() putting the
+  // socket in both sets
+  fd_set readFds, writeFds;
+  FD_ZERO(&readFds);
+  FD_SET(smartSock.get(), &readFds);
+  writeFds = readFds;
+
+  // Wait for the connection to complete using select with a timeout
+  struct timeval selectTimeout;
+  selectTimeout.tv_sec = timeout;
+  selectTimeout.tv_usec = 0;
+  const int selectRc = select(smartSock.get() + 1, &readFds, &writeFds, NULL,
+    &selectTimeout);
+  if(-1 == selectRc) {
+    const int selectErrno = errno;
+    TAPE_THROW_CODE(errno,
+      ": Call to select() failed"
+      ": " << sstrerror(selectErrno));
+  }
+
+  // Throw a timed-out exception if select timed-out
+  if(0 == selectRc) {
+    TAPE_THROW_EX(castor::exception::TimeOut,
+      ": Failed to connect"
+      ": Timed out after " << timeout << " seconds");
+  }
+
+  // Throw an exception if no file descriptor was set
+  if(!FD_ISSET(smartSock.get(), &readFds) &&
+    !FD_ISSET(smartSock.get(), &writeFds)) {
+    TAPE_THROW_CODE(ECANCELED,
+      ": Failed to connect"
+      ": select() returned with no timneout or any descriptors set");
+  }
+
+  // Use getsockopt() to check whether or not the connection completed
+  // successfully
+  //
+  // Take into account the fact that if there is an error then Solaris will
+  // return -1 and set errno, whereas BSD will return 0 and set sockoptError
+  int sockoptError = 0;
+  socklen_t sockoptErrorLen = sizeof(sockoptError);
+  const int getsockoptRc = getsockopt(smartSock.get(), SOL_SOCKET, SO_ERROR,
+    &sockoptError, &sockoptErrorLen);
+  const int getsockoptErrno = errno;
+  if(-1 == getsockoptRc) { // Solaris
+    TAPE_THROW_CODE(getsockoptErrno,
+      ": Connection did not complete successfully"
+      ": " << sstrerror(getsockoptErrno));
+  }
+  if(0 != sockoptError) { // BSD
+    TAPE_THROW_CODE(sockoptError,
+      ": Connection did not complete successfully"
+      ": " << sstrerror(sockoptError));
+  }
+
+  // Restore the original file-control flags of the socket
+  if(-1 == fcntl(smartSock.get(), F_SETFL, orginalFileControlFlags)) {
+    const int fcntlErrno = errno;
+    TAPE_THROW_CODE(fcntlErrno,
+      ": Failed to restore the file-control flags of the socket"
+      ": " << sstrerror(fcntlErrno));
+  }
+
+  return smartSock.release();
 }

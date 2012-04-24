@@ -26,6 +26,7 @@
 #define CASTOR_TAPE_TAPEBRIDGE_CONFIGPARAMLOGGER
 
 #include "castor/dlf/Dlf.hpp"
+#include "castor/tape/tapebridge/ConfigParamSource.hpp"
 #include "castor/tape/tapebridge/DlfMessageConstants.hpp"
 
 namespace castor     {
@@ -42,16 +43,16 @@ public:
   /**
    * Logs the specified ConfigParamAndSource object.
    */
-  template<typename ConfigParamAndSourceType>
+  template<typename ConfigParamType>
     static void writeToDlf(
-      const Cuuid_t            &cuuid,
-      ConfigParamAndSourceType &configParamAndSource) {
+      const Cuuid_t   &cuuid,
+      ConfigParamType &configParam) {
     writeToDlf(
       cuuid,
-      configParamAndSource.category,
-      configParamAndSource.name,
-      configParamAndSource.value,
-      configParamAndSource.source);
+      configParam.getCategory(),
+      configParam.getName(),
+      configParam.getValue(),
+      configParam.getSource());
   }
 
   /**
@@ -59,20 +60,42 @@ public:
    */
   template<typename ValueType>
     static void writeToDlf(
-      const Cuuid_t     &cuuid,
-      const std::string &category,
-      const std::string &name,
-      ValueType         &value,
-      const std::string &source) {
+      const Cuuid_t                 &cuuid,
+      const std::string             &category,
+      const std::string             &name,
+      ValueType                     value,
+      const ConfigParamSource::Enum source) {
+    const std::string sourceStr(ConfigParamSource::toString(source));
     castor::dlf::Param params[] = {
-      castor::dlf::Param("category", category),
-      castor::dlf::Param("name"    , name    ),
-      castor::dlf::Param("value"   , value   ),
-      castor::dlf::Param("source"  , source  )};
+      castor::dlf::Param("category", category ),
+      castor::dlf::Param("name"    , name     ),
+      castor::dlf::Param("value"   , value    ),
+      castor::dlf::Param("source"  , sourceStr)};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
       TAPEBRIDGE_CONFIG_PARAM, params);
   }
 
+  /**
+   * Logs the specified components of a ConfigParamAndSource object.
+   */
+/*
+  template<typename ValueType>
+    static void writeToDlf(
+      const Cuuid_t           &cuuid,
+      std::string             &category,
+      std::string             &name,
+      const ValueType               &value,
+      ConfigParamSource::Enum source) {
+    const std::string sourceStr(ConfigParamSource::toString(source));
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("category", category ),
+      castor::dlf::Param("name"    , name     ),
+      castor::dlf::Param("value"   , value    ),
+      castor::dlf::Param("source"  , sourceStr)};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
+      TAPEBRIDGE_CONFIG_PARAM, params);
+  }
+*/
 }; // class ConfigParamLogger
 
 } // namespace tapebridge

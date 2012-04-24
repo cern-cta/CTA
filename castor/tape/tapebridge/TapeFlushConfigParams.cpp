@@ -31,17 +31,16 @@
 #include "h/tapebridge_constants.h"
 #include "h/u64subr.h"
 
+#include <string>
+
 
 //-----------------------------------------------------------------------------
 // Constructor
 //-----------------------------------------------------------------------------
 castor::tape::tapebridge::TapeFlushConfigParams::TapeFlushConfigParams():
-  m_tapeFlushMode("TAPEBRIDGE", "TAPEFLUSHMODE", TAPEBRIDGE_N_FLUSHES_PER_FILE,
-    "UNKNOWN"),
-  m_maxBytesBeforeFlush("TAPEBRIDGE", "MAXBYTESBEFOREFLUSH", (uint64_t)0,
-    "UNKNOWN"),
-  m_maxFilesBeforeFlush("TAPEBRIDGE", "MAXFILESBEFOREFLUSH", (uint64_t)0,
-    "UNKNOWN") {
+  m_tapeFlushMode("TAPEBRIDGE", "TAPEFLUSHMODE"),
+  m_maxBytesBeforeFlush("TAPEBRIDGE", "MAXBYTESBEFOREFLUSH"),
+  m_maxFilesBeforeFlush("TAPEBRIDGE", "MAXFILESBEFOREFLUSH") {
   // Do nothing
 }
 
@@ -50,13 +49,13 @@ castor::tape::tapebridge::TapeFlushConfigParams::TapeFlushConfigParams():
 // determineConfigParams
 //------------------------------------------------------------------------------
 void castor::tape::tapebridge::TapeFlushConfigParams::determineConfigParams()
-  throw(castor::exception::Exception) {
+  throw(castor::exception::InvalidArgument, castor::exception::Exception) {
 
   determineTapeFlushMode();
 
   // Only try to determine the maximum number of bytes and files before a flush
   // if the flush mode requires them
-  if(TAPEBRIDGE_ONE_FLUSH_PER_N_FILES == m_tapeFlushMode.value) {
+  if(TAPEBRIDGE_ONE_FLUSH_PER_N_FILES == m_tapeFlushMode.getValue()) {
     determineMaxBytesBeforeFlush();
     determineMaxFilesBeforeFlush();
   }
@@ -67,41 +66,48 @@ void castor::tape::tapebridge::TapeFlushConfigParams::determineConfigParams()
 // determineTapeFlushMode
 //------------------------------------------------------------------------------
 void castor::tape::tapebridge::TapeFlushConfigParams::determineTapeFlushMode()
-  throw(castor::exception::Exception) {
-  const std::string envVarName = m_tapeFlushMode.category + "_" +
-    m_tapeFlushMode.name;
+  throw(castor::exception::InvalidArgument, castor::exception::Exception) {
+  const std::string envVarName = m_tapeFlushMode.getCategory() + "_" +
+    m_tapeFlushMode.getName();
   const char *paramCStr  = NULL;
 
   // Try to get the value from the environment variables, else try to get it
-  // from castor.conf
+  // from castor.conf, else use the compile-time default
   if(NULL != (paramCStr = getenv(envVarName.c_str()))) {
-    m_tapeFlushMode.source = "environment variable";
-  } else if(NULL != (paramCStr = getconfent(m_tapeFlushMode.category.c_str(),
-    m_tapeFlushMode.name.c_str(), 0))) {
-    m_tapeFlushMode.source = "castor.conf";
-  }
-
-  // If we got the value, then try to convert it to a uint32_t, else use the
-  // compile-time default
-  if(NULL != paramCStr) {
-    if(0 == strcmp("N_FLUSHES_PER_FILE", paramCStr)) {
-      m_tapeFlushMode.value = TAPEBRIDGE_N_FLUSHES_PER_FILE;
-    } else if(0 == strcmp("ONE_FLUSH_PER_N_FILES", paramCStr)) {
-      m_tapeFlushMode.value = TAPEBRIDGE_ONE_FLUSH_PER_N_FILES;
-    } else {
-      castor::exception::InvalidArgument ex;
-      ex.getMessage() <<
-        "Value of configuration parameter is not valid"
-        ": expected N_FLUSHES_PER_FILE or ONE_FLUSH_PER_N_FILES"
-        ": category=" << m_tapeFlushMode.category <<
-        " name=" << m_tapeFlushMode.name <<
-        " value=" << paramCStr <<
-        " source=" << m_tapeFlushMode.source;
-      throw(ex);
-    }
+    const uint32_t value = stringToTapeFlushMode(paramCStr);
+    const ConfigParamSource::Enum source =
+      ConfigParamSource::ENVIRONMENT_VARIABLE;
+    m_tapeFlushMode.setValueAndSource(value, source);
+  } else if(NULL != (paramCStr =
+      getconfent(m_tapeFlushMode.getCategory().c_str(),
+      m_tapeFlushMode.getName().c_str(), 0))) {
+    const uint32_t value = stringToTapeFlushMode(paramCStr);
+    const ConfigParamSource::Enum source = ConfigParamSource::CASTOR_CONF;
+    m_tapeFlushMode.setValueAndSource(value, source);
   } else {
-    m_tapeFlushMode.source = "compile-time default";
-    m_tapeFlushMode.value = TAPEBRIDGE_N_FLUSHES_PER_FILE;
+    const uint32_t value = TAPEBRIDGE_N_FLUSHES_PER_FILE;
+    const ConfigParamSource::Enum source =
+      ConfigParamSource::COMPILE_TIME_DEFAULT;
+    m_tapeFlushMode.setValueAndSource(value, source);
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// stringToTapeFlushMode
+//------------------------------------------------------------------------------
+uint32_t castor::tape::tapebridge::TapeFlushConfigParams::
+  stringToTapeFlushMode(const std::string s)
+  throw(castor::exception::InvalidArgument) {
+  if(s == "N_FLUSHES_PER_FILE") {
+    return TAPEBRIDGE_N_FLUSHES_PER_FILE;
+  } else if(s == "ONE_FLUSH_PER_N_FILES") {
+    return TAPEBRIDGE_ONE_FLUSH_PER_N_FILES;
+  } else {
+    TAPE_THROW_EX(castor::exception::InvalidArgument,
+      ": Invalid tape-flush mode string"
+      ": expected N_FLUSHES_PER_FILE or ONE_FLUSH_PER_N_FILES"
+      ": actual=" << s);
   }
 }
 
@@ -110,7 +116,8 @@ void castor::tape::tapebridge::TapeFlushConfigParams::determineTapeFlushMode()
 // determineMaxBytesBeforeFlush
 //------------------------------------------------------------------------------
 void castor::tape::tapebridge::TapeFlushConfigParams::
-  determineMaxBytesBeforeFlush() throw(castor::exception::Exception) {
+  determineMaxBytesBeforeFlush()
+  throw(castor::exception::InvalidArgument, castor::exception::Exception) {
   determineUint64ConfigParam(m_maxBytesBeforeFlush,
     TAPEBRIDGE_MAXBYTESBEFOREFLUSH);
 }
@@ -120,7 +127,8 @@ void castor::tape::tapebridge::TapeFlushConfigParams::
 // determineMaxFilesBeforeFlush
 //------------------------------------------------------------------------------
 void castor::tape::tapebridge::TapeFlushConfigParams::
-  determineMaxFilesBeforeFlush() throw(castor::exception::Exception) {
+  determineMaxFilesBeforeFlush()
+  throw(castor::exception::InvalidArgument, castor::exception::Exception) {
   determineUint64ConfigParam(m_maxFilesBeforeFlush,
     TAPEBRIDGE_MAXFILESBEFOREFLUSH);
 }
@@ -129,16 +137,16 @@ void castor::tape::tapebridge::TapeFlushConfigParams::
 //-----------------------------------------------------------------------------
 // getTapeFlushMode
 //-----------------------------------------------------------------------------
-const castor::tape::tapebridge::ConfigParamAndSource<uint32_t>
+const castor::tape::tapebridge::ConfigParam<uint32_t>
   &castor::tape::tapebridge::TapeFlushConfigParams::getTapeFlushMode() const {
   return m_tapeFlushMode;
 }
 
 
 //-----------------------------------------------------------------------------
-//
+// getMaxBytesBeforeFlush
 //-----------------------------------------------------------------------------
-const castor::tape::tapebridge::ConfigParamAndSource<uint64_t>
+const castor::tape::tapebridge::ConfigParam<uint64_t>
   &castor::tape::tapebridge::TapeFlushConfigParams::
   getMaxBytesBeforeFlush() const {
   return m_maxBytesBeforeFlush;
@@ -146,10 +154,40 @@ const castor::tape::tapebridge::ConfigParamAndSource<uint64_t>
 
 
 //-----------------------------------------------------------------------------
-//
+// getMaxFilesBeforeFlush
 //-----------------------------------------------------------------------------
-const castor::tape::tapebridge::ConfigParamAndSource<uint64_t>
+const castor::tape::tapebridge::ConfigParam<uint64_t>
   &castor::tape::tapebridge::TapeFlushConfigParams::
   getMaxFilesBeforeFlush() const {
   return m_maxFilesBeforeFlush;
+}
+
+
+//-----------------------------------------------------------------------------
+// setTapeFlushMode
+//-----------------------------------------------------------------------------
+void castor::tape::tapebridge::TapeFlushConfigParams::setTapeFlushMode(
+  const uint32_t                value,
+  const ConfigParamSource::Enum source) {
+  m_tapeFlushMode.setValueAndSource(value, source);
+}
+
+
+//-----------------------------------------------------------------------------
+// setMaxBytesBeforeFlush
+//-----------------------------------------------------------------------------
+void castor::tape::tapebridge::TapeFlushConfigParams::setMaxBytesBeforeFlush(
+  const uint64_t                value,
+  const ConfigParamSource::Enum source) {
+  m_maxBytesBeforeFlush.setValueAndSource(value, source);
+}
+
+
+//-----------------------------------------------------------------------------
+// setMaxFilesBeforeFlush
+//-----------------------------------------------------------------------------
+void castor::tape::tapebridge::TapeFlushConfigParams::setMaxFilesBeforeFlush(
+  const uint64_t                value,
+  const ConfigParamSource::Enum source) {
+  m_maxFilesBeforeFlush.setValueAndSource(value, source);
 }

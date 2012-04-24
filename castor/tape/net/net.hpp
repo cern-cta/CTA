@@ -36,6 +36,7 @@
 #include <errno.h>
 #include <string.h>
 #include <iostream>
+#include <sys/socket.h>
 #include <sys/types.h>
 
 namespace castor {
@@ -259,6 +260,38 @@ void readBytesFromCloseable(bool &connClosed, const int socketFd,
  */
 void writeBytes(const int socketFd, const int timeout, const int nbBytes,
   char *const buf) throw(castor::exception::Exception);
+
+/**
+ * Creates the specified socket and uses it to connects to the specified
+ * address within the constraints of the specified timeout.
+ *
+ * This method throws a castor::exception::TimeOut exception if a timeout
+ * occurs.
+ *
+ * This method throws a castor::exception::Exception exception if an error
+ * other than a timeout occurs.
+ *
+ * @param sockDomain   The communications domain of the socket, see
+ *                     'man 2 socket'.
+ * @param sockType     The type of the socket, see 'man 2 socket'.
+ * @param sockProtocol The protocol to be used with the socket, see
+ *                     'man 2 socket'.
+ * @param address      The address to connect to, see 'man 2 connect'.
+ * @param address_len  The length of the address to connect to, see
+ *                     'man 2 connect'.
+ * @param timeout      The maximum amount of time in seconds to wait for the
+ *                     connect to finish.
+ * @return             A file-descriptor referencing the newly created and
+ *                     connected socket.
+ */
+int connectWithTimeout(
+  const int             sockDomain,
+  const int             sockType,
+  const int             sockProtocol,
+  const struct sockaddr *address,
+  const socklen_t       address_len,
+  const int             timeout)
+  throw(castor::exception::TimeOut, castor::exception::Exception);
 
 } // namespace net
 } // namespace tape

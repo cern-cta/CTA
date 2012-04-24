@@ -148,16 +148,16 @@ int castor::tape::tapebridge::TapeBridgeDaemon::exceptionThrowingMain(
     tapeFlushConfigParams.getTapeFlushMode());
   {
     const char *const tapeFlushModeStr = tapebridge_tapeFlushModeToStr(
-      tapeFlushConfigParams.getTapeFlushMode().value);
+      tapeFlushConfigParams.getTapeFlushMode().getValue());
     ConfigParamLogger::writeToDlf(
       nullCuuid,
-      tapeFlushConfigParams.getTapeFlushMode().category,
-      tapeFlushConfigParams.getTapeFlushMode().name,
+      tapeFlushConfigParams.getTapeFlushMode().getCategory(),
+      tapeFlushConfigParams.getTapeFlushMode().getName(),
       tapeFlushModeStr,
-      tapeFlushConfigParams.getTapeFlushMode().source);
+      tapeFlushConfigParams.getTapeFlushMode().getSource());
   }
   if(TAPEBRIDGE_ONE_FLUSH_PER_N_FILES ==
-    tapeFlushConfigParams.getTapeFlushMode().value) {
+    tapeFlushConfigParams.getTapeFlushMode().getValue()) {
     ConfigParamLogger::writeToDlf(nullCuuid,
       tapeFlushConfigParams.getMaxBytesBeforeFlush());
     ConfigParamLogger::writeToDlf(nullCuuid,

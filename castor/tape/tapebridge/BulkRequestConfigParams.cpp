@@ -30,14 +30,10 @@
 // constructor
 //-----------------------------------------------------------------------------
 castor::tape::tapebridge::BulkRequestConfigParams::BulkRequestConfigParams():
-  m_bulkRequestMigrationMaxBytes("TAPEBRIDGE", "BULKREQUESTMIGRATIONMAXBYTES",
-    (uint64_t)0, "UNKNOWN"),
-  m_bulkRequestMigrationMaxFiles("TAPEBRIDGE", "BULKREQUESTMIGRATIONMAXFILES",
-    (uint64_t)0, "UNKNOWN"),
-  m_bulkRequestRecallMaxBytes("TAPEBRIDGE", "BULKREQUESTRECALLMAXBYTES",
-    (uint64_t)0, "UNKNOWN"),
-  m_bulkRequestRecallMaxFiles("TAPEBRIDGE", "BULKREQUESTRECALLMAXFILES",
-    (uint64_t)0, "UNKNOWN") {
+  m_bulkRequestMigrationMaxBytes("TAPEBRIDGE", "BULKREQUESTMIGRATIONMAXBYTES"),
+  m_bulkRequestMigrationMaxFiles("TAPEBRIDGE", "BULKREQUESTMIGRATIONMAXFILES"),
+  m_bulkRequestRecallMaxBytes("TAPEBRIDGE", "BULKREQUESTRECALLMAXBYTES"),
+  m_bulkRequestRecallMaxFiles("TAPEBRIDGE", "BULKREQUESTRECALLMAXFILES") {
   // Do nothing
 }
 
@@ -45,7 +41,7 @@ castor::tape::tapebridge::BulkRequestConfigParams::BulkRequestConfigParams():
 //-----------------------------------------------------------------------------
 // getBulkRequestMigrationMaxBytes
 //-----------------------------------------------------------------------------
-const castor::tape::tapebridge::ConfigParamAndSource<uint64_t> &
+const castor::tape::tapebridge::ConfigParam<uint64_t> &
   castor::tape::tapebridge::BulkRequestConfigParams::
   getBulkRequestMigrationMaxBytes() const {
   return m_bulkRequestMigrationMaxBytes;
@@ -55,7 +51,7 @@ const castor::tape::tapebridge::ConfigParamAndSource<uint64_t> &
 //-----------------------------------------------------------------------------
 // getBulkRequestMigrationMaxFiles
 //-----------------------------------------------------------------------------
-const castor::tape::tapebridge::ConfigParamAndSource<uint64_t> &
+const castor::tape::tapebridge::ConfigParam<uint64_t> &
   castor::tape::tapebridge::BulkRequestConfigParams::
   getBulkRequestMigrationMaxFiles() const {
   return m_bulkRequestMigrationMaxFiles;
@@ -65,7 +61,7 @@ const castor::tape::tapebridge::ConfigParamAndSource<uint64_t> &
 //-----------------------------------------------------------------------------
 // getBulkRequestRecallMaxBytes
 //-----------------------------------------------------------------------------
-const castor::tape::tapebridge::ConfigParamAndSource<uint64_t> &
+const castor::tape::tapebridge::ConfigParam<uint64_t> &
   castor::tape::tapebridge::BulkRequestConfigParams::
   getBulkRequestRecallMaxBytes() const {
   return m_bulkRequestRecallMaxBytes;
@@ -75,7 +71,7 @@ const castor::tape::tapebridge::ConfigParamAndSource<uint64_t> &
 //-----------------------------------------------------------------------------
 // getBulkRequestRecallMaxFiles
 //-----------------------------------------------------------------------------
-const castor::tape::tapebridge::ConfigParamAndSource<uint64_t> &
+const castor::tape::tapebridge::ConfigParam<uint64_t> &
   castor::tape::tapebridge::BulkRequestConfigParams::
   getBulkRequestRecallMaxFiles() const {
   return m_bulkRequestRecallMaxFiles;
@@ -86,7 +82,7 @@ const castor::tape::tapebridge::ConfigParamAndSource<uint64_t> &
 // determineConfigParams
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BulkRequestConfigParams::determineConfigParams()
-  throw(castor::exception::Exception) {
+  throw(castor::exception::InvalidArgument, castor::exception::Exception) {
   determineBulkRequestMigrationMaxBytes();
   determineBulkRequestMigrationMaxFiles();
   determineBulkRequestRecallMaxBytes();
@@ -99,7 +95,7 @@ void castor::tape::tapebridge::BulkRequestConfigParams::determineConfigParams()
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BulkRequestConfigParams::
   determineBulkRequestMigrationMaxBytes()
-  throw(castor::exception::Exception) {
+  throw(castor::exception::InvalidArgument, castor::exception::Exception) {
   determineUint64ConfigParam(m_bulkRequestMigrationMaxBytes,
     TAPEBRIDGE_BULKREQUESTMIGRATIONMAXBYTES);
 }
@@ -110,7 +106,7 @@ void castor::tape::tapebridge::BulkRequestConfigParams::
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BulkRequestConfigParams::
   determineBulkRequestMigrationMaxFiles()
-  throw(castor::exception::Exception) {
+  throw(castor::exception::InvalidArgument, castor::exception::Exception) {
   determineUint64ConfigParam(m_bulkRequestMigrationMaxFiles,
     TAPEBRIDGE_BULKREQUESTMIGRATIONMAXFILES);
 }
@@ -121,7 +117,7 @@ void castor::tape::tapebridge::BulkRequestConfigParams::
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BulkRequestConfigParams::
   determineBulkRequestRecallMaxBytes()
-  throw(castor::exception::Exception) {
+  throw(castor::exception::InvalidArgument, castor::exception::Exception) {
   determineUint64ConfigParam(m_bulkRequestRecallMaxBytes,
     TAPEBRIDGE_BULKREQUESTRECALLMAXBYTES);
 }
@@ -132,7 +128,51 @@ void castor::tape::tapebridge::BulkRequestConfigParams::
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BulkRequestConfigParams::
   determineBulkRequestRecallMaxFiles()
-  throw(castor::exception::Exception) {
+  throw(castor::exception::InvalidArgument, castor::exception::Exception) {
   determineUint64ConfigParam(m_bulkRequestRecallMaxFiles,
     TAPEBRIDGE_BULKREQUESTRECALLMAXFILES);
+}
+
+
+//-----------------------------------------------------------------------------
+// setBulkRequestMigrationMaxBytes
+//-----------------------------------------------------------------------------
+void castor::tape::tapebridge::BulkRequestConfigParams::
+  setBulkRequestMigrationMaxBytes(
+  const uint64_t                value,
+  const ConfigParamSource::Enum source) {
+  m_bulkRequestMigrationMaxBytes.setValueAndSource(value, source);
+}
+
+
+//-----------------------------------------------------------------------------
+// setBulkRequestMigrationMaxFiles
+//-----------------------------------------------------------------------------
+void castor::tape::tapebridge::BulkRequestConfigParams::
+  setBulkRequestMigrationMaxFiles(
+  const uint64_t                value,
+  const ConfigParamSource::Enum source) {
+  m_bulkRequestMigrationMaxFiles.setValueAndSource(value, source);
+}
+
+
+//-----------------------------------------------------------------------------
+// setBulkRequestRecallMaxBytes
+//-----------------------------------------------------------------------------
+void castor::tape::tapebridge::BulkRequestConfigParams::
+  setBulkRequestRecallMaxBytes(
+  const uint64_t                value,
+  const ConfigParamSource::Enum source) {
+  m_bulkRequestRecallMaxBytes.setValueAndSource(value, source);
+}
+
+
+//-----------------------------------------------------------------------------
+// setBulkRequestRecallMaxFiles
+//-----------------------------------------------------------------------------
+void castor::tape::tapebridge::BulkRequestConfigParams::
+  setBulkRequestRecallMaxFiles(
+  const uint64_t                value,
+  const ConfigParamSource::Enum source) {
+  m_bulkRequestRecallMaxFiles.setValueAndSource(value, source);
 }

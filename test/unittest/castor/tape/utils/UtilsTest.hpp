@@ -22,8 +22,8 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TTEST_UNITTEST_CASTOR_TAPE_UTILS_UTILSTEST_HPP
-#define TTEST_UNITTEST_CASTOR_TAPE_UTILS_UTILSTEST_HPP 1
+#ifndef TEST_UNITTEST_CASTOR_TAPE_UTILS_UTILSTEST_HPP
+#define TEST_UNITTEST_CASTOR_TAPE_UTILS_UTILSTEST_HPP 1
 
 #include "castor/tape/utils/utils.hpp"
 #include "test/unittest/test_exception.hpp"
@@ -41,7 +41,7 @@ namespace castor {
 namespace tape   {
 namespace utils {
 
-class TapeUtilsTest: public CppUnit::TestFixture {
+class UtilsTest: public CppUnit::TestFixture {
 private:
   void readFileIntoList_stdException(const char *const filename,
     std::list<std::string> &lines) {
@@ -498,7 +498,7 @@ public:
       true, sleepDuration == testDuration.tv_sec);
   }
 
-  CPPUNIT_TEST_SUITE(TapeUtilsTest);
+  CPPUNIT_TEST_SUITE(UtilsTest);
   CPPUNIT_TEST(testToHex);
   CPPUNIT_TEST(testCopyStringNullDst);
   CPPUNIT_TEST(testCopyStringNullSrc);
@@ -526,10 +526,10 @@ public:
   CPPUNIT_TEST_SUITE_END();
 };
 
-CPPUNIT_TEST_SUITE_REGISTRATION(TapeUtilsTest);
+CPPUNIT_TEST_SUITE_REGISTRATION(UtilsTest);
 
 } // namespace utils
 } // namespace tape
 } // namespace castor
 
-#endif // TTEST_UNITTEST_CASTOR_TAPE_UTILS_UTILSTEST_HPP
+#endif // TEST_UNITTEST_CASTOR_TAPE_UTILS_UTILSTEST_HPP

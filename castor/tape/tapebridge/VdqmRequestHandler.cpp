@@ -29,8 +29,9 @@
 #include "castor/tape/tapebridge/DlfMessageConstants.hpp"
 #include "castor/tape/tapebridge/BridgeClientInfo2Sender.hpp"
 #include "castor/tape/tapebridge/BridgeProtocolEngine.hpp"
+#include "castor/tape/tapebridge/ClientAddressTcpIp.hpp"
+#include "castor/tape/tapebridge/ClientProxy.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"
-#include "castor/tape/tapebridge/ClientTxRx.hpp"
 #include "castor/tape/tapebridge/RtcpJobSubmitter.hpp"
 #include "castor/tape/tapebridge/RtcpTxRx.hpp"
 #include "castor/tape/tapebridge/SystemFileCloser.hpp"
@@ -300,11 +301,11 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
       clientInfoMsgBody.clientUID = jobRequest.clientEuid;
       clientInfoMsgBody.clientGID = jobRequest.clientEgid;
       clientInfoMsgBody.tapeFlushMode =
-        m_tapeFlushConfigParams.getTapeFlushMode().value;
+        m_tapeFlushConfigParams.getTapeFlushMode().getValue();
       clientInfoMsgBody.maxBytesBeforeFlush =
-        m_tapeFlushConfigParams.getMaxBytesBeforeFlush().value;
+        m_tapeFlushConfigParams.getMaxBytesBeforeFlush().getValue();
       clientInfoMsgBody.maxFilesBeforeFlush =
-        m_tapeFlushConfigParams.getMaxFilesBeforeFlush().value;
+        m_tapeFlushConfigParams.getMaxFilesBeforeFlush().getValue();
       utils::copyString(clientInfoMsgBody.bridgeHost, bridgeCallbackHost);
       utils::copyString(clientInfoMsgBody.bridgeClientHost,
         jobRequest.clientHost);
@@ -390,10 +391,21 @@ void castor::tape::tapebridge::VdqmRequestHandler::exceptionThrowingRun(
   const int                           bridgeCallbackSockFd)
   throw(castor::exception::Exception) {
 
+  ClientAddressTcpIp
+    clientAddress(jobRequest.clientHost, jobRequest.clientPort);
+
+  ClientProxy clientProxy(
+    cuuid,
+    jobRequest.volReqId,
+    CLIENTNETRWTIMEOUT,
+    clientAddress,
+    jobRequest.dgn,
+    jobRequest.driveUnit);
+
   // Accept the initial incoming RTCPD callback connection.
   // Wrap the socket file descriptor in a smart file descriptor so that it is
   // guaranteed to be closed if it goes out of scope.
-  utils::SmartFd  rtcpdInitialSock(net::acceptConnection(bridgeCallbackSockFd,
+  utils::SmartFd rtcpdInitialSock(net::acceptConnection(bridgeCallbackSockFd,
     RTCPDCALLBACKTIMEOUT));
 
   // Log the initial callback connection from RTCPD
@@ -441,9 +453,8 @@ void castor::tape::tapebridge::VdqmRequestHandler::exceptionThrowingRun(
   }
 
   // Get the volume from the client of the tape-bridge
-  std::auto_ptr<tapegateway::Volume> volume(ClientTxRx::getVolume(cuuid,
-    jobRequest.volReqId, tapebridgeTransactionCounter.next(),
-    jobRequest.clientHost, jobRequest.clientPort, jobRequest.driveUnit));
+  std::auto_ptr<tapegateway::Volume> volume(clientProxy.getVolume(
+    tapebridgeTransactionCounter.next()));
 
   // If there is no volume to mount, then notify the client end of session
   // and return
@@ -451,8 +462,7 @@ void castor::tape::tapebridge::VdqmRequestHandler::exceptionThrowingRun(
     const uint64_t aggregatorTransactionId =
       tapebridgeTransactionCounter.next();
     try {
-      ClientTxRx::notifyEndOfSession(cuuid, jobRequest.volReqId,
-        aggregatorTransactionId, jobRequest.clientHost, jobRequest.clientPort);
+      clientProxy.notifyEndOfSession(aggregatorTransactionId);
     } catch(castor::exception::Exception &ex) {
       castor::exception::Exception ex2(ex.code());
 
@@ -508,6 +518,8 @@ void castor::tape::tapebridge::VdqmRequestHandler::exceptionThrowingRun(
     }
 
     SystemFileCloser systemFileCloser;
+    const bool logPeerOfCallbackConnectionsFromRtcpd = true;
+    const bool checkRtcpdIsConnectingFromLocalHost = true;
     BridgeProtocolEngine bridgeProtocolEngine(
       systemFileCloser,
       m_bulkRequestConfigParams,
@@ -519,13 +531,18 @@ void castor::tape::tapebridge::VdqmRequestHandler::exceptionThrowingRun(
       *volume,
       tapeInfo.nbFiles,
       s_stoppingGracefullyFunctor,
-      tapebridgeTransactionCounter);
+      tapebridgeTransactionCounter,
+      logPeerOfCallbackConnectionsFromRtcpd,
+      checkRtcpdIsConnectingFromLocalHost,
+      clientProxy);
     bridgeProtocolEngine.run();
 
   // Else recalling
   } else {
     SystemFileCloser systemFileCloser;
     const uint32_t nbFilesOnDestinationTape = 0;
+    const bool logPeerOfCallbackConnectionsFromRtcpd = true;
+    const bool checkRtcpdIsConnectingFromLocalHost = true;
 
     BridgeProtocolEngine bridgeProtocolEngine(
       systemFileCloser,
@@ -538,7 +555,10 @@ void castor::tape::tapebridge::VdqmRequestHandler::exceptionThrowingRun(
       *volume,
       nbFilesOnDestinationTape,
       s_stoppingGracefullyFunctor,
-      tapebridgeTransactionCounter);
+      tapebridgeTransactionCounter,
+      logPeerOfCallbackConnectionsFromRtcpd,
+      checkRtcpdIsConnectingFromLocalHost,
+      clientProxy);
     bridgeProtocolEngine.run();
   }
 }

@@ -25,6 +25,19 @@
 #include "castor/tape/tapebridge/SessionError.hpp"
 #include "h/serrno.h"
 
+//----------------------------------------------------------------------------
+// errorScopeToString
+//----------------------------------------------------------------------------
+const char *castor::tape::tapebridge::SessionError::errorScopeToString(
+  const ErrorScope scope) throw() {
+  switch(scope) {
+  case FILE_SCOPE   : return "file scope";
+  case SESSION_SCOPE: return "session scope";
+  case UNKNOWN_SCOPE: return "unknown scope";
+  default           : return "INVALID SCOPE";
+  }
+}
+
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------

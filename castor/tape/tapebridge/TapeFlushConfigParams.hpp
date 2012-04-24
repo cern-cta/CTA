@@ -26,7 +26,7 @@
 #define CASTOR_TAPE_TAPEBRIDGE_TAPEFLUSHCONFIGPARAMS_HPP 1
 
 #include "castor/exception/Exception.hpp"
-#include "castor/tape/tapebridge/ConfigParamAndSource.hpp"
+#include "castor/tape/tapebridge/ConfigParam.hpp"
 #include "castor/tape/tapebridge/ConfigParams.hpp"
 
 #include <stdint.h>
@@ -57,23 +57,28 @@ public:
    * If the tape flush mode does not require the maximum number of bytes and
    * files before a tape flush, then the value of these configuration
    * parameters are given the value of 0 and their source set to "UNKNOWN".
+   *
+   * This method throws a castor::exception::InvalidArgument exception if the
+   * source-value of one the configuration parameters for which this object
+   * is responsible is invalid.
    */
-  void determineConfigParams() throw(castor::exception::Exception);
+  void determineConfigParams()
+    throw(castor::exception::InvalidArgument, castor::exception::Exception);
 
   /**
-   * Returns the tapeFlushMode configuration parameter.
+   * Returns the tapeFlushMode configuration-parameter.
    */
-  const ConfigParamAndSource<uint32_t> &getTapeFlushMode() const;
+  const ConfigParam<uint32_t> &getTapeFlushMode() const;
 
   /**
-   * Returns the maxBytesBeforeFlush configuration parameter.
+   * Returns the maxBytesBeforeFlush configuration-parameter.
    */
-  const ConfigParamAndSource<uint64_t> &getMaxBytesBeforeFlush() const;
+  const ConfigParam<uint64_t> &getMaxBytesBeforeFlush() const;
 
   /**
-   * Returns the maxFilesBeforeFlush configuration parameter.
+   * Returns the maxFilesBeforeFlush configuration-parameter.
    */
-  const ConfigParamAndSource<uint64_t> &getMaxFilesBeforeFlush() const;
+  const ConfigParam<uint64_t> &getMaxFilesBeforeFlush() const;
 
 protected:
 
@@ -87,8 +92,23 @@ protected:
    * This method determines the required value by first reading the
    * environment variables, then if unsuccessful by reading castor.conf and
    * finally if still unsuccessfull by using the compile-time default.
+   *
+   * This method throws a castor::exception::InvalidArgument exception if the
+   * source-value of the configuration parameter is invalid.
    */
-  void determineTapeFlushMode() throw(castor::exception::Exception);
+  void determineTapeFlushMode()
+    throw(castor::exception::InvalidArgument, castor::exception::Exception);
+
+  /**
+   * Returns the numerical equivalent of the specified tape-flush mode string.
+   *
+   * This method throws a castor::exception::InvalidArgument exception if the
+   * specified string is invalid.
+   *
+   * @param s The string represention of the tape-flush mode.
+   */
+  uint32_t stringToTapeFlushMode(const std::string s)
+    throw(castor::exception::InvalidArgument);
 
   /**
    * With respect to using buffered tape-marks over multiple files, this
@@ -103,8 +123,12 @@ protected:
    * This method determines the required value by first reading the
    * environment variables, then if unsuccessful by reading castor.conf and
    * finally if still unsuccessfull by using the compile-time default.
+   *
+   * This method throws a castor::exception::InvalidArgument exception if the
+   * source-value of the configuration parameter is invalid.
    */
-  void determineMaxBytesBeforeFlush() throw(castor::exception::Exception);
+  void determineMaxBytesBeforeFlush()
+    throw(castor::exception::InvalidArgument, castor::exception::Exception);
 
   /**
    * With respect to using buffered tape-marks over multiple files, this
@@ -117,29 +141,78 @@ protected:
    * This method determines the required value by first reading the
    * environment variables, then if unsuccessful by reading castor.conf and
    * finally if still unsuccessfull by using the compile-time default.
+   *
+   * This method throws a castor::exception::InvalidArgument exception if the
+   * source-value of the configuration parameter is invalid.
    */
-  void determineMaxFilesBeforeFlush() throw(castor::exception::Exception);
+  void determineMaxFilesBeforeFlush()
+    throw(castor::exception::InvalidArgument, castor::exception::Exception);
+
+  /**
+   * Sets the tapeFlushMode configuration-parameter.
+   *
+   * Please note that this method was developed for the sole purpose of
+   * facilitating unit-testing. Apart from unit-tests, a
+   * configuration-parameter of this class should only be set using the
+   * appropriate determineXXXX() method.
+   *
+   * @param value  The value of the configuration parameter.
+   * @param source The source of the configuration parameter.
+   */
+  void setTapeFlushMode(
+    const uint32_t                value,
+    const ConfigParamSource::Enum source);
+
+  /**
+   * Sets the maxBytesBeforeFlush configuration-parameter.
+   *
+   * Please note that this method was developed for the sole purpose of
+   * facilitating unit-testing. Apart from unit-tests, a
+   * configuration-parameter of this class should only be set using the
+   * appropriate determineXXXX() method.
+   *
+   * @param value  The value of the configuration parameter.
+   * @param source The source of the configuration parameter.
+   */
+  void setMaxBytesBeforeFlush(
+    const uint64_t                value,
+    const ConfigParamSource::Enum source);
+
+  /**
+   * Sets the maxFilesBeforeFlush configuration-parameter.
+   *
+   * Please note that this method was developed for the sole purpose of
+   * facilitating unit-testing. Apart from unit-tests, a
+   * configuration-parameter of this class should only be set using the
+   * appropriate determineXXXX() method.
+   *
+   * @param value  The value of the configuration parameter.
+   * @param source The source of the configuration parameter.
+   */
+  void setMaxFilesBeforeFlush(
+    const uint64_t                value,
+    const ConfigParamSource::Enum source);
 
 private:
 
   /**
    * The mode of tape flush behaviour to be used when writing totape.
    */
-  ConfigParamAndSource<uint32_t> m_tapeFlushMode;
+  ConfigParam<uint32_t> m_tapeFlushMode;
 
   /**
    * If the mode of tape flush tape behaviour to flush every Nth file,
    * then this parameter specifies the Nth file in terms of the maximum number
    * of bytes to be written to tape before a flush.
    */
-  ConfigParamAndSource<uint64_t> m_maxBytesBeforeFlush;
+  ConfigParam<uint64_t> m_maxBytesBeforeFlush;
 
   /**
    * If the mode of tape flush tape behaviour to flush every Nth file,
    * then this parameter specifies the Nth file in terms of the maximum number
    * of files to be written to tape before a flush.
    */
-  ConfigParamAndSource<uint64_t> m_maxFilesBeforeFlush;
+  ConfigParam<uint64_t> m_maxFilesBeforeFlush;
 
 }; // class TapeFlushConfigParams
 

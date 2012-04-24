@@ -59,7 +59,7 @@ namespace tapebridge {
  * The BridgeSocketCatalogue is responsible for cataloguing the above sockets.
  *
  * The BridgeSocketCatalogue behaves like a smart pointer for the initital
- * rtcpd-connection the rtcpd disk/tape IO control-connections and the client
+ * rtcpd-connection, the rtcpd disk/tape IO control-connections and the client
  * connections.  This means the destructor of the BridgeSocketCatalogue will
  * close them if they are still open.
  *
@@ -354,7 +354,7 @@ public:
   int getAPendingSock(fd_set &readFdSet, SocketType &sockType) const;
 
   /**
-   * Returns the total number of disk/tape IO control-conenction.
+   * Returns the total number of disk/tape IO control-connections.
    */
   int getNbDiskTapeIOControlConns() const;
 

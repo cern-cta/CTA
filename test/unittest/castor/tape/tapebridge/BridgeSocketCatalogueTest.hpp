@@ -28,6 +28,8 @@
 #include "castor/tape/tapebridge/BridgeSocketCatalogue.hpp"
 #include "castor/tape/tapebridge/SystemFileCloser.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "test/unittest/castor/tape/tapebridge/TestingBridgeSocketCatalogue.hpp"
+#include "test/unittest/castor/tape/tapebridge/TraceableDummyFileCloser.hpp"
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <exception>
@@ -42,32 +44,6 @@ namespace tape       {
 namespace tapebridge {
 
 class BridgeSocketCatalogueTest: public CppUnit::TestFixture {
-private:
-  class DummyFileCloser: public IFileCloser {
-  public:
-
-    std::vector<int> m_closedFds;
-
-    ~DummyFileCloser() throw() {
-      // Do nothing
-    }
-
-    int closeFd(const int fd) {
-      m_closedFds.push_back(fd);
-      return 0;
-    }
-  }; // class DummyFileCloser
-
-  class TestingBridgeSocketCatalogue: public BridgeSocketCatalogue {
-  public:
-    TestingBridgeSocketCatalogue(IFileCloser &fileCloser):
-      BridgeSocketCatalogue(fileCloser) {
-      // Do ntohing
-    }
-
-    using BridgeSocketCatalogue::ifValidInsertFdIntoSet;
-  };
-
 public:
 
   BridgeSocketCatalogueTest() {
@@ -80,7 +56,7 @@ public:
   }
 
   void testConstructor() {
-    DummyFileCloser fileCloser;
+    TraceableDummyFileCloser fileCloser;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -109,8 +85,8 @@ public:
   }
 
   void testAddListenSockWithNegativeSock() {
-    DummyFileCloser fileCloser;
-    const int       sock = -1;
+    TraceableDummyFileCloser fileCloser;
+    const int                sock = -1;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -127,8 +103,8 @@ public:
   }
 
   void testAddListenSockWithEqualToFD_SETSIZE() {
-    DummyFileCloser fileCloser;
-    const int       sock = FD_SETSIZE;
+    TraceableDummyFileCloser fileCloser;
+    const int                sock = FD_SETSIZE;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -145,8 +121,8 @@ public:
   }
 
   void testAddListenSockWithGreaterThanFD_SETSIZE() {
-    DummyFileCloser fileCloser;
-    const int       sock = FD_SETSIZE + 1;
+    TraceableDummyFileCloser fileCloser;
+    const int                sock = FD_SETSIZE + 1;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -163,8 +139,8 @@ public:
   }
 
   void testAddListenSock() {
-    DummyFileCloser fileCloser;
-    const int       sock = 12;
+    TraceableDummyFileCloser fileCloser;
+    const int                sock = 12;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -184,8 +160,8 @@ public:
   }
 
   void testAddListenSockTwice() {
-    DummyFileCloser fileCloser;
-    const int       sock = 12;
+    TraceableDummyFileCloser fileCloser;
+    const int                sock = 12;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -213,8 +189,8 @@ public:
   }
 
   void testAddInitialRtcpdConnWithNegativeSock() {
-    DummyFileCloser fileCloser;
-    const int       sock = -1;
+    TraceableDummyFileCloser fileCloser;
+    const int                sock = -1;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -231,8 +207,8 @@ public:
   }
 
   void testAddInitialRtcpdConnWithEqualToFD_SETSIZE() {
-    DummyFileCloser fileCloser;
-    const int       sock = FD_SETSIZE;
+    TraceableDummyFileCloser fileCloser;
+    const int                sock = FD_SETSIZE;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -249,8 +225,8 @@ public:
   }
 
   void testAddInitialRtcpdConnWithGreaterThanFD_SETSIZE() {
-    DummyFileCloser fileCloser;
-    const int       sock = FD_SETSIZE + 1;
+    TraceableDummyFileCloser fileCloser;
+    const int                sock = FD_SETSIZE + 1;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -267,8 +243,8 @@ public:
   }
 
   void testAddInitialRtcpdConn() {
-    DummyFileCloser fileCloser;
-    const int       sock = 12;
+    TraceableDummyFileCloser fileCloser;
+    const int                sock = 12;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -292,8 +268,8 @@ public:
   }
 
   void testAddInitialRtcpdConnTwice() {
-    DummyFileCloser fileCloser;
-    const int       sock = 12;
+    TraceableDummyFileCloser fileCloser;
+    const int                sock = 12;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -325,7 +301,7 @@ public:
   }
 
   void testReleaseInitialRtcpdConnWithNoSet() {
-    DummyFileCloser fileCloser;
+    TraceableDummyFileCloser fileCloser;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -342,8 +318,8 @@ public:
   }
 
   void testReleaseInitialRtcpdConn() {
-    DummyFileCloser fileCloser;
-    const int       sock = 12;
+    TraceableDummyFileCloser fileCloser;
+    const int                sock = 12;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -368,8 +344,8 @@ public:
   }
 
   void testReleaseInitialRtcpdConnTwice() {
-    DummyFileCloser fileCloser;
-    const int       sock = 12;
+    TraceableDummyFileCloser fileCloser;
+    const int                sock = 12;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -397,8 +373,8 @@ public:
   }
 
   void testAddRtcpdDiskTapeIOControlConnWithNegativeSock() {
-    DummyFileCloser fileCloser;
-    const int       sock = -1;
+    TraceableDummyFileCloser fileCloser;
+    const int                sock = -1;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -418,8 +394,8 @@ public:
   }
 
   void testAddRtcpdDiskTapeIOControlConnWithEqualToFD_SETSIZE() {
-    DummyFileCloser fileCloser;
-    const int       sock = FD_SETSIZE;
+    TraceableDummyFileCloser fileCloser;
+    const int                sock = FD_SETSIZE;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -439,8 +415,8 @@ public:
   }
 
   void testAddRtcpdDiskTapeIOControlConnWithGreaterThanFD_SETSIZE() {
-    DummyFileCloser fileCloser;
-    const int       sock = FD_SETSIZE + 1;
+    TraceableDummyFileCloser fileCloser;
+    const int                sock = FD_SETSIZE + 1;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -460,8 +436,8 @@ public:
   }
 
   void testAddRtcpdDiskTapeIOControlConn() {
-    DummyFileCloser fileCloser;
-    const int       sock = 12;
+    TraceableDummyFileCloser fileCloser;
+    const int                sock = 12;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -485,8 +461,8 @@ public:
   }
 
   void testAddRtcpdDiskTapeIOControlConnTwice() {
-    DummyFileCloser fileCloser;
-    const int       sock = 12;
+    TraceableDummyFileCloser fileCloser;
+    const int                sock = 12;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -518,8 +494,8 @@ public:
   }
 
   void testAddClientMigrationReportSockWithNegativeSock() {
-    DummyFileCloser fileCloser;
-    const int       sock = -1;
+    TraceableDummyFileCloser fileCloser;
+    const int                sock = -1;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -540,8 +516,8 @@ public:
   }
 
   void testAddClientMigrationReportSockWithEqualToFD_SETSIZE() {
-    DummyFileCloser fileCloser;
-    const int       sock = FD_SETSIZE;
+    TraceableDummyFileCloser fileCloser;
+    const int                sock = FD_SETSIZE;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -562,8 +538,8 @@ public:
   }
 
   void testAddClientMigrationReportSockWithGreaterThanFD_SETSIZE() {
-    DummyFileCloser fileCloser;
-    const int       sock = FD_SETSIZE + 1;
+    TraceableDummyFileCloser fileCloser;
+    const int                sock = FD_SETSIZE + 1;
   
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -584,8 +560,8 @@ public:
   }
 
   void testAddClientMigrationReportSock() {
-    DummyFileCloser fileCloser;
-    const int       sock = 12;
+    TraceableDummyFileCloser fileCloser;
+    const int                sock = 12;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -611,8 +587,8 @@ public:
   }
 
   void testAddClientMigrationReportSockTwice() {
-    DummyFileCloser fileCloser;
-    const int       sock = 12;
+    TraceableDummyFileCloser fileCloser;
+    const int                sock = 12;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -645,7 +621,7 @@ public:
   }
 
   void testReleaseClientMigrationReportSockWithNoSet() {
-    DummyFileCloser fileCloser;
+    TraceableDummyFileCloser fileCloser;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -666,8 +642,8 @@ public:
   }
 
   void testReleaseClientMigrationReportSock() {
-    DummyFileCloser fileCloser;
-    const int       sock = 12;
+    TraceableDummyFileCloser fileCloser;
+    const int                sock = 12;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -702,8 +678,8 @@ public:
   }
 
   void testReleaseClientMigrationReportSockTwice() {
-    DummyFileCloser fileCloser;
-    const int       sock = 12;
+    TraceableDummyFileCloser fileCloser;
+    const int                sock = 12;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -744,9 +720,9 @@ public:
   }
 
   void testAddGetMoreWorkSockWithNegativeRtcpdSock() {
-    DummyFileCloser fileCloser;
-    const int       rtcpdSock  = -1;
-    const int       clientSock =  1;
+    TraceableDummyFileCloser fileCloser;
+    const int                rtcpdSock  = -1;
+    const int                clientSock =  1;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -776,9 +752,9 @@ public:
   }
 
   void testAddGetMoreWorkSockWithRtcpdSockEqualToFD_SETSIZE() {
-    DummyFileCloser fileCloser;
-    const int       rtcpdSock  = FD_SETSIZE;
-    const int       clientSock = 1;
+    TraceableDummyFileCloser fileCloser;
+    const int                rtcpdSock  = FD_SETSIZE;
+    const int                clientSock = 1;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -808,9 +784,9 @@ public:
   }
 
   void testAddGetMoreWorkSockWithRtcpdSockGreaterThanFD_SETSIZE() {
-    DummyFileCloser fileCloser;
-    const int       rtcpdSock  = FD_SETSIZE + 1;
-    const int       clientSock = 1;
+    TraceableDummyFileCloser fileCloser;
+    const int                rtcpdSock  = FD_SETSIZE + 1;
+    const int                clientSock = 1;
   
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -840,9 +816,9 @@ public:
   }
 
   void testAddGetMoreWorkSockWithNegativeClientSock() {
-    DummyFileCloser fileCloser;
-    const int       rtcpdSock  =  1;
-    const int       clientSock = -1;
+    TraceableDummyFileCloser fileCloser;
+    const int                rtcpdSock  =  1;
+    const int                clientSock = -1;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -879,9 +855,9 @@ public:
   }
 
   void testAddGetMoreWorkSockWithClientSockEqualToFD_SETSIZE() {
-    DummyFileCloser fileCloser;
-    const int       rtcpdSock  = 1;
-    const int       clientSock = FD_SETSIZE;
+    TraceableDummyFileCloser fileCloser;
+    const int                rtcpdSock  = 1;
+    const int                clientSock = FD_SETSIZE;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -918,9 +894,9 @@ public:
   }
 
   void testAddGetMoreWorkSockWithClientSockGreaterThanFD_SETSIZE() {
-    DummyFileCloser fileCloser;
-    const int       rtcpdSock  = 1;
-    const int       clientSock = FD_SETSIZE + 1;
+    TraceableDummyFileCloser fileCloser;
+    const int                rtcpdSock  = 1;
+    const int                clientSock = FD_SETSIZE + 1;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -957,9 +933,9 @@ public:
   }
 
   void testAddGetMoreWorkSockWithUnknownRtcpdSock() {
-    DummyFileCloser fileCloser;
-    const int       rtcpdSock  = 12;
-    const int       clientSock = 13;
+    TraceableDummyFileCloser fileCloser;
+    const int                rtcpdSock  = 12;
+    const int                clientSock = 13;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -989,9 +965,9 @@ public:
   }
 
   void testAddGetMoreWorkSock() {
-    DummyFileCloser fileCloser;
-    const int       rtcpdSock  = 12;
-    const int       clientSock = 13;
+    TraceableDummyFileCloser fileCloser;
+    const int                rtcpdSock  = 12;
+    const int                clientSock = 13;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -1047,9 +1023,9 @@ public:
   }
 
   void testAddGetMoreWorkSockTwice() {
-    DummyFileCloser fileCloser;
-    const int       rtcpdSock  = 12;
-    const int       clientSock = 13;
+    TraceableDummyFileCloser fileCloser;
+    const int                rtcpdSock  = 12;
+    const int                clientSock = 13;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -1120,7 +1096,7 @@ public:
   }
 
   void testReleaseClientGetMoreWorkSockWithNoSet() {
-    DummyFileCloser fileCloser;
+    TraceableDummyFileCloser fileCloser;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -1140,9 +1116,9 @@ public:
   }
 
   void testReleaseClientGetMoreWorkSock() {
-    DummyFileCloser fileCloser;
-    const int       rtcpdSock  = 12;
-    const int       clientSock = 13;
+    TraceableDummyFileCloser fileCloser;
+    const int                rtcpdSock  = 12;
+    const int                clientSock = 13;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -1187,9 +1163,9 @@ public:
   }
 
   void testReleaseClientGetMoreWorkSockTwice() {
-    DummyFileCloser fileCloser;
-    const int       rtcpdSock  = 12;
-    const int       clientSock = 13;
+    TraceableDummyFileCloser fileCloser;
+    const int                rtcpdSock  = 12;
+    const int                clientSock = 13;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -1240,7 +1216,7 @@ public:
   }
 
   void testGetGetMoreWorkConnectionWithoutSet() {
-    DummyFileCloser fileCloser;
+    TraceableDummyFileCloser fileCloser;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -1257,7 +1233,7 @@ public:
   }
 
   void testIfValidInsertFdIntoSetWithInvalidFd() {
-    DummyFileCloser fileCloser;
+    TraceableDummyFileCloser fileCloser;
 
     {
       const int fd           = -1;
@@ -1288,7 +1264,7 @@ public:
   }
 
   void testIfValidInsertFdIntoSetWithFdLessThanMax() {
-    DummyFileCloser fileCloser;
+    TraceableDummyFileCloser fileCloser;
 
     {
       const int fd           = 12;
@@ -1321,7 +1297,7 @@ public:
   }
 
   void testIfValidInsertFdIntoSetWithFdGreaterThanMax() {
-    DummyFileCloser fileCloser;
+    TraceableDummyFileCloser fileCloser;
 
     {
       const int fd           = 12;
@@ -1354,7 +1330,7 @@ public:
   }
 
   void testBuildReadFdSetWithNoFds() {
-    DummyFileCloser fileCloser;
+    TraceableDummyFileCloser fileCloser;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -1374,8 +1350,8 @@ public:
   }
 
   void testGetAPendingSockLISTEN() {
-    DummyFileCloser fileCloser;
-    const int listenSock = 12;
+    TraceableDummyFileCloser fileCloser;
+    const int                listenSock = 12;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -1411,8 +1387,8 @@ public:
   }
 
   void testGetAPendingSockINITIAL_RTCPD() {
-    DummyFileCloser fileCloser;
-    const int initialRtcpdSock = 12;
+    TraceableDummyFileCloser fileCloser;
+    const int                initialRtcpdSock = 12;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -1452,8 +1428,8 @@ public:
   }
 
   void testGetAPendingSockRTCPD_DISK_TAPE_IO_CONTROL() {
-    DummyFileCloser fileCloser;
-    const int ioControlSock = 12;
+    TraceableDummyFileCloser fileCloser;
+    const int                ioControlSock = 12;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -1493,13 +1469,13 @@ public:
   }
 
   void testGetAPendingSockCLIENT_GET_MORE_WORK() {
-    DummyFileCloser   fileCloser;
-    const int         rtcpdSock               = 12;
-    const uint32_t    rtcpdReqMagic           = 13;
-    const uint32_t    rtcpdReqType            = 14;
-    const std::string rtcpdReqTapePath        = "rtcpdReqTapePath";
-    const int         clientSock              = 15;
-    const uint64_t    aggregatorTransactionId = 16;
+    TraceableDummyFileCloser fileCloser;
+    const int                rtcpdSock               = 12;
+    const uint32_t           rtcpdReqMagic           = 13;
+    const uint32_t           rtcpdReqType            = 14;
+    const std::string        rtcpdReqTapePath        = "rtcpdReqTapePath";
+    const int                clientSock              = 15;
+    const uint64_t           aggregatorTransactionId = 16;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -1550,9 +1526,9 @@ public:
   }
 
   void testGetAPendingSockCLIENT_MIGRATION_REPORT() {
-    DummyFileCloser fileCloser;
-    const int       migrationReportSock     = 12;
-    const uint64_t  aggregatorTransactionId = 13;
+    TraceableDummyFileCloser fileCloser;
+    const int                migrationReportSock     = 12;
+    const uint64_t           aggregatorTransactionId = 13;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);

@@ -25,15 +25,19 @@ clean:
 rununittests: \
   runUnitTestsMain.o \
   castor_BaseAddress.o \
-  client_BaseClient.o \
+  castor_BaseCnvSvc.o \
   castor_BaseObject.o \
+  castor_BaseSvc.o \
   castor_Constants.o \
+  castor_Converters.o \
   castor_Factories.o \
+  castor_ObjectCatalog.o \
   castor_ObjectSet.o \
   castor_Services.o \
   castor_System.o \
   castor_IClient.o \
   castor_MessageAck.o \
+  client_BaseClient.o \
   client_VectorResponseHandler.o \
   common_Cdlopen.o \
   common_Cdomainname.o \
@@ -84,10 +88,38 @@ rununittests: \
   io_ClientSocket.o \
   io_ServerSocket.o \
   io_StreamAddress.o \
+  io_StreamBaseCnv.o \
+  io_StreamCnvSvc.o \
+  io_StreamEndNotificationCnv.o \
+  io_StreamEndNotificationErrorReportCnv.o \
+  io_StreamEndNotificationFileErrorReportCnv.o \
+  io_StreamFilesListRequestCnv.o \
+  io_StreamFileErrorReportStructCnv.o \
+  io_StreamFileMigratedNotificationStructCnv.o \
+  io_StreamFileMigrationReportListCnv.o \
+  io_StreamFileRecalledNotificationStructCnv.o \
+  io_StreamFileRecallReportListCnv.o \
+  io_StreamFilesToMigrateListCnv.o \
+  io_StreamFilesToMigrateListRequestCnv.o \
+  io_StreamFilesToRecallListCnv.o \
+  io_StreamFilesToRecallListRequestCnv.o \
+  io_StreamFileToMigrateStructCnv.o \
+  io_StreamFileToRecallStructCnv.o \
+  io_StreamNoMoreFilesCnv.o \
+  io_StreamNotificationAcknowledgeCnv.o \
+  io_StreamPtrCnv.o \
+  io_StreamVolumeRequestCnv.o \
+  io_StreamVolumeCnv.o \
+  io_UDPSocket.o \
   legacymsg_CommonMarshal.o \
   legacymsg_RtcpMarshal.o \
   legacymsg_TapeBridgeMarshal.o \
   legacymsg_VmgrMarshal.o \
+  metrics_Counter.o \
+  metrics_Histogram.o \
+  metrics_InternalCounter.o \
+  metrics_MetricsCollector.o \
+  metrics_UpdateThread.o \
   ns_Cns_selectsrvr.o \
   ns_Cns_opendir.o \
   ns_Cns_closedir.o \
@@ -161,6 +193,18 @@ rununittests: \
   security_Csec_apiinit.o \
   security_Csec_common.o \
   security_Csec_protocol_policy.o \
+  server_TCPListenerThreadPool.o \
+  server_UDPListenerThreadPool.o \
+  server_ListenerThreadPool.o \
+  server_DynamicThreadPool.o \
+  server_SignalThreadPool.o \
+  server_BaseThreadPool.o \
+  server_BaseDaemon.o \
+  server_BaseServer.o \
+  server_Queue.o \
+  server_Mutex.o \
+  server_ThreadNotification.o \
+  server_NotifierThread.o \
   stager_mapper.o \
   stager_errmsg.o \
   stager_client_commandline.o \
@@ -206,12 +250,18 @@ rununittests: \
   tapebridge_BridgeProtocolEngine.o \
   tapebridge_BridgeSocketCatalogue.o \
   tapebridge_BulkRequestConfigParams.o \
-  tapebridge_ClientTxRx.o \
+  tapebridge_ClientAddress.o \
+  tapebridge_ClientAddressLocal.o \
+  tapebridge_ClientAddressTcpIp.o \
+  tapebridge_ClientProxy.o \
   tapebridge_ConfigParams.o \
+  tapebridge_ConfigParamSource.o \
   tapebridge_DlfMessageStrings.o \
   tapebridge_FileToMigrate.o \
   tapebridge_FileToRecall.o \
   tapebridge_GetMoreWorkConnection.o \
+  tapebridge_IClientProxy.o \
+  tapebridge_IFileCloser.o \
   tapebridge_LegacyTxRx.o \
   tapebridge_LogHelper.o \
   tapebridge_marshall.o \
@@ -220,11 +270,14 @@ rununittests: \
   tapebridge_recvTapeBridgeFlushedToTapeAck.o \
   tapebridge_RtcpTxRx.o \
   tapebridge_SessionError.o \
+  tapebridge_SessionErrorList.o \
   tapebridge_sendTapeBridgeClientInfo2Ack.o \
   tapebridge_sendTapeBridgeFlushedToTape.o \
   tapebridge_SystemFileCloser.o \
+  tapebridge_TapeBridgeDaemon.o \
   tapebridge_TapeFlushConfigParams.o \
   tapebridge_tapeFlushModeToStr.o \
+  tapebridge_VdqmRequestHandler.o \
   tapebridge_VmgrTxRx.o \
   tapegateway_BaseFileInfo.o \
   tapegateway_BaseFileInfoStruct.o \
@@ -256,6 +309,7 @@ rununittests: \
   tapegateway_VolumeMode.o \
   tapegateway_VolumeRequest.o \
   test_exception.o \
+  unittest.o \
   upv_Cupv_check.o \
   upv_send2Cupv.o \
   upv_Cupv_errmsg.o \
@@ -277,24 +331,38 @@ runUnitTestsMain.o: runUnitTestsMain.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 runUnitTestsMain.cpp: \
-  castor/tape/tapebridge/BridgeClientInfo2SenderTest.hpp \
-  castor/tape/tapebridge/BridgeProtocolEngineTest.hpp \
-  castor/tape/tapebridge/BridgeSocketCatalogueTest.hpp \
-  castor/tape/tapebridge/BulkRequestConfigParamsTest.hpp \
-  castor/tape/tapebridge/FileToMigrateTest.hpp \
-  castor/tape/tapebridge/FileToRecallTest.hpp \
-  castor/tape/tapebridge/GetMoreWorkConnectionTest.hpp \
-  castor/tape/tapebridge/MigrationReportConnectionTest.hpp \
-  castor/tape/tapebridge/TapeFlushConfigParamsTest.hpp \
-  castor/tape/tapebridge/PendingMigrationsStoreTest.hpp \
-  castor/tape/tapebridge/SessionErrorTest.hpp \
-  castor/tape/utils/IndexedContainerTest.hpp \
-  castor/tape/utils/UtilsTest.hpp \
-  rtcopy/RtcopyTest.hpp \
-  tapebridge/MarshallTapeBridgeClientInfo2Test.hpp \
-  tapebridge/MarshallTapeBridgeFlushedToTapeTest.hpp \
-  tapebridge/RecvTapeBridgeFlushedToTapeAckTest.hpp \
-  tapebridge/SendTapeBridgeFlushedToTapeTest.hpp
+  $(ROOT_DIR)/test/unittest/castor/tape/net/NetTest.hpp \
+  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/BridgeClientInfo2SenderTest.hpp \
+  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/BridgeProtocolEngineTest.hpp \
+  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/BridgeSocketCatalogueTest.hpp \
+  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/BulkRequestConfigParamsTest.hpp \
+  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/ClientAddressLocalTest.hpp \
+  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/ClientProxyTest.hpp \
+  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/ClientAddressTcpIpTest.hpp \
+  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/ConfigParamTest.hpp \
+  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/FileToMigrateTest.hpp \
+  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/FileToRecallTest.hpp \
+  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/GetMoreWorkConnectionTest.hpp \
+  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/MigrationReportConnectionTest.hpp \
+  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/TapeBridgeDaemonTest.hpp \
+  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/TapeFlushConfigParamsTest.hpp \
+  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/TestingBridgeProtocolEngine.hpp \
+  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/TestingBridgeSocketCatalogue.hpp \
+  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/TestingBulkRequestConfigParams.hpp \
+  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/TestingTapeFlushConfigParams.hpp \
+  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/TraceableDummyFileCloser.hpp \
+  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/TraceableSystemFileCloser.hpp \
+  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/PendingMigrationsStoreTest.hpp \
+  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/SessionErrorTest.hpp \
+  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/SessionErrorListTest.hpp \
+  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/VdqmRequestHandlerTest.hpp \
+  $(ROOT_DIR)/test/unittest/castor/tape/utils/IndexedContainerTest.hpp \
+  $(ROOT_DIR)/test/unittest/castor/tape/utils/UtilsTest.hpp \
+  $(ROOT_DIR)/test/unittest/rtcopy/RtcopyTest.hpp \
+  $(ROOT_DIR)/test/unittest/tapebridge/MarshallTapeBridgeClientInfo2Test.hpp \
+  $(ROOT_DIR)/test/unittest/tapebridge/MarshallTapeBridgeFlushedToTapeTest.hpp \
+  $(ROOT_DIR)/test/unittest/tapebridge/RecvTapeBridgeFlushedToTapeAckTest.hpp \
+  $(ROOT_DIR)/test/unittest/tapebridge/SendTapeBridgeFlushedToTapeTest.hpp
 	touch $@
 
 castor_Services.o: $(ROOT_DIR)/castor/Services.cpp
@@ -318,7 +386,19 @@ castor_Factories.o: $(ROOT_DIR)/castor/Factories.cpp
 castor_Constants.o: $(ROOT_DIR)/castor/Constants.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
+castor_Converters.o: $(ROOT_DIR)/castor/Converters.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+castor_BaseCnvSvc.o: $(ROOT_DIR)/castor/BaseCnvSvc.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
 castor_BaseObject.o: $(ROOT_DIR)/castor/BaseObject.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+castor_BaseSvc.o: $(ROOT_DIR)/castor/BaseSvc.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+castor_ObjectCatalog.o: $(ROOT_DIR)/castor/ObjectCatalog.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 castor_ObjectSet.o: $(ROOT_DIR)/castor/ObjectSet.cpp
@@ -482,6 +562,96 @@ io_ServerSocket.o: $(ROOT_DIR)/castor/io/ServerSocket.cpp
 io_StreamAddress.o: $(ROOT_DIR)/castor/io/StreamAddress.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
+io_StreamBaseCnv.o: $(ROOT_DIR)/castor/io/StreamBaseCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamCnvSvc.o: $(ROOT_DIR)/castor/io/StreamCnvSvc.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamEndNotificationCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamEndNotificationCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamEndNotificationErrorReportCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamEndNotificationErrorReportCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamEndNotificationFileErrorReportCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamEndNotificationFileErrorReportCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamFileErrorReportStructCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamFileErrorReportStructCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamFileMigratedNotificationStructCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamFileMigratedNotificationStructCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamFileMigrationReportListCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamFileMigrationReportListCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamFileRecalledNotificationStructCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamFileRecalledNotificationStructCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamFileRecallReportListCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamFileRecallReportListCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamFilesListRequestCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamFilesListRequestCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamFilesToMigrateListCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamFilesToMigrateListCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamFilesToMigrateListRequestCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamFilesToMigrateListRequestCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamFilesToRecallListCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamFilesToRecallListCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamFilesToRecallListRequestCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamFilesToRecallListRequestCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamFileToMigrateStructCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamFileToMigrateStructCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamFileToRecallStructCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamFileToRecallStructCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamNotificationAcknowledgeCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamNotificationAcknowledgeCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamNoMoreFilesCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamNoMoreFilesCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamPingNotificationCnv.o: \
+  $(ROOT_DIR)/castor/io/StreamPingNotificationCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamPtrCnv.o: $(ROOT_DIR)/castor/io/StreamPtrCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamVolumeRequestCnv.o: $(ROOT_DIR)/castor/io/StreamVolumeRequestCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_StreamVolumeCnv.o:$(ROOT_DIR)/castor/io/StreamVolumeCnv.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+io_UDPSocket.o:$(ROOT_DIR)/castor/io/UDPSocket.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
 legacymsg_CommonMarshal.o: \
   $(ROOT_DIR)/castor/tape/legacymsg/CommonMarshal.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
@@ -494,6 +664,26 @@ legacymsg_TapeBridgeMarshal.o: \
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 legacymsg_VmgrMarshal.o: $(ROOT_DIR)/castor/tape/legacymsg/VmgrMarshal.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+metrics_Counter.o: \
+  $(ROOT_DIR)/castor/metrics/Counter.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+metrics_Histogram.o: \
+  $(ROOT_DIR)/castor/metrics/Histogram.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+metrics_InternalCounter.o: \
+  $(ROOT_DIR)/castor/metrics/InternalCounter.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+metrics_MetricsCollector.o: \
+  $(ROOT_DIR)/castor/metrics/MetricsCollector.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+metrics_UpdateThread.o: \
+  $(ROOT_DIR)/castor/metrics/UpdateThread.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 ns_Cns_selectsrvr.o: $(ROOT_DIR)/ns/Cns_selectsrvr.c
@@ -763,6 +953,54 @@ security_Csec_apiinit.o: $(ROOT_DIR)/security/Csec_apiinit.c
 security_Csec_common.o: $(ROOT_DIR)/security/Csec_common.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
+server_TCPListenerThreadPool.o: \
+  $(ROOT_DIR)/castor/server/TCPListenerThreadPool.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+server_UDPListenerThreadPool.o: \
+  $(ROOT_DIR)/castor/server/UDPListenerThreadPool.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+server_ListenerThreadPool.o: \
+  $(ROOT_DIR)/castor/server/ListenerThreadPool.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+server_DynamicThreadPool.o: \
+  $(ROOT_DIR)/castor/server/DynamicThreadPool.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+server_SignalThreadPool.o: \
+  $(ROOT_DIR)/castor/server/SignalThreadPool.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+server_BaseThreadPool.o: \
+  $(ROOT_DIR)/castor/server/BaseThreadPool.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+server_BaseDaemon.o: \
+  $(ROOT_DIR)/castor/server/BaseDaemon.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+server_BaseServer.o: \
+  $(ROOT_DIR)/castor/server/BaseServer.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+server_Queue.o: \
+  $(ROOT_DIR)/castor/server/Queue.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+server_Mutex.o: \
+  $(ROOT_DIR)/castor/server/Mutex.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+server_ThreadNotification.o: \
+  $(ROOT_DIR)/castor/server/ThreadNotification.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+server_NotifierThread.o: \
+  $(ROOT_DIR)/castor/server/NotifierThread.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
 stager_mapper.o: $(ROOT_DIR)/client/src/stager/stager_mapper.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
@@ -961,12 +1199,32 @@ tapebridge_BulkRequestConfigParams.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/BulkRequestConfigParams.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-tapebridge_ClientTxRx.o: \
-  $(ROOT_DIR)/castor/tape/tapebridge/ClientTxRx.cpp
+tapebridge_ClientAddress.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/ClientAddress.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapebridge_ClientAddressType.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/ClientAddressType.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapebridge_ClientAddressLocal.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/ClientAddressLocal.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapebridge_ClientProxy.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/ClientProxy.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapebridge_ClientAddressTcpIp.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/ClientAddressTcpIp.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapebridge_ConfigParams.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/ConfigParams.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapebridge_ConfigParamSource.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/ConfigParamSource.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapebridge_DlfMessageStrings.o: \
@@ -983,6 +1241,14 @@ tapebridge_FileToRecall.o: \
 
 tapebridge_GetMoreWorkConnection.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/GetMoreWorkConnection.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapebridge_IClientProxy.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/IClientProxy.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapebridge_IFileCloser.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/IFileCloser.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapebridge_LegacyTxRx.o: \
@@ -1010,6 +1276,10 @@ tapebridge_recvTapeBridgeFlushedToTapeAck.o: \
 
 tapebridge_SessionError.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/SessionError.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapebridge_SessionErrorList.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/SessionErrorList.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapebridge_RtcpTxRx.o: \
@@ -1048,7 +1318,8 @@ tapebridge_VdqmRequestHandler.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/VdqmRequestHandler.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-tapebridge_VmgrTxRx.o: $(ROOT_DIR)/castor/tape/tapebridge/VmgrTxRx.cpp
+tapebridge_VmgrTxRx.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/VmgrTxRx.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapegateway_BaseFileInfo.o: \
@@ -1192,7 +1463,13 @@ tapegateway_VolumeRequest.o: \
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 test_exception.o: test_exception.cpp
-	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+unittest.o: unittest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+unittest.cpp: unittest.hpp
+	touch $@
 
 upv_Cupv_check.o: $(ROOT_DIR)/upv/Cupv_check.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
