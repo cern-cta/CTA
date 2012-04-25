@@ -88,43 +88,32 @@ void castor::BaseObject::makeServicesKey()
 castor::Services* castor::BaseObject::services()
   throw (castor::exception::Exception) {
   // make a new key if we are in the first call to this
-  int rc = pthread_once(&castor::BaseObject::s_servicesOnce,
-			castor::BaseObject::makeServicesKey);
-  if (rc != 0) {
-    castor::exception::Exception e(rc);
-    e.getMessage() << "Error caught in call to pthread_once";
-    throw e;
-  }
-  // retrieve the thread specific data
-  void **tls = 0;
-  getTLS(castor::BaseObject::s_servicesKey, tls);
-  if (0 == *tls) {
-    // and create content if it was just allocated
-    *tls = (void *)(new castor::Services());
-  }
-  return (castor::Services*)(*tls);
-}
-
-//------------------------------------------------------------------------------
-// getTLS
-//------------------------------------------------------------------------------
-void castor::BaseObject::getTLS(pthread_key_t &key, void **&tls)
-  throw(castor::exception::Exception) {
-  // retrieve the thread specific data
-  tls = (void**)pthread_getspecific(key);
-  if (NULL == tls) {
-    // the thread specific data does not exist yet, let's create it
-    // XXX For the time being we don't free up this memory when a thread dies,
-    // XXX and valgrind identifies this as a definitive leak. However it's
-    // XXX 8 bytes per thread destruction, so at most 16 bytes a minute
-    // XXX on DynamicThreadPool's.
-    tls = (void**)calloc(1,sizeof(void*));
-    int rc = pthread_setspecific(key, (void*)tls);
+  {
+    const int rc = pthread_once(&castor::BaseObject::s_servicesOnce,
+      castor::BaseObject::makeServicesKey);
     if (rc != 0) {
+      castor::exception::Exception e(rc);
+      e.getMessage() << "Error caught in call to pthread_once";
+      throw e;
+    }
+  }
+
+  castor::Services *services =
+    (castor::Services *)pthread_getspecific(s_servicesKey);
+
+  // If this is the first time this thread gets the value of its
+  // thread-specific s_servicesKey then create the Services object and set the
+  // key to point to it
+  if(NULL == services) {
+    services = new castor::Services();
+    const int rc = pthread_setspecific(s_servicesKey, services);
+    if(0 != rc) {
+      delete services;
       castor::exception::Exception e(rc);
       e.getMessage() << "Error caught in call to pthread_setspecific";
       throw e;
     }
-    *tls = 0;
   }
+
+  return services;
 }

@@ -204,21 +204,34 @@ castor::rh::RateLimiter *
 castor::rh::RHThread::getRateLimiterFromTLS()
   throw (castor::exception::Exception) {
   // make a new key if we are in the first call to this
-  int rc = pthread_once(&castor::rh::RHThread::s_rateLimiterOnce,
-			castor::rh::RHThread::makeRateLimiterKey);
-  if (rc != 0) {
-    castor::exception::Exception e(rc);
-    e.getMessage() << "Error caught in call to pthread_once";
-    throw e;
+  {
+    const int rc = pthread_once(&castor::rh::RHThread::s_rateLimiterOnce,
+      castor::rh::RHThread::makeRateLimiterKey);
+    if (0 != rc) {
+      castor::exception::Exception e(rc);
+      e.getMessage() << "Error caught in call to pthread_once";
+      throw e;
+    }
   }
-  // retrieve the thread specific data
-  void **tls = 0;
-  getTLS(s_rateLimiterKey, tls);
-  if (0 == *tls) {
-    // and create content if it was just allocated
-    *tls = (void *)(new castor::rh::RateLimiter());
+
+  castor::rh::RateLimiter *rateLimiter =
+    (castor::rh::RateLimiter *)pthread_getspecific(s_rateLimiterKey);
+
+  // If this is the first time this thread gets the value of its
+  // thread-specific s_rateLimiterKey then create the RateLimiter object and
+  // set the key to point to it
+  if(NULL == rateLimiter) {
+    rateLimiter = new castor::rh::RateLimiter();
+    const int rc = pthread_setspecific(s_rateLimiterKey, rateLimiter);
+    if(0 != rc) {
+      delete rateLimiter;
+      castor::exception::Exception e(rc);
+      e.getMessage() << "Error caught in call to pthread_setspecific";
+      throw e;
+    }
   }
-  return (castor::rh::RateLimiter*) *tls;
+
+  return rateLimiter;
 }
 
 //------------------------------------------------------------------------------
