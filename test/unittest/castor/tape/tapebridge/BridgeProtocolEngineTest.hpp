@@ -138,10 +138,12 @@ public:
   }
 
   void setUp() {
+    unlink(m_clientListenSockPath);
     unlink(m_bridgeListenSockPath);
   }
 
   void tearDown() {
+    unlink(m_clientListenSockPath);
     unlink(m_bridgeListenSockPath);
   }
 

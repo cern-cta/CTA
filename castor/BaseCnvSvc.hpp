@@ -60,7 +60,7 @@ namespace castor {
     /**
      * Destructor
      */
-    virtual ~BaseCnvSvc() throw() {};
+    virtual ~BaseCnvSvc() throw();
 
     /**
      * resets the service

@@ -49,6 +49,8 @@
 #include "test/unittest/tapebridge/RecvTapeBridgeFlushedToTapeAckTest.hpp"
 #include "test/unittest/tapebridge/SendTapeBridgeFlushedToTapeTest.hpp"
 #include "castor/tape/utils/SmartFILEPtr.hpp"
+#include "castor/BaseObject.hpp"
+#include "castor/Services.hpp"
 #include "h/net.h"
 
 #include <cppunit/extensions/HelperMacros.h>
@@ -71,6 +73,8 @@ int main() {
 
   runner.addTest(registry.makeTest());
   const int runnerRc = runner.run();
+
+  delete castor::BaseObject::services();
 
   return runnerRc == 0 ? 1 : 0;
 }
