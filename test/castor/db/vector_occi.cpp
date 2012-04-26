@@ -103,7 +103,7 @@ int main (void)
     strvec.push_back("One");
     strvec.push_back("Two");
     strvec.push_back("Three");
-    oracle::occi::setVector()(stmt.get(),1, numvec, "numList");
+    oracle::occi::setVector(stmt.get(),1, numvec, "numList");
     oracle::occi::setVector(stmt.get(),2, strvec, "textList");
     // Run the statement
     stmt->executeUpdate();
