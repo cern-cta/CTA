@@ -55,7 +55,11 @@
 #define DLF_MSG_PARAM_UUID    5     /* Subrequest identifier */
 #define DLF_MSG_PARAM_FLOAT   6     /* Single precision floating point value */
 #define DLF_MSG_PARAM_INT     7     /* Integer parameter */
-#define DLF_MSG_PARAM_RAW     8     /* raw (set of) parameters, in key=value format */
+#define DLF_MSG_PARAM_UID     8
+#define DLF_MSG_PARAM_GID     9
+#define DLF_MSG_PARAM_STYPE   10
+#define DLF_MSG_PARAM_SNAME   11
+#define DLF_MSG_PARAM_RAW     12    /* raw (set of) parameters, in key=value format */
 
 /* Message number ranges (0-999) reserved for local messages */
 #define DLF_BASE_SHAREDMEMORY 1000  /* Shared Memory related code */

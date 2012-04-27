@@ -678,9 +678,20 @@ int dlf_writept(Cuuid_t reqid,
       break;
 
     default:
+      /* Please note that this case is used for normally program execution */
+      /* for the following parameter types:                                */
+      /*                                                                   */
+      /*   DLF_MSG_PARAM_UID                                               */
+      /*   DLF_MSG_PARAM_GID                                               */
+      /*   DLF_MSG_PARAM_STYPE                                             */
+      /*   DLF_MSG_PARAM_SNAME                                             */
       break; /* Nothing */
     }
-    free(name);
+
+    /* RAW parameters have no name */
+    if (params[i].type != DLF_MSG_PARAM_RAW) {
+      free(name);
+    }
 
     /* Check if there is enough space in the buffer */
     if ((int)len >= maxmsglen) {

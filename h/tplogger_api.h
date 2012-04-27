@@ -37,10 +37,6 @@
 
 /* Required by tplogger */
 #define DLF_LEN_MSGTEXT       512
-#define DLF_MSG_PARAM_UID     8
-#define DLF_MSG_PARAM_GID     9
-#define DLF_MSG_PARAM_STYPE   10
-#define DLF_MSG_PARAM_SNAME   11
 
 
 /*
