@@ -539,6 +539,7 @@ PROCEDURE tg_defaultMigrSelPolicy(inMountId IN INTEGER,
   CURSOR c IS
     SELECT /*+ FIRST_ROWS_1
                LEADING(MigrationMount MigrationJob CastorFile DiskCopy FileSystem DiskServer)
+               USE_NL(MigrationMount MigrationJob CastorFile DiskCopy FileSystem DiskServer)
                INDEX(CastorFile PK_CastorFile_Id)
                INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile)
                INDEX_RS_ASC(MigrationJob I_MigrationJob_TPStatusId) */
@@ -549,7 +550,7 @@ PROCEDURE tg_defaultMigrSelPolicy(inMountId IN INTEGER,
        AND MigrationJob.tapePool = MigrationMount.tapePool
        AND MigrationJob.status = tconst.MIGRATIONJOB_PENDING
        AND CastorFile.id = MigrationJob.castorFile
-       AND DiskCopy.castorFile = MigrationJob.castorFile
+       AND CastorFile.id = DiskCopy.castorFile
        AND DiskCopy.status = dconst.DISKCOPY_CANBEMIGR
        AND FileSystem.id = DiskCopy.fileSystem
        AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING)
@@ -1105,7 +1106,7 @@ END;
 /* update the db after a successful migration - disk side */
 CREATE OR REPLACE PROCEDURE dc_setFileMigrated(
   inCfId          IN NUMBER,
-  inOriginVID     IN VARCHAR2,       -- NOT NULL only for repacked files
+  inOriginVID     IN VARCHAR2,     -- NOT NULL only for repacked files
   inLastMigration IN BOOLEAN) AS   -- whether this is the last copy on tape
   varSrId NUMBER;
 BEGIN
@@ -1125,7 +1126,7 @@ BEGIN
         AND SubRequest.request = StageRepackRequest.id
         AND StageRepackRequest.RepackVID = inOriginVID;
     archiveSubReq(varSrId, dconst.SUBREQUEST_FINISHED);
-  END IF;  
+  END IF;
 END;
 /
 
