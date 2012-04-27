@@ -229,7 +229,7 @@ BEGIN
     FROM Cns_file_metadata
    WHERE fileId = segEntry.fileId FOR UPDATE;
   -- Is it a directory?
-  IF bitand(fmode, 4*8*8*8*8) > 0 THEN  -- 0x40000 == S_IFDIR
+  IF bitand(fmode, 4*8*8*8*8) > 0 THEN  -- 040000 == S_IFDIR
     rc := dlf.EISDIR;
     msg := dlf.EISDIR_MSG;
     ROLLBACK;
@@ -312,8 +312,8 @@ BEGIN
   SELECT segEntry.blockId INTO varBlockId FROM Dual;  -- to_char() of a RAW type does not work. This does the trick...
   varParams := 'CopyNo='|| segEntry.copyNo ||' Fsec=1 SegmentSize='|| segEntry.segSize
     ||' Compression='|| trunc(segEntry.segSize*100/segEntry.comprSize) ||' TPVID='|| segEntry.vid
-    ||' Fseq='|| segEntry.fseq ||' BlockId=' || varBlockId
-    ||' ChecksumType="'|| segEntry.checksum_name ||'" ChecksumValue=' || fCkSum;
+    ||' Fseq='|| segEntry.fseq ||' BlockId="' || varBlockId
+    ||'" ChecksumType="'|| segEntry.checksum_name ||'" ChecksumValue=' || fCkSum;
   tmpDlfLog(dlf.LVL_SYSTEM, uuidGen(), 'New segment information', fid, varParams);
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- The file entry was not found, just give up
@@ -346,10 +346,12 @@ BEGIN
   END LOOP;
   -- Final logging
   UPDATE ResultsLogHelper SET reqid = varReqid;
-  varParams := 'Function="setSegmentsForFiles" NbFiles='|| segs.COUNT ||' ElapsedTime='|| getSecs(varStartTime, SYSTIMESTAMP);
+  varParams := 'Function="setSegmentsForFiles" NbFiles='|| segs.COUNT
+    ||' ElapsedTime='|| getSecs(varStartTime, SYSTIMESTAMP);
   tmpDlfLog(dlf.LVL_SYSTEM, varReqid, 'Bulk processing complete', 0, varParams);
   -- Return logs to the stager
-  OPEN logs FOR SELECT * FROM ResultsLogHelper;
+  OPEN logs FOR
+    SELECT timeinfo, lvl, reqid, msg, fileId, params FROM ResultsLogHelper;
 END;
 /
 
@@ -399,7 +401,7 @@ BEGIN
     FROM Cns_file_metadata
    WHERE fileId = segEntry.fileId FOR UPDATE;
   -- Is it a directory?
-  IF bitand(fmode, 4*8*8*8*8) > 0 THEN  -- 0x40000 == S_IFDIR
+  IF bitand(fmode, 4*8*8*8*8) > 0 THEN  -- 040000 == S_IFDIR
     rc := dlf.EISDIR;
     msg := dlf.EISDIR_MSG;
     ROLLBACK;
@@ -460,11 +462,12 @@ BEGIN
       SELECT varOwSeg.blockId INTO varBlockId FROM Dual;
       varParams := 'CopyNo='|| varOwSeg.copyNo ||' Fsec=1 SegmentSize='|| varOwSeg.segSize
         ||' Compression='|| varOwSeg.comprSize ||' TPVID='|| varOwSeg.vid
-        ||' Fseq='|| varOwSeg.fseq ||' BlockId=' || varBlockId
-        ||' ChecksumType="'|| varOwSeg.checksum_name ||'" ChecksumValue=' || varOwSeg.checksum;
+        ||' Fseq='|| varOwSeg.fseq ||' BlockId="' || varBlockId
+        ||'" ChecksumType="'|| varOwSeg.checksum_name ||'" ChecksumValue=' || varOwSeg.checksum;
       tmpDlfLog(dlf.LVL_SYSTEM, varReqid, 'Unlinking segment (overwritten)', fid, varParams);
     END IF;
   EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- Previous segment not found, give up
     rc := dlf.ENSNOSEG;
     msg := dlf.ENSNOSEG_MSG;
     ROLLBACK;
@@ -480,8 +483,8 @@ BEGIN
   SELECT varRepSeg.blockId INTO varBlockId FROM Dual;
   varParams := 'CopyNo='|| varRepSeg.copyNo ||' Fsec=1 SegmentSize='|| varRepSeg.segSize
     ||' Compression='|| varRepSeg.comprSize ||' TPVID='|| varRepSeg.vid
-    ||' Fseq='|| varRepSeg.fseq ||' BlockId=' || varBlockId
-    ||' ChecksumType="'|| varRepSeg.checksum_name ||'" ChecksumValue=' || varRepSeg.checksum;
+    ||' Fseq='|| varRepSeg.fseq ||' BlockId="' || varBlockId
+    ||'" ChecksumType="'|| varRepSeg.checksum_name ||'" ChecksumValue=' || varRepSeg.checksum;
   tmpDlfLog(dlf.LVL_SYSTEM, varReqid, 'Unlinking segment (replaced)', fid, varParams);
   -- Insert new segment metadata and deal with possible collisions with the fseq position
   BEGIN
@@ -503,8 +506,8 @@ BEGIN
   SELECT segEntry.blockId INTO varBlockId FROM Dual;  -- to_char() of a RAW type does not work. This does the trick...
   varParams := 'CopyNo='|| segEntry.copyNo ||' Fsec=1 SegmentSize='|| segEntry.segSize
     ||' Compression='|| trunc(segEntry.segSize*100/segEntry.comprSize) ||' TPVID='|| segEntry.vid
-    ||' Fseq='|| segEntry.fseq ||' BlockId=' || varBlockId
-    ||' ChecksumType="'|| segEntry.checksum_name ||'" ChecksumValue=' || fCkSum;
+    ||' Fseq='|| segEntry.fseq ||' BlockId="' || varBlockId
+    ||'" ChecksumType="'|| segEntry.checksum_name ||'" ChecksumValue=' || fCkSum;
   tmpDlfLog(dlf.LVL_SYSTEM, varReqid, 'New segment information', fid, varParams);
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- The file entry was not found, just give up
@@ -538,9 +541,11 @@ BEGIN
   END LOOP;
   -- Final logging
   UPDATE ResultsLogHelper SET reqid = varReqid;
-  varParams := 'Function="repackSegmentsForFiles" NbFiles='|| segs.COUNT ||' ElapsedTime='|| getSecs(varStartTime, SYSTIMESTAMP);
+  varParams := 'Function="repackSegmentsForFiles" NbFiles='|| segs.COUNT
+    ||' ElapsedTime='|| getSecs(varStartTime, SYSTIMESTAMP);
   tmpDlfLog(dlf.LVL_SYSTEM, varReqid, 'Bulk processing complete', 0, varParams);
   -- Return logs to the stager
-  OPEN logs FOR SELECT * FROM ResultsLogHelper;
+  OPEN logs FOR
+    SELECT timeinfo, lvl, reqid, msg, fileId, params FROM ResultsLogHelper;
 END;
 /
