@@ -31,6 +31,13 @@ BEGIN
 END;
 /
 
+/* Returns a time interval in seconds */
+CREATE OR REPLACE FUNCTION getSecs(startTime IN TIMESTAMP, endTime IN TIMESTAMP) RETURN NUMBER IS
+BEGIN
+  RETURN EXTRACT(SECOND FROM (endTime - startTime));
+END;
+/
+
 /* Generate a universally unique id (UUID) */
 CREATE OR REPLACE FUNCTION uuidGen RETURN VARCHAR2 IS
   ret VARCHAR2(36);
