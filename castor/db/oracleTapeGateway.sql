@@ -1717,8 +1717,8 @@ END;
 
 /* resurrect tapes */
 CREATE OR REPLACE PROCEDURE startMigrationMounts AS
-  varNbMounts INTEGER;
-  varNbExtraMounts INTEGER := 0;
+  varNbPreExistingMounts INTEGER;
+  varTotalNbMounts INTEGER := 0;
   varDataAmount INTEGER;
   varNbFiles INTEGER;
   varOldestCreationTime NUMBER;
@@ -1729,9 +1729,10 @@ BEGIN
                    minNbFilesForMount, maxFileAgeBeforeMount
               FROM TapePool) LOOP
     -- get number of mounts already running for this tapepool
-    SELECT nvl(count(*), 0) INTO varNbMounts
+    SELECT nvl(count(*), 0) INTO varNbPreExistingMounts
       FROM MigrationMount
      WHERE tapePool = t.id;
+    varTotalNbMounts := varNbPreExistingMounts;
     -- get the amount of data and number of files to migrate, plus the age of the oldest file
     SELECT SUM(fileSize), COUNT(*), MIN(creationTime) INTO varDataAmount, varNbFiles, varOldestCreationTime
       FROM MigrationJob
@@ -1739,17 +1740,18 @@ BEGIN
        AND status = tconst.MIGRATIONJOB_PENDING
      GROUP BY tapePool;
     -- Create as many mounts as needed according to amount of data and number of files
-    WHILE (varNbMounts < t.nbDrives) AND
-          ((varDataAmount/(varNbMounts+1) >= t.minAmountDataForMount) OR
-           (varNbFiles/(varNbMounts+1) >= t.minNbFilesForMount)) AND
-          (varNbMounts < varNbFiles) LOOP   -- in case minAmountDataForMount << avgFileSize, stop creating more than one mount per file
+    WHILE (varTotalNbMounts < t.nbDrives) AND
+          ((varDataAmount/(varTotalNbMounts+1) >= t.minAmountDataForMount) OR
+           (varNbFiles/(varTotalNbMounts+1) >= t.minNbFilesForMount)) AND
+          (varTotalNbMounts+1 < varNbFiles) LOOP   -- in case minAmountDataForMount << avgFileSize, stop creating more than one mount per file
       insertMigrationMount(t.id, varTGRequestId);
-      varNbExtraMounts := varNbExtraMounts + 1;
+      varTotalNbMounts := varTotalNbMounts + 1;
       IF varTGRequestId = 0 THEN
         -- log "startMigrationMounts: failed migration mount creation due to lack of files"
         logToDLF(NULL, dlf.LVL_WARNING, dlf.MOUNT_PRODUCER_NO_FILE, 0, '', 'tapegatewayd',
                  'tapePool=' || t.name ||
-                 ' nbExistingMounts=' || TO_CHAR(varNbMounts) ||
+                 ' nbPreExistingMounts=' || TO_CHAR(varNbPreExistingMounts) ||
+                 ' nbMounts=' || TO_CHAR(varTotalNbMounts) ||
                  ' dataAmountInQueue=' || TO_CHAR(varDataAmount) ||
                  ' nbFilesInQueue=' || TO_CHAR(varNbFiles) ||
                  ' oldestCreationTime=' || TO_CHAR(varOldestCreationTime));
@@ -1761,21 +1763,23 @@ BEGIN
         logToDLF(NULL, dlf.LVL_SYSTEM, dlf.MOUNT_PRODUCER_NEW_MOUNT, 0, '', 'tapegatewayd',
                  'mountTransactionId=' || TO_CHAR(varTGRequestId) ||
                  ' tapePool=' || t.name ||
-                 ' nbExistingMounts=' || TO_CHAR(varNbMounts) ||
+                 ' nbPreExistingMounts=' || TO_CHAR(varNbPreExistingMounts) ||
+                 ' nbMounts=' || TO_CHAR(varTotalNbMounts) ||
                  ' dataAmountInQueue=' || TO_CHAR(varDataAmount) ||
                  ' nbFilesInQueue=' || TO_CHAR(varNbFiles) ||
                  ' oldestCreationTime=' || TO_CHAR(varOldestCreationTime));
       END IF;
     END LOOP;
     -- force creation of a unique mount in case no mount was created at all and some files are too old
-    IF varNbFiles > 0 AND varNbMounts = 0 AND varNbExtraMounts = 0 AND t.nbDrives > 0 AND
+    IF varNbFiles > 0 AND varTotalNbMounts = 0 AND t.nbDrives > 0 AND
        gettime() - varOldestCreationTime > t.maxFileAgeBeforeMount THEN
       insertMigrationMount(t.id, varTGRequestId);
       IF varTGRequestId = 0 THEN
         -- log "startMigrationMounts: failed migration mount creation due to lack of files"
         logToDLF(NULL, dlf.LVL_WARNING, dlf.MOUNT_PRODUCER_AGE_NO_FILE, 0, '', 'tapegatewayd',
                  'tapePool=' || t.name ||
-                 ' nbExistingMounts=' || TO_CHAR(varNbMounts) ||
+                 ' nbPreExistingMounts=' || TO_CHAR(varNbPreExistingMounts) ||
+                 ' nbMounts=' || TO_CHAR(varTotalNbMounts) ||
                  ' dataAmountInQueue=' || TO_CHAR(varDataAmount) ||
                  ' nbFilesInQueue=' || TO_CHAR(varNbFiles) ||
                  ' oldestCreationTime=' || TO_CHAR(varOldestCreationTime));
@@ -1784,17 +1788,19 @@ BEGIN
         logToDLF(NULL, dlf.LVL_SYSTEM, dlf.MOUNT_PRODUCER_NEW_MOUNT_AGE, 0, '', 'tapegatewayd',
                  'mountTransactionId=' || TO_CHAR(varTGRequestId) ||
                  ' tapePool=' || t.name ||
-                 ' nbExistingMounts=' || TO_CHAR(varNbMounts) ||
+                 ' nbPreExistingMounts=' || TO_CHAR(varNbPreExistingMounts) ||
+                 ' nbMounts=' || TO_CHAR(varTotalNbMounts) ||
                  ' dataAmountInQueue=' || TO_CHAR(varDataAmount) ||
                  ' nbFilesInQueue=' || TO_CHAR(varNbFiles) ||
                  ' oldestCreationTime=' || TO_CHAR(varOldestCreationTime));
       END IF;
     ELSE
-      IF varNbExtraMounts = 0 THEN 
+      IF varTotalNbMounts = varNbPreExistingMounts THEN 
         -- log "startMigrationMounts: no need for new migration mount"
         logToDLF(NULL, dlf.LVL_DEBUG, dlf.MOUNT_PRODUCER_NOACTION, 0, '', 'tapegatewayd',
                  'tapePool=' || t.name ||
-                 ' nbExistingMounts=' || TO_CHAR(varNbMounts) ||
+                 ' nbPreExistingMounts=' || TO_CHAR(varNbPreExistingMounts) ||
+                 ' nbMounts=' || TO_CHAR(varTotalNbMounts) ||
                  ' dataAmountInQueue=' || TO_CHAR(nvl(varDataAmount,0)) ||
                  ' nbFilesInQueue=' || TO_CHAR(nvl(varNbFiles,0)) ||
                  ' oldestCreationTime=' || TO_CHAR(nvl(varOldestCreationTime,0)));
