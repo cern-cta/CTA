@@ -122,29 +122,26 @@ private:
   /**
    * Handles the specified successful migration of files to tape.
    *
-   * @param aggregatorTransactionId The aggregator transaction Id of the
-   *                                enclosing FileMigrationReportList message.
-   * @param files                   The sucessful migrations to tape.
-   * @param sock                    The socket on which to reply to the
-   *                                tapebridge.
+   * @param tapebridgeTransId The tapebridge transaction Id of the enclosing
+   *                          FileMigrationReportList message.
+   * @param files             The sucessful migrations to tape.
+   * @param sock              The socket on which to reply to the tapebridge.
    */
   void handleSuccessfulMigrations(
-    const uint64_t aggregatorTransactionId,
+    const uint64_t tapebridgeTransId,
     const std::vector<tapegateway::FileMigratedNotificationStruct*> &files,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
    * Handles the successfull migration of a file to tape.
    *
-   * @param aggregatorTransactionId The aggregator transaction Id of the
-   *                                enclosing FileMigrationReportList message.
-   * @param file                    The file that was successfully migrated to
-   *                                tape.
-   * @param sock                    The socket on which to reply to the
-   *                                tapebridge.
+   * @param tapebridgeTransId The tapebridge transaction Id of the enclosing
+   *                          FileMigrationReportList message.
+   * @param file              The file that was successfully migrated to tape.
+   * @param sock              The socket on which to reply to the tapebridge.
    */
   void handleSuccessfulMigration(
-    const uint64_t aggregatorTransactionId,
+    const uint64_t tapebridgeTransId,
     const tapegateway::FileMigratedNotificationStruct &file,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 

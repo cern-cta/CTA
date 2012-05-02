@@ -39,7 +39,7 @@ struct MigrationReportConnection {
 
   /**
    * Constructor that will initialise the member variable clientSock to -1 and
-   * the member variable aggregatorTransactionId to 0.
+   * the member variable tapebridgeTransId to 0.
    */
   MigrationReportConnection();
 
@@ -56,7 +56,7 @@ struct MigrationReportConnection {
    * This member of the structure should be ignored if the clientSock member
    * is negative.
    */
-  uint64_t aggregatorTransactionId;
+  uint64_t tapebridgeTransId;
 
 }; // struct MigrationReportConnection
 

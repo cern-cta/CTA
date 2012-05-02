@@ -171,38 +171,6 @@ private:
   static void checkRtcpJobSubmitterIsAuthorised(const int socketFd)
     throw(castor::exception::Exception);
 
-  /**
-   * Enters the thread into either bridge or tapebridge mode.
-   *
-   * @param cuuid                    The ccuid to be used for logging.
-   * @param rtcpdCallbackSockFd      The file descriptor of the listener socket
-   *                                 to be used to accept callback connections
-   *                                 from RTCPD.
-   * @param rtcpdInitialSockFd       The socket file descriptor of initial
-   *                                 RTCPD connection.
-   * @param jobRequest               The RTCOPY job request from the VDQM.
-   * @param volume                   The volume message received from the
-   *                                 client.
-   * @param nbFilesOnDestinationTape If migrating and the client is the tape
-   *                                 gateay, then this must be set to the
-   *                                 current number of files on the tape, else
-   *                                 this parameter is ignored.
-   * @param stoppingGracefully       Functor that returns true if the daemon is
-   *                                 stopping gracefully.
-   * @param tapebridgeTransactionCounter The counter used to generate
-   *                                 tapebridge transaction IDs.  These are the
-   *                                 IDs used in requests to the clients.
-   */
-  void enterBridgeOrTapeBridgeMode(
-    const Cuuid_t                       &cuuid,
-    const int                           rtcpdCallbackSockFd,
-    const int                           rtcpdInitialSockFd,
-    const legacymsg::RtcpJobRqstMsgBody &jobRequest,
-    tapegateway::Volume                 &volume,
-    const uint32_t                      nbFilesOnDestinationTape,
-    utils::BoolFunctor                  &stoppingGracefully,
-    Counter<uint64_t>                   &tapebridgeTransactionCounter)
-  throw(castor::exception::Exception);
 }; // class VdqmRequestHandler
 
 } // namespace tapebridge

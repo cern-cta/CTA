@@ -94,14 +94,15 @@ public:
   /**
    * Gets the volume to be mounted from the client.
    *
-   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
-   *         the client.
-   * @return A pointer to the volume message received from the client or NULL
-   *         if there is no volume to mount.  The callee is responsible for
-   *         deallocating the message.
+   * @param tapebridgeTransId The tapebridge transaction ID to be sent to
+   *                          the client.
+   * @return                  A pointer to the volume message received from the
+   *                          client or NULL if there is no volume to mount.
+   *                          The caller is responsible for deallocating the
+   *                          message.
    */
   tapegateway::Volume *getVolume(
-    const uint64_t aggregatorTransactionId)
+    const uint64_t tapebridgeTransId)
     throw(castor::exception::Exception);
 
   /**
@@ -109,18 +110,18 @@ public:
    * socket-descriptor of the client connection from which the reply will be
    * read later.
    *
-   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
-   *                 the client.
-   * @param maxFiles The maximum number of files the client can send in the
-   *                 reply.
-   * @param maxBytes The maximum number of files the client can send in the
-   *                 reply represented indirectly by the sum of their
-   *                 file-sizes.
-   * @return         The socket-descriptor of the client connection from which
-   *                 the reply will be read later.
+   * @param tapebridgeTransId The tapebridge transaction ID to be sent to
+   *                          the client.
+   * @param maxFiles          The maximum number of files the client can send
+   *                          in the reply.
+   * @param maxBytes          The maximum number of files the client can send
+   *                          in the reply represented indirectly by the sum of
+   *                          their file-sizes.
+   * @return                  The socket-descriptor of the client connection
+   *                          from which the reply will be read later.
    */
   int sendFilesToMigrateListRequest(
-    const uint64_t aggregatorTransactionId,
+    const uint64_t tapebridgeTransId,
     const uint64_t maxFiles,
     const uint64_t maxBytes) const
     throw(castor::exception::Exception);
@@ -133,17 +134,17 @@ public:
    * FilesToMigrateList containing 0 files.  If a client has no more files to
    * migrate then it must send a NoMoreFiles message.
    *
-   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
-   *                           the client.
-   * @param clientSock         The socket-descriptor of the client connection.
-   * @return                   A pointer to the FilesToMigrateList message
-   *                           received from the client or NULL if there is no
-   *                           file to be migrated.  The callee is responsible
-   *                           for deallocating the message.
+   * @param tapebridgeTransId The tapebridge transaction ID to be sent to the
+   *                          client.
+   * @param clientSock        The socket-descriptor of the client connection.
+   * @return                  A pointer to the FilesToMigrateList message
+   *                          received from the client or NULL if there is no
+   *                          file to be migrated.  The caller is responsible
+   *                          for deallocating the message.
    */
   castor::tape::tapegateway::FilesToMigrateList
     *receiveFilesToMigrateListRequestReplyAndClose(
-    const uint64_t aggregatorTransactionId,
+    const uint64_t tapebridgeTransId,
     const int      clientSock) const
     throw(castor::exception::Exception);
 
@@ -152,21 +153,21 @@ public:
    * socket-descriptor of the client connection from which the reply will be
    * read later.
    *
-   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
-   *                           the client.
-   * @param clientHost         The client host name.
-   * @param clientPort         The client port number.
-   * @param maxFiles           The maximum number of files the client can send
-   *                           in the reply.
-   * @param maxBytes           The maximum number of files the client can send
-   *                           in the reply represented indirectly by the sum
-   *                           of their file-sizes.
-   * @return                   The socket-descriptor of the tape-gateway
-   *                           connection from which the reply will be read
-   *                           later.
+   * @param tapebridgeTransId The tapebridge transaction ID to be sent to
+   *                          the client.
+   * @param clientHost        The client host name.
+   * @param clientPort        The client port number.
+   * @param maxFiles          The maximum number of files the client can send
+   *                          in the reply.
+   * @param maxBytes          The maximum number of files the client can send
+   *                          in the reply represented indirectly by the sum
+   *                          of their file-sizes.
+   * @return                  The socket-descriptor of the tape-gateway
+   *                          connection from which the reply will be read
+   *                          later.
    */
   int sendFilesToRecallListRequest(
-    const uint64_t aggregatorTransactionId,
+    const uint64_t tapebridgeTransId,
     const uint64_t maxFiles,
     const uint64_t maxBytes) const
     throw(castor::exception::Exception);
@@ -179,17 +180,17 @@ public:
    * FilesToRecallList containing 0 files.  If a client has no more files to
    * recall then it must send a NoMoreFiles message.
    *
-   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
-   *                           the client.
-   * @param clientSock         The socket-descriptor of the client connection.
-   * @return                   A pointer to the file to recall message received
-   *                           from the client or NULL if there is no file to
-   *                           be recalled.  The callee is responsible for
-   *                           deallocating the message.
+   * @param tapebridgeTransId The tapebridge transaction ID to be sent to the
+   *                          client.
+   * @param clientSock        The socket-descriptor of the client connection.
+   * @return                  A pointer to the file to recall message received
+   *                          from the client or NULL if there is no file to
+   *                          be recalled.  The caller is responsible for
+   *                          deallocating the message.
    */
   castor::tape::tapegateway::FilesToRecallList
     *receiveFilesToRecallListRequestReplyAndClose(
-    const uint64_t aggregatorTransactionId,
+    const uint64_t tapebridgeTransId,
     const int      clientSock) const
     throw(castor::exception::Exception);
 
@@ -197,47 +198,48 @@ public:
    * Receives the reply to a FileMigrationReportList or a FileRecallReportList
    * from the specified client socket and then closes the connection.
    *
-   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
-   *                            the client.
-   * @param clientSock          The socket-descriptor of the client connection.
+   * @param tapebridgeTransId The tapebridge transaction ID to be sent to the
+   *                          client.
+   * @param clientSock        The socket-descriptor of the client connection.
    */
   void receiveNotificationReplyAndClose(
-    const uint64_t aggregatorTransactionId,
+    const uint64_t tapebridgeTransId,
     const int      clientSock) const
     throw(castor::exception::Exception);
 
   /**
    * Gets the parameters to be used when dumping a tape.
    *
-   * @param  aggregatorTransactionId The tapebridge transaction ID to be sent
-   *         to the client.
-   * @return A pointer to the DumpParamaters message.  The callee is
-   *         responsible for deallocating the message.
+   * @param  tapebridgeTransId The tapebridge transaction ID to be sent to the
+   *                           client.
+   * @return                   A pointer to the DumpParamaters message.  The
+   *                           caller is responsible for deallocating the
+   *                           message.
    */
   tapegateway::DumpParameters *getDumpParameters(
-    const uint64_t aggregatorTransactionId) const
+    const uint64_t tapebridgeTransId) const
     throw(castor::exception::Exception);
 
   /**
    * Notifies the client of a dump tape message string.
    *
-   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
-   *                the client.
-   * @param message The dump tape message string.
+   * @param tapebridgeTransId The tapebridge transaction ID to be sent to the
+   *                          client.
+   * @param message           The dump tape message string.
    */
   void notifyDumpMessage(
-    const uint64_t aggregatorTransactionId,
+    const uint64_t tapebridgeTransId,
     const char     (&message)[CA_MAXLINELEN+1]) const
     throw(castor::exception::Exception);
 
   /**
    * Pings the client and throws an exception if the ping has failed.
    *
-   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
-   *                                the client.
+   * @param tapebridgeTransId The tapebridge transaction ID to be sent to the
+   *                          client.
    */
   void ping(
-    const uint64_t aggregatorTransactionId) const
+    const uint64_t tapebridgeTransId) const
     throw(castor::exception::Exception);
 
   /**
@@ -256,41 +258,39 @@ public:
    * Throws an exception if there is a mount transaction ID mismatch and/or
    * a aggregator transaction ID mismatch.
    *
-   * @param messageTypeName                 The type name of the client message.
-   * @param actualMountTransactionIdA       The actual mount transaction ID.
-   * @param expectedAggregatorTransactionId The expected aggregator transaction
-   *                                        ID.
-   * @param actualAggregatorTransactionId   The actual aggregator transaction
-   *                                        ID.
+   * @param messageTypeName           The type name of the client message.
+   * @param actualMountTransactionId  The actual mount transaction ID.
+   * @param expectedTapebridgeTransId The expected aggregator transaction ID.
+   * @param actualTapebridgeTransId   The actual aggregator transaction ID.
    */
   void checkTransactionIds(
     const char *const messageTypeName,
     const uint32_t    actualMountTransactionId,
-    const uint64_t    expectedAggregatorTransactionId,
-    const uint64_t    actualAggregatorTransactionId) const
+    const uint64_t    expectedTapebridgeTransId,
+    const uint64_t    actualTapebridgeTransId) const
     throw(castor::exception::Exception);
 
   /**
    * Notifies the client of the end of the recall/migration session.
    *
-   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
-   *                                the client.
+   * @param tapebridgeTransId The tapebridge transaction ID to be sent to the
+   *                          client.
    */
   void notifyEndOfSession(
-    const uint64_t aggregatorTransactionId) const
+    const uint64_t tapebridgeTransId) const
     throw(castor::exception::Exception);
 
   /**
    * Notifies the client of the end of the recall/migration session due to an
    * error not caused by a specific file.
    *
-   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
-   *                     the client.
-   * @param errorCode    The error code to be reported to the client.
-   * @patam errorMessage The error message to be reported to the client.
+   * @param tapebridgeTransId The tapebridge transaction ID to be sent to the
+   *                          client.
+   * @param errorCode         The error code to be reported to the client.
+   * @patam errorMessage      The error message to be reported to the client.
    */
   void notifyEndOfFailedSession(
-    const uint64_t    aggregatorTransactionId,
+    const uint64_t    tapebridgeTransId,
     const int         errorCode,
     const std::string &errorMessage) const
     throw(castor::exception::Exception);
@@ -341,15 +341,15 @@ protected:
   /**
    * Notifies the client using the specified request message.
    *
-   * @param aggregatorTransactionId The tapebridge transaction ID to be sent to
-   *                        the client.
-   * @param requestTypeName The name of the type of the request.  This name
-   *                        will be used in logging messages.
-   * @param request         Out parameter: The request to be sent to the
-   *                        client.
+   * @param tapebridgeTransId The tapebridge transaction ID to be sent to
+   *                          the client.
+   * @param requestTypeName   The name of the type of the request.  This name
+   *                          will be used in logging messages.
+   * @param request           Out parameter: The request to be sent to the
+   *                          client.
    */
   void notifyClient(
-    const uint64_t    aggregatorTransactionId,
+    const uint64_t    tapebridgeTransId,
     const char *const requestTypeName,
     IObject           &request) const
     throw(castor::exception::Exception);

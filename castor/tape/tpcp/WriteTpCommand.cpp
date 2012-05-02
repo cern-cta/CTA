@@ -475,7 +475,7 @@ bool castor::tape::tpcp::WriteTpCommand::handleFileMigrationReportList(
 // handleSuccessfulMigrations
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::WriteTpCommand::handleSuccessfulMigrations(
-  const uint64_t aggregatorTransactionId,
+  const uint64_t tapebridgeTransId,
   const std::vector<tapegateway::FileMigratedNotificationStruct*> &files,
   castor::io::AbstractSocket &sock)
   throw(castor::exception::Exception) {
@@ -487,7 +487,7 @@ void castor::tape::tpcp::WriteTpCommand::handleSuccessfulMigrations(
         "Pointer to FileMigratedNotificationStruct is NULL");
     }
 
-    handleSuccessfulMigration(aggregatorTransactionId, *(*itor), sock);
+    handleSuccessfulMigration(tapebridgeTransId, *(*itor), sock);
   }
 }
 
@@ -496,7 +496,7 @@ void castor::tape::tpcp::WriteTpCommand::handleSuccessfulMigrations(
 // handleSuccessfulMigration
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::WriteTpCommand::handleSuccessfulMigration(
-  const uint64_t aggregatorTransactionId,
+  const uint64_t tapebridgeTransId,
   const tapegateway::FileMigratedNotificationStruct &file,
   castor::io::AbstractSocket &sock) throw(castor::exception::Exception) {
   // Check the file transaction ID
@@ -512,7 +512,7 @@ void castor::tape::tpcp::WriteTpCommand::handleSuccessfulMigration(
         "Received unknown file transaction ID from the tapebridge"
         ": fileTransactionId=" << file.fileTransactionId();
 
-      sendEndNotificationErrorReport(aggregatorTransactionId, EBADMSG,
+      sendEndNotificationErrorReport(tapebridgeTransId, EBADMSG,
         oss.str(), sock);
 
       castor::exception::Exception ex(ECANCELED);

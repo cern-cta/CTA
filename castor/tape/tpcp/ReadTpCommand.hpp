@@ -152,29 +152,26 @@ private:
   /**
    * Handles the specified successful recalls of files from tape.
    *
-   * @param aggregatorTransactionId The aggregator transaction Id of the
-   *                                enclosing FileRecallReportList message.
-   * @param files                   The sucessful recalls from tape.
-   * @param sock                    The socket on which to reply to the
-   *                                tapebridge.
+   * @param tapebridgeTransId The tapebridge transaction Id of the enclosing
+   *                          FileRecallReportList message.
+   * @param files             The sucessful recalls from tape.
+   * @param sock              The socket on which to reply to the tapebridge.
    */
   void handleSuccessfulRecalls(
-    const uint64_t aggregatorTransactionId,
+    const uint64_t tapebridgeTransId,
     const std::vector<tapegateway::FileRecalledNotificationStruct*> &files,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 
   /**
    * Handles the successfull recall of a file from tape.
    *
-   * @param aggregatorTransactionId The aggregator transaction Id of the
-   *                                enclosing FileRecallReportList message.
-   * @param file                    The file that was successfully recalled
-   *                                from tape.
-   * @param sock                    The socket on which to reply to the
-   *                                tapebridge.
+   * @param tapebridgeTransId The tapebridge transaction Id of the enclosing
+   *                          FileRecallReportList message.
+   * @param file              The file that was successfully recalled from tape.
+   * @param sock              The socket on which to reply to the tapebridge.
    */
   void handleSuccessfulRecall(
-    const uint64_t aggregatorTransactionId,
+    const uint64_t tapebridgeTransId,
     const tapegateway::FileRecalledNotificationStruct &file,
     castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
 

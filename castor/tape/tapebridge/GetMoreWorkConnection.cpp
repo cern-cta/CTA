@@ -41,7 +41,7 @@ void castor::tape::tapebridge::GetMoreWorkConnection::clear() {
   rtcpdReqMagic              = 0;
   rtcpdReqType               = 0;
   clientSock                 = -1;
-  aggregatorTransactionId    = 0;
+  tapebridgeTransId          = 0;
   rtcpdReqTapePath           = "";
   clientReqTimeStamp.tv_sec  = 0;
   clientReqTimeStamp.tv_usec = 0;

@@ -421,7 +421,7 @@ void castor::tape::tapebridge::BridgeSocketCatalogue::checkForTimeout() const
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeSocketCatalogue::
   addClientMigrationReportSock(const int sock,
-  const uint64_t aggregatorTransactionId)
+  const uint64_t tapebridgeTransId)
   throw(castor::exception::InvalidArgument, castor::exception::Exception) {
 
   // Throw an exception if the socket-descriptor is invalid
@@ -440,8 +440,7 @@ void castor::tape::tapebridge::BridgeSocketCatalogue::
   }
 
   m_migrationReportConnection.clientSock = sock;
-  m_migrationReportConnection.aggregatorTransactionId =
-    aggregatorTransactionId;
+  m_migrationReportConnection.tapebridgeTransId = tapebridgeTransId;
 }
 
 
@@ -458,7 +457,7 @@ bool castor::tape::tapebridge::BridgeSocketCatalogue::
 // releaseClientMigrationReportSock
 //-----------------------------------------------------------------------------
 int castor::tape::tapebridge::BridgeSocketCatalogue::
-  releaseClientMigrationReportSock(uint64_t &aggregatorTransactionId)
+  releaseClientMigrationReportSock(uint64_t &tapebridgeTransId)
   throw(castor::exception::Exception) {
 
   // Throw an exception if the socket-descriptor has not been set
@@ -469,11 +468,10 @@ int castor::tape::tapebridge::BridgeSocketCatalogue::
   }
 
   // Release and return the socket-descriptor
-  aggregatorTransactionId =
-    m_migrationReportConnection.aggregatorTransactionId;
+  tapebridgeTransId = m_migrationReportConnection.tapebridgeTransId;
   const int tmpSock = m_migrationReportConnection.clientSock;
   m_migrationReportConnection.clientSock = -1;
-  m_migrationReportConnection.aggregatorTransactionId = 0;
+  m_migrationReportConnection.tapebridgeTransId = 0;
   return tmpSock;
 }
 
@@ -488,7 +486,7 @@ void castor::tape::tapebridge::BridgeSocketCatalogue::
   const uint32_t    rtcpdReqType,
   const std::string &rtcpdReqTapePath,
   const int         clientSock,
-  const uint64_t    aggregatorTransactionId)
+  const uint64_t    tapebridgeTransId)
   throw(castor::exception::InvalidArgument, castor::exception::Exception) {
 
   if(0 > rtcpdSock || FD_SETSIZE <= rtcpdSock) {
@@ -525,12 +523,12 @@ void castor::tape::tapebridge::BridgeSocketCatalogue::
   }
 
   // Set the "get more work" connection information
-  m_getMoreWorkConnection.rtcpdSock               = rtcpdSock;
-  m_getMoreWorkConnection.rtcpdReqMagic           = rtcpdReqMagic;
-  m_getMoreWorkConnection.rtcpdReqType            = rtcpdReqType;
-  m_getMoreWorkConnection.rtcpdReqTapePath        = rtcpdReqTapePath;
-  m_getMoreWorkConnection.clientSock              = clientSock;
-  m_getMoreWorkConnection.aggregatorTransactionId = aggregatorTransactionId;
+  m_getMoreWorkConnection.rtcpdSock         = rtcpdSock;
+  m_getMoreWorkConnection.rtcpdReqMagic     = rtcpdReqMagic;
+  m_getMoreWorkConnection.rtcpdReqType      = rtcpdReqType;
+  m_getMoreWorkConnection.rtcpdReqTapePath  = rtcpdReqTapePath;
+  m_getMoreWorkConnection.clientSock        = clientSock;
+  m_getMoreWorkConnection.tapebridgeTransId = tapebridgeTransId;
   gettimeofday(&(m_getMoreWorkConnection.clientReqTimeStamp), NULL);
 
   // Store an entry in the client request history

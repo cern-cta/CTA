@@ -541,7 +541,7 @@ bool castor::tape::tpcp::ReadTpCommand::handleFileRecallReportList(
 // handleSuccessfulRecalls
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::ReadTpCommand::handleSuccessfulRecalls(
-  const uint64_t aggregatorTransactionId,
+  const uint64_t tapebridgeTransId,
   const std::vector<tapegateway::FileRecalledNotificationStruct*> &files,
   castor::io::AbstractSocket &sock) 
   throw(castor::exception::Exception) {
@@ -553,7 +553,7 @@ void castor::tape::tpcp::ReadTpCommand::handleSuccessfulRecalls(
         "Pointer to FileRecalledNotificationStruct is NULL");
     }
 
-    handleSuccessfulRecall(aggregatorTransactionId, *(*itor), sock);
+    handleSuccessfulRecall(tapebridgeTransId, *(*itor), sock);
   }
 }
 
@@ -562,7 +562,7 @@ void castor::tape::tpcp::ReadTpCommand::handleSuccessfulRecalls(
 // handleSuccessfulRecall
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::ReadTpCommand::handleSuccessfulRecall(
-  const uint64_t aggregatorTransactionId,
+  const uint64_t tapebridgeTransId,
   const tapegateway::FileRecalledNotificationStruct &file,
   castor::io::AbstractSocket &sock) throw(castor::exception::Exception) {
   // Check the file transaction ID
@@ -578,7 +578,7 @@ void castor::tape::tpcp::ReadTpCommand::handleSuccessfulRecall(
         "Received unknown file transaction ID from the tapebridge"
         ": fileTransactionId=" << file.fileTransactionId();
 
-      sendEndNotificationErrorReport(aggregatorTransactionId, EBADMSG,
+      sendEndNotificationErrorReport(tapebridgeTransId, EBADMSG,
         oss.str(), sock);
 
       castor::exception::Exception ex(ECANCELED);

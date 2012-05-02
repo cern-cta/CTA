@@ -54,9 +54,9 @@ public:
       connection.clientSock);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
-      "Check aggregatorTransactionId is initialised correctly",
+      "Check tapebridgeTransId is initialised correctly",
       (uint64_t)0,
-      connection.aggregatorTransactionId);
+      connection.tapebridgeTransId);
   }
 
   CPPUNIT_TEST_SUITE(MigrationReportConnectionTest);

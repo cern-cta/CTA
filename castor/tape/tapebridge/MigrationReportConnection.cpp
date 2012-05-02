@@ -30,6 +30,6 @@
 castor::tape::tapebridge::MigrationReportConnection::
   MigrationReportConnection():
   clientSock(-1),
-  aggregatorTransactionId(0) {
+  tapebridgeTransId(0) {
   // Do nothing
 }

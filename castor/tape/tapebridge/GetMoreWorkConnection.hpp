@@ -94,7 +94,7 @@ struct GetMoreWorkConnection {
    *
    * If no message has been sent, then the value of this member is 0.
    */
-  uint64_t aggregatorTransactionId;
+  uint64_t tapebridgeTransId;
 
   /**
    * If a request has been resent to the client, then this is the absolute

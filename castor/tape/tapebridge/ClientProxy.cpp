@@ -119,15 +119,15 @@ castor::tape::tapebridge::ClientProxy::~ClientProxy() throw() {
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::Volume
   *castor::tape::tapebridge::ClientProxy::getVolume(
-  const uint64_t aggregatorTransactionId)
+  const uint64_t tapebridgeTransId)
   throw(castor::exception::Exception) {
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId", m_mountTransactionId   ),
-      castor::dlf::Param("volReqId"          , m_mountTransactionId   ),
-      castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
-      castor::dlf::Param("driveUnit"         , m_driveUnit            ),
+      castor::dlf::Param("mountTransactionId", m_mountTransactionId),
+      castor::dlf::Param("volReqId"          , m_mountTransactionId),
+      castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId   ),
+      castor::dlf::Param("driveUnit"         , m_driveUnit         ),
       castor::dlf::Param("clientAddress"     ,
         m_clientAddress.getDescription())};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG,
@@ -137,7 +137,7 @@ castor::tape::tapegateway::Volume
   // Prepare the request
   tapegateway::VolumeRequest request;
   request.setMountTransactionId(m_mountTransactionId);
-  request.setAggregatorTransactionId(aggregatorTransactionId);
+  request.setAggregatorTransactionId(tapebridgeTransId);
   request.setUnit(m_driveUnit);
 
   // Send the request and receive the reply
@@ -161,7 +161,7 @@ castor::tape::tapegateway::Volume
 
       try {
         checkTransactionIds("Volume", reply->mountTransactionId(),
-          aggregatorTransactionId, reply->aggregatorTransactionId());
+          tapebridgeTransId, reply->aggregatorTransactionId());
       } catch(castor::exception::Exception &ex) {
         TAPE_THROW_CODE(ex.code(),
           ": Failed to get volume"
@@ -193,10 +193,10 @@ castor::tape::tapegateway::Volume
       }
 
       castor::dlf::Param params[] = {
-        castor::dlf::Param("mountTransactionId", m_mountTransactionId   ),
-        castor::dlf::Param("volReqId"          , m_mountTransactionId   ),
-        castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
-        castor::dlf::Param("driveUnit"         , m_driveUnit            ),
+        castor::dlf::Param("mountTransactionId", m_mountTransactionId),
+        castor::dlf::Param("volReqId"          , m_mountTransactionId),
+        castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId   ),
+        castor::dlf::Param("driveUnit"         , m_driveUnit         ),
         castor::dlf::Param("clientAddress"     ,
           m_clientAddress.getDescription())};
       castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
@@ -204,7 +204,7 @@ castor::tape::tapegateway::Volume
 
       try {
         checkTransactionIds("NoMoreFiles", reply->mountTransactionId(),
-          aggregatorTransactionId, reply->aggregatorTransactionId());
+          tapebridgeTransId, reply->aggregatorTransactionId());
       } catch(castor::exception::Exception &ex) {
         TAPE_THROW_CODE(ex.code(),
           ": Failed to get volume"
@@ -235,7 +235,7 @@ castor::tape::tapegateway::Volume
 // sendFilesToMigrateListRequest
 //-----------------------------------------------------------------------------
 int castor::tape::tapebridge::ClientProxy::sendFilesToMigrateListRequest(
-  const uint64_t aggregatorTransactionId,
+  const uint64_t tapebridgeTransId,
   const uint64_t maxFiles,
   const uint64_t maxBytes) const
   throw(castor::exception::Exception) {
@@ -253,7 +253,7 @@ int castor::tape::tapebridge::ClientProxy::sendFilesToMigrateListRequest(
   // Prepare the request
   tapegateway::FilesToMigrateListRequest request;
   request.setMountTransactionId(m_mountTransactionId);
-  request.setAggregatorTransactionId(aggregatorTransactionId);
+  request.setAggregatorTransactionId(tapebridgeTransId);
   request.setMaxFiles(maxFiles);
   request.setMaxBytes(maxBytes);
 
@@ -275,19 +275,19 @@ int castor::tape::tapebridge::ClientProxy::sendFilesToMigrateListRequest(
       utils::timevalToDouble(connectDuration);
 
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId", m_mountTransactionId   ),
-      castor::dlf::Param("volReqId"          , m_mountTransactionId   ),
-      castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
-      castor::dlf::Param("driveUnit"         , m_driveUnit            ),
-      castor::dlf::Param("TPVID"             , m_vid                  ),
-      castor::dlf::Param("dgn"               , m_dgn                  ),
+      castor::dlf::Param("mountTransactionId", m_mountTransactionId ),
+      castor::dlf::Param("volReqId"          , m_mountTransactionId ),
+      castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId    ),
+      castor::dlf::Param("driveUnit"         , m_driveUnit          ),
+      castor::dlf::Param("TPVID"             , m_vid                ),
+      castor::dlf::Param("dgn"               , m_dgn                ),
       castor::dlf::Param("clientAddress"     ,
         m_clientAddress.getDescription()),
-      castor::dlf::Param("maxFiles"          , maxFiles               ),
-      castor::dlf::Param("maxBytes"          , maxBytes               ),
-      castor::dlf::Param("clientType"        , m_clientType           ),
-      castor::dlf::Param("clientSock"        , clientSock.get()       ),
-      castor::dlf::Param("connectDuration"   , connectDurationDouble  )};
+      castor::dlf::Param("maxFiles"          , maxFiles             ),
+      castor::dlf::Param("maxBytes"          , maxBytes             ),
+      castor::dlf::Param("clientType"        , m_clientType         ),
+      castor::dlf::Param("clientSock"        , clientSock.get()     ),
+      castor::dlf::Param("connectDuration"   , connectDurationDouble)};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       TAPEBRIDGE_SENT_FILESTOMIGRATELISTREQUEST, params);
   }
@@ -302,7 +302,7 @@ int castor::tape::tapebridge::ClientProxy::sendFilesToMigrateListRequest(
 castor::tape::tapegateway::FilesToMigrateList
   *castor::tape::tapebridge::ClientProxy::
   receiveFilesToMigrateListRequestReplyAndClose(
-  const uint64_t aggregatorTransactionId,
+  const uint64_t tapebridgeTransId,
   const int      clientSock) const
   throw(castor::exception::Exception) {
 
@@ -327,7 +327,7 @@ castor::tape::tapegateway::FilesToMigrateList
 
       try {
         checkTransactionIds("FilesToMigrateList", reply->mountTransactionId(),
-          aggregatorTransactionId, reply->aggregatorTransactionId());
+          tapebridgeTransId, reply->aggregatorTransactionId());
       } catch(castor::exception::Exception &ex) {
         TAPE_THROW_CODE(ex.code(),
           ": Failed to " << task <<
@@ -361,7 +361,7 @@ castor::tape::tapegateway::FilesToMigrateList
 
       try {
         checkTransactionIds("NoMoreFiles", reply->mountTransactionId(),
-          aggregatorTransactionId, reply->aggregatorTransactionId());
+          tapebridgeTransId, reply->aggregatorTransactionId());
       } catch(castor::exception::Exception &ex) {
         TAPE_THROW_CODE(ex.code(),
           ": Failed to " << task <<
@@ -392,7 +392,7 @@ castor::tape::tapegateway::FilesToMigrateList
 // sendFilesToRecallListRequest
 //-----------------------------------------------------------------------------
 int castor::tape::tapebridge::ClientProxy::sendFilesToRecallListRequest(
-  const uint64_t aggregatorTransactionId,
+  const uint64_t tapebridgeTransId,
   const uint64_t maxFiles,
   const uint64_t maxBytes) const
   throw(castor::exception::Exception) {
@@ -410,7 +410,7 @@ int castor::tape::tapebridge::ClientProxy::sendFilesToRecallListRequest(
   // Prepare the request
   tapegateway::FilesToRecallListRequest request;
   request.setMountTransactionId(m_mountTransactionId);
-  request.setAggregatorTransactionId(aggregatorTransactionId);
+  request.setAggregatorTransactionId(tapebridgeTransId);
   request.setMaxFiles(maxFiles);
   request.setMaxBytes(maxBytes);
 
@@ -433,7 +433,7 @@ int castor::tape::tapebridge::ClientProxy::sendFilesToRecallListRequest(
 castor::tape::tapegateway::FilesToRecallList
   *castor::tape::tapebridge::ClientProxy::
   receiveFilesToRecallListRequestReplyAndClose(
-  const uint64_t aggregatorTransactionId,
+  const uint64_t tapebridgeTransId,
   const int      clientSock) const
   throw(castor::exception::Exception) {
 
@@ -458,7 +458,7 @@ castor::tape::tapegateway::FilesToRecallList
 
       try {
         checkTransactionIds("FilesToRecallList", reply->mountTransactionId(),
-          aggregatorTransactionId, reply->aggregatorTransactionId());
+          tapebridgeTransId, reply->aggregatorTransactionId());
       } catch(castor::exception::Exception &ex) {
         TAPE_THROW_CODE(ex.code(),
           ": Failed to " << task <<
@@ -485,7 +485,7 @@ castor::tape::tapegateway::FilesToRecallList
 
       try {
         checkTransactionIds("NoMoreFiles", reply->mountTransactionId(),
-          aggregatorTransactionId, reply->aggregatorTransactionId());
+          tapebridgeTransId, reply->aggregatorTransactionId());
       } catch(castor::exception::Exception &ex) {
         TAPE_THROW_CODE(ex.code(),
           ": Failed to " << task <<
@@ -517,15 +517,15 @@ castor::tape::tapegateway::FilesToRecallList
 //-----------------------------------------------------------------------------
 castor::tape::tapegateway::DumpParameters
   *castor::tape::tapebridge::ClientProxy::getDumpParameters(
-  const uint64_t aggregatorTransactionId) const
+  const uint64_t tapebridgeTransId) const
   throw(castor::exception::Exception) {
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId", m_mountTransactionId   ),
-      castor::dlf::Param("volReqId"          , m_mountTransactionId   ),
-      castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
-      castor::dlf::Param("driveUnit"         , m_driveUnit            ),
+      castor::dlf::Param("mountTransactionId", m_mountTransactionId),
+      castor::dlf::Param("volReqId"          , m_mountTransactionId),
+      castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId   ),
+      castor::dlf::Param("driveUnit"         , m_driveUnit         ),
       castor::dlf::Param("clientAddress"     ,
         m_clientAddress.getDescription())};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG,
@@ -535,7 +535,7 @@ castor::tape::tapegateway::DumpParameters
   // Prepare the request
   tapegateway::DumpParametersRequest request;
   request.setMountTransactionId(m_mountTransactionId);
-  request.setAggregatorTransactionId(aggregatorTransactionId);
+  request.setAggregatorTransactionId(tapebridgeTransId);
 
   // Send the request and receive the reply
   timeval connectDuration  = {0, 0};
@@ -562,7 +562,7 @@ castor::tape::tapegateway::DumpParameters
 
       try {
         checkTransactionIds("DumpParameters", reply->mountTransactionId(),
-          aggregatorTransactionId, reply->aggregatorTransactionId());
+          tapebridgeTransId, reply->aggregatorTransactionId());
       } catch(castor::exception::Exception &ex) {
         TAPE_THROW_CODE(ex.code(),
           ": Failed to get dump parameters"
@@ -595,19 +595,19 @@ castor::tape::tapegateway::DumpParameters
 // notifyDumpMessage
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::ClientProxy::notifyDumpMessage(
-  const uint64_t aggregatorTransactionId,
+  const uint64_t tapebridgeTransId,
   const char     (&message)[CA_MAXLINELEN+1]) const
   throw(castor::exception::Exception) {
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId", m_mountTransactionId   ),
-      castor::dlf::Param("volReqId"          , m_mountTransactionId   ),
-      castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
-      castor::dlf::Param("driveUnit"         , m_driveUnit            ),
+      castor::dlf::Param("mountTransactionId", m_mountTransactionId),
+      castor::dlf::Param("volReqId"          , m_mountTransactionId),
+      castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId   ),
+      castor::dlf::Param("driveUnit"         , m_driveUnit         ),
       castor::dlf::Param("clientAddress"     ,
         m_clientAddress.getDescription()),
-      castor::dlf::Param("message"           , message                )};
+      castor::dlf::Param("message"           , message             )};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG,
       TAPEBRIDGE_NOTIFY_CLIENT_DUMP_MESSAGE, params);
   }
@@ -615,21 +615,21 @@ void castor::tape::tapebridge::ClientProxy::notifyDumpMessage(
   // Prepare the request
   tapegateway::DumpNotification request;
   request.setMountTransactionId(m_mountTransactionId);
-  request.setAggregatorTransactionId(aggregatorTransactionId);
+  request.setAggregatorTransactionId(tapebridgeTransId);
   request.setMessage(message);
 
   const char *const requestTypeName = "DumpNotification";
-  notifyClient(aggregatorTransactionId, requestTypeName, request);
+  notifyClient(tapebridgeTransId, requestTypeName, request);
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId", m_mountTransactionId   ),
-      castor::dlf::Param("volReqId"          , m_mountTransactionId   ),
-      castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
-      castor::dlf::Param("driveUnit"         , m_driveUnit            ),
+      castor::dlf::Param("mountTransactionId", m_mountTransactionId),
+      castor::dlf::Param("volReqId"          , m_mountTransactionId),
+      castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId   ),
+      castor::dlf::Param("driveUnit"         , m_driveUnit         ),
       castor::dlf::Param("clientAddress"     ,
         m_clientAddress.getDescription()),
-      castor::dlf::Param("message"           , message                )};
+      castor::dlf::Param("message"           , message             )};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG,
       TAPEBRIDGE_NOTIFIED_CLIENT_DUMP_MESSAGE, params);
   }
@@ -640,15 +640,15 @@ void castor::tape::tapebridge::ClientProxy::notifyDumpMessage(
 // ping
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::ClientProxy::ping(
-  const uint64_t aggregatorTransactionId) const
+  const uint64_t tapebridgeTransId) const
   throw(castor::exception::Exception) {
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId", m_mountTransactionId   ),
-      castor::dlf::Param("volReqId"          , m_mountTransactionId   ),
-      castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
-      castor::dlf::Param("driveUnit"         , m_driveUnit            ),
+      castor::dlf::Param("mountTransactionId", m_mountTransactionId),
+      castor::dlf::Param("volReqId"          , m_mountTransactionId),
+      castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId   ),
+      castor::dlf::Param("driveUnit"         , m_driveUnit         ),
       castor::dlf::Param("clientAddress"     ,
         m_clientAddress.getDescription())};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG,
@@ -658,17 +658,17 @@ void castor::tape::tapebridge::ClientProxy::ping(
   // Prepare the request
   tapegateway::PingNotification request;
   request.setMountTransactionId(m_mountTransactionId);
-  request.setAggregatorTransactionId(aggregatorTransactionId);
+  request.setAggregatorTransactionId(tapebridgeTransId);
 
   const char *const requestTypeName = "PingNotification";
-  notifyClient(aggregatorTransactionId, requestTypeName, request);
+  notifyClient(tapebridgeTransId, requestTypeName, request);
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId", m_mountTransactionId   ),
-      castor::dlf::Param("volReqId"          , m_mountTransactionId   ),
-      castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
-      castor::dlf::Param("driveUnit"         , m_driveUnit            ),
+      castor::dlf::Param("mountTransactionId", m_mountTransactionId),
+      castor::dlf::Param("volReqId"          , m_mountTransactionId),
+      castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId   ),
+      castor::dlf::Param("driveUnit"         , m_driveUnit         ),
       castor::dlf::Param("clientAddress"     ,
         m_clientAddress.getDescription())};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG,
@@ -820,7 +820,7 @@ castor::IObject
 // receiveNotificationReplyAndClose
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::ClientProxy::receiveNotificationReplyAndClose(
-  const uint64_t aggregatorTransactionId,
+  const uint64_t tapebridgeTransId,
   const int      clientSock) const
   throw(castor::exception::Exception) {
 
@@ -842,7 +842,7 @@ void castor::tape::tapebridge::ClientProxy::receiveNotificationReplyAndClose(
 
       try {
         checkTransactionIds("NotificationAcknowledge",
-          reply->mountTransactionId(), aggregatorTransactionId,
+          reply->mountTransactionId(), tapebridgeTransId,
           reply->aggregatorTransactionId());
       } catch(castor::exception::Exception &ex) {
         TAPE_THROW_CODE(ex.code(),
@@ -871,7 +871,7 @@ void castor::tape::tapebridge::ClientProxy::receiveNotificationReplyAndClose(
 // notifyClient
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::ClientProxy::notifyClient(
-  const uint64_t    aggregatorTransactionId,
+  const uint64_t    tapebridgeTransId,
   const char *const requestTypeName,
   IObject&          request) const
   throw(castor::exception::Exception) {
@@ -897,7 +897,7 @@ void castor::tape::tapebridge::ClientProxy::notifyClient(
       }
 
       checkTransactionIds("NotificationAcknowledge",
-        reply->mountTransactionId(), aggregatorTransactionId,
+        reply->mountTransactionId(), tapebridgeTransId,
         reply->aggregatorTransactionId());
     }
     break;
@@ -947,8 +947,8 @@ void  castor::tape::tapebridge::ClientProxy::throwEndNotificationErrorReport(
 void castor::tape::tapebridge::ClientProxy::checkTransactionIds(
   const char *const messageTypeName,
   const uint32_t    actualMountTransactionId,
-  const uint64_t    expectedAggregatorTransactionId,
-  const uint64_t    actualAggregatorTransactionId) const
+  const uint64_t    expectedTapebridgeTransId,
+  const uint64_t    actualTapebridgeTransId) const
   throw(castor::exception::Exception) {
 
   int nbErrors = 0;
@@ -963,13 +963,13 @@ void castor::tape::tapebridge::ClientProxy::checkTransactionIds(
       " actualMountTransactionId=" << actualMountTransactionId;
   }
 
-  if(expectedAggregatorTransactionId != actualAggregatorTransactionId) {
+  if(expectedTapebridgeTransId != actualTapebridgeTransId) {
     nbErrors++;
     errorMessage <<
       ": Tape-bridge transaction ID mismatch"
       ": messageTypeName=" << messageTypeName <<
-      " expectedAggregatorTransactionId=" << expectedAggregatorTransactionId <<
-      " actualAggregatorTransactionId=" << actualAggregatorTransactionId;
+      " expectedTapebridgeTransId=" << expectedTapebridgeTransId <<
+      " actualTapebridgeTransId=" << actualTapebridgeTransId;
   }
   if(nbErrors > 0) {
     TAPE_THROW_CODE(EBADMSG,
@@ -982,15 +982,15 @@ void castor::tape::tapebridge::ClientProxy::checkTransactionIds(
 // notifyEndOfSession
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::ClientProxy::notifyEndOfSession(
-  const uint64_t aggregatorTransactionId) const
+  const uint64_t tapebridgeTransId) const
   throw(castor::exception::Exception) {
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId", m_mountTransactionId   ),
-      castor::dlf::Param("volReqId"          , m_mountTransactionId   ),
-      castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
-      castor::dlf::Param("driveUnit"         , m_driveUnit            ),
+      castor::dlf::Param("mountTransactionId", m_mountTransactionId),
+      castor::dlf::Param("volReqId"          , m_mountTransactionId),
+      castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId   ),
+      castor::dlf::Param("driveUnit"         , m_driveUnit         ),
       castor::dlf::Param("clientAddress"     ,
         m_clientAddress.getDescription())};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG,
@@ -1000,17 +1000,17 @@ void castor::tape::tapebridge::ClientProxy::notifyEndOfSession(
   // Prepare the request
   tapegateway::EndNotification request;
   request.setMountTransactionId(m_mountTransactionId);
-  request.setAggregatorTransactionId(aggregatorTransactionId);
+  request.setAggregatorTransactionId(tapebridgeTransId);
 
   const char *requestTypeName = "EndNotification";
-  notifyClient(aggregatorTransactionId, requestTypeName, request);
+  notifyClient(tapebridgeTransId, requestTypeName, request);
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId", m_mountTransactionId   ),
-      castor::dlf::Param("volReqId"          , m_mountTransactionId   ),
-      castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
-      castor::dlf::Param("driveUnit"         , m_driveUnit            ),
+      castor::dlf::Param("mountTransactionId", m_mountTransactionId),
+      castor::dlf::Param("volReqId"          , m_mountTransactionId),
+      castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId   ),
+      castor::dlf::Param("driveUnit"         , m_driveUnit         ),
       castor::dlf::Param("clientAddress"     ,
         m_clientAddress.getDescription())};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
@@ -1023,17 +1023,17 @@ void castor::tape::tapebridge::ClientProxy::notifyEndOfSession(
 // notifyEndOfFailedSession
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::ClientProxy::notifyEndOfFailedSession(
-  const uint64_t    aggregatorTransactionId,
+  const uint64_t    tapebridgeTransId,
   const int         errorCode,
   const std::string &errorMessage) const
   throw(castor::exception::Exception) {
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId", m_mountTransactionId   ),
-      castor::dlf::Param("volReqId"          , m_mountTransactionId   ),
-      castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
-      castor::dlf::Param("driveUnit"         , m_driveUnit            ),
+      castor::dlf::Param("mountTransactionId", m_mountTransactionId),
+      castor::dlf::Param("volReqId"          , m_mountTransactionId),
+      castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId   ),
+      castor::dlf::Param("driveUnit"         , m_driveUnit         ),
       castor::dlf::Param("clientAddress"     ,
         m_clientAddress.getDescription())};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG,
@@ -1043,23 +1043,23 @@ void castor::tape::tapebridge::ClientProxy::notifyEndOfFailedSession(
   // Prepare the request
   tapegateway::EndNotificationErrorReport request;
   request.setMountTransactionId(m_mountTransactionId);
-  request.setAggregatorTransactionId(aggregatorTransactionId);
+  request.setAggregatorTransactionId(tapebridgeTransId);
   request.setErrorCode(errorCode);
   request.setErrorMessage(errorMessage);
 
   const char *requestTypeName = "EndNotificationErrorReport";
-  notifyClient(aggregatorTransactionId, requestTypeName, request);
+  notifyClient(tapebridgeTransId, requestTypeName, request);
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId", m_mountTransactionId   ),
-      castor::dlf::Param("volReqId"          , m_mountTransactionId   ),
-      castor::dlf::Param("tapebridgeTransId" , aggregatorTransactionId),
-      castor::dlf::Param("driveUnit"         , m_driveUnit            ),
+      castor::dlf::Param("mountTransactionId", m_mountTransactionId),
+      castor::dlf::Param("volReqId"          , m_mountTransactionId),
+      castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId   ),
+      castor::dlf::Param("driveUnit"         , m_driveUnit         ),
       castor::dlf::Param("clientAddress"     ,
         m_clientAddress.getDescription()),
-      castor::dlf::Param("errorCode"         , errorCode              ),
-      castor::dlf::Param("errorMessage"      , errorMessage           )};
+      castor::dlf::Param("errorCode"         , errorCode           ),
+      castor::dlf::Param("errorMessage"      , errorMessage        )};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       TAPEBRIDGE_NOTIFIED_CLIENT_END_OF_FAILED_SESSION, params);
   }

@@ -459,17 +459,17 @@ void castor::tape::tapebridge::VdqmRequestHandler::exceptionThrowingRun(
   // If there is no volume to mount, then notify the client end of session
   // and return
   if(NULL == volume.get()) {
-    const uint64_t aggregatorTransactionId =
+    const uint64_t tapebridgeTransId =
       tapebridgeTransactionCounter.next();
     try {
-      clientProxy.notifyEndOfSession(aggregatorTransactionId);
+      clientProxy.notifyEndOfSession(tapebridgeTransId);
     } catch(castor::exception::Exception &ex) {
       castor::exception::Exception ex2(ex.code());
 
       ex2.getMessage() <<
         "Failed to notify client end of session"
         ": mountTransactionId=" << jobRequest.volReqId <<
-        ": aggregatorTransactionId=" << aggregatorTransactionId <<
+        ": tapebridgeTransId=" << tapebridgeTransId <<
         ": " << ex.getMessage().str();
 
       throw(ex2);

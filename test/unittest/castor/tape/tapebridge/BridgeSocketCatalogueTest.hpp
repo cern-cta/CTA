@@ -499,10 +499,10 @@ public:
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
-      const uint64_t aggregatorTransactionId = 1888;
+      const uint64_t tapebridgeTransId = 1888;
 
       CPPUNIT_ASSERT_THROW(
-        catalogue.addClientMigrationReportSock(sock, aggregatorTransactionId),
+        catalogue.addClientMigrationReportSock(sock, tapebridgeTransId),
         castor::exception::InvalidArgument);
       CPPUNIT_ASSERT_EQUAL(
         false,
@@ -521,10 +521,10 @@ public:
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
-      const uint64_t aggregatorTransactionId = 1888;
+      const uint64_t tapebridgeTransId = 1888;
 
       CPPUNIT_ASSERT_THROW(
-        catalogue.addClientMigrationReportSock(sock, aggregatorTransactionId),
+        catalogue.addClientMigrationReportSock(sock, tapebridgeTransId),
         castor::exception::InvalidArgument);
       CPPUNIT_ASSERT_EQUAL(
         false,
@@ -543,10 +543,10 @@ public:
   
     {
       BridgeSocketCatalogue catalogue(fileCloser);
-      const uint64_t aggregatorTransactionId = 1888;
+      const uint64_t tapebridgeTransId = 1888;
   
       CPPUNIT_ASSERT_THROW(
-        catalogue.addClientMigrationReportSock(sock, aggregatorTransactionId),
+        catalogue.addClientMigrationReportSock(sock, tapebridgeTransId),
         castor::exception::InvalidArgument);
       CPPUNIT_ASSERT_EQUAL(
         false,
@@ -565,11 +565,11 @@ public:
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
-      const uint64_t aggregatorTransactionId = 2000;
+      const uint64_t tapebridgeTransId = 2000;
 
       CPPUNIT_ASSERT_NO_THROW(
         catalogue.addClientMigrationReportSock(sock,
-          aggregatorTransactionId));
+          tapebridgeTransId));
       CPPUNIT_ASSERT_EQUAL(
         true,
         catalogue.clientMigrationReportSockIsSet());
@@ -592,17 +592,17 @@ public:
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
-      const uint64_t aggregatorTransactionId = 2222;
+      const uint64_t tapebridgeTransId = 2222;
 
       CPPUNIT_ASSERT_NO_THROW_MESSAGE(
         "Add once",
-        catalogue.addClientMigrationReportSock(sock, aggregatorTransactionId));
+        catalogue.addClientMigrationReportSock(sock, tapebridgeTransId));
       CPPUNIT_ASSERT_EQUAL(
         true,
         catalogue.clientMigrationReportSockIsSet());
       CPPUNIT_ASSERT_THROW_MESSAGE(
         "Add twice",
-        catalogue.addClientMigrationReportSock(sock, aggregatorTransactionId),
+        catalogue.addClientMigrationReportSock(sock, tapebridgeTransId),
         castor::exception::Exception);
       CPPUNIT_ASSERT_EQUAL(
         true,
@@ -625,10 +625,10 @@ public:
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
-      uint64_t aggregatorTransactionId = 0;
+      uint64_t tapebridgeTransId = 0;
 
       CPPUNIT_ASSERT_THROW(
-        catalogue.releaseClientMigrationReportSock(aggregatorTransactionId),
+        catalogue.releaseClientMigrationReportSock(tapebridgeTransId),
         castor::exception::Exception);
       CPPUNIT_ASSERT_EQUAL(
         false,
@@ -647,25 +647,25 @@ public:
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
-      const uint64_t        aggregatorTransactionId = 2333;
+      const uint64_t        tapebridgeTransId = 2333;
       int                   releasedSock = 0;
-      uint64_t              releasedAggregatorTransactionId = 0;
+      uint64_t              releasedTapebridgeTransId = 0;
 
 
       CPPUNIT_ASSERT_NO_THROW(
-        catalogue.addClientMigrationReportSock(sock, aggregatorTransactionId));
+        catalogue.addClientMigrationReportSock(sock, tapebridgeTransId));
       CPPUNIT_ASSERT_EQUAL(
         true,
         catalogue.clientMigrationReportSockIsSet());
       CPPUNIT_ASSERT_NO_THROW(
         releasedSock = catalogue.releaseClientMigrationReportSock(
-          releasedAggregatorTransactionId));
+          releasedTapebridgeTransId));
       CPPUNIT_ASSERT_EQUAL(
         sock,
         releasedSock);
       CPPUNIT_ASSERT_EQUAL(
-        aggregatorTransactionId,
-        releasedAggregatorTransactionId);
+        tapebridgeTransId,
+        releasedTapebridgeTransId);
       CPPUNIT_ASSERT_EQUAL(
         false,
         catalogue.clientMigrationReportSockIsSet());
@@ -683,30 +683,30 @@ public:
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
-      const uint64_t        aggregatorTransactionId = 2555;
+      const uint64_t        tapebridgeTransId = 2555;
       int                   releasedSock = 0;
-      uint64_t              releasedAggregatorTransactionId = 0;
+      uint64_t              releasedTapebridgeTransId = 0;
 
       CPPUNIT_ASSERT_NO_THROW(
-        catalogue.addClientMigrationReportSock(sock, aggregatorTransactionId));
+        catalogue.addClientMigrationReportSock(sock, tapebridgeTransId));
       CPPUNIT_ASSERT_EQUAL(
         true,
         catalogue.clientMigrationReportSockIsSet());
       CPPUNIT_ASSERT_NO_THROW(
         releasedSock = catalogue.releaseClientMigrationReportSock(
-          releasedAggregatorTransactionId));
+          releasedTapebridgeTransId));
       CPPUNIT_ASSERT_EQUAL(
         sock,
         releasedSock);
       CPPUNIT_ASSERT_EQUAL(
-        aggregatorTransactionId,
-        releasedAggregatorTransactionId);
+        tapebridgeTransId,
+        releasedTapebridgeTransId);
       CPPUNIT_ASSERT_EQUAL(
         false,
         catalogue.clientMigrationReportSockIsSet());
       CPPUNIT_ASSERT_THROW(
         catalogue.releaseClientMigrationReportSock(
-          releasedAggregatorTransactionId),
+          releasedTapebridgeTransId),
         castor::exception::Exception);
       CPPUNIT_ASSERT_EQUAL(
         false,
@@ -726,10 +726,10 @@ public:
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
-      const uint32_t    rtcpdReqMagic           = 2;
-      const uint32_t    rtcpdReqType            = 3;
-      const std::string rtcpdReqTapePath        = "";
-      const uint64_t    aggregatorTransactionId = 1888;
+      const uint32_t    rtcpdReqMagic     = 2;
+      const uint32_t    rtcpdReqType      = 3;
+      const std::string rtcpdReqTapePath  = "";
+      const uint64_t    tapebridgeTransId = 1888;
 
       CPPUNIT_ASSERT_THROW(
         catalogue.addGetMoreWorkConnection(
@@ -738,7 +738,7 @@ public:
           rtcpdReqType,
           rtcpdReqTapePath,
           clientSock,
-          aggregatorTransactionId),
+          tapebridgeTransId),
         castor::exception::InvalidArgument);
       CPPUNIT_ASSERT_EQUAL(
         false,
@@ -758,10 +758,10 @@ public:
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
-      const uint32_t    rtcpdReqMagic           = 2;
-      const uint32_t    rtcpdReqType            = 3;
-      const std::string rtcpdReqTapePath        = "";
-      const uint64_t    aggregatorTransactionId = 1888;
+      const uint32_t    rtcpdReqMagic     = 2;
+      const uint32_t    rtcpdReqType      = 3;
+      const std::string rtcpdReqTapePath  = "";
+      const uint64_t    tapebridgeTransId = 1888;
 
       CPPUNIT_ASSERT_THROW(
         catalogue.addGetMoreWorkConnection(
@@ -770,7 +770,7 @@ public:
           rtcpdReqType,
           rtcpdReqTapePath,
           clientSock,
-          aggregatorTransactionId),
+          tapebridgeTransId),
         castor::exception::InvalidArgument);
       CPPUNIT_ASSERT_EQUAL(
         false,
@@ -790,10 +790,10 @@ public:
   
     {
       BridgeSocketCatalogue catalogue(fileCloser);
-      const uint32_t    rtcpdReqMagic           = 2;
-      const uint32_t    rtcpdReqType            = 3;
-      const std::string rtcpdReqTapePath        = "";
-      const uint64_t    aggregatorTransactionId = 1888;
+      const uint32_t    rtcpdReqMagic     = 2;
+      const uint32_t    rtcpdReqType      = 3;
+      const std::string rtcpdReqTapePath  = "";
+      const uint64_t    tapebridgeTransId = 1888;
 
       CPPUNIT_ASSERT_THROW(
         catalogue.addGetMoreWorkConnection(
@@ -802,7 +802,7 @@ public:
           rtcpdReqType,
           rtcpdReqTapePath,
           clientSock,
-          aggregatorTransactionId),
+          tapebridgeTransId),
         castor::exception::InvalidArgument);
       CPPUNIT_ASSERT_EQUAL(
         false,
@@ -825,7 +825,7 @@ public:
       const uint32_t rtcpdReqMagic = 2;
       const uint32_t rtcpdReqType  = 3;
       const char     rtcpdReqTapePath[CA_MAXPATHLEN+1] = "";
-      const uint64_t aggregatorTransactionId = 1999;
+      const uint64_t tapebridgeTransId = 1999;
 
       CPPUNIT_ASSERT_NO_THROW(
         catalogue.addRtcpdDiskTapeIOControlConn(rtcpdSock));
@@ -837,7 +837,7 @@ public:
           rtcpdReqType,
           rtcpdReqTapePath,
           clientSock,
-          aggregatorTransactionId),
+          tapebridgeTransId),
         castor::exception::InvalidArgument);
       CPPUNIT_ASSERT_EQUAL(
         false,
@@ -864,7 +864,7 @@ public:
       const uint32_t rtcpdReqMagic = 2;
       const uint32_t rtcpdReqType  = 3;
       const char     rtcpdReqTapePath[CA_MAXPATHLEN+1] = "";
-      const uint64_t aggregatorTransactionId = 1999;
+      const uint64_t tapebridgeTransId = 1999;
 
       CPPUNIT_ASSERT_NO_THROW(
         catalogue.addRtcpdDiskTapeIOControlConn(rtcpdSock));
@@ -876,7 +876,7 @@ public:
           rtcpdReqType,
           rtcpdReqTapePath,
           clientSock,
-          aggregatorTransactionId),
+          tapebridgeTransId),
         castor::exception::InvalidArgument);
       CPPUNIT_ASSERT_EQUAL(
         false,
@@ -903,7 +903,7 @@ public:
       const uint32_t rtcpdReqMagic = 2;
       const uint32_t rtcpdReqType  = 3;
       const char     rtcpdReqTapePath[CA_MAXPATHLEN+1] = "";
-      const uint64_t aggregatorTransactionId = 1999;
+      const uint64_t tapebridgeTransId = 1999;
 
       CPPUNIT_ASSERT_NO_THROW(
         catalogue.addRtcpdDiskTapeIOControlConn(rtcpdSock));
@@ -915,7 +915,7 @@ public:
           rtcpdReqType,
           rtcpdReqTapePath,
           clientSock,
-          aggregatorTransactionId),
+          tapebridgeTransId),
         castor::exception::InvalidArgument);
       CPPUNIT_ASSERT_EQUAL(
         false,
@@ -942,7 +942,7 @@ public:
       const uint32_t rtcpdReqMagic = 2;
       const uint32_t rtcpdReqType  = 3;
       const char     rtcpdReqTapePath[CA_MAXPATHLEN+1] = "";
-      const uint64_t aggregatorTransactionId = 1999;
+      const uint64_t tapebridgeTransId = 1999;
 
       CPPUNIT_ASSERT_THROW(
         catalogue.addGetMoreWorkConnection(
@@ -951,7 +951,7 @@ public:
           rtcpdReqType,
           rtcpdReqTapePath,
           clientSock,
-          aggregatorTransactionId),
+          tapebridgeTransId),
         castor::exception::Exception);
       CPPUNIT_ASSERT_EQUAL(
         false,
@@ -974,7 +974,7 @@ public:
       const uint32_t rtcpdReqMagic = 2;
       const uint32_t rtcpdReqType  = 3;
       const char     rtcpdReqTapePath[CA_MAXPATHLEN+1] = "";
-      const uint64_t aggregatorTransactionId = 2222;
+      const uint64_t tapebridgeTransId = 2222;
 
       CPPUNIT_ASSERT_NO_THROW(
         catalogue.addRtcpdDiskTapeIOControlConn(rtcpdSock));
@@ -986,7 +986,7 @@ public:
           rtcpdReqType,
           rtcpdReqTapePath,
           clientSock,
-          aggregatorTransactionId));
+          tapebridgeTransId));
 
       CPPUNIT_ASSERT_EQUAL_MESSAGE(
         "Check getMoreWorkConnectionIsSet() returns true",
@@ -1032,7 +1032,7 @@ public:
       const uint32_t rtcpdReqMagic = 2;
       const uint32_t rtcpdReqType  = 3;
       const char     rtcpdReqTapePath[CA_MAXPATHLEN+1] = "";
-      const uint64_t aggregatorTransactionId = 2555;
+      const uint64_t tapebridgeTransId = 2555;
 
       CPPUNIT_ASSERT_NO_THROW(
         catalogue.addRtcpdDiskTapeIOControlConn(rtcpdSock));
@@ -1045,7 +1045,7 @@ public:
           rtcpdReqType,
           rtcpdReqTapePath,
           clientSock,
-          aggregatorTransactionId));
+          tapebridgeTransId));
 
       CPPUNIT_ASSERT_EQUAL_MESSAGE(
         "Check getMoreWorkConnectionIsSet() returns true",
@@ -1075,7 +1075,7 @@ public:
           rtcpdReqType,
           rtcpdReqTapePath,
           clientSock,
-          aggregatorTransactionId),
+          tapebridgeTransId),
         castor::exception::Exception);
       CPPUNIT_ASSERT_EQUAL(
         true,
@@ -1125,7 +1125,7 @@ public:
       const uint32_t rtcpdReqMagic = 2;
       const uint32_t rtcpdReqType  = 3;
       const char     rtcpdReqTapePath[CA_MAXPATHLEN+1] = "";
-      const uint64_t aggregatorTransactionId = 2888;
+      const uint64_t tapebridgeTransId = 2888;
       int            releasedSock = 0;
 
       CPPUNIT_ASSERT_NO_THROW(
@@ -1138,7 +1138,7 @@ public:
           rtcpdReqType,
           rtcpdReqTapePath,
           clientSock,
-          aggregatorTransactionId));
+          tapebridgeTransId));
       CPPUNIT_ASSERT_EQUAL(
         true,
         catalogue.getMoreWorkConnectionIsSet());
@@ -1172,7 +1172,7 @@ public:
       const uint32_t rtcpdReqMagic = 2;
       const uint32_t rtcpdReqType  = 3;
       const char     rtcpdReqTapePath[CA_MAXPATHLEN+1] = "";
-      const uint64_t aggregatorTransactionId = 3111;
+      const uint64_t tapebridgeTransId = 3111;
       int            releasedSock = -1;
 
       CPPUNIT_ASSERT_NO_THROW(
@@ -1185,7 +1185,7 @@ public:
           rtcpdReqType,
           rtcpdReqTapePath,
           clientSock,
-          aggregatorTransactionId));
+          tapebridgeTransId));
       CPPUNIT_ASSERT_EQUAL(
         true,
         catalogue.getMoreWorkConnectionIsSet());
@@ -1470,12 +1470,12 @@ public:
 
   void testGetAPendingSockCLIENT_GET_MORE_WORK() {
     TraceableDummyFileCloser fileCloser;
-    const int                rtcpdSock               = 12;
-    const uint32_t           rtcpdReqMagic           = 13;
-    const uint32_t           rtcpdReqType            = 14;
-    const std::string        rtcpdReqTapePath        = "rtcpdReqTapePath";
-    const int                clientSock              = 15;
-    const uint64_t           aggregatorTransactionId = 16;
+    const int                rtcpdSock         = 12;
+    const uint32_t           rtcpdReqMagic     = 13;
+    const uint32_t           rtcpdReqType      = 14;
+    const std::string        rtcpdReqTapePath  = "rtcpdReqTapePath";
+    const int                clientSock        = 15;
+    const uint64_t           tapebridgeTransId = 16;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -1491,7 +1491,7 @@ public:
           rtcpdReqType,
           rtcpdReqTapePath,
           clientSock,
-          aggregatorTransactionId));
+          tapebridgeTransId));
 
       // Create a set of file-descriptors where the get more work socket is
       // pending
@@ -1527,8 +1527,8 @@ public:
 
   void testGetAPendingSockCLIENT_MIGRATION_REPORT() {
     TraceableDummyFileCloser fileCloser;
-    const int                migrationReportSock     = 12;
-    const uint64_t           aggregatorTransactionId = 13;
+    const int                migrationReportSock = 12;
+    const uint64_t           tapebridgeTransId = 13;
 
     {
       BridgeSocketCatalogue catalogue(fileCloser);
@@ -1537,7 +1537,7 @@ public:
         "Add migration report socket to catalogue",
         catalogue.addClientMigrationReportSock(
           migrationReportSock,
-          aggregatorTransactionId));
+          tapebridgeTransId));
 
       // Create a set of file-descriptors where the IO control socket is
       // pending

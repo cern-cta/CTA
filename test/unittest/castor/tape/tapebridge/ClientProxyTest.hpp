@@ -275,11 +275,11 @@ public:
     for(int i=0; i<1000; i++) {
 
       // Use the ClientProxy to send a FilesToMigrateListRequest message
-      const uint64_t aggregatorTransactionId = 1;
-      const uint64_t maxFiles                = 2;
-      const uint64_t maxBytes                = 3;
+      const uint64_t tapebridgeTransId = 1;
+      const uint64_t maxFiles          = 2;
+      const uint64_t maxBytes          = 3;
       close(smartClientProxy->sendFilesToMigrateListRequest(
-        aggregatorTransactionId, maxFiles, maxBytes));
+        tapebridgeTransId, maxFiles, maxBytes));
 
       // Act as the client and accept the connection for more work from the
       // BridgeProtocolEngine

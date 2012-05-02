@@ -713,8 +713,16 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
     m_clientProxy.receiveNotificationReplyAndClose(tapebridgeTransId,
       closedClientSock);
   } catch(castor::exception::Exception &ex) {
-    // Add some context information and rethrow exception
-    TAPE_THROW_CODE(ex.code(), ": " << ex.getMessage().str());
+
+    // Gather the error information into an SessionError object
+    SessionError sessionError;
+    sessionError.setErrorCode(ex.code());
+    sessionError.setErrorMessage(ex.getMessage().str());
+    sessionError.setErrorScope(SessionError::SESSION_SCOPE);
+
+    // Push the error onto the back of the list of errors generated during the
+    // tape session
+    m_sessionErrors.push_back(sessionError);
   }
   {
     castor::dlf::Param params[] = {
@@ -1531,7 +1539,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpWaiting(
     }
 
     // Push the error onto the back of the list of errors generated during the
-    // session with the rtcpd daemon
+    // tape session
     m_sessionErrors.push_back(sessionError);
   }
 }
@@ -2536,7 +2544,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
     sessionError.setErrorScope(SessionError::SESSION_SCOPE);
 
     // Push the error onto the back of the list of errors generated during the
-    // session with the rtcpd daemon
+    // tape session
     m_sessionErrors.push_back(sessionError);
 
     // There is nothing else to do
@@ -2556,7 +2564,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
     sessionError.setErrorScope(SessionError::SESSION_SCOPE);
 
     // Push the error onto the back of the list of errors generated during the
-    // session with the rtcpd daemon
+    // tape session
     m_sessionErrors.push_back(sessionError);
 
     // There is nothing else to do
@@ -2577,7 +2585,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
     sessionError.setErrorScope(SessionError::SESSION_SCOPE);
 
     // Push the error onto the back of the list of errors generated during the
-    // session with the rtcpd daemon
+    // tape session
     m_sessionErrors.push_back(sessionError);
 
     // There is nothing else to do
@@ -2611,7 +2619,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
     sessionError.setErrorScope(SessionError::SESSION_SCOPE);
 
     // Push the error onto the back of the list of errors generated during the
-    // session with the rtcpd daemon
+    // tape session
     m_sessionErrors.push_back(sessionError);
 
     // There is nothing else to do
@@ -2760,7 +2768,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   m_clientProxy.checkTransactionIds(
     "FileToMigrateList",
     reply->mountTransactionId(),
-    getMoreWorkConnection.aggregatorTransactionId,
+    getMoreWorkConnection.tapebridgeTransId,
     reply->aggregatorTransactionId());
 
   if(0 == reply->filesToMigrate().size()) {
@@ -3048,7 +3056,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   m_clientProxy.checkTransactionIds(
      "FileToRecallList",
      reply->mountTransactionId(),
-     getMoreWorkConnection.aggregatorTransactionId,
+     getMoreWorkConnection.tapebridgeTransId,
      reply->aggregatorTransactionId());
 
   if(0 == reply->filesToRecall().size()) {
@@ -3154,7 +3162,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   m_clientProxy.checkTransactionIds(
     "NoMoreFiles",
     reply->mountTransactionId(),
-    getMoreWorkConnection.aggregatorTransactionId,
+    getMoreWorkConnection.tapebridgeTransId,
     reply->aggregatorTransactionId());
 
   tellRtcpdThereAreNoMoreFiles(
@@ -3537,9 +3545,9 @@ void castor::tape::tapebridge::BridgeProtocolEngine::notifyClientEndOfSession()
     // (...) to castor::exception::Exception
     try {
       // An error received from the rtcpd daemon has priority over an exception
-      // thrown whilst running the session with the rtcpd daemon
+      // thrown whilst running the tape session
 
-      // If an error was generated during the session with the rtcpd daemon
+      // If an error was generated during the tape session
       if(!m_sessionErrors.empty()) {
 
         // Get the oldest and first error to have occurred
@@ -3591,8 +3599,8 @@ void castor::tape::tapebridge::BridgeProtocolEngine::notifyClientEndOfSession()
 //-----------------------------------------------------------------------------
 bool castor::tape::tapebridge::BridgeProtocolEngine::shuttingDownRtcpdSession()
   const {
-  // The session with the rtcpd daemon should be shut down if the rtcpd daemon
-  // has sent us any errors
+  // The session with the rtcpd daemon should be shut down if there has been at
+  // least one error detected during the tape session
   return !m_sessionErrors.empty();
 }
 
