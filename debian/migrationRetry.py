@@ -42,7 +42,7 @@ def migrationRetry(errorCode,nbRetry):
    if errorCode == ENOENT:
       return 0
 
-   if errorCode == SECHECKSUM and nbRetry > defaultNormalRetries:
+   if errorCode == SECHECKSUM and nbRetry >= defaultNormalRetries:
       return 0
   
    # Default strategy is to retry indefinitely.
