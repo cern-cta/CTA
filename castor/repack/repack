@@ -194,7 +194,7 @@ def displayStatus():
                SUM(CASE WHEN SubRequest.status IN (7, 9) THEN 1 ELSE 0 END) failed,
                SUM(CASE WHEN SubRequest.status IN (8, 11) THEN 1 ELSE 0 END) migrated
           FROM StageRepackRequest, SubRequest
-         WHERE SubRequest.request(+) = StageRepackRequest.id
+         WHERE SubRequest.request(+) = StageRepackRequest.id AND SubRequest.reqtype = 119
          GROUP BY StageRepackRequest.creationTime, StageRepackRequest.username, StageRepackRequest.machine,
                   StageRepackRequest.repackVID, StageRepackRequest.status
          HAVING StageRepackRequest.status IN (0, 1, 4)
