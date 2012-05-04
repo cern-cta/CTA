@@ -80,7 +80,7 @@ const char *castor::client::STAGE_EGID = "STAGE_EGID";
 const char *castor::client::CLIENT_CONF = "CLIENT";
 const char *castor::client::LOWPORT_CONF = "LOWPORT";
 const char *castor::client::HIGHPORT_CONF = "HIGHPORT";
-const char *castor::client::SEC_MECH_ENV = "CSEC_MECH"; // Security protocol GSI, ID, KRB5,KRB4
+const char *castor::client::SEC_MECH_ENV = "CSEC_MECH"; // Security protocol ID, KRB5
 const char *castor::client::SECURITY_ENV = "SECURE_CASTOR"; // Security enable
 const char *castor::client::SECURITY_CONF = "SECURE_CASTOR";
 
@@ -427,7 +427,7 @@ void castor::client::BaseClient::setAuthorizationId()
 }
 
 //------------------------------------------------------------------------------
-// setAutorizationId
+// setAuthorizationId
 //------------------------------------------------------------------------------
 void castor::client::BaseClient::setAuthorizationId(uid_t uid, gid_t gid) throw() {
   m_authUid = uid;
@@ -436,57 +436,19 @@ void castor::client::BaseClient::setAuthorizationId(uid_t uid, gid_t gid) throw(
 }
 
 //------------------------------------------------------------------------------
-// setAutorization
+// setAuthorization
 //------------------------------------------------------------------------------
 void castor::client::BaseClient::setAuthorization() throw(castor::exception::Exception) {
   char *security;
-  char *mech;
   // Check if security env option is set.
   if (((security = getenv (castor::client::SECURITY_ENV)) != 0 ||
        (security = getconfent((char *)castor::client::CLIENT_CONF,
                               (char *)castor::client::SECURITY_CONF,0)) != 0 ) &&
       strcasecmp(security, "YES") == 0) {
-    if (( mech = getenv (castor::client::SEC_MECH_ENV)) != 0) {
-      if (strlen(mech) > CA_MAXCSECPROTOLEN) {
-        serrno = EINVAL;
-        castor::exception::Exception e(serrno);
-        e.getMessage() << "Supplied security protocol is too long" << std::endl;
-        throw e;
-      } else {
-        m_Sec_mech = mech;
+        m_Sec_mech = "KRB5";
         m_hasSecAuthorization = true;
-        stage_trace(3, "Setting security mechanism: %s", mech);
+        stage_trace(3, "Setting security mechanism: KRB5");
       }
-    }
-  }
-}
-
-//------------------------------------------------------------------------------
-// setAutorization
-//------------------------------------------------------------------------------
-void castor::client::BaseClient::setAuthorization(char *mech, char *id) throw(castor::exception::Exception) {
-  if (strlen(mech) > CA_MAXCSECPROTOLEN) {
-    serrno = EINVAL;
-    castor::exception::Exception e(serrno);
-    e.getMessage() << "Supplied security protocol is too long" << std::endl;
-    throw e;
-  }
-
-  m_Sec_mech = mech;
-
-  if (strlen(id) > CA_MAXCSECNAMELEN) {
-    serrno = EINVAL;
-    castor::exception::Exception e(serrno);
-    e.getMessage() << "Supplied authorization id is too long" << std::endl;
-    throw e;
-  }
-
-  m_Csec_auth_id = id;
-  m_voname = NULL;
-  m_nbfqan = 0;
-  m_fqan   = NULL;
-  m_hasSecAuthorization = true;
-  stage_trace(3, "Setting security mechanism: %s", mech);
 }
 
 //------------------------------------------------------------------------------

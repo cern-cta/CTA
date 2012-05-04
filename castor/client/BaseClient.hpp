@@ -146,8 +146,6 @@ namespace castor {
        */
       void setAuthorization()
         throw (castor::exception::Exception);
-      void setAuthorization(char *mech, char *id)
-        throw (castor::exception::Exception);
 
       /**
        * gets the request handler port to use and put it
@@ -278,7 +276,6 @@ namespace castor {
       /// Strong Authentication parameters
       bool m_hasSecAuthorization;
       char *m_Sec_mech;
-      char *m_Csec_auth_id;
       char *m_voname;
       int  m_nbfqan;
       char **m_fqan;
