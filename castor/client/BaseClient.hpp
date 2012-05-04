@@ -275,7 +275,7 @@ namespace castor {
 
       /// Strong Authentication parameters
       bool m_hasSecAuthorization;
-      char *m_Sec_mech;
+      std::string m_Sec_mech;
       char *m_voname;
       int  m_nbfqan;
       char **m_fqan;
