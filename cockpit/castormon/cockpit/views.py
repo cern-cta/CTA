@@ -1,6 +1,5 @@
 import rpyc
-import datetime
-from decimal import *
+import datetime, math
 import urllib, urllib2
 
 from django.shortcuts import render_to_response, get_object_or_404, redirect
@@ -96,6 +95,105 @@ def _update_metrics_info():
             # secondly delete the metric info
             metric.delete()
 
+# here we define what we do to format the data, according on the requested format
+def _format_data_timeline(result_data, nb_group_keys):
+    return result_data
+
+def _format_data_sum(result_data, nb_group_keys):
+    if nb_group_keys == 0:
+        # we merge and add the elements of the lists one bye one
+        data = reduce((lambda x, y : [math.fsum(tup) for tup in zip(x,y)]), [raw[1] for raw in result_data])
+    elif nb_group_keys == 1:
+        data = dict()
+        # first get all the keys
+        for key in result_data[0][1].keys():
+            # then loop over the data for every key
+            for md in result_data:
+                for i in range(len(md[1][key])):
+                    try:
+                        data[key][i] += md[1][key][i]
+                    except KeyError:
+                        data[key] = list()
+                        for d in md[1][key]:
+                            # initialize with zeroes
+                            data[key].append(0)
+                        data[key][i] += md[1][key][i]
+    elif nb_group_keys == 2:
+        data = dict()
+        data['keys1'] = list()
+        data['keys2'] = list()
+        for md in result_data:
+            for key1 in md[1].keys():
+                if key1 not in data.keys():
+                    if key1 not in data['keys1'] : data['keys1'].append(key1)
+                    data[key1] = dict()
+                for key2 in md[1][key1]:
+                    if key2 not in data[key1].keys():
+                        if key2 not in data['keys2'] : data['keys2'].append(key2)
+                        data[key1][key2] = list()
+                        for d in md[1][key1][key2]:
+                            # initialize with zeroes
+                            data[key1][key2].append(0)
+                    for i in range(len(md[1][key1][key2])):
+                        data[key1][key2][i] += md[1][key1][key2][i]
+    else:
+        data = list()
+    return data
+    
+def _format_data_average(result_data, nb_group_keys):
+    if nb_group_keys == 0:
+        # we merge and add the elements of the lists one bye one
+        _sum = reduce((lambda x, y : [math.fsum(tup) for tup in zip(x,y)]), [raw[1] for raw in result_data])
+        data = [float(subsum) / len(result_data) for subsum in _sum]
+    elif nb_group_keys == 1:
+        data = dict()
+        # first get all the keys
+        for key in result_data[0][1].keys():
+            nb_datakeys = len(result_data[0][1][key])
+            # then loop over the data for every key
+            for md in result_data:
+                for i in range(nb_datakeys):
+                    try:
+                        data[key][i] += md[1][key][i]
+                    except KeyError:
+                        data[key] = list()
+                        for d in range(nb_datakeys):
+                            data[key].append(0)
+                        data[key][i] += md[1][key][i]
+            for i in range(nb_datakeys):
+                data[key][i] = float(data[key][i]) / len(result_data)
+    elif nb_group_keys == 2:
+        data = dict()
+        data['keys1'] = list()
+        data['keys2'] = list()
+        for md in result_data:
+            for key1 in md[1].keys():
+                if key1 not in data.keys():
+                    if key1 not in data['keys1'] : data['keys1'].append(key1)
+                    data[key1] = dict()
+                for key2 in md[1][key1]:
+                    if key2 not in data[key1].keys():
+                        if key2 not in data['keys2'] : data['keys2'].append(key2)
+                        data[key1][key2] = list()
+                        for d in md[1][key1][key2]:
+                            # initialize with zeroes
+                            data[key1][key2].append(0)
+                    for i in range(len(md[1][key1][key2])):
+                        data[key1][key2][i] += md[1][key1][key2][i]
+        for key1 in data.keys():
+            if key1 in ['keys1','keys2']: continue
+            for key2 in data[key1].keys():
+                for i in range(len(data[key1][key2])):
+                    data[key1][key2][i] = float(data[key1][key2][i]) / len(result_data)
+    else:
+        data = list()
+    return data
+
+_format_data = {
+    "timeline"  : _format_data_timeline,
+    "sum"       : _format_data_sum,
+    "average"   : _format_data_average,
+}
 
 ###################################################################################################
 #                                   Django Views
@@ -134,13 +232,14 @@ def display_metric(request, metric_name = None):
                               context_instance=RequestContext(request))
 
 
-def get_metric_data(request, metric_name, timestamp_from=None, timestamp_to=None):
+def get_metric_data(request, metric_name, timestamp_from=None, timestamp_to=None, format_type=None):
     """
     return the data for the given metric
     NB : used only by ajax calls
     :param metric_name:
     :param timestamp_from:
     :param timestamp_to:
+    :param format_type: the type of data you want (timeline, sum, average, ...)
     """
     bt = datetime.datetime.now() # debug
     res = dict()
@@ -151,6 +250,7 @@ def get_metric_data(request, metric_name, timestamp_from=None, timestamp_to=None
     groupkeys = simplejson.loads(metric.groupbykeys)
     res['datakeys'] = simplejson.loads(metric.data)[1]
     
+    # fetch data from DB
     if timestamp_from:
         if timestamp_to:
             metric_data = MetricData.objects.filter(name=metric_name).filter(timestamp__gt=timestamp_from).filter(timestamp__lt=timestamp_to).order_by('timestamp')
@@ -166,9 +266,9 @@ def get_metric_data(request, metric_name, timestamp_from=None, timestamp_to=None
     ###############################################################################################
     #   1) No group key, we plot the data "as is"
     ###############################################################################################
-    if len(groupkeys)==1 and groupkeys[0]=="NONE":
+    if len(groupkeys) == 1 and groupkeys[0] == "NONE" :
         res['groupby'] = 0
-        res['data'] = list()
+        result_data = list()
         for md in metric_data:
             l = list()
             try:
@@ -181,22 +281,24 @@ def get_metric_data(request, metric_name, timestamp_from=None, timestamp_to=None
                         l.append(e[0])
                     else:
                         l.append(e)
-                res['data'].append([md.timestamp, l])
+                result_data.append([md.timestamp, l])
         # here we handle counterhz datakey
         if "CounterHz" in res['datakeys']:
             position = res['datakeys'].index("CounterHz") # get position in the list
-            for d in res['data']:
+            for d in result_data:
                 tmp = d[1].pop(position)
-                freq = tmp / float(metric.window)
+                freq = tmp / float(metric.window) / float(metric.nbins)
                 d[1].insert(position, freq)
+        # format the data according to the requested format, default is timeline
+        res['data'] = _format_data.get(format_type, _format_data_timeline)(result_data, 0)
    
     ###############################################################################################
     #   2) one group key
     ###############################################################################################
-    elif len(groupkeys)==1 and groupkeys[0]!="NONE":
-        res['debug']['begin process'] = str(datetime.datetime.now())# debug
+    elif len(groupkeys) == 1 and groupkeys[0] != "NONE" :
+        #res['debug']['begin process'] = str(datetime.datetime.now())# debug
         res['groupby'] = 1
-        res['data'] = list()
+        result_data = list()
         res['groupkeys'] = list()
         # get ALL the groupby keywords for future process (we don't want to miss a groupby)
         for md in metric_data:
@@ -204,30 +306,80 @@ def get_metric_data(request, metric_name, timestamp_from=None, timestamp_to=None
                 if groupk not in res['groupkeys']:
                     res['groupkeys'].append(groupk)
         ## add the data
-        res['debug']['begin add data'] = str(datetime.datetime.now())# debug
+        #res['debug']['begin add data'] = str(datetime.datetime.now())# debug
         for md in metric_data:
             l = [md.timestamp, simplejson.loads(md.data)]
             # check if we didnt miss a groupkey, if so fill it with null (None)
             for groupk in res['groupkeys']:
                 if groupk not in l[1].keys():
-                    l[1][groupk] = [None]
-            res['data'].append(l)
+                    l[1][groupk] = []
+                    for datakey in res['datakeys']:
+                        # we add as much zero as there are datakeys
+                        l[1][groupk].append(0)
+            result_data.append(l)
         # here we handle counterhz datakey
-        res['debug']['begin counterhz'] = str(datetime.datetime.now())# debug
+        #res['debug']['begin counterhz'] = str(datetime.datetime.now())# debug
         if "CounterHz" in res['datakeys']:
             position = res['datakeys'].index("CounterHz") # get position in the list
-            for l in res['data']:
+            for l in result_data:
                 for groupk in res['groupkeys']:
-                    if l[1][groupk][position] == None: # skip if None
+                    if l[1][groupk][position] == 0: # skip if 0
                         continue
                     tmp = l[1][groupk].pop(position)
-                    freq = tmp / float(metric.window)
+                    freq = tmp / float(metric.window) / float(metric.nbins)
                     l[1][groupk].insert(position, freq)
-    
-    elif len(groupkeys)>1:
-        pass
+        # format the data according to the requested format, default is timeline
+        res['data'] = _format_data.get(format_type, _format_data_timeline)(result_data, 1)
 
-    res['debug']['finish'] = str(datetime.datetime.now())# debug
+    ###############################################################################################
+    #   3) two group keys
+    ###############################################################################################
+    elif len(groupkeys) == 2 :
+        res['groupby'] = 2
+        res['groupcategories'] = groupkeys
+        res['keys1'] = list()
+        res['keys2'] = list()
+        result_data = list()
+        # get ALL the groupby keywords for future process (we don't want to miss a groupby)
+        for md in metric_data:
+            data = simplejson.loads(md.data)
+            for key1 in data.keys():
+                if key1 not in res['keys1']:
+                    res['keys1'].append(key1)
+                for key2 in data[key1].keys():
+                    if key2 not in res['keys2']:
+                        res['keys2'].append(key2)
+        for md in metric_data:
+            l = [ md.timestamp, simplejson.loads(md.data)]
+            for key1 in res['keys1']:
+                if key1 not in l[1].keys():
+                    l[1][key1] = dict()
+                for key2 in res['keys2']:
+                    if key2 not in l[1][key1].keys():
+                        l[1][key1][key2] = []
+                        for datakey in res['datakeys']:
+                            # we add as much zero as there are datakeys
+                            l[1][key1][key2].append(0)
+            result_data.append(l)
+        # here we handle counterhz datakey
+        #res['debug']['begin counterhz'] = str(datetime.datetime.now())# debug
+        if "CounterHz" in res['datakeys']:
+            position = res['datakeys'].index("CounterHz") # get position in the list
+            for l in result_data:
+                for key1 in res['keys1']:
+                    for key2 in res['keys2']:
+                        if l[1][key1][key2][position] == 0: # skip if 0
+                            continue
+                        tmp = l[1][key1][key2].pop(position)
+                        freq = tmp / float(metric.window) / float(metric.nbins)
+                        l[1][key1][key2].insert(position, freq)
+        #res['keys1'] = list(reduce(( lambda x, y: set(x)|set(y) ), [d[1].keys() for d in result_data] )) # list unique keys of lvl 1
+        #res['keys2'] = list(reduce(( lambda x, y: set(x)|set(y) ), [v[0].keys() for v in [d[1].values() for d in result_data]] )) # list unique keys of lvl 2
+        res['data'] = _format_data.get(format_type, _format_data_timeline)(result_data, 2)
+
+
+    res['debug']['end'] = str(datetime.datetime.now())# debug
+
     return HttpResponse(simplejson.dumps(res))
 
 

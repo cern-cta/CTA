@@ -13,6 +13,7 @@ img {
 
 a.current {
     color: #f77b21;
+    border-bottom:1px dotted;
 }
 
 a {
@@ -20,16 +21,22 @@ a {
     text-decoration: none;
     font-weight: bold;
     cursor: pointer;
+    border-bottom:1px dotted black;
 }
 
 a:hover {
     color: #f77b21;
+    border-bottom:1px dotted #f77b21;
 }
 
 a:visited {
 }
 
 a:active {
+}
+
+a.refresh-plot {
+    border:none;
 }
 
 p {
@@ -121,7 +128,7 @@ div#metric-display img {
 div.filter-container {
     height: 50px;
     margin: 5px;
-    width: 450px;
+    width: 460px;
     float: left;
 }
 

@@ -1,24 +1,66 @@
+/* Some global variables to store the "states" of the chart */
 var log = '';
 var filter_type = 'quick';
 var chart;
 var hiddenSeries = {};
+var graphType = 'timeline';
+
+function drawChart(metric_container, from, to) {
+    /*
+     * Wrapper function to draw the chart, according to the type of graph selected
+     */
+    switch(graphType) {
+        case 'timeline':
+            _drawTimelineChart(metric_container, from, to);
+            break;
+        case 'sum':
+            _drawSumChart(metric_container, from, to, 'sum');
+            break;
+        case 'average':
+            _drawSumChart(metric_container, from, to, 'average');
+            break;
+        default:
+            break;
+    }
+}
+
+function getAjaxURL(metric_name, from, to, format_type) {
+    /*
+     * Build the URL for the Ajax request
+     * NB : we use join instead of string concatenation, for performance purpose
+     */
+    var url = null;
+    if(from) {
+        if(to) {
+            url = ['/data/metric/', metric_name, '/', from, '/', to, '/', format_type].join('') ;
+        } else {
+            url = ['/data/metric/', metric_name, '/', from, '/', format_type].join('') ;
+        }
+    } else {
+        url = ['/data/metric/', metric_name, '/', format_type].join('') ; 
+    }
+    return url;
+}
 
 function updateHiddenSeries() {
     /*
      * function used to keep track of the hidden series, when refreshing the chart
      */
     hiddenSeries = {};
-    for (var i = 0 ; i < chart.series.length ; i++) {
-        if ( !chart.series[i].visible ) {
-            hiddenSeries[chart.series[i].name] = true;
+    if (chart.series) {
+        for (var i = 0 ; i < chart.series.length ; i++) {
+            if ( !chart.series[i].visible ) {
+                hiddenSeries[chart.series[i].name] = true;
+            }
         }
     }
 }
 
 function refreshChart(input) {
     /*
-     * This function is called to refresh the chart, when user un/select logarithmic scale.
-     * :param input: the button clicked to select log scale $(input.toggle-log-scale)
+     * This function is called to refresh the chart
+     * when user un/select logarithmic scale.
+     * :param input: the button clicked
      */
     metric_container = input.closest('.metric_container');
     if (filter_type == 'quick') {
@@ -26,30 +68,6 @@ function refreshChart(input) {
     } else if (filter_type == 'advanced') {
         metric_container.find('input.do-advanced-filter').trigger('click');
     }
-}
-
-function sortObj(arr) {
-    /*
-     * this function is used to sort the json hashmaps
-     * of data, by timestamp
-     * (highchart cant handle unordered data)
-     */
-
-	// Setup Arrays
-	var sortedKeys = new Array();
-	var sortedObj = {};
-
-	// Separate keys and sort them
-	for (var i in arr){
-		sortedKeys.push(i);
-	}
-	sortedKeys.sort();
-
-	// Reconstruct sorted obj based on keys
-	for (var i in sortedKeys){
-		sortedObj[sortedKeys[i]] = arr[sortedKeys[i]];
-	}
-	return sortedObj;
 }
 
 function getPythonTimestamp(tmp) {
@@ -88,18 +106,12 @@ function getTimestamp(string) {
     return getPythonTimestamp(timestamp);
 }
 
-function drawChart(metric_container, from, to) {
-
-    metric_name = metric_container.attr('id');
-
-    // if we are on a display page
-    if (metric_name) {
-
-        // Create a timer
-        var start = + new Date();
-
-        // initialize char options
-        var options = {
+function getTimelineChartOptions(metric_name) {
+    /*
+     * Just build and return the options for the timeline chart.
+     */
+    var start = + new Date(); // Create a timer
+    return {
             chart: {
                 renderTo: metric_display[0],
                 events: {
@@ -111,10 +123,26 @@ function drawChart(metric_container, from, to) {
                     },
                 zoomType: 'x',
                 animation: false,
+                shadow: false,
                 marginTop: 20,
                 type: 'spline'
             },
+            plotOptions: {
+                series: {
+                    marker: {
+                        enabled: false    
+                    },
+                    shadow: false,
+                    //animation: false,
+                    states: {
+                        hover: {
+                                enabled: false
+                            }
+                    }
+                }              
+            },
             rangeSelector: {
+                enabled: true,
                 buttons : [
                     {
                         type : 'minute',
@@ -141,12 +169,17 @@ function drawChart(metric_container, from, to) {
                 enabled : true
             },
             xAxis: {
+                type: 'datetime',
                 ordinal: true
             },
             yAxis: {
+                //min: 0,
+                title: null,
                 type: log // 'logarithmic'
             },
             tooltip: {
+                shared: true,
+                crosshairs: true,
                 pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b><br/>',
                 valueDecimals: 4
             },
@@ -164,40 +197,114 @@ function drawChart(metric_container, from, to) {
             credits: {
                 enabled: false
             },
+            title: {
+                text: metric_name
+            },
+            scrollbar: {
+                enabled: true
+            },
             series: []
         };
+}
 
-        // now get JSON and compute it
-        if(from) {
-            if(to) {
-                url = ['/data/metric/', metric_name, '/', from, '/', to].join('') ;
-            } else {
-                url = ['/data/metric/', metric_name, '/', from].join('') ;
-            }
-        } else {
-            url = ['/data/metric/', metric_name].join('') ; // we use join instead of string concatenation, for performance purpose
-        }
-        //json["data"] = sortObj(json["data"]);
+function getSumChartOptions(metric_name) {
+    /*
+     * Just build and return the options for the sum/average chart.
+     */
+    var start = + new Date(); // Create a timer
+    return {
+            chart: {
+                renderTo: metric_display[0],
+                events: {
+                        load: function(chart) {
+                            this.setTitle(null, {
+                                text: 'Built chart in '+ (new Date() - start) +'ms'
+                            });
+                        }
+                    },
+                animation: false,
+                shadow: false,
+                type: 'column'
+            },
+            plotOptions: {
+                series: {
+                    colorByPoint:true,
+                }              
+            },
+            exporting: {
+                enabled : true
+            },
+            xAxis: {
+                categories: [],
+                name: ''
+            },
+            yAxis: {
+                title: null,
+                type: log // 'logarithmic'
+            },
+            tooltip: {
+                pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b><br/>',
+                valueDecimals: 4
+            },
+            legend: {
+                enabled: true,
+                align: 'right',
+                backgroundColor: '#FCFFC5',
+                borderColor: 'black',
+                borderWidth: 2,
+                layout: 'vertical',
+                verticalAlign: 'top',
+                y: 100,
+                shadow: true
+            },
+            credits: {
+                enabled: false
+            },
+            title: {
+                text: metric_name
+            },
+            series: []
+        };
+}
+
+function _drawTimelineChart(metric_container, from, to) {
+
+    var metric_name = metric_container.attr('id');
+
+    // if we are on a display page
+    if (metric_name) {
+
+        // initialize char options
+        var options = getTimelineChartOptions(metric_name); 
+
+        var url = getAjaxURL(metric_name, from, to, "timeline");
+        
+        // preprocess the data, and give them to highchart
         $.getJSON(url, function(json) {
             switch (json["groupby"]) {
                 case 0:
                     $.each(json["datakeys"], function (i, datakey) {
-                        // initialisation
+                        // serie initialisation
                         var seriesOptions = {
                             name : datakey,
-                            //animation: false,
-                            //enableMouseTracking : false,
                             dataGrouping:{
+                                enabled: true,
                                 groupPixelWidth: 12
                             },
-                            data : [],
+                            data : []
                         };
                         if (hiddenSeries[datakey]) {
                             seriesOptions.visible = false;
                         }
-                        $.each(json["data"], function() {
+                        $.each(json["data"], function(index, d) {
+                            var tmp;
+                            if (d[1][i] == 0) {
+                                tmp = null;
+                            } else {
+                                tmp = d[1][i];
+                            }
                             seriesOptions.data.push(
-                                [ this[0] * 1000 , this[1][i] ]
+                                [ d[0] * 1000 , tmp ]
                             );
                         });
                         options.series.push( seriesOptions );
@@ -205,10 +312,11 @@ function drawChart(metric_container, from, to) {
                     break;
                 case 1:
                     $.each(json["groupkeys"], function (i, groupkey) {
-                        // initialisation
+                        // serie initialisation
                         var seriesOptions = {
                             name : groupkey,
                             dataGrouping:{
+                                enabled: true,
                                 groupPixelWidth: 12
                             },
                             data : []
@@ -216,30 +324,129 @@ function drawChart(metric_container, from, to) {
                         if (hiddenSeries[groupkey]) {
                             seriesOptions.visible = false;
                         }
-                        $.each(json["data"], function(timestamp, d) {
-                            var tmp = null;
-                            if (this[1][groupkey][0] != null){
-                                tmp = this[1][groupkey][0];
+                        $.each(json["data"], function(i, d) {
+                            var tmp;
+                            if (d[1][groupkey][0] == 0){
+                                tmp = null;
+                            } else {
+                                tmp = d[1][groupkey][0];
                             }
                             seriesOptions.data.push(
-                                [ this[0] * 1000, tmp ]
+                                [ d[0] * 1000, tmp ]
                             );
                         });
                         options.series.push( seriesOptions );
                     });
                     break;
+                /*case 2:
+                    $.each(json['keys1'], function (i, key1) {
+                        $.each(json['keys2'], function (i, key2) {
+                            var seriesOptions = {
+                                name : key1+'-'+key2,
+                                dataGrouping:{
+                                    enabled: true,
+                                    groupPixelWidth: 12
+                                },
+                                data : []
+                            };
+                            $.each(json["data"], function(i, d) {
+                                var tmp;
+                                if (log == "logarithmic" && d[1][key1][key2][0] == 0){
+                                    tmp = null;
+                                } else {
+                                    tmp = d[1][key1][key2][0];
+                                }
+                                seriesOptions.data.push(
+                                    [ d[0] * 1000, tmp ]
+                                );
+                            });
+                            options.series.push( seriesOptions );
+                        });
+                    });*/
                 default:
+                    metric_container.find('select.graph-type').val('sum').change();
+                    //metric_display.empty().html("<br /><br /><b><p>This metric cannot be plotted with this graph type</p></b>");
                     break;
             } // switch end
-            chart = new Highcharts.StockChart(options);
+            if (options.series.length) {
+                chart = new Highcharts.Chart(options);
+            } else {
+                chart = null;
+            }
         });
     }
-} // end drawChart
+}
 
 
+function _drawSumChart(metric_container, from, to, format_type) {
+    var metric_name = metric_container.attr('id');
+
+    // if we are on a display page
+    if (metric_name) {
+
+        // initialize options
+        var options = getSumChartOptions(metric_name);
+
+        var url = getAjaxURL(metric_name, from, to, format_type);
+
+        // preprocess the data, and give them to highchart
+        $.getJSON(url, function(json) {
+            switch (json["groupby"]) {
+                case 0:
+                    options.xAxis.categories = json["datakeys"];
+                    options.series.push( { name: metric_name, data: json["data"]} );
+                    break;
+                case 1:
+                    options.xAxis.categories = json["groupkeys"];
+                    var data = [];
+                    $.each(json["groupkeys"], function (i, groupkey) {
+                        data.push(json["data"][groupkey][0]);
+                    });
+                    options.series.push( { name: metric_name, data: data} );
+                    break;
+                case 2:
+                    var data = {};
+                    options.xAxis.categories = json["data"]["keys1"];
+                    options.plotOptions.series.colorByPoint = false;
+                    $.each(json["data"]["keys2"], function (i, key2) {
+                        // serie initialisation
+                        var seriesOptions = {
+                            name : key2,
+                            data : []
+                        };
+                        if (hiddenSeries[key2]) {
+                            seriesOptions.visible = false;
+                        }
+                        $.each(json["data"]["keys1"], function (i, key1) {
+                            var tmp;
+                            if (json["data"][key1][key2][0] == 0){
+                                tmp = null;
+                            } else {
+                                tmp = json["data"][key1][key2][0];
+                            }
+                            seriesOptions.data.push(tmp);
+                        });
+                        options.series.push( seriesOptions );
+                    });
+                    break;
+                default:
+                    metric_display.empty().html("<br /><br /><b>This metric cannot be plotted with this graph type</b>");
+                    break;
+            } // switch end
+            if (options.series.length) {
+                chart = new Highcharts.Chart(options);
+            } else {
+                chart = null;
+            }
+        });
+    }
+}
 
 $(document).ready(function () {
 
+    /*****************************
+     * Hightchart global options *
+     *****************************/
     Highcharts.setOptions({
 		global: {
 			useUTC: false
@@ -247,7 +454,7 @@ $(document).ready(function () {
 	});
 
     /****************
-     * messages box *
+     * Messages box *
      ****************/
     box = $("div#messages");
     if (box.length) {
@@ -255,9 +462,9 @@ $(document).ready(function () {
     }
 
     /************************
-     * quick data filtering *
+     * Quick data filtering *
      ************************/
-    $('.metric_container').delegate('input.data-filter', 'click', function () {
+    $('.metric_container').on('click', 'input.data-filter', function () {
         metric_container = $(this).closest('.metric_container');
         metric_display = metric_container.find('div#metric-display');
         metric_container.find('input.data-filter.selected').removeClass('selected');
@@ -272,9 +479,9 @@ $(document).ready(function () {
     });
 
     /***************************
-     * advanced data filtering *
+     * Advanced data filtering *
      ***************************/
-    $('.metric_container').delegate('input.do-advanced-filter', 'click', function () {
+    $('.metric_container').on('click', 'input.do-advanced-filter', function () {
         input_from = $(this).parent().find('input.datepicker-from').val();
         input_to = $(this).parent().find('input.datepicker-to').val();
 
@@ -287,7 +494,7 @@ $(document).ready(function () {
         if(input_to) {
             timestamp_to = getPythonTimestamp(new Date(input_to).getTime() + 1000*3600*24);
             if(timestamp_from >= timestamp_to) {
-                alert("Time machine?");
+                alert("Did you build a time machine?");
                 return;
             }
         } else {
@@ -304,18 +511,13 @@ $(document).ready(function () {
         drawChart(metric_container, timestamp_from, timestamp_to);
     });
     
-    // trigger the default filtering
-    $('input[value="last 3 hours"]').trigger('click');
-
-    $('.metric_container').delegate('a.toggle-filter', 'click', function () {
-        $(this).parent().parent().find('div.advanced-filter').slideToggle();
-        $(this).parent().parent().find('div.quick-filter').slideToggle();
+    /***********************************
+     *   Quick/advanced filter switch  *
+     ***********************************/
+    $('.metric_container').on('click', 'a.toggle-filter', function () {
+        $(this).closest('div.filter-container').find('div.advanced-filter').slideToggle();
+        $(this).closest('div.filter-container').find('div.quick-filter').slideToggle();
     });
-
-    // datepicker
-    $(".datepicker-from").datepicker();
-    $(".datepicker-to").datepicker();
-
 
     /************************
      * Logarithmic scale    *
@@ -333,8 +535,23 @@ $(document).ready(function () {
     /*********************
      * Refresh button    *
      *********************/
-    $('.metric_container').delegate('a.refresh-plot', 'click', function () {
+    $('.metric_container').on('click', 'a.refresh-plot', function () {
         refreshChart($(this));
     });
+
+    /************************
+     * Graph type selection *
+     ************************/
+    $('.metric_container').on('change', 'select.graph-type', function () {
+        graphType = $(this).val();
+        refreshChart($(this));
+    });
+
+    // Datepicker
+    $(".datepicker-from").datepicker();
+    $(".datepicker-to").datepicker();
+
+    // Finally, we trigger the default filtering when the page is loaded
+    $('input[value="last 3 hours"]').trigger('click');
 
 });
