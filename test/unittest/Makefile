@@ -325,7 +325,7 @@ rununittests: \
   vmgr_vmgr_querypool.o \
   vmgr_send2vmgr.o \
   vmgr_vmgr_querytape_byte_u64.o
-	g++ $(COMMON_OPS) $(LIB_DIR_OPS) -lpthread $(UUID_LIB) -lcppunit -lz -o $@ $^
+	g++ $(COMMON_OPS) $(LIB_DIR_OPS) -lpthread -ldl $(UUID_LIB) -lcppunit -lz -o $@ $^
 
 runUnitTestsMain.o: runUnitTestsMain.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
