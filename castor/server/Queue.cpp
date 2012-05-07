@@ -25,6 +25,8 @@
 // Include files
 #include "castor/server/Queue.hpp"
 
+#include <unistd.h>
+
 
 //-----------------------------------------------------------------------------
 // Constructor
