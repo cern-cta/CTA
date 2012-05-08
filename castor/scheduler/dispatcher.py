@@ -274,23 +274,30 @@ class Dispatcher(threading.Thread):
                "-X", str(int(reqSourceDiskCopy)),
                "-S", str(reqSvcClass),
                "-t", str(int(reqCreationTime))]
-    # first schedule a transfer on the source node
-    schedSourceCandidates = [candidate.split(':') for candidate in sourceRfs.split('|')]
     transferid = srSubReqId
     fileid = (str(cfNsHost), int(cfFileId))
-    # 'Scheduling d2d source' message
-    dlf.writedebug(msgs.SCHEDD2DSRC, subreqid=transferid, reqid=reqId, fileid=fileid, DiskServer=str(schedSourceCandidates[0]))
+    arrivaltime =  time.time()
+    # check whether the destinations are not empty
+    if srRfs == None:
+      # fail the transfer immediately as we have nowhere to go. This will log the error too
+      self.updateDBQueue.put((transferid, fileid, 1721, 'No destination host found', reqId)) # 1721 = ESTSCHEDERR
+      return
+    # first schedule a transfer on the source node
+    schedSourceCandidates = [candidate.split(':') for candidate in sourceRfs.split('|')]
     diskserver, mountpoint = schedSourceCandidates[0]
     cmd = tuple(basecmd + ["-R", diskserver+':'+mountpoint])
-    arrivaltime =  time.time()
+    # 'Scheduling d2d source' message
+    dlf.writedebug(msgs.SCHEDD2DSRC, subreqid=transferid, reqid=reqId,
+                   fileid=fileid, DiskServer=diskserver, MountPoint=mountpoint)
     # effectively schedule the transfer onto its source
     if not self._schedule(transferid, reqId, fileid, arrivaltime, [(diskserver, cmd)], 'd2dsrc',
-                      msgs.SCHEDD2DSRCFAILED, 'Unable to schedule on source host'):
+                          msgs.SCHEDD2DSRCFAILED, 'Unable to schedule on source host'):
       return
     # now schedule on all potential destinations
     schedDestCandidates = [candidate.split(':') for candidate in srRfs.split('|')]
     # 'Scheduling d2d destination' message
-    dlf.writedebug(msgs.SCHEDD2DDEST, subreqid=transferid, reqid=reqId, fileid=fileid, DiskServers=str(schedDestCandidates))
+    dlf.writedebug(msgs.SCHEDD2DDEST, subreqid=transferid, reqid=reqId,
+                   fileid=fileid, DiskServers=str(schedDestCandidates))
     # build the list of hosts and transfers to launch
     transferList = []
     for diskserver, mountpoint in schedDestCandidates:
