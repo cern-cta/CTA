@@ -371,9 +371,10 @@ class RunningTransfersSet(object):
           if rc < 0:
             if scheduler not in killedTransfers:
               killedTransfers[scheduler] = []
-            killedTransfers[scheduler].append((transferid, fileid, rc,
-                                               'Transfer has been killed : ' + process.stderr.read(),
-                                               transfer[2]))
+            errMsg = 'Transfer has been killed'
+            if process:
+              errMsg += ' : ' + process.stderr.read()
+            killedTransfers[scheduler].append((transferid, fileid, rc, errMsg, transfer[2]))
       # cleanup ended transfers
       self.transfers = set(transfer for transfer in self.transfers if transfer[0] not in ended)
     finally:
