@@ -14,7 +14,6 @@
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/stager/SubRequestGetNextStatusCodes.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/stager/Tape.hpp"
 
 #include "castor/stager/daemon/DlfMessages.hpp"
 #include "castor/stager/daemon/RequestHelper.hpp"
@@ -103,7 +102,7 @@ namespace castor{
             }
             break;
 
-          case DISKCOPY_WAITTAPERECALL:   // create a tape copy and corresponding segment objects on stager catalogue
+          case 2:   // trigger a tape recall
             {
               // reset the filesize to the nameserver one, as we don't have anything in the db
               reqHelper->subrequest->castorFile()->setFileSize(reqHelper->cnsFilestat.filesize);
@@ -114,29 +113,8 @@ namespace castor{
                 // allowing to have a single round trip to the DB
                 break;
               }
-              // Create recall candidates
-              castor::stager::Tape *tape = 0;
-              result = reqHelper->stagerService->createRecallCandidate(reqHelper->subrequest, reqHelper->svcClass, tape);
-              if (result) {
-                // "Triggering Tape Recall"
-                castor::dlf::Param params[] = {
-                  castor::dlf::Param("Type", castor::ObjectsIdStrings[reqHelper->fileRequest->type()]),
-                  castor::dlf::Param("Filename", reqHelper->subrequest->fileName()),
-                  castor::dlf::Param("Username", reqHelper->username),
-                  castor::dlf::Param("Groupname", reqHelper->groupname),
-                  castor::dlf::Param("SvcClass", reqHelper->svcClass->name()),
-                  castor::dlf::Param("TPVID", tape->vid()),
-                  castor::dlf::Param("TapeStatus", castor::stager::TapeStatusCodesStrings[tape->status()]),
-                  castor::dlf::Param("FileSize", reqHelper->subrequest->castorFile()->fileSize()),
-                castor::dlf::Param(reqHelper->subrequestUuid)};
-                castor::dlf::dlf_writep(reqHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_TAPE_RECALL, 9, params, &(reqHelper->cnsFileid));
-              } else {
-                // no tape copy found because of Tape0 file, log it
-                // any other tape error will throw an exception and will be classified as LVL_ERROR
-                reqHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(reqHelper->cnsFileid));
-              }
-              if (tape != 0)
-                delete tape;
+              // otherwise trigger recall
+              reqHelper->stagerService->createRecallCandidate(reqHelper->subrequest->id());
             }
             break;
 

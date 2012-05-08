@@ -48,7 +48,6 @@
 #include "castor/tape/tapegateway/daemon/Constants.hpp"
 #include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"
 #include "castor/tape/tapegateway/daemon/MigratorErrorHandlerThread.hpp"
-#include "castor/tape/tapegateway/daemon/RecallerErrorHandlerThread.hpp"
 #include "castor/tape/tapegateway/daemon/TapeGatewayDaemon.hpp"
 #include "castor/tape/tapegateway/daemon/TapeMigrationMountLinkerThread.hpp"
 #include "castor/tape/tapegateway/daemon/VdqmRequestsCheckerThread.hpp"
@@ -227,12 +226,6 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
   std::auto_ptr<castor::server::SignalThreadPool> mPool(new castor::server::SignalThreadPool("R-MigrationErrorHandlerThread", mThread.release(),  DEFAULT_SLEEP_INTERVAL));
   addThreadPool(mPool.release());
   getThreadPool('R')->setNbThreads(1);
-
-  // recaller error handler
-  std::auto_ptr<castor::tape::tapegateway::RecallerErrorHandlerThread> rThread(new castor::tape::tapegateway::RecallerErrorHandlerThread(recallFunction));
-  std::auto_ptr<castor::server::SignalThreadPool> rPool(new castor::server::SignalThreadPool("S-RecallerErrorHandlerThread", rThread.release(), DEFAULT_SLEEP_INTERVAL));
-  addThreadPool(rPool.release());
-  getThreadPool('S')->setNbThreads(1);
 
   // start the daemon
   start();

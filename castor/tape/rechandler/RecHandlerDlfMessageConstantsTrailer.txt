@@ -1,7 +1,0 @@
-}; // enum RecHandlerDlfMessages
-} // namespace rechandler
-} // namespace tape
-} // namespace castor
-
-
-#endif // CASTOR_TAPE_RECHANDLER_RECHANDLERDLFMESSAGECONSTANTS_HPP

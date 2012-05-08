@@ -55,7 +55,6 @@
 #include "castor/stager/QueryParameter.hpp"
 #include "castor/stager/StageQueryResult.hpp"
 #include "castor/stager/DiskCopyStatusCodes.hpp"
-#include "castor/stager/SegmentStatusCodes.hpp"
 #include "castor/stager/DiskServerStatusCode.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "castor/rh/BasicResponse.hpp"
@@ -108,7 +107,7 @@ void castor::stager::daemon::QueryRequestSvcThread::setFileResponseStatus
     break;
 
   case DISKCOPY_WAITDISK2DISKCOPY:
-  case DISKCOPY_WAITTAPERECALL:
+  case 2:  // ex WAITTAPERECALL:
     st = FILE_STAGEIN;
     break;
 

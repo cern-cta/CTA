@@ -32,7 +32,6 @@
 #include "castor/Constants.hpp"
 #include "castor/IClient.hpp"
 #include "castor/stager/Request.hpp"
-#include "castor/stager/Tape.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "castor/stager/FileClass.hpp"
 #include "castor/stager/FileSystem.hpp"
@@ -72,19 +71,13 @@ static castor::SvcFactory<castor::db::ora::OraCommonSvc>* s_factoryOraCommonSvc 
 const std::string castor::db::ora::OraCommonSvc::s_requestToDoStatementString =
 "BEGIN requestToDo(:1, :2, :3); END;";
 
-/// SQL statement for selectTape
-const std::string castor::db::ora::OraCommonSvc::s_selectTapeStatementString =
-  "SELECT id FROM Tape WHERE vid = :1 AND side = :2 AND tpmode = :3";
-
-
 //------------------------------------------------------------------------------
 // OraCommonSvc
 //------------------------------------------------------------------------------
 castor::db::ora::OraCommonSvc::OraCommonSvc(const std::string name,
                                             castor::ICnvSvc* conversionService) :
   BaseSvc(name), DbBaseObj(conversionService),
-  m_requestToDoStatement(0),
-  m_selectTapeStatement(0) {
+  m_requestToDoStatement(0) {
   registerToCnvSvc(this);  // equivalent to conversionService->registerDepSvc(this);
 }
 
@@ -121,11 +114,9 @@ void castor::db::ora::OraCommonSvc::reset() throw() {
   // If something goes wrong, we just ignore it
   try {
     if (m_requestToDoStatement) deleteStatement(m_requestToDoStatement);
-    if (m_selectTapeStatement) deleteStatement(m_selectTapeStatement);
   } catch (castor::exception::Exception& ignored) {};
   // Now reset all pointers to 0
   m_requestToDoStatement = 0;
-  m_selectTapeStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -186,109 +177,6 @@ castor::db::ora::OraCommonSvc::requestToDo(std::string service)
       << std::endl << e.what();
     throw ex;
   }
-}
-
-//------------------------------------------------------------------------------
-// selectTape
-//------------------------------------------------------------------------------
-castor::stager::Tape*
-castor::db::ora::OraCommonSvc::selectTape(const std::string vid,
-                                          const int side,
-                                          const int tpmode)
-  throw (castor::exception::Exception) {
-  // Check whether the statements are ok
-  if (0 == m_selectTapeStatement) {
-    m_selectTapeStatement = createStatement(s_selectTapeStatementString);
-  }
-
-  // Execute statement and get result
-  u_signed64 id;
-  try {
-    m_selectTapeStatement->setString(1, vid);
-    m_selectTapeStatement->setInt(2, side);
-    m_selectTapeStatement->setInt(3, tpmode);
-    oracle::occi::ResultSet *rset = m_selectTapeStatement->executeQuery();
-    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      m_selectTapeStatement->closeResultSet(rset);
-      // we found nothing, so let's create the tape
-
-      castor::stager::Tape* tape = new castor::stager::Tape();
-      tape->setVid(vid);
-      tape->setSide(side);
-      tape->setTpmode(tpmode);
-      tape->setStatus(castor::stager::TAPE_UNUSED);
-      castor::BaseAddress ad;
-      ad.setCnvSvcName("DbCnvSvc");
-      ad.setCnvSvcType(castor::SVC_DBCNV);
-      try {
-        cnvSvc()->createRep(&ad, tape, false);
-        return tape;
-      } catch (castor::exception::Exception& e) {
-        delete tape;
-        // XXX Change createRep in CodeGenerator to forward the oracle errorcode
-        if ( e.getMessage().str().find("ORA-00001", 0) != std::string::npos ) {
-          // if violation of unique constraint, ie means that
-          // some other thread was quicker than us on the insertion
-          // So let's select what was inserted
-          rset = m_selectTapeStatement->executeQuery();
-          if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-            // Still nothing ! Here it's a real error
-            m_selectTapeStatement->closeResultSet(rset);
-            castor::exception::Internal ex;
-            ex.getMessage()
-              << "Unable to select tape while inserting "
-              << "violated unique constraint :"
-              << std::endl << e.getMessage().str();
-            throw ex;
-          }
-        } else {
-          m_selectTapeStatement->closeResultSet(rset);
-          // Else, "standard" error, throw exception
-          castor::exception::Internal ex;
-          ex.getMessage()
-            << "Exception while inserting new tape in the DB :"
-            << std::endl << e.getMessage().str();
-          throw ex;
-        }
-      }
-    }
-    // If we reach this point, then we selected successfully
-    // a tape and it's id is in rset
-    id = (u_signed64)rset->getDouble(1);
-    m_selectTapeStatement->closeResultSet(rset);
-  } catch (oracle::occi::SQLException e) {
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Unable to select tape by vid, side and tpmode :"
-      << std::endl << e.getMessage();
-    throw ex;
-  }
-  // Now get the tape from its id
-  try {
-    castor::BaseAddress ad;
-    ad.setTarget(id);
-    ad.setObjType(castor::OBJ_Tape);
-    ad.setCnvSvcName("DbCnvSvc");
-    ad.setCnvSvcType(castor::SVC_DBCNV);
-    castor::IObject* obj = cnvSvc()->createObj(&ad);
-    castor::stager::Tape* tape =
-      dynamic_cast<castor::stager::Tape*> (obj);
-    if (0 == tape) {
-      castor::exception::Internal e;
-      e.getMessage() << "createObj return unexpected type "
-                     << obj->type() << " for id " << id;
-      delete obj;
-      throw e;
-    }
-    return tape;
-  } catch (oracle::occi::SQLException e) {
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Unable to select tape for id " << id  << " :"
-      << std::endl << e.getMessage();
-    throw ex;
-  }
-  // We should never reach this point
 }
 
 //------------------------------------------------------------------------------

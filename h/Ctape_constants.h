@@ -60,10 +60,16 @@
 
 			/* position method */
 
-#define TPPOSIT_FSEQ	0	/* position by file sequence number */
-#define TPPOSIT_FID	1	/* position by fid (dataset name) */
-#define TPPOSIT_EOI	2	/* position at end of information to add a file */
-#define TPPOSIT_BLKID	3	/* position by block id (locate) */
+/* Note that the next 4 lines should always be identical to the declaration
+ * in castor/tape/tapegateway/PositionCommandCode.hpp
+ * In the future, the two enums should be merged
+ */
+enum PositionCommandCode {
+  TPPOSIT_FSEQ = 0,     /* position by file sequence number */
+  TPPOSIT_FID = 1,      /* position by fid (dataset name) */
+  TPPOSIT_EOI = 2,      /* position at end of information to add a file */
+  TPPOSIT_BLKID = 3     /* position by block id (locate) */
+};
 
 			/* release flags */
 

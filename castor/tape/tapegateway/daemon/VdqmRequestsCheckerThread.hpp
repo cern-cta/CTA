@@ -18,9 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: VdqmRequestsCheckerThread.hpp,v $ $Author: gtaur $
- *
- *
+ * Regularly checks that ongoing recalls and migrations have an associated
+ * request in VDQM. Cleans up when it's not the case
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -28,48 +27,57 @@
 #ifndef VDQMREQUESTSCHECKER_THREAD_HPP
 #define VDQMREQUESTSCHECKER_THREAD_HPP 1
 
-#include <u64subr.h>
-#include "castor/tape/tapegateway/TapeGatewayRequest.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/server/IThread.hpp"
 #include "castor/tape/utils/ShutdownBoolFunctor.hpp"
 
 namespace castor     {
-namespace tape       {
-namespace tapegateway{
-  
-    /**
-     *  VdqmRequestsChecker tread.
-     */
-    
-  class VdqmRequestsCheckerThread : public virtual castor::server::IThread,
-                                    public castor::BaseObject { 
-    u_signed64 m_timeOut;
-  public:
-	
-    VdqmRequestsCheckerThread(u_signed64 timeOut);
-    virtual ~VdqmRequestsCheckerThread() throw() {};
+  namespace tape       {
+    namespace tapegateway{
 
-    /**
-     * Initialization of the thread.
-     */
-    virtual void init() {}
+      /**
+       * VdqmRequestsChecker tread.
+       * Regularly checks that ongoing recalls and migrations have an associated
+       * request in VDQM. Cleans up when it's not the case
+       */
+      class VdqmRequestsCheckerThread : public virtual castor::server::IThread,
+                                        public castor::BaseObject {
+      public:
 
-    /**
-     * Main work for this thread
-     */
-    virtual void run(void* param);
+        /** constructor
+         * @param timeout the delay within which requests are not rechecked
+         */
+        VdqmRequestsCheckerThread(u_signed64 timeOut);
 
-    /**
-     * Stop of the thread
-     */
-    virtual void stop() {m_shuttingDown.set();}
-  private:
-    utils::ShutdownBoolFunctor m_shuttingDown;
-  };
+        /// destructor
+        virtual ~VdqmRequestsCheckerThread() throw() {};
 
-} // end of tapegateway
-} // end of namespace tape
+        /**
+         * Initialization of the thread.
+         */
+        virtual void init() {}
+
+        /**
+         * Main work for this thread
+         */
+        virtual void run(void* param);
+
+        /**
+         * Stop of the thread
+         */
+        virtual void stop() {m_shuttingDown.set();}
+
+      private:
+
+        /// only requests not checked for more than this time out are considered
+        u_signed64 m_timeOut;
+
+        /// a functor telling whether the thread is shutting down
+        utils::ShutdownBoolFunctor m_shuttingDown;
+      };
+
+    } // end of tapegateway
+  } // end of namespace tape
 } // end of namespace castor
 
 #endif // VDQMREQUESTSCHECKER_THREAD_HPP

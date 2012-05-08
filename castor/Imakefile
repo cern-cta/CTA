@@ -67,7 +67,6 @@ STGLIB_SRCS = BaseAddress.cpp \
               io/StreamAddress.cpp \
               io/StreamBaseCnv.cpp \
               io/StreamBaseAddressCnv.cpp \
-              io/StreamCastorFileCnv.cpp \
               io/StreamClientCnv.cpp \
               io/StreamStartResponseCnv.cpp \
               io/StreamCnvSvc.cpp \
@@ -99,13 +98,10 @@ STGLIB_SRCS = BaseAddress.cpp \
               io/StreamDisk2DiskCopyStartRequestCnv.cpp \
               io/StreamDisk2DiskCopyStartResponseCnv.cpp \
               io/StreamBasicResponseCnv.cpp \
-              io/StreamSegmentCnv.cpp \
               io/StreamSetFileGCWeightCnv.cpp \
               io/StreamStreamReportCnv.cpp \
               io/StreamStringResponseCnv.cpp \
-              io/StreamTapeCnv.cpp \
               io/StreamSubRequestCnv.cpp \
-              io/StreamRecallJobCnv.cpp \
               io/StreamStageAbortRequestCnv.cpp \
               io/StreamStageFileQueryRequestCnv.cpp \
               io/StreamStageGetRequestCnv.cpp \
@@ -222,8 +218,6 @@ STGLIB_SRCS = BaseAddress.cpp \
               stager/StartRequest.cpp \
               stager/SvcClass.cpp \
               stager/QueryParameter.cpp \
-              stager/Segment.cpp \
-              stager/SegmentStatusCodes.cpp \
               stager/SetFileGCWeight.cpp \
               stager/StageAbortRequest.cpp \
               stager/StageFileQueryRequest.cpp \
@@ -241,10 +235,6 @@ STGLIB_SRCS = BaseAddress.cpp \
               stager/SubRequest.cpp \
               stager/SubRequestStatusCodes.cpp \
               stager/SubRequestGetNextStatusCodes.cpp \
-              stager/Tape.cpp \
-              stager/RecallJob.cpp \
-              stager/TapeStatusCodes.cpp \
-              stager/RecallJobStatusCodes.cpp \
               stager/TapeVid.cpp \
               stager/NsFileId.cpp \
               stager/BulkRequestResult.cpp \
@@ -283,8 +273,6 @@ STGLIB_SRCS = BaseAddress.cpp \
               exception/TapeNetAcceptInterrupted.cpp \
               exception/TimeOut.cpp \
               exception/TooBig.cpp \
-              exception/SegmentNotAccessible.cpp \
-              exception/TapeOffline.cpp \
               query/DiskPoolQueryResponse.cpp \
               query/FileSystemDescription.cpp \
               query/DiskServerDescription.cpp \

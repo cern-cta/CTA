@@ -372,248 +372,14 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::updateRepackedFile(
   }
 }
 
-void castor::tape::tapegateway::NsTapeGatewayHelper::getBlockIdToRecall(castor::tape::tapegateway::FileToRecall& file, std::string vid ) throw (castor::exception::Exception) {
-
- 
-  // get segments for this fileid 
- 
-
-  struct Cns_fileid castorFileId;
-  memset(&castorFileId,'\0',sizeof(castorFileId));
-  strncpy(
-          castorFileId.server,
-          file.nshost().c_str(),
-          sizeof(castorFileId.server)-1
-          );
-  castorFileId.fileid = file.fileid();
-
-  int nbSegs=0;
-  struct Cns_segattrs *segArray = NULL;
-  serrno=0;
-  int rc = Cns_getsegattrs(NULL,&castorFileId,&nbSegs,&segArray);
-
-  if ( rc == -1 ) {
-
-    if (segArray != NULL )   free(segArray);
-    segArray=NULL;
-    castor::exception::Exception ex(serrno);
-    ex.getMessage()
-      << "castor::tape::tapegateway::NsTapeGatewayHelper::getBlockIdToRecall:"
-      << "Cns_getsegattrs failed";
-    throw ex;
-  }
-
-  // let's get the copy number that we are refering to
-
-  for ( int i=0; i< nbSegs ;i++) {
-    if ( segArray[i].fseq == file.fseq() &&  strcmp(segArray[i].vid , vid.c_str()) == 0 ) {
-      // here it is the right segment we want to recall
-      // impossible to have 2 copies of the same file in the same aggregate   
-
-      file.setBlockId0(segArray[i].blockid[0]);
-      file.setBlockId1(segArray[i].blockid[1]);
-      file.setBlockId2(segArray[i].blockid[2]);
-      file.setBlockId3(segArray[i].blockid[3]);
- 
-      //if ( memcmp(blockid,nullblkid,sizeof(blockid)) != 0 ) 
-      
-      if ((file.blockId0() == '\0') && (file.blockId1() == '\0') && ( file.blockId2()== '\0' ) && ( file.blockId3() == '\0' )){
-	file.setPositionCommandCode(TPPOSIT_FSEQ); // magic things for the first file
-      }
-	
-      if (segArray != NULL )   free(segArray);
-      segArray=NULL;
-      return;
-    }
-  }
-  
-  // segment not found anymore
-
-  if (segArray != NULL )   free(segArray);
-  segArray=NULL;
-  castor::exception::Exception ex(ENOENT);
-  ex.getMessage()
-    << "castor::tape::tapegateway::NsTapeGatewayHelper::getBlockIdToRecall:"
-    << "impossible to find the segment";
-  throw ex;
-}
-
-
-void  castor::tape::tapegateway::NsTapeGatewayHelper::checkRecalledFile(castor::tape::tapegateway::FileRecalledNotification& file, std::string vid, int copyNb) throw (castor::exception::Exception) {
- 
- 
-  // get segments for this fileid
-
-  struct Cns_fileid castorFileId;
-  memset(&castorFileId,'\0',sizeof(castorFileId));
-  strncpy(
-          castorFileId.server,
-          file.nshost().c_str(),
-          sizeof(castorFileId.server)-1
-          );
-  castorFileId.fileid = file.fileid();
-
-
-  int nbSegs=0;
-  struct Cns_segattrs *segattrs = NULL;
-  
-  serrno=0;
-  int rc = Cns_getsegattrs( NULL, &castorFileId,&nbSegs, &segattrs);
-  
-  if ( (rc == -1) || (nbSegs <= 0) || (segattrs == NULL) ) {
-    if (segattrs != NULL ) free(segattrs);
-    segattrs=NULL;
-    castor::exception::Exception ex(serrno);
-    ex.getMessage()
-      << "castor::tape::tapegateway::NsTapeGatewayHelper::checkRecalledFile:"
-      << "Cns_getsegattrs failed";
-    throw ex;
-
-  }
-
-  // Now we have the information from the nameserver and we can check the information given as input
-
-  // Find the segment given (for old multisegmented file this function will be called several times) 
-
-  // Let's get the right segment
-
-
-  for ( int i=0; i<nbSegs; i++ ) {
-
-    if ( strcmp(segattrs[i].vid, vid.c_str()) != 0 ) continue;
-  
-    if ( segattrs[i].side != 0 ) continue;
-
-    if ( segattrs[i].fseq != file.fseq() ) continue;
-
-    // removed the  check of  the blockid 
-   
-    if ( segattrs[i].copyno != copyNb ) continue;
-
-    // All the checks were successfull let's check checksum  
-
-    // check the checksum (mandatory)
-
-    if (file.checksumName().empty() && segattrs[i].checksum_name[0] == '\0') {
-      return; //no checksum given
-    }
-
-    // If the segment does not have a checkum in the name server then do nothing and
-    // return
-    if (segattrs[i].checksum_name[0] == '\0') {
-      return;
-    }
-
-    if ( strcmp(file.checksumName().c_str(),segattrs[i].checksum_name) != 0 || file.checksum() != segattrs[i].checksum ) {
-      // wrong checksum and you cannot change the checksum on the fly
-      
-      if (segattrs != NULL ) free(segattrs);
-      segattrs=NULL;
-
-      castor::exception::Exception ex(SECHECKSUM);
-      ex.getMessage()
-	<< "castor::tape::tapegateway::NsTapeGatewayHelper::checkRecalledFile:"
-	<< "wrong checksum";
-      throw ex;
-    } else {
-
-      if (segattrs != NULL ) free(segattrs);
-      segattrs=NULL;
-
-      // correct checksum
-      return;
-    }
-  }
-  // segment not found at all
-
-  
-  if (segattrs != NULL ) free(segattrs);
-  segattrs=NULL;
-  castor::exception::Exception ex(ENOENT);
-  ex.getMessage()
-    << "castor::tape::tapegateway::NsTapeGatewayHelper::checkRecalledFile:"
-    << "segment not found";
-  throw ex;
-
-}
-
-
-void  castor::tape::tapegateway::NsTapeGatewayHelper::checkFileSize(castor::tape::tapegateway::FileRecalledNotification& file) throw (castor::exception::Exception) {
- 
-  // get segments for this fileid
-
-  struct Cns_fileid castorFileId;
-  memset(&castorFileId,'\0',sizeof(castorFileId));
-  strncpy(
-          castorFileId.server,
-          file.nshost().c_str(),
-          sizeof(castorFileId.server)-1
-          );
-  castorFileId.fileid = file.fileid();
-
-  struct Cns_filestat statBuf;
-
-  char path[CA_MAXPATHLEN+1];
-  int rc = Cns_getpath(castorFileId.server, castorFileId.fileid,(char*)path);
-  if ( rc == -1) {
-    castor::exception::Exception ex(serrno);
-    ex.getMessage()
-      << "castor::tape::tapegateway::NsTapeGatewayHelper::checkFileSize:"
-      << "Cns_getpath failed for nshost "<<castorFileId.server<<" fileid "<<castorFileId.fileid;
-    throw ex;
-  }
-  
-  serrno=0; 
-  
-  // in rtcpclientd it is using the castorfile.filesize
-  rc = Cns_statx( path, &castorFileId,&statBuf);
-  
-  if ( rc == -1) {
-   
-    castor::exception::Exception ex(serrno);
-    ex.getMessage()
-      << "castor::tape::tapegateway::NsTapeGatewayHelper::checkFileSize:"
-      << "Cns_statx failed for "<<path;
-    throw ex;
-
-  }
-
-  // get with rfio the filesize of the copy on disk
-
-  
-  struct stat64 st;
-  serrno=0;
-
-  rc = rfio_stat64((char*)file.path().c_str(),&st);
- 
-  if (rc <0 ){
-    castor::exception::Exception ex(serrno);
-    ex.getMessage()
-      << "castor::tape::tapegateway::NsTapeGatewayHelper::checkFileSize:"
-      << "rfio_stat failed for "<<file.path().c_str();
-    throw ex;
-
-  }
- 
-  if ( (u_signed64)st.st_size !=  statBuf.filesize){ // cast done to follow castor convention 
-    castor::exception::Exception ex(ERTWRONGSIZE);
-    ex.getMessage()
-      << "castor::tape::tapegateway::NsTapeGatewayHelper::checkFileSize:"
-      << " file size mismatch: ns filesize is "<< statBuf.filesize <<" while rfstat reports a discopy size of "<< st.st_size;
-    throw ex;  
-
-  }
-  
-}
-
 // This checker function will raise an exception if the Fseq forseen for writing
 // is not strictly greater than the highest know Fseq for this tape in the name
 // server (meaning an overwrite).
-void castor::tape::tapegateway::NsTapeGatewayHelper::checkFseqForWrite (const std::string &vid, int side, int Fseq)
+void castor::tape::tapegateway::NsTapeGatewayHelper::checkFseqForWrite (const std::string &vid, int Fseq)
      throw (castor::exception::Exception) {
   struct Cns_segattrs segattrs;
   memset (&segattrs, 0, sizeof(struct Cns_segattrs));
-  int rc = Cns_lastfseq (vid.c_str(), side, &segattrs);
+  int rc = Cns_lastfseq (vid.c_str(), 0, &segattrs); // side = 0 hardcoded
   // Read serrno only once as it points at a function hidden behind a macro.
   int save_serrno = serrno;
   // If the name server does not know about the tape, we're safe (return, done).
@@ -622,7 +388,7 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::checkFseqForWrite (const st
     castor::exception::Exception ex(save_serrno);
     ex.getMessage()
       << "castor::tape::tapegateway::NsTapeGatewayHelper::checkFseqForWrite:"
-      << "Cns_lastfseq failed for VID="<<vid.c_str()<< " side="<< side << " : rc="
+      << "Cns_lastfseq failed for VID="<<vid.c_str()<< " side="<< 0 << " : rc="
       << rc << " serrno =" << save_serrno << "(" << sstrerror(save_serrno) << ")";
     throw ex;
   }
@@ -631,7 +397,7 @@ void castor::tape::tapegateway::NsTapeGatewayHelper::checkFseqForWrite (const st
     castor::exception::Exception ex(ERTWRONGFSEQ);
     ex.getMessage()
           << "castor::tape::tapegateway::NsTapeGatewayHelper::checkFseqForWrite:"
-          << "Fseq check failed for VID="<<vid.c_str()<< " side="<< side << " Fseq="
+          << "Fseq check failed for VID="<<vid.c_str()<< " side="<< 0 << " Fseq="
           << Fseq << " last referenced segment in NS=" << segattrs.fseq;
     throw ex;
   }

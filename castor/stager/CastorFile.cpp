@@ -29,7 +29,6 @@
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/FileClass.hpp"
-#include "castor/stager/RecallJob.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -58,11 +57,6 @@ castor::stager::CastorFile::~CastorFile() throw() {
     m_diskCopiesVector[i]->setCastorFile(0);
   }
   m_diskCopiesVector.clear();
-  for (unsigned int i = 0; i < m_tapeCopiesVector.size(); i++) {
-    m_tapeCopiesVector[i]->setCastorFile(0);
-    delete m_tapeCopiesVector[i];
-  }
-  m_tapeCopiesVector.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -99,17 +93,6 @@ void castor::stager::CastorFile::print(std::ostream& stream,
     std::vector<DiskCopy*>::const_iterator it;
     for (it = m_diskCopiesVector.begin(), i = 0;
          it != m_diskCopiesVector.end();
-         it++, i++) {
-      stream << indent << "  " << i << " :" << std::endl;
-      (*it)->print(stream, indent + "    ", alreadyPrinted);
-    }
-  }
-  {
-    stream << indent << "TapeCopies : " << std::endl;
-    int i;
-    std::vector<RecallJob*>::const_iterator it;
-    for (it = m_tapeCopiesVector.begin(), i = 0;
-         it != m_tapeCopiesVector.end();
          it++, i++) {
       stream << indent << "  " << i << " :" << std::endl;
       (*it)->print(stream, indent + "    ", alreadyPrinted);

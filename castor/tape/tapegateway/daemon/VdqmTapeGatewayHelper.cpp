@@ -1,4 +1,3 @@
-
 /******************************************************************************
  *                      VdqmTapeGatewayHelper.cpp
  *
@@ -18,10 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: VdqmTapeGatewayHelper.cpp,v $ $Revision: 1.5 $ $Release$ 
- * $Date: 2009/08/13 08:40:53 $ $Author: gtaur $
- *
- *
+ * helper class for accessing VDQM from C++
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -38,7 +34,11 @@
 #include "vdqm_api.h"
 
 
-void castor::tape::tapegateway::VdqmTapeGatewayHelper::connectToVdqm() throw (castor::exception::Exception){
+//------------------------------------------------------------------------------
+// connectToVdqm
+//------------------------------------------------------------------------------
+void castor::tape::tapegateway::VdqmTapeGatewayHelper::connectToVdqm()
+  throw (castor::exception::Exception) {
   serrno=0;
   m_connection=NULL;
   int rc = vdqm_Connect(&m_connection);
@@ -52,36 +52,44 @@ void castor::tape::tapegateway::VdqmTapeGatewayHelper::connectToVdqm() throw (ca
   return;
 }
 
-int castor::tape::tapegateway::VdqmTapeGatewayHelper::createRequestForAggregator( const castor::stager::Tape& tape, const int& port) throw (castor::exception::Exception){
-
-  // send vol request
-
-  int reqId=0; // to have it as output
-  char vidForC[CA_MAXVIDLEN+1];
-  char dgnForC[CA_MAXDGNLEN+1];
-  
-  strcpy(vidForC, tape.vid().c_str());
-  strcpy (dgnForC, tape.dgn().c_str());
-  
-  serrno=0;
-  int ret = vdqm_CreateRequestForAggregator(m_connection,&reqId,vidForC,dgnForC,NULL,NULL,tape.tpmode(),port);
-
-  if (ret<0) {
+//------------------------------------------------------------------------------
+// createRequestForAggregator
+//------------------------------------------------------------------------------
+int castor::tape::tapegateway::VdqmTapeGatewayHelper::createRequestForAggregator
+(const std::string &vid, const char *dgn, const int mode, const int port, const int priority)
+  throw (castor::exception::Exception) {
+  // Due to historical compoenents, we first send the priority of the future
+  // request (set on the VID only) and only then we create the request
+  serrno = 0;
+  int ret = vdqm_SendVolPriority((char*)vid.c_str(),0,priority,0);
+  if (ret < 0) {
     castor::exception::Exception ex(serrno);
     ex.getMessage()
-      << "castor::tape::tapegateway::VdqmTapeGatewayHelper::submitTapeToVdqm"
-      <<" vdqm_CreateRequestForAggregator failed";
+      << "castor::tape::tapegateway::VdqmTapeGatewayHelper::createRequestForAggregator "
+      << "vdqm_SendVolPriority failed";
     throw ex;
   }
-
+  // send vol request
+  int reqId = 0;
+  serrno = 0;
+  ret = vdqm_CreateRequestForAggregator(m_connection, &reqId, (char*)vid.c_str(),
+                                        (char*)dgn, NULL, NULL, mode, port);
+  if (ret < 0) {
+    castor::exception::Exception ex(serrno);
+    ex.getMessage()
+      << "castor::tape::tapegateway::VdqmTapeGatewayHelper::createRequestForAggregator "
+      << "vdqm_CreateRequestForAggregator failed";
+    throw ex;
+  }
   return reqId;
-
 }
 
-void castor::tape::tapegateway::VdqmTapeGatewayHelper::confirmRequestToVdqm() throw (castor::exception::Exception){
-
+//------------------------------------------------------------------------------
+// confirmRequestToVdqm
+//------------------------------------------------------------------------------
+void castor::tape::tapegateway::VdqmTapeGatewayHelper::confirmRequestToVdqm()
+  throw (castor::exception::Exception) {
   // after saving the transaction id in the db I send the confirmation to vdqm
-  
   serrno=0;
   int ret = vdqm_QueueRequestForAggregator(m_connection);
 
@@ -92,25 +100,30 @@ void castor::tape::tapegateway::VdqmTapeGatewayHelper::confirmRequestToVdqm() th
       <<" vdqm_QueueRequestForAggregator failed";
     throw ex;
   }
-
 }
 
+//------------------------------------------------------------------------------
+// checkVdqmForRequest
+//------------------------------------------------------------------------------
+void castor::tape::tapegateway::VdqmTapeGatewayHelper::checkVdqmForRequest
+(const int mountTransactionId)
+  throw (castor::exception::Exception) {
+  serrno=0;
+  int rc = vdqm_PingServer(NULL,NULL,mountTransactionId); // dgn is not given
+  if (rc < 0) {
+    castor::exception::Exception ex(serrno);
+    ex.getMessage()
+      << "castor::tape::tapegateway::VdqmTapeGatewayHelper::checkVdqmForRequest"
+      << " vdqm_PingServer failed";
+    throw ex;
+  }
+}
 
- void castor::tape::tapegateway::VdqmTapeGatewayHelper::checkVdqmForRequest( const castor::tape::tapegateway::TapeGatewayRequest& tapeRequest) throw (castor::exception::Exception) {
-   serrno=0;
-   int rc = vdqm_PingServer(NULL,NULL,tapeRequest.vdqmVolReqId()); // I don't give the dgn
-
-   if (rc<0) {
-     castor::exception::Exception ex(serrno);
-     ex.getMessage()
-       << "castor::tape::tapegateway::VdqmTapeGatewayHelper::checkVdqmForRequest"
-       << " vdqm_PingServer failed";
-     throw ex;
-   }
- }
-
-
-void castor::tape::tapegateway::VdqmTapeGatewayHelper::disconnectFromVdqm()throw (castor::exception::Exception){
+//------------------------------------------------------------------------------
+// disconnectFromVdqm
+//------------------------------------------------------------------------------
+void castor::tape::tapegateway::VdqmTapeGatewayHelper::disconnectFromVdqm()
+  throw (castor::exception::Exception) {
   serrno=0;
   int rc = vdqm_Disconnect(&m_connection);
   if (rc<0) {

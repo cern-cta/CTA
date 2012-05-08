@@ -1,5 +1,0 @@
-%attr(0755,root,root) etc/init.d/rechandlerd
-%attr(0644,root,root) etc/sysconfig/rechandlerd.example
-%attr(0644,root,root) etc/castor/policies/rechandler.py.example
-%attr(0644,root,root) etc/logrotate.d/castor-rechandler-server
-%attr(0755,root,root) usr/bin/rechandlerd

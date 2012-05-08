@@ -171,28 +171,6 @@ BEGIN
 END;
 /
 
-
-/* This function returns a list of valid segments for a given file.
- * By valid, we mean valid segments on non disable tapes. So VMGR
- * is checked inside the function.
- * The returned REF CURSOR is of type Segment.
- */
-CREATE OR REPLACE FUNCTION getValidSegmentsForRecall(fid IN NUMBER) RETURN castorns.Segment_Cur IS
-  res castorns.Segment_Cur;
-BEGIN
-  OPEN res FOR
-    SELECT s_fileId as fileId, 0 as lastModTime, copyNo, segSize, 0 as comprSize,
-           Cns_seg_metadata.vid, fseq, blockId, checksum_name, nvl(checksum, 0) as checksum
-      FROM Cns_seg_metadata, Vmgr_tape_side
-     WHERE Cns_seg_metadata.s_fileid = fid
-       AND Cns_seg_metadata.s_status = '-'
-       AND Vmgr_tape_side.VID = Cns_seg_metadata.VID
-       AND Vmgr_tape_side.status NOT IN (1, 2, 32)  -- DISABLED, EXPORTED, ARCHIVED
-     ORDER BY copyno, fsec;
-  RETURN res;
-END;
-/
-
 /**
  * This procedure creates a segment for a given file.
  * Return code:
@@ -547,5 +525,21 @@ BEGIN
   -- Return logs to the stager
   OPEN logs FOR
     SELECT timeinfo, lvl, reqid, msg, fileId, params FROM ResultsLogHelper;
+END;
+/
+
+/* This function sets the checksum of a segment if there is none and commits.
+ * It otherwise exits silently.
+ */
+CREATE OR REPLACE PROCEDURE setSegChecksumWhenNull(fid IN INTEGER,
+                                                   copyNb IN INTEGER,
+                                                   cksumType IN VARCHAR2,
+                                                   cksumValue IN INTEGER) IS
+BEGIN
+  UPDATE Cns_seg_metadata
+     SET checksum_name = cksumType, checksum = cksumValue
+   WHERE s_fileid = fid AND copyno = copyNb AND fsec = 1
+     AND checksum_name IS NULL AND checksum IS NULL;
+  COMMIT;
 END;
 /

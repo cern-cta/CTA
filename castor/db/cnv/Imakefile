@@ -27,7 +27,6 @@ AddLdFlags(-lstdc++)
 
 CNVSLIB_SRCS = DbBaseAddressCnv.cpp \
      DbBaseCnv.cpp \
-     DbCastorFileCnv.cpp \
      DbChangePrivilegeCnv.cpp \
      DbListPrivilegesCnv.cpp \
      DbClientCnv.cpp \
@@ -55,9 +54,7 @@ CNVSLIB_SRCS = DbBaseAddressCnv.cpp \
      DbPutFailedCnv.cpp \
      DbPutStartRequestCnv.cpp \
      DbQueryParameterCnv.cpp \
-     DbRecallJobCnv.cpp \
      DbRequestTypeCnv.cpp \
-     DbSegmentCnv.cpp \
      DbSetFileGCWeightCnv.cpp \
      DbStageAbortRequestCnv.cpp \
      DbStageFileQueryRequestCnv.cpp \
@@ -73,7 +70,6 @@ CNVSLIB_SRCS = DbBaseAddressCnv.cpp \
      DbSubRequestCnv.cpp \
      DbSvcClassCnv.cpp \
      DbTapeAccessSpecificationCnv.cpp \
-     DbTapeCnv.cpp \
      DbTapeDriveCnv.cpp \
      DbTapeDriveCompatibilityCnv.cpp \
      DbTapeDriveDedicationCnv.cpp \

@@ -40,7 +40,6 @@ namespace castor {
   namespace stager {
 
     // Forward declarations
-    class RecallJob;
     class FileClass;
     class DiskCopy;
 
@@ -292,35 +291,6 @@ namespace castor {
         return m_diskCopiesVector;
       }
 
-      /**
-       * Add a RecallJob* object to the m_tapeCopiesVector list
-       */
-      void addTapeCopies(RecallJob* add_object) {
-        m_tapeCopiesVector.push_back(add_object);
-      }
-
-      /**
-       * Remove a RecallJob* object from m_tapeCopiesVector
-       */
-      void removeTapeCopies(RecallJob* remove_object) {
-        for (unsigned int i = 0; i < m_tapeCopiesVector.size(); i++) {
-          RecallJob* item = m_tapeCopiesVector[i];
-          if (item == remove_object) {
-            std::vector<RecallJob*>::iterator it = m_tapeCopiesVector.begin() + i;
-            m_tapeCopiesVector.erase(it);
-            return;
-          }
-        }
-      }
-
-      /**
-       * Get the list of RecallJob* objects held by m_tapeCopiesVector
-       * @return list of RecallJob* objects held by m_tapeCopiesVector
-       */
-      std::vector<RecallJob*>& tapeCopies() {
-        return m_tapeCopiesVector;
-      }
-
     private:
 
       /// The id of this castor file. This identifies it uniquely
@@ -352,8 +322,6 @@ namespace castor {
       FileClass* m_fileClass;
 
       std::vector<DiskCopy*> m_diskCopiesVector;
-
-      std::vector<RecallJob*> m_tapeCopiesVector;
 
     }; /* end of class CastorFile */
 

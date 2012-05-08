@@ -29,62 +29,81 @@
 #include "osdep.h"
 #include "vmgr_api.h"
 #include "castor/exception/Exception.hpp"
-#include "castor/stager/Tape.hpp"
 #include "castor/tape/tapegateway/FileMigratedNotification.hpp"
 #include "castor/tape/utils/BoolFunctor.hpp"
 
 namespace castor {
   namespace tape {
     namespace tapegateway {
-      class VmgrTapeGatewayHelper {
-        public:
-	void getTapeForMigration(const u_signed64 initialSizeToTransfer, const std::string& tapepoolName,
-	    int& startFseq, castor::stager::Tape& tapeToUse, const utils::BoolFunctor &shuttingDown) throw (castor::exception::Exception);
 
-	void getDataFromVmgr(castor::stager::Tape& tape, const utils::BoolFunctor &shuttingDown)
-	throw (castor::exception::Exception);
-	
-	void resetBusyTape(const castor::stager::Tape& tape, const utils::BoolFunctor &shuttingDown)
+      /* Small local struct storing tape information */
+      struct TapeInfo {
+        /* constructor */
+        TapeInfo() {
+            memset(&vmgrTapeInfo, 0, sizeof(vmgrTapeInfo));
+            memset(dgnBuffer, 0, sizeof(dgnBuffer));
+        }
+        struct vmgr_tape_info_byte_u64 vmgrTapeInfo;
+        char dgnBuffer[8];
+      };
+
+      namespace VmgrTapeGatewayHelper {
+
+        /** Gets a tape to be used to migrate data
+         * @param initialSizeToTransfer the amount of data to migrate
+         * @param tapepoolName the tapepool in which the tape should reside
+         * @param vid this parameter will be filled with the name of the tape to be used
+         * @param startFseq this parameter will be filled with the fseq where
+         * one should start writing on the selected tape
+         * @param shuttingDown a functor telling whether we are shutting down
+         * @exception throws CASTOR exceptions in case of error
+         */
+        void getTapeForMigration(const u_signed64 initialSizeToTransfer,
+                                 const std::string& tapepoolName,
+                                 std::string &vid,
+                                 int& startFseq,
+                                 const utils::BoolFunctor &shuttingDown)
+          throw (castor::exception::Exception);
+
+        /** unbusy a tape in VMGR
+         * @param vid the vid of the tape to reset
+         * @param shuttingDown a functor telling whether we are shutting down
+         * @exception throws CASTOR exceptions in case of error
+         */
+	void resetBusyTape(const std::string &vid,
+                           const utils::BoolFunctor &shuttingDown)
 	throw (castor::exception::Exception);
 
 	void updateTapeInVmgr(const castor::tape::tapegateway::FileMigratedNotification& file,
 	    const std::string& vid, const utils::BoolFunctor &shuttingDown) throw (castor::exception::Exception);
 
-	void setTapeAsFull(const castor::stager::Tape& tapem, const utils::BoolFunctor &shuttingDown)
+	void setTapeAsFull(const std::string &vid, const utils::BoolFunctor &shuttingDown)
 	throw (castor::exception::Exception);
 
-        void setTapeAsReadonlyAndUnbusy(const castor::stager::Tape& tape, const utils::BoolFunctor &shuttingDown)
-        throw (castor::exception::Exception);
-
-        void setTapeAsReadonlyAndUnbusy(const std::string& vid, const utils::BoolFunctor &shuttingDown)
+        void setTapeAsReadonlyAndUnbusy(const  std::string &vid, const utils::BoolFunctor &shuttingDown)
         throw (castor::exception::Exception);
 
         int maxFseqFromLabel(const char* label);
 
-        /* This class will extract the tape information from the vdqm at construction time.
-         * It can loop for a while in case of retries, or throw an exception at construction
-         * in case of failure */
-        private:
-        class TapeInfo {
-        public:
-          struct vmgr_tape_info_byte_u64 vmgrTapeInfo;
-          char dgnBuffer[8];
-          TapeInfo(const castor::stager::Tape& tape, const utils::BoolFunctor &shuttingDown)
+        /* get information concerning a tape from VMGR
+         * @param vid the concerned tape
+         * @return a struct containing the vmgr information
+         * @exception throws CASTOR exceptions in case of error
+         */
+        TapeInfo getTapeInfo(const std::string &vid, const utils::BoolFunctor &shuttingDown)
           throw (castor::exception::Exception);
-          virtual ~TapeInfo () throw () {};
-        protected:
-          std::string m_vid;
-          int m_side;
-        };
-        /* Same as the previous one, but will make sure the tape is not ARCHIVED, EXPORTED or DISABLED
-         * In such a case an extra exception will be thrown. */
-        class TapeInfoAssertAvailable: public TapeInfo {
-        public:
-          TapeInfoAssertAvailable(const castor::stager::Tape& tape, const utils::BoolFunctor &shuttingDown)
+        
+        /* get information concerning a tape from VMGR and checks
+         * that the tape is available
+         * @param vid the concerned tape
+         * @return a struct containing the vmgr information
+         * @exception throws CASTOR exceptions in case of error, in particular
+         * if the tape is not available
+         */
+        TapeInfo getTapeInfoAssertAvailable(const std::string &vid, const utils::BoolFunctor &shuttingDown)
           throw (castor::exception::Exception);
-          virtual ~TapeInfoAssertAvailable () throw () {};
-        };
-      };
+
+      } // end of namespace VmgrTapeGatewayHelper
     } // end of namespace tapegateway
   } // end of namespace tape
 }  // end of namespace castor

@@ -231,14 +231,9 @@ BEGIN
 END;
 /
 
-/* PL/SQL method deleting recall jobs (and segments) of a castorfile */
-CREATE OR REPLACE PROCEDURE deleteRecallJobs(cfId NUMBER) AS
+/* PL/SQL method deleting migration jobs of a castorfile that was being recalled */
+CREATE OR REPLACE PROCEDURE deleteMigrationJobsForRecall(cfId NUMBER) AS
 BEGIN
-  -- Loop over the recall jobs
-  FOR t IN (SELECT id FROM RecallJob WHERE castorfile = cfId) LOOP
-    DELETE FROM Segment WHERE copy = t.id;
-    DELETE FROM RecallJob WHERE id = t.id;
-  END LOOP;
   -- delete migration jobs waiting on this recall
   DELETE FROM MigrationJob WHERE castorfile = cfId AND status = tconst.MIGRATIONJOB_WAITINGONRECALL;
   -- delete migrated segments if no migration jobs remain
@@ -253,32 +248,13 @@ BEGIN
 END;
 /
 
-CREATE OR REPLACE PROCEDURE cancelRecall(cfId NUMBER, dcId NUMBER) AS
-  srIds "numList";
-  unused NUMBER;
+/* PL/SQL method deleting recall jobs of a castorfile */
+CREATE OR REPLACE PROCEDURE deleteRecallJobs(cfId NUMBER) AS
 BEGIN
-  -- Lock the CastorFile
-  SELECT id INTO unused FROM CastorFile
-   WHERE id = cfId FOR UPDATE;
-  -- Cancel the recall
-  deleteRecallJobs(cfId);
-  -- Invalidate the DiskCopy
-  UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID WHERE id = dcId;
-  -- Look for and update requests associated to the recall plus dependent ones
-  UPDATE /*+ INDEX(Subrequest I_Subrequest_Diskcopy) */ SubRequest
-     SET status = dconst.SUBREQUEST_RESTART,
-         answered = 0
-   WHERE diskCopy = dcId
-     AND status = dconst.SUBREQUEST_WAITTAPERECALL
-  RETURNING id BULK COLLECT INTO srIds;
-  UPDATE /*+ INDEX(Subrequest I_Subrequest_Parent)*/ SubRequest
-     SET status = dconst.SUBREQUEST_RESTART,
-         parent = 0
-   WHERE status = dconst.SUBREQUEST_WAITSUBREQ
-     AND parent IN
-       (SELECT /*+ CARDINALITY(sridTable 5) */ *
-          FROM TABLE(srIds) sridTable)
-     AND castorfile = cfId;
+  -- Loop over the recall jobs
+  DELETE FROM RecallJob WHERE castorfile = cfId;
+  -- deal with potential waiting migrationJobs
+  deleteMigrationJobsForRecall(cfId);
 END;
 /
 
@@ -299,7 +275,7 @@ BEGIN
   IF nb = 0 THEN
     -- See whether it has any RecallJob
     SELECT count(*) INTO nb FROM RecallJob
-     WHERE castorFile = cfId AND status != tconst.RECALLJOB_FAILED;
+     WHERE castorFile = cfId;
     -- If any RecallJob, give up
     IF nb = 0 THEN
       -- See whether it has any MigrationJob

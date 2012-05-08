@@ -38,7 +38,6 @@ namespace castor {
     enum DiskCopyStatusCodes {
       DISKCOPY_STAGED = 0,
       DISKCOPY_WAITDISK2DISKCOPY = 1,
-      DISKCOPY_WAITTAPERECALL = 2,
       DISKCOPY_DELETED = 3,
       DISKCOPY_FAILED = 4,
       DISKCOPY_WAITFS = 5,

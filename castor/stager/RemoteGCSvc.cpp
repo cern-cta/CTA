@@ -107,20 +107,6 @@ unsigned int castor::stager::RemoteGCSvc::ID() {
 }
 
 //------------------------------------------------------------------------------
-// selectTape
-//------------------------------------------------------------------------------
-castor::stager::Tape*
-castor::stager::RemoteGCSvc::selectTape
-(const std::string, const int, const int)
-  throw (castor::exception::Exception) {
-  castor::exception::NotSupported ex;
-  ex.getMessage()
-    << "RemoteGCSvc implementation is not complete"
-    << std::endl << "This method is not supported.";
-  throw ex;
-}
-
-//------------------------------------------------------------------------------
 // requestToDo
 //------------------------------------------------------------------------------
 castor::stager::Request*

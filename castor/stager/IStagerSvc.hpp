@@ -347,28 +347,12 @@ namespace castor {
         throw (castor::exception::Exception) = 0;
 
       /**
-       * Creates a candidate for a recall. This includes RecallJob with
-       * its Segment(s), a DiskCopy and a SubRequest in WAITTAPERECALL.
-       * @param subreq the subreq of the file to recall
-       * @param svcClass svc class for recall policy
-       * @param tape a pointer to a location of where to store the tape
-       * information associated with the recall. In case the pointer is
-       * not empty, this should be considered as an hint of the tape that
-       * should be used for the recall, if possible. Note: if the file has
-       * multiple segments spread across multiple tapes only the last
-       * Tape processed will be returned. We could of course return a
-       * vector of Tape objects but this is overkill as multi segment,
-       * multi tape recalls are extremely rare and can only happen when
-       * recalling a file which was written under Castor1. It is the
-       * responsibility of the calling function to delete the Tape object
-       * @return 0: error (e.g. no valid segments)
-       *         1: success
-       * @exception Exception in case of error.
+       * Triggers the recall of a file
+       * @param srId the id of the subRequest triggering the recall
+       * @return the status of the subrequest after the call (WAITTAPERECALL OR FAILED)
+       * @exception Exception in case of error
        */
-     virtual int createRecallCandidate
-     (castor::stager::SubRequest* subreq,
-      castor::stager::SvcClass* svcClass,
-      castor::stager::Tape* &tape)
+      virtual castor::stager::SubRequestStatusCodes createRecallCandidate(u_signed64 srId)
         throw (castor::exception::Exception) = 0;
 
       /**

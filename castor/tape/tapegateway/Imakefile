@@ -40,15 +40,12 @@ DependsOnLibrary(vdqm,castorvdqm)
 DependsOnLibrary(vmgr,castorvmgr)
 
 TAPEGATEWAYDBIN_SRCS = \
-        ScopedTransaction.cpp \
-  	TapeGatewayDlfMessageStrings.cpp \
+	ScopedTransaction.cpp \
+	TapeGatewayDlfMessageStrings.cpp \
 	TapeRequestStateCode.cpp \
-	TapeGatewayRequest.cpp \
-	VdqmTapeGatewayRequest.cpp \
 	daemon/MigratorErrorHandlerThread.cpp \
 	daemon/MountIdToFseqMap.cpp \
 	daemon/NsTapeGatewayHelper.cpp \
-	daemon/RecallerErrorHandlerThread.cpp \
 	daemon/TapeGatewayDaemon.cpp \
 	daemon/TapeGatewayMain.cpp \
 	daemon/TapeMigrationMountLinkerThread.cpp  \
@@ -68,5 +65,4 @@ SYSCONFIG(tapegatewayd,install)
 INITSCRIPT(tapegatewayd,install)
 LOGROTATE(castor-tapegateway-server,install)
 EXAMPLEFILE(migrationRetry.py,/etc/castor/policies,install)
-EXAMPLEFILE(recallRetry.py,/etc/castor/policies,install)
 

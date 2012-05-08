@@ -57,6 +57,9 @@ PARTITION BY LIST (type)
   PARTITION notlisted VALUES (default) TABLESPACE stager_data
  );
 
+/* SQL statements for type CastorFile */
+CREATE TABLE CastorFile (fileId INTEGER, nsHost VARCHAR2(2048), fileSize INTEGER, creationTime INTEGER, lastAccessTime INTEGER, lastKnownFileName VARCHAR2(2048), lastUpdateTime INTEGER, id INTEGER CONSTRAINT PK_CastorFile_Id PRIMARY KEY, fileClass INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
 /* Redefinition of table SubRequest to make it partitioned by status */
 /* Unfortunately it has already been defined, so we drop and recreate it */
 /* Note that if the schema changes, this part has to be updated manually! */
@@ -124,38 +127,131 @@ CREATE INDEX I_SubRequest_CT_ID ON SubRequest(creationTime, id) LOCAL
 /* this index is dedicated to archivesubreq */
 CREATE INDEX I_SubRequest_Req_Stat_no89 ON SubRequest (request, decode(status,8,NULL,9,NULL,status));
 
-/* Redefinition of table RecallJob to make it partitioned by status */
-DROP TABLE RecallJob;
-CREATE TABLE RecallJob(copyNb NUMBER,
-                       errorCode NUMBER,
-                       nbRetry NUMBER DEFAULT 0 CONSTRAINT NN_RecallJob_nbRetry NOT NULL,
-                       missingCopies NUMBER, 
-                       fseq NUMBER,
-                       tapeGatewayRequestId NUMBER,
-                       vid VARCHAR2(2048), 
-                       fileTransactionId NUMBER,
-                       id INTEGER CONSTRAINT PK_RecallJob_Id PRIMARY KEY CONSTRAINT NN_RecallJob_Id NOT NULL, 
-                       castorFile INTEGER,
-                       status INTEGER) 
-INITRANS 50 PCTUSED 40 PCTFREE 50 ENABLE ROW MOVEMENT
-PARTITION BY LIST (STATUS) (
-  PARTITION P_STATUS_0_1   VALUES (0, 1),
-  PARTITION P_STATUS_OTHER VALUES (DEFAULT)
-);
-/* Add index to allow fast lookup by VID (use for preventing 2 tape copies on the same tape.) */
-CREATE INDEX I_RecallJob_VID ON RecallJob(VID);
-CREATE INDEX I_RecallJob_Castorfile ON RecallJob (castorFile) LOCAL;
-CREATE INDEX I_RecallJob_Status ON RecallJob (status) LOCAL;
-CREATE INDEX I_RecallJob_TG_RequestIdFseq on RecallJob(tapeGatewayRequestId, fseq);
-/* This transaction id is the mean to track a migration, so it obviously needs to be unique */
-ALTER TABLE RecallJob ADD CONSTRAINT UN_RECALLJOB_FILETRID 
-  UNIQUE (FileTransactionId) USING INDEX;
+/* Definition of the RecallGroup table
+ *   name : the name of the RecallGroup
+ *   nbDrives : maximum number of drives that may be concurrently used across all users of this RecallGroup
+ *   minAmountDataForMount : the minimum amount of data needed to trigger a new mount, in bytes
+ *   minNbFilesForMount : the minimum number of files needed to trigger a new mount
+ *   maxFileAgeBeforeMount : the maximum file age before a tape in mounted, in seconds
+ *   vdqmPriority : the priority that should be used for VDQM requests
+ *   lastEditor : the login from which the tapepool was last modified
+ *   lastEditionTime : the time at which the tapepool was last modified
+ * Note that a mount is attempted as soon as one of the three criterias is reached.
+ */
+CREATE TABLE RecallGroup(id INTEGER CONSTRAINT PK_RecallGroup_Id PRIMARY KEY CONSTRAINT NN_RecallGroup_Id NOT NULL, 
+                         name VARCHAR2(2048) CONSTRAINT NN_RecallGroup_Name NOT NULL
+                                             CONSTRAINT UN_RecallGroup_Name UNIQUE USING INDEX,
+                         nbDrives INTEGER CONSTRAINT NN_RecallGroup_NbDrives NOT NULL,
+                         minAmountDataForMount INTEGER CONSTRAINT NN_RecallGroup_MinAmountData NOT NULL,
+                         minNbFilesForMount INTEGER CONSTRAINT NN_RecallGroup_MinNbFiles NOT NULL,
+                         maxFileAgeBeforeMount INTEGER CONSTRAINT NN_RecallGroup_MaxFileAge NOT NULL,
+                         vdqmPriority INTEGER DEFAULT 0 CONSTRAINT NN_RecallGroup_VdqmPriority NOT NULL,
+                         lastEditor VARCHAR2(2048) CONSTRAINT NN_RecallGroup_LastEditor NOT NULL,
+                         lastEditionTime NUMBER CONSTRAINT NN_RecallGroup_LastEdTime NOT NULL)
+INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+/* Definition of the RecallGroup table
+ *   euid : uid of the recall user
+ *   egid : gid of the recall user
+ *   recallGroup : the recall group to which this user belongs
+ *   lastEditor : the login from which the tapepool was last modified
+ *   lastEditionTime : the time at which the tapepool was last modified
+ * Note that a mount is attempted as soon as one of the three criterias is reached.
+ */
+CREATE TABLE RecallUser(euid INTEGER CONSTRAINT NN_RecallUser_Euid NOT NULL,
+                        egid INTEGER CONSTRAINT NN_RecallUser_Egid NOT NULL,
+                        recallGroup INTEGER CONSTRAINT NN_RecallUser_RecallGroup NOT NULL,
+                        lastEditor VARCHAR2(2048) CONSTRAINT NN_RecallUser_LastEditor NOT NULL,
+                        lastEditionTime NUMBER CONSTRAINT NN_RecallUser_LastEdTime NOT NULL)
+INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE INDEX I_RecallUser_RecallGroup ON RecallUser(recallGroup); 
+ALTER TABLE RecallUser ADD CONSTRAINT FK_RecallUser_RecallGroup FOREIGN KEY (recallGroup) REFERENCES RecallGroup(id);
+
+/* Definition of the RecallMount table
+ *   vid : the tape mounted or to be mounted
+ *   recallGroup : the recall group to which this user belongs
+ *   status : current status of the recall
+ */
+CREATE TABLE RecallMount(id INTEGER CONSTRAINT PK_RecallMount_Id PRIMARY KEY CONSTRAINT NN_RecallMount_Id NOT NULL, 
+                         mountTransactionId INTEGER CONSTRAINT UN_RecallMount_TransId UNIQUE USING INDEX,
+                         VID VARCHAR2(2048) CONSTRAINT NN_RecallMount_VID NOT NULL
+                                            CONSTRAINT UN_RecallMount_VID UNIQUE USING INDEX,
+                         label VARCHAR2(2048),
+                         density VARCHAR2(2048),
+                         recallGroup INTEGER CONSTRAINT NN_RecallMount_RecallGroup NOT NULL,
+                         startTime NUMBER CONSTRAINT NN_RecallMount_startTime NOT NULL,
+                         status INTEGER CONSTRAINT NN_RecallMount_Status NOT NULL,
+                         lastVDQMPingTime NUMBER DEFAULT 0 CONSTRAINT NN_RecallMount_lastVDQMPing NOT NULL,
+                         lastProcessedFseq INTEGER DEFAULT -1 CONSTRAINT NN_RecallMount_Fseq NOT NULL)
+INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+ALTER TABLE RecallMount ADD CONSTRAINT FK_RecallMount_RecallGroup FOREIGN KEY (recallGroup) REFERENCES RecallGroup(id);
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallMount', 'status', 0, 'RECALLMOUNT_NEW');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallMount', 'status', 1, 'RECALLMOUNT_WAITDRIVE');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallMount', 'status', 2, 'RECALLMOUNT_RECALLING');
+
+/* Definition of the RecallJob table
+ * id unique identifer of this RecallJob
+ * castorFile the file to be recalled
+ * copyNb the copy number of the segment that this recalljob is targetting
+ * recallGroup the recallGroup that triggered the recall
+ * svcClass the service class used when triggering the recall. Will be used to place the file on disk
+ * euid the user that triggered the recall
+ * egid the group that triggered the recall
+ * vid the tape on which the targetted segment resides
+ * fseq the file sequence number of the targetted segment on its tape
+ * status status of the recallJob
+ * creationTime time when this job was created
+ * nbRetriesWithinMount number of times we have tried to read the file within the current tape mount
+ * nbMounts number of times we have mounted a tape for this RecallJob
+ * blockId blockId of the file
+ * fileTransactionId
+ */
+CREATE TABLE RecallJob(id INTEGER CONSTRAINT PK_RecallJob_Id PRIMARY KEY CONSTRAINT NN_RecallJob_Id NOT NULL, 
+                       castorFile INTEGER CONSTRAINT NN_RecallJob_CastorFile NOT NULL,
+                       copyNb INTEGER CONSTRAINT NN_RecallJob_CopyNb NOT NULL,
+                       recallGroup INTEGER CONSTRAINT NN_RecallJob_RecallGroup NOT NULL,
+                       svcClass INTEGER CONSTRAINT NN_RecallJob_SvcClass NOT NULL,
+                       euid INTEGER CONSTRAINT NN_RecallJob_Euid NOT NULL,
+                       egid INTEGER CONSTRAINT NN_RecallJob_Egid NOT NULL,
+                       vid VARCHAR2(2048) CONSTRAINT NN_RecallJob_VID NOT NULL,
+                       fseq INTEGER CONSTRAINT NN_RecallJob_Fseq NOT NULL,
+                       status INTEGER CONSTRAINT NN_RecallJob_Status NOT NULL,
+                       fileSize INTEGER CONSTRAINT NN_RecallJob_FileSize NOT NULL,
+                       creationTime INTEGER CONSTRAINT NN_RecallJob_CreationTime NOT NULL,
+                       nbRetriesWithinMount NUMBER DEFAULT 0 CONSTRAINT NN_RecallJob_nbRetriesWM NOT NULL,
+                       nbMounts NUMBER DEFAULT 0 CONSTRAINT NN_RecallJob_nbMounts NOT NULL,
+                       blockId RAW(4) CONSTRAINT NN_RecallJob_blockId NOT NULL,
+                       fileTransactionId INTEGER CONSTRAINT UN_RecallJob_FileTrId UNIQUE USING INDEX)
+INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+CREATE INDEX I_RecallJob_RecallGroup ON RecallJob (recallGroup);
+CREATE INDEX I_RecallJob_Castorfile_VID ON RecallJob (castorFile, VID);
+CREATE INDEX I_RecallJob_VID ON RecallJob (VID);
+
+ALTER TABLE RecallJob ADD CONSTRAINT FK_RecallJob_SvcClass FOREIGN KEY (svcClass) REFERENCES SvcClass(id);
+ALTER TABLE RecallJob ADD CONSTRAINT FK_RecallJob_RecallGroup FOREIGN KEY (recallGroup) REFERENCES RecallGroup(id);
+ALTER TABLE RecallJob ADD CONSTRAINT FK_RecallJob_CastorFile FOREIGN KEY (castorFile) REFERENCES CastorFile(id);
+
+-- NEW status is when the RecallJob is created and no mount is foreseen yet
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallJob', 'status', 0, 'RECALLJOB_NEW');
+-- PENDING status is when a RecallMount has been created that will handle the file for this RecallJob
+-- Note that it may not be the tape of the RecallJob itself if another copy is being recalled
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallJob', 'status', 1, 'RECALLJOB_PENDING');
+-- SELECTED status is when the file is currently being recalled. This can only happen for RecallJobs
+-- for which the tape has been mounted. Other RecallJobs for the same file stay in PENDING
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallJob', 'status', 2, 'RECALLJOB_SELECTED');
+-- RETRYMOUNT status is when the file recall has failed and should be retried after remounting the tape
+-- These will be reset to NEW on RecallMount deletion
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallJob', 'status', 3, 'RECALLJOB_RETRYMOUNT');
+
+
 
 /* Create sequence for the File request IDs. */
 CREATE SEQUENCE TG_FILETRID_SEQ START WITH 1 INCREMENT BY 1;
 
 /* Definition of the TapePool table
  *   name : the name of the TapePool
+ *   nbDrives : maximum number of drives that may be concurrently used across all users of this TapePool
  *   minAmountDataForMount : the minimum amount of data needed to trigger a new mount, in bytes
  *   minNbFilesForMount : the minimum number of files needed to trigger a new mount
  *   maxFileAgeBeforeMount : the maximum file age before a tape in mounted, in seconds
@@ -174,7 +270,7 @@ CREATE TABLE TapePool (name VARCHAR2(2048) CONSTRAINT NN_TapePool_Name NOT NULL,
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* Definition of the MigrationMount table
- *   vdqmVolReqId : 
+ *   mountTransactionId : the unique identifier of the mount transaction
  *   tapeGatewayRequestId : 
  *   VID : tape currently mounted (when applicable)
  *   label : label (i.e. format) of the currently mounted tape (when applicable)
@@ -184,7 +280,7 @@ INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
  *   tapePool : tapepool used by this migration
  *   status : current status of the migration
  */
-CREATE TABLE MigrationMount (vdqmVolReqId INTEGER CONSTRAINT UN_MigrationMount_VDQM UNIQUE USING INDEX,
+CREATE TABLE MigrationMount (mountTransactionId INTEGER CONSTRAINT UN_MigrationMount_VDQM UNIQUE USING INDEX,
                              tapeGatewayRequestId INTEGER CONSTRAINT NN_MigrationMount_tgRequestId NOT NULL,
                              id INTEGER CONSTRAINT PK_MigrationMount_Id PRIMARY KEY
                                         CONSTRAINT NN_MigrationMount_Id NOT NULL,
@@ -330,12 +426,6 @@ CREATE INDEX I_StagePutRequest_SvcClass ON StagePutRequest (svcClass);
 /* Indexing GCFile by Request */
 CREATE INDEX I_GCFile_Request ON GCFile (request);
 
-/* Indexing Tape by Status */
-CREATE INDEX I_Tape_Status ON Tape (status);
-
-/* Indexing Segments by Tape and Status and fseq */
-CREATE INDEX I_Segment_TapeStatusFseq ON Segment (tape, status, fseq);
-
 /* FileSystem constraints */
 ALTER TABLE FileSystem ADD CONSTRAINT FK_FileSystem_DiskServer 
   FOREIGN KEY (diskServer) REFERENCES DiskServer(id);
@@ -357,9 +447,6 @@ ALTER TABLE DiskServer ADD CONSTRAINT UN_DiskServer_Name UNIQUE (name);
 
 /* An index to speed up queries in FileQueryRequest, FindRequestRequest, RequestQueryRequest */
 CREATE INDEX I_QueryParameter_Query ON QueryParameter (query);
-
-/* An index to speed the queries on Segments by copy */
-CREATE INDEX I_Segment_Copy ON Segment (copy);
 
 /* Constraint on FileClass name */
 ALTER TABLE FileClass ADD CONSTRAINT UN_FileClass_Name UNIQUE (name);
@@ -453,7 +540,6 @@ CREATE GLOBAL TEMPORARY TABLE ProcessBulkRequestHelper
 /* Global temporary table to handle bulk update of subrequests in processBulkAbortForRepack */
 CREATE GLOBAL TEMPORARY TABLE ProcessRepackAbortHelperSR (srId NUMBER) ON COMMIT DELETE ROWS;
 /* Global temporary table to handle bulk update of diskCopies in processBulkAbortForRepack */
-CREATE GLOBAL TEMPORARY TABLE ProcessRepackAbortHelperDCrec (cfId NUMBER) ON COMMIT DELETE ROWS;
 CREATE GLOBAL TEMPORARY TABLE ProcessRepackAbortHelperDCmigr (cfId NUMBER) ON COMMIT DELETE ROWS;
 
 /* Table to log the DB activity */
@@ -603,6 +689,10 @@ INSERT INTO CastorConfig
   VALUES ('Repack', 'Protocol', 'rfio', 'The protocol that repack should use for writing files to disk');
 INSERT INTO CastorConfig
   VALUES ('Repack', 'MaxNbConcurrentClients', '3', 'The maximum number of repacks clients that are able to start or abort concurrently. This are either clients starting repacks or aborting running repacks. Providing that each of them will take a DB core, this number should not exceed ~50% of the number of cores of the stager DB server');
+INSERT INTO CastorConfig
+  VALUES ('Recall', 'MaxNbRetriesWithinMount', '2', 'The maximum number of retries for recaling a file within the same tape mount. When exceeded, the recall may still be retried in another mount. See Recall/MaxNbMount entry');
+INSERT INTO CastorConfig
+  VALUES ('Recall', 'MaxNbMounts', '2', 'The maximum number of mounts for recaling a given file. When exceeded, the recall will be fail in no other tapecopy can be used. See also Recall/MaxNbRetriesWithinMount entry');
 COMMIT;
 
 
@@ -778,3 +868,13 @@ CREATE GLOBAL TEMPORARY TABLE RepackTapeSegments
   copyNb NUMBER, fileClass NUMBER, allSegments VARCHAR2(2048))
  ON COMMIT PRESERVE ROWS;
 
+/*****************/
+/* logon trigger */
+/*****************/
+
+/* allows the call of new versions of remote procedures when the signature is matching */
+CREATE OR REPLACE TRIGGER tr_RemoteDepSignature AFTER LOGON ON DATABASE
+BEGIN
+  EXECUTE IMMEDIATE 'ALTER SESSION SET REMOTE_DEPENDENCIES_MODE=SIGNATURE';
+END;
+/

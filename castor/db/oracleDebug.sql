@@ -34,17 +34,18 @@ CREATE OR REPLACE PACKAGE castorDebug AS
     ReqType VARCHAR2(20));
   TYPE RequestDebug IS TABLE OF RequestDebug_typ;
   TYPE RecallJobDebug_typ IS RECORD (
-    RJId NUMBER,
-    RJStatus NUMBER,
-    RJMissing NUMBER,
-    RJNbRetry NUMBER,
-    SegId NUMBER,
-    SegStatus NUMBER,
-    SegErrCode NUMBER,
-    VID VARCHAR2(2048),
-    tpMode NUMBER,
-    TapeStatus NUMBER,
-    SegErr VARCHAR2(2048));
+    id INTEGER,
+    copyNb INTEGER,
+    recallGroup VARCHAR(2048),
+    svcClass VARCHAR(2048),
+    euid INTEGER,
+    egid INTEGER,
+    vid VARCHAR(2048),
+    fseq INTEGER,
+    status INTEGER,
+    creationTime NUMBER,
+    nbRetriesWithinMount INTEGER,
+    nbMounts INTEGER);
   TYPE RecallJobDebug IS TABLE OF RecallJobDebug_typ;
 END;
 /
@@ -73,14 +74,9 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- MigrationJob?
 BEGIN
   SELECT castorFile INTO cfId FROM MigrationJob WHERE id = ref;
   RETURN cfId;
-EXCEPTION WHEN NO_DATA_FOUND THEN -- Segment?
-BEGIN
-  SELECT castorFile INTO cfId FROM RecallJob, Segment
-   WHERE Segment.id = ref AND RecallJob.id = Segment.copy;
-  RETURN cfId;
 EXCEPTION WHEN NO_DATA_FOUND THEN -- nothing found
-  RAISE_APPLICATION_ERROR (-20000, 'Could not find any CastorFile, SubRequest, DiskCopy, MigrationJob, RecallJob or Segment with id = ' || ref);
-END; END; END; END; END; END;
+  RAISE_APPLICATION_ERROR (-20000, 'Could not find any CastorFile, SubRequest, DiskCopy, MigrationJob or RecallJob with id = ' || ref);
+END; END; END; END; END;
 /
 
 
@@ -108,18 +104,17 @@ END;
 /
 
 
-/* Get the recalljobs, segments and tapes associated with the reference number */
+/* Get the recalljobs associated with the reference number */
 CREATE OR REPLACE FUNCTION getRJs(ref number) RETURN castorDebug.RecallJobDebug PIPELINED AS
 BEGIN
-  FOR t IN (SELECT RecallJob.id AS RJId, RecallJob.status AS RJStatus,
-                   RecallJob.missingCopies AS RJmissing, RecallJob.nbRetry AS RJNbRetry,
-                   Segment.Id, Segment.status AS SegStatus, Segment.errorCode AS SegErrCode,
-                   Tape.vid AS VID, Tape.tpMode AS tpMode, Tape.Status AS TapeStatus,
-                   Segment.errMsgTxt AS SegErr
-              FROM RecallJob, Segment, Tape
-             WHERE RecallJob.id = Segment.copy(+)
-               AND Segment.tape = Tape.id(+)
-               AND RecallJob.castorfile = getCF(ref)) LOOP
+  FOR t IN (SELECT RecallJob.id, RecallJob.copyNb, RecallGroup.name as recallGroupName,
+                   SvcClass.name as svcClassName, RecallJob.euid, RecallJob.egid, RecallJob.vid,
+                   RecallJob.fseq, RecallJob.status, RecallJob.creationTime,
+                   RecallJob.nbRetriesWithinMount, RecallJob.nbMounts
+              FROM RecallJob, RecallGroup, SvcClass
+             WHERE RecallJob.castorfile = getCF(ref)
+               AND RecallJob.recallGroup = RecallGroup.id
+               AND RecallJob.svcClass = SvcClass.id) LOOP
      PIPE ROW(t);
   END LOOP;
 END;

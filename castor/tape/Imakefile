@@ -29,5 +29,4 @@ include LOCAL_PATH/tpcp/Makefile
 include LOCAL_PATH/utils/Makefile
 include LOCAL_PATH/legacymsg/Makefile
 include LOCAL_PATH/net/Makefile
-include LOCAL_PATH/rechandler/Makefile
 include LOCAL_PATH/tapebridge/Makefile

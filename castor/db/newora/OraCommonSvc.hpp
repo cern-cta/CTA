@@ -89,24 +89,6 @@ namespace castor {
         virtual castor::stager::Request* requestToDo(std::string service)
           throw (castor::exception::Exception);
 
-        /**
-         * Retrieves a tape from the database based on its vid,
-         * side and tpmode. If no tape is found, creates one
-         * This method holds a lock on the row only on creation
-         * of a new tape. It is the* responsability of the caller
-         * to commit the transaction.
-         * @param vid the vid of the tape
-         * @param side the side of the tape
-         * @param tpmode the tpmode of the tape
-         * @return the tape. the return value can never be 0
-         * @exception Exception in case of error (no tape found,
-         * several tapes found, DB problem, etc...)
-         */
-        castor::stager::Tape* selectTape(const std::string vid,
-                                         const int side,
-                                         const int tpmode)
-          throw (castor::exception::Exception);
-
       protected:
 
         /**
@@ -144,12 +126,6 @@ namespace castor {
 
         /// SQL statement object for function requestToDo
         oracle::occi::Statement *m_requestToDoStatement;
-
-        /// SQL statement for function selectTape
-        static const std::string s_selectTapeStatementString;
-
-        /// SQL statement object for function selectTape
-        oracle::occi::Statement *m_selectTapeStatement;
 
       }; // end of class OraCommonSvc
 

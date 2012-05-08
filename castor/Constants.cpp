@@ -212,7 +212,7 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "FileToRecall",
   "VolumeRequest",
   "Volume",
-  "TapeGatewayRequest",
+  "DELETED TYPE", 
   "DELETED TYPE", 
   "EndNotification",
   "NoMoreFiles",
@@ -232,7 +232,7 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "MigrationPolicyElement",
   "StreamPolicyElement",
   "RetryPolicyElement",
-  "VdqmTapeGatewayRequest",
+  "DELETED TYPE",
 
   "StageQueryResult",
   "NsFileId",

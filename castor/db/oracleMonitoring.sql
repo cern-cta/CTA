@@ -215,15 +215,13 @@ CREATE OR REPLACE PACKAGE BODY CastorMon AS
           -- as the DiskCopy filesystem pointer is 0 until the file is
           -- successfully recalled.
           SELECT Request.svcClassName svcClass, CastorFile.fileSize,
-                 (getTime() - DiskCopy.creationTime) waitTime, 1 found
-            FROM DiskCopy, SubRequest, CastorFile,
+                 (getTime() - Subrequest.creationTime) waitTime, 1 found
+            FROM SubRequest, CastorFile,
               (SELECT id, svcClassName FROM StageGetRequest UNION ALL
                SELECT id, svcClassName FROM StagePrepareToGetRequest UNION ALL
                SELECT id, svcClassName FROM StageUpdateRequest UNION ALL
                SELECT id, svcClassName FROM StageRepackRequest) Request
-           WHERE DiskCopy.id = SubRequest.diskCopy
-             AND DiskCopy.status = 2  -- DISKCOPY_WAITTAPERECALL
-             AND DiskCopy.castorFile = CastorFile.id
+           WHERE SubRequest.castorFile = CastorFile.id
              AND SubRequest.status = 4  -- SUBREQUEST_WAITTAPERECALL
              AND SubRequest.parent = 0
              AND SubRequest.request = Request.id

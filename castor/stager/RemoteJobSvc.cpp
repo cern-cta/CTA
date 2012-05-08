@@ -106,20 +106,6 @@ unsigned int castor::stager::RemoteJobSvc::ID() {
 }
 
 //------------------------------------------------------------------------------
-// selectTape
-//------------------------------------------------------------------------------
-castor::stager::Tape*
-castor::stager::RemoteJobSvc::selectTape
-(const std::string, const int, const int)
-  throw (castor::exception::Exception) {
-  castor::exception::NotSupported ex;
-  ex.getMessage()
-    << "RemoteJobSvc implementation is not complete"
-    << std::endl << "This method is not supported.";
-  throw ex;
-}
-
-//------------------------------------------------------------------------------
 // requestToDo
 //------------------------------------------------------------------------------
 castor::stager::Request*

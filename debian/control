@@ -274,12 +274,6 @@ Build-Depends: vdt_packaging_fixes, gpt, globus-config, vdt_compile_globus_core,
 Description: castor (Cern Advanced STORage system)
  External CASTOR2 gridftp2 DSI module with xroot support
 
-Package: castor-rechandler-server
-Architecture: any
-Depends: logrotate, castor-lib-tape
-Description: castor (Cern Advanced STORage system)
- Recall Handler Daemon
-
 Package: castor-csec
 Architecture: any
 Depends: castor-lib, vdt_globus_essentials, glite-security-voms-api-c

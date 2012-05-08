@@ -18,6 +18,7 @@
 #ifndef _VDQM_H
 #define _VDQM_H
 
+#include "net.h"
 #include "vdqm_messages.h"
 #include "Castor_limits.h"
 #include "Cregexp.h"

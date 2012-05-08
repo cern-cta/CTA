@@ -25,6 +25,7 @@ BEGIN
   -- and because it may include a check for read permissions.
   IF svcClassId = 0 THEN
     OPEN result FOR
+     SELECT * FROM (
       SELECT fileId, nsHost, dcId, path, fileSize, status, machine, mountPoint, nbCopyAccesses,
              lastKnownFileName, creationTime, svcClass, lastAccessTime, hwStatus
         FROM (
@@ -33,30 +34,24 @@ BEGIN
                  CASE WHEN DC.svcClass IS NULL THEN
                    (SELECT /*+ INDEX(Subrequest I_Subrequest_DiskCopy)*/ UNIQUE Req.svcClassName
                       FROM SubRequest,
-                        (SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */ id, svcClassName FROM StagePrepareToGetRequest    UNION ALL
-                         SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id, svcClassName FROM StagePrepareToPutRequest    UNION ALL
+                        (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id, svcClassName FROM StagePrepareToPutRequest UNION ALL
                          SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcClassName FROM StagePrepareToUpdateRequest UNION ALL
-                         SELECT /*+ INDEX(StageDiskCopyReplicaRequest PK_StageDiskCopyReplicaRequ_Id) */ id, svcClassName FROM StageDiskCopyReplicaRequest UNION ALL
-                         SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */ id, svcClassName FROM StageRepackRequest                      UNION ALL
-                         SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, svcClassName FROM StageGetRequest) Req
+                         SELECT /*+ INDEX(StageDiskCopyReplicaRequest PK_StageDiskCopyReplicaRequ_Id) */ id, svcClassName FROM StageDiskCopyReplicaRequest) Req
                           WHERE SubRequest.diskCopy = DC.id
-                            AND SubRequest.status IN (4, 5, 6, 13)  -- WAITTAPERECALL, WAITSUBREQ, READY, BEINGSCHED
+                            AND SubRequest.status IN (5, 6, 13)  -- WAITSUBREQ, READY, BEINGSCHED
                             AND request = Req.id)              
                    ELSE DC.svcClass END AS svcClass,
                  DC.machine, DC.mountPoint, DC.nbCopyAccesses, CastorFile.lastKnownFileName,
                  DC.creationTime, DC.lastAccessTime, nvl(decode(DC.hwStatus, 2, 1, DC.hwStatus), -1) hwStatus
             FROM CastorFile,
               (SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, DiskServer.name AS machine, FileSystem.mountPoint,
-                      SvcClass.name AS svcClass, DiskCopy.filesystem, DiskCopy.CastorFile, 
+                      SvcClass.name AS svcClass, DiskCopy.filesystem, DiskCopy.castorFile, 
                       DiskCopy.nbCopyAccesses, DiskCopy.creationTime, DiskCopy.lastAccessTime,
                       FileSystem.status + DiskServer.status AS hwStatus
-                 FROM FileSystem, DiskServer, DiskPool2SvcClass, SvcClass,
-                   (SELECT id, status, filesystem, castorFile, path, nbCopyAccesses, creationTime, lastAccessTime
-                      FROM DiskCopy
-                     WHERE CastorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
-                       AND status IN (0, 1, 2, 4, 5, 6, 7, 10, 11) -- search for diskCopies not BEINGDELETED
-                     GROUP BY (id, status, filesystem, castorfile, path, nbCopyAccesses, creationTime, lastAccessTime)) DiskCopy
-                WHERE FileSystem.id(+) = DiskCopy.fileSystem
+                 FROM FileSystem, DiskServer, DiskPool2SvcClass, SvcClass, DiskCopy
+                WHERE Diskcopy.castorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
+                  AND Diskcopy.status IN (0, 1, 4, 5, 6, 7, 10, 11) -- search for diskCopies not BEINGDELETED
+                  AND FileSystem.id(+) = DiskCopy.fileSystem
                   AND nvl(FileSystem.status, 0) IN (0, 1) -- PRODUCTION, DRAINING
                   AND DiskServer.id(+) = FileSystem.diskServer
                   AND nvl(DiskServer.status, 0) IN (0, 1) -- PRODUCTION, DRAINING
@@ -67,9 +62,24 @@ BEGIN
                  ) DC
            WHERE CastorFile.id = DC.castorFile)
        WHERE status IS NOT NULL    -- search for valid diskcopies
-       ORDER BY fileid, nshost;
+     UNION
+      SELECT CastorFile.fileId, CastorFile.nsHost, 0, '', RecallJob.fileSize, 2, -- WAITTAPERECALL
+             '', '', 0, CastorFile.lastKnownFileName, RecallJob.creationTime, Req.svcClassName, RecallJob.creationTime, -1
+        FROM RecallJob, CastorFile, Subrequest,
+             (SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */ id, svcClassName FROM StagePrepareToGetRequest UNION ALL
+              SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcClassName FROM StagePrepareToUpdateRequest UNION ALL
+              SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, svcClassName FROM StageGetRequest UNION ALL
+              SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ id, svcClassName FROM StageUpdateRequest UNION ALL
+              SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */ id, svcClassName FROM StageRepackRequest) Req
+       WHERE RecallJob.castorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
+         AND Castorfile.id = RecallJob.castorfile
+         AND Subrequest.CastorFile = Castorfile.id
+         AND SubRequest.status = dconst.SUBREQUEST_WAITTAPERECALL
+         AND Req.id = SubRequest.request)
+    ORDER BY fileid, nshost;
   ELSE
     OPEN result FOR
+     SELECT * FROM (
       SELECT fileId, nsHost, dcId, path, fileSize, status, machine, mountPoint, nbCopyAccesses,
              lastKnownFileName, creationTime, (SELECT name FROM svcClass WHERE id = svcClassId),
              lastAccessTime, hwStatus
@@ -81,15 +91,12 @@ BEGIN
                        (SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/
                         UNIQUE decode(nvl(SubRequest.status, -1), -1, -1, DC.status)
                           FROM SubRequest,
-                            (SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */ id, svcclass, svcClassName FROM StagePrepareToGetRequest       UNION ALL
-                             SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id, svcclass, svcClassName FROM StagePrepareToPutRequest       UNION ALL
+                            (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id, svcclass, svcClassName FROM StagePrepareToPutRequest UNION ALL
                              SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcclass, svcClassName FROM StagePrepareToUpdateRequest UNION ALL
-                             SELECT /*+ INDEX(StageDiskCopyReplicaRequest PK_StageDiskCopyReplicaRequ_Id) */ id, svcclass, svcClassName FROM StageDiskCopyReplicaRequest UNION ALL
-                             SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */ id, svcclass, svcClassName FROM StageRepackRequest                         UNION ALL
-                             SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, svcclass, svcClassName FROM StageGetRequest) Req
+                             SELECT /*+ INDEX(StageDiskCopyReplicaRequest PK_StageDiskCopyReplicaRequ_Id) */ id, svcclass, svcClassName FROM StageDiskCopyReplicaRequest) Req
                          WHERE SubRequest.CastorFile = CastorFile.id
                            AND SubRequest.request = Req.id
-                           AND SubRequest.status IN (4, 5, 6, 13)  -- WAITTAPERECALL, WAITSUBREQ, READY, BEINGSCHED
+                           AND SubRequest.status IN (5, 6, 13)  -- WAITSUBREQ, READY, BEINGSCHED
                            AND svcClass = svcClassId)
                       END AS status,
                  DC.machine, DC.mountPoint, DC.nbCopyAccesses, CastorFile.lastKnownFileName,
@@ -99,13 +106,10 @@ BEGIN
                       DiskPool2SvcClass.child AS dcSvcClass, DiskCopy.filesystem, DiskCopy.CastorFile, 
                       DiskCopy.nbCopyAccesses, DiskCopy.creationTime, DiskCopy.lastAccessTime,
                       FileSystem.status + DiskServer.status AS hwStatus
-                 FROM FileSystem, DiskServer, DiskPool2SvcClass,
-                   (SELECT id, status, filesystem, castorFile, path, nbCopyAccesses, creationTime, lastAccessTime
-                      FROM DiskCopy
-                     WHERE CastorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
-                       AND status IN (0, 1, 2, 4, 5, 6, 7, 10, 11)  -- search for diskCopies not GCCANDIDATE or BEINGDELETED
-                     GROUP BY (id, status, filesystem, castorfile, path, nbCopyAccesses, creationTime, lastAccessTime)) DiskCopy
-                WHERE FileSystem.id(+) = DiskCopy.fileSystem
+                 FROM FileSystem, DiskServer, DiskPool2SvcClass, DiskCopy
+                WHERE Diskcopy.castorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
+                  AND DiskCopy.status IN (0, 1, 4, 5, 6, 7, 10, 11)  -- search for diskCopies not GCCANDIDATE or BEINGDELETED
+                  AND FileSystem.id(+) = DiskCopy.fileSystem
                   AND nvl(FileSystem.status, 0) IN (0, 1) -- PRODUCTION, DRAINING
                   AND DiskServer.id(+) = FileSystem.diskServer
                   AND nvl(DiskServer.status, 0) IN (0, 1) -- PRODUCTION, DRAINING
@@ -113,7 +117,22 @@ BEGIN
                   -- No extra check on read permissions here, it is not relevant
            WHERE CastorFile.id = DC.castorFile)
        WHERE status IS NOT NULL     -- search for valid diskcopies
-       ORDER BY fileid, nshost;
+     UNION
+      SELECT CastorFile.fileId, CastorFile.nsHost, 0, '', RecallJob.fileSize, 2, -- WAITTAPERECALL
+             '', '', 0, CastorFile.lastKnownFileName, RecallJob.creationTime, Req.svcClassName, RecallJob.creationTime, -1
+        FROM RecallJob, CastorFile, Subrequest,
+             (SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */ id, svcClassName, svcClass FROM StagePrepareToGetRequest UNION ALL
+              SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcClassName, svcClass FROM StagePrepareToUpdateRequest UNION ALL
+              SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, svcClassName, svcClass FROM StageGetRequest UNION ALL
+              SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ id, svcClassName, svcClass FROM StageUpdateRequest UNION ALL
+              SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */ id, svcClassName, svcClass FROM StageRepackRequest) Req
+       WHERE RecallJob.castorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
+         AND Castorfile.id = RecallJob.castorfile
+         AND Subrequest.CastorFile = Castorfile.id
+         AND SubRequest.status = dconst.SUBREQUEST_WAITTAPERECALL
+         AND Req.id = SubRequest.request
+         AND Req.svcClass = svcClassId)
+    ORDER BY fileid, nshost;
    END IF;
 END;
 /

@@ -33,36 +33,19 @@ AS
   WRITE_DISABLE CONSTANT PLS_INTEGER :=  0;
   WRITE_ENABLE  CONSTANT PLS_INTEGER :=  1;
 
-  SEGMENT_UNPROCESSED CONSTANT PLS_INTEGER := 0;
-  SEGMENT_FILECOPIED  CONSTANT PLS_INTEGER := 5;
-  SEGMENT_FAILED      CONSTANT PLS_INTEGER := 6;
-  SEGMENT_SELECTED    CONSTANT PLS_INTEGER := 7;
-  SEGMENT_RETRIED     CONSTANT PLS_INTEGER := 8;
+  RECALLMOUNT_NEW        CONSTANT PLS_INTEGER := 0;
+  RECALLMOUNT_WAITDRIVE  CONSTANT PLS_INTEGER := 1;
+  RECALLMOUNT_RECALLING  CONSTANT PLS_INTEGER := 2;
+
+  RECALLJOB_NEW          CONSTANT PLS_INTEGER := 0;
+  RECALLJOB_PENDING      CONSTANT PLS_INTEGER := 1;
+  RECALLJOB_SELECTED     CONSTANT PLS_INTEGER := 2;
+  RECALLJOB_RETRYMOUNT   CONSTANT PLS_INTEGER := 3;
 
   MIGRATIONMOUNT_WAITTAPE  CONSTANT PLS_INTEGER := 0;
   MIGRATIONMOUNT_SEND_TO_VDQM CONSTANT PLS_INTEGER := 1;
   MIGRATIONMOUNT_WAITDRIVE CONSTANT PLS_INTEGER := 2;
   MIGRATIONMOUNT_MIGRATING CONSTANT PLS_INTEGER := 3;
-
-  TAPE_UNUSED     CONSTANT PLS_INTEGER := 0;
-  TAPE_PENDING    CONSTANT PLS_INTEGER := 1;
-  TAPE_WAITDRIVE  CONSTANT PLS_INTEGER := 2;
-  TAPE_WAITMOUNT  CONSTANT PLS_INTEGER := 3;
-  TAPE_MOUNTED    CONSTANT PLS_INTEGER := 4;
-  TAPE_FINISHED   CONSTANT PLS_INTEGER := 5;
-  TAPE_FAILED     CONSTANT PLS_INTEGER := 6;
-  TAPE_UNKNOWN    CONSTANT PLS_INTEGER := 7;
-  TAPE_WAITPOLICY CONSTANT PLS_INTEGER := 8;
-  TAPE_ATTACHEDTOSTREAM CONSTANT PLS_INTEGER := 9;
-  
-  TPMODE_READ     CONSTANT PLS_INTEGER := 0;
-  TPMODE_WRITE    CONSTANT PLS_INTEGER := 1;
-
-  RECALLJOB_SELECTED      CONSTANT PLS_INTEGER := 3;
-  RECALLJOB_TOBERECALLED  CONSTANT PLS_INTEGER := 4;
-  RECALLJOB_STAGED        CONSTANT PLS_INTEGER := 5;
-  RECALLJOB_FAILED        CONSTANT PLS_INTEGER := 6;
-  RECALLJOB_RETRY         CONSTANT PLS_INTEGER := 8;
 
   MIGRATIONJOB_PENDING   CONSTANT PLS_INTEGER := 0;
   MIGRATIONJOB_SELECTED  CONSTANT PLS_INTEGER := 1;
@@ -88,7 +71,6 @@ AS
 
   DISKCOPY_STAGED            CONSTANT PLS_INTEGER :=  0;
   DISKCOPY_WAITDISK2DISKCOPY CONSTANT PLS_INTEGER :=  1;
-  DISKCOPY_WAITTAPERECALL    CONSTANT PLS_INTEGER :=  2;
   DISKCOPY_DELETED           CONSTANT PLS_INTEGER :=  3;
   DISKCOPY_FAILED            CONSTANT PLS_INTEGER :=  4;
   DISKCOPY_WAITFS            CONSTANT PLS_INTEGER :=  5;
@@ -153,13 +135,40 @@ AS
   LVL_DEBUG      CONSTANT PLS_INTEGER := 7; /* LOG_DEBUG   Debug-level messages */
 
   /* messages */
-  FILE_DROPPED_BY_CLEANING CONSTANT     VARCHAR2(2048) := 'File was dropped by internal cleaning';
+  FILE_DROPPED_BY_CLEANING     CONSTANT VARCHAR2(2048) := 'File was dropped by internal cleaning';
   PUTDONE_ENFORCED_BY_CLEANING CONSTANT VARCHAR2(2048) := 'PutDone enforced by internal cleaning';
-  MOUNT_PRODUCER_NO_FILE CONSTANT       VARCHAR2(2048) := 'startMigrationMounts: failed migration mount creation due to lack of files';
-  MOUNT_PRODUCER_AGE_NO_FILE CONSTANT   VARCHAR2(2048) := 'startMigrationMounts: failed migration mount creation base on age due to lack of files';
-  MOUNT_PRODUCER_NEW_MOUNT CONSTANT     VARCHAR2(2048) := 'startMigrationMounts: created new migration mount';
-  MOUNT_PRODUCER_NEW_MOUNT_AGE CONSTANT VARCHAR2(2048) := 'startMigrationMounts: created new migration mount based on age';
-  MOUNT_PRODUCER_NOACTION CONSTANT      VARCHAR2(2048) := 'startMigrationMounts: no need for new migration mount';
+
+  MIGMOUNT_NO_FILE             CONSTANT VARCHAR2(2048) := 'startMigrationMounts: failed migration mount creation due to lack of files';
+  MIGMOUNT_AGE_NO_FILE         CONSTANT VARCHAR2(2048) := 'startMigrationMounts: failed migration mount creation base on age due to lack of files';
+  MIGMOUNT_NEW_MOUNT           CONSTANT VARCHAR2(2048) := 'startMigrationMounts: created new migration mount';
+  MIGMOUNT_NEW_MOUNT_AGE       CONSTANT VARCHAR2(2048) := 'startMigrationMounts: created new migration mount based on age';
+  MIGMOUNT_NOACTION            CONSTANT VARCHAR2(2048) := 'startMigrationMounts: no need for new migration mount';
+
+  RECMOUNT_NEW_MOUNT           CONSTANT VARCHAR2(2048) := 'startRecallMounts: created new recall mount';
+  RECMOUNT_NOACTION_NODRIVE    CONSTANT VARCHAR2(2048) := 'startRecallMounts: not allowed to start new recall mount. Maximum nb of drives has been reached';
+  RECMOUNT_NOACTION_NOCAND     CONSTANT VARCHAR2(2048) := 'startRecallMounts: no candidate found for a mount';
+
+  RECALL_FOUND_ONGOING_RECALL  CONSTANT VARCHAR2(2048) := 'createRecallCandidate: found already running recall';
+  RECALL_UNKNOWN_NS_ERROR      CONSTANT VARCHAR2(2048) := 'createRecallCandidate: error when retrieving segments from namespace';
+  RECALL_NO_TAPECOPY_FOUND     CONSTANT VARCHAR2(2048) := 'createRecallCandidate: No TapeCopy found for Recall';
+  RECALL_CREATING_RECALLJOB    CONSTANT VARCHAR2(2048) := 'createRecallCandidate: created new RecallJob';
+  RECALL_MISSING_COPIES        CONSTANT VARCHAR2(2048) := 'createRecallCandidate: detected missing copies on tape';
+  RECALL_MISSING_COPIES_NOOP   CONSTANT VARCHAR2(2048) := 'createRecallCandidate: detected missing copies on tape, but migrations ongoing';
+  RECALL_MJ_FOR_MISSING_COPY   CONSTANT VARCHAR2(2048) := 'createRecallCandidate: create new MigrationJob to migrate missing copy';
+  RECALL_COPY_STILL_MISSING    CONSTANT VARCHAR2(2048) := 'createRecallCandidate: could not find enough valid copy numbers to create missing copy';
+
+
+  MIGRATION_CANCEL_BY_VID      CONSTANT VARCHAR2(2048) := 'Canceling tape migration for given VID';
+  RECALL_CANCEL_BY_VID         CONSTANT VARCHAR2(2048) := 'Canceling tape recall for given VID';
+  RECALL_CANCEL_RECALLJOB_VID  CONSTANT VARCHAR2(2048) := 'Canceling RecallJobs for given VID';
+  RECALL_FAILING               CONSTANT VARCHAR2(2048) := 'Failing Recall(s)';
+  RECALL_NOT_FOUND             CONSTANT VARCHAR2(2048) := 'setFileRecalled : unable to identify Recall. giving up';
+  RECALL_INVALID_PATH          CONSTANT VARCHAR2(2048) := 'setFileRecalled : unable to parse input path. giving up';
+  RECALL_COMPLETED_DB          CONSTANT VARCHAR2(2048) := 'setFileRecalled : db updates after full recall completed';
+  RECALL_FILE_OVERWRITTEN      CONSTANT VARCHAR2(2048) := 'setFileRecalled : file was overwritten during recall, restarting from scratch';
+  RECALL_FILE_DROPPED          CONSTANT VARCHAR2(2048) := 'setFileRecalled : file was dropped from namespace during recall, giving up';
+  RECALL_BAD_CHECKSUM          CONSTANT VARCHAR2(2048) := 'setFileRecalled : bad checksum detected, will retry if allowed';
+  RECALL_CREATED_CHECKSUM      CONSTANT VARCHAR2(2048) := 'setFileRecalled : created missing checksum in the namespace';
 
 END dlf;
 /

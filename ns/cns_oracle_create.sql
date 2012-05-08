@@ -113,7 +113,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_12_3');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_12_4');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -172,6 +172,57 @@ BEGIN
      raise_application_error(-20001, '');
    END IF;
    RETURN p;
+END;
+/
+
+/* a small package holding type declarations for recall related PL/SQL API */
+CREATE OR REPLACE PACKAGE recall AS
+  TYPE Segment IS RECORD (
+    copyno INTEGER,
+    segsize INTEGER,
+    vid VARCHAR2(2048),
+    fseq INTEGER,
+    blockid RAW(4),
+    checksum_name VARCHAR2(2048),
+    checksum INTEGER
+  );
+  TYPE Segment_Cur IS REF CURSOR RETURN Segment;
+END recall;
+/
+
+/* This function returns a list of valid segments for a given file
+ * By valid, we mean valid segments on non disable tapes. So VMGR
+ * is checked inside the function.
+ * The returned REF CURSOR is of type 
+ */
+CREATE OR REPLACE FUNCTION getValidSegmentsForRecall(fid IN INTEGER) RETURN recall.Segment_Cur IS
+  res recall.Segment_Cur;
+BEGIN
+  OPEN res FOR
+    SELECT COPYNO, SEGSIZE, Cns_seg_metadata.VID, FSEQ, BLOCKID, CHECKSUM_NAME, NVL(CHECKSUM,0)
+      FROM Cns_seg_metadata, Vmgr_tape_side
+     WHERE Cns_seg_metadata.s_fileid = fid
+       AND Cns_seg_metadata.s_status = '-'
+       AND Vmgr_tape_side.VID = Cns_seg_metadata.VID
+       AND Vmgr_tape_side.status NOT IN (1, 2, 32)  -- DISABLED, EXPORTED, ARCHIVED
+     ORDER BY copyno, fsec;
+  RETURN res;
+END;
+/
+
+/* This function sets the checksum of a segment if there is none and commits.
+ * It otherwise exits silently.
+ */
+CREATE OR REPLACE PROCEDURE setSegChecksumWhenNull(fid IN INTEGER,
+                                                   copyNb IN INTEGER,
+                                                   cksumType IN VARCHAR2,
+                                                   cksumValue IN INTEGER) IS
+BEGIN
+  UPDATE Cns_seg_metadata
+     SET checksum_name = cksumType, checksum = cksumValue
+   WHERE s_fileid = fid AND copyno = copyNb AND fsec = 1
+     AND checksum_name IS NULL AND checksum IS NULL;
+  COMMIT;
 END;
 /
 

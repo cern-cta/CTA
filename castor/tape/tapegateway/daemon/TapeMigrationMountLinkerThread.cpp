@@ -107,13 +107,9 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
   };
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, LINKER_MOUNTS_FOUND, paramsTapes);
 
-  // ask tapes to vmgr
-  VmgrTapeGatewayHelper vmgrHelper;
-
   std::list<u_signed64> MMIds;
   std::list<std::string> vids;
   std::list<int> fseqs;
-  std::list<castor::stager::Tape> tapesUsed;
 
   for (std::list<castor::tape::tapegateway::ITapeGatewaySvc::migrationMountParameters>::iterator item = migrationsMountToResolve.begin();
       item != migrationsMountToResolve.end();
@@ -128,11 +124,15 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
 
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,LINKER_QUERYING_VMGR, paramsVmgr);
     int lastFseq=-1;
-    castor::stager::Tape tapeToUse;
+    std::string vidToUse;
 
     try {
       // last Fseq is the value which should be used for the first file
-      vmgrHelper.getTapeForMigration(item->initialSizeToTransfer, item->tapePoolName, lastFseq, tapeToUse, m_shuttingDown);
+      VmgrTapeGatewayHelper::getTapeForMigration(item->initialSizeToTransfer,
+                                                 item->tapePoolName,
+                                                 vidToUse,
+                                                 lastFseq,
+                                                 m_shuttingDown);
 
       // Validate the value received from the vmgr with the nameserver: for this given tape
       // fseq should be strictly greater than the highest referenced segment on the tape
@@ -143,7 +143,7 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
       // by a change to read only. This will maximise safety (no more attempts to write to this
       // badly tracked tape) without disrutions (no problems for reads)
       NsTapeGatewayHelper nsHelper;
-      nsHelper.checkFseqForWrite (tapeToUse.vid(), tapeToUse.side(), lastFseq);
+      nsHelper.checkFseqForWrite (vidToUse, lastFseq);
     } catch(castor::exception::Exception& e) {
       castor::dlf::Param params[] = {
           castor::dlf::Param("MigationMountId", item->migrationMountId),
@@ -174,10 +174,10 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
         }
       } else if (e.code() == ERTWRONGFSEQ) {
         try {
-          vmgrHelper.setTapeAsReadonlyAndUnbusy(tapeToUse, m_shuttingDown);
+          VmgrTapeGatewayHelper::setTapeAsReadonlyAndUnbusy(vidToUse, m_shuttingDown);
         } catch (castor::exception::Exception e) {
           castor::dlf::Param params[] = {
-              castor::dlf::Param("VID", tapeToUse.vid()),
+              castor::dlf::Param("VID", vidToUse),
               castor::dlf::Param("TapePool", item->tapePoolName),
               castor::dlf::Param("mountTransactionId", item->tapegatewayRequestID),
               castor::dlf::Param("errorCode", sstrerror(e.code())),
@@ -192,7 +192,7 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
             castor::dlf::Param("TapePool", item->tapePoolName),
             castor::dlf::Param("errorCode", sstrerror(e.code())),
             castor::dlf::Param("errorMessage", e.getMessage().str()),
-            castor::dlf::Param("VID", tapeToUse.vid())
+            castor::dlf::Param("VID", vidToUse)
         };
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_CRIT, LINKER_VMGR_NS_DISCREPANCY, params);
         // Abort.
@@ -202,19 +202,18 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
       // in case of errors we don't change the status from TO_BE_RESOLVED to TO_BE_SENT_TO_VDQM -- NO NEED OF WAITSPACE status
     }
 
-    if ( !tapeToUse.vid().empty()){
+    if ( !vidToUse.empty()){
       // got the tape
       castor::dlf::Param params[] = {
           castor::dlf::Param("MigationMountId", item->migrationMountId),
           castor::dlf::Param("mountTransactionId", item->tapegatewayRequestID),
-          castor::dlf::Param("TPVID", tapeToUse.vid())
+          castor::dlf::Param("TPVID", vidToUse)
       };
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, LINKER_LINKING_TAPE_MOUNT, params);
 
       MMIds.push_back(item->migrationMountId);
-      vids.push_back(tapeToUse.vid());
+      vids.push_back(vidToUse);
       fseqs.push_back(lastFseq);
-      tapesUsed.push_back(tapeToUse);
     }
   }
   gettimeofday(&tvStart, NULL);
@@ -230,17 +229,17 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
     };
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, LINKER_CANNOT_UPDATE_DB, params);
 
-    for (std::list<castor::stager::Tape>::iterator tapeItem=tapesUsed.begin();
-        tapeItem!=tapesUsed.end();
-        tapeItem++) {
+    for (std::list<std::string>::iterator vidItem = vids.begin();
+        vidItem != vids.end();
+        vidItem++) {
       // release the tape
-      castor::dlf::Param params[] = {castor::dlf::Param("TPVID",(*tapeItem).vid())};
+      castor::dlf::Param params[] = {castor::dlf::Param("TPVID", *vidItem)};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, LINKER_RELEASED_BUSY_TAPE, params);
       try {
-        vmgrHelper.resetBusyTape(*tapeItem, m_shuttingDown);
+        VmgrTapeGatewayHelper::resetBusyTape(*vidItem, m_shuttingDown);
       } catch (castor::exception::Exception& e){
         castor::dlf::Param params[] = {
-            castor::dlf::Param("TPVID",(*tapeItem).vid()),
+            castor::dlf::Param("TPVID", *vidItem),
             castor::dlf::Param("errorCode",sstrerror(e.code())),
             castor::dlf::Param("errorMessage",e.getMessage().str())};
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, LINKER_CANNOT_RELEASE_TAPE, params);

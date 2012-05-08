@@ -155,26 +155,6 @@ namespace castor {
       /////// ICommonSvc part (not implemented)
 
       /**
-       * Retrieves a tape from the database based on its vid,
-       * side and tpmode. If no tape is found, creates one.
-       * Note that this method creates a lock on the row of the
-       * given tape and does not release it. It is the
-       * responsability of the caller to commit the transaction.
-       * The caller is also responsible for the deletion of the
-       * allocated object
-       * @param vid the vid of the tape
-       * @param side the side of the tape
-       * @param tpmode the tpmode of the tape
-       * @return the tape. the return value can never be 0
-       * @exception Exception in case of error (no tape found,
-       * several tapes found, DB problem, etc...)
-       */
-      virtual castor::stager::Tape* selectTape(const std::string vid,
-                                               const int side,
-                                               const int tpmode)
-        throw (castor::exception::Exception);
-
-      /**
        * Selects the next request the GC service should deal with.
        * Selects a Request in START status and move its status
        * PROCESSED to avoid double processing.

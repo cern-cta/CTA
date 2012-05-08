@@ -34,8 +34,6 @@
 #include "castor/exception/TooBig.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/stager/DiskCopyStatusCodes.hpp"
-#include "castor/stager/RecallJobStatusCodes.hpp"
-#include "castor/stager/SegmentStatusCodes.hpp"
 #include "castor/query/DiskPoolQueryResponse.hpp"
 #include "castor/query/DiskServerDescription.hpp"
 #include "castor/query/FileSystemDescription.hpp"
