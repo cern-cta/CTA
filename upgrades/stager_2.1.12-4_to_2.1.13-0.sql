@@ -1,0 +1,282 @@
+/******************************************************************************
+ *                 stager_2.1.12-4_to_2.1.13-0.sql
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2003  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * This script upgrades a CASTOR v2.1.12-4 STAGER database to v2.1.13-0
+ *
+ * @author Castor Dev team, castor-dev@cern.ch
+ *****************************************************************************/
+
+/* Stop on errors */
+WHENEVER SQLERROR EXIT FAILURE
+BEGIN
+  -- If we have encountered an error rollback any previously non committed
+  -- operations. This prevents the UPDATE of the UpgradeLog from committing
+  -- inconsistent data to the database.
+  ROLLBACK;
+  UPDATE UpgradeLog
+     SET failureCount = failureCount + 1
+   WHERE schemaVersion = '2_1_13_0'
+     AND release = '2_1_13_0'
+     AND state != 'COMPLETE';
+  COMMIT;
+END;
+/
+
+/* Verify that the script is running against the correct schema and version */
+DECLARE
+  unused VARCHAR(100);
+BEGIN
+  SELECT release INTO unused FROM CastorVersion
+   WHERE schemaName = 'STAGER'
+     AND (release LIKE '2_1_12_4%');
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- Error, we cannot apply this script
+  raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts for the STAGER before this one.');
+END;
+/
+
+
+-- XXXXX Also check the nameserver version here. We need at least 2.1.13-0
+
+/* Starting the upgrade */
+INSERT INTO UpgradeLog (schemaVersion, release, type)
+VALUES ('2_1_13_0', '2_1_13_0', 'NON TRANSPARENT');
+COMMIT;
+
+/* Job management */
+BEGIN
+  FOR a IN (SELECT * FROM user_scheduler_jobs)
+  LOOP
+    -- Stop any running jobs
+    IF a.state = 'RUNNING' THEN
+      dbms_scheduler.stop_job(a.job_name, force=>TRUE);
+    END IF;
+    -- Schedule the start date of the job to 60 minutes from now. This
+    -- basically pauses the job so that the upgrade can
+    -- go through as quickly as possible.
+    dbms_scheduler.set_attribute(a.job_name, 'START_DATE', SYSDATE + 60/1440);
+  END LOOP;
+END;
+/
+
+/* Schema changes go here */
+/**************************/
+drop table CleanupJobLog;
+CREATE TABLE DLFLogs
+  (timeinfo NUMBER,
+   uuid VARCHAR2(2048),
+   priority INTEGER CONSTRAINT NN_DLFLogs_Priority NOT NULL,
+   msg VARCHAR2(2048) CONSTRAINT NN_DLFLogs_Msg NOT NULL,
+   fileId NUMBER,
+   nsHost VARCHAR2(2048),
+   source VARCHAR2(2048),
+   params VARCHAR2(2048));
+
+DROP PROCEDURE dumpCleanupLogs;
+
+-- XXXXX will have to create the new RecallJob Table, then populate it, then drop old tables
+-- XXXXX and then rename new to old
+DROP TABLE Tape;
+DROP TABLE Segment;
+DROP TABLE RecallJob;
+DROP TABLE RecallGroup;
+DROP TABLE RecallUser;
+DROP TABLE RecallMount;
+
+DROP FUNCTION triggerRepackRecall;
+
+/* Definition of the RecallGroup table
+ *   name : the name of the RecallGroup
+ *   nbDrives : maximum number of drives that may be concurrently used across all users of this RecallGroup
+ *   minAmountDataForMount : the minimum amount of data needed to trigger a new mount, in bytes
+ *   minNbFilesForMount : the minimum number of files needed to trigger a new mount
+ *   maxFileAgeBeforeMount : the maximum file age before a tape in mounted, in seconds
+ *   vdqmPriority : the priority that should be used for VDQM requests
+ *   lastEditor : the login from which the tapepool was last modified
+ *   lastEditionTime : the time at which the tapepool was last modified
+ * Note that a mount is attempted as soon as one of the three criterias is reached.
+ */
+CREATE TABLE RecallGroup(id INTEGER CONSTRAINT PK_RecallGroup_Id PRIMARY KEY CONSTRAINT NN_RecallGroup_Id NOT NULL, 
+                         name VARCHAR2(2048) CONSTRAINT NN_RecallGroup_Name NOT NULL,
+                         nbDrives INTEGER CONSTRAINT NN_RecallGroup_NbDrives NOT NULL,
+                         minAmountDataForMount INTEGER CONSTRAINT NN_RecallGroup_MinAmountData NOT NULL,
+                         minNbFilesForMount INTEGER CONSTRAINT NN_RecallGroup_MinNbFiles NOT NULL,
+                         maxFileAgeBeforeMount INTEGER CONSTRAINT NN_RecallGroup_MaxFileAge NOT NULL,
+                         vdqmPriority INTEGER DEFAULT 0 CONSTRAINT NN_RecallGroup_VdqmPriority NOT NULL,
+                         lastEditor VARCHAR2(2048) CONSTRAINT NN_RecallGroup_LastEditor NOT NULL,
+                         lastEditionTime NUMBER CONSTRAINT NN_RecallGroup_LastEdTime NOT NULL)
+INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+INSERT INTO RecallGroup (id, name, nbDrives, minAmountDataForMount, minNbFilesForMount, maxFileAgeBeforeMount, vdqmPriority, lastEditor, lastEditionTime)
+VALUES (ids_seq.nextval, 'default', 20, 10*1024*1024*1024, 10, 30*3600, 0, '2.1.13 upgrade script', getTime());
+
+/* Definition of the RecallGroup table
+ *   euid : uid of the recall user
+ *   egid : gid of the recall user
+ *   recallGroup : the recall group to which this user belongs
+ *   lastEditor : the login from which the tapepool was last modified
+ *   lastEditionTime : the time at which the tapepool was last modified
+ * Note that a mount is attempted as soon as one of the three criterias is reached.
+ */
+CREATE TABLE RecallUser(euid INTEGER CONSTRAINT NN_RecallUser_Euid NOT NULL,
+                        egid INTEGER CONSTRAINT NN_RecallUser_Egid NOT NULL,
+                        recallGroup INTEGER CONSTRAINT NN_RecallUser_RecallGroup NOT NULL,
+                        lastEditor VARCHAR2(2048) CONSTRAINT NN_RecallUser_LastEditor NOT NULL,
+                        lastEditionTime NUMBER CONSTRAINT NN_RecallUser_LastEdTime NOT NULL)
+INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE INDEX I_RecallUser_RecallGroup ON RecallUser(recallGroup); 
+ALTER TABLE RecallUser ADD CONSTRAINT FK_RecallUser_RecallGroup FOREIGN KEY (recallGroup) REFERENCES RecallGroup(id);
+
+/* Definition of the RecallMount table
+ *   vid : the tape mounted or to be mounted
+ *   recallGroup : the recall group to which this user belongs
+ *   status : current status of the recall
+ */
+CREATE TABLE RecallMount(id INTEGER CONSTRAINT PK_RecallMount_Id PRIMARY KEY CONSTRAINT NN_RecallMount_Id NOT NULL, 
+                         mountTransactionId INTEGER CONSTRAINT UN_RecallMount_TransId UNIQUE USING INDEX,
+                         VID VARCHAR2(2048) CONSTRAINT NN_RecallMount_VID NOT NULL
+                                            CONSTRAINT UN_RecallMount_VID UNIQUE USING INDEX,
+                         label VARCHAR2(2048) CONSTRAINT NN_RecallMount_Label NOT NULL,
+                         density VARCHAR2(2048) CONSTRAINT NN_RecallMount_Density NOT NULL,
+                         recallGroup INTEGER CONSTRAINT NN_RecallMount_RecallGroup NOT NULL,
+                         startTime NUMBER CONSTRAINT NN_RecallMount_startTime NOT NULL,
+                         status INTEGER CONSTRAINT NN_RecallMount_Status NOT NULL,
+                         lastVDQMPingTime NUMBER CONSTRAINT NN_RecallMount_lastVDQMPing NOT NULL,
+                         lastProcessedFseq INTEGER DEFAULT -1 CONSTRAINT NN_RecallMount_Fseq NOT NULL
+)
+-- dgn VARCHAR2(2048),
+-- label VARCHAR2(2048),
+-- density VARCHAR2(2048),
+-- vdqmVolReqId NUMBER,
+INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+ALTER TABLE RecallMount ADD CONSTRAINT FK_RecallMount_RecallGroup FOREIGN KEY (recallGroup) REFERENCES RecallGroup(id);
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallMount', 'status', 0, 'RECALLMOUNT_NEW');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallMount', 'status', 2, 'RECALLMOUNT_WAITDRIVE');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallMount', 'status', 3, 'RECALLMOUNT_RECALLING');
+
+/* Definition of the RecallJob table
+ * id unique identifer of this RecallJob
+ * castorFile the file to be recalled
+ * copyNb the copy number of the segment that this recalljob is targetting
+ * recallGroup the recallGroup that triggered the recall
+ * svcClass the service class used when triggering the recall. Will be used to place the file on disk
+ * euid the user that triggered the recall
+ * egid the group that triggered the recall
+ * vid the tape on which the targetted segment resides
+ * fseq the file sequence number of the targetted segment on its tape
+ * status status of the recallJob
+ * creationTime time when this job was created
+ * nbRetriesWithinMount number of times we have tried to read the file within the current tape mount
+ * nbMounts number of times we have mounted a tape for this RecallJob
+ * blockId blockId of the file
+ * fileTransactionId
+ */
+CREATE TABLE RecallJob(id INTEGER CONSTRAINT PK_RecallJob_Id PRIMARY KEY CONSTRAINT NN_RecallJob_Id NOT NULL, 
+                       castorFile INTEGER CONSTRAINT NN_RecallJob_CastorFile NOT NULL,
+                       copyNb INTEGER CONSTRAINT NN_RecallJob_CopyNb NOT NULL,
+                       recallGroup INTEGER CONSTRAINT NN_RecallJob_RecallGroup NOT NULL,
+                       svcClass INTEGER CONSTRAINT NN_RecallJob_SvcClass NOT NULL,
+                       euid INTEGER CONSTRAINT NN_RecallJob_Euid NOT NULL,
+                       egid INTEGER CONSTRAINT NN_RecallJob_Egid NOT NULL,
+                       vid VARCHAR2(2048) CONSTRAINT NN_RecallJob_VID NOT NULL,
+                       fseq INTEGER CONSTRAINT NN_RecallJob_Fseq NOT NULL,
+                       status INTEGER CONSTRAINT NN_RecallJob_Status NOT NULL,
+                       creationTime INTEGER CONSTRAINT NN_RecallJob_CreationTime NOT NULL,
+                       nbRetriesWithinMount NUMBER DEFAULT 0 CONSTRAINT NN_RecallJob_nbRetriesWM NOT NULL,
+                       nbMounts NUMBER DEFAULT 0 CONSTRAINT NN_RecallJob_nbMounts NOT NULL,
+                       blockId RAW(4) CONSTRAINT NN_RecallJob_blockId NOT NULL,
+                       fileTransactionId INTEGER CONSTRAINT UN_RecallJob_FileTrId UNIQUE USING INDEX)
+INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+CREATE INDEX I_RecallJob_RecallGroup ON RecallJob (recallGroup);
+CREATE INDEX I_RecallJob_Castorfile_VID ON RecallJob (castorFile, VID);
+CREATE INDEX I_RecallJob_VID ON RecallJob (VID);
+
+ALTER TABLE RecallJob ADD CONSTRAINT FK_RecallJob_SvcClass FOREIGN KEY (svcClass) REFERENCES SvcClass(id);
+ALTER TABLE RecallJob ADD CONSTRAINT FK_RecallJob_RecallGroup FOREIGN KEY (recallGroup) REFERENCES RecallGroup(id);
+ALTER TABLE RecallJob ADD CONSTRAINT FK_RecallJob_CastorFile FOREIGN KEY (castorFile) REFERENCES CastorFile(id);
+
+-- NEW status is when the RecallJob is created and no mount is foreseen yet
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallJob', 'status', 0, 'RECALLJOB_NEW');
+-- PENDING status is when a RecallMount has been created that will handle the file for this RecallJob
+-- Note that it may not be the tape of the RecallJob itself if another copy is being recalled
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallJob', 'status', 1, 'RECALLJOB_PENDING');
+-- SELECTED status is when the file is currently being recalled. This can only happen for RecallJobs
+-- for which the tape has been mounted. Other RecallJobs for the same file stay in PENDING
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallJob', 'status', 2, 'RECALLJOB_SELECTED');
+-- RETRYMOUNT status is when the file recall has failed and should be retried after remounting the tape
+-- These will be reset to NEW on RecallMount deletion
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallJob', 'status', 3, 'RECALLJOB_RETRYMOUNT');
+
+
+ALTER TABLE MigrationMount RENAME COLUMN vdqmVolReqId TO mountTransactionId;
+
+INSERT INTO CastorConfig
+  VALUES ('Recall', 'MaxNbRetriesWithinMount', '2', 'The maximum number of retries for recaling a file within the same tape mount. When exceeded, the recall may still be retried in another mount. See Recall/MaxNbMount entry');
+INSERT INTO CastorConfig
+  VALUES ('Recall', 'MaxNbMounts', '2', 'The maximum number of mounts for recaling a given file. When exceeded, the recall will be fail in no other tapecopy can be used. See also Recall/MaxNbRetriesWithinMount entry');
+
+
+DROP PROCEDURE bestFileSystemForSegment;
+DROP PROCEDURE resurrectTapes;
+DROP PROCEDURE tapesAndMountsForRecallPolicy;
+DROP PROCEDURE tg_attachDriveReqToTape;
+DROP PROCEDURE tg_cancelRecallOrMigration;
+DROP PROCEDURE tg_deleteTapeRequest;
+DROP PROCEDURE tg_findFromTGRequestId;
+DROP PROCEDURE tg_findFromVDQMReqId;
+DROP PROCEDURE tg_findVDQMReqFromTGReqId;
+DROP PROCEDURE tg_getFailedRecalls;
+DROP PROCEDURE tg_getSegmentInfo;
+DROP PROCEDURE tg_invalidateFile;
+DROP PROCEDURE tg_RequestIdFromVDQMReqId;
+DROP PROCEDURE tg_setRecRetryResult;
+DROP PROCEDURE tg_startMigrationMounts;
+DROP PROCEDURE createRecallCandidate;
+DROP FUNCTION selectTapeForRecall;
+
+
+-- XXXXX Add revalidation of all the PL/SQL code
+-- XXXXX To be done by hand for now
+
+
+/* Recompile all invalid procedures, triggers and functions */
+/************************************************************/
+BEGIN
+  FOR a IN (SELECT object_name, object_type
+              FROM user_objects
+             WHERE object_type IN ('PROCEDURE', 'TRIGGER', 'FUNCTION', 'VIEW', 'PACKAGE BODY')
+               AND status = 'INVALID')
+  LOOP
+    IF a.object_type = 'PACKAGE BODY' THEN a.object_type := 'PACKAGE'; END IF;
+    BEGIN
+      EXECUTE IMMEDIATE 'ALTER ' ||a.object_type||' '||a.object_name||' COMPILE';
+    EXCEPTION WHEN OTHERS THEN
+      -- ignore, so that we continue compiling the other invalid items
+      NULL;
+    END;
+  END LOOP;
+END;
+/
+
+/* Flag the schema upgrade as COMPLETE */
+/***************************************/
+UPDATE UpgradeLog SET endDate = sysdate, state = 'COMPLETE'
+ WHERE release = '2_1_13_0';
+COMMIT;

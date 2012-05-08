@@ -6081,7 +6081,7 @@ END;
 /* PL/SQL method used by the stager to handle recalls
  * note that this method should only be called with a lock on the concerned CastorFile
  */
-CREATE OR REPLACE PROCEDURE createRecallCandidate(inSrId IN INTEGER) AS
+CREATE OR REPLACE FUNCTION createRecallCandidate(inSrId IN INTEGER) RETURN INTEGER AS
   varFileId INTEGER;
   varNsHost VARCHAR2(2048);
   varFileName VARCHAR2(2048);
@@ -6139,11 +6139,13 @@ BEGIN
   -- update the state of the SubRequest
   IF varRc = 0 THEN
     UPDATE Subrequest SET status = dconst.SUBREQUEST_WAITTAPERECALL WHERE id = inSrId;
+    RETURN dconst.SUBREQUEST_WAITTAPERECALL;
   ELSE
     UPDATE Subrequest
        SET status = dconst.SUBREQUEST_FAILED,
            errorCode = varRc
      WHERE id = inSrId;
+    RETURN dconst.SUBREQUEST_FAILED;
   END IF;
 END;
 /
@@ -7390,7 +7392,7 @@ BEGIN
                  CASE WHEN DC.svcClass IS NULL THEN
                    (SELECT /*+ INDEX(Subrequest I_Subrequest_DiskCopy)*/ UNIQUE Req.svcClassName
                       FROM SubRequest,
-                        (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id, svcClassName FROM StagePrepareToPutRequest    UNION ALL
+                        (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id, svcClassName FROM StagePrepareToPutRequest UNION ALL
                          SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcClassName FROM StagePrepareToUpdateRequest UNION ALL
                          SELECT /*+ INDEX(StageDiskCopyReplicaRequest PK_StageDiskCopyReplicaRequ_Id) */ id, svcClassName FROM StageDiskCopyReplicaRequest) Req
                           WHERE SubRequest.diskCopy = DC.id
@@ -7420,11 +7422,18 @@ BEGIN
        WHERE status IS NOT NULL    -- search for valid diskcopies
      UNION
       SELECT CastorFile.fileId, CastorFile.nsHost, 0, '', RecallJob.fileSize, 2, -- WAITTAPERECALL
-             '', '', 0, CastorFile.lastKnownFileName, RecallJob.creationTime, SvcClass.name, RecallJob.creationTime, -1
-        FROM RecallJob, CastorFile, SvcClass
+             '', '', 0, CastorFile.lastKnownFileName, RecallJob.creationTime, Req.svcClassName, RecallJob.creationTime, -1
+        FROM RecallJob, CastorFile, Subrequest,
+             (SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */ id, svcClassName FROM StagePrepareToGetRequest UNION ALL
+              SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcClassName FROM StagePrepareToUpdateRequest UNION ALL
+              SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, svcClassName FROM StageGetRequest UNION ALL
+              SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ id, svcClassName FROM StageUpdateRequest UNION ALL
+              SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */ id, svcClassName FROM StageRepackRequest) Req
        WHERE RecallJob.castorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
-         AND RecallJob.castorfile = Castorfile.id
-         AND RecallJob.svcClass = SvcClass.id)
+         AND Castorfile.id = RecallJob.castorfile
+         AND Subrequest.CastorFile = Castorfile.id
+         AND SubRequest.status = dconst.SUBREQUEST_WAITTAPERECALL
+         AND Req.id = SubRequest.request)
     ORDER BY fileid, nshost;
   ELSE
     OPEN result FOR
@@ -7440,7 +7449,7 @@ BEGIN
                        (SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/
                         UNIQUE decode(nvl(SubRequest.status, -1), -1, -1, DC.status)
                           FROM SubRequest,
-                            (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id, svcclass, svcClassName FROM StagePrepareToPutRequest       UNION ALL
+                            (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id, svcclass, svcClassName FROM StagePrepareToPutRequest UNION ALL
                              SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcclass, svcClassName FROM StagePrepareToUpdateRequest UNION ALL
                              SELECT /*+ INDEX(StageDiskCopyReplicaRequest PK_StageDiskCopyReplicaRequ_Id) */ id, svcclass, svcClassName FROM StageDiskCopyReplicaRequest) Req
                          WHERE SubRequest.CastorFile = CastorFile.id
@@ -7468,12 +7477,19 @@ BEGIN
        WHERE status IS NOT NULL     -- search for valid diskcopies
      UNION
       SELECT CastorFile.fileId, CastorFile.nsHost, 0, '', RecallJob.fileSize, 2, -- WAITTAPERECALL
-             '', '', 0, CastorFile.lastKnownFileName, RecallJob.creationTime, SvcClass.name, RecallJob.creationTime, -1
-        FROM RecallJob, CastorFile, SvcClass
+             '', '', 0, CastorFile.lastKnownFileName, RecallJob.creationTime, Req.svcClassName, RecallJob.creationTime, -1
+        FROM RecallJob, CastorFile, Subrequest,
+             (SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */ id, svcClassName, svcClass FROM StagePrepareToGetRequest UNION ALL
+              SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcClassName, svcClass FROM StagePrepareToUpdateRequest UNION ALL
+              SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, svcClassName, svcClass FROM StageGetRequest UNION ALL
+              SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ id, svcClassName, svcClass FROM StageUpdateRequest UNION ALL
+              SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */ id, svcClassName, svcClass FROM StageRepackRequest) Req
        WHERE RecallJob.castorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
-         AND RecallJob.svcClass = svcClassId
-         AND RecallJob.castorfile = Castorfile.id
-         AND RecallJob.svcClass = SvcClass.id)
+         AND Castorfile.id = RecallJob.castorfile
+         AND Subrequest.CastorFile = Castorfile.id
+         AND SubRequest.status = dconst.SUBREQUEST_WAITTAPERECALL
+         AND Req.id = SubRequest.request
+         AND Req.svcClass = svcClassId)
     ORDER BY fileid, nshost;
    END IF;
 END;
