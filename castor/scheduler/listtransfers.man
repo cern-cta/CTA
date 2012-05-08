@@ -63,6 +63,9 @@ used in conjunction with -s/--summary, provides a 'clean' summary of the managed
 .BI \-p,\ \-\-poolsummary
 provides a summary of the managed transfers, on a pool base
 .TP
+.BI \-q,\ \-\-queues
+displays only the queued transfers. As this list can be obtained without connecting to each individual disk transfers, reponse times may be shorter.
+.TP
 .BI \-u,\ \-\-user
 restricts the listing to transfers belonging to a given user
 .TP
