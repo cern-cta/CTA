@@ -2,37 +2,11 @@
 import sys
 import os
 
-# error codes
-
 ENOENT = 2
-EACCESS = 13
-EFAULT = 14
-EINVAL = 22
-SENOSHOST = 1001
-SENOSSERV = 1002
-SETIMEDOUT = 1004
-SECOMERR = 1018
-EVMGRNACT = 2001
-ENSFILECHG = 1402
-ENOTDIR = 20
-EISDIR = 21
-ENAMETOOLONG = 1008
-ENSNACT = 1401
-ENOMEM = 12
-EPERM = 1
-SEENTRYNFND = 1014
-SENOMAPFND = 1020
-EBADF = 9
-SECHECKSUM = 1037 
-EEXIST = 17
-ERTZEROSIZE = 1612
-ERTWRONGSIZE = 1613
-ERTWRONGFSEQ = 1614
 
 # Default number of retries
 
-defaultNormalRetries = 5
-defaultMaxRetries    = 1000
+defaultNormalRetries = 7
 
 def migrationRetry(errorCode,nbRetry):
    # When a file is not present anymore in the name server, we get
@@ -43,11 +17,7 @@ def migrationRetry(errorCode,nbRetry):
    if errorCode == ENOENT:
       return 0
 
-   if errorCode == SETIMEDOUT and nbRetry >= defaultNormalRetries:
-      return 0
-
-   if errorCode == SECHECKSUM and nbRetry >= defaultNormalRetries:
+   if nbRetry >= defaultNormalRetries:
       return 0
   
-   # Default strategy is to retry indefinitely.
    return 1
