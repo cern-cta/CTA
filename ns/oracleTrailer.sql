@@ -301,39 +301,6 @@ END;
 /
 
 /**
- * This procedure creates segments for multiple files by calling setSegmentForFile in a loop.
- * The output is a log table ready to be sent to DLF from a stager database.
- */
-CREATE OR REPLACE PROCEDURE setSegmentsForFiles(segs IN castorns.SegmentList, logs OUT castorns.Log_Cur) AS
-  varRC INTEGER;
-  varParams VARCHAR2(1000);
-  varStartTime TIMESTAMP;
-  varReqid VARCHAR2(36);
-BEGIN
-  varStartTime := SYSTIMESTAMP;
-  varReqid := uuidGen();
-  -- First clean any previous log
-  EXECUTE IMMEDIATE 'TRUNCATE TABLE ResultsLogHelper';
-  -- Loop over all files. Each call commits or rollbacks each file.
-  FOR i IN segs.FIRST .. segs.LAST LOOP
-    setSegmentForFile(segs(i), varRC, varParams);
-    IF varRC != 0 THEN
-      varParams := 'ErrorCode='|| to_char(varRC) ||' ErrorMessage="'|| varParams || '"';
-      tmpDlfLog(dlf.LVL_ERROR, varReqid, 'Error creating/updating segment', segs(i).fileId, varParams);
-    END IF;
-  END LOOP;
-  -- Final logging
-  UPDATE ResultsLogHelper SET reqid = varReqid;
-  varParams := 'Function="setSegmentsForFiles" NbFiles='|| segs.COUNT
-    ||' ElapsedTime='|| getSecs(varStartTime, SYSTIMESTAMP);
-  tmpDlfLog(dlf.LVL_SYSTEM, varReqid, 'Bulk processing complete', 0, varParams);
-  -- Return logs to the stager
-  OPEN logs FOR
-    SELECT timeinfo, lvl, reqid, msg, fileId, params FROM ResultsLogHelper;
-END;
-/
-
-/**
  * This procedure replaces one (or more) segments for a given file when repacked.
  * This can be a one to one replacement (same copy number) or a move, if the
  * original copy had a different copy number than the new one. In this last case,
@@ -495,11 +462,13 @@ END;
 /
 
 /**
- * This procedure replaces segments for multiple files by calling repackSegmentForFile in a loop.
+ * This procedure sets or replaces segments for multiple files by calling either repackSegmentForFile
+ * or setSegmentForFile in a loop, the choice depending on the oldCopyNos values:
+ * when 0, a normal migration is assumed and setSegmentForFile is called.  
  * The output is a log table ready to be sent to DLF from a stager database.
  */
-CREATE OR REPLACE PROCEDURE repackSegmentsForFiles(oldCopyNos IN castorns.cnumList, segs IN castorns.SegmentList,
-                                                   logs OUT castorns.Log_Cur) AS
+CREATE OR REPLACE PROCEDURE setOrRepackSegmentsForFiles(oldCopyNos IN castorns.cnumList, segs IN castorns.SegmentList,
+                                                        logs OUT castorns.Log_Cur) AS
   varRC INTEGER;
   varParams VARCHAR2(1000);
   varStartTime TIMESTAMP;
@@ -511,15 +480,24 @@ BEGIN
   EXECUTE IMMEDIATE 'TRUNCATE TABLE ResultsLogHelper';
   -- Loop over all files. Each call commits or rollbacks each file.
   FOR i IN segs.FIRST .. segs.LAST LOOP
-    repackSegmentForFile(oldCopyNos(i), segs(i), varRC, varParams);
+    IF segs(i).fileId = 0 THEN
+      -- When fileId not provided, skip entry. Allows for invalidating
+      -- some entries upfront without recompacting the input.
+      CONTINUE;
+    END IF;
+    IF oldCopyNos(i) = 0 THEN
+      setSegmentForFile(segs(i), varRC, varParams);
+    ELSE
+      repackSegmentForFile(oldCopyNos(i), segs(i), varRC, varParams);
+    END IF;
     IF varRC != 0 THEN
       varParams := 'ErrorCode='|| to_char(varRC) ||' ErrorMessage="'|| varParams || '"';
-      tmpDlfLog(dlf.LVL_ERROR, varReqid, 'Error replacing segment', segs(i).fileId, varParams);
+      tmpDlfLog(dlf.LVL_ERROR, varReqid, 'Error creating/replacing segment', segs(i).fileId, varParams);
     END IF;
   END LOOP;
   -- Final logging
   UPDATE ResultsLogHelper SET reqid = varReqid;
-  varParams := 'Function="repackSegmentsForFiles" NbFiles='|| segs.COUNT
+  varParams := 'Function="setOrRepackSegmentsForFiles" NbFiles='|| segs.COUNT
     ||' ElapsedTime='|| getSecs(varStartTime, SYSTIMESTAMP);
   tmpDlfLog(dlf.LVL_SYSTEM, varReqid, 'Bulk processing complete', 0, varParams);
   -- Return logs to the stager
