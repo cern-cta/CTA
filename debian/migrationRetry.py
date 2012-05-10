@@ -10,6 +10,7 @@ EFAULT = 14
 EINVAL = 22
 SENOSHOST = 1001
 SENOSSERV = 1002
+SETIMEDOUT = 1004
 SECOMERR = 1018
 EVMGRNACT = 2001
 ENSFILECHG = 1402
@@ -40,6 +41,9 @@ def migrationRetry(errorCode,nbRetry):
    # The diskcopy will remain in the stager until the garbage
    # collector picks it up.
    if errorCode == ENOENT:
+      return 0
+
+   if errorCode == SETIMEDOUT and nbRetry >= defaultNormalRetries:
       return 0
 
    if errorCode == SECHECKSUM and nbRetry >= defaultNormalRetries:
