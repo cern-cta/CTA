@@ -92,6 +92,11 @@
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::WorkerThread::WorkerThread():BaseObject(){}
 
+/* TODO: Cleanup the classes:
+ * EndNotificationFileErrorReport
+ *
+ */
+
 //------------------------------------------------------------------------------
 // runs the thread
 //------------------------------------------------------------------------------
@@ -170,9 +175,6 @@ void castor::tape::tapegateway::WorkerThread::run(void* arg)
           break;
         case OBJ_EndNotificationErrorReport:
           handler_response = handleFailWorker(*obj,*oraSvc,requester);
-          break;
-        case OBJ_EndNotificationFileErrorReport:
-          handler_response = handleFileFailWorker(*obj,*oraSvc,requester);
           break;
         case OBJ_FileMigrationReportList:
           handler_response = handleFileMigrationReportList(*obj,*oraSvc,requester);
@@ -340,10 +342,14 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleStartWorker(
 
 }
 
-castor::IObject*
-castor::tape::tapegateway::WorkerThread::handleRecallUpdate
-(castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester)
-  throw (castor::exception::Exception) {
+/* TODO: adapt to bulk (remove?) */
+castor::IObject* castor::tape::tapegateway::WorkerThread::handleRecallUpdate(
+    castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc,
+    requesterInfo& requester) throw(castor::exception::Exception){
+
+  // Initialize auto-rollback in case of error
+  ScopedTransaction scpTrans(&oraSvc);
+
   try {
     // I received a FileRecalledNotification
     FileRecalledNotification &fileRecalled = dynamic_cast<FileRecalledNotification&>(obj);
@@ -388,6 +394,8 @@ castor::tape::tapegateway::WorkerThread::handleRecallUpdate
   // never reached
   return 0;
 }
+
+/* TODO: adapt to bulk (remove?) */
 
 // This function is the one handling the writing in the tape gateway.
 // It receives a writing report from the tape server, and first
@@ -441,7 +449,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
   std::string vid;
   std::string tapePool;
   try{
-    oraSvc.getMigrationMountVid(fileMigrated, vid, tapePool);
+    oraSvc.getMigrationMountVid(fileMigrated.mountTransactionId(), vid, tapePool);
   } catch (castor::exception::Exception e) {
     // No Vid, not much we can do... Just tell the tape server to abort.
     logMigrationCannotFindVid (nullCuuid, &castorFileId, requester,
@@ -482,7 +490,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
     return errorReport;
   }
 
-  // Once we passed this point, the data on tape is protected from overwrites
+  // Once we    passed this point, the data on tape is protected from overwrites
   // by the vmgr.
   const std::string blockid = utils::tapeBlockIdToString(fileMigrated.blockId0(),
       fileMigrated.blockId1() ,fileMigrated.blockId2() ,fileMigrated.blockId3());
@@ -621,6 +629,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleMigrationUpdate
   return response;
 }
 
+/* TODO:adapt to bulk (remove?) */
 castor::IObject*  castor::tape::tapegateway::WorkerThread::handleRecallMoreWork(
     castor::IObject& obj,castor::tape::tapegateway::ITapeGatewaySvc& oraSvc,
     requesterInfo& requester ) throw(castor::exception::Exception){
@@ -720,6 +729,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleRecallMoreWork(
   return response;
 }
 
+/* TODO: adapt to bulk (remove?)*/
 castor::IObject* castor::tape::tapegateway::WorkerThread::handleMigrationMoreWork(
     castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc,
     requesterInfo& requester ) throw(castor::exception::Exception){
@@ -1113,6 +1123,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker(
   return  response.release();
 }
 
+/* TODO: adapt to bulk (remove?) */
 castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileFailWorker(
     castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc,
     requesterInfo& requester ) throw(castor::exception::Exception){
@@ -1171,16 +1182,15 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileFailWorker(
   return NULL; // We should not get here.
 }
 
+/* TODO adapt to bulk */
 castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileMigrationReportList(
     castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc,
     requesterInfo& requester ) throw(castor::exception::Exception){
-
   // first check we are called with the proper class
   FileMigrationReportList* rep = dynamic_cast<FileMigrationReportList *>(&obj);
   if (!rep) {
     // "Invalid Request" message
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_INVALID_CAST, 0, NULL);
-
     EndNotificationErrorReport* errorReport=new EndNotificationErrorReport();
     errorReport->setErrorCode(EINVAL);
     errorReport->setErrorMessage("invalid object");
@@ -1203,23 +1213,10 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileMigrationRe
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_MIG_REPORT_LIST_RECEIVED, params);
   }
 
-  // We have 2 lists of both successes and errors.
-  // As a first implementation, we just loop-call the two single action handlers
-  // The error handler is simple as there is no specific return for errors besides
-  // acknowledgement.
-  // The success report handling is more tricky, as it can lead to an error
-  // due to an issue in the name server or the VMGR, leading to a per-file error (or success).
-  // In order to match the current process as closely as possible, we
-  // have to handle the success reports in fseq order, and stop the session on the first
-  // error.
-  // TODO A later implementation pushing the loop deeper towards the DB will then be able to distinguish
-  // between the session fatal VMGR errors (checks or updates) and the per file benign NS errors
-  // (typically a file being deleted from namespace as it gets migrated)
-
-  // First the hard part: we record the successful migration in fseq order, and stop the session on the
-  // first failed one.
-  // The non-recorded ones will simply be remigrated on a subsequent request (going back from SELECTED to
-  // TOBEMIGRATED.
+    // We have 2 lists of both successes and errors.
+    // The database side of the application will take care of updating both the
+    // name server and the stager database.
+    // The VMGR is still the responsibility of the gateway.
 
   // Check we are not confronted too early with a future feature of the tape bridge (update of fseq in
   // VMGR from tape server side instead of from gateway side).
@@ -1247,152 +1244,126 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileMigrationRe
     return errorReport.release();
   }
 
-  // Get hold of the list and fseq-order it
-  std::vector<FileMigratedNotificationStruct *>&successes=fileMigrationReportList.successfulMigrations();
-  std::sort (successes.begin(), successes.end(), m_fileMigratedFseqComparator);
-  // Loop on the now ordered vector
-  std::vector<FileMigratedNotificationStruct *>::iterator migedfile;
-  std::auto_ptr<EndNotificationErrorReport> endErrorReport;
-  for (migedfile = successes.begin(); migedfile!=successes.end(); migedfile++) {
-    // Copy contents to the old structure
-    FileMigratedNotification notif;
-    // Session-related info.
-    notif.setAggregatorTransactionId(fileMigrationReportList.aggregatorTransactionId());
-    notif.setMountTransactionId(fileMigrationReportList.mountTransactionId());
-    // File related info
-    notif.setFileid((*migedfile)->fileid());
-    notif.setNshost((*migedfile)->nshost());
-    notif.setFseq((*migedfile)->fseq());
-    notif.setFileTransactionId((*migedfile)->fileTransactionId());
-    notif.setFileSize((*migedfile)->fileSize());
-    notif.setChecksumName((*migedfile)->checksumName());
-    notif.setChecksum((*migedfile)->checksum());
-    notif.setCompressedFileSize((*migedfile)->compressedFileSize());
-    notif.setBlockId0((*migedfile)->blockId0());
-    notif.setBlockId1((*migedfile)->blockId1());
-    notif.setBlockId2((*migedfile)->blockId2());
-    notif.setBlockId3((*migedfile)->blockId3());
-    notif.setPositionCommandCode((*migedfile)->positionCommandCode());
-    // Call the per-file
-    std::auto_ptr<castor::IObject> ret_obj (handleMigrationUpdate(notif, oraSvc, requester));
-    // Interpret the result: we expect either NotificationAcknowledge or
-    // EndNotificationErrorReport
-    if (OBJ_NotificationAcknowledge == ret_obj->type()) {
-      // We are happy, nothing to do.
-      ret_obj.reset(NULL);
-    } else if (OBJ_EndNotificationErrorReport == ret_obj->type()) {
-      // Something went wrong. We stop the session, and we'll pass on the result (later)
-      // We are sure of the type, so checks are not necessary
-      endErrorReport.reset(dynamic_cast <EndNotificationErrorReport *>(ret_obj.release()));
-      break;
-    } else {
-      // We got an unexpected message type. Internal error. Better stop here.
-      std::string report = "Unexpected return type from handleMigrationUpdate ";
-      report += "in handleFileMigrationReportList :";
-      report += castor::ObjectsIdStrings[ret_obj->type()];
-      castor::dlf::Param params[] ={
-          castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
-          castor::dlf::Param("Port",requester.port),
-          castor::dlf::Param("HostName",requester.hostName),
-          castor::dlf::Param("mountTransactionId", fileMigrationReportList.mountTransactionId()),
-          castor::dlf::Param("tapebridgeTransId", fileMigrationReportList.aggregatorTransactionId()),
-          castor::dlf::Param("errorCode",SEINTERNAL),
-          castor::dlf::Param("errorMessage",report)
-      };
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, INTERNAL_ERROR, params);
-      // Abort all the rest.
-      ret_obj.reset(NULL);
-      std::auto_ptr<EndNotificationErrorReport> errorReport (new EndNotificationErrorReport());
-      errorReport->setErrorCode(SEINTERNAL);
-      errorReport->setErrorMessage(report);
-      return errorReport.release();
+  // Step 1: get the VID from the DB (once for all files)
+  // Get the VID from the DB (and the tape pool)
+  std::string vid;
+  std::string tapePool;
+  try{
+    oraSvc.getMigrationMountVid(fileMigrationReportList.mountTransactionId(), vid, tapePool);
+  } catch (castor::exception::Exception e) {
+    // No Vid, not much we can do... The DB is failing on us. We can try to
+    // mark the session as closing, be better warn the tape server of a problem
+    // so we have a chance to not loop.
+    logMigrationCannotFindVid (nullCuuid, requester, fileMigrationReportList, e);
+    // This helper procedure will log its own failures.
+    setSessionToClosing(oraSvc, requester, fileMigrationReportList.mountTransactionId());
+    EndNotificationErrorReport* errorReport=new EndNotificationErrorReport();
+    errorReport->setErrorCode(ENOENT);
+    errorReport->setErrorMessage("Session not found in DB.");
+    errorReport->setMountTransactionId(fileMigrationReportList.mountTransactionId());
+    errorReport->setAggregatorTransactionId(fileMigrationReportList.aggregatorTransactionId());
+    return errorReport;
+  }
+
+  // Step 2: update the VMGR, so that the written tape copies are safe from overwrite.
+  // Failing here is fatal.
+  // We can update the vmgr in one go here, reporting for several files at a time.
+  // XXX Limitation: today, any migration error is fatal and terminates the migration
+  // session. This means only record the successes in the VMGR.
+  // When the tape server will handle failed migrations gracefully (leave a "hole"
+  // on the tape and carry on), we will have
+  // the record the empty hole left by the failure in the middle of the successes.
+  // Today we just bump up the tape's statistics for the successes.
+  {
+    // 2.1 Build the statistics of the successes. Also log the reception of them.
+    u_signed64 totalBytes = 0, totalCompressedBytes = 0, highestFseq = -1;
+
+    for (std::vector<FileMigratedNotificationStruct *>::iterator sm =
+           fileMigrationReportList.successfulMigrations().begin();
+        sm <  fileMigrationReportList.successfulMigrations().end(); sm++) {
+      totalBytes += (*sm)->fileSize();
+      totalCompressedBytes += (*sm)->compressedFileSize();
+      highestFseq = u_signed64((*sm)->fseq()) > highestFseq? (*sm)->fseq(): highestFseq;
+      // Log the file notification while we're at it.
+      Cns_fileid fileId;
+      fileId.fileid = (*sm)->fileid();
+      strncpy(fileId.server, (*sm)->nshost().c_str(),sizeof(fileId.server)-1);
+      logMigrationNotified(nullCuuid, fileMigrationReportList.mountTransactionId(),
+          fileMigrationReportList.aggregatorTransactionId(), &fileId, requester, **sm);
+    }
+
+    // 2.2 Update the VMGR for fseq. Stop here in case of failure.
+    castor::tape::utils::Timer timer;
+    try {
+      VmgrTapeGatewayHelper::bulkUpdateTapeInVmgr(
+          fileMigrationReportList.successfulMigrations().size(),
+          highestFseq, totalBytes, totalCompressedBytes,
+          vid, m_shuttingDown);
+      logMigrationBulkVmgrUpdate(nullCuuid, requester, fileMigrationReportList,
+        fileMigrationReportList.successfulMigrations().size(),
+        highestFseq, totalBytes, totalCompressedBytes,
+        tapePool, vid, timer.usecs());
+    } catch (castor::exception::Exception& e){
+      logMigrationVmgrFailure(nullCuuid, requester, fileMigrationReportList, vid,
+        tapePool, e);
+      // Attempt to move the tape to read only as a stuck fseq is the worst we can get in
+      // terms of data protection: what got written will potentially be overwritten.
+      try {
+        VmgrTapeGatewayHelper::setTapeAsReadonlyAndUnbusy(vid, m_shuttingDown);
+        logTapeReadOnly(nullCuuid, requester, fileMigrationReportList,
+            tapePool, vid);
+      } catch (castor::exception::Exception e) {
+        logCannotReadOnly(nullCuuid, requester, fileMigrationReportList,
+            tapePool, vid, e);
+      }
+      // We could not update the VMGR for this tape: better leave it alone and stop the session
+      EndNotificationErrorReport* errorReport=new EndNotificationErrorReport();
+      errorReport->setErrorCode(EIO);
+      errorReport->setErrorMessage("Failed to update VMGR");
+      errorReport->setMountTransactionId(fileMigrationReportList.mountTransactionId());
+      errorReport->setAggregatorTransactionId(fileMigrationReportList.aggregatorTransactionId());
+      return errorReport;
     }
   }
 
-  // Second, we have to filter the errors, and fail only the
-  // files that have to.
-  // The tape bridge sends us unfiltered error codes for migrations
-  // Those errors can be tape related (typically tape full), where the
-  // individual file is just an innocent bystander, file related, and in this
-  // case they can be retryable (file not available) or fatal (file not found on
-  // the disk server, checksum error, etc...).
-  //
-  // The decision is taken in the helper function 'classifyBridgeFileError'.
-  //
-  // In the special case of a tape full, we set a local boolean, in order to
-  // remember that the tape is full in the DB.
-  // The tape will be marked as full as session end (thanks to the stored data
-  // in the DB).
-
-  bool tapeFull = false;
-  std::list<FileErrorReport> filesToFailForRetry, filesToFailPermanently;
-  std::vector<FileErrorReportStruct *>& failures = fileMigrationReportList.failedMigrations();
-  std::vector<FileErrorReportStruct *>::iterator failedfile;
-  for (failedfile = failures.begin(); failedfile!= failures.end(); failedfile++) {
-    // We received a a failed file information.
-    // Evaluate the error
-    fileErrorClassification classification = classifyBridgeMigrationFileError((*failedfile)->errorCode());
-    // The problem involves the file
-    if (classification.fileInvolved) {
-      // We package the information about this file into an individual
-      // FileErrorReport
-      FileErrorReport fileError;
-      fileError.setAggregatorTransactionId(fileMigrationReportList.aggregatorTransactionId());
-      fileError.setMountTransactionId(fileMigrationReportList.mountTransactionId());
-      fileError.setErrorCode((*failedfile)->errorCode());
-      fileError.setErrorMessage((*failedfile)->errorMessage());
-      fileError.setFileTransactionId((*failedfile)->fileTransactionId());
-      fileError.setFileid((*failedfile)->fileid());
-      fileError.setFseq((*failedfile)->fseq());
-      fileError.setNshost((*failedfile)->nshost());
-      fileError.setPositionCommandCode((*failedfile)->positionCommandCode());
-      // Log the error (error level for all cases, could be made more detailed)
-      logFileError(nullCuuid, requester, DLF_LVL_ERROR, fileError, "Migration", classification);
-      if (classification.fileRetryable) {
-        // We will fail the file transfer first in the DB.
-        filesToFailForRetry.push_back(fileError);
-      } else {
-        // We permanently fail the migration. There is no point in retrying.
-        filesToFailPermanently.push_back(fileError);
+  {
+    // 2.3 Scan all errors to find tape full condition for more update of the
+    // VMGR (at end session). Right now, the full status is just recorded in the
+    // stager DB, to be used at end of tape session.
+    // This is tape full conditions currently.
+    bool tapeFull = false;
+    for (std::vector<FileErrorReportStruct *>::iterator fm =
+        fileMigrationReportList.failedMigrations().begin();
+        fm < fileMigrationReportList.failedMigrations().end(); fm++){
+      fileErrorClassification cl = classifyBridgeMigrationFileError((*fm)->errorCode());
+      tapeFull |= cl.tapeIsFull;
+    }
+    if (tapeFull) {
+      try {
+        oraSvc.flagTapeFullForMigrationSession(fileMigrationReportList.mountTransactionId());
+        oraSvc.commit();
+      } catch (castor::exception::Exception e){
+        logInternalError (e, requester, fileMigrationReportList);
       }
     }
-    tapeFull |= classification.tapeIsFull;
-  }
-  // Now push the decisions into the DB
-  if (!filesToFailForRetry.empty()) {
-    try {
-      failFileMigrationsList (oraSvc, requester, filesToFailForRetry);
-      oraSvc.commit();
-    } catch (castor::exception::Exception e) {
-      logDbError(e, requester, fileMigrationReportList);
-    }
-  }
-  if (!filesToFailPermanently.empty()) {
-    try {
-      permanentlyFailFileMigrationsList (oraSvc, requester, filesToFailPermanently);
-      oraSvc.commit();
-    } catch (castor::exception::Exception e) {
-      logDbError (e, requester, fileMigrationReportList);
-    }
-  }
-  if (tapeFull) {
-    try {
-      oraSvc.flagTapeFullForMigrationSession(fileMigrationReportList.mountTransactionId());
-      oraSvc.commit();
-    } catch (castor::exception::Exception e){
-      logInternalError (e, requester, fileMigrationReportList);
-    }
   }
 
-  // Now send the result of all this (migrations and recalls) to the tape server.
-  // If there was an error, the reply is ready
-  if (endErrorReport.get()) return endErrorReport.release();
-  // Else return Ack
-  std::auto_ptr <NotificationAcknowledge> ack (new NotificationAcknowledge());
-  ack->setAggregatorTransactionId(fileMigrationReportList.aggregatorTransactionId());
-  ack->setMountTransactionId(fileMigrationReportList.mountTransactionId());
+  // Step 3: update NS and stager DB.
+  // Once we passed that point, whatever is on tape is safe. We are free to update
+  // the name server, and the record "job done" in stager DB. Both steps are
+  // handled by the stager DB as is has a DB link to the name server.
+  try {
+    oraSvc.setBulkFileMigrationResult(
+        fileMigrationReportList.mountTransactionId(),
+        fileMigrationReportList.successfulMigrations(),
+        fileMigrationReportList.failedMigrations());
+    /* TODO: get the per-file result and log it */
+  } catch (castor::exception::Exception e) {
 
-  // Log completion of the processing
+    /* TODO */
+  }
+
+  // Log completion of the processing.
   {
     castor::dlf::Param params[] ={
         castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
@@ -1403,9 +1374,13 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileMigrationRe
     };
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_MIG_REPORT_LIST_PROCESSED, params);
   }
+  std::auto_ptr <NotificationAcknowledge> ack (new NotificationAcknowledge());
+  ack->setAggregatorTransactionId(fileMigrationReportList.aggregatorTransactionId());
+  ack->setMountTransactionId(fileMigrationReportList.mountTransactionId());
   return ack.release();
 }
 
+/* TODO: adapt to bulk */
 castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileRecallReportList(
     castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc,
     requesterInfo& requester ) throw(castor::exception::Exception){
@@ -1534,8 +1509,8 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFilesToMigrateL
     castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc,
     requesterInfo& requester ) throw(castor::exception::Exception){
   // first check we are called with the proper class
-  FilesToMigrateListRequest * req = dynamic_cast <FilesToMigrateListRequest *>(&obj);
-  if (!req) {
+  FilesToMigrateListRequest* req_p = dynamic_cast <FilesToMigrateListRequest *>(&obj);
+  if (!req_p) {
     // We did not get the expected class
     // "Invalid Request" message
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_INVALID_CAST, 0, NULL);
@@ -1544,136 +1519,123 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFilesToMigrateL
     errorReport->setErrorMessage("invalid object");
     return errorReport;
   }
-  FilesToMigrateListRequest &filesToMigrateListRequest = *req;
-  req = NULL;
+  FilesToMigrateListRequest &ftmlr = *req_p;
+  req_p = NULL;
 
-  // Try to fulfil the request. We count here.
-  uint64_t files = 0;
-  uint64_t bytes = 0;
-  // We try to find filesToMigrateListRequest.maxFiles().
-  // If we get over the bytes threshold, we stop before this limit.
+  // Log the request
+  castor::dlf::Param params_outloop[] = {
+      castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
+      castor::dlf::Param("Port",requester.port),
+      castor::dlf::Param("HostName",requester.hostName),
+      castor::dlf::Param("mountTransactionId",ftmlr.mountTransactionId()),
+      castor::dlf::Param("tapebridgeTransId",ftmlr.aggregatorTransactionId()),
+      castor::dlf::Param("maxFiles",ftmlr.maxFiles()),
+      castor::dlf::Param("maxBytes",ftmlr.maxBytes())
+  };
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, WORKER_MIGRATION_REQUESTED,params_outloop);
+
+  // Setup the auto roll back in case of exception or error.
+  ScopedTransaction scpTrans (&oraSvc);
+
+  // Prepare the file list container
   std::queue <FileToMigrateStruct> files_list;
-  // We can keep the upstream answer in some situations.
-  // It will be stored here:
-  castor::IObject * response = NULL;
-  while (files < filesToMigrateListRequest.maxFiles()) {
-    // Get new file to migrate
-    FileToMigrateRequest fileReq;
-    fileReq.setAggregatorTransactionId(filesToMigrateListRequest.aggregatorTransactionId());
-    fileReq.setMountTransactionId(filesToMigrateListRequest.mountTransactionId());
-    castor::IObject * fileResp = handleMigrationMoreWork (fileReq, oraSvc, requester);
-    // handleMigrationMoreWork can return:
-    // - FileToMigrate (nortmal case)
-    // - EndNotificationErrorReport (in case of problems with the DB)
-    // - NoMoreFiles (when there is nothing new to return).
-    if (OBJ_FileToMigrate == fileResp->type()) {
-      // We found a file
-      // We are sure of the type, so checks are not necessary
-      FileToMigrate * file_response = dynamic_cast<FileToMigrate *>(fileResp);
-      FileToMigrateStruct ftm;
-      ftm.setFileTransactionId(file_response->fileTransactionId());
-      ftm.setNshost(file_response->nshost());
-      ftm.setFileid(file_response->fileid());
-      ftm.setFseq(file_response->fseq());
-      ftm.setFileSize(file_response->fileSize());
-      ftm.setLastKnownFilename(file_response->lastKnownFilename());
-      ftm.setLastModificationTime(file_response->lastModificationTime());
-      ftm.setPath(file_response->path());
-      ftm.setUmask(file_response->umask());
-      ftm.setPositionCommandCode(file_response->positionCommandCode());
-      // Record the file
-      files_list.push(ftm);
-      // Accounting for the request
-      files++;
-      bytes+=file_response->fileSize();
-      delete file_response;
-      // We're done if we reached the byte quota
-      if (bytes >= filesToMigrateListRequest.maxBytes()) break;
-    } else if (OBJ_NoMoreFiles == fileResp->type()) {
-      // We won't get more files.
-      // If the list is empty, we can just pass the NoMoreFiles.
-      // If not, we'll build the reply now (break without reaching the quota).
-      if (files_list.empty()) {
-        response = fileResp;
-      } else {
-        delete fileResp;
-      }
-      break;
-    } else if  (OBJ_EndNotificationErrorReport == fileResp->type()) {
-      // We abandon here the few files (if any) that were put in SELECTED, but not yet
-      // tranmitted to the tapebridge. They will be recovered at the end of the session,
-      // which will happen right now, as we transmit the EndNotitficationErrorReport.
-      // Jettison the files!
-      while (!files_list.empty()) files_list.pop();
-      response = fileResp;
-      break;
-    } else {
-      // Panic! Panic! Unexpected response. Internal error. Better stop here.
-      // If some files are now SELECTED, we won't transmit them, like in the previous case.
-      // They will eventually be resurrected at the end of the session (which
-      // will come soon as we prepare an EndNotification.)
-      std::string report = "Unexpected return type from handleMigrationMoreWork ";
-      report += "in handleFilesToMigrateListRequest :";
-      report += castor::ObjectsIdStrings[obj.type()];
-      castor::dlf::Param params[] ={
-          castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
-          castor::dlf::Param("Port",requester.port),
-          castor::dlf::Param("HostName",requester.hostName),
-          castor::dlf::Param("mountTransactionId", filesToMigrateListRequest.mountTransactionId()),
-          castor::dlf::Param("tapebridgeTransId", filesToMigrateListRequest.aggregatorTransactionId()),
-          castor::dlf::Param("errorCode",SEINTERNAL),
-          castor::dlf::Param("errorMessage",report)
-      };
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, INTERNAL_ERROR, params);
-      // Abandon ship!
-      while (!files_list.empty()) files_list.pop();
-      EndNotificationErrorReport * endReport = new EndNotificationErrorReport();
-      endReport->setAggregatorTransactionId(filesToMigrateListRequest.aggregatorTransactionId());
-      endReport->setMountTransactionId(filesToMigrateListRequest.mountTransactionId());
-      endReport->setErrorCode(SEINTERNAL);
-      endReport->setErrorMessage(report);
-      response = endReport;
-      break;
-    }
+  bool dbFailure = false;
+  double dbServingTime;
+  castor::tape::utils::Timer timer;
+
+  // Transmit the request to the DB directly
+  try {
+    oraSvc.getBulkFilesToMigrate(ftmlr.mountTransactionId(),
+        ftmlr.maxFiles(), ftmlr.maxBytes(),
+        files_list);
+  } catch (castor::exception::Exception& e) {
+    castor::dlf::Param params[] ={
+        castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
+        castor::dlf::Param("Port",requester.port),
+        castor::dlf::Param("HostName",requester.hostName),
+        castor::dlf::Param("mountTransactionId",ftmlr.mountTransactionId()),
+        castor::dlf::Param("tapebridgeTransId",ftmlr.aggregatorTransactionId()),
+        castor::dlf::Param("maxBytes",ftmlr.maxBytes()),
+        castor::dlf::Param("maxFiles",ftmlr.maxFiles()),
+        castor::dlf::Param("errorCode",sstrerror(e.code())),
+        castor::dlf::Param("errorMessage",e.getMessage().str())
+    };
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_MIGRATION_RETRIEVING_DB_ERROR,params);
+    // The tape server does not need to know about our messing up.
+    // We just report no more files to it.
+    dbFailure = true;
+  }
+  dbServingTime = timer.secs();
+  // If it was a simple no more work, log it as such
+  if (files_list.empty())
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_NO_FILE_TO_MIGRATE, params_outloop);
+
+  // If the list turned up empty, or the DB blew up, reply with a no more files.
+  if (dbFailure || files_list.empty()) {
+    std::auto_ptr<NoMoreFiles> noMore(new NoMoreFiles);
+    noMore->setMountTransactionId(ftmlr.mountTransactionId());
+    noMore->setAggregatorTransactionId(ftmlr.aggregatorTransactionId());
+    return noMore.release();
   }
 
-  // We got out of the loop. Should now have either a list of files in the files_list
-  // queue, or an already cooked response pointed to by response.
-  if (response) {
-    // already cooked response. Just make sure there is nothing in the files queue
-    if (!files_list.empty()) {
-      std::string report = "Non-empty files queue ";
-      report += "in handleFilesToMigrateListRequest when response is ready.";
-      castor::dlf::Param params[] ={
-          castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
-          castor::dlf::Param("Port",requester.port),
-          castor::dlf::Param("HostName",requester.hostName),
-          castor::dlf::Param("mountTransactionId", filesToMigrateListRequest.mountTransactionId()),
-          castor::dlf::Param("tapebridgeTransId", filesToMigrateListRequest.aggregatorTransactionId()),
-          castor::dlf::Param("errorCode",SEINTERNAL),
-          castor::dlf::Param("errorMessage",report)
-      };
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, INTERNAL_ERROR, params);
-    }
-    /* while (!files_list.empty()) files_list.pop(); */ /* This is done automatically on return */
-    return response;
-  }
-  // Standard case: we create the response and populate it with the queue of files.
-  FilesToMigrateList * files_response = new FilesToMigrateList();
-  files_response->setAggregatorTransactionId(filesToMigrateListRequest.aggregatorTransactionId());
-  files_response->setMountTransactionId(filesToMigrateListRequest.mountTransactionId());
-  int i=0;
-  // We know the number of files. Let's allocate the vector's memory efficiently.
-  files_response->filesToMigrate().resize(files);
+  //The list is non-empty, we build the response and gather a few stats
+  u_signed64 filesCount = 0, bytesCount = 0;
+  std::auto_ptr<FilesToMigrateList> files_response(new FilesToMigrateList);
+  files_response->setAggregatorTransactionId(ftmlr.aggregatorTransactionId());
+  files_response->setMountTransactionId(ftmlr.mountTransactionId());
   while (!files_list.empty()) {
-    FileToMigrateStruct * ftm = new FileToMigrateStruct();
+    std::auto_ptr<FileToMigrateStruct> ftm (new FileToMigrateStruct);
     *ftm = files_list.front();
-    files_response->filesToMigrate()[i++]=ftm;
+    filesCount++;
+    bytesCount+= ftm->fileSize();
+    // Log the per-file information
+    castor::dlf::Param paramsComplete[] ={
+        castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
+        castor::dlf::Param("Port",requester.port),
+        castor::dlf::Param("HostName",requester.hostName),
+        castor::dlf::Param("mountTransactionId",ftmlr.mountTransactionId()),
+        castor::dlf::Param("tapebridgeTransId",ftmlr.aggregatorTransactionId()),
+        castor::dlf::Param("fseq",ftm->fseq()),
+        castor::dlf::Param("path",ftm->path()),
+        castor::dlf::Param("fileSize", ftm->fileSize()),
+        castor::dlf::Param("lastKnownFileName", ftm->lastKnownFilename()),
+        castor::dlf::Param("lastModificationTime", ftm->lastModificationTime()),
+        castor::dlf::Param("fileTransactionId", ftm->fileTransactionId())
+      };
+    struct Cns_fileid fileId;
+    memset(&fileId,'\0',sizeof(fileId));
+    strncpy(fileId.server, ftm->nshost().c_str(), sizeof(fileId.server)-1);
+    fileId.fileid = ftm->fileid();
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_MIGRATION_RETRIEVED, paramsComplete, &fileId);
+    // ... and store in the response.
+    files_response->filesToMigrate().push_back(ftm.release());
     files_list.pop();
   }
-  return files_response;
+
+  // Log the summary of the recall request
+  {
+    castor::dlf::Param params[] = {
+        castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
+        castor::dlf::Param("Port",requester.port),
+        castor::dlf::Param("HostName",requester.hostName),
+        castor::dlf::Param("mountTransactionId",ftmlr.mountTransactionId()),
+        castor::dlf::Param("tapebridgeTransId",ftmlr.aggregatorTransactionId()),
+        castor::dlf::Param("maxFiles",ftmlr.maxFiles()),
+        castor::dlf::Param("maxBytes",ftmlr.maxBytes()),
+        castor::dlf::Param("filesCount",filesCount),
+        castor::dlf::Param("totalSize",bytesCount),
+        castor::dlf::Param("DbProcessingTime", dbServingTime),
+        castor::dlf::Param("DbProcessingTimePerFile", dbServingTime/filesCount),
+        castor::dlf::Param("ProcessingTime", timer.secs()),
+        castor::dlf::Param("ProcessingTimePerFile", timer.secs()/filesCount)
+    };
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, WORKER_MIGRATION_LIST_RETRIEVED,params);
+  }
+  // and reply to requester.
+  return files_response.release();
 }
 
+/* TODO: adapt to bulk */
 castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFilesToRecallListRequest(
     castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc,
     requesterInfo& requester ) throw(castor::exception::Exception){
@@ -1819,6 +1781,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFilesToRecallLi
   return files_response;
 }
 
+/* TODO: adapt to bulk (remove?) */
 void castor::tape::tapegateway::WorkerThread::failFileMigrationsList(castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc,
     castor::tape::tapegateway::WorkerThread::requesterInfo& requester,
     std::list<castor::tape::tapegateway::FileErrorReport>& filesToFailForRetry)
@@ -1847,6 +1810,7 @@ throw (castor::exception::Exception){
   }
 }
 
+/* TODO: adapt to bulk (remove?) */
 void castor::tape::tapegateway::WorkerThread::failFileRecallsList   (castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc,
     castor::tape::tapegateway::WorkerThread::requesterInfo& requester,
     std::list<castor::tape::tapegateway::FileErrorReport>& filesToFailForRetry)
@@ -1854,6 +1818,7 @@ throw (castor::exception::Exception) {
   failFileMigrationsList (oraSvc, requester, filesToFailForRetry);
 }
 
+/* TODO: diagnose */
 void castor::tape::tapegateway::WorkerThread::permanentlyFailFileMigrationsList(castor::tape::tapegateway::ITapeGatewaySvc&  /*oraSvc*/,
     castor::tape::tapegateway::WorkerThread::requesterInfo& /*requester*/,
     std::list<castor::tape::tapegateway::FileErrorReport>& /*filesToFailPermanently*/)
@@ -1863,6 +1828,7 @@ throw (castor::exception::Exception) {
   ie.getMessage() << "permanentlyFailFileMigrationsList not implemented in 2.1.11 version. Will be in 2.1.12";
 }
 
+/* TODO: diagnose */
 void castor::tape::tapegateway::WorkerThread::permanentlyFailFileRecallsList   (castor::tape::tapegateway::ITapeGatewaySvc&  /*oraSvc*/,
     castor::tape::tapegateway::WorkerThread::requesterInfo& /*requester*/,
     std::list<castor::tape::tapegateway::FileErrorReport>& /*filesToFailPermanently*/)
@@ -1872,6 +1838,39 @@ throw (castor::exception::Exception) {
   ie.getMessage() << "permanentlyFailFileRecallsList not implemented in 2.1.11 version. Will be in 2.1.12";
 }
 
+// Helper function for setting a session to closing in the DB.
+// This is usually in reaction to a problem, which is logged in the caller.
+// Comes with logging of its own problems as internal error (context in a
+// string).
+// As it's a last ditch action, there is no need to send further exceptions.
+void castor::tape::tapegateway::WorkerThread::setSessionToClosing (
+    castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc,
+    castor::tape::tapegateway::WorkerThread::requesterInfo& requester,
+    u_signed64 mountTransactionId)
+throw ()
+{
+  try {
+    oraSvc.setTapeSessionClosing(mountTransactionId);
+  } catch (castor::exception::Exception e) {
+    // If things still go wrong, log an internal error.
+    std::stringstream report;
+    report <<  "Failed to set the tape session to closing in the DB "
+      "in: castor::tape::tapegateway::WorkerThread::setSessionToClosing: "
+      "error=" << e.code() << " errorMessage=" << e.getMessage();
+    castor::dlf::Param params[] ={
+        castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
+        castor::dlf::Param("Port",requester.port),
+        castor::dlf::Param("HostName",requester.hostName),
+        castor::dlf::Param("mountTransactionId", mountTransactionId),
+        castor::dlf::Param("errorCode",SEINTERNAL),
+        castor::dlf::Param("errorMessage",report.str())
+    };
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, INTERNAL_ERROR, params);
+  }
+}
+
+
+/* TODO: diagnose */
 castor::tape::tapegateway::WorkerThread::fileErrorClassification
 castor::tape::tapegateway::WorkerThread::classifyBridgeMigrationFileError(int errorCode) throw () {
   // We rely on the default for the return values:
@@ -1886,6 +1885,7 @@ castor::tape::tapegateway::WorkerThread::classifyBridgeMigrationFileError(int er
   return ret;
 }
 
+/* TODO: diagnose */
 castor::tape::tapegateway::WorkerThread::fileErrorClassification
 castor::tape::tapegateway::WorkerThread::classifyBridgeRecallFileError(int /*errorCode*/) throw () {
   // We rely on the default for the return values:
@@ -1896,6 +1896,7 @@ castor::tape::tapegateway::WorkerThread::classifyBridgeRecallFileError(int /*err
   return ret;
 }
 
+/* TODO: diagnose all error utilities */
 void castor::tape::tapegateway::WorkerThread::logDbError (
     castor::exception::Exception e, requesterInfo& requester,
     FileMigrationReportList & fileMigrationReportList) throw () {
@@ -1997,6 +1998,32 @@ void castor::tape::tapegateway::WorkerThread::logMigrationNotified (Cuuid_t uuid
   castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, WORKER_MIGRATION_NOTIFIED, paramsComplete, castorFileId);
 }
 
+void castor::tape::tapegateway::WorkerThread::logMigrationNotified (Cuuid_t uuid,
+    u_signed64 mountTransactionId, u_signed64 aggregatorTransactionId,
+    struct Cns_fileid* castorFileId,
+    const requesterInfo& requester, const FileMigratedNotificationStruct & fileMigrated)
+{
+  std::stringstream checkSum;
+  checkSum << std::hex << std::showbase << std::uppercase << fileMigrated.checksum();
+  castor::dlf::Param paramsComplete[] ={
+      castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
+      castor::dlf::Param("Port",requester.port),
+      castor::dlf::Param("HostName",requester.hostName),
+      castor::dlf::Param("mountTransactionId",mountTransactionId),
+      castor::dlf::Param("tapebridgeTransId",aggregatorTransactionId),
+      castor::dlf::Param("fseq",fileMigrated.fseq()),
+      castor::dlf::Param("checksum name",fileMigrated.checksumName()),
+      castor::dlf::Param("checksum",checkSum.str()),
+      castor::dlf::Param("fileSize",fileMigrated.fileSize()),
+      castor::dlf::Param("compressedFileSize",fileMigrated.compressedFileSize()),
+      castor::dlf::Param("blockid", utils::tapeBlockIdToString(fileMigrated.blockId0(),
+          fileMigrated.blockId1(), fileMigrated.blockId2(),
+          fileMigrated.blockId3())),
+      castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId())
+  };
+  castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, WORKER_MIGRATION_NOTIFIED, paramsComplete, castorFileId);
+}
+
 void castor::tape::tapegateway::WorkerThread::logMigrationFileNotfound (Cuuid_t uuid,
     struct Cns_fileid* castorFileId,
     const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
@@ -2064,6 +2091,31 @@ void castor::tape::tapegateway::WorkerThread::logMigrationVmgrUpdate (Cuuid_t uu
   castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, WORKER_MIGRATION_VMGR_UPDATE, paramsVmgr, castorFileId);
 }
 
+/* TODO: new */
+void castor::tape::tapegateway::WorkerThread::logMigrationBulkVmgrUpdate (Cuuid_t uuid,
+    const requesterInfo& requester,  const FileMigrationReportList & fileMigrationReportList,
+    int filesCount, u_signed64 highestFseq, u_signed64 totalBytes,
+    u_signed64 totalCompressedBytes, const std::string & tapePool,
+    const std::string & vid, signed64 procTime)
+{
+  castor::dlf::Param paramsVmgr[] ={
+      castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
+      castor::dlf::Param("Port",requester.port),
+      castor::dlf::Param("HostName",requester.hostName),
+      castor::dlf::Param("mountTransactionId",fileMigrationReportList.mountTransactionId()),
+      castor::dlf::Param("tapebridgeTransId",fileMigrationReportList.aggregatorTransactionId()),
+      castor::dlf::Param("tapePool",tapePool),
+      castor::dlf::Param("filesCount",filesCount),
+      castor::dlf::Param("highestFseq",highestFseq),
+      castor::dlf::Param("filesCount",filesCount),
+      castor::dlf::Param("TPVID",vid),
+      castor::dlf::Param("totalSize",totalBytes),
+      castor::dlf::Param("compressedTotalSize",totalCompressedBytes),
+      castor::dlf::Param("ProcessingTime", procTime * 0.000001)
+  };
+  castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, WORKER_MIGRATION_VMGR_UPDATE, paramsVmgr);
+}
+
 void castor::tape::tapegateway::WorkerThread::logMigrationVmgrFailure (Cuuid_t uuid,
     struct Cns_fileid* castorFileId,
     const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
@@ -2081,6 +2133,26 @@ void castor::tape::tapegateway::WorkerThread::logMigrationVmgrFailure (Cuuid_t u
       castor::dlf::Param("errorMessage",e.getMessage().str())
   };
   castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR,WORKER_MIGRATION_VMGR_FAILURE, params, castorFileId);
+}
+
+void castor::tape::tapegateway::WorkerThread::logMigrationVmgrFailure (
+    Cuuid_t uuid, const requesterInfo& requester,
+    const FileMigrationReportList &fileMigrationReportList,
+    const std::string & vid, const std::string & tapePool,
+    castor::exception::Exception & e)
+{
+  castor::dlf::Param params[] ={
+      castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
+      castor::dlf::Param("Port",requester.port),
+      castor::dlf::Param("HostName",requester.hostName),
+      castor::dlf::Param("mountTransactionId",fileMigrationReportList.mountTransactionId()),
+      castor::dlf::Param("tapebridgeTransId",fileMigrationReportList.aggregatorTransactionId()),
+      castor::dlf::Param("tapePool",tapePool),
+      castor::dlf::Param("TPVID",vid),
+      castor::dlf::Param("errorCode",sstrerror(e.code())),
+      castor::dlf::Param("errorMessage",e.getMessage().str())
+  };
+  castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR,WORKER_MIGRATION_VMGR_FAILURE, params);
 }
 
 void castor::tape::tapegateway::WorkerThread::logMigrationCannotUpdateDb (Cuuid_t uuid, struct Cns_fileid* castorFileId,
@@ -2379,6 +2451,22 @@ void castor::tape::tapegateway::WorkerThread::logMigrationCannotFindVid (Cuuid_t
   castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, WORKER_MIG_CANNOT_FIND_VID, params,castorFileId);
 }
 
+void castor::tape::tapegateway::WorkerThread::logMigrationCannotFindVid (Cuuid_t uuid,
+    const requesterInfo& requester, const FileMigrationReportList & migrationReport,
+    castor::exception::Exception & e)
+{
+  castor::dlf::Param params[] ={
+      castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
+      castor::dlf::Param("Port",requester.port),
+      castor::dlf::Param("HostName",requester.hostName),
+      castor::dlf::Param("mountTransactionId",migrationReport.mountTransactionId()),
+      castor::dlf::Param("tapebridgeTransId",migrationReport.aggregatorTransactionId()),
+      castor::dlf::Param("errorCode",sstrerror(e.code())),
+      castor::dlf::Param("errorMessage",e.getMessage().str())
+  };
+  castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, WORKER_MIG_CANNOT_FIND_VID, params);
+}
+
 void castor::tape::tapegateway::WorkerThread::logTapeReadOnly (Cuuid_t uuid, struct Cns_fileid* castorFileId,
       const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
       const std::string& vid)
@@ -2394,6 +2482,24 @@ void castor::tape::tapegateway::WorkerThread::logTapeReadOnly (Cuuid_t uuid, str
   };
   castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, WORKER_MIG_TAPE_RDONLY, params,castorFileId);
 }
+
+void castor::tape::tapegateway::WorkerThread::logTapeReadOnly (
+    Cuuid_t uuid, const requesterInfo& requester,
+    const FileMigrationReportList & fileMigrationReportList,
+    const std::string & tapePool, const std::string & vid)
+{
+  castor::dlf::Param params[] ={
+      castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
+      castor::dlf::Param("Port",requester.port),
+      castor::dlf::Param("HostName",requester.hostName),
+      castor::dlf::Param("mountTransactionId",fileMigrationReportList.mountTransactionId()),
+      castor::dlf::Param("tapebridgeTransId",fileMigrationReportList.aggregatorTransactionId()),
+      castor::dlf::Param("tapePool",tapePool),
+      castor::dlf::Param("TPVID",vid)
+  };
+  castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, WORKER_MIG_TAPE_RDONLY, params);
+}
+
 
 void castor::tape::tapegateway::WorkerThread::logCannotReadOnly (Cuuid_t uuid, struct Cns_fileid* castorFileId,
     const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
@@ -2411,6 +2517,26 @@ void castor::tape::tapegateway::WorkerThread::logCannotReadOnly (Cuuid_t uuid, s
       castor::dlf::Param("errorMessage",e.getMessage().str())
   };
   castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, WORKER_MIG_CANNOT_RDONLY, params,castorFileId);
+}
+
+void castor::tape::tapegateway::WorkerThread::logCannotReadOnly (
+    Cuuid_t uuid, const requesterInfo& requester,
+    const FileMigrationReportList & fileMigrationReportList,
+    const std::string & tapePool, const std::string & vid,
+    castor::exception::Exception & e)
+{
+  castor::dlf::Param params[] ={
+      castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
+      castor::dlf::Param("Port",requester.port),
+      castor::dlf::Param("HostName",requester.hostName),
+      castor::dlf::Param("mountTransactionId",fileMigrationReportList.mountTransactionId()),
+      castor::dlf::Param("tapebridgeTransId",fileMigrationReportList.aggregatorTransactionId()),
+      castor::dlf::Param("TPVID",vid),
+      castor::dlf::Param("tapePool",tapePool),
+      castor::dlf::Param("errorCode",sstrerror(e.code())),
+      castor::dlf::Param("errorMessage",e.getMessage().str())
+  };
+  castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, WORKER_MIG_CANNOT_RDONLY, params);
 }
 
 void castor::tape::tapegateway::WorkerThread::logFileError (Cuuid_t uuid,

@@ -63,13 +63,13 @@ namespace castor      {
 
           // To get all the migration mount without a Tape associated to it
           virtual void  getMigrationMountsWithoutTapes(std::list<castor::tape::tapegateway::ITapeGatewaySvc::migrationMountParameters>& migrationMounts)
-            throw (castor::exception::Exception);
+          throw (castor::exception::Exception);
 
           // To create the db link between a Tape and a migrationMountParameters
           virtual void attachTapesToMigMounts(const std::list<u_signed64>& strIds,
-                                              const std::list<std::string>& vids,
-                                              const std::list<int>& fseqs)
-            throw (castor::exception::Exception);
+              const std::list<std::string>& vids,
+              const std::list<int>& fseqs)
+          throw (castor::exception::Exception);
 
           /** get the tapes for which a VDQM request si needed
            * @param vidsForMigr a vector to be filled with tapes to handle for migration
@@ -78,8 +78,8 @@ namespace castor      {
            * @exception throws castor exceptions in case of failure
            */
           virtual void getTapeWithoutDriveReq(std::vector<std::string> &vidsForMigr,
-                                              std::vector<std::pair<std::string, int> > &tapesForRecall)
-            throw (castor::exception::Exception);
+              std::vector<std::pair<std::string, int> > &tapesForRecall)
+          throw (castor::exception::Exception);
 
           /** updates the db with the VDQM mountTransaction id
            * after we have sent a recall or migration request to VDQM
@@ -91,11 +91,11 @@ namespace castor      {
            * @exception throws castor exceptions in case of failure
            */
           virtual void attachDriveReq(const std::string &vid,
-                                      const u_signed64 mountTransactionId,
-                                      const int mode,
-                                      const char *label,
-                                      const char *density)
-            throw (castor::exception::Exception);
+              const u_signed64 mountTransactionId,
+              const int mode,
+              const char *label,
+              const char *density)
+          throw (castor::exception::Exception);
 
           /** To get the transactionids and vids of all ongoing recall or migrations
            * for which there should be a VDQM request
@@ -104,43 +104,43 @@ namespace castor      {
            * @exception throws castor exceptions in case of failure
            */
           virtual void getTapesWithDriveReqs(std::list<struct TapeRequest>& requests,
-                                             const u_signed64& timeOut)
-            throw (castor::exception::Exception);
+              const u_signed64& timeOut)
+          throw (castor::exception::Exception);
 
           /** restarts requests lost by VDQM or a request which was processed
            * while the tapegateway was down
            * @param mountTransactionIds the transaction ids of the requests to be restarted
            */
           virtual void restartLostReqs(const std::list<int>& mountTransactionIds)
-            throw (castor::exception::Exception);
+          throw (castor::exception::Exception);
 
           //  To get the best file to migrate when the function is called
           virtual void  getFileToMigrate(
-                                         const castor::tape::tapegateway::FileToMigrateRequest& req,
-                                         castor::tape::tapegateway::FileToMigrate& file)
-            throw (castor::exception::Exception);
+              const castor::tape::tapegateway::FileToMigrateRequest& req,
+              castor::tape::tapegateway::FileToMigrate& file)
+          throw (castor::exception::Exception);
 
           // To update the db for a file which is migrated successfully
           virtual  void  setFileMigrated(
-                                         const castor::tape::tapegateway::FileMigratedNotification& resp)
-            throw (castor::exception::Exception);
+              const castor::tape::tapegateway::FileMigratedNotification& resp)
+          throw (castor::exception::Exception);
 
           // Update the db for a semgent whose migration was rejected as non-necessary by the name server
           virtual  void  dropSuperfluousSegment(
-                                                const castor::tape::tapegateway::FileMigratedNotification& resp)
-            throw (castor::exception::Exception);
+              const castor::tape::tapegateway::FileMigratedNotification& resp)
+          throw (castor::exception::Exception);
 
           // To update the db for a file which can't be referenced in the
           // name server anymore after a successful migration (file changed in the mean time)
           virtual  void  setFileStaleInMigration(
-                                                 const castor::tape::tapegateway::FileMigratedNotification& resp)
-            throw (castor::exception::Exception);
+              const castor::tape::tapegateway::FileMigratedNotification& resp)
+          throw (castor::exception::Exception);
 
           //  To get the best file to recall when the function is called
           virtual void getFileToRecall(
-                                       const castor::tape::tapegateway::FileToRecallRequest&  req,
-                                       castor::tape::tapegateway::FileToRecall& file )
-            throw (castor::exception::Exception);
+              const castor::tape::tapegateway::FileToRecallRequest&  req,
+              castor::tape::tapegateway::FileToRecall& file )
+          throw (castor::exception::Exception);
 
           /** updates the db for a file which has been recalled successfully.
            * Simple wrapper around tg_setFileRecalled PL/SQL procedure
@@ -148,32 +148,32 @@ namespace castor      {
            * @exception throws castor exceptions when failing
            */
           virtual void setFileRecalled(const castor::tape::tapegateway::FileRecalledNotification& fileRecalled)
-            throw (castor::exception::Exception);
+          throw (castor::exception::Exception);
 
           // To get the tapecopies which faced a migration failure
           virtual void  getFailedMigrations(std::list<castor::tape::tapegateway::RetryPolicyElement>& candidates)
-            throw (castor::exception::Exception);
+          throw (castor::exception::Exception);
 
           // To update the db using the retry migration policy returned values
           virtual void  setMigRetryResult(const std::list<u_signed64>& mjToRetry,
-                                          const std::list<u_signed64>& mjToFail )
-            throw (castor::exception::Exception);
+              const std::list<u_signed64>& mjToFail )
+          throw (castor::exception::Exception);
 
           // To access the db to retrieve the information about a completed migration
           virtual void getMigratedFileInfo(const castor::tape::tapegateway::FileMigratedNotification& file,
-                                           std::string& vid,
-                                           int& copyNumber,
-                                           u_signed64& lastModificationTime,
-                                           std::string& originalVid,
-                                           int& originalCopyNumber,
-                                           std::string& fileClass)
-            throw (castor::exception::Exception);
+              std::string& vid,
+              int& copyNumber,
+              u_signed64& lastModificationTime,
+              std::string& originalVid,
+              int& originalCopyNumber,
+              std::string& fileClass)
+          throw (castor::exception::Exception);
 
           // To update the database when the tapebridge allows
           // us to serve a request
           virtual void  startTapeSession(const castor::tape::tapegateway::VolumeRequest& startReq,
-                                         castor::tape::tapegateway::Volume& volume)
-            throw (castor::exception::Exception);
+              castor::tape::tapegateway::Volume& volume)
+          throw (castor::exception::Exception);
 
           /** Ends a tape session
            * @param mountTransactionId the mountTansactionId of the session to end
@@ -182,8 +182,8 @@ namespace castor      {
            * @exception throws castor exceptions in case of failure
            */
           virtual void endTapeSession(const u_signed64 mountTransactionId,
-                                      const int errorCode = 0)
-            throw (castor::exception::Exception);
+              const int errorCode = 0)
+          throw (castor::exception::Exception);
 
           /** updates the stager db after a file failure
            * @param mountTransactionId the transaction id of the mount where the failure took place
@@ -193,15 +193,15 @@ namespace castor      {
            * @exception throws castor exceptions in case of failure
            */
           virtual void failFileTransfer(const u_signed64 mountTransactionId,
-                                        const u_signed64 fileId,
-                                        const std::string &nsHost,
-                                        const int errorCode)
-            throw (castor::exception::Exception);
+              const u_signed64 fileId,
+              const std::string &nsHost,
+              const int errorCode)
+          throw (castor::exception::Exception);
 
           // To get tapes to release in vmgr */
           virtual void  getTapeToRelease(const u_signed64& mountTransactionId,
-                                         castor::tape::tapegateway::ITapeGatewaySvc::TapeToReleaseInfo& tape)
-            throw (castor::exception::Exception);
+              castor::tape::tapegateway::ITapeGatewaySvc::TapeToReleaseInfo& tape)
+          throw (castor::exception::Exception);
 
           /** cancels a migration or recall for the given tape
            * @param mode the request mode (WRITE_DISABLE for Recalls, WRITE_ENABLE for Migrations)
@@ -211,36 +211,81 @@ namespace castor      {
            * @exception throws castor exceptions in case of failure
            */
           virtual void cancelMigrationOrRecall(const int mode,
-                                               const std::string &vid,
-                                               const int errorCode,
-                                               const std::string &errorMsg)
-            throw (castor::exception::Exception);
+              const std::string &vid,
+              const int errorCode,
+              const std::string &errorMsg)
+          throw (castor::exception::Exception);
 
           // To delete migartion mounts with wrong tapepool
           virtual void deleteMigrationMountWithBadTapePool(
-                                                           const u_signed64 migrationMountId)
-            throw (castor::exception::Exception);
+              const u_signed64 migrationMountId)
+          throw (castor::exception::Exception);
+
+          // Find the VID (and just it) for a migration mount.
+          // This allows a safer update for the VMGR's fseq on this tape.
+          // Past that update, fiddling with a file will only affect the file itself
+          virtual void getMigrationMountVid(const u_signed64&  mountTransactionId,
+              std::string& vid, std::string& tapePool);
 
           // Mark tape full for the tape session.
           // This is typically called when a file migration gets a tape full
           // error so that we remember to make the tape as full at the end of
           // the session. Session is passed by VDQM request id (like for end/failSession).
           virtual void flagTapeFullForMigrationSession(const u_signed64& tapeRequestId)
-            throw (castor::exception::Exception);
+          throw (castor::exception::Exception);
 
-          // Find the VID (and just it) for a migration mount.
-          // This allows a safer update for the VMGR's fseq on this tape.
-          // Past that update, fiddling with a file will only affect the file itself
-          virtual void getMigrationMountVid(FileMigratedNotification & fileMigrated,
-                                            std::string& vid, std::string& tapePool);
+          /**
+           * Set tape session to closing: moves the tape session to a state
+           * where no more work will be retrieved, in order to get the session
+           * to fold down gracefully. This mechanism moves the error handling
+           * back to the tape gateway from the tape server.
+           * Thanks to this, most of the replies to the tape server can be a neutral
+           * "got it".
+           */
+          virtual void setTapeSessionClosing (u_signed64 mountTransactionId)
+          throw (castor::exception::Exception);
+
+          /**
+           * Get the next best files to migrate
+           */
+          virtual void getBulkFilesToMigrate (
+              u_signed64 mountTransactionId, u_signed64 maxFiles, u_signed64 maxBytes,
+              std::queue<castor::tape::tapegateway::FileToMigrateStruct>& filesToMigrate)
+          throw (castor::exception::Exception);
+
+          /**
+           * Get the next best files to recall
+           */
+          virtual void getBulkFilesToRecall (
+              u_signed64 mountTransactionId, u_signed64 maxFiles, u_signed64 maxBytes,
+              std::queue<castor::tape::tapegateway::FileToRecallStruct>& filesToRecall)
+          throw (castor::exception::Exception);
+
+          /**
+           * Check and update the NS and then the stager DB accordingly from migration result
+           * transmitted by the tape server.
+           */
+          virtual  void  setBulkFileMigrationResult (u_signed64 mountTransactionId,
+              std::vector<FileMigratedNotificationStruct *>& successes,
+              std::vector<FileErrorReportStruct *>& failures)
+          throw (castor::exception::Exception);
+
+          /**
+           * Check the NS and update the stager DB accordingly for files from recall result
+           * transmitted by the tape server.
+           */
+          virtual  void  setBulkFileRecallResult (u_signed64 mountTransactionId,
+              std::vector<FileRecalledNotificationStruct *>& successes,
+              std::vector<FileErrorReportStruct *>& failures)
+          throw (castor::exception::Exception);
 
           // To directly commit
           virtual void commit()
-            throw (castor::exception::Exception);
+          throw (castor::exception::Exception);
 
           // To direcly rollback
           virtual void rollback()
-            throw (castor::exception::Exception);
+          throw (castor::exception::Exception);
 
         private:
 
@@ -267,6 +312,11 @@ namespace castor      {
           oracle::occi::Statement *m_flagTapeFullForMigrationSession;
           oracle::occi::Statement *m_getMigrationMountVid;
           oracle::occi::Statement *m_dropSuperfluousSegmentStatement;
+          oracle::occi::Statement *m_setTapeSessionClosing;
+          oracle::occi::Statement *m_getBulkFilesToMigrate;
+          oracle::occi::Statement *m_getBulkFilesToRecall;
+          oracle::occi::Statement *m_setBulkFileMigrationResult;
+          oracle::occi::Statement *m_setBulkFileRecallResult;
 
           // Private helper class used to introspect cursors, making the OCCI code independent of the order of elements
           // in the cursor (especially with %ROWTYPE contexts).
@@ -280,7 +330,7 @@ namespace castor      {
             // Look for a given column in the metadata array.
             int findColumnIndex (const std::string& colName, int colType)
             // We could throw std::exception for the STL, or a castor exception.
-              const throw (std::exception, castor::exception::Internal) {
+            const throw (std::exception, castor::exception::Internal) {
               for (unsigned int i=0; i<m_rsStruct.size(); i++) {
                 if (colName == m_rsStruct[i].getString(oracle::occi::MetaData::ATTR_NAME) &&
                     colType == m_rsStruct[i].getInt(oracle::occi::MetaData::ATTR_DATA_TYPE))
@@ -290,11 +340,11 @@ namespace castor      {
               // We will dump all names and type (in numeric form) in the exception to ease diagnostic.
               castor::exception::Internal ex;
               ex.getMessage() << "resultSetIntrospector could not find column " << colName << " of type " << colType
-                              << " columns are: ";
+                  << " columns are: ";
               for (unsigned int i=0; i<m_rsStruct.size(); i++) {
                 if (i) ex.getMessage() << ", ";
                 ex.getMessage() << i << ":(" << m_rsStruct[i].getString(oracle::occi::MetaData::ATTR_NAME) << ","
-                                << m_rsStruct[i].getInt(oracle::occi::MetaData::ATTR_DATA_TYPE) << ")";
+                    << m_rsStruct[i].getInt(oracle::occi::MetaData::ATTR_DATA_TYPE) << ")";
               }
               throw ex;
             }
@@ -327,9 +377,27 @@ namespace castor      {
            */
           class occiNumber {
           public:
+            occiNumber (): m_n(0) {};
             occiNumber (const oracle::occi::Number & n): m_n(n) {};
+            /* Hand crafted cast-constructor for 64 bits */
+            occiNumber (u_signed64 n) {
+              /* From example grabbed from the web:
+               * https://forums.oracle.com/forums/thread.jspa?threadID=663724 */
+              static const oracle::occi::Number two(2);
+              static const oracle::occi::Number _32(two.intPower(32));
+              m_n = uint32_t (n & 0xFFFFFFFF);
+              m_n += oracle::occi::Number(uint32_t(n >> 32)) * _32;
+            };
             ~occiNumber () {};
             occiNumber (const occiNumber & oN): m_n(oN.m_n) {};
+            /* Hand crafted cast operator for 64 bits */
+            operator u_signed64 () {
+              static const oracle::occi::Number two(2);
+              static const oracle::occi::Number _32(two.intPower(32));
+              uint32_t n_high = m_n / _32;
+              uint32_t n_low  = m_n - oracle::occi::Number(n_high) * _32;
+              return u_signed64 (n_high) << 32  | u_signed64 (n_low);
+            }
             template <typename T>
             operator T () {
               if (m_n.isNull()) {
@@ -340,9 +408,8 @@ namespace castor      {
             }
           private:
             oracle::occi::Number m_n;
-          };
-
-        }; // end of class OraTapeGateway
+          }; // end of class occiNumber
+          }; // end of class OraTapeGateway
 
       } // end of namespace ora
     } // end of namespace tapegateway

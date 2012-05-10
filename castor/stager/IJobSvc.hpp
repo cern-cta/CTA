@@ -45,7 +45,6 @@ namespace castor {
   namespace stager {
 
     // Forward declaration
-    class Tape;
     class Stream;
     class Request;
     class Segment;

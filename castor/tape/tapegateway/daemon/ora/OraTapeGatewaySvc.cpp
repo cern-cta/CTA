@@ -27,6 +27,9 @@
 #include <serrno.h>
 #include <string>
 #include <list>
+#include <iostream>
+#include <sstream>
+#include <iomanip>
 
 #include "errno.h"
 
@@ -92,7 +95,12 @@ castor::tape::tapegateway::ora::OraTapeGatewaySvc::OraTapeGatewaySvc(const std::
   m_deleteMigrationMountWithBadTapePoolStatement(0),
   m_flagTapeFullForMigrationSession(0),
   m_getMigrationMountVid(0),
-  m_dropSuperfluousSegmentStatement(0)
+  m_dropSuperfluousSegmentStatement(0),
+  m_setTapeSessionClosing(0),
+  m_getBulkFilesToMigrate(0),
+  m_getBulkFilesToRecall(0),
+  m_setBulkFileMigrationResult(0),
+  m_setBulkFileRecallResult(0)
 {
 }
 
@@ -148,6 +156,11 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
     if ( m_flagTapeFullForMigrationSession) deleteStatement(m_flagTapeFullForMigrationSession);
     if ( m_getMigrationMountVid) deleteStatement(m_getMigrationMountVid);
     if ( m_dropSuperfluousSegmentStatement) deleteStatement(m_dropSuperfluousSegmentStatement);
+    if ( m_setTapeSessionClosing) deleteStatement(m_setTapeSessionClosing);
+    if ( m_getBulkFilesToMigrate) deleteStatement(m_getBulkFilesToMigrate);
+    if ( m_getBulkFilesToRecall) deleteStatement(m_getBulkFilesToRecall);
+    if ( m_setBulkFileMigrationResult) deleteStatement(m_setBulkFileMigrationResult);
+    if ( m_setBulkFileRecallResult) deleteStatement(m_setBulkFileRecallResult);
   } catch (castor::exception::Exception& ignored) {};
   // Now reset all pointers to 0
   m_getMigrationMountsWithoutTapesStatement= 0; 
@@ -173,6 +186,11 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
   m_flagTapeFullForMigrationSession=0;
   m_getMigrationMountVid=0;
   m_dropSuperfluousSegmentStatement=0;
+  m_setTapeSessionClosing=0;
+  m_getBulkFilesToMigrate=0;
+  m_getBulkFilesToRecall=0;
+  m_setBulkFileMigrationResult=0;
+  m_setBulkFileRecallResult=0;
 }
 
 //----------------------------------------------------------------------------
@@ -1222,7 +1240,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getTapeToRelease
     m_getTapeToReleaseStatement->setDouble(1,(double)mountTransactionId); 
     m_getTapeToReleaseStatement->executeUpdate();
     tape.vid = m_getTapeToReleaseStatement->getString(2);
-    tape.mode = m_getTapeToReleaseStatement->getInt(3);
+    tape.mode = (TapeMode) m_getTapeToReleaseStatement->getInt(3);
     tape.full = m_getTapeToReleaseStatement->getInt(4);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
@@ -1320,7 +1338,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::flagTapeFullForMigration
 //----------------------------------------------------------------------------
 // getMigrationMountVid
 //----------------------------------------------------------------------------
-void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getMigrationMountVid(FileMigratedNotification & fileMigrated,
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getMigrationMountVid(const u_signed64&  mountTransactionId,
     std::string &vid, std::string &tapePool)
 {
   try {
@@ -1332,7 +1350,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getMigrationMountVid(Fil
       m_getMigrationMountVid->registerOutParam
       (3, oracle::occi::OCCISTRING, 2048 );
     }
-    m_getMigrationMountVid->setDouble(1,(double)fileMigrated.mountTransactionId());
+    m_getMigrationMountVid->setDouble(1,(double)mountTransactionId);
     m_getMigrationMountVid->executeUpdate();
     vid      = m_getMigrationMountVid->getString(2);
     tapePool = m_getMigrationMountVid->getString(3);
@@ -1342,6 +1360,383 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getMigrationMountVid(Fil
     ex.getMessage()
       << "Error caught in getMigrationMountVid"
       << std::endl << e.what();
+    throw ex;
+  }
+}
+
+//----------------------------------------------------------------------------
+// setTapeSessionClosing
+//----------------------------------------------------------------------------
+
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::setTapeSessionClosing(u_signed64 mountTransactionId)
+throw (castor::exception::Exception){
+  try {
+    if (!m_setTapeSessionClosing) {
+      m_setTapeSessionClosing =
+        createStatement("BEGIN tg_setTapeSessionToClosing(:1);END;");
+    }
+    m_setTapeSessionClosing->setNumber(1,occiNumber(mountTransactionId));
+    m_setTapeSessionClosing->executeUpdate();
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in setTapeSessionClosing"
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+//----------------------------------------------------------------------------
+// getBulkFilesToMigrate
+//----------------------------------------------------------------------------
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getBulkFilesToMigrate (
+    u_signed64 mountTransactionId, u_signed64 maxFiles, u_signed64 maxBytes,
+    std::queue<castor::tape::tapegateway::FileToMigrateStruct>& filesToMigrate)
+  throw (castor::exception::Exception){
+  // container for result should be clean!
+  if (!filesToMigrate.empty()) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+          << "Error in getBulkFilesToMigrate: filesToMigrate container not empty on call";
+    throw ex;
+  }
+  try {
+    if (!m_getBulkFilesToMigrate) {
+      m_getBulkFilesToMigrate =
+        createStatement("BEGIN tg_getBulkFilesToMigrate(:1,:2,:3,:4);END;");
+      m_getBulkFilesToMigrate->registerOutParam(4, oracle::occi::OCCICURSOR);
+    }
+    /* Call the SQL to retrieve files to migrate */
+    m_getBulkFilesToMigrate->setNumber(1,(double)mountTransactionId);
+    m_getBulkFilesToMigrate->setNumber(2,(double)maxFiles);
+    m_getBulkFilesToMigrate->setNumber(3,(double)maxBytes);
+    // Roll back is anything goes wrong.
+    scopedRollback scpRollback (this);
+    m_getBulkFilesToMigrate->executeUpdate();
+    /* Convert the cursor's contents into a collection of FileToMigrateStruct, to be sent to
+     * tape server.
+     */
+    castor::db::ora::SmartOcciResultSet rs (m_getBulkFilesToMigrate, m_getBulkFilesToMigrate->getCursor(4));
+    // Find columns for the cursor
+    resultSetIntrospector resIntros (rs.get());
+    int fileTransIdIdx   = resIntros.findColumnIndex(   "FILETRANSACTIONID", oracle::occi::OCCI_SQLT_NUM);
+    int nsFileIdIdx      = resIntros.findColumnIndex(            "NSFILEID", oracle::occi::OCCI_SQLT_NUM);
+    int nsHostIdx        = resIntros.findColumnIndex(              "NSHOST", oracle::occi::OCCI_SQLT_CHR);
+    int fSeqIdx          = resIntros.findColumnIndex(                "FSEQ", oracle::occi::OCCI_SQLT_NUM);
+    int fileSizeIdx      = resIntros.findColumnIndex(            "FILESIZE", oracle::occi::OCCI_SQLT_NUM);
+    int lastKnownNameIdx = resIntros.findColumnIndex(   "LASTKNOWNFILENAME", oracle::occi::OCCI_SQLT_CHR);
+    int lastModifTimeIdx = resIntros.findColumnIndex("LASTMODIFICATIONTIME", oracle::occi::OCCI_SQLT_NUM);
+    int pathIdx          = resIntros.findColumnIndex(                "PATH", oracle::occi::OCCI_SQLT_CHR);
+    // Run through the cursor
+    while (rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
+      castor::tape::tapegateway::FileToMigrateStruct ftm;
+      ftm.setFileTransactionId   (occiNumber(rs->getNumber(  fileTransIdIdx)));
+      ftm.setFileid              (occiNumber(rs->getNumber(     nsFileIdIdx)));
+      ftm.setNshost              (           rs->getString(       nsHostIdx));
+      ftm.setFseq                (occiNumber(rs->getNumber(         fSeqIdx)));
+      ftm.setFileSize            (occiNumber(rs->getNumber(     fileSizeIdx)));
+      ftm.setLastKnownFilename   (           rs->getString(lastKnownNameIdx));
+      ftm.setLastModificationTime(occiNumber(rs->getNumber(lastModifTimeIdx)));
+      ftm.setPath                (           rs->getString(         pathIdx));
+      ftm.setUmask               (022);
+      ftm.setPositionCommandCode (TPPOSIT_FSEQ);
+      filesToMigrate.push(ftm);
+    }
+    // Close result set and transaction.
+    rs.close();
+    commit();
+    scpRollback.disengage();
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in setTapeSessionClosing"
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+//----------------------------------------------------------------------------
+// getBulkFilesToRecall
+//----------------------------------------------------------------------------
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getBulkFilesToRecall (
+    u_signed64 mountTransactionId, u_signed64 maxFiles, u_signed64 maxBytes,
+    std::queue<castor::tape::tapegateway::FileToRecallStruct>& filesToRecall)
+  throw (castor::exception::Exception){
+  // container for result should be clean!
+  if (!filesToRecall.empty()) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+          << "Error in getBulkFilesToRecall: filesToRecall container not empty on call";
+    throw ex;
+  }
+  try {
+    if (!m_getBulkFilesToRecall) {
+      m_getBulkFilesToRecall =
+        createStatement("BEGIN tg_getBulkFilesToRecall(:1,:2,:3,:4);END;");
+      m_getBulkFilesToRecall->registerOutParam(4, oracle::occi::OCCICURSOR);
+    }
+    /* Call the SQL to retrieve files to migrate */
+    m_getBulkFilesToRecall->setNumber(1,(double)mountTransactionId);
+    m_getBulkFilesToRecall->setNumber(2,(double)maxFiles);
+    m_getBulkFilesToRecall->setNumber(3,(double)maxBytes);
+    // Roll back is anything goes wrong.
+    scopedRollback scpRollback (this);
+    m_getBulkFilesToRecall->executeUpdate();
+    /* Convert the cursor's contents into a collection of FileToMigrateStruct, to be sent to
+     * tape server.
+     */
+    castor::db::ora::SmartOcciResultSet rs (m_getBulkFilesToRecall, m_getBulkFilesToRecall->getCursor(4));
+    // Find columns for the cursor
+    resultSetIntrospector resIntros (rs.get());
+    int fileTransIdIdx   = resIntros.findColumnIndex(   "FILETRANSACTIONID", oracle::occi::OCCI_SQLT_NUM);
+    int nsFileIdIdx      = resIntros.findColumnIndex(            "NSFILEID", oracle::occi::OCCI_SQLT_NUM);
+    int nsHostIdx        = resIntros.findColumnIndex(              "NSHOST", oracle::occi::OCCI_SQLT_CHR);
+    int fSeqIdx          = resIntros.findColumnIndex(                "FSEQ", oracle::occi::OCCI_SQLT_NUM);
+    int blockIdIdx       = resIntros.findColumnIndex(             "BLOCKID", oracle::occi::OCCI_SQLT_CHR);
+    int pathIdx          = resIntros.findColumnIndex(                "PATH", oracle::occi::OCCI_SQLT_CHR);
+    // Run through the cursor
+    while (rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
+      castor::tape::tapegateway::FileToRecallStruct ftr;
+      ftr.setFileTransactionId   (occiNumber(rs->getNumber(  fileTransIdIdx)));
+      ftr.setFileid              (occiNumber(rs->getNumber(     nsFileIdIdx)));
+      ftr.setNshost              (           rs->getString(       nsHostIdx));
+      ftr.setFseq                (occiNumber(rs->getNumber(         fSeqIdx)));
+      ftr.setPath                (           rs->getString(         pathIdx));
+      ftr.setUmask               (022);
+      ftr.setPositionCommandCode (TPPOSIT_FSEQ);
+      // Extract the block ID. We will cut it into 4 blocks of 2 characters, which
+      // will be interpreted as bytes in hex and stored in the 4-bytes blockIdn structure.
+      std::string blockId        (        rs->getString(      blockIdIdx));
+      unsigned char bid[4];
+      for (int i=0; i<4; i++) {
+        std::stringstream bidsstream(blockId.substr(2*i,2));
+        bidsstream<<std::hex;
+        // The intermediate int is here to prevent the stream
+        // from interpreting the contents as characters instead
+        // of numbers as we want.
+        int bidval;
+        bidsstream>>bidval;
+        bid[i]=bidval;
+      }
+      ftr.setBlockId0(bid[0]);
+      ftr.setBlockId1(bid[1]);
+      ftr.setBlockId2(bid[2]);
+      ftr.setBlockId3(bid[3]);
+      // And done
+      filesToRecall.push(ftr);
+    }
+    // Close result set and transaction.
+    rs.close();
+    commit();
+    scpRollback.disengage();
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in setTapeSessionClosing"
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+//----------------------------------------------------------------------------
+// setBulkFileMigrationResult
+//----------------------------------------------------------------------------
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::setBulkFileMigrationResult (
+    u_signed64 mountTransactionId,
+    std::vector<FileMigratedNotificationStruct *>& successes,
+    std::vector<FileErrorReportStruct *>& failures)
+throw (castor::exception::Exception){
+  try {
+    if (!m_setBulkFileMigrationResult) {
+      m_setBulkFileMigrationResult =
+        createStatement("BEGIN tg_setBulkFileMigrationResult(:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12);END;");
+    }
+    // Prepare the arays of data to be sent to PL/SQL
+    std::vector<oracle::occi::Number> fileIds;
+    std::vector<std::string> nsHosts;
+    std::vector<oracle::occi::Number> fileTransactionIds;
+    std::vector<oracle::occi::Number> fSeqs;
+    std::vector<std::string> blockIds;
+    std::vector<std::string> checksumNames;
+    std::vector<oracle::occi::Number> checksums;
+    std::vector<oracle::occi::Number> compressedFileSizes;
+    std::vector<oracle::occi::Number> fileSizes;
+    std::vector<oracle::occi::Number> errorCodes;
+    std::vector<std::string> errorMessages;
+
+    // Fill arrays with data
+    for (std::vector<FileMigratedNotificationStruct *>::iterator s = successes.begin();
+         s < successes.end();
+         s++) {
+      // We cast the u_signed64 values for double first as the occi::Number type lacks a long long
+      // case operator. This limits us to 52 bits, or ids, sizes and checksums below ~10^15.
+      fileIds.push_back(occiNumber((*s)->fileid()));
+      nsHosts.push_back((*s)->nshost());
+      fileTransactionIds.push_back(occiNumber((*s)->fileTransactionId()));
+      fSeqs.push_back(occiNumber((*s)->fseq()));
+      std::stringstream blockIdHex;
+      // Special treatment for blockId array. It is an array of 4 bytes, passed as an hex string.
+      // This "interpretation" of the hex string happens to print out the block id as an intelligible
+      // number (as in nsls, for example) because it is stored in big endian order in the SCSI
+      // command buffer and always stored that way without interpretation outside of SCSI commands.
+      blockIdHex << std::hex << std::noshowbase << std::uppercase << std::setfill('0')
+                 << std::setw(2) << (*s)->blockId0() << std::setw(2) << (*s)->blockId1()
+                 << std::setw(2) << (*s)->blockId2() << std::setw(2) << (*s)->blockId3();
+      blockIds.push_back(blockIdHex.str());
+      checksumNames.push_back((*s)->checksumName());
+      checksums.push_back(occiNumber((*s)->checksum()));
+      compressedFileSizes.push_back(occiNumber((*s)->compressedFileSize()));
+      fileSizes.push_back(occiNumber((*s)->fileSize()));
+      errorCodes.push_back(0);
+      errorMessages.push_back(std::string(""));
+    }
+    for (std::vector<FileErrorReportStruct *>::iterator f = failures.begin();
+        f < failures.end();
+        f++) {
+      // We cast the u_signed64 values to double first as the occi::Number type lacks a long long
+      // cast operator. This limits us to 52 bits, or ids, sizes and checksums below ~10^15.
+      fileIds.push_back(occiNumber((*f)->fileid()));
+      nsHosts.push_back((*f)->nshost());
+      fileTransactionIds.push_back(occiNumber((*f)->fileTransactionId()));
+      fSeqs.push_back(occiNumber((*f)->fseq()));
+      blockIds.push_back(std::string(""));
+      checksumNames.push_back(std::string(""));
+      checksums.push_back(0);
+      compressedFileSizes.push_back(0);
+      fileSizes.push_back(0);
+      // The called PL/SQL relies on a 0 error code to differentiate successes
+      // from failures. Getting an error code of 0 here is hence an issue.
+      // We treat is as an internal error (it can originate from as far back as
+      // rtcpd on the tape server.
+      if (!(*f)->errorCode()) {
+        castor::exception::Internal ex;
+        ex.getMessage() << "Got a zero error code for failure in setBulkFileMigrationResult:"
+                     << " NSHOSTNAME=" << (*f)->nshost() <<  " NSFILEID=" << (*f)->fileid()
+                     << " fileTransactionId=" << (*f)->fileTransactionId() << " fseq=" << (*f)->fseq()
+                     << " errorCode=" << (*f)->errorCode() << " errorMessage=" << (*f)->errorMessage();
+        throw ex;
+      }
+      errorCodes.push_back((*f)->errorCode());
+      errorMessages.push_back((*f)->errorMessage());
+    }
+
+    // Attach arrays to parameters
+    m_setBulkFileMigrationResult->setNumber(1, occiNumber(mountTransactionId));
+    oracle::occi::setVector(m_setBulkFileMigrationResult, 2, nsHosts,       "strList");
+    oracle::occi::setVector(m_setBulkFileMigrationResult, 3, nsHosts,       "numList");
+    oracle::occi::setVector(m_setBulkFileMigrationResult, 4, fileTransactionIds,  "numList");
+    oracle::occi::setVector(m_setBulkFileMigrationResult, 5, fSeqs,         "numList");
+    oracle::occi::setVector(m_setBulkFileMigrationResult, 6, blockIds,      "strList");
+    oracle::occi::setVector(m_setBulkFileMigrationResult, 7, checksumNames, "strList");
+    oracle::occi::setVector(m_setBulkFileMigrationResult, 8, checksums,     "numList");
+    oracle::occi::setVector(m_setBulkFileMigrationResult, 9, compressedFileSizes, "numList");
+    oracle::occi::setVector(m_setBulkFileMigrationResult,10, fileSizes,     "numList");
+    oracle::occi::setVector(m_setBulkFileMigrationResult,11, errorCodes,    "numList");
+    oracle::occi::setVector(m_setBulkFileMigrationResult,12, errorMessages, "strList");
+
+    // DB update and done.
+    m_setBulkFileMigrationResult->executeUpdate();
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+          << "Error caught in setBulkFileMigrationResult"
+          << std::endl << e.what();
+    throw ex;
+  }
+}
+
+//----------------------------------------------------------------------------
+// setBulkFileRecallResult
+//----------------------------------------------------------------------------
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::setBulkFileRecallResult (
+    u_signed64 mountTransactionId,
+    std::vector<FileRecalledNotificationStruct *>& successes,
+    std::vector<FileErrorReportStruct *>& failures)
+throw (castor::exception::Exception){
+  try {
+    if (!m_setBulkFileRecallResult) {
+      m_setBulkFileRecallResult =
+        createStatement("BEGIN tg_setBulkFileMigrationResult(:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12);END;");
+    }
+    // Prepare the arays of data to be sent to PL/SQL
+    std::vector<oracle::occi::Number> fileIds;
+    std::vector<std::string> nsHosts;
+    std::vector<oracle::occi::Number> fileTransactionIds;
+    std::vector<oracle::occi::Number> fSeqs;
+    std::vector<std::string> checksumNames;
+    std::vector<oracle::occi::Number> checksums;
+    std::vector<oracle::occi::Number> fileSizes;
+    std::vector<oracle::occi::Number> errorCodes;
+    std::vector<std::string> errorMessages;
+
+    // Fill arrays with data
+    for (std::vector<FileRecalledNotificationStruct *>::iterator s = successes.begin();
+         s < successes.end();
+         s++) {
+      // We cast the u_signed64 values for double first as the occi::Number type lacks a long long
+      // case operator. This limits us to 52 bits, or ids, sizes and checksums below ~10^15.
+      fileIds.push_back(occiNumber((*s)->fileid()));
+      nsHosts.push_back((*s)->nshost());
+      fileTransactionIds.push_back(occiNumber((*s)->fileTransactionId()));
+      fSeqs.push_back(occiNumber((*s)->fseq()));
+      checksumNames.push_back((*s)->checksumName());
+      checksums.push_back(occiNumber((*s)->checksum()));
+                          fileSizes.push_back(occiNumber((*s)->fileSize()));
+      errorCodes.push_back(0);
+      errorMessages.push_back(std::string(""));
+    }
+    for (std::vector<FileErrorReportStruct *>::iterator f = failures.begin();
+        f < failures.end();
+        f++) {
+      // We cast the u_signed64 values to double first as the occi::Number type lacks a long long
+      // cast operator. This limits us to 52 bits, or ids, sizes and checksums below ~10^15.
+      fileIds.push_back(occiNumber((*f)->fileid()));
+      nsHosts.push_back((*f)->nshost());
+      fileTransactionIds.push_back(occiNumber((*f)->fileTransactionId()));
+      fSeqs.push_back(occiNumber((*f)->fseq()));
+      checksumNames.push_back(std::string(""));
+      checksums.push_back(0);
+      fileSizes.push_back(0);
+      // The called PL/SQL relies on a 0 error code to differentiate successes
+      // from failures. Getting an error code of 0 here is hence an issue.
+      // We treat is as an internal error (it can originate from as far back as
+      // rtcpd on the tape server.
+      if (!(*f)->errorCode()) {
+        castor::exception::Internal ex;
+        ex.getMessage() << "Got a zero error code for failure in setBulkFileRecallResult:"
+                        << " NSHOSTNAME=" << (*f)->nshost() << " NSFILEID=" << (*f)->fileid()
+                        << " fileTransactionId=" << (*f)->fileTransactionId() << " fseq=" << (*f)->fseq()
+                        << " errorCode=" << (*f)->errorCode() << " errorMessage=" << (*f)->errorMessage();
+        throw ex;
+      }
+      errorCodes.push_back((*f)->errorCode());
+      errorMessages.push_back((*f)->errorMessage());
+    }
+
+    // Attach arrays to parameters
+    m_setBulkFileMigrationResult->setNumber(1, occiNumber(mountTransactionId));
+    oracle::occi::setVector(m_setBulkFileMigrationResult, 2, nsHosts,       "strList");
+    oracle::occi::setVector(m_setBulkFileMigrationResult, 3, nsHosts,       "numList");
+    oracle::occi::setVector(m_setBulkFileMigrationResult, 4, fileTransactionIds,  "numList");
+    oracle::occi::setVector(m_setBulkFileMigrationResult, 5, fSeqs,         "numList");
+    oracle::occi::setVector(m_setBulkFileMigrationResult, 6, checksumNames, "strList");
+    oracle::occi::setVector(m_setBulkFileMigrationResult, 7, checksums,     "numList");
+    oracle::occi::setVector(m_setBulkFileMigrationResult, 8, fileSizes,     "numList");
+    oracle::occi::setVector(m_setBulkFileMigrationResult, 9, errorCodes,    "numList");
+    oracle::occi::setVector(m_setBulkFileMigrationResult,10, errorMessages, "strList");
+
+    // DB update and done.
+    m_setBulkFileMigrationResult->executeUpdate();
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+          << "Error caught in setBulkFileRecallResult"
+          << std::endl << e.what();
     throw ex;
   }
 }

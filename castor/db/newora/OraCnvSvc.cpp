@@ -189,7 +189,8 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
   try {
     if (0 == m_environment) {
       m_environment = oracle::occi::Environment::createEnvironment
-        (oracle::occi::Environment::THREADED_MUTEXED);
+        (oracle::occi::Environment::Mode(oracle::occi::Environment::THREADED_MUTEXED |
+         oracle::occi::Environment::OBJECT));
     }
     m_connection =
       m_environment->createConnection(m_user, m_passwd, m_dbName);
