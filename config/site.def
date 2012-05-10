@@ -95,7 +95,7 @@ COMM Define the remote tape copy daemon log file.
  * Section specifying the build of the Security packages
  */
 
-#define UseGSI	        YES
+#define UseGSI	        NO
 #define UseKRB5	        YES
 
 #define BuildSecureTape	        NO
