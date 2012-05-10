@@ -58,7 +58,7 @@ LOCAL_PATH/Csec_plugin_GSI_pthr_mapper.d: LOCAL_PATH/Csec_plugin_GSS_mapper.c
 #define SecLibsKRB5 $(shell $(Krb5Config) gssapi --libs)
 KRB5LIB_OBJS = Csec_plugin_KRB5.o Csec_plugin_KRB5_mapper.o
 KRB5LIB = SecLibsKRB5 -lc -ldl
-SharedLibraryTarget(Csec_plugin_KRB5,$(KRB5LIB_OBJS),,$(KRB5LIB))
+ClientSharedLibraryTarget(Csec_plugin_KRB5,$(KRB5LIB_OBJS),,$(KRB5LIB))
 
 LOCAL_PATH/Csec_plugin_KRB5.o: LOCAL_PATH/Csec_plugin_GSS.c
 	@echo Compiling $@
@@ -75,6 +75,6 @@ LOCAL_PATH/Csec_plugin_KRB5_mapper.d:  LOCAL_PATH/Csec_plugin_GSS_mapper.c
 
 IDLIB_OBJS = Csec_plugin_ID.o
 IDLIB = -lc -ldl
-SharedLibraryTarget(Csec_plugin_ID,$(KRB5LIB_OBJS),,$(KRB5LIB))
+ClientSharedLibraryTarget(Csec_plugin_ID,$(KRB5LIB_OBJS),,$(KRB5LIB))
 
 CLIENTLIBMANPAGE(Csec_api)
