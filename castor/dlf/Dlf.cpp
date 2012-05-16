@@ -48,7 +48,7 @@ void castor::dlf::dlf_init
 (const char* facilityName, castor::dlf::Message messages[])
   throw (castor::exception::Exception) {
   // Initialise the DLF interface
-  if (::dlf_init(facilityName) != 0) {
+  if (::dlf_init(facilityName, -1) != 0) {
     castor::exception::Internal ex;
     ex.getMessage() << "Unable to initialize DLF: " << sstrerror(errno);
     throw ex;

@@ -36,12 +36,12 @@
 #ifdef __APPLE__
 #include <mach/mach.h>
 #endif
-#include <search.h>
 
 /* Global variables */
 static char *messages[DLF_MAX_MSGTEXTS];
 static int   initialized = 0;
 static int   maxmsglen   = DEFAULT_SYSLOG_MSGLEN;
+static int   logmask     = 0xff;
 static const char* progname = 0;
 static int   LogFile = -1;           /* fd for log */
 static int   connected;              /* have done connect */
@@ -111,13 +111,13 @@ char *_clean_string(char *str, int underscore) {
 /*---------------------------------------------------------------------------
  * dlf_init
  *---------------------------------------------------------------------------*/
-int dlf_init(const char *ident) {
+int dlf_init(const char *ident, int maskpri) {
 
   /* Variables */
   FILE *fp = NULL;
   char *p;
   char buffer[1024];
-  int  i, size = 0; // int found;
+  int  i, found, size = 0;
 
   /* Check if already initialized */
   if (initialized) {
@@ -143,37 +143,36 @@ int dlf_init(const char *ident) {
    * logged. So, we set the syslog priority mask at the client application.
    */
 
-  /* build a hash table of log masks for all known facilites, from
-   * the configuration file
-   *
-  {
-    char **valuess = NULL;
-    int nbvals = 0;
-    int rc = getconfent_multi("LogMask",
-                              (char *)name,
-                              1,
-                              &vals,
-                              &nbvals); 
-  if (rc == 0) {
+  /* The default mask for castor is to logged everything up to and including
+   * INFO messages. I.e. we exclude debug messages.
+   */
+  if (maskpri < 0) {
+    (void)setlogmask(LOG_UPTO(LOG_INFO));
 
-  if ((p = getconfent(ident, "LogMask", 0)) != NULL) { */
-    /* Lookup the prority in the priority list */
-  /*    found = 0;
-    for (i = 0; prioritylist[i].name != NULL; i++) {
-      if (!strcasecmp(p, prioritylist[i].name)) {
-        (void)setlogmask(LOG_UPTO(prioritylist[i].value));
-        found = 1;
-        break;
+    /* Check if the configuration file defines the log mask to use */
+    if ((p = getconfent(ident, "LogMask", 0)) != NULL) {
+      /* Lookup the prority in the priority list */
+      found = 0;
+      for (i = 0; prioritylist[i].name != NULL; i++) {
+        if (!strcasecmp(p, prioritylist[i].name)) {
+          (void)setlogmask(LOG_UPTO(prioritylist[i].value));
+          found = 1;
+          break;
+        }
       }
-      }*/
-    /* If the priority wasn't found abort the initialization of the
-     * logging interface
-     *//*
-    if (!found) {
-      errno = EINVAL;
-      return (-1);
+      /* If the priority wasn't found abort the initialization of the
+       * logging interface
+       */
+      if (!found) {
+        errno = EINVAL;
+        return (-1);
+      }
     }
-  }*/
+  } else {
+    /* Use the mask supplied by the user */
+    (void)setlogmask(maskpri);
+  }
+  logmask = setlogmask(0);
   progname = ident;
 
   /* Determine the maximum message size that the client syslog server can
@@ -334,10 +333,10 @@ int dlf_write(Cuuid_t reqid,
     return (-1);
   }
 
-  /* Ignore messages whose priority is not of interest *
+  /* Ignore messages whose priority is not of interest */
   if ((LOG_MASK(LOG_PRI(priority)) & logmask) == 0) {
     return (0);
-    }*/
+  }
 
   params = (dlf_write_param_t *)
     malloc(numparams * sizeof(dlf_write_param_t));
@@ -560,10 +559,10 @@ int dlf_writept(Cuuid_t reqid,
     return (-1);
   }
 
-  /* Ignore messages whose priority is not of interest *
+  /* Ignore messages whose priority is not of interest */
   if ((LOG_MASK(LOG_PRI(priority)) & logmask) == 0) {
     return (0);
-    }*/
+  }
 
   /* Convert the request uuid type to a string */
   if (Cuuid2string(uuidstr, CUUID_STRING_LEN + 1, &reqid)) {
