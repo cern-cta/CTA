@@ -1497,8 +1497,8 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileRecallRepor
         castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
         castor::dlf::Param("Port",requester.port),
         castor::dlf::Param("HostName",requester.hostName),
-        castor::dlf::Param("mountTransactionId", fileMigrationReportList.mountTransactionId()),
-        castor::dlf::Param("tapebridgeTransId", fileMigrationReportList.aggregatorTransactionId())
+        castor::dlf::Param("mountTransactionId", fileRecallReportList.mountTransactionId()),
+        castor::dlf::Param("tapebridgeTransId", fileRecallReportList.aggregatorTransactionId())
     };
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_REC_REPORT_LIST_PROCESSED, params);
   }
@@ -1679,8 +1679,8 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFilesToRecallLi
 
   // Transmit the request to the DB directly
   try {
-    oraSvc.getBulkFilesToRecall(ftmlr.mountTransactionId(),
-        ftmlr.maxFiles(), ftmlr.maxBytes(),
+    oraSvc.getBulkFilesToRecall(ftrlr.mountTransactionId(),
+        ftrlr.maxFiles(), ftrlr.maxBytes(),
         files_list);
   } catch (castor::exception::Exception& e) {
     castor::dlf::Param params[] ={
@@ -1716,10 +1716,10 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFilesToRecallLi
   //The list is non-empty, we build the response and gather a few stats
   u_signed64 filesCount = 0;
   std::auto_ptr<FilesToRecallList> files_response(new FilesToRecallList);
-  files_response->setAggregatorTransactionId(ftmlr.aggregatorTransactionId());
-  files_response->setMountTransactionId(ftmlr.mountTransactionId());
+  files_response->setAggregatorTransactionId(ftrlr.aggregatorTransactionId());
+  files_response->setMountTransactionId(ftrlr.mountTransactionId());
   while (!files_list.empty()) {
-    std::auto_ptr<FileToRecallStruct> ftr (new FileToMigrateStruct);
+    std::auto_ptr<FileToRecallStruct> ftr (new FileToRecallStruct);
     *ftr = files_list.front();
     filesCount++;
     // Log the per-file information
@@ -1746,7 +1746,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFilesToRecallLi
     fileId.fileid = ftr->fileid();
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_RECALL_RETRIEVED, paramsComplete, &fileId);
     // ... and store in the response.
-    files_response->filesToMigrate().push_back(ftr.release());
+    files_response->filesToRecall().push_back(ftr.release());
     files_list.pop();
   }
 
