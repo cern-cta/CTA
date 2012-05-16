@@ -251,28 +251,6 @@ STGLIB_SRCS = BaseAddress.cpp \
               vdqm/TapeServer.cpp \
               vdqm/TapeServerStatusCodes.cpp \
               vdqm/VdqmTape.cpp \
-              exception/BadVersion.cpp \
-              exception/Busy.cpp \
-              exception/Exception.cpp \
-              exception/FailedToExecutePython.cpp \
-              exception/InvalidArgument.cpp \
-              exception/InvalidConfigEntry.cpp \
-              exception/InvalidConfiguration.cpp \
-              exception/Internal.cpp \
-              exception/NotSupported.cpp \
-              exception/OutOfMemory.cpp \
-              exception/Communication.cpp \
-              exception/NoEntry.cpp \
-              exception/NoPortInRange.cpp \
-              exception/NoSegmentFound.cpp \
-              exception/NoValue.cpp \
-              exception/PermissionDenied.cpp \
-              exception/RequestCanceled.cpp \
-              exception/Security.cpp \
-              exception/SQLError.cpp \
-              exception/TapeNetAcceptInterrupted.cpp \
-              exception/TimeOut.cpp \
-              exception/TooBig.cpp \
               query/DiskPoolQueryResponse.cpp \
               query/FileSystemDescription.cpp \
               query/DiskServerDescription.cpp \

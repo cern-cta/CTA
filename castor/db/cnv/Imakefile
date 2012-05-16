@@ -84,6 +84,7 @@ CNVSLIB_SRCS = DbBaseAddressCnv.cpp \
      ../DbParamsSvc.cpp
 CNVSLIB_OBJS = $(CNVSLIB_SRCS:.cpp=.o)
 
+DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(castor,castorclient)
 DependsOnLibrary(dlf,castordlf)
 SharedLibraryTarget(castorcnvs,$(CNVSLIB_OBJS),,)

@@ -7,7 +7,7 @@ COMM
 COMM		Make common routines library
 
 CPPFLAGS += -DPATH_CONFIG=CastorConfigFile -DLOCALHOSTSFILE=LocalHostsList -DMAPPING_FILE=MappingFile -DRTHOSTSFILE=RemoteHostsList -DADMIN_HOSTS=AdminHosts
-AddLdFlags(-l UUIDLIBNAME)
+AddLdFlags(-l UUIDLIBNAME -lstdc++)
 
 COMMONLIB_OBJS = $(SYSDEP_OBJS) \
 		 compat.o getacct.o getacctent.o getconfent.o \
@@ -19,7 +19,30 @@ COMMONLIB_OBJS = $(SYSDEP_OBJS) \
 		 Cdomainname.o Cnetdb.o Cpool.o Cpwd.o Cstrerror.o \
 		 socket_timeout.o u64subr.o Cinitdaemon.o Cgetopt.o \
 		 Cregexp.o Cexportconf.o Csnprintf.o util.o \
-		 Csecloader.o castor1compat.o
+		 Csecloader.o castor1compat.o \
+                 ../castor/exception/BadVersion.o \
+                 ../castor/exception/Busy.o \
+                 ../castor/exception/Exception.o \
+                 ../castor/exception/FailedToExecutePython.o \
+                 ../castor/exception/InvalidArgument.o \
+                 ../castor/exception/InvalidConfigEntry.o \
+                 ../castor/exception/InvalidConfiguration.o \
+                 ../castor/exception/Internal.o \
+                 ../castor/exception/NotSupported.o \
+                 ../castor/exception/OutOfMemory.o \
+                 ../castor/exception/Communication.o \
+                 ../castor/exception/NoEntry.o \
+                 ../castor/exception/NoPortInRange.o \
+                 ../castor/exception/NoSegmentFound.o \
+                 ../castor/exception/NoValue.o \
+                 ../castor/exception/PermissionDenied.o \
+                 ../castor/exception/RequestCanceled.o \
+                 ../castor/exception/Security.o \
+                 ../castor/exception/SQLError.o \
+                 ../castor/exception/TapeNetAcceptInterrupted.o \
+                 ../castor/exception/TimeOut.o \
+                 ../castor/exception/TooBig.o \
+                 ../castor/common/CastorConfiguration.o
 
 ClientSharedLibraryTarget(castorcommon,$(COMMONLIB_OBJS),,-ldl)
 

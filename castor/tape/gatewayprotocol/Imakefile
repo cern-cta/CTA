@@ -83,5 +83,6 @@ TAPEGATEWAYPROTOCOLLIB_SRCS = \
 
 TAPEGATEWAYPROTOCOLLIB_OBJS = $(TAPEGATEWAYPROTOCOLLIB_SRCS:.cpp=.o)
 
+DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(castor,castorclient)
 SharedLibraryTarget(castortapegatewayprotocol,$(TAPEGATEWAYPROTOCOLLIB_OBJS),,)

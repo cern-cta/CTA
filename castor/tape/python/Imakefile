@@ -31,6 +31,7 @@ TAPEPYTHONLIB_SRCS = \
 
 TAPEPYTHONLIB_OBJS = $(TAPEPYTHONLIB_SRCS:.cpp=.o)
 
+DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(castor,castorclient)
 DependsOnLibrary(castor/tape/utils,castortapeutils)
 SharedLibraryTarget(castortapepython,$(TAPEPYTHONLIB_OBJS),,)
