@@ -105,13 +105,19 @@ int send2nsdx(int *socketp,
   struct servent *sp,*sec_sp;
   struct Cns_api_thread_info *thip = NULL;
   int timeout;
+  int errorRetVal;
   int needsLogging = !securityOpt; /* This controls the logging:
                                       log only if authenticated or
                                       running unsecured */
 
+  /* Set a different return error value for security to allow for
+   * specialized behavior */
+  if (securityOpt) errorRetVal = -2;
+  else errorRetVal = -1;
+
   strncpy (func, "send2nsd", 16);
   if (Cns_apiinit (&thip))
-    return (-1);
+    return errorRetVal;
   if (*thip->defserver)
     host = thip->defserver;
   if (socketp && *socketp >= 0) { /* connection opened by Cns_list... */
@@ -131,7 +137,7 @@ int send2nsdx(int *socketp,
         strcpy (Cnshost, SCNS_HOST);
 #else
         serrno = SENOSHOST;
-        return -1;
+        return errorRetVal;
 #endif
       } else {
 #if defined(CNS_HOST)
@@ -153,8 +159,7 @@ int send2nsdx(int *socketp,
       /* Log only if in non-secure mode */
       if (needsLogging) Cns_errmsg (func, NS009, "Host unknown:", Cnshost);
       serrno = SENOSHOST;
-      /* Send -1 and retry because we might have configured different hosts for secure/unsecure nsd */
-      return (-1);
+      return errorRetVal;
     }
     sin.sin_addr.s_addr = ((struct in_addr *)(hp->h_addr))->s_addr;
     if (! sin.sin_port) {
@@ -213,7 +218,7 @@ int send2nsdx(int *socketp,
       if ((s = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
         if (needsLogging) Cns_errmsg (func, NS002, "socket", neterror());
         serrno = SECOMERR;
-        return (-1);
+        return errorRetVal;
       }
 
       if (netconnect_timeout (s, (struct sockaddr *)&sin,
@@ -223,7 +228,7 @@ int send2nsdx(int *socketp,
           if (retrycnt == nbretry) {
             if (needsLogging) Cns_errmsg (func, NS002, "connect", neterror());
             (void) netclose(s);
-            return (-1);
+            return errorRetVal;
           }
         } else {
 
@@ -232,14 +237,14 @@ int send2nsdx(int *socketp,
               if (needsLogging) Cns_errmsg (func, NS000, Cnshost);
               (void) netclose (s);
               serrno = ENSNACT;
-              return (-1);
+              return errorRetVal;
             }
           } else {
             if (retrycnt == nbretry) {
               if (needsLogging) Cns_errmsg (func, NS002, "connect", neterror());
               (void) netclose (s);
               serrno = SECOMERR;
-              return (-1);
+              return errorRetVal;
             }
           }
         }
@@ -253,20 +258,20 @@ int send2nsdx(int *socketp,
               if (needsLogging) Cns_errmsg (func, NS002, "send", "Communication error");
               (void) netclose (s);
               Csec_clearContext (&ctx);
-              return (-2);
+              return errorRetVal;
             case SETIMEDOUT:
               if (retrycnt == nbretry) {
                 if (needsLogging) Cns_errmsg (func, NS002, "send", "Operation timed out");
                 (void) netclose (s);
                 Csec_clearContext (&ctx);
-                return (-2);
+                return errorRetVal;
               }
               break;
             default:
               if (needsLogging) Cns_errmsg (func, NS002, "send", "No valid credential found");
               (void) netclose (s);
               Csec_clearContext (&ctx);
-              return (-2);
+              return errorRetVal;
             }
 
             (void) netclose (s);
@@ -289,6 +294,8 @@ int send2nsdx(int *socketp,
     if (socketp)
       *socketp = s;
   }
+
+  /* From now on we don't need to split the error codes anymore */
 
   /* send request to name server */
   serrno = 0;
