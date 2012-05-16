@@ -1547,12 +1547,21 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getBulkFilesToRecall (
 void castor::tape::tapegateway::ora::OraTapeGatewaySvc::setBulkFileMigrationResult (
     u_signed64 mountTransactionId,
     std::vector<FileMigratedNotificationStruct *>& successes,
-    std::vector<FileErrorReportStruct *>& failures)
+    std::vector<FileErrorReportStruct *>& failures,
+    ptr2ref_vector<BulkDbRecordingResult>& dbResults)
 throw (castor::exception::Exception){
+  // Check we got an empty result array.
+  if (!dbResults.empty()) {
+    castor::exception::Internal e;
+    e.getMessage() << "Error in castor::tape::tapegateway::ora::OraTapeGatewaySvc::setBulkFileMigrationResult:"
+        << " we received a non-empty dbResult array.";
+    throw e;
+  }
   try {
     if (!m_setBulkFileMigrationResult) {
       m_setBulkFileMigrationResult =
-        createStatement("BEGIN tg_setBulkFileMigrationResult(:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12);END;");
+        createStatement("BEGIN tg_setBulkFileMigrationResult(:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13);END;");
+      m_setBulkFileMigrationResult->registerOutParam(13, oracle::occi::OCCICURSOR);
     }
     // Prepare the arays of data to be sent to PL/SQL
     std::vector<oracle::occi::Number> fileIds;
@@ -1637,8 +1646,96 @@ throw (castor::exception::Exception){
     oracle::occi::setVector(m_setBulkFileMigrationResult,11, errorCodes,    "numList");
     oracle::occi::setVector(m_setBulkFileMigrationResult,12, errorMessages, "strList");
 
-    // DB update and done.
+    // DB update and get result.
     m_setBulkFileMigrationResult->executeUpdate();
+
+    // Gather the results
+    castor::db::ora::SmartOcciResultSet rs (m_setBulkFileMigrationResult, m_setBulkFileMigrationResult->getCursor(13));
+    //Find the columns from the cursor
+    resultSetIntrospector resIntros (rs.get());
+    int nsFileIdIdx      = resIntros.findColumnIndex(            "NSFILEID", oracle::occi::OCCI_SQLT_NUM);
+    int nsHostIdx        = resIntros.findColumnIndex(              "NSHOST", oracle::occi::OCCI_SQLT_CHR);
+    int fileClassIdx     = resIntros.findColumnIndex(           "FILECLASS", oracle::occi::OCCI_SQLT_CHR);
+    int svcClassIdx      = resIntros.findColumnIndex(            "SVCCLASS", oracle::occi::OCCI_SQLT_CHR);
+    int copyNumberIdx    = resIntros.findColumnIndex(              "COPYNB", oracle::occi::OCCI_SQLT_NUM);
+    int lastModificationTimeIdx
+                         = resIntros.findColumnIndex("LASTMODIFICATIONTIME", oracle::occi::OCCI_SQLT_NUM);
+    int errorCodeIdx     = resIntros.findColumnIndex(           "ERRORCODE", oracle::occi::OCCI_SQLT_NUM);
+
+    // Run through the cursor
+    // Store the result in a temporary array before crossing with our input
+    std::vector<BulkDbRecordingResult> tempRes;
+    while (rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
+      BulkDbRecordingResult r;
+      r.mountTransactionId = mountTransactionId;
+      r.nshost =                rs->getString(    nsHostIdx);
+      r.fileid =     occiNumber(rs->getNumber(  nsFileIdIdx));
+      r.fileClass =             rs->getString( fileClassIdx);
+      r.svcClass =              rs->getString(  svcClassIdx);
+      r.copyNumber = occiNumber(rs->getNumber(copyNumberIdx));
+      r.lastModificationTime =
+                     occiNumber(rs->getNumber(lastModificationTimeIdx));
+      r.errorCode =  occiNumber(rs->getNumber( errorCodeIdx));
+      tempRes.push_back(r);
+    }
+
+    // Cross check we received everybody's result and join DB's result with
+    // out own file info.
+    for (std::vector<FileMigratedNotificationStruct *>::iterator s = successes.begin();
+         s < successes.end();
+         s++) {
+      bool found = false;
+      for (std::vector<BulkDbRecordingResult>::iterator r = tempRes.begin();
+          r<tempRes.end(); r++)
+        if (r->fileid == (*s)->fileid() && r->nshost == (*s)->nshost()) {
+          // Complement the DB's data with our own for easier logging from caller.
+          std::auto_ptr<BulkMigrationDbRecordingResult> fullRep (new BulkMigrationDbRecordingResult (*r));
+          fullRep->migratedFile = **s;
+          dbResults.push_back(fullRep.release());
+          found = true;
+          break;
+        }
+      if (!found) {
+        castor::exception::Internal e;
+        e.getMessage()
+              << "Error caught in setBulkFileMigrationResult: No result found for success sent to DB: "
+              << "NSHOST=" << (*s)->nshost() << "NSFILEID=" <<(*s)->fileid();
+        throw e;
+      }
+    }
+    for (std::vector<FileErrorReportStruct *>::iterator f = failures.begin();
+         f < failures.end();
+         f++) {
+      bool found = false;
+      for (std::vector<BulkDbRecordingResult>::iterator r = tempRes.begin();
+          r<tempRes.end(); r++)
+        if (r->fileid == (*f)->fileid() && r->nshost == (*f)->nshost()) {
+          // Complement the DB's data with our own for easier logging from caller.
+          std::auto_ptr<BulkErrorDbRecordingResult> fullRep (new BulkErrorDbRecordingResult (*r));
+          fullRep->failedFile = **f;
+          dbResults.push_back(fullRep.release());
+          found = true;
+          break;
+        }
+      if (!found) {
+        castor::exception::Internal e;
+        e.getMessage()
+              << "Error caught in setBulkFileMigrationResult: No result found for failure sent to DB: "
+              << "NSHOST=" << (*f)->nshost() << "NSFILEID=" <<(*f)->fileid();
+        throw e;
+      }
+    }
+
+    // Past that point a simple count should do it
+    if (tempRes.size()!= successes.size()+failures.size()) {
+      castor::exception::Internal e;
+      e.getMessage()
+            << "Error caught in setBulkFileMigrationResult: Mismatch between success+failures count and "
+                "number of results from the Db: "
+            << "successes=" << successes.size() << " failures=" << failures.size()
+            << " dbResults=" << dbResults.size();
+      throw e;
+    }
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -1655,12 +1752,21 @@ throw (castor::exception::Exception){
 void castor::tape::tapegateway::ora::OraTapeGatewaySvc::setBulkFileRecallResult (
     u_signed64 mountTransactionId,
     std::vector<FileRecalledNotificationStruct *>& successes,
-    std::vector<FileErrorReportStruct *>& failures)
+    std::vector<FileErrorReportStruct *>& failures,
+    ptr2ref_vector<BulkDbRecordingResult>& dbResults)
 throw (castor::exception::Exception){
+  // Check we got an empty result array.
+  if (!dbResults.empty()) {
+    castor::exception::Internal e;
+    e.getMessage() << "Error in castor::tape::tapegateway::ora::OraTapeGatewaySvc::setBulkFileRecallResult:"
+        << " we received a non-empty dbResult array.";
+    throw e;
+  }
   try {
     if (!m_setBulkFileRecallResult) {
       m_setBulkFileRecallResult =
-        createStatement("BEGIN tg_setBulkFileMigrationResult(:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12);END;");
+        createStatement("BEGIN tg_setBulkFileRecallResult(:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13);END;");
+      m_setBulkFileRecallResult->registerOutParam(13, oracle::occi::OCCICURSOR);
     }
     // Prepare the arays of data to be sent to PL/SQL
     std::vector<oracle::occi::Number> fileIds;
@@ -1718,19 +1824,95 @@ throw (castor::exception::Exception){
     }
 
     // Attach arrays to parameters
-    m_setBulkFileMigrationResult->setNumber(1, occiNumber(mountTransactionId));
-    oracle::occi::setVector(m_setBulkFileMigrationResult, 2, nsHosts,       "strList");
-    oracle::occi::setVector(m_setBulkFileMigrationResult, 3, nsHosts,       "numList");
-    oracle::occi::setVector(m_setBulkFileMigrationResult, 4, fileTransactionIds,  "numList");
-    oracle::occi::setVector(m_setBulkFileMigrationResult, 5, fSeqs,         "numList");
-    oracle::occi::setVector(m_setBulkFileMigrationResult, 6, checksumNames, "strList");
-    oracle::occi::setVector(m_setBulkFileMigrationResult, 7, checksums,     "numList");
-    oracle::occi::setVector(m_setBulkFileMigrationResult, 8, fileSizes,     "numList");
-    oracle::occi::setVector(m_setBulkFileMigrationResult, 9, errorCodes,    "numList");
-    oracle::occi::setVector(m_setBulkFileMigrationResult,10, errorMessages, "strList");
+    m_setBulkFileRecallResult->setNumber(1, occiNumber(mountTransactionId));
+    oracle::occi::setVector(m_setBulkFileRecallResult, 2, nsHosts,       "strList");
+    oracle::occi::setVector(m_setBulkFileRecallResult, 3, nsHosts,       "numList");
+    oracle::occi::setVector(m_setBulkFileRecallResult, 4, fileTransactionIds,  "numList");
+    oracle::occi::setVector(m_setBulkFileRecallResult, 5, fSeqs,         "numList");
+    oracle::occi::setVector(m_setBulkFileRecallResult, 6, checksumNames, "strList");
+    oracle::occi::setVector(m_setBulkFileRecallResult, 7, checksums,     "numList");
+    oracle::occi::setVector(m_setBulkFileRecallResult, 8, fileSizes,     "numList");
+    oracle::occi::setVector(m_setBulkFileRecallResult, 9, errorCodes,    "numList");
+    oracle::occi::setVector(m_setBulkFileRecallResult,10, errorMessages, "strList");
 
-    // DB update and done.
-    m_setBulkFileMigrationResult->executeUpdate();
+    // DB update and get result.
+    m_setBulkFileRecallResult->executeUpdate();
+
+    // Gather the results
+    castor::db::ora::SmartOcciResultSet rs (m_setBulkFileRecallResult, m_setBulkFileRecallResult->getCursor(13));
+    //Find the columns from the cursor
+    resultSetIntrospector resIntros (rs.get());
+    int nsFileIdIdx      = resIntros.findColumnIndex(            "NSFILEID", oracle::occi::OCCI_SQLT_NUM);
+    int nsHostIdx        = resIntros.findColumnIndex(              "NSHOST", oracle::occi::OCCI_SQLT_CHR);
+    int errorCodeIdx     = resIntros.findColumnIndex(           "ERRORCODE", oracle::occi::OCCI_SQLT_NUM);
+
+    // Run through the cursor
+    // Store the result in a temporary array before crossing with our input
+    std::vector<BulkDbRecordingResult> tempRes;
+    while (rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
+      BulkDbRecordingResult r;
+      r.nshost =               rs->getString(   nsHostIdx);
+      r.fileid =    occiNumber(rs->getNumber( nsFileIdIdx));
+      r.errorCode = occiNumber(rs->getNumber(errorCodeIdx));
+      tempRes.push_back(r);
+    }
+
+    // Cross check we received everybody's result and join DB's result with
+    // out own file info.
+    for (std::vector<FileRecalledNotificationStruct *>::iterator s = successes.begin();
+         s < successes.end();
+         s++) {
+      bool found = false;
+      for (std::vector<BulkDbRecordingResult>::iterator r = tempRes.begin();
+          r<tempRes.end(); r++)
+        if (r->fileid == (*s)->fileid() && r->nshost == (*s)->nshost()) {
+          std::auto_ptr<BulkRecallDbRecordingResult> fullRep(new BulkRecallDbRecordingResult(*r));
+          fullRep->recalledFile = **s;
+          dbResults.push_back(fullRep.release());
+          found = true;
+          break;
+        }
+      if (!found) {
+        castor::exception::Internal e;
+        e.getMessage()
+              << "Error caught setBulkFileRecallResult: No result found for success sent to DB: "
+              << "NSHOST=" << (*s)->nshost() << "NSFILEID=" <<(*s)->fileid();
+        throw e;
+      }
+    }
+    for (std::vector<FileErrorReportStruct *>::iterator f = failures.begin();
+         f < failures.end();
+         f++) {
+      bool found = false;
+      for (std::vector<BulkDbRecordingResult>::iterator r = tempRes.begin();
+          r<tempRes.end(); r++)
+        if (r->fileid == (*f)->fileid() && r->nshost == (*f)->nshost()) {
+          // Complement the DB's data with our own for easier logging from caller.
+          std::auto_ptr<BulkErrorDbRecordingResult> fullRep (new BulkErrorDbRecordingResult(*r));
+          fullRep->failedFile = **f;
+          dbResults.push_back(fullRep.release());
+          found = true;
+          break;
+        }
+      if (!found) {
+        castor::exception::Internal e;
+        e.getMessage()
+              << "Error caught in setBulkFileRecallResult: No result found for failure sent to DB: "
+              << "NSHOST=" << (*f)->nshost() << "NSFILEID=" <<(*f)->fileid();
+        throw e;
+      }
+    }
+
+    // Past that point a simple count should do it
+    if (tempRes.size()!= successes.size()+failures.size()) {
+      castor::exception::Internal e;
+      e.getMessage()
+            << "Error caught in setBulkFileRecallResult: Mismatch between success+failures count and "
+                "number of results from the Db: "
+            << "successes=" << successes.size() << " failures=" << failures.size()
+            << " dbResults=" << dbResults.size();
+      throw e;
+    }
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;

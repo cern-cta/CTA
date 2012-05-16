@@ -37,6 +37,8 @@ namespace castor      {
 namespace tape        {
 namespace tapegateway {
 
+/* XXX seemingly unused */
+
 /**
  * Thread-safe map of mount transaction ids to tape file sequence numbers.
  */

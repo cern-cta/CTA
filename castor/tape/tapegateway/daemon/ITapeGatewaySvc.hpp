@@ -56,6 +56,7 @@
 #include <string>
 #include <queue>
 #include <inttypes.h>
+#include <iomanip>
 
 namespace castor      {
   namespace tape        {
@@ -320,13 +321,118 @@ namespace castor      {
             std::queue<castor::tape::tapegateway::FileToRecallStruct>& filesToRecall)
           throw (castor::exception::Exception)=0;
 
+        // Small family of nested classes used to pass the result of the recording
+        // in the DB in a single array.
+        /**
+         * Base class for recording results
+         */
+        class BulkDbRecordingResult {
+        public:
+          virtual ~BulkDbRecordingResult(){};
+          std::string nshost;
+          std::string svcClass;
+          std::string fileClass;
+          u_signed64 copyNumber;
+          u_signed64 lastModificationTime;
+          u_signed64 fileid;
+          u_signed64 mountTransactionId;
+          int errorCode;
+        };
+
+        /**
+         * Derived class for successful migration recording result
+         */
+        class BulkMigrationDbRecordingResult: public BulkDbRecordingResult {
+        public:
+          BulkMigrationDbRecordingResult(const BulkDbRecordingResult & a):
+            BulkDbRecordingResult(a){};
+          FileMigratedNotificationStruct migratedFile;
+        };
+
+        /**
+         * Derived class for successful recall recording result
+         */
+        class BulkRecallDbRecordingResult: public BulkDbRecordingResult {
+        public:
+          BulkRecallDbRecordingResult(const BulkDbRecordingResult & a):
+            BulkDbRecordingResult(a){};
+          FileRecalledNotificationStruct recalledFile;
+        };
+
+        /**
+         * Derived class for failure recording result
+         */
+        class BulkErrorDbRecordingResult: public BulkDbRecordingResult {
+        public:
+          BulkErrorDbRecordingResult(const BulkDbRecordingResult & a):
+            BulkDbRecordingResult(a){};
+          FileErrorReportStruct failedFile;
+        };
+
+        /**
+         * Container for the recording resuls
+         * This container get elements initialized with pointer to a class,
+         * allowing polymorphism of the contents.
+         * The elements will then be owned by the cnotainer, and deallocated
+         * on destruction.
+         * This is a partial, vector-like API, which will be cmpleted as need be.
+         */
+        template <class T>
+        class ptr2ref_vector {
+        public:
+          /**
+           * A sub-class providing an iterator
+           */
+          class iterator {
+            friend class ptr2ref_vector;
+          public:
+            iterator(const iterator &i):m_it(i.m_it){};
+            ~iterator(){};
+            iterator operator++ (int) { return m_it++; };
+            bool operator< (const iterator &i) { return m_it < i.m_it; };
+            T & operator * () { return **m_it; };
+            T * operator -> () { return *m_it; };
+          private:
+            /* "Shortcut" constructor allowing the "return" of the contained vector
+             * in various members.
+             */
+            iterator (const typename std::vector<T *>::iterator & bi) { m_it = bi; };
+            /* The meat */
+            typename std::vector<T *>::iterator m_it;
+          };
+
+          /**
+           * Access to iterators
+           */
+          const iterator begin() { return m_vec.begin(); }
+          const iterator end() { return m_vec.end(); }
+          /**
+           * Constructor, destructor (the value added part)
+           * and the strict minimum wrappers.
+           */
+          ptr2ref_vector(): m_vec() {};
+          virtual ~ptr2ref_vector() {
+            for (typename std::vector<T *>::iterator t = m_vec.begin();
+                t<m_vec.end(); t++)
+              delete *t;
+          }
+          void push_back(T * t) { m_vec.push_back(t); }
+          T & back() { return *m_vec.back(); }
+          bool empty() { return m_vec.empty(); }
+          size_t size() { return m_vec.size(); }
+        private:
+          typename std::vector<T *> m_vec;
+        };
+
+
         /**
          * Check and update the NS and then the stager DB accordingly from migration result
          * transmitted by the tape server.
          */
         virtual  void  setBulkFileMigrationResult (    u_signed64 mountTransactionId,
             std::vector<FileMigratedNotificationStruct *>& successes,
-            std::vector<FileErrorReportStruct *>& failures)
+            std::vector<FileErrorReportStruct *>& failures,
+            ptr2ref_vector<BulkDbRecordingResult>& dbResults)
           throw (castor::exception::Exception)=0;
 
         /**
@@ -335,7 +441,8 @@ namespace castor      {
          */
         virtual  void  setBulkFileRecallResult (u_signed64 mountTransactionId,
             std::vector<FileRecalledNotificationStruct *>& successes,
-            std::vector<FileErrorReportStruct *>& failures)
+            std::vector<FileErrorReportStruct *>& failures,
+            ptr2ref_vector<BulkDbRecordingResult>& dbResults)
         throw (castor::exception::Exception)=0;
 
     /**

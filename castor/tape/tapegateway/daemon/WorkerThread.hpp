@@ -154,6 +154,13 @@ namespace tapegateway{
         FileMigrationReportList & fileMigrationReportList) throw ();
     void logDbError (castor::exception::Exception e, requesterInfo& requester,
         FileRecallReportList &fileRecallReportList) throw ();
+    void logMigrationErrorCannotUpdateDb (
+        Cuuid_t uuid, struct Cns_fileid* castorFileId,
+            u_signed64 mountTransactionId,
+            const requesterInfo& requester, const FileErrorReportStruct & fileMigError,
+            const std::string & serviceClass, const std::string & fileClass,
+            const std::string & tapePool, const std::string & vid,
+            int copyNumber, int error) throw ();
     void logInternalError (castor::exception::Exception e, requesterInfo& requester,
         FileMigrationReportList & fileMigrationReportList) throw ();
     void logInternalError (castor::exception::Exception e, requesterInfo& requester,
@@ -198,12 +205,22 @@ namespace tapegateway{
         const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
         const std::string & serviceClass, const std::string & fileClass,
         const std::string & tapePool, castor::exception::Exception & e);
+    void logMigrationCannotUpdateDb (Cuuid_t uuid, struct Cns_fileid* castorFileId,
+        u_signed64 mountTransactionId,
+        const requesterInfo& requester, const FileMigratedNotificationStruct & fileMigrated,
+        const std::string & serviceClass, const std::string & fileClass,
+        const std::string & tapePool, const std::string & vid,
+        int copyNumber, int error);
     void logMigrationNsUpdate(Cuuid_t uuid, struct Cns_fileid* castorFileId,
         const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
         const std::string & serviceClass, const std::string & fileClass,
         const std::string & tapePool, const std::string & blockid,
         const std::string & vid, int copyNumber, u_signed64 lastModificationTime,
         const char (&checksumHex)[19], signed64 procTime);
+    void logMigrationNsUpdate(Cuuid_t uuid, struct Cns_fileid* castorFileId,
+        const requesterInfo& requester,
+        const ITapeGatewaySvc::BulkMigrationDbRecordingResult & fileMigrated,
+        const std::string & tapePool, const std::string & vid);
     void logRepackNsUpdate (Cuuid_t uuid, struct Cns_fileid* castorFileId,
         const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
         const std::string & serviceClass, const std::string & fileClass,
@@ -246,6 +263,12 @@ namespace tapegateway{
         const std::string & serviceClass, const std::string & fileClass,
         const std::string & tapePool, const std::string & blockid,
         const std::string & vid, int copyNumber, signed64 procTime);
+    void logMigrationDbUpdate (Cuuid_t uuid, struct Cns_fileid* castorFileId,
+        u_signed64 mountTransactionId,
+        const requesterInfo& requester, const FileMigratedNotificationStruct & fileMigrated,
+        const std::string & serviceClass, const std::string & fileClass,
+        const std::string & tapePool, const std::string & vid,
+        int copyNumber);
     void logMigrationCannotFindVid (Cuuid_t uuid, struct Cns_fileid* castorFileId,
         const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
         castor::exception::Exception & e);
@@ -270,6 +293,17 @@ namespace tapegateway{
         const FileErrorReport & fileError,
         const std::string & migRecContext,
         const fileErrorClassification & classification);
+    void logFileError (Cuuid_t uuid,
+        const requesterInfo& requester, int logLevel,
+        u_signed64 mountTransactionId,
+        const FileErrorReportStruct & fileError,
+        const std::string & migRecContext,
+        const fileErrorClassification & classification);
+    void logSetSessionClosing(Cuuid_t uuid,
+        u_signed64 mountTransactionId,
+        const requesterInfo& requester,
+        std::string tapePool,
+        std::string vid, const std::string & migRecContext);
 
     utils::ShutdownBoolFunctor m_shuttingDown;
 

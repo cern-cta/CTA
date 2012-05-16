@@ -158,5 +158,6 @@
 158,PRODUCER_GETTING_TAPES,"VdqmRequestsProducer: getting tapes to submit"
 159,PRODUCER_TAPE_FOUND,"VdqmRequestsProducer: found tapes to submit"
 160,PRODUCER_REQUEST_SUBMITTED,"VdqmRequestsProducer: request submitted to vdqm successfully"
+161,WORKER_SET_SESSION_CLOSING,"Worker: set the session to closing after error"
 
 

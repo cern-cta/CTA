@@ -267,7 +267,8 @@ namespace castor      {
            */
           virtual  void  setBulkFileMigrationResult (u_signed64 mountTransactionId,
               std::vector<FileMigratedNotificationStruct *>& successes,
-              std::vector<FileErrorReportStruct *>& failures)
+              std::vector<FileErrorReportStruct *>& failures,
+              ptr2ref_vector<BulkDbRecordingResult>& dbResults)
           throw (castor::exception::Exception);
 
           /**
@@ -276,7 +277,8 @@ namespace castor      {
            */
           virtual  void  setBulkFileRecallResult (u_signed64 mountTransactionId,
               std::vector<FileRecalledNotificationStruct *>& successes,
-              std::vector<FileErrorReportStruct *>& failures)
+              std::vector<FileErrorReportStruct *>& failures,
+              ptr2ref_vector<BulkDbRecordingResult>& dbResults)
           throw (castor::exception::Exception);
 
           // To directly commit
