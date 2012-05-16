@@ -36,7 +36,6 @@
 #include "castor/tape/net/Constants.hpp"
 #include "castor/tape/utils/ShutdownBoolFunctor.hpp"
 #include "castor/tape/tapegateway/FileMigratedNotificationStruct.hpp"
-#include "castor/tape/tapegateway/FileErrorReport.hpp"
 #include "castor/tape/tapegateway/FileMigrationReportList.hpp"
 #include "castor/tape/tapegateway/FileRecallReportList.hpp"
 #include <list>
@@ -87,40 +86,12 @@ namespace tapegateway{
     };
     // handlers used with the different message types
     castor::IObject* handleStartWorker      (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw(castor::exception::Exception);
-    castor::IObject* handleRecallUpdate     (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw(castor::exception::Exception);
-    castor::IObject* handleMigrationUpdate  (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw(castor::exception::Exception);
-    castor::IObject* handleRecallMoreWork   (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw(castor::exception::Exception);
-    castor::IObject* handleMigrationMoreWork(castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw(castor::exception::Exception);
     castor::IObject* handleEndWorker        (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw(castor::exception::Exception);
     castor::IObject* handleFailWorker       (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw(castor::exception::Exception);
-    castor::IObject* handleFileFailWorker   (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw(castor::exception::Exception);
     castor::IObject* handleFileMigrationReportList   (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw(castor::exception::Exception);
     castor::IObject* handleFileRecallReportList  (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw(castor::exception::Exception);
     castor::IObject* handleFilesToMigrateListRequest (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw(castor::exception::Exception);
     castor::IObject* handleFilesToRecallListRequest  (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw(castor::exception::Exception);
-
-    // Helpers for managing file lists
-    // We cover fatal and non-fatal cases, for both recalls and migrations
-    // That's 4 functions.
-    void failFileMigrationsList(castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc,
-        castor::tape::tapegateway::WorkerThread::requesterInfo& requester,
-        std::list<castor::tape::tapegateway::FileErrorReport>& filesToFailForRetry) 
-        throw (castor::exception::Exception);
-
-    void failFileRecallsList   (castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc,
-        castor::tape::tapegateway::WorkerThread::requesterInfo& requester,
-        std::list<castor::tape::tapegateway::FileErrorReport>& filesToFailForRetry) 
-        throw (castor::exception::Exception);
-
-    void permanentlyFailFileMigrationsList(castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc,
-        castor::tape::tapegateway::WorkerThread::requesterInfo& requester,
-        std::list<castor::tape::tapegateway::FileErrorReport>& filesToFailPermanently)
-        throw (castor::exception::Exception);
-
-    void permanentlyFailFileRecallsList   (castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc,
-        castor::tape::tapegateway::WorkerThread::requesterInfo& requester,
-        std::list<castor::tape::tapegateway::FileErrorReport>& filesToFailPermanently) 
-        throw (castor::exception::Exception);
 
     // Helper function for setting a sesssion to closing in the DB.
     // This is usually in reaction to a problem, which is logged in the caller.
@@ -165,46 +136,19 @@ namespace tapegateway{
         FileMigrationReportList & fileMigrationReportList) throw ();
     void logInternalError (castor::exception::Exception e, requesterInfo& requester,
         FileRecallReportList &fileRecallReportList) throw ();
-    void logFatalError (Cuuid_t uuid,
-        struct Cns_fileid* castorFileId,
-        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
-        castor::exception::Exception & e);
-    void logMigrationNotified (Cuuid_t uuid, struct Cns_fileid* castorFileId,
-        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
-        const char (&checksumHex)[19], const std::string &blockid);
     void logMigrationNotified (Cuuid_t uuid,
         u_signed64 mountTransactionId, u_signed64 aggregatorTransactionId,
         struct Cns_fileid* castorFileId,
         const requesterInfo& requester, const FileMigratedNotificationStruct & fileMigrated);
-    void logMigrationFileNotfound (Cuuid_t uuid,
-        struct Cns_fileid* castorFileId,
-        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
-        castor::exception::Exception & e);
-    void logMigrationGetDbInfo (Cuuid_t uuid, struct Cns_fileid* castorFileId,
-        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
-        const std::string & serviceClass, const std::string & fileClass,
-        const std::string & tapePool, const std::string & blockid,
-        const std::string & vid, int copyNumber, u_signed64 lastModificationTime,
-        signed64 procTime);
-    void logMigrationVmgrUpdate (Cuuid_t uuid, struct Cns_fileid* castorFileId,
-        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
-        const std::string & tapePool, const std::string & vid, signed64 procTime);
     void logMigrationBulkVmgrUpdate (Cuuid_t uuid,
         const requesterInfo& requester,  const FileMigrationReportList & fileMigrationReportList,
         int filesCount, u_signed64 highestFseq, u_signed64 totalBytes,
         u_signed64 totalCompressedBytes, const std::string & tapePool,
         const std::string & vid, signed64 procTime);
-    void logMigrationVmgrFailure (Cuuid_t uuid, struct Cns_fileid* castorFileId,
-        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
-        const std::string & tapePool, castor::exception::Exception & e);
     void logMigrationVmgrFailure (Cuuid_t uuid, const requesterInfo& requester,
         const FileMigrationReportList &fileMigrationReportList,
         const std::string & vid, const std::string & tapePool,
         castor::exception::Exception & e);
-    void logMigrationCannotUpdateDb (Cuuid_t uuid, struct Cns_fileid* castorFileId,
-        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
-        const std::string & serviceClass, const std::string & fileClass,
-        const std::string & tapePool, castor::exception::Exception & e);
     void logMigrationCannotUpdateDb (Cuuid_t uuid, struct Cns_fileid* castorFileId,
         u_signed64 mountTransactionId,
         const requesterInfo& requester, const FileMigratedNotificationStruct & fileMigrated,
@@ -212,87 +156,25 @@ namespace tapegateway{
         const std::string & tapePool, const std::string & vid,
         int copyNumber, int error);
     void logMigrationNsUpdate(Cuuid_t uuid, struct Cns_fileid* castorFileId,
-        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
-        const std::string & serviceClass, const std::string & fileClass,
-        const std::string & tapePool, const std::string & blockid,
-        const std::string & vid, int copyNumber, u_signed64 lastModificationTime,
-        const char (&checksumHex)[19], signed64 procTime);
-    void logMigrationNsUpdate(Cuuid_t uuid, struct Cns_fileid* castorFileId,
         const requesterInfo& requester,
         const ITapeGatewaySvc::BulkMigrationDbRecordingResult & fileMigrated,
         const std::string & tapePool, const std::string & vid);
-    void logRepackNsUpdate (Cuuid_t uuid, struct Cns_fileid* castorFileId,
-        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
-        const std::string & serviceClass, const std::string & fileClass,
-        const std::string & tapePool, const std::string & blockid,
-        const std::string & vid, int copyNumber, u_signed64 lastModificationTime,
-        const char (&checksumHex)[19],const std::string & repackVid, signed64 procTime);
-    void logRepackFileRemoved (Cuuid_t uuid, struct Cns_fileid* castorFileId,
-        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
-        const std::string & serviceClass, const std::string & fileClass,
-        const std::string & tapePool, const std::string & blockid,
-        const std::string & vid, int copyNumber, u_signed64 lastModificationTime,
-        const char (&checksumHex)[19], const std::string & RepackVid, signed64 procTime);
-    void logRepackStaleFile (Cuuid_t uuid, struct Cns_fileid* castorFileId,
-        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
-        const std::string & serviceClass, const std::string & fileClass,
-        const std::string & tapePool, const std::string & blockid,
-        const std::string & vid, int copyNumber, u_signed64 lastModificationTime,
-        const char (&checksumHex)[19],const std::string & repackVid, signed64 procTime);
-    void logRepackUncomfirmedStaleFile (Cuuid_t uuid, struct Cns_fileid* castorFileId,
-        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
-        const std::string & serviceClass, const std::string & fileClass,
-        const std::string & tapePool, const std::string & blockid,
-        const std::string & vid, int copyNumber, u_signed64 lastModificationTime,
-        const char (&checksumHex)[19],const std::string & repackVid, signed64 procTime);
-    void logSuperfluousSegment (Cuuid_t uuid, struct Cns_fileid* castorFileId,
-        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
-        const std::string & serviceClass, const std::string & fileClass,
-        const std::string & tapePool, const std::string & blockid,
-        const std::string & vid, int copyNumber, u_signed64 lastModificationTime,
-        const char (&checksumHex)[19],const std::string & repackVid, signed64 procTime);
-    void logMigrationNsFailure (Cuuid_t uuid, struct Cns_fileid* castorFileId,
-        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
-        const std::string & serviceClass, const std::string & fileClass,
-        const std::string & tapePool, const std::string & blockid,
-        const std::string & vid, int copyNumber, u_signed64 lastModificationTime,
-        const char (&checksumHex)[19],const std::string & repackVid, signed64 procTime,
-        castor::exception::Exception & e);
-    void logMigrationDbUpdate (Cuuid_t uuid, struct Cns_fileid* castorFileId,
-        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
-        const std::string & serviceClass, const std::string & fileClass,
-        const std::string & tapePool, const std::string & blockid,
-        const std::string & vid, int copyNumber, signed64 procTime);
     void logMigrationDbUpdate (Cuuid_t uuid, struct Cns_fileid* castorFileId,
         u_signed64 mountTransactionId,
         const requesterInfo& requester, const FileMigratedNotificationStruct & fileMigrated,
         const std::string & serviceClass, const std::string & fileClass,
         const std::string & tapePool, const std::string & vid,
         int copyNumber);
-    void logMigrationCannotFindVid (Cuuid_t uuid, struct Cns_fileid* castorFileId,
-        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
-        castor::exception::Exception & e);
     void logMigrationCannotFindVid (Cuuid_t uuid,
         const requesterInfo& requester, const FileMigrationReportList & migrationReport,
         castor::exception::Exception & e);
     void logTapeReadOnly (Cuuid_t uuid, const requesterInfo& requester,
         const FileMigrationReportList & fileMigrationReportList,
         const std::string & tapePool, const std::string & vid);
-    void logTapeReadOnly (Cuuid_t uuid, struct Cns_fileid* castorFileId,
-        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
-        const std::string & vid);
-    void logCannotReadOnly (Cuuid_t uuid, struct Cns_fileid* castorFileId,
-        const requesterInfo& requester, const FileMigratedNotification & fileMigrated,
-        const std::string & vid, castor::exception::Exception & e);
     void logCannotReadOnly (Cuuid_t uuid, const requesterInfo& requester,
         const FileMigrationReportList & fileMigrationReportList,
         const std::string & tapePool, const std::string & vid,
         castor::exception::Exception & e);
-    void logFileError (Cuuid_t uuid,
-        const requesterInfo& requester, int logLevel,
-        const FileErrorReport & fileError,
-        const std::string & migRecContext,
-        const fileErrorClassification & classification);
     void logFileError (Cuuid_t uuid,
         const requesterInfo& requester, int logLevel,
         u_signed64 mountTransactionId,

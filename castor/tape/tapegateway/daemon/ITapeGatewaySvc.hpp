@@ -34,17 +34,10 @@
 
 #include "castor/tape/tapegateway/EndNotification.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
-#include "castor/tape/tapegateway/FileErrorReport.hpp"
-#include "castor/tape/tapegateway/FileMigratedNotification.hpp"
-#include "castor/tape/tapegateway/FileRecalledNotification.hpp"
 #include "castor/tape/tapegateway/FileMigratedNotificationStruct.hpp"
 #include "castor/tape/tapegateway/FileRecalledNotificationStruct.hpp"
 #include "castor/tape/tapegateway/FileErrorReportStruct.hpp"
-#include "castor/tape/tapegateway/FileToMigrate.hpp"
-#include "castor/tape/tapegateway/FileToMigrateRequest.hpp"
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
-#include "castor/tape/tapegateway/FileToRecall.hpp"
-#include "castor/tape/tapegateway/FileToRecallRequest.hpp"
 #include "castor/tape/tapegateway/FileToRecallStruct.hpp"
 #include "castor/tape/tapegateway/NoMoreFiles.hpp"
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
@@ -143,47 +136,6 @@ namespace castor      {
         virtual void restartLostReqs(const std::list<int>& mountTransactionIds)
           throw (castor::exception::Exception) = 0;
 
-
-        /**
-         * Get the best file to migrate
-         */
-        virtual void  getFileToMigrate(const castor::tape::tapegateway::FileToMigrateRequest& req,
-                                       castor::tape::tapegateway::FileToMigrate& file)
-          throw (castor::exception::Exception)=0;
-
-        /**
-         * Update the db for a file which is migrated successfully
-         */
-        virtual  void  setFileMigrated(const castor::tape::tapegateway::FileMigratedNotification& resp)
-          throw (castor::exception::Exception)=0;
-
-        /**
-         * Update the db for a semgent whose migration was rejected as non-necessary by the name server
-         */
-        virtual  void  dropSuperfluousSegment(const castor::tape::tapegateway::FileMigratedNotification& resp)
-          throw (castor::exception::Exception)=0;
-
-        /**
-         * Update the db for a successful migration that turned out useless (file changed elsewhere)
-         */
-        virtual  void  setFileStaleInMigration(const castor::tape::tapegateway::FileMigratedNotification& resp)
-          throw (castor::exception::Exception)=0;
-
-        /**
-         * Get the best file to recall
-         */
-        virtual void getFileToRecall(const castor::tape::tapegateway::FileToRecallRequest&  req,
-                                     castor::tape::tapegateway::FileToRecall& file )
-          throw (castor::exception::Exception)=0;
-
-        /** updates the db for a file which has been recalled successfully.
-         * Simple wrapper around tg_setFileRecalled PL/SQL procedure
-         * @param fileRecalled the FileRecalledNotification object received
-         * @exception throws castor exceptions when failing
-         */
-        virtual void setFileRecalled(const castor::tape::tapegateway::FileRecalledNotification& fileRecalled)
-          throw (castor::exception::Exception) = 0;
-
         /**
          * Get the tapecopies which faced a migration failure
          */
@@ -196,18 +148,6 @@ namespace castor      {
         virtual void  setMigRetryResult(const std::list<u_signed64>& mjToRetry,
                                         const std::list<u_signed64>& mjToFail )
           throw (castor::exception::Exception)=0;
-
-        /**
-         * Access the db to retrieve the information about a completed migration
-         */
-        virtual void getMigratedFileInfo(const castor::tape::tapegateway::FileMigratedNotification& file,
-                                         std::string& vid,
-                                         int& copyNumber,
-                                         u_signed64& lastModificationTime,
-                                         std::string& originalVid,
-                                         int& originalCopyNumber,
-                                         std::string& fileClass)
-	  throw (castor::exception::Exception)=0;
 
 	/**
 	 * Update the database when the Tapegateway allows us to serve a request

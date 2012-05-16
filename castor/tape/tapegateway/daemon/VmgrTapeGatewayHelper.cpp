@@ -154,51 +154,6 @@ void  castor::tape::tapegateway::VmgrTapeGatewayHelper::resetBusyTape
   }
 }
 
-void castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr
-(const castor::tape::tapegateway::FileMigratedNotification& file,
- const std::string& vid, const utils::BoolFunctor &shuttingDown)
-  throw (castor::exception::Exception) {
-  /* Retrieve from vmgr through helper class, with assertion */
-  TapeInfo info = getTapeInfoAssertAvailable(vid, shuttingDown);
-  int flags = info.vmgrTapeInfo.status;
-
-  // check if the fseq is not too big, in this case we mark it as error.
-  int fseq= file.fseq();
-  int maxFseq = maxFseqFromLabel(info.vmgrTapeInfo.lbltype);
-  //TODO new type
-  if (maxFseq <= 0 || fseq >= maxFseq) {
-    // reset status to RDONLY
-    flags = TAPE_RDONLY;
-    int rc = vmgr_updatetape(vid.c_str(), 0, file.fileSize(), 100, 0, flags ); // side = 0
-    if (rc<0) {
-      castor::exception::Exception ex(serrno);
-      ex.getMessage()
-           << "castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr"
-           << " vmgr_updatetape failed after invalid fseq: " << fseq
-           << ". For label type \"" << info.vmgrTapeInfo.lbltype << "\" maximum is "
-           << maxFseq;
-      throw ex;
-    }
-    castor::exception::Exception ex(EINVAL);
-    ex.getMessage()
-         << "castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr"
-         <<" invalid fseq";
-    throw ex;
-  }
-  // File migrated correctly, update vmgr and continue to migrate from the tape
-  serrno=0;
-  u_signed64 compression = (file.fileSize() * 100 )/file.compressedFileSize()  ;
-  int rc = vmgr_updatetape(vid.c_str(), 0, file.fileSize(),  // side = 0
-      compression, 1, flags ); // number files always one
-  if (rc <0) {
-    castor::exception::Exception ex(serrno);
-    ex.getMessage()
-           << "castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr"
-           <<" vmgr_updatetape failed";
-    throw ex;
-  }
-}
-
 void castor::tape::tapegateway::VmgrTapeGatewayHelper::bulkUpdateTapeInVmgr(
     u_signed64 filesCount, u_signed64 highestFseq, u_signed64 totalBytes,
     u_signed64 totalCompressedBytes, const std::string& vid,

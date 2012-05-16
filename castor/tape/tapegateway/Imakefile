@@ -42,7 +42,6 @@ DependsOnLibrary(vmgr,castorvmgr)
 TAPEGATEWAYDBIN_SRCS = \
 	ScopedTransaction.cpp \
 	TapeGatewayDlfMessageStrings.cpp \
-	TapeRequestStateCode.cpp \
 	daemon/MigratorErrorHandlerThread.cpp \
 	daemon/MountIdToFseqMap.cpp \
 	daemon/NsTapeGatewayHelper.cpp \

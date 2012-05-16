@@ -29,7 +29,6 @@
 #include "osdep.h"
 #include "vmgr_api.h"
 #include "castor/exception/Exception.hpp"
-#include "castor/tape/tapegateway/FileMigratedNotification.hpp"
 #include "castor/tape/utils/BoolFunctor.hpp"
 
 namespace castor {
@@ -73,9 +72,6 @@ namespace castor {
 	void resetBusyTape(const std::string &vid,
                            const utils::BoolFunctor &shuttingDown)
 	throw (castor::exception::Exception);
-
-	void updateTapeInVmgr(const castor::tape::tapegateway::FileMigratedNotification& file,
-	    const std::string& vid, const utils::BoolFunctor &shuttingDown) throw (castor::exception::Exception);
 
 	void bulkUpdateTapeInVmgr(u_signed64     filesCount, u_signed64 highestFseq, u_signed64 totalBytes,
 	    u_signed64 totalCompressedBytes, const std::string& vid, const utils::BoolFunctor &shuttingDown)

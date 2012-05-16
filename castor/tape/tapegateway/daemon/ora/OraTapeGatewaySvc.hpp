@@ -114,42 +114,6 @@ namespace castor      {
           virtual void restartLostReqs(const std::list<int>& mountTransactionIds)
           throw (castor::exception::Exception);
 
-          //  To get the best file to migrate when the function is called
-          virtual void  getFileToMigrate(
-              const castor::tape::tapegateway::FileToMigrateRequest& req,
-              castor::tape::tapegateway::FileToMigrate& file)
-          throw (castor::exception::Exception);
-
-          // To update the db for a file which is migrated successfully
-          virtual  void  setFileMigrated(
-              const castor::tape::tapegateway::FileMigratedNotification& resp)
-          throw (castor::exception::Exception);
-
-          // Update the db for a semgent whose migration was rejected as non-necessary by the name server
-          virtual  void  dropSuperfluousSegment(
-              const castor::tape::tapegateway::FileMigratedNotification& resp)
-          throw (castor::exception::Exception);
-
-          // To update the db for a file which can't be referenced in the
-          // name server anymore after a successful migration (file changed in the mean time)
-          virtual  void  setFileStaleInMigration(
-              const castor::tape::tapegateway::FileMigratedNotification& resp)
-          throw (castor::exception::Exception);
-
-          //  To get the best file to recall when the function is called
-          virtual void getFileToRecall(
-              const castor::tape::tapegateway::FileToRecallRequest&  req,
-              castor::tape::tapegateway::FileToRecall& file )
-          throw (castor::exception::Exception);
-
-          /** updates the db for a file which has been recalled successfully.
-           * Simple wrapper around tg_setFileRecalled PL/SQL procedure
-           * @param fileRecalled the FileRecalledNotification object received
-           * @exception throws castor exceptions when failing
-           */
-          virtual void setFileRecalled(const castor::tape::tapegateway::FileRecalledNotification& fileRecalled)
-          throw (castor::exception::Exception);
-
           // To get the tapecopies which faced a migration failure
           virtual void  getFailedMigrations(std::list<castor::tape::tapegateway::RetryPolicyElement>& candidates)
           throw (castor::exception::Exception);
@@ -157,16 +121,6 @@ namespace castor      {
           // To update the db using the retry migration policy returned values
           virtual void  setMigRetryResult(const std::list<u_signed64>& mjToRetry,
               const std::list<u_signed64>& mjToFail )
-          throw (castor::exception::Exception);
-
-          // To access the db to retrieve the information about a completed migration
-          virtual void getMigratedFileInfo(const castor::tape::tapegateway::FileMigratedNotification& file,
-              std::string& vid,
-              int& copyNumber,
-              u_signed64& lastModificationTime,
-              std::string& originalVid,
-              int& originalCopyNumber,
-              std::string& fileClass)
           throw (castor::exception::Exception);
 
           // To update the database when the tapebridge allows

@@ -30,12 +30,6 @@
 
 #include "castor/exception/Exception.hpp"
 
-#include "castor/tape/tapegateway/FileMigratedNotification.hpp"
-#include "castor/tape/tapegateway/FileRecalledNotification.hpp"
-#include "castor/tape/tapegateway/FileToMigrate.hpp"
-#include "castor/tape/tapegateway/FileToRecall.hpp"
-
-
 namespace castor {
 
   namespace tape {
@@ -45,17 +39,6 @@ namespace castor {
       class NsTapeGatewayHelper {
 
         public:
-
-	void updateMigratedFile(tape::tapegateway::FileMigratedNotification& file,
-                                int copyNumber, std::string vid,
-                                u_signed64 lastModificationTime)
-          throw (castor::exception::Exception);
-
-	void updateRepackedFile(tape::tapegateway::FileMigratedNotification& file,
-                                int originalCopyNumber, std::string originalVid,
-                                int copyNumber, std::string vid,
-                                u_signed64 lastModificationTime)
-          throw (castor::exception::Exception);
 
 	void checkFseqForWrite (const std::string &vid, int Fseq)
           throw (castor::exception::Exception);
