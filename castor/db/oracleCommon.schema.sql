@@ -8,7 +8,7 @@
  *******************************************************************/
 
 /* SQL statement to populate the intial schema version */
-UPDATE UpgradeLog SET schemaVersion = '2_1_12_0';
+UPDATE UpgradeLog SET schemaVersion = '2_1_13_0';
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -245,10 +245,6 @@ INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallJob
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallJob', 'status', 3, 'RECALLJOB_RETRYMOUNT');
 
 
-
-/* Create sequence for the File request IDs. */
-CREATE SEQUENCE TG_FILETRID_SEQ START WITH 1 INCREMENT BY 1;
-
 /* Definition of the TapePool table
  *   name : the name of the TapePool
  *   nbDrives : maximum number of drives that may be concurrently used across all users of this TapePool
@@ -281,7 +277,6 @@ INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
  *   status : current status of the migration
  */
 CREATE TABLE MigrationMount (mountTransactionId INTEGER CONSTRAINT UN_MigrationMount_VDQM UNIQUE USING INDEX,
-                             tapeGatewayRequestId INTEGER CONSTRAINT NN_MigrationMount_tgRequestId NOT NULL,
                              id INTEGER CONSTRAINT PK_MigrationMount_Id PRIMARY KEY
                                         CONSTRAINT NN_MigrationMount_Id NOT NULL,
                              startTime NUMBER CONSTRAINT NN_MigrationMount_startTime NOT NULL,
@@ -296,7 +291,7 @@ CREATE TABLE MigrationMount (mountTransactionId INTEGER CONSTRAINT UN_MigrationM
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE INDEX I_MigrationMount_TapePool ON MigrationMount(tapePool); 
 ALTER TABLE MigrationMount ADD CONSTRAINT FK_MigrationMount_TapePool
-   FOREIGN KEY (tapePool) REFERENCES TapePool(id);
+  FOREIGN KEY (tapePool) REFERENCES TapePool(id);
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationMount', 'status', 0, 'MIGRATIONMOUNT_WAITTAPE');
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationMount', 'status', 1, 'MIGRATIONMOUNT_SEND_TO_VDQM');
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationMount', 'status', 2, 'MIGRATIONMOUNT_WAITDRIVE');
@@ -317,7 +312,7 @@ CREATE TABLE MigratedSegment(castorFile INTEGER CONSTRAINT NN_MigratedSegment_Ca
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE UNIQUE INDEX I_MigratedSegment_CFCopyNbVID ON MigratedSegment(CastorFile, copyNb, VID);
 ALTER TABLE MigratedSegment ADD CONSTRAINT FK_MigratedSegment_CastorFile
-   FOREIGN KEY (castorFile) REFERENCES CastorFile(id);
+  FOREIGN KEY (castorFile) REFERENCES CastorFile(id);
 
 /* Definition of the MigrationJob table
  *   fileSize : size of the file to be migrated, in bytes
@@ -345,9 +340,8 @@ CREATE TABLE MigrationJob (fileSize INTEGER CONSTRAINT NN_MigrationJob_FileSize 
                            originalCopyNb INTEGER,
                            destCopyNb INTEGER CONSTRAINT NN_MigrationJob_destcopyNb NOT NULL,
                            tapePool INTEGER CONSTRAINT NN_MigrationJob_TapePool NOT NULL,
-                           nbRetry INTEGER CONSTRAINT NN_MigrationJob_nbRetry NOT NULL,
-                           errorcode INTEGER,
-                           tapeGatewayRequestId INTEGER,
+                           nbRetries INTEGER CONSTRAINT NN_MigrationJob_nbRetries NOT NULL DEFAULT 0,
+                           mountTransactionId INTEGER,   -- this is NULL at the beginning
                            fileTransactionId INTEGER CONSTRAINT UN_MigrationJob_FileTrId UNIQUE USING INDEX,
                            fSeq INTEGER,
                            status INTEGER CONSTRAINT NN_MigrationJob_Status NOT NULL,
@@ -358,15 +352,17 @@ CREATE INDEX I_MigrationJob_CFVID ON MigrationJob(castorFile, VID);
 CREATE INDEX I_MigrationJob_TapePoolSize ON MigrationJob(tapePool, fileSize);
 CREATE UNIQUE INDEX I_MigrationJob_TPStatusId ON MigrationJob(tapePool, status, id);
 CREATE UNIQUE INDEX I_MigrationJob_CFCopyNb ON MigrationJob(castorFile, destCopyNb);
-ALTER TABLE MigrationJob ADD CONSTRAINT UN_MigrationJob_CopyNb UNIQUE (castorFile, destCopyNb) USING INDEX I_MigrationJob_CFCopyNb;
+ALTER TABLE MigrationJob ADD CONSTRAINT UN_MigrationJob_CopyNb
+  UNIQUE (castorFile, destCopyNb) USING INDEX I_MigrationJob_CFCopyNb;
 ALTER TABLE MigrationJob ADD CONSTRAINT FK_MigrationJob_CastorFile
-   FOREIGN KEY (castorFile) REFERENCES CastorFile(id);
+  FOREIGN KEY (castorFile) REFERENCES CastorFile(id);
 ALTER TABLE MigrationJob ADD CONSTRAINT FK_MigrationJob_TapePool
-   FOREIGN KEY (tapePool) REFERENCES TapePool(id);
+  FOREIGN KEY (tapePool) REFERENCES TapePool(id);
+ALTER TABLE MigrationJob ADD CONSTRAINT FK_MigrationJob_MigrationMount
+  FOREIGN KEY (mountTransactionId) REFERENCES MigrationMount(mountTransactionId);
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationJob', 'status', 0, 'MIGRATIONJOB_PENDING');
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationJob', 'status', 1, 'MIGRATIONJOB_SELECTED');
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationJob', 'status', 3, 'MIGRATIONJOB_WAITINGONRECALL');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationJob', 'status', 8, 'MIGRATIONJOB_RETRY');
 
 
 /* Definition of the MigrationRouting table. Each line is a routing rule for migration jobs
@@ -385,12 +381,19 @@ CREATE TABLE MigrationRouting (isSmallFile INTEGER,
                                tapePool INTEGER CONSTRAINT NN_MigrationRouting_TapePool NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE INDEX I_MigrationRouting_Rules ON MigrationRouting(fileClass, copyNb, isSmallFile);
-ALTER TABLE MigrationRouting ADD CONSTRAINT UN_MigrationRouting_Rules UNIQUE (fileClass, copyNb, isSmallFile) USING INDEX I_MigrationRouting_Rules;
+ALTER TABLE MigrationRouting ADD CONSTRAINT UN_MigrationRouting_Rules
+  UNIQUE (fileClass, copyNb, isSmallFile) USING INDEX I_MigrationRouting_Rules;
 ALTER TABLE MigrationRouting ADD CONSTRAINT FK_MigrationRouting_FileClass
-   FOREIGN KEY (fileClass) REFERENCES FileClass(id);
+  FOREIGN KEY (fileClass) REFERENCES FileClass(id);
 ALTER TABLE MigrationRouting ADD CONSTRAINT FK_MigrationRouting_TapePool
-   FOREIGN KEY (tapePool) REFERENCES TapePool(id);
- 
+  FOREIGN KEY (tapePool) REFERENCES TapePool(id);
+
+/* Temporary table used to bulk select next candidates for migration */
+CREATE GLOBAL TEMPORARY TABLE FilesToMigrateHelper
+ (fileId NUMBER, lastKnownFileName VARCHAR2(2048), filePath VARCHAR2(2048),
+  fileTransactionId NUMBER, fileSize NUMBER, fseq NUMBER)
+ ON COMMIT PRESERVE ROWS;
+
 /* Indexes related to most used entities */
 CREATE UNIQUE INDEX I_DiskServer_name ON DiskServer (name);
 
@@ -436,7 +439,7 @@ ALTER TABLE FileSystem MODIFY
    mountPoint CONSTRAINT NN_FileSystem_MountPoint NOT NULL);
 
 ALTER TABLE FileSystem ADD CONSTRAINT UN_FileSystem_DSMountPoint
-   UNIQUE (diskServer, mountPoint);
+  UNIQUE (diskServer, mountPoint);
 
 /* DiskServer constraints */
 ALTER TABLE DiskServer MODIFY
@@ -690,9 +693,11 @@ INSERT INTO CastorConfig
 INSERT INTO CastorConfig
   VALUES ('Repack', 'MaxNbConcurrentClients', '3', 'The maximum number of repacks clients that are able to start or abort concurrently. This are either clients starting repacks or aborting running repacks. Providing that each of them will take a DB core, this number should not exceed ~50% of the number of cores of the stager DB server');
 INSERT INTO CastorConfig
-  VALUES ('Recall', 'MaxNbRetriesWithinMount', '2', 'The maximum number of retries for recaling a file within the same tape mount. When exceeded, the recall may still be retried in another mount. See Recall/MaxNbMount entry');
+  VALUES ('Recall', 'MaxNbRetriesWithinMount', '2', 'The maximum number of retries for recalling a file within the same tape mount. When exceeded, the recall may still be retried in another mount. See Recall/MaxNbMount entry');
 INSERT INTO CastorConfig
-  VALUES ('Recall', 'MaxNbMounts', '2', 'The maximum number of mounts for recaling a given file. When exceeded, the recall will be fail in no other tapecopy can be used. See also Recall/MaxNbRetriesWithinMount entry');
+  VALUES ('Recall', 'MaxNbMounts', '2', 'The maximum number of mounts for recalling a given file. When exceeded, the recall will be failed if no other tapecopy can be used. See also Recall/MaxNbRetriesWithinMount entry');
+INSERT INTO CastorConfig
+  VALUES ('Migration', 'MaxNbMounts', '7', 'The maximum number of mounts for migrating a given file. When exceeded, the migration will be considered failed: the MigrationJob entry will be dropped and the corresponding diskcopy left in status CANBEMIGR. An operator intervention is required to resume the migration.');
 COMMIT;
 
 
@@ -861,7 +866,7 @@ ACCEPT cnsDbName CHAR PROMPT 'Enter the nameserver db TNS name: ';
 CREATE DATABASE LINK remotens
   CONNECT TO &cnsUser IDENTIFIED BY &cnsPasswd USING '&cnsDbName';
 
-/* temporary table used for listing segments of a tape */
+/* Temporary table used for listing segments of a tape */
 /* efficiently via DB link when repacking              */
 CREATE GLOBAL TEMPORARY TABLE RepackTapeSegments
  (fileId NUMBER, blockid RAW(4), fseq NUMBER, segSize NUMBER,

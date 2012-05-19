@@ -219,14 +219,12 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getMigrationMountsWithou
     rs = m_getMigrationMountsWithoutTapesStatement->getCursor(1);
     // Identify the columns of the cursor
     resultSetIntrospector resIntros (rs);
-    int idIdx       = resIntros.findColumnIndex(                   "ID", oracle::occi::OCCI_SQLT_NUM);
-    int TPNameIdx   = resIntros.findColumnIndex(                 "NAME", oracle::occi::OCCI_SQLT_CHR);
-    int ReqIdIdx    = resIntros.findColumnIndex( "TAPEGATEWAYREQUESTID", oracle::occi::OCCI_SQLT_NUM);
+    int idIdx       = resIntros.findColumnIndex(  "ID", oracle::occi::OCCI_SQLT_NUM);
+    int TPNameIdx   = resIntros.findColumnIndex("NAME", oracle::occi::OCCI_SQLT_CHR);
     // Run through the cursor
     while( rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
       castor::tape::tapegateway::ITapeGatewaySvc::migrationMountParameters item;
       item.migrationMountId     = (u_signed64) (double) rs->getNumber(idIdx);
-      item.tapegatewayRequestID = (u_signed64) (double) rs->getNumber(ReqIdIdx);
       // Note that we hardcode 1 for the initialSizeToTransfer. This parameter should actually
       // be dropped and the call to VMGR changed accordingly.
       item.initialSizeToTransfer = 1;

@@ -66,7 +66,6 @@ namespace castor      {
         struct migrationMountParameters {
           u_signed64 migrationMountId;
           u_signed64 initialSizeToTransfer;
-          u_signed64 tapegatewayRequestID;
           std::string tapePoolName;
         };
 

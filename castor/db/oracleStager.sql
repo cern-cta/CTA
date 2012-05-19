@@ -2121,7 +2121,7 @@ END;
 /*** initMigration ***/
 CREATE OR REPLACE PROCEDURE initMigration
 (cfId IN INTEGER, datasize IN INTEGER, originalVID IN VARCHAR2,
- originalCopyNb IN INTEGER, destCopyNb IN INTEGER, MJStatus IN INTEGER) AS
+ originalCopyNb IN INTEGER, destCopyNb IN INTEGER, inMJStatus IN INTEGER) AS
   varTpId INTEGER;
   varSizeThreshold INTEGER;
 BEGIN
@@ -2138,11 +2138,10 @@ BEGIN
     raise_application_error(-20100, 'Cannot find an appropriate tape routing for this file, aborting');
   END;
   -- Create tape copy and attach to the appropriate tape pool
-  -- XXX TODO tapeGatewayRequestId should be renamed migrationMount and made Foreign Key
   INSERT INTO MigrationJob (fileSize, creationTime, castorFile, originalVID, originalCopyNb, destCopyNb,
-                            tapePool, nbRetry, status, id, tapeGatewayRequestId)
+                            tapePool, nbRetries, status, mountTransactionId, id)
     VALUES (datasize, getTime(), cfId, originalVID, originalCopyNb, destCopyNb, varTpId, 0,
-            MJStatus, ids_seq.nextval, NULL);
+            inMJStatus, NULL, ids_seq.nextval);
 END;
 /
 

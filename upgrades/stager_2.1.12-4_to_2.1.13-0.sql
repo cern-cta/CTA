@@ -77,7 +77,7 @@ END;
 
 /* Schema changes go here */
 /**************************/
-drop table CleanupJobLog;
+DROP TABLE CleanupJobLog;
 CREATE TABLE DLFLogs
   (timeinfo NUMBER,
    uuid VARCHAR2(2048),
@@ -95,11 +95,9 @@ DROP PROCEDURE dumpCleanupLogs;
 DROP TABLE Tape;
 DROP TABLE Segment;
 DROP TABLE RecallJob;
-DROP TABLE RecallGroup;
-DROP TABLE RecallUser;
-DROP TABLE RecallMount;
 
-DROP FUNCTION triggerRepackRecall;
+DROP SEQUENCE TG_FILETRID_SEQ;
+
 
 /* Definition of the RecallGroup table
  *   name : the name of the RecallGroup
@@ -212,6 +210,8 @@ ALTER TABLE RecallJob ADD CONSTRAINT FK_RecallJob_SvcClass FOREIGN KEY (svcClass
 ALTER TABLE RecallJob ADD CONSTRAINT FK_RecallJob_RecallGroup FOREIGN KEY (recallGroup) REFERENCES RecallGroup(id);
 ALTER TABLE RecallJob ADD CONSTRAINT FK_RecallJob_CastorFile FOREIGN KEY (castorFile) REFERENCES CastorFile(id);
 
+DELETE FROM ObjStatus WHERE object = 'RecallJob' OR object = 'MigrationJob';
+
 -- NEW status is when the RecallJob is created and no mount is foreseen yet
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallJob', 'status', 0, 'RECALLJOB_NEW');
 -- PENDING status is when a RecallMount has been created that will handle the file for this RecallJob
@@ -224,20 +224,32 @@ INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallJob
 -- These will be reset to NEW on RecallMount deletion
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallJob', 'status', 3, 'RECALLJOB_RETRYMOUNT');
 
-
 ALTER TABLE MigrationMount RENAME COLUMN vdqmVolReqId TO mountTransactionId;
+ALTER TABLE MigrationMount DROP COLUMN tapeGatewayRequestId;
+ALTER TABLE MigrationJob RENAME COLUMN nbRetry TO nbRetries;
+ALTER TABLE MigrationJob DROP COLUMN errorCode;
+ALTER TABLE MigrationJob ADD (mountTransactionId INTEGER);
+ALTER TABLE MigrationJob DROP COLUMN tapeGatewayRequestId;
+ALTER TABLE MigrationJob ADD CONSTRAINT FK_MigrationJob_MigrationMount
+  FOREIGN KEY (mountTransactionId) REFERENCES MigrationMount(mountTransactionId);
+
+DELETE FROM ObjStatus WHERE object = 'MigrationJob' AND statusCode = 8;
 
 INSERT INTO CastorConfig
-  VALUES ('Recall', 'MaxNbRetriesWithinMount', '2', 'The maximum number of retries for recaling a file within the same tape mount. When exceeded, the recall may still be retried in another mount. See Recall/MaxNbMount entry');
+  VALUES ('Recall', 'MaxNbRetriesWithinMount', '2', 'The maximum number of retries for recalling a file within the same tape mount. When exceeded, the recall may still be retried in another mount. See Recall/MaxNbMount entry');
 INSERT INTO CastorConfig
-  VALUES ('Recall', 'MaxNbMounts', '2', 'The maximum number of mounts for recaling a given file. When exceeded, the recall will be fail in no other tapecopy can be used. See also Recall/MaxNbRetriesWithinMount entry');
+  VALUES ('Recall', 'MaxNbMounts', '2', 'The maximum number of mounts for recalling a given file. When exceeded, the recall will be failed if no other tapecopy can be used. See also Recall/MaxNbRetriesWithinMount entry');
+INSERT INTO CastorConfig
+  VALUES ('Migration', 'MaxNbMounts', '7', 'The maximum number of mounts for migrating a given file. When exceeded, the migration will be considered failed: the MigrationJob entry will be dropped and the corresponding diskcopy left in status CANBEMIGR. An operator intervention is required to resume the migration.');
+
+-- XXX insert some PL/SQL block to convert old recall and migration jobs into new schema...
+
 
 
 DROP PROCEDURE bestFileSystemForSegment;
 DROP PROCEDURE resurrectTapes;
 DROP PROCEDURE tapesAndMountsForRecallPolicy;
 DROP PROCEDURE tg_attachDriveReqToTape;
-DROP PROCEDURE tg_cancelRecallOrMigration;
 DROP PROCEDURE tg_deleteTapeRequest;
 DROP PROCEDURE tg_findFromTGRequestId;
 DROP PROCEDURE tg_findFromVDQMReqId;
@@ -245,11 +257,19 @@ DROP PROCEDURE tg_findVDQMReqFromTGReqId;
 DROP PROCEDURE tg_getFailedRecalls;
 DROP PROCEDURE tg_getSegmentInfo;
 DROP PROCEDURE tg_invalidateFile;
-DROP PROCEDURE tg_RequestIdFromVDQMReqId;
+DROP PROCEDURE tg_requestIdFromVDQMReqId;
 DROP PROCEDURE tg_setRecRetryResult;
-DROP PROCEDURE tg_startMigrationMounts;
-DROP PROCEDURE createRecallCandidate;
+DROP PROCEDURE inputForRecallPolicy;
+DROP PROCEDURE tg_dropSuperfluousSegment;
+DROP PROCEDURE tg_setMigRetryResult;
+DROP PROCEDURE tg_setFileStaleInMigration;
+DROP PROCEDURE tg_defaultMigrSelPolicy;
+DROP PROCEDURE tg_failFileTransfer;
+DROP PROCEDURE tg_getRepackVIDAndFileInfo;
+DROP PROCEDURE tg_getFailedMigrations;
+DROP PROCEDURE tg_getFileToMigrate;
 DROP FUNCTION selectTapeForRecall;
+DROP FUNCTION triggerRepackRecall;
 
 
 -- XXXXX Add revalidation of all the PL/SQL code

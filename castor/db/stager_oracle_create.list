@@ -7,8 +7,8 @@ oraclePerm.sql
 oracleStager.sql
 oracleJob.sql
 oracleQuery.sql
-oracleTape.sql
 oracleTapeGateway.sql
+oracleDiskTapeInterface.sql
 oracleGC.sql
 oracleDrain.sql
 oracleDebug.sql

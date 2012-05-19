@@ -50,7 +50,6 @@ AS
   MIGRATIONJOB_PENDING   CONSTANT PLS_INTEGER := 0;
   MIGRATIONJOB_SELECTED  CONSTANT PLS_INTEGER := 1;
   MIGRATIONJOB_WAITINGONRECALL CONSTANT PLS_INTEGER := 3;
-  MIGRATIONJOB_RETRY     CONSTANT PLS_INTEGER := 8;
 
   REPACK_STARTING        CONSTANT PLS_INTEGER := 0;
   REPACK_ONGOING         CONSTANT PLS_INTEGER := 1;
@@ -128,6 +127,7 @@ AS
   LVL_CRIT       CONSTANT PLS_INTEGER := 2; /* LOG_CRIT    Critical conditions */
   LVL_ERROR      CONSTANT PLS_INTEGER := 3; /* LOG_ERR     Error conditions */
   LVL_WARNING    CONSTANT PLS_INTEGER := 4; /* LOG_WARNING Warning conditions */
+  LVL_NOTICE     CONSTANT PLS_INTEGER := 5; /* LOG_NOTICE  Normal but significant condition */
   LVL_USER_ERROR CONSTANT PLS_INTEGER := 5; /* LOG_NOTICE  Normal but significant condition */
   LVL_AUTH       CONSTANT PLS_INTEGER := 5; /* LOG_NOTICE  Normal but significant condition */
   LVL_SECURITY   CONSTANT PLS_INTEGER := 5; /* LOG_NOTICE  Normal but significant condition */
@@ -156,20 +156,26 @@ AS
   RECALL_MISSING_COPIES_NOOP   CONSTANT VARCHAR2(2048) := 'createRecallCandidate: detected missing copies on tape, but migrations ongoing';
   RECALL_MJ_FOR_MISSING_COPY   CONSTANT VARCHAR2(2048) := 'createRecallCandidate: create new MigrationJob to migrate missing copy';
   RECALL_COPY_STILL_MISSING    CONSTANT VARCHAR2(2048) := 'createRecallCandidate: could not find enough valid copy numbers to create missing copy';
-
-
   MIGRATION_CANCEL_BY_VID      CONSTANT VARCHAR2(2048) := 'Canceling tape migration for given VID';
   RECALL_CANCEL_BY_VID         CONSTANT VARCHAR2(2048) := 'Canceling tape recall for given VID';
   RECALL_CANCEL_RECALLJOB_VID  CONSTANT VARCHAR2(2048) := 'Canceling RecallJobs for given VID';
   RECALL_FAILING               CONSTANT VARCHAR2(2048) := 'Failing Recall(s)';
-  RECALL_NOT_FOUND             CONSTANT VARCHAR2(2048) := 'setFileRecalled : unable to identify Recall. giving up';
-  RECALL_INVALID_PATH          CONSTANT VARCHAR2(2048) := 'setFileRecalled : unable to parse input path. giving up';
-  RECALL_COMPLETED_DB          CONSTANT VARCHAR2(2048) := 'setFileRecalled : db updates after full recall completed';
-  RECALL_FILE_OVERWRITTEN      CONSTANT VARCHAR2(2048) := 'setFileRecalled : file was overwritten during recall, restarting from scratch';
-  RECALL_FILE_DROPPED          CONSTANT VARCHAR2(2048) := 'setFileRecalled : file was dropped from namespace during recall, giving up';
-  RECALL_BAD_CHECKSUM          CONSTANT VARCHAR2(2048) := 'setFileRecalled : bad checksum detected, will retry if allowed';
-  RECALL_CREATED_CHECKSUM      CONSTANT VARCHAR2(2048) := 'setFileRecalled : created missing checksum in the namespace';
-
+  RECALL_NOT_FOUND             CONSTANT VARCHAR2(2048) := 'setFileRecalled: unable to identify recall, giving up';
+  RECALL_INVALID_PATH          CONSTANT VARCHAR2(2048) := 'setFileRecalled: unable to parse input path, giving up';
+  RECALL_COMPLETED_DB          CONSTANT VARCHAR2(2048) := 'setFileRecalled: db updates after full recall completed';
+  RECALL_FILE_OVERWRITTEN      CONSTANT VARCHAR2(2048) := 'setFileRecalled: file was overwritten during recall, restarting from scratch';
+  RECALL_FILE_DROPPED          CONSTANT VARCHAR2(2048) := 'setFileRecalled: file was dropped from namespace during recall, giving up';
+  RECALL_BAD_CHECKSUM          CONSTANT VARCHAR2(2048) := 'setFileRecalled: bad checksum detected, will retry if allowed';
+  RECALL_CREATED_CHECKSUM      CONSTANT VARCHAR2(2048) := 'setFileRecalled: created missing checksum in the namespace';
+  
+  MIGRATION_COMPLETED          CONSTANT VARCHAR2(2048) := 'setFileMigrated: db updates after full migration completed';
+  MIGRATION_NOT_FOUND          CONSTANT VARCHAR2(2048) := 'setFileMigrated: file not found, giving up';
+  MIGRATION_RETRY              CONSTANT VARCHAR2(2048) := 'setFilesMigrated: migration failed, will retry if allowed';
+  MIGRATION_FILE_DROPPED       CONSTANT VARCHAR2(2048) := 'failFileMigration: file was dropped or modified during migration, giving up';
+  MIGRATION_SUPERFLUOUS_COPY   CONSTANT VARCHAR2(2048) := 'failFileMigration: file already had enough copies on tape, ignoring new segment';
+  MIGRATION_FAILED             CONSTANT VARCHAR2(2048) := 'failFileMigration: migration to tape failed for this file, giving up';
+  MIGRATION_FAILED_NOT_FOUND   CONSTANT VARCHAR2(2048) := 'failFileMigration: file not found when failing migration';
+  BULK_MIGRATION_COMPLETED     CONSTANT VARCHAR2(2048) := 'setFilesMigrated: bulk migration completed';
 END dlf;
 /
 
