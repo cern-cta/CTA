@@ -1042,7 +1042,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getBulkFilesToMigrate (
   try {
     if (!m_getBulkFilesToMigrate) {
       m_getBulkFilesToMigrate =
-        createStatement("BEGIN tg_getBulkFilesToMigrate(:1,:2,:3,:4);END;");
+        createStatement("BEGIN tg_getBulkFilesToMigrate(:1,:2,:3,:4); END;");
       m_getBulkFilesToMigrate->registerOutParam(4, oracle::occi::OCCICURSOR);
     }
     /* Call the SQL to retrieve files to migrate */
@@ -1059,12 +1059,11 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getBulkFilesToMigrate (
     // Find columns for the cursor
     resultSetIntrospector resIntros (rs.get());
     int fileTransIdIdx   = resIntros.findColumnIndex(   "FILETRANSACTIONID", oracle::occi::OCCI_SQLT_NUM);
-    int nsFileIdIdx      = resIntros.findColumnIndex(            "NSFILEID", oracle::occi::OCCI_SQLT_NUM);
+    int nsFileIdIdx      = resIntros.findColumnIndex(              "FILEID", oracle::occi::OCCI_SQLT_NUM);
     int nsHostIdx        = resIntros.findColumnIndex(              "NSHOST", oracle::occi::OCCI_SQLT_CHR);
     int fSeqIdx          = resIntros.findColumnIndex(                "FSEQ", oracle::occi::OCCI_SQLT_NUM);
     int fileSizeIdx      = resIntros.findColumnIndex(            "FILESIZE", oracle::occi::OCCI_SQLT_NUM);
     int lastKnownNameIdx = resIntros.findColumnIndex(   "LASTKNOWNFILENAME", oracle::occi::OCCI_SQLT_CHR);
-    int lastModifTimeIdx = resIntros.findColumnIndex("LASTMODIFICATIONTIME", oracle::occi::OCCI_SQLT_NUM);
     int pathIdx          = resIntros.findColumnIndex(                "PATH", oracle::occi::OCCI_SQLT_CHR);
     // Run through the cursor
     while (rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
@@ -1075,8 +1074,8 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getBulkFilesToMigrate (
       ftm.setFseq                (occiNumber(rs->getNumber(         fSeqIdx)));
       ftm.setFileSize            (occiNumber(rs->getNumber(     fileSizeIdx)));
       ftm.setLastKnownFilename   (           rs->getString(lastKnownNameIdx));
-      ftm.setLastModificationTime(occiNumber(rs->getNumber(lastModifTimeIdx)));
       ftm.setPath                (           rs->getString(         pathIdx));
+      ftm.setLastModificationTime(0);
       ftm.setUmask               (022);
       ftm.setPositionCommandCode (TPPOSIT_FSEQ);
       filesToMigrate.push(ftm);
@@ -1198,12 +1197,10 @@ throw (castor::exception::Exception){
   try {
     if (!m_setBulkFileMigrationResult) {
       m_setBulkFileMigrationResult =
-        createStatement("BEGIN tg_setBulkFileMigrationResult(:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13);END;");
-      m_setBulkFileMigrationResult->registerOutParam(13, oracle::occi::OCCICURSOR);
+        createStatement("BEGIN tg_setBulkFileMigrationResult(:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12); END;");
     }
     // Prepare the arays of data to be sent to PL/SQL
     std::vector<oracle::occi::Number> fileIds;
-    std::vector<std::string> nsHosts;
     std::vector<oracle::occi::Number> fileTransactionIds;
     std::vector<oracle::occi::Number> fSeqs;
     std::vector<std::string> blockIds;
@@ -1221,7 +1218,6 @@ throw (castor::exception::Exception){
       // We cast the u_signed64 values for double first as the occi::Number type lacks a long long
       // case operator. This limits us to 52 bits, or ids, sizes and checksums below ~10^15.
       fileIds.push_back(occiNumber((*s)->fileid()));
-      nsHosts.push_back((*s)->nshost());
       fileTransactionIds.push_back(occiNumber((*s)->fileTransactionId()));
       fSeqs.push_back(occiNumber((*s)->fseq()));
       std::stringstream blockIdHex;
@@ -1246,7 +1242,6 @@ throw (castor::exception::Exception){
       // We cast the u_signed64 values to double first as the occi::Number type lacks a long long
       // cast operator. This limits us to 52 bits, or ids, sizes and checksums below ~10^15.
       fileIds.push_back(occiNumber((*f)->fileid()));
-      nsHosts.push_back((*f)->nshost());
       fileTransactionIds.push_back(occiNumber((*f)->fileTransactionId()));
       fSeqs.push_back(occiNumber((*f)->fseq()));
       blockIds.push_back(std::string(""));
@@ -1258,32 +1253,24 @@ throw (castor::exception::Exception){
       // from failures. Getting an error code of 0 here is hence an issue.
       // We treat is as an internal error (it can originate from as far back as
       // rtcpd on the tape server.
-      if (!(*f)->errorCode()) {
-        castor::exception::Internal ex;
-        ex.getMessage() << "Got a zero error code for failure in setBulkFileMigrationResult:"
-                     << " NSHOSTNAME=" << (*f)->nshost() <<  " NSFILEID=" << (*f)->fileid()
-                     << " fileTransactionId=" << (*f)->fileTransactionId() << " fseq=" << (*f)->fseq()
-                     << " errorCode=" << (*f)->errorCode() << " errorMessage=" << (*f)->errorMessage();
-        throw ex;
-      }
-      errorCodes.push_back((*f)->errorCode());
+      errorCodes.push_back((*f)->errorCode() ? (*f)->errorCode() : SEINTERNAL);
       errorMessages.push_back((*f)->errorMessage());
     }
 
     // Attach arrays to parameters
     m_setBulkFileMigrationResult->setNumber(1, occiNumber(mountTransactionId));
-    oracle::occi::setVector(m_setBulkFileMigrationResult, 2, nsHosts,       "strList");
-    oracle::occi::setVector(m_setBulkFileMigrationResult, 3, nsHosts,       "numList");
-    oracle::occi::setVector(m_setBulkFileMigrationResult, 4, fileTransactionIds,  "numList");
-    oracle::occi::setVector(m_setBulkFileMigrationResult, 5, fSeqs,         "numList");
-    oracle::occi::setVector(m_setBulkFileMigrationResult, 6, blockIds,      "strList");
-    oracle::occi::setVector(m_setBulkFileMigrationResult, 7, checksumNames, "strList");
-    oracle::occi::setVector(m_setBulkFileMigrationResult, 8, checksums,     "numList");
-    oracle::occi::setVector(m_setBulkFileMigrationResult, 9, compressedFileSizes, "numList");
-    oracle::occi::setVector(m_setBulkFileMigrationResult,10, fileSizes,     "numList");
-    oracle::occi::setVector(m_setBulkFileMigrationResult,11, errorCodes,    "numList");
-    oracle::occi::setVector(m_setBulkFileMigrationResult,12, errorMessages, "strList");
-
+    oracle::occi::setVector(m_setBulkFileMigrationResult, 2, fileIds,       "numList");
+    oracle::occi::setVector(m_setBulkFileMigrationResult, 3, fileTransactionIds,  "numList");
+    oracle::occi::setVector(m_setBulkFileMigrationResult, 4, fSeqs,         "numList");
+    oracle::occi::setVector(m_setBulkFileMigrationResult, 5, blockIds,      "strList");
+    oracle::occi::setVector(m_setBulkFileMigrationResult, 6, checksumNames, "strList");
+    oracle::occi::setVector(m_setBulkFileMigrationResult, 7, checksums,     "numList");
+    oracle::occi::setVector(m_setBulkFileMigrationResult, 8, compressedFileSizes, "numList");
+    oracle::occi::setVector(m_setBulkFileMigrationResult, 9, fileSizes,     "numList");
+    oracle::occi::setVector(m_setBulkFileMigrationResult,10, errorCodes,    "numList");
+    oracle::occi::setVector(m_setBulkFileMigrationResult,11, errorMessages, "strList");
+    m_setBulkFileMigrationResult->setString(12, "logging context");
+    
     // DB update and get result.
     m_setBulkFileMigrationResult->executeUpdate();
 
@@ -1403,12 +1390,10 @@ throw (castor::exception::Exception){
   try {
     if (!m_setBulkFileRecallResult) {
       m_setBulkFileRecallResult =
-        createStatement("BEGIN tg_setBulkFileRecallResult(:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13);END;");
-      m_setBulkFileRecallResult->registerOutParam(13, oracle::occi::OCCICURSOR);
+        createStatement("BEGIN tg_setBulkFileRecallResult(:1,:2,:3,:4,:5,:6,:7,:8,:9,:10); END;");
     }
     // Prepare the arays of data to be sent to PL/SQL
     std::vector<oracle::occi::Number> fileIds;
-    std::vector<std::string> nsHosts;
     std::vector<oracle::occi::Number> fileTransactionIds;
     std::vector<oracle::occi::Number> fSeqs;
     std::vector<std::string> checksumNames;
@@ -1424,7 +1409,6 @@ throw (castor::exception::Exception){
       // We cast the u_signed64 values for double first as the occi::Number type lacks a long long
       // case operator. This limits us to 52 bits, or ids, sizes and checksums below ~10^15.
       fileIds.push_back(occiNumber((*s)->fileid()));
-      nsHosts.push_back((*s)->nshost());
       fileTransactionIds.push_back(occiNumber((*s)->fileTransactionId()));
       fSeqs.push_back(occiNumber((*s)->fseq()));
       checksumNames.push_back((*s)->checksumName());
@@ -1439,7 +1423,6 @@ throw (castor::exception::Exception){
       // We cast the u_signed64 values to double first as the occi::Number type lacks a long long
       // cast operator. This limits us to 52 bits, or ids, sizes and checksums below ~10^15.
       fileIds.push_back(occiNumber((*f)->fileid()));
-      nsHosts.push_back((*f)->nshost());
       fileTransactionIds.push_back(occiNumber((*f)->fileTransactionId()));
       fSeqs.push_back(occiNumber((*f)->fseq()));
       checksumNames.push_back(std::string(""));
@@ -1463,15 +1446,15 @@ throw (castor::exception::Exception){
 
     // Attach arrays to parameters
     m_setBulkFileRecallResult->setNumber(1, occiNumber(mountTransactionId));
-    oracle::occi::setVector(m_setBulkFileRecallResult, 2, nsHosts,       "strList");
-    oracle::occi::setVector(m_setBulkFileRecallResult, 3, nsHosts,       "numList");
-    oracle::occi::setVector(m_setBulkFileRecallResult, 4, fileTransactionIds,  "numList");
-    oracle::occi::setVector(m_setBulkFileRecallResult, 5, fSeqs,         "numList");
-    oracle::occi::setVector(m_setBulkFileRecallResult, 6, checksumNames, "strList");
-    oracle::occi::setVector(m_setBulkFileRecallResult, 7, checksums,     "numList");
-    oracle::occi::setVector(m_setBulkFileRecallResult, 8, fileSizes,     "numList");
-    oracle::occi::setVector(m_setBulkFileRecallResult, 9, errorCodes,    "numList");
-    oracle::occi::setVector(m_setBulkFileRecallResult,10, errorMessages, "strList");
+    oracle::occi::setVector(m_setBulkFileRecallResult, 2, fileIds,       "numList");
+    oracle::occi::setVector(m_setBulkFileRecallResult, 3, fileTransactionIds,  "numList");
+    oracle::occi::setVector(m_setBulkFileRecallResult, 4, fSeqs,         "numList");
+    oracle::occi::setVector(m_setBulkFileRecallResult, 5, checksumNames, "strList");
+    oracle::occi::setVector(m_setBulkFileRecallResult, 6, checksums,     "numList");
+    oracle::occi::setVector(m_setBulkFileRecallResult, 7, fileSizes,     "numList");
+    oracle::occi::setVector(m_setBulkFileRecallResult, 8, errorCodes,    "numList");
+    oracle::occi::setVector(m_setBulkFileRecallResult, 9, errorMessages, "strList");
+    m_setBulkFileMigrationResult->setString(10, "logging context");
 
     // DB update and get result.
     m_setBulkFileRecallResult->executeUpdate();

@@ -358,3 +358,11 @@ BEGIN
   COMMIT;
 END;
 /
+
+
+/* Small utility function to convert an hexadecimal string (8 digits) into a RAW(4) type */
+CREATE OR REPLACE FUNCTION strToRaw4(v VARCHAR2) RETURN RAW IS
+BEGIN
+  RETURN hexToRaw(ltrim(to_char(to_number(v, 'XXXXXXXX'), '0XXXXXXXX')));
+END;
+/

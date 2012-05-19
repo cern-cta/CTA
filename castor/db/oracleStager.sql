@@ -2125,7 +2125,7 @@ CREATE OR REPLACE PROCEDURE initMigration
   varTpId INTEGER;
   varSizeThreshold INTEGER;
 BEGIN
-  varSizeThreshold := TO_NUMBER(getConfigOption('tape', 'sizeThreshold', '300000000'));
+  varSizeThreshold := TO_NUMBER(getConfigOption('Migration', 'SizeThreshold', '300000000'));
   -- Find routing
   BEGIN
     SELECT tapePool INTO varTpId FROM MigrationRouting MR, CastorFile

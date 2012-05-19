@@ -544,7 +544,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   deleteRecallJobs(inCfId);
   UPDATE SubRequest
        SET status = dconst.SUBREQUEST_FAILED,
-           errorCode = 2, -- ENOENT
+           errorCode = serrno.ENOENT,
            errorMessage = 'File disappeared from namespace during recall'
      WHERE castorFile = inCfId
        AND status = dconst.SUBREQUEST_WAITTAPERECALL;
@@ -724,6 +724,7 @@ END;
 /* Attempt to retry a migration. Fail it in case it should not be retried anymore */
 CREATE OR REPLACE PROCEDURE retryOrFailMigration(inMountTrId IN NUMBER, inFileId IN VARCHAR2, inNsHost IN VARCHAR2,
                                                  inErrorCode IN NUMBER, inReqId IN VARCHAR2) AS
+  PRAGMA AUTONOMOUS_TRANSACTION;   -- See tg_setBulkFileMigrationResult()
   varFileTrId NUMBER;
 BEGIN
   -- For the time being, we ignore the error code and apply the same policy to any
@@ -745,8 +746,9 @@ BEGIN
   IF SQL%ROWCOUNT = 0 THEN
     -- Nb of retries exceeded, fail migration
     failFileMigration(inMountTrId, inFileId, inErrorCode, inReqId);
-  -- ELSE we have one more retry. Don't log, we have the upstream log entry.
+  -- ELSE we have one more retry, which has been logged upstream
   END IF;
+  COMMIT;
 END;
 /
 

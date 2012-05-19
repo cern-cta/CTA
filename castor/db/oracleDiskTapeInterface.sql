@@ -51,7 +51,7 @@ BEGIN
                INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile)
                INDEX_RS_ASC(MigrationJob I_MigrationJob_TPStatusId) */
            MigrationJob.id mjId, DiskServer.name || ':' || FileSystem.mountPoint || DiskCopy.path filePath,
-           CastorFile.fileId, CastorFile.fileSize, CastorFile.lastKnownFileName
+           CastorFile.fileId, CastorFile.nsHost, CastorFile.fileSize, CastorFile.lastKnownFileName
       FROM MigrationMount, MigrationJob, CastorFile, DiskCopy, FileSystem, DiskServer
      WHERE MigrationMount.id = varMountId
        AND MigrationJob.tapePool = MigrationMount.tapePool
@@ -72,8 +72,8 @@ BEGIN
     varNewFseq := varNewFseq + 1;    -- we still decide the fseq for each migration candidate
     varCount := varCount + 1;
     varTotalSize := varTotalSize + Cand.fileSize;
-    INSERT INTO FilesToMigrateHelper (fileId, lastKnownFileName, filePath, fileTransactionId, fileSize, fseq)
-      VALUES (Cand.fileId, Cand.lastKnownFileName, Cand.filePath, ids_seq.NEXTVAL, Cand.fileSize, varNewFseq)
+    INSERT INTO FilesToMigrateHelper (fileId, nsHost, lastKnownFileName, filePath, fileTransactionId, fileSize, fseq)
+      VALUES (Cand.fileId, Cand.nsHost, Cand.lastKnownFileName, Cand.filePath, ids_seq.NEXTVAL, Cand.fileSize, varNewFseq)
     RETURNING fileTransactionId INTO varFileTrId;
     -- Take this candidate on this mount
     UPDATE MigrationJob
@@ -96,7 +96,7 @@ BEGIN
     -- Return all candidates. Don't commit now, this will be done in C++
     -- after the results have been collected as the temporary table will be emptied. 
     OPEN outFiles FOR
-      SELECT fileId, lastKnownFileName, filePath, fileTransactionId, fseq, fileSize
+      SELECT fileId, nsHost, lastKnownFileName, filePath, fileTransactionId, fseq, fileSize
         FROM FilesToMigrateHelper;
   END IF;
   -- ELSE no candidates found, return an empty cursor
@@ -106,10 +106,10 @@ END;
 
 CREATE OR REPLACE PROCEDURE tg_setBulkFileMigrationResult(inMountTrId IN NUMBER,
                                                           inFileIds IN castor."cnumList",
-                                                          inFilesTrIds IN castor."cnumList",
+                                                          inFileTrIds IN castor."cnumList",
                                                           inFseqs IN castor."cnumList",
                                                           inBlockIds IN castor."strList",
-                                                          inChecksumType IN castor."strList",
+                                                          inChecksumTypes IN castor."strList",
                                                           inChecksums IN castor."cnumList",
                                                           inComprSizes IN castor."cnumList",
                                                           inTransferredSizes IN castor."cnumList",
@@ -119,8 +119,10 @@ CREATE OR REPLACE PROCEDURE tg_setBulkFileMigrationResult(inMountTrId IN NUMBER,
   varStartTime TIMESTAMP;
   varNsHost VARCHAR2(2048);
   varReqId VARCHAR2(36);
-  varSegs castorns@RemoteNS.SegmentList := castorns@RemoteNS.SegmentList();
-  varOldCopyNos "numList" := "numList"();
+  varLastUpdTime NUMBER;
+  varCopyNo NUMBER;
+  varOldCopyNo NUMBER;
+  varVid VARCHAR2(10);
   varNSTimeInfos "numList";
   varNSErrorCodes "numList";
   varNSMsgs strListTable;
@@ -132,48 +134,57 @@ BEGIN
   varReqId := uuidGen();
   -- Get the NS host name
   varNsHost := getConfigOption('stager', 'nsHost', '');
-  -- Prepare input for nameserver and check for file size mismatch
-  FOR i IN inFilesTrIds.FIRST .. inFilesTrIds.LAST LOOP
-    varSegs.EXTEND;
-    varOldCopyNos.EXTEND;
+  -- Prepare input for nameserver
+  FOR i IN inFileTrIds.FIRST .. inFileTrIds.LAST LOOP
     IF inErrorCodes(i) = 0 THEN
       -- Successful migration, collect additional data.
       -- Note that this is NOT bulk to preserve the order in the input arrays.
-      SELECT CF.lastUpdateTime, CF.fileSize, nvl(MJ.originalCopyNb, 0), MJ.vid, MJ.destCopyNb
-        INTO varSegs(i).lastModTime, varSegs(i).segSize, varOldCopyNos(i), varSegs(i).vid, varSegs(i).copyNo
-        FROM CastorFile CF, MigrationJob MJ
-       WHERE MJ.castorFile = CF.id
-         AND CF.fileid = inFileIds(i)
-         AND MJ.mountTransactionId = inMountTrId;
-      -- Check the transfered size corresponds to the recorded file size
-      IF inTransferredSizes(i) != varSegs(i).segSize THEN
-        inErrorCodes(i) := 1613;  -- file size mismatch
-        inErrorMsgs(i) := 'Transferred size does not match file size: '|| to_char(inTransferredSizes(i))
-                          ||' vs '|| to_char(varSegs(i).segSize);
-        -- Make the NS ignore this entry
-        varSegs(i).fileId := 0;
-      ELSE
-        varSegs(i).fileId := inFileIds(i);
-        varSegs(i).comprSize := inComprSizes(i);
-        varSegs(i).blockId := n+umToRaw(inBlockIds(i));
-        varSegs(i).checksum_name := inChecksumType;
-        varSegs(i).checksum := inChecksums(i);
-      END IF;
-    END IF;
-    IF inErrorCodes(i) != 0 THEN
+      BEGIN
+        SELECT CF.lastUpdateTime, nvl(MJ.originalCopyNb, 0), MJ.vid, MJ.destCopyNb
+          INTO varLastUpdTime, varOldCopyNo, varVid, varCopyNo
+          FROM CastorFile CF, MigrationJob MJ
+         WHERE MJ.castorFile = CF.id
+           AND CF.fileid = inFileIds(i)
+           AND MJ.mountTransactionId = inMountTrId
+           AND MJ.fileTransactionId = inFileTrIds(i);
+        -- store in a temporary table, to be transfered to the NS DB
+        INSERT INTO FileMigrationResultsHelper
+          (reqId, fileId, lastModTime, copyNo, oldCopyNo, transfSize, comprSize,
+            vid, fseq, blockId, checksumType, checksum)
+        VALUES (varReqId, inFileIds(i), varLastUpdTime, varCopyNo, varOldCopyNo,
+                inTransferredSizes(i), inComprSizes(i), varVid, inFseqs(i),
+                strtoRaw4(inBlockIds(i)), inChecksumTypes(i), inChecksums(i));
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- Log 'file not found, giving up'
+        varParams := 'mountTransactionId='|| to_char(inMountTrId) ||' '|| inLogContext;
+        logToDLF(varReqid, dlf.LVL_ERROR, dlf.MIGRATION_NOT_FOUND, inFileIds(i), varNsHost, 'tapegatewayd', varParams);
+      END;
+    ELSE
       -- Fail/retry this migration, log 'migration failed, will retry if allowed'
       varParams := 'mountTransactionId='|| to_char(inMountTrId) ||' ErrorCode='|| to_char(inErrorCodes(i))
-                   ||' ErrorMessage="'|| inErrorMsgs(i) ||'" VID='|| varSegs(i).vid
-                   ||' copyNb='|| to_char(varSegs(i).copyNo) ||' '|| inLogContext;
+                   ||' ErrorMessage="'|| inErrorMsgs(i) ||'" VID='|| varVid
+                   ||' copyNb='|| to_char(varCopyNo) ||' '|| inLogContext;
       logToDLF(varReqid, dlf.LVL_WARNING, dlf.MIGRATION_RETRY, inFileIds(i), varNsHost, 'tapegatewayd', varParams);
+      -- The following call commits in an autonomous transaction!
       retryOrFailMigration(inMountTrId, inFileIds(i), varNsHost, inErrorCodes(i), varReqId);
-      -- Make the NS ignore this entry
-      varSegs(i).fileId := 0;
     END IF;
   END LOOP;
-  -- This call autocommits all segments in the NameServer, and returns a set of 
-  setOrReplaceSegmentsForFiles@RemoteNS(varOldCopyNos, varSegs, varNSTimeInfos, varNSErrorCodes,
-                                        varNSMsgs, varNSFileIds, varNSParams);
+
+  -- "Bulk" transfer data to the NS DB (FORALL is not supported here)
+  INSERT INTO SetSegmentsForFilesHelper@RemoteNS
+    SELECT * FROM FileMigrationResultsHelper;
+  
+  -- This call autocommits all segments in the NameServer
+  setOrReplaceSegmentsForFiles@RemoteNS(varReqId);
+  
+  -- Retrieve results from the NS DB in bulk
+  SELECT timeinfo, ec, msg, fileId, params
+    BULK COLLECT INTO varNSTimeInfos, varNSErrorCodes, varNSMsgs, varNSFileIds, varNSParams
+    FROM ResultsLogHelper@RemoteNS
+   WHERE reqId = varReqId;
+  DELETE FROM ResultsLogHelper@RemoteNS
+   WHERE reqId = varReqId;
+
   -- Process the results
   FOR i IN varNSFileIds.FIRST .. varNSFileIds.LAST LOOP
     -- First log on behalf of the NS
@@ -188,7 +199,9 @@ BEGIN
       -- All right, commit the migration in the stager
       tg_setFileMigrated(inMountTrId, varNSFileIds(i), varReqId, inLogContext);
       
-    WHEN varNSErrorCodes(i) = 2 OR varNSErrorCodes(i) = 1402 OR varNSErrorCodes(i) = 1406 THEN  -- ENOENT, ENSFILECHG, ENSTOOMANYSEGS
+    WHEN varNSErrorCodes(i) = serrno.ENOENT
+      OR varNSErrorCodes(i) = serrno.ENSFILECHG
+      OR varNSErrorCodes(i) = serrno.ENSTOOMANYSEGS THEN
       -- The migration was useless because either the file is gone, or it has been modified elsewhere,
       -- or there were already enough copies on tape for it. Fail and update disk cache accordingly.
       failFileMigration(inMountTrId, varNSFileIds(i), varNSErrorCodes(i), varReqId);
@@ -198,7 +211,7 @@ BEGIN
       varParams := 'mountTransactionId='|| to_char(inMountTrId) ||' ErrorCode='|| to_char(varNSErrorCodes(i))
                    ||' ErrorMessage="'|| varNSMsgs(i) ||'" '|| inLogContext;
       logToDLF(varReqid, dlf.LVL_WARNING, dlf.MIGRATION_RETRY, varNSFileIds(i), varNsHost, 'tapegatewayd', varParams);
-      retryOrFailMigration(inMountTrId, inFileId, inNsHost, varNSErrorCodes(i), varReqId);
+      retryOrFailMigration(inMountTrId, varNSFileIds(i), varNsHost, varNSErrorCodes(i), varReqId);
     END CASE;
     -- Commit file by file
     COMMIT;
@@ -332,7 +345,7 @@ BEGIN
   END IF;
   
   -- Log depending on the error: some are not pathological and have dedicated handling
-  IF inErrorCode = 2 OR inErrorCode = 1402 THEN  -- ENOENT, ENSFILECHG
+  IF inErrorCode = serrno.ENOENT OR inErrorCode = serrno.ENSFILECHG THEN
     -- in this case, disk cache is stale
     UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
      WHERE status = dconst.DISKCOPY_CANBEMIGR
@@ -341,7 +354,7 @@ BEGIN
     logToDLF(inReqid, dlf.LVL_NOTICE, dlf.MIGRATION_FILE_DROPPED, inFileId, varNsHost, 'tapegatewayd',
              'mountTransactionId=' || to_char(inMountTrId) || ' ErrorCode=' || to_char(inErrorCode)
              ||' lastUpdateTime=' || to_char(varCFLastUpdateTime));
-  ELSIF inErrorCode = 1406 THEN  -- ENSTOOMANYSEGS
+  ELSIF inErrorCode = serrno.ENSTOOMANYSEGS THEN
     -- do as if migration was successful
     UPDATE DiskCopy SET status = dconst.DISKCOPY_STAGED
      WHERE status = dconst.DISKCOPY_CANBEMIGR

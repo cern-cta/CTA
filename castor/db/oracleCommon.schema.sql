@@ -390,10 +390,17 @@ ALTER TABLE MigrationRouting ADD CONSTRAINT FK_MigrationRouting_TapePool
 
 /* Temporary table used to bulk select next candidates for migration */
 CREATE GLOBAL TEMPORARY TABLE FilesToMigrateHelper
- (fileId NUMBER, lastKnownFileName VARCHAR2(2048), filePath VARCHAR2(2048),
+ (fileId NUMBER, nsHost VARCHAR2(100), lastKnownFileName VARCHAR2(2048), filePath VARCHAR2(2048),
   fileTransactionId NUMBER, fileSize NUMBER, fseq NUMBER)
  ON COMMIT PRESERVE ROWS;
 
+CREATE GLOBAL TEMPORARY TABLE FileMigrationResultsHelper
+ (reqId VARCHAR2(36) CONSTRAINT PK_SetSegsHelper_ReqId PRIMARY KEY,
+  fileId NUMBER, lastModTime NUMBER, copyNo NUMBER, oldCopyNo NUMBER, transfSize NUMBER,
+  comprSize NUMBER, vid VARCHAR2(6), fseq NUMBER, blockId RAW(4), checksumType VARCHAR2(2), checksum NUMBER)
+  ON COMMIT DELETE ROWS;
+
+ 
 /* Indexes related to most used entities */
 CREATE UNIQUE INDEX I_DiskServer_name ON DiskServer (name);
 
@@ -696,6 +703,8 @@ INSERT INTO CastorConfig
   VALUES ('Recall', 'MaxNbRetriesWithinMount', '2', 'The maximum number of retries for recalling a file within the same tape mount. When exceeded, the recall may still be retried in another mount. See Recall/MaxNbMount entry');
 INSERT INTO CastorConfig
   VALUES ('Recall', 'MaxNbMounts', '2', 'The maximum number of mounts for recalling a given file. When exceeded, the recall will be failed if no other tapecopy can be used. See also Recall/MaxNbRetriesWithinMount entry');
+INSERT INTO CastorConfig
+  VALUES ('Migration', 'SizeThreshold', '300000000', 'The threshold to consider a file "small" or "large" when routing it to tape');
 INSERT INTO CastorConfig
   VALUES ('Migration', 'MaxNbMounts', '7', 'The maximum number of mounts for migrating a given file. When exceeded, the migration will be considered failed: the MigrationJob entry will be dropped and the corresponding diskcopy left in status CANBEMIGR. An operator intervention is required to resume the migration.');
 COMMIT;

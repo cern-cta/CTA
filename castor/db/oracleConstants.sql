@@ -179,3 +179,35 @@ AS
 END dlf;
 /
 
+/**
+ * Package containing the definition of some relevant (s)errno values and messages.
+ */
+CREATE OR REPLACE PACKAGE serrno AS
+  /* (s)errno values */
+  ENOENT          CONSTANT PLS_INTEGER := 2;    /* No such file or directory */
+  EACCES          CONSTANT PLS_INTEGER := 13;   /* Permission denied */
+  EEXIST          CONSTANT PLS_INTEGER := 17;   /* File exists */
+  EISDIR          CONSTANT PLS_INTEGER := 21;   /* Is a directory */
+  
+  SEINTERNAL      CONSTANT PLS_INTEGER := 1015; /* Internal error */
+  SECHECKSUM      CONSTANT PLS_INTEGER := 1037; /* Bad checksum */
+  ENSFILECHG      CONSTANT PLS_INTEGER := 1402; /* File has been overwritten, request ignored */
+  ENSNOSEG        CONSTANT PLS_INTEGER := 1403; /* Segment had been deleted */
+  ENSTOOMANYSEGS  CONSTANT PLS_INTEGER := 1406; /* Too many copies on tape */
+  ENSOVERWHENREP  CONSTANT PLS_INTEGER := 1407; /* Cannot overwrite valid segment when replacing */
+  ERTWRONGSIZE    CONSTANT PLS_INTEGER := 1613; /* (Recalled) file size incorrect */
+  
+  /* messages */
+  ENOENT_MSG          CONSTANT VARCHAR2(2048) := 'No such file or directory';
+  EACCES_MSG          CONSTANT VARCHAR2(2048) := 'Permission denied';
+  EEXIST_MSG          CONSTANT VARCHAR2(2048) := 'File exists';
+  EISDIR_MSG          CONSTANT VARCHAR2(2048) := 'Is a directory';
+  SEINTERNAL_MSG      CONSTANT VARCHAR2(2048) := 'Internal error';
+  SECHECKSUM_MSG      CONSTANT VARCHAR2(2048) := 'Checksum mismatch between segment and file';
+  ENSFILECHG_MSG      CONSTANT VARCHAR2(2048) := 'File has been overwritten, request ignored';
+  ENSNOSEG_MSG        CONSTANT VARCHAR2(2048) := 'Segment had been deleted';
+  ENSTOOMANYSEGS_MSG  CONSTANT VARCHAR2(2048) := 'Too many copies on tape';
+  ENSOVERWHENREP_MSG  CONSTANT VARCHAR2(2048) := 'Cannot overwrite valid segment when replacing';
+  ERTWRONGSIZE_MSG    CONSTANT VARCHAR2(2048) := 'Incorrect file size';
+END serrno;
+/
