@@ -30,6 +30,7 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
+#include <memory>
 
 #include "errno.h"
 
@@ -555,7 +556,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::restartLostReqs
       (1,bufferMountTransactionIds, oracle::occi::OCCI_SQLT_NUM, nb, &unused, 21, lensMountTransactionIds);
     // execute the statement
     m_restartLostReqsStatement->executeUpdate();
-    // fre memory
+    // free memory
     if (lensMountTransactionIds != 0 ) free(lensMountTransactionIds);
     if (bufferMountTransactionIds != 0) free(bufferMountTransactionIds);
   } catch (oracle::occi::SQLException e) {
