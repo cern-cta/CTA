@@ -91,11 +91,16 @@ try:
             sys.exit(1)
         cfs.append((cfId, fs, copynb))
     print 'All files have been found on disk, triggering migrations'
+    # we create a migrationJob and we date it back at the time the file was created, so that
+    # in case of repairing/recreating jobs that previously had failed, we skip the queue of
+    # the tapepool throttling policies.
     stMigSQL = '''DECLARE
                     tcId INTEGER;
                   BEGIN
                     UPDATE DiskCopy SET status = 10 WHERE castorFile = :cf AND status = 0;
                     initMigration(:cf, :fs, NULL, NULL, :cn, tconst.MIGRATIONJOB_PENDING);
+                    UPDATE MigrationJob SET creationTime = (SELECT lastUpdateTime FROM CastorFile WHERE id = :cf)
+                     WHERE castorFile = :cf;
                   END;'''
     for cfid, fs, copynb in cfs:
         stcur.execute(stMigSQL, cf=cfid, fs=fs, cn=copynb)
