@@ -17,7 +17,7 @@
 #include "u64subr.h"
 
 static sql_context ctx[CNS_MAXNBTHREADS];
-static const char *const CNSSCHEMAVERSION = "2_1_9_3";
+static const char *const CNSSCHEMAVERSION = "2_1_13_0";
 
 int Cns_init_dbpkg()
 {
@@ -1933,11 +1933,9 @@ int Cns_opendb(struct Cns_dbfd *dbfd)
   switch (sqlca.sqlcode) {
   case 0: {
     if (strcmp(schema_version, CNSSCHEMAVERSION) != 0) {
-      Cns_closedb (dbfd);
-      nslogit("MSG=\"Error: Incorrect schema version detected, "
-              "disconnecting\" SchemaVersion=\"%s\" RequiredVersion=\"%s\"",
+      nslogit("MSG=\"Warning: incorrect schema version detected\" "
+              "SchemaVersion=\"%s\" RequiredVersion=\"%s\"",
               schema_version, CNSSCHEMAVERSION);
-      return -1;
     }
     nslogit("MSG=\"Connection successful\" SchemaVersion=\"%s\"",
             schema_version);
