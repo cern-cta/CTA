@@ -2979,7 +2979,7 @@ BEGIN
        AND DC.status IN (0, 6, 10)  -- STAGED, STAGEOUT, CANBEMIGR
        AND DC.fileSystem = FileSystem.id
        AND FileSystem.diskPool = DP2SC.parent
-       AND DP2SC.child = svcClassId)
+       AND (DP2SC.child = svcClassId OR svcClassId = 0))
   UNION ALL
     -- and then diskcopies resulting from ongoing requests, for which the previous
     -- query wouldn't return any entry because of e.g. missing filesystem
