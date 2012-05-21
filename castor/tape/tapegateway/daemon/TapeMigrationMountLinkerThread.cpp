@@ -165,6 +165,7 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
           oraSvc->deleteMigrationMountWithBadTapePool(item->migrationMountId);
         } catch (castor::exception::Exception e){
           castor::dlf::Param params[] = {
+              castor::dlf::Param("MigationMountId", item->migrationMountId),
               castor::dlf::Param("errorCode",sstrerror(e.code())),
               castor::dlf::Param("errorMessage",e.getMessage().str())
           };
@@ -175,6 +176,7 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
           VmgrTapeGatewayHelper::setTapeAsReadonlyAndUnbusy(vidToUse, m_shuttingDown);
         } catch (castor::exception::Exception e) {
           castor::dlf::Param params[] = {
+              castor::dlf::Param("MigationMountId", item->migrationMountId),
               castor::dlf::Param("VID", vidToUse),
               castor::dlf::Param("TapePool", item->tapePoolName),
               castor::dlf::Param("errorCode", sstrerror(e.code())),
