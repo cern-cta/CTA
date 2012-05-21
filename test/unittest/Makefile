@@ -278,7 +278,6 @@ rununittests: \
   tapebridge_tapeFlushModeToStr.o \
   tapebridge_VdqmRequestHandler.o \
   tapebridge_VmgrTxRx.o \
-  tapegateway_BaseFileInfo.o \
   tapegateway_BaseFileInfoStruct.o \
   tapegateway_ClientType.o \
   tapegateway_DumpNotification.o \
@@ -286,7 +285,6 @@ rununittests: \
   tapegateway_DumpParametersRequest.o \
   tapegateway_EndNotification.o \
   tapegateway_EndNotificationErrorReport.o \
-  tapegateway_EndNotificationFileErrorReport.o \
   tapegateway_GatewayMessage.o \
   tapegateway_FileErrorReportStruct.o \
   tapegateway_FileMigratedNotificationStruct.o \
@@ -1317,10 +1315,6 @@ tapebridge_VmgrTxRx.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/VmgrTxRx.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-tapegateway_BaseFileInfo.o: \
-  $(ROOT_DIR)/castor/tape/tapegateway/BaseFileInfo.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
 tapegateway_BaseFileInfoStruct.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/BaseFileInfoStruct.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
@@ -1347,10 +1341,6 @@ tapegateway_EndNotification.o: \
 
 tapegateway_EndNotificationErrorReport.o: \
   $(ROOT_DIR)/castor/tape/tapegateway/EndNotificationErrorReport.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tapegateway_EndNotificationFileErrorReport.o: \
-  $(ROOT_DIR)/castor/tape/tapegateway/EndNotificationFileErrorReport.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapegateway_FileErrorReportStruct.o: \
