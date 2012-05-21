@@ -106,11 +106,6 @@ namespace castor {
     private:
 
       /**
-       * the configuration itself
-       */
-      Configuration m_config;
-
-      /**
        * fileName to be used when updating the configuration
        */
       std::string m_fileName;

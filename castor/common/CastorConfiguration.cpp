@@ -78,8 +78,8 @@ castor::common::CastorConfiguration::getConfEnt(const std::string &category,
   // get read lock
   pthread_rwlock_rdlock(&m_lock);
   // get the category
-  Configuration::const_iterator catIt = m_config.find(category);
-  if (m_config.end() == catIt) {
+  Configuration::const_iterator catIt = find(category);
+  if (end() == catIt) {
     castor::exception::NoEntry e;
     throw e;
   }
