@@ -92,7 +92,6 @@ rununittests: \
   io_StreamCnvSvc.o \
   io_StreamEndNotificationCnv.o \
   io_StreamEndNotificationErrorReportCnv.o \
-  io_StreamEndNotificationFileErrorReportCnv.o \
   io_StreamFilesListRequestCnv.o \
   io_StreamFileErrorReportStructCnv.o \
   io_StreamFileMigratedNotificationStructCnv.o \
@@ -574,10 +573,6 @@ io_StreamEndNotificationCnv.o: \
 
 io_StreamEndNotificationErrorReportCnv.o: \
   $(ROOT_DIR)/castor/io/StreamEndNotificationErrorReportCnv.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-io_StreamEndNotificationFileErrorReportCnv.o: \
-  $(ROOT_DIR)/castor/io/StreamEndNotificationFileErrorReportCnv.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 io_StreamFileErrorReportStructCnv.o: \
