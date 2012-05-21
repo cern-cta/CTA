@@ -497,10 +497,19 @@ public:
       std::string("MAXFILESBEFOREFLUSH"),
       params.getMaxFilesBeforeFlush().getName());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE(
-      "getValue()",
-      (uint64_t)44444,
-      params.getMaxFilesBeforeFlush().getValue());
+    {
+      const ConfigParam<uint64_t> &maxFilesBeforeFlush =
+        params.getMaxFilesBeforeFlush();
+
+      CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+        "Checking maxFilesBeforeFlush.getValue() does not throw an exception",
+        maxFilesBeforeFlush.getValue());
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "maxFilesBeforeFlush.getValue()",
+        (uint64_t)44444,
+        maxFilesBeforeFlush.getValue());
+    }
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "getSource()",
@@ -530,10 +539,19 @@ public:
       std::string("MAXBYTESBEFOREFLUSH"),
       params.getMaxBytesBeforeFlush().getName());
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE(
-      "getValue()",
-      (uint64_t)12345,
-      params.getMaxBytesBeforeFlush().getValue());
+    {
+      const ConfigParam<uint64_t> &maxBytesBeforeFlush =
+        params.getMaxBytesBeforeFlush();
+
+      CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+        "Checking maxBytesBeforeFlush.getValue() does not throw an exception",
+        maxBytesBeforeFlush.getValue());
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "maxBytesBeforeFlush.getValue()",
+        (uint64_t)12345,
+        maxBytesBeforeFlush.getValue());
+    }
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "getSource()",
