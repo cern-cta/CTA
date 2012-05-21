@@ -28,6 +28,8 @@
 #include "castor/common/CastorConfiguration.hpp"
 #include "castor/exception/NoEntry.hpp"
 
+#include <errno.h>
+
 // Global configurations, indexed by original file name
 std::map<std::string, castor::common::CastorConfiguration> s_castorConfigs;
 
@@ -138,8 +140,18 @@ void castor::common::CastorConfiguration::renewConfig()
   throw (castor::exception::Exception) {
   // reset the config
   clear();
-  // open config file
+
+  // try to open the configuration file, throwing an exception if there is a
+  // failure
   std::ifstream file(m_fileName.c_str());
+  if(file.fail()) {
+    castor::exception::Exception ex(EIO);
+    ex.getMessage() << __FUNCTION__ << " failed"
+      ": Failed to open file"
+      ": m_fileName=" << m_fileName;
+    throw(ex);
+  }
+
   std::string line;
   while(std::getline(file, line)) {
     // get rid of potential tabs
