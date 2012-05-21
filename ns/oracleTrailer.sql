@@ -512,6 +512,9 @@ BEGIN
     ||' ElapsedTime='|| getSecs(varStartTime, SYSTIMESTAMP)
     ||' AvgProcessingTime='|| getSecs(varStartTime, SYSTIMESTAMP)/varCount;
   tmpDlfLog(inReqId, 0, 'Bulk processing complete', 0, varParams);
+  -- Clean input data
+  DELETE FROM SetSegmentsForFilesHelper
+   WHERE reqId = inReqId;
   COMMIT;
   -- Return logs to the stager. Unfortunately we can't OPEN CURSOR FOR ...
   -- because we would get ORA-24338: 'statement handle not executed' at run time.

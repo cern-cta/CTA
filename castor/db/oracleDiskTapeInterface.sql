@@ -146,11 +146,15 @@ BEGIN
          WHERE MJ.castorFile = CF.id
            AND CF.fileid = inFileIds(i)
            AND MJ.mountTransactionId = inMountTrId
-           AND MJ.fileTransactionId = inFileTrIds(i);
-        -- store in a temporary table, to be transfered to the NS DB
+           AND MJ.fileTransactionId = inFileTrIds(i)
+           AND status = tconst.MIGRATIONJOB_SELECTED;
+        -- Store in a temporary table, to be transfered to the NS DB.
+        -- Note that this is an ON COMMIT DELETE table and we never take locks or commit until
+        -- after the NS call: if anything goes bad (including the db link being broken) we bail out
+        -- without needing to rollback.
         INSERT INTO FileMigrationResultsHelper
           (reqId, fileId, lastModTime, copyNo, oldCopyNo, transfSize, comprSize,
-            vid, fseq, blockId, checksumType, checksum)
+           vid, fseq, blockId, checksumType, checksum)
         VALUES (varReqId, inFileIds(i), varLastUpdTime, varCopyNo, varOldCopyNo,
                 inTransferredSizes(i), inComprSizes(i), varVid, inFseqs(i),
                 strtoRaw4(inBlockIds(i)), inChecksumTypes(i), inChecksums(i));
@@ -177,7 +181,7 @@ BEGIN
   -- This call autocommits all segments in the NameServer
   setOrReplaceSegmentsForFiles@RemoteNS(varReqId);
   
-  -- Retrieve results from the NS DB in bulk
+  -- Retrieve results from the NS DB in bulk and clean result data
   SELECT timeinfo, ec, msg, fileId, params
     BULK COLLECT INTO varNSTimeInfos, varNSErrorCodes, varNSMsgs, varNSFileIds, varNSParams
     FROM ResultsLogHelper@RemoteNS

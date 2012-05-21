@@ -261,7 +261,7 @@ def connectToVmgr():
 
 def connectToStager():
     '''Connects to the stager database'''
-    STAGERSCHEMAVERSION = "2_1_12_0"
+    STAGERSCHEMAVERSION = "2_1_13_0"
     user, passwd, dbname = getStagerDBConnectParams()
     return connectToDB(user, passwd, dbname, STAGERSCHEMAVERSION)
 

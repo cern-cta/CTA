@@ -53,7 +53,7 @@ extern "C" char *getconfent_fromfile(const char *filename,
 char *getconfent(const char *category,
                  const char *name,
                  int flags) {
-  return getconfent_fromfile(NULL,category,name,flags);
+  return getconfent_fromfile(PATH_CONFIG,category,name,flags);
 }
 
 int getconfent_parser(char **conf_val,

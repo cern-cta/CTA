@@ -159,4 +159,5 @@ void castor::common::CastorConfiguration::renewConfig()
     std::getline(sline, value, '#');
     Configuration::operator[](category)[key] = value;
   }
+  m_lastUpdateTime = time(0);
 }

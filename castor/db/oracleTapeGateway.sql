@@ -7,7 +7,7 @@
 
 /* PL/SQL declaration for the castorTape package */
 CREATE OR REPLACE PACKAGE castorTape AS 
-   TYPE TapeGatewayRequest IS RECORD (
+  TYPE TapeGatewayRequest IS RECORD (
     accessMode INTEGER,
     mountTransactionId NUMBER, 
     vid VARCHAR2(2048));
@@ -16,14 +16,6 @@ CREATE OR REPLACE PACKAGE castorTape AS
   TYPE VID_Cur IS REF CURSOR RETURN VIDRec;
   TYPE VIDPriorityRec IS RECORD (vid VARCHAR2(2048), vdqmPriority INTEGER);
   TYPE VIDPriority_Cur IS REF CURSOR RETURN VIDPriorityRec;
-  TYPE DbMigrationInfo IS RECORD (
-    id NUMBER,
-    copyNb NUMBER,
-    fileName VARCHAR2(2048),
-    nsHost VARCHAR2(2048),
-    fileId NUMBER,
-    fileSize NUMBER);
-  TYPE DbMigrationInfo_Cur IS REF CURSOR RETURN DbMigrationInfo;
   TYPE FileToRecallCore IS RECORD (
    fileId NUMBER,
    nsHost VARCHAR2(2048),
@@ -36,6 +28,7 @@ CREATE OR REPLACE PACKAGE castorTape AS
   TYPE FileToRecallCore_Cur IS REF CURSOR RETURN  FileToRecallCore;  
   TYPE FileToMigrateCore IS RECORD (
    fileId NUMBER,
+   nsHost VARCHAR2(2048),
    lastKnownFileName VARCHAR2(2048),
    filePath VARCHAR2(2048),
    fileTransactionId NUMBER,
@@ -324,7 +317,7 @@ BEGIN
   -- update recallMount and RecallJob
   UPDATE RecallJob
      SET status = tconst.RECALLJOB_SELECTED,
-         fileTransactionID = ids_seq.NEXTVAL,
+         fileTransactionID = ids_seq.NEXTVAL
    WHERE id = varRjId;
   -- Record this recall at the MigrationMount level
   UPDATE RecallMount
@@ -737,14 +730,14 @@ BEGIN
        AND MJ.castorFile = CF.id
        AND CF.fileId = inFileId
        AND CF.nsHost = inNsHost
-       AND nbRetries < TO_NUMBER(getConfigOption('Migration', 'MaxNbMounts', 7)))
+       AND nbRetries <= TO_NUMBER(getConfigOption('Migration', 'MaxNbMounts', 7)))
     SET nbRetries = nbRetries + 1,
         status = tconst.MIGRATIONJOB_PENDING,
         vid = NULL,
         mountTransactionId = NULL
     RETURNING fileTransactionId INTO varFileTrId;
   IF SQL%ROWCOUNT = 0 THEN
-    -- Nb of retries exceeded, fail migration
+    -- Nb of retries exceeded or migration job not found, fail migration
     failFileMigration(inMountTrId, inFileId, inErrorCode, inReqId);
   -- ELSE we have one more retry, which has been logged upstream
   END IF;
