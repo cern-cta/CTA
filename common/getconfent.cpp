@@ -53,7 +53,15 @@ extern "C" char *getconfent_fromfile(const char *filename,
 char *getconfent(const char *category,
                  const char *name,
                  int flags) {
-  return getconfent_fromfile(PATH_CONFIG,category,name,flags);
+  // Try to get the location of the configuration file from the environment
+  // variable named PATH_CONFIG.  If the enviornment variable is not set then
+  // fall back to the compile-time default.
+  const char *configFilename = getenv("PATH_CONFIG");
+  if(NULL == configFilename) {
+    configFilename = PATH_CONFIG;
+  }
+
+  return getconfent_fromfile(configFilename,category,name,flags);
 }
 
 int getconfent_parser(char **conf_val,
