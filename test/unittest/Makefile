@@ -39,6 +39,7 @@ rununittests: \
   castor_MessageAck.o \
   client_BaseClient.o \
   client_VectorResponseHandler.o \
+  common_CastorConfiguration.o \
   common_Cdlopen.o \
   common_Cdomainname.o \
   common_Cgetopt.o \
@@ -413,10 +414,13 @@ common_Csecloader.o: $(ROOT_DIR)/common/Csecloader.c
 common_getifnam.o: $(ROOT_DIR)/common/getifnam.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-common_Cdomainname.o: $(ROOT_DIR)/common/Cdomainname.c
-	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+common_CastorConfiguration.o: $(ROOT_DIR)/castor/common/CastorConfiguration.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 common_Cdlopen.o: $(ROOT_DIR)/common/Cdlopen.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+common_Cdomainname.o: $(ROOT_DIR)/common/Cdomainname.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 common_Cgrp.o: $(ROOT_DIR)/common/Cgrp.c
