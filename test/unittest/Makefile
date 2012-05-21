@@ -449,8 +449,8 @@ common_Cglobals.o: $(ROOT_DIR)/common/Cglobals.c
 common_Cnetdb.o: $(ROOT_DIR)/common/Cnetdb.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-common_getconfent.o: $(ROOT_DIR)/common/getconfent.c
-	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+common_getconfent.o: $(ROOT_DIR)/common/getconfent.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 common_Cgetopt.o: $(ROOT_DIR)/common/Cgetopt.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
