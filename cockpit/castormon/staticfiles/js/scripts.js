@@ -134,6 +134,7 @@ function getTimelineChartOptions(metric_name) {
                     },
                     shadow: false,
                     //animation: false,
+                    connectNulls: false,
                     states: {
                         hover: {
                                 enabled: false
@@ -170,7 +171,7 @@ function getTimelineChartOptions(metric_name) {
             },
             xAxis: {
                 type: 'datetime',
-                ordinal: true
+                ordinal: false
             },
             yAxis: {
                 //min: 0,
