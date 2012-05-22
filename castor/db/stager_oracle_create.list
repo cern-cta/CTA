@@ -8,7 +8,6 @@ oracleStager.sql
 oracleJob.sql
 oracleQuery.sql
 oracleTapeGateway.sql
-oracleDiskTapeInterface.sql
 oracleGC.sql
 oracleDrain.sql
 oracleDebug.sql
