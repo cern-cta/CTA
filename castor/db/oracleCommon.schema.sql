@@ -887,7 +887,7 @@ CREATE GLOBAL TEMPORARY TABLE RepackTapeSegments
 /*****************/
 
 /* allows the call of new versions of remote procedures when the signature is matching */
-CREATE OR REPLACE TRIGGER tr_RemoteDepSignature AFTER LOGON ON DATABASE
+CREATE OR REPLACE TRIGGER tr_RemoteDepSignature AFTER LOGON ON SCHEMA
 BEGIN
   EXECUTE IMMEDIATE 'ALTER SESSION SET REMOTE_DEPENDENCIES_MODE=SIGNATURE';
 END;
