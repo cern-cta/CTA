@@ -5,11 +5,13 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
 
+
+/*** Migration ***/
+
 /* Get next candidates for a given migration mount.
  * input:  VDQM transaction id, count and total size
  * output: outVid    the target VID,
-           outRet    return code (-2: migration is over; -1: no more candidates; 0: candidates found)
-           outFiles  a cursor for the set of migration candidates 
+           outFiles  a cursor for the set of migration candidates. 
  * Locks are taken on the selected migration jobs.
  *
  * We should only propose a migration job for a file that does not
@@ -28,18 +30,15 @@ CREATE OR REPLACE PROCEDURE tg_getBulkFilesToMigrate(inMountTrId IN NUMBER,
   varFileTrId NUMBER;
 BEGIN
   BEGIN
-    -- Extract id and tape gateway request and VID from the migration mount
-    SELECT id, vid INTO varMountId, varVid
+    -- Get id, VID and last valid fseq for this migration mount, lock
+    SELECT id, vid, lastFSeq INTO varMountId, varVid, varNewFseq
       FROM MigrationMount
-     WHERE mountTransactionId = inMountTrId;
+     WHERE mountTransactionId = inMountTrId
+       FOR UPDATE;
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- migration mount is over
+    -- migration mount is over or unknown request
     RETURN;
   END;
-  -- Get last valid fseq and lock this mount
-  SELECT lastFseq INTO varNewFseq
-    FROM MigrationMount
-   WHERE id = varMountId FOR UPDATE;
   varCount := 0;
   varTotalSize := 0;
   -- Get candidates up to inCount or inTotalSize
@@ -74,7 +73,7 @@ BEGIN
     varTotalSize := varTotalSize + Cand.fileSize;
     INSERT INTO FilesToMigrateHelper (fileId, nsHost, lastKnownFileName, filePath, fileTransactionId, fileSize, fseq)
       VALUES (Cand.fileId, Cand.nsHost, Cand.lastKnownFileName, Cand.filePath, ids_seq.NEXTVAL, Cand.fileSize, varNewFseq)
-    RETURNING fileTransactionId INTO varFileTrId;
+      RETURNING fileTransactionId INTO varFileTrId;
     -- Take this candidate on this mount
     UPDATE MigrationJob
        SET status = tconst.MIGRATIONJOB_SELECTED,
@@ -104,6 +103,9 @@ END;
 /
 
 
+/* Commit a set of succeeded/failed migration processes to the NS and stager db.
+ * Locks are taken on the involved castorfiles one by one, then to the dependent entities.
+ */
 CREATE OR REPLACE PROCEDURE tg_setBulkFileMigrationResult(inMountTrId IN NUMBER,
                                                           inFileIds IN castor."cnumList",
                                                           inFileTrIds IN castor."cnumList",
@@ -159,7 +161,7 @@ BEGIN
                 inTransferredSizes(i), inComprSizes(i), varVid, inFseqs(i),
                 strtoRaw4(inBlockIds(i)), inChecksumTypes(i), inChecksums(i));
       EXCEPTION WHEN NO_DATA_FOUND THEN
-        -- Log 'file not found, giving up'
+        -- Log 'unable to identify migration, giving up'
         varParams := 'mountTransactionId='|| to_char(inMountTrId) ||' '|| inLogContext;
         logToDLF(varReqid, dlf.LVL_ERROR, dlf.MIGRATION_NOT_FOUND, inFileIds(i), varNsHost, 'tapegatewayd', varParams);
       END;
@@ -221,7 +223,7 @@ BEGIN
     COMMIT;
   END LOOP;
   -- Final log
-  varParams := 'Function="tg_setBulkFileMigrationResult" mountTransactionId='|| to_char(inMountTrId)
+  varParams := 'mountTransactionId='|| to_char(inMountTrId)
                ||' NbFiles='|| inFileIds.COUNT ||' '|| inLogContext
                ||' ElapsedTime='|| getSecs(varStartTime, SYSTIMESTAMP)
                ||' AvgProcessingTime='|| getSecs(varStartTime, SYSTIMESTAMP)/inFileIds.COUNT;
@@ -229,7 +231,7 @@ BEGIN
 END;
 /
 
-
+/* Commit a successful file migration */
 CREATE OR REPLACE PROCEDURE tg_setFileMigrated(inMountTrId IN NUMBER, inFileId IN NUMBER,
                                                inReqId IN VARCHAR2, inLogContext IN VARCHAR2) AS
   varNsHost VARCHAR2(2048);
@@ -302,7 +304,6 @@ BEGIN
   END IF;
 END;
 /
-
 
 /* Fail a file migration, potentially archiving outstanding repack requests */
 CREATE OR REPLACE PROCEDURE failFileMigration(inMountTrId IN NUMBER, inFileId IN NUMBER,
@@ -380,4 +381,155 @@ END;
 
 
 /*** Recall ***/
-/* XXX move from oracleTapeGateway */
+
+/* Get next candidates for a given recall mount.
+ * input:  VDQM transaction id, count and total size
+ * output: outFiles, a cursor for the set of recall candidates.
+ * A lock is taken on the selected recall mount.
+ */
+CREATE OR REPLACE PROCEDURE tg_getBulkFilesToRecall(inMountTrId IN NUMBER,
+                                                    inCount IN INTEGER, inTotalSize IN INTEGER,
+                                                    outFiles OUT castorTape.FileToRecallCore_cur) AS
+  varVid VARCHAR2(10);
+  varPreviousFseq INTEGER;
+  varCount INTEGER;
+  varTotalSize INTEGER;
+  varPath VARCHAR2(2048);
+  varFileTrId INTEGER;
+  varNewFseq INTEGER;
+  bestFSForRecall_error EXCEPTION;
+  PRAGMA EXCEPTION_INIT(bestFSForRecall_error, -20115);
+BEGIN
+  BEGIN
+    -- Get VID and last processed fseq for this recall mount, lock
+    SELECT vid, lastProcessedFseq INTO varVid, varPreviousFseq
+      FROM RecallMount
+     WHERE mountTransactionId = inMountTrId
+       FOR UPDATE;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- recall is over or unknown request
+    RETURN;
+  END;
+  varCount := 0;
+  varTotalSize := 0;
+  varNewFseq := varPreviousFseq;
+  -- Get candidates up to inCount or inTotalSize
+  FOR Cand IN (
+    -- Find the unprocessed recallJobs of this tape with lowest fSeq
+    -- that is above the previous one. If none, take the recallJob with lowest fseq.
+    SELECT RecallJob.id AS rjId, fSeq, blockId, RecallJob.fileSize, castorFile AS cfId, fileId, nsHost
+      FROM RecallJob, CastorFile
+     WHERE vid = varVid
+       AND status = tconst.RECALLJOB_PENDING
+       AND RecallJob.castorFile = CastorFile.id
+     ORDER BY CASE WHEN fseq > varPreviousFseq THEN 1 ELSE 0 END DESC,
+              fseq ASC
+       FOR UPDATE OF RecallJob.id SKIP LOCKED)
+  LOOP
+    BEGIN
+      -- Find the best filesystem to recall the selected file
+      bestFileSystemForRecall(Cand.cfId, varPath);
+      varCount := varCount + 1;
+      varTotalSize := varTotalSize + Cand.fileSize;
+      varNewFseq := Cand.fseq;
+      INSERT INTO FilesToRecallHelper (fileid, nshost, fileTransactionId, filePath, blockId, fSeq)
+        VALUES (Cand.fileId, Cand.nsHost, ids_seq.nextval, varPath, Cand.blockId, Cand.fSeq)
+        RETURNING fileTransactionId INTO varFileTrId;
+      -- update RecallJob
+      UPDATE RecallJob
+         SET status = tconst.RECALLJOB_SELECTED,
+             fileTransactionID = varFileTrId
+       WHERE id = Cand.rjId;
+      IF varCount > inCount OR varTotalSize > inTotalSize THEN
+        -- we have enough candidates for this round, exit loop
+        EXIT;
+      END IF;
+    EXCEPTION WHEN bestFSForRecall_error OR NO_DATA_FOUND THEN
+      -- log 'bestFileSystemForRecall could not find a suitable destination for this recall' and skip it
+      -- XXX we should actually abort this recall + restart SRs
+      logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_FS_NOT_FOUND, Cand.fileId, Cand.nsHost, 'tapegatewayd',
+        'errorMessage="' || SQLERRM || '"');
+    END;
+  END LOOP;
+  -- Record last fseq at the mount level
+  UPDATE RecallMount
+     SET lastProcessedFseq = varNewFseq
+   WHERE vid = varVid;
+  IF varCount > 0 THEN
+    -- Return all candidates. Don't commit now, this will be done in C++
+    -- after the results have been collected as the temporary table will be emptied.
+    OPEN outFiles FOR
+      SELECT fileid, nshost, fileTransactionId, filePath, blockId, fseq
+        FROM FilesToRecallHelper;
+  END IF;
+END;
+/
+
+
+/* Commit a set of succeeded/failed recall processes to the NS and stager db.
+ * Locks are taken on the involved castorfiles one by one, then to the dependent entities.
+ */
+CREATE OR REPLACE PROCEDURE tg_setBulkFileRecallResult(inMountTrId IN NUMBER,
+                                                       inFileIds IN castor."cnumList",
+                                                       inFileTrIds IN castor."cnumList",
+                                                       inFilePaths IN castor."strList",
+                                                       inFseqs IN castor."cnumList",
+                                                       inChecksumNames IN castor."strList",
+                                                       inChecksums IN castor."cnumList",
+                                                       inErrorCodes IN castor."cnumList",
+                                                       inErrorMsgs IN castor."strList",
+                                                       inLogContext IN VARCHAR2) AS
+  varCfId NUMBER;
+  varVID VARCHAR2(10);
+  varReqId VARCHAR2(36);
+  varStartTime TIMESTAMP;
+  varNsHost VARCHAR2(2048);
+  varParams VARCHAR2(4000);
+BEGIN
+  varStartTime := SYSTIMESTAMP;
+  varReqId := uuidGen();
+  -- Get the NS host name
+  varNsHost := getConfigOption('stager', 'nsHost', '');
+  -- Get the current VID
+  SELECT VID INTO varVID
+    FROM RecallMount
+   WHERE mountTransactionId = inMountTrId;
+  -- Loop over the input
+  FOR i IN inFileIds.FIRST .. inFileIds.LAST LOOP
+    BEGIN
+      -- Find and lock related castorFile
+      SELECT id INTO varCfId
+        FROM CastorFile
+       WHERE fileid = inFileIds(i)
+         AND nsHost = varNsHost
+         FOR UPDATE;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- log "setFileRecalled : unable to identify Recall. giving up"
+      logToDLF(varReqId, dlf.LVL_ERROR, dlf.RECALL_NOT_FOUND, inFileIds(i), varNsHost, 'tapegatewayd',
+               'mountTransactionId=' || TO_CHAR(inMountTrId) || ' TPVID=' || varVID ||
+               ' fseq=' || TO_CHAR(inFseqs(i)) || ' filePath=' || inFilePaths(i) || ' ' || inLogContext);
+      CONTINUE;
+    END;
+    -- Now deal with each recall one by one
+    IF inErrorCodes(i) = 0 THEN
+      -- Recall successful, check NS and update stager + log
+      tg_setFileRecalled(inMountTrId, inFseqs(i), inFilePaths(i), inChecksumNames(i), inChecksums(i),
+                         varReqId, inLogContext);
+    ELSE
+      -- Recall failed at tapeserver level, attempt to retry it
+      -- log "setBulkFileRecallResult : recall process failed, will retry if allowed"
+      logToDLF(varReqId, dlf.LVL_ERROR, dlf.RECALL_FAILED, inFileIds(i), varNsHost, 'tapegatewayd',
+               'mountTransactionId=' || TO_CHAR(inMountTrId) || ' TPVID=' || varVID ||
+               ' fseq=' || TO_CHAR(inFseqs(i)) || ' errorMessage="' || inErrorMsgs(i) ||'" '|| inLogContext);
+      retryOrFailRecall(varCfId, varVID);
+    END IF;
+    COMMIT;
+  END LOOP;
+  -- Final log
+  varParams := 'mountTransactionId='|| to_char(inMountTrId)
+               ||' NbFiles='|| inFileIds.COUNT ||' '|| inLogContext
+               ||' ElapsedTime='|| getSecs(varStartTime, SYSTIMESTAMP)
+               ||' AvgProcessingTime='|| getSecs(varStartTime, SYSTIMESTAMP)/inFileIds.COUNT;
+  logToDLF(varReqid, dlf.LVL_SYSTEM, dlf.BULK_RECALL_COMPLETED, 0, '', 'tapegatewayd', varParams);
+END;
+/

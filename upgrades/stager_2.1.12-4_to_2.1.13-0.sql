@@ -245,17 +245,23 @@ INSERT INTO CastorConfig
 -- XXX insert some PL/SQL block to convert old recall and migration jobs into new schema...
 
 
-/* Temporary table used to bulk select next candidates for migration */
+/* Temporary table used to bulk select next candidates for recall and migration */
+CREATE GLOBAL TEMPORARY TABLE FilesToRecallHelper
+ (fileId NUMBER, nsHost VARCHAR2(100), fileTransactionId NUMBER,
+  filePath VARCHAR2(2048), blockId RAW(4), fSeq INTEGER)
+ ON COMMIT DELETE ROWS;
+
 CREATE GLOBAL TEMPORARY TABLE FilesToMigrateHelper
  (fileId NUMBER, nsHost VARCHAR2(100), lastKnownFileName VARCHAR2(2048), filePath VARCHAR2(2048),
-  fileTransactionId NUMBER, fileSize NUMBER, fseq NUMBER)
- ON COMMIT PRESERVE ROWS;
-
+  fileTransactionId NUMBER, fileSize NUMBER, fSeq INTEGER)
+ ON COMMIT DELETE ROWS;
+ 
 CREATE GLOBAL TEMPORARY TABLE FileMigrationResultsHelper
  (reqId VARCHAR2(36) CONSTRAINT PK_SetSegsHelper_ReqId PRIMARY KEY,
   fileId NUMBER, lastModTime NUMBER, copyNo NUMBER, oldCopyNo NUMBER, transfSize NUMBER,
-  comprSize NUMBER, vid VARCHAR2(6), fseq NUMBER, blockId RAW(4), checksumType VARCHAR2(2), checksum NUMBER)
+  comprSize NUMBER, vid VARCHAR2(6), fSeq NUMBER, blockId RAW(4), checksumType VARCHAR2(2), checksum NUMBER)
   ON COMMIT DELETE ROWS;
+
 
 /* Drop obsoleted code */
 DROP PROCEDURE bestFileSystemForSegment;
@@ -280,6 +286,7 @@ DROP PROCEDURE tg_failFileTransfer;
 DROP PROCEDURE tg_getRepackVIDAndFileInfo;
 DROP PROCEDURE tg_getFailedMigrations;
 DROP PROCEDURE tg_getFileToMigrate;
+DROP PROCEDURE tg_getFileToRecall;
 DROP FUNCTION selectTapeForRecall;
 DROP FUNCTION triggerRepackRecall;
 

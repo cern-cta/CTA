@@ -19,12 +19,10 @@ CREATE OR REPLACE PACKAGE castorTape AS
   TYPE FileToRecallCore IS RECORD (
    fileId NUMBER,
    nsHost VARCHAR2(2048),
-   diskserver VARCHAR2(2048),
-   mountPoint VARCHAR(2048),
-   path VARCHAR2(2048),
-   fseq INTEGER,
    fileTransactionId NUMBER,
-   blockId RAW(4));
+   filePath VARCHAR2(2048),
+   blockId RAW(4),
+   fseq INTEGER);
   TYPE FileToRecallCore_Cur IS REF CURSOR RETURN  FileToRecallCore;  
   TYPE FileToMigrateCore IS RECORD (
    fileId NUMBER,
@@ -150,59 +148,23 @@ BEGIN
 END;
 /
 
-/* mark a migration or recall as failed or to be retried according to the retry policy */
-CREATE OR REPLACE
-PROCEDURE tg_failFileTransfer(inMountTransactionId IN NUMBER,
-                              inFileId IN NUMBER,
-                              inNsHost IN VARCHAR2,
-                              inErrorCode IN NUMBER) AS
-  varVID VARCHAR2(2048);
-  varCfId NUMBER;
-BEGIN
-  BEGIN
-    -- Lock related castorfile
-    SELECT CF.id INTO varCfId 
-      FROM CastorFile CF
-     WHERE CF.fileid = inFileId
-       AND CF.nsHost = inNsHost 
-       FOR UPDATE;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- file not found, raise
-    RAISE_APPLICATION_ERROR(-20119, 'tg_failFileTransfer: File not found attempting to retry fileId ' ||
-                            inFileId || ' on mountTransactionId ' || inMountTransactionId);
-  END;
-  -- suppose it's a recall case
-  SELECT VID INTO varVID
-    FROM RecallMount
-   WHERE mountTransactionId = inMountTransactionId;
-  -- mark RecallJob for retry
-  retryOrFailRecall(varCfId, varVID);
-EXCEPTION WHEN NO_DATA_FOUND THEN
-  -- so it must be a migration case
-  retryOrFailMigration(inMountTransactionId, inFileId, inNsHost, inErrorCode, NULL);
-END;
-/
-
 
 /* PL/SQL method implementing bestFileSystemForRecall */
-CREATE OR REPLACE PROCEDURE bestFileSystemForRecall(inCfId IN INTEGER, diskServerName OUT VARCHAR2,
-                                                    rmountPoint OUT VARCHAR2, rpath OUT VARCHAR2) AS
+CREATE OR REPLACE PROCEDURE bestFileSystemForRecall(inCfId IN INTEGER, outFilePath OUT VARCHAR2) AS
   varCfId INTEGER;
-  fileSystemId NUMBER := 0;
-  fsDiskServer NUMBER;
-  fileSize NUMBER;
+  varFileSystemId NUMBER := 0;
   nb NUMBER;
 BEGIN
   -- try and select a good FileSystem for this recall
-  FOR a IN (SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/
-                   DiskServer.name, FileSystem.mountPoint, FileSystem.id,
+  FOR f IN (SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/
+                   DiskServer.name || FileSystem.mountPoint AS remotePath, FileSystem.id,
                    FileSystem.diskserver, CastorFile.fileSize, CastorFile.fileId, CastorFile.nsHost
               FROM DiskServer, FileSystem, DiskPool2SvcClass,
-                   (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, svcClass from StageGetRequest                            UNION ALL
-                    SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */ id, svcClass from StagePrepareToGetRequest UNION ALL
+                   (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, svcClass FROM StageGetRequest                            UNION ALL
+                    SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */ id, svcClass FROM StagePrepareToGetRequest UNION ALL
                     SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */ id, svcClass from StageRepackRequest                   UNION ALL
                     SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ id, svcClass from StageUpdateRequest                   UNION ALL
-                    SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcClass from StagePrepareToUpdateRequest) Request,
+                    SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcClass FROM StagePrepareToUpdateRequest) Request,
                     SubRequest, CastorFile
              WHERE CastorFile.id = inCfId
                AND SubRequest.castorfile = inCfId
@@ -228,10 +190,9 @@ BEGIN
                    -- use randomness to avoid preferring always the same FS when everything is idle
                    DBMS_Random.value)
   LOOP
-    diskServerName := a.name;
-    rmountPoint    := a.mountPoint;
-    fileSystemId   := a.id;
-    buildPathFromFileId(a.fileId, a.nsHost, ids_seq.nextval, rpath);
+    varFileSystemId := f.id;
+    buildPathFromFileId(f.fileId, f.nsHost, ids_seq.nextval, outFilePath);
+    outFilePath := f.remotePath || outFilePath;
     -- Check that we don't already have a copy of this file on this filesystem.
     -- This will never happen in normal operations but may be the case if a filesystem
     -- was disabled and did come back while the tape recall was waiting.
@@ -240,97 +201,17 @@ BEGIN
     -- the problem.
     SELECT count(*) INTO nb
       FROM DiskCopy
-     WHERE fileSystem = a.id
+     WHERE fileSystem = f.id
        AND castorfile = inCfid
        AND status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR);
     IF nb != 0 THEN
-      raise_application_error(-20103, 'Recaller could not find a FileSystem in production in the requested SvcClass and without copies of this file');
+      raise_application_error(-20115, 'Recaller could not find a FileSystem in production in the requested SvcClass and without copies of this file');
     END IF;
     RETURN;
   END LOOP;
-  IF fileSystemId = 0 THEN
+  IF varFileSystemId = 0 THEN
     raise_application_error(-20115, 'No suitable filesystem found for this recalled file');
   END IF;
-END;
-/
-
-/* get a candidate for recall */
-CREATE OR REPLACE
-PROCEDURE tg_getFileToRecall (inMountTransactionId IN  NUMBER,
-                              outRet OUT INTEGER,
-                              outVid OUT NOCOPY VARCHAR2,
-                              outFile OUT castorTape.FileToRecallCore_Cur) AS
-  varDSName VARCHAR2(2048); -- Disk Server name
-  varMPoint VARCHAR2(2048); -- Mount Point
-  varPath   VARCHAR2(2048); -- Diskcopy path
-
-  varPreviousFseq INTEGER;
-  varRjId         INTEGER;
-  varCfId         INTEGER;
-  varNewFSeq      INTEGER;
-BEGIN 
-  BEGIN
-    SELECT vid, lastProcessedFseq INTO outVid, varPreviousFseq
-      FROM RecallMount
-     WHERE mountTransactionId = inMountTransactionId
-       FOR UPDATE;
-  EXCEPTION WHEN  NO_DATA_FOUND THEN
-     -- unknown request
-     outRet := -2;
-     RETURN;
-  END; 
-
-  BEGIN
-    -- Find the unprocessed recallJob of this tape with lowest fSeq
-    -- that is above the previous one. If none, take the recallJob with lowest fseq.
-    SELECT id, fSeq, castorFile INTO varRjId, varNewFSeq, varCfId
-      FROM (SELECT id, fSeq, castorFile
-              FROM RecallJob
-             WHERE vid = outvid  
-               AND status = tconst.RECALLJOB_PENDING
-             ORDER BY CASE WHEN fseq > varPreviousFseq THEN 1 ELSE 0 END DESC,
-                      fseq ASC)
-     WHERE ROWNUM < 2;
-    -- Lock the corresponding castorfile
-    SELECT id INTO varCfId
-      FROM Castorfile
-     WHERE id = varCfId 
-       FOR UPDATE;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-     outRet := -1; -- NO MORE FILES
-     COMMIT;
-     RETURN;
-  END;
-
-  -- Find the best filesystem to recall the selected file
-  DECLARE
-    application_error EXCEPTION;
-    PRAGMA EXCEPTION_INIT(application_error,-20115);
-  BEGIN
-    bestFileSystemForRecall(varCfId,varDSName,varMPoint,varPath);
-  EXCEPTION WHEN application_error OR NO_DATA_FOUND THEN 
-    outRet := -3;
-    COMMIT;
-    RETURN;
-  END;
-
-  -- update recallMount and RecallJob
-  UPDATE RecallJob
-     SET status = tconst.RECALLJOB_SELECTED,
-         fileTransactionID = ids_seq.NEXTVAL
-   WHERE id = varRjId;
-  -- Record this recall at the MigrationMount level
-  UPDATE RecallMount
-     SET lastProcessedFseq = varNewFSeq
-   WHERE vid = outVid;
-
-  -- return all needed info
-  OPEN outFile FOR 
-    SELECT Castorfile.fileid, Castorfile.nshost, varDSName, varMPoint,
-           varPath, varNewFSeq, RecallJob.fileTransactionID, RecallJob.blockId
-      FROM RecallJob, Castorfile
-     WHERE RecallJob.id = varRjId
-       AND Castorfile.id = RecallJob.castorfile;
 END;
 /
 
@@ -480,7 +361,9 @@ CREATE OR REPLACE FUNCTION checkRecallInNS(inCfId IN INTEGER,
                                            inNsHost IN VARCHAR2,
                                            inCksumName IN VARCHAR2,
                                            inCksumValue IN INTEGER,
-                                           inLastUpdateTime IN NUMBER) RETURN BOOLEAN AS
+                                           inLastUpdateTime IN NUMBER,
+                                           inReqId IN VARCHAR2,
+                                           inLogContext IN VARCHAR2) RETURN BOOLEAN AS
   varNSLastUpdateTime NUMBER;
   varNSCsumtype VARCHAR2(2048);
   varNSCsumvalue VARCHAR2(2048);
@@ -500,7 +383,7 @@ BEGIN
      WHERE castorFile = inCfId
        AND status = dconst.SUBREQUEST_WAITTAPERECALL;
     -- log "setFileRecalled : file was overwritten during recall, restarting from scratch"
-    logToDLF(NULL, dlf.LVL_NOTICE, dlf.RECALL_FILE_OVERWRITTEN, inFileId, inNsHost, 'tapegatewayd',
+    logToDLF(inReqId, dlf.LVL_NOTICE, dlf.RECALL_FILE_OVERWRITTEN, inFileId, inNsHost, 'tapegatewayd',
              'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || inVID ||
              ' fseq=' || TO_CHAR(inFseq) || ' NsLastUpdateTime=' || TO_CHAR(varNSLastUpdateTime) ||
              ' CFLastUpdateTime=' || TO_CHAR(inLastUpdateTime));
@@ -512,7 +395,7 @@ BEGIN
     -- no -> let's set it (note that the function called commits in the remote DB)
     setSegChecksumWhenNull@remoteNS(inFileId, inCopyNb, inCksumName, inCksumValue);
     -- log 'setFileRecalled : created missing checksum in the namespace'
-    logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_CREATED_CHECKSUM, inFileId, inNsHost, 'nsd',
+    logToDLF(inReqId, dlf.LVL_SYSTEM, dlf.RECALL_CREATED_CHECKSUM, inFileId, inNsHost, 'nsd',
              'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' CopyNo=' || inCopyNb ||
              ' TPVID=' || inVID || ' Fseq=' || TO_CHAR(inFseq) || ' checksumType='  || inCksumName ||
              ' checksumValue=' || TO_CHAR(inCksumValue));
@@ -523,7 +406,7 @@ BEGIN
       -- not matching ! Retry the recall
       retryOrFailRecall(inCfId, inVID);
       -- log "setFileRecalled : bad checksum detected, will retry if allowed"
-      logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_BAD_CHECKSUM, inFileId, inNsHost, 'tapegatewayd',
+      logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_BAD_CHECKSUM, inFileId, inNsHost, 'tapegatewayd',
                'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || inVID ||
                ' fseq=' || TO_CHAR(inFseq) || ' checksumType='  || inCksumName ||
                ' expectedChecksumValue=' || varNSCsumvalue ||
@@ -542,9 +425,9 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
      WHERE castorFile = inCfId
        AND status = dconst.SUBREQUEST_WAITTAPERECALL;
   -- log "setFileRecalled : file was dropped from namespace during recall, giving up"
-  logToDLF(NULL, dlf.LVL_NOTICE, dlf.RECALL_FILE_DROPPED, inFileId, inNsHost, 'tapegatewayd',
+  logToDLF(inReqId, dlf.LVL_NOTICE, dlf.RECALL_FILE_DROPPED, inFileId, inNsHost, 'tapegatewayd',
            'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || inVID ||
-           ' fseq=' || TO_CHAR(inFseq) || ' CFLastUpdateTime=' || TO_CHAR(inLastUpdateTime));
+           ' fseq=' || TO_CHAR(inFseq) || ' CFLastUpdateTime=' || TO_CHAR(inLastUpdateTime) || ' ' || inLogContext);
   RETURN FALSE;
 END;
 /
@@ -554,7 +437,9 @@ CREATE OR REPLACE PROCEDURE tg_setFileRecalled(inMountTransactionId IN INTEGER,
                                                inFseq IN INTEGER,
                                                inFilePath IN VARCHAR2,
                                                inCksumName IN VARCHAR2,
-                                               inCksumValue IN INTEGER) AS
+                                               inCksumValue IN INTEGER,
+                                               inReqId IN VARCHAR2,
+                                               inLogContext IN VARCHAR2) AS
   varFileId         INTEGER;
   varNsHost         VARCHAR2(2048);
   varVID            VARCHAR2(2048);
@@ -590,23 +475,23 @@ BEGIN
        FOR UPDATE OF CastorFile.id;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- log "setFileRecalled : unable to identify Recall. giving up"
-    logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_NOT_FOUND, 0, '', 'tapegatewayd',
+    logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_NOT_FOUND, 0, '', 'tapegatewayd',
              'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || varVID ||
-             ' fseq=' || TO_CHAR(inFseq) || ' filePath=' || inFilePath);
+             ' fseq=' || TO_CHAR(inFseq) || ' filePath=' || inFilePath || ' ' || inLogContext);
     RETURN;
   END;
   -- Check that the file is still there in the namespace (and did not get overwritten)
   -- Note that error handling and logging is done inside the function
   IF NOT checkRecallInNS(varCfId, inMountTransactionId, varVID, varCopyNb, inFseq, varFileId, varNsHost, 
-                         inCksumName, inCksumValue, varLastUpdateTime) THEN RETURN; END IF;
+                         inCksumName, inCksumValue, varLastUpdateTime, inReqId, inLogContext) THEN RETURN; END IF;
   -- get diskserver, filesystem and path from full path in input
   BEGIN
     parsePath(inFilePath, varFSId, varDCPath, varDCId);
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- log "setFileRecalled : unable to parse input path. giving up"
-    logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_INVALID_PATH, varFileId, varNsHost, 'tapegatewayd',
+    logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_INVALID_PATH, varFileId, varNsHost, 'tapegatewayd',
              'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || varVID ||
-             ' fseq=' || TO_CHAR(inFseq) || ' filePath=' || inFilePath);
+             ' fseq=' || TO_CHAR(inFseq) || ' filePath=' || inFilePath || ' ' || inLogContext);
     RETURN;
   END;
 
@@ -661,9 +546,9 @@ BEGIN
   replicateOnClose(varCfId, varEuid, varEgid);
 
   -- log success
-  logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_COMPLETED_DB, varFileId, varNsHost, 'tapegatewayd',
+  logToDLF(inReqId, dlf.LVL_SYSTEM, dlf.RECALL_COMPLETED_DB, varFileId, varNsHost, 'tapegatewayd',
            'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || varVID ||
-           ' fseq=' || TO_CHAR(inFseq) || ' filePath=' || inFilePath);
+           ' fseq=' || TO_CHAR(inFseq) || ' filePath=' || inFilePath || ' ' || inLogContext);
 END;
 /
 
