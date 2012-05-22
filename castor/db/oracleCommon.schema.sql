@@ -340,7 +340,7 @@ CREATE TABLE MigrationJob (fileSize INTEGER CONSTRAINT NN_MigrationJob_FileSize 
                            originalCopyNb INTEGER,
                            destCopyNb INTEGER CONSTRAINT NN_MigrationJob_destcopyNb NOT NULL,
                            tapePool INTEGER CONSTRAINT NN_MigrationJob_TapePool NOT NULL,
-                           nbRetries INTEGER CONSTRAINT NN_MigrationJob_nbRetries NOT NULL DEFAULT 0,
+                           nbRetries INTEGER DEFAULT 0 CONSTRAINT NN_MigrationJob_nbRetries NOT NULL,
                            mountTransactionId INTEGER,   -- this is NULL at the beginning
                            fileTransactionId INTEGER CONSTRAINT UN_MigrationJob_FileTrId UNIQUE USING INDEX,
                            fSeq INTEGER,
