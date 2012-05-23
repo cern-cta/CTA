@@ -5817,7 +5817,6 @@ int Cns_srv_openx(char *req_data,
   char       path[CA_MAXPATHLEN + 1];
   int        classid;
   int        flags;
-  int        nbsegs;
   uid_t      owneruid;
   gid_t      ownergid;
   mode_t     mask;
@@ -5907,41 +5906,31 @@ int Cns_srv_openx(char *req_data,
     }
 
     /* If the file was opened with O_TRUNC and has one of the writable access
-     * modes check whether we should delete the segments associated to the file
-     * and reset the file size.
-     *
-     * Note: We should really reset the file size and drop the segments in all
-     * cases. See #68818: Remove all tapecopies on file overwrite.
+     * modes delete the segments associated to the file and reset the file size
      */
     if ((flags & O_TRUNC) && ((flags & O_WRONLY) || (flags & O_RDWR))) {
-
-      /* Determine the number of segments the file has, segment status is not
-       * taken into consideration.
-       */
-      nbsegs = 0;
-      if (Cns_get_smd_copy_count_by_pfid
-          (&thip->dbfd, fmd_entry.fileid, &nbsegs, 0)) {
+      
+      /* Drop segments if any, log their metadata */
+      if (Cns_delete_segs(thip, &fmd_entry, 0)) {
+        if (serrno != SEENTRYNFND) {
+          sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
+          RETURN (serrno);
+        }
+      }
+      
+      /* Reset the filesize and update the time attributes */
+      fmd_entry.filesize = 0;
+      fmd_entry.mtime = time (0);
+      fmd_entry.ctime = fmd_entry.mtime;
+      fmd_entry.status = '-';
+      if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &fmd_entry)) {
         sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
         RETURN (serrno);
       }
 
-      /* If the file has zero segments, reset the file size */
-      if (nbsegs == 0) {
-
-        /* Reset the filesize and update the time attributes */
-        fmd_entry.filesize = 0;
-        fmd_entry.mtime = time (0);
-        fmd_entry.ctime = fmd_entry.mtime;
-        fmd_entry.status = '-';
-        if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &fmd_entry)) {
-          sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
-          RETURN (serrno);
-        }
-
-        /* Ammend logging parameters */
-        sprintf (reqinfo->logbuf + strlen(reqinfo->logbuf),
-                 " Truncated=\"True\"");
-      }
+      /* Ammend logging parameters */
+      sprintf (reqinfo->logbuf + strlen(reqinfo->logbuf),
+               " Truncated=\"True\"");
     }
   } else {  /* New file */
     if ((flags & O_CREAT) == 0)
