@@ -1468,7 +1468,7 @@ CREATE OR REPLACE PROCEDURE tg_setBulkFileRecallResult(inLogContext IN VARCHAR2,
                                                        inFseqs IN castor."cnumList",
                                                        inChecksumNames IN castor."strList",
                                                        inChecksums IN castor."cnumList",
-                                                       inFileSizes IN castor."cnumlist",
+                                                       inFileSizes IN castor."cnumList",
                                                        inErrorCodes IN castor."cnumList",
                                                        inErrorMsgs IN castor."strList") AS
   varCfId NUMBER;
