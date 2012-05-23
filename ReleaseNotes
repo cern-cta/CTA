@@ -6,6 +6,8 @@ $SystemLogSocketIgnoreMsgTimestamp off
   - castor-csec has been dropped: the GSI plugin has been removed whereas the KRB5 plugin
     has been integrated into castor-lib, so that it is also part of the client distribution.
     Therefore, as of this release the castor-lib RPM has a depency on Kerberos libraries.
+  - castor-rechandler-server has been dropped as a result of the refactoring of the recall logic.
+  - castor-cockpit is a new package providing the new monitoring system for CASTOR ...
 
 
 --------------
