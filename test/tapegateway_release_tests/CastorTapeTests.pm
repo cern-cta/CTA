@@ -80,6 +80,9 @@ our @export   = qw(
                    elapsed_time
                    spawn_testsuite
                    wait_testsuite
+                   configure_headnode_2111
+                   configure_headnode_2112
+                   configure_headnode_2113
                    ); # Symbols to autoexport (:DEFAULT tag)
 
 # keep track of the locally created files and of the recalled and locally rfcped files.
@@ -1565,7 +1568,7 @@ sub check_leftovers ( $ )
     }
     
     my $schemaversion = get_db_version ( $dbh );
-    if ( $schemaversion =~ /^2_1_12/ ) {
+    if ( $schemaversion =~ /^2_1_1[23]/ ) {
         $sth = $dbh -> prepare("SELECT count (*) from ( 
                               SELECT dc.id from diskcopy dc where
                                 dc.status NOT IN ( 0, 7, 4 )
@@ -1618,7 +1621,7 @@ sub print_leftovers ( $ )
 {
     my $dbh = shift;
     my $schemaversion = get_db_version ( $dbh );
-    if ( $schemaversion =~ /^2_1_12/ ) {
+    if ( $schemaversion =~ /^2_1_1[23]/ ) {
         # Print by castofile with corresponding tapecopies
         my $sth = $dbh -> prepare ("SELECT cf.lastknownfilename, dc.id, dc.status, mj.id, mj.status,
                                     rj.id, rj.status
@@ -1651,7 +1654,7 @@ sub print_leftovers ( $ )
     } else {
         die "Unexpected schema version: $schemaversion";
     }
-    if ( $schemaversion =~ /^2_1_12/ ) {
+    if ( $schemaversion =~ /^2_1_1[23]/ ) {
         # print any other migration and recall jobs not covered previously
         my $sth = $dbh -> prepare ("SELECT cf.lastknownfilename, dc.id, dc.status, mj.id, mj.status, rj.id, rj.status
                                  FROM castorfile cf
@@ -1714,7 +1717,7 @@ sub print_file_info ( $$ )
         print  "    dc.id=$row[0], dc.status=$row[1]\n";
     }
     # Then dump the migration-related info
-    if ( $schemaversion =~ /^2_1_12/ ) {
+    if ( $schemaversion =~ /^2_1_1[23]/ ) {
         $stmt = $dbh -> prepare ("SELECT mj.id, mj.status, mjtp.name, mm.id, mm.status, mm.vid, tp.name, seg.id, seg.status, seg.errorcode, seg.errmsgtxt, seg.tape 
                                       FROM castorfile cf
                                       INNER JOIN migrationJob mj on mj.castorfile = cf.id
@@ -1783,7 +1786,7 @@ sub print_migration_and_recall_structures ( $ )
 {
     my ( $dbh ) = (shift);
     my $schemaversion = get_db_version ( $dbh );
-    if ( $schemaversion =~ /^2_1_12/ ) {
+    if ( $schemaversion =~ /^2_1_1[23]/ ) {
         # print all the migration mounts (with tapepool info).
         print "Migration mounts snapshot:\n";
         my $stmt = $dbh -> prepare ("SELECT mm.id, mm.status, mm.tapegatewayrequestid, mm.vid, tp.name
@@ -2329,6 +2332,58 @@ sub configure_headnode_2112 ( )
     print `entermigrationroute largeuser 1:$default_pool`;
 }
 
+sub configure_headnode_2113 ( )
+{
+    my @diskServers = get_disk_servers();
+    my $nbDiskServers = @diskServers;
+    poll_rm_readyness ( 1, 15 );
+    print "Sleeping extra 15 seconds\n";
+    sleep (15);
+    
+    my $rmGetNodesResult = `rmGetNodes | egrep 'name:'`;
+    print("\n");
+    print("rmGetNodes RESULTS\n");
+    print("==================\n");
+    print($rmGetNodesResult);
+    
+    # Fill database with the standard set-up for a dev-box
+    print `nslistclass | grep NAME | awk '{print \$2}' | xargs -i enterfileclass {}`;
+
+    print `enterdiskpool default`;
+    print `enterdiskpool extra`;
+    
+    print `entersvcclass --diskpools default --defaultfilesize 10485760 --failjobswhennospace yes default`;
+    my $main_tapepool=`vmgrlistpool  | head -1  | awk '{print \$1}' | tr -d "\\n"`;
+    print `entertapepool --nbdrives 2 --minamountdata 0 --minnbfiles 0 --maxfileage 0 $main_tapepool`;
+    print `entersvcclass --diskpools extra --defaultfilesize 10485760 --failjobswhennospace yes dev`;
+    print `entersvcclass --diskpools extra --forcedfileclass temp --defaultfilesize 10485760 --disk1behavior yes --failjobswhennospace yes diskonly`;
+    
+    print `rmAdminNode -r -R -n $diskServers[0]`;
+    print `rmAdminNode -r -R -n $diskServers[1]`;
+    sleep 10;
+    print `moveDiskServer default $diskServers[0]`;
+    print `moveDiskServer extra $diskServers[1]`;
+
+    # Add the tapecopy routing rules
+    my $single_copy_dir = $environment{castor_directory} . $environment{castor_single_subdirectory};
+    my $dual_copy_dir = $environment{castor_directory} . $environment{castor_dual_subdirectory};
+    #my $single_file_class_number = `nsls -d --class $single_copy_dir |  awk '{print \$1}'`;
+    #my $single_copy_class = `printfileclass  | perl -e 'while (<>) { if (/\\s*(\\w+)\\s+(\\w+)\\s+(\\w+)\\s+(\\w+)/ && \$2 eq $single_file_class_number) { print \$1 }}'`;
+    my  $single_copy_class = 'largeuser';
+    #my $dual_file_class_number = `nsls -d --class $dual_copy_dir |  awk '{print \$1}'`;
+    #my $dual_copy_class = `printfileclass  | perl -e 'while (<>) { if (/\\s*(\\w+)\\s+(\\w+)\\s+(\\w+)\\s+(\\w+)/ && \$2 eq $dual_file_class_number) { print \$1 }}'`;
+    my $dual_copy_class ='test2';
+    my $svcclass = $environment{svcclass};
+    my $tapepool = $environment{tapepool};
+    print `entertapepool --nbdrives 2 --minamountdata 0 --minnbfiles 0 --maxfileage 0 $tapepool`;
+    print `entermigrationroute $single_copy_class 1:$tapepool`;
+    print `entermigrationroute $dual_copy_class 1:$tapepool 2:$tapepool`;
+    
+    # Add a single copy default-default route using first pool name
+    my $default_pool = `vmgrlistpool | head -1  | awk '{print \$1}'`;
+    print `entermigrationroute largeuser 1:$default_pool`;
+}
+
 sub reinstall_stager_db()
 {
     reinstall_stager_db_from_checkout ( $environment{checkout_location} );
@@ -2397,14 +2452,19 @@ END {
         print "t=".elapsed_time()."s. Nuking leftovers, if any.\n";
         my $stmt;
         my $schemaversion = get_db_version ( $dbh );
-        if ( $schemaversion =~ /^2_1_12/ ) {
+        if ( $schemaversion =~ /^2_1_13/ ) {
+            $stmt = $dbh->prepare("BEGIN
+                                    DELETE FROM MigrationJob;
+                                    DELETE FROM RecallJob;
+                                    DELETE FROM DiskCopy;
+                                    COMMIT;
+                                  END;");
+        } elsif ( $schemaversion =~ /^2_1_12/ ) {
             $stmt = $dbh->prepare("BEGIN
                                     DELETE FROM MigrationJob;
                                     DELETE FROM RecallJob;
                                     DELETE FROM Segment;
                                     DELETE FROM DiskCopy;
-                                    DELETE FROM MigrationJob;
-                                    DELETE FROM RecallJob;
                                     COMMIT;
                                   END;");
         } elsif ( $schemaversion =~ /^2_1_11/ ) {

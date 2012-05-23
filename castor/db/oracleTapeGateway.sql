@@ -1005,8 +1005,10 @@ END;
  * The already migrated copies are kept in MigratedSegment until the whole set
  * of siblings has been migrated.
  */
-CREATE OR REPLACE PROCEDURE tg_getBulkFilesToMigrate(inMountTrId IN NUMBER,
-                                                     inCount IN INTEGER, inTotalSize IN INTEGER,
+CREATE OR REPLACE PROCEDURE tg_getBulkFilesToMigrate(inLogContext IN VARCHAR2,
+                                                     inMountTrId IN NUMBER,
+                                                     inCount IN INTEGER,
+                                                     inTotalSize IN INTEGER,
                                                      outFiles OUT castorTape.FileToMigrateCore_cur) AS
   varMountId NUMBER;
   varCount INTEGER;
@@ -1092,7 +1094,8 @@ END;
 /* Commit a set of succeeded/failed migration processes to the NS and stager db.
  * Locks are taken on the involved castorfiles one by one, then to the dependent entities.
  */
-CREATE OR REPLACE PROCEDURE tg_setBulkFileMigrationResult(inMountTrId IN NUMBER,
+CREATE OR REPLACE PROCEDURE tg_setBulkFileMigrationResult(inLogContext IN VARCHAR2,
+                                                          inMountTrId IN NUMBER,
                                                           inFileIds IN castor."cnumList",
                                                           inFileTrIds IN castor."cnumList",
                                                           inFseqs IN castor."cnumList",
@@ -1102,8 +1105,8 @@ CREATE OR REPLACE PROCEDURE tg_setBulkFileMigrationResult(inMountTrId IN NUMBER,
                                                           inComprSizes IN castor."cnumList",
                                                           inTransferredSizes IN castor."cnumList",
                                                           inErrorCodes IN castor."cnumList",
-                                                          inErrorMsgs IN castor."strList",
-                                                          inLogContext IN VARCHAR2) AS
+                                                          inErrorMsgs IN castor."strList"
+                                                          ) AS
   varStartTime TIMESTAMP;
   varNsHost VARCHAR2(2048);
   varReqId VARCHAR2(36);
@@ -1373,8 +1376,10 @@ END;
  * output: outFiles, a cursor for the set of recall candidates.
  * A lock is taken on the selected recall mount.
  */
-CREATE OR REPLACE PROCEDURE tg_getBulkFilesToRecall(inMountTrId IN NUMBER,
-                                                    inCount IN INTEGER, inTotalSize IN INTEGER,
+CREATE OR REPLACE PROCEDURE tg_getBulkFilesToRecall(inLogContext IN VARCHAR2,
+                                                    inMountTrId IN NUMBER,
+                                                    inCount IN INTEGER,
+                                                    inTotalSize IN INTEGER,
                                                     outFiles OUT castorTape.FileToRecallCore_cur) AS
   varVid VARCHAR2(10);
   varPreviousFseq INTEGER;
@@ -1455,16 +1460,17 @@ END;
 /* Commit a set of succeeded/failed recall processes to the NS and stager db.
  * Locks are taken on the involved castorfiles one by one, then to the dependent entities.
  */
-CREATE OR REPLACE PROCEDURE tg_setBulkFileRecallResult(inMountTrId IN NUMBER,
+CREATE OR REPLACE PROCEDURE tg_setBulkFileRecallResult(inLogContext IN VARCHAR2,
+                                                       inMountTrId IN NUMBER,
                                                        inFileIds IN castor."cnumList",
                                                        inFileTrIds IN castor."cnumList",
                                                        inFilePaths IN castor."strList",
                                                        inFseqs IN castor."cnumList",
                                                        inChecksumNames IN castor."strList",
                                                        inChecksums IN castor."cnumList",
+                                                       inFileSizes IN castor."cnumlist",
                                                        inErrorCodes IN castor."cnumList",
-                                                       inErrorMsgs IN castor."strList",
-                                                       inLogContext IN VARCHAR2) AS
+                                                       inErrorMsgs IN castor."strList") AS
   varCfId NUMBER;
   varVID VARCHAR2(10);
   varReqId VARCHAR2(36);

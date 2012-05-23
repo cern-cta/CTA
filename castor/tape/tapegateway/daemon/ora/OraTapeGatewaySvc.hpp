@@ -139,19 +139,6 @@ namespace castor      {
               const int errorCode = 0)
           throw (castor::exception::Exception);
 
-          /** updates the stager db after a file failure
-           * @param mountTransactionId the transaction id of the mount where the failure took place
-           * @param fileId the file concerned by the failure
-           * @param nsHost the namespace where the file concerned by the failure lives
-           * @param errorCode the code of the error that triggered the failure
-           * @exception throws castor exceptions in case of failure
-           */
-          virtual void failFileTransfer(const u_signed64 mountTransactionId,
-              const u_signed64 fileId,
-              const std::string &nsHost,
-              const int errorCode)
-          throw (castor::exception::Exception);
-
           // To get tapes to release in vmgr */
           virtual void  getTapeToRelease(const u_signed64& mountTransactionId,
               castor::tape::tapegateway::ITapeGatewaySvc::TapeToReleaseInfo& tape)
@@ -202,7 +189,7 @@ namespace castor      {
           /**
            * Get the next best files to migrate
            */
-          virtual void getBulkFilesToMigrate (
+          virtual void getBulkFilesToMigrate (const std::string & context,
               u_signed64 mountTransactionId, u_signed64 maxFiles, u_signed64 maxBytes,
               std::queue<castor::tape::tapegateway::FileToMigrateStruct>& filesToMigrate)
           throw (castor::exception::Exception);
@@ -210,7 +197,7 @@ namespace castor      {
           /**
            * Get the next best files to recall
            */
-          virtual void getBulkFilesToRecall (
+          virtual void getBulkFilesToRecall (const std::string & context,
               u_signed64 mountTransactionId, u_signed64 maxFiles, u_signed64 maxBytes,
               std::queue<castor::tape::tapegateway::FileToRecallStruct>& filesToRecall)
           throw (castor::exception::Exception);
@@ -219,20 +206,20 @@ namespace castor      {
            * Check and update the NS and then the stager DB accordingly from migration result
            * transmitted by the tape server.
            */
-          virtual  void  setBulkFileMigrationResult (u_signed64 mountTransactionId,
+          virtual  void  setBulkFileMigrationResult (
+              const std::string & context, u_signed64 mountTransactionId,
               std::vector<FileMigratedNotificationStruct *>& successes,
-              std::vector<FileErrorReportStruct *>& failures,
-              ptr2ref_vector<BulkDbRecordingResult>& dbResults)
+              std::vector<FileErrorReportStruct *>& failures)
           throw (castor::exception::Exception);
 
           /**
            * Check the NS and update the stager DB accordingly for files from recall result
            * transmitted by the tape server.
            */
-          virtual  void  setBulkFileRecallResult (u_signed64 mountTransactionId,
+          virtual  void  setBulkFileRecallResult (
+              const std::string & context, u_signed64 mountTransactionId,
               std::vector<FileRecalledNotificationStruct *>& successes,
-              std::vector<FileErrorReportStruct *>& failures,
-              ptr2ref_vector<BulkDbRecordingResult>& dbResults)
+              std::vector<FileErrorReportStruct *>& failures)
           throw (castor::exception::Exception);
 
           // To directly commit
@@ -251,14 +238,8 @@ namespace castor      {
           oracle::occi::Statement *m_attachDriveReqStatement;
           oracle::occi::Statement *m_getTapesWithDriveReqsStatement;
           oracle::occi::Statement *m_restartLostReqsStatement;
-          oracle::occi::Statement *m_getFileToMigrateStatement;
-          oracle::occi::Statement *m_setFileMigratedStatement;
-          oracle::occi::Statement *m_setFileStaleInMigrationStatement;
-          oracle::occi::Statement *m_getFileToRecallStatement;
-          oracle::occi::Statement *m_setFileRecalledStatement;
           oracle::occi::Statement *m_getFailedMigrationsStatement;
           oracle::occi::Statement *m_setMigRetryResultStatement;
-          oracle::occi::Statement *m_getRepackVidAndFileInfoStatement;
           oracle::occi::Statement *m_startTapeSessionStatement;
           oracle::occi::Statement *m_endTapeSessionStatement;
           oracle::occi::Statement *m_failFileTransferStatement;
@@ -267,7 +248,6 @@ namespace castor      {
           oracle::occi::Statement *m_deleteMigrationMountWithBadTapePoolStatement;
           oracle::occi::Statement *m_flagTapeFullForMigrationSession;
           oracle::occi::Statement *m_getMigrationMountVid;
-          oracle::occi::Statement *m_dropSuperfluousSegmentStatement;
           oracle::occi::Statement *m_setTapeSessionClosing;
           oracle::occi::Statement *m_getBulkFilesToMigrate;
           oracle::occi::Statement *m_getBulkFilesToRecall;

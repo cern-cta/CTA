@@ -83,7 +83,11 @@ namespace tapegateway{
       char hostName[castor::tape::net::HOSTNAMEBUFLEN];
       unsigned short port;
       unsigned long ip;
+      // Helper converting requester structure into a context string
+      std::string str();
     };
+    // Helper converting requester structure into a context string
+    std::string requester2str (const requesterInfo & reqer);
     // handlers used with the different message types
     castor::IObject* handleStartWorker      (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw(castor::exception::Exception);
     castor::IObject* handleEndWorker        (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw(castor::exception::Exception);
@@ -121,17 +125,6 @@ namespace tapegateway{
 
     // Helper functions for logging database errors (overloaded variants with different
     // parameters.
-    void logDbError (castor::exception::Exception e, requesterInfo& requester,
-        FileMigrationReportList & fileMigrationReportList) throw ();
-    void logDbError (castor::exception::Exception e, requesterInfo& requester,
-        FileRecallReportList &fileRecallReportList) throw ();
-    void logMigrationErrorCannotUpdateDb (
-        Cuuid_t uuid, struct Cns_fileid* castorFileId,
-            u_signed64 mountTransactionId,
-            const requesterInfo& requester, const FileErrorReportStruct & fileMigError,
-            const std::string & serviceClass, const std::string & fileClass,
-            const std::string & tapePool, const std::string & vid,
-            int copyNumber, int error) throw ();
     void logInternalError (castor::exception::Exception e, requesterInfo& requester,
         FileMigrationReportList & fileMigrationReportList) throw ();
     void logInternalError (castor::exception::Exception e, requesterInfo& requester,
@@ -149,22 +142,6 @@ namespace tapegateway{
         const FileMigrationReportList &fileMigrationReportList,
         const std::string & vid, const std::string & tapePool,
         castor::exception::Exception & e);
-    void logMigrationCannotUpdateDb (Cuuid_t uuid, struct Cns_fileid* castorFileId,
-        u_signed64 mountTransactionId,
-        const requesterInfo& requester, const FileMigratedNotificationStruct & fileMigrated,
-        const std::string & serviceClass, const std::string & fileClass,
-        const std::string & tapePool, const std::string & vid,
-        int copyNumber, int error);
-    void logMigrationNsUpdate(Cuuid_t uuid, struct Cns_fileid* castorFileId,
-        const requesterInfo& requester,
-        const ITapeGatewaySvc::BulkMigrationDbRecordingResult & fileMigrated,
-        const std::string & tapePool, const std::string & vid);
-    void logMigrationDbUpdate (Cuuid_t uuid, struct Cns_fileid* castorFileId,
-        u_signed64 mountTransactionId,
-        const requesterInfo& requester, const FileMigratedNotificationStruct & fileMigrated,
-        const std::string & serviceClass, const std::string & fileClass,
-        const std::string & tapePool, const std::string & vid,
-        int copyNumber);
     void logMigrationCannotFindVid (Cuuid_t uuid,
         const requesterInfo& requester, const FileMigrationReportList & migrationReport,
         castor::exception::Exception & e);
@@ -175,17 +152,6 @@ namespace tapegateway{
         const FileMigrationReportList & fileMigrationReportList,
         const std::string & tapePool, const std::string & vid,
         castor::exception::Exception & e);
-    void logFileError (Cuuid_t uuid,
-        const requesterInfo& requester, int logLevel,
-        u_signed64 mountTransactionId,
-        const FileErrorReportStruct & fileError,
-        const std::string & migRecContext,
-        const fileErrorClassification & classification);
-    void logSetSessionClosing(Cuuid_t uuid,
-        u_signed64 mountTransactionId,
-        const requesterInfo& requester,
-        std::string tapePool,
-        std::string vid, const std::string & migRecContext);
 
     utils::ShutdownBoolFunctor m_shuttingDown;
 

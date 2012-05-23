@@ -23,18 +23,14 @@
 #  @author Castor Dev team, castor-dev@cern.ch
 ###############################################################################
 
-# This test script will wipe and reinstall a fresh 2.1.11 tape gateway system.
-# It will inject new migrations to it.
-# Then the daemons will be shut down, and the stager upgraded to 2.1.12
-# The daemons will be restarted, the test suite launched, and additionnal migrations 
+# This test script will wipe and reinstall a fresh 2.1.13 tape gateway system.
+# The daemons will be restarted, the test suite launched, and migrations 
 # will be injected into the system.
 # Results of all the steps will be checked.
 
 # To run, the script:
-# - needs a 2.1.12 checkout (of which is it part).
-# - A reference 2.1.11 checkout (production release recommended).
+# - needs a 2.1.13 checkout (of which is it part).
 # - The RPMS for both releases.
-
 
 # This perl script that has to be run as root on the stager host will connect to
 # the DB and report wether there are any pending migrations for this stager
@@ -51,9 +47,8 @@ use File::Basename;
 use CastorTapeTests;
 
 
-my @packages_headnode_2112=  
+my @packages_headnode=  
 (
- "castor-csec",
  "castor-tape-tools",
  "castor-vmgr-client",
  "castor-lib-oracle",
@@ -62,7 +57,6 @@ my @packages_headnode_2112=
  "castor-hsmtools",
  "castor-lib",
  "castor-dbtools",
- "castor-rechandler-server",
  "castor-rmmaster-client",
  "castor-rmmaster-server",
  "castor-vmgr-server",
@@ -100,7 +94,6 @@ my @packages_disktape_server=
  "castor-config",
  "castor-lib",
  "castor-gridftp-dsi-common",
- "castor-csec",
  "castor-job",
  "castor-gc-server",
  "castor-debuginfo",
@@ -116,7 +109,7 @@ my @packages_disktape_server=
  "castor-rfio-client"
  );
 
-my @services_headnode_2112 =
+my @services_headnode =
 (
  "rechandlerd",
  "expertd",
@@ -141,22 +134,6 @@ my @services_disktape_server=
  "rfiod",
  "rtcpd"
  );
-
-my @services_headnode_2111 =
-(
- "mighunterd",
- "rechandlerd",
- "expertd",
- "rmmasterd",
- "vmgrd",
- "rhd",
- "tapegatewayd",
- "vdqmd",
- "logprocessord",
- "transfermanagerd",
- "stagerd",
- "cupvd"
- );
  
 sub main ( $ );
 sub set_checkout_location ();
@@ -169,12 +146,11 @@ sub deploy_packages_remote ( $$ );
 sub upgrade_cluster ( $$$ );
 sub downgrade_cluster ( $$$$$ );
 sub stop_daemons_remote( $ );
-sub stop_daemons_2111();
-sub stop_daemons_2112();
+sub stop_daemons();
 sub start_daemons_remote ( $ );
-sub start_daemons_2112();
+sub start_daemons();
 sub check_daemons_remote ( $ );
-sub check_daemons_2112();
+sub check_daemons();
 sub wipe_reinstall_stager_Db ();
 sub wipe_reinstall_vdqm_Db ();
 sub upgrade_stager_Db ();
@@ -187,14 +163,14 @@ sub checkTapes ( );
 
 sub get_current_castor_packages ()
 {
-    my $list = `rpm -qa | egrep "castor-.*2\.1\.1[12]" | sort`;
+    my $list = `rpm -qa | egrep "castor-.*2\.1\.1[123]" | sort`;
     return split ("\n", $list);
 }
 
 sub get_current_castor_packages_remote ( $ )
 {
     my $host = shift;
-    my $list = `ssh $host rpm -qa | egrep "castor-.*2\.1\.1[12]" | sort`;
+    my $list = `ssh $host rpm -qa | egrep "castor-.*2\.1\.1[123]" | sort`;
     return split ("\n", $list);
 }
 
@@ -211,7 +187,7 @@ sub build_change_list ( $$$$ )
     # Find the packages to install or update (among the targeted ones)
     my $p;
     for $p (@{$targeted_packages}) {
-        $p =~ s/-2\.1\.1[12]\.\d+$//;
+        $p =~ s/-2\.1\.1[123]\.\d+$//;
         if (!grep /$p/, @{$current_packages}) {
             push @to_install, $p;
         } else {
@@ -255,7 +231,7 @@ sub deploy_packages ( $ )
     print RPMT $file_list;
     close RPMT;
     print "t=".CastorTapeTests::elapsed_time."s. Deploying packages locally\n";
-    print `rpmt-py --force -i$tempfile`;
+    print `rpmt-py --force -i$tempfile 2>&1`;
     unlink $tempfile;
     print `ldconfig`;
 }
@@ -271,7 +247,7 @@ sub deploy_packages_remote ( $$ )
     close RPMT;
     print "t=".CastorTapeTests::elapsed_time."s. Deploying packages to host $host\n";
     print `scp $tempfile $host:$remote_file`;
-    print `ssh $host rpmt-py --force -i$remote_file`;
+    print `ssh $host rpmt-py --force -i$remote_file 2>&1`;
     unlink $tempfile;
     print `ssh $host rm -f $remote_file`;
     print `ssh $host ldconfig`;
@@ -299,8 +275,7 @@ sub reinstall_cluster ( $$$$ )
     for my $ds ( @disk_servers ) {
         stop_daemons_remote ( $ds );
     }
-    stop_daemons_2111 ();
-    stop_daemons_2112 ();
+    stop_daemons ();
     
     # Reinstall software on disk servers then server
     my @current_packages;
@@ -313,7 +288,7 @@ sub reinstall_cluster ( $$$$ )
         deploy_packages_remote ( $change_list, $ds );
     }
     @current_packages  = get_current_castor_packages ();
-    $change_list = build_change_list ( \@current_packages, \@packages_headnode_2112, 
+    $change_list = build_change_list ( \@current_packages, \@packages_headnode, 
         $targeted_version,  $RPMS_directory );
     deploy_packages ( $change_list );
 
@@ -326,7 +301,7 @@ sub reinstall_cluster ( $$$$ )
     print `vdqmDBInit`;
     
     # Restart daemons on the headnode (some will fail)
-    start_daemons_2112 ();
+    start_daemons ();
     # Restart the daemons on the disk/tape servers
     # Start daemons
     for my $ds ( @disk_servers ) {
@@ -335,10 +310,10 @@ sub reinstall_cluster ( $$$$ )
 
     # Configure the fileclasses, service classes, fileclasses, etc... 
     # (diskservers are needed at that point)
-    CastorTapeTests::configure_headnode_2112 ( );
+    CastorTapeTests::configure_headnode_2113 ( );
 
     # Second pass to start daemons
-    start_daemons_2112 ();
+    start_daemons ();
     
     # On first run, clean house
     print "Cleaning up test directories $castor_directory\{$single_subdir,$dual_subdir\}\n";
@@ -358,9 +333,9 @@ sub reinstall_cluster ( $$$$ )
     }   
 }
 
-sub stop_daemons_2111()
+sub stop_daemons()
 {
-    for my $d ( @services_headnode_2111 ) {
+    for my $d ( @services_headnode ) {
        print `service $d stop`; 
     }
 }
@@ -370,13 +345,6 @@ sub stop_daemons_remote( $ )
     my $host = shift;
     for my $d ( @services_disktape_server ) {
         print `ssh $host service $d stop`;
-    }
-}
-
-sub stop_daemons_2112()
-{
-    for my $d ( @services_headnode_2112 ) {
-       print `service $d stop`; 
     }
 }
 
@@ -398,16 +366,16 @@ sub start_daemons_remote ( $ )
      }
 }
 
-sub start_daemons_2112()
+sub start_daemons()
 {
-    for my $d ( @services_headnode_2112 ) {
+    for my $d ( @services_headnode ) {
        print `service $d start`; 
     }
 }
 
-sub check_daemons_2111()
+sub check_daemons()
 {
-    for my $d ( @services_headnode_2112 ) {
+    for my $d ( @services_headnode ) {
        print `service $d status`; 
     }
 }
@@ -417,13 +385,6 @@ sub check_daemons_remote ( $ )
     my $host = shift;
     for my $d ( @services_disktape_server ) {
         print `ssh $host service $d status`;
-    }
-}
-
-sub check_daemons_2112()
-{
-    for my $d ( @services_headnode_2112 ) {
-       print `service $d status`; 
     }
 }
 
