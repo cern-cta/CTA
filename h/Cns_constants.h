@@ -68,7 +68,7 @@
 
 			/* timeout constants */
 
-#define DEFAULT_RETRYCNT     38880   /* Default retry count 38880*60 = 1 week  */
+#define DEFAULT_RETRYCNT     10      /* Default retry count => 100 secs (cf. RETRYI) */
 #define DEFAULT_CONNTIMEOUT  (2*60)  /* Default connect timeout limit = 2mins. */
 
 #endif

@@ -37,7 +37,7 @@
 #define CNS_TIMEOUT             5      /* netread timeout while receiving a request */
 #define CNS_TRANSTIMEOUT        60     /* timeout while waiting for the next req in transaction */
 #define MAXRETRY                5
-#define RETRYI                  60
+#define RETRYI                  10
 #define DIRBUFSZ                4096
 #define LISTBUFSZ               4096
 #define LOGBUFSZ                4096
