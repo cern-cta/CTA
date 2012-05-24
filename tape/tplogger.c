@@ -153,7 +153,7 @@ int tl_init_dlf( tplogger_t *self, int init ) {
                 goto err_out;
         }
 
-        rv = dlf_init( self->tl_name, -1 );
+        rv = dlf_init( self->tl_name );
         if (rv != 0) {
                 fprintf( stderr, "dlf_init() - %s\n", strerror(errno) );
                 free( self->tl_name );

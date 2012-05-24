@@ -101,7 +101,6 @@ typedef struct {
  *
  * @param ident   The ident argument is a string that is prepended to every
  *                log message and identifiers the source application.
- * @param maskpri Used to set the log priority mask when logging messages.
  *
  * @return On success zero is returned, On error, -1 is returned, and errno is
  *         set appropriately.
@@ -113,7 +112,7 @@ typedef struct {
  *
  * @see openlog(), setlogmask()
  */
-EXTERN_C int dlf_init (const char *ident, int maskpri);
+EXTERN_C int dlf_init (const char *ident);
 
 
 /* Shutdown the DLF logging interface deallocating all resources.

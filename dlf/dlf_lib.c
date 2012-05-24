@@ -41,7 +41,6 @@
 static char *messages[DLF_MAX_MSGTEXTS];
 static int   initialized = 0;
 static int   maxmsglen   = DEFAULT_SYSLOG_MSGLEN;
-static int   logmask     = 0xff;
 static const char* progname = 0;
 static int   LogFile = -1;           /* fd for log */
 static int   connected;              /* have done connect */
@@ -107,17 +106,35 @@ char *_clean_string(char *str, int underscore) {
   return str;
 }
 
+/*---------------------------------------------------------------------------
+ * dlf_logmask
+ *---------------------------------------------------------------------------*/
+int dlf_logmask(const char* facility) {
+  char *p;
+  int i;
+  /* Check if the configuration file defines the log mask to use */
+  if ((p = getconfent("LogMask", facility, 0)) != NULL) {
+    /* Lookup the prority in the priority list */
+    for (i = 0; prioritylist[i].name != NULL; i++) {
+      if (!strcasecmp(p, prioritylist[i].name)) {
+        return LOG_UPTO(prioritylist[i].value);
+      }
+    }
+  }
+  /* If the priority wasn't found, default is INFO level */
+  return LOG_UPTO(LOG_INFO);
+}
 
 /*---------------------------------------------------------------------------
  * dlf_init
  *---------------------------------------------------------------------------*/
-int dlf_init(const char *ident, int maskpri) {
+int dlf_init(const char *ident) {
 
   /* Variables */
   FILE *fp = NULL;
   char *p;
   char buffer[1024];
-  int  i, found, size = 0;
+  int  i, size = 0;
 
   /* Check if already initialized */
   if (initialized) {
@@ -136,43 +153,6 @@ int dlf_init(const char *ident, int maskpri) {
     return (-1);
   }
 
-  /* The default syslog log mask is set so that all messages irrespective of
-   * there priority should be logged. This can be changed by modifying the
-   * syslog configuration file but this is not formant as syslogd still
-   * needs to process the message to determine whether or not it should be
-   * logged. So, we set the syslog priority mask at the client application.
-   */
-
-  /* The default mask for castor is to logged everything up to and including
-   * INFO messages. I.e. we exclude debug messages.
-   */
-  if (maskpri < 0) {
-    (void)setlogmask(LOG_UPTO(LOG_INFO));
-
-    /* Check if the configuration file defines the log mask to use */
-    if ((p = getconfent(ident, "LogMask", 0)) != NULL) {
-      /* Lookup the prority in the priority list */
-      found = 0;
-      for (i = 0; prioritylist[i].name != NULL; i++) {
-        if (!strcasecmp(p, prioritylist[i].name)) {
-          (void)setlogmask(LOG_UPTO(prioritylist[i].value));
-          found = 1;
-          break;
-        }
-      }
-      /* If the priority wasn't found abort the initialization of the
-       * logging interface
-       */
-      if (!found) {
-        errno = EINVAL;
-        return (-1);
-      }
-    }
-  } else {
-    /* Use the mask supplied by the user */
-    (void)setlogmask(maskpri);
-  }
-  logmask = setlogmask(0);
   progname = ident;
 
   /* Determine the maximum message size that the client syslog server can
@@ -334,7 +314,7 @@ int dlf_write(Cuuid_t reqid,
   }
 
   /* Ignore messages whose priority is not of interest */
-  if ((LOG_MASK(LOG_PRI(priority)) & logmask) == 0) {
+  if ((LOG_MASK(LOG_PRI(priority)) & dlf_logmask(progname)) == 0) {
     return (0);
   }
 
@@ -560,7 +540,7 @@ int dlf_writept(Cuuid_t reqid,
   }
 
   /* Ignore messages whose priority is not of interest */
-  if ((LOG_MASK(LOG_PRI(priority)) & logmask) == 0) {
+  if ((LOG_MASK(LOG_PRI(priority)) & dlf_logmask(source)) == 0) {
     return (0);
   }
 

@@ -265,7 +265,7 @@ int main (int argc, char **argv) {
    *   - note: the facility should be registered prior to the test, self registration from a client
    *     is not supported!!
    */
-  rv = dlf_init(facility, LOG_UPTO(LOG_DEBUG));
+  rv = dlf_init(facility);
   if (rv != 0) {
     fprintf(stderr, "dlf_init() - %s\n", strerror(errno));
     free(facility);
