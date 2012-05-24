@@ -47,7 +47,6 @@
 
 #include "castor/tape/tapegateway/daemon/Constants.hpp"
 #include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"
-#include "castor/tape/tapegateway/daemon/MigratorErrorHandlerThread.hpp"
 #include "castor/tape/tapegateway/daemon/TapeGatewayDaemon.hpp"
 #include "castor/tape/tapegateway/daemon/TapeMigrationMountLinkerThread.hpp"
 #include "castor/tape/tapegateway/daemon/VdqmRequestsCheckerThread.hpp"
@@ -220,12 +219,6 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
   std::auto_ptr<castor::tape::tapegateway::WorkerThread> wThread(new castor::tape::tapegateway::WorkerThread());
   std::auto_ptr<castor::server::TCPListenerThreadPool> wPool(new castor::server::TCPListenerThreadPool("K-WorkerThread", wThread.release(),listenPort(),true, minThreadsNumber, maxThreadsNumber,TG_THRESHOLD, TG_MAXTASKS ));
   addThreadPool(wPool.release());
-
-  // migration error handler
-  std::auto_ptr<castor::tape::tapegateway::MigratorErrorHandlerThread> mThread(new castor::tape::tapegateway::MigratorErrorHandlerThread(migrationFunction));
-  std::auto_ptr<castor::server::SignalThreadPool> mPool(new castor::server::SignalThreadPool("R-MigrationErrorHandlerThread", mThread.release(),  DEFAULT_SLEEP_INTERVAL));
-  addThreadPool(mPool.release());
-  getThreadPool('R')->setNbThreads(1);
 
   // start the daemon
   start();
