@@ -63,7 +63,7 @@ namespace castor {
        * static method for getting a given configuration
        * @param fileName the name of the file to be used for filling this configuration
        */
-      static CastorConfiguration& getConfig(const std::string filename)
+      static CastorConfiguration& getConfig(const std::string filename = "/etc/castor/castor.conf")
         throw (castor::exception::Exception);
         
     public:
