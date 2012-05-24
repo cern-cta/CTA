@@ -51,8 +51,18 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 END;
 /
 
-
--- XXXXX Also check the nameserver version here. We need at least 2.1.13-0
+/* check the nameserver version here. We need at least 2.1.13-0 */
+DECLARE
+  unused VARCHAR(100);
+BEGIN
+  SELECT release FROM UpgradeLog@remoteNs
+   WHERE startDate = (SELECT MAX(startDate) FROM UpgradeLog@remoteNs)
+     AND (release LIKE '2_1_13_%');
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- Error, we cannot apply this script
+  raise_application_error(-20000, 'Nameserver release mismatch. Please upgrade the nameserver database before this one.');
+END;
+/
 
 /* Starting the upgrade */
 INSERT INTO UpgradeLog (schemaVersion, release, type)
@@ -89,9 +99,6 @@ CREATE TABLE DLFLogs
    params VARCHAR2(2048));
 
 DROP PROCEDURE dumpCleanupLogs;
-
--- XXXXX will have to create the new RecallJob Table, then populate it, then drop old tables
--- XXXXX and then rename new to old
 DROP TABLE Tape;
 DROP TABLE Segment;
 DROP TABLE RecallJob;
@@ -242,15 +249,13 @@ INSERT INTO CastorConfig
 INSERT INTO CastorConfig
   VALUES ('Migration', 'MaxNbMounts', '7', 'The maximum number of mounts for migrating a given file. When exceeded, the migration will be considered failed: the MigrationJob entry will be dropped and the corresponding diskcopy left in status CANBEMIGR. An operator intervention is required to resume the migration.');
 
--- XXX insert some PL/SQL block to convert old recall and migration jobs into new schema...
-
-
 /* Temporary table used to bulk select next candidates for recall and migration */
 CREATE GLOBAL TEMPORARY TABLE FilesToRecallHelper
  (fileId NUMBER, nsHost VARCHAR2(100), fileTransactionId NUMBER,
   filePath VARCHAR2(2048), blockId RAW(4), fSeq INTEGER)
  ON COMMIT DELETE ROWS;
 
+/* Temporary table used to bulk select next candidates for migration */
 CREATE GLOBAL TEMPORARY TABLE FilesToMigrateHelper
  (fileId NUMBER, nsHost VARCHAR2(100), lastKnownFileName VARCHAR2(2048), filePath VARCHAR2(2048),
   fileTransactionId NUMBER, fileSize NUMBER, fSeq INTEGER)
@@ -291,9 +296,29 @@ DROP FUNCTION selectTapeForRecall;
 DROP FUNCTION triggerRepackRecall;
 
 
--- XXXXX Add revalidation of all the PL/SQL code
--- XXXXX To be done by hand for now
+/* Resurrect all subrequest that were waiting so that we trigger new recalls after we have */
+/* dropped all recall related tables */
+/* also cleanup all diskcopies in WAITTAPERECALL as they should no exist anymore */
+DELETE FROM  DiskCopy WHERE status = dconst.DISKCOPY_WAITTAPERECALL;
+UPDATE SubRequest SET status = dconst.SUBREQUEST_RESTART WHERE status IN (SUBREQUEST_WAITTAPERECALL,
+                                                                          SUBREQUEST_WAITSUBREQ);
+COMMIT;
 
+-- XXXXX Revalidation of all the PL/SQL code
+-- XXXXX To be copy pasted rather than included
+
+@oracleConstants.sql
+@oracleCommon.sql
+@oracleDebug.sql
+@oracleDrain.sql
+@oracleGC.sql
+@oracleJob.sql
+@oraclePerm.sql
+@oracleQuery.sql
+@oracleRH.sql
+@oracleStager.sql
+@oracleDiskTapeInterface.sql
+@oracleTapeGateway.sql
 
 /* Recompile all invalid procedures, triggers and functions */
 /************************************************************/
