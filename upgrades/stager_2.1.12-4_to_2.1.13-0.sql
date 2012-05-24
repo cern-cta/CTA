@@ -243,6 +243,8 @@ ALTER TABLE MigrationJob ADD CONSTRAINT FK_MigrationJob_MigrationMount
 DELETE FROM ObjStatus WHERE object = 'MigrationJob' AND statusCode = 8;
 
 INSERT INTO CastorConfig
+  VALUES ('Migration', 'SizeThreshold', '300000000', 'The threshold to consider a file "small" or "large" when routing it to tape');
+INSERT INTO CastorConfig
   VALUES ('Recall', 'MaxNbRetriesWithinMount', '2', 'The maximum number of retries for recalling a file within the same tape mount. When exceeded, the recall may still be retried in another mount. See Recall/MaxNbMount entry');
 INSERT INTO CastorConfig
   VALUES ('Recall', 'MaxNbMounts', '2', 'The maximum number of mounts for recalling a given file. When exceeded, the recall will be failed if no other tapecopy can be used. See also Recall/MaxNbRetriesWithinMount entry');
@@ -300,8 +302,14 @@ DROP FUNCTION triggerRepackRecall;
 /* dropped all recall related tables */
 /* also cleanup all diskcopies in WAITTAPERECALL as they should no exist anymore */
 DELETE FROM  DiskCopy WHERE status = dconst.DISKCOPY_WAITTAPERECALL;
-UPDATE SubRequest SET status = dconst.SUBREQUEST_RESTART WHERE status IN (SUBREQUEST_WAITTAPERECALL,
-                                                                          SUBREQUEST_WAITSUBREQ);
+UPDATE SubRequest SET status = dconst.SUBREQUEST_RESTART
+ WHERE status IN (dconst.SUBREQUEST_WAITTAPERECALL, dconst.SUBREQUEST_WAITSUBREQ);
+COMMIT;
+
+/* Resurrect all selected migration jobs so that they get relinked to new mounts */
+UPDATE MigrationJob
+   SET status = tconst.MIGRATIONJOB_PENDING, mountTransactionId = NULL, nbRetries = 0
+ WHERE status = tconst.MIGRATIONJOB_SELECTED;
 COMMIT;
 
 -- XXXXX Revalidation of all the PL/SQL code
