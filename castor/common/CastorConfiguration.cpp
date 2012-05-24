@@ -77,8 +77,8 @@ castor::common::CastorConfiguration::getConfEnt(const std::string &category,
   throw (castor::exception::Exception) {
   // check whether we need to reload the configuration
   checkAndRenewConfig();
-  // get read lock
-  pthread_rwlock_rdlock(&m_lock);
+  // get read lock. No need to be fancy, just let it auto-release on exit.
+  smartReadLockTaker srl(&m_lock);
   // get the category
   Configuration::const_iterator catIt = find(category);
   if (end() == catIt) {
@@ -91,9 +91,6 @@ castor::common::CastorConfiguration::getConfEnt(const std::string &category,
     castor::exception::NoEntry e;
     throw e;
   }
-  // release read lock
-  pthread_rwlock_unlock(&m_lock);
-  // return
   return entIt->second;
 }
 
@@ -118,19 +115,17 @@ void castor::common::CastorConfiguration::checkAndRenewConfig()
     // no need to renew
     return;  
   }
-  // we should probably renew. First take the write lock
-  pthread_rwlock_wrlock(&m_lock);
+  // we should probably renew. First take the write lock.
+  // No need to be fancy, just let it auto-release on exit.
+  smartWriteLockTaker swl(&m_lock);
   // now check that we should really renew, because someone may have done it
   // while we waited for the lock
   if (currentTime < m_lastUpdateTime + timeout) {
     // indeed, someone renew it for us, so give up
-    pthread_rwlock_unlock(&m_lock);
-    return;  
+    return;
   }
   // now we should really renew
   renewConfig();
-  // release the write lock
-  pthread_rwlock_unlock(&m_lock);
 }
 
 //------------------------------------------------------------------------------

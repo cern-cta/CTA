@@ -116,6 +116,28 @@ namespace castor {
       time_t m_lastUpdateTime;
 
       /**
+       * Scoped lock allowing safe lock release in all execution pathes
+       */
+      class smartLockTaker {
+      protected:
+        smartLockTaker(pthread_rwlock_t *lk): m_reld(false), m_lock(lk) {};
+        bool m_reld;
+        pthread_rwlock_t *m_lock;
+      public:
+        void release() { if (!m_reld) pthread_rwlock_unlock(m_lock); m_reld=true; }
+        ~smartLockTaker() { release(); }
+      };
+
+      class smartReadLockTaker: public smartLockTaker {
+      public:
+        smartReadLockTaker(pthread_rwlock_t *lk): smartLockTaker(lk) { pthread_rwlock_rdlock(m_lock); }
+      };
+
+      class smartWriteLockTaker: public smartLockTaker {
+      public:
+        smartWriteLockTaker(pthread_rwlock_t *lk): smartLockTaker(lk) { pthread_rwlock_wrlock(m_lock); }
+      };
+      /**
        * lock to garantee safe access to the configuration
        */
       pthread_rwlock_t m_lock;
