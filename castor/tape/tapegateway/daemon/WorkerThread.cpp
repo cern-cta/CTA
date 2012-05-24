@@ -1127,6 +1127,10 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFilesToRecallLi
     memset(&fileId,'\0',sizeof(fileId));
     strncpy(fileId.server, ftr->nshost().c_str(), sizeof(fileId.server)-1);
     fileId.fileid = ftr->fileid();
+    // Handle the special case when blockId = 0: we should position by fseq
+    // Said to be for fseq=1 in older code, unconfirmed.
+    if (!(ftr->blockId0()|ftr->blockId1()|ftr->blockId2()|ftr->blockId3()))
+      ftr->setPositionCommandCode(TPPOSIT_FSEQ);
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_RECALL_RETRIEVED, paramsComplete, &fileId);
     // ... and store in the response.
     files_response->filesToRecall().push_back(ftr.release());
