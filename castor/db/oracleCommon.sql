@@ -337,28 +337,13 @@ CREATE OR REPLACE PROCEDURE logToDLF(uuid VARCHAR2,
                                      nsHost VARCHAR2,
                                      source VARCHAR2,
                                      params VARCHAR2) AS
+  PRAGMA AUTONOMOUS_TRANSACTION;
 BEGIN
   INSERT INTO DLFLogs (timeinfo, uuid, priority, msg, fileId, nsHost, source, params)
          VALUES (getTime(), uuid, priority, msg, fileId, nsHost, source, params);
-END;
-/
-
-/* automatic logging procedure. The logs are then processed by the stager and sent to the rsyslog streams.
-   This version runs in an autonomous transaction, so that logs are immediately commited */
-CREATE OR REPLACE PROCEDURE logToDLFAuto(uuid VARCHAR2,
-                                         priority INTEGER,
-                                         msg VARCHAR2,
-                                         fileId NUMBER,
-                                         nsHost VARCHAR2,
-                                         source VARCHAR2,
-                                         params VARCHAR2) AS
-  PRAGMA AUTONOMOUS_TRANSACTION;
-BEGIN
-  logToDLF(uuid, priority, msg, fileId, nsHost, source, params);
   COMMIT;
 END;
 /
-
 
 /* Small utility function to convert an hexadecimal string (8 digits) into a RAW(4) type */
 CREATE OR REPLACE FUNCTION strToRaw4(v VARCHAR2) RETURN RAW IS
