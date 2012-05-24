@@ -248,8 +248,8 @@ BEGIN
       0, inSegEntry.checksum_name, inSegEntry.checksum);
   EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
     -- We assume the PK was violated, i.e. a previous segment already exists and we need to update it.
-    -- XXX This should not happen in post-2.1.13 versions as we drop previous versions of the segments
-    -- XXX at file creation/truncation time!
+    -- XXX This won't happen anymore once we will drop previous versions of the segments at
+    -- XXX file creation/truncation time!
     UPDATE Cns_seg_metadata
        SET fsec = 1, segSize = inSegEntry.segSize, s_status = '-',
            vid = inSegEntry.vid, fseq = inSegEntry.fseq, blockId = inSegEntry.blockId,
