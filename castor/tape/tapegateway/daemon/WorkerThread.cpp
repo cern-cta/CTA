@@ -1171,11 +1171,11 @@ void castor::tape::tapegateway::WorkerThread::setSessionToClosing (
 throw ()
 {
   try {
-    oraSvc.setTapeSessionClosing(mountTransactionId);
+    oraSvc.endTapeSession(mountTransactionId);
   } catch (castor::exception::Exception e) {
     // If things still go wrong, log an internal error.
     std::stringstream report;
-    report <<  "Failed to set the tape session to closing in the DB "
+    report <<  "Failed to endTapeSession in the DB "
       "in: castor::tape::tapegateway::WorkerThread::setSessionToClosing: "
       "error=" << e.code() << " errorMessage=" << e.getMessage();
     castor::dlf::Param params[] ={

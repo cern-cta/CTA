@@ -90,7 +90,6 @@ castor::tape::tapegateway::ora::OraTapeGatewaySvc::OraTapeGatewaySvc(const std::
   m_deleteMigrationMountWithBadTapePoolStatement(0),
   m_flagTapeFullForMigrationSession(0),
   m_getMigrationMountVid(0),
-  m_setTapeSessionClosing(0),
   m_getBulkFilesToMigrate(0),
   m_getBulkFilesToRecall(0),
   m_setBulkFileMigrationResult(0),
@@ -143,7 +142,6 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
     if ( m_deleteMigrationMountWithBadTapePoolStatement) deleteStatement(m_deleteMigrationMountWithBadTapePoolStatement);    
     if ( m_flagTapeFullForMigrationSession) deleteStatement(m_flagTapeFullForMigrationSession);
     if ( m_getMigrationMountVid) deleteStatement(m_getMigrationMountVid);
-    if ( m_setTapeSessionClosing) deleteStatement(m_setTapeSessionClosing);
     if ( m_getBulkFilesToMigrate) deleteStatement(m_getBulkFilesToMigrate);
     if ( m_getBulkFilesToRecall) deleteStatement(m_getBulkFilesToRecall);
     if ( m_setBulkFileMigrationResult) deleteStatement(m_setBulkFileMigrationResult);
@@ -166,7 +164,6 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
   m_deleteMigrationMountWithBadTapePoolStatement=0;
   m_flagTapeFullForMigrationSession=0;
   m_getMigrationMountVid=0;
-  m_setTapeSessionClosing=0;
   m_getBulkFilesToMigrate=0;
   m_getBulkFilesToRecall=0;
   m_setBulkFileMigrationResult=0;
@@ -952,28 +949,6 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getMigrationMountVid(con
   }
 }
 
-//----------------------------------------------------------------------------
-// setTapeSessionClosing
-//----------------------------------------------------------------------------
-
-void castor::tape::tapegateway::ora::OraTapeGatewaySvc::setTapeSessionClosing(u_signed64 mountTransactionId)
-throw (castor::exception::Exception){
-  try {
-    if (!m_setTapeSessionClosing) {
-      m_setTapeSessionClosing =
-        createStatement("BEGIN tg_setTapeSessionToClosing(:1);END;");
-    }
-    m_setTapeSessionClosing->setNumber(1,occiNumber(mountTransactionId));
-    m_setTapeSessionClosing->executeUpdate();
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in setTapeSessionClosing"
-      << std::endl << e.what();
-    throw ex;
-  }
-}
 
 //----------------------------------------------------------------------------
 // getBulkFilesToMigrate
@@ -1007,7 +982,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getBulkFilesToMigrate (
     /* Convert the cursor's contents into a collection of FileToMigrateStruct, to be sent to
      * tape server.
      */
-    castor::db::ora::SmartOcciResultSet rs (m_getBulkFilesToMigrate, m_getBulkFilesToMigrate->getCursor(4));
+    castor::db::ora::SmartOcciResultSet rs (m_getBulkFilesToMigrate, m_getBulkFilesToMigrate->getCursor(5));
     // Find columns for the cursor
     resultSetIntrospector resIntros (rs.get());
     int fileTransIdIdx   = resIntros.findColumnIndex(   "FILETRANSACTIONID", oracle::occi::OCCI_SQLT_NUM);
@@ -1040,7 +1015,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getBulkFilesToMigrate (
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
-      << "Error caught in setTapeSessionClosing"
+      << "Error caught in getBulkFilesToMigrate"
       << std::endl << e.what();
     throw ex;
   }
@@ -1078,7 +1053,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getBulkFilesToRecall (
     /* Convert the cursor's contents into a collection of FileToMigrateStruct, to be sent to
      * tape server.
      */
-    castor::db::ora::SmartOcciResultSet rs (m_getBulkFilesToRecall, m_getBulkFilesToRecall->getCursor(4));
+    castor::db::ora::SmartOcciResultSet rs (m_getBulkFilesToRecall, m_getBulkFilesToRecall->getCursor(5));
     // Find columns for the cursor
     resultSetIntrospector resIntros (rs.get());
     int fileTransIdIdx   = resIntros.findColumnIndex(   "FILETRANSACTIONID", oracle::occi::OCCI_SQLT_NUM);
@@ -1115,7 +1090,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getBulkFilesToRecall (
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
-      << "Error caught in setTapeSessionClosing"
+      << "Error caught in getBulkFilesToRecall"
       << std::endl << e.what();
     throw ex;
   }

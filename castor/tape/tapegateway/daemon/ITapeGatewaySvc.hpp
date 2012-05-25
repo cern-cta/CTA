@@ -148,31 +148,31 @@ namespace castor      {
                                         const std::list<u_signed64>& mjToFail )
           throw (castor::exception::Exception)=0;
 
-	/**
-	 * Update the database when the Tapegateway allows us to serve a request
-	 */
-	virtual void  startTapeSession( const castor::tape::tapegateway::VolumeRequest& startReq,
-					castor::tape::tapegateway::Volume& volume) 
-	  throw (castor::exception::Exception)=0; 
+        /**
+         * Update the database when the Tapegateway allows us to serve a request
+         */
+        virtual void  startTapeSession( const castor::tape::tapegateway::VolumeRequest& startReq,
+                                        castor::tape::tapegateway::Volume& volume) 
+          throw (castor::exception::Exception)=0; 
 
-	/**
-	 *  Structure carrying the tape information needed for a release.
-	 */
-	enum TapeMode {
-	  read  = 0,
-	  write = 1
-	};
-	struct TapeToReleaseInfo {
-	  std::string vid;
-	  enum TapeMode mode;
-	  bool full;
-	};
-	/**
-	 *  get tapes to release in vmgr
-	 */
-	virtual void  getTapeToRelease(const u_signed64& mountTransactionId,
-	  castor::tape::tapegateway::ITapeGatewaySvc::TapeToReleaseInfo& tape)
-	  throw (castor::exception::Exception)=0;
+        /**
+         *  Structure carrying the tape information needed for a release.
+         */
+        enum TapeMode {
+          read  = 0,
+          write = 1
+        };
+        struct TapeToReleaseInfo {
+          std::string vid;
+          enum TapeMode mode;
+          bool full;
+        };
+        /**
+         *  get tapes to release in vmgr
+         */
+        virtual void  getTapeToRelease(const u_signed64& mountTransactionId,
+          castor::tape::tapegateway::ITapeGatewaySvc::TapeToReleaseInfo& tape)
+          throw (castor::exception::Exception)=0;
 
         /** Ends a tape session
          * @param mountTransactionId the mountTansactionId of the session to end
@@ -184,28 +184,28 @@ namespace castor      {
                                     const int errorCode = 0)
           throw (castor::exception::Exception) = 0;
 
-	/**
-	 *  delete migration mounts with wrong tapepool
-	 */
-	virtual void deleteMigrationMountWithBadTapePool(const u_signed64 migrationMountId)
-	  throw (castor::exception::Exception)=0;
-
-	/**
-	 * Mark tape full for the tape session.
-	 * This is typically called when a file migration gets a tape full
-	 * error so that we remember to make the tape as full at the end of
-	 * the session. Session is passed by VDQM request id (like for end/failSession).
-	 */
-	virtual void flagTapeFullForMigrationSession(const u_signed64& tapeRequestId)
-	throw (castor::exception::Exception) = 0;
-
-	/**
-	 * Find the VID (and just it) for a migration mount.
-	 * This allows a safer update for the VMGR's fseq on this tape.
-	 * Past that update, fiddling with a file will only affect the file itself.
-	 */
-	virtual void getMigrationMountVid(const u_signed64&  mountTransactionId,
-	    std::string& vid, std::string& tapePool) = 0;
+        /**
+         *  delete migration mounts with wrong tapepool
+         */
+        virtual void deleteMigrationMountWithBadTapePool(const u_signed64 migrationMountId)
+          throw (castor::exception::Exception)=0;
+      
+        /**
+         * Mark tape full for the tape session.
+         * This is typically called when a file migration gets a tape full
+         * error so that we remember to make the tape as full at the end of
+         * the session. Session is passed by VDQM request id (like for end/failSession).
+         */
+        virtual void flagTapeFullForMigrationSession(const u_signed64& tapeRequestId)
+          throw (castor::exception::Exception) = 0;
+      
+        /**
+         * Find the VID (and just it) for a migration mount.
+         * This allows a safer update for the VMGR's fseq on this tape.
+         * Past that update, fiddling with a file will only affect the file itself.
+         */
+        virtual void getMigrationMountVid(const u_signed64&  mountTransactionId,
+            std::string& vid, std::string& tapePool) = 0;
 
         /** cancels a migration or recall for the given tape
          * @param mode the request mode (WRITE_DISABLE for Recalls, WRITE_ENABLE for Migrations)
@@ -219,17 +219,6 @@ namespace castor      {
                                              const int errorCode,
                                              const std::string &errorMsg)
           throw (castor::exception::Exception) = 0;
-
-        /**
-	 * Set tape session to closing: moves the tape session to a state
-	 * where no more work will be retrieved, in order to get the session
-	 * to fold down gracefully. This mechanism moves the error handling
-	 * back to the tape gateway from the tape server.
-	 * Thanks to this, most of the replies to the tape server can be a neutral
-	 * "got it".
-	 */
-	virtual void setTapeSessionClosing (u_signed64 mountTransactionId)
-        throw (castor::exception::Exception)=0;
 
         /**
          * Get the next best files to migrate
@@ -270,15 +259,15 @@ namespace castor      {
             std::vector<FileErrorReportStruct *>& failures)
         throw (castor::exception::Exception)=0;
 
-    /**
-     *  Bypass access the the underlying DB accessor allowing safe handling from the caller
-     */
-    virtual void commit() = 0;
-
-    /**
-     *  Bypass access the the underlying DB accessor allowing safe handling from the caller
-     */
-    virtual void rollback() = 0;
+        /**
+         *  Bypass access the the underlying DB accessor allowing safe handling from the caller
+         */
+        virtual void commit() = 0;
+    
+        /**
+         *  Bypass access the the underlying DB accessor allowing safe handling from the caller
+         */
+        virtual void rollback() = 0;
 
       }; // end of class ITapeGatewaySvc
 
