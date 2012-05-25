@@ -25,11 +25,6 @@
 *****************************************************************************/
 
 
-// Include Python.h before any standard headers because Python.h may define
-// some pre-processor definitions which affect the standard headers
-#include "castor/tape/python/python.hpp"
-
-
 // Include Files
 
 #include "castor/exception/Exception.hpp"
@@ -37,13 +32,9 @@
 #include "castor/exception/InvalidArgument.hpp"
 
 #include "castor/PortNumbers.hpp"
-
 #include "castor/server/SignalThreadPool.hpp"
 #include "castor/server/TCPListenerThreadPool.hpp"
-
 #include "castor/Services.hpp"
-
-#include "castor/tape/python/ScopedPythonLock.hpp"
 
 #include "castor/tape/tapegateway/daemon/Constants.hpp"
 #include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"
@@ -117,60 +108,6 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
       "Failed to get  TapeGateway Oracle database service";
     throw(ex);
   }
-  //Retrive the retry policies
-  std::string migrationPolicyName;
-  char* tmpStr=NULL;
-  tmpStr = getconfent("TAPEGATEWAY","MIG_RETRY_POLICY",0);
-  if (tmpStr==NULL){
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("message","No policy for migration retry in castor.conf")};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, castor::tape::tapegateway::NO_RETRY_POLICY_FOUND, params);
-  } else {
-    migrationPolicyName = tmpStr;
-  }
-  std::string recallPolicyName;
-  tmpStr = getconfent("TAPEGATEWAY","REC_RETRY_POLICY",0);
-  if (tmpStr == NULL){
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("message","No policy for recall retry in castor.conf")};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, castor::tape::tapegateway::NO_RETRY_POLICY_FOUND, params);
-  } else {
-    recallPolicyName = tmpStr;
-  }
-  // Initialize Python
-  castor::tape::python::initializePython();
-  // Load the policies
-  castor::tape::python::ScopedPythonLock scopedLock;
-  PyObject* migrationDict = NULL;
-  if (!migrationPolicyName.empty()){
-    migrationDict = castor::tape::python::importPolicyPythonModule(migrationPolicyName.c_str());
-  }
-  PyObject* recallDict = NULL;
-  if (!recallPolicyName.empty()){
-    recallDict = castor::tape::python::importPolicyPythonModule(recallPolicyName.c_str());
-  }
-  // Get the functions from the dictionaries to be used by the threads
-  // name of the function is the same as the module
-  PyObject * migrationFunction=NULL;
-  if (migrationDict && !migrationPolicyName.empty())
-    migrationFunction = castor::tape::python::getPythonFunction(migrationDict,migrationPolicyName.c_str());
-  if (migrationFunction == NULL){
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("message", "No migration retry function found in the python module"),
-       castor::dlf::Param("functionName",migrationPolicyName.c_str())
-      };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, castor::tape::tapegateway::NO_RETRY_POLICY_FOUND, params);
-  }
-  PyObject * recallFunction=NULL;
-  if (recallDict && !recallPolicyName.empty())
-    recallFunction = castor::tape::python::getPythonFunction(recallDict,recallPolicyName.c_str());
-  if (recallFunction == NULL){
-      castor::dlf::Param params[] =
-      {castor::dlf::Param("message", "No recall retry function found in the python module"),
-       castor::dlf::Param("functionName",recallPolicyName.c_str())
-      };
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, castor::tape::tapegateway::NO_RETRY_POLICY_FOUND, params);
-  }
 
   // Get the min and max number of thread used by the Worker
   int minThreadsNumber = MIN_WORKER_THREADS;
@@ -222,8 +159,6 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
 
   // start the daemon
   start();
-  // Finalize Python
-  castor::tape::python::finalizePython();
   return 0;
 }
 

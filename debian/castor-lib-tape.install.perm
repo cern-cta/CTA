@@ -3,5 +3,4 @@
 %attr(-,root,root) usr/lib/libcastortapegatewayprotocol.so.*
 %attr(-,root,root) usr/lib/libcastortapelegacymsg.so.*
 %attr(-,root,root) usr/lib/libcastortapenet.so.*
-%attr(-,root,root) usr/lib/libcastortapepython.so.*
 %attr(-,root,root) usr/lib/libcastortapeutils.so.*
