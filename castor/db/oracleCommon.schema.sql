@@ -327,7 +327,7 @@ ALTER TABLE MigratedSegment ADD CONSTRAINT FK_MigratedSegment_CastorFile
  *   tapePool : the tape pool where to migrate
  *   nbRetry : the number of retries we already went through
  *   errorcode : the error we got on last try (if any)
- *   tapeGatewayRequestId : an identifier for the migration session that is handling this job (when applicable)
+ *   mountTransactionId : an identifier for the migration session that is handling this job (when applicable)
  *   fileTransactionId : an identifier for this migration job
  *   fSeq : the file sequence of the copy created on tape for this job (when applicable)
  *   status : the status of the migration job
