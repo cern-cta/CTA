@@ -819,7 +819,8 @@ BEGIN
      AND FileSystem.id = DiskCopy.fileSystem
      AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING)
      AND DiskServer.id = FileSystem.diskServer
-     AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING);
+     AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING)
+     AND ROWNUM < 2;
   -- The select worked out, create a mount for this tape pool
   INSERT INTO MigrationMount
               (mountTransactionId, id, startTime, VID, label, density,
@@ -853,16 +854,16 @@ BEGIN
      WHERE tapePool = t.id;
     varTotalNbMounts := varNbPreExistingMounts;
     -- get the amount of data and number of files to migrate, plus the age of the oldest file
-    SELECT SUM(fileSize), COUNT(*), MIN(creationTime) INTO varDataAmount, varNbFiles, varOldestCreationTime
+    SELECT nvl(SUM(fileSize), 0), COUNT(*), nvl(MIN(creationTime), 0)
+      INTO varDataAmount, varNbFiles, varOldestCreationTime
       FROM MigrationJob
      WHERE tapePool = t.id
-       AND status = tconst.MIGRATIONJOB_PENDING
-     GROUP BY tapePool;
+       AND status = tconst.MIGRATIONJOB_PENDING;
     -- Create as many mounts as needed according to amount of data and number of files
     WHILE (varTotalNbMounts < t.nbDrives) AND
           ((varDataAmount/(varTotalNbMounts+1) >= t.minAmountDataForMount) OR
            (varNbFiles/(varTotalNbMounts+1) >= t.minNbFilesForMount)) AND
-          (varTotalNbMounts+1 < varNbFiles) LOOP   -- in case minAmountDataForMount << avgFileSize, stop creating more than one mount per file
+          (varTotalNbMounts+1 <= varNbFiles) LOOP   -- in case minAmountDataForMount << avgFileSize, stop creating more than one mount per file
       insertMigrationMount(t.id, varMountId);
       varTotalNbMounts := varTotalNbMounts + 1;
       IF varMountId = 0 THEN

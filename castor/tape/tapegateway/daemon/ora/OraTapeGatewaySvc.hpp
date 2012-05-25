@@ -318,9 +318,18 @@ namespace castor      {
             operator u_signed64 () {
               static const oracle::occi::Number two(2);
               static const oracle::occi::Number _32(two.intPower(32));
-              uint32_t n_high = m_n / _32;
-              uint32_t n_low  = m_n - oracle::occi::Number(n_high) * _32;
-              return u_signed64 (n_high) << 32  | u_signed64 (n_low);
+              try {
+                uint32_t n_high = m_n / _32;  // throws an exception when m_n < _32
+                uint32_t n_low  = m_n - oracle::occi::Number(n_high) * _32;
+                u_signed64 ret = u_signed64 (n_high) << 32  | u_signed64 (n_low);
+                return ret;
+              } catch (oracle::occi::SQLException& oe) {
+                if(oe.getErrorCode() == 22054) {  // ORA-22054 = Underflow error
+                  u_signed64 ret = (uint32_t) m_n;
+                  return ret;
+                }
+                else throw oe;
+              }
             }
             template <typename T>
             operator T () {

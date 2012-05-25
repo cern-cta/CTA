@@ -991,7 +991,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getBulkFilesToMigrate (
     int fSeqIdx          = resIntros.findColumnIndex(                "FSEQ", oracle::occi::OCCI_SQLT_NUM);
     int fileSizeIdx      = resIntros.findColumnIndex(            "FILESIZE", oracle::occi::OCCI_SQLT_NUM);
     int lastKnownNameIdx = resIntros.findColumnIndex(   "LASTKNOWNFILENAME", oracle::occi::OCCI_SQLT_CHR);
-    int pathIdx          = resIntros.findColumnIndex(                "PATH", oracle::occi::OCCI_SQLT_CHR);
+    int pathIdx          = resIntros.findColumnIndex(            "FILEPATH", oracle::occi::OCCI_SQLT_CHR);
     // Run through the cursor
     while (rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
       castor::tape::tapegateway::FileToMigrateStruct ftm;
@@ -1061,7 +1061,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getBulkFilesToRecall (
     int nsHostIdx        = resIntros.findColumnIndex(              "NSHOST", oracle::occi::OCCI_SQLT_CHR);
     int fSeqIdx          = resIntros.findColumnIndex(                "FSEQ", oracle::occi::OCCI_SQLT_NUM);
     int blockIdIdx       = resIntros.findColumnIndex(             "BLOCKID", oracle::occi::OCCI_SQLT_BIN);
-    int pathIdx          = resIntros.findColumnIndex(                "PATH", oracle::occi::OCCI_SQLT_CHR);
+    int pathIdx          = resIntros.findColumnIndex(            "FILEPATH", oracle::occi::OCCI_SQLT_CHR);
     // Run through the cursor
     while (rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
       castor::tape::tapegateway::FileToRecallStruct ftr;
@@ -1074,7 +1074,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getBulkFilesToRecall (
       ftr.setPositionCommandCode (TPPOSIT_FSEQ);
       // Extract the block ID. The query passes us the raw bytes, which we just
       // chop into the 4-bytes representation.
-      oracle::occi::Bytes blockId(        rs->getBytes(      blockIdIdx));
+      oracle::occi::Bytes blockId(            rs->getBytes(      blockIdIdx));
       ftr.setBlockId0(blockId.byteAt(0));
       ftr.setBlockId1(blockId.byteAt(1));
       ftr.setBlockId2(blockId.byteAt(2));
