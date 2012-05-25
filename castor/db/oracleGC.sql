@@ -802,7 +802,7 @@ BEGIN
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'houseKeepingJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
-      JOB_ACTION      => 'BEGIN deleteTerminatedRequests(); END;',
+      JOB_ACTION      => 'BEGIN startDbJob(''BEGIN deleteTerminatedRequests(); END;'', ''stagerd''); END;',
       JOB_CLASS       => 'CASTOR_JOB_CLASS',
       START_DATE      => SYSDATE + 60/1440,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=20',
@@ -813,7 +813,7 @@ BEGIN
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'cleanupJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
-      JOB_ACTION      => 'BEGIN cleanup(); END;',
+      JOB_ACTION      => 'BEGIN startDbJob(''BEGIN cleanup(); END;'', ''stagerd''); END;',
       JOB_CLASS       => 'CASTOR_JOB_CLASS',
       START_DATE      => SYSDATE + 60/1440,
       REPEAT_INTERVAL => 'FREQ=HOURLY; INTERVAL=12',
@@ -824,7 +824,7 @@ BEGIN
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'bulkCheckFSBackInProdJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
-      JOB_ACTION      => 'BEGIN bulkCheckFSBackInProd(); END;',
+      JOB_ACTION      => 'BEGIN startDbJob(''BEGIN bulkCheckFSBackInProd(); END;'', ''stagerd''); END;',
       JOB_CLASS       => 'CASTOR_JOB_CLASS',
       START_DATE      => SYSDATE + 60/1440,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=5',

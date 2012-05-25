@@ -621,29 +621,6 @@ END;
 /
 
 
-/* SQL statement for DBMS_SCHEDULER job creation */
-BEGIN
-  -- Remove jobs related to the draining logic before recreating them
-  FOR j IN (SELECT job_name FROM user_scheduler_jobs
-             WHERE job_name IN ('DRAINMANAGERJOB'))
-  LOOP
-    DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
-  END LOOP;
-
-  -- Create the drain manager job to be executed every minute
-  DBMS_SCHEDULER.CREATE_JOB(
-      JOB_NAME        => 'drainManagerJob',
-      JOB_TYPE        => 'PLSQL_BLOCK',
-      JOB_ACTION      => 'BEGIN DrainManager(); END;',
-      JOB_CLASS       => 'CASTOR_JOB_CLASS',
-      START_DATE      => SYSDATE + 5/1440,
-      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=1',
-      ENABLED         => TRUE,
-      COMMENTS        => 'Database job to manage the draining process');
-END;
-/
-
-
 /* Procedure responsible for managing the draining process */
 CREATE OR REPLACE PROCEDURE drainManager AS
   fsIds "numList";
@@ -757,5 +734,28 @@ BEGIN
       drainFileSystem(f.fileSystem);
     END LOOP;
   END LOOP;
+END;
+/
+
+
+/* SQL statement for DBMS_SCHEDULER job creation */
+BEGIN
+  -- Remove jobs related to the draining logic before recreating them
+  FOR j IN (SELECT job_name FROM user_scheduler_jobs
+             WHERE job_name IN ('DRAINMANAGERJOB'))
+  LOOP
+    DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
+  END LOOP;
+
+  -- Create the drain manager job to be executed every minute
+  DBMS_SCHEDULER.CREATE_JOB(
+      JOB_NAME        => 'drainManagerJob',
+      JOB_TYPE        => 'PLSQL_BLOCK',
+      JOB_ACTION      => 'BEGIN startDbJob(''BEGIN drainManager(); END;'', ''stagerd''); END;',
+      JOB_CLASS       => 'CASTOR_JOB_CLASS',
+      START_DATE      => SYSDATE + 5/1440,
+      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=1',
+      ENABLED         => TRUE,
+      COMMENTS        => 'Database job to manage the draining process');
 END;
 /

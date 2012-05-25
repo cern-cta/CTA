@@ -1542,7 +1542,7 @@ BEGIN
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'MigrationMountsJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
-      JOB_ACTION      => 'BEGIN startMigrationMounts(); END;',
+      JOB_ACTION      => 'BEGIN startDbJob(''BEGIN startMigrationMounts(); END;'', ''tapegatewayd''); END;',
       JOB_CLASS       => 'CASTOR_JOB_CLASS',
       START_DATE      => SYSDATE + 1/1440,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=1',
@@ -1553,7 +1553,7 @@ BEGIN
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'RecallMountsJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
-      JOB_ACTION      => 'BEGIN startRecallMounts(); END;',
+      JOB_ACTION      => 'BEGIN startDbJob(''BEGIN startRecallMounts(); END;'', ''tapegatewayd''); END;',
       JOB_CLASS       => 'CASTOR_JOB_CLASS',
       START_DATE      => SYSDATE + 1/1440,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=1',

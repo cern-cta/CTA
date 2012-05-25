@@ -351,3 +351,13 @@ BEGIN
   RETURN hexToRaw(ltrim(to_char(to_number(v, 'XXXXXXXX'), '0XXXXXXXX')));
 END;
 /
+
+CREATE OR REPLACE PROCEDURE startDbJob(jobCode VARCHAR2, source VARCHAR2) AS
+BEGIN
+  EXECUTE IMMEDIATE jobCode;
+EXCEPTION WHEN OTHERS THEN
+  logToDLF(NULL, dlf.LVL_ALERT, dlf.DBJOB_UNEXPECTED_EXCEPTION, 0, '', source,
+    'jobCode="'|| jobCode ||'" errorCode=' || to_char(SQLCODE) ||' errorMessage="' || SQLERRM
+    ||'" stackTrace="' dbms_utility.format_error_backtrace ||'"');
+END;
+/
