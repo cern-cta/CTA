@@ -494,7 +494,7 @@ int dlf_writepm(Cuuid_t reqid,
   struct timeval tv;
   gettimeofday(&tv, NULL);
   // and call actual logging method
-  return dlf_writept(reqid, priority, msg, ns, numparams, params, &tv, 0, getpid());
+  return dlf_writept(reqid, priority, msg, ns, numparams, params, &tv, progname, getpid());
 }
 
 /*---------------------------------------------------------------------------
