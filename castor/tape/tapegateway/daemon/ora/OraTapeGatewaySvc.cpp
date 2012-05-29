@@ -1271,13 +1271,13 @@ throw (castor::exception::Exception){
     m_setBulkFileRecallResult->setNumber(2, occiNumber(mountTransactionId));
     oracle::occi::setVector(m_setBulkFileRecallResult,  3, fileIds,       "numList");
     oracle::occi::setVector(m_setBulkFileRecallResult,  4, fileTransactionIds,  "numList");
-    oracle::occi::setVector(m_setBulkFileRecallResult,  5, pathes,        "strList");
+    oracle::occi::setVector(m_setBulkFileRecallResult,  5, pathes,        "STRLISTTABLE");
     oracle::occi::setVector(m_setBulkFileRecallResult,  6, fSeqs,         "numList");
-    oracle::occi::setVector(m_setBulkFileRecallResult,  7, checksumNames, "strList");
+    oracle::occi::setVector(m_setBulkFileRecallResult,  7, checksumNames, "STRLISTTABLE");
     oracle::occi::setVector(m_setBulkFileRecallResult,  8, checksums,     "numList");
     oracle::occi::setVector(m_setBulkFileRecallResult,  9, fileSizes,     "numList");
     oracle::occi::setVector(m_setBulkFileRecallResult, 10, errorCodes,    "numList");
-    oracle::occi::setVector(m_setBulkFileRecallResult, 11, errorMessages, "strList");
+    oracle::occi::setVector(m_setBulkFileRecallResult, 11, errorMessages, "STRLISTTABLE");
 
     // DB update and get result.
     m_setBulkFileRecallResult->executeUpdate();

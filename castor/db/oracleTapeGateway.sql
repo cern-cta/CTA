@@ -1087,16 +1087,16 @@ END;
  */
 CREATE OR REPLACE PROCEDURE tg_setBulkFileMigrationResult(inLogContext IN VARCHAR2,
                                                           inMountTrId IN NUMBER,
-                                                          inFileIds IN castor."cnumList",
-                                                          inFileTrIds IN castor."cnumList",
-                                                          inFseqs IN castor."cnumList",
-                                                          inBlockIds IN castor."strList",
-                                                          inChecksumTypes IN castor."strList",
-                                                          inChecksums IN castor."cnumList",
-                                                          inComprSizes IN castor."cnumList",
-                                                          inTransferredSizes IN castor."cnumList",
-                                                          inErrorCodes IN castor."cnumList",
-                                                          inErrorMsgs IN castor."strList"
+                                                          inFileIds IN numList,
+                                                          inFileTrIds IN numList,
+                                                          inFseqs IN numList,
+                                                          inBlockIds IN strListTable,
+                                                          inChecksumTypes IN strListTable,
+                                                          inChecksums IN numList,
+                                                          inComprSizes IN numList,
+                                                          inTransferredSizes IN numList,
+                                                          inErrorCodes IN numList,
+                                                          inErrorMsgs IN strListTable
                                                           ) AS
   varStartTime TIMESTAMP;
   varNsHost VARCHAR2(2048);
@@ -1437,13 +1437,11 @@ BEGIN
   UPDATE RecallMount
      SET lastProcessedFseq = varNewFseq
    WHERE vid = varVid;
-  IF varCount > 0 THEN
-    -- Return all candidates. Don't commit now, this will be done in C++
-    -- after the results have been collected as the temporary table will be emptied.
-    OPEN outFiles FOR
-      SELECT fileid, nshost, fileTransactionId, filePath, blockId, fseq
-        FROM FilesToRecallHelper;
-  END IF;
+  -- Return all candidates. Don't commit now, this will be done in C++
+  -- after the results have been collected as the temporary table will be emptied.
+  OPEN outFiles FOR
+    SELECT fileid, nshost, fileTransactionId, filePath, blockId, fseq
+      FROM FilesToRecallHelper;
 END;
 /
 
@@ -1453,15 +1451,15 @@ END;
  */
 CREATE OR REPLACE PROCEDURE tg_setBulkFileRecallResult(inLogContext IN VARCHAR2,
                                                        inMountTrId IN NUMBER,
-                                                       inFileIds IN castor."cnumList",
-                                                       inFileTrIds IN castor."cnumList",
-                                                       inFilePaths IN castor."strList",
-                                                       inFseqs IN castor."cnumList",
-                                                       inChecksumNames IN castor."strList",
-                                                       inChecksums IN castor."cnumList",
-                                                       inFileSizes IN castor."cnumList",
-                                                       inErrorCodes IN castor."cnumList",
-                                                       inErrorMsgs IN castor."strList") AS
+                                                       inFileIds IN numList,
+                                                       inFileTrIds IN numList,
+                                                       inFilePaths IN strListTable,
+                                                       inFseqs IN numList,
+                                                       inChecksumNames IN strListTable,
+                                                       inChecksums IN numList,
+                                                       inFileSizes IN numList,
+                                                       inErrorCodes IN numList,
+                                                       inErrorMsgs IN strListTable) AS
   varCfId NUMBER;
   varVID VARCHAR2(10);
   varReqId VARCHAR2(36);
