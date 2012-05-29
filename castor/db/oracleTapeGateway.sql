@@ -330,7 +330,7 @@ CREATE OR REPLACE
 PROCEDURE tg_restartLostReqs(inMountTransactionIds IN castor."cnumList") AS
 BEGIN
  FOR i IN inMountTransactionIds.FIRST .. inMountTransactionIds.LAST LOOP   
-   tg_endTapeSession(mountTransactionIds(i), 0);
+   tg_endTapeSession(inMountTransactionIds(i), 0);
  END LOOP;
  COMMIT;
 END;
@@ -1050,7 +1050,6 @@ BEGIN
                                           AND copyNb != MigrationJob.destCopyNb))
        FOR UPDATE OF MigrationJob.id SKIP LOCKED)
   LOOP
-    varNewFseq := varNewFseq + 1;    -- we still decide the fseq for each migration candidate
     varCount := varCount + 1;
     varTotalSize := varTotalSize + Cand.fileSize;
     INSERT INTO FilesToMigrateHelper (fileId, nsHost, lastKnownFileName, filePath, fileTransactionId, fileSize, fseq)
@@ -1064,23 +1063,21 @@ BEGIN
            mountTransactionId = inMountTrId,
            fileTransactionId = varFileTrId
      WHERE id = Cand.mjId;
+    varNewFseq := varNewFseq + 1;    -- we still decide the fseq for each migration candidate
     IF varCount > inCount OR varTotalSize > inTotalSize THEN
       -- we have enough candidates for this round, exit loop
       EXIT;
     END IF;
   END LOOP;
-  IF varCount > 0 THEN
-    -- Update last fseq
-    UPDATE MigrationMount
-       SET lastFseq = varNewFseq
-     WHERE id = varMountId;
-    -- Return all candidates. Don't commit now, this will be done in C++
-    -- after the results have been collected as the temporary table will be emptied. 
-    OPEN outFiles FOR
-      SELECT fileId, nsHost, lastKnownFileName, filePath, fileTransactionId, fseq, fileSize
-        FROM FilesToMigrateHelper;
-  END IF;
-  -- ELSE no candidates found, return an empty cursor
+  -- Update last fseq
+  UPDATE MigrationMount
+     SET lastFseq = varNewFseq
+   WHERE id = varMountId;
+  -- Return all candidates (potentially an empty cursor). Don't commit now, this will be done
+  -- in C++ after the results have been collected as the temporary table will be emptied. 
+  OPEN outFiles FOR
+    SELECT fileId, nsHost, lastKnownFileName, filePath, fileTransactionId, fseq, fileSize
+      FROM FilesToMigrateHelper;
 END;
 /
 
