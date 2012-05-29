@@ -276,25 +276,6 @@ namespace castor      {
             std::vector<oracle::occi::MetaData> m_rsStruct;
           };
 
-          // Private helper class allowing auto rollback in case of problem inside the
-          // OCCI caller function
-          class scopedRollback {
-          public:
-            scopedRollback (OraTapeGatewaySvc * client): m_client(client), m_active(true) {};
-            ~scopedRollback ()
-            {
-              if (m_active) {
-                try {
-                  m_client->rollback();
-                } catch (...) {};
-              }
-            }
-            void engage() { m_active = true; };
-            void disengage() { m_active = false; };
-          private:
-            OraTapeGatewaySvc * m_client;
-            bool m_active;
-          };
 
           /* Small wrapper class for occi number, protecting from null values.
            * (Casting from null occi numbers trigger run time exceptions)

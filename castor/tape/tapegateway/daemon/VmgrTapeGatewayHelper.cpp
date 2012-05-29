@@ -105,8 +105,8 @@ void castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeForMigration
                     << " invalid label";
     throw ex;
   }
-  int maxPossible=maxFseqFromLabel(label);
-  if (maxPossible > 0 && outStartFseq >  maxPossible) {
+  const signed64 maxPossible=maxFseqFromLabel(label);
+  if (maxPossible > 0 && outStartFseq > maxPossible) {
     // too big fseq
     serrno=0;
     rc = vmgr_updatetape(vid,
@@ -155,7 +155,7 @@ void  castor::tape::tapegateway::VmgrTapeGatewayHelper::resetBusyTape
 }
 
 void castor::tape::tapegateway::VmgrTapeGatewayHelper::bulkUpdateTapeInVmgr(
-    u_signed64 filesCount, u_signed64 highestFseq, u_signed64 totalBytes,
+    u_signed64 filesCount, signed64 highestFseq, u_signed64 totalBytes,
     u_signed64 totalCompressedBytes, const std::string& vid,
     const utils::BoolFunctor &shuttingDown)
 throw (castor::exception::Exception){
@@ -163,18 +163,18 @@ throw (castor::exception::Exception){
   int flags = tinfo.vmgrTapeInfo.status;
 
   // Prepare sanity checks
-  u_signed64 maxFseq = maxFseqFromLabel(tinfo.vmgrTapeInfo.lbltype);
+  const int maxFseq = maxFseqFromLabel(tinfo.vmgrTapeInfo.lbltype);
   std::stringstream problemDescription;
   bool abortUpdate = false;
   // check if the highestFseq is not too big, in this case we mark it as error.
   if (maxFseq <= 0 || highestFseq >= maxFseq) {
     problemDescription << "castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr"
                        << " invalid fseq: " << highestFseq << " where maximum is "
-                       << maxFseq << "for label " << tinfo.vmgrTapeInfo.lbltype;
+                       << maxFseq << " for label " << tinfo.vmgrTapeInfo.lbltype;
     abortUpdate = true;
   // Check that we will actually reach the highestFseq with the current filesCount
   // fail if not.
-  } else if ((u_signed64)tinfo.vmgrTapeInfo.nbfiles + filesCount < highestFseq){
+  } else if ((int)(tinfo.vmgrTapeInfo.nbfiles + filesCount) != highestFseq) {
     problemDescription << "castor::tape::tapegateway::VmgrTapeGatewayHelper::updateTapeInVmgr"
                        << " invalid initial fseq before update: fseq=" << highestFseq << " would not be reached "
                        << "when adding count=" <<  filesCount << " to initial fseq=" << tinfo.vmgrTapeInfo.nbfiles;
@@ -190,18 +190,17 @@ throw (castor::exception::Exception){
       ex.getMessage()
            << "castor::tape::tapegateway::VmgrTapeGatewayHelper::bulkUpdateTapeInVmgr"
            << " vmgr_updatetape failed when setting tape readonly following: "
-           << problemDescription;
+           << problemDescription.str();
       throw ex;
     }
     castor::exception::Exception ex(EINVAL);
-    ex.getMessage()
-         << problemDescription;
+    ex.getMessage() << problemDescription.str();
     throw ex;
   }
 
   // Data sanity OK, update vmgr and continue to migrate from the tape
-  serrno=0;
-  u_signed64 compression = (totalBytes * 100 )/totalCompressedBytes  ;
+  serrno = 0;
+  u_signed64 compression = (totalBytes * 100)/totalCompressedBytes;
   int rc = vmgr_updatetape(vid.c_str(), /* Hardcoded side */ 0, totalBytes,
       compression, filesCount, flags ); // number files always one
   if (rc <0) {

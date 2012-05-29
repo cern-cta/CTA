@@ -44,7 +44,6 @@
 #include "castor/tape/tapegateway/daemon/VdqmTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/daemon/VmgrTapeGatewayHelper.hpp"
 
-#include "castor/tape/tapegateway/ScopedTransaction.hpp"
 
 //------------------------------------------------------------------------------
 // constructor

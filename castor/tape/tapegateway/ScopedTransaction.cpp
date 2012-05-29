@@ -61,11 +61,6 @@ namespace castor {
         m_transactionClosed = true;
       }
 
-      // Release: just disengage the auto-rollback
-      void ScopedTransaction::release() {
-        m_transactionClosed = true;
-      }
-
     } // namespace tapegateway
   } // namespace tape
 } // namespace castor

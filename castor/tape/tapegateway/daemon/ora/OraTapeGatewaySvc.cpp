@@ -903,9 +903,11 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::flagTapeFullForMigration
 
     /* The name of the SQL procedure is shorter, but not really ambiguous:
        only migration session can lead to a full tape (obviously) */
-    if (!m_flagTapeFullForMigrationSession)
+    if (!m_flagTapeFullForMigrationSession) {
       m_flagTapeFullForMigrationSession =
         createStatement("BEGIN tg_flagTapeFull(:1);END;");
+      m_flagTapeFullForMigrationSession->setAutoCommit(true);
+    }
 
     m_flagTapeFullForMigrationSession->setDouble(1,(double)tapeRequestId);
     // execute the statement
@@ -976,8 +978,6 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getBulkFilesToMigrate (
     m_getBulkFilesToMigrate->setNumber(2,(double)mountTransactionId);
     m_getBulkFilesToMigrate->setNumber(3,(double)maxFiles);
     m_getBulkFilesToMigrate->setNumber(4,(double)maxBytes);
-    // Roll back is anything goes wrong.
-    scopedRollback scpRollback (this);
     m_getBulkFilesToMigrate->executeUpdate();
     /* Convert the cursor's contents into a collection of FileToMigrateStruct, to be sent to
      * tape server.
@@ -1009,15 +1009,18 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getBulkFilesToMigrate (
     }
     // Close result set and transaction.
     rs.close();
-    commit();
-    scpRollback.disengage();
+    cnvSvc()->commit();
   } catch (oracle::occi::SQLException e) {
+    cnvSvc()->rollback();
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in getBulkFilesToMigrate"
       << std::endl << e.what();
     throw ex;
+  } catch (...) {
+    cnvSvc()->rollback();
+    throw;
   }
 }
 
@@ -1047,8 +1050,6 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getBulkFilesToRecall (
     m_getBulkFilesToRecall->setNumber(2,(double)mountTransactionId);
     m_getBulkFilesToRecall->setNumber(3,(double)maxFiles);
     m_getBulkFilesToRecall->setNumber(4,(double)maxBytes);
-    // Roll back is anything goes wrong.
-    scopedRollback scpRollback (this);
     m_getBulkFilesToRecall->executeUpdate();
     /* Convert the cursor's contents into a collection of FileToMigrateStruct, to be sent to
      * tape server.
@@ -1084,15 +1085,18 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getBulkFilesToRecall (
     }
     // Close result set and transaction.
     rs.close();
-    commit();
-    scpRollback.disengage();
+    cnvSvc()->commit();
   } catch (oracle::occi::SQLException e) {
+    cnvSvc()->rollback();
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in getBulkFilesToRecall"
       << std::endl << e.what();
     throw ex;
+  } catch (...) {
+    cnvSvc()->rollback();
+    throw;
   }
 }
 
@@ -1108,6 +1112,7 @@ throw (castor::exception::Exception){
     if (!m_setBulkFileMigrationResult) {
       m_setBulkFileMigrationResult =
         createStatement("BEGIN tg_setBulkFileMigrationResult(:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12); END;");
+      m_setBulkFileMigrationResult->setAutoCommit(true);
     }
     // Prepare the arays of data to be sent to PL/SQL
     std::vector<oracle::occi::Number> fileIds;
@@ -1173,13 +1178,13 @@ throw (castor::exception::Exception){
     oracle::occi::setVector(m_setBulkFileMigrationResult, 3, fileIds,       "numList");
     oracle::occi::setVector(m_setBulkFileMigrationResult, 4, fileTransactionIds,  "numList");
     oracle::occi::setVector(m_setBulkFileMigrationResult, 5, fSeqs,         "numList");
-    oracle::occi::setVector(m_setBulkFileMigrationResult, 6, blockIds,      "strList");
-    oracle::occi::setVector(m_setBulkFileMigrationResult, 7, checksumNames, "strList");
+    oracle::occi::setVector(m_setBulkFileMigrationResult, 6, blockIds,      "STRLISTTABLE");
+    oracle::occi::setVector(m_setBulkFileMigrationResult, 7, checksumNames, "STRLISTTABLE");
     oracle::occi::setVector(m_setBulkFileMigrationResult, 8, checksums,     "numList");
     oracle::occi::setVector(m_setBulkFileMigrationResult, 9, compressedFileSizes, "numList");
     oracle::occi::setVector(m_setBulkFileMigrationResult,10, fileSizes,     "numList");
     oracle::occi::setVector(m_setBulkFileMigrationResult,11, errorCodes,    "numList");
-    oracle::occi::setVector(m_setBulkFileMigrationResult,12, errorMessages, "strList");
+    oracle::occi::setVector(m_setBulkFileMigrationResult,12, errorMessages, "STRLISTTABLE");
     
     // DB update and get result.
     m_setBulkFileMigrationResult->executeUpdate();
@@ -1205,6 +1210,7 @@ throw (castor::exception::Exception){
     if (!m_setBulkFileRecallResult) {
       m_setBulkFileRecallResult =
         createStatement("BEGIN tg_setBulkFileRecallResult(:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11); END;");
+      m_setBulkFileRecallResult->setAutoCommit(true);
     }
     // Prepare the arays of data to be sent to PL/SQL
     std::vector<oracle::occi::Number> fileIds;
@@ -1292,7 +1298,7 @@ throw (castor::exception::Exception){
 void castor::tape::tapegateway::ora::OraTapeGatewaySvc::commit()
   throw (castor::exception::Exception)
 {
-  DbBaseObj::commit();
+  cnvSvc()->commit();
 }
 
 //----------------------------------------------------------------------------
@@ -1302,6 +1308,5 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::commit()
 void castor::tape::tapegateway::ora::OraTapeGatewaySvc::rollback()
   throw (castor::exception::Exception)
 {
-  DbBaseObj::rollback();
+  cnvSvc()->rollback();
 }
-

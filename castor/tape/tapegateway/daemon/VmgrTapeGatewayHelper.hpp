@@ -69,19 +69,19 @@ namespace castor {
          * @param shuttingDown a functor telling whether we are shutting down
          * @exception throws CASTOR exceptions in case of error
          */
-	void resetBusyTape(const std::string &vid,
-                           const utils::BoolFunctor &shuttingDown)
-	throw (castor::exception::Exception);
-
-	void bulkUpdateTapeInVmgr(u_signed64     filesCount, u_signed64 highestFseq, u_signed64 totalBytes,
-	    u_signed64 totalCompressedBytes, const std::string& vid, const utils::BoolFunctor &shuttingDown)
-	throw (castor::exception::Exception);
-
-	void setTapeAsFull(const std::string &vid, const utils::BoolFunctor &shuttingDown)
-	throw (castor::exception::Exception);
+        void resetBusyTape(const std::string &vid,
+                                 const utils::BoolFunctor &shuttingDown)
+          throw (castor::exception::Exception);
+      
+        void bulkUpdateTapeInVmgr(u_signed64 filesCount, signed64 highestFseq, u_signed64 totalBytes,
+            u_signed64 totalCompressedBytes, const std::string& vid, const utils::BoolFunctor &shuttingDown)
+          throw (castor::exception::Exception);
+      
+        void setTapeAsFull(const std::string &vid, const utils::BoolFunctor &shuttingDown)
+          throw (castor::exception::Exception);
 
         void setTapeAsReadonlyAndUnbusy(const  std::string &vid, const utils::BoolFunctor &shuttingDown)
-        throw (castor::exception::Exception);
+          throw (castor::exception::Exception);
 
         int maxFseqFromLabel(const char* label);
 

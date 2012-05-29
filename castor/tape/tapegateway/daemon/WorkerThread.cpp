@@ -78,7 +78,6 @@
 #include "castor/tape/utils/utils.hpp"
 #include "castor/tape/utils/Timer.hpp"
 
-#include "castor/tape/tapegateway/ScopedTransaction.hpp"
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -337,8 +336,6 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleStartWorker(
 castor::IObject*  castor::tape::tapegateway::WorkerThread::handleEndWorker(
     castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc,
     requesterInfo& requester) throw(castor::exception::Exception){
-  // Rollback mechanism.
-  ScopedTransaction scpTrans(&oraSvc);
   // I received an EndTransferRequest, I send back an EndTransferResponse
   std::auto_ptr <NotificationAcknowledge> response(new NotificationAcknowledge());
   EndNotification * pEndRep =  dynamic_cast<EndNotification *>(&obj);
@@ -474,10 +471,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleEndWorker(
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, WORKER_END_DB_ERROR, params);
     return response.release();
   }
-  // No release of the scpTrans as all is supposed to be self-contained.
-  // Leving the rollback as a safety mechanism (SQL does not catch all exceptions)
-  // TODO review SQL.
-  return  response.release();
+  return response.release();
 }
 
 castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker(
@@ -687,7 +681,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileMigrationRe
   // Get the VID from the DB (and the tape pool)
   std::string vid;
   std::string tapePool;
-  try{
+  try {
     oraSvc.getMigrationMountVid(fileMigrationReportList.mountTransactionId(), vid, tapePool);
   } catch (castor::exception::Exception e) {
     // No Vid, not much we can do... The DB is failing on us. We can try to
@@ -713,16 +707,17 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileMigrationRe
   // on the tape and carry on), we will have
   // the record the empty hole left by the failure in the middle of the successes.
   // Today we just bump up the tape's statistics for the successes.
-  {
+  if (!fileMigrationReportList.successfulMigrations().empty()) {
     // 2.1 Build the statistics of the successes. Also log the reception of them.
-    u_signed64 totalBytes = 0, totalCompressedBytes = 0, highestFseq = -1;
+    u_signed64 totalBytes = 0, totalCompressedBytes = 0;
+    int highestFseq = -1;
 
     for (std::vector<FileMigratedNotificationStruct *>::iterator sm =
            fileMigrationReportList.successfulMigrations().begin();
-        sm <  fileMigrationReportList.successfulMigrations().end(); sm++) {
+           sm < fileMigrationReportList.successfulMigrations().end(); sm++) {
       totalBytes += (*sm)->fileSize();
       totalCompressedBytes += (*sm)->compressedFileSize();
-      highestFseq = u_signed64((*sm)->fseq()) > highestFseq? (*sm)->fseq(): highestFseq;
+      highestFseq = std::max((*sm)->fseq(), highestFseq);
       // Log the file notification while we're at it.
       Cns_fileid fileId;
       fileId.fileid = (*sm)->fileid();
@@ -780,7 +775,6 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileMigrationRe
     if (tapeFull) {
       try {
         oraSvc.flagTapeFullForMigrationSession(fileMigrationReportList.mountTransactionId());
-        oraSvc.commit();
       } catch (castor::exception::Exception e){
         logInternalError (e, requester, fileMigrationReportList);
       }
@@ -921,9 +915,6 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFilesToMigrateL
   };
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, WORKER_MIGRATION_REQUESTED,params_outloop);
 
-  // Setup the auto roll back in case of exception or error.
-  ScopedTransaction scpTrans (&oraSvc);
-
   // Prepare the file list container
   std::queue <FileToMigrateStruct> files_list;
   bool dbFailure = false;
@@ -1051,9 +1042,6 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFilesToRecallLi
   };
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, WORKER_RECALL_REQUESTED, params_outloop);
 
-  // Setup the auto roll back in case of exception or error.
-  ScopedTransaction scpTrans (&oraSvc);
-
   // Prepare the file list container
   std::queue <FileToRecallStruct> files_list;
   bool dbFailure = false;
@@ -1177,7 +1165,7 @@ throw ()
     std::stringstream report;
     report <<  "Failed to endTapeSession in the DB "
       "in: castor::tape::tapegateway::WorkerThread::setSessionToClosing: "
-      "error=" << e.code() << " errorMessage=" << e.getMessage();
+      "error=" << e.code() << " errorMessage=" << e.getMessage().str();
     castor::dlf::Param params[] ={
         castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
         castor::dlf::Param("Port",requester.port),

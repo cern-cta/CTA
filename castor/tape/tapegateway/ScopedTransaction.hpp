@@ -59,11 +59,6 @@ namespace castor {
         /* explicitely rollbacks the transaction */
         void rollback() throw (castor::exception::Exception);
 
-        /* pretends the transaction is over, without commitint neither rolling back 
-         * XXX should be dropped !
-         */
-        void release();
-
       private:
 
         /* the underlying ITapeGatewaySvc object */
