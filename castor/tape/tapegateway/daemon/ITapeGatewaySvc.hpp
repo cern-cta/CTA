@@ -221,6 +221,17 @@ namespace castor      {
           throw (castor::exception::Exception) = 0;
 
         /**
+         * Set tape session to closing: moves the tape session to a state
+         * where no more work will be retrieved, in order to get the session
+         * to fold down gracefully. This mechanism moves the error handling
+         * back to the tape gateway from the tape server.
+         * Thanks to this, most of the replies to the tape server can be a neutral
+         * "got it".
+         */
+        virtual void setTapeSessionToClosing (u_signed64 mountTransactionId)
+          throw (castor::exception::Exception) = 0;
+
+        /**
          * Get the next best files to migrate
          */
         virtual void getBulkFilesToMigrate (

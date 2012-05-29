@@ -90,6 +90,7 @@ castor::tape::tapegateway::ora::OraTapeGatewaySvc::OraTapeGatewaySvc(const std::
   m_deleteMigrationMountWithBadTapePoolStatement(0),
   m_flagTapeFullForMigrationSession(0),
   m_getMigrationMountVid(0),
+  m_setTapeSessionToClosing(0),
   m_getBulkFilesToMigrate(0),
   m_getBulkFilesToRecall(0),
   m_setBulkFileMigrationResult(0),
@@ -139,13 +140,14 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
     if ( m_failFileTransferStatement ) deleteStatement(m_failFileTransferStatement);
     if ( m_getTapeToReleaseStatement ) deleteStatement(m_getTapeToReleaseStatement);
     if ( m_cancelMigrationOrRecallStatement ) deleteStatement(m_cancelMigrationOrRecallStatement);
-    if ( m_deleteMigrationMountWithBadTapePoolStatement) deleteStatement(m_deleteMigrationMountWithBadTapePoolStatement);    
-    if ( m_flagTapeFullForMigrationSession) deleteStatement(m_flagTapeFullForMigrationSession);
-    if ( m_getMigrationMountVid) deleteStatement(m_getMigrationMountVid);
-    if ( m_getBulkFilesToMigrate) deleteStatement(m_getBulkFilesToMigrate);
-    if ( m_getBulkFilesToRecall) deleteStatement(m_getBulkFilesToRecall);
-    if ( m_setBulkFileMigrationResult) deleteStatement(m_setBulkFileMigrationResult);
-    if ( m_setBulkFileRecallResult) deleteStatement(m_setBulkFileRecallResult);
+    if ( m_deleteMigrationMountWithBadTapePoolStatement ) deleteStatement(m_deleteMigrationMountWithBadTapePoolStatement);    
+    if ( m_flagTapeFullForMigrationSession ) deleteStatement(m_flagTapeFullForMigrationSession);
+    if ( m_getMigrationMountVid ) deleteStatement(m_getMigrationMountVid);
+    if ( m_setTapeSessionToClosing ) deleteStatement(m_setTapeSessionToClosing);
+    if ( m_getBulkFilesToMigrate ) deleteStatement(m_getBulkFilesToMigrate);
+    if ( m_getBulkFilesToRecall ) deleteStatement(m_getBulkFilesToRecall);
+    if ( m_setBulkFileMigrationResult ) deleteStatement(m_setBulkFileMigrationResult);
+    if ( m_setBulkFileRecallResult ) deleteStatement(m_setBulkFileRecallResult);
   } catch (castor::exception::Exception& ignored) {};
   // Now reset all pointers to 0
   m_getMigrationMountsWithoutTapesStatement= 0; 
@@ -164,6 +166,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
   m_deleteMigrationMountWithBadTapePoolStatement=0;
   m_flagTapeFullForMigrationSession=0;
   m_getMigrationMountVid=0;
+  m_setTapeSessionToClosing=0;
   m_getBulkFilesToMigrate=0;
   m_getBulkFilesToRecall=0;
   m_setBulkFileMigrationResult=0;
@@ -953,6 +956,29 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getMigrationMountVid(con
 
 
 //----------------------------------------------------------------------------
+// setTapeSessionClosing
+//----------------------------------------------------------------------------
+
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::setTapeSessionToClosing(u_signed64 mountTransactionId)
+throw (castor::exception::Exception){
+  try {
+    if (!m_setTapeSessionToClosing) {
+      m_setTapeSessionToClosing =
+        createStatement("BEGIN tg_setTapeSessionToClosing(:1); END;");
+    }
+    m_setTapeSessionToClosing->setNumber(1,occiNumber(mountTransactionId));
+    m_setTapeSessionToClosing->executeUpdate();
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in setTapeSessionToClosing"
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+//----------------------------------------------------------------------------
 // getBulkFilesToMigrate
 //----------------------------------------------------------------------------
 void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getBulkFilesToMigrate (
@@ -1058,7 +1084,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getBulkFilesToRecall (
     // Find columns for the cursor
     resultSetIntrospector resIntros (rs.get());
     int fileTransIdIdx   = resIntros.findColumnIndex(   "FILETRANSACTIONID", oracle::occi::OCCI_SQLT_NUM);
-    int nsFileIdIdx      = resIntros.findColumnIndex(            "NSFILEID", oracle::occi::OCCI_SQLT_NUM);
+    int nsFileIdIdx      = resIntros.findColumnIndex(              "FILEID", oracle::occi::OCCI_SQLT_NUM);
     int nsHostIdx        = resIntros.findColumnIndex(              "NSHOST", oracle::occi::OCCI_SQLT_CHR);
     int fSeqIdx          = resIntros.findColumnIndex(                "FSEQ", oracle::occi::OCCI_SQLT_NUM);
     int blockIdIdx       = resIntros.findColumnIndex(             "BLOCKID", oracle::occi::OCCI_SQLT_BIN);
@@ -1141,8 +1167,8 @@ throw (castor::exception::Exception){
       // number (as in nsls, for example) because it is stored in big endian order in the SCSI
       // command buffer and always stored that way without interpretation outside of SCSI commands.
       blockIdHex << std::hex << std::noshowbase << std::uppercase << std::setfill('0')
-                 << std::setw(2) << (*s)->blockId0() << std::setw(2) << (*s)->blockId1()
-                 << std::setw(2) << (*s)->blockId2() << std::setw(2) << (*s)->blockId3();
+                 << std::setw(2) << (int)(*s)->blockId0() << std::setw(2) << (int)(*s)->blockId1()
+                 << std::setw(2) << (int)(*s)->blockId2() << std::setw(2) << (int)(*s)->blockId3();
       blockIds.push_back(blockIdHex.str());
       checksumNames.push_back((*s)->checksumName());
       checksums.push_back(occiNumber((*s)->checksum()));
@@ -1290,6 +1316,7 @@ throw (castor::exception::Exception){
     throw ex;
   }
 }
+
 
 //----------------------------------------------------------------------------
 // commit
