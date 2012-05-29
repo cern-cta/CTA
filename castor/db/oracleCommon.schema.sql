@@ -402,7 +402,7 @@ CREATE GLOBAL TEMPORARY TABLE FilesToMigrateHelper
 CREATE GLOBAL TEMPORARY TABLE FileMigrationResultsHelper
  (reqId VARCHAR2(36) CONSTRAINT PK_SetSegsHelper_ReqId PRIMARY KEY,
   fileId NUMBER, lastModTime NUMBER, copyNo NUMBER, oldCopyNo NUMBER, transfSize NUMBER,
-  comprSize NUMBER, vid VARCHAR2(6), fSeq NUMBER, blockId RAW(4), checksumType VARCHAR2(2), checksum NUMBER)
+  comprSize NUMBER, vid VARCHAR2(6), fSeq NUMBER, blockId RAW(4), checksumType VARCHAR2(16), checksum NUMBER)
   ON COMMIT DELETE ROWS;
 
 

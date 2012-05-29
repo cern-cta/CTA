@@ -101,12 +101,16 @@ CREATE GLOBAL TEMPORARY TABLE Cns_files_exist_tmp
 -- We keep the data on commit and truncate it explicitly afterwards as we
 -- want to use it over multiple commits (e.g. on bulk multi-file operations).
 CREATE GLOBAL TEMPORARY TABLE SetSegmentsForFilesHelper
-  (reqId VARCHAR2(36) CONSTRAINT PK_SetSegsHelper_ReqId PRIMARY KEY,
+  (reqId VARCHAR2(36),
    fileId NUMBER, lastModTime NUMBER, copyNo NUMBER, oldCopyNo NUMBER, transfSize NUMBER,
-   comprSize NUMBER, vid VARCHAR2(6), fseq NUMBER, blockId RAW(4), checksumType VARCHAR2(2), checksum NUMBER)
+   comprSize NUMBER, vid VARCHAR2(6), fseq NUMBER, blockId RAW(4), checksumType VARCHAR2(16), checksum NUMBER)
   ON COMMIT PRESERVE ROWS;
 
+CREATE INDEX I_SetSegsHelper_ReqId ON SetSegmentsForFilesHelper(reqId);
+  
 CREATE GLOBAL TEMPORARY TABLE ResultsLogHelper
-  (reqId VARCHAR2(36) CONSTRAINT PK_ResLogHelper_ReqId PRIMARY KEY,
+  (reqId VARCHAR2(36),
    timeinfo NUMBER, ec INTEGER, fileId NUMBER, msg VARCHAR2(2048), params VARCHAR2(4000))
   ON COMMIT PRESERVE ROWS;
+
+CREATE INDEX I_ResultsLogHelper_ReqId ON ResultsLogHelper(reqId);

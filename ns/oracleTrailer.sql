@@ -35,7 +35,7 @@ CREATE OR REPLACE PACKAGE castorns AS
     vid VARCHAR2(6),
     fseq INTEGER,
     blockId RAW(4),
-    checksum_name VARCHAR2(2),
+    checksum_name VARCHAR2(16),
     checksum INTEGER
   );
   TYPE Segment_Cur IS REF CURSOR RETURN Segment_Rec;

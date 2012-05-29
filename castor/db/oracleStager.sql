@@ -17,28 +17,6 @@ CREATE OR REPLACE PACKAGE castor AS
     mountPoint VARCHAR2(2048),
     diskServer VARCHAR2(2048));
   TYPE DiskCopy_Cur IS REF CURSOR RETURN DiskCopyCore;
-  TYPE Segment_Rec IS RECORD (
-    fseq NUMBER,
-    offset INTEGER,
-    bytes_in INTEGER,
-    bytes_out INTEGER,
-    host_bytes INTEGER,
-    segmCksumAlgorithm VARCHAR2(2048),
-    segmCksum NUMBER,
-    errMsgTxt VARCHAR2(2048),
-    errorCode NUMBER,
-    severity NUMBER,
-    blockId0 INTEGER,
-    blockId1 INTEGER,
-    blockId2 INTEGER,
-    blockId3 INTEGER,
-    creationTime INTEGER,
-    id INTEGER,
-    tape INTEGER,
-    copy INTEGER,
-    status INTEGER,
-    priority INTEGER);
-  TYPE Segment_Cur IS REF CURSOR RETURN Segment_Rec;
   TYPE "strList" IS TABLE OF VARCHAR2(2048) index BY binary_integer;
   TYPE "cnumList" IS TABLE OF NUMBER index BY binary_integer;
   TYPE QueryLine IS RECORD (

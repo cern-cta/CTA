@@ -150,7 +150,7 @@ CREATE OR REPLACE PROCEDURE bestFileSystemForRecall(inCfId IN INTEGER, outFilePa
 BEGIN
   -- try and select a good FileSystem for this recall
   FOR f IN (SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/
-                   DiskServer.name || FileSystem.mountPoint AS remotePath, FileSystem.id,
+                   DiskServer.name ||':'|| FileSystem.mountPoint AS remotePath, FileSystem.id,
                    FileSystem.diskserver, CastorFile.fileSize, CastorFile.fileId, CastorFile.nsHost
               FROM DiskServer, FileSystem, DiskPool2SvcClass,
                    (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, svcClass FROM StageGetRequest                            UNION ALL
@@ -1087,15 +1087,15 @@ END;
  */
 CREATE OR REPLACE PROCEDURE tg_setBulkFileMigrationResult(inLogContext IN VARCHAR2,
                                                           inMountTrId IN NUMBER,
-                                                          inFileIds IN numList,
-                                                          inFileTrIds IN numList,
-                                                          inFseqs IN numList,
+                                                          inFileIds IN "numList",
+                                                          inFileTrIds IN "numList",
+                                                          inFseqs IN "numList",
                                                           inBlockIds IN strListTable,
                                                           inChecksumTypes IN strListTable,
-                                                          inChecksums IN numList,
-                                                          inComprSizes IN numList,
-                                                          inTransferredSizes IN numList,
-                                                          inErrorCodes IN numList,
+                                                          inChecksums IN "numList",
+                                                          inComprSizes IN "numList",
+                                                          inTransferredSizes IN "numList",
+                                                          inErrorCodes IN "numList",
                                                           inErrorMsgs IN strListTable
                                                           ) AS
   varStartTime TIMESTAMP;
@@ -1414,7 +1414,7 @@ BEGIN
       varCount := varCount + 1;
       varTotalSize := varTotalSize + Cand.fileSize;
       varNewFseq := Cand.fseq;
-      INSERT INTO FilesToRecallHelper (fileid, nshost, fileTransactionId, filePath, blockId, fSeq)
+      INSERT INTO FilesToRecallHelper (fileId, nsHost, fileTransactionId, filePath, blockId, fSeq)
         VALUES (Cand.fileId, Cand.nsHost, ids_seq.nextval, varPath, Cand.blockId, Cand.fSeq)
         RETURNING fileTransactionId INTO varFileTrId;
       -- update RecallJob
@@ -1440,7 +1440,7 @@ BEGIN
   -- Return all candidates. Don't commit now, this will be done in C++
   -- after the results have been collected as the temporary table will be emptied.
   OPEN outFiles FOR
-    SELECT fileid, nshost, fileTransactionId, filePath, blockId, fseq
+    SELECT fileId, nsHost, fileTransactionId, filePath, blockId, fseq
       FROM FilesToRecallHelper;
 END;
 /
@@ -1451,14 +1451,14 @@ END;
  */
 CREATE OR REPLACE PROCEDURE tg_setBulkFileRecallResult(inLogContext IN VARCHAR2,
                                                        inMountTrId IN NUMBER,
-                                                       inFileIds IN numList,
-                                                       inFileTrIds IN numList,
+                                                       inFileIds IN "numList",
+                                                       inFileTrIds IN "numList",
                                                        inFilePaths IN strListTable,
-                                                       inFseqs IN numList,
+                                                       inFseqs IN "numList",
                                                        inChecksumNames IN strListTable,
-                                                       inChecksums IN numList,
-                                                       inFileSizes IN numList,
-                                                       inErrorCodes IN numList,
+                                                       inChecksums IN "numList",
+                                                       inFileSizes IN "numList",
+                                                       inErrorCodes IN "numList",
                                                        inErrorMsgs IN strListTable) AS
   varCfId NUMBER;
   varVID VARCHAR2(10);
