@@ -103,5 +103,5 @@ CREATE TABLE SetSegmentsForFilesHelper
   (reqId VARCHAR2(36), fileId NUMBER, lastModTime NUMBER, copyNo NUMBER, oldCopyNo NUMBER, transfSize NUMBER,
    comprSize NUMBER, vid VARCHAR2(6), fseq NUMBER, blockId RAW(4), checksumType VARCHAR2(16), checksum NUMBER);
 
-CREATE ResultsLogHelper
+CREATE TABLE ResultsLogHelper
   (reqId VARCHAR2(36), timeinfo NUMBER, ec INTEGER, fileId NUMBER, msg VARCHAR2(2048), params VARCHAR2(4000));
