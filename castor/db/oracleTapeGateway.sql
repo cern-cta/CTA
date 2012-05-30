@@ -595,7 +595,6 @@ END;
 /* Attempt to retry a migration. Fail it in case it should not be retried anymore */
 CREATE OR REPLACE PROCEDURE retryOrFailMigration(inMountTrId IN NUMBER, inFileId IN VARCHAR2, inNsHost IN VARCHAR2,
                                                  inErrorCode IN NUMBER, inReqId IN VARCHAR2) AS
-  PRAGMA AUTONOMOUS_TRANSACTION;   -- See tg_setBulkFileMigrationResult()
   varFileTrId NUMBER;
 BEGIN
   -- For the time being, we ignore the error code and apply the same policy to any
@@ -619,7 +618,6 @@ BEGIN
     failFileMigration(inMountTrId, inFileId, inErrorCode, inReqId);
   -- ELSE we have one more retry, which has been logged upstream
   END IF;
-  COMMIT;
 END;
 /
 
@@ -682,8 +680,7 @@ END;
 /
 
 /* delete MigrationMount */
-CREATE OR REPLACE
-PROCEDURE tg_deleteMigrationMount(inMountId IN NUMBER) AS
+CREATE OR REPLACE PROCEDURE tg_deleteMigrationMount(inMountId IN NUMBER) AS
 BEGIN
   DELETE FROM MigrationMount WHERE id=inMountId;
 END;
@@ -765,16 +762,14 @@ END;
 /
 
 /* flag tape as full for a given session */
-CREATE OR REPLACE
-PROCEDURE tg_flagTapeFull (inMountTransactionId IN NUMBER) AS
+CREATE OR REPLACE PROCEDURE tg_flagTapeFull (inMountTransactionId IN NUMBER) AS
 BEGIN
   UPDATE MigrationMount SET full = 1 WHERE mountTransactionId = inMountTransactionId;
 END;
 /
 
 /* Find the VID of the tape used in a tape session */
-CREATE OR REPLACE
-PROCEDURE tg_getMigrationMountVid (
+CREATE OR REPLACE PROCEDURE tg_getMigrationMountVid (
     inMountTransactionId IN NUMBER,
     outVid          OUT NOCOPY VARCHAR2,
     outTapePool     OUT NOCOPY VARCHAR2) AS
@@ -788,6 +783,7 @@ BEGIN
      AND MigrationMount.mountTransactionId = inMountTransactionId;
 END;
 /
+
 
 /* insert new Migration Mount */
 CREATE OR REPLACE PROCEDURE insertMigrationMount(inTapePoolId IN NUMBER,
@@ -828,7 +824,8 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 END;
 /
 
-/* resurrect tapes */
+
+/* DB job to start new migration mounts */
 CREATE OR REPLACE PROCEDURE startMigrationMounts AS
   varNbPreExistingMounts INTEGER;
   varTotalNbMounts INTEGER := 0;
@@ -923,7 +920,7 @@ BEGIN
 END;
 /
 
-/* startRecallMounts */
+/* DB job to start new recall mounts */
 CREATE OR REPLACE PROCEDURE startRecallMounts AS
    varNbMounts INTEGER;
    varNbExtraMounts INTEGER := 0;
@@ -1081,6 +1078,38 @@ BEGIN
 END;
 /
 
+/* Wrapper procedure for the setOrReplaceSegmentsForFiles call in the NS DB. Because we can't,
+ * pass arrays, and temporary tables are forbidden with distributed transactions, we use standard
+ * tables on the Stager DB (while the NS table is still temporary) to pass the data
+ * and we wrap everything in an autonomous transaction to isolate the caller.
+ */
+CREATE OR REPLACE PROCEDURE ns_setOrReplaceSegments(inReqId IN VARCHAR2,
+                                                    outNSTimeInfos OUT "numList",
+                                                    outNSErrorCodes OUT "numList",
+                                                    outNSMsgs OUT strListTable,
+                                                    outNSFileIds OUT "numList",
+                                                    outNSParams OUT strListTable) AS
+PRAGMA AUTONOMOUS_TRANSACTION;
+BEGIN
+  -- "Bulk" transfer data to the NS DB
+  INSERT /*+ APPEND */ INTO SetSegmentsForFilesHelper@RemoteNS
+    SELECT * FROM FileMigrationResultsHelper
+     WHERE reqId = inReqId;
+  DELETE FROM FileMigrationResultsHelper
+   WHERE reqId = inReqId;
+  -- This call autocommits all segments in the NameServer
+  setOrReplaceSegmentsForFiles@RemoteNS(inReqId);
+  -- Retrieve results from the NS DB in bulk and clean data
+  SELECT timeinfo, ec, msg, fileId, params
+    BULK COLLECT INTO outNSTimeInfos, outNSErrorCodes, outNSMsgs, outNSFileIds, outNSParams
+    FROM ResultsLogHelper@RemoteNS
+   WHERE reqId = inReqId;
+  DELETE FROM ResultsLogHelper@RemoteNS
+   WHERE reqId = inReqId;
+  -- this commits the remote transaction
+  COMMIT;
+END;
+/
 
 /* Commit a set of succeeded/failed migration processes to the NS and stager db.
  * Locks are taken on the involved castorfiles one by one, then to the dependent entities.
@@ -1142,7 +1171,8 @@ BEGIN
                 strtoRaw4(inBlockIds(i)), inChecksumTypes(i), inChecksums(i));
       EXCEPTION WHEN NO_DATA_FOUND THEN
         -- Log 'unable to identify migration, giving up'
-        varParams := 'mountTransactionId='|| to_char(inMountTrId) ||' '|| inLogContext;
+        varParams := 'mountTransactionId='|| to_char(inMountTrId) ||' fileTransactionId='|| to_char(inFileTrIds(i))
+          ||' '|| inLogContext;
         logToDLF(varReqid, dlf.LVL_ERROR, dlf.MIGRATION_NOT_FOUND, inFileIds(i), varNsHost, 'tapegatewayd', varParams);
       END;
     ELSE
@@ -1151,25 +1181,15 @@ BEGIN
                    ||' ErrorMessage="'|| inErrorMsgs(i) ||'" VID='|| varVid
                    ||' copyNb='|| to_char(varCopyNo) ||' '|| inLogContext;
       logToDLF(varReqid, dlf.LVL_WARNING, dlf.MIGRATION_RETRY, inFileIds(i), varNsHost, 'tapegatewayd', varParams);
-      -- The following call commits in an autonomous transaction!
       retryOrFailMigration(inMountTrId, inFileIds(i), varNsHost, inErrorCodes(i), varReqId);
+      COMMIT;
     END IF;
   END LOOP;
+  -- Commit all the entries in FileMigrationResultsHelper so that the next call can take them
+  COMMIT;
 
-  -- "Bulk" transfer data to the NS DB (FORALL is not supported here)
-  INSERT INTO SetSegmentsForFilesHelper@RemoteNS
-    SELECT * FROM FileMigrationResultsHelper;
-  
-  -- This call autocommits all segments in the NameServer
-  setOrReplaceSegmentsForFiles@RemoteNS(varReqId);
-  
-  -- Retrieve results from the NS DB in bulk and clean result data
-  SELECT timeinfo, ec, msg, fileId, params
-    BULK COLLECT INTO varNSTimeInfos, varNSErrorCodes, varNSMsgs, varNSFileIds, varNSParams
-    FROM ResultsLogHelper@RemoteNS
-   WHERE reqId = varReqId;
-  DELETE FROM ResultsLogHelper@RemoteNS
-   WHERE reqId = varReqId;
+  -- The following procedure wraps the remote calls in an autonomous transaction
+  ns_setOrReplaceSegments(varReqId, varNSTimeInfos, varNSErrorCodes, varNSMsgs, varNSFileIds, varNSParams);
 
   -- Process the results
   FOR i IN varNSFileIds.FIRST .. varNSFileIds.LAST LOOP
@@ -1179,7 +1199,8 @@ BEGIN
               CASE varNSErrorCodes(i) WHEN 0 THEN dlf.LVL_SYSTEM ELSE dlf.LVL_ERROR END,
               varNSMsgs(i), varNSFileIds(i), varNsHost, 'nsd', varNSParams(i));
     
-    -- Now process file by file, depending on the result
+    -- Now process file by file, depending on the result. Skip pure log entries with fileId = 0.
+    IF varNSFileIds(i) = 0 THEN CONTINUE; END IF;
     CASE
     WHEN varNSErrorCodes(i) = 0 THEN
       -- All right, commit the migration in the stager

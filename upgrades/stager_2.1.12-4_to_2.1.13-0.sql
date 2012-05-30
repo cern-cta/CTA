@@ -263,11 +263,9 @@ CREATE GLOBAL TEMPORARY TABLE FilesToMigrateHelper
   fileTransactionId NUMBER, fileSize NUMBER, fSeq INTEGER)
  ON COMMIT DELETE ROWS;
  
-CREATE GLOBAL TEMPORARY TABLE FileMigrationResultsHelper
- (reqId VARCHAR2(36) CONSTRAINT PK_SetSegsHelper_ReqId PRIMARY KEY,
-  fileId NUMBER, lastModTime NUMBER, copyNo NUMBER, oldCopyNo NUMBER, transfSize NUMBER,
-  comprSize NUMBER, vid VARCHAR2(6), fSeq NUMBER, blockId RAW(4), checksumType VARCHAR2(2), checksum NUMBER)
-  ON COMMIT DELETE ROWS;
+CREATE TABLE FileMigrationResultsHelper
+ (reqId VARCHAR2(36), fileId NUMBER, lastModTime NUMBER, copyNo NUMBER, oldCopyNo NUMBER, transfSize NUMBER,
+  comprSize NUMBER, vid VARCHAR2(6), fSeq NUMBER, blockId RAW(4), checksumType VARCHAR2(16), checksum NUMBER);
 
 
 /* Drop obsoleted code */
@@ -301,7 +299,7 @@ DROP FUNCTION triggerRepackRecall;
 /* Resurrect all subrequest that were waiting so that we trigger new recalls after we have */
 /* dropped all recall related tables */
 /* also cleanup all diskcopies in WAITTAPERECALL as they should no exist anymore */
-DELETE FROM  DiskCopy WHERE status = dconst.DISKCOPY_WAITTAPERECALL;
+DELETE FROM DiskCopy WHERE status = dconst.DISKCOPY_WAITTAPERECALL;
 UPDATE SubRequest SET status = dconst.SUBREQUEST_RESTART
  WHERE status IN (dconst.SUBREQUEST_WAITTAPERECALL, dconst.SUBREQUEST_WAITSUBREQ);
 COMMIT;

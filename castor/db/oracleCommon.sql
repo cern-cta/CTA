@@ -34,7 +34,7 @@ END;
 /* Returns a time interval in seconds */
 CREATE OR REPLACE FUNCTION getSecs(startTime IN TIMESTAMP, endTime IN TIMESTAMP) RETURN NUMBER IS
 BEGIN
-  RETURN EXTRACT(SECOND FROM (endTime - startTime));
+  RETURN TRUNC(EXTRACT(SECOND FROM (endTime - startTime)), 6);
 END;
 /
 
@@ -352,6 +352,7 @@ BEGIN
 END;
 /
 
+/* A wrapper to run DB jobs and catch+log any exception they may throw */
 CREATE OR REPLACE PROCEDURE startDbJob(jobCode VARCHAR2, source VARCHAR2) AS
 BEGIN
   EXECUTE IMMEDIATE jobCode;

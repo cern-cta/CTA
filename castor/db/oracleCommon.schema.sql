@@ -399,11 +399,12 @@ CREATE GLOBAL TEMPORARY TABLE FilesToMigrateHelper
   fileTransactionId NUMBER, fileSize NUMBER, fSeq INTEGER)
  ON COMMIT DELETE ROWS;
 
-CREATE GLOBAL TEMPORARY TABLE FileMigrationResultsHelper
- (reqId VARCHAR2(36) CONSTRAINT PK_SetSegsHelper_ReqId PRIMARY KEY,
-  fileId NUMBER, lastModTime NUMBER, copyNo NUMBER, oldCopyNo NUMBER, transfSize NUMBER,
-  comprSize NUMBER, vid VARCHAR2(6), fSeq NUMBER, blockId RAW(4), checksumType VARCHAR2(16), checksum NUMBER)
-  ON COMMIT DELETE ROWS;
+/* The following would be a temporary table, except that as it is used through a distributed
+   transaction and Oracle does not support temporary tables in such context, it is defined as
+   a normal table. See ns_setOrReplaceSegments for more details */
+CREATE TABLE FileMigrationResultsHelper
+ (reqId VARCHAR2(36), fileId NUMBER, lastModTime NUMBER, copyNo NUMBER, oldCopyNo NUMBER, transfSize NUMBER,
+  comprSize NUMBER, vid VARCHAR2(6), fSeq NUMBER, blockId RAW(4), checksumType VARCHAR2(16), checksum NUMBER);
 
 
 /* Indexes related to most used entities */

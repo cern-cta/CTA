@@ -58,11 +58,29 @@ COMMIT;
 
 /* Schema changes go here */
 /**************************/
+-- Temporary tables to store intermediate data to be passed from/to the stager.
+-- We keep the data on commit and truncate it explicitly afterwards as we
+-- want to use it over multiple commits (e.g. on bulk multi-file operations).
+CREATE GLOBAL TEMPORARY TABLE SetSegmentsForFilesHelper
+  (reqId VARCHAR2(36),
+   fileId NUMBER, lastModTime NUMBER, copyNo NUMBER, oldCopyNo NUMBER, transfSize NUMBER,
+   comprSize NUMBER, vid VARCHAR2(6), fseq NUMBER, blockId RAW(4), checksumType VARCHAR2(16), checksum NUMBER)
+  ON COMMIT PRESERVE ROWS;
+
+CREATE INDEX I_SetSegsHelper_ReqId ON SetSegmentsForFilesHelper(reqId);
+  
+CREATE GLOBAL TEMPORARY TABLE ResultsLogHelper
+  (reqId VARCHAR2(36),
+   timeinfo NUMBER, ec INTEGER, fileId NUMBER, msg VARCHAR2(2048), params VARCHAR2(4000))
+  ON COMMIT PRESERVE ROWS;
+
+CREATE INDEX I_ResultsLogHelper_ReqId ON ResultsLogHelper(reqId);
+
+
 
 /* Package holding type declarations for the NameServer PL/SQL API */
 CREATE OR REPLACE PACKAGE castorns AS
   TYPE cnumList IS TABLE OF INTEGER INDEX BY BINARY_INTEGER;
-  TYPE Log_Cur IS REF CURSOR RETURN ResultsLogHelper%ROWTYPE;
   TYPE Segment_Rec IS RECORD (
     fileId NUMBER,
     lastModTime NUMBER,
@@ -72,11 +90,10 @@ CREATE OR REPLACE PACKAGE castorns AS
     vid VARCHAR2(6),
     fseq INTEGER,
     blockId RAW(4),
-    checksum_name VARCHAR2(2),
+    checksum_name VARCHAR2(16),
     checksum INTEGER
   );
   TYPE Segment_Cur IS REF CURSOR RETURN Segment_Rec;
-  TYPE SegmentList IS TABLE OF Segment_Rec;
 END castorns;
 /
 
@@ -87,22 +104,10 @@ CREATE OR REPLACE TYPE numList IS TABLE OF INTEGER;
 /
 
 /**
- * Package containing the definition of all DLF levels and messages for the SQL-to-DLF API.
- * The actual logging is performed by the stagers, the NS PL/SQL code pushes logs to the callers.
+ * Package containing the definition of some relevant (s)errno values and messages.
+ * The actual logging is performed by the stagers.
  */
-CREATE OR REPLACE PACKAGE dlf AS
-  /* message levels */
-  LVL_EMERGENCY  CONSTANT PLS_INTEGER := 0; /* LOG_EMERG   System is unusable */
-  LVL_ALERT      CONSTANT PLS_INTEGER := 1; /* LOG_ALERT   Action must be taken immediately */
-  LVL_CRIT       CONSTANT PLS_INTEGER := 2; /* LOG_CRIT    Critical conditions */
-  LVL_ERROR      CONSTANT PLS_INTEGER := 3; /* LOG_ERR     Error conditions */
-  LVL_WARNING    CONSTANT PLS_INTEGER := 4; /* LOG_WARNING Warning conditions */
-  LVL_USER_ERROR CONSTANT PLS_INTEGER := 5; /* LOG_NOTICE  Normal but significant condition */
-  LVL_AUTH       CONSTANT PLS_INTEGER := 5; /* LOG_NOTICE  Normal but significant condition */
-  LVL_SECURITY   CONSTANT PLS_INTEGER := 5; /* LOG_NOTICE  Normal but significant condition */
-  LVL_SYSTEM     CONSTANT PLS_INTEGER := 6; /* LOG_INFO    Informational */
-  LVL_DEBUG      CONSTANT PLS_INTEGER := 7; /* LOG_DEBUG   Debug-level messages */
-  
+CREATE OR REPLACE PACKAGE serrno AS
   /* (s)errno values */
   ENOENT          CONSTANT PLS_INTEGER := 2;    /* No such file or directory */
   EACCES          CONSTANT PLS_INTEGER := 13;   /* Permission denied */
@@ -113,9 +118,9 @@ CREATE OR REPLACE PACKAGE dlf AS
   SECHECKSUM      CONSTANT PLS_INTEGER := 1037; /* Bad checksum */
   ENSFILECHG      CONSTANT PLS_INTEGER := 1402; /* File has been overwritten, request ignored */
   ENSNOSEG        CONSTANT PLS_INTEGER := 1403; /* Segment had been deleted */
-  ENSISLINK       CONSTANT PLS_INTEGER := 1404; /* Is a symbolic link */
   ENSTOOMANYSEGS  CONSTANT PLS_INTEGER := 1406; /* Too many copies on tape */
   ENSOVERWHENREP  CONSTANT PLS_INTEGER := 1407; /* Cannot overwrite valid segment when replacing */
+  ERTWRONGSIZE    CONSTANT PLS_INTEGER := 1613; /* (Recalled) file size incorrect */
   
   /* messages */
   ENOENT_MSG          CONSTANT VARCHAR2(2048) := 'No such file or directory';
@@ -123,13 +128,13 @@ CREATE OR REPLACE PACKAGE dlf AS
   EEXIST_MSG          CONSTANT VARCHAR2(2048) := 'File exists';
   EISDIR_MSG          CONSTANT VARCHAR2(2048) := 'Is a directory';
   SEINTERNAL_MSG      CONSTANT VARCHAR2(2048) := 'Internal error';
-  SECHECKSUM_MSG      CONSTANT VARCHAR2(2048) := 'Checksum mismatch between segment and file';
+  SECHECKSUM_MSG      CONSTANT VARCHAR2(2048) := 'Checksum mismatch between file and segment';
   ENSFILECHG_MSG      CONSTANT VARCHAR2(2048) := 'File has been overwritten, request ignored';
   ENSNOSEG_MSG        CONSTANT VARCHAR2(2048) := 'Segment had been deleted';
   ENSTOOMANYSEGS_MSG  CONSTANT VARCHAR2(2048) := 'Too many copies on tape';
-  ENSISLINK_MSG       CONSTANT VARCHAR2(2048) := 'Is a symbolic link';
   ENSOVERWHENREP_MSG  CONSTANT VARCHAR2(2048) := 'Cannot overwrite valid segment when replacing';
-END dlf;
+  ERTWRONGSIZE_MSG    CONSTANT VARCHAR2(2048) := 'Incorrect file size';
+END serrno;
 /
 
 
@@ -176,20 +181,20 @@ END;
 /
 
 /* A small procedure to add a line to the temporary DLF log */
-CREATE OR REPLACE PROCEDURE tmpDlfLog(inLvl IN INTEGER, inReqid IN VARCHAR2, inMsg IN VARCHAR2,
+CREATE OR REPLACE PROCEDURE tmpDlfLog(inReqId IN VARCHAR2, inEC IN INTEGER, inMsg IN VARCHAR2,
                                       inFileId IN NUMBER, inParams IN VARCHAR2) AS
 BEGIN
-  INSERT INTO ResultsLogHelper (timeinfo, lvl, reqid, msg, fileId, params)
-    VALUES (getTime(), inLvl, inReqid, inMsg, inFileId, inParams);
+  INSERT INTO ResultsLogHelper (reqId, timeinfo, ec, msg, fileId, params)
+    VALUES (inReqId, getTime(), inEC, inMsg, inFileId, inParams);
 END;
 /
 
 /* A function to extract the full path of a file in one go */
-CREATE OR REPLACE FUNCTION getPathForFileid(fid IN NUMBER) RETURN VARCHAR2 IS
+CREATE OR REPLACE FUNCTION getPathForFileid(varFid IN NUMBER) RETURN VARCHAR2 IS
   CURSOR c IS
     SELECT /*+ NO_CONNECT_BY_COST_BASED */ name
       FROM cns_file_metadata
-    START WITH fileid = fid
+    START WITH fileid = varFid
     CONNECT BY fileid = PRIOR parent_fileid
     ORDER BY level DESC;
   p VARCHAR2(2048) := '';
@@ -211,23 +216,25 @@ END;
  * This procedure creates a segment for a given file.
  * Return code:
  * 0  in case of success
- * ENOENT         if the file does not exist (e.g. it had been dropped).
+ * ENOENT         if the file does not exist (e.g. it has been dropped meanwhile).
  * EISDIR         if the file is a directory.
  * EEXIST         if the file already has a valid segment on the same tape.
  * ENSFILECHG     if the file has been modified meanwhile.
  * SEINTERNAL     if another segment exists on the given tape at the given fseq location.
  * ENSTOOMANYSEGS if this copy exceeds the number of copies allowed by the file's fileclass.
- *                This also applies if a segment is attached to a file which fileclass allows 0 copies.
+ *                This also applies if inSegEntry refers to a file which fileclass allows 0 copies.
  */
-CREATE OR REPLACE PROCEDURE setSegmentForFile(segEntry IN castorns.Segment_Rec,
+CREATE OR REPLACE PROCEDURE setSegmentForFile(inSegEntry IN castorns.Segment_Rec,
+                                              inReqId IN VARCHAR2,
                                               rc OUT INTEGER, msg OUT NOCOPY VARCHAR2) AS
-  fid NUMBER;
-  fmode NUMBER(6);
-  fLastMTime NUMBER;
-  fClassId NUMBER;
-  fcNbCopies NUMBER;
-  fCkSumName VARCHAR2(2);
-  fCkSum VARCHAR2(32);
+  varFid NUMBER;
+  varFmode NUMBER(6);
+  varFLastMTime NUMBER;
+  varFSize NUMBER;
+  varFClassId NUMBER;
+  varFCNbCopies NUMBER;
+  varFCksumName VARCHAR2(2);
+  varFCksum VARCHAR2(32);
   varNb INTEGER;
   varBlockId VARCHAR2(8);
   varParams VARCHAR2(2048);
@@ -238,31 +245,39 @@ BEGIN
   rc := 0;
   msg := '';
   -- Get file data and lock the entry, exit if not found
-  SELECT fileId, filemode, mtime, fileClass, csumType, csumValue
-    INTO fid, fmode, fLastMTime, fClassId, fCkSumName, fCkSum
+  SELECT fileId, filemode, mtime, fileClass, fileSize, csumType, csumValue
+    INTO varFid, varFmode, varFLastMTime, varFClassId, varFSize, varFCksumName, varFCksum
     FROM Cns_file_metadata
-   WHERE fileId = segEntry.fileId FOR UPDATE;
+   WHERE fileId = inSegEntry.fileId FOR UPDATE;
   -- Is it a directory?
-  IF bitand(fmode, 4*8*8*8*8) > 0 THEN  -- 040000 == S_IFDIR
-    rc := dlf.EISDIR;
-    msg := dlf.EISDIR_MSG;
+  IF bitand(varFmode, 4*8*8*8*8) > 0 THEN  -- 040000 == S_IFDIR
+    rc := serrno.EISDIR;
+    msg := serrno.EISDIR_MSG;
     ROLLBACK;
     RETURN;
   END IF;
   -- Has the file been changed meanwhile?
-  IF fLastMTime > segEntry.lastModTime AND segEntry.lastModTime > 0 THEN
-    rc := dlf.ENSFILECHG;
-    msg := dlf.ENSFILECHG_MSG;
+  IF varFLastMTime > inSegEntry.lastModTime AND inSegEntry.lastModTime > 0 THEN
+    rc := serrno.ENSFILECHG;
+    msg := serrno.ENSFILECHG_MSG;
     ROLLBACK;
     RETURN;
   END IF;
   -- Cross check file and segment checksums when adler32 (AD in the file entry):
   -- unfortunately we have to play with different representations...
-  IF fCkSumName = 'AD' AND segEntry.checksum_name = 'adler32' AND
-     segEntry.checksum != to_number(fCkSum, 'XXXXXXXX') THEN
-    rc := dlf.SECHECKSUM;
-    msg := dlf.SECHECKSUM_MSG || ' : '
-      || to_char(segEntry.checksum, 'XXXXXXXX') || ' vs ' || fCkSum;
+  IF varFCksumName = 'AD' AND inSegEntry.checksum_name = 'adler32' AND
+     inSegEntry.checksum != to_number(varFCksum, 'XXXXXXXX') THEN
+    rc := serrno.SECHECKSUM;
+    msg := serrno.SECHECKSUM_MSG ||' : '
+      || varFCksum ||' vs '|| to_char(inSegEntry.checksum, 'XXXXXXXX');
+    ROLLBACK;
+    RETURN;
+  END IF;
+  -- Cross check segment (transfered) size and file size
+  IF varFSize != inSegEntry.segSize THEN
+    rc := serrno.ERTWRONGSIZE;
+    msg := serrno.ERTWRONGSIZE ||' : expected '
+      || to_char(varFSize) ||', got '|| to_char(inSegEntry.segSize);
     ROLLBACK;
     RETURN;
   END IF;
@@ -270,9 +285,9 @@ BEGIN
   -- on a tape that already holds a valid copy
   SELECT count(*) INTO varNb
     FROM Cns_seg_metadata
-   WHERE s_fileid = fid AND s_status = '-' AND vid = segEntry.vid;
+   WHERE s_fileid = varFid AND s_status = '-' AND vid = inSegEntry.vid;
   IF varNb > 0 THEN
-    rc := dlf.EEXIST;
+    rc := serrno.EEXIST;
     msg := 'File already has a copy on the tape';
     ROLLBACK;
     RETURN;
@@ -283,89 +298,56 @@ BEGIN
   BEGIN
     INSERT INTO Cns_seg_metadata (s_fileId, copyNo, fsec, segSize, s_status,
       vid, fseq, blockId, compression, side, checksum_name, checksum)
-    VALUES (fid, segEntry.copyNo, 1, segEntry.segSize, '-',
-      segEntry.vid, segEntry.fseq, segEntry.blockId, trunc(segEntry.segSize*100/segEntry.comprSize),
-      0, segEntry.checksum_name, segEntry.checksum);
+    VALUES (varFid, inSegEntry.copyNo, 1, inSegEntry.segSize, '-',
+      inSegEntry.vid, inSegEntry.fseq, inSegEntry.blockId, trunc(inSegEntry.segSize*100/inSegEntry.comprSize),
+      0, inSegEntry.checksum_name, inSegEntry.checksum);
   EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
     -- We assume the PK was violated, i.e. a previous segment already exists and we need to update it.
     -- XXX This won't happen anymore once we will drop previous versions of the segments at
     -- XXX file creation/truncation time!
     UPDATE Cns_seg_metadata
-       SET fsec = 1, segSize = segEntry.segSize, s_status = '-',
-           vid = segEntry.vid, fseq = segEntry.fseq, blockId = segEntry.blockId,
-           compression = trunc(segEntry.segSize*100/segEntry.comprSize),
-           side = 0, checksum_name = segEntry.checksum_name,
-           checksum = segEntry.checksum
-     WHERE s_fileId = fid
-       AND copyNo = segEntry.copyNo;
+       SET fsec = 1, segSize = inSegEntry.segSize, s_status = '-',
+           vid = inSegEntry.vid, fseq = inSegEntry.fseq, blockId = inSegEntry.blockId,
+           compression = trunc(inSegEntry.segSize*100/inSegEntry.comprSize),
+           side = 0, checksum_name = inSegEntry.checksum_name,
+           checksum = inSegEntry.checksum
+     WHERE s_fileId = varFid
+       AND copyNo = inSegEntry.copyNo;
     IF SQL%ROWCOUNT = 0 THEN
       -- The update failed, thus the CONSTRAINT_VIOLATED was due to an existing segment at that fseq position.
       -- This is forbidden!
-      rc := dlf.SEINTERNAL;
-      msg := 'A file already exists at fseq '|| segEntry.fseq ||' on VID '|| segEntry.vid;
+      rc := serrno.SEINTERNAL;
+      msg := 'A file already exists at fseq '|| inSegEntry.fseq ||' on VID '|| inSegEntry.vid;
       ROLLBACK;
       RETURN;
     END IF;
   END;
   -- Finally check for too many segments for this file
-  SELECT nbCopies INTO fcNbCopies
+  SELECT nbCopies INTO varFCNbCopies
     FROM Cns_class_metadata
-   WHERE classid = fClassId;
+   WHERE classid = varFClassId;
   SELECT count(*) INTO varNb
     FROM Cns_seg_metadata
-   WHERE s_fileid = fid AND s_status = '-';
-  IF varNb > fcNbCopies THEN
-    rc := dlf.ENSTOOMANYSEGS;
-    msg := dlf.ENSTOOMANYSEGS_MSG ||', VID='|| segEntry.vid;
+   WHERE s_fileid = varFid AND s_status = '-';
+  IF varNb > varFCNbCopies THEN
+    rc := serrno.ENSTOOMANYSEGS;
+    msg := serrno.ENSTOOMANYSEGS_MSG ||', VID='|| inSegEntry.vid;
     ROLLBACK;
     RETURN;
   END IF;
   -- Update file status
-  UPDATE Cns_file_metadata SET status = 'm' WHERE fileid = fid;
+  UPDATE Cns_file_metadata SET status = 'm' WHERE fileid = varFid;
   COMMIT;
-  SELECT segEntry.blockId INTO varBlockId FROM Dual;  -- to_char() of a RAW type does not work. This does the trick...
-  varParams := 'CopyNo='|| segEntry.copyNo ||' Fsec=1 SegmentSize='|| segEntry.segSize
-    ||' Compression='|| trunc(segEntry.segSize*100/segEntry.comprSize) ||' TPVID='|| segEntry.vid
-    ||' Fseq='|| segEntry.fseq ||' BlockId="' || varBlockId
-    ||'" ChecksumType="'|| segEntry.checksum_name ||'" ChecksumValue=' || fCkSum;
-  tmpDlfLog(dlf.LVL_SYSTEM, uuidGen(), 'New segment information', fid, varParams);
+  SELECT inSegEntry.blockId INTO varBlockId FROM Dual;  -- to_char() of a RAW type does not work. This does the trick...
+  varParams := 'CopyNo='|| inSegEntry.copyNo ||' Fsec=1 SegmentSize='|| inSegEntry.segSize
+    ||' Compression='|| trunc(inSegEntry.segSize*100/inSegEntry.comprSize) ||' TPVID='|| inSegEntry.vid
+    ||' Fseq='|| inSegEntry.fseq ||' BlockId="' || varBlockId
+    ||'" ChecksumType="'|| inSegEntry.checksum_name ||'" ChecksumValue=' || varFCksum;
+  tmpDlfLog(inReqId, 0, 'New segment information', varFid, varParams);
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- The file entry was not found, just give up
-  rc := dlf.ENOENT;
-  msg := dlf.ENOENT_MSG;
-END;
-/
-
-/**
- * This procedure creates segments for multiple files by calling setSegmentForFile in a loop.
- * The output is a log table ready to be sent to DLF from a stager database.
- */
-CREATE OR REPLACE PROCEDURE setSegmentsForFiles(segs IN castorns.SegmentList, logs OUT castorns.Log_Cur) AS
-  varRC INTEGER;
-  varParams VARCHAR2(1000);
-  varStartTime TIMESTAMP;
-  varReqid VARCHAR2(36);
-BEGIN
-  varStartTime := SYSTIMESTAMP;
-  varReqid := uuidGen();
-  -- First clean any previous log
-  EXECUTE IMMEDIATE 'TRUNCATE TABLE ResultsLogHelper';
-  -- Loop over all files. Each call commits or rollbacks each file.
-  FOR i IN segs.FIRST .. segs.LAST LOOP
-    setSegmentForFile(segs(i), varRC, varParams);
-    IF varRC != 0 THEN
-      varParams := 'ErrorCode='|| to_char(varRC) ||' ErrorMessage="'|| varParams || '"';
-      tmpDlfLog(dlf.LVL_ERROR, varReqid, 'Error creating/updating segment', segs(i).fileId, varParams);
-    END IF;
-  END LOOP;
-  -- Final logging
-  UPDATE ResultsLogHelper SET reqid = varReqid;
-  varParams := 'Function="setSegmentsForFiles" NbFiles='|| segs.COUNT
-    ||' ElapsedTime='|| getSecs(varStartTime, SYSTIMESTAMP);
-  tmpDlfLog(dlf.LVL_SYSTEM, varReqid, 'Bulk processing complete', 0, varParams);
-  -- Return logs to the stager
-  OPEN logs FOR
-    SELECT timeinfo, lvl, reqid, msg, fileId, params FROM ResultsLogHelper;
+  rc := serrno.ENOENT;
+  msg := serrno.ENOENT_MSG;
 END;
 /
 
@@ -378,24 +360,25 @@ END;
  * last case is only accepted if the second replaced copy was invalid.
  * Return code:
  * 0  in case of success
- * ENOENT         if the file does not exist (e.g. it had been dropped).
+ * ENOENT         if the file does not exist (e.g. it has been dropped meanwhile).
  * EISDIR         if the file is a directory.
  * EEXIST         if the file already has a valid segment on the same tape.
  * ENSFILECHG     if the file has been modified meanwhile.
  * SEINTERNAL     if another segment exists on the given tape at the given fseq location.
- * ENSNOSEG       if the to-be-replaced segment was not found
- * ENSOVERWHENREP if the oldCopyNo refers to a valid segment and the new segEntry has a different copyNo.
+ * ENSNOSEG       if the to-be-replaced segment was not found.
+ * ENSOVERWHENREP if inOldCopyNo refers to a valid segment and the new inSegEntry has a different copyNo.
  */
-CREATE OR REPLACE PROCEDURE repackSegmentForFile(oldCopyNo IN INTEGER, segEntry IN castorns.Segment_Rec,
-                                                 rc OUT INTEGER, msg OUT NOCOPY VARCHAR2) AS
-  varReqid VARCHAR2(36);
-  fid NUMBER;
-  fmode NUMBER(6);
-  fLastMTime NUMBER;
-  fClassId NUMBER;
-  fcNbCopies NUMBER;
-  fCkSumName VARCHAR2(2);
-  fCkSum VARCHAR2(32);
+CREATE OR REPLACE PROCEDURE replaceSegmentForFile(inOldCopyNo IN INTEGER, inSegEntry IN castorns.Segment_Rec,
+                                                  inReqId IN VARCHAR2,
+                                                  rc OUT INTEGER, msg OUT NOCOPY VARCHAR2) AS
+  varFid NUMBER;
+  varFmode NUMBER(6);
+  varFLastMTime NUMBER;
+  varFSize NUMBER;
+  varFClassId NUMBER;
+  varFCNbCopies NUMBER;
+  varFCksumName VARCHAR2(2);
+  varFCksum VARCHAR2(32);
   varNb INTEGER;
   varStatus INTEGER;
   varBlockId VARCHAR2(8);
@@ -408,33 +391,40 @@ CREATE OR REPLACE PROCEDURE repackSegmentForFile(oldCopyNo IN INTEGER, segEntry 
 BEGIN
   rc := 0;
   msg := '';
-  varReqid := uuidGen();
   -- Get file data and lock the entry, exit if not found
   SELECT fileId, filemode, mtime, fileClass, csumType, csumValue
-    INTO fid, fmode, fLastMTime, fClassId, fCkSumName, fCkSum
+    INTO varFid, varFmode, varFLastMTime, varFClassId, varFCksumName, varFCksum
     FROM Cns_file_metadata
-   WHERE fileId = segEntry.fileId FOR UPDATE;
+   WHERE fileId = inSegEntry.fileId FOR UPDATE;
   -- Is it a directory?
-  IF bitand(fmode, 4*8*8*8*8) > 0 THEN  -- 040000 == S_IFDIR
-    rc := dlf.EISDIR;
-    msg := dlf.EISDIR_MSG;
+  IF bitand(varFmode, 4*8*8*8*8) > 0 THEN  -- 040000 == S_IFDIR
+    rc := serrno.EISDIR;
+    msg := serrno.EISDIR_MSG;
     ROLLBACK;
     RETURN;
   END IF;
   -- Has the file been changed meanwhile?
-  IF fLastMTime > segEntry.lastModTime AND segEntry.lastModTime > 0 THEN
-    rc := dlf.ENSFILECHG;
-    msg := dlf.ENSFILECHG_MSG;
+  IF varFLastMTime > inSegEntry.lastModTime AND inSegEntry.lastModTime > 0 THEN
+    rc := serrno.ENSFILECHG;
+    msg := serrno.ENSFILECHG_MSG;
     ROLLBACK;
     RETURN;
   END IF;
   -- Cross check file and segment checksums when adler32 (AD in the file entry):
   -- unfortunately we have to play with different representations...
-  IF fCkSumName = 'AD' AND segEntry.checksum_name = 'adler32' AND
-     segEntry.checksum != to_number(fCkSum, 'XXXXXXXX') THEN
-    rc := dlf.SECHECKSUM;
-    msg := dlf.SECHECKSUM_MSG || ' : '
-      || to_char(segEntry.checksum, 'XXXXXXXX') || ' vs ' || fCkSum;
+  IF varFCksumName = 'AD' AND inSegEntry.checksum_name = 'adler32' AND
+     inSegEntry.checksum != to_number(varFCksum, 'XXXXXXXX') THEN
+    rc := serrno.SECHECKSUM;
+    msg := serrno.SECHECKSUM_MSG ||' : '
+      || varFCksum ||' vs '|| to_char(inSegEntry.checksum, 'XXXXXXXX');
+    ROLLBACK;
+    RETURN;
+  END IF;
+  -- Cross check segment (transfered) size and file size
+  IF varFSize != inSegEntry.segSize THEN
+    rc := serrno.ERTWRONGSIZE;
+    msg := serrno.ERTWRONGSIZE ||' : expected '
+      || to_char(varFSize) ||', got '|| to_char(inSegEntry.segSize);
     ROLLBACK;
     RETURN;
   END IF;
@@ -442,9 +432,9 @@ BEGIN
   -- on a tape that already holds a valid copy
   SELECT count(*) INTO varNb
     FROM Cns_seg_metadata
-   WHERE s_fileid = fid AND s_status = '-' AND vid = segEntry.vid;
+   WHERE s_fileid = varFid AND s_status = '-' AND vid = inSegEntry.vid;
   IF varNb > 0 THEN
-    rc := dlf.EEXIST;
+    rc := serrno.EEXIST;
     msg := 'File already has a copy on the tape';
     ROLLBACK;
     RETURN;
@@ -455,20 +445,20 @@ BEGIN
   BEGIN
     SELECT s_status INTO varStatus
       FROM Cns_seg_metadata
-     WHERE s_fileid = fid AND copyNo = segEntry.copyNo;
+     WHERE s_fileid = varFid AND copyNo = inSegEntry.copyNo;
     -- Check status of segment to be replaced in case it's a different copyNo
-    IF segEntry.copyNo != oldCopyNo THEN
+    IF inSegEntry.copyNo != inOldCopyNo THEN
       IF varStatus = '-' THEN
         -- We are asked to overwrite a valid segment and replace another one.
         -- This is forbidden.
-        rc := dlf.ENSOVERWHENREP;
-        msg := dlf.ENSOVERWHENREP_MSG;
+        rc := serrno.ENSOVERWHENREP;
+        msg := serrno.ENSOVERWHENREP_MSG;
         ROLLBACK;
         RETURN;
       END IF;
       -- OK, the segment being overwritten is invalid
       DELETE FROM Cns_seg_metadata
-       WHERE s_fileid = fid AND copyNo = segEntry.copyNo
+       WHERE s_fileid = varFid AND copyNo = inSegEntry.copyNo
       RETURNING copyNo, segSize, compression, vid, fseq, blockId, checksum_name, checksum
            INTO varOwSeg.copyNo, varOwSeg.segSize, varOwSeg.comprSize, varOwSeg.vid,
                 varOwSeg.fseq, varOwSeg.blockId, varOwSeg.checksum_name, varOwSeg.checksum;
@@ -478,19 +468,19 @@ BEGIN
         ||' Compression='|| varOwSeg.comprSize ||' TPVID='|| varOwSeg.vid
         ||' Fseq='|| varOwSeg.fseq ||' BlockId="' || varBlockId
         ||'" ChecksumType="'|| varOwSeg.checksum_name ||'" ChecksumValue=' || varOwSeg.checksum;
-      tmpDlfLog(dlf.LVL_SYSTEM, varReqid, 'Unlinking segment (overwritten)', fid, varParams);
+      tmpDlfLog(inReqId, 0, 'Unlinking segment (overwritten)', varFid, varParams);
     END IF;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- Previous segment not found, give up
-    rc := dlf.ENSNOSEG;
-    msg := dlf.ENSNOSEG_MSG;
+    rc := serrno.ENSNOSEG;
+    msg := serrno.ENSNOSEG_MSG;
     ROLLBACK;
     RETURN;
   END;
   
   -- We're done with the pre-checks. Remove and log old segment metadata
   DELETE FROM Cns_seg_metadata
-   WHERE s_fileid = fid AND copyNo = oldCopyNo
+   WHERE s_fileid = varFid AND copyNo = inOldCopyNo
   RETURNING copyNo, segSize, compression, vid, fseq, blockId, checksum_name, checksum
        INTO varRepSeg.copyNo, varRepSeg.segSize, varRepSeg.comprSize, varRepSeg.vid,
             varRepSeg.fseq, varRepSeg.blockId, varRepSeg.checksum_name, varRepSeg.checksum;
@@ -499,68 +489,95 @@ BEGIN
     ||' Compression='|| varRepSeg.comprSize ||' TPVID='|| varRepSeg.vid
     ||' Fseq='|| varRepSeg.fseq ||' BlockId="' || varBlockId
     ||'" ChecksumType="'|| varRepSeg.checksum_name ||'" ChecksumValue=' || varRepSeg.checksum;
-  tmpDlfLog(dlf.LVL_SYSTEM, varReqid, 'Unlinking segment (replaced)', fid, varParams);
+  tmpDlfLog(inReqId, 0, 'Unlinking segment (replaced)', varFid, varParams);
   -- Insert new segment metadata and deal with possible collisions with the fseq position
   BEGIN
     INSERT INTO Cns_seg_metadata (s_fileId, copyNo, fsec, segSize, s_status,
       vid, fseq, blockId, compression, side, checksum_name, checksum)
-    VALUES (fid, segEntry.copyNo, 1, segEntry.segSize, '-',
-      segEntry.vid, segEntry.fseq, segEntry.blockId, trunc(segEntry.segSize*100/segEntry.comprSize),
-      0, segEntry.checksum_name, segEntry.checksum);
+    VALUES (varFid, inSegEntry.copyNo, 1, inSegEntry.segSize, '-',
+      inSegEntry.vid, inSegEntry.fseq, inSegEntry.blockId, trunc(inSegEntry.segSize*100/inSegEntry.comprSize),
+      0, inSegEntry.checksum_name, inSegEntry.checksum);
   EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
     -- There must already be an existing segment at that fseq position for a different file.
     -- This is forbidden! Abort the entire operation.
-    rc := dlf.SEINTERNAL;
-    msg := 'A file already exists at fseq '|| segEntry.fseq ||' on VID '|| segEntry.vid;
+    rc := serrno.SEINTERNAL;
+    msg := 'A file already exists at fseq '|| inSegEntry.fseq ||' on VID '|| inSegEntry.vid;
     ROLLBACK;
     RETURN;
   END;
   -- All right, commit and log
   COMMIT;
-  SELECT segEntry.blockId INTO varBlockId FROM Dual;  -- to_char() of a RAW type does not work. This does the trick...
-  varParams := 'CopyNo='|| segEntry.copyNo ||' Fsec=1 SegmentSize='|| segEntry.segSize
-    ||' Compression='|| trunc(segEntry.segSize*100/segEntry.comprSize) ||' TPVID='|| segEntry.vid
-    ||' Fseq='|| segEntry.fseq ||' BlockId="' || varBlockId
-    ||'" ChecksumType="'|| segEntry.checksum_name ||'" ChecksumValue=' || fCkSum;
-  tmpDlfLog(dlf.LVL_SYSTEM, varReqid, 'New segment information', fid, varParams);
+  SELECT inSegEntry.blockId INTO varBlockId FROM Dual;  -- to_char() of a RAW type does not work. This does the trick...
+  varParams := 'CopyNo='|| inSegEntry.copyNo ||' Fsec=1 SegmentSize='|| inSegEntry.segSize
+    ||' Compression='|| trunc(inSegEntry.segSize*100/inSegEntry.comprSize) ||' TPVID='|| inSegEntry.vid
+    ||' Fseq='|| inSegEntry.fseq ||' BlockId="' || varBlockId
+    ||'" ChecksumType="'|| inSegEntry.checksum_name ||'" ChecksumValue=' || varFCksum;
+  tmpDlfLog(inReqId, 0, 'New segment information', varFid, varParams);
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- The file entry was not found, just give up
-  rc := dlf.ENOENT;
-  msg := dlf.ENOENT_MSG;
+  rc := serrno.ENOENT;
+  msg := serrno.ENOENT_MSG;
 END;
 /
 
 /**
- * This procedure replaces segments for multiple files by calling repackSegmentForFile in a loop.
- * The output is a log table ready to be sent to DLF from a stager database.
+ * This procedure sets or replaces segments for multiple files by calling either setSegmentForFile
+ * or replaceSegmentForFile in a loop, the choice depending on the inOldCopyNos values:
+ * when 0, a normal migration is assumed and setSegmentForFile is called.
+ * The output is a set of arrays of logs to be sent to DLF from a stager database.
  */
-CREATE OR REPLACE PROCEDURE repackSegmentsForFiles(oldCopyNos IN castorns.cnumList, segs IN castorns.SegmentList,
-                                                   logs OUT castorns.Log_Cur) AS
+CREATE OR REPLACE PROCEDURE setOrReplaceSegmentsForFiles(inReqId IN VARCHAR2) AS
   varRC INTEGER;
   varParams VARCHAR2(1000);
   varStartTime TIMESTAMP;
-  varReqid VARCHAR2(36);
+  varSeg castorns.Segment_Rec;
+  varCount INTEGER;
 BEGIN
   varStartTime := SYSTIMESTAMP;
-  varReqid := uuidGen();
-  -- First clean any previous log
-  EXECUTE IMMEDIATE 'TRUNCATE TABLE ResultsLogHelper';
+  varCount := 0;
   -- Loop over all files. Each call commits or rollbacks each file.
-  FOR i IN segs.FIRST .. segs.LAST LOOP
-    repackSegmentForFile(oldCopyNos(i), segs(i), varRC, varParams);
-    IF varRC != 0 THEN
-      varParams := 'ErrorCode='|| to_char(varRC) ||' ErrorMessage="'|| varParams || '"';
-      tmpDlfLog(dlf.LVL_ERROR, varReqid, 'Error replacing segment', segs(i).fileId, varParams);
+  FOR s IN (SELECT fileId, lastModTime, copyNo, oldCopyNo, transfSize, comprSize,
+                   vid, fseq, blockId, checksumType, checksum
+              FROM SetSegmentsForFilesHelper
+             WHERE reqId = inReqId) LOOP
+    varSeg.fileId := s.fileId;
+    varSeg.lastModTime := s.lastModTime;
+    varSeg.copyNo := s.copyNo;
+    varSeg.segSize := s.transfSize;
+    varSeg.comprSize := s.comprSize;
+    varSeg.vid := s.vid;
+    varSeg.fseq := s.fseq;
+    varSeg.blockId := s.blockId;
+    varSeg.checksum_name := s.checksumType;
+    varSeg.checksum := s.checksum;
+    IF s.oldCopyNo = 0 THEN
+      setSegmentForFile(varSeg, inReqId, varRC, varParams);
+    ELSE
+      replaceSegmentForFile(s.oldCopyNo, varSeg, inReqId, varRC, varParams);
     END IF;
+    IF varRC != 0 THEN
+      varParams := 'ErrorCode='|| to_char(varRC) ||' ErrorMessage="'|| varParams ||'"';
+      tmpDlfLog(inReqId, varRC, 'Error creating/replacing segment', s.fileId, varParams);
+      COMMIT;
+    END IF;
+    varCount := varCount + 1;
   END LOOP;
-  -- Final logging
-  UPDATE ResultsLogHelper SET reqid = varReqid;
-  varParams := 'Function="repackSegmentsForFiles" NbFiles='|| segs.COUNT
-    ||' ElapsedTime='|| getSecs(varStartTime, SYSTIMESTAMP);
-  tmpDlfLog(dlf.LVL_SYSTEM, varReqid, 'Bulk processing complete', 0, varParams);
-  -- Return logs to the stager
-  OPEN logs FOR
-    SELECT timeinfo, lvl, reqid, msg, fileId, params FROM ResultsLogHelper;
+  IF varCount > 0 THEN
+    -- Final logging
+    varParams := 'Function="setOrRepackSegmentsForFiles" NbFiles='|| varCount
+      ||' ElapsedTime='|| getSecs(varStartTime, SYSTIMESTAMP)
+      ||' AvgProcessingTime='|| getSecs(varStartTime, SYSTIMESTAMP)/varCount;
+    tmpDlfLog(inReqId, 0, 'Bulk processing complete', 0, varParams);
+  END IF;
+  -- Clean input data
+  DELETE FROM SetSegmentsForFilesHelper
+   WHERE reqId = inReqId;
+  COMMIT;
+  -- Return results and logs to the stager. Unfortunately we can't OPEN CURSOR FOR ...
+  -- because we would get ORA-24338: 'statement handle not executed' at run time.
+  -- Moreover, temporary tables are not supported with distributed transactions,
+  -- so the stager will remotely open the ResultsLogHelper table, and we clean
+  -- the tables by hand using the reqId key.
 END;
 /
 
@@ -570,7 +587,7 @@ END;
 CREATE OR REPLACE PROCEDURE setSegChecksumWhenNull(fid IN INTEGER,
                                                    copyNb IN INTEGER,
                                                    cksumType IN VARCHAR2,
-                                                   cksumValue IN INTEGER) IS
+                                                   cksumValue IN INTEGER) AS
 BEGIN
   UPDATE Cns_seg_metadata
      SET checksum_name = cksumType, checksum = cksumValue

@@ -507,18 +507,22 @@ BEGIN
     END IF;
     varCount := varCount + 1;
   END LOOP;
-  -- Final logging
-  varParams := 'Function="setOrRepackSegmentsForFiles" NbFiles='|| varCount
-    ||' ElapsedTime='|| getSecs(varStartTime, SYSTIMESTAMP)
-    ||' AvgProcessingTime='|| getSecs(varStartTime, SYSTIMESTAMP)/varCount;
-  tmpDlfLog(inReqId, 0, 'Bulk processing complete', 0, varParams);
+  IF varCount > 0 THEN
+    -- Final logging
+    varParams := 'Function="setOrRepackSegmentsForFiles" NbFiles='|| varCount
+      ||' ElapsedTime='|| getSecs(varStartTime, SYSTIMESTAMP)
+      ||' AvgProcessingTime='|| getSecs(varStartTime, SYSTIMESTAMP)/varCount;
+    tmpDlfLog(inReqId, 0, 'Bulk processing complete', 0, varParams);
+  END IF;
   -- Clean input data
   DELETE FROM SetSegmentsForFilesHelper
    WHERE reqId = inReqId;
   COMMIT;
-  -- Return logs to the stager. Unfortunately we can't OPEN CURSOR FOR ...
+  -- Return results and logs to the stager. Unfortunately we can't OPEN CURSOR FOR ...
   -- because we would get ORA-24338: 'statement handle not executed' at run time.
-  -- So the stager will remotely open the ResultsLogHelper table.
+  -- Moreover, temporary tables are not supported with distributed transactions,
+  -- so the stager will remotely open the ResultsLogHelper table, and we clean
+  -- the tables by hand using the reqId key.
 END;
 /
 
