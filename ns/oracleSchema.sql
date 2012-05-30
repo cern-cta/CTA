@@ -97,20 +97,11 @@ CREATE INDEX I_seg_metadata_tapesum ON Cns_seg_metadata (vid, s_fileid, segsize,
 CREATE GLOBAL TEMPORARY TABLE Cns_files_exist_tmp
   (tmpFileId NUMBER) ON COMMIT DELETE ROWS;
 
--- Temporary tables to store intermediate data to be passed from/to the stager.
--- We keep the data on commit and truncate it explicitly afterwards as we
--- want to use it over multiple commits (e.g. on bulk multi-file operations).
-CREATE GLOBAL TEMPORARY TABLE SetSegmentsForFilesHelper
-  (reqId VARCHAR2(36),
-   fileId NUMBER, lastModTime NUMBER, copyNo NUMBER, oldCopyNo NUMBER, transfSize NUMBER,
-   comprSize NUMBER, vid VARCHAR2(6), fseq NUMBER, blockId RAW(4), checksumType VARCHAR2(16), checksum NUMBER)
-  ON COMMIT PRESERVE ROWS;
+-- Tables to store intermediate data to be passed from/to the stager.
+-- Note that we cannot use temporary tables with distributed transactions.
+CREATE TABLE SetSegmentsForFilesHelper
+  (reqId VARCHAR2(36), fileId NUMBER, lastModTime NUMBER, copyNo NUMBER, oldCopyNo NUMBER, transfSize NUMBER,
+   comprSize NUMBER, vid VARCHAR2(6), fseq NUMBER, blockId RAW(4), checksumType VARCHAR2(16), checksum NUMBER);
 
-CREATE INDEX I_SetSegsHelper_ReqId ON SetSegmentsForFilesHelper(reqId);
-  
-CREATE GLOBAL TEMPORARY TABLE ResultsLogHelper
-  (reqId VARCHAR2(36),
-   timeinfo NUMBER, ec INTEGER, fileId NUMBER, msg VARCHAR2(2048), params VARCHAR2(4000))
-  ON COMMIT PRESERVE ROWS;
-
-CREATE INDEX I_ResultsLogHelper_ReqId ON ResultsLogHelper(reqId);
+CREATE ResultsLogHelper
+  (reqId VARCHAR2(36), timeinfo NUMBER, ec INTEGER, fileId NUMBER, msg VARCHAR2(2048), params VARCHAR2(4000));
