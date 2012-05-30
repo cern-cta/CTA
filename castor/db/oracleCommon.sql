@@ -359,6 +359,6 @@ BEGIN
 EXCEPTION WHEN OTHERS THEN
   logToDLF(NULL, dlf.LVL_ALERT, dlf.DBJOB_UNEXPECTED_EXCEPTION, 0, '', source,
     'jobCode="'|| jobCode ||'" errorCode=' || to_char(SQLCODE) ||' errorMessage="' || SQLERRM
-    ||'" stackTrace="' dbms_utility.format_error_backtrace ||'"');
+    ||'" stackTrace="' || dbms_utility.format_error_backtrace ||'"');
 END;
 /
