@@ -129,7 +129,9 @@ namespace castor      {
               castor::tape::tapegateway::Volume& volume)
           throw (castor::exception::Exception);
 
-          /** Ends a tape session
+          /** Ends a tape session by dropping it from the DB. If the tapebridge
+           * comes afterwards asking for more data on the dropped session, it will
+           * get an error that shall be gracefully handled on its side.
            * @param mountTransactionId the mountTansactionId of the session to end
            * @param errorCode an error code is the session is ended due to an error
            * if not given, defaults to 0
@@ -173,17 +175,6 @@ namespace castor      {
           // error so that we remember to make the tape as full at the end of
           // the session. Session is passed by VDQM request id (like for end/failSession).
           virtual void flagTapeFullForMigrationSession(const u_signed64& tapeRequestId)
-          throw (castor::exception::Exception);
-
-          /**
-           * Set tape session to closing: moves the tape session to a state
-           * where no more work will be retrieved, in order to get the session
-           * to fold down gracefully. This mechanism moves the error handling
-           * back to the tape gateway from the tape server.
-           * Thanks to this, most of the replies to the tape server can be a neutral
-           * "got it".
-           */
-          virtual void setTapeSessionToClosing (u_signed64 mountTransactionId)
           throw (castor::exception::Exception);
 
           /**
@@ -248,7 +239,6 @@ namespace castor      {
           oracle::occi::Statement *m_deleteMigrationMountWithBadTapePoolStatement;
           oracle::occi::Statement *m_flagTapeFullForMigrationSession;
           oracle::occi::Statement *m_getMigrationMountVid;
-          oracle::occi::Statement *m_setTapeSessionToClosing;
           oracle::occi::Statement *m_getBulkFilesToMigrate;
           oracle::occi::Statement *m_getBulkFilesToRecall;
           oracle::occi::Statement *m_setBulkFileMigrationResult;

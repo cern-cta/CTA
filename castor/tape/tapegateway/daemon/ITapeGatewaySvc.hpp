@@ -174,12 +174,14 @@ namespace castor      {
           castor::tape::tapegateway::ITapeGatewaySvc::TapeToReleaseInfo& tape)
           throw (castor::exception::Exception)=0;
 
-        /** Ends a tape session
-         * @param mountTransactionId the mountTansactionId of the session to end
-         * @param errorCode an error code is the session is ended due to an error
-         * if not given, defaults to 0
-         * @exception throws castor exceptions in case of failure
-         */
+          /** Ends a tape session by dropping it from the DB. If the tapebridge
+           * comes afterwards asking for more data on the dropped session, it will
+           * get an error that shall be gracefully handled on its side.
+           * @param mountTransactionId the mountTansactionId of the session to end
+           * @param errorCode an error code is the session is ended due to an error
+           * if not given, defaults to 0
+           * @exception throws castor exceptions in case of failure
+           */
         virtual void endTapeSession(const u_signed64 mountTransactionId,
                                     const int errorCode = 0)
           throw (castor::exception::Exception) = 0;
@@ -218,17 +220,6 @@ namespace castor      {
                                              const std::string &vid,
                                              const int errorCode,
                                              const std::string &errorMsg)
-          throw (castor::exception::Exception) = 0;
-
-        /**
-         * Set tape session to closing: moves the tape session to a state
-         * where no more work will be retrieved, in order to get the session
-         * to fold down gracefully. This mechanism moves the error handling
-         * back to the tape gateway from the tape server.
-         * Thanks to this, most of the replies to the tape server can be a neutral
-         * "got it".
-         */
-        virtual void setTapeSessionToClosing (u_signed64 mountTransactionId)
           throw (castor::exception::Exception) = 0;
 
         /**
