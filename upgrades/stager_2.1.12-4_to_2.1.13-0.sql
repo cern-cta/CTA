@@ -55,7 +55,7 @@ END;
 DECLARE
   unused VARCHAR(100);
 BEGIN
-  SELECT release FROM UpgradeLog@remoteNs
+  SELECT release INTO unused FROM UpgradeLog@remoteNs
    WHERE startDate = (SELECT MAX(startDate) FROM UpgradeLog@remoteNs)
      AND (release LIKE '2_1_13_%');
 EXCEPTION WHEN NO_DATA_FOUND THEN
