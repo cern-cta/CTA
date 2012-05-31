@@ -164,6 +164,7 @@ CREATE TABLE RecallUser(euid INTEGER CONSTRAINT NN_RecallUser_Euid NOT NULL,
                         lastEditor VARCHAR2(2048) CONSTRAINT NN_RecallUser_LastEditor NOT NULL,
                         lastEditionTime NUMBER CONSTRAINT NN_RecallUser_LastEdTime NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+-- see comment in the RecallMount table about why we need this index
 CREATE INDEX I_RecallUser_RecallGroup ON RecallUser(recallGroup); 
 ALTER TABLE RecallUser ADD CONSTRAINT FK_RecallUser_RecallGroup FOREIGN KEY (recallGroup) REFERENCES RecallGroup(id);
 
@@ -184,6 +185,11 @@ CREATE TABLE RecallMount(id INTEGER CONSTRAINT PK_RecallMount_Id PRIMARY KEY CON
                          lastVDQMPingTime NUMBER DEFAULT 0 CONSTRAINT NN_RecallMount_lastVDQMPing NOT NULL,
                          lastProcessedFseq INTEGER DEFAULT -1 CONSTRAINT NN_RecallMount_Fseq NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+-- this index may sound counter prodcutive as we have very few rows and a full table scan will always be faster
+-- However, it is needed to avoid a table lock on RecallGroup when taking a row lock on RecallMount,
+-- via the existing foreign key. On top, this table lock is also taken in case of an update that does not
+-- touch any row while with the index, no row lock is taken at all, as one may expect
+CREATE INDEX I_RecallMount_RecallGroup ON RecallMount(recallGroup); 
 ALTER TABLE RecallMount ADD CONSTRAINT FK_RecallMount_RecallGroup FOREIGN KEY (recallGroup) REFERENCES RecallGroup(id);
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallMount', 'status', 0, 'RECALLMOUNT_NEW');
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallMount', 'status', 1, 'RECALLMOUNT_WAITDRIVE');
@@ -224,6 +230,9 @@ CREATE TABLE RecallJob(id INTEGER CONSTRAINT PK_RecallJob_Id PRIMARY KEY CONSTRA
                        fileTransactionId INTEGER CONSTRAINT UN_RecallJob_FileTrId UNIQUE USING INDEX)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
+-- see comment in the RecallMount table about why we need the next 3 indices (although here,
+-- the size of the table by itself is asking for one)
+CREATE INDEX I_RecallJob_SvcClass ON RecallJob (svcClass);
 CREATE INDEX I_RecallJob_RecallGroup ON RecallJob (recallGroup);
 CREATE INDEX I_RecallJob_Castorfile_VID ON RecallJob (castorFile, VID);
 CREATE INDEX I_RecallJob_VID ON RecallJob (VID);
@@ -348,6 +357,8 @@ CREATE TABLE MigrationJob (fileSize INTEGER CONSTRAINT NN_MigrationJob_FileSize 
                            id INTEGER CONSTRAINT PK_MigrationJob_Id PRIMARY KEY 
                                       CONSTRAINT NN_MigrationJob_Id NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+-- see comment in the RecallMount table about why we need this index
+CREATE INDEX I_MigrationJob_MountTransId ON MigrationJob(mountTransactionId);
 CREATE INDEX I_MigrationJob_CFVID ON MigrationJob(castorFile, VID);
 CREATE INDEX I_MigrationJob_TapePoolSize ON MigrationJob(tapePool, fileSize);
 CREATE UNIQUE INDEX I_MigrationJob_TPStatusId ON MigrationJob(tapePool, status, id);
@@ -380,6 +391,8 @@ CREATE TABLE MigrationRouting (isSmallFile INTEGER,
                                lastEditionTime NUMBER CONSTRAINT NN_MigrationRouting_LastEdTime NOT NULL,
                                tapePool INTEGER CONSTRAINT NN_MigrationRouting_TapePool NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+-- see comment in the RecallMount table about why we need thess indexes
+CREATE INDEX I_MigrationRouting_TapePool ON MigrationRouting(tapePool);
 CREATE INDEX I_MigrationRouting_Rules ON MigrationRouting(fileClass, copyNb, isSmallFile);
 ALTER TABLE MigrationRouting ADD CONSTRAINT UN_MigrationRouting_Rules
   UNIQUE (fileClass, copyNb, isSmallFile) USING INDEX I_MigrationRouting_Rules;

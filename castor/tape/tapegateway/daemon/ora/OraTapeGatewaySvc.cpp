@@ -462,8 +462,7 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getTapesWithDriveReqs
     m_getTapesWithDriveReqsStatement->setDouble(1,(double)timeOut);
     unsigned int nb = m_getTapesWithDriveReqsStatement->executeUpdate();
     if (0 == nb) {
-      // just release the lock no result
-      cnvSvc()->commit();
+      // nothing found, return
       return;
     }
     // Run through the results
