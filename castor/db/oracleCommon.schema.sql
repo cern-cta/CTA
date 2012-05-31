@@ -128,6 +128,7 @@ CREATE INDEX I_SubRequest_CT_ID ON SubRequest(creationTime, id) LOCAL
 CREATE INDEX I_SubRequest_Req_Stat_no89 ON SubRequest (request, decode(status,8,NULL,9,NULL,status));
 
 /* Definition of the RecallGroup table
+ *   id : unique id of the RecallGroup
  *   name : the name of the RecallGroup
  *   nbDrives : maximum number of drives that may be concurrently used across all users of this RecallGroup
  *   minAmountDataForMount : the minimum amount of data needed to trigger a new mount, in bytes
@@ -150,7 +151,7 @@ CREATE TABLE RecallGroup(id INTEGER CONSTRAINT PK_RecallGroup_Id PRIMARY KEY CON
                          lastEditionTime NUMBER CONSTRAINT NN_RecallGroup_LastEdTime NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
-/* Definition of the RecallGroup table
+/* Definition of the RecallUser table
  *   euid : uid of the recall user
  *   egid : gid of the recall user
  *   recallGroup : the recall group to which this user belongs
@@ -169,9 +170,16 @@ CREATE INDEX I_RecallUser_RecallGroup ON RecallUser(recallGroup);
 ALTER TABLE RecallUser ADD CONSTRAINT FK_RecallUser_RecallGroup FOREIGN KEY (recallGroup) REFERENCES RecallGroup(id);
 
 /* Definition of the RecallMount table
+ *   id : unique id of the RecallGroup
+ *   mountTransactionId : the VDQM transaction that this mount is dealing with
  *   vid : the tape mounted or to be mounted
- *   recallGroup : the recall group to which this user belongs
- *   status : current status of the recall
+ *   label : the label of the mounted tape
+ *   density : the density of the mounted tape
+ *   recallGroup : the recall group to which this mount belongs
+ *   startTime : the time at which this mount started
+ *   status : current status of the RecallMount (NEW, WAITDRIVE or RECALLING)
+ *   lastVDQMPingTime : last time we have checked VDQM for this mount
+ *   lastProcessedFseq : last fseq that was processed by this mount (-1 if none)
  */
 CREATE TABLE RecallMount(id INTEGER CONSTRAINT PK_RecallMount_Id PRIMARY KEY CONSTRAINT NN_RecallMount_Id NOT NULL, 
                          mountTransactionId INTEGER CONSTRAINT UN_RecallMount_TransId UNIQUE USING INDEX,
@@ -206,6 +214,7 @@ INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallMou
  * vid the tape on which the targetted segment resides
  * fseq the file sequence number of the targetted segment on its tape
  * status status of the recallJob
+ * filesize size of the segment to be recalled
  * creationTime time when this job was created
  * nbRetriesWithinMount number of times we have tried to read the file within the current tape mount
  * nbMounts number of times we have mounted a tape for this RecallJob

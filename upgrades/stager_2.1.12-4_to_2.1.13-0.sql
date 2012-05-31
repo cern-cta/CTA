@@ -107,6 +107,7 @@ DROP SEQUENCE TG_FILETRID_SEQ;
 
 
 /* Definition of the RecallGroup table
+ *   id : unique id of the RecallGroup
  *   name : the name of the RecallGroup
  *   nbDrives : maximum number of drives that may be concurrently used across all users of this RecallGroup
  *   minAmountDataForMount : the minimum amount of data needed to trigger a new mount, in bytes
@@ -118,7 +119,8 @@ DROP SEQUENCE TG_FILETRID_SEQ;
  * Note that a mount is attempted as soon as one of the three criterias is reached.
  */
 CREATE TABLE RecallGroup(id INTEGER CONSTRAINT PK_RecallGroup_Id PRIMARY KEY CONSTRAINT NN_RecallGroup_Id NOT NULL, 
-                         name VARCHAR2(2048) CONSTRAINT NN_RecallGroup_Name NOT NULL,
+                         name VARCHAR2(2048) CONSTRAINT NN_RecallGroup_Name NOT NULL
+                                             CONSTRAINT UN_RecallGroup_Name UNIQUE USING INDEX,
                          nbDrives INTEGER CONSTRAINT NN_RecallGroup_NbDrives NOT NULL,
                          minAmountDataForMount INTEGER CONSTRAINT NN_RecallGroup_MinAmountData NOT NULL,
                          minNbFilesForMount INTEGER CONSTRAINT NN_RecallGroup_MinNbFiles NOT NULL,
@@ -131,7 +133,7 @@ INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 INSERT INTO RecallGroup (id, name, nbDrives, minAmountDataForMount, minNbFilesForMount, maxFileAgeBeforeMount, vdqmPriority, lastEditor, lastEditionTime)
 VALUES (ids_seq.nextval, 'default', 20, 10*1024*1024*1024, 10, 30*3600, 0, '2.1.13 upgrade script', getTime());
 
-/* Definition of the RecallGroup table
+/* Definition of the RecallUser table
  *   euid : uid of the recall user
  *   egid : gid of the recall user
  *   recallGroup : the recall group to which this user belongs
@@ -145,35 +147,43 @@ CREATE TABLE RecallUser(euid INTEGER CONSTRAINT NN_RecallUser_Euid NOT NULL,
                         lastEditor VARCHAR2(2048) CONSTRAINT NN_RecallUser_LastEditor NOT NULL,
                         lastEditionTime NUMBER CONSTRAINT NN_RecallUser_LastEdTime NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+-- see comment in the RecallMount table about why we need this index
 CREATE INDEX I_RecallUser_RecallGroup ON RecallUser(recallGroup); 
 ALTER TABLE RecallUser ADD CONSTRAINT FK_RecallUser_RecallGroup FOREIGN KEY (recallGroup) REFERENCES RecallGroup(id);
 
 /* Definition of the RecallMount table
+ *   id : unique id of the RecallGroup
+ *   mountTransactionId : the VDQM transaction that this mount is dealing with
  *   vid : the tape mounted or to be mounted
- *   recallGroup : the recall group to which this user belongs
- *   status : current status of the recall
+ *   label : the label of the mounted tape
+ *   density : the density of the mounted tape
+ *   recallGroup : the recall group to which this mount belongs
+ *   startTime : the time at which this mount started
+ *   status : current status of the RecallMount (NEW, WAITDRIVE or RECALLING)
+ *   lastVDQMPingTime : last time we have checked VDQM for this mount
+ *   lastProcessedFseq : last fseq that was processed by this mount (-1 if none)
  */
 CREATE TABLE RecallMount(id INTEGER CONSTRAINT PK_RecallMount_Id PRIMARY KEY CONSTRAINT NN_RecallMount_Id NOT NULL, 
                          mountTransactionId INTEGER CONSTRAINT UN_RecallMount_TransId UNIQUE USING INDEX,
                          VID VARCHAR2(2048) CONSTRAINT NN_RecallMount_VID NOT NULL
                                             CONSTRAINT UN_RecallMount_VID UNIQUE USING INDEX,
-                         label VARCHAR2(2048) CONSTRAINT NN_RecallMount_Label NOT NULL,
-                         density VARCHAR2(2048) CONSTRAINT NN_RecallMount_Density NOT NULL,
+                         label VARCHAR2(2048),
+                         density VARCHAR2(2048),
                          recallGroup INTEGER CONSTRAINT NN_RecallMount_RecallGroup NOT NULL,
                          startTime NUMBER CONSTRAINT NN_RecallMount_startTime NOT NULL,
                          status INTEGER CONSTRAINT NN_RecallMount_Status NOT NULL,
-                         lastVDQMPingTime NUMBER CONSTRAINT NN_RecallMount_lastVDQMPing NOT NULL,
-                         lastProcessedFseq INTEGER DEFAULT -1 CONSTRAINT NN_RecallMount_Fseq NOT NULL
-)
--- dgn VARCHAR2(2048),
--- label VARCHAR2(2048),
--- density VARCHAR2(2048),
--- vdqmVolReqId NUMBER,
+                         lastVDQMPingTime NUMBER DEFAULT 0 CONSTRAINT NN_RecallMount_lastVDQMPing NOT NULL,
+                         lastProcessedFseq INTEGER DEFAULT -1 CONSTRAINT NN_RecallMount_Fseq NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+-- this index may sound counter prodcutive as we have very few rows and a full table scan will always be faster
+-- However, it is needed to avoid a table lock on RecallGroup when taking a row lock on RecallMount,
+-- via the existing foreign key. On top, this table lock is also taken in case of an update that does not
+-- touch any row while with the index, no row lock is taken at all, as one may expect
+CREATE INDEX I_RecallMount_RecallGroup ON RecallMount(recallGroup); 
 ALTER TABLE RecallMount ADD CONSTRAINT FK_RecallMount_RecallGroup FOREIGN KEY (recallGroup) REFERENCES RecallGroup(id);
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallMount', 'status', 0, 'RECALLMOUNT_NEW');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallMount', 'status', 2, 'RECALLMOUNT_WAITDRIVE');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallMount', 'status', 3, 'RECALLMOUNT_RECALLING');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallMount', 'status', 1, 'RECALLMOUNT_WAITDRIVE');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallMount', 'status', 2, 'RECALLMOUNT_RECALLING');
 
 /* Definition of the RecallJob table
  * id unique identifer of this RecallJob
@@ -186,6 +196,7 @@ INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallMou
  * vid the tape on which the targetted segment resides
  * fseq the file sequence number of the targetted segment on its tape
  * status status of the recallJob
+ * filesize size of the segment to be recalled
  * creationTime time when this job was created
  * nbRetriesWithinMount number of times we have tried to read the file within the current tape mount
  * nbMounts number of times we have mounted a tape for this RecallJob
@@ -202,6 +213,7 @@ CREATE TABLE RecallJob(id INTEGER CONSTRAINT PK_RecallJob_Id PRIMARY KEY CONSTRA
                        vid VARCHAR2(2048) CONSTRAINT NN_RecallJob_VID NOT NULL,
                        fseq INTEGER CONSTRAINT NN_RecallJob_Fseq NOT NULL,
                        status INTEGER CONSTRAINT NN_RecallJob_Status NOT NULL,
+                       fileSize INTEGER CONSTRAINT NN_RecallJob_FileSize NOT NULL,
                        creationTime INTEGER CONSTRAINT NN_RecallJob_CreationTime NOT NULL,
                        nbRetriesWithinMount NUMBER DEFAULT 0 CONSTRAINT NN_RecallJob_nbRetriesWM NOT NULL,
                        nbMounts NUMBER DEFAULT 0 CONSTRAINT NN_RecallJob_nbMounts NOT NULL,
@@ -209,6 +221,9 @@ CREATE TABLE RecallJob(id INTEGER CONSTRAINT PK_RecallJob_Id PRIMARY KEY CONSTRA
                        fileTransactionId INTEGER CONSTRAINT UN_RecallJob_FileTrId UNIQUE USING INDEX)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
+-- see comment in the RecallMount table about why we need the next 3 indices (although here,
+-- the size of the table by itself is asking for one)
+CREATE INDEX I_RecallJob_SvcClass ON RecallJob (svcClass);
 CREATE INDEX I_RecallJob_RecallGroup ON RecallJob (recallGroup);
 CREATE INDEX I_RecallJob_Castorfile_VID ON RecallJob (castorFile, VID);
 CREATE INDEX I_RecallJob_VID ON RecallJob (VID);
@@ -217,7 +232,7 @@ ALTER TABLE RecallJob ADD CONSTRAINT FK_RecallJob_SvcClass FOREIGN KEY (svcClass
 ALTER TABLE RecallJob ADD CONSTRAINT FK_RecallJob_RecallGroup FOREIGN KEY (recallGroup) REFERENCES RecallGroup(id);
 ALTER TABLE RecallJob ADD CONSTRAINT FK_RecallJob_CastorFile FOREIGN KEY (castorFile) REFERENCES CastorFile(id);
 
-DELETE FROM ObjStatus WHERE object = 'RecallJob' OR object = 'MigrationJob';
+DELETE FROM ObjStatus WHERE object = 'RecallJob';
 
 -- NEW status is when the RecallJob is created and no mount is foreseen yet
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallJob', 'status', 0, 'RECALLJOB_NEW');
