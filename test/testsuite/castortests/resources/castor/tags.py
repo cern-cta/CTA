@@ -25,7 +25,6 @@ def _setFileClass(self, path, fileclass):
     assert len(output) == 0, \
            'Failed to set FileClass ' + fileclass + \
            ' on directory ' + path + os.linesep + "Error :" + os.linesep + output
-    return path
 Setup._setFileClass = _setFileClass
 
 def _addACLforUnprivUser(self, path):
@@ -41,14 +40,14 @@ def _addACLforUnprivUser(self, path):
     assert len(output) == 0, \
            'Failed to set ACLs for user ' + self.options.get('Tags', 'unprivUid') + \
            ' on working directory ' + path + os.linesep + "Error :" + os.linesep + output
-    return path
 Setup._addACLforUnprivUser = _addACLforUnprivUser
 
 def _configuredPath(self, test, fileclass):
     # create the directory and configure it
-    path = self._createDir(self.getTag(test, '_testSessionPath') + os.sep + test)
-    path = self._setFileClass(path, fileclass)
-    path = self._addACLforUnprivUser(path)
+    path, created = self._createDir(self.getTag(test, '_testSessionPath') + os.sep + test)
+    if created:
+        self._setFileClass(path, fileclass)
+        self._addACLforUnprivUser(path)
     return path
 Setup._configuredPath = _configuredPath
 

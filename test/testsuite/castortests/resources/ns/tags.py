@@ -24,17 +24,20 @@ def _createDir(self, path):
     # create the path in the namespace
     output = Popen('nsmkdir ' + path)
     # check it went fine
-    assert len(output) == 0 or output.find('File exists'), \
+    assert len(output) == 0 or output.find('File exists') >= 0, \
         'Failed to create working directory ' + path + os.linesep + "Error :" + os.linesep + output
     # return the created dir
-    return path
+    if output.find('File exists') >= 0:
+        return (path, False)
+    else:
+        return (path, True)
 Setup._createDir = _createDir
 
 def _testSessionPath(self):
     # get the test path
     testpath = self.options.get('Generic','CastorTestDir')
     # create a unique directory
-    return self._createDir(testpath + os.sep + self.getTag(None, 'sessionuuid'))
+    return self._createDir(testpath + os.sep + self.getTag(None, 'sessionuuid'))[0]
 Setup.getTag__testSessionPath = _testSessionPath
 
 def nsDir(self):
@@ -42,7 +45,7 @@ def nsDir(self):
 Setup.getTag_nsDir = nsDir
 
 def nsFile(self, nb=0):
-    return (lambda test : self._createDir(self.getTag(test, 'nsDir')) + \
+    return (lambda test : self._createDir(self.getTag(test, 'nsDir'))[0] + \
             os.sep + test + str(nb))
 Setup.getTag_nsFile = nsFile
 
