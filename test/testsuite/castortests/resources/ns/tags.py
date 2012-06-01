@@ -21,16 +21,21 @@ def cnsHost(self):
 Setup.getTag_cnsHost = cnsHost
 
 def _createDir(self, path):
+    if path in self._alreadyCreatedDirs:
+        return (path, False)
     # create the path in the namespace
     output = Popen('nsmkdir ' + path)
     # check it went fine
     assert len(output) == 0 or output.find('File exists') >= 0, \
         'Failed to create working directory ' + path + os.linesep + "Error :" + os.linesep + output
+    # remember it
+    self._alreadyCreatedDirs.add(path)
     # return the created dir
     if output.find('File exists') >= 0:
         return (path, False)
     else:
         return (path, True)
+Setup._alreadyCreatedDirs = set()
 Setup._createDir = _createDir
 
 def _testSessionPath(self):
