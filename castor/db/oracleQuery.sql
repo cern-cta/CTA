@@ -63,18 +63,17 @@ BEGIN
            WHERE CastorFile.id = DC.castorFile)
        WHERE status IS NOT NULL    -- search for valid diskcopies
      UNION
-      SELECT CastorFile.fileId, CastorFile.nsHost, 0, '', RecallJob.fileSize, 2, -- WAITTAPERECALL
-             '', '', 0, CastorFile.lastKnownFileName, RecallJob.creationTime, Req.svcClassName, RecallJob.creationTime, -1
-        FROM RecallJob, CastorFile, Subrequest,
+      SELECT CastorFile.fileId, CastorFile.nsHost, 0, '', Castorfile.fileSize, 2, -- WAITTAPERECALL
+             '', '', 0, CastorFile.lastKnownFileName, Subrequest.creationTime, Req.svcClassName, Subrequest.creationTime, -1
+        FROM CastorFile, Subrequest,
              (SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */ id, svcClassName FROM StagePrepareToGetRequest UNION ALL
               SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcClassName FROM StagePrepareToUpdateRequest UNION ALL
               SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, svcClassName FROM StageGetRequest UNION ALL
               SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ id, svcClassName FROM StageUpdateRequest UNION ALL
               SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */ id, svcClassName FROM StageRepackRequest) Req
-       WHERE RecallJob.castorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
-         AND Castorfile.id = RecallJob.castorfile
+       WHERE Castorfile.id IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
          AND Subrequest.CastorFile = Castorfile.id
-         AND SubRequest.status = dconst.SUBREQUEST_WAITTAPERECALL
+         AND SubRequest.status IN (dconst.SUBREQUEST_WAITTAPERECALL, dconst.SUBREQUEST_START, dconst.SUBREQUEST_RESTART)
          AND Req.id = SubRequest.request)
     ORDER BY fileid, nshost;
   ELSE
@@ -118,18 +117,17 @@ BEGIN
            WHERE CastorFile.id = DC.castorFile)
        WHERE status IS NOT NULL     -- search for valid diskcopies
      UNION
-      SELECT CastorFile.fileId, CastorFile.nsHost, 0, '', RecallJob.fileSize, 2, -- WAITTAPERECALL
-             '', '', 0, CastorFile.lastKnownFileName, RecallJob.creationTime, Req.svcClassName, RecallJob.creationTime, -1
-        FROM RecallJob, CastorFile, Subrequest,
+      SELECT CastorFile.fileId, CastorFile.nsHost, 0, '', Castorfile.fileSize, 2, -- WAITTAPERECALL
+             '', '', 0, CastorFile.lastKnownFileName, Subrequest.creationTime, Req.svcClassName, Subrequest.creationTime, -1
+        FROM CastorFile, Subrequest,
              (SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */ id, svcClassName, svcClass FROM StagePrepareToGetRequest UNION ALL
               SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcClassName, svcClass FROM StagePrepareToUpdateRequest UNION ALL
               SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, svcClassName, svcClass FROM StageGetRequest UNION ALL
               SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ id, svcClassName, svcClass FROM StageUpdateRequest UNION ALL
               SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */ id, svcClassName, svcClass FROM StageRepackRequest) Req
-       WHERE RecallJob.castorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
-         AND Castorfile.id = RecallJob.castorfile
+       WHERE Castorfile.id IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
          AND Subrequest.CastorFile = Castorfile.id
-         AND SubRequest.status = dconst.SUBREQUEST_WAITTAPERECALL
+         AND SubRequest.status IN (dconst.SUBREQUEST_WAITTAPERECALL, dconst.SUBREQUEST_START, dconst.SUBREQUEST_RESTART)
          AND Req.id = SubRequest.request
          AND Req.svcClass = svcClassId)
     ORDER BY fileid, nshost;
