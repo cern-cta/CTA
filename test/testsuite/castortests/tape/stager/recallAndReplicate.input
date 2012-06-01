@@ -8,5 +8,6 @@ stager_qry -M <tapeFileName>
 stager_get -S <tapeServiceClass> -M <tapeFileName>
 stager_get -S <diskOnlyServiceClass> -M <tapeFileName>
 status=`stager_qry -M <tapeFileName> -S <diskOnlyServiceClass> | tail -1 | awk '{print $NF;}'`; while [[ $status == 'STAGEIN' ]]; do sleep 10; status=`stager_qry -M <tapeFileName> -S <diskOnlyServiceClass> | tail -1 | awk '{print $NF;}'` ; done
+status=`stager_qry -M <tapeFileName> -S <tapeServiceClass> | tail -1 | awk '{print $NF;}'`; while [[ $status == 'STAGEIN' ]]; do sleep 10; status=`stager_qry -M <tapeFileName> -S <tapeServiceClass> | tail -1 | awk '{print $NF;}'` ; done
 stager_qry -S <tapeServiceClass> -M <tapeFileName>
 stager_qry -S <diskOnlyServiceClass> -M <tapeFileName>
