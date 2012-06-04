@@ -410,7 +410,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_12_4');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_13_0');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -434,7 +434,7 @@ AS
  *******************************************************************/
 
 /* SQL statement to populate the intial schema version */
-UPDATE UpgradeLog SET schemaVersion = '2_1_12_0';
+UPDATE UpgradeLog SET schemaVersion = '2_1_13_0';
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -554,6 +554,7 @@ CREATE INDEX I_SubRequest_CT_ID ON SubRequest(creationTime, id) LOCAL
 CREATE INDEX I_SubRequest_Req_Stat_no89 ON SubRequest (request, decode(status,8,NULL,9,NULL,status));
 
 /* Definition of the RecallGroup table
+ *   id : unique id of the RecallGroup
  *   name : the name of the RecallGroup
  *   nbDrives : maximum number of drives that may be concurrently used across all users of this RecallGroup
  *   minAmountDataForMount : the minimum amount of data needed to trigger a new mount, in bytes
@@ -576,7 +577,7 @@ CREATE TABLE RecallGroup(id INTEGER CONSTRAINT PK_RecallGroup_Id PRIMARY KEY CON
                          lastEditionTime NUMBER CONSTRAINT NN_RecallGroup_LastEdTime NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
-/* Definition of the RecallGroup table
+/* Definition of the RecallUser table
  *   euid : uid of the recall user
  *   egid : gid of the recall user
  *   recallGroup : the recall group to which this user belongs
@@ -590,13 +591,21 @@ CREATE TABLE RecallUser(euid INTEGER CONSTRAINT NN_RecallUser_Euid NOT NULL,
                         lastEditor VARCHAR2(2048) CONSTRAINT NN_RecallUser_LastEditor NOT NULL,
                         lastEditionTime NUMBER CONSTRAINT NN_RecallUser_LastEdTime NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+-- see comment in the RecallMount table about why we need this index
 CREATE INDEX I_RecallUser_RecallGroup ON RecallUser(recallGroup); 
 ALTER TABLE RecallUser ADD CONSTRAINT FK_RecallUser_RecallGroup FOREIGN KEY (recallGroup) REFERENCES RecallGroup(id);
 
 /* Definition of the RecallMount table
+ *   id : unique id of the RecallGroup
+ *   mountTransactionId : the VDQM transaction that this mount is dealing with
  *   vid : the tape mounted or to be mounted
- *   recallGroup : the recall group to which this user belongs
- *   status : current status of the recall
+ *   label : the label of the mounted tape
+ *   density : the density of the mounted tape
+ *   recallGroup : the recall group to which this mount belongs
+ *   startTime : the time at which this mount started
+ *   status : current status of the RecallMount (NEW, WAITDRIVE or RECALLING)
+ *   lastVDQMPingTime : last time we have checked VDQM for this mount
+ *   lastProcessedFseq : last fseq that was processed by this mount (-1 if none)
  */
 CREATE TABLE RecallMount(id INTEGER CONSTRAINT PK_RecallMount_Id PRIMARY KEY CONSTRAINT NN_RecallMount_Id NOT NULL, 
                          mountTransactionId INTEGER CONSTRAINT UN_RecallMount_TransId UNIQUE USING INDEX,
@@ -610,6 +619,11 @@ CREATE TABLE RecallMount(id INTEGER CONSTRAINT PK_RecallMount_Id PRIMARY KEY CON
                          lastVDQMPingTime NUMBER DEFAULT 0 CONSTRAINT NN_RecallMount_lastVDQMPing NOT NULL,
                          lastProcessedFseq INTEGER DEFAULT -1 CONSTRAINT NN_RecallMount_Fseq NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+-- this index may sound counter prodcutive as we have very few rows and a full table scan will always be faster
+-- However, it is needed to avoid a table lock on RecallGroup when taking a row lock on RecallMount,
+-- via the existing foreign key. On top, this table lock is also taken in case of an update that does not
+-- touch any row while with the index, no row lock is taken at all, as one may expect
+CREATE INDEX I_RecallMount_RecallGroup ON RecallMount(recallGroup); 
 ALTER TABLE RecallMount ADD CONSTRAINT FK_RecallMount_RecallGroup FOREIGN KEY (recallGroup) REFERENCES RecallGroup(id);
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallMount', 'status', 0, 'RECALLMOUNT_NEW');
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallMount', 'status', 1, 'RECALLMOUNT_WAITDRIVE');
@@ -626,6 +640,7 @@ INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallMou
  * vid the tape on which the targetted segment resides
  * fseq the file sequence number of the targetted segment on its tape
  * status status of the recallJob
+ * filesize size of the segment to be recalled
  * creationTime time when this job was created
  * nbRetriesWithinMount number of times we have tried to read the file within the current tape mount
  * nbMounts number of times we have mounted a tape for this RecallJob
@@ -650,6 +665,9 @@ CREATE TABLE RecallJob(id INTEGER CONSTRAINT PK_RecallJob_Id PRIMARY KEY CONSTRA
                        fileTransactionId INTEGER CONSTRAINT UN_RecallJob_FileTrId UNIQUE USING INDEX)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
+-- see comment in the RecallMount table about why we need the next 3 indices (although here,
+-- the size of the table by itself is asking for one)
+CREATE INDEX I_RecallJob_SvcClass ON RecallJob (svcClass);
 CREATE INDEX I_RecallJob_RecallGroup ON RecallJob (recallGroup);
 CREATE INDEX I_RecallJob_Castorfile_VID ON RecallJob (castorFile, VID);
 CREATE INDEX I_RecallJob_VID ON RecallJob (VID);
@@ -670,10 +688,6 @@ INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallJob
 -- These will be reset to NEW on RecallMount deletion
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallJob', 'status', 3, 'RECALLJOB_RETRYMOUNT');
 
-
-
-/* Create sequence for the File request IDs. */
-CREATE SEQUENCE TG_FILETRID_SEQ START WITH 1 INCREMENT BY 1;
 
 /* Definition of the TapePool table
  *   name : the name of the TapePool
@@ -707,7 +721,6 @@ INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
  *   status : current status of the migration
  */
 CREATE TABLE MigrationMount (mountTransactionId INTEGER CONSTRAINT UN_MigrationMount_VDQM UNIQUE USING INDEX,
-                             tapeGatewayRequestId INTEGER CONSTRAINT NN_MigrationMount_tgRequestId NOT NULL,
                              id INTEGER CONSTRAINT PK_MigrationMount_Id PRIMARY KEY
                                         CONSTRAINT NN_MigrationMount_Id NOT NULL,
                              startTime NUMBER CONSTRAINT NN_MigrationMount_startTime NOT NULL,
@@ -722,7 +735,7 @@ CREATE TABLE MigrationMount (mountTransactionId INTEGER CONSTRAINT UN_MigrationM
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE INDEX I_MigrationMount_TapePool ON MigrationMount(tapePool); 
 ALTER TABLE MigrationMount ADD CONSTRAINT FK_MigrationMount_TapePool
-   FOREIGN KEY (tapePool) REFERENCES TapePool(id);
+  FOREIGN KEY (tapePool) REFERENCES TapePool(id);
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationMount', 'status', 0, 'MIGRATIONMOUNT_WAITTAPE');
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationMount', 'status', 1, 'MIGRATIONMOUNT_SEND_TO_VDQM');
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationMount', 'status', 2, 'MIGRATIONMOUNT_WAITDRIVE');
@@ -743,7 +756,7 @@ CREATE TABLE MigratedSegment(castorFile INTEGER CONSTRAINT NN_MigratedSegment_Ca
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE UNIQUE INDEX I_MigratedSegment_CFCopyNbVID ON MigratedSegment(CastorFile, copyNb, VID);
 ALTER TABLE MigratedSegment ADD CONSTRAINT FK_MigratedSegment_CastorFile
-   FOREIGN KEY (castorFile) REFERENCES CastorFile(id);
+  FOREIGN KEY (castorFile) REFERENCES CastorFile(id);
 
 /* Definition of the MigrationJob table
  *   fileSize : size of the file to be migrated, in bytes
@@ -758,7 +771,7 @@ ALTER TABLE MigratedSegment ADD CONSTRAINT FK_MigratedSegment_CastorFile
  *   tapePool : the tape pool where to migrate
  *   nbRetry : the number of retries we already went through
  *   errorcode : the error we got on last try (if any)
- *   tapeGatewayRequestId : an identifier for the migration session that is handling this job (when applicable)
+ *   mountTransactionId : an identifier for the migration session that is handling this job (when applicable)
  *   fileTransactionId : an identifier for this migration job
  *   fSeq : the file sequence of the copy created on tape for this job (when applicable)
  *   status : the status of the migration job
@@ -771,28 +784,31 @@ CREATE TABLE MigrationJob (fileSize INTEGER CONSTRAINT NN_MigrationJob_FileSize 
                            originalCopyNb INTEGER,
                            destCopyNb INTEGER CONSTRAINT NN_MigrationJob_destcopyNb NOT NULL,
                            tapePool INTEGER CONSTRAINT NN_MigrationJob_TapePool NOT NULL,
-                           nbRetry INTEGER CONSTRAINT NN_MigrationJob_nbRetry NOT NULL,
-                           errorcode INTEGER,
-                           tapeGatewayRequestId INTEGER,
+                           nbRetries INTEGER DEFAULT 0 CONSTRAINT NN_MigrationJob_nbRetries NOT NULL,
+                           mountTransactionId INTEGER,   -- this is NULL at the beginning
                            fileTransactionId INTEGER CONSTRAINT UN_MigrationJob_FileTrId UNIQUE USING INDEX,
                            fSeq INTEGER,
                            status INTEGER CONSTRAINT NN_MigrationJob_Status NOT NULL,
                            id INTEGER CONSTRAINT PK_MigrationJob_Id PRIMARY KEY 
                                       CONSTRAINT NN_MigrationJob_Id NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+-- see comment in the RecallMount table about why we need this index
+CREATE INDEX I_MigrationJob_MountTransId ON MigrationJob(mountTransactionId);
 CREATE INDEX I_MigrationJob_CFVID ON MigrationJob(castorFile, VID);
 CREATE INDEX I_MigrationJob_TapePoolSize ON MigrationJob(tapePool, fileSize);
 CREATE UNIQUE INDEX I_MigrationJob_TPStatusId ON MigrationJob(tapePool, status, id);
 CREATE UNIQUE INDEX I_MigrationJob_CFCopyNb ON MigrationJob(castorFile, destCopyNb);
-ALTER TABLE MigrationJob ADD CONSTRAINT UN_MigrationJob_CopyNb UNIQUE (castorFile, destCopyNb) USING INDEX I_MigrationJob_CFCopyNb;
+ALTER TABLE MigrationJob ADD CONSTRAINT UN_MigrationJob_CopyNb
+  UNIQUE (castorFile, destCopyNb) USING INDEX I_MigrationJob_CFCopyNb;
 ALTER TABLE MigrationJob ADD CONSTRAINT FK_MigrationJob_CastorFile
-   FOREIGN KEY (castorFile) REFERENCES CastorFile(id);
+  FOREIGN KEY (castorFile) REFERENCES CastorFile(id);
 ALTER TABLE MigrationJob ADD CONSTRAINT FK_MigrationJob_TapePool
-   FOREIGN KEY (tapePool) REFERENCES TapePool(id);
+  FOREIGN KEY (tapePool) REFERENCES TapePool(id);
+ALTER TABLE MigrationJob ADD CONSTRAINT FK_MigrationJob_MigrationMount
+  FOREIGN KEY (mountTransactionId) REFERENCES MigrationMount(mountTransactionId);
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationJob', 'status', 0, 'MIGRATIONJOB_PENDING');
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationJob', 'status', 1, 'MIGRATIONJOB_SELECTED');
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationJob', 'status', 3, 'MIGRATIONJOB_WAITINGONRECALL');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationJob', 'status', 8, 'MIGRATIONJOB_RETRY');
 
 
 /* Definition of the MigrationRouting table. Each line is a routing rule for migration jobs
@@ -810,13 +826,35 @@ CREATE TABLE MigrationRouting (isSmallFile INTEGER,
                                lastEditionTime NUMBER CONSTRAINT NN_MigrationRouting_LastEdTime NOT NULL,
                                tapePool INTEGER CONSTRAINT NN_MigrationRouting_TapePool NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+-- see comment in the RecallMount table about why we need thess indexes
+CREATE INDEX I_MigrationRouting_TapePool ON MigrationRouting(tapePool);
 CREATE INDEX I_MigrationRouting_Rules ON MigrationRouting(fileClass, copyNb, isSmallFile);
-ALTER TABLE MigrationRouting ADD CONSTRAINT UN_MigrationRouting_Rules UNIQUE (fileClass, copyNb, isSmallFile) USING INDEX I_MigrationRouting_Rules;
+ALTER TABLE MigrationRouting ADD CONSTRAINT UN_MigrationRouting_Rules
+  UNIQUE (fileClass, copyNb, isSmallFile) USING INDEX I_MigrationRouting_Rules;
 ALTER TABLE MigrationRouting ADD CONSTRAINT FK_MigrationRouting_FileClass
-   FOREIGN KEY (fileClass) REFERENCES FileClass(id);
+  FOREIGN KEY (fileClass) REFERENCES FileClass(id);
 ALTER TABLE MigrationRouting ADD CONSTRAINT FK_MigrationRouting_TapePool
-   FOREIGN KEY (tapePool) REFERENCES TapePool(id);
- 
+  FOREIGN KEY (tapePool) REFERENCES TapePool(id);
+
+/* Temporary table used to bulk select next candidates for recall and migration */
+CREATE GLOBAL TEMPORARY TABLE FilesToRecallHelper
+ (fileId NUMBER, nsHost VARCHAR2(100), fileTransactionId NUMBER,
+  filePath VARCHAR2(2048), blockId RAW(4), fSeq INTEGER)
+ ON COMMIT DELETE ROWS;
+
+CREATE GLOBAL TEMPORARY TABLE FilesToMigrateHelper
+ (fileId NUMBER, nsHost VARCHAR2(100), lastKnownFileName VARCHAR2(2048), filePath VARCHAR2(2048),
+  fileTransactionId NUMBER, fileSize NUMBER, fSeq INTEGER)
+ ON COMMIT DELETE ROWS;
+
+/* The following would be a temporary table, except that as it is used through a distributed
+   transaction and Oracle does not support temporary tables in such context, it is defined as
+   a normal table. See ns_setOrReplaceSegments for more details */
+CREATE TABLE FileMigrationResultsHelper
+ (reqId VARCHAR2(36), fileId NUMBER, lastModTime NUMBER, copyNo NUMBER, oldCopyNo NUMBER, transfSize NUMBER,
+  comprSize NUMBER, vid VARCHAR2(6), fSeq NUMBER, blockId RAW(4), checksumType VARCHAR2(16), checksum NUMBER);
+
+
 /* Indexes related to most used entities */
 CREATE UNIQUE INDEX I_DiskServer_name ON DiskServer (name);
 
@@ -862,7 +900,7 @@ ALTER TABLE FileSystem MODIFY
    mountPoint CONSTRAINT NN_FileSystem_MountPoint NOT NULL);
 
 ALTER TABLE FileSystem ADD CONSTRAINT UN_FileSystem_DSMountPoint
-   UNIQUE (diskServer, mountPoint);
+  UNIQUE (diskServer, mountPoint);
 
 /* DiskServer constraints */
 ALTER TABLE DiskServer MODIFY
@@ -876,9 +914,6 @@ CREATE INDEX I_QueryParameter_Query ON QueryParameter (query);
 
 /* Constraint on FileClass name */
 ALTER TABLE FileClass ADD CONSTRAINT UN_FileClass_Name UNIQUE (name);
-
-/* Add unique constraint on tapes */
-ALTER TABLE Tape ADD CONSTRAINT UN_Tape_VIDSideTpMode UNIQUE (VID, side, tpMode);
 
 /* Add unique constraint on svcClass name */
 ALTER TABLE SvcClass ADD CONSTRAINT UN_SvcClass_Name UNIQUE (name);
@@ -924,8 +959,6 @@ ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_FileClass
 ALTER TABLE CastorFile ADD CONSTRAINT UN_CastorFile_LKFileName UNIQUE (LastKnownFileName);
 
 ALTER TABLE CastorFile MODIFY (LastKnownFileName CONSTRAINT NN_CastorFile_LKFileName NOT NULL);
-
-ALTER TABLE Tape MODIFY(lastVdqmPingTime CONSTRAINT NN_Tape_lastVdqmPingTime NOT NULL);
 
 /* DiskPool2SvcClass constraints */
 ALTER TABLE DiskPool2SvcClass ADD CONSTRAINT PK_DiskPool2SvcClass_PC
@@ -1116,9 +1149,13 @@ INSERT INTO CastorConfig
 INSERT INTO CastorConfig
   VALUES ('Repack', 'MaxNbConcurrentClients', '3', 'The maximum number of repacks clients that are able to start or abort concurrently. This are either clients starting repacks or aborting running repacks. Providing that each of them will take a DB core, this number should not exceed ~50% of the number of cores of the stager DB server');
 INSERT INTO CastorConfig
-  VALUES ('Recall', 'MaxNbRetriesWithinMount', '2', 'The maximum number of retries for recaling a file within the same tape mount. When exceeded, the recall may still be retried in another mount. See Recall/MaxNbMount entry');
+  VALUES ('Recall', 'MaxNbRetriesWithinMount', '2', 'The maximum number of retries for recalling a file within the same tape mount. When exceeded, the recall may still be retried in another mount. See Recall/MaxNbMount entry');
 INSERT INTO CastorConfig
-  VALUES ('Recall', 'MaxNbMounts', '2', 'The maximum number of mounts for recaling a given file. When exceeded, the recall will be fail in no other tapecopy can be used. See also Recall/MaxNbRetriesWithinMount entry');
+  VALUES ('Recall', 'MaxNbMounts', '2', 'The maximum number of mounts for recalling a given file. When exceeded, the recall will be failed if no other tapecopy can be used. See also Recall/MaxNbRetriesWithinMount entry');
+INSERT INTO CastorConfig
+  VALUES ('Migration', 'SizeThreshold', '300000000', 'The threshold to consider a file "small" or "large" when routing it to tape');
+INSERT INTO CastorConfig
+  VALUES ('Migration', 'MaxNbMounts', '7', 'The maximum number of mounts for migrating a given file. When exceeded, the migration will be considered failed: the MigrationJob entry will be dropped and the corresponding diskcopy left in status CANBEMIGR. An operator intervention is required to resume the migration.');
 COMMIT;
 
 
@@ -1287,7 +1324,7 @@ ACCEPT cnsDbName CHAR PROMPT 'Enter the nameserver db TNS name: ';
 CREATE DATABASE LINK remotens
   CONNECT TO &cnsUser IDENTIFIED BY &cnsPasswd USING '&cnsDbName';
 
-/* temporary table used for listing segments of a tape */
+/* Temporary table used for listing segments of a tape */
 /* efficiently via DB link when repacking              */
 CREATE GLOBAL TEMPORARY TABLE RepackTapeSegments
  (fileId NUMBER, blockid RAW(4), fseq NUMBER, segSize NUMBER,
@@ -1299,7 +1336,7 @@ CREATE GLOBAL TEMPORARY TABLE RepackTapeSegments
 /*****************/
 
 /* allows the call of new versions of remote procedures when the signature is matching */
-CREATE OR REPLACE TRIGGER tr_RemoteDepSignature AFTER LOGON ON DATABASE
+CREATE OR REPLACE TRIGGER tr_RemoteDepSignature AFTER LOGON ON SCHEMA
 BEGIN
   EXECUTE IMMEDIATE 'ALTER SESSION SET REMOTE_DEPENDENCIES_MODE=SIGNATURE';
 END;
@@ -1530,7 +1567,6 @@ AS
   MIGRATIONJOB_PENDING   CONSTANT PLS_INTEGER := 0;
   MIGRATIONJOB_SELECTED  CONSTANT PLS_INTEGER := 1;
   MIGRATIONJOB_WAITINGONRECALL CONSTANT PLS_INTEGER := 3;
-  MIGRATIONJOB_RETRY     CONSTANT PLS_INTEGER := 8;
 
   REPACK_STARTING        CONSTANT PLS_INTEGER := 0;
   REPACK_ONGOING         CONSTANT PLS_INTEGER := 1;
@@ -1608,6 +1644,7 @@ AS
   LVL_CRIT       CONSTANT PLS_INTEGER := 2; /* LOG_CRIT    Critical conditions */
   LVL_ERROR      CONSTANT PLS_INTEGER := 3; /* LOG_ERR     Error conditions */
   LVL_WARNING    CONSTANT PLS_INTEGER := 4; /* LOG_WARNING Warning conditions */
+  LVL_NOTICE     CONSTANT PLS_INTEGER := 5; /* LOG_NOTICE  Normal but significant condition */
   LVL_USER_ERROR CONSTANT PLS_INTEGER := 5; /* LOG_NOTICE  Normal but significant condition */
   LVL_AUTH       CONSTANT PLS_INTEGER := 5; /* LOG_NOTICE  Normal but significant condition */
   LVL_SECURITY   CONSTANT PLS_INTEGER := 5; /* LOG_NOTICE  Normal but significant condition */
@@ -1617,6 +1654,8 @@ AS
   /* messages */
   FILE_DROPPED_BY_CLEANING     CONSTANT VARCHAR2(2048) := 'File was dropped by internal cleaning';
   PUTDONE_ENFORCED_BY_CLEANING CONSTANT VARCHAR2(2048) := 'PutDone enforced by internal cleaning';
+  
+  DBJOB_UNEXPECTED_EXCEPTION   CONSTANT VARCHAR2(2048) := 'Unexpected exception caught in DB job';
 
   MIGMOUNT_NO_FILE             CONSTANT VARCHAR2(2048) := 'startMigrationMounts: failed migration mount creation due to lack of files';
   MIGMOUNT_AGE_NO_FILE         CONSTANT VARCHAR2(2048) := 'startMigrationMounts: failed migration mount creation base on age due to lack of files';
@@ -1636,23 +1675,64 @@ AS
   RECALL_MISSING_COPIES_NOOP   CONSTANT VARCHAR2(2048) := 'createRecallCandidate: detected missing copies on tape, but migrations ongoing';
   RECALL_MJ_FOR_MISSING_COPY   CONSTANT VARCHAR2(2048) := 'createRecallCandidate: create new MigrationJob to migrate missing copy';
   RECALL_COPY_STILL_MISSING    CONSTANT VARCHAR2(2048) := 'createRecallCandidate: could not find enough valid copy numbers to create missing copy';
-
-
   MIGRATION_CANCEL_BY_VID      CONSTANT VARCHAR2(2048) := 'Canceling tape migration for given VID';
   RECALL_CANCEL_BY_VID         CONSTANT VARCHAR2(2048) := 'Canceling tape recall for given VID';
   RECALL_CANCEL_RECALLJOB_VID  CONSTANT VARCHAR2(2048) := 'Canceling RecallJobs for given VID';
   RECALL_FAILING               CONSTANT VARCHAR2(2048) := 'Failing Recall(s)';
-  RECALL_NOT_FOUND             CONSTANT VARCHAR2(2048) := 'setFileRecalled : unable to identify Recall. giving up';
-  RECALL_INVALID_PATH          CONSTANT VARCHAR2(2048) := 'setFileRecalled : unable to parse input path. giving up';
-  RECALL_COMPLETED_DB          CONSTANT VARCHAR2(2048) := 'setFileRecalled : db updates after full recall completed';
-  RECALL_FILE_OVERWRITTEN      CONSTANT VARCHAR2(2048) := 'setFileRecalled : file was overwritten during recall, restarting from scratch';
-  RECALL_FILE_DROPPED          CONSTANT VARCHAR2(2048) := 'setFileRecalled : file was dropped from namespace during recall, giving up';
-  RECALL_BAD_CHECKSUM          CONSTANT VARCHAR2(2048) := 'setFileRecalled : bad checksum detected, will retry if allowed';
-  RECALL_CREATED_CHECKSUM      CONSTANT VARCHAR2(2048) := 'setFileRecalled : created missing checksum in the namespace';
-
+  RECALL_FS_NOT_FOUND          CONSTANT VARCHAR2(2048) := 'bestFileSystemForRecall could not find a suitable destination for this recall';
+  RECALL_NOT_FOUND             CONSTANT VARCHAR2(2048) := 'setFileRecalled: unable to identify recall, giving up';
+  RECALL_INVALID_PATH          CONSTANT VARCHAR2(2048) := 'setFileRecalled: unable to parse input path, giving up';
+  RECALL_COMPLETED_DB          CONSTANT VARCHAR2(2048) := 'setFileRecalled: db updates after full recall completed';
+  RECALL_FILE_OVERWRITTEN      CONSTANT VARCHAR2(2048) := 'setFileRecalled: file was overwritten during recall, restarting from scratch';
+  RECALL_FILE_DROPPED          CONSTANT VARCHAR2(2048) := 'setFileRecalled: file was dropped from namespace during recall, giving up';
+  RECALL_BAD_CHECKSUM          CONSTANT VARCHAR2(2048) := 'setFileRecalled: bad checksum detected, will retry if allowed';
+  RECALL_CREATED_CHECKSUM      CONSTANT VARCHAR2(2048) := 'setFileRecalled: created missing checksum in the namespace';
+  RECALL_FAILED                CONSTANT VARCHAR2(2048) := 'setBulkFileRecallResult: recall process failed, will retry if allowed';
+  BULK_RECALL_COMPLETED        CONSTANT VARCHAR2(2048) := 'setBulkFileRecallResult: bulk recall completed';
+  
+  MIGRATION_COMPLETED          CONSTANT VARCHAR2(2048) := 'setFileMigrated: db updates after full migration completed';
+  MIGRATION_NOT_FOUND          CONSTANT VARCHAR2(2048) := 'setFileMigrated: unable to identify migration, giving up';
+  MIGRATION_RETRY              CONSTANT VARCHAR2(2048) := 'setBulkFilesMigrationResult: migration failed, will retry if allowed';
+  MIGRATION_FILE_DROPPED       CONSTANT VARCHAR2(2048) := 'failFileMigration: file was dropped or modified during migration, giving up';
+  MIGRATION_SUPERFLUOUS_COPY   CONSTANT VARCHAR2(2048) := 'failFileMigration: file already had enough copies on tape, ignoring new segment';
+  MIGRATION_FAILED             CONSTANT VARCHAR2(2048) := 'failFileMigration: migration to tape failed for this file, giving up';
+  MIGRATION_FAILED_NOT_FOUND   CONSTANT VARCHAR2(2048) := 'failFileMigration: file not found when failing migration';
+  BULK_MIGRATION_COMPLETED     CONSTANT VARCHAR2(2048) := 'setBulkFileMigrationResult: bulk migration completed';
 END dlf;
 /
 
+/**
+ * Package containing the definition of some relevant (s)errno values and messages.
+ */
+CREATE OR REPLACE PACKAGE serrno AS
+  /* (s)errno values */
+  ENOENT          CONSTANT PLS_INTEGER := 2;    /* No such file or directory */
+  EACCES          CONSTANT PLS_INTEGER := 13;   /* Permission denied */
+  EEXIST          CONSTANT PLS_INTEGER := 17;   /* File exists */
+  EISDIR          CONSTANT PLS_INTEGER := 21;   /* Is a directory */
+  
+  SEINTERNAL      CONSTANT PLS_INTEGER := 1015; /* Internal error */
+  SECHECKSUM      CONSTANT PLS_INTEGER := 1037; /* Bad checksum */
+  ENSFILECHG      CONSTANT PLS_INTEGER := 1402; /* File has been overwritten, request ignored */
+  ENSNOSEG        CONSTANT PLS_INTEGER := 1403; /* Segment had been deleted */
+  ENSTOOMANYSEGS  CONSTANT PLS_INTEGER := 1406; /* Too many copies on tape */
+  ENSOVERWHENREP  CONSTANT PLS_INTEGER := 1407; /* Cannot overwrite valid segment when replacing */
+  ERTWRONGSIZE    CONSTANT PLS_INTEGER := 1613; /* (Recalled) file size incorrect */
+  
+  /* messages */
+  ENOENT_MSG          CONSTANT VARCHAR2(2048) := 'No such file or directory';
+  EACCES_MSG          CONSTANT VARCHAR2(2048) := 'Permission denied';
+  EEXIST_MSG          CONSTANT VARCHAR2(2048) := 'File exists';
+  EISDIR_MSG          CONSTANT VARCHAR2(2048) := 'Is a directory';
+  SEINTERNAL_MSG      CONSTANT VARCHAR2(2048) := 'Internal error';
+  SECHECKSUM_MSG      CONSTANT VARCHAR2(2048) := 'Checksum mismatch between segment and file';
+  ENSFILECHG_MSG      CONSTANT VARCHAR2(2048) := 'File has been overwritten, request ignored';
+  ENSNOSEG_MSG        CONSTANT VARCHAR2(2048) := 'Segment had been deleted';
+  ENSTOOMANYSEGS_MSG  CONSTANT VARCHAR2(2048) := 'Too many copies on tape';
+  ENSOVERWHENREP_MSG  CONSTANT VARCHAR2(2048) := 'Cannot overwrite valid segment when replacing';
+  ERTWRONGSIZE_MSG    CONSTANT VARCHAR2(2048) := 'Incorrect file size';
+END serrno;
+/
 /*******************************************************************
  *
  * @(#)RCSfile: oracleCommon.sql,v  Revision: 1.697  Date: 2009/08/13 14:11:33  Author: itglp 
@@ -1689,7 +1769,7 @@ END;
 /* Returns a time interval in seconds */
 CREATE OR REPLACE FUNCTION getSecs(startTime IN TIMESTAMP, endTime IN TIMESTAMP) RETURN NUMBER IS
 BEGIN
-  RETURN EXTRACT(SECOND FROM (endTime - startTime));
+  RETURN TRUNC(EXTRACT(SECOND FROM (endTime - startTime)), 6);
 END;
 /
 
@@ -1992,25 +2072,29 @@ CREATE OR REPLACE PROCEDURE logToDLF(uuid VARCHAR2,
                                      nsHost VARCHAR2,
                                      source VARCHAR2,
                                      params VARCHAR2) AS
+  PRAGMA AUTONOMOUS_TRANSACTION;
 BEGIN
   INSERT INTO DLFLogs (timeinfo, uuid, priority, msg, fileId, nsHost, source, params)
          VALUES (getTime(), uuid, priority, msg, fileId, nsHost, source, params);
+  COMMIT;
 END;
 /
 
-/* automatic logging procedure. The logs are then processed by the stager and sent to the rsyslog streams.
-   This version runs in an autonomous transaction, so that logs are immediately commited */
-CREATE OR REPLACE PROCEDURE logToDLFAuto(uuid VARCHAR2,
-                                         priority INTEGER,
-                                         msg VARCHAR2,
-                                         fileId NUMBER,
-                                         nsHost VARCHAR2,
-                                         source VARCHAR2,
-                                         params VARCHAR2) AS
-  PRAGMA AUTONOMOUS_TRANSACTION;
+/* Small utility function to convert an hexadecimal string (8 digits) into a RAW(4) type */
+CREATE OR REPLACE FUNCTION strToRaw4(v VARCHAR2) RETURN RAW IS
 BEGIN
-  logToDLF(uuid, priority, msg, fileId, nsHost, source, params);
-  COMMIT;
+  RETURN hexToRaw(ltrim(to_char(to_number(v, 'XXXXXXXX'), '0XXXXXXX')));
+END;
+/
+
+/* A wrapper to run DB jobs and catch+log any exception they may throw */
+CREATE OR REPLACE PROCEDURE startDbJob(jobCode VARCHAR2, source VARCHAR2) AS
+BEGIN
+  EXECUTE IMMEDIATE jobCode;
+EXCEPTION WHEN OTHERS THEN
+  logToDLF(NULL, dlf.LVL_ALERT, dlf.DBJOB_UNEXPECTED_EXCEPTION, 0, '', source,
+    'jobCode="'|| jobCode ||'" errorCode=' || to_char(SQLCODE) ||' errorMessage="' || SQLERRM
+    ||'" stackTrace="' || dbms_utility.format_error_backtrace ||'"');
 END;
 /
 /*******************************************************************
@@ -2551,28 +2635,6 @@ CREATE OR REPLACE PACKAGE castor AS
     mountPoint VARCHAR2(2048),
     diskServer VARCHAR2(2048));
   TYPE DiskCopy_Cur IS REF CURSOR RETURN DiskCopyCore;
-  TYPE Segment_Rec IS RECORD (
-    fseq NUMBER,
-    offset INTEGER,
-    bytes_in INTEGER,
-    bytes_out INTEGER,
-    host_bytes INTEGER,
-    segmCksumAlgorithm VARCHAR2(2048),
-    segmCksum NUMBER,
-    errMsgTxt VARCHAR2(2048),
-    errorCode NUMBER,
-    severity NUMBER,
-    blockId0 INTEGER,
-    blockId1 INTEGER,
-    blockId2 INTEGER,
-    blockId3 INTEGER,
-    creationTime INTEGER,
-    id INTEGER,
-    tape INTEGER,
-    copy INTEGER,
-    status INTEGER,
-    priority INTEGER);
-  TYPE Segment_Cur IS REF CURSOR RETURN Segment_Rec;
   TYPE "strList" IS TABLE OF VARCHAR2(2048) index BY binary_integer;
   TYPE "cnumList" IS TABLE OF NUMBER index BY binary_integer;
   TYPE QueryLine IS RECORD (
@@ -4655,11 +4717,11 @@ END;
 /*** initMigration ***/
 CREATE OR REPLACE PROCEDURE initMigration
 (cfId IN INTEGER, datasize IN INTEGER, originalVID IN VARCHAR2,
- originalCopyNb IN INTEGER, destCopyNb IN INTEGER, MJStatus IN INTEGER) AS
+ originalCopyNb IN INTEGER, destCopyNb IN INTEGER, inMJStatus IN INTEGER) AS
   varTpId INTEGER;
   varSizeThreshold INTEGER;
 BEGIN
-  varSizeThreshold := TO_NUMBER(getConfigOption('tape', 'sizeThreshold', '300000000'));
+  varSizeThreshold := TO_NUMBER(getConfigOption('Migration', 'SizeThreshold', '300000000'));
   -- Find routing
   BEGIN
     SELECT tapePool INTO varTpId FROM MigrationRouting MR, CastorFile
@@ -4672,11 +4734,10 @@ BEGIN
     raise_application_error(-20100, 'Cannot find an appropriate tape routing for this file, aborting');
   END;
   -- Create tape copy and attach to the appropriate tape pool
-  -- XXX TODO tapeGatewayRequestId should be renamed migrationMount and made Foreign Key
   INSERT INTO MigrationJob (fileSize, creationTime, castorFile, originalVID, originalCopyNb, destCopyNb,
-                            tapePool, nbRetry, status, id, tapeGatewayRequestId)
+                            tapePool, nbRetries, status, mountTransactionId, id)
     VALUES (datasize, getTime(), cfId, originalVID, originalCopyNb, destCopyNb, varTpId, 0,
-            MJStatus, ids_seq.nextval, NULL);
+            inMJStatus, NULL, ids_seq.nextval);
 END;
 /
 
@@ -5513,7 +5574,7 @@ BEGIN
        AND DC.status IN (0, 6, 10)  -- STAGED, STAGEOUT, CANBEMIGR
        AND DC.fileSystem = FileSystem.id
        AND FileSystem.diskPool = DP2SC.parent
-       AND DP2SC.child = svcClassId)
+       AND (DP2SC.child = svcClassId OR svcClassId = 0))
   UNION ALL
     -- and then diskcopies resulting from ongoing requests, for which the previous
     -- query wouldn't return any entry because of e.g. missing filesystem
@@ -7421,18 +7482,17 @@ BEGIN
            WHERE CastorFile.id = DC.castorFile)
        WHERE status IS NOT NULL    -- search for valid diskcopies
      UNION
-      SELECT CastorFile.fileId, CastorFile.nsHost, 0, '', RecallJob.fileSize, 2, -- WAITTAPERECALL
-             '', '', 0, CastorFile.lastKnownFileName, RecallJob.creationTime, Req.svcClassName, RecallJob.creationTime, -1
-        FROM RecallJob, CastorFile, Subrequest,
+      SELECT CastorFile.fileId, CastorFile.nsHost, 0, '', Castorfile.fileSize, 2, -- WAITTAPERECALL
+             '', '', 0, CastorFile.lastKnownFileName, Subrequest.creationTime, Req.svcClassName, Subrequest.creationTime, -1
+        FROM CastorFile, Subrequest,
              (SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */ id, svcClassName FROM StagePrepareToGetRequest UNION ALL
               SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcClassName FROM StagePrepareToUpdateRequest UNION ALL
               SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, svcClassName FROM StageGetRequest UNION ALL
               SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ id, svcClassName FROM StageUpdateRequest UNION ALL
               SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */ id, svcClassName FROM StageRepackRequest) Req
-       WHERE RecallJob.castorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
-         AND Castorfile.id = RecallJob.castorfile
+       WHERE Castorfile.id IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
          AND Subrequest.CastorFile = Castorfile.id
-         AND SubRequest.status = dconst.SUBREQUEST_WAITTAPERECALL
+         AND SubRequest.status IN (dconst.SUBREQUEST_WAITTAPERECALL, dconst.SUBREQUEST_START, dconst.SUBREQUEST_RESTART)
          AND Req.id = SubRequest.request)
     ORDER BY fileid, nshost;
   ELSE
@@ -7476,18 +7536,17 @@ BEGIN
            WHERE CastorFile.id = DC.castorFile)
        WHERE status IS NOT NULL     -- search for valid diskcopies
      UNION
-      SELECT CastorFile.fileId, CastorFile.nsHost, 0, '', RecallJob.fileSize, 2, -- WAITTAPERECALL
-             '', '', 0, CastorFile.lastKnownFileName, RecallJob.creationTime, Req.svcClassName, RecallJob.creationTime, -1
-        FROM RecallJob, CastorFile, Subrequest,
+      SELECT CastorFile.fileId, CastorFile.nsHost, 0, '', Castorfile.fileSize, 2, -- WAITTAPERECALL
+             '', '', 0, CastorFile.lastKnownFileName, Subrequest.creationTime, Req.svcClassName, Subrequest.creationTime, -1
+        FROM CastorFile, Subrequest,
              (SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */ id, svcClassName, svcClass FROM StagePrepareToGetRequest UNION ALL
               SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcClassName, svcClass FROM StagePrepareToUpdateRequest UNION ALL
               SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, svcClassName, svcClass FROM StageGetRequest UNION ALL
               SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ id, svcClassName, svcClass FROM StageUpdateRequest UNION ALL
               SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */ id, svcClassName, svcClass FROM StageRepackRequest) Req
-       WHERE RecallJob.castorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
-         AND Castorfile.id = RecallJob.castorfile
+       WHERE Castorfile.id IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
          AND Subrequest.CastorFile = Castorfile.id
-         AND SubRequest.status = dconst.SUBREQUEST_WAITTAPERECALL
+         AND SubRequest.status IN (dconst.SUBREQUEST_WAITTAPERECALL, dconst.SUBREQUEST_START, dconst.SUBREQUEST_RESTART)
          AND Req.id = SubRequest.request
          AND Req.svcClass = svcClassId)
     ORDER BY fileid, nshost;
@@ -7935,7 +7994,7 @@ END;
 
 /* PL/SQL declaration for the castorTape package */
 CREATE OR REPLACE PACKAGE castorTape AS 
-   TYPE TapeGatewayRequest IS RECORD (
+  TYPE TapeGatewayRequest IS RECORD (
     accessMode INTEGER,
     mountTransactionId NUMBER, 
     vid VARCHAR2(2048));
@@ -7944,35 +8003,22 @@ CREATE OR REPLACE PACKAGE castorTape AS
   TYPE VID_Cur IS REF CURSOR RETURN VIDRec;
   TYPE VIDPriorityRec IS RECORD (vid VARCHAR2(2048), vdqmPriority INTEGER);
   TYPE VIDPriority_Cur IS REF CURSOR RETURN VIDPriorityRec;
-  TYPE DbMigrationInfo IS RECORD (
-    id NUMBER,
-    copyNb NUMBER,
-    fileName VARCHAR2(2048),
-    nsHost VARCHAR2(2048),
-    fileId NUMBER,
-    fileSize NUMBER);
-  TYPE DbMigrationInfo_Cur IS REF CURSOR RETURN DbMigrationInfo;
   TYPE FileToRecallCore IS RECORD (
    fileId NUMBER,
    nsHost VARCHAR2(2048),
-   diskserver VARCHAR2(2048),
-   mountPoint VARCHAR(2048),
-   path VARCHAR2(2048),
-   fseq INTEGER,
    fileTransactionId NUMBER,
-   blockId RAW(4));
+   filePath VARCHAR2(2048),
+   blockId RAW(4),
+   fseq INTEGER);
   TYPE FileToRecallCore_Cur IS REF CURSOR RETURN  FileToRecallCore;  
   TYPE FileToMigrateCore IS RECORD (
    fileId NUMBER,
    nsHost VARCHAR2(2048),
-   lastModificationTime NUMBER,
-   diskserver VARCHAR2(2048),
-   mountPoint VARCHAR(2048),
-   path VARCHAR2(2048),
-   lastKnownFilename VARCHAR2(2048), 
+   lastKnownFileName VARCHAR2(2048),
+   filePath VARCHAR2(2048),
+   fileTransactionId NUMBER,
    fseq INTEGER,
-   fileSize NUMBER,
-   fileTransactionId NUMBER);
+   fileSize NUMBER);
   TYPE FileToMigrateCore_Cur IS REF CURSOR RETURN  FileToMigrateCore;  
 END castorTape;
 /
@@ -7995,11 +8041,11 @@ BEGIN
      WHERE VID = inVID;
   ELSE
     UPDATE MigrationMount
-       SET lastvdqmpingtime = gettime(),
-           mountTransactionId     = inVdqmId,
-           status           = tconst.MIGRATIONMOUNT_WAITDRIVE,
-           label            = inLabel,
-           density          = inDensity
+       SET lastvdqmpingtime   = gettime(),
+           mountTransactionId = inVdqmId,
+           status             = tconst.MIGRATIONMOUNT_WAITDRIVE,
+           label              = inLabel,
+           density            = inDensity
      WHERE VID = inVID;
   END IF;
 END;
@@ -8032,282 +8078,73 @@ END;
 /
 
 /* update the db when a tape session is ended */
-CREATE OR REPLACE
-PROCEDURE tg_endTapeSession(inMountTransactionId IN NUMBER,
-                            inErrorCode IN INTEGER) AS
+CREATE OR REPLACE PROCEDURE tg_endTapeSession(inMountTransactionId IN NUMBER,
+                                              inErrorCode IN INTEGER) AS
   varMjIds "numList";    -- recall/migration job Ids
-  varTgrId INTEGER;
+  varMountId INTEGER;
 BEGIN
-  -- try to delete the migration mount (may not be one)
-  DELETE FROM MigrationMount
+  -- Let's assume this is a migration mount
+  SELECT id INTO varMountId
+    FROM MigrationMount
    WHERE mountTransactionId = inMountTransactionId
-  RETURNING tapeGatewayRequestId INTO varTgrId;
-  IF SQL%ROWCOUNT > 0 THEN
-    -- it was a migration mounts
-    -- find and lock the MigrationJobs.
-    SELECT id BULK COLLECT INTO varMjIds
-      FROM MigrationJob
-     WHERE tapeGatewayRequestId = varTgrId
-       FOR UPDATE;
-    -- Process the write case
-    -- just resurrect the remaining migrations
-    UPDATE MigrationJob
-       SET status = tconst.MIGRATIONJOB_PENDING,
-           VID = NULL,
-           TapeGatewayRequestId = NULL
-     WHERE id IN (SELECT * FROM TABLE(varMjIds))
-       AND status = tconst.MIGRATIONJOB_SELECTED;
-  ELSE
-    -- was not a migration session, let's try a recall one
-    DECLARE
-      varVID VARCHAR2(2048);
-      varRjIds "numList";
-    BEGIN
-      DELETE FROM RecallMount
-       WHERE mountTransactionId = inMountTransactionId
-      RETURNING VID INTO varVID;
-      IF SQL%ROWCOUNT > 0 THEN
-        -- it was a recall mount
-        -- find and reset the all RecallJobs of files for this VID
-        UPDATE RecallJob
-           SET status    = tconst.RECALLJOB_NEW
-         WHERE castorFile IN (SELECT castorFile
-                                FROM RecallJob
-                               WHERE VID = varVID
-                                 AND status IN (tconst.RECALLJOB_PENDING,
-                                                tconst.RECALLJOB_SELECTED,
-                                                tconst.RECALLJOB_RETRYMOUNT));
-      ELSE
-        -- Small infusion of paranoia ;-) We should never reach that point...
-        ROLLBACK;
-        RAISE_APPLICATION_ERROR (-20119,
-         'No tape or migration mount found on second pass for mountTransactionId ' ||
-         inMountTransactionId || ' in tg_endTapeSession');
-      END IF;
-    END;
-  END IF;
-END;
-/
-
-/* mark a migration or recall as failed saving in the db the error code associated with the failure */
-CREATE OR REPLACE
-PROCEDURE tg_failFileTransfer(inMountTransactionId IN NUMBER,
-                              inFileId IN NUMBER,
-                              inNsHost IN VARCHAR2,
-                              inErrorCode IN NUMBER) AS
-  varVID VARCHAR2(2048);
-  varCfId NUMBER;
-BEGIN
-  -- Lock related castorfile
-  SELECT CF.id INTO varCfId 
-    FROM CastorFile CF
-   WHERE CF.fileid = inFileId
-     AND CF.nsHost = inNsHost 
-    FOR UPDATE;
-  -- suppose it's a recall case
-  SELECT VID INTO varVID
-    FROM RecallMount
-   WHERE mountTransactionId = inMountTransactionId;
-  -- mark RecallJob for retry
-  retryRecall(varCfId, varVID);
-EXCEPTION WHEN  NO_DATA_FOUND THEN
-  -- so it must be a migration case
-  BEGIN
-    SELECT VID INTO varVID
-      FROM MigrationMount
-     WHERE mountTransactionId = inMountTransactionId;
-    UPDATE MigrationJob
-       SET status    = tconst.MIGRATIONJOB_RETRY,
-           errorcode = inErrorCode,
-           vid       = NULL
-     WHERE castorFile = varCfId
-       AND VID = varVID; 
-  EXCEPTION WHEN  NO_DATA_FOUND THEN
-    -- not a migration either -> complain in case of failure
-    ROLLBACK;
-    RAISE_APPLICATION_ERROR(-20119, 'No tape or migration mount found on second pass for mountTransactionId ' ||
-                            inMountTransactionId || ' in tg_failFileTransfer');
-  END;
-END;
-/
-
-/* retrieve from the db all the migration jobs that faced a failure */
-CREATE OR REPLACE
-PROCEDURE tg_getFailedMigrations(outFailedMigrationJob_c OUT SYS_REFCURSOR) AS
-  varFailedIds "numList";
-BEGIN
-  /* Find and lock the migration jobs we will work on */
-  SELECT mj.id
-    BULK COLLECT INTO varFailedIds
-    FROM MigrationJob mj
-   WHERE mj.status = tconst.MIGRATIONJOB_RETRY
-     AND ROWNUM < 1000
-     FOR UPDATE SKIP LOCKED;
-  /* Report theirs Id, joined with other information */
-  OPEN outFailedMigrationJob_c FOR
-    SELECT mj.id, mj.errorCode, mj.nbRetry, cf.fileId, cf.nsHost
-      FROM MigrationJob mj
-      LEFT OUTER JOIN castorfile cf ON cf.id = mj.castorfile
-     WHERE mj.id IN (SELECT * FROM TABLE (varFailedIds));
-END;
-/
-
-/* default migration candidate selection policy */
-CREATE OR REPLACE
-PROCEDURE tg_defaultMigrSelPolicy(inMountId IN INTEGER,
-                                  outDiskServerName OUT NOCOPY VARCHAR2,
-                                  outMountPoint OUT NOCOPY VARCHAR2,
-                                  outPath OUT NOCOPY VARCHAR2,
-                                  outDiskCopyId OUT INTEGER,
-                                  outLastKnownFileName OUT NOCOPY VARCHAR2,
-                                  outFileId OUT INTEGER,
-                                  outNsHost OUT NOCOPY VARCHAR2,
-                                  outFileSize OUT INTEGER,
-                                  outMigJobId OUT INTEGER,
-                                  outLastUpdateTime OUT INTEGER) AS
-  /* Find the next file to migrate for a given migration mount.
-   *
-   * Procedure's input: migration mount id
-   * Procedure's output: non-zero MigrationJob ID
-   *
-   * Lock taken on the migration job if it selects one.
-   *
-   * Per policy we should only propose a migration job for a file that does not
-   * already have another copy migrated to the same tape.
-   * The already migrated copies are kept in MigratedSegment until the whole set
-   * of siblings has been migrated.
-   */
-  LockError EXCEPTION;
-  PRAGMA EXCEPTION_INIT (LockError, -54);
-  CURSOR c IS
-    SELECT /*+ FIRST_ROWS_1
-               LEADING(MigrationMount MigrationJob CastorFile DiskCopy FileSystem DiskServer)
-               USE_NL(MigrationMount MigrationJob CastorFile DiskCopy FileSystem DiskServer)
-               INDEX(CastorFile PK_CastorFile_Id)
-               INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile)
-               INDEX_RS_ASC(MigrationJob I_MigrationJob_TPStatusId) */
-           DiskServer.name, FileSystem.mountPoint, DiskCopy.path, DiskCopy.id, CastorFile.lastKnownFilename,
-           CastorFile.fileId, CastorFile.nsHost, CastorFile.fileSize, MigrationJob.id, CastorFile.lastUpdateTime
-      FROM MigrationMount, MigrationJob, DiskCopy, FileSystem, DiskServer, CastorFile
-     WHERE MigrationMount.id = inMountId
-       AND MigrationJob.tapePool = MigrationMount.tapePool
-       AND MigrationJob.status = tconst.MIGRATIONJOB_PENDING
-       AND CastorFile.id = MigrationJob.castorFile
-       AND CastorFile.id = DiskCopy.castorFile
-       AND DiskCopy.status = dconst.DISKCOPY_CANBEMIGR
-       AND FileSystem.id = DiskCopy.fileSystem
-       AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING)
-       AND DiskServer.id = FileSystem.diskServer
-       AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING)
-       AND (MigrationMount.VID IS NULL OR 
-            MigrationMount.VID NOT IN (SELECT /*+ INDEX_RS_ASC(MigratedSegment I_MigratedSegment_CFCopyNBVID) */ vid
-                                        FROM MigratedSegment
-                                       WHERE castorFile = MigrationJob.castorfile
-                                         AND copyNb != MigrationJob.destCopyNb))
-       FOR UPDATE OF MigrationJob.id SKIP LOCKED;
-BEGIN
-  OPEN c;
-  FETCH c INTO outDiskServerName, outMountPoint, outPath, outDiskCopyId, outLastKnownFileName,
-               outFileId, outNsHost, outFileSize, outMigJobId, outLastUpdateTime;
-  CLOSE c;
+   FOR UPDATE;
+  -- Yes, it's a migration mount: delete it
+  UPDATE MigrationJob
+     SET status = tconst.MIGRATIONJOB_PENDING,
+         VID = NULL,
+         mountTransactionId = NULL
+   WHERE mountTransactionId = inMountTransactionId
+     AND status = tconst.MIGRATIONJOB_SELECTED;
+  DELETE FROM MigrationMount
+   WHERE id = varMountId;
 EXCEPTION WHEN NO_DATA_FOUND THEN
-  -- Nothing to migrate. Simply return
-  CLOSE c;
-END;
-/
-
-/* get a candidate for migration */
-CREATE OR REPLACE
-PROCEDURE tg_getFileToMigrate(
-  inVDQMtransacId IN  NUMBER,
-  outRet           OUT INTEGER,
-  outVid        OUT NOCOPY VARCHAR2,
-  outputFile    OUT castorTape.FileToMigrateCore_cur) AS
-  -- This procedure finds the next file to migrate
-  CONSTRAINT_VIOLATED EXCEPTION;
-  PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
-  varMountId NUMBER;
-  varDiskServer VARCHAR2(2048);
-  varMountPoint VARCHAR2(2048);
-  varPath  VARCHAR2(2048);
-  varDiskCopyId NUMBER;
-  varFileId NUMBER;
-  varNsHost VARCHAR2(2048);
-  varFileSize  INTEGER;
-  varMigJobId  INTEGER;
-  varLastUpdateTime NUMBER;
-  varLastKnownName VARCHAR2(2048);
-  varTgRequestId NUMBER;
-  varUnused INTEGER;
-BEGIN
-  outRet:=0;
-  BEGIN
-    -- Extract id and tape gateway request and VID from the migration mount
-    SELECT id, TapeGatewayRequestId, vid INTO varMountId, varTgRequestId, outVid
-      FROM MigrationMount
-     WHERE mountTransactionId = inVDQMtransacId;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    outRet:=-2;   -- migration mount is over
-    RETURN;
-  END;
-  -- default policy is used in all cases in version 2.1.12
-  tg_defaultMigrSelPolicy(varMountId,varDiskServer,varMountPoint,varPath,
-    varDiskCopyId ,varLastKnownName, varFileId, varNsHost,varFileSize,
-    varMigJobId,varLastUpdateTime);
-  IF varMigJobId IS NULL THEN
-    outRet := -1; -- the migration selection policy didn't find any candidate
-    RETURN;
-  END IF;
-
+  -- was not a migration session, let's try a recall one
   DECLARE
-    varNewFseq NUMBER;
+    varVID VARCHAR2(2048);
+    varRjIds "numList";
   BEGIN
-   -- Atomically increment and read the next FSEQ to be written to. fSeq is held
-   -- in the tape structure.
-   UPDATE MigrationMount
-      SET lastFseq = lastFseq + 1
-     WHERE id = varMountId
-   RETURNING lastFseq-1 into varNewFseq; -- The previous value is where we'll write
-
-   -- Update the migration job and attach it to a newly created file transaction ID
-   UPDATE MigrationJob
-      SET status = tconst.MIGRATIONJOB_SELECTED,
-          VID = outVID,
-          fSeq = varNewFseq,
-          tapeGatewayRequestId = varTgRequestId,
-          fileTransactionId = TG_FileTrId_Seq.NEXTVAL
-    WHERE id = varMigJobId;
-
-   OPEN outputFile FOR
-     SELECT varFileId,varNshost,varLastUpdateTime,varDiskServer,varMountPoint,
-            varPath,varLastKnownName,fseq,varFileSize,fileTransactionId
-       FROM MigrationJob
-      WHERE id = varMigJobId;
-
+    SELECT vid INTO varVID
+      FROM RecallMount
+     WHERE mountTransactionId = inMountTransactionId
+     FOR UPDATE;
+    -- it was a recall mount
+    -- find and reset the all RecallJobs of files for this VID
+    UPDATE RecallJob
+       SET status    = tconst.RECALLJOB_NEW
+     WHERE castorFile IN (SELECT castorFile
+                            FROM RecallJob
+                           WHERE VID = varVID
+                             AND status IN (tconst.RECALLJOB_PENDING,
+                                            tconst.RECALLJOB_SELECTED,
+                                            tconst.RECALLJOB_RETRYMOUNT));
+    DELETE FROM RecallMount WHERE vid = varVID;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- Small infusion of paranoia ;-) We should never reach that point...
+    ROLLBACK;
+    RAISE_APPLICATION_ERROR (-20119,
+      'No tape or migration mount found on second pass for mountTransactionId ' ||
+       inMountTransactionId || ' in tg_endTapeSession');
   END;
-  COMMIT;
 END;
 /
+
 
 /* PL/SQL method implementing bestFileSystemForRecall */
-CREATE OR REPLACE PROCEDURE bestFileSystemForRecall(inCfId IN INTEGER, diskServerName OUT VARCHAR2,
-                                                    rmountPoint OUT VARCHAR2, rpath OUT VARCHAR2) AS
+CREATE OR REPLACE PROCEDURE bestFileSystemForRecall(inCfId IN INTEGER, outFilePath OUT VARCHAR2) AS
   varCfId INTEGER;
-  fileSystemId NUMBER := 0;
-  fsDiskServer NUMBER;
-  fileSize NUMBER;
+  varFileSystemId NUMBER := 0;
   nb NUMBER;
 BEGIN
   -- try and select a good FileSystem for this recall
-  FOR a IN (SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/
-                   DiskServer.name, FileSystem.mountPoint, FileSystem.id,
+  FOR f IN (SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/
+                   DiskServer.name ||':'|| FileSystem.mountPoint AS remotePath, FileSystem.id,
                    FileSystem.diskserver, CastorFile.fileSize, CastorFile.fileId, CastorFile.nsHost
               FROM DiskServer, FileSystem, DiskPool2SvcClass,
-                   (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, svcClass from StageGetRequest                            UNION ALL
-                    SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */ id, svcClass from StagePrepareToGetRequest UNION ALL
+                   (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, svcClass FROM StageGetRequest                            UNION ALL
+                    SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */ id, svcClass FROM StagePrepareToGetRequest UNION ALL
                     SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */ id, svcClass from StageRepackRequest                   UNION ALL
                     SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ id, svcClass from StageUpdateRequest                   UNION ALL
-                    SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcClass from StagePrepareToUpdateRequest) Request,
+                    SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcClass FROM StagePrepareToUpdateRequest) Request,
                     SubRequest, CastorFile
              WHERE CastorFile.id = inCfId
                AND SubRequest.castorfile = inCfId
@@ -8333,10 +8170,9 @@ BEGIN
                    -- use randomness to avoid preferring always the same FS when everything is idle
                    DBMS_Random.value)
   LOOP
-    diskServerName := a.name;
-    rmountPoint    := a.mountPoint;
-    fileSystemId   := a.id;
-    buildPathFromFileId(a.fileId, a.nsHost, ids_seq.nextval, rpath);
+    varFileSystemId := f.id;
+    buildPathFromFileId(f.fileId, f.nsHost, ids_seq.nextval, outFilePath);
+    outFilePath := f.remotePath || outFilePath;
     -- Check that we don't already have a copy of this file on this filesystem.
     -- This will never happen in normal operations but may be the case if a filesystem
     -- was disabled and did come back while the tape recall was waiting.
@@ -8345,181 +8181,31 @@ BEGIN
     -- the problem.
     SELECT count(*) INTO nb
       FROM DiskCopy
-     WHERE fileSystem = a.id
+     WHERE fileSystem = f.id
        AND castorfile = inCfid
-       AND status = dconst.DISKCOPY_STAGED;
+       AND status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR);
     IF nb != 0 THEN
-      raise_application_error(-20103, 'Recaller could not find a FileSystem in production in the requested SvcClass and without copies of this file');
+      raise_application_error(-20115, 'Recaller could not find a FileSystem in production in the requested SvcClass and without copies of this file');
     END IF;
     RETURN;
   END LOOP;
-  IF fileSystemId = 0 THEN
+  IF varFileSystemId = 0 THEN
     raise_application_error(-20115, 'No suitable filesystem found for this recalled file');
   END IF;
 END;
 /
 
-/* get a candidate for recall */
-CREATE OR REPLACE
-PROCEDURE tg_getFileToRecall (inMountTransactionId IN  NUMBER,
-                              outRet OUT INTEGER,
-                              outVid OUT NOCOPY VARCHAR2,
-                              outFile OUT castorTape.FileToRecallCore_Cur) AS
-  varDSName VARCHAR2(2048); -- Disk Server name
-  varMPoint VARCHAR2(2048); -- Mount Point
-  varPath   VARCHAR2(2048); -- Diskcopy path
-
-  varPreviousFseq INTEGER;
-  varRjId         INTEGER;
-  varCfId         INTEGER;
-  varNewFSeq      INTEGER;
-BEGIN 
-  BEGIN
-    SELECT vid, lastProcessedFseq INTO outVid, varPreviousFseq
-      FROM RecallMount
-     WHERE mountTransactionId = inMountTransactionId
-       FOR UPDATE;
-  EXCEPTION WHEN  NO_DATA_FOUND THEN
-     -- unknown request
-     outRet := -2;
-     RETURN;
-  END; 
-
-  BEGIN
-    -- Find the unprocessed recallJob of this tape with lowest fSeq
-    -- that is above the previous one. If none, take the recallJob with lowest fseq.
-    SELECT id, fSeq, castorFile INTO varRjId, varNewFSeq, varCfId
-      FROM (SELECT id, fSeq, castorFile
-              FROM RecallJob
-             WHERE vid = outvid  
-               AND status = tconst.RECALLJOB_PENDING
-             ORDER BY CASE WHEN fseq > varPreviousFseq THEN 1 ELSE 0 END DESC,
-                      fseq ASC)
-     WHERE ROWNUM < 2;
-    -- Lock the corresponding castorfile
-    SELECT id INTO varCfId
-      FROM Castorfile
-     WHERE id = varCfId 
-       FOR UPDATE;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-     outRet := -1; -- NO MORE FILES
-     COMMIT;
-     RETURN;
-  END;
-
-  -- Find the best filesystem to recall the selected file
-  DECLARE
-    application_error EXCEPTION;
-    PRAGMA EXCEPTION_INIT(application_error,-20115);
-  BEGIN
-    bestFileSystemForRecall(varCfId,varDSName,varMPoint,varPath);
-  EXCEPTION WHEN application_error OR NO_DATA_FOUND THEN 
-    outRet := -3;
-    COMMIT;
-    RETURN;
-  END;
-
-  -- update recallMount and RecallJob
-  UPDATE RecallJob
-     SET status = tconst.RECALLJOB_SELECTED,
-         fileTransactionID = TG_FileTrId_Seq.NEXTVAL
-   WHERE id = varRjId;
-  -- Record this recall at the MigrationMount level
-  UPDATE RecallMount
-     SET lastProcessedFseq = varNewFSeq
-   WHERE vid = outVid;
-
-  -- return all needed info
-  OPEN outFile FOR 
-    SELECT Castorfile.fileid, Castorfile.nshost, varDSName, varMPoint,
-           varPath, varNewFSeq, RecallJob.fileTransactionID, RecallJob.blockId
-      FROM RecallJob, Castorfile
-     WHERE RecallJob.id = varRjId
-       AND Castorfile.id = RecallJob.castorfile;
-END;
-/
-
-/* get the information from the db for a successful migration */
-CREATE OR REPLACE
-PROCEDURE tg_getRepackVidAndFileInfo(
-  inFileId          IN  NUMBER, 
-  inNsHost          IN VARCHAR2,
-  inFseq            IN  INTEGER, 
-  inMountTransactionId IN  NUMBER, 
-  inBytesTransfered IN  NUMBER,
-  outOriginalVID    OUT NOCOPY VARCHAR2,
-  outOriginalCopyNb OUT NUMBER,
-  outDestVID        OUT NOCOPY VARCHAR2,
-  outDestCopyNb     OUT INTEGER, 
-  outLastTime       OUT NUMBER,
-  outFileClass      OUT NOCOPY VARCHAR2,
-  outRet            OUT INTEGER) AS 
-  varCfId              NUMBER;  -- CastorFile Id
-  varFileSize          NUMBER;  -- Expected file size
-  varTgrId             NUMBER;  -- Tape gateway request Id
-BEGIN
-  outOriginalVID := NULL;
-  outOriginalCopyNb := NULL;
-   -- ignore the repack state
-  BEGIN
-    SELECT CF.lastupdatetime, CF.id, CF.fileSize,      FC.name 
-      INTO outLastTime,     varCfId, varFileSize, outFileClass
-      FROM CastorFile CF 
-      LEFT OUTER JOIN FileClass FC ON FC.Id = CF.FileClass
-     WHERE CF.fileid = inFileId 
-       AND CF.nshost = inNsHost;
-     IF (outFileClass IS NULL) THEN
-       outFileClass := 'UNKNOWN';
-     END IF;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    RAISE_APPLICATION_ERROR (-20119,
-         'Castorfile not found for File ID='||inFileId||' and nshost = '||
-           inNsHost||' in tg_getRepackVidAndFileInfo.');
-  END;
-  IF varFileSize <> inBytesTransfered THEN
-  -- fail the file
-    tg_failFileTransfer(inMountTransactionId, inFileId, inNsHost,  1613); -- wrongfilesize
-    COMMIT;
-    outRet := -1;
-    RETURN;
-  ELSE
-    outRet:=0;
-  END IF;
-  
-  BEGIN
-    SELECT tapeGatewayRequestId INTO varTgrId
-      FROM MigrationMount
-     WHERE mountTransactionId = inMountTransactionId;
-    BEGIN
-      SELECT originalCopyNb, originalVID, destcopyNb, VID
-        INTO outOriginalCopyNb, outOriginalVID, outDestCopyNb, outDestVID
-        FROM MigrationJob
-       WHERE TapeGatewayRequestId = varTgrId
-         AND castorfile = varCfId
-         AND fseq= inFseq;
-    EXCEPTION WHEN NO_DATA_FOUND THEN
-      RAISE_APPLICATION_ERROR (-20119,
-         'MigrationJob not found for castorfile='||varCFId||'(File ID='||inFileId||' and nshost = '||
-           inNsHost||') and fSeq='||inFseq||' in tg_getRepackVidAndFileInfo.');
-    END;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- nothing to do, we did not find any MigrationMount
-    NULL;
-  END;  
-END;
-/
 
 /* get the migration mounts without any tape associated */
 CREATE OR REPLACE
 PROCEDURE tg_getMigMountsWithoutTapes(outStrList OUT SYS_REFCURSOR) AS
 BEGIN
-  -- get migration mounts  in state WAITTAPE with a non-NULL TapeGatewayRequestId
+  -- get migration mounts in state WAITTAPE
   OPEN outStrList FOR
-    SELECT M.id, M.TapeGatewayRequestId, TP.name
-      FROM MigrationMount M,Tapepool TP
+    SELECT M.id, TP.name
+      FROM MigrationMount M, Tapepool TP
      WHERE M.status = tconst.MIGRATIONMOUNT_WAITTAPE
-       AND M.TapeGatewayRequestId IS NOT NULL
-       AND M.tapepool=TP.id 
+       AND M.tapepool = TP.id 
        FOR UPDATE OF M.id SKIP LOCKED;   
 END;
 /
@@ -8630,130 +8316,12 @@ END;
 CREATE OR REPLACE
 PROCEDURE tg_restartLostReqs(inMountTransactionIds IN castor."cnumList") AS
 BEGIN
- FOR mountTransactionId IN inMountTransactionIds.FIRST .. inMountTransactionIds.LAST LOOP   
-   tg_endTapeSession(mountTransactionId, 0);
+ FOR i IN inMountTransactionIds.FIRST .. inMountTransactionIds.LAST LOOP   
+   tg_endTapeSession(inMountTransactionIds(i), 0);
  END LOOP;
  COMMIT;
 END;
 /
-
-/* update the db after a successful migration - tape side */
-CREATE OR REPLACE
-PROCEDURE TG_SetFileMigrated(
-  inFileId          IN  NUMBER,
-  inNsHost          IN  VARCHAR2, 
-  inFseq            IN  INTEGER, 
-  inFileTransaction IN  NUMBER) AS
-  varMigJobCount  INTEGER;
-  varCfId         NUMBER;
-  varCopyNb       NUMBER;
-  varVID          VARCHAR2(10);
-  varOrigVID      VARCHAR2(10);
-BEGIN
-  -- Lock the CastorFile
-  SELECT CF.id INTO varCfId FROM CastorFile CF
-   WHERE CF.fileid = inFileId 
-     AND CF.nsHost = inNsHost 
-     FOR UPDATE;
-  -- delete the corresponding migration job, create the new migrated segment
-  DELETE FROM MigrationJob
-   WHERE fileTransactionId = inFileTransaction
-     AND fSeq = inFseq
-  RETURNING destCopyNb, VID, originalVID
-    INTO varCopyNb, varVID, varOrigVID;
-  -- check if another migration should be performed
-  SELECT count(*) INTO varMigJobCount
-    FROM MigrationJob
-    WHERE castorfile = varCfId;
-  IF varMigJobCount = 0 THEN
-    -- no more migrations, delete all migrated segments 
-    DELETE FROM MigratedSegment
-     WHERE castorfile = varCfId;
-  ELSE
-    -- another migration ongoing, keep track of this one 
-    INSERT INTO MigratedSegment VALUES (varCfId, varCopyNb, varVID);
-  END IF;
-  -- Tell the Disk Cache that migration is over
-  dc_setFileMigrated(varCfId, varOrigVID, (varMigJobCount = 0));
-  COMMIT;
-END;
-/
-
-/* update the db after a successful migration - disk side */
-CREATE OR REPLACE PROCEDURE dc_setFileMigrated(
-  inCfId          IN NUMBER,
-  inOriginVID     IN VARCHAR2,     -- NOT NULL only for repacked files
-  inLastMigration IN BOOLEAN) AS   -- whether this is the last copy on tape
-  varSrId NUMBER;
-BEGIN
-  IF inLastMigration THEN
-     -- Mark all disk copies as staged
-     UPDATE DiskCopy
-        SET status= dconst.DISKCOPY_STAGED
-      WHERE castorFile = inCfId
-        AND status= dconst.DISKCOPY_CANBEMIGR;
-  END IF;
-  IF inOriginVID IS NOT NULL THEN
-    -- archive the repack subrequest associated to this migrationJob
-    SELECT /*+ INDEX(SR I_Subrequest_Castorfile) */ SubRequest.id INTO varSrId
-      FROM SubRequest, StageRepackRequest
-      WHERE SubRequest.castorfile = inCfId
-        AND SubRequest.status = dconst.SUBREQUEST_REPACK
-        AND SubRequest.request = StageRepackRequest.id
-        AND StageRepackRequest.RepackVID = inOriginVID;
-    archiveSubReq(varSrId, dconst.SUBREQUEST_FINISHED);
-  END IF;
-END;
-/
-
-
-/* update the db after a successful migration */
-CREATE OR REPLACE
-PROCEDURE TG_DropSuperfluousSegment(
-  inFileId          IN  NUMBER,
-  inNsHost          IN  VARCHAR2, 
-  inFseq            IN  INTEGER, 
-  inFileTransaction IN  NUMBER) AS
-  varMigJobCount      INTEGER;
-  varCfId               NUMBER;
-  varCopyNb             NUMBER;
-  varVID                VARCHAR2(2048);
-BEGIN
-  -- Lock the CastorFile
-  SELECT CF.id INTO varCfId FROM CastorFile CF
-   WHERE CF.fileid = inFileId 
-     AND CF.nsHost = inNsHost 
-     FOR UPDATE;
-  -- delete the corresponding migration job, but skip creating the new migrated segment
-  DELETE FROM MigrationJob
-   WHERE FileTransactionId = inFileTransaction
-     AND fSeq = inFseq
-  RETURNING destCopyNb, VID INTO varCopyNb, varVID;
-  -- check if another migration should be performed
-  SELECT count(*) INTO varMigJobCount
-    FROM MigrationJob
-    WHERE castorfile = varCfId;
-  IF varMigJobCount = 0 THEN
-     -- Mark all disk copies as staged and delete all migrated segments together.
-     UPDATE DiskCopy
-        SET status= dconst.DISKCOPY_STAGED
-      WHERE castorFile = varCfId
-        AND status= dconst.DISKCOPY_CANBEMIGR;
-     DELETE FROM MigratedSegment
-      WHERE castorfile = varCfId;
-  END IF;
-  -- archive Repack requests should any be in the db
-  FOR i IN (
-    SELECT /*+ INDEX(SR I_Subrequest_Castorfile)*/ SR.id FROM SubRequest SR
-    WHERE SR.castorfile = varCfId AND
-          SR.status = dconst.SUBREQUEST_REPACK
-    ) LOOP
-    archiveSubReq(i.id, 8); -- SUBREQUEST_FINISHED
-  END LOOP;
-  COMMIT;
-END;
-/
-
 
 /* Checks whether a recall that was reported successful is ok from the namespace
  * point of view. This includes :
@@ -8773,7 +8341,9 @@ CREATE OR REPLACE FUNCTION checkRecallInNS(inCfId IN INTEGER,
                                            inNsHost IN VARCHAR2,
                                            inCksumName IN VARCHAR2,
                                            inCksumValue IN INTEGER,
-                                           inLastUpdateTime IN NUMBER) RETURN BOOLEAN AS
+                                           inLastUpdateTime IN NUMBER,
+                                           inReqId IN VARCHAR2,
+                                           inLogContext IN VARCHAR2) RETURN BOOLEAN AS
   varNSLastUpdateTime NUMBER;
   varNSCsumtype VARCHAR2(2048);
   varNSCsumvalue VARCHAR2(2048);
@@ -8793,7 +8363,7 @@ BEGIN
      WHERE castorFile = inCfId
        AND status = dconst.SUBREQUEST_WAITTAPERECALL;
     -- log "setFileRecalled : file was overwritten during recall, restarting from scratch"
-    logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_FILE_OVERWRITTEN, inFileId, inNsHost, 'tapegatewayd',
+    logToDLF(inReqId, dlf.LVL_NOTICE, dlf.RECALL_FILE_OVERWRITTEN, inFileId, inNsHost, 'tapegatewayd',
              'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || inVID ||
              ' fseq=' || TO_CHAR(inFseq) || ' NsLastUpdateTime=' || TO_CHAR(varNSLastUpdateTime) ||
              ' CFLastUpdateTime=' || TO_CHAR(inLastUpdateTime));
@@ -8805,7 +8375,7 @@ BEGIN
     -- no -> let's set it (note that the function called commits in the remote DB)
     setSegChecksumWhenNull@remoteNS(inFileId, inCopyNb, inCksumName, inCksumValue);
     -- log 'setFileRecalled : created missing checksum in the namespace'
-    logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_CREATED_CHECKSUM, inFileId, inNsHost, 'nsd',
+    logToDLF(inReqId, dlf.LVL_SYSTEM, dlf.RECALL_CREATED_CHECKSUM, inFileId, inNsHost, 'nsd',
              'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' CopyNo=' || inCopyNb ||
              ' TPVID=' || inVID || ' Fseq=' || TO_CHAR(inFseq) || ' checksumType='  || inCksumName ||
              ' checksumValue=' || TO_CHAR(inCksumValue));
@@ -8814,9 +8384,9 @@ BEGIN
     -- note that this is probably useless as it was already checked at transfer time
     IF inCksumName = varNSCsumtype AND TO_CHAR(inCksumValue, 'XXXXXXXX') != varNSCsumvalue THEN
       -- not matching ! Retry the recall
-      retryRecall(inCfId, inVID);
+      retryOrFailRecall(inCfId, inVID);
       -- log "setFileRecalled : bad checksum detected, will retry if allowed"
-      logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_BAD_CHECKSUM, inFileId, inNsHost, 'tapegatewayd',
+      logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_BAD_CHECKSUM, inFileId, inNsHost, 'tapegatewayd',
                'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || inVID ||
                ' fseq=' || TO_CHAR(inFseq) || ' checksumType='  || inCksumName ||
                ' expectedChecksumValue=' || varNSCsumvalue ||
@@ -8830,14 +8400,14 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   deleteRecallJobs(inCfId);
   UPDATE SubRequest
        SET status = dconst.SUBREQUEST_FAILED,
-           errorCode = 2, -- ENOENT
+           errorCode = serrno.ENOENT,
            errorMessage = 'File disappeared from namespace during recall'
      WHERE castorFile = inCfId
        AND status = dconst.SUBREQUEST_WAITTAPERECALL;
   -- log "setFileRecalled : file was dropped from namespace during recall, giving up"
-  logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_FILE_DROPPED, inFileId, inNsHost, 'tapegatewayd',
+  logToDLF(inReqId, dlf.LVL_NOTICE, dlf.RECALL_FILE_DROPPED, inFileId, inNsHost, 'tapegatewayd',
            'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || inVID ||
-           ' fseq=' || TO_CHAR(inFseq) || ' CFLastUpdateTime=' || TO_CHAR(inLastUpdateTime));
+           ' fseq=' || TO_CHAR(inFseq) || ' CFLastUpdateTime=' || TO_CHAR(inLastUpdateTime) || ' ' || inLogContext);
   RETURN FALSE;
 END;
 /
@@ -8847,7 +8417,9 @@ CREATE OR REPLACE PROCEDURE tg_setFileRecalled(inMountTransactionId IN INTEGER,
                                                inFseq IN INTEGER,
                                                inFilePath IN VARCHAR2,
                                                inCksumName IN VARCHAR2,
-                                               inCksumValue IN INTEGER) AS
+                                               inCksumValue IN INTEGER,
+                                               inReqId IN VARCHAR2,
+                                               inLogContext IN VARCHAR2) AS
   varFileId         INTEGER;
   varNsHost         VARCHAR2(2048);
   varVID            VARCHAR2(2048);
@@ -8865,10 +8437,9 @@ CREATE OR REPLACE PROCEDURE tg_setFileRecalled(inMountTransactionId IN INTEGER,
   varGcWeight       NUMBER;
   varGcWeightProc   VARCHAR2(2048);
 BEGIN
-
   -- first lock Castorfile, check NS and parse path
 
-  -- Get RecallJob and lock Castorfile (+lock Castorfile)
+  -- Get RecallJob and lock Castorfile
   BEGIN
     SELECT CastorFile.id, CastorFile.fileId, CastorFile.nsHost, CastorFile.lastUpdateTime,
            CastorFile.fileSize, RecallMount.VID, RecallJob.copyNb, RecallJob.svcClass,
@@ -8884,23 +8455,23 @@ BEGIN
        FOR UPDATE OF CastorFile.id;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- log "setFileRecalled : unable to identify Recall. giving up"
-    logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_NOT_FOUND, 0, '', 'tapegatewayd',
+    logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_NOT_FOUND, 0, '', 'tapegatewayd',
              'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || varVID ||
-             ' fseq=' || TO_CHAR(inFseq) || ' filePath=' || inFilePath);
+             ' fseq=' || TO_CHAR(inFseq) || ' filePath=' || inFilePath || ' ' || inLogContext);
     RETURN;
   END;
   -- Check that the file is still there in the namespace (and did not get overwritten)
   -- Note that error handling and logging is done inside the function
   IF NOT checkRecallInNS(varCfId, inMountTransactionId, varVID, varCopyNb, inFseq, varFileId, varNsHost, 
-                         inCksumName, inCksumValue, varLastUpdateTime) THEN RETURN; END IF;
+                         inCksumName, inCksumValue, varLastUpdateTime, inReqId, inLogContext) THEN RETURN; END IF;
   -- get diskserver, filesystem and path from full path in input
   BEGIN
     parsePath(inFilePath, varFSId, varDCPath, varDCId);
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- log "setFileRecalled : unable to parse input path. giving up"
-    logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_INVALID_PATH, varFileId, varNsHost, 'tapegatewayd',
+    logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_INVALID_PATH, varFileId, varNsHost, 'tapegatewayd',
              'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || varVID ||
-             ' fseq=' || TO_CHAR(inFseq) || ' filePath=' || inFilePath);
+             ' fseq=' || TO_CHAR(inFseq) || ' filePath=' || inFilePath || ' ' || inLogContext);
     RETURN;
   END;
 
@@ -8955,76 +8526,14 @@ BEGIN
   replicateOnClose(varCfId, varEuid, varEgid);
 
   -- log success
-  logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_COMPLETED_DB, varFileId, varNsHost, 'tapegatewayd',
+  logToDLF(inReqId, dlf.LVL_SYSTEM, dlf.RECALL_COMPLETED_DB, varFileId, varNsHost, 'tapegatewayd',
            'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || varVID ||
-           ' fseq=' || TO_CHAR(inFseq) || ' filePath=' || inFilePath);
+           ' fseq=' || TO_CHAR(inFseq) || ' filePath=' || inFilePath || ' ' || inLogContext);
 END;
 /
 
-/* save in the db the results returned by the retry policy for migration */
-CREATE OR REPLACE
-PROCEDURE tg_setMigRetryResult(
-  mjToRetry IN castor."cnumList",
-  mjToFail  IN castor."cnumList" ) AS
-  varSrIds "numList";
-  varCfId NUMBER;
-  varOriginalCopyNb NUMBER;
-  varMigJobCount NUMBER;
-BEGIN
-  -- check because oracle cannot handle empty buffer
-  IF mjToRetry( mjToRetry.FIRST) != -1 THEN
-    -- restarted the one to be retried
-    FOR i IN mjToRetry.FIRST .. mjToRetry.LAST LOOP
-      UPDATE MigrationJob SET
-        status = tconst.MIGRATIONJOB_PENDING,
-        nbretry = nbretry+1,
-        vid = NULL  -- this job will not go to this volume after all, at least not now...
-        WHERE id = mjToRetry(i);
-    END LOOP;
-  END IF;
-
-  -- check because oracle cannot handle empty buffer
-  IF mjToFail(mjToFail.FIRST) != -1 THEN
-    -- go through failed migration jobs
-    FOR i IN mjToFail.FIRST .. mjToFail.LAST LOOP
-      -- delete migration job
-      DELETE FROM MigrationJob WHERE id = mjToFail(i)
-      RETURNING originalCopyNb, castorfile INTO varOriginalCopyNb, varCfId;
-      -- check if another migration should be performed
-      SELECT count(*) INTO varMigJobCount
-        FROM MigrationJob
-       WHERE castorfile = varCfId;
-      IF varMigJobCount = 0 THEN
-         -- no other migration, delete all migrated segments together.
-         DELETE FROM MigratedSegment
-          WHERE castorfile = varCfId;
-      END IF;
-      -- fail repack subrequests
-      IF varOriginalCopyNb IS NOT NULL THEN
-        -- find and archive the repack subrequest(s)
-        SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/
-               SubRequest.id BULK COLLECT INTO varSrIds
-          FROM SubRequest
-          WHERE SubRequest.castorfile = varCfId
-          AND subrequest.status = dconst.SUBREQUEST_REPACK;
-        FOR i IN varSrIds.FIRST .. varSrIds.LAST LOOP
-          archivesubreq(varSrIds(i), dconst.SUBREQUEST_FAILED_FINISHED);
-        END LOOP;
-        -- set back the diskcopies to STAGED otherwise repack will wait forever
-        UPDATE DiskCopy
-          SET status = dconst.DISKCOPY_STAGED
-          WHERE castorfile = varCfId
-          AND status = dconst.DISKCOPY_CANBEMIGR;
-      END IF;
-    END LOOP;
-  END IF;
-
-  COMMIT;
-END;
-/
-
-/* attempt to retry a recall. Fail it in case it should not be retried anymore */
-CREATE OR REPLACE PROCEDURE retryRecall(inCfId NUMBER, inVID VARCHAR2) AS
+/* Attempt to retry a recall. Fail it in case it should not be retried anymore */
+CREATE OR REPLACE PROCEDURE retryOrFailRecall(inCfId IN NUMBER, inVID IN VARCHAR2) AS
   varUnused INTEGER;
   varRecallStillAlive INTEGER;
 BEGIN
@@ -9045,7 +8554,7 @@ BEGIN
    WHERE castorFile = inCfId
      AND VID = inVID
      AND nbRetriesWithinMount >= TO_NUMBER(getConfigOption('Recall', 'MaxNbRetriesWithinMount', 2));
-  -- stop here is no recallJob was concerned
+  -- stop here if no recallJob was concerned
   IF SQL%ROWCOUNT = 0 THEN RETURN; END IF;
   -- detect RecallJobs with too many mounts
   DELETE RecallJob
@@ -9059,13 +8568,42 @@ BEGIN
      AND ROWNUM < 2;
   -- if no remaining recallJobs, the subrequests are failed
   IF varRecallStillAlive = 0 THEN
-    UPDATE /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest 
+    UPDATE /*+ INDEX(Subrequest I_Subrequest_Castorfile) */ SubRequest 
        SET status = dconst.SUBREQUEST_FAILED,
            lastModificationTime = getTime(),
            errorCode = 1015,  -- SEINTERNAL
            errorMessage = 'File recall from tape has failed, please try again later'
      WHERE castorFile = inCfId 
        AND status = dconst.SUBREQUEST_WAITTAPERECALL;
+  END IF;
+END;
+/
+
+/* Attempt to retry a migration. Fail it in case it should not be retried anymore */
+CREATE OR REPLACE PROCEDURE retryOrFailMigration(inMountTrId IN NUMBER, inFileId IN VARCHAR2, inNsHost IN VARCHAR2,
+                                                 inErrorCode IN NUMBER, inReqId IN VARCHAR2) AS
+  varFileTrId NUMBER;
+BEGIN
+  -- For the time being, we ignore the error code and apply the same policy to any
+  -- tape-side error. Note that NS errors like ENOENT are caught at a second stage and never retried.
+  -- Check if a new retry is allowed
+  UPDATE (
+    SELECT nbRetries, status, vid, mountTransactionId, fileTransactionId
+      FROM MigrationJob MJ, CastorFile CF
+     WHERE mountTransactionId = inMountTrId
+       AND MJ.castorFile = CF.id
+       AND CF.fileId = inFileId
+       AND CF.nsHost = inNsHost
+       AND nbRetries <= TO_NUMBER(getConfigOption('Migration', 'MaxNbMounts', 7)))
+    SET nbRetries = nbRetries + 1,
+        status = tconst.MIGRATIONJOB_PENDING,
+        vid = NULL,
+        mountTransactionId = NULL
+    RETURNING fileTransactionId INTO varFileTrId;
+  IF SQL%ROWCOUNT = 0 THEN
+    -- Nb of retries exceeded or migration job not found, fail migration
+    failFileMigration(inMountTrId, inFileId, inErrorCode, inReqId);
+  -- ELSE we have one more retry, which has been logged upstream
   END IF;
 END;
 /
@@ -9079,7 +8617,7 @@ PROCEDURE tg_startTapeSession(inMountTransactionId IN NUMBER,
                               outRet        OUT INTEGER,
                               outDensity    OUT NOCOPY VARCHAR2,
                               outLabel      OUT NOCOPY VARCHAR2) AS
-  varUnused          NUMBER;
+  varUnused   NUMBER;
   varTapePool INTEGER;
 BEGIN
   outRet := 0;
@@ -9129,57 +8667,12 @@ END;
 /
 
 /* delete MigrationMount */
-CREATE OR REPLACE
-PROCEDURE tg_deleteMigrationMount(inMountId IN NUMBER) AS
+CREATE OR REPLACE PROCEDURE tg_deleteMigrationMount(inMountId IN NUMBER) AS
 BEGIN
   DELETE FROM MigrationMount WHERE id=inMountId;
 END;
 /
 
-CREATE OR REPLACE
-PROCEDURE TG_SetFileStaleInMigration(
-  /* When discovering in name server that a file has been changed during its migration,
-  we have to finish it and indicate to the stager that the discopy is outdated */
-  inMountTransactionId IN NUMBER,
-  inFileId             IN NUMBER,
-  inNsHost             IN VARCHAR2,
-  inFseq               IN INTEGER,
-  inFileTransaction    IN NUMBER) AS
-  varCfId                 NUMBER;
-  varUnused               NUMBER;
-BEGIN
-  -- Find MigrationMount from vdqm vol req ID and lock it
-  SELECT mountTransactionId INTO varUnused FROM MigrationMount
-   WHERE mountTransactionId = inMountTransactionId FOR UPDATE;
-  -- Lock the CastorFile
-  SELECT CF.id INTO varCfId FROM CastorFile CF
-   WHERE CF.fileid = inFileId
-     AND CF.nsHost = inNsHost
-     FOR UPDATE;
-  -- XXX This migration job is done. The other ones (if any) will have to live
-  -- an independant life without the diskcopy (and fail)
-  -- After the schema remake in 09/2011 for 2.1.12, we expect to
-  -- fully cover those cases.
-  -- As of today,we are supposed to repack a file's tape copies
-  -- one by one. So should be exempt of this problem.
-  DELETE FROM MigrationJob
-   WHERE FileTransactionId = inFileTransaction
-     AND fSeq = inFseq;
-  -- The disk copy is known stale. Let's invalidate it:
-  UPDATE DiskCopy DC
-     SET DC.status= dconst.DISKCOPY_INVALID
-   WHERE DC.castorFile = varCfId
-     AND DC.status= dconst.DISKCOPY_CANBEMIGR;
-  -- archive Repack requests should any be in the db
-  FOR i IN (
-    SELECT /*+ INDEX(SR I_Subrequest_Castorfile)*/ SR.id FROM SubRequest SR
-    WHERE SR.castorfile = varCfId AND
-          SR.status= dconst.SUBREQUEST_REPACK
-    ) LOOP
-      archivesubreq(i.id, 8); -- SUBREQUEST_FINISHED
-  END LOOP;
-END;
-/
 
 /* fail recall of a given CastorFile for a non existing tape */
 CREATE OR REPLACE PROCEDURE cancelRecallForCFAndVID(inCfId IN INTEGER,
@@ -9256,16 +8749,14 @@ END;
 /
 
 /* flag tape as full for a given session */
-CREATE OR REPLACE
-PROCEDURE tg_flagTapeFull (inMountTransactionId IN NUMBER) AS
+CREATE OR REPLACE PROCEDURE tg_flagTapeFull (inMountTransactionId IN NUMBER) AS
 BEGIN
   UPDATE MigrationMount SET full = 1 WHERE mountTransactionId = inMountTransactionId;
 END;
 /
 
 /* Find the VID of the tape used in a tape session */
-CREATE OR REPLACE
-PROCEDURE tg_getMigrationMountVid (
+CREATE OR REPLACE PROCEDURE tg_getMigrationMountVid (
     inMountTransactionId IN NUMBER,
     outVid          OUT NOCOPY VARCHAR2,
     outTapePool     OUT NOCOPY VARCHAR2) AS
@@ -9280,50 +8771,55 @@ BEGIN
 END;
 /
 
+
 /* insert new Migration Mount */
 CREATE OR REPLACE PROCEDURE insertMigrationMount(inTapePoolId IN NUMBER,
-                                                 outTgRequestId OUT INTEGER) AS
-  varMountId NUMBER;
-  varDiskServer VARCHAR2(2048);
-  varMountPoint VARCHAR2(2048);
-  varPath VARCHAR2(2048);
-  varDiskCopyId NUMBER;
-  varLastKnownName VARCHAR2(2048);
-  varFileId NUMBER;
-  varNsHost VARCHAR2(2048);
-  varFileSize INTEGER;
+                                                 outMountId OUT INTEGER) AS
   varMigJobId INTEGER;
-  varLastUpdateTime NUMBER;
 BEGIN
-  -- try to create a mount
+  -- Check that the mount would be honoured by running a dry-run file selection.
+  -- This is almost a duplicate of the query in tg_getFilesToMigrate.
+  SELECT /*+ FIRST_ROWS_1
+             LEADING(MigrationJob CastorFile DiskCopy FileSystem DiskServer)
+             USE_NL(MMigrationJob CastorFile DiskCopy FileSystem DiskServer)
+             INDEX(CastorFile PK_CastorFile_Id)
+             INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile)
+             INDEX_RS_ASC(MigrationJob I_MigrationJob_TPStatusId) */
+         MigrationJob.id mjId INTO varMigJobId
+    FROM MigrationJob, DiskCopy, FileSystem, DiskServer, CastorFile
+   WHERE MigrationJob.tapePool = inTapePoolId
+     AND MigrationJob.status = tconst.MIGRATIONJOB_PENDING
+     AND CastorFile.id = MigrationJob.castorFile
+     AND CastorFile.id = DiskCopy.castorFile
+     AND DiskCopy.status = dconst.DISKCOPY_CANBEMIGR
+     AND FileSystem.id = DiskCopy.fileSystem
+     AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING)
+     AND DiskServer.id = FileSystem.diskServer
+     AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING)
+     AND ROWNUM < 2;
+  -- The select worked out, create a mount for this tape pool
   INSERT INTO MigrationMount
-              (mountTransactionId, tapeGatewayRequestId, id, startTime, VID, label, density,
+              (mountTransactionId, id, startTime, VID, label, density,
                lastFseq, lastVDQMPingTime, tapePool, status)
-   VALUES (NULL, ids_seq.nextval, ids_seq.nextval, gettime(), NULL, NULL, NULL,
-           NULL, 0, inTapePoolId, tconst.MIGRATIONMOUNT_WAITTAPE)
-   RETURNING id, tapeGatewayRequestId INTO varMountId, outTgRequestId;
-  -- check that the mount will be honoured by running a dry-run file selection
-  -- Caveat: this will select for update a file for migartion.
-  tg_defaultMigrSelPolicy(varMountId, varDiskServer, varMountPoint, varPath,
-    varDiskCopyId, varLastKnownName, varFileId, varNsHost,varFileSize,
-    varMigJobId, varLastUpdateTime);
-  IF varMigJobId IS NULL THEN
-    -- No valid candidate found: this could happen e.g. when candidates exist
-    -- but reside on non-available hardware. In this case we drop the mount and log
-    DELETE FROM MigrationMount WHERE id = varMountId;
-    outTgRequestId := 0;
-  END IF;
+    VALUES (NULL, ids_seq.nextval, gettime(), NULL, NULL, NULL,
+            NULL, 0, inTapePoolId, tconst.MIGRATIONMOUNT_WAITTAPE)
+    RETURNING id INTO outMountId;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- No valid candidate found: this could happen e.g. when candidates exist
+  -- but reside on non-available hardware. In this case we drop the mount and log
+  outMountId := 0;
 END;
 /
 
-/* resurrect tapes */
+
+/* DB job to start new migration mounts */
 CREATE OR REPLACE PROCEDURE startMigrationMounts AS
   varNbPreExistingMounts INTEGER;
   varTotalNbMounts INTEGER := 0;
   varDataAmount INTEGER;
   varNbFiles INTEGER;
   varOldestCreationTime NUMBER;
-  varTGRequestId INTEGER;
+  varMountId INTEGER;
 BEGIN
   -- loop through tapepools
   FOR t IN (SELECT id, name, nbDrives, minAmountDataForMount,
@@ -9335,19 +8831,19 @@ BEGIN
      WHERE tapePool = t.id;
     varTotalNbMounts := varNbPreExistingMounts;
     -- get the amount of data and number of files to migrate, plus the age of the oldest file
-    SELECT SUM(fileSize), COUNT(*), MIN(creationTime) INTO varDataAmount, varNbFiles, varOldestCreationTime
+    SELECT nvl(SUM(fileSize), 0), COUNT(*), nvl(MIN(creationTime), 0)
+      INTO varDataAmount, varNbFiles, varOldestCreationTime
       FROM MigrationJob
      WHERE tapePool = t.id
-       AND status = tconst.MIGRATIONJOB_PENDING
-     GROUP BY tapePool;
+       AND status = tconst.MIGRATIONJOB_PENDING;
     -- Create as many mounts as needed according to amount of data and number of files
     WHILE (varTotalNbMounts < t.nbDrives) AND
           ((varDataAmount/(varTotalNbMounts+1) >= t.minAmountDataForMount) OR
            (varNbFiles/(varTotalNbMounts+1) >= t.minNbFilesForMount)) AND
-          (varTotalNbMounts+1 < varNbFiles) LOOP   -- in case minAmountDataForMount << avgFileSize, stop creating more than one mount per file
-      insertMigrationMount(t.id, varTGRequestId);
+          (varTotalNbMounts+1 <= varNbFiles) LOOP   -- in case minAmountDataForMount << avgFileSize, stop creating more than one mount per file
+      insertMigrationMount(t.id, varMountId);
       varTotalNbMounts := varTotalNbMounts + 1;
-      IF varTGRequestId = 0 THEN
+      IF varMountId = 0 THEN
         -- log "startMigrationMounts: failed migration mount creation due to lack of files"
         logToDLF(NULL, dlf.LVL_WARNING, dlf.MIGMOUNT_NO_FILE, 0, '', 'tapegatewayd',
                  'tapePool=' || t.name ||
@@ -9357,12 +8853,11 @@ BEGIN
                  ' nbFilesInQueue=' || TO_CHAR(varNbFiles) ||
                  ' oldestCreationTime=' || TO_CHAR(varOldestCreationTime));
         -- no need to continue as we could not find a single file to migrate
-        -- note that we've logge
         EXIT;
       ELSE
         -- log "startMigrationMounts: created new migration mount"
         logToDLF(NULL, dlf.LVL_SYSTEM, dlf.MIGMOUNT_NEW_MOUNT, 0, '', 'tapegatewayd',
-                 'mountTransactionId=' || TO_CHAR(varTGRequestId) ||
+                 'mountId=' || TO_CHAR(varMountId) ||
                  ' tapePool=' || t.name ||
                  ' nbPreExistingMounts=' || TO_CHAR(varNbPreExistingMounts) ||
                  ' nbMounts=' || TO_CHAR(varTotalNbMounts) ||
@@ -9374,8 +8869,8 @@ BEGIN
     -- force creation of a unique mount in case no mount was created at all and some files are too old
     IF varNbFiles > 0 AND varTotalNbMounts = 0 AND t.nbDrives > 0 AND
        gettime() - varOldestCreationTime > t.maxFileAgeBeforeMount THEN
-      insertMigrationMount(t.id, varTGRequestId);
-      IF varTGRequestId = 0 THEN
+      insertMigrationMount(t.id, varMountId);
+      IF varMountId = 0 THEN
         -- log "startMigrationMounts: failed migration mount creation due to lack of files"
         logToDLF(NULL, dlf.LVL_WARNING, dlf.MIGMOUNT_AGE_NO_FILE, 0, '', 'tapegatewayd',
                  'tapePool=' || t.name ||
@@ -9387,7 +8882,7 @@ BEGIN
       ELSE
         -- log "startMigrationMounts: created new migration mount based on age"
         logToDLF(NULL, dlf.LVL_SYSTEM, dlf.MIGMOUNT_NEW_MOUNT_AGE, 0, '', 'tapegatewayd',
-                 'mountTransactionId=' || TO_CHAR(varTGRequestId) ||
+                 'mountId=' || TO_CHAR(varMountId) ||
                  ' tapePool=' || t.name ||
                  ' nbPreExistingMounts=' || TO_CHAR(varNbPreExistingMounts) ||
                  ' nbMounts=' || TO_CHAR(varTotalNbMounts) ||
@@ -9412,7 +8907,7 @@ BEGIN
 END;
 /
 
-/* startRecallMounts */
+/* DB job to start new recall mounts */
 CREATE OR REPLACE PROCEDURE startRecallMounts AS
    varNbMounts INTEGER;
    varNbExtraMounts INTEGER := 0;
@@ -9475,6 +8970,560 @@ BEGIN
 END;
 /
 
+/*** Disk-Tape interface, Migration ***/
+
+/* Get next candidates for a given migration mount.
+ * input:  VDQM transaction id, count and total size
+ * output: outVid    the target VID,
+           outFiles  a cursor for the set of migration candidates. 
+ * Locks are taken on the selected migration jobs.
+ *
+ * We should only propose a migration job for a file that does not
+ * already have another copy migrated to the same tape.
+ * The already migrated copies are kept in MigratedSegment until the whole set
+ * of siblings has been migrated.
+ */
+CREATE OR REPLACE PROCEDURE tg_getBulkFilesToMigrate(inLogContext IN VARCHAR2,
+                                                     inMountTrId IN NUMBER,
+                                                     inCount IN INTEGER,
+                                                     inTotalSize IN INTEGER,
+                                                     outFiles OUT castorTape.FileToMigrateCore_cur) AS
+  varMountId NUMBER;
+  varCount INTEGER;
+  varTotalSize INTEGER;
+  varVid VARCHAR2(10);
+  varNewFseq INTEGER;
+  varFileTrId NUMBER;
+BEGIN
+  BEGIN
+    -- Get id, VID and last valid fseq for this migration mount, lock
+    SELECT id, vid, lastFSeq INTO varMountId, varVid, varNewFseq
+      FROM MigrationMount
+     WHERE mountTransactionId = inMountTrId
+       FOR UPDATE;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- migration mount is over or unknown request
+    RETURN;
+  END;
+  varCount := 0;
+  varTotalSize := 0;
+  -- Get candidates up to inCount or inTotalSize
+  FOR Cand IN (
+    SELECT /*+ FIRST_ROWS(100)
+               LEADING(MigrationMount MigrationJob CastorFile DiskCopy FileSystem DiskServer)
+               USE_NL(MigrationMount MigrationJob CastorFile DiskCopy FileSystem DiskServer)
+               INDEX(CastorFile PK_CastorFile_Id)
+               INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile)
+               INDEX_RS_ASC(MigrationJob I_MigrationJob_TPStatusId) */
+           MigrationJob.id mjId, DiskServer.name || ':' || FileSystem.mountPoint || DiskCopy.path filePath,
+           CastorFile.fileId, CastorFile.nsHost, CastorFile.fileSize, CastorFile.lastKnownFileName
+      FROM MigrationMount, MigrationJob, CastorFile, DiskCopy, FileSystem, DiskServer
+     WHERE MigrationMount.id = varMountId
+       AND MigrationJob.tapePool = MigrationMount.tapePool
+       AND MigrationJob.status = tconst.MIGRATIONJOB_PENDING
+       AND CastorFile.id = MigrationJob.castorFile
+       AND CastorFile.id = DiskCopy.castorFile
+       AND DiskCopy.status = dconst.DISKCOPY_CANBEMIGR
+       AND FileSystem.id = DiskCopy.fileSystem
+       AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING)
+       AND DiskServer.id = FileSystem.diskServer
+       AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING)
+       AND (MigrationMount.VID NOT IN (SELECT /*+ INDEX_RS_ASC(MigratedSegment I_MigratedSegment_CFCopyNBVID) */ vid
+                                         FROM MigratedSegment
+                                        WHERE castorFile = MigrationJob.castorfile
+                                          AND copyNb != MigrationJob.destCopyNb))
+       FOR UPDATE OF MigrationJob.id SKIP LOCKED)
+  LOOP
+    varCount := varCount + 1;
+    varTotalSize := varTotalSize + Cand.fileSize;
+    INSERT INTO FilesToMigrateHelper (fileId, nsHost, lastKnownFileName, filePath, fileTransactionId, fileSize, fseq)
+      VALUES (Cand.fileId, Cand.nsHost, Cand.lastKnownFileName, Cand.filePath, ids_seq.NEXTVAL, Cand.fileSize, varNewFseq)
+      RETURNING fileTransactionId INTO varFileTrId;
+    -- Take this candidate on this mount
+    UPDATE MigrationJob
+       SET status = tconst.MIGRATIONJOB_SELECTED,
+           vid = varVid,
+           fSeq = varNewFseq,
+           mountTransactionId = inMountTrId,
+           fileTransactionId = varFileTrId
+     WHERE id = Cand.mjId;
+    varNewFseq := varNewFseq + 1;    -- we still decide the fseq for each migration candidate
+    IF varCount > inCount OR varTotalSize > inTotalSize THEN
+      -- we have enough candidates for this round, exit loop
+      EXIT;
+    END IF;
+  END LOOP;
+  -- Update last fseq
+  UPDATE MigrationMount
+     SET lastFseq = varNewFseq
+   WHERE id = varMountId;
+  -- Return all candidates (potentially an empty cursor). Don't commit now, this will be done
+  -- in C++ after the results have been collected as the temporary table will be emptied. 
+  OPEN outFiles FOR
+    SELECT fileId, nsHost, lastKnownFileName, filePath, fileTransactionId, fseq, fileSize
+      FROM FilesToMigrateHelper;
+END;
+/
+
+/* Wrapper procedure for the setOrReplaceSegmentsForFiles call in the NS DB. Because we can't,
+ * pass arrays, and temporary tables are forbidden with distributed transactions, we use standard
+ * tables on the Stager DB (while the NS table is still temporary) to pass the data
+ * and we wrap everything in an autonomous transaction to isolate the caller.
+ */
+CREATE OR REPLACE PROCEDURE ns_setOrReplaceSegments(inReqId IN VARCHAR2,
+                                                    outNSTimeInfos OUT "numList",
+                                                    outNSErrorCodes OUT "numList",
+                                                    outNSMsgs OUT strListTable,
+                                                    outNSFileIds OUT "numList",
+                                                    outNSParams OUT strListTable) AS
+PRAGMA AUTONOMOUS_TRANSACTION;
+BEGIN
+  -- "Bulk" transfer data to the NS DB
+  INSERT /*+ APPEND */ INTO SetSegmentsForFilesHelper@RemoteNS
+    SELECT * FROM FileMigrationResultsHelper
+     WHERE reqId = inReqId;
+  DELETE FROM FileMigrationResultsHelper
+   WHERE reqId = inReqId;
+  -- This call autocommits all segments in the NameServer
+  setOrReplaceSegmentsForFiles@RemoteNS(inReqId);
+  -- Retrieve results from the NS DB in bulk and clean data
+  SELECT timeinfo, ec, msg, fileId, params
+    BULK COLLECT INTO outNSTimeInfos, outNSErrorCodes, outNSMsgs, outNSFileIds, outNSParams
+    FROM ResultsLogHelper@RemoteNS
+   WHERE reqId = inReqId;
+  DELETE FROM ResultsLogHelper@RemoteNS
+   WHERE reqId = inReqId;
+  -- this commits the remote transaction
+  COMMIT;
+END;
+/
+
+/* Commit a set of succeeded/failed migration processes to the NS and stager db.
+ * Locks are taken on the involved castorfiles one by one, then to the dependent entities.
+ */
+CREATE OR REPLACE PROCEDURE tg_setBulkFileMigrationResult(inLogContext IN VARCHAR2,
+                                                          inMountTrId IN NUMBER,
+                                                          inFileIds IN "numList",
+                                                          inFileTrIds IN "numList",
+                                                          inFseqs IN "numList",
+                                                          inBlockIds IN strListTable,
+                                                          inChecksumTypes IN strListTable,
+                                                          inChecksums IN "numList",
+                                                          inComprSizes IN "numList",
+                                                          inTransferredSizes IN "numList",
+                                                          inErrorCodes IN "numList",
+                                                          inErrorMsgs IN strListTable
+                                                          ) AS
+  varStartTime TIMESTAMP;
+  varNsHost VARCHAR2(2048);
+  varReqId VARCHAR2(36);
+  varLastUpdTime NUMBER;
+  varCopyNo NUMBER;
+  varOldCopyNo NUMBER;
+  varVid VARCHAR2(10);
+  varNSTimeInfos "numList";
+  varNSErrorCodes "numList";
+  varNSMsgs strListTable;
+  varNSFileIds "numList";
+  varNSParams strListTable;
+  varParams VARCHAR2(4000);
+BEGIN
+  varStartTime := SYSTIMESTAMP;
+  varReqId := uuidGen();
+  -- Get the NS host name
+  varNsHost := getConfigOption('stager', 'nsHost', '');
+  -- Prepare input for nameserver
+  FOR i IN inFileTrIds.FIRST .. inFileTrIds.LAST LOOP
+    IF inErrorCodes(i) = 0 THEN
+      -- Successful migration, collect additional data.
+      -- Note that this is NOT bulk to preserve the order in the input arrays.
+      BEGIN
+        SELECT CF.lastUpdateTime, nvl(MJ.originalCopyNb, 0), MJ.vid, MJ.destCopyNb
+          INTO varLastUpdTime, varOldCopyNo, varVid, varCopyNo
+          FROM CastorFile CF, MigrationJob MJ
+         WHERE MJ.castorFile = CF.id
+           AND CF.fileid = inFileIds(i)
+           AND MJ.mountTransactionId = inMountTrId
+           AND MJ.fileTransactionId = inFileTrIds(i)
+           AND status = tconst.MIGRATIONJOB_SELECTED;
+        -- Store in a temporary table, to be transfered to the NS DB.
+        -- Note that this is an ON COMMIT DELETE table and we never take locks or commit until
+        -- after the NS call: if anything goes bad (including the db link being broken) we bail out
+        -- without needing to rollback.
+        INSERT INTO FileMigrationResultsHelper
+          (reqId, fileId, lastModTime, copyNo, oldCopyNo, transfSize, comprSize,
+           vid, fseq, blockId, checksumType, checksum)
+        VALUES (varReqId, inFileIds(i), varLastUpdTime, varCopyNo, varOldCopyNo,
+                inTransferredSizes(i), inComprSizes(i), varVid, inFseqs(i),
+                strtoRaw4(inBlockIds(i)), inChecksumTypes(i), inChecksums(i));
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- Log 'unable to identify migration, giving up'
+        varParams := 'mountTransactionId='|| to_char(inMountTrId) ||' fileTransactionId='|| to_char(inFileTrIds(i))
+          ||' '|| inLogContext;
+        logToDLF(varReqid, dlf.LVL_ERROR, dlf.MIGRATION_NOT_FOUND, inFileIds(i), varNsHost, 'tapegatewayd', varParams);
+      END;
+    ELSE
+      -- Fail/retry this migration, log 'migration failed, will retry if allowed'
+      varParams := 'mountTransactionId='|| to_char(inMountTrId) ||' ErrorCode='|| to_char(inErrorCodes(i))
+                   ||' ErrorMessage="'|| inErrorMsgs(i) ||'" VID='|| varVid
+                   ||' copyNb='|| to_char(varCopyNo) ||' '|| inLogContext;
+      logToDLF(varReqid, dlf.LVL_WARNING, dlf.MIGRATION_RETRY, inFileIds(i), varNsHost, 'tapegatewayd', varParams);
+      retryOrFailMigration(inMountTrId, inFileIds(i), varNsHost, inErrorCodes(i), varReqId);
+      COMMIT;
+    END IF;
+  END LOOP;
+  -- Commit all the entries in FileMigrationResultsHelper so that the next call can take them
+  COMMIT;
+
+  -- The following procedure wraps the remote calls in an autonomous transaction
+  ns_setOrReplaceSegments(varReqId, varNSTimeInfos, varNSErrorCodes, varNSMsgs, varNSFileIds, varNSParams);
+
+  -- Process the results
+  FOR i IN varNSFileIds.FIRST .. varNSFileIds.LAST LOOP
+    -- First log on behalf of the NS
+    INSERT INTO DLFLogs (timeinfo, uuid, priority, msg, fileId, nsHost, source, params)
+      VALUES (varNSTimeinfos(i), varReqid,
+              CASE varNSErrorCodes(i) WHEN 0 THEN dlf.LVL_SYSTEM ELSE dlf.LVL_ERROR END,
+              varNSMsgs(i), varNSFileIds(i), varNsHost, 'nsd', varNSParams(i));
+    
+    -- Now process file by file, depending on the result. Skip pure log entries with fileId = 0.
+    IF varNSFileIds(i) = 0 THEN CONTINUE; END IF;
+    CASE
+    WHEN varNSErrorCodes(i) = 0 THEN
+      -- All right, commit the migration in the stager
+      tg_setFileMigrated(inMountTrId, varNSFileIds(i), varReqId, inLogContext);
+      
+    WHEN varNSErrorCodes(i) = serrno.ENOENT
+      OR varNSErrorCodes(i) = serrno.ENSFILECHG
+      OR varNSErrorCodes(i) = serrno.ENSTOOMANYSEGS THEN
+      -- The migration was useless because either the file is gone, or it has been modified elsewhere,
+      -- or there were already enough copies on tape for it. Fail and update disk cache accordingly.
+      failFileMigration(inMountTrId, varNSFileIds(i), varNSErrorCodes(i), varReqId);
+      
+    ELSE
+      -- Attempt to retry for all other NS errors. To be reviewed whether some of the NS errors are to be considered fatal.      
+      varParams := 'mountTransactionId='|| to_char(inMountTrId) ||' ErrorCode='|| to_char(varNSErrorCodes(i))
+                   ||' ErrorMessage="'|| varNSMsgs(i) ||'" '|| inLogContext;
+      logToDLF(varReqid, dlf.LVL_WARNING, dlf.MIGRATION_RETRY, varNSFileIds(i), varNsHost, 'tapegatewayd', varParams);
+      retryOrFailMigration(inMountTrId, varNSFileIds(i), varNsHost, varNSErrorCodes(i), varReqId);
+    END CASE;
+    -- Commit file by file
+    COMMIT;
+  END LOOP;
+  -- Final log
+  varParams := 'mountTransactionId='|| to_char(inMountTrId)
+               ||' NbFiles='|| inFileIds.COUNT ||' '|| inLogContext
+               ||' ElapsedTime='|| getSecs(varStartTime, SYSTIMESTAMP)
+               ||' AvgProcessingTime='|| getSecs(varStartTime, SYSTIMESTAMP)/inFileIds.COUNT;
+  logToDLF(varReqid, dlf.LVL_SYSTEM, dlf.BULK_MIGRATION_COMPLETED, 0, '', 'tapegatewayd', varParams);
+END;
+/
+
+/* Commit a successful file migration */
+CREATE OR REPLACE PROCEDURE tg_setFileMigrated(inMountTrId IN NUMBER, inFileId IN NUMBER,
+                                               inReqId IN VARCHAR2, inLogContext IN VARCHAR2) AS
+  varNsHost VARCHAR2(2048);
+  varCfId NUMBER;
+  varCopyNb INTEGER;
+  varVID VARCHAR2(10);
+  varOrigVID VARCHAR2(10);
+  varMigJobCount INTEGER;
+  varParams VARCHAR2(4000);
+BEGIN
+  varNsHost := getConfigOption('stager', 'nsHost', '');
+  -- Lock the CastorFile
+  SELECT CF.id INTO varCfId FROM CastorFile CF
+   WHERE CF.fileid = inFileId 
+     AND CF.nsHost = varNsHost
+     FOR UPDATE;
+  -- delete the corresponding migration job, create the new migrated segment
+  DELETE FROM MigrationJob
+   WHERE castorFile = varCfId
+     AND mountTransactionId = inMountTrId
+  RETURNING destCopyNb, VID, originalVID
+    INTO varCopyNb, varVID, varOrigVID;
+  -- check if another migration should be performed
+  SELECT count(*) INTO varMigJobCount
+    FROM MigrationJob
+   WHERE castorFile = varCfId;
+  IF varMigJobCount = 0 THEN
+    -- no more migrations, delete all migrated segments 
+    DELETE FROM MigratedSegment
+     WHERE castorFile = varCfId;
+  ELSE
+    -- another migration ongoing, keep track of this one 
+    INSERT INTO MigratedSegment VALUES (varCfId, varCopyNb, varVID);
+  END IF;
+  -- Tell the Disk Cache that migration is over
+  dc_setFileMigrated(varCfId, varOrigVID, (varMigJobCount = 0));
+  -- Log 'db updates after full migration completed'
+  varParams := 'TPVID='|| varVID ||' mountTransactionId='|| to_char(inMountTrId) ||' '|| inLogContext;
+  logToDLF(inReqid, dlf.LVL_SYSTEM, dlf.MIGRATION_COMPLETED, inFileId, varNsHost, 'tapegatewayd', varParams);
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- Log 'file not found, giving up'
+  varParams := 'mountTransactionId='|| to_char(inMountTrId) ||' '|| inLogContext;
+  logToDLF(inReqid, dlf.LVL_ERROR, dlf.MIGRATION_NOT_FOUND, inFileId, varNsHost, 'tapegatewayd', varParams);
+END;
+/
+
+/* update the db after a successful migration - disk side */
+CREATE OR REPLACE PROCEDURE dc_setFileMigrated(
+  inCfId          IN NUMBER,
+  inOriginVID     IN VARCHAR2,     -- NOT NULL only for repacked files
+  inLastMigration IN BOOLEAN) AS   -- whether this is the last copy on tape
+  varSrId NUMBER;
+BEGIN
+  IF inLastMigration THEN
+     -- Mark all disk copies as staged
+     UPDATE DiskCopy
+        SET status= dconst.DISKCOPY_STAGED
+      WHERE castorFile = inCfId
+        AND status= dconst.DISKCOPY_CANBEMIGR;
+  END IF;
+  IF inOriginVID IS NOT NULL THEN
+    -- archive the repack subrequest associated to this VID (there can only be one)
+    SELECT /*+ INDEX(SR I_Subrequest_Castorfile) */ SubRequest.id INTO varSrId
+      FROM SubRequest, StageRepackRequest
+      WHERE SubRequest.castorfile = inCfId
+        AND SubRequest.status = dconst.SUBREQUEST_REPACK
+        AND SubRequest.request = StageRepackRequest.id
+        AND StageRepackRequest.RepackVID = inOriginVID;
+    archiveSubReq(varSrId, dconst.SUBREQUEST_FINISHED);
+  END IF;
+END;
+/
+
+/* Fail a file migration, potentially archiving outstanding repack requests */
+CREATE OR REPLACE PROCEDURE failFileMigration(inMountTrId IN NUMBER, inFileId IN NUMBER,
+                                              inErrorCode IN INTEGER, inReqId IN VARCHAR2) AS
+  varNsHost VARCHAR2(2048);
+  varCfId NUMBER;
+  varCFLastUpdateTime NUMBER;
+  varSrIds "numList";
+  varOriginalCopyNb NUMBER;
+  varMigJobCount NUMBER;
+BEGIN
+  varNsHost := getConfigOption('stager', 'nsHost', '');
+  -- Lock castor file
+  SELECT id, lastUpdateTime INTO varCfId, varCFLastUpdateTime FROM CastorFile WHERE fileId = inFileId FOR UPDATE;
+  -- delete migration job
+  DELETE FROM MigrationJob 
+   WHERE castorFile = varCFId AND mountTransactionId = inMountTrId
+  RETURNING originalCopyNb INTO varOriginalCopyNb;
+  -- check if another migration should be performed
+  SELECT count(*) INTO varMigJobCount
+    FROM MigrationJob
+   WHERE castorfile = varCfId;
+  IF varMigJobCount = 0 THEN
+     -- no other migration, delete all migrated segments
+     DELETE FROM MigratedSegment
+      WHERE castorfile = varCfId;
+  END IF;
+  -- fail repack subrequests
+  IF varOriginalCopyNb IS NOT NULL THEN
+    -- find and archive the repack subrequest(s)
+    SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile) */
+           SubRequest.id BULK COLLECT INTO varSrIds
+      FROM SubRequest
+     WHERE SubRequest.castorfile = varCfId
+       AND subrequest.status = dconst.SUBREQUEST_REPACK;
+    FOR i IN varSrIds.FIRST .. varSrIds.LAST LOOP
+      archiveSubReq(varSrIds(i), dconst.SUBREQUEST_FAILED_FINISHED);
+    END LOOP;
+    -- set back the diskcopies to STAGED otherwise repack will wait forever
+    UPDATE DiskCopy
+       SET status = dconst.DISKCOPY_STAGED
+     WHERE castorfile = varCfId
+       AND status = dconst.DISKCOPY_CANBEMIGR;
+  END IF;
+  
+  -- Log depending on the error: some are not pathological and have dedicated handling
+  IF inErrorCode = serrno.ENOENT OR inErrorCode = serrno.ENSFILECHG THEN
+    -- in this case, disk cache is stale
+    UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
+     WHERE status = dconst.DISKCOPY_CANBEMIGR
+       AND castorFile = varCfId;
+    -- Log 'file was dropped or modified during migration, giving up'
+    logToDLF(inReqid, dlf.LVL_NOTICE, dlf.MIGRATION_FILE_DROPPED, inFileId, varNsHost, 'tapegatewayd',
+             'mountTransactionId=' || to_char(inMountTrId) || ' ErrorCode=' || to_char(inErrorCode)
+             ||' lastUpdateTime=' || to_char(varCFLastUpdateTime));
+  ELSIF inErrorCode = serrno.ENSTOOMANYSEGS THEN
+    -- do as if migration was successful
+    UPDATE DiskCopy SET status = dconst.DISKCOPY_STAGED
+     WHERE status = dconst.DISKCOPY_CANBEMIGR
+       AND castorFile = varCfId;
+    -- Log 'file already had enough copies on tape, ignoring new segment'
+    logToDLF(inReqid, dlf.LVL_NOTICE, dlf.MIGRATION_SUPERFLUOUS_COPY, inFileId, varNsHost, 'tapegatewayd',
+             'mountTransactionId=' || to_char(inMountTrId));
+  ELSE
+    -- Any other case, log 'migration to tape failed for this file, giving up'
+    logToDLF(inReqid, dlf.LVL_ERROR, dlf.MIGRATION_FAILED, inFileId, varNsHost, 'tapegatewayd',
+             'mountTransactionId=' || to_char(inMountTrId) || ' LastErrorCode=' || to_char(inErrorCode));
+  END IF;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- File was dropped, log 'file not found when failing migration'
+  logToDLF(inReqid, dlf.LVL_ERROR, dlf.MIGRATION_FAILED_NOT_FOUND, inFileId, varNsHost, 'tapegatewayd',
+           'mountTransactionId=' || to_char(inMountTrId) || ' LastErrorCode=' || to_char(inErrorCode));
+END;
+/
+
+
+/*** Disk-Tape interface, Recall ***/
+
+/* Get next candidates for a given recall mount.
+ * input:  VDQM transaction id, count and total size
+ * output: outFiles, a cursor for the set of recall candidates.
+ * A lock is taken on the selected recall mount.
+ */
+CREATE OR REPLACE PROCEDURE tg_getBulkFilesToRecall(inLogContext IN VARCHAR2,
+                                                    inMountTrId IN NUMBER,
+                                                    inCount IN INTEGER,
+                                                    inTotalSize IN INTEGER,
+                                                    outFiles OUT castorTape.FileToRecallCore_cur) AS
+  varVid VARCHAR2(10);
+  varPreviousFseq INTEGER;
+  varCount INTEGER;
+  varTotalSize INTEGER;
+  varPath VARCHAR2(2048);
+  varFileTrId INTEGER;
+  varNewFseq INTEGER;
+  bestFSForRecall_error EXCEPTION;
+  PRAGMA EXCEPTION_INIT(bestFSForRecall_error, -20115);
+BEGIN
+  BEGIN
+    -- Get VID and last processed fseq for this recall mount, lock
+    SELECT vid, lastProcessedFseq INTO varVid, varPreviousFseq
+      FROM RecallMount
+     WHERE mountTransactionId = inMountTrId
+       FOR UPDATE;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- recall is over or unknown request
+    RETURN;
+  END;
+  varCount := 0;
+  varTotalSize := 0;
+  varNewFseq := varPreviousFseq;
+  -- Get candidates up to inCount or inTotalSize
+  FOR Cand IN (
+    -- Find the unprocessed recallJobs of this tape with lowest fSeq
+    -- that is above the previous one. If none, take the recallJob with lowest fseq.
+    SELECT RecallJob.id AS rjId, fSeq, blockId, RecallJob.fileSize, castorFile AS cfId, fileId, nsHost
+      FROM RecallJob, CastorFile
+     WHERE vid = varVid
+       AND status = tconst.RECALLJOB_PENDING
+       AND RecallJob.castorFile = CastorFile.id
+     ORDER BY CASE WHEN fseq > varPreviousFseq THEN 1 ELSE 0 END DESC,
+              fseq ASC
+       FOR UPDATE OF RecallJob.id SKIP LOCKED)
+  LOOP
+    BEGIN
+      -- Find the best filesystem to recall the selected file
+      bestFileSystemForRecall(Cand.cfId, varPath);
+      varCount := varCount + 1;
+      varTotalSize := varTotalSize + Cand.fileSize;
+      varNewFseq := Cand.fseq;
+      INSERT INTO FilesToRecallHelper (fileId, nsHost, fileTransactionId, filePath, blockId, fSeq)
+        VALUES (Cand.fileId, Cand.nsHost, ids_seq.nextval, varPath, Cand.blockId, Cand.fSeq)
+        RETURNING fileTransactionId INTO varFileTrId;
+      -- update RecallJob
+      UPDATE RecallJob
+         SET status = tconst.RECALLJOB_SELECTED,
+             fileTransactionID = varFileTrId
+       WHERE id = Cand.rjId;
+      IF varCount > inCount OR varTotalSize > inTotalSize THEN
+        -- we have enough candidates for this round, exit loop
+        EXIT;
+      END IF;
+    EXCEPTION WHEN bestFSForRecall_error OR NO_DATA_FOUND THEN
+      -- log 'bestFileSystemForRecall could not find a suitable destination for this recall' and skip it
+      -- XXX we should actually abort this recall + restart SRs
+      logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_FS_NOT_FOUND, Cand.fileId, Cand.nsHost, 'tapegatewayd',
+        'errorMessage="' || SQLERRM || '"');
+    END;
+  END LOOP;
+  -- Record last fseq at the mount level
+  UPDATE RecallMount
+     SET lastProcessedFseq = varNewFseq
+   WHERE vid = varVid;
+  -- Return all candidates. Don't commit now, this will be done in C++
+  -- after the results have been collected as the temporary table will be emptied.
+  OPEN outFiles FOR
+    SELECT fileId, nsHost, fileTransactionId, filePath, blockId, fseq
+      FROM FilesToRecallHelper;
+END;
+/
+
+
+/* Commit a set of succeeded/failed recall processes to the NS and stager db.
+ * Locks are taken on the involved castorfiles one by one, then to the dependent entities.
+ */
+CREATE OR REPLACE PROCEDURE tg_setBulkFileRecallResult(inLogContext IN VARCHAR2,
+                                                       inMountTrId IN NUMBER,
+                                                       inFileIds IN "numList",
+                                                       inFileTrIds IN "numList",
+                                                       inFilePaths IN strListTable,
+                                                       inFseqs IN "numList",
+                                                       inChecksumNames IN strListTable,
+                                                       inChecksums IN "numList",
+                                                       inFileSizes IN "numList",
+                                                       inErrorCodes IN "numList",
+                                                       inErrorMsgs IN strListTable) AS
+  varCfId NUMBER;
+  varVID VARCHAR2(10);
+  varReqId VARCHAR2(36);
+  varStartTime TIMESTAMP;
+  varNsHost VARCHAR2(2048);
+  varParams VARCHAR2(4000);
+BEGIN
+  varStartTime := SYSTIMESTAMP;
+  varReqId := uuidGen();
+  -- Get the NS host name
+  varNsHost := getConfigOption('stager', 'nsHost', '');
+  -- Get the current VID
+  SELECT VID INTO varVID
+    FROM RecallMount
+   WHERE mountTransactionId = inMountTrId;
+  -- Loop over the input
+  FOR i IN inFileIds.FIRST .. inFileIds.LAST LOOP
+    BEGIN
+      -- Find and lock related castorFile
+      SELECT id INTO varCfId
+        FROM CastorFile
+       WHERE fileid = inFileIds(i)
+         AND nsHost = varNsHost
+         FOR UPDATE;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- log "setFileRecalled : unable to identify Recall. giving up"
+      logToDLF(varReqId, dlf.LVL_ERROR, dlf.RECALL_NOT_FOUND, inFileIds(i), varNsHost, 'tapegatewayd',
+               'mountTransactionId=' || TO_CHAR(inMountTrId) || ' TPVID=' || varVID ||
+               ' fseq=' || TO_CHAR(inFseqs(i)) || ' filePath=' || inFilePaths(i) || ' ' || inLogContext);
+      CONTINUE;
+    END;
+    -- Now deal with each recall one by one
+    IF inErrorCodes(i) = 0 THEN
+      -- Recall successful, check NS and update stager + log
+      tg_setFileRecalled(inMountTrId, inFseqs(i), inFilePaths(i), inChecksumNames(i), inChecksums(i),
+                         varReqId, inLogContext);
+    ELSE
+      -- Recall failed at tapeserver level, attempt to retry it
+      -- log "setBulkFileRecallResult : recall process failed, will retry if allowed"
+      logToDLF(varReqId, dlf.LVL_ERROR, dlf.RECALL_FAILED, inFileIds(i), varNsHost, 'tapegatewayd',
+               'mountTransactionId=' || TO_CHAR(inMountTrId) || ' TPVID=' || varVID ||
+               ' fseq=' || TO_CHAR(inFseqs(i)) || ' errorMessage="' || inErrorMsgs(i) ||'" '|| inLogContext);
+      retryOrFailRecall(varCfId, varVID);
+    END IF;
+    COMMIT;
+  END LOOP;
+  -- Final log
+  varParams := 'mountTransactionId='|| to_char(inMountTrId)
+               ||' NbFiles='|| inFileIds.COUNT ||' '|| inLogContext
+               ||' ElapsedTime='|| getSecs(varStartTime, SYSTIMESTAMP)
+               ||' AvgProcessingTime='|| getSecs(varStartTime, SYSTIMESTAMP)/inFileIds.COUNT;
+  logToDLF(varReqid, dlf.LVL_SYSTEM, dlf.BULK_RECALL_COMPLETED, 0, '', 'tapegatewayd', varParams);
+END;
+/
+
+
 /*
  * Database jobs
  */
@@ -9490,7 +9539,7 @@ BEGIN
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'MigrationMountsJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
-      JOB_ACTION      => 'BEGIN startMigrationMounts(); END;',
+      JOB_ACTION      => 'BEGIN startDbJob(''BEGIN startMigrationMounts(); END;'', ''tapegatewayd''); END;',
       JOB_CLASS       => 'CASTOR_JOB_CLASS',
       START_DATE      => SYSDATE + 1/1440,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=1',
@@ -9501,7 +9550,7 @@ BEGIN
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'RecallMountsJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
-      JOB_ACTION      => 'BEGIN startRecallMounts(); END;',
+      JOB_ACTION      => 'BEGIN startDbJob(''BEGIN startRecallMounts(); END;'', ''tapegatewayd''); END;',
       JOB_CLASS       => 'CASTOR_JOB_CLASS',
       START_DATE      => SYSDATE + 1/1440,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=1',
@@ -10313,7 +10362,7 @@ BEGIN
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'houseKeepingJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
-      JOB_ACTION      => 'BEGIN deleteTerminatedRequests(); END;',
+      JOB_ACTION      => 'BEGIN startDbJob(''BEGIN deleteTerminatedRequests(); END;'', ''stagerd''); END;',
       JOB_CLASS       => 'CASTOR_JOB_CLASS',
       START_DATE      => SYSDATE + 60/1440,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=20',
@@ -10324,7 +10373,7 @@ BEGIN
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'cleanupJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
-      JOB_ACTION      => 'BEGIN cleanup(); END;',
+      JOB_ACTION      => 'BEGIN startDbJob(''BEGIN cleanup(); END;'', ''stagerd''); END;',
       JOB_CLASS       => 'CASTOR_JOB_CLASS',
       START_DATE      => SYSDATE + 60/1440,
       REPEAT_INTERVAL => 'FREQ=HOURLY; INTERVAL=12',
@@ -10335,7 +10384,7 @@ BEGIN
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'bulkCheckFSBackInProdJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
-      JOB_ACTION      => 'BEGIN bulkCheckFSBackInProd(); END;',
+      JOB_ACTION      => 'BEGIN startDbJob(''BEGIN bulkCheckFSBackInProd(); END;'', ''stagerd''); END;',
       JOB_CLASS       => 'CASTOR_JOB_CLASS',
       START_DATE      => SYSDATE + 60/1440,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=5',
@@ -10987,29 +11036,6 @@ END;
 /
 
 
-/* SQL statement for DBMS_SCHEDULER job creation */
-BEGIN
-  -- Remove jobs related to the draining logic before recreating them
-  FOR j IN (SELECT job_name FROM user_scheduler_jobs
-             WHERE job_name IN ('DRAINMANAGERJOB'))
-  LOOP
-    DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
-  END LOOP;
-
-  -- Create the drain manager job to be executed every minute
-  DBMS_SCHEDULER.CREATE_JOB(
-      JOB_NAME        => 'drainManagerJob',
-      JOB_TYPE        => 'PLSQL_BLOCK',
-      JOB_ACTION      => 'BEGIN DrainManager(); END;',
-      JOB_CLASS       => 'CASTOR_JOB_CLASS',
-      START_DATE      => SYSDATE + 5/1440,
-      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=1',
-      ENABLED         => TRUE,
-      COMMENTS        => 'Database job to manage the draining process');
-END;
-/
-
-
 /* Procedure responsible for managing the draining process */
 CREATE OR REPLACE PROCEDURE drainManager AS
   fsIds "numList";
@@ -11123,6 +11149,29 @@ BEGIN
       drainFileSystem(f.fileSystem);
     END LOOP;
   END LOOP;
+END;
+/
+
+
+/* SQL statement for DBMS_SCHEDULER job creation */
+BEGIN
+  -- Remove jobs related to the draining logic before recreating them
+  FOR j IN (SELECT job_name FROM user_scheduler_jobs
+             WHERE job_name IN ('DRAINMANAGERJOB'))
+  LOOP
+    DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
+  END LOOP;
+
+  -- Create the drain manager job to be executed every minute
+  DBMS_SCHEDULER.CREATE_JOB(
+      JOB_NAME        => 'drainManagerJob',
+      JOB_TYPE        => 'PLSQL_BLOCK',
+      JOB_ACTION      => 'BEGIN startDbJob(''BEGIN drainManager(); END;'', ''stagerd''); END;',
+      JOB_CLASS       => 'CASTOR_JOB_CLASS',
+      START_DATE      => SYSDATE + 5/1440,
+      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=1',
+      ENABLED         => TRUE,
+      COMMENTS        => 'Database job to manage the draining process');
 END;
 /
 /*******************************************************************
