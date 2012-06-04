@@ -267,7 +267,7 @@ def connectToStager():
 
 def connectToNS():
     '''Connects to the nameserver database'''
-    NSSCHEMAVERSION = "2_1_9_3"
+    NSSCHEMAVERSION = "2_1_13_0"
     user, passwd, dbname = getNSDBConnectParam('NSCONFIG')
     return connectToDB(user, passwd, dbname, NSSCHEMAVERSION)
 
