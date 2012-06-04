@@ -110,7 +110,7 @@ END;
 /* Returns a time interval in seconds */
 CREATE OR REPLACE FUNCTION getSecs(startTime IN TIMESTAMP, endTime IN TIMESTAMP) RETURN NUMBER IS
 BEGIN
-  RETURN EXTRACT(SECOND FROM (endTime - startTime));
+  RETURN TRUNC(EXTRACT(SECOND FROM (endTime - startTime)), 6);
 END;
 /
 
