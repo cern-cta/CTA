@@ -99,6 +99,8 @@ castor::common::CastorConfiguration::getConfEnt(const std::string &category,
 //------------------------------------------------------------------------------
 void castor::common::CastorConfiguration::checkAndRenewConfig()
   throw (castor::exception::Exception) {
+  // take read only lock
+  smartReadLockTaker srl(&m_lock);
   // get the timeout
   time_t timeout = 300; // default to 300s = 5mn
   std::string &stimeout = Configuration::operator[]("Config")["ExpirationDelay"];
@@ -109,6 +111,8 @@ void castor::common::CastorConfiguration::checkAndRenewConfig()
     // set default to 300s = 5mn into the configuration
     Configuration::operator[]("Config")["ExpirationDelay"] = "300";
   }
+  // release read only lock
+  srl.release();
   // check whether we should renew  
   time_t currentTime = time(0);
   if (currentTime < m_lastUpdateTime + timeout) {
