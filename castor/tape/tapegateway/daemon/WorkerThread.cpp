@@ -734,7 +734,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileMigrationRe
     // failures should have a fseq higher than any of the successes.
     // 2.2.1 Check continuity
     if (highestFseq - lowestFseq + 1 !=
-        fileMigrationReportList.successfulMigrations().size()) {
+        (int) fileMigrationReportList.successfulMigrations().size()) {
       castor::exception::Internal e;
       e.getMessage() << "In handleFileMigrationReportList, mismatching "
           << "fSeqs and number of successes: lowestFseq=" << lowestFseq
@@ -755,14 +755,14 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileMigrationRe
         fileMigrationReportList.failedMigrations().begin();
         f < fileMigrationReportList.failedMigrations().end();
         f++) {
-      if ( f->fseq() <= highestFseq) {
+      if ( (*f)->fseq() <= highestFseq) {
         castor::exception::Internal e;
         e.getMessage() << "In handleFileMigrationReportList, mismatching "
             << "fSeqs for failure, lower than highest success fSeq: failureFSeq="
-            << f->fseq() << " failureNsFileId=" << f->fileid()
-            << " failureFileTransactionId=" << f->fileTransactionId()
-            << " failureErrorCode=" << f->errorCode()
-            << " failureErrorMessage=" << f->errorMessage()
+            << (*f)->fseq() << " failureNsFileId=" << (*f)->fileid()
+            << " failureFileTransactionId=" << (*f)->fileTransactionId()
+            << " failureErrorCode=" << (*f)->errorCode()
+            << " failureErrorMessage=" << (*f)->errorMessage()
             << " highestSuccessFseq=" << highestFseq;
         logInternalError(e, requester, fileMigrationReportList);
         std::auto_ptr<EndNotificationErrorReport> errorReport (new EndNotificationErrorReport());
