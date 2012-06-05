@@ -28,6 +28,7 @@
 #include <getconfent.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <limits.h>
 #include <inttypes.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -711,6 +712,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileMigrationRe
     // 2.1 Build the statistics of the successes. Also log the reception of them.
     u_signed64 totalBytes = 0, totalCompressedBytes = 0;
     int highestFseq = -1;
+    int lowestFseq = INT_MAX;
 
     for (std::vector<FileMigratedNotificationStruct *>::iterator sm =
            fileMigrationReportList.successfulMigrations().begin();
@@ -718,6 +720,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileMigrationRe
       totalBytes += (*sm)->fileSize();
       totalCompressedBytes += (*sm)->compressedFileSize();
       highestFseq = std::max((*sm)->fseq(), highestFseq);
+      lowestFseq =  std::min((*sm)->fseq(), lowestFseq);
       // Log the file notification while we're at it.
       Cns_fileid fileId;
       fileId.fileid = (*sm)->fileid();
@@ -726,7 +729,52 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileMigrationRe
           fileMigrationReportList.aggregatorTransactionId(), &fileId, requester, **sm);
     }
 
-    // 2.2 Update the VMGR for fseq. Stop here in case of failure.
+    // 2.2 As mentioned above, the tape server does not carry on on errors.
+    // That means the successes should be a continuous streak of fseqs, and all
+    // failures should have a fseq higher than any of the successes.
+    // 2.2.1 Check continuity
+    if (highestFseq - lowestFseq + 1 !=
+        fileMigrationReportList.successfulMigrations().size()) {
+      castor::exception::Internal e;
+      e.getMessage() << "In handleFileMigrationReportList, mismatching "
+          << "fSeqs and number of successes: lowestFseq=" << lowestFseq
+          << " highestFseq=" << highestFseq << " expectedNumber="
+          << highestFseq - lowestFseq + 1 <<  " actualNumber="
+          << fileMigrationReportList.successfulMigrations().size();
+      logInternalError(e, requester, fileMigrationReportList);
+      std::auto_ptr<EndNotificationErrorReport> errorReport (new EndNotificationErrorReport());
+      errorReport->setErrorCode(EIO);
+      errorReport->setErrorMessage("Wrong successes number/fseq range mismatch");
+      errorReport->setMountTransactionId(fileMigrationReportList.mountTransactionId());
+      errorReport->setAggregatorTransactionId(fileMigrationReportList.aggregatorTransactionId());
+      return errorReport.release();
+    }
+
+    // 2.2.2 Check that any failure fseq is above the highest success fSeq
+    for (std::vector<FileErrorReportStruct*>::iterator f =
+        fileMigrationReportList.failedMigrations().begin();
+        f < fileMigrationReportList.failedMigrations().end();
+        f++) {
+      if ( f->fseq() <= highestFseq) {
+        castor::exception::Internal e;
+        e.getMessage() << "In handleFileMigrationReportList, mismatching "
+            << "fSeqs for failure, lower than highest success fSeq: failureFSeq="
+            << f->fseq() << " failureNsFileId=" << f->fileid()
+            << " failureFileTransactionId=" << f->fileTransactionId()
+            << " failureErrorCode=" << f->errorCode()
+            << " failureErrorMessage=" << f->errorMessage()
+            << " highestSuccessFseq=" << highestFseq;
+        logInternalError(e, requester, fileMigrationReportList);
+        std::auto_ptr<EndNotificationErrorReport> errorReport (new EndNotificationErrorReport());
+        errorReport->setErrorCode(EIO);
+        errorReport->setErrorMessage("Error report interleaved in successes. This is not supported (nor expected)");
+        errorReport->setMountTransactionId(fileMigrationReportList.mountTransactionId());
+        errorReport->setAggregatorTransactionId(fileMigrationReportList.aggregatorTransactionId());
+        return errorReport.release();
+      }
+    }
+
+    // 2.3 Update the VMGR for fseq. Stop here in case of failure.
     castor::tape::utils::Timer timer;
     try {
       VmgrTapeGatewayHelper::bulkUpdateTapeInVmgr(
@@ -761,7 +809,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileMigrationRe
   }
 
   {
-    // 2.3 Scan all errors to find tape full condition for more update of the
+    // 2.4 Scan all errors to find tape full condition for more update of the
     // VMGR (at end session). Right now, the full status is just recorded in the
     // stager DB, to be used at end of tape session.
     // This is tape full conditions currently.
