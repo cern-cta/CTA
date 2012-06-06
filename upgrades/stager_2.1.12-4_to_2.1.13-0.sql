@@ -99,10 +99,11 @@ CREATE TABLE DLFLogs
    params VARCHAR2(2048));
 
 DROP PROCEDURE dumpCleanupLogs;
+DROP TABLE TapeGatewayRequest;
 DROP TABLE Tape;
 DROP TABLE Segment;
 DROP TABLE RecallJob;
-
+DROP TABLE PriorityMap;
 DROP SEQUENCE TG_FILETRID_SEQ;
 
 
@@ -307,6 +308,13 @@ DROP PROCEDURE tg_getRepackVIDAndFileInfo;
 DROP PROCEDURE tg_getFailedMigrations;
 DROP PROCEDURE tg_getFileToMigrate;
 DROP PROCEDURE tg_getFileToRecall;
+DROP PROCEDURE anySegmentsForTape;
+DROP PROCEDURE deletePriority;
+DROP PROCEDURE enterPriority;
+DROP PROCEDURE selectPriority;
+DROP PROCEDURE failedSegments;
+DROP PROCEDURE restartStuckRecalls;
+DROP PROCEDURE segmentsForTape;
 DROP FUNCTION selectTapeForRecall;
 DROP FUNCTION triggerRepackRecall;
 
@@ -314,15 +322,15 @@ DROP FUNCTION triggerRepackRecall;
 /* Resurrect all subrequest that were waiting so that we trigger new recalls after we have */
 /* dropped all recall related tables */
 /* also cleanup all diskcopies in WAITTAPERECALL as they should no exist anymore */
-DELETE FROM DiskCopy WHERE status = dconst.DISKCOPY_WAITTAPERECALL;
-UPDATE SubRequest SET status = dconst.SUBREQUEST_RESTART
- WHERE status IN (dconst.SUBREQUEST_WAITTAPERECALL, dconst.SUBREQUEST_WAITSUBREQ);
+DELETE FROM DiskCopy WHERE status = 2;
+UPDATE SubRequest SET status = 1
+ WHERE status IN (4, 5);
 COMMIT;
 
 /* Resurrect all selected migration jobs so that they get relinked to new mounts */
 UPDATE MigrationJob
-   SET status = tconst.MIGRATIONJOB_PENDING, mountTransactionId = NULL, nbRetries = 0
- WHERE status = tconst.MIGRATIONJOB_SELECTED;
+   SET status = 0, mountTransactionId = NULL, nbRetries = 0
+ WHERE status = 1;
 COMMIT;
 
 -- XXXXX Revalidation of all the PL/SQL code
@@ -338,7 +346,6 @@ COMMIT;
 @oracleQuery.sql
 @oracleRH.sql
 @oracleStager.sql
-@oracleDiskTapeInterface.sql
 @oracleTapeGateway.sql
 
 /* Recompile all invalid procedures, triggers and functions */
