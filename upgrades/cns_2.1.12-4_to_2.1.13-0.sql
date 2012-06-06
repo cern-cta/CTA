@@ -68,7 +68,10 @@ CREATE TABLE SetSegmentsForFilesHelper
 CREATE TABLE ResultsLogHelper
   (reqId VARCHAR2(36), timeinfo NUMBER, ec INTEGER, fileId NUMBER, msg VARCHAR2(2048), params VARCHAR2(4000));
 
-
+-- a synonym allowing to acces the VMGR_TAPE_SIDE table from within the nameserver DB
+UNDEF vmgrSchema
+ACCEPT vmgrSchema CHAR DEFAULT 'vmgr' PROMPT 'Enter the name of the VMGR schema (default vmgr): ';
+CREATE OR REPLACE SYNONYM Vmgr_tape_side FOR &vmgrSchema..Vmgr_tape_side;
 
 /* Package holding type declarations for the NameServer PL/SQL API */
 CREATE OR REPLACE PACKAGE castorns AS
