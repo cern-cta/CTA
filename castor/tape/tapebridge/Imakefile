@@ -49,6 +49,7 @@ TAPEBRIDGEBIN_SRCS = \
   DlfMessageStrings.cpp \
   IClientProxy.cpp \
   IFileCloser.cpp \
+  ILegacyTxRx.cpp \
   LegacyTxRx.cpp \
   LogHelper.cpp \
   MigrationReportConnection.cpp \

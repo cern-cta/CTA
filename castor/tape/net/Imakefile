@@ -24,6 +24,7 @@ COMM
 AddLdFlags(-lstdc++)
 
 TAPENETLIB_SRCS = \
+  IpAndPort.cpp   \
   net.cpp
 
 TAPENETLIB_OBJS = $(TAPENETLIB_SRCS:.cpp=.o)

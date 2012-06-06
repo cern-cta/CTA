@@ -56,80 +56,98 @@ namespace castor     {
 namespace tape       {
 namespace tapebridge {
 
-int createListenerSock_stdException(const char *addr,
-  const unsigned short lowPort, const unsigned short highPort,
-  unsigned short &chosenPort) {
-  try {
-    return net::createListenerSock(addr, lowPort, highPort,
-      chosenPort);
-  } catch(castor::exception::Exception &ex) {
-    test_exception te(ex.getMessage().str());
-
-    throw te;
-  }
-}
-
-typedef struct {
-  int                            inListenSocketFd;
-  int32_t                        inMarshalledMsgBodyLen;
-  int                            outGetClientInfo2Success;
-  tapeBridgeClientInfo2MsgBody_t outMsgBody;
-} rtcpd_thread_params;
-
-void *rtcpd_thread(void *arg) {
-  try {
-    rtcpd_thread_params *threadParams =
-      (rtcpd_thread_params*)arg;
-    utils::SmartFd listenSock(threadParams->inListenSocketFd);
-
-    const time_t acceptTimeout = 10; // Timeout is in seconds
-    utils::SmartFd connectionSockFd(
-      net::acceptConnection(listenSock.get(), acceptTimeout));
-
-    const int netReadWriteTimeout = 10; // Timeout is in seconds
-    rtcpClientInfo_t client;
-    rtcpTapeRequest_t tapeReq;
-    rtcpFileRequest_t fileReq;
-    int clientIsTapeBridge = 0;
-    char errBuf[1024];
-    rtcpd_GetClientInfo(
-      connectionSockFd.get(),
-      netReadWriteTimeout,
-      &tapeReq,
-      &fileReq,
-      &client,
-      &clientIsTapeBridge,
-      &(threadParams->outMsgBody),
-      errBuf,
-      sizeof(errBuf));
-
-    threadParams->outGetClientInfo2Success = 1;
-  } catch(castor::exception::Exception &ce) {
-    std::cerr <<
-      "ERROR"
-      ": rtcpd_thread"
-      ": Caught a castor::exception::Exception"
-      ": " << ce.getMessage().str() << std::endl;
-  } catch(std::exception &se) {
-    std::cerr <<
-      "ERROR"
-      ": rtcpd_thread"
-      ": Caught an std::exception"
-      ": " << se.what() << std::endl;
-  } catch(...) {
-    std::cerr << 
-      "ERROR"
-      ": rtcpd_thread"
-      ": Caught an unknown exception";
-  }
-
-  return arg;
-}
-
 class BridgeClientInfo2SenderTest: public CppUnit::TestFixture {
 private:
 
   tapeBridgeClientInfo2MsgBody_t m_clientInfoMsgBody;
+
+  int createListenerSock_stdException(const char *addr,
+    const unsigned short lowPort, const unsigned short highPort,
+    unsigned short &chosenPort) {
+    try {
+      return net::createListenerSock(addr, lowPort, highPort,
+        chosenPort);
+    } catch(castor::exception::Exception &ex) {
+      test_exception te(ex.getMessage().str());
+
+      throw te;
+    }
+  }
+
+  struct rtcpd_thread_params {
+    int                            inListenSocketFd;
+    int32_t                        inMarshalledMsgBodyLen;
+    int                            outGetClientInfo2Success;
+    tapeBridgeClientInfo2MsgBody_t outMsgBody;
+    bool                           outAnErrorOccurred;
+    std::ostringstream             outErrorStream;
+
+    rtcpd_thread_params():
+      inListenSocketFd(-1),
+      inMarshalledMsgBodyLen(0),
+      outGetClientInfo2Success(0),
+      outAnErrorOccurred(false) {
+      memset(&outMsgBody, '\0', sizeof(outMsgBody));
+    }
+  };
+
+  static void *rtcpd_thread(void *arg) {
+    rtcpd_thread_params *const threadParams = (rtcpd_thread_params*)arg;
+
+    try {
+      if(NULL == threadParams) {
+        test_exception te("Pointer to the thread-parameters is NULL");
+        throw te;
+      }
+
+      utils::SmartFd listenSock(threadParams->inListenSocketFd);
+
+      const time_t acceptTimeout = 10; // Timeout is in seconds
+      utils::SmartFd connectionSockFd(
+        net::acceptConnection(listenSock.get(), acceptTimeout));
+
+      const int netReadWriteTimeout = 10; // Timeout is in seconds
+      rtcpClientInfo_t client;
+      rtcpTapeRequest_t tapeReq;
+      rtcpFileRequest_t fileReq;
+      int clientIsTapeBridge = 0;
+      char errBuf[1024];
+      rtcpd_GetClientInfo(
+        connectionSockFd.get(),
+        netReadWriteTimeout,
+        &tapeReq,
+        &fileReq,
+        &client,
+        &clientIsTapeBridge,
+        &(threadParams->outMsgBody),
+        errBuf,
+        sizeof(errBuf));
+
+      threadParams->outGetClientInfo2Success = 1;
+    } catch(castor::exception::Exception &ce) {
+      threadParams->outAnErrorOccurred = true;
+      threadParams->outErrorStream <<
+        "ERROR"
+        ": " << __FUNCTION__ <<
+        ": Caught a castor::exception::Exception"
+        ": " << ce.getMessage().str() << std::endl;
+    } catch(std::exception &se) {
+      threadParams->outAnErrorOccurred = true;
+      threadParams->outErrorStream <<
+        "ERROR"
+        ": " << __FUNCTION__ <<
+        ": Caught an std::exception"
+        ": " << se.what() << std::endl;
+    } catch(...) {
+      threadParams->outAnErrorOccurred = true;
+      threadParams->outErrorStream <<
+        "ERROR"
+        ": " << __FUNCTION__ <<
+        ": Caught an unknown exception";
+    }
+
+    return arg;
+  }
 
 public:
 
@@ -202,7 +220,6 @@ public:
   void testSubmit() {
     rtcpd_thread_params threadParams;
 
-    memset(&threadParams, '\0', sizeof(threadParams));
     threadParams.inMarshalledMsgBodyLen =
       tapebridge_tapeBridgeClientInfo2MsgBodyMarshalledSize(
       &m_clientInfoMsgBody);
@@ -255,6 +272,13 @@ public:
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Thread results are same structure",
       (void *)&threadParams, rtcpd_thread_result);
+
+    if(threadParams.outAnErrorOccurred) {
+      test_exception te(threadParams.outErrorStream.str());
+      CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+        "The rtcpd_thread encountered an error",
+        throw te);
+    }
 
     CPPUNIT_ASSERT_MESSAGE("Check rtcpd_GetClientInfo2",
       threadParams.outGetClientInfo2Success);

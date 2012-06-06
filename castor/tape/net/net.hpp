@@ -32,6 +32,7 @@
 #include "castor/exception/TapeNetAcceptInterrupted.hpp"
 #include "castor/exception/TimeOut.hpp"
 #include "castor/tape/net/Constants.hpp"
+#include "castor/tape/net/IpAndPort.hpp"
 
 #include <errno.h>
 #include <string.h>
@@ -62,24 +63,29 @@ namespace net    {
  *                   parameter must be an unsigned integer greater than 0.
  * @param chosenPort Out parameter: The actual port that this method binds the
  *                   socket to.
- * @return           The socket file descriptor.
+ * @return           The socket descriptor.
  */
-int createListenerSock(const char *addr, const unsigned short lowPort,
-  const unsigned short highPort, unsigned short &chosenPort)
+int createListenerSock(
+  const char *const    addr,
+  const unsigned short lowPort,
+  const unsigned short highPort,
+  unsigned short       &chosenPort)
   throw(castor::exception::Exception);
 
 /**
  * Accepts a connection on the specified listener socket and returns the
- * socket file descriptor of the newly created connected socket.
+ * socket descriptor of the newly created and connected socket.
  *
  * @param listenSockFd The file descriptor of the listener socket.
+ * @return             The socket descriptor of the newly created and connected
+ *                     socket.
  */
 int acceptConnection(const int listenSockFd)
   throw(castor::exception::Exception);
 
 /**
  * Accepts a connection on the specified listener socket and returns the
- * socket file descriptor of the newly created connected socket.
+ * socket descriptor of the newly created and connected socket.
  *
  * This method accepts a timeout parameter.  If the timeout is exceeded, then
  * this method raises a castor::exception::TimeOut exception.  If this method
@@ -96,30 +102,32 @@ int acceptConnection(const int listenSockFd)
  * @param listenSockFd The file descriptor of the listener socket.
  * @param timeout      The timeout in seconds to be used when waiting for a
  *                     connection.
+ * @return             The socket descriptor of the newly created and connected
+ *                     socket.
  */
-int acceptConnection(const int listenSockFd,
-  const time_t timeout) throw(castor::exception::TimeOut,
-    castor::exception::TapeNetAcceptInterrupted, castor::exception::Exception);
+int acceptConnection(
+  const int    listenSockFd,
+  const time_t timeout)
+  throw(castor::exception::TimeOut,
+    castor::exception::TapeNetAcceptInterrupted, castor::exception::Exception); 
 
 /**
  * Gets the locally-bound IP and port number of the specified socket.
  *
  * @param socketFd The socket file descriptor.
- * @param ip The IP to be filled.
- * @param port The port to be filled.
+ * @return         The IP and port number of the specified socket.
  */
-void getSockIpPort(const int socketFd, unsigned long& ip,
-  unsigned short& port) throw(castor::exception::Exception);
+IpAndPort getSockIpPort(const int socketFd)
+  throw(castor::exception::Exception);
 
 /**
  * Gets the peer IP and port number of the specified socket.
  *
  * @param socketFd The socket file descriptor.
- * @param ip       The IP to be filled.
- * @param port     The port to be filled.
+ * @return         The IP and port number of the specified socket.
  */
-void getPeerIpPort(const int socketFd, unsigned long& ip,
-  unsigned short& port) throw(castor::exception::Exception);
+IpAndPort getPeerIpPort(const int socketFd)
+  throw(castor::exception::Exception);
 
 /**
  * Gets the locally-bound host name of the specified socket.
@@ -129,7 +137,10 @@ void getPeerIpPort(const int socketFd, unsigned long& ip,
  * @param len      The length of the buffer into which the host name should be
  *                 written to.
  */
-void getSockHostName(const int socketFd, char *buf, size_t len)
+void getSockHostName(
+  const int    socketFd,
+  char *const  buf,
+  const size_t len)
   throw(castor::exception::Exception);
 
 /**
@@ -138,11 +149,12 @@ void getSockHostName(const int socketFd, char *buf, size_t len)
  * @param socketFd The socket file descriptor.
  * @param buf      The buffer into which the hostname should written to.
  */
-template<int n> static void getSockHostName(const int socketFd,
-  char (&buf)[n]) throw(castor::exception::Exception) {
+template<int n> static void getSockHostName(
+  const int socketFd,
+  char (&buf)[n])
+  throw(castor::exception::Exception) {
   getSockHostName(socketFd, buf, n);
 }
-
 
 /**
  * Gets the locally-bound IP, host name and port of the specified socket.
@@ -154,9 +166,12 @@ template<int n> static void getSockHostName(const int socketFd,
  *                    should be written to.
  * @param port        The port to be filled.
  */
-void getSockIpHostnamePort(const int socketFd,
-  unsigned long& ip, char *hostName, size_t hostNameLen,
-  unsigned short& port) throw(castor::exception::Exception);
+void getSockIpHostnamePort(
+  const int      socketFd,
+  unsigned long  &ip,
+  char           *const hostName,
+  const size_t   hostNameLen,
+  unsigned short &port) throw(castor::exception::Exception);
 
 /**
  * Gets the locally-bound IP, host name and port of the specified socket.
@@ -166,8 +181,11 @@ void getSockIpHostnamePort(const int socketFd,
  * @param hostName The buffer into which the hostname should written to.
  * @param port     The port to be filled.
  */
-template<int n> static void getSockIpHostnamePort(const int socketFd,
-  unsigned long& ip, char (&hostName)[n], unsigned short& port)
+template<int n> static void getSockIpHostnamePort(
+  const int      socketFd,
+  unsigned long  &ip,
+  char           (&hostName)[n],
+  unsigned short &port)
   throw(castor::exception::Exception) {
   getSockIpHostnamePort(socketFd, ip, hostName, n, port);
 }
@@ -180,7 +198,10 @@ template<int n> static void getSockIpHostnamePort(const int socketFd,
  * @param len      The length of the buffer into which the host name should be
  *                 written to.
  */
-void getPeerHostName(const int socketFd, char *buf, size_t len)
+void getPeerHostName(
+  const int    socketFd,
+  char *const  buf,
+  const size_t len)
   throw(castor::exception::Exception);
 
 /**
@@ -189,8 +210,10 @@ void getPeerHostName(const int socketFd, char *buf, size_t len)
  * @param socketFd The socket file descriptor of the connection.
  * @param buf      The buffer into which the hostname should written to.
  */
-template<int n> static void getPeerHostName(const int socketFd,
-  char (&buf)[n]) throw(castor::exception::Exception) {
+template<int n> static void getPeerHostName(
+  const int socketFd,
+  char (&buf)[n])
+  throw(castor::exception::Exception) {
   getPeerHostName(socketFd, buf, n);
 }
 
@@ -201,7 +224,10 @@ template<int n> static void getPeerHostName(const int socketFd,
  * @param os The output stream.
  * @param ip The IP address in host byte order.
  */
-void writeIp(std::ostream &os, const unsigned long ip) throw();
+void writeIp(
+  std::ostream        &os,
+  const unsigned long ip)
+  throw();
 
 /**
  * Writes a textual description of the specified socket to the specified
@@ -211,7 +237,9 @@ void writeIp(std::ostream &os, const unsigned long ip) throw();
  * @param socketFd The file descriptor of the socket whose textual
  *                 description is to be printed to the stream.
  */
-void writeSockDescription(std::ostream &os, const int socketFd)
+void writeSockDescription(
+  std::ostream &os,
+  const int socketFd)
   throw();
 
 /**
@@ -231,22 +259,28 @@ void writeSockDescription(std::ostream &os, const int socketFd)
  * @param nbBytes  The number of bytes to be read.
  * @param buf      The buffer into which the bytes will be written.
  */
-void readBytes(const int socketFd, const int timeout, const int nbBytes,
-  char *buf) throw(castor::exception::Exception);
+void readBytes(
+  const int   socketFd,
+  const int   timeout,
+  const int   nbBytes,
+  char *const buf)
+  throw(castor::exception::Exception);
 
 /**
  * Reads the specified number of bytes from the specified closable socket
  * and writes the result into the specified buffer.
  *
- * @param connClosed Output parameter: True if the connection was closed
- * by the peer.
- * @param socketFd The file descriptor of the socket to be read from.
- * @param timeout  The timeout in seconds.
- * @param nbBytes  The number of bytes to be read.
- * @param buf      The buffer into which the bytes will be written.
+ * @param socketFd   The file descriptor of the socket to be read from.
+ * @param timeout    The timeout in seconds.
+ * @param nbBytes    The number of bytes to be read.
+ * @param buf        The buffer into which the bytes will be written.
+ * @return           True if the connection was closed by the peer, else false.
  */
-void readBytesFromCloseable(bool &connClosed, const int socketFd, 
-  const int timeout, const int nbBytes, char *buf) 
+bool readBytesFromCloseable(
+  const int   socketFd, 
+  const int   timeout,
+  const int   nbBytes,
+  char *const buf) 
   throw(castor::exception::Exception);
 
 /**
@@ -258,8 +292,12 @@ void readBytesFromCloseable(bool &connClosed, const int socketFd,
  * @param nbBytes  The number of bytes to be written.
  * @param buf      The buffer of bytes to be written to the socket.
  */
-void writeBytes(const int socketFd, const int timeout, const int nbBytes,
-  char *const buf) throw(castor::exception::Exception);
+void writeBytes(
+  const int   socketFd,
+  const int   timeout,
+  const int   nbBytes,
+  char *const buf)
+  throw(castor::exception::Exception);
 
 /**
  * Creates the specified socket and uses it to connects to the specified

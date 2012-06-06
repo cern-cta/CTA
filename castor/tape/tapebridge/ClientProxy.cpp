@@ -306,10 +306,18 @@ castor::tape::tapegateway::FilesToMigrateList
   const int      clientSock) const
   throw(castor::exception::Exception) {
 
-  std::auto_ptr<castor::IObject> obj(receiveReplyAndClose(clientSock));
-
   const char *const task = "receive reply to FilesToMigrateListRequest and"
     " close connection";
+
+  std::auto_ptr<castor::IObject> obj;
+  try {
+    obj.reset(receiveReplyAndClose(clientSock));
+  } catch(castor::exception::Exception &ex) {
+    // Add context and rethrow
+    TAPE_THROW_CODE(ex.code(),
+       ": Failed to " << task <<
+       ": " << ex.getMessage().str());
+  }
 
   switch(obj->type()) {
   case OBJ_FilesToMigrateList:
@@ -437,10 +445,18 @@ castor::tape::tapegateway::FilesToRecallList
   const int      clientSock) const
   throw(castor::exception::Exception) {
 
-  std::auto_ptr<castor::IObject> obj(receiveReplyAndClose(clientSock));
-
   const char *const task = "receive reply to FilesToRecallListRequest and"
     " close connection";
+
+  std::auto_ptr<castor::IObject> obj;
+  try {
+    obj.reset(receiveReplyAndClose(clientSock));
+  } catch(castor::exception::Exception &ex) {
+    // Add context and rethrow
+    TAPE_THROW_CODE(ex.code(),
+       ": Failed to " << task <<
+       ": " << ex.getMessage().str());
+  }
 
   switch(obj->type()) {
   case OBJ_FilesToRecallList:
@@ -687,6 +703,8 @@ int castor::tape::tapebridge::ClientProxy::connectAndSendMessage(
 
   castor::io::ClientSocket
     sock(m_clientAddress.connectToClient(m_netTimeout, connectDuration));
+  sock.setTimeout(m_netTimeout);
+  sock.setConnTimeout(m_netTimeout);
 
   // Send the message
   try {
@@ -765,6 +783,8 @@ castor::IObject
 
   castor::io::ClientSocket
     sock(m_clientAddress.connectToClient(m_netTimeout, connectDuration));
+  sock.setTimeout(m_netTimeout);
+  sock.setConnTimeout(m_netTimeout);
 
   // Send the request
   timeval sendAndReceiveStartTime = {0, 0};
@@ -824,7 +844,18 @@ void castor::tape::tapebridge::ClientProxy::receiveNotificationReplyAndClose(
   const int      clientSock) const
   throw(castor::exception::Exception) {
 
-  std::auto_ptr<castor::IObject> obj(receiveReplyAndClose(clientSock));
+  const char *const task = "receive notification reply and close connection";
+
+  std::auto_ptr<castor::IObject> obj;
+
+  try {
+    obj.reset(receiveReplyAndClose(clientSock));
+  } catch(castor::exception::Exception &ex) {
+    // Add context and rethrow
+    TAPE_THROW_CODE(ex.code(),
+       ": Failed to " << task <<
+       ": " << ex.getMessage().str());
+  }
 
   switch(obj->type()) {
   case OBJ_NotificationAcknowledge:
@@ -835,7 +866,7 @@ void castor::tape::tapebridge::ClientProxy::receiveNotificationReplyAndClose(
 
       if(reply == NULL) {
         TAPE_THROW_EX(castor::exception::Internal,
-          ": Failed to receive notification reply and close connection"
+          ": Failed to " << task <<
           ": Failed to down cast reply object to "
           "tapegateway::NotificationAcknowledge");
       }
@@ -846,7 +877,7 @@ void castor::tape::tapebridge::ClientProxy::receiveNotificationReplyAndClose(
           reply->aggregatorTransactionId());
       } catch(castor::exception::Exception &ex) {
         TAPE_THROW_CODE(ex.code(),
-          ": Failed to receive notification reply and close connection"
+          ": Failed to " << task <<
           ": " << ex.getMessage().str());
       }
     }
@@ -859,7 +890,7 @@ void castor::tape::tapebridge::ClientProxy::receiveNotificationReplyAndClose(
   default:
     {
       TAPE_THROW_CODE(EBADMSG,
-        ": Failed to receive notification reply and close connection"
+        ": Failed to " << task <<
         ": Unknown reply type "
         ": Reply type = " << obj->type());
     }

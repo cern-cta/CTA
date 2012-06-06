@@ -50,10 +50,10 @@ public:
   }
 
   void testConstructor() {
-    castor::tape::tapebridge::SessionError rtcpdError;
+    SessionError rtcpdError;
 
     CPPUNIT_ASSERT_EQUAL(
-      castor::tape::tapebridge::SessionError::UNKNOWN_SCOPE,
+      SessionError::UNKNOWN_SCOPE,
       rtcpdError.getErrorScope());
 
     CPPUNIT_ASSERT_EQUAL(
@@ -82,28 +82,28 @@ public:
   }
 
   void testAttributes() {
-    castor::tape::tapebridge::SessionError rtcpdError;
+    SessionError rtcpdError;
 
-    rtcpdError.setErrorScope(castor::tape::tapebridge::SessionError::FILE_SCOPE);
+    rtcpdError.setErrorScope(SessionError::FILE_SCOPE);
     CPPUNIT_ASSERT_EQUAL(
-      castor::tape::tapebridge::SessionError::FILE_SCOPE,
+      SessionError::FILE_SCOPE,
       rtcpdError.getErrorScope());
 
     rtcpdError.setErrorScope(
-      castor::tape::tapebridge::SessionError::SESSION_SCOPE);
+      SessionError::SESSION_SCOPE);
     CPPUNIT_ASSERT_EQUAL(
-      castor::tape::tapebridge::SessionError::SESSION_SCOPE,
+      SessionError::SESSION_SCOPE,
       rtcpdError.getErrorScope());
 
     rtcpdError.setErrorScope(
-      castor::tape::tapebridge::SessionError::UNKNOWN_SCOPE);
+      SessionError::UNKNOWN_SCOPE);
     CPPUNIT_ASSERT_EQUAL(
-      castor::tape::tapebridge::SessionError::UNKNOWN_SCOPE,
+      SessionError::UNKNOWN_SCOPE,
       rtcpdError.getErrorScope());
 
     {
-      const castor::tape::tapebridge::SessionError::ErrorScope crazyScopeValue =
-          (castor::tape::tapebridge::SessionError::ErrorScope)12345;
+      const SessionError::ErrorScope crazyScopeValue =
+          (SessionError::ErrorScope)12345;
 
       CPPUNIT_ASSERT_THROW(
         rtcpdError.setErrorScope(crazyScopeValue),

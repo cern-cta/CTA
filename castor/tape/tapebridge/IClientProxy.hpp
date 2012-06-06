@@ -44,8 +44,8 @@ namespace tape       {
 namespace tapebridge {
 
 /**
- * The interface to implemented by an object acting as a proxy for the client
- * of the tapebridged daemon.
+ * Abstract class specifiying the interface to be implemented by an object
+ * acting as a proxy for the client of the tapebridged daemon.
  *
  * A client of the tapebridged daemon may be dumptp, readtp, tapegatewayd, or
  * writetp.

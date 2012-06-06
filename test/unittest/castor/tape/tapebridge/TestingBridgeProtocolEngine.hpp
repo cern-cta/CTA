@@ -50,7 +50,8 @@ public:
     Counter<uint64_t>                   &tapebridgeTransactionCounter,
     const bool                          logPeerOfCallbackConnectionsFromRtcpd,
     const bool                          checkRtcpdIsConnectingFromLocalHost,
-    IClientProxy                        &clientProxy)
+    IClientProxy                        &clientProxy,
+    ILegacyTxRx                         &legacyTxRx)
     throw():
     BridgeProtocolEngine(
       fileCloser,
@@ -66,7 +67,8 @@ public:
       tapebridgeTransactionCounter,
       logPeerOfCallbackConnectionsFromRtcpd,
       checkRtcpdIsConnectingFromLocalHost,
-      clientProxy) {
+      clientProxy,
+      legacyTxRx) {
     // Do nothing
   }
 

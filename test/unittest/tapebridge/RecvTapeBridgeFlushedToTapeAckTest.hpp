@@ -50,6 +50,10 @@
 
 #define FAKE_TAPEBRIDGE_LISTEN_PORT 64000
 
+namespace castor     {
+namespace tape       {
+namespace tapebridge {
+
 class RecvTapeBridgeFlushedToTapeAckTest: public CppUnit::TestFixture {
 private:
 
@@ -185,8 +189,8 @@ public:
       &threadParams));
 
     // Create client connection
-    castor::tape::utils::SmartFd clientConnectionSock(socket(PF_INET,
-      SOCK_STREAM, IPPROTO_TCP));
+    utils::SmartFd clientConnectionSock(socket(PF_INET, SOCK_STREAM,
+      IPPROTO_TCP));
     CPPUNIT_ASSERT_MESSAGE("create client connection socket",
       0 <= clientConnectionSock.get());
     {
@@ -204,14 +208,13 @@ public:
 
     // Send TAPEBRIDGE_FLUSHEDTOTAPE acknowledgement message using client
     // connection
-    const uint32_t dummyVolReqId = 7777;
-    castor::tape::legacymsg::MessageHeader ackMsg;
+    legacymsg::MessageHeader ackMsg;
     memset(&ackMsg, '\0', sizeof(ackMsg));
     ackMsg.magic       = RTCOPY_MAGIC;
     ackMsg.reqType     = TAPEBRIDGE_FLUSHEDTOTAPE;
     ackMsg.lenOrStatus = 0;
-    castor::tape::tapebridge::LegacyTxRx::sendMsgHeader(nullCuuid,
-      dummyVolReqId, clientConnectionSock.get(), netReadWriteTimeout, ackMsg);
+    LegacyTxRx legacyTxRx(netReadWriteTimeout);
+    legacyTxRx.sendMsgHeader(clientConnectionSock.get(), ackMsg);
 
     void *tapebridged_thread_result = NULL;
       CPPUNIT_ASSERT_EQUAL_MESSAGE("pthread_join", 0,
@@ -237,5 +240,9 @@ public:
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION(RecvTapeBridgeFlushedToTapeAckTest);
+
+} // namespace tapebridge
+} // namespace tape
+} // namespace castor
 
 #endif // TEST_UNITTEST_TAPEBRIDGE_RECVTAPEBRIDGEFLUSHEDTOTAPEACKTEST_HPP

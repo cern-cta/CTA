@@ -34,6 +34,7 @@
 #include "test/unittest/castor/tape/tapebridge/FileToMigrateTest.hpp"
 #include "test/unittest/castor/tape/tapebridge/FileToRecallTest.hpp"
 #include "test/unittest/castor/tape/tapebridge/GetMoreWorkConnectionTest.hpp"
+#include "test/unittest/castor/tape/tapebridge/LegacyTxRxTest.hpp"
 #include "test/unittest/castor/tape/tapebridge/MigrationReportConnectionTest.hpp"
 #include "test/unittest/castor/tape/tapebridge/TapeBridgeDaemonTest.hpp"
 #include "test/unittest/castor/tape/tapebridge/TapeFlushConfigParamsTest.hpp"

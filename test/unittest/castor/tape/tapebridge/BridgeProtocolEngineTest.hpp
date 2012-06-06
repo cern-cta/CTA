@@ -226,6 +226,12 @@ private:
   AlwaysFalseBoolFunctor m_stoppingGracefully;
 
   /**
+   * Object responisble for sending and receiving the header of messages
+   * belonging to the legacy RTCOPY-protocol.
+   */
+  LegacyTxRx m_legacyTxRx;
+
+  /**
    * Pointer to the BridgeProtocolEngine.
    */
   TestingBridgeProtocolEngine *m_engine;
@@ -347,7 +353,7 @@ public:
     m_driveUnit("unit"),
     m_tapebridgeTransactionCounter(0),
     m_mountTransactionId(5678),
-    m_netTimeout(1),
+    m_netTimeout(2),
     m_clientAddress(m_clientListenSockPath),
     m_clientProxy(
       m_cuuid,
@@ -357,6 +363,7 @@ public:
       m_volumeDgn,
       m_driveUnit),
     m_nbFilesOnDestinationTape(2),
+    m_legacyTxRx(m_netTimeout),
     m_volReqId(m_mountTransactionId) {
     // Do nothing
   }
@@ -449,7 +456,8 @@ public:
       m_tapebridgeTransactionCounter,
       logPeerOfCallbackConnectionsFromRtcpd,
       checkRtcpdIsConnectingFromLocalHost,
-      m_clientProxy);
+      m_clientProxy,
+      m_legacyTxRx);
 
     // Clear the list of threads to join with at tearDown
     m_threadsToJoinWithAtTearDown.clear();
@@ -500,7 +508,8 @@ public:
     Counter<uint64_t>                   &tapebridgeTransactionCounter,
     const bool                          logPeerOfCallbackConnectionsFromRtcpd,
     const bool                          checkRtcpdIsConnectingFromLocalHost,
-    IClientProxy                        &clientProxy)
+    IClientProxy                        &clientProxy,
+    ILegacyTxRx                         &legacyTxRx)
     throw(std::exception) {
     TestingBridgeProtocolEngine *engine = NULL;
 
@@ -519,7 +528,8 @@ public:
         tapebridgeTransactionCounter,
         logPeerOfCallbackConnectionsFromRtcpd,
         checkRtcpdIsConnectingFromLocalHost,
-        clientProxy);
+        clientProxy,
+        legacyTxRx);
     } catch(castor::exception::Exception &ce) {
       test_exception te(ce.getMessage().str());
       throw te;
@@ -754,12 +764,11 @@ public:
 
     // Act as the client and accept the connection for more work from the
     // BridgeProtocolEngine
-    const int acceptTimeout = 10;
     int clientConnection1Fd = -1;
     CPPUNIT_ASSERT_NO_THROW_MESSAGE(
       "Check accept of first client-connection from the BridgeProtcolEngine",
        clientConnection1Fd = unittest::netAcceptConnection(
-         m_clientListenSock, acceptTimeout));
+         m_clientListenSock, m_netTimeout));
     castor::io::AbstractTCPSocket clientMarshallingSock1(clientConnection1Fd);
     clientMarshallingSock1.setTimeout(1);
 
@@ -822,8 +831,8 @@ public:
       legacymsg::MessageHeader rtcpEndOfReqMsg;
       CPPUNIT_ASSERT_NO_THROW_MESSAGE(
         "Receive header of RTCP_ENDOF_REQ message from BridgeProtocolEngine",
-        LegacyTxRx::receiveMsgHeader(m_cuuid, m_volReqId,
-        m_initialRtcpdSockRtcpdSide, m_netTimeout, rtcpEndOfReqMsg));
+        m_legacyTxRx.receiveMsgHeader(m_initialRtcpdSockRtcpdSide,
+        rtcpEndOfReqMsg));
       CPPUNIT_ASSERT_EQUAL_MESSAGE(
         "Check magic number of RTCP_ENDOF_REQ message from"
         " BridgeProtocolEngine",
@@ -851,8 +860,7 @@ public:
 
       CPPUNIT_ASSERT_NO_THROW_MESSAGE(
         "Send ack of RTCP_ENDOF_REQ message to BridgeProtocolEngine",
-        LegacyTxRx::sendMsgHeader(m_cuuid, m_volReqId,
-          m_initialRtcpdSockRtcpdSide, m_netTimeout, ackMsg));
+        m_legacyTxRx.sendMsgHeader(m_initialRtcpdSockRtcpdSide, ackMsg));
     }
 
     // Act as the client and accept the second connection from the
@@ -864,7 +872,7 @@ public:
     CPPUNIT_ASSERT_NO_THROW_MESSAGE(
       "Check accept of second client-connection from the BridgeProtcolEngine",
       clientConnection2Fd = unittest::netAcceptConnection(
-        m_clientListenSock, acceptTimeout));
+        m_clientListenSock, m_netTimeout));
     castor::io::AbstractTCPSocket clientMarshallingSock2(clientConnection2Fd);
     clientMarshallingSock2.setTimeout(1);
 
@@ -900,14 +908,6 @@ public:
         errorReport->errorCode());
     }
 
-/*
-    // Act as the client a send back a NotificationAcknowledge message
-    {
-      tapegateway::NotificationAcknowledge ack;
-      ack.setMountTransactionId(m_mountTransactionId);
-      ack.setAggregatorTransactionId();
-    }
-*/
     // Join with the start rtcpd session thread
     void *startRtcpdSessionThreadResult = NULL;
     CPPUNIT_ASSERT_EQUAL_MESSAGE("pthread_join", 0,
@@ -927,196 +927,6 @@ public:
         "The startRtcpdSessionThread thread encountered an error",
         throw te);
     }
-return;
-/*
-
-      // Act as the rtcpd daemon and read back the ACK from the
-      // BridgeProtocolEngine
-      CPPUNIT_ASSERT_NO_THROW_MESSAGE(
-        "Check read back of ACK of RTCP_FINISHED message",
-        unittest::readAck(smartIoControlConnectionSock.get(), RTCOPY_MAGIC,
-          RTCP_FILEERR_REQ, 0));
-
-      // Act as the rtcpd daemon and send the BridgeProtocolEngine a
-      // flushed-to-tape message
-      {
-        tapeBridgeFlushedToTapeMsgBody_t flushedMsgBody;
-        memset(&flushedMsgBody, '\0', sizeof(flushedMsgBody));
-        flushedMsgBody.volReqId = volReqId;
-        flushedMsgBody.tapeFseq = tapeFSeqOfFirstFileToMigrate;
-
-        CPPUNIT_ASSERT_MESSAGE(
-          "Check tapebridge_sendTapeBridgeFlushedToTape()",
-          0 < tapebridge_sendTapeBridgeFlushedToTape(
-            smartIoControlConnectionSock.get(), netTimeout, &flushedMsgBody));
-      }
-
-      // Act as the BridgeProtocolEngine and handle the flushed-to-tape message
-      // sent by the rtcpd daemon
-      {
-        struct timeval selectTimeout = {0, 0};
-        CPPUNIT_ASSERT_NO_THROW_MESSAGE(
-          "Check handling of the first flushed-to-tape message",
-          m_engine->handleSelectEvents(selectTimeout));
-      }
-      CPPUNIT_ASSERT_EQUAL_MESSAGE(
-        "Check the there is still only one I/O control-connection",
-        1,
-        m_engine->getNbDiskTapeIOControlConns());
-      CPPUNIT_ASSERT_EQUAL_MESSAGE(
-        "Check no RTCP_ENDOF_REQ messages have been received",
-        (uint32_t)0,
-        m_engine->getNbReceivedENDOF_REQs());
-      CPPUNIT_ASSERT_EQUAL_MESSAGE(
-        "Check the session with the rtcpd daemon is not being shutdown",
-        false,
-        m_engine->shuttingDownRtcpdSession());
-      CPPUNIT_ASSERT_EQUAL_MESSAGE(
-        "Check rtcpd session has not finished",
-        false,
-        m_engine->sessionWithRtcpdIsFinished());
-      CPPUNIT_ASSERT_EQUAL_MESSAGE(
-        "Check BridgeProtocolEngine should continue processing sockets",
-        true,
-        m_engine->continueProcessingSocks());
-
-      // Act as the rtcpd daemon and read in the ACK from the
-      // BridgeProtocolEngine of the flushed-to-tape message
-      {
-        tapeBridgeFlushedToTapeAckMsg_t flushedAckMsg;
-        memset(&flushedAckMsg, '\0', sizeof(flushedAckMsg));
-
-        CPPUNIT_ASSERT_MESSAGE(
-          "Check tapebridge_recvTapeBridgeFlushedToTapeAck()",
-          0 <= tapebridge_recvTapeBridgeFlushedToTapeAck(
-            smartIoControlConnectionSock.get(), netTimeout, &flushedAckMsg));
-      }
-
-      // Act as the client and accept the second connection from the
-      // BridgeProtocolEngine.  This connection will be used by the
-      // BridgeProtocolEngine to send the FileMigrationReportList message of
-      // the first migrated file.
-      int clientConnection2Fd = -1;
-      CPPUNIT_ASSERT_NO_THROW_MESSAGE(
-        "Check accept of second client-connection from the BridgeProtcolEngine",
-        clientConnection2Fd = unittest::netAcceptConnection(
-          m_clientListenSock, acceptTimeout));
-      castor::io::AbstractTCPSocket clientMarshallingSock2(clientConnection2Fd);
-      clientMarshallingSock2.setTimeout(1);
-
-      // The client is now slow to process the second connection from the
-      // BridgeProtocolEngine so does nothing at this very moment in time.
-
-      // Act as the rtcpd daemon and send a request for more work using the
-      // the already existant disk/tape I/O control-connection
-      CPPUNIT_ASSERT_NO_THROW_MESSAGE(
-        "Check writeRTCP_REQUEST_MORE_WORK()",
-        unittest::writeRTCP_REQUEST_MORE_WORK(
-          smartIoControlConnectionSock.get(),
-          volReqId,
-          tapePath));
-
-      // Act as the BridgeProtocolEngine and handle the second
-      // RTCP_REQUEST_MORE_WORK message from the rtcpd daemon
-      {
-        struct timeval selectTimeout = {0, 0};
-        CPPUNIT_ASSERT_NO_THROW_MESSAGE(
-          "Check handling of the second RTCP_REQUEST_MORE_WORK message",
-          m_engine->handleSelectEvents(selectTimeout));
-      }
-      CPPUNIT_ASSERT_EQUAL_MESSAGE(
-        "Check the there is still only one I/O control-connection",
-        1,
-        m_engine->getNbDiskTapeIOControlConns());
-      CPPUNIT_ASSERT_EQUAL_MESSAGE(
-        "Check no RTCP_ENDOF_REQ messages have been received",
-        (uint32_t)0,
-        m_engine->getNbReceivedENDOF_REQs());
-      CPPUNIT_ASSERT_EQUAL_MESSAGE(
-        "Check the session with the rtcpd daemon is not being shutdown",
-        false,
-        m_engine->shuttingDownRtcpdSession());
-      CPPUNIT_ASSERT_EQUAL_MESSAGE(
-        "Check rtcpd session has not finished",
-        false,
-        m_engine->sessionWithRtcpdIsFinished());
-      CPPUNIT_ASSERT_EQUAL_MESSAGE(
-        "Check BridgeProtocolEngine should continue processing sockets",
-        true,
-        m_engine->continueProcessingSocks());
-
-      // The client now catches up
-
-      // Act as the client and read in the FileMigrationReportList message of
-      // the first file to be migrated from the seond connection made with the
-      // client by the BridgeProtocolEngine
-      std::auto_ptr<IObject> fileMigrationReportListObj;
-      tapegateway::FileMigrationReportList *fileMigrationReportList = NULL;
-      {
-        CPPUNIT_ASSERT_NO_THROW_MESSAGE(
-          "Read in FileMigrationReportList the BridgeProtocolEngine",
-          fileMigrationReportListObj.reset(
-            clientMarshallingSock2.readObject()));
-        CPPUNIT_ASSERT_MESSAGE(
-          "Check FileMigrationReportList was read in from the"
-          " BridgeProtocolEngine",
-          NULL != fileMigrationReportListObj.get());
-        CPPUNIT_ASSERT_EQUAL_MESSAGE(
-          "Check FileMigrationReportList is of the correct type",
-          (int)castor::OBJ_FileMigrationReportList,
-          fileMigrationReportListObj->type());
-        fileMigrationReportList =
-          dynamic_cast<tapegateway::FileMigrationReportList*>
-          (fileMigrationReportListObj.get());
-        CPPUNIT_ASSERT_MESSAGE(
-          "Check dynamic_cast to FileMigrationReportList",
-          NULL != fileMigrationReportList);
-      }
-
-      // Act as the client and reply to the BridgeProtocolEngine with an error
-      // report
-      {
-        tapegateway::EndNotificationErrorReport errorReport;
-        errorReport.setErrorCode(ECANCELED);
-        errorReport.setErrorMessage("Error message");
-
-        CPPUNIT_ASSERT_NO_THROW_MESSAGE(
-          "Send error report in response to first file migrated",
-          clientMarshallingSock2.sendObject(errorReport));
-
-        clientMarshallingSock2.close();
-      }
-
-      // Act as the BridgeProtocolEngine and handle the error report from the
-      // client about the first migrated-file
-      {
-        struct timeval selectTimeout = {0, 0};
-        CPPUNIT_ASSERT_NO_THROW_MESSAGE(
-          "Check handling of the first file's error report from the client",
-          m_engine->handleSelectEvents(selectTimeout));
-      }
-      CPPUNIT_ASSERT_EQUAL_MESSAGE(
-        "Check the there is still only one I/O control-connection",
-        1,
-        m_engine->getNbDiskTapeIOControlConns());
-      CPPUNIT_ASSERT_EQUAL_MESSAGE(
-        "Check no RTCP_ENDOF_REQ messages have been received",
-        (uint32_t)0,
-        m_engine->getNbReceivedENDOF_REQs());
-      CPPUNIT_ASSERT_EQUAL_MESSAGE(
-        "Check the session with the rtcpd daemon is being gracefully shutdown",
-        true,
-        m_engine->shuttingDownRtcpdSession());
-      CPPUNIT_ASSERT_EQUAL_MESSAGE(
-        "Check rtcpd session has not finished",
-        false,
-        m_engine->sessionWithRtcpdIsFinished());
-      CPPUNIT_ASSERT_EQUAL_MESSAGE(
-        "Check BridgeProtocolEngine should continue processing sockets",
-        true,
-        m_engine->continueProcessingSocks());
-    }
-  */
   }
 
   /**
@@ -1336,12 +1146,11 @@ return;
 
     // Act as the client and accept the connection for more work from the
     // BridgeProtocolEngine
-    const int acceptTimeout = 1;
     int clientConnection1Fd = -1;
     CPPUNIT_ASSERT_NO_THROW_MESSAGE(
       "Check accept of first client-connection from the BridgeProtcolEngine",
        clientConnection1Fd = unittest::netAcceptConnection(
-         m_clientListenSock, acceptTimeout));
+         m_clientListenSock, m_netTimeout));
     castor::io::AbstractTCPSocket clientMarshallingSock1(clientConnection1Fd);
     clientMarshallingSock1.setTimeout(1);
 
@@ -1611,7 +1420,7 @@ return;
     CPPUNIT_ASSERT_NO_THROW_MESSAGE(
       "Check accept of second client-connection from the BridgeProtcolEngine",
       clientConnection2Fd = unittest::netAcceptConnection(
-        m_clientListenSock, acceptTimeout));
+        m_clientListenSock, m_netTimeout));
     castor::io::AbstractTCPSocket clientMarshallingSock2(clientConnection2Fd);
     clientMarshallingSock2.setTimeout(1);
 

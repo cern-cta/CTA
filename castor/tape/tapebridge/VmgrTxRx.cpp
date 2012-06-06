@@ -140,8 +140,8 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
   legacymsg::MessageHeader header;
   utils::setBytes(header, '\0');
   try {
-    LegacyTxRx::receiveMsgHeader(cuuid, volReqId, sock.socket(),
-      netReadWriteTimeout, header);
+    LegacyTxRx legacyTxRx(netReadWriteTimeout);
+    legacyTxRx.receiveMsgHeader(sock.socket(), header);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EPROTO,
       ": Failed to receive tape request from RTCPD"

@@ -25,10 +25,11 @@
 #include "castor/Constants.hpp"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/tape/legacymsg/CommonMarshal.hpp"
+#include "castor/tape/net/net.hpp"
 #include "castor/tape/tapebridge/DlfMessageConstants.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"
 #include "castor/tape/tapebridge/LegacyTxRx.hpp"
-#include "castor/tape/net/net.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/common.h"
 
@@ -37,11 +38,37 @@
 
 
 //-----------------------------------------------------------------------------
+// constructor
+//-----------------------------------------------------------------------------
+castor::tape::tapebridge::LegacyTxRx::LegacyTxRx(const int netReadWriteTimeout)
+  throw(): m_netReadWriteTimeout(netReadWriteTimeout) {
+  // Do nothing
+}
+
+
+//-----------------------------------------------------------------------------
+// destructor
+//-----------------------------------------------------------------------------
+castor::tape::tapebridge::LegacyTxRx::~LegacyTxRx() throw() {
+  // Do nothing
+}
+
+
+//-----------------------------------------------------------------------------
+// getNetReadWriteTimeout
+//-----------------------------------------------------------------------------
+int castor::tape::tapebridge::LegacyTxRx::getNetReadWriteTimeout() const
+  throw() {
+  return m_netReadWriteTimeout;
+}
+
+
+//-----------------------------------------------------------------------------
 // sendMsgHeader
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::LegacyTxRx::sendMsgHeader(
-  const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
-  const int netReadWriteTimeout, const legacymsg::MessageHeader &header)
+  const int                      socketFd,
+  const legacymsg::MessageHeader &header)
   throw(castor::exception::Exception) {
 
   char buf[RTCPMSGBUFSIZE];
@@ -55,30 +82,12 @@ void castor::tape::tapebridge::LegacyTxRx::sendMsgHeader(
       << ex.getMessage().str());
   }
 
-  {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", volReqId),
-      castor::dlf::Param("socketFd", socketFd)};
-
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
-      TAPEBRIDGE_SEND_HEADER_TO_RTCPD, params);
-  }
-
   try {
-    net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
+    net::writeBytes(socketFd, m_netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
       ": Failed to send message header to RTCPD"
       ": " << ex.getMessage().str());
-  }
-
-  {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", volReqId),
-      castor::dlf::Param("socketFd", socketFd)};
-
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
-      TAPEBRIDGE_SENT_HEADER_TO_RTCPD, params);
   }
 }
 
@@ -87,14 +96,15 @@ void castor::tape::tapebridge::LegacyTxRx::sendMsgHeader(
 // receiveMsgHeader
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::LegacyTxRx::receiveMsgHeader(
-  const Cuuid_t&, const uint32_t, const int socketFd,
-  const int, legacymsg::MessageHeader &header)
+  const int                socketFd,
+  legacymsg::MessageHeader &header)
   throw(castor::exception::Exception) {
 
   // Read in the message header
   char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len
   try {
-    net::readBytes(socketFd, RTCPDNETRWTIMEOUT, sizeof(headerBuf), headerBuf);
+    net::readBytes(socketFd, m_netReadWriteTimeout, sizeof(headerBuf),
+      headerBuf);
   } catch (castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
          ": Failed to read message header from RTCPD"
@@ -117,15 +127,16 @@ void castor::tape::tapebridge::LegacyTxRx::receiveMsgHeader(
 //-----------------------------------------------------------------------------
 // receiveMsgHeaderFromCloseableConn
 //-----------------------------------------------------------------------------
-void castor::tape::tapebridge::LegacyTxRx::receiveMsgHeaderFromCloseable(
-  const Cuuid_t&,  bool &connClosed, const uint32_t, 
-  const int socketFd, const int,
+bool castor::tape::tapebridge::LegacyTxRx::receiveMsgHeaderFromCloseable(
+  const int                socketFd,
   legacymsg::MessageHeader &header) throw(castor::exception::Exception) {
+
+  bool connClosed = false;
 
   // Read in the message header
   char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len
   try {
-    net::readBytesFromCloseable(connClosed, socketFd, RTCPDNETRWTIMEOUT, 
+    connClosed = net::readBytesFromCloseable(socketFd, m_netReadWriteTimeout, 
       sizeof(headerBuf), headerBuf);
   } catch (castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
@@ -143,4 +154,6 @@ void castor::tape::tapebridge::LegacyTxRx::receiveMsgHeaderFromCloseable(
        ": Failed to unmarshal message header from RTCPD"
        ": " << ex.getMessage().str());
   }
+
+  return connClosed;
 }

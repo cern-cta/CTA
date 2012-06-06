@@ -32,6 +32,7 @@
 #include "castor/tape/tapebridge/ClientAddressTcpIp.hpp"
 #include "castor/tape/tapebridge/ClientProxy.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"
+#include "castor/tape/tapebridge/LegacyTxRx.hpp"
 #include "castor/tape/tapebridge/RtcpJobSubmitter.hpp"
 #include "castor/tape/tapebridge/RtcpTxRx.hpp"
 #include "castor/tape/tapebridge/SystemFileCloser.hpp"
@@ -147,18 +148,16 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
 
     // Log the connection from the VDQM
     {
-      unsigned short port = 0; // Client port
-      unsigned long  ip   = 0; // Client IP
-      char           hostName[net::HOSTNAMEBUFLEN];
-
-      net::getPeerIpPort(vdqmSock.get(), ip, port);
+      char hostName[net::HOSTNAMEBUFLEN];
+      const net::IpAndPort peerIpAndPort = net::getPeerIpPort(vdqmSock.get());
       net::getPeerHostName(vdqmSock.get(), hostName);
 
       castor::dlf::Param params[] = {
-        castor::dlf::Param("IP"      , castor::dlf::IPAddress(ip)),
-        castor::dlf::Param("Port"    , port                      ),
-        castor::dlf::Param("HostName", hostName                  ),
-        castor::dlf::Param("socketFd", vdqmSock.get()            )};
+        castor::dlf::Param("IP"      ,
+          castor::dlf::IPAddress(peerIpAndPort.getIp())),
+        castor::dlf::Param("Port"    , peerIpAndPort.getPort()),
+        castor::dlf::Param("HostName", hostName               ),
+        castor::dlf::Param("socketFd", vdqmSock.get()         )};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
         TAPEBRIDGE_RECEIVED_VDQM_CONNECTION, params);
     }
@@ -391,17 +390,6 @@ void castor::tape::tapebridge::VdqmRequestHandler::exceptionThrowingRun(
   const int                           bridgeCallbackSockFd)
   throw(castor::exception::Exception) {
 
-  ClientAddressTcpIp
-    clientAddress(jobRequest.clientHost, jobRequest.clientPort);
-
-  ClientProxy clientProxy(
-    cuuid,
-    jobRequest.volReqId,
-    CLIENTNETRWTIMEOUT,
-    clientAddress,
-    jobRequest.dgn,
-    jobRequest.driveUnit);
-
   // Accept the initial incoming RTCPD callback connection.
   // Wrap the socket file descriptor in a smart file descriptor so that it is
   // guaranteed to be closed if it goes out of scope.
@@ -410,17 +398,17 @@ void castor::tape::tapebridge::VdqmRequestHandler::exceptionThrowingRun(
 
   // Log the initial callback connection from RTCPD
   try {
-    unsigned short port = 0; // Client port
-    unsigned long  ip   = 0; // Client IP
-    char           hostName[net::HOSTNAMEBUFLEN];
+    char hostName[net::HOSTNAMEBUFLEN];
 
-    net::getPeerIpPort(rtcpdInitialSock.get(), ip, port);
+    const net::IpAndPort peerIpAndPort =
+      net::getPeerIpPort(rtcpdInitialSock.get());
     net::getPeerHostName(rtcpdInitialSock.get(), hostName);
 
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId", jobRequest.volReqId       ),
-      castor::dlf::Param("IP"      , castor::dlf::IPAddress(ip)),
-      castor::dlf::Param("Port"    , port                      ),
+      castor::dlf::Param("IP"      ,
+        castor::dlf::IPAddress(peerIpAndPort.getIp())),
+      castor::dlf::Param("Port"    , peerIpAndPort.getPort()   ),
       castor::dlf::Param("HostName", hostName                  ),
       castor::dlf::Param("socketFd", rtcpdInitialSock.get()    )};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
@@ -452,6 +440,17 @@ void castor::tape::tapebridge::VdqmRequestHandler::exceptionThrowingRun(
       " RTCPD volume request ID=" << rtcpdRequestInfoReply.volReqId);
   }
 
+  // Create the client proxy
+  ClientAddressTcpIp
+    clientAddress(jobRequest.clientHost, jobRequest.clientPort);
+  ClientProxy clientProxy(
+    cuuid,
+    jobRequest.volReqId,
+    CLIENTNETRWTIMEOUT,
+    clientAddress,
+    jobRequest.dgn,
+    jobRequest.driveUnit);
+
   // Get the volume from the client of the tape-bridge
   std::auto_ptr<tapegateway::Volume> volume(clientProxy.getVolume(
     tapebridgeTransactionCounter.next()));
@@ -477,6 +476,10 @@ void castor::tape::tapebridge::VdqmRequestHandler::exceptionThrowingRun(
 
     return;
   }
+
+  // Create the object reponsible for sending and receiving the headers of
+  // messages belonging to the legacy RTCOPY protocol
+  LegacyTxRx legacyTxRx(RTCPDNETRWTIMEOUT);
 
   // If migrating
   if(volume->mode() == tapegateway::WRITE) {
@@ -534,7 +537,8 @@ void castor::tape::tapebridge::VdqmRequestHandler::exceptionThrowingRun(
       tapebridgeTransactionCounter,
       logPeerOfCallbackConnectionsFromRtcpd,
       checkRtcpdIsConnectingFromLocalHost,
-      clientProxy);
+      clientProxy,
+      legacyTxRx);
     bridgeProtocolEngine.run();
 
   // Else recalling
@@ -558,7 +562,8 @@ void castor::tape::tapebridge::VdqmRequestHandler::exceptionThrowingRun(
       tapebridgeTransactionCounter,
       logPeerOfCallbackConnectionsFromRtcpd,
       checkRtcpdIsConnectingFromLocalHost,
-      clientProxy);
+      clientProxy,
+      legacyTxRx);
     bridgeProtocolEngine.run();
   }
 }

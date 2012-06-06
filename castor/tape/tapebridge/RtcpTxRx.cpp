@@ -84,10 +84,10 @@ void castor::tape::tapebridge::RtcpTxRx::getRequestInfoFromRtcpd(
   }
 
   // Receive acknowledge from RTCPD
+  LegacyTxRx legacyTxRx(netReadWriteTimeout);
   legacymsg::MessageHeader ackMsg;
   try {
-    LegacyTxRx::receiveMsgHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
-      ackMsg);
+    legacyTxRx.receiveMsgHeader(socketFd, ackMsg);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EPROTO,
          ": Failed to receive acknowledge from RTCPD: "
@@ -108,8 +108,7 @@ void castor::tape::tapebridge::RtcpTxRx::getRequestInfoFromRtcpd(
   utils::setBytes(reply, '\0');
   try {
     legacymsg::MessageHeader header;
-    LegacyTxRx::receiveMsgHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
-      header);
+    legacyTxRx.receiveMsgHeader(socketFd, header);
     RtcpTxRx::receiveMsgBody(cuuid, volReqId, socketFd, netReadWriteTimeout,
       header, reply);
   } catch(castor::exception::Exception &ex) {
@@ -120,8 +119,7 @@ void castor::tape::tapebridge::RtcpTxRx::getRequestInfoFromRtcpd(
 
   // Send acknowledge to RTCPD
   try {
-    LegacyTxRx::sendMsgHeader(cuuid, volReqId, socketFd, netReadWriteTimeout, 
-      ackMsg);
+    legacyTxRx.sendMsgHeader(socketFd, ackMsg);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EPROTO,
       ": Failed to send acknowledge to RTCPD"
@@ -165,10 +163,10 @@ void castor::tape::tapebridge::RtcpTxRx::giveVolumeToRtcpd(
   }
 
   // Receive acknowledge from RTCPD
+  LegacyTxRx legacyTxRx(netReadWriteTimeout);
   legacymsg::MessageHeader ackMsg;
   try {
-    LegacyTxRx::receiveMsgHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
-      ackMsg);
+    legacyTxRx.receiveMsgHeader(socketFd, ackMsg);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EPROTO,
          ": Failed to receive acknowledge from RTCPD: "
@@ -230,9 +228,9 @@ void castor::tape::tapebridge::RtcpTxRx::giveFileToRtcpd(
 
   // Receive acknowledge from RTCPD
   legacymsg::MessageHeader ackMsg;
+  LegacyTxRx legacyTxRx(netReadWriteTimeout);
   try {
-    LegacyTxRx::receiveMsgHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
-      ackMsg);
+    legacyTxRx.receiveMsgHeader(socketFd, ackMsg);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EPROTO,
          ": Failed to receive acknowledge from RTCPD: "
@@ -293,9 +291,9 @@ void castor::tape::tapebridge::RtcpTxRx::tellRtcpdDumpTape(
 
   // Receive acknowledge from RTCPD
   legacymsg::MessageHeader ackMsg;
+  LegacyTxRx legacyTxRx(netReadWriteTimeout);
   try {
-    LegacyTxRx::receiveMsgHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
-      ackMsg);
+    legacyTxRx.receiveMsgHeader(socketFd, ackMsg);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EPROTO,
          ": Failed to receive acknowledge from RTCPD: "
@@ -410,9 +408,9 @@ void castor::tape::tapebridge::RtcpTxRx::tellRtcpdEndOfFileList(
 
   // Receive acknowledge from RTCPD
   legacymsg::MessageHeader ackMsg;
+  LegacyTxRx legacyTxRx(netReadWriteTimeout);
   try {
-    LegacyTxRx::receiveMsgHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
-      ackMsg);
+    legacyTxRx.receiveMsgHeader(socketFd, ackMsg);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EPROTO,
       ": Failed to receive acknowledge from RTCPD"
@@ -505,9 +503,9 @@ void castor::tape::tapebridge::RtcpTxRx::tellRtcpdToAbort(const Cuuid_t &cuuid,
 
   // Receive acknowledge from RTCPD
   legacymsg::MessageHeader ackMsg;
+  LegacyTxRx legacyTxRx(netReadWriteTimeout);
   try {
-    LegacyTxRx::receiveMsgHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
-      ackMsg);
+    legacyTxRx.receiveMsgHeader(socketFd, ackMsg);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EPROTO,
          ": Failed to receive acknowledge from RTCPD: "
@@ -691,9 +689,9 @@ void castor::tape::tapebridge::RtcpTxRx::askRtcpdToRequestMoreWork(
 
   // Receive acknowledge from RTCPD
   legacymsg::MessageHeader ackMsg;
+  LegacyTxRx legacyTxRx(netReadWriteTimeout);
   try {
-    LegacyTxRx::receiveMsgHeader(cuuid, volReqId, socketFd, netReadWriteTimeout,
-      ackMsg);
+    legacyTxRx.receiveMsgHeader(socketFd, ackMsg);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EPROTO,
       ": Failed to receive acknowledge from RTCPD"

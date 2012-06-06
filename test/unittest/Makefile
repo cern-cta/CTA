@@ -243,6 +243,7 @@ rununittests: \
   tape_findpgrp.o \
   tape_initlabel.o \
   tape_net.o \
+  tape_net_IpAndPort.o \
   tape_send2tpd.o \
   tape_usrmsg.o \
   tape_utils.o \
@@ -262,6 +263,7 @@ rununittests: \
   tapebridge_GetMoreWorkConnection.o \
   tapebridge_IClientProxy.o \
   tapebridge_IFileCloser.o \
+  tapebridge_ILegacyTxRx.o \
   tapebridge_LegacyTxRx.o \
   tapebridge_LogHelper.o \
   tapebridge_marshall.o \
@@ -341,6 +343,7 @@ runUnitTestsMain.cpp: \
   $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/FileToMigrateTest.hpp \
   $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/FileToRecallTest.hpp \
   $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/GetMoreWorkConnectionTest.hpp \
+  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/LegacyTxRxTest.hpp \
   $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/MigrationReportConnectionTest.hpp \
   $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/TapeBridgeDaemonTest.hpp \
   $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/TapeFlushConfigParamsTest.hpp \
@@ -1132,6 +1135,9 @@ tape_getcompstat.o: $(ROOT_DIR)/tape/getcompstat.c
 tape_net.o: $(ROOT_DIR)/castor/tape/net/net.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
+tape_net_IpAndPort.o: $(ROOT_DIR)/castor/tape/net/IpAndPort.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
 tape_initlabel.o: $(ROOT_DIR)/tape/initlabel.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
@@ -1246,6 +1252,10 @@ tapebridge_IClientProxy.o: \
 
 tapebridge_IFileCloser.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/IFileCloser.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapebridge_ILegacyTxRx.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/ILegacyTxRx.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapebridge_LegacyTxRx.o: \

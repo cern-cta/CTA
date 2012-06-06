@@ -90,7 +90,8 @@ castor::tape::tapebridge::BridgeProtocolEngine::BridgeProtocolEngine(
   Counter<uint64_t>                   &tapebridgeTransactionCounter,
   const bool                          logPeerOfCallbackConnectionsFromRtcpd,
   const bool                          checkRtcpdIsConnectingFromLocalHost,
-  IClientProxy                        &clientProxy)
+  IClientProxy                        &clientProxy,
+  ILegacyTxRx                         &legacyTxRx)
   throw(castor::exception::Exception) :
   m_fileCloser(fileCloser),
   m_bulkRequestConfigParams(bulkRequestConfigParams),
@@ -114,6 +115,7 @@ castor::tape::tapebridge::BridgeProtocolEngine::BridgeProtocolEngine(
     logPeerOfCallbackConnectionsFromRtcpd),
   m_checkRtcpdIsConnectingFromLocalHost(checkRtcpdIsConnectingFromLocalHost),
   m_clientProxy(clientProxy),
+  m_legacyTxRx(legacyTxRx),
   m_sessionErrors(cuuid, jobRequest, volume) {
 
   // Store the listen socket and initial rtcpd connection in the socket
@@ -177,11 +179,9 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   const int connectedSock)
   throw(castor::exception::Exception) {
   try {
-    unsigned short port = 0; // Client port
-    unsigned long  ip   = 0; // Client IP
-    char           hostName[net::HOSTNAMEBUFLEN];
+    char hostName[net::HOSTNAMEBUFLEN];
 
-    net::getPeerIpPort(connectedSock, ip, port);
+    const net::IpAndPort peerIpAndPort = net::getPeerIpPort(connectedSock);
     net::getPeerHostName(connectedSock, hostName);
 
     castor::dlf::Param params[] = {
@@ -194,8 +194,9 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
       castor::dlf::Param("clientPort"        , m_jobRequest.clientPort     ),
       castor::dlf::Param("clientType",
         utils::volumeClientTypeToString(m_volume.clientType())),
-      castor::dlf::Param("IP"                , castor::dlf::IPAddress(ip)  ),
-      castor::dlf::Param("Port"              , port                        ),
+      castor::dlf::Param("IP"                ,
+        castor::dlf::IPAddress(peerIpAndPort.getIp())),
+      castor::dlf::Param("Port"              , peerIpAndPort.getPort()     ),
       castor::dlf::Param("HostName"          , hostName                    ),
       castor::dlf::Param("socketFd"          , connectedSock               ),
       castor::dlf::Param("nbDiskTapeConns"   ,
@@ -472,20 +473,17 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 void castor::tape::tapebridge::BridgeProtocolEngine::checkPeerIsLocalhost(
   const int socketFd) throw(castor::exception::Exception) {
 
-  unsigned long  ip;
-  unsigned short port;
-
-  net::getPeerIpPort(socketFd, ip, port);
+  const net::IpAndPort peerIpAndPort = net::getPeerIpPort(socketFd);
 
   // localhost = 127.0.0.1 = 0x7F000001
-  if(ip != 0x7F000001) {
+  if(peerIpAndPort.getIp() != 0x7F000001) {
     castor::exception::PermissionDenied ex;
     std::ostream &os = ex.getMessage();
     os <<
       "Peer is not local host"
       ": expected=127.0.0.1"
       ": actual=";
-    net::writeIp(os, ip);
+    net::writeIp(os, peerIpAndPort.getIp());
 
     throw ex;
   }
@@ -511,7 +509,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   bool rtcpdClosedConnection = false;
   try {
     char dummyBuf[1];
-    net::readBytesFromCloseable(rtcpdClosedConnection, pendingSock,
+    rtcpdClosedConnection = net::readBytesFromCloseable(pendingSock,
       RTCPDNETRWTIMEOUT, sizeof(dummyBuf), dummyBuf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_EX(castor::exception::Internal,
@@ -551,9 +549,8 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   // Try to receive the message header which may not be possible; The file
   // descriptor may be ready because rtcpd has closed the connection
   {
-    bool peerClosed = false;
-    LegacyTxRx::receiveMsgHeaderFromCloseable(m_cuuid, peerClosed,
-      m_jobRequest.volReqId, pendingSock, RTCPDNETRWTIMEOUT, header);
+    const bool peerClosed = m_legacyTxRx.receiveMsgHeaderFromCloseable(
+      pendingSock, header);
 
     // If the peer closed its side of the connection, then close this side
     // of the connection and return in order to continue the RTCOPY session
@@ -838,6 +835,16 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::startRtcpdSession()
       castor::dlf::Param("errorMessage"      , ex.getMessage().str()  )};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
       TAPEBRIDGE_FAILED_TO_START_RTCPD_SESSION, params);
+
+    // Gather the error information into an SessionError object
+    SessionError sessionError;
+    sessionError.setErrorCode(ex.code());
+    sessionError.setErrorMessage(ex.getMessage().str());
+    sessionError.setErrorScope(SessionError::SESSION_SCOPE);
+
+    // Push the error onto the back of the list of errors generated during the
+    // sesion with the rtcpd daemon
+    m_sessionErrors.push_back(sessionError);
 
     rtcpdSessionStarted = false;
   }
@@ -1215,6 +1222,16 @@ void castor::tape::tapebridge::BridgeProtocolEngine::endRtcpdSession() throw() {
       castor::dlf::Param("errorMessage"      , ex.getMessage().str()  )};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
       TAPEBRIDGE_FAILED_TO_END_RTCPD_SESSION, params);
+
+    // Gather the error information into an SessionError object
+    SessionError sessionError;
+    sessionError.setErrorCode(ex.code());
+    sessionError.setErrorMessage(ex.getMessage().str());
+    sessionError.setErrorScope(SessionError::SESSION_SCOPE);
+
+    // Push the error onto the back of the list of errors generated during the
+    // sesion with the rtcpd daemon
+    m_sessionErrors.push_back(sessionError);
   }
 
   // Close the initial rtcpd-connection
@@ -1436,8 +1453,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpFileErrReqDump(
   ackMsg.magic       = header.magic;
   ackMsg.reqType     = header.reqType;
   ackMsg.lenOrStatus = 0;
-  LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, rtcpdSock,
-    RTCPDNETRWTIMEOUT, ackMsg);
+  m_legacyTxRx.sendMsgHeader(rtcpdSock, ackMsg);
 }
 
 
@@ -1454,8 +1470,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpWaiting(
   ackMsg.magic       = header.magic;
   ackMsg.reqType     = header.reqType;
   ackMsg.lenOrStatus = 0;
-  LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, rtcpdSock,
-    RTCPDNETRWTIMEOUT, ackMsg);
+  m_legacyTxRx.sendMsgHeader(rtcpdSock, ackMsg);
 
   // Determine the error code and message if there is an error embedded in the
   // message
@@ -1916,12 +1931,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::sendFileToRecallToRtcpd(
   ackMsg.magic       = rtcpdReqMagic;
   ackMsg.reqType     = rtcpdReqType;
   ackMsg.lenOrStatus = 0;
-  LegacyTxRx::sendMsgHeader(
-    m_cuuid,
-    m_jobRequest.volReqId,
-    rtcpdSock,
-    RTCPDNETRWTIMEOUT,
-    ackMsg);
+  m_legacyTxRx.sendMsgHeader(rtcpdSock, ackMsg);
 
   {
     castor::dlf::Param params[] = {
@@ -1954,8 +1964,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   ackMsg.magic       = header.magic;
   ackMsg.reqType     = header.reqType;
   ackMsg.lenOrStatus = 0;
-  LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, rtcpdSock,
-    RTCPDNETRWTIMEOUT, ackMsg);
+  m_legacyTxRx.sendMsgHeader(rtcpdSock, ackMsg);
 
   // Determine the error code and message if there is an error embedded in the
   // message
@@ -2054,8 +2063,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   ackMsg.magic       = header.magic;
   ackMsg.reqType     = header.reqType;
   ackMsg.lenOrStatus = 0;
-  LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, rtcpdSock,
-    RTCPDNETRWTIMEOUT, ackMsg);
+  m_legacyTxRx.sendMsgHeader(rtcpdSock, ackMsg);
 
   // Drop the message from rtcpd and return if the session is being shutdown
   if(shuttingDownRtcpdSession()) {
@@ -2354,8 +2362,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::rtcpTapeReqRtcpdCallback(
   ackMsg.magic       = RTCOPY_MAGIC;
   ackMsg.reqType     = RTCP_TAPE_REQ;
   ackMsg.lenOrStatus = 0;
-  LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, socketFd,
-    RTCPDNETRWTIMEOUT, ackMsg);
+  m_legacyTxRx.sendMsgHeader(socketFd, ackMsg);
 }
 
 
@@ -2377,8 +2384,7 @@ void
   ackMsg.magic       = RTCOPY_MAGIC;
   ackMsg.reqType     = RTCP_TAPE_REQ;
   ackMsg.lenOrStatus = 0;
-  LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, socketFd,
-    RTCPDNETRWTIMEOUT, ackMsg);
+  m_legacyTxRx.sendMsgHeader(socketFd, ackMsg);
 
   if(body.err.errorCode != 0) {
     TAPE_THROW_CODE(body.err.errorCode,
@@ -2401,8 +2407,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::rtcpEndOfReqRtcpdCallback(
   ackMsg.magic       = RTCOPY_MAGIC;
   ackMsg.reqType     = RTCP_ENDOF_REQ;
   ackMsg.lenOrStatus = 0;
-  LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, socketFd,
-    RTCPDNETRWTIMEOUT, ackMsg);
+  m_legacyTxRx.sendMsgHeader(socketFd, ackMsg);
 
   m_nbReceivedENDOF_REQs++;
 
@@ -2508,8 +2513,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   ackMsg.magic       = RTCOPY_MAGIC;
   ackMsg.reqType     = TAPEBRIDGE_FLUSHEDTOTAPE;
   ackMsg.lenOrStatus = 0;
-  LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, socketFd,
-    RTCPDNETRWTIMEOUT, ackMsg);
+  m_legacyTxRx.sendMsgHeader(socketFd, ackMsg);
 
   // Drop the message from rtcpd and return if the session is being shutdown
   if(shuttingDownRtcpdSession()) {
@@ -2981,11 +2985,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::sendFileToMigrateToRtcpd(
   ackMsg.magic       = rtcpdReqMagic;
   ackMsg.reqType     = rtcpdReqType;
   ackMsg.lenOrStatus = 0;
-  LegacyTxRx::sendMsgHeader(
-    m_cuuid,
-    m_jobRequest.volReqId,
-    rtcpdSock,
-    RTCPDNETRWTIMEOUT,ackMsg);
+  m_legacyTxRx.sendMsgHeader(rtcpdSock, ackMsg);
 
   {
     castor::dlf::Param params[] = {
@@ -3197,8 +3197,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   ackMsg.magic       = rtcpdReqMagic;
   ackMsg.reqType     = rtcpdReqType;
   ackMsg.lenOrStatus = 0;
-  LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId, rtcpdSock,
-    RTCPDNETRWTIMEOUT,ackMsg);
+  m_legacyTxRx.sendMsgHeader(rtcpdSock, ackMsg);
 
   {
     castor::dlf::Param params[] = {
@@ -3274,8 +3273,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::notifyRtcpdEndOfSession()
   endofReqMsg.magic       = RTCOPY_MAGIC;
   endofReqMsg.reqType     = RTCP_ENDOF_REQ;
   endofReqMsg.lenOrStatus = 0;
-  LegacyTxRx::sendMsgHeader(m_cuuid, m_jobRequest.volReqId,
-    m_sockCatalogue.getInitialRtcpdConn(), RTCPDNETRWTIMEOUT,
+  m_legacyTxRx.sendMsgHeader(m_sockCatalogue.getInitialRtcpdConn(),
     endofReqMsg);
 
   {
@@ -3299,8 +3297,8 @@ void castor::tape::tapebridge::BridgeProtocolEngine::notifyRtcpdEndOfSession()
   // Receive the acknowledge of the RTCP_ENDOF_REQ message
   legacymsg::MessageHeader ackMsg;
   try {
-    LegacyTxRx::receiveMsgHeader(m_cuuid, m_jobRequest.volReqId,
-      m_sockCatalogue.getInitialRtcpdConn(), RTCPDNETRWTIMEOUT, ackMsg);
+    m_legacyTxRx.receiveMsgHeader(m_sockCatalogue.getInitialRtcpdConn(),
+      ackMsg);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EPROTO,
       ": Failed to receive acknowledge of RTCP_ENDOF_REQ from rtcpd: "
@@ -3551,13 +3549,14 @@ void castor::tape::tapebridge::BridgeProtocolEngine::notifyClientEndOfSession()
       if(!m_sessionErrors.empty()) {
 
         // Get the oldest and first error to have occurred
-        const SessionError sessionError = m_sessionErrors.front();
+        const SessionError firstSessionError = m_sessionErrors.front();
 
         // Notify the client the session ended due to the error
         const uint64_t tapebridgeTransId =
           m_tapebridgeTransactionCounter.next();
         m_clientProxy.notifyEndOfFailedSession(tapebridgeTransId,
-          sessionError.getErrorCode(), sessionError.getErrorMessage());
+          firstSessionError.getErrorCode(),
+          firstSessionError.getErrorMessage());
       } else {
         // Notify the client the session has ended with success
         const uint64_t tapebridgeTransId =

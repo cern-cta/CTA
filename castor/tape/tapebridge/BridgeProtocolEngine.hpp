@@ -36,6 +36,7 @@
 #include "castor/tape/tapebridge/GetMoreWorkConnection.hpp"
 #include "castor/tape/tapebridge/IClientProxy.hpp"
 #include "castor/tape/tapebridge/IFileCloser.hpp"
+#include "castor/tape/tapebridge/ILegacyTxRx.hpp"
 #include "castor/tape/tapebridge/PendingMigrationsStore.hpp"
 #include "castor/tape/tapebridge/SessionErrorList.hpp"
 #include "castor/tape/tapebridge/TapeFlushConfigParams.hpp"
@@ -63,12 +64,11 @@ namespace tapebridge {
  * Acts as a bridge between the tapegatewayd and rtcpd daemons.
  *
  * The BridgeProtocolEngine behaves like a smart pointer for the initital
- * rtcpd-connection, the rtcpd disk/tape IO control-connections and the client
- * connections.  This means the destructor of the BridgeSocketCatalogue will
- * close them if they are still open.
+ * rtcpd-connection.  This means the destructor of the BridgeSocketCatalogue
+ * will close the inititalrtcpd-connection if it is still open.
  *
  * The BridgeProtocolEngine will not close the listen socket used to accept
- * rtcpd connections.  This is the responsibility of the VdqmRequestHandler.
+ * rtcpd connections.
  */
 class BridgeProtocolEngine {
 
@@ -114,6 +114,9 @@ public:
    *                                 connecting from the local host.
    * @param clientProxy              Object representing the client of the
    *                                 tapebridged daemon.
+   * @param legacyTxRx               Object reponsible for sending and
+   *                                 receiving the headers of messages
+   *                                 belonging to the legacy RTCOPY protocol.
    */
   BridgeProtocolEngine(
     IFileCloser                         &fileCloser,
@@ -129,7 +132,8 @@ public:
     Counter<uint64_t>                   &tapebridgeTransactionCounter,
     const bool                          logPeerOfCallbackConnectionsFromRtcpd,
     const bool                          checkRtcpdIsConnectingFromLocalHost,
-    IClientProxy                        &clientProxy)
+    IClientProxy                        &clientProxy,
+    ILegacyTxRx                         &legacyTxRx)
     throw(castor::exception::Exception);
 
   /**
@@ -142,7 +146,7 @@ private:
   /**
    * The object used to close file-descriptors.
    *
-   * The main goal of this object to facilitate in unit-testing the
+   * The main goal of this object is to facilitate in unit-testing the
    * BridgeProtocolEngine.
    */
   IFileCloser &m_fileCloser;
@@ -266,6 +270,12 @@ private:
    * Object representing the client of the tapebridged daemon.
    */
   IClientProxy &m_clientProxy;
+
+  /**
+   * Object reponsible for sending and receiving the headers of messages
+   * belonging to the legacy RTCOPY protocol.
+   */
+  ILegacyTxRx &m_legacyTxRx;
 
   /**
    * The files to be migrated to tape that have been returned by the

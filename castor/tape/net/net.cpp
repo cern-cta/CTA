@@ -36,6 +36,7 @@
 #include <fcntl.h>
 #include <netdb.h>
 #include <sstream>
+#include <string.h>
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -46,7 +47,7 @@
 // createListenerSock
 //-----------------------------------------------------------------------------
 int castor::tape::net::createListenerSock(
-  const char           *addr,
+  const char *const    addr,
   const unsigned short lowPort,
   const unsigned short highPort,
   unsigned short       &chosenPort)
@@ -207,9 +208,11 @@ int castor::tape::net::acceptConnection(const int listenSocketFd)
 //-----------------------------------------------------------------------------
 // acceptConnection
 //-----------------------------------------------------------------------------
-int castor::tape::net::acceptConnection(const int listenSocketFd,
-  const time_t timeout) throw(castor::exception::TimeOut,
-  castor::exception::TapeNetAcceptInterrupted, castor::exception::Exception) {
+int castor::tape::net::acceptConnection(
+  const int    listenSocketFd,
+  const time_t timeout)
+  throw(castor::exception::TimeOut,
+    castor::exception::TapeNetAcceptInterrupted, castor::exception::Exception) {
 
   // Throw an exception if listenSocketFd is invalid
   if(listenSocketFd < 0) {
@@ -293,9 +296,8 @@ int castor::tape::net::acceptConnection(const int listenSocketFd,
 //-----------------------------------------------------------------------------
 // getSockIpPort
 //-----------------------------------------------------------------------------
-void castor::tape::net::getSockIpPort(const int socketFd,
-  unsigned long& ip, unsigned short& port)
-  throw(castor::exception::Exception) {
+castor::tape::net::IpAndPort castor::tape::net::getSockIpPort(
+  const int socketFd) throw(castor::exception::Exception) {
 
   // Throw an exception if socketFd is invalid
   if(socketFd < 0) {
@@ -305,6 +307,7 @@ void castor::tape::net::getSockIpPort(const int socketFd,
   }
 
   struct sockaddr_in address;
+  memset(&address, '\0', sizeof(address));
   socklen_t addressLen = sizeof(address);
 
   if(getsockname(socketFd, (struct sockaddr*)&address, &addressLen) < 0) {
@@ -316,17 +319,15 @@ void castor::tape::net::getSockIpPort(const int socketFd,
       ": " << sstrerror(savedErrno));
   }
 
-  ip   = ntohl(address.sin_addr.s_addr);
-  port = ntohs(address.sin_port);
+  return IpAndPort(ntohl(address.sin_addr.s_addr), ntohs(address.sin_port));
 }
 
 
 //-----------------------------------------------------------------------------
 // getPeerIpPort
 //-----------------------------------------------------------------------------
-void castor::tape::net::getPeerIpPort(const int socketFd,
-  unsigned long& ip, unsigned short& port)
-  throw(castor::exception::Exception) {
+castor::tape::net::IpAndPort  castor::tape::net::getPeerIpPort(
+  const int socketFd) throw(castor::exception::Exception) {
 
   // Throw an exception if socketFd is invalid
   if(socketFd < 0) {
@@ -336,6 +337,7 @@ void castor::tape::net::getPeerIpPort(const int socketFd,
   }
 
   struct sockaddr_in address;
+  memset(&address, '\0', sizeof(address));
   socklen_t addressLen = sizeof(address);
 
   if(getpeername(socketFd, (struct sockaddr*)&address, &addressLen) < 0) {
@@ -347,16 +349,18 @@ void castor::tape::net::getPeerIpPort(const int socketFd,
       ": " << sstrerror(savedErrno));
   }
 
-  ip   = ntohl(address.sin_addr.s_addr);
-  port = ntohs(address.sin_port);
+  return IpAndPort(ntohl(address.sin_addr.s_addr), ntohs(address.sin_port));
 }
 
 
 //------------------------------------------------------------------------------
 // getSockHostName
 //------------------------------------------------------------------------------
-void castor::tape::net::getSockHostName(const int socketFd,
-  char *buf, size_t len) throw(castor::exception::Exception) {
+void castor::tape::net::getSockHostName(
+  const int    socketFd,
+  char *const  buf,
+  const size_t len)
+  throw(castor::exception::Exception) {
 
   // Throw an exception if socketFd is invalid
   if(socketFd < 0) {
@@ -396,9 +400,13 @@ void castor::tape::net::getSockHostName(const int socketFd,
 //------------------------------------------------------------------------------
 // getSockIpHostnamePort
 //------------------------------------------------------------------------------
-void castor::tape::net::getSockIpHostnamePort(const int socketFd,
-  unsigned long& ip, char *hostName, size_t hostNameLen,
-  unsigned short& port) throw(castor::exception::Exception) {
+void castor::tape::net::getSockIpHostnamePort(
+  const int      socketFd,
+  unsigned long  &ip,
+  char *const    hostName,
+  const size_t   hostNameLen,
+  unsigned short &port)
+  throw(castor::exception::Exception) {
 
   // Throw an exception if socketFd is invalid
   if(socketFd < 0) {
@@ -440,8 +448,11 @@ void castor::tape::net::getSockIpHostnamePort(const int socketFd,
 //------------------------------------------------------------------------------
 // getPeerHostName
 //------------------------------------------------------------------------------
-void castor::tape::net::getPeerHostName(const int socketFd,
-  char *buf, size_t len) throw(castor::exception::Exception) {
+void castor::tape::net::getPeerHostName(
+  const int    socketFd,
+  char *const  buf,
+  const size_t len)
+  throw(castor::exception::Exception) {
 
   // Throw an exception if socketFd is invalid
   if(socketFd < 0) {
@@ -483,8 +494,10 @@ void castor::tape::net::getPeerHostName(const int socketFd,
 //------------------------------------------------------------------------------
 // writeIp
 //------------------------------------------------------------------------------
-void castor::tape::net::writeIp(std::ostream &os,
-  const unsigned long ip) throw() {
+void castor::tape::net::writeIp(
+  std::ostream        &os,
+  const unsigned long ip)
+  throw() {
   os << ((ip >> 24) & 0x000000FF) << "."
      << ((ip >> 16) & 0x000000FF) << "."
      << ((ip >>  8) & 0x000000FF) << "."
@@ -495,8 +508,10 @@ void castor::tape::net::writeIp(std::ostream &os,
 //------------------------------------------------------------------------------
 // writeSockDescription
 //------------------------------------------------------------------------------
-void castor::tape::net::writeSockDescription(std::ostream &os,
-  const int socketFd) throw() {
+void castor::tape::net::writeSockDescription(
+  std::ostream &os,
+  const int    socketFd)
+  throw() {
 
   // Throw an exception if socketFd is invalid
   if(socketFd < 0) {
@@ -505,31 +520,28 @@ void castor::tape::net::writeSockDescription(std::ostream &os,
       ": socketFd=" << socketFd);
   }
 
-  unsigned long  localIp   = 0;
-  unsigned short localPort = 0;
-  unsigned long  peerIp    = 0;
-  unsigned short peerPort  = 0;
-
+  IpAndPort localIpAndPort(0, 0);
   try {
-    getSockIpPort(socketFd, localIp, localPort);
+    localIpAndPort = getSockIpPort(socketFd);
   } catch(castor::exception::Exception &e) {
-    localIp   = 0;
-    localPort = 0;
+    localIpAndPort.setIp(0);
+    localIpAndPort.setPort(0);
   }
 
+  IpAndPort peerIpAndPort(0, 0);
   try {
-    getPeerIpPort(socketFd, peerIp, peerPort);
+    peerIpAndPort = getPeerIpPort(socketFd);
   } catch(castor::exception::Exception &e) {
-    peerIp   = 0;
-    peerPort = 0;
+    peerIpAndPort.setIp(0);
+    peerIpAndPort.setPort(0);
   }
 
   os << "{local=";
-  writeIp(os, localIp);
-  os << ":" << localPort;
+  writeIp(os, localIpAndPort.getIp());
+  os << ":" << localIpAndPort.getPort();
   os << ",peer=";
-  writeIp(os, peerIp);
-  os << ":" << peerPort;
+  writeIp(os, peerIpAndPort.getIp());
+  os << ":" << peerIpAndPort.getPort();
   os << "}";
 }
 
@@ -537,8 +549,12 @@ void castor::tape::net::writeSockDescription(std::ostream &os,
 //------------------------------------------------------------------------------
 // readBytes
 //------------------------------------------------------------------------------
-void castor::tape::net::readBytes(const int socketFd, const int timeout,
-  const int nbBytes, char *buf) throw(castor::exception::Exception) {
+void castor::tape::net::readBytes(
+  const int   socketFd,
+  const int   timeout,
+  const int   nbBytes,
+  char *const buf)
+  throw(castor::exception::Exception) {
 
   // Throw an exception if socketFd is invalid
   if(socketFd < 0) {
@@ -547,9 +563,8 @@ void castor::tape::net::readBytes(const int socketFd, const int timeout,
       ": socketFd=" << socketFd);
   }
 
-  bool connClosed = false;
-
-  readBytesFromCloseable(connClosed, socketFd, timeout, nbBytes, buf);
+  const bool connClosed = readBytesFromCloseable(socketFd, timeout, nbBytes,
+    buf);
 
   if(connClosed) {
     std::stringstream oss;
@@ -565,8 +580,11 @@ void castor::tape::net::readBytes(const int socketFd, const int timeout,
 //------------------------------------------------------------------------------
 // readBytesFromCloseable
 //------------------------------------------------------------------------------
-void castor::tape::net::readBytesFromCloseable(bool &connClosed, 
-  const int socketFd, const int timeout, const int nbBytes, char *buf)
+bool castor::tape::net::readBytesFromCloseable(
+  const int   socketFd,
+  const int   timeout,
+  const int   nbBytes,
+  char *const buf)
   throw(castor::exception::Exception) {
 
   // Throw an exception if socketFd is invalid
@@ -576,7 +594,7 @@ void castor::tape::net::readBytesFromCloseable(bool &connClosed,
       ": socketFd=" << socketFd);
   }
 
-  connClosed = false;
+  bool connClosed = false;
   const int rc = netread_timeout(socketFd, buf, nbBytes, timeout);
   int savedSerrno = serrno;
 
@@ -620,14 +638,20 @@ void castor::tape::net::readBytesFromCloseable(bool &connClosed,
       TAPE_THROW_CODE(SECOMERR, oss.str());
     }
   }
+
+  return connClosed;
 }
 
 
 //------------------------------------------------------------------------------
 // writeBytes
 //------------------------------------------------------------------------------
-void castor::tape::net::writeBytes(const int socketFd, const int timeout,
-  const int nbBytes, char *const buf) throw(castor::exception::Exception) {
+void castor::tape::net::writeBytes(
+  const int   socketFd,
+  const int   timeout,
+  const int   nbBytes,
+  char *const buf)
+  throw(castor::exception::Exception) {
 
   // Throw an exception if socketFd is invalid
   if(socketFd < 0) {

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/tapebridge/LegacyTxRx.hpp
+ *                castor/tape/tapebridge/ILegacyTxRx.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,47 +19,32 @@
  *
  *
  *
- * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPEBRIDGE_LEGACYTXRX_HPP
-#define CASTOR_TAPE_TAPEBRIDGE_LEGACYTXRX_HPP 1
+#ifndef CASTOR_TAPE_TAPEBRIDGE_ILEGACYTXRX_HPP
+#define CASTOR_TAPE_TAPEBRIDGE_ILEGACYTXRX_HPP 1
 
-#include "castor/tape/tapebridge/ILegacyTxRx.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/tape/legacymsg/MessageHeader.hpp"
 
 namespace castor     {
 namespace tape       {
 namespace tapebridge {
 
 /**
- * Provides common functions for sending and receiving the messages of the
- * legacy protocols: RTCOPY and VMGR.
+ * Abstract class specifying the interface to be implemented by an object
+ * repsonsible for sending and receiving the headers of messages belonging to
+ * the legacy RTCOPY protocol.
  */
-class LegacyTxRx: public ILegacyTxRx {
+class ILegacyTxRx {
 
 public:
 
   /**
-   * Constructor.
-   *
-   * @param netReadWriteTimeout The timeout in seconds to be applied when
-   *                            performing network read and write operations.
+   * Virtual destructor.
    */
-  LegacyTxRx(const int netReadWriteTimeout) throw();
-
-  /**
-   * Destructor.
-   */
-  ~LegacyTxRx() throw();
-
-  /**
-   * Returns the timeout in seconds to be applied when performing network read
-   * and write operations.
-   *
-   * @return The timeout in seconds to be applied when performing network read
-   *         and write operations.
-   */
-  int getNetReadWriteTimeout() const throw();
+  virtual ~ILegacyTxRx() throw();
 
   /**
    * Sends the specified message header to RTCPD using the specified socket.
@@ -67,10 +52,10 @@ public:
    * @param socketFd The socket file descriptor of the connection with RTCPD.
    * @param header   The message header to be sent.
    */
-  void sendMsgHeader(
+  virtual void sendMsgHeader(
     const int                      socketFd,
     const legacymsg::MessageHeader &header)
-    throw(castor::exception::Exception);
+    throw(castor::exception::Exception) = 0;
 
   /**
    * Receives a message header.
@@ -87,10 +72,10 @@ public:
    * @param request  The request which will be filled with the contents of the
    *                 received message.
    */
-  void receiveMsgHeader(
+  virtual void receiveMsgHeader(
     const int                socketFd,
     legacymsg::MessageHeader &header)
-    throw(castor::exception::Exception);
+    throw(castor::exception::Exception) = 0;
 
   /**
    * Receives a message header or a connection close message.
@@ -100,18 +85,10 @@ public:
    *                 received message.
    * @return         True if the connection was closed by the peer, else false.
    */
-  bool receiveMsgHeaderFromCloseable(
+  virtual bool receiveMsgHeaderFromCloseable(
     const int                socketFd,
     legacymsg::MessageHeader &header) 
-    throw(castor::exception::Exception);
-
-private:
-
-  /**
-   * The timeout in seconds to be applied when performing network read and
-   * write operations.
-   */
-  int m_netReadWriteTimeout;
+    throw(castor::exception::Exception) = 0;
 
 }; // class LegacyTxRx
 
@@ -119,4 +96,4 @@ private:
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPEBRIDGE_LEGACYTXRX_HPP
+#endif // CASTOR_TAPE_TAPEBRIDGE_ILEGACYTXRX_HPP
