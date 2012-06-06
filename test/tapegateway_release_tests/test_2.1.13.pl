@@ -75,7 +75,8 @@ my @packages_headnode=
  "castor-upv-server",
  "castor-vdqm2-lib-oracle",
  "castor-upv-client",
- "castor-rfio-client"
+ "castor-rfio-client",
+ "castor-ns-server"
  );
 
 
@@ -111,8 +112,7 @@ my @packages_disktape_server=
 
 my @services_headnode =
 (
- "rechandlerd",
- "expertd",
+ "nsd",
  "vmgrd",
  "rhd",
  "tapegatewayd",
@@ -292,7 +292,13 @@ sub reinstall_cluster ( $$$$ )
         $targeted_version,  $RPMS_directory );
     deploy_packages ( $change_list );
 
-    # Reinstall the DBs: wipe and reinstall the stager Db and the vdqm Db.
+    # Reinstall the DBs: wipe and reinstall the stager Db, the vdqm Db,
+    # the VMGR DB and the name server
+    
+    # First, name server get reinstalled
+    CastorTapeTests::reinstall_ns_db_from_checkout  ( $checkout_directory );
+    print `service nsd start`;
+    
     CastorTapeTests::reinstall_stager_db_from_checkout  ( $checkout_directory );
     CastorTapeTests::reinstall_vdqm_db_from_checkout ( $checkout_directory );
     print `service vmgrd start`;
@@ -314,16 +320,12 @@ sub reinstall_cluster ( $$$$ )
 
     # Second pass to start daemons
     start_daemons ();
-    
-    # On first run, clean house
-    print "Cleaning up test directories $castor_directory\{$single_subdir,$dual_subdir\}\n";
-    print `su $username -c "for p in $castor_directory\{$single_subdir,$dual_subdir\}; do nsrm -r -f \\\$p; done"`;
 
     # Re-create the directories:
-    print `su $username -c "nsmkdir $castor_directory$single_subdir"`;
+    print `su $username -c "nsmkdir -p $castor_directory$single_subdir"`;
     print `su $username -c "nschclass largeuser $castor_directory$single_subdir"`;
     CastorTapeTests::register_remote ( $castor_directory.$single_subdir, "directory" );
-    print `su $username -c "nsmkdir $castor_directory$dual_subdir"`;
+    print `su $username -c "nsmkdir -p $castor_directory$dual_subdir"`;
     print `su $username -c "nschclass test2 $castor_directory$dual_subdir"`;
     CastorTapeTests::register_remote ( $castor_directory.$dual_subdir, "directory" );
 
@@ -461,6 +463,10 @@ sub main ( $ )
     my $username = CastorTapeTests::get_environment('username');
     my $run_testsuite = CastorTapeTests::get_environment('run_testsuite');
 
+
+    
+    print `nsmkdir -p $castor_directory`;
+    
     
     # First iteration of the test
     # Start testsuite in the background

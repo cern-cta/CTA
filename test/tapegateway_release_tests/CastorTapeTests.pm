@@ -169,13 +169,14 @@ sub read_config ( $ )
 		             	  'local_transfermanagerd', 'local_rechandlerd', 'local_rhd',
 			              'local_rmmasterd', 'local_stagerd', 'local_tapegatewayd',
                           'local_logprocessord', 'testsuite_config_location', 'instance_name',
-                          'cns_name', 'run_testsuite', 'diskservers');
+                          'cns_name', 'run_testsuite', 'diskservers', 'vmgr_schema');
                           
     my @global_vars   = ( 'dbDir' , 'tstDir', 'adminList', 'originalDbSchema',
                           'originalDropSchema', 'originalSetPermissionsSQL', 
                           'castor_single_subdirectory', 'castor_dual_subdirectory',
                           'vdqmScript', 'stagerUpgrade', 'stagerUpgrade_1', 
-                          'stagerUpgrade_2', 'stagerUpgrade_3', 'VDQMUpgrade');
+                          'stagerUpgrade_2', 'stagerUpgrade_3', 'VDQMUpgrade',
+                          'nsScript');
     for my $i ( @per_host_vars ) {
         $environment{$i}=getConfParam('TAPETEST', $i.'_'.$local_host, $config_file );
     }
@@ -1786,7 +1787,18 @@ sub print_migration_and_recall_structures ( $ )
 {
     my ( $dbh ) = (shift);
     my $schemaversion = get_db_version ( $dbh );
-    if ( $schemaversion =~ /^2_1_1[23]/ ) {
+    if ( $schemaversion =~ /^2_1_13/ ) {
+        # print all the migration mounts (with tapepool info).
+        print "Migration mounts snapshot:\n";
+        my $stmt = $dbh -> prepare ("SELECT mm.id, mm.status, mm.mounttransactionid, mm.vid, tp.name
+                                FROM MigrationMount mm
+                                LEFT OUTER JOIN TapePool tp ON tp.id = mm.tapepool");
+        $stmt->execute();
+        while ( my @row = $stmt->fetchrow_array() ) {
+            nullize_arrays_undefs ( \@row );
+            print  "    mm.id=$row[0], mm.status=$row[1] mm.mounttransactionid=$row[2] mm.vid=$row[3] tp.name=$row[4]\n";
+        }
+    } elsif ( $schemaversion =~ /^2_1_12/ ) {
         # print all the migration mounts (with tapepool info).
         print "Migration mounts snapshot:\n";
         my $stmt = $dbh -> prepare ("SELECT mm.id, mm.status, mm.tapegatewayrequestid, mm.vid, tp.name
@@ -1813,12 +1825,28 @@ sub print_migration_and_recall_structures ( $ )
     } else { 
         warn "Could no find schema version. Skipping migrationa and recall structures display.";
     }
-    my $stmt =  $dbh -> prepare ("SELECT t.id, t.vid, t.status
-                                FROM tape t");
-    $stmt->execute();
-    while ( my @row = $stmt->fetchrow_array() ) {
-        nullize_arrays_undefs ( \@row );
-        print  "    t.id=$row[0], t.vid=$row[1] t.status=$row[2]\n";
+    if ($schemaversion =~ /^2.1.13/ ) {
+      my $stmt =  $dbh -> prepare ("SELECT rm.id, rm.mountTransactionId, rm.vid, rm.label, rm.density,
+                                            rm.recallgroup, rm.starttime, rm.status, rm.lastvdqmpingtime,
+                                            rm.lastprocessedfseq
+                                  FROM recallMount rm");
+      $stmt->execute();
+      while ( my @row = $stmt->fetchrow_array() ) {
+          nullize_arrays_undefs ( \@row );
+          print  "    rm.id=$row[0], rm.mountTransactionId=$row[1], rm.vid=$row[2], rm.label=$row[3], rm.density=$row[4],\n".
+                 "          rm.recallgroup=$row[5], rm.starttime=$row[6], rm.status=$row[7], rm.lastvdqmpingtime=$row[8]\n".
+                 "          rm.lastprocessedfseq=$row[9]\n";
+      }
+    } elsif ($schemaversion =~ /^2_1_1[12]/ ) {
+      my $stmt =  $dbh -> prepare ("SELECT t.id, t.vid, t.status
+                                  FROM tape t");
+      $stmt->execute();
+      while ( my @row = $stmt->fetchrow_array() ) {
+          nullize_arrays_undefs ( \@row );
+          print  "    t.id=$row[0], t.vid=$row[1] t.status=$row[2]\n";
+      }
+    } else {
+       warn "Could no find schema version. Skipping migration and recall structures display.";
     }
 }
 
@@ -2075,7 +2103,6 @@ sub reinstall_vdqm_db_from_checkout ( $ )
     my $dbDir               = $environment{dbDir};
     my $originalDropSchema  = $environment{originalDropSchema};
     my $vdqmScript          = $environment{vdqmScript};
-    my $tstDir              = $environment{tstDir};
     my $originalDropSchemaFullpath=$checkout_location.'/'.$dbDir.'/'.$originalDropSchema;
     my $originalDbSchemaFullpath=$checkout_location.'/'.$vdqmScript;
 
@@ -2090,9 +2117,6 @@ sub reinstall_vdqm_db_from_checkout ( $ )
     die('ABORT: This script is only made to be run on host $stager_host\n')
       if ( ! $host =~ /^$vdqm_host($|\.)/i );
 
-    # This is where the final go/no go decsion is taken. Record that we got green light.
-    $initial_green_light = 1;
-
     # Ensure all of the daemons accessing the stager-database are dead
     killDaemonWithTimeout('vdqmd' , 2);
 
@@ -2103,17 +2127,68 @@ sub reinstall_vdqm_db_from_checkout ( $ )
     executeSQLPlusScript ( $dbUser, $dbPasswd, $dbName, 
                            $originalDropSchemaFullpath,
                            "Dropping VDQM schema");
-    
-    my $stageUid = &get_uid_for_username('stage');
-    my $stageGid = &get_gid_for_username('stage');
-    my $adminList = $environment{adminList};
-    my $instanceName = $environment{instance_name};
-    my $CNSName = $environment{cns_name};
 
     executeSQLPlusScript ( $dbUser, $dbPasswd, $dbName, 
                            $originalDbSchemaFullpath, "Re-creating VDQM schema");
 }
 
+sub reinstall_ns_db_from_checkout ( $ )
+{
+    my $checkout_location = shift;
+    
+    my $ns_host = getCastorConfParam('CNS', 'HOST');
+    # Drastic test to prevent the running of this dangerous tool
+    # ouside of a dev environement
+    die "reinstall_ns_db_from_checkout should not run on $ns_host" unless $ns_host =~ /lxc2dev3/;
+
+    # Print error message and abort if the user is not root
+    my $uid = POSIX::getuid;
+    my $gid = POSIX::getgid;
+    if($uid != 0 || $gid !=0) {
+        print("ABORT: This script must be ran as root\n");
+        exit(-1);
+    }
+    
+    my $dbDir               = $environment{dbDir};
+    my $originalDropSchema  = $environment{originalDropSchema};
+    my $nsScript            = $environment{nsScript};
+    my $originalDropSchemaFullpath=$checkout_location.'/'.$dbDir.'/'.$originalDropSchema;
+    my $originalDbSchemaFullpath=$checkout_location.'/'.$nsScript;
+
+    
+    die "ABORT: $originalDropSchema does not exist\n"
+       if ! -e $originalDropSchemaFullpath;
+    
+    die "ABORT: $originalDbSchemaFullpath does not exist\n"
+        if ! -e $originalDbSchemaFullpath;  
+    
+    # Make sure we're running on the proper machine.
+    my $host = `uname -n`;
+    die('ABORT: This script is only made to be run on host $ns_host\n')
+      unless ( $host =~ /^$ns_host($|\.)/i );
+
+    # Ensure all of the daemons accessing the stager-database are dead
+    killDaemonWithTimeout('nsd' , 2);
+
+    my ( $dbUser, $dbPasswd, $dbName ) = &getOraCNSLoginInfo ();
+    
+    executeSQLPlusScript ( $dbUser, $dbPasswd, $dbName, 
+                           $originalDropSchemaFullpath,
+                           "Dropping NS schema");
+                           
+    my $vmgr_schema = $environment{vmgr_schema};
+    my $hacked_creation= `mktemp`;
+    chomp $hacked_creation;
+    `cat $originalDbSchemaFullpath > $hacked_creation`;
+    `sed -i s/^ACCEPT/--ACCEPT/ $hacked_creation`;
+    `sed -i s/^PROMPT/--PROMPT/ $hacked_creation`;
+    `sed -i s/^UNDEF/--UNDEF/ $hacked_creation`;
+    `sed -i s/\\&vmgrSchema\./$vmgr_schema/g $hacked_creation`;
+
+    executeSQLPlusScript ( $dbUser, $dbPasswd, $dbName, 
+                           $hacked_creation, "Re-creating NS schema");
+    unlink $hacked_creation;
+}
 sub reinstall_stager_db_from_checkout ( $ )
 {
     my $checkout_location = shift;
@@ -2164,7 +2239,8 @@ sub reinstall_stager_db_from_checkout ( $ )
     warn("WARNING: Reinstall requires at least 2 disk-servers")
       if($nbDiskServers < 2);
 
-    # This is where the final go/no go decsion is taken. Record that we got green light.
+    # This is where the final go/no go decsion is taken. 
+    # Record that we got green light for stager DB wiping.
     $initial_green_light = 1;
 
     # Ensure all of the daemons accessing the stager-database are dead
@@ -2347,7 +2423,13 @@ sub configure_headnode_2113 ( )
     print($rmGetNodesResult);
     
     # Fill database with the standard set-up for a dev-box
-    print `nslistclass | grep NAME | awk '{print \$2}' | xargs -i enterfileclass {}`;
+    # Re-create the name server's file classes first:
+    print `nsenterclass --name=temp --id=58`;
+    print `nsenterclass --name=largeuser --id=95 --nbcopies=1`;
+    print `nsenterclass --name=test2 --id=27 --nbcopies=2`;
+    
+    # populate the stager.
+    print `enterfileclass -a`;
 
     print `enterdiskpool default`;
     print `enterdiskpool extra`;
