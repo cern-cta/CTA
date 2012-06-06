@@ -1,0 +1,161 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                      enterrecallgroup
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @author castor dev team
+# *****************************************************************************/
+
+'''allows to enter a new recall group into the castor stager'''
+
+import sys, re, os, pwd
+import getopt
+import castor_tools
+
+# usage function
+def usage(exitCode):
+    '''prints usage'''
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] [--nbdrives <nbDrives>] ' + \
+          '[--minamountdata <minAmountDataForAMount>] [--minnbfiles <minNbFilesForAMount>] ' + \
+          '[--maxfileage <maxFileAgeBeforeForcedMount>] [--priority <VDQMPriority>] <recallGroupName>'
+    sys.exit(exitCode)
+
+def parsePositiveInt(name, svalue):
+    '''parses a positive int value and exits with proper error message in case the value does not fit'''
+    try:
+        value = int(svalue)
+        if value < 0:
+            raise ValueError
+        return value
+    except ValueError:
+        print 'Invalid %s %s' % (name, svalue)
+        usage(1)
+
+def parseDataAmount(name, svalue):
+    '''parses a value describing an amount of data. Exits with proper error message in case the value does not fit'''
+    try:
+        exts = {'K' : 1000, 'M' : 1000*1000, 'G' : 1000*1000*1000, 'T' : 1000*1000*1000*1000,
+                'Ki' : 1024, 'Mi' : 1024*1024, 'Gi' : 1024*1024*1024, 'Ti' : 1024*1024*1024*1024}
+        regexp = re.compile('^(?P<nb>\d+)(?P<ext>(?:[KMGT]i?)?)B?$')
+        m = regexp.match(svalue)
+        if not m:
+            raise ValueError
+        value = int(m.group('nb'))
+        if m.group('ext'):
+            value *= exts[m.group('ext')]
+        return value
+    except ValueError:
+        print 'Invalid %s %s' % (name, svalue)
+        usage(1)
+
+def parseTimeDuration(name, svalue):
+    '''parses a value describing a time duration. Exits with proper error message in case the value does not fit'''
+    try:
+        # check validity
+        if not re.compile('^(\d+(s|mn?|h|d)?)+$').match(svalue):
+            raise ValueError
+        # parse
+        exts = {'s' : 1, 'm' : 60, 'mn' : 60, 'h' : 3600, 'd' : 86400}
+        regexp = re.compile('(\d+)(s|mn?|h|d)?')
+        value = 0
+        for nb, ext in regexp.findall(svalue):
+            partvalue = int(nb)
+            if ext:
+                partvalue *= exts[ext]
+            value += partvalue
+        return value
+    except ValueError:
+        print 'Invalid %s %s' % (name, svalue)
+        usage(1)
+
+# first parse the options
+try:
+    options, args = getopt.getopt(sys.argv[1:], 'hv', ['help', 'verbose', 'nbdrives=', 'minamountdata=',
+                                                       'minnbfiles=', 'maxfileage=', 'priority='])
+except Exception, e:
+    print e
+    usage(1)
+verbose = False
+nbdrives = 0
+minamountdata = 100*1024*1024*1024  # 100GiB
+minnbfiles = 1000
+maxfileage = 43200 # 12h
+priority = 0
+for f, v in options:
+    if f == '-h' or f == '--help':
+        usage(0)
+    elif f == '-v' or f == '--verbose':
+        verbose = True
+    elif f == '--nbdrives':
+        nbdrives = parsePositiveInt('nbdrives', v)
+    elif f == '--minamountdata':
+        minamountdata = parseDataAmount('minamountdata', v)
+    elif f == '--minnbfiles':
+        minnbfiles = parsePositiveInt('minnbfiles', v)
+    elif f == '--maxfileage':
+        maxfileage = parseTimeDuration('maxfileage', v)
+    elif f == '--priority':
+        priority = parsePositiveInt('priority', v)
+    else:
+        print "unknown option : " + f
+        usage(1)
+
+# Deal with arguments
+if len(args) == 0:
+    print "Missing arguments"
+    usage(1)
+elif len(args) > 1:
+    print "Too many arguments"
+    usage(1)
+recallGroupName = args[0]
+
+try:
+    # connect to stager
+    stconn = castor_tools.connectToStager()
+    stcur = stconn.cursor()
+    # check whether the recall group already exists
+    stcur.execute('SELECT id FROM RecallGroup WHERE name=:name', name=recallGroupName)
+    rows = stcur.fetchall()
+    if len(rows) != 0:
+        print 'RecallGroup %s already exists in the stager DB' % recallGroupName
+        print 'You may want to use modifyrecallgroup'
+        sys.exit(1)
+    # get info on user running this command
+    lasteditor = pwd.getpwuid(os.getuid())[0]
+    # insert new recallGroup
+    stcur.execute('''INSERT INTO RecallGroup
+                     (name, nbDrives, minAmountDataForMount, minNbFilesForMount, maxFileAgeBeforeMount,
+                      VDQMPriority, lastEditor, lastEditionTime, id)
+                     VALUES
+                     (:name, :nbdrives, :minamountdata, :minnbfiles, :maxfileage,
+                      :priority, :lasteditor, gettime(), ids_seq.nextval)''',
+                  name=recallGroupName, nbdrives=nbdrives, minamountdata=minamountdata,
+                  minnbfiles=minnbfiles, maxfileage=maxfileage, priority=priority, lasteditor=lasteditor)
+    stconn.commit()
+    print 'inserted recall group %s successfully' % recallGroupName
+    # close DB connection
+    try:
+        castor_tools.disconnectDB(stconn)
+    except Exception:
+        pass
+except Exception, e:
+    print e
+    if verbose:
+        import traceback
+        traceback.print_exc()
+    sys.exit(-1)

@@ -8,6 +8,10 @@
 %attr(0755,root,root) usr/bin/enterdiskpool
 %attr(0755,root,root) usr/bin/deletediskpool
 %attr(0755,root,root) usr/bin/printdiskpool
+%attr(0755,root,root) usr/bin/enterrecallgroup
+%attr(0755,root,root) usr/bin/modifyrecallgroup
+%attr(0755,root,root) usr/bin/deleterecallgroup
+%attr(0755,root,root) usr/bin/printrecallgroup
 %attr(0755,root,root) usr/bin/entertapepool
 %attr(0755,root,root) usr/bin/modifytapepool
 %attr(0755,root,root) usr/bin/deletetapepool

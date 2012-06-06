@@ -1,0 +1,108 @@
+.TH ENTERRECALLGROUP 1 "2011" CASTOR "stager catalog administrative commands"
+.SH NAME
+enterrecallgroup \- enter a new tape pool in the stager catalog
+.SH SYNOPSIS
+.B enterrecallgroup
+[
+.BI -h
+]
+[
+.BI --nbdrives
+<nbDrives>
+]
+[
+.BI --minamountdata
+.B <minAmountDataForAMount>
+]
+[
+.BI --minnbfiles
+.B <minNbFilesForAMount>
+]
+[
+.BI --maxfileage
+.B <maxFileAgeBeforeForcedMount>
+]
+[
+.BI --priority
+.B <VDQMPriority>
+]
+.BI <recallGroupName>
+.SH DESCRIPTION
+.B enterrecallgroup
+enters a new recall group in the CASTOR stager catalog.
+
+The parameters of the recall group define the policy used to trigger tape mounts in case users of this group want to recall some files.
+The behavior is the following :
+  - never more than <nbDrives> drives can be used concurrently
+  - a new tape will be mounted whenever we have either more than <minAmountDataForAMount> of data or <minNbFilesForAMount> files waiting for recall. In practice, if some migrations are already running, a new one is trigerred if one of these 2 numbers will still be exceeded per mount, even with the new mount.
+  - a tape mount will be forced if nothing is mounted and one file becomes older than maxFileAgeBeforeForcedMount
+  - if a tape mount is triggered, VDQM will be called to get a drive with the given priority
+.TP
+.BI \-h,\ \-\-help
+Get usage information
+.TP
+.BI \-\-nbdrives <nbDrives>
+The maximum number of tape drives this tape pool is allowed to use concurrently
+for migration. Default is 0 is not provided
+.TP
+.BI \-\-minamountdata <minAmountDataForAMount>
+The minimum amount of data needed to trigger a new mount in bytes. Default is 100GiB if not provided.
+The value can be given using the standard K/M/G/T extensions, with or without B (i.e. both KB and K are accepted).
+These have the ISO meaning of powers of 10. Ki/Mi/Gi/Ti[B] extensions are also accepted and deal with powers of 2.
+.TP
+.BI \-\-minnbfiles <minNbFilesForAMount>
+The minimum number of files needed to trigger a new mount. Default is 1000 if not provided.
+.TP
+.BI \-\-maxfileage <maxFileAgeBeforeForcedMount>
+The maximum age of a file before a new mount is triggered. Default is 12h if not provided.
+The value can be given using the extensions s/m/mn/h/d for seconds, minutes(both m and mn), hours and days.
+.TP
+.BI \-\-priority <VDQMpriority>
+The priority to be used when accessing VDQM to get a drive. Default is 0 if not provided.
+.TP
+.BI <recallGroupName>
+name of a tape pool to create.
+
+.SH EXAMPLES
+.nf
+.ft CW
+# enterrecallgroup newrecallgroup
+inserted recall group newrecallgroup successfully
+
+# printrecallgroup
+          NAME NBDRIVES MINAMOUNTDATA MINNBFILES MAXFILEAGE VDQMPRIORITY     ID            LASTEDITOR          LASTEDITION
+----------------------------------------------------------------------------------------------------------------------
+newrecallgroup        0        100GiB       1000        12h            0 263333                  root 30-May-2012 17:29:12
+       default       20        100GiB       1000        12h            0 133068 2.1.13 upgrade script 03-May-2012 16:44:50
+
+# enterrecallgroup --nbdrives 2 newrecallgroup
+Recallgroup newrecallgroup already exists in the stager DB
+You may want to use modifyrecallgroup
+
+# enterrecallgroup --nbdrives 2 --minamountdata 23MiB --maxfileage 12h23mn --priority 456 testrecallgroup
+inserted recall group testrecallgroup successfully
+
+# printrecallgroup
+           NAME NBDRIVES MINAMOUNTDATA MINNBFILES MAXFILEAGE VDQMPRIORITY     ID            LASTEDITOR          LASTEDITION
+-----------------------------------------------------------------------------------------------------------------------
+ newrecallgroup        0        100GiB       1000        12h            0 263333                  root 30-May-2012 17:29:12
+        default       20        100GiB       1000        12h            0 133068 2.1.13 upgrade script 03-May-2012 16:44:50
+testrecallgroup        2         23MiB       1000    12h23mn          456 263419                  root 30-May-2012 17:31:11
+
+.SH NOTES
+This command requires database client access to the stager catalog and nameserver DBs.
+Configuration for the database accesses is taken from castor.conf.
+
+.SH SEE ALSO
+.BR deleterecallgroup,
+.BR modifyrecallgroup,
+.BR printrecallgroup,
+.BR enterdiskpool,
+.BR entersvcclass,
+.BR enterfileclass,
+.BR entertapepool,
+.BR entermigrationroute,
+.BR adminMultiInstance
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

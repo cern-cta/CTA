@@ -1,0 +1,77 @@
+.TH DELETERECALLGROUP 1 "2011" CASTOR "stager catalogue administrative commands"
+.SH NAME
+deleterecallgroup \- deletes existing recall groups from the stager catalogue
+
+.SH SYNOPSIS
+.B deleterecallgroup
+[
+.BI -h
+]
+.BI <recallGroupName>
+[:...]
+
+.SH DESCRIPTION
+.B deleterecallgroup
+deletes existing recall groups from the CASTOR stager catalog
+.LP
+.BI \-h,\ \-\-help
+Get usage information
+.TP
+.BI <recallGroupName>
+name of recall groups to delete. Several names can be given, colon separated
+
+.SH EXAMPLES
+.nf
+.ft CW
+# printrecallgroup
+           NAME NBDRIVES MINAMOUNTDATA MINNBFILES MAXFILEAGE VDQMPRIORITY     ID            LASTEDITOR          LASTEDITION
+-----------------------------------------------------------------------------------------------------------------------
+ newrecallgroup        0        100GiB       1000        12h            0 263333                  root 30-May-2012 17:29:12
+        default       20        100GiB       1000        12h            0 133068 2.1.13 upgrade script 03-May-2012 16:44:50
+testrecallgroup        2         23MiB       1000    12h23mn          456 263419                  root 30-May-2012 17:31:11
+
+# deleterecallgroup newrecallgroup
+successfully dropped the following recall groups : newrecallgroup
+
+# printrecallgroup
+           NAME NBDRIVES MINAMOUNTDATA MINNBFILES MAXFILEAGE VDQMPRIORITY     ID            LASTEDITOR          LASTEDITION
+---------------------------------------------------------------------------------------------------------------------------
+        default       20        100GiB       1000        12h            0 133068 2.1.13 upgrade script 03-May-2012 16:44:50
+testrecallgroup        2         23MiB       1000    12h23mn          456 263419                  root 30-May-2012 17:31:11
+
+# deleterecallgroup newrecallgroup:testrecallgroup
+successfully dropped the following recall groups : testrecallgroup
+WARNING : some recall group(s) did not exist : newrecallgroup
+
+# printrecallgroup
+   NAME NBDRIVES MINAMOUNTDATA MINNBFILES MAXFILEAGE VDQMPRIORITY     ID            LASTEDITOR          LASTEDITION
+-------------------------------------------------------------------------------------------------------------------
+default       20        100GiB       1000        12h            0 133068 2.1.13 upgrade script 03-May-2012 16:44:50
+
+# deleterecallgroup default
+Recall group default should be deleted. Giving up
+
+In case a user still belongs to a recall group, you may get this :
+
+# deleterecallgroup testrecallgroup
+RecallGroups cannot be dropped when they still contain users :
+  - recall group testrecallgroup contains 1 users
+You may want to use deleterecalluser or modifyrecalluser to correct this
+
+.SH NOTES
+This command requires database client access to the stager catalogue.
+Configuration for the database access is taken from castor.conf.
+
+.SH SEE ALSO
+.BR enterrecallgroup,
+.BR modifyrecallgroup,
+.BR printrecallgroup,
+.BR deletediskpool,
+.BR deletesvcclass,
+.BR deletetapepool,
+.BR deletefileclass,
+.BR deletemigrationroute,
+.BR adminMultiInstance
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,0 +1,129 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                      deleterecallgroup
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+
+'''command line deleting the recall group(s)'''
+
+import sys
+import getopt
+import castor_tools
+
+# usage function
+def usage(exitCode):
+    '''prints usage'''
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] <recallGroupName>[:...]'
+    sys.exit(exitCode)
+
+# first parse the options
+try:
+    options, args = getopt.getopt(sys.argv[1:], 'hv', ['help', 'verbose'])
+except Exception, e:
+    print e
+    usage(1)
+verbose = False
+for f, v in options:
+    if f == '-h' or f == '--help':
+        usage(0)
+    elif f == '-v' or f == '--verbose':
+        verbose = True
+    else:
+        print "unknown option : " + f
+        usage(1)
+
+# Deal with arguments
+recallGroups = set([])
+if len(args) != 0:
+    recallGroups = set(args[0].split(':'))
+else:
+    print "Missing arguments"
+    usage(1)
+
+try:
+    # connect to stager
+    stconn = castor_tools.connectToStager()
+    stcur = stconn.cursor()
+    # check tape pool existence
+    stcur.execute("SELECT name FROM RecallGroup WHERE name IN ('" + "', '".join(recallGroups) + "')")
+    existingRecallGroups = set([row[0] for row in stcur.fetchall()])
+    nonexitingRecallGroups = recallGroups - existingRecallGroups
+    # forbid deletion of the default group
+    if 'default' in existingRecallGroups:
+        print 'Recall group default should be deleted. Giving up'
+        sys.exit(1)
+    # check that the recall groups are not containing any user
+    stcur.execute('''SELECT RecallGroup.name, count(*)
+                       FROM RecallUser, RecallGroup
+                      WHERE RecallUser.recallGroup = RecallGroup.id
+                        AND RecallGroup.name IN (\'''' + "', '".join(existingRecallGroups) + "') " + '''
+                        GROUP BY RecallGroup.name''')
+    rows = stcur.fetchall()
+    if len(rows) > 0:
+        print 'RecallGroups cannot be dropped when they still contain users :'
+        for rg, nb in rows:
+            print '  - recall group %s contains %d user(s)' % (rg, nb)
+        print 'You may want to use deleterecalluser or modifyrecalluser to correct this'
+        sys.exit(1)
+    # check that the tape pools are not used by any ongoing RecallJob
+    stcur.execute('''SELECT RecallGroup.name, count(*)
+                       FROM RecallJob, RecallGroup
+                      WHERE RecallJob.recallGroup = RecallGroup.id
+                        AND RecallGroup.name IN (\'''' + "', '".join(existingRecallGroups) + '''\')
+                      GROUP BY RecallGroup.name''')
+    rows = stcur.fetchall()
+    if len(rows) > 0:
+        print 'RecallGroups cannot be dropped when used by some recall jobs :'
+        for tp, nb in rows:
+            print '  - recall group %s is in use by %d recall jobs' % (tp, nb)
+        print 'You probably have to wait that the recall of these files is over'
+        sys.exit(1)
+    # check that the tape pools are not used by any ongoing RecallMount
+    stcur.execute('''SELECT RecallGroup.name, count(*)
+                       FROM RecallMount, RecallGroup
+                      WHERE RecallMount.recallGroup = RecallGroup.id
+                        AND RecallGroup.name IN (\'''' + "', '".join(existingRecallGroups) + '''\')
+                      GROUP BY RecallGroup.name''')
+    rows = stcur.fetchall()
+    if len(rows) > 0:
+        print 'RecallGroups cannot be dropped when used by some recall mount :'
+        for tp, nb in rows:
+            print '  - recall group %s is in use by %d recall mounts' % (tp, nb)
+        print 'You probably have to wait that the mount is over. Note that there was no RecallJob left so it should be a matter of seconds'
+        sys.exit(1)
+    # drop recall group
+    if existingRecallGroups:
+        stcur.execute("DELETE FROM RecallGroup WHERE name IN ('" + "', '".join(existingRecallGroups) + "')")
+        stconn.commit()
+        print 'successfully dropped the following recall groups : ' + ', '.join(existingRecallGroups)
+    # warn for non existing tape pools
+    if nonexitingRecallGroups:
+        print 'WARNING : some recall group(s) did not exist : ' + ', '.join(nonexitingRecallGroups)
+    # close DB connections
+    try:
+        castor_tools.disconnectDB(stconn)
+    except Exception:
+        pass
+except Exception, e:
+    print e
+    if verbose:
+        import traceback
+        traceback.print_exc()
+    sys.exit(-1)

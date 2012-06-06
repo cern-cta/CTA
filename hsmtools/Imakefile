@@ -42,6 +42,11 @@ InstallTarget(enterdiskpool,755)
 InstallTarget(deletediskpool,755)
 InstallTarget(printdiskpool,755)
 
+InstallTarget(enterrecallgroup,755)
+InstallTarget(modifyrecallgroup,755)
+InstallTarget(deleterecallgroup,755)
+InstallTarget(printrecallgroup,755)
+
 InstallTarget(entertapepool,755)
 InstallTarget(modifytapepool,755)
 InstallTarget(deletetapepool,755)
@@ -79,6 +84,11 @@ EXEMANPAGE(printsvcclass)
 EXEMANPAGE(enterdiskpool)
 EXEMANPAGE(deletediskpool)
 EXEMANPAGE(printdiskpool)
+
+EXEMANPAGE(enterrecallgroup)
+EXEMANPAGE(modifyrecallgroup)
+EXEMANPAGE(deleterecallgroup)
+EXEMANPAGE(printrecallgroup)
 
 EXEMANPAGE(entertapepool)
 EXEMANPAGE(modifytapepool)

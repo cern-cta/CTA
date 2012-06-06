@@ -1,0 +1,137 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                      printrecallgroup
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+
+'''command line printing the given recall group(s)'''
+
+import sys
+import getopt, time
+import castor_tools
+
+# usage function
+def usage(exitCode):
+    '''prints usage'''
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] [<recallGroupName> [...]]'
+    sys.exit(exitCode)
+
+def secsToDate(s):
+    '''converts number of seconds since the epoch into readable date'''
+    return time.strftime('%d-%b-%Y %H:%M:%S', time.localtime(s))
+
+def nbToDataAmount(n):
+    '''converts a number into a readable amount of data'''
+    ext = ['B', 'KiB', 'MiB', 'GiB', 'TiB']
+    magn = 0
+    while n / 1024 > 5:
+        magn += 1
+        n = n / 1024
+    return str(n) + ext[magn]
+
+def nbToAge(n):
+    '''converts a number of seconds into a readable age'''
+    s = ''
+    if n >= 86400:
+        s = s + str(n/86400) + 'd'
+        n = n % 86400
+    if n >= 3600:
+        s = s + str(n/3600) + 'h'
+        n = n % 3600
+    if n >= 60:
+        s = s + str(n/60) + 'mn'
+        n = n % 60
+    if n > 0:
+        s = s + str(n) + 's'
+    if len(s) == 0:
+        s = '0s'
+    return s
+
+# first parse the options
+try:
+    options, args = getopt.getopt(sys.argv[1:], 'hv', ['help', 'verbose'])
+except Exception, e:
+    print e
+    usage(1)
+verbose = False
+for f, v in options:
+    if f == '-h' or f == '--help':
+        usage(0)
+    elif f == '-v' or f == '--verbose':
+        verbose = True
+    else:
+        print "unknown option : " + f
+        usage(1)
+
+# Deal with arguments
+recallGroups = None
+if len(args) != 0:
+    recallGroups = set(args)
+
+try:
+    # connect to stager and prepare statements
+    stconn = castor_tools.connectToStager()
+    stcur = stconn.cursor()
+    sqlStatement = '''
+    SELECT name, nbDrives, minAmountDataForMount, minNbFilesForMount, maxFileAgeBeforeMount, VDQMPriority,
+           lastEditor, lastEditionTime, id
+      FROM RecallGroup'''
+    if recallGroups:
+        sqlStatement = sqlStatement + " WHERE name IN ('" + "', '".join(recallGroups) + "')"
+    stcur.execute(sqlStatement)
+    # get results
+    rows = stcur.fetchall()
+    existingRecallGroups = set([row[0] for row in rows])
+    if recallGroups:
+        unknownRecallGroups = recallGroups - existingRecallGroups
+    # loop over tape pools and print them
+    if existingRecallGroups:
+        maxNameLen = max([4] + [len(row[0]) for row in rows])
+        maxMinAmountDataLen = max([13] + [len(nbToDataAmount(row[2])) for row in rows])
+        maxMinNbFilesLen = max([10] + [len(str(row[3])) for row in rows])
+        maxMaxFileAgeLen = max([10] + [len(nbToAge(row[4])) for row in rows])
+        maxLastEditorLen = max([10] + [len(row[6]) for row in rows if row[6]])
+        maxLastEditionTimeLen = max([11] + [len(secsToDate(row[7])) for row in rows])
+        maxIdLen = max([2] + [len(str(row[8])) for row in rows])
+        print '%*s NBDRIVES %*s %*s %*s VDQMPRIORITY %*s %*s %*s' % \
+              (maxNameLen, 'NAME', maxMinAmountDataLen, 'MINAMOUNTDATA', maxMinNbFilesLen, \
+               'MINNBFILES', maxMaxFileAgeLen, 'MAXFILEAGE', maxIdLen, 'ID', \
+               maxLastEditorLen, 'LASTEDITOR', maxLastEditionTimeLen, 'LASTEDITION')
+        print '-' * (28 + maxNameLen + maxMinAmountDataLen + maxMinNbFilesLen + maxMaxFileAgeLen + \
+                     maxLastEditorLen + maxLastEditionTimeLen + maxIdLen)
+        for name, nbdrives, minamountdata, minnbfiles, maxfileage, priority, lastEditor, lastEdition, tpid in rows:
+            print '%*s %8d %*s %*d %*s %12d %*d %*s %*s' % \
+                  (maxNameLen, name, nbdrives, maxMinAmountDataLen, nbToDataAmount(minamountdata), \
+                   maxMinNbFilesLen, minnbfiles, maxMaxFileAgeLen, nbToAge(maxfileage), priority, maxIdLen, tpid, \
+                   maxLastEditorLen, lastEditor, maxLastEditionTimeLen, secsToDate(lastEdition))
+    # check unknown tape pools
+    if recallGroups and unknownRecallGroups:
+        print 'WARNING : the following recall groups do not exist : ' + ', '.join(unknownRecallGroups)
+    # close DB connections
+    try:
+        castor_tools.disconnectDB(stconn)
+    except Exception:
+        pass
+except Exception, e:
+    print e
+    if verbose:
+        import traceback
+        traceback.print_exc()
+    sys.exit(-1)

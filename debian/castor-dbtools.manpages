@@ -8,6 +8,10 @@ debian/castor/usr/share/man/man1/printsvcclass.1castor.gz
 debian/castor/usr/share/man/man1/enterdiskpool.1castor.gz
 debian/castor/usr/share/man/man1/deletediskpool.1castor.gz
 debian/castor/usr/share/man/man1/printdiskpool.1castor.gz
+debian/castor/usr/share/man/man1/enterrecallgroup.1castor.gz
+debian/castor/usr/share/man/man1/modifyrecallgroup.1castor.gz
+debian/castor/usr/share/man/man1/deleterecallgroup.1castor.gz
+debian/castor/usr/share/man/man1/printrecallgroup.1castor.gz
 debian/castor/usr/share/man/man1/entertapepool.1castor.gz
 debian/castor/usr/share/man/man1/modifytapepool.1castor.gz
 debian/castor/usr/share/man/man1/deletetapepool.1castor.gz

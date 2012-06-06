@@ -1,0 +1,57 @@
+.TH PRINTRECALLGROUP 1 "2011" CASTOR "Prints out the given recall group(s)"
+.SH NAME
+printrecallgroup
+.SH SYNOPSIS
+.B printrecallgroup
+[
+.BI -h
+]
+[
+<recallGroupName>
+[...]
+]
+
+.SH DESCRIPTION
+.B printrecallgroup
+prints out definitions of the given tape pools
+.LP
+.BI \-h,\ \-\-help
+Get usage information
+.TP
+.BI <RecallGroupName>
+when recall group names are given, only the definitions of the listed recall groups are printed.
+If no recall group name is given, all recall group definitions are printed.
+
+.SH EXAMPLES
+.nf
+.ft CW
+# printrecallgroup
+           NAME NBDRIVES MINAMOUNTDATA MINNBFILES MAXFILEAGE VDQMPRIORITY     ID            LASTEDITOR          LASTEDITION
+---------------------------------------------------------------------------------------------------------------------------
+ newrecallgroup        0        100GiB       1000        12h            0 263333                  root 30-May-2012 17:29:12
+        default       20        100GiB       1000        12h            0 133068 2.1.13 upgrade script 03-May-2012 16:44:50
+testrecallgroup        2         23MiB       1000    12h23mn          456 263419                  root 30-May-2012 17:31:11
+
+# printrecallgroup testrecallgroup nonexisting
+           NAME NBDRIVES MINAMOUNTDATA MINNBFILES MAXFILEAGE VDQMPRIORITY     ID            LASTEDITOR          LASTEDITION
+---------------------------------------------------------------------------------------------------------------------------
+testrecallgroup        2         23MiB       1000    12h23mn          456 263419                  root 30-May-2012 17:31:11
+WARNING : the following recall groups do not exist : nonexisting
+
+.SH NOTES
+This command requires database client access to the stager catalogue.
+Configuration for the database access is taken from castor.conf.
+
+.SH SEE ALSO
+.BR enterrecallgroup,
+.BR modifyrecallgroup,
+.BR deleterecallgroup,
+.BR printdiskpool,
+.BR printsvcclass,
+.BR printfileclass,
+.BR printtapepool,
+.BR printmigrationroute,
+.BR adminMultiInstance
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
