@@ -68,7 +68,6 @@
 #include "castor/exception/NotSupported.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/stager/DiskCopyStatusCodes.hpp"
-#include "castor/stager/PriorityMap.hpp"
 #include "castor/stager/BulkRequestResult.hpp"
 #include "castor/stager/FileResult.hpp"
 #include "castor/rh/Client.hpp"
@@ -1290,121 +1289,6 @@ int castor::db::ora::OraStagerSvc::setFileGCWeight
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in setFileGCWeight."
-      << std::endl << e.what();
-    throw ex;
-  }
-}
-
-
-//------------------------------------------------------------------------------
-// selectPriority
-//------------------------------------------------------------------------------
-std::vector<castor::stager::PriorityMap*>
-castor::db::ora::OraStagerSvc::selectPriority
-(int euid, int egid, int priority)
-  throw (castor::exception::Exception) {
-  try {
-
-    // Check whether the statements are ok
-    if (0 == m_selectPriorityStatement) {
-      m_selectPriorityStatement =
-	createStatement(s_selectPriorityStatementString);
-      m_selectPriorityStatement->registerOutParam
-        (4, oracle::occi::OCCICURSOR);
-    }
-
-    // Execute the statement
-    m_selectPriorityStatement->setInt(1, euid);
-    m_selectPriorityStatement->setInt(2, egid);
-    m_selectPriorityStatement->setInt(3, priority);
-
-    m_selectPriorityStatement->executeUpdate();
-
-    // Return value
-    std::vector<castor::stager::PriorityMap*> priorityList;
-    oracle::occi::ResultSet *rs = m_selectPriorityStatement->getCursor(4);
-
-    // Run through the cursor
-    oracle::occi::ResultSet::Status status = rs->next();
-    while (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
-      castor::stager::PriorityMap* item = new castor::stager::PriorityMap();
-      item->setEuid((u_signed64)rs->getDouble(1));
-      item->setEgid((u_signed64)rs->getDouble(2));
-      item->setPriority((u_signed64)rs->getDouble(3));
-      priorityList.push_back(item);
-      status = rs->next();
-    }
-    m_selectPriorityStatement->closeResultSet(rs);
-    return priorityList;
-
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in selectPriority(): uid ("
-      << euid << ")" << " gid (" << egid << ")"
-      << std::endl << e.what();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// enterPriority
-//------------------------------------------------------------------------------
-void castor::db::ora::OraStagerSvc::enterPriority
-(u_signed64 euid, u_signed64 egid, u_signed64 priority)
-  throw (castor::exception::Exception) {
-  try {
-
-    // Check whether the statements are ok
-    if (0 == m_enterPriorityStatement) {
-      m_enterPriorityStatement =
-        createStatement(s_enterPriorityStatementString);
-      m_enterPriorityStatement->setAutoCommit(true);
-    }
-
-    // Execute the statement
-    m_enterPriorityStatement->setDouble(1, euid);
-    m_enterPriorityStatement->setDouble(2, egid);
-    m_enterPriorityStatement->setDouble(3, priority);
-    m_enterPriorityStatement->executeUpdate();
-
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Exception ex(e.getErrorCode());
-    ex.getMessage()
-      << "Invalid input: uid ("
-      << euid << ")" << " gid (" << egid << ")"
-      << std::endl << e.what();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// deletePriority
-//------------------------------------------------------------------------------
-void  castor::db::ora::OraStagerSvc::deletePriority(int euid, int egid)
-  throw (castor::exception::Exception) {
-  try {
-
-    // Check whether the statements are ok
-    if (0 == m_deletePriorityStatement) {
-      m_deletePriorityStatement =
-        createStatement(s_deletePriorityStatementString);
-      m_deletePriorityStatement->setAutoCommit(true);
-    }
-
-    // Execute the statement
-    m_deletePriorityStatement->setInt(1, euid);
-    m_deletePriorityStatement->setInt(2, egid);
-    m_deletePriorityStatement->executeUpdate();
-
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in deletePriority(): uid ("
-      << euid << ")" << " gid (" << egid << ")"
       << std::endl << e.what();
     throw ex;
   }

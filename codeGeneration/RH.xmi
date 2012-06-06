@@ -725,13 +725,6 @@ Resources can be allocated to one or many projects are are composed of a set of 
             <UML:Generalization xmi.idref="0Nzi4BLx7uyV" />
            </UML:GeneralizableElement.generalization>
           </UML:Class>
-          <UML:Class stereotype="53500" isSpecification="false" isLeaf="false" visibility="public" namespace="2105" xmi.id="Mo05JiglnuWE" isRoot="false" isAbstract="false" name="PriorityMap" >
-           <UML:Classifier.feature>
-            <UML:Attribute comment="The priority associated with the user and group" isSpecification="false" visibility="public" xmi.id="xvtRSyCeB3G8" type="131665" name="priority" />
-            <UML:Attribute comment="The id of the user concerned" isSpecification="false" visibility="public" xmi.id="OKKf7Y8SM6Vf" type="131665" name="euid" />
-            <UML:Attribute comment="The id of the group concerned" isSpecification="false" visibility="public" xmi.id="oBPa3vozofOH" type="131665" name="egid" />
-           </UML:Classifier.feature>
-          </UML:Class>
           <UML:Class stereotype="53501" isSpecification="false" isLeaf="false" visibility="public" namespace="2105" xmi.id="R5j2pUzclG6J" isRoot="false" isAbstract="false" name="GCTypeCodes" >
            <UML:Classifier.feature>
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="mY1OJFTaPC7B" initialValue="0" type="133771" name="GCTYPE_AUTO" />
@@ -1618,7 +1611,6 @@ Concerning the user list, an empty list means all users and all groups are conce
       </UML:Association>
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="dseFlZtRy0oH" client="KnuSEdL8nP1V" name="" supplier="960" />
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="kzpixdyKReAv" client="KnuSEdL8nP1V" name="" supplier="1216" />
-      <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="dotFx5uz0Xqb" client="Mo05JiglnuWE" name="" supplier="960" />
       <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="fP91g4eemKEs" name="" >
        <UML:Association.connection>
         <UML:AssociationEnd comment="SqlOnly" isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="iCkPXzLZFOj4" aggregation="none" type="1195" name="" multiplicity="1" />
@@ -2760,11 +2752,6 @@ Concerning the user list, an empty list means all users and all groups are conce
         <listitem open="0" type="814" id="pHJHmMqI7gJt" />
        </listitem>
        <listitem open="0" type="813" id="RZYBAWDaUfHC" />
-       <listitem open="0" type="813" id="Mo05JiglnuWE" >
-        <listitem open="0" type="814" id="xvtRSyCeB3G8" />
-        <listitem open="0" type="814" id="OKKf7Y8SM6Vf" />
-        <listitem open="0" type="814" id="oBPa3vozofOH" />
-       </listitem>
        <listitem open="0" type="813" id="88537" >
         <listitem open="0" type="814" id="89088" />
         <listitem open="0" type="814" id="klA7YdTtNlwL" />

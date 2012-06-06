@@ -179,9 +179,6 @@ namespace castor {
     OBJ_Privilege = 156,
     OBJ_ListPrivilegesResponse = 157,
 
-    /* object for segment priority */
-    OBJ_PriorityMap = 158,
-
     /* vector address for bulk operations */
     OBJ_VectorAddress = 159,
 

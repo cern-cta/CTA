@@ -199,7 +199,7 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "ListPrivileges",
   "Privilege",
   "ListPrivilegesResponse",
-  "PriorityMap",
+  "DELETED TYPE",
   "VectorAddress",
   "Tape2DriveDedication",
 

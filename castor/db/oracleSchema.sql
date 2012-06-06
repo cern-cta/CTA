@@ -342,7 +342,6 @@ INSERT INTO Type2Obj (type, object) VALUES (154, 'RequestType');
 INSERT INTO Type2Obj (type, object) VALUES (155, 'ListPrivileges');
 INSERT INTO Type2Obj (type, object) VALUES (156, 'Privilege');
 INSERT INTO Type2Obj (type, object) VALUES (157, 'ListPrivilegesResponse');
-INSERT INTO Type2Obj (type, object) VALUES (158, 'PriorityMap');
 INSERT INTO Type2Obj (type, object) VALUES (159, 'VectorAddress');
 INSERT INTO Type2Obj (type, object) VALUES (160, 'Tape2DriveDedication');
 INSERT INTO Type2Obj (type, object) VALUES (161, 'TapeRecall');

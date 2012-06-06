@@ -36,7 +36,6 @@
 #include "castor/stager/DiskCopyStatusCodes.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/stager/DiskCopyInfo.hpp"
-#include "castor/stager/PriorityMap.hpp"
 #include <vector>
 #include <string>
 #include <list>
@@ -64,7 +63,6 @@ namespace castor {
     class CastorFile;
     class GCLocalFile;
     class DiskCopyForRecall;
-    class PriorityMap;
     class BulkRequestResult;
 
     /**
@@ -354,38 +352,6 @@ namespace castor {
       virtual castor::stager::SubRequestStatusCodes createRecallCandidate(u_signed64 srId)
         throw (castor::exception::Exception) = 0;
 
-      /**
-       * Select priority for recall
-       * @param euid the userid of the user
-       * @param egid the groupid of the user
-       * @return priority value
-       * @exception in case of an error
-       */
-      virtual std::vector<castor::stager::PriorityMap*>
-      selectPriority(int euid, int egid, int priority)
-        throw (castor::exception::Exception) = 0;
-
-      /**
-       * Enter priority for recall
-       * @param euid the userid of the user
-       * @param egid the groupid of the user
-       * @param priority value
-       * @exception in case of an error
-       */
-      virtual void enterPriority(u_signed64 euid,
-                                 u_signed64 egid,
-                                 u_signed64 priority)
-        throw (castor::exception::Exception) = 0;
-
-      /**
-       * Delete priority for recall
-       * @param euid the userid of the user
-       * @param egid the groupid of the user
-       * @exception in case of an error
-       */
-      virtual void deletePriority(int euid, int egid)
-        throw (castor::exception::Exception) = 0;
-        
       /**
        * Gets a configuration option from the
        * CastorConfig table

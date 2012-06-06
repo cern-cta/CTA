@@ -206,7 +206,6 @@ STGLIB_SRCS = BaseAddress.cpp \
               stager/GCFile.cpp \
               stager/GCFileList.cpp \
               stager/MoverCloseRequest.cpp \
-              stager/PriorityMap.cpp \
               stager/PutStartRequest.cpp \
               stager/QryRequest.cpp \
               stager/PutFailed.cpp \

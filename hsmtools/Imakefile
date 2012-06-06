@@ -19,9 +19,6 @@ DependsOnLibrary(rfio,castorrfio)
 NormalProgramTarget(reclaim,reclaim.o,,,755)
 NormalProgramTarget(adler32,adler32.o,,-lz,755)
 NormalProgramTarget(c2probe,c2probe.o,,,755)
-NormalProgramTarget(listPriority,listPriority.o,,-lstdc++,755)
-NormalProgramTarget(enterPriority,enterPriority.o,,-lstdc++,755)
-NormalProgramTarget(deletePriority,deletePriority.o,,-lstdc++,755)
 LOCAL_PATH/rfcpupd.c: $(CASTOR_ROOT)/rfio/rfcp.c
 	sed 's/| *O_TRUNC//' $< | sed 's/O_WRONLY/O_RDWR|O_APPEND/' > $@
 PREFIX(FilesToClean) += LOCAL_PATH/rfcpupd.c
@@ -100,9 +97,6 @@ EXEMANPAGE(moveDiskServer)
 EXEMANPAGE(c2probe)
 EXEMANPAGE(adler32)
 EXEMANPAGE(adminMultiInstance)
-EXEMANPAGE(listPriority)
-EXEMANPAGE(enterPriority)
-EXEMANPAGE(deletePriority)
 EXEMANPAGE(draindiskserver)
 EXEMANPAGE(migrateNewCopy)
 

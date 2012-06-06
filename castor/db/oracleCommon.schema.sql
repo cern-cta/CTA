@@ -621,10 +621,6 @@ CREATE GLOBAL TEMPORARY TABLE DeleteTermReqHelper
 CREATE GLOBAL TEMPORARY TABLE getFileIdsForSrsHelper (rowno NUMBER, fileId NUMBER, nsHost VARCHAR(2048))
   ON COMMIT DELETE ROWS;
 
-/* SQL statements for table PriorityMap */
-CREATE TABLE PriorityMap (euid INTEGER, egid INTEGER, priority INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-ALTER TABLE PriorityMap ADD CONSTRAINT UN_Priority_euid_egid UNIQUE (euid, egid);
-
 /*
  * Black and while list mechanism
  * In order to be able to enter a request for a given service class, you need :

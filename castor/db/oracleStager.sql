@@ -3302,47 +3302,6 @@ BEGIN
 END;
 /
 
-
-/* PL/SQL method implementing selectPriority */
-CREATE OR REPLACE PROCEDURE selectPriority(
-  inUid IN INTEGER,
-  inGid IN INTEGER,
-  inPriority IN INTEGER,
-  dbInfo OUT castor.TapeAccessPriority_Cur) AS
-BEGIN
-  OPEN dbInfo FOR
-    SELECT euid, egid, priority FROM PriorityMap
-     WHERE (euid = inUid OR inUid = -1)
-       AND (egid = inGid OR inGid = -1)
-       AND (priority = inPriority OR inPriority = -1);
-END;
-/
-
-/* PL/SQL method implementing enterPriority
-   it can raise constraint violation exception */
-CREATE OR REPLACE PROCEDURE enterPriority(
-  inUid IN NUMBER,
-  inGid IN NUMBER,
-  inPriority IN INTEGER) AS
-BEGIN
-  INSERT INTO PriorityMap (euid, egid, priority)
-  VALUES (inUid, inGid, inPriority);
-END;
-/
-
-
-/* PL/SQL method implementing deletePriority */
-CREATE OR REPLACE PROCEDURE deletePriority(
-  inUid IN INTEGER,
-  inGid IN INTEGER) AS
-BEGIN
-  DELETE FROM PriorityMap
-   WHERE (euid = inUid OR inUid = -1)
-     AND (egid = inGid OR inGid = -1);
-END;
-/
-
-
 /* PL/SQL method used by the stager to collect the logging made in the DB */
 CREATE OR REPLACE PROCEDURE dumpDBLogs(logEntries OUT castor.LogEntry_Cur) AS
   unused NUMBER;

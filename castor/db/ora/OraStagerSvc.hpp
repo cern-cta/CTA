@@ -357,38 +357,6 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Select priority for recall
-         * @param euid the userid of the user
-         * @param egid the groupid of the user
-         * @return priority value
-         * @exception in case of an error
-         */
-        std::vector<castor::stager::PriorityMap*>
-        selectPriority(int euid, int egid, int priority)
-          throw (castor::exception::Exception);
-
-        /**
-         * Enter priority for recall
-         * @param euid the userid of the user
-         * @param egid the groupid of the user
-         * @param priority  rating
-         * @exception in case of an error
-         */
-        void enterPriority(u_signed64 euid,
-                           u_signed64 egid,
-                           u_signed64 priority)
-          throw (castor::exception::Exception);
-
-        /**
-         * Delete priority for recall
-         * @param euid the userid of the user
-         * @param egid the groupid of the user
-         * @exception in case of an error
-         */
-        void deletePriority(int euid, int egid)
-          throw (castor::exception::Exception);
-          
-        /**
          * Gets a configuration option from the CastorConfig table
          * @param class a string containing the option class (e.g. stager)
          * @param key a string containing the option key to be accessed
