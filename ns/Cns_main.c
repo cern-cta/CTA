@@ -753,17 +753,14 @@ doit(void *arg)
       clienthost = inet_ntoa (from.sin_addr);
     else
       clienthost = hp->h_name;
-
     clientport = ntohs(from.sin_port);
-
     clientip = inet_ntop(AF_INET, &from.sin_addr, ipbuf, sizeof(ipbuf));
-    nslogit("MSG=\"Incoming request\" ClientHost=\"%s\" IP=\"%s\" Port=%d ",
-            clienthost, clientip, clientport);
 
     Csec_server_reinitContext (&thip->sec_ctx, CSEC_SERVICE_TYPE_HOST, NULL);
     if (Csec_server_establishContext (&thip->sec_ctx, thip->s) < 0) {
-      nslogit("MSG=\"Error: Could not establish security context\" Error=\"%s\"",
-              Csec_getErrorMessage());
+      nslogit("MSG=\"Error: Could not establish security context\" "
+              "Error=\"%s\" ClientHost=\"%s\" IP=\"%s\" Port=%d",
+              Csec_getErrorMessage(), clienthost, clientip, clientport);
       sendrep (thip->s, CNS_RC, ESEC_NO_CONTEXT);
       thip->s = -1;
       return NULL;
@@ -771,17 +768,18 @@ doit(void *arg)
     Csec_server_getClientId (&thip->sec_ctx, &thip->Csec_mech,
                              &thip->Csec_auth_id);
     if (Csec_mapToLocalUser (thip->Csec_mech, thip->Csec_auth_id,
-                             username,CA_MAXUSRNAMELEN, &thip->Csec_uid
-                             , &thip->Csec_gid) < 0) {
-      nslogit("MSG=\"Error: Could not map to local user\" Error=\"%s\"",
-              sstrerror(serrno));
+                             username, CA_MAXUSRNAMELEN, &thip->Csec_uid,
+                             &thip->Csec_gid) < 0) {
+      nslogit("MSG=\"Error: Could not map to local user\" Error=\"%s\" "
+              "Principal=\"%s\" ClientHost=\"%s\" IP=\"%s\" Port=%d",
+              sstrerror(serrno), thip->Csec_auth_id, clienthost, clientip, clientport);
       sendrep (thip->s, CNS_RC, serrno);
       thip->s = -1;
       return NULL;
     }
-    nslogit("MSG=\"Mapping to local user successful\" AuthId=\"%s\" "
-            "Username=\"%s\"",
-            thip->Csec_auth_id, username);
+    nslogit("MSG=\"KRB principal mapped to local user\" Principal=\"%s\" "
+            "Username=\"%s\" ClientHost=\"%s\" IP=\"%s\" Port=%d",
+            thip->Csec_auth_id, username, clienthost, clientip, clientport);
   }
 
   /* Initialize the request info structure. */
