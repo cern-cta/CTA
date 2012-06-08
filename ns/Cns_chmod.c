@@ -45,7 +45,10 @@ Cns_chmod(const char *path, mode_t mode)
     return (-1);
   }
 
-  mode &= 07777;
+  if (mode > 4095) {
+    serrno = EINVAL;
+    return (-1);
+  }
 
   if (Cns_selectsrvr (path, thip->server, server, &actual_path))
     return (-1);

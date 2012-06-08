@@ -63,7 +63,7 @@ int main(int argc,
     case 'm':
       mflag++;
       mode = strtol (Coptarg, &dp, 8);
-      if (*dp != '\0') {
+      if (*dp != '\0' || mode > 4095) {
         fprintf (stderr, "invalid value for option -m\n");
         errflg++;
       }

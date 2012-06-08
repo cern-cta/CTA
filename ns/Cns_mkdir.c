@@ -49,7 +49,10 @@ Cns_mkdirg(const char *path, const char *guid, mode_t mode)
     return (-1);
   }
 
-  mode &= 07777;
+  if (mode > 4095) {
+    serrno = EINVAL;
+    return (-1);
+  }
 
   if (Cns_selectsrvr (path, thip->server, server, &actual_path))
     return (-1);

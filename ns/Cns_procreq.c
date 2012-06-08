@@ -389,6 +389,8 @@ int Cns_srv_chmod(char *req_data,
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
     RETURN (SENAMETOOLONG);
   unmarshall_LONG (rbp, mode);
+  /* mode must be within 0 and 07777 */
+  if (mode > 4095) RETURN (EINVAL);
 
   /* Check if namespace is in 'readonly' mode */
   if (rdonly)
@@ -667,6 +669,8 @@ int Cns_srv_creat(int magic,
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
     RETURN (SENAMETOOLONG);
   unmarshall_LONG (rbp, mode);
+  /* mode must be within 0 and 07777 */
+  if (mode > 4095) RETURN (EINVAL);
   if (magic >= CNS_MAGIC2) {
     if (unmarshall_STRINGN (rbp, guid, CA_MAXGUIDLEN+1))
       RETURN (EINVAL);
@@ -2365,6 +2369,8 @@ int Cns_srv_mkdir(int magic,
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
     RETURN (SENAMETOOLONG);
   unmarshall_LONG (rbp, mode);
+  /* mode must be within 0 and 07777 */
+  if (mode > 4095) RETURN (EINVAL);
   if (magic >= CNS_MAGIC2) {
     if (unmarshall_STRINGN (rbp, guid, CA_MAXGUIDLEN+1))
       RETURN (EINVAL);
@@ -5840,6 +5846,8 @@ int Cns_srv_openx(char *req_data,
   unmarshall_LONG (rbp, flags);
   flags = ntohopnflg (flags);
   unmarshall_LONG (rbp, mode);
+  /* mode must be within 0 and 07777 */
+  if (mode > 4095) RETURN (EINVAL);
   unmarshall_LONG (rbp, classid);
 
   /* Check if namespace is in 'readonly' mode */
