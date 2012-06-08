@@ -1007,6 +1007,8 @@ CREATE OR REPLACE PROCEDURE tg_getBulkFilesToMigrate(inLogContext IN VARCHAR2,
   varVid VARCHAR2(10);
   varNewFseq INTEGER;
   varFileTrId NUMBER;
+  CONSTRAINT_VIOLATED EXCEPTION;
+  PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -00001);
 BEGIN
   BEGIN
     -- Get id, VID and last valid fseq for this migration mount, lock
@@ -1047,12 +1049,18 @@ BEGIN
                                           AND copyNb != MigrationJob.destCopyNb))
        FOR UPDATE OF MigrationJob.id SKIP LOCKED)
   LOOP
+    BEGIN
+      -- Try to take this candidate on this mount
+      INSERT INTO FilesToMigrateHelper (fileId, nsHost, lastKnownFileName, filePath, fileTransactionId, fileSize, fseq)
+        VALUES (Cand.fileId, Cand.nsHost, Cand.lastKnownFileName, Cand.filePath, ids_seq.NEXTVAL, Cand.fileSize, varNewFseq)
+        RETURNING fileTransactionId INTO varFileTrId;
+    EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
+      -- If we fail here, it means that another copy of this file was already selected for this mount.
+      -- Not a big deal, we skip this candidate and keep going.
+      CONTINUE;
+    END;
     varCount := varCount + 1;
     varTotalSize := varTotalSize + Cand.fileSize;
-    INSERT INTO FilesToMigrateHelper (fileId, nsHost, lastKnownFileName, filePath, fileTransactionId, fileSize, fseq)
-      VALUES (Cand.fileId, Cand.nsHost, Cand.lastKnownFileName, Cand.filePath, ids_seq.NEXTVAL, Cand.fileSize, varNewFseq)
-      RETURNING fileTransactionId INTO varFileTrId;
-    -- Take this candidate on this mount
     UPDATE MigrationJob
        SET status = tconst.MIGRATIONJOB_SELECTED,
            vid = varVid,
