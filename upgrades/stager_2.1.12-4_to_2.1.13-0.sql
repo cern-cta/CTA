@@ -97,6 +97,16 @@ CREATE TABLE DLFLogs
    nsHost VARCHAR2(2048),
    source VARCHAR2(2048),
    params VARCHAR2(2048));
+CREATE GLOBAL TEMPORARY TABLE DLFLogsHelper
+  (timeinfo NUMBER,
+   uuid VARCHAR2(2048),
+   priority INTEGER,
+   msg VARCHAR2(2048),
+   fileId NUMBER,
+   nsHost VARCHAR2(2048),
+   source VARCHAR2(2048),
+   params VARCHAR2(2048))
+ON COMMIT DELETE ROWS;
 
 DROP PROCEDURE dumpCleanupLogs;
 DROP TABLE TapeGatewayRequest;

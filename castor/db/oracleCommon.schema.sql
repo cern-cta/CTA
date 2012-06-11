@@ -497,6 +497,10 @@ ALTER TABLE SvcClass ADD CONSTRAINT UN_SvcClass_Name UNIQUE (name);
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
 /
 
+/* Custom type to handle float arrays */
+CREATE OR REPLACE TYPE floatList IS TABLE OF NUMBER;
+/
+
 /* Custom type to handle strings returned by pipelined functions */
 CREATE OR REPLACE TYPE strListTable AS TABLE OF VARCHAR2(2048);
 /
@@ -576,7 +580,7 @@ CREATE GLOBAL TEMPORARY TABLE ProcessRepackAbortHelperSR (srId NUMBER) ON COMMIT
 /* Global temporary table to handle bulk update of diskCopies in processBulkAbortForRepack */
 CREATE GLOBAL TEMPORARY TABLE ProcessRepackAbortHelperDCmigr (cfId NUMBER) ON COMMIT DELETE ROWS;
 
-/* Table to log the DB activity */
+/* Tables to log the DB activity */
 CREATE TABLE DLFLogs
   (timeinfo NUMBER,
    uuid VARCHAR2(2048),
@@ -586,7 +590,17 @@ CREATE TABLE DLFLogs
    nsHost VARCHAR2(2048),
    source VARCHAR2(2048),
    params VARCHAR2(2048));
- 
+CREATE GLOBAL TEMPORARY TABLE DLFLogsHelper
+  (timeinfo NUMBER,
+   uuid VARCHAR2(2048),
+   priority INTEGER,
+   msg VARCHAR2(2048),
+   fileId NUMBER,
+   nsHost VARCHAR2(2048),
+   source VARCHAR2(2048),
+   params VARCHAR2(2048))
+ON COMMIT DELETE ROWS;
+
 /* Temporary table to handle removing of priviledges */
 CREATE GLOBAL TEMPORARY TABLE RemovePrivilegeTmpTable
   (svcClass VARCHAR2(2048),

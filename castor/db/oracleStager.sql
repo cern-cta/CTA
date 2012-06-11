@@ -137,7 +137,6 @@ END;
  *     coming back but already exist on another one 	 
  */ 	 
 CREATE OR REPLACE PROCEDURE checkFSBackInProd(fsId NUMBER) AS 	 
-   srIds "numList"; 	 
 BEGIN 	 
   -- Flag the filesystem for processing in a bulk operation later. 	 
   -- We need to do this because some operations are database intensive 	 
@@ -3304,12 +3303,26 @@ END;
 
 /* PL/SQL method used by the stager to collect the logging made in the DB */
 CREATE OR REPLACE PROCEDURE dumpDBLogs(logEntries OUT castor.LogEntry_Cur) AS
-  unused NUMBER;
+  timeinfos floatList;
+  uuids strListTable;
+  priorities "numList";
+  msgs strListTable;
+  fileIds "numList";
+  nsHosts strListTable;
+  sources strListTable;
+  paramss strListTable;
 BEGIN
-  -- if we got here, we have something in the log table, let's lock it and dump it
-  LOCK TABLE DLFLogs IN EXCLUSIVE MODE;
+  -- get whatever we can from the table
+  DELETE FROM DLFLogs
+  RETURNING timeinfo, uuid, priority, msg, fileId, nsHost, source, params
+    BULK COLLECT INTO timeinfos, uuids, priorities, msgs, fileIds, nsHosts, sources, paramss;
+  -- insert into tmp table so that we can open a cursor on it
+  FORALL i IN timeinfos.FIRST .. timeinfos.LAST
+    INSERT INTO DLFLogsHelper
+    VALUES (timeinfos(i), uuids(i), priorities(i), msgs(i), fileIds(i), nsHosts(i), sources(i), paramss(i));
+  -- return list of entries by opening a cursor on temp table
   OPEN logEntries FOR
-    SELECT timeinfo, uuid, priority, msg, fileId, nsHost, source, params FROM DLFLogs;
+    SELECT timeinfo, uuid, priority, msg, fileId, nsHost, source, params FROM DLFLogsHelper;
 END;
 /
 

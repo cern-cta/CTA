@@ -513,11 +513,9 @@ namespace castor {
 
         /// SQL statement for dumpDBLogs function
         static const std::string s_dumpDBLogsString;
-        static const std::string s_truncateDBLogsString;
 
         /// SQL statement object for dumpDBLogs function
         oracle::occi::Statement *m_dumpDBLogsStatement;
-        oracle::occi::Statement *m_truncateDBLogsStatement;
 
       }; // end of class OraStagerSvc
 
