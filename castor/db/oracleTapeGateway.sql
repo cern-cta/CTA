@@ -1086,13 +1086,13 @@ BEGIN
 END;
 /
 
-/* Wrapper procedure for the setOrReplaceSegmentsForFiles call in the NS DB. Because we can't,
+/* Wrapper procedure for the setOrReplaceSegmentsForFiles call in the NS DB. Because we can't
  * pass arrays, and temporary tables are forbidden with distributed transactions, we use standard
  * tables on the Stager DB (while the NS table is still temporary) to pass the data
  * and we wrap everything in an autonomous transaction to isolate the caller.
  */
 CREATE OR REPLACE PROCEDURE ns_setOrReplaceSegments(inReqId IN VARCHAR2,
-                                                    outNSTimeInfos OUT "numList",
+                                                    outNSTimeInfos OUT floatList,
                                                     outNSErrorCodes OUT "numList",
                                                     outNSMsgs OUT strListTable,
                                                     outNSFileIds OUT "numList",
@@ -1142,7 +1142,7 @@ CREATE OR REPLACE PROCEDURE tg_setBulkFileMigrationResult(inLogContext IN VARCHA
   varCopyNo NUMBER;
   varOldCopyNo NUMBER;
   varVid VARCHAR2(10);
-  varNSTimeInfos "numList";
+  varNSTimeInfos floatList;
   varNSErrorCodes "numList";
   varNSMsgs strListTable;
   varNSFileIds "numList";
