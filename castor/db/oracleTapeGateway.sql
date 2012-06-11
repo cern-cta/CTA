@@ -1579,13 +1579,3 @@ BEGIN
       COMMENTS        => 'Creates RecallMount entries when new recalls should start');
 END;
 /
-
-
-/* Insert the bare minimum to get a working system. Inserted late in the creation
- * script in order to use getTime().
- * - Create the default recall group to have a default recall mount traffic shaping.
- */
-INSERT INTO RecallGroup (id, name, nbDrives, minAmountDataForMount, minNbFilesForMount, maxFileAgeBeforeMount, vdqmPriority, lastEditor, lastEditionTime)
-VALUES (ids_seq.nextval, 'default', 20, 10*1024*1024*1024, 10, 30*3600, 0, '2.1.13 upgrade script', getTime());
-
-/* End of oracleTapeGateway.sql. This trailer makes sure the previous statement is followed by a new line. */

@@ -541,20 +541,3 @@ BEGIN
   COMMIT;
 END;
 /
-/* Insert the bare minimum to get a working system. Inserted late in the creation
- * script in order to use getTime().
- * - Create a default 'system' fileclass. Pre-requisite to next step.
- * - Create the root directory.
- * - Create a synonym to access the VMGR. This requires CNS and VMGR co-location
- *   in the same database.
- */
--- Root entry
- insert into cns_class_metadata (classid,   name, owner_uid, gid, min_filesize, max_filesize, flags, maxdrives, max_segsize, migr_time_interval, mintime_beforemigr, nbcopies, retenp_on_disk) 
-values                         (      1, 'system',       0,   0,            0,            0,     0,         0,           0,                  0,                  0,        0,              0);
-insert into cns_file_metadata (fileid, parent_fileid, guid, name, filemode, nlink, owner_uid, gid, filesize,      atime,     mtime,     ctime, fileclass, status, csumtype, csumvalue,  acl) 
-values                        (     2,             0, NULL,  '/',    16877,     0,         0,   0,        0,  getTime(), getTime(), getTime(),         1,    '-',     NULL,      NULL, NULL);
-
--- A synonym allowing to acces the VMGR_TAPE_SIDE table from within the nameserver DB
-UNDEF vmgrSchema
-ACCEPT vmgrSchema CHAR DEFAULT 'vmgr' PROMPT 'Enter the name of the VMGR schema (default vmgr): ';
-CREATE OR REPLACE SYNONYM Vmgr_tape_side FOR &vmgrSchema..Vmgr_tape_side;

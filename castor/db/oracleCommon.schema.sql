@@ -10,6 +10,30 @@
 /* SQL statement to populate the intial schema version */
 UPDATE UpgradeLog SET schemaVersion = '2_1_13_0';
 
+/* Get current time as a time_t. Not that easy in ORACLE */
+CREATE OR REPLACE FUNCTION getTime RETURN NUMBER IS
+  epoch            TIMESTAMP WITH TIME ZONE;
+  now              TIMESTAMP WITH TIME ZONE;
+  interval         INTERVAL DAY(9) TO SECOND;
+  interval_days    NUMBER;
+  interval_hours   NUMBER;
+  interval_minutes NUMBER;
+  interval_seconds NUMBER;
+BEGIN
+  epoch := TO_TIMESTAMP_TZ('01-JAN-1970 00:00:00 00:00',
+    'DD-MON-YYYY HH24:MI:SS TZH:TZM');
+  now := SYSTIMESTAMP AT TIME ZONE '00:00';
+  interval         := now - epoch;
+  interval_days    := EXTRACT(DAY    FROM (interval));
+  interval_hours   := EXTRACT(HOUR   FROM (interval));
+  interval_minutes := EXTRACT(MINUTE FROM (interval));
+  interval_seconds := EXTRACT(SECOND FROM (interval));
+
+  RETURN interval_days * 24 * 60 * 60 + interval_hours * 60 * 60 +
+    interval_minutes * 60 + interval_seconds;
+END;
+/
+
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
 
@@ -150,6 +174,14 @@ CREATE TABLE RecallGroup(id INTEGER CONSTRAINT PK_RecallGroup_Id PRIMARY KEY CON
                          lastEditor VARCHAR2(2048) CONSTRAINT NN_RecallGroup_LastEditor NOT NULL,
                          lastEditionTime NUMBER CONSTRAINT NN_RecallGroup_LastEdTime NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+/* Insert the bare minimum to get a working recall:
+ * create the default recall group to have a default recall mount traffic shaping.
+ */
+INSERT INTO RecallGroup (id, name, nbDrives, minAmountDataForMount, minNbFilesForMount,
+                         maxFileAgeBeforeMount, vdqmPriority, lastEditor, lastEditionTime)
+  VALUES (ids_seq.nextval, 'default', 20, 10*1024*1024*1024, 10, 30*3600, 0, '', getTime());
+
 
 /* Definition of the RecallUser table
  *   euid : uid of the recall user
@@ -749,7 +781,6 @@ COMMIT;
 /* when they change status                                           */
 /*********************************************************************/
 CREATE TABLE FileSystemsToCheck (FileSystem NUMBER CONSTRAINT PK_FSToCheck_FS PRIMARY KEY, ToBeChecked NUMBER);
-INSERT INTO FileSystemsToCheck SELECT id, 0 FROM FileSystem;
 
 
 /**************/

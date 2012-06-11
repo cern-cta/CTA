@@ -7,30 +7,6 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
 
-/* Get current time as a time_t. Not that easy in ORACLE */
-CREATE OR REPLACE FUNCTION getTime RETURN NUMBER IS
-  epoch            TIMESTAMP WITH TIME ZONE;
-  now              TIMESTAMP WITH TIME ZONE;
-  interval         INTERVAL DAY(9) TO SECOND;
-  interval_days    NUMBER;
-  interval_hours   NUMBER;
-  interval_minutes NUMBER;
-  interval_seconds NUMBER;
-BEGIN
-  epoch := TO_TIMESTAMP_TZ('01-JAN-1970 00:00:00 00:00',
-    'DD-MON-YYYY HH24:MI:SS TZH:TZM');
-  now := SYSTIMESTAMP AT TIME ZONE '00:00';
-  interval         := now - epoch;
-  interval_days    := EXTRACT(DAY    FROM (interval));
-  interval_hours   := EXTRACT(HOUR   FROM (interval));
-  interval_minutes := EXTRACT(MINUTE FROM (interval));
-  interval_seconds := EXTRACT(SECOND FROM (interval));
-
-  RETURN interval_days * 24 * 60 * 60 + interval_hours * 60 * 60 +
-    interval_minutes * 60 + interval_seconds;
-END;
-/
-
 /* Returns a time interval in seconds */
 CREATE OR REPLACE FUNCTION getSecs(startTime IN TIMESTAMP, endTime IN TIMESTAMP) RETURN NUMBER IS
 BEGIN

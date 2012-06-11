@@ -97,6 +97,13 @@ CREATE INDEX I_seg_metadata_tapesum ON Cns_seg_metadata (vid, s_fileid, segsize,
 CREATE GLOBAL TEMPORARY TABLE Cns_files_exist_tmp
   (tmpFileId NUMBER) ON COMMIT DELETE ROWS;
 
+-- A synonym allowing to acces the VMGR_TAPE_SIDE table from within the nameserver DB.
+-- Note that the VMGR schema shall grant read access to the NS account with something like:
+-- GRANT SELECT ON Vmgr_Tape_Side TO <CastorNsAccount>;
+UNDEF vmgrSchema
+ACCEPT vmgrSchema CHAR DEFAULT 'castor_vmgr' PROMPT 'Enter the name of the VMGR schema (default castor_vmgr): ';
+CREATE OR REPLACE SYNONYM Vmgr_tape_side FOR &vmgrSchema..Vmgr_tape_side;
+
 -- Tables to store intermediate data to be passed from/to the stager.
 -- Note that we cannot use temporary tables with distributed transactions.
 CREATE TABLE SetSegmentsForFilesHelper
@@ -105,3 +112,15 @@ CREATE TABLE SetSegmentsForFilesHelper
 
 CREATE TABLE ResultsLogHelper
   (reqId VARCHAR2(36), timeinfo NUMBER, ec INTEGER, fileId NUMBER, msg VARCHAR2(2048), params VARCHAR2(4000));
+
+/* Insert the bare minimum to get a working system.
+ * - Create a default 'system' fileclass. Pre-requisite to next step.
+ * - Create the root directory.
+ */
+INSERT INTO cns_class_metadata (classid, name, owner_uid, gid, min_filesize, max_filesize, flags, maxdrives,
+  max_segsize, migr_time_interval, mintime_beforemigr, nbcopies, retenp_on_disk) 
+  VALUES (1, 'system', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+INSERT INTO cns_file_metadata (fileid, parent_fileid, guid, name, filemode, nlink, owner_uid, gid, filesize,
+  atime, mtime, ctime, fileclass, status, csumtype, csumvalue, acl) 
+  VALUES (2, 0, NULL,  '/', 16877, 0, 0, 0, 0,  0, 0, 0, 1, '-', NULL, NULL, NULL);
+COMMIT;
