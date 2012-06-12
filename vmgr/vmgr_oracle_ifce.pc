@@ -750,7 +750,7 @@ int vmgr_get_side_by_size_byte_u64(struct vmgr_dbfd *dbfd,
                                             AND vmgr_tape_side.poolname = :poolname
                                             AND vmgr_tape_side.status = 0
                                             AND vmgr_tape_side.estimated_free_space >= :reqsize
-                                            ORDER BY vmgr_tape_side.estimated_free_space asc)
+                                            ORDER BY vmgr_tape_side.estimated_free_space asc, DBMS_RANDOM.VALUE)
                                       WHERE rownum <= 5)
                                 ORDER BY DBMS_RANDOM.VALUE)
                           WHERE ROWNUM < 2)
@@ -778,7 +778,7 @@ int vmgr_get_side_by_size_byte_u64(struct vmgr_dbfd *dbfd,
                                             AND vmgr_tape_library.status = 0
                                             AND vmgr_tape_side.poolname = :poolname
                                             AND vmgr_tape_side.status = 0
-                                            ORDER BY vmgr_tape_side.estimated_free_space desc)
+                                            ORDER BY vmgr_tape_side.estimated_free_space desc, DBMS_RANDOM.VALUE)
                                       WHERE rownum <= 5)
                                 ORDER BY DBMS_RANDOM.VALUE)
                           WHERE ROWNUM < 2)
