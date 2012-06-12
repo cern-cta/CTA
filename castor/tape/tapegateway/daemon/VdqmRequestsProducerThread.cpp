@@ -231,6 +231,20 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::sendToVDQM
       castor::dlf::Param("ProcessingTime", timer.secs())
     };
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, PRODUCER_REQUEST_SUBMITTED, paramsDb);
+    try {
+      // (try to) disconnect (otherwise we leak memory)
+      vdqmHelper.disconnectFromVdqm();
+    } catch (castor::exception::Exception& e) {
+      // impossible to disconnect from vdqm
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("errorCode", sstrerror(e.code())),
+        castor::dlf::Param("errorMessage", e.getMessage().str()),
+        castor::dlf::Param("TPVID", vid),
+        castor::dlf::Param("mountTransactionId", mountTransactionId),
+        castor::dlf::Param("ProcessingTime", timer.secs())
+      };
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_VDQM_ERROR,params);
+    }
   } catch (castor::exception::Exception& e) {
     castor::dlf::Param params[] = {
       castor::dlf::Param("errorCode", sstrerror(e.code())),
@@ -240,19 +254,5 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::sendToVDQM
       castor::dlf::Param("ProcessingTime", timer.secs())
     };
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_VDQM_ERROR, params);
-  }
-  try {
-    // in all cases we (try to) disconnect (otherwise we leak memory)
-    vdqmHelper.disconnectFromVdqm();
-  } catch (castor::exception::Exception& e) {
-    // impossible to disconnect from vdqm
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("errorCode", sstrerror(e.code())),
-      castor::dlf::Param("errorMessage", e.getMessage().str()),
-      castor::dlf::Param("TPVID", vid),
-      castor::dlf::Param("mountTransactionId", mountTransactionId),
-      castor::dlf::Param("ProcessingTime", timer.secs())
-    };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, PRODUCER_VDQM_ERROR,params);
   }
 }
