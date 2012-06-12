@@ -51,7 +51,7 @@ castor::common::CastorConfiguration::getConfig(std::string fileName)
 // constructor
 //------------------------------------------------------------------------------
 castor::common::CastorConfiguration::CastorConfiguration(std::string fileName)
-  throw (castor::exception::Exception) : m_fileName(fileName), m_lastUpdateTime(-1) {
+  throw (castor::exception::Exception) : m_fileName(fileName), m_lastUpdateTime(0) {
   // create internal read write lock
   int rc = pthread_rwlock_init(&m_lock, NULL);
   if (0 != rc) {
@@ -76,69 +76,118 @@ castor::common::CastorConfiguration::getConfEnt(const std::string &category,
                                                 const std::string &key)
   throw (castor::exception::Exception) {
   // check whether we need to reload the configuration
-  checkAndRenewConfig();
-  // get read lock. No need to be fancy, just let it auto-release on exit.
-  smartReadLockTaker srl(&m_lock);
-  // get the category
-  Configuration::const_iterator catIt = find(category);
-  if (end() == catIt) {
-    castor::exception::NoEntry e;
+  if (isStale()) {
+    tryToRenewConfig();
+  }
+  // get read lock
+  int rc = pthread_rwlock_rdlock(&m_lock);
+  if (0 != rc) {
+    castor::exception::Exception e(rc);
     throw e;
   }
   // get the entry
-  ConfCategory::const_iterator entIt = catIt->second.find(key);
-  if (catIt->second.end() == entIt) {
-    castor::exception::NoEntry e;
-    throw e;
+  try {
+    std::map<std::string, ConfCategory>::const_iterator catIt = m_config.find(category);
+    if (m_config.end() == catIt) {
+      castor::exception::NoEntry e;
+      throw e;
+    }
+    // get the entry
+    ConfCategory::const_iterator entIt = catIt->second.find(key);
+    if (catIt->second.end() == entIt) {
+      castor::exception::NoEntry e;
+      throw e;
+    }
+    // release the lock
+    pthread_rwlock_unlock(&m_lock);
+    return entIt->second;
+  } catch (...) {
+    // release the lock
+    pthread_rwlock_unlock(&m_lock);
+    throw;
   }
-  return entIt->second;
 }
 
 //------------------------------------------------------------------------------
-// checkAndRenewConfig
+// isStale
 //------------------------------------------------------------------------------
-void castor::common::CastorConfiguration::checkAndRenewConfig()
+bool castor::common::CastorConfiguration::isStale()
   throw (castor::exception::Exception) {
-  // take read only lock
-  smartReadLockTaker srl(&m_lock);
-  // get the timeout
-  time_t timeout = 300; // default to 300s = 5mn
-  std::string &stimeout = Configuration::operator[]("Config")["ExpirationDelay"];
+  // get read lock
+  int rc = pthread_rwlock_rdlock(&m_lock);
+  if (0 != rc) {
+    castor::exception::Exception e(rc);
+    throw e;
+  }
+  try {
+    // get the timeout
+    int timeout = getTimeoutNolock();
+    // release the lock
+    pthread_rwlock_unlock(&m_lock);
+    // return whether we should renew  
+    return time(0) > m_lastUpdateTime + timeout;
+  } catch (...) {
+    // release the lock
+    pthread_rwlock_unlock(&m_lock);
+    throw;
+  }   
+}
+
+//------------------------------------------------------------------------------
+// tryToRenewConfig
+//------------------------------------------------------------------------------
+void castor::common::CastorConfiguration::tryToRenewConfig()
+  throw (castor::exception::Exception) {
+  // we should probably renew. First take the write lock.
+  int rc = pthread_rwlock_wrlock(&m_lock);
+  if (0 != rc) {
+    castor::exception::Exception e(rc);
+    throw e;
+  }
+  // now check that we should really renew, because someone may have done it
+  // while we waited for the lock
+  try {
+    if (time(0) > m_lastUpdateTime + getTimeoutNolock()) {
+      // now we should really renew
+      renewConfigNolock();
+    }
+  } catch (...) {
+    // release the lock
+    pthread_rwlock_unlock(&m_lock);
+    throw;
+  }
+  // release the lock
+  pthread_rwlock_unlock(&m_lock);
+  return;
+}
+
+//------------------------------------------------------------------------------
+// getTimeoutNolock
+//------------------------------------------------------------------------------
+int castor::common::CastorConfiguration::getTimeoutNolock()
+  throw (castor::exception::Exception) {
+  // start with the default (300s = 5mn)
+  int timeout = 300;
+  // get value from config
+  std::string &stimeout = m_config["Config"]["ExpirationDelay"];
   if ("" != stimeout) {
     // parse the timeout into an integer
     timeout = atoi(stimeout.c_str());
   } else {
-    // set default to 300s = 5mn into the configuration
-    Configuration::operator[]("Config")["ExpirationDelay"] = "300";
+    // no value found in config, set default to 300s = 5mn into the configuration
+    m_config["Config"]["ExpirationDelay"] = "300";
   }
-  // release read only lock
-  srl.release();
-  // check whether we should renew  
-  time_t currentTime = time(0);
-  if (currentTime < m_lastUpdateTime + timeout) {
-    // no need to renew
-    return;  
-  }
-  // we should probably renew. First take the write lock.
-  // No need to be fancy, just let it auto-release on exit.
-  smartWriteLockTaker swl(&m_lock);
-  // now check that we should really renew, because someone may have done it
-  // while we waited for the lock
-  if (currentTime < m_lastUpdateTime + timeout) {
-    // indeed, someone renew it for us, so give up
-    return;
-  }
-  // now we should really renew
-  renewConfig();
+  // return timeout
+  return timeout;
 }
 
 //------------------------------------------------------------------------------
-// renewConfig
+// renewConfigNolock
 //------------------------------------------------------------------------------
-void castor::common::CastorConfiguration::renewConfig()
+void castor::common::CastorConfiguration::renewConfigNolock()
   throw (castor::exception::Exception) {
   // reset the config
-  clear();
+  m_config.clear();
 
   // try to open the configuration file, throwing an exception if there is a
   // failure
@@ -168,7 +217,7 @@ void castor::common::CastorConfiguration::renewConfig()
     while (sline.get() == ' '){}; sline.unget(); // skip spaces
     std::string value;
     std::getline(sline, value, '#');
-    Configuration::operator[](category)[key] = value;
+    m_config[category][key] = value;
   }
   m_lastUpdateTime = time(0);
 }

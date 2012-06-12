@@ -40,22 +40,13 @@ namespace castor {
     typedef std::map<std::string, std::string> ConfCategory;
 
     /**
-     * represents a CASTOR configuration
-     */
-    typedef std::map<std::string, ConfCategory> Configuration;
-
-    /**
      * a class representing the configuration of castor.
      * This configurations is obtained from the local file given in the
      * constructor and will be updated regularly. The time between two
      * updates is taken from the Config/ExpirationDelay entry of the
      * configuration itself and defaults to 5mn if no such entry is found
-     *
-     * Objects of this class behave like duoble level dictionnaries. This
-     * means that you can look for entry A/B using obj["A"]["B"] or loop
-     * over the entries of a given category using an iterator in obj["A"]
      */
-    class CastorConfiguration : public Configuration {
+    class CastorConfiguration {
 
     public:
 
@@ -92,16 +83,32 @@ namespace castor {
     private:
 
       /**
-       * checks whether we should update our configuration.
-       * If yes, do the update
+       * check whether the configuration should be renewed
        */
-      void checkAndRenewConfig() throw (castor::exception::Exception);
+      bool isStale() throw (castor::exception::Exception);
 
       /**
-       * renew the configuration. Should be called only while
-       * holding the write lock
+       * tries to renew the configuration.
+       * That is : take the write lock to do it, check whether it's needed
+       * and do it only if needed before releasing the lock
        */
-      void renewConfig() throw (castor::exception::Exception);
+      void tryToRenewConfig() throw (castor::exception::Exception);
+
+      /**
+       * gets current timeout value (in seconds)
+       * this function does not take any lock while reading the
+       * configuration. So it should never be called without holding
+       * a read or a write lock
+       */
+      int getTimeoutNolock() throw (castor::exception::Exception);
+
+      /**
+       * renews the configuration
+       * this function does not take any lock while renewing the
+       * configuration. So it should never be called without holding
+       * the write lock
+       */
+      void renewConfigNolock() throw (castor::exception::Exception);
 
     private:
 
@@ -116,29 +123,13 @@ namespace castor {
       time_t m_lastUpdateTime;
 
       /**
-       * Scoped lock allowing safe lock release in all execution pathes
+       * the dictionnary of configuration items
+       * actually a dictionnary of ConfCategories, which are dictionnaries of entries
        */
-      class smartLockTaker {
-      protected:
-        smartLockTaker(pthread_rwlock_t *lk): m_reld(false), m_lock(lk) {};
-        bool m_reld;
-        pthread_rwlock_t *m_lock;
-      public:
-        void release() { if (!m_reld) pthread_rwlock_unlock(m_lock); m_reld=true; }
-        ~smartLockTaker() { release(); }
-      };
+      std::map<std::string, ConfCategory> m_config;
 
-      class smartReadLockTaker: public smartLockTaker {
-      public:
-        smartReadLockTaker(pthread_rwlock_t *lk): smartLockTaker(lk) { pthread_rwlock_rdlock(m_lock); }
-      };
-
-      class smartWriteLockTaker: public smartLockTaker {
-      public:
-        smartWriteLockTaker(pthread_rwlock_t *lk): smartLockTaker(lk) { pthread_rwlock_wrlock(m_lock); }
-      };
       /**
-       * lock to garantee safe access to the configuration
+       * lock to garantee safe access to the configuration, lastUpdateTime and timeout
        */
       pthread_rwlock_t m_lock;
 
