@@ -806,20 +806,20 @@ void standardWorker(void) {
       if (0 != issueCommand(dirpath, filepath.str(), tid,
                             sendPrepareToPutRequest,
                             "sendPrepareToPutRequest")) {
-	break;
+	continue;
       }
     }
     // Write the file
     if (0 != issueCommand(dirpath, filepath.str(), tid,
                           writeFileUsingRFIO, "writeFileUsingRFIO",
                           writeFileSize)) {
-      break;
+      continue;
     }
     // Invoke PutDone if needed
     if (putDoneCycle) {
       if (0 != issueCommand(dirpath, filepath.str(), tid,
                             sendPutDoneRequest, "sendPutDoneRequest")) {
-	break;
+	continue;
       }
     }
     // Stat the file
@@ -827,7 +827,7 @@ void standardWorker(void) {
       if (0 != issueCommand(dirpath, filepath.str(), tid,
                             sendStatRequest, "sendStatRequest",
                             0, false)) {
-	break;
+	continue;
       }
     }
     // Perform a file query if needed
@@ -835,7 +835,7 @@ void standardWorker(void) {
       if (0 != issueCommand(dirpath, filepath.str(), tid,
                             sendFileQueryRequest, "sendFileQueryRequest",
                             0, false)) {
-	break;
+	continue;
       }
     }
     // Read the file back n times
@@ -843,7 +843,7 @@ void standardWorker(void) {
       if (0 != issueCommand(dirpath, filepath.str(), tid,
                             readFileUsingRFIO, "readFileUsingRFIO",
                             writeFileSize, false)) {
-        break;
+        continue;
       }
     }
     // Sleep a bit if delay is greater than 0
@@ -883,14 +883,14 @@ void racecondWorker(void) {
                           writeFileUsingRFIO, "writeFileUsingRFIO",
                           writeFileSize, false);
     if ((0 != rc) && (EBUSY != rc)) {
-      break;
+      continue;
     }
     // Read the file back n times
     rc = issueCommand(dirpath, filepath.str(), tid,
                       readFileUsingRFIO, "readFileUsingRFIO",
                       writeFileSize, false);
     if ((0 != rc) && (ENOENT != rc) && (EBUSY != rc)) {
-      break;
+      continue;
     }
   }
   // Exit
