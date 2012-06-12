@@ -1,0 +1,6 @@
+rfcp <localFileName> <tapeFileName>
+status=`stager_qry -M <tapeFileName> | tail -1 | awk '{print $NF;}'`; while [[ $status == 'CANBEMIGR' ]]; do sleep 15; status=`stager_qry -M <tapeFileName> | tail -1 | awk '{print $NF;}'` ; done
+stager_qry -M <tapeFileName>
+stager_put -M <tapeFileName>
+nsls -T <tapeFileName>
+nsls -l <tapeFileName> | sed "s/  */ /g"

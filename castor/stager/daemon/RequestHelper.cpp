@@ -242,16 +242,16 @@ namespace castor {
         // Massage the flags so that the request type always wins over them.
         // See also the stage_open API.
         if(fileRequest->type() == OBJ_StagePutRequest || fileRequest->type() == OBJ_StagePrepareToPutRequest) {
-          // a Put must (re)create and truncate
-          subrequest->setFlags(subrequest->flags() | O_CREAT | O_TRUNC);
+          // a Put must (re)create and truncate, plus it's a write operation
+          subrequest->setFlags(subrequest->flags() | O_CREAT | O_TRUNC | O_WRONLY);
         }
         else if(fileRequest->type() == OBJ_StageUpdateRequest || fileRequest->type() == OBJ_StagePrepareToUpdateRequest) {
           // an Update may recreate, plus it's a read/write operation
-          subrequest->setFlags(subrequest->flags() | O_RDWR | O_CREAT);
+          subrequest->setFlags(subrequest->flags() | O_CREAT | O_RDWR);
         }
         else if(fileRequest->type() == OBJ_StageGetRequest || fileRequest->type() == OBJ_StagePrepareToGetRequest
           || fileRequest->type() == OBJ_StageRepackRequest) {
-          // a Get is always a read-only operation
+          // a Get is always a read-only operation (O_RDONLY == 0, hence the or is a no-op)
           subrequest->setFlags((subrequest->flags() | O_RDONLY) & ~O_RDWR & ~O_WRONLY);
         }
         // Open file in the NameServer. This eventually creates it when allowed according to the flags
