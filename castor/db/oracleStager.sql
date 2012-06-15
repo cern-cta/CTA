@@ -3456,8 +3456,8 @@ BEGIN
   END;
   -- Did we find at least one segment ?
   IF varAllCopyNbs.COUNT = 0 THEN
-    -- log "No TapeCopy found for Recall"
-    logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_NO_TAPECOPY_FOUND, inFileId, inNsHost, 'stagerd', inLogParams);
+    -- log "No recallJob found"
+    logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_NO_JOB_FOUND, inFileId, inNsHost, 'stagerd', inLogParams);
     RETURN 1723; -- ESTNOSEGFOUND
   END IF;
   -- create missing segments if needed

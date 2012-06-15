@@ -152,7 +152,7 @@ AS
 
   RECALL_FOUND_ONGOING_RECALL  CONSTANT VARCHAR2(2048) := 'createRecallCandidate: found already running recall';
   RECALL_UNKNOWN_NS_ERROR      CONSTANT VARCHAR2(2048) := 'createRecallCandidate: error when retrieving segments from namespace';
-  RECALL_NO_TAPECOPY_FOUND     CONSTANT VARCHAR2(2048) := 'createRecallCandidate: No TapeCopy found for Recall';
+  RECALL_NO_JOB_FOUND          CONSTANT VARCHAR2(2048) := 'createRecallCandidate: No RecallJob found';
   RECALL_CREATING_RECALLJOB    CONSTANT VARCHAR2(2048) := 'createRecallCandidate: created new RecallJob';
   RECALL_MISSING_COPIES        CONSTANT VARCHAR2(2048) := 'createRecallCandidate: detected missing copies on tape';
   RECALL_MISSING_COPIES_NOOP   CONSTANT VARCHAR2(2048) := 'createRecallCandidate: detected missing copies on tape, but migrations ongoing';
