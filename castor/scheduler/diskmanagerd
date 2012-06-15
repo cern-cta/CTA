@@ -211,11 +211,15 @@ class ActivityControl(threading.Thread):
                 # Note that this is inherited from the former scheduler limitations andd
                 # should be dropped in favour of passing directly the value to
                 # the stagerJob on the command line
-                notifFileHandle, notifFileName = tempfile.mkstemp()
-                notifFile = os.fdopen(notifFileHandle, 'w')
-                notifFile.write(transfer[-1])
-                notifFile.close()
-                os.chmod(notifFileName, 0444)
+                try:
+                  notifFileHandle, notifFileName = tempfile.mkstemp()
+                  notifFile = os.fdopen(notifFileHandle, 'w')
+                  notifFile.write(transfer[-1])
+                  notifFile.close()
+                  os.chmod(notifFileName, 0444)
+                except Exception,e:
+                  # avoid raising standard exception, as some are used for dedicated purposes
+                  raise Exception(str(e))
                 # build the stagerTransfer command line and execute it
                 cmd = list(transfer[:-1])
                 cmd.append('file://'+notifFileName)
