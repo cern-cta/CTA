@@ -424,7 +424,6 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::attachDriveReq
     if (0 == m_attachDriveReqStatement) {
       m_attachDriveReqStatement =
         createStatement("BEGIN tg_attachDriveReq(:1,:2,:3,:4,:5);END;");
-      m_attachDriveReqStatement->setAutoCommit(true);
     }
     // execute the statement
     m_attachDriveReqStatement->setString(1, vid);
