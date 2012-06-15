@@ -101,7 +101,7 @@ BEGIN
     FROM MigrationMount
    WHERE mountTransactionId = inMountTransactionId
    FOR UPDATE;
-  -- Yes, it's a migration mount: delete it
+  -- yes, it's a migration mount: delete it and detach all selected jobs
   UPDATE MigrationJob
      SET status = tconst.MIGRATIONJOB_PENDING,
          VID = NULL,
@@ -123,7 +123,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
     -- it was a recall mount
     -- find and reset the all RecallJobs of files for this VID
     UPDATE RecallJob
-       SET status    = tconst.RECALLJOB_NEW
+       SET status = tconst.RECALLJOB_NEW
      WHERE castorFile IN (SELECT castorFile
                             FROM RecallJob
                            WHERE VID = varVID
@@ -135,7 +135,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
     -- Small infusion of paranoia ;-) We should never reach that point...
     ROLLBACK;
     RAISE_APPLICATION_ERROR (-20119,
-      'No tape or migration mount found on second pass for mountTransactionId ' ||
+      'No recall or migration mount found for mountTransactionId ' ||
        inMountTransactionId || ' in tg_endTapeSession');
   END;
 END;
@@ -1018,7 +1018,10 @@ BEGIN
      WHERE mountTransactionId = inMountTrId
        FOR UPDATE;
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- migration mount is over or unknown request
+    -- migration mount is over or unknown request: return an empty cursor
+    OPEN outFiles FOR
+      SELECT fileId, nsHost, lastKnownFileName, filePath, fileTransactionId, fseq, fileSize
+        FROM FilesToMigrateHelper;
     RETURN;
   END;
   varCount := 0;
@@ -1197,41 +1200,51 @@ BEGIN
   -- Commit all the entries in FileMigrationResultsHelper so that the next call can take them
   COMMIT;
 
-  -- The following procedure wraps the remote calls in an autonomous transaction
-  ns_setOrReplaceSegments(varReqId, varNSTimeInfos, varNSErrorCodes, varNSMsgs, varNSFileIds, varNSParams);
+  BEGIN
+    -- boundary case: if nothing to do, just skip the remote call and the
+    -- subsequent FOR loop as it would fail.
+    SELECT 1 INTO varUnused FROM FileMigrationResultsHelper
+     WHERE reqId = varReqId AND ROWNUM < 2;
+    -- The following procedure wraps the remote calls in an autonomous transaction
+    ns_setOrReplaceSegments(varReqId, varNSTimeInfos, varNSErrorCodes, varNSMsgs, varNSFileIds, varNSParams);
 
-  -- Process the results
-  FOR i IN varNSFileIds.FIRST .. varNSFileIds.LAST LOOP
-    -- First log on behalf of the NS
-    INSERT INTO DLFLogs (timeinfo, uuid, priority, msg, fileId, nsHost, source, params)
-      VALUES (varNSTimeinfos(i), varReqid,
-              CASE varNSErrorCodes(i) WHEN 0 THEN dlf.LVL_SYSTEM ELSE dlf.LVL_ERROR END,
-              varNSMsgs(i), varNSFileIds(i), varNsHost, 'nsd', varNSParams(i));
-    
-    -- Now process file by file, depending on the result. Skip pure log entries with fileId = 0.
-    IF varNSFileIds(i) = 0 THEN CONTINUE; END IF;
-    CASE
-    WHEN varNSErrorCodes(i) = 0 THEN
-      -- All right, commit the migration in the stager
-      tg_setFileMigrated(inMountTrId, varNSFileIds(i), varReqId, inLogContext);
+    -- Process the results
+    FOR i IN varNSFileIds.FIRST .. varNSFileIds.LAST LOOP
+      -- First log on behalf of the NS
       
-    WHEN varNSErrorCodes(i) = serrno.ENOENT
-      OR varNSErrorCodes(i) = serrno.ENSFILECHG
-      OR varNSErrorCodes(i) = serrno.ENSTOOMANYSEGS THEN
-      -- The migration was useless because either the file is gone, or it has been modified elsewhere,
-      -- or there were already enough copies on tape for it. Fail and update disk cache accordingly.
-      failFileMigration(inMountTrId, varNSFileIds(i), varNSErrorCodes(i), varReqId);
+      INSERT INTO DLFLogs (timeinfo, uuid, priority, msg, fileId, nsHost, source, params)
+        VALUES (varNSTimeinfos(i), varReqid,
+                CASE varNSErrorCodes(i) WHEN 0 THEN dlf.LVL_SYSTEM ELSE dlf.LVL_ERROR END,
+                varNSMsgs(i), varNSFileIds(i), varNsHost, 'nsd', varNSParams(i));
       
-    ELSE
-      -- Attempt to retry for all other NS errors. To be reviewed whether some of the NS errors are to be considered fatal.      
-      varParams := 'mountTransactionId='|| to_char(inMountTrId) ||' ErrorCode='|| to_char(varNSErrorCodes(i))
-                   ||' ErrorMessage="'|| varNSMsgs(i) ||'" '|| inLogContext;
-      logToDLF(varReqid, dlf.LVL_WARNING, dlf.MIGRATION_RETRY, varNSFileIds(i), varNsHost, 'tapegatewayd', varParams);
-      retryOrFailMigration(inMountTrId, varNSFileIds(i), varNsHost, varNSErrorCodes(i), varReqId);
-    END CASE;
-    -- Commit file by file
-    COMMIT;
-  END LOOP;
+      -- Now process file by file, depending on the result. Skip pure log entries with fileId = 0.
+      IF varNSFileIds(i) = 0 THEN CONTINUE; END IF;
+      CASE
+      WHEN varNSErrorCodes(i) = 0 THEN
+        -- All right, commit the migration in the stager
+        tg_setFileMigrated(inMountTrId, varNSFileIds(i), varReqId, inLogContext);
+
+      WHEN varNSErrorCodes(i) = serrno.ENOENT
+        OR varNSErrorCodes(i) = serrno.ENSFILECHG
+        OR varNSErrorCodes(i) = serrno.ENSTOOMANYSEGS THEN
+        -- The migration was useless because either the file is gone, or it has been modified elsewhere,
+        -- or there were already enough copies on tape for it. Fail and update disk cache accordingly.
+        failFileMigration(inMountTrId, varNSFileIds(i), varNSErrorCodes(i), varReqId);
+
+      ELSE
+        -- Attempt to retry for all other NS errors. To be reviewed whether some of the NS errors are to be considered fatal.
+        varParams := 'mountTransactionId='|| to_char(inMountTrId) ||' ErrorCode='|| to_char(varNSErrorCodes(i))
+                     ||' ErrorMessage="'|| varNSMsgs(i) ||'" '|| inLogContext;
+        logToDLF(varReqid, dlf.LVL_WARNING, dlf.MIGRATION_RETRY, varNSFileIds(i), varNsHost, 'tapegatewayd', varParams);
+        retryOrFailMigration(inMountTrId, varNSFileIds(i), varNsHost, varNSErrorCodes(i), varReqId);
+      END CASE;
+      -- Commit file by file
+      COMMIT;
+    END LOOP;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- Nothing to do after processing the error cases
+    NULL;
+  END;
   -- Final log
   varParams := 'mountTransactionId='|| to_char(inMountTrId)
                ||' NbFiles='|| inFileIds.COUNT ||' '|| inLogContext
@@ -1419,7 +1432,10 @@ BEGIN
      WHERE mountTransactionId = inMountTrId
        FOR UPDATE;
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- recall is over or unknown request
+    -- recall is over or unknown request: return an empty cursor
+    OPEN outFiles FOR
+      SELECT fileId, nsHost, fileTransactionId, filePath, blockId, fseq
+        FROM FilesToRecallHelper;
     RETURN;
   END;
   varCount := 0;
