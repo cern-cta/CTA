@@ -1165,7 +1165,7 @@ throw (castor::exception::Exception){
       fileSizes.push_back(0);
       // The called PL/SQL relies on a 0 error code to differentiate successes
       // from failures. Getting an error code of 0 here is hence an issue.
-      // We treat is as an internal error (it can originate from as far back as
+      // We treat it as an internal error (it can originate from as far back as
       // rtcpd on the tape server.
       errorCodes.push_back((*f)->errorCode() ? (*f)->errorCode() : SEINTERNAL);
       errorMessages.push_back((*f)->errorMessage());
@@ -1251,17 +1251,9 @@ throw (castor::exception::Exception){
       fileSizes.push_back(0);
       // The called PL/SQL relies on a 0 error code to differentiate successes
       // from failures. Getting an error code of 0 here is hence an issue.
-      // We treat is as an internal error (it can originate from as far back as
+      // We treat it as an internal error (it can originate from as far back as
       // rtcpd on the tape server.
-      if (!(*f)->errorCode()) {
-        castor::exception::Internal ex;
-        ex.getMessage() << "Got a zero error code for failure in setBulkFileRecallResult:"
-                        << " NSHOSTNAME=" << (*f)->nshost() << " NSFILEID=" << (*f)->fileid()
-                        << " fileTransactionId=" << (*f)->fileTransactionId() << " fseq=" << (*f)->fseq()
-                        << " errorCode=" << (*f)->errorCode() << " errorMessage=" << (*f)->errorMessage();
-        throw ex;
-      }
-      errorCodes.push_back((*f)->errorCode());
+      errorCodes.push_back((*f)->errorCode() ? (*f)->errorCode() : SEINTERNAL);
       errorMessages.push_back((*f)->errorMessage());
     }
 
