@@ -152,7 +152,7 @@ VALUES (ids_seq.nextval, 'default', 20, 10*1024*1024*1024, 10, 30*3600, 0, '2.1.
  *   lastEditionTime : the time at which the tapepool was last modified
  * Note that a mount is attempted as soon as one of the three criterias is reached.
  */
-CREATE TABLE RecallUser(euid INTEGER CONSTRAINT NN_RecallUser_Euid NOT NULL,
+CREATE TABLE RecallUser(euid INTEGER,
                         egid INTEGER CONSTRAINT NN_RecallUser_Egid NOT NULL,
                         recallGroup INTEGER CONSTRAINT NN_RecallUser_RecallGroup NOT NULL,
                         lastEditor VARCHAR2(2048) CONSTRAINT NN_RecallUser_LastEditor NOT NULL,
