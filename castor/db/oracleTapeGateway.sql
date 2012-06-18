@@ -1317,12 +1317,12 @@ BEGIN
   END IF;
   IF inOriginVID IS NOT NULL THEN
     -- archive the repack subrequest associated to this VID (there can only be one)
-    SELECT /*+ INDEX(SR I_Subrequest_Castorfile) */ SubRequest.id INTO varSrId
-      FROM SubRequest, StageRepackRequest
-      WHERE SubRequest.castorfile = inCfId
-        AND SubRequest.status = dconst.SUBREQUEST_REPACK
-        AND SubRequest.request = StageRepackRequest.id
-        AND StageRepackRequest.RepackVID = inOriginVID;
+    SELECT /*+ INDEX(SR I_Subrequest_CastorFile) */ SR.id INTO varSrId
+      FROM SubRequest SR, StageRepackRequest Req
+      WHERE SR.castorfile = inCfId
+        AND SR.status = dconst.SUBREQUEST_REPACK
+        AND SR.request = Req.id
+        AND Req.RepackVID = inOriginVID;
     archiveSubReq(varSrId, dconst.SUBREQUEST_FINISHED);
   END IF;
 END;
