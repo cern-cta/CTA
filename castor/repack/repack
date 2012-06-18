@@ -195,6 +195,12 @@ def displayStatus():
                SUM(CASE WHEN SubRequest.status IN (8, 11) THEN 1 ELSE 0 END) migrated
           FROM StageRepackRequest, SubRequest
          WHERE SubRequest.request(+) = StageRepackRequest.id AND SubRequest.reqtype = 119
+         '''
+        # query only the requested VIDs. This requires hard parsing but it's still more efficient
+        # than a later 'grep' and avoids the complexity of dealing with a string list as bind variable.
+        if vids:
+            stGetStatus += "AND StageRepackRequest.repackVID IN ('" + "','".join(vids) + "')"
+        stGetStatus += '''
          GROUP BY StageRepackRequest.creationTime, StageRepackRequest.username, StageRepackRequest.machine,
                   StageRepackRequest.repackVID, StageRepackRequest.status
          HAVING StageRepackRequest.status IN (0, 1, 4)
@@ -212,15 +218,14 @@ def displayStatus():
         print '-'*149
         sumTotal = sumSize = sumToRecall = sumToMigr = sumFailed = sumMigrated = 0
         for subTime, user, machine, vid, status, total, size, toRecall, toMigr, failed, migrated in rows:
-            if not vids or vid in vids:
-                _printStatusLine(subTime, user, machine, vid, status, total, size, toRecall, toMigr, failed, migrated)
-                sumTotal += total
-                if size > 0:
-                    sumSize += size
-                sumToRecall += toRecall
-                sumToMigr += toMigr
-                sumFailed += failed
-                sumMigrated += migrated
+            _printStatusLine(subTime, user, machine, vid, status, total, size, toRecall, toMigr, failed, migrated)
+            sumTotal += total
+            if size > 0:
+                sumSize += size
+            sumToRecall += toRecall
+            sumToMigr += toMigr
+            sumFailed += failed
+            sumMigrated += migrated
         print '-'*149
         # print out summary line
         if sumTotal > 0:
