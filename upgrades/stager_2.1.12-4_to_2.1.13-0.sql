@@ -73,14 +73,8 @@ COMMIT;
 BEGIN
   FOR a IN (SELECT * FROM user_scheduler_jobs)
   LOOP
-    -- Stop any running jobs
-    IF a.state = 'RUNNING' THEN
-      dbms_scheduler.stop_job(a.job_name, force=>TRUE);
-    END IF;
-    -- Schedule the start date of the job to 60 minutes from now. This
-    -- basically pauses the job so that the upgrade can
-    -- go through as quickly as possible.
-    dbms_scheduler.set_attribute(a.job_name, 'START_DATE', SYSDATE + 60/1440);
+    -- Stop and drop all jobs
+    dbms_scheduler.drop_job(a.job_name, force=>TRUE);
   END LOOP;
 END;
 /
