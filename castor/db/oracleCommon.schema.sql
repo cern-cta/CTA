@@ -225,7 +225,7 @@ CREATE TABLE RecallMount(id INTEGER CONSTRAINT PK_RecallMount_Id PRIMARY KEY CON
                          lastVDQMPingTime NUMBER DEFAULT 0 CONSTRAINT NN_RecallMount_lastVDQMPing NOT NULL,
                          lastProcessedFseq INTEGER DEFAULT -1 CONSTRAINT NN_RecallMount_Fseq NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
--- this index may sound counter prodcutive as we have very few rows and a full table scan will always be faster
+-- this index may sound counter productive as we have very few rows and a full table scan will always be faster
 -- However, it is needed to avoid a table lock on RecallGroup when taking a row lock on RecallMount,
 -- via the existing foreign key. On top, this table lock is also taken in case of an update that does not
 -- touch any row while with the index, no row lock is taken at all, as one may expect
