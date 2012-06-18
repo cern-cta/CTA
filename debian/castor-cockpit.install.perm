@@ -1,2 +1,3 @@
 %attr(0755,root,root) var/www/castormon/*
+%attr(0644,root,root) etc/castor/cockpit-credentials.conf.example
 %attr(0644,root,root) etc/logrotate.d/castor-cockpit

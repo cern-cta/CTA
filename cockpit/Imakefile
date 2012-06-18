@@ -26,4 +26,5 @@ COMM @author Castor Dev team, castor-dev@cern.ch
 InstallSubTree(castormon,/var/www,0755,install)
 
 LOGROTATE(castor-cockpit,install)
+EXAMPLEFILE(cockpit-credentials.conf,/etc/castor,install)
 
