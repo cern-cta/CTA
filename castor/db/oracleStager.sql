@@ -2648,9 +2648,11 @@ BEGIN
       RETURN;
     END IF;
     -- check if recreation is possible for migrations
-    SELECT count(*) INTO nbRes FROM MigrationJob
+    SELECT /*+ INDEX(MigrationJob I_MigrationJob_CastorFile */ count(*)
+      INTO nbRes FROM MigrationJob
      WHERE status = tconst.MIGRATIONJOB_SELECTED
-      AND castorFile = cfId;
+      AND castorFile = cfId
+      AND ROWNUM < 2;
     IF nbRes > 0 THEN
       -- We found something, thus we cannot recreate
       dcId := 0;
