@@ -12,8 +12,6 @@ CREATE OR REPLACE PACKAGE castorTape AS
     mountTransactionId NUMBER, 
     vid VARCHAR2(2048));
   TYPE TapeGatewayRequest_Cur IS REF CURSOR RETURN TapeGatewayRequest;
-  TYPE VIDRec IS RECORD (vid VARCHAR2(2048));
-  TYPE VID_Cur IS REF CURSOR RETURN VIDRec;
   TYPE VIDPriorityRec IS RECORD (vid VARCHAR2(2048), vdqmPriority INTEGER);
   TYPE VIDPriority_Cur IS REF CURSOR RETURN VIDPriorityRec;
   TYPE FileToRecallCore IS RECORD (
@@ -279,20 +277,33 @@ END;
 
 /* get a the list of tapes to be sent to VDQM */
 CREATE OR REPLACE
-PROCEDURE tg_getTapeWithoutDriveReq(outMigrations OUT castorTape.VID_Cur,
-                                    outRecalls OUT castorTape.VIDPriority_Cur) AS
+PROCEDURE tg_getTapeWithoutDriveReq(outVID OUT VARCHAR2,
+                                    outVdqmPriority OUT INTEGER,
+                                    outMode OUT INTEGER) AS
 BEGIN
-  OPEN outMigrations FOR
-    SELECT VID
-      FROM MigrationMount
-     WHERE status = tconst.MIGRATIONMOUNT_SEND_TO_VDQM
-       FOR UPDATE SKIP LOCKED;
-  OPEN outRecalls FOR
-    SELECT RecallMount.VID, RecallGroup.vdqmPriority
+  -- try to find a migration mount
+  SELECT VID, 0, 1  -- harcoded priority to 0, mode 1 == WRITE_ENABLE
+    INTO outVID, outVdqmPriority, outMode
+    FROM MigrationMount
+   WHERE status = tconst.MIGRATIONMOUNT_SEND_TO_VDQM
+     AND ROWNUM < 2
+     FOR UPDATE SKIP LOCKED;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- no migration mount to process, try to find a recall mount
+  BEGIN
+    SELECT RecallMount.VID, RecallGroup.vdqmPriority, 0  -- mode 0 == WRITE_DISABLE
+      INTO outVID, outVdqmPriority, outMode
       FROM RecallMount, RecallGroup
      WHERE RecallMount.status = tconst.RECALLMOUNT_NEW
        AND RecallMount.recallGroup = RecallGroup.id
+       AND ROWNUM < 2
        FOR UPDATE OF RecallMount.id SKIP LOCKED;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- no recall mount to process either
+    outVID := '';
+    outVdqmPriority := 0;
+    outMode := 0;
+  END;
 END;
 /
 

@@ -71,14 +71,15 @@ namespace castor      {
               const std::list<int>& fseqs)
           throw (castor::exception::Exception);
 
-          /** get the tapes for which a VDQM request si needed
-           * @param vidsForMigr a vector to be filled with tapes to handle for migration
-           * @param tapesForRecall this vector is filled with tapes that need a VDQM request for recall
-           * Each tape is given by the pair VID, vdqmPriority
+          /** get a tape for which a VDQM request si needed
+           * @param vid a string filled with the VID of the selected tape
+           * @param vdqmPriority an int filled with the priority to use in the call to VDQM
+           * @param mode the mode of access to the tape (WRITE_DISABLE or WRITE_ENABLE)
            * @exception throws castor exceptions in case of failure
            */
-          virtual void getTapeWithoutDriveReq(std::vector<std::string> &vidsForMigr,
-              std::vector<std::pair<std::string, int> > &tapesForRecall)
+          virtual void getTapeWithoutDriveReq(std::string &vid,
+                                              int &vdqmPriority,
+                                              int &mode)
           throw (castor::exception::Exception);
 
           /** updates the db with the VDQM mountTransaction id

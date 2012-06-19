@@ -72,57 +72,36 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::run(void* /*param*/)
     return;
   }
 
-  // Get the lists of tapes to submit to VDQM for migration and recall
-  // All returned Migration/RecallMounts will be locked
-  std::vector<std::string> tapesForMigr;
-  std::vector<std::pair<std::string, int> > tapesForRecall; 
-  int nbTapes = getTapesToHandle(oraSvc, tapesForMigr, tapesForRecall);
-  if (0 == nbTapes) return;
-
-  // go through the migration candidates
-  for (std::vector<std::string>::const_iterator vid = tapesForMigr.begin();
-       vid != tapesForMigr.end();
-       vid++) {
+  // loop over tapes that need to be handled
+  std::string vid;
+  int vdqmPriority;
+  int mode;
+  while (getTapeToHandle(oraSvc, vid, vdqmPriority, mode)) {
     // check tape in VMGR (and fail migration if not ok)
-    struct TapeInfo info = checkInVMGR(oraSvc, *vid, WRITE_ENABLE);
+    struct TapeInfo info = checkInVMGR(oraSvc, vid, mode);
     if (0 != strcmp(info.dgnBuffer,"")) {
-      // Create a VDQM request
-      sendToVDQM(oraSvc, *vid, info.dgnBuffer, WRITE_ENABLE, info.vmgrTapeInfo.lbltype,
-                 info.vmgrTapeInfo.density, 0);  // hardcoded priority 0 for migrations
+      // Create a VDQM request and commit to stager DB
+      sendToVDQM(oraSvc, vid, info.dgnBuffer, mode, info.vmgrTapeInfo.lbltype,
+                 info.vmgrTapeInfo.density, vdqmPriority);
     }
   }
-
-  // go through the recall candidates
-  for (std::vector<std::pair<std::string, int> >::const_iterator tape = tapesForRecall.begin();
-       tape != tapesForRecall.end();
-       tape++) {
-    // check tape in VMGR (and fail recall if not ok)
-    struct TapeInfo info = checkInVMGR(oraSvc, tape->first, WRITE_DISABLE);
-    if (0 != strcmp(info.dgnBuffer,"")) {
-      // Create a VDQM request
-      sendToVDQM(oraSvc, tape->first, info.dgnBuffer, WRITE_DISABLE, info.vmgrTapeInfo.lbltype,
-                 info.vmgrTapeInfo.density, tape->second);
-    }
-  }
-
-  // release the locks on the Migration/RecallMounts
-  oraSvc->commit();
 }
 
 //------------------------------------------------------------------------------
-// getTapesToHandle 
+// getTapeToHandle 
 //------------------------------------------------------------------------------
-int castor::tape::tapegateway::VdqmRequestsProducerThread::getTapesToHandle
+bool castor::tape::tapegateway::VdqmRequestsProducerThread::getTapeToHandle
 (castor::tape::tapegateway::ITapeGatewaySvc* oraSvc, 
- std::vector<std::string> &vidsForMigr,
- std::vector<std::pair<std::string, int> > &tapesForRecall)
+ std::string &vid,
+ int &vdqmPriority,
+ int &mode)
   throw() {
   castor::tape::utils::Timer timer;
   try {
-    // get all the tapes to send from the db
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,PRODUCER_GETTING_TAPES, 0,  NULL);
+    // get a tape from the db
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, PRODUCER_GETTING_TAPE, 0,  NULL);
     // This PL/SQL takes locks
-    oraSvc->getTapeWithoutDriveReq(vidsForMigr, tapesForRecall);
+    oraSvc->getTapeWithoutDriveReq(vid, vdqmPriority, mode);
   } catch (castor::exception::Exception& e){
     // error in getting new tape to submit
     castor::dlf::Param params[] = {
@@ -133,19 +112,20 @@ int castor::tape::tapegateway::VdqmRequestsProducerThread::getTapesToHandle
     return 0;
   }
   // check whether we have something to do
-  int nbTapes = vidsForMigr.size() + tapesForRecall.size();
-  if (0 == nbTapes) {
+  if (vid.empty()) {
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, PRODUCER_NO_TAPE, 0, NULL);
+    return false;
   } else {
-    // We have something to do, log "found tapes to submit"
+    // We have something to do, log "found tape to submit"
     castor::dlf::Param params[] = {
-      castor::dlf::Param("nbTapesForMigration", vidsForMigr.size()),
-      castor::dlf::Param("nbTapesForRecall", tapesForRecall.size()),
+      castor::dlf::Param("VID", vid),
+      castor::dlf::Param("vdqmPriority", vdqmPriority),
+      castor::dlf::Param("mode", mode==WRITE_ENABLE?"WRITE_ENABLE":"WRITE_DISABLE"),
       castor::dlf::Param("ProcessingTime", timer.secs())
     };
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, PRODUCER_TAPE_FOUND, params);
   }
-  return nbTapes;
+  return true;
 }
 
 //------------------------------------------------------------------------------
@@ -233,7 +213,7 @@ void castor::tape::tapegateway::VdqmRequestsProducerThread::sendToVDQM
   try {
     mountTransactionId = vdqmHelper.createRequestForAggregator
       (vid, dgn, mode, m_port, vdqmPriority);
-    // set mountTransactionId in the RecallMount
+    // set mountTransactionId in the RecallMount and commit
     oraSvc->attachDriveReq(vid, mountTransactionId, mode, label, density);
     // confirm to vdqm
     vdqmHelper.confirmRequestToVdqm();

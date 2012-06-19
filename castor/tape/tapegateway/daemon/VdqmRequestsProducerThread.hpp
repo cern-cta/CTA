@@ -75,16 +75,17 @@ namespace castor     {
 
       private:
 
-        /** get lists of tapes to handle, both for recall and migrations
+        /** get a tape to handle, either for recall or migration
          * @param oraSvc the ITapeGatewaySvc to use for stager DB access
-         * @param vidsForMigr a vector to be filled with tapes to handle for migration
-         * @param tapesForRecall this vector is filled with tapes that need a VDQM request for recall
-         * Each tape is given by the pair VID, vdqmPriority
-         * @return total nb of tapes to handle
+         * @param vid a string filled with the VID of the selected tape
+         * @param vdqmPriority an int filled with the priority to use in the call to VDQM
+         * @param mode the mode of access to the tape (WRITE_DISABLE or WRITE_ENABLE)
+         * @return whether a tape was found or not
          */
-        int getTapesToHandle(castor::tape::tapegateway::ITapeGatewaySvc* oraSvc, 
-                             std::vector<std::string> &vidsForMigr,
-                             std::vector<std::pair<std::string, int> > &tapesForRecall)
+        bool getTapeToHandle(castor::tape::tapegateway::ITapeGatewaySvc* oraSvc, 
+                             std::string &vid,
+                             int &vdqmPriority,
+                             int &mode)
           throw();
 
         /**

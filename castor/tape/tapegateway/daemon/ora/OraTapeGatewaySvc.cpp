@@ -371,39 +371,25 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::attachTapesToMigMounts(c
 //----------------------------------------------------------------------------
 // getTapeWithoutDriveReq 
 //----------------------------------------------------------------------------
-
 void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getTapeWithoutDriveReq
-(std::vector<std::string> &vidsForMigr,
- std::vector<std::pair<std::string, int> > &tapesForRecall)
-  throw (castor::exception::Exception){
+(std::string &vid, int &vdqmPriority, int &mode)
+  throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
     if (0 == m_getTapeWithoutDriveReqStatement) {
       m_getTapeWithoutDriveReqStatement =
-        createStatement("BEGIN tg_getTapeWithoutDriveReq(:1,:2);END;");
-      m_getTapeWithoutDriveReqStatement->registerOutParam
-        (1, oracle::occi::OCCICURSOR);
-      m_getTapeWithoutDriveReqStatement->registerOutParam
-        (2, oracle::occi::OCCICURSOR);
+        createStatement("BEGIN tg_getTapeWithoutDriveReq(:1,:2,:3);END;");
+      m_getTapeWithoutDriveReqStatement->registerOutParam(1, oracle::occi::OCCISTRING, 2048);
+      m_getTapeWithoutDriveReqStatement->registerOutParam(2, oracle::occi::OCCIINT);
+      m_getTapeWithoutDriveReqStatement->registerOutParam(3, oracle::occi::OCCIINT);
     }
     // execute the statement
     m_getTapeWithoutDriveReqStatement->executeUpdate();
-    // deal with migrations
-    oracle::occi::ResultSet *rs = m_getTapeWithoutDriveReqStatement->getCursor(1);
-    while(rs->next()  == oracle::occi::ResultSet::DATA_AVAILABLE) {
-      std::string vid(rs->getString(1));
-      vidsForMigr.push_back(vid);
-    }
-    m_getTapeWithoutDriveReqStatement->closeResultSet(rs);
-    // deal with recalls
-    rs = m_getTapeWithoutDriveReqStatement->getCursor(2);
-    while(rs->next()  == oracle::occi::ResultSet::DATA_AVAILABLE) {
-      std::string vid(rs->getString(1));
-      int vdqmPriority = rs->getInt(2);
-      tapesForRecall.push_back(std::pair<std::string, int>(vid, vdqmPriority));
-    }
-    m_getTapeWithoutDriveReqStatement->closeResultSet(rs);
-  } catch (oracle::occi::SQLException e) {    
+    // get output values
+    vid = m_getTapeWithoutDriveReqStatement->getString(1);
+    vdqmPriority = m_getTapeWithoutDriveReqStatement->getInt(2);
+    mode = m_getTapeWithoutDriveReqStatement->getInt(3);
+  } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage() << "Error caught in getTapeWithoutDriveReq"
@@ -424,6 +410,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::attachDriveReq
     if (0 == m_attachDriveReqStatement) {
       m_attachDriveReqStatement =
         createStatement("BEGIN tg_attachDriveReq(:1,:2,:3,:4,:5);END;");
+      m_attachDriveReqStatement->setAutoCommit(true);
     }
     // execute the statement
     m_attachDriveReqStatement->setString(1, vid);
