@@ -117,7 +117,7 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
 
     // get tape from vmgr
     castor::dlf::Param paramsVmgr[] = {
-        castor::dlf::Param("MigationMountId", item->migrationMountId),
+        castor::dlf::Param("MigrationMountId", item->migrationMountId),
 
        castor::dlf::Param("TapePool", item->tapePoolName)
       };
@@ -146,7 +146,7 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
       nsHelper.checkFseqForWrite (vidToUse, lastFseq);
     } catch(castor::exception::Exception& e) {
       castor::dlf::Param params[] = {
-          castor::dlf::Param("MigationMountId", item->migrationMountId),
+          castor::dlf::Param("MigrationMountId", item->migrationMountId),
           castor::dlf::Param("errorCode", sstrerror(e.code())),
           castor::dlf::Param("errorMessage", e.getMessage().str())
       };
@@ -165,7 +165,7 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
           oraSvc->deleteMigrationMountWithBadTapePool(item->migrationMountId);
         } catch (castor::exception::Exception e){
           castor::dlf::Param params[] = {
-              castor::dlf::Param("MigationMountId", item->migrationMountId),
+              castor::dlf::Param("MigrationMountId", item->migrationMountId),
               castor::dlf::Param("errorCode",sstrerror(e.code())),
               castor::dlf::Param("errorMessage",e.getMessage().str())
           };
@@ -176,7 +176,7 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
           VmgrTapeGatewayHelper::setTapeAsReadonlyAndUnbusy(vidToUse, m_shuttingDown);
         } catch (castor::exception::Exception e) {
           castor::dlf::Param params[] = {
-              castor::dlf::Param("MigationMountId", item->migrationMountId),
+              castor::dlf::Param("MigrationMountId", item->migrationMountId),
               castor::dlf::Param("VID", vidToUse),
               castor::dlf::Param("TapePool", item->tapePoolName),
               castor::dlf::Param("errorCode", sstrerror(e.code())),
@@ -186,7 +186,7 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
         }
         // Major problem, the vmgr told us to write on an fseq still referenced in the NS
         castor::dlf::Param params[] = {
-            castor::dlf::Param("MigationMountId", item->migrationMountId),
+            castor::dlf::Param("MigrationMountId", item->migrationMountId),
             castor::dlf::Param("TapePool", item->tapePoolName),
             castor::dlf::Param("errorCode", sstrerror(e.code())),
             castor::dlf::Param("errorMessage", e.getMessage().str()),
@@ -203,7 +203,7 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
     if ( !vidToUse.empty()){
       // got the tape
       castor::dlf::Param params[] = {
-          castor::dlf::Param("MigationMountId", item->migrationMountId),
+          castor::dlf::Param("MigrationMountId", item->migrationMountId),
           castor::dlf::Param("TPVID", vidToUse)
       };
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, LINKER_LINKING_TAPE_MOUNT, params);
