@@ -291,7 +291,7 @@ BEGIN
     -- online.
     FOR b IN (SELECT id FROM (
                 SELECT rownum ind, id FROM (
-                  SELECT DiskCopy.id
+                  SELECT /*+ INDEX (DiskCopy I_DiskCopy_Castorfile) */ DiskCopy.id
                     FROM DiskCopy, FileSystem, DiskPool2SvcClass, SvcClass,
                          DiskServer
                    WHERE DiskCopy.filesystem = FileSystem.id
