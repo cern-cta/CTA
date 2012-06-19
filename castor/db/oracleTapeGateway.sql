@@ -70,8 +70,6 @@ PROCEDURE tg_attachTapesToMigMounts (
   inStartFseqs IN castor."cnumList",
   inMountIds   IN castor."cnumList",
   inTapeVids   IN castor."strList") AS
-  CONSTRAINT_VIOLATED EXCEPTION;
-  PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
 BEGIN
   -- Sanity check
   IF (inStartFseqs.COUNT != inTapeVids.COUNT) THEN
