@@ -1198,6 +1198,8 @@ BEGIN
   -- Commit all the entries in FileMigrationResultsHelper so that the next call can take them
   COMMIT;
 
+  DECLARE
+    varUnused INTEGER;
   BEGIN
     -- boundary case: if nothing to do, just skip the remote call and the
     -- subsequent FOR loop as it would fail.
