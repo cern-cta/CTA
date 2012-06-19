@@ -325,7 +325,6 @@ CREATE OR REPLACE PROCEDURE replaceSegmentForFile(inOldCopyNo IN INTEGER, inSegE
   varFCksumName VARCHAR2(2);
   varFCksum VARCHAR2(32);
   varNb INTEGER;
-  varStatus INTEGER;
   varBlockId VARCHAR2(8);
   varOwSeg castorns.Segment_Rec;
   varRepSeg castorns.Segment_Rec;
@@ -387,6 +386,8 @@ BEGIN
   -- Repack specific: --
   -- Make sure a segment exists for the given copyNo. There can only be one segment
   -- as we don't support multi-segmented files any longer.
+  DECLARE
+    varStatus CHAR(1);
   BEGIN
     SELECT s_status INTO varStatus
       FROM Cns_seg_metadata
