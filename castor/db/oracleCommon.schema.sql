@@ -180,7 +180,7 @@ INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
  */
 INSERT INTO RecallGroup (id, name, nbDrives, minAmountDataForMount, minNbFilesForMount,
                          maxFileAgeBeforeMount, vdqmPriority, lastEditor, lastEditionTime)
-  VALUES (ids_seq.nextval, 'default', 20, 10*1024*1024*1024, 10, 30*3600, 0, '', getTime());
+  VALUES (ids_seq.nextval, 'default', 20, 10*1024*1024*1024, 10, 30*3600, 0, 'Castor 2.1.13 or above installation script', getTime());
 
 
 /* Definition of the RecallUser table
