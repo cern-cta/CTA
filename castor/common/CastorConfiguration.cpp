@@ -169,13 +169,13 @@ int castor::common::CastorConfiguration::getTimeoutNolock()
   // start with the default (300s = 5mn)
   int timeout = 300;
   // get value from config
-  std::string &stimeout = m_config["Config"]["ExpirationDelay"];
-  if ("" != stimeout) {
-    // parse the timeout into an integer
-    timeout = atoi(stimeout.c_str());
-  } else {
-    // no value found in config, set default to 300s = 5mn into the configuration
-    m_config["Config"]["ExpirationDelay"] = "300";
+  std::map<std::string, ConfCategory>::const_iterator catIt = m_config.find("Config");
+  if (m_config.end() != catIt) {
+    ConfCategory::const_iterator entIt = catIt->second.find("ExpirationDelay");
+    if (catIt->second.end() != entIt) {
+      // parse the timeout into an integer
+      timeout = atoi(entIt->second.c_str());
+    }
   }
   // return timeout
   return timeout;
