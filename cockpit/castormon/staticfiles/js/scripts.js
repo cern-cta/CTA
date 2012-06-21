@@ -4,6 +4,8 @@ var filter_type = 'quick';
 var chart;
 var hiddenSeries = {};
 var graphType = 'timeline';
+var autoRefreshTimer;
+
 
 function drawChart(metric_container, from, to) {
     /*
@@ -24,6 +26,7 @@ function drawChart(metric_container, from, to) {
     }
 }
 
+
 function getAjaxURL(metric_name, from, to, format_type) {
     /*
      * Build the URL for the Ajax request
@@ -41,6 +44,7 @@ function getAjaxURL(metric_name, from, to, format_type) {
     }
     return url;
 }
+
 
 function updateHiddenSeries() {
     /*
@@ -70,6 +74,21 @@ function refreshChart(input) {
     }
 }
 
+
+function autoRefresh(rate) {
+    /*
+     * This function un/set the time for auto-refresh, with a provided rate.
+     * :param rate: the wanted auto-refresh rate
+     */
+    if(rate == 0) {
+        clearInterval(autoRefreshTimer);
+    }
+    else {
+        autoRefreshTimer = setInterval("$('a.refresh-plot').trigger('click')", rate);
+    }
+}
+
+
 function getPythonTimestamp(tmp) {
     /*
      * javascript timestamp in milliseconds
@@ -80,6 +99,7 @@ function getPythonTimestamp(tmp) {
     var str = str.substring(0, str.length-3);
     return parseInt(str);
 }
+
 
 function getTimestamp(string) {
     /*
@@ -105,6 +125,7 @@ function getTimestamp(string) {
     
     return getPythonTimestamp(timestamp);
 }
+
 
 function getTimelineChartOptions(metric_name) {
     /*
@@ -133,7 +154,7 @@ function getTimelineChartOptions(metric_name) {
                         enabled: false    
                     },
                     shadow: false,
-                    //animation: false,
+                    animation: false,
                     connectNulls: false,
                     states: {
                         hover: {
@@ -208,6 +229,7 @@ function getTimelineChartOptions(metric_name) {
         };
 }
 
+
 function getSumChartOptions(metric_name) {
     /*
      * Just build and return the options for the sum/average chart.
@@ -267,6 +289,7 @@ function getSumChartOptions(metric_name) {
             series: []
         };
 }
+
 
 function _drawTimelineChart(metric_container, from, to) {
 
@@ -443,6 +466,7 @@ function _drawSumChart(metric_container, from, to, format_type) {
     }
 }
 
+
 $(document).ready(function () {
 
     /*****************************
@@ -546,6 +570,15 @@ $(document).ready(function () {
     $('.metric_container').on('change', 'select.graph-type', function () {
         graphType = $(this).val();
         refreshChart($(this));
+    });
+
+    /************************
+     *  Auto Refresh        *
+     ************************/
+    // TODO NB : this code is not optimal, cause we recreate the whole chart each time...
+    $('.metric_container').on('change', 'select.auto-refresh', function () {
+        refreshRate = $(this).val();
+        autoRefresh(refreshRate);
     });
 
     // Datepicker
