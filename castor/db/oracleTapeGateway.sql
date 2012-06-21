@@ -1453,6 +1453,8 @@ BEGIN
   varTotalSize := 0;
   varNewFseq := varPreviousFseq;
   -- Get candidates up to inCount or inTotalSize
+  -- Select only the ones further down the tape (fseq > current one)
+  <<candidateLoop>>
   FOR Cand IN (
     -- Find the unprocessed recallJobs of this tape with lowest fSeq
     -- that is above the previous one. If none, take the recallJob with lowest fseq.
@@ -1461,8 +1463,8 @@ BEGIN
      WHERE vid = varVid
        AND status = tconst.RECALLJOB_PENDING
        AND RecallJob.castorFile = CastorFile.id
-     ORDER BY CASE WHEN fseq > varPreviousFseq THEN 1 ELSE 0 END DESC,
-              fseq ASC
+       AND fseq > varNewFseq
+     ORDER fseq ASC
        FOR UPDATE OF RecallJob.id SKIP LOCKED)
   LOOP
     BEGIN
@@ -1490,6 +1492,11 @@ BEGIN
         'errorMessage="' || SQLERRM || '"');
     END;
   END LOOP;
+  -- check whether we've done enough. If not, consider taking lower fseqs
+  IF varNewFseq > -1 AND varCount <= inCount AND varTotalSize <= inTotalSize THEN
+    varNewFseq := -1;
+    GOTO candidateLoop;
+  END IF;
   -- Record last fseq at the mount level
   UPDATE RecallMount
      SET lastProcessedFseq = varNewFseq

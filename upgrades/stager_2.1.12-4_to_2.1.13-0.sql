@@ -231,7 +231,7 @@ INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE INDEX I_RecallJob_SvcClass ON RecallJob (svcClass);
 CREATE INDEX I_RecallJob_RecallGroup ON RecallJob (recallGroup);
 CREATE INDEX I_RecallJob_Castorfile_VID ON RecallJob (castorFile, VID);
-CREATE INDEX I_RecallJob_VID ON RecallJob (VID);
+CREATE INDEX I_RecallJob_VIDFseq ON RecallJob (VID, fseq);
 
 ALTER TABLE RecallJob ADD CONSTRAINT FK_RecallJob_SvcClass FOREIGN KEY (svcClass) REFERENCES SvcClass(id);
 ALTER TABLE RecallJob ADD CONSTRAINT FK_RecallJob_RecallGroup FOREIGN KEY (recallGroup) REFERENCES RecallGroup(id);
