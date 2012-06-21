@@ -30,6 +30,7 @@
 #include <iostream>
 #include <string>
 #include <map>
+#include "errno.h"
 #include "castor/exception/Exception.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/server/BaseThreadPool.hpp"
@@ -98,9 +99,19 @@ namespace castor {
        */
       void resetAllMetrics() throw();
 
-      /// Gets a pool by its name initial
-      BaseThreadPool* getThreadPool(const char nameIn) throw() {
-        return m_threadPools[nameIn];
+      /**
+       * Gets a pool by its name initial.
+       * @param nameIn the name initial
+       * @throw castor::exception::Exception in case it was not found
+       */
+      BaseThreadPool* getThreadPool(const char nameIn) throw (castor::exception::Exception) {
+        std::map<const char, BaseThreadPool*>::const_iterator tpIt = m_threadPools.find(nameIn);
+        if(tpIt == m_threadPools.end()) {
+          castor::exception::Exception notFound(ENOENT);
+          notFound.getMessage() << "No thread pool found with initial " << nameIn;
+          throw notFound;
+        }
+        return tpIt->second;
       };
       
       /// Returns this server's name
@@ -160,7 +171,6 @@ namespace castor {
        * identified by their name initials (= cmd line parameter).
        */
       std::map<const char, BaseThreadPool*> m_threadPools;
-
     };
 
   } // end of namespace server
