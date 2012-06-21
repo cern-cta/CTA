@@ -11,6 +11,17 @@ $SystemLogSocketIgnoreMsgTimestamp off
 
 
 --------------
+- 2.1.12-4-5 -
+--------------
+
+  Summary
+  -------
+
+  - This is an INTERNAL RELEASE for the purpose of creating rpms for the
+    Cockpit monitoring project.
+
+
+--------------
 - 2.1.12-4-4 -
 --------------
 
