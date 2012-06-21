@@ -10,9 +10,9 @@ $SystemLogSocketIgnoreMsgTimestamp off
   - castor-cockpit is a new package providing the new monitoring system for CASTOR ...
 
 
---------------
-- 2.1.12-4-6 -
---------------
+------------
+- 2.1.12-6 -
+------------
 
   Summary
   -------
@@ -21,9 +21,9 @@ $SystemLogSocketIgnoreMsgTimestamp off
     Cockpit monitoring project.
 
 
---------------
-- 2.1.12-4-5 -
---------------
+------------
+- 2.1.12-5 -
+------------
 
   Summary
   -------
