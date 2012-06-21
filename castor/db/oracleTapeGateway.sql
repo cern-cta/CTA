@@ -1464,7 +1464,7 @@ BEGIN
        AND status = tconst.RECALLJOB_PENDING
        AND RecallJob.castorFile = CastorFile.id
        AND fseq > varNewFseq
-     ORDER fseq ASC
+     ORDER BY fseq ASC
        FOR UPDATE OF RecallJob.id SKIP LOCKED)
   LOOP
     BEGIN
