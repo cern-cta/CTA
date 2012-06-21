@@ -202,8 +202,12 @@ END;
 /* PL/SQL method deleting migration jobs of a castorfile */
 CREATE OR REPLACE PROCEDURE deleteMigrationJobs(cfId NUMBER) AS
 BEGIN
-  DELETE FROM MigrationJob WHERE castorfile = cfId;
-  DELETE FROM MigratedSegment WHERE castorfile = cfId;
+  DELETE /*+ INDEX (MigrationJob I_MigrationJob_CFVID) */
+    FROM MigrationJob
+   WHERE castorfile = cfId;
+  DELETE /*+ INDEX (MigratedSegment I_MigratedSegment_CFCopyNbVID) */
+    FROM MigratedSegment
+   WHERE castorfile = cfId;
 END;
 /
 
@@ -211,7 +215,9 @@ END;
 CREATE OR REPLACE PROCEDURE deleteMigrationJobsForRecall(cfId NUMBER) AS
 BEGIN
   -- delete migration jobs waiting on this recall
-  DELETE FROM MigrationJob WHERE castorfile = cfId AND status = tconst.MIGRATIONJOB_WAITINGONRECALL;
+  DELETE /*+ INDEX (MigrationJob I_MigrationJob_CFVID) */
+    FROM MigrationJob
+   WHERE castorfile = cfId AND status = tconst.MIGRATIONJOB_WAITINGONRECALL;
   -- delete migrated segments if no migration jobs remain
   DECLARE
     unused NUMBER;

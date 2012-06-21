@@ -506,7 +506,7 @@ BEGIN
   -- Note that we reset the creation time as if the MigrationJob was created right now
   -- this is because "creationTime" is actually the time of entering the "PENDING" state
   -- in the cases where the migrationJob went through a WAITINGONRECALL state
-  UPDATE MigrationJob
+  UPDATE /*+ INDEX (MigrationJob I_MigrationJob_CFVID) */ MigrationJob
      SET status = tconst.MIGRATIONJOB_PENDING,
          creationTime = getTime()
    WHERE status = tconst.MIGRATIONJOB_WAITINGONRECALL

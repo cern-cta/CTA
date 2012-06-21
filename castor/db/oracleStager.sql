@@ -2285,7 +2285,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
     -- create new migration
     initMigration(cfId, fileSize, vid, copyNb, varDestCopyNb, MJStatus);
     -- create migrated segments for the existing segments if there are none
-    SELECT count(*) INTO varNb
+    SELECT /*+ INDEX_RS_ASC (MigratedSegment I_MigratedSegment_CFCopyNbVID) */ count(*) INTO varNb
       FROM MigratedSegment
      WHERE castorFile = cfId;
     IF varNb = 0 THEN
@@ -2648,7 +2648,7 @@ BEGIN
       RETURN;
     END IF;
     -- check if recreation is possible for migrations
-    SELECT /*+ INDEX(MigrationJob I_MigrationJob_CastorFile */ count(*)
+    SELECT /*+ INDEX(MigrationJob I_MigrationJob_CFVID */ count(*)
       INTO nbRes FROM MigrationJob
      WHERE status = tconst.MIGRATIONJOB_SELECTED
       AND castorFile = cfId
