@@ -9,6 +9,17 @@ $SystemLogSocketIgnoreMsgTimestamp off
   - castor-rechandler-server has been dropped as a result of the refactoring of the recall logic.
   - castor-cockpit is a new package providing the new monitoring system for CASTOR ...
 
+
+--------------
+- 2.1.12-4-4 -
+--------------
+
+  Summary
+  -------
+
+  - This is a hotfix release.
+
+
 --------------
 - 2.1.12-4-3 -
 --------------
