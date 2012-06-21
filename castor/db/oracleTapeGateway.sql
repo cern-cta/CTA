@@ -955,6 +955,7 @@ BEGIN
                    HAVING (SUM(fileSize) >= rg.minAmountDataForMount OR
                            COUNT(*) >= rg.minNbFilesForMount OR
                            gettime() - MIN(creationTime) > rg.maxFileAgeBeforeMount)
+                      AND VID NOT IN (SELECT vid FROM RecallMount)
                     ORDER BY MIN(creationTime)) LOOP
         -- if we created enough, stop
         IF varNbMounts + varNbExtraMounts = rg.nbDrives THEN EXIT; END IF;
