@@ -1089,7 +1089,7 @@ BEGIN
         IF varNbCopies = 0 THEN
           -- find out whether this file is already being recalled
           SELECT count(*) INTO varIsRecalled FROM RecallJob WHERE castorfile = cfId AND ROWNUM < 2;
-          IF varIsRecalled > 0 THEN
+          IF varIsRecalled = 0 THEN
             -- trigger recall
             triggerRepackRecall(cfId, segment.fileid, nsHostName, segment.blockid,
                                 segment.fseq, segment.copyNb, inEuid, inEgid,
@@ -3345,7 +3345,7 @@ BEGIN
     varNb INTEGER;
   BEGIN
     -- check whether there are missing segments and whether we should create new ones
-    SELECT nbCopies INTO varExpectedNbCopies FROM FileClass WHERE id = inFileClassId;
+    SELECT nbCopies INTO varExpectedNbCopies FROM FileClass WHERE classid = inFileClassId;
     IF varExpectedNbCopies > inAllCopyNbs.COUNT THEN
       -- some copies are missing
       DECLARE
