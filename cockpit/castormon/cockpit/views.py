@@ -136,6 +136,9 @@ def _format_data_sum(result_data, nb_group_keys):
                             data[key1][key2].append(0)
                     for i in range(len(md[1][key1][key2])):
                         data[key1][key2][i] += md[1][key1][key2][i]
+        # sort the keys !
+        data['keys1'].sort()
+        data['keys2'].sort()
     else:
         data = list()
     return data
@@ -185,6 +188,9 @@ def _format_data_average(result_data, nb_group_keys):
             for key2 in data[key1].keys():
                 for i in range(len(data[key1][key2])):
                     data[key1][key2][i] = float(data[key1][key2][i]) / len(result_data)
+        # sort the keys !
+        data['keys1'].sort()
+        data['keys2'].sort()
     else:
         data = list()
     return data
@@ -305,6 +311,8 @@ def get_metric_data(request, metric_name, timestamp_from=None, timestamp_to=None
             for groupk in simplejson.loads(md.data).keys():
                 if groupk not in res['groupkeys']:
                     res['groupkeys'].append(groupk)
+        # sort the keys !
+        res['groupkeys'].sort()
         ## add the data
         #res['debug']['begin add data'] = str(datetime.datetime.now())# debug
         for md in metric_data:
@@ -349,6 +357,9 @@ def get_metric_data(request, metric_name, timestamp_from=None, timestamp_to=None
                 for key2 in data[key1].keys():
                     if key2 not in res['keys2']:
                         res['keys2'].append(key2)
+        # sort the keys !
+        res['keys1'].sort()
+        res['keys2'].sort()
         for md in metric_data:
             l = [ md.timestamp, simplejson.loads(md.data)]
             for key1 in res['keys1']:
@@ -373,8 +384,7 @@ def get_metric_data(request, metric_name, timestamp_from=None, timestamp_to=None
                         tmp = l[1][key1][key2].pop(position)
                         freq = tmp / float(metric.window) / float(metric.nbins)
                         l[1][key1][key2].insert(position, freq)
-        #res['keys1'] = list(reduce(( lambda x, y: set(x)|set(y) ), [d[1].keys() for d in result_data] )) # list unique keys of lvl 1
-        #res['keys2'] = list(reduce(( lambda x, y: set(x)|set(y) ), [v[0].keys() for v in [d[1].values() for d in result_data]] )) # list unique keys of lvl 2
+        # format the data according to the requested format, default is timeline
         res['data'] = _format_data.get(format_type, _format_data_timeline)(result_data, 2)
 
 
