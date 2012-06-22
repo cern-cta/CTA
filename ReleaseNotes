@@ -11,23 +11,6 @@ $SystemLogSocketIgnoreMsgTimestamp off
 
 
 ------------
-- 2.1.13-0 -
-------------
-
-  Summary
-  -------
-
-  - This is an INTERNAL RELEASE for the sole purpose of creating rpms at CERN
-    for the client-commands of the CASTOR name-server.  These client-commands
-    use the new connection policy of first trying to connect to a secure
-    name-server and in the case of a failure then falling back to connecting to
-    a non-secure name-server.  The RFEs addressed by this INTERNAL RELEASE are
-    as follows:
-     + bug #95559: RFE: Disable the use of GSI based security
-     + bug #95558: RFE: Implement new security connection-policy for NS clients
-
-
-------------
 - 2.1.12-6 -
 ------------
 
