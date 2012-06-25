@@ -1226,11 +1226,11 @@ BEGIN
       
       INSERT INTO DLFLogs (timeinfo, uuid, priority, msg, fileId, nsHost, source, params)
         VALUES (varNSTimeinfos(i), varReqid,
-                CASE varNSErrorCodes(i) WHEN 0 THEN dlf.LVL_SYSTEM ELSE dlf.LVL_ERROR END,
+                CASE WHEN varNSErrorCodes(i) IN (0,-1) THEN dlf.LVL_SYSTEM ELSE dlf.LVL_ERROR END,
                 varNSMsgs(i), varNSFileIds(i), varNsHost, 'nsd', varNSParams(i));
       
-      -- Now process file by file, depending on the result. Skip pure log entries with fileId = 0.
-      IF varNSFileIds(i) = 0 THEN CONTINUE; END IF;
+      -- Now process file by file, depending on the result. Skip pure log entries with error code = -1.
+      IF varNSErrorCodes(i) = -1 THEN CONTINUE; END IF;
       CASE
       WHEN varNSErrorCodes(i) = 0 THEN
         -- All right, commit the migration in the stager
@@ -1298,7 +1298,7 @@ BEGIN
     DELETE FROM MigratedSegment
      WHERE castorFile = varCfId;
   ELSE
-    -- another migration ongoing, keep track of this one 
+    -- another migration ongoing, keep track of the one just completed
     INSERT INTO MigratedSegment VALUES (varCfId, varCopyNb, varVID);
   END IF;
   -- Tell the Disk Cache that migration is over

@@ -408,13 +408,13 @@ BEGIN
       RETURNING copyNo, segSize, compression, vid, fseq, blockId, checksum_name, checksum
            INTO varOwSeg.copyNo, varOwSeg.segSize, varOwSeg.comprSize, varOwSeg.vid,
                 varOwSeg.fseq, varOwSeg.blockId, varOwSeg.checksum_name, varOwSeg.checksum;
-      -- Log overwritten segment metadata
+      -- Log overwritten segment metadata. ErrorCode = -1 => taken as pure log by the stager
       SELECT varOwSeg.blockId INTO varBlockId FROM Dual;
       varParams := 'CopyNo='|| varOwSeg.copyNo ||' Fsec=1 SegmentSize='|| varOwSeg.segSize
         ||' Compression='|| varOwSeg.comprSize ||' TPVID='|| varOwSeg.vid
         ||' Fseq='|| varOwSeg.fseq ||' BlockId="' || varBlockId
         ||'" ChecksumType="'|| varOwSeg.checksum_name ||'" ChecksumValue=' || varOwSeg.checksum;
-      tmpDlfLog(inReqId, 0, 'Unlinking segment (overwritten)', varFid, varParams);
+      tmpDlfLog(inReqId, -1, 'Unlinking segment (overwritten)', varFid, varParams);
     END IF;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- Previous segment not found, give up
@@ -435,7 +435,7 @@ BEGIN
     ||' Compression='|| varRepSeg.comprSize ||' TPVID='|| varRepSeg.vid
     ||' Fseq='|| varRepSeg.fseq ||' BlockId="' || varBlockId
     ||'" ChecksumType="'|| varRepSeg.checksum_name ||'" ChecksumValue=' || varRepSeg.checksum;
-  tmpDlfLog(inReqId, 0, 'Unlinking segment (replaced)', varFid, varParams);
+  tmpDlfLog(inReqId, -1, 'Unlinking segment (replaced)', varFid, varParams);
   -- Insert new segment metadata and deal with possible collisions with the fseq position
   BEGIN
     INSERT INTO Cns_seg_metadata (s_fileId, copyNo, fsec, segSize, s_status,
@@ -509,11 +509,11 @@ BEGIN
     varCount := varCount + 1;
   END LOOP;
   IF varCount > 0 THEN
-    -- Final logging
+    -- Final logging. ErrorCode = -1 => taken as pure log by the stager
     varParams := 'Function="setOrRepackSegmentsForFiles" NbFiles='|| varCount
       ||' ElapsedTime='|| getSecs(varStartTime, SYSTIMESTAMP)
       ||' AvgProcessingTime='|| getSecs(varStartTime, SYSTIMESTAMP)/varCount;
-    tmpDlfLog(inReqId, 0, 'Bulk processing complete', 0, varParams);
+    tmpDlfLog(inReqId, -1, 'Bulk processing complete', 0, varParams);
   END IF;
   -- Clean input data
   DELETE FROM SetSegmentsForFilesHelper
