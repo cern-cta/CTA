@@ -2951,7 +2951,7 @@ BEGIN
   -- select the list of DiskCopies to be deleted
   SELECT id, status BULK COLLECT INTO dcsToRm, dcsToRmStatus FROM (
     -- first physical diskcopies
-    SELECT DC.id, DC.status
+    SELECT /*+ INDEX(DC I_DiskCopy_CastorFile) */ DC.id, DC.status
       FROM DiskCopy DC, FileSystem, DiskPool2SvcClass DP2SC
      WHERE DC.castorFile = cfId
        AND DC.status IN (0, 6, 10)  -- STAGED, STAGEOUT, CANBEMIGR

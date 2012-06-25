@@ -337,6 +337,9 @@ UPDATE MigrationJob
  WHERE status = 1;
 COMMIT;
 
+/* Index to speed up the deleteOutOfDateStageOutDCs job */
+CREATE INDEX I_DiskCopy_Status_Open ON DiskCopy (decode(status,6,status,decode(status,5,status,decode(status,11,status,NULL))));
+
 -- XXXXX Revalidation of all the PL/SQL code
 -- XXXXX To be copy pasted rather than included
 

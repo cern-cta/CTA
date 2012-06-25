@@ -731,12 +731,12 @@ CREATE OR REPLACE PROCEDURE deleteOutOfDateStageOutDCs(timeOut IN NUMBER) AS
 BEGIN
   -- Deal with old DiskCopies in STAGEOUT/WAITFS. The rule is to drop
   -- the ones with 0 fileSize and issue a putDone for the others
-  FOR f IN (SELECT C.filesize, C.id,
-                   C.fileId, C.nsHost, D.fileSystem, D.id AS dcId, D.status AS dcStatus
+  FOR f IN (SELECT /*+ USE_NL(D C S) LEADING(D C S) INDEX(D I_DiskCopy_Status_Open) INDEX(S I_SubRequest_CastorFile) */
+                   C.filesize, C.id, C.fileId, C.nsHost, D.fileSystem, D.id AS dcId, D.status AS dcStatus
               FROM DiskCopy D, Castorfile C
              WHERE C.id = D.castorFile
                AND D.creationTime < getTime() - timeOut
-               AND D.status IN (5, 6, 11) -- WAITFS, STAGEOUT, WAITFS_SCHEDULING
+               AND decode(D.status,6,D.status,decode(D.status,5,D.status,decode(D.status,11,D.status,NULL))) IS NOT NULL
                AND NOT EXISTS (
                  SELECT 'x'
                    FROM SubRequest
