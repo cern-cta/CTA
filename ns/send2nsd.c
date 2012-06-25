@@ -187,18 +187,18 @@ int send2nsdx(int *socketp,
         }
       }
     }
+    /* get timeout environment variables */
+    if ((p = getenv (CNS_CONNTIMEOUT_ENV)) == NULL) {
+      timeout = DEFAULT_CONNTIMEOUT;
+    } else {
+      timeout = atoi (p);
+    }
     if (securityOpt) {
         /* TRANSITIONAL: Don't loop and go straight to unsecure if needed */
         retrycnt = 0;
         nbretry = 0;
     } else {
       /* get retry environment variables */
-      if ((p = getenv (CNS_CONNTIMEOUT_ENV)) == NULL) {
-        timeout = DEFAULT_CONNTIMEOUT;
-      } else {
-        timeout = atoi (p);
-      }
-
       nbretry = DEFAULT_RETRYCNT;
       if ((p = getenv (CNS_CONRETRY_ENV)) ||
           (p = getconfent (CNS_SCE, "CONRETRY", 0))) {
