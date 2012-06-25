@@ -898,9 +898,6 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileRecallRepor
   // We have 2 lists of both successes and errors.
   // The database side of the application will take care of updating the stager database.
   // As opposed to migrations, the VMGR needs no update here.
-  // Just extract a bit of info from the DB (VI
-
-  // Directly update the stager DB
   // results are also logged by the DB procedures.
   try {
     oraSvc.setBulkFileRecallResult(
@@ -1303,7 +1300,7 @@ void castor::tape::tapegateway::WorkerThread::logMigrationNotified (Cuuid_t uuid
           fileMigrated.blockId3())),
       castor::dlf::Param("fileTransactionId",fileMigrated.fileTransactionId())
   };
-  castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, WORKER_MIGRATION_NOTIFIED, paramsComplete, castorFileId);
+  castor::dlf::dlf_writep(uuid, DLF_LVL_DEBUG, WORKER_MIGRATION_NOTIFIED, paramsComplete, castorFileId);
 }
 
 void castor::tape::tapegateway::WorkerThread::logMigrationBulkVmgrUpdate (Cuuid_t uuid,
