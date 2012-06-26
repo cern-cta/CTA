@@ -1083,7 +1083,7 @@ BEGIN
            fileTransactionId = varFileTrId
      WHERE id = Cand.mjId;
     varNewFseq := varNewFseq + 1;    -- we still decide the fseq for each migration candidate
-    IF varCount > inCount OR varTotalSize > inTotalSize THEN
+    IF varCount >= inCount OR varTotalSize >= inTotalSize THEN
       -- we have enough candidates for this round, exit loop
       EXIT;
     END IF;
@@ -1482,7 +1482,7 @@ BEGIN
          SET status = tconst.RECALLJOB_SELECTED,
              fileTransactionID = varFileTrId
        WHERE id = Cand.rjId;
-      IF varCount > inCount OR varTotalSize > inTotalSize THEN
+      IF varCount >= inCount OR varTotalSize >= inTotalSize THEN
         -- we have enough candidates for this round, exit loop
         EXIT;
       END IF;
@@ -1494,7 +1494,7 @@ BEGIN
     END;
   END LOOP;
   -- check whether we've done enough. If not, consider taking lower fseqs
-  IF varNewFseq > -1 AND varCount <= inCount AND varTotalSize <= inTotalSize THEN
+  IF varNewFseq > -1 AND varCount < inCount AND varTotalSize < inTotalSize THEN
     varNewFseq := -1;
     GOTO candidateLoop;
   END IF;
