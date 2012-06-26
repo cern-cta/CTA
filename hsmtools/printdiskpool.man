@@ -40,12 +40,14 @@ This command requires database client access to the stager catalogue.
 Configuration for the database access is taken from castor.conf.
 
 .SH SEE ALSO
-.BR enterdiskpool,
-.BR deletediskpool,
-.BR printtapepool,
-.BR printsvcclass,
-.BR printfileclass,
-.BR printmigrationroute,
+.BR enterdiskpool
+.BR deletediskpool
+.BR printfileclass
+.BR printmigrationroute
+.BR printrecallgroup
+.BR printrecalluser
+.BR printsvcclass
+.BR printtapepool
 .BR adminMultiInstance
 
 .SH AUTHOR

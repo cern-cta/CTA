@@ -13,7 +13,7 @@ printrecallgroup
 
 .SH DESCRIPTION
 .B printrecallgroup
-prints out definitions of the given tape pools
+prints out definitions of the given recall groups
 .LP
 .BI \-h,\ \-\-help
 Get usage information
@@ -43,14 +43,15 @@ This command requires database client access to the stager catalogue.
 Configuration for the database access is taken from castor.conf.
 
 .SH SEE ALSO
-.BR enterrecallgroup,
-.BR modifyrecallgroup,
-.BR deleterecallgroup,
-.BR printdiskpool,
-.BR printsvcclass,
-.BR printfileclass,
-.BR printtapepool,
-.BR printmigrationroute,
+.BR enterrecallgroup
+.BR modifyrecallgroup
+.BR deleterecallgroup
+.BR printdiskpool
+.BR printfileclass
+.BR printmigrationroute
+.BR printrecalluser
+.BR printsvcclass
+.BR printtapepool
 .BR adminMultiInstance
 
 .SH AUTHOR

@@ -61,7 +61,7 @@ try:
     # connect to stager
     stconn = castor_tools.connectToStager()
     stcur = stconn.cursor()
-    # check tape pool existence
+    # check recall group existence
     stcur.execute("SELECT name FROM RecallGroup WHERE name IN ('" + "', '".join(recallGroups) + "')")
     existingRecallGroups = set([row[0] for row in stcur.fetchall()])
     nonexitingRecallGroups = recallGroups - existingRecallGroups
@@ -82,7 +82,7 @@ try:
             print '  - recall group %s contains %d user(s)' % (rg, nb)
         print 'You may want to use deleterecalluser or modifyrecalluser to correct this'
         sys.exit(1)
-    # check that the tape pools are not used by any ongoing RecallJob
+    # check that the recall groups are not used by any ongoing RecallJob
     stcur.execute('''SELECT RecallGroup.name, count(*)
                        FROM RecallJob, RecallGroup
                       WHERE RecallJob.recallGroup = RecallGroup.id
@@ -95,7 +95,7 @@ try:
             print '  - recall group %s is in use by %d recall jobs' % (tp, nb)
         print 'You probably have to wait that the recall of these files is over'
         sys.exit(1)
-    # check that the tape pools are not used by any ongoing RecallMount
+    # check that the recall groups are not used by any ongoing RecallMount
     stcur.execute('''SELECT RecallGroup.name, count(*)
                        FROM RecallMount, RecallGroup
                       WHERE RecallMount.recallGroup = RecallGroup.id
@@ -113,7 +113,7 @@ try:
         stcur.execute("DELETE FROM RecallGroup WHERE name IN ('" + "', '".join(existingRecallGroups) + "')")
         stconn.commit()
         print 'successfully dropped the following recall groups : ' + ', '.join(existingRecallGroups)
-    # warn for non existing tape pools
+    # warn for non existing recall groups
     if nonexitingRecallGroups:
         print 'WARNING : some recall group(s) did not exist : ' + ', '.join(nonexitingRecallGroups)
     # close DB connections

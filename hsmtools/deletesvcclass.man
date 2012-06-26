@@ -48,13 +48,15 @@ This command requires database client access to the stager catalogue.
 Configuration for the database access is taken from castor.conf.
 
 .SH SEE ALSO
-.BR entersvcclass,
-.BR modifysvcclass,
-.BR printsvcclass,
-.BR deletetapepool,
-.BR deletediskpool,
-.BR deletefileclass,
-.BR deletemigrationroute,
+.BR entersvcclass
+.BR modifysvcclass
+.BR printsvcclass
+.BR deletediskpool
+.BR deletefileclass
+.BR deletemigrationroute
+.BR deleterecallgroup
+.BR deleterecalluser
+.BR deletetapepool
 .BR adminMultiInstance
 
 .SH AUTHOR

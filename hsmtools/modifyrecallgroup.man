@@ -61,7 +61,7 @@ The value can be given using the extensions s/m/mn/h/d for seconds, minutes(both
 .BI \-\-priority <VDQMpriority>
 The priority to be used when accessing VDQM to get a drive.
 .TP
-.BI <tapePoolName>
+.BI <recallGroupName>
 name of the recall group to modify.
 
 .SH EXAMPLES
@@ -87,12 +87,13 @@ This command requires database client access to the stager catalog and nameserve
 Configuration for the database accesses is taken from castor.conf.
 
 .SH SEE ALSO
-.BR deleterecallgroup,
-.BR enterrecallgroup,
-.BR printrecallgroup,
+.BR enterrecallgroup
+.BR deleterecallgroup
+.BR printrecallgroup
+.BR modifymigrationroute
+.BR modifyrecalluser
+.BR modifysvcclass
 .BR modifytapepool
-.BR modifysvcclass,
-.BR modifymigrationroute,
 .BR adminMultiInstance
 
 .SH AUTHOR

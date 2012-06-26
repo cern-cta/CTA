@@ -106,13 +106,15 @@ This command requires database client access to the stager catalog DB.
 Configuration for the database accesses is taken from castor.conf.
 
 .SH SEE ALSO
-.BR deletemigrationroute,
-.BR modifymigrationroute,
-.BR printmigrationroute,
-.BR entertapepool,
-.BR enterdiskpool,
-.BR enterfileclass,
-.BR entersvcclass,
+.BR modifymigrationroute
+.BR deletemigrationroute
+.BR printmigrationroute
+.BR enterdiskpool
+.BR enterfileclass
+.BR enterrecallgroup
+.BR enterrecalluser
+.BR entersvcclass
+.BR entertapepool
 .BR adminMultiInstance
 
 .SH AUTHOR

@@ -1,6 +1,6 @@
 .TH ENTERRECALLGROUP 1 "2011" CASTOR "stager catalog administrative commands"
 .SH NAME
-enterrecallgroup \- enter a new tape pool in the stager catalog
+enterrecallgroup \- enter a new recall group in the stager catalog
 .SH SYNOPSIS
 .B enterrecallgroup
 [
@@ -42,8 +42,8 @@ The behavior is the following :
 Get usage information
 .TP
 .BI \-\-nbdrives <nbDrives>
-The maximum number of tape drives this tape pool is allowed to use concurrently
-for migration. Default is 0 is not provided
+The maximum number of tape drives this recall group is allowed to use concurrently
+for recalls. Default is 0 is not provided
 .TP
 .BI \-\-minamountdata <minAmountDataForAMount>
 The minimum amount of data needed to trigger a new mount in bytes. Default is 100GiB if not provided.
@@ -61,7 +61,7 @@ The value can be given using the extensions s/m/mn/h/d for seconds, minutes(both
 The priority to be used when accessing VDQM to get a drive. Default is 0 if not provided.
 .TP
 .BI <recallGroupName>
-name of a tape pool to create.
+name of a recall group to create.
 
 .SH EXAMPLES
 .nf
@@ -94,14 +94,15 @@ This command requires database client access to the stager catalog and nameserve
 Configuration for the database accesses is taken from castor.conf.
 
 .SH SEE ALSO
-.BR deleterecallgroup,
-.BR modifyrecallgroup,
-.BR printrecallgroup,
-.BR enterdiskpool,
-.BR entersvcclass,
-.BR enterfileclass,
-.BR entertapepool,
-.BR entermigrationroute,
+.BR modifyrecallgroup
+.BR deleterecallgroup
+.BR printrecallgroup
+.BR enterdiskpool
+.BR enterfileclass
+.BR entermigrationroute
+.BR enterrecalluser
+.BR entersvcclass
+.BR entertapepool
 .BR adminMultiInstance
 
 .SH AUTHOR

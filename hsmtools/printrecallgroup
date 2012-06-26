@@ -101,7 +101,7 @@ try:
     existingRecallGroups = set([row[0] for row in rows])
     if recallGroups:
         unknownRecallGroups = recallGroups - existingRecallGroups
-    # loop over tape pools and print them
+    # loop over recall groups and print them
     if existingRecallGroups:
         maxNameLen = max([4] + [len(row[0]) for row in rows])
         maxMinAmountDataLen = max([13] + [len(nbToDataAmount(row[2])) for row in rows])
@@ -121,7 +121,7 @@ try:
                   (maxNameLen, name, nbdrives, maxMinAmountDataLen, nbToDataAmount(minamountdata), \
                    maxMinNbFilesLen, minnbfiles, maxMaxFileAgeLen, nbToAge(maxfileage), priority, maxIdLen, tpid, \
                    maxLastEditorLen, lastEditor, maxLastEditionTimeLen, secsToDate(lastEdition))
-    # check unknown tape pools
+    # check unknown recall groups
     if recallGroups and unknownRecallGroups:
         print 'WARNING : the following recall groups do not exist : ' + ', '.join(unknownRecallGroups)
     # close DB connections

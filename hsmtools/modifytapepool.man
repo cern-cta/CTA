@@ -79,11 +79,13 @@ This command requires database client access to the stager catalog and nameserve
 Configuration for the database accesses is taken from castor.conf.
 
 .SH SEE ALSO
-.BR deletetapepool,
-.BR entertapepool,
-.BR printtapepool,
-.BR modifysvcclass,
-.BR modifymigrationroute,
+.BR entertapepool
+.BR deletetapepool
+.BR printtapepool
+.BR modifymigrationroute
+.BR modifyrecallgroup
+.BR modifyrecalluser
+.BR modifysvcclass
 .BR adminMultiInstance
 
 .SH AUTHOR
