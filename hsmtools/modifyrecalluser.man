@@ -1,0 +1,94 @@
+.TH MODIFYRECALLUSER 1 "2011" CASTOR "stager catalog administrative commands"
+.SH NAME
+modifyrecalluser \- modify the mapping of a recall user in the stager catalog
+.SH SYNOPSIS
+.B modifyrecalluser
+[
+.BI -h
+]
+(<userName>|<uid>)
+.BI <newRecallGroup>
+
+.B modifyrecalluser
+[
+.BI -h
+]
+(<userName>|<uid>)?:(<groupName>|<gid>)
+.BI <newRecallGroup>
+.SH DESCRIPTION
+.B modifyrecalluser
+modifies the mapping of a recall user in the CASTOR stager catalog.
+
+.TP
+.BI \-h,\ \-\-help
+Get usage information
+.TP
+.BI <userName>
+name of the user to create. In case it is omitted, the whole group will be considered. Note that the user must exist on the local host and that the corresponding uid will be used
+.TP
+.BI <uid>
+id of the user to create. In case it is omitted, the whole group will be considered
+.TP
+.BI <groupName>
+name of a group the user belongs to. In case it is omitted but the user is given, the primary group of the user as defined on the local host will be used. Note that the group must exist on the local host and that the corresponding gid will be used
+.TP
+.BI <gid>
+id of a group the user belongs to. In case it is omitted but the user is given, the primary group of the user as defined on the local host will be used
+.TP
+.BI <newRecallGroup>
+name of the new recall group for the specified user
+
+.SH EXAMPLES
+.nf
+.ft CW
+# printrecalluser 
+    USER/GROUP (UID/GID) RECALLGROUP LASTEDITOR          LASTEDITION
+--------------------------------------------------------------------
+             :zp (:1307)    newgroup       root 25-Jun-2012 17:11:00
+   itglp:c3 (22103:1028)     default       root 26-Jun-2012 11:09:02
+sponcec3:c3 (14493:1028)     default       root 26-Jun-2012 11:09:06
+   <123>:<456> (123:456)    newgroup       root 26-Jun-2012 11:46:33
+
+# modifyrecalluser itglp newgroup
+modified recall user successfully
+
+# modifyrecalluser :zp default 
+modified recall user successfully
+
+# printrecalluser 
+    USER/GROUP (UID/GID) RECALLGROUP LASTEDITOR          LASTEDITION
+--------------------------------------------------------------------
+             :zp (:1307)     default       root 26-Jun-2012 11:51:36
+   itglp:c3 (22103:1028)    newgroup       root 26-Jun-2012 11:51:15
+sponcec3:c3 (14493:1028)     default       root 26-Jun-2012 11:09:06
+   <123>:<456> (123:456)    newgroup       root 26-Jun-2012 11:46:33
+
+# modifyrecalluser nonexisting default
+Unknown user nonexisting
+Usage : /usr/bin/modifyrecalluser [-h|--help] (<userName>|<uid>) <newRecallGroup>
+        /usr/bin/modifyrecalluser [-h|--help] (<userName>|<uid>)?:(<groupName>|<gid>) <newRecallGroup>
+
+# modifyrecalluser :c3 default
+Could not find the specified RecallUser
+Note that you cannot modify several recall users in one go by only specifying their group
+
+# modifyrecalluser :zp nonexisting
+RecallGroup nonexisting does not exist in the stager DB
+You may want to use enterRecallGroup to create it first
+
+.SH NOTES
+This command requires database client access to the stager catalog and nameserver DBs.
+Configuration for the database accesses is taken from castor.conf.
+
+.SH SEE ALSO
+.BR enterrecalluser
+.BR deleterecalluser
+.BR printrecalluser
+.BR modifymigrationroute
+.BR modifyrecallgroup
+.BR modifysvcclass
+.BR modifytapepool
+.BR adminMultiInstance
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,0 +1,119 @@
+.TH ENTERRECALLUSER 1 "2011" CASTOR "stager catalog administrative commands"
+.SH NAME
+enterrecalluser \- enter a new recall user in the stager catalog
+.SH SYNOPSIS
+.B enterrecalluser
+[
+.BI -h
+]
+(<userName>|<uid>)
+.BI <recallUserGroup>
+
+.B enterrecalluser
+[
+.BI -h
+]
+(<userName>|<uid>)?:(<groupName>|<gid>)
+.BI <recallUserGroup>
+.SH DESCRIPTION
+.B enterrecalluser
+enters a new recall user in the CASTOR stager catalog.
+
+A recall user is linked to a recall group that defines the policy used to trigger tape mounts for this user.
+.TP
+.BI \-h,\ \-\-help
+Get usage information
+.TP
+.BI <userName>
+name of the user to create. In case it is omitted, the whole group will be considered. Note that the user must exist on the local host and that the corresponding uid will be used
+.TP
+.BI <uid>
+id of the user to create. In case it is omitted, the whole group will be considered
+.TP
+.BI <groupName>
+name of a group the user belongs to. In case it is omitted but the user is given, the primary group of the user as defined on the local host will be used. Note that the group must exist on the local host and that the corresponding gid will be used
+.TP
+.BI <gid>
+id of a group the user belongs to. In case it is omitted but the user is given, the primary group of the user as defined on the local host will be used
+.TP
+.BI <recallGroupName>
+name of a recall group the user should belong to
+
+.SH EXAMPLES
+.nf
+.ft CW
+# printrecalluser
+
+# enterrecalluser newuser newgroup
+Unknown user newuser
+Usage : /usr/bin/enterrecalluser [-h|--help] (<userName>|<uid>) <recalluserGroup>
+        /usr/bin/enterrecalluser [-h|--help] (<userName>|<uid>)?:(<groupName>|<gid>) <recalluserGroup>
+
+# enterrecalluser sponcec3 newgroup
+inserted recall user successfully
+
+# printrecalluser
+       USER RECALLGROUP LASTEDITOR          LASTEDITION
+-------------------------------------------------------
+sponcec3:c3    newgroup       root 25-Jun-2012 11:55:16
+
+# enterrecalluser :c3 newgroup
+This generic RecallUser collides with existing specific RecallUser(s) :
+        USER/GROUP (UID/GID) -> RECALLGROUP
+    sponcec3:c3 (14493:1028) -> newgroup
+You may want to use deleteRecallUser to drop the specific users
+
+# enterrecalluser :zp newgroup
+inserted recall user successfully
+
+# printrecalluser
+    USER/GROUP (UID/GID) RECALLGROUP LASTEDITOR          LASTEDITION
+--------------------------------------------------------------------
+sponcec3:c3 (14493:1028)    newgroup       root 25-Jun-2012 11:55:16
+             :zp (:1307)    newgroup       root 25-Jun-2012 17:11:00
+
+# enterrecalluser 123:456 newgroup
+inserted recall user successfully
+
+# printrecalluser   
+    USER/GROUP (UID/GID) RECALLGROUP LASTEDITOR          LASTEDITION
+--------------------------------------------------------------------
+sponcec3:c3 (14493:1028)    newgroup       root 25-Jun-2012 11:55:16
+             :zp (:1307)    newgroup       root 25-Jun-2012 17:11:00
+   <123>:<456> (123:456)    newgroup       root 25-Jun-2012 17:16:22
+
+# enterrecalluser sponce:zp newgroup
+The RecallUser you are trying to add collides with a generic RecallUser that maps his/her unix group to RecallGroup default
+You may want to use deleteRecallUser to drop the generic group
+
+# enterrecalluser sponcec3:c3 newgroup
+The RecallUser you are trying to add already exists in the stager DB
+It is mapped to RecallGroup default
+You may want to use modifyRecallUser
+
+# enterrecalluser :zp newgroup
+This generic RecallUser already exists and is mapped to RecallGroup newgroup
+You may want to use modifyRecallUser
+
+# enterrecalluser 123:456 nonexistinggroup
+RecallGroup nonexistinggroup does not exist in the stager DB
+You may want to use enterRecallGroup to create it first
+
+.SH NOTES
+This command requires database client access to the stager catalog and nameserver DBs.
+Configuration for the database accesses is taken from castor.conf.
+
+.SH SEE ALSO
+.BR modifyrecalluser
+.BR deleterecalluser
+.BR printrecalluser
+.BR enterdiskpool
+.BR enterfileclass
+.BR entermigrationroute
+.BR enterrecallgroup
+.BR entersvcclass
+.BR entertapepool
+.BR adminMultiInstance
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

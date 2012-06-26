@@ -1,0 +1,144 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                      deleterecalluser
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+
+'''command line deleteing the given recall user(s)'''
+
+import sys, pwd, grp
+import getopt, time
+import castor_tools
+
+# usage function
+def usage(exitCode):
+    '''usage'''
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] [(<userName>|<uid>) [...]]'
+    print '        ' + sys.argv[0] + ' [-h|--help] [(<userName>|<uid>)?:(groupName|<gid>) [...]]'
+    sys.exit(exitCode)
+
+def parseUser(rawUserGroup):
+    '''parses input of a given user'''
+    # split user and group from input
+    colonindex = rawUserGroup.find(':')
+    if colonindex < 0:
+        rawUser = rawUserGroup
+        rawGroup = None
+    else:
+        rawUser = rawUserGroup[0:colonindex]
+        rawGroup = rawUserGroup[colonindex+1:]
+    # parse user
+    if rawUser == '':
+        uid = None
+    else:
+        try:
+            # suppose a uid is given
+            uid = int(rawUser)
+            if uid < 0:
+                print 'Invalid uid %d' % uid
+                usage(1)
+        except ValueError:
+            # was not a uid
+            try:
+                pwdEntry = pwd.getpwnam(rawUser)
+                uid = pwdEntry.pw_uid
+                gid = pwdEntry.pw_gid
+            except KeyError:
+                print 'Unknown user %s' % rawUser
+                usage(1)
+    # find out the group, if given
+    if rawGroup == None:
+        gid = None
+    else:
+        try:
+            # suppose a gid is given
+            gid = int(rawGroup)
+            if gid < 0:
+                print 'Invalid gid %d' % uid
+                usage(1)
+        except ValueError:
+            # was not a gid
+            try:
+                gid = grp.getgrnam(rawGroup).gr_gid
+            except KeyError:
+                print 'Unknown group %s' % rawGroup
+                usage(1)
+    return uid,gid
+
+# first parse the options
+try:
+    options, args = getopt.getopt(sys.argv[1:], 'hv', ['help', 'verbose'])
+except Exception, e:
+    print e
+    usage(1)
+verbose = False
+for f, v in options:
+    if f == '-h' or f == '--help':
+        usage(0)
+    elif f == '-v' or f == '--verbose':
+        verbose = True
+    else:
+        print "unknown option : " + f
+        usage(1)
+
+# Deal with arguments
+recallUsers = None
+if len(args) > 0:
+    recallUsers = set(map(parseUser, args))
+else:
+    print 'missing argument'
+    usage(1)
+
+try:
+    # connect to stager and prepare statements
+    stconn = castor_tools.connectToStager()
+    stcur = stconn.cursor()
+    sqlStatement = 'DELETE FROM RecallUser'''
+    if recallUsers:
+        sqlStatement = sqlStatement + " WHERE ("
+        firstOne = True
+        for uid,gid in recallUsers:
+            if firstOne:
+                firstOne = False
+            else:
+                sqlStatement = sqlStatement + " OR "
+            sqlStatement = sqlStatement + "("
+            if uid != None:
+                sqlStatement = sqlStatement + "euid = %d" % uid
+            if gid is not None:
+                if uid != None:
+                    sqlStatement = sqlStatement + " AND "
+                sqlStatement = sqlStatement + "egid = %d" %gid
+            sqlStatement = sqlStatement + ")"
+        sqlStatement = sqlStatement + ")"
+    stcur.execute(sqlStatement)
+    stconn.commit()
+    print 'deleted recall user successfully'
+    # close DB connections
+    try:
+        castor_tools.disconnectDB(stconn)
+    except Exception:
+        pass
+except Exception, e:
+    print e
+    if verbose:
+        import traceback
+        traceback.print_exc()
+    sys.exit(-1)

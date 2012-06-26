@@ -1,0 +1,100 @@
+.TH PRINTRECALLUSER 1 "2011" CASTOR "stager catalog administrative commands"
+.SH NAME
+printrecalluser \- print recall users from the stager catalog
+.SH SYNOPSIS
+.B printrecalluser
+[
+.BI -h
+]
+[
+.BI -g
+<recallGroupName>
+]
+
+.B printrecalluser
+[
+.BI -h
+]
+(<userName>|<uid>) [...]
+
+.B printrecalluser
+[
+.BI -h
+]
+(<userName>|<uid>)?:(<groupName>|<gid>) [...]
+.BI <recallUserGroup>
+.SH DESCRIPTION
+.B printrecalluser
+prints recall users from the CASTOR stager catalog.
+
+.TP
+.BI \-h,\ \-\-help
+Get usage information
+.TP
+.BI \-g,\ \-\-recallgroup\ <recallGroupName>
+if present, restricts the listing to users mapped to the given recallGroup
+.TP
+.BI <userName>
+if present, restrict the listing to users whose uid maps to this name on the local host
+.TP
+.BI <uid>
+if present, restrict the listing to users with this uid
+.TP
+.BI <groupName>
+if present, restrict the listing to users whose primary group maps to this name on the local host
+.TP
+.BI <gid>
+if present, restrict the listing to users belonging to a group with this group id
+
+.SH EXAMPLES
+.nf
+.ft CW
+
+# printrecalluser         
+    USER/GROUP (UID/GID) RECALLGROUP LASTEDITOR          LASTEDITION
+--------------------------------------------------------------------
+sponcec3:c3 (14493:1028)    newgroup       root 25-Jun-2012 11:55:16
+             :zp (:1307)    newgroup       root 25-Jun-2012 17:11:00
+   <123>:<456> (123:456)    newgroup       root 25-Jun-2012 17:16:22
+   itglp:c3 (22103:1028)     default       root 25-Jun-2012 17:32:48
+
+# printrecalluser :c3
+    USER/GROUP (UID/GID) RECALLGROUP LASTEDITOR          LASTEDITION
+--------------------------------------------------------------------
+sponcec3:c3 (14493:1028)    newgroup       root 25-Jun-2012 11:55:16
+   itglp:c3 (22103:1028)     default       root 25-Jun-2012 17:32:48
+
+# printrecalluser itglp
+ USER/GROUP (UID/GID) RECALLGROUP LASTEDITOR          LASTEDITION
+-----------------------------------------------------------------
+itglp:c3 (22103:1028)     default       root 25-Jun-2012 17:32:48
+
+# printrecalluser 123
+ USER/GROUP (UID/GID) RECALLGROUP LASTEDITOR          LASTEDITION
+-----------------------------------------------------------------
+<123>:<456> (123:456)    newgroup       root 25-Jun-2012 17:16:22
+
+# printrecalluser -g default 
+    USER/GROUP (UID/GID) RECALLGROUP LASTEDITOR          LASTEDITION
+--------------------------------------------------------------------
+   itglp:c3 (22103:1028)     default       root 26-Jun-2012 11:09:02
+sponcec3:c3 (14493:1028)     default       root 26-Jun-2012 11:09:06
+
+.SH NOTES
+This command requires database client access to the stager catalog and nameserver DBs.
+Configuration for the database accesses is taken from castor.conf.
+
+.SH SEE ALSO
+.BR enterrecalluser
+.BR modifyrecalluser
+.BR deleterecalluser
+.BR printdiskpool
+.BR printfileclass
+.BR printmigrationroute
+.BR printrecallgroup
+.BR printsvcclass
+.BR printtapepool
+.BR adminMultiInstance
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

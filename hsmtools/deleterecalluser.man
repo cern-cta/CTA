@@ -1,0 +1,92 @@
+.TH DELETERECALLUSER 1 "2011" CASTOR "stager catalog administrative commands"
+.SH NAME
+deleterecalluser \- delete recall users from the stager catalog
+.SH SYNOPSIS
+.B deleterecalluser
+[
+.BI -h
+]
+(<userName>|<uid>) [...]
+
+.B deleterecalluser
+[
+.BI -h
+]
+(<userName>|<uid>)?:(<groupName>|<gid>) [...]
+.BI <recallUserGroup>
+.SH DESCRIPTION
+.B deleterecalluser
+deletes recall users from the CASTOR stager catalog.
+
+.TP
+.BI \-h,\ \-\-help
+Get usage information
+.TP
+.BI <userName>
+delete user with the uid correponding to this name on the local host
+.TP
+.BI <uid>
+delete user with this uid
+.TP
+.BI <groupName>
+delete users whose primary group maps to this name on the local host. In case it is omitted but the user is given, the primary group of the user as defined on the local host will be used.
+.TP
+.BI <gid>
+delete users whose primary group have this gid. In case it is omitted but the user is given, the primary group of the user as defined on the local host will be used
+
+.SH EXAMPLES
+.nf
+.ft CW
+
+# printrecalluser         
+    USER/GROUP (UID/GID) RECALLGROUP LASTEDITOR          LASTEDITION
+--------------------------------------------------------------------
+sponcec3:c3 (14493:1028)    newgroup       root 25-Jun-2012 11:55:16
+             :zp (:1307)    newgroup       root 25-Jun-2012 17:11:00
+   <123>:<456> (123:456)    newgroup       root 25-Jun-2012 17:16:22
+   itglp:c3 (22103:1028)     default       root 25-Jun-2012 17:32:48
+
+# deleterecalluser sponcec3
+deleted recall user successfully
+
+# printrecalluser 
+ USER/GROUP (UID/GID) RECALLGROUP LASTEDITOR          LASTEDITION
+-----------------------------------------------------------------
+          :zp (:1307)    newgroup       root 25-Jun-2012 17:11:00
+<123>:<456> (123:456)    newgroup       root 25-Jun-2012 17:16:22
+itglp:c3 (22103:1028)     default       root 25-Jun-2012 17:32:48
+
+# deleterecalluser :c3
+deleted recall user successfully
+
+# printrecalluser 
+ USER/GROUP (UID/GID) RECALLGROUP LASTEDITOR          LASTEDITION
+-----------------------------------------------------------------
+          :zp (:1307)    newgroup       root 25-Jun-2012 17:11:00
+<123>:<456> (123:456)    newgroup       root 25-Jun-2012 17:16:22
+
+# deleterecalluser 123:456
+deleted recall user successfully
+
+USER/GROUP (UID/GID) RECALLGROUP LASTEDITOR          LASTEDITION
+----------------------------------------------------------------
+         :zp (:1307)    newgroup       root 25-Jun-2012 17:11:00
+
+.SH NOTES
+This command requires database client access to the stager catalog and nameserver DBs.
+Configuration for the database accesses is taken from castor.conf.
+
+.SH SEE ALSO
+.BR enterrecalluser
+.BR modifyrecalluser
+.BR printrecalluser
+.BR deletediskpool
+.BR deletefileclass
+.BR deletemigrationroute
+.BR deleterecallgroup
+.BR deletesvcclass
+.BR deletetapepool
+.BR adminMultiInstance
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

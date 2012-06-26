@@ -1,0 +1,206 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                      enterrecalluser
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @author castor dev team
+# *****************************************************************************/
+
+'''allows to enter a new recall user into the castor stager'''
+
+import sys, re, os, pwd, grp
+import getopt
+import castor_tools
+
+# usage function
+def usage(exitCode):
+    '''prints usage'''
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] (<userName>|<uid>) <recalluserGroup>\n' + \
+          '        ' + sys.argv[0] + ' [-h|--help] (<userName>|<uid>)?:(<groupName>|<gid>) <recalluserGroup>\n'
+    sys.exit(exitCode)
+
+def parseUser(rawUserGroup):
+    '''parses input of a given user'''
+    # split user and group from input
+    colonindex = rawUserGroup.find(':')
+    if colonindex < 0:
+        rawUser = rawUserGroup
+        rawGroup = None
+    else:
+        rawUser = rawUserGroup[0:colonindex]
+        rawGroup = rawUserGroup[colonindex+1:]
+    # parse user
+    if rawUser == '':
+        uid = None
+    else:
+        try:
+            # suppose a uid is given
+            uid = int(rawUser)
+            if uid < 0:
+                print 'Invalid uid %d' % uid
+                usage(1)
+        except ValueError:
+            # was not a uid
+            try:
+                pwdEntry = pwd.getpwnam(rawUser)
+                uid = pwdEntry.pw_uid
+                gid = pwdEntry.pw_gid
+            except KeyError:
+                print 'Unknown user %s' % rawUser
+                usage(1)
+    # find out the group, if given
+    if rawGroup == None:
+        gid = None
+    else:
+        try:
+            # suppose a gid is given
+            gid = int(rawGroup)
+            if gid < 0:
+                print 'Invalid gid %d' % uid
+                usage(1)
+        except ValueError:
+            # was not a gid
+            try:
+                gid = grp.getgrnam(rawGroup).gr_gid
+            except KeyError:
+                print 'Unknown group %s' % rawGroup
+                usage(1)
+    return uid, gid
+
+def printUser((uid, gid)):
+    '''converts uid/gid pair into printable string'''
+    if uid == None:
+        userName = ''
+        uid = ''
+    else:
+        try:
+            userName = pwd.getpwuid(uid)[0]
+        except KeyError:
+            userName = '<%d>' % uid
+        uid = str(uid)
+    try:
+        groupName = grp.getgrgid(gid)[0]
+    except KeyError:
+        groupName = '<%d>' % gid
+    return '%s:%s (%s:%d)' % (userName, groupName, uid, gid)
+
+# first parse the options
+try:
+    options, args = getopt.getopt(sys.argv[1:], 'hv', ['help', 'verbose'])
+except Exception, e:
+    print e
+    usage(1)
+verbose = False
+for f, v in options:
+    if f == '-h' or f == '--help':
+        usage(0)
+    elif f == '-v' or f == '--verbose':
+        verbose = True
+    else:
+        print "unknown option : " + f
+        usage(1)
+
+# Deal with arguments
+if len(args) < 2:
+    print "Missing arguments"
+    usage(1)
+elif len(args) > 2:
+    print "Too many arguments"
+    usage(1)
+uid, gid = parseUser(args[0])
+recallGroup = args[1]
+
+try:
+    # connect to stager
+    stconn = castor_tools.connectToStager()
+    stcur = stconn.cursor()
+    # check that the recall group exists
+    stcur.execute('SELECT id FROM RecallGroup WHERE name=:name', name=recallGroup)
+    rows = stcur.fetchall()
+    if len(rows) == 0:
+        print 'RecallGroup %s does not exist in the stager DB' % recallGroup
+        print 'You may want to use enterRecallGroup to create it first'
+        sys.exit(1)
+    recallGroupId = rows[0][0]
+    # check that the new entry will not collide with an existing one
+    if uid != None:
+        stcur.execute('''SELECT RecallGroup.name
+                           FROM RecallUser, RecallGroup
+                          WHERE euid=:euid and egid=:egid''', euid=uid, egid=gid)
+        rows = stcur.fetchall()
+        if len(rows) != 0:
+            print 'The RecallUser you are trying to add already exists in the stager DB'
+            print 'It is mapped to RecallGroup %s' % rows[0][0]
+            print 'You may want to use modifyRecallUser'
+            sys.exit(1)
+        stcur.execute('''SELECT RecallGroup.name
+                           FROM RecallUser, RecallGroup
+                          WHERE euid IS NULL AND egid=:gid''', gid=gid)
+        rows = stcur.fetchall()
+        if len(rows) != 0:
+            print 'The RecallUser you are trying to add collides with a generic RecallUser that ' + \
+                  'maps his/her unix group to RecallGroup %s' % rows[0][0]
+            print 'You may want to use deleteRecallUser to drop the generic group'
+            sys.exit(1)
+    else:
+        stcur.execute('''SELECT RecallGroup.name
+                           FROM RecallUser, RecallGroup
+                          WHERE RecallUser.recallGroup = RecallGroup.id
+                            AND euid IS NULL AND egid=:gid''', gid=gid)
+        rows = stcur.fetchall()
+        if len(rows) != 0:
+            print 'This generic RecallUser already exists and is mapped to RecallGroup %s' % rows[0][0]
+            print 'You may want to use modifyRecallUser'
+            sys.exit(1)
+        stcur.execute('''SELECT euid, RecallGroup.name
+                           FROM RecallUser, RecallGroup
+                          WHERE RecallUser.recallGroup = RecallGroup.id
+                            AND euid IS NOT NULL AND egid=:gid''', gid=gid)
+        rows = stcur.fetchall()
+        if len(rows) != 0:
+            print 'This generic RecallUser collides with existing specific RecallUser(s) :'
+            userLen = max([20] + (map(len, map(printUser, [(row[0], gid) for row in rows]))))
+            print '    %*s -> %s' % (userLen, 'USER/GROUP (UID/GID)', 'RECALLGROUP')
+            for row in rows:
+                print '    %*s -> %s' % (userLen, printUser((row[0], gid)), row[1])
+            print 'You may want to use deleteRecallUser to drop the specific users'
+            sys.exit(1)
+    # get info on user running this command
+    lasteditor = pwd.getpwuid(os.getuid())[0]
+    # insert new recalluser
+    if uid != None:
+        stcur.execute('''INSERT INTO RecallUser (euid, egid, recallGroup, lastEditor, lastEditionTime)
+                         VALUES (:euid, :egid, :recallGroupId, :lasteditor, gettime())''',
+                      euid=uid, egid=gid, recallGroupId=recallGroupId, lasteditor=lasteditor)
+    else:
+        stcur.execute('''INSERT INTO RecallUser (euid, egid, recallGroup, lastEditor, lastEditionTime)
+                         VALUES (NULL, :egid, :recallGroupId, :lasteditor, gettime())''',
+                      egid=gid, recallGroupId=recallGroupId, lasteditor=lasteditor)
+    stconn.commit()
+    print 'inserted recall user successfully'
+    # close DB connection
+    try:
+        castor_tools.disconnectDB(stconn)
+    except Exception:
+        pass
+except Exception, e:
+    print e
+    if verbose:
+        import traceback
+        traceback.print_exc()
+    sys.exit(-1)

@@ -1,0 +1,194 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                      printrecalluser
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+
+'''command line printing the given recall user(s)'''
+
+import sys, pwd, grp
+import getopt, time
+import castor_tools
+
+# usage function
+def usage(exitCode):
+    '''prints usage'''
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-g <recallGroupName]'
+    print '        ' + sys.argv[0] + ' [-h|--help] [(<userName>|<uid>) [...]]'
+    print '        ' + sys.argv[0] + ' [-h|--help] [(<userName>|<uid>)?:(groupName|<gid>) [...]]'
+    sys.exit(exitCode)
+
+def parseUser(rawUserGroup):
+    '''parses input of a given user'''
+    # split user and group from input
+    colonindex = rawUserGroup.find(':')
+    if colonindex < 0:
+        rawUser = rawUserGroup
+        rawGroup = None
+    else:
+        rawUser = rawUserGroup[0:colonindex]
+        rawGroup = rawUserGroup[colonindex+1:]
+    # parse user
+    if rawUser == '':
+        uid = None
+    else:
+        try:
+            # suppose a uid is given
+            uid = int(rawUser)
+            if uid < 0:
+                print 'Invalid uid %d' % uid
+                usage(1)
+        except ValueError:
+            # was not a uid
+            try:
+                pwdEntry = pwd.getpwnam(rawUser)
+                uid = pwdEntry.pw_uid
+                gid = pwdEntry.pw_gid
+            except KeyError:
+                print 'Unknown user %s' % rawUser
+                usage(1)
+    # find out the group, if given
+    if rawGroup == None:
+        gid = None
+    else:
+        try:
+            # suppose a gid is given
+            gid = int(rawGroup)
+            if gid < 0:
+                print 'Invalid gid %d' % uid
+                usage(1)
+        except ValueError:
+            # was not a gid
+            try:
+                gid = grp.getgrnam(rawGroup).gr_gid
+            except KeyError:
+                print 'Unknown group %s' % rawGroup
+                usage(1)
+    return uid,gid
+
+def printUser((uid, gid)):
+    '''converts uid/gid pair into printable string'''
+    if uid == None:
+        userName = ''
+        uid = ''
+    else:
+        try:
+            userName = pwd.getpwuid(uid)[0]
+        except KeyError:
+            userName = '<%d>' % uid
+        uid = str(uid)
+    try:
+        groupName = grp.getgrgid(gid)[0]
+    except KeyError:
+        groupName = '<%d>' % gid
+    return '%s:%s (%s:%d)' % (userName, groupName, uid, gid)
+
+def secsToDate(s):
+    '''converts number of seconds since the epoch into readable date'''
+    return time.strftime('%d-%b-%Y %H:%M:%S', time.localtime(s))
+
+# first parse the options
+try:
+    options, args = getopt.getopt(sys.argv[1:], 'hvg:', ['help', 'verbose', 'recallgroup'])
+except Exception, e:
+    print e
+    usage(1)
+verbose = False
+recallGroup = None
+for f, v in options:
+    if f == '-h' or f == '--help':
+        usage(0)
+    elif f == '-v' or f == '--verbose':
+        verbose = True
+    elif f == '-g' or f == '--recallgroup':
+        recallGroup = v
+    else:
+        print "unknown option : " + f
+        usage(1)
+
+# Deal with arguments
+recallUsers = None
+if recallGroup != None:
+    if len(args) > 0:
+        print 'Too many arguments'
+        usage(1)
+else:
+    if len(args) > 0:
+        recallUsers = set(map(parseUser, args))
+
+try:
+    # connect to stager and prepare statements
+    stconn = castor_tools.connectToStager()
+    stcur = stconn.cursor()
+    sqlStatement = '''
+    SELECT RecallUser.euid, RecallUser.egid, RecallGroup.name, RecallUser.lastEditor, RecallUser.lastEditionTime
+      FROM RecallUser, RecallGroup
+     WHERE RecallGroup.id(+) = RecallUser.recallGroup'''
+    if recallUsers:
+        sqlStatement = sqlStatement + " AND ("
+        firstOne = True
+        for uid,gid in recallUsers:
+            if firstOne:
+                firstOne = False
+            else:
+                sqlStatement = sqlStatement + " OR "
+            sqlStatement = sqlStatement + "("
+            if uid != None:
+                sqlStatement = sqlStatement + "euid = %d" % uid
+            if gid is not None:
+                if uid != None:
+                    sqlStatement = sqlStatement + " AND "
+                sqlStatement = sqlStatement + "egid = %d" % gid
+            sqlStatement = sqlStatement + ")"
+        sqlStatement = sqlStatement + ")"
+    elif recallGroup != None:
+        sqlStatement = sqlStatement + " AND RecallGroup.name = :recallGroup"
+    if recallGroup != None:
+        stcur.execute(sqlStatement, recallGroup=recallGroup)
+    else:
+        stcur.execute(sqlStatement)        
+    # get results
+    rows = stcur.fetchall()
+    existingUsers = set([(row[0],row[1]) for row in rows])
+    # loop over recall users and print them
+    if existingUsers:
+        maxUserLen = max([20] + (map(len, map(printUser, existingUsers))))
+        maxRecallGroupLen = max([11] + [len(row[2]) for row in rows])
+        maxLastEditorLen = max([10] + [len(row[3]) for row in rows])
+        maxLastEditionTimeLen = max([6] + [len(secsToDate(row[4])) for row in rows])
+        print '%*s %*s %*s %*s' % \
+              (maxUserLen, 'USER/GROUP (UID/GID)', maxRecallGroupLen, 'RECALLGROUP', \
+               maxLastEditorLen, 'LASTEDITOR', maxLastEditionTimeLen, 'LASTEDITION')
+        print '-' * (3 + maxUserLen + maxRecallGroupLen + maxLastEditorLen + maxLastEditionTimeLen)
+        for uid, gid, recallGroup, lastEditor, lastEdition in rows:
+            print '%*s %*s %*s %*s' % \
+                  (maxUserLen, printUser((uid,gid)), maxRecallGroupLen, recallGroup, \
+                   maxLastEditorLen, lastEditor, maxLastEditionTimeLen, secsToDate(lastEdition))
+    # close DB connections
+    try:
+        castor_tools.disconnectDB(stconn)
+    except Exception:
+        pass
+except Exception, e:
+    print e
+    if verbose:
+        import traceback
+        traceback.print_exc()
+    sys.exit(-1)
