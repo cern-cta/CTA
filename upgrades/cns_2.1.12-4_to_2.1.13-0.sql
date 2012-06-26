@@ -61,12 +61,12 @@ COMMIT;
 
 -- Tables to store intermediate data to be passed from/to the stager.
 -- Note that we cannot use temporary tables with distributed transactions.
-CREATE TABLE SetSegmentsForFilesHelper
+CREATE TABLE SetSegsForFilesInputHelper
   (reqId VARCHAR2(36), fileId NUMBER, lastModTime NUMBER, copyNo NUMBER, oldCopyNo NUMBER, transfSize NUMBER,
    comprSize NUMBER, vid VARCHAR2(6), fseq NUMBER, blockId RAW(4), checksumType VARCHAR2(16), checksum NUMBER);
 
-CREATE TABLE ResultsLogHelper
-  (reqId VARCHAR2(36), timeinfo NUMBER, ec INTEGER, fileId NUMBER, msg VARCHAR2(2048), params VARCHAR2(4000));
+CREATE TABLE SetSegsForFilesResultsHelper
+  (isOnlyLog NUMBER(1), reqId VARCHAR2(36), timeInfo NUMBER, errorCode INTEGER, fileId NUMBER, msg VARCHAR2(2048), params VARCHAR2(4000));
 
 -- a synonym allowing to acces the VMGR_TAPE_SIDE table from within the nameserver DB
 UNDEF vmgrSchema
@@ -175,12 +175,15 @@ BEGIN
 END;
 /
 
-/* A small procedure to add a line to the temporary DLF log */
-CREATE OR REPLACE PROCEDURE tmpDlfLog(inReqId IN VARCHAR2, inEC IN INTEGER, inMsg IN VARCHAR2,
-                                      inFileId IN NUMBER, inParams IN VARCHAR2) AS
+/* A small procedure to add a line to the temporary SetSegsForFilesResultsHelper table.
+ * The table is ultimately NOT a temporary table because Oracle does not support temporary tables
+ * with distributed transactions, but it is used as such: see castor/db/oracleTapeGateway.sql.
+ */
+CREATE OR REPLACE PROCEDURE addSegResult(inIsOnlyLog IN INTEGER, inReqId IN VARCHAR2, inErrorCode IN INTEGER,
+                                         inMsg IN VARCHAR2, inFileId IN NUMBER, inParams IN VARCHAR2) AS
 BEGIN
-  INSERT INTO ResultsLogHelper (reqId, timeinfo, ec, msg, fileId, params)
-    VALUES (inReqId, getTime(), inEC, inMsg, inFileId, inParams);
+  INSERT INTO SetSegsForFilesResultsHelper (isOnlyLog, reqId, timeinfo, errorCode, msg, fileId, params)
+    VALUES (inIsOnlyLog, inReqId, getTime(), inErrorCode, inMsg, inFileId, inParams);
 END;
 /
 
@@ -338,7 +341,7 @@ BEGIN
     ||' Compression='|| trunc(inSegEntry.segSize*100/inSegEntry.comprSize) ||' TPVID='|| inSegEntry.vid
     ||' Fseq='|| inSegEntry.fseq ||' BlockId="' || varBlockId
     ||'" ChecksumType="'|| inSegEntry.checksum_name ||'" ChecksumValue=' || varFCksum;
-  tmpDlfLog(inReqId, 0, 'New segment information', varFid, varParams);
+  addSegResult(0, inReqId, 0, 'New segment information', varFid, varParams);
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- The file entry was not found, just give up
   rc := serrno.ENOENT;
@@ -375,7 +378,6 @@ CREATE OR REPLACE PROCEDURE replaceSegmentForFile(inOldCopyNo IN INTEGER, inSegE
   varFCksumName VARCHAR2(2);
   varFCksum VARCHAR2(32);
   varNb INTEGER;
-  varStatus INTEGER;
   varBlockId VARCHAR2(8);
   varOwSeg castorns.Segment_Rec;
   varRepSeg castorns.Segment_Rec;
@@ -437,6 +439,8 @@ BEGIN
   -- Repack specific: --
   -- Make sure a segment exists for the given copyNo. There can only be one segment
   -- as we don't support multi-segmented files any longer.
+  DECLARE
+    varStatus CHAR(1);
   BEGIN
     SELECT s_status INTO varStatus
       FROM Cns_seg_metadata
@@ -457,13 +461,13 @@ BEGIN
       RETURNING copyNo, segSize, compression, vid, fseq, blockId, checksum_name, checksum
            INTO varOwSeg.copyNo, varOwSeg.segSize, varOwSeg.comprSize, varOwSeg.vid,
                 varOwSeg.fseq, varOwSeg.blockId, varOwSeg.checksum_name, varOwSeg.checksum;
-      -- Log overwritten segment metadata
+      -- Log overwritten segment metadata. ErrorCode = -1 => taken as pure log by the stager
       SELECT varOwSeg.blockId INTO varBlockId FROM Dual;
       varParams := 'CopyNo='|| varOwSeg.copyNo ||' Fsec=1 SegmentSize='|| varOwSeg.segSize
         ||' Compression='|| varOwSeg.comprSize ||' TPVID='|| varOwSeg.vid
         ||' Fseq='|| varOwSeg.fseq ||' BlockId="' || varBlockId
         ||'" ChecksumType="'|| varOwSeg.checksum_name ||'" ChecksumValue=' || varOwSeg.checksum;
-      tmpDlfLog(inReqId, 0, 'Unlinking segment (overwritten)', varFid, varParams);
+      addSegResult(1, inReqId, 0, 'Unlinking segment (overwritten)', varFid, varParams);
     END IF;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- Previous segment not found, give up
@@ -484,7 +488,7 @@ BEGIN
     ||' Compression='|| varRepSeg.comprSize ||' TPVID='|| varRepSeg.vid
     ||' Fseq='|| varRepSeg.fseq ||' BlockId="' || varBlockId
     ||'" ChecksumType="'|| varRepSeg.checksum_name ||'" ChecksumValue=' || varRepSeg.checksum;
-  tmpDlfLog(inReqId, 0, 'Unlinking segment (replaced)', varFid, varParams);
+  addSegResult(1, inReqId, 0, 'Unlinking segment (replaced)', varFid, varParams);
   -- Insert new segment metadata and deal with possible collisions with the fseq position
   BEGIN
     INSERT INTO Cns_seg_metadata (s_fileId, copyNo, fsec, segSize, s_status,
@@ -507,7 +511,7 @@ BEGIN
     ||' Compression='|| trunc(inSegEntry.segSize*100/inSegEntry.comprSize) ||' TPVID='|| inSegEntry.vid
     ||' Fseq='|| inSegEntry.fseq ||' BlockId="' || varBlockId
     ||'" ChecksumType="'|| inSegEntry.checksum_name ||'" ChecksumValue=' || varFCksum;
-  tmpDlfLog(inReqId, 0, 'New segment information', varFid, varParams);
+  addSegResult(0, inReqId, 0, 'New segment information', varFid, varParams);
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- The file entry was not found, just give up
   rc := serrno.ENOENT;
@@ -533,7 +537,7 @@ BEGIN
   -- Loop over all files. Each call commits or rollbacks each file.
   FOR s IN (SELECT fileId, lastModTime, copyNo, oldCopyNo, transfSize, comprSize,
                    vid, fseq, blockId, checksumType, checksum
-              FROM SetSegmentsForFilesHelper
+              FROM SetSegsForFilesInputHelper
              WHERE reqId = inReqId) LOOP
     varSeg.fileId := s.fileId;
     varSeg.lastModTime := s.lastModTime;
@@ -552,20 +556,20 @@ BEGIN
     END IF;
     IF varRC != 0 THEN
       varParams := 'ErrorCode='|| to_char(varRC) ||' ErrorMessage="'|| varParams ||'"';
-      tmpDlfLog(inReqId, varRC, 'Error creating/replacing segment', s.fileId, varParams);
+      addSegResult(0, inReqId, varRC, 'Error creating/replacing segment', s.fileId, varParams);
       COMMIT;
     END IF;
     varCount := varCount + 1;
   END LOOP;
   IF varCount > 0 THEN
-    -- Final logging
+    -- Final logging. ErrorCode = -1 => taken as pure log by the stager
     varParams := 'Function="setOrRepackSegmentsForFiles" NbFiles='|| varCount
       ||' ElapsedTime='|| getSecs(varStartTime, SYSTIMESTAMP)
       ||' AvgProcessingTime='|| getSecs(varStartTime, SYSTIMESTAMP)/varCount;
-    tmpDlfLog(inReqId, 0, 'Bulk processing complete', 0, varParams);
+    addSegResult(1, inReqId, 0, 'Bulk processing complete', 0, varParams);
   END IF;
   -- Clean input data
-  DELETE FROM SetSegmentsForFilesHelper
+  DELETE FROM SetSegsForFilesInputHelper
    WHERE reqId = inReqId;
   COMMIT;
   -- Return results and logs to the stager. Unfortunately we can't OPEN CURSOR FOR ...
