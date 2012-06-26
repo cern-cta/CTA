@@ -34,7 +34,7 @@ CREATE TABLE Cns_seg_metadata (s_fileid NUMBER, copyno NUMBER(1),fsec NUMBER(3),
 
 CREATE TABLE Cns_symlinks (fileid NUMBER, linkname VARCHAR2(1023));
 
-CREATE SEQUENCE Cns_unique_id START WITH 3 INCREMENT BY 1 CACHE 20;
+CREATE SEQUENCE Cns_unique_id START WITH 3 INCREMENT BY 1 CACHE 1000;
 
 ALTER TABLE Cns_class_metadata
   ADD CONSTRAINT pk_classid PRIMARY KEY (classid)
@@ -106,12 +106,12 @@ CREATE OR REPLACE SYNONYM Vmgr_tape_side FOR &vmgrSchema..Vmgr_tape_side;
 
 -- Tables to store intermediate data to be passed from/to the stager.
 -- Note that we cannot use temporary tables with distributed transactions.
-CREATE TABLE SetSegmentsForFilesHelper
+CREATE TABLE SetSegsForFilesInputHelper
   (reqId VARCHAR2(36), fileId NUMBER, lastModTime NUMBER, copyNo NUMBER, oldCopyNo NUMBER, transfSize NUMBER,
    comprSize NUMBER, vid VARCHAR2(6), fseq NUMBER, blockId RAW(4), checksumType VARCHAR2(16), checksum NUMBER);
 
-CREATE TABLE ResultsLogHelper
-  (reqId VARCHAR2(36), timeinfo NUMBER, ec INTEGER, fileId NUMBER, msg VARCHAR2(2048), params VARCHAR2(4000));
+CREATE TABLE SetSegsForFilesResultsHelper
+  (isOnlyLog NUMBER(1), reqId VARCHAR2(36), timeInfo NUMBER, errorCode INTEGER, fileId NUMBER, msg VARCHAR2(2048), params VARCHAR2(4000));
 
 /* Insert the bare minimum to get a working system.
  * - Create a default 'system' fileclass. Pre-requisite to next step.

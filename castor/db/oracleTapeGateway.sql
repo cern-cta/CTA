@@ -1106,6 +1106,7 @@ END;
  * and we wrap everything in an autonomous transaction to isolate the caller.
  */
 CREATE OR REPLACE PROCEDURE ns_setOrReplaceSegments(inReqId IN VARCHAR2,
+                                                    outNSIsOnlyLogs OUT "numList",
                                                     outNSTimeInfos OUT floatList,
                                                     outNSErrorCodes OUT "numList",
                                                     outNSMsgs OUT strListTable,
@@ -1114,7 +1115,7 @@ CREATE OR REPLACE PROCEDURE ns_setOrReplaceSegments(inReqId IN VARCHAR2,
 PRAGMA AUTONOMOUS_TRANSACTION;
 BEGIN
   -- "Bulk" transfer data to the NS DB
-  INSERT /*+ APPEND */ INTO SetSegmentsForFilesHelper@RemoteNS
+  INSERT /*+ APPEND */ INTO SetSegsForFilesInputHelper@RemoteNS
     SELECT * FROM FileMigrationResultsHelper
      WHERE reqId = inReqId;
   DELETE FROM FileMigrationResultsHelper
@@ -1122,11 +1123,11 @@ BEGIN
   -- This call autocommits all segments in the NameServer
   setOrReplaceSegmentsForFiles@RemoteNS(inReqId);
   -- Retrieve results from the NS DB in bulk and clean data
-  SELECT timeinfo, ec, msg, fileId, params
-    BULK COLLECT INTO outNSTimeInfos, outNSErrorCodes, outNSMsgs, outNSFileIds, outNSParams
-    FROM ResultsLogHelper@RemoteNS
+  SELECT isOnlyLog, timeinfo, errorCode, msg, fileId, params
+    BULK COLLECT INTO outNSIsOnlyLogs, outNSTimeInfos, outNSErrorCodes, outNSMsgs, outNSFileIds, outNSParams
+    FROM SetSegsForFilesResultsHelper@RemoteNS
    WHERE reqId = inReqId;
-  DELETE FROM ResultsLogHelper@RemoteNS
+  DELETE FROM SetSegsForFilesResultsHelper@RemoteNS
    WHERE reqId = inReqId;
   -- this commits the remote transaction
   COMMIT;
@@ -1156,6 +1157,7 @@ CREATE OR REPLACE PROCEDURE tg_setBulkFileMigrationResult(inLogContext IN VARCHA
   varCopyNo NUMBER;
   varOldCopyNo NUMBER;
   varVid VARCHAR2(10);
+  varNSIsOnlyLogs "numList";
   varNSTimeInfos floatList;
   varNSErrorCodes "numList";
   varNSMsgs strListTable;
@@ -1218,19 +1220,18 @@ BEGIN
     SELECT 1 INTO varUnused FROM FileMigrationResultsHelper
      WHERE reqId = varReqId AND ROWNUM < 2;
     -- The following procedure wraps the remote calls in an autonomous transaction
-    ns_setOrReplaceSegments(varReqId, varNSTimeInfos, varNSErrorCodes, varNSMsgs, varNSFileIds, varNSParams);
+    ns_setOrReplaceSegments(varReqId, varNSIsOnlyLogs, varNSTimeInfos, varNSErrorCodes, varNSMsgs, varNSFileIds, varNSParams);
 
     -- Process the results
     FOR i IN varNSFileIds.FIRST .. varNSFileIds.LAST LOOP
       -- First log on behalf of the NS
-      
       INSERT INTO DLFLogs (timeinfo, uuid, priority, msg, fileId, nsHost, source, params)
         VALUES (varNSTimeinfos(i), varReqid,
-                CASE WHEN varNSErrorCodes(i) IN (0,-1) THEN dlf.LVL_SYSTEM ELSE dlf.LVL_ERROR END,
+                CASE varNSErrorCodes(i) WHEN 0 THEN dlf.LVL_SYSTEM ELSE dlf.LVL_ERROR END,
                 varNSMsgs(i), varNSFileIds(i), varNsHost, 'nsd', varNSParams(i));
       
-      -- Now process file by file, depending on the result. Skip pure log entries with error code = -1.
-      IF varNSErrorCodes(i) = -1 THEN CONTINUE; END IF;
+      -- Now skip pure log entries and process file by file, depending on the result
+      IF varNSIsOnlyLogs(i) = 1 THEN CONTINUE; END IF;
       CASE
       WHEN varNSErrorCodes(i) = 0 THEN
         -- All right, commit the migration in the stager
