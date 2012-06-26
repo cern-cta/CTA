@@ -208,7 +208,7 @@ def index(request):
     """
     Simple home
     """
-    metrics_names = [m.name for m in Metric.objects.all()]
+    metrics_names = sorted([m.name for m in Metric.objects.all()])
     rpyc_status = _get_server_status()
     return render_to_response('cockpit/index.html',
                               {'metrics' : metrics_names,
@@ -221,7 +221,7 @@ def display_metric(request, metric_name = None):
     display the data of the given metric
     :param metric_name:
     """
-    metrics_names = [m.name for m in Metric.objects.all()]
+    metrics_names = sorted([m.name for m in Metric.objects.all()])
     rpyc_status = _get_server_status()
 
     if metric_name not in metrics_names:
