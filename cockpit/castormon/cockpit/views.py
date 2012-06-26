@@ -9,6 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.contrib import messages
 from django.template import RequestContext
 from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
 
 from castormon.cockpit.models import MetricData, Metric
 
@@ -20,9 +21,8 @@ from castormon.cockpit.models import MetricData, Metric
 def _get_rpyc_connexion():
     """
     return an RPyC connexion
-    @TODO : singleton ?
     """
-    return rpyc.connect("lxbsq1204.cern.ch", 18861, config = {"allow_public_attrs" : True})
+    return rpyc.connect(settings.RPYC_SERVER, 18861, config = {"allow_public_attrs" : True})
 
 
 def _get_metrics_names():

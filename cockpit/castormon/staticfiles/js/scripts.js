@@ -84,6 +84,9 @@ function autoRefresh(rate) {
         clearInterval(autoRefreshTimer);
     }
     else {
+        // first refresh so the user sees his action has triggered something,
+        // then set the timer
+        $('a.refresh-plot').trigger('click');
         autoRefreshTimer = setInterval("$('a.refresh-plot').trigger('click')", rate);
     }
 }
@@ -251,7 +254,8 @@ function getSumChartOptions(metric_name) {
             },
             plotOptions: {
                 series: {
-                    colorByPoint:true,
+                    colorByPoint: true,
+                    animation: false
                 }              
             },
             exporting: {

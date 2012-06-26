@@ -2,6 +2,8 @@
 import os
 import django
 
+RPYC_SERVER = "localhost"
+
 CREDENTIALS_FILE = '/etc/castor/cockpit-credentials.conf'
 
 def get_db_user():
