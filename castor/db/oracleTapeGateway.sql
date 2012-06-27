@@ -171,14 +171,7 @@ BEGIN
                AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
                AND DiskServer.id = FileSystem.diskServer
                AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
-          ORDER BY -- first minimize concurrent migrators/recallers in the same FS or DS
-                   FileSystem.nbRecallerStreams + FileSystem.nbMigratorStreams ASC,
-                   DiskServer.nbRecallerStreams + DiskServer.nbMigratorStreams ASC,
-                   -- then order by rate as defined by the function
-                   fileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
-                                  FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams) DESC,
-                   -- use randomness to avoid preferring always the same FS when everything is idle
-                   DBMS_Random.value)
+          ORDER BY DBMS_Random.value)   -- go completely random instead of trying to be clever with weighting file systems
   LOOP
     varFileSystemId := f.id;
     buildPathFromFileId(f.fileId, f.nsHost, ids_seq.nextval, outFilePath);
