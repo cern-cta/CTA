@@ -1018,6 +1018,7 @@ CREATE OR REPLACE PROCEDURE tg_getBulkFilesToMigrate(inLogContext IN VARCHAR2,
   varVid VARCHAR2(10);
   varNewFseq INTEGER;
   varFileTrId NUMBER;
+  varUnused INTEGER;
   CONSTRAINT_VIOLATED EXCEPTION;
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -00001);
 BEGIN
@@ -1045,7 +1046,8 @@ BEGIN
                INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile)
                INDEX_RS_ASC(MigrationJob I_MigrationJob_TPStatusId) */
            MigrationJob.id mjId, DiskServer.name || ':' || FileSystem.mountPoint || DiskCopy.path filePath,
-           CastorFile.fileId, CastorFile.nsHost, CastorFile.fileSize, CastorFile.lastKnownFileName
+           CastorFile.fileId, CastorFile.nsHost, CastorFile.fileSize, CastorFile.lastKnownFileName,
+           MigrationMount.VID, Castorfile.id as castorfile
       FROM MigrationMount, MigrationJob, CastorFile, DiskCopy, FileSystem, DiskServer
      WHERE MigrationMount.id = varMountId
        AND MigrationJob.tapePool = MigrationMount.tapePool
@@ -1057,12 +1059,27 @@ BEGIN
        AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING)
        AND DiskServer.id = FileSystem.diskServer
        AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING)
-       AND (MigrationMount.VID NOT IN (SELECT /*+ INDEX_RS_ASC(MigratedSegment I_MigratedSegment_CFCopyNBVID) */ vid
-                                         FROM MigratedSegment
-                                        WHERE castorFile = MigrationJob.castorfile
-                                          AND copyNb != MigrationJob.destCopyNb))
+       AND NOT EXISTS (SELECT /*+ INDEX_RS_ASC(MigratedSegment I_MigratedSegment_CFCopyNBVID) */ 1
+                         FROM MigratedSegment
+                        WHERE MigratedSegment.castorFile = MigrationJob.castorfile
+                          AND MigratedSegment.copyNb != MigrationJob.destCopyNb
+                          AND MigratedSegment.vid = MigrationMount.VID)
        FOR UPDATE OF MigrationJob.id SKIP LOCKED)
   LOOP
+    -- last part of the above statement. Could not be part of it as ORACLE insisted on not
+    -- optimizing properly the execution plan
+    BEGIN
+      SELECT /*+ INDEX_RS_ASC(MJ I_MigrationJob_CFVID) */ 1 INTO varUnused
+        FROM MigrationJob MJ
+       WHERE MJ.castorfile = Cand.castorfile
+         AND MJ.vid = Cand.VID
+         AND MJ.vid IS NOT NULL;
+      -- found one, so skip this candidate
+      CONTINUE;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- nothing, it's a valid candidate
+      NULL;
+    END;
     BEGIN
       -- Try to take this candidate on this mount
       INSERT INTO FilesToMigrateHelper (fileId, nsHost, lastKnownFileName, filePath, fileTransactionId, fileSize, fseq)
