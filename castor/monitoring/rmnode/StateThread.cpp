@@ -151,7 +151,7 @@ void castor::monitoring::rmnode::StateThread::run(void*)
 	       castor::dlf::Param("Error", strerror(errno))};
 	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 22, 2, params);
 	  } else if (ack->ack().size() != fsList.size()) {
-	    
+	    fclose(fp);
 	    // "Failed to update the RmNode/StatusFile, filesystem acknowledgement mismatch"
 	    castor::dlf::Param params[] =
 	      {castor::dlf::Param("Filename", filename),
