@@ -569,6 +569,7 @@ ALTER TABLE DiskCopy
 ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_FileClass
   FOREIGN KEY (fileClass) REFERENCES FileClass (id)
   INITIALLY DEFERRED DEFERRABLE;
+CREATE INDEX I_CastorFile_FileClass ON CastorFile(FileClass);
 
 ALTER TABLE CastorFile ADD CONSTRAINT UN_CastorFile_LKFileName UNIQUE (LastKnownFileName);
 
