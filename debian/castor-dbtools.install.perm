@@ -12,6 +12,10 @@
 %attr(0755,root,root) usr/bin/modifyrecallgroup
 %attr(0755,root,root) usr/bin/deleterecallgroup
 %attr(0755,root,root) usr/bin/printrecallgroup
+%attr(0755,root,root) usr/bin/enterrecalluser
+%attr(0755,root,root) usr/bin/modifyrecalluser
+%attr(0755,root,root) usr/bin/deleterecalluser
+%attr(0755,root,root) usr/bin/printrecalluser
 %attr(0755,root,root) usr/bin/entertapepool
 %attr(0755,root,root) usr/bin/modifytapepool
 %attr(0755,root,root) usr/bin/deletetapepool

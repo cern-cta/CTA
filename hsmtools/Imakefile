@@ -47,6 +47,11 @@ InstallTarget(modifyrecallgroup,755)
 InstallTarget(deleterecallgroup,755)
 InstallTarget(printrecallgroup,755)
 
+InstallTarget(enterrecalluser,755)
+InstallTarget(modifyrecalluser,755)
+InstallTarget(deleterecalluser,755)
+InstallTarget(printrecalluser,755)
+
 InstallTarget(entertapepool,755)
 InstallTarget(modifytapepool,755)
 InstallTarget(deletetapepool,755)
@@ -89,6 +94,11 @@ EXEMANPAGE(enterrecallgroup)
 EXEMANPAGE(modifyrecallgroup)
 EXEMANPAGE(deleterecallgroup)
 EXEMANPAGE(printrecallgroup)
+
+EXEMANPAGE(enterrecalluser)
+EXEMANPAGE(modifyrecalluser)
+EXEMANPAGE(deleterecalluser)
+EXEMANPAGE(printrecalluser)
 
 EXEMANPAGE(entertapepool)
 EXEMANPAGE(modifytapepool)
