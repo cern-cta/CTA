@@ -345,7 +345,6 @@ INSERT INTO Type2Obj (type, object) VALUES (154, 'RequestType');
 INSERT INTO Type2Obj (type, object) VALUES (155, 'ListPrivileges');
 INSERT INTO Type2Obj (type, object) VALUES (156, 'Privilege');
 INSERT INTO Type2Obj (type, object) VALUES (157, 'ListPrivilegesResponse');
-INSERT INTO Type2Obj (type, object) VALUES (158, 'PriorityMap');
 INSERT INTO Type2Obj (type, object) VALUES (159, 'VectorAddress');
 INSERT INTO Type2Obj (type, object) VALUES (160, 'Tape2DriveDedication');
 INSERT INTO Type2Obj (type, object) VALUES (161, 'TapeRecall');
@@ -435,6 +434,30 @@ AS
 
 /* SQL statement to populate the intial schema version */
 UPDATE UpgradeLog SET schemaVersion = '2_1_13_0';
+
+/* Get current time as a time_t. Not that easy in ORACLE */
+CREATE OR REPLACE FUNCTION getTime RETURN NUMBER IS
+  epoch            TIMESTAMP WITH TIME ZONE;
+  now              TIMESTAMP WITH TIME ZONE;
+  interval         INTERVAL DAY(9) TO SECOND;
+  interval_days    NUMBER;
+  interval_hours   NUMBER;
+  interval_minutes NUMBER;
+  interval_seconds NUMBER;
+BEGIN
+  epoch := TO_TIMESTAMP_TZ('01-JAN-1970 00:00:00 00:00',
+    'DD-MON-YYYY HH24:MI:SS TZH:TZM');
+  now := SYSTIMESTAMP AT TIME ZONE '00:00';
+  interval         := now - epoch;
+  interval_days    := EXTRACT(DAY    FROM (interval));
+  interval_hours   := EXTRACT(HOUR   FROM (interval));
+  interval_minutes := EXTRACT(MINUTE FROM (interval));
+  interval_seconds := EXTRACT(SECOND FROM (interval));
+
+  RETURN interval_days * 24 * 60 * 60 + interval_hours * 60 * 60 +
+    interval_minutes * 60 + interval_seconds;
+END;
+/
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -577,6 +600,14 @@ CREATE TABLE RecallGroup(id INTEGER CONSTRAINT PK_RecallGroup_Id PRIMARY KEY CON
                          lastEditionTime NUMBER CONSTRAINT NN_RecallGroup_LastEdTime NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
+/* Insert the bare minimum to get a working recall:
+ * create the default recall group to have a default recall mount traffic shaping.
+ */
+INSERT INTO RecallGroup (id, name, nbDrives, minAmountDataForMount, minNbFilesForMount,
+                         maxFileAgeBeforeMount, vdqmPriority, lastEditor, lastEditionTime)
+  VALUES (ids_seq.nextval, 'default', 20, 10*1024*1024*1024, 10, 30*3600, 0, 'Castor 2.1.13 or above installation script', getTime());
+
+
 /* Definition of the RecallUser table
  *   euid : uid of the recall user
  *   egid : gid of the recall user
@@ -585,7 +616,7 @@ INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
  *   lastEditionTime : the time at which the tapepool was last modified
  * Note that a mount is attempted as soon as one of the three criterias is reached.
  */
-CREATE TABLE RecallUser(euid INTEGER CONSTRAINT NN_RecallUser_Euid NOT NULL,
+CREATE TABLE RecallUser(euid INTEGER,
                         egid INTEGER CONSTRAINT NN_RecallUser_Egid NOT NULL,
                         recallGroup INTEGER CONSTRAINT NN_RecallUser_RecallGroup NOT NULL,
                         lastEditor VARCHAR2(2048) CONSTRAINT NN_RecallUser_LastEditor NOT NULL,
@@ -619,7 +650,7 @@ CREATE TABLE RecallMount(id INTEGER CONSTRAINT PK_RecallMount_Id PRIMARY KEY CON
                          lastVDQMPingTime NUMBER DEFAULT 0 CONSTRAINT NN_RecallMount_lastVDQMPing NOT NULL,
                          lastProcessedFseq INTEGER DEFAULT -1 CONSTRAINT NN_RecallMount_Fseq NOT NULL)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
--- this index may sound counter prodcutive as we have very few rows and a full table scan will always be faster
+-- this index may sound counter productive as we have very few rows and a full table scan will always be faster
 -- However, it is needed to avoid a table lock on RecallGroup when taking a row lock on RecallMount,
 -- via the existing foreign key. On top, this table lock is also taken in case of an update that does not
 -- touch any row while with the index, no row lock is taken at all, as one may expect
@@ -670,7 +701,7 @@ INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE INDEX I_RecallJob_SvcClass ON RecallJob (svcClass);
 CREATE INDEX I_RecallJob_RecallGroup ON RecallJob (recallGroup);
 CREATE INDEX I_RecallJob_Castorfile_VID ON RecallJob (castorFile, VID);
-CREATE INDEX I_RecallJob_VID ON RecallJob (VID);
+CREATE INDEX I_RecallJob_VIDFseq ON RecallJob (VID, fseq);
 
 ALTER TABLE RecallJob ADD CONSTRAINT FK_RecallJob_SvcClass FOREIGN KEY (svcClass) REFERENCES SvcClass(id);
 ALTER TABLE RecallJob ADD CONSTRAINT FK_RecallJob_RecallGroup FOREIGN KEY (recallGroup) REFERENCES RecallGroup(id);
@@ -843,7 +874,8 @@ CREATE GLOBAL TEMPORARY TABLE FilesToRecallHelper
  ON COMMIT DELETE ROWS;
 
 CREATE GLOBAL TEMPORARY TABLE FilesToMigrateHelper
- (fileId NUMBER, nsHost VARCHAR2(100), lastKnownFileName VARCHAR2(2048), filePath VARCHAR2(2048),
+ (fileId NUMBER CONSTRAINT UN_FilesToMigrateHelper_fileId UNIQUE,
+  nsHost VARCHAR2(100), lastKnownFileName VARCHAR2(2048), filePath VARCHAR2(2048),
   fileTransactionId NUMBER, fileSize NUMBER, fSeq INTEGER)
  ON COMMIT DELETE ROWS;
 
@@ -864,8 +896,11 @@ CREATE UNIQUE INDEX I_CastorFile_LastKnownFileName ON CastorFile (lastKnownFileN
 CREATE INDEX I_DiskCopy_Castorfile ON DiskCopy (castorFile);
 CREATE INDEX I_DiskCopy_FileSystem ON DiskCopy (fileSystem);
 CREATE INDEX I_DiskCopy_FS_GCW ON DiskCopy (fileSystem, gcWeight);
+-- to speed up the GC
 CREATE INDEX I_DiskCopy_Status_7 ON DiskCopy (decode(status,7,status,NULL));
 CREATE INDEX I_DiskCopy_Status_9 ON DiskCopy (decode(status,9,status,NULL));
+-- to speed up deleteOutOfDateStageOutDCs
+CREATE INDEX I_DiskCopy_Status_Open ON DiskCopy (decode(status,6,status,decode(status,5,status,decode(status,11,status,NULL))));
 
 CREATE INDEX I_FileSystem_DiskPool ON FileSystem (diskPool);
 CREATE INDEX I_FileSystem_DiskServer ON FileSystem (diskServer);
@@ -922,6 +957,10 @@ ALTER TABLE SvcClass ADD CONSTRAINT UN_SvcClass_Name UNIQUE (name);
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
 /
 
+/* Custom type to handle float arrays */
+CREATE OR REPLACE TYPE floatList IS TABLE OF NUMBER;
+/
+
 /* Custom type to handle strings returned by pipelined functions */
 CREATE OR REPLACE TYPE strListTable AS TABLE OF VARCHAR2(2048);
 /
@@ -955,6 +994,7 @@ ALTER TABLE DiskCopy
 ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_FileClass
   FOREIGN KEY (fileClass) REFERENCES FileClass (id)
   INITIALLY DEFERRED DEFERRABLE;
+CREATE INDEX I_CastorFile_FileClass ON CastorFile(FileClass);
 
 ALTER TABLE CastorFile ADD CONSTRAINT UN_CastorFile_LKFileName UNIQUE (LastKnownFileName);
 
@@ -1001,7 +1041,7 @@ CREATE GLOBAL TEMPORARY TABLE ProcessRepackAbortHelperSR (srId NUMBER) ON COMMIT
 /* Global temporary table to handle bulk update of diskCopies in processBulkAbortForRepack */
 CREATE GLOBAL TEMPORARY TABLE ProcessRepackAbortHelperDCmigr (cfId NUMBER) ON COMMIT DELETE ROWS;
 
-/* Table to log the DB activity */
+/* Tables to log the DB activity */
 CREATE TABLE DLFLogs
   (timeinfo NUMBER,
    uuid VARCHAR2(2048),
@@ -1011,7 +1051,17 @@ CREATE TABLE DLFLogs
    nsHost VARCHAR2(2048),
    source VARCHAR2(2048),
    params VARCHAR2(2048));
- 
+CREATE GLOBAL TEMPORARY TABLE DLFLogsHelper
+  (timeinfo NUMBER,
+   uuid VARCHAR2(2048),
+   priority INTEGER,
+   msg VARCHAR2(2048),
+   fileId NUMBER,
+   nsHost VARCHAR2(2048),
+   source VARCHAR2(2048),
+   params VARCHAR2(2048))
+ON COMMIT DELETE ROWS;
+
 /* Temporary table to handle removing of priviledges */
 CREATE GLOBAL TEMPORARY TABLE RemovePrivilegeTmpTable
   (svcClass VARCHAR2(2048),
@@ -1046,10 +1096,6 @@ CREATE GLOBAL TEMPORARY TABLE DeleteTermReqHelper
 /* Global temporary table to handle output of the processBulkRequest procedure */
 CREATE GLOBAL TEMPORARY TABLE getFileIdsForSrsHelper (rowno NUMBER, fileId NUMBER, nsHost VARCHAR(2048))
   ON COMMIT DELETE ROWS;
-
-/* SQL statements for table PriorityMap */
-CREATE TABLE PriorityMap (euid INTEGER, egid INTEGER, priority INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-ALTER TABLE PriorityMap ADD CONSTRAINT UN_Priority_euid_egid UNIQUE (euid, egid);
 
 /*
  * Black and while list mechanism
@@ -1164,7 +1210,6 @@ COMMIT;
 /* when they change status                                           */
 /*********************************************************************/
 CREATE TABLE FileSystemsToCheck (FileSystem NUMBER CONSTRAINT PK_FSToCheck_FS PRIMARY KEY, ToBeChecked NUMBER);
-INSERT INTO FileSystemsToCheck SELECT id, 0 FROM FileSystem;
 
 
 /**************/
@@ -1669,7 +1714,7 @@ AS
 
   RECALL_FOUND_ONGOING_RECALL  CONSTANT VARCHAR2(2048) := 'createRecallCandidate: found already running recall';
   RECALL_UNKNOWN_NS_ERROR      CONSTANT VARCHAR2(2048) := 'createRecallCandidate: error when retrieving segments from namespace';
-  RECALL_NO_TAPECOPY_FOUND     CONSTANT VARCHAR2(2048) := 'createRecallCandidate: No TapeCopy found for Recall';
+  RECALL_NO_JOB_FOUND          CONSTANT VARCHAR2(2048) := 'createRecallCandidate: No RecallJob found';
   RECALL_CREATING_RECALLJOB    CONSTANT VARCHAR2(2048) := 'createRecallCandidate: created new RecallJob';
   RECALL_MISSING_COPIES        CONSTANT VARCHAR2(2048) := 'createRecallCandidate: detected missing copies on tape';
   RECALL_MISSING_COPIES_NOOP   CONSTANT VARCHAR2(2048) := 'createRecallCandidate: detected missing copies on tape, but migrations ongoing';
@@ -1741,30 +1786,6 @@ END serrno;
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
-
-/* Get current time as a time_t. Not that easy in ORACLE */
-CREATE OR REPLACE FUNCTION getTime RETURN NUMBER IS
-  epoch            TIMESTAMP WITH TIME ZONE;
-  now              TIMESTAMP WITH TIME ZONE;
-  interval         INTERVAL DAY(9) TO SECOND;
-  interval_days    NUMBER;
-  interval_hours   NUMBER;
-  interval_minutes NUMBER;
-  interval_seconds NUMBER;
-BEGIN
-  epoch := TO_TIMESTAMP_TZ('01-JAN-1970 00:00:00 00:00',
-    'DD-MON-YYYY HH24:MI:SS TZH:TZM');
-  now := SYSTIMESTAMP AT TIME ZONE '00:00';
-  interval         := now - epoch;
-  interval_days    := EXTRACT(DAY    FROM (interval));
-  interval_hours   := EXTRACT(HOUR   FROM (interval));
-  interval_minutes := EXTRACT(MINUTE FROM (interval));
-  interval_seconds := EXTRACT(SECOND FROM (interval));
-
-  RETURN interval_days * 24 * 60 * 60 + interval_hours * 60 * 60 +
-    interval_minutes * 60 + interval_seconds;
-END;
-/
 
 /* Returns a time interval in seconds */
 CREATE OR REPLACE FUNCTION getSecs(startTime IN TIMESTAMP, endTime IN TIMESTAMP) RETURN NUMBER IS
@@ -1961,8 +1982,12 @@ END;
 /* PL/SQL method deleting migration jobs of a castorfile */
 CREATE OR REPLACE PROCEDURE deleteMigrationJobs(cfId NUMBER) AS
 BEGIN
-  DELETE FROM MigrationJob WHERE castorfile = cfId;
-  DELETE FROM MigratedSegment WHERE castorfile = cfId;
+  DELETE /*+ INDEX (MigrationJob I_MigrationJob_CFVID) */
+    FROM MigrationJob
+   WHERE castorfile = cfId;
+  DELETE /*+ INDEX (MigratedSegment I_MigratedSegment_CFCopyNbVID) */
+    FROM MigratedSegment
+   WHERE castorfile = cfId;
 END;
 /
 
@@ -1970,7 +1995,9 @@ END;
 CREATE OR REPLACE PROCEDURE deleteMigrationJobsForRecall(cfId NUMBER) AS
 BEGIN
   -- delete migration jobs waiting on this recall
-  DELETE FROM MigrationJob WHERE castorfile = cfId AND status = tconst.MIGRATIONJOB_WAITINGONRECALL;
+  DELETE /*+ INDEX (MigrationJob I_MigrationJob_CFVID) */
+    FROM MigrationJob
+   WHERE castorfile = cfId AND status = tconst.MIGRATIONJOB_WAITINGONRECALL;
   -- delete migrated segments if no migration jobs remain
   DECLARE
     unused NUMBER;
@@ -2755,7 +2782,6 @@ END;
  *     coming back but already exist on another one 	 
  */ 	 
 CREATE OR REPLACE PROCEDURE checkFSBackInProd(fsId NUMBER) AS 	 
-   srIds "numList"; 	 
 BEGIN 	 
   -- Flag the filesystem for processing in a bulk operation later. 	 
   -- We need to do this because some operations are database intensive 	 
@@ -2910,7 +2936,7 @@ BEGIN
     -- online.
     FOR b IN (SELECT id FROM (
                 SELECT rownum ind, id FROM (
-                  SELECT DiskCopy.id
+                  SELECT /*+ INDEX (DiskCopy I_DiskCopy_Castorfile) */ DiskCopy.id
                     FROM DiskCopy, FileSystem, DiskPool2SvcClass, SvcClass,
                          DiskServer
                    WHERE DiskCopy.filesystem = FileSystem.id
@@ -3708,7 +3734,7 @@ BEGIN
         IF varNbCopies = 0 THEN
           -- find out whether this file is already being recalled
           SELECT count(*) INTO varIsRecalled FROM RecallJob WHERE castorfile = cfId AND ROWNUM < 2;
-          IF varIsRecalled > 0 THEN
+          IF varIsRecalled = 0 THEN
             -- trigger recall
             triggerRepackRecall(cfId, segment.fileid, nsHostName, segment.blockid,
                                 segment.fseq, segment.copyNb, inEuid, inEgid,
@@ -4904,7 +4930,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
     -- create new migration
     initMigration(cfId, fileSize, vid, copyNb, varDestCopyNb, MJStatus);
     -- create migrated segments for the existing segments if there are none
-    SELECT count(*) INTO varNb
+    SELECT /*+ INDEX_RS_ASC (MigratedSegment I_MigratedSegment_CFCopyNbVID) */ count(*) INTO varNb
       FROM MigratedSegment
      WHERE castorFile = cfId;
     IF varNb = 0 THEN
@@ -5267,9 +5293,11 @@ BEGIN
       RETURN;
     END IF;
     -- check if recreation is possible for migrations
-    SELECT count(*) INTO nbRes FROM MigrationJob
+    SELECT /*+ INDEX(MigrationJob I_MigrationJob_CFVID */ count(*)
+      INTO nbRes FROM MigrationJob
      WHERE status = tconst.MIGRATIONJOB_SELECTED
-      AND castorFile = cfId;
+      AND castorFile = cfId
+      AND ROWNUM < 2;
     IF nbRes > 0 THEN
       -- We found something, thus we cannot recreate
       dcId := 0;
@@ -5568,7 +5596,7 @@ BEGIN
   -- select the list of DiskCopies to be deleted
   SELECT id, status BULK COLLECT INTO dcsToRm, dcsToRmStatus FROM (
     -- first physical diskcopies
-    SELECT DC.id, DC.status
+    SELECT /*+ INDEX(DC I_DiskCopy_CastorFile) */ DC.id, DC.status
       FROM DiskCopy DC, FileSystem, DiskPool2SvcClass DP2SC
      WHERE DC.castorFile = cfId
        AND DC.status IN (0, 6, 10)  -- STAGED, STAGEOUT, CANBEMIGR
@@ -5920,55 +5948,28 @@ BEGIN
 END;
 /
 
-
-/* PL/SQL method implementing selectPriority */
-CREATE OR REPLACE PROCEDURE selectPriority(
-  inUid IN INTEGER,
-  inGid IN INTEGER,
-  inPriority IN INTEGER,
-  dbInfo OUT castor.TapeAccessPriority_Cur) AS
-BEGIN
-  OPEN dbInfo FOR
-    SELECT euid, egid, priority FROM PriorityMap
-     WHERE (euid = inUid OR inUid = -1)
-       AND (egid = inGid OR inGid = -1)
-       AND (priority = inPriority OR inPriority = -1);
-END;
-/
-
-/* PL/SQL method implementing enterPriority
-   it can raise constraint violation exception */
-CREATE OR REPLACE PROCEDURE enterPriority(
-  inUid IN NUMBER,
-  inGid IN NUMBER,
-  inPriority IN INTEGER) AS
-BEGIN
-  INSERT INTO PriorityMap (euid, egid, priority)
-  VALUES (inUid, inGid, inPriority);
-END;
-/
-
-
-/* PL/SQL method implementing deletePriority */
-CREATE OR REPLACE PROCEDURE deletePriority(
-  inUid IN INTEGER,
-  inGid IN INTEGER) AS
-BEGIN
-  DELETE FROM PriorityMap
-   WHERE (euid = inUid OR inUid = -1)
-     AND (egid = inGid OR inGid = -1);
-END;
-/
-
-
 /* PL/SQL method used by the stager to collect the logging made in the DB */
 CREATE OR REPLACE PROCEDURE dumpDBLogs(logEntries OUT castor.LogEntry_Cur) AS
-  unused NUMBER;
+  timeinfos floatList;
+  uuids strListTable;
+  priorities "numList";
+  msgs strListTable;
+  fileIds "numList";
+  nsHosts strListTable;
+  sources strListTable;
+  paramss strListTable;
 BEGIN
-  -- if we got here, we have something in the log table, let's lock it and dump it
-  LOCK TABLE DLFLogs IN EXCLUSIVE MODE;
+  -- get whatever we can from the table
+  DELETE FROM DLFLogs
+  RETURNING timeinfo, uuid, priority, msg, fileId, nsHost, source, params
+    BULK COLLECT INTO timeinfos, uuids, priorities, msgs, fileIds, nsHosts, sources, paramss;
+  -- insert into tmp table so that we can open a cursor on it
+  FORALL i IN timeinfos.FIRST .. timeinfos.LAST
+    INSERT INTO DLFLogsHelper
+    VALUES (timeinfos(i), uuids(i), priorities(i), msgs(i), fileIds(i), nsHosts(i), sources(i), paramss(i));
+  -- return list of entries by opening a cursor on temp table
   OPEN logEntries FOR
-    SELECT timeinfo, uuid, priority, msg, fileId, nsHost, source, params FROM DLFLogs;
+    SELECT timeinfo, uuid, priority, msg, fileId, nsHost, source, params FROM DLFLogsHelper;
 END;
 /
 
@@ -5989,7 +5990,7 @@ BEGIN
     varNb INTEGER;
   BEGIN
     -- check whether there are missing segments and whether we should create new ones
-    SELECT nbCopies INTO varExpectedNbCopies FROM FileClass WHERE id = inFileClassId;
+    SELECT nbCopies INTO varExpectedNbCopies FROM FileClass WHERE classid = inFileClassId;
     IF varExpectedNbCopies > inAllCopyNbs.COUNT THEN
       -- some copies are missing
       DECLARE
@@ -6102,8 +6103,8 @@ BEGIN
   END;
   -- Did we find at least one segment ?
   IF varAllCopyNbs.COUNT = 0 THEN
-    -- log "No TapeCopy found for Recall"
-    logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_NO_TAPECOPY_FOUND, inFileId, inNsHost, 'stagerd', inLogParams);
+    -- log "No recallJob found"
+    logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_NO_JOB_FOUND, inFileId, inNsHost, 'stagerd', inLogParams);
     RETURN 1723; -- ESTNOSEGFOUND
   END IF;
   -- create missing segments if needed
@@ -7999,8 +8000,6 @@ CREATE OR REPLACE PACKAGE castorTape AS
     mountTransactionId NUMBER, 
     vid VARCHAR2(2048));
   TYPE TapeGatewayRequest_Cur IS REF CURSOR RETURN TapeGatewayRequest;
-  TYPE VIDRec IS RECORD (vid VARCHAR2(2048));
-  TYPE VID_Cur IS REF CURSOR RETURN VIDRec;
   TYPE VIDPriorityRec IS RECORD (vid VARCHAR2(2048), vdqmPriority INTEGER);
   TYPE VIDPriority_Cur IS REF CURSOR RETURN VIDPriorityRec;
   TYPE FileToRecallCore IS RECORD (
@@ -8057,8 +8056,6 @@ PROCEDURE tg_attachTapesToMigMounts (
   inStartFseqs IN castor."cnumList",
   inMountIds   IN castor."cnumList",
   inTapeVids   IN castor."strList") AS
-  CONSTRAINT_VIOLATED EXCEPTION;
-  PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
 BEGIN
   -- Sanity check
   IF (inStartFseqs.COUNT != inTapeVids.COUNT) THEN
@@ -8088,7 +8085,7 @@ BEGIN
     FROM MigrationMount
    WHERE mountTransactionId = inMountTransactionId
    FOR UPDATE;
-  -- Yes, it's a migration mount: delete it
+  -- yes, it's a migration mount: delete it and detach all selected jobs
   UPDATE MigrationJob
      SET status = tconst.MIGRATIONJOB_PENDING,
          VID = NULL,
@@ -8110,7 +8107,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
     -- it was a recall mount
     -- find and reset the all RecallJobs of files for this VID
     UPDATE RecallJob
-       SET status    = tconst.RECALLJOB_NEW
+       SET status = tconst.RECALLJOB_NEW
      WHERE castorFile IN (SELECT castorFile
                             FROM RecallJob
                            WHERE VID = varVID
@@ -8122,7 +8119,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
     -- Small infusion of paranoia ;-) We should never reach that point...
     ROLLBACK;
     RAISE_APPLICATION_ERROR (-20119,
-      'No tape or migration mount found on second pass for mountTransactionId ' ||
+      'No recall or migration mount found for mountTransactionId ' ||
        inMountTransactionId || ' in tg_endTapeSession');
   END;
 END;
@@ -8162,13 +8159,7 @@ BEGIN
                AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
                AND DiskServer.id = FileSystem.diskServer
                AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
-          ORDER BY -- first prefer DSs without concurrent migrators/recallers
-                   DiskServer.nbRecallerStreams ASC, FileSystem.nbMigratorStreams ASC,
-                   -- order by rate as defined by the function
-                   fileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
-                                  FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams) DESC,
-                   -- use randomness to avoid preferring always the same FS when everything is idle
-                   DBMS_Random.value)
+          ORDER BY DBMS_Random.value)   -- go completely random instead of trying to be clever with weighting file systems
   LOOP
     varFileSystemId := f.id;
     buildPathFromFileId(f.fileId, f.nsHost, ids_seq.nextval, outFilePath);
@@ -8267,20 +8258,33 @@ END;
 
 /* get a the list of tapes to be sent to VDQM */
 CREATE OR REPLACE
-PROCEDURE tg_getTapeWithoutDriveReq(outMigrations OUT castorTape.VID_Cur,
-                                    outRecalls OUT castorTape.VIDPriority_Cur) AS
+PROCEDURE tg_getTapeWithoutDriveReq(outVID OUT VARCHAR2,
+                                    outVdqmPriority OUT INTEGER,
+                                    outMode OUT INTEGER) AS
 BEGIN
-  OPEN outMigrations FOR
-    SELECT VID
-      FROM MigrationMount
-     WHERE status = tconst.MIGRATIONMOUNT_SEND_TO_VDQM
-       FOR UPDATE SKIP LOCKED;
-  OPEN outRecalls FOR
-    SELECT RecallMount.VID, RecallGroup.vdqmPriority
+  -- try to find a migration mount
+  SELECT VID, 0, 1  -- harcoded priority to 0, mode 1 == WRITE_ENABLE
+    INTO outVID, outVdqmPriority, outMode
+    FROM MigrationMount
+   WHERE status = tconst.MIGRATIONMOUNT_SEND_TO_VDQM
+     AND ROWNUM < 2
+     FOR UPDATE SKIP LOCKED;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- no migration mount to process, try to find a recall mount
+  BEGIN
+    SELECT RecallMount.VID, RecallGroup.vdqmPriority, 0  -- mode 0 == WRITE_DISABLE
+      INTO outVID, outVdqmPriority, outMode
       FROM RecallMount, RecallGroup
      WHERE RecallMount.status = tconst.RECALLMOUNT_NEW
        AND RecallMount.recallGroup = RecallGroup.id
+       AND ROWNUM < 2
        FOR UPDATE OF RecallMount.id SKIP LOCKED;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- no recall mount to process either
+    outVID := '';
+    outVdqmPriority := 0;
+    outMode := 0;
+  END;
 END;
 /
 
@@ -8483,7 +8487,7 @@ BEGIN
   -- Note that we reset the creation time as if the MigrationJob was created right now
   -- this is because "creationTime" is actually the time of entering the "PENDING" state
   -- in the cases where the migrationJob went through a WAITINGONRECALL state
-  UPDATE MigrationJob
+  UPDATE /*+ INDEX (MigrationJob I_MigrationJob_CFVID) */ MigrationJob
      SET status = tconst.MIGRATIONJOB_PENDING,
          creationTime = getTime()
    WHERE status = tconst.MIGRATIONJOB_WAITINGONRECALL
@@ -8932,6 +8936,7 @@ BEGIN
                    HAVING (SUM(fileSize) >= rg.minAmountDataForMount OR
                            COUNT(*) >= rg.minNbFilesForMount OR
                            gettime() - MIN(creationTime) > rg.maxFileAgeBeforeMount)
+                      AND VID NOT IN (SELECT vid FROM RecallMount)
                     ORDER BY MIN(creationTime)) LOOP
         -- if we created enough, stop
         IF varNbMounts + varNbExtraMounts = rg.nbDrives THEN EXIT; END IF;
@@ -8994,6 +8999,9 @@ CREATE OR REPLACE PROCEDURE tg_getBulkFilesToMigrate(inLogContext IN VARCHAR2,
   varVid VARCHAR2(10);
   varNewFseq INTEGER;
   varFileTrId NUMBER;
+  varUnused INTEGER;
+  CONSTRAINT_VIOLATED EXCEPTION;
+  PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -00001);
 BEGIN
   BEGIN
     -- Get id, VID and last valid fseq for this migration mount, lock
@@ -9002,7 +9010,10 @@ BEGIN
      WHERE mountTransactionId = inMountTrId
        FOR UPDATE;
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- migration mount is over or unknown request
+    -- migration mount is over or unknown request: return an empty cursor
+    OPEN outFiles FOR
+      SELECT fileId, nsHost, lastKnownFileName, filePath, fileTransactionId, fseq, fileSize
+        FROM FilesToMigrateHelper;
     RETURN;
   END;
   varCount := 0;
@@ -9016,7 +9027,8 @@ BEGIN
                INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile)
                INDEX_RS_ASC(MigrationJob I_MigrationJob_TPStatusId) */
            MigrationJob.id mjId, DiskServer.name || ':' || FileSystem.mountPoint || DiskCopy.path filePath,
-           CastorFile.fileId, CastorFile.nsHost, CastorFile.fileSize, CastorFile.lastKnownFileName
+           CastorFile.fileId, CastorFile.nsHost, CastorFile.fileSize, CastorFile.lastKnownFileName,
+           MigrationMount.VID, Castorfile.id as castorfile
       FROM MigrationMount, MigrationJob, CastorFile, DiskCopy, FileSystem, DiskServer
      WHERE MigrationMount.id = varMountId
        AND MigrationJob.tapePool = MigrationMount.tapePool
@@ -9028,18 +9040,39 @@ BEGIN
        AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING)
        AND DiskServer.id = FileSystem.diskServer
        AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING)
-       AND (MigrationMount.VID NOT IN (SELECT /*+ INDEX_RS_ASC(MigratedSegment I_MigratedSegment_CFCopyNBVID) */ vid
-                                         FROM MigratedSegment
-                                        WHERE castorFile = MigrationJob.castorfile
-                                          AND copyNb != MigrationJob.destCopyNb))
+       AND NOT EXISTS (SELECT /*+ INDEX_RS_ASC(MigratedSegment I_MigratedSegment_CFCopyNBVID) */ 1
+                         FROM MigratedSegment
+                        WHERE MigratedSegment.castorFile = MigrationJob.castorfile
+                          AND MigratedSegment.copyNb != MigrationJob.destCopyNb
+                          AND MigratedSegment.vid = MigrationMount.VID)
        FOR UPDATE OF MigrationJob.id SKIP LOCKED)
   LOOP
+    -- last part of the above statement. Could not be part of it as ORACLE insisted on not
+    -- optimizing properly the execution plan
+    BEGIN
+      SELECT /*+ INDEX_RS_ASC(MJ I_MigrationJob_CFVID) */ 1 INTO varUnused
+        FROM MigrationJob MJ
+       WHERE MJ.castorfile = Cand.castorfile
+         AND MJ.vid = Cand.VID
+         AND MJ.vid IS NOT NULL;
+      -- found one, so skip this candidate
+      CONTINUE;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- nothing, it's a valid candidate
+      NULL;
+    END;
+    BEGIN
+      -- Try to take this candidate on this mount
+      INSERT INTO FilesToMigrateHelper (fileId, nsHost, lastKnownFileName, filePath, fileTransactionId, fileSize, fseq)
+        VALUES (Cand.fileId, Cand.nsHost, Cand.lastKnownFileName, Cand.filePath, ids_seq.NEXTVAL, Cand.fileSize, varNewFseq)
+        RETURNING fileTransactionId INTO varFileTrId;
+    EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
+      -- If we fail here, it means that another copy of this file was already selected for this mount.
+      -- Not a big deal, we skip this candidate and keep going.
+      CONTINUE;
+    END;
     varCount := varCount + 1;
     varTotalSize := varTotalSize + Cand.fileSize;
-    INSERT INTO FilesToMigrateHelper (fileId, nsHost, lastKnownFileName, filePath, fileTransactionId, fileSize, fseq)
-      VALUES (Cand.fileId, Cand.nsHost, Cand.lastKnownFileName, Cand.filePath, ids_seq.NEXTVAL, Cand.fileSize, varNewFseq)
-      RETURNING fileTransactionId INTO varFileTrId;
-    -- Take this candidate on this mount
     UPDATE MigrationJob
        SET status = tconst.MIGRATIONJOB_SELECTED,
            vid = varVid,
@@ -9048,7 +9081,7 @@ BEGIN
            fileTransactionId = varFileTrId
      WHERE id = Cand.mjId;
     varNewFseq := varNewFseq + 1;    -- we still decide the fseq for each migration candidate
-    IF varCount > inCount OR varTotalSize > inTotalSize THEN
+    IF varCount >= inCount OR varTotalSize >= inTotalSize THEN
       -- we have enough candidates for this round, exit loop
       EXIT;
     END IF;
@@ -9065,13 +9098,14 @@ BEGIN
 END;
 /
 
-/* Wrapper procedure for the setOrReplaceSegmentsForFiles call in the NS DB. Because we can't,
+/* Wrapper procedure for the setOrReplaceSegmentsForFiles call in the NS DB. Because we can't
  * pass arrays, and temporary tables are forbidden with distributed transactions, we use standard
  * tables on the Stager DB (while the NS table is still temporary) to pass the data
  * and we wrap everything in an autonomous transaction to isolate the caller.
  */
 CREATE OR REPLACE PROCEDURE ns_setOrReplaceSegments(inReqId IN VARCHAR2,
-                                                    outNSTimeInfos OUT "numList",
+                                                    outNSIsOnlyLogs OUT "numList",
+                                                    outNSTimeInfos OUT floatList,
                                                     outNSErrorCodes OUT "numList",
                                                     outNSMsgs OUT strListTable,
                                                     outNSFileIds OUT "numList",
@@ -9079,7 +9113,7 @@ CREATE OR REPLACE PROCEDURE ns_setOrReplaceSegments(inReqId IN VARCHAR2,
 PRAGMA AUTONOMOUS_TRANSACTION;
 BEGIN
   -- "Bulk" transfer data to the NS DB
-  INSERT /*+ APPEND */ INTO SetSegmentsForFilesHelper@RemoteNS
+  INSERT /*+ APPEND */ INTO SetSegsForFilesInputHelper@RemoteNS
     SELECT * FROM FileMigrationResultsHelper
      WHERE reqId = inReqId;
   DELETE FROM FileMigrationResultsHelper
@@ -9087,11 +9121,11 @@ BEGIN
   -- This call autocommits all segments in the NameServer
   setOrReplaceSegmentsForFiles@RemoteNS(inReqId);
   -- Retrieve results from the NS DB in bulk and clean data
-  SELECT timeinfo, ec, msg, fileId, params
-    BULK COLLECT INTO outNSTimeInfos, outNSErrorCodes, outNSMsgs, outNSFileIds, outNSParams
-    FROM ResultsLogHelper@RemoteNS
+  SELECT isOnlyLog, timeinfo, errorCode, msg, fileId, params
+    BULK COLLECT INTO outNSIsOnlyLogs, outNSTimeInfos, outNSErrorCodes, outNSMsgs, outNSFileIds, outNSParams
+    FROM SetSegsForFilesResultsHelper@RemoteNS
    WHERE reqId = inReqId;
-  DELETE FROM ResultsLogHelper@RemoteNS
+  DELETE FROM SetSegsForFilesResultsHelper@RemoteNS
    WHERE reqId = inReqId;
   -- this commits the remote transaction
   COMMIT;
@@ -9121,7 +9155,8 @@ CREATE OR REPLACE PROCEDURE tg_setBulkFileMigrationResult(inLogContext IN VARCHA
   varCopyNo NUMBER;
   varOldCopyNo NUMBER;
   varVid VARCHAR2(10);
-  varNSTimeInfos "numList";
+  varNSIsOnlyLogs "numList";
+  varNSTimeInfos floatList;
   varNSErrorCodes "numList";
   varNSMsgs strListTable;
   varNSFileIds "numList";
@@ -9175,41 +9210,52 @@ BEGIN
   -- Commit all the entries in FileMigrationResultsHelper so that the next call can take them
   COMMIT;
 
-  -- The following procedure wraps the remote calls in an autonomous transaction
-  ns_setOrReplaceSegments(varReqId, varNSTimeInfos, varNSErrorCodes, varNSMsgs, varNSFileIds, varNSParams);
+  DECLARE
+    varUnused INTEGER;
+  BEGIN
+    -- boundary case: if nothing to do, just skip the remote call and the
+    -- subsequent FOR loop as it would fail.
+    SELECT 1 INTO varUnused FROM FileMigrationResultsHelper
+     WHERE reqId = varReqId AND ROWNUM < 2;
+    -- The following procedure wraps the remote calls in an autonomous transaction
+    ns_setOrReplaceSegments(varReqId, varNSIsOnlyLogs, varNSTimeInfos, varNSErrorCodes, varNSMsgs, varNSFileIds, varNSParams);
 
-  -- Process the results
-  FOR i IN varNSFileIds.FIRST .. varNSFileIds.LAST LOOP
-    -- First log on behalf of the NS
-    INSERT INTO DLFLogs (timeinfo, uuid, priority, msg, fileId, nsHost, source, params)
-      VALUES (varNSTimeinfos(i), varReqid,
-              CASE varNSErrorCodes(i) WHEN 0 THEN dlf.LVL_SYSTEM ELSE dlf.LVL_ERROR END,
-              varNSMsgs(i), varNSFileIds(i), varNsHost, 'nsd', varNSParams(i));
-    
-    -- Now process file by file, depending on the result. Skip pure log entries with fileId = 0.
-    IF varNSFileIds(i) = 0 THEN CONTINUE; END IF;
-    CASE
-    WHEN varNSErrorCodes(i) = 0 THEN
-      -- All right, commit the migration in the stager
-      tg_setFileMigrated(inMountTrId, varNSFileIds(i), varReqId, inLogContext);
+    -- Process the results
+    FOR i IN varNSFileIds.FIRST .. varNSFileIds.LAST LOOP
+      -- First log on behalf of the NS
+      INSERT INTO DLFLogs (timeinfo, uuid, priority, msg, fileId, nsHost, source, params)
+        VALUES (varNSTimeinfos(i), varReqid,
+                CASE varNSErrorCodes(i) WHEN 0 THEN dlf.LVL_SYSTEM ELSE dlf.LVL_ERROR END,
+                varNSMsgs(i), varNSFileIds(i), varNsHost, 'nsd', varNSParams(i));
       
-    WHEN varNSErrorCodes(i) = serrno.ENOENT
-      OR varNSErrorCodes(i) = serrno.ENSFILECHG
-      OR varNSErrorCodes(i) = serrno.ENSTOOMANYSEGS THEN
-      -- The migration was useless because either the file is gone, or it has been modified elsewhere,
-      -- or there were already enough copies on tape for it. Fail and update disk cache accordingly.
-      failFileMigration(inMountTrId, varNSFileIds(i), varNSErrorCodes(i), varReqId);
-      
-    ELSE
-      -- Attempt to retry for all other NS errors. To be reviewed whether some of the NS errors are to be considered fatal.      
-      varParams := 'mountTransactionId='|| to_char(inMountTrId) ||' ErrorCode='|| to_char(varNSErrorCodes(i))
-                   ||' ErrorMessage="'|| varNSMsgs(i) ||'" '|| inLogContext;
-      logToDLF(varReqid, dlf.LVL_WARNING, dlf.MIGRATION_RETRY, varNSFileIds(i), varNsHost, 'tapegatewayd', varParams);
-      retryOrFailMigration(inMountTrId, varNSFileIds(i), varNsHost, varNSErrorCodes(i), varReqId);
-    END CASE;
-    -- Commit file by file
-    COMMIT;
-  END LOOP;
+      -- Now skip pure log entries and process file by file, depending on the result
+      IF varNSIsOnlyLogs(i) = 1 THEN CONTINUE; END IF;
+      CASE
+      WHEN varNSErrorCodes(i) = 0 THEN
+        -- All right, commit the migration in the stager
+        tg_setFileMigrated(inMountTrId, varNSFileIds(i), varReqId, inLogContext);
+
+      WHEN varNSErrorCodes(i) = serrno.ENOENT
+        OR varNSErrorCodes(i) = serrno.ENSFILECHG
+        OR varNSErrorCodes(i) = serrno.ENSTOOMANYSEGS THEN
+        -- The migration was useless because either the file is gone, or it has been modified elsewhere,
+        -- or there were already enough copies on tape for it. Fail and update disk cache accordingly.
+        failFileMigration(inMountTrId, varNSFileIds(i), varNSErrorCodes(i), varReqId);
+
+      ELSE
+        -- Attempt to retry for all other NS errors. To be reviewed whether some of the NS errors are to be considered fatal.
+        varParams := 'mountTransactionId='|| to_char(inMountTrId) ||' ErrorCode='|| to_char(varNSErrorCodes(i))
+                     ||' ErrorMessage="'|| varNSMsgs(i) ||'" '|| inLogContext;
+        logToDLF(varReqid, dlf.LVL_WARNING, dlf.MIGRATION_RETRY, varNSFileIds(i), varNsHost, 'tapegatewayd', varParams);
+        retryOrFailMigration(inMountTrId, varNSFileIds(i), varNsHost, varNSErrorCodes(i), varReqId);
+      END CASE;
+      -- Commit file by file
+      COMMIT;
+    END LOOP;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- Nothing to do after processing the error cases
+    NULL;
+  END;
   -- Final log
   varParams := 'mountTransactionId='|| to_char(inMountTrId)
                ||' NbFiles='|| inFileIds.COUNT ||' '|| inLogContext
@@ -9251,7 +9297,7 @@ BEGIN
     DELETE FROM MigratedSegment
      WHERE castorFile = varCfId;
   ELSE
-    -- another migration ongoing, keep track of this one 
+    -- another migration ongoing, keep track of the one just completed
     INSERT INTO MigratedSegment VALUES (varCfId, varCopyNb, varVID);
   END IF;
   -- Tell the Disk Cache that migration is over
@@ -9282,12 +9328,12 @@ BEGIN
   END IF;
   IF inOriginVID IS NOT NULL THEN
     -- archive the repack subrequest associated to this VID (there can only be one)
-    SELECT /*+ INDEX(SR I_Subrequest_Castorfile) */ SubRequest.id INTO varSrId
-      FROM SubRequest, StageRepackRequest
-      WHERE SubRequest.castorfile = inCfId
-        AND SubRequest.status = dconst.SUBREQUEST_REPACK
-        AND SubRequest.request = StageRepackRequest.id
-        AND StageRepackRequest.RepackVID = inOriginVID;
+    SELECT /*+ INDEX(SR I_Subrequest_CastorFile) */ SR.id INTO varSrId
+      FROM SubRequest SR, StageRepackRequest Req
+      WHERE SR.castorfile = inCfId
+        AND SR.status = dconst.SUBREQUEST_REPACK
+        AND SR.request = Req.id
+        AND Req.RepackVID = inOriginVID;
     archiveSubReq(varSrId, dconst.SUBREQUEST_FINISHED);
   END IF;
 END;
@@ -9397,13 +9443,18 @@ BEGIN
      WHERE mountTransactionId = inMountTrId
        FOR UPDATE;
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- recall is over or unknown request
+    -- recall is over or unknown request: return an empty cursor
+    OPEN outFiles FOR
+      SELECT fileId, nsHost, fileTransactionId, filePath, blockId, fseq
+        FROM FilesToRecallHelper;
     RETURN;
   END;
   varCount := 0;
   varTotalSize := 0;
   varNewFseq := varPreviousFseq;
   -- Get candidates up to inCount or inTotalSize
+  -- Select only the ones further down the tape (fseq > current one)
+  <<candidateLoop>>
   FOR Cand IN (
     -- Find the unprocessed recallJobs of this tape with lowest fSeq
     -- that is above the previous one. If none, take the recallJob with lowest fseq.
@@ -9412,8 +9463,8 @@ BEGIN
      WHERE vid = varVid
        AND status = tconst.RECALLJOB_PENDING
        AND RecallJob.castorFile = CastorFile.id
-     ORDER BY CASE WHEN fseq > varPreviousFseq THEN 1 ELSE 0 END DESC,
-              fseq ASC
+       AND fseq > varNewFseq
+     ORDER BY fseq ASC
        FOR UPDATE OF RecallJob.id SKIP LOCKED)
   LOOP
     BEGIN
@@ -9430,7 +9481,7 @@ BEGIN
          SET status = tconst.RECALLJOB_SELECTED,
              fileTransactionID = varFileTrId
        WHERE id = Cand.rjId;
-      IF varCount > inCount OR varTotalSize > inTotalSize THEN
+      IF varCount >= inCount OR varTotalSize >= inTotalSize THEN
         -- we have enough candidates for this round, exit loop
         EXIT;
       END IF;
@@ -9441,6 +9492,11 @@ BEGIN
         'errorMessage="' || SQLERRM || '"');
     END;
   END LOOP;
+  -- check whether we've done enough. If not, consider taking lower fseqs
+  IF varNewFseq > -1 AND varCount < inCount AND varTotalSize < inTotalSize THEN
+    varNewFseq := -1;
+    GOTO candidateLoop;
+  END IF;
   -- Record last fseq at the mount level
   UPDATE RecallMount
      SET lastProcessedFseq = varNewFseq
@@ -10291,12 +10347,12 @@ CREATE OR REPLACE PROCEDURE deleteOutOfDateStageOutDCs(timeOut IN NUMBER) AS
 BEGIN
   -- Deal with old DiskCopies in STAGEOUT/WAITFS. The rule is to drop
   -- the ones with 0 fileSize and issue a putDone for the others
-  FOR f IN (SELECT C.filesize, C.id,
-                   C.fileId, C.nsHost, D.fileSystem, D.id AS dcId, D.status AS dcStatus
+  FOR f IN (SELECT /*+ USE_NL(D C S) LEADING(D C S) INDEX(D I_DiskCopy_Status_Open) INDEX(S I_SubRequest_CastorFile) */
+                   C.filesize, C.id, C.fileId, C.nsHost, D.fileSystem, D.id AS dcId, D.status AS dcStatus
               FROM DiskCopy D, Castorfile C
              WHERE C.id = D.castorFile
                AND D.creationTime < getTime() - timeOut
-               AND D.status IN (5, 6, 11) -- WAITFS, STAGEOUT, WAITFS_SCHEDULING
+               AND decode(D.status,6,D.status,decode(D.status,5,D.status,decode(D.status,11,D.status,NULL))) IS NOT NULL
                AND NOT EXISTS (
                  SELECT 'x'
                    FROM SubRequest
