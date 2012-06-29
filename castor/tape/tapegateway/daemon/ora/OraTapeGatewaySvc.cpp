@@ -93,7 +93,8 @@ castor::tape::tapegateway::ora::OraTapeGatewaySvc::OraTapeGatewaySvc(const std::
   m_getBulkFilesToMigrate(0),
   m_getBulkFilesToRecall(0),
   m_setBulkFileMigrationResult(0),
-  m_setBulkFileRecallResult(0)
+  m_setBulkFileRecallResult(0),
+  m_getMigrationMountReqsForVids(0)
 {
 }
 
@@ -146,6 +147,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
     if ( m_getBulkFilesToRecall ) deleteStatement(m_getBulkFilesToRecall);
     if ( m_setBulkFileMigrationResult ) deleteStatement(m_setBulkFileMigrationResult);
     if ( m_setBulkFileRecallResult ) deleteStatement(m_setBulkFileRecallResult);
+    if ( m_getMigrationMountReqsForVids ) deleteStatement(m_getMigrationMountReqsForVids);
   } catch (castor::exception::Exception& ignored) {};
   // Now reset all pointers to 0
   m_getMigrationMountsWithoutTapesStatement= 0; 
@@ -168,6 +170,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
   m_getBulkFilesToRecall=0;
   m_setBulkFileMigrationResult=0;
   m_setBulkFileRecallResult=0;
+  m_getMigrationMountReqsForVids=0;
 }
 
 //----------------------------------------------------------------------------
@@ -221,6 +224,56 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getMigrationMountsWithou
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in getMigrationMountsWithoutTapes"
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+//----------------------------------------------------------------------------
+// getMigrationMountReqIdsForVids
+//----------------------------------------------------------------------------
+
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getMigrationMountReqsForVids(
+    const std::list<std::string>& vids,
+    std::list<blockingSessionInfo>& blockingSessions)
+throw (castor::exception::Exception) {
+  if (!blockingSessions.empty()) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+          << "Error in getMigrationMountReqsForVids: blockingSessions container not empty on call";
+    throw ex;
+  }
+  try {
+    if (!m_getMigrationMountReqsForVids) {
+      m_getMigrationMountReqsForVids =
+          createStatement("BEGIN tg_getMigMountReqsForVids(:1,:2);END;");
+      m_getMigrationMountReqsForVids->registerOutParam(2, oracle::occi::OCCICURSOR);
+    }
+    // Create the vector of strings
+    std::vector<std::string> v_vids;
+    for (std::list<std::string>::const_iterator v = vids.begin();
+        v != vids.end(); v++)
+      v_vids.push_back(*v);
+    oracle::occi::setVector(m_getMigrationMountReqsForVids, 1, v_vids, "STRLISTTABLE");
+    m_getMigrationMountReqsForVids->executeUpdate();
+    castor::db::ora::SmartOcciResultSet rs (m_getMigrationMountReqsForVids,
+        m_getMigrationMountReqsForVids->getCursor(2));
+    resultSetIntrospector resIntros (rs.get());
+    int vidIdx     = resIntros.findColumnIndex(    "TPVID", oracle::occi::OCCI_SQLT_CHR);
+    int vdqmReqIdx = resIntros.findColumnIndex("VDQMREQID", oracle::occi::OCCI_SQLT_NUM);
+    while (rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
+      blockingSessionInfo bsi;
+      bsi.vid = rs->getString(vidIdx);
+      bsi.vdqmReqId = occiNumber(rs->getNumber(vdqmReqIdx));
+      blockingSessions.push_back(bsi);
+    }
+    // Close result set
+    rs.close();
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in getMigrationMountReqsForVids"
       << std::endl << e.what();
     throw ex;
   }
@@ -777,8 +830,8 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::endTapeSession
   try {
     // Check whether the statements are ok
     if (0 == m_endTapeSessionStatement) {
+      /* This SQL procedure is a committing autonomous transaction, as it  */
       m_endTapeSessionStatement = createStatement("BEGIN tg_endTapeSession(:1,:2);END;");
-      m_endTapeSessionStatement->setAutoCommit(true);
     }
     // run statement
     m_endTapeSessionStatement->setDouble(1, (double)mountTransactionId); 

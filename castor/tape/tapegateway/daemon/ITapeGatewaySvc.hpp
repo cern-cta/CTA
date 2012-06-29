@@ -75,6 +75,18 @@ namespace castor      {
         virtual void  getMigrationMountsWithoutTapes(std::list<migrationMountParameters>& migrationMounts)
           throw (castor::exception::Exception)=0;
 
+        struct blockingSessionInfo {
+          std::string vid;
+          u_signed64 vdqmReqId;
+        };
+
+        /**
+         * Find vdqm request Ids for migration mounts still referencing those tapes.
+         */
+        virtual void getMigrationMountReqsForVids(const std::list<std::string>& vids,
+                                                          std::list<blockingSessionInfo>& blockingSessions)
+          throw (castor::exception::Exception)=0;
+
         /**
          * Associate to each migrationMountParameters a Tape
          */

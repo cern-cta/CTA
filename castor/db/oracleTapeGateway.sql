@@ -89,6 +89,7 @@ END;
 /* update the db when a tape session is ended */
 CREATE OR REPLACE PROCEDURE tg_endTapeSession(inMountTransactionId IN NUMBER,
                                               inErrorCode IN INTEGER) AS
+  PRAGMA AUTONOMOUS_TRANSACTION;
   varMjIds "numList";    -- recall/migration job Ids
   varMountId INTEGER;
 BEGIN
@@ -106,6 +107,7 @@ BEGIN
      AND status = tconst.MIGRATIONJOB_SELECTED;
   DELETE FROM MigrationMount
    WHERE id = varMountId;
+  COMMIT;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- was not a migration session, let's try a recall one
   DECLARE
@@ -127,6 +129,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
                                             tconst.RECALLJOB_SELECTED,
                                             tconst.RECALLJOB_RETRYMOUNT));
     DELETE FROM RecallMount WHERE vid = varVID;
+    COMMIT;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- Small infusion of paranoia ;-) We should never reach that point...
     ROLLBACK;
@@ -137,6 +140,16 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 END;
 /
 
+/* find all migration mounts involving a set of tapes */
+CREATE OR REPLACE PROCEDURE tg_getMigMountReqsForVids(inVids              IN  strListTable,
+                                                            outBlockingSessions OUT SYS_REFCURSOR) AS
+BEGIN
+    OPEN  outBlockingSessions FOR
+      SELECT vid TPVID, mountTransactionId VDQMREQID
+        FROM MigrationMount
+       WHERE vid IN (SELECT * FROM TABLE (inVids));
+END;
+/
 
 /* PL/SQL method implementing bestFileSystemForRecall */
 CREATE OR REPLACE PROCEDURE bestFileSystemForRecall(inCfId IN INTEGER, outFilePath OUT VARCHAR2) AS

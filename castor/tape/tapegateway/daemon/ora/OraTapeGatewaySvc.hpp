@@ -65,6 +65,11 @@ namespace castor      {
           virtual void  getMigrationMountsWithoutTapes(std::list<castor::tape::tapegateway::ITapeGatewaySvc::migrationMountParameters>& migrationMounts)
           throw (castor::exception::Exception);
 
+          // Find vdqm request Ids for migration mounts still referencing those tapes.
+          virtual void getMigrationMountReqsForVids(const std::list<std::string>& vids,
+                                                            std::list<blockingSessionInfo>& blockingSessions)
+            throw (castor::exception::Exception);
+
           // To create the db link between a Tape and a migrationMountParameters
           virtual void attachTapesToMigMounts(const std::list<u_signed64>& strIds,
               const std::list<std::string>& vids,
@@ -244,6 +249,7 @@ namespace castor      {
           oracle::occi::Statement *m_getBulkFilesToRecall;
           oracle::occi::Statement *m_setBulkFileMigrationResult;
           oracle::occi::Statement *m_setBulkFileRecallResult;
+          oracle::occi::Statement *m_getMigrationMountReqsForVids;
 
           // Private helper class used to introspect cursors, making the OCCI code independent of the order of elements
           // in the cursor (especially with %ROWTYPE contexts).

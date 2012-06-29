@@ -46,6 +46,7 @@
 #include "castor/tape/tapegateway/daemon/VmgrTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/daemon/NsTapeGatewayHelper.hpp"
 #include "castor/tape/tapegateway/ScopedTransaction.hpp"
+#include "vdqm_api.h"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -217,6 +218,47 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
 
   // update the db
   try {
+    // To avoid a race condition with closing (the tape is unbusied before
+    // the tape session is closed in the DB), we will here:
+    // 1- Find the tape session using our targeted tapes
+    // 2- Validate that they are gone from VDQM (to make sure we are
+    //    simply cleaning up a finished session). Failing this test will
+    //    an error.
+    // 3- Issue an end tape session for the session standing in our way
+    //   This will be logged as a warning, as the window for the race
+    //   condition is thought to be impractically small in usual conditions.
+    // 4- If all went well, we can now attach all the tapes to migration mounts.
+
+    // 1- Find the blocking sessions
+    std::list<castor::tape::tapegateway::ITapeGatewaySvc::blockingSessionInfo> blockingSessions;
+    oraSvc->getMigrationMountReqsForVids(vids, blockingSessions);
+
+    // 2- If any of those sessions is still active, we have a problem!
+    for (std::list<castor::tape::tapegateway::ITapeGatewaySvc::blockingSessionInfo>::iterator bs = blockingSessions.begin();
+        bs != blockingSessions.end(); bs++) {
+      // If we successfully ping this session, we have a problem, as it is still active
+      if (vdqm_PingServer(NULL, NULL, bs->vdqmReqId) >= 0) {
+        castor::exception::Internal ex;
+        ex.getMessage() << "Trying to link a tape already involved in an active session: vdqmrequestId="
+            << bs->vdqmReqId << " TPVID=" << bs->vid;
+        throw ex;
+      }
+    }
+
+    // 3- Get all the sessions (now confirmed to be going away anyway)
+    // out of our way. Not that this has to be an autonomous transaction
+    // as we are still holding lock from getMigrationMountsWithoutTapes
+    for (std::list<castor::tape::tapegateway::ITapeGatewaySvc::blockingSessionInfo>::iterator bs = blockingSessions.begin();
+            bs != blockingSessions.end(); bs++) {
+      oraSvc->endTapeSession(bs->vdqmReqId);
+      castor::dlf::Param params[] = {
+          castor::dlf::Param("TPVID", bs->vid),
+          castor::dlf::Param("mountTransactionId", bs->vdqmReqId)
+      };
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, LINKER_SESSION_IN_THE_WAY, params);
+    }
+
+    // 4-All checks went well, we have a set of tapes to attach.
     // This is where the commit happens (finally)
     oraSvc->attachTapesToMigMounts(MMIds, vids, fseqs);
   } catch (castor::exception::Exception e){
