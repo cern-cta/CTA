@@ -64,9 +64,7 @@ def parseUser(rawUserGroup):
                 print 'Unknown user %s' % rawUser
                 usage(1)
     # find out the group, if given
-    if rawGroup == None:
-        gid = None
-    else:
+    if rawGroup != None:
         try:
             # suppose a gid is given
             gid = int(rawGroup)
