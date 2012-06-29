@@ -458,17 +458,26 @@ BEGIN
   -- Get RecallJob and lock Castorfile
   BEGIN
     SELECT CastorFile.id, CastorFile.fileId, CastorFile.nsHost, CastorFile.lastUpdateTime,
-           CastorFile.fileSize, RecallMount.VID, RecallJob.copyNb, RecallJob.svcClass,
+           CastorFile.fileSize, RecallMount.VID, RecallJob.copyNb,
            RecallJob.euid, RecallJob.egid
       INTO varCfId, varFileId, varNsHost, varLastUpdateTime, varFileSize, varVID,
-           varCopyNb, varSvcClassId, varEuid, varEgid
+           varCopyNb, varEuid, varEgid
       FROM RecallMount, RecallJob, CastorFile
      WHERE RecallMount.mountTransactionId = inMountTransactionId
        AND RecallJob.vid = RecallMount.vid
        AND RecallJob.fseq = inFseq
        AND RecallJob.status = tconst.RECALLJOB_SELECTED
        AND RecallJob.castorFile = CastorFile.id
+       AND ROWNUM < 2
        FOR UPDATE OF CastorFile.id;
+    -- the ROWNUM < 2 clause is worth a comment here :
+    -- this select will select a single CastorFile and RecallMount, but may select
+    -- several RecallJobs "linked" to them. All these recall jobs have the same copyNb
+    -- but different uid/gid. They exist because these different uid/gid are attached
+    -- to different recallGroups.
+    -- In case of several recallJobs present, they are all equally responsible for the
+    -- recall, thus we pick the first one as "the" responsible. The only consequence is
+    -- that it's uid/gid will be used for the DiskCopy creation
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- log "setFileRecalled : unable to identify Recall. giving up"
     logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_NOT_FOUND, 0, '', 'tapegatewayd',
@@ -509,6 +518,17 @@ BEGIN
   -- Deal with DiskCopies
 
   -- compute GC weight of the recalled diskcopy
+  -- first get the svcClass
+  SELECT Diskpool2SvcClass.child INTO varSvcClassId
+    FROM Diskpool2SvcClass, FileSystem
+   WHERE FileSystem.id = varFSId
+     AND Diskpool2SvcClass.parent = FileSystem.diskPool
+     AND ROWNUM < 2;
+  -- Again, the ROWNUM < 2 is worth a comment : the diskpool may be attached
+  -- to several svcClasses. However, we do not support that these different
+  -- SvcClasses have different GC policies (actually the GC policy should be
+  -- moved to the DiskPool table in the future). Thus it is safe to take any
+  -- SvcClass from the list
   varGcWeightProc := castorGC.getRecallWeight(varSvcClassId);
   EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || varGcWeightProc || '(:size); END;'
     USING OUT varGcWeight, IN varFileSize;
