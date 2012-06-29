@@ -79,6 +79,17 @@ BEGIN
 END;
 /
 
+/*****************/
+/* logon trigger */
+/*****************/
+
+/* allows the call of new versions of remote procedures when the signature is matching */
+CREATE OR REPLACE TRIGGER tr_RemoteDepSignature AFTER LOGON ON SCHEMA
+BEGIN
+  EXECUTE IMMEDIATE 'ALTER SESSION SET REMOTE_DEPENDENCIES_MODE=SIGNATURE';
+END;
+/
+
 /* Schema changes go here */
 /**************************/
 DROP TABLE CleanupJobLog;
@@ -103,11 +114,11 @@ CREATE GLOBAL TEMPORARY TABLE DLFLogsHelper
 ON COMMIT DELETE ROWS;
 
 DROP PROCEDURE dumpCleanupLogs;
-DROP TABLE TapeGatewayRequest;
 DROP TABLE Tape;
 DROP TABLE Segment;
 DROP TABLE RecallJob;
 DROP TABLE PriorityMap;
+DROP TABLE ProcessRepackAbortHelperDCrec;
 DROP SEQUENCE TG_FILETRID_SEQ;
 
 
@@ -259,6 +270,8 @@ ALTER TABLE MigrationJob ADD (mountTransactionId INTEGER);
 ALTER TABLE MigrationJob DROP COLUMN tapeGatewayRequestId;
 ALTER TABLE MigrationJob ADD CONSTRAINT FK_MigrationJob_MigrationMount
   FOREIGN KEY (mountTransactionId) REFERENCES MigrationMount(mountTransactionId);
+CREATE INDEX I_MigrationJob_MountTransId ON MigrationJob(mountTransactionId);
+CREATE INDEX I_MigrationRouting_TapePool ON MigrationRouting(tapePool);
 
 DELETE FROM ObjStatus WHERE object = 'MigrationJob' AND statusCode = 8;
 
@@ -279,7 +292,8 @@ CREATE GLOBAL TEMPORARY TABLE FilesToRecallHelper
 
 /* Temporary table used to bulk select next candidates for migration */
 CREATE GLOBAL TEMPORARY TABLE FilesToMigrateHelper
- (fileId NUMBER, nsHost VARCHAR2(100), lastKnownFileName VARCHAR2(2048), filePath VARCHAR2(2048),
+ (fileId NUMBER CONSTRAINT UN_FilesToMigrateHelper_fileId UNIQUE,
+  nsHost VARCHAR2(100), lastKnownFileName VARCHAR2(2048), filePath VARCHAR2(2048),
   fileTransactionId NUMBER, fileSize NUMBER, fSeq INTEGER)
  ON COMMIT DELETE ROWS;
  
@@ -302,7 +316,6 @@ DROP PROCEDURE tg_getSegmentInfo;
 DROP PROCEDURE tg_invalidateFile;
 DROP PROCEDURE tg_requestIdFromVDQMReqId;
 DROP PROCEDURE tg_setRecRetryResult;
-DROP PROCEDURE inputForRecallPolicy;
 DROP PROCEDURE tg_dropSuperfluousSegment;
 DROP PROCEDURE tg_setMigRetryResult;
 DROP PROCEDURE tg_setFileStaleInMigration;
@@ -312,16 +325,24 @@ DROP PROCEDURE tg_getRepackVIDAndFileInfo;
 DROP PROCEDURE tg_getFailedMigrations;
 DROP PROCEDURE tg_getFileToMigrate;
 DROP PROCEDURE tg_getFileToRecall;
-DROP PROCEDURE anySegmentsForTape;
 DROP PROCEDURE deletePriority;
 DROP PROCEDURE enterPriority;
 DROP PROCEDURE selectPriority;
-DROP PROCEDURE failedSegments;
-DROP PROCEDURE restartStuckRecalls;
-DROP PROCEDURE segmentsForTape;
+DROP PROCEDURE cancelRecall;
 DROP FUNCTION selectTapeForRecall;
 DROP FUNCTION triggerRepackRecall;
 
+-- inputForRecallPolicy should have been dropped in previous upgrades
+-- but was forgotten in some cases
+DECLARE
+  unused VARCHAR2(2048);
+BEGIN
+  SELECT object_name INTO unused FROM USER_OBJECTS WHERE object_name = 'INPUTFORRECALLPOLICY';
+  EXECUTE IMMEDIATE 'DROP PROCEDURE INPUTFORRECALLPOLICY';
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  NULL;
+END;
+/
 
 /* Resurrect all subrequest that were waiting so that we trigger new recalls after we have */
 /* dropped all recall related tables */
@@ -343,6 +364,9 @@ CREATE INDEX I_DiskCopy_Status_Open ON DiskCopy (decode(status,6,status,decode(s
 /* Missing index on a FK */
 CREATE INDEX I_CastorFile_FileClass ON CastorFile(FileClass);
 
+/* Custom type to handle float arrays */
+CREATE OR REPLACE TYPE floatList IS TABLE OF NUMBER;
+/
 
 -- XXXXX Revalidation of all the PL/SQL code
 -- XXXXX To be copy pasted rather than included
@@ -358,6 +382,7 @@ CREATE INDEX I_CastorFile_FileClass ON CastorFile(FileClass);
 @oracleRH.sql
 @oracleStager.sql
 @oracleTapeGateway.sql
+@oracleMonitoring.sql
 
 /* Recompile all invalid procedures, triggers and functions */
 /************************************************************/
