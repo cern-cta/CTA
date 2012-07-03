@@ -147,6 +147,21 @@ namespace castor      {
               const int errorCode = 0)
           throw (castor::exception::Exception);
 
+
+          /** Ends a tape session by dropping it from the DB. If the tapebridge
+           * comes afterwards asking for more data on the dropped session, it will
+           * get an error that shall be gracefully handled on its side.
+           * This version is an autonomous transaction version, allowing the cleanup
+           * of old leftover sessions while creating new ones
+           * @param mountTransactionId the mountTansactionId of the session to end
+           * @param errorCode an error code is the session is ended due to an error
+           * if not given, defaults to 0
+           * @exception throws castor exceptions in case of failure
+           */
+        virtual void endTapeSessionAutonomous(const u_signed64 mountTransactionId,
+                                    const int errorCode = 0)
+          throw (castor::exception::Exception);
+
           // To get tapes to release in vmgr */
           virtual void  getTapeToRelease(const u_signed64& mountTransactionId,
               castor::tape::tapegateway::ITapeGatewaySvc::TapeToReleaseInfo& tape)
@@ -239,6 +254,7 @@ namespace castor      {
           oracle::occi::Statement *m_setMigRetryResultStatement;
           oracle::occi::Statement *m_startTapeSessionStatement;
           oracle::occi::Statement *m_endTapeSessionStatement;
+          oracle::occi::Statement *m_endTapeSessionAutonomousStatement;
           oracle::occi::Statement *m_failFileTransferStatement;
           oracle::occi::Statement *m_getTapeToReleaseStatement;
           oracle::occi::Statement *m_cancelMigrationOrRecallStatement;

@@ -250,7 +250,7 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
     // as we are still holding lock from getMigrationMountsWithoutTapes
     for (std::list<castor::tape::tapegateway::ITapeGatewaySvc::blockingSessionInfo>::iterator bs = blockingSessions.begin();
             bs != blockingSessions.end(); bs++) {
-      oraSvc->endTapeSession(bs->vdqmReqId);
+      oraSvc->endTapeSessionAutonomous(bs->vdqmReqId);
       castor::dlf::Param params[] = {
           castor::dlf::Param("TPVID", bs->vid),
           castor::dlf::Param("mountTransactionId", bs->vdqmReqId)

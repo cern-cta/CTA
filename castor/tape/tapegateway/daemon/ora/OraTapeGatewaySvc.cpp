@@ -84,6 +84,7 @@ castor::tape::tapegateway::ora::OraTapeGatewaySvc::OraTapeGatewaySvc(const std::
   m_setMigRetryResultStatement(0),
   m_startTapeSessionStatement(0),
   m_endTapeSessionStatement(0),
+  m_endTapeSessionAutonomousStatement(0),
   m_failFileTransferStatement(0),
   m_getTapeToReleaseStatement(0),
   m_cancelMigrationOrRecallStatement(0),
@@ -137,6 +138,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
     if ( m_setMigRetryResultStatement ) deleteStatement(m_setMigRetryResultStatement);
     if ( m_startTapeSessionStatement ) deleteStatement(m_startTapeSessionStatement);
     if ( m_endTapeSessionStatement ) deleteStatement(m_endTapeSessionStatement);
+    if ( m_endTapeSessionAutonomousStatement ) deleteStatement(m_endTapeSessionAutonomousStatement);
     if ( m_failFileTransferStatement ) deleteStatement(m_failFileTransferStatement);
     if ( m_getTapeToReleaseStatement ) deleteStatement(m_getTapeToReleaseStatement);
     if ( m_cancelMigrationOrRecallStatement ) deleteStatement(m_cancelMigrationOrRecallStatement);
@@ -160,6 +162,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
   m_setMigRetryResultStatement= 0;
   m_startTapeSessionStatement = 0;
   m_endTapeSessionStatement = 0;
+  m_endTapeSessionAutonomousStatement = 0;
   m_failFileTransferStatement= 0;
   m_getTapeToReleaseStatement=0;
   m_cancelMigrationOrRecallStatement=0;
@@ -830,8 +833,8 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::endTapeSession
   try {
     // Check whether the statements are ok
     if (0 == m_endTapeSessionStatement) {
-      /* This SQL procedure is a committing autonomous transaction, as it  */
       m_endTapeSessionStatement = createStatement("BEGIN tg_endTapeSession(:1,:2);END;");
+      m_endTapeSessionStatement->setAutoCommit(true);
     }
     // run statement
     m_endTapeSessionStatement->setDouble(1, (double)mountTransactionId); 
@@ -841,6 +844,30 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::endTapeSession
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage() << "Error caught in failTapeSession" << std::endl << e.what();
+    throw ex;
+  }
+}
+
+//----------------------------------------------------------------------------
+// endTapeSession
+//----------------------------------------------------------------------------
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::endTapeSessionAutonomous
+(const u_signed64 mountTransactionId, const int errorCode)
+  throw (castor::exception::Exception){
+  try {
+    // Check whether the statements are ok
+    if (0 == m_endTapeSessionAutonomousStatement) {
+      /* This SQL procedure is a committing autonomous transaction, as it  */
+      m_endTapeSessionAutonomousStatement = createStatement("BEGIN tg_endTapeSessionAT(:1,:2);END;");
+    }
+    // run statement
+    m_endTapeSessionAutonomousStatement->setDouble(1, (double)mountTransactionId);
+    m_endTapeSessionAutonomousStatement->setInt(2, errorCode);
+    m_endTapeSessionAutonomousStatement->executeUpdate();
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage() << "Error caught in failTapeSessionAutonomous" << std::endl << e.what();
     throw ex;
   }
 }

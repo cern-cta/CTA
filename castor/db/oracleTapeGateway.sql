@@ -89,7 +89,6 @@ END;
 /* update the db when a tape session is ended */
 CREATE OR REPLACE PROCEDURE tg_endTapeSession(inMountTransactionId IN NUMBER,
                                               inErrorCode IN INTEGER) AS
-  PRAGMA AUTONOMOUS_TRANSACTION;
   varMjIds "numList";    -- recall/migration job Ids
   varMountId INTEGER;
 BEGIN
@@ -107,7 +106,6 @@ BEGIN
      AND status = tconst.MIGRATIONJOB_SELECTED;
   DELETE FROM MigrationMount
    WHERE id = varMountId;
-  COMMIT;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- was not a migration session, let's try a recall one
   DECLARE
@@ -129,7 +127,6 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
                                             tconst.RECALLJOB_SELECTED,
                                             tconst.RECALLJOB_RETRYMOUNT));
     DELETE FROM RecallMount WHERE vid = varVID;
-    COMMIT;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- Small infusion of paranoia ;-) We should never reach that point...
     ROLLBACK;
@@ -137,6 +134,17 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
       'No recall or migration mount found for mountTransactionId ' ||
        inMountTransactionId || ' in tg_endTapeSession');
   END;
+END;
+/
+
+/* update the db when a tape session is ended. This autonomous transaction wrapper
+ * allow cleanup of leftover sessions when creating new sessions */
+CREATE OR REPLACE PROCEDURE tg_endTapeSessionAT(inMountTransactionId IN NUMBER,
+                                                inErrorCode IN INTEGER) AS
+  PRAGMA AUTONOMOUS_TRANSACTION;
+BEGIN
+  tg_endTapeSession(inMountTransactionId, inErrorCode);
+  COMMIT;
 END;
 /
 

@@ -199,6 +199,20 @@ namespace castor      {
                                     const int errorCode = 0)
           throw (castor::exception::Exception) = 0;
 
+        /** Ends a tape session by dropping it from the DB. If the tapebridge
+         * comes afterwards asking for more data on the dropped session, it will
+         * get an error that shall be gracefully handled on its side.
+         * This version is an autonomous transaction version, allowing the cleanup
+         * of old leftover sessions while creating new ones
+         * @param mountTransactionId the mountTansactionId of the session to end
+         * @param errorCode an error code is the session is ended due to an error
+         * if not given, defaults to 0
+         * @exception throws castor exceptions in case of failure
+         */
+      virtual void endTapeSessionAutonomous(const u_signed64 mountTransactionId,
+                                  const int errorCode = 0)
+        throw (castor::exception::Exception) = 0;
+
         /**
          *  delete migration mounts with wrong tapepool
          */
