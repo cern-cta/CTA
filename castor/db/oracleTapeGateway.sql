@@ -972,39 +972,51 @@ BEGIN
      WHERE recallGroup = rg.id;
     -- check whether some tapes should be mounted
     IF varNbMounts < rg.nbDrives THEN
-      -- loop over the best candidates
-      FOR tape IN (SELECT vid, SUM(fileSize) dataAmount, COUNT(*) nbFiles, gettime() - MIN(creationTime) maxAge
-                     FROM RecallJob
-                    WHERE recallGroup = rg.id
-                      AND status = tconst.RECALLJOB_NEW
-                    GROUP BY vid
-                   HAVING (SUM(fileSize) >= rg.minAmountDataForMount OR
-                           COUNT(*) >= rg.minNbFilesForMount OR
-                           gettime() - MIN(creationTime) > rg.maxFileAgeBeforeMount)
-                      AND VID NOT IN (SELECT vid FROM RecallMount)
-                    ORDER BY MIN(creationTime)) LOOP
-        -- if we created enough, stop
-        IF varNbMounts + varNbExtraMounts = rg.nbDrives THEN EXIT; END IF;
-        -- else trigger a new mount
-        INSERT INTO RecallMount (id, VID, recallGroup, startTime, status)
-        VALUES (ids_seq.nextval, tape.vid, rg.id, gettime(), tconst.RECALLMOUNT_NEW);
-        varNbExtraMounts := varNbExtraMounts + 1;
-        -- mark all recallJobs of concerned files PENDING
-        UPDATE RecallJob
-           SET status = tconst.RECALLJOB_PENDING
-         WHERE status = tconst.RECALLJOB_NEW
-           AND castorFile IN (SELECT UNIQUE castorFile
-                                FROM RecallJob
-                               WHERE VID = tape.vid);
-        -- log "startRecallMounts: created new recall mount"
-        logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECMOUNT_NEW_MOUNT, 0, '', 'tapegatewayd',
-                 'recallGroup=' || rg.name ||
-                 ' tape=' || tape.vid ||
-                 ' nbExistingMounts=' || TO_CHAR(varNbMounts) ||
-                 ' dataAmountInQueue=' || TO_CHAR(tape.dataAmount) ||
-                 ' nbFilesInQueue=' || TO_CHAR(tape.nbFiles) ||
-                 ' oldestCreationTime=' || TO_CHAR(tape.maxAge));
-      END LOOP;
+      DECLARE
+        varVID VARCHAR2(2048);
+        varDataAmount INTEGER;
+        varNbFiles INTEGER;
+        varMaxAge NUMBER;
+      BEGIN
+        -- loop over the best candidates until we have enough mounts
+        WHILE varNbMounts + varNbExtraMounts < rg.nbDrives LOOP
+          SELECT * INTO varVID, varDataAmount, varNbFiles, varMaxAge FROM (
+            SELECT vid, SUM(fileSize) dataAmount, COUNT(*) nbFiles, gettime() - MIN(creationTime) maxAge
+              FROM RecallJob
+             WHERE recallGroup = rg.id
+               AND status = tconst.RECALLJOB_NEW
+             GROUP BY vid
+            HAVING (SUM(fileSize) >= rg.minAmountDataForMount OR
+                    COUNT(*) >= rg.minNbFilesForMount OR
+                    gettime() - MIN(creationTime) > rg.maxFileAgeBeforeMount)
+               AND VID NOT IN (SELECT vid FROM RecallMount)
+             ORDER BY MIN(creationTime))
+           WHERE ROWNUM < 2;
+          -- trigger a new mount
+          INSERT INTO RecallMount (id, VID, recallGroup, startTime, status)
+          VALUES (ids_seq.nextval, varVid, rg.id, gettime(), tconst.RECALLMOUNT_NEW);
+          varNbExtraMounts := varNbExtraMounts + 1;
+          -- mark all recallJobs of concerned files PENDING
+          UPDATE RecallJob
+             SET status = tconst.RECALLJOB_PENDING
+           WHERE status = tconst.RECALLJOB_NEW
+             AND castorFile IN (SELECT UNIQUE castorFile
+                                  FROM RecallJob
+                                 WHERE VID = varVid);
+          -- log "startRecallMounts: created new recall mount"
+          logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECMOUNT_NEW_MOUNT, 0, '', 'tapegatewayd',
+                   'recallGroup=' || rg.name ||
+                   ' tape=' || varVid ||
+                   ' nbExistingMounts=' || TO_CHAR(varNbMounts) ||
+                   ' nbNewMountsSoFar=' || TO_CHAR(varNbExtraMounts) ||
+                   ' dataAmountInQueue=' || TO_CHAR(varDataAmount) ||
+                   ' nbFilesInQueue=' || TO_CHAR(varNbFiles) ||
+                   ' oldestCreationTime=' || TO_CHAR(varMaxAge));
+        END LOOP;
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- nothing left to recall, just exit nicely
+        NULL;
+      END;
       IF varNbExtraMounts = 0 THEN
         -- log "startRecallMounts: no candidate found for a mount"
         logToDLF(NULL, dlf.LVL_DEBUG, dlf.RECMOUNT_NOACTION_NOCAND, 0, '',
@@ -1464,7 +1476,6 @@ END;
 /* Get next candidates for a given recall mount.
  * input:  VDQM transaction id, count and total size
  * output: outFiles, a cursor for the set of recall candidates.
- * A lock is taken on the selected recall mount.
  */
 CREATE OR REPLACE PROCEDURE tg_getBulkFilesToRecall(inLogContext IN VARCHAR2,
                                                     inMountTrId IN NUMBER,
