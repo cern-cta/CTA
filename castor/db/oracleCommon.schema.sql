@@ -287,8 +287,10 @@ INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallJob
 -- PENDING status is when a RecallMount has been created that will handle the file for this RecallJob
 -- Note that it may not be the tape of the RecallJob itself if another copy is being recalled
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallJob', 'status', 1, 'RECALLJOB_PENDING');
--- SELECTED status is when the file is currently being recalled. This can only happen for RecallJobs
--- for which the tape has been mounted. Other RecallJobs for the same file stay in PENDING
+-- SELECTED status is when the file is currently being recalled.
+-- Note all recallJobs of a given file will have this state while the file is being recalled,
+-- even if another copy is being recalled. The recallJob that is effectively used can be identified
+-- by its non NULL fileTransactionId
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallJob', 'status', 2, 'RECALLJOB_SELECTED');
 -- RETRYMOUNT status is when the file recall has failed and should be retried after remounting the tape
 -- These will be reset to NEW on RecallMount deletion

@@ -494,7 +494,7 @@ BEGIN
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- log "setFileRecalled : unable to identify Recall. giving up"
     logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_NOT_FOUND, 0, '', 'tapegatewayd',
-             'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || varVID ||
+             'mountTransactionId=' || TO_CHAR(inMountTransactionId) ||
              ' fseq=' || TO_CHAR(inFseq) || ' filePath=' || inFilePath || ' ' || inLogContext);
     RETURN;
   END;
@@ -1509,50 +1509,81 @@ BEGIN
   varTotalSize := 0;
   varNewFseq := varPreviousFseq;
   -- Get candidates up to inCount or inTotalSize
-  -- Select only the ones further down the tape (fseq > current one)
-  <<candidateLoop>>
-  FOR Cand IN (
-    -- Find the unprocessed recallJobs of this tape with lowest fSeq
-    -- that is above the previous one. If none, take the recallJob with lowest fseq.
-    SELECT RecallJob.id AS rjId, fSeq, blockId, RecallJob.fileSize, castorFile AS cfId, fileId, nsHost
-      FROM RecallJob, CastorFile
-     WHERE vid = varVid
-       AND status = tconst.RECALLJOB_PENDING
-       AND RecallJob.castorFile = CastorFile.id
-       AND fseq > varNewFseq
-     ORDER BY fseq ASC
-       FOR UPDATE OF RecallJob.id SKIP LOCKED)
+  -- Select only the ones further down the tape (fseq > current one) as long as possible
   LOOP
+    DECLARE
+      varRjId INTEGER;
+      varFSeq INTEGER;
+      varBlockId RAW(4);
+      varFileSize INTEGER;
+      varCfId INTEGER;
+      varFileId INTEGER;
+      varNsHost VARCHAR2(2048);
+      CfLocked EXCEPTION;
+      PRAGMA EXCEPTION_INIT (CfLocked, -54);
     BEGIN
+      -- Find the unprocessed recallJobs of this tape with lowest fSeq
+      -- that is above the previous one
+      SELECT * INTO varRjId, varFSeq, varBlockId, varFileSize, varCfId
+        FROM (SELECT id, fSeq, blockId, fileSize, castorFile
+                FROM RecallJob
+               WHERE vid = varVid
+                 AND status = tconst.RECALLJOB_PENDING
+                 AND fseq > varNewFseq
+               ORDER BY fseq ASC)
+       WHERE ROWNUM < 2;
+      -- lock the corresponding CastorFile, give up if we do not manage as it means that
+      -- this file is already being handled by someone else
+      -- Note that the giving up is handled by the handling of the CfLocked exception
+      SELECT fileId, nsHost INTO varFileId, varNsHost
+        FROM CastorFile
+       WHERE id = varCfId
+         FOR UPDATE NOWAIT;
+      -- Now that we have the lock, double check that the RecallJob is still there and
+      -- valid (due to race condition, it may have been processed in between our first select
+      -- and the takin gof the lock)
+      BEGIN
+        SELECT id INTO varRjId FROM RecallJob WHERE id = varRJId AND status = tconst.RECALLJOB_PENDING;
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- we got the race condition ! So this has already been handled, let's move to next file
+        CONTINUE;
+      END;
       -- Find the best filesystem to recall the selected file
-      bestFileSystemForRecall(Cand.cfId, varPath);
+      bestFileSystemForRecall(varCfId, varPath);
       varCount := varCount + 1;
-      varTotalSize := varTotalSize + Cand.fileSize;
-      varNewFseq := Cand.fseq;
+      varTotalSize := varTotalSize + varFileSize;
+      varNewFseq := varFseq;
       INSERT INTO FilesToRecallHelper (fileId, nsHost, fileTransactionId, filePath, blockId, fSeq)
-        VALUES (Cand.fileId, Cand.nsHost, ids_seq.nextval, varPath, Cand.blockId, Cand.fSeq)
+        VALUES (varFileId, varNsHost, ids_seq.nextval, varPath, varBlockId, varFSeq)
         RETURNING fileTransactionId INTO varFileTrId;
-      -- update RecallJob
+      -- update RecallJobs of this file. Only the recalled one gets a fileTransactionId
       UPDATE RecallJob
          SET status = tconst.RECALLJOB_SELECTED,
-             fileTransactionID = varFileTrId
-       WHERE id = Cand.rjId;
+             fileTransactionID = CASE WHEN id = varRjId THEN varFileTrId ELSE NULL END
+       WHERE castorFile = varCfId;
       IF varCount >= inCount OR varTotalSize >= inTotalSize THEN
         -- we have enough candidates for this round, exit loop
         EXIT;
       END IF;
-    EXCEPTION WHEN bestFSForRecall_error OR NO_DATA_FOUND THEN
-      -- log 'bestFileSystemForRecall could not find a suitable destination for this recall' and skip it
-      -- XXX we should actually abort this recall + restart SRs
-      logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_FS_NOT_FOUND, Cand.fileId, Cand.nsHost, 'tapegatewayd',
-        'errorMessage="' || SQLERRM || '"');
+    EXCEPTION
+      WHEN CfLocked THEN
+        -- Go to next candidate, this CastorFile is being processed by another thread
+        NULL;
+      WHEN bestFSForRecall_error THEN
+        -- log 'bestFileSystemForRecall could not find a suitable destination for this recall' and skip it
+        -- XXX we should actually abort this recall + restart SRs
+        logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_FS_NOT_FOUND, varFileId, varNsHost, 'tapegatewayd',
+                 'errorMessage="' || SQLERRM || '"');
+      WHEN NO_DATA_FOUND THEN
+        -- nothing found. In case we did not try so far, try to restart with low fseqs
+        IF varNewFseq > -1 THEN
+          varNewFseq := -1;
+        ELSE
+          -- low fseqs were tried, we are really out of candidates, so exit the loop
+          EXIT;
+        END IF;
     END;
   END LOOP;
-  -- check whether we've done enough. If not, consider taking lower fseqs
-  IF varNewFseq > -1 AND varCount < inCount AND varTotalSize < inTotalSize THEN
-    varNewFseq := -1;
-    GOTO candidateLoop;
-  END IF;
   -- Record last fseq at the mount level
   UPDATE RecallMount
      SET lastProcessedFseq = varNewFseq
