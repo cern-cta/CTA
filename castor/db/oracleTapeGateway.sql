@@ -357,6 +357,48 @@ BEGIN
 END;
 /
 
+/* resets a CastorFile, its diskcopies and recall/migrationJobs when it
+ * was overwritten in the namespace. This includes :
+ *    - updating the CastorFile with the new NS data
+ *    - mark current DiskCopies for GC
+ *    - restart any pending recalls
+ *    - discard any pending migrations
+ * XXXX This is a preliminary version of this function that is used only
+ * XXXX in the context of overwritten files during recalls. It has to be
+ * XXXX completed and tested before any other usage. In particular, is
+ * XXXX does not handle the Disk2DiskCopy case
+ */
+CREATE OR REPLACE PROCEDURE resetOverwrittenCastorFile(inCfId INTEGER,
+                                                       inNewLastUpdateTime NUMBER,
+                                                       inNewSize INTEGER) AS
+BEGIN
+  -- update the Castorfile
+  UPDATE CastorFile
+     SET lastUpdateTime = inNewLastUpdateTime,
+         fileSize = inNewSize,
+         lastAccessTime = getTime()
+   WHERE id = inCfId;
+  -- cancel ongoing recalls, if any
+  deleteRecallJobs(inCfId);
+  -- cancel ongoing migrations, if any
+  deleteMigrationJobs(inCfId);
+  -- invalidate existing DiskCopies, if any
+  UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
+   WHERE castorFile = inCfId
+     AND status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR);
+  -- restart ongoing requests
+  -- Note that we reset the "answered" flag of the subrequest. This will potentially lead to
+  -- a wrong attempt to answer again the client (but won't harm as the client is gone in that case)
+  -- but is needed as the current implementation of the stager also uses this flag to know
+  -- whether to archive the subrequest. If we leave it to 1, the subrequests are wrongly
+  -- archived when retried, leading e.g. to failing recalls
+  UPDATE SubRequest
+     SET status = dconst.SUBREQUEST_RESTART, answered = 0
+   WHERE castorFile = inCfId
+     AND status IN (dconst.SUBREQUEST_WAITTAPERECALL);
+END;
+/
+
 /* Checks whether a recall that was reported successful is ok from the namespace
  * point of view. This includes :
  *   - checking that the file still exists
@@ -379,29 +421,20 @@ CREATE OR REPLACE FUNCTION checkRecallInNS(inCfId IN INTEGER,
                                            inReqId IN VARCHAR2,
                                            inLogContext IN VARCHAR2) RETURN BOOLEAN AS
   varNSLastUpdateTime NUMBER;
+  varNSSize INTEGER;
   varNSCsumtype VARCHAR2(2048);
   varNSCsumvalue VARCHAR2(2048);
 BEGIN
   -- check the namespace
-  SELECT mtime, csumtype, csumvalue
-    INTO varNSLastUpdateTime, varNSCsumtype, varNSCsumvalue
+  SELECT mtime, csumtype, csumvalue, filesize
+    INTO varNSLastUpdateTime, varNSCsumtype, varNSCsumvalue, varNSSize
     FROM Cns_File_Metadata@remoteNs
    WHERE fileid = inFileId;
 
   -- was the file overwritten in the meantime ?
   IF varNSLastUpdateTime > inLastUpdateTime THEN
-    -- It was, recall should be restarted from scratch
-    -- Note that we reset the "answered" flag of the subrequest. This will lead to
-    -- a wrong attempt to answer again the client (but won't harm as the client is gone)
-    -- but is needed as the current implementation of the stager uses this flag for 2 things,
-    -- the second being to know whether to archive the subrequest. If we leave it to 1, the
-    -- subrequest is wrongly archived and the retried recall then fails.
-    deleteRecallJobs(inCfId);
-    UPDATE SubRequest
-       SET status = dconst.SUBREQUEST_RESTART,
-           answered = 0
-     WHERE castorFile = inCfId
-       AND status = dconst.SUBREQUEST_WAITTAPERECALL;
+    -- yes ! reset it and thus restart the recall from scratch
+    resetOverwrittenCastorFile(inCfId, varNSLastUpdateTime, varNSSize);
     -- log "setFileRecalled : file was overwritten during recall, restarting from scratch"
     logToDLF(inReqId, dlf.LVL_NOTICE, dlf.RECALL_FILE_OVERWRITTEN, inFileId, inNsHost, 'tapegatewayd',
              'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || inVID ||
