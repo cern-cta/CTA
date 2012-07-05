@@ -133,6 +133,6 @@ namespace castor{
       }
       
       
-    }//end namespace dbservice
+    }//end namespace daemon
   }//end namespace stager
 }//end namespace castor
