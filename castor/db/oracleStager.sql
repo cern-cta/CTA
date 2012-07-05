@@ -1350,9 +1350,9 @@ BEGIN
     DELETE FROM Client WHERE id = clientId;
     -- archive the successful subrequests
     UPDATE /*+ INDEX(SubRequest I_SubRequest_Request) */ SubRequest
-       SET status = 11    -- ARCHIVED
+       SET status = dconst.SUBREQUEST_ARCHIVED
      WHERE request = rId
-       AND status = 8;  -- FINISHED
+       AND status = dconst.SUBREQUEST_FINISHED
     -- in case of repack, change the status of the request
     IF rType = 119 THEN
       DECLARE
