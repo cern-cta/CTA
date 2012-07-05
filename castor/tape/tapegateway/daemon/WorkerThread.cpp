@@ -892,6 +892,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileRecallRepor
         castor::dlf::Param("successes", fileRecallReportList.successfulRecalls().size()),
         castor::dlf::Param("failures", fileRecallReportList.failedRecalls().size()),
     };
+    // "Worker: received a recall report list"
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_REC_REPORT_LIST_RECEIVED, params);
   }
 
@@ -923,6 +924,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileRecallRepor
         castor::dlf::Param("mountTransactionId", fileRecallReportList.mountTransactionId()),
         castor::dlf::Param("tapebridgeTransId", fileRecallReportList.aggregatorTransactionId())
     };
+    // "Worker: finished processing a recall report list"
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_REC_REPORT_LIST_PROCESSED, params);
   }
   std::auto_ptr <NotificationAcknowledge> ack (new NotificationAcknowledge());
