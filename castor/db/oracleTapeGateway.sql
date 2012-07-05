@@ -119,13 +119,10 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
     -- it was a recall mount
     -- find and reset the all RecallJobs of files for this VID
     UPDATE RecallJob
-       SET status = tconst.RECALLJOB_NEW
+       SET status = tconst.RECALLJOB_PENDING
      WHERE castorFile IN (SELECT castorFile
                             FROM RecallJob
-                           WHERE VID = varVID
-                             AND status IN (tconst.RECALLJOB_PENDING,
-                                            tconst.RECALLJOB_SELECTED,
-                                            tconst.RECALLJOB_RETRYMOUNT));
+                           WHERE VID = varVID);
     DELETE FROM RecallMount WHERE vid = varVID;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- Small infusion of paranoia ;-) We should never reach that point...
@@ -601,7 +598,7 @@ BEGIN
   -- increase retry counters within mount and set recallJob status to NEW
   UPDATE RecallJob
      SET nbRetriesWithinMount = nbRetriesWithinMount + 1,
-         status = tconst.RECALLJOB_NEW
+         status = tconst.RECALLJOB_PENDING
    WHERE castorFile = inCfId
      AND VID = inVID;
   -- detect the RecallJobs with too many retries within this mount
@@ -994,7 +991,6 @@ BEGIN
             SELECT vid, SUM(fileSize) dataAmount, COUNT(*) nbFiles, gettime() - MIN(creationTime) maxAge
               FROM RecallJob
              WHERE recallGroup = rg.id
-               AND status = tconst.RECALLJOB_NEW
              GROUP BY vid
             HAVING (SUM(fileSize) >= rg.minAmountDataForMount OR
                     COUNT(*) >= rg.minNbFilesForMount OR
@@ -1006,13 +1002,6 @@ BEGIN
           INSERT INTO RecallMount (id, VID, recallGroup, startTime, status)
           VALUES (ids_seq.nextval, varVid, rg.id, gettime(), tconst.RECALLMOUNT_NEW);
           varNbExtraMounts := varNbExtraMounts + 1;
-          -- mark all recallJobs of concerned files PENDING
-          UPDATE RecallJob
-             SET status = tconst.RECALLJOB_PENDING
-           WHERE status = tconst.RECALLJOB_NEW
-             AND castorFile IN (SELECT UNIQUE castorFile
-                                  FROM RecallJob
-                                 WHERE VID = varVid);
           -- log "startRecallMounts: created new recall mount"
           logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECMOUNT_NEW_MOUNT, 0, '', 'tapegatewayd',
                    'recallGroup=' || rg.name ||

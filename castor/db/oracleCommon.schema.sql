@@ -282,10 +282,8 @@ ALTER TABLE RecallJob ADD CONSTRAINT FK_RecallJob_SvcClass FOREIGN KEY (svcClass
 ALTER TABLE RecallJob ADD CONSTRAINT FK_RecallJob_RecallGroup FOREIGN KEY (recallGroup) REFERENCES RecallGroup(id);
 ALTER TABLE RecallJob ADD CONSTRAINT FK_RecallJob_CastorFile FOREIGN KEY (castorFile) REFERENCES CastorFile(id);
 
--- NEW status is when the RecallJob is created and no mount is foreseen yet
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallJob', 'status', 0, 'RECALLJOB_NEW');
--- PENDING status is when a RecallMount has been created that will handle the file for this RecallJob
--- Note that it may not be the tape of the RecallJob itself if another copy is being recalled
+-- PENDING status is when a RecallJob is created
+-- It is immediately candidate for being recalled by an ongoing recallMount
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallJob', 'status', 1, 'RECALLJOB_PENDING');
 -- SELECTED status is when the file is currently being recalled.
 -- Note all recallJobs of a given file will have this state while the file is being recalled,

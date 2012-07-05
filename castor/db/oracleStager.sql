@@ -2316,7 +2316,7 @@ BEGIN
   INSERT INTO RecallJob (id, castorFile, copyNb, recallGroup, svcClass, euid, egid,
                          vid, fseq, status, fileSize, creationTime, blockId, fileTransactionId)
   VALUES (ids_seq.nextval, inCfId, inCopynb, inRecallGroupId, inSvcClassId,
-          inEuid, inEgid, inVid, inFseq, tconst.RECALLJOB_NEW, inFileSize, getTime(),
+          inEuid, inEgid, inVid, inFseq, tconst.RECALLJOB_PENDING, inFileSize, getTime(),
           inBlock, NULL);
   -- log "created new RecallJob"
   varLogParam := 'REQID=' || inReqUUID || ' SUBREQID=' || inSubReqUUID || ' RecallGroup=' || inRecallGroupName;
@@ -3437,7 +3437,7 @@ BEGIN
       INSERT INTO RecallJob (id, castorFile, copyNb, recallGroup, svcClass, euid, egid,
                              vid, fseq, status, fileSize, creationTime, blockId, fileTransactionId)
       VALUES (ids_seq.nextval, inCfId, varSeg.copyno, inRecallGroupId, inSvcClassId,
-              inEuid, inEgid, varSeg.vid, varSeg.fseq, tconst.RECALLJOB_NEW, inFileSize, getTime(),
+              inEuid, inEgid, varSeg.vid, varSeg.fseq, tconst.RECALLJOB_PENDING, inFileSize, getTime(),
               varSeg.blockId, NULL);
       -- log "created new RecallJob"
       logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_CREATING_RECALLJOB, inFileId, inNsHost, 'stagerd',
