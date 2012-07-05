@@ -391,9 +391,15 @@ BEGIN
   -- was the file overwritten in the meantime ?
   IF varNSLastUpdateTime > inLastUpdateTime THEN
     -- It was, recall should be restarted from scratch
+    -- Note that we reset the "answered" flag of the subrequest. This will lead to
+    -- a wrong attempt to answer again the client (but won't harm as the client is gone)
+    -- but is needed as the current implementation of the stager uses this flag for 2 things,
+    -- the second being to know whether to archive the subrequest. If we leave it to 1, the
+    -- subrequest is wrongly archived and the retried recall then fails.
     deleteRecallJobs(inCfId);
     UPDATE SubRequest
-       SET status = dconst.SUBREQUEST_RESTART
+       SET status = dconst.SUBREQUEST_RESTART,
+           answered = 0
      WHERE castorFile = inCfId
        AND status = dconst.SUBREQUEST_WAITTAPERECALL;
     -- log "setFileRecalled : file was overwritten during recall, restarting from scratch"
