@@ -1556,11 +1556,15 @@ BEGIN
         -- we got the race condition ! So this has already been handled, let's move to next file
         CONTINUE;
       END;
+      -- move up last fseq used. Note that it moves up even if bestFileSystemForRecall
+      -- (or any other statement) fails and the file is actually not recalled.
+      -- The goal is that a potential retry within the same mount only occurs after
+      -- we went around the other files on this tape.
+      varNewFseq := varFseq;
       -- Find the best filesystem to recall the selected file
       bestFileSystemForRecall(varCfId, varPath);
       varCount := varCount + 1;
       varTotalSize := varTotalSize + varFileSize;
-      varNewFseq := varFseq;
       INSERT INTO FilesToRecallHelper (fileId, nsHost, fileTransactionId, filePath, blockId, fSeq)
         VALUES (varFileId, varNsHost, ids_seq.nextval, varPath, varBlockId, varFSeq)
         RETURNING fileTransactionId INTO varFileTrId;
@@ -1579,9 +1583,10 @@ BEGIN
         NULL;
       WHEN bestFSForRecall_error THEN
         -- log 'bestFileSystemForRecall could not find a suitable destination for this recall' and skip it
-        -- XXX we should actually abort this recall + restart SRs
         logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_FS_NOT_FOUND, varFileId, varNsHost, 'tapegatewayd',
                  'errorMessage="' || SQLERRM || '"');
+        -- mark the recall job as failed, and maybe retry
+        retryOrFailRecall(varCfId, varVID);
       WHEN NO_DATA_FOUND THEN
         -- nothing found. In case we did not try so far, try to restart with low fseqs
         IF varNewFseq > -1 THEN
