@@ -509,7 +509,9 @@ BEGIN
   -- Check that the file is still there in the namespace (and did not get overwritten)
   -- Note that error handling and logging is done inside the function
   IF NOT checkRecallInNS(varCfId, inMountTransactionId, varVID, varCopyNb, inFseq, varFileId, varNsHost, 
-                         inCksumName, inCksumValue, varLastUpdateTime, inReqId, inLogContext) THEN RETURN; END IF;
+                         inCksumName, inCksumValue, varLastUpdateTime, inReqId, inLogContext) THEN
+    RETURN;
+  END IF;
   -- get diskserver, filesystem and path from full path in input
   BEGIN
     parsePath(inFilePath, varFSId, varDCPath, varDCId);
@@ -1670,7 +1672,7 @@ BEGIN
     END IF;
     COMMIT;
   END LOOP;
-  -- Final log
+  -- log "setBulkFileRecallResult: bulk recall completed"
   varParams := 'mountTransactionId='|| to_char(inMountTrId)
                ||' NbFiles='|| inFileIds.COUNT ||' '|| inLogContext
                ||' ElapsedTime='|| getSecs(varStartTime, SYSTIMESTAMP)
