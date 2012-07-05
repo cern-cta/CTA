@@ -707,13 +707,13 @@ ALTER TABLE RecallJob ADD CONSTRAINT FK_RecallJob_SvcClass FOREIGN KEY (svcClass
 ALTER TABLE RecallJob ADD CONSTRAINT FK_RecallJob_RecallGroup FOREIGN KEY (recallGroup) REFERENCES RecallGroup(id);
 ALTER TABLE RecallJob ADD CONSTRAINT FK_RecallJob_CastorFile FOREIGN KEY (castorFile) REFERENCES CastorFile(id);
 
--- NEW status is when the RecallJob is created and no mount is foreseen yet
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallJob', 'status', 0, 'RECALLJOB_NEW');
--- PENDING status is when a RecallMount has been created that will handle the file for this RecallJob
--- Note that it may not be the tape of the RecallJob itself if another copy is being recalled
+-- PENDING status is when a RecallJob is created
+-- It is immediately candidate for being recalled by an ongoing recallMount
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallJob', 'status', 1, 'RECALLJOB_PENDING');
--- SELECTED status is when the file is currently being recalled. This can only happen for RecallJobs
--- for which the tape has been mounted. Other RecallJobs for the same file stay in PENDING
+-- SELECTED status is when the file is currently being recalled.
+-- Note all recallJobs of a given file will have this state while the file is being recalled,
+-- even if another copy is being recalled. The recallJob that is effectively used can be identified
+-- by its non NULL fileTransactionId
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallJob', 'status', 2, 'RECALLJOB_SELECTED');
 -- RETRYMOUNT status is when the file recall has failed and should be retried after remounting the tape
 -- These will be reset to NEW on RecallMount deletion
@@ -1599,7 +1599,6 @@ AS
   RECALLMOUNT_WAITDRIVE  CONSTANT PLS_INTEGER := 1;
   RECALLMOUNT_RECALLING  CONSTANT PLS_INTEGER := 2;
 
-  RECALLJOB_NEW          CONSTANT PLS_INTEGER := 0;
   RECALLJOB_PENDING      CONSTANT PLS_INTEGER := 1;
   RECALLJOB_SELECTED     CONSTANT PLS_INTEGER := 2;
   RECALLJOB_RETRYMOUNT   CONSTANT PLS_INTEGER := 3;
@@ -3995,9 +3994,9 @@ BEGIN
     DELETE FROM Client WHERE id = clientId;
     -- archive the successful subrequests
     UPDATE /*+ INDEX(SubRequest I_SubRequest_Request) */ SubRequest
-       SET status = 11    -- ARCHIVED
+       SET status = dconst.SUBREQUEST_ARCHIVED
      WHERE request = rId
-       AND status = 8;  -- FINISHED
+       AND status = dconst.SUBREQUEST_FINISHED
     -- in case of repack, change the status of the request
     IF rType = 119 THEN
       DECLARE
@@ -4961,7 +4960,7 @@ BEGIN
   INSERT INTO RecallJob (id, castorFile, copyNb, recallGroup, svcClass, euid, egid,
                          vid, fseq, status, fileSize, creationTime, blockId, fileTransactionId)
   VALUES (ids_seq.nextval, inCfId, inCopynb, inRecallGroupId, inSvcClassId,
-          inEuid, inEgid, inVid, inFseq, tconst.RECALLJOB_NEW, inFileSize, getTime(),
+          inEuid, inEgid, inVid, inFseq, tconst.RECALLJOB_PENDING, inFileSize, getTime(),
           inBlock, NULL);
   -- log "created new RecallJob"
   varLogParam := 'REQID=' || inReqUUID || ' SUBREQID=' || inSubReqUUID || ' RecallGroup=' || inRecallGroupName;
@@ -6082,7 +6081,7 @@ BEGIN
       INSERT INTO RecallJob (id, castorFile, copyNb, recallGroup, svcClass, euid, egid,
                              vid, fseq, status, fileSize, creationTime, blockId, fileTransactionId)
       VALUES (ids_seq.nextval, inCfId, varSeg.copyno, inRecallGroupId, inSvcClassId,
-              inEuid, inEgid, varSeg.vid, varSeg.fseq, tconst.RECALLJOB_NEW, inFileSize, getTime(),
+              inEuid, inEgid, varSeg.vid, varSeg.fseq, tconst.RECALLJOB_PENDING, inFileSize, getTime(),
               varSeg.blockId, NULL);
       -- log "created new RecallJob"
       logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_CREATING_RECALLJOB, inFileId, inNsHost, 'stagerd',
@@ -8107,13 +8106,10 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
     -- it was a recall mount
     -- find and reset the all RecallJobs of files for this VID
     UPDATE RecallJob
-       SET status = tconst.RECALLJOB_NEW
+       SET status = tconst.RECALLJOB_PENDING
      WHERE castorFile IN (SELECT castorFile
                             FROM RecallJob
-                           WHERE VID = varVID
-                             AND status IN (tconst.RECALLJOB_PENDING,
-                                            tconst.RECALLJOB_SELECTED,
-                                            tconst.RECALLJOB_RETRYMOUNT));
+                           WHERE VID = varVID);
     DELETE FROM RecallMount WHERE vid = varVID;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- Small infusion of paranoia ;-) We should never reach that point...
@@ -8125,6 +8121,27 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 END;
 /
 
+/* update the db when a tape session is ended. This autonomous transaction wrapper
+ * allow cleanup of leftover sessions when creating new sessions */
+CREATE OR REPLACE PROCEDURE tg_endTapeSessionAT(inMountTransactionId IN NUMBER,
+                                                inErrorCode IN INTEGER) AS
+  PRAGMA AUTONOMOUS_TRANSACTION;
+BEGIN
+  tg_endTapeSession(inMountTransactionId, inErrorCode);
+  COMMIT;
+END;
+/
+
+/* find all migration mounts involving a set of tapes */
+CREATE OR REPLACE PROCEDURE tg_getMigMountReqsForVids(inVids              IN  strListTable,
+                                                            outBlockingSessions OUT SYS_REFCURSOR) AS
+BEGIN
+    OPEN  outBlockingSessions FOR
+      SELECT vid TPVID, mountTransactionId VDQMREQID
+        FROM MigrationMount
+       WHERE vid IN (SELECT * FROM TABLE (inVids));
+END;
+/
 
 /* PL/SQL method implementing bestFileSystemForRecall */
 CREATE OR REPLACE PROCEDURE bestFileSystemForRecall(inCfId IN INTEGER, outFilePath OUT VARCHAR2) AS
@@ -8361,9 +8378,15 @@ BEGIN
   -- was the file overwritten in the meantime ?
   IF varNSLastUpdateTime > inLastUpdateTime THEN
     -- It was, recall should be restarted from scratch
+    -- Note that we reset the "answered" flag of the subrequest. This will lead to
+    -- a wrong attempt to answer again the client (but won't harm as the client is gone)
+    -- but is needed as the current implementation of the stager uses this flag for 2 things,
+    -- the second being to know whether to archive the subrequest. If we leave it to 1, the
+    -- subrequest is wrongly archived and the retried recall then fails.
     deleteRecallJobs(inCfId);
     UPDATE SubRequest
-       SET status = dconst.SUBREQUEST_RESTART
+       SET status = dconst.SUBREQUEST_RESTART,
+           answered = 0
      WHERE castorFile = inCfId
        AND status = dconst.SUBREQUEST_WAITTAPERECALL;
     -- log "setFileRecalled : file was overwritten during recall, restarting from scratch"
@@ -8469,14 +8492,16 @@ BEGIN
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- log "setFileRecalled : unable to identify Recall. giving up"
     logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_NOT_FOUND, 0, '', 'tapegatewayd',
-             'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || varVID ||
+             'mountTransactionId=' || TO_CHAR(inMountTransactionId) ||
              ' fseq=' || TO_CHAR(inFseq) || ' filePath=' || inFilePath || ' ' || inLogContext);
     RETURN;
   END;
   -- Check that the file is still there in the namespace (and did not get overwritten)
   -- Note that error handling and logging is done inside the function
   IF NOT checkRecallInNS(varCfId, inMountTransactionId, varVID, varCopyNb, inFseq, varFileId, varNsHost, 
-                         inCksumName, inCksumValue, varLastUpdateTime, inReqId, inLogContext) THEN RETURN; END IF;
+                         inCksumName, inCksumValue, varLastUpdateTime, inReqId, inLogContext) THEN
+    RETURN;
+  END IF;
   -- get diskserver, filesystem and path from full path in input
   BEGIN
     parsePath(inFilePath, varFSId, varDCPath, varDCId);
@@ -8566,7 +8591,7 @@ BEGIN
   -- increase retry counters within mount and set recallJob status to NEW
   UPDATE RecallJob
      SET nbRetriesWithinMount = nbRetriesWithinMount + 1,
-         status = tconst.RECALLJOB_NEW
+         status = tconst.RECALLJOB_PENDING
    WHERE castorFile = inCfId
      AND VID = inVID;
   -- detect the RecallJobs with too many retries within this mount
@@ -8947,39 +8972,43 @@ BEGIN
      WHERE recallGroup = rg.id;
     -- check whether some tapes should be mounted
     IF varNbMounts < rg.nbDrives THEN
-      -- loop over the best candidates
-      FOR tape IN (SELECT vid, SUM(fileSize) dataAmount, COUNT(*) nbFiles, gettime() - MIN(creationTime) maxAge
-                     FROM RecallJob
-                    WHERE recallGroup = rg.id
-                      AND status = tconst.RECALLJOB_NEW
-                    GROUP BY vid
-                   HAVING (SUM(fileSize) >= rg.minAmountDataForMount OR
-                           COUNT(*) >= rg.minNbFilesForMount OR
-                           gettime() - MIN(creationTime) > rg.maxFileAgeBeforeMount)
-                      AND VID NOT IN (SELECT vid FROM RecallMount)
-                    ORDER BY MIN(creationTime)) LOOP
-        -- if we created enough, stop
-        IF varNbMounts + varNbExtraMounts = rg.nbDrives THEN EXIT; END IF;
-        -- else trigger a new mount
-        INSERT INTO RecallMount (id, VID, recallGroup, startTime, status)
-        VALUES (ids_seq.nextval, tape.vid, rg.id, gettime(), tconst.RECALLMOUNT_NEW);
-        varNbExtraMounts := varNbExtraMounts + 1;
-        -- mark all recallJobs of concerned files PENDING
-        UPDATE RecallJob
-           SET status = tconst.RECALLJOB_PENDING
-         WHERE status = tconst.RECALLJOB_NEW
-           AND castorFile IN (SELECT UNIQUE castorFile
-                                FROM RecallJob
-                               WHERE VID = tape.vid);
-        -- log "startRecallMounts: created new recall mount"
-        logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECMOUNT_NEW_MOUNT, 0, '', 'tapegatewayd',
-                 'recallGroup=' || rg.name ||
-                 ' tape=' || tape.vid ||
-                 ' nbExistingMounts=' || TO_CHAR(varNbMounts) ||
-                 ' dataAmountInQueue=' || TO_CHAR(tape.dataAmount) ||
-                 ' nbFilesInQueue=' || TO_CHAR(tape.nbFiles) ||
-                 ' oldestCreationTime=' || TO_CHAR(tape.maxAge));
-      END LOOP;
+      DECLARE
+        varVID VARCHAR2(2048);
+        varDataAmount INTEGER;
+        varNbFiles INTEGER;
+        varMaxAge NUMBER;
+      BEGIN
+        -- loop over the best candidates until we have enough mounts
+        WHILE varNbMounts + varNbExtraMounts < rg.nbDrives LOOP
+          SELECT * INTO varVID, varDataAmount, varNbFiles, varMaxAge FROM (
+            SELECT vid, SUM(fileSize) dataAmount, COUNT(*) nbFiles, gettime() - MIN(creationTime) maxAge
+              FROM RecallJob
+             WHERE recallGroup = rg.id
+             GROUP BY vid
+            HAVING (SUM(fileSize) >= rg.minAmountDataForMount OR
+                    COUNT(*) >= rg.minNbFilesForMount OR
+                    gettime() - MIN(creationTime) > rg.maxFileAgeBeforeMount)
+               AND VID NOT IN (SELECT vid FROM RecallMount)
+             ORDER BY MIN(creationTime))
+           WHERE ROWNUM < 2;
+          -- trigger a new mount
+          INSERT INTO RecallMount (id, VID, recallGroup, startTime, status)
+          VALUES (ids_seq.nextval, varVid, rg.id, gettime(), tconst.RECALLMOUNT_NEW);
+          varNbExtraMounts := varNbExtraMounts + 1;
+          -- log "startRecallMounts: created new recall mount"
+          logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECMOUNT_NEW_MOUNT, 0, '', 'tapegatewayd',
+                   'recallGroup=' || rg.name ||
+                   ' tape=' || varVid ||
+                   ' nbExistingMounts=' || TO_CHAR(varNbMounts) ||
+                   ' nbNewMountsSoFar=' || TO_CHAR(varNbExtraMounts) ||
+                   ' dataAmountInQueue=' || TO_CHAR(varDataAmount) ||
+                   ' nbFilesInQueue=' || TO_CHAR(varNbFiles) ||
+                   ' oldestCreationTime=' || TO_CHAR(varMaxAge));
+        END LOOP;
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- nothing left to recall, just exit nicely
+        NULL;
+      END;
       IF varNbExtraMounts = 0 THEN
         -- log "startRecallMounts: no candidate found for a mount"
         logToDLF(NULL, dlf.LVL_DEBUG, dlf.RECMOUNT_NOACTION_NOCAND, 0, '',
@@ -9439,7 +9468,6 @@ END;
 /* Get next candidates for a given recall mount.
  * input:  VDQM transaction id, count and total size
  * output: outFiles, a cursor for the set of recall candidates.
- * A lock is taken on the selected recall mount.
  */
 CREATE OR REPLACE PROCEDURE tg_getBulkFilesToRecall(inLogContext IN VARCHAR2,
                                                     inMountTrId IN NUMBER,
@@ -9473,50 +9501,86 @@ BEGIN
   varTotalSize := 0;
   varNewFseq := varPreviousFseq;
   -- Get candidates up to inCount or inTotalSize
-  -- Select only the ones further down the tape (fseq > current one)
-  <<candidateLoop>>
-  FOR Cand IN (
-    -- Find the unprocessed recallJobs of this tape with lowest fSeq
-    -- that is above the previous one. If none, take the recallJob with lowest fseq.
-    SELECT RecallJob.id AS rjId, fSeq, blockId, RecallJob.fileSize, castorFile AS cfId, fileId, nsHost
-      FROM RecallJob, CastorFile
-     WHERE vid = varVid
-       AND status = tconst.RECALLJOB_PENDING
-       AND RecallJob.castorFile = CastorFile.id
-       AND fseq > varNewFseq
-     ORDER BY fseq ASC
-       FOR UPDATE OF RecallJob.id SKIP LOCKED)
+  -- Select only the ones further down the tape (fseq > current one) as long as possible
   LOOP
+    DECLARE
+      varRjId INTEGER;
+      varFSeq INTEGER;
+      varBlockId RAW(4);
+      varFileSize INTEGER;
+      varCfId INTEGER;
+      varFileId INTEGER;
+      varNsHost VARCHAR2(2048);
+      CfLocked EXCEPTION;
+      PRAGMA EXCEPTION_INIT (CfLocked, -54);
     BEGIN
+      -- Find the unprocessed recallJobs of this tape with lowest fSeq
+      -- that is above the previous one
+      SELECT * INTO varRjId, varFSeq, varBlockId, varFileSize, varCfId
+        FROM (SELECT id, fSeq, blockId, fileSize, castorFile
+                FROM RecallJob
+               WHERE vid = varVid
+                 AND status = tconst.RECALLJOB_PENDING
+                 AND fseq > varNewFseq
+               ORDER BY fseq ASC)
+       WHERE ROWNUM < 2;
+      -- lock the corresponding CastorFile, give up if we do not manage as it means that
+      -- this file is already being handled by someone else
+      -- Note that the giving up is handled by the handling of the CfLocked exception
+      SELECT fileId, nsHost INTO varFileId, varNsHost
+        FROM CastorFile
+       WHERE id = varCfId
+         FOR UPDATE NOWAIT;
+      -- Now that we have the lock, double check that the RecallJob is still there and
+      -- valid (due to race condition, it may have been processed in between our first select
+      -- and the takin gof the lock)
+      BEGIN
+        SELECT id INTO varRjId FROM RecallJob WHERE id = varRJId AND status = tconst.RECALLJOB_PENDING;
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- we got the race condition ! So this has already been handled, let's move to next file
+        CONTINUE;
+      END;
+      -- move up last fseq used. Note that it moves up even if bestFileSystemForRecall
+      -- (or any other statement) fails and the file is actually not recalled.
+      -- The goal is that a potential retry within the same mount only occurs after
+      -- we went around the other files on this tape.
+      varNewFseq := varFseq;
       -- Find the best filesystem to recall the selected file
-      bestFileSystemForRecall(Cand.cfId, varPath);
+      bestFileSystemForRecall(varCfId, varPath);
       varCount := varCount + 1;
-      varTotalSize := varTotalSize + Cand.fileSize;
-      varNewFseq := Cand.fseq;
+      varTotalSize := varTotalSize + varFileSize;
       INSERT INTO FilesToRecallHelper (fileId, nsHost, fileTransactionId, filePath, blockId, fSeq)
-        VALUES (Cand.fileId, Cand.nsHost, ids_seq.nextval, varPath, Cand.blockId, Cand.fSeq)
+        VALUES (varFileId, varNsHost, ids_seq.nextval, varPath, varBlockId, varFSeq)
         RETURNING fileTransactionId INTO varFileTrId;
-      -- update RecallJob
+      -- update RecallJobs of this file. Only the recalled one gets a fileTransactionId
       UPDATE RecallJob
          SET status = tconst.RECALLJOB_SELECTED,
-             fileTransactionID = varFileTrId
-       WHERE id = Cand.rjId;
+             fileTransactionID = CASE WHEN id = varRjId THEN varFileTrId ELSE NULL END
+       WHERE castorFile = varCfId;
       IF varCount >= inCount OR varTotalSize >= inTotalSize THEN
         -- we have enough candidates for this round, exit loop
         EXIT;
       END IF;
-    EXCEPTION WHEN bestFSForRecall_error OR NO_DATA_FOUND THEN
-      -- log 'bestFileSystemForRecall could not find a suitable destination for this recall' and skip it
-      -- XXX we should actually abort this recall + restart SRs
-      logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_FS_NOT_FOUND, Cand.fileId, Cand.nsHost, 'tapegatewayd',
-        'errorMessage="' || SQLERRM || '"');
+    EXCEPTION
+      WHEN CfLocked THEN
+        -- Go to next candidate, this CastorFile is being processed by another thread
+        NULL;
+      WHEN bestFSForRecall_error THEN
+        -- log 'bestFileSystemForRecall could not find a suitable destination for this recall' and skip it
+        logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_FS_NOT_FOUND, varFileId, varNsHost, 'tapegatewayd',
+                 'errorMessage="' || SQLERRM || '"');
+        -- mark the recall job as failed, and maybe retry
+        retryOrFailRecall(varCfId, varVID);
+      WHEN NO_DATA_FOUND THEN
+        -- nothing found. In case we did not try so far, try to restart with low fseqs
+        IF varNewFseq > -1 THEN
+          varNewFseq := -1;
+        ELSE
+          -- low fseqs were tried, we are really out of candidates, so exit the loop
+          EXIT;
+        END IF;
     END;
   END LOOP;
-  -- check whether we've done enough. If not, consider taking lower fseqs
-  IF varNewFseq > -1 AND varCount < inCount AND varTotalSize < inTotalSize THEN
-    varNewFseq := -1;
-    GOTO candidateLoop;
-  END IF;
   -- Record last fseq at the mount level
   UPDATE RecallMount
      SET lastProcessedFseq = varNewFseq
@@ -9590,7 +9654,7 @@ BEGIN
     END IF;
     COMMIT;
   END LOOP;
-  -- Final log
+  -- log "setBulkFileRecallResult: bulk recall completed"
   varParams := 'mountTransactionId='|| to_char(inMountTrId)
                ||' NbFiles='|| inFileIds.COUNT ||' '|| inLogContext
                ||' ElapsedTime='|| getSecs(varStartTime, SYSTIMESTAMP)
