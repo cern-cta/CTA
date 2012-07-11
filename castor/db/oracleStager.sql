@@ -520,7 +520,7 @@ BEGIN
       OR abortedSRstatus = dconst.SUBREQUEST_READYFORSCHED
       OR abortedSRstatus = dconst.SUBREQUEST_BEINGSCHED THEN
       -- standard case, we only have to fail the subrequest
-      UPDATE SubRequest SET status = 7 WHERE id = sr.srId;
+      UPDATE SubRequest SET status = dconst.SUBREQUEST_FAILED WHERE id = sr.srId;
       INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 0, '');
     WHEN abortedSRstatus = dconst.SUBREQUEST_WAITTAPERECALL THEN
         failRecallSubReq(sr.srId, sr.cfId);
@@ -528,19 +528,22 @@ BEGIN
     WHEN abortedSRstatus = dconst.SUBREQUEST_FAILED
       OR abortedSRstatus = dconst.SUBREQUEST_FAILED_FINISHED THEN
       -- subrequest has failed, nothing to abort
-      INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 22, 'Cannot abort failed subRequest'); -- EINVAL
+      INSERT INTO ProcessBulkRequestHelper
+      VALUES (sr.fileId, sr.nsHost, serrno.EINVAL, 'Cannot abort failed subRequest');
     WHEN abortedSRstatus = dconst.SUBREQUEST_FINISHED
       OR abortedSRstatus = dconst.SUBREQUEST_ARCHIVED THEN
       -- subrequest is over, nothing to abort
-      INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 22, 'Cannot abort completed subRequest'); -- EINVAL
+      INSERT INTO ProcessBulkRequestHelper
+      VALUES (sr.fileId, sr.nsHost, serrno.EINVAL, 'Cannot abort completed subRequest');
     ELSE
       -- unknown status !
       INSERT INTO ProcessBulkRequestHelper
-      VALUES (sr.fileId, sr.nsHost, 1015, 'Found unknown status for request : ' || TO_CHAR(abortedSRstatus)); -- SEINTERNAL
+      VALUES (sr.fileId, sr.nsHost, serrno.SEINTERNAL, 'Found unknown status for request : ' || TO_CHAR(abortedSRstatus));
   END CASE;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- subRequest was deleted in the mean time !
-  INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 2, 'Targeted SubRequest has just been deleted'); -- ENOENT
+  INSERT INTO ProcessBulkRequestHelper
+  VALUES (sr.fileId, sr.nsHost, serrno.ENOENT, 'Targeted SubRequest has just been deleted');
 END;
 /
 
@@ -573,19 +576,22 @@ BEGIN
     WHEN abortedSRstatus = dconst.SUBREQUEST_FAILED
       OR abortedSRstatus = dconst.SUBREQUEST_FAILED_FINISHED THEN
       -- subrequest has failed, nothing to abort
-      INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 22, 'Cannot abort failed subRequest'); -- EINVAL
+      INSERT INTO ProcessBulkRequestHelper
+      VALUES (sr.fileId, sr.nsHost, serrno.EINVAL, 'Cannot abort failed subRequest');
     WHEN abortedSRstatus = dconst.SUBREQUEST_FINISHED
       OR abortedSRstatus = dconst.SUBREQUEST_ARCHIVED THEN
       -- subrequest is over, nothing to abort
-      INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 22, 'Cannot abort completed subRequest'); -- EINVAL
+      INSERT INTO ProcessBulkRequestHelper
+      VALUES (sr.fileId, sr.nsHost, serrno.EINVAL, 'Cannot abort completed subRequest');
     ELSE
       -- unknown status !
       INSERT INTO ProcessBulkRequestHelper
-      VALUES (sr.fileId, sr.nsHost, 1015, 'Found unknown status for request : ' || TO_CHAR(abortedSRstatus)); -- SEINTERNAL
+      VALUES (sr.fileId, sr.nsHost, serrno.SEINTERNAL, 'Found unknown status for request : ' || TO_CHAR(abortedSRstatus));
   END CASE;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- subRequest was deleted in the mean time !
-  INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 2, 'Targeted SubRequest has just been deleted'); -- ENOENT
+  INSERT INTO ProcessBulkRequestHelper
+  VALUES (sr.fileId, sr.nsHost, serrno.ENOENT, 'Targeted SubRequest has just been deleted');
 END;
 /
 
@@ -685,7 +691,8 @@ BEGIN
     FORALL i IN srsToUpdate.FIRST .. srsToUpdate.LAST
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
          SET parent = NULL, diskCopy = NULL, lastModificationTime = getTime(),
-             status = 9, errorCode = 1701, errorMessage='Aborted explicitely'
+             status = dconst.SUBREQUEST_FAILED_FINISHED,
+             errorCode = 1701, errorMessage = 'Aborted explicitely'  -- ESTCLEARED
        WHERE id = srsToUpdate(i);
     SELECT cfId BULK COLLECT INTO dcmigrsToUpdate FROM ProcessRepackAbortHelperDCmigr;
     FORALL i IN dcmigrsToUpdate.FIRST .. dcmigrsToUpdate.LAST
@@ -741,7 +748,7 @@ BEGIN
       EXCEPTION WHEN NO_DATA_FOUND THEN
         -- this fileid/nshost did not exist in the request, send an error back
         INSERT INTO ProcessBulkRequestHelper
-        VALUES (fileIds(i), nsHosts(i), 2, 'No subRequest found for this fileId/nsHost'); -- ENOENT
+        VALUES (fileIds(i), nsHosts(i), serrno.ENOENT, 'No subRequest found for this fileId/nsHost');
       END;
     END LOOP;
   END IF;
@@ -835,7 +842,8 @@ BEGIN
      WHERE reqId = abortedReqUuid;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- abort on non supported request type
-    INSERT INTO ProcessBulkRequestHelper VALUES (0, '', 2, 'Request not found, or abort not supported for this request type'); -- ENOENT
+    INSERT INTO ProcessBulkRequestHelper
+    VALUES (0, '', serrno.ENOENT, 'Request not found, or abort not supported for this request type');
     RETURN;
   END;
   IF reqType IN (1,2) THEN
@@ -1091,7 +1099,7 @@ BEGIN
     UPDATE /*+ INDEX(SubRequest I_SubRequest_Request) */ SubRequest
        SET status = dconst.SUBREQUEST_ARCHIVED
      WHERE request = rId
-       AND status = dconst.SUBREQUEST_FINISHED
+       AND status = dconst.SUBREQUEST_FINISHED;
     -- in case of repack, change the status of the request
     IF rType = 119 THEN
       DECLARE
@@ -1269,7 +1277,7 @@ BEGIN
   IF (checkFailJobsWhenNoSpace(svcClassId) = 1) THEN
     dcId := -1;
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-       SET status = 7, -- FAILED
+       SET status = dconst.SUBREQUEST_FAILED,
            errorCode = 28, -- ENOSPC
            errorMessage = 'File creation canceled since diskPool is full'
      WHERE id = srId;
@@ -1304,8 +1312,8 @@ BEGIN
     -- Fail the subrequest and notify the client
     dcId := -1;
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-       SET status = 7, -- FAILED
-           errorCode = 13, -- EACCES
+       SET status = dconst.SUBREQUEST_FAILED,
+           errorCode = serrno.EACCES,
            errorMessage = 'Insufficient user privileges to trigger a tape recall or file replication to the '''||destSvcClass||''' service class'
      WHERE id = srId;
     RETURN;
@@ -1346,10 +1354,10 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
     -- We are in one of the special cases. Don't schedule, don't recall
     dcId := -1;
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-       SET status = 7, -- FAILED
+       SET status = dconst.SUBREQUEST_FAILED,
            errorCode = CASE
-             WHEN dcStatus IN (5, 11) THEN 16 -- WAITFS, WAITFSSCHEDULING, EBUSY
-             WHEN dcStatus = 6 AND fsStatus = 0 AND dsStatus = 0 THEN 16 -- STAGEOUT, PRODUCTION, PRODUCTION, EBUSY
+             WHEN dcStatus IN (5, 11) THEN serrno.EBUSY -- WAITFS, WAITFSSCHEDULING
+             WHEN dcStatus = 6 AND fsStatus = 0 AND dsStatus = 0 THEN serrno.EBUSY -- STAGEOUT, PRODUCTION, PRODUCTION
              ELSE 1718 -- ESTNOTAVAIL
            END,
            errorMessage = CASE
@@ -1368,7 +1376,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
       -- Fail the subrequest and notify the client
       dcId := -1;
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-         SET status = 7, -- FAILED
+         SET status = dconst.SUBREQUEST_FAILED,
              errorCode = 13, -- EACCES
              errorMessage = 'Insufficient user privileges to trigger a tape recall to the '''||destSvcClass||''' service class'
        WHERE id = srId;
@@ -2116,7 +2124,7 @@ BEGIN
       -- This is a PutDone without a put (otherwise we would have found
       -- a DiskCopy on a FileSystem), so we fail the subrequest.
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET
-        status = 7,  -- FAILED
+        status = dconst.SUBREQUEST_FAILED,
         errorCode = 1,  -- EPERM
         errorMessage = 'putDone without a put, or wrong service class'
       WHERE id = rsubReqId;
@@ -2184,8 +2192,8 @@ BEGIN
         -- is already running in a different service class. This is forbidden
         dcId := 0;
         UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-           SET status = 7, -- FAILED
-               errorCode = 16, -- EBUSY
+           SET status = dconst.SUBREQUEST_FAILED,
+               errorCode = serrno.EBUSY,
                errorMessage = 'A prepareToPut is running in another service class for this file'
          WHERE id = srId;
         RETURN;
@@ -2216,9 +2224,9 @@ BEGIN
         -- this means we are a PrepareToPut and another PrepareToPut/Update
         -- is already running. This is forbidden
         dcId := 0;
-    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-       SET status = 7, -- FAILED
-               errorCode = 16, -- EBUSY
+        UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
+           SET status = dconst.SUBREQUEST_FAILED,
+               errorCode = serrno.EBUSY,
                errorMessage = 'Another prepareToPut/Update is ongoing for this file'
          WHERE id = srId;
         RETURN;
@@ -2247,7 +2255,7 @@ BEGIN
     -- thus we cannot recreate the file
     dcId := 0;
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-       SET status = 7, -- FAILED
+       SET status = dconst.SUBREQUEST_FAILED,
            errorCode = 28, -- ENOSPC
            errorMessage = 'File creation canceled since disk pool is full'
      WHERE id = srId;
@@ -2260,7 +2268,7 @@ BEGIN
       -- We could not route the file to tape, so let's fail the opening
       dcId := 0;
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-         SET status = 7, -- FAILED
+         SET status = dconst.SUBREQUEST_FAILED,
              errorCode = 1727, -- ESTNOTAPEROUTE
              errorMessage = 'File recreation canceled since the file cannot be routed to tape'
        WHERE id = srId;
@@ -2276,8 +2284,8 @@ BEGIN
       -- We found something, thus we cannot recreate
       dcId := 0;
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-         SET status = 7, -- FAILED
-             errorCode = 16, -- EBUSY
+         SET status = dconst.SUBREQUEST_FAILED,
+             errorCode = serrno.EBUSY,
              errorMessage = 'File recreation canceled since file is being migrated'
         WHERE id = srId;
       RETURN;
@@ -2290,8 +2298,8 @@ BEGIN
       -- We found something, thus we cannot recreate
       dcId := 0;
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-         SET status = 7, -- FAILED
-             errorCode = 16, -- EBUSY
+         SET status = dconst.SUBREQUEST_FAILED,
+             errorCode = serrno.EBUSY,
              errorMessage = 'File recreation canceled since file is either being recalled, or replicated or created by another user'
        WHERE id = srId;
       RETURN;
@@ -2519,7 +2527,7 @@ BEGIN
                    FROM TABLE(dcsToRm) dcidTable)
                 AND status IN (0, 1, 2, 5, 6, 12, 13)) LOOP   -- START, RESTART, RETRY, WAITSUBREQ, READY, READYFORSCHED
     UPDATE SubRequest
-       SET status = 7,  -- FAILED
+       SET status = dconst.SUBREQUEST_FAILED,
            errorCode = 4,  -- EINTR
            errorMessage = 'Canceled by another user request',
            parent = 0
@@ -2560,8 +2568,8 @@ BEGIN
     -- This file does not exist in the stager catalog
     -- so we just fail the request
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-       SET status = 7,  -- FAILED
-           errorCode = 2,  -- ENOENT
+       SET status = dconst.SUBREQUEST_FAILED,
+           errorCode = serrno.ENOENT,
            errorMessage = 'File not found on disk cache'
      WHERE id = srId;
     RETURN;
@@ -2607,8 +2615,8 @@ BEGIN
       EXCEPTION WHEN NO_DATA_FOUND THEN
         -- nothing left, so we would lose the file. Better to forbid stagerm
         UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-           SET status = 7,  -- FAILED
-               errorCode = 16,  -- EBUSY
+           SET status = dconst.SUBREQUEST_FAILED,
+               errorCode = serrno.EBUSY,
                errorMessage = 'The file is not yet migrated'
          WHERE id = srId;
         RETURN;
@@ -2674,8 +2682,8 @@ BEGIN
   -- In case nothing was dropped at all, complain
   IF dcsToRm.COUNT = 0 AND nbRJsDeleted = 0 THEN
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-       SET status = 7,  -- FAILED
-           errorCode = 2,  -- ENOENT
+       SET status = dconst.SUBREQUEST_FAILED,
+           errorCode = serrno.ENOENT,
            errorMessage = CASE WHEN svcClassId = 0 THEN 'File not found on disk cache'
                                ELSE 'File not found on this service class' END
      WHERE id = srId;
@@ -2948,6 +2956,7 @@ END;
 /
 
 /* PL/SQL method creating MigrationJobs for missing segments of a file if needed */
+/* Can throw a -20100 exception when no route to tape is found for the missing segments */
 CREATE OR REPLACE PROCEDURE createMJForMissingSegments(inCfId IN INTEGER,
                                                        inFileSize IN INTEGER,
                                                        inFileClassId IN INTEGER,
@@ -2956,71 +2965,68 @@ CREATE OR REPLACE PROCEDURE createMJForMissingSegments(inCfId IN INTEGER,
                                                        inFileId IN INTEGER,
                                                        inNsHost IN VARCHAR2,
                                                        inLogParams IN VARCHAR2) AS
+  varExpectedNbCopies INTEGER;
+  varCreatedMJs INTEGER := 0;
+  varNextCopyNb INTEGER := 1;
+  varNb INTEGER;
 BEGIN
-  DECLARE
-    varExpectedNbCopies INTEGER;
-    varCreatedMJs INTEGER := 0;
-    varNextCopyNb INTEGER := 1;
-    varNb INTEGER;
-  BEGIN
-    -- check whether there are missing segments and whether we should create new ones
-    SELECT nbCopies INTO varExpectedNbCopies FROM FileClass WHERE id = inFileClassId;
-    IF varExpectedNbCopies > inAllCopyNbs.COUNT THEN
-      -- some copies are missing
-      DECLARE
-        unused INTEGER;
-      BEGIN
-        -- check presence of migration jobs for this file
-        SELECT id INTO unused FROM MigrationJob WHERE castorFile=inCfId AND ROWNUM < 2;
-        -- there are MigrationJobs already, so remigrations were already handled. Nothing to be done
-        -- we typically are in a situation where the file was already waiting for recall for
-        -- another recall group.
-        -- log "detected missing copies on tape, but migrations ongoing"
-        logToDLF(NULL, dlf.LVL_DEBUG, dlf.RECALL_MISSING_COPIES_NOOP, inFileId, inNsHost, 'stagerd',
-                 inLogParams || ' nbMissingCopies=' || TO_CHAR(varExpectedNbCopies-inAllCopyNbs.COUNT));
-        RETURN;
-      EXCEPTION WHEN NO_DATA_FOUND THEN
-        -- we need to remigrate this file
-        NULL;
-      END;
-      -- log "detected missing copies on tape"
-      logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_MISSING_COPIES, inFileId, inNsHost, 'stagerd',
+  -- check whether there are missing segments and whether we should create new ones
+  SELECT nbCopies INTO varExpectedNbCopies FROM FileClass WHERE id = inFileClassId;
+  IF varExpectedNbCopies > inAllCopyNbs.COUNT THEN
+    -- some copies are missing
+    DECLARE
+      unused INTEGER;
+    BEGIN
+      -- check presence of migration jobs for this file
+      SELECT id INTO unused FROM MigrationJob WHERE castorFile=inCfId AND ROWNUM < 2;
+      -- there are MigrationJobs already, so remigrations were already handled. Nothing to be done
+      -- we typically are in a situation where the file was already waiting for recall for
+      -- another recall group.
+      -- log "detected missing copies on tape, but migrations ongoing"
+      logToDLF(NULL, dlf.LVL_DEBUG, dlf.RECALL_MISSING_COPIES_NOOP, inFileId, inNsHost, 'stagerd',
                inLogParams || ' nbMissingCopies=' || TO_CHAR(varExpectedNbCopies-inAllCopyNbs.COUNT));
-      -- copies are missing, try to recreate them
-      WHILE varExpectedNbCopies > inAllCopyNbs.COUNT + varCreatedMJs AND varNextCopyNb <= varExpectedNbCopies LOOP
-        BEGIN
-          -- check whether varNextCopyNb is already in use by a valid copy
-          SELECT * INTO varNb FROM TABLE(inAllCopyNbs) WHERE COLUMN_VALUE=varNextCopyNb;
-          -- this copy number is in use, go to next one
-        EXCEPTION WHEN NO_DATA_FOUND THEN
-          -- copy number is not in use, create a migrationJob using it
-          initMigration(inCfId, inFileSize, NULL, NULL, varNextCopyNb, tconst.MIGRATIONJOB_WAITINGONRECALL);
-          varCreatedMJs := varCreatedMJs + 1;
-          -- log "create new MigrationJob to migrate missing copy"
-          logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_MJ_FOR_MISSING_COPY, inFileId, inNsHost, 'stagerd',
-                   inLogParams || ' COPYNB=' || TO_CHAR(varNextCopyNb));
-        END;
-        varNextCopyNb := varNextCopyNb + 1;
-      END LOOP;
-      -- Did we create new copies ?
-      IF varExpectedNbCopies > inAllCopyNbs.COUNT + varCreatedMJs THEN
-        -- We did not create enough new copies, this means that we did not find enough
-        -- valid copy number. Odd... Log something !
-        logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_COPY_STILL_MISSING, inFileId, inNsHost, 'stagerd',
-                 inLogParams || ' nbCopiesStillMissing=' ||
-                 TO_CHAR(varExpectedNbCopies - inAllCopyNbs.COUNT - varCreatedMJs));
-      ELSE
-        -- Yes, then create migrated segments for the existing segments if there are none
-        SELECT count(*) INTO varNb FROM MigratedSegment WHERE castorFile = inCfId;
-        IF varNb = 0 THEN
-          FOR i IN inAllCopyNbs.FIRST .. inAllCopyNbs.LAST LOOP
-            INSERT INTO MigratedSegment (castorFile, copyNb, VID)
-            VALUES (inCfId, inAllCopyNbs(i), inAllVIDs(i));
-          END LOOP;
-        END IF;
+      RETURN;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- we need to remigrate this file
+      NULL;
+    END;
+    -- log "detected missing copies on tape"
+    logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_MISSING_COPIES, inFileId, inNsHost, 'stagerd',
+             inLogParams || ' nbMissingCopies=' || TO_CHAR(varExpectedNbCopies-inAllCopyNbs.COUNT));
+    -- copies are missing, try to recreate them
+    WHILE varExpectedNbCopies > inAllCopyNbs.COUNT + varCreatedMJs AND varNextCopyNb <= varExpectedNbCopies LOOP
+      BEGIN
+        -- check whether varNextCopyNb is already in use by a valid copy
+        SELECT * INTO varNb FROM TABLE(inAllCopyNbs) WHERE COLUMN_VALUE=varNextCopyNb;
+        -- this copy number is in use, go to next one
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- copy number is not in use, create a migrationJob using it (may throw exceptions)
+        initMigration(inCfId, inFileSize, NULL, NULL, varNextCopyNb, tconst.MIGRATIONJOB_WAITINGONRECALL);
+        varCreatedMJs := varCreatedMJs + 1;
+        -- log "create new MigrationJob to migrate missing copy"
+        logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_MJ_FOR_MISSING_COPY, inFileId, inNsHost, 'stagerd',
+                 inLogParams || ' COPYNB=' || TO_CHAR(varNextCopyNb));
+      END;
+      varNextCopyNb := varNextCopyNb + 1;
+    END LOOP;
+    -- Did we create new copies ?
+    IF varExpectedNbCopies > inAllCopyNbs.COUNT + varCreatedMJs THEN
+      -- We did not create enough new copies, this means that we did not find enough
+      -- valid copy numbers. Odd... Log something !
+      logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_COPY_STILL_MISSING, inFileId, inNsHost, 'stagerd',
+               inLogParams || ' nbCopiesStillMissing=' ||
+               TO_CHAR(varExpectedNbCopies - inAllCopyNbs.COUNT - varCreatedMJs));
+    ELSE
+      -- Yes, then create migrated segments for the existing segments if there are none
+      SELECT count(*) INTO varNb FROM MigratedSegment WHERE castorFile = inCfId;
+      IF varNb = 0 THEN
+        FOR i IN inAllCopyNbs.FIRST .. inAllCopyNbs.LAST LOOP
+          INSERT INTO MigratedSegment (castorFile, copyNb, VID)
+          VALUES (inCfId, inAllCopyNbs(i), inAllVIDs(i));
+        END LOOP;
       END IF;
     END IF;
-  END;
+  END IF;
 END;
 /
 
@@ -3041,6 +3047,8 @@ CREATE OR REPLACE FUNCTION createRecallJobs(inCfId IN INTEGER,
   varAllCopyNbs "numList" := "numList"();
   varAllVIDs strListTable := strListTable();
   varI INTEGER := 1;
+  NO_TAPE_ROUTE EXCEPTION;
+  PRAGMA EXCEPTION_INIT(NO_TAPE_ROUTE, -20100);
 BEGIN
   BEGIN
     -- loop over the existing segments
@@ -3072,18 +3080,24 @@ BEGIN
   EXCEPTION WHEN OTHERS THEN
     -- log "error when retrieving segments from namespace"
     logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_UNKNOWN_NS_ERROR, inFileId, inNsHost, 'stagerd',
-             inLogParams || ' ErrorMsg=' || SQLERRM);
-    RETURN 1015;  -- SEINTERNAL
+             inLogParams || ' ErrorMessage=' || SQLERRM);
+    RETURN serrno.SEINTERNAL;
   END;
   -- Did we find at least one segment ?
   IF varAllCopyNbs.COUNT = 0 THEN
     -- log "No recallJob found"
     logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_NO_JOB_FOUND, inFileId, inNsHost, 'stagerd', inLogParams);
-    RETURN 1723; -- ESTNOSEGFOUND
+    RETURN serrno.ESTNOSEGFOUND;
   END IF;
-  -- create missing segments if needed
-  createMJForMissingSegments(inCfId, inFileSize, inFileClassId, varAllCopyNbs,
-                             varAllVIDs, inFileId, inNsHost, inLogParams);
+  BEGIN
+    -- create missing segments if needed
+    createMJForMissingSegments(inCfId, inFileSize, inFileClassId, varAllCopyNbs,
+                               varAllVIDs, inFileId, inNsHost, inLogParams);
+  EXCEPTION WHEN NO_TAPE_ROUTE THEN
+    -- there's at least a missing segment and we cannot recreate it!
+    -- log a "no route to tape defined for missing copy" error, but don't stop the recall
+    logToDLF(NULL, dlf.LVL_ALERT, dlf.RECALL_MISSING_COPY_NO_ROUTE, inFileId, inNsHost, 'stagerd', inLogParams);
+  END;
   RETURN 0;
 END; 
 /
