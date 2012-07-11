@@ -380,6 +380,7 @@ CREATE OR REPLACE TYPE floatList IS TABLE OF NUMBER;
 @oraclePerm.sql
 @oracleQuery.sql
 @oracleRH.sql
+@oracleRepack.sql
 @oracleStager.sql
 @oracleTapeGateway.sql
 @oracleMonitoring.sql
