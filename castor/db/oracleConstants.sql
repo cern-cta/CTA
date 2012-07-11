@@ -157,6 +157,7 @@ AS
   RECALL_MISSING_COPIES_NOOP   CONSTANT VARCHAR2(2048) := 'createRecallCandidate: detected missing copies on tape, but migrations ongoing';
   RECALL_MJ_FOR_MISSING_COPY   CONSTANT VARCHAR2(2048) := 'createRecallCandidate: create new MigrationJob to migrate missing copy';
   RECALL_COPY_STILL_MISSING    CONSTANT VARCHAR2(2048) := 'createRecallCandidate: could not find enough valid copy numbers to create missing copy';
+  RECALL_MISSING_COPY_NO_ROUTE CONSTANT VARCHAR2(2048) := 'createRecallCandidate: no route to tape defined for missing copy';
   MIGRATION_CANCEL_BY_VID      CONSTANT VARCHAR2(2048) := 'Canceling tape migration for given VID';
   RECALL_CANCEL_BY_VID         CONSTANT VARCHAR2(2048) := 'Canceling tape recall for given VID';
   RECALL_CANCEL_RECALLJOB_VID  CONSTANT VARCHAR2(2048) := 'Canceling RecallJobs for given VID';
@@ -190,8 +191,10 @@ CREATE OR REPLACE PACKAGE serrno AS
   /* (s)errno values */
   ENOENT          CONSTANT PLS_INTEGER := 2;    /* No such file or directory */
   EACCES          CONSTANT PLS_INTEGER := 13;   /* Permission denied */
+  EBUSY           CONSTANT PLS_INTEGER := 16;   /* Device or resource busy */
   EEXIST          CONSTANT PLS_INTEGER := 17;   /* File exists */
   EISDIR          CONSTANT PLS_INTEGER := 21;   /* Is a directory */
+  EINVAL          CONSTANT PLS_INTEGER := 22;   /* Invalid argument */
   
   SEINTERNAL      CONSTANT PLS_INTEGER := 1015; /* Internal error */
   SECHECKSUM      CONSTANT PLS_INTEGER := 1037; /* Bad checksum */
@@ -200,12 +203,16 @@ CREATE OR REPLACE PACKAGE serrno AS
   ENSTOOMANYSEGS  CONSTANT PLS_INTEGER := 1406; /* Too many copies on tape */
   ENSOVERWHENREP  CONSTANT PLS_INTEGER := 1407; /* Cannot overwrite valid segment when replacing */
   ERTWRONGSIZE    CONSTANT PLS_INTEGER := 1613; /* (Recalled) file size incorrect */
+  ESTNOSEGFOUND   CONSTANT PLS_INTEGER := 1723; /* File has no copy on tape or no diskcopies are accessible */
   
   /* messages */
   ENOENT_MSG          CONSTANT VARCHAR2(2048) := 'No such file or directory';
   EACCES_MSG          CONSTANT VARCHAR2(2048) := 'Permission denied';
+  EBUSY_MSG           CONSTANT VARCHAR2(2048) := 'Device or resource busy';
   EEXIST_MSG          CONSTANT VARCHAR2(2048) := 'File exists';
   EISDIR_MSG          CONSTANT VARCHAR2(2048) := 'Is a directory';
+  EINVAL_MSG          CONSTANT VARCHAR2(2048) := 'Invalid argument';
+  
   SEINTERNAL_MSG      CONSTANT VARCHAR2(2048) := 'Internal error';
   SECHECKSUM_MSG      CONSTANT VARCHAR2(2048) := 'Checksum mismatch between segment and file';
   ENSFILECHG_MSG      CONSTANT VARCHAR2(2048) := 'File has been overwritten, request ignored';
@@ -213,5 +220,6 @@ CREATE OR REPLACE PACKAGE serrno AS
   ENSTOOMANYSEGS_MSG  CONSTANT VARCHAR2(2048) := 'Too many copies on tape';
   ENSOVERWHENREP_MSG  CONSTANT VARCHAR2(2048) := 'Cannot overwrite valid segment when replacing';
   ERTWRONGSIZE_MSG    CONSTANT VARCHAR2(2048) := 'Incorrect file size';
+  ESTNOSEGFOUND_MSG   CONSTANT VARCHAR2(2048) := 'File has no copy on tape or no diskcopies are accessible';
 END serrno;
 /
