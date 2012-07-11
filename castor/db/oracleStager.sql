@@ -618,7 +618,7 @@ BEGIN
       FROM SubRequest, CastorFile
      WHERE SubRequest.castorFile = CastorFile.id
        AND request = origReqId
-       AND status IN (dconst.SUBREQUEST_RESTART, dconst.SUBREQUEST_RETRY,
+       AND status IN (dconst.SUBREQUEST_START, dconst.SUBREQUEST_RESTART, dconst.SUBREQUEST_RETRY,
                       dconst.SUBREQUEST_WAITSUBREQ, dconst.SUBREQUEST_WAITTAPERECALL,
                       dconst.SUBREQUEST_REPACK));
   SELECT COUNT(*) INTO nbItems FROM processBulkAbortFileReqsHelper;
@@ -706,6 +706,12 @@ BEGIN
     firstOne := TRUE;
     commitWork := FALSE;
   END LOOP;
+  -- This procedure should really be called 'terminateSubReqAndArchiveRequest', and this is
+  -- why we call it here: we need to trigger the logic to mark the whole request and all of its subrequests
+  -- as ARCHIVED, so that they are cleaned up afterwards. Note that this is effectively
+  -- a no-op for the status change of the SubRequest pointed by srsToUpdate(1).
+  archiveSubReq(srsToUpdate(1), dconst.SUBREQUEST_FAILED_FINISHED);
+  COMMIT;
 END;
 /
 
@@ -1082,7 +1088,7 @@ BEGIN
    RETURNING request, reqType, (SELECT object FROM Type2Obj WHERE type = reqType) INTO rId, rType, rName;
   -- Try to see whether another subrequest in the same
   -- request is still being processed. For this, we
-  -- need a master lock on the request but for easiness we use the Client
+  -- need a master lock on the request.
   EXECUTE IMMEDIATE
     'BEGIN SELECT client INTO :clientId FROM '|| rName ||' WHERE id = :rId FOR UPDATE; END;'
     USING OUT clientId, IN rId;
@@ -1101,7 +1107,7 @@ BEGIN
      WHERE request = rId
        AND status = dconst.SUBREQUEST_FINISHED;
     -- in case of repack, change the status of the request
-    IF rType = 119 THEN
+    IF rType = 119 THEN  -- OBJ_StageRepackRequest
       DECLARE
         nbfailures NUMBER;
       BEGIN
