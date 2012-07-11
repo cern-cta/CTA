@@ -194,7 +194,7 @@ BEGIN
             triggerRepackRecall(cfId, segment.fileid, nsHostName, segment.blockid,
                                 segment.fseq, segment.copyNb, inEuid, inEgid,
                                 varRecallGroupId, svcClassId, reqVID, segment.segSize,
-                                segment.fileclass, varReqUUID, varSubreqUUID, varRecallGroupName);
+                                segment.fileclass, segment.allSegments, varReqUUID, varSubreqUUID, varRecallGroupName);
           END IF;
           -- file is being recalled
           varSrStatus := dconst.SUBREQUEST_WAITTAPERECALL;
@@ -368,18 +368,20 @@ END;
 /
 
 /* PL/SQL procedure implementing triggerRepackRecall
- * this triggers a recall in the repack context and updates the subrequest.
+ * this triggers a recall in the repack context
  */
 CREATE OR REPLACE PROCEDURE triggerRepackRecall
 (inCfId IN INTEGER, inFileId IN INTEGER, inNsHost IN VARCHAR2, inBlock IN RAW,
  inFseq IN INTEGER, inCopynb IN INTEGER, inEuid IN INTEGER, inEgid IN INTEGER,
  inRecallGroupId IN INTEGER, inSvcClassId IN INTEGER, inVid IN VARCHAR2, inFileSize IN INTEGER,
- inFileClassId IN INTEGER, inReqUUID IN VARCHAR2, inSubReqUUID IN VARCHAR2, inRecallGroupName IN VARCHAR2) AS
+ inFileClassId IN INTEGER, inAllSegments IN VARCHAR2, inReqUUID IN VARCHAR2,
+ inSubReqUUID IN VARCHAR2, inRecallGroupName IN VARCHAR2) AS
   varLogParam VARCHAR2(2048);
   varAllCopyNbs "numList" := "numList"();
   varAllVIDs strListTable := strListTable();
+  varAllSegments strListTable;
 BEGIN
-  -- create recallJob
+  -- create recallJob for the given VID, copyNb, etc.
   INSERT INTO RecallJob (id, castorFile, copyNb, recallGroup, svcClass, euid, egid,
                          vid, fseq, status, fileSize, creationTime, blockId, fileTransactionId)
   VALUES (ids_seq.nextval, inCfId, inCopynb, inRecallGroupId, inSvcClassId,
@@ -391,10 +393,14 @@ BEGIN
            varLogParam || ' fileClass=' || TO_CHAR(inFileClassId) || ' CopyNb=' || TO_CHAR(inCopynb)
            || ' TPVID=' || inVid || ' FSEQ=' || TO_CHAR(inFseq) || ' FileSize=' || TO_CHAR(inFileSize));
   -- create missing segments if needed
-  varAllCopyNbs.EXTEND;
-  varAllCopyNbs(1) := inCopynb;
-  varAllVIDs.EXTEND;
-  varAllVIDs(1) := inVid;
+  SELECT * BULK COLLECT INTO varAllSegments
+    FROM TABLE(strTokenizer(inAllSegments));
+  FOR i IN varAllSegments.FIRST .. varAllSegments.LAST/2 LOOP
+    varAllCopyNbs.EXTEND;
+    varAllCopyNbs(i) := TO_NUMBER(varAllSegments(2*i-1));
+    varAllVIDs.EXTEND;
+    varAllVIDs(i) := varAllSegments(2*i);
+  END LOOP;
   createMJForMissingSegments(inCfId, inFileSize, inFileClassId, varAllCopyNbs,
                              varAllVIDs, inFileId, inNsHost, varLogParam);
 END;
