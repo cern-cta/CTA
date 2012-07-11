@@ -125,7 +125,8 @@ BEGIN
       varNbCopies INTEGER;
       varSrErrorCode INTEGER := 0;
       varSrErrorMsg VARCHAR2(2048) := NULL;
-      varIsRecalled NUMBER;
+      varWasRecalled NUMBER;
+      varMigrationTriggered BOOLEAN := False;
     BEGIN
       -- Commit from time to time
       IF nbFilesProcessed = 1000 THEN
@@ -140,7 +141,7 @@ BEGIN
         locked EXCEPTION;
         PRAGMA EXCEPTION_INIT (locked, -54);
       BEGIN
-        -- This may raise a SrLocked exception as we do not want to wait for locks (except on first file).
+        -- This may raise a Locked exception as we do not want to wait for locks (except on first file).
         -- In such a case, we commit what we've done so far and retry this file, this time waiting for the lock.
         -- The reason for such a complex code is to avoid commiting each file separately, as it would be
         -- too heavy. On the other hand, we still need to avoid dead locks.
@@ -169,7 +170,7 @@ BEGIN
          AND DiskCopy.status = dconst.DISKCOPY_STAGEOUT;
       IF varNbCopies > 0 THEN
         varSrStatus := dconst.SUBREQUEST_FAILED;
-        varSrErrorCode := 16; -- EBUSY
+        varSrErrorCode := serrno.EBUSY;
         varSrErrorMsg := 'File is currently being overwritten';
         INSERT INTO ProcessBulkRequestHelper VALUES
           (segment.fileid, nsHostName, varSrErrorCode, varSrErrorMsg);
@@ -187,8 +188,8 @@ BEGIN
            AND DC.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR);
         IF varNbCopies = 0 THEN
           -- find out whether this file is already being recalled
-          SELECT count(*) INTO varIsRecalled FROM RecallJob WHERE castorfile = cfId AND ROWNUM < 2;
-          IF varIsRecalled = 0 THEN
+          SELECT count(*) INTO varWasRecalled FROM RecallJob WHERE castorfile = cfId AND ROWNUM < 2;
+          IF varWasRecalled = 0 THEN
             -- trigger recall
             triggerRepackRecall(cfId, segment.fileid, nsHostName, segment.blockid,
                                 segment.fseq, segment.copyNb, inEuid, inEgid,
@@ -208,11 +209,10 @@ BEGIN
           PRAGMA EXCEPTION_INIT (noValidCopyNbFound, -20123);
           noMigrationRoute EXCEPTION;
           PRAGMA EXCEPTION_INIT (noMigrationRoute, -20100);
-          migrationTriggered boolean := False;
         BEGIN
           triggerRepackMigration(cfId, reqVID, segment.fileid, segment.copyNb, segment.fileclass,
-                                 segment.segSize, segment.allSegments, varMJStatus, migrationTriggered);
-          IF migrationTriggered THEN
+                                 segment.segSize, segment.allSegments, varMJStatus, varMigrationTriggered);
+          IF varMigrationTriggered THEN
             -- update STAGED diskcopies to CANBEMIGR
             UPDATE DiskCopy SET status = 10  -- DISKCOPY_CANBEMIGR
              WHERE castorFile = cfId AND status = 0;  -- DISKCOPY_STAGED
@@ -220,12 +220,12 @@ BEGIN
           isOngoing := True;
         EXCEPTION WHEN noValidCopyNbFound OR noMigrationRoute THEN
           -- cleanup recall part if needed
-          IF varIsRecalled = 0 THEN
-            DELETE FROM RecallJob WHERE castorfile = cfId;
+          IF varWasRecalled = 0 THEN
+            DELETE FROM RecallJob WHERE castorFile = cfId;
           END IF;
-          -- fail subrequest
+          -- fail SubRequest
           varSrStatus := dconst.SUBREQUEST_FAILED;
-          varSrErrorCode := 22; -- EINVAL
+          varSrErrorCode := serrno.EINVAL;
           varSrErrorMsg := SQLERRM;
           INSERT INTO ProcessBulkRequestHelper VALUES
             (segment.fileid, nsHostName, varSrErrorCode, varSrErrorMsg);
@@ -233,14 +233,33 @@ BEGIN
         END;
       END IF;
       -- update SubRequest
-      UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
+      UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id) */ SubRequest
          SET status = varSrStatus,
              errorCode = varSrErrorCode,
              errorMessage = varSrErrorMsg
        WHERE id = varSubreqId;
     EXCEPTION WHEN OTHERS THEN
-      raise_application_error(-20000, 'Problematic file was castorFile '||TO_CHAR(cfId)||
-                                      ', fileid '||TO_CHAR(segment.fileid), TRUE);
+      -- something went wrong: log "handleRepackRequest: unexpected exception caught"
+      varSrErrorMsg := SQLERRM;
+      logToDLF(NULL, dlf.LVL_ERROR, dlf.REPACK_UNEXPECTED_EXCEPTION, segment.fileId, nsHostName, 'stagerd',
+        'errorCode=' || to_char(SQLCODE) ||' errorMessage="' || varSrErrorMsg
+        ||'" stackTrace="' || dbms_utility.format_error_backtrace ||'"');
+      -- report to the user
+      INSERT INTO ProcessBulkRequestHelper (fileId, nsHost, errorCode, errorMessage)
+      VALUES (segment.fileid, nsHostName, serrno.SEINTERNAL, 'Oracle error caught : ' || varSrErrorMsg);
+      -- cleanup and fail SubRequest
+      IF varWasRecalled = 0 THEN
+        DELETE FROM RecallJob WHERE castorFile = cfId;
+      END IF;
+      IF varMigrationTriggered THEN
+        DELETE FROM MigrationJob WHERE castorFile = cfId;
+        DELETE FROM MigratedSegment WHERE castorFile = cfId;
+      END IF;
+      UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id) */ SubRequest
+         SET status = dconst.SUBREQUEST_FAILED,
+             errorCode = serrno.SEINTERNAL,
+             errorMessage = varSrErrorMsg
+       WHERE id = varSubreqId;
     END;
   END LOOP;
   -- cleanup RepackTapeSegments
@@ -369,8 +388,8 @@ BEGIN
   -- log "created new RecallJob"
   varLogParam := 'REQID=' || inReqUUID || ' SUBREQID=' || inSubReqUUID || ' RecallGroup=' || inRecallGroupName;
   logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_CREATING_RECALLJOB, inFileId, inNsHost, 'stagerd',
-           varLogParam || ' COPYNB=' || TO_CHAR(inCopynb) || ' TPVID=' || inVid ||
-           ' FSEQ=' || TO_CHAR(inFseq) || ' FileSize=' || TO_CHAR(inFileSize));
+           varLogParam || ' fileClass=' || TO_CHAR(inFileClassId) || ' CopyNb=' || TO_CHAR(inCopynb)
+           || ' TPVID=' || inVid || ' FSEQ=' || TO_CHAR(inFseq) || ' FileSize=' || TO_CHAR(inFileSize));
   -- create missing segments if needed
   varAllCopyNbs.EXTEND;
   varAllCopyNbs(1) := inCopynb;

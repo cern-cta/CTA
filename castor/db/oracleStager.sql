@@ -2971,7 +2971,7 @@ CREATE OR REPLACE PROCEDURE createMJForMissingSegments(inCfId IN INTEGER,
   varNb INTEGER;
 BEGIN
   -- check whether there are missing segments and whether we should create new ones
-  SELECT nbCopies INTO varExpectedNbCopies FROM FileClass WHERE id = inFileClassId;
+  SELECT nbCopies INTO varExpectedNbCopies FROM FileClass WHERE classId = inFileClassId;
   IF varExpectedNbCopies > inAllCopyNbs.COUNT THEN
     -- some copies are missing
     DECLARE
