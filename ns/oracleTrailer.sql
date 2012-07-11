@@ -50,14 +50,15 @@ CREATE OR REPLACE TYPE numList IS TABLE OF INTEGER;
 
 /**
  * Package containing the definition of some relevant (s)errno values and messages.
- * The actual logging is performed by the stagers.
  */
 CREATE OR REPLACE PACKAGE serrno AS
   /* (s)errno values */
   ENOENT          CONSTANT PLS_INTEGER := 2;    /* No such file or directory */
   EACCES          CONSTANT PLS_INTEGER := 13;   /* Permission denied */
+  EBUSY           CONSTANT PLS_INTEGER := 16;   /* Device or resource busy */
   EEXIST          CONSTANT PLS_INTEGER := 17;   /* File exists */
   EISDIR          CONSTANT PLS_INTEGER := 21;   /* Is a directory */
+  EINVAL          CONSTANT PLS_INTEGER := 22;   /* Invalid argument */
   
   SEINTERNAL      CONSTANT PLS_INTEGER := 1015; /* Internal error */
   SECHECKSUM      CONSTANT PLS_INTEGER := 1037; /* Bad checksum */
@@ -66,19 +67,24 @@ CREATE OR REPLACE PACKAGE serrno AS
   ENSTOOMANYSEGS  CONSTANT PLS_INTEGER := 1406; /* Too many copies on tape */
   ENSOVERWHENREP  CONSTANT PLS_INTEGER := 1407; /* Cannot overwrite valid segment when replacing */
   ERTWRONGSIZE    CONSTANT PLS_INTEGER := 1613; /* (Recalled) file size incorrect */
+  ESTNOSEGFOUND   CONSTANT PLS_INTEGER := 1723; /* File has no copy on tape or no diskcopies are accessible */
   
   /* messages */
   ENOENT_MSG          CONSTANT VARCHAR2(2048) := 'No such file or directory';
   EACCES_MSG          CONSTANT VARCHAR2(2048) := 'Permission denied';
+  EBUSY_MSG           CONSTANT VARCHAR2(2048) := 'Device or resource busy';
   EEXIST_MSG          CONSTANT VARCHAR2(2048) := 'File exists';
   EISDIR_MSG          CONSTANT VARCHAR2(2048) := 'Is a directory';
+  EINVAL_MSG          CONSTANT VARCHAR2(2048) := 'Invalid argument';
+  
   SEINTERNAL_MSG      CONSTANT VARCHAR2(2048) := 'Internal error';
-  SECHECKSUM_MSG      CONSTANT VARCHAR2(2048) := 'Checksum mismatch between file and segment';
+  SECHECKSUM_MSG      CONSTANT VARCHAR2(2048) := 'Checksum mismatch between segment and file';
   ENSFILECHG_MSG      CONSTANT VARCHAR2(2048) := 'File has been overwritten, request ignored';
   ENSNOSEG_MSG        CONSTANT VARCHAR2(2048) := 'Segment had been deleted';
   ENSTOOMANYSEGS_MSG  CONSTANT VARCHAR2(2048) := 'Too many copies on tape';
   ENSOVERWHENREP_MSG  CONSTANT VARCHAR2(2048) := 'Cannot overwrite valid segment when replacing';
   ERTWRONGSIZE_MSG    CONSTANT VARCHAR2(2048) := 'Incorrect file size';
+  ESTNOSEGFOUND_MSG   CONSTANT VARCHAR2(2048) := 'File has no copy on tape or no diskcopies are accessible';
 END serrno;
 /
 
@@ -213,7 +219,7 @@ BEGIN
   END IF;
   -- Cross check file and segment checksums when adler32 (AD in the file entry):
   -- unfortunately we have to play with different representations...
-  IF varFCksumName = 'AD' AND inSegEntry.checksum_name = 'adler32' AND
+  IF (varFCksumName = 'AD' OR varFCksumName = 'PA') AND inSegEntry.checksum_name = 'adler32' AND
      inSegEntry.checksum != to_number(varFCksum, 'XXXXXXXX') THEN
     rc := serrno.SECHECKSUM;
     msg := serrno.SECHECKSUM_MSG ||' : '
@@ -224,7 +230,7 @@ BEGIN
   -- Cross check segment (transfered) size and file size
   IF varFSize != inSegEntry.segSize THEN
     rc := serrno.ERTWRONGSIZE;
-    msg := serrno.ERTWRONGSIZE ||' : expected '
+    msg := serrno.ERTWRONGSIZE_MSG ||' : expected '
       || to_char(varFSize) ||', got '|| to_char(inSegEntry.segSize);
     ROLLBACK;
     RETURN;
@@ -359,7 +365,7 @@ BEGIN
   END IF;
   -- Cross check file and segment checksums when adler32 (AD in the file entry):
   -- unfortunately we have to play with different representations...
-  IF varFCksumName = 'AD' AND inSegEntry.checksum_name = 'adler32' AND
+  IF (varFCksumName = 'AD' OR varFCksumName = 'PA') AND inSegEntry.checksum_name = 'adler32' AND
      inSegEntry.checksum != to_number(varFCksum, 'XXXXXXXX') THEN
     rc := serrno.SECHECKSUM;
     msg := serrno.SECHECKSUM_MSG ||' : '
@@ -370,7 +376,7 @@ BEGIN
   -- Cross check segment (transfered) size and file size
   IF varFSize != inSegEntry.segSize THEN
     rc := serrno.ERTWRONGSIZE;
-    msg := serrno.ERTWRONGSIZE ||' : expected '
+    msg := serrno.ERTWRONGSIZE_MSG ||' : expected '
       || to_char(varFSize) ||', got '|| to_char(inSegEntry.segSize);
     ROLLBACK;
     RETURN;

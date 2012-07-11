@@ -666,7 +666,7 @@ BEGIN
     UPDATE /*+ INDEX(Subrequest I_Subrequest_Castorfile) */ SubRequest 
        SET status = dconst.SUBREQUEST_FAILED,
            lastModificationTime = getTime(),
-           errorCode = 1015,  -- SEINTERNAL
+           errorCode = serrno.SEINTERNAL,
            errorMessage = 'File recall from tape has failed, please try again later'
      WHERE castorFile = inCfId 
        AND status = dconst.SUBREQUEST_WAITTAPERECALL;
@@ -689,7 +689,7 @@ BEGIN
        AND MJ.castorFile = CF.id
        AND CF.fileId = inFileId
        AND CF.nsHost = inNsHost
-       AND nbRetries <= TO_NUMBER(getConfigOption('Migration', 'MaxNbMounts', 7)))
+       AND nbRetries < TO_NUMBER(getConfigOption('Migration', 'MaxNbMounts', 7)))
     SET nbRetries = nbRetries + 1,
         status = tconst.MIGRATIONJOB_PENDING,
         vid = NULL,
@@ -812,7 +812,7 @@ BEGIN
        SET SR.status = dconst.SUBREQUEST_FAILED,
            SR.getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED, --  (not strictly correct but the request is over anyway)
            SR.lastModificationTime = getTime(),
-           SR.errorCode = 1015,  -- SEINTERNAL
+           SR.errorCode = serrno.SEINTERNAL,
            SR.errorMessage = 'File recall from tape has failed (tape not available), please try again later',
            SR.parent = 0
      WHERE SR.castorFile = inCfId
@@ -1139,7 +1139,7 @@ BEGIN
                          FROM MigratedSegment
                         WHERE MigratedSegment.castorFile = MigrationJob.castorfile
                           AND MigratedSegment.copyNb != MigrationJob.destCopyNb
-                          AND MigratedSegment.vid = MigrationMount.VID)
+                          AND MigratedSegment.vid = MigrationMount.vid)
        FOR UPDATE OF MigrationJob.id SKIP LOCKED)
   LOOP
     -- last part of the above statement. Could not be part of it as ORACLE insisted on not
@@ -1147,7 +1147,7 @@ BEGIN
     BEGIN
       SELECT /*+ INDEX_RS_ASC(MJ I_MigrationJob_CFVID) */ 1 INTO varUnused
         FROM MigrationJob MJ
-       WHERE MJ.castorfile = Cand.castorfile
+       WHERE MJ.castorFile = Cand.castorFile
          AND MJ.vid = Cand.VID
          AND MJ.vid IS NOT NULL;
       -- found one, so skip this candidate
@@ -1309,7 +1309,7 @@ BEGIN
     varUnused INTEGER;
   BEGIN
     -- boundary case: if nothing to do, just skip the remote call and the
-    -- subsequent FOR loop as it would fail.
+    -- subsequent FOR loop as it would be useless (and would fail).
     SELECT 1 INTO varUnused FROM FileMigrationResultsHelper
      WHERE reqId = varReqId AND ROWNUM < 2;
     -- The following procedure wraps the remote calls in an autonomous transaction
@@ -1331,6 +1331,7 @@ BEGIN
         tg_setFileMigrated(inMountTrId, varNSFileIds(i), varReqId, inLogContext);
 
       WHEN varNSErrorCodes(i) = serrno.ENOENT
+        OR varNSErrorCodes(i) = serrno.ENSNOSEG
         OR varNSErrorCodes(i) = serrno.ENSFILECHG
         OR varNSErrorCodes(i) = serrno.ENSTOOMANYSEGS THEN
         -- The migration was useless because either the file is gone, or it has been modified elsewhere,
@@ -1479,10 +1480,10 @@ BEGIN
   END IF;
   
   -- Log depending on the error: some are not pathological and have dedicated handling
-  IF inErrorCode = serrno.ENOENT OR inErrorCode = serrno.ENSFILECHG THEN
+  IF inErrorCode = serrno.ENOENT OR inErrorCode = serrno.ENSFILECHG OR inErrorCode = serrno.ENSNOSEG THEN
     -- in this case, disk cache is stale
     UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
-     WHERE status = dconst.DISKCOPY_CANBEMIGR
+     WHERE status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR)
        AND castorFile = varCfId;
     -- Log 'file was dropped or modified during migration, giving up'
     logToDLF(inReqid, dlf.LVL_NOTICE, dlf.MIGRATION_FILE_DROPPED, inFileId, varNsHost, 'tapegatewayd',
