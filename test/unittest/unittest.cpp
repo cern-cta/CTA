@@ -139,12 +139,15 @@ void *unittest::readInAckAndDropNRtcopyMsgs(void *sockFdAndNMsgsPtr) {
 void *unittest::readInAndAckRtcopyMsgHeaderAndBody(void *sockFdPtr) {
   using namespace castor::tape;
 
-  const int sockFd = *((int *)sockFdPtr);
+  const int sockFd  = *((int *)sockFdPtr);
+  const int timeout = 5; // Timeout in seconds
 
   // Read out the RTCOPY message header
   char headerBuf[12]; // uint32_t magic + uint32_t reqType + uint32_t len
   memset(headerBuf, '\0', sizeof(headerBuf));
-  if(sizeof(headerBuf) != read(sockFd, headerBuf, sizeof(headerBuf))) {
+  try {
+    net::readBytes(sockFd, timeout, sizeof(headerBuf), headerBuf);
+  } catch(...) {
     return NULL; // There was an error reading
   }
 

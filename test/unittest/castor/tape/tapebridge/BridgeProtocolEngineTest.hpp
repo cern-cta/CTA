@@ -39,6 +39,10 @@
 #include "castor/tape/tapegateway/FilesToMigrateListRequest.hpp"
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include "castor/tape/tapegateway/FileMigrationReportList.hpp"
+#include "castor/tape/tapegateway/FilesToRecallList.hpp"
+#include "castor/tape/tapegateway/FilesToRecallListRequest.hpp"
+#include "castor/tape/tapegateway/FileToRecallStruct.hpp"
+#include "castor/tape/tapegateway/FileRecallReportList.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/utils/SmartFd.hpp"
 #include "h/Castor_limits.h"
@@ -278,6 +282,11 @@ private:
     }
   }
 
+  /**
+   * Structure used to pass parameters to the test BridgeProtocolEngine-thread
+   * responsible for starting an a session with the
+   * rtcpd session by calling the BridgeProtocolEngine::run() method.
+   */
   struct StartRtcpdSessionThreadParams {
     TestingBridgeProtocolEngine *inEngine;
     bool                        outAnErrorOccurred;
@@ -290,7 +299,12 @@ private:
     }
   };
 
-  static void* runStartRtcpdSessionThread(void *arg) {
+  /**
+   * The test BridgeProtocolEngine-thread that is responsible for starting an
+   * a session with the rtcpd session by calling the
+   * BridgeProtocolEngine::run() method.
+   */
+  static void *runStartRtcpdSessionThread(void *const arg) {
     StartRtcpdSessionThreadParams *const threadParams =
       (StartRtcpdSessionThreadParams*)arg;
 
@@ -335,7 +349,193 @@ private:
     }
 
     return arg;
-  }
+  } // runStartRtcpdSessionThread
+
+  /**
+   * Structure used to pass parameters to the test rtcpd-thread responsible
+   * for receiving the messages representing "no more work" from the
+   * BridgeProtocolEngine.
+   */
+  struct ReceiveNoMoreWorkFromBridgeThreadParams {
+    int                inIoControlConnectionSock;
+    LegacyTxRx         *inLegacyTxRx;
+    bool               outAnErrorOccurred;
+    std::ostringstream outErrorStream;
+
+    ReceiveNoMoreWorkFromBridgeThreadParams():
+      inIoControlConnectionSock(-1),
+      inLegacyTxRx(NULL),
+      outAnErrorOccurred(false) {
+      // Do nothing
+    }
+  }; // struct ReceiveNoMoreWorkFromBridgeThreadParams
+
+
+  /**
+   * The test rtcpd-thread that is responsible for receiving and replying to
+   * the messages representing "no more work" from the BridgeProtocolEngine.
+   *
+   * The thread carries out the following snippet of the RTCOPY protocol.
+   *
+   * RTCPD            BRIDGE
+   *   |                 |
+   *   | RTCP_NOMORE_REQ |
+   *   |<----------------|
+   *   |                 |
+   *   |     Ack         |
+   *   |---------------->|
+   *   |                 |
+   *   |   Delayed ack   |
+   *   |<----------------|
+   *   |                 |
+   *   |                 |
+   *   |                 |
+   *   |                 |
+   */
+  static void *receiveNoMoreWorkFromBridge(void *const arg) {
+    ReceiveNoMoreWorkFromBridgeThreadParams *const threadParams =
+      (ReceiveNoMoreWorkFromBridgeThreadParams*)arg;
+
+    try {
+      if(NULL == threadParams) {
+        test_exception te("Pointer to the thread-parameters is NULL");
+        throw te;
+      }
+
+      if(-1 == threadParams->inIoControlConnectionSock) {
+        test_exception te(
+          "Socket-descriptor of the IO control connection is invalid");
+        throw te;
+      }
+
+      if(NULL == threadParams->inLegacyTxRx) {
+        test_exception te("Pointer to the LegacyTxRx is NULL");
+        throw te;
+      }
+
+      // Read in and unmarshal the RTCP_NOMORE_REQ message
+      legacymsg::MessageHeader noMoreMsg;
+      noMoreMsg.magic       = 0;
+      noMoreMsg.reqType     = 0;
+      noMoreMsg.lenOrStatus = 0;
+      {
+        const int netReadWriteTimeout = 1;
+        char msgBuf[3 * sizeof(uint32_t)];
+        memset(msgBuf, '\0', sizeof(msgBuf));
+        net::readBytes(threadParams->inIoControlConnectionSock,
+          netReadWriteTimeout, sizeof(msgBuf), msgBuf);
+        const char *srcPtr = msgBuf;
+        size_t srcLen = sizeof(msgBuf);
+        legacymsg::unmarshal(srcPtr, srcLen, noMoreMsg);
+      }
+
+      if(RTCOPY_MAGIC != noMoreMsg.magic) {
+        test_exception
+          te("RTCP_NOMORE_REQ message has an invalid magic-number");
+        throw te;
+      }
+      if(RTCP_NOMORE_REQ != noMoreMsg.reqType) {
+        test_exception
+          te("RTCP_NOMORE_REQ message has an invalid request-type");
+        throw te;
+      }
+      if(0 != noMoreMsg.lenOrStatus) {
+        test_exception 
+          te("RTCP_NOMORE_REQ message has an invalid lenOrStatus");
+        throw te;
+      }
+
+      // Send back an ACK of the RTCP_NOMORE_REQ message
+      try {
+        legacymsg::MessageHeader ackMsg;
+        ackMsg.magic       = RTCOPY_MAGIC;
+        ackMsg.reqType     = RTCP_NOMORE_REQ;
+        ackMsg.lenOrStatus = 0;
+
+        threadParams->inLegacyTxRx->sendMsgHeader(
+          threadParams->inIoControlConnectionSock, ackMsg);
+      } catch(castor::exception::Exception &ex) {
+        test_exception
+          te("Failed to send ack of RTCP_NOMORE_REQ message");
+        throw te;
+      }
+
+      {
+        // Read in and un-marshaled the delayed ACK of the request for more work
+        legacymsg::MessageHeader ackMsg;
+        memset(&ackMsg, '\0', sizeof(ackMsg));
+
+        try {
+          threadParams->inLegacyTxRx->receiveMsgHeader(
+            threadParams->inIoControlConnectionSock, ackMsg);
+        } catch(castor::exception::Exception &ex) {
+          test_exception
+            te("Failed to read in and un-marshal the delayed ACK of the request"
+              " for more work");
+          throw te;
+        }
+
+        // Check the contents of the delayed ACK of the request for more work
+        if(RTCOPY_MAGIC != ackMsg.magic) {
+          std::ostringstream oss;
+          oss <<
+            "Delayed ACK of request for more work contains an invalid"
+            " magic-number"
+            ": expected=0x" << std::hex << RTCOPY_MAGIC <<
+            " actual=0x" << ackMsg.magic;
+          test_exception te(oss.str());
+          throw te;
+        }
+        if(RTCP_FILEERR_REQ != ackMsg.reqType) {
+          std::ostringstream oss;
+          oss <<
+            "Delayed ACK of request for more work contains an invalid"
+            " request-type"
+            ": expected=0x" << std::hex << RTCP_FILEERR_REQ <<
+            " actual=0x" << ackMsg.reqType;
+          test_exception te(oss.str());
+          throw te;
+        }
+        if(0 != ackMsg.lenOrStatus) {
+          std::ostringstream oss;
+          oss << 
+            "Delayed ACK of request for more work contains an invalid"          
+            " status"
+            ": expected=0 actual=" << ackMsg.lenOrStatus;
+          test_exception te(oss.str());
+          throw te;
+        }
+      }
+    } catch(castor::exception::Exception &ce) {
+      threadParams->outAnErrorOccurred = true;
+      threadParams->outErrorStream <<
+        "ERROR"
+        ": " << __FUNCTION__ <<
+        ": Caught a castor::exception::Exception"
+        ": " << ce.getMessage().str() << std::endl;
+    } catch(std::exception &se) {
+      threadParams->outAnErrorOccurred = true;
+      threadParams->outErrorStream <<
+        "ERROR"
+        ": " << __FUNCTION__ <<
+        ": Caught an std::exception"
+        ": " << se.what() << std::endl;
+    } catch(...) {
+      threadParams->outAnErrorOccurred = true;
+      threadParams->outErrorStream <<
+        "ERROR"
+        ": " << __FUNCTION__ <<
+        ": Caught an unknown exception";
+    }
+
+    try {
+      delete castor::BaseObject::services();
+    } catch(...) {
+      // Ignore any exception
+    }
+
+    return arg;
+  } // receiveNoMoreWorkFromBridge
 
 public:
 
@@ -439,26 +639,6 @@ public:
     m_tapeFlushConfigParams.setMaxFilesBeforeFlush(1,
       ConfigParamSource::UNDEFINED);
 
-    // Create the BridgeProtocolEngine
-    const bool logPeerOfCallbackConnectionsFromRtcpd = false;
-    const bool checkRtcpdIsConnectingFromLocalHost = false;
-    m_engine = newTestingBridgeProtocolEngine(
-      m_fileCloser,
-      m_bulkRequestConfigParams,
-      m_tapeFlushConfigParams,
-      m_cuuid,
-      m_bridgeListenSock,
-      m_initialRtcpdSockBridgeSide,
-      m_jobRequest,
-      m_volume,
-      m_nbFilesOnDestinationTape,
-      m_stoppingGracefully,
-      m_tapebridgeTransactionCounter,
-      logPeerOfCallbackConnectionsFromRtcpd,
-      checkRtcpdIsConnectingFromLocalHost,
-      m_clientProxy,
-      m_legacyTxRx);
-
     // Clear the list of threads to join with at tearDown
     m_threadsToJoinWithAtTearDown.clear();
   }
@@ -548,6 +728,27 @@ public:
    * shutdown logic of the legacy RTCOPY-protocol.
    */
   void testShutdownOfProtocolUsingLocalDomain() {
+    // Create the BridgeProtocolEngine for a migration session
+    m_volume.setMode(tapegateway::WRITE);
+    const bool logPeerOfCallbackConnectionsFromRtcpd = false;
+    const bool checkRtcpdIsConnectingFromLocalHost = false;
+    m_engine = newTestingBridgeProtocolEngine(
+      m_fileCloser,
+      m_bulkRequestConfigParams,
+      m_tapeFlushConfigParams,
+      m_cuuid,
+      m_bridgeListenSock,
+      m_initialRtcpdSockBridgeSide,
+      m_jobRequest,
+      m_volume,
+      m_nbFilesOnDestinationTape,
+      m_stoppingGracefully,
+      m_tapebridgeTransactionCounter,
+      logPeerOfCallbackConnectionsFromRtcpd,
+      checkRtcpdIsConnectingFromLocalHost,
+      m_clientProxy,
+      m_legacyTxRx);
+
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Check there are no I/O control-connections",
       0,
@@ -725,6 +926,27 @@ public:
    *   |                 |                             |
    */
   void testGetFirstFileToMigrateFromDisabledTapeUsingLocalDomain() {
+    // Create the BridgeProtocolEngine for a migration session
+    m_volume.setMode(tapegateway::WRITE);
+    const bool logPeerOfCallbackConnectionsFromRtcpd = false;
+    const bool checkRtcpdIsConnectingFromLocalHost = false;
+    m_engine = newTestingBridgeProtocolEngine(
+      m_fileCloser,
+      m_bulkRequestConfigParams,
+      m_tapeFlushConfigParams,
+      m_cuuid,
+      m_bridgeListenSock,
+      m_initialRtcpdSockBridgeSide,
+      m_jobRequest,
+      m_volume,
+      m_nbFilesOnDestinationTape,
+      m_stoppingGracefully,
+      m_tapebridgeTransactionCounter,
+      logPeerOfCallbackConnectionsFromRtcpd,
+      checkRtcpdIsConnectingFromLocalHost,
+      m_clientProxy,
+      m_legacyTxRx);
+
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Check there are no I/O control-connections",
       0,
@@ -930,7 +1152,7 @@ public:
   }
 
   /**
-   * This unit-test check that the BridgeProtocolEngine waits for all of its
+   * This unit-test checkd that the BridgeProtocolEngine waits for all of its
    * requests to the client for more work to be answered by the client before
    * ending a tape session, even in the event the client reports a DISABLED
    * tape.
@@ -1011,6 +1233,27 @@ public:
    * Now job j2 is outside of its tape session and is therefore stuck forever.
    */
   void testMigrationToDisabledTapeUsingLocalDomain() {
+    // Create the BridgeProtocolEngine for a migration session
+    m_volume.setMode(tapegateway::WRITE);
+    const bool logPeerOfCallbackConnectionsFromRtcpd = false;
+    const bool checkRtcpdIsConnectingFromLocalHost = false;
+    m_engine = newTestingBridgeProtocolEngine(
+      m_fileCloser,
+      m_bulkRequestConfigParams,
+      m_tapeFlushConfigParams,
+      m_cuuid,
+      m_bridgeListenSock,
+      m_initialRtcpdSockBridgeSide,
+      m_jobRequest,
+      m_volume,
+      m_nbFilesOnDestinationTape,
+      m_stoppingGracefully,
+      m_tapebridgeTransactionCounter,
+      logPeerOfCallbackConnectionsFromRtcpd,
+      checkRtcpdIsConnectingFromLocalHost,
+      m_clientProxy,
+      m_legacyTxRx);
+
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Check there are no I/O control-connections",
       0,
@@ -1497,6 +1740,9 @@ public:
     // report
     {
       tapegateway::EndNotificationErrorReport errorReport;
+      errorReport.setMountTransactionId(m_mountTransactionId);
+      errorReport.setAggregatorTransactionId(
+        fileMigrationReportList->aggregatorTransactionId());
       errorReport.setErrorCode(ECANCELED);
       errorReport.setErrorMessage("Error message");
 
@@ -1538,10 +1784,343 @@ public:
   }
 
   /**
+   * This unit-test checks that the BridgeProtocolEngine starts the graceful
+   * shutdown of the tape-session when it receives an error in response to a
+   * request for the next file to recall.
+   *
+   * RTCPD            BRIDGE              GATE            VMGR     SOMEBODY
+   *   |                 |                  |               |          |
+   *   |   more work?    |                  |               |          |
+   *   |---------------->|                  |               |          |
+   *   |                 |   more work?     |               |          |
+   *   |                 |----------------->|               |          |
+   *   |                 |                  |               |          |
+   *   |                 |       ERROR      |               |          |
+   *   |                 |<-----------------|               |          |
+   *   |     no more     |                  |               |          |
+   *   |<----------------|                  |               |          |
+   *   |                 |                  |               |          |
+   */
+  void testNoMoreRecallsDueToErrorFromTapegatewayUsingLocalDomain() {
+    // Create the BridgeProtocolEngine for a recall session
+    m_volume.setMode(tapegateway::READ);
+    const bool logPeerOfCallbackConnectionsFromRtcpd = false;
+    const bool checkRtcpdIsConnectingFromLocalHost = false;
+    m_engine = newTestingBridgeProtocolEngine(
+      m_fileCloser,
+      m_bulkRequestConfigParams,
+      m_tapeFlushConfigParams,
+      m_cuuid,
+      m_bridgeListenSock,
+      m_initialRtcpdSockBridgeSide,
+      m_jobRequest,
+      m_volume,
+      m_nbFilesOnDestinationTape,
+      m_stoppingGracefully,
+      m_tapebridgeTransactionCounter,
+      logPeerOfCallbackConnectionsFromRtcpd,
+      checkRtcpdIsConnectingFromLocalHost,
+      m_clientProxy,
+      m_legacyTxRx);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Check there are no I/O control-connections",
+      0,
+      m_engine->getNbDiskTapeIOControlConns());
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Check no RTCP_ENDOF_REQ messages have been received",
+      (uint32_t)0,
+      m_engine->getNbReceivedENDOF_REQs());
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Check the session with the rtcpd daemon is not being shutdown",
+      false,
+      m_engine->shuttingDownRtcpdSession());
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Check rtcpd session has not finished",
+      false,
+      m_engine->sessionWithRtcpdIsFinished());
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Check BridgeProtocolEngine should continue processing sockets",
+      true,
+      m_engine->continueProcessingSocks());
+
+    // Check the BridgeProtocolEngine can handle the case of no select events
+    {
+      struct timeval selectTimeout = {0, 0};
+      CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+        "Check handling of no select events",
+        m_engine->handleSelectEvents(selectTimeout));
+    }
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Check there are no I/O control-connections",
+      0,
+      m_engine->getNbDiskTapeIOControlConns());
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Check no RTCP_ENDOF_REQ messages have been received",
+      (uint32_t)0,
+      m_engine->getNbReceivedENDOF_REQs());
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Check the session with the rtcpd daemon is not being shutdown",
+      false,
+      m_engine->shuttingDownRtcpdSession());
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Check rtcpd session has not finished",
+      false,
+      m_engine->sessionWithRtcpdIsFinished());
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Check BridgeProtocolEngine should continue processing sockets",
+      true,
+      m_engine->continueProcessingSocks());
+
+    // Act as the rtcpd daemon and create a disk/tape I/O control-connection
+    // with the BridgeProtocolEngine
+    {
+      struct sockaddr_un listenAddr;
+      memset(&listenAddr, 0, sizeof(listenAddr));
+      listenAddr.sun_family = PF_LOCAL;
+      strncpy(listenAddr.sun_path, m_bridgeListenSockPath,
+        sizeof(listenAddr.sun_path) - 1);
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Check creation of disk/tape I/O control-connection",
+        0,
+        connect(m_ioControlConnectionSock,
+          (const struct sockaddr *)&listenAddr, sizeof(listenAddr)));
+    }
+      
+    // Act as the BridgeProtocolEngine and accept the disk/tape I/O
+    // control-connection from the rtcpd daemon
+    {
+      struct timeval selectTimeout = {0, 0};
+      CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+        "Check handling of the I/O control-connection connect event",
+        m_engine->handleSelectEvents(selectTimeout));
+    }
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Check the new I/O control-connection has been counted",
+      1,
+      m_engine->getNbDiskTapeIOControlConns());
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Check no RTCP_ENDOF_REQ messages have been received",
+      (uint32_t)0,
+      m_engine->getNbReceivedENDOF_REQs());
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Check the session with the rtcpd daemon is not being shutdown",
+      false,
+      m_engine->shuttingDownRtcpdSession());
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Check rtcpd session has not finished",
+      false,
+      m_engine->sessionWithRtcpdIsFinished());
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Check BridgeProtocolEngine should continue processing sockets",
+      true,
+      m_engine->continueProcessingSocks());
+
+    // Act as the rtcpd daemon and send a request for more work using the
+    // newly created disk/tape I/O control-connection
+    const char *const tapePath = "";
+    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+      "Check writeRTCP_REQUEST_MORE_WORK()",
+      unittest::writeRTCP_REQUEST_MORE_WORK(
+        m_ioControlConnectionSock,
+        m_volReqId,
+        tapePath));
+
+    // Act as the BridgeProtocolEngine and handle the first
+    // RTCP_REQUEST_MORE_WORK message from the rtcpd daemon
+    {
+      struct timeval selectTimeout = {0, 0};
+      CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+        "Check handling of the first RTCP_REQUEST_MORE_WORK message",
+        m_engine->handleSelectEvents(selectTimeout));
+    }
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Check the there is still only one I/O control-connection",
+      1,
+      m_engine->getNbDiskTapeIOControlConns());
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Check no RTCP_ENDOF_REQ messages have been received",
+      (uint32_t)0,
+      m_engine->getNbReceivedENDOF_REQs());
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Check the session with the rtcpd daemon is not being shutdown",
+      false,
+      m_engine->shuttingDownRtcpdSession());
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Check rtcpd session has not finished",
+      false,
+      m_engine->sessionWithRtcpdIsFinished());
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Check BridgeProtocolEngine should continue processing sockets",
+      true,
+      m_engine->continueProcessingSocks());
+
+    // Act as the client and accept the connection for more work from the
+    // BridgeProtocolEngine
+    int clientConnection1Fd = -1;
+    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+      "Check accept of first client-connection from the BridgeProtcolEngine",
+       clientConnection1Fd = unittest::netAcceptConnection(
+         m_clientListenSock, m_netTimeout));
+    castor::io::AbstractTCPSocket clientMarshallingSock1(clientConnection1Fd);
+    clientMarshallingSock1.setTimeout(1);
+
+    // Act as the client and read in the first request for more work
+    std::auto_ptr<IObject> moreWorkRequestObj;
+    tapegateway::FilesToRecallListRequest *moreWorkRequest = NULL;
+    {
+      CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+        "Read in request for more recall-work from the"
+        " BridgeProtocolEngine",
+        moreWorkRequestObj.reset(clientMarshallingSock1.readObject()));
+      CPPUNIT_ASSERT_MESSAGE(
+        "Check request for more recall-work from the"
+        " BridgeProtocolEngine was read in",
+        NULL != moreWorkRequestObj.get());
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Check FilesToRecallListRequest message is of the correct type",
+        (int)castor::OBJ_FilesToRecallListRequest,
+        moreWorkRequestObj->type());
+      moreWorkRequest = dynamic_cast<tapegateway::FilesToRecallListRequest*>
+        (moreWorkRequestObj.get());
+      CPPUNIT_ASSERT_MESSAGE(
+        "Check dynamic_cast to FilesToRecallListRequest",
+        NULL != moreWorkRequest);
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Check mountTransactionId of request for more work",
+        (u_signed64)m_mountTransactionId,
+        moreWorkRequest->mountTransactionId());
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Check maxFiles of request for more recall-work",
+        m_bulkRequestConfigParams.getBulkRequestRecallMaxFiles().getValue(),
+        (uint64_t)moreWorkRequest->maxFiles());
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Check maxBytes of request for more migration-work",
+        m_bulkRequestConfigParams.getBulkRequestRecallMaxBytes().getValue(),
+        (uint64_t)moreWorkRequest->maxBytes());
+    }
+
+    // Act as the client and send back an error
+    {
+      tapegateway::EndNotificationErrorReport errorReport;
+      errorReport.setMountTransactionId(m_mountTransactionId);
+      errorReport.setAggregatorTransactionId(
+        moreWorkRequest->aggregatorTransactionId());
+      errorReport.setErrorCode(ECANCELED);
+      errorReport.setErrorMessage("Error message");
+
+      CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+        "Send error report in response to first file recall",
+        clientMarshallingSock1.sendObject(errorReport));
+
+      clientMarshallingSock1.close();
+    }
+
+    // Create a thread to act as the rtcpd daemon and handle the RTCOPY
+    // messages from the BridgeProtocolEngine that represent "no more work"
+    pthread_t receiveNoMoreWorkFromBridgeThread;
+    memset(&receiveNoMoreWorkFromBridgeThread, '\0',
+      sizeof(receiveNoMoreWorkFromBridgeThread));
+    ReceiveNoMoreWorkFromBridgeThreadParams
+      receiveNoMoreWorkFromBridgeThreadParams;
+    receiveNoMoreWorkFromBridgeThreadParams.inIoControlConnectionSock =
+      m_ioControlConnectionSock;
+    receiveNoMoreWorkFromBridgeThreadParams.inLegacyTxRx =
+      &m_legacyTxRx;
+    {
+        const pthread_attr_t *const threadAttr = NULL;
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Create rtcpd thread to handle no more work messages from bridge",
+        0,
+        pthread_create(&receiveNoMoreWorkFromBridgeThread, threadAttr,
+        receiveNoMoreWorkFromBridge,
+        (void *)&receiveNoMoreWorkFromBridgeThreadParams));
+    }
+
+    // Push the id of the "receive no-more work" thread onto the back of the
+    // list of threads to be joined with at tearDown, because an exception may
+    // be thrown before this test has had a chance to call join
+    m_threadsToJoinWithAtTearDown.push_back(receiveNoMoreWorkFromBridgeThread);
+
+    // Act as the BridgeProtocolEngine and handle the error message from the
+    // client
+    {
+      struct timeval selectTimeout = {0, 0};
+      CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+        "Check handling of the error message from the client",
+        m_engine->handleSelectEvents(selectTimeout));
+    }
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Check the there is still only one I/O control-connection",
+      1,
+      m_engine->getNbDiskTapeIOControlConns());
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Check no RTCP_ENDOF_REQ messages have been received",
+      (uint32_t)0,
+      m_engine->getNbReceivedENDOF_REQs());
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Check the session with the rtcpd daemon is being shutdown gracefully",
+      true,
+      m_engine->shuttingDownRtcpdSession());
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Check rtcpd session has not finished",
+      false,
+      m_engine->sessionWithRtcpdIsFinished());
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Check BridgeProtocolEngine should continue processing sockets",
+      true,
+      m_engine->continueProcessingSocks());
+
+    // Join with the "receive no-more work" thread
+    void *receiveNoMoreWorkFromBridgeThreadResult = NULL; 
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Join with local rtcpd thread that read and dropped 3 messages",
+      0,
+      pthread_join(receiveNoMoreWorkFromBridgeThread,
+        &receiveNoMoreWorkFromBridgeThreadResult));
+
+    // Remove the id of the "receive no-more work" thread from the list of
+    // threads that should be joined with at tearDown
+    m_threadsToJoinWithAtTearDown.remove(receiveNoMoreWorkFromBridgeThread);
+
+    // Check the result of the "receive no-more work" thread
+    if(receiveNoMoreWorkFromBridgeThreadParams.outAnErrorOccurred) {
+      test_exception te(
+        receiveNoMoreWorkFromBridgeThreadParams.outErrorStream.str());
+      CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+        "The receive no-more work thread encountered an error",
+        throw te);
+    }  
+  }
+
+
+  /**
    * This unit-test checks that the BridgeProtocolEngine correctly generates
    * the hexadecimal tape-file identifiers used by the legacy RTCOPY-protocol.
    */
   void testGenerateMigrationTapeFileId() {
+    // Create the BridgeProtocolEngine for a migration session
+    m_volume.setMode(tapegateway::WRITE);
+    const bool logPeerOfCallbackConnectionsFromRtcpd = false;
+    const bool checkRtcpdIsConnectingFromLocalHost = false;
+    m_engine = newTestingBridgeProtocolEngine(
+      m_fileCloser,
+      m_bulkRequestConfigParams,
+      m_tapeFlushConfigParams,
+      m_cuuid,
+      m_bridgeListenSock,
+      m_initialRtcpdSockBridgeSide,
+      m_jobRequest,
+      m_volume,
+      m_nbFilesOnDestinationTape,
+      m_stoppingGracefully,
+      m_tapebridgeTransactionCounter,
+      logPeerOfCallbackConnectionsFromRtcpd,
+      checkRtcpdIsConnectingFromLocalHost,
+      m_clientProxy,
+      m_legacyTxRx);
+
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Check there are no I/O control-connections",
       0,
@@ -1583,6 +2162,7 @@ public:
   CPPUNIT_TEST(testShutdownOfProtocolUsingLocalDomain);
   CPPUNIT_TEST(testGetFirstFileToMigrateFromDisabledTapeUsingLocalDomain);
   CPPUNIT_TEST(testMigrationToDisabledTapeUsingLocalDomain);
+  CPPUNIT_TEST(testNoMoreRecallsDueToErrorFromTapegatewayUsingLocalDomain);
   CPPUNIT_TEST(testGenerateMigrationTapeFileId);
 
   CPPUNIT_TEST_SUITE_END();
