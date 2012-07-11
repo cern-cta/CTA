@@ -3092,7 +3092,7 @@ BEGIN
   -- Did we find at least one segment ?
   IF varAllCopyNbs.COUNT = 0 THEN
     -- log "No recallJob found"
-    logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_NO_JOB_FOUND, inFileId, inNsHost, 'stagerd', inLogParams);
+    logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_NO_SEG_FOUND, inFileId, inNsHost, 'stagerd', inLogParams);
     RETURN serrno.ESTNOSEGFOUND;
   END IF;
   BEGIN
