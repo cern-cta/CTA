@@ -19,18 +19,28 @@
 # *
 # * @(#)$RCSfile: castor_tools.py,v $ $Revision: 1.9 $ $Release$ $Date: 2009/03/23 15:47:41 $ $Author: sponcec3 $
 # *
-# * this class implements the distributed logging facility of CASTOR for the python
-# * tools. It basically uses syslog to send well formatted messages to the DLF server
+# * This class implements the distributed logging facility of CASTOR for
+# * the python tools. It basically uses syslog to send well formatted
+# * messages to the DLF server
 # *
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
 
-import syslog
+'''
+This class implements the distributed logging facility of CASTOR for
+the python tools. It basically uses syslog to send well formatted
+messages to the DLF server
+'''
+
+#import syslog
 import castor_tools
 import thread
 
-# a little, useful enum type, with parameterized base value
+import logging
+from logging.handlers import SysLogHandler as syslog
+
 def enum(*args, **kwds):
+    '''a little, useful enum type, with parameterized base value'''
     try:
         base = kwds['base']
     except KeyError:
@@ -38,63 +48,84 @@ def enum(*args, **kwds):
     enums = dict(zip(args, range(base, base+len(args))))
     return type('Enum', (), enums)
 
+
 _messages = {}
-_priorities = { syslog.LOG_EMERG:   "Emerg",
-                syslog.LOG_ALERT:   "Alert",
-                syslog.LOG_CRIT:    "Crit",
-                syslog.LOG_ERR:     "Error",
-                syslog.LOG_WARNING: "Warn",
-                syslog.LOG_NOTICE:  "Notice",
-                syslog.LOG_INFO:    "Info",
-                syslog.LOG_DEBUG:   "Debug" }
-_logmask = 0xff
+
+_priorities = { 
+        syslog.LOG_EMERG:   "Emerg",
+        syslog.LOG_ALERT:   "Alert",
+        syslog.LOG_CRIT:    "Crit",
+        syslog.LOG_ERR:     "Error",
+        syslog.LOG_WARNING: "Warn",
+        syslog.LOG_NOTICE:  "Notice",
+        syslog.LOG_INFO:    "Info",
+        syslog.LOG_DEBUG:   "Debug" 
+        }
+
 _initialized = False
 
-# Constants
-_LOG_PRIMASK = 0x07
+logger = None
+_handler = None
+_logmask = None
+
+
+class CastorFormater(logging.Formatter):
+    '''Logs formatter
+    NB: timestamp and hostname are handled by rsyslog'''
+    def format(self, record):
+        return "".join([record.name, "[", str(record.process), "]: ", 
+                        record.msg])
+
 
 def init(facility):
-    '''Initializes the distributed logging facility. Sets the facility name and the mask'''
+    '''Initializes the distributed logging facility. 
+    Sets the facility name and the mask'''
     # Default logmask to include all messages up to and including INFO
-    global _logmask, _initialized
-    syslog.setlogmask(syslog.LOG_UPTO(syslog.LOG_INFO))
+    global _logmask, _initialized, logger, _handler
+    _logmask = syslog.LOG_INFO
     # Find out which logmask should be used from castor.conf
     config = castor_tools.castorConf()
     smask = config.getValue(facility, "LogMask", "LOG_INFO")
     # Set the log mask
     try:
-        syslog.setlogmask(
-            syslog.LOG_UPTO(getattr(syslog, smask)))
-        _logmask = syslog.setlogmask(0)
+        _logmask = getattr(syslog, smask)
     except AttributeError:
         # Unknown mask name
-        raise AttributeError('Invalid Argument: ' + smask + ' for ' + facility + '/LogMask option in castor.conf')
+        raise AttributeError('Invalid Argument: ' + smask + ' for ' + 
+                              facility + '/LogMask option in castor.conf')
+    # Create logger
+    logger = logging.getLogger(facility)
+    # NB : we take msg up to DEBUG, because the effective level is 
+    # handled by _logmask
+    logger.setLevel(logging.DEBUG)
     # Open syslog
-    syslog.openlog(facility, syslog.LOG_PID, syslog.LOG_LOCAL3)
+    _handler = syslog(address='/dev/log', facility=syslog.LOG_LOCAL3)
+    _handler.setFormatter(CastorFormater())
+    logger.addHandler(_handler)
     _initialized = True
 
 def shutdown():
     '''Close/shutdown the distributed logging facility interface'''
-    global _logmask, _initialized
+    global _logmask, _initialized, _messages
     if not _initialized:
         return
-    # Close the syslog API
-    syslog.closelog()
+    # close sysloghandler
+    _handler.close()
     # Reset internal variables
-    _logmask = 0xff
+    _logmask = None
     _messages = {}
-    _initialize = False
+    _initialized = False
 
 def addmessages(msgs):
     '''Add new messages to the set of known messages'''
-    # add messages given to the list of known ones (or overwrite any existing one)
-    # and specifiy that we did not yet send them to the server
+    # add messages given to the list of known ones (or overwrite any 
+    # existing one) and specifiy that we did not yet send them to the server
     # messages should be passed as a dictionary with the key being the message
     # number and the value being the message itself
     for msgnb in msgs:
         _messages[msgnb] = [msgs[msgnb], False]
 
-def writep(priority, msgnb, **params):
+def _writep(priority, msgnb, **params):
     '''Writes a log message with the given priority.
     Parameters can be passed as a dictionnary of name/value.
     Some parameter names will trigger a specific interpretation :
@@ -103,20 +134,24 @@ def writep(priority, msgnb, **params):
     '''
     # check if API has been initialized
     if not _initialized:
-        return
+        return None
     # ignore messages whose priority is not of interest
-    if syslog.LOG_MASK(priority & _LOG_PRIMASK) & _logmask == 0:
-        return
+    if priority > _logmask:
+        return None
     # check whether this is the first log of this message
     if not _messages[msgnb][1]:
         # then send the message to the server
-        syslog.syslog(syslog.LOG_INFO | syslog.LOG_LOCAL2, 'MSGNO=%d MSGTEXT="%s"' % (msgnb, _messages[msgnb][0]))
+    #    syslog.syslog(syslog.LOG_INFO | syslog.LOG_LOCAL2, 'MSGNO=%d MSGTEXT="%s"' % (msgnb, _messages[msgnb][0]))
         _messages[msgnb][1] = True
     # build the message raw text
-    # note that the thread id is not the actual linux thread id but the "fake" python one
-    # note also that we cut it to 5 digits (potentially creating colisions) so that it does
-    # not exceed the length expected by som eother components (e.g. syslog)
-    rawmsg = 'LVL=%s TID=%d MSG="%s" ' % (_priorities[priority], thread.get_ident()%10000, _messages[msgnb][0])
+    # note that the thread id is not the actual linux thread id but the 
+    # "fake" python one
+    # note also that we cut it to 5 digits (potentially creating colisions)
+    # so that it does not exceed the length expected by som eother components
+    # (e.g. syslog)
+    rawmsg = 'LVL=%s TID=%d MSG="%s" ' % (_priorities[priority], 
+                                          thread.get_ident()%10000, 
+                                          _messages[msgnb][0])
     if params.has_key('fileid'):
         rawmsg += 'NSHOSTNAME=%s NSFILEID=%d ' % (params['fileid'])
     if params.has_key('reqid'):
@@ -151,34 +186,47 @@ def writep(priority, msgnb, **params):
         value = value.strip("'") # remove trailing and leading signal quotes
         rawmsg += '%s="%s" ' % (param[0:20], value[0:1024])
 
-    syslog.syslog(priority, rawmsg.rstrip())
+    return rawmsg.rstrip()
 
 def write(msgnb, **params):
     '''Writes a log message with the LOG_INFO priority.
-    See writep for more details'''
-    writep(syslog.LOG_INFO, msgnb, **params)
+    See _writep for more details'''
+    rawmsg = _writep(syslog.LOG_INFO, msgnb, **params)
+    if rawmsg:
+        logger.info(rawmsg)
 
 def writedebug(msgnb, **params):
     '''Writes a log message with the LOG_DEBUG priority.
-    See writep for more details'''
-    writep(syslog.LOG_DEBUG, msgnb, **params)
+    See _writep for more details'''
+    rawmsg = _writep(syslog.LOG_DEBUG, msgnb, **params)
+    if rawmsg:
+        logger.debug(rawmsg)
 
 def writeerr(msgnb, **params):
     '''Writes a log message with the LOG_ERR priority.
-    See writep for more details'''
-    writep(syslog.LOG_ERR, msgnb, **params)
+    See _writep for more details'''
+    rawmsg = _writep(syslog.LOG_ERR, msgnb, **params)
+    if rawmsg:
+        logger.error(rawmsg)
 
 def writewarning(msgnb, **params):
     '''Writes a log message with the LOG_WARNING priority.
-    See writep for more details'''
-    writep(syslog.LOG_WARNING, msgnb, **params)
+    See _writep for more details'''
+    rawmsg = _writep(syslog.LOG_WARNING, msgnb, **params)
+    if rawmsg:
+        logger.warning(rawmsg)
 
 def writenotice(msgnb, **params):
     '''Writes a log message with the LOG_NOTICE priority.
-    See writep for more details'''
-    writep(syslog.LOG_NOTICE, msgnb, **params)
+    See _writep for more details'''
+    rawmsg = _writep(syslog.LOG_NOTICE, msgnb, **params)
+    if rawmsg:
+        logger.warning(rawmsg)
 
 def writeemerg(msgnb, **params):
     '''Writes a log message with the LOG_EMERG priority.
-    See writep for more details'''
-    writep(syslog.LOG_EMERG, msgnb, **params)
+    See _writep for more details'''
+    rawmsg = _writep(syslog.LOG_EMERG, msgnb, **params)
+    if rawmsg:
+        logger.critical(rawmsg)
+
