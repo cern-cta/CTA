@@ -6,10 +6,10 @@
 nsenterclass \- define a new file class
 .SH SYNOPSIS
 .B nsenterclass
-<\f--name=CLASSNAME\fR> [\fIOPTION\fR]...
+--name=\fICLASSNAME\fR --id=\fIID\fR [\fIOPTION\fR]...
 .SH DESCRIPTION
 .B nsenterclass
-defines a new file class.
+defines a new file class with the specified name and id.
 .LP
 This command requires ADMIN privileges in the Cupv database.
 .SH OPTIONS
