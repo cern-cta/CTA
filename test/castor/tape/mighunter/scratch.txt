@@ -1,5 +1,0 @@
-# Add the tape-pool of the default service-class to the dev service-class
-modifySvcClass --Name dev --AddTapePool stager_dev04
-# Set the number of drives on the default and dev service-classes to 10 each
-modifySvcClass --Name default --NbDrives 10
-modifySvcClass --Name dev     --NbDrives 10
