@@ -414,7 +414,6 @@ include LOCAL_PATH/db/Makefile
 include LOCAL_PATH/rh/Makefile
 include LOCAL_PATH/vdqm/Makefile
 include LOCAL_PATH/gc/Makefile
-include LOCAL_PATH/repack/Makefile
 include LOCAL_PATH/monitoring/Makefile
 include LOCAL_PATH/stager/daemon/Makefile
 include LOCAL_PATH/job/Makefile
