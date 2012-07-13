@@ -3,62 +3,6 @@
 {% block header %}<h1>CASTOR COCKPIT : {{ metric_name }}</h1>{% endblock %}
 
 {% block content %}
-<div id="detailed-metric-content">
-    
-    <div class="metric_container" id="{{ metric_name }}">
-        <div class="metric-options">    
-            
-            <div class="filter-container">
-
-                <div class="quick-filter">
-                    Quick data filter : 
-                    <input class="data-filter" type="submit" value="last 3 hours" /> 
-                    <input class="data-filter" type="submit" value="last day" /> 
-                    <input class="data-filter" type="submit" value="last 3 days" /> 
-                    <input class="data-filter" type="submit" value="all data" />
-                    <br />
-                    <a class="toggle-filter">>Switch to advanced filter</a>
-                </div>
-
-                <div class="advanced-filter">
-                    Advanced data filter : 
-                    FROM <input type="text" class="datepicker-from" size="10"/> 
-                    TO <input type="text" class="datepicker-to" size="10"/> 
-                    <input type="submit" value="Filter" class="do-advanced-filter" /> 
-                    <br />
-                    <a class="toggle-filter">>Switch to quick filter</a>
-                </div>
-            </div>
-
-            <div class="plot-options">
-                Visualization options :
-                <input class="toggle-log-scale" type="submit" value="Logarithmic scale" title="Display data using logarithmic scale" />
-                Graph type :
-                <select class="graph-type">
-                    <option value="timeline">Timeline</option>
-                    <option value="sum">Sum</option>
-                    <option value="average">Average</option>
-                </select>
-                Auto-refresh : 
-                <select class="auto-refresh">
-                    <option value="0">Disabled</option>
-                    <option value="30000">30 sec</option>
-                    <option value="60000">1 min</option>
-                    <option value="300000">5 min</option>
-                </select>
-            </div>
-
-            <div class="plot-misc">
-                <a class="refresh-plot"><img src="/static/img/update.png" title="Refresh chart" alt="Refresh chart" /></a> 
-            </div>
-        </div>
-        <div id="metric-display">
-        </div>
-    </div>
-    <div class="metric-info">
-        <p><u>NB : metrics can easily be created and defined in "..../logprocessord/metrics/"</u></p>
-        {{ metric_file|linebreaks }}
-    </div>
-</div>
+    {% include "cockpit/metric-container.html" %}
 {% endblock %}
 

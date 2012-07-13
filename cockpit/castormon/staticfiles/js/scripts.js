@@ -7,6 +7,13 @@ var graphType = 'timeline';
 var autoRefreshTimer;
 
 
+function getYAxisMin(log) {
+    if (log == '')
+        return 0
+    else
+        return null
+}
+
 function drawChart(metric_container, from, to) {
     /*
      * Wrapper function to draw the chart, according to the type of graph selected
@@ -153,15 +160,26 @@ function getTimelineChartOptions(metric_name) {
             },
             plotOptions: {
                 series: {
+                    gapSize: 3,
                     marker: {
-                        enabled: false    
+                        enabled: false,
+                        states: {
+                            hover: {
+                                enabled: true,
+                                radius: 5
+                            }
+                        }
                     },
                     shadow: false,
                     animation: false,
-                    connectNulls: false,
+                    // connectNulls: false,
                     states: {
                         hover: {
-                                enabled: false
+                                enabled: true,
+                                lineWidth: 2,
+                                    marker: {
+                                        enabled: true
+                                    }
                             }
                     }
                 }              
@@ -198,7 +216,8 @@ function getTimelineChartOptions(metric_name) {
                 ordinal: false
             },
             yAxis: {
-                //min: 0,
+                // min: getYAxisMin(log),
+                startOnTick: false,
                 title: null,
                 type: log // 'logarithmic'
             },
@@ -209,15 +228,15 @@ function getTimelineChartOptions(metric_name) {
                 valueDecimals: 4
             },
             legend: {
-                        enabled: true,
-                        align: 'right',
-                        backgroundColor: '#FCFFC5',
-                        borderColor: 'black',
-                        borderWidth: 2,
-                        layout: 'vertical',
-                        verticalAlign: 'top',
-                        y: 100,
-                        shadow: true
+                enabled: true,
+                align: 'right',
+                backgroundColor: '#FCFFC5',
+                borderColor: 'black',
+                borderWidth: 2,
+                layout: 'vertical',
+                verticalAlign: 'top',
+                y: 100,
+                shadow: true
             },
             credits: {
                 enabled: false
@@ -317,7 +336,7 @@ function _drawTimelineChart(metric_container, from, to) {
                             name : datakey,
                             dataGrouping:{
                                 enabled: true,
-                                groupPixelWidth: 12
+                                groupPixelWidth: 10
                             },
                             data : []
                         };
@@ -327,7 +346,11 @@ function _drawTimelineChart(metric_container, from, to) {
                         $.each(json["data"], function(index, d) {
                             var tmp;
                             if (d[1][i] == 0) {
-                                tmp = null;
+                                if (log == '') {
+                                    tmp = 0;
+                                } else {
+                                    tmp = null;
+                                }
                             } else {
                                 tmp = d[1][i];
                             }
@@ -345,7 +368,7 @@ function _drawTimelineChart(metric_container, from, to) {
                             name : groupkey,
                             dataGrouping:{
                                 enabled: true,
-                                groupPixelWidth: 12
+                                groupPixelWidth: 10
                             },
                             data : []
                         };
@@ -355,7 +378,11 @@ function _drawTimelineChart(metric_container, from, to) {
                         $.each(json["data"], function(i, d) {
                             var tmp;
                             if (d[1][groupkey][0] == 0){
-                                tmp = null;
+                                if (log == '') {
+                                    tmp = 0;
+                                } else {
+                                    tmp = null;
+                                }
                             } else {
                                 tmp = d[1][groupkey][0];
                             }
@@ -448,7 +475,11 @@ function _drawSumChart(metric_container, from, to, format_type) {
                         $.each(json["data"]["keys1"], function (i, key1) {
                             var tmp;
                             if (json["data"][key1][key2][0] == 0){
-                                tmp = null;
+                                if (log == '') {
+                                    tmp = 0;
+                                } else {
+                                    tmp = null;
+                                }
                             } else {
                                 tmp = json["data"][key1][key2][0];
                             }
@@ -495,7 +526,7 @@ $(document).ready(function () {
      ************************/
     $('.metric_container').on('click', 'input.data-filter', function () {
         metric_container = $(this).closest('.metric_container');
-        metric_display = metric_container.find('div#metric-display');
+        metric_display = metric_container.find('div.metric-display');
         metric_container.find('input.data-filter.selected').removeClass('selected');
         $(this).attr('class', 'data-filter selected');
         if (chart) {
@@ -530,7 +561,7 @@ $(document).ready(function () {
             timestamp_to = null;
         }
         metric_container = $(this).closest('.metric_container');
-        metric_display = metric_container.find('div#metric-display');
+        metric_display = metric_container.find('div.metric-display');
         filter_type = 'advanced';
         if (chart) {
             updateHiddenSeries();
@@ -584,6 +615,31 @@ $(document).ready(function () {
         refreshRate = $(this).val();
         autoRefresh(refreshRate);
     });
+    // Default auto-refresh
+    defaultRefreshRate = "300000"
+    autoRefresh(defaultRefreshRate);
+    $('select.auto-refresh').val(defaultRefreshRate);
+
+    
+    /****************************
+     *  Display Metric details  *
+     ****************************/
+    $('a.metric-info-button').toggle( function() {
+        hide = "Hide metric details <img src=\"/static/img/arrow-up-double-2.png\" title=\"Hide details\" />"
+        $(this).empty().html(hide);
+        $(this).next('div.metric-info-text').slideDown();
+    }, function() {
+        show = "Metric details <img src=\"/static/img/arrow-down-double-2.png\" title=\"Show details\" />"
+        $(this).empty().html(show);
+        $(this).next('div.metric-info-text').slideUp();
+    });
+
+    /****************************
+     *  Auto size               *
+     ****************************/
+    docHeight = $(document).height(); // height of HTML document
+    h = docHeight * 0.8;
+    $('div.metric-display').height(h);
 
     // Datepicker
     $(".datepicker-from").datepicker();

@@ -102,7 +102,8 @@ def _format_data_timeline(result_data, nb_group_keys):
 def _format_data_sum(result_data, nb_group_keys):
     if nb_group_keys == 0:
         # we merge and add the elements of the lists one bye one
-        data = reduce((lambda x, y : [math.fsum(tup) for tup in zip(x,y)]), [raw[1] for raw in result_data])
+        data = reduce((lambda x, y : [math.fsum(tup) for tup in zip(x, y)]),
+                      [raw[1] for raw in result_data])
     elif nb_group_keys == 1:
         data = dict()
         # first get all the keys
@@ -146,7 +147,8 @@ def _format_data_sum(result_data, nb_group_keys):
 def _format_data_average(result_data, nb_group_keys):
     if nb_group_keys == 0:
         # we merge and add the elements of the lists one bye one
-        _sum = reduce((lambda x, y : [math.fsum(tup) for tup in zip(x,y)]), [raw[1] for raw in result_data])
+        _sum = reduce((lambda x, y : [math.fsum(tup) for tup in zip(x, y)]),
+                      [raw[1] for raw in result_data])
         data = [float(subsum) / len(result_data) for subsum in _sum]
     elif nb_group_keys == 1:
         data = dict()
@@ -387,6 +389,11 @@ def get_metric_data(request, metric_name, timestamp_from=None, timestamp_to=None
         # format the data according to the requested format, default is timeline
         res['data'] = _format_data.get(format_type, _format_data_timeline)(result_data, 2)
 
+    ###############################################################################################
+    #   4) three group keys
+    ###############################################################################################
+    elif len(groupkeys) == 3 :
+        pass
 
     res['debug']['end'] = str(datetime.datetime.now())# debug
 
@@ -398,7 +405,7 @@ def pushdata(request):
     """
     Method used to push data via a POST HTTP request
     """
-    begin_time=datetime.datetime.now() # debug
+    begin_time = datetime.datetime.now() # debug
     debug = dict() # debug
 
     if request.method != 'POST':
@@ -435,7 +442,7 @@ def pushdata(request):
         
         debug['django'] = [m.name for m in Metric.objects.all()]
         debug['mae'] = metrics_names
-        finish_time=datetime.datetime.now() # debug
+        finish_time = datetime.datetime.now() # debug
         delta = finish_time - begin_time # debug
         msg = "delta : "+str(delta)+" -- "+simplejson.dumps(debug)+" -- "+simplejson.dumps(data) # debug
         return HttpResponse('ok '+msg, status=200) # 200 OK
