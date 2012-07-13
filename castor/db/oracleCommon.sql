@@ -217,13 +217,13 @@ BEGIN
   -- delete migration jobs waiting on this recall
   DELETE /*+ INDEX (MigrationJob I_MigrationJob_CFVID) */
     FROM MigrationJob
-   WHERE castorfile = cfId AND status = tconst.MIGRATIONJOB_WAITINGONRECALL;
+   WHERE castorFile = cfId AND status = tconst.MIGRATIONJOB_WAITINGONRECALL;
   -- delete migrated segments if no migration jobs remain
   DECLARE
     unused NUMBER;
   BEGIN
-    SELECT /*+ INDEX_RS_ASC(MigrationJob I_MigrationJob_CFCopyNb) */ castorfile INTO unused
-      FROM MigrationJob WHERE castorfile = cfId;
+    SELECT /*+ INDEX_RS_ASC(MigrationJob I_MigrationJob_CFCopyNb) */ castorFile INTO unused
+      FROM MigrationJob WHERE castorFile = cfId AND ROWNUM < 2;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     DELETE FROM MigratedSegment WHERE castorfile = cfId;
   END;
