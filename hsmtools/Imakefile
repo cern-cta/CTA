@@ -17,6 +17,8 @@ DependsOnLibrary(vmgr,castorvmgr)
 DependsOnLibrary(rfio,castorrfio)
 
 NormalProgramTarget(reclaim,reclaim.o,,,755)
+InstallTarget(repack,755)
+
 NormalProgramTarget(adler32,adler32.o,,-lz,755)
 NormalProgramTarget(c2probe,c2probe.o,,,755)
 LOCAL_PATH/rfcpupd.c: $(CASTOR_ROOT)/rfio/rfcp.c
@@ -76,6 +78,8 @@ InstallTarget(vdqmdeletepriority,755)
 InstallNonExecFile(castor_tools.pm,$(PERL_LIBDIR),755)
 InstallNonExecFile(castor_tools.py,$(PYTHON_LIBDIR),644)
 InstallNonExecFile(dlf.py,$(PYTHON_LIBDIR),644)
+
+EXEMANPAGE(repack)
 
 EXEMANPAGE(enterfileclass)
 EXEMANPAGE(deletefileclass)
