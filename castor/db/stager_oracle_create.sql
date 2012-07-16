@@ -1193,8 +1193,6 @@ INSERT INTO CastorConfig
 INSERT INTO CastorConfig
   VALUES ('Repack', 'Protocol', 'rfio', 'The protocol that repack should use for writing files to disk');
 INSERT INTO CastorConfig
-  VALUES ('Repack', 'MaxNbConcurrentClients', '3', 'The maximum number of repacks clients that are able to start or abort concurrently. This are either clients starting repacks or aborting running repacks. Providing that each of them will take a DB core, this number should not exceed ~50% of the number of cores of the stager DB server');
-INSERT INTO CastorConfig
   VALUES ('Recall', 'MaxNbRetriesWithinMount', '2', 'The maximum number of retries for recalling a file within the same tape mount. When exceeded, the recall may still be retried in another mount. See Recall/MaxNbMount entry');
 INSERT INTO CastorConfig
   VALUES ('Recall', 'MaxNbMounts', '2', 'The maximum number of mounts for recalling a given file. When exceeded, the recall will be failed if no other tapecopy can be used. See also Recall/MaxNbRetriesWithinMount entry');
@@ -1354,11 +1352,10 @@ ON COMMIT PRESERVE ROWS;
 CREATE TABLE RmMasterLock (unused NUMBER);
 
 
-/**********/
-/* Repack */
-/**********/
-
+/********************************/
 /* DB link to the nameserver db */
+/********************************/
+
 PROMPT Configuration of the database link to the CASTOR name space
 UNDEF cnsUser
 ACCEPT cnsUser CHAR DEFAULT 'castor' PROMPT 'Enter the nameserver db username (default castor): ';
@@ -1369,12 +1366,35 @@ ACCEPT cnsDbName CHAR PROMPT 'Enter the nameserver db TNS name: ';
 CREATE DATABASE LINK remotens
   CONNECT TO &cnsUser IDENTIFIED BY &cnsPasswd USING '&cnsDbName';
 
+
+/**********/
+/* Repack */
+/**********/
+
 /* Temporary table used for listing segments of a tape */
 /* efficiently via DB link when repacking              */
 CREATE GLOBAL TEMPORARY TABLE RepackTapeSegments
  (fileId NUMBER, blockid RAW(4), fseq NUMBER, segSize NUMBER,
   copyNb NUMBER, fileClass NUMBER, allSegments VARCHAR2(2048))
  ON COMMIT PRESERVE ROWS;
+
+/* Definition of the RepackQueue table. This is the input for the repackManager DB job. */
+CREATE TABLE RepackQueue
+  (reqUUID VARCHAR2(36) CONSTRAINT NN_RepackQueue_reqUUID NOT NULL,
+   machine VARCHAR2(2048) CONSTRAINT NN_RepackQueue_machine NOT NULL,
+   pid INTEGER CONSTRAINT NN_RepackQueue_pid NOT NULL,
+   euid INTEGER CONSTRAINT NN_RepackQueue_euid NOT NULL,
+   egid INTEGER CONSTRAINT NN_RepackQueue_egid NOT NULL,
+   userName VARCHAR2(2048) CONSTRAINT NN_RepackQueue_userName NOT NULL,
+   svcClass INTEGER CONSTRAINT NN_RepackQueue_svcClass NOT NULL,
+   client INTEGER CONSTRAINT NN_RepackQueue_client NOT NULL,
+   repackVID VARCHAR2(10) CONSTRAINT NN_RepackQueue_repackVID NOT NULL,
+   creationTime NUMBER CONSTRAINT NN_RepackQueue_creationTime NOT NULL);
+ALTER TABLE RepackQueue ADD CONSTRAINT FK_RepackQueue_svcClass
+  FOREIGN KEY (svcClass) REFERENCES SvcClass(id);
+ALTER TABLE RepackQueue ADD CONSTRAINT FK_RepackQueue_client
+  FOREIGN KEY (client) REFERENCES Client(id);
+
 
 /*****************/
 /* logon trigger */
@@ -1713,13 +1733,13 @@ AS
 
   RECALL_FOUND_ONGOING_RECALL  CONSTANT VARCHAR2(2048) := 'createRecallCandidate: found already running recall';
   RECALL_UNKNOWN_NS_ERROR      CONSTANT VARCHAR2(2048) := 'createRecallCandidate: error when retrieving segments from namespace';
-  RECALL_NO_JOB_FOUND          CONSTANT VARCHAR2(2048) := 'createRecallCandidate: No RecallJob found';
+  RECALL_NO_SEG_FOUND          CONSTANT VARCHAR2(2048) := 'createRecallCandidate: no valid segment to recall found';
   RECALL_CREATING_RECALLJOB    CONSTANT VARCHAR2(2048) := 'createRecallCandidate: created new RecallJob';
   RECALL_MISSING_COPIES        CONSTANT VARCHAR2(2048) := 'createRecallCandidate: detected missing copies on tape';
   RECALL_MISSING_COPIES_NOOP   CONSTANT VARCHAR2(2048) := 'createRecallCandidate: detected missing copies on tape, but migrations ongoing';
   RECALL_MJ_FOR_MISSING_COPY   CONSTANT VARCHAR2(2048) := 'createRecallCandidate: create new MigrationJob to migrate missing copy';
   RECALL_COPY_STILL_MISSING    CONSTANT VARCHAR2(2048) := 'createRecallCandidate: could not find enough valid copy numbers to create missing copy';
-  MIGRATION_CANCEL_BY_VID      CONSTANT VARCHAR2(2048) := 'Canceling tape migration for given VID';
+  RECALL_MISSING_COPY_NO_ROUTE CONSTANT VARCHAR2(2048) := 'createRecallCandidate: no route to tape defined for missing copy';
   RECALL_CANCEL_BY_VID         CONSTANT VARCHAR2(2048) := 'Canceling tape recall for given VID';
   RECALL_CANCEL_RECALLJOB_VID  CONSTANT VARCHAR2(2048) := 'Canceling RecallJobs for given VID';
   RECALL_FAILING               CONSTANT VARCHAR2(2048) := 'Failing Recall(s)';
@@ -1734,6 +1754,7 @@ AS
   RECALL_FAILED                CONSTANT VARCHAR2(2048) := 'setBulkFileRecallResult: recall process failed, will retry if allowed';
   BULK_RECALL_COMPLETED        CONSTANT VARCHAR2(2048) := 'setBulkFileRecallResult: bulk recall completed';
   
+  MIGRATION_CANCEL_BY_VID      CONSTANT VARCHAR2(2048) := 'Canceling tape migration for given VID';
   MIGRATION_COMPLETED          CONSTANT VARCHAR2(2048) := 'setFileMigrated: db updates after full migration completed';
   MIGRATION_NOT_FOUND          CONSTANT VARCHAR2(2048) := 'setFileMigrated: unable to identify migration, giving up';
   MIGRATION_RETRY              CONSTANT VARCHAR2(2048) := 'setBulkFilesMigrationResult: migration failed, will retry if allowed';
@@ -1742,6 +1763,13 @@ AS
   MIGRATION_FAILED             CONSTANT VARCHAR2(2048) := 'failFileMigration: migration to tape failed for this file, giving up';
   MIGRATION_FAILED_NOT_FOUND   CONSTANT VARCHAR2(2048) := 'failFileMigration: file not found when failing migration';
   BULK_MIGRATION_COMPLETED     CONSTANT VARCHAR2(2048) := 'setBulkFileMigrationResult: bulk migration completed';
+
+  REPACK_SUBMITTED             CONSTANT VARCHAR2(2048) := 'New Repack request submitted';
+  REPACK_ABORTING              CONSTANT VARCHAR2(2048) := 'Aborting Repack process';
+  REPACK_JOB_ONGOING           CONSTANT VARCHAR2(2048) := 'repackManager: Repack processes still starting, no new ones will be started for this round';
+  REPACK_STARTING              CONSTANT VARCHAR2(2048) := 'repackManager: starting new Repack process';
+  REPACK_JOB_STATS             CONSTANT VARCHAR2(2048) := 'repackManager: Repack processes statistics';
+  REPACK_UNEXPECTED_EXCEPTION  CONSTANT VARCHAR2(2048) := 'handleRepackRequest: unexpected exception caught';
 END dlf;
 /
 
@@ -1752,8 +1780,10 @@ CREATE OR REPLACE PACKAGE serrno AS
   /* (s)errno values */
   ENOENT          CONSTANT PLS_INTEGER := 2;    /* No such file or directory */
   EACCES          CONSTANT PLS_INTEGER := 13;   /* Permission denied */
+  EBUSY           CONSTANT PLS_INTEGER := 16;   /* Device or resource busy */
   EEXIST          CONSTANT PLS_INTEGER := 17;   /* File exists */
   EISDIR          CONSTANT PLS_INTEGER := 21;   /* Is a directory */
+  EINVAL          CONSTANT PLS_INTEGER := 22;   /* Invalid argument */
   
   SEINTERNAL      CONSTANT PLS_INTEGER := 1015; /* Internal error */
   SECHECKSUM      CONSTANT PLS_INTEGER := 1037; /* Bad checksum */
@@ -1762,12 +1792,16 @@ CREATE OR REPLACE PACKAGE serrno AS
   ENSTOOMANYSEGS  CONSTANT PLS_INTEGER := 1406; /* Too many copies on tape */
   ENSOVERWHENREP  CONSTANT PLS_INTEGER := 1407; /* Cannot overwrite valid segment when replacing */
   ERTWRONGSIZE    CONSTANT PLS_INTEGER := 1613; /* (Recalled) file size incorrect */
+  ESTNOSEGFOUND   CONSTANT PLS_INTEGER := 1723; /* File has no copy on tape or no diskcopies are accessible */
   
   /* messages */
   ENOENT_MSG          CONSTANT VARCHAR2(2048) := 'No such file or directory';
   EACCES_MSG          CONSTANT VARCHAR2(2048) := 'Permission denied';
+  EBUSY_MSG           CONSTANT VARCHAR2(2048) := 'Device or resource busy';
   EEXIST_MSG          CONSTANT VARCHAR2(2048) := 'File exists';
   EISDIR_MSG          CONSTANT VARCHAR2(2048) := 'Is a directory';
+  EINVAL_MSG          CONSTANT VARCHAR2(2048) := 'Invalid argument';
+  
   SEINTERNAL_MSG      CONSTANT VARCHAR2(2048) := 'Internal error';
   SECHECKSUM_MSG      CONSTANT VARCHAR2(2048) := 'Checksum mismatch between segment and file';
   ENSFILECHG_MSG      CONSTANT VARCHAR2(2048) := 'File has been overwritten, request ignored';
@@ -1775,6 +1809,7 @@ CREATE OR REPLACE PACKAGE serrno AS
   ENSTOOMANYSEGS_MSG  CONSTANT VARCHAR2(2048) := 'Too many copies on tape';
   ENSOVERWHENREP_MSG  CONSTANT VARCHAR2(2048) := 'Cannot overwrite valid segment when replacing';
   ERTWRONGSIZE_MSG    CONSTANT VARCHAR2(2048) := 'Incorrect file size';
+  ESTNOSEGFOUND_MSG   CONSTANT VARCHAR2(2048) := 'File has no copy on tape or no diskcopies are accessible';
 END serrno;
 /
 /*******************************************************************
@@ -1996,13 +2031,13 @@ BEGIN
   -- delete migration jobs waiting on this recall
   DELETE /*+ INDEX (MigrationJob I_MigrationJob_CFVID) */
     FROM MigrationJob
-   WHERE castorfile = cfId AND status = tconst.MIGRATIONJOB_WAITINGONRECALL;
+   WHERE castorFile = cfId AND status = tconst.MIGRATIONJOB_WAITINGONRECALL;
   -- delete migrated segments if no migration jobs remain
   DECLARE
     unused NUMBER;
   BEGIN
-    SELECT /*+ INDEX_RS_ASC(MigrationJob I_MigrationJob_CFCopyNb) */ castorfile INTO unused
-      FROM MigrationJob WHERE castorfile = cfId;
+    SELECT /*+ INDEX_RS_ASC(MigrationJob I_MigrationJob_CFCopyNb) */ castorFile INTO unused
+      FROM MigrationJob WHERE castorFile = cfId AND ROWNUM < 2;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     DELETE FROM MigratedSegment WHERE castorfile = cfId;
   END;
@@ -2644,7 +2679,502 @@ END castorBW;
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleStager.sql,v  Revision: 1.752  Date: 2009/08/17 15:08:33  Author: sponcec3 
+ * PL/SQL code for Repack
+ *
+ * @author Castor Dev team, castor-dev@cern.ch
+ *******************************************************************/
+
+
+/* PL/SQL method to process bulk Repack abort requests */
+CREATE OR REPLACE PROCEDURE abortRepackRequest
+  (machine IN VARCHAR2,
+   euid IN INTEGER,
+   egid IN INTEGER,
+   pid IN INTEGER,
+   userName IN VARCHAR2,
+   clientIP IN INTEGER,
+   parentUUID IN VARCHAR2,
+   rSubResults OUT castor.FileResult_Cur) AS
+  svcClassId NUMBER;
+  reqId NUMBER;
+  clientId NUMBER;
+  varCreationTime NUMBER;
+  rIpAddress INTEGER;
+  rport INTEGER;
+  rReqUuid VARCHAR2(2048);
+  varVID VARCHAR2(10);
+BEGIN
+  -- mark the repack request as being aborted
+  UPDATE StageRepackRequest SET status = tconst.REPACK_ABORTING
+   WHERE reqId = parentUUID
+  RETURNING repackVID INTO varVID;
+  COMMIT;
+  logToDLF(parentUUID, dlf.LVL_SYSTEM, dlf.REPACK_ABORTING, 0, '', 'repackd', 'TPVID=' || varVID);
+  -- get unique ids for the request and the client and get current time
+  SELECT ids_seq.nextval INTO reqId FROM DUAL;
+  SELECT ids_seq.nextval INTO clientId FROM DUAL;
+  varCreationTime := getTime();
+  -- insert the request itself
+  INSERT INTO StageAbortRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName,
+    userTag, reqId, creationTime, lastModificationTime, parentUuid, id, svcClass, client)
+  VALUES (0, userName, euid, egid, 0, pid, machine, '', '', uuidgen(),
+    varCreationTime, varCreationTime, parentUUID, reqId, 0, clientId);
+  -- insert the client information
+  INSERT INTO Client (ipAddress, port, version, secure, id)
+  VALUES (clientIP, 0, 0, 0, clientId);
+  -- process the abort
+  processBulkAbort(reqId, rIpAddress, rport, rReqUuid);
+  -- mark the repack request as ABORTED
+  UPDATE StageRepackRequest SET status = tconst.REPACK_ABORTED WHERE reqId = parentUUID;
+  -- return all results
+  OPEN rSubResults FOR
+    SELECT fileId, nsHost, errorCode, errorMessage FROM ProcessBulkRequestHelper;
+END;
+/
+
+
+/* PL/SQL method to submit a Repack request. This method returns immediately
+   and the processing is done asynchronously by a DB job. */
+CREATE OR REPLACE PROCEDURE submitRepackRequest
+  (inMachine IN VARCHAR2,
+   inEuid IN INTEGER,
+   inEgid IN INTEGER,
+   inPid IN INTEGER,
+   inUserName IN VARCHAR2,
+   svcClassName IN VARCHAR2,
+   clientIP IN INTEGER,
+   reqVID IN VARCHAR2) AS
+  varClientId INTEGER;
+  varSvcClassId INTEGER;
+  varReqUUID VARCHAR2(36);
+BEGIN
+  -- do prechecks and get the service class
+  varSvcClassId := insertPreChecks(inEuid, inEgid, svcClassName, 119);
+  -- insert the client information
+  INSERT INTO Client (ipAddress, port, version, secure, id)
+  VALUES (clientIP, 0, 0, 0, ids_seq.nextval)
+  RETURNING id INTO varClientId;
+  -- insert the request itself in the RepackQueue
+  INSERT INTO RepackQueue (reqUUID, machine, euid, egid, pid, userName, svcClass, client, repackVID, creationTime)
+  VALUES (uuidgen(), inMachine, inEuid, inEgid, inPid, inUserName, varSvcClassId, varClientId, reqVID, getTime())
+  RETURNING reqUUID INTO varReqUUID;
+  COMMIT;
+  logToDLF(varReqUUID, dlf.LVL_SYSTEM, dlf.REPACK_SUBMITTED, 0, '', 'repackd', 'TPVID=' || reqVID);
+END;
+/
+
+/* PL/SQL method to handle a Repack request. This is performed as part of a DB job. */
+CREATE OR REPLACE PROCEDURE handleRepackRequest
+  (inReqUUID IN VARCHAR2,
+   inMachine IN VARCHAR2,
+   inEuid IN INTEGER,
+   inEgid IN INTEGER,
+   inPid IN INTEGER,
+   inUserName IN VARCHAR2,
+   svcClassId IN VARCHAR2,
+   clientId IN INTEGER,
+   inReqVID IN VARCHAR2,
+   inCreationTime IN NUMBER) AS
+  varReqId INTEGER;
+  cfId INTEGER;
+  dcId INTEGER;
+  repackProtocol VARCHAR2(2048);
+  result NUMBER;
+  nsHostName VARCHAR2(2048);
+  lastKnownFileName VARCHAR2(2048);
+  varRecallGroupId INTEGER;
+  varRecallGroupName VARCHAR2(2048);
+  unused INTEGER;
+  firstCF boolean := True;
+  nbFilesProcessed NUMBER := 0;
+  nbFilesFailed NUMBER := 0;
+  isOngoing boolean := False;
+BEGIN
+  INSERT INTO StageRepackRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName,
+    userTag, reqId, creationTime, lastModificationTime, repackVid, id, svcClass, client, status)
+  VALUES (0, inUserName, inEuid, inEgid, 0, inPid, inMachine, (SELECT name FROM SvcClass WHERE id = svcClassId),
+    '', inReqUUID, inCreationTime, inCreationTime, inReqVID, ids_seq.nextval, svcClassId, clientId, tconst.REPACK_STARTING)
+  RETURNING id INTO varReqId;
+  -- commit so that the repack request is visible, even if empty for the moment
+  COMMIT;
+  -- Check which protocol should be used for writing files to disk
+  repackProtocol := getConfigOption('Repack', 'Protocol', 'rfio');
+  -- name server host name
+  nsHostName := getConfigOption('stager', 'nsHost', '');
+  -- find out the recallGroup to be used for this request
+  getRecallGroup(inEuid, inEgid, varRecallGroupId, varRecallGroupName);
+  -- Get the list of files to repack from the NS DB via DBLink and store them in memory
+  -- in a temporary table. We do that so that we do not keep an open cursor for too long
+  -- in the nameserver DB
+  INSERT INTO RepackTapeSegments (SELECT s_fileid, blockid, fseq, segSize,
+                                         copyno, fileclass,
+                                         (SELECT LISTAGG(TO_CHAR(oseg.copyno)||','||oseg.vid, ',') 
+                                          WITHIN GROUP (ORDER BY copyno)
+                                            FROM Cns_Seg_Metadata@remotens oseg
+                                           WHERE oseg.s_fileid = seg.s_fileid
+                                             AND oseg.s_status = '-'
+                                           GROUP BY oseg.s_fileid)
+                                    FROM Cns_Seg_Metadata@remotens seg, Cns_File_Metadata@remotens fileEntry
+                                   WHERE seg.vid = inReqVID
+                                     AND seg.s_fileid = fileEntry.fileid
+                                     AND seg.s_status = '-'
+                                     AND fileEntry.status != 'D');
+  FOR segment IN (SELECT * FROM RepackTapeSegments) LOOP
+    DECLARE
+      varSubreqId INTEGER;
+      varSubreqUUID VARCHAR2(2048);
+      varSrStatus INTEGER := dconst.SUBREQUEST_REPACK;
+      varMjStatus INTEGER := tconst.MIGRATIONJOB_PENDING;
+      varNbCopies INTEGER;
+      varSrErrorCode INTEGER := 0;
+      varSrErrorMsg VARCHAR2(2048) := NULL;
+      varWasRecalled NUMBER;
+      varMigrationTriggered BOOLEAN := False;
+    BEGIN
+      -- Commit from time to time
+      IF nbFilesProcessed = 1000 THEN
+        COMMIT;
+        firstCF := TRUE;
+        nbFilesProcessed := 0;
+      END IF;
+      -- lastKnownFileName we will have in the DB
+      lastKnownFileName := CONCAT('Repack_', TO_CHAR(segment.fileid));
+      -- find the Castorfile (and take a lock on it)
+      DECLARE
+        locked EXCEPTION;
+        PRAGMA EXCEPTION_INIT (locked, -54);
+      BEGIN
+        -- This may raise a Locked exception as we do not want to wait for locks (except on first file).
+        -- In such a case, we commit what we've done so far and retry this file, this time waiting for the lock.
+        -- The reason for such a complex code is to avoid commiting each file separately, as it would be
+        -- too heavy. On the other hand, we still need to avoid dead locks.
+        -- Note that we pass 0 for the subrequest id, thus the subrequest will not be attached to the
+        -- CastorFile. We actually attach it when we create it.
+        selectCastorFileInternal(segment.fileid, nsHostName, segment.fileclass,
+                                 segment.segSize, lastKnownFileName, 0, inCreationTime, firstCF, cfid, unused);
+        firstCF := FALSE;
+      EXCEPTION WHEN locked THEN
+        -- commit what we've done so far
+        COMMIT;
+        -- And lock the castorfile (waiting this time)
+        selectCastorFileInternal(segment.fileid, nsHostName, segment.fileclass,
+                                 segment.segSize, lastKnownFileName, 0, inCreationTime, TRUE, cfid, unused);
+      END;
+      nbFilesProcessed := nbFilesProcessed + 1;
+      -- create  subrequest for this file.
+      -- Note that the svcHandler is not set. It will actually never be used as repacks are handled purely in PL/SQL
+      INSERT INTO SubRequest (retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, creationTime, lastModificationTime, answered, errorCode, errorMessage, requestedFileSystems, svcHandler, id, diskcopy, castorFile, parent, status, request, getNextStatus, reqType)
+      VALUES (0, lastKnownFileName, repackProtocol, segment.segSize, 0, uuidGen(), 0, 0, inCreationTime, inCreationTime, 1, 0, '', NULL, 'NotNullNeeded', ids_seq.nextval, 0, cfId, NULL, dconst.SUBREQUEST_START, varReqId, 0, 119)
+      RETURNING id, subReqId INTO varSubreqId, varSubreqUUID;
+      -- if the file is being overwritten, fail
+      SELECT count(DiskCopy.id) INTO varNbCopies
+        FROM DiskCopy
+       WHERE DiskCopy.castorfile = cfId
+         AND DiskCopy.status = dconst.DISKCOPY_STAGEOUT;
+      IF varNbCopies > 0 THEN
+        varSrStatus := dconst.SUBREQUEST_FAILED;
+        varSrErrorCode := serrno.EBUSY;
+        varSrErrorMsg := 'File is currently being overwritten';
+        nbFilesFailed := nbFilesFailed + 1;
+      ELSE
+        -- find out whether this file is already staged
+        SELECT /*+ INDEX(DC I_DiskCopy_CastorFile) */ count(DC.id)
+          INTO varNbCopies
+          FROM DiskCopy DC, FileSystem, DiskServer
+         WHERE DC.castorfile = cfId
+           AND DC.fileSystem = FileSystem.id
+           AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
+           AND FileSystem.diskserver = DiskServer.id
+           AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+           AND DC.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR);
+        IF varNbCopies = 0 THEN
+          -- find out whether this file is already being recalled
+          SELECT count(*) INTO varWasRecalled FROM RecallJob WHERE castorfile = cfId AND ROWNUM < 2;
+          IF varWasRecalled = 0 THEN
+            -- trigger recall
+            triggerRepackRecall(cfId, segment.fileid, nsHostName, segment.blockid,
+                                segment.fseq, segment.copyNb, inEuid, inEgid,
+                                varRecallGroupId, svcClassId, inReqVID, segment.segSize,
+                                segment.fileclass, segment.allSegments, inReqUUID, varSubreqUUID, varRecallGroupName);
+          END IF;
+          -- file is being recalled
+          varSrStatus := dconst.SUBREQUEST_WAITTAPERECALL;
+          isOngoing := TRUE;
+        END IF;
+        -- deal with migrations
+        IF varSrStatus = dconst.SUBREQUEST_WAITTAPERECALL THEN
+          varMJStatus := tconst.MIGRATIONJOB_WAITINGONRECALL;
+        END IF;
+        DECLARE
+          noValidCopyNbFound EXCEPTION;
+          PRAGMA EXCEPTION_INIT (noValidCopyNbFound, -20123);
+          noMigrationRoute EXCEPTION;
+          PRAGMA EXCEPTION_INIT (noMigrationRoute, -20100);
+        BEGIN
+          triggerRepackMigration(cfId, inReqVID, segment.fileid, segment.copyNb, segment.fileclass,
+                                 segment.segSize, segment.allSegments, varMJStatus, varMigrationTriggered);
+          IF varMigrationTriggered THEN
+            -- update STAGED diskcopies to CANBEMIGR
+            UPDATE DiskCopy SET status = 10  -- DISKCOPY_CANBEMIGR
+             WHERE castorFile = cfId AND status = 0;  -- DISKCOPY_STAGED
+          END IF;
+          isOngoing := True;
+        EXCEPTION WHEN noValidCopyNbFound OR noMigrationRoute THEN
+          -- cleanup recall part if needed
+          IF varWasRecalled = 0 THEN
+            DELETE FROM RecallJob WHERE castorFile = cfId;
+          END IF;
+          -- fail SubRequest
+          varSrStatus := dconst.SUBREQUEST_FAILED;
+          varSrErrorCode := serrno.EINVAL;
+          varSrErrorMsg := SQLERRM;
+          nbFilesFailed := nbFilesFailed + 1;
+        END;
+      END IF;
+      -- update SubRequest
+      UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id) */ SubRequest
+         SET status = varSrStatus,
+             errorCode = varSrErrorCode,
+             errorMessage = varSrErrorMsg
+       WHERE id = varSubreqId;
+    EXCEPTION WHEN OTHERS THEN
+      -- something went wrong: log "handleRepackRequest: unexpected exception caught"
+      varSrErrorMsg := 'Oracle error caught : ' || SQLERRM;
+      logToDLF(NULL, dlf.LVL_ERROR, dlf.REPACK_UNEXPECTED_EXCEPTION, segment.fileId, nsHostName, 'repackd',
+        'errorCode=' || to_char(SQLCODE) ||' errorMessage="' || varSrErrorMsg
+        ||'" stackTrace="' || dbms_utility.format_error_backtrace ||'"');
+      -- cleanup and fail SubRequest
+      IF varWasRecalled = 0 THEN
+        DELETE FROM RecallJob WHERE castorFile = cfId;
+      END IF;
+      IF varMigrationTriggered THEN
+        DELETE FROM MigrationJob WHERE castorFile = cfId;
+        DELETE FROM MigratedSegment WHERE castorFile = cfId;
+      END IF;
+      UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id) */ SubRequest
+         SET status = dconst.SUBREQUEST_FAILED,
+             errorCode = serrno.SEINTERNAL,
+             errorMessage = varSrErrorMsg
+       WHERE id = varSubreqId;
+    END;
+  END LOOP;
+  -- cleanup RepackTapeSegments
+  EXECUTE IMMEDIATE 'TRUNCATE TABLE RepackTapeSegments';
+  -- update status of the RepackRequest
+  IF isOngoing THEN
+    UPDATE StageRepackRequest SET status = tconst.REPACK_ONGOING WHERE StageRepackRequest.id = varReqId;
+  ELSE
+    IF nbFilesFailed > 0 THEN
+      UPDATE StageRepackRequest SET status = tconst.REPACK_FAILED WHERE StageRepackRequest.id = varReqId;
+    ELSE
+      -- CASE of an 'empty' repack : the tape had no files at all
+      UPDATE StageRepackRequest SET status = tconst.REPACK_FINISHED WHERE StageRepackRequest.id = varReqId;
+    END IF;
+  END IF;
+  COMMIT;
+END;
+/
+
+/* PL/SQL procedure implementing triggerRepackMigration */
+CREATE OR REPLACE PROCEDURE triggerRepackMigration
+(cfId IN INTEGER, vid IN VARCHAR2, fileid IN INTEGER, copyNb IN INTEGER,
+ fileclass IN INTEGER, fileSize IN INTEGER, allSegments IN VARCHAR2,
+ MJStatus IN INTEGER, migrationTriggered OUT boolean) AS
+  varMjId INTEGER;
+  varNb INTEGER;
+  varDestCopyNb INTEGER;
+  varNbCopies INTEGER;
+  varAllSegments strListTable;
+BEGIN
+  -- check whether we already have a migrationJob for this copy of the file
+  SELECT id INTO varMjId
+    FROM MigrationJob
+   WHERE castorFile = cfId
+     AND destCopyNb = copyNb;
+  -- we have a migrationJob for this copy ! This means that the file has been overwritten
+  -- and the new version is about to go to tape. We thus don't have anything to do
+  -- for this file
+  migrationTriggered := False;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- no migration job for this copyNb, we can proceed
+  -- first let's parse the list of all segments
+  SELECT * BULK COLLECT INTO varAllSegments
+    FROM TABLE(strTokenizer(allSegments));
+  DECLARE
+    varAllCopyNbs "numList" := "numList"();
+    varAllVIDs strListTable := strListTable();
+  BEGIN
+    FOR i IN varAllSegments.FIRST .. varAllSegments.LAST/2 LOOP
+      varAllCopyNbs.EXTEND;
+      varAllCopyNbs(i) := TO_NUMBER(varAllSegments(2*i-1));
+      varAllVIDs.EXTEND;
+      varAllVIDs(i) := varAllSegments(2*i);
+    END LOOP;
+    -- find the new copy number to be used. This is the minimal one
+    -- that is lower than the allowed number of copies and is not
+    -- already used by an ongoing migration or by a valid migrated copy
+    SELECT nbCopies INTO varNbCopies FROM FileClass WHERE classId = fileclass;
+    FOR i IN 1 .. varNbCopies LOOP
+      -- if we are reusing the original copy number, it's ok
+      IF i = copyNb THEN
+        varDestCopyNb := i;
+      ELSE
+        BEGIN
+          -- check whether this copy number is already in use by a valid copy
+          SELECT * INTO varNb FROM TABLE(varAllCopyNbs)
+           WHERE COLUMN_VALUE=i;
+          -- this copy number is in use, go to next one
+        EXCEPTION WHEN NO_DATA_FOUND THEN
+          BEGIN
+            -- check whether this copy number is in use by an ongoing migration
+            SELECT destCopyNb INTO varNb FROM MigrationJob WHERE castorFile = cfId AND destCopyNb = i;
+            -- this copy number is in use, go to next one
+          EXCEPTION WHEN NO_DATA_FOUND THEN
+            -- copy number is not in use, we take it
+            varDestCopyNb := i;
+            EXIT;
+          END;
+        END;
+      END IF;
+    END LOOP;
+    IF varDestCopyNb IS NULL THEN
+      RAISE_APPLICATION_ERROR (-20123,
+        'Unable to find a valid copy number for the migration of file ' ||
+        TO_CHAR (fileid) || ' in triggerRepackMigration. ' ||
+        'The file probably has too many valid copies.');
+    END IF;
+    -- create new migration
+    initMigration(cfId, fileSize, vid, copyNb, varDestCopyNb, MJStatus);
+    -- create migrated segments for the existing segments if there are none
+    SELECT /*+ INDEX_RS_ASC (MigratedSegment I_MigratedSegment_CFCopyNbVID) */ count(*) INTO varNb
+      FROM MigratedSegment
+     WHERE castorFile = cfId;
+    IF varNb = 0 THEN
+      FOR i IN varAllCopyNbs.FIRST .. varAllCopyNbs.LAST LOOP
+        INSERT INTO MigratedSegment (castorFile, copyNb, VID)
+        VALUES (cfId, varAllCopyNbs(i), varAllVIDs(i));
+      END LOOP;
+    END IF;
+    -- all is fine, migration was triggered
+    migrationTriggered := True;
+  END;
+END;
+/
+
+/* PL/SQL procedure implementing triggerRepackRecall
+ * this triggers a recall in the repack context
+ */
+CREATE OR REPLACE PROCEDURE triggerRepackRecall
+(inCfId IN INTEGER, inFileId IN INTEGER, inNsHost IN VARCHAR2, inBlock IN RAW,
+ inFseq IN INTEGER, inCopynb IN INTEGER, inEuid IN INTEGER, inEgid IN INTEGER,
+ inRecallGroupId IN INTEGER, inSvcClassId IN INTEGER, inVid IN VARCHAR2, inFileSize IN INTEGER,
+ inFileClassId IN INTEGER, inAllSegments IN VARCHAR2, inReqUUID IN VARCHAR2,
+ inSubReqUUID IN VARCHAR2, inRecallGroupName IN VARCHAR2) AS
+  varLogParam VARCHAR2(2048);
+  varAllCopyNbs "numList" := "numList"();
+  varAllVIDs strListTable := strListTable();
+  varAllSegments strListTable;
+BEGIN
+  -- create recallJob for the given VID, copyNb, etc.
+  INSERT INTO RecallJob (id, castorFile, copyNb, recallGroup, svcClass, euid, egid,
+                         vid, fseq, status, fileSize, creationTime, blockId, fileTransactionId)
+  VALUES (ids_seq.nextval, inCfId, inCopynb, inRecallGroupId, inSvcClassId,
+          inEuid, inEgid, inVid, inFseq, tconst.RECALLJOB_PENDING, inFileSize, getTime(),
+          inBlock, NULL);
+  -- log "created new RecallJob"
+  varLogParam := 'REQID=' || inReqUUID || ' SUBREQID=' || inSubReqUUID || ' RecallGroup=' || inRecallGroupName;
+  logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_CREATING_RECALLJOB, inFileId, inNsHost, 'repackd',
+           varLogParam || ' fileClass=' || TO_CHAR(inFileClassId) || ' CopyNb=' || TO_CHAR(inCopynb)
+           || ' TPVID=' || inVid || ' FSEQ=' || TO_CHAR(inFseq) || ' FileSize=' || TO_CHAR(inFileSize));
+  -- create missing segments if needed
+  SELECT * BULK COLLECT INTO varAllSegments
+    FROM TABLE(strTokenizer(inAllSegments));
+  FOR i IN varAllSegments.FIRST .. varAllSegments.LAST/2 LOOP
+    varAllCopyNbs.EXTEND;
+    varAllCopyNbs(i) := TO_NUMBER(varAllSegments(2*i-1));
+    varAllVIDs.EXTEND;
+    varAllVIDs(i) := varAllSegments(2*i);
+  END LOOP;
+  createMJForMissingSegments(inCfId, inFileSize, inFileClassId, varAllCopyNbs,
+                             varAllVIDs, inFileId, inNsHost, varLogParam);
+END;
+/
+
+
+/* PL/SQL procedure implementing repackManager, the repack job
+   that really handles all repack requests */
+CREATE OR REPLACE PROCEDURE repackManager AS
+  varReqUUID VARCHAR2(36);
+  varMachine VARCHAR2(2048);
+  varEuid INTEGER;
+  varEgid INTEGER;
+  varPid INTEGER;
+  varUserName VARCHAR2(2048);
+  varSvcClassId INTEGER;
+  varClientId INTEGER;
+  varRepackVID VARCHAR2(10);
+  varCreationTime NUMBER;
+  varStartTime TIMESTAMP;
+  nbRepacks INTEGER;
+BEGIN
+  SELECT count(*) INTO nbRepacks
+    FROM StageRepackRequest
+   WHERE status = tconst.REPACK_STARTING;
+  IF nbRepacks > 0 THEN
+    -- a previous instance of this job is still running, give up for this round
+    logToDLF(NULL, dlf.LVL_SYSTEM, dlf.REPACK_JOB_ONGOING, 0, '', 'repackd', '');
+    RETURN;
+  END IF;
+  varStartTime := SYSTIMESTAMP;
+  WHILE TRUE LOOP
+    varReqUUID := NULL;
+    -- get an outstanding repack to start - we're alone, no need to take special locks
+    DELETE FROM RepackQueue
+     WHERE creationTime = (SELECT min(creationTime) FROM RepackQueue)
+    RETURNING reqUUID, machine, euid, egid, pid, userName, svcClass, client, repackVID, creationTime
+    INTO varReqUUID, varMachine, varEuid, varEgid, varPid, varUserName,
+      varSvcClassId, varClientId, varRepackVID, varCreationTime;
+    -- if no new repack is found to start, terminate
+    EXIT WHEN varReqUUID IS NULL;
+    -- log and start the repack for this request: this can take some considerable time
+    logToDLF(varReqUUID, dlf.LVL_SYSTEM, dlf.REPACK_STARTING, 0, '', 'repackd', 'TPVID=' || varRepackVID);
+    handleRepackRequest(varReqUUID, varMachine, varEuid, varEgid, varPid, varUserName, varSvcClassId,
+                        varClientId, varRepackVID, varCreationTime);
+    nbRepacks := nbRepacks + 1;
+  END LOOP;
+  IF nbRepacks > 0 THEN
+    -- log some statistics
+    logToDLF(NULL, dlf.LVL_SYSTEM, dlf.REPACK_JOB_STATS, 0, '', 'repackd',
+      'nbStarted=' || TO_CHAR(nbRepacks) || ' elapsedTime=' || getSecs(varStartTime, SYSTIMESTAMP));
+  END IF;
+END;
+/
+
+
+/*
+ * Database jobs
+ */
+BEGIN
+  -- Remove database jobs before recreating them
+  FOR j IN (SELECT job_name FROM user_scheduler_jobs
+             WHERE job_name = 'REPACKMANAGERJOB')
+  LOOP
+    DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
+  END LOOP;
+
+  -- Create a db job to be run every minute executing the startMigrationMounts procedure
+  DBMS_SCHEDULER.CREATE_JOB(
+      JOB_NAME        => 'RepackManagerJob',
+      JOB_TYPE        => 'PLSQL_BLOCK',
+      JOB_ACTION      => 'BEGIN startDbJob(''BEGIN repackManager(); END;'', ''repackd''); END;',
+      JOB_CLASS       => 'CASTOR_JOB_CLASS',
+      START_DATE      => SYSDATE + 1/1440,
+      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=10',
+      ENABLED         => TRUE,
+      COMMENTS        => 'Database job to manage the repack process');
+END;
+/
+/*******************************************************************
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -3020,10 +3550,6 @@ END;
 /
 
 
-/***************************************/
-/* Some triggers to prevent dead locks */
-/***************************************/
-
 /* PL/SQL method to get the next SubRequest to do according to the given service */
 CREATE OR REPLACE PROCEDURE subRequestToDo(service IN VARCHAR2,
                                            srId OUT INTEGER, srRetryCounter OUT INTEGER, srFileName OUT VARCHAR2,
@@ -3170,7 +3696,7 @@ BEGIN
       OR abortedSRstatus = dconst.SUBREQUEST_READYFORSCHED
       OR abortedSRstatus = dconst.SUBREQUEST_BEINGSCHED THEN
       -- standard case, we only have to fail the subrequest
-      UPDATE SubRequest SET status = 7 WHERE id = sr.srId;
+      UPDATE SubRequest SET status = dconst.SUBREQUEST_FAILED WHERE id = sr.srId;
       INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 0, '');
     WHEN abortedSRstatus = dconst.SUBREQUEST_WAITTAPERECALL THEN
         failRecallSubReq(sr.srId, sr.cfId);
@@ -3178,19 +3704,22 @@ BEGIN
     WHEN abortedSRstatus = dconst.SUBREQUEST_FAILED
       OR abortedSRstatus = dconst.SUBREQUEST_FAILED_FINISHED THEN
       -- subrequest has failed, nothing to abort
-      INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 22, 'Cannot abort failed subRequest'); -- EINVAL
+      INSERT INTO ProcessBulkRequestHelper
+      VALUES (sr.fileId, sr.nsHost, serrno.EINVAL, 'Cannot abort failed subRequest');
     WHEN abortedSRstatus = dconst.SUBREQUEST_FINISHED
       OR abortedSRstatus = dconst.SUBREQUEST_ARCHIVED THEN
       -- subrequest is over, nothing to abort
-      INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 22, 'Cannot abort completed subRequest'); -- EINVAL
+      INSERT INTO ProcessBulkRequestHelper
+      VALUES (sr.fileId, sr.nsHost, serrno.EINVAL, 'Cannot abort completed subRequest');
     ELSE
       -- unknown status !
       INSERT INTO ProcessBulkRequestHelper
-      VALUES (sr.fileId, sr.nsHost, 1015, 'Found unknown status for request : ' || TO_CHAR(abortedSRstatus)); -- SEINTERNAL
+      VALUES (sr.fileId, sr.nsHost, serrno.SEINTERNAL, 'Found unknown status for request : ' || TO_CHAR(abortedSRstatus));
   END CASE;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- subRequest was deleted in the mean time !
-  INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 2, 'Targeted SubRequest has just been deleted'); -- ENOENT
+  INSERT INTO ProcessBulkRequestHelper
+  VALUES (sr.fileId, sr.nsHost, serrno.ENOENT, 'Targeted SubRequest has just been deleted');
 END;
 /
 
@@ -3223,19 +3752,22 @@ BEGIN
     WHEN abortedSRstatus = dconst.SUBREQUEST_FAILED
       OR abortedSRstatus = dconst.SUBREQUEST_FAILED_FINISHED THEN
       -- subrequest has failed, nothing to abort
-      INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 22, 'Cannot abort failed subRequest'); -- EINVAL
+      INSERT INTO ProcessBulkRequestHelper
+      VALUES (sr.fileId, sr.nsHost, serrno.EINVAL, 'Cannot abort failed subRequest');
     WHEN abortedSRstatus = dconst.SUBREQUEST_FINISHED
       OR abortedSRstatus = dconst.SUBREQUEST_ARCHIVED THEN
       -- subrequest is over, nothing to abort
-      INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 22, 'Cannot abort completed subRequest'); -- EINVAL
+      INSERT INTO ProcessBulkRequestHelper
+      VALUES (sr.fileId, sr.nsHost, serrno.EINVAL, 'Cannot abort completed subRequest');
     ELSE
       -- unknown status !
       INSERT INTO ProcessBulkRequestHelper
-      VALUES (sr.fileId, sr.nsHost, 1015, 'Found unknown status for request : ' || TO_CHAR(abortedSRstatus)); -- SEINTERNAL
+      VALUES (sr.fileId, sr.nsHost, serrno.SEINTERNAL, 'Found unknown status for request : ' || TO_CHAR(abortedSRstatus));
   END CASE;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- subRequest was deleted in the mean time !
-  INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 2, 'Targeted SubRequest has just been deleted'); -- ENOENT
+  INSERT INTO ProcessBulkRequestHelper
+  VALUES (sr.fileId, sr.nsHost, serrno.ENOENT, 'Targeted SubRequest has just been deleted');
 END;
 /
 
@@ -3262,7 +3794,7 @@ BEGIN
       FROM SubRequest, CastorFile
      WHERE SubRequest.castorFile = CastorFile.id
        AND request = origReqId
-       AND status IN (dconst.SUBREQUEST_RESTART, dconst.SUBREQUEST_RETRY,
+       AND status IN (dconst.SUBREQUEST_START, dconst.SUBREQUEST_RESTART, dconst.SUBREQUEST_RETRY,
                       dconst.SUBREQUEST_WAITSUBREQ, dconst.SUBREQUEST_WAITTAPERECALL,
                       dconst.SUBREQUEST_REPACK));
   SELECT COUNT(*) INTO nbItems FROM processBulkAbortFileReqsHelper;
@@ -3335,7 +3867,8 @@ BEGIN
     FORALL i IN srsToUpdate.FIRST .. srsToUpdate.LAST
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
          SET parent = NULL, diskCopy = NULL, lastModificationTime = getTime(),
-             status = 9, errorCode = 1701, errorMessage='Aborted explicitely'
+             status = dconst.SUBREQUEST_FAILED_FINISHED,
+             errorCode = 1701, errorMessage = 'Aborted explicitely'  -- ESTCLEARED
        WHERE id = srsToUpdate(i);
     SELECT cfId BULK COLLECT INTO dcmigrsToUpdate FROM ProcessRepackAbortHelperDCmigr;
     FORALL i IN dcmigrsToUpdate.FIRST .. dcmigrsToUpdate.LAST
@@ -3349,6 +3882,12 @@ BEGIN
     firstOne := TRUE;
     commitWork := FALSE;
   END LOOP;
+  -- This procedure should really be called 'terminateSubReqAndArchiveRequest', and this is
+  -- why we call it here: we need to trigger the logic to mark the whole request and all of its subrequests
+  -- as ARCHIVED, so that they are cleaned up afterwards. Note that this is effectively
+  -- a no-op for the status change of the SubRequest pointed by srsToUpdate(1).
+  archiveSubReq(srsToUpdate(1), dconst.SUBREQUEST_FAILED_FINISHED);
+  COMMIT;
 END;
 /
 
@@ -3391,7 +3930,7 @@ BEGIN
       EXCEPTION WHEN NO_DATA_FOUND THEN
         -- this fileid/nshost did not exist in the request, send an error back
         INSERT INTO ProcessBulkRequestHelper
-        VALUES (fileIds(i), nsHosts(i), 2, 'No subRequest found for this fileId/nsHost'); -- ENOENT
+        VALUES (fileIds(i), nsHosts(i), serrno.ENOENT, 'No subRequest found for this fileId/nsHost');
       END;
     END LOOP;
   END IF;
@@ -3485,7 +4024,8 @@ BEGIN
      WHERE reqId = abortedReqUuid;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- abort on non supported request type
-    INSERT INTO ProcessBulkRequestHelper VALUES (0, '', 2, 'Request not found, or abort not supported for this request type'); -- ENOENT
+    INSERT INTO ProcessBulkRequestHelper
+    VALUES (0, '', serrno.ENOENT, 'Request not found, or abort not supported for this request type');
     RETURN;
   END;
   IF reqType IN (1,2) THEN
@@ -3493,47 +4033,6 @@ BEGIN
   ELSE
     processBulkAbortForRepack(requestId);
   END IF;
-END;
-/
-
-/* PL/SQL method to process bulk abort requests */
-CREATE OR REPLACE PROCEDURE abortRepackRequest
-  (machine IN VARCHAR2,
-   euid IN INTEGER,
-   egid IN INTEGER,
-   pid IN INTEGER,
-   userName IN VARCHAR2,
-   clientIP IN INTEGER,
-   parentUUID IN VARCHAR2,
-   rSubResults OUT castor.FileResult_Cur) AS
-  svcClassId NUMBER;
-  reqId NUMBER;
-  clientId NUMBER;
-  creationTime NUMBER;
-  rIpAddress INTEGER;
-  rport INTEGER;
-  rReqUuid VARCHAR2(2048);
-BEGIN
-  -- mark the repack request as being aborted
-  UPDATE StageRepackRequest SET status = tconst.REPACK_ABORTING WHERE reqId = parentUUID;
-  COMMIT;
-  -- get unique ids for the request and the client and get current time
-  SELECT ids_seq.nextval INTO reqId FROM DUAL;
-  SELECT ids_seq.nextval INTO clientId FROM DUAL;
-  creationTime := getTime();
-  -- insert the request itself
-  INSERT INTO StageAbortRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, parentUuid, id, svcClass, client)
-  VALUES (0,userName,euid,egid,0,pid,machine,'','',uuidgen(),creationTime,creationTime,parentUUID,reqId,0,clientId);
-  -- insert the client information
-  INSERT INTO Client (ipAddress, port, version, secure, id)
-  VALUES (clientIP,0,0,0,clientId);
-  -- process the abort
-  processBulkAbort(reqId, rIpAddress, rport, rReqUuid);
-  -- mark the repack request as ABORTED
-  UPDATE StageRepackRequest SET status = tconst.REPACK_ABORTED WHERE reqId = parentUUID;
-  -- return all results
-  OPEN rSubResults FOR
-    SELECT fileId, nsHost, errorCode, errorMessage FROM ProcessBulkRequestHelper;
 END;
 /
 
@@ -3590,220 +4089,6 @@ BEGIN
     END;
   END LOOP;
   CLOSE Rcur;
-END;
-/
-
-/* PL/SQL method to handle a repack request */
-CREATE OR REPLACE PROCEDURE handleRepackRequest
-  (machine IN VARCHAR2,
-   inEuid IN INTEGER,
-   inEgid IN INTEGER,
-   pid IN INTEGER,
-   userName IN VARCHAR2,
-   svcClassName IN VARCHAR2,
-   clientIP IN INTEGER,
-   reqVID IN VARCHAR2,
-   rSubResults OUT castor.FileResult_Cur) AS
-  varReqId INTEGER;
-  varReqUUID VARCHAR2(2048);
-  clientId INTEGER;
-  creationTime NUMBER;
-  svcClassId INTEGER;
-  cfId INTEGER;
-  dcId INTEGER;
-  repackProtocol VARCHAR2(2048);
-  result NUMBER;
-  nsHostName VARCHAR2(2048);
-  lastKnownFileName VARCHAR2(2048);
-  varRecallGroupId INTEGER;
-  varRecallGroupName VARCHAR2(2048);
-  unused INTEGER;
-  firstCF boolean := True;
-  nbFilesProcessed NUMBER := 0;
-  nbFilesFailed NUMBER := 0;
-  isOngoing boolean := False;
-BEGIN
-  -- do prechecks and get the service class
-  svcClassId := insertPreChecks(inEuid, inEgid, svcClassName, 119);
-  -- insertion time
-  creationTime := getTime();
-  -- insert the client information
-  INSERT INTO Client (ipAddress, port, version, secure, id)
-  VALUES (clientIP,0,0,0,ids_seq.nextval)
-  RETURNING id INTO clientId;
-  -- insert the request itself
-  INSERT INTO StageRepackRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, repackVid, id, svcClass, client,status)
-  VALUES (0,userName,inEuid,inEgid,0,pid,machine,svcClassName,'',uuidgen(),creationTime,creationTime,reqVID,ids_seq.nextval,svcClassId,clientId,tconst.REPACK_STARTING)
-  RETURNING id, reqId INTO varReqId, varReqUUID;
-  -- commit so that the repack request is visible, even if empty for the moment
-  COMMIT;
-  -- Clear the temporary table for subresults
-  DELETE FROM ProcessBulkRequestHelper;
-  -- Check which protocol should be used for writing files to disk
-  repackProtocol := getConfigOption('Repack', 'Protocol', 'rfio');
-  -- name server host name
-  nsHostName := getConfigOption('stager', 'nsHost', '');
-  -- find out the recallGroup to be used for this request
-  getRecallGroup(inEuid, inEgid, varRecallGroupId, varRecallGroupName);
-  -- Get the list of files to repack from the NS DB via DBLink and store them in memory
-  -- in a temporary table. We do that so that we do not keep an open cursor for too long
-  -- in the nameserver DB
-  INSERT INTO RepackTapeSegments (SELECT s_fileid, blockid, fseq, segSize,
-                                         copyno, fileclass,
-                                         (SELECT LISTAGG(TO_CHAR(oseg.copyno)||','||oseg.vid, ',') 
-                                          WITHIN GROUP (ORDER BY copyno)
-                                            FROM Cns_Seg_Metadata@remotens oseg
-                                           WHERE oseg.s_fileid = seg.s_fileid
-                                             AND oseg.s_status = '-'
-                                           GROUP BY oseg.s_fileid)
-                                    FROM Cns_Seg_Metadata@remotens seg, Cns_File_Metadata@remotens fileEntry
-                                   WHERE seg.vid = reqVID
-                                     AND seg.s_fileid = fileEntry.fileid
-                                     AND seg.s_status = '-'
-                                     AND fileEntry.status != 'D');
-  FOR segment IN (SELECT * FROM RepackTapeSegments) LOOP
-    DECLARE
-      varSubreqId INTEGER;
-      varSubreqUUID VARCHAR2(2048);
-      varSrStatus INTEGER := dconst.SUBREQUEST_REPACK;
-      varMjStatus INTEGER := tconst.MIGRATIONJOB_PENDING;
-      varNbCopies INTEGER;
-      varSrErrorCode INTEGER := 0;
-      varSrErrorMsg VARCHAR2(2048) := NULL;
-      varIsRecalled NUMBER;
-    BEGIN
-      -- Commit from time to time
-      IF nbFilesProcessed = 1000 THEN
-        COMMIT;
-        firstCF := TRUE;
-        nbFilesProcessed := 0;
-      END IF;
-      -- lastKnownFileName we will have in the DB
-      lastKnownFileName := CONCAT('Repack_', TO_CHAR(segment.fileid));
-      -- find the Castorfile (and take a lock on it)
-      DECLARE
-        locked EXCEPTION;
-        PRAGMA EXCEPTION_INIT (locked, -54);
-      BEGIN
-        -- This may raise a SrLocked exception as we do not want to wait for locks (except on first file).
-        -- In such a case, we commit what we've done so far and retry this file, this time waiting for the lock.
-        -- The reason for such a complex code is to avoid commiting each file separately, as it would be
-        -- too heavy. On the other hand, we still need to avoid dead locks.
-        -- Note that we pass 0 for the subrequest id, thus the subrequest will not be attached to the
-        -- CastorFile. We actually attach it when we create it.
-        selectCastorFileInternal(segment.fileid, nsHostName, segment.fileclass,
-                                 segment.segSize, lastKnownFileName, 0, creationTime, firstCF, cfid, unused);
-        firstCF := FALSE;
-      EXCEPTION WHEN locked THEN
-        -- commit what we've done so far
-        COMMIT;
-        -- And lock the castorfile (waiting this time)
-        selectCastorFileInternal(segment.fileid, nsHostName, segment.fileclass,
-                                 segment.segSize, lastKnownFileName, 0, creationTime, TRUE, cfid, unused);
-      END;
-      nbFilesProcessed := nbFilesProcessed + 1;
-      -- create  subrequest for this file.
-      -- Note that the svcHandler is not set. It will actually never be used as repacks are handled purely in PL/SQL
-      INSERT INTO SubRequest (retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, creationTime, lastModificationTime, answered, errorCode, errorMessage, requestedFileSystems, svcHandler, id, diskcopy, castorFile, parent, status, request, getNextStatus, reqType)
-      VALUES (0, lastKnownFileName, repackProtocol, segment.segSize, 0, uuidGen(), 0, 0, creationTime, creationTime, 1, 0, '', NULL, 'NotNullNeeded', ids_seq.nextval, 0, cfId, NULL, dconst.SUBREQUEST_START, varReqId, 0, 119)
-      RETURNING id, subReqId INTO varSubreqId, varSubreqUUID;
-      -- if the file is being overwritten, fail
-      SELECT count(DiskCopy.id) INTO varNbCopies
-        FROM DiskCopy
-       WHERE DiskCopy.castorfile = cfId
-         AND DiskCopy.status = dconst.DISKCOPY_STAGEOUT;
-      IF varNbCopies > 0 THEN
-        varSrStatus := dconst.SUBREQUEST_FAILED;
-        varSrErrorCode := 16; -- EBUSY
-        varSrErrorMsg := 'File is currently being overwritten';
-        INSERT INTO ProcessBulkRequestHelper VALUES
-          (segment.fileid, nsHostName, varSrErrorCode, varSrErrorMsg);
-        nbFilesFailed := nbFilesFailed + 1;
-      ELSE
-        -- find out whether this file is already staged
-        SELECT /*+ INDEX(DC I_DiskCopy_CastorFile) */ count(DC.id)
-          INTO varNbCopies
-          FROM DiskCopy DC, FileSystem, DiskServer
-         WHERE DC.castorfile = cfId
-           AND DC.fileSystem = FileSystem.id
-           AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
-           AND FileSystem.diskserver = DiskServer.id
-           AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
-           AND DC.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR);
-        IF varNbCopies = 0 THEN
-          -- find out whether this file is already being recalled
-          SELECT count(*) INTO varIsRecalled FROM RecallJob WHERE castorfile = cfId AND ROWNUM < 2;
-          IF varIsRecalled = 0 THEN
-            -- trigger recall
-            triggerRepackRecall(cfId, segment.fileid, nsHostName, segment.blockid,
-                                segment.fseq, segment.copyNb, inEuid, inEgid,
-                                varRecallGroupId, svcClassId, reqVID, segment.segSize,
-                                segment.fileclass, varReqUUID, varSubreqUUID, varRecallGroupName);
-          END IF;
-          -- file is being recalled
-          varSrStatus := dconst.SUBREQUEST_WAITTAPERECALL;
-          isOngoing := TRUE;
-        END IF;
-        -- deal with migrations
-        IF varSrStatus = dconst.SUBREQUEST_WAITTAPERECALL THEN
-          varMJStatus := tconst.MIGRATIONJOB_WAITINGONRECALL;
-        END IF;
-        DECLARE
-          noValidCopyNbFound EXCEPTION;
-          PRAGMA EXCEPTION_INIT (noValidCopyNbFound, -20123);
-          noMigrationRoute EXCEPTION;
-          PRAGMA EXCEPTION_INIT (noMigrationRoute, -20100);
-          migrationTriggered boolean := False;
-        BEGIN
-          triggerRepackMigration(cfId, reqVID, segment.fileid, segment.copyNb, segment.fileclass,
-                                 segment.segSize, segment.allSegments, varMJStatus, migrationTriggered);
-          IF migrationTriggered THEN
-            -- update STAGED diskcopies to CANBEMIGR
-            UPDATE DiskCopy SET status = 10  -- DISKCOPY_CANBEMIGR
-             WHERE castorFile = cfId AND status = 0;  -- DISKCOPY_STAGED
-          END IF;
-          isOngoing := True;
-        EXCEPTION WHEN noValidCopyNbFound OR noMigrationRoute THEN
-          -- cleanup recall part if needed
-          IF varIsRecalled = 0 THEN
-            DELETE FROM RecallJob WHERE castorfile = cfId;
-          END IF;
-          -- fail subrequest
-          varSrStatus := dconst.SUBREQUEST_FAILED;
-          varSrErrorCode := 22; -- EINVAL
-          varSrErrorMsg := SQLERRM;
-          INSERT INTO ProcessBulkRequestHelper VALUES
-            (segment.fileid, nsHostName, varSrErrorCode, varSrErrorMsg);
-          nbFilesFailed := nbFilesFailed + 1;
-        END;
-      END IF;
-      -- update SubRequest
-      UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-         SET status = varSrStatus,
-             errorCode = varSrErrorCode,
-             errorMessage = varSrErrorMsg
-       WHERE id = varSubreqId;
-    EXCEPTION WHEN OTHERS THEN
-      raise_application_error(-20000, 'Problematic file was castorFile '||TO_CHAR(cfId)||
-                                      ', fileid '||TO_CHAR(segment.fileid), TRUE);
-    END;
-  END LOOP;
-  -- cleanup RepackTapeSegments
-  EXECUTE IMMEDIATE 'TRUNCATE TABLE RepackTapeSegments';
-  -- update status of the RepackRequest
-  IF isOngoing THEN
-    UPDATE StageRepackRequest SET status = tconst.REPACK_ONGOING WHERE StageRepackRequest.id = varReqId;
-  ELSE
-    IF nbFilesFailed > 0 THEN
-      UPDATE StageRepackRequest SET status = tconst.REPACK_FAILED WHERE StageRepackRequest.id = varReqId;
-    ELSE
-      -- CASE of an 'empty' repack : the tape had no files at all
-      UPDATE StageRepackRequest SET status = tconst.REPACK_FINISHED WHERE StageRepackRequest.id = varReqId;
-    END IF;
-  END IF;
-  -- open cursor on results
-  OPEN rSubResults FOR
-    SELECT fileId, nsHost, errorCode, errorMessage FROM ProcessBulkRequestHelper;
 END;
 /
 
@@ -3979,7 +4264,7 @@ BEGIN
    RETURNING request, reqType, (SELECT object FROM Type2Obj WHERE type = reqType) INTO rId, rType, rName;
   -- Try to see whether another subrequest in the same
   -- request is still being processed. For this, we
-  -- need a master lock on the request but for easiness we use the Client
+  -- need a master lock on the request.
   EXECUTE IMMEDIATE
     'BEGIN SELECT client INTO :clientId FROM '|| rName ||' WHERE id = :rId FOR UPDATE; END;'
     USING OUT clientId, IN rId;
@@ -3996,9 +4281,9 @@ BEGIN
     UPDATE /*+ INDEX(SubRequest I_SubRequest_Request) */ SubRequest
        SET status = dconst.SUBREQUEST_ARCHIVED
      WHERE request = rId
-       AND status = dconst.SUBREQUEST_FINISHED
+       AND status = dconst.SUBREQUEST_FINISHED;
     -- in case of repack, change the status of the request
-    IF rType = 119 THEN
+    IF rType = 119 THEN  -- OBJ_StageRepackRequest
       DECLARE
         nbfailures NUMBER;
       BEGIN
@@ -4163,9 +4448,8 @@ END;
  * dcId is the DiskCopy id of the best candidate for replica, 0 if none is found (tape recall), -1 in case of user error
  * Internally used by getDiskCopiesForJob and processPrepareRequest
  */
-CREATE OR REPLACE
-PROCEDURE checkForD2DCopyOrRecall(cfId IN NUMBER, srId IN NUMBER, reuid IN NUMBER, regid IN NUMBER,
-                                  svcClassId IN NUMBER, dcId OUT NUMBER, srcSvcClassId OUT NUMBER) AS
+CREATE OR REPLACE PROCEDURE checkForD2DCopyOrRecall(cfId IN NUMBER, srId IN NUMBER, reuid IN NUMBER, regid IN NUMBER,
+                                                    svcClassId IN NUMBER, dcId OUT NUMBER, srcSvcClassId OUT NUMBER) AS
   destSvcClass VARCHAR2(2048);
   userid NUMBER := reuid;
   groupid NUMBER := regid;
@@ -4175,7 +4459,7 @@ BEGIN
   IF (checkFailJobsWhenNoSpace(svcClassId) = 1) THEN
     dcId := -1;
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-       SET status = 7, -- FAILED
+       SET status = dconst.SUBREQUEST_FAILED,
            errorCode = 28, -- ENOSPC
            errorMessage = 'File creation canceled since diskPool is full'
      WHERE id = srId;
@@ -4210,8 +4494,8 @@ BEGIN
     -- Fail the subrequest and notify the client
     dcId := -1;
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-       SET status = 7, -- FAILED
-           errorCode = 13, -- EACCES
+       SET status = dconst.SUBREQUEST_FAILED,
+           errorCode = serrno.EACCES,
            errorMessage = 'Insufficient user privileges to trigger a tape recall or file replication to the '''||destSvcClass||''' service class'
      WHERE id = srId;
     RETURN;
@@ -4252,10 +4536,10 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
     -- We are in one of the special cases. Don't schedule, don't recall
     dcId := -1;
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-       SET status = 7, -- FAILED
+       SET status = dconst.SUBREQUEST_FAILED,
            errorCode = CASE
-             WHEN dcStatus IN (5, 11) THEN 16 -- WAITFS, WAITFSSCHEDULING, EBUSY
-             WHEN dcStatus = 6 AND fsStatus = 0 AND dsStatus = 0 THEN 16 -- STAGEOUT, PRODUCTION, PRODUCTION, EBUSY
+             WHEN dcStatus IN (5, 11) THEN serrno.EBUSY -- WAITFS, WAITFSSCHEDULING
+             WHEN dcStatus = 6 AND fsStatus = 0 AND dsStatus = 0 THEN serrno.EBUSY -- STAGEOUT, PRODUCTION, PRODUCTION
              ELSE 1718 -- ESTNOTAVAIL
            END,
            errorMessage = CASE
@@ -4274,7 +4558,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
       -- Fail the subrequest and notify the client
       dcId := -1;
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-         SET status = 7, -- FAILED
+         SET status = dconst.SUBREQUEST_FAILED,
              errorCode = 13, -- EACCES
              errorMessage = 'Insufficient user privileges to trigger a tape recall to the '''||destSvcClass||''' service class'
        WHERE id = srId;
@@ -4858,125 +5142,6 @@ BEGIN
 END;
 /
 
-/* PL/SQL procedure implementing triggerMigration */
-CREATE OR REPLACE PROCEDURE triggerRepackMigration
-(cfId IN INTEGER, vid IN VARCHAR2, fileid IN INTEGER, copyNb IN INTEGER,
- fileclass IN INTEGER, fileSize IN INTEGER, allSegments IN VARCHAR2,
- MJStatus IN INTEGER, migrationTriggered OUT boolean) AS
-  varMjId INTEGER;
-  varNb INTEGER;
-  varDestCopyNb INTEGER;
-  varNbCopies INTEGER;
-  varAllSegments strListTable;
-BEGIN
-  -- check whether we already have a migrationJob for this copy of the file
-  SELECT id INTO varMjId
-    FROM MigrationJob
-   WHERE castorFile = cfId
-     AND destCopyNb = copyNb;
-  -- we have a migrationJob for this copy ! This means that the file has been overwritten
-  -- and the new version is about to go to tape. We thus don't have anything to do
-  -- for this file
-  migrationTriggered := False;
-EXCEPTION WHEN NO_DATA_FOUND THEN
-  -- no migration job for this copyNb, we can proceed
-  -- first let's parse the list of all segments
-  SELECT * BULK COLLECT INTO varAllSegments
-    FROM TABLE(strTokenizer(allSegments));
-  DECLARE
-    varAllCopyNbs "numList" := "numList"();
-    varAllVIDs strListTable := strListTable();
-  BEGIN
-    FOR i IN varAllSegments.FIRST .. varAllSegments.LAST/2 LOOP
-      varAllCopyNbs.EXTEND;
-      varAllCopyNbs(i) := TO_NUMBER(varAllSegments(2*i-1));
-      varAllVIDs.EXTEND;
-      varAllVIDs(i) := varAllSegments(2*i);
-    END LOOP;
-    -- find the new copy number to be used. This is the minimal one
-    -- that is lower than the allowed number of copies and is not
-    -- already used by an ongoing migration or by a valid migrated copy
-    SELECT nbCopies INTO varNbCopies FROM FileClass WHERE classId = fileclass;
-    FOR i IN 1 .. varNbCopies LOOP
-      -- if we are reusing the original copy number, it's ok
-      IF i = copyNb THEN
-        varDestCopyNb := i;
-      ELSE
-        BEGIN
-          -- check whether this copy number is already in use by a valid copy
-          SELECT * INTO varNb FROM TABLE(varAllCopyNbs)
-           WHERE COLUMN_VALUE=i;
-          -- this copy number is in use, go to next one
-        EXCEPTION WHEN NO_DATA_FOUND THEN
-          BEGIN
-            -- check whether this copy number is in use by an ongoing migration
-            SELECT destCopyNb INTO varNb FROM MigrationJob WHERE castorFile = cfId AND destCopyNb = i;
-            -- this copy number is in use, go to next one
-          EXCEPTION WHEN NO_DATA_FOUND THEN
-            -- copy number is not in use, we take it
-            varDestCopyNb := i;
-            EXIT;
-          END;
-        END;
-      END IF;
-    END LOOP;
-    IF varDestCopyNb IS NULL THEN
-      RAISE_APPLICATION_ERROR (-20123,
-        'Unable to find a valid copy number for the migration of file ' ||
-        TO_CHAR (fileid) || ' in triggerRepackMigration. ' ||
-        'The file probably has too many valid copies.');
-    END IF;
-    -- create new migration
-    initMigration(cfId, fileSize, vid, copyNb, varDestCopyNb, MJStatus);
-    -- create migrated segments for the existing segments if there are none
-    SELECT /*+ INDEX_RS_ASC (MigratedSegment I_MigratedSegment_CFCopyNbVID) */ count(*) INTO varNb
-      FROM MigratedSegment
-     WHERE castorFile = cfId;
-    IF varNb = 0 THEN
-      FOR i IN varAllCopyNbs.FIRST .. varAllCopyNbs.LAST LOOP
-        INSERT INTO MigratedSegment (castorFile, copyNb, VID)
-        VALUES (cfId, varAllCopyNbs(i), varAllVIDs(i));
-      END LOOP;
-    END IF;
-    -- all is fine, migration was triggered
-    migrationTriggered := True;
-  END;
-END;
-/
-
-/* PL/SQL procedure implementing triggerRepackRecall
- * this triggers a recall in the repack context and updates the subrequest.
- */
-CREATE OR REPLACE PROCEDURE triggerRepackRecall
-(inCfId IN INTEGER, inFileId IN INTEGER, inNsHost IN VARCHAR2, inBlock IN RAW,
- inFseq IN INTEGER, inCopynb IN INTEGER, inEuid IN INTEGER, inEgid IN INTEGER,
- inRecallGroupId IN INTEGER, inSvcClassId IN INTEGER, inVid IN VARCHAR2, inFileSize IN INTEGER,
- inFileClassId IN INTEGER, inReqUUID IN VARCHAR2, inSubReqUUID IN VARCHAR2, inRecallGroupName IN VARCHAR2) AS
-  varLogParam VARCHAR2(2048);
-  varAllCopyNbs "numList" := "numList"();
-  varAllVIDs strListTable := strListTable();
-BEGIN
-  -- create recallJob
-  INSERT INTO RecallJob (id, castorFile, copyNb, recallGroup, svcClass, euid, egid,
-                         vid, fseq, status, fileSize, creationTime, blockId, fileTransactionId)
-  VALUES (ids_seq.nextval, inCfId, inCopynb, inRecallGroupId, inSvcClassId,
-          inEuid, inEgid, inVid, inFseq, tconst.RECALLJOB_PENDING, inFileSize, getTime(),
-          inBlock, NULL);
-  -- log "created new RecallJob"
-  varLogParam := 'REQID=' || inReqUUID || ' SUBREQID=' || inSubReqUUID || ' RecallGroup=' || inRecallGroupName;
-  logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_CREATING_RECALLJOB, inFileId, inNsHost, 'stagerd',
-           varLogParam || ' COPYNB=' || TO_CHAR(inCopynb) || ' TPVID=' || inVid ||
-           ' FSEQ=' || TO_CHAR(inFseq) || ' FileSize=' || TO_CHAR(inFileSize));
-  -- create missing segments if needed
-  varAllCopyNbs.EXTEND;
-  varAllCopyNbs(1) := inCopynb;
-  varAllVIDs.EXTEND;
-  varAllVIDs(1) := inVid;
-  createMJForMissingSegments(inCfId, inFileSize, inFileClassId, varAllCopyNbs,
-                             varAllVIDs, inFileId, inNsHost, varLogParam);
-END;
-/
-
 /* PL/SQL method implementing processPrepareRequest */
 /* the result output is a DiskCopy status for STAGED, DISK2DISKCOPY or RECALL,
    -1 for user failure, -2 for subrequest put in WAITSUBREQ */
@@ -5141,7 +5306,7 @@ BEGIN
       -- This is a PutDone without a put (otherwise we would have found
       -- a DiskCopy on a FileSystem), so we fail the subrequest.
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET
-        status = 7,  -- FAILED
+        status = dconst.SUBREQUEST_FAILED,
         errorCode = 1,  -- EPERM
         errorMessage = 'putDone without a put, or wrong service class'
       WHERE id = rsubReqId;
@@ -5209,8 +5374,8 @@ BEGIN
         -- is already running in a different service class. This is forbidden
         dcId := 0;
         UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-           SET status = 7, -- FAILED
-               errorCode = 16, -- EBUSY
+           SET status = dconst.SUBREQUEST_FAILED,
+               errorCode = serrno.EBUSY,
                errorMessage = 'A prepareToPut is running in another service class for this file'
          WHERE id = srId;
         RETURN;
@@ -5241,9 +5406,9 @@ BEGIN
         -- this means we are a PrepareToPut and another PrepareToPut/Update
         -- is already running. This is forbidden
         dcId := 0;
-    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-       SET status = 7, -- FAILED
-               errorCode = 16, -- EBUSY
+        UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
+           SET status = dconst.SUBREQUEST_FAILED,
+               errorCode = serrno.EBUSY,
                errorMessage = 'Another prepareToPut/Update is ongoing for this file'
          WHERE id = srId;
         RETURN;
@@ -5272,7 +5437,7 @@ BEGIN
     -- thus we cannot recreate the file
     dcId := 0;
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-       SET status = 7, -- FAILED
+       SET status = dconst.SUBREQUEST_FAILED,
            errorCode = 28, -- ENOSPC
            errorMessage = 'File creation canceled since disk pool is full'
      WHERE id = srId;
@@ -5285,7 +5450,7 @@ BEGIN
       -- We could not route the file to tape, so let's fail the opening
       dcId := 0;
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-         SET status = 7, -- FAILED
+         SET status = dconst.SUBREQUEST_FAILED,
              errorCode = 1727, -- ESTNOTAPEROUTE
              errorMessage = 'File recreation canceled since the file cannot be routed to tape'
        WHERE id = srId;
@@ -5301,8 +5466,8 @@ BEGIN
       -- We found something, thus we cannot recreate
       dcId := 0;
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-         SET status = 7, -- FAILED
-             errorCode = 16, -- EBUSY
+         SET status = dconst.SUBREQUEST_FAILED,
+             errorCode = serrno.EBUSY,
              errorMessage = 'File recreation canceled since file is being migrated'
         WHERE id = srId;
       RETURN;
@@ -5315,8 +5480,8 @@ BEGIN
       -- We found something, thus we cannot recreate
       dcId := 0;
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-         SET status = 7, -- FAILED
-             errorCode = 16, -- EBUSY
+         SET status = dconst.SUBREQUEST_FAILED,
+             errorCode = serrno.EBUSY,
              errorMessage = 'File recreation canceled since file is either being recalled, or replicated or created by another user'
        WHERE id = srId;
       RETURN;
@@ -5544,7 +5709,7 @@ BEGIN
                    FROM TABLE(dcsToRm) dcidTable)
                 AND status IN (0, 1, 2, 5, 6, 12, 13)) LOOP   -- START, RESTART, RETRY, WAITSUBREQ, READY, READYFORSCHED
     UPDATE SubRequest
-       SET status = 7,  -- FAILED
+       SET status = dconst.SUBREQUEST_FAILED,
            errorCode = 4,  -- EINTR
            errorMessage = 'Canceled by another user request',
            parent = 0
@@ -5585,8 +5750,8 @@ BEGIN
     -- This file does not exist in the stager catalog
     -- so we just fail the request
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-       SET status = 7,  -- FAILED
-           errorCode = 2,  -- ENOENT
+       SET status = dconst.SUBREQUEST_FAILED,
+           errorCode = serrno.ENOENT,
            errorMessage = 'File not found on disk cache'
      WHERE id = srId;
     RETURN;
@@ -5632,8 +5797,8 @@ BEGIN
       EXCEPTION WHEN NO_DATA_FOUND THEN
         -- nothing left, so we would lose the file. Better to forbid stagerm
         UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-           SET status = 7,  -- FAILED
-               errorCode = 16,  -- EBUSY
+           SET status = dconst.SUBREQUEST_FAILED,
+               errorCode = serrno.EBUSY,
                errorMessage = 'The file is not yet migrated'
          WHERE id = srId;
         RETURN;
@@ -5699,8 +5864,8 @@ BEGIN
   -- In case nothing was dropped at all, complain
   IF dcsToRm.COUNT = 0 AND nbRJsDeleted = 0 THEN
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-       SET status = 7,  -- FAILED
-           errorCode = 2,  -- ENOENT
+       SET status = dconst.SUBREQUEST_FAILED,
+           errorCode = serrno.ENOENT,
            errorMessage = CASE WHEN svcClassId = 0 THEN 'File not found on disk cache'
                                ELSE 'File not found on this service class' END
      WHERE id = srId;
@@ -5973,6 +6138,7 @@ END;
 /
 
 /* PL/SQL method creating MigrationJobs for missing segments of a file if needed */
+/* Can throw a -20100 exception when no route to tape is found for the missing segments */
 CREATE OR REPLACE PROCEDURE createMJForMissingSegments(inCfId IN INTEGER,
                                                        inFileSize IN INTEGER,
                                                        inFileClassId IN INTEGER,
@@ -5981,71 +6147,68 @@ CREATE OR REPLACE PROCEDURE createMJForMissingSegments(inCfId IN INTEGER,
                                                        inFileId IN INTEGER,
                                                        inNsHost IN VARCHAR2,
                                                        inLogParams IN VARCHAR2) AS
+  varExpectedNbCopies INTEGER;
+  varCreatedMJs INTEGER := 0;
+  varNextCopyNb INTEGER := 1;
+  varNb INTEGER;
 BEGIN
-  DECLARE
-    varExpectedNbCopies INTEGER;
-    varCreatedMJs INTEGER := 0;
-    varNextCopyNb INTEGER := 1;
-    varNb INTEGER;
-  BEGIN
-    -- check whether there are missing segments and whether we should create new ones
-    SELECT nbCopies INTO varExpectedNbCopies FROM FileClass WHERE id = inFileClassId;
-    IF varExpectedNbCopies > inAllCopyNbs.COUNT THEN
-      -- some copies are missing
-      DECLARE
-        unused INTEGER;
-      BEGIN
-        -- check presence of migration jobs for this file
-        SELECT id INTO unused FROM MigrationJob WHERE castorFile=inCfId AND ROWNUM < 2;
-        -- there are MigrationJobs already, so remigrations were already handled. Nothing to be done
-        -- we typically are in a situation where the file was already waiting for recall for
-        -- another recall group.
-        -- log "detected missing copies on tape, but migrations ongoing"
-        logToDLF(NULL, dlf.LVL_DEBUG, dlf.RECALL_MISSING_COPIES_NOOP, inFileId, inNsHost, 'stagerd',
-                 inLogParams || ' nbMissingCopies=' || TO_CHAR(varExpectedNbCopies-inAllCopyNbs.COUNT));
-        RETURN;
-      EXCEPTION WHEN NO_DATA_FOUND THEN
-        -- we need to remigrate this file
-        NULL;
-      END;
-      -- log "detected missing copies on tape"
-      logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_MISSING_COPIES, inFileId, inNsHost, 'stagerd',
+  -- check whether there are missing segments and whether we should create new ones
+  SELECT nbCopies INTO varExpectedNbCopies FROM FileClass WHERE classId = inFileClassId;
+  IF varExpectedNbCopies > inAllCopyNbs.COUNT THEN
+    -- some copies are missing
+    DECLARE
+      unused INTEGER;
+    BEGIN
+      -- check presence of migration jobs for this file
+      SELECT id INTO unused FROM MigrationJob WHERE castorFile=inCfId AND ROWNUM < 2;
+      -- there are MigrationJobs already, so remigrations were already handled. Nothing to be done
+      -- we typically are in a situation where the file was already waiting for recall for
+      -- another recall group.
+      -- log "detected missing copies on tape, but migrations ongoing"
+      logToDLF(NULL, dlf.LVL_DEBUG, dlf.RECALL_MISSING_COPIES_NOOP, inFileId, inNsHost, 'stagerd',
                inLogParams || ' nbMissingCopies=' || TO_CHAR(varExpectedNbCopies-inAllCopyNbs.COUNT));
-      -- copies are missing, try to recreate them
-      WHILE varExpectedNbCopies > inAllCopyNbs.COUNT + varCreatedMJs AND varNextCopyNb <= varExpectedNbCopies LOOP
-        BEGIN
-          -- check whether varNextCopyNb is already in use by a valid copy
-          SELECT * INTO varNb FROM TABLE(inAllCopyNbs) WHERE COLUMN_VALUE=varNextCopyNb;
-          -- this copy number is in use, go to next one
-        EXCEPTION WHEN NO_DATA_FOUND THEN
-          -- copy number is not in use, create a migrationJob using it
-          initMigration(inCfId, inFileSize, NULL, NULL, varNextCopyNb, tconst.MIGRATIONJOB_WAITINGONRECALL);
-          varCreatedMJs := varCreatedMJs + 1;
-          -- log "create new MigrationJob to migrate missing copy"
-          logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_MJ_FOR_MISSING_COPY, inFileId, inNsHost, 'stagerd',
-                   inLogParams || ' COPYNB=' || TO_CHAR(varNextCopyNb));
-        END;
-        varNextCopyNb := varNextCopyNb + 1;
-      END LOOP;
-      -- Did we create new copies ?
-      IF varExpectedNbCopies > inAllCopyNbs.COUNT + varCreatedMJs THEN
-        -- We did not create enough new copies, this means that we did not find enough
-        -- valid copy number. Odd... Log something !
-        logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_COPY_STILL_MISSING, inFileId, inNsHost, 'stagerd',
-                 inLogParams || ' nbCopiesStillMissing=' ||
-                 TO_CHAR(varExpectedNbCopies - inAllCopyNbs.COUNT - varCreatedMJs));
-      ELSE
-        -- Yes, then create migrated segments for the existing segments if there are none
-        SELECT count(*) INTO varNb FROM MigratedSegment WHERE castorFile = inCfId;
-        IF varNb = 0 THEN
-          FOR i IN inAllCopyNbs.FIRST .. inAllCopyNbs.LAST LOOP
-            INSERT INTO MigratedSegment (castorFile, copyNb, VID)
-            VALUES (inCfId, inAllCopyNbs(i), inAllVIDs(i));
-          END LOOP;
-        END IF;
+      RETURN;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- we need to remigrate this file
+      NULL;
+    END;
+    -- log "detected missing copies on tape"
+    logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_MISSING_COPIES, inFileId, inNsHost, 'stagerd',
+             inLogParams || ' nbMissingCopies=' || TO_CHAR(varExpectedNbCopies-inAllCopyNbs.COUNT));
+    -- copies are missing, try to recreate them
+    WHILE varExpectedNbCopies > inAllCopyNbs.COUNT + varCreatedMJs AND varNextCopyNb <= varExpectedNbCopies LOOP
+      BEGIN
+        -- check whether varNextCopyNb is already in use by a valid copy
+        SELECT * INTO varNb FROM TABLE(inAllCopyNbs) WHERE COLUMN_VALUE=varNextCopyNb;
+        -- this copy number is in use, go to next one
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- copy number is not in use, create a migrationJob using it (may throw exceptions)
+        initMigration(inCfId, inFileSize, NULL, NULL, varNextCopyNb, tconst.MIGRATIONJOB_WAITINGONRECALL);
+        varCreatedMJs := varCreatedMJs + 1;
+        -- log "create new MigrationJob to migrate missing copy"
+        logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_MJ_FOR_MISSING_COPY, inFileId, inNsHost, 'stagerd',
+                 inLogParams || ' COPYNB=' || TO_CHAR(varNextCopyNb));
+      END;
+      varNextCopyNb := varNextCopyNb + 1;
+    END LOOP;
+    -- Did we create new copies ?
+    IF varExpectedNbCopies > inAllCopyNbs.COUNT + varCreatedMJs THEN
+      -- We did not create enough new copies, this means that we did not find enough
+      -- valid copy numbers. Odd... Log something !
+      logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_COPY_STILL_MISSING, inFileId, inNsHost, 'stagerd',
+               inLogParams || ' nbCopiesStillMissing=' ||
+               TO_CHAR(varExpectedNbCopies - inAllCopyNbs.COUNT - varCreatedMJs));
+    ELSE
+      -- Yes, then create migrated segments for the existing segments if there are none
+      SELECT count(*) INTO varNb FROM MigratedSegment WHERE castorFile = inCfId;
+      IF varNb = 0 THEN
+        FOR i IN inAllCopyNbs.FIRST .. inAllCopyNbs.LAST LOOP
+          INSERT INTO MigratedSegment (castorFile, copyNb, VID)
+          VALUES (inCfId, inAllCopyNbs(i), inAllVIDs(i));
+        END LOOP;
       END IF;
     END IF;
-  END;
+  END IF;
 END;
 /
 
@@ -6066,6 +6229,8 @@ CREATE OR REPLACE FUNCTION createRecallJobs(inCfId IN INTEGER,
   varAllCopyNbs "numList" := "numList"();
   varAllVIDs strListTable := strListTable();
   varI INTEGER := 1;
+  NO_TAPE_ROUTE EXCEPTION;
+  PRAGMA EXCEPTION_INIT(NO_TAPE_ROUTE, -20100);
 BEGIN
   BEGIN
     -- loop over the existing segments
@@ -6097,18 +6262,24 @@ BEGIN
   EXCEPTION WHEN OTHERS THEN
     -- log "error when retrieving segments from namespace"
     logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_UNKNOWN_NS_ERROR, inFileId, inNsHost, 'stagerd',
-             inLogParams || ' ErrorMsg=' || SQLERRM);
-    RETURN 1015;  -- SEINTERNAL
+             inLogParams || ' ErrorMessage=' || SQLERRM);
+    RETURN serrno.SEINTERNAL;
   END;
   -- Did we find at least one segment ?
   IF varAllCopyNbs.COUNT = 0 THEN
     -- log "No recallJob found"
-    logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_NO_JOB_FOUND, inFileId, inNsHost, 'stagerd', inLogParams);
-    RETURN 1723; -- ESTNOSEGFOUND
+    logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_NO_SEG_FOUND, inFileId, inNsHost, 'stagerd', inLogParams);
+    RETURN serrno.ESTNOSEGFOUND;
   END IF;
-  -- create missing segments if needed
-  createMJForMissingSegments(inCfId, inFileSize, inFileClassId, varAllCopyNbs,
-                             varAllVIDs, inFileId, inNsHost, inLogParams);
+  BEGIN
+    -- create missing segments if needed
+    createMJForMissingSegments(inCfId, inFileSize, inFileClassId, varAllCopyNbs,
+                               varAllVIDs, inFileId, inNsHost, inLogParams);
+  EXCEPTION WHEN NO_TAPE_ROUTE THEN
+    -- there's at least a missing segment and we cannot recreate it!
+    -- log a "no route to tape defined for missing copy" error, but don't stop the recall
+    logToDLF(NULL, dlf.LVL_ALERT, dlf.RECALL_MISSING_COPY_NO_ROUTE, inFileId, inNsHost, 'stagerd', inLogParams);
+  END;
   RETURN 0;
 END; 
 /
@@ -8344,6 +8515,48 @@ BEGIN
 END;
 /
 
+/* resets a CastorFile, its diskcopies and recall/migrationJobs when it
+ * was overwritten in the namespace. This includes :
+ *    - updating the CastorFile with the new NS data
+ *    - mark current DiskCopies for GC
+ *    - restart any pending recalls
+ *    - discard any pending migrations
+ * XXXX This is a preliminary version of this function that is used only
+ * XXXX in the context of overwritten files during recalls. It has to be
+ * XXXX completed and tested before any other usage. In particular, is
+ * XXXX does not handle the Disk2DiskCopy case
+ */
+CREATE OR REPLACE PROCEDURE resetOverwrittenCastorFile(inCfId INTEGER,
+                                                       inNewLastUpdateTime NUMBER,
+                                                       inNewSize INTEGER) AS
+BEGIN
+  -- update the Castorfile
+  UPDATE CastorFile
+     SET lastUpdateTime = inNewLastUpdateTime,
+         fileSize = inNewSize,
+         lastAccessTime = getTime()
+   WHERE id = inCfId;
+  -- cancel ongoing recalls, if any
+  deleteRecallJobs(inCfId);
+  -- cancel ongoing migrations, if any
+  deleteMigrationJobs(inCfId);
+  -- invalidate existing DiskCopies, if any
+  UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
+   WHERE castorFile = inCfId
+     AND status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR);
+  -- restart ongoing requests
+  -- Note that we reset the "answered" flag of the subrequest. This will potentially lead to
+  -- a wrong attempt to answer again the client (but won't harm as the client is gone in that case)
+  -- but is needed as the current implementation of the stager also uses this flag to know
+  -- whether to archive the subrequest. If we leave it to 1, the subrequests are wrongly
+  -- archived when retried, leading e.g. to failing recalls
+  UPDATE SubRequest
+     SET status = dconst.SUBREQUEST_RESTART, answered = 0
+   WHERE castorFile = inCfId
+     AND status IN (dconst.SUBREQUEST_WAITTAPERECALL);
+END;
+/
+
 /* Checks whether a recall that was reported successful is ok from the namespace
  * point of view. This includes :
  *   - checking that the file still exists
@@ -8366,29 +8579,20 @@ CREATE OR REPLACE FUNCTION checkRecallInNS(inCfId IN INTEGER,
                                            inReqId IN VARCHAR2,
                                            inLogContext IN VARCHAR2) RETURN BOOLEAN AS
   varNSLastUpdateTime NUMBER;
+  varNSSize INTEGER;
   varNSCsumtype VARCHAR2(2048);
   varNSCsumvalue VARCHAR2(2048);
 BEGIN
   -- check the namespace
-  SELECT mtime, csumtype, csumvalue
-    INTO varNSLastUpdateTime, varNSCsumtype, varNSCsumvalue
+  SELECT mtime, csumtype, csumvalue, filesize
+    INTO varNSLastUpdateTime, varNSCsumtype, varNSCsumvalue, varNSSize
     FROM Cns_File_Metadata@remoteNs
    WHERE fileid = inFileId;
 
   -- was the file overwritten in the meantime ?
   IF varNSLastUpdateTime > inLastUpdateTime THEN
-    -- It was, recall should be restarted from scratch
-    -- Note that we reset the "answered" flag of the subrequest. This will lead to
-    -- a wrong attempt to answer again the client (but won't harm as the client is gone)
-    -- but is needed as the current implementation of the stager uses this flag for 2 things,
-    -- the second being to know whether to archive the subrequest. If we leave it to 1, the
-    -- subrequest is wrongly archived and the retried recall then fails.
-    deleteRecallJobs(inCfId);
-    UPDATE SubRequest
-       SET status = dconst.SUBREQUEST_RESTART,
-           answered = 0
-     WHERE castorFile = inCfId
-       AND status = dconst.SUBREQUEST_WAITTAPERECALL;
+    -- yes ! reset it and thus restart the recall from scratch
+    resetOverwrittenCastorFile(inCfId, varNSLastUpdateTime, varNSSize);
     -- log "setFileRecalled : file was overwritten during recall, restarting from scratch"
     logToDLF(inReqId, dlf.LVL_NOTICE, dlf.RECALL_FILE_OVERWRITTEN, inFileId, inNsHost, 'tapegatewayd',
              'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || inVID ||
@@ -8620,7 +8824,7 @@ BEGIN
     UPDATE /*+ INDEX(Subrequest I_Subrequest_Castorfile) */ SubRequest 
        SET status = dconst.SUBREQUEST_FAILED,
            lastModificationTime = getTime(),
-           errorCode = 1015,  -- SEINTERNAL
+           errorCode = serrno.SEINTERNAL,
            errorMessage = 'File recall from tape has failed, please try again later'
      WHERE castorFile = inCfId 
        AND status = dconst.SUBREQUEST_WAITTAPERECALL;
@@ -8643,7 +8847,7 @@ BEGIN
        AND MJ.castorFile = CF.id
        AND CF.fileId = inFileId
        AND CF.nsHost = inNsHost
-       AND nbRetries <= TO_NUMBER(getConfigOption('Migration', 'MaxNbMounts', 7)))
+       AND nbRetries < TO_NUMBER(getConfigOption('Migration', 'MaxNbMounts', 7)))
     SET nbRetries = nbRetries + 1,
         status = tconst.MIGRATIONJOB_PENDING,
         vid = NULL,
@@ -8766,7 +8970,7 @@ BEGIN
        SET SR.status = dconst.SUBREQUEST_FAILED,
            SR.getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED, --  (not strictly correct but the request is over anyway)
            SR.lastModificationTime = getTime(),
-           SR.errorCode = 1015,  -- SEINTERNAL
+           SR.errorCode = serrno.SEINTERNAL,
            SR.errorMessage = 'File recall from tape has failed (tape not available), please try again later',
            SR.parent = 0
      WHERE SR.castorFile = inCfId
@@ -9093,7 +9297,7 @@ BEGIN
                          FROM MigratedSegment
                         WHERE MigratedSegment.castorFile = MigrationJob.castorfile
                           AND MigratedSegment.copyNb != MigrationJob.destCopyNb
-                          AND MigratedSegment.vid = MigrationMount.VID)
+                          AND MigratedSegment.vid = MigrationMount.vid)
        FOR UPDATE OF MigrationJob.id SKIP LOCKED)
   LOOP
     -- last part of the above statement. Could not be part of it as ORACLE insisted on not
@@ -9101,7 +9305,7 @@ BEGIN
     BEGIN
       SELECT /*+ INDEX_RS_ASC(MJ I_MigrationJob_CFVID) */ 1 INTO varUnused
         FROM MigrationJob MJ
-       WHERE MJ.castorfile = Cand.castorfile
+       WHERE MJ.castorFile = Cand.castorFile
          AND MJ.vid = Cand.VID
          AND MJ.vid IS NOT NULL;
       -- found one, so skip this candidate
@@ -9263,7 +9467,7 @@ BEGIN
     varUnused INTEGER;
   BEGIN
     -- boundary case: if nothing to do, just skip the remote call and the
-    -- subsequent FOR loop as it would fail.
+    -- subsequent FOR loop as it would be useless (and would fail).
     SELECT 1 INTO varUnused FROM FileMigrationResultsHelper
      WHERE reqId = varReqId AND ROWNUM < 2;
     -- The following procedure wraps the remote calls in an autonomous transaction
@@ -9285,6 +9489,7 @@ BEGIN
         tg_setFileMigrated(inMountTrId, varNSFileIds(i), varReqId, inLogContext);
 
       WHEN varNSErrorCodes(i) = serrno.ENOENT
+        OR varNSErrorCodes(i) = serrno.ENSNOSEG
         OR varNSErrorCodes(i) = serrno.ENSFILECHG
         OR varNSErrorCodes(i) = serrno.ENSTOOMANYSEGS THEN
         -- The migration was useless because either the file is gone, or it has been modified elsewhere,
@@ -9433,10 +9638,10 @@ BEGIN
   END IF;
   
   -- Log depending on the error: some are not pathological and have dedicated handling
-  IF inErrorCode = serrno.ENOENT OR inErrorCode = serrno.ENSFILECHG THEN
+  IF inErrorCode = serrno.ENOENT OR inErrorCode = serrno.ENSFILECHG OR inErrorCode = serrno.ENSNOSEG THEN
     -- in this case, disk cache is stale
     UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
-     WHERE status = dconst.DISKCOPY_CANBEMIGR
+     WHERE status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR)
        AND castorFile = varCfId;
     -- Log 'file was dropped or modified during migration, giving up'
     logToDLF(inReqid, dlf.LVL_NOTICE, dlf.MIGRATION_FILE_DROPPED, inFileId, varNsHost, 'tapegatewayd',
