@@ -768,8 +768,6 @@ INSERT INTO CastorConfig
 INSERT INTO CastorConfig
   VALUES ('Repack', 'Protocol', 'rfio', 'The protocol that repack should use for writing files to disk');
 INSERT INTO CastorConfig
-  VALUES ('Repack', 'MaxNbConcurrentClients', '3', 'The maximum number of repacks clients that are able to start or abort concurrently. This are either clients starting repacks or aborting running repacks. Providing that each of them will take a DB core, this number should not exceed ~50% of the number of cores of the stager DB server');
-INSERT INTO CastorConfig
   VALUES ('Recall', 'MaxNbRetriesWithinMount', '2', 'The maximum number of retries for recalling a file within the same tape mount. When exceeded, the recall may still be retried in another mount. See Recall/MaxNbMount entry');
 INSERT INTO CastorConfig
   VALUES ('Recall', 'MaxNbMounts', '2', 'The maximum number of mounts for recalling a given file. When exceeded, the recall will be failed if no other tapecopy can be used. See also Recall/MaxNbRetriesWithinMount entry');
@@ -929,11 +927,10 @@ ON COMMIT PRESERVE ROWS;
 CREATE TABLE RmMasterLock (unused NUMBER);
 
 
-/**********/
-/* Repack */
-/**********/
-
+/********************************/
 /* DB link to the nameserver db */
+/********************************/
+
 PROMPT Configuration of the database link to the CASTOR name space
 UNDEF cnsUser
 ACCEPT cnsUser CHAR DEFAULT 'castor' PROMPT 'Enter the nameserver db username (default castor): ';
@@ -944,12 +941,35 @@ ACCEPT cnsDbName CHAR PROMPT 'Enter the nameserver db TNS name: ';
 CREATE DATABASE LINK remotens
   CONNECT TO &cnsUser IDENTIFIED BY &cnsPasswd USING '&cnsDbName';
 
+
+/**********/
+/* Repack */
+/**********/
+
 /* Temporary table used for listing segments of a tape */
 /* efficiently via DB link when repacking              */
 CREATE GLOBAL TEMPORARY TABLE RepackTapeSegments
  (fileId NUMBER, blockid RAW(4), fseq NUMBER, segSize NUMBER,
   copyNb NUMBER, fileClass NUMBER, allSegments VARCHAR2(2048))
  ON COMMIT PRESERVE ROWS;
+
+/* Definition of the RepackQueue table. This is the input for the repackManager DB job. */
+CREATE TABLE RepackQueue
+  (reqUUID VARCHAR2(36) CONSTRAINT NN_RepackQueue_reqUUID NOT NULL,
+   machine VARCHAR2(2048) CONSTRAINT NN_RepackQueue_machine NOT NULL,
+   pid INTEGER CONSTRAINT NN_RepackQueue_pid NOT NULL,
+   euid INTEGER CONSTRAINT NN_RepackQueue_euid NOT NULL,
+   egid INTEGER CONSTRAINT NN_RepackQueue_egid NOT NULL,
+   userName VARCHAR2(2048) CONSTRAINT NN_RepackQueue_userName NOT NULL,
+   svcClass INTEGER CONSTRAINT NN_RepackQueue_svcClass NOT NULL,
+   client INTEGER CONSTRAINT NN_RepackQueue_client NOT NULL,
+   repackVID VARCHAR2(10) CONSTRAINT NN_RepackQueue_repackVID NOT NULL,
+   creationTime NUMBER CONSTRAINT NN_RepackQueue_creationTime NOT NULL);
+ALTER TABLE RepackQueue ADD CONSTRAINT FK_RepackQueue_svcClass
+  FOREIGN KEY (svcClass) REFERENCES SvcClass(id);
+ALTER TABLE RepackQueue ADD CONSTRAINT FK_RepackQueue_client
+  FOREIGN KEY (client) REFERENCES Client(id);
+
 
 /*****************/
 /* logon trigger */

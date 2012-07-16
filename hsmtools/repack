@@ -160,7 +160,7 @@ def _humanReadableSize(size):
     else:
         return '%.2f' % fsize + _powerSuf[order]
 
-_repackRequestStatuses = ['STARTING', 'ONGOING', 'FINISHED', 'FAILED', 'ABORTING', 'ABORTED']
+_repackRequestStatuses = ['STARTING', 'ONGOING', 'FINISHED', 'FAILED', 'ABORTING', 'ABORTED', 'SUBMITTED']
 def _printStatusLine(subTime, user, machine, vid, status, total, size, toRecall, toMigr, failed, migrated):
     '''prints one status line'''
     # times need to be transformed in human readable strings
@@ -185,27 +185,38 @@ def displayStatus():
         stcur = stconn.cursor()
         stcur.arraysize = 50
         stGetStatus = '''
-        SELECT StageRepackRequest.creationTime, StageRepackRequest.username, StageRepackRequest.machine,
-               StageRepackRequest.repackVID, StageRepackRequest.status,
-               SUM(CASE WHEN SubRequest.status IS NULL THEN 0 ELSE 1 END) total,
-               SUM(SubRequest.xsize) totsize,
-               SUM(CASE WHEN SubRequest.status IN (4, 5) THEN 1 ELSE 0 END) toRecall,
-               SUM(CASE SubRequest.status WHEN 12 THEN 1 ELSE 0 END) toMigr,
-               SUM(CASE WHEN SubRequest.status IN (7, 9) THEN 1 ELSE 0 END) failed,
-               SUM(CASE WHEN SubRequest.status IN (8, 11) THEN 1 ELSE 0 END) migrated
-          FROM StageRepackRequest, SubRequest
-         WHERE SubRequest.request(+) = StageRepackRequest.id
-         '''
+        SELECT * FROM (
+          SELECT StageRepackRequest.creationTime, StageRepackRequest.username, StageRepackRequest.machine,
+                 StageRepackRequest.repackVID, StageRepackRequest.status,
+                 SUM(CASE WHEN SubRequest.status IS NULL THEN 0 ELSE 1 END) total,
+                 SUM(SubRequest.xsize) totsize,
+                 SUM(CASE WHEN SubRequest.status IN (4, 5) THEN 1 ELSE 0 END) toRecall,
+                 SUM(CASE SubRequest.status WHEN 12 THEN 1 ELSE 0 END) toMigr,
+                 SUM(CASE WHEN SubRequest.status IN (7, 9) THEN 1 ELSE 0 END) failed,
+                 SUM(CASE WHEN SubRequest.status IN (8, 11) THEN 1 ELSE 0 END) migrated
+            FROM StageRepackRequest, SubRequest
+           WHERE SubRequest.request(+) = StageRepackRequest.id
+          '''
         # query only the requested VIDs. This requires hard parsing but it's still more efficient
         # than a later 'grep' and avoids the complexity of dealing with a string list as bind variable.
         if vids:
             stGetStatus += "AND StageRepackRequest.repackVID IN ('" + "','".join(vids) + "')"
         stGetStatus += '''
-         GROUP BY StageRepackRequest.creationTime, StageRepackRequest.username, StageRepackRequest.machine,
-                  StageRepackRequest.repackVID, StageRepackRequest.status
-         HAVING StageRepackRequest.status IN (0, 1, 4)
-             OR StageRepackRequest.creationTime > getTime() - 86400*:nbdays
-         ORDER BY StageRepackRequest.creationTime DESC'''
+          GROUP BY StageRepackRequest.creationTime, StageRepackRequest.username, StageRepackRequest.machine,
+                   StageRepackRequest.repackVID, StageRepackRequest.status
+          HAVING StageRepackRequest.status IN (0, 1, 4)
+              OR StageRepackRequest.creationTime > getTime() - 86400*:nbdays
+          UNION
+          -- now get the submitted tapes: status = -1 will be printed as the last element in _repackRequestStatuses
+          SELECT creationTime, userName, machine, repackVID, -1 status,
+                 0 total, 0 totsize, 0 toRecall, 0 toMigr, 0 failed, 0 migrated
+            FROM RepackQueue
+           WHERE creationTime > getTime() - 86400*:nbdays
+          '''
+        if vids:
+            stGetStatus += "AND repackVID IN ('" + "','".join(vids) + "')"
+        stGetStatus += '''
+          ) ORDER BY creationTime DESC'''
         # go to DB and get back the data
         stcur.execute(stGetStatus, nbdays=since)
         rows = stcur.fetchall()
@@ -220,7 +231,7 @@ def displayStatus():
         shownVids = set()
         for subTime, user, machine, vid, status, total, size, toRecall, toMigr, failed, migrated in rows:
             if not vids and vid in shownVids:
-                # when showing full statistics skip the less recent requests per VID
+                # when showing full statistics skip the less recent requests for each VID
                 continue
             shownVids.add(vid)
             _printStatusLine(subTime, user, machine, vid, status, total, size, toRecall, toMigr, failed, migrated)
@@ -254,28 +265,6 @@ def startRepack():
         try:
             stcur = stconn.cursor()
             stcur.arraysize = 50
-            # check the number of repack clients on the stager and deny repacking if too high
-            stCheckNbClients = '''
-            SELECT count(*)
-              FROM StageRepackRequest
-             WHERE status IN (0, 4)'''
-            stCheckLimit = '''
-            SELECT value
-              FROM CastorConfig
-             WHERE class = 'Repack'
-               AND key = 'MaxNbConcurrentClients' '''
-            # check whether we have reached the maximum number of concurrent repack starts in the stager DB
-            stcur.execute(stCheckNbClients)
-            nbClients = stcur.fetchone()[0]
-            stcur.execute(stCheckLimit)
-            row = stcur.fetchone()
-            if not row:
-                print 'Unable to check stager repack load. Giving up. Please report.'
-                sys.exit(1)
-            if nbClients >= int(row[0]):
-                print 'At least %s repacks are already concurrently starting or aborting right now.' % (row[0])
-                print 'This is the maximum, so new repacks are temporarily impossible. please retry later'
-                sys.exit(1)
             # precompute some useful values about us
             machine, euid, egid, pid, username, ip = _getIdentity()
             # check the service class
@@ -295,12 +284,16 @@ def startRepack():
             SELECT StageRepackRequest.id
               FROM StageRepackRequest, SubRequest
              WHERE SubRequest.request = StageRepackRequest.id
-               AND StageRepackRequest.RepackVID = :vid
+               AND StageRepackRequest.repackVID = :vid                                                    
                AND SubRequest.status IN (4,5,12)
-               AND ROWNUM < 2'''
+               AND ROWNUM < 2
+            UNION
+            SELECT euid
+              FROM RepackQueue
+             WHERE repackVID = :vid'''
             stRepack = '''
             BEGIN
-              handleRepackRequest(:pmachine, :peuid, :pegid, :ppid, :pusername, :psvcClass, :pip, :pvid, :errors);
+            submitRepackRequest(:pmachine, :peuid, :pegid, :ppid, :pusername, :psvcClass, :pip, :pvid);
             END;'''
             # loop over the tapes we should deal with
             for tape in vids:
@@ -318,32 +311,15 @@ def startRepack():
                     if len(rows) > 0:
                         print 'Tape ' + tape + ' is already being repacked. Ignoring it'
                     else:
-                        # start repacking
-                        sterrorscur = stconn.cursor()
-                        sterrorscur.arraysize = 50
+                        # submit repack
                         stcur.execute(stRepack, pmachine=machine, peuid=euid, pegid=egid, ppid=pid,
-                                      pusername=username, psvcClass=svcClass, pip=ip, pvid=tape,
-                                      errors=sterrorscur)
-                        print 'Repack started for tape ' + tape
-                        # display errors
-                        gotErrors = False
-                        errors = sterrorscur.fetchall()
-                        for fid, nshost, errorCode, errorMessage in errors:
-                            if not gotErrors:
-                                print '  The following files had errors :'
-                                gotErrors = True
-                            print "  %d@%s : (%d)%s" % (fid, nshost, errorCode, errorMessage)
-                        sterrorscur.close()
-                    # commit this tape's repack
-                    stconn.commit()
+                                      pusername=username, psvcClass=svcClass, pip=ip, pvid=tape)
+                        print 'Repack submitted for tape ' + tape
                 except cx_Oracle.Error, e:
-                    print 'Caught exception when starting repack of ' + tape + ' :'
+                    print 'Caught exception when submitting repack of ' + tape + ' :'
                     error, = e.args
                     print error.message
                     print 'Giving up with tape ' + tape
-                    print 'Note that repack may still be partially completed.'
-                    # rollback this tape's repack
-                    stconn.rollback()
         finally:
             # close DB connection
             castor_tools.disconnectDB(stconn)

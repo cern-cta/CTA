@@ -283,6 +283,8 @@ INSERT INTO CastorConfig
   VALUES ('Recall', 'MaxNbMounts', '2', 'The maximum number of mounts for recalling a given file. When exceeded, the recall will be failed if no other tapecopy can be used. See also Recall/MaxNbRetriesWithinMount entry');
 INSERT INTO CastorConfig
   VALUES ('Migration', 'MaxNbMounts', '7', 'The maximum number of mounts for migrating a given file. When exceeded, the migration will be considered failed: the MigrationJob entry will be dropped and the corresponding diskcopy left in status CANBEMIGR. An operator intervention is required to resume the migration.');
+DELETE FROM CastorConfig
+ WHERE key = 'MaxNbConcurrentClients';
 
 /* Temporary table used to bulk select next candidates for recall and migration */
 CREATE GLOBAL TEMPORARY TABLE FilesToRecallHelper
@@ -300,6 +302,23 @@ CREATE GLOBAL TEMPORARY TABLE FilesToMigrateHelper
 CREATE TABLE FileMigrationResultsHelper
  (reqId VARCHAR2(36), fileId NUMBER, lastModTime NUMBER, copyNo NUMBER, oldCopyNo NUMBER, transfSize NUMBER,
   comprSize NUMBER, vid VARCHAR2(6), fSeq NUMBER, blockId RAW(4), checksumType VARCHAR2(16), checksum NUMBER);
+
+/* Definition of the RepackQueue table. This is the input for the repackManager DB job. */
+CREATE TABLE RepackQueue
+  (reqUUID VARCHAR2(36) CONSTRAINT NN_RepackQueue_reqUUID NOT NULL,
+   machine VARCHAR2(2048) CONSTRAINT NN_RepackQueue_machine NOT NULL,
+   pid INTEGER CONSTRAINT NN_RepackQueue_pid NOT NULL,
+   euid INTEGER CONSTRAINT NN_RepackQueue_euid NOT NULL,
+   egid INTEGER CONSTRAINT NN_RepackQueue_egid NOT NULL,
+   userName VARCHAR2(2048) CONSTRAINT NN_RepackQueue_userName NOT NULL,
+   svcClass INTEGER CONSTRAINT NN_RepackQueue_svcClass NOT NULL,
+   client INTEGER CONSTRAINT NN_RepackQueue_client NOT NULL,
+   repackVID VARCHAR2(10) CONSTRAINT NN_RepackQueue_repackVID NOT NULL,
+   creationTime NUMBER CONSTRAINT NN_RepackQueue_creationTime NOT NULL);
+ALTER TABLE RepackQueue ADD CONSTRAINT FK_RepackQueue_svcClass
+  FOREIGN KEY (svcClass) REFERENCES SvcClass(id);
+ALTER TABLE RepackQueue ADD CONSTRAINT FK_RepackQueue_client
+  FOREIGN KEY (client) REFERENCES Client(id);
 
 
 /* Drop obsoleted code */
