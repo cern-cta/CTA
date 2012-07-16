@@ -194,7 +194,7 @@ def displayStatus():
                SUM(CASE WHEN SubRequest.status IN (7, 9) THEN 1 ELSE 0 END) failed,
                SUM(CASE WHEN SubRequest.status IN (8, 11) THEN 1 ELSE 0 END) migrated
           FROM StageRepackRequest, SubRequest
-         WHERE SubRequest.request(+) = StageRepackRequest.id AND SubRequest.reqtype = 119
+         WHERE SubRequest.request(+) = StageRepackRequest.id
          '''
         # query only the requested VIDs. This requires hard parsing but it's still more efficient
         # than a later 'grep' and avoids the complexity of dealing with a string list as bind variable.
@@ -217,18 +217,24 @@ def displayStatus():
         print 'SubmitTime              User                       Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated  Compl%     Status'
         print '-'*149
         sumTotal = sumSize = sumToRecall = sumToMigr = sumFailed = sumMigrated = 0
+        shownVids = set()
         for subTime, user, machine, vid, status, total, size, toRecall, toMigr, failed, migrated in rows:
+            if not vids and vid in shownVids:
+                # when showing full statistics skip the less recent requests per VID
+                continue
+            shownVids.add(vid)
             _printStatusLine(subTime, user, machine, vid, status, total, size, toRecall, toMigr, failed, migrated)
             sumTotal += total
             if size > 0:
+                # it may have returned None
                 sumSize += size
             sumToRecall += toRecall
             sumToMigr += toMigr
             sumFailed += failed
             sumMigrated += migrated
         print '-'*149
-        # print out summary line
-        if sumTotal > 0:
+        #  when showing full statistics, print out summary line
+        if not vids and sumTotal > 0:
             if sumToRecall + sumToMigr > 0:
                 globalStatus = 1  # ONGOING
             else:
