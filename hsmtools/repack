@@ -257,8 +257,8 @@ def displayStatus():
         print e
         sys.exit(1)
 
-def startRepack():
-    '''starts the repacking of the given tapes using the given service class'''
+def submitRepack():
+    '''submits the repacking of the given tapes using the given service class'''
     try:
         # prepare DB connection
         stconn = castor_tools.connectToStager()
@@ -284,7 +284,7 @@ def startRepack():
             SELECT StageRepackRequest.id
               FROM StageRepackRequest, SubRequest
              WHERE SubRequest.request = StageRepackRequest.id
-               AND StageRepackRequest.repackVID = :vid                                                    
+               AND StageRepackRequest.repackVID = :vid
                AND SubRequest.status IN (4,5,12)
                AND ROWNUM < 2
             UNION
@@ -293,7 +293,7 @@ def startRepack():
              WHERE repackVID = :vid'''
             stRepack = '''
             BEGIN
-            submitRepackRequest(:pmachine, :peuid, :pegid, :ppid, :pusername, :psvcClass, :pip, :pvid);
+              submitRepackRequest(:pmachine, :peuid, :pegid, :ppid, :pusername, :psvcClass, :pip, :pvid);
             END;'''
             # loop over the tapes we should deal with
             for tape in vids:
@@ -440,7 +440,7 @@ def displayErrors():
 
 # process the request
 if vflag:
-    startRepack()
+    submitRepack()
 elif sflag:
     displayStatus()
 elif rflag:
