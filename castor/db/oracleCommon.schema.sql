@@ -963,7 +963,8 @@ CREATE TABLE RepackQueue
    userName VARCHAR2(2048) CONSTRAINT NN_RepackQueue_userName NOT NULL,
    svcClass INTEGER CONSTRAINT NN_RepackQueue_svcClass NOT NULL,
    client INTEGER CONSTRAINT NN_RepackQueue_client NOT NULL,
-   repackVID VARCHAR2(10) CONSTRAINT NN_RepackQueue_repackVID NOT NULL,
+   repackVID VARCHAR2(10) CONSTRAINT NN_RepackQueue_repackVID NOT NULL
+     CONSTRAINT UN_RepackQueue_repackVID UNIQUE,
    creationTime NUMBER CONSTRAINT NN_RepackQueue_creationTime NOT NULL);
 ALTER TABLE RepackQueue ADD CONSTRAINT FK_RepackQueue_svcClass
   FOREIGN KEY (svcClass) REFERENCES SvcClass(id);
