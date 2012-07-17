@@ -35,7 +35,7 @@ The name of the service class that files should be replicated too. This option
 can be omitted if the filesystems to be added belong to a diskpool which is
 linked to only one service class.
 .TP
-.B -t,\ \-\-tansfers=\fINUM\fR
+.B -t,\ \-\-transfers=\fINUM\fR
 The maximum number of transfers allowed to run concurrently per filesystem.
 (Default: 50). The value must be greater than 0. It is recommended when setting
 this value to set more transfers than job slots in the scheduler. This compensates for any
