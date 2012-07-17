@@ -5,3 +5,11 @@
     rotate 200
     delaycompress
 }
+
+/var/log/castor/repackd*.log {
+    compress
+    daily
+    missingok
+    rotate 200
+    delaycompress
+}
