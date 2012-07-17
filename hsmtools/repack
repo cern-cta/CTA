@@ -42,8 +42,8 @@ def usage(exitCode):
     print '  repack --bulkvolumeid <filename> -o serviceclass'
     print '  repack -R <VID>[:<VID>[:...]]'
     print '  repack --bulkdelete <filename>'
-    print '  repack -s [-a <nb days>]'
-    print '  repack -S <VID>:<VID>[:...]] [-a <nb days>]'
+    print '  repack -s'
+    print '  repack -S <VID>:<VID>[:...]]'
     print '  repack -e <VID>[:<VID>[:...]] [-n <nbErrorsDisplayed>]'
     sys.exit(exitCode)
 
@@ -53,7 +53,7 @@ def parseInputFile(fileName):
     
 # first parse the options
 try:
-    options, arguments = getopt.getopt(sys.argv[1:], 'V:o:sS:R:e:hn:Aa:', ['volumeid=', 'bulkvolumeid=', 'svcclass=', 'statusAll', 'status=', 'delete=', 'bulkdelete=', 'errors=', 'help', 'nbErrorsDisplayed=', 'since='])
+    options, arguments = getopt.getopt(sys.argv[1:], 'V:o:sS:R:e:hn:', ['volumeid=', 'bulkvolumeid=', 'svcclass=', 'statusAll', 'status=', 'delete=', 'bulkdelete=', 'errors=', 'help', 'nbErrorsDisplayed='])
 except Exception, parsingException:
     print parsingException
     usage(1)
@@ -64,7 +64,6 @@ rflag = False
 eflag = False
 svcClass = None
 maxNbErrors = None
-since = None
 for f, v in options:
     if f == '-h' or f == '--help':
         usage(0)
@@ -76,12 +75,6 @@ for f, v in options:
         vflag = True
     elif f == '-s' or f == '--statusAll':
         sflag = True
-    elif f == '-a' or f == '--since':
-        try:
-            since = float(v)
-        except ValueError:
-            print 'Invalid number of days :', v
-            usage(1)
     elif f == '-S' or f == '--status':
         vids.extend(v.split(':'))
         sflag = True
@@ -115,9 +108,6 @@ if len(arguments) != 0:
 if [vflag, sflag, rflag, eflag].count(True) > 1:
     print "Conflicting options : " + ' '.join(arguments) + "\n"
     usage(1)
-if since and not sflag:
-    print "-a/--since is only meaningful in conjunction with -s/--statusAll or -S/--status\n"
-    usage(1)
 if svcClass and not vflag:
     print "-o/--output_svcclass is only meaningful in conjunction with -V/--volumeid\n"
     usage(1)
@@ -129,8 +119,6 @@ if maxNbErrors and not eflag:
     usage(1)
 if eflag and not maxNbErrors:
     maxNbErrors = 10
-if not since:
-    since = 3.0
 
 def _getIdentity():
     '''Retrieves identity of the user running this script'''
@@ -204,21 +192,18 @@ def displayStatus():
         stGetStatus += '''
           GROUP BY StageRepackRequest.creationTime, StageRepackRequest.username, StageRepackRequest.machine,
                    StageRepackRequest.repackVID, StageRepackRequest.status
-          HAVING StageRepackRequest.status IN (0, 1, 4)
-              OR StageRepackRequest.creationTime > getTime() - 86400*:nbdays
           UNION
           -- now get the submitted tapes: status = -1 will be printed as the last element in _repackRequestStatuses
           SELECT creationTime, userName, machine, repackVID, -1 status,
                  0 total, 0 totsize, 0 toRecall, 0 toMigr, 0 failed, 0 migrated
             FROM RepackQueue
-           WHERE creationTime > getTime() - 86400*:nbdays
           '''
         if vids:
             stGetStatus += "AND repackVID IN ('" + "','".join(vids) + "')"
         stGetStatus += '''
           ) ORDER BY creationTime DESC'''
         # go to DB and get back the data
-        stcur.execute(stGetStatus, nbdays=since)
+        stcur.execute(stGetStatus)
         rows = stcur.fetchall()
         if len(rows) == 0:
             print 'No repack activity found'
@@ -281,14 +266,12 @@ def submitRepack():
                 sys.exit(1)
             # statements for checking and starting repacks
             stCheckForOngoingRepack = '''
-            SELECT StageRepackRequest.id
-              FROM StageRepackRequest, SubRequest
-             WHERE SubRequest.request = StageRepackRequest.id
-               AND StageRepackRequest.repackVID = :vid
-               AND SubRequest.status IN (4,5,12)
-               AND ROWNUM < 2
+            SELECT userName
+              FROM StageRepackRequest
+             WHERE repackVID = :vid
+               AND status NOT IN (2, 5) -- FINISHED, ABORTED
             UNION
-            SELECT euid
+            SELECT userName
               FROM RepackQueue
              WHERE repackVID = :vid'''
             stRepack = '''
@@ -309,7 +292,7 @@ def submitRepack():
                     stcur.execute(stCheckForOngoingRepack, vid=tape)
                     rows = stcur.fetchall() 
                     if len(rows) > 0:
-                        print 'Tape ' + tape + ' is already being repacked. Ignoring it'
+                        print 'Tape '+ tape +' is already being repacked by user '+ rows[0][0] +', ignoring it'
                     else:
                         # submit repack
                         stcur.execute(stRepack, pmachine=machine, peuid=euid, pegid=egid, ppid=pid,
@@ -320,6 +303,8 @@ def submitRepack():
                     error, = e.args
                     print error.message
                     print 'Giving up with tape ' + tape
+                except IndexError:
+                    print 'Caught exception when executing vmgrlisttape for tape ' + tape + ', skipping'
         finally:
             # close DB connection
             castor_tools.disconnectDB(stconn)
