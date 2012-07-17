@@ -533,6 +533,9 @@ BEGIN
     UPDATE DiskCopy SET status = 4 -- FAILED
      WHERE castorFile =
        (SELECT castorFile FROM DiskCopy WHERE id = dcId);
+    -- drop ongoing recalls and migrations
+    deleteRecallJobs(cfId);
+    deleteMigrationJobs(cfId);
   ELSE
     -- Set the diskcopy status to INVALID so that it will be garbage collected
     -- at a later date.

@@ -2522,8 +2522,9 @@ BEGIN
     FROM DiskCopy
    WHERE castorFile = cfId
      AND status IN (0, 5, 6, 10, 11);  -- STAGED, WAITFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
-  -- Stop ongoing recalls
+  -- Stop ongoing recalls and migrations
   deleteRecallJobs(cfId);
+  deleteMigrationJobs(cfId);
   -- mark all get/put requests for those diskcopies
   -- and the ones waiting on them as failed
   -- so that clients eventually get an answer
