@@ -114,7 +114,7 @@ BEGIN
   INSERT INTO StageRepackRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName,
     userTag, reqId, creationTime, lastModificationTime, repackVid, id, svcClass, client, status)
   VALUES (0, inUserName, inEuid, inEgid, 0, inPid, inMachine, (SELECT name FROM SvcClass WHERE id = svcClassId),
-    '', inReqUUID, inCreationTime, inCreationTime, inReqVID, ids_seq.nextval, svcClassId, clientId, tconst.REPACK_STARTING)
+    inReqVID, inReqUUID, inCreationTime, inCreationTime, inReqVID, ids_seq.nextval, svcClassId, clientId, tconst.REPACK_STARTING)
   RETURNING id INTO varReqId;
   -- commit so that the repack request is visible, even if empty for the moment
   COMMIT;
@@ -435,18 +435,19 @@ CREATE OR REPLACE PROCEDURE repackManager AS
   varClientId INTEGER;
   varRepackVID VARCHAR2(10);
   varCreationTime NUMBER;
-  varStartTime TIMESTAMP;
+  varStartTime INTEGER;
   nbRepacks INTEGER;
 BEGIN
   SELECT count(*) INTO nbRepacks
     FROM StageRepackRequest
    WHERE status = tconst.REPACK_STARTING;
   IF nbRepacks > 0 THEN
-    -- a previous instance of this job is still running, give up for this round
-    logToDLF(NULL, dlf.LVL_SYSTEM, dlf.REPACK_JOB_ONGOING, 0, '', 'repackd', '');
+    -- this shouldn't happen, possibly this procedure is running in parallel: give up and log
+    -- "repackManager: Repack processes still starting, no new ones will be started for this round"
+    logToDLF(NULL, dlf.LVL_NOTICE, dlf.REPACK_JOB_ONGOING, 0, '', 'repackd', '');
     RETURN;
   END IF;
-  varStartTime := SYSTIMESTAMP;
+  varStartTime := getTime();
   WHILE TRUE LOOP
     varReqUUID := NULL;
     -- get an outstanding repack to start - we're alone, no need to take special locks
@@ -466,7 +467,7 @@ BEGIN
   IF nbRepacks > 0 THEN
     -- log some statistics
     logToDLF(NULL, dlf.LVL_SYSTEM, dlf.REPACK_JOB_STATS, 0, '', 'repackd',
-      'nbStarted=' || TO_CHAR(nbRepacks) || ' elapsedTime=' || getSecs(varStartTime, SYSTIMESTAMP));
+      'nbStarted=' || TO_CHAR(nbRepacks) || ' elapsedTime=' || TO_CHAR(TRUNC(getTime() - varStartTime)));
   END IF;
 END;
 /
@@ -483,7 +484,7 @@ BEGIN
     DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
   END LOOP;
 
-  -- Create a db job to be run every minute executing the startMigrationMounts procedure
+  -- Create a db job to be run every 10 minutes executing the repackManager procedure
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'RepackManagerJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
