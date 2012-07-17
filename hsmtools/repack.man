@@ -111,9 +111,15 @@ in conjunction with \-e, sets the maximum number of errors to display.
 .SH EXAMPLE
 .nf
 .ft CW
+> repack -V V00000:V10025:V13049 -o default
+vmgrlisttape: No such tape
+Caught exception when executing vmgrlisttape for tape V00000, skipping
+Tape V10025 is not marked FULL, ignoring it
+Tape V13049 is already being repacked by user root, ignoring it
+
 > repack -V I10551:I10552 -o default
-Repack started for tape I10551
-Repack started for tape I10552
+Repack submitted for tape I10551
+Repack submitted for tape I10552
 
 > repack -s
 ============================================================================================================================================

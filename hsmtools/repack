@@ -284,26 +284,25 @@ def submitRepack():
                     # check that the tape to be repacked is in a valid state
                     tapeStatus = subprocess.Popen('vmgrlisttape -V ' + tape, shell=True, stdout=subprocess.PIPE).stdout.read().split()[-1]
                     if tapeStatus.find('DISABLED') > -1 or tapeStatus.find('ARCHIVED') > -1 or tapeStatus.find('EXPORTED') > -1:
-                        print 'Tape ' + tape + ' has status ' + tapeStatus + ' which is not compatible with repack. Ignoring it'
+                        print 'Tape ' + tape + ' has status ' + tapeStatus + ' which is not compatible with repack, ignoring it'
                         continue
                     if tapeStatus.find('FULL') < 0:
-                        print 'Tape ' + tape + ' is not marked FULL. Ignoring it'
+                        print 'Tape ' + tape + ' is not marked FULL, ignoring it'
                         continue                        
                     stcur.execute(stCheckForOngoingRepack, vid=tape)
                     rows = stcur.fetchall() 
                     if len(rows) > 0:
-                        print 'Tape '+ tape +' is already being repacked by user '+ rows[0][0] +', ignoring it'
+                        print 'Tape ' + tape + ' is already being repacked by user ' + rows[0][0] + ', ignoring it'
                     else:
                         # submit repack
                         stcur.execute(stRepack, pmachine=machine, peuid=euid, pegid=egid, ppid=pid,
                                       pusername=username, psvcClass=svcClass, pip=ip, pvid=tape)
                         print 'Repack submitted for tape ' + tape
                 except cx_Oracle.Error, e:
-                    print 'Caught exception when submitting repack of ' + tape + ' :'
                     error, = e.args
-                    print error.message
-                    print 'Giving up with tape ' + tape
+                    print 'Caught exception when submitting repack of ' + tape + ' (' + error.message.strip('\n') + '), skipping'
                 except IndexError:
+                    # the output was not the expected one
                     print 'Caught exception when executing vmgrlisttape for tape ' + tape + ', skipping'
         finally:
             # close DB connection
