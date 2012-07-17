@@ -41,10 +41,10 @@ repack \- Move files from tape(s) to other tape destination
 .BI \-\-bulkdelete\ <file>
 .br
 .B repack
-.BI \-s\ [\-a\ <nb\ days>]
+.BI \-s\
 .br
 .B repack
-.BI \-S\ <VID>[:<VID>[...]]\ [\-a\ <nb\ days>]
+.BI \-S\ <VID>[:<VID>[...]]
 .br
 .B repack
 .BI \-e\ <VID>[:<VID>[...]]\ [\-n\ <nbErrorsDisplayed>]
@@ -68,17 +68,13 @@ reclaimed using the reclaim command.
 displays command usage help.
 .TP
 .BI \-V,\ \-\-volumeid
-launches the repacking of the given tapes. The tapes are given by their VID and the list is colon separated.
-Note that the laucnching may be refused in case too many repacks are already being launched or aborted.
-The maximum number is defined in the Repack/MaxNbConcurrentClients entry of the CastorConfig table
-in the stager database. The default value is 5.
+submits the repacking of the given tapes and returns immediately. The tapes are given by their VID
+and the list is colon separated. The actual repack processes are asynchronously started, one by one,
+by the database.
 .TP
 .BI \-\-bulkvolumeid
-launches the repacking of the tapes given in the provided file. The file must contain a list of VIDs,
+submits the repacking of the tapes given in the provided file. The file must contain a list of VIDs,
 one per line. Spaces and anything appearing after the '#' sign on a given line are ignored.
-Note that the laucnching may be refused in case too many repacks are already being launched or aborted.
-The maximum number is defined in the Repack/MaxNbConcurrentClients entry of the CastorConfig table
-in the stager database. The default value is 5.
 .TP
 .BI \-o,\ \-\-svcclass
 the service class to be used for repacking the given tapes.
@@ -97,19 +93,13 @@ The maximum number is defined in the Repack/MaxNbConcurrentClients entry of the 
 in the stager database. The default value is 5.
 .TP
 .BI \-s,\ \-\-statusAll
-shows the status of ongoing and finished repacks. By default, displays all ongoing repacks plus the finished
-ones that have been started less than 24h ago. This limit can be changed using the \-a option.
+shows the status of all ongoing and finished repacks. If multiple repack requests were issued for a given
+tape, only the last request is shown. Note that old completed repacks are automatically removed
+from the database and are not shown any longer.
 .TP
 .BI \-S,\ \-\-status
-shows the status of ongoing and finished repacks for the given tape(s). The tape(s is(are) given by their
-VID and the list is colon separated. By default, displays all ongoing repacks plus the finished
-ones that have been started less than 24h ago for that(these) tape(s). This limit can be changed using
-the \-a option.
-.TP
-.BI \-a,\ \-\-after\ <nb\ days>
-in conjunction with \-s or \-S, changes the display of finished repacks to all those started within
-the given number of days. The number of days can be given as float, e.g. 1.5 for 36 hours. The default
-value is 3.
+shows the status of ongoing and finished repacks for the given tape(s). The tape(s) is(are) given by their
+VID and the list is colon separated. As opposed to the \-s option, here the entire history is shown.
 .TP
 .BI \-e,\ \-\-errors
 displays the errors that occured during the repack of a given tape, file by file. By default, the number of
@@ -130,29 +120,17 @@ Repack started for tape I10552
 SubmitTime              User                       Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated    Status
 --------------------------------------------------------------------------------------------------------------------------------------------
 23-Jun-11 14:34     sponcec3         lxcastordev01.cern.ch   I10551         44    47.41KiB         0        43         1         0  STARTING
-23-Jun-11 14:34     sponcec3         lxcastordev01.cern.ch   I10552          1        721B         1         0         0         0   ONGOING
 22-Jun-11 17:19     sponcec3         lxcastordev01.cern.ch   I10552          1        721B         0         0         0         1  FINISHED
-22-Jun-11 17:16     sponcec3         lxcastordev01.cern.ch   I10552         66    47.41KiB         0         0         1        65    FAILED
 
-> repack -R I10551
-
-> repack -s
+> repack -S I10552
 ============================================================================================================================================
 SubmitTime              User                       Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated    Status
 --------------------------------------------------------------------------------------------------------------------------------------------
-23-Jun-11 14:34     sponcec3         lxcastordev01.cern.ch   I10551         66    47.41KiB         0        65         1         0   ONGOING
 23-Jun-11 14:34     sponcec3         lxcastordev01.cern.ch   I10552          1        721B         0         0         1         0   ABORTED 
 22-Jun-11 17:19     sponcec3         lxcastordev01.cern.ch   I10552          1        721B         0         0         0         1  FINISHED
 22-Jun-11 17:16     sponcec3         lxcastordev01.cern.ch   I10552         66    47.41KiB         0         0         1        65    FAILED
 
-> repack -s -a 0.5
-============================================================================================================================================
-SubmitTime              User                       Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated    Status
---------------------------------------------------------------------------------------------------------------------------------------------
-23-Jun-11 14:34     sponcec3         lxcastordev01.cern.ch   I10551         66    47.41KiB         0        65         1         0   ONGOING
-23-Jun-11 14:34     sponcec3         lxcastordev01.cern.ch   I10552          1        721B         0         0         1         0   ABORTED 
-
-> repack -S I10551 -a 0.5
+> repack -S I10551
 ============================================================================================================================================
 SubmitTime              User                       Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated    Status
 --------------------------------------------------------------------------------------------------------------------------------------------
@@ -160,13 +138,13 @@ SubmitTime              User                       Machine      Vid      Total  
 
 > repack -R I10551
 
-> repack -S I10551 -a 0.5
+> repack -S I10551
 ============================================================================================================================================
 SubmitTime              User                       Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated    Status
 --------------------------------------------------------------------------------------------------------------------------------------------
 23-Jun-11 14:34     sponcec3         lxcastordev01.cern.ch   I10551         66    47.41KiB         0        25        41         0  ABORTING
 
-> repack -S I10551 -a 0.5
+> repack -S I10551
 ============================================================================================================================================
 SubmitTime              User                       Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated    Status
 --------------------------------------------------------------------------------------------------------------------------------------------
