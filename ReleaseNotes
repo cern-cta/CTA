@@ -11,6 +11,31 @@ $SystemLogSocketIgnoreMsgTimestamp off
 
 
 ------------
+- 2.1.12-8 -
+------------
+
+  Summary
+  -------
+
+  - This is an INTERNAL RELEASE for the purpose of creating tape-server rpms
+    for the CERN tape-operations team to deploy and test the latetest versions
+    of the rtcpd and tapebridged daemons on real hardware.
+
+
+------------
+- 2.1.12-7 -
+------------
+
+  Summary
+  -------
+
+  - This is an INTERNAL RELEASE for the purpose of creating client rpms for
+    the CERN castor-operations team to deploy and test the new secure
+    name-server clients on the pre-production servers of the lxplus cluster
+    at CERN.
+
+
+------------
 - 2.1.12-6 -
 ------------
 
