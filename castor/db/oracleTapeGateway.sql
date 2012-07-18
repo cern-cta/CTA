@@ -189,7 +189,10 @@ BEGIN
                AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
                AND DiskServer.id = FileSystem.diskServer
                AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
-          ORDER BY DBMS_Random.value)   -- go completely random instead of trying to be clever with weighting file systems
+          ORDER BY -- use randomness to scatter recalls everywhere in the pool. This works unless the pool starts to be overloaded:
+                   -- once a hot spot develops, recalls start to take longer and longer and thus tend to accumulate. However,
+                   -- until we have a faster feedback system to rank filesystems, the fileSystemRate order has not proven to be better.
+                   DBMS_Random.value)
   LOOP
     varFileSystemId := f.id;
     buildPathFromFileId(f.fileId, f.nsHost, ids_seq.nextval, outFilePath);
