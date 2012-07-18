@@ -1,0 +1,160 @@
+{% extends "cockpit/base.html" %}
+
+{% block header %}<h1>CASTOR COCKPIT</h1>{% endblock %}
+
+{% block content %}
+<div id="home">
+    <table id="sls">
+        <tr>
+            <th colspan="3">
+                CASTOR
+            </th>
+            <th>
+                EOS
+            </th>
+        </tr>
+        <tr>
+            <td>
+                Service <br />
+                <iframe src="http://cern.ch/sls/service-inline.php?id=CASTOR&layout=line" 
+                frameborder="0" height="20" width="250" scrolling="no"></iframe>
+            </td>
+            <td>
+                SRM <br />
+                <iframe src="http://cern.ch/sls/service-inline.php?id=CASTOR-SRM&layout=line" 
+                frameborder="0" height="20" width="250" scrolling="no"></iframe>
+            </td>
+            <td>
+                TAPE <br />
+                <iframe src="http://cern.ch/sls/service-inline.php?id=CASTORTapeInfrastructure&layout=line" 
+                frameborder="0" height="20" width="250" scrolling="no"></iframe>
+            </td>
+            <td>
+                Service <br />
+                <iframe src="http://cern.ch/sls/service-inline.php?id=EOS&layout=line" 
+                frameborder="0" height="20" width="250" scrolling="no"></iframe>
+            </td>
+        </tr>
+        <tr> <!-- Alice-->
+            <td>
+                CASTORALICE <br />
+                <iframe src="http://cern.ch/sls/service-inline.php?id=CASTORALICE&layout=line" 
+                frameborder="0" height="20" width="250" scrolling="no"></iframe>
+            </td>
+            <td>
+            </td>
+            <td>
+                CASTORALICE-TAPE <br />
+                <iframe src="http://cern.ch/sls/service-inline.php?id=CASTORTapeALICE&layout=line" 
+                frameborder="0" height="20" width="250" scrolling="no"></iframe>
+            </td>
+            <td>
+                EOSALICE <br />
+                <iframe src="http://cern.ch/sls/service-inline.php?id=EOSALICE&layout=line" 
+                frameborder="0" height="20" width="250" scrolling="no"></iframe>
+            </td>
+        </tr>
+        <tr> <!-- Atlas-->
+            <td>
+                CASTORATLAS <br />
+                <iframe src="http://cern.ch/sls/service-inline.php?id=CASTORATLAS&layout=line" 
+                frameborder="0" height="20" width="250" scrolling="no"></iframe>
+            </td>
+            <td>
+                CASTORATLAS-SRM <br />
+                <iframe src="http://cern.ch/sls/service-inline.php?id=CASTOR-SRM_ATLAS&layout=line" 
+                frameborder="0" height="20" width="250" scrolling="no"></iframe>
+            </td>
+            <td>
+                CASTORATLAS-TAPE <br />
+                <iframe src="http://cern.ch/sls/service-inline.php?id=CASTORTapeATLAS&layout=line" 
+                frameborder="0" height="20" width="250" scrolling="no"></iframe>
+            </td>
+            <td>
+                EOSATLAS <br />
+                <iframe src="http://cern.ch/sls/service-inline.php?id=EOSATLAS&layout=line" 
+                frameborder="0" height="20" width="250" scrolling="no"></iframe>
+            </td>
+        </tr>
+        <tr> <!-- CMS -->
+            <td>
+                CASTORCMS <br />
+                <iframe src="http://cern.ch/sls/service-inline.php?id=CASTORCMS&layout=line" 
+                frameborder="0" height="20" width="250" scrolling="no"></iframe>
+            </td>
+            <td>
+                CASTORCMS-SRM <br />
+                <iframe src="http://cern.ch/sls/service-inline.php?id=CASTOR-SRM_CMS&layout=line" 
+                frameborder="0" height="20" width="250" scrolling="no"></iframe>
+            </td>
+            <td>
+                CASTORCMS-TAPE <br />
+                <iframe src="http://cern.ch/sls/service-inline.php?id=CASTORTapeCMS&layout=line" 
+                frameborder="0" height="20" width="250" scrolling="no"></iframe>
+            </td>
+            <td>
+                EOSCMS <br />
+                <iframe src="http://cern.ch/sls/service-inline.php?id=EOSCMS&layout=line" 
+                frameborder="0" height="20" width="250" scrolling="no"></iframe>
+            </td>
+        </tr>
+        <tr> <!-- LHCb -->
+            <td>
+                CASTORLHCB <br />
+                <iframe src="http://cern.ch/sls/service-inline.php?id=CASTORLHCB&layout=line" 
+                frameborder="0" height="20" width="250" scrolling="no"></iframe>
+            </td>
+            <td>
+                CASTORLHCB-SRM <br />
+                <iframe src="http://cern.ch/sls/service-inline.php?id=CASTOR-SRM_LHCB&layout=line" 
+                frameborder="0" height="20" width="250" scrolling="no"></iframe>
+            </td>
+            <td>
+                CASTORLHCB-TAPE <br />
+                <iframe src="http://cern.ch/sls/service-inline.php?id=CASTORTapeLHCB&layout=line" 
+                frameborder="0" height="20" width="250" scrolling="no"></iframe>
+            </td>
+            <td>
+                EOSLHCB <br />
+                <iframe src="http://cern.ch/sls/service-inline.php?id=EOSLHCB&layout=line" 
+                frameborder="0" height="20" width="250" scrolling="no"></iframe>
+            </td>
+        </tr>
+        <tr> <!-- public -->
+            <td>
+                CASTORPUBLIC <br />
+                <iframe src="http://cern.ch/sls/service-inline.php?id=CASTORPUBLIC&layout=line" 
+                frameborder="0" height="20" width="250" scrolling="no"></iframe>
+            </td>
+            <td>
+                CASTORPUBLIC-SRM <br />
+                <iframe src="http://cern.ch/sls/service-inline.php?id=CASTOR-SRM_PUBLIC&layout=line" 
+                frameborder="0" height="20" width="250" scrolling="no"></iframe>
+            </td>
+            <td>
+            </td>
+            <td>
+            </td>
+        </tr>
+        <tr> <!-- pps -->
+            <td>
+                CASTORPPS <br />
+                <iframe src="http://cern.ch/sls/service-inline.php?id=CASTORPPS&layout=line" 
+                frameborder="0" height="20" width="250" scrolling="no"></iframe>
+            </td>
+            <td>
+                CASTORPPS-SRM <br />
+                <iframe src="http://cern.ch/sls/service-inline.php?id=CASTOR-SRM_PPS&layout=line" 
+                frameborder="0" height="20" width="250" scrolling="no"></iframe>
+            </td>
+            <td>
+            </td>
+            <td>
+                EOSPPS <br />
+                <iframe src="http://cern.ch/sls/service-inline.php?id=EOSPPS&layout=line" 
+                frameborder="0" height="20" width="250" scrolling="no"></iframe>
+            </td>
+        </tr>
+    </table>
+</div>
+{% endblock %}

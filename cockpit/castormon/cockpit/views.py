@@ -22,7 +22,7 @@ def _get_rpyc_connexion():
     """
     return an RPyC connexion
     """
-    return rpyc.connect(settings.RPYC_SERVER, 18861, config = {"allow_public_attrs" : True})
+    return rpyc.connect("localhost", 18861, config = {"allow_public_attrs" : True})
 
 
 def _get_metrics_names():
@@ -206,13 +206,13 @@ _format_data = {
 ###################################################################################################
 #                                   Django Views
 ###################################################################################################
-def index(request):
+def home(request, template_name):
     """
-    Simple home
+    Simple home and sls overview
     """
     metrics_names = sorted([m.name for m in Metric.objects.all()])
     rpyc_status = _get_server_status()
-    return render_to_response('cockpit/index.html',
+    return render_to_response(template_name,
                               {'metrics' : metrics_names,
                                'rpyc_status' : rpyc_status},
                               context_instance=RequestContext(request))

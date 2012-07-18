@@ -41,11 +41,12 @@
             </h1>
             <ul>
                 <li><a href="https://twiki.cern.ch/twiki/bin/view/DSSGroup/CockpitWebInterface">Twiki page</a></li>
+                <li><a href="/sls">SLS overview</a></li>
             {% if rpyc_status %}
-                <li class="rpyc-up">RPyC Server : <img src="/static/img/button_ok.png" alt="UP" style="vertical-align:middle;width:20px" /></li>
+                <li class="rpyc-status rpyc-up">RPyC Server : <img src="/static/img/button_ok.png" alt="UP" /></li>
             {% else %}
-                <li class="rpyc-down">RPyC Server : <img src="/static/img/button_cancel.png" alt="DOWN" style="vertical-align:middle;width:20px" /></li>
-                <p>Data not up-to-date !</p>
+                <li class="rpyc-status rpyc-down">RPyC Server : <img src="/static/img/button_cancel.png" alt="DOWN" /><p>Data not up-to-date !</p></li>
+                
             {% endif %}
             </ul>
         </div>

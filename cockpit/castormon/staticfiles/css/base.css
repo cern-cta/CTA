@@ -47,6 +47,15 @@ p {
     padding: 5px;
 }
 
+li.rpyc-status {
+    margin-top: 15px;
+}
+
+li.rpyc-status img {
+    vertical-align:middle;
+    width:20px;
+}
+
 .rpyc-up {
     color: green;
 }
@@ -54,6 +63,32 @@ p {
 .rpyc-down {
     color: red;
     font-weight: bold;
+}
+
+table#sls {
+    margin: 0px auto;
+    border-collapse: collapse;
+}
+
+table#sls tr {
+}
+
+table#sls th {
+    background-color: #eee;
+    font-size: xx-large;
+    padding: 10px;
+    border: 1px solid #fff;
+}
+
+table#sls td {
+    background-color: #eee;
+    padding: 10px;
+    border: 1px solid #fff;
+}
+
+
+iframe {
+    margin: 0px auto;
 }
 
 #sidebar {

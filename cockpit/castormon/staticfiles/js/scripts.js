@@ -160,7 +160,7 @@ function getTimelineChartOptions(metric_name) {
             },
             plotOptions: {
                 series: {
-                    gapSize: 3,
+                    gapSize: 4,
                     marker: {
                         enabled: false,
                         states: {
@@ -504,6 +504,13 @@ function _drawSumChart(metric_container, from, to, format_type) {
 
 $(document).ready(function () {
 
+    /****************************
+     *  Auto size               *
+     ****************************/
+    docHeight = $(document).height(); // height of HTML document
+    h = docHeight * 0.8;
+    $('div.metric-display').height(h);
+
     /*****************************
      * Hightchart global options *
      *****************************/
@@ -633,13 +640,6 @@ $(document).ready(function () {
         $(this).empty().html(show);
         $(this).next('div.metric-info-text').slideUp();
     });
-
-    /****************************
-     *  Auto size               *
-     ****************************/
-    docHeight = $(document).height(); // height of HTML document
-    h = docHeight * 0.8;
-    $('div.metric-display').height(h);
 
     // Datepicker
     $(".datepicker-from").datepicker();
