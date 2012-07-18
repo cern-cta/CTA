@@ -29,10 +29,12 @@ $SystemLogSocketIgnoreMsgTimestamp off
   Summary
   -------
 
-  - This is an INTERNAL RELEASE for the purpose of creating client rpms for
-    the CERN castor-operations team to deploy and test the new secure
-    name-server clients on the pre-production servers of the lxplus cluster
-    at CERN.
+  - This is an INTERNAL RELEASE for the sole purpose of creating rpms for
+    CERN CASTOR-operations to install the name-server clients on a set of
+    pre-production client machines in order to further test the implementations
+    of the following two RFEs:
+     + bug #95558: RFE: Implement new security connection-policy for NS clients
+     + bug #95559: RFE: Disable the use of GSI based security
 
 
 ------------
