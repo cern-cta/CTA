@@ -11,6 +11,18 @@ $SystemLogSocketIgnoreMsgTimestamp off
 
 
 ------------
+- 2.1.12-9 -
+------------
+
+  Summary
+  -------
+
+  - This is an INTERNAL RELEASE for the purpose of creating tape-server rpms
+    for the CERN tape-operations team to deploy and test the latetest versions
+    of the rtcpd and tapebridged daemons on real hardware.
+
+
+------------
 - 2.1.12-8 -
 ------------
 
