@@ -38,8 +38,6 @@ Cns_selectsrvr(const char *path,
   char *last = NULL;
   int n;
   char *p;
-  char *securemode;
-  int securityOpt=0;
 
   strncpy (func, "Cns_selectsrvr", 16);
   if (! path || ! server || ! actual_path) {
@@ -80,25 +78,12 @@ Cns_selectsrvr(const char *path,
         server[0] = '\0'; /* use localhost */
         return (0);
       }
-      if ((securemode = getenv ("SECURE_CASTOR")) ||
-	  (securemode = getconfent(CNS_SCE, "SECURITY", 0))) {
-        securityOpt = (strcasecmp(securemode, "YES") == 0);
+      if (strlen (CNSHOSTPFX) + strlen (p) + strlen (domain) +
+          1 > CA_MAXHOSTNAMELEN) {
+        serrno = EINVAL;
+        return (-1);
       }
-      if (securityOpt) {
-        if (strlen (SCNSHOSTPFX) + strlen (p) + strlen (domain) +
-            1 > CA_MAXHOSTNAMELEN) {
-          serrno = EINVAL;
-          return (-1);
-        }
-        sprintf (server, "%s%s.%s", SCNSHOSTPFX, p, domain);
-      } else {
-        if (strlen (CNSHOSTPFX) + strlen (p) + strlen (domain) +
-            1 > CA_MAXHOSTNAMELEN) {
-          serrno = EINVAL;
-          return (-1);
-        }
-        sprintf (server, "%s%s.%s", CNSHOSTPFX, p, domain);
-      }
+      sprintf (server, "%s%s.%s", CNSHOSTPFX, p, domain);
     }
   }
   return (0);

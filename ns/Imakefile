@@ -14,8 +14,7 @@ NSLIBCSEC += -lcrypto
 #endif
 NSLIBCSEC += -ldl
 
-CPPFLAGS += -DCNS_HOST=NsHost -DSCNS_HOST=SNsHost \
-            -DCNSHOSTPFX=NsHostPfx -DSCNSHOSTPFX=SNsHostPfx \
+CPPFLAGS += -DCNS_HOST=NsHost -DCNSHOSTPFX=NsHostPfx \
             -DLCGDM_MAPFILE=\"IdMapFile\" \
             -DNSLOGFILE=NsLogFile -DNSCONFIG=NsConfigFile \
 	    $(ORACLE_CPPFLAGS)

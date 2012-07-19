@@ -34,9 +34,7 @@ COMM authorized to use remotely rtcopy server
 #define NsLogFile       LOGPATH(nsd.log)
 #define NsConfigFile	CONFIGPATH(NSCONFIG)
 #define NsHost          \"castorns\"
-#define SNsHost         \"scnsdev\"
 #define NsHostPfx       \"cns\"
-#define SNsHostPfx      \"scns\"
 
 COMM Define CASTOR Name server root path name to prevent
 COMM tpread/tpwrite request to/from HSM files

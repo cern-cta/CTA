@@ -132,21 +132,12 @@ int send2nsdx(int *socketp,
     else if ((p = getenv (CNS_HOST_ENV)) || (p = getconfent (CNS_SCE, "HOST", 0)))
       strcpy (Cnshost, p);
     else {
-      if (securityOpt) {
-#if defined(SCNS_HOST)
-        strcpy (Cnshost, SCNS_HOST);
-#else
-        serrno = SENOSHOST;
-        return errorRetVal;
-#endif
-      } else {
 #if defined(CNS_HOST)
-        strcpy (Cnshost, CNS_HOST);
+      strcpy (Cnshost, CNS_HOST);
 #else
-        gethostname (Cnshost, sizeof(Cnshost));
+      serrno = SENOSHOST;
+      return errorRetVal;
 #endif
-        serrno = 0;
-      }
     }
     /* If the user has decided to enable the security mode then the port can not be set
      * via host:port but with the specific SECURITY_PORT options
