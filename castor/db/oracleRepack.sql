@@ -24,12 +24,14 @@ CREATE OR REPLACE PROCEDURE abortRepackRequest
   rport INTEGER;
   rReqUuid VARCHAR2(2048);
   varVID VARCHAR2(10);
+  varStartTime NUMBER;
 BEGIN
-  -- mark the repack request as being aborted
+  -- lock and mark the repack request as being aborted
   UPDATE StageRepackRequest SET status = tconst.REPACK_ABORTING
    WHERE reqId = parentUUID
   RETURNING repackVID INTO varVID;
   COMMIT;
+  varStartTime := getTime();
   logToDLF(parentUUID, dlf.LVL_SYSTEM, dlf.REPACK_ABORTING, 0, '', 'repackd', 'TPVID=' || varVID);
   -- get unique ids for the request and the client and get current time
   SELECT ids_seq.nextval INTO reqId FROM DUAL;
@@ -47,6 +49,8 @@ BEGIN
   processBulkAbort(reqId, rIpAddress, rport, rReqUuid);
   -- mark the repack request as ABORTED
   UPDATE StageRepackRequest SET status = tconst.REPACK_ABORTED WHERE reqId = parentUUID;
+  logToDLF(parentUUID, dlf.LVL_SYSTEM, dlf.REPACK_ABORTED, 0, '', 'repackd',
+    'TPVID=' || varVID || ' elapsedTime=' || to_char(getTime() - varStartTime));
   -- return all results
   OPEN rSubResults FOR
     SELECT fileId, nsHost, errorCode, errorMessage FROM ProcessBulkRequestHelper;
@@ -403,8 +407,8 @@ BEGIN
           inEuid, inEgid, inVid, inFseq, tconst.RECALLJOB_PENDING, inFileSize, getTime(),
           inBlock, NULL);
   -- log "created new RecallJob"
-  varLogParam := 'REQID=' || inReqUUID || ' SUBREQID=' || inSubReqUUID || ' RecallGroup=' || inRecallGroupName;
-  logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_CREATING_RECALLJOB, inFileId, inNsHost, 'repackd',
+  varLogParam := 'SUBREQID=' || inSubReqUUID || ' RecallGroup=' || inRecallGroupName;
+  logToDLF(inReqUUID, dlf.LVL_SYSTEM, dlf.RECALL_CREATING_RECALLJOB, inFileId, inNsHost, 'stagerd',
            varLogParam || ' fileClass=' || TO_CHAR(inFileClassId) || ' CopyNb=' || TO_CHAR(inCopynb)
            || ' TPVID=' || inVid || ' FSEQ=' || TO_CHAR(inFseq) || ' FileSize=' || TO_CHAR(inFileSize));
   -- create missing segments if needed
@@ -435,7 +439,8 @@ CREATE OR REPLACE PROCEDURE repackManager AS
   varClientId INTEGER;
   varRepackVID VARCHAR2(10);
   varCreationTime NUMBER;
-  varStartTime INTEGER;
+  varStartTime NUMBER;
+  varTapeStartTime NUMBER;
   nbRepacks INTEGER;
 BEGIN
   SELECT count(*) INTO nbRepacks
@@ -449,6 +454,7 @@ BEGIN
   END IF;
   varStartTime := getTime();
   WHILE TRUE LOOP
+    varTapeStartTime := getTime();
     varReqUUID := NULL;
     -- get an outstanding repack to start - we're alone, no need to take special locks
     DELETE FROM RepackQueue
@@ -458,10 +464,12 @@ BEGIN
       varSvcClassId, varClientId, varRepackVID, varCreationTime;
     -- if no new repack is found to start, terminate
     EXIT WHEN varReqUUID IS NULL;
-    -- log and start the repack for this request: this can take some considerable time
-    logToDLF(varReqUUID, dlf.LVL_SYSTEM, dlf.REPACK_STARTING, 0, '', 'repackd', 'TPVID=' || varRepackVID);
+    -- start the repack for this request: this can take some considerable time
     handleRepackRequest(varReqUUID, varMachine, varEuid, varEgid, varPid, varUserName, varSvcClassId,
                         varClientId, varRepackVID, varCreationTime);
+    -- log 'Repack process started'
+    logToDLF(varReqUUID, dlf.LVL_SYSTEM, dlf.REPACK_STARTED, 0, '', 'repackd',
+      'TPVID=' || varRepackVID || ' elapsedTime=' || TO_CHAR(getTime() - varTapeStartTime));
     nbRepacks := nbRepacks + 1;
   END LOOP;
   IF nbRepacks > 0 THEN
@@ -484,14 +492,14 @@ BEGIN
     DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
   END LOOP;
 
-  -- Create a db job to be run every 10 minutes executing the repackManager procedure
+  -- Create a db job to be run every 2 minutes executing the repackManager procedure
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'RepackManagerJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'BEGIN startDbJob(''BEGIN repackManager(); END;'', ''repackd''); END;',
       JOB_CLASS       => 'CASTOR_JOB_CLASS',
       START_DATE      => SYSDATE + 1/1440,
-      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=10',
+      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=2',
       ENABLED         => TRUE,
       COMMENTS        => 'Database job to manage the repack process');
 END;

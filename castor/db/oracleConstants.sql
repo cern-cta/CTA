@@ -183,9 +183,10 @@ AS
   BULK_MIGRATION_COMPLETED     CONSTANT VARCHAR2(2048) := 'setBulkFileMigrationResult: bulk migration completed';
 
   REPACK_SUBMITTED             CONSTANT VARCHAR2(2048) := 'New Repack request submitted';
-  REPACK_ABORTING              CONSTANT VARCHAR2(2048) := 'Aborting Repack process';
+  REPACK_ABORTING              CONSTANT VARCHAR2(2048) := 'Aborting Repack request';
+  REPACK_ABORTED               CONSTANT VARCHAR2(2048) := 'Repack request aborted';
   REPACK_JOB_ONGOING           CONSTANT VARCHAR2(2048) := 'repackManager: Repack processes still starting, no new ones will be started for this round';
-  REPACK_STARTING              CONSTANT VARCHAR2(2048) := 'repackManager: starting new Repack process';
+  REPACK_STARTED               CONSTANT VARCHAR2(2048) := 'repackManager: Repack process started';
   REPACK_JOB_STATS             CONSTANT VARCHAR2(2048) := 'repackManager: Repack processes statistics';
   REPACK_UNEXPECTED_EXCEPTION  CONSTANT VARCHAR2(2048) := 'handleRepackRequest: unexpected exception caught';
 END dlf;
