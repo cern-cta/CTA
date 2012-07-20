@@ -26,8 +26,8 @@
 
 """utility functions for castor tools written in python"""
 
-import os, sys, time, dlf
-import subprocess
+import os, sys, time, thread, subprocess
+import dlf
 
 def _checkValueFound(name, value, instance, configFile):
     '''Checks whether value is empty and raise an exception if it is'''
@@ -81,6 +81,9 @@ class DBConnection(object):
             raise ValueError, 'Version mismatch between the database and the software : ' + dbVer[0] + ' versus ' + self.schemaVersion
         # 'Created new Oracle connection' message
         dlf.write(msgs.CREATEDORACONN)
+        # pass client info for debugging purposes. The thread ID is cut to 5 digits, cf. dlf.py
+        cur = self.connection.cursor()
+        cur.execute("BEGIN DBMS_APPLICATION_INFO.SET_CLIENT_INFO('CASTOR pid=%d tid=%d'); END;" % (os.getpid(), thread.get_ident()%10000))
     
     def dropConnection(self):
         '''Drop existing internal connection'''
