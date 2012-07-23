@@ -1,13 +1,242 @@
-For new logging deployement : 
-$SystemLogSocketIgnoreMsgTimestamp off
+------------
+- 2.1.13-0 -
+------------
 
-  Package changes
+  Summary of major features
+  -------------------------
+
+  - the tape schema of the stager DB has been cleaned up for recalls.
+    + Tape and Segment tables have disappeared
+    + RecallUser and RecallGroup tabls have appeared
+       - RecallUser defines a user by uid and gid and associates him/her to a recall group
+       - RecallGroup defines the behavior of the system for recalls triggered by users from this group
+       - RecallGroup has fields nbDrives, minAmountDataForMount, minNbFilesForMount, maxFileAgeBeforeMount
+         very similar to the TapePool for the migration case
+       - RecallGroup also has a field vdqmPriority that defines the priority to be used in VDQM for this group
+    + recall policy has been replaced by PL/SQL code that uses the RecallGroup table
+    + You may now have multiple RecallJob for a given file
+       - one per possible value of the (RecallGroup, copynb) tuple
+    + recall retries are now more clever and can make use of a second copy if first one fails
+
+  - bulk interfaces have been implemented for both recall, migrations and related nameserver calls
+    + allows efficient migration/recall of small files
+
+  - the nameserver has been secured in a transparent way :
+    + only kerberos is supported
+    + clients having a kerberos token will try to use it
+    + if they fail or is they have no toekn, they will try the unsecure way
+    + you are free to start the nameserver in secure or unsecure mode or even both
+
+  - the configuration parameters in castor.conf are now reread regularly (by default every 5mn)
+    This however does not ensure that all new parameters are taken into account, as the code
+    may not check the new value. An example of parameters that will be reloaded are the log levels.
+    So no need to restart your daemons (could be visible) to switch to debug mode and back
+
+  - a new monitoring facility is provided called the cockpit
+    + it allows to display in real time metrics working on top of the CASTOR log flow
+    + new metrics can be easily defined within few lines of XML and deployed on the fly
+
+
+  CASTOR Nameserver
+  -----------------
+
+  [Features]
+
+
+  CASTOR Core Framework
+  ---------------------
+
+  [Bug]
+
+  [Code maintenance]
+
+
+  CASTOR Stager
+  -------------
+
+  [Bug]
+
+  [Features]
+
+
+  CASTOR Scheduler
+  -------------
+
+  [Bug]
+
+  CASTOR Tape
+  -----------
+
+  [Bug]
+
+  [Features]
+
+
+  CASTOR Tape Gateway
+  -------------------
+
+  [Bug]
+
+  [Features]
+
+
+  Package Changes
   ---------------
+
   - castor-csec has been dropped: the GSI plugin has been removed whereas the KRB5 plugin
     has been integrated into castor-lib, so that it is also part of the client distribution.
     Therefore, as of this release the castor-lib RPM has a depency on Kerberos libraries.
   - castor-rechandler-server has been dropped as a result of the refactoring of the recall logic.
-  - castor-cockpit is a new package providing the new monitoring system for CASTOR ...
+  - castor-cockpit is a new package providing the new monitoring system for CASTOR
+
+
+  Deployment Changes
+  ------------------
+
+  - /etc/rsyslog/conf has to be modified to add the following entry :
+       $SystemLogSocketIgnoreMsgTimestamp off
+    This will ensure that the times logged are the ones when things have append and not
+    when their logs were received by rsyslog
+
+
+  Upgrade Instructions from 2.1.12-4
+  ----------------------------------
+
+    Before upgrading to a 2.1.13-0 instance of CASTOR2 please make sure to read
+    the upgrade instructions fully before proceeding.
+
+    Central services (Nameserver)
+    -----------------------------
+
+      The upgrade of the CNS databases to 2.1.12-0 can be performed online while
+      the system is running and will be transparent.
+      The RPM upgrade can also be performed on a running system, providing that the
+      restart of the nameserver daemons may be noticable by few clients (< 1s downtime)
+      In order to avoid that, you can upgrade the nodes one after the other, removing
+      them temporarily from the load balancing alias
+
+      Notes
+      -----
+
+      - the upgrade script supposes that the nameserver and VMGR schemas are hosted in
+        a common database. Other deployment can also work but are not supported in the
+        official upgrade instructions.
+
+      - Prior to upgrading the nameserver database please verify with your DBA that
+        you have the right to create synonyms. The way to add this privilege
+        if it is not present is :
+
+        GRANT CREATE SYNONYM TO <user>;
+
+      Instructions 
+      ------------
+
+       1. Apply the appropriate database upgrade script from:
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.13-*/2.1.13-0/dbupgrades
+
+       2. Update the software to use the 2.1.13-0 RPMS. Note: the nameserver
+          daemon will be restarted automatically.
+
+       3. Upgrade complete.
+
+
+    Stager, DLF
+    -----------
+
+    The upgrade of the STAGER database to 2.1.13-0 cannot be performed online.
+    As a result all daemons accessing the STAGER database MUST be stopped!
+    The expected downtime for the upgrade is 30 minutes.
+
+    Notes:
+      - Prior to upgrading the STAGER database please verify that your nameserver
+        database has been upgraded to 2.1.13-0
+
+      Instructions
+      ------------
+
+       1. Stop all daemons on the stager headnodes which have direct
+          connections to the STAGER database. This includes: rhd, stagerd,
+          transfermanagerd, tapegatewayd, rechandlerd and rmmasterd.
+
+          Note: It is not necessary to stop any daemons on the diskservers.
+
+       2. Upgrade the STAGER database using the stager_2.1.12-4_to_2.1.13-0.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.13-*/2.1.13-0/dbupgrades
+
+       3. Upgrade the DLF database using the dlf_2.1.12-4_to_2.1.13-0.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.13-*/2.1.13-0/dbupgrades
+
+       4. Upgrade the software on the headnodes and diskservers to 2.1.13-0.
+
+       5. Create RecallUser and RecallGroup configurations using enterRecallGroup/enterRecallUser
+          if needed. This is replacing the previous recall policies
+
+       6. If you have an independent monitoring system to monitor CASTOR such
+          as LEMON. Please make sure to update the monitoring configuration to
+          reflect any changes in this release.
+
+       7. Start all the daemons which were stopped in step 2.
+
+          Note: If you have a concept of private and public request handlers
+                you should start only the private ones to test/validate the
+                installation without user interference.
+
+       8. Wait 60 seconds to give time for the diskservers to send a heartbeat
+          message to the rmmaster daemon.
+
+       9. Test the instance by running the test suite available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.13-*/2.1.13-0/testsuite
+
+      10. Start the public request handlers (if applicable)
+
+      11. Congratulations you have successfully upgraded to the 2.1.13-0 release
+          of CASTOR.
+
+
+    Central services (CUPV, VMGR, VDQM)
+    -----------------------------------
+
+      The upgrade of the VDQM database needs a down time. We assume that VMGR and
+      UPV daemons are collocated with the VDQM one, thus we give upgrade instructions
+      for a non transparent upgrade of all of them. Please adapt to your needs
+
+      Instructions
+      ------------
+
+       1. Put all the tapeservers down using tpconfig
+
+       2. Stop all vdqm, vmgr and cupv daemons
+
+       3. Apply the appropriate database upgrade scripts from:
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.12-*/2.1.12-0/dbupgrades
+         Note that these scripts can be used for 2.1.11-8 and 2.1.11-9 databases.
+
+       4. Update the software to use the 2.1.12-0 RPMS.
+
+       5. Restart vdqm, vmgr and cupv daemons
+
+       6. Put all the tapeservers up using tpconfig
+
+       7. Upgrade complete.
+
+
+    Monitoring
+    ----------
+
+      The upgrade of the MONITORING database can be performed online while the
+      system is running.
+
+      Instructions
+      ------------
+
+       1. Upgrade the MONITORING database using the mon_2.1.11-9_to_2.1.12-0.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.12-*/2.1.12-0/dbupgrades
+          Note that this script can be used for 2.1.11-8 and 2.1.11-9 databases.
+
+       2. Upgrade complete.
 
 
 ------------
