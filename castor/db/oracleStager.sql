@@ -3180,7 +3180,7 @@ BEGIN
   SELECT count(*) INTO varIsBeingRecalled
     FROM RecallJob
    WHERE castorFile = varCfId
-     AND (recallGroup = varRecallGroup OR status IN (tconst.RECALLJOB_PENDING, tconst.RECALLJOB_SELECTED));
+     AND (recallGroup = varRecallGroup OR status = tconst.RECALLJOB_SELECTED);
   -- trigger recall only if recall is not already ongoing
   IF varIsBeingRecalled != 0 THEN
     -- createRecallCandidate: found already running recall
