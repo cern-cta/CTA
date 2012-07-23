@@ -126,7 +126,7 @@ else:
     recallgroupname = args[0]
 
 # check we have something to do
-if nbdrives == None and minamountdata == None and minnbfiles == None and maxfileage == None:
+if nbdrives == None and minamountdata == None and minnbfiles == None and maxfileage == None and priority == None:
     print 'Nothing to modify. Did you forget some argument ?'
     usage(1)
 
