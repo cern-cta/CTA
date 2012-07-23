@@ -176,7 +176,6 @@ def displayStatus():
         stcur = stconn.cursor()
         stcur.arraysize = 50
         stGetStatus = '''
-        SELECT * FROM (
           SELECT StageRepackRequest.creationTime, StageRepackRequest.username, StageRepackRequest.machine,
                  StageRepackRequest.repackVID, StageRepackRequest.status,
                  SUM(CASE WHEN SubRequest.status IS NULL THEN 0 ELSE 1 END) total,
@@ -195,16 +194,7 @@ def displayStatus():
         stGetStatus += '''
           GROUP BY StageRepackRequest.creationTime, StageRepackRequest.username, StageRepackRequest.machine,
                    StageRepackRequest.repackVID, StageRepackRequest.status
-          UNION
-          -- now get the submitted tapes: status = -1 will be printed as the last element in _repackRequestStatuses
-          SELECT creationTime, userName, machine, repackVID, -1 status,
-                 0 total, 0 totsize, 0 toRecall, 0 toMigr, 0 failed, 0 migrated
-            FROM RepackQueue
-          '''
-        if vids:
-            stGetStatus += "AND repackVID IN ('" + "','".join(vids) + "')"
-        stGetStatus += '''
-          ) ORDER BY creationTime DESC'''
+          ORDER BY creationTime DESC'''
         # go to DB and get back the data
         stcur.execute(stGetStatus)
         rows = stcur.fetchall()
@@ -272,11 +262,8 @@ def submitRepack():
             SELECT userName
               FROM StageRepackRequest
              WHERE repackVID = :vid
-               AND status NOT IN (2, 5) -- FINISHED, ABORTED
-            UNION
-            SELECT userName
-              FROM RepackQueue
-             WHERE repackVID = :vid'''
+               AND status NOT IN (2, 3, 5) -- FINISHED, FAILED, ABORTED
+            '''
             stRepack = '''
             BEGIN
               submitRepackRequest(:pmachine, :peuid, :pegid, :ppid, :pusername, :psvcClass, :pip, :pvid);
@@ -305,7 +292,7 @@ def submitRepack():
                     error, = e.args
                     print 'Caught exception when submitting repack of ' + tape + ' (' + error.message.strip('\n') + '), skipping'
                 except IndexError:
-                    # the output was not the expected one
+                    # the output from vmgrlisttape was not the expected one
                     print 'Caught exception when executing vmgrlisttape for tape ' + tape + ', skipping'
         finally:
             # close DB connection
@@ -325,7 +312,7 @@ def cancelRepack():
         SELECT reqId
           FROM StageRepackRequest
          WHERE StageRepackRequest.RepackVID = :vid
-           AND status IN (0, 1) -- STARTING, ONGOING
+           AND status IN (6, 0, 1) -- SUBMITTED, STARTING, ONGOING
         '''
         stAbort = '''
         BEGIN
@@ -437,7 +424,7 @@ try:
         displayErrors()
     else:
         print "No option specified\n"
-        usage(1)  
+        usage(1)
 except Exception, e:
     print e
     if verbose:

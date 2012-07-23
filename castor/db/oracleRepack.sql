@@ -25,12 +25,26 @@ CREATE OR REPLACE PROCEDURE abortRepackRequest
   rReqUuid VARCHAR2(2048);
   varVID VARCHAR2(10);
   varStartTime NUMBER;
+  varOldStatus INTEGER;
 BEGIN
   -- lock and mark the repack request as being aborted
-  UPDATE StageRepackRequest SET status = tconst.REPACK_ABORTING
+  SELECT status, repackVID INTO varOldStatus, varVID
+    FROM StageRepackRequest
    WHERE reqId = parentUUID
-  RETURNING repackVID INTO varVID;
-  COMMIT;
+   FOR UPDATE;
+  IF varOldStatus = tconst.REPACK_SUBMITTED THEN
+    -- the request was just submitted, simply drop it from the queue
+    DELETE FROM StageRepackRequest WHERE reqId = parentUUID;
+    logToDLF(parentUUID, dlf.LVL_SYSTEM, dlf.REPACK_ABORTED, 0, '', 'repackd', 'TPVID=' || varVID);
+    COMMIT;
+    -- and return an empty cursor - not that nice...
+    OPEN rSubResults FOR
+      SELECT fileId, nsHost, errorCode, errorMessage FROM ProcessBulkRequestHelper;
+    RETURN;
+  END IF;
+  UPDATE StageRepackRequest SET status = tconst.REPACK_ABORTING
+   WHERE reqId = parentUUID;
+  COMMIT;  -- so to make the status change visible
   varStartTime := getTime();
   logToDLF(parentUUID, dlf.LVL_SYSTEM, dlf.REPACK_ABORTING, 0, '', 'repackd', 'TPVID=' || varVID);
   -- get unique ids for the request and the client and get current time
@@ -66,7 +80,7 @@ CREATE OR REPLACE PROCEDURE submitRepackRequest
    inEgid IN INTEGER,
    inPid IN INTEGER,
    inUserName IN VARCHAR2,
-   svcClassName IN VARCHAR2,
+   inSvcClassName IN VARCHAR2,
    clientIP IN INTEGER,
    reqVID IN VARCHAR2) AS
   varClientId INTEGER;
@@ -74,37 +88,33 @@ CREATE OR REPLACE PROCEDURE submitRepackRequest
   varReqUUID VARCHAR2(36);
 BEGIN
   -- do prechecks and get the service class
-  varSvcClassId := insertPreChecks(inEuid, inEgid, svcClassName, 119);
+  varSvcClassId := insertPreChecks(inEuid, inEgid, inSvcClassName, 119);
   -- insert the client information
   INSERT INTO Client (ipAddress, port, version, secure, id)
   VALUES (clientIP, 0, 0, 0, ids_seq.nextval)
   RETURNING id INTO varClientId;
-  -- insert the request itself in the RepackQueue
-  INSERT INTO RepackQueue (reqUUID, machine, euid, egid, pid, userName, svcClass, client, repackVID, creationTime)
-  VALUES (uuidgen(), inMachine, inEuid, inEgid, inPid, inUserName, varSvcClassId, varClientId, reqVID, getTime())
-  RETURNING reqUUID INTO varReqUUID;
+  varReqUUID := uuidGen();
+  -- insert the request in status SUBMITTED, the SubRequests will be created afterwards
+  INSERT INTO StageRepackRequest (reqId, machine, euid, egid, pid, userName, svcClassName, svcClass, client, repackVID,
+    userTag, flags, mask, creationTime, lastModificationTime, status, id)
+  VALUES (varReqUUID, inMachine, inEuid, inEgid, inPid, inUserName, inSvcClassName, varSvcClassId, varClientId, reqVID,
+    varReqUUID, 0, 0, getTime(), getTime(), tconst.REPACK_SUBMITTED, ids_seq.nextval);
   COMMIT;
   logToDLF(varReqUUID, dlf.LVL_SYSTEM, dlf.REPACK_SUBMITTED, 0, '', 'repackd', 'TPVID=' || reqVID);
 END;
 /
 
 /* PL/SQL method to handle a Repack request. This is performed as part of a DB job. */
-CREATE OR REPLACE PROCEDURE handleRepackRequest
-  (inReqUUID IN VARCHAR2,
-   inMachine IN VARCHAR2,
-   inEuid IN INTEGER,
-   inEgid IN INTEGER,
-   inPid IN INTEGER,
-   inUserName IN VARCHAR2,
-   svcClassId IN VARCHAR2,
-   clientId IN INTEGER,
-   inReqVID IN VARCHAR2,
-   inCreationTime IN NUMBER) AS
+CREATE OR REPLACE PROCEDURE handleRepackRequest(inReqUUID IN VARCHAR2) AS
+  varEuid INTEGER;
+  varEgid INTEGER;
+  svcClassId INTEGER;
+  varRepackVID VARCHAR2(10);
+  varCreationTime NUMBER;
   varReqId INTEGER;
   cfId INTEGER;
   dcId INTEGER;
   repackProtocol VARCHAR2(2048);
-  result NUMBER;
   nsHostName VARCHAR2(2048);
   lastKnownFileName VARCHAR2(2048);
   varRecallGroupId INTEGER;
@@ -115,19 +125,20 @@ CREATE OR REPLACE PROCEDURE handleRepackRequest
   nbFilesFailed NUMBER := 0;
   isOngoing boolean := False;
 BEGIN
-  INSERT INTO StageRepackRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName,
-    userTag, reqId, creationTime, lastModificationTime, repackVid, id, svcClass, client, status)
-  VALUES (0, inUserName, inEuid, inEgid, 0, inPid, inMachine, (SELECT name FROM SvcClass WHERE id = svcClassId),
-    inReqVID, inReqUUID, inCreationTime, inCreationTime, inReqVID, ids_seq.nextval, svcClassId, clientId, tconst.REPACK_STARTING)
-  RETURNING id INTO varReqId;
-  -- commit so that the repack request is visible, even if empty for the moment
+  UPDATE StageRepackRequest SET status = tconst.REPACK_STARTING
+   WHERE reqId = inReqUUID
+  RETURNING id, euid, egid, svcClass, repackVID
+    INTO varReqId, varEuid, varEgid, svcClassId, varRepackVID;
+  -- commit so that the status change is visible, even if the request is empty for the moment
   COMMIT;
   -- Check which protocol should be used for writing files to disk
   repackProtocol := getConfigOption('Repack', 'Protocol', 'rfio');
   -- name server host name
   nsHostName := getConfigOption('stager', 'nsHost', '');
+  -- creation time given to new CastorFile entries
+  varCreationTime := getTime();
   -- find out the recallGroup to be used for this request
-  getRecallGroup(inEuid, inEgid, varRecallGroupId, varRecallGroupName);
+  getRecallGroup(varEuid, varEgid, varRecallGroupId, varRecallGroupName);
   -- Get the list of files to repack from the NS DB via DBLink and store them in memory
   -- in a temporary table. We do that so that we do not keep an open cursor for too long
   -- in the nameserver DB
@@ -140,7 +151,7 @@ BEGIN
                                              AND oseg.s_status = '-'
                                            GROUP BY oseg.s_fileid)
                                     FROM Cns_Seg_Metadata@remotens seg, Cns_File_Metadata@remotens fileEntry
-                                   WHERE seg.vid = inReqVID
+                                   WHERE seg.vid = varRepackVID
                                      AND seg.s_fileid = fileEntry.fileid
                                      AND seg.s_status = '-'
                                      AND fileEntry.status != 'D');
@@ -176,20 +187,20 @@ BEGIN
         -- Note that we pass 0 for the subrequest id, thus the subrequest will not be attached to the
         -- CastorFile. We actually attach it when we create it.
         selectCastorFileInternal(segment.fileid, nsHostName, segment.fileclass,
-                                 segment.segSize, lastKnownFileName, 0, inCreationTime, firstCF, cfid, unused);
+                                 segment.segSize, lastKnownFileName, 0, varCreationTime, firstCF, cfid, unused);
         firstCF := FALSE;
       EXCEPTION WHEN locked THEN
         -- commit what we've done so far
         COMMIT;
         -- And lock the castorfile (waiting this time)
         selectCastorFileInternal(segment.fileid, nsHostName, segment.fileclass,
-                                 segment.segSize, lastKnownFileName, 0, inCreationTime, TRUE, cfid, unused);
+                                 segment.segSize, lastKnownFileName, 0, varCreationTime, TRUE, cfid, unused);
       END;
       nbFilesProcessed := nbFilesProcessed + 1;
       -- create  subrequest for this file.
       -- Note that the svcHandler is not set. It will actually never be used as repacks are handled purely in PL/SQL
       INSERT INTO SubRequest (retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, creationTime, lastModificationTime, answered, errorCode, errorMessage, requestedFileSystems, svcHandler, id, diskcopy, castorFile, parent, status, request, getNextStatus, reqType)
-      VALUES (0, lastKnownFileName, repackProtocol, segment.segSize, 0, uuidGen(), 0, 0, inCreationTime, inCreationTime, 1, 0, '', NULL, 'NotNullNeeded', ids_seq.nextval, 0, cfId, NULL, dconst.SUBREQUEST_START, varReqId, 0, 119)
+      VALUES (0, lastKnownFileName, repackProtocol, segment.segSize, 0, uuidGen(), 0, 0, varCreationTime, varCreationTime, 1, 0, '', NULL, 'NotNullNeeded', ids_seq.nextval, 0, cfId, NULL, dconst.SUBREQUEST_START, varReqId, 0, 119)
       RETURNING id, subReqId INTO varSubreqId, varSubreqUUID;
       -- if the file is being overwritten, fail
       SELECT count(DiskCopy.id) INTO varNbCopies
@@ -218,8 +229,8 @@ BEGIN
           IF varWasRecalled = 0 THEN
             -- trigger recall
             triggerRepackRecall(cfId, segment.fileid, nsHostName, segment.blockid,
-                                segment.fseq, segment.copyNb, inEuid, inEgid,
-                                varRecallGroupId, svcClassId, inReqVID, segment.segSize,
+                                segment.fseq, segment.copyNb, varEuid, varEgid,
+                                varRecallGroupId, svcClassId, varRepackVID, segment.segSize,
                                 segment.fileclass, segment.allSegments, inReqUUID, varSubreqUUID, varRecallGroupName);
           END IF;
           -- file is being recalled
@@ -236,7 +247,7 @@ BEGIN
           noMigrationRoute EXCEPTION;
           PRAGMA EXCEPTION_INIT (noMigrationRoute, -20100);
         BEGIN
-          triggerRepackMigration(cfId, inReqVID, segment.fileid, segment.copyNb, segment.fileclass,
+          triggerRepackMigration(cfId, varRepackVID, segment.fileid, segment.copyNb, segment.fileclass,
                                  segment.segSize, segment.allSegments, varMJStatus, varMigrationTriggered);
           IF varMigrationTriggered THEN
             -- update STAGED diskcopies to CANBEMIGR
@@ -430,15 +441,7 @@ END;
    that really handles all repack requests */
 CREATE OR REPLACE PROCEDURE repackManager AS
   varReqUUID VARCHAR2(36);
-  varMachine VARCHAR2(2048);
-  varEuid INTEGER;
-  varEgid INTEGER;
-  varPid INTEGER;
-  varUserName VARCHAR2(2048);
-  varSvcClassId INTEGER;
-  varClientId INTEGER;
   varRepackVID VARCHAR2(10);
-  varCreationTime NUMBER;
   varStartTime NUMBER;
   varTapeStartTime NUMBER;
   nbRepacks INTEGER;
@@ -455,22 +458,26 @@ BEGIN
   varStartTime := getTime();
   WHILE TRUE LOOP
     varTapeStartTime := getTime();
-    varReqUUID := NULL;
-    -- get an outstanding repack to start - we're alone, no need to take special locks
-    DELETE FROM RepackQueue
-     WHERE creationTime = (SELECT min(creationTime) FROM RepackQueue)
-    RETURNING reqUUID, machine, euid, egid, pid, userName, svcClass, client, repackVID, creationTime
-    INTO varReqUUID, varMachine, varEuid, varEgid, varPid, varUserName,
-      varSvcClassId, varClientId, varRepackVID, varCreationTime;
-    -- if no new repack is found to start, terminate
-    EXIT WHEN varReqUUID IS NULL;
-    -- start the repack for this request: this can take some considerable time
-    handleRepackRequest(varReqUUID, varMachine, varEuid, varEgid, varPid, varUserName, varSvcClassId,
-                        varClientId, varRepackVID, varCreationTime);
-    -- log 'Repack process started'
-    logToDLF(varReqUUID, dlf.LVL_SYSTEM, dlf.REPACK_STARTED, 0, '', 'repackd',
-      'TPVID=' || varRepackVID || ' elapsedTime=' || TO_CHAR(getTime() - varTapeStartTime));
-    nbRepacks := nbRepacks + 1;
+    BEGIN
+      -- get an outstanding repack to start, and lock to prevent
+      -- a concurrent abort (there cannot be anyone else)
+      SELECT reqId, repackVID INTO varReqUUID, varRepackVID
+        FROM StageRepackRequest
+       WHERE status = tconst.REPACK_SUBMITTED
+         AND creationTime =
+          (SELECT min(creationTime) FROM StageRepackRequest
+            WHERE status = tconst.REPACK_SUBMITTED)
+      FOR UPDATE;
+      -- start the repack for this request: this can take some considerable time
+      handleRepackRequest(varReqUUID);
+      -- log 'Repack process started'
+      logToDLF(varReqUUID, dlf.LVL_SYSTEM, dlf.REPACK_STARTED, 0, '', 'repackd',
+        'TPVID=' || varRepackVID || ' elapsedTime=' || TO_CHAR(getTime() - varTapeStartTime));
+      nbRepacks := nbRepacks + 1;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- if no new repack is found to start, terminate
+      EXIT;
+    END;
   END LOOP;
   IF nbRepacks > 0 THEN
     -- log some statistics

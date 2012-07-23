@@ -303,24 +303,6 @@ CREATE TABLE FileMigrationResultsHelper
  (reqId VARCHAR2(36), fileId NUMBER, lastModTime NUMBER, copyNo NUMBER, oldCopyNo NUMBER, transfSize NUMBER,
   comprSize NUMBER, vid VARCHAR2(6), fSeq NUMBER, blockId RAW(4), checksumType VARCHAR2(16), checksum NUMBER);
 
-/* Definition of the RepackQueue table. This is the input for the repackManager DB job. */
-CREATE TABLE RepackQueue
-  (reqUUID VARCHAR2(36) CONSTRAINT NN_RepackQueue_reqUUID NOT NULL,
-   machine VARCHAR2(2048) CONSTRAINT NN_RepackQueue_machine NOT NULL,
-   pid INTEGER CONSTRAINT NN_RepackQueue_pid NOT NULL,
-   euid INTEGER CONSTRAINT NN_RepackQueue_euid NOT NULL,
-   egid INTEGER CONSTRAINT NN_RepackQueue_egid NOT NULL,
-   userName VARCHAR2(2048) CONSTRAINT NN_RepackQueue_userName NOT NULL,
-   svcClass INTEGER CONSTRAINT NN_RepackQueue_svcClass NOT NULL,
-   client INTEGER CONSTRAINT NN_RepackQueue_client NOT NULL,
-   repackVID VARCHAR2(10) CONSTRAINT NN_RepackQueue_repackVID NOT NULL
-     CONSTRAINT UN_RepackQueue_repackVID UNIQUE,
-   creationTime NUMBER CONSTRAINT NN_RepackQueue_creationTime NOT NULL);
-ALTER TABLE RepackQueue ADD CONSTRAINT FK_RepackQueue_svcClass
-  FOREIGN KEY (svcClass) REFERENCES SvcClass(id);
-ALTER TABLE RepackQueue ADD CONSTRAINT FK_RepackQueue_client
-  FOREIGN KEY (client) REFERENCES Client(id);
-
 
 /* Drop obsoleted code */
 DROP PROCEDURE bestFileSystemForSegment;
