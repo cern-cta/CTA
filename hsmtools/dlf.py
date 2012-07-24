@@ -85,7 +85,7 @@ def init(facility):
     _logmask = syslog.LOG_INFO
     # Find out which logmask should be used from castor.conf
     config = castor_tools.castorConf()
-    smask = config.getValue(facility, "LogMask", "LOG_INFO")
+    smask = config.getValue("LogMask", facility, "LOG_INFO")
     # Set the log mask
     try:
         _logmask = getattr(syslog, smask)
