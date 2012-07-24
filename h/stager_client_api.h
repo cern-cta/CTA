@@ -1526,7 +1526,7 @@ EXTERN_C int stage_getClientTimeout ();
   struct stage_##STRCNAME *ptrlist;                                    \
   if (ptr == NULL || nb <=0) return -1; \
   ptrlist = (struct stage_##STRCNAME *)calloc(nb, sizeof(struct stage_##STRCNAME)); \
-  if (ptrlist < 0) return -1; \
+  if (ptrlist == NULL) return -1; \
   *ptr = ptrlist; \
   return 0; \
 }
