@@ -441,7 +441,7 @@ BEGIN
     -- Restart all entries in the snapshot of files to drain that may be
     -- waiting on the replication of the source diskcopy.
     UPDATE DrainingDiskCopy
-       SET status = 1,  -- RESTARTED
+       SET status = 0,  -- CREATED
            parent = 0
      WHERE status = 3  -- RUNNING
        AND (diskCopy = srcDcId
@@ -497,7 +497,7 @@ BEGIN
   -- Restart all entries in the snapshot of files to drain that may be
   -- waiting on the replication of the source diskcopy.
   UPDATE DrainingDiskCopy
-     SET status = 1,  -- RESTARTED
+     SET status = 0,  -- CREATED
          parent = 0
    WHERE status = 3  -- RUNNING
      AND (diskCopy = srcDcId
@@ -575,7 +575,7 @@ BEGIN
     -- Restart all entries in the snapshot of files to drain that may be
     -- waiting on the replication of the source diskcopy.
     UPDATE DrainingDiskCopy
-       SET status = 1,  -- RESTARTED
+       SET status = 0,  -- CREATED
            parent = 0
      WHERE status = 3  -- RUNNING
        AND (diskCopy = srcDcId

@@ -366,6 +366,12 @@ CREATE INDEX I_DiskCopy_Status_Open ON DiskCopy (decode(status,6,status,decode(s
 /* Missing index on a FK */
 CREATE INDEX I_CastorFile_FileClass ON CastorFile(FileClass);
 
+DROP INDEX I_DrainingDCs_PC;
+/* For the in-order processing, see drainFileSystem */
+CREATE INDEX I_DrainingDCs_FSStPrioTimeDC
+  ON DrainingDiskCopy (fileSystem, status, priority DESC, creationTime ASC, diskCopy);
+
+
 /* Custom type to handle float arrays */
 CREATE OR REPLACE TYPE floatList IS TABLE OF NUMBER;
 /

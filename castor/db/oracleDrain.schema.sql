@@ -103,7 +103,6 @@ CREATE TABLE DrainingDiskCopy
     * file is in the lifecycle of draining a filesystem.
     * The status can be one of:
     *   0 -- CREATED
-    *   1 -- RESTARTED
     *   2 -- PROCESSING    (Transient state)
     *   3 -- WAITD2D
     *   4 -- FAILED
@@ -144,12 +143,9 @@ CREATE INDEX I_DrainingDCs_FileSystem
 CREATE INDEX I_DrainingDCs_Status
   ON DrainingDiskCopy (status);
 
-/* This index is essentially the same as the one on the SubRequest table which
- * allows us to process entries in order. In this case by priority and
- * creationTime.
- */
-CREATE INDEX I_DrainingDCs_PC
-  ON DrainingDiskCopy (priority, creationTime);
+/* For the in-order processing, see drainFileSystem */
+CREATE INDEX I_DrainingDCs_FSStPrioTimeDC
+  ON DrainingDiskCopy (fileSystem, status, priority DESC, creationTime ASC, diskCopy);
 
 CREATE INDEX I_DrainingDCs_Parent
   ON DrainingDiskCopy (parent);

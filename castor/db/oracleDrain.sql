@@ -472,10 +472,10 @@ BEGIN
      SET status = 2  -- PROCESSING
    WHERE diskCopy = (
      SELECT diskCopy FROM (
-       SELECT DDC.diskCopy
+       SELECT /*+ INDEX(DDC I_DrainingDCs_FsStPrioTimeDc) */ DDC.diskCopy
          FROM DrainingDiskCopy DDC
         WHERE DDC.fileSystem = fsId
-          AND DDC.status IN (0, 1)  -- CREATED, RESTARTED
+          AND DDC.status = 0  -- CREATED
         ORDER BY DDC.priority DESC, DDC.creationTime ASC)
      WHERE rownum < 2)
   RETURNING diskCopy INTO dcId;
