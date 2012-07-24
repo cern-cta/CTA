@@ -27,6 +27,7 @@
 // Include Files
 #include <string>
 #include <sstream>
+#include <unistd.h>
 #include "getconfent.h"
 #include "rfio_constants.h"
 #include "castor/dlf/Dlf.hpp"

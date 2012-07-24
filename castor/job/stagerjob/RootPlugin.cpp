@@ -28,6 +28,7 @@
 #include <errno.h>
 #include <string>
 #include <sstream>
+#include <unistd.h>
 #include "getconfent.h"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Exception.hpp"

@@ -41,6 +41,7 @@
 #include <sstream>
 #include <iomanip>
 #include <sys/types.h>
+#include <unistd.h>
 #include <linux/unistd.h>
 
 // Local Files

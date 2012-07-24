@@ -259,7 +259,7 @@ void castor::sharedMemory::Block<A>::free
   // Merge with the previous one ?
   bool merged = false;
   size_t size = nbBytes;
-  if (previousRegion.first > 0 &&
+  if (previousRegion.first != 0 &&
       ((void*)((char*)previousRegion.first +
                previousRegion.second)) == pointer) {
     pointer = previousRegion.first;
