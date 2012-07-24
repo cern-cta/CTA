@@ -26,7 +26,7 @@
 #include "castor/monitoring/rmmaster/SchedulerStatus.hpp"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/System.hpp"
-#include "castor/db/newora/OraCnvSvc.hpp"
+#include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/exception/Internal.hpp"
 #include "Cmutex.h"
 #include "Cthread_api.h"

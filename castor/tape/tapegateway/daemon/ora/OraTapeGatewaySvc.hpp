@@ -34,7 +34,7 @@
 
 #include "castor/BaseSvc.hpp"
 
-#include "castor/db/newora/OraCommonSvc.hpp"
+#include "castor/db/ora/OraCommonSvc.hpp"
 
 #include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"
 

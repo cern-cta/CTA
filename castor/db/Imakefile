@@ -25,4 +25,4 @@ COMM @author Castor Dev team, castor-dev@cern.ch
 COMM
 
 include LOCAL_PATH/cnv/Makefile
-include LOCAL_PATH/newora/Makefile
+include LOCAL_PATH/ora/Makefile

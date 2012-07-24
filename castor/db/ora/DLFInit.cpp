@@ -24,7 +24,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#include "castor/db/newora/DLFInit.hpp"
+#include "castor/db/ora/DLFInit.hpp"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Message.hpp"
 #include "castor/exception/Exception.hpp"

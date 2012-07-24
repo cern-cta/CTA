@@ -28,7 +28,7 @@
 #define ORA_ORAGCSVC_HPP 1
 
 // Include Files
-#include "castor/db/newora/OraCommonSvc.hpp"
+#include "castor/db/ora/OraCommonSvc.hpp"
 #include "castor/stager/IGCSvc.hpp"
 #include "occi.h"
 #include <vector>

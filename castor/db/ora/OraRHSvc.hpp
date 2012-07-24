@@ -28,7 +28,7 @@
 #define ORA_ORARHSVC_HPP 1
 
 // Include Files
-#include "castor/db/newora/OraCommonSvc.hpp"
+#include "castor/db/ora/OraCommonSvc.hpp"
 #include "castor/rh/IRHSvc.hpp"
 #include <vector>
 #include "occi.h"

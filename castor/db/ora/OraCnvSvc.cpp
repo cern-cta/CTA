@@ -33,7 +33,7 @@
 #include "castor/SvcFactory.hpp"
 #include "castor/db/DbParamsSvc.hpp"
 #include "castor/BaseAddress.hpp"
-#include "castor/db/newora/OraStatement.hpp"
+#include "castor/db/ora/OraStatement.hpp"
 #include "castor/exception/BadVersion.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
@@ -44,7 +44,7 @@
 #include <linux/unistd.h>
 
 // Local Files
-#include "castor/db/newora/OraCnvSvc.hpp"
+#include "castor/db/ora/OraCnvSvc.hpp"
 
 //------------------------------------------------------------------------------
 // External C function used for getting configuration from castor.conf file

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/db/newora/OraCommonSvc.hpp
+ *                castor/db/ora/OraCommonSvc.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -31,7 +31,7 @@
 #include "castor/BaseSvc.hpp"
 #include "castor/ICnvSvc.hpp"
 #include "castor/db/DbBaseObj.hpp"
-#include "castor/db/newora/OraCnvSvc.hpp"
+#include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/stager/ICommonSvc.hpp"
 #include "occi.h"
 #include <vector>

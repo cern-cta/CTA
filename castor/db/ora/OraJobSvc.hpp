@@ -29,7 +29,7 @@
 
 // Include Files
 #include "castor/BaseSvc.hpp"
-#include "castor/db/newora/OraCommonSvc.hpp"
+#include "castor/db/ora/OraCommonSvc.hpp"
 #include "castor/stager/IJobSvc.hpp"
 #include "occi.h"
 #include <vector>

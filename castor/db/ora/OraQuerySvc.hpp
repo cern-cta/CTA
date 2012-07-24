@@ -30,7 +30,7 @@
 // Include Files
 #include "castor/BaseSvc.hpp"
 #include "castor/stager/StageQueryResult.hpp"
-#include "castor/db/newora/OraCommonSvc.hpp"
+#include "castor/db/ora/OraCommonSvc.hpp"
 #include "castor/query/IQuerySvc.hpp"
 #include "occi.h"
 #include <list>

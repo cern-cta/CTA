@@ -25,7 +25,7 @@ COMM @author Ben Couturier, ben.couturier@cern.ch
 COMM
 
 DependsOnLibrary(castor,castorclient)
-DependsOnLibrary(castor/db/newora,castorcommonora)
+DependsOnLibrary(castor/db/ora,castorcommonora)
 
 RRTEST_SRCS = RrTest.o \
               ../../../castor/replier/RequestReplier.o \

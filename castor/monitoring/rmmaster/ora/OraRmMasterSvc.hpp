@@ -30,7 +30,7 @@
 // Include Files
 #include "castor/BaseSvc.hpp"
 #include "castor/ICnvSvc.hpp"
-#include "castor/db/newora/OraCommonSvc.hpp"
+#include "castor/db/ora/OraCommonSvc.hpp"
 #include "castor/monitoring/rmmaster/IRmMasterSvc.hpp"
 #include "occi.h"
 #include "castor/monitoring/ClusterStatus.hpp"

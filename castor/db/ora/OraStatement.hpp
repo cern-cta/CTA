@@ -29,7 +29,7 @@
 
 #include <string>
 #include "castor/db/IDbStatement.hpp"
-#include "castor/db/newora/OraCnvSvc.hpp"
+#include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/exception/OutOfMemory.hpp"
 #include "occi.h"
 

@@ -1,5 +1,5 @@
 COMM
-COMM                    castor/db/newora/Imakefile
+COMM                    castor/db/ora/Imakefile
 COMM
 COMM This file is part of the Castor project.
 COMM See http://castor.web.cern.ch/castor
@@ -38,19 +38,19 @@ ORALIB_SRCS = OraCnvSvc.cpp \
             OraStatement.cpp \
             OraResultSet.cpp \
             OraCommonSvc.cpp \
-            ../ora/OraRHSvc.cpp \
-            ../ora/OraStagerSvc.cpp \
-            ../ora/OraJobSvc.cpp \
-            ../ora/OraGCSvc.cpp \
-            ../ora/OraQuerySvc.cpp \
-            ../ora/SmartOcciResultSet.cpp \
+            OraRHSvc.cpp \
+            OraStagerSvc.cpp \
+            OraJobSvc.cpp \
+            OraGCSvc.cpp \
+            OraQuerySvc.cpp \
+            SmartOcciResultSet.cpp \
             DLFInit.cpp
 ORALIB_OBJS = $(ORALIB_SRCS:.cpp=.o)
 SharedLibraryTarget(castorcommonora,$(ORALIB_OBJS),,)
 CONFIGFILE(ORASTAGER,install)
 
-LIBCOMMONORA = DepSharedLibraryTargetName(castor/db/newora,castorcommonora)
-ORAVDQMLIB_SRCS = ../ora/OraVdqmSvc.cpp
+LIBCOMMONORA = DepSharedLibraryTargetName(castor/db/ora,castorcommonora)
+ORAVDQMLIB_SRCS = OraVdqmSvc.cpp
 ORAVDQMLIB_OBJS = $(ORAVDQMLIB_SRCS:.cpp=.o)
 SharedLibraryTarget(castorvdqmora,$(ORAVDQMLIB_OBJS),$(LIBCOMMONORA),$(LIBCOMMONORA))
 CONFIGFILE(ORAVDQM,install)

@@ -31,7 +31,7 @@
 #include "occi.h"
 
 #include "castor/BaseSvc.hpp"
-#include "castor/db/newora/OraCommonSvc.hpp"
+#include "castor/db/ora/OraCommonSvc.hpp"
 #include "castor/stager/IStagerSvc.hpp"
 #include <vector>
 

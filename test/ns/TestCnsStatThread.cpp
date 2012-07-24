@@ -39,7 +39,7 @@
 #include "castor/Services.hpp"
 #include "castor/server/SignalThreadPool.hpp"
 #include "castor/db/DbCnvSvc.hpp"
-#include "castor/db/newora/OraCnvSvc.hpp"
+#include "castor/db/ora/OraCnvSvc.hpp"
 
 #include "TestCnsStatThread.hpp"
 

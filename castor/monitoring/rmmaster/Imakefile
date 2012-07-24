@@ -31,7 +31,7 @@ DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(dlf,castordlf)
 DependsOnLibrary(castor,castorclient)
 DependsOnLibrary(castor/monitoring,castormonitor)
-DependsOnLibrary(castor/db/newora,castorcommonora)
+DependsOnLibrary(castor/db/ora,castorcommonora)
 DependsOnLibrary(castor/db/cnv,castorcnvs)
 
 RMMASTERDAEMONBIN_SRCS = RmMasterDaemon.cpp CollectorThread.cpp DatabaseActuatorThread.cpp UpdateThread.cpp HeartbeatThread.cpp SchedulerStatus.cpp ora/OraRmMasterSvc.cpp ora/StatusUpdateHelper.cpp

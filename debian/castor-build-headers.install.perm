@@ -14,8 +14,8 @@
 %attr(0644,root,root) usr/include/castor/castor/db/DbParamsSvc.hpp
 %attr(0644,root,root) usr/include/castor/castor/db/IDbResultSet.hpp
 %attr(0644,root,root) usr/include/castor/castor/db/IDbStatement.hpp
-%attr(0644,root,root) usr/include/castor/castor/db/newora/OraCnvSvc.hpp
-%attr(0644,root,root) usr/include/castor/castor/db/newora/OraCommonSvc.hpp
+%attr(0644,root,root) usr/include/castor/castor/db/ora/OraCnvSvc.hpp
+%attr(0644,root,root) usr/include/castor/castor/db/ora/OraCommonSvc.hpp
 %attr(0644,root,root) usr/include/castor/castor/dlf/Dlf.hpp
 %attr(0644,root,root) usr/include/castor/castor/dlf/IPAddress.hpp
 %attr(0644,root,root) usr/include/castor/castor/dlf/Message.hpp
