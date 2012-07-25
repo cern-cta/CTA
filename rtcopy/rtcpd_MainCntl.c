@@ -3055,7 +3055,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
    * Release the tape from the drive if this has not already been done
    */
   if(*tapeNeedsToBeReleasedAtEndOfSession) {
-      const int   flags  = TPRLS_ALL | TPRLS_NOWAIT;
+      const int   flags  = TPRLS_ALL;
       int         rls_rc = 0;
       char *const path   = NULL;
 
