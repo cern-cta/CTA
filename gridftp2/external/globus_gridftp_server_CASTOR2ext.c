@@ -433,8 +433,8 @@ globus_l_gfs_CASTOR2ext_command(
 	       break;
 
        case GLOBUS_GFS_CMD_RNTO:
-	       globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: GLOBUS_GFS_CMD_RNTO: %s to %s\n",func,pathname,cmd_info->rnfr_pathname);
-	       frm_pathname = strdup(cmd_info->rnfr_pathname);
+	       globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: GLOBUS_GFS_CMD_RNTO: %s to %s\n",func,pathname,cmd_info->from_pathname);
+	       frm_pathname = strdup(cmd_info->from_pathname);
 	       if(frm_pathname == NULL) {
 		       result = GlobusGFSErrorGeneric("error: strdup failed");
 		       globus_gridftp_server_finished_command(op, result, GLOBUS_NULL);
@@ -963,8 +963,9 @@ static globus_gfs_storage_iface_t       globus_l_gfs_CASTOR2ext_dsi_iface =
     NULL, /* data destroy */
     globus_l_gfs_CASTOR2ext_command, 
     globus_l_gfs_CASTOR2ext_stat,
-    NULL,
-    NULL
+    NULL, /* set_cred */
+    NULL, /* buffer_send */
+    NULL  /*realpath */
 };
 
 
