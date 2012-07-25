@@ -661,7 +661,8 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
       noMoreFilesClientCallback(obj, getMoreWorkConnection);
       break;
     case OBJ_EndNotificationErrorReport:
-      endNotificationErrorReportClientCallback(obj, getMoreWorkConnection);
+      endNotificationErrorReportForGetMoreWorkClientCallback(obj,
+        getMoreWorkConnection);
       break;
     default:
       TAPE_THROW_CODE(EBADMSG,
@@ -3218,10 +3219,10 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 
 
 //-----------------------------------------------------------------------------
-// endNotificationErrorReportClientCallback
+// endNotificationErrorReportForGetMoreWorkClientCallback
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeProtocolEngine::
-  endNotificationErrorReportClientCallback(
+  endNotificationErrorReportForGetMoreWorkClientCallback(
   IObject *const              obj,
   const GetMoreWorkConnection &getMoreWorkConnection)
   throw(castor::exception::Exception) {
@@ -3236,6 +3237,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
       "tapegateway::EndNotificationErrorReport");
   }
 
+  // Log the error report from the client
   castor::dlf::Param params[] = {
     castor::dlf::Param("tapebridgeTransId" , reply->aggregatorTransactionId()),
     castor::dlf::Param("mountTransactionId", reply->mountTransactionId()     ),
@@ -3254,10 +3256,32 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
     TAPEBRIDGE_RECEIVED_ENDNOTIFCATIONERRORREPORT, params);
 
-  // Translate the reception of the error report into a C++ exception
-  TAPE_THROW_CODE(reply->errorCode(),
-    ": Client error report "
-    ": " << reply->errorMessage());
+  m_clientProxy.checkTransactionIds(
+    "EndNotificationErrorReport",
+    reply->mountTransactionId(),
+    getMoreWorkConnection.tapebridgeTransId,
+    reply->aggregatorTransactionId());
+
+  {
+    // Put the error report from the client into a SessionError object
+    std::ostringstream oss;
+    oss <<
+      "Client error report"
+      ": " << reply->errorMessage();
+    SessionError sessionError;
+    sessionError.setErrorCode(reply->errorCode());
+    sessionError.setErrorMessage(oss.str());
+    sessionError.setErrorScope(SessionError::SESSION_SCOPE);
+
+    // Push the error onto the back of the list of errors generated during the
+    // tape session
+    m_sessionErrors.push_back(sessionError);
+  }
+
+  tellRtcpdThereAreNoMoreFiles(
+    getMoreWorkConnection.rtcpdSock,
+    getMoreWorkConnection.rtcpdReqMagic,
+    getMoreWorkConnection.rtcpdReqType);
 }
 
 

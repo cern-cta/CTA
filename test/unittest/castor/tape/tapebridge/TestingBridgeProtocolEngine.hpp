@@ -137,7 +137,7 @@ public:
   using BridgeProtocolEngine::addFileToRecallToCache;
   using BridgeProtocolEngine::noMoreFilesClientCallback;
   using BridgeProtocolEngine::tellRtcpdThereAreNoMoreFiles;
-  using BridgeProtocolEngine::endNotificationErrorReportClientCallback;
+  using BridgeProtocolEngine::endNotificationErrorReportForGetMoreWorkClientCallback;
   using BridgeProtocolEngine::notifyClientEndOfSession;
   using BridgeProtocolEngine::notifyRtcpdEndOfSession;
   using BridgeProtocolEngine::notifyClientOfAnyFileSpecificErrors;

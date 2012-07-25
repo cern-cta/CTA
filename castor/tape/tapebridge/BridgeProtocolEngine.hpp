@@ -987,7 +987,9 @@ protected:
   throw(castor::exception::Exception);
 
   /**
-   * EndNotificationErrorReport client message handler.
+   * Handles an EndNotificationErrorReport message sent from the client as a
+   * reply to a get more work request message (a FilesToMigrateListRequest
+   * message or a FilesToRecallListRequest message).
    *
    * @param obj                   The message object received from the client.
    * @param getMoreWorkConnection Information about the "get more work"
@@ -997,7 +999,7 @@ protected:
    *                              that effectively requested the creation of
    *                              the connection with the client.
    */
-  void endNotificationErrorReportClientCallback(
+  void endNotificationErrorReportForGetMoreWorkClientCallback(
     IObject *const              obj,
     const GetMoreWorkConnection &getMoreWorkConnection)
     throw(castor::exception::Exception);
