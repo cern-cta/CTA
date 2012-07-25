@@ -24,8 +24,10 @@ COMM
 COMM @author castor-dev@cern.ch
 COMM
 
+FLAVOR=gcc32dbg
 MOPTION=-m32
 ifeq ($(shell uname -m), x86_64)
+  FLAVOR=gcc64dbg
   MOPTION=-m64
 endif
 
@@ -35,7 +37,7 @@ AddLdFlags($(GLOBUS_FTPLIB) $(MOPTION) -shared -L$(XROOT_LOCATION)/lib -lXrdPosi
 
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(castor,castorclient)
-PlacedSharedLibraryTargetWithSo(globus_gridftp_server_CASTOR2xroot,globus_gridftp_server_CASTOR2xroot.o,,,$(GLOBUS_LIB_PATH))
+PlacedSharedLibraryTargetWithSo(globus_gridftp_server_CASTOR2xroot_$(FLAVOR),globus_gridftp_server_CASTOR2xroot.o,,,$(GLOBUS_LIB_PATH))
 
 COMM We overwrite here the default rule for the compilation of
 COMM globus_gridftp_server_CASTOR2xroot in order to be able to alleviate the -Werror

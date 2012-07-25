@@ -32,8 +32,8 @@ import getopt
 
 # Constants
 ORACLE_DIRS = ("/usr/__lib__/oracle/__version__/__client__",  "/afs/cern.ch/project/oracle/@sys/__version__")
-LIBDIRS     = ("lib64", "lib")
-VERSIONS    = ("11.2.0.3.0", "11.2", "10.2.0.3", "10203")
+LIBDIRS     = ("lib", "lib64")
+VERSIONS    = ("11.2", "10.2.0.3", "10203")
 CLIENTS     = ("client", "client64")
 
 #------------------------------------------------------------------------------
@@ -89,16 +89,9 @@ def getOracleEnv(withPreCompiler, oracleVersions):
                         procpath = os.sep.join([dirpathcand, "bin", "proc"])
                         if not os.path.isfile(procpath) and withPreCompiler:
                             continue
-                        # let's now check that the libraries are there
-                        for lib2 in LIBDIRS:
-                            if not found:
-                                libpath = os.sep.join([dirpathcand, lib2])
-                                if not os.path.isfile(libpath):
-                                    continue
                         # We have a valid base directory
                         dirpath = dirpathcand
                         libdir = lib
-                        libdir2 = lib2
                         found = True
 
     # Set default values for the return argument.
@@ -132,7 +125,7 @@ def getOracleEnv(withPreCompiler, oracleVersions):
         rtn['cppflags'] = rtn['cppflags'].strip()
         rtn['procinc']  = rtn['procinc'].strip()
     else:
-        rtn['libdir']   = os.path.join(dirpath, libdir2)
+        rtn['libdir']   = os.path.join(dirpath, libdir)
 
         # The location of header files in OIC is not in the same base as
         # home.

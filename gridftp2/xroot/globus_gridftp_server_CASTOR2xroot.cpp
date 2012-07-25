@@ -31,7 +31,6 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <string.h>
-#include <string>
 
 #include <XrdPosix/XrdPosixXrootd.hh>
 #include <XrdPosix/XrdPosixExtern.hh>
@@ -42,13 +41,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
-
-// This singleton is needed as all calls to static functions of the XrdPosixXrootd
-// class will actually use the static xrootd clients embedded in it.
-XrdPosixXrootd posixsingleton;
-
-// start of xrootd URLs
-const std::string urlPrefix = "root://localhost/";
 
 extern "C" {
 
@@ -227,10 +219,9 @@ extern "C" {
     globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,
                            "%s: pathname: %s\n",
                            func,pathname);
-    std::string url = urlPrefix + pathname;
-    status=XrdPosixXrootd::Stat(url.c_str(),&statbuf);
+    status=XrdPosix_Stat(pathname,&statbuf);
     if(status!=0) {
-      result=globus_l_gfs_make_error("XrdPosixXrootd::Stat", errno);
+      result=globus_l_gfs_make_error("XrdPosix_Stat", errno);
       globus_gridftp_server_finished_stat(op,result,NULL, 0);
       free(pathname);
       return;
@@ -327,8 +318,7 @@ extern "C" {
                                func,
                                CASTOR2xroot_handle->fullDestPath);
         try {
-          std::string url = urlPrefix + CASTOR2xroot_handle->fullDestPath;
-          rc = XrdPosixXrootd::Open(url.c_str(), flags, mode);
+          rc = XrdPosixXrootd::Open(CASTOR2xroot_handle->fullDestPath, flags, mode);
           if (rc < 0) {
             globus_gfs_log_message(GLOBUS_GFS_LOG_ERR,
                                    "%s: XrdPosixXrootd::Open returned error code %d\n",
@@ -376,13 +366,13 @@ extern "C" {
         CASTOR2xroot_handle->done = GLOBUS_TRUE;
       }
       else if(nbytes > 0) {
-        start_offset = XrdPosixXrootd::Lseek(CASTOR2xroot_handle->fd, offset, SEEK_SET);
+        start_offset = XrdPosix_Lseek(CASTOR2xroot_handle->fd, offset, SEEK_SET);
         if(start_offset != offset) {
           CASTOR2xroot_handle->cached_res = globus_l_gfs_make_error("seek",errno);
           CASTOR2xroot_handle->done = GLOBUS_TRUE;
         }
         else {
-          bytes_written = XrdPosixXrootd::Write(CASTOR2xroot_handle->fd, buffer, nbytes);
+          bytes_written = XrdPosix_Write(CASTOR2xroot_handle->fd, buffer, nbytes);
           if(bytes_written < nbytes) {
             errno = ENOSPC;
             CASTOR2xroot_handle->cached_res =
@@ -399,7 +389,7 @@ extern "C" {
       }
       /* if done and there are no outstanding callbacks finish */
       else if(CASTOR2xroot_handle->outstanding == 0){
-        XrdPosixXrootd::Close(CASTOR2xroot_handle->fd);
+        XrdPosix_Close(CASTOR2xroot_handle->fd);
         globus_gridftp_server_finished_transfer
           (op, CASTOR2xroot_handle->cached_res);
       }
@@ -426,7 +416,7 @@ extern "C" {
         CASTOR2xroot_handle->cached_res = result;
         CASTOR2xroot_handle->done = GLOBUS_TRUE;
         if(CASTOR2xroot_handle->outstanding == 0) {
-          XrdPosixXrootd::Close(CASTOR2xroot_handle->fd);
+          XrdPosix_Close(CASTOR2xroot_handle->fd);
           globus_gridftp_server_finished_transfer
             (CASTOR2xroot_handle->op, CASTOR2xroot_handle->cached_res);
         }
@@ -447,7 +437,7 @@ extern "C" {
         CASTOR2xroot_handle->cached_res = result;
         CASTOR2xroot_handle->done = GLOBUS_TRUE;
         if(CASTOR2xroot_handle->outstanding == 0) {
-          XrdPosixXrootd::Close(CASTOR2xroot_handle->fd);
+          XrdPosix_Close(CASTOR2xroot_handle->fd);
           globus_gridftp_server_finished_transfer
             (CASTOR2xroot_handle->op, CASTOR2xroot_handle->cached_res);
         }
@@ -641,7 +631,7 @@ extern "C" {
                                            &CASTOR2xroot_handle->blk_length);
       if (CASTOR2xroot_handle->blk_length == 0) {
         result = GLOBUS_SUCCESS;
-        XrdPosixXrootd::Close(CASTOR2xroot_handle->fd);
+        XrdPosix_Close(CASTOR2xroot_handle->fd);
         CASTOR2xroot_handle->cached_res = result;
         CASTOR2xroot_handle->done = GLOBUS_TRUE;
         if (CASTOR2xroot_handle->outstanding == 0) {
@@ -659,13 +649,13 @@ extern "C" {
       read_length = CASTOR2xroot_handle->blk_length;
     }
 
-    start_offset = XrdPosixXrootd::Lseek(CASTOR2xroot_handle->fd,
-                                         CASTOR2xroot_handle->blk_offset,
-                                         SEEK_SET);
+    start_offset = XrdPosix_Lseek(CASTOR2xroot_handle->fd,
+                                  CASTOR2xroot_handle->blk_offset,
+                                  SEEK_SET);
     // verify that it worked
     if (start_offset != CASTOR2xroot_handle->blk_offset) {
       result = globus_l_gfs_make_error("seek", errno);
-      XrdPosixXrootd::Close(CASTOR2xroot_handle->fd);
+      XrdPosix_Close(CASTOR2xroot_handle->fd);
       CASTOR2xroot_handle->cached_res = result;
       CASTOR2xroot_handle->done = GLOBUS_TRUE;
       if (CASTOR2xroot_handle->outstanding == 0) {
@@ -678,7 +668,7 @@ extern "C" {
     buffer = (globus_byte_t*)globus_malloc(read_length);
     if(buffer == NULL) {
       result = GlobusGFSErrorGeneric("error: malloc failed");
-      XrdPosixXrootd::Close(CASTOR2xroot_handle->fd);
+      XrdPosix_Close(CASTOR2xroot_handle->fd);
       CASTOR2xroot_handle->cached_res = result;
       CASTOR2xroot_handle->done = GLOBUS_TRUE;
       if (CASTOR2xroot_handle->outstanding == 0) {
@@ -688,11 +678,11 @@ extern "C" {
       return CASTOR2xroot_handle->done;
     }
 
-    nbread = XrdPosixXrootd::Read(CASTOR2xroot_handle->fd, buffer, read_length);
+    nbread = XrdPosix_Read(CASTOR2xroot_handle->fd, buffer, read_length);
     if (nbread == 0) { // eof
       result = GLOBUS_SUCCESS;
       globus_free(buffer);
-      XrdPosixXrootd::Close(CASTOR2xroot_handle->fd);
+      XrdPosix_Close(CASTOR2xroot_handle->fd);
       CASTOR2xroot_handle->cached_res = result;
       CASTOR2xroot_handle->done = GLOBUS_TRUE;
       if (CASTOR2xroot_handle->outstanding == 0) {
@@ -705,7 +695,7 @@ extern "C" {
     if (nbread < 0) { // error
       result = globus_l_gfs_make_error("read", errno);
       globus_free(buffer);
-      XrdPosixXrootd::Close(CASTOR2xroot_handle->fd);
+      XrdPosix_Close(CASTOR2xroot_handle->fd);
       CASTOR2xroot_handle->cached_res = result;
       CASTOR2xroot_handle->done = GLOBUS_TRUE;
       if (CASTOR2xroot_handle->outstanding == 0) {
@@ -739,7 +729,7 @@ extern "C" {
     CASTOR2xroot_handle->blk_offset += read_length;
     if (res != GLOBUS_SUCCESS) {
       globus_free(buffer);
-      XrdPosixXrootd::Close(CASTOR2xroot_handle->fd);
+      XrdPosix_Close(CASTOR2xroot_handle->fd);
       CASTOR2xroot_handle->cached_res = res;
       CASTOR2xroot_handle->done = GLOBUS_TRUE;
       if (CASTOR2xroot_handle->outstanding == 0) {
@@ -776,7 +766,7 @@ extern "C" {
       if (!CASTOR2xroot_handle->done) {
         globus_l_gfs_CASTOR2xroot_send_next_to_client(CASTOR2xroot_handle);
       } else if (CASTOR2xroot_handle->outstanding == 0) {
-        XrdPosixXrootd::Close(CASTOR2xroot_handle->fd);
+        XrdPosix_Close(CASTOR2xroot_handle->fd);
         globus_gfs_log_message(GLOBUS_GFS_LOG_INFO,
                                "%s: finished transfer\n",
                                func);
@@ -807,9 +797,8 @@ extern "C" {
     NULL, /* data destroy */
     globus_l_gfs_CASTOR2xroot_command,
     globus_l_gfs_CASTOR2xroot_stat,
-    NULL, /* set_cred */
-    NULL, /* buffer_send */
-    NULL  /*realpath */
+    NULL,
+    NULL
   };
 
 
