@@ -77,7 +77,8 @@ void castor::vdqm::ProtocolFacade::handleProtocolVersion()
   // get the incoming request
   try {
     // First check of the Protocol
-    magicNumber = SocketHelper::readMagicNumber(m_socket);
+    const int timeout = 20; // Timeout is in seconds
+    magicNumber = SocketHelper::readMagicNumber(m_socket, timeout);
   } catch (castor::exception::Exception &e) {  
     // "Unable to read Request from socket" message
     castor::dlf::Param params[] = {

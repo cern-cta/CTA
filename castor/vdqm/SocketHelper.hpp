@@ -52,10 +52,13 @@ namespace castor {
        * support also the older VDQM protocol. The magic number defines, which
        * protocol is used.
        * 
-       * @param the socket to be read from.
+       * @param socket the socket to be read from.
+       * @param timeout the timeout to be used in seconds.
        * @return the magic number.
        */
-      static unsigned int readMagicNumber(castor::io::ServerSocket &socket)
+      static unsigned int readMagicNumber(
+        castor::io::ServerSocket &socket,
+        const int timeout)
         throw (castor::exception::Exception);
 
       /**

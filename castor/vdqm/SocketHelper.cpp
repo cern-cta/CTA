@@ -53,13 +53,15 @@
 // readMagicNumber
 //------------------------------------------------------------------------------
 unsigned int castor::vdqm::SocketHelper::readMagicNumber(
-  castor::io::ServerSocket &socket)
+  castor::io::ServerSocket &socket,
+  const int                timeout)
   throw (castor::exception::Exception) {
 
   char buffer[sizeof(unsigned int)];
 
   // Read the magic number from the socket
-  int rc = netread(socket.socket(), buffer, sizeof(unsigned int));
+  const int rc = netread_timeout(socket.socket(), buffer, sizeof(unsigned int),
+    timeout);
 
   switch(rc) {
   case -1:
