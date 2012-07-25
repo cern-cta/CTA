@@ -92,7 +92,7 @@ Get usage information.
 Set the number of request handler threads.  The default is 20.
 .TP
 \fB\-j, \-\-RTCPJobSubmitterThreads num
-Set the number of RTCP job submitter threads.  The default is 5.
+Set the number of RTCP job submitter threads.  The default is 1.
 .TP
 \fB\-s, \-\-schedulerThreads num
 Set the number of scheduler threads.  The default is 1.

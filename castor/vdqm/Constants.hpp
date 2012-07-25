@@ -40,7 +40,7 @@ namespace castor { namespace vdqm {
   /**
    * Default number of remote tape copy job submitter threads.
    */
-  const int RTCPJOBSUBMITTERDEFAULTTHREADNUMBER = 5;
+  const int RTCPJOBSUBMITTERDEFAULTTHREADNUMBER = 1;
 
   /**
    * Default number of scheduler threads.
