@@ -34,7 +34,7 @@ def usage(exitCode):
           '[--defaultfilesize <defaultFileSize>] [--maxreplicanb <maxReplicaNb>] ' + \
           '[--failjobswhennospace <[yes|no]>] [--disk1behavior <[yes|no]>] ' + \
           '[--forcedfileclass <forcedFileClass>] [--replicateonclose <[yes|no]>] ' + \
-          '[--gcpolicy <gcPolicyName>] [--recallerpolicy <recallerPolicy>] ' + \
+          '--gcpolicy <gcPolicyName> [--recallerpolicy <recallerPolicy>] ' + \
           '[--diskpools <diskPoolName>:[...]] <svcClassName>'
     sys.exit(exitCode)
 
@@ -143,16 +143,30 @@ elif len(args) > 1:
 else:
     svcclassname = args[0]
 
+# check some arguments
+if gcpolicy == None:
+    if disk1behavior:
+        gcPolicy = 'default'
+    else:
+        print "gcpolicy argument is mandatory but is missing. Did you mean 'default' ?"
+        usage(1)
+
 try:
     # connect to stager
     stconn = castor_tools.connectToStager()
     stcur = stconn.cursor()
-    # check that the service class does exist
+    # check that the service class does not exist
     stcur.execute('SELECT id FROM SvcClass WHERE name=:name', name=svcclassname)
     rows = stcur.fetchall()
     if len(rows) != 0:
         print 'SvcClass %s already exists in the stager DB' % svcclassname
         print 'Giving up'
+        sys.exit(1)
+    # check that the service class exists
+    stcur.execute('SELECT name FROM GcPolicy WHERE name=:name', name=gcpolicy)
+    rows = stcur.fetchall()
+    if len(rows) == 0:
+        print 'GcPolicy %s does not exist in the stager DB' % gcpolicy
         sys.exit(1)
     # Get DiskPool info (and check existence)
     if diskpools:

@@ -43,6 +43,7 @@ CREATE OR REPLACE PACKAGE castorGC AS
   -- LRU gc policy
   FUNCTION LRUFirstAccessHook(oldGcWeight NUMBER, creationTime NUMBER) RETURN NUMBER;
   FUNCTION LRUAccessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER) RETURN NUMBER;
+  FUNCTION LRUpinUserSetGCWeight(oldGcWeight NUMBER, userDelta NUMBER) RETURN NUMBER;
 END castorGC;
 /
 
@@ -191,7 +192,7 @@ CREATE OR REPLACE PACKAGE BODY castorGC AS
     RETURN getTime();
   END;
 
-  -- LRU gc policy
+  -- LRU and LRUpin gc policy
   FUNCTION LRUFirstAccessHook(oldGcWeight NUMBER, creationTime NUMBER) RETURN NUMBER AS
   BEGIN
     RETURN getTime();
@@ -200,6 +201,15 @@ CREATE OR REPLACE PACKAGE BODY castorGC AS
   FUNCTION LRUAccessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER) RETURN NUMBER AS
   BEGIN
     RETURN getTime();
+  END;
+
+  FUNCTION LRUpinUserSetGCWeight(oldGcWeight NUMBER, userDelta NUMBER) RETURN NUMBER AS
+  BEGIN
+    IF userDelta >= 2592000 THEN -- 30 days max
+      RETURN oldGcWeight + 2592000;
+    ELSE
+      RETURN oldGcWeight + userDelta;
+    END IF;
   END;
 
 END castorGC;

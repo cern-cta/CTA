@@ -151,6 +151,77 @@ CREATE INDEX I_SubRequest_CT_ID ON SubRequest(creationTime, id) LOCAL
 /* this index is dedicated to archivesubreq */
 CREATE INDEX I_SubRequest_Req_Stat_no89 ON SubRequest (request, decode(status,8,NULL,9,NULL,status));
 
+/************************************/
+/* Garbage collection related table */
+/************************************/
+
+/* A table storing the Gc policies and detailing there configuration
+ * For each policy, identified by a name, parameters are :
+ *   - userWeight : the name of the PL/SQL function to be called to
+ *     precompute the GC weight when a file is written by the user.
+ *   - recallWeight : the name of the PL/SQL function to be called to
+ *     precompute the GC weight when a file is recalled
+ *   - copyWeight : the name of the PL/SQL function to be called to
+ *     precompute the GC weight when a file is disk to disk copied
+ *   - firstAccessHook : the name of the PL/SQL function to be called
+ *     when the file is accessed for the first time. Can be NULL.
+ *   - accessHook : the name of the PL/SQL function to be called
+ *     when the file is accessed (except for the first time). Can be NULL.
+ *   - userSetGCWeight : the name of the PL/SQL function to be called
+ *     when a setFileGcWeight user request is processed can be NULL.
+ * All functions return a number that is the new gcWeight.
+ * In general, here are the signatures :
+ *   userWeight(fileSize NUMBER, DiskCopyStatus NUMBER)
+ *   recallWeight(fileSize NUMBER)
+ *   copyWeight(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER))
+ *   firstAccessHook(oldGcWeight NUMBER, creationTime NUMBER)
+ *   accessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER)
+ *   userSetGCWeight(oldGcWeight NUMBER, userDelta NUMBER)
+ * Few notes :
+ *   diskCopyStatus can be STAGED(0) or CANBEMIGR(10)
+ */
+CREATE TABLE GcPolicy (name VARCHAR2(2048) CONSTRAINT NN_GcPolicy_Name NOT NULL CONSTRAINT PK_GcPolicy_Name PRIMARY KEY,
+                       userWeight VARCHAR2(2048) CONSTRAINT NN_GcPolicy_UserWeight NOT NULL,
+                       recallWeight VARCHAR2(2048) CONSTRAINT NN_GcPolicy_RecallWeight NOT NULL,
+                       copyWeight VARCHAR2(2048) CONSTRAINT NN_GcPolicy_CopyWeight NOT NULL,
+                       firstAccessHook VARCHAR2(2048) DEFAULT NULL,
+                       accessHook VARCHAR2(2048) DEFAULT NULL,
+                       userSetGCWeight VARCHAR2(2048) DEFAULT NULL);
+
+/* Default policy, mainly based on file sizes */
+INSERT INTO GcPolicy VALUES ('default',
+                             'castorGC.sizeRelatedUserWeight',
+                             'castorGC.sizeRelatedRecallWeight',
+                             'castorGC.sizeRelatedCopyWeight',
+                             'castorGC.dayBonusFirstAccessHook',
+                             'castorGC.halfHourBonusAccessHook',
+                             'castorGC.cappedUserSetGCWeight');
+INSERT INTO GcPolicy VALUES ('FIFO',
+                             'castorGC.creationTimeUserWeight',
+                             'castorGC.creationTimeRecallWeight',
+                             'castorGC.creationTimeCopyWeight',
+                             NULL,
+                             NULL,
+                             NULL);
+INSERT INTO GcPolicy VALUES ('LRU',
+                             'castorGC.creationTimeUserWeight',
+                             'castorGC.creationTimeRecallWeight',
+                             'castorGC.creationTimeCopyWeight',
+                             'castorGC.LRUFirstAccessHook',
+                             'castorGC.LRUAccessHook',
+                             NULL);
+INSERT INTO GcPolicy VALUES ('LRUpin',
+                             'castorGC.creationTimeUserWeight',
+                             'castorGC.creationTimeRecallWeight',
+                             'castorGC.creationTimeCopyWeight',
+                             'castorGC.LRUFirstAccessHook',
+                             'castorGC.LRUAccessHook',
+                             'castorGC.LRUpinUserSetGCWeight');
+
+/**********************************/
+/* Recall/Migration related table */
+/**********************************/
+
 /* Definition of the RecallGroup table
  *   id : unique id of the RecallGroup
  *   name : the name of the RecallGroup
@@ -547,7 +618,10 @@ ALTER TABLE SvcClass
 ALTER TABLE SvcClass 
   MODIFY (forcedFileClass CONSTRAINT NN_SvcClass_ForcedFileClass NOT NULL);
 
+ALTER TABLE SvcClass MODIFY (gcPolicy CONSTRAINT NN_SvcClass_GcPolicy NOT NULL);
 ALTER TABLE SvcClass MODIFY (gcPolicy DEFAULT 'default');
+ALTER TABLE SvcClass ADD CONSTRAINT FK_SvcClass_GCPolicy
+  FOREIGN KEY (gcPolicy) REFERENCES GcPolicy (name);
 
 ALTER TABLE SvcClass MODIFY (lastEditor CONSTRAINT NN_SvcClass_LastEditor NOT NULL);
 
@@ -816,66 +890,6 @@ AS
    GROUP BY SvcClass.name, Accounting.euid
    ORDER BY SvcClass.name, Accounting.euid;
 
-
-/************************************/
-/* Garbage collection related table */
-/************************************/
-
-/* A table storing the Gc policies and detailing there configuration
- * For each policy, identified by a name, parameters are :
- *   - userWeight : the name of the PL/SQL function to be called to
- *     precompute the GC weight when a file is written by the user.
- *   - recallWeight : the name of the PL/SQL function to be called to
- *     precompute the GC weight when a file is recalled
- *   - copyWeight : the name of the PL/SQL function to be called to
- *     precompute the GC weight when a file is disk to disk copied
- *   - firstAccessHook : the name of the PL/SQL function to be called
- *     when the file is accessed for the first time. Can be NULL.
- *   - accessHook : the name of the PL/SQL function to be called
- *     when the file is accessed (except for the first time). Can be NULL.
- *   - userSetGCWeight : the name of the PL/SQL function to be called
- *     when a setFileGcWeight user request is processed can be NULL.
- * All functions return a number that is the new gcWeight.
- * In general, here are the signatures :
- *   userWeight(fileSize NUMBER, DiskCopyStatus NUMBER)
- *   recallWeight(fileSize NUMBER)
- *   copyWeight(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER))
- *   firstAccessHook(oldGcWeight NUMBER, creationTime NUMBER)
- *   accessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER)
- *   userSetGCWeight(oldGcWeight NUMBER, userDelta NUMBER)
- * Few notes :
- *   diskCopyStatus can be STAGED(0) or CANBEMIGR(10)
- */
-CREATE TABLE GcPolicy (name VARCHAR2(2048) CONSTRAINT NN_GcPolicy_Name NOT NULL CONSTRAINT PK_GcPolicy_Name PRIMARY KEY,
-                       userWeight VARCHAR2(2048) CONSTRAINT NN_GcPolicy_UserWeight NOT NULL,
-                       recallWeight VARCHAR2(2048) CONSTRAINT NN_GcPolicy_RecallWeight NOT NULL,
-                       copyWeight VARCHAR2(2048) CONSTRAINT NN_GcPolicy_CopyWeight NOT NULL,
-                       firstAccessHook VARCHAR2(2048) DEFAULT NULL,
-                       accessHook VARCHAR2(2048) DEFAULT NULL,
-                       userSetGCWeight VARCHAR2(2048) DEFAULT NULL);
-
-/* Default policy, mainly based on file sizes */
-INSERT INTO GcPolicy VALUES ('default',
-                             'castorGC.sizeRelatedUserWeight',
-                             'castorGC.sizeRelatedRecallWeight',
-                             'castorGC.sizeRelatedCopyWeight',
-                             'castorGC.dayBonusFirstAccessHook',
-                             'castorGC.halfHourBonusAccessHook',
-                             'castorGC.cappedUserSetGCWeight');
-INSERT INTO GcPolicy VALUES ('FIFO',
-                             'castorGC.creationTimeUserWeight',
-                             'castorGC.creationTimeRecallWeight',
-                             'castorGC.creationTimeCopyWeight',
-                             NULL,
-                             NULL,
-                             NULL);
-INSERT INTO GcPolicy VALUES ('LRU',
-                             'castorGC.creationTimeUserWeight',
-                             'castorGC.creationTimeRecallWeight',
-                             'castorGC.creationTimeCopyWeight',
-                             'castorGC.LRUFirstAccessHook',
-                             'castorGC.LRUAccessHook',
-                             NULL);
 
 /*********************/
 /* FileSystem rating */

@@ -36,6 +36,8 @@
     + it allows to display in real time metrics working on top of the CASTOR log flow
     + new metrics can be easily defined within few lines of XML and deployed on the fly
 
+  - a new GC policy is available. Called LRUpin, it is equivalent to the LRU policy, but
+    allows to use setGcWeight to do some pinning of files, up to one month
 
   CASTOR Nameserver
   -----------------

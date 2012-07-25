@@ -111,8 +111,6 @@ try:
             replicateonclose, recallerPolicy, disk1behavior, scId, diskPools, lastEditor, lastEdition in rows:
             if not forcedFileClass:
                 forcedFileClass = '-'
-            if not gcPolicy:
-                gcPolicy = '-'
             if not recallerPolicy:
                 recallerPolicy = '-'
             if diskPools:

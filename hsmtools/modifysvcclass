@@ -185,6 +185,13 @@ try:
         stcur.execute('UPDATE SvcClass SET replicateonclose=:value WHERE id = :svcClassId',
                       value=replicateonclose, svcClassId=svcClassId)
     if gcpolicy != None:
+        # check that the service class exists
+        stcur.execute('SELECT name FROM GcPolicy WHERE name=:name', name=gcpolicy)
+        rows = stcur.fetchall()
+        if len(rows) == 0:
+            print 'GcPolicy %s does not exist in the stager DB' % gcpolicy
+            sys.exit(1)
+        # update svcclass
         stcur.execute('UPDATE SvcClass SET gcpolicy=:value WHERE id = :svcClassId',
                       value=gcpolicy, svcClassId=svcClassId)
     if recallerpolicy != None:

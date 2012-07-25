@@ -576,6 +576,77 @@ CREATE INDEX I_SubRequest_CT_ID ON SubRequest(creationTime, id) LOCAL
 /* this index is dedicated to archivesubreq */
 CREATE INDEX I_SubRequest_Req_Stat_no89 ON SubRequest (request, decode(status,8,NULL,9,NULL,status));
 
+/************************************/
+/* Garbage collection related table */
+/************************************/
+
+/* A table storing the Gc policies and detailing there configuration
+ * For each policy, identified by a name, parameters are :
+ *   - userWeight : the name of the PL/SQL function to be called to
+ *     precompute the GC weight when a file is written by the user.
+ *   - recallWeight : the name of the PL/SQL function to be called to
+ *     precompute the GC weight when a file is recalled
+ *   - copyWeight : the name of the PL/SQL function to be called to
+ *     precompute the GC weight when a file is disk to disk copied
+ *   - firstAccessHook : the name of the PL/SQL function to be called
+ *     when the file is accessed for the first time. Can be NULL.
+ *   - accessHook : the name of the PL/SQL function to be called
+ *     when the file is accessed (except for the first time). Can be NULL.
+ *   - userSetGCWeight : the name of the PL/SQL function to be called
+ *     when a setFileGcWeight user request is processed can be NULL.
+ * All functions return a number that is the new gcWeight.
+ * In general, here are the signatures :
+ *   userWeight(fileSize NUMBER, DiskCopyStatus NUMBER)
+ *   recallWeight(fileSize NUMBER)
+ *   copyWeight(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER))
+ *   firstAccessHook(oldGcWeight NUMBER, creationTime NUMBER)
+ *   accessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER)
+ *   userSetGCWeight(oldGcWeight NUMBER, userDelta NUMBER)
+ * Few notes :
+ *   diskCopyStatus can be STAGED(0) or CANBEMIGR(10)
+ */
+CREATE TABLE GcPolicy (name VARCHAR2(2048) CONSTRAINT NN_GcPolicy_Name NOT NULL CONSTRAINT PK_GcPolicy_Name PRIMARY KEY,
+                       userWeight VARCHAR2(2048) CONSTRAINT NN_GcPolicy_UserWeight NOT NULL,
+                       recallWeight VARCHAR2(2048) CONSTRAINT NN_GcPolicy_RecallWeight NOT NULL,
+                       copyWeight VARCHAR2(2048) CONSTRAINT NN_GcPolicy_CopyWeight NOT NULL,
+                       firstAccessHook VARCHAR2(2048) DEFAULT NULL,
+                       accessHook VARCHAR2(2048) DEFAULT NULL,
+                       userSetGCWeight VARCHAR2(2048) DEFAULT NULL);
+
+/* Default policy, mainly based on file sizes */
+INSERT INTO GcPolicy VALUES ('default',
+                             'castorGC.sizeRelatedUserWeight',
+                             'castorGC.sizeRelatedRecallWeight',
+                             'castorGC.sizeRelatedCopyWeight',
+                             'castorGC.dayBonusFirstAccessHook',
+                             'castorGC.halfHourBonusAccessHook',
+                             'castorGC.cappedUserSetGCWeight');
+INSERT INTO GcPolicy VALUES ('FIFO',
+                             'castorGC.creationTimeUserWeight',
+                             'castorGC.creationTimeRecallWeight',
+                             'castorGC.creationTimeCopyWeight',
+                             NULL,
+                             NULL,
+                             NULL);
+INSERT INTO GcPolicy VALUES ('LRU',
+                             'castorGC.creationTimeUserWeight',
+                             'castorGC.creationTimeRecallWeight',
+                             'castorGC.creationTimeCopyWeight',
+                             'castorGC.LRUFirstAccessHook',
+                             'castorGC.LRUAccessHook',
+                             NULL);
+INSERT INTO GcPolicy VALUES ('LRUpin',
+                             'castorGC.creationTimeUserWeight',
+                             'castorGC.creationTimeRecallWeight',
+                             'castorGC.creationTimeCopyWeight',
+                             'castorGC.LRUFirstAccessHook',
+                             'castorGC.LRUAccessHook',
+                             'castorGC.LRUpinUserSetGCWeight');
+
+/**********************************/
+/* Recall/Migration related table */
+/**********************************/
+
 /* Definition of the RecallGroup table
  *   id : unique id of the RecallGroup
  *   name : the name of the RecallGroup
@@ -972,7 +1043,10 @@ ALTER TABLE SvcClass
 ALTER TABLE SvcClass 
   MODIFY (forcedFileClass CONSTRAINT NN_SvcClass_ForcedFileClass NOT NULL);
 
+ALTER TABLE SvcClass MODIFY (gcPolicy CONSTRAINT NN_SvcClass_GcPolicy NOT NULL);
 ALTER TABLE SvcClass MODIFY (gcPolicy DEFAULT 'default');
+ALTER TABLE SvcClass ADD CONSTRAINT FK_SvcClass_GCPolicy
+  FOREIGN KEY (gcPolicy) REFERENCES GcPolicy (name);
 
 ALTER TABLE SvcClass MODIFY (lastEditor CONSTRAINT NN_SvcClass_LastEditor NOT NULL);
 
@@ -1242,66 +1316,6 @@ AS
    ORDER BY SvcClass.name, Accounting.euid;
 
 
-/************************************/
-/* Garbage collection related table */
-/************************************/
-
-/* A table storing the Gc policies and detailing there configuration
- * For each policy, identified by a name, parameters are :
- *   - userWeight : the name of the PL/SQL function to be called to
- *     precompute the GC weight when a file is written by the user.
- *   - recallWeight : the name of the PL/SQL function to be called to
- *     precompute the GC weight when a file is recalled
- *   - copyWeight : the name of the PL/SQL function to be called to
- *     precompute the GC weight when a file is disk to disk copied
- *   - firstAccessHook : the name of the PL/SQL function to be called
- *     when the file is accessed for the first time. Can be NULL.
- *   - accessHook : the name of the PL/SQL function to be called
- *     when the file is accessed (except for the first time). Can be NULL.
- *   - userSetGCWeight : the name of the PL/SQL function to be called
- *     when a setFileGcWeight user request is processed can be NULL.
- * All functions return a number that is the new gcWeight.
- * In general, here are the signatures :
- *   userWeight(fileSize NUMBER, DiskCopyStatus NUMBER)
- *   recallWeight(fileSize NUMBER)
- *   copyWeight(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER))
- *   firstAccessHook(oldGcWeight NUMBER, creationTime NUMBER)
- *   accessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER)
- *   userSetGCWeight(oldGcWeight NUMBER, userDelta NUMBER)
- * Few notes :
- *   diskCopyStatus can be STAGED(0) or CANBEMIGR(10)
- */
-CREATE TABLE GcPolicy (name VARCHAR2(2048) CONSTRAINT NN_GcPolicy_Name NOT NULL CONSTRAINT PK_GcPolicy_Name PRIMARY KEY,
-                       userWeight VARCHAR2(2048) CONSTRAINT NN_GcPolicy_UserWeight NOT NULL,
-                       recallWeight VARCHAR2(2048) CONSTRAINT NN_GcPolicy_RecallWeight NOT NULL,
-                       copyWeight VARCHAR2(2048) CONSTRAINT NN_GcPolicy_CopyWeight NOT NULL,
-                       firstAccessHook VARCHAR2(2048) DEFAULT NULL,
-                       accessHook VARCHAR2(2048) DEFAULT NULL,
-                       userSetGCWeight VARCHAR2(2048) DEFAULT NULL);
-
-/* Default policy, mainly based on file sizes */
-INSERT INTO GcPolicy VALUES ('default',
-                             'castorGC.sizeRelatedUserWeight',
-                             'castorGC.sizeRelatedRecallWeight',
-                             'castorGC.sizeRelatedCopyWeight',
-                             'castorGC.dayBonusFirstAccessHook',
-                             'castorGC.halfHourBonusAccessHook',
-                             'castorGC.cappedUserSetGCWeight');
-INSERT INTO GcPolicy VALUES ('FIFO',
-                             'castorGC.creationTimeUserWeight',
-                             'castorGC.creationTimeRecallWeight',
-                             'castorGC.creationTimeCopyWeight',
-                             NULL,
-                             NULL,
-                             NULL);
-INSERT INTO GcPolicy VALUES ('LRU',
-                             'castorGC.creationTimeUserWeight',
-                             'castorGC.creationTimeRecallWeight',
-                             'castorGC.creationTimeCopyWeight',
-                             'castorGC.LRUFirstAccessHook',
-                             'castorGC.LRUAccessHook',
-                             NULL);
-
 /*********************/
 /* FileSystem rating */
 /*********************/
@@ -1377,23 +1391,6 @@ CREATE GLOBAL TEMPORARY TABLE RepackTapeSegments
  (fileId NUMBER, blockid RAW(4), fseq NUMBER, segSize NUMBER,
   copyNb NUMBER, fileClass NUMBER, allSegments VARCHAR2(2048))
  ON COMMIT PRESERVE ROWS;
-
-/* Definition of the RepackQueue table. This is the input for the repackManager DB job. */
-CREATE TABLE RepackQueue
-  (reqUUID VARCHAR2(36) CONSTRAINT NN_RepackQueue_reqUUID NOT NULL,
-   machine VARCHAR2(2048) CONSTRAINT NN_RepackQueue_machine NOT NULL,
-   pid INTEGER CONSTRAINT NN_RepackQueue_pid NOT NULL,
-   euid INTEGER CONSTRAINT NN_RepackQueue_euid NOT NULL,
-   egid INTEGER CONSTRAINT NN_RepackQueue_egid NOT NULL,
-   userName VARCHAR2(2048) CONSTRAINT NN_RepackQueue_userName NOT NULL,
-   svcClass INTEGER CONSTRAINT NN_RepackQueue_svcClass NOT NULL,
-   client INTEGER CONSTRAINT NN_RepackQueue_client NOT NULL,
-   repackVID VARCHAR2(10) CONSTRAINT NN_RepackQueue_repackVID NOT NULL,
-   creationTime NUMBER CONSTRAINT NN_RepackQueue_creationTime NOT NULL);
-ALTER TABLE RepackQueue ADD CONSTRAINT FK_RepackQueue_svcClass
-  FOREIGN KEY (svcClass) REFERENCES SvcClass(id);
-ALTER TABLE RepackQueue ADD CONSTRAINT FK_RepackQueue_client
-  FOREIGN KEY (client) REFERENCES Client(id);
 
 
 /*****************/
@@ -1632,6 +1629,7 @@ AS
   MIGRATIONJOB_SELECTED  CONSTANT PLS_INTEGER := 1;
   MIGRATIONJOB_WAITINGONRECALL CONSTANT PLS_INTEGER := 3;
 
+  REPACK_SUBMITTED       CONSTANT PLS_INTEGER := 6;
   REPACK_STARTING        CONSTANT PLS_INTEGER := 0;
   REPACK_ONGOING         CONSTANT PLS_INTEGER := 1;
   REPACK_FINISHED        CONSTANT PLS_INTEGER := 2;
@@ -1765,9 +1763,10 @@ AS
   BULK_MIGRATION_COMPLETED     CONSTANT VARCHAR2(2048) := 'setBulkFileMigrationResult: bulk migration completed';
 
   REPACK_SUBMITTED             CONSTANT VARCHAR2(2048) := 'New Repack request submitted';
-  REPACK_ABORTING              CONSTANT VARCHAR2(2048) := 'Aborting Repack process';
+  REPACK_ABORTING              CONSTANT VARCHAR2(2048) := 'Aborting Repack request';
+  REPACK_ABORTED               CONSTANT VARCHAR2(2048) := 'Repack request aborted';
   REPACK_JOB_ONGOING           CONSTANT VARCHAR2(2048) := 'repackManager: Repack processes still starting, no new ones will be started for this round';
-  REPACK_STARTING              CONSTANT VARCHAR2(2048) := 'repackManager: starting new Repack process';
+  REPACK_STARTED               CONSTANT VARCHAR2(2048) := 'repackManager: Repack process started';
   REPACK_JOB_STATS             CONSTANT VARCHAR2(2048) := 'repackManager: Repack processes statistics';
   REPACK_UNEXPECTED_EXCEPTION  CONSTANT VARCHAR2(2048) := 'handleRepackRequest: unexpected exception caught';
 END dlf;
@@ -2703,12 +2702,28 @@ CREATE OR REPLACE PROCEDURE abortRepackRequest
   rport INTEGER;
   rReqUuid VARCHAR2(2048);
   varVID VARCHAR2(10);
+  varStartTime NUMBER;
+  varOldStatus INTEGER;
 BEGIN
-  -- mark the repack request as being aborted
-  UPDATE StageRepackRequest SET status = tconst.REPACK_ABORTING
+  -- lock and mark the repack request as being aborted
+  SELECT status, repackVID INTO varOldStatus, varVID
+    FROM StageRepackRequest
    WHERE reqId = parentUUID
-  RETURNING repackVID INTO varVID;
-  COMMIT;
+   FOR UPDATE;
+  IF varOldStatus = tconst.REPACK_SUBMITTED THEN
+    -- the request was just submitted, simply drop it from the queue
+    DELETE FROM StageRepackRequest WHERE reqId = parentUUID;
+    logToDLF(parentUUID, dlf.LVL_SYSTEM, dlf.REPACK_ABORTED, 0, '', 'repackd', 'TPVID=' || varVID);
+    COMMIT;
+    -- and return an empty cursor - not that nice...
+    OPEN rSubResults FOR
+      SELECT fileId, nsHost, errorCode, errorMessage FROM ProcessBulkRequestHelper;
+    RETURN;
+  END IF;
+  UPDATE StageRepackRequest SET status = tconst.REPACK_ABORTING
+   WHERE reqId = parentUUID;
+  COMMIT;  -- so to make the status change visible
+  varStartTime := getTime();
   logToDLF(parentUUID, dlf.LVL_SYSTEM, dlf.REPACK_ABORTING, 0, '', 'repackd', 'TPVID=' || varVID);
   -- get unique ids for the request and the client and get current time
   SELECT ids_seq.nextval INTO reqId FROM DUAL;
@@ -2726,6 +2741,8 @@ BEGIN
   processBulkAbort(reqId, rIpAddress, rport, rReqUuid);
   -- mark the repack request as ABORTED
   UPDATE StageRepackRequest SET status = tconst.REPACK_ABORTED WHERE reqId = parentUUID;
+  logToDLF(parentUUID, dlf.LVL_SYSTEM, dlf.REPACK_ABORTED, 0, '', 'repackd',
+    'TPVID=' || varVID || ' elapsedTime=' || to_char(getTime() - varStartTime));
   -- return all results
   OPEN rSubResults FOR
     SELECT fileId, nsHost, errorCode, errorMessage FROM ProcessBulkRequestHelper;
@@ -2741,7 +2758,7 @@ CREATE OR REPLACE PROCEDURE submitRepackRequest
    inEgid IN INTEGER,
    inPid IN INTEGER,
    inUserName IN VARCHAR2,
-   svcClassName IN VARCHAR2,
+   inSvcClassName IN VARCHAR2,
    clientIP IN INTEGER,
    reqVID IN VARCHAR2) AS
   varClientId INTEGER;
@@ -2749,37 +2766,33 @@ CREATE OR REPLACE PROCEDURE submitRepackRequest
   varReqUUID VARCHAR2(36);
 BEGIN
   -- do prechecks and get the service class
-  varSvcClassId := insertPreChecks(inEuid, inEgid, svcClassName, 119);
+  varSvcClassId := insertPreChecks(inEuid, inEgid, inSvcClassName, 119);
   -- insert the client information
   INSERT INTO Client (ipAddress, port, version, secure, id)
   VALUES (clientIP, 0, 0, 0, ids_seq.nextval)
   RETURNING id INTO varClientId;
-  -- insert the request itself in the RepackQueue
-  INSERT INTO RepackQueue (reqUUID, machine, euid, egid, pid, userName, svcClass, client, repackVID, creationTime)
-  VALUES (uuidgen(), inMachine, inEuid, inEgid, inPid, inUserName, varSvcClassId, varClientId, reqVID, getTime())
-  RETURNING reqUUID INTO varReqUUID;
+  varReqUUID := uuidGen();
+  -- insert the request in status SUBMITTED, the SubRequests will be created afterwards
+  INSERT INTO StageRepackRequest (reqId, machine, euid, egid, pid, userName, svcClassName, svcClass, client, repackVID,
+    userTag, flags, mask, creationTime, lastModificationTime, status, id)
+  VALUES (varReqUUID, inMachine, inEuid, inEgid, inPid, inUserName, inSvcClassName, varSvcClassId, varClientId, reqVID,
+    varReqUUID, 0, 0, getTime(), getTime(), tconst.REPACK_SUBMITTED, ids_seq.nextval);
   COMMIT;
   logToDLF(varReqUUID, dlf.LVL_SYSTEM, dlf.REPACK_SUBMITTED, 0, '', 'repackd', 'TPVID=' || reqVID);
 END;
 /
 
 /* PL/SQL method to handle a Repack request. This is performed as part of a DB job. */
-CREATE OR REPLACE PROCEDURE handleRepackRequest
-  (inReqUUID IN VARCHAR2,
-   inMachine IN VARCHAR2,
-   inEuid IN INTEGER,
-   inEgid IN INTEGER,
-   inPid IN INTEGER,
-   inUserName IN VARCHAR2,
-   svcClassId IN VARCHAR2,
-   clientId IN INTEGER,
-   inReqVID IN VARCHAR2,
-   inCreationTime IN NUMBER) AS
+CREATE OR REPLACE PROCEDURE handleRepackRequest(inReqUUID IN VARCHAR2) AS
+  varEuid INTEGER;
+  varEgid INTEGER;
+  svcClassId INTEGER;
+  varRepackVID VARCHAR2(10);
+  varCreationTime NUMBER;
   varReqId INTEGER;
   cfId INTEGER;
   dcId INTEGER;
   repackProtocol VARCHAR2(2048);
-  result NUMBER;
   nsHostName VARCHAR2(2048);
   lastKnownFileName VARCHAR2(2048);
   varRecallGroupId INTEGER;
@@ -2790,19 +2803,20 @@ CREATE OR REPLACE PROCEDURE handleRepackRequest
   nbFilesFailed NUMBER := 0;
   isOngoing boolean := False;
 BEGIN
-  INSERT INTO StageRepackRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName,
-    userTag, reqId, creationTime, lastModificationTime, repackVid, id, svcClass, client, status)
-  VALUES (0, inUserName, inEuid, inEgid, 0, inPid, inMachine, (SELECT name FROM SvcClass WHERE id = svcClassId),
-    '', inReqUUID, inCreationTime, inCreationTime, inReqVID, ids_seq.nextval, svcClassId, clientId, tconst.REPACK_STARTING)
-  RETURNING id INTO varReqId;
-  -- commit so that the repack request is visible, even if empty for the moment
+  UPDATE StageRepackRequest SET status = tconst.REPACK_STARTING
+   WHERE reqId = inReqUUID
+  RETURNING id, euid, egid, svcClass, repackVID
+    INTO varReqId, varEuid, varEgid, svcClassId, varRepackVID;
+  -- commit so that the status change is visible, even if the request is empty for the moment
   COMMIT;
   -- Check which protocol should be used for writing files to disk
   repackProtocol := getConfigOption('Repack', 'Protocol', 'rfio');
   -- name server host name
   nsHostName := getConfigOption('stager', 'nsHost', '');
+  -- creation time given to new CastorFile entries
+  varCreationTime := getTime();
   -- find out the recallGroup to be used for this request
-  getRecallGroup(inEuid, inEgid, varRecallGroupId, varRecallGroupName);
+  getRecallGroup(varEuid, varEgid, varRecallGroupId, varRecallGroupName);
   -- Get the list of files to repack from the NS DB via DBLink and store them in memory
   -- in a temporary table. We do that so that we do not keep an open cursor for too long
   -- in the nameserver DB
@@ -2815,7 +2829,7 @@ BEGIN
                                              AND oseg.s_status = '-'
                                            GROUP BY oseg.s_fileid)
                                     FROM Cns_Seg_Metadata@remotens seg, Cns_File_Metadata@remotens fileEntry
-                                   WHERE seg.vid = inReqVID
+                                   WHERE seg.vid = varRepackVID
                                      AND seg.s_fileid = fileEntry.fileid
                                      AND seg.s_status = '-'
                                      AND fileEntry.status != 'D');
@@ -2851,20 +2865,20 @@ BEGIN
         -- Note that we pass 0 for the subrequest id, thus the subrequest will not be attached to the
         -- CastorFile. We actually attach it when we create it.
         selectCastorFileInternal(segment.fileid, nsHostName, segment.fileclass,
-                                 segment.segSize, lastKnownFileName, 0, inCreationTime, firstCF, cfid, unused);
+                                 segment.segSize, lastKnownFileName, 0, varCreationTime, firstCF, cfid, unused);
         firstCF := FALSE;
       EXCEPTION WHEN locked THEN
         -- commit what we've done so far
         COMMIT;
         -- And lock the castorfile (waiting this time)
         selectCastorFileInternal(segment.fileid, nsHostName, segment.fileclass,
-                                 segment.segSize, lastKnownFileName, 0, inCreationTime, TRUE, cfid, unused);
+                                 segment.segSize, lastKnownFileName, 0, varCreationTime, TRUE, cfid, unused);
       END;
       nbFilesProcessed := nbFilesProcessed + 1;
       -- create  subrequest for this file.
       -- Note that the svcHandler is not set. It will actually never be used as repacks are handled purely in PL/SQL
       INSERT INTO SubRequest (retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, creationTime, lastModificationTime, answered, errorCode, errorMessage, requestedFileSystems, svcHandler, id, diskcopy, castorFile, parent, status, request, getNextStatus, reqType)
-      VALUES (0, lastKnownFileName, repackProtocol, segment.segSize, 0, uuidGen(), 0, 0, inCreationTime, inCreationTime, 1, 0, '', NULL, 'NotNullNeeded', ids_seq.nextval, 0, cfId, NULL, dconst.SUBREQUEST_START, varReqId, 0, 119)
+      VALUES (0, lastKnownFileName, repackProtocol, segment.segSize, 0, uuidGen(), 0, 0, varCreationTime, varCreationTime, 1, 0, '', NULL, 'NotNullNeeded', ids_seq.nextval, 0, cfId, NULL, dconst.SUBREQUEST_START, varReqId, 0, 119)
       RETURNING id, subReqId INTO varSubreqId, varSubreqUUID;
       -- if the file is being overwritten, fail
       SELECT count(DiskCopy.id) INTO varNbCopies
@@ -2893,8 +2907,8 @@ BEGIN
           IF varWasRecalled = 0 THEN
             -- trigger recall
             triggerRepackRecall(cfId, segment.fileid, nsHostName, segment.blockid,
-                                segment.fseq, segment.copyNb, inEuid, inEgid,
-                                varRecallGroupId, svcClassId, inReqVID, segment.segSize,
+                                segment.fseq, segment.copyNb, varEuid, varEgid,
+                                varRecallGroupId, svcClassId, varRepackVID, segment.segSize,
                                 segment.fileclass, segment.allSegments, inReqUUID, varSubreqUUID, varRecallGroupName);
           END IF;
           -- file is being recalled
@@ -2911,7 +2925,7 @@ BEGIN
           noMigrationRoute EXCEPTION;
           PRAGMA EXCEPTION_INIT (noMigrationRoute, -20100);
         BEGIN
-          triggerRepackMigration(cfId, inReqVID, segment.fileid, segment.copyNb, segment.fileclass,
+          triggerRepackMigration(cfId, varRepackVID, segment.fileid, segment.copyNb, segment.fileclass,
                                  segment.segSize, segment.allSegments, varMJStatus, varMigrationTriggered);
           IF varMigrationTriggered THEN
             -- update STAGED diskcopies to CANBEMIGR
@@ -3082,8 +3096,8 @@ BEGIN
           inEuid, inEgid, inVid, inFseq, tconst.RECALLJOB_PENDING, inFileSize, getTime(),
           inBlock, NULL);
   -- log "created new RecallJob"
-  varLogParam := 'REQID=' || inReqUUID || ' SUBREQID=' || inSubReqUUID || ' RecallGroup=' || inRecallGroupName;
-  logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_CREATING_RECALLJOB, inFileId, inNsHost, 'repackd',
+  varLogParam := 'SUBREQID=' || inSubReqUUID || ' RecallGroup=' || inRecallGroupName;
+  logToDLF(inReqUUID, dlf.LVL_SYSTEM, dlf.RECALL_CREATING_RECALLJOB, inFileId, inNsHost, 'stagerd',
            varLogParam || ' fileClass=' || TO_CHAR(inFileClassId) || ' CopyNb=' || TO_CHAR(inCopynb)
            || ' TPVID=' || inVid || ' FSEQ=' || TO_CHAR(inFseq) || ' FileSize=' || TO_CHAR(inFileSize));
   -- create missing segments if needed
@@ -3105,47 +3119,48 @@ END;
    that really handles all repack requests */
 CREATE OR REPLACE PROCEDURE repackManager AS
   varReqUUID VARCHAR2(36);
-  varMachine VARCHAR2(2048);
-  varEuid INTEGER;
-  varEgid INTEGER;
-  varPid INTEGER;
-  varUserName VARCHAR2(2048);
-  varSvcClassId INTEGER;
-  varClientId INTEGER;
   varRepackVID VARCHAR2(10);
-  varCreationTime NUMBER;
-  varStartTime TIMESTAMP;
+  varStartTime NUMBER;
+  varTapeStartTime NUMBER;
   nbRepacks INTEGER;
 BEGIN
   SELECT count(*) INTO nbRepacks
     FROM StageRepackRequest
    WHERE status = tconst.REPACK_STARTING;
   IF nbRepacks > 0 THEN
-    -- a previous instance of this job is still running, give up for this round
-    logToDLF(NULL, dlf.LVL_SYSTEM, dlf.REPACK_JOB_ONGOING, 0, '', 'repackd', '');
+    -- this shouldn't happen, possibly this procedure is running in parallel: give up and log
+    -- "repackManager: Repack processes still starting, no new ones will be started for this round"
+    logToDLF(NULL, dlf.LVL_NOTICE, dlf.REPACK_JOB_ONGOING, 0, '', 'repackd', '');
     RETURN;
   END IF;
-  varStartTime := SYSTIMESTAMP;
+  varStartTime := getTime();
   WHILE TRUE LOOP
-    varReqUUID := NULL;
-    -- get an outstanding repack to start - we're alone, no need to take special locks
-    DELETE FROM RepackQueue
-     WHERE creationTime = (SELECT min(creationTime) FROM RepackQueue)
-    RETURNING reqUUID, machine, euid, egid, pid, userName, svcClass, client, repackVID, creationTime
-    INTO varReqUUID, varMachine, varEuid, varEgid, varPid, varUserName,
-      varSvcClassId, varClientId, varRepackVID, varCreationTime;
-    -- if no new repack is found to start, terminate
-    EXIT WHEN varReqUUID IS NULL;
-    -- log and start the repack for this request: this can take some considerable time
-    logToDLF(varReqUUID, dlf.LVL_SYSTEM, dlf.REPACK_STARTING, 0, '', 'repackd', 'TPVID=' || varRepackVID);
-    handleRepackRequest(varReqUUID, varMachine, varEuid, varEgid, varPid, varUserName, varSvcClassId,
-                        varClientId, varRepackVID, varCreationTime);
-    nbRepacks := nbRepacks + 1;
+    varTapeStartTime := getTime();
+    BEGIN
+      -- get an outstanding repack to start, and lock to prevent
+      -- a concurrent abort (there cannot be anyone else)
+      SELECT reqId, repackVID INTO varReqUUID, varRepackVID
+        FROM StageRepackRequest
+       WHERE status = tconst.REPACK_SUBMITTED
+         AND creationTime =
+          (SELECT min(creationTime) FROM StageRepackRequest
+            WHERE status = tconst.REPACK_SUBMITTED)
+      FOR UPDATE;
+      -- start the repack for this request: this can take some considerable time
+      handleRepackRequest(varReqUUID);
+      -- log 'Repack process started'
+      logToDLF(varReqUUID, dlf.LVL_SYSTEM, dlf.REPACK_STARTED, 0, '', 'repackd',
+        'TPVID=' || varRepackVID || ' elapsedTime=' || TO_CHAR(getTime() - varTapeStartTime));
+      nbRepacks := nbRepacks + 1;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- if no new repack is found to start, terminate
+      EXIT;
+    END;
   END LOOP;
   IF nbRepacks > 0 THEN
     -- log some statistics
     logToDLF(NULL, dlf.LVL_SYSTEM, dlf.REPACK_JOB_STATS, 0, '', 'repackd',
-      'nbStarted=' || TO_CHAR(nbRepacks) || ' elapsedTime=' || getSecs(varStartTime, SYSTIMESTAMP));
+      'nbStarted=' || TO_CHAR(nbRepacks) || ' elapsedTime=' || TO_CHAR(TRUNC(getTime() - varStartTime)));
   END IF;
 END;
 /
@@ -3162,14 +3177,14 @@ BEGIN
     DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
   END LOOP;
 
-  -- Create a db job to be run every minute executing the startMigrationMounts procedure
+  -- Create a db job to be run every 2 minutes executing the repackManager procedure
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'RepackManagerJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'BEGIN startDbJob(''BEGIN repackManager(); END;'', ''repackd''); END;',
       JOB_CLASS       => 'CASTOR_JOB_CLASS',
       START_DATE      => SYSDATE + 1/1440,
-      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=10',
+      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=2',
       ENABLED         => TRUE,
       COMMENTS        => 'Database job to manage the repack process');
 END;
@@ -5698,8 +5713,9 @@ BEGIN
     FROM DiskCopy
    WHERE castorFile = cfId
      AND status IN (0, 5, 6, 10, 11);  -- STAGED, WAITFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
-  -- Stop ongoing recalls
+  -- Stop ongoing recalls and migrations
   deleteRecallJobs(cfId);
+  deleteMigrationJobs(cfId);
   -- mark all get/put requests for those diskcopies
   -- and the ones waiting on them as failed
   -- so that clients eventually get an answer
@@ -6355,7 +6371,7 @@ BEGIN
   SELECT count(*) INTO varIsBeingRecalled
     FROM RecallJob
    WHERE castorFile = varCfId
-     AND (recallGroup = varRecallGroup OR status IN (tconst.RECALLJOB_PENDING, tconst.RECALLJOB_SELECTED));
+     AND (recallGroup = varRecallGroup OR status = tconst.RECALLJOB_SELECTED);
   -- trigger recall only if recall is not already ongoing
   IF varIsBeingRecalled != 0 THEN
     -- createRecallCandidate: found already running recall
@@ -6916,6 +6932,9 @@ BEGIN
     UPDATE DiskCopy SET status = 4 -- FAILED
      WHERE castorFile =
        (SELECT castorFile FROM DiskCopy WHERE id = dcId);
+    -- drop ongoing recalls and migrations
+    deleteRecallJobs(cfId);
+    deleteMigrationJobs(cfId);
   ELSE
     -- Set the diskcopy status to INVALID so that it will be garbage collected
     -- at a later date.
@@ -8347,7 +8366,10 @@ BEGIN
                AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
                AND DiskServer.id = FileSystem.diskServer
                AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
-          ORDER BY DBMS_Random.value)   -- go completely random instead of trying to be clever with weighting file systems
+          ORDER BY -- use randomness to scatter recalls everywhere in the pool. This works unless the pool starts to be overloaded:
+                   -- once a hot spot develops, recalls start to take longer and longer and thus tend to accumulate. However,
+                   -- until we have a faster feedback system to rank filesystems, the fileSystemRate order has not proven to be better.
+                   DBMS_Random.value)
   LOOP
     varFileSystemId := f.id;
     buildPathFromFileId(f.fileId, f.nsHost, ids_seq.nextval, outFilePath);
@@ -9948,6 +9970,7 @@ CREATE OR REPLACE PACKAGE castorGC AS
   -- LRU gc policy
   FUNCTION LRUFirstAccessHook(oldGcWeight NUMBER, creationTime NUMBER) RETURN NUMBER;
   FUNCTION LRUAccessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER) RETURN NUMBER;
+  FUNCTION LRUpinUserSetGCWeight(oldGcWeight NUMBER, userDelta NUMBER) RETURN NUMBER;
 END castorGC;
 /
 
@@ -10096,7 +10119,7 @@ CREATE OR REPLACE PACKAGE BODY castorGC AS
     RETURN getTime();
   END;
 
-  -- LRU gc policy
+  -- LRU and LRUpin gc policy
   FUNCTION LRUFirstAccessHook(oldGcWeight NUMBER, creationTime NUMBER) RETURN NUMBER AS
   BEGIN
     RETURN getTime();
@@ -10105,6 +10128,15 @@ CREATE OR REPLACE PACKAGE BODY castorGC AS
   FUNCTION LRUAccessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER) RETURN NUMBER AS
   BEGIN
     RETURN getTime();
+  END;
+
+  FUNCTION LRUpinUserSetGCWeight(oldGcWeight NUMBER, userDelta NUMBER) RETURN NUMBER AS
+  BEGIN
+    IF userDelta >= 2592000 THEN -- 30 days max
+      RETURN oldGcWeight + 2592000;
+    ELSE
+      RETURN oldGcWeight + userDelta;
+    END IF;
   END;
 
 END castorGC;

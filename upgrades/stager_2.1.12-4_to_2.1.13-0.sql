@@ -286,6 +286,22 @@ INSERT INTO CastorConfig
 DELETE FROM CastorConfig
  WHERE key = 'MaxNbConcurrentClients';
 
+/* enforce explicit gcPolicies */
+UPDATE SvcClass SET gcPolicy = 'default' WHERE gcPolicy IS NULL;
+COMMIT;
+ALTER TABLE SvcClass MODIFY (gcPolicy CONSTRAINT NN_SvcClass_GcPolicy NOT NULL);
+ALTER TABLE SvcClass ADD CONSTRAINT FK_SvcClass_GCPolicy
+  FOREIGN KEY (gcPolicy) REFERENCES GcPolicy (name);
+
+/* new LRUpin GC policy */
+INSERT INTO GcPolicy VALUES ('LRUpin',
+                             'castorGC.creationTimeUserWeight',
+                             'castorGC.creationTimeRecallWeight',
+                             'castorGC.creationTimeCopyWeight',
+                             'castorGC.LRUFirstAccessHook',
+                             'castorGC.LRUAccessHook',
+                             'castorGC.LRUpinUserSetGCWeight');
+
 /* Temporary table used to bulk select next candidates for recall and migration */
 CREATE GLOBAL TEMPORARY TABLE FilesToRecallHelper
  (fileId NUMBER, nsHost VARCHAR2(100), fileTransactionId NUMBER,

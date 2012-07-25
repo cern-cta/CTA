@@ -30,10 +30,8 @@ entersvcclass \- define a new service class in the stager catalog
 .BI --replicateonclose 
 <bool>
 ]
-[
 .BI --gcpolicy 
 <gcPolicyName>
-]
 [
 .BI --recallerpolicy 
 <recallerPolicy>
@@ -51,36 +49,36 @@ enters a new service class definition in the CASTOR stager catalog
 .BI \-h,\ \-\-help
 Get usage information
 .TP
-.BI \-\-defaultfilesize <defaultFileSize>
+.BI \-\-defaultfilesize\ <defaultFileSize>
 The default file size allocation for write requests not specifying any filesize.
 Default is 2 GiB if not specified.
 The value can be given using the standard K/M/G/T extensions, with or without B (i.e. both KB and K are accepted).
 These have the ISO meaning of powers of 10. Ki/Mi/Gi/Ti[B] extensions are also accepted and deal with powers of 2.
 .TP
-.BI \-\-maxreplicanb <maxReplicaNb>
+.BI \-\-maxreplicanb\ <maxReplicaNb>
 Specifies the maximum number of disk resident replicas for a given CASTOR file
 in this service class.
 Default is 1 if not specified.
 .TP
-.BI \-\-failjobswhennospace <boolean value>
+.BI \-\-failjobswhennospace\ <boolean\ value>
 Defines whether jobs requesting new space are failed when the pool(s) connected
 with this service class is(are) full. Example of supported values are yes/no, y/n, true/false, t/f, 1/0.
 Default is yes if not specified.
 .TP
-.BI \-\-disk1behavior <boolean value>
+.BI \-\-disk1behavior\ <boolean\ value>
 Defines whether this service class has Disk1 behavior, which means that garbage
 collection is disabled and the flag FailJobsWhenNoSpace is set to yes.
 Example of supported values are yes/no, y/n, true/false, t/f, 1/0.
 Default is no if not specified.
 .TP
-.BI \-\-forcedfileclass <forcedFileClassName>
+.BI \-\-forcedfileclass\ <forcedFileClassName>
 Allows to force the file class of files written to this service class to the given value.
 The forced file class overrides the file class that the user specifies. This parameter allows
 specifying for this service class any TapeN retention policy, where N is the number of
 tape copies of the forced file class.
 When not provided, the user specified file class is not overwritten.
 .TP
-.BI \-\-replicateonclose <boolean value>
+.BI \-\-replicateonclose\ <boolean\ value>
 Enables or disables replication on close is enabled for this service class.
 When enabled, once a file is created and finalized/closed it will be replicated
 so that MaxReplicaNb copies exist in the pool where the file resides.
@@ -89,20 +87,20 @@ Note: this functionality will not rebalance the number copies in the pool in res
 diskservers which are no longer in production!
 Default is no if not specified.
 .TP
-.BI \-\-gcpolicy <gcPolicyName>
+.BI \-\-gcpolicy\ <gcPolicyName>
 Specifies the name of the garbage collection policy to be used for this service class.
-This value is irrelevant if Disk1Behavior is set to yes.
-If not provided, the default policy will be used
+This value is irrelevant if Disk1Behavior is set thus you can omit it in that case and "default" will then be used.
+When Disk1Behavior is not true, this option is mandatory.
 .TP
-.BI \-\-recallerpolicy <recallerPolicy>
+.BI \-\-recallerpolicy\ <recallerPolicy>
 Specifies the name of the recaller policy to be used for this service class.
 .TP
-.BI \-\-diskpools <diskPool1:diskPool2:...>
+.BI \-\-diskpools\ <diskPool1:diskPool2:...>
 Lists the names of the disk pools that this service class is allowed to use.
 More than one disk pool can be specified, colon separated. All specified disk
 pools must already exist.
 .TP
-.BI <svcClassName>
+.BI\ <svcClassName>
 name of the service class to create.
 
 .SH EXAMPLES
