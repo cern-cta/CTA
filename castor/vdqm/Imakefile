@@ -38,7 +38,6 @@ VDQMBIN_SRCS = CDevTools.cpp \
                DatabaseHelper.cpp \
                DevTools.cpp \
                DriveSchedulerThread.cpp \
-               NewProtocolInterpreter.cpp \
                OldProtocolInterpreter.cpp \
                OldRequestFacade.cpp \
                ProtocolFacade.cpp \
