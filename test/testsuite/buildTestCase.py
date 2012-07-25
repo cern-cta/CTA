@@ -1,17 +1,4 @@
-import os, sys, re, ConfigParser, os.path, readline
-
-# handling of subprocesses, depending on the python version
-try:
-    import subprocess
-    hasSubProcessModule = True
-except Exception:
-    hasSubProcessModule = False
-    
-def Popen(cmd):
-    if hasSubProcessModule:
-        return subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
-    else:
-        return os.popen4(cmd)[1].read()
+import os, sys, re, ConfigParser, os.path, readline, subprocess
 
 # define and parse command line options
 from optparse import OptionParser
@@ -100,7 +87,8 @@ while goOn:
     cmds.append(cmd)
     if len(cmd) == 0 or cmd[0] == '#': continue
     # execute it
-    output = Popen(cmd)
+    output = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE,
+                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
     outputs.append(output)
     # and print output
     print output

@@ -2,7 +2,7 @@
 # this is the core of the test suite infrastructure, based on py.test
 #
 
-import ConfigParser, os, sys, py, tempfile, re, types, signal
+import ConfigParser, os, sys, py, tempfile, re, types, signal, subprocess
 
 #########################
 # Some useful functions #
@@ -24,13 +24,6 @@ def listTests(testdir, topdir, listResources=False):
             tn = tn.replace(os.sep,'_')
             yield ts, tn, fn
 
-# handling of subprocesses, depending on the python version
-try:
-    import subprocess
-    hasSubProcessModule = True
-except Exception:
-    hasSubProcessModule = False
-
 class Timeout(Exception):
     None
     
@@ -38,26 +31,23 @@ def alarm_handler(signum, frame):
     raise Timeout
 
 def Popen(cmd, timeout=600):
-    if hasSubProcessModule:
-        process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        # Note that process.stdout.read() should not be used here as it can create
-        # dead locks if the output is too large. See Python documentation for the
-        # subprocess module.
-        # Also procee.poll should not be used (despite the documentation this time)
-        # as it will never come back with a not None return code. It actually
-        # suffers from the same deadlock as the others. So we use signals to implement
-        # proper timeouting.
-        signal.signal(signal.SIGALRM, alarm_handler)
-        signal.alarm(timeout)
-        try:
-            (stdoutdata, stderrdata) = process.communicate()
-            return stdoutdata
-        except Timeout:
-            os.kill(process.pid, signal.SIGKILL)
-            os.waitpid(-1, os.WNOHANG)
-            raise
-    else:
-        return os.popen4(cmd)[1].read()
+    process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    # Note that process.stdout.read() should not be used here as it can create
+    # dead locks if the output is too large. See Python documentation for the
+    # subprocess module.
+    # Also procee.poll should not be used (despite the documentation this time)
+    # as it will never come back with a not None return code. It actually
+    # suffers from the same deadlock as the others. So we use signals to implement
+    # proper timeouting.
+    signal.signal(signal.SIGALRM, alarm_handler)
+    signal.alarm(timeout)
+    try:
+        (stdoutdata, stderrdata) = process.communicate()
+        return stdoutdata
+    except Timeout:
+        os.kill(process.pid, signal.SIGKILL)
+        os.waitpid(-1, os.WNOHANG)
+        raise
 
 #################################
 # command line options handling #
