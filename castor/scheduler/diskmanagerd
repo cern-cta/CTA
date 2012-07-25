@@ -35,6 +35,7 @@ import subprocess
 import socket
 import tempfile
 import threading
+import traceback
 import connectionpool, castor_tools, localqueue, runningtransfersset
 import daemon
 import dlf
@@ -236,7 +237,8 @@ class ActivityControl(threading.Thread):
           except connectionpool.Timeout:
             # we timed out in the call to transfersCanceled or transferStarting. We need to try again
             # thus we put the transfer into the priority queue and inform the scheduler
-            transferList = ((socket.getfqdn(), transfer))
+            # note that we need to pass a tuple of tuples
+            transferList = ((socket.getfqdn(), transfer),)
             connections.transferBackToQueue(scheduler, transferid, arrivalTime, transferList, transfertype)
             transferQueue.putPriority(scheduler, transferid, transfer, transfertype, arrivalTime)
             # 'Timeout when trying to start/cancel transfer. Putting it back to the queue' message
@@ -255,7 +257,8 @@ class ActivityControl(threading.Thread):
           except Exception, e:
             # startup of the transfer failed with unexpected error
             # We need to try again thus we put the transfer into the priority queue and inform the scheduler
-            transferList = ((socket.getfqdn(), transfer))
+            # note that we need to pass a tuple of tuples
+            transferList = ((socket.getfqdn(), transfer),)
             connections.transferBackToQueue(scheduler, transferid, arrivalTime, transferList, transfertype)
             transferQueue.putPriority(scheduler, transferid, transfer, transfertype, arrivalTime)
             # 'Failed to start transfer. Putting it back to the queue' message
@@ -265,7 +268,10 @@ class ActivityControl(threading.Thread):
           time.sleep(.05)
       except Exception, e:
         # "Caught exception in ActivityControl thread" message
-        dlf.writeerr(msgs.ACTIVITYCONTROLEXCEPTION, Type=str(e.__class__), Message=str(e))
+        extraArgs = {'TraceBack': traceback.format_exc()}
+        if hasattr(e, "_remote_tb"):
+          extraArgs['RemoteTraceBack'] = str(e._remote_tb[0])
+        dlf.writeerr(msgs.ACTIVITYCONTROLEXCEPTION, Type=str(e.__class__), Message=str(e), **extraArgs)
         time.sleep(1)
 
   def stop(self):
@@ -451,7 +457,6 @@ try:
     # 'Caught unexpected exception, exiting' message
     print 'Caught unexpected exception, exiting : (' + str(unexpectedException.__class__) + ') : ' + str(unexpectedException)
     if verbose:
-      import traceback
       traceback.print_exc()
     dlf.writeemerg(msgs.UNEXPECTEDEXCEPTION, Type=str(unexpectedException.__class__), Message=str(unexpectedException))
     raise

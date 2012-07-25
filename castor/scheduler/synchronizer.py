@@ -32,6 +32,7 @@ Handle background synchronization between the stager DB and the transfer manager
 
 import time
 import threading
+import traceback
 import castor_tools
 import random
 import socket
@@ -139,7 +140,10 @@ class Synchronizer(threading.Thread):
       # we could not list all pending running transfers in the system
       # Thus we have to give up with synchronization for this round
       # 'Error caught while trying to get rid of disk to disk sources left behind. Giving up for this round.'
-      dlf.writenotice(msgs.D2DSYNCFAILED, Type=str(e.__class__), Message=str(e))
+      extraArgs = {'TraceBack': traceback.format_exc()}
+      if hasattr(e, "_remote_tb"):
+        extraArgs['RemoteTraceBack'] = str(e._remote_tb[0])
+      dlf.writenotice(msgs.D2DSYNCFAILED, Type=str(e.__class__), Message=str(e), **extraArgs)
       return
     # prepare a cursor for database polling
     stcur = self.dbConnection().cursor()
