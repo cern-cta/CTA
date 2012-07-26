@@ -37,6 +37,7 @@ import random
 import socket
 import dlf
 from transfermanagerdlf import msgs
+import connectionpool
 
 class Synchronizer(threading.Thread):
   '''synchronizer class of the transfer manager of the CASTOR project
