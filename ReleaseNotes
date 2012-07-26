@@ -5,26 +5,32 @@
   Summary of major features
   -------------------------
 
-  - the tape schema of the stager DB has been cleaned up for recalls.
+  - the tape schema of the Stager DB has been cleaned up for recalls.
     + Tape and Segment tables have disappeared
-    + RecallUser and RecallGroup tabls have appeared
+    + RecallUser and RecallGroup tables have appeared
        - RecallUser defines a user by uid and gid and associates him/her to a recall group
        - RecallGroup defines the behavior of the system for recalls triggered by users from this group
        - RecallGroup has fields nbDrives, minAmountDataForMount, minNbFilesForMount, maxFileAgeBeforeMount
          very similar to the TapePool for the migration case
        - RecallGroup also has a field vdqmPriority that defines the priority to be used in VDQM for this group
-    + recall policy has been replaced by PL/SQL code that uses the RecallGroup table
+    + recall policies have been replaced by PL/SQL code that uses the RecallGroup table
     + You may now have multiple RecallJob for a given file
        - one per possible value of the (RecallGroup, copynb) tuple
     + recall retries are now more clever and can make use of a second copy if first one fails
 
-  - bulk interfaces have been implemented for both recall, migrations and related nameserver calls
+  - bulk interfaces have been implemented for both recall, migrations and related nameserver calls.
+    The database link between the Stager and the Nameserver DB has been used for that.
     + allows efficient migration/recall of small files
+
+  - logging has been enabled directly from the Stager DB. Now PL/SQL procedures and database jobs
+    have the ability to add log entries to any of the daemon logs, in particular the stagerd, nsd,
+    tapegatewayd, and repackd logs. The typical signature is that DB log entries have a PID equal to 0.
+    The repack related logs are all from the DB as there's no repackd daemon any longer.
 
   - the nameserver has been secured in a transparent way :
     + only kerberos is supported
     + clients having a kerberos token will try to use it
-    + if they fail or is they have no toekn, they will try the unsecure way
+    + if they fail or if they have no token, they will try the unsecure way
     + you are free to start the nameserver in secure or unsecure mode or even both
 
   - the configuration parameters in castor.conf are now reread regularly (by default every 5mn)
@@ -100,6 +106,13 @@
     This will ensure that the times logged are the ones when things have append and not
     when their logs were received by rsyslog
 
+  - $TNS_ADMIN/sqlnet.ora in the Stager database nodes should contain the following entries :
+       DEFAULT_SDU_SIZE=65535
+       SEND_BUF_SIZE=225000
+       RECV_BUF_SIZE=225000
+    This allows more efficient use of the database link between the Stager and the
+    Nameserver database.
+
 
   Upgrade Instructions from 2.1.12-4
   ----------------------------------
@@ -172,7 +185,7 @@
 
        4. Upgrade the software on the headnodes and diskservers to 2.1.13-0.
 
-       5. Create RecallUser and RecallGroup configurations using enterRecallGroup/enterRecallUser
+       5. Create RecallUser and RecallGroup configurations using enterrecallgroup/enterrecalluser
           if needed. This is replacing the previous recall policies
 
        6. If you have an independent monitoring system to monitor CASTOR such
@@ -241,75 +254,42 @@
        2. Upgrade complete.
 
 
-------------
-- 2.1.12-9 -
-------------
+--------------
+- 2.1.12-4-5 -
+--------------
 
   Summary
   -------
 
-  - This is an INTERNAL RELEASE for the purpose of creating tape-server rpms
-    for the CERN tape-operations team to deploy and test the latetest versions
-    of the rtcpd and tapebridged daemons on real hardware.
+  This release is a hot fix release on top of 2.1.12-4 for the stager DB.
+  It includes all hot fixes deployed so far plus the following ones:
+  - #96139: Incorrect cleanup after detecting a file has been dropped from the namespace
+  - #96058: Error caught in nsFilesDeleted ("ORA-01422: exact fetch returns...)
+  - #96172: RFE: on recalls, change the logic to select a filesystem to be fully random
+  - #92296: tg_defaultMigrSelPolicy overlooks some migration jobs
 
+  Upgrade Instructions from 2.1.12-4
+  ----------------------------------
 
-------------
-- 2.1.12-8 -
-------------
+    Stager
+    ------
 
-  Summary
-  -------
+    The upgrade of the stager database to 2.1.12-4-5 can be performed online while the system is running.
+    Upgrade the STAGER database using the stager_2.1.12-4_to_2.1.12-4-5.sql available from
+      http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.12-*/2.1.12-4/dbupgrades
+    Note that the script works from any 2.1.12-4-x release and incorporates the previous ones.
 
-  - This is an INTERNAL RELEASE for the purpose of creating tape-server rpms
-    for the CERN tape-operations team to deploy and test the latetest versions
-    of the rtcpd and tapebridged daemons on real hardware.
+    Other components
+    ----------------
 
-
-------------
-- 2.1.12-7 -
-------------
-
-  Summary
-  -------
-
-  - This is an INTERNAL RELEASE for the sole purpose of creating rpms for
-    CERN CASTOR-operations to install the name-server clients on a set of
-    pre-production client machines in order to further test the implementations
-    of the following two RFEs:
-     + bug #95558: RFE: Implement new security connection-policy for NS clients
-     + bug #95559: RFE: Disable the use of GSI based security
-
-
-------------
-- 2.1.12-6 -
-------------
-
-  Summary
-  -------
-
-  - This is an INTERNAL RELEASE for the purpose of creating rpms for the
-    Cockpit monitoring project.
-
-
-------------
-- 2.1.12-5 -
-------------
-
-  Summary
-  -------
-
-  - This is an INTERNAL RELEASE for the purpose of creating rpms for the
-    Cockpit monitoring project.
+    Nothing to be done.
 
 
 --------------
 - 2.1.12-4-4 -
 --------------
 
-  Summary
-  -------
-
-  - This is a hotfix release.
+  This hot fix release has been withdrawn.
 
 
 --------------
@@ -319,7 +299,10 @@
   Summary
   -------
 
-  - This is a hotfix release.
+  - This is a hotfix release on top of 2.1.12-4 for the stager DB.
+    It fixes bug #92384: Incorrect restarting of replication requests
+    when a diskserver comes back online.
+
 
 --------------
 - 2.1.12-4-2 -
@@ -328,7 +311,7 @@
   Summary
   -------
 
-  - this release is a hot fix release on top of 2.1.12-4-1 for the stager DB
+  - This release is a hot fix release on top of 2.1.12-4-1 for the stager DB.
     It fixes bug #92721: bestFileSystemForSegment ignores running tape transfers
 
   Upgrade Instructions from 2.1.12-4-1
@@ -342,7 +325,7 @@
       http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.12-*/2.1.12-4/dbupgrades
 
     Other components
-    ---------------- 
+    ----------------
 
     Nothing to be done.
 
