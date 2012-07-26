@@ -10,7 +10,9 @@
 #include <sys/types.h>
 #include <string.h>
 #include <unistd.h>
-#include "Cns_api.h"
+#include "h/Cns.h"
+#include "h/Cns_api.h"
+#include "h/getconfent.h"
 #include "serrno.h"
 #include "vmgr_api.h"
 extern	char	*optarg;
@@ -21,6 +23,8 @@ extern	int	optind;
  * Connects to the specified name server host and counts the number of enabled
  * and disabled files still on the tape with the specified VID.
  *
+ * @param server          The host name of the CASTOR name-server to be
+ *                        contacted.
  * @param vid             The VID of the tape.
  * @param nbEnabledFiles  Output parameter: The number of enabled files on the
  *                        specified tape.
@@ -31,15 +35,20 @@ extern	int	optind;
  * @param errorBufLen     The length of the errorBuf in bytes.
  * @return                0 on success and -1 on failure.
  */
-int countNsFilesOnTape(char *vid, unsigned int *nbActiveFiles,
-                       unsigned *nbLDeleteFiles, char *errorBuf, const size_t errorBufLen) {
+int countNsFilesOnTape(
+  char         * const server,
+  char         * const vid,
+  unsigned int * const nbActiveFiles,
+  unsigned     * const nbLDeleteFiles,
+  char         * const errorBuf,
+  const size_t         errorBufLen) {
 
-  struct Cns_direntape *dtp;
+  const struct Cns_direntape *dtp;
   Cns_list list;
   int flags;
 
   flags = CNS_LIST_BEGIN;
-  while ((dtp = Cns_listtape (NULL, vid, flags, &list, 0)) != NULL) {
+  while ((dtp = Cns_listtape (server, vid, flags, &list, 0)) != NULL) {
     flags = CNS_LIST_CONTINUE;
     if (dtp->s_status == 'D') {
       (*nbLDeleteFiles)++;
@@ -56,13 +65,9 @@ int countNsFilesOnTape(char *vid, unsigned int *nbActiveFiles,
     return(-1);
   } 
   if (serrno == 0) {
-    (void) Cns_listtape (NULL, vid, CNS_LIST_END, &list, 0);
+    (void) Cns_listtape (server, vid, CNS_LIST_END, &list, 0);
   }
 
-  /* Implement by passing NULL as the NS host to Cns_listtape                */
-  /* Copy an modify the code already existing at trunk/hsmtools/reclaim.c:97 */
-  /* Once finished, copy this code into trunk/hsmtools/reclaim.c and use it  */
-  /* there.                                                                  */
   return 0;
 }
 
@@ -71,10 +76,14 @@ int main(int argc, char **argv) {
   int  c             = 0;
   int  nbParseErrors = 0;
   char *vid          = NULL;
+  char *nsHostName   = NULL;
 
   /* Parse the command-line */
-  while((c = getopt (argc, argv, "V:")) != EOF) {
+  while((c = getopt (argc, argv, "h:V:")) != EOF) {
     switch (c) {
+    case 'h':
+      nsHostName = optarg;
+      break;
     case 'V':
       vid = optarg;
       break;
@@ -108,6 +117,18 @@ int main(int argc, char **argv) {
     return(USERR);
   }
 
+  /* If the CASTOR name-server host name has not been provided on the       */
+  /* command line, then try to get the host name from castor.conf and abort */
+  /* with an appropriate error message if unsuccessful                      */
+  if(NULL == nsHostName) {
+    nsHostName = getconfent(CNS_SCE, "HOST", 0);
+    if(NULL == nsHostName) {
+      fprintf(stderr, "Error: The CASTOR name-server host name must be"
+        " provided either on the command line or in castor.conf\n");
+      exit (USERR);
+    }
+  }
+
   /* Set the number of consistency errors to zero */
   int consistencyError = 0, 
     nbTapeFiles = 0, 
@@ -138,8 +159,8 @@ int main(int argc, char **argv) {
   unsigned int nbDisableFiles = 0, nbActiveFiles = 0;
   const size_t STRERRORBUFLEN = 256;
   char errorBuf[STRERRORBUFLEN];
-  int rc = countNsFilesOnTape(vid, &nbActiveFiles, &nbDisableFiles, errorBuf, STRERRORBUFLEN);
-  if (rc==0){
+  if(0 == countNsFilesOnTape(nsHostName, vid, &nbActiveFiles, &nbDisableFiles,
+    errorBuf, STRERRORBUFLEN)) {
     nbNsFiles = nbDisableFiles + nbActiveFiles;
     
     if(nbActiveFiles > 0){
