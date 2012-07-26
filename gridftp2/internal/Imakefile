@@ -24,10 +24,8 @@ COMM
 COMM @author castor-dev@cern.ch
 COMM
 
-FLAVOR=gcc32dbg
 MOPTION=-m32
 ifeq ($(shell uname -m), x86_64)
-  FLAVOR=gcc64dbg
   MOPTION=-m64
 endif
 
@@ -35,6 +33,6 @@ CPPFLAGS += $(GLOBUS_INC)
 CFLAGS += $(MOPTION) -fPIC
 AddLdFlags($(GLOBUS_FTPLIB) $(MOPTION) -shared -lz)
 
-PlacedSharedLibraryTargetWithSo(globus_gridftp_server_CASTOR2int_$(FLAVOR),globus_gridftp_server_CASTOR2int.o,,,$(GLOBUS_LIB_PATH))
+PlacedSharedLibraryTargetWithSo(globus_gridftp_server_CASTOR2int,globus_gridftp_server_CASTOR2int.o,,,$(GLOBUS_LIB_PATH))
 LOGROTATE(castor-gridftp-dsi-common,install)
 MakeDir(/var/log,0755)

@@ -22,9 +22,9 @@
 # @author Castor Dev team, castor-dev@cern.ch
 #******************************************************************************
 
+'''finds out oracle configuration'''
+
 # Modules
-import platform
-import string
 import sys
 import os
 import re
@@ -32,14 +32,15 @@ import getopt
 
 # Constants
 ORACLE_DIRS = ("/usr/__lib__/oracle/__version__/__client__",  "/afs/cern.ch/project/oracle/@sys/__version__")
-LIBDIRS     = ("lib", "lib64")
-VERSIONS    = ("11.2", "10.2.0.3", "10203")
+LIBDIRS     = ("lib64", "lib")
+VERSIONS    = ("11.2.0.3.0", "11.2", "10.2.0.3", "10203")
 CLIENTS     = ("client", "client64")
 
 #------------------------------------------------------------------------------
 # Usage
 #------------------------------------------------------------------------------
 def usage():
+    '''display usage'''
     print "Usage: %s [options]\n" % (os.path.basename(sys.argv[0]))
     print "-h, --help               Display this help and exit"
     print "    --with-precomp       Return an environment which has Pro*C"
@@ -55,7 +56,7 @@ def usage():
 #------------------------------------------------------------------------------
 # GetOracleEnv
 #------------------------------------------------------------------------------
-def getOracleEnv(withPreCompiler, oracleVersions):
+def getOracleEnv(needPreCompiler, versions):
 
     """
     Function to automatically determine the ORACLE environment required to
@@ -73,7 +74,7 @@ def getOracleEnv(withPreCompiler, oracleVersions):
     found = False
     for directory in ORACLE_DIRS:
         for lib in LIBDIRS:
-            for version in oracleVersions:
+            for version in versions:
                 for client in CLIENTS:
                     if not found:
                         # Check for a sub directory in the base matching the required ORACLE
@@ -87,11 +88,22 @@ def getOracleEnv(withPreCompiler, oracleVersions):
                         # We have a valid directory lets check that the proc (Pro*C) binary
                         # exists. This is a simple check that the layout is as expected.
                         procpath = os.sep.join([dirpathcand, "bin", "proc"])
-                        if not os.path.isfile(procpath) and withPreCompiler:
+                        if not os.path.isfile(procpath) and needPreCompiler:
+                            continue
+                        # let's now check that the libraries are there
+                        lib2 = None
+                        for lib2cand in LIBDIRS:
+                            if not found:
+                                libpath = os.sep.join([dirpathcand, lib2cand, 'libclntsh.so'])
+                                if os.path.isfile(libpath):
+                                    lib2 = lib2cand
+                                    break
+                        if lib2 == None:
                             continue
                         # We have a valid base directory
                         dirpath = dirpathcand
                         libdir = lib
+                        libdir2 = lib2
                         found = True
 
     # Set default values for the return argument.
@@ -125,7 +137,7 @@ def getOracleEnv(withPreCompiler, oracleVersions):
         rtn['cppflags'] = rtn['cppflags'].strip()
         rtn['procinc']  = rtn['procinc'].strip()
     else:
-        rtn['libdir']   = os.path.join(dirpath, libdir)
+        rtn['libdir']   = os.path.join(dirpath, libdir2)
 
         # The location of header files in OIC is not in the same base as
         # home.
@@ -139,10 +151,11 @@ def getOracleEnv(withPreCompiler, oracleVersions):
 # PrefixCompilerOption
 #------------------------------------------------------------------------------
 def prefixCompilerOption(string, compilerOption):
-    rtnValue = []
+    '''used to prefix a compiler option to a list of words'''
+    rtn = []
     for value in string.split(" "):
-        rtnValue.append(compilerOption + value)
-    return ' '.join(rtnValue)
+        rtn.append(compilerOption + value)
+    return ' '.join(rtn)
 
 #------------------------------------------------------------------------------
 # Main Thread

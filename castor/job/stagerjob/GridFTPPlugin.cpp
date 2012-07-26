@@ -141,7 +141,7 @@ void castor::job::stagerjob::GridFTPPlugin::getEnvironment
   if (globus_location == NULL) {
     globus_location = getconfent("GSIFTP", "GLOBUS_LOCATION", 0);
     if (globus_location == NULL) {
-      env.globus_location = "/opt/globus";
+      env.globus_location = "/usr";
     } else {
       env.globus_location = globus_location;
     }

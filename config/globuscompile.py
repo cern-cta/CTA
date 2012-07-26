@@ -39,9 +39,11 @@ else:
 
 # Constants
 INCDIRS = [os.sep.join(['', 'opt', 'globus', 'include', FLAVOUR]), 
-           os.sep.join(['', 'usr', 'include', 'globus']), 
+           os.sep.join(['', 'usr', 'include', 'globus']),
+           os.sep.join(['', 'usr', 'lib64', 'globus', 'include']),
            os.sep.join(['', 'usr', 'lib', 'globus', 'include'])]
 LIBDIRS = [os.sep.join(['', 'opt', 'globus', 'lib']), 
+           os.sep.join(['', 'usr', 'lib64']), 
            os.sep.join(['', 'usr', 'lib'])]
 if os.environ.has_key('GLOBUS_LOCATION'):
     gl = os.environ['GLOBUS_LOCATION']

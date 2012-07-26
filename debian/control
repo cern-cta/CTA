@@ -96,7 +96,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-ns-server
 Architecture: any
-Depends: logrotate, vdt_globus_essentials
+Depends: logrotate
 Build-Depends: oracle-instantclient-precomp
 Description: castor (Cern Advanced STORage system)
  Name server daemon
@@ -109,14 +109,14 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-rfio-server
 Architecture: any
-Depends: logrotate, vdt_globus_essentials
+Depends: logrotate
 Build-Depends: xfsprogs-devel, libattr-devel, zlib-devel
 Description: castor (Cern Advanced STORage system)
  RFIO server
 
 Package: castor-rh-server
 Architecture: any
-Depends: logrotate, castor-lib-oracle, vdt_globus_essentials
+Depends: logrotate, castor-lib-oracle
 Build-Depends: libmemcached-devel
 Description: castor (Cern Advanced STORage system)
  Request Handler server
@@ -170,9 +170,9 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-tape-server
 Architecture: any
-Depends: logrotate
+Depends: logrotate, stk-ssi
 Conflicts: castor-tape-server-nostk
-Build-Depends: stk-ssi, stk-ssi-devel
+Build-Depends: stk-ssi-devel
 Description: castor (Cern Advanced STORage system)
  Tape server
 
@@ -255,22 +255,22 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-gridftp-dsi-int
 Architecture: any
-Depends: vdt_globus_data_server, vdt_globus_essentials, castor-gridftp-dsi-common
-Build-Depends: libattr-devel, zlib-devel, vdt_packaging_fixes, gpt, globus-config, vdt_compile_globus_core, vdt_globus_essentials, vdt_globus_data_server, vdt_globus_sdk
+Depends: globus-gridftp-server, globus-common, castor-gridftp-dsi-common
+Build-Depends: libattr-devel, zlib-devel, globus-gridftp-server-devel, globus-common-devel
 Description: castor (Cern Advanced STORage system)
  Internal CASTOR2 gridftp2 DSI module
 
 Package: castor-gridftp-dsi-ext
 Architecture: any
-Depends: castor-lib, xinetd, castor-gridftp-dsi-common, vdt_globus_data_server, vdt_globus_essentials
-Build-Depends: vdt_packaging_fixes, gpt, globus-config, vdt_compile_globus_core, vdt_globus_essentials, vdt_globus_data_server, vdt_globus_sdk
+Depends: castor-lib, xinetd, globus-gridftp-server, globus-common, castor-gridftp-dsi-common
+Build-Depends: globus-gridftp-server-devel, globus-common-devel
 Description: castor (Cern Advanced STORage system)
  External CASTOR2 gridftp2 DSI module
 
 Package: castor-gridftp-dsi-xroot
 Architecture: any
-Depends: castor-lib, castor-gridftp-dsi-common, xrootd-server, vdt_globus_data_server, vdt_globus_essentials
-Build-Depends: vdt_packaging_fixes, gpt, globus-config, vdt_compile_globus_core, vdt_globus_essentials, vdt_globus_data_server, vdt_globus_sdk, xrootd-server, xrootd-devel
+Depends: castor-lib, globus-gridftp-server, globus-common, castor-gridftp-dsi-common, xrootd-server, xrootd-client
+Build-Depends: globus-gridftp-server-devel, globus-common-devel, xrootd-server, xrootd-client, xrootd-libs-devel, xrootd-client-devel
 Description: castor (Cern Advanced STORage system)
  External CASTOR2 gridftp2 DSI module with xroot support
 
