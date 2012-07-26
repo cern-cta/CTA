@@ -3056,6 +3056,7 @@ CREATE OR REPLACE FUNCTION createRecallJobs(inCfId IN INTEGER,
   varI INTEGER := 1;
   NO_TAPE_ROUTE EXCEPTION;
   PRAGMA EXCEPTION_INIT(NO_TAPE_ROUTE, -20100);
+  varErrorMsg VARCHAR2(2048);
 BEGIN
   BEGIN
     -- loop over the existing segments
@@ -3082,7 +3083,7 @@ BEGIN
       varAllCopyNbs(varI) := varSeg.copyno;
       varAllVIDs.EXTEND;
       varAllVIDs(varI) := varSeg.vid;
-      varI := varI +1;
+      varI := varI + 1;
     END LOOP;
   EXCEPTION WHEN OTHERS THEN
     -- log "error when retrieving segments from namespace"
@@ -3102,8 +3103,14 @@ BEGIN
                                varAllVIDs, inFileId, inNsHost, inLogParams);
   EXCEPTION WHEN NO_TAPE_ROUTE THEN
     -- there's at least a missing segment and we cannot recreate it!
-    -- log a "no route to tape defined for missing copy" error, but don't stop the recall
+    -- log a "no route to tape defined for missing copy" error, but don't fail the recall
     logToDLF(NULL, dlf.LVL_ALERT, dlf.RECALL_MISSING_COPY_NO_ROUTE, inFileId, inNsHost, 'stagerd', inLogParams);
+  WHEN OTHERS THEN
+    -- some other error happened, log "unexpected error when creating missing copy", but don't fail the recall
+    varErrorMsg := 'Oracle error caught : ' || SQLERRM;
+    logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_MISSING_COPY_ERROR, inFileId, inNsHost, 'stagerd',
+      'errorCode=' || to_char(SQLCODE) ||' errorMessage="' || varErrorMsg
+      ||'" stackTrace="' || dbms_utility.format_error_backtrace ||'"');
   END;
   RETURN 0;
 END; 
