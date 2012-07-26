@@ -2312,11 +2312,17 @@ BEGIN
     END IF;
     -- delete ongoing recalls
     deleteRecallJobs(cfId);
+    -- fail recall requests pending on the previous file
+    UPDATE SubRequest
+       SET status = dconst.SUBREQUEST_FAILED,
+           errorCode = serrno.EINTR,
+           errorMessage = 'Canceled by another user request'
+     WHERE castorFile = cfId AND status IN (dconst.SUBREQUEST_WAITTAPERECALL, dconst.SUBREQUEST_REPACK);
     -- delete ongoing migrations
     deleteMigrationJobs(cfId);
     -- set DiskCopies to INVALID
-    UPDATE DiskCopy SET status = 7 -- INVALID
-     WHERE castorFile = cfId AND status IN (0, 10); -- STAGED, CANBEMIGR
+    UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
+     WHERE castorFile = cfId AND status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR);
     -- create new DiskCopy
     SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfId;
     SELECT ids_seq.nextval INTO dcId FROM DUAL;
@@ -2535,7 +2541,7 @@ BEGIN
                 AND status IN (0, 1, 2, 5, 6, 12, 13)) LOOP   -- START, RESTART, RETRY, WAITSUBREQ, READY, READYFORSCHED
     UPDATE SubRequest
        SET status = dconst.SUBREQUEST_FAILED,
-           errorCode = 4,  -- EINTR
+           errorCode = serrno.EINTR,
            errorMessage = 'Canceled by another user request',
            parent = 0
      WHERE (id = sr.id) OR (parent = sr.id);
@@ -2652,7 +2658,7 @@ BEGIN
                            ELSE dconst.SUBREQUEST_FAILED END,
              -- user requests in status WAITSUBREQ are always marked FAILED
              -- even if they wait on a replication
-             errorCode = 4,  -- EINTR
+             errorCode = serrno.EINTR,
              errorMessage = 'Canceled by another user request'
        WHERE id = sr.id OR parent = sr.id;
       -- make the scheduler aware so that it can remove the transfer from the queues if needed
@@ -2679,7 +2685,7 @@ BEGIN
       -- fail corresponding requests
       UPDATE SubRequest
          SET status = dconst.SUBREQUEST_FAILED,
-             errorCode = 4,  -- EINTR
+             errorCode = serrno.EINTR,
              errorMessage = 'Canceled by another user request'
        WHERE castorFile = cfId
          AND status = dconst.SUBREQUEST_WAITTAPERECALL;
@@ -2978,7 +2984,7 @@ CREATE OR REPLACE PROCEDURE createMJForMissingSegments(inCfId IN INTEGER,
   varNb INTEGER;
 BEGIN
   -- check whether there are missing segments and whether we should create new ones
-  SELECT nbCopies INTO varExpectedNbCopies FROM FileClass WHERE classId = inFileClassId;
+  SELECT nbCopies INTO varExpectedNbCopies FROM FileClass WHERE id = inFileClassId;
   IF varExpectedNbCopies > inAllCopyNbs.COUNT THEN
     -- some copies are missing
     DECLARE

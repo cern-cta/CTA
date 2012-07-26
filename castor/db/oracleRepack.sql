@@ -404,12 +404,13 @@ CREATE OR REPLACE PROCEDURE triggerRepackRecall
 (inCfId IN INTEGER, inFileId IN INTEGER, inNsHost IN VARCHAR2, inBlock IN RAW,
  inFseq IN INTEGER, inCopynb IN INTEGER, inEuid IN INTEGER, inEgid IN INTEGER,
  inRecallGroupId IN INTEGER, inSvcClassId IN INTEGER, inVid IN VARCHAR2, inFileSize IN INTEGER,
- inFileClassId IN INTEGER, inAllSegments IN VARCHAR2, inReqUUID IN VARCHAR2,
+ inFileClass IN INTEGER, inAllSegments IN VARCHAR2, inReqUUID IN VARCHAR2,
  inSubReqUUID IN VARCHAR2, inRecallGroupName IN VARCHAR2) AS
   varLogParam VARCHAR2(2048);
   varAllCopyNbs "numList" := "numList"();
   varAllVIDs strListTable := strListTable();
   varAllSegments strListTable;
+  varFileClassId INTEGER;
 BEGIN
   -- create recallJob for the given VID, copyNb, etc.
   INSERT INTO RecallJob (id, castorFile, copyNb, recallGroup, svcClass, euid, egid,
@@ -420,7 +421,7 @@ BEGIN
   -- log "created new RecallJob"
   varLogParam := 'SUBREQID=' || inSubReqUUID || ' RecallGroup=' || inRecallGroupName;
   logToDLF(inReqUUID, dlf.LVL_SYSTEM, dlf.RECALL_CREATING_RECALLJOB, inFileId, inNsHost, 'stagerd',
-           varLogParam || ' fileClass=' || TO_CHAR(inFileClassId) || ' CopyNb=' || TO_CHAR(inCopynb)
+           varLogParam || ' fileClass=' || TO_CHAR(inFileClass) || ' CopyNb=' || TO_CHAR(inCopynb)
            || ' TPVID=' || inVid || ' FSEQ=' || TO_CHAR(inFseq) || ' FileSize=' || TO_CHAR(inFileSize));
   -- create missing segments if needed
   SELECT * BULK COLLECT INTO varAllSegments
@@ -431,7 +432,9 @@ BEGIN
     varAllVIDs.EXTEND;
     varAllVIDs(i) := varAllSegments(2*i);
   END LOOP;
-  createMJForMissingSegments(inCfId, inFileSize, inFileClassId, varAllCopyNbs,
+  SELECT id INTO varFileClassId
+    FROM FileClass WHERE classId = inFileClass;
+  createMJForMissingSegments(inCfId, inFileSize, varFileClassId, varAllCopyNbs,
                              varAllVIDs, inFileId, inNsHost, varLogParam);
 END;
 /

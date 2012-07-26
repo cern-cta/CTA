@@ -200,6 +200,7 @@ END dlf;
 CREATE OR REPLACE PACKAGE serrno AS
   /* (s)errno values */
   ENOENT          CONSTANT PLS_INTEGER := 2;    /* No such file or directory */
+  EINTR           CONSTANT PLS_INTEGER := 4;    /* Interrupted system call */
   EACCES          CONSTANT PLS_INTEGER := 13;   /* Permission denied */
   EBUSY           CONSTANT PLS_INTEGER := 16;   /* Device or resource busy */
   EEXIST          CONSTANT PLS_INTEGER := 17;   /* File exists */
@@ -217,6 +218,7 @@ CREATE OR REPLACE PACKAGE serrno AS
   
   /* messages */
   ENOENT_MSG          CONSTANT VARCHAR2(2048) := 'No such file or directory';
+  EINTR_MSG           CONSTANT VARCHAR2(2048) := 'Interrupted system call';
   EACCES_MSG          CONSTANT VARCHAR2(2048) := 'Permission denied';
   EBUSY_MSG           CONSTANT VARCHAR2(2048) := 'Device or resource busy';
   EEXIST_MSG          CONSTANT VARCHAR2(2048) := 'File exists';
