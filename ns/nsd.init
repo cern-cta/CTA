@@ -46,10 +46,6 @@ start() {
         echo -n $"Starting $prog: "
         echo
 
-        # Set location of globus libraries
-        LD_LIBRARY_PATH=/opt/globus/lib
-        export LD_LIBRARY_PATH
-
         # Start nsds
         for i in ${ROLES}; do
 
