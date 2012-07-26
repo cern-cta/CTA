@@ -33,6 +33,9 @@
     + if they fail or if they have no token, they will try the unsecure way
     + you are free to start the nameserver in secure or unsecure mode or even both
 
+  - software was converted to the new xroot distribution (version >= 3.2) and to the new
+    globus distribution (by EMI).
+
   - the configuration parameters in castor.conf are now reread regularly (by default every 5mn)
     This however does not ensure that all new parameters are taken into account, as the code
     may not check the new value. An example of parameters that will be reloaded are the log levels.
@@ -45,10 +48,15 @@
   - a new GC policy is available. Called LRUpin, it is equivalent to the LRU policy, but
     allows to use setGcWeight to do some pinning of files, up to one month
 
+
   CASTOR Nameserver
   -----------------
 
   [Features]
+
+     #87029 RFE: improve the NS override logic
+     #95558 RFE: Implement new security connection-policy for NS clients
+     #95559 RFE: Disable the use of GSI based security
 
 
   CASTOR Core Framework
@@ -56,7 +64,16 @@
 
   [Bug]
 
+     #58704 Policy interface should have proper logging
+     #68818 Remove all tapecopies on file overwrite
+     #92775 Terminated requests are not archived properly
+     #94018 Fix memory leak of the converters of the conversion service
+
   [Code maintenance]
+
+     #74023 CM: enhancements in the core framework
+     #93615 RFE: Move the toHex() method out of the castor::tape::utils package
+     #94004 RFE: Replace confusing castor::BaseObject::getTLS() with standard pthread calls
 
 
   CASTOR Stager
@@ -64,7 +81,12 @@
 
   [Bug]
 
+     #93812 On Stage[PrepareTo]PutRequests, CastorFile.filesize is not reset to 0
+     #95990 Correct nsenterclass manual page so it shows --name and tells the user to specify --id
+
   [Features]
+
+     #78613 RFE: stager recalls should be synchronized between stagers
 
 
   CASTOR Scheduler
@@ -72,20 +94,75 @@
 
   [Bug]
 
+     #94420 orphaned transfers in listtransfers when diskmanagerd is restarted
+     #94433 properly check that some destination is available before scheduling d2d transfers
+
+
+  CASTOR Repack
+  -------------
+
+  [Bug]
+
+     #92406 Recall jobs created for repack have a NULL nbretry.
+     #93210 Repack should reset the creation time of the migration jobs when transitioning from WAITINGONRECALL to PENDING.
+     #95191 repack -S VID slow performance
+     #96138 Repack should not stop processing tapes upon a single failure
+
+  [Features]
+
+     #96076 RFE: the repack command option to queue repacks
+     #96104 RFE: Do not display the history of a tape in "repack -s"
+     #96116 RFE: We do not need the repack '-a' option 
+
+  CASTOR Protocols
+  ----------------
+
+  [Bug]
+
+     #91108 The xrootd redirector gives a malformed answer to kXR_locate requests.
+
+
+  CASTOR VDQM
+  -----------
+
+  [Bug]
+
+     #93625 Fix VDQM and VMGR database connection logic in castor_tools.py and vdqmsetpriority
+     #96303 vdqmd must not wait forever for clients that connect to its listening port
+
+  [Features]
+
+     #96302 RFE: Remove unused C++ class castor::vdqm::NewProtocolInterpreter
+     #96320 RFE: Change the default number of VDQM job submission threads to 1
+
+
   CASTOR Tape
   -----------
 
   [Bug]
 
+     #88675 VMGR fails to check permissions for some operations
+     #89146 rechandlerd recalculates the eligibility of a tape even after it is eligible.
+     #91161 Tape Gateway NS helper improvement
+     #92300 "No tape available in such tapepool" is logged at an excessive level
+     #92341 Recall session should go forward (in fseq) as long as possible
+     #92717 Log level adjustment for VdqmRequestsChecker: request was lost or out of date
+     #93381 Race condition between end session and more work calls in recalls and migrations
+     #93680 NsTapeGatewayHelper::checkRecalledFile causes a segmentation fault when file has no checksum in the name-server 
+     #93786 tg_deleteTapeRequest spins when the castorfile is missing.
+     #94488 Add retry rule to migrationRetry.py for time out errors
+     #96125 tapebridged causes tape unmounts to fail if they take too long
+
   [Features]
 
-
-  CASTOR Tape Gateway
-  -------------------
-
-  [Bug]
-
-  [Features]
+     #91727 RFE: log messages for migration stream/mount handling in 2.1.12
+     #92923 RFE: refactor logic to perform recalls
+     #93612 RFE: Remove calls to castor::tape::utils::toHex from tapegatewayd
+     #94256 RFE: Add rule for bad checksums to the example retry policy file /etc/castor/policies/migrationRetry.py
+     #94376 RFE: Remove deprecated and commented out migration retry policy
+     #95975 RFE: tapebridged should gracefully shutdown the rtcpd session when get next file for recall returns an erro
+     #96353: RFE: reclaim should abort if name-server not on command-line or in castor.conf
+     #96359: RFE: vmgrdeletetape should abort if name-server not on command-line or in castor.conf
 
 
   Package Changes
@@ -105,6 +182,43 @@
        $SystemLogSocketIgnoreMsgTimestamp off
     This will ensure that the times logged are the ones when things have append and not
     when their logs were received by rsyslog
+  - CASTOR 2.1.13 is using the new xroot packages (xroot 3.2 and higher). The set of packages
+    to be installed for xroot has not changed for production environment, but did change
+    for compilation. Namely xrootd-devel was split into xrootd-server-devel, xrootd-client-devel
+    and xrootd-libs-devel
+  - CASTOR 2.1.13 is also using the new globus packages, provided by EMI. This has changed
+    considerably the list of packages to be installed :
+      + on diskservers, drop packages :
+           vdt_globus_essentials, vdt_globus_data_server, gpt
+        and replace them with :
+           libtool-ltdl, globus-authz, globus-authz-callout-error, globus-callout, globus-common,
+           globus-ftp-control, globus-gfork, globus-gridftp-server, globus-gridftp-server-control,
+           globus-gridftp-server-progs, globus-gsi-callback, globus-gsi-cert-utils,
+           globus-gsi-credential, globus-gsi-openssl-error, globus-gsi-proxy-core,
+           globus-gsi-proxy-ssl, globus-gsi-sysconfig, globus-gssapi-error, globus-gss-assist,
+           globus-io, globus-openssl-module, globus-usage, globus-xio, globus-xio-gsi-driver,
+           globus-xio-pipe-driver
+      + on build nodes, drop packages :
+           vdt_packaging_fixes, vdt_globus_essentials, vdt_globus_sdk, vdt_compile_globus_core,
+           vdt_globus_data_server, gpt, globus-config, glite-security-voms-api,
+           glite-security-voms-api-c, glite-security-voms-api-cpp, CGSI_gSOAP_2.7-voms,
+           CGSI_gSOAP_2.7-dev, CGSI_gSOAP_2.7, gSOAP
+        and replace them with :
+           libtool-ltdl, globus-authz, globus-authz-callout-error, globus-authz-callout-error-devel,
+           globus-authz-devel, globus-callout, globus-callout-devel, globus-common,
+           globus-common-devel, globus-common-progs, globus-core, globus-ftp-control,
+           globus-ftp-control-devel, globus-gfork, globus-gfork-devel, globus-gridftp-server,
+           globus-gridftp-server-control, globus-gridftp-server-control-devel,
+           globus-gridftp-server-devel, globus-gsi-callback, globus-gsi-callback-devel,
+           globus-gsi-cert-utils, globus-gsi-cert-utils-devel, globus-gsi-credential,
+           globus-gsi-credential-devel, globus-gsi-openssl-error, globus-gsi-openssl-error-devel,
+           globus-gsi-proxy-core, globus-gsi-proxy-core-devel, globus-gsi-proxy-ssl,
+           globus-gsi-proxy-ssl-devel, globus-gsi-sysconfig, globus-gsi-sysconfig-devel,
+           globus-gss-assist, globus-gss-assist-devel, globus-gssapi-error,
+           globus-gssapi-error-devel, globus-gssapi-gsi, globus-gssapi-gsi-devel, globus-io,
+           globus-io-devel, globus-openssl-module, globus-openssl-module-devel, globus-usage,
+           globus-usage-devel, globus-xio, globus-xio-devel, globus-xio-gsi-driver,
+           globus-xio-gsi-driver-devel, globus-xio-pipe-driver, globus-xio-pipe-driver-devel
 
   - $TNS_ADMIN/sqlnet.ora in the Stager database nodes should contain the following entries :
        DEFAULT_SDU_SIZE=65535
