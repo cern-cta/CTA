@@ -35,7 +35,8 @@ messages to the DLF server
 #import syslog
 import castor_tools
 import thread
-
+import traceback
+import sys
 import logging
 from logging.handlers import SysLogHandler as syslog
 
@@ -127,10 +128,12 @@ def addmessages(msgs):
 
 def _writep(priority, msgnb, **params):
     '''Writes a log message with the given priority.
-    Parameters can be passed as a dictionnary of name/value.
+    Parameters can be passed as a dictionary of name/value.
     Some parameter names will trigger a specific interpretation :
       - reqid : will be treated as the UUID of the ongoing request
       - fileid : will be treated as a pair(nshost, fileid)
+    If called within an exception handler and priority is LOG_ERR or above,
+    all details about the exception will be logged.
     '''
     # check if API has been initialized
     if not _initialized:
@@ -138,6 +141,13 @@ def _writep(priority, msgnb, **params):
     # ignore messages whose priority is not of interest
     if priority > _logmask:
         return None
+    # for LOG_ERR and above, check if we're in an exception context
+    if priority >= syslog.LOG_ERR:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        if exc_type != None:
+            params['TraceBack'] = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+            if hasattr(exc_value, '_remote_tb'):
+                params['RemoteTraceBack'] = str(exc_value._remote_tb[0])
     # check whether this is the first log of this message
     if not _messages[msgnb][1]:
         # then send the message to the server
@@ -229,4 +239,3 @@ def writeemerg(msgnb, **params):
     rawmsg = _writep(syslog.LOG_EMERG, msgnb, **params)
     if rawmsg:
         logger.critical(rawmsg)
-
