@@ -92,6 +92,15 @@ int main(int argc,
     } else
       Cns_hosts = NULL;
   }
+
+  /* Abort with an appropriate error message if the user did not provide the */
+  /* name-server host name on either the command line or in castor.conf      */
+  if (!host && !Cns_hosts) {
+    fprintf (stderr, "Error: Name-server host name must either be provided"
+      " on the command line or in castor.conf\n");
+    exit (USERR);
+  }
+
   while (1) {
     flags = CNS_LIST_BEGIN;
     while ((dtp = Cns_listtape (host, vid, flags, &list, 0)) != NULL) {
