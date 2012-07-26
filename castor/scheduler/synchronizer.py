@@ -32,7 +32,6 @@ Handle background synchronization between the stager DB and the transfer manager
 
 import time
 import threading
-import traceback
 import castor_tools
 import random
 import socket
@@ -136,14 +135,16 @@ class Synchronizer(threading.Thread):
       # list d2d source running and handled by this transfer manager
       allTMD2dSrc = self.connections.getAllRunningD2dSourceTransfers(self.hostname, timeout=None)
       allTMD2dSrcSet = set([(transferid, reqid) for transferid, reqid, fileid in allTMD2dSrc])
-    except Exception, e:
-      # we could not list all pending running transfers in the system
+    except connectionpool.Timeout:
+      # we could not list all pending running transfers in the system because of timeouts
       # Thus we have to give up with synchronization for this round
       # 'Error caught while trying to get rid of disk to disk sources left behind. Giving up for this round.'
-      extraArgs = {'TraceBack': traceback.format_exc()}
-      if hasattr(e, "_remote_tb"):
-        extraArgs['RemoteTraceBack'] = str(e._remote_tb[0])
-      dlf.writenotice(msgs.D2DSYNCFAILED, Type=str(e.__class__), Message=str(e), **extraArgs)
+      dlf.writenotice(msgs.D2DSYNCFAILED)
+      return
+    except Exception:
+      # we could not list all pending running transfers in the system for a unexpected error
+      # 'Error caught while trying to get rid of disk to disk sources left behind. Giving up for this round.'
+      dlf.writeerr(msgs.D2DSYNCFAILED)
       return
     # prepare a cursor for database polling
     stcur = self.dbConnection().cursor()

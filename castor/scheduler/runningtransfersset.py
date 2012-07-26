@@ -385,6 +385,9 @@ class RunningTransfersSet(object):
     for scheduler, transferid, fileid, reqid in sourcesToBeInformed:
       try:
         self.connections.d2dend(scheduler, transferid, reqid, timeout=timeout)
+      except connectionpool.Timeout, e:
+        # "Failed to inform scheduler that a d2d transfer is over" message
+        dlf.writenotice(msgs.INFORMTRANSFERISOVERFAILED, Scheduler=scheduler, subreqid=transferid, reqid=reqid, fileid=fileid, Type=str(e.__class__), Message=str(e))
       except Exception, e:
         # "Failed to inform scheduler that a d2d transfer is over" message
         dlf.writeerr(msgs.INFORMTRANSFERISOVERFAILED, Scheduler=scheduler, subreqid=transferid, reqid=reqid, fileid=fileid, Type=str(e.__class__), Message=str(e))
@@ -395,6 +398,10 @@ class RunningTransfersSet(object):
         for transferid, fileid, rc, msg, reqid in killedTransfers[scheduler]:
           # "Informed scheduler that transfer was killed by a signal" message
           dlf.write(msgs.INFORMTRANSFERKILLED, Scheduler=scheduler, subreqid=transferid, reqid=reqid, fileid=fileid, signal=-rc, Message=msg)
+      except connectionpool.Timeout, e:
+        for transferid, fileid, rc, msg, reqid in killedTransfers[scheduler]:
+          # "Failed to inform scheduler that transfer was killed by a signal" message
+          dlf.writenotice(msgs.INFORMTRANSFERKILLEDFAILED, Scheduler=scheduler, subreqid=transferid, reqid=reqid, fileid=fileid, Message=msg)
       except Exception, e:
         for transferid, fileid, rc, msg, reqid in killedTransfers[scheduler]:
           # "Failed to inform scheduler that transfer was killed by a signal" message

@@ -239,10 +239,14 @@ class ActivityControl(threading.Thread):
             # thus we put the transfer into the priority queue and inform the scheduler
             # note that we need to pass a tuple of tuples
             transferList = ((socket.getfqdn(), transfer),)
-            connections.transferBackToQueue(scheduler, transferid, arrivalTime, transferList, transfertype)
-            transferQueue.putPriority(scheduler, transferid, transfer, transfertype, arrivalTime)
-            # 'Timeout when trying to start/cancel transfer. Putting it back to the queue' message
-            dlf.writenotice(msgs.TRANSFERSTARTTIMEOUT, subreqid=transferid, reqid=transfer[2], fileid=fileid)
+            try:
+              connections.transferBackToQueue(scheduler, transferid, arrivalTime, transferList, transfertype)
+              transferQueue.putPriority(scheduler, transferid, transfer, transfertype, arrivalTime)
+              # 'Timeout when trying to start/cancel transfer. Putting it back to the queue' message
+              dlf.writenotice(msgs.TRANSFERSTARTTIMEOUT, subreqid=transferid, reqid=transfer[2], fileid=fileid)
+            except connectionpool.Timeout:
+              # 'Failed to start transfer and got timeout when putting back to queue'
+              dlf.writenotice(msgs.TRANSFERBACKTOQUEUEFAILED, subreqid=transferid, reqid=transfer[2], fileid=fileid)
           except ValueError:
             # 'Transfer start canceled (already started on another host)' message
             dlf.writedebug(msgs.TRANSFERALREADYSTARTED, subreqid=transferid, reqid=transfer[2], fileid=fileid)
@@ -254,24 +258,27 @@ class ActivityControl(threading.Thread):
             dlf.write(msgs.POSTPONEDFORSRCNOTREADY, subreqid=transferid, reqid=transfer[2], fileid=fileid)
             # put the transfer into the pending queue
             transferQueue.d2dDestReady(scheduler, transferid, transfer, arrivalTime, transfertype)
-          except Exception, e:
+          except Exception:
             # startup of the transfer failed with unexpected error
             # We need to try again thus we put the transfer into the priority queue and inform the scheduler
             # note that we need to pass a tuple of tuples
             transferList = ((socket.getfqdn(), transfer),)
-            connections.transferBackToQueue(scheduler, transferid, arrivalTime, transferList, transfertype)
-            transferQueue.putPriority(scheduler, transferid, transfer, transfertype, arrivalTime)
-            # 'Failed to start transfer. Putting it back to the queue' message
-            dlf.writeerr(msgs.TRANSFERSTARTINGFAILED, subreqid=transferid, reqid=transfer[2], fileid=fileid, Type=str(e.__class__), Message=str(e))
-            time.sleep(1)
+            try:
+              connections.transferBackToQueue(scheduler, transferid, arrivalTime, transferList, transfertype)
+              transferQueue.putPriority(scheduler, transferid, transfer, transfertype, arrivalTime)
+              # 'Failed to start transfer. Putting it back to the queue' message
+              dlf.writeerr(msgs.TRANSFERSTARTINGFAILED, subreqid=transferid, reqid=transfer[2], fileid=fileid)
+              time.sleep(1)
+            except connectionpool.Timeout:
+              # clear this exception context, i.e. the Timeout, so that we log the original error
+              sys.exc_clear()
+              # 'Failed to start transfer and got timeout when putting back to queue'
+              dlf.writeerr(msgs.TRANSFERBACKTOQUEUEFAILED, subreqid=transferid, reqid=transfer[2], fileid=fileid)
         else:
           time.sleep(.05)
-      except Exception, e:
+      except Exception:
         # "Caught exception in ActivityControl thread" message
-        extraArgs = {'TraceBack': traceback.format_exc()}
-        if hasattr(e, "_remote_tb"):
-          extraArgs['RemoteTraceBack'] = str(e._remote_tb[0])
-        dlf.writeerr(msgs.ACTIVITYCONTROLEXCEPTION, Type=str(e.__class__), Message=str(e), **extraArgs)
+        dlf.writeerr(msgs.ACTIVITYCONTROLEXCEPTION)
         time.sleep(1)
 
   def stop(self):
@@ -352,6 +359,9 @@ class ManagementThread(threading.Thread):
         transferQueue.checkForTransfersCancelation()
         # recompute list of ongoing tape transfers
         runningTransfers.listTapeTransfers()
+      except connectionpool.Timeout, e:
+        # 'Caught exception in Management thread' message
+        dlf.writenotice(msgs.MGMTEXCEPTION, Type=str(e.__class__), Message=str(e))
       except Exception, e:
         # 'Caught exception in Management thread' message
         dlf.writeerr(msgs.MGMTEXCEPTION, Type=str(e.__class__), Message=str(e))
