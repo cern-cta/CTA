@@ -512,6 +512,7 @@ CREATE OR REPLACE PROCEDURE tg_setFileRecalled(inMountTransactionId IN INTEGER,
   varNbMigrationsStarted INTEGER;
   varGcWeight       NUMBER;
   varGcWeightProc   VARCHAR2(2048);
+  varRecallStartTime NUMBER;
 BEGIN
   -- first lock Castorfile, check NS and parse path
 
@@ -565,7 +566,8 @@ BEGIN
   -- Then deal with recalljobs and potential migrationJobs
 
   -- Delete recall jobs
-  DELETE FROM RecallJob WHERE castorFile = varCfId;
+  DELETE FROM RecallJob WHERE castorFile = varCfId
+  RETURNING creationTime INTO varRecallStartTime;
   -- trigger waiting migrations if any
   -- Note that we reset the creation time as if the MigrationJob was created right now
   -- this is because "creationTime" is actually the time of entering the "PENDING" state
@@ -626,7 +628,8 @@ BEGIN
   -- log success
   logToDLF(inReqId, dlf.LVL_SYSTEM, dlf.RECALL_COMPLETED_DB, varFileId, varNsHost, 'tapegatewayd',
            'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || varVID ||
-           ' fseq=' || TO_CHAR(inFseq) || ' filePath=' || inFilePath || ' ' || inLogContext);
+           ' fseq=' || TO_CHAR(inFseq) || ' filePath=' || inFilePath || ' recallTime=' ||
+           to_char(trunc(getTime() - varRecallStartTime, 0)) || ' ' || inLogContext);
 END;
 /
 
@@ -1374,6 +1377,7 @@ CREATE OR REPLACE PROCEDURE tg_setFileMigrated(inMountTrId IN NUMBER, inFileId I
   varOrigVID VARCHAR2(10);
   varMigJobCount INTEGER;
   varParams VARCHAR2(4000);
+  varMigStartTime NUMBER;
 BEGIN
   varNsHost := getConfigOption('stager', 'nsHost', '');
   -- Lock the CastorFile
@@ -1385,8 +1389,8 @@ BEGIN
   DELETE FROM MigrationJob
    WHERE castorFile = varCfId
      AND mountTransactionId = inMountTrId
-  RETURNING destCopyNb, VID, originalVID
-    INTO varCopyNb, varVID, varOrigVID;
+  RETURNING destCopyNb, VID, originalVID, creationTime
+    INTO varCopyNb, varVID, varOrigVID, varMigStartTime;
   -- check if another migration should be performed
   SELECT count(*) INTO varMigJobCount
     FROM MigrationJob
@@ -1402,7 +1406,8 @@ BEGIN
   -- Tell the Disk Cache that migration is over
   dc_setFileMigrated(varCfId, varOrigVID, (varMigJobCount = 0));
   -- Log 'db updates after full migration completed'
-  varParams := 'TPVID='|| varVID ||' mountTransactionId='|| to_char(inMountTrId) ||' '|| inLogContext;
+  varParams := 'TPVID='|| varVID ||' mountTransactionId='|| to_char(inMountTrId) ||
+    ' migrationTime=' || to_char(trunc(getTime() - varMigStartTime, 0)) || ' '|| inLogContext;
   logToDLF(inReqid, dlf.LVL_SYSTEM, dlf.MIGRATION_COMPLETED, inFileId, varNsHost, 'tapegatewayd', varParams);
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- Log 'file not found, giving up'
