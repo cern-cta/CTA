@@ -236,7 +236,7 @@ class ServerQueue(dict):
       self.lock.acquire()
       try:
         # check whether the transfer has already been started somewhere else
-        if transferid not in self.transfersLocations:
+        if transferid not in self.transfersLocations or transferid not in self[diskserver]:
           # this transfer is supposed to be running. Let's check that it is not suppose to be
           # running on the very machine that wants to start it. That would mean that our answer
           # to this machine never arrived and the machine is retrying
