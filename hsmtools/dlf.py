@@ -142,7 +142,7 @@ def _writep(priority, msgnb, **params):
     if priority > _logmask:
         return None
     # for LOG_ERR and above, check if we're in an exception context
-    if priority >= syslog.LOG_ERR:
+    if priority <= syslog.LOG_ERR:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         if exc_type != None:
             params['TraceBack'] = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
