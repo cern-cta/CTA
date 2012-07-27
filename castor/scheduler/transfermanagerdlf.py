@@ -48,7 +48,8 @@ msgs = dlf.enum('ABORTEREXCEPTION', 'SYNCHROFAILED', 'SYNCHROEXCEPTION',
                 'TRANSFERMANAGERDSTARTED', 'TRANSFERMANAGERDSTOPPED', 'NOD2DLEFTBEHIND',
                 'D2DSYNCFAILED', 'SYNCHROENDEDTRANSFER', 'INVOKINGGETALLRUNNINGD2DSOURCETRANSFERS',
                 'SYNCDBWITHD2DSRC', 'COULDNOTCONTACTTM', 'TRANSFERSTARTCONFIRMED',
-                'D2DENDEXCEPTION', 'D2DDESTRESTARTERROR', 'CONNLOST', 'INVOKINGTRANSFERBACKTOQUEUE')
+                'D2DENDEXCEPTION', 'D2DDESTRESTARTERROR', 'CONNLOST', 'INVOKINGTRANSFERBACKTOQUEUE',
+                'TRANSFERSRCCANCELED')
 
 # initialization of the messages
 dlf.addmessages({msgs.ABORTEREXCEPTION : 'Caught exception in Aborter thread',
@@ -110,5 +111,6 @@ dlf.addmessages({msgs.ABORTEREXCEPTION : 'Caught exception in Aborter thread',
                  msgs.D2DENDEXCEPTION : 'Unable to end d2d as it\'s not in the server list. Probable race condition',
                  msgs.D2DDESTRESTARTERROR : 'Unable to put d2ddest back in queue as sources are missing. Probable race condition',
                  msgs.CONNLOST : 'Connection lost',
-                 msgs.INVOKINGTRANSFERBACKTOQUEUE : 'Invoking transferBackToQueue'})
+                 msgs.INVOKINGTRANSFERBACKTOQUEUE : 'Invoking transferBackToQueue',
+                 msgs.TRANSFERSRCCANCELED : 'denying start of source transfer as it has been canceled'})
 

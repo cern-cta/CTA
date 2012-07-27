@@ -42,7 +42,8 @@ msgs = dlf.enum('INVOKINGSCHEDULETRANSFER', 'INVOKINGSUMMARIZETRANSFERS',
                 'INVOKINGTRANSFERALREADYSTARTED', 'SYNCRUNTRANSFERFAILED',
                 'DISKMANAGERDSTARTED', 'DISKMANAGERDSTOPPED', 'INVOKINGRETRYD2DDEST',
                 'TRANSFERSTARTTIMEOUT', 'ACTIVITYCHECKDROPCONN', 'ACTIVITYCHECKEXCEPTION',
-                'INFORMTRANSFERKILLED', 'CONNLOST', 'TRANSFERBACKTOQUEUEFAILED')
+                'INFORMTRANSFERKILLED', 'CONNLOST', 'TRANSFERBACKTOQUEUEFAILED',
+                'SRCTRANSFERCANCELED')
 
 # initialization of the messages
 dlf.addmessages({msgs.INVOKINGSCHEDULETRANSFER : 'Invoking scheduleTransfer called',
@@ -80,5 +81,6 @@ dlf.addmessages({msgs.INVOKINGSCHEDULETRANSFER : 'Invoking scheduleTransfer call
                  msgs.ACTIVITYCHECKEXCEPTION : 'Caught exception in ActivityControlChecker thread. Giving up for this round',
                  msgs.INFORMTRANSFERKILLED : 'Informed scheduler that transfer was killed by a signal',
                  msgs.CONNLOST : 'Connection lost',
-                 msgs.TRANSFERBACKTOQUEUEFAILED : 'Failed to start transfer and got timeout when putting back to queue'})
+                 msgs.TRANSFERBACKTOQUEUEFAILED : 'Failed to start transfer and got timeout when putting back to queue',
+                 msgs.SRCTRANSFERCANCELED : 'source transfer has been canceled while queuing. Not starting it'})
 

@@ -82,6 +82,8 @@ class ServerQueue(dict):
     self.lock = threading.Lock()
     # dictionnary containing the set of machines on which each transfer is queueing
     self.transfersLocations = {}
+    # list of source d2d transfers pending
+    self.d2dsrcpending = set()
     # list of source d2d transfers running
     self.d2dsrcrunning = {}
     # memory of recently scheduled jobs
@@ -89,14 +91,16 @@ class ServerQueue(dict):
     # get configuration
     self.config = castor_tools.castorConf()
 
-  def put(self, transferid, arrivaltime, transferList, transfertype):
+  def put(self, transferid, arrivaltime, transferList, transfertype, putback=False):
     '''Adds a new transfer. transfertype can be one of 'standard', 'd2dsrc' and 'd2ddest' '''
     self.lock.acquire()
     try:
-      if transfertype == 'd2ddest' and transferid not in self.transfersLocations and transferid not in self.d2dsrcrunning:
+      # in case we put back a d2ddest transfer, check that source is still around
+      if putback and transfertype == 'd2ddest' and \
+             transferid not in self.d2dsrcpending and transferid not in self.d2dsrcrunning:
         # a d2ddest wants to (re)start but no source exists in the queuing nor in the running lists:
         # we probably have a race condition with a d2ddest that was put back in the queue too late
-        dlf.writenotice(msgs.D2DDESTRESTARTERROR, subreqid=transferid, reqid=reqid)
+        dlf.writenotice(msgs.D2DDESTRESTARTERROR, subreqid=transferid)
         return
       for diskserver, transfer in transferList:
         # add transfer to the list of queueing transfers on the diskserver
@@ -111,6 +115,8 @@ class ServerQueue(dict):
           if transferid not in self.transfersLocations:
             self.transfersLocations[transferid] = set()
           self.transfersLocations[transferid].add(diskserver)
+        else:
+          self.d2dsrcpending.add(transferid)
     finally:
       self.lock.release()
 
@@ -222,8 +228,15 @@ class ServerQueue(dict):
       try:
         # the source transfer is starting, mark all destinations (and the source) ready
         try :
+          # check whether the source transfer was canceled in the meantime
+          if transferid not in self.d2dsrcpending:
+            # source was canceled. This only happens when all desctinations were canceled too
+            # log 'denying start of source transfer as it has been canceled'
+            dlf.writedebug(msgs.TRANSFERSRCCANCELED, DiskServer=diskserver, subreqid=transferid, reqid=reqid)
+            raise ValueError
           # remember where the source is running
           self.d2dsrcrunning[transferid] = diskserver
+          self.d2dsrcpending.remove(transferid)
           # and make the destinations (if any) aware that it can now start this transfer
           for ds in self.transfersLocations[transferid]:
             self[ds][transferid] = self[ds][transferid][0:3]+[True]
@@ -484,6 +497,9 @@ class ServerQueue(dict):
           # if we have a source transfer already running, stop it
           if transferid in self.d2dsrcrunning:
             self.d2dend(transferid, reqid, transferCancelation=True)
+          else:
+            # if we have a source transfer pending, drop it
+            self.d2dsrcpending.discard(transferid)
         # drop the transfer id from the machine queue
         del self[machine][transferid]
     finally:
