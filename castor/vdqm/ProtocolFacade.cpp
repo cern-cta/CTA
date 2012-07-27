@@ -77,7 +77,8 @@ void castor::vdqm::ProtocolFacade::handleProtocolVersion()
   // get the incoming request
   try {
     // First check of the Protocol
-    const int timeout = 20; // Timeout is in seconds
+    // XXX should be 20, put back to 0 for the moment as it triggers strange behavior
+    const int timeout = 0; // Timeout is in seconds
     magicNumber = SocketHelper::readMagicNumber(m_socket, timeout);
   } catch (castor::exception::Exception &e) {  
     // "Unable to read Request from socket" message
