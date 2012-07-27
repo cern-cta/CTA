@@ -28,7 +28,7 @@ int main(int argc,
   struct Cns_direntape *dtp = NULL;
   int errflg = 0;
   int flags = 0;
-  char *host = NULL;
+  char *const host = getconfent (CNS_SCE, "HOST", 0);
   Cns_list list;
   char p_stat[9];
   char path[CA_MAXPATHLEN+1];
@@ -36,11 +36,16 @@ int main(int argc,
   FILE *tmpfile();
   char *vid = NULL;
 
-  while ((c = getopt (argc, argv, "h:V:")) != EOF) {
+  /* Abort with an appropriate error message if the user did not provide the */
+  /* name-server host name in castor.conf                                    */
+  if (!host) {
+    fprintf (stderr, "Error: CASTOR name-server host name must be provided in"
+      " castor.conf\n");
+    exit (USERR);
+  }
+
+  while ((c = getopt (argc, argv, "V:")) != EOF) {
     switch (c) {
-    case 'h':
-      host = optarg;
-      break;
     case 'V':
       vid = optarg;
       break;
@@ -55,21 +60,7 @@ int main(int argc,
     errflg++;
   }
   if (errflg) {
-    fprintf (stderr, "usage: %s [-h name_server] -V vid\n", argv[0]);
-    exit (USERR);
-  }
-
-  /* If the CASTOR name-server host was not specified on the command line */
-  /* then try to get it from castor.conf                                  */
-  if(NULL == host) {
-    host = getconfent (CNS_SCE, "HOST", 0);
-  }
-
-  /* Abort with an appropriate error message if the user did not provide the */
-  /* name-server host name on either the command line or in castor.conf      */
-  if (!host) {
-    fprintf (stderr, "Error: CASTOR name-server host name must either be"
-      " provided on the command line or in castor.conf\n");
+    fprintf (stderr, "usage: %s -V vid\n", argv[0]);
     exit (USERR);
   }
 

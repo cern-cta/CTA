@@ -7,9 +7,6 @@
 reclaim \- reset information concerning a volume
 .SH SYNOPSIS
 .B reclaim
-[
-.BI -h " name_server"
-]
 .BI -V " vid"
 .SH DESCRIPTION
 .B reclaim

@@ -23,6 +23,11 @@ extern	int	optind;
  * Connects to the specified name server host and counts the number of enabled
  * and disabled files still on the tape with the specified VID.
  *
+ * Please note that the specified name server host may not be used if there
+ * is a CNS HOST entry in castor.conf.  This is because the send2nsdx function
+ * will override the host name passed to it if it finds a CNS HOST entry in
+ * castor.conf.
+ *
  * @param server          The host name of the CASTOR name-server to be
  *                        contacted.
  * @param vid             The VID of the tape.
@@ -73,17 +78,22 @@ int countNsFilesOnTape(
 
 
 int main(int argc, char **argv) {
-  int  c             = 0;
-  int  nbParseErrors = 0;
-  char *vid          = NULL;
-  char *nsHostName   = NULL;
+  int          c             = 0;
+  int          nbParseErrors = 0;
+  char *       vid           = NULL;
+  char * const nsHostName    = getconfent(CNS_SCE, "HOST", 0);
+
+  /* Abort with an appropriate error message if the user did not provide the */
+  /* name-server host name in castor.conf                                    */
+  if (!nsHostName) {
+    fprintf (stderr, "Error: CASTOR name-server host name must be provided in"
+      " castor.conf\n");
+    exit (USERR);
+  }
 
   /* Parse the command-line */
-  while((c = getopt (argc, argv, "h:V:")) != EOF) {
+  while((c = getopt (argc, argv, "V:")) != EOF) {
     switch (c) {
-    case 'h':
-      nsHostName = optarg;
-      break;
     case 'V':
       vid = optarg;
       break;
@@ -113,20 +123,8 @@ int main(int argc, char **argv) {
 
   /* Display the usage message if there were one or more parse errors */
   if(nbParseErrors) {
-    fprintf (stderr, "usage: %s [-h name_server] -V vid\n", argv[0]);
+    fprintf (stderr, "usage: %s -V vid\n", argv[0]);
     return(USERR);
-  }
-
-  /* If the CASTOR name-server host name has not been provided on the       */
-  /* command line, then try to get the host name from castor.conf and abort */
-  /* with an appropriate error message if unsuccessful                      */
-  if(NULL == nsHostName) {
-    nsHostName = getconfent(CNS_SCE, "HOST", 0);
-    if(NULL == nsHostName) {
-      fprintf(stderr, "Error: The CASTOR name-server host name must be"
-        " provided either on the command line or in castor.conf\n");
-      exit (USERR);
-    }
   }
 
   /* Set the number of consistency errors to zero */

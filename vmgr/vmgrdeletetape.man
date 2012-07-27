@@ -6,16 +6,10 @@
 vmgrdeletetape \- remove a tape from the CASTOR Volume Manager
 .SH SYNOPSIS
 .B vmgrdeletetape
-[
-.BI -h " name-server"
-]
 .BI -V " vid"
 .SH DESCRIPTION
 .B vmgrdeletetape
 removes a tape from the CASTOR Volume Manager.
-.TP
-.I name-server
-is the host name of the CASTOR name-server.
 .TP
 .I vid
 is the volume visual identifier.
