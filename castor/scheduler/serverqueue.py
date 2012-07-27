@@ -93,6 +93,11 @@ class ServerQueue(dict):
     '''Adds a new transfer. transfertype can be one of 'standard', 'd2dsrc' and 'd2ddest' '''
     self.lock.acquire()
     try:
+      if transfertype == 'd2ddest' and transferid not in self.transfersLocations and transferid not in self.d2dsrcrunning:
+        # a d2ddest wants to (re)start but no source exists in the queuing nor in the running lists:
+        # we probably have a race condition with a d2ddest that was put back in the queue too late
+        dlf.writenotice(msgs.D2DDESTRESTARTERROR, subreqid=transferid, reqid=reqid)
+        return
       for diskserver, transfer in transferList:
         # add transfer to the list of queueing transfers on the diskserver
         # note the extra argument, used only for d2ddest transfers and telling whether the source is ready
@@ -101,7 +106,7 @@ class ServerQueue(dict):
         if diskserver not in self:
           self[diskserver] = {}
         self[diskserver][transferid] = [transfer, arrivaltime, transfertype, transferid in self.d2dsrcrunning]
-        # add the diskserver to the transferLocations list for this transfer (except for sources)
+        # add the diskserver to the transfersLocations list for this transfer (except for sources)
         if transfertype != 'd2dsrc':
           if transferid not in self.transfersLocations:
             self.transfersLocations[transferid] = set()
@@ -117,7 +122,7 @@ class ServerQueue(dict):
     try:
       # get the list of machines potentially running the transfer
       machines = self.transfersLocations[transferid]
-      # clean up _transfersLocations
+      # clean up transfersLocations
       del self.transfersLocations[transferid]
       # for each machine, cleanup the server queue and note down where the transfer was sent
       fileid = None

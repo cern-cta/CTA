@@ -108,6 +108,7 @@ dlf.addmessages({msgs.ABORTEREXCEPTION : 'Caught exception in Aborter thread',
                  msgs.COULDNOTCONTACTTM : 'Could not contact transfer manager',
                  msgs.TRANSFERSTARTCONFIRMED : 'Transfer starting reconfirmed',
                  msgs.D2DENDEXCEPTION : 'Unable to end d2d as it\'s not in the server list. Probable race condition',
+                 msgs.D2DDESTRESTARTERROR : 'Unable to put d2ddest back in queue as sources are missing. Probable race condition',
                  msgs.CONNLOST : 'Connection lost',
                  msgs.INVOKINGTRANSFERBACKTOQUEUE : 'Invoking transferBackToQueue'})
 
