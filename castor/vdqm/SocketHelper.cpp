@@ -70,7 +70,7 @@ unsigned int castor::vdqm::SocketHelper::readMagicNumber(
       std::ostream &os = ex.getMessage();
       os << "Failed to read Magic Number from socket: ";
       castor::vdqm::DevTools::printSocketDescription(os, socket);
-      os << ": " << errno << " - " << strerror(errno);
+      os << ": " << serrno << " - " << sstrerror(serrno);
       throw ex;
     }
   case 0:

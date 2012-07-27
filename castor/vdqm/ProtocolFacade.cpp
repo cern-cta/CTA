@@ -72,7 +72,7 @@ void castor::vdqm::ProtocolFacade::handleProtocolVersion()
   throw (castor::exception::Exception) {
   
   //The magic Number of the message on the socket
-  unsigned int magicNumber;  
+  unsigned int magicNumber = 0;  
   
   // get the incoming request
   try {
@@ -81,12 +81,13 @@ void castor::vdqm::ProtocolFacade::handleProtocolVersion()
     const int timeout = 0; // Timeout is in seconds
     magicNumber = SocketHelper::readMagicNumber(m_socket, timeout);
   } catch (castor::exception::Exception &e) {  
-    // "Unable to read Request from socket" message
+    // Log "Unable to read Request from socket" message and return
     castor::dlf::Param params[] = {
       castor::dlf::Param("Standard Message", sstrerror(e.code())),
       castor::dlf::Param("Precise Message", e.getMessage().str())};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR, VDQM_FAILED_SOCK_READ, 2,
       params);
+    return;
   }
 
   switch (magicNumber) {
