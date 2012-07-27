@@ -172,7 +172,7 @@ Package: castor-tape-server
 Architecture: any
 Depends: logrotate, stk-ssi
 Conflicts: castor-tape-server-nostk
-Build-Depends: stk-ssi-devel
+Build-Depends: stk-ssi-devel, stk-ssi
 Description: castor (Cern Advanced STORage system)
  Tape server
 
