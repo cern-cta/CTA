@@ -1508,7 +1508,6 @@ CREATE TABLE DrainingDiskCopy
     * file is in the lifecycle of draining a filesystem.
     * The status can be one of:
     *   0 -- CREATED
-    *   1 -- RESTARTED
     *   2 -- PROCESSING    (Transient state)
     *   3 -- WAITD2D
     *   4 -- FAILED
@@ -1549,12 +1548,9 @@ CREATE INDEX I_DrainingDCs_FileSystem
 CREATE INDEX I_DrainingDCs_Status
   ON DrainingDiskCopy (status);
 
-/* This index is essentially the same as the one on the SubRequest table which
- * allows us to process entries in order. In this case by priority and
- * creationTime.
- */
-CREATE INDEX I_DrainingDCs_PC
-  ON DrainingDiskCopy (priority, creationTime);
+/* For the in-order processing, see drainFileSystem */
+CREATE INDEX I_DrainingDCs_FSStPrioTimeDC
+  ON DrainingDiskCopy (fileSystem, status, priority DESC, creationTime ASC, diskCopy);
 
 CREATE INDEX I_DrainingDCs_Parent
   ON DrainingDiskCopy (parent);
@@ -1738,6 +1734,7 @@ AS
   RECALL_MJ_FOR_MISSING_COPY   CONSTANT VARCHAR2(2048) := 'createRecallCandidate: create new MigrationJob to migrate missing copy';
   RECALL_COPY_STILL_MISSING    CONSTANT VARCHAR2(2048) := 'createRecallCandidate: could not find enough valid copy numbers to create missing copy';
   RECALL_MISSING_COPY_NO_ROUTE CONSTANT VARCHAR2(2048) := 'createRecallCandidate: no route to tape defined for missing copy';
+  RECALL_MISSING_COPY_ERROR    CONSTANT VARCHAR2(2048) := 'createRecallCandidate: unexpected error when creating missing copy';
   RECALL_CANCEL_BY_VID         CONSTANT VARCHAR2(2048) := 'Canceling tape recall for given VID';
   RECALL_CANCEL_RECALLJOB_VID  CONSTANT VARCHAR2(2048) := 'Canceling RecallJobs for given VID';
   RECALL_FAILING               CONSTANT VARCHAR2(2048) := 'Failing Recall(s)';
@@ -1778,6 +1775,7 @@ END dlf;
 CREATE OR REPLACE PACKAGE serrno AS
   /* (s)errno values */
   ENOENT          CONSTANT PLS_INTEGER := 2;    /* No such file or directory */
+  EINTR           CONSTANT PLS_INTEGER := 4;    /* Interrupted system call */
   EACCES          CONSTANT PLS_INTEGER := 13;   /* Permission denied */
   EBUSY           CONSTANT PLS_INTEGER := 16;   /* Device or resource busy */
   EEXIST          CONSTANT PLS_INTEGER := 17;   /* File exists */
@@ -1795,6 +1793,7 @@ CREATE OR REPLACE PACKAGE serrno AS
   
   /* messages */
   ENOENT_MSG          CONSTANT VARCHAR2(2048) := 'No such file or directory';
+  EINTR_MSG           CONSTANT VARCHAR2(2048) := 'Interrupted system call';
   EACCES_MSG          CONSTANT VARCHAR2(2048) := 'Permission denied';
   EBUSY_MSG           CONSTANT VARCHAR2(2048) := 'Device or resource busy';
   EEXIST_MSG          CONSTANT VARCHAR2(2048) := 'File exists';
@@ -3082,12 +3081,13 @@ CREATE OR REPLACE PROCEDURE triggerRepackRecall
 (inCfId IN INTEGER, inFileId IN INTEGER, inNsHost IN VARCHAR2, inBlock IN RAW,
  inFseq IN INTEGER, inCopynb IN INTEGER, inEuid IN INTEGER, inEgid IN INTEGER,
  inRecallGroupId IN INTEGER, inSvcClassId IN INTEGER, inVid IN VARCHAR2, inFileSize IN INTEGER,
- inFileClassId IN INTEGER, inAllSegments IN VARCHAR2, inReqUUID IN VARCHAR2,
+ inFileClass IN INTEGER, inAllSegments IN VARCHAR2, inReqUUID IN VARCHAR2,
  inSubReqUUID IN VARCHAR2, inRecallGroupName IN VARCHAR2) AS
   varLogParam VARCHAR2(2048);
   varAllCopyNbs "numList" := "numList"();
   varAllVIDs strListTable := strListTable();
   varAllSegments strListTable;
+  varFileClassId INTEGER;
 BEGIN
   -- create recallJob for the given VID, copyNb, etc.
   INSERT INTO RecallJob (id, castorFile, copyNb, recallGroup, svcClass, euid, egid,
@@ -3098,7 +3098,7 @@ BEGIN
   -- log "created new RecallJob"
   varLogParam := 'SUBREQID=' || inSubReqUUID || ' RecallGroup=' || inRecallGroupName;
   logToDLF(inReqUUID, dlf.LVL_SYSTEM, dlf.RECALL_CREATING_RECALLJOB, inFileId, inNsHost, 'stagerd',
-           varLogParam || ' fileClass=' || TO_CHAR(inFileClassId) || ' CopyNb=' || TO_CHAR(inCopynb)
+           varLogParam || ' fileClass=' || TO_CHAR(inFileClass) || ' CopyNb=' || TO_CHAR(inCopynb)
            || ' TPVID=' || inVid || ' FSEQ=' || TO_CHAR(inFseq) || ' FileSize=' || TO_CHAR(inFileSize));
   -- create missing segments if needed
   SELECT * BULK COLLECT INTO varAllSegments
@@ -3109,7 +3109,9 @@ BEGIN
     varAllVIDs.EXTEND;
     varAllVIDs(i) := varAllSegments(2*i);
   END LOOP;
-  createMJForMissingSegments(inCfId, inFileSize, inFileClassId, varAllCopyNbs,
+  SELECT id INTO varFileClassId
+    FROM FileClass WHERE classId = inFileClass;
+  createMJForMissingSegments(inCfId, inFileSize, varFileClassId, varAllCopyNbs,
                              varAllVIDs, inFileId, inNsHost, varLogParam);
 END;
 /
@@ -5503,11 +5505,17 @@ BEGIN
     END IF;
     -- delete ongoing recalls
     deleteRecallJobs(cfId);
+    -- fail recall requests pending on the previous file
+    UPDATE SubRequest
+       SET status = dconst.SUBREQUEST_FAILED,
+           errorCode = serrno.EINTR,
+           errorMessage = 'Canceled by another user request'
+     WHERE castorFile = cfId AND status IN (dconst.SUBREQUEST_WAITTAPERECALL, dconst.SUBREQUEST_REPACK);
     -- delete ongoing migrations
     deleteMigrationJobs(cfId);
     -- set DiskCopies to INVALID
-    UPDATE DiskCopy SET status = 7 -- INVALID
-     WHERE castorFile = cfId AND status IN (0, 10); -- STAGED, CANBEMIGR
+    UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
+     WHERE castorFile = cfId AND status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR);
     -- create new DiskCopy
     SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfId;
     SELECT ids_seq.nextval INTO dcId FROM DUAL;
@@ -5726,7 +5734,7 @@ BEGIN
                 AND status IN (0, 1, 2, 5, 6, 12, 13)) LOOP   -- START, RESTART, RETRY, WAITSUBREQ, READY, READYFORSCHED
     UPDATE SubRequest
        SET status = dconst.SUBREQUEST_FAILED,
-           errorCode = 4,  -- EINTR
+           errorCode = serrno.EINTR,
            errorMessage = 'Canceled by another user request',
            parent = 0
      WHERE (id = sr.id) OR (parent = sr.id);
@@ -5843,7 +5851,7 @@ BEGIN
                            ELSE dconst.SUBREQUEST_FAILED END,
              -- user requests in status WAITSUBREQ are always marked FAILED
              -- even if they wait on a replication
-             errorCode = 4,  -- EINTR
+             errorCode = serrno.EINTR,
              errorMessage = 'Canceled by another user request'
        WHERE id = sr.id OR parent = sr.id;
       -- make the scheduler aware so that it can remove the transfer from the queues if needed
@@ -5870,7 +5878,7 @@ BEGIN
       -- fail corresponding requests
       UPDATE SubRequest
          SET status = dconst.SUBREQUEST_FAILED,
-             errorCode = 4,  -- EINTR
+             errorCode = serrno.EINTR,
              errorMessage = 'Canceled by another user request'
        WHERE castorFile = cfId
          AND status = dconst.SUBREQUEST_WAITTAPERECALL;
@@ -6169,7 +6177,7 @@ CREATE OR REPLACE PROCEDURE createMJForMissingSegments(inCfId IN INTEGER,
   varNb INTEGER;
 BEGIN
   -- check whether there are missing segments and whether we should create new ones
-  SELECT nbCopies INTO varExpectedNbCopies FROM FileClass WHERE classId = inFileClassId;
+  SELECT nbCopies INTO varExpectedNbCopies FROM FileClass WHERE id = inFileClassId;
   IF varExpectedNbCopies > inAllCopyNbs.COUNT THEN
     -- some copies are missing
     DECLARE
@@ -6247,6 +6255,7 @@ CREATE OR REPLACE FUNCTION createRecallJobs(inCfId IN INTEGER,
   varI INTEGER := 1;
   NO_TAPE_ROUTE EXCEPTION;
   PRAGMA EXCEPTION_INIT(NO_TAPE_ROUTE, -20100);
+  varErrorMsg VARCHAR2(2048);
 BEGIN
   BEGIN
     -- loop over the existing segments
@@ -6273,7 +6282,7 @@ BEGIN
       varAllCopyNbs(varI) := varSeg.copyno;
       varAllVIDs.EXTEND;
       varAllVIDs(varI) := varSeg.vid;
-      varI := varI +1;
+      varI := varI + 1;
     END LOOP;
   EXCEPTION WHEN OTHERS THEN
     -- log "error when retrieving segments from namespace"
@@ -6293,8 +6302,14 @@ BEGIN
                                varAllVIDs, inFileId, inNsHost, inLogParams);
   EXCEPTION WHEN NO_TAPE_ROUTE THEN
     -- there's at least a missing segment and we cannot recreate it!
-    -- log a "no route to tape defined for missing copy" error, but don't stop the recall
+    -- log a "no route to tape defined for missing copy" error, but don't fail the recall
     logToDLF(NULL, dlf.LVL_ALERT, dlf.RECALL_MISSING_COPY_NO_ROUTE, inFileId, inNsHost, 'stagerd', inLogParams);
+  WHEN OTHERS THEN
+    -- some other error happened, log "unexpected error when creating missing copy", but don't fail the recall
+    varErrorMsg := 'Oracle error caught : ' || SQLERRM;
+    logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_MISSING_COPY_ERROR, inFileId, inNsHost, 'stagerd',
+      'errorCode=' || to_char(SQLCODE) ||' errorMessage="' || varErrorMsg
+      ||'" stackTrace="' || dbms_utility.format_error_backtrace ||'"');
   END;
   RETURN 0;
 END; 
@@ -6840,7 +6855,7 @@ BEGIN
     -- Restart all entries in the snapshot of files to drain that may be
     -- waiting on the replication of the source diskcopy.
     UPDATE DrainingDiskCopy
-       SET status = 1,  -- RESTARTED
+       SET status = 0,  -- CREATED
            parent = 0
      WHERE status = 3  -- RUNNING
        AND (diskCopy = srcDcId
@@ -6896,7 +6911,7 @@ BEGIN
   -- Restart all entries in the snapshot of files to drain that may be
   -- waiting on the replication of the source diskcopy.
   UPDATE DrainingDiskCopy
-     SET status = 1,  -- RESTARTED
+     SET status = 0,  -- CREATED
          parent = 0
    WHERE status = 3  -- RUNNING
      AND (diskCopy = srcDcId
@@ -6974,7 +6989,7 @@ BEGIN
     -- Restart all entries in the snapshot of files to drain that may be
     -- waiting on the replication of the source diskcopy.
     UPDATE DrainingDiskCopy
-       SET status = 1,  -- RESTARTED
+       SET status = 0,  -- CREATED
            parent = 0
      WHERE status = 3  -- RUNNING
        AND (diskCopy = srcDcId
@@ -8689,6 +8704,7 @@ CREATE OR REPLACE PROCEDURE tg_setFileRecalled(inMountTransactionId IN INTEGER,
   varNbMigrationsStarted INTEGER;
   varGcWeight       NUMBER;
   varGcWeightProc   VARCHAR2(2048);
+  varRecallStartTime NUMBER;
 BEGIN
   -- first lock Castorfile, check NS and parse path
 
@@ -8742,7 +8758,8 @@ BEGIN
   -- Then deal with recalljobs and potential migrationJobs
 
   -- Delete recall jobs
-  DELETE FROM RecallJob WHERE castorFile = varCfId;
+  DELETE FROM RecallJob WHERE castorFile = varCfId
+  RETURNING creationTime INTO varRecallStartTime;
   -- trigger waiting migrations if any
   -- Note that we reset the creation time as if the MigrationJob was created right now
   -- this is because "creationTime" is actually the time of entering the "PENDING" state
@@ -8803,7 +8820,8 @@ BEGIN
   -- log success
   logToDLF(inReqId, dlf.LVL_SYSTEM, dlf.RECALL_COMPLETED_DB, varFileId, varNsHost, 'tapegatewayd',
            'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || varVID ||
-           ' fseq=' || TO_CHAR(inFseq) || ' filePath=' || inFilePath || ' ' || inLogContext);
+           ' fseq=' || TO_CHAR(inFseq) || ' filePath=' || inFilePath || ' recallTime=' ||
+           to_char(trunc(getTime() - varRecallStartTime, 0)) || ' ' || inLogContext);
 END;
 /
 
@@ -9551,6 +9569,7 @@ CREATE OR REPLACE PROCEDURE tg_setFileMigrated(inMountTrId IN NUMBER, inFileId I
   varOrigVID VARCHAR2(10);
   varMigJobCount INTEGER;
   varParams VARCHAR2(4000);
+  varMigStartTime NUMBER;
 BEGIN
   varNsHost := getConfigOption('stager', 'nsHost', '');
   -- Lock the CastorFile
@@ -9562,8 +9581,8 @@ BEGIN
   DELETE FROM MigrationJob
    WHERE castorFile = varCfId
      AND mountTransactionId = inMountTrId
-  RETURNING destCopyNb, VID, originalVID
-    INTO varCopyNb, varVID, varOrigVID;
+  RETURNING destCopyNb, VID, originalVID, creationTime
+    INTO varCopyNb, varVID, varOrigVID, varMigStartTime;
   -- check if another migration should be performed
   SELECT count(*) INTO varMigJobCount
     FROM MigrationJob
@@ -9579,7 +9598,8 @@ BEGIN
   -- Tell the Disk Cache that migration is over
   dc_setFileMigrated(varCfId, varOrigVID, (varMigJobCount = 0));
   -- Log 'db updates after full migration completed'
-  varParams := 'TPVID='|| varVID ||' mountTransactionId='|| to_char(inMountTrId) ||' '|| inLogContext;
+  varParams := 'TPVID='|| varVID ||' mountTransactionId='|| to_char(inMountTrId) ||
+    ' migrationTime=' || to_char(trunc(getTime() - varMigStartTime, 0)) || ' '|| inLogContext;
   logToDLF(inReqid, dlf.LVL_SYSTEM, dlf.MIGRATION_COMPLETED, inFileId, varNsHost, 'tapegatewayd', varParams);
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- Log 'file not found, giving up'
@@ -11264,10 +11284,10 @@ BEGIN
      SET status = 2  -- PROCESSING
    WHERE diskCopy = (
      SELECT diskCopy FROM (
-       SELECT DDC.diskCopy
+       SELECT /*+ INDEX(DDC I_DrainingDCs_FsStPrioTimeDc) */ DDC.diskCopy
          FROM DrainingDiskCopy DDC
         WHERE DDC.fileSystem = fsId
-          AND DDC.status IN (0, 1)  -- CREATED, RESTARTED
+          AND DDC.status = 0  -- CREATED
         ORDER BY DDC.priority DESC, DDC.creationTime ASC)
      WHERE rownum < 2)
   RETURNING diskCopy INTO dcId;
