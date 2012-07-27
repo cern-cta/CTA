@@ -24,14 +24,12 @@ int main(int argc,
          char **argv)
 {
   int c = 0;
-  FILE *df = NULL;
   struct Cns_direntape *dtp = NULL;
   int errflg = 0;
   int flags = 0;
   char *const host = getconfent (CNS_SCE, "HOST", 0);
   Cns_list list;
   char p_stat[9];
-  char path[CA_MAXPATHLEN+1];
   struct vmgr_tape_info_byte_u64 tape_info;
   FILE *tmpfile();
   char *vid = NULL;
@@ -81,25 +79,18 @@ int main(int argc,
     exit (USERR);
   }
 
-  /* check if the volume still contains active files */
-  if ((df = tmpfile ()) == NULL) {
-    fprintf (stderr, "Cannot create temporary file\n");
-    exit (USERR);
-  }
+  /* check if the volume still contains files */
   flags = CNS_LIST_BEGIN;
   while ((dtp = Cns_listtape (host, vid, flags, &list, 0)) != NULL) {
     flags = CNS_LIST_CONTINUE;
     if (dtp->s_status == 'D') {
-      if (Cns_getpath (host, dtp->parent_fileid, path) < 0) {
-        fprintf (stderr, "%s\n", sstrerror(serrno));
-        exit (USERR);
-      }
-      fprintf (df, "%s\n", path);
+      fprintf (stderr,
+          "Volume %s still contains disabled segments\n", vid);
     } else {
       fprintf (stderr,
           "Volume %s still contains active files\n", vid);
-      exit (USERR);
     }
+    exit (USERR);
   }
   if (serrno > 0 && serrno != ENOENT) {
     fprintf (stderr, "reclaim %s: %s\n", vid,
@@ -109,18 +100,6 @@ int main(int argc,
   if (serrno == 0) {
     (void) Cns_listtape (host, vid, CNS_LIST_END, &list, 0);
   }
-
-  /* remove logically deleted files */
-  rewind (df);
-  while (fgets (path, CA_MAXPATHLEN, df)) {
-    *(path + strlen (path)) = '\0';
-    if (Cns_unlink (path)) {
-      fprintf (stderr, "Cannot delete %s: %s\n", path,
-          sstrerror (serrno));
-      exit (USERR);
-    }
-  }
-  fclose (df);
 
   /* reset nbfiles, estimated_free_space and status for this volume */
   if (vmgr_reclaim (vid)) {
