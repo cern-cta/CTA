@@ -214,6 +214,10 @@ int main(int argc, char *argv[]) {
                     <<        "or add and entry for RM/HOST in configuration file" << std::endl;
           return 1;
         }
+        // Mimic the old behavior of getconfent by getting the first HOST in the RM/HOST std::list
+        // XXX to be dropped/fixed
+        std::stringstream ss(rmMasterHost);
+        ss >> rmMasterHost;
       }
     }
 
