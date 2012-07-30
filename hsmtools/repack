@@ -152,21 +152,33 @@ def _humanReadableSize(size):
         return '%.2f' % fsize + _powerSuf[order]
 
 _repackRequestStatuses = ['STARTING', 'ONGOING', 'FINISHED', 'FAILED', 'ABORTING', 'ABORTED', 'SUBMITTED']
-def _printStatusLine(subTime, user, machine, vid, status, total, size, toRecall, toMigr, failed, migrated):
+def _printStatusLine(subTime, lastModTime, user, machine, vid, status, total, size, toRecall, toMigr, failed, migrated):
     '''prints one status line'''
-    # times need to be transformed in human readable strings
-    subTime = time.strftime('%d-%b-%y %H:%M', time.localtime(subTime))
     # dealing with global status
     status = _repackRequestStatuses[status]
+    # compute repack elapsed time
+    if lastModTime == 0:
+      repackTime = '-'  # special case of the summary line
+    else:
+      if status == 'FINISHED' or status == 'FAILED' or status == 'ABORTED':
+        repackTime = lastModTime - subTime
+      else:
+        repackTime = time.time() - subTime
+      # format elapsed time
+      d, rest = divmod(repackTime, 86400)
+      h, rest = divmod(rest, 3600)
+      repackTime = '%2dd %02d:%02d' % (d, h, rest / 60)
+    # times need to be transformed in human readable strings
+    subTime = time.strftime('%d-%b-%y %H:%M', time.localtime(subTime))
     # human readable size
     size = _humanReadableSize(size)
     # actual printing
     if total > 0:
       # Completion % takes into account each operation (recall and migration) as 1, so that e.g. a tape with half files recalled and none migrated counts as 25% done;
       # no weight is given to recalls vs. migrations nor is the file size taken into account.
-      print '%-18s%10s%30s%9s%11d%12s%10d%10d%10d%10d%7d%%%11s' % (subTime, user, machine, vid, total, size, toRecall, toMigr, failed, migrated, 100-(2*toRecall+toMigr)*50.0/total, status)
+      print '%-18s%10s%10s%26s%9s%11d%12s%10d%10d%10d%10d%7d%%%11s' % (subTime, repackTime, user, machine, vid, total, size, toRecall, toMigr, failed, migrated, 100-(2*toRecall+toMigr)*50.0/total, status)
     else:
-      print '%-18s%10s%30s%9s%11d%12s%10d%10d%10d%10d    N/A %11s' % (subTime, user, machine, vid, total, size, toRecall, toMigr, failed, migrated, status)
+      print '%-18s%10s%10s%26s%9s%11d%12s%10d%10d%10d%10d    N/A %11s' % (subTime, repackTime, user, machine, vid, total, size, toRecall, toMigr, failed, migrated, status)
 
 def displayStatus():
     '''displays the ongoing repacks. If vids is not empty, the output is limited to these tapes'''
@@ -176,8 +188,8 @@ def displayStatus():
         stcur = stconn.cursor()
         stcur.arraysize = 50
         stGetStatus = '''
-          SELECT StageRepackRequest.creationTime, StageRepackRequest.username, StageRepackRequest.machine,
-                 StageRepackRequest.repackVID, StageRepackRequest.status,
+          SELECT StageRepackRequest.creationTime, StageRepackRequest.lastModificationTime, StageRepackRequest.username,
+                 StageRepackRequest.machine, StageRepackRequest.repackVID, StageRepackRequest.status,
                  SUM(CASE WHEN SubRequest.status IS NULL THEN 0 ELSE 1 END) total,
                  SUM(SubRequest.xsize) totsize,
                  SUM(CASE WHEN SubRequest.status IN (4, 5) THEN 1 ELSE 0 END) toRecall,
@@ -192,8 +204,8 @@ def displayStatus():
         if vids:
             stGetStatus += "AND StageRepackRequest.repackVID IN ('" + "','".join(vids) + "')"
         stGetStatus += '''
-          GROUP BY StageRepackRequest.creationTime, StageRepackRequest.username, StageRepackRequest.machine,
-                   StageRepackRequest.repackVID, StageRepackRequest.status
+          GROUP BY StageRepackRequest.creationTime, StageRepackRequest.lastModificationTime, StageRepackRequest.username,
+                   StageRepackRequest.machine, StageRepackRequest.repackVID, StageRepackRequest.status
           ORDER BY creationTime DESC'''
         # go to DB and get back the data
         stcur.execute(stGetStatus)
@@ -202,17 +214,17 @@ def displayStatus():
             print 'No repack activity found'
             return
         # print out results
-        print '='*149
-        print 'SubmitTime              User                       Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated  Compl%     Status'
-        print '-'*149
+        print '='*155
+        print 'SubmitTime        RepackTime      User                   Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated  Compl%     Status'
+        print '-'*155
         sumTotal = sumSize = sumToRecall = sumToMigr = sumFailed = sumMigrated = 0
         shownVids = set()
-        for subTime, user, machine, vid, status, total, size, toRecall, toMigr, failed, migrated in rows:
+        for subTime, lastModTime, user, machine, vid, status, total, size, toRecall, toMigr, failed, migrated in rows:
             if not vids and vid in shownVids:
                 # when showing full statistics skip the less recent requests for each VID
                 continue
             shownVids.add(vid)
-            _printStatusLine(subTime, user, machine, vid, status, total, size, toRecall, toMigr, failed, migrated)
+            _printStatusLine(subTime, lastModTime, user, machine, vid, status, total, size, toRecall, toMigr, failed, migrated)
             sumTotal += total
             if size > 0:
                 # it may have returned None
@@ -221,14 +233,14 @@ def displayStatus():
             sumToMigr += toMigr
             sumFailed += failed
             sumMigrated += migrated
-        print '-'*149
+        print '-'*155
         #  when showing full statistics, print out summary line
         if not vids and sumTotal > 0:
             if sumToRecall + sumToMigr > 0:
                 globalStatus = 1  # ONGOING
             else:
                 globalStatus = 2  # FINISHED
-            _printStatusLine(time.time(), '-', '-', 'TOTAL', globalStatus, sumTotal, sumSize, sumToRecall, sumToMigr, sumFailed, sumMigrated)
+            _printStatusLine(time.time(), 0, '-', '-', 'TOTAL', globalStatus, sumTotal, sumSize, sumToRecall, sumToMigr, sumFailed, sumMigrated)
         # close DB connection
         castor_tools.disconnectDB(stconn)
     except Exception, e:

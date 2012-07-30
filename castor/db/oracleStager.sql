@@ -1116,7 +1116,8 @@ BEGIN
            AND status = dconst.SUBREQUEST_FAILED_FINISHED
            AND ROWNUM < 2;
         UPDATE StageRepackRequest
-           SET status = CASE nbfailures WHEN 1 THEN tconst.REPACK_FAILED ELSE tconst.REPACK_FINISHED END
+           SET status = CASE nbfailures WHEN 1 THEN tconst.REPACK_FAILED ELSE tconst.REPACK_FINISHED END,
+               lastModificationTime = getTime()
          WHERE id = rId;
       END;
     END IF;
