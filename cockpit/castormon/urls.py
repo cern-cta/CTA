@@ -5,8 +5,8 @@ from django.conf.urls.defaults import patterns, include, url
 # admin.autodiscover()
 
 urlpatterns = patterns('',
+    url(r'^sls$', 'castormon.cockpit.views.home', {'template_name' : 'cockpit/sls.html'}), # SLS
     url(r'^$', 'castormon.cockpit.views.home', {'template_name' : 'cockpit/home.html'}), # home
-    url(r'^sls$', 'castormon.cockpit.views.home', {'template_name' : 'cockpit/sls.html'}), # home
     url(r'^metric/(?P<metric_name>\w+)$', 'castormon.cockpit.views.display_metric'), # display a specific metric
     url(r'^data/metric/(?P<metric_name>\w+)/(?P<format_type>\w+)$', 'castormon.cockpit.views.get_metric_data'), # used by ajax to get data
     url(r'^data/metric/(?P<metric_name>\w+)/(?P<timestamp_from>\d+)/(?P<format_type>\w+)$', 'castormon.cockpit.views.get_metric_data'), # used by ajax to get data

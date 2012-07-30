@@ -228,7 +228,7 @@ def display_metric(request, metric_name = None):
 
     if metric_name not in metrics_names:
         messages.info(request, 'This metric name does not exist.')
-        return redirect(index)
+        return redirect(home)
 
     metric_file = Metric.objects.get(name=metric_name).config_file # get the metric configuration file
 
