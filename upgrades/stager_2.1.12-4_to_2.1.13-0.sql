@@ -292,6 +292,7 @@ COMMIT;
 ALTER TABLE SvcClass MODIFY (gcPolicy CONSTRAINT NN_SvcClass_GcPolicy NOT NULL);
 ALTER TABLE SvcClass ADD CONSTRAINT FK_SvcClass_GCPolicy
   FOREIGN KEY (gcPolicy) REFERENCES GcPolicy (name);
+CREATE INDEX I_SvcClass_GcPolicy ON SvcClass (gcPolicy);
 
 /* new LRUpin GC policy */
 INSERT INTO GcPolicy VALUES ('LRUpin',
