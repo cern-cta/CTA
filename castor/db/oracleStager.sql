@@ -2282,7 +2282,7 @@ BEGIN
       RETURN;
     END IF;
     -- check if recreation is possible for migrations
-    SELECT /*+ INDEX(MigrationJob I_MigrationJob_CFVID */ count(*)
+    SELECT /*+ INDEX(MigrationJob I_MigrationJob_CFVID) */ count(*)
       INTO nbRes FROM MigrationJob
      WHERE status = tconst.MIGRATIONJOB_SELECTED
       AND castorFile = cfId
