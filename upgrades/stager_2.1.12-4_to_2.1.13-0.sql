@@ -379,6 +379,7 @@ COMMIT;
 
 /* Index to speed up the deleteOutOfDateStageOutDCs job */
 CREATE INDEX I_DiskCopy_Status_Open ON DiskCopy (decode(status,6,status,decode(status,5,status,decode(status,11,status,NULL))));
+CREATE INDEX I_DiskCopy_Status_6 ON DiskCopy (decode(status,6,status,NULL));
 
 /* Missing index on a FK */
 CREATE INDEX I_CastorFile_FileClass ON CastorFile(FileClass);
