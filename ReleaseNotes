@@ -152,6 +152,8 @@
      #93786 tg_deleteTapeRequest spins when the castorfile is missing.
      #94488 Add retry rule to migrationRetry.py for time out errors
      #96125 tapebridged causes tape unmounts to fail if they take too long
+     #96375 reclaim command parses the CNS HOST entry of castor.conf incorrectly
+     #96388 Exception handling of the castor::vdqm::ProtocolFacade::handleProtocolVersion method is incorrect
 
   [Features]
 
@@ -161,9 +163,10 @@
      #94256 RFE: Add rule for bad checksums to the example retry policy file /etc/castor/policies/migrationRetry.py
      #94376 RFE: Remove deprecated and commented out migration retry policy
      #95975 RFE: tapebridged should gracefully shutdown the rtcpd session when get next file for recall returns an erro
-     #96353: RFE: reclaim should abort if name-server not on command-line or in castor.conf
-     #96359: RFE: vmgrdeletetape should abort if name-server not on command-line or in castor.conf
-
+     #96353 RFE: reclaim should abort if name-server not on command-line or in castor.conf
+     #96359 RFE: vmgrdeletetape should abort if name-server not on command-line or in castor.conf
+     #96377 RFE: Remove -h command-line option from vmgrdeletetape and reclaim
+     #96389 RFE: reclaim command should not try to delete files in the name server
 
   Package Changes
   ---------------
