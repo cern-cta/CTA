@@ -1,4 +1,5 @@
 %attr(0755,root,root) etc/init.d/diskmanagerd
+%attr(0644,root,root) etc/sysconfig/diskmanagerd.example
 %attr(0755,root,root) usr/bin/diskmanagerd
 %attr(0644,root,root) etc/logrotate.d/castor-diskserver-manager
 %attr(0644,root,root) usr/lib/python*/site-packages/localqueue.py*

@@ -1,4 +1,5 @@
 %attr(0755,root,root) etc/init.d/transfermanagerd
+%attr(0644,root,root) etc/sysconfig/transfermanagerd.example
 %attr(0755,root,root) usr/bin/transfermanagerd
 %attr(0644,root,root) etc/logrotate.d/castor-transfer-manager
 %attr(0644,root,root) usr/lib/python*/site-packages/serverqueue.py*
