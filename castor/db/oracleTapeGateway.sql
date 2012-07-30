@@ -1479,6 +1479,18 @@ BEGIN
        AND subrequest.status = dconst.SUBREQUEST_REPACK;
     FOR i IN varSrIds.FIRST .. varSrIds.LAST LOOP
       archiveSubReq(varSrIds(i), dconst.SUBREQUEST_FAILED_FINISHED);
+      -- For error reporting
+      UPDATE SubRequest
+         SET errorCode = inErrorCode,
+             errorMessage = CASE
+               WHEN inErrorCode IN (serrno.ENOENT, serrno.ENSFILECHG, serrno.ENSNOSEG) THEN
+                 'File was dropped or modified during repack, skipping'
+               WHEN inErrorCode = serrno.ENSTOOMANYSEGS THEN
+                 'File has too many segments on tape, skipping'
+               ELSE
+                 'Migration failed, reached maximum number of retries'
+               END
+       WHERE id = varSrIds(i);
     END LOOP;
     -- set back the diskcopies to STAGED otherwise repack will wait forever
     UPDATE DiskCopy
