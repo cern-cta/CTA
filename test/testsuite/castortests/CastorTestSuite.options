@@ -60,10 +60,10 @@ STAGE_SVCCLASS =
 ROOTSYS = /afs/cern.ch/sw/lcg/app/releases/ROOT/5.25.04/x86_64-slc5-gcc34-opt/root
 
 # XROOT Base directory
-XROOTSYS = /opt/xrootd
+XROOTSYS = /usr
 
 # GLOBUS Base directory
-GLOBUSSYS = /opt/globus
+GLOBUSSYS = /usr
 
 # values to give to parameters in the .input files of the test suite
 # any <TAG> string (where tag can contain anything but '>') will be
