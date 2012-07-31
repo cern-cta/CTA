@@ -49,6 +49,15 @@
     allows to use setGcWeight to do some pinning of files, up to one month
 
 
+  Note
+  ----
+
+  - similarly to release 2.1.12-*, in the test suite some test cases will still fail, namely :
+       touch_updateFileAccess,
+       touch_updateFileModification
+    see details in the release notes of release 2.1.12-1
+
+
   CASTOR Nameserver
   -----------------
 
