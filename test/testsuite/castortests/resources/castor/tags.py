@@ -98,7 +98,7 @@ def diskOnlyServiceClassList(self):
     l = map(lambda s: s.strip(), self.options.get('Generic','DiskOnlyServiceClasses').split(','))
     # check that they are tape enabled
     for sc in l:
-        print os.linesep+'Checking Service Class ' + sc + ', should be tape disk only'
+        print os.linesep+'Checking Service Class ' + sc + ', should be disk only'
         self._checkServiceClass(sc, 'STAGED')
         print os.linesep+'Service Class ' + sc + ' is ok'
         return l
