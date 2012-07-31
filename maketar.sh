@@ -175,8 +175,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
       map {if (/([^:]+):(.+)/) {$this{$1}=$2};} split("\n",$this);
       if (defined($this{$what})) {
         print "$this{$what}\n";
-      }' $package Build-Depends |
-      sed 's/ //g'`
+      }' $package Build-Depends`
     if [ -n "${buildrequires}" ]; then
         echo "BuildRequires: ${buildrequires}" >> CASTOR.spec
     fi
