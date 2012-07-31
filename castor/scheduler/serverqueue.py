@@ -119,8 +119,9 @@ class ServerQueue(dict):
           # put back source to pending
           self.d2dsrcpending.add(transferid)
           # reset flag of the destinations that believe source is running
-          for ds in self.transfersLocations[transferid]:
-            self[ds][transferid] = self[ds][transferid][0:3]+[False]
+          if transferid in self.transfersLocations:
+            for ds in self.transfersLocations[transferid]:
+              self[ds][transferid] = self[ds][transferid][0:3]+[False]
     finally:
       self.lock.release()
 
