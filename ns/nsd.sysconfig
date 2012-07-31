@@ -1,29 +1,6 @@
-# Arguments for the nsd
-#   -f              remain in the foreground
-#   -c <path>       configuration file
-#   -l <logfile>    the path to the name server log file
-#   -r              start in read-only mode
-#   -t <nbthreads>  the number of server threads
-#   -s              enable security
-#   -n <nshostname> the name of the nshostname used in log files
-#
-# Options to pass to the ns daemon
-#NSD_OPTIONS=
-
-# Should we run with another limit on the core file size than the default?
-DAEMON_COREFILE_LIMIT=unlimited
-
 # What roles should the nsd run for. For each role you can overwrite
 # the default options using a dedicate sysconfig file
 # e.g. /etc/sysconfig/nsd.<role>. The role based mechanism allows for
 # multiple nsd's running with different options to be controlled via
 # the same initd script
-#ROLES=
-
-# Security
-if [ -f /etc/sysconfig/castor_security ]; then
-        . /etc/sysconfig/castor_security CENTRAL
-        export SECURE_CASTOR=1
-        export CSEC_TRACE=1
-        export CSEC_TRACEFILE=/var/log/castor/nsd.csec.log
-fi
+ROLES="normal secure"

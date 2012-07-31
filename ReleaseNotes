@@ -185,6 +185,11 @@
        $SystemLogSocketIgnoreMsgTimestamp off
     This will ensure that the times logged are the ones when things have append and not
     when their logs were received by rsyslog
+  - /etc/sysconfig/nsd* have been improved. We know distribute 3 example files : nsd.sysconfig,
+    nsd.normal.sysconfig and nsd.secure.sysconfig. The first one enables by default both the
+    normal (aka insecure) and the secure daemons. The two others are dedicated options for both
+    cases. Not in particular the need for the secure file in order to pass the -s option to the
+    daemon and to work around some oracle 11 client bugs concerning the use of kerberos.
   - CASTOR 2.1.13 is using the new xroot packages (xroot 3.2 and higher). The set of packages
     to be installed for xroot has not changed for production environment, but did change
     for compilation. Namely xrootd-devel was split into xrootd-server-devel, xrootd-client-devel

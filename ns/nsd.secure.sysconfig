@@ -1,0 +1,22 @@
+# Arguments for the nsd
+#   -f              remain in the foreground
+#   -c <path>       configuration file
+#   -l <logfile>    the path to the name server log file
+#   -r              start in read-only mode
+#   -t <nbthreads>  the number of server threads
+#   -s              enable security
+#   -n <nshostname> the name of the nshostname used in log files
+#
+# Options to pass to the ns daemon
+NSD_OPTIONS=-s
+
+# Should we run with another limit on the core file size than the default?
+#DAEMON_COREFILE_LIMIT=unlimited
+
+# This is required to avoid a clash of symbols with the ORACLE 11 libraries, that is redefining
+# symbols of these 5 libraries in an incompatible way, making kerberos unusable.
+# This set is the minimum set of libraries to be preloaded. An alternative is to
+# recompile nsd with an explicit dependencies on these libraries (and putting these
+# libraries before the oracle one in the link statement).
+# However, we hope to have a fixed oracle library in the future, thus we using the preloading trick
+export LD_PRELOAD=libgssapi.so:libgssapi_krb5.so:libkrb5.so:libkrb5support.so:libcom_err.so
