@@ -967,7 +967,8 @@ CREATE UNIQUE INDEX I_CastorFile_LastKnownFileName ON CastorFile (lastKnownFileN
 CREATE INDEX I_DiskCopy_Castorfile ON DiskCopy (castorFile);
 CREATE INDEX I_DiskCopy_FileSystem ON DiskCopy (fileSystem);
 CREATE INDEX I_DiskCopy_FS_GCW ON DiskCopy (fileSystem, gcWeight);
--- to speed up the GC
+-- for queries on active statuses
+CREATE INDEX I_DiskCopy_Status_6 ON DiskCopy (decode(status,6,status,NULL));
 CREATE INDEX I_DiskCopy_Status_7 ON DiskCopy (decode(status,7,status,NULL));
 CREATE INDEX I_DiskCopy_Status_9 ON DiskCopy (decode(status,9,status,NULL));
 -- to speed up deleteOutOfDateStageOutDCs
@@ -3337,22 +3338,25 @@ BEGIN
   -- where full table scans are involved. 	 
   UPDATE FileSystemsToCheck SET toBeChecked = 1 	 
    WHERE fileSystem = fsId; 	 
-  -- Look for files that are STAGEOUT on the filesystem coming back to life 	 
-  -- but already STAGED/CANBEMIGR/WAITTAPERECALL/WAITFS/STAGEOUT/ 	 
-  -- WAITFS_SCHEDULING somewhere else 	 
-  FOR cf IN (SELECT UNIQUE d.castorfile, d.id 	 
-               FROM DiskCopy d, DiskCopy e 	 
-              WHERE d.castorfile = e.castorfile 	 
-                AND d.fileSystem = fsId 	 
-                AND e.fileSystem != fsId 	 
-                AND d.status = 6 -- STAGEOUT 	 
-                AND e.status IN (0, 10, 5, 6, 11)) LOOP -- STAGED/CANBEMIGR/WAITFS/STAGEOUT/WAITFS_SCHEDULING 	 
+  -- Look for files that are STAGEOUT on the filesystem coming back to life
+  -- but already STAGED/CANBEMIGR/WAITTAPERECALL/WAITFS/STAGEOUT/
+  -- WAITFS_SCHEDULING somewhere else
+  FOR cf IN (SELECT /*+ USE_NL(D E) INDEX(D I_DiskCopy_Status6) */
+                    UNIQUE D.castorfile, D.id dcId
+               FROM DiskCopy D, DiskCopy E
+              WHERE D.castorfile = E.castorfile
+                AND D.fileSystem = fsId
+                AND E.fileSystem != fsId
+                AND decode(D.status,6,D.status,NULL) = dconst.DISKCOPY_STAGEOUT
+                AND E.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR,
+                                 dconst.DISKCOPY_WAITFS, dconst.DISKCOPY_STAGEOUT,
+                                 dconst.DISKCOPY_WAITFS_SCHEDULING)) LOOP
     -- Invalidate the DiskCopy 	 
-    UPDATE DiskCopy 	 
-       SET status = 7  -- INVALID 	 
-     WHERE id = cf.id;
+    UPDATE DiskCopy
+       SET status = dconst.DISKCOPY_INVALID
+     WHERE id = cf.dcId;
   END LOOP;
-END; 	 
+END;
 /
 
 /* PL/SQL method implementing bulkCheckFSBackInProd for processing
@@ -5476,7 +5480,7 @@ BEGIN
       RETURN;
     END IF;
     -- check if recreation is possible for migrations
-    SELECT /*+ INDEX(MigrationJob I_MigrationJob_CFVID */ count(*)
+    SELECT /*+ INDEX(MigrationJob I_MigrationJob_CFVID) */ count(*)
       INTO nbRes FROM MigrationJob
      WHERE status = tconst.MIGRATIONJOB_SELECTED
       AND castorFile = cfId
@@ -9673,6 +9677,18 @@ BEGIN
        AND subrequest.status = dconst.SUBREQUEST_REPACK;
     FOR i IN varSrIds.FIRST .. varSrIds.LAST LOOP
       archiveSubReq(varSrIds(i), dconst.SUBREQUEST_FAILED_FINISHED);
+      -- For error reporting
+      UPDATE SubRequest
+         SET errorCode = inErrorCode,
+             errorMessage = CASE
+               WHEN inErrorCode IN (serrno.ENOENT, serrno.ENSFILECHG, serrno.ENSNOSEG) THEN
+                 'File was dropped or modified during repack, skipping'
+               WHEN inErrorCode = serrno.ENSTOOMANYSEGS THEN
+                 'File has too many segments on tape, skipping'
+               ELSE
+                 'Migration failed, reached maximum number of retries'
+               END
+       WHERE id = varSrIds(i);
     END LOOP;
     -- set back the diskcopies to STAGED otherwise repack will wait forever
     UPDATE DiskCopy

@@ -589,6 +589,21 @@ BEGIN
     ROLLBACK;
     RETURN;
   END;
+  -- Finally check for too many segments for this file: this can only happen if manual operations
+  -- have created a previous inconsistency. In such a case we rollback and make repack fail,
+  -- without attempting to repair the inconsistency (i.e. drop a segment).
+  SELECT nbCopies INTO varFCNbCopies
+    FROM Cns_class_metadata
+   WHERE classid = varFClassId;
+  SELECT count(*) INTO varNb
+    FROM Cns_seg_metadata
+   WHERE s_fileid = varFid AND s_status = '-';
+  IF varNb > varFCNbCopies THEN
+    rc := serrno.ENSTOOMANYSEGS;
+    msg := serrno.ENSTOOMANYSEGS_MSG ||', VID='|| inSegEntry.vid;
+    ROLLBACK;
+    RETURN;
+  END IF;
   
   -- We're done with the pre-checks. Remove and log old segment metadata
   DELETE FROM Cns_seg_metadata
