@@ -1,4 +1,29 @@
-import os, sys, re, ConfigParser, os.path, readline, subprocess
+import os, sys, re, ConfigParser, os.path, readline, subprocess, signal
+
+class Timeout(Exception):
+    None
+    
+def alarm_handler(signum, frame):
+    raise Timeout
+
+def Popen(cmd, timeout=600):
+    process = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    # Note that process.stdout.read() should not be used here as it can create
+    # dead locks if the output is too large. See Python documentation for the
+    # subprocess module.
+    # Also procee.poll should not be used (despite the documentation this time)
+    # as it will never come back with a not None return code. It actually
+    # suffers from the same deadlock as the others. So we use signals to implement
+    # proper timeouting.
+    signal.signal(signal.SIGALRM, alarm_handler)
+    signal.alarm(timeout)
+    try:
+        (stdoutdata, stderrdata) = process.communicate()
+        return stdoutdata
+    except Timeout:
+        os.kill(process.pid, signal.SIGKILL)
+        os.waitpid(-1, os.WNOHANG)
+        raise
 
 # define and parse command line options
 from optparse import OptionParser
@@ -87,8 +112,7 @@ while goOn:
     cmds.append(cmd)
     if len(cmd) == 0 or cmd[0] == '#': continue
     # execute it
-    output = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE,
-                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
+    output = Popen(cmd)
     outputs.append(output)
     # and print output
     print output
