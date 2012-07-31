@@ -19,4 +19,8 @@ NSD_OPTIONS=-s
 # recompile nsd with an explicit dependencies on these libraries (and putting these
 # libraries before the oracle one in the link statement).
 # However, we hope to have a fixed oracle library in the future, thus we using the preloading trick
-export LD_PRELOAD=libgssapi.so:libgssapi_krb5.so:libkrb5.so:libkrb5support.so:libcom_err.so
+export LD_PRELOAD=libgssapi.so.2:libgssapi_krb5.so:libkrb5.so:libkrb5support.so:libcom_err.so
+
+# disable kerberos replay cache for performance reasons
+# the security risk is acceptable
+export KRB5RCACHETYPE=none
