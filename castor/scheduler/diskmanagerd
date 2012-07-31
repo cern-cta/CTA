@@ -413,7 +413,8 @@ signal.signal(signal.SIGINT, handler)
 # with daemon.DaemonContext():
 if daemonize:
   context = daemon.DaemonContext(working_directory='/var/log/castor/',
-                                 detach_process=True)
+                                 detach_process=True,
+                                 prevent_core=False)
   context.__enter__()
 try:
   try:
