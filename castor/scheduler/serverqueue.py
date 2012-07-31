@@ -116,6 +116,10 @@ class ServerQueue(dict):
             self.transfersLocations[transferid] = set()
           self.transfersLocations[transferid].add(diskserver)
         else:
+          # in case, drop source from running job. It may be there id we agreed we its start and
+          # our answer never made it to the diskserver, which then called transferBackToQueue
+          if transferid in self.d2dsrcrunning:
+            del self.d2dsrcrunning[transferid]
           # put back source to pending
           self.d2dsrcpending.add(transferid)
           # reset flag of the destinations that believe source is running
@@ -318,6 +322,8 @@ class ServerQueue(dict):
         # We can ignore these cases, but we still log
         # "Unable to end d2d as it's not in the server list. Probable race condition" message
         dlf.writewarning(msgs.D2DENDEXCEPTION, subreqid=transferid, reqid=reqid)
+        # in case, discard the src tranfer from the pending list
+        self.d2dsrcpending.discard(transferid)        
         return
       # get the source location
       diskserver = self.d2dsrcrunning[transferid]
