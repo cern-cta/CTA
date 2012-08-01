@@ -245,8 +245,8 @@
     Nameserver database.
 
 
-  Upgrade Instructions from 2.1.12-4
-  ----------------------------------
+  Upgrade Instructions from 2.1.12-10
+  -----------------------------------
 
     Before upgrading to a 2.1.13-0 instance of CASTOR2 please make sure to read
     the upgrade instructions fully before proceeding.
@@ -254,7 +254,7 @@
     Central services (Nameserver)
     -----------------------------
 
-      The upgrade of the CNS databases to 2.1.12-0 can be performed online while
+      The upgrade of the CNS databases to 2.1.13-0 can be performed online while
       the system is running and will be transparent.
       The RPM upgrade can also be performed on a running system, providing that the
       restart of the nameserver daemons may be noticable by few clients (< 1s downtime)
@@ -306,11 +306,11 @@
 
           Note: It is not necessary to stop any daemons on the diskservers.
 
-       2. Upgrade the STAGER database using the stager_2.1.12-4_to_2.1.13-0.sql
+       2. Upgrade the STAGER database using the stager_2.1.12-10_to_2.1.13-0.sql
           upgrade script available from:
           - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.13-*/2.1.13-0/dbupgrades
 
-       3. Upgrade the DLF database using the dlf_2.1.12-4_to_2.1.13-0.sql
+       3. Upgrade the DLF database using the dlf_2.1.12-10_to_2.1.13-0.sql
           upgrade script available from:
           - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.13-*/2.1.13-0/dbupgrades
 
@@ -356,10 +356,9 @@
        2. Stop all vdqm, vmgr and cupv daemons
 
        3. Apply the appropriate database upgrade scripts from:
-         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.12-*/2.1.12-0/dbupgrades
-         Note that these scripts can be used for 2.1.11-8 and 2.1.11-9 databases.
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.13-*/2.1.13-0/dbupgrades
 
-       4. Update the software to use the 2.1.12-0 RPMS.
+       4. Update the software to use the 2.1.13-0 RPMS.
 
        5. Restart vdqm, vmgr and cupv daemons
 
@@ -377,10 +376,9 @@
       Instructions
       ------------
 
-       1. Upgrade the MONITORING database using the mon_2.1.11-9_to_2.1.12-0.sql
+       1. Upgrade the MONITORING database using the mon_2.1.12-10_to_2.1.13-0.sql
           upgrade script available from:
-          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.12-*/2.1.12-0/dbupgrades
-          Note that this script can be used for 2.1.11-8 and 2.1.11-9 databases.
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.13-*/2.1.13-0/dbupgrades
 
        2. Upgrade complete.
 
