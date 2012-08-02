@@ -202,7 +202,8 @@
   - CASTOR 2.1.13 is using the new xroot packages (xroot 3.2 and higher). The set of packages
     to be installed for xroot has not changed for production environment, but did change
     for compilation. Namely xrootd-devel was split into xrootd-server-devel, xrootd-client-devel
-    and xrootd-libs-devel
+    and xrootd-libs-devel.
+    You may also have to adapt the xroot configuration files (e.g. /etc/xrd.cf)
   - CASTOR 2.1.13 is also using the new globus packages, provided by EMI. This has changed
     considerably the list of packages to be installed :
       + on diskservers, drop packages :
