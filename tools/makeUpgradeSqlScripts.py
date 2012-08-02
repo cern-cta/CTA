@@ -29,14 +29,17 @@ import sys, os
 # usage function
 def usage(exitCode):
   '''prints usage'''
-  print 'Usage : ' + sys.argv[0] + ' [-h|--help] [component [...]]'
+  print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-o|--oldversion <oldversion>] [-n|--newversion <newversion>] [-t|--transparent] [component [...]]'
   print '  give no component to create all scripts'
   sys.exit(exitCode)
 
 # first parse the options
 verbose = False
+forcedOldVersion = None
+forcedNewVersion = None
+transparent = False
 try:
-  options, arguments = getopt.getopt(sys.argv[1:], 'hv', ['help', 'verbose'])
+  options, arguments = getopt.getopt(sys.argv[1:], 'hvo:n:t', ['help', 'verbose', 'oldversion', 'newversion'])
 except Exception, parsingException:
   print parsingException
   usage(1)
@@ -45,6 +48,12 @@ for f, v in options:
     usage(0)
   elif f == '-v' or f == '--verbose':
     verbose = True
+  elif f == '-o' or f == '--oldversion':
+    forcedOldVersion = v
+  elif f == '-n' or f == '--newversion':
+    forcedNewVersion = v
+  elif f == '-t' or f == '--transparent':
+    transparent = True
   else:
     print "unknown option : " + f
     usage(1)
@@ -140,8 +149,10 @@ def writeHeader(fd, prevVersion, newVersion, component, schemaName):
     fd.write(' *****************************************************************************/\n\n')
 
 # method writing the checks at the top of the upgrade script
-def writeChecks(fd, schemaName, schemaVersion, prevVersion, newVersion, releaseType):
+def writeChecks(fd, schemaName, schemaVersion, prevVersion, newVersion):
     '''Writes the checks at the top of an upgrade SQL file'''
+    releaseType = 'NON TRANSPARENT'
+    if transparent: releaseType = 'TRANSPARENT'
     fd.write('''/* Stop on errors */
 WHENEVER SQLERROR EXIT FAILURE
 BEGIN
@@ -239,18 +250,29 @@ COMMIT;\n''' % newVersion.tag())
 # method trying to guess version numbers for a given component
 def extractVersions(component):
     '''method trying to guess version numbers for a given component'''
-    # find a previous upgrade script and deduce the latest version
+    # list exsiting upgrade scripts
     updateScripts = [script for script in os.listdir(os.getcwd()) \
                      if script.startswith(component) and script.endswith('.sql')]
-    latestVersion = Version('0.0.0-0')
-    latestScript = ''
-    for script in updateScripts:
-        new = script[:-3].split('_')[3]
-        newVersion = Version(new)
-        if latestVersion < newVersion:
-            latestVersion = newVersion
-            latestScript = script
-    newVersion = latestVersion.next()
+    if not forcedOldVersion:
+        # find a previous upgrade script and deduce the latest version
+        latestVersion = Version('0.0.0-0')
+        latestScript = ''
+        for script in updateScripts:
+            new = script[:-3].split('_')[3]
+            newVersion = Version(new)
+            if latestVersion < newVersion:
+                latestVersion = newVersion
+                latestScript = script
+        if not latestScript:
+            latestVersion = Version(raw_input('latest version for %s (2.1.x-y): ' % component))
+    else:
+        latestVersion = Version(forcedOldVersion)
+        latestScript = ''
+        for script in updateScripts:
+            new = script[:-3].split('_')[3]
+            newVersion = Version(new)
+            if latestVersion == newVersion:
+                latestScript = script
     # find out the DB schema version
     if latestScript:
       for l in open(latestScript).readlines():
@@ -258,20 +280,22 @@ def extractVersions(component):
           schemaVersion = Version(l.split("'")[1])
           break
     else:
-      latestVersion = Version(raw_input('latest version for %s (2.1.x-y): ' % component))
-      newVersion = Version(raw_input('new version for %s  (2.1.x-y): ' % component))
       schemaVersion = Version(raw_input('SchemaVersion for %s  (2.1.x-y): ' % component))
-    # find out the type of release
-    releaseType = 'TRANSPARENT'
+    # find out the new version
+    if not forcedNewVersion:
+      newVersion = latestVersion.next()
+    else:
+      newVersion = Version(forcedNewVersion)
     # return all versions
-    return component.upper(), schemaVersion, latestVersion, newVersion, releaseType
+    return schemaVersion, latestVersion, newVersion
 
 # main method going through the creation of all upgrade scripts
 for gcomponent in components:
-    (gschemaName, gschemaVersion, gprevVersion, gnewVersion, greleaseType) = extractVersions(gcomponent)
+    gschemaName = gcomponent.upper()
+    gschemaVersion, gprevVersion, gnewVersion = extractVersions(gcomponent)
     gfd = open('%s_%s_to_%s.sql' % (gcomponent, gprevVersion, gnewVersion), 'w')
     writeHeader(gfd, gprevVersion, gnewVersion, gcomponent, gschemaName)
-    writeChecks(gfd, gschemaName, gschemaVersion, gprevVersion, gnewVersion, greleaseType)
+    writeChecks(gfd, gschemaName, gschemaVersion, gprevVersion, gnewVersion)
     if gcomponent == 'stager':
         writeStandardJobMgmt(gfd)
     answer = raw_input('Any changes to the schema or PL/SQL code for the %s script [y/N] ? ' % gcomponent)
