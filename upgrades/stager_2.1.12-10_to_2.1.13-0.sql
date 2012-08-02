@@ -3997,6 +3997,8 @@ END;
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
 
+define adminlist=''
+
 /* Process the adminList provided by the user in oracleCommon.schema */
 DECLARE
   adminUserId NUMBER;
