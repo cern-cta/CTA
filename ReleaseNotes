@@ -154,7 +154,6 @@
   [Bug]
 
      #59007 Fix error handling logic of the RTCPD disk IO thread
-     #88675 VMGR fails to check permissions for some operations
      #89146 rechandlerd recalculates the eligibility of a tape even after it is eligible.
      #91161 Tape Gateway NS helper improvement
      #92300 "No tape available in such tapepool" is logged at an excessive level
