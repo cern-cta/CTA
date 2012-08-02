@@ -68,7 +68,6 @@
 
   [Features]
 
-     #87029 RFE: improve the NS override logic
      #95558 RFE: Implement new security connection-policy for NS clients
      #95559 RFE: Disable the use of GSI based security
 
@@ -84,7 +83,6 @@
 
   [Code maintenance]
 
-     #74023 CM: enhancements in the core framework
      #93615 RFE: Move the toHex() method out of the castor::tape::utils package
      #94004 RFE: Replace confusing castor::BaseObject::getTLS() with standard pthread calls
 
