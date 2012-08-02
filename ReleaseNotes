@@ -279,6 +279,11 @@
 
         GRANT CREATE SYNONYM TO <user>;
 
+      - Then log to the VMGR database and grant select privileges to the nameserver account :
+
+        GRANT SELECT ON Vmgr_tape_side to <castornsuser>;
+
+
       Instructions 
       ------------
 
