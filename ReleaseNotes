@@ -61,12 +61,16 @@
   CASTOR Nameserver
   -----------------
 
+  [Bug]
+
+     #47161 CSEC_MECH is GSI by default
+     #91080 nsmkdir truncates mode if it's somewhat valid but too long
+
   [Features]
 
      #87029 RFE: improve the NS override logic
      #95558 RFE: Implement new security connection-policy for NS clients
      #95559 RFE: Disable the use of GSI based security
-
 
   CASTOR Core Framework
   ---------------------
@@ -90,6 +94,7 @@
 
   [Bug]
 
+     #93078 DB internal error using printsvcclass
      #93812 On Stage[PrepareTo]PutRequests, CastorFile.filesize is not reset to 0
      #95990 Correct nsenterclass manual page so it shows --name and tells the user to specify --id
 
@@ -150,11 +155,13 @@
 
   [Bug]
 
+     #59007 Fix error handling logic of the RTCPD disk IO thread
      #88675 VMGR fails to check permissions for some operations
      #89146 rechandlerd recalculates the eligibility of a tape even after it is eligible.
      #91161 Tape Gateway NS helper improvement
      #92300 "No tape available in such tapepool" is logged at an excessive level
      #92341 Recall session should go forward (in fseq) as long as possible
+     #92460 tapebridged should gracefully shutdown a migration tape-session when tapegatewayd reports a disabled tape
      #92717 Log level adjustment for VdqmRequestsChecker: request was lost or out of date
      #93381 Race condition between end session and more work calls in recalls and migrations
      #93680 NsTapeGatewayHelper::checkRecalledFile causes a segmentation fault when file has no checksum in the name-server 
