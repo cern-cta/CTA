@@ -13,13 +13,19 @@
 #include "Ctape_api.h"
 #include "serrno.h"
 
-/*	initlabelroutines - allocate the structures to store the information
+/* initlabelroutines - provides access to the static structures usedto store the information
 	needed by the label processing routines */
 
-static int nb_rsvd_resources;
+static int nb_rsvd_resources = 0;
 static struct devlblinfo *devlblinfop;
-int initlabelroutines (int nrr)
+int initlabelroutines (const int nrr)
 {
+	/* Multi-DGN and multi-drive reservations are not supported */
+	if (1 != nrr) {
+		serrno = EINVAL;
+		return (-1);
+	}
+
 	nb_rsvd_resources = nrr;
 	devlblinfop = calloc (nrr, sizeof(struct devlblinfo));
 	if (devlblinfop == NULL) {
