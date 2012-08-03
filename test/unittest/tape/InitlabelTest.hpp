@@ -138,7 +138,7 @@ public:
 
   /**
    * Support for a multiple drive resource lock is being removed as it buggy
-   * and never used.  The new implemenetation of initlabelroutines should
+   * and never used.  The new implementation of initlabelroutines should
    * therefore not accept a value other than 1 and in all other cases return -1
    * and set serrno to EINVAL.
    */
