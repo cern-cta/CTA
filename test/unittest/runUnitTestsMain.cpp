@@ -45,6 +45,7 @@
 #include "test/unittest/castor/tape/utils/IndexedContainerTest.hpp"
 #include "test/unittest/castor/tape/utils/UtilsTest.hpp"
 #include "test/unittest/rtcopy/RtcopyTest.hpp"
+#include "test/unittest/tape/InitlabelTest.hpp"
 #include "test/unittest/tapebridge/MarshallTapeBridgeClientInfo2Test.hpp"
 #include "test/unittest/tapebridge/MarshallTapeBridgeFlushedToTapeTest.hpp"
 #include "test/unittest/tapebridge/RecvTapeBridgeFlushedToTapeAckTest.hpp"
