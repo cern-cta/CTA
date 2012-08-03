@@ -5,15 +5,16 @@
 
 /*	Ctape_reserve - reserve tape resources */
 
+#include <errno.h>
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <stddef.h>
-#include "Ctape.h"
-#include "Ctape_api.h"
-#include "marshall.h"
-#include "serrno.h"
 #include <unistd.h>
-#include <sys/types.h>
+
+#include "h/Ctape.h"
+#include "h/Ctape_api.h"
+#include "h/marshall.h"
+#include "h/serrno.h"
 
 int Ctape_reserve(int count,
                   struct dgn_rsv dgn_rsv[])
@@ -30,6 +31,20 @@ int Ctape_reserve(int count,
 	char sendbuf[REQBUFSZ];
 	int totrsvd = 0;
 	uid_t uid;
+
+	/* Reserving drives from more than one DGN is not supported */
+	if (1 != count) {
+		serrno = EINVAL;
+		return -1;
+	}
+
+	/* Reserving more than one drive from a DGN is not supported */
+	for (i = 0; i< count; i++) {
+		if (1 != dgn_rsv[i].num) {
+			serrno = EINVAL;
+			return -1;
+		}
+	}
 
 	strncpy (func, "Ctape_reserve", 16);
 	uid = getuid();
