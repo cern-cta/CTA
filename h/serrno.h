@@ -343,7 +343,9 @@
 #define	ETWVSN		ETBASEOFF+32	/* wrong vsn */
 #define ETBADMIR	ETBASEOFF+33    /* Tape has a bad MIR */
 #define ETNETACCEPTINTR ETBASEOFF+34    /* castor::tape::net::acceptConnection interrupted */
-#define ETMAXERR        ETBASEOFF+34
+#define ETNOLBLINFO	ETBASEOFF+35    /* Label information not found in memory */
+#define ETMLTDRVRSV	ETBASEOFF+36    /* Multi-drive reservations are not supported */
+#define ETMAXERR        ETBASEOFF+36
 
 /*
  *------------------------------------------------------------------------

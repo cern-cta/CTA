@@ -246,6 +246,9 @@ Cartridge write protected.
 .TP
 .B ETWVSN
 Wrong vsn.
+.TP
+.B ETNOLBLINFO
+Label information not found in memory.
 .SH SEE ALSO
 .BR vdqm_SendVolReq(3)
 .SH AUTHOR

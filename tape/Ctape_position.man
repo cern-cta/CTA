@@ -261,5 +261,8 @@ Drive not ready.
 .TP
 .B ETNXPD
 File not expired.
+.TP
+.B ETNOLBLINFO
+Label information not found in memory.
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

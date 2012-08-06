@@ -173,7 +173,7 @@ int Ctape_mount(char *path,
 		unmarshall_STRING (rbp, devtype);
 		unmarshall_WORD (rbp, den);
 		unmarshall_WORD (rbp, lblcode);
-		setdevinfo (path, devtype, den, lblcode);
+		c = setdevinfo (path, devtype, den, lblcode);
 	}
 	return (c);
 }

@@ -150,7 +150,8 @@ int Ctape_position(char *path,
 		unmarshall_STRING (rbp, hdr1);
 		unmarshall_STRING (rbp, hdr2);
 		unmarshall_STRING (rbp, uhl1);
-		setlabelinfo (path, flags, actual_fseq, vol1, hdr1, hdr2, uhl1);
+		c = setlabelinfo (path, flags, actual_fseq, vol1, hdr1, hdr2,
+			uhl1);
 	}
 	return (c);
 }

@@ -71,7 +71,7 @@ struct rsv_status {		/* resource reservation status reply entry */
 			/* function prototypes */
 
 EXTERN_C int Ctape_config (char *, int, int);
-EXTERN_C struct devinfo *Ctape_devinfo (char *);
+EXTERN_C struct devinfo *Ctape_devinfo (const char *const);
 EXTERN_C int Ctape_dmpend();
 EXTERN_C int Ctape_dmpfil (char *, char *, int *, char *, int *, int *, int *, char *, u_signed64 *);
 EXTERN_C int Ctape_dmpinit (char *, char *, char *, char *, char *, int, int, int, int, int, int, int, int);

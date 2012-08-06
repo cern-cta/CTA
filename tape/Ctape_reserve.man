@@ -84,5 +84,9 @@ Too many drives requested.
 .TP
 .B ETIDG
 Invalid device group name.
+.TP
+.B ETMLTDRVRSV
+Multi-drive reservations are not supported.
+Invalid device group name.
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

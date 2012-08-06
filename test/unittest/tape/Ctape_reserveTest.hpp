@@ -70,7 +70,7 @@ public:
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Checking serrno is set occordingly",
-      EINVAL,
+      ETMLTDRVRSV,
       serrno);
   }
 
@@ -95,7 +95,7 @@ public:
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Checking serrno is set occordingly",
-      EINVAL,
+      ETMLTDRVRSV,
       serrno);
   }
 

@@ -34,16 +34,14 @@ int Ctape_reserve(int count,
 
 	/* Reserving drives from more than one DGN is not supported */
 	if (1 != count) {
-		serrno = EINVAL;
+		serrno = ETMLTDRVRSV;
 		return -1;
 	}
 
 	/* Reserving more than one drive from a DGN is not supported */
-	for (i = 0; i< count; i++) {
-		if (1 != dgn_rsv[i].num) {
-			serrno = EINVAL;
-			return -1;
-		}
+	if (1 != dgn_rsv[0].num) {
+		serrno = ETMLTDRVRSV;
+		return -1;
 	}
 
 	strncpy (func, "Ctape_reserve", 16);
@@ -76,7 +74,5 @@ int Ctape_reserve(int count,
 	marshall_LONG (q, msglen);	/* update length field */
 
 	c = send2tpd (NULL, sendbuf, msglen, repbuf, sizeof(repbuf));
-	if (c == 0)
-		c = initlabelroutines (totrsvd);
 	return (c);
 }

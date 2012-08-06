@@ -37,9 +37,7 @@ static struct devinfo devinfo[] = {
   { "",       1, 2, 0, -1, 1,     262144,  32760, 0x00, { {0,        0}, {0,         0}, {0,         0}, {0,         0}, {0,        0}, {0,         0}, {0,        0}, {0,         0}, {0,         0} } }
 };
 
-struct devinfo *
-Ctape_devinfo(devtype)
-char *devtype;
+struct devinfo * Ctape_devinfo(const char *const devtype)
 {
 	char devtype_local[CA_MAXMODELLEN+1];
 	int i;

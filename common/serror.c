@@ -339,6 +339,8 @@ char *sys_terrlist[ETMAXERR-ETBASEOFF+2] =
    "Wrong vsn",
    "Tape has a bad MIR",
    "castor::tape::net::acceptConnection interrupted",
+   "Label information not found in memory",
+   "Multi-drive reservations are not supported",
    "BAD ERROR NUMBER"
   };
 
