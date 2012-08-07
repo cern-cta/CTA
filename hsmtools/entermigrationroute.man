@@ -78,7 +78,8 @@ threeCopyOnTape      2           - stager_dev02   sponcec3 31-Aug-2011 10:11:06
 threeCopyOnTape      3           - stager_dev01   sponcec3 31-Aug-2011 10:11:06
 
 #entermigrationroute largeuser 1:stager_dev01
-Rule is colliding with an existing one. Giving up
+Migration route(s) already exist for FileClass largeuser. Please remove first
+Giving up
 
 #entermigrationroute temp 1:stager_dev01
 CopyNb 1 too large for fileClass temp that has nbCopies=0

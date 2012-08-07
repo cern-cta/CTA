@@ -120,6 +120,13 @@ try:
         sys.exit(1)
     fileClassId = int(rows[0][0])
     nbCopies = int(rows[0][1])
+    # check that we do not already have migration route(s) for this file class
+    stcur.execute('SELECT * FROM MigrationRouting WHERE fileclass=:fcid', fcid=fileClassId)
+    rows = stcur.fetchall()
+    if len(rows) > 0:
+        print 'Migration route(s) already exist for FileClass %s. Please remove them first' % fileclassname
+        print 'Giving up'
+        sys.exit(1)
     # check validity of copyNbs and tapePoolNames
     routes = [[] for i in range(nbCopies)]
     for copyNb, isSmallFile, tapePoolName in mappings:
