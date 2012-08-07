@@ -79,6 +79,14 @@ inserted tape pool testtapepool successfully
  newtapepool        0        100GiB       1000        12h  7   sponcec3 30-Aug-2011 16:32:15
 testtapepool        2         23MiB       1000    12h23mn  8   sopncec3 30-Aug-2011 16:42:32
 
+# entertapepool testtapepool
+TapePool testtapepool already exists in the stager DB
+You may want to use modifytapepool
+
+# entertapepool nonexistingtapepool
+Tape pool nonexistingtapepool does not exist in VMGR
+Giving up
+
 .SH NOTES
 This command requires database client access to the stager catalog and nameserver DBs.
 Configuration for the database accesses is taken from castor.conf.

@@ -125,12 +125,21 @@ try:
     # connect to stager
     stconn = castor_tools.connectToStager()
     stcur = stconn.cursor()
-    # check that the tape pool does exist
+    # check that the tape pool does not exist in the stager
     stcur.execute('SELECT id FROM TapePool WHERE name=:name', name=tapePoolName)
     rows = stcur.fetchall()
     if len(rows) != 0:
         print 'TapePool %s already exists in the stager DB' % tapePoolName
         print 'You may want to use modifytapepool'
+        sys.exit(1)
+    # check that the tapepool exists in the vmgr
+    stconnvmgr = castor_tools.connectToVmgr()
+    stcurvmgr = stconnvmgr.cursor()
+    stcurvmgr.execute('SELECT * FROM VMGR_TAPE_POOL WHERE name=:name', name=tapePoolName)
+    rows = stcurvmgr.fetchall()
+    if len(rows) == 0:
+        print 'Tape pool %s does not exist in VMGR' % tapePoolName
+        print 'Giving up'
         sys.exit(1)
     # get info on user running this command
     lasteditor = pwd.getpwuid(os.getuid())[0]

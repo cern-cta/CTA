@@ -124,7 +124,7 @@ try:
     stcur.execute('SELECT * FROM MigrationRouting WHERE fileclass=:fcid', fcid=fileClassId)
     rows = stcur.fetchall()
     if len(rows) > 0:
-        print 'Migration route(s) already exist for FileClass %s. Please remove them first' % fileclassname
+        print 'Migration route(s) already exist for FileClass %s. Please remove first' % fileclassname
         print 'Giving up'
         sys.exit(1)
     # check validity of copyNbs and tapePoolNames
