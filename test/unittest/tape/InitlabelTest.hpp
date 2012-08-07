@@ -163,7 +163,7 @@ public:
 
   /**
    * Calling setdevinfo() a second time with a differnet path and without
-   * calling rmlabelinfo() should return -1 and set serrno to ENOMEM.
+   * calling rmlabelinfo() should return -1 and set serrno to ETNOLBLINFOMEM.
    */
   void testSetdevinfoTwiceWithDifferentPaths() {
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
@@ -178,7 +178,7 @@ public:
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Checking setlabelinfo sets serrno occordingly",
-      ENOMEM,
+      ETNOLBLINFOMEM,
       serrno);
   }
 

@@ -91,7 +91,7 @@ int setdevinfo (const char *const path,
 	/* has a value for another path */
 	if (s_devlblinfoHasValue &&
 		strncmp(s_devlblinfo.path, path, sizeof(s_devlblinfo.path))) {
-		serrno = ENOMEM;
+		serrno = ETNOLBLINFOMEM;
 		return (-1);
 	}
 

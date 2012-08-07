@@ -249,6 +249,9 @@ Wrong vsn.
 .TP
 .B ETNOLBLINFO
 Label information not found in memory.
+.TP
+.B ETNOLBLINFOMEM
+No memory available for label information.
 .SH SEE ALSO
 .BR vdqm_SendVolReq(3)
 .SH AUTHOR

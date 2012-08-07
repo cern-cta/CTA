@@ -341,6 +341,7 @@ char *sys_terrlist[ETMAXERR-ETBASEOFF+2] =
    "castor::tape::net::acceptConnection interrupted",
    "Label information not found in memory",
    "Multi-drive reservations are not supported",
+   "No memory available for label information",
    "BAD ERROR NUMBER"
   };
 
