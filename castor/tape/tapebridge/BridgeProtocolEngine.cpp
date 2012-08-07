@@ -2387,12 +2387,17 @@ void
   ackMsg.lenOrStatus = 0;
   m_legacyTxRx.sendMsgHeader(socketFd, ackMsg);
 
+  // If the rtcpd daemon has reported an error
   if(body.err.errorCode != 0) {
-    TAPE_THROW_CODE(body.err.errorCode,
-      ": Received an error from rtcpd"
-      ": errorCode=" << body.err.errorCode <<
-      ": errorMsg=" << body.err.errorMsg <<
-      ": sstrerror=" << sstrerror(body.err.errorCode));
+    // Gather the error information into a SessionError object
+    SessionError sessionError;
+    sessionError.setErrorCode(body.err.errorCode);
+    sessionError.setErrorMessage(body.err.errorMsg);
+    sessionError.setErrorScope(SessionError::SESSION_SCOPE);
+
+    // Push the error onto the back of the list of errors generated during the
+    // sesion with the rtcpd daemon
+    m_sessionErrors.push_back(sessionError);
   }
 }
 
