@@ -37,9 +37,10 @@ def _checkValueFound(name, value, instance, configFile):
 # DLF initialization
 DLF_BASE_CASTORTOOLSLIB = 1000
 
-msgs = dlf.enum('CREATEDORACONN', 'DROPPEDORACONN', 'INVALIDOPT', 
+msgs = dlf.enum('CREATEDORACONN', 'ORAVERSIONMISMATCH', 'DROPPEDORACONN', 'INVALIDOPT',
                 base=DLF_BASE_CASTORTOOLSLIB)
 dlf.addmessages({msgs.CREATEDORACONN : 'Created new Oracle connection',
+                 msgs.ORAVERSIONMISMATCH : 'Version mismatch between the database and the software, ignoring',
                  msgs.DROPPEDORACONN : 'Oracle connection dropped',
                  msgs.INVALIDOPT : 'Invalid option in castor.conf'})
 
@@ -50,7 +51,7 @@ class DBConnection(object):
     '''This class wraps an Oracle database connection with the ability to automatically reconnect when 
     the underlying db connection drops. See also castor/db/ora/OraCnvSvc.cpp'''
     
-    def __init__(self, connString, schemaVersion):
+    def __init__(self, connString, schemaVersion, enforceCheck=True):
         '''Constructor'''
         try:
             import cx_Oracle
@@ -61,6 +62,7 @@ class DBConnection(object):
         self.cx_Oracle = cx_Oracle
         self.connString = connString
         self.schemaVersion = schemaVersion
+        self.enforceCheck = enforceCheck
         self._autocommit = False
         self.connection = None
         # the following ORA error codes are known (see OraCnvSvc.cpp) to be raised when the Oracle connection drops
@@ -78,7 +80,11 @@ class DBConnection(object):
         if dbVer == None:
             raise ValueError, 'No CastorVersion table found in the database'
         if dbVer[0] != self.schemaVersion:
-            raise ValueError, 'Version mismatch between the database and the software : ' + dbVer[0] + ' versus ' + self.schemaVersion
+            if self.enforceCheck:
+                raise ValueError, 'Version mismatch between the database and the software : ' + dbVer[0] + ' versus ' + self.schemaVersion
+            else:
+                # log 'Version mismatch error' message, keep going
+                dlf.writenotice(msgs.ORAVERSIONMISMATCH, dbVersion=dbVer[0], softwareVersion=self.schemaVersion)
         # 'Created new Oracle connection' message
         dlf.write(msgs.CREATEDORACONN)
         # pass client info for debugging purposes. The thread ID is cut to 5 digits, cf. dlf.py
@@ -144,9 +150,9 @@ class DBConnection(object):
 #-------------------------------------------------------------------------------
 # connectToDB
 #-------------------------------------------------------------------------------
-def connectToDB(user, passwd, dbname, schemaVersion):
+def connectToDB(user, passwd, dbname, schemaVersion, enforceCheck=True):
     '''returns a connection to the required database, and checks its version'''
-    return DBConnection(user + '/' + passwd + '@' + dbname, schemaVersion)
+    return DBConnection(user + '/' + passwd + '@' + dbname, schemaVersion, enforceCheck)
 
 #-------------------------------------------------------------------------------
 # disconnectDB
@@ -258,7 +264,7 @@ def connectToVmgr():
     for l in open ('/etc/castor/VMGRCONFIG').readlines():
         if len(l.strip()) == 0 or l.strip()[0] == '#':
             continue
-        conn = DBConnection( l.strip(), VMGRSCHEMAVERSION )
+        conn = DBConnection(l.strip(), VMGRSCHEMAVERSION, enforceCheck=False)
         break
     return conn
 
@@ -272,7 +278,7 @@ def connectToNS():
     '''Connects to the nameserver database'''
     NSSCHEMAVERSION = "2_1_13_0"
     user, passwd, dbname = getNSDBConnectParam('NSCONFIG')
-    return connectToDB(user, passwd, dbname, NSSCHEMAVERSION)
+    return connectToDB(user, passwd, dbname, NSSCHEMAVERSION, enforceCheck=False)
 
 DiskCopyStatus = ["DISKCOPY_STAGED",
                   "DISKCOPY_WAITDISK2DISKCOPY",
