@@ -710,6 +710,18 @@ The following error values are returned only by the tape package:
 .TP
 .B ETBADMIR
 (1933) Tape has a bad MIR
+.TP
+.B ETNETACCEPTINTR
+(1934) castor::tape::net::acceptConnection interrupted
+.TP
+.B ETNOLBLINFO
+(1935) Label information not found in memory
+.TP
+.B ETMLTDRVRSV
+(1936) Multi-drive reservations are not supported
+.TP
+.B ETNOLBLINFOMEM
+(1937) No memory available for label information
 
 .SH VMGR ERRORS
 The following error values are returned only by the volume manager package:
