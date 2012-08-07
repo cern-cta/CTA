@@ -509,6 +509,7 @@ static int rtcp_TransAckn(SOCKET *s,
   if ( data != NULL ) status = *(int *)data;
 
   if ( whereto == ReceiveFrom ) {
+    serrno = 0;
     rc = netread_timeout(*s,hdrbuf,RTCP_HDRBUFSIZ,RTCP_NETTIMEOUT);
     switch (rc) {
     case -1: 
