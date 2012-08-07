@@ -345,7 +345,8 @@
 #define ETNETACCEPTINTR ETBASEOFF+34    /* castor::tape::net::acceptConnection interrupted */
 #define ETNOLBLINFO	ETBASEOFF+35    /* Label information not found in memory */
 #define ETMLTDRVRSV	ETBASEOFF+36    /* Multi-drive reservations are not supported */
-#define ETMAXERR        ETBASEOFF+36
+#define ETNOLBLINFOMEM	ETBASEOFF+37    /* No memory available for label information */
+#define ETMAXERR        ETBASEOFF+37
 
 /*
  *------------------------------------------------------------------------
