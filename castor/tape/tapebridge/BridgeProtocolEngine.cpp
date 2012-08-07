@@ -2383,7 +2383,7 @@ void
   // Reply to rtcpd with a positive acknowledgement
   legacymsg::MessageHeader ackMsg;
   ackMsg.magic       = RTCOPY_MAGIC;
-  ackMsg.reqType     = RTCP_TAPE_REQ;
+  ackMsg.reqType     = RTCP_TAPEERR_REQ;
   ackMsg.lenOrStatus = 0;
   m_legacyTxRx.sendMsgHeader(socketFd, ackMsg);
 
