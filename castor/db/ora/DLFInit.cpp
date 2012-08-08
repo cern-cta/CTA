@@ -76,6 +76,7 @@ castor::db::ora::DLFInit::DLFInit() {
      { 33, "Error caught when unlinking file" },
      { 34, "Invalid FILEQUERY/MAXNBRESPONSES configuration option, using default" },
      { 35, "Cns_closex ignored by name server due to concurrent file modification on another stager" },
+     { 36, "Call to commit() failed" },
      { -1, ""}};
   try {
     castor::dlf::dlf_addMessages(DLF_BASE_ORACLELIB, messages);

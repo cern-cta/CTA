@@ -25,6 +25,7 @@
  *****************************************************************************/
 
 // Include Files
+#include "castor/dlf/Dlf.hpp"
 #include "castor/IObject.hpp"
 #include "castor/Services.hpp"
 #include "castor/exception/Exception.hpp"
@@ -90,7 +91,14 @@ void
 castor::db::DbBaseObj::commit() {
   try {
     cnvSvc()->commit();
-  } catch (castor::exception::Exception) {
+  } catch (castor::exception::Exception &ex) {
+    // log the exception
+    // 36 = "Call to commit() failed"
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Message", ex.getMessage().str()),
+      castor::dlf::Param("Code"   , ex.code()            )};
+    CASTOR_DLF_WRITEPC(nullCuuid, DLF_LVL_ERROR, 36, params);
+
     // commit failed, let's rollback for security
     rollback();
   }
