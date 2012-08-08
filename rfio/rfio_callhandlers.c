@@ -247,8 +247,6 @@ int rfio_handle_close(void *ctx,
           serrno = error_code;
           log(LOG_ERR, "rfio_handle_close : Cstager_IJobSvc_putFailed error for subrequest_id=%s (%s)\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0), error_msg);
           free(error_msg);
-        } else {
-          forced_mover_exit_error = 0;
         }
       }
     } else {
@@ -268,8 +266,6 @@ int rfio_handle_close(void *ctx,
           serrno = error_code;
           log(LOG_ERR, "rfio_handle_close : Cstager_IJobSvc_getUpdateFailed error for subrequest_id=%s (%s)\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0), error_msg);
           free(error_msg);
-        } else {
-          forced_mover_exit_error = 0;
         }
       }
     }
