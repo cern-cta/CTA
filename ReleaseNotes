@@ -354,27 +354,19 @@
     Central services (CUPV, VMGR, VDQM)
     -----------------------------------
 
-      The upgrade of the VDQM database needs a down time. We assume that VMGR and
-      UPV daemons are collocated with the VDQM one, thus we give upgrade instructions
-      for a non transparent upgrade of all of them. Please adapt to your needs
+      The upgrade of the CUPV, VMGR, and Nameserver databases to 2.1.13-0 can be performed online while
+      the system is running.
 
       Instructions
       ------------
 
-       1. Put all the tapeservers down using tpconfig
-
-       2. Stop all vdqm, vmgr and cupv daemons
-
-       3. Apply the appropriate database upgrade scripts from:
+       1. Apply the appropriate database upgrade scripts from:
          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.13-*/2.1.13-0/dbupgrades
 
-       4. Update the software to use the 2.1.13-0 RPMS.
+       2. Update the software to use the 2.1.13-0 RPMS. Note: All
+          daemons involved in the upgrade will be restarted automatically.
 
-       5. Restart vdqm, vmgr and cupv daemons
-
-       6. Put all the tapeservers up using tpconfig
-
-       7. Upgrade complete.
+       3. Upgrade complete.
 
 
     Monitoring
