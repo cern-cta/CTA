@@ -222,18 +222,19 @@ int readFileUsingRFIO(const std::string &filepath,
 
   // Read the data into memory
   uint64_t bytesrecv = 0;
+  uint64_t nbbytes = 0;
   do {
     rfio_errno = serrno = 0;
-    uint64_t nbbytes = rfio_read(fd, (void *)(buffer.c_str()), 
-                                 (bufsize < (expectedFileSize - bytesrecv)) ?
-                                 bufsize : (expectedFileSize - bytesrecv));
+    nbbytes = rfio_read(fd, (void *)(buffer.c_str()), 
+                        (bufsize < (expectedFileSize - bytesrecv)) ?
+                        bufsize : (expectedFileSize - bytesrecv));
     if (nbbytes < 0) {
       rfio_errno = serrno = 0;
       rfio_close(fd);
       return -1;
     }
     bytesrecv += nbbytes;
-  } while ((expectedFileSize - bytesrecv) != 0);
+  } while ((expectedFileSize - bytesrecv) != 0 && nbbytes > 0);
   
   // Close the file. Note: we don't ignore errors here so that we can detect
   // checksum problems.
