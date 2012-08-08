@@ -131,7 +131,7 @@ int main(int argc, char *argv[]) {
       do {
          if ( tmp == NULL )
              tmp = (struct vdqm_reqlist *)calloc(1,sizeof(struct vdqm_reqlist));
-         memset(tmp,'\0',sizeof(tmp));
+         memset(tmp,'\0',sizeof(struct vdqm_reqlist));
          strcpy(tmp->volreq.dgn,dgn);
          rc = vdqm_NextVol(&nw,&tmp->volreq);
          if ( rc != -1 && tmp->volreq.VolReqID > 0 && 
