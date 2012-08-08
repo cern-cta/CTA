@@ -290,9 +290,9 @@ def processDiskPoolListing():
     #  nbRunningTransfers, (('proto1', nbRunningTransfersForProto1), ...),
     #  nbRunningSlots, (('proto1', nbRunningSlotsForProto1), ...),
     #  (unreachableMachine,...))
-    # Note that we do not send the list of unreachableMachines as it would break
+    # Note that we do not send the lists of unreachableMachines as it would break
     # the (very weak) parsing of _buildProtocolList
-    protocols = _buildProtocolList(summaryreport)
+    protocols = _buildProtocolList([report[:-1] for report in summaryreport])
     # build title, subtitle and format strings
     title, subtitle, dataformat = _buildTitleAndCoStrings(diskpoolHead + 'NBSLOTS  NBUTPEND', '%-*s%5d%9s', '%-*s%5s%9s', protocols)[0:3]
     # display title and subtitle

@@ -315,7 +315,10 @@ class TransferManagerService(rpyc.Service):
         if len(unreachableMachines) < len(nbs[diskPool]):
           data = [extendedSum(item) for item in zip(*[item for item in nbs[diskPool].values() if item])]
         else:
-          data = [0, 0, 0, 0, 0]
+          if detailed:
+            data = [0, 0, (), 0, (), 0, (), 0, ()]
+          else:
+            data = [0, 0, 0, 0, 0]
         res.append(tuple([diskPool, nbtransfers] + data + [tuple(unreachableMachines)]))
       else:
         res.append((diskPool,))
