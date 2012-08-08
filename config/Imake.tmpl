@@ -39,7 +39,7 @@ CXXFLAGS += -I$(CASTOR_ROOT) -I$(CASTOR_ROOT)/h $(DEBUG)
 CFLAGS += $(CXXFLAGS)
 CPPFLAGS += -pthread -I$(CASTOR_ROOT) -I$(CASTOR_ROOT)/h
 CPPFLAGS += -DBIN=\"InstallBinDir\" -DACCTFILE=SacctFile -DTPCONFIG=TapeConfigFile -DNFSROOT=NfsRoot
-LDFLAGS += -pthread
+LDFLAGS += -lpthread
 
 PERL_LIBDIR = /usr/lib/perl/CASTOR
 
