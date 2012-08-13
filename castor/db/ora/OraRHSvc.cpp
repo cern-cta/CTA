@@ -1261,7 +1261,7 @@ void castor::db::ora::OraRHSvc::storeChangePrivilegeRequest (castor::bwlist::Cha
     m_storeChangePrivilegeStatement->setDataBufferArray
       (15, bufferGid, oracle::occi::OCCI_SQLT_NUM,
        nbUsers, &nbUsers, 21, lensGid);
-    ub4 nbReqTypes = users.size();
+    ub4 nbReqTypes = requestTypes.size();
     m_storeChangePrivilegeStatement->setDataBufferArray
       (16, bufferReqType, oracle::occi::OCCI_SQLT_NUM,
        nbReqTypes, &nbReqTypes, 21, lensReqType);
