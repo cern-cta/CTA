@@ -47,8 +47,8 @@ LIBDIRS = [os.sep.join(['', 'opt', 'globus', 'lib']),
            os.sep.join(['', 'usr', 'lib'])]
 if os.environ.has_key('GLOBUS_LOCATION'):
     gl = os.environ['GLOBUS_LOCATION']
-    INCDIRS = [os.sep.join([gl,'include',FLAVOUR])]
-    LIBDIRS = [os.sep.join([gl,'lib'])]
+    INCDIRS = [os.sep.join([gl,dir]) for dir in INCDIRS]
+    LIBDIRS = [os.sep.join([gl,dir]) for dir in LIBDIRS]
 
 #------------------------------------------------------------------------------
 # Usage

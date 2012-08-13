@@ -35,6 +35,10 @@ ORACLE_DIRS = ("/usr/__lib__/oracle/__version__/__client__",  "/afs/cern.ch/proj
 LIBDIRS     = ("lib64", "lib")
 VERSIONS    = ("11.2.0.3.0", "11.2", "10.2.0.3", "10203")
 CLIENTS     = ("client", "client64")
+if os.environ.has_key('ORACLE_HOME'):
+    ORACLE_DIRS = (os.environ['ORACLE_HOME'],)
+    VERSIONS    = ('unused',)
+    CLIENTS     = ('unused',)
 
 #------------------------------------------------------------------------------
 # Usage
