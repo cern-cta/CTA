@@ -44,6 +44,7 @@
 #include "tplogger_api.h"
 
 #include "h/rtcpd_GetClientInfo.h"
+#include "h/rtcpdIsConfiguredToReuseMount.h"
 #include "h/tapebridge_constants.h"
 #include "h/tapebridge_tapeFlushModeToStr.h"
 #include "h/u64subr.h"
@@ -2337,27 +2338,8 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
   /* tapeBridgeClientInfo2MsgBody is set to a meaningful value if the the */
   /* client of rtcpd is the tape-bridge daemon (see clientIsTapeBridge)  */
   tapeBridgeClientInfo2MsgBody_t tapeBridgeClientInfo2MsgBody;
-  int *tapeNeedsToBeReleasedAtEndOfSession = NULL;
+  int tapeNeedsToBeReleasedAtEndOfSession = 0;
   char clientHostname[CA_MAXHOSTNAMELEN+1];
-
-  /* Allocate memory of tapeNeedsToBeReleasedAtEndOfSession boolean giving */
-  /* it an initial value of false using calloc                             */
-  tapeNeedsToBeReleasedAtEndOfSession = calloc(1,
-    sizeof(*tapeNeedsToBeReleasedAtEndOfSession));
-  if ( NULL == tapeNeedsToBeReleasedAtEndOfSession ) {
-    char logMsg[128];
-
-    snprintf(logMsg, sizeof(logMsg),
-      "rtcpd_MainCntl() calloc() for tapeNeedsToBeReleasedAtEndOfSession: %s",
-      sstrerror(errno));
-    logMsg[sizeof(logMsg) - 1] = '\0';
-    rtcp_log(LOG_ERR, "%s(): %s\n", __FUNCTION__, logMsg);
-    tl_rtcpd.tl_log( &tl_rtcpd, TL_LVL_ERROR, 2,
-      "func"   , TL_MSG_PARAM_STR, __FUNCTION__,
-      "Message", TL_MSG_PARAM_STR, logMsg);
-
-    return(-1);
-  }
 
   memset(&tapeBridgeClientInfo2MsgBody, '\0',
     sizeof(tapeBridgeClientInfo2MsgBody));
@@ -2946,7 +2928,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
       tapeBridgeClientInfo2MsgBody.tapeFlushMode,
       tapeBridgeClientInfo2MsgBody.maxBytesBeforeFlush,
       tapeBridgeClientInfo2MsgBody.maxFilesBeforeFlush,
-      tapeNeedsToBeReleasedAtEndOfSession);
+      &tapeNeedsToBeReleasedAtEndOfSession);
     if ( rc == -1 ) {
       (void)rtcpd_SetReqStatus(tape,NULL,serrno,RTCP_RESELECT_SERV);
       rtcp_log(LOG_ERR,
@@ -3054,10 +3036,20 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
   /*
    * Release the tape from the drive if this has not already been done
    */
-  if(*tapeNeedsToBeReleasedAtEndOfSession) {
-      const int   flags  = TPRLS_ALL;
-      int         rls_rc = 0;
-      char *const path   = NULL;
+  if(tapeNeedsToBeReleasedAtEndOfSession) {
+      int rlsFlags = TPRLS_ALL;
+      int rls_rc = 0;
+      char *const path = NULL;
+
+      /* Log whether or not the rtcpd daemon is configured to reuse mounts */
+      /* and set the TPRLS_UNLOAD bit of the flags for the Ctape_rls()     */
+      /* function if the rtcpd daemon is not configured to reuse mounts    */
+      if(rtcpdIsConfiguredToReuseMount()) {
+          rtcp_log(LOG_INFO, "rtcpd is configured to reuse mount\n");
+      } else {
+          rtcp_log(LOG_INFO, "rtcpd is not configured to reuse mount\n");
+          rlsFlags |= TPRLS_UNLOAD;
+      }
 
       rtcp_log(LOG_INFO,
           "Asking taped to release the tape"
@@ -3067,7 +3059,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
           tape->tapereq.TStartUnmount = (int)time(NULL);
       }
       rtcpd_ResetCtapeError();
-      rls_rc = Ctape_rls(path,flags);
+      rls_rc = Ctape_rls(path, rlsFlags);
       if(NULL != tape) {
           tape->tapereq.TEndUnmount = (int)time(NULL);
       }
@@ -3091,7 +3083,6 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
    */
   (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPCMDC);
   rtcpd_FreeResources(&client_socket, &client, &tape, clientHostname);
-  free(tapeNeedsToBeReleasedAtEndOfSession);
 
   return(0);
 }

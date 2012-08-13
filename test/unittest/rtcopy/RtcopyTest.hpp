@@ -30,6 +30,7 @@
 #include "h/rtcp.h"
 #include "h/rtcp_constants.h"
 #include "h/rtcp_marshallVdqmClientInfoMsg.h"
+#include "h/rtcpdIsConfiguredToReuseMount.h"
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <errno.h>
@@ -197,6 +198,51 @@ public:
       std::string(msgBody.clientName));
   }
 
+  void testRtcpdIsConfiguredToReuseMountLowerCase() {
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "setenv PATH_CONFIG",
+      0,
+      setenv(
+        "PATH_CONFIG",
+        "rtcpdIsConfiguredToReuseMountLowerCase.conf",
+        1));
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Test rtcpdIsConfiguredToReuseMount() returns 1 for true",
+      1,
+      rtcpdIsConfiguredToReuseMount());
+  }
+
+  void testRtcpdIsConfiguredToReuseMountUpperCase() {
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "setenv PATH_CONFIG",
+      0,
+      setenv(
+        "PATH_CONFIG",
+        "rtcpdIsConfiguredToReuseMountUpperCase.conf",
+        1));
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Test rtcpdIsConfiguredToReuseMount() returns 1 for TRUE",
+      1,
+      rtcpdIsConfiguredToReuseMount());
+  }
+
+  void testRtcpdIsNotConfiguredToReuseDrive() {
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "setenv PATH_CONFIG",
+      0,
+      setenv(
+        "PATH_CONFIG",
+        "rtcpdIsNotConfiguredToReuseMount.conf",
+        1));
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Test rtcpdIsConfiguredToReuseMount() returns 0 for no value",
+      0,
+      rtcpdIsConfiguredToReuseMount());
+  }
+
   CPPUNIT_TEST_SUITE(RtcopyTest);
   CPPUNIT_TEST(testMsgBodyMarshalledSize);
   CPPUNIT_TEST(testMarshallBufNull);
@@ -209,6 +255,9 @@ public:
   CPPUNIT_TEST(testUnmarshallBufLen1);
   CPPUNIT_TEST(testUnmarshallMsgBodyNull);
   CPPUNIT_TEST(testMarshallAndUnmarshallContents);
+  CPPUNIT_TEST(testRtcpdIsConfiguredToReuseMountLowerCase);
+  CPPUNIT_TEST(testRtcpdIsConfiguredToReuseMountUpperCase);
+  CPPUNIT_TEST(testRtcpdIsNotConfiguredToReuseDrive);
   CPPUNIT_TEST_SUITE_END();
 };
 

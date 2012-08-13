@@ -231,8 +231,11 @@ int main(int	argc,
 		sleep (atoi (p));
 
 	vdqm_status = VDQM_UNIT_RELEASE;
-	if (rlsflags & TPRLS_UNLOAD)
+	if (rlsflags & TPRLS_UNLOAD) {
+		tplogit (func, "The TPRLS_UNLOAD bit of rlsflags has been set\n");
 		vdqm_status |= VDQM_FORCE_UNMOUNT;
+	}
+
 	tplogit (func, "calling vdqm_UnitStatus(VDQM_UNIT_RELEASE)\n");
         tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 3,
                             "func"   , TL_MSG_PARAM_STR  , func,

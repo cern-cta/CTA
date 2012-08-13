@@ -187,6 +187,7 @@ rununittests: \
   rtcopy_rtcpd_GetClientInfo.o \
   rtcopy_rtcpd_GetClientInfoMsg.o \
   rtcopy_rtcpd_SendAckToVdqmOrTapeBridge.o \
+  rtcopy_rtcpdIsConfiguredToReuseMount.o \
   security_Csec_api_loader.o \
   security_Csec_api.o \
   security_Csec_errmsg.o \
@@ -935,6 +936,9 @@ rtcopy_server_rtcp_SendRecv.o: $(ROOT_DIR)/rtcopy/rtcp_SendRecv.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rtcopy_rtcpd_ConvertData.o: $(ROOT_DIR)/rtcopy/rtcpd_ConvertData.c
+	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+rtcopy_rtcpdIsConfiguredToReuseMount.o: $(ROOT_DIR)/rtcopy/rtcpdIsConfiguredToReuseMount.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 security_Csec_protocol_policy.o: $(ROOT_DIR)/security/Csec_protocol_policy.c
