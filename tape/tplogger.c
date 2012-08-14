@@ -312,7 +312,7 @@ int tl_log_dlf( tplogger_t *self, unsigned short msg_no, int num_params, ... ) {
         int               ndx = -1;
         int               prio = 0;
 	va_list           ap;
-  	Cuuid_t           req_id;
+  	Cuuid_t           req_id = nullCuuid;
 
         if( NULL == self ) {
 

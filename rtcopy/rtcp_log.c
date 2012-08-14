@@ -195,7 +195,7 @@ int rtcp_stringToVoid(char *str, void *out, int len)
     return(-1);
   }
 
-  outCp = (u_char *)malloc(len);
+  outCp = (u_char *)calloc(1,len);
   if ( outCp == NULL ) return(-1);
   p = str;
   i=0;

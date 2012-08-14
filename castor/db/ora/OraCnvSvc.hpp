@@ -123,7 +123,7 @@ namespace castor {
          * so that next time a new connection is established
          * @param e an Oracle exception
          */
-        virtual void handleException(std::exception& e);
+        virtual void handleException(std::exception& e) throw();
         
       private:
         

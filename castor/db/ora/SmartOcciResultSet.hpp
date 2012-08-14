@@ -123,12 +123,14 @@ private:
   /**
    * Private copy-constructor to prevent users from trying to create a new
    * copy of an object of this class.
+   * Not implemented so that it cannot be called
    */
   SmartOcciResultSet(const SmartOcciResultSet &obj) throw();
 
   /**
    * Private assignment-operator to prevent users from trying to assign one
    * object of this class to another.
+   * Not implemented so that it cannot be called
    */
   SmartOcciResultSet &operator=(SmartOcciResultSet& obj) throw();
 

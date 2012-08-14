@@ -1346,7 +1346,7 @@ void procmountreq(char *req_data,
 	int i, j;
 	int jid;
 	char *lbltype;
-	int lblcode;
+	int lblcode = 0;
 	int mode;
 	char *path;
 	int pid;

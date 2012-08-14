@@ -106,6 +106,7 @@ castor::tape::tpcp::TpcpCommand::TpcpCommand(const char *const programName)
       ": " << sstrerror(savedErrno));
   }
   m_sigintAction.sa_flags = 0; // No flags
+  m_sigintAction.sa_restorer = NULL; // unused
 
   // Set the SIGINT signal handler
   if(sigaction(SIGINT, &m_sigintAction, 0) < 0){

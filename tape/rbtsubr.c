@@ -821,6 +821,7 @@ int send2dmc(int *sock,
 		strcpy(dmc_host,p);
 	}
 	if ( (p = getenv("DMC_PORT")) != NULL ) dmc_port = atoi(p);
+        memset(&sin, 0, sizeof(sin));
 	sin.sin_family = AF_INET;
 	if ( (hp = gethostbyname(dmc_host)) == NULL ) {
 		tplogit(func,"gethostbyname: %s\n",neterror());

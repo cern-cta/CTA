@@ -315,6 +315,7 @@ int main (int     argc,
 #if defined(linux)
     sa.sa_handler = reaper;
     sa.sa_flags = SA_RESTART;
+    sa.sa_restorer = NULL;
     sigaction (SIGCHLD, &sa, NULL);
 #endif /* linux */
 
@@ -390,6 +391,7 @@ int main (int     argc,
       log(LOG_INFO, "Socket already bound to port %d\n", Socket_parent_port);
       port = Socket_parent_port;
     } else {
+      memset(&sin, 0, sizeof(sin));
       if (!port) {
 
         /* If CSEC defined and security requested (set uid and gid) and user not root */
@@ -609,12 +611,14 @@ int doit(int      s,
          uid_t uid,
          gid_t gid)
 {
-  int      request, status;        /* Request Id  number               */
+  int      request;                /* Request Id  number               */
+  int      status = 0;
   int      fd = -1;                /* Local fd      -> -1              */
   DIR      *dirp = NULL;           /* Local dir ptr -> NULL            */
   struct   hostent *hp;
-  int      lun;
-  int      access, yes;
+  int      lun = -1;
+  int      access = -1;
+  int      yes;
   struct   rfiostat info;
   int      is_remote = 0;              /* Is requestor in another site ? */
   char     from_host[MAXHOSTNAMELEN];  /* Where the request comes from   */
@@ -744,6 +748,7 @@ int doit(int      s,
      */
     sa.sa_handler = reaper;
     sa.sa_flags = SA_RESTART;
+    sa.sa_restorer = NULL;
     sigaction (SIGPIPE, &sa, NULL);
 
   }

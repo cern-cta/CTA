@@ -457,32 +457,41 @@ void castor::gc::SynchronizationThread::synchronizeFiles
   std::map<u_signed64, std::string> filePaths = paths;
 
   // Get RemoteGCSvc
-  castor::IService* svc =
-    castor::BaseObject::services()->
-    service("RemoteGCSvc", castor::SVC_REMOTEGCSVC);
-  if (0 == svc) {
+  castor::stager::IGCSvc *gcSvc = 0;
+  try {
+    castor::IService* svc =
+      castor::BaseObject::services()->service("RemoteGCSvc", castor::SVC_REMOTEGCSVC);
+    if (0 == svc) {
+      // "Could not get RemoteStagerSvc"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Function", "SynchronizationThread::synchronizeFiles")};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2, 1, params);
+      return;
+    }
+    gcSvc = dynamic_cast<castor::stager::IGCSvc*>(svc);
+    if (0 == gcSvc) {
+      // "Got a bad RemoteStagerSvc"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("ID", svc->id()),
+         castor::dlf::Param("Name", svc->name()),
+         castor::dlf::Param("Function", "SynchronizationThread::synchronizeFiles")};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 3, 3, params);
+      return;
+    }
+  } catch (castor::exception::Exception e) {
     // "Could not get RemoteStagerSvc"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("Function", "SynchronizationThread::synchronizeFiles")};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2, 1, params);
-    return;
-  }
-
-  castor::stager::IGCSvc *gcSvc =
-    dynamic_cast<castor::stager::IGCSvc*>(svc);
-  if (0 == gcSvc) {
-    // "Got a bad RemoteStagerSvc"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("ID", svc->id()),
-       castor::dlf::Param("Name", svc->name()),
-       castor::dlf::Param("Function", "SynchronizationThread::synchronizeFiles")};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 3, 3, params);
+      {castor::dlf::Param("Function", "SynchronizationThread::synchronizeFiles"),
+       castor::dlf::Param("ErrorCode", e.code()),
+       castor::dlf::Param("ErrorMsg", e.getMessage().str())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2, 3, params);
     return;
   }
 
   Cns_fileid fileId;
   memset(&fileId, 0, sizeof(fileId));
   strncpy(fileId.server, nameServer.c_str(), sizeof(fileId.server));
+  fileId.server[CA_MAXHOSTNAMELEN] = 0;
   u_signed64 nbOrphanFiles = 0;
   u_signed64 spaceFreed = 0;
   std::vector<u_signed64> orphans;
@@ -556,13 +565,14 @@ void castor::gc::SynchronizationThread::synchronizeFiles
 
   // Create an array of 64bit unsigned integers to pass to the Cns_bulkexist
   // call
-  u_signed64 *cnsFileIds = (u_signed64 *) malloc(filePaths.size() * sizeof(u_signed64));
+  u_signed64 *cnsFileIds = (u_signed64 *) calloc(filePaths.size(), sizeof(u_signed64));
   if (cnsFileIds == 0){
     // "Memory allocation failure"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "synchronizeFiles"),
        castor::dlf::Param("Message", strerror(errno)) };
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 29, 2, params);
+    return;
   }
 
   // Populate the array with fileids
@@ -665,7 +675,11 @@ void castor::gc::SynchronizationThread::synchronizeFiles
     if (it2 != orphans.end()) {
       continue;
     }
-    fileId.fileid = fileIdFromFilePath(cnsFilePaths.find(*it)->second);
+    try {
+      fileId.fileid = fileIdFromFilePath(cnsFilePaths.find(*it)->second);
+    } catch (castor::exception::Exception e) {
+      // fileid won't be set but this only impacts logging, so let it go
+    }
 
     // "File scheduled for deletion as the file no longer exists in the
     // nameserver but still exists in the stager"

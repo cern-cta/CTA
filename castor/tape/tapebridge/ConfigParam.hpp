@@ -55,6 +55,7 @@ public:
     const std::string &name):
     m_category(category),
     m_name(name),
+    m_value(),
     m_source(ConfigParamSource::UNDEFINED),
     m_valueAndSourceAreSet(false) {
     // Do nothing

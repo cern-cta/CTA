@@ -45,7 +45,8 @@ castor::server::DynamicThreadPool::DynamicThreadPool
   BaseThreadPool(poolName, consumerThread, 0),
   m_taskQueue(maxTasks),
   m_producerThread(producerThread),
-  m_lastPoolChange(0) {
+  m_lastPoolChange(0),
+  m_queueTime(0) {
 
   int rv;
 

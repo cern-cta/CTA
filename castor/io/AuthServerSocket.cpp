@@ -49,6 +49,7 @@ castor::io::AuthServerSocket::AuthServerSocket(const unsigned short port,
                                                const bool reusable)
   throw (castor::exception::Exception) :
   ServerSocket(port, reusable) {
+  memset (&m_security_context, 0, sizeof(m_security_context));
 }
 
 

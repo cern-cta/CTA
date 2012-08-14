@@ -32,7 +32,8 @@
 // Constructor
 // -----------------------------------------------------------------------
 castor::exception::SQLError::SQLError() :
-  castor::exception::Exception(SESQLERR) {}
+  castor::exception::Exception(SESQLERR),
+  sqlErrorCode(0) {}
  
 void castor::exception::SQLError::setSQLErrorCode(int code)
 {

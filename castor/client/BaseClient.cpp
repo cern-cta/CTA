@@ -134,7 +134,10 @@ castor::client::BaseClient::BaseClient
   m_hasAuthorizationId(false),
   m_authUid(0),
   m_authGid(0),
-  m_hasSecAuthorization(false) {
+  m_hasSecAuthorization(false),
+  m_voname(0),
+  m_nbfqan(0),
+  m_fqan(0) {
   setAuthorization();
   // Check timeout value. Max value * 1000 should fit into an int as it will be
   // used by poll that wants milliseconds. If the value is too big, it is

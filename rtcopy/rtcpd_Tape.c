@@ -244,7 +244,8 @@ static int MemoryToTape(
     const uint64_t     maxBytesBeforeFlush,
     const uint64_t     maxFilesBeforeFlush,
     int                *flushedToTapeAfterNFiles) {
-    int nb_bytes, rc, i, j, last_sz, blksiz, severity, lrecl;
+    int rc = 0;
+    int nb_bytes, i, j, last_sz, blksiz, severity, lrecl;
     int end_of_tpfile, buf_done, nb_truncated, spill, bytes_used, proc_err;
     int pileupWaitTime = 0, nbFullBufs;
     char *convert_buffer = NULL;

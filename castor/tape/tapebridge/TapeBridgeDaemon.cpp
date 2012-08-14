@@ -47,7 +47,8 @@
 //------------------------------------------------------------------------------
 castor::tape::tapebridge::TapeBridgeDaemon::TapeBridgeDaemon()
   throw(castor::exception::Exception) :
-  castor::server::BaseDaemon("tapebridged") {
+  castor::server::BaseDaemon("tapebridged"),
+  m_vdqmRequestHandlerThreadPool(0) {
 }
 
 

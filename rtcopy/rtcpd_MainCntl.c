@@ -1134,7 +1134,7 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
   int jobID = 0;
   int status = 0;
   int rc = 0;
-  int VolReqID;
+  int VolReqID = -1;
   int client_uid = -1;
   int client_gid = -1;
   char client_host[CA_MAXHOSTNAMELEN+1];
@@ -2365,7 +2365,6 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                      "Message", TL_MSG_PARAM_STR, "malloc",
                      "Error"  , TL_MSG_PARAM_STR, sstrerror(errno) );
-    free(clientHostname);
     return(-1);
   }
 

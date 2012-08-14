@@ -786,7 +786,8 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                         tape_list_t *tape,
                         file_list_t *file) {
     int rc, irc, status, i, j, blksiz, lrecl, save_serrno;
-    int nb_bytes, proc_err, severity, last_errno, SendStartSignal;
+    int last_errno = 0;
+    int nb_bytes, proc_err, severity, SendStartSignal;
     register int Uformat;
     register int debug = Debug;
     register int convert, concat;

@@ -129,6 +129,7 @@ castor::db::ora::OraJobSvc::OraJobSvc(const std::string name) :
   OraCommonSvc(name),
   m_getUpdateStartStatement(0),
   m_putStartStatement(0),
+  m_putDoneStartStatement(0),
   m_disk2DiskCopyStartStatement(0),
   m_disk2DiskCopyDoneStatement(0),
   m_disk2DiskCopyFailedStatement(0),

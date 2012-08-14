@@ -41,28 +41,6 @@ castor::tape::tapebridge::PendingMigrationsStore::PendingMigrationsStore(
 
 
 //-----------------------------------------------------------------------------
-// Copy constructor
-//-----------------------------------------------------------------------------
-castor::tape::tapebridge::PendingMigrationsStore::PendingMigrationsStore(
-  PendingMigrationsStore &other):
-  m_maxBytesBeforeFlush(other.m_maxBytesBeforeFlush),
-  m_maxFilesBeforeFlush(other.m_maxFilesBeforeFlush) {
-  // Should never be called, therefore do nothing
-}
-
-
-//-----------------------------------------------------------------------------
-// Assignment operator
-//-----------------------------------------------------------------------------
-castor::tape::tapebridge::PendingMigrationsStore
-  &castor::tape::tapebridge::PendingMigrationsStore::operator=(
-  const PendingMigrationsStore&) {
-  // Should never be called, therefore do nothing
-  return *this;
-}
-
-
-//-----------------------------------------------------------------------------
 // receivedRequestToMigrateFile
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::PendingMigrationsStore::

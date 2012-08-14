@@ -70,7 +70,7 @@ static int rtcp_Transfer(SOCKET *s,
   char vmsopt_dummy[RTCP_VMSOPTLEN+1];
   char *hdrbuf, *buf, *tmp;
   char *p,unit[CA_MAXUNMLEN+1];
-  int magic, reqtype, len, dummyInt;
+  int magic, reqtype, len, dummyInt = 0;
   int rc, save_serrno;
 
   if ( s == NULL || *s == INVALID_SOCKET ) {

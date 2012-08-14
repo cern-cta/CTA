@@ -704,7 +704,8 @@ int srsymlink(int s,
   char name1[MAXFILENAMSIZE];
   char name2[MAXFILENAMSIZE];
   int rcode      ;
-  int uid,gid;
+  int uid = 0    ;
+  int gid = 0    ;
 
   p= rqstbuf + 2*WORDSIZE;
   unmarshall_LONG(p, len);
@@ -827,7 +828,8 @@ int srreadlink(int s,
   char path[MAXFILENAMSIZE];        /* link file path to read         */
   char lpath[MAXFILENAMSIZE];       /* link returned by readlink()    */
   int rcode      ;
-  int uid,gid    ;                  /* Requestor's uid & gid          */
+  int uid = 0    ;
+  int gid = 0    ;                  /* Requestor's uid & gid          */
 
   (void)rt;
   p= rqstbuf + 2*WORDSIZE;
@@ -1411,6 +1413,7 @@ int     srlstat(int     s,
   char user[CA_MAXUSRNAMELEN+1];
   int uid,gid;
 
+  memset(&statbuf,'\0',sizeof(statbuf));
   p= rqstbuf + 2*WORDSIZE;
   unmarshall_LONG(p,len);
   if ( (status = srchkreqsize(s,p,len)) == -1 ) {
@@ -1483,7 +1486,6 @@ int     srlstat(int     s,
           log(LOG_ERR,"rlstat(): uid %d not allowed to stat()\n",uid);
         else
           log(LOG_ERR,"rlstat(): failed at check_user_perm(), rcode %d\n",rcode);
-        memset(&statbuf,'\0',sizeof(statbuf));
         status = rcode;
       } else {
         char ofilename[MAXFILENAMSIZE];
@@ -1535,6 +1537,7 @@ int     srstat(int     s,
   char user[CA_MAXUSRNAMELEN+1];
   int uid,gid;
 
+  memset(&statbuf, 0, sizeof(statbuf));  
   p= rqstbuf + 2*WORDSIZE;
   unmarshall_LONG(p,len);
   if ( (status = srchkreqsize(s,p,len)) == -1 ) {
@@ -1837,6 +1840,7 @@ int  srstatfs(int     s)
   char path[MAXFILENAMSIZE];
   struct rfstatfs statfsbuf;
 
+  memset(&statfsbuf, 0, sizeof(statfsbuf));  
   p= rqstbuf + 2*WORDSIZE;
   unmarshall_LONG(p,len);
   if ( (status = srchkreqsize(s,p,len)) == -1 ) {
@@ -1895,9 +1899,10 @@ int  sropen(int     s,
   char       *p;
   int        len;
   int         fd = -1;
-  LONG    flags, mode;
+  LONG    flags = 0;
+  LONG    mode;
   int     uid,gid;
-  WORD    mask, ftype, passwd, mapping;
+  WORD    mask, ftype, passwd, mapping = 0;
   char    account[MAXACCTSIZE];           /* account string       */
   char    user[CA_MAXUSRNAMELEN+1];                       /* User name            */
   char    reqhost[MAXHOSTNAMELEN];
@@ -3505,7 +3510,7 @@ int  sropen_v3(int     s,
   int  fd = -1;
   LONG flags, mode;
   int uid,gid;
-  WORD mask, ftype, passwd, mapping;
+  WORD mask, ftype, passwd, mapping = 0;
   char account[MAXACCTSIZE];           /* account string       */
   char user[CA_MAXUSRNAMELEN+1];       /* User name            */
   char reqhost[MAXHOSTNAMELEN];
@@ -3530,6 +3535,7 @@ int  sropen_v3(int     s,
   ctrl_sock = s;
   first_write = 1;
   first_read = 1;
+  memset(&sin, 0, sizeof(sin));
   /* Init myinfo to zeros */
   myinfo.readop = myinfo.writop = myinfo.flusop = myinfo.statop = myinfo.seekop
     = myinfo.presop = 0;
@@ -3753,7 +3759,6 @@ int  sropen_v3(int     s,
       }
       log(LOG_DEBUG, "data socket created fd=%d\n", data_s);
 
-      memset(&sin, 0, sizeof(sin));
       sin.sin_addr.s_addr = htonl(INADDR_ANY);
       sin.sin_family = AF_INET;
 

@@ -225,6 +225,7 @@ int     srlstat64(int     s,
   char   user[CA_MAXUSRNAMELEN+1];
   int    uid,gid;
 
+  memset(&statbuf,'\0',sizeof(statbuf));
   p= rqstbuf + 2*WORDSIZE;
   unmarshall_LONG(p,len);
   if ( (status = srchkreqsize(s,p,len)) == -1 ) {
@@ -295,7 +296,6 @@ int     srlstat64(int     s,
           log(LOG_ERR, "srlstat64: uid %d not allowed to stat()\n", uid);
         else
           log(LOG_ERR, "srlstat64: failed at check_user_perm(), rcode %d\n", rcode);
-        memset(&statbuf,'\0',sizeof(statbuf));
         status = rcode;
       }
       else {
@@ -352,6 +352,7 @@ int     srstat64(int     s,
   char   user[CA_MAXUSRNAMELEN+1];
   int    uid,gid;
 
+  memset(&statbuf,'\0',sizeof(statbuf));
   p= rqstbuf + 2*WORDSIZE;
   unmarshall_LONG(p,len);
   if ( (status = srchkreqsize(s,p,len)) == -1 ) {
@@ -427,7 +428,6 @@ int     srstat64(int     s,
           log(LOG_ERR, "srstat64: uid %d not allowed to stat()\n", uid);
         else
           log(LOG_ERR, "srstat64: failed at check_user_perm(), rcode %d\n", rcode);
-        memset(&statbuf,'\0',sizeof(statbuf));
         status = rcode;
       }
       else  {
@@ -480,14 +480,15 @@ int  sropen64(int     s,
   char    *p;
   int     len;
   int     replen;
-  int     fd;
-  LONG    flags, mode;
+  int     fd = -1;
+  LONG    flags = 0;
+  LONG    mode;
   int     uid,gid;
   WORD    mask, ftype, passwd, mapping;
   char    account[MAXACCTSIZE];           /* account string            */
   char    user[CA_MAXUSRNAMELEN+1];                       /* User name                 */
   char    reqhost[MAXHOSTNAMELEN];
-  off64_t offsetin, offsetout;
+  off64_t offsetin, offsetout = 0;
   int        sock;
   char tmpbuf[21], tmpbuf2[21];
 
@@ -660,7 +661,6 @@ int  sropen64(int     s,
           perm_array[2] = NULL;
 
           errno = 0;
-          fd = -1;
           if (forced_filename!=NULL || !check_path_whitelist(host, pfn, perm_array, ofilename, sizeof(ofilename),1)) {
             fd = open64((forced_filename!=NULL)?pfn:ofilename, ntohopnflg(flags),
                         ((forced_filename != NULL) && (((ntohopnflg(flags)) & (O_WRONLY|O_RDWR)) != 0)) ? 0644 : mode);
@@ -1391,7 +1391,7 @@ int  sropen64_v3(int         s,
   extern int max_rcvbuf;
   extern int max_sndbuf;
   int      yes;                          /* Socket option value  */
-  off64_t  offsetout;                    /* Offset               */
+  off64_t  offsetout = 0;                /* Offset               */
   char     tmpbuf[21];
   struct timeval tv;
   fd_set read_fds;
@@ -1401,6 +1401,7 @@ int  sropen64_v3(int         s,
   data_sock   = -1;
   first_write = 1;
   first_read  = 1;
+  memset(&sin, 0, sizeof(sin));
   /* Init myinfo to zeros */
   myinfo.readop = myinfo.writop = myinfo.flusop = myinfo.statop = myinfo.seekop
     = myinfo.presop = 0;
@@ -1695,7 +1696,6 @@ int  sropen64_v3(int         s,
       }
       log(LOG_DEBUG, "ropen64_v3: data socket created fd=%d\n", data_s);
 
-      memset(&sin, 0, sizeof(sin));
       sin.sin_addr.s_addr = htonl(INADDR_ANY);
       sin.sin_family = AF_INET;
 

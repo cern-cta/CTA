@@ -51,8 +51,11 @@
 //------------------------------------------------------------------------------
 castor::io::AbstractSocket::AbstractSocket(int socket) throw () :
   m_socket(socket),
+  m_reusable(true),
   m_timeout(DEFAULT_SOCKET_NETTIMEOUT),
-  m_connTimeout(DEFAULT_SOCKET_CONNTIMEOUT) {}
+  m_connTimeout(DEFAULT_SOCKET_CONNTIMEOUT) {
+  m_saddr = buildAddress(0);
+}
 
 //------------------------------------------------------------------------------
 // constructor

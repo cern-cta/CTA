@@ -387,7 +387,7 @@ void castor::db::ora::OraCnvSvc::terminateStatement(oracle::occi::Statement* ora
 //-------------------------------------------------------------------------------
 //  handleException
 //-------------------------------------------------------------------------------
-void castor::db::ora::OraCnvSvc::handleException(std::exception& e) {
+void castor::db::ora::OraCnvSvc::handleException(std::exception& e) throw() {
   int errcode = ((oracle::occi::SQLException&)e).getErrorCode();
   if (errcode == 28    || errcode == 3113 || errcode == 3114  ||
       errcode == 32102 || errcode == 3135 || errcode == 12170 ||

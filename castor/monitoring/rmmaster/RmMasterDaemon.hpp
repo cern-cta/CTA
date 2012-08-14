@@ -74,9 +74,6 @@ namespace castor {
 
       private:
 
-        /// The shared memory area identifier
-        int m_smemoryId;
-
         /// The shared memory area
         castor::monitoring::ClusterStatus* m_clusterStatus;
 

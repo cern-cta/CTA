@@ -45,7 +45,8 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::server::BaseDaemon::BaseDaemon(const std::string serverName) :
-  castor::server::BaseServer(serverName) {}
+  castor::server::BaseServer(serverName),
+  m_signalMutex(0) {}
 
 
 //------------------------------------------------------------------------------

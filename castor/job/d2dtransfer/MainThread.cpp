@@ -41,7 +41,9 @@
 //-----------------------------------------------------------------------------
 castor::job::d2dtransfer::MainThread::MainThread(int argc, char *argv[])
   throw(castor::exception::Exception) :
+  m_jobSvc(0),
   m_mover(0),
+  m_resHelper(0),
   m_protocol("rfio"),
   m_requestUuid(nullCuuid),
   m_subRequestUuid(nullCuuid),

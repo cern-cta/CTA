@@ -336,6 +336,7 @@ void castor::db::ora::OraGCSvc::filesDeleted
           if (serrno != ENOENT) {
             if (!strcmp((char *)errBuf, "")) {
               strncpy((char *)errBuf, sstrerror(serrno), sizeof(errBuf));
+              errBuf[sizeof(errBuf)-1] = 0;
             }
             // "Error caught when calling Cns_getpath. This file won't be
             //  deleted from the nameserver when it should have been"

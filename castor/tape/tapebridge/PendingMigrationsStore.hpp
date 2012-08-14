@@ -316,11 +316,13 @@ private:
 
   /**
    * Private copy-constructor to prevent copies being made.
+   * Not implemented so that it cannot be called
    */
   PendingMigrationsStore(PendingMigrationsStore &);
 
   /**
    * Private assignment operator to prevent assignments.
+   * Not implemented so that it cannot be called
    */
   PendingMigrationsStore &operator=(const PendingMigrationsStore&);
 

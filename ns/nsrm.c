@@ -108,7 +108,7 @@ int removepath(char *path)
   char *p;
   char fullpath[CA_MAXPATHLEN+1];
   struct Cns_filestat statbuf;
-  int returnCode;
+  int returnCode = 0;
 
   /* Expand the path */
   if (path[0] != '/' && strstr (path, ":/") == NULL) {

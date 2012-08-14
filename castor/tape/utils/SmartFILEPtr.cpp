@@ -46,18 +46,6 @@ castor::tape::utils::SmartFILEPtr::SmartFILEPtr(FILE *const file) throw() :
 
 
 //-----------------------------------------------------------------------------
-// copy-constructor
-//-----------------------------------------------------------------------------
-castor::tape::utils::SmartFILEPtr::SmartFILEPtr(const SmartFILEPtr &) throw() {
-
-  // This code is never executed because the copy-constructor is private and
-  // should never be called by another method of this class.
-
-  // Do nothing
-}
-
-
-//-----------------------------------------------------------------------------
 // reset
 //-----------------------------------------------------------------------------
 void castor::tape::utils::SmartFILEPtr::reset(FILE *const file = NULL)

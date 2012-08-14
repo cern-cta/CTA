@@ -33,7 +33,7 @@
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::metrics::UpdateThread::UpdateThread()
+castor::metrics::UpdateThread::UpdateThread() : m_t0(0)
 {
   m_sampling = DEFAULT_SAMPLING_INTERVAL;
   char* sampling = getconfent("Metrics", "SamplingInterval", 0);

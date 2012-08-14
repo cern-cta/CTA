@@ -89,7 +89,7 @@ int   srxyopen(int     s,
   int filen ;    /* file name length */
   int     status ;   /* Status  */
   char    user[CA_MAXUSRNAMELEN+1];
-  int     passwd,mapping;
+  int     passwd,mapping = 0;
   char    reqhost[MAXHOSTNAMELEN];
   int sock ;
 

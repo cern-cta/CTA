@@ -174,7 +174,8 @@ int list_dir(char *dir,
 {
   RDIR *dirp;
   struct stat64 st;
-  int rc,i,fd;
+  int rc = 0;
+  int i,fd;
   struct dirent *de;
   char modestr[11];
   char t_creat[14];

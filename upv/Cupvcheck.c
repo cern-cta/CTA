@@ -34,7 +34,7 @@ int main(int argc,char **argv)
   char tgt[CA_MAXREGEXPLEN + 1];
   char usr[CA_MAXUSRNAMELEN + 1];
   char grp[MAXGRPNAMELEN + 1];
-  int priv;
+  int priv = -1;
 
   src[0]=0;
   tgt[0]=0;

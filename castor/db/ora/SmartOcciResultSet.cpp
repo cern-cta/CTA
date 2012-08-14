@@ -62,37 +62,6 @@ castor::db::ora::SmartOcciResultSet::SmartOcciResultSet(
 
 
 //-----------------------------------------------------------------------------
-// copy-constructor
-//-----------------------------------------------------------------------------
-castor::db::ora::SmartOcciResultSet::SmartOcciResultSet(
-  const SmartOcciResultSet &obj) throw() :
-  m_statement(obj.m_statement),
-  m_resultSet(obj.m_resultSet) {
-  
-  // This code is never executed because the copy-constructor is private and
-  // should never be called by another method of this class.
-
-  // Do nothing
-}
-
-
-//-----------------------------------------------------------------------------
-// assignment-operator
-//-----------------------------------------------------------------------------
-castor::db::ora::SmartOcciResultSet
-  &castor::db::ora::SmartOcciResultSet::operator=(SmartOcciResultSet&)
-  throw() {
-  
-  // This code is never executed because the assignment-operator is private and
-  // should never be called by another method of this class
-
-  // Do nothing
-
-  return *this;
-}
-
-
-//-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
 castor::db::ora::SmartOcciResultSet::~SmartOcciResultSet() throw() {

@@ -90,7 +90,7 @@ void castor::stager::daemon::JobSvcThread::handleStartRequest
   castor::stager::SubRequest *subreq = 0;
   castor::stager::DiskCopy *dc = 0;
   castor::stager::StartRequest *sReq;
-  bool emptyFile;
+  bool emptyFile = false;
   Cuuid_t suuid = nullCuuid;
   castor::rh::GetUpdateStartResponse res;
   bool failed = false;

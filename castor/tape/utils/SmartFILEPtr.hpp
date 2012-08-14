@@ -111,6 +111,7 @@ private:
   /**
    * Private copy-constructor to prevent users from trying to create a new
    * copy of an object of this class.
+   * Not implemented so that it cannot be called
    */
   SmartFILEPtr(const SmartFILEPtr &obj) throw();
 
