@@ -28,7 +28,7 @@
 #include "h/osdep.h"
 
 /**
- * Returns true if the rtpcd daemon has been configured to reuse drive mounts
+ * Returns true if the rtcpd daemon has been configured to reuse drive mounts
  * where possible.
  *
  * The rtcpd daemon has been configured to reuse drive mounts if the
