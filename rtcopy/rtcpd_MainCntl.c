@@ -2338,7 +2338,12 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
   /* tapeBridgeClientInfo2MsgBody is set to a meaningful value if the the */
   /* client of rtcpd is the tape-bridge daemon (see clientIsTapeBridge)  */
   tapeBridgeClientInfo2MsgBody_t tapeBridgeClientInfo2MsgBody;
-  int tapeNeedsToBeReleasedAtEndOfSession = 0;
+  /* tapeNeedsToBeReleasedAtEndOfSession needs to be a static variable    */
+  /* because its address is passed from the main thread to the tape IO    */
+  /* thread.  Making the variable static avoids the possibility of memory */
+  /* corruption if this function ends prematurely before the main thread  */
+  /* calling it has joined with the tape IO thread.                       */
+  static int tapeNeedsToBeReleasedAtEndOfSession = 0;
   char clientHostname[CA_MAXHOSTNAMELEN+1];
 
   memset(&tapeBridgeClientInfo2MsgBody, '\0',
