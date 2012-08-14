@@ -40,6 +40,7 @@ int Cinitdaemon(char *name,
         if ( wait4child != NULL ) {
                 sa.sa_handler = wait4child;
                 sa.sa_flags = SA_RESTART;
+                sa.sa_restorer = NULL;
                 sigaction (SIGCHLD, &sa, NULL);
         }
         return (maxfds);
