@@ -2365,7 +2365,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                      "Message", TL_MSG_PARAM_STR, "malloc",
                      "Error"  , TL_MSG_PARAM_STR, sstrerror(errno) );
-    free(tapeNeedsToBeReleasedAtEndOfSession);
+    free(clientHostname);
     return(-1);
   }
 
