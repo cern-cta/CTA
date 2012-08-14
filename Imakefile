@@ -33,7 +33,6 @@ include LOCAL_PATH/h/Makefile
 include LOCAL_PATH/client/src/stager/Makefile
 include LOCAL_PATH/rfio/Makefile
 include LOCAL_PATH/tape/Makefile
-include LOCAL_PATH/logprocessor/Makefile
 include LOCAL_PATH/vdqm/Makefile
 include LOCAL_PATH/castor/Makefile
 include LOCAL_PATH/security/Makefile
@@ -46,4 +45,4 @@ include LOCAL_PATH/common/Makefile
 include LOCAL_PATH/gridftp2/Makefile
 include LOCAL_PATH/shlib/Makefile
 include LOCAL_PATH/tapebridge/Makefile
-include LOCAL_PATH/cockpit/Makefile
+include LOCAL_PATH/monitoring/Makefile
