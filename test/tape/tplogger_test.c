@@ -161,14 +161,14 @@ int main( void )
 
         err = tl_init_handle( &tl, "dlf" );
         if( 0 != err ) {
-                printf( "unable to init handle: err=%d, tlp=%p\n", err, tl );
+                printf( "unable to init handle: err=%d, tlp=%p\n", err, &tl );
                 goto err_out;
         }        
         test_tplogger( &tl );
 
         err = tl_init_handle( &tl, "stdio" );
         if( 0 != err ) {
-                printf( "unable to init handle: err=%d, tlp=%p\n", err, tl );
+                printf( "unable to init handle: err=%d, tlp=%p\n", err, &tl );
                 goto err_out;
         }
         test_tplogger( &tl );

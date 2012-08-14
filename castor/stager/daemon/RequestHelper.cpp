@@ -75,6 +75,7 @@ namespace castor {
             subrequestUuid = nullCuuid;
           }
           memset(&cnsFileid, 0, sizeof(cnsFileid));
+          memset(&cnsFilestat, 0, sizeof(cnsFilestat));
         }
         catch(castor::exception::Exception& e){
           // should never happen: the db service is initialized in the main as well

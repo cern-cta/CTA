@@ -276,7 +276,6 @@ int splitItemStr(char *itemStr,
     *itemArray = NULL;
     return(0);
   }
-  tmpStr = strdup(itemStr);
   if ( itemArray == NULL ) {
     serrno = errno;
     return(-1);
@@ -286,6 +285,7 @@ int splitItemStr(char *itemStr,
     serrno = errno;
     return(-1);
   }
+  tmpStr = strdup(itemStr);
   *nbItems = tmpNbItems;
   p = strtok(tmpStr,itemDelimiter);
   for (i=0; i<tmpNbItems; i++) {
@@ -483,7 +483,6 @@ void *svcClassProbe(
     log(LOG_ERR,"svcClassProbe() thread started without service class???\n");
     return(NULL);
   }
-  mySvcClass = strdup((char *)arg);
   myRootPath  = (char *)malloc(strlen("rfio://") +
                                strlen(stageHost) + strlen("/") +
                                strlen("?svcClass=") + strlen(mySvcClass) +
@@ -496,6 +495,7 @@ void *svcClassProbe(
     log(LOG_ERR,"malloc(): %s\n",sstrerror(errno));
     return(NULL);
   }
+  mySvcClass = strdup((char *)arg);
   sprintf(myRootPath,"rfio://%s/?svcClass=%s&path=%s/c2probe",
           stageHost,mySvcClass,directoryName);
   rc = rfio_mkdir(myRootPath,0755);
@@ -521,16 +521,22 @@ void *svcClassProbe(
       mySvcClass,myRootPath);
   if ( (baseName = (char *)malloc(256)) == NULL ) {
     log(LOG_ERR,"svcClassProbe(%s) malloc(): %s\n",mySvcClass,sstrerror(errno));
+    free(mySvcClass);
     return(NULL);
   }
   if ( (myWriteBuffer = (char *)malloc(bufferSize)) == NULL ) {
     log(LOG_ERR,"svcClassProbe(%s) malloc(%d): %s\n",mySvcClass,
         bufferSize,sstrerror(errno));
+    free(baseName);
+    free(mySvcClass);
     return(NULL);
   }
   if ( (myReadBuffer = (char *)malloc(bufferSize)) == NULL ) {
     log(LOG_ERR,"svcClassProbe(%s) malloc(%d): %s\n",mySvcClass,
         bufferSize,sstrerror(errno));
+    free(myWriteBuffer);
+    free(baseName);
+    free(mySvcClass);
     return(NULL);
   }
 

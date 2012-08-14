@@ -81,7 +81,7 @@ typedef  char*          bitvct; /* bit vector type definition           */
 				  INC_PTR(ptr,BYTESIZE); \
 				} 
 
-#define unmarshall_BYTE(ptr,n)  { BYTE n_; \
+#define unmarshall_BYTE(ptr,n)  { BYTE n_ = 0; \
 				  (void) memcpy(BYTEADDR(n_),(ptr),BYTESIZE); \
 				  n = n_; \
 				  INC_PTR(ptr,BYTESIZE); \
@@ -150,7 +150,7 @@ EXTERN_C int _unmarshall_STRINGN (char **, char*, int);
 					  INC_PTR(ptr,LONGSIZE); \
 					}
 
-#define  unmarshall_HYPER(ptr,n)        { U_HYPER u_; \
+#define  unmarshall_HYPER(ptr,n)        { U_HYPER u_ = 0; \
 					  LONG n_ = 0;  \
 					  (void) memcpy(LONGADDR(n_),(ptr),LONGSIZE); \
 					  *((LONG *)&(u_)) = ntohl((unsigned long)(n_)); \

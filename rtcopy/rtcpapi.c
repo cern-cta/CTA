@@ -1375,7 +1375,8 @@ int rtcpc_sendReqList(
                       rtcpc_sockets_t **socks,
                       tape_list_t *tape
                       ) {
-  int reqID, rc, tStartRequest, local_severity, save_serrno = 0;
+  int reqID, tStartRequest, local_severity, save_serrno = 0;
+  int rc = 0;
   tape_list_t *tl;
   file_list_t *fl;
   rtcpTapeRequest_t *tapereq;

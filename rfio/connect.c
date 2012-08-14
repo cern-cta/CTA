@@ -48,6 +48,7 @@ int rfio_nodeHasPort(char *node, char *host, int *port) {
 
   pos = strchr(nodecp, ':');
   if (pos == NULL) {
+    free(nodecp);
     return 0;
   }
 

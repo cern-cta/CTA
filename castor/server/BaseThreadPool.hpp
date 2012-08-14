@@ -51,12 +51,6 @@ namespace castor {
   public:
 
     /**
-     * Empty constructor
-     */
-    BaseThreadPool() : 
-       BaseObject(), m_poolName(""), m_thread(0) {};
-
-    /**
      * Constructor
      * @param poolName the name of this pool
      * @param thread the user code to be run

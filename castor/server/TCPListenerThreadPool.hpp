@@ -50,11 +50,6 @@ namespace castor {
     public:
 
       /**
-       * Empty constructor
-       */
-      TCPListenerThreadPool() throw() : ListenerThreadPool() {};
-
-      /**
        * Constructor for a TCP listener with a fixed number of threads.
        * @param poolName, thread as in BaseThreadPool
        * @param listenPort the port to be used by the listening socket.

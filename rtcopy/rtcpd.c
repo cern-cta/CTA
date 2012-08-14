@@ -154,18 +154,10 @@ int rtcpd_main() {
                              "func"   , TL_MSG_PARAM_STR, "rtcpd_main",
                              "Message", TL_MSG_PARAM_STR, "main() rtcpd_InitNW()",
                              "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
+            free(request_socket);
             return(1);
     }
 
-    if ( rc == -1 ) {
-        rtcp_log(LOG_ERR,"main() Ctape_InitDummy(): %s\n",
-                 sstrerror(serrno));
-        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
-                         "func"   , TL_MSG_PARAM_STR, "rtcpd_main",
-                         "Message", TL_MSG_PARAM_STR, "main() Ctape_InitDummy()",
-                         "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
-        return(1);
-    }
     /*
      * Go to working directory
      */
@@ -176,6 +168,7 @@ int rtcpd_main() {
                          "func"   , TL_MSG_PARAM_STR, "rtcpd_main",
                          "Message", TL_MSG_PARAM_STR, "main() ChdirWorkdir()",
                          "Error"  , TL_MSG_PARAM_STR, sstrerror(errno) );
+        free(request_socket);
         return(1);
     }
 

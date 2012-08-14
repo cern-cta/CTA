@@ -167,6 +167,7 @@ rfio_xyopen_ext(char *name,
 
   if (gethostname(localhost, sizeof(localhost)) < 0)      {
     TRACE(2, "rfio", "gethostname () failed.");
+    free((char *)fd);
     return(-1);
   }
 
@@ -395,10 +396,13 @@ void xyopn_(char    *fname,
   }
   if ((node = malloc((unsigned) fnodel+1)) == NULL) {
     *firc = -errno;
+    free(name);
     return;
   }
   if ((chopt = malloc((unsigned) fchoptl+1)) == NULL) {
     *firc = -errno;
+    free(node);
+    free(name);
     return;
   }
 

@@ -121,6 +121,7 @@ int generateData(char *fileName,
     log(LOG_ERR,
         "open(/dev/urandom): %s, switch to random()\n",
         strerror(errno));
+    free(buffer);
     return(-1);
   } else {
     log(LOG_INFO,"read %d*%d bytes from /dev/urandom\n",

@@ -657,7 +657,7 @@ int main(int argc,
 		if (totalread != savsize) {
 			fprintf(stderr,"Got %s bytes instead of %s !?\n", u64tostr((u_signed64) totalread, tmpbuf, 0), u64tostr((u_signed64) savsize, tmpbuf2, 0));
 		} else {
-			fprintf(stdout,"Got %s bytes OK\n", u64tostr((u_signed64) totalread, tmpbuf, 0), u64tostr((u_signed64) savsize, tmpbuf2, 0));
+			fprintf(stdout,"Got %s bytes OK\n", u64tostr((u_signed64) totalread, tmpbuf, 0));
 		}
 	}
 	fprintf(stdout,"OK\n");

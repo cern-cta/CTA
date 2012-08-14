@@ -54,7 +54,8 @@ int main(int argc,
 
 void *master_thread(void *arg)
 {
-	int i, j;
+	int i = 0;
+	int j;
 	time_t thistime, newtime;
 	int nassign = 0;
 	int nfailure = 0;

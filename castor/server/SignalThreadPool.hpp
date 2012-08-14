@@ -68,12 +68,6 @@ namespace castor {
   public:
 
     /**
-     * Empty constructor
-     */
-    SignalThreadPool() :
-      BaseThreadPool(), m_poolMutex(-1), m_notified(0) {};
-
-    /**
      * Constructor
      * @param poolName, thread as in BaseThreadPool
      * @param timeout the interval in seconds on which

@@ -664,7 +664,8 @@ static int DiskFileClose(int disk_fd,
                          tape_list_t *tape,
                          file_list_t *file) {
     rtcpFileRequest_t *filereq;
-    int rc, irc, save_rfio_errno, save_serrno, save_errno;
+    int rc = 0;
+    int irc, save_rfio_errno, save_serrno, save_errno;
 
     if ( file == NULL ) return(-1);
     filereq = &file->filereq;

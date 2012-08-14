@@ -2752,16 +2752,14 @@ void check_child_exit()
 			if (tunp->rlsovly_pid == pid) {
                 tunp->rlsovly_pid = 0;
                 if (status) {
-                    if (tunp) {
-                        tplogit (func, "rlstape process %d found dead (jid %d)\n", pid, tunp->jid);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 6,
-                                            "func"   , TL_MSG_PARAM_STR  , func,
-                                            "Message", TL_MSG_PARAM_STR  , "rlstape process found dead",
-                                            "pid"    , TL_MSG_PARAM_INT  , pid,
-                                            "JobID"  , TL_MSG_PARAM_INT  , tunp->jid,
-                                            "vid"    , TL_MSG_PARAM_STR  , tunp->vid,
-                                            "TPVID"  , TL_MSG_PARAM_TPVID, tunp->vid );
-                    }
+                    tplogit (func, "rlstape process %d found dead (jid %d)\n", pid, tunp->jid);
+                    tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 6,
+                                        "func"   , TL_MSG_PARAM_STR  , func,
+                                        "Message", TL_MSG_PARAM_STR  , "rlstape process found dead",
+                                        "pid"    , TL_MSG_PARAM_INT  , pid,
+                                        "JobID"  , TL_MSG_PARAM_INT  , tunp->jid,
+                                        "vid"    , TL_MSG_PARAM_STR  , tunp->vid,
+                                        "TPVID"  , TL_MSG_PARAM_TPVID, tunp->vid );
                     p = getconfent( "TAPE", "CRASHED_RLS_HANDLING", 0 );
                     if (NULL != p) {                                                
 

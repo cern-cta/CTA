@@ -57,10 +57,10 @@ public:
     memset(dgn_reservations, '\0', sizeof(dgn_reservations));
 
     strncpy(dgn_reservations[0].name, "DGN1",
-      sizeof(dgn_reservations[0].name - 1));
+            sizeof(dgn_reservations[0].name) - 1);
     dgn_reservations[0].num = 1;
     strncpy(dgn_reservations[1].name, "DGN2",
-      sizeof(dgn_reservations[1].name - 1));
+            sizeof(dgn_reservations[1].name) - 1);
     dgn_reservations[1].num = 1;
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE(

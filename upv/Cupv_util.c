@@ -193,6 +193,7 @@ int Cupv_parse_privstring(char *privstr) {
     else if (strcmp (p, STR_STAGE_SYSTEM) == 0)
       priv |= P_STAGE_SYSTEM;
     else {
+      free(buf);
       return(-1);
     }
     p = strtok (NULL, STR_SEP);

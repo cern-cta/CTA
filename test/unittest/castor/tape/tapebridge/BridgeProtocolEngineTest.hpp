@@ -545,6 +545,11 @@ public:
   BridgeProtocolEngineTest():
     m_clientListenSockPath("/tmp/clientListenSockForBridgeProtocolEngineTest"),
     m_bridgeListenSockPath("/tmp/brigdeListenSockForBridgeProtocolEngineTest"),
+    m_clientListenSock(0),
+    m_bridgeListenSock(0),
+    m_initialRtcpdSockRtcpdSide(0),
+    m_initialRtcpdSockBridgeSide(0),
+    m_ioControlConnectionSock(0),
     m_cuuid(nullCuuid),
     m_volumeVid("vid"),
     m_volumeDensity("density"),
@@ -564,8 +569,9 @@ public:
       m_driveUnit),
     m_nbFilesOnDestinationTape(2),
     m_legacyTxRx(m_netTimeout),
+    m_engine(0),
     m_volReqId(m_mountTransactionId) {
-    // Do nothing
+    memset(&m_jobRequest, 0, sizeof(m_jobRequest));
   }
 
   void setUp() {

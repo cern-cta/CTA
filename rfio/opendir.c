@@ -217,10 +217,10 @@ RDIR *rfio_opendir_ext(char *dirpath,
         rdp->uid,rdp->gid) ;
   TRACE(2,"rfio","rfio_opendir: account: %s",account) ;
   TRACE(2,"rfio","rfio_opendir: dirname: %s",dirname) ;
-  if (reqhost != NULL && strlen(reqhost) )
+  if ( strlen(reqhost) )
     TRACE(2,"rfio","rfio_opendir: requestor's host: %s",reqhost) ;
   p= rfio_buf ;
-  len= 3*WORDSIZE + LONGSIZE + strlen(account) + strlen(dirname) +strlen(pw->pw_name) + strlen(reqhost) + strlen(vmstr) + 5 ;
+  len= 3*WORDSIZE + LONGSIZE + strlen(account) + strlen(dirname) + strlen(pw->pw_name) + strlen(reqhost) + strlen(vmstr) + 5 ;
   marshall_WORD(p,RFIO_MAGIC) ;
   marshall_WORD(p,RQST_OPENDIR) ;
   marshall_LONG(p,len) ;

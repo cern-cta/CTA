@@ -124,6 +124,7 @@ void cmd_parse(int argc,
           nsfileid.setRequest(&req);
           req.addFiles(&nsfileid);
 	}
+        fclose(infile);
       }
       break;
     case 'r':

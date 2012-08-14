@@ -390,7 +390,9 @@ int main(int argc,
          char **argv)
 {
   int ch, rc, nbParallelOpens = 1, nbLoops = 1, i;
-  char *cmd, *directoryName = NULL, *dumpFileName, *logfile = "";
+  char *cmd, *directoryName = NULL;
+  char *dumpFileName = NULL;
+  char *logfile = "";
   Cuuid_t myCuuid;
   char myCuuidStr[50];
 
@@ -436,12 +438,16 @@ int main(int argc,
     fprintf(stderr,"Number of parallel opens must be >0 (%d)\n",
             nbParallelOpens);
     usage(cmd);
+    free(directoryName);
+    if (NULL != dumpFileName) free(dumpFileName);
     return(0);
   }
 
   baseFileName = (char *)calloc(1,strlen(directoryName)+50);
   if ( baseFileName == NULL ) {
     LOG_ERROR("calloc()");
+    free(directoryName);
+    if (NULL != dumpFileName) free(dumpFileName);
     return(1);
   }
   Cuuid_create(&myCuuid);

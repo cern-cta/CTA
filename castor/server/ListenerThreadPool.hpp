@@ -49,12 +49,6 @@ namespace castor {
   public:
 
     /**
-     * Empty constructor
-     */
-    ListenerThreadPool() throw() : 
-      DynamicThreadPool() {};
-
-    /**
      * Constructor for a listener with a fixed number of threads.
      * @param poolName, thread as in BaseThreadPool
      * @param listenPort the port to be used by the listening socket.

@@ -44,7 +44,7 @@
 // constructor
 //------------------------------------------------------------------------------
 TestThread::TestThread() :
-  m_procTime(0), m_wallTime(0), m_reqCount(0), m_nbThreads(0) {
+  m_procTime(0), m_wallTime(0), m_reqCount(0), m_timeStdDev(0), m_nbThreads(0) {
   m = new castor::server::Mutex(0);
   m_timeStart.tv_usec = 0;
 }

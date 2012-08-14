@@ -46,12 +46,6 @@ namespace castor {
   public:
 
     /**
-     * Empty constructor
-     */
-    AuthListenerThreadPool() throw() : 
-       TCPListenerThreadPool() {};
-
-    /**
      * Inherited constructor, see TCPListenerThreadPool
      */
     AuthListenerThreadPool(const std::string poolName, castor::server::IThread* thread,

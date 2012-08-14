@@ -40,6 +40,10 @@ void help(std::string programName) {
 }
 
 int main(int argc, char** argv) {
+  char c;
+  char* node = 0;
+  bool showAll = false;
+  bool showDeleted = false;
   try {
     // Parse command line
     Coptind = 1; /* Required */
@@ -50,10 +54,6 @@ int main(int argc, char** argv) {
       { "deleted", NO_ARGUMENT, NULL, 'd' },
       { 0, 0, 0, 0}
     };
-    char c;
-    char* node = 0;
-    bool showAll = false;
-    bool showDeleted = false;
     while ((c = Cgetopt_long(argc, argv, "han:d", longopts, NULL)) != -1) {
       switch (c) {
       case 'n':
@@ -134,4 +134,6 @@ int main(int argc, char** argv) {
   } catch (castor::exception::Exception& e) {
     std::cout << e.getMessage().str() << std::endl;
   }
+  // cleanup memory
+  if (0 != node) free(node);
 }

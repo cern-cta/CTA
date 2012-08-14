@@ -68,7 +68,7 @@ char *lun2fn(int lun) {
     }
   }
 
-  for (;(p=fgets(buf, BUFSIZ, fp)) != NULL;)   {
+  for (;(p=fgets(buf, 1024, fp)) != NULL;)   {
     p = strchr(p,'.');
     p1 = strchr(p+1, ':');
     *(p1++)='\0';

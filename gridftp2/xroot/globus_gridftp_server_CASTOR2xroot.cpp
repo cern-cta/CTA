@@ -194,7 +194,7 @@ extern "C" {
     struct stat statbuf;
     int status = 0;
     globus_result_t result;
-    char *pathname;
+    char *pathname = 0;
     char *uuid_path;
 
     GlobusGFSName(globus_l_gfs_CASTOR2xroot_stat);
@@ -202,18 +202,16 @@ extern "C" {
 
     // we will use fullDestPath instead of client "path",
     // and "path" must be in uuid form
-    int uuid_ok = 0;
     if(CASTOR2xroot_handle->use_uuid) {
       uuid_path=stat_info->pathname;
       /* strip any preceding path to isolate only the uuid part; see also CASTOR2int_handle_open */
       while (*uuid_path=='/') uuid_path++;
       if(strcmp(uuid_path,CASTOR2xroot_handle->uuid)==0) {
         pathname = strdup(CASTOR2xroot_handle->fullDestPath);
-        uuid_ok = 1;
       }
     }
     // uuid check has failed
-    if (0 == uuid_ok) {
+    if (0 == pathname) {
       globus_gfs_log_message(GLOBUS_GFS_LOG_INFO,
                              "%s: client and server uuids do not match "
                              "in uuid mode \"%s\" != \"%s\"\n",

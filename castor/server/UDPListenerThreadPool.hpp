@@ -50,11 +50,6 @@ namespace castor {
     public:
 
       /**
-       * Empty constructor
-       */
-      UDPListenerThreadPool() throw() : ListenerThreadPool() {};
-
-      /**
        * Constructor
        * @param poolName, thread as in BaseThreadPool
        * @param listenPort the TCP port to which to attach the ServerSocket.

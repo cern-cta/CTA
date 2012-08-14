@@ -58,6 +58,7 @@ static void
     log(ALIGNEDBUF_LOG_LEVEL,"%s: u=%p a=%p\n", __func__, u, a);
     if ((q = a_map_find_unaligned(a))) {
       log(LOG_ERR,"%s: mapping already exists!\n", __func__);
+      free(p);
       return a;
     }
     if ((q = _a_map_get_tail())) {

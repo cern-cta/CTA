@@ -33,7 +33,8 @@ static void usage(char *cmd, char cmds[][20]) {
 
 int main(int argc, char *argv[]) {
     int rc = 0;
-    int i,j,k;
+    int i = 0;
+    int j,k;
 
     char cmds[][20] =  {"-ping",
                         "-shutdown",

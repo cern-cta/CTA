@@ -74,13 +74,6 @@ namespace castor {
     public:
 
       /**
-       * Empty constructor
-       */
-      DynamicThreadPool() : 
-         BaseThreadPool(), m_producerThread(0),
-         m_initThreads(0), m_maxThreads(0), m_threshold(0) {};
-
-      /**
        * Default Constructor.
        * @param poolName As in BaseThreadPool
        * @param consumerThread The consumer thread, passed to BaseThreadPool

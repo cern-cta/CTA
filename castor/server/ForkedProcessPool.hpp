@@ -48,12 +48,6 @@ namespace castor {
     public:
       
       /**
-       * empty constructor
-       */
-      ForkedProcessPool() :
-        BaseThreadPool() {};
-      
-      /**
        * constructor
        */
       ForkedProcessPool(const std::string poolName,

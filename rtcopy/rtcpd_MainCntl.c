@@ -1266,10 +1266,8 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
             totSz += filereq->bytes_out;
           totFiles++;
 
-          if (filereq) {
-                  Tposition += ((time_t)filereq->TEndPosition -
-                                (time_t)filereq->TStartPosition);
-          }
+          Tposition += ((time_t)filereq->TEndPosition -
+                        (time_t)filereq->TStartPosition);
         }
 
         /* Get the VDQM ID */
@@ -2367,6 +2365,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                      "Message", TL_MSG_PARAM_STR, "malloc",
                      "Error"  , TL_MSG_PARAM_STR, sstrerror(errno) );
+    free(tapeNeedsToBeReleasedAtEndOfSession);
     return(-1);
   }
 

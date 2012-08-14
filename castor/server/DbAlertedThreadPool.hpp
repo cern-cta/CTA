@@ -57,12 +57,6 @@ namespace castor {
   public:
 
     /**
-     * Empty constructor
-     */
-    DbAlertedThreadPool() :
-      BaseThreadPool() {};
-
-    /**
      * Constructor
      * @param poolName as in BaseThreadPool
      * @param thread the thread running the user code. It must

@@ -82,7 +82,7 @@ int getconfent_parser(char **conf_val,
   /* Allocating the necessary space and parsing the string */
   if ((p = strdup(*conf_val)) == NULL) { return -1; }
   (*result) = (char **)calloc((i+1), sizeof(char *));
-  if (result == NULL) { return -1; }
+  if (*result == NULL) { free(p); return -1; }
  
   i = 0 ;
   for (q = strtok_r(p," \t",&last);q != NULL; q = strtok_r(NULL," \t",&last)) { (*result)[i++] = strdup(q); }

@@ -237,6 +237,8 @@ extern "C" {
                 privileges[i].requestType == 0 ? "*" :
                 castor::ObjectsIdStrings[privileges[i].requestType],
                 privileges[i].isGranted ? "Granted" : "Denied");
+        free(user);
+        free(group);
       }
     }
     return 0;

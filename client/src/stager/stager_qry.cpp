@@ -366,6 +366,7 @@ int parseCmdLineFileQuery(int argc, char *argv[],
           args->requests[nbargs].param = (char *)strdup(line);
           nbargs++;
         }
+        fclose(infile);
       }
       break;
     case 'F':
@@ -495,6 +496,7 @@ int checkAndCountArguments(int argc, char *argv[],
         while (fgets(line, sizeof(line), infile) != NULL) {
           (*count)++;
         }
+        fclose(infile);
       }
       break;
     case 's':

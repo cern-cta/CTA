@@ -61,6 +61,7 @@ Cns_opendirxg(char *host, const char *path, const char *guid)
   }
 
   if (path && Cns_selectsrvr (path, thip->server, server, &actual_path))
+    free(dirp);
     return (NULL);
   if (path && actual_path != path)
     actual_server = server;
