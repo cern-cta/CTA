@@ -1,5 +1,5 @@
 COMM
-COMM                      monitoring/Imakefile
+COMM                      monitoring/mae/Imakefile
 COMM
 COMM This file is part of the Castor project.
 COMM See http://castor.web.cern.ch/castor
@@ -17,12 +17,18 @@ COMM You should have received a copy of the GNU General Public License
 COMM along with this program; if not, write to the Free Software
 COMM Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 COMM
+COMM @(#)$RCSfile: Imakefile,v $ $Revision: 1.7 $ $Release$ $Date: 2009/08/18 09:42:54 $ $Author: waldron $
 COMM
-COMM Makefile for the CASTOR2 monitoring tools
+COMM Makefile for the CASTOR2 cockpit
 COMM
 COMM @author Castor Dev team, castor-dev@cern.ch
 
+COMM Package MAE
+InstallSubTree(mae,$(PYTHON_LIBDIR),0755,install)
 
-include LOCAL_PATH/cockpit/Makefile
-include LOCAL_PATH/logprocessor/Makefile
-include LOCAL_PATH/mae/Makefile
+COMM Exec
+InstallTarget(mae-consumer.py,755)
+
+LOGROTATE(castor-mae,install)
+EXAMPLEFILE(mae.conf,/etc/mae,install)
+
