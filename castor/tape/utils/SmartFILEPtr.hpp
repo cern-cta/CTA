@@ -76,14 +76,15 @@ public:
    *      previous owner (obj).
    * </ul>
    */
-  SmartFILEPtr &operator=(SmartFILEPtr& obj) throw();
+  SmartFILEPtr &operator=(SmartFILEPtr& obj)
+    throw(castor::exception::Exception) ;
 
   /**
    * Destructor.
    *
    * Closes the owned FILE pointer if there is one.
    */
-  ~SmartFILEPtr();
+  ~SmartFILEPtr() throw();
 
   /**
    * Returns the owned pointer or NULL if this smart pointer does not own one.

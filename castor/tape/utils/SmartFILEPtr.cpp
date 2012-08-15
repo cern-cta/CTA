@@ -68,7 +68,8 @@ void castor::tape::utils::SmartFILEPtr::reset(FILE *const file = NULL)
 // SmartFILEPtr assignment operator
 //-----------------------------------------------------------------------------
 castor::tape::utils::SmartFILEPtr
-  &castor::tape::utils::SmartFILEPtr::operator=(SmartFILEPtr& obj) throw() {
+  &castor::tape::utils::SmartFILEPtr::operator=(SmartFILEPtr& obj)
+  throw(castor::exception::Exception) {
   
   reset(obj.release());
 
@@ -79,7 +80,7 @@ castor::tape::utils::SmartFILEPtr
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
-castor::tape::utils::SmartFILEPtr::~SmartFILEPtr() {
+castor::tape::utils::SmartFILEPtr::~SmartFILEPtr() throw() {
 
   reset();
 }
