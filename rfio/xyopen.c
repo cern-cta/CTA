@@ -190,6 +190,7 @@ rfio_xyopen_ext(char *name,
     } else {
       if (parserc < 0) {
         END_TRACE();
+        free((char *)fd);
         return(-1);
       }
     }

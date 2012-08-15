@@ -80,7 +80,7 @@ typedef  char*          bitvct; /* bit vector type definition           */
 				  INC_PTR(ptr,BYTESIZE); \
 				} 
 
-#define unmarshall_BYTE(ptr,n)  { BYTE n_; \
+#define unmarshall_BYTE(ptr,n)  { BYTE n_ = 0; \
 				  (void) memcpy(BYTEADDR(n_),(ptr),BYTESIZE); \
 				  n = n_; \
 				  INC_PTR(ptr,BYTESIZE); \

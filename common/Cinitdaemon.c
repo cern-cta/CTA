@@ -13,6 +13,7 @@
 #include <signal.h> 
 #include <errno.h>
 #include <osdep.h>
+#include <string.h>
 #include <serrno.h>
 
 int Cinitdaemon(char *name,

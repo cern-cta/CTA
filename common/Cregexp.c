@@ -420,6 +420,7 @@ Cregexp_t *Cregexp_comp(char *exp)
 					 _Cregexp_dummy,
 					 _Cregexp_code,
 					 _Cregexp_size) == NULL) {
+		free(r);
 		return(NULL);
 	}
 

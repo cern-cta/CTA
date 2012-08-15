@@ -432,6 +432,7 @@ int main(int argc,
   if ( help_flag != 0 || directoryName == NULL ) {
     if ( directoryName == NULL ) fprintf(stderr,"Directory name is required\n");
     usage(cmd);
+    if (NULL != dumpFileName) free(dumpFileName);
     return(0);
   }
   if ( nbParallelOpens <= 0 ) {

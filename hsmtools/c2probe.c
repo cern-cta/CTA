@@ -483,6 +483,7 @@ void *svcClassProbe(
     log(LOG_ERR,"svcClassProbe() thread started without service class???\n");
     return(NULL);
   }
+  mySvcClass = strdup((char *)arg);
   myRootPath  = (char *)malloc(strlen("rfio://") +
                                strlen(stageHost) + strlen("/") +
                                strlen("?svcClass=") + strlen(mySvcClass) +
@@ -493,29 +494,38 @@ void *svcClassProbe(
                                strlen(mySvcClass)+1);
   if ( myRootPath == NULL ) {
     log(LOG_ERR,"malloc(): %s\n",sstrerror(errno));
+    free(mySvcClass);
     return(NULL);
   }
-  mySvcClass = strdup((char *)arg);
   sprintf(myRootPath,"rfio://%s/?svcClass=%s&path=%s/c2probe",
           stageHost,mySvcClass,directoryName);
   rc = rfio_mkdir(myRootPath,0755);
   if ( rc == -1 ) {
     log(LOG_ERR,"rfio_mkdir(%s): %s\n",myRootPath,rfio_serror());
-    if ( rfio_serrno() != EEXIST ) return(NULL);
+    if ( rfio_serrno() != EEXIST ) {
+      free(mySvcClass);
+      return(NULL);
+    }
   }
   sprintf(myRootPath,"rfio://%s/?svcClass=%s&path=%s/c2probe/%s",
           stageHost,mySvcClass,directoryName,stageHost);
   rc = rfio_mkdir(myRootPath,0755);
   if ( rc == -1 ) {
     log(LOG_ERR,"rfio_mkdir(%s): %s\n",myRootPath,rfio_serror());
-    if ( rfio_serrno() != EEXIST ) return(NULL);
+    if ( rfio_serrno() != EEXIST ) {
+      free(mySvcClass);
+      return(NULL);
+    }
   }
   sprintf(myRootPath,"rfio://%s/?svcClass=%s&path=%s/c2probe/%s/%s",
           stageHost,mySvcClass,directoryName,stageHost,mySvcClass);
   rc = rfio_mkdir(myRootPath,0755);
   if ( rc == -1 ) {
     log(LOG_ERR,"rfio_mkdir(%s): %s\n",myRootPath,rfio_serror());
-    if ( rfio_serrno() != EEXIST ) return(NULL);
+    if ( rfio_serrno() != EEXIST ) {
+      free(mySvcClass);
+      return(NULL);
+    }
   }
   log(LOG_INFO,"svcClassProbe(%s) starting with root path %s\n",
       mySvcClass,myRootPath);

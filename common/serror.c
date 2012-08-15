@@ -500,7 +500,6 @@ char *  sstrerror_r(n,buf,buflen)
      char    *buf;
      size_t  buflen;
 {
-  size_t msglen;
   char *tmpstr;
   if ( buf == NULL || buflen <= 0 ) return(NULL);
   memset(buf,'\0',buflen);
@@ -608,17 +607,12 @@ char *  sstrerror_r(n,buf,buflen)
   }
 
   if ( tmpstr != NULL ) {
-    msglen = strlen(tmpstr);
-    if ( msglen >= buflen ) strncpy(buf,tmpstr,buflen-1);
-    else strcpy(buf,tmpstr);
+    strncpy(buf,tmpstr,buflen-1);
   } else {
     /*
      * Unknown error message
      */
-    tmpstr = sys_serrlist[SEMAXERR+1-SEBASEOFF];
-    msglen = strlen(tmpstr);
-    if ( msglen+15 >= buflen ) strncpy(buf,tmpstr,buflen-1);
-    else (void) sprintf(buf,"%s: %d", tmpstr,n);
+    sprintf(buf, "%*s: %10d", (int)buflen-14, sys_serrlist[SEMAXERR+1-SEBASEOFF], n);
   }
   return(buf);
 }

@@ -1271,11 +1271,7 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
         }
 
         /* Get the VDQM ID */
-        if (filereq) {
-                VolReqID = filereq->VolReqID;
-        } else {
-                VolReqID = -1;
-        }
+        VolReqID = filereq->VolReqID;
 
         CLIST_DELETE(nextfile,tmpfile);
         rtcp_log(LOG_DEBUG,"rtcpd_FreeResources() free file element 0x%lx\n",

@@ -142,6 +142,7 @@ int cmd_parse(int argc,
 	  (*reqs)[nbfiles].filename = strdup(line);
 	  nbfiles++;
 	}
+        fclose(infile);
       }
       break;
     case 'S':
@@ -194,6 +195,7 @@ int cmd_countHsmFiles(int argc, char *argv[]) {
 	while (fgets(line, sizeof(line), infile) != NULL) {
 	  nbargs++;;
 	}
+        fclose(infile);
       }
       break;
     default:
