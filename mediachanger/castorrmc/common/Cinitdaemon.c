@@ -38,9 +38,9 @@ int Cinitdaemon(char *name,
         for (c = 3; c < maxfds; c++)
                 close (c);
         if ( wait4child != NULL ) {
+                memset(&sa, 0, sizeof(sa));
                 sa.sa_handler = wait4child;
                 sa.sa_flags = SA_RESTART;
-                sa.sa_restorer = NULL;
                 sigaction (SIGCHLD, &sa, NULL);
         }
         return (maxfds);
