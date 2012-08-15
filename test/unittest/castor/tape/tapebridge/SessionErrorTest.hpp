@@ -102,15 +102,6 @@ public:
       rtcpdError.getErrorScope());
 
     {
-      const SessionError::ErrorScope crazyScopeValue =
-          (SessionError::ErrorScope)12345;
-
-      CPPUNIT_ASSERT_THROW(
-        rtcpdError.setErrorScope(crazyScopeValue),
-        castor::exception::InvalidArgument);
-    }
-
-    {
       const int errorCode = 1;
       rtcpdError.setErrorCode(errorCode);
       CPPUNIT_ASSERT_EQUAL(

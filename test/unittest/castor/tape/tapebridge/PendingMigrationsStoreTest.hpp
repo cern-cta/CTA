@@ -29,6 +29,7 @@
 #include "castor/tape/tapebridge/PendingMigrationsStore.hpp"
 #include "h/Cuuid.h"
 #include "h/rtcpd_constants.h"
+#include "test/unittest/castor/tape/tapebridge/TestingTapeFlushConfigParams.hpp"
 #include "test/unittest/test_exception.hpp"
 
 #include <cppunit/extensions/HelperMacros.h>
@@ -52,10 +53,18 @@ public:
   }
 
   void testFlushEveryNthByte() {
-    const uint64_t maxBytesBeforeFlush = 8;
-    const uint64_t maxFilesBeforeFlush = 20;
-    castor::tape::tapebridge::PendingMigrationsStore store(maxBytesBeforeFlush,
-      maxFilesBeforeFlush);
+    TestingTapeFlushConfigParams tapeFlushConfigParams;
+    tapeFlushConfigParams.setTapeFlushMode(
+      TAPEBRIDGE_ONE_FLUSH_PER_N_FILES,
+      ConfigParamSource::COMPILE_TIME_DEFAULT);
+    tapeFlushConfigParams.setMaxBytesBeforeFlush(
+      8,
+      ConfigParamSource::COMPILE_TIME_DEFAULT);
+    tapeFlushConfigParams.setMaxFilesBeforeFlush(
+      20,
+      ConfigParamSource::COMPILE_TIME_DEFAULT);
+    castor::tape::tapebridge::PendingMigrationsStore store(
+      tapeFlushConfigParams);
     const uint32_t maxFseq = 1024;
 
     // Tell the pending-migrations store all files are pending write-to-tape.
@@ -88,7 +97,7 @@ public:
         fileWrittenWithoutFlush(store, notification));
 
       // If data should be flushed to tape
-      if(0 == i % maxBytesBeforeFlush) {
+      if(0 == i % tapeFlushConfigParams.getMaxBytesBeforeFlush().getValue()) {
         castor::tape::tapebridge::FileWrittenNotificationList
           notfications;
 
@@ -99,12 +108,13 @@ public:
         CPPUNIT_ASSERT_EQUAL_MESSAGE(
           "size of result of store.dataFlushedToTape",
           (castor::tape::tapebridge::FileWrittenNotificationList::
-          size_type)maxBytesBeforeFlush,
+          size_type)tapeFlushConfigParams.getMaxBytesBeforeFlush().getValue(),
           notfications.size());
 
         // Check the tape-file sequence-numbers of the flushed files
         {
-          int32_t k = i-maxBytesBeforeFlush+1;
+          int32_t k = i -
+            tapeFlushConfigParams.getMaxBytesBeforeFlush().getValue() + 1;
           for(castor::tape::tapebridge::FileWrittenNotificationList::
             const_iterator itor = notfications.begin();
             itor != notfications.end(); itor++) {
@@ -128,10 +138,18 @@ public:
   } // testFlushEveryNthFile()
 
   void testFlushEveryNthFile() {
-    const uint64_t maxBytesBeforeFlush = 8589934592UL;
-    const uint64_t maxFilesBeforeFlush = 4;
-    castor::tape::tapebridge::PendingMigrationsStore store(maxBytesBeforeFlush,
-      maxFilesBeforeFlush);
+    TestingTapeFlushConfigParams tapeFlushConfigParams;
+    tapeFlushConfigParams.setTapeFlushMode(
+      TAPEBRIDGE_ONE_FLUSH_PER_N_FILES,
+      ConfigParamSource::COMPILE_TIME_DEFAULT);
+    tapeFlushConfigParams.setMaxBytesBeforeFlush(
+      8589934592UL,
+      ConfigParamSource::COMPILE_TIME_DEFAULT);
+    tapeFlushConfigParams.setMaxFilesBeforeFlush(
+      4,
+      ConfigParamSource::COMPILE_TIME_DEFAULT);
+    castor::tape::tapebridge::PendingMigrationsStore store(
+      tapeFlushConfigParams);
     const uint32_t maxFseq = 1024;
 
     // Tell the pending-migrations store all files are pending write-to-tape.
@@ -164,7 +182,7 @@ public:
         fileWrittenWithoutFlush(store, notification));
 
       // If data should be flushed to tape
-      if(0 == i % maxFilesBeforeFlush) {
+      if(0 == i % tapeFlushConfigParams.getMaxFilesBeforeFlush().getValue()) {
         castor::tape::tapebridge::FileWrittenNotificationList
           notfications;
 
@@ -175,12 +193,13 @@ public:
         CPPUNIT_ASSERT_EQUAL_MESSAGE(
           "size of result of store.dataFlushedToTape",
           (castor::tape::tapebridge::FileWrittenNotificationList::
-          size_type)maxFilesBeforeFlush,
+          size_type)tapeFlushConfigParams.getMaxFilesBeforeFlush().getValue(),
           notfications.size());
 
         // Check the tape-file sequence-numbers of the flushed files
         {
-          int32_t k = i-maxFilesBeforeFlush+1;
+          int32_t k = i -
+            tapeFlushConfigParams.getMaxFilesBeforeFlush().getValue() + 1;
           for(castor::tape::tapebridge::FileWrittenNotificationList::
             const_iterator itor = notfications.begin();
             itor != notfications.end(); itor++) {
@@ -204,10 +223,18 @@ public:
   } // testFlushEveryNthFile()
 
   void testInvalidFlushFseqMaxBytes() {
-    const uint64_t maxBytesBeforeFlush = 67;
-    const uint64_t maxFilesBeforeFlush = maxBytesBeforeFlush + 100;
-    castor::tape::tapebridge::PendingMigrationsStore store(maxBytesBeforeFlush,
-      maxFilesBeforeFlush);
+    TestingTapeFlushConfigParams tapeFlushConfigParams;
+    tapeFlushConfigParams.setTapeFlushMode(
+      TAPEBRIDGE_ONE_FLUSH_PER_N_FILES,
+      ConfigParamSource::COMPILE_TIME_DEFAULT);
+    tapeFlushConfigParams.setMaxBytesBeforeFlush(
+      67,
+      ConfigParamSource::COMPILE_TIME_DEFAULT);
+    tapeFlushConfigParams.setMaxFilesBeforeFlush(
+      tapeFlushConfigParams.getMaxBytesBeforeFlush().getValue() + 100,
+      ConfigParamSource::COMPILE_TIME_DEFAULT);
+    castor::tape::tapebridge::PendingMigrationsStore store(
+      tapeFlushConfigParams);
     const uint32_t maxFseq = 1024;
 
     // Tell the pending-migrations store all files are pending write-to-tape.
@@ -229,7 +256,8 @@ public:
     store.noMoreFilesToMigrate();
 
     // Write all files up to maxBytesBeforeFlush;
-    for(uint32_t i=1; i <= maxBytesBeforeFlush; i++) {
+    for(uint32_t i = 1;
+      i <= tapeFlushConfigParams.getMaxBytesBeforeFlush().getValue(); i++) {
       castor::tape::tapebridge::FileWrittenNotification
       notification;
       notification.fileTransactionId = 10000 + i;
@@ -254,10 +282,18 @@ public:
   }
 
   void testInvalidFlushFseqMaxFiles() {
-    const uint64_t maxFilesBeforeFlush = 23;
-    const uint64_t maxBytesBeforeFlush = maxFilesBeforeFlush + 100;
-    castor::tape::tapebridge::PendingMigrationsStore store(maxBytesBeforeFlush,
-      maxFilesBeforeFlush);
+    TestingTapeFlushConfigParams tapeFlushConfigParams;
+    tapeFlushConfigParams.setTapeFlushMode(
+      TAPEBRIDGE_ONE_FLUSH_PER_N_FILES,
+      ConfigParamSource::COMPILE_TIME_DEFAULT);
+    tapeFlushConfigParams.setMaxFilesBeforeFlush(
+      23,
+      ConfigParamSource::COMPILE_TIME_DEFAULT);
+    tapeFlushConfigParams.setMaxBytesBeforeFlush(
+      tapeFlushConfigParams.getMaxFilesBeforeFlush().getValue() + 100,
+      ConfigParamSource::COMPILE_TIME_DEFAULT);
+    castor::tape::tapebridge::PendingMigrationsStore store(
+      tapeFlushConfigParams);
     const uint32_t maxFseq = 1024;
 
     // Tell the pending-migrations store all files are pending write-to-tape.
@@ -278,7 +314,8 @@ public:
     }
 
     // Write all files up to maxFilesBeforeFlush;
-    for(uint32_t i=1; i <= maxFilesBeforeFlush; i++) {
+    for(uint32_t i = 1;
+      i <= tapeFlushConfigParams.getMaxFilesBeforeFlush().getValue(); i++) {
       castor::tape::tapebridge::FileWrittenNotification
         notification;
       notification.fileTransactionId = 10000 + i;

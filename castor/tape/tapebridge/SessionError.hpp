@@ -119,84 +119,83 @@ public:
   /**
    * Constructor.
    */
-  SessionError();
+  SessionError() throw();
 
   /**
    * Sets the scope of the session-error.
    */
-  void setErrorScope(const ErrorScope value)
-    throw(castor::exception::InvalidArgument);
+  void setErrorScope(const ErrorScope value) throw();
 
   /**
    * Gets the scope of the session-error.
    */
-  ErrorScope getErrorScope() const;
+  ErrorScope getErrorScope() const throw();
 
   /**
    * Sets the error code of the session-error.
    */
-  void setErrorCode(const int value);
+  void setErrorCode(const int value) throw();
 
   /**
    * Gets the error code of the session-error.
    */
-  int getErrorCode() const;
+  int getErrorCode() const throw();
 
   /**
    * Sets the error message of the session-error.
    */
-  void setErrorMessage(const std::string &value);
+  void setErrorMessage(const std::string &value) throw();
 
   /**
    * Gets the error message of the session-error.
    */
-  const std::string &getErrorMessage() const;
+  const std::string &getErrorMessage() const throw();
 
   /**
    * Sets the file transaction-id of the session-error.
    */
-  void setFileTransactionId(const uint64_t value);
+  void setFileTransactionId(const uint64_t value) throw();
 
   /**
    * Gets the file transaction-id of the session-error.
    */
-  uint64_t getFileTransactionId() const;
+  uint64_t getFileTransactionId() const throw();
 
   /**
    * Sets the name-server hostname of the file associated with the
    * session-error.
    */
-  void setNsHost(const std::string &value);
+  void setNsHost(const std::string &value) throw();
 
   /**
    * Gets the name-server hostname of the file associated with the
    * session-error.
    */
-  const std::string &getNsHost() const;
+  const std::string &getNsHost() const throw();
 
   /**
    * Sets the name-server file-id of the file associated with the
    * session-error.
    */
-  void setNsFileId(const uint64_t value);
+  void setNsFileId(const uint64_t value) throw();
 
   /**
    * Gets the name-server file-id of the file associated with the
    * session-error.
    */
-  uint64_t getNsFileId() const;
+  uint64_t getNsFileId() const throw();
 
   /**
    * Sets the tape-file sequence-number of the file associated with the
    * session-error.
    */
-  void setTapeFSeq(const int32_t value);
+  void setTapeFSeq(const int32_t value) throw();
 
   /**
    * Gets the tape-file sequence-number of the file associated with the
    * session-error.
    */
-  int32_t getTapeFSeq() const;
+  int32_t getTapeFSeq() const throw();
 
 }; // class SessionError
 

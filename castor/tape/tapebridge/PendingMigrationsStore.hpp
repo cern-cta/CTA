@@ -29,6 +29,7 @@
 #include "castor/tape/tapebridge/FileWrittenNotification.hpp"
 #include "castor/tape/tapebridge/FileWrittenNotificationList.hpp"
 #include "castor/tape/tapebridge/RequestToMigrateFile.hpp"
+#include "castor/tape/tapebridge/TapeFlushConfigParams.hpp"
 
 #include <list>
 #include <map>
@@ -50,18 +51,9 @@ public:
   /**
    * Constructor.
    *
-   * @param maxBytesBeforeFlush The maximum number of bytes that can be written
-   *                            to tape before a flush to tape should be
-   *                            executed.  Please note that flushes to tape
-   *                            occur on file boundaries, therefore more bytes
-   *                            will most probably be written to tape before
-   *                            the actual flush takes place.
-   * @param maxFilesBeforeFlush The maximum number of files that can be written
-   *                            to tape before a flush to tape should be
-   *                            executed.
+   * @param tapeFlushConfigParams The tape flush configuration parameters.
    */
-  PendingMigrationsStore(const uint64_t maxBytesBeforeFlush,
-    const uint64_t maxFilesBeforeFlush);
+  PendingMigrationsStore(const TapeFlushConfigParams &tapeFlushConfigParams);
 
   /**
    * Adds the specified file-migration request to the store.
@@ -139,18 +131,9 @@ public:
 private:
 
   /**
-   * The maximum number of bytes that can be written to tape before a flush to
-   * tape should be executed.  Please note that flushes to tape occur on file
-   * boundaries, therefore more bytes will most probably be written to tape
-   * before the actual flush takes place.
+   * The tape flush configuration parameters.
    */
-  const uint64_t m_maxBytesBeforeFlush;
-
-  /**
-   * The maximum number of files that can be written to tape before a flush to
-   * tape should be executed.
-   */
-  const uint64_t m_maxFilesBeforeFlush;
+  const TapeFlushConfigParams m_tapeFlushConfigParams;
 
   /**
    * The current number of bytes written to tape without a flush to tape.
@@ -343,6 +326,18 @@ private:
    * Clears all of the pending migrations from this store.
    */
   void clear();
+
+  /**
+   * Returns the maximum number of bytes before the tape drive buffer should
+   * be flushed.
+   */
+  uint64_t getMaxBytesBeforeFlush() const throw(castor::exception::Exception);
+
+  /**
+   * Returns the maximum number of files before the tape drive buffer should
+   * be flushed.
+   */
+  uint64_t getMaxFilesBeforeFlush() const throw(castor::exception::Exception);
 
 }; // class PendingMigrationsStore
 

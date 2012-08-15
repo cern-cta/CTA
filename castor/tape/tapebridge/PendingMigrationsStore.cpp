@@ -25,6 +25,7 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/tape/tapebridge/PendingMigrationsStore.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "h/tapebridge_constants.h"
 
 #include <sstream>
 
@@ -33,9 +34,8 @@
 // Constructor
 //-----------------------------------------------------------------------------
 castor::tape::tapebridge::PendingMigrationsStore::PendingMigrationsStore(
-  const uint64_t maxBytesBeforeFlush, const uint64_t maxFilesBeforeFlush):
-  m_maxBytesBeforeFlush(maxBytesBeforeFlush),
-  m_maxFilesBeforeFlush(maxFilesBeforeFlush) {
+  const TapeFlushConfigParams &tapeFlushConfigParams):
+  m_tapeFlushConfigParams(tapeFlushConfigParams) {
   clear();
 }
 
@@ -205,12 +205,12 @@ void castor::tape::tapebridge::PendingMigrationsStore::fileWrittenWithoutFlush(
   // Determine whether or not the current file is the one that matches or
   // immediately exceeds the maximum number of bytes to be written to tape
   // before a flush
-  if(m_maxBytesBeforeFlush <= m_nbBytesWrittenWithoutFlush) {
+  if(getMaxBytesBeforeFlush() <= m_nbBytesWrittenWithoutFlush) {
     if(0 != m_tapeFSeqOfMaxBytesFile) {
       TAPE_THROW_EX(castor::exception::InvalidArgument,
         ": Failed to " << task <<
         ": Already matched or exceed maximum number of bytes before flush"
-        ": maxBytesBeforeFlush=" << m_maxBytesBeforeFlush <<
+        ": maxBytesBeforeFlush=" << getMaxBytesBeforeFlush() <<
         " nbBytesWrittenWithoutFlush=" << m_nbBytesWrittenWithoutFlush <<
         " tapeFSeqOfMaxBytesFile=" << m_tapeFSeqOfMaxBytesFile <<
         " illegalTapeFSeqOfMaxBytesFile=" << notification.tapeFSeq);
@@ -221,12 +221,12 @@ void castor::tape::tapebridge::PendingMigrationsStore::fileWrittenWithoutFlush(
 
   // Determine whether or not the current file is the one that matches the
   // the maximum number of files to be written to tape before a flush
-  if(m_maxFilesBeforeFlush <= m_nbFilesWrittenWithoutFlush) {
+  if(getMaxFilesBeforeFlush() <= m_nbFilesWrittenWithoutFlush) {
     if(0 != m_tapeFSeqOfMaxFilesFile) {
       TAPE_THROW_EX(castor::exception::InvalidArgument,
         ": Failed to " << task <<
         ": Already matched maximum number of files before flush"
-        ": maxFilesBeforeFlush=" << m_maxFilesBeforeFlush <<
+        ": maxFilesBeforeFlush=" << getMaxFilesBeforeFlush() <<
         " nbFilesWrittenWithoutFlush=" << m_nbFilesWrittenWithoutFlush <<
         " tapeFSeqOfMaxFilesFile=" << m_tapeFSeqOfMaxFilesFile <<
         " illegalTapeFSeqOfMaxFilesFile=" << notification.tapeFSeq);
@@ -399,6 +399,34 @@ void castor::tape::tapebridge::PendingMigrationsStore::clear() {
   m_tapeFSeqOfMaxFilesFile                = 0;
 
   m_migrations.clear();
+}
+
+
+//-----------------------------------------------------------------------------
+// getMaxBytesBeforeFlush
+//-----------------------------------------------------------------------------
+uint64_t castor::tape::tapebridge::PendingMigrationsStore::
+  getMaxBytesBeforeFlush() const throw(castor::exception::Exception) {
+  if(TAPEBRIDGE_ONE_FLUSH_PER_N_FILES ==
+    m_tapeFlushConfigParams.getTapeFlushMode().getValue()) {
+    return m_tapeFlushConfigParams.getMaxBytesBeforeFlush().getValue();
+  } else {
+    return 1;
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// getMaxFilesBeforeFlush
+//-----------------------------------------------------------------------------
+uint64_t castor::tape::tapebridge::PendingMigrationsStore::
+  getMaxFilesBeforeFlush() const throw(castor::exception::Exception) {
+  if(TAPEBRIDGE_ONE_FLUSH_PER_N_FILES ==
+    m_tapeFlushConfigParams.getTapeFlushMode().getValue()) {
+    return m_tapeFlushConfigParams.getMaxFilesBeforeFlush().getValue();
+  } else {
+    return 1;
+  }
 }
 
 

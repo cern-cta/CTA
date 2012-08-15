@@ -41,7 +41,7 @@ const char *castor::tape::tapebridge::SessionError::errorScopeToString(
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::tapebridge::SessionError::SessionError() :
+castor::tape::tapebridge::SessionError::SessionError() throw() :
   m_errorScope(UNKNOWN_SCOPE),
   m_errorCode(SEINTERNAL),
   m_errorMessage("UNKNOWN"),
@@ -56,17 +56,7 @@ castor::tape::tapebridge::SessionError::SessionError() :
 // setErrorScope
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::SessionError::setErrorScope(
-  const ErrorScope value) throw(castor::exception::InvalidArgument) {
-
-  // Check the method arguments
-  if(0 > value || SESSIONERRORSCOPE_MAX < value) {
-    castor::exception::InvalidArgument ex;
-    ex.getMessage() <<
-      "Invalid SessionErrorScope"
-      ": value=" << value;
-    throw ex;
-  }
-    
+  const ErrorScope value) throw() {
   m_errorScope = value;
 }
 
@@ -74,21 +64,22 @@ void castor::tape::tapebridge::SessionError::setErrorScope(
 // getErrorScope
 //-----------------------------------------------------------------------------
 castor::tape::tapebridge::SessionError::ErrorScope
-  castor::tape::tapebridge::SessionError::getErrorScope() const {
+  castor::tape::tapebridge::SessionError::getErrorScope() const throw() {
   return m_errorScope;
 }
 
 //-----------------------------------------------------------------------------
 // setErrorCode
 //-----------------------------------------------------------------------------
-void castor::tape::tapebridge::SessionError::setErrorCode(const int value) {
+void castor::tape::tapebridge::SessionError::setErrorCode(const int value)
+  throw() {
   m_errorCode = value;
 }
 
 //-----------------------------------------------------------------------------
 // getErrorCode
 //-----------------------------------------------------------------------------
-int castor::tape::tapebridge::SessionError::getErrorCode() const {
+int castor::tape::tapebridge::SessionError::getErrorCode() const throw() {
   return m_errorCode;
 }
 
@@ -96,7 +87,7 @@ int castor::tape::tapebridge::SessionError::getErrorCode() const {
 // setErrorMessage
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::SessionError::setErrorMessage(
-  const std::string &value) {
+  const std::string &value) throw() {
   m_errorMessage = value;
 }
 
@@ -104,7 +95,7 @@ void castor::tape::tapebridge::SessionError::setErrorMessage(
 // getErrorMessage
 //-----------------------------------------------------------------------------
 const std::string &castor::tape::tapebridge::SessionError::getErrorMessage()
-  const {
+  const throw() {
   return m_errorMessage;
 }
 
@@ -112,55 +103,62 @@ const std::string &castor::tape::tapebridge::SessionError::getErrorMessage()
 // setFileTransactionId
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::SessionError::setFileTransactionId(
-  const uint64_t value) {
+  const uint64_t value) throw() {
   m_fileTransactionId = value;
 }
 
 //-----------------------------------------------------------------------------
 // getFileTransactionId
 //-----------------------------------------------------------------------------
-uint64_t castor::tape::tapebridge::SessionError::getFileTransactionId() const {
+uint64_t castor::tape::tapebridge::SessionError::getFileTransactionId()
+  const throw() {
   return m_fileTransactionId;
 }
 
 //-----------------------------------------------------------------------------
 // setNsHost
 //-----------------------------------------------------------------------------
-void castor::tape::tapebridge::SessionError::setNsHost(const std::string &value) {
+void castor::tape::tapebridge::SessionError::setNsHost(
+  const std::string &value) throw() {
   m_nsHost = value;
 }
 
 //-----------------------------------------------------------------------------
 // getNsHost
 //-----------------------------------------------------------------------------
-const std::string &castor::tape::tapebridge::SessionError::getNsHost() const {
+const std::string &castor::tape::tapebridge::SessionError::getNsHost() const
+  throw() {
   return m_nsHost;
 }
 
 //-----------------------------------------------------------------------------
 // setNsFileId
 //-----------------------------------------------------------------------------
-void castor::tape::tapebridge::SessionError::setNsFileId(const uint64_t value) {
+void castor::tape::tapebridge::SessionError::setNsFileId(const uint64_t value)
+  throw() {
   m_nsFileId = value;
 }
 
 //-----------------------------------------------------------------------------
 // getNsFileId
 //-----------------------------------------------------------------------------
-uint64_t castor::tape::tapebridge::SessionError::getNsFileId() const {
+uint64_t castor::tape::tapebridge::SessionError::getNsFileId() const
+  throw() {
   return m_nsFileId;
 }
 
 //-----------------------------------------------------------------------------
 // setTapeFSeq
 //-----------------------------------------------------------------------------
-void castor::tape::tapebridge::SessionError::setTapeFSeq(const int32_t value) {
+void castor::tape::tapebridge::SessionError::setTapeFSeq(const int32_t value)
+  throw() {
   m_tapeFSeq = value;
 }
 
 //-----------------------------------------------------------------------------
 // getTapeFSeq
 //-----------------------------------------------------------------------------
-int32_t castor::tape::tapebridge::SessionError::getTapeFSeq() const {
+int32_t castor::tape::tapebridge::SessionError::getTapeFSeq() const
+  throw() {
   return m_tapeFSeq;
 }

@@ -47,8 +47,8 @@ namespace tapebridge {
      * 
      * @param rtcpdHost           The hostname of the rtcpd daemon.
      * @param rtcpdPort           The port number of the rtcpd daemon.
-     * @param netReadWriteTimeout The timeout to be used when performing
-     *                            network reads and writes.
+     * @param netReadWriteTimeout The timeout in seconds to be used when
+     *                            performing network reads and writes.
      * @param msgBody             The body of the message to be sent.
      * @param reply               The reply from rtcpd which may be positive or
      *                            negative.

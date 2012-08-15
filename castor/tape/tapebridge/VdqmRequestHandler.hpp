@@ -30,7 +30,9 @@
 #include "castor/tape/tapebridge/BulkRequestConfigParams.hpp"
 #include "castor/tape/tapebridge/Counter.hpp"
 #include "castor/tape/tapebridge/TapeFlushConfigParams.hpp"
+#include "castor/tape/legacymsg/RtcpJobReplyMsgBody.hpp"
 #include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
+#include "castor/tape/net/Constants.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/utils/BoolFunctor.hpp"
 #include "castor/tape/utils/SmartFdList.hpp"
@@ -170,6 +172,33 @@ private:
    */
   static void checkRtcpJobSubmitterIsAuthorised(const int socketFd)
     throw(castor::exception::Exception);
+
+  /**
+   * Sends information about the tapebridged daemon to the rtcpd daemon.
+   *
+   * @param rtcpdHost           The network hostname of the host on which the
+   *                            rtcpd daemon is listening for connections.
+   * @param rtcpdPort           The TCP/IP port on which the rtcpd daemon is
+   *                            listening for connections.
+   * @param netReadWriteTimeout The timeout in seconds to be used when reading
+   *                            from or writing to the network.
+   * @param jobRequest          The job sent from the vdqmd daemon.
+   * @param bridgeCallbackHost  The network hostname of the host on which the
+   *                            tapebridged daemon is listening for callbacks
+   *                            from the rtcpd daemon.
+   * @param bridgeCallbackPort  The TCP/IP port on which the tapebridged daemon
+   *                            is listening for callbacks from the rtcpd
+   *                            daemon.
+   * @return                    The reply from the rtcpd daemon.
+   */
+  legacymsg::RtcpJobReplyMsgBody sendClientInfoToRtcpd(
+    const std::string                   rtcpdHost,
+    const unsigned int                  rtcpdPort,
+    const int                           netReadWriteTimeout,
+    const legacymsg::RtcpJobRqstMsgBody &jobRequest,
+    const char                       (&bridgeCallbackHost)[net::HOSTNAMEBUFLEN],
+    const unsigned short                bridgeCallbackPort)
+    const throw(castor::exception::Exception);
 
 }; // class VdqmRequestHandler
 

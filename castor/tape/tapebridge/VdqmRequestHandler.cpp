@@ -286,40 +286,10 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
         TAPEBRIDGE_SUBMITTING_RTCOPY_JOB_TO_RTCPD, params);
     }
-    // The reply to be received from RTCPD
-    legacymsg::RtcpJobReplyMsgBody rtcpdReply;
-    {
-      const std::string  rtcpdHost("localhost");
-      const unsigned int rtcpdPort = RTCOPY_PORT;
-      tapeBridgeClientInfo2MsgBody_t clientInfoMsgBody;
 
-      memset(&clientInfoMsgBody, '\0', sizeof(clientInfoMsgBody));
-      clientInfoMsgBody.volReqId = jobRequest.volReqId;
-      clientInfoMsgBody.bridgeCallbackPort = bridgeCallbackPort;
-      clientInfoMsgBody.bridgeClientCallbackPort = jobRequest.clientPort;
-      clientInfoMsgBody.clientUID = jobRequest.clientEuid;
-      clientInfoMsgBody.clientGID = jobRequest.clientEgid;
-      clientInfoMsgBody.tapeFlushMode =
-        m_tapeFlushConfigParams.getTapeFlushMode().getValue();
-      clientInfoMsgBody.maxBytesBeforeFlush =
-        m_tapeFlushConfigParams.getMaxBytesBeforeFlush().getValue();
-      clientInfoMsgBody.maxFilesBeforeFlush =
-        m_tapeFlushConfigParams.getMaxFilesBeforeFlush().getValue();
-      utils::copyString(clientInfoMsgBody.bridgeHost, bridgeCallbackHost);
-      utils::copyString(clientInfoMsgBody.bridgeClientHost,
-        jobRequest.clientHost);
-      utils::copyString(clientInfoMsgBody.dgn, jobRequest.dgn);
-      utils::copyString(clientInfoMsgBody.drive, jobRequest.driveUnit);
-      utils::copyString(clientInfoMsgBody.clientName,
-        jobRequest.clientUserName);
-
-      castor::tape::tapebridge::BridgeClientInfo2Sender::send(
-        rtcpdHost,
-        rtcpdPort,
-        RTCPDNETRWTIMEOUT,
-        clientInfoMsgBody,
-        rtcpdReply);
-    }
+    const legacymsg::RtcpJobReplyMsgBody rtcpdReply = sendClientInfoToRtcpd(
+      "localhost", RTCOPY_PORT, RTCPDNETRWTIMEOUT, jobRequest,
+      bridgeCallbackHost, bridgeCallbackPort);
 
     // Throw an exception if RTCPD returned an error message.
     //
@@ -340,7 +310,6 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
     {
       legacymsg::RtcpJobReplyMsgBody vdqmReply;
       utils::setBytes(vdqmReply, '\0');
-      rtcpdReply.status = VDQM_CLIENTINFO; // Strange status code
       char vdqmReplyBuf[RTCPMSGBUFSIZE];
       const size_t vdqmReplyLen = legacymsg::marshal(vdqmReplyBuf, vdqmReply);
       net::writeBytes(vdqmSock.get(), RTCPDNETRWTIMEOUT, vdqmReplyLen,
@@ -377,6 +346,80 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
     CASTOR_DLF_WRITEPC(cuuid, DLF_LVL_ERROR,
       TAPEBRIDGE_TRANSFER_FAILED, params);
   }
+}
+
+
+//-----------------------------------------------------------------------------
+// sendClientInfoToRtcpd
+//-----------------------------------------------------------------------------
+castor::tape::legacymsg::RtcpJobReplyMsgBody
+  castor::tape::tapebridge::VdqmRequestHandler::sendClientInfoToRtcpd(
+  const std::string                   rtcpdHost,
+  const unsigned int                  rtcpdPort,
+  const int                           netReadWriteTimeout,
+  const legacymsg::RtcpJobRqstMsgBody &jobRequest,
+  const char                         (&bridgeCallbackHost)[net::HOSTNAMEBUFLEN],
+  const unsigned short                bridgeCallbackPort)
+  const throw(castor::exception::Exception) {
+  tapeBridgeClientInfo2MsgBody_t clientInfoMsgBody;
+  legacymsg::RtcpJobReplyMsgBody rtcpdReply;
+
+  utils::setBytes(clientInfoMsgBody, '\0');
+  utils::setBytes(rtcpdReply, '\0');
+
+  clientInfoMsgBody.volReqId = jobRequest.volReqId;
+  clientInfoMsgBody.bridgeCallbackPort = bridgeCallbackPort;
+  clientInfoMsgBody.bridgeClientCallbackPort = jobRequest.clientPort;
+  clientInfoMsgBody.clientUID = jobRequest.clientEuid;
+  clientInfoMsgBody.clientGID = jobRequest.clientEgid;
+
+  try {
+    clientInfoMsgBody.tapeFlushMode =
+      m_tapeFlushConfigParams.getTapeFlushMode().getValue();
+  } catch(castor::exception::Exception &ex) {
+    // Add context and rethrow
+    TAPE_THROW_CODE(ex.code(),
+      ex.getMessage().str());
+  }
+
+  // Max files and bytes before flush is only applicable if the tape flush
+  // mode is TAPEBRIDGE_ONE_FLUSH_PER_N_FILES
+  if(TAPEBRIDGE_ONE_FLUSH_PER_N_FILES == clientInfoMsgBody.tapeFlushMode) {
+    try {
+      clientInfoMsgBody.maxBytesBeforeFlush =
+        m_tapeFlushConfigParams.getMaxBytesBeforeFlush().getValue();
+      clientInfoMsgBody.maxFilesBeforeFlush =
+        m_tapeFlushConfigParams.getMaxFilesBeforeFlush().getValue();
+    } catch(castor::exception::Exception &ex) {
+      // Add context and rethrow
+      TAPE_THROW_CODE(ex.code(),
+        ex.getMessage().str());
+    }
+  } else {
+    clientInfoMsgBody.maxBytesBeforeFlush = 1;
+    clientInfoMsgBody.maxFilesBeforeFlush = 1;
+  }
+
+  utils::copyString(clientInfoMsgBody.bridgeHost, bridgeCallbackHost);
+  utils::copyString(clientInfoMsgBody.bridgeClientHost, jobRequest.clientHost);
+  utils::copyString(clientInfoMsgBody.dgn, jobRequest.dgn);
+  utils::copyString(clientInfoMsgBody.drive, jobRequest.driveUnit);
+  utils::copyString(clientInfoMsgBody.clientName, jobRequest.clientUserName);
+
+  try {
+    castor::tape::tapebridge::BridgeClientInfo2Sender::send(
+      rtcpdHost,
+      rtcpdPort,
+      netReadWriteTimeout,
+      clientInfoMsgBody,
+      rtcpdReply);
+  } catch(castor::exception::Exception &ex) {
+    // Add context and rethrow
+    TAPE_THROW_CODE(ex.code(),
+      ex.getMessage().str());
+  }
+
+  return rtcpdReply;
 }
 
 

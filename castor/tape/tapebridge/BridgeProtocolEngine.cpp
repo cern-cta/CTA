@@ -107,9 +107,7 @@ castor::tape::tapebridge::BridgeProtocolEngine::BridgeProtocolEngine(
   m_timeOfLastClientPing(time(NULL)),
   m_nbReceivedENDOF_REQs(0),
   m_pendingTransferIds(MAXPENDINGTRANSFERS),
-  m_pendingMigrationsStore(
-    tapeFlushConfigParams.getMaxBytesBeforeFlush().getValue(),
-    tapeFlushConfigParams.getMaxFilesBeforeFlush().getValue()),
+  m_pendingMigrationsStore(tapeFlushConfigParams),
   m_sessionWithRtcpdIsFinished(false),
   m_logPeerOfCallbackConnectionsFromRtcpd(
     logPeerOfCallbackConnectionsFromRtcpd),
