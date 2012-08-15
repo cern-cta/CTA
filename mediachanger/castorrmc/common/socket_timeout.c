@@ -24,6 +24,7 @@
 
 #include "net.h"
 #include "serrno.h"
+#include "string.h"
 #include "socket_timeout.h"
 
 /* Signal handler - Simplify the POSIX sigaction calls */
