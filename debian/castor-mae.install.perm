@@ -1,0 +1,5 @@
+%attr(0755,root,root) var/www/castormon/*
+%attr(0755,root,root) usr/bin/mae.py
+%attr(0755,root,root) usr/lib/python*/site-packages/mae/*
+%attr(0644,root,root) etc/mae/mae.conf.example
+%attr(0644,root,root) etc/logrotate.d/castor-mae

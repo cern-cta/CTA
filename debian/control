@@ -310,3 +310,9 @@ Architecture: any
 Depends: logrotate, python, python-rpyc, Django
 Description: castor (Cern Advanced STORage system)
  Castor monitoring Cockpit
+
+Package: castor-mae
+Architecture: any
+Depends: logrotate, python, python-rpyc, python-dirq, python-messaging, python-simplejson
+Description: castor (Cern Advanced STORage system)
+ AI messaging consumer for the Metric Analysis Engine.
