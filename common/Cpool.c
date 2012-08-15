@@ -625,10 +625,9 @@ Sigfunc *_Cpool_signal(int signo,
 	struct sigaction	act, oact;
 	int n = 0;
 
+        memset(&act, 0, sizeof(act));
 	act.sa_handler = func;
 	sigemptyset(&act.sa_mask);
-	act.sa_flags = 0;
-        act.sa_restorer = NULL;
 	if (signo == SIGALRM) {
 #ifdef	SA_INTERRUPT
 	  act.sa_flags |= SA_INTERRUPT;	/* SunOS 4.x */

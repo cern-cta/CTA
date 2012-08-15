@@ -313,9 +313,9 @@ int main (int     argc,
      * Trap SIGCLD, SIGCHLD
      */
 #if defined(linux)
+    memset(&sa, 0, sizeof(sa));
     sa.sa_handler = reaper;
     sa.sa_flags = SA_RESTART;
-    sa.sa_restorer = NULL;
     sigaction (SIGCHLD, &sa, NULL);
 #endif /* linux */
 
@@ -746,9 +746,9 @@ int doit(int      s,
     /*
      * Trap SIGPIPE
      */
+    memset(&sa, 0, sizeof(sa));
     sa.sa_handler = reaper;
     sa.sa_flags = SA_RESTART;
-    sa.sa_restorer = NULL;
     sigaction (SIGPIPE, &sa, NULL);
 
   }

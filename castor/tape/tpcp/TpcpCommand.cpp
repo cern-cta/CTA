@@ -95,6 +95,7 @@ castor::tape::tpcp::TpcpCommand::TpcpCommand(const char *const programName)
   m_fileTransactionId(1) {
 
   // Prepare the SIGINT action handler structure ready for sigaction()
+  memset(&m_sigintAction, 0, sizeof(m_sigintAction));   // No flags
   m_sigintAction.sa_handler = &sigintHandler;
   if(sigfillset(&m_sigintAction.sa_mask) < 0) { // Mask all signals
     const int savedErrno = errno;
@@ -105,8 +106,6 @@ castor::tape::tpcp::TpcpCommand::TpcpCommand(const char *const programName)
       "Failed to initialize signal mask using sigfillset"
       ": " << sstrerror(savedErrno));
   }
-  m_sigintAction.sa_flags = 0; // No flags
-  m_sigintAction.sa_restorer = NULL; // unused
 
   // Set the SIGINT signal handler
   if(sigaction(SIGINT, &m_sigintAction, 0) < 0){
