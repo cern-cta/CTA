@@ -466,11 +466,13 @@ BEGIN
       -- a concurrent abort (there cannot be anyone else)
       SELECT reqId, repackVID INTO varReqUUID, varRepackVID
         FROM StageRepackRequest
-       WHERE status = tconst.REPACK_SUBMITTED
-         AND creationTime =
-          (SELECT min(creationTime) FROM StageRepackRequest
-            WHERE status = tconst.REPACK_SUBMITTED)
-      FOR UPDATE;
+       WHERE id = (SELECT id
+                     FROM (SELECT id
+                             FROM StageRepackRequest
+                            WHERE status = tconst.REPACK_SUBMITTED
+                            ORDER BY creationTime ASC)
+                    WHERE ROWNUM < 2)
+         FOR UPDATE;
       -- start the repack for this request: this can take some considerable time
       handleRepackRequest(varReqUUID);
       -- log 'Repack process started'
