@@ -15,7 +15,7 @@ COMMONLIB_OBJS = $(SYSDEP_OBJS) \
 		 readc.o remote.o \
 		 serror.o setnetio.o socket.o solveln.o trace.o \
 		 wsacct.o ypgetacct.o ypgetacctent.o \
-		 Cdlopen.o Cthread.o Cglobals.o Cgrp.o Cmutex.o Cuuid.o \
+		 Cthread.o Cglobals.o Cgrp.o Cmutex.o Cuuid.o \
 		 Cdomainname.o Cnetdb.o Cpool.o Cpwd.o Cstrerror.o \
 		 socket_timeout.o u64subr.o Cinitdaemon.o Cgetopt.o \
 		 Cregexp.o Cexportconf.o Csnprintf.o util.o \

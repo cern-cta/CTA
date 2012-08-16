@@ -31,35 +31,10 @@ typedef unsigned char   U_BYTE;
 /* typedef unsigned short  U_WORD; */
 typedef unsigned short  U_SHORT;
 typedef unsigned int    U_LONG;
-typedef struct  {
-        U_LONG      lslw;
-        U_LONG      mslw;
-} U_QUAD;
-#ifndef _WINDEF_
-/*
-  VC 5.0 : 1100
-  VC 6.0 : 1200
-  VC 7.0 : 1300 (.NET)
-*/
 
-#if _MSC_VER < 1300
-typedef          char   BYTE;
-typedef          short  WORD;
-typedef          int    LONG;
-#endif
-#endif
-typedef struct  {
-#if _MSC_VER < 1300
-        LONG      mslw;
-#else
-        int      mslw;
-#endif
-        U_LONG    lslw;
-} QUAD;
 #define BYTEADDR(x)     (((char *)&(x))+sizeof(BYTE)-BYTESIZE)
 #define WORDADDR(x)     (((char *)&(x))+sizeof(WORD)-WORDSIZE)
 #define LONGADDR(x)     (((char *)&(x))+sizeof(LONG)-LONGSIZE)
-#define QUADADDR(x)     (((char *)&(x))+sizeof(QUAD)-QUADSIZE)
 
 typedef long long		signed64;
 typedef unsigned long long	u_signed64;

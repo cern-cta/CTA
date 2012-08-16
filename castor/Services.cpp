@@ -36,7 +36,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "common.h"   // for getconfent
-#include "Cdlopen_api.h"
+#include "dlfcn.h"
 
 //-----------------------------------------------------------------------------
 // Constructor
@@ -84,12 +84,12 @@ castor::IService* castor::Services::service(const std::string name,
         // not yet found: check if a .so library has to be loaded
         char* targetLib = getconfent("DynamicLib", castor::ServicesIdStrings[id2], 0);
         if(0 != targetLib) {
-          void* handle = Cdlopen(targetLib, RTLD_NOW);//RTLD_GLOBAL
+          void* handle = dlopen(targetLib, RTLD_NOW);//RTLD_GLOBAL
           if(handle == 0) {
             // something wrong in the config file?
             castor::exception::Internal ex;
             ex.getMessage() << "Couldn't load dynamic library for service " 
-                            << name << ": " << Cdlerror();
+                            << name << ": " << dlerror();
             throw ex;
           }
         }

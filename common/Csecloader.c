@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <Cdlopen_api.h>
+#include <dlfcn.h>
 #include <Csec_api.h>
 
 #include "patchlevel.h"
@@ -25,45 +25,45 @@ int loader(){
   snprintf(filename, CA_MAXNAMELEN, "libcastorsecurity.so.%d.%d",
            MAJORVERSION, MINORVERSION);
 
-  handle = Cdlopen (filename, RTLD_LAZY);
+  handle = dlopen (filename, RTLD_LAZY);
   if (!handle) {
-    fprintf (stderr, "%s\n", Cdlerror());
+    fprintf (stderr, "%s\n", dlerror());
     return -1;
   }
-  Cdlerror(); // Clear any existing error 
-  *(void **) (&Cclient_initContext) = Cdlsym(handle, "Csec_client_initContext");
+  dlerror(); // Clear any existing error 
+  *(void **) (&Cclient_initContext) = dlsym(handle, "Csec_client_initContext");
   if (!Cclient_initContext) {
-    fprintf (stderr, "%s\n", Cdlerror());
+    fprintf (stderr, "%s\n", dlerror());
     return -1;
   }
-  *(void **) (&Cserver_initContext) = Cdlsym(handle, "Csec_server_initContext");
+  *(void **) (&Cserver_initContext) = dlsym(handle, "Csec_server_initContext");
   if (!Cserver_initContext) {
-    fprintf (stderr, "%s\n", Cdlerror());
+    fprintf (stderr, "%s\n", dlerror());
     return -1;
   }
-  *(void **) (&Cclient_establishContext) = Cdlsym(handle, "Csec_client_establishContext");
+  *(void **) (&Cclient_establishContext) = dlsym(handle, "Csec_client_establishContext");
   if (!Cclient_establishContext) {
-    fprintf (stderr, "%s\n", Cdlerror());
+    fprintf (stderr, "%s\n", dlerror());
     return -1;
   }
-  *(void **) (&Cserver_establishContext) = Cdlsym(handle, "Csec_server_establishContext");
+  *(void **) (&Cserver_establishContext) = dlsym(handle, "Csec_server_establishContext");
   if (!Cserver_establishContext) {
-    fprintf (stderr, "%s\n", Cdlerror());
+    fprintf (stderr, "%s\n", dlerror());
     return -1;
   }
-  *(void **) (&CclearContext) = Cdlsym(handle, "Csec_clearContext");
+  *(void **) (&CclearContext) = dlsym(handle, "Csec_clearContext");
   if (!CclearContext) {
-    fprintf (stderr, "%s\n", Cdlerror());
+    fprintf (stderr, "%s\n", dlerror());
     return -1;
   }
-  *(void **) (&CgetClientId) = Cdlsym(handle, "Csec_server_getClientId");
+  *(void **) (&CgetClientId) = dlsym(handle, "Csec_server_getClientId");
   if (!CgetClientId) {
-    fprintf (stderr, "%s\n", Cdlerror());
+    fprintf (stderr, "%s\n", dlerror());
     return -1;
   }
-  *(void **) (&CmapUser) = Cdlsym(handle, "Csec_mapToLocalUser");
+  *(void **) (&CmapUser) = dlsym(handle, "Csec_mapToLocalUser");
   if (!CmapUser) {
-    fprintf (stderr, "%s\n", Cdlerror());
+    fprintf (stderr, "%s\n", dlerror());
     return -1;
   }
 
