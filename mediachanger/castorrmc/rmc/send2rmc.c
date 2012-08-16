@@ -77,12 +77,12 @@ int send2rmc(char *host,
 	if (connect (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
 		if (errno == ECONNREFUSED) {
 			rmc_errmsg (func, RMC00, rmchost);
-			(void) netclose (s);
+			(void) close (s);
 			serrno = ERMCNACT;
 			return (-1);
 		} else {
 			rmc_errmsg (func, RMC02, "connect", neterror());
-			(void) netclose (s);
+			(void) close (s);
 			serrno = SECOMERR;
 			return (-1);
 		}
@@ -95,13 +95,13 @@ int send2rmc(char *host,
 			rmc_errmsg (func, RMC02, "send", sys_serrlist[SERRNO]);
 		else
 			rmc_errmsg (func, RMC02, "send", neterror());
-		(void) netclose (s);
+		(void) close (s);
 		serrno = SECOMERR;
 		return (-1);
 	}
 
 	if (user_repbuf == NULL) {	/* does not want a reply */
-		(void) netclose (s);
+		(void) close (s);
 		return (0);
 	}
 
@@ -113,7 +113,7 @@ int send2rmc(char *host,
 				rmc_errmsg (func, RMC02, "recv", sys_serrlist[SERRNO]);
 			else
 				rmc_errmsg (func, RMC02, "recv", neterror());
-			(void) netclose (s);
+			(void) close (s);
 			serrno = SECOMERR;
 			return (-1);
 		}
@@ -122,7 +122,7 @@ int send2rmc(char *host,
 		unmarshall_LONG (p, rep_type) ;
 		unmarshall_LONG (p, c) ;
 		if (rep_type == RMC_RC) {
-			(void) netclose (s);
+			(void) close (s);
 			if (c) {
 				serrno = c;
 				c = -1;
@@ -134,7 +134,7 @@ int send2rmc(char *host,
 				rmc_errmsg (func, RMC02, "recv", sys_serrlist[SERRNO]);
 			else
 				rmc_errmsg (func, RMC02, "recv", neterror());
-			(void) netclose (s);
+			(void) close (s);
 			serrno = SECOMERR;
 			return (-1);
 		}

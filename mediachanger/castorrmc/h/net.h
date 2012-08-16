@@ -1,80 +1,34 @@
-/*
- * $Id: net.h,v 1.6 2007/03/14 09:30:08 sponcec3 Exp $ 
- */
+/******************************************************************************
+ *                      net.h
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2003  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * @author castor dev team
+ *****************************************************************************/
 
 #ifndef _NET_H
 #define _NET_H
-/*
- * Copyright (C) 1999 by CERN IT-PDP/DM
- * All rights reserved
- */
+
 #include <osdep.h>
-/*
- * Define NT types and constants for UNIX system. All
- * CASTOR sources dealing with networking access should 
- * use these definitions to maximize portability.
- */
-#ifndef SOCKET
-#define SOCKET int
-#endif
-/*
- * The following definitions should be used with shutdown()
- */
-#if defined(SHUT_RD)
-#define SD_RECEIVE SHUT_RD
-#else /* SHUT_RD */
-#define SD_RECEIVE 0x00
-#endif /* SHUT_RD */
 
-#if defined(SHUT_WR)
-#define SD_SEND SHUT_WR
-#else /* SHUT_WR */
-#define SD_SEND 0x01
-#endif /* SHUT_WR */
-
-#if defined(SHUT_RDWR)
-#define SD_BOTH SHUT_RDWR
-#else /* SHUT_RDWR */
-#define SD_BOTH 0x02
-#endif /* SHUT_RDWR */
-
-/*
- * Invalid socket and socket error. INVALID_SOCKET should be use
- * for system calls returning a socket, e.g. socket(), accept().
- * SOCKET_ERROR should be used for all other network routines
- * returning an int, e.g. connect(), bind()
- */
-#ifndef INVALID_SOCKET
-#define INVALID_SOCKET -1
-#endif
-#ifndef SOCKET_ERROR
-#define SOCKET_ERROR -1
-#endif
-
-#ifndef closesocket
-#define closesocket close
-#endif
-#ifndef ioctlsocket
-#define ioctlsocket ioctl
-#endif
-
-EXTERN_C int (*recvfunc) (SOCKET, char *, int);
-                                        /* Network receive function     */
-#define netread    (*recvfunc)
-EXTERN_C int (*sendfunc) (SOCKET, char *, int);
-                                        /* Network send function        */
-#define netwrite   (*sendfunc)
-EXTERN_C int (*closefunc) (SOCKET);
-                                        /* Network close function       */
-#define netclose   (*closefunc)
-EXTERN_C int (*ioctlfunc) (SOCKET, int, int);
-                                        /* Network ioctl function       */
-#define netioctl  (*ioctlfunc)
-EXTERN_C char *(*errfunc) (void);
-                                        /* Network error function       */
-#define neterror (*errfunc)
+EXTERN_C int   netread (int, char *, int); /* Network receive function     */
+EXTERN_C int   netwrite(int, char *, int); /* Network send function        */
+EXTERN_C char* neterror(void);             /* Network error function       */
 
 #include <socket_timeout.h>
-
 
 #endif /* _NET_H */

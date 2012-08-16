@@ -284,7 +284,7 @@ void doit(int rqfd)
 	else if (c > 0)
 		sendrep (rqfd, RMC_RC, c);
 	else
-		netclose (rqfd);
+		close (rqfd);
 }
 
 int getreq(int s,

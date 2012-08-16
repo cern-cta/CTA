@@ -32,11 +32,11 @@ typedef void    Sigfunc(int);
 
 int      _net_readable(int, int);
 int      _net_writable(int, int);
-int      _net_connectable(SOCKET, int);
+int      _net_connectable(int, int);
 int      _net_isclosed(int);
 Sigfunc *_netsignal(int, Sigfunc *);
 
-int netconnect_timeout(SOCKET fd,
+int netconnect_timeout(int fd,
                        struct sockaddr *addr,
                        size_t addr_size,
                        int timeout)
@@ -53,7 +53,7 @@ int netconnect_timeout(SOCKET fd,
 	if ( timeout >= 0 )  {
 		nonblocking = 1;
 		rc = ioctl(fd,FIONBIO,&nonblocking);
-		if ( rc == SOCKET_ERROR ) {
+		if ( rc == -1 ) {
 			serrno = 0;
 		} 
 	} else {
@@ -98,13 +98,13 @@ int netconnect_timeout(SOCKET fd,
 	if ( timeout >= 0 && rc == 0 ) {
 		nonblocking = 0;
 		rc = ioctl(fd,FIONBIO,&nonblocking);
-		if ( rc == SOCKET_ERROR ) serrno = 0;
+		if ( rc == -1 ) serrno = 0;
 	}
 
 	return(rc);
 }
 
-ssize_t netread_timeout(SOCKET fd,
+ssize_t netread_timeout(int fd,
                         void *vptr,
                         ssize_t n,
                         int timeout)
@@ -202,7 +202,7 @@ ssize_t netread_timeout(SOCKET fd,
 	return(n - nleft);
 }
 
-ssize_t netwrite_timeout(SOCKET fd,
+ssize_t netwrite_timeout(int fd,
                          void *vptr,
                          ssize_t n,
                          int timeout)
@@ -427,7 +427,7 @@ int _net_readable(int fd,
 }
 #endif
 
-int _net_connectable(SOCKET fd,
+int _net_connectable(int fd,
                      int timeout)
 {
 #ifdef USE_POLL_INSTEAD_OF_SELECT
