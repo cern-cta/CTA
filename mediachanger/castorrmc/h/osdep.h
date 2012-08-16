@@ -28,9 +28,11 @@
 #define TIME_TSIZE      HYPERSIZE
 
 typedef unsigned char   U_BYTE;
-/* typedef unsigned short  U_WORD; */
 typedef unsigned short  U_SHORT;
 typedef unsigned int    U_LONG;
+typedef          char   BYTE;
+typedef          short  WORD;
+typedef          int    LONG;
 
 #define BYTEADDR(x)     (((char *)&(x))+sizeof(BYTE)-BYTESIZE)
 #define WORDADDR(x)     (((char *)&(x))+sizeof(WORD)-WORDSIZE)
