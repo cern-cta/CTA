@@ -31,7 +31,7 @@ EXTERN_C int vdqm_UnitStatus (vdqmnw_t *, char *, char *, char *, char *, int *,
 EXTERN_C int vdqm_DelVolumeReq (vdqmnw_t *, int, char *, char *, char *, char *, int);
 EXTERN_C int vdqm_DelDrive (vdqmnw_t *, char *, char *, char *);
 EXTERN_C int vdqm_GetClientAddr (char *, char *, int *, int *, int *, int *, char *, char *, char *);
-EXTERN_C int vdqm_AcknClientAddr (SOCKET, int, int, char *);
+EXTERN_C int vdqm_AcknClientAddr (int, int, int, char *);
 EXTERN_C int vdqm_NextDrive (vdqmnw_t **, vdqmDrvReq_t *);
 EXTERN_C int vdqm_NextVol (vdqmnw_t **, vdqmVolReq_t *);
 EXTERN_C int vdqm_DedicateDrive (vdqmnw_t *, char *, char *, char *, char *);

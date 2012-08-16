@@ -21,6 +21,7 @@
 #include <Cpwd.h>
 #include <net.h>
 #include <string.h>
+#include <unistd.h>
 
 typedef struct socks {
   char host[CA_MAXHOSTNAMELEN+1];
@@ -100,7 +101,7 @@ int rfio_mstat(char *file,
     for ( i=0; i<2; i++ ) {
       /* The second pass can occur only if (rc == -1 && serrno == SEPROTONOTSUP) */
       /* In such a case rfio_smstat(fd) would have called rfio_end_this(fd,1) */
-      /* itself calling netclose(fd) */
+      /* itself calling close(fd) */
       rfio_errno = 0;
       fd=rfio_connect(host,&rt) ;
       if ( fd < 0 ) {
@@ -122,7 +123,7 @@ int rfio_mstat(char *file,
           rc = rfio_smstat(fd,filename,statb,RQST_STAT);
         if ( (rc != -1) || (rc == -1 && rfio_errno != 0) ) {
           TRACE(2,"rfio","rfio_mstat() overflow connect table, host=%s, Tid=%d. Closing %d",host,Tid,fd);
-          netclose(fd);
+          close(fd);
         }
         fd = -1;
       }
@@ -303,7 +304,7 @@ int rfio_end()
           TRACE(3, "rfio", "rfio_end: netwrite_timeout(): ERROR occured (errno=%d), Tid=%d", errno, Tid);
           rc = -1;
         }
-        netclose(mstat_tab[i].s);
+        close(mstat_tab[i].s);
       }
       mstat_tab[i].s = -1;
       mstat_tab[i].host[0] = '\0';
@@ -359,7 +360,7 @@ static int rfio_end_this(int s,
             TRACE(3, "rfio", "rfio_end_this: netwrite_timeout(): ERROR occured (errno=%d), Tid=%d", errno, Tid);
           }
         }
-        netclose(mstat_tab[i].s);
+        close(mstat_tab[i].s);
         mstat_tab[i].s = -1;
         mstat_tab[i].host[0] = '\0';
         mstat_tab[i].sec = -1;
@@ -368,7 +369,7 @@ static int rfio_end_this(int s,
       }
     }
   }
-  if (! found) netclose(s);
+  if (! found) close(s);
 
   TRACE(3,"rfio","rfio_end: Unlock mstat_tab");
   if (Cmutex_unlock((void *) mstat_tab) != 0) {
@@ -483,7 +484,7 @@ int rfio_mstat_reset()
   for (i = 0; i < MAXMCON; i++) {
     if ((mstat_tab[i].s >= 0) && (mstat_tab[i].host[0] != '\0')) {
       TRACE(3,"rfio","rfio_mstat_reset: Resetting socket fd=%d, host=%s\n", mstat_tab[i].s, mstat_tab[i].host);
-      netclose(mstat_tab[i].s);
+      close(mstat_tab[i].s);
     }
     mstat_tab[i].s = -1;
     mstat_tab[i].host[0] = '\0';
@@ -593,7 +594,7 @@ int rfio_mstat64(char *file,
 
       /* The second pass can occur only if (rc == -1 && serrno == SEPROTONOTSUP) */
       /* In such a case rfio_smstat(fd) would have called rfio_end_this(fd,1) */
-      /* itself calling netclose(fd) */
+      /* itself calling close(fd) */
       rfio_errno = 0;
       fd = rfio_connect(host,&rt) ;
       if ( fd < 0 ) {
@@ -613,7 +614,7 @@ int rfio_mstat64(char *file,
         rc = rfio_smstat64(fd, filename, statb, tabreqst2[i]);
         if ( (rc != -1) || (rc == -1 && rfio_errno != 0) ) {
           TRACE(2,"rfio","rfio_mstat() overflow connect table, Tid=%d. Closing %d",Tid,fd);
-          netclose(fd);
+          close(fd);
         }
         fd = -1;
       }

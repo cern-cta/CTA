@@ -37,19 +37,14 @@
 
 EXTERN_C char *getconfent_r (const char *, const char *, int, char *, int);
 EXTERN_C char *getconfent (const char *, const char *, int);
-EXTERN_C int setnetio ();
 EXTERN_C int solveln (char *, char *, int);
 EXTERN_C int seelink (char *, char *, int);
 EXTERN_C int isremote (struct in_addr, char *);
-EXTERN_C int CDoubleDnsLookup (SOCKET s, char *);
-EXTERN_C int isadminhost (SOCKET s, char *);
-EXTERN_C char *getifnam_r (SOCKET, char *, size_t);
-EXTERN_C char *getifnam (SOCKET);
+EXTERN_C int CDoubleDnsLookup (int s, char *);
+EXTERN_C int isadminhost (int s, char *);
+EXTERN_C char *getifnam_r (int, char *, size_t);
+EXTERN_C char *getifnam (int);
 EXTERN_C int get_user (char *, char *, int, int, char *, int *, int *);
-
-EXTERN_C int s_nrecv (SOCKET, char *, int);
-EXTERN_C int s_close (SOCKET);
-
 
 /**
  * Checks whether the given string is a size.

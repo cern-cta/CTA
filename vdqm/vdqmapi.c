@@ -60,7 +60,7 @@ int vdqm_Connect(vdqmnw_t **nw) {
 
     VDQM_API_ENTER(vdqm_Connect);
 
-    if ( nw != NULL && *nw != NULL && (*nw)->connect_socket!=INVALID_SOCKET ) {
+    if ( nw != NULL && *nw != NULL && (*nw)->connect_socket!=-1 ) {
         TRACE(1,"vdqm","vdqm_Connect() called with invalid socket");
         serrno = EINVAL;
         VDQM_API_RETURN(0);
@@ -140,11 +140,11 @@ int vdqm_Connect(vdqmnw_t **nw) {
             VDQM_API_RETURN(-1);
         }
         (*nw)->listen_socket = (*nw)->accept_socket = 
-            (*nw)->connect_socket = INVALID_SOCKET;
+            (*nw)->connect_socket = -1;
     }
 
     (*nw)->connect_socket = socket(AF_INET,SOCK_STREAM,0);
-    if ( (*nw)->connect_socket == INVALID_SOCKET ) {
+    if ( (*nw)->connect_socket == -1 ) {
         TRACE(1,"vdqm","vdqm_Connnect() socket(): %s",neterror());
         free(*nw);
         serrno = SECOMERR;
@@ -169,9 +169,9 @@ int vdqm_Connect(vdqmnw_t **nw) {
         TRACE(1,"vdqm","vdqm_Connect() try to connect to VDQM at %s:%d",
               try_host,vdqm_port);
         if ( connect((*nw)->connect_socket,(struct sockaddr *)&sin, sizeof(struct sockaddr_in)) ==
-            SOCKET_ERROR) {
+            -1) {
             TRACE(1,"vdqm","vdqm_Connect() connect(): %s",neterror());
-            closesocket((*nw)->connect_socket);
+            close((*nw)->connect_socket);
 
             if ( vdqm_replica == NULL || vdqm_replica == try_host ) {
                 TRACE(1,"vdqm","vdqm_Connect() cannot connect to VDQM");
@@ -180,7 +180,7 @@ int vdqm_Connect(vdqmnw_t **nw) {
                 VDQM_API_RETURN(-1);
             } else {
                 (*nw)->connect_socket = socket(AF_INET,SOCK_STREAM,0);
-                if ( (*nw)->connect_socket == INVALID_SOCKET ) {
+                if ( (*nw)->connect_socket == -1 ) {
                     TRACE(1,"vdqm","vdqm_Connnect() socket(): %s",neterror());
                     free(*nw);
                     serrno = SECOMERR;
@@ -198,7 +198,7 @@ int vdqm_Connect(vdqmnw_t **nw) {
     if (secure_connection) {
       if (Csec_client_initContext(&((*nw)->sec_ctx), CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
 	TRACE (1, "vdqm_CSEC", "Could not init context\n");
-	closesocket((*nw)->connect_socket);
+	close((*nw)->connect_socket);
 	free(*nw);
 	serrno = ESEC_CTX_NOT_INITIALIZED;
 	VDQM_API_RETURN(-1);
@@ -206,7 +206,7 @@ int vdqm_Connect(vdqmnw_t **nw) {
 	
       if(Csec_client_establishContext(&((*nw)->sec_ctx), (*nw)->connect_socket)< 0) {
 	TRACE (1, "vdqm_CSEC", "Could not establish context\n");
-	closesocket((*nw)->connect_socket);
+	close((*nw)->connect_socket);
 	free(*nw);
 	serrno = ESEC_NO_CONTEXT;
 	return -1;
@@ -225,13 +225,13 @@ int vdqm_Disconnect(vdqmnw_t **nw) {
 
     retval = 0;
     if ( nw == NULL || *nw == NULL ) return(-1);
-    if ( (*nw)->connect_socket != INVALID_SOCKET ) {
-        if ( (rc = shutdown((*nw)->connect_socket,2)) == SOCKET_ERROR ) {
+    if ( (*nw)->connect_socket != -1 ) {
+        if ( (rc = shutdown((*nw)->connect_socket,2)) == -1 ) {
             TRACE(1,"vdqm","vdqm_Disconnect() shutdown(): %s",neterror());
             retval = -1;
         }
-        if ( (rc = closesocket((*nw)->connect_socket)) == SOCKET_ERROR ) {
-            TRACE(1,"vdqm","vdqm_Disconnect() closesocket(%d): %s",
+        if ( (rc = close((*nw)->connect_socket)) == -1 ) {
+            TRACE(1,"vdqm","vdqm_Disconnect() close(%d): %s",
                   (*nw)->connect_socket,neterror());
             retval = -1;
         }
@@ -259,7 +259,7 @@ int vdqm_SendVolReq(vdqmnw_t *nw,
     VDQM_API_ENTER(vdqm_SendVolReq);
 
     memset(&volreq,'\0',sizeof(vdqmVolReq_t));
-    if ( (nw != NULL && nw->connect_socket == INVALID_SOCKET) ||
+    if ( (nw != NULL && nw->connect_socket == -1) ||
         VID == NULL || dgn == NULL || client_port < 0 ) {
         TRACE(1,"vdqm","vdqm_SendVolReq() called with invalid socket");
         serrno = EINVAL;
@@ -328,7 +328,7 @@ int vdqm_DelVolumeReq(vdqmnw_t *nw,
 
     memset(&hdr,'\0',sizeof(hdr));
     memset(&volreq,'\0',sizeof(vdqmVolReq_t));
-    if ( (nw != NULL && nw->connect_socket == INVALID_SOCKET) ||
+    if ( (nw != NULL && nw->connect_socket == -1) ||
         reqID <= 0 || VID == NULL || dgn == NULL || client_port < 0 ) {
         TRACE(1,"vdqm","vdqm_DelVolumeReq() called with invalid argument");
         serrno = EINVAL;
@@ -379,7 +379,7 @@ int vdqm_NextVol(vdqmnw_t **nw, vdqmVolReq_t *volreq) {
         serrno = EINVAL;
         VDQM_API_RETURN(-1);
     }
-    if ( *nw != NULL && (*nw)->connect_socket == INVALID_SOCKET ) {
+    if ( *nw != NULL && (*nw)->connect_socket == -1 ) {
         TRACE(1,"vdqm","vdqm_NextVol() called with invalid argument");
         serrno = EINVAL;
         VDQM_API_RETURN(-1);
@@ -433,7 +433,7 @@ int vdqm_UnitStatus(vdqmnw_t *nw,
     VDQM_API_ENTER(vdqm_UnitStatus);
 
     memset(&drvreq,'\0',sizeof(vdqmDrvReq_t));
-    if ( (nw != NULL && nw->connect_socket == INVALID_SOCKET) ||
+    if ( (nw != NULL && nw->connect_socket == -1) ||
         status == NULL || (*status != VDQM_TPD_STARTED && 
         (unit == NULL || dgn == NULL)) ) {
         TRACE(1,"vdqm","vdqm_UnitStatus() called with invalid argument");
@@ -460,7 +460,7 @@ int vdqm_UnitStatus(vdqmnw_t *nw,
     else {
         len = sizeof(drvreq.server)-1;
         rc = gethostname(drvreq.server,len);
-        if ( rc == SOCKET_ERROR ) {
+        if ( rc == -1 ) {
             TRACE(1,"vdqm","vdqm_UnitStatus() gethostname() %s",neterror());
             serrno = SECOMERR;
             VDQM_API_RETURN(-1);
@@ -537,7 +537,7 @@ int vdqm_DelDrive(vdqmnw_t *nw,
 
     memset(&hdr,'\0',sizeof(hdr));
     memset(&drvreq,'\0',sizeof(vdqmDrvReq_t));
-    if ( (nw != NULL && nw->connect_socket == INVALID_SOCKET) ||
+    if ( (nw != NULL && nw->connect_socket == -1) ||
         unit == NULL || dgn == NULL ) {
         TRACE(1,"vdqm","vdqm_DelDrive() called with invalid argument");
         serrno = EINVAL;
@@ -551,7 +551,7 @@ int vdqm_DelDrive(vdqmnw_t *nw,
     else {
         len = sizeof(drvreq.server)-1;
         rc = gethostname(drvreq.server,len);
-        if ( rc == SOCKET_ERROR ) {
+        if ( rc == -1 ) {
             TRACE(1,"vdqm","vdqm_DelDrive() gethostname() %s",neterror());
             serrno = SECOMERR;
             VDQM_API_RETURN(-1);
@@ -593,7 +593,7 @@ int vdqm_NextDrive(vdqmnw_t **nw, vdqmDrvReq_t *drvreq) {
         serrno = EINVAL;
         VDQM_API_RETURN(-1);
     }
-    if ( *nw != NULL && (*nw)->connect_socket == INVALID_SOCKET ) {
+    if ( *nw != NULL && (*nw)->connect_socket == -1 ) {
         TRACE(1,"vdqm","vdqm_NextDrive() called with invalid socket");
         serrno = EINVAL;
         VDQM_API_RETURN(-1);
@@ -695,7 +695,7 @@ int vdqm_DedicateDrive(vdqmnw_t *nw,
     else {
         len = sizeof(drvreq.server)-1;
         rc = gethostname(drvreq.server,len);
-        if ( rc == SOCKET_ERROR ) {
+        if ( rc == -1 ) {
             TRACE(1,"vdqm","vdqm_dedicate() gethostname() %s",neterror());
             serrno = SECOMERR;
             VDQM_API_RETURN(-1);
@@ -746,7 +746,7 @@ int vdqm_admin(vdqmnw_t *nw, int admin_req) {
         serrno = EINVAL;
         VDQM_API_RETURN(-1);
     }
-    if ( nw != NULL && nw->connect_socket == INVALID_SOCKET ) {
+    if ( nw != NULL && nw->connect_socket == -1 ) {
         TRACE(1,"vdqm","vdqm_admin() called with an invalid socket");
         serrno = EINVAL;
         VDQM_API_RETURN(-1);
@@ -819,13 +819,13 @@ int vdqm_GetClientAddr(char *buf,
     return(rc);
 }
 
-int vdqm_AcknClientAddr(SOCKET s,
+int vdqm_AcknClientAddr(int s,
                                  int status,
                                  int errmsglen,
                                  char *errmsg) {
     int rc,l_status,l_errmsglen;
 
-    if ( s == INVALID_SOCKET ) {
+    if ( s == -1 ) {
         serrno = EINVAL;
         return(-1);
     }
@@ -1079,7 +1079,7 @@ int vdqm_CreateRequestForAggregator(vdqmnw_t *nw,
         serrno = EINVAL;
         VDQM_API_RETURN(-1);
     }
-    if ( nw->connect_socket == INVALID_SOCKET ) {
+    if ( nw->connect_socket == -1 ) {
         TRACE(1,"vdqm",
             "vdqm_CreateRequestForAggregator() called with invalid socket");
 
@@ -1182,7 +1182,7 @@ int vdqm_QueueRequestForAggregator(vdqmnw_t *nw) {
         serrno = EINVAL;
         VDQM_API_RETURN(-1);
     }
-    if ( nw->connect_socket == INVALID_SOCKET ) {
+    if ( nw->connect_socket == -1 ) {
         TRACE(1,"vdqm",
           "vdqm_QueueRequestForAggregator() called with invalid socket");
         serrno = EINVAL;

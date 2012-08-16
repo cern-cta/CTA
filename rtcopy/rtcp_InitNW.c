@@ -32,7 +32,7 @@ typedef enum rtcp_type {client,server} rtcp_type_t;
 
 int use_port = -1;
 
-int rtcp_InitNW(SOCKET **ListenSocket, int *port, rtcp_type_t type, char *serviceName, char *cfgName) {
+int rtcp_InitNW(int **ListenSocket, int *port, rtcp_type_t type, char *serviceName, char *cfgName) {
     struct sockaddr_in sin ; /* Internet address */
     struct servent *sp ;   /* Service entry */
     extern char * getconfent() ;
@@ -46,7 +46,7 @@ int rtcp_InitNW(SOCKET **ListenSocket, int *port, rtcp_type_t type, char *servic
     char portEnv[CA_MAXLINELEN+1];
     
     if ( ListenSocket == NULL || (*ListenSocket != NULL && 
-        **ListenSocket != INVALID_SOCKET )) {
+        **ListenSocket != -1 )) {
         serrno = EINVAL;
         return(-1); /* Socket already allocated and opened */
     }
@@ -60,12 +60,12 @@ int rtcp_InitNW(SOCKET **ListenSocket, int *port, rtcp_type_t type, char *servic
     if ( serviceName != NULL ) localServiceName = serviceName;
     if ( cfgName != NULL ) localCfgName = cfgName;
 
-    if ( (*ListenSocket = (SOCKET *)calloc(1,sizeof(SOCKET))) == NULL ) {
+    if ( (*ListenSocket = (int *)calloc(1,sizeof(int))) == NULL ) {
         rtcp_log(LOG_ERR,"rtcp_InitNW() calloc(): %s",sstrerror(errno));
         serrno = SESYSERR;
         return(-1);
     }
-    **ListenSocket = INVALID_SOCKET;
+    **ListenSocket = -1;
 
     if ( type == server ) {
         /*
@@ -104,7 +104,7 @@ int rtcp_InitNW(SOCKET **ListenSocket, int *port, rtcp_type_t type, char *servic
     }
     
     **ListenSocket = socket(AF_INET,SOCK_STREAM,0);
-    if ( **ListenSocket == INVALID_SOCKET ) {
+    if ( **ListenSocket == -1 ) {
         rtcp_log(LOG_ERR,"rtcp_InitNW() socket(): %s\n",neterror());
         serrno = SECOMERR;
         return(-1);
@@ -113,7 +113,7 @@ int rtcp_InitNW(SOCKET **ListenSocket, int *port, rtcp_type_t type, char *servic
     if ( type == server ) {
         rcode = 1;
         if ( setsockopt(**ListenSocket, SOL_SOCKET, SO_REUSEADDR, 
-            (char *)&rcode,sizeof(rcode)) == SOCKET_ERROR ) {
+            (char *)&rcode,sizeof(rcode)) == -1 ) {
             rtcp_log(LOG_ERR,"rtcp_InitNW() setsockopt(SO_REUSEADDR) not fatal: %s\n",
                 neterror());
         }
@@ -133,13 +133,13 @@ int rtcp_InitNW(SOCKET **ListenSocket, int *port, rtcp_type_t type, char *servic
     sin.sin_family = AF_INET;
     sin.sin_port = htons((u_short)rtcp_port);
     rc = bind(**ListenSocket, (struct sockaddr *)&sin, sizeof(sin));
-    if ( rc == SOCKET_ERROR ) {
+    if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcp_InitNW() bind(): %s\n",neterror());
         serrno = SECOMERR;
         return(-1);
     }
     
-    if ( listen(**ListenSocket,RTCOPY_BACKLOG) == SOCKET_ERROR ) {
+    if ( listen(**ListenSocket,RTCOPY_BACKLOG) == -1 ) {
         rtcp_log(LOG_ERR,"rtcp_InitNW() listen(): %s\n",neterror());
         serrno = SECOMERR;
         return(-1);
@@ -147,7 +147,7 @@ int rtcp_InitNW(SOCKET **ListenSocket, int *port, rtcp_type_t type, char *servic
     if ( type == client ) {
         len = sizeof(sin);
         rc = getsockname(**ListenSocket,(struct sockaddr *)&sin,&len);
-        if ( rc == SOCKET_ERROR ) {
+        if ( rc == -1 ) {
             rtcp_log(LOG_ERR,"rtcp_InitNW() getsockname(): %s\n",neterror());
             serrno = SECOMERR;
             return(-1);
@@ -162,7 +162,7 @@ int rtcp_InitNW(SOCKET **ListenSocket, int *port, rtcp_type_t type, char *servic
 /*
  * Server initialize NW routine
  */
-int rtcpd_InitNW(SOCKET **ListenSocket) {
+int rtcpd_InitNW(int **ListenSocket) {
     rtcp_type_t type = server;
     return(rtcp_InitNW(ListenSocket,NULL,type,NULL,NULL));
 }
@@ -170,12 +170,12 @@ int rtcpd_InitNW(SOCKET **ListenSocket) {
 /*
  * Client initialize NW routine
  */
-int rtcpc_InitNW(SOCKET **ListenSocket, int *port) {
+int rtcpc_InitNW(int **ListenSocket, int *port) {
     rtcp_type_t type = client;
     return(rtcp_InitNW(ListenSocket,port,type,NULL,NULL));
 }
 
-int rtcpcld_InitNW(SOCKET **rtcpdCallback) {
+int rtcpcld_InitNW(int **rtcpdCallback) {
     int rc;
     rtcp_type_t type = server;
     rc = rtcp_InitNW(rtcpdCallback,NULL,type,"rtcpcld","RTCPCLD");
@@ -186,11 +186,11 @@ int rtcpcld_InitNW(SOCKET **rtcpdCallback) {
  * Cleanup routine to be used in a return statement like,
  *    return(rtcp_CleanUp(ListenSocket,-1));
  */
-int rtcp_CleanUp(SOCKET **ListenSocket,int status) {
+int rtcp_CleanUp(int **ListenSocket,int status) {
     if ( ListenSocket != NULL && *ListenSocket != NULL ) {
-        if ( **ListenSocket != INVALID_SOCKET ) {
-            closesocket(**ListenSocket);
-            **ListenSocket = INVALID_SOCKET;
+        if ( **ListenSocket != -1 ) {
+            close(**ListenSocket);
+            **ListenSocket = -1;
         }
         free(*ListenSocket);
         *ListenSocket = NULL;

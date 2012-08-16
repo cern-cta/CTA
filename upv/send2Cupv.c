@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <unistd.h>
 #include <sys/socket.h>
 #include "Cnetdb.h"
 #include "marshall.h"
@@ -97,12 +98,12 @@ int send2Cupv(int *socketp,char *reqp,int reql,char *user_repbuf,int user_repbuf
     if (connect (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
 	if (errno == ECONNREFUSED) {
 	  Cupv_errmsg (func, CUP00, Cupvhost);
-	  (void) netclose (s);
+	  (void) close (s);
 	  serrno = ECUPVNACT;
 	  return (-1);
 	} else {
 	  Cupv_errmsg (func, CUP02, "connect", neterror());
-	  (void) netclose (s);
+	  (void) close (s);
 	  serrno = SECOMERR;
 	  return (-1);
 	}
@@ -111,7 +112,7 @@ int send2Cupv(int *socketp,char *reqp,int reql,char *user_repbuf,int user_repbuf
       if (secure_connection) {
 	if (Csec_client_initContext(&ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
 	  Cupv_errmsg (func, CUP02, "send", "Could not init context");
-	  (void) netclose (s);
+	  (void) close (s);
 	  serrno = ESEC_CTX_NOT_INITIALIZED;
 	  return -1;
 	}
@@ -120,7 +121,7 @@ int send2Cupv(int *socketp,char *reqp,int reql,char *user_repbuf,int user_repbuf
 	  Cupv_errmsg (func, "%s: %s\n",
 		       "send",
 		       "Could not establish context");
-	  (void) netclose (s);
+	  (void) close (s);
 	  serrno = ESEC_NO_CONTEXT;
 	  return -1;
 	}
@@ -140,7 +141,7 @@ int send2Cupv(int *socketp,char *reqp,int reql,char *user_repbuf,int user_repbuf
 	Cupv_errmsg (func, CUP02, "send", sys_serrlist[SERRNO]);
       else
 	Cupv_errmsg (func, CUP02, "send", neterror());
-      (void) netclose (s);
+      (void) close (s);
       serrno = SECOMERR;
       return (-1);
     }
@@ -153,7 +154,7 @@ int send2Cupv(int *socketp,char *reqp,int reql,char *user_repbuf,int user_repbuf
 	  Cupv_errmsg (func, CUP02, "recv", sys_serrlist[SERRNO]);
 	else
 	  Cupv_errmsg (func, CUP02, "recv", neterror());
-	(void) netclose (s);
+	(void) close (s);
 	serrno = SECOMERR;
 	return (-1);
       }
@@ -164,7 +165,7 @@ int send2Cupv(int *socketp,char *reqp,int reql,char *user_repbuf,int user_repbuf
       if (rep_type == CUPV_IRC)
 	return (0);
       if (rep_type == CUPV_RC) {
-	(void) netclose (s);
+	(void) close (s);
 	if (c) {
 	  serrno = c;
 	  c = -1;
@@ -176,7 +177,7 @@ int send2Cupv(int *socketp,char *reqp,int reql,char *user_repbuf,int user_repbuf
 	  Cupv_errmsg (func, CUP02, "recv", sys_serrlist[SERRNO]);
 	else
 	  Cupv_errmsg (func, CUP02, "recv", neterror());
-	(void) netclose (s);
+	(void) close (s);
 	serrno = SECOMERR;
 	return (-1);
       }

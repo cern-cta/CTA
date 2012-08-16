@@ -19,6 +19,7 @@
 #include <Cpwd.h>
 #include <net.h>
 #include <string.h>
+#include <unistd.h>
 
 typedef struct socks {
   char host[CA_MAXHOSTNAMELEN+1];
@@ -90,7 +91,7 @@ int rfio_msymlink(char *n1,
     } else {
       rc = rfio_smsymlink(fd,n1,filename) ;
       TRACE(2,"rfio","rfio_msymlink() overflow connect table, host=%s, Tid=%d. Closing %d",host,Tid,fd);
-      netclose(fd);
+      close(fd);
     }
   }
   END_TRACE();
@@ -232,7 +233,7 @@ int rfio_symend()
           TRACE(3, "rfio", "rfio_symend: write(): ERROR occured (errno=%d), Tid=%d", errno, Tid);
           rc = -1;
         }
-        netclose(msymlink_tab[i].s);
+        close(msymlink_tab[i].s);
       }
       msymlink_tab[i].s = -1;
       msymlink_tab[i].host[0] = '\0';
@@ -281,7 +282,7 @@ static int rfio_symend_this(int s,
             TRACE(3, "rfio", "rfio_symend_this: netwrite_timeout(): ERROR occured (errno=%d), Tid=%d", errno, Tid);
           }
         }
-        netclose(msymlink_tab[i].s);
+        close(msymlink_tab[i].s);
         msymlink_tab[i].s = -1;
         msymlink_tab[i].host[0] = '\0';
         msymlink_tab[i].Tid = -1;
@@ -395,7 +396,7 @@ int rfio_msymlink_reset()
   for (i = 0; i < MAXMCON; i++) {
     if ((msymlink_tab[i].s >= 0) && (msymlink_tab[i].host[0] != '\0')) {
       TRACE(3,"rfio","rfio_msymlink_reset: Resetting socket fd=%d, host=%s\n", msymlink_tab[i].s, msymlink_tab[i].host);
-      netclose(msymlink_tab[i].s);
+      close(msymlink_tab[i].s);
     }
     msymlink_tab[i].s = -1;
     msymlink_tab[i].host[0] = '\0';

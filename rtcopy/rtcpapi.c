@@ -46,8 +46,8 @@ typedef struct rtcpcThrData
   tape_list_t *tape;
   rtcpTapeRequest_t tapereq;
   rtcpFileRequest_t filereq;
-  SOCKET s;
-  SOCKET pipe;
+  int s;
+  int pipe;
   int index;
   int reqID;
   int dumptape;
@@ -64,24 +64,24 @@ static rtcpcThrData_t *activeThreads = NULL;
 #define RFIO_NETOPT 	2
 #define RFIO_NONET	1
 
-extern int rtcpc_InitNW (SOCKET **, int *);
-extern int rtcp_CleanUp (SOCKET **, int);
-extern int rtcp_RecvReq (SOCKET *, rtcpHdr_t *, rtcpClientInfo_t *, 
+extern int rtcpc_InitNW (int **, int *);
+extern int rtcp_CleanUp (int **, int);
+extern int rtcp_RecvReq (int *, rtcpHdr_t *, rtcpClientInfo_t *, 
 			 rtcpTapeRequest_t *, rtcpFileRequest_t *);
-extern int rtcp_SendReq (SOCKET *, rtcpHdr_t *, rtcpClientInfo_t *, 
+extern int rtcp_SendReq (int *, rtcpHdr_t *, rtcpClientInfo_t *, 
 			 rtcpTapeRequest_t *, rtcpFileRequest_t *);
-extern int rtcp_RecvAckn (SOCKET *, int);
-extern int rtcp_SendAckn (SOCKET *, int);
-extern int rtcp_CloseConnection (SOCKET *);
+extern int rtcp_RecvAckn (int *, int);
+extern int rtcp_SendAckn (int *, int);
+extern int rtcp_CloseConnection (int *);
 
-extern int rtcp_Listen (SOCKET, SOCKET *, int, int);
+extern int rtcp_Listen (int, int *, int, int);
 extern int rtcp_CallVMGR (tape_list_t *, char *);
 extern int rtcpc_InitReqStruct (
 				rtcpTapeRequest_t *, 
 				rtcpFileRequest_t *
 				);
 extern int rtcp_CheckReqStructures (
-				    SOCKET *, 
+				    int *, 
 				    rtcpClientInfo_t *, 
 				    tape_list_t *
 				    );
@@ -805,7 +805,7 @@ int rtcpc_UpdateProcStatus(tape_list_t *tape,
   return(0);
 }
 
-void rtcpc_DumpRequest(SOCKET *s, tape_list_t *tape) {
+void rtcpc_DumpRequest(int *s, tape_list_t *tape) {
   tape_list_t *tl;
   file_list_t *fl;
   rtcpHdr_t hdr;
@@ -895,7 +895,7 @@ int rtcpc_SelectServer(rtcpc_sockets_t **socks,
   rtcpTapeRequest_t *tapereq = NULL;
 
   if ( socks == NULL || *socks == NULL || (*socks)->listen_socket == NULL ||
-       *(*socks)->listen_socket == INVALID_SOCKET || tape == NULL ) {
+       *(*socks)->listen_socket == -1 || tape == NULL ) {
     serrno = EINVAL;
     return(-1);
   }
@@ -905,7 +905,7 @@ int rtcpc_SelectServer(rtcpc_sockets_t **socks,
   if ( ReqID != NULL ) reqID = *ReqID;
   else reqID = -1;
 
-  while ( (*socks)->accept_socket == INVALID_SOCKET && rtcpc_killed == 0 ) {
+  while ( (*socks)->accept_socket == -1 && rtcpc_killed == 0 ) {
     if ( reqID == -1 ) {
       rtcp_log(LOG_DEBUG,"rtcpc_SelectServer() call vdqm_SendVolReq()\n");
       rc = vdqm_SendVolReq(NULL,&reqID,realVID,tapereq->dgn,
@@ -949,7 +949,7 @@ int rtcpc_SelectServer(rtcpc_sockets_t **socks,
                                        local_severity,rc));
     }
 
-    if ( (*socks)->accept_socket == INVALID_SOCKET ) {
+    if ( (*socks)->accept_socket == -1 ) {
       rc = vdqm_PingServer(NULL,tapereq->dgn,reqID);
       if ( rc == -1 ) {
         save_serrno = serrno;
@@ -1066,7 +1066,7 @@ int rtcpc_finished(rtcpc_sockets_t **socks, rtcpHdr_t *hdr, tape_list_t *tape) {
   if ( rtcpc_killed == 0 ) (void)rtcpc_ResetKillInfo();
   rc = retval = save_serrno = 0;
   if ( socks != NULL && *socks != NULL ) {
-    if ( (*socks)->abort_socket != INVALID_SOCKET && hdr != NULL ) {
+    if ( (*socks)->abort_socket != -1 && hdr != NULL ) {
       hdr->magic = RTCOPY_MAGIC;
       hdr->len = -1;
       rc = rtcp_SendReq(&((*socks)->abort_socket),hdr,NULL,NULL,NULL);
@@ -1091,7 +1091,7 @@ int rtcpc_finished(rtcpc_sockets_t **socks, rtcpHdr_t *hdr, tape_list_t *tape) {
     }
     for (i=0; i<100; i++) {
       if ( (*socks)->proc_socket[i] != NULL &&
-           *((*socks)->proc_socket[i]) != INVALID_SOCKET ) {
+           *((*socks)->proc_socket[i]) != -1 ) {
         (void)rtcp_CloseConnection((*socks)->proc_socket[i]);
         free((*socks)->proc_socket[i]);
         (*socks)->proc_socket[i] = NULL;
@@ -1177,7 +1177,7 @@ int rtcpc_InitReq(rtcpc_sockets_t **socks, int *port, tape_list_t *tape) {
   }
   (void)rtcpc_SetKillInfo(*socks,tape);
   (*socks)->listen_socket = NULL;
-  (*socks)->accept_socket = (*socks)->abort_socket = INVALID_SOCKET;
+  (*socks)->accept_socket = (*socks)->abort_socket = -1;
   (*socks)->nb_proc_sockets = 0;
 
   rc = rtcpc_InitNW(&((*socks)->listen_socket),port);
@@ -1660,7 +1660,7 @@ void *rtcpc_processReqUpdate(void *arg)
   file_list_t *fl;
   rtcpHdr_t tmpHdr, *hdr;
   rtcpFileRequest_t *filereq, fltmp;
-  SOCKET s;
+  int s;
   int check_more_work, rc = 0, retval = 0, save_serrno= 0, reqID, dumptape;
   char wakeUpMsg[1] = "";
 
@@ -1886,7 +1886,7 @@ void *rtcpc_processReqUpdate(void *arg)
     }
   }
 
-  if ( thr->pipe != INVALID_SOCKET ) {
+  if ( thr->pipe != -1 ) {
     rtcp_log(LOG_DEBUG,"rtcpc_processReqUpdate(): write to internal pipe %d\n",
              thr->pipe);
     (void)write(thr->pipe,wakeUpMsg,sizeof(wakeUpMsg));
@@ -1914,7 +1914,7 @@ int rtcpc_runReq_ext(
                      ) {
   int rc, i, found, socketIndex, reqID;
   char wakeUpMsg[1];
-  SOCKET internalPipe[2] = {INVALID_SOCKET, INVALID_SOCKET};
+  int internalPipe[2] = {-1, -1};
   rtcpcThrData_t *thr = NULL;
   rtcpTapeRequest_t *tapereq, tpreq;
   rtcpFileRequest_t *filereq, flreq;
@@ -1957,9 +1957,9 @@ int rtcpc_runReq_ext(
     FD_ZERO(&wr_set);
     FD_ZERO(&exc_set);
     FD_SET(*((*socks)->listen_socket),&rd_set);
-    if ( (*socks)->abort_socket != INVALID_SOCKET ) 
+    if ( (*socks)->abort_socket != -1 ) 
       FD_SET((*socks)->abort_socket,&rd_set);
-    if ( internalPipe[0] != INVALID_SOCKET )
+    if ( internalPipe[0] != -1 )
       FD_SET(internalPipe[0],&rd_set);
     maxfd = (*socks)->abort_socket;
     if ( (*socks)->abort_socket < *((*socks)->listen_socket) ) 
@@ -1967,7 +1967,7 @@ int rtcpc_runReq_ext(
     if ( maxfd < internalPipe[0] ) maxfd = internalPipe[0];
     for (i=0; i<100; i++) {
       if ( (*socks)->proc_socket[i] != NULL &&
-           *(*socks)->proc_socket[i] != INVALID_SOCKET ) {
+           *(*socks)->proc_socket[i] != -1 ) {
         FD_SET(*((*socks)->proc_socket[i]),&rd_set);
         if (*((*socks)->proc_socket[i]) > maxfd) 
           maxfd = *((*socks)->proc_socket[i]);
@@ -2045,7 +2045,7 @@ int rtcpc_runReq_ext(
                        -1,
 		       RTCP_ACCEPT_FROM_SERVER
                        );
-      if ( rc == -1 || (*socks)->accept_socket == INVALID_SOCKET ) {
+      if ( rc == -1 || (*socks)->accept_socket == -1 ) {
         if ( save_serrno <=0 ) save_serrno = serrno;
         rtcp_log(
                  LOG_ERR,
@@ -2078,7 +2078,7 @@ int rtcpc_runReq_ext(
       }
 
       for (i=0; i<100; i++) if ( (*socks)->proc_socket[i] == NULL ) break;
-      (*socks)->proc_socket[i] = (SOCKET *)malloc(sizeof(SOCKET));
+      (*socks)->proc_socket[i] = (int *)malloc(sizeof(int));
       if ( (*socks)->proc_socket[i] == NULL ) {
         if ( save_serrno <= 0 ) save_serrno = errno;
         rtcp_log(
@@ -2106,7 +2106,7 @@ int rtcpc_runReq_ext(
                (*socks)->nb_proc_sockets
                );
       continue;
-    } else if ( (*socks)->abort_socket != INVALID_SOCKET &&
+    } else if ( (*socks)->abort_socket != -1 &&
                 FD_ISSET((*socks)->abort_socket,&rd_set) ) {
       (*socks)->accept_socket = (*socks)->abort_socket;
       rtcp_log(
@@ -2114,7 +2114,7 @@ int rtcpc_runReq_ext(
                "rtcpc_runReq(): data on abort socket %d\n",
                (*socks)->accept_socket
                );
-    } else if ( internalPipe[0] != INVALID_SOCKET &&
+    } else if ( internalPipe[0] != -1 &&
                 FD_ISSET(internalPipe[0],&rd_set) ) {
       rtcp_log(
                LOG_DEBUG,
@@ -2194,7 +2194,7 @@ int rtcpc_runReq_ext(
     } else {
       for (i=0; i<100; i++) {
         if ( (*socks)->proc_socket[i] != NULL && 
-             *((*socks)->proc_socket[i]) != INVALID_SOCKET && 
+             *((*socks)->proc_socket[i]) != -1 && 
              FD_ISSET(*((*socks)->proc_socket[i]),&rd_set) ) {
           (*socks)->accept_socket = *((*socks)->proc_socket[i]);
           socketIndex = i;
@@ -2302,7 +2302,7 @@ int rtcpc_runReq_ext(
       free((*socks)->proc_socket[i]);
       (*socks)->proc_socket[i] = NULL;
       (*socks)->nb_proc_sockets--;
-      (*socks)->abort_socket = INVALID_SOCKET;
+      (*socks)->abort_socket = -1;
       break;
     case RTCP_ENDOF_REQ :
       rtcp_log(
@@ -2388,7 +2388,7 @@ int rtcpc_runReq_ext(
       thr->s = (*socks)->accept_socket;
       thr->index = socketIndex;
       if ( (dispatchRoutine != NULL) && (socketIndex >= 0) )
-        *((*socks)->proc_socket[socketIndex]) = INVALID_SOCKET;
+        *((*socks)->proc_socket[socketIndex]) = -1;
 
       { /* S. Murray 23/04/09 */
         int rc = Cmutex_lock(&activeThreads,-1);

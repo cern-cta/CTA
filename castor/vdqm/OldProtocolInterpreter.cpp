@@ -159,7 +159,7 @@ throw (castor::exception::Exception) {
   fromlen = sizeof(from);
   rc = getpeername(m_socket.socket(), (struct sockaddr *)&from,
     (socklen_t *)&fromlen);
-  if ( rc == SOCKET_ERROR ) {
+  if ( rc == -1 ) {
     castor::exception::Internal ex;
     ex.getMessage() << "OldProtocolInterpreter::readProtocol() getpeername(): "
                     << neterror() << std::endl;      

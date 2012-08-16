@@ -11,6 +11,7 @@
 
 #define RFIO_KERNEL 1
 #include <rfio.h>
+#include <unistd.h>
 
 
 EXTERN_C int rfio_smstat (int, char *, struct stat *, int);
@@ -77,7 +78,7 @@ int  rfio_stat(char    *filepath,              /* remote file path              
     }
     status = rfio_smstat(s,filename,statbuf,RQST_STAT) ;
   }
-  (void) netclose(s);
+  (void) close(s);
   return (status);
 #endif
 #endif
@@ -141,6 +142,6 @@ int  rfio_stat64(char    *filepath,              /* remote file path            
       status = rfio_smstat64(s,filename,statbuf,RQST_STAT) ;
     }
   }
-  (void) netclose(s);
+  (void) close(s);
   return (status);
 }

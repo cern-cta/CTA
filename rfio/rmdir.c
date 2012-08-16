@@ -13,6 +13,7 @@
 
 #include "rfio.h"               /* Remote File I/O general definitions  */
 #include <string.h>
+#include <unistd.h>
 
 
 /* Remote rmdir             */
@@ -76,7 +77,7 @@ int  rfio_rmdir(char  *dirpath)          /* remote directory path             */
     TRACE(2,"rfio","rfio_rmdir: request too long %d (max %d)",
           RQSTSIZE+len,BUFSIZ);
     END_TRACE();
-    (void) netclose(s);
+    (void) close(s);
     serrno = E2BIG;
     return(-1);
   }

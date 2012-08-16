@@ -37,7 +37,7 @@
 #include <stdio.h>
 
 int rtcpd_GetClientInfoMsg(
-  const SOCKET                   connSock,
+  const int                      connSock,
   const int                      netTimeout,
   rtcpHdr_t                      *const msgHdr,
   rtcpTapeRequest_t              *const tapeReq,
@@ -57,7 +57,7 @@ int rtcpd_GetClientInfoMsg(
   *clientIsTapeBridge = FALSE;
 
   /* Check function-parameters */
-  if(INVALID_SOCKET == connSock || NULL == tapeReq || NULL == fileReq ||
+  if(-1 == connSock || NULL == tapeReq || NULL == fileReq ||
     NULL == client || NULL == errBuf) {
     snprintf(errBuf, errBufLen, "%s()"
       ": Invalid function-parameter",

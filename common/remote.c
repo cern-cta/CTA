@@ -47,7 +47,7 @@ int isremote(struct in_addr from_host,
     char buf[BUFSIZ];            /* A buffer                     */
     char ent[25] ;
     struct hostent  *h;
-    SOCKET   s_s;
+    int   s_s;
     struct  ifconf  ifc;     /* ifconf structure      */
     struct  ifreq   *ifr;    /* Pointer on ifreq structure */
     int n ;          
@@ -156,7 +156,7 @@ int isremote(struct in_addr from_host,
 
     log(LOG_DEBUG, "isremote(): Client host is %s\n",inet_ntoa( from_host )) ;
 
-    if( (s_s = socket(AF_INET, SOCK_DGRAM, 0)) == SOCKET_ERROR )  {
+    if( (s_s = socket(AF_INET, SOCK_DGRAM, 0)) == -1 )  {
         log(LOG_ERR, "socket: %s\n",strerror(errno));
         return -1;
     }
@@ -182,23 +182,23 @@ int isremote(struct in_addr from_host,
             }
         }
     }
-    closesocket(s_s);
+    close(s_s);
     log(LOG_INFO ,"isremote(): client is in another site\n");
     return 1;
 }
 
-int CDoubleDnsLookup(SOCKET s, char *host) {
+int CDoubleDnsLookup(int s, char *host) {
     char tmphost[CA_MAXHOSTNAMELEN+1], *p;
     struct sockaddr_in from;
     struct hostent *hp;
     int i, save_errno;
     socklen_t fromlen = (socklen_t) sizeof(from);
 
-    if ( s == INVALID_SOCKET ) {
+    if ( s == -1 ) {
         serrno = EBADF;
         return(-1);
     }
-    if ( getpeername(s,(struct sockaddr *)&from,&fromlen) == SOCKET_ERROR ) {
+    if ( getpeername(s,(struct sockaddr *)&from,&fromlen) == -1 ) {
         save_errno = errno;
         log(LOG_ERR, "CDoubleDnsLookup() getpeername(): %s\n",neterror());
         errno = save_errno;
@@ -245,7 +245,7 @@ int CDoubleDnsLookup(SOCKET s, char *host) {
     return(-1);
 }
 
-int isadminhost(SOCKET s, char *peerhost) {
+int isadminhost(int s, char *peerhost) {
     int i, rc;
 #if defined(ADMIN_HOSTS)
     char *defined_admin_hosts = ADMIN_HOSTS;

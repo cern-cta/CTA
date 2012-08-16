@@ -609,6 +609,7 @@ int dlf_writept(Cuuid_t reqid,
 
         /* Check for memory allocation failure */
         if (value == NULL) {
+          free(name);
           return (-1);
         }
 

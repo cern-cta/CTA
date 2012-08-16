@@ -31,7 +31,6 @@
 #include <string.h>
 #include <serrno.h>
 #include <sys/types.h>
-#include <Cnetdb.h>
 #include "castor/Constants.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
@@ -78,7 +77,7 @@ castor::io::PipeSocket::~PipeSocket() throw()
 void castor::io::PipeSocket::closeWrite()
 {
   if((m_mode & castor::io::PIPE_WRITE) != 0) {
-    CLOSE(m_fdOut);
+    ::close(m_fdOut);
     m_mode &= ~castor::io::PIPE_WRITE;
   }
 }
@@ -89,7 +88,7 @@ void castor::io::PipeSocket::closeWrite()
 void castor::io::PipeSocket::closeRead()
 {
   if((m_mode & castor::io::PIPE_READ) != 0) {
-    CLOSE(m_fdIn);
+    ::close(m_fdIn);
     m_mode &= ~castor::io::PIPE_READ;
   }
 }

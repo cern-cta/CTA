@@ -35,8 +35,8 @@
 
 #include <sys/types.h>
 
-EXTERN_C ssize_t  netread_timeout (SOCKET, void *, ssize_t, int);
-EXTERN_C ssize_t  netwrite_timeout (SOCKET, void *, ssize_t, int);
-EXTERN_C int netconnect_timeout (SOCKET, struct sockaddr *, size_t, int);
+EXTERN_C ssize_t  netread_timeout (int, void *, ssize_t, int);
+EXTERN_C ssize_t  netwrite_timeout (int, void *, ssize_t, int);
+EXTERN_C int netconnect_timeout (int, struct sockaddr *, size_t, int);
 
 #endif /* __stgtimeout_h */

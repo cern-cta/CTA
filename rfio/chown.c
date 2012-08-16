@@ -13,6 +13,7 @@
 
 #include "rfio.h"               /* Remote File I/O general definitions  */
 #include <string.h>
+#include <unistd.h>
 
 /* Remote chown                 */
 int rfio_chown(char  *file,          /* remote file path             */
@@ -68,7 +69,7 @@ int rfio_chown(char  *file,          /* remote file path             */
     TRACE(2,"rfio","rfio_chown: request too long %d (max %d)",
           RQSTSIZE+len,BUFSIZ);
     END_TRACE();
-    (void) netclose(s);
+    (void) close(s);
     serrno = E2BIG;
     return(-1);
   }
@@ -84,7 +85,7 @@ int rfio_chown(char  *file,          /* remote file path             */
   TRACE(2,"rfio","rfio_chown: sending %d bytes",RQSTSIZE+len) ;
   if (netwrite_timeout(s,buf,RQSTSIZE+len,RFIO_CTRL_TIMEOUT) != (RQSTSIZE+len)) {
     TRACE(2, "rfio", "rfio_chown: write(): ERROR occured (errno=%d)", errno);
-    (void) netclose(s);
+    (void) close(s);
     END_TRACE();
     return(-1);
   }
@@ -92,7 +93,7 @@ int rfio_chown(char  *file,          /* remote file path             */
   TRACE(2, "rfio", "rfio_chown: reading %d bytes", LONGSIZE);
   if (netread_timeout(s, buf, 2* LONGSIZE, RFIO_CTRL_TIMEOUT) != (2 * LONGSIZE))  {
     TRACE(2, "rfio", "rfio_chown: read(): ERROR occured (errno=%d)", errno);
-    (void) netclose(s);
+    (void) close(s);
     END_TRACE();
     return(-1);
   }
@@ -100,7 +101,7 @@ int rfio_chown(char  *file,          /* remote file path             */
   unmarshall_LONG(p, rcode);
   TRACE(1, "rfio", "rfio_chown: return %d",status);
   rfio_errno = rcode;
-  (void) netclose(s);
+  (void) close(s);
   if (status)     {
     END_TRACE();
     return(-1);

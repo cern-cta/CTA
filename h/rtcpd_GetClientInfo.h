@@ -62,7 +62,7 @@
  *                   is set accordingly.
  */
 EXTERN_C int rtcpd_GetClientInfo(
-  const SOCKET                          connSock,
+  const int                             connSock,
   const int                             netTimeout,
   rtcpTapeRequest_t              *const tapeReq,
   rtcpFileRequest_t              *const fileReq,

@@ -55,7 +55,7 @@ char *getconfent (char *, char *, int);
 #define DEBUG_PRINT(X) {if ( debug == TRUE ) rtcp_log X ;}
 
 typedef struct thread_arg {
-    SOCKET client_socket;
+    int client_socket;
     tape_list_t *tape;
     rtcpClientInfo_t *client;
 
@@ -1440,7 +1440,7 @@ void *tapeIOthread(void *arg) {
     rtcpClientInfo_t *client;
     tape_list_t *tape, *nexttape;
     file_list_t *nextfile, *tmpfile, *prevfile;
-    SOCKET client_socket;
+    int client_socket;
     char *p, u64buf[22];
     u_signed64 bytes_in,totsz;
     int indxp = 0;
@@ -2343,7 +2343,7 @@ int rtcpd_StartTapeIO(
     /*
      * Open a separate connection to client
      */
-    tharg->client_socket = INVALID_SOCKET;
+    tharg->client_socket = -1;
     rc = rtcpd_ConnectToClient(&tharg->client_socket,
                                client->clienthost,
                                &client->clientport);

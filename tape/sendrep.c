@@ -13,6 +13,8 @@
 #include "Ctape_api.h"
 #include "marshall.h"
 #include "net.h"
+#include <unistd.h>
+
 int sendrep(int rpfd, int rep_type, ...)
 {
 	va_list args;
@@ -55,10 +57,10 @@ int sendrep(int rpfd, int rep_type, ...)
 	if (netwrite (rpfd, repbuf, repsize) != repsize) {
 		tplogit (func, TP002, "send", neterror());
 		if (rep_type == TAPERC)
-			netclose (rpfd);
+			close (rpfd);
 		return (-1);
 	}
 	if (rep_type == TAPERC)
-		netclose (rpfd);
+		close (rpfd);
 	return (0);
 }

@@ -17,6 +17,7 @@
 #include <trace.h>                      /* tracing definitions          */
 #include <string.h>                     /* For strlen                   */
 #include <Cglobals.h>                   /* Cglobals prototypes          */
+#include <unistd.h>
 
 #include <net.h>                        /* Networking specifics         */
 
@@ -29,7 +30,7 @@ static int ifname_key = -1;             /* Key to interface name global */
  *       it failed. With a new socket creation it works however.
  */
 
-char  *getifnam_r(SOCKET     s,
+char  *getifnam_r(int     s,
                   char    *ifname,
                   size_t  ifnamelen)
 {
@@ -41,7 +42,7 @@ char  *getifnam_r(SOCKET     s,
     unsigned long binaddr;          /* Store address                */
     int     n;                      /* # of interfaces              */
     int     found=0;                /* Found the interface ?        */
-    SOCKET  s_s;                    /* A socket to get interfaces   */
+    int  s_s;                    /* A socket to get interfaces   */
 #if defined(__APPLE__)
     struct  sockaddr_in *sp;    /* Ptr to sockaddr in ifreq buf */  
     char    *endp;          /* End of ifreq buffer      */  
@@ -51,7 +52,7 @@ char  *getifnam_r(SOCKET     s,
     INIT_TRACE("COMMON_TRACE");
     TRACE(1,"getifnam_r", "getifnam_r(%d) entered",s);
     addrlen = (socklen_t) sizeof(struct sockaddr_in);
-    if (getsockname(s, (struct  sockaddr *)&addr, &addrlen) == SOCKET_ERROR ) {
+    if (getsockname(s, (struct  sockaddr *)&addr, &addrlen) == -1 ) {
         TRACE(2,"getifnam_r", "getsockname returned %d", errno);
         log(LOG_ERR, "getsockname: %s\n",strerror(errno));
         END_TRACE();
@@ -59,7 +60,7 @@ char  *getifnam_r(SOCKET     s,
     } else {
         binaddr = addr.sin_addr.s_addr;
     }
-    if ((s_s = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET ) {
+    if ((s_s = socket(AF_INET, SOCK_DGRAM, 0)) == -1 ) {
         log(LOG_ERR, "socket: %s\n",strerror(errno));
         return(NULL);
     }
@@ -67,10 +68,10 @@ char  *getifnam_r(SOCKET     s,
     ifc.ifc_len = sizeof(buf);
     ifc.ifc_buf = buf;
     ifr = ifc.ifc_req;
-    if ((n = ioctlsocket(s_s, SIOCGIFCONF, (char *)&ifc)) < 0) {
-        TRACE(2,"getifnam_r", "netioctl returned %d", errno);
+    if ((n = ioctl(s_s, SIOCGIFCONF, (char *)&ifc)) < 0) {
+        TRACE(2,"getifnam_r", "ioctl returned %d", errno);
         log(LOG_ERR, "ioctl(SIOCGIFCONF): %s\n",strerror(errno));
-        (void) netclose(s_s);
+        (void) close(s_s);
         END_TRACE();
         return(NULL);
     }
@@ -106,7 +107,7 @@ char  *getifnam_r(SOCKET     s,
         }
 #endif /* __APPLE__ */
     }
-    (void) netclose(s_s);
+    (void) close(s_s);
     if (found) {
         TRACE(2,"getifnam_r", "returning %s", ifname);
         END_TRACE();
@@ -120,7 +121,7 @@ char  *getifnam_r(SOCKET     s,
     }
 }
 
-char *getifnam(SOCKET s)
+char *getifnam(int s)
 {
     char *ifname = NULL;
     size_t ifnamelen = 16;

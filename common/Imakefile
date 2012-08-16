@@ -13,7 +13,7 @@ COMMONLIB_OBJS = $(SYSDEP_OBJS) \
 		 compat.o getacct.o getacctent.o getconfent.o \
 		 getifnam.o getuser.o log.o marshall.o \
 		 readc.o remote.o \
-		 serror.o setnetio.o socket.o solveln.o trace.o \
+		 serror.o socket.o solveln.o trace.o \
 		 wsacct.o ypgetacct.o ypgetacctent.o \
 		 Cthread.o Cglobals.o Cgrp.o Cmutex.o Cuuid.o \
 		 Cdomainname.o Cnetdb.o Cpool.o Cpwd.o Cstrerror.o \
@@ -50,7 +50,6 @@ CLIENTLIBMANPAGE(getacct)
 CLIENTLIBMANPAGE(getacctent)
 CLIENTLIBMANPAGE(getconfent)
 CLIENTLIBMANPAGE(log)
-CLIENTLIBMANPAGE(netclose)
 CLIENTLIBMANPAGE(netread)
 CLIENTLIBMANPAGE(netwrite)
 CLIENTLIBMANPAGE(Cgetopt)

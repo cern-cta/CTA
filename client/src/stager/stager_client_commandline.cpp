@@ -96,10 +96,6 @@ int getDefaultForGlobal(char** host,
           }
         }
       } else {
-        if (hostDefault != NULL) {
-          free(hostDefault);
-          hostDefault = NULL;
-        }
         hostDefault = strdup(hostMap);
       }
     }
@@ -113,7 +109,7 @@ int getDefaultForGlobal(char** host,
     aux = getenv("STAGE_SVCCLASS");
     svcDefault = aux == NULL ? NULL : strdup(aux);
     if (svcDefault == NULL || strcmp(svcDefault, "") == 0) {
-      if (svcDefault != NULL && strcmp(svcDefault, "")) {
+      if (svcDefault != NULL) {
         free(svcDefault);
         svcDefault = NULL;
       }
@@ -128,10 +124,6 @@ int getDefaultForGlobal(char** host,
           svcDefault = strdup(DEFAULT_SVCCLASS);
         }
       } else {
-        if (svcDefault != NULL && strcmp(svcDefault, "")) {
-          free(svcDefault);
-          svcDefault = NULL;
-        }
         svcDefault = strdup(svcMap);
       }
     }
@@ -201,12 +193,15 @@ int parseCmdLine(int argc, char *argv[], int (*callback)(const char *),
   Copterr = 1;
   errflg = 0;
 
+  if (0 == callback) {
+    // fail if callback is null
+    return 1;
+  }
+
   while ((c = Cgetopt_long (argc, argv, "f:M:S:U:rh", longopts, NULL)) != -1) {
     switch (c) {
     case 'M':
-      if (0 != callback) {
-        callback(Coptarg);
-      }
+      callback(Coptarg);
       break;
     case 'f':
       {

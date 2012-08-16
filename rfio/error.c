@@ -17,6 +17,7 @@
 #include "rfio.h"
 #include <Cglobals.h>
 #include <rfio_errno.h>
+#include <unistd.h>
 
 /*
  * RFIO global error number.
@@ -126,7 +127,7 @@ char *rfio_serror_r(char *buf,
           sprintf(rerrlist, "%s (error %d on %s)", rferrmsg, last_rferr, rfio_lasthost());
         else
           sprintf(rerrlist, " (error %d on %s)", last_rferr, rfio_lasthost());
-        netclose(s);
+        close(s);
         rfio_errno = last_rferr ;
         strcpy(buf, rerrlist);
         return (buf);

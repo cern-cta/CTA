@@ -62,7 +62,7 @@ extern int switch_open();
 extern int switch_close();
 extern int switch_write();
 extern int switch_read();
-extern int srchkreqsize (SOCKET, char *, int);
+extern int srchkreqsize (int, char *, int);
 extern int check_path_whitelist (const char *, const char *, const char **, char *, size_t, int);
 
 /************************************************************************/

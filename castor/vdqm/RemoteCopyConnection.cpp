@@ -37,6 +37,7 @@
 #include "h/rtcp_constants.h" /* Definition of RTCOPY_MAGIC   */
 #include "h/serrno.h"
 #include "h/vdqm_messages.h"
+#include <sys/socket.h>
 
 #include <errno.h>
 #include <unistd.h>
@@ -73,7 +74,7 @@ castor::vdqm::RemoteCopyConnection::RemoteCopyConnection(
 // destructor
 //------------------------------------------------------------------------------
 castor::vdqm::RemoteCopyConnection::~RemoteCopyConnection() throw () {
-  ::shutdown(m_socket, SD_BOTH);
+  ::shutdown(m_socket, SHUT_RDWR);
   this->close();
 }
 

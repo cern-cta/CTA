@@ -40,7 +40,7 @@
 #include <rtcp_server.h>
 #include <Ctape_api.h>
 #include <serrno.h>
-int rtcp_CheckReqStructures (SOCKET *,
+int rtcp_CheckReqStructures (int *,
 			     rtcpClientInfo_t *,
 			     tape_list_t *);
 
@@ -660,7 +660,7 @@ int rtcpd_CheckFileReq(file_list_t *file) {
 }
 
 
-int rtcp_CheckReq(SOCKET *client_socket, 
+int rtcp_CheckReq(int *client_socket, 
                   rtcpClientInfo_t *client, 
                   tape_list_t *tape) {
     int rc = 0;
@@ -753,7 +753,7 @@ int rtcp_CheckReq(SOCKET *client_socket,
     return(rc);
 }
 
-int rtcp_CheckReqStructures(SOCKET *client_socket,
+int rtcp_CheckReqStructures(int *client_socket,
                             rtcpClientInfo_t *client,
                             tape_list_t *tape) {
     int rc;

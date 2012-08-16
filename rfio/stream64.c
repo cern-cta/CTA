@@ -15,6 +15,7 @@
 #include <string.h>
 #include <syslog.h>             /* system logger                        */
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "rfio.h"               /* remote file I/O definitions          */
@@ -632,7 +633,7 @@ int rfio_read64_v3(int     ctrl_sock,
     {
       /* Receiving data using data socket */
       /* Do not use read here because NT doesn't support that with socket fds */
-      n = s_nrecv(data_sock, iobuffer, size-byte_in_buffer);
+      n = recv(data_sock, iobuffer, size-byte_in_buffer, 0);
       if (n <= 0) {
         if (n == 0)
         {
@@ -890,7 +891,7 @@ int rfio_close64_v3(int     s)
   {
     FD_ZERO(&fdvar);
     FD_SET(s,&fdvar);
-    if ( rfilefdt[s_index]->lseekhow != INVALID_SOCKET && eod == 0)
+    if ( rfilefdt[s_index]->lseekhow != -1 && eod == 0)
       FD_SET(rfilefdt[s_index]->lseekhow,&fdvar);
 
     t.tv_sec = 10;
@@ -926,10 +927,10 @@ int rfio_close64_v3(int     s)
       /* Closing data socket after the server has read all the data */
       TRACE(2, "rfio", "rfio_close64_v3 closing data socket, fildesc=%d",
             rfilefdt[s_index]->lseekhow) ;
-      if (rfilefdt[s_index]->lseekhow != INVALID_SOCKET &&
-          s_close(rfilefdt[s_index]->lseekhow) < 0)
+      if (rfilefdt[s_index]->lseekhow != -1 &&
+          close(rfilefdt[s_index]->lseekhow) < 0)
         TRACE(2, "rfio", "rfio_close64_v3: close(): ERROR occured (errno=%d)", errno);
-      rfilefdt[s_index]->lseekhow = INVALID_SOCKET;
+      rfilefdt[s_index]->lseekhow = -1;
       p = rfio_buf ;
       unmarshall_WORD(p,req) ;
       unmarshall_LONG(p,status) ;
@@ -979,7 +980,7 @@ int rfio_close64_v3(int     s)
         return -1 ;
       }
       /*  Do not use read here as NT doesn't support this with socket fds */
-      if ((n = s_nrecv(rfilefdt[s_index]->lseekhow, dummy, sizeofdummy)) <= 0) {
+      if ((n = recv(rfilefdt[s_index]->lseekhow, dummy, sizeofdummy, 0)) <= 0) {
         if (n < 0) /* 0 = continue (data socket closed, waiting for close ack */
         {
           TRACE(2,"rfio","close64_v3: read failed (errno=%d)",errno) ;

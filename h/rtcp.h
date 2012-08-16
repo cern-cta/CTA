@@ -353,6 +353,6 @@ else {(Y)->next=(X); (Y)->prev=(X)->prev; (Y)->next->prev=(Y); (Y)->prev->next=(
 EXTERN_C void (*rtcp_log) (int, const char *, ...);
 EXTERN_C char *rtcp_voidToString (void *, int);
 EXTERN_C int rtcp_stringToVoid (char *, void *, int);
-EXTERN_C int rtcp_ClientMsg (SOCKET *, char *);
+EXTERN_C int rtcp_ClientMsg (int *, char *);
 
 #endif /* RTCP_H */

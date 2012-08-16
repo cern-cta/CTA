@@ -11,7 +11,7 @@
 #define RFIO_KERNEL 1
 #include "rfio.h"               /* Remote File I/O general definitions  */
 #include <string.h>
-
+#include <unistd.h>
 
 /* Remote file access            */
 int rfio_access(const char    *filepath,              /* remote file path                     */
@@ -65,7 +65,7 @@ int rfio_access(const char    *filepath,              /* remote file path       
     TRACE(2,"rfio","rfio_access: request too long %d (max %d)",
           RQSTSIZE+len,BUFSIZ);
     END_TRACE();
-    (void) netclose(s);
+    (void) close(s);
     serrno = E2BIG;
     return(-1);
   }
@@ -82,7 +82,7 @@ int rfio_access(const char    *filepath,              /* remote file path       
   TRACE(2,"rfio","rfio_access: sending %d bytes",RQSTSIZE+len) ;
   if (netwrite_timeout(s,buf,RQSTSIZE+len,RFIO_CTRL_TIMEOUT) != (RQSTSIZE+len)) {
     TRACE(2, "rfio", "rfio_access: write(): ERROR occured (errno=%d)", errno);
-    (void) netclose(s);
+    (void) close(s);
     END_TRACE();
     return(-1);
   }
@@ -90,14 +90,14 @@ int rfio_access(const char    *filepath,              /* remote file path       
   TRACE(2, "rfio", "rfio_access: reading %d bytes", LONGSIZE);
   if (netread_timeout(s, buf, LONGSIZE, RFIO_CTRL_TIMEOUT) != LONGSIZE )  {
     TRACE(2, "rfio", "rfio_access: read(): ERROR occured (errno=%d)", errno);
-    (void) netclose(s);
+    (void) close(s);
     END_TRACE();
     return(-1);
   }
   unmarshall_LONG(p, status);
   TRACE(1, "rfio", "rfio_access: return %d",status);
   rfio_errno = status;
-  (void) netclose(s);
+  (void) close(s);
   if (status)     {
     END_TRACE();
     return(-1);

@@ -28,12 +28,6 @@
 #define RFIO2TPREAD_MAGIC 0X0110
 #define OK 1
 
-extern int (*recvfunc)();       /* Network receive function */
-extern int (*sendfunc)(); /* Network send function */
-
-#define netread         (*recvfunc)
-#define netwrite        (*sendfunc)
-
 #ifndef RFIO_CTRL_TIMEOUT
 #define RFIO_CTRL_TIMEOUT 10
 #endif
@@ -85,11 +79,6 @@ int connecttpread(char * host,
   if ( isremote(sin.sin_addr, host) ) {
     log(LOG_INFO,"Attempt to give key from outside site rejected\n");
     return  -1 ;
-  }
-  if ( setnetio() == -1 ) {
-    log(LOG_ERR,"error in setnetio()\n") ;
-    (void) close(sock) ;
-    return -1 ;
   }
   return sock ;
 }

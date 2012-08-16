@@ -11,6 +11,7 @@
 #define RFIO_KERNEL     1
 #include "rfio.h"
 #include <string.h>
+#include <unistd.h>
 
 int rfio_readlink(char *path,
                   char *buf,
@@ -64,14 +65,14 @@ int rfio_readlink(char *path,
     TRACE(2,"rfio","rfio_readlink: request too long %d (max %d)",
           status,BUFSIZ);
     END_TRACE();
-    (void) netclose(s);
+    (void) close(s);
     serrno = E2BIG;
     return(-1);
   }
 
   if (netwrite_timeout(s,buffer,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE) {
     TRACE(2, "rfio", "readlink: write(): ERROR occured (errno=%d)",errno);
-    (void) netclose(s);
+    (void) close(s);
     END_TRACE();
     return(-1);
   }
@@ -83,7 +84,7 @@ int rfio_readlink(char *path,
 
   if (netwrite_timeout(s,buffer,status,RFIO_CTRL_TIMEOUT) != status ) {
     TRACE(2, "rfio", "readlink(): write(): ERROR occured (errno=%d)",errno);
-    (void) netclose(s);
+    (void) close(s);
     END_TRACE();
     return(-1);
   }
@@ -97,7 +98,7 @@ int rfio_readlink(char *path,
       TRACE(2, "rfio", "rfio_readlink: read(): ERROR occured (serrno=%d)", serrno);
     } else
       TRACE(2, "rfio", "rfio_readlink: read(): ERROR occured (errno=%d)", errno);
-    (void) netclose(s);
+    (void) close(s);
     END_TRACE();
     return(-1);
   }
@@ -109,14 +110,14 @@ int rfio_readlink(char *path,
   if ( status < 0 ) {
     TRACE(1,"rfio","rfio_readlink(): rcode = %d , status = %d",rcode, status);
     rfio_errno = rcode ;
-    (void) netclose(s);
+    (void) close(s);
     END_TRACE();
     return(status);
   }
   /* Length is not of a long size, so RFIO_CTRL_TIMEOUT is enough */
   if (netread_timeout(s, buffer, len, RFIO_CTRL_TIMEOUT) != len)  {
     TRACE(2, "rfio", "rfio_readlink: read(): ERROR occured (errno=%d)", errno);
-    (void) netclose(s);
+    (void) close(s);
     END_TRACE();
     return(-1);
   }
@@ -129,6 +130,6 @@ int rfio_readlink(char *path,
   }
   TRACE (2,"rfio","rfio_readlink succeded: returned %s",buf);
   END_TRACE();
-  (void) netclose (s) ;
+  (void) close (s) ;
   return(rcode) ;
 }

@@ -60,7 +60,7 @@
 #include <cppunit/ui/text/TestRunner.h>
 #include <stdio.h>
 
-extern "C" int rtcp_InitLog (char *, FILE *, FILE *, SOCKET *);
+extern "C" int rtcp_InitLog (char *, FILE *, FILE *, int *);
 
 int main() {
   char rtcpLogErrTxt[1024];

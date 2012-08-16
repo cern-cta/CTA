@@ -243,7 +243,7 @@ int tpd_main() {
                                               "func",    TL_MSG_PARAM_STR, func,
                                               "Message", TL_MSG_PARAM_STR, "CSEC: Could not establish context!",
                                               "Value",   TL_MSG_PARAM_STR, Csec_getErrorMessage() );
-			  netclose (rqfd);
+			  close (rqfd);
 			  continue;
 			}
 			/* Connection could be done from another castor service */
@@ -274,7 +274,7 @@ int tpd_main() {
                             tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
                                                 "func",    TL_MSG_PARAM_STR, func,
                                                 "Message", TL_MSG_PARAM_STR, "CSEC: Can't get client username!" );
-			    netclose (rqfd);
+			    close (rqfd);
 			    continue;
 			  }
 			}
@@ -292,7 +292,7 @@ int tpd_main() {
                                         tl_tpdaemon.tl_log( &tl_tpdaemon, 46, 2,
                                                             "func",    TL_MSG_PARAM_STR, func,
                                                             "REQBUFSZ", TL_MSG_PARAM_INT, REQBUFSZ );
-					netclose (rqfd);
+					close (rqfd);
 					continue;
 				}
 				l = msglen - sizeof(req_hdr);
@@ -315,7 +315,7 @@ int tpd_main() {
                                                             "func",    TL_MSG_PARAM_STR, func,
                                                             "Message", TL_MSG_PARAM_STR, "netread_timeout",
                                                             "Value",   TL_MSG_PARAM_STR, errMsg);
-					netclose (rqfd);
+					close (rqfd);
 					continue;
 				}
 				rpfd = rqfd;
@@ -336,7 +336,7 @@ int tpd_main() {
                                         clienthost = hp->h_name ;
 				procreq (req_type, req_data, clienthost);
 			} else {
-				netclose (rqfd);
+				close (rqfd);
 				if (l > 0) {
 					tplogit (func, TP004, l);
                                         tl_tpdaemon.tl_log( &tl_tpdaemon, 4, 3,
@@ -1028,7 +1028,7 @@ reply:
 	if (c)
 		sendrep (rpfd, TAPERC, c);
 	else
-		netclose (rpfd);
+		close (rpfd);
 }
 
 void procdinforeq(char *req_data,
@@ -1198,7 +1198,7 @@ void procfrdrvreq(char *req_data,
 		free (rqp);
 		sendrep (rls_rpfd, TAPERC, 0);
 	}
-	netclose (rpfd);
+	close (rpfd);
 }
 
 void procinforeq(char *req_data,
@@ -1327,7 +1327,7 @@ void prockilltreq(char *req_data,
 			tunp++;
 		}
 	}
-	netclose (rpfd);
+	close (rpfd);
 }
 
 void procmountreq(char *req_data,
@@ -1700,7 +1700,7 @@ reply:
 	if (c)
 		sendrep (rpfd, TAPERC, c);
 	else
-		netclose (rpfd);
+		close (rpfd);
 }
 
 void procposreq(char *req_data,
@@ -1986,7 +1986,7 @@ reply:
 	if (c)
 		sendrep (rpfd, TAPERC, c);
 	else
-		netclose (rpfd);
+		close (rpfd);
 }
 
 void procrlsreq(char *req_data,
@@ -2539,7 +2539,7 @@ void procufilreq(char *req_data,
 	strcpy (tunp->filp->fid, fid);
 	tunp->filp->lrecl = lrecl;
 	strcpy (tunp->filp->recfm, recfm);
-	netclose (rpfd);
+	close (rpfd);
 }
 
 void procuvsnreq(char *req_data,
@@ -2583,7 +2583,7 @@ void procuvsnreq(char *req_data,
 	tunp->tobemounted = tobemounted;
 	tunp->lblcode = lblcode;
 	tunp->mode = mode;
-	netclose (rpfd);
+	close (rpfd);
 }
 
 int reldrive(struct tptab *tunp,

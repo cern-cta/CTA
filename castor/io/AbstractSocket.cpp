@@ -27,11 +27,11 @@
 // Include Files
 #include <unistd.h>
 #include <net.h>
-#include <Cnetdb.h>
 #include <errno.h>
 #include <serrno.h>
 #include <sys/types.h>
 #include <string>
+#include "Cnetdb.h"
 #include "castor/exception/Exception.hpp"
 #include "castor/io/biniostream.h"
 #include "castor/Services.hpp"
@@ -282,8 +282,7 @@ sockaddr_in castor::io::AbstractSocket::buildAddress(const unsigned short port,
 //------------------------------------------------------------------------------
 void castor::io::AbstractSocket::close() throw () {
   if (m_socket >= 0) {
-    // CLOSE is a system independent macro defined in Cnetdb.h
-    CLOSE(m_socket);
+    ::close(m_socket);
   }
   m_socket = -1;
 }

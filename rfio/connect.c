@@ -370,12 +370,6 @@ int rfio_connect_with_port(char    *node,                  /* remote host to con
   strcpy(last_host, cp); /* remember to fetch back remote errs     */
   TRACE(2, "rfio", "rfio_connect: connected");
   TRACE(2, "rfio", "rfio_connect: calling setnetio()");
-  if (setnetio() < 0) {
-    close(s);
-    END_TRACE();
-    return(-1);
-  }
-
   TRACE(1, "rfio", "rfio_connect: return socket %d", s);
   if (secure_connection) {
     /* Performing authentication */

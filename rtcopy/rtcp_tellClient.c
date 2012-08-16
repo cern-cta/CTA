@@ -99,7 +99,7 @@ extern int AbortFlag;
  *
  */
 int tellClient(
-               SOCKET *client_socket,
+               int *client_socket,
                tape_list_t *tape, 
                file_list_t *file,
                int status
@@ -111,7 +111,7 @@ int tellClient(
   int rc, save_serrno;
 
   if ( client_socket == NULL ||
-       *client_socket == INVALID_SOCKET ) {
+       *client_socket == -1 ) {
     serrno = EINVAL;
     return(-1);
   }

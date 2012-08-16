@@ -37,10 +37,10 @@ extern int AbortFlag;
 extern int SHIFTclient;
 extern int Dumptape;
 static int wait_to_be_joined = FALSE;
-extern int rtcp_InitLog(char *, FILE *, FILE *, SOCKET *);
+extern int rtcp_InitLog(char *, FILE *, FILE *, int *);
 
 void *rtcpd_CLThread(void *arg) {
-    static SOCKET client_socket;
+    static int client_socket;
     rtcpHdr_t hdr;
     int stop_request;
     int rc, nb_pings;
@@ -52,7 +52,7 @@ void *rtcpd_CLThread(void *arg) {
                          "Message", TL_MSG_PARAM_STR, "NULL argument" ); 
         return((void *)&failure);
     }
-    client_socket = *(SOCKET *)arg;
+    client_socket = *(int *)arg;
     free(arg);
 
     nb_pings = stop_request = 0;
@@ -199,15 +199,15 @@ void *rtcpd_CLThread(void *arg) {
     return((void *)&success);
 }
 
-int rtcpd_ClientListen(SOCKET s) {
+int rtcpd_ClientListen(int s) {
     int rc, *client_socket, save_serrno;
 
-    if ( s == INVALID_SOCKET ) {
+    if ( s == -1 ) {
         serrno = EINVAL;
         return(-1);
     }
 
-    client_socket = (SOCKET *)malloc(sizeof(SOCKET));
+    client_socket = (int *)malloc(sizeof(int));
     if ( client_socket == NULL ) {
         serrno = errno;
         rtcp_log(LOG_ERR,"rtcpd_ClientListen() malloc(): %s\n",

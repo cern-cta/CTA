@@ -49,7 +49,7 @@
  *                   is set accrodingly.
  */
 EXTERN_C int rtcpd_SendAckToVdqmOrTapeBridge(
-  const SOCKET   connSock,
+  const int      connSock,
   const int      netTimeout,
   const uint32_t reqType,
   const int32_t  ackStatus,

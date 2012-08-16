@@ -30,6 +30,7 @@
 #include "net.h"
 #include "patchlevel.h"
 #include "serrno.h"
+#include <unistd.h>
 
 /* Forward declarations */
 int procsessreq(int magic, char *req_data, struct Cns_srv_thread_info *thip);
@@ -808,7 +809,7 @@ doit(void *arg)
   } else if (c > 0) {
     sendrep (thip->s, CNS_RC, c);
   } else {
-    netclose (thip->s);
+    close (thip->s);
   }
 
   if (req_data != reqbuf)

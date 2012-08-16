@@ -13,6 +13,8 @@
 #include "net.h"
 #include "rmc.h"
 #include "tplogger_api.h"
+#include <unistd.h>
+
 int sendrep(int rpfd, int rep_type, ...)
 {
 	va_list args;
@@ -62,10 +64,10 @@ int sendrep(int rpfd, int rep_type, ...)
                                      "On"   , TL_MSG_PARAM_STR, "send",
                                      "Error", TL_MSG_PARAM_STR, neterror() );
 		if (rep_type == RMC_RC)
-			netclose (rpfd);
+			close (rpfd);
 		return (-1);
 	}
 	if (rep_type == RMC_RC)
-		netclose (rpfd);
+		close (rpfd);
 	return (0);
 }

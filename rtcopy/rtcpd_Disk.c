@@ -52,10 +52,10 @@
 #define DK_SIZE(X)   (diskIOstatus->nbbytes = (X))
 #define DEBUG_PRINT(X) {if ( debug == TRUE ) rtcp_log X ;}
 
-extern char *getifnam (SOCKET);
+extern char *getifnam (int);
 
 typedef struct thread_arg {
-    SOCKET client_socket;
+    int client_socket;
     int pool_index;              /* Pool index of this thread */
     int start_indxp;             /* Index of start buffer */
     int start_offset;            /* Byte offset withint start buffer */
@@ -334,7 +334,7 @@ static int DiskFileOpen(int pool_index,
     diskIOstatus_t *diskIOstatus = NULL;
     char *ifce;
     char node[2];
-    SOCKET s;
+    int s;
     char Uformat_flags[8];
     int binmode = 0;
 
@@ -637,9 +637,9 @@ static int DiskFileOpen(int pool_index,
          * client we must change this to call a routine to
          * return the socket.
          */
-        s = (SOCKET)disk_fd;
+        s = (int)disk_fd;
         if ( (*filereq->recfm == 'U') && ((filereq->convert & NOF77CW) == 0) )
-            s = (SOCKET)rfio_xysock(disk_fd);
+            s = (int)rfio_xysock(disk_fd);
         ifce = getifnam(s);
         if ( ifce == NULL )
             strcpy(filereq->ifce,"???");
@@ -1678,7 +1678,7 @@ void *diskIOthread(void *arg) {
     rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
     u_signed64 nbbytes;
-    SOCKET client_socket;
+    int client_socket;
     char *p, u64buf[22];
     int pool_index = -1;
     int indxp = 0;
@@ -2033,7 +2033,7 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
              * (in rtcpd_CleanUpDiskIO()).
              */
             tharg = &thargs[thIndex];
-            tharg->client_socket = INVALID_SOCKET;
+            tharg->client_socket = -1;
             rc = rtcpd_ConnectToClient(&tharg->client_socket,
                                        client->clienthost,
                                        &client->clientport);

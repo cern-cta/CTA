@@ -18,6 +18,7 @@
 #include <Cglobals.h>
 #include <Cpwd.h>
 #include <string.h>
+#include <unistd.h>
 
 typedef struct socks {
   char host[CA_MAXHOSTNAMELEN+1];
@@ -87,7 +88,7 @@ int rfio_munlink(char *file)
     } else {
       rc = rfio_smunlink(fd,filename) ;
       TRACE(2,"rfio","rfio_munlink() overflow connect table, host=%s, Tid=%d. Closing %d",host,Tid,fd);
-      netclose(fd);
+      close(fd);
     }
   }
   END_TRACE();
@@ -228,7 +229,7 @@ int rfio_unend()
           TRACE(3, "rfio", "rfio_unend: write(): ERROR occured (errno=%d), Tid=%d", errno, Tid);
           rc = -1;
         }
-        netclose(munlink_tab[i].s);
+        close(munlink_tab[i].s);
       }
       munlink_tab[i].s = -1;
       munlink_tab[i].host[0] = '\0';
@@ -277,7 +278,7 @@ static int rfio_unend_this(int s,
             TRACE(3, "rfio", "rfio_unend_this: netwrite_timeout(): ERROR occured (errno=%d), Tid=%d", errno, Tid);
           }
         }
-        netclose(munlink_tab[i].s);
+        close(munlink_tab[i].s);
         munlink_tab[i].s = -1;
         munlink_tab[i].host[0] = '\0';
         munlink_tab[i].Tid = -1;
@@ -391,7 +392,7 @@ int rfio_munlink_reset()
   for (i = 0; i < MAXMCON; i++) {
     if ((munlink_tab[i].s >= 0) && (munlink_tab[i].host[0] != '\0')) {
       TRACE(3,"rfio","rfio_munlink_reset: Resetting socket fd=%d, host=%s\n", munlink_tab[i].s, munlink_tab[i].host);
-      netclose(munlink_tab[i].s);
+      close(munlink_tab[i].s);
     }
     munlink_tab[i].s = -1;
     munlink_tab[i].host[0] = '\0';

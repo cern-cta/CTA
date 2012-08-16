@@ -93,7 +93,6 @@ debian/castor/usr/share/man/man3/getacctent.3castor.gz
 debian/castor/usr/share/man/man3/getcompstat.3castor.gz
 debian/castor/usr/share/man/man3/getconfent.3castor.gz
 debian/castor/usr/share/man/man3/log.3castor.gz
-debian/castor/usr/share/man/man3/netclose.3castor.gz
 debian/castor/usr/share/man/man3/netread.3castor.gz
 debian/castor/usr/share/man/man3/netwrite.3castor.gz
 debian/castor/usr/share/man/man3/readlbl.3castor.gz

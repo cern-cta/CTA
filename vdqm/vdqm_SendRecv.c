@@ -64,14 +64,14 @@ static int vdqm_Transfer(vdqmnw_t *nw,
     socklen_t fromlen;
     int magic,reqtype,len,local_access; 
     int rc;
-    SOCKET s;
+    int s;
     
     /*
      * Sanity checks
      */
     if ( nw == NULL                                   ||
-        (nw->accept_socket == INVALID_SOCKET          &&
-        nw->connect_socket == INVALID_SOCKET) ) {
+        (nw->accept_socket == -1          &&
+        nw->connect_socket == -1) ) {
         serrno = EINVAL;
         return(-1);
     }
@@ -80,7 +80,7 @@ static int vdqm_Transfer(vdqmnw_t *nw,
     *servername = '\0';
     local_access = 0;
     magic = len = 0;
-    if ( (s = nw->accept_socket) == INVALID_SOCKET ) {
+    if ( (s = nw->accept_socket) == -1 ) {
         rc = gethostname(servername,CA_MAXHOSTNAMELEN);
         s = nw->connect_socket;
     }
@@ -138,7 +138,7 @@ static int vdqm_Transfer(vdqmnw_t *nw,
         }
         
         fromlen = sizeof(from);
-        if ( (rc = getpeername(s,(struct sockaddr *)&from,&fromlen)) == SOCKET_ERROR ) {
+        if ( (rc = getpeername(s,(struct sockaddr *)&from,&fromlen)) == -1 ) {
 #if defined(VDQMSERV)
           log(LOG_ERR,"vdqm_Transfer(): getpeername() %s\n",neterror());
 #endif /* VDQMSERV */
@@ -360,16 +360,16 @@ int vdqm_GetReplica(vdqmnw_t *nw, vdqmReplica_t *Replica) {
     struct hostent *hp = NULL;
     struct sockaddr_in from;
     char *p;
-    SOCKET s;
+    int s;
 
-    if ( nw == NULL || nw->accept_socket == INVALID_SOCKET || 
+    if ( nw == NULL || nw->accept_socket == -1 || 
          Replica == NULL ) {
         serrno = EINVAL;
         return(-1);
     }
     s = nw->accept_socket;
     fromlen = sizeof(from);
-    if ( getpeername(s,(struct sockaddr *)&from,&fromlen) == SOCKET_ERROR ) {
+    if ( getpeername(s,(struct sockaddr *)&from,&fromlen) == -1 ) {
         log(LOG_ERR,"vdqm_GetReplica() getpeername(): %s\n",neterror());
         serrno = SECOMERR;
         return(-1);
@@ -394,15 +394,15 @@ static int vdqm_TransAckn(vdqmnw_t *nw, int reqtype, int *data,
     char hdrbuf[VDQM_HDRBUFSIZ];
     int magic, recvreqtype, len, rc;
     char *p;
-    SOCKET s;
+    int s;
     
     if ( nw == NULL                                   ||
-        (nw->accept_socket == INVALID_SOCKET          &&
-        nw->connect_socket == INVALID_SOCKET) ) {
+        (nw->accept_socket == -1          &&
+        nw->connect_socket == -1) ) {
         serrno = EINVAL;
         return(-1);
     }
-    if ( (s = nw->accept_socket) == INVALID_SOCKET )
+    if ( (s = nw->accept_socket) == -1 )
         s = nw->connect_socket;
     
     magic = VDQM_MAGIC;
@@ -590,7 +590,7 @@ int vdqm_GetRTCPReq(char *buf,
     return(vdqm_MarshallRTCPReq(buf,VolReq,DrvReq,whereto));
 }
 
-int vdqm_SendRTCPAckn(SOCKET connect_socket,
+int vdqm_SendRTCPAckn(int connect_socket,
                       int *status,
                       int *errmsglen,
                       char *errmsg) {
@@ -612,8 +612,8 @@ int vdqm_SendRTCPAckn(SOCKET connect_socket,
 }
 
 #if defined(VDQMSERV)
-int vdqm_ConnectToRTCP(SOCKET *connect_socket, char *RTCPserver) {
-    SOCKET s;
+int vdqm_ConnectToRTCP(int *connect_socket, char *RTCPserver) {
+    int s;
     char servername[CA_MAXHOSTNAMELEN+1];
     int port;
     struct sockaddr_in sin;
@@ -636,7 +636,7 @@ int vdqm_ConnectToRTCP(SOCKET *connect_socket, char *RTCPserver) {
     }
 
     s = socket(AF_INET,SOCK_STREAM,0);
-    if ( s == INVALID_SOCKET ) {
+    if ( s == -1 ) {
         log(LOG_ERR,"vdqm_ConnectToRTCP(%s): socket() %s\n",servername,
             neterror());
         return(-1);
@@ -651,24 +651,24 @@ int vdqm_ConnectToRTCP(SOCKET *connect_socket, char *RTCPserver) {
     sin.sin_family = AF_INET;
     sin.sin_addr.s_addr = ((struct in_addr *)(hp->h_addr))->s_addr;
 
-    if ( connect(s, (struct sockaddr *)&sin, sizeof(sin)) == SOCKET_ERROR) {
+    if ( connect(s, (struct sockaddr *)&sin, sizeof(sin)) == -1) {
         log(LOG_ERR,"vdqm_ConnectToRTCP(%s): connect() %s\n",
             servername,neterror());
-        closesocket(s);
+        close(s);
         return(-1);
     }
 #ifdef VDQMCSEC
 
     if (Csec_client_initContext(&sec_ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
       log(LOG_ERR, "vdqm_ConnectToRTCP(%s): Could not init context\n", servername);
-      closesocket(s);
+      close(s);
       serrno = ESEC_CTX_NOT_INITIALIZED;
       return(-1);
     }
 	
     if(Csec_client_establishContext(&sec_ctx, s)< 0) {
       log(LOG_ERR, "vdqm_ConnectToRTCP(%s): Could not establish context\n", servername);
-      closesocket(s);
+      close(s);
       serrno = ESEC_NO_CONTEXT;
       return(-1);
     }
@@ -681,7 +681,7 @@ int vdqm_ConnectToRTCP(SOCKET *connect_socket, char *RTCPserver) {
 }
 #endif /* VDQMSERV */ 
 
-int vdqm_SendToRTCP(SOCKET connect_socket, vdqmVolReq_t *VolReq,
+int vdqm_SendToRTCP(int connect_socket, vdqmVolReq_t *VolReq,
                     vdqmDrvReq_t *DrvReq) {
     char buf[VDQM_MSGBUFSIZ];
     char errmsg[1024];
@@ -760,21 +760,21 @@ int vdqm_SendVolPriority_Transfer(vdqmnw_t *nw, vdqmVolPriority_t *volpriority)
     char *p;
     int magic,reqtype,len; 
     int rc;
-    SOCKET s;
+    int s;
     
     /*
      * Sanity checks
      */
     if ( nw == NULL                                   ||
-        (nw->accept_socket == INVALID_SOCKET          &&
-        nw->connect_socket == INVALID_SOCKET) ) {
+        (nw->accept_socket == -1          &&
+        nw->connect_socket == -1) ) {
         serrno = EINVAL;
         return(-1);
     }
     
     *servername = '\0';
     magic = len = 0;
-    if ( (s = nw->accept_socket) == INVALID_SOCKET ) {
+    if ( (s = nw->accept_socket) == -1 ) {
         rc = gethostname(servername,CA_MAXHOSTNAMELEN);
         s = nw->connect_socket;
     }
@@ -852,14 +852,14 @@ int vdqm_RecvVolPriority_Transfer(vdqmnw_t *nw, vdqmVolPriority_t *volpriority)
     socklen_t fromlen;
     int magic,reqtype,len; 
     int rc;
-    SOCKET s;
+    int s;
     
     /*
      * Sanity checks
      */
     if ( nw == NULL                                   ||
-        (nw->accept_socket == INVALID_SOCKET          &&
-        nw->connect_socket == INVALID_SOCKET) ) {
+        (nw->accept_socket == -1          &&
+        nw->connect_socket == -1) ) {
         serrno = EINVAL;
         return(-1);
     }
@@ -867,7 +867,7 @@ int vdqm_RecvVolPriority_Transfer(vdqmnw_t *nw, vdqmVolPriority_t *volpriority)
     reqtype = -1;
     *servername = '\0';
     magic = len = 0;
-    if ( (s = nw->accept_socket) == INVALID_SOCKET ) {
+    if ( (s = nw->accept_socket) == -1 ) {
         rc = gethostname(servername,CA_MAXHOSTNAMELEN);
         s = nw->connect_socket;
     }
@@ -923,7 +923,7 @@ int vdqm_RecvVolPriority_Transfer(vdqmnw_t *nw, vdqmVolPriority_t *volpriority)
         
     fromlen = sizeof(from);
     if ( (rc = getpeername(s,(struct sockaddr *)&from,&fromlen)) ==
-        SOCKET_ERROR ) {
+        -1 ) {
 #if defined(VDQMSERV)
         log(LOG_ERR,"vdqm_RecvVolPriority_Transfer(): getpeername() %s\n",
             neterror());
@@ -961,21 +961,21 @@ int vdqm_SendDelDrv_Transfer(vdqmnw_t *nw, vdqmDelDrv_t *msg)
     char *p;
     int magic,reqtype,len;
     int rc;
-    SOCKET s;
+    int s;
 
     /*
      * Sanity checks
      */
     if ( nw == NULL                                   ||
-        (nw->accept_socket == INVALID_SOCKET          &&
-        nw->connect_socket == INVALID_SOCKET) ) {
+        (nw->accept_socket == -1          &&
+        nw->connect_socket == -1) ) {
         serrno = EINVAL;
         return(-1);
     }
 
     *servername = '\0';
     magic = len = 0;
-    if ( (s = nw->accept_socket) == INVALID_SOCKET ) {
+    if ( (s = nw->accept_socket) == -1 ) {
         rc = gethostname(servername,CA_MAXHOSTNAMELEN);
         s = nw->connect_socket;
     }
@@ -1048,21 +1048,21 @@ int vdqm_SendDedicate_Transfer(vdqmnw_t *nw, vdqmDedicate_t *msg)
     char *p;
     int magic,reqtype,len;
     int rc;
-    SOCKET s;
+    int s;
 
     /*
      * Sanity checks
      */
     if ( nw == NULL                                   ||
-        (nw->accept_socket == INVALID_SOCKET          &&
-        nw->connect_socket == INVALID_SOCKET) ) {
+        (nw->accept_socket == -1          &&
+        nw->connect_socket == -1) ) {
         serrno = EINVAL;
         return(-1);
     }
 
     *servername = '\0';
     magic = len = 0;
-    if ( (s = nw->accept_socket) == INVALID_SOCKET ) {
+    if ( (s = nw->accept_socket) == -1 ) {
         rc = gethostname(servername,CA_MAXHOSTNAMELEN);
         s = nw->connect_socket;
     }
@@ -1138,14 +1138,14 @@ static int vdqm_AggregatorVolReq_Transfer(vdqmnw_t *nw, vdqmHdr_t *hdr,
     socklen_t fromlen;
     int magic,reqtype,len; 
     int rc;
-    SOCKET s;
+    int s;
     
     /*
      * Sanity checks
      */
     if ( nw == NULL                                   ||
-        (nw->accept_socket == INVALID_SOCKET          &&
-        nw->connect_socket == INVALID_SOCKET) ) {
+        (nw->accept_socket == -1          &&
+        nw->connect_socket == -1) ) {
         serrno = EINVAL;
         return(-1);
     }
@@ -1157,7 +1157,7 @@ static int vdqm_AggregatorVolReq_Transfer(vdqmnw_t *nw, vdqmHdr_t *hdr,
     reqtype = -1;
     *servername = '\0';
     magic = len = 0;
-    if ( (s = nw->accept_socket) == INVALID_SOCKET ) {
+    if ( (s = nw->accept_socket) == -1 ) {
         rc = gethostname(servername,CA_MAXHOSTNAMELEN);
         s = nw->connect_socket;
     }
@@ -1215,7 +1215,7 @@ static int vdqm_AggregatorVolReq_Transfer(vdqmnw_t *nw, vdqmHdr_t *hdr,
         }
         
         fromlen = sizeof(from);
-        if ( (rc = getpeername(s,(struct sockaddr *)&from,&fromlen)) == SOCKET_ERROR ) {
+        if ( (rc = getpeername(s,(struct sockaddr *)&from,&fromlen)) == -1 ) {
 #if defined(VDQMSERV)
           log(LOG_ERR,"vdqm_AggregatorVolReq_Transfer(): getpeername() %s\n",neterror());
 #endif /* VDQMSERV */

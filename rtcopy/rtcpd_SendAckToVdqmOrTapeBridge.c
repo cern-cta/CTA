@@ -33,7 +33,7 @@
 #include <stdio.h>
 
 int rtcpd_SendAckToVdqmOrTapeBridge(
-  const SOCKET   connSock,
+  const int      connSock,
   const int      netTimeout,
   const uint32_t reqType,
   const int32_t  ackStatus,
@@ -45,7 +45,7 @@ int rtcpd_SendAckToVdqmOrTapeBridge(
   char *errmsg     = NULL;
 
   /* Check function-parameters */
-  if(connSock == INVALID_SOCKET ||
+  if(connSock == -1 ||
     (reqType != VDQM_CLIENTINFO && reqType != TAPEBRIDGE_CLIENTINFO2) ||
     ackMsg == NULL || errBuf == NULL) {
     snprintf(errBuf, errBufLen, "%s()"

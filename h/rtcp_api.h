@@ -22,10 +22,10 @@
 #include <rtcp.h>
 #include <net.h>
 typedef struct rtcpc_sockets {
-    SOCKET *listen_socket;
-    SOCKET accept_socket;
-    SOCKET abort_socket;
-    SOCKET *proc_socket[100];
+    int *listen_socket;
+    int accept_socket;
+    int abort_socket;
+    int *proc_socket[100];
     int nb_proc_sockets;
 } rtcpc_sockets_t;
 

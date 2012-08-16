@@ -43,7 +43,7 @@
 #define TP_STATUS(X) (proc_stat.tapeIOstatus.current_activity = (X))
 extern processing_status_t proc_stat;
 extern int AbortFlag;
-extern int rtcp_InitLog(char *, FILE *, FILE *, SOCKET *);
+extern int rtcp_InitLog(char *, FILE *, FILE *, int *);
 
 void dmp_usrmsg(int dmpmsg_level, char *format, ...) {
     va_list args;
@@ -97,23 +97,23 @@ int rtcpd_tpdump(rtcpClientInfo_t *client, tape_list_t *tape) {
     tape_list_t *tl = NULL;
     file_list_t *fl = NULL;
     rtcpFileRequest_t *filereq = NULL;
-    SOCKET *client_socket = NULL;
+    int *client_socket = NULL;
     char lbltyp[CA_MAXLBLTYPLEN+1];
 
     proc_stat.tapeIOstatus.nbbytes = 0;
     TP_STATUS(RTCP_PS_NOBLOCKING);
 
-    client_socket = (SOCKET *)malloc(sizeof(SOCKET));
+    client_socket = (int *)malloc(sizeof(int));
     if ( client_socket == NULL ) {
-        rtcp_log(LOG_ERR,"rtcpd_tpdump() malloc(SOCKET): %s\n",
+        rtcp_log(LOG_ERR,"rtcpd_tpdump() malloc(int): %s\n",
                  sstrerror(serrno));
         tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
                          "func"   , TL_MSG_PARAM_STR, "rtcpd_tpdump",
-                         "Message", TL_MSG_PARAM_STR, "malloc(SOCKET)",
+                         "Message", TL_MSG_PARAM_STR, "malloc(int)",
                          "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
         return(-1);
     }
-    *client_socket = INVALID_SOCKET;
+    *client_socket = -1;
     rc = rtcpd_ConnectToClient(client_socket,
                                client->clienthost,
                                &client->clientport);

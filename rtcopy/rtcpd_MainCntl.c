@@ -54,7 +54,7 @@ char rtcp_cmds[][10] = RTCOPY_CMD_STRINGS;
 extern char *getconfent(const char *, const char *, int);
 
 extern char *rtcpd_logfile;
-extern int rtcp_InitLog(char *, FILE *, FILE *, SOCKET *);
+extern int rtcp_InitLog(char *, FILE *, FILE *, int *);
 
 extern int Debug;
 int Debug = FALSE;
@@ -1106,7 +1106,7 @@ int rtcpd_AdmUformatInfo(file_list_t *file, int indxp) {
   return(0);
 }
 
-static void rtcpd_FreeResources(SOCKET **client_socket,
+static void rtcpd_FreeResources(int **client_socket,
                                 rtcpClientInfo_t **client,
                                 tape_list_t **tape,
                                 const char *const clientHostname) {
@@ -1805,7 +1805,7 @@ static int unlockMoreWork() {
   return(0);
 }
 
-int rtcpd_checkMoreWork(SOCKET *client_socket,
+int rtcpd_checkMoreWork(int *client_socket,
                         tape_list_t *tl,
                         file_list_t *fl) {
   int rc = 0;
@@ -1890,7 +1890,7 @@ int rtcpd_waitMoreWork(file_list_t *fl) {
   return(rc);
 }
 
-int rtcpd_GetRequestList(SOCKET *client_socket,
+int rtcpd_GetRequestList(int *client_socket,
                          rtcpClientInfo_t *client,
                          rtcpTapeRequest_t *vdqm_tapereq,
                          tape_list_t **rootTape,
@@ -2311,10 +2311,10 @@ int rtcpd_GetRequestList(SOCKET *client_socket,
   return(rc);
 }
 
-int rtcpd_MainCntl(SOCKET *accept_socket) {
+int rtcpd_MainCntl(int *accept_socket) {
   rtcpTapeRequest_t tapereq;
   rtcpFileRequest_t filereq;
-  SOCKET *client_socket = NULL;
+  int *client_socket = NULL;
   rtcpClientInfo_t *client = NULL;
   tape_list_t *tape = NULL;
   int rc = 0;
@@ -2646,7 +2646,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
   /*
    * Client OK, connect to him
    */
-  client_socket = (SOCKET *)malloc(sizeof(SOCKET));
+  client_socket = (int *)malloc(sizeof(int));
   if ( client_socket == NULL ) {
     rtcp_log(LOG_ERR,"rtcpd_MainCntl() malloc(): %s\n",
              sstrerror(errno));
@@ -2658,7 +2658,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     rtcpd_FreeResources(NULL, &client, NULL, clientHostname);
     return(-1);
   }
-  *client_socket = INVALID_SOCKET;
+  *client_socket = -1;
   rc = rtcpd_ConnectToClient(client_socket,
                              client->clienthost,
                              &client->clientport);

@@ -58,7 +58,7 @@ typedef enum direction {SendTo,ReceiveFrom} direction_t;
  */
 int client_magic = 0;
 
-static int rtcp_Transfer(SOCKET *s,
+static int rtcp_Transfer(int *s,
                          rtcpHdr_t *hdr,
                          rtcpClientInfo_t *client,
                          rtcpTapeRequest_t *tapereq,
@@ -73,7 +73,7 @@ static int rtcp_Transfer(SOCKET *s,
   int magic, reqtype, len, dummyInt = 0;
   int rc, save_serrno;
 
-  if ( s == NULL || *s == INVALID_SOCKET ) {
+  if ( s == NULL || *s == -1 ) {
     serrno = EINVAL;
     return(-1);
   }
@@ -391,7 +391,7 @@ static int rtcp_Transfer(SOCKET *s,
   return(reqtype);
 }    
 
-int rtcp_SendReq(SOCKET *s,
+int rtcp_SendReq(int *s,
                  rtcpHdr_t *hdr,
                  rtcpClientInfo_t *client,
                  rtcpTapeRequest_t *tape,
@@ -400,7 +400,7 @@ int rtcp_SendReq(SOCKET *s,
   return(rtcp_Transfer(s,hdr,client,tape,file,whereto));
 }
 
-int rtcp_RecvReq(SOCKET *s,
+int rtcp_RecvReq(int *s,
                  rtcpHdr_t *hdr,
                  rtcpClientInfo_t *client,
                  rtcpTapeRequest_t *tape,
@@ -409,7 +409,7 @@ int rtcp_RecvReq(SOCKET *s,
   return(rtcp_Transfer(s,hdr,client,tape,file,whereto));
 }
 
-static int rtcp_TransferTpDump(SOCKET *s,
+static int rtcp_TransferTpDump(int *s,
                                rtcpDumpTapeRequest_t *dumpreq,
                                direction_t whereto) {
   char buf[RTCP_MSGBUFSIZ];
@@ -480,24 +480,24 @@ static int rtcp_TransferTpDump(SOCKET *s,
   return(0);
 }
 
-int rtcp_SendTpDump(SOCKET *s, rtcpDumpTapeRequest_t *dumpreq) {
+int rtcp_SendTpDump(int *s, rtcpDumpTapeRequest_t *dumpreq) {
   direction_t whereto = SendTo;
   return(rtcp_TransferTpDump(s,dumpreq,whereto));
 }
 
-int rtcp_RecvTpDump(SOCKET *s, rtcpDumpTapeRequest_t *dumpreq) {
+int rtcp_RecvTpDump(int *s, rtcpDumpTapeRequest_t *dumpreq) {
   direction_t whereto = ReceiveFrom;
   return(rtcp_TransferTpDump(s,dumpreq,whereto));
 }
 
-static int rtcp_TransAckn(SOCKET *s,
+static int rtcp_TransAckn(int *s,
                           int reqtype,
                           void *data,
                           direction_t whereto) {
   char hdrbuf[RTCP_HDRBUFSIZ];
   int magic, recvreqtype, status, rc;
 
-  if ( s == NULL || *s == INVALID_SOCKET ) {
+  if ( s == NULL || *s == -1 ) {
     serrno = EINVAL;
     return(-1);
   }
@@ -534,8 +534,8 @@ static int rtcp_TransAckn(SOCKET *s,
   if ( whereto == SendTo ) {
     if ( reqtype == VDQM_CLIENTINFO ) {
       rc = vdqm_AcknClientAddr(*s,status,0,NULL);
-      closesocket(*s);
-      *s = INVALID_SOCKET;
+      close(*s);
+      *s = -1;
       return(rc);
     }
     rc = netwrite_timeout(*s,hdrbuf,RTCP_HDRBUFSIZ,RTCP_NETTIMEOUT);
@@ -556,28 +556,28 @@ static int rtcp_TransAckn(SOCKET *s,
   return(recvreqtype);
 }
 
-int rtcp_SendAckn(SOCKET *s, int reqtype) {
+int rtcp_SendAckn(int *s, int reqtype) {
   direction_t whereto = SendTo;
   return(rtcp_TransAckn(s,reqtype,NULL,whereto));
 }
 
-int rtcp_RecvAckn(SOCKET *s, int reqtype) {
+int rtcp_RecvAckn(int *s, int reqtype) {
   direction_t whereto = ReceiveFrom;
   return(rtcp_TransAckn(s,reqtype,NULL,whereto));
 }
 
-int rtcp_CloseConnection(SOCKET *s) {
+int rtcp_CloseConnection(int *s) {
 
-  if ( s == NULL || *s == INVALID_SOCKET ) {
+  if ( s == NULL || *s == -1 ) {
     serrno = EINVAL;
     return(-1);
   }
 
-  (void) shutdown(*s,SD_BOTH);
+  (void) shutdown(*s, SHUT_RDWR);
 
-  (void) closesocket(*s);
+  (void) close(*s);
 
-  *s = INVALID_SOCKET;
+  *s = -1;
   return(0);
 }
 
@@ -586,7 +586,7 @@ int rtcp_CloseConnection(SOCKET *s) {
  * Connect to rtcopy client (or server) listen port
  */
 int rtcp_Connect(
-                 SOCKET *connect_socket,
+                 int *connect_socket,
                  char *client_host,
                  int *client_port,
                  int whereto        /* Indicates whether we are connecting to the server or to the client */
@@ -611,7 +611,7 @@ int rtcp_Connect(
     return(-1);
   }
   *connect_socket = socket(AF_INET,SOCK_STREAM,0);
-  if ( *connect_socket == INVALID_SOCKET ) {
+  if ( *connect_socket == -1 ) {
     rtcp_log(
              LOG_ERR,
              "rtcp_Connect() socket(): %s\n",
@@ -628,8 +628,8 @@ int rtcp_Connect(
              h_errno,
              neterror()
              );
-    closesocket(*connect_socket);
-    *connect_socket = INVALID_SOCKET;
+    close(*connect_socket);
+    *connect_socket = -1;
     serrno = SENOSHOST;
     return(-1);
   }
@@ -641,10 +641,10 @@ int rtcp_Connect(
                *connect_socket,
                (struct sockaddr *)&sin, 
                sizeof(struct sockaddr_in)
-               ) == SOCKET_ERROR) {
+               ) == -1) {
     rtcp_log(LOG_ERR,"rtcp_Connect() connect(): %s\n",neterror());
-    closesocket(*connect_socket);
-    *connect_socket = INVALID_SOCKET;
+    close(*connect_socket);
+    *connect_socket = -1;
     serrno = SECOMERR;
     return(-1);
   }
@@ -669,8 +669,8 @@ int rtcp_Connect(
     n = Csec_server_initContext(&sec_ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL);
     if ((n = Csec_server_establishContext(&sec_ctx, *connect_socket)) < 0) {
       rtcp_log(LOG_ERR,"rtcp_Connect(): CSEC: Could not establish server context\n");
-      closesocket(*connect_socket);
-      *connect_socket = INVALID_SOCKET;
+      close(*connect_socket);
+      *connect_socket = -1;
       serrno = SECOMERR;
       return(-1);
     }
@@ -689,8 +689,8 @@ int rtcp_Connect(
         Csec_service_type = -1;
       }
       else {
-        closesocket(*connect_socket);
-        *connect_socket = INVALID_SOCKET;
+        close(*connect_socket);
+        *connect_socket = -1;
         serrno = SECOMERR;
         return(-1);
       }
@@ -699,16 +699,16 @@ int rtcp_Connect(
   } else { /* We are the client */
     if (Csec_client_initContext(&sec_ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
       rtcp_log(LOG_ERR, "rtcp_Connect() Could not init context\n");
-      closesocket(*connect_socket);
-      *connect_socket = INVALID_SOCKET;
+      close(*connect_socket);
+      *connect_socket = -1;
       serrno = ESEC_CTX_NOT_INITIALIZED;
       return(-1);
     }
     
     if(Csec_client_establishContext(&sec_ctx, *connect_socket)< 0) {
       rtcp_log(LOG_ERR, "rtcp_Connect() Could not establish context\n");
-      closesocket(*connect_socket);
-      *connect_socket = INVALID_SOCKET;
+      close(*connect_socket);
+      *connect_socket = -1;
       serrno = ESEC_NO_CONTEXT;
       return(-1);
     }
@@ -722,7 +722,7 @@ int rtcp_Connect(
   return(0);
 }
 int rtcpd_ConnectToClient(
-                          SOCKET *connect_socket,
+                          int *connect_socket,
                           char *client_host,
                           int *client_port
                           ) {
@@ -731,7 +731,7 @@ int rtcpd_ConnectToClient(
 
 /** rtcp_ClientMsg() - send message to a SHIFT client (obsolete)
  *
- * @param SOCKET *s - point to client socket
+ * @param int *s - point to client socket
  * @param char *msg - message to be sent
  *
  * Needed to support OLD SHIFT clients but other applications could use
@@ -739,14 +739,14 @@ int rtcpd_ConnectToClient(
  * to use log() to log our errors.
  */
 int rtcp_ClientMsg(
-                   SOCKET *s, 
+                   int *s, 
                    char *msg
                    ) {
   int len,rc;
   char str[RTCP_SHIFT_BUFSZ];
   char *p;
     
-  if ( s == NULL || *s == INVALID_SOCKET || msg == NULL ) {
+  if ( s == NULL || *s == -1 || msg == NULL ) {
     serrno = EINVAL;
     return(-1);
   }
@@ -795,7 +795,7 @@ int rtcp_ClientMsg(
 }
 
 int rtcp_GetMsg(
-                SOCKET *s, 
+                int *s, 
                 char *msg, 
                 int length
                 ) {
@@ -838,7 +838,7 @@ int rtcp_GetMsg(
 }
 
 int rtcp_SendOldCAckn(
-                      SOCKET *s,
+                      int *s,
                       rtcpHdr_t *hdr
                       ) {
   char acknmsg[3*LONGSIZE];
@@ -851,7 +851,7 @@ int rtcp_SendOldCAckn(
   int ackn_types[] = {ACKN_TPDK, ACKN_DKTP, ACKN_PING, \
                       ACKN_ABORT, ACKN_DPTP,-1};
 
-  if ( s == NULL || *s == INVALID_SOCKET || hdr == NULL ) {
+  if ( s == NULL || *s == -1 || hdr == NULL ) {
     serrno = EINVAL;
     return(-1);
   }
@@ -907,7 +907,7 @@ int rtcp_SendOldCAckn(
 }
 
 int rtcp_SendOldCinfo(
-                      SOCKET *s, 
+                      int *s, 
                       rtcpHdr_t *hdr, 
                       shift_client_t *req
                       ) {
@@ -915,7 +915,7 @@ int rtcp_SendOldCinfo(
   char *p;
   int rc,queue;
 
-  if ( s == NULL || *s == INVALID_SOCKET || hdr == NULL || req == NULL ) {
+  if ( s == NULL || *s == -1 || hdr == NULL || req == NULL ) {
     serrno = EINVAL;
     return(-1);
   }

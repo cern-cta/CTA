@@ -218,7 +218,7 @@ int send2nsdx(int *socketp,
         if (serrno == SETIMEDOUT) {
           if (retrycnt == nbretry) {
             if (needsLogging) Cns_errmsg (func, NS002, "connect", neterror());
-            (void) netclose(s);
+            (void) close(s);
             return errorRetVal;
           }
         } else {
@@ -226,20 +226,20 @@ int send2nsdx(int *socketp,
           if (serrno == ECONNREFUSED) {
             if (retrycnt == nbretry) {
               if (needsLogging) Cns_errmsg (func, NS000, Cnshost);
-              (void) netclose (s);
+              (void) close (s);
               serrno = ENSNACT;
               return errorRetVal;
             }
           } else {
             if (retrycnt == nbretry) {
               if (needsLogging) Cns_errmsg (func, NS002, "connect", neterror());
-              (void) netclose (s);
+              (void) close (s);
               serrno = SECOMERR;
               return errorRetVal;
             }
           }
         }
-        (void) netclose (s);
+        (void) close (s);
       } else {
         if (securityOpt) {
           Csec_client_initContext (&ctx, CSEC_SERVICE_TYPE_HOST, NULL);
@@ -247,25 +247,25 @@ int send2nsdx(int *socketp,
             switch (serrno) {
             case SECOMERR:
               if (needsLogging) Cns_errmsg (func, NS002, "send", "Communication error");
-              (void) netclose (s);
+              (void) close (s);
               Csec_clearContext (&ctx);
               return errorRetVal;
             case SETIMEDOUT:
               if (retrycnt == nbretry) {
                 if (needsLogging) Cns_errmsg (func, NS002, "send", "Operation timed out");
-                (void) netclose (s);
+                (void) close (s);
                 Csec_clearContext (&ctx);
                 return errorRetVal;
               }
               break;
             default:
               if (needsLogging) Cns_errmsg (func, NS002, "send", "No valid credential found");
-              (void) netclose (s);
+              (void) close (s);
               Csec_clearContext (&ctx);
               return errorRetVal;
             }
 
-            (void) netclose (s);
+            (void) close (s);
             Csec_clearContext (&ctx);
           } else {
             /* This is the exit point of a successful loop w/security enabled */
@@ -295,7 +295,7 @@ int send2nsdx(int *socketp,
       if (n == 0) Cns_errmsg (func, NS002, "send", sys_serrlist[SERRNO]);
       else Cns_errmsg (func, NS002, "send", neterror());
     }
-    (void) netclose (s);
+    (void) close (s);
     serrno = SECOMERR;
     return (-1);
   }
@@ -308,7 +308,7 @@ int send2nsdx(int *socketp,
         if (n == 0) Cns_errmsg (func, NS002, "recv", sys_serrlist[SERRNO]);
         else Cns_errmsg (func, NS002, "recv", neterror());
       }
-      (void) netclose (s);
+      (void) close (s);
       serrno = SECOMERR;
       return (-1);
     }
@@ -317,7 +317,7 @@ int send2nsdx(int *socketp,
     unmarshall_LONG (p, rep_type) ;
     unmarshall_LONG (p, c) ;
     if (rep_type == CNS_RC) {
-      (void) netclose (s);
+      (void) close (s);
       if (thip && s == thip->fd)
         thip->fd = -1;
     }
@@ -330,7 +330,7 @@ int send2nsdx(int *socketp,
     }
     if (c > REPBUFSZ) {
       if (needsLogging) Cns_errmsg (func, "reply too large\n");
-      (void) netclose (s);
+      (void) close (s);
       serrno = SEINTERNAL;
       return (-1);
     }
@@ -339,7 +339,7 @@ int send2nsdx(int *socketp,
         if (n == 0) Cns_errmsg (func, NS002, "recv", sys_serrlist[SERRNO]);
         else Cns_errmsg (func, NS002, "recv", neterror());
       }
-      (void) netclose (s);
+      (void) close (s);
       serrno = SECOMERR;
       return (-1);
     }

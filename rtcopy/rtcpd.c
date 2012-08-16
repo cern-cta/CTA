@@ -41,7 +41,7 @@ extern char *rtcpd_logfile;
 extern int use_port;
 extern int Debug;
 extern int loglevel;
-extern int rtcp_InitLog (char *, FILE *, FILE *, SOCKET *);
+extern int rtcp_InitLog (char *, FILE *, FILE *, int *);
 extern int Cinitdaemon (char *, void (*)(int));
 
 char *getconfent();
@@ -105,9 +105,9 @@ int rtcpd_main() {
     int pid;
     char workdir[] = WORKDIR;
     char tpserver[CA_MAXHOSTNAMELEN+1];
-    SOCKET *listen_socket = NULL;
-    SOCKET *request_socket = NULL;
-    SOCKET accept_socket = INVALID_SOCKET;
+    int *listen_socket = NULL;
+    int *request_socket = NULL;
+    int accept_socket = -1;
 
     signal(SIGPIPE,SIG_IGN);
     /*
@@ -137,12 +137,12 @@ int rtcpd_main() {
                              "Message", TL_MSG_PARAM_STR, "Logging initialized" );
             umask(save_mask);
     }
-    request_socket = (SOCKET *)calloc(1,sizeof(SOCKET));
+    request_socket = (int *)calloc(1,sizeof(int));
     if ( request_socket == NULL ) {
-            rtcp_log(LOG_ERR,"main() calloc(SOCKET): %s\n",sstrerror(errno));
+            rtcp_log(LOG_ERR,"main() calloc(int): %s\n",sstrerror(errno));
             tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
                              "func"   , TL_MSG_PARAM_STR, "rtcpd_main",
-                             "Message", TL_MSG_PARAM_STR, "main() calloc (SOCKET)",
+                             "Message", TL_MSG_PARAM_STR, "main() calloc (int)",
                              "Error"  , TL_MSG_PARAM_STR, sstrerror(errno) );
             return(1);
     }
@@ -208,7 +208,7 @@ int rtcpd_main() {
             continue;
         }
         if ( pid != 0 ) {
-            closesocket(accept_socket);
+            close(accept_socket);
             continue; /* Parent */
         }
 
@@ -220,7 +220,7 @@ int rtcpd_main() {
          * Ignoring SIGXFSZ signals before logging anything
          */
         signal(SIGXFSZ,SIG_IGN);
-        closesocket(*listen_socket);
+        close(*listen_socket);
         free(listen_socket);
         listen_socket = NULL;
         *request_socket = accept_socket;

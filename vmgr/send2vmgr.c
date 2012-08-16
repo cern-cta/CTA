@@ -103,12 +103,12 @@ int send2vmgr(int *socketp,
     if (connect (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
       if (errno == ECONNREFUSED) {
         vmgr_errmsg (func, VMG00, vmgrhost);
-        (void) netclose (s);
+        (void) close (s);
         serrno = EVMGRNACT;
         return (-1);
       } else {
         vmgr_errmsg (func, VMG02, "connect", neterror());
-        (void) netclose (s);
+        (void) close (s);
         serrno = SECOMERR;
         return (-1);
       }
@@ -119,7 +119,7 @@ int send2vmgr(int *socketp,
       if (Csec_client_initContext(&ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
         vmgr_errmsg (func, VMG02, "send", "Could not init context");
         serrno = ESEC_CTX_NOT_INITIALIZED;
-        (void) netclose (s);
+        (void) close (s);
         return -1;
       }
 
@@ -127,7 +127,7 @@ int send2vmgr(int *socketp,
         vmgr_errmsg (func, "%s: %s\n",
                      "send",
                      "Could not establish context");
-        (void) netclose (s);
+        (void) close (s);
         serrno = ESEC_NO_CONTEXT;
         return -1;
       }
@@ -147,7 +147,7 @@ int send2vmgr(int *socketp,
       vmgr_errmsg (func, VMG02, "send", sys_serrlist[SERRNO]);
     else
       vmgr_errmsg (func, VMG02, "send", neterror());
-    (void) netclose (s);
+    (void) close (s);
     serrno = SECOMERR;
     return (-1);
   }
@@ -160,7 +160,7 @@ int send2vmgr(int *socketp,
         vmgr_errmsg (func, VMG02, "recv", sys_serrlist[SERRNO]);
       else
         vmgr_errmsg (func, VMG02, "recv", neterror());
-      (void) netclose (s);
+      (void) close (s);
       serrno = SECOMERR;
       return (-1);
     }
@@ -171,7 +171,7 @@ int send2vmgr(int *socketp,
     if (rep_type == VMGR_IRC)
       return (0);
     if (rep_type == VMGR_RC) {
-      (void) netclose (s);
+      (void) close (s);
       if (c) {
         serrno = c;
         c = -1;
@@ -183,7 +183,7 @@ int send2vmgr(int *socketp,
         vmgr_errmsg (func, VMG02, "recv", sys_serrlist[SERRNO]);
       else
         vmgr_errmsg (func, VMG02, "recv", neterror());
-      (void) netclose (s);
+      (void) close (s);
       serrno = SECOMERR;
       return (-1);
     }

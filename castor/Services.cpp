@@ -55,6 +55,13 @@ castor::Services::~Services() {
     delete it->second;
   }
   m_services.clear();
+  // close all dlopen handles
+  for (std::vector<void*>::const_iterator it = m_dlopenHandles.begin();
+       it != m_dlopenHandles.end();
+       it++) {
+    dlclose(*it);
+  }
+  m_dlopenHandles.clear();
 }
 
 //-----------------------------------------------------------------------------
@@ -85,12 +92,14 @@ castor::IService* castor::Services::service(const std::string name,
         char* targetLib = getconfent("DynamicLib", castor::ServicesIdStrings[id2], 0);
         if(0 != targetLib) {
           void* handle = dlopen(targetLib, RTLD_NOW);//RTLD_GLOBAL
-          if(handle == 0) {
+          if (handle == 0) {
             // something wrong in the config file?
             castor::exception::Internal ex;
             ex.getMessage() << "Couldn't load dynamic library for service " 
                             << name << ": " << dlerror();
             throw ex;
+          } else {
+            m_dlopenHandles.push_back(handle);
           }
         }
         // build the service - 3rd try

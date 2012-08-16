@@ -563,7 +563,7 @@ void castor::client::BaseClient::buildClient(castor::stager::Request* req)
   int rc;
   int nonblocking = 1;
   rc = ioctl(m_callbackSocket->socket(), FIONBIO, &nonblocking);
-  if (rc == SOCKET_ERROR) {
+  if (rc == -1) {
     castor::exception::InvalidArgument e;
     e.getMessage() << "Could not set socket asynchronous";
     throw e;

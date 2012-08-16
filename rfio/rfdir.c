@@ -19,6 +19,7 @@
 #include <time.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <unistd.h>
 
 #include <pwd.h>
 #include <grp.h>
@@ -211,7 +212,7 @@ int list_dir(char *dir,
       if ( rc < 0 && serrno == SEPROTONOTSUP )
         reqtype = RQST_MSTAT;
     }
-    if (fd >= 0) netclose(fd);
+    if (fd >= 0) close(fd);
   } else {
     localdir = 1;
   }

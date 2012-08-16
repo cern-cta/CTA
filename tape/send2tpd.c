@@ -103,12 +103,12 @@ int send2tpd(char *host,
 	if (connect (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
 		if (errno == ECONNREFUSED) {
 			Ctape_errmsg (func, TP000, tapehost);
-			(void) netclose (s);
+			(void) close (s);
 			serrno = ETDNP;
 			return (-1);
 		} else {
 			Ctape_errmsg (func, TP002, "connect", neterror());
-			(void) netclose (s);
+			(void) close (s);
 			serrno = SECOMERR;
 			return (-1);
 		}
@@ -119,7 +119,7 @@ int send2tpd(char *host,
 		  
 		  if (Csec_client_initContext(&ctx, CSEC_SERVICE_TYPE_TAPE, NULL) <0) {
 			  Ctape_errmsg (func, TP002, "send", "Could not init context");
-			  (void) netclose (s);
+			  (void) close (s);
 			  serrno = ESEC_CTX_NOT_INITIALIZED;
 			  return -1;
 			}
@@ -128,7 +128,7 @@ int send2tpd(char *host,
 			  Ctape_errmsg (func, "%s: %s\n",
 				      "send",
 				      "Could not establish context");
-			  (void) netclose (s);
+			  (void) close (s);
 			  serrno = ESEC_NO_CONTEXT;
 			  return -1;
 			}
@@ -144,13 +144,13 @@ int send2tpd(char *host,
 			Ctape_errmsg (func, TP002, "send", sys_serrlist[SERRNO]);
 		else
 			Ctape_errmsg (func, TP002, "send", neterror());
-		(void) netclose (s);
+		(void) close (s);
 		serrno = SECOMERR;
 		return (-1);
 	}
 
 	if (user_repbuf == NULL) {	/* does not want a reply */
-		(void) netclose (s);
+		(void) close (s);
 		return (0);
 	}
 
@@ -162,7 +162,7 @@ int send2tpd(char *host,
 				Ctape_errmsg (func, TP002, "recv", sys_serrlist[SERRNO]);
 			else
 				Ctape_errmsg (func, TP002, "recv", neterror());
-			(void) netclose (s);
+			(void) close (s);
 			serrno = SECOMERR;
 			return (-1);
 		}
@@ -171,7 +171,7 @@ int send2tpd(char *host,
 		unmarshall_LONG (p, rep_type) ;
 		unmarshall_LONG (p, c) ;
 		if (rep_type == TAPERC) {
-			(void) netclose (s);
+			(void) close (s);
 			if (c) {
 				serrno = c;
 				c = -1;
@@ -183,7 +183,7 @@ int send2tpd(char *host,
 				Ctape_errmsg (func, TP002, "recv", sys_serrlist[SERRNO]);
 			else
 				Ctape_errmsg (func, TP002, "recv", neterror());
-			(void) netclose (s);
+			(void) close (s);
 			serrno = SECOMERR;
 			return (-1);
 		}

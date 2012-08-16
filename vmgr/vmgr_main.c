@@ -16,6 +16,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <unistd.h>
 
 #include "Cinit.h"
 #include "Cdomainname.h"
@@ -568,7 +569,7 @@ void *procconnection(void *const arg) {
   if (Csec_server_establishContext(&(thip->sec_ctx),thip->s) < 0) {
     vmgrlogit("MSG=\"Error: Could not establish security context\" "
               "Error=\"%s\"", Csec_getErrorMessage());
-    netclose (thip->s);
+    close (thip->s);
     thip->s = -1;
     return (NULL);
   }
@@ -589,7 +590,7 @@ void *procconnection(void *const arg) {
     }
     else {
       vmgrlogit("MSG=\"Error: Could not map to local user\n");
-      netclose (thip->s);
+      close (thip->s);
       thip->s = -1;
       return (NULL);
     }
@@ -616,7 +617,7 @@ void *procconnection(void *const arg) {
   } else if (c > 0) {
     sendrep (thip->s, VMGR_RC, c);
   } else {
-    netclose (thip->s);
+    close (thip->s);
   }
   thip->s = -1;
   return (NULL);

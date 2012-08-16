@@ -219,10 +219,11 @@ namespace castor {
     castor::ICnvSvc* cnvSvcFromAddress(castor::IAddress* address)
       throw (castor::exception::Exception);
 
-  private:
-
     /** the list of services, by name */
     std::map<const std::string, IService*> m_services;
+
+    /** the list of dlopen handles to be closed at the end */
+    std::vector<void*> m_dlopenHandles;
 
   };
 

@@ -114,7 +114,7 @@ extern char     filename[MAXFILENAMSIZE];
 static char     *iobuffer;             /* Data communication buffer    */
 static int      iobufsiz;              /* Current io buffer size       */
 
-extern int srchkreqsize (SOCKET, char *, int);
+extern int srchkreqsize (int, char *, int);
 extern char *forced_filename;
 #define CORRECT_FILENAME(filename) (forced_filename != NULL ? forced_filename : filename)
 extern const char *rfio_all_perms[];

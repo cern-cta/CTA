@@ -110,7 +110,6 @@ extern int      srxyopen();             /* server remote xyopen()       */
 extern int      srxyclos();             /* server remote xyclos()       */
 extern int      srxywrit();             /* server remote xywrit()       */
 extern int      srxyread();             /* server remote xyread()       */
-extern int      setnetio();             /* set network characteristics  */
 
 static int      standalone=0;   /* standalone flag                      */
 static char     logfile[CA_MAXPATHLEN+1];   /* log file name buffer                 */
@@ -427,7 +426,7 @@ int main (int     argc,
       listen(s, 5);
     }
 
-    if ( s != INVALID_SOCKET ) FD_SET (s, &readmask);
+    if ( s != -1 ) FD_SET (s, &readmask);
 
     max_rcvbuf = setsock_ceiling;
     max_sndbuf = setsock_ceiling;
@@ -495,7 +494,7 @@ int main (int     argc,
 
     for (;;) {
       check_child_exit((subrequest_id>0 ? have_a_child : 0)); /* check childs [pid,status] */
-      if ( (s != INVALID_SOCKET) && FD_ISSET (s, &readfd)) {
+      if ( (s != -1) && FD_ISSET (s, &readfd)) {
         fromlen = sizeof(from);
         ns = accept(s, (struct sockaddr *)&from, &fromlen);
         if( ns < 0 ) {
@@ -543,7 +542,7 @@ int main (int     argc,
              * to wait for the child we just forked.
              */
             close(Socket_parent);
-            s = Socket_parent = INVALID_SOCKET;
+            s = Socket_parent = -1;
             continue;
           }
         } else { /* singlethread */
@@ -553,7 +552,7 @@ int main (int     argc,
         FD_CLR (ns, &readfd);
       }
     select_continue:
-      if ( s != INVALID_SOCKET ) {
+      if ( s != -1 ) {
         memcpy (&readfd, &readmask, sizeof(readmask));
         timeval.tv_sec = (once_only && have_a_child) ? 1 : select_timeout;  /* must set each time for linux */
         timeval.tv_usec = 0;
@@ -661,13 +660,13 @@ int doit(int      s,
 
     if (Csec_server_initContext(&ctx, CSEC_SERVICE_TYPE_HOST, NULL)<0) {
       log(LOG_ERR, "Could not initialize context with %s [%d]: %s\n", from_host,from_port, Csec_getErrorMessage());
-      closesocket(s);
+      close(s);
       exit(1);
     }
 
     if (Csec_server_establishContext(&ctx, s)<0) {
       log(LOG_ERR, "Could not establish context with %s [%d]: %s\n",  from_host,from_port,Csec_getErrorMessage());
-      closesocket(s);
+      close(s);
       exit(1);
     }
 
@@ -689,20 +688,20 @@ int doit(int      s,
                             &peer_uid, &peer_gid) < 0) {
       log(LOG_ERR, "CSEC: Could not map user %s/%s from %s [%d]\n", Csec_mech, Csec_auth_id,from_host,from_port);
     }
-    /*  closesocket(s);
+    /*  close(s);
      *  exit(1);
      * }
      */
     /*Checking if the user just mapped match with the same that started the request */
     if(peer_uid != uid) {
       log(LOG_ERR, "CSEC: The user do not match with the initial oner %s/%d\n", Csec_mech, peer_uid);
-      closesocket(s);
+      close(s);
       exit(1);
     } else {
       log(LOG_INFO, "Comparing gid %d and peer_gid %d \n",gid ,peer_gid);
       if(peer_gid != gid) {
         log(LOG_ERR, "CSEC: The group id of this group is not valid %s/%d\n", Csec_mech, peer_gid);
-        closesocket(s);
+        close(s);
         exit(1);
       }
     }
@@ -729,14 +728,6 @@ int doit(int      s,
   info.lockop= 0 ;
   info.rnbr= (off64_t)0 ;
   info.wnbr= (off64_t)0 ;
-  /*
-   * Use to solve an UltraNet bug
-   */
-  if (setnetio() <0) {
-    shutdown(s, 2);
-    close(s);
-    exit(1);
-  }
 
   if ( (p1 = getconfent("RFIOD","KEEPALIVE",0)) != NULL && !strcmp(p1,"YES") ) {
     yes = 1;

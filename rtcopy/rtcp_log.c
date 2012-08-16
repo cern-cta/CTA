@@ -54,7 +54,7 @@ void rtcpc_SetErrTxt(int level, char *format, ...) {
     char **msgbuf_p;
     int loglevel = LOG_INFO;
     FILE **err_p, **out_p;
-    SOCKET **client_socket_p;
+    int **client_socket_p;
 
     SAVE_ERRNO
 
@@ -69,7 +69,7 @@ void rtcpc_SetErrTxt(int level, char *format, ...) {
     }
     Cglobals_get(&out_key,(void *)&out_p,sizeof(FILE *));
     Cglobals_get(&err_key,(void *)&err_p,sizeof(FILE *));
-    Cglobals_get(&client_socket_key,(void *)&client_socket_p,sizeof(SOCKET *));
+    Cglobals_get(&client_socket_key,(void *)&client_socket_p,sizeof(int *));
     if ( level <= loglevel ) {
         va_start(args,format);
         vsprintf(msgbuf,format,args);
@@ -106,11 +106,11 @@ void rtcpc_SetErrTxt(int level, char *format, ...) {
     return;
 }
 
-int rtcp_InitLog(char *msgbuf, FILE *out, FILE *err, SOCKET *client_socket) {
+int rtcp_InitLog(char *msgbuf, FILE *out, FILE *err, int *client_socket) {
     char *p = NULL;
     char **msgbuf_p = NULL;
     FILE **out_p, **err_p;
-    SOCKET **client_socket_p;
+    int **client_socket_p;
 
     SAVE_ERRNO
 
@@ -145,7 +145,7 @@ int rtcp_InitLog(char *msgbuf, FILE *out, FILE *err, SOCKET *client_socket) {
     if ( err != NULL && err_p == NULL ) {RESTORE_ERRNO; return(-1);}
     else *err_p = err;
 
-    Cglobals_get(&client_socket_key,(void **)&client_socket_p,sizeof(SOCKET *));
+    Cglobals_get(&client_socket_key,(void **)&client_socket_p,sizeof(int *));
     if ( client_socket != NULL && client_socket_p == NULL ) {
       RESTORE_ERRNO;
       return(-1);

@@ -31,9 +31,9 @@
  * Network definitions
  */
 typedef struct vdqmnw {
-    SOCKET listen_socket;
-    SOCKET accept_socket;
-    SOCKET connect_socket;
+    int listen_socket;
+    int accept_socket;
+    int connect_socket;
 #ifdef VDQMCSEC
     Csec_context_t sec_ctx;
     uid_t Csec_uid;
@@ -59,10 +59,10 @@ int vdqm_SendPing (vdqmnw_t *, vdqmHdr_t *, vdqmVolReq_t *);
 int vdqm_CleanUp (vdqmnw_t *,int);
 int vdqm_ConnectToVDQM (vdqmnw_t **, char *);
 int vdqm_CloseConn (vdqmnw_t *);
-int vdqm_ConnectToRTCP (SOCKET *, char *);
-int vdqm_SendToRTCP (SOCKET, vdqmVolReq_t *, vdqmDrvReq_t *);
+int vdqm_ConnectToRTCP (int *, char *);
+int vdqm_SendToRTCP (int, vdqmVolReq_t *, vdqmDrvReq_t *);
 int vdqm_GetRTCPReq (char *, vdqmVolReq_t *, vdqmDrvReq_t *);
-int vdqm_SendRTCPAckn (SOCKET, int *, int *, char *);
+int vdqm_SendRTCPAckn (int, int *, int *, char *);
 int vdqm_GetRTCPPort (void);
 int vdqm_SendVolPriority_Transfer (vdqmnw_t *, vdqmVolPriority_t *);
 int vdqm_RecvVolPriority_Transfer (vdqmnw_t *, vdqmVolPriority_t *);

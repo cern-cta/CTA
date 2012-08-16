@@ -15,6 +15,7 @@
 #include <Cglobals.h>
 #include <Cpwd.h>
 #include <string.h>
+#include <unistd.h>
 
 #if !defined(__ia64__) && !defined(__x86_64) && !defined(__ppc64__)
 static int pw_key = -1;
@@ -105,7 +106,7 @@ int rfio_lstat(char    *filepath,               /* remote file path    */
         if ( (pw_tmp = Cgetpwuid(uid) ) == NULL ) {
           TRACE(2, "rfio" ,"rfio_stat: Cgetpwuid(): ERROR occured (errno=%d)",errno);
           END_TRACE();
-          (void) netclose(s);
+          (void) close(s);
           return -1 ;
         }
         memcpy(pw, pw_tmp, sizeof(struct passwd));
@@ -116,7 +117,7 @@ int rfio_lstat(char    *filepath,               /* remote file path    */
         TRACE(2,"rfio","rfio_lstat: request too long %d (max %d)",
               RQSTSIZE+len,BUFSIZ);
         END_TRACE();
-        (void) netclose(s);
+        (void) close(s);
         serrno = E2BIG;
         return(-1);
       }
@@ -132,7 +133,7 @@ int rfio_lstat(char    *filepath,               /* remote file path    */
     TRACE(2,"rfio","rfio_lstat: sending %d bytes",RQSTSIZE+len) ;
     if (netwrite_timeout(s,buf,RQSTSIZE+len,RFIO_CTRL_TIMEOUT) != (RQSTSIZE+len)) {
       TRACE(2, "rfio", "rfio_lstat: write(): ERROR occured (errno=%d)", errno);
-      (void) netclose(s);
+      (void) close(s);
       END_TRACE();
       return(-1);
     }
@@ -140,7 +141,7 @@ int rfio_lstat(char    *filepath,               /* remote file path    */
     TRACE(2, "rfio", "rfio_lstat: reading %d bytes", 6*LONGSIZE+5*WORDSIZE);
     if ((rc = netread_timeout(s, buf, 6*LONGSIZE+5*WORDSIZE,RFIO_CTRL_TIMEOUT)) != (6*LONGSIZE+5*WORDSIZE))  {
       TRACE(2, "rfio", "rfio_lstat: read(): ERROR occured (errno=%d)", errno);
-      (void) netclose(s);
+      (void) close(s);
       if ( rc == 0 && reqst == RQST_LSTAT_SEC ) {
         TRACE(2,"rfio","rfio_lstat: Server doesn't support secure lstat()");
         reqst = RQST_LSTAT;
@@ -164,7 +165,7 @@ int rfio_lstat(char    *filepath,               /* remote file path    */
   unmarshall_LONG(p, lstatus);
   TRACE(1, "rfio", "rfio_lstat: return %d",lstatus);
   rfio_errno = lstatus;
-  (void) netclose(s);
+  (void) close(s);
   if (lstatus)     {
     END_TRACE();
     return(-1);
@@ -236,6 +237,6 @@ int rfio_lstat64(char    *filepath,                              /* remote file 
       status = rfio_smstat64(s, filename, statbuf, RQST_LSTAT) ;
     }
   }
-  (void) netclose(s);
+  (void) close(s);
   return (status);
 }

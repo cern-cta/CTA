@@ -13,6 +13,7 @@
 #include "net.h"
 #include "Cns.h"
 #include "Cns_server.h"
+#include <unistd.h>
 
 int sendrep(int rpfd, int rep_type, ...)
 {
@@ -57,10 +58,10 @@ int sendrep(int rpfd, int rep_type, ...)
             "Error=\"%s\" File=\"%s\" Line=%d",
             neterror(), __FILE__, __LINE__);
     if (rep_type == CNS_RC)
-      netclose (rpfd);
+      close (rpfd);
     return (-1);
   }
   if (rep_type == CNS_RC)
-    netclose (rpfd);
+    close (rpfd);
   return (0);
 }

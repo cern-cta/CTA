@@ -13,6 +13,7 @@
 #include <sys/param.h>
 #include "rfio.h"               /* Remote File I/O general definitions  */
 #include <string.h>
+#include <unistd.h>
 
 /*
 ** NB This does not implement a rename across hosts
@@ -112,7 +113,7 @@ int  rfio_rename(char  *fileo,  /* remote old path     */
     TRACE(2,"rfio","rfio_rename: request too long %d (max %d)",
           RQSTSIZE+len,BUFSIZ);
     END_TRACE();
-    (void) netclose(s);
+    (void) close(s);
     serrno = E2BIG;
     return(-1);
   }

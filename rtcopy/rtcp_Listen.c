@@ -35,7 +35,7 @@
 #endif
 
 
-int rtcp_Listen(SOCKET s, SOCKET *ns, int timeout, int wherefrom) {
+int rtcp_Listen(int s, int *ns, int timeout, int wherefrom) {
   fd_set rfds, rfds_copy;
   struct sockaddr_in from;
   int maxfd, rc;
@@ -54,7 +54,7 @@ int rtcp_Listen(SOCKET s, SOCKET *ns, int timeout, int wherefrom) {
 
   (void)wherefrom;
 
-  if ( s == INVALID_SOCKET ) {
+  if ( s == -1 ) {
     serrno = EINVAL;
     return(-1);
   }
@@ -75,7 +75,7 @@ int rtcp_Listen(SOCKET s, SOCKET *ns, int timeout, int wherefrom) {
    * connection or true error.
    */
   for (;;) {
-    if ( ns != NULL ) *ns = INVALID_SOCKET;
+    if ( ns != NULL ) *ns = -1;
     rfds_copy = rfds;
     if ( (rc = select(maxfd,&rfds_copy,NULL,NULL,t_out_p)) > 0 ) {
       if ( FD_ISSET(s,&rfds_copy) ) {
@@ -90,7 +90,7 @@ int rtcp_Listen(SOCKET s, SOCKET *ns, int timeout, int wherefrom) {
         for (;;) {
           fromlen = sizeof(from);
           *ns = accept(s,(struct sockaddr *)&from,&fromlen);
-          if ( *ns == INVALID_SOCKET ) {
+          if ( *ns == -1 ) {
             save_errno = errno;
             rtcp_log(LOG_ERR,"rtcp_Listen() accept(): %s\n",
                      neterror());
@@ -131,8 +131,8 @@ int rtcp_Listen(SOCKET s, SOCKET *ns, int timeout, int wherefrom) {
             Csec_server_initContext(&sec_ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL);
             if (Csec_server_establishContext(&sec_ctx, *ns) < 0) {
               rtcp_log(LOG_ERR,"rtcp_Listen(): CSEC: Could not establish cotext\n");
-              closesocket(*ns);
-              *ns = INVALID_SOCKET;
+              close(*ns);
+              *ns = -1;
               return(-1);
             }
             rtcp_log(LOG_INFO,"rtcp_Listen() CSEC: server context established\n");
@@ -151,8 +151,8 @@ int rtcp_Listen(SOCKET s, SOCKET *ns, int timeout, int wherefrom) {
                 Csec_service_type = -1;
               }
               else {
-                closesocket(*ns);
-                *ns = INVALID_SOCKET;
+                close(*ns);
+                *ns = -1;
                 return(-1);
               }
             }
@@ -160,16 +160,16 @@ int rtcp_Listen(SOCKET s, SOCKET *ns, int timeout, int wherefrom) {
           else { /* We are the client */
             if (Csec_client_initContext(&sec_ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
               rtcp_log(LOG_ERR, "rtcp_Listen() Could not init client context\n");
-              closesocket(*ns);
-              *ns = INVALID_SOCKET;
+              close(*ns);
+              *ns = -1;
               serrno = ESEC_CTX_NOT_INITIALIZED;
               return(-1);
             }
                       
             if(Csec_client_establishContext(&sec_ctx, *ns)< 0) {
               rtcp_log(LOG_ERR, "rtcp_Listen() Could not establish client context\n");
-              closesocket(*ns);
-              *ns = INVALID_SOCKET;
+              close(*ns);
+              *ns = -1;
               serrno = ESEC_NO_CONTEXT;
               return(-1);
             }
@@ -198,14 +198,14 @@ int rtcp_Listen(SOCKET s, SOCKET *ns, int timeout, int wherefrom) {
   return(0);
 }
 
-int rtcp_CheckConnect(const SOCKET s, tape_list_t *tape) {
+int rtcp_CheckConnect(const int s, tape_list_t *tape) {
   char peerhost[CA_MAXHOSTNAMELEN+1], tmp[CA_MAXHOSTNAMELEN+1];
   char *tpserver;
   int l, rc;
 
   *peerhost = '\0';
   rtcp_log(LOG_DEBUG,"rtcp_CheckConnect() entered\n");
-  if ( s == INVALID_SOCKET ) return(-1);
+  if ( s == -1 ) return(-1);
 
   if ( (rc = isadminhost(s,peerhost)) == -1 && serrno != SENOTADMIN ) {
     rtcp_log(LOG_ERR,"rtcp_CheckConnect() failed to lookup connection\n");
