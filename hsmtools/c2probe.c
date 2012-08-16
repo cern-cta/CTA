@@ -375,6 +375,7 @@ int rmFile(char *svcClass, char *path)
     log(LOG_ERR, "stage_rm(%s,%s): %s, errbuf=%s\n",
         svcClass,path,sstrerror(serrno),errbuf);
     UPDATE_ERROR(svcClass,stager_rm_error);
+    free_filereq(reqs,nbreqs);
     return(-1);
   }
 

@@ -81,7 +81,7 @@ castor::io::AuthServerSocket::~AuthServerSocket() throw () {
 // accept
 //------------------------------------------------------------------------------
 castor::io::ServerSocket* castor::io::AuthServerSocket::accept()
-  throw(castor::exception::Security) {
+  throw(castor::exception::Exception) {
 
   castor::io::ServerSocket* as = castor::io::ServerSocket::accept();
   return new AuthServerSocket(as, m_security_context);

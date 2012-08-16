@@ -1044,10 +1044,19 @@ void castor::stager::daemon::QueryRequestSvcThread::process
     res.setStatus(1);
     res.setErrorCode(e.code());
     res.setErrorMessage(e.getMessage().str());
-    castor::replier::RequestReplier::getInstance()->
-      sendResponse(client, &res);
-    castor::replier::RequestReplier::getInstance()->
-      sendEndResponse(client, req->reqId());
+    try {
+      castor::replier::RequestReplier::getInstance()->sendResponse(client, &res);
+      castor::replier::RequestReplier::getInstance()->sendEndResponse(client, req->reqId());
+    } catch (castor::exception::Exception& e2) {
+      // log that we could not answer the client and give up
+      // "Unexpected exception caught"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Function", "QueryRequestSvcThread::process.2.5"),
+         castor::dlf::Param("ErrorMessage", e2.getMessage().str()),
+         castor::dlf::Param("Code", e2.code()),
+         castor::dlf::Param("Message", "Could not answer to client")};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_EXCEPT, 4, params);
+    }
     // Cleanup
     cleanup(req);
     return;

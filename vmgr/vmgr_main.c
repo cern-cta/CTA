@@ -211,6 +211,7 @@ int vmgr_main(struct main_args *main_args)
     vmgrlogit("MSG=\"Error: Failed to bind listening socket\" "
               "Function=\"socket\" Error=\"%s\" File=\"%s\" Line=%d",
               neterror(), __FILE__, __LINE__);
+    close(s);
     return (CONFERR);
   }
   listen (s, 5) ;
@@ -228,6 +229,7 @@ int vmgr_main(struct main_args *main_args)
           (void) vmgr_closedb (&(vmgr_srv_thread_info + i)->dbfd);
       }
       if (nb_active_threads == 0)
+        close(s);
         return (0);
     }
 

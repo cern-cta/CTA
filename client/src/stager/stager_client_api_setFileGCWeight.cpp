@@ -68,14 +68,13 @@ static int _processFileRequest(const char *func,
     // Preparing the requests
     req.setWeight(weight);
     for(int i=0; i<nbreqs; i++) {
-      castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
-
       if (!(requests[i].filename)) {
         serrno = EINVAL;
         stager_errmsg(func, "filename in request %d is NULL", i);
         return -1;
       }
 
+      castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
       req.addSubRequests(subreq);
       std::string sfilename(requests[i].filename);
       subreq->setFileName(sfilename);

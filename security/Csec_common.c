@@ -73,10 +73,12 @@ int Csec_trace(char *func, char *msg, ...) {
   }
 
   va_start (args, msg);
-  if (func)
-    sprintf (prtbuf, "%s: ", func);
-  else
+  if (func) {
+    sprintf (prtbuf, "%*s: ", SECPRTBUFSZ-2, func);
+    prtbuf[SECPRTBUFSZ] = 0;
+  } else {
     *prtbuf = '\0';
+  }
   funlen = strlen(prtbuf);
 
   vsnprintf (prtbuf + funlen ,  SECPRTBUFSZ - funlen -1, msg, args);
@@ -357,15 +359,15 @@ void _Csec_print_token(csec_buffer_t tok)
   unsigned char *p = tok->value;
 
   for (i=0; i < tok->length; i++, p++) {
-  	sprintf(buf+l,"%02x ",*p); 
+    snprintf(buf+l,50-l,"%02x ",*p); 
     l+=3;
     if(l>=48) {
-          Csec_trace(NULL, "%s\n",buf);
-          l=0;
-    	}    	
-    }
-   if(l)  Csec_trace(NULL, "%s\n",buf);
-   Csec_trace(NULL,"\n");
+      Csec_trace(NULL, "%s\n",buf);
+      l=0;
+    }    	
+  }
+  if(l)  Csec_trace(NULL, "%s\n",buf);
+  Csec_trace(NULL,"\n");
 }
 
 

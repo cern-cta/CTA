@@ -378,7 +378,7 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
     m_statements.begin(); itor != m_statements.end(); itor++) {
     try {
       deleteStatement(itor->second);
-    } catch(oracle::occi::SQLException e) {
+    } catch(castor::exception::Exception e) {
       // Do nothing
     }
   }

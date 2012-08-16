@@ -197,6 +197,7 @@ int Cupv_main(struct main_args *main_args)
     cupvlogit("MSG=\"Error: Failed to bind listening socket\" "
 	      "Function=\"socket\" Error=\"%s\" File=\"%s\" Line=%d",
 	      neterror(), __FILE__, __LINE__);
+    close(s);
     return (CONFERR);
   }
   listen (s, 5) ;
@@ -216,6 +217,7 @@ int Cupv_main(struct main_args *main_args)
 	  (void) Cupv_closedb (&(cupv_srv_thread_info + i)->dbfd);
       }
       if (nb_active_threads == 0)
+        close(s);
 	return (0);
     }
     if (FD_ISSET (s, &readfd)) {
@@ -230,6 +232,7 @@ int Cupv_main(struct main_args *main_args)
 	  sendrep (rqfd, CUPV_RC, serrno);
 	  continue;
 	} else
+          close(s);
 	  return (SYERR);
       }
       (cupv_srv_thread_info + thread_index)->s = rqfd;
@@ -239,6 +242,7 @@ int Cupv_main(struct main_args *main_args)
         cupvlogit("MSG=\"Error: Failed to assign request to thread\" "
 		  "Function=\"Cpool_assign\" Error=\"%s\" File=\"%s\" Line=%d",
 		  sstrerror(serrno), __FILE__, __LINE__);
+        close(s);
 	return (SYERR);
       }
     }

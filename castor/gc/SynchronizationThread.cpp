@@ -503,12 +503,21 @@ void castor::gc::SynchronizationThread::synchronizeFiles
   if (!disableStagerSync && (rand()/(RAND_MAX + 1.0) < 0.1)) {
     orphans = gcSvc->stgFilesDeleted(dcIds, nameServer);
 
-  // Remove orphaned files
+    // Remove orphaned files
     for (std::vector<u_signed64>::const_iterator it = orphans.begin();
          it != orphans.end();
          it++) {
-      fileId.fileid = fileIdFromFilePath(filePaths.find(*it)->second);
-
+      try {
+        fileId.fileid = fileIdFromFilePath(filePaths.find(*it)->second);
+      } catch (castor::exception::Exception e) {
+        // "Could not get fileid from filepath, giving up for this file"
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("Filename", filePaths.find(*it)->second),
+           castor::dlf::Param("Error", e.code()),
+           castor::dlf::Param("ErrorMessage", e.getMessage().str())};
+        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 43, 3, params, &fileId);        
+        continue;
+      }
       // Get information about the file before unlinking
       struct stat64 fileinfo;
       if (stat64(filePaths.find(*it)->second.c_str(), &fileinfo) < 0) {
@@ -581,9 +590,18 @@ void castor::gc::SynchronizationThread::synchronizeFiles
   for (std::map<u_signed64, std::string>::iterator it = filePaths.begin();
        it != filePaths.end();
        it++, i++) {
-    u_signed64 fid = fileIdFromFilePath(it->second);
-    cnsFilePaths[fid] = it->second;
-    cnsFileIds[i] = fid;
+    try {
+      u_signed64 fid = fileIdFromFilePath(it->second);
+      cnsFilePaths[fid] = it->second;
+      cnsFileIds[i] = fid;
+    } catch (castor::exception::Exception e) {
+      // "Could not get fileid from filepath, giving up for this file"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Filename", it->second),
+         castor::dlf::Param("Error", e.code()),
+         castor::dlf::Param("ErrorMessage", e.getMessage().str())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 43, 3, params, &fileId);        
+    }
   }
 
   // Call the nameserver to determine which files have been deleted
@@ -620,7 +638,7 @@ void castor::gc::SynchronizationThread::synchronizeFiles
   for (std::vector<u_signed64>::const_iterator it = orphans.begin();
        it != orphans.end();
        it++) {
-    fileId.fileid = fileIdFromFilePath(cnsFilePaths.find(*it)->second);
+    fileId.fileid = *it;
 
     // Get information about the file before unlinking
     struct stat64 fileinfo;

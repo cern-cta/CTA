@@ -709,6 +709,7 @@ int  sropen64(int     s,
   replen = WORDSIZE+3*LONGSIZE+HYPERSIZE;
   if (netwrite_timeout(s,rqstbuf,replen,RFIO_CTRL_TIMEOUT) != replen)  {
     log(LOG_ERR, "sropen64: write(): %s\n", strerror(errno));
+    if (fd >=0) close(fd);
     return -1;
   }
   return fd;
@@ -1797,6 +1798,7 @@ int  sropen64_v3(int         s,
   errno = ECONNRESET;
   if (netwrite_timeout(s,rqstbuf,replen,RFIO_CTRL_TIMEOUT) != replen)  {
     log(LOG_ERR,"ropen64_v3: write(): %s\n", strerror(errno));
+    close(data_s);
     return -1;
   }
 

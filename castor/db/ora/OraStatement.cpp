@@ -24,13 +24,14 @@
 
 #include "OraStatement.hpp"
 #include "OraResultSet.hpp"
+#include "castor/exception/OutOfMemory.hpp"
 #include "occi.h"
 
 
 //------------------------------------------------------------------------------
 // OraStatement
 //------------------------------------------------------------------------------
-castor::db::ora::OraStatement::OraStatement(oracle::occi::Statement* stmt, castor::db::ora::OraCnvSvc* cnvSvc) :
+castor::db::ora::OraStatement::OraStatement(oracle::occi::Statement* stmt, castor::db::ora::OraCnvSvc* cnvSvc) throw() :
   m_statement(stmt),
   m_cnvSvc(cnvSvc),
   m_clobBuf(""),
@@ -46,7 +47,7 @@ castor::db::ora::OraStatement::OraStatement(oracle::occi::Statement* stmt, casto
 //------------------------------------------------------------------------------
 // ~OraStatement
 //------------------------------------------------------------------------------
-castor::db::ora::OraStatement::~OraStatement() {
+castor::db::ora::OraStatement::~OraStatement() throw() {
   try {
     // Free memory buffers
     if (m_arrayBuf)
@@ -62,7 +63,7 @@ castor::db::ora::OraStatement::~OraStatement() {
     // Close statement
     m_cnvSvc->terminateStatement(m_statement);
   }
-  catch(oracle::occi::SQLException ignored) {}
+  catch(castor::exception::Exception ignored) {}
 }
 
 //------------------------------------------------------------------------------
@@ -176,7 +177,7 @@ void castor::db::ora::OraStatement::setDataBuffer
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStatement::setDataBufferArray
 (int pos, void* buffer, unsigned dbType, unsigned size, unsigned elementSize, void* bufLens)
-  throw(castor::exception::SQLError) {
+  throw(castor::exception::Exception) {
   try {
     if (0 == m_arraySize) {
       m_arraySize = (ub4*) malloc(sizeof(ub4));
@@ -204,7 +205,7 @@ void castor::db::ora::OraStatement::setDataBufferArray
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStatement::setDataBufferUInt64Array
 (int pos, std::vector<u_signed64> data)
-  throw(castor::exception::SQLError) {
+  throw(castor::exception::Exception) {
   m_arrayPos = pos;
   // a dedicated method to handle u_signed64 arrays, i.e. arrays of ids
   unsigned int nb1 = data.size() == 0 ? 1 : data.size();
@@ -410,7 +411,7 @@ castor::db::IDbResultSet* castor::db::ora::OraStatement::executeQuery()
 // execute
 //------------------------------------------------------------------------------
 int castor::db::ora::OraStatement::execute(int count)
-  throw (castor::exception::SQLError) {
+  throw (castor::exception::Exception) {
   try {
     int ret = 0;
     if(count == 1) {

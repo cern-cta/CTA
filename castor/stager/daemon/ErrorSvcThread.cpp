@@ -96,9 +96,20 @@ void castor::stager::daemon::ErrorSvcThread::process
 
   // get the Svc. Note that we cannot cache it since we
   // would not be thread safe
-  castor::Services *svcs = castor::BaseObject::services();
-  castor::IService *svc = svcs->service("DbStagerSvc", castor::SVC_DBSTAGERSVC);
-  castor::stager::IStagerSvc *stgSvc = dynamic_cast<castor::stager::IStagerSvc*>(svc);
+  castor::stager::IStagerSvc *stgSvc = 0;
+  try {
+    castor::Services *svcs = castor::BaseObject::services();
+    castor::IService *svc = svcs->service("DbStagerSvc", castor::SVC_DBSTAGERSVC);
+    stgSvc = dynamic_cast<castor::stager::IStagerSvc*>(svc);
+  } catch (castor::exception::Exception& e) {
+    // "Unexpected exception caught"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Function", "ErrorSvcThread::process.0"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_ERRSVC_EXCEPT, 3, params);
+    return;
+  }  
   // Extracting data; actual fetches from the db
   // have been performed by subReqFailedToDo.
   // Note that casting the subrequest will

@@ -129,6 +129,14 @@ typedef  char*          bitvct; /* bit vector type definition           */
 					   INC_PTR(ptr,strlen(str)+1); \
 					}
 
+#define  marshall_STRINGN(ptr,str,n)    {  (void) strncpy((char*)(ptr),(char*)(str),n); \
+                                           ((char*)(ptr))[n-1] = 0;                     \
+                                           if (strlen(str)+1 > n)                       \
+                                             INC_PTR(ptr,n);                            \
+                                           else                                         \
+                                             INC_PTR(ptr,strlen(str)+1);                \
+                                        }
+
 #define  unmarshall_STRING(ptr,str)     { (void) strcpy((char*)(str),(char*)(ptr)); \
 					  INC_PTR(ptr,strlen(str)+1); \
 					}

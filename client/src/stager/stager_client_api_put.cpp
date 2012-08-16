@@ -91,7 +91,6 @@ EXTERN_C int stage_prepareToPut(const char *userTag,
 
     // Preparing the requests
     for(int i=0; i<nbreqs; i++) {
-      castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
 
       if (!(requests[i].filename)) {
         serrno = EINVAL;
@@ -99,6 +98,7 @@ EXTERN_C int stage_prepareToPut(const char *userTag,
         return -1;
       }
 
+      castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
       req.addSubRequests(subreq);
       std::string sfilename(requests[i].filename);
       subreq->setFileName(sfilename);
@@ -353,7 +353,6 @@ EXTERN_C int stage_putDone(char *putRequestId,
 
     // Preparing the requests
     for(int i=0; i<nbreqs; i++) {
-      castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
 
       if (!(requests[i].filename)) {
         serrno = EINVAL;
@@ -361,6 +360,7 @@ EXTERN_C int stage_putDone(char *putRequestId,
         return -1;
       }
 
+      castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
       req.addSubRequests(subreq);
       std::string sfilename(requests[i].filename);
       subreq->setFileName(sfilename);

@@ -270,6 +270,7 @@ int Cns_main(struct main_args *main_args)
     nslogit("MSG=\"Error: Failed to bind listening socket\" "
             "Function=\"socket\" Error=\"%s\" File=\"%s\" Line=%d",
             neterror(), __FILE__, __LINE__);
+    close(s);
     return (CONFERR);
   }
   listen (s, 5) ;
@@ -290,6 +291,7 @@ int Cns_main(struct main_args *main_args)
         (void) Csec_clearContext (&(Cns_srv_thread_info + i)->sec_ctx);
       }
       if (nb_active_threads == 0)
+        close(s);
         return (0);
     }
     if (FD_ISSET (s, &readfd)) {
@@ -311,6 +313,7 @@ int Cns_main(struct main_args *main_args)
           sendrep (rqfd, CNS_RC, serrno);
           continue;
         } else
+          close(s);
           return (SYERR);
       }
       (Cns_srv_thread_info + thread_index)->s = rqfd;
@@ -321,6 +324,7 @@ int Cns_main(struct main_args *main_args)
         nslogit("MSG=\"Error: Failed to assign request to thread\" "
                 "Function=\"Cpool_assign\" Error=\"%s\" File=\"%s\" Line=%d",
                 sstrerror(serrno), __FILE__, __LINE__);
+        close(s);
         return (SYERR);
       }
     }

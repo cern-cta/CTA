@@ -80,7 +80,7 @@ namespace castor {
        * The deallocation of the new socket is the responsability
        * of the caller.
        */
-      virtual ServerSocket* accept() throw(castor::exception::Security);
+      virtual ServerSocket* accept() throw(castor::exception::Exception);
 
       /**
        * This method gets the dn or principal of the client from the context and then 

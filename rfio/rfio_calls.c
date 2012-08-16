@@ -2119,6 +2119,7 @@ int  sropen(int     s,
   log(LOG_DEBUG, "ropen: sending back status(%d) and errno(%d)\n",status,rcode);
   if (netwrite_timeout(s,rqstbuf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+3*LONGSIZE))  {
     log(LOG_ERR,"ropen: netwrite_timeout(): %s\n",strerror(errno));
+    if (fd >=0) close(fd);
     return -1;
   }
   return fd;
@@ -3858,6 +3859,8 @@ int  sropen_v3(int     s,
   errno = ECONNRESET;
   if (netwrite_timeout(s,rqstbuf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE)  {
     log(LOG_ERR,"ropen_v3: netwrite_timeout(): %s\n",strerror(errno));
+    close(data_s);
+    close(fd);
     return -1;
   }
 

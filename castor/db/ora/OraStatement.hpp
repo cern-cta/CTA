@@ -30,7 +30,7 @@
 #include <string>
 #include "castor/db/IDbStatement.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
-#include "castor/exception/OutOfMemory.hpp"
+#include "castor/exception/Exception.hpp"
 #include "occi.h"
 
 namespace castor {
@@ -70,12 +70,12 @@ namespace castor {
 
       public:
 
-        OraStatement(oracle::occi::Statement* stmt, castor::db::ora::OraCnvSvc* cnvSvc);
+        OraStatement(oracle::occi::Statement* stmt, castor::db::ora::OraCnvSvc* cnvSvc) throw();
 
         /**
          * Standard destructor. Closes the statement
          */
-        virtual ~OraStatement();
+        virtual ~OraStatement() throw();
 
         virtual void endTransaction();
 
@@ -98,10 +98,10 @@ namespace castor {
 
         virtual void setDataBufferArray(int pos, void* buffer, unsigned dbType,
           unsigned size, unsigned elementSize, void* bufLens)
-          throw (castor::exception::SQLError);
+          throw (castor::exception::Exception);
 
         virtual void setDataBufferUInt64Array(int pos, std::vector<u_signed64> data)
-          throw (castor::exception::SQLError);
+          throw (castor::exception::Exception);
 
         virtual void registerOutParam(int pos, unsigned dbType)
           throw (castor::exception::SQLError);
@@ -127,7 +127,7 @@ namespace castor {
           throw (castor::exception::SQLError);
 
         virtual int execute(int count = 1)
-          throw (castor::exception::SQLError);
+          throw (castor::exception::Exception);
 
         inline oracle::occi::Statement* getStatementImpl() {
           return m_statement;

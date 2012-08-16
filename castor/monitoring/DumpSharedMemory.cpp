@@ -33,43 +33,47 @@
 
 int main(int, char**) {
 
-  // get SharedMemoryBlock
-  bool create = false;
-  castor::sharedMemory::BlockKey key =
-    castor::monitoring::ClusterStatusBlockKey::getBlockKey();
-  castor::sharedMemory::SingletonBlock
-    <castor::monitoring::ClusterStatus,
-    castor::sharedMemory::Allocator
-    <castor::sharedMemory::SharedNode,
-    castor::monitoring::ClusterStatusBlockKey> > *b =
-    castor::sharedMemory::BlockDict::getBlock
-    <castor::sharedMemory::SingletonBlock
-    <castor::monitoring::ClusterStatus,
-    castor::sharedMemory::Allocator
-    <castor::sharedMemory::SharedNode,
-    castor::monitoring::ClusterStatusBlockKey> > >(key, create);
+  try {
+    // get SharedMemoryBlock
+    bool create = false;
+    castor::sharedMemory::BlockKey key =
+      castor::monitoring::ClusterStatusBlockKey::getBlockKey();
+    castor::sharedMemory::SingletonBlock
+      <castor::monitoring::ClusterStatus,
+      castor::sharedMemory::Allocator
+      <castor::sharedMemory::SharedNode,
+      castor::monitoring::ClusterStatusBlockKey> > *b =
+      castor::sharedMemory::BlockDict::getBlock
+      <castor::sharedMemory::SingletonBlock
+      <castor::monitoring::ClusterStatus,
+      castor::sharedMemory::Allocator
+      <castor::sharedMemory::SharedNode,
+      castor::monitoring::ClusterStatusBlockKey> > >(key, create);
 
-  if (0 == b) {
-    std::cout << "No shared memory found." << std::endl;
+    if (0 == b) {
+      std::cout << "No shared memory found." << std::endl;
+      return 0;
+    }
+    // print content roughly
+    b->print(std::cout, "");
+
+    // print details of the Cluster status map
+    castor::monitoring::ClusterStatus* smStatus =
+      b->getSingleton();
+    void** p = (void**)smStatus;
+    // From now on, we assume gcc 3.2 stdc++ lib
+    std::cout << "----------------------------------\n"
+  	    << "-- Details on ClusterStatus map --\n"
+  	    << "----------------------------------\n";
+    std::cout << "allocator : " << std::hex << *p << "\n";
+    p = (void**)(((char*)p) + sizeof(void*));
+    std::cout << "header : " << std::hex << *p << "\n";
+    p = (void**)(((char*)p) + sizeof(void*));
+    std::cout << "node_count : " << (long)(*p) << "\n";
+    p = (void**)(((char*)p) + sizeof(void*));
+    std::cout << "key_compare : " << *p << std::endl;
     return 0;
+  } catch (castor::exception::Exception e) {
+    std::cout << "Caucht exception :\n" << e.getMessage().str() << std::endl;
   }
-  // print content roughly
-  b->print(std::cout, "");
-
-  // print details of the Cluster status map
-  castor::monitoring::ClusterStatus* smStatus =
-    b->getSingleton();
-  void** p = (void**)smStatus;
-  // From now on, we assume gcc 3.2 stdc++ lib
-  std::cout << "----------------------------------\n"
-	    << "-- Details on ClusterStatus map --\n"
-	    << "----------------------------------\n";
-  std::cout << "allocator : " << std::hex << *p << "\n";
-  p = (void**)(((char*)p) + sizeof(void*));
-  std::cout << "header : " << std::hex << *p << "\n";
-  p = (void**)(((char*)p) + sizeof(void*));
-  std::cout << "node_count : " << (long)(*p) << "\n";
-  p = (void**)(((char*)p) + sizeof(void*));
-  std::cout << "key_compare : " << *p << std::endl;
-  return 0;
 }

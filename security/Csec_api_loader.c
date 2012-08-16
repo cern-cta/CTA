@@ -42,9 +42,9 @@
 #include "Csec_plugin.h"
 
 /* Macro to initialize one symbol in the context structure */
-#define DLSETFUNC(CTX, HDL, SYM, SFX) strcpy(symname, #SYM "_");\
-    strcat(symname, CTX->protocols[CTX->current_protocol].id);  \
-    strcat(symname, SFX);                                       \
+#define DLSETFUNC(CTX, HDL, SYM, SFX)                           \
+    snprintf(symname, 255, "%s_%s%s", #SYM , CTX->protocols[CTX->current_protocol].id, SFX); \
+    symname[255] = 0;                                           \
     if ((PLUGINFP(CTX,SYM) = dlsym(HDL, symname)) == NULL) {    \
     serrno =  ESEC_NO_SECMECH;                                  \
     Csec_errmsg(func, "Error finding symbol %s: %s",		\
@@ -139,10 +139,8 @@ static int _try_activate_func(Csec_context_t *ctx,void *hdl, char *sfx) {
 
   Csec_trace(func, "Entering\n");
 
-  strcpy(symname, "Csec_activate");
-  strcat(symname, "_");
-  strcat(symname, mech);
-  strcat(symname, sfx);
+  snprintf(symname, 255, "Csec_activate_%s%s", mech, sfx);
+  symname[255] = 0;
   Csec_trace(func, "Meth: %s\n", symname);
 
   ctx->shhandle = malloc(sizeof(Csec_plugin_pluginptrs_t));
@@ -258,7 +256,8 @@ void *Csec_get_shlib(Csec_context_t *ctx) {
       Csec_trace(func, "NOT TRYING TO LOAD _pthr !!\n");
     else {
       Csec_trace(func, "    TRYING TO LOAD _pthr !!\n");
-      strcpy(suffix,"_pthr");
+      strncpy(suffix,"_pthr",CA_MAXNAMELEN-1);
+      suffix[CA_MAXNAMELEN-1] = 0;
     }
   }
 
@@ -280,8 +279,8 @@ void *Csec_get_shlib(Csec_context_t *ctx) {
     /* Creating the library name */
     snprintf(filename, CA_MAXNAMELEN, "libCsec_plugin_%s.so.%d.%d",
              ctx->protocols[ctx->current_protocol].id, MAJORVERSION, MINORVERSION);
-    strcpy(filename_thread,filename);
-    strcat(filename_thread,"_thread.so");
+    snprintf(filename_thread,CA_MAXNAMELEN-1,"%s_thread.so",filename);
+    filename_thread[CA_MAXNAMELEN-1] = 0;
 
     handle = NULL;
     

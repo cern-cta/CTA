@@ -123,6 +123,7 @@ int Csec_client_lookup_protocols(Csec_protocol **protocols, int *nbprotocols) {
   char *p, *q, *tokctx;
   char *buf;
   int entry = 0;
+  int plen;
   Csec_protocol *prots;
   char *func="Csec_client_lookup_protocols";
 
@@ -139,16 +140,17 @@ int Csec_client_lookup_protocols(Csec_protocol **protocols, int *nbprotocols) {
 
   Csec_trace(func, "Protocols looked up are <%s>\n", p);
   
-  buf = (char *)malloc(strlen(p)+1);
+  plen = strlen(p);
+  buf = (char *)malloc(plen+1);
   if (NULL == buf) {
     serrno = ESEC_NO_SECPROT;
-    Csec_errmsg(func, "Error allocating buffer of size %d",
-		strlen(p)+1);
+    Csec_errmsg(func, "Error allocating buffer of size %d", plen+1);
     return -1;
   }
 
   /* First counting the entries */
-  strcpy(buf, p);
+  strncpy(buf, p, plen);
+  buf[plen] = 0;
   q = strtok_r(buf, " \t", &tokctx);
   while (q  != NULL) {
     if (strlen(q) > 0) entry++;
@@ -168,7 +170,8 @@ int Csec_client_lookup_protocols(Csec_protocol **protocols, int *nbprotocols) {
   /* Now creating the list of protocols */
   *nbprotocols = entry;
   entry = 0;
-  strcpy(buf, p);
+  strncpy(buf, p, plen);
+  buf[plen] = 0;
   q = strtok_r(buf, " \t", &tokctx);
   while (q != NULL) {
     if (strlen(q) > 0) {

@@ -31,6 +31,7 @@
 #include <vector>
 #include "osdep.h"
 #include "castor/db/IDbResultSet.hpp"
+#include "castor/exception/Exception.hpp"
 #include "castor/exception/SQLError.hpp"
 
 namespace castor {
@@ -68,10 +69,10 @@ namespace castor {
         
       virtual void setDataBufferArray(int pos, void* buffer, unsigned dbType, 
 				      unsigned size, unsigned elementSize, void* bufLens)
-        throw (castor::exception::SQLError) = 0;
+        throw (castor::exception::Exception) = 0;
 
       virtual void setDataBufferUInt64Array(int pos, std::vector<u_signed64> data)
-        throw (castor::exception::SQLError) = 0;
+        throw (castor::exception::Exception) = 0;
 
       virtual void registerOutParam(int pos, unsigned dbType)
         throw (castor::exception::SQLError) = 0;
@@ -95,7 +96,7 @@ namespace castor {
        * 
        */
       virtual int execute(int count = 1)
-        throw (castor::exception::SQLError) = 0;
+        throw (castor::exception::Exception) = 0;
     
     };
 

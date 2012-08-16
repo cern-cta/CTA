@@ -57,7 +57,7 @@ Cns_access_internal(const char *path, int amode, uid_t uid, gid_t gid)
   marshall_LONG (sbp, uid);
   marshall_LONG (sbp, gid);
   marshall_HYPER (sbp, thip->cwd);
-  marshall_STRING (sbp, actual_path);
+  marshall_STRINGN (sbp, actual_path, REQBUFSZ-8*LONGSIZE);
   marshall_LONG (sbp, amode);
 
   msglen = sbp - sendbuf;
