@@ -163,6 +163,7 @@ int send2Cupv(int *socketp,char *reqp,int reql,char *user_repbuf,int user_repbuf
       unmarshall_LONG (p, rep_type) ;
       unmarshall_LONG (p, c) ;
       if (rep_type == CUPV_IRC)
+	(void) close (s);
 	return (0);
       if (rep_type == CUPV_RC) {
 	(void) close (s);

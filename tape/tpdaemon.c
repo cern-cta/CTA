@@ -796,7 +796,10 @@ int initdrvtab()
 			errflag++;
 		}
 	}
-	if (errflag) return (ETSYS);
+	if (errflag) {
+          fclose(s);
+          return (ETSYS);
+        }
 
 	/* allocate space for tape drive table */
 	tptabp = (struct tptab *) calloc (nbtpdrives, sizeof(struct tptab));

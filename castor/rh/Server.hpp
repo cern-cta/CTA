@@ -63,6 +63,11 @@ namespace castor {
       Server();
 
       /**
+       * Destructor
+       */
+      virtual ~Server() throw();
+
+      /**
        * Overloaded method from BaseDaemon for individual command line parser
        */
       virtual void parseCommandLine(int argc, char *argv[])
@@ -86,6 +91,14 @@ namespace castor {
        * Prints out the online help
        */
       virtual void help(std::string programName);
+
+    private:
+
+      /**
+       * the handle returned by dlopen when opening libCsec_plugin_KRB5.
+       * for working around the bug related with the KRB5 and GSI mixed libraries
+       */
+      void *m_dlopenHandle;
 
     }; // class Server
 

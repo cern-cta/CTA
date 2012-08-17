@@ -2356,6 +2356,7 @@ int rtcpd_StartTapeIO(
                          "Host"   , TL_MSG_PARAM_STR, client->clienthost,
                          "Port"   , TL_MSG_PARAM_INT, client->clientport,
                          "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );        
+        free(tharg);
         return(-1);
     }
 

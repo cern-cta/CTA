@@ -27,11 +27,30 @@
 // Local Files
 #include "Exception.hpp"
 
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
 castor::exception::Exception::Exception(int se) : m_serrno(se) {}
 
+//------------------------------------------------------------------------------
+// copy constructor
+//------------------------------------------------------------------------------
 castor::exception::Exception::Exception(castor::exception::Exception& ex) {
   m_serrno = ex.code();
   m_message << ex.getMessage().str();
 }
 
+
+//------------------------------------------------------------------------------
+// assignement operator
+//------------------------------------------------------------------------------
+castor::exception::Exception& castor::exception::Exception::operator=(castor::exception::Exception &ex) {
+  m_serrno = ex.code();
+  m_message << ex.getMessage().str();
+  return *this;
+}
+
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
 castor::exception::Exception::~Exception() {}

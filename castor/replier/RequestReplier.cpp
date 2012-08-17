@@ -283,6 +283,7 @@ castor::replier::RequestReplier::replierThread(void*) throw() {
 
   } // End while(1)
 
+  delete[] toPoll;
   return 0;
 }
 

@@ -531,9 +531,7 @@ int check_path_whitelist(const char *hostname,
     additional = NULL; count2 = 0;
   } else if (count2==0) {
     l_free_strlist(additional); additional = NULL;
-  }
-
-  if (count2>0) {
+  } else {
     if (count==0) {
       count = count2;
       white_list = additional;
@@ -2851,6 +2849,7 @@ int srpreseek(int     s,
     if ((iobuffer = malloc(size+WORDSIZE+3*LONGSIZE)) == NULL)    {
       log(LOG_ERR, "rpreseek: malloc(): %s\n", strerror(errno));
       (void) close(s);
+      free(v);
       return -1;
     }
     iobufsiz = size+WORDSIZE+3*LONGSIZE;
@@ -3522,7 +3521,7 @@ int  sropen_v3(int     s,
   char *dp2 = NULL;
   long low_port  = RFIO_LOW_PORT_RANGE;
   long high_port = RFIO_HIGH_PORT_RANGE;
-  int sock, data_s;
+  int sock, data_s = -1;
   int port;
   socklen_t fromlen;
   socklen_t size_sin;
@@ -3859,7 +3858,7 @@ int  sropen_v3(int     s,
   errno = ECONNRESET;
   if (netwrite_timeout(s,rqstbuf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE)  {
     log(LOG_ERR,"ropen_v3: netwrite_timeout(): %s\n",strerror(errno));
-    close(data_s);
+    if (data_s >= 0) close(data_s);
     close(fd);
     return -1;
   }
@@ -3935,6 +3934,7 @@ int  sropen_v3(int     s,
       log(LOG_DEBUG,"setsockopt nodelay option set on ctrl socket\n");
     }
   rfioacct(RQST_OPEN_V3,uid,gid,s,(int)flags,(int)mode,status,rcode,NULL,CORRECT_FILENAME(filename),NULL);
+  if (data_s >= 0) close(data_s);
   return fd;
 }
 

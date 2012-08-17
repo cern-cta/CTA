@@ -96,7 +96,8 @@ castor::rh::Server::Server() :
   castor::server::BaseDaemon("rhd"),
   m_port(-1),
   m_secure(false),
-  m_waitIfBusy(true) {
+  m_waitIfBusy(true),
+  m_dlopenHandle(0) {
 
   // Initializes the DLF logging
   castor::dlf::Message messages[] =
@@ -249,8 +250,8 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor:
     char filename[CA_MAXNAMELEN];
     snprintf(filename, CA_MAXNAMELEN, "libCsec_plugin_KRB5.so.%d.%d",
              MAJORVERSION, MINORVERSION);
-    void *handle = dlopen (filename, RTLD_LAZY);
-    if (!handle) {
+    m_dlopenHandle = dlopen (filename, RTLD_LAZY);
+    if (!m_dlopenHandle) {
       fprintf (stderr, "%s\n", dlerror());
       exit(EXIT_FAILURE);
     }
@@ -291,3 +292,11 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor:
       "Users", &castor::rh::UserCounter::instantiate));
   }    
 }
+
+//------------------------------------------------------------------------------
+// Desstructor
+//------------------------------------------------------------------------------
+castor::rh::Server::~Server() throw() {
+  dlclose(m_dlopenHandle);
+}
+

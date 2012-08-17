@@ -55,6 +55,11 @@ namespace castor {
       Exception(Exception& dbex);
 
       /**
+       * Assignment operator
+       */
+      Exception& operator=(Exception &dbex);
+
+      /**
        * Empty Destructor
        */
       virtual ~Exception();

@@ -49,7 +49,7 @@ RFILE *rfio_fopen64(char * file,
     return NULL ;
   }
 
-  f= rfio_open64(file,oflags, 0666) ;
+  f = rfio_open64(file,oflags, 0666) ;
   if ( f < 0 ) {
     END_TRACE() ;
     return NULL ;
@@ -57,6 +57,7 @@ RFILE *rfio_fopen64(char * file,
 
   if ( (f_index = rfio_rfilefdt_findentry(f,FINDRFILE_WITHOUT_SCAN)) != -1  ) {
     END_TRACE() ;
+    rfio_close(f);
     return (RFILE *) rfilefdt[f_index] ;
   }
   else {

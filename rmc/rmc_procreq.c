@@ -214,6 +214,7 @@ int rmc_srv_findcart(char *req_data,
 	}
 	if ((repbuf = malloc (c * 18 + 4)) == NULL) {
 		sendrep (rpfd, MSG_ERR, RMC05);
+		free (element_info);
 		RETURN (ERMCUNREC);
 	}
 	sbp = repbuf;
@@ -439,6 +440,7 @@ int rmc_srv_readelem(char *req_data,
 	}
 	if ((repbuf = malloc (c * 18 + 4)) == NULL) {
 		sendrep (rpfd, MSG_ERR, RMC05);
+		free (element_info);
 		RETURN (ERMCUNREC);
 	}
 	sbp = repbuf;

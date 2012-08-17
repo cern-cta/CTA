@@ -184,7 +184,7 @@ int send_scsi_cmd (int tapefd,
   (void)senselen;
 	/* First the value in /proc of the max buffer size for the sg driver */
 	procfd = open("/proc/scsi/sg/def_reserved_size", O_RDONLY);
-	if (procfd > 0) {
+	if (procfd >= 0) {
 	  memset(procbuf, 0, PROCBUFSZ);
 	  nbread = read(procfd, procbuf, PROCBUFSZ -1);
 	  if (nbread > 0) {

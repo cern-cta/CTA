@@ -84,6 +84,7 @@ int rfio_handle_open(const char *lfn,
                 log(LOG_ERR, "rfio_handle_open : memory allocation error duplicating "
                     "nameserver host (%s)\n", strerror(errno));
                 serrno = errno;
+                free(internal_context);
                 return -1;
               }
             }
@@ -98,12 +99,14 @@ int rfio_handle_open(const char *lfn,
           log(LOG_ERR, "rfio_handle_open : error parsing the physical filename %s: (format unknown)\n",
               internal_context->pfn);
           serrno = EINVAL;
+          free(internal_context);
           return -1;
         }
       } else {
         log(LOG_ERR, "rfio_handle_open : error parsing the physical filename %s: (%s)\n",
             internal_context->pfn, strerror(errno));
         serrno = errno;
+        free(internal_context);
         return -1;
       }
     } else {

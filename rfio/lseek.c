@@ -404,6 +404,7 @@ static int rfio_forcelseek(int      s,
         if ( rfilefdt[s_index]->_iobuf.base==NULL || (int)rfilefdt[s_index]->_iobuf.dsize<msgsiz ) {
           temp= 1 ;
           TRACE(3,"rfio","rfio_forcelseek: allocating momentary buffer of size %d",msgsiz) ;
+          if ( trp ) (void) free(trp) ;
           if ( (trp= ( char *) malloc(msgsiz)) == NULL ) {
             TRACE(3,"rfio","rfio_forcelseek: malloc(): ERROR occured (errno=%d)",errno) ;
             END_TRACE() ;

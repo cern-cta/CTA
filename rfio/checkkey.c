@@ -53,6 +53,7 @@ int connecttpread(char * host,
   if ((hp= Cgethostbyname(host)) == NULL ) {
     serrno = SENOSHOST;
     log(LOG_ERR,"Cgethostbyname(): %s\n",sstrerror(serrno)) ;
+    close(sock);
     return -1 ;
   }
 
@@ -72,12 +73,14 @@ int connecttpread(char * host,
    */
   if ( connect(sock, (struct sockaddr *) &sin, sizeof(sin))  == -1 ) {
     log(LOG_ERR,"connect(): %s\n",strerror(errno)) ;
+    close(sock);
     return -1 ;
   }
 
   log(LOG_DEBUG,"Checking that key replier is in site\n");
   if ( isremote(sin.sin_addr, host) ) {
     log(LOG_INFO,"Attempt to give key from outside site rejected\n");
+    close(sock);
     return  -1 ;
   }
   return sock ;

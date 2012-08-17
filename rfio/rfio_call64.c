@@ -1247,6 +1247,7 @@ int srpreseek64(int     s,
     if ((iobuffer = malloc(size+WORDSIZE+3*LONGSIZE)) == NULL)    {
       log(LOG_ERR, "rpreseek64: malloc(): %s\n", strerror(errno));
       (void) close(s);
+      free(v);
       return -1;
     }
     iobufsiz = size+WORDSIZE+3*LONGSIZE;
@@ -1799,6 +1800,7 @@ int  sropen64_v3(int         s,
   if (netwrite_timeout(s,rqstbuf,replen,RFIO_CTRL_TIMEOUT) != replen)  {
     log(LOG_ERR,"ropen64_v3: write(): %s\n", strerror(errno));
     close(data_s);
+    close(fd);
     return -1;
   }
 
