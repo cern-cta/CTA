@@ -478,7 +478,7 @@ void castor::gc::SynchronizationThread::synchronizeFiles
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 3, 3, params);
       return;
     }
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception &e) {
     // "Could not get RemoteStagerSvc"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "SynchronizationThread::synchronizeFiles"),
@@ -509,7 +509,7 @@ void castor::gc::SynchronizationThread::synchronizeFiles
          it++) {
       try {
         fileId.fileid = fileIdFromFilePath(filePaths.find(*it)->second);
-      } catch (castor::exception::Exception e) {
+      } catch (castor::exception::Exception &e) {
         // "Could not get fileid from filepath, giving up for this file"
         castor::dlf::Param params[] =
           {castor::dlf::Param("Filename", filePaths.find(*it)->second),
@@ -594,7 +594,7 @@ void castor::gc::SynchronizationThread::synchronizeFiles
       u_signed64 fid = fileIdFromFilePath(it->second);
       cnsFilePaths[fid] = it->second;
       cnsFileIds[i] = fid;
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception &e) {
       // "Could not get fileid from filepath, giving up for this file"
       castor::dlf::Param params[] =
         {castor::dlf::Param("Filename", it->second),
@@ -695,7 +695,7 @@ void castor::gc::SynchronizationThread::synchronizeFiles
     }
     try {
       fileId.fileid = fileIdFromFilePath(cnsFilePaths.find(*it)->second);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception &e) {
       // fileid won't be set but this only impacts logging, so let it go
     }
 

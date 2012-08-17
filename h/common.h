@@ -30,7 +30,6 @@
 #include <log.h>
 #include <net.h>
 #include <serrno.h>
-#include <socket_timeout.h>
 #include <trace.h>
 #include <u64subr.h>
 #include <ypgetacctent.h>

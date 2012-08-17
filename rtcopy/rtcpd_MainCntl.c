@@ -3054,14 +3054,10 @@ int rtcpd_MainCntl(int *accept_socket) {
           "Asking taped to release the tape"
           ": event=end of rtcpd-session\n");
 
-      if(NULL != tape) {
-          tape->tapereq.TStartUnmount = (int)time(NULL);
-      }
+      tape->tapereq.TStartUnmount = (int)time(NULL);
       rtcpd_ResetCtapeError();
       rls_rc = Ctape_rls(path, rlsFlags);
-      if(NULL != tape) {
-          tape->tapereq.TEndUnmount = (int)time(NULL);
-      }
+      tape->tapereq.TEndUnmount = (int)time(NULL);
 
       if(0 != rls_rc) {
           char logMsg[128];

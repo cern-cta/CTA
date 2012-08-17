@@ -63,7 +63,7 @@ castor::db::ora::OraStatement::~OraStatement() throw() {
     // Close statement
     m_cnvSvc->terminateStatement(m_statement);
   }
-  catch(castor::exception::Exception ignored) {}
+  catch(castor::exception::Exception &ignored) {}
 }
 
 //------------------------------------------------------------------------------

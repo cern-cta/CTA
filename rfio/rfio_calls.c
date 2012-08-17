@@ -498,7 +498,8 @@ int check_path_whitelist(const char *hostname,
             break;
           }
         }
-        if (p != NULL) { free(p); p = NULL; }
+        free(p);
+        p = NULL;
       }
     }
     if (p != NULL) free(p);
@@ -869,7 +870,7 @@ int srreadlink(int s,
       char opath[MAXFILENAMSIZE];
       rcode = -1;
       if (!check_path_whitelist(host, path, perm_array, opath, sizeof(opath),0)) {
-        rcode = readlink( opath, lpath, MAXFILENAMSIZE);
+        rcode = readlink( opath, lpath, MAXFILENAMSIZE-1);
       }
       if (rcode < 0) {
         lpath[0]='\0';

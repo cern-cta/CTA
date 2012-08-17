@@ -813,6 +813,6 @@ void castor::stager::daemon::JobSvcThread::process
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
   }
   // Final cleanup
-  if (req) delete req;
+  delete req;
   return;
 }

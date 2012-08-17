@@ -25,7 +25,7 @@
 #include "h/marshall.h"
 #include "h/rtcp_constants.h"
 #include "h/serrno.h"
-#include "h/socket_timeout.h"
+#include "h/net.h"
 #include "h/tapebridge_constants.h"
 #include "h/tapebridge_marshall.h"
 #include "h/tapebridge_recvTapeBridgeFlushedToTapeAck.h"

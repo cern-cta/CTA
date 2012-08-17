@@ -23,7 +23,7 @@
  *****************************************************************************/
 
 #include "h/serrno.h"
-#include "h/socket_timeout.h"
+#include "h/net.h"
 #include "h/tapebridge_constants.h"
 #include "h/tapebridge_marshall.h"
 #include "h/tapebridge_sendTapeBridgeFlushedToTape.h"

@@ -318,7 +318,7 @@ int send2nsdx(int *socketp,
     unmarshall_LONG (p, c) ;
     if (rep_type == CNS_RC) {
       (void) close (s);
-      if (thip && s == thip->fd)
+      if (s == thip->fd)
         thip->fd = -1;
     }
     if (rep_type == CNS_RC || rep_type == CNS_IRC) {

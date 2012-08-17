@@ -489,32 +489,32 @@ globus_l_gfs_file_net_read_cb(
 		    }
 		    qsort(checksum_array, index, sizeof(checksum_block_list_t*), offsetComparison);
 		    /* combine checksums, while making sure that we deal with missing chunks */
-		    globus_off_t offset = 0;
+		    globus_off_t chkOffset = 0;
 		    /* check whether first chunk is missing */
 		    if (checksum_array[0]->offset != 0) {
 		      /* first chunk is missing. Consider it full of 0s */
-		      offset = checksum_array[0]->offset;
-		      file_checksum = adler32_combine_(adler32_0chunks(offset),
+		      chkOffset = checksum_array[0]->offset;
+		      file_checksum = adler32_combine_(adler32_0chunks(chkOffset),
 						       checksum_array[0]->csumvalue,
 						       checksum_array[0]->size);
 		    } else {
 		      file_checksum = checksum_array[0]->csumvalue;
 		    }
-		    offset += checksum_array[0]->size;
+		    chkOffset += checksum_array[0]->size;
 		    /* go over all received chunks */
 		    for (i=1;i<CASTOR2int_handle->number_of_blocks;i++) {
 		      /* check the continuity with previous chunk */
-		      if (checksum_array[i]->offset != offset) {
+		      if (checksum_array[i]->offset != chkOffset) {
 			// not continuous, a chunk is missing, consider it full of 0s
-			globus_off_t doff = checksum_array[i]->offset - offset;
+			globus_off_t doff = checksum_array[i]->offset - chkOffset;
 			file_checksum = adler32_combine_(file_checksum, adler32_0chunks(doff), doff);
-			offset = checksum_array[i]->offset;
+			chkOffset = checksum_array[i]->offset;
 		      }
 		      /* now handle the next chunk */
 		      file_checksum=adler32_combine_(file_checksum,
 						     checksum_array[i]->csumvalue,
 						     checksum_array[i]->size);
-		      offset += checksum_array[i]->size;
+		      chkOffset += checksum_array[i]->size;
 		    }
 
 		    globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: checksum for %s : AD 0x%lx\n",func,CASTOR2int_handle->fullDestPath,file_checksum);

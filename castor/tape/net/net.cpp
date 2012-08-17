@@ -30,7 +30,7 @@
 #include "castor/tape/utils/SmartFd.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/serrno.h"
-#include "h/socket_timeout.h"
+#include "h/net.h"
 
 #include <arpa/inet.h>
 #include <fcntl.h>

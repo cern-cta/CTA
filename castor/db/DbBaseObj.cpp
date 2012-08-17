@@ -111,7 +111,7 @@ void
 castor::db::DbBaseObj::rollback() {
   try {
     cnvSvc()->rollback();
-  } catch (castor::exception::Exception) {
+  } catch (castor::exception::Exception &) {
     // rollback failed, let's reset the conversion service
     // (and thus drop the connection) for security
     cnvSvc()->reset();

@@ -33,7 +33,7 @@
 #include "castor/rh/IOResponse.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "getconfent.h"
-#include "socket_timeout.h"
+#include "net.h"
 #include <string.h>
 
 #include <arpa/inet.h>

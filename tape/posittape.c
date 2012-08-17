@@ -300,7 +300,7 @@ int posittape(int tapefd,
 			(*cfseq)++;
 		}
 	} else {	/* AL or SL */
-		if (flags & NOPOS && cfseq && filstat == NEW_FILE) {	/* already positionned */
+		if (flags & NOPOS && filstat == NEW_FILE) {	/* already positionned */
 			(*cfseq)++;
 			return (0);
 		}

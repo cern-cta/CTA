@@ -164,7 +164,7 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
           // in this SQL procedure.
           // Wrapper has no side-effect
           oraSvc->deleteMigrationMountWithBadTapePool(item->migrationMountId);
-        } catch (castor::exception::Exception e){
+        } catch (castor::exception::Exception &e){
           castor::dlf::Param params[] = {
               castor::dlf::Param("MigrationMountId", item->migrationMountId),
               castor::dlf::Param("errorCode",sstrerror(e.code())),
@@ -175,7 +175,7 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
       } else if (e.code() == ERTWRONGFSEQ) {
         try {
           VmgrTapeGatewayHelper::setTapeAsReadonlyAndUnbusy(vidToUse, m_shuttingDown);
-        } catch (castor::exception::Exception e) {
+        } catch (castor::exception::Exception &e) {
           castor::dlf::Param params[] = {
               castor::dlf::Param("MigrationMountId", item->migrationMountId),
               castor::dlf::Param("VID", vidToUse),
@@ -261,7 +261,7 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
     // 4-All checks went well, we have a set of tapes to attach.
     // This is where the commit happens (finally)
     oraSvc->attachTapesToMigMounts(MMIds, vids, fseqs);
-  } catch (castor::exception::Exception e){
+  } catch (castor::exception::Exception &e){
     castor::dlf::Param params[] =  {
         castor::dlf::Param("errorCode",sstrerror(e.code())),
         castor::dlf::Param("errorMessage",e.getMessage().str())

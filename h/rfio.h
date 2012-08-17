@@ -39,10 +39,7 @@
 #include <marshall.h>           /* marshalling macros and definitions   */
 #include <serrno.h>             /* special error numbers                */
 #include <trace.h>              /* tracing definitions                  */
-
 #include <net.h>                        /* networking specifics         */
-
-#include <socket_timeout.h>             /* socket timeout routines */
 
 #endif /* RFIO_KERNEL */
 

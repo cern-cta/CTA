@@ -26,7 +26,6 @@
 #define MAIN_THREAD_HPP 1
 
 // Include files
-#include "castor/job/d2dtransfer/MainThread.hpp"
 #include "castor/job/d2dtransfer/IMover.hpp"
 #include "castor/job/SharedResourceHelper.hpp"
 #include "castor/server/IThread.hpp"

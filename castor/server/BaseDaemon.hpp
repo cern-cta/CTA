@@ -35,7 +35,6 @@
 #include "castor/BaseObject.hpp"
 #include "castor/server/BaseServer.hpp"
 #include "castor/server/Mutex.hpp"
-#include "castor/server/NotifierThread.hpp"
 
 
 namespace castor {
@@ -44,7 +43,6 @@ namespace castor {
 
   // Forward declaration
   class BaseServer;
-  class NotifierThread;
 
   ///  handled signals - see the signal handler thread
   const int RESTART_GRACEFULLY = 1;

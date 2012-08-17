@@ -18,7 +18,7 @@
 #include <errno.h>
 #include <serrno.h>
 #include <marshall.h>
-#include <socket_timeout.h>
+#include <net.h>
 #include <Cnetdb.h>
 #include <stdlib.h>
 #include <unistd.h>

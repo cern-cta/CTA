@@ -486,13 +486,13 @@ std::vector<u_signed64> castor::db::ora::OraGCSvc::nsFilesDeleted
     }
     commit();
     m_nsFilesDeletedStatement->closeResultSet(rset);
-  } catch (oracle::occi::SQLException e) {
+  } catch (oracle::occi::SQLException &e) {
     handleException(e);
     // "Error caught in nsFilesDeleted"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", e.getMessage())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, DLF_BASE_ORACLELIB + 15, 1, params);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception &e) {
     // "Error caught in nsFilesDeleted"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", e.getMessage().str()),
@@ -551,7 +551,7 @@ std::vector<u_signed64> castor::db::ora::OraGCSvc::stgFilesDeleted
     commit();
     if (0 != lens) free(lens);
     if (0 != buffer) free(buffer);
-  } catch (oracle::occi::SQLException e) {
+  } catch (oracle::occi::SQLException &e) {
     handleException(e);
     // "Error caught in stgFilesDeleted"
     castor::dlf::Param params[] =
@@ -559,7 +559,7 @@ std::vector<u_signed64> castor::db::ora::OraGCSvc::stgFilesDeleted
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, DLF_BASE_ORACLELIB + 16, 1, params);
     if (0 != lens) free(lens);
     if (0 != buffer) free(buffer);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception &e) {
     // "Error caught in stgFilesDeleted"
     castor::dlf::Param params[] =
       {castor::dlf::Param("ErrorCode", e.code()),

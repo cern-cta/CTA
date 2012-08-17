@@ -26,6 +26,7 @@
 
 // Include Files
 #include "castor/server/NotifierThread.hpp"
+#include "castor/server/BaseDaemon.hpp"
 #include "castor/server/ThreadNotification.hpp"
 #include "castor/server/SignalThreadPool.hpp"
 

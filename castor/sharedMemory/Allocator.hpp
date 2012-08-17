@@ -114,7 +114,6 @@ namespace castor {
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <memory>
-#include "castor/sharedMemory/Allocator.hpp"
 #include "castor/sharedMemory/LocalBlock.hpp"
 #include "castor/sharedMemory/BlockDict.hpp"
 #include "castor/exception/Internal.hpp"
@@ -130,7 +129,7 @@ T* castor::sharedMemory::Allocator<T, BK>::allocate
   try {
     return static_cast<T*>
       (getBlock()->malloc(numObjects*sizeof(T)));
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception &e) {
     // Log exception "Exception caught in allocate"
     std::cout << e.getMessage().str() << std::endl;
     castor::dlf::Param initParams[] =
@@ -152,7 +151,7 @@ void castor::sharedMemory::Allocator<T, BK>::deallocate
  std::allocator<void>::size_type numObjects) throw() {
   try {
     getBlock()->free(ptrToMemory, numObjects*sizeof(T));
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception &e) {
     // Log exception "Exception caught in allocate"
     castor::dlf::Param initParams[] =
       {castor::dlf::Param("Original Error", e.getMessage().str())};

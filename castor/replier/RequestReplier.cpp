@@ -375,11 +375,9 @@ void castor::replier::RequestReplier::deleteConnection(int dfd) throw() {
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
                           DLF_BASE_STAGERLIB + 21, 2, params);
 
-  if (0 != cr) {
-    cr->close();
-    m_connections->erase(dfd);
-    delete cr;
-  }
+  cr->close();
+  m_connections->erase(dfd);
+  delete cr;
 }
 
 
@@ -581,7 +579,7 @@ castor::replier::RequestReplier::processPollArray(struct ::pollfd pl[], int nbfd
       case CONNECTED:
         try {
           cr->sendNextMessage();
-        } catch (EndConnectionException ex) {
+        } catch (EndConnectionException &ex) {
 
           // "RR: Got EndConnectionException closing connection"
           castor::dlf::Param params[] =
@@ -590,7 +588,7 @@ castor::replier::RequestReplier::processPollArray(struct ::pollfd pl[], int nbfd
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING,
                                   DLF_BASE_STAGERLIB + 30, 2, params);
           cr->setStatus(CLOSE);
-        } catch (NoMoreMessagesException ex) {
+        } catch (NoMoreMessagesException &ex) {
 
           // "RR: No more messages to send, waiting"
           castor::dlf::Param params[] =
@@ -600,7 +598,7 @@ castor::replier::RequestReplier::processPollArray(struct ::pollfd pl[], int nbfd
              castor::dlf::Param("Message", ex.getMessage().str())};
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
                                   DLF_BASE_STAGERLIB + 31, 4, params);
-        } catch (castor::exception::Exception& ex) {
+        } catch (castor::exception::Exception &ex) {
 
           // "RR: Exception caught in sending data"
           castor::dlf::Param params[] =

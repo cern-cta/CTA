@@ -757,12 +757,6 @@ int (CSEC_METHOD_NAME(Csec_client_establish_context, MECH))(FP,ctx, s)
 				    (OM_uint32 *)&(ctx->context_flags),
 				    NULL); /* ignore time_rec */
 
-    if (gss_context==NULL) {
-      serrno = ESEC_SYSTEM;
-      Csec_errmsg(func, "Could not create context.");
-      goto error;
-    }
-
     if (token_ptr != GSS_C_NO_BUFFER) {
       (void) gss_release_buffer(&min_stat, token_ptr);
       token_ptr = GSS_C_NO_BUFFER;

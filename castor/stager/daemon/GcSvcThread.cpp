@@ -427,7 +427,8 @@ void castor::stager::daemon::GcSvcThread::process
     castor::dlf::Param params[] =
       {castor::dlf::Param("Type", req->type())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_GCSVC_UNKREQ, 1, params);
-    if (req) {delete req; req=0;}
+    delete req;
+    req=0;
     return;
   }
   try {
@@ -442,6 +443,7 @@ void castor::stager::daemon::GcSvcThread::process
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_GCSVC_EXCEPT, 3, params);
   }
   // Final cleanup
-  if (req) { delete req; req=0;}
+  delete req;
+  req=0;
   return;
 }

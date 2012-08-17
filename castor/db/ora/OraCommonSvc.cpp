@@ -185,7 +185,7 @@ castor::db::ora::OraCommonSvc::requestToDo(std::string service)
 void castor::db::ora::OraCommonSvc::commit() {
   try {
     cnvSvc()->commit();
-  } catch (castor::exception::Exception) {
+  } catch (castor::exception::Exception &) {
     // commit failed, let's rollback
     rollback();
   }
@@ -197,7 +197,7 @@ void castor::db::ora::OraCommonSvc::commit() {
 void castor::db::ora::OraCommonSvc::rollback() {
   try {
     cnvSvc()->rollback();
-  } catch (castor::exception::Exception) {
+  } catch (castor::exception::Exception &) {
     // rollback failed, let's reset everything for security
     reset();
   }
@@ -210,7 +210,7 @@ void castor::db::ora::OraCommonSvc::handleException
 (oracle::occi::SQLException& e) {
   try {
     dynamic_cast<castor::db::ora::OraCnvSvc*>(cnvSvc())->handleException(e);
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception &) {
     // we could not find the conversion service !
     // give up with the handling of this exception.
   }

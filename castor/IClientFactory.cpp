@@ -108,8 +108,14 @@ castor::IClient* castor::IClientFactory::string2Client(const std::string &st)
             in >> port;
             if (in) {
               castor::rh::Client *res = new castor::rh::Client();
-              res->setIpAddress
-                ((a[0] << 24) + (a[1] << 16) + (a[2] << 8) + a[3]);
+              unsigned long ip = a[0];
+              ip <<= 8;
+              ip += a[1];
+              ip <<= 8;
+              ip += a[2];
+              ip <<= 8;
+              ip += a[3];
+              res->setIpAddress(ip);
               res->setPort(port);
               return res;
             }

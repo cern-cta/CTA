@@ -43,7 +43,7 @@ extern "C" char *getconfent_fromfile(const char *filename,
     castor::common::CastorConfiguration &config =
       castor::common::CastorConfiguration::getConfig(filename);
     return (char*)config.getConfEnt(category, name).c_str();
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception &e) {
     serrno = e.code();
   }
   // nothing found

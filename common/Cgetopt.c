@@ -255,13 +255,11 @@ Cgetopt_long(int nargc,
         return (-1);
       }
     }
-    if (long_options != NULL) {
-      if (long_options[match].flag != NULL) {
-        *long_options[match].flag = long_options[match].val;
-        retval = 0;
-      } else {
-        retval = long_options[match].val;
-      }
+    if (long_options[match].flag != NULL) {
+      *long_options[match].flag = long_options[match].val;
+      retval = 0;
+    } else {
+      retval = long_options[match].val;
     }
     if (index != NULL)
       *index = match;

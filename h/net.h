@@ -24,11 +24,15 @@
 #define _NET_H
 
 #include <osdep.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 
 EXTERN_C int   netread (int, char *, int); /* Network receive function     */
 EXTERN_C int   netwrite(int, char *, int); /* Network send function        */
 EXTERN_C char* neterror(void);             /* Network error function       */
 
-#include <socket_timeout.h>
+EXTERN_C ssize_t  netread_timeout (int, void *, ssize_t, int);
+EXTERN_C ssize_t  netwrite_timeout (int, void *, ssize_t, int);
+EXTERN_C int netconnect_timeout (int, struct sockaddr *, size_t, int);
 
 #endif /* _NET_H */

@@ -193,7 +193,7 @@ static int trerror(int fd, tape_list_t *tape, file_list_t *file) {
     rtcpd_AppendClientMsg(NULL, file, RT125, "CPTPDSK", 
                           msgaddr, trec+1);
 
-    if ( filereq != NULL ) status = errcat;
+    status = errcat;
     if ( skiponerr == 0 || errcat != ETPARIT ) {
       switch ( errcat ) { 
       case ETPARIT:       /* Parity error              */
@@ -261,20 +261,18 @@ static int trerror(int fd, tape_list_t *tape, file_list_t *file) {
     break;
   }
 
-  if ( filereq != NULL ) {
-    rtcpd_SetReqStatus(NULL,file,status,severity);
-    if ( (severity & RTCP_NORETRY) != 0 ) {
-      /* 
-       * If configured error action says noretry we
-       * reset max_cpretry so that the client won't retry
-       * on another server
-       */
-      filereq->err.max_cpretry = 0;
-    } else {
-      if ( (severity & RTCP_LOCAL_RETRY) || 
-           (severity & RTCP_RESELECT_SERV) )
-        filereq->err.max_cpretry--;
-    }
+  rtcpd_SetReqStatus(NULL,file,status,severity);
+  if ( (severity & RTCP_NORETRY) != 0 ) {
+    /* 
+     * If configured error action says noretry we
+     * reset max_cpretry so that the client won't retry
+     * on another server
+     */
+    filereq->err.max_cpretry = 0;
+  } else {
+    if ( (severity & RTCP_LOCAL_RETRY) || 
+         (severity & RTCP_RESELECT_SERV) )
+      filereq->err.max_cpretry--;
   }
   return(severity);
 }

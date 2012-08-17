@@ -603,7 +603,7 @@ static int rtcpc_f_opt(int mode,
         if ( *filereq->fid == '\0' ) {
             if ( (q = strstr(p,":")) != NULL ) *q = '\0';
             if ( strlen(p) > CA_MAXFIDLEN ) p += strlen(p) - CA_MAXFIDLEN;
-            if ( p != NULL ) strcpy(fid,p);
+            strcpy(fid,p);
             strcpy(filereq->fid,fid);
             if ( q != NULL ) {
                 p = q;

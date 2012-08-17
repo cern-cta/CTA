@@ -32,7 +32,6 @@
 #include "castor/IObject.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/server/IThread.hpp"
-#include "castor/server/BaseDaemon.hpp"
 
 namespace castor {
 

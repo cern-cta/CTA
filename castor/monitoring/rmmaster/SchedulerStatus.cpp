@@ -129,7 +129,7 @@ void castor::monitoring::rmmaster::SchedulerStatus::getSchedulerStatus
     // ask the DB whether we are the master
     try {
       production = isMonitoringMaster();
-    } catch(castor::exception::Exception e) {
+    } catch(castor::exception::Exception &e) {
       pthread_mutex_unlock(&m_masterCheckLock);
       throw e;
     }
@@ -232,7 +232,7 @@ bool castor::monitoring::rmmaster::SchedulerStatus::isMonitoringMaster()
     // Drop our local statements
     try {
       cnvSvc()->terminateStatement(m_isMonitoringMasterStatement);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception &e) {
       // We've tried. Ignore any error. They are likely to come, e.g. if the connection was dropped.
     }
     m_isMonitoringMasterStatement  = 0;
