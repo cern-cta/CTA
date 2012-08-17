@@ -21,6 +21,8 @@ COMM
 COMM @author Castor Dev team, castor-dev@cern.ch
 COMM
 
+INCLUDEDEPFILES(LOCAL_PATH/daemon)
+INCLUDEDEPFILES(LOCAL_PATH/daemon/ora)
 
 CPPFLAGS += $(ORACLE_CPPFLAGS) $(PYTHON_INC)
 AddLdFlags($(PYTHON_LIBS) -L$(ORACLE_LIBDIR) -locci -lclntsh -lstdc++)

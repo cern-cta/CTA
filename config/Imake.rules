@@ -297,10 +297,10 @@ LOCAL_PATH/$(patsubst %.c,%.d,file): LOCAL_PATH/file @@\
 
 COMM Replacement for the default rules, in order to not display all compilation commands by default
 
-%.o: %.c
+%.o: %.c %.d
 	@echo Compiling $@
 	$(COMPILE.c) $(OUTPUT_OPTION) $<
 
-%.o: %.cpp
+%.o: %.cpp %.d
 	@echo Compiling $@
 	$(COMPILE.cpp) $(OUTPUT_OPTION) $<

@@ -24,6 +24,8 @@ COMM
 COMM @author Castor Dev team, castor-dev@cern.ch
 COMM
 
+INCLUDEDEPFILES(LOCAL_PATH/ora)
+
 CPPFLAGS += $(ORACLE_CPPFLAGS)
 AddLdFlags(-L$(ORACLE_LIBDIR) -locci -lclntsh -lstdc++)
 

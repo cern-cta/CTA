@@ -133,7 +133,7 @@ checkVERSION:
  * functionnality plus a couple of refinements.
  *
  *   The basic functionnality is to call gcc -MM on the input file ("$<") and
- * store the result in an output file ("> $@" at the end). As you guessed, this
+ * store the result in the output file $@. As you guessed, this
  * macro is actually supposed to be used in a rule like this :
  * %.d : %.c
  *      $(create_d)
@@ -146,23 +146,14 @@ checkVERSION:
  *
  *   However, the default output of gcc -MM misses the dependencies of the .d
  * file itself (which are the same as for the .o). Thus the .d file would not
- * be rebuilt if any dependency has changed. This is why we pipe the output of
- * gcc -MM into a sed expression. Let's detail this expression :
- *   - H means "Copy/append pattern space to hold space." (see sed man page)
- *   - at the end of the file the ${} regexp triggers. (Note the dollar sign
- *     needs to be escaped into two dollar signed due to it running within make
- *   - g means "Copy/append hold space to pattern space." (see sed man page)
- *   - s,....,; is a replacement expression where , is used as separator. We
- *     cannot use the regular / as files names will appear in place of $* and $@
- *   - p means "Print the current pattern space." (see sed man page). It goes
- * together with the -n flag that disables the default printing of pattern space.
- * The H/g trick is needed in order to deal with the multiline output of gcc -M
- * The final content of the .d file looks like this :
+ * be rebuilt if any dependency has changed. This is why we use the -MT option
+ * to specify the target ourselves. The final content of the .d file looks
+ * like this :
  * BaseAddress.o BaseAddress.d : BaseAddress.cpp \
  *  /home/sponcec3/DEVEL/trunk/castor/BaseAddress.hpp \
  *  /home/sponcec3/DEVEL/trunk/castor/IAddress.hpp
  */
-create_d = gcc -MM $(CPPFLAGS) $< | sed -n "H;$$ {g;s,\($*\)\.o[ :]*,\1.o $@ : ,;p;}" > $@
+create_d = gcc -MM $(CPPFLAGS) -MT $(@:.d=.o) -MT $@ -MF $@ $<
 
 /*
  * this rules use the create_d macro to build dependency files from source files.
@@ -180,6 +171,11 @@ create_d = gcc -MM $(CPPFLAGS) $< | sed -n "H;$$ {g;s,\($*\)\.o[ :]*,\1.o $@ : ,
 	$(create_d)
 
 /*
+ * close the ifndef IMAKETMPL started in Imake.tmpl
+ */
+endif
+
+/*
  * The last part is to include the generated dependency files into this
  * Makefile. This is done via the include directive.
  * Note that this step is less trivial than it seems : we do not include
@@ -193,12 +189,13 @@ create_d = gcc -MM $(CPPFLAGS) $< | sed -n "H;$$ {g;s,\($*\)\.o[ :]*,\1.o $@ : ,
  * considered as targets by the Makefile. Thus in this approach, all .d
  * files would be checked and built if necessary for each call to make,
  * even if you called make clean for example.
- * Another trick is the presence of the "fileThatDoesNotExist" item.
- * This is a workaround for the "no file name for `include'" warning that
- * SLC4 gives when the wildcard expression returns an empty string.
- * The workaround is to make sure there is something, even if this file
- * does not exist and remove the "No such file or directory" error
- * using the -include directive rather than the include. Note that this
- * does not remove any checks as wildcard will list only existing files.
+ * Another trick is the subst expression for 'startobereplaced'. The reason
+ * for this is that the simpler rule would look like LOCAL_PATH/*.d. the
+ * '/*' part would be taken a comment by imake and the end of the line dropped.
+ * The first idea was to prepend the directy to *.d using Makefile functions,
+ * but this does not work as the *.d would be expanded first (into the list
+ * of files of the wrong directory). You thus want the expansion to take place
+ * after the addition of the path. Hence the final trick.
  */
--include fileThatDoesNotExist $(wildcard *.d)
+#define INCLUDEDEPFILES(path) include $(wildcard $(subst startobereplaced,*,path/startobereplaced.d))
+INCLUDEDEPFILES(LOCAL_PATH)

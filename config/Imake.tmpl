@@ -78,8 +78,8 @@ STAGERSUPERGROUP = -DSTAGERSUPERGROUP=StagerSuperGroup
 
 #include <Imake.rules>
 #include <Project.tmpl>
+/* Note that Project.tmpl is closing the ifndef IMAKETMPL here */
 
-endif
 
 ifndef LOCAL_PATH
 LOCAL_PATH = 1
