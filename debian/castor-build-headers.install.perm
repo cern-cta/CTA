@@ -120,7 +120,6 @@
 %attr(0644,root,root) usr/include/castor/h/rfio_constants.h
 %attr(0644,root,root) usr/include/castor/h/rfio_errno.h
 %attr(0644,root,root) usr/include/castor/h/serrno.h
-%attr(0644,root,root) usr/include/castor/h/socket_timeout.h
 %attr(0644,root,root) usr/include/castor/h/stager_api.h
 %attr(0644,root,root) usr/include/castor/h/stager_client_api_common.hpp
 %attr(0644,root,root) usr/include/castor/h/stager_client_api.h

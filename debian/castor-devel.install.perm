@@ -67,7 +67,6 @@
 %attr(0644,root,root) usr/include/shift/scsictl.h
 %attr(0644,root,root) usr/include/shift/serrno.h
 %attr(0644,root,root) usr/include/shift/smc.h
-%attr(0644,root,root) usr/include/shift/socket_timeout.h
 %attr(0644,root,root) usr/include/shift/stage_api.h
 %attr(0644,root,root) usr/include/shift/stage_constants.h
 %attr(0644,root,root) usr/include/shift/stage_limits.h
