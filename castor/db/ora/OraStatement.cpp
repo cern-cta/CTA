@@ -357,6 +357,10 @@ std::string castor::db::ora::OraStatement::getClob(int pos)
     clob.open(oracle::occi::OCCI_LOB_READONLY);
     int len = clob.length();
     char* buf = (char*) malloc(len+1);
+    if (0 == buf) {
+      castor::exception::OutOfMemory ex;
+      throw ex;
+    }
     clob.read(len, (unsigned char*)buf, len);
     buf[len] = 0;
     clob.close();

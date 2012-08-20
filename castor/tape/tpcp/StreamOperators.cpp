@@ -76,13 +76,9 @@ std::ostream &operator<<(std::ostream &os,
         "debugSet=" << utils::boolToString(value.debugSet)<<","
         "helpSet="  << utils::boolToString(value.helpSet) <<","
         "action="         << value.action                             <<","
-        "vid=";
-  if(value.vid == NULL) {
-    os << "NULL,";
-  } else {
-    os << "\"" << value.vid << "\",";
-  }
-  os <<"tapeFseqRanges="    << value.tapeFseqRanges                        <<","
+        "vid="
+     << "\"" << value.vid << "\","
+     <<"tapeFseqRanges="    << value.tapeFseqRanges                        <<","
        "fileListSet=" << utils::boolToString(value.fileListSet)<<","
        "fileListFilename=\""<< value.fileListFilename                   << "\","
        "filenames="         << value.filenames

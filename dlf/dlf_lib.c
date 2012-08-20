@@ -262,7 +262,7 @@ int dlf_regtext(unsigned int msgno, const char *message) {
     errno = EINVAL;
     return (-1);
   }
-  if (msgno > DLF_MAX_MSGTEXTS) {
+  if (msgno >= DLF_MAX_MSGTEXTS) {
     errno = EINVAL;
     return (-1);
   }

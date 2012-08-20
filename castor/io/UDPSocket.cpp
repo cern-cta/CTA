@@ -40,6 +40,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/TooBig.hpp"
+#include "castor/exception/OutOfMemory.hpp"
 #include "castor/io/UDPSocket.hpp"
 
 // Definitions
@@ -180,6 +181,12 @@ void castor::io::UDPSocket::readBuffer(const unsigned int magic,
   }
   // Now return the data
   *buf = (char*) malloc(n);
+  if (0 == buf) {
+    castor::exception::OutOfMemory ex;
+    ex.getMessage() << "Could not allocate returned buffer of length " << n;
+    delete [] internalBuf;
+    throw ex;
+  }
   memcpy(*buf, internalBuf + 2*sizeof(unsigned int), n);
   delete [] internalBuf;
 }

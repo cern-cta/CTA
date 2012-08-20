@@ -38,10 +38,6 @@ Cns_updateseg_status(char *server, u_signed64 fileid, struct Cns_segattrs *oldse
     return (-1);
   }
 
-  if (! oldsegattrs->vid) {
-    serrno = EFAULT;
-    return (-1);
-  }
   if (strlen(oldsegattrs->vid) > CA_MAXVIDLEN) {
     serrno = EINVAL;
     return (-1);

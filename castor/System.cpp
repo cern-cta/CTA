@@ -36,6 +36,7 @@
 #include "Cnetdb.h"
 #include "common.h"
 #include "castor/exception/Internal.hpp"
+#include "castor/exception/OutOfMemory.hpp"
 
 //------------------------------------------------------------------------------
 // getHostName
@@ -46,6 +47,11 @@ std::string castor::System::getHostName() throw (castor::exception::Exception)
   int len = 64;
   char* hostname;
   hostname = (char*) calloc(len, 1);
+  if (0 == hostname) {
+    castor::exception::OutOfMemory ex;
+    ex.getMessage() << "Could not allocate hostname with length " << len;
+    throw ex;
+  }
   if (gethostname(hostname, len) < 0) {
     // Test whether error is due to a name too long
     // The errno depends on the glibc version
@@ -55,7 +61,6 @@ std::string castor::System::getHostName() throw (castor::exception::Exception)
       castor::exception::Exception e(errno);
       e.getMessage() << "gethostname error";
       throw e;
-
     }
     // So the name was too long
     while (hostname[len - 1] != 0) {

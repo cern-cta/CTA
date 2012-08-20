@@ -1264,8 +1264,7 @@ int rtcpc(tape_list_t *tape) {
   rc = rtcpc_sendReqList(&hdr,&socks, tape);
   if ( rc == -1 ) return(rc);  
 
-  if ( realVID != NULL && (*realVID != '\0' &&
-                           strcmp(realVID,tape->tapereq.vid) != 0) ) {
+  if (*realVID != '\0' && strcmp(realVID,tape->tapereq.vid) != 0) {
     strcpy(tape->tapereq.vid,realVID);
   }
 

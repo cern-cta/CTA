@@ -1161,22 +1161,12 @@ static void rtcpd_FreeResources(int **client_socket,
   strncpy(client_name, "N/A", sizeof(client_name));
   client_name[sizeof(client_name) - 1] = '\0';
   if (client && *client) {
-    if ((*client)->name) {
-      strncpy(client_name, (*client)->name, sizeof(client_name));
-      client_name[sizeof(client_name) - 1] = '\0';
-    } else {
-      strncpy(client_name, "N/A", sizeof(client_name));
-      client_name[sizeof(client_name) - 1] = '\0';
-    }
+    strncpy(client_name, (*client)->name, sizeof(client_name));
+    client_name[sizeof(client_name) - 1] = '\0';
     client_uid = (*client)->uid;
     client_gid = (*client)->gid;
-    if ((*client)->clienthost) {
-      strncpy(client_host, (*client)->clienthost, sizeof(client_host));
-      client_host[sizeof(client_host) - 1] = '\0';
-    } else {
-      strncpy(client_host, "N/A", sizeof(client_host));
-      client_host[sizeof(client_host) - 1] = '\0';
-    }
+    strncpy(client_host, (*client)->clienthost, sizeof(client_host));
+    client_host[sizeof(client_host) - 1] = '\0';
   }
 
   if ( client != NULL && *client != NULL ) {
@@ -2403,8 +2393,7 @@ int rtcpd_MainCntl(int *accept_socket) {
       sizeof(clientHostname));
     clientHostname[sizeof(clientHostname) - 1] = '\0';
   } else {
-    if(NULL != client && NULL != client->clienthost &&
-      '\0' != client->clienthost[0]) {
+    if(NULL != client && '\0' != client->clienthost[0]) {
       strncpy(clientHostname, client->clienthost, sizeof(clientHostname));
       clientHostname[sizeof(clientHostname) - 1] = '\0';
     }

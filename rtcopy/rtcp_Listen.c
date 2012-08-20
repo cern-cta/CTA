@@ -240,7 +240,7 @@ int rtcp_CheckConnect(const int s, tape_list_t *tape) {
              peerhost,tpserver);
     return(1);
   }
-  rtcp_log(LOG_INFO,"rtcp_CheckConnect() reject connection from unauthorised host %s\n",(peerhost != NULL ? peerhost : "'unknown'"));
+  rtcp_log(LOG_INFO,"rtcp_CheckConnect() reject connection from unauthorised host %s\n", peerhost);
   rtcp_log(LOG_DEBUG,"rtcp_CheckConnect() exits with status 0 (unauthorised connection)\n");
   return(0);
 }

@@ -26,7 +26,7 @@
 
 #include "OraResultSet.hpp"
 #include "OraStatement.hpp"
-
+#include "castor/exception/OutOfMemory.hpp"
 
 castor::db::ora::OraResultSet::OraResultSet(oracle::occi::ResultSet* rset, oracle::occi::Statement* statement) :
   m_rset(rset),
@@ -140,6 +140,10 @@ std::string castor::db::ora::OraResultSet::getClob(int i)
     clob.open(oracle::occi::OCCI_LOB_READONLY);
     int len = clob.length();
     char* buf = (char*) malloc(len+1);
+    if (0 == buf) {
+      castor::exception::OutOfMemory ex;
+      throw ex;
+    }
     buf[len] = 0;
     clob.read(len, (unsigned char*)buf, len+1);
     clob.close();

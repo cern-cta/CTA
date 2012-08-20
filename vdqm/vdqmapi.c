@@ -88,12 +88,7 @@ int vdqm_Connect(vdqmnw_t **nw) {
         strcpy(vdqm_host,VDQM_HOST);
 #endif /* VDQM_HOST */
     }
-    if ( vdqm_host != NULL ) p = strtok(vdqm_host,", \t");
-    else {
-        TRACE(1,"vdqm","vdqm_Connect() no VDQM host configured!");
-        serrno = SENOSHOST;
-        VDQM_API_RETURN(-1);
-    }
+    p = strtok(vdqm_host,", \t");
     vdqm_primary = p;
     p = strtok(NULL,", \t");
     vdqm_replica = p;

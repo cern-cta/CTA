@@ -111,7 +111,7 @@ struct dirent *rfio_readdir(dirp)
   }
   if ( namlen > 0 ) {
     TRACE(2, "rfio", "rfio_readdir: reading %d bytes",namlen) ;
-    memset(de->d_name,'\0',MAXFILENAMSIZE);
+    memset(de->d_name,'\0',256);
     /* Directory name is of a small size, so I put RFIO_CTRL_TIMEOUT instead */
     /* of RFIO_DATA_TIMEOUT */
     if ( netread_timeout(s,de->d_name,namlen,RFIO_CTRL_TIMEOUT) != namlen ) {

@@ -57,6 +57,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/exception/NotSupported.hpp"
+#include "castor/exception/OutOfMemory.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/stager/DiskCopyStatusCodes.hpp"
 #include "castor/BaseAddress.hpp"
@@ -287,7 +288,15 @@ void castor::db::ora::OraGCSvc::filesDeleted
     // Oracle does not like 0 length arrays....
     nba = nb == 0 ? 1 : nb;
     lens=(ub2 *)malloc(sizeof(ub2)*nb);
+    if (0 == lens) {
+      castor::exception::OutOfMemory ex;
+      throw ex;
+    }
     buffer=(unsigned char(*)[21]) calloc(nba * 21, sizeof(unsigned char));
+    if (0 == buffer) {
+      castor::exception::OutOfMemory ex;
+      throw ex;
+    }
     for (unsigned int i = 0; i < nb; i++) {
       oracle::occi::Number n = (double)(*(diskCopyIds[i]));
       oracle::occi::Bytes b = n.toBytes();
@@ -413,7 +422,15 @@ void castor::db::ora::OraGCSvc::filesDeletionFailed
     // Oracle does not like 0 length arrays....
     nba = nb == 0 ? 1 : nb;
     lens=(ub2 *)malloc(sizeof(ub2)*nb);
+    if (0 == lens) {
+      castor::exception::OutOfMemory ex;
+      throw ex;
+    }
     buffer=(unsigned char(*)[21]) calloc(nba * 21, sizeof(unsigned char));
+    if (0 == buffer) {
+      castor::exception::OutOfMemory ex;
+      throw ex;
+    }
     for (unsigned int i = 0; i < nb; i++) {
       oracle::occi::Number n = (double)(*(diskCopyIds[i]));
       oracle::occi::Bytes b = n.toBytes();
@@ -462,7 +479,15 @@ std::vector<u_signed64> castor::db::ora::OraGCSvc::nsFilesDeleted
     // Deal with the list of fileIds
     unsigned int nb = fileIds.size();
     lens=(ub2 *)malloc(sizeof(ub2)*nb);
+    if (0 == lens) {
+      castor::exception::OutOfMemory ex;
+      throw ex;
+    }
     buffer=(unsigned char(*)[21]) calloc(nb * 21, sizeof(unsigned char));
+    if (0 == buffer) {
+      castor::exception::OutOfMemory ex;
+      throw ex;
+    }
     for (unsigned int i = 0; i < nb; i++) {
       oracle::occi::Number n = (double)(fileIds[i]);
       oracle::occi::Bytes b = n.toBytes();
@@ -526,7 +551,15 @@ std::vector<u_signed64> castor::db::ora::OraGCSvc::stgFilesDeleted
     // Deal with the list of diskCopyIds
     unsigned int nb = diskCopyIds.size();
     lens=(ub2 *)malloc(sizeof(ub2)*nb);
+    if (0 == lens) {
+      castor::exception::OutOfMemory ex;
+      throw ex;
+    }
     buffer=(unsigned char(*)[21]) calloc(nb * 21, sizeof(unsigned char));
+    if (0 == buffer) {
+      castor::exception::OutOfMemory ex;
+      throw ex;
+    }
     for (unsigned int i = 0; i < nb; i++) {
       oracle::occi::Number n = (double)(diskCopyIds[i]);
       oracle::occi::Bytes b = n.toBytes();

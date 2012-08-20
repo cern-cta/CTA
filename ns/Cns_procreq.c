@@ -3382,8 +3382,7 @@ int Cns_srv_updateseg_checksum(int magic,
           old_smd_entry.checksum);
 
   /* Checking that the segment has no checksum */
-  if (!(old_smd_entry.checksum_name == NULL
-        || old_smd_entry.checksum_name[0] == '\0')) {
+  if (old_smd_entry.checksum_name[0] != '\0') {
     nslogit("MSG=\"Missing checksum information, segment metadata cannot be "
             "updated\" REQID=%s NSHOSTNAME=%s NSFILEID=%llu ",
             reqinfo->requuid, nshostname, old_smd_entry.s_fileid);
@@ -3405,8 +3404,7 @@ int Cns_srv_updateseg_checksum(int magic,
   smd_entry.checksum_name[CA_MAXCKSUMNAMELEN] = '\0';
   unmarshall_LONG (rbp, smd_entry.checksum);
 
-  if (smd_entry.checksum_name == NULL
-      || strlen(smd_entry.checksum_name) == 0) {
+  if (strlen(smd_entry.checksum_name) == 0) {
     checksum_ok = 0;
   } else {
     checksum_ok = 1;
@@ -3559,8 +3557,7 @@ int Cns_srv_replaceseg(int magic,
     smd_entry.segsize = old_smd_entry.segsize;
   }
 
-  if (smd_entry.checksum_name == NULL
-      || strlen(smd_entry.checksum_name) == 0) {
+  if (strlen(smd_entry.checksum_name) == 0) {
     checksum_ok = 0;
   } else {
     checksum_ok = 1;
@@ -3769,8 +3766,7 @@ int Cns_srv_replacetapecopy(int magic,
       new_smd_entry[i].checksum = 0;
     }
 
-    if (new_smd_entry[i].checksum_name == NULL ||
-        strlen(new_smd_entry[i].checksum_name) == 0) {
+    if (strlen(new_smd_entry[i].checksum_name) == 0) {
       checksum_ok = 0;
     } else {
       checksum_ok = 1;
@@ -4783,9 +4779,7 @@ int Cns_srv_setsegattrs(int magic,
     if (magic >= CNS_MAGIC4) {
 
       /* If we have a checksum make sure the checksum name is also defined */
-      if ((smd_entry.checksum_name == NULL
-           || strlen(smd_entry.checksum_name) == 0)
-          && smd_entry.checksum != 0) {
+      if ((strlen(smd_entry.checksum_name) == 0) && smd_entry.checksum != 0) {
         RETURN (EINVAL);
       }
     }

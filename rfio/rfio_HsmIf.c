@@ -439,7 +439,7 @@ int rfio_HsmIf_stat(const char *path, struct stat *st) {
   if ( rfio_HsmIf_IsCnsFile(path) ) {
     Cglobals_get(&DIRcontext_key,(void **)&myDIRcontext,
                  sizeof(rfio_HsmIf_DIRcontext_t));
-    if ( myDIRcontext != NULL && *myDIRcontext != NULL && (*myDIRcontext)->current_entry != NULL && (*myDIRcontext)->dirpath != NULL) {
+    if ( myDIRcontext != NULL && *myDIRcontext != NULL && (*myDIRcontext)->current_entry != NULL) {
       current_entry = (*myDIRcontext)->current_entry;
       dirpath = (*myDIRcontext)->dirpath;
       p = strrchr(path,'/');
@@ -481,7 +481,7 @@ int rfio_HsmIf_stat64(const char *path, struct stat64 *st) {
   if ( rfio_HsmIf_IsCnsFile(path) ) {
     Cglobals_get(&DIRcontext_key,(void **)&myDIRcontext,
                  sizeof(rfio_HsmIf_DIRcontext_t));
-    if ( myDIRcontext != NULL && *myDIRcontext != NULL && (*myDIRcontext)->current_entry != NULL && (*myDIRcontext)->dirpath != NULL) {
+    if ( myDIRcontext != NULL && *myDIRcontext != NULL && (*myDIRcontext)->current_entry != NULL) {
       current_entry = (*myDIRcontext)->current_entry;
       dirpath = (*myDIRcontext)->dirpath;
       p = strrchr(path,'/');

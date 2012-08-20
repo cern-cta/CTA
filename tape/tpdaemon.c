@@ -46,9 +46,9 @@ struct tpdpdg *dpdg;	/* pointer to drives per device group table */
 char func[16];
 int jid;
 int maxfds;
-int nbdgp;		/* number of device groups */
+unsigned int nbdgp;		/* number of device groups */
 int nbjobs = 1;		/* number of jobs + 1 (tape daemon itself) */
-int nbtpdrives;		/* number of tape drives */
+unsigned int nbtpdrives;		/* number of tape drives */
 fd_set readfd, readmask;
 struct rlsq *rlsqp;	/* pointer to rls queue */
 int rpfd;
@@ -364,7 +364,7 @@ int tpd_main() {
         */
         if ((((tm = time (0)) - lasttime_vdqm_update) >= vdqmchkintvl)) {               
 
-            int i;
+            unsigned int i;
             struct tptab *tunp = tptabp;  
                         
             /* 
@@ -494,7 +494,8 @@ int chk_den(struct tptab *tunp,
 
 void clean4jobdied()
 {
-	int c, i, j, n;
+	int c, j, n;
+        unsigned int i;
 	int *jids;
 	int nb_drives_asn;
 	struct tptab *tunp;
@@ -682,7 +683,8 @@ int initdrvtab()
 	int errflag;
 	char *fgets();
 	FILE *fopen(), *s;
-	int i, j;
+	unsigned int i;
+        int j;
 	char instat[5];
 	int lineno;
 	char *p_den;
@@ -849,9 +851,9 @@ int initdrvtab()
 int initrrt()
 {
 	int errflag;
-	int i, j;
+	unsigned int i, j;
 	char prevdgn[CA_MAXDGNLEN+1];
-	int prevgrp;
+	unsigned int prevgrp;
 	struct tptab *tunp;
 
 	tunp = tptabp;
@@ -962,7 +964,7 @@ void procconfreq(char *req_data,
 	int c;
 	char *drive;
 	gid_t gid;
-	int j;
+	unsigned int j;
 	char *rbp;
 	int reason;
 	int status;
@@ -1042,7 +1044,7 @@ void procdinforeq(char *req_data,
 	char *drive;
 	int found;
 	gid_t gid;
-	int i;
+	unsigned int i;
 	char *rbp;
 	char repbuf[REPBUFSZ];
 	char *sbp;
@@ -1108,7 +1110,7 @@ void procfrdrvreq(char *req_data,
 {
 	int found;
 	gid_t gid;
-	int j;
+	unsigned int j;
 	int jid;
 	int rlsflags;
 	char *rbp;
@@ -1148,7 +1150,7 @@ void procfrdrvreq(char *req_data,
         }
         rrtp->dg[j].used--;	/* decrement usage count */
     }
-    if (j>=0 && j<nbdgp) {
+    if (j < nbdgp) {
         tpdrrt.dg[j].used--;	/* decrement global usage count */
     }
     if (rrtp) {
@@ -1211,7 +1213,7 @@ void procinforeq(char *req_data,
 	int cfseq;
 	int found;
 	gid_t gid;
-	int i;
+	unsigned int i;
 	char *path;
 	char *rbp;
 	char repbuf[REPBUFSZ];
@@ -1275,7 +1277,7 @@ reply:
 void prockilltreq(char *req_data,
                   char *clienthost)
 {
-	int i;
+	unsigned int i;
 	gid_t gid;
 	int jid;
 	char *path;
@@ -1346,7 +1348,7 @@ void procmountreq(char *req_data,
 	int errflg = 0;
 	int found;
 	gid_t gid;
-	int i, j;
+	unsigned int i, j;
 	int jid;
 	char *lbltype;
 	int lblcode = 0;
@@ -1722,7 +1724,7 @@ void procposreq(char *req_data,
 	int fseq;
 	char *fsid;
 	gid_t gid;
-	int i;
+	unsigned int i;
 	int jid;
 	int lrecl;
 	int method;
@@ -1995,7 +1997,8 @@ reply:
 void procrlsreq(char *req_data,
                 char *clienthost)
 {
-	int c, i, n;
+	int c, n;
+        unsigned int i;
 	int errflg = 0;
 	int flags;
 	gid_t gid;
@@ -2119,7 +2122,8 @@ reply:
 void procrsltreq(char *req_data,
                  char *clienthost)
 {
-	int c, i;
+	int c;
+        unsigned int i;
 	struct tpdev *cdevp;
 	gid_t gid;
 	int jid;
@@ -2288,7 +2292,8 @@ void procrsvreq(char *req_data,
 	int count;
 	char *dgn;
 	gid_t gid;
-	int i, j;
+	int i;
+        unsigned int j;
 	int jid;
 	int num;
 	struct tprrt *orrtp;
@@ -2404,7 +2409,7 @@ void procrstatreq(char *req_data,
                   char *clienthost)
 {
 	gid_t gid;
-	int j;
+	unsigned int j;
 	char *rbp;
 	char repbuf[REPBUFSZ];
 	struct tprrt *rrtp;
@@ -2447,7 +2452,7 @@ void procstatreq(char *req_data,
                  char *clienthost)
 {
 	gid_t gid;
-	int j;
+	unsigned int j;
 	static char labels[6][4] = {"", "al", "nl", "sl", "blp", "aul"};
 	char *rbp;
 	char repbuf[REPBUFSZ];
@@ -2693,7 +2698,7 @@ void wait4child()
 
 void check_child_exit()
 {
-	int i;
+	unsigned int i;
 	int pid;
 	struct confq *rqp;
 	int status;
@@ -2750,7 +2755,8 @@ void check_child_exit()
 
         tunp = tptabp;
 		for (i = 0; i < nbtpdrives; i++) {
-            int j, c;
+            unsigned int j;
+            int c;
             char *p;
 			if (tunp->rlsovly_pid == pid) {
                 tunp->rlsovly_pid = 0;

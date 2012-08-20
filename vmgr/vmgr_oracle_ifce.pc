@@ -594,7 +594,7 @@ int vmgr_get_tag_by_vid(struct vmgr_dbfd *dbfd,
                         vmgr_dbrec_addr *rec_addr)
 {
   char func[20];
-  char rowid_value[20];
+  char rowid_value[19];
   struct sqlca sqlca;
   EXEC SQL DECLARE tag_cursor CURSOR FOR
     SELECT

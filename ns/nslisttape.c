@@ -173,7 +173,7 @@ int main(int argc,char **argv)
               u64tostr (dtp->segsize, tmpbuf, 20), dtp->compression);
 
     if (checksumflag) {
-      if (dtp->checksum_name != NULL &&  strlen(dtp->checksum_name)>0) {
+      if (strlen(dtp->checksum_name) > 0) {
         printf (" %*s %08lx", CA_MAXCKSUMNAMELEN, dtp->checksum_name, dtp->checksum);
       } else {
         printf (" %*s %08x", CA_MAXCKSUMNAMELEN, "-", 0);

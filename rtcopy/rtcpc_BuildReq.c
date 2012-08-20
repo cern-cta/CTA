@@ -656,17 +656,15 @@ static int rtcpc_F_opt(int mode,
         */
         if ( *filereq->recfm == '\0' ) {
             if ( (q = strstr(p,":")) != NULL ) *q = '\0';
-            if ( p != NULL ) {
-                i=0;
-                while (*valid_recfm[i] != '\0' &&
-                    strcmp(p,valid_recfm[i]) ) i++;
-                if ( *valid_recfm[i] == '\0' ) {
-                    rtcp_log(LOG_ERR,
-                        "INVALID FORMAT SPECIFIED\n");
-                    serrno = EINVAL;
-                    rc = -1;
-                    break;
-                }
+            i=0;
+            while (*valid_recfm[i] != '\0' &&
+                strcmp(p,valid_recfm[i]) ) i++;
+            if ( *valid_recfm[i] == '\0' ) {
+                rtcp_log(LOG_ERR,
+                    "INVALID FORMAT SPECIFIED\n");
+                serrno = EINVAL;
+                rc = -1;
+                break;
             }
             
             if ( (strcmp(valid_recfm[i],"F,-f77") == 0) ||

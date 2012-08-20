@@ -88,7 +88,7 @@ char *Cstrerror(int code)
     return(static_message);
   }
   /* Who knows */
-  bufp[buflen] = '\0';
+  bufp[buflen-1] = '\0';
 #else
   /* TODO */
   if ((message = strerror(code)) == NULL) {
@@ -98,7 +98,7 @@ char *Cstrerror(int code)
   }
   /* Keep a copy anyway */
   strncpy(bufp, message, buflen-1);
-  bufp[buflen] = '\0';
+  bufp[buflen-1] = '\0';
 #endif
 
   errno = code;

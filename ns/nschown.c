@@ -82,6 +82,10 @@ int main(int argc, char **argv)
     usage (USERR, argv[0]);
   }
   p = strtok (argv[Coptind], ":.");
+  if (NULL == p) {
+    fprintf (stderr, "invalid empty user\n");
+    exit (USERR);
+  }
   if (isdigit (*p)) {
     newuid = strtol (p, &dp, 10);
     if (*dp != '\0') {

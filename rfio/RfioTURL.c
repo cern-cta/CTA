@@ -292,9 +292,9 @@ int rfioTURLFromString(
 
   /* to remove the // or /// because of srm1 problems */
 
-     if (_tURL.rfioPath && (strstr(_tURL.rfioPath,"//")==_tURL.rfioPath )){
+     if (strstr(_tURL.rfioPath,"//")==_tURL.rfioPath) {
        memmove(_tURL.rfioPath,(char*)&_tURL.rfioPath[1],strlen(_tURL.rfioPath));
-       if (_tURL.rfioPath && (strstr(_tURL.rfioPath,"//") == _tURL.rfioPath)){
+       if (strstr(_tURL.rfioPath,"//") == _tURL.rfioPath) {
          memmove(_tURL.rfioPath,(char*)&_tURL.rfioPath[1],strlen(_tURL.rfioPath));
        }
      }

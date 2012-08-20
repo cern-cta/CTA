@@ -244,14 +244,7 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
   }
     
   // Get the Current Working Directory
-  getcwd(m_cwd, PATH_MAX);
-  if(m_cwd == NULL){
-    castor::exception::Exception ex(ECANCELED);
-    ex.getMessage() <<
-      m_programName << " cannot be ran on a machine where the current working "
-      "directory is not been set";
-    throw ex;
-  }
+  getcwd(m_cwd, CA_MAXPATHLEN+1);
 
   // This command cannot be ran as root
   if(m_userId == 0 && m_groupId == 0) {
