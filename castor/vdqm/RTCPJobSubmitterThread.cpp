@@ -22,8 +22,6 @@
  * @author castor dev team
  *****************************************************************************/
 
-#include <memory>
-
 #include "castor/BaseAddress.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IService.hpp"
@@ -45,6 +43,8 @@
 #include "castor/vdqm/VdqmTape.hpp"
 #include "h/rtcp_constants.h"
 
+#include <memory>
+#include <time.h>
 
 //-----------------------------------------------------------------------------
 // constructor
@@ -432,6 +432,9 @@ void castor::vdqm::RTCPJobSubmitterThread::submitJob(const Cuuid_t &cuuid,
   bool acknSucc = true;
 
   {
+    const u_signed64 now = time(NULL);
+    const u_signed64 requestAgeSecs = now > request->creationTime() ?
+      now - request->creationTime() : 0;
     castor::dlf::Param params[] = {
       castor::dlf::Param("remoteCopyType", remoteCopyType),
       castor::dlf::Param("tapeRequestID", request->id()),
@@ -443,9 +446,10 @@ void castor::vdqm::RTCPJobSubmitterThread::submitJob(const Cuuid_t &cuuid,
       castor::dlf::Param("deviceGroupName", dgn->dgName()),
       castor::dlf::Param("tapeDriveName", tapeDrive->driveName()),
       castor::dlf::Param("tapeServerName", tapeServer->serverName()),
-      castor::dlf::Param("tapeServerPort", port)};
+      castor::dlf::Param("tapeServerPort", port),
+      castor::dlf::Param("requestAgeSecs", requestAgeSecs)};
 
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_SEND_RTCOPY_JOB, 11,
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_SEND_RTCOPY_JOB, 12,
       params);
   }
 
