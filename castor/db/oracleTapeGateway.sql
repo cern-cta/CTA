@@ -1379,6 +1379,7 @@ CREATE OR REPLACE PROCEDURE tg_setFileMigrated(inMountTrId IN NUMBER, inFileId I
   varMigJobCount INTEGER;
   varParams VARCHAR2(4000);
   varMigStartTime NUMBER;
+  varSrId INTEGER;
 BEGIN
   varNsHost := getConfigOption('stager', 'nsHost', '');
   -- Lock the CastorFile
@@ -1400,12 +1401,29 @@ BEGIN
     -- no more migrations, delete all migrated segments 
     DELETE FROM MigratedSegment
      WHERE castorFile = varCfId;
+    -- And mark all disk copies as staged
+    UPDATE DiskCopy
+       SET status= dconst.DISKCOPY_STAGED
+     WHERE castorFile = varCfId
+       AND status= dconst.DISKCOPY_CANBEMIGR;
   ELSE
     -- another migration ongoing, keep track of the one just completed
     INSERT INTO MigratedSegment VALUES (varCfId, varCopyNb, varVID);
   END IF;
-  -- Tell the Disk Cache that migration is over
-  dc_setFileMigrated(varCfId, varOrigVID, (varMigJobCount = 0));
+  -- Do we have to deal with a repack ?
+  IF varOrigVID IS NOT NULL THEN
+    -- Yes we do, then archive the repack subrequest associated
+    -- Note that there may be several if we are dealing with old bad tapes
+    -- that have 2 copies of the same file on them. Thus we take one at random
+    SELECT /*+ INDEX(SR I_Subrequest_CastorFile) */ SR.id INTO varSrId
+      FROM SubRequest SR, StageRepackRequest Req
+      WHERE SR.castorfile = varCfId
+        AND SR.status = dconst.SUBREQUEST_REPACK
+        AND SR.request = Req.id
+        AND Req.RepackVID = varOrigVID
+        AND ROWNUM < 2;
+    archiveSubReq(varSrId, dconst.SUBREQUEST_FINISHED);
+  END IF;
   -- Log 'db updates after full migration completed'
   varParams := 'TPVID='|| varVID ||' mountTransactionId='|| to_char(inMountTrId) ||
     ' migrationTime=' || to_char(trunc(getTime() - varMigStartTime, 0)) || ' '|| inLogContext;
@@ -1417,32 +1435,6 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 END;
 /
 
-/* update the db after a successful migration - disk side */
-CREATE OR REPLACE PROCEDURE dc_setFileMigrated(
-  inCfId          IN NUMBER,
-  inOriginVID     IN VARCHAR2,     -- NOT NULL only for repacked files
-  inLastMigration IN BOOLEAN) AS   -- whether this is the last copy on tape
-  varSrId NUMBER;
-BEGIN
-  IF inLastMigration THEN
-     -- Mark all disk copies as staged
-     UPDATE DiskCopy
-        SET status= dconst.DISKCOPY_STAGED
-      WHERE castorFile = inCfId
-        AND status= dconst.DISKCOPY_CANBEMIGR;
-  END IF;
-  IF inOriginVID IS NOT NULL THEN
-    -- archive the repack subrequest associated to this VID (there can only be one)
-    SELECT /*+ INDEX(SR I_Subrequest_CastorFile) */ SR.id INTO varSrId
-      FROM SubRequest SR, StageRepackRequest Req
-      WHERE SR.castorfile = inCfId
-        AND SR.status = dconst.SUBREQUEST_REPACK
-        AND SR.request = Req.id
-        AND Req.RepackVID = inOriginVID;
-    archiveSubReq(varSrId, dconst.SUBREQUEST_FINISHED);
-  END IF;
-END;
-/
 
 /* Fail a file migration, potentially archiving outstanding repack requests */
 CREATE OR REPLACE PROCEDURE failFileMigration(inMountTrId IN NUMBER, inFileId IN NUMBER,
