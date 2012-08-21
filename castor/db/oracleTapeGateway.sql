@@ -565,9 +565,10 @@ BEGIN
 
   -- Then deal with recalljobs and potential migrationJobs
 
+  -- Find out starting time of oldest recall for logging purposes
+  SELECT MIN(creationTime) INTO varRecallStartTime FROM RecallJob WHERE castorFile = varCfId;
   -- Delete recall jobs
-  DELETE FROM RecallJob WHERE castorFile = varCfId
-  RETURNING creationTime INTO varRecallStartTime;
+  DELETE FROM RecallJob WHERE castorFile = varCfId;
   -- trigger waiting migrations if any
   -- Note that we reset the creation time as if the MigrationJob was created right now
   -- this is because "creationTime" is actually the time of entering the "PENDING" state
