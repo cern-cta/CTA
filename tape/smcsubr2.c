@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include "Ctape.h"
 #include "Ctape_api.h"
+#include "getconfent.h"
 #include "serrno.h"
 #include "smc.h"
 
@@ -28,43 +29,68 @@ int smc_dismount (int fd,
                   int drvord,
                   char *vid)
 {
-    int c;
-    struct smc_element_info element_info;
+	const unsigned int max_element_status_reads = 20;
+	const unsigned int dismount_status_read_delay = 1; /* In seconds */
+	unsigned int nb_element_status_reads = 0;
+	int drive_not_unloaded = 1;
+	struct smc_element_info element_info;
 	char func[16];
-	char *msgaddr;
+	char *msgaddr = 0;
 	struct smc_status smc_status;
  
 	ENTRY (smc_dismount);
-	if ((c = smc_read_elem_status (fd, loader, 4, robot_info->device_start+drvord,
-	    1, &element_info)) < 0) {
-		c = smc_lasterror (&smc_status, &msgaddr);
-		usrmsg (func, SR020, "read_elem_status", msgaddr);
-		RETURN (c);
+
+	memset(&smc_status, '\0', sizeof(smc_status));
+
+	/* IBM libraries sometimes disagree with the eject of their drives. */
+	/* Sometimes the access bit of the result of Read Element Status    */
+	/* (XB8) indicates the gripper cannot access the tape even though   */
+	/* the eject was successful.  Reading the element status at a later */
+	/* point in time eventually indicates the tape is accessible.       */
+	while(drive_not_unloaded && nb_element_status_reads < max_element_status_reads) {
+		if (0 > smc_read_elem_status (fd, loader, 4, robot_info->device_start+drvord,
+		    	1, &element_info)) {
+			const int smc_error = smc_lasterror (&smc_status, &msgaddr);
+			usrmsg (func, SR020, "read_elem_status", msgaddr);
+			RETURN (smc_error);
+		}
+		if (0 == (element_info.state & 0x1)) {
+			usrmsg (func, SR018, "demount", vid, drvord, "Medium Not Present");
+			RETURN (RBT_OK);
+		}
+
+		drive_not_unloaded = (0 == (element_info.state & 0x8));
+		if (drive_not_unloaded) {
+			usrmsg (func, "read_elem_status of %s on drive %d detected Drive Not Unloaded\n", vid, drvord);
+		}
+
+		nb_element_status_reads++;
+
+		if(nb_element_status_reads < max_element_status_reads) {
+			sleep(dismount_status_read_delay);
+		}
 	}
-	if ((element_info.state & 0x1) == 0) {
-		usrmsg (func, SR018, "demount", vid, drvord, "Medium Not Present");
-		RETURN (RBT_OK);
-	}
-	if ((element_info.state & 0x8) == 0) {
+	if(drive_not_unloaded) {
 		usrmsg (func, SR018, "demount", vid, drvord, "Drive Not Unloaded");
 		RETURN (RBT_UNLD_DMNT);
 	}
+
 	if (*vid && strcmp (element_info.name, vid)) {
 		usrmsg (func, SR009, vid, element_info.name);
 		RETURN (RBT_NORETRY);
 	}
-	if ((c = smc_move_medium (fd, loader, robot_info->device_start+drvord,
-	    element_info.source_address, (element_info.flags & 0x40) ? 1 : 0)) < 0) {
-		c = smc_lasterror (&smc_status, &msgaddr);
+	if (0 > smc_move_medium (fd, loader, robot_info->device_start+drvord,
+	    element_info.source_address, (element_info.flags & 0x40) ? 1 : 0)) {
+		const int smc_error = smc_lasterror (&smc_status, &msgaddr);
 		usrmsg (func, SR018, "demount", vid, drvord, msgaddr);
-		RETURN (c);
+		RETURN (smc_error);
 	}
     /* check that the vid is in a slot before returning */
     while (1) {   
-          if ((c = smc_find_cartridge (fd, loader, vid, 0, 0, 1, &element_info)) < 0) {
-              c = smc_lasterror (&smc_status, &msgaddr);
+          if (0 > smc_find_cartridge (fd, loader, vid, 0, 0, 1, &element_info)) {
+              const int smc_error = smc_lasterror (&smc_status, &msgaddr);
               usrmsg (func, SR017, "find_cartridge", vid, msgaddr);
-              RETURN (c);
+              RETURN (smc_error);
           }
          
           /* vid is in a storage slot */  
