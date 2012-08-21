@@ -33,18 +33,37 @@
 // Global configurations, indexed by original file name
 std::map<std::string, castor::common::CastorConfiguration> s_castorConfigs;
 
+// Lock for the global configuration
+static pthread_mutex_t s_globalConfigLock = PTHREAD_MUTEX_INITIALIZER;
+
 //------------------------------------------------------------------------------
 // getConfig
 //------------------------------------------------------------------------------
 castor::common::CastorConfiguration&
 castor::common::CastorConfiguration::getConfig(std::string fileName)
   throw (castor::exception::Exception) {
-  // do we have this configuration already in cache ?
-  if (s_castorConfigs.end() == s_castorConfigs.find(fileName)) {
-    // no such configuration. Create it
-    s_castorConfigs[fileName] = CastorConfiguration(fileName);
+  // This method is non thread safe, and is protected by the s_globlaConfigLock lock
+  int rc = pthread_mutex_lock(&s_globalConfigLock);
+  if (0 != rc) {
+    castor::exception::Exception e(rc);
+    throw e;
   }
-  return s_castorConfigs[fileName];
+  // take care to catch all exceptions so that the lock is not leaked
+  try {
+    // do we have this configuration already in cache ?
+    if (s_castorConfigs.end() == s_castorConfigs.find(fileName)) {
+      // no such configuration. Create it
+      s_castorConfigs[fileName] = CastorConfiguration(fileName);
+    }
+    // we can now release the lock. Concurrent read only access is ok.
+    pthread_mutex_unlock(&s_globalConfigLock);
+    return s_castorConfigs[fileName];
+  } catch (...) {
+    // release the lock
+    pthread_mutex_unlock(&s_globalConfigLock);
+    // rethrow
+    throw;
+  }
 }
 
 //------------------------------------------------------------------------------
