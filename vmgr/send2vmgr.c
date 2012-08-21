@@ -168,9 +168,9 @@ int send2vmgr(int *socketp,
     unmarshall_LONG (p, magic) ;
     unmarshall_LONG (p, rep_type) ;
     unmarshall_LONG (p, c) ;
-    if (rep_type == VMGR_IRC)
-      (void) close (s);
+    if (rep_type == VMGR_IRC) {
       return (0);
+    }
     if (rep_type == VMGR_RC) {
       (void) close (s);
       if (c) {
