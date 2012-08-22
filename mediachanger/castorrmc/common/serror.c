@@ -74,16 +74,6 @@ char    *sys_serrlist[SEMAXERR-SEBASEOFF+2]=
 
 /*
  *------------------------------------------------------------------------
- * COPYTAPE specific error messages
- *------------------------------------------------------------------------
- */
-char *sys_cerrlist[ECMAXERR-ECBASEOFF+2] =
-  {"Error 0",
-   "BAD ERROR NUMBER"
-  };
-
-/*
- *------------------------------------------------------------------------
  * DB specific error messages
  *------------------------------------------------------------------------
  */
@@ -510,11 +500,6 @@ char *  sstrerror_r(n,buf,buflen)
      * COMMON error messages
      */
     tmpstr = sys_serrlist[n-SEBASEOFF];
-  } else if ((n>ECBASEOFF) && (n<=ECMAXERR)) {
-    /*
-     * COPYTAPE specific error messages
-     */
-    tmpstr = sys_cerrlist[n-ECBASEOFF];
   } else if ((n>EDBBASEOFF) && (n<=EDBMAXERR)) {
     /*
      * DB specific error messages

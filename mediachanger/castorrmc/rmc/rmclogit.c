@@ -32,6 +32,7 @@ int rmclogit(char *func, char *msg, ...)
 	vsprintf (prtbuf+strlen(prtbuf), msg, args);
 	va_end (args);
 	fd_log = open (RMCLOGFILE, O_WRONLY | O_CREAT | O_APPEND, 0664);
+        if (fd_log < 0) return -1;        
 	write (fd_log, prtbuf, strlen(prtbuf));
 	close (fd_log);
 	errno = save_errno;
