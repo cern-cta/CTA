@@ -46,7 +46,9 @@
 //------------------------------------------------------------------------------
 castor::server::BaseDaemon::BaseDaemon(const std::string serverName) :
   castor::server::BaseServer(serverName),
-  m_signalMutex(0) {}
+  m_signalMutex(0) {
+  memset(&m_signalSet, 0, sizeof(m_signalSet));
+}
 
 
 //------------------------------------------------------------------------------

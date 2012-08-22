@@ -2150,7 +2150,7 @@ void *tapeIOthread(void *arg) {
                     nextfile->filereq.proc_status = RTCP_UNREACHABLE;
 
                 if ( bytes_in>0 ) {
-                    p = u64tostr(bytes_in,u64buf,0);
+                    u64tostr(bytes_in,u64buf,0);
                     p = strchr(u64buf,' ');
                     if ( p != NULL ) p = '\0';
                     rtcp_log(LOG_INFO,

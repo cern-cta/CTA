@@ -351,7 +351,7 @@ double castor::db::ora::OraStatement::getDouble(int pos)
 // getClob
 //------------------------------------------------------------------------------
 std::string castor::db::ora::OraStatement::getClob(int pos)
-  throw (castor::exception::SQLError) {
+  throw (castor::exception::Exception) {
   try {
     oracle::occi::Clob clob = m_statement->getClob(pos);
     clob.open(oracle::occi::OCCI_LOB_READONLY);
@@ -367,8 +367,7 @@ std::string castor::db::ora::OraStatement::getClob(int pos)
     std::string res(buf);
     free(buf);
     return res;
-  }
-  catch(oracle::occi::SQLException e) {
+  } catch(oracle::occi::SQLException e) {
     castor::exception::SQLError ex;
     ex.getMessage() << "Database error, Oracle code: " << e.getErrorCode()
                     << std::endl << e.what();

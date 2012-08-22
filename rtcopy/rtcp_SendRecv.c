@@ -449,26 +449,18 @@ static int rtcp_TransferTpDump(int *s,
   DO_MARSHALL(LONG,p,dumpreq->toblock,whereto);
 
   if ( whereto == SendTo ) {
-    if ( VALID_MSGLEN(len) ) {
-      rc = netwrite_timeout(*s,buf,len,RTCP_NETTIMEOUT);
-      switch (rc) {
-      case -1:
-        rtcp_log(LOG_ERR,"rtcp_TransferTpDump() netwrite(%d,REQ): %s\n",*s,
-                 neterror());
-        serrno = SECOMERR;
-        return(-1);
-      case 0:
-        rtcp_log(LOG_ERR,"rtcp_TransferTpDump() netwrite(%d,REQ): connection dropped\n",*s);
-        serrno = SECONNDROP;
-        return(-1);
-      }
-    } else if ( len > 0 ) {
-      rtcp_log(LOG_ERR,"rtcp_TransferTpDump() invalid msg length %d\n",
-               len);
-      serrno = SEUMSG2LONG;
+    rc = netwrite_timeout(*s,buf,len,RTCP_NETTIMEOUT);
+    switch (rc) {
+    case -1:
+      rtcp_log(LOG_ERR,"rtcp_TransferTpDump() netwrite(%d,REQ): %s\n",*s,
+               neterror());
+      serrno = SECOMERR;
+      return(-1);
+    case 0:
+      rtcp_log(LOG_ERR,"rtcp_TransferTpDump() netwrite(%d,REQ): connection dropped\n",*s);
+      serrno = SECONNDROP;
       return(-1);
     }
-
   }
   return(0);
 }

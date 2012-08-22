@@ -105,12 +105,8 @@ int cmd_parse(int argc,
   if ((*nbreqs = cmd_countHsmFiles(argc, argv)) < 0) {
     return -1;
   }
-
   /* Creating the structure for files */
-  if (*nbreqs > 0) {
-    create_filereq(reqs, *nbreqs);
-  }
-
+  create_filereq(reqs, *nbreqs);
   /* Now parsing the command line */
   Coptind = 1;
   Copterr = 1;

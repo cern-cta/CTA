@@ -46,8 +46,7 @@ int rtcpd_SendAckToVdqmOrTapeBridge(
 
   /* Check function-parameters */
   if(connSock == -1 ||
-    (reqType != VDQM_CLIENTINFO && reqType != TAPEBRIDGE_CLIENTINFO2) ||
-    ackMsg == NULL || errBuf == NULL) {
+    (reqType != VDQM_CLIENTINFO && reqType != TAPEBRIDGE_CLIENTINFO2) || ackMsg == NULL) {
     snprintf(errBuf, errBufLen, "%s()"
       ": Invalid function-parameter",
       __FUNCTION__);

@@ -1693,7 +1693,7 @@ static int rtcpc_diskfiles(int mode,
     int rc, toomany, disk_fseq;
     tape_list_t *tl, *tl1;
     file_list_t *fl, *fl1;
-    rtcpFileRequest_t *filereq;
+    rtcpFileRequest_t *filereq = NULL;
     char *last_filename, tmp[CA_MAXPATHLEN+1];
 
     if ( tape == NULL ) {

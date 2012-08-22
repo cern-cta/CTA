@@ -134,7 +134,7 @@ std::string castor::db::ora::OraResultSet::getString(int i)
 }
 
 std::string castor::db::ora::OraResultSet::getClob(int i)
-  throw (castor::exception::SQLError) {
+  throw (castor::exception::Exception) {
   try {
     oracle::occi::Clob clob = m_rset->getClob(i);
     clob.open(oracle::occi::OCCI_LOB_READONLY);

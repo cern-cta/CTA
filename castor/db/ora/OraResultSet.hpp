@@ -67,7 +67,7 @@ namespace castor {
         virtual signed64 getInt64(int i) throw (castor::exception::SQLError);
         virtual u_signed64 getUInt64(int i) throw (castor::exception::SQLError);
         virtual std::string getString(int i) throw (castor::exception::SQLError);
-        virtual std::string getClob(int i) throw (castor::exception::SQLError);
+        virtual std::string getClob(int i) throw (castor::exception::Exception);
         virtual float getFloat(int i) throw (castor::exception::SQLError);
         virtual double getDouble(int i) throw (castor::exception::SQLError);
 

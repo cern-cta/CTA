@@ -94,6 +94,9 @@ castor::tape::tpcp::TpcpCommand::TpcpCommand(const char *const programName)
   m_volReqId(0),
   m_fileTransactionId(1) {
 
+  memset(m_hostname, 0, sizeof(m_hostname));
+  memset(m_cwd, 0, sizeof(m_cwd));
+
   // Prepare the SIGINT action handler structure ready for sigaction()
   memset(&m_sigintAction, 0, sizeof(m_sigintAction));   // No flags
   m_sigintAction.sa_handler = &sigintHandler;

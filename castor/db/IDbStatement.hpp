@@ -83,7 +83,7 @@ namespace castor {
       virtual std::string getString(int pos) throw (castor::exception::SQLError) = 0;
       virtual float getFloat(int pos) throw (castor::exception::SQLError) = 0;
       virtual double getDouble(int pos) throw (castor::exception::SQLError) = 0;
-      virtual std::string getClob(int pos) throw (castor::exception::SQLError) = 0;
+      virtual std::string getClob(int pos) throw (castor::exception::Exception) = 0;
       virtual castor::db::IDbResultSet* getCursor(int pos) throw (castor::exception::SQLError) = 0;
     
       /**

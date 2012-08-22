@@ -22,11 +22,6 @@
 
 #define NAMEOFVAR(x) #x
 
-#ifdef SIXMONTHS
-#undef SIXMONTHS
-#endif
-#define SIXMONTHS (6*30*24*60*60)
-
 static char strftime_format_sixmonthsold[] = "%b %e %Y";
 static char strftime_format[] = "%b %e %H:%M:%S";
 
@@ -154,7 +149,7 @@ void Cupv_util_time(time_t this,
 
   localtime_r(&(this),&tmstruc);
   tp = &tmstruc;
-  if ((this - this_time) > SIXMONTHS) {
+  if ((this - this_time) > 6*30*24*60*60) {  // six months
     strftime(timestr,64,strftime_format_sixmonthsold,tp);
   } else {
     strftime(timestr,64,strftime_format,tp);

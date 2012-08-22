@@ -504,6 +504,11 @@ int check_path_whitelist(const char *hostname,
   }
 
   if (found) {
+    if (opath == NULL) {
+      log(LOG_ERR, "check_path_whitelist: Host trusted but output path is null\n");
+      errno = EINVAL;
+      return -1;
+    }
     if (opath != NULL && strlen(path)>=opathsize) {
       log(LOG_ERR, "check_path_whitelist: Host trusted but path (%s) too long to return in output\n", path);
       errno = ENAMETOOLONG;
@@ -1899,7 +1904,8 @@ int  sropen(int     s,
   LONG    flags = 0;
   LONG    mode;
   int     uid,gid;
-  WORD    mask, ftype, passwd, mapping = 0;
+  WORD    mask, ftype, passwd = 0;
+  WORD    mapping = 0;
   char    account[MAXACCTSIZE];           /* account string       */
   char    user[CA_MAXUSRNAMELEN+1];                       /* User name            */
   char    reqhost[MAXHOSTNAMELEN];
@@ -3509,7 +3515,8 @@ int  sropen_v3(int     s,
   int  fd = -1;
   LONG flags, mode;
   int uid,gid;
-  WORD mask, ftype, passwd, mapping = 0;
+  WORD mask, ftype, passwd = 0;
+  WORD mapping = 0;
   char account[MAXACCTSIZE];           /* account string       */
   char user[CA_MAXUSRNAMELEN+1];       /* User name            */
   char reqhost[MAXHOSTNAMELEN];

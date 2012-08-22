@@ -248,8 +248,10 @@ parse_entries(char *entries, struct Cns_acl *acl)
           fprintf (stderr, "missing colon delimiter\n");
           return (-1);
         }
-      } else
+      } else {
         *q = '\0';
+        q++;
+      }
       if (acl->a_type == CNS_ACL_USER ||
           acl->a_type == (CNS_ACL_DEFAULT | CNS_ACL_USER)) {
         if ((acl->a_id = cvt_user (p_id)) < 0)
@@ -258,7 +260,6 @@ parse_entries(char *entries, struct Cns_acl *acl)
         if ((acl->a_id = cvt_group (p_id)) < 0)
           return (-1);
       }
-      q++;
     }
     if (! dflag) {
       if ((n = cvt_perm (q)) < 0)

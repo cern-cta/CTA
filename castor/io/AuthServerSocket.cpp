@@ -47,9 +47,9 @@
 
 castor::io::AuthServerSocket::AuthServerSocket(const unsigned short port,
                                                const bool reusable)
-  throw (castor::exception::Exception) :
-  ServerSocket(port, reusable) {
-  memset (&m_security_context, 0, sizeof(m_security_context));
+  throw (castor::exception::Exception) : ServerSocket(port, reusable),
+                                         m_Euid(0), m_Egid(0) {
+  memset(&m_security_context, 0, sizeof(m_security_context));
 }
 
 
@@ -62,8 +62,9 @@ castor::io::AuthServerSocket::AuthServerSocket(const unsigned short port,
 
 castor::io::AuthServerSocket::AuthServerSocket(castor::io::ServerSocket* cs,
                                                const Csec_context_t)
-  throw (castor::exception::Exception) :
-  ServerSocket(cs->socket()) {
+  throw (castor::exception::Exception) : ServerSocket(cs->socket()),
+                                         m_Euid(0), m_Egid(0) {
+  memset(&m_security_context, 0, sizeof(m_security_context));
   cs->resetSocket();
   delete cs;
 }

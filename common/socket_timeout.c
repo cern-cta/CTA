@@ -3,11 +3,6 @@
  * All rights reserved
  */
 
-#if defined(linux)
-#define USE_POLL_INSTEAD_OF_SELECT
-/* #define __FD_SETSIZE 65536 */
-#endif
-
 #include <stdlib.h>
 #include <errno.h>
 #include <signal.h>
@@ -17,10 +12,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-
-#ifdef USE_POLL_INSTEAD_OF_SELECT
 #include <poll.h>
-#endif
 
 #include "net.h"
 #include "serrno.h"
@@ -320,7 +312,6 @@ Sigfunc *_netsignal(int signo,
 	return(oact.sa_handler);
 }
 
-#ifdef USE_POLL_INSTEAD_OF_SELECT
 int _net_isclosed(int fd)
 {
 	struct pollfd pollit;
@@ -339,32 +330,7 @@ int _net_isclosed(int fd)
 	}
 	return 0;
 }
-#else
-int _net_isclosed(int fd)
-{
-	fd_set         rset;
-	struct timeval tv;
-	char           buf[1];
-	
-	FD_ZERO(&rset);
-	FD_SET(fd,&rset);
-	
-	tv.tv_sec = 0;
-	tv.tv_usec = 0;
-	
-	/* Will return > 0 if the descriptor is closed */
-	if (select(fd + 1, NULL, &rset, NULL, &tv) > 0) {
-		if (recv(fd, buf, sizeof(buf), MSG_PEEK | MSG_DONTWAIT) == 0) {
-			serrno = errno;
-			return 1;
-		}
-	}
-	return 0;
-}
 
-#endif
-
-#ifdef USE_POLL_INSTEAD_OF_SELECT
 int _net_writable(int fd,
                   int timeout)
 {
@@ -377,25 +343,7 @@ int _net_writable(int fd,
 	/* Will return > 0 if the descriptor is writable */
 	return(poll(&pollit, 1, timeout * 1000));
 }
-#else
-int _net_writable(int fd,
-                  int timeout)
-{
-	fd_set         rset;
-	struct timeval tv;
-	
-	FD_ZERO(&rset);
-	FD_SET(fd,&rset);
-	
-	tv.tv_sec  = timeout;
-	tv.tv_usec = 0;
-	
-	/* Will return > 0 if the descriptor is writable */
-	return(select(fd + 1, NULL, &rset, NULL, &tv));
-}
-#endif
 
-#ifdef USE_POLL_INSTEAD_OF_SELECT
 int _net_readable(int fd,
                   int timeout)
 {
@@ -408,56 +356,21 @@ int _net_readable(int fd,
 	/* Will return > 0 if the descriptor is readable */
 	return(poll(&pollit, 1, timeout * 1000));
 }
-#else
-int _net_readable(int fd,
-                  int timeout)
-{
-	fd_set         rset;
-	struct timeval tv;
-  
-	FD_ZERO(&rset);
-	FD_SET(fd,&rset);
-  
-	tv.tv_sec  = timeout;
-	tv.tv_usec = 0;
-  
-	/* Will return > 0 if the descriptor is readable */
-	return(select(fd + 1, &rset, NULL, NULL, &tv));
-}
-#endif
 
 int _net_connectable(int fd,
                      int timeout)
 {
-#ifdef USE_POLL_INSTEAD_OF_SELECT
 	struct pollfd pollit;
-#else
-	fd_set wset, eset;
-	struct timeval tv;
-#endif
 	int rc, errval;
 	socklen_t errval_len;
 
-#ifdef USE_POLL_INSTEAD_OF_SELECT
 	pollit.fd = fd;
 	pollit.events = POLLOUT;
 	pollit.revents = 0;
-#else
-	FD_ZERO(&wset);
-	FD_SET(fd,&wset);
-	FD_ZERO(&eset);
-	FD_SET(fd,&eset);
-
-	tv.tv_sec = timeout;
-	tv.tv_usec = 0;
-#endif
 
 	/* Will return > 0 if the descriptor is connected */
-#ifdef USE_POLL_INSTEAD_OF_SELECT
 	rc = poll(&pollit, 1, timeout * 1000);
-#else
-	rc = select(fd + 1, NULL, &wset, &eset, &tv);
-#endif
+
 	/*
 	 * Timeout ?
 	 */
@@ -489,21 +402,7 @@ int _net_connectable(int fd,
 		return(-1);
 	}
 
-#ifdef USE_POLL_INSTEAD_OF_SELECT
 	if (errval == 0) return(0);
-#else
-	if ( (FD_ISSET(fd,&wset)) && (errval == 0) ) return(0);
-	/*
-	 * For Windows it may happen that the getsockopt returns zero
-	 * error value despite that the write set has not been set.
-	 * Flag that an error occurred with SECOMERR. On windows we must
-	 * set a valid socket error since WSAGetLastError() might be called.
-	 * A good guess value is connection refused.
-	 */
-	if ( errval == 0 ) {
-		errval = SECOMERR;
-	}
-#endif
 	serrno = errval;
 	return(-1);
 }

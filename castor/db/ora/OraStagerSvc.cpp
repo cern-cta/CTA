@@ -432,12 +432,15 @@ castor::db::ora::OraStagerSvc::subRequestToDo
         break;
       case castor::OBJ_SetFileGCWeight:
         {
-          castor::stager::SetFileGCWeight* greq =
-            new castor::stager::SetFileGCWeight();
+          castor::stager::SetFileGCWeight* greq = new castor::stager::SetFileGCWeight();
           greq->setWeight((u_signed64)m_subRequestToDoStatement->getDouble(26));
           req = greq;
           break;
         }
+      default:
+        castor::exception::InvalidArgument e;
+        e.getMessage() << "Unexpected request type " << result->reqType() << " in subRequestToDo";
+        throw e;
     }
     result->setRequest(req);
     req->addSubRequests(result);

@@ -21,17 +21,18 @@
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
- 
 
 #include "castor/tape/tapegateway/daemon/TapeGatewayDaemon.hpp"
-
+#include "castor/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
 int main(int argc, char **argv) {
-  castor::tape::tapegateway::TapeGatewayDaemon daemon;
-
-  return daemon.main(argc, argv);
-
+  try {
+    castor::tape::tapegateway::TapeGatewayDaemon daemon;
+    return daemon.main(argc, argv);
+  } catch (castor::exception::Exception e) {
+    std::cerr << "Caught exception :\n" << e.getMessage().str() << "\nExiting" << std::endl;
+  }
 }

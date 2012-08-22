@@ -57,8 +57,7 @@ int rtcpd_GetClientInfoMsg(
   *clientIsTapeBridge = FALSE;
 
   /* Check function-parameters */
-  if(-1 == connSock || NULL == tapeReq || NULL == fileReq ||
-    NULL == client || NULL == errBuf) {
+  if(-1 == connSock || NULL == tapeReq || NULL == fileReq || NULL == client) {
     snprintf(errBuf, errBufLen, "%s()"
       ": Invalid function-parameter",
       __FUNCTION__);

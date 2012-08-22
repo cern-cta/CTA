@@ -649,8 +649,11 @@ int vdqm_DedicateDrive(vdqmnw_t *nw,
 
     memset(&hdr,'\0',sizeof(hdr));
     memset(&drvreq,'\0',sizeof(drvreq));
-    if ( dedicate == NULL || *dedicate == '\0' ) strcpy(tmpstr,dedicate); 
-    else {
+    if ( dedicate == NULL || *dedicate == '\0' ) {
+      TRACE(1,"vdqm","vdqm_dedicate() null dedicate string given");
+      serrno = EINVAL;
+      VDQM_API_RETURN(-1);
+    } else {
         if ( strlen(dedicate) > sizeof(tmpstr)-1 ) {
             TRACE(1,"vdqm","vdqm_dedicate() dedication string too long (%d>%d)",
                   strlen(dedicate),sizeof(drvreq.dedicate)-1);

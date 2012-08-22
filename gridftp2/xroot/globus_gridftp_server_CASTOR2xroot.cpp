@@ -195,7 +195,7 @@ extern "C" {
     int status = 0;
     globus_result_t result;
     char *pathname = 0;
-    char *uuid_path;
+    char *uuid_path = "";
 
     GlobusGFSName(globus_l_gfs_CASTOR2xroot_stat);
     CASTOR2xroot_handle = (globus_l_gfs_CASTOR2xroot_handle_t *) user_arg;
