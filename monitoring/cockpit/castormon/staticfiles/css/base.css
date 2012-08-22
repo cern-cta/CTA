@@ -98,6 +98,7 @@ iframe {
     background-color: transparent;
     border: 1px solid #CCC;
     margin: 0px 0px 0px 10px;
+    overflow: hidden;
 }
 
 #sidebar-content {

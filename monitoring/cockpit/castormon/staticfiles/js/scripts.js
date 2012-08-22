@@ -424,6 +424,7 @@ function _drawTimelineChart(metric_container, from, to) {
                     break;
             } // switch end
             if (options.series.length) {
+                options.yAxis.title = { text: json['unit']};
                 chart = new Highcharts.Chart(options);
             } else {
                 chart = null;
@@ -493,6 +494,7 @@ function _drawSumChart(metric_container, from, to, format_type) {
                     break;
             } // switch end
             if (options.series.length) {
+                options.yAxis.title = { text: json['unit']};
                 chart = new Highcharts.Chart(options);
             } else {
                 chart = null;

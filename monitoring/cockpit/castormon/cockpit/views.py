@@ -75,6 +75,7 @@ def _update_metrics_info():
             # if the metric is created, then we specify the infos
             me = conn.root.get_metric(metric_name)
             # save infos
+            m.unit = me.unit
             m.window = me.window
             m.conditions = me.conditions
             m.groupbykeys = simplejson.dumps(list(me.groupbykeys)) # save list as json
@@ -257,6 +258,7 @@ def get_metric_data(request, metric_name, timestamp_from=None, timestamp_to=None
     metric = get_object_or_404(Metric, name=metric_name)
     groupkeys = simplejson.loads(metric.groupbykeys)
     res['datakeys'] = simplejson.loads(metric.data)[1]
+    res['unit'] = metric.unit
     
     # fetch data from DB
     if timestamp_from:
