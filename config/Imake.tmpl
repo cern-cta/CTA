@@ -16,8 +16,8 @@ ifndef IMAKETMPL
 #include <site.def>
 
 CASTOR_ROOT = __back_to_root__
-MAJOR_CASTOR_VERSION := $(shell egrep -m 1 "^castor" $(CASTOR_ROOT)/debian/changelog | awk '{ print $$2 }' | cut -d . -f 1,2 | cut -c 2-)
-MINOR_CASTOR_VERSION := $(shell egrep -m 1 "^castor" $(CASTOR_ROOT)/debian/changelog  | awk '{ print $$2 }' | cut -d . -f 3 | head -c -2 | sed 's/-/./')
+MAJOR_CASTOR_VERSION ?= $(shell egrep -m 1 "^castor" $(CASTOR_ROOT)/debian/changelog | awk '{ print $$2 }' | cut -d . -f 1,2 | cut -c 2-)
+MINOR_CASTOR_VERSION ?= $(shell egrep -m 1 "^castor" $(CASTOR_ROOT)/debian/changelog  | awk '{ print $$2 }' | cut -d . -f 3 | head -c -2 | sed 's/-/./')
 
 #ifdef linux
 #include <linux.cf>
