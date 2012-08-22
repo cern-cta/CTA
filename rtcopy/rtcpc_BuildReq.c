@@ -1244,8 +1244,6 @@ static int rtcpc_q_opt(int mode,
     p = q = fseq_list;
     if ( *p == ',' ) p++;
 
-    if ( fseq_list == NULL ) rc = -1;
-
     rc = 0;
     tl = *tape;
 

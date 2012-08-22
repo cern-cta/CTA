@@ -1800,7 +1800,7 @@ int  sropen64_v3(int         s,
   if (netwrite_timeout(s,rqstbuf,replen,RFIO_CTRL_TIMEOUT) != replen)  {
     log(LOG_ERR,"ropen64_v3: write(): %s\n", strerror(errno));
     close(data_s);
-    close(fd);
+    if (fd >= 0) close(fd);
     return -1;
   }
 

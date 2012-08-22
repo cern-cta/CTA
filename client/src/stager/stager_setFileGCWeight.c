@@ -153,12 +153,11 @@ int cmd_parse(int argc,
  * or -1 if an error occured
  */
 int cmd_countHsmFiles(int argc, char *argv[]) {
-  int Coptind, Copterr, errflg, nbargs;
+  int Coptind, Copterr, nbargs;
   char c;
 
   Coptind = 1;
   Copterr = 1;
-  errflg = 0;
   nbargs = 0;
   while ((c = Cgetopt_long (argc, argv, "M:S:h", longopts, NULL)) != -1) {
     switch (c) {
@@ -168,13 +167,8 @@ int cmd_countHsmFiles(int argc, char *argv[]) {
     default:
       break;
     }
-    if (errflg != 0) break;
   }
-
-  if (errflg)
-    return -1;
-  else
-    return nbargs;
+  return nbargs;
 }
 
 /**

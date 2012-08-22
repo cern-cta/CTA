@@ -63,6 +63,16 @@ namespace castor {
          */
         virtual ~MetricsThread() throw();
 
+        /**
+         * copy constructor. Not implemented so that it cannot be used
+         */
+        MetricsThread(const MetricsThread &s) throw();
+
+        /**
+         * assignement operator. Not implemented so that it cannot be used
+         */
+        MetricsThread &operator=(MetricsThread& obj) throw();
+
         /// Not implemented
         virtual void init() {};
 

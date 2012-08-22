@@ -295,7 +295,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkBusyConsistency()
 void castor::vdqm::handler::TapeDriveConsistencyChecker::checkFreeConsistency() 
   throw (castor::exception::Exception) {
   
-  castor::vdqm::VdqmTape* tape = ptr_tapeDrive->tape();
+  castor::vdqm::VdqmTape* tape;
    TapeServer* tapeServer = ptr_tapeDrive->tapeServer(); 
   
   // Cannot free an assigned unit, it must be released first
@@ -337,7 +337,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkFreeConsistency()
 void castor::vdqm::handler::TapeDriveConsistencyChecker::
   checkAssignConsistency() throw (castor::exception::Exception) {
 
-  TapeRequest* tapeRequest = ptr_tapeDrive->runningTapeReq();
+  TapeRequest* tapeRequest;
   TapeServer* tapeServer = ptr_tapeDrive->tapeServer(); 
   
   // If unit is busy and being assigned the VolReqIDs must

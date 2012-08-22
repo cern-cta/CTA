@@ -309,6 +309,7 @@ namespace castor      {
           public:
             occiNumber (): m_n(0) {};
             occiNumber (const oracle::occi::Number & n): m_n(n) {};
+            occiNumber &operator=(occiNumber& obj) throw() { m_n=obj.m_n; return *this;};
             /* Hand crafted cast-constructor for 64 bits */
             occiNumber (u_signed64 n) {
               /* From example grabbed from the web:

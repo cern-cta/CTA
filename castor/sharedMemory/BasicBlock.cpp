@@ -49,9 +49,11 @@ void castor::sharedMemory::BasicBlock::print(std::ostream& stream,
   throw() {
   stream << indent << "[# BasicBlock #]" << "\n";
   m_key.print(stream, indent + "  ");
+  std::ios::fmtflags f(stream.flags());
   stream << indent << "  m_sharedMemoryBlock = "
 	 << std::hex << m_sharedMemoryBlock
 	 << std::endl;
+  stream.flags(f);
 }
 
 //------------------------------------------------------------------------------

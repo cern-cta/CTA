@@ -733,10 +733,10 @@ int Csec_client_negociate_protocol(int s, int timeout, Csec_context_t *ctx) {
   
   rc = _Csec_send_token(s, &bigbuf, timeout, CSEC_TOKEN_TYPE_PROTOCOL_REQ);
 
-  free(bigbuf.value);
-
-  if (rc)
+  if (rc) {
+    free(bigbuf.value);
     return rc;
+  }
 
   /* now read reply */
 

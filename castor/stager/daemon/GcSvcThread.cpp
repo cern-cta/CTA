@@ -243,6 +243,7 @@ void castor::stager::daemon::GcSvcThread::handleNsFilesDeleted
   }
   Cns_fileid fileId;
   strncpy(fileId.server, uReq->nsHost().c_str(), CA_MAXHOSTNAMELEN+1);
+  fileId.server[CA_MAXHOSTNAMELEN] = 0;
   for(std::vector<u_signed64>::iterator it =
         result.begin();
       it != result.end();
@@ -318,6 +319,7 @@ void castor::stager::daemon::GcSvcThread::handleStgFilesDeleted
   Cns_fileid fileId;
   memset(&fileId, 0, sizeof(fileId));
   strncpy(fileId.server, uReq->nsHost().c_str(), CA_MAXHOSTNAMELEN+1);
+  fileId.server[CA_MAXHOSTNAMELEN] = 0;
   for(std::vector<u_signed64>::iterator it =
         orphanDiskCopies.begin();
       it != orphanDiskCopies.end();

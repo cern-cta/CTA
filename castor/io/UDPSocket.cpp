@@ -181,7 +181,7 @@ void castor::io::UDPSocket::readBuffer(const unsigned int magic,
   }
   // Now return the data
   *buf = (char*) malloc(n);
-  if (0 == buf) {
+  if (0 == *buf) {
     castor::exception::OutOfMemory ex;
     ex.getMessage() << "Could not allocate returned buffer of length " << n;
     delete [] internalBuf;

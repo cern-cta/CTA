@@ -618,12 +618,6 @@ int Cupv_util_check(struct Cupv_userpriv *requested,
   while ((c = Cupv_list_privilege_entry (&thip->dbfd, bol, &db_entry, &filter,
                                          0)) == 0) {
 
-    if (c < 0) {
-      cupvlogit("MSG=\"Error: Access DENIED - Problem accessing DB\" REQID=%s",
-                thip->reqinfo.requuid);
-      return(-1);
-    }
-
     if (Cupv_compare_priv(requested, &db_entry) == 0) {
       cupvlogit("MSG=\"Access GRANTED - Authorization found in DB\" REQID=%s",
                 thip->reqinfo.requuid);
@@ -635,6 +629,12 @@ int Cupv_util_check(struct Cupv_userpriv *requested,
     }
 
     bol = 0;
+  }
+
+  if (c < 0) {
+    cupvlogit("MSG=\"Error: Access DENIED - Problem accessing DB\" REQID=%s",
+              thip->reqinfo.requuid);
+    return(-1);
   }
 
   /* Nothing was found, return 1 */

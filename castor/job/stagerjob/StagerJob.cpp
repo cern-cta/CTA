@@ -209,10 +209,6 @@ std::string startAndGetPath
     delete diskCopy;
     return fullDestPath;
   }
-  // Never reached
-  castor::exception::Internal e;
-  e.getMessage() << "reached unreachable code !";
-  throw e;
 }
 
 //------------------------------------------------------------------------------

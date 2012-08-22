@@ -87,7 +87,10 @@ int Csec_trace(char *func, char *msg, ...) {
   if (thip->trace_file[0] != '\0') {
     int fd;
     fd = open(thip->trace_file, O_CREAT|O_WRONLY|O_APPEND, 0666);
-    if (fd <0) return -1;
+    if (fd <0) {
+      va_end (args);
+      return -1;
+    }
     write(fd, prtbuf, strlen(prtbuf));
     close(fd);
 
@@ -95,6 +98,7 @@ int Csec_trace(char *func, char *msg, ...) {
     fprintf (stderr, "%s", prtbuf);
   }
 
+  va_end (args);
   return 0;
 }
 

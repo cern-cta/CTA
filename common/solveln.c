@@ -86,35 +86,16 @@ int solveln(char *path,
         char * p ;
  
         nfsroot = getconfent("RFIO","NFS_ROOT",0) ;
-#ifdef NFSROOT
-        if (nfsroot == NULL) nfsroot = NFSROOT;
-#endif
-        if ( (nfsroot == NULL  && strstr(path,":/") != NULL )  ||
-             (nfsroot != NULL && !strncmp(path,nfsroot,strlen(nfsroot)) )) {
-                        if ((int)strlen(path)>size) {
-				(void) strncpy(buffer,path,size) ;
-				return -ENAMETOOLONG;
-			}
-			else {
-				(void) strcpy(buffer,path) ;
-                        	return 0 ;
-			}
-        }
- 
-        if ( nfsroot == NULL  && strstr(path,":/") == NULL ) {
-                        if ( (n=seelink(path, buffer, size)) > 0 )
-                                buffer[n]='\0' ;
-                        else {
-                                if ((int)strlen(path)>size) {
-					(void) strncpy(buffer,path,size) ;
-					return -ENAMETOOLONG;
-				}
-				else {
-					(void) strcpy(buffer,path) ;
-					return 0 ;
-				}
-			}
-                        return 0 ;
+        if (nfsroot == NULL) nfsroot = "/shift";
+        if (!strncmp(path,nfsroot,strlen(nfsroot))) {
+          if ((int)strlen(path)>size) {
+            (void) strncpy(buffer,path,size) ;
+            return -ENAMETOOLONG;
+          }
+          else {
+            (void) strcpy(buffer,path) ;
+            return 0 ;
+          }
         }
  
         /*
@@ -122,8 +103,7 @@ int solveln(char *path,
          * in the beginning
          */
  
-        if ( (p=strstr(path,":/")) != NULL && !strncmp( p+1 , nfsroot
- ,strlen(nfsroot)) ){
+        if ( (p=strstr(path,":/")) != NULL && !strncmp( p+1 , nfsroot ,strlen(nfsroot)) ){
                 /*
                  * Then erase machine name
                  */

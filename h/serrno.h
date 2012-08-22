@@ -19,7 +19,6 @@
 #include <stddef.h>                     /* For size_t on _WIN32         */
 
 #define SEBASEOFF       1000            /* Base offset for special err. */
-#define ECBASEOFF       1100            /* COPYTAPE error base offset   */
 #define EDBBASEOFF      1200            /* CDB error base offset        */
 #define EMSBASEOFF      1300            /* MSG error base offset        */
 #define ENSBASEOFF      1400            /* NS error base offset         */
@@ -90,13 +89,6 @@
 /*
  * Package specific error messages (don't forget to update commmon/serror.c)
  */
-
-/*
- *------------------------------------------------------------------------
- * COPYTAPE errors
- *------------------------------------------------------------------------
- */
-#define ECMAXERR        ECBASEOFF
 
 /*
  *------------------------------------------------------------------------

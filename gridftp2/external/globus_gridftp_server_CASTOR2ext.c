@@ -277,7 +277,7 @@ globus_l_gfs_CASTOR2ext_stat(
 	                free(freepathname);
 	                return;	
 		}   
-		while ((dirp = rfio_readdir64(dp)) != NULL) {
+		while ((rfio_readdir64(dp)) != NULL) {
 			stat_count++;
 		}
 		rfio_rewinddir(dp);

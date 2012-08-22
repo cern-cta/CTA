@@ -59,6 +59,16 @@ namespace castor {
 	 */
         virtual ~CollectorThread() throw();
 
+        /**
+         * copy constructor. Not implemented so that it cannot be used
+         */
+        CollectorThread(const CollectorThread &s) throw();
+
+        /**
+         * assignement operator. Not implemented so that it cannot be used
+         */
+        CollectorThread &operator=(CollectorThread& obj) throw();
+
         /// Not implemented
         virtual void init() {};
 

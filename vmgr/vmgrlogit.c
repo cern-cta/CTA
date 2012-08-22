@@ -31,7 +31,6 @@ int openlog(const char *ident, const char *logfile) {
   /* Variables */
   struct hostent *hent;
   char *buf      = NULL;
-  char *p        = NULL;
   size_t len     = 128;
   unsigned int i = 0;
 
@@ -79,7 +78,7 @@ int openlog(const char *ident, const char *logfile) {
    * domain name. If the result is not fully qualified we call gethostbyname()
    * in the hope to determine it.
    */
-  if ((p = strchr(buf, '.')) == NULL) {
+  if ((strchr(buf, '.')) == NULL) {
     if ((hent = gethostbyname(buf)) != NULL) {
       free(buf);
       if ((buf = strdup(hent->h_name)) == NULL) {

@@ -45,11 +45,26 @@ namespace castor{
         castor::rh::IOResponse *ioResponse;
         castor::replier::RequestReplier *requestReplier;
         
-        /* constructor  */
+        /**
+         * constructor
+         */
         ReplyHelper() throw(castor::exception::Exception);
-        /* destructor */
+
+        /**
+         * destructor
+         */
         ~ReplyHelper() throw();
-        
+
+        /**
+         * copy constructor. Not implemented so that it cannot be used
+         */
+        ReplyHelper(const ReplyHelper &s) throw();
+
+        /**
+         * assignement operator. Not implemented so that it cannot be used
+         */
+        ReplyHelper &operator=(ReplyHelper& obj) throw();
+
         
         /*******************************************************************************************/
         /* set fileId, reqAssociated (reqId()), castorFileName,newSubReqStatus,physicalFileName    */

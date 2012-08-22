@@ -209,7 +209,7 @@ int main(int	argc,
                                 st_long_timeout = 3600;
                                 if ((p = getconfent ("TAPE", "ST_LONG_TIMEOUT", 0))) {
                                         st_long_timeout = (int)atoi(p);
-                                        if (st_timeout < 0) {
+                                        if (st_long_timeout < 0) {
                                                 st_long_timeout = 3600;   
                                         }
                                 }

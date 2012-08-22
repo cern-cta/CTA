@@ -268,6 +268,7 @@ namespace castor {
         std::string cnsHost = NsOverride::getInstance()->getTargetCnsHost();
         if(cnsHost.length() > 0) {
           strncpy(cnsFileid.server, cnsHost.c_str(), CA_MAXHOSTNAMELEN+1);
+          cnsFileid.server[CA_MAXHOSTNAMELEN] = 0;
         }
         
         // Deny PrepareToPut|Update on files with preset checksums

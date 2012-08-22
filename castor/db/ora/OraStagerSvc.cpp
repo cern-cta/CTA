@@ -1366,7 +1366,8 @@ void castor::db::ora::OraStagerSvc::dumpDBLogs()
       std::string source = rs->getString(7);
       std::string parameters = rs->getString(8);
       // log to DLF
-      dlf_write_param_t params[] = {{(char*)"", DLF_MSG_PARAM_RAW, {(char*)parameters.c_str()}}};
+      dlf_write_param_t params[1] = {{(char*)"", DLF_MSG_PARAM_RAW, {(char*)""}}};
+      params[0].value.par_string = (char*)parameters.c_str();
       ::dlf_writept(uuid, priority, msg.c_str(), &fileid, 1, params, &tv, source.c_str(), 0);
       status = rs->next();
     }

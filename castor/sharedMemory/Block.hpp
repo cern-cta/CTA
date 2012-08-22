@@ -298,6 +298,7 @@ template <class A>
 void castor::sharedMemory::Block<A>::print
 (std::ostream& stream, std::string indent) const throw() {
   castor::sharedMemory::BasicBlock::print(stream, indent);
+  std::ios::fmtflags f(stream.flags());
   stream << indent << "[# Block #]" << "\n"
 	 << indent << "  m_initializing = " << m_initializing << "\n"
 	 << indent << "  m_freeRegions = " << std::hex
@@ -311,6 +312,7 @@ void castor::sharedMemory::Block<A>::print
 	   << std::hex << "0x" << it->first << "\n";
   }
   stream << std::flush;
+  stream.flags(f);
 }
 
 #endif // SHAREDMEMORY_BLOCK_HPP

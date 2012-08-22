@@ -129,10 +129,8 @@ int Cupv_strtoi(int *output,
     if ((thislong < INT_MIN) || (thislong > INT_MAX)) {
       if (thislong < INT_MIN) {
 	*output = INT_MIN;
-      } else if (thislong > INT_MAX) {
-	*output = INT_MAX;
       } else {
-	*output = (int) thislong;
+	*output = INT_MAX;
       }
       if (**endptr == '\0') {
 	/* We force the caller to have an error anyway, just checking **endptr */
@@ -217,7 +215,7 @@ char* strsafecat(char* dest, int *destLen, char* src) {
 char* write_str(char* dest, int *destlen, char* src, int *firstentry) {
   char* ret = 0;
   if (!(*firstentry)) {
-    ret = strsafecat(dest, destlen, STR_SEP);
+    strsafecat(dest, destlen, STR_SEP);
   }
   ret = strsafecat(dest, destlen, src);
   *firstentry = 0;

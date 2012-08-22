@@ -27,6 +27,7 @@ void wsacct(int package,
 	memcpy (buf, (char *) &accthdr, sizeof(struct accthdr));
 	memcpy (buf+sizeof(struct accthdr), acctstruct, len);
 	fd_acct = open (ACCTFILE, O_WRONLY | O_CREAT | O_APPEND, 0666);
+        if (fd_acct < 0) return;
 	(void) chmod (ACCTFILE, 0666);
 	write (fd_acct, buf, sizeof(struct accthdr) + len);
         close (fd_acct);

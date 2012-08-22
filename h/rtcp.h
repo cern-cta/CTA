@@ -240,7 +240,7 @@ typedef struct rtcpDumpTapeRequest {
     int fromblock;
     int toblock;
 } rtcpDumpTapeRequest_t;
-#define RTCP_DUMPTAPEREQLEN(X) (8*LONGSIZE)
+#define RTCP_DUMPTAPEREQLEN (8*LONGSIZE)
 
 /*
  * Opaque DB reference for use in the new stager

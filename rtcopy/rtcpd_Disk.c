@@ -1850,7 +1850,7 @@ void *diskIOthread(void *arg) {
                 } CLIST_ITERATE_END(tl->file,fl);
             } CLIST_ITERATE_END(tape,tl);
         } else filereq->proc_status = RTCP_FINISHED;
-        p = u64tostr(nbbytes,u64buf,0);
+        u64tostr(nbbytes,u64buf,0);
         p = strchr(u64buf,' ');
         if ( p != NULL ) p = '\0';
         if ( nbbytes > 0 ) { 

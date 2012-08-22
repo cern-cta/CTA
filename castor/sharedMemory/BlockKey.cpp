@@ -40,9 +40,11 @@ castor::sharedMemory::BlockKey::BlockKey
 //------------------------------------------------------------------------------
 void castor::sharedMemory::BlockKey::print(std::ostream& stream,
 					   std::string indent) const throw() {
+  std::ios::fmtflags f(stream.flags());
   stream << indent << "[# BlockKey #]" << "\n"
 	 << indent << "  key = " << m_key << "\n"
 	 << indent << "  size = " << m_size << "\n"
 	 << indent << "  address = " << std::hex << m_address
 	 << std::endl;
+  stream.flags(f);
 }

@@ -60,13 +60,13 @@ public:
 private:
 
   /**
-   * Private copy-constructor to prevent users from trying to create a new
+   * Not implemented copy-constructor to prevent users from trying to create a new
    * copy of an object of this class.
    */
   ScopedLock(const ScopedLock &s) throw();
 
   /**
-   * Private assignment-operator to prevent users from trying to assign one
+   * Not implemented assignment-operator to prevent users from trying to assign one
    * object of this class to another.
    */
   ScopedLock &operator=(ScopedLock& obj) throw();

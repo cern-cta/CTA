@@ -176,7 +176,7 @@ void castor::vdqm::VdqmMagic4ProtocolInterpreter::sendAggregatorVolReqToClient
   p = Utils::marshallString(p, msg.server);
   p = Utils::marshallString(p, msg.drive);
   p = Utils::marshallString(p, msg.dgn);
-  p = Utils::marshallString(p, msg.client_name);
+  Utils::marshallString(p, msg.client_name);
 
   // Marshall the message header
   int          magic   = VDQM_MAGIC4;

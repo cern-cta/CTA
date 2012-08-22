@@ -37,7 +37,10 @@ void print_trace(int level, const char *label, const char *format, ...)
 
     va_start(args, format);
 	Cglobals_get(&trc_key,(void **)&trc,sizeof(trc_spec_t));
-	if (trace_level < level) return;
+	if (trace_level < level) {
+          va_end (args);
+          return;
+        }
 	for (i=0; i< level+indent_level ; i++)       {
 		fprintf(stdout," "); /* indentation                    */
 	}
@@ -100,9 +103,15 @@ void print_trace_r(void *trace, int level, const char *label, const char *format
 	int sav_serrno = serrno;
 
 	va_start(args, format);
-	if (trace == NULL) return;
+	if (trace == NULL) {
+          va_end (args);
+          return;
+        }
 	trc = (trc_spec_t *)trace;
-	if (trace_level < level) return;
+	if (trace_level < level) {
+          va_end (args);
+          return;
+        }
 	for (i=0; i< level+indent_level ; i++)       {
 		fprintf(stdout," "); /* indentation                    */
 	}

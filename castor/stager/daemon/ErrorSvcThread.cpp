@@ -159,7 +159,8 @@ void castor::stager::daemon::ErrorSvcThread::process
     if(subReq->castorFile()) {
       struct Cns_fileid nsid;
       nsid.fileid = subReq->castorFile()->fileId();
-      strncpy(nsid.server, subReq->castorFile()->nsHost().c_str(), sizeof(nsid.server));
+      strncpy(nsid.server, subReq->castorFile()->nsHost().c_str(), CA_MAXHOSTNAMELEN+1);
+      nsid.server[CA_MAXHOSTNAMELEN] = 0;
       castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, 2, params, &nsid);
     } else {
       castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, 2, params);

@@ -29,7 +29,6 @@ COMM authorized to use remotely rtcopy server
 #define DbConfigFile	CONFIGPATH(DBCONFIG)
 #define LocalHostsList  CONFIGPATH(castor.localhosts)
 #define MappingFile	CONFIGPATH(ext.users)
-#define NfsRoot 	\"/shift\"
 
 #define NsLogFile       LOGPATH(nsd.log)
 #define NsConfigFile	CONFIGPATH(NSCONFIG)

@@ -42,6 +42,7 @@ Csec_errmsg(char *func, char *msg, ...) {
   
   errno = save_errno;
   serrno = save_serrno;
+  va_end (args);
   return (0);
 }
 

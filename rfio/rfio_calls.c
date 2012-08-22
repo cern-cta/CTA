@@ -373,7 +373,6 @@ static char **l_canonicalize_path(inpath,sym_depth,effective_cwd,path_typep,pref
 
  success:
   if (ptr != NULL) free(ptr);
-  if (elements != NULL) l_free_strlist(elements);
   return result;
 
  error:
@@ -502,7 +501,6 @@ int check_path_whitelist(const char *hostname,
         p = NULL;
       }
     }
-    if (p != NULL) free(p);
   }
 
   if (found) {
@@ -3860,7 +3858,7 @@ int  sropen_v3(int     s,
   if (netwrite_timeout(s,rqstbuf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE)  {
     log(LOG_ERR,"ropen_v3: netwrite_timeout(): %s\n",strerror(errno));
     if (data_s >= 0) close(data_s);
-    close(fd);
+    if (fd >= 0) close(fd);
     return -1;
   }
 

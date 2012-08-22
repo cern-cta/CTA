@@ -54,34 +54,6 @@ castor::tape::utils::ScopedLock::ScopedLock(pthread_mutex_t &mutex)
 
 
 //-----------------------------------------------------------------------------
-// copy-constructor
-//-----------------------------------------------------------------------------
-castor::tape::utils::ScopedLock::ScopedLock(const ScopedLock&) throw() :
-  m_mutex(NULL) {
-  
-  // This code is never executed because the copy-constructor is private and
-  // should never be called by another method of this class.
-
-  // Do nothing
-}
-
-
-//-----------------------------------------------------------------------------
-// assignment-operator
-//-----------------------------------------------------------------------------
-castor::tape::utils::ScopedLock
-&castor::tape::utils::ScopedLock::operator=(ScopedLock&) throw() {
-
-  // This code is never executed because the assignment-operator is private and
-  // should never be called by another method of this class
-
-  // Do nothing
-
-  return *this;
-}
-
-
-//-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
 castor::tape::utils::ScopedLock::~ScopedLock() throw() {

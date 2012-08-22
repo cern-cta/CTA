@@ -421,26 +421,19 @@ static int rtcp_TransferTpDump(int *s,
     return(-1);
   }
 
-  len = RTCP_DUMPTAPEREQLEN(dumpreq);
+  len = RTCP_DUMPTAPEREQLEN;
 
   if ( whereto == ReceiveFrom ) {
-    if ( VALID_MSGLEN(len) ) {
-      rc = netread_timeout(*s,buf,len,RTCP_NETTIMEOUT);
-      switch (rc) {
-      case -1:
-        rtcp_log(LOG_ERR,"rtcp_TransferTpDump() netread(%d,REQ): %s\n",*s,
-                 neterror());
-        serrno = SECOMERR;
-        return(-1);
-      case 0:
-        rtcp_log(LOG_ERR,"rtcp_TransferTpDump() netread(%d,REQ): connection dropped\n",*s);
-        serrno = SECONNDROP;
-        return(-1);
-      }
-    } else if ( len > 0 ) {
-      rtcp_log(LOG_ERR,"rtcp_TransferTpDump() invalid msg length %d\n",
-               len);
-      serrno = SEUMSG2LONG;
+    rc = netread_timeout(*s,buf,len,RTCP_NETTIMEOUT);
+    switch (rc) {
+    case -1:
+      rtcp_log(LOG_ERR,"rtcp_TransferTpDump() netread(%d,REQ): %s\n",*s,
+               neterror());
+      serrno = SECOMERR;
+      return(-1);
+    case 0:
+      rtcp_log(LOG_ERR,"rtcp_TransferTpDump() netread(%d,REQ): connection dropped\n",*s);
+      serrno = SECONNDROP;
       return(-1);
     }
   }

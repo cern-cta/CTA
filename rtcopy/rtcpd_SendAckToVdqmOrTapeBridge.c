@@ -92,15 +92,6 @@ int rtcpd_SendAckToVdqmOrTapeBridge(
       return -1;
     }
     break;
-  default:
-    snprintf(errBuf, errBufLen, "%s()"
-      ": Internal error"
-      ": Unknown request type"
-      ": line=%d reqType=0x%x",
-      __FUNCTION__, __LINE__, reqType);
-    errBuf[errBufLen - 1] = '\0';
-    serrno = SEINTERNAL;
-    return -1;
   }
 
   return 0;

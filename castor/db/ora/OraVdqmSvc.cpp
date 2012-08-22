@@ -1049,7 +1049,8 @@ void castor::db::ora::OraVdqmSvc::getAllVolPriorities(
       strncpy(p.clientHost, rs->getString(4).c_str(), sizeof(p.clientHost));
       // Null-terminate in case source string is longer than destination
       p.clientHost[sizeof(p.clientHost) - 1] = '\0';
-      strncpy(p.vid, rs->getString(5).c_str(), sizeof(p.vid));
+      strncpy(p.vid, rs->getString(5).c_str(), CA_MAXVIDLEN+1);
+      p.vid[CA_MAXVIDLEN] = 0;
       // Null-terminate in case source string is longer than destination
       p.clientHost[sizeof(p.clientHost) - 1] = '\0';
       p.tpMode           = rs->getInt(6);
@@ -1124,7 +1125,8 @@ void castor::db::ora::OraVdqmSvc::getEffectiveVolPriorities(
       strncpy(p.clientHost, rs->getString(4).c_str(), sizeof(p.clientHost));
       // Null-terminate in case source string is longer than destination
       p.clientHost[sizeof(p.clientHost) - 1] = '\0';
-      strncpy(p.vid, rs->getString(5).c_str(), sizeof(p.vid));
+      strncpy(p.vid, rs->getString(5).c_str(), CA_MAXVIDLEN+1);
+      p.vid[CA_MAXVIDLEN] = 0;
       // Null-terminate in case source string is longer than destination
       p.clientHost[sizeof(p.clientHost) - 1] = '\0';
       p.tpMode           = rs->getInt(6);
