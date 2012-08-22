@@ -1638,7 +1638,7 @@ int Cregexp_sub(Cregexp_t *prog,
  */
 char *_Cregexp_prop(char *op)
 {
-	char *p;
+	char *p = NULL;
 	static char buf[50];
   
 	(void) strcpy(buf, ":");
