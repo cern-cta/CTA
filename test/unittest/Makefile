@@ -40,7 +40,6 @@ rununittests: \
   client_BaseClient.o \
   client_VectorResponseHandler.o \
   common_CastorConfiguration.o \
-  common_Cdlopen.o \
   common_Cdomainname.o \
   common_Cgetopt.o \
   common_Cglobals.o \
@@ -60,7 +59,6 @@ rununittests: \
   common_marshall.o \
   common_serror.o \
   common_remote.o \
-  common_setnetio.o \
   common_socket.o \
   common_socket_timeout.o \
   common_trace.o \
@@ -423,16 +421,10 @@ common_getifnam.o: $(ROOT_DIR)/common/getifnam.c
 common_CastorConfiguration.o: $(ROOT_DIR)/castor/common/CastorConfiguration.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-common_Cdlopen.o: $(ROOT_DIR)/common/Cdlopen.c
-	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
 common_Cdomainname.o: $(ROOT_DIR)/common/Cdomainname.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 common_Cgrp.o: $(ROOT_DIR)/common/Cgrp.c
-	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-common_setnetio.o: $(ROOT_DIR)/common/setnetio.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 common_Cpool.o: $(ROOT_DIR)/common/Cpool.c
