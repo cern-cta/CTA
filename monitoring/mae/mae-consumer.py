@@ -51,6 +51,10 @@ pprint = pprint.PrettyPrinter(indent=4)
 log_file_path = '/var/log/castor/mae.log'
 STOP_FLAG = threading.Event()
 
+def sigHupHandler( signum, frame ):
+    logging.info('Caught SIGHUP signal, reopening logfile')
+    utils.redirect_output(log_file_path)
+
 def exit_handler(signum=None, frame=None):
     """
     Handler assigned to the reception of SIGTERM and SIGINT signals
@@ -156,5 +160,6 @@ if __name__ == '__main__':
     # Assign handler to signals
     signal.signal(signal.SIGINT, exit_handler)
     signal.signal(signal.SIGTERM, exit_handler)
+    signal.signal(signal.SIGHUP, sigHupHandler)
     # Start main thread
     main()
