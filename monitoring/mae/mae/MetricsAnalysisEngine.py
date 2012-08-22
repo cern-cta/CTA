@@ -17,6 +17,7 @@
 # Data test Metric:
 #  <metric>
 #   name: CountHosts
+#   unit: second
 #   window: 300
 #   conditions: MESSAGES=='ALLMESSAGES'
 #   groupbykeys: INSTANCE, HOSTNAME
@@ -1627,12 +1628,15 @@ class Metric:
         return "<\'"+self.name+"\' metric object>"
     
     #---------------------------------------------------------------------------
-    def __init__(self, name, window, nbins, conditions, groupbykeys, data, handle_unordered):
+    def __init__(self, name, unit, window, nbins, conditions, groupbykeys, data, handle_unordered):
 
         # Local vars..
 
         # - name, string
         self.name=name
+
+        # - unit, string
+        self.unit=unit
         
         # - window, int
         self.window=int(window)
@@ -1915,7 +1919,7 @@ def parseMetrics(metricsfile):
 
             
             # The metric is ended, lety's check that we have all the needed keywords:
-            if metric.has_key('name') and metric.has_key('window') and metric.has_key('conditions') and metric.has_key('groupbykeys') and metric.has_key('data') and metric.has_key('handle_unordered') and metric.has_key('nbins'):
+            if metric.has_key('name') and metric.has_key('unit') and metric.has_key('window') and metric.has_key('conditions') and metric.has_key('groupbykeys') and metric.has_key('data') and metric.has_key('handle_unordered') and metric.has_key('nbins'):
 
                 debug('MetricsAnalysisEngine.loadMetrics: Found valid metric "' + metric['name'] + '"')
 
@@ -2023,9 +2027,10 @@ def loadMetrics(path):
             #print metric
 
             # Create the metric
-            #def __init__( self, name, window, nbins, conditions, groupbykeys, data, handle_unordered):
+            #def __init__( self, name, unit, window, nbins, conditions, groupbykeys, data, handle_unordered):
             try:
                 metrics.append(Metric(metric['name'],
+                                        metric['unit'],
                                         metric['window'],
                                         metric['nbins'],
                                         metric['conditions'],
