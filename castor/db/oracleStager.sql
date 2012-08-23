@@ -665,7 +665,7 @@ BEGIN
             DELETE FROM MigrationJob WHERE castorfile = sr.cfId AND originalVID = varOriginalVID;
             -- delete migrated segments if no migration jobs remain
             BEGIN
-              SELECT id INTO unused FROM MigrationJob WHERE castorfile = sr.cfId;
+              SELECT id INTO unused FROM MigrationJob WHERE castorfile = sr.cfId AND ROWNUM < 2;
             EXCEPTION WHEN NO_DATA_FOUND THEN
               DELETE FROM MigratedSegment WHERE castorfile = sr.cfId;
               -- trigger the update of the DiskCopy to STAGED as no more migrations remain
