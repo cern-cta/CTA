@@ -1919,11 +1919,14 @@ def parseMetrics(metricsfile):
 
             
             # The metric is ended, lety's check that we have all the needed keywords:
-            if metric.has_key('name') and metric.has_key('unit') and metric.has_key('window') and metric.has_key('conditions') and metric.has_key('groupbykeys') and metric.has_key('data') and metric.has_key('handle_unordered') and metric.has_key('nbins'):
+            if metric.has_key('name') and metric.has_key('window') and metric.has_key('conditions') and metric.has_key('groupbykeys') and metric.has_key('data') and metric.has_key('handle_unordered') and metric.has_key('nbins'):
 
                 debug('MetricsAnalysisEngine.loadMetrics: Found valid metric "' + metric['name'] + '"')
 
-
+                # support old metric with no unit field
+                if not metric.has_key('unit'):
+                    metric['unit'] = ''
+                
                 # Perfect, we have all the keys. Let's now rearrange the data array:
                 
                 # Parsing (will have to be included in the metricommon.loadmetrics
