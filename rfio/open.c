@@ -133,59 +133,9 @@ int rfio_open(char    *filepath,
   if ( flags & O_LARGEFILE ) return( rfio_open64(filepath, flags, mode) );
 #endif /* O_LARGEFILE */
 
-#if defined(__ia64__) || defined(__x86_64) || defined(__ppc64__)
   /* Try to promote into rfio 64 bits call                           */
   /* If 64 is not supported goes to rfio_open_ext                    */
   return( rfio_open64(filepath, flags, mode) );
-#else
-  int n;
-  int n_index;
-  int old;
-  int fd;
-  int fd_index;
-
-  old = rfioreadopt(RFIO_READOPT);
-
-  if ((old & RFIO_STREAM) == RFIO_STREAM)
-  {
-    /* New V3 stream protocol for sequential transfers is requested */
-
-    if ((n = rfio_open_v3(filepath,flags,mode)) < 0)
-    {
-      if (serrno == SEPROTONOTSUP) /* Server doesn't support V3 protocol, call previous open (V2)*/
-      {
-        int newopt = RFIO_READBUF;
-
-        rfiosetopt(RFIO_READOPT,&newopt,4); /* 4 = dummy len value */
-        fd = rfio_open_v2(filepath, flags, mode);
-        if ((fd_index = rfio_rfilefdt_findentry(fd,FINDRFILE_WITHOUT_SCAN)) != -1)
-          rfilefdt[fd_index]->version3 = 0;
-        return(fd);
-      }
-      else
-        return(-1);
-    }
-    else
-    {
-      /* To indicate to rfio_open_ext (called directly by rtcopy) that the negociation has already
-         been done */
-      int newopt = RFIO_STREAM | RFIO_STREAM_DONE;
-
-      rfiosetopt(RFIO_READOPT,&newopt,4); /* 4 = dummy len value */
-      if ((n_index = rfio_rfilefdt_findentry(n,FINDRFILE_WITHOUT_SCAN)) != -1)
-        rfilefdt[n_index]->version3 = 1;
-      return(n);
-    }
-  }
-  else
-  {
-    /* Call previous version */
-    fd = rfio_open_v2(filepath, flags, mode);
-    if ((fd_index = rfio_rfilefdt_findentry(fd,FINDRFILE_WITHOUT_SCAN)) != -1)
-      rfilefdt[fd_index]->version3 = 0;
-    return(fd);
-  }
-#endif
 }
 
 int  rfio_open_v2(char    * filepath,

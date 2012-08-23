@@ -42,97 +42,11 @@ int rfio_mstat(char *file,
                struct stat *statb)
 {
   int       rc;
-#if defined(__ia64__) || defined(__x86_64) || defined(__ppc64__)
   struct stat64 statb64;
 
   if ((rc = rfio_mstat64(file,&statb64)) == 0)
     (void) stat64tostat(&statb64, statb);
   return (rc);
-#else
-  int rt ,i ,fd, rfindex, Tid, parserc;
-  char *host , *filename ;
-
-  INIT_TRACE("RFIO_TRACE");
-
-  Cglobals_getTid(&Tid);
-
-  TRACE(1, "rfio", "rfio_mstat(%s, %x), Tid=%d", file, statb, Tid);
-  if (!(parserc = rfio_parseln(file,&host,&filename,NORDLINKS))) {
-    /* if not a remote file, must be local or HSM  */
-    if ( host != NULL ) {
-      /*
-       * HSM file
-       */
-      rfio_errno = 0;
-      rc = rfio_HsmIf_stat(filename,statb);
-      END_TRACE();
-      return(rc);
-    }
-
-    /* The file is local */
-    rc = stat(filename,statb) ;
-    if ( rc < 0 ) serrno = 0;
-    rfio_errno = 0;
-    END_TRACE();
-    return (rc) ;
-  }  else  {
-    if (parserc < 0) {
-      END_TRACE();
-      return(-1);
-    }
-    /* Look if already in */
-    serrno = 0;
-    rfindex = rfio_mstat_findentry(host,Tid);
-    TRACE(2, "rfio", "rfio_mstat: rfio_mstat_findentry(host=%s,Tid=%d) returns %d", host, Tid, rfindex);
-    if (rfindex >= 0) {
-      if ( mstat_tab[rfindex].sec ) {
-        rc = rfio_smstat(mstat_tab[rfindex].s,filename,statb,RQST_MSTAT_SEC ) ;
-      } else {
-        rc = rfio_smstat(mstat_tab[rfindex].s,filename,statb,RQST_MSTAT ) ;
-      }
-      END_TRACE();
-      return (rc) ;
-    }
-    rc = 0;
-    /*
-     * To keep backward compatibility we first try the new secure
-     * stat() and then, if it failed, go back to the old one.
-     */
-    for ( i=0; i<2; i++ ) {
-      /* The second pass can occur only if (rc == -1 && serrno == SEPROTONOTSUP) */
-      /* In such a case rfio_smstat(fd) would have called rfio_end_this(fd,1) */
-      /* itself calling close(fd) */
-      rfio_errno = 0;
-      fd=rfio_connect(host,&rt) ;
-      if ( fd < 0 ) {
-        END_TRACE();
-        return (-1) ;
-      }
-      rfindex = rfio_mstat_allocentry(host,Tid,fd, (! rc) ? 1 : 0);
-      TRACE(2, "rfio", "rfio_mstat: rfio_mstat_allocentry(host=%s,Tid=%d,s=%d,sec=%d) returns %d", host, Tid, fd, (! rc) ? 1 : 0, rfindex);
-      serrno = 0;
-      if ( rfindex >= 0 ) {
-        if ( !rc )
-          rc = rfio_smstat(fd,filename,statb,RQST_MSTAT_SEC);
-        else
-          rc = rfio_smstat(fd,filename,statb,RQST_MSTAT);
-      } else {
-        if ( !rc )
-          rc = rfio_smstat(fd,filename,statb,RQST_STAT_SEC) ;
-        else
-          rc = rfio_smstat(fd,filename,statb,RQST_STAT);
-        if ( (rc != -1) || (rc == -1 && rfio_errno != 0) ) {
-          TRACE(2,"rfio","rfio_mstat() overflow connect table, host=%s, Tid=%d. Closing %d",host,Tid,fd);
-          close(fd);
-        }
-        fd = -1;
-      }
-      if ( !(rc == -1 && serrno == SEPROTONOTSUP) ) break;
-    }
-    END_TRACE();
-    return (rc)  ;
-  }
-#endif
 }
 
 /*

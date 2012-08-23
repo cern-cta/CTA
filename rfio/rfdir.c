@@ -29,7 +29,7 @@
 #define SIXMONTHS (6*30*24*60*60)
 #ifndef PATH_MAX
 #include <Castor_limits.h>
-#define PATH_MAX CA_MAXPATHLEN + 1 /* == 1024 == PATH_MAX on IRIX */
+#define PATH_MAX CA_MAXPATHLEN + 1 /* == 1024 == */
 #endif
 #include "getconfent.h"
 

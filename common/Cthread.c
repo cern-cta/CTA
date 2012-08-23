@@ -1485,18 +1485,8 @@ int _Cthread_obtain_mtx(const char *file,
       }
       if (errno == EBUSY) {
         timewaited += Timeout / 20;
-#if defined(linux)
         /* usleep is in micro-seconds, not milli seconds... */
         usleep((Timeout * 1000)/20);
-#else
-        /* This method deadlocks on IRIX or linux (poll() via select() bug)*/
-        {
-          struct timeval ts;
-          ts.tv_sec = Timeout;
-          ts.tv_usec = 0;
-          select(0,NULL,NULL,NULL,&ts);
-        }
-#endif
       }
     }
     if (file != NULL) {

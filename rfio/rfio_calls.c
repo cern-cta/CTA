@@ -7,7 +7,7 @@
  * All rights reserved
  */
 
-#if defined(linux) && !defined(__ia64__)
+#if defined(linux)
 #define _GNU_SOURCE                /* O_DIRECT */
 #endif
 

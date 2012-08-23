@@ -242,9 +242,7 @@ typedef struct {
   int status;
   int log_info_l;
   char *log_info;
-#if !defined(__osf__) && !defined(__alpha)
   char *fill[2];
-#endif
 } DMCreply_t;
 
 typedef struct {

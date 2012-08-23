@@ -708,10 +708,6 @@ int Ctape_dmpfil(char *path,
 					break;
 				}
 			}
-#if sgi
-			close (infd);
-			infd = open (path, O_RDONLY);
-#endif
 			irec = 0;
 			qbov = 0;
 			if (lcode == 0 || qlab < 0) return (0);
@@ -728,12 +724,6 @@ int Ctape_dmpfil(char *path,
 			} else if (errno == EIO)
 				errcat = gettperror (infd, path, &msgaddr);
 			else
-#if sgi || (__alpha && __osf__)
-				if (errno == ENOSPC) {
-					msgaddr = "Blank check";
-					errcat = ETBLANK;
-				} else
-#endif
 					msgaddr = (char *) strerror(errno);
 			if (errcat == ETBLANK && dev1tm && !qbov && irec == 0) break;
 			irec++;

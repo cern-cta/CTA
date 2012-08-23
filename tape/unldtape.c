@@ -19,11 +19,7 @@ int unldtape(int tapefd,
 
 	ENTRY (unldtape);
 	if (tapefd < 0) RETURN (0);
-#if sgi
-	mtop.mt_op = MTUNLOAD;
-#else
 	mtop.mt_op = MTOFFL;	/* unload tape */
-#endif
 	mtop.mt_count = 1;
 	if (ioctl (tapefd, MTIOCTOP, &mtop) < 0) {
 		serrno = rpttperror (func, tapefd, path, "ioctl");
