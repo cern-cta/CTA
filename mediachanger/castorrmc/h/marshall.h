@@ -148,52 +148,6 @@ EXTERN_C int _unmarshall_STRINGN (char **, char*, int);
  *    H Y P E R   ( 6 4   B I T S )
  */
 
-#if !defined(i386) && !defined(__ia64__) && !defined(__x86_64) && !defined(__ppc64__) 
-#define  marshall_HYPER(ptr,n)          { U_HYPER u_ = n; \
-					  LONG n_ = htonl(*((unsigned long *)&(u_))); \
-					  (void) memcpy((ptr),LONGADDR(n_),LONGSIZE); \
-					  INC_PTR(ptr,LONGSIZE); \
-					  n_ = htonl(*((unsigned long *)((char *)&(u_)+LONGSIZE))); \
-					  (void) memcpy((ptr),LONGADDR(n_),LONGSIZE); \
-					  INC_PTR(ptr,LONGSIZE); \
-					}
-
-#define  unmarshall_HYPER(ptr,n)        { U_HYPER u_ = 0; \
-					  LONG n_ = 0;  \
-					  (void) memcpy(LONGADDR(n_),(ptr),LONGSIZE); \
-					  *((LONG *)&(u_)) = ntohl((unsigned long)(n_)); \
-					  INC_PTR(ptr,LONGSIZE); \
-					  n_ = 0;  \
-					  (void) memcpy(LONGADDR(n_),(ptr),LONGSIZE); \
-					  *((LONG *)((char *)&(u_)+LONGSIZE)) = \
-						ntohl((unsigned long)(n_)); \
-					  INC_PTR(ptr,LONGSIZE); \
-					  n = u_; \
-					}
-#else
-#if defined(__ppc64__)
-#define  marshall_HYPER(ptr,n)          { U_HYPER u_ = n; \
-					  LONG n_ = htonl(*((U_LONG *)&(u_))); \
-					  (void) memcpy((ptr),LONGADDR(n_),LONGSIZE); \
-					  INC_PTR(ptr,LONGSIZE); \
-					  n_ = htonl(*((U_LONG *)((char *)&(u_)+LONGSIZE))); \
-					  (void) memcpy((ptr),LONGADDR(n_),LONGSIZE); \
-					  INC_PTR(ptr,LONGSIZE); \
-					}
-
-#define  unmarshall_HYPER(ptr,n)        { U_HYPER u_; \
-					  LONG n_ = 0;  \
-					  (void) memcpy(LONGADDR(n_),(ptr),LONGSIZE); \
-					  *((LONG *)&(u_)) = ntohl((U_LONG)(n_)); \
-					  INC_PTR(ptr,LONGSIZE); \
-					  n_ = 0;  \
-					  (void) memcpy(LONGADDR(n_),(ptr),LONGSIZE); \
-					  *((LONG *)((char *)&(u_)+LONGSIZE)) = \
-						ntohl((U_LONG)(n_)); \
-					  INC_PTR(ptr,LONGSIZE); \
-					  n = u_; \
-					}
-#else
 #define  marshall_HYPER(ptr,n)          { U_HYPER u_ = n; \
 					  LONG n_ = htonl(*((U_LONG *)((char *)&(u_)+LONGSIZE))); \
 					  (void) memcpy((ptr),LONGADDR(n_),LONGSIZE); \
@@ -215,8 +169,6 @@ EXTERN_C int _unmarshall_STRINGN (char **, char*, int);
 					  INC_PTR(ptr,LONGSIZE); \
 					  n = u_; \
 					}
-#endif
-#endif
 
 /*
  *    O P A Q U E
