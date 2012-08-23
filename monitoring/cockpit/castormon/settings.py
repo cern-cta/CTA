@@ -4,6 +4,11 @@ import django
 
 RPYC_SERVER = "localhost"
 
+HBASE_NAMESERVER = "lxfssm4401"
+FILE_TABLE = "castortest_file"
+TAPE_TABLE = "castortest_tape"
+REQ_TABLE = "castortest_req"
+
 CREDENTIALS_FILE = '/etc/castor/cockpit-credentials.conf'
 
 def get_db_user():
@@ -142,6 +147,7 @@ INSTALLED_APPS = (
     'south',
     # Product
     'cockpit',
+    #'dlfui',
 )
 
 # A sample logging configuration. The only tangible logging

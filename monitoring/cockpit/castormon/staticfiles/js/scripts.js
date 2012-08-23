@@ -5,6 +5,9 @@ var chart;
 var hiddenSeries = {};
 var graphType = 'timeline';
 var autoRefreshTimer;
+var categories_drilldown;
+var data_drilldown;
+var hc_colors = Highcharts.getOptions().colors;
 
 
 function getYAxisMin(log) {
@@ -290,7 +293,7 @@ function getSumChartOptions(metric_name) {
             },
             tooltip: {
                 pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b><br/>',
-                valueDecimals: 4
+                valueDecimals: 0
             },
             legend: {
                 enabled: true,
@@ -488,6 +491,96 @@ function _drawSumChart(metric_container, from, to, format_type) {
                         });
                         options.series.push( seriesOptions );
                     });
+                    break;
+                case 3:
+                    categories_drilldown = json["data"]["keys1"];
+                    data_drilldown = [];
+                    
+                    $.each(json["data"]["keys2"], function (i2, key2) {
+                        // serie initialisation
+                        var seriesOptions = {
+                            name : key2,
+                            color : hc_colors[i2 % hc_colors.length],
+                            data : []
+                        };
+                        if (hiddenSeries[key2]) {
+                            seriesOptions.visible = false;
+                        }
+                        $.each(json["data"]["keys1"], function (i1, key1) {
+                            var tmp_value;
+                            if (!json["data"][key1][key2] || json["data"][key1][key2]['sum'][0] == 0){
+                                if (log == '') {
+                                    tmp_value = 0;
+                                } else {
+                                    tmp_value = null;
+                                }
+                            } else {
+                                tmp_value = json["data"][key1][key2]['sum'][0];
+                            }
+                            // build point
+                            var tmp_point = {
+                                y : tmp_value,
+                                name : [key1, '-', key2].join(''),
+                                drilldown: {}
+                            }
+                            
+                            // build drilldown on this point if not null
+                            if (json["data"][key1][key2]) {
+                                var tmp_drilldown = {
+                                    name : [key1, '-', key2].join(''),
+                                    categories: json["data"][key1][key2]['keys3'],
+                                    color : hc_colors[i2 % hc_colors.length],
+                                    data: []
+                                };
+                                var tmp_3;
+                                $.each(json["data"][key1][key2]['keys3'], function (i, key3) {
+                                    if (json["data"][key1][key2][key3]['sum'][0] == 0){
+                                        if (log == '') {
+                                            tmp_3 = 0;
+                                        } else {
+                                            tmp_3 = null;
+                                        }
+                                    } else {
+                                        tmp_3 = json["data"][key1][key2][key3]['sum'][0];
+                                    }
+                                    tmp_drilldown.data.push(tmp_3);
+                                });
+                                tmp_point.drilldown = tmp_drilldown;
+                            }
+                            seriesOptions.data.push(tmp_point);
+                        });
+                        data_drilldown.push( seriesOptions );
+                    });
+                    
+                    options.xAxis.categories = categories_drilldown;
+                    options.series = data_drilldown;
+
+                    options.plotOptions.series.colorByPoint = false;
+                    options.plotOptions.column = {
+                        cursor: 'pointer',
+                        point: {
+                            events: {
+                                click: function() {
+                                    var drilldown = this.drilldown;
+
+                                    if (drilldown) { // drill down
+                                        this.series.xAxis.setCategories(drilldown.categories);
+                                        while(chart.series.length)
+                                            chart.series[0].remove();
+                                        chart.addSeries({name : drilldown.name,
+                                                         data : drilldown.data,
+                                                         color : drilldown.color});
+                                     } else { // restore
+                                         chart.xAxis[0].setCategories(categories_drilldown);
+                                        while(chart.series.length)
+                                            chart.series[0].remove();
+                                        for(i=0;i<=data_drilldown.length;i++)
+                                            chart.addSeries(data_drilldown[i]);
+                                     }
+                                }
+                            }
+                        }
+                    };
                     break;
                 default:
                     metric_display.empty().html("<br /><br /><b>This metric cannot be plotted with this graph type</b>");

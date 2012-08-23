@@ -22,7 +22,7 @@ def _get_rpyc_connexion():
     """
     return an RPyC connexion
     """
-    return rpyc.connect("localhost", 18861, config = {"allow_public_attrs" : True})
+    return rpyc.connect(settings.RPYC_SERVER, 18861, config = {"allow_public_attrs" : True})
 
 
 def _get_metrics_names():
@@ -395,8 +395,52 @@ def get_metric_data(request, metric_name, timestamp_from=None, timestamp_to=None
     #   4) three group keys
     ###############################################################################################
     elif len(groupkeys) == 3 :
-        pass
+        res['groupby'] = 3
+        res['groupcategories'] = groupkeys
+        result_data = dict()
+        result_data['keys1'] = list()
+        result_data['keys2'] = list()
+        # build result dictionnary
+        for md in metric_data:
+            data = simplejson.loads(md.data)
+            # for each lvl 1 key
+            for key1 in data.keys():
+                # init the key
+                if key1 not in result_data['keys1']:
+                    result_data['keys1'].append(key1)
+                    result_data[key1] = dict()
+                    result_data[key1]['keys2'] = list()
+                # for each lvl 2 key
+                for key2 in data[key1].keys():
+                    #init the key
+                    if key2 not in result_data[key1]['keys2']:
+                        result_data[key1]['keys2'].append(key2)
+                        result_data[key1]['keys2'].sort()
+                        result_data['keys2'].append(key2)
+                        result_data[key1][key2] = dict()
+                        result_data[key1][key2]['keys3'] = list()
+                        result_data[key1][key2]['sum'] = [ 0 for i in range(len(res['datakeys']))]
+                        #result_data[key1][key2]['avg'] = list()
+                    # for each lvl 3 key
+                    for key3 in data[key1][key2].keys():
+                        # init the key
+                        if key3 not in result_data[key1][key2]['keys3']:
+                            result_data[key1][key2]['keys3'].append(key3)
+                            result_data[key1][key2]['keys3'].sort()
+                            result_data[key1][key2][key3] = dict()
+                            result_data[key1][key2][key3]['sum'] = [ 0 for i in range(len(res['datakeys']))]
+                        # compute the sum of lvl 3
+                        for i in range(len(res['datakeys'])):
+                            result_data[key1][key2][key3]['sum'][i] += data[key1][key2][key3][i]
+                        # compute the sum of lvl 2
+                        for i in range(len(res['datakeys'])):
+                            result_data[key1][key2]['sum'][i] += data[key1][key2][key3][i]
+        result_data['keys1'].sort()
+        result_data['keys2'] = list(set(result_data['keys2'])) # to remove duplicate
+        result_data['keys2'].sort()
+        res['data'] = result_data
 
+    ###############################################################################################
     res['debug']['end'] = str(datetime.datetime.now())# debug
 
     return HttpResponse(simplejson.dumps(res))
