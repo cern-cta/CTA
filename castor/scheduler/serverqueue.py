@@ -492,14 +492,19 @@ class ServerQueue(dict):
         if transferid not in self.transfersLocations:
           # the transfer has already disappeared (or was never started). This
           # can happen due to raise conditions, e.g when we get a timeout on the
-          # start of the transfer when it has started already but the acknoledgement
+          # start of the transfer when it has started already but the acknowledgement
           # did not yet come.
           # We can ignore these cases, but we still log
           # "Unable to cancel transfer as it's not in the transfer list. Probable race condition" message
           dlf.writewarning(msgs.TRANSFERCANCELEXCEPTION, subreqid=transferid, reqid=reqid, fileid=fileid)
           continue
         # cleanup the queue for the given transfer on the given machine
-        self.transfersLocations[transferid].remove(machine)
+        try:
+          self.transfersLocations[transferid].remove(machine)
+        except KeyError:
+          # "Unable to cancel transfer as it's not in the transfer list. Probable race condition" message
+          dlf.writewarning(msgs.TRANSFERCANCELEXCEPTION, subreqid=transferid, reqid=reqid, fileid=fileid, machine=machine)
+          continue
         if not self.transfersLocations[transferid]:
           # no other candidate machine for this transfer. It has to be failed
           transfersKilled.append((transferid, fileid, rc, msg, reqid))
