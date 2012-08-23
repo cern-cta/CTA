@@ -1718,7 +1718,33 @@ sub print_file_info ( $$ )
         print  "    dc.id=$row[0], dc.status=$row[1]\n";
     }
     # Then dump the migration-related info
-    if ( $schemaversion =~ /^2_1_1[23]/ ) {
+    if ( $schemaversion =~ /^2_1_13/ ) {
+        $stmt = $dbh -> prepare ("SELECT mj.id, mj.status, mjtp.name, mm.id, mm.status, mm.vid, tp.name
+                                      FROM castorfile cf
+                                      INNER JOIN migrationJob mj on mj.castorfile = cf.id
+                                      LEFT OUTER JOIN tapepool mjtp on mjtp.id = mj.tapepool
+                                      LEFT OUTER JOIN migrationMount mm on mm.mountTransactionId = mj.mountTransactionId
+                                      LEFT OUTER JOIN TapePool tp on tp.id = mm.tapepool
+                                     WHERE cf.lastKnownFileName = :FILENAME");
+        $stmt->bind_param (":FILENAME", $filename);
+        $stmt->execute();
+        while ( my @row = $stmt->fetchrow_array() ) {
+            nullize_arrays_undefs ( \@row );
+            print  "    mj.id=$row[0], mj.status=$row[1] mjtp.name=$row[2] mm.id=$row[3] mm.status=$row[4] mm.vid=$row[5] tp.name=$row[6]\n";
+        }
+        # Finally dump the recall-related into
+        $stmt = $dbh -> prepare ("SELECT rj.id, rj.status, rj.vid, rj.fseq, rj.nbmounts, rj.nbretrieswithinmount, rm.status
+                                      FROM castorfile cf
+                                      INNER JOIN recallJob rj on rj.castorfile = cf.id
+                                      LEFT OUTER JOIN recallMount rm on rm.vid = rj.vid
+                                     WHERE cf.lastKnownFileName = :FILENAME");
+        $stmt->bind_param (":FILENAME", $filename);
+        $stmt->execute();
+        while ( my @row = $stmt->fetchrow_array() ) {
+            nullize_arrays_undefs ( \@row );
+            print  "    rj.id=$row[0], rj.status=$row[1] rj.vid=$row[2] rj.nbmounts=$row[3] rj.nbretrieswithinmount=$row[4] rm.status=$row[5]\n";
+        }
+    } elsif ( $schemaversion =~ /^2_1_12/ ) {
         $stmt = $dbh -> prepare ("SELECT mj.id, mj.status, mjtp.name, mm.id, mm.status, mm.vid, tp.name, seg.id, seg.status, seg.errorcode, seg.errmsgtxt, seg.tape 
                                       FROM castorfile cf
                                       INNER JOIN migrationJob mj on mj.castorfile = cf.id
@@ -2337,9 +2363,9 @@ sub configure_headnode_2111 ( )
     # Fill database with the standard set-up for a dev-box
     print `nslistclass | grep NAME | awk '{print \$2}' | xargs -i enterFileClass --Name {} --GetFromCns`;
     
-    print `enterSvcClass --Name default --DiskPools default --DefaultFileSize 10485760 --FailJobsWhenNoSpace yes --NbDrives 1 --TapePool stager_dev03_3 --MigratorPolicy defaultMigrationPolicy --StreamPolicy defaultStreamPolicy`;
-    print `enterSvcClass --Name dev --DiskPools extra --DefaultFileSize 10485760 --FailJobsWhenNoSpace yes`;
-    print `enterSvcClass --Name diskonly --DiskPools extra --ForcedFileClass temp --DefaultFileSize 10485760 --Disk1Behavior yes --FailJobsWhenNoSpace yes`;
+ print `enterSvcClass --Name default --DiskPools default --DefaultFileSize 10485760 --FailJobsWhenNoSpace yes --NbDrives 1 --TapePool stager_dev03_3 --MigratorPolicy defaultMigrationPolicy --StreamPolicy defaultStreamPolicy --gcpolicy default`;
+    print `enterSvcClass --Name dev --DiskPools extra --DefaultFileSize 10485760 --FailJobsWhenNoSpace yes  --gcpolicy default`;
+    print `enterSvcClass --Name diskonly --DiskPools extra --ForcedFileClass temp --DefaultFileSize 10485760 --Disk1Behavior yes --FailJobsWhenNoSpace yes  --gcpolicy default`;
     
     print `rmAdminNode -r -R -n $diskServers[0]`;
     print `rmAdminNode -r -R -n $diskServers[1]`;
@@ -2434,11 +2460,11 @@ sub configure_headnode_2113 ( )
     print `enterdiskpool default`;
     print `enterdiskpool extra`;
     
-    print `entersvcclass --diskpools default --defaultfilesize 10485760 --failjobswhennospace yes default`;
+    print `entersvcclass --diskpools default --defaultfilesize 10485760 --failjobswhennospace yes  --gcpolicy default default`;
     my $main_tapepool=`vmgrlistpool  | head -1  | awk '{print \$1}' | tr -d "\\n"`;
     print `entertapepool --nbdrives 2 --minamountdata 0 --minnbfiles 0 --maxfileage 0 $main_tapepool`;
-    print `entersvcclass --diskpools extra --defaultfilesize 10485760 --failjobswhennospace yes dev`;
-    print `entersvcclass --diskpools extra --forcedfileclass temp --defaultfilesize 10485760 --disk1behavior yes --failjobswhennospace yes diskonly`;
+    print `entersvcclass --diskpools extra --defaultfilesize 10485760 --failjobswhennospace yes  --gcpolicy default dev`;
+    print `entersvcclass --diskpools extra --forcedfileclass temp --defaultfilesize 10485760 --disk1behavior yes --failjobswhennospace yes  --gcpolicy default diskonly`;
     
     print `rmAdminNode -r -R -n $diskServers[0]`;
     print `rmAdminNode -r -R -n $diskServers[1]`;
