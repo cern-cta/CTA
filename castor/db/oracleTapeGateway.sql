@@ -1325,9 +1325,20 @@ BEGIN
     -- Process the results
     FOR i IN varNSFileIds.FIRST .. varNSFileIds.LAST LOOP
       -- First log on behalf of the NS
+      -- We classify the log level based on the error code here.
+      -- Current error codes are:
+      --   ENOENT, EACCES, EBUSY, EEXIST, EISDIR, EINVAL, SEINTERNAL, SECHECKSUM, ENSFILECHG, ENSNOSEG
+      --   ENSTOOMANYSEGS, ENSOVERWHENREP, ERTWRONGSIZE, ESTNOSEGFOUND
+      -- default level is ERROR. Some cases can be demoted to warning when it's a normal case
+      -- (like file deleted by user in the mean time).
       INSERT INTO DLFLogs (timeinfo, uuid, priority, msg, fileId, nsHost, source, params)
         VALUES (varNSTimeinfos(i), varReqid,
-                CASE varNSErrorCodes(i) WHEN 0 THEN dlf.LVL_SYSTEM ELSE dlf.LVL_ERROR END,
+                CASE varNSErrorCodes(i) 
+                  WHEN                  0 THEN dlf.LVL_SYSTEM
+                  WHEN  serrno.ENOENT     THEN dlf.LVL_WARNING
+                  WHEN  serrno.ENSFILECHG THEN dlf.LVL_WARNING
+                  ELSE                         dlf.LVL_ERROR 
+                END,
                 varNSMsgs(i), varNSFileIds(i), varNsHost, 'nsd', varNSParams(i));
       
       -- Now skip pure log entries and process file by file, depending on the result
