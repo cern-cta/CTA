@@ -566,16 +566,17 @@ function _drawSumChart(metric_container, from, to, format_type) {
                                     if (drilldown) { // drill down
                                         this.series.xAxis.setCategories(drilldown.categories);
                                         while(chart.series.length)
-                                            chart.series[0].remove();
+                                            chart.series[0].remove(false);
                                         chart.addSeries({name : drilldown.name,
                                                          data : drilldown.data,
                                                          color : drilldown.color});
                                      } else { // restore
                                          chart.xAxis[0].setCategories(categories_drilldown);
                                         while(chart.series.length)
-                                            chart.series[0].remove();
+                                            chart.series[0].remove(false);
                                         for(i=0;i<=data_drilldown.length;i++)
-                                            chart.addSeries(data_drilldown[i]);
+                                            chart.addSeries(data_drilldown[i], false);
+                                         chart.redraw();
                                      }
                                 }
                             }
