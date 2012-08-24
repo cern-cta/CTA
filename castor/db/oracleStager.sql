@@ -709,11 +709,14 @@ BEGIN
     firstOne := TRUE;
     commitWork := FALSE;
   END LOOP;
-  -- This procedure should really be called 'terminateSubReqAndArchiveRequest', and this is
-  -- why we call it here: we need to trigger the logic to mark the whole request and all of its subrequests
-  -- as ARCHIVED, so that they are cleaned up afterwards. Note that this is effectively
-  -- a no-op for the status change of the SubRequest pointed by srsToUpdate(1).
-  archiveSubReq(srsToUpdate(1), dconst.SUBREQUEST_FAILED_FINISHED);
+  -- avoid error if there is nothing to do actually
+  IF srsToUpdate.COUNT > 0 THEN
+    -- This procedure should really be called 'terminateSubReqAndArchiveRequest', and this is
+    -- why we call it here: we need to trigger the logic to mark the whole request and all of its subrequests
+    -- as ARCHIVED, so that they are cleaned up afterwards. Note that this is effectively
+    -- a no-op for the status change of the SubRequest pointed by srsToUpdate(1).
+    archiveSubReq(srsToUpdate(1), dconst.SUBREQUEST_FAILED_FINISHED);
+  END IF;
   COMMIT;
 END;
 /
