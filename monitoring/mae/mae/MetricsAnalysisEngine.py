@@ -1408,7 +1408,7 @@ class Bins:
             # but not more than a given percentage of the current bin duration the default is 10%.
             
             if self.handle_unordered == 'percent_threshold':
-                if (abs(epoch_delta) <= (binDuration/10)):
+                if (abs(epoch_delta) <= (self.binDuration/10)):
                     pass
                 else:
                     return
