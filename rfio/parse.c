@@ -229,13 +229,15 @@ static int rfio_parseln_old(char    *name,
             *host,*path);
       return(0);
     }
-    int sav_serrno = serrno;
-    cp2 = getconfent("RFIO","NFS_ROOT", 0);
-    if (cp2 == NULL) {
-      TRACE(3,"rfio","rfio_parseln() Using site-wide NFS ROOT \"/shift\"");
-      cp2 = "/shift";
-      /* Restore serrno */
-      serrno = sav_serrno;
+    {
+      const int sav_serrno = serrno;
+      cp2 = getconfent("RFIO","NFS_ROOT", 0);
+      if (cp2 == NULL) {
+        TRACE(3,"rfio","rfio_parseln() Using site-wide NFS ROOT \"/shift\"");
+        cp2 = "/shift";
+        /* Restore serrno */
+        serrno = sav_serrno;
+      }
     }
     /* compare the 2 strings        */
     for (i=0;i< (int)strlen(cp2);i++)     {
