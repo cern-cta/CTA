@@ -1030,37 +1030,43 @@ int smcmount(char *vid,
              int side,
              char *loader)
 {
-	int c;
 	struct smc_element_info element_info;
 	char func[16];
-	char *msgaddr;
-	char *p;
-	struct smc_status smc_status;
 
 	ENTRY (smcmount);
+
+	memset(&element_info, '\0', sizeof(element_info));
         
-	if ((c = opensmc (loader)) != 0)
-		RETURN (c);
+	{
+		const int opensmc_rc = opensmc (loader);
+		if (0 != opensmc_rc) {
+			RETURN (opensmc_rc);
+		}
+	}
+
 	if (rmc_host) {
 
-		c = rmc_mount (rmc_host, smc_ldr, vid, side, drvord);
+		const int rmc_mount_rc = rmc_mount (rmc_host, smc_ldr, vid, side, drvord);
+		const int rmc_mount_serrno = serrno;
 
-                if (c == EBUSY) {
+		if (0 == rmc_mount_rc) {
+			RETURN (0);
+                } else if (EBUSY == rmc_mount_rc) {
 
                         /* this will never happen, since c == -1 on error     */
                         RETURN(RBT_FAST_RETRY);
 
-                } else if ((-1 == c) && ((serrno - ERMCRBTERR) == EBUSY)) {
+                } else if ((-1 == rmc_mount_rc) && ((rmc_mount_serrno - ERMCRBTERR) == EBUSY)) {
 
                         /* 
                            EBUSY: tape may be mounted none the less, so check 
                            that and repeat mount only if appropriate          
                         */
 
-                        int mounted, RETRIES = 3, retryCtr = 0;
-                        int save_serrno = serrno; 
+                        const int RETRIES = 3;
+			int retryCtr = 0;
  
-                        p = strrchr (rmc_errbuf, ':');
+                        const char *const p = strrchr (rmc_errbuf, ':');
 			sprintf (msg, TP041, "mount", vid, cur_unm,
                                  p ? p + 2 : rmc_errbuf);
                         tplogit (func, "%s", msg);
@@ -1074,7 +1080,7 @@ int smcmount(char *vid,
                         while (retryCtr < RETRIES) {
                                 
                                 /* check if the tape is mounted or not */
-                                mounted = istapemounted( vid, drvord, smc_ldr );
+                                const int mounted = istapemounted( vid, drvord, smc_ldr );
                                 if (0 == mounted) {
 
                                         tplogit (func, "Encountered EBUSY. Tape not mounted. Retry Mount.\n" );
@@ -1103,9 +1109,13 @@ int smcmount(char *vid,
                         }
 
                         /* no info available, return the original problem */
-                        c = (save_serrno == SECOMERR) ? RBT_FAST_RETRY : save_serrno - ERMCRBTERR;
+			if (SECOMERR == rmc_mount_serrno) {
+				RETURN (RBT_FAST_RETRY);
+			} else {
+				RETURN (rmc_mount_serrno - ERMCRBTERR);
+			}
 
-                } else if ((-1 == c) && ((serrno - ERMCRBTERR) == 7)) {
+                } else if ((-1 == rmc_mount_rc) && ((rmc_mount_serrno - ERMCRBTERR) == 7)) {
                         
                         /* 
                            'Volume in use': this may happen when we try to 
@@ -1120,10 +1130,10 @@ int smcmount(char *vid,
                            for a retry.                                           
                         */
                         
-                        int mounted, RETRIES = 3, retryCtr = 0;
-                        int save_serrno = serrno; 
+                        const int RETRIES = 3;
+			int retryCtr = 0;
 
-                        p = strrchr (rmc_errbuf, ':');
+                        const char *const p = strrchr (rmc_errbuf, ':');
 			sprintf (msg, TP041, "mount", vid, cur_unm,
                                  p ? p + 2 : rmc_errbuf);
                         tplogit (func, "%s", msg);
@@ -1137,7 +1147,7 @@ int smcmount(char *vid,
                         while (retryCtr < RETRIES) {
                                 
                                 /* check if the tape is mounted or not */
-                                mounted = istapemounted( vid, drvord, smc_ldr );
+                                const int mounted = istapemounted( vid, drvord, smc_ldr );
                                 if (0 == mounted) {
 
                                         tplogit (func, "Encountered 'Volume in Use'. Tape not mounted locally. Return Error.\n" );
@@ -1145,8 +1155,11 @@ int smcmount(char *vid,
                                                             "func"   , TL_MSG_PARAM_STR, func,
                                                             "Message", TL_MSG_PARAM_STR, "Encountered EBUSY. Tape not mounted locally. Return Error." );
 
-                                        c = (save_serrno == SECOMERR) ? RBT_FAST_RETRY : save_serrno - ERMCRBTERR;
-                                        RETURN (c);
+					if (SECOMERR == rmc_mount_serrno) {
+						RETURN (RBT_FAST_RETRY);
+					} else {
+						RETURN (rmc_mount_serrno - ERMCRBTERR);
+					}
 
                                 } else if (1 == mounted) {
                                 
@@ -1168,22 +1181,26 @@ int smcmount(char *vid,
                         }
 
                         /* no info available, return the original problem */
-                        c = (save_serrno == SECOMERR) ? RBT_FAST_RETRY : save_serrno - ERMCRBTERR;
+			if(SECOMERR == rmc_mount_serrno) {
+				RETURN (RBT_FAST_RETRY);
+			} else {
+				RETURN (rmc_mount_serrno - ERMCRBTERR);
+			}
 
-                } else if (c) {
+                } else {
 
                         /* log information about the error condition         */
-                        if (serrno != SECOMERR) {
+			if (SECOMERR != rmc_mount_serrno) {
                                 tplogit (func, "Error in smcmount: c=%d, serrno=%d, (serrno-ERMCRBTERR)=%d\n", 
-                                         c, serrno, (serrno - ERMCRBTERR) );                        
+                                         rmc_mount_rc, rmc_mount_serrno, (rmc_mount_serrno - ERMCRBTERR) );                        
                                 tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
                                                     "func"               , TL_MSG_PARAM_STR, func,
                                                     "Message"            , TL_MSG_PARAM_STR, "Error in smcmount",
-                                                    "c"                  , TL_MSG_PARAM_INT, c, 
-                                                    "serrno"             , TL_MSG_PARAM_INT, serrno, 
-                                                    "(serrno-ERMCRBTERR)", TL_MSG_PARAM_INT, (serrno - ERMCRBTERR) );
+                                                    "c"                  , TL_MSG_PARAM_INT, rmc_mount_rc, 
+                                                    "serrno"             , TL_MSG_PARAM_INT, rmc_mount_serrno, 
+                                                    "(serrno-ERMCRBTERR)", TL_MSG_PARAM_INT, (rmc_mount_serrno - ERMCRBTERR) );
                         }                        
-                        p = strrchr (rmc_errbuf, ':');
+                        const char *const p = strrchr (rmc_errbuf, ':');
 			sprintf (msg, TP041, "mount", vid, cur_unm,
                                  p ? p + 2 : rmc_errbuf);
                         /* Just send message to operator after two retries*/ 
@@ -1194,46 +1211,56 @@ int smcmount(char *vid,
                                             "cur_vid", TL_MSG_PARAM_STR, vid,
                                             "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                             "Message", TL_MSG_PARAM_STR, p ? p + 2 : rmc_errbuf );
-                        c = (serrno == SECOMERR) ? RBT_FAST_RETRY : serrno - ERMCRBTERR;
+
+			if (SECOMERR == rmc_mount_serrno) {
+				RETURN (RBT_FAST_RETRY);
+			} else {
+				RETURN (rmc_mount_serrno - ERMCRBTERR);
+			}
                 }
-                RETURN (c);
 	}
-	if ((c = smc_find_cartridge (smc_fd, smc_ldr, vid, 0, 0, 1, &element_info)) < 0) {
-		c = smc_lasterror (&smc_status, &msgaddr);
-                if (c == EBUSY) {
-                        usrmsg (func, "%s\n", msgaddr);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
-                                            "func",    TL_MSG_PARAM_STR, func,
-                                            "msgaddr", TL_MSG_PARAM_STR, msgaddr ); 
-                        RETURN(RBT_FAST_RETRY);
-		} else if (smc_status.rc == -1 || smc_status.rc == -2) {
-			usrmsg (func, "%s\n", msgaddr);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
-                                            "func",    TL_MSG_PARAM_STR, func,
-                                            "msgaddr", TL_MSG_PARAM_STR, msgaddr ); 
-		} else {
-			p = strrchr (msgaddr, ':');
-			usrmsg (func, TP042, smc_ldr, "find_cartridge",
-				p ? p + 2 : msgaddr);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 5,
-                                            "func",    TL_MSG_PARAM_STR, func,
-                                            "smc_ldr", TL_MSG_PARAM_STR, smc_ldr,
-                                            "Message", TL_MSG_PARAM_STR, "find_cartridge", 
-                                            "Error",   TL_MSG_PARAM_STR, p ? p + 2 : msgaddr,
-                                            "Drive",   TL_MSG_PARAM_STR, cur_unm );
+	{
+		const int smc_find_cartridge_rc = smc_find_cartridge (smc_fd, smc_ldr, vid, 0, 0, 1, &element_info);
+		if (0 > smc_find_cartridge_rc) {
+			struct smc_status smc_status;
+			char *msgaddr = NULL;
+			memset(&smc_status, '\0', sizeof(smc_status));
+			const int smc_error = smc_lasterror (&smc_status, &msgaddr);
+			if (EBUSY == smc_error) {
+                        	usrmsg (func, "%s\n", msgaddr);
+                        	tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                                            	"func",    TL_MSG_PARAM_STR, func,
+                                            	"msgaddr", TL_MSG_PARAM_STR, msgaddr ); 
+                        	RETURN(RBT_FAST_RETRY);
+			} else if (smc_status.rc == -1 || smc_status.rc == -2) {
+				usrmsg (func, "%s\n", msgaddr);
+                        	tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                                            	"func",    TL_MSG_PARAM_STR, func,
+                                            	"msgaddr", TL_MSG_PARAM_STR, msgaddr ); 
+			} else {
+				const char *const p = strrchr (msgaddr, ':');
+				usrmsg (func, TP042, smc_ldr, "find_cartridge",
+					p ? p + 2 : msgaddr);
+                        	tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 5,
+                                            	"func",    TL_MSG_PARAM_STR, func,
+                                            	"smc_ldr", TL_MSG_PARAM_STR, smc_ldr,
+                                            	"Message", TL_MSG_PARAM_STR, "find_cartridge", 
+                                            	"Error",   TL_MSG_PARAM_STR, p ? p + 2 : msgaddr,
+                                            	"Drive",   TL_MSG_PARAM_STR, cur_unm );
+			}
+			RETURN (smc_error);
 		}
-		RETURN (c);
-	}
-	if (c == 0) {
-		sprintf (msg, TP041, "mount", vid, cur_unm, "volume not in library");
-		usrmsg (func, "%s\n", msg);
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+		if (0 == smc_find_cartridge_rc) {
+			sprintf (msg, TP041, "mount", vid, cur_unm, "volume not in library");
+			usrmsg (func, "%s\n", msg);
+                	tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
                                     "func",    TL_MSG_PARAM_STR, func,
                                     "action",  TL_MSG_PARAM_STR, "mount",
                                     "cur_vid", TL_MSG_PARAM_STR, vid,
                                     "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                     "Message", TL_MSG_PARAM_STR, "volume not in library" );
-		RETURN (RBT_NORETRY);
+			RETURN (RBT_NORETRY);
+		}
 	}
 	if (element_info.element_type != 2) {
 		sprintf (msg, TP041, "mount", vid, cur_unm, "volume in use");
@@ -1246,10 +1273,12 @@ int smcmount(char *vid,
                                     "Message", TL_MSG_PARAM_STR, "volume in use" );
 		RETURN (RBT_SLOW_RETRY);
 	}
-	if ((c = smc_move_medium (smc_fd, smc_ldr, element_info.element_address,
-	    robot_info.device_start+drvord, side)) < 0) {
-		c = smc_lasterror (&smc_status, &msgaddr);
-        if (c == EBUSY) {
+	if (0 > smc_move_medium (smc_fd, smc_ldr, element_info.element_address, robot_info.device_start+drvord, side)) {
+		struct smc_status smc_status;
+		char *msgaddr = NULL;
+		memset(&smc_status, '\0', sizeof(smc_status));
+		const int smc_error = smc_lasterror (&smc_status, &msgaddr);
+        	if (EBUSY == smc_error) {
 			usrmsg (func, "%s\n", msgaddr);
                         tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
                                         "func",    TL_MSG_PARAM_STR, func,
@@ -1261,7 +1290,7 @@ int smcmount(char *vid,
                                             "func",    TL_MSG_PARAM_STR, func,
                                             "msgaddr", TL_MSG_PARAM_STR, msgaddr ); 
 		} else {
-			p = strrchr (msgaddr, ':');
+			const char *const p = strrchr (msgaddr, ':');
 			sprintf (msg, TP041, "mount", vid, cur_unm,
 				p ? p + 2 : msgaddr);
 			usrmsg (func, "%s\n", msg);
@@ -1272,7 +1301,7 @@ int smcmount(char *vid,
                                             "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                             "Message", TL_MSG_PARAM_STR, p ? p + 2 : msgaddr );
                 }
-		RETURN (c);
+		RETURN (smc_error);
 	}
 	RETURN (0);
 }
@@ -1381,6 +1410,7 @@ int smcdismount(char *vid,
 	if (0 > smc_read_elem_status (smc_fd, smc_ldr, 4, robot_info.device_start+drvord, 1, &element_info)) {
 		char *msgaddr = NULL;
 		struct smc_status smc_status;
+		memset(&smc_status, '\0', sizeof(smc_status));
 		const int smc_error = smc_lasterror (&smc_status, &msgaddr);
                 if (EBUSY == smc_error) {
                         usrmsg (func, "%s\n", msgaddr);
@@ -1437,6 +1467,7 @@ int smcdismount(char *vid,
 	if (0 > smc_move_medium (smc_fd, smc_ldr, robot_info.device_start+drvord, element_info.source_address, (element_info.flags & 0x40) ? 1 : 0)) {
 		char *msgaddr = NULL;
 		struct smc_status smc_status;
+		memset(&smc_status, '\0', sizeof(smc_status));
 		const int smc_error = smc_lasterror (&smc_status, &msgaddr);
                 if (EBUSY == smc_error) {
 			usrmsg (func, "%s\n", msgaddr);
