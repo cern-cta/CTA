@@ -1,3 +1,27 @@
+castor (2.1.13-4) unstable; urgency=low
+
+  * Internal release
+
+ -- Steven Murray <steven.murray@cern.ch> Tue, 28 Aug 14:52:34 +0100
+
+castor (2.1.13-3) unstable; urgency=low
+
+  * Second 2.1.13 production release
+
+ -- Sebastien Ponce <sebastien.ponce@cern.ch>  Tue, 21 Aug 2012 11:32:00 +0100
+
+castor (2.1.13-2) unstable; urgency=low
+
+  * Internal release
+
+ -- Steven Murray <steven.murray@cern.ch> Wed, 9 Aug 10:00:00 +0100
+
+castor (2.1.13-1) unstable; urgency=low
+
+  * Internal release
+
+ -- Steven Murray <steven.murray@cern.ch> Wed, 8 Aug 10:09:28 +0100
+
 castor (2.1.13-0) unstable; urgency=low
 
   * First 2.1.13 production release
