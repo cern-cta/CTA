@@ -40,6 +40,8 @@
 #include "castor/tape/tpcp/Helper.hpp"
 #include "castor/tape/tpcp/WriteTpCommand.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "h/Ctape_constants.h"
+#include "h/Cupv_api.h"
 #include "h/rfio_api.h"
 
 #include <errno.h>
@@ -79,15 +81,14 @@ castor::tape::tpcp::WriteTpCommand::~WriteTpCommand() throw() {
 //------------------------------------------------------------------------------
 // usage
 //------------------------------------------------------------------------------
-void castor::tape::tpcp::WriteTpCommand::usage(std::ostream &os) throw() {
+void castor::tape::tpcp::WriteTpCommand::usage(std::ostream &os) const throw() {
   os <<
     "Usage:\n"
-    "\t" << m_programName << " VID POSITION [OPTIONS] [FILE]...\n"
+    "\t" << m_programName << " VID [OPTIONS] [FILE]...\n"
     "\n"
     "Where:\n"
     "\n"
     "\tVID      The VID of the tape to be written to.\n"
-    "\tPOSITION A tape-file sequence-number greater than 0.\n"
     "\tFILE     A filename in RFIO notation [host:]local_path.\n"
     "\n"
     "Options:\n"
@@ -113,8 +114,6 @@ void castor::tape::tpcp::WriteTpCommand::usage(std::ostream &os) throw() {
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::WriteTpCommand::parseCommandLine(const int argc,
   char **argv) throw(castor::exception::Exception) {
-
-  m_cmdLine.action = Action::write;
 
   static struct option longopts[] = {
     {"debug"   , 0, NULL, 'd'},
@@ -202,23 +201,12 @@ void castor::tape::tpcp::WriteTpCommand::parseCommandLine(const int argc,
   if(nbArgs < 1) {
     castor::exception::InvalidArgument ex;
 
-    ex.getMessage() << "\tThe VID and POSITION have not been specified";
+    ex.getMessage() << "\tThe VID has not been specified";
 
     throw ex;
   }
 
-  // Check the POSITION has been specified
-  if(nbArgs < 2) {
-    castor::exception::InvalidArgument ex;
-
-    ex.getMessage() <<
-      "\tThe POSITION has not been specified";
-
-    throw ex;
-  }
-
-  // -2 = -1 for the VID and -1 for the POSITION
-  const int nbFilenamesOnCommandLine = nbArgs - 2;
+  const int nbFilenamesOnCommandLine = nbArgs - 1;
 
   // Filenames on the command-line and the "-f, --filelist" option are mutually
   // exclusive
@@ -253,40 +241,203 @@ void castor::tape::tpcp::WriteTpCommand::parseCommandLine(const int argc,
       ": " << ex.getMessage().str());
   }
 
-  // Move on to the next command-line argument
+  // Move on to the next command-line argument.  There may not actually be one because
+  // the user may have specified the list of disk source files using the -f option
+  // instead of listing them at the end of the command-line arguments.
   optind++;
 
-  // Parse the POSITION command-line argument
-  {
-    std::string tmp(argv[optind]);
-    utils::toUpper(tmp);
-
-    if(!utils::isValidUInt(argv[optind])) {
-      castor::exception::InvalidArgument ex;
-      ex.getMessage() <<
-        "\tSecond command-line argument must be a valid unsigned-integer\n"
-        "\tgreater than 0: Actual=\"" << argv[optind] << "\"";
-      throw ex;
-    }
-
-    m_cmdLine.tapeFseqPosition = atoi(tmp.c_str());
-
-    if(0 == m_cmdLine.tapeFseqPosition) {
-      castor::exception::InvalidArgument ex;
-      ex.getMessage() <<
-        "\tSecond command-line argument must be a valid unsigned-integer\n"
-        "\tgreater than 0: Actual=" << argv[optind];
-      throw ex;
-    }
-  }
-
-  // Move on to the next command-line argument (there may not be one)
-  optind++;
-
-  // Parse any filenames on the command-line
+  // Parse any filenames at the of the command-line
   while(optind < argc) {
     m_cmdLine.filenames.push_back(argv[optind++]);
   }
+}
+
+
+//------------------------------------------------------------------------------
+// checkAccessToDisk
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::WriteTpCommand::checkAccessToDisk()
+  const throw (castor::exception::Exception) {
+  // Check that there is at least one file to be migrated
+  if(m_filenames.size() == 0) {
+    castor::exception::InvalidArgument ex;
+
+    ex.getMessage()
+      << "There must be at least one file to be migrated";
+
+    throw ex;
+  }
+
+  // RFIO stat the first file to be migrated in order to check the RFIO
+  // daemon is running
+  {
+    FilenameList::const_iterator itor = m_filenames.begin();
+
+    // Sanity check - there should be at least one file to be migrated
+    if(itor == m_filenames.end()) {
+      TAPE_THROW_EX(exception::Internal,
+        ": List of filenames to be processed is unexpectedly empty");
+    }
+
+    const std::string &filename = *itor;
+
+    // Command-line user feedback
+    std::ostream &os = std::cout;
+    time_t       now = time(NULL);
+
+    utils::writeTime(os, now, TIMEFORMAT);
+    os << " RFIO stat the first file \""
+       << filename << "\"" << std::endl;
+
+    // Perform the RFIO stat
+    struct stat64 statBuf;
+    rfioStat(filename.c_str(), statBuf);
+
+    // Test if the filename corrispond to a directory
+    if( (statBuf.st_mode & S_IFMT) == S_IFDIR ){
+      castor::exception::Exception ex(ECANCELED);
+      ex.getMessage() <<
+        ": Invalid RFIO filename syntax"
+        ": Filename must identify a regular file"
+        ": filename=\"" << filename.c_str() <<"\"";
+
+      throw ex;
+    }
+
+    // Test if the filesize is greather than zero
+    if(statBuf.st_size == 0){
+      castor::exception::Exception ex(ECANCELED);
+      ex.getMessage() <<
+        ": Invalid file size: File size must be greater than zero"
+        ": filename=\"" << filename.c_str() <<"\"";
+
+      throw ex;
+    }
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// checkAccessToTape
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::WriteTpCommand::checkAccessToTape()
+  const throw(castor::exception::Exception) {
+  checkUserHasTapeWritePermission(m_vmgrTapeInfo.poolname, m_userId,
+    m_groupId, m_hostname);
+
+  if(m_vmgrTapeInfo.status & DISABLED ||
+    m_vmgrTapeInfo.status & EXPORTED ||
+    m_vmgrTapeInfo.status & ARCHIVED ||
+    m_vmgrTapeInfo.status & TAPE_RDONLY) {
+    castor::exception::Exception ex(ECANCELED);
+    std::ostream &os = ex.getMessage();
+    os <<
+      "Tape is not available for writing"
+      ": Tape is";
+    if(m_vmgrTapeInfo.status & DISABLED) os << " DISABLED";
+    if(m_vmgrTapeInfo.status & EXPORTED) os << " EXPORTED";
+    if(m_vmgrTapeInfo.status & ARCHIVED) os << " ARCHIVED";
+    if(m_vmgrTapeInfo.status & TAPE_RDONLY) os << " TAPE_RDONLY";
+
+    throw ex;
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// checkUserHasTapeWritePermission
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::WriteTpCommand::checkUserHasTapeWritePermission(
+  const char *const poolName, const uid_t userId, const gid_t groupId,
+  const char *const sourceHost)
+  const throw(castor::exception::PermissionDenied) {
+
+  // Get the owner of the pool by querying the VMGR
+  uid_t poolUserId  = 0;
+  gid_t poolGroupId = 0;
+  {
+    const int rc = vmgr_querypool(poolName, &poolUserId,
+      &poolGroupId, NULL, NULL);
+    const int saved_serrno = serrno;
+
+    if(rc < 0) {
+      castor::exception::Exception ex(saved_serrno);
+
+      ex.getMessage() <<
+        "Failed to query tape pool"
+        ": poolName=" << poolName <<
+        ": " << sstrerror(saved_serrno);
+    }
+  }
+
+  const bool userOwnsPool = userId == poolUserId && groupId == poolGroupId;
+
+  if(userOwnsPool) {
+    // Command-line user feedback
+    std::ostream &os = std::cout;
+    time_t       now = time(NULL);
+
+    utils::writeTime(os, now, TIMEFORMAT);
+    os <<
+      " User can write to tape: User owns tape pool \"" << poolName << "\"" <<
+      std::endl;
+  } else {
+
+    const bool userIsAdmin =
+      Cupv_check(userId, groupId, sourceHost, "TAPE_SERVERS",P_ADMIN) == 0 ||
+      Cupv_check(userId, groupId, sourceHost, NULL          ,P_ADMIN) == 0;
+
+    if(userIsAdmin) {
+      // Command-line user feedback
+      std::ostream &os = std::cout;
+      time_t       now = time(NULL);
+
+      utils::writeTime(os, now, TIMEFORMAT);
+      os <<
+        " User can write to tape: User has ADMIN privilege" << std::endl;
+    } else {
+      castor::exception::PermissionDenied ex;
+
+      ex.getMessage() <<
+        "User cannot write to tape"
+        ": User must own the \"" << poolName << "\" tape pool or "
+        "have the ADMIN privilege";
+
+      throw ex;
+    }
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// requestDriveFromVdqm
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::WriteTpCommand::requestDriveFromVdqm(
+  char *const tapeServer) throw(castor::exception::Exception) {
+  TpcpCommand::requestDriveFromVdqm(WRITE_ENABLE, tapeServer);
+}
+
+
+//------------------------------------------------------------------------------
+// sendVolumeToTapeBridge
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::WriteTpCommand::sendVolumeToTapeBridge(
+  const tapegateway::VolumeRequest &volumeRequest,
+  castor::io::AbstractTCPSocket    &connection)
+  const throw(castor::exception::Exception) {
+  castor::tape::tapegateway::Volume volumeMsg;
+  volumeMsg.setVid(m_vmgrTapeInfo.vid);
+  volumeMsg.setClientType(castor::tape::tapegateway::WRITE_TP);
+  volumeMsg.setMode(castor::tape::tapegateway::WRITE);
+  volumeMsg.setLabel(m_vmgrTapeInfo.lbltype);
+  volumeMsg.setMountTransactionId(m_volReqId);
+  volumeMsg.setAggregatorTransactionId(volumeRequest.aggregatorTransactionId());
+  volumeMsg.setDensity(m_vmgrTapeInfo.density);
+
+  // Send the volume message to the tapebridge
+  connection.sendObject(volumeMsg);
+
+  Helper::displaySentMsgIfDebug(volumeMsg, m_cmdLine.debugSet);
 }
 
 
@@ -296,7 +447,24 @@ void castor::tape::tpcp::WriteTpCommand::parseCommandLine(const int argc,
 void castor::tape::tpcp::WriteTpCommand::performTransfer()
   throw (castor::exception::Exception) {
 
-  m_nextTapeFseq = m_cmdLine.tapeFseqPosition;
+  std::ostream &os = std::cout;
+
+  // Query the VMGR for information about the tape again in order to get
+  // the latest number of files written to the tape
+  //
+  // Please note that the tapebridged daemon will check again that writetp is
+  // not overwriting any files written by the CASTOR stagers that succesfully
+  // updated the VMGR file counters
+  vmgrQueryTape();
+  m_nextTapeFseq = m_vmgrTapeInfo.nbfiles + 1;
+
+  {
+    time_t now = time(NULL);
+    utils::writeTime(os, now, TIMEFORMAT);
+  }
+  os << " Writing to tape " << m_cmdLine.vid <<
+    " starting at tape-file sequence-number " << m_nextTapeFseq << std::endl
+    << std::endl;
 
   // Spin in the wait for and dispatch message loop until there is no more work
   while(waitForAndDispatchMessage()) {
@@ -306,10 +474,10 @@ void castor::tape::tpcp::WriteTpCommand::performTransfer()
   const uint64_t nbMigrateRequests     = m_fileTransactionId - 1;
   const uint64_t nbIncompleteTransfers = m_pendingFileTransfers.size();
 
-  std::ostream &os = std::cout;
-
-  time_t now = time(NULL);
-  utils::writeTime(os, now, TIMEFORMAT);
+  {
+    time_t now = time(NULL);
+    utils::writeTime(os, now, TIMEFORMAT);
+  }
   os << " Finished writing to tape " << m_cmdLine.vid << std::endl
      << std::endl
      << "Number of files to be migrated   = " << m_filenames.size() << std::endl

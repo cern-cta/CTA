@@ -28,9 +28,12 @@
 #include "castor/tape/tapegateway/DumpParameters.hpp"
 #include "castor/tape/tapegateway/DumpParametersRequest.hpp"
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
+#include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/tpcp/Constants.hpp"
 #include "castor/tape/tpcp/DumpTpCommand.hpp"
 #include "castor/tape/tpcp/Helper.hpp"
+#include "h/Ctape_constants.h"
+#include "h/Cupv_api.h"
 
 #include <errno.h>
 #include <getopt.h>
@@ -67,7 +70,7 @@ castor::tape::tpcp::DumpTpCommand::~DumpTpCommand() throw() {
 //------------------------------------------------------------------------------
 // usage
 //------------------------------------------------------------------------------
-void castor::tape::tpcp::DumpTpCommand::usage(std::ostream &os) throw() {
+void castor::tape::tpcp::DumpTpCommand::usage(std::ostream &os) const throw() {
   os <<
     "Usage:\n"
     "\t" << m_programName << " VID [OPTIONS]\n"
@@ -110,8 +113,6 @@ void castor::tape::tpcp::DumpTpCommand::usage(std::ostream &os) throw() {
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::DumpTpCommand::parseCommandLine(const int argc,
   char **argv) throw(castor::exception::Exception) {
-
-  m_cmdLine.action = Action::dump;
 
   static struct option longopts[] = {
     {"debug"    , 0, NULL, 'd'},
@@ -337,6 +338,83 @@ void castor::tape::tpcp::DumpTpCommand::parseCommandLine(const int argc,
       " structures"
       ": " << ex.getMessage().str());
   }
+}
+
+
+//------------------------------------------------------------------------------
+// checkAccessToDisk
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::DumpTpCommand::checkAccessToDisk()
+  const throw (castor::exception::Exception) {
+  // There are no disk files when making a dump of tape, therefore throw no
+  // exceptions.
+}
+
+
+//------------------------------------------------------------------------------
+// checkAccessToTape
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::DumpTpCommand::checkAccessToTape()
+  const throw (castor::exception::Exception) {
+  const bool userIsTapeOperator =
+    Cupv_check(m_userId, m_groupId, m_hostname, "TAPE_SERVERS",
+      P_TAPE_OPERATOR) == 0 ||
+    Cupv_check(m_userId, m_groupId, m_hostname, NULL          ,
+      P_TAPE_OPERATOR) == 0;
+
+  // Only tape-operators can dump disabled tapes
+  if(m_vmgrTapeInfo.status & DISABLED) {
+    if(!userIsTapeOperator) {
+      castor::exception::Exception ex(ECANCELED);
+      std::ostream &os = ex.getMessage();
+      os << "Tape is not available for dumping"
+        ": Tape is DISABLED and user is not a tape-operator";
+      throw ex;
+    }
+  }
+
+  if(m_vmgrTapeInfo.status & EXPORTED ||
+     m_vmgrTapeInfo.status & ARCHIVED) {
+     castor::exception::Exception ex(ECANCELED);
+     std::ostream &os = ex.getMessage();
+     os << "Tape is not available for dumping"
+       ": Tape is";
+     if(m_vmgrTapeInfo.status & EXPORTED) os << " EXPORTED";
+     if(m_vmgrTapeInfo.status & ARCHIVED) os << " ARCHIVED";
+     throw ex;
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// requestDriveFromVdqm
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::DumpTpCommand::requestDriveFromVdqm(
+  char *const tapeServer) throw(castor::exception::Exception) {
+  TpcpCommand::requestDriveFromVdqm(WRITE_DISABLE, tapeServer);
+}
+
+
+//------------------------------------------------------------------------------
+// sendVolumeToTapeBridge
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::DumpTpCommand::sendVolumeToTapeBridge(
+  const tapegateway::VolumeRequest &volumeRequest,
+  castor::io::AbstractTCPSocket    &connection)
+  const throw(castor::exception::Exception) {
+  castor::tape::tapegateway::Volume volumeMsg;
+  volumeMsg.setVid(m_vmgrTapeInfo.vid);
+  volumeMsg.setClientType(castor::tape::tapegateway::DUMP_TP);
+  volumeMsg.setMode(castor::tape::tapegateway::DUMP);
+  volumeMsg.setLabel(m_vmgrTapeInfo.lbltype);
+  volumeMsg.setMountTransactionId(m_volReqId);
+  volumeMsg.setAggregatorTransactionId(volumeRequest.aggregatorTransactionId());
+  volumeMsg.setDensity(m_vmgrTapeInfo.density);
+
+  // Send the volume message to the tapebridge
+  connection.sendObject(volumeMsg);
+
+  Helper::displaySentMsgIfDebug(volumeMsg, m_cmdLine.debugSet);
 }
 
 

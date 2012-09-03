@@ -41,6 +41,8 @@
 #include "castor/tape/tpcp/ReadTpCommand.hpp"
 #include "castor/tape/tpcp/TapeFileSequenceParser.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "h/Ctape_constants.h"
+#include "h/Cupv_api.h"
 #include "h/rfio_api.h"
 
 #include <errno.h>
@@ -87,7 +89,7 @@ castor::tape::tpcp::ReadTpCommand::~ReadTpCommand() throw() {
 //------------------------------------------------------------------------------
 // usage
 //------------------------------------------------------------------------------
-void castor::tape::tpcp::ReadTpCommand::usage(std::ostream &os) throw() {
+void castor::tape::tpcp::ReadTpCommand::usage(std::ostream &os) const throw() {
   os <<
     "Usage:\n"
     "\t" << m_programName << " VID SEQUENCE [OPTIONS] [FILE]...\n"
@@ -123,8 +125,6 @@ void castor::tape::tpcp::ReadTpCommand::usage(std::ostream &os) throw() {
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::ReadTpCommand::parseCommandLine(const int argc,
   char **argv) throw(castor::exception::Exception) {
-
-  m_cmdLine.action = Action::read;
 
   static struct option longopts[] = {
     {"debug"   , 0, NULL, 'd'},
@@ -325,6 +325,144 @@ void castor::tape::tpcp::ReadTpCommand::parseCommandLine(const int argc,
 
 
 //------------------------------------------------------------------------------
+// checkAccessToDisk
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::ReadTpCommand::checkAccessToDisk()
+  const throw (castor::exception::Exception) {
+  // If there are no disk files then throw no exceptions and return
+  if(m_cmdLine.nodataSet) {
+    return;
+  }
+
+  // Determine the number of tape files based on the sequence of tape
+  // file sequence numbers they would produce
+  //
+  // Note that the number maybe infinite if the user has requested to read
+  // until the end of the tape
+  TapeFseqRangeListSequence seq(&m_cmdLine.tapeFseqRanges);
+
+  // Throw an exception if the number of tape files is finite and does not
+  // match the number of RFIO file names
+  if(seq.isFinite() && seq.totalSize() != m_filenames.size()) {
+    castor::exception::InvalidArgument ex;
+
+    ex.getMessage() <<
+      "The number of tape files does not match the number of RFIO "
+      "filenames"
+      ": Number of tape files=" << seq.totalSize() <<
+      " Number of RFIO filenames=" << m_filenames.size();
+
+    throw ex;
+  }
+
+  // RFIO stat the directory to which the first file to be recalled will be
+  // written, in order to check the RFIO daemon is running
+  {
+    FilenameList::const_iterator itor = m_filenames.begin();
+
+    // Sanity check - there should be at least one file to be migrated
+    if(itor == m_filenames.end()) {
+      TAPE_THROW_EX(exception::Internal,
+        ": List of filenames to be processed is unexpectedly empty");
+    }
+
+    const std::string &filename = *itor;
+    std::string filepath(filename.substr(0, filename.find_last_of("/")+1));
+
+    // Command-line user feedback
+    std::ostream &os = std::cout;
+    time_t       now = time(NULL);
+
+    utils::writeTime(os, now, TIMEFORMAT);
+    os << " RFIO stat the directory of the first file \""
+       << filepath << "\"" << std::endl;
+
+    // Perform the RFIO stat
+    struct stat64 statBuf;
+    rfioStat(filepath.c_str(), statBuf);
+
+    // Test if the filepath is not a directory
+    if( (statBuf.st_mode & S_IFMT) != S_IFDIR ){
+      castor::exception::Exception ex(ECANCELED);
+      ex.getMessage() <<
+        ": Invalid RFIO filename syntax"
+        ": Filepath must identify a regular directory"
+        ": filepath=\"" << filepath.c_str() <<"\"";
+
+      throw ex;
+    }
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// checkAccessToTape
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::ReadTpCommand::checkAccessToTape()
+  const throw (castor::exception::Exception) {
+  const bool userIsTapeOperator =
+    Cupv_check(m_userId, m_groupId, m_hostname, "TAPE_SERVERS",
+      P_TAPE_OPERATOR) == 0 ||
+    Cupv_check(m_userId, m_groupId, m_hostname, NULL          ,
+      P_TAPE_OPERATOR) == 0;
+
+  // Only tape-operators can read disabled tapes
+  if(m_vmgrTapeInfo.status & DISABLED) {
+    if(!userIsTapeOperator) {
+      castor::exception::Exception ex(ECANCELED);
+      std::ostream &os = ex.getMessage();
+      os << "Tape is not available for reading"
+        ": Tape is DISABLED and user is not a tape-operator";
+      throw ex;
+    }
+  }
+
+  if(m_vmgrTapeInfo.status & EXPORTED ||
+    m_vmgrTapeInfo.status & ARCHIVED) {
+    castor::exception::Exception ex(ECANCELED);
+    std::ostream &os = ex.getMessage();
+    os << "Tape is not available for reading"
+      ": Tape is";
+    if(m_vmgrTapeInfo.status & EXPORTED) os << " EXPORTED";
+    if(m_vmgrTapeInfo.status & ARCHIVED) os << " ARCHIVED";
+    throw ex;
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// requestDriveFromVdqm
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::ReadTpCommand::requestDriveFromVdqm(
+  char *const tapeServer) throw(castor::exception::Exception) {
+  TpcpCommand::requestDriveFromVdqm(WRITE_DISABLE, tapeServer);
+}
+
+
+//------------------------------------------------------------------------------
+// sendVolumeToTapeBridge
+//------------------------------------------------------------------------------
+void castor::tape::tpcp::ReadTpCommand::sendVolumeToTapeBridge(
+  const tapegateway::VolumeRequest &volumeRequest,
+  castor::io::AbstractTCPSocket    &connection)
+  const throw(castor::exception::Exception) {
+  castor::tape::tapegateway::Volume volumeMsg;
+  volumeMsg.setVid(m_vmgrTapeInfo.vid);
+  volumeMsg.setClientType(castor::tape::tapegateway::READ_TP);
+  volumeMsg.setMode(castor::tape::tapegateway::READ);
+  volumeMsg.setLabel(m_vmgrTapeInfo.lbltype);
+  volumeMsg.setMountTransactionId(m_volReqId);
+  volumeMsg.setAggregatorTransactionId(volumeRequest.aggregatorTransactionId());
+  volumeMsg.setDensity(m_vmgrTapeInfo.density);
+
+  // Send the volume message to the tapebridge
+  connection.sendObject(volumeMsg);
+
+  Helper::displaySentMsgIfDebug(volumeMsg, m_cmdLine.debugSet);
+}
+
+
+//------------------------------------------------------------------------------
 // performTransfer
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::ReadTpCommand::performTransfer()
@@ -427,16 +565,16 @@ bool castor::tape::tpcp::ReadTpCommand::handleFilesToRecallListRequest(
       filename = *(m_filenameItor++);
       std::string filepath(filename.substr(0, filename.find_last_of("/")+1)); 
 
-      // RFIO stat the directory to which the recalled file will be written to in
-      // order to check the RFIO daemon is running
+      // RFIO stat the directory to which the recalled file will be written to,
+      // in order to check the RFIO daemon is running
       try {
         struct stat64 statBuf;
         rfioStat(filepath.c_str(), statBuf);
       } catch(castor::exception::Exception &ex) {
 
         // Notify the tapebridge about the exception and rethrow
-        sendEndNotificationErrorReport(msg->aggregatorTransactionId(), ex.code(),
-          ex.getMessage().str(), sock);
+        sendEndNotificationErrorReport(msg->aggregatorTransactionId(),
+          ex.code(), ex.getMessage().str(), sock);
         throw(ex);
       }
     }

@@ -25,7 +25,6 @@
 #ifndef CASTOR_TAPE_TPCP_STREAMOPERATORS_HPP
 #define CASTOR_TAPE_TPCP_STREAMOPERATORS_HPP 1
 
-#include "castor/tape/tpcp/Action.hpp"
 #include "castor/tape/tpcp/FilenameList.hpp"
 #include "castor/tape/tpcp/ParsedCommandLine.hpp"
 #include "castor/tape/tpcp/TapeFseqRange.hpp"
@@ -34,12 +33,6 @@
 
 #include <ostream>
 
-
-/**
- * ostream << operator for castor::tape::tpcp::Action
- */
-std::ostream &operator<<(std::ostream &os,
-  const castor::tape::tpcp::Action &value);
 
 /**
  * ostream << operator for castor::tape::tpcp::FilenameList

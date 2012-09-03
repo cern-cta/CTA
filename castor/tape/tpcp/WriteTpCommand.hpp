@@ -56,7 +56,7 @@ protected:
    *
    * @param os Output stream to be written to.
    */
-  void usage(std::ostream &os) throw();
+  void usage(std::ostream &os) const throw();
 
   /**
    * Parses the specified command-line arguments.
@@ -66,6 +66,45 @@ protected:
    */
   void parseCommandLine(const int argc, char **argv)
     throw(castor::exception::Exception);
+
+  /**
+   * Checks the disk files can be accessed.
+   *
+   * @throw A castor::exception::Exception exception if the disk files cannot
+   *        be accessed.
+   */
+  void checkAccessToDisk() const throw(castor::exception::Exception);
+
+  /**
+   * Checks the tape can be accessed.
+   *
+   * @throw A castor::exception::Exception exception if the tape cannot be
+   *        accessed.
+   */
+  void checkAccessToTape() const throw(castor::exception::Exception);
+
+  /**
+   * Request a drive connected to the specified tape-server from the VDQM.
+   *
+   * @param tapeServer If not NULL then this parameter specifies the tape
+   *                   server to be used, therefore overriding the drive
+   *                   scheduling of the VDQM.
+   */
+  void requestDriveFromVdqm(char *const tapeServer)
+    throw(castor::exception::Exception);
+
+  /**
+   * Sends the volume message to the tapebridged daemon.
+   *
+   * @param volumeRequest The volume rerquest message received from the
+   *                      tapegatewayd daemon.
+   * @param connection    The already open connection to the tapebridged daemon
+   *                      over which the volume message should be sent.
+   */
+  void sendVolumeToTapeBridge(
+    const tapegateway::VolumeRequest &volumeRequest,
+    castor::io::AbstractTCPSocket    &connection)
+    const throw(castor::exception::Exception);
 
   /**
    * Performs the tape copy whether it be DUMP, READ or WRITE.
@@ -98,6 +137,20 @@ private:
    * The number of successfully transfered files.
    */
   uint64_t m_nbMigratedFiles;
+
+  /**
+   * Throws a permission denied exception if the user of the tpcp command
+   * does not have permission to write to tape.
+   *
+   * @param poolName   The name of the pool in which the tape to be written
+   *                   resides.
+   * @param userId     The ID of the user.
+   * @param groupId    The group ID of the user.
+   * @param sourceHost The CUPV source host.
+   */
+  void checkUserHasTapeWritePermission(const char *const poolName,
+    const uid_t userId, const gid_t groupId, const char *const sourceHost)
+    const throw (castor::exception::PermissionDenied);
 
   /**
    * FilesToMigrateListRequest message handler.

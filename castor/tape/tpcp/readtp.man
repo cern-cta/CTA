@@ -43,10 +43,12 @@ to the last file on the tape.
 A series of non\-consecutive ranges of files.
 .RE
 .P
-The filenames of the destination disk files can be specified using two
+The filenames of the destination disk files can be specified using three
 mutually-exclusive methods.  They can be entered on the command-line
-(\fB[FILE]\fP) or in a "file-list" file using the
+(\fB[FILE]\fP), in a "file-list" file using the
 .B -f, --filelist
+option or they may not be specified at all using the
+.B -n, \-\-nodata
 option.
 
 .SH OPTIONS
@@ -66,17 +68,31 @@ VDQM request will remain in the VDQM until it is deleted (this command will
 delete the request when it receives Ctrl-C).  If this option is not set then
 the VDQM will allocate the first free compatible drive.
 .TP
-\fB\-f, \-\-filelist file
+.B -f, \-\-filelist file
 File containing the list of destination filenames in RFIO notation
 [host:]local_path.  There should be one filename per line. Whitespace is
 trimmed from the left and right of each filename.  Blank lines are ignored.
 Lines starting with a '#' character are considered comments and are therefore
 ignored.  Whitespace is allowed between the beginning of the line and a '#'
-character.  Please note that this option is mutually exclusive with the method
-of providing filenames on the command-line.
+character.  Please note that this option is mutually exclusive with
+providing filenames on the command-line and with the
+.B -n, \-\-nodata
+option.
 .TP
 \fB\-n, \-\-nodata
-Send all data read from tape to the /dev/null of the tape server.
+Send all data read from tape to the /dev/null of the tape server.  Please note
+that this option is mutually exclusive with providing filenames on the
+command-line and with the
+.B -f, \-\-filelist
+option.
+
+.SH "RETURN CODES"
+.TP
+\fB 0
+Ok.
+.TP
+\fB 1
+Command failed.
 
 .SH CASTOR CONFIGURATION PARAMETERS
 The \fBreadtp\fP command reads and uses the following CASTOR configuration

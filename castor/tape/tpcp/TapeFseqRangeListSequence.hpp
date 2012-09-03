@@ -54,7 +54,7 @@ public:
    * @param list The list of tape file sequence ranges from which the sequence
    * of tape file sequence numbers is to be generated.
    */
-  TapeFseqRangeListSequence(TapeFseqRangeList *const list)
+  TapeFseqRangeListSequence(const TapeFseqRangeList *const list)
     throw(castor::exception::Exception);
 
   /**
@@ -63,7 +63,8 @@ public:
    * @param list The list of tape file sequence ranges from which the sequence
    * of tape file sequence numbers is to be generated.
    */
-  void reset(TapeFseqRangeList *const list) throw(castor::exception::Exception);
+  void reset(const TapeFseqRangeList *const list)
+    throw(castor::exception::Exception);
 
   /**
    * Returns true if there is another tape file sequence number in the
@@ -96,12 +97,12 @@ private:
   /**
    * The list of tape file sequence ranges.
    */
-  TapeFseqRangeList *m_list;
+  const TapeFseqRangeList *m_list;
 
   /**
    * Iterator pointing to the current range of tape file sequence numbers.
    */
-  TapeFseqRangeList::iterator m_rangeItor;
+  TapeFseqRangeList::const_iterator m_rangeItor;
 
   /**
    * True if the sequence is finite, else false if it is infinite.

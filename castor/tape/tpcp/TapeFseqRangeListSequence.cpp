@@ -40,7 +40,7 @@ castor::tape::tpcp::TapeFseqRangeListSequence::TapeFseqRangeListSequence()
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tpcp::TapeFseqRangeListSequence::TapeFseqRangeListSequence(
-  TapeFseqRangeList *const list) throw(castor::exception::Exception) {
+  const TapeFseqRangeList *const list) throw(castor::exception::Exception) {
   reset(list);
 }
 
@@ -49,7 +49,7 @@ castor::tape::tpcp::TapeFseqRangeListSequence::TapeFseqRangeListSequence(
 // reset
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::TapeFseqRangeListSequence::reset(
-  TapeFseqRangeList *const list) throw(castor::exception::Exception) {
+  const TapeFseqRangeList *const list) throw(castor::exception::Exception) {
   m_list = list;
 
   if(m_list == NULL) {

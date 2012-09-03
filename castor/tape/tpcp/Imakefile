@@ -35,7 +35,6 @@ DependsOnLibrary(vmgr,castorvmgr)
 DependsOnLibrary(upv,castorupv)
 
 DUMPTPBIN_SRCS = \
-  Action.cpp \
   DumpTpCommand.cpp \
   DumpTpMain.cpp \
   Helper.cpp \
@@ -48,7 +47,6 @@ DUMPTPBIN_SRCS = \
 DUMPTPBIN_OBJS = $(DUMPTPBIN_SRCS:.cpp=.o)
 
 READTPBIN_SRCS = \
-  Action.cpp \
   Helper.cpp \
   ReadTpCommand.cpp \
   ReadTpMain.cpp \
@@ -61,7 +59,6 @@ READTPBIN_SRCS = \
 READTPBIN_OBJS = $(READTPBIN_SRCS:.cpp=.o)
 
 WRITETPBIN_SRCS = \
-  Action.cpp \
   Helper.cpp \
   StreamOperators.cpp \
   TapeFileSequenceParser.cpp \

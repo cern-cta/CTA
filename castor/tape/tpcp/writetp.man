@@ -12,19 +12,17 @@
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 .TH WRITETP 1 "$Date: 2009/08/14 14:04:25 $" CASTOR "CASTOR"
 .SH NAME
-writetp \- write to a tape
+writetp \- write files to the end a tape
 .SH SYNOPSIS
-.BI "writetp VID POSITION [OPTIONS] [FILE]..."
+.BI "writetp VID [OPTIONS] [FILE]..."
 
 .SH DESCRIPTION
 .B writetp
-writes one or files from disk to tape.
+appends one or more files from disk to the end of a tape.
 .P
 This command gives privileged users direct access to the tape system.
 .P
-The tape to be written is specified by the \fBVID\fP argument.  The position
-where the writing should start on the tape is specified by the \fBPOSITION\fP
-argument.  This argument should be a tape-file sequence-number greater than 0.
+The tape to be written is specified by the \fBVID\fP argument.
 The filenames of the source disk files can be specified using two
 mutually-exclusive methods.  They can be entered on the command-line
 (\fB[FILE]\fP) or in a "file-list" file using the
@@ -57,6 +55,14 @@ ignored.  Whitespace is allowed between the beginning of the line and a '#'
 character.  Please note that this option is mutually exclusive with the method
 of providing filenames on the command-line.
 
+.SH "RETURN CODES"
+.TP
+\fB 0
+Ok.
+.TP
+\fB 1
+Command failed.
+
 .SH CASTOR CONFIGURATION PARAMETERS
 The \fBwritetp\fP command reads and uses the following CASTOR configuration
 parameters which are specified using environment variables or within the CASTOR
@@ -77,13 +83,10 @@ The name of the host on which the VDQM daemon is running.
 The name of the host on which the VMGR daemon is running.
 
 .SH EXAMPLE
-The following example writes the file \fBlxc2disk07:/tmp/test\fP to the tape
-with VID \fBI02024\fP.  The file will be written as the fifth file on the
-tape.  \fBCAUTION:\fP Any files that were on the tape after the fifth file
-will be lost as the new end-of-data will be the end of the newly written
-fifth file.
+The following example appends the file \fBlxc2disk07:/tmp/test\fP to the
+tape with VID \fBI02024\fP.
 .P
-writetp I02024 5 lxc2disk07:/tmp/test
+writetp I02024 lxc2disk07:/tmp/test
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

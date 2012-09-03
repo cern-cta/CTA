@@ -945,24 +945,19 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::startMigrationSession()
   const tapegateway::FileToMigrateStruct *const firstFileToMigrate =
     filesFromClient->filesToMigrate()[0];
 
-  // If the client is the tape-gateway then cross-check and update the next
-  // expected tape-file sequence-number
-  if(tapegateway::TAPE_GATEWAY == m_volume.clientType()) {
+  if(firstFileToMigrate->fseq() != m_nextDestinationTapeFSeq) {
+    castor::exception::Exception ex(ECANCELED);
 
-    if(firstFileToMigrate->fseq() != m_nextDestinationTapeFSeq) {
-      castor::exception::Exception ex(ECANCELED);
+    ex.getMessage() <<
+      ": Failed to " << task <<
+      ": Invalid tape file sequence number from client"
+      ": expected=" << (m_nextDestinationTapeFSeq) <<
+      ": actual=" << firstFileToMigrate->fseq();
 
-      ex.getMessage() <<
-        ": Failed to " << task <<
-        ": Invalid tape file sequence number from client"
-        ": expected=" << (m_nextDestinationTapeFSeq) <<
-        ": actual=" << firstFileToMigrate->fseq();
-
-      throw(ex);
-    }
-
-    m_nextDestinationTapeFSeq++;
+    throw(ex);
   }
+
+  m_nextDestinationTapeFSeq++;
 
   // Remember the file transaction ID and get its unique index to be passed
   // to rtcpd through the "rtcpFileRequest.disk_fseq" message field
@@ -2827,21 +2822,17 @@ void castor::tape::tapebridge::BridgeProtocolEngine::addFileToMigrateToCache(
   const tapegateway::FileToMigrateStruct &clientFileToMigrate)
   throw(castor::exception::Exception) {
 
-  // If the client is the tape gateway
-  if(m_volume.clientType() == tapegateway::TAPE_GATEWAY) {
-
-    // Throw an exception if the tape file sequence number from the client is
-    // invalid
-    if(clientFileToMigrate.fseq() != m_nextDestinationTapeFSeq) {
-      TAPE_THROW_CODE(ECANCELED,
-        ": Invalid tape-file sequence-number from client"
-        ": expected=" << (m_nextDestinationTapeFSeq) <<
-        ": actual=" << clientFileToMigrate.fseq());
-    }
-
-    // Update the next expected tape file sequence number
-    m_nextDestinationTapeFSeq++;
+  // Throw an exception if the tape file sequence number from the client is
+  // invalid
+  if(clientFileToMigrate.fseq() != m_nextDestinationTapeFSeq) {
+    TAPE_THROW_CODE(ECANCELED,
+      ": Invalid tape-file sequence-number from client"
+      ": expected=" << (m_nextDestinationTapeFSeq) <<
+      ": actual=" << clientFileToMigrate.fseq());
   }
+
+  // Update the next expected tape file sequence number
+  m_nextDestinationTapeFSeq++;
 
   // Push the file to migrate onto the back of the cache
   FileToMigrate fileToMigrate;

@@ -27,18 +27,6 @@
 
 
 //------------------------------------------------------------------------------
-// ostream << operator for castor::tape::tpcp::Action
-//------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os,
-  const castor::tape::tpcp::Action &value) {
-
-  os << value.str();
-
-  return os;
-}
-
-
-//------------------------------------------------------------------------------
 // ostream << operator for castor::tape::tpcp::FilenameList
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os,
@@ -72,17 +60,16 @@ std::ostream &operator<<(std::ostream &os,
   using namespace castor::tape;
   using namespace castor::tape::tpcp;
 
-  os <<"{"
-        "debugSet=" << utils::boolToString(value.debugSet)<<","
-        "helpSet="  << utils::boolToString(value.helpSet) <<","
-        "action="         << value.action                             <<","
-        "vid="
-     << "\"" << value.vid << "\","
-     <<"tapeFseqRanges="    << value.tapeFseqRanges                        <<","
-       "fileListSet=" << utils::boolToString(value.fileListSet)<<","
-       "fileListFilename=\""<< value.fileListFilename                   << "\","
-       "filenames="         << value.filenames
-     <<"}";
+  os <<
+    "{"
+    "debugSet="           << utils::boolToString(value.debugSet)    << ","
+    "helpSet="            << utils::boolToString(value.helpSet)     << ","
+    "vid=\""              << value.vid                              << "\","
+    "tapeFseqRanges="     << value.tapeFseqRanges                   <<","
+    "fileListSet="        << utils::boolToString(value.fileListSet) <<","
+    "fileListFilename=\"" << value.fileListFilename                 << "\","
+    "filenames="          << value.filenames                        <<
+    "}";
 
    return os;
 }

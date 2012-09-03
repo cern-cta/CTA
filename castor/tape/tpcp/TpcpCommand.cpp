@@ -165,17 +165,6 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     return 0;
   }
 
-  // Abort if the requested action type is not yet supportd
-  if(m_cmdLine.action != Action::read  &&
-     m_cmdLine.action != Action::write &&
-     m_cmdLine.action != Action::dump) {
-     castor::exception::Internal ex;
-
-     ex.getMessage() << "Unknown action";
-
-     throw ex;
-  }
-
   // Execute the command
   try {
     executeCommand();
@@ -304,158 +293,13 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
     os << "Filenames to be processed = " << m_filenames << std::endl;
   }
 
+  checkAccessToDisk();
+
   // Set the iterator pointing to the next RFIO filename to be processed
   m_filenameItor = m_filenames.begin();
 
-  // If the -n/--nodata option is set, then the destination file location in
-  // hardcoded and assigned at runtime, there is no need to validate the 
-  // filename format.
-  // The destination filename is local to the selected tape-server and the 
-  // process would run as user Stage, there is no need for rfio_stat the
-  // location.
-
-  if(m_cmdLine.action == Action::read && !m_cmdLine.nodataSet) {
-
-    // Determine the number of tape files based on the sequence of tape
-    // file sequence numbers they would produce
-    //
-    // Note that the number maybe infinite if the user has requested to read
-    // until the end of the tape
-    TapeFseqRangeListSequence seq(&m_cmdLine.tapeFseqRanges);
-
-    // Throw an exception if the number of tape files is finite and does not
-    // match the number of RFIO file names
-    if(seq.isFinite() && seq.totalSize() != m_filenames.size()) {
-      castor::exception::InvalidArgument ex;
-
-      ex.getMessage() <<
-        "The number of tape files does not match the number of RFIO "
-        "filenames"
-        ": Number of tape files=" << seq.totalSize() <<
-        " Number of RFIO filenames=" << m_filenames.size();
-
-      throw ex;
-    }
-
-    // RFIO stat the directory to which the first file to be recalled will be
-    // written, in order to check the RFIO daemon is running
-    {
-      FilenameList::const_iterator itor = m_filenames.begin();
-
-      // Sanity check - there should be at least one file to be migrated
-      if(itor == m_filenames.end()) {
-        TAPE_THROW_EX(exception::Internal,
-          ": List of filenames to be processed is unexpectedly empty");
-      }
-
-      const std::string &filename = *itor;
-      std::string filepath(filename.substr(0, filename.find_last_of("/")+1));
-
-      // Command-line user feedback
-      std::ostream &os = std::cout;
-      time_t       now = time(NULL);
-
-      utils::writeTime(os, now, TIMEFORMAT);
-      os << " RFIO stat the directory of the first file \""
-         << filepath << "\"" << std::endl;
-
-      // Perform the RFIO stat
-      struct stat64 statBuf;
-      rfioStat(filepath.c_str(), statBuf);
-
-      // Test if the filepath is not a directory
-      if( (statBuf.st_mode & S_IFMT) != S_IFDIR ){
-        castor::exception::Exception ex(ECANCELED);
-        ex.getMessage() <<
-          ": Invalid RFIO filename syntax"
-          ": Filepath must identify a regular directory"
-          ": filepath=\"" << filepath.c_str() <<"\"";
-
-        throw ex;
-      }
-    }
-  } // if(m_cmdLine.action == Action::read)
-
-  if(m_cmdLine.action == Action::write) {
-
-    // Check that there is at least one file to be migrated
-    if(m_filenames.size() == 0) {
-      castor::exception::InvalidArgument ex;
-
-      ex.getMessage()
-        << "There must be at least one file to be migrated";
-
-      throw ex;
-    }
-
-    // RFIO stat the first file to be migrated in order to check the RFIO
-    // daemon is running
-    {
-      FilenameList::const_iterator itor = m_filenames.begin();
-
-      // Sanity check - there should be at least one file to be migrated
-      if(itor == m_filenames.end()) {
-        TAPE_THROW_EX(exception::Internal,
-          ": List of filenames to be processed is unexpectedly empty");
-      }
-
-      const std::string &filename = *itor;
-
-      // Command-line user feedback
-      std::ostream &os = std::cout;
-      time_t       now = time(NULL);
-
-      utils::writeTime(os, now, TIMEFORMAT);
-      os << " RFIO stat the first file \""
-         << filename << "\"" << std::endl;
-
-      // Perform the RFIO stat
-      struct stat64 statBuf;
-      rfioStat(filename.c_str(), statBuf);
-
-      // Test if the filename corrispond to a directory
-      if( (statBuf.st_mode & S_IFMT) == S_IFDIR ){
-        castor::exception::Exception ex(ECANCELED);
-        ex.getMessage() <<
-          ": Invalid RFIO filename syntax"
-          ": Filename must identify a regular file"
-          ": filename=\"" << filename.c_str() <<"\"";
-
-        throw ex;
-      }
-
-      // Test if the filesize is greather than zero
-      if(statBuf.st_size == 0){
-        castor::exception::Exception ex(ECANCELED);
-        ex.getMessage() <<
-          ": Invalid file size: File size must be greater than zero"
-          ": filename=\"" << filename.c_str() <<"\"";
-
-        throw ex;
-      }
-    }
-  } // if(m_cmdLine.action == Action::write)
-
   // Get information about the tape to be used from the VMGR
-  try {
-    const int side = 0;
-    vmgrQueryTape(m_cmdLine.vid, side);
-  } catch(castor::exception::Exception &ex) {
-    castor::exception::Exception ex2(ECANCELED);
-
-    std::ostream &os = ex2.getMessage();
-    os << "Failed to query the VMGR about tape: VID = "
-       << m_cmdLine.vid;
-
-    // If the tape does not exist
-    if(ex.code() == ENOENT) {
-      os << ": Tape does not exist";
-    } else {
-      os << ": " << ex.getMessage().str();
-    }
-
-    throw ex2;
-  }
+  vmgrQueryTape();
 
   // If debug, then display the tape information retrieved from the VMGR
   if(m_cmdLine.debugSet) {
@@ -482,113 +326,7 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
      throw ex;
   }
 
-  // If writing to tape then check that the user has permission to write to
-  // the tape
-  if(m_cmdLine.action == Action::write) {
-    checkUserHasTapeWritePermission(m_vmgrTapeInfo.poolname, m_userId,
-      m_groupId, m_hostname);
-  }
-
-  // Check the tape is available taking into account the type of action
-  switch(m_cmdLine.action.value()) {
-  case Action::READ:
-    {
-      const bool userIsTapeOperator =
-        Cupv_check(m_userId, m_groupId, m_hostname, "TAPE_SERVERS",
-          P_TAPE_OPERATOR) == 0 ||
-        Cupv_check(m_userId, m_groupId, m_hostname, NULL          ,
-          P_TAPE_OPERATOR) == 0;
-
-      // Only tape-operators can read disabled tapes
-      if(m_vmgrTapeInfo.status & DISABLED) {
-        if(!userIsTapeOperator) {
-          castor::exception::Exception ex(ECANCELED);
-          std::ostream &os = ex.getMessage();
-          os << "Tape is not available for reading"
-            ": Tape is DISABLED and user is not a tape-operator";
-          throw ex;
-        }
-      }
-
-      if(m_vmgrTapeInfo.status & EXPORTED ||
-        m_vmgrTapeInfo.status & ARCHIVED) {
-        castor::exception::Exception ex(ECANCELED);
-        std::ostream &os = ex.getMessage();
-        os << "Tape is not available for reading"
-          ": Tape is";
-        if(m_vmgrTapeInfo.status & EXPORTED) os << " EXPORTED";
-        if(m_vmgrTapeInfo.status & ARCHIVED) os << " ARCHIVED";
-        throw ex;
-      }
-    }
-    break;
-  case Action::WRITE:
-    if(m_vmgrTapeInfo.status & DISABLED ||
-       m_vmgrTapeInfo.status & EXPORTED ||
-       m_vmgrTapeInfo.status & ARCHIVED) {
-       castor::exception::Exception ex(ECANCELED);
-       std::ostream &os = ex.getMessage();
-       os << "Tape is not available for writing"
-         ": Tape is";
-       if(m_vmgrTapeInfo.status & DISABLED) os << " DISABLED";
-       if(m_vmgrTapeInfo.status & EXPORTED) os << " EXPORTED";
-       if(m_vmgrTapeInfo.status & ARCHIVED) os << " ARCHIVED";
-
-       throw ex;
-    }
-    break;
-  case Action::DUMP:
-    {
-      const bool userIsTapeOperator =
-        Cupv_check(m_userId, m_groupId, m_hostname, "TAPE_SERVERS",
-          P_TAPE_OPERATOR) == 0 ||
-        Cupv_check(m_userId, m_groupId, m_hostname, NULL          ,
-          P_TAPE_OPERATOR) == 0;
-
-      // Only tape-operators can dump disabled tapes
-      if(m_vmgrTapeInfo.status & DISABLED) {
-        if(!userIsTapeOperator) {
-          castor::exception::Exception ex(ECANCELED);
-          std::ostream &os = ex.getMessage();
-          os << "Tape is not available for dumping"
-            ": Tape is DISABLED and user is not a tape-operator";
-          throw ex;
-        }
-      }
-
-      if(m_vmgrTapeInfo.status & EXPORTED ||
-         m_vmgrTapeInfo.status & ARCHIVED) {
-         castor::exception::Exception ex(ECANCELED);
-         std::ostream &os = ex.getMessage();
-         os << "Tape is not available for dumping"
-           ": Tape is";
-         if(m_vmgrTapeInfo.status & EXPORTED) os << " EXPORTED";
-         if(m_vmgrTapeInfo.status & ARCHIVED) os << " ARCHIVED";
-         throw ex;
-      }
-    }
-    break;
-  default:
-    {
-      // Should never get here
-      TAPE_THROW_EX(castor::exception::Internal,
-        ": Unknown action for comand-line tool"
-        ": action.value()=" << m_cmdLine.action.value());
-    }
-  }
-
-  // Check if the access mode of the tape is compatible with the action to be
-  // performed by tpcp
-  if(m_cmdLine.action == Action::write &&
-    m_vmgrTapeInfo.status & TAPE_RDONLY) {
-
-    castor::exception::Exception ex(ECANCELED);
-
-     ex.getMessage() << "Tape cannot be written to"
-       ": Tape marked as TAPE_RDONLY";
-
-     throw ex;
-  }
+  checkAccessToTape();
 
   // Setup the tapebridge callback socket
   setupCallbackSock();
@@ -605,11 +343,8 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
 
   // Send the request for a drive to the VDQM
   {
-    const int mode = m_cmdLine.action == Action::write ?
-      WRITE_ENABLE : WRITE_DISABLE;
-    char *const server = m_cmdLine.serverSet ?
-      m_cmdLine.server : NULL;
-    requestDriveFromVdqm(mode, server);
+    char *const tapeServer = m_cmdLine.serverSet ? m_cmdLine.server : NULL;
+    requestDriveFromVdqm(tapeServer);
   }
 
   // Command-line user feedback
@@ -728,14 +463,6 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
 
   Helper::displayRcvdMsgIfDebug(volumeRequest, m_cmdLine.debugSet);
 
-  {
-    std::ostream &os = std::cout;
-    time_t       now = time(NULL);
-
-    utils::writeTime(os, now, TIMEFORMAT);
-    os << " Selected drive unit is " << volumeRequest.unit() << std::endl;
-  }
-
   // Check the volume request ID of the VolumeRequest object matches that of
   // the reply from the VDQM when the drive was requested
   if(volumeRequest.mountTransactionId() != (uint64_t)m_volReqId) {
@@ -749,70 +476,30 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
     throw ex;
   }
 
-  // Create the volume message for the tapebridge
-  castor::tape::tapegateway::Volume volumeMsg;
-  volumeMsg.setVid(m_vmgrTapeInfo.vid);
-  switch(m_cmdLine.action.value()) {
-  case Action::READ:
-    volumeMsg.setClientType(castor::tape::tapegateway::READ_TP);
-    volumeMsg.setMode(castor::tape::tapegateway::READ);
-    break;
-  case Action::WRITE:
-    volumeMsg.setClientType(castor::tape::tapegateway::WRITE_TP);
-    volumeMsg.setMode(castor::tape::tapegateway::WRITE);
-    break;
-  case Action::DUMP:
-    volumeMsg.setClientType(castor::tape::tapegateway::DUMP_TP);
-    volumeMsg.setMode(castor::tape::tapegateway::DUMP);
-    break;
-  default:
-    TAPE_THROW_EX(castor::exception::Internal,
-      ": Unknown action type: value=" << m_cmdLine.action.value());
-  }
-  volumeMsg.setLabel(m_vmgrTapeInfo.lbltype);
-  volumeMsg.setMountTransactionId(m_volReqId);
-  volumeMsg.setAggregatorTransactionId(
-    volumeRequest.aggregatorTransactionId());
-  volumeMsg.setDensity(m_vmgrTapeInfo.density);
-
-  // Send the volume message to the tapebridge
-  callbackConnectionSock.sendObject(volumeMsg);
-
-  Helper::displaySentMsgIfDebug(volumeMsg, m_cmdLine.debugSet);
+  sendVolumeToTapeBridge(volumeRequest, callbackConnectionSock);
 
   // Close the connection to the tapebridge
   callbackConnectionSock.close();
 
-  // Perform the transfer, either READ, WRITE or DUMP
-  try {
-    performTransfer();
-  } catch(castor::exception::Exception &ex) {
-    castor::exception::Exception ex2(ECANCELED);
-
-    ex2.getMessage() <<
-      "Failed to perform " << m_cmdLine.action <<
-      ": " << ex.getMessage().str();
-
-    throw ex2;
-  }
+  performTransfer();
 }
 
 
 //------------------------------------------------------------------------------
 // vmgrQueryTape
 //------------------------------------------------------------------------------
-void castor::tape::tpcp::TpcpCommand::vmgrQueryTape(
-  char (&vid)[CA_MAXVIDLEN+1], const int side)
+void castor::tape::tpcp::TpcpCommand::vmgrQueryTape()
   throw (castor::exception::Exception) {
-
+  const int side = 0;
   serrno=0;
-  const int rc = vmgr_querytape_byte_u64(vid, side, &m_vmgrTapeInfo,
+  const int rc = vmgr_querytape_byte_u64(m_cmdLine.vid, side, &m_vmgrTapeInfo,
     m_dgn);
   const int savedSerrno = serrno;
 
-  if(rc != 0) {
+  if(0 != rc) {
     TAPE_THROW_CODE(savedSerrno,
       ": Failed call to vmgr_querytape()"
+      ": VID = " << m_cmdLine.vid <<
       ": " << sstrerror(savedSerrno));
   }
 }
@@ -1406,7 +1093,7 @@ void castor::tape::tpcp::TpcpCommand::checkFilenameFormat()
 // rfioStat
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::TpcpCommand::rfioStat(const char *const path,
-  struct stat64 &statBuf) throw(castor::exception::Exception) {
+  struct stat64 &statBuf) const throw(castor::exception::Exception) {
 
   // rfio_stat64 is a smart oparation, in case of a local file, it do not use
   // the rfio's stat, but the local stat. To forse the use of rfio's stat we
@@ -1446,69 +1133,5 @@ void castor::tape::tpcp::TpcpCommand::rfioStat(const char *const path,
       ": " << err_msg;
 
     throw(ex);
-  }
-}
-
-
-//------------------------------------------------------------------------------
-// checkUserHasTapeWritePermission
-//------------------------------------------------------------------------------
-void castor::tape::tpcp::TpcpCommand::checkUserHasTapeWritePermission(
-  const char *const poolName, const uid_t userId, const gid_t groupId,
-  const char *const sourceHost) throw(castor::exception::PermissionDenied) {
-
-  // Get the owner of the pool by querying the VMGR
-  uid_t poolUserId  = 0;
-  gid_t poolGroupId = 0;
-  {
-    const int rc = vmgr_querypool(poolName, &poolUserId,
-      &poolGroupId, NULL, NULL);
-    const int saved_serrno = serrno;
-
-    if(rc < 0) {
-      castor::exception::Exception ex(saved_serrno);
-
-      ex.getMessage() <<
-        "Failed to query tape pool"
-        ": poolName=" << poolName <<
-        ": " << sstrerror(saved_serrno);
-    }
-  }
-
-  const bool userOwnsPool = userId == poolUserId && groupId == poolGroupId;
-
-  if(userOwnsPool) {
-    // Command-line user feedback
-    std::ostream &os = std::cout;
-    time_t       now = time(NULL);
-
-    utils::writeTime(os, now, TIMEFORMAT);
-    os <<
-      " User can write to tape: User owns tape pool \"" << poolName << "\"" <<
-      std::endl;
-  } else {
-
-    const bool userIsAdmin =
-      Cupv_check(userId, groupId, sourceHost, "TAPE_SERVERS",P_ADMIN) == 0 ||
-      Cupv_check(userId, groupId, sourceHost, NULL          ,P_ADMIN) == 0;
-
-    if(userIsAdmin) {
-      // Command-line user feedback
-      std::ostream &os = std::cout;
-      time_t       now = time(NULL);
-
-      utils::writeTime(os, now, TIMEFORMAT);
-      os <<
-        " User can write to tape: User has ADMIN privilege" << std::endl;
-    } else {
-      castor::exception::PermissionDenied ex;
-
-      ex.getMessage() <<
-        "User cannot write to tape"
-        ": User must own the \"" << poolName << "\" tape pool or "
-        "have the ADMIN privilege";
-
-      throw ex;
-    }
   }
 }

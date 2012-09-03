@@ -27,6 +27,7 @@
 
 #include "castor/tape/tapegateway/FileErrorReportStruct.hpp"
 #include "castor/tape/tapegateway/FileRecalledNotificationStruct.hpp"
+#include "castor/tape/tapegateway/VolumeRequest.hpp"
 #include "castor/tape/tpcp/TapeFseqRangeListSequence.hpp"
 #include "castor/tape/tpcp/TpcpCommand.hpp"
 
@@ -60,7 +61,7 @@ protected:
    *
    * @param os Output stream to be written to.
    */
-  void usage(std::ostream &os) throw();
+  void usage(std::ostream &os) const throw();
 
   /**
    * Parses the specified command-line arguments.
@@ -70,6 +71,45 @@ protected:
    */
   void parseCommandLine(const int argc, char **argv)
     throw(castor::exception::Exception);
+
+  /**
+   * Checks the disk files can be accessed.
+   *
+   * @throw A castor::exception::Exception exception if the disk files cannot
+   *        be accessed.
+   */
+  void checkAccessToDisk() const throw(castor::exception::Exception);
+
+  /**
+   * Checks the tape can be accessed.
+   *
+   * @throw A castor::exception::Exception exception if the tape cannot be
+   *        accessed.
+   */
+  void checkAccessToTape() const throw(castor::exception::Exception);
+
+  /**
+   * Request a drive connected to the specified tape-server from the VDQM.
+   *
+   * @param tapeServer If not NULL then this parameter specifies the tape
+   *                   server to be used, therefore overriding the drive
+   *                   scheduling of the VDQM.
+   */
+  void requestDriveFromVdqm(char *const tapeServer)
+    throw(castor::exception::Exception);
+
+  /**
+   * Sends the volume message to the tapebridged daemon.
+   *
+   * @param volumeRequest The volume rerquest message received from the
+   *                      tapegatewayd daemon.
+   * @param connection    The already open connection to the tapebridged daemon
+   *                      over which the volume message should be sent.
+   */
+  void sendVolumeToTapeBridge(
+    const tapegateway::VolumeRequest &volumeRequest,
+    castor::io::AbstractTCPSocket    &connection)
+    const throw(castor::exception::Exception);
 
   /**
    * Performs the tape copy whether it be DUMP, READ or WRITE.

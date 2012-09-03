@@ -31,7 +31,7 @@
 #include "castor/exception/PermissionDenied.hpp"
 #include "castor/io/ServerSocket.hpp"
 #include "castor/tape/tapegateway/FileErrorReportStruct.hpp"
-#include "castor/tape/tpcp/Action.hpp"
+#include "castor/tape/tapegateway/VolumeRequest.hpp"
 #include "castor/tape/tpcp/FilenameList.hpp"
 #include "castor/tape/tpcp/ParsedCommandLine.hpp"
 #include "castor/tape/utils/utils.hpp"
@@ -118,7 +118,7 @@ protected:
    * @param os Output stream to be written to.
    * @param programName The program name to be used in the message.
    */
-  virtual void usage(std::ostream &os) throw() = 0;
+  virtual void usage(std::ostream &os) const throw() = 0;
 
   /**
    * To be implemented by sub-classes.
@@ -130,6 +130,55 @@ protected:
    */
   virtual void parseCommandLine(const int argc, char **argv)
     throw(castor::exception::Exception) = 0;
+
+  /**
+   * To be implemented by sub-classes.
+   *
+   * Checks the disk files can be accessed.
+   *
+   * @throw A castor::exception::Exception exception if the disk files cannot
+   *        be accessed.
+   */
+  virtual void checkAccessToDisk()
+    const throw(castor::exception::Exception) = 0;
+
+  /**
+   * To be implemented by sub-classes.
+   *
+   * Checks the tape can be accessed.
+   *
+   * @throw A castor::exception::Exception exception if the tape cannot be
+   *        accessed.
+   */
+  virtual void checkAccessToTape()
+    const throw(castor::exception::Exception) = 0;
+
+  /**
+   * To be implemented by sub-classes.
+   *
+   * Request a drive connected to the specified tape-server from the VDQM.
+   *
+   * @param tapeServer If not NULL then this parameter specifies the tape
+   *                   server to be used, therefore overriding the drive
+   *                   scheduling of the VDQM.
+   */
+  virtual void requestDriveFromVdqm(char *const tapeServer)
+    throw(castor::exception::Exception) = 0;
+
+  /**
+   * To be implemented by sub-classes.
+   *
+   * Sends the volume message to the tapebridged daemon.
+   *
+   * @param volumeRequest The volume rerquest message received from the
+   *                      tapegatewayd daemon.
+   * @param connection    The already open connection to the tapebridged daemon
+   *                      over which the volume message should be sent.
+   */
+  virtual void sendVolumeToTapeBridge(
+    const tapegateway::VolumeRequest &volumeRequest,
+    castor::io::AbstractTCPSocket    &connection)
+    const throw(castor::exception::Exception) = 0;
 
   /**
    * To be implemented by sub-classes.
@@ -211,17 +260,18 @@ protected:
   uint64_t m_fileTransactionId;
 
   /**
+   * The hostname of the machine.
+   */
+  char m_hostname[CA_MAXHOSTNAMELEN+1];
+
+  /**
    * Retrieves information about the specified tape from the VMGR.
    *
    * This method is basically a C++ wrapper around the C VMGR function
    * vmgr_querytape.  This method converts the return value of -1 and the
    * serrno to an exception in the case of an error.
-   &
-   * @param vid The tape for which the information should be retrieved.
-   * @param side The tape side.
    */
-  void vmgrQueryTape(char (&vid)[CA_MAXVIDLEN+1], const int side)
-    throw (castor::exception::Exception);
+  void vmgrQueryTape() throw (castor::exception::Exception);
 
   /**
    * Creates, binds and sets to listening the callback socket to be used for
@@ -381,7 +431,7 @@ protected:
    * @param statBuf The stat buffer to be passed to rfio_stat64.
    */
   void rfioStat(const char *path, struct stat64 &statBuf)
-    throw(castor::exception::Exception);
+    const throw(castor::exception::Exception);
 
 
 private:
@@ -401,20 +451,6 @@ private:
    * clause so that any type of exception can be thrown.
    */
   void executeCommand();
-
-  /**
-   * Throws a permission denied exception if the user of the tpcp command
-   * does not have permission to write to tape.
-   *
-   * @param poolName   The name of the pool in which the tape to be written
-   *                   resides.
-   * @param userId     The ID of the user.
-   * @param groupId    The group ID of the user.
-   * @param sourceHost The CUPV source host.
-   */
-  void checkUserHasTapeWritePermission(const char *const poolName,
-    const uid_t userId, const gid_t groupId, const char *const sourceHost)
-    throw (castor::exception::PermissionDenied);
 
   /**
    * Deletes the specified VDQM volume request.
@@ -556,11 +592,6 @@ private:
    * working directory
    */
   void checkFilenameFormat() throw(castor::exception::Exception);
-
-  /**
-   * The hostaname of the machine.
-   */
-  char m_hostname[CA_MAXHOSTNAMELEN+1];
 
   /**
    * The current working directory where tpcp command is run.

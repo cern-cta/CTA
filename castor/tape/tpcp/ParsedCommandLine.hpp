@@ -25,7 +25,6 @@
 #ifndef CASTOR_TAPE_TPCP_PARSEDCOMMANDLINE_HPP
 #define CASTOR_TAPE_TPCP_PARSEDCOMMANDLINE_HPP 1
 
-#include "castor/tape/tpcp/Action.hpp"
 #include "castor/tape/tpcp/Constants.hpp"
 #include "castor/tape/tpcp/FilenameList.hpp"
 #include "castor/tape/tpcp/TapeFseqRangeList.hpp"
@@ -44,10 +43,6 @@ namespace tpcp   {
  * Data type used to store the results of parsing the command-line.
  */
 struct ParsedCommandLine {
-  /**
-   * The action to be performed: DUMP, READ or WRITE.
-   */
-  Action action;
 
   /**
    * True if the debug option has been set.
@@ -89,13 +84,6 @@ struct ParsedCommandLine {
    * the VDQM.
    */
   char server[CA_MAXHOSTNAMELEN+1];
-
-  /**
-   * The tape file sequence number to be positioned to just before writing.
-   *
-   * Please note that a value of 0 corresponds to end-of-tape.
-   */
-  int32_t tapeFseqPosition;
 
   /**
    * The tape file sequence number ranges.
@@ -151,13 +139,11 @@ struct ParsedCommandLine {
    * Constructor.
    */
   ParsedCommandLine() :
-    action(Action::read),
     debugSet(false),
     fileListSet(false),
     helpSet(false),
     serverSet(false),
     nodataSet(false),
-    tapeFseqPosition(0),
     dumpTapeMaxBytes(320),
     dumpTapeBlockSize(DEFAULTDUMPBLOCKSIZE),
     dumpTapeConverter(-1),

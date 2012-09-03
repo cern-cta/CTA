@@ -65,6 +65,14 @@ default is 1.
 End block per file.  This should be an unsigned integer greater than 0. The
 default is 1.
 
+.SH "RETURN CODES"
+.TP
+\fB 0
+Ok.
+.TP
+\fB 1
+Command failed.
+
 .SH CASTOR CONFIGURATION PARAMETERS
 The \fBdumptp\fP command reads and uses the following CASTOR configuration
 parameters which are specified using environment variables or within the CASTOR
