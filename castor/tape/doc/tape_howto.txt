@@ -4045,3 +4045,12 @@ vtlcmd 10 close map
 mtx -f /dev/sg4 status
 mtx -f /dev/sg4 eepos 0 transfer 40 24
 mtx -f /dev/sg4 status
+
+How to label a set of virtual tapes
+===================================
+
+tplabel -D VD41STK0 -d 20G -g V41STK -l aul -V V41001 -v V41001 -f
+tplabel -D VD41STK0 -d 20G -g V41STK -l aul -V V41002 -v V41002 -f
+tplabel -D VD41STK0 -d 20G -g V41STK -l aul -V V41003 -v V41003 -f
+tplabel -D VD41STK0 -d 20G -g V41STK -l aul -V V41004 -v V41004 -f
+tplabel -D VD41STK0 -d 20G -g V41STK -l aul -V V41005 -v V41005 -f
