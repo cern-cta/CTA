@@ -68,7 +68,6 @@ int vmgr_main(struct main_args *main_args)
   int nbthreads = VMGR_NBTHREADS;
   int on = 1;        /* for REUSEADDR */
   char *p = NULL;
-  const char *buf = NULL;
   int rqfd = 0;
   int s = 0;
   struct sockaddr_in sin;
@@ -79,7 +78,7 @@ int vmgr_main(struct main_args *main_args)
   struct timeval timeval;
 
   vmgrconfigfile[0] = '\0';
-  strcpy(logfile, VMGRLOGFILE);
+  strcpy(logfile, "/var/log/castor/vmgrd.log");
 
   /* process command line options if any */
   while ((c = getopt (main_args->argc, main_args->argv, "fc:l:t:")) != EOF) {
@@ -135,12 +134,7 @@ int vmgr_main(struct main_args *main_args)
 
   /* Set the location of the volume manager login file */
   if (!*vmgrconfigfile) {
-    if (strncmp (VMGRCONFIG, "%SystemRoot%\\", 13) == 0 &&
-        (p = getenv ("SystemRoot")) &&
-        (buf = strchr (VMGRCONFIG, '\\')))
-      sprintf (vmgrconfigfile, "%s%s", p, buf);
-    else
-      strcpy (vmgrconfigfile, VMGRCONFIG);
+    strcpy (vmgrconfigfile, "/etc/castor/VMGRCONFIG");
   }
 
   (void) vmgr_init_dbpkg ();

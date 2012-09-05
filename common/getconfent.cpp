@@ -27,10 +27,6 @@
 #include "string.h"
 #include "castor/common/CastorConfiguration.hpp"
 
-#ifndef PATH_CONFIG
-#define PATH_CONFIG "/etc/castor/castor.conf"
-#endif /* PATH_CONFIG */
-
 //------------------------------------------------------------------------------
 // getconfent_fromfile
 //------------------------------------------------------------------------------
@@ -55,10 +51,10 @@ char *getconfent(const char *category,
                  int flags) {
   // Try to get the location of the configuration file from the environment
   // variable named PATH_CONFIG.  If the enviornment variable is not set then
-  // fall back to the compile-time default.
+  // fall back to hardcoded default : /etc/castor/castor.conf
   const char *configFilename = getenv("PATH_CONFIG");
   if(NULL == configFilename) {
-    configFilename = PATH_CONFIG;
+    configFilename = "/etc/castor/castor.conf";
   }
 
   return getconfent_fromfile(configFilename,category,name,flags);

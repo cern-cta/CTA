@@ -44,7 +44,7 @@ DECLARE
 BEGIN
   SELECT release INTO unused FROM CastorVersion
    WHERE schemaName = 'CUPV'
-     AND (release LIKE '2_1_11_8%' OR release LIKE '2_1_11_9%');
+     AND (release LIKE '2_1_11_8%' OR release LIKE '2_1_11_9%') AND rownum < 2;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- Error, we cannot apply this script
   raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts for the CUPV before this one.');

@@ -14,9 +14,6 @@ CFLAGS += -DRTCOPYCSEC
 AddLdFlags(-ldl)
 #endif
 
-CPPFLAGS += -DRTCOPY_LOGFILE=RtcpdLogFile -DNOMORETAPES=RtcpNoMoreTapes \
-            -DWORKDIR=RtcpWorkDir -DNS_ROOT=NsRoot
-
 CommonDependsOnLibrary(common,castorcommon)
 CommonDependsOnLibrary(vmgr,castorvmgr)
 CommonDependsOnLibrary(vdqm,castorvdqm)
@@ -24,7 +21,7 @@ CommonDependsOnLibrary(tape,castortape)
 CommonDependsOnLibrary(tapebridge,castortapebridge)
 CommonDependsOnLibrary(rfio,castorrfio)
 
-MakeDir(RtcpBareWorkDir,777)
+MakeDir(/var/lib/castor/rtcpd,777)
 RTCPD_OBJS =	rtcpd.o rtcp_CallVMGR.o rtcp_CheckReq.o \
 		rtcp_Listen.o rtcp_SendRecv.o rtcp_log.o \
 		rtcpd_ClientListen.o rtcpd_Ctape.o rtcpd_Disk.o \

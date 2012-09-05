@@ -3,7 +3,6 @@ COMM  @(#)Imakefile,v 1.52 2005/11/25 14:27:22 CERN IT-ADC/CA Jean-Damien Durand
 COMM
 COMM  Make stager clients.
 
-CPPFLAGS += -DSTAGEMAP=StageMapFile
 AddLdFlags(-lstdc++)
 
 CommonDependsOnLibrary(common,castorcommon)

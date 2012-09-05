@@ -32,6 +32,7 @@
 
 // Local includes
 #include "System.hpp"
+#include "stage_constants.h"
 #include "Cgrp.h"
 #include "Cnetdb.h"
 #include "common.h"

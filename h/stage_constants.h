@@ -8,15 +8,8 @@
 /* =================================== */
 /* stage configuration default values  */
 /* =================================== */
-#ifdef  STAGE_NAME
-#undef  STAGE_NAME
-#endif
-#define STAGE_NAME "stage"
-
-#ifdef  STAGE_PROTO
-#undef  STAGE_PROTO
-#endif
-#define STAGE_PROTO "tcp"
+#define STAGERSUPERGROUP "st"
+#define STAGERSUPERUSER "stage"
 
 #ifdef  STAGE_PORT
 #undef  STAGE_PORT

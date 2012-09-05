@@ -29,7 +29,7 @@
 #ifndef KERNEL_VERSION
 #define KERNEL_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
 #endif
-#include SCSIINC
+#include "/usr/include/scsi/sg.h"
 #include <sys/stat.h>
 #include "scsictl.h"
 #include "serrno.h"

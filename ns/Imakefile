@@ -14,10 +14,7 @@ NSLIBCSEC += -lcrypto
 #endif
 NSLIBCSEC += -ldl
 
-CPPFLAGS += -DCNS_HOST=NsHost -DCNSHOSTPFX=NsHostPfx \
-            -DLCGDM_MAPFILE=\"IdMapFile\" \
-            -DNSLOGFILE=NsLogFile -DNSCONFIG=NsConfigFile \
-	    $(ORACLE_CPPFLAGS)
+CPPFLAGS += -DLCGDM_MAPFILE=\"IdMapFile\" $(ORACLE_CPPFLAGS)
 
 NSD_OBJS	=	Cns_main.o \
 			Cns_acl.o \
@@ -222,7 +219,7 @@ DependsOnLibrary(upv,castorupv)
 DependsOnLibrary(dlf,castordlf)
 
 PROC(Cns_oracle_ifce)
-MakeDir(LogPath,0755)
+MakeDir($(LOGPATH),0755)
 NSORALIBS= -L$(ORACLE_LIBDIR) -lclntsh
 
 NormalProgramTarget(nsd,$(NSD_OBJS),,$(NSORALIBS) $(NSLIBCSEC),755)

@@ -76,7 +76,6 @@ int Cns_main(struct main_args *main_args)
   int nbthreads = CNS_NBTHREADS;
   int on = 1; /* For REUSEADDR */
   char *p;
-  const char *buf;
   int daemonize = 1;
   fd_set readfd, readmask;
   int rqfd;
@@ -88,7 +87,7 @@ int Cns_main(struct main_args *main_args)
   struct timeval timeval;
 
   nsconfigfile[0] = '\0';
-  strcpy (logfile, NSLOGFILE);
+  strcpy (logfile, "/var/log/castor/nsd.log");
   strcpy (nshostname, "castorns");
 
   /* Process command line options if any */
@@ -156,12 +155,7 @@ int Cns_main(struct main_args *main_args)
 
   /* Set the location of the name server login file */
   if (!*nsconfigfile) {
-    if (strncmp (NSCONFIG, "%SystemRoot%\\", 13) == 0 &&
-        (p = getenv ("SystemRoot")) &&
-        (buf = strchr (NSCONFIG, '\\')))
-      sprintf (nsconfigfile, "%s%s", p, buf);
-    else
-      strcpy (nsconfigfile, NSCONFIG);
+    strcpy (nsconfigfile, "/etc/castor/NSCONFIG");
   }
 
   (void) Cns_init_dbpkg ();

@@ -74,14 +74,9 @@ int send2Cupv(int *socketp,char *reqp,int reql,char *user_repbuf,int user_repbuf
 #ifdef UPVCSEC
     }
 #endif
+    *Cupvhost = '\0';
     if ((p = getenv ("UPV_HOST")) || (p = getconfent ("UPV", "HOST", 0)))
       strcpy (Cupvhost, p);
-    else
-#if defined(CUPV_HOST)
-      strcpy (Cupvhost, CUPV_HOST);
-#else
-    gethostname (Cupvhost, sizeof(Cupvhost));
-#endif
     if ((hp = Cgethostbyname (Cupvhost)) == NULL) {
       Cupv_errmsg (func, CUP09, "Host unknown:", Cupvhost);
       serrno = SENOSHOST;

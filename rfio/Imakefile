@@ -11,8 +11,7 @@ COMM Define the file indicating that no more RFIO requests
 COMM should be issued.
 COMM
 
-CPPFLAGS += -DSACCT -DNOMORERFIO=RfioNoMore -DRFIOLOGFILE=RfioLogFile \
-	    -DCNS_ROOT=NsRoot $(STAGERSUPERUSER) $(STAGERSUPERGROUP)
+CPPFLAGS += -DSACCT
 CFLAGS += -DUSE_XFSPREALLOC
 
 RFIOLIB = DepSharedLibraryTargetName(rfio,castorrfio)
@@ -121,7 +120,7 @@ CLIENTLIBMANPAGE(rfio_write)
 CLIENTLIBMANPAGE(rfioreadopt)
 CLIENTLIBMANPAGE(rfiosetopt)
 
-MakeDir(LogPath,0755)
+MakeDir($(LOGPATH),0755)
 MakeDir(/var/lib/rfiod,0755)
 SRVOBJS = Csemaphore.o rfio_serv.o rfio_calls.o \
 		rfio_call64.o rfio_fcalls.o rfio_callhandlers.o switch_req.o \

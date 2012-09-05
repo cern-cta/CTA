@@ -80,13 +80,9 @@ int vdqm_Connect(vdqmnw_t **nw) {
      */
     *vdqm_host = '\0';
     if ( (p = getenv("VDQM_HOST")) != (char *)NULL ) {
-        strcpy(vdqm_host,p);
+      strcpy(vdqm_host,p);
     } else if ( (p = getconfent("VDQM","HOST",1)) != (char *)NULL ) {
-        strcpy(vdqm_host,p);
-    } else {
-#if defined(VDQM_HOST)
-        strcpy(vdqm_host,VDQM_HOST);
-#endif /* VDQM_HOST */
+      strcpy(vdqm_host,p);
     }
     p = strtok(vdqm_host,", \t");
     vdqm_primary = p;

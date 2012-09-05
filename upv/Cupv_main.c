@@ -64,7 +64,6 @@ int Cupv_main(struct main_args *main_args)
   int nbthreads = CUPV_NBTHREADS;
   int on = 1;	/* for REUSEADDR */
   char *p;
-  const char *buf;
   int daemonize = 1;
   fd_set readfd, readmask;
   int rqfd;
@@ -75,7 +74,7 @@ int Cupv_main(struct main_args *main_args)
   struct timeval timeval;
 
   cupvconfigfile[0] = '\0';
-  strcpy(logfile, CUPVLOGFILE);
+  strcpy(logfile, "/var/log/castor/cupvd.log");
 
   /* Process command line options if any */
   while ((c = getopt (main_args->argc, main_args->argv, "fc:l:t:")) != EOF) {
@@ -119,12 +118,7 @@ int Cupv_main(struct main_args *main_args)
 
   /* Set the location of the upv login file */
   if (!*cupvconfigfile) {
-    if (strncmp (CUPVCONFIG, "%SystemRoot%\\", 13) == 0 &&
-	(p = getenv ("SystemRoot")) &&
-	(buf = strchr (CUPVCONFIG, '\\')))
-      sprintf (cupvconfigfile, "%s%s", p, buf);
-    else
-      strcpy (cupvconfigfile, CUPVCONFIG);
+    strcpy (cupvconfigfile, "/etc/castor/CUPVCONFIG");
   }
 
   (void) Cupv_init_dbpkg ();

@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include "Ctape.h"
 #include "Ctape_api.h"
+#include "stage_constants.h"
 
 int buildvollbl(char vol1[],
 		char *vsn,

@@ -27,8 +27,6 @@ INCLUDEDEPFILES(LOCAL_PATH/handler)
 
 AddLdFlags(-lstdc++)
 
-CPPFLAGS += -DORAVDQMCONFIGFILE=VdqmConfigFile
-
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(dlf,castordlf)
 DependsOnLibrary(castor,castorclient)
@@ -64,7 +62,7 @@ VDQMBIN_SRCS = CDevTools.cpp \
                handler/VdqmMagic4RequestHandler.cpp
 VDQMBIN_OBJS = $(VDQMBIN_SRCS:.cpp=.o)
 NormalProgramTarget(vdqmd,$(VDQMBIN_OBJS),,,755)
-MakeDir(LogPath,0755)
+MakeDir($(LOGPATH),0755)
 ADMMANPAGE(vdqmd)
 LOGROTATE(castor-vdqm2-server,install)
 SYSCONFIG(vdqmd,install)

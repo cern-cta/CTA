@@ -22,15 +22,13 @@ COMM Makefile for the Log Processor Daemon
 COMM
 COMM @author Castor Dev team, castor-dev@cern.ch
 
-LIBNOARCHDIR = InstallLibNoArchDir
-
 InstallTarget(logprocessord,755)
 InstallNonExecFile(DLF.py,$(LIBNOARCHDIR)/log-processor,644)
 InstallNonExecFile(LoggingCommon.py,$(LIBNOARCHDIR)/log-processor,644)
 InstallNonExecFile(Scribe_source.py,$(LIBNOARCHDIR)/log-processor,644)
 InstallNonExecFile(MetricsAnalysisEngine.py,$(LIBNOARCHDIR)/log-processor,644)
 InstallNonExecFile(MetricsAnalysisEngine_dest.py,$(LIBNOARCHDIR)/log-processor,644)
-MakeDir(LogPath,0755)
+MakeDir($(LOGPATH),0755)
 MakeDir(/var/log/dlf,0755)
 LOGROTATE(castor-logprocessor-server,install)
 SYSCONFIG(logprocessord,install)

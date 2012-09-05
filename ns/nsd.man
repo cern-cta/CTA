@@ -93,8 +93,7 @@ CNS	HOST	castor5
 .RE
 .RE
 .LP
-If none of these methods is used, the default host is taken from the
-definition of NsHost in site.def.
+If none of these methods is used, the default host is "castorns".
 .LP
 The name server database keeps the metadata information: filename, file size,
 access time, permissions and migration status.

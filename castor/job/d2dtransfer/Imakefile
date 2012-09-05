@@ -23,7 +23,6 @@ COMM Makefile for the CASTOR2 DiskCopy mover
 COMM
 COMM @author Castor Dev team, castor-dev@cern.ch
 
-CPPFLAGS += $(STAGERSUPERUSER) $(STAGERSUPERGROUP)
 AddLdFlags(-lstdc++)
 
 DependsOnLibrary(common,castorcommon)
@@ -34,4 +33,4 @@ DependsOnLibrary(rfio,castorrfio)
 D2D_SRCS = DiskCopyTransfer.cpp MainThread.cpp ../SharedResourceHelper.cpp BaseMover.cpp RfioMover.cpp
 D2D_OBJS = $(D2D_SRCS:.cpp=.o)
 NormalProgramTarget(d2dtransfer,$(D2D_OBJS),,,755)
-MakeDir(LogPath,0755)
+MakeDir($(LOGPATH),0755)

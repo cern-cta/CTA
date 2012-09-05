@@ -40,6 +40,8 @@
 #include <rtcp_server.h>
 #include <Ctape_api.h>
 #include <serrno.h>
+#include <Cns.h>
+
 int rtcp_CheckReqStructures (int *,
 			     rtcpClientInfo_t *,
 			     tape_list_t *);
@@ -464,16 +466,14 @@ static int rtcp_CheckFileReq(file_list_t *file) {
         if ( rc == -1 ) return(rc);
     }
 
-#if defined(NS_ROOT)
     /*
      * Make sure that disk file names is not a CASTOR HSM file
      */
-    if ( strncmp(filereq->file_path,NS_ROOT,strlen(NS_ROOT)) == 0 ) {
+    if ( strncmp(filereq->file_path,CNS_ROOT,strlen(CNS_ROOT)) == 0 ) {
         sprintf(errmsgtxt,RT152,CMD(mode));
         SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
         if ( rc == -1 ) return(rc);
     }
-#endif /* NS_ROOT */
 
     /*
      * Tape file checks flag. Just set a default if not set.

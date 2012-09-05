@@ -10,7 +10,7 @@
  * if the environment variable CNS_HOST is set, its value is used else
  * if CNS HOST is defined in /etc/castor/castor.conf, the value is used else
  * the second component of path is the domain name and the third component
- * is prefixed by the value of NsHostPfx to give the host name or its alias
+ * is prefixed by "cns" to give the host name or its alias
  */
 
 #include <errno.h>
@@ -78,12 +78,12 @@ Cns_selectsrvr(const char *path,
         server[0] = '\0'; /* use localhost */
         return (0);
       }
-      if (strlen (CNSHOSTPFX) + strlen (p) + strlen (domain) +
+      if (strlen ("cns") + strlen (p) + strlen (domain) +
           1 > CA_MAXHOSTNAMELEN) {
         serrno = EINVAL;
         return (-1);
       }
-      sprintf (server, "%s%s.%s", CNSHOSTPFX, p, domain);
+      sprintf (server, "%s%s.%s", "cns", p, domain);
     }
   }
   return (0);

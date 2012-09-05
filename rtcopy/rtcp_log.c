@@ -33,7 +33,7 @@
 #include <rtcp_constants.h>
 #include <rtcp.h>
 #include <rtcp_server.h>
-char *rtcpd_logfile = RTCOPY_LOGFILE;
+char *rtcpd_logfile = "/var/log/castor/rtcpd_legacy.log";
 
 #define SAVE_ERRNO int save_errno, save_serrno; save_errno = errno; save_serrno = serrno;
 #define RESTORE_ERRNO {serrno = save_serrno; errno = save_errno;}

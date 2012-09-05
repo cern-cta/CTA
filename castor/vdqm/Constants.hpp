@@ -33,6 +33,11 @@ namespace castor { namespace vdqm {
   const std::string VDQMSCHEMAVERSION = "2_1_12_0";
 
   /**
+   * The schema version with which this release of the VDQM is compatible with.
+   */
+  const std::string VDQMORACONFIGFILE = "/etc/castor/ORAVDQMCONFIG";
+
+  /**
    * Default number of request handler threads.
    */
   const int REQUESTHANDLERDEFAULTTHREADNUMBER = 20;

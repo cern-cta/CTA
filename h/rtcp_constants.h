@@ -218,10 +218,6 @@
                            RTCP_CKSUM_CRC32, \
                            ""}
 
-#if !defined(RTCOPY_LOGFILE)
-#define RTCOPY_LOGFILE     ""
-#endif /* RTCOPY_LOGFILE */
-
 #if !defined(NB_RTCP_BUFS)
 #define NB_RTCP_BUFS       (32)
 #endif /* NB_RTCP_BUFS */

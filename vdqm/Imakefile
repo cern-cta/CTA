@@ -27,7 +27,6 @@ COMM @author Castor Dev team, castor-dev@cern.ch
 CPPFLAGS += -DVDQMCSEC
 LDLIBS += -ldl
 #endif  
-CPPFLAGS += -DVDQM_HOST=VdqmHost
 
 CommonDependsOnLibrary(common,castorcommon)
 

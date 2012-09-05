@@ -24,7 +24,7 @@ COMM
 COMM @author Castor Dev team, castor-dev@cern.ch
 COMM
 
-CPPFLAGS += -DORASTAGERCONFIGFILE=OraStagerConfigFile $(ORACLE_CPPFLAGS)
+CPPFLAGS += $(ORACLE_CPPFLAGS)
 AddLdFlags(-L$(ORACLE_LIBDIR) -locci -lclntsh -lstdc++ -lm)
 
 DependsOnLibrary(castor/db/cnv,castorcnvs)

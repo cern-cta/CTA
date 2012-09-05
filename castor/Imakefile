@@ -23,7 +23,6 @@ COMM Make Castor libraries and executables
 COMM
 COMM @author Castor Dev team, castor-dev@cern.ch
 
-CPPFLAGS += $(STAGERSUPERUSER) $(STAGERSUPERGROUP) -DSTAGEMAP=StageMapFile
 AddLdFlags(-lstdc++)
 
 STGLIB_SRCS = BaseAddress.cpp \
@@ -291,7 +290,6 @@ EXAMPLEFILE(castor.conf,/etc/castor,install)
 EXAMPLEFILE(rsyslog.conf.client,/etc/castor,install)
 EXAMPLEFILE(rsyslog.conf.server,/etc/castor,install)
 
-TOPINCLUDE=InstallIncludeDir
 BUILDHEADERSDIRHPP=$(TOPINCLUDE)/castor/castor
 
 # Required by xrootd-xcastor2fs and castor-srmv2

@@ -698,11 +698,11 @@ int initdrvtab()
 	struct tpdev *tdp;
 	struct tptab *tunp;
 
-	if ((s = fopen (TPCONFIG, "r")) == NULL) {
-		tplogit (func, TP008, TPCONFIG);
+	if ((s = fopen ("/etc/castor/TPCONFIG", "r")) == NULL) {
+		tplogit (func, TP008, "/etc/castor/TPCONFIG");
                 tl_tpdaemon.tl_log( &tl_tpdaemon, 8, 2,
                                     "func",    TL_MSG_PARAM_STR, func,
-                                    "Message", TL_MSG_PARAM_STR, TPCONFIG );
+                                    "Message", TL_MSG_PARAM_STR, "/etc/castor/TPCONFIG" );
 		return (ETSYS);
 	}
 	/* 1st pass: count number of tape drives defined */

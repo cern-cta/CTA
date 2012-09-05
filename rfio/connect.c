@@ -276,7 +276,7 @@ int rfio_connect_with_port(char    *node,                  /* remote host to con
     sin.sin_addr.s_addr = ((struct in_addr *)(hp->h_addr))->s_addr;
   }
 
-  strcpy(nomorebuf1, NOMORERFIO);
+  strcpy(nomorebuf1, "/var/run/nomorerfio");
   sprintf(nomorebuf2, "%s.%s", nomorebuf1, cp);
  retry:
   if (!stat(nomorebuf1,&statbuf)) {

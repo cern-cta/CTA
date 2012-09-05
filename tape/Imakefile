@@ -12,9 +12,9 @@ CPPFLAGS += -DTPCSEC
 AddLdFlags(-ldl)
 #endif
 
-COMM ######################### FLAGS ##############################
+CPPFLAGS += -DBIN=\"$(BINDIR)\"
 
-CPPFLAGS += -DTAPELOGFILE=TapeLogFile $(STAGERSUPERUSER) -DSCSIINC=TapeScsiInc
+COMM ######################### FLAGS ##############################
 
 LOCAL_PATH/usrlocate.c: LOCAL_PATH/locate.c
 	RemoveFiles($@)
@@ -98,7 +98,7 @@ EXEMANPAGE(tpconfig)
 EXEMANPAGE(tprstat)
 EXEMANPAGE(tpstat)
 
-TapeMakeDir(LogPath,0755)
+TapeMakeDir($(LOGPATH),0755)
 TAPED_OBJS = tpdaemon.o checkjobdied.o cvtden.o sendrep.o tplogit.o usrmsg.o
 CONFDRIVE_OBJS = confdrive.o sendrep.o tplogit.o
 POSOVL_OBJS = posovl.o buildhdrlbl.o builduhl.o buildvollbl.o ebc2asc.o getdrvstatus.o inquiry.o locate.o posittape.o readlbl.o rwndtape.o send2tpd.o sendrep.o skiptape.o tperror.o tplogit.o usrmsg.o
@@ -127,7 +127,7 @@ TapeProgramTarget(rlstape-nostk,$(RLSTAPE_NOSTK_OBJS) $(TAPEACCT),$(TAPELIB),$(T
 ifeq ($(CASTOR_NOSTK),)
 CDKFLG = -DCDK -DLINUX
 CDKINC = -I/usr/include/CDK
-LIBCDK = -L InstallLibDir/CDK -lapi -lutl -lipc -lcl
+LIBCDK = -L $(LIBDIR)/CDK -lapi -lutl -lipc -lcl
 
 LOCAL_PATH/mounttape-stk.c: $(CASTOR_ROOT)/tape/mounttape.c
 	RemoveFiles($@)

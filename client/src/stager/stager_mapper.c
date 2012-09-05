@@ -75,7 +75,7 @@ get_mapping(enum mapping_type mt,
   if (svcclass != NULL)
     *svcclass = NULL;
 
-  rc = getconfent_multi_fromfile(STAGEMAP,
+  rc = getconfent_multi_fromfile("/etc/castor/stagemap.conf",
 				 category,
 				 (char *)name,
 				 1,

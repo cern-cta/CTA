@@ -24,8 +24,6 @@ MINOR_CASTOR_VERSION ?= $(shell egrep -m 1 "^castor" $(CASTOR_ROOT)/debian/chang
 #else
 #ifdef __APPLE__
 #include <apple.cf>
-#else
-#include <Win32.cf>
 #endif
 #endif
 
@@ -38,10 +36,22 @@ CXX += -fPIC -D_LARGEFILE64_SOURCE -Wall -Wextra -Werror
 CXXFLAGS += -I$(CASTOR_ROOT) -I$(CASTOR_ROOT)/h $(DEBUG)
 CFLAGS += $(CXXFLAGS)
 CPPFLAGS += -pthread -I$(CASTOR_ROOT) -I$(CASTOR_ROOT)/h
-CPPFLAGS += -DBIN=\"InstallBinDir\" -DACCTFILE=SacctFile -DTPCONFIG=TapeConfigFile
 
 LDFLAGS += -lpthread
 
+LOGPATH := /var/log/castor
+BINDIR := /usr/bin
+TOPINCLUDE := /usr/include
+LIBNOARCHDIR := /usr/lib
+ifneq ($(wildcard /etc/debian_version),)
+  LIBDIR = /usr/lib
+else
+#if defined(__x86_64)
+  LIBDIR = /usr/lib64
+#else
+  LIBDIR = /usr/lib
+#endif
+endif
 PERL_LIBDIR = /usr/lib/perl/CASTOR
 
 PYTHON_LIBS := $(shell python $(CASTOR_ROOT)/config/pycompile.py --libs)
@@ -63,19 +73,6 @@ GLOBUS_FTPLIB := $(shell python $(CASTOR_ROOT)/config/globuscompile.py --ftplib)
 GLOBUS_GSSLIB_THR := $(shell python $(CASTOR_ROOT)/config/globuscompile.py --gsslibthr)
 
 Krb5Config := $(shell if [ -r "/usr/kerberos/bin/krb5-config" ]; then echo /usr/kerberos/bin/krb5-config; else echo /usr/bin/krb5-config; fi)
-
-ifneq ($(wildcard /etc/debian_version),)
-  LIBDIR = /usr/lib
-else
-  LIBDIR = InstallLibDir
-endif
-
-#ifdef StagerSuperUser
-STAGERSUPERUSER  = -DSTAGERSUPERUSER=StagerSuperUser
-#endif
-#ifdef StagerSuperGroup
-STAGERSUPERGROUP = -DSTAGERSUPERGROUP=StagerSuperGroup
-#endif
 
 #include <Imake.rules>
 #include <Project.tmpl>

@@ -30,6 +30,7 @@
 #include "Cgetopt.h"
 #include "u64subr.h"
 #include "getconfent.h"
+#include "stage_constants.h"
 #include <sys/time.h>
 #include <errno.h>
 #include <pwd.h>

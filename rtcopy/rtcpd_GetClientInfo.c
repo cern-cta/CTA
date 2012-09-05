@@ -107,7 +107,7 @@ int rtcpd_GetClientInfo(
   {
     struct stat st;
 
-    if(0 == stat(NOMORETAPES, &st)) {
+    if(0 == stat("/var/run/nomoretapes", &st)) {
       char *const errMsg = "Tape service momentarily interrupted";
 
       snprintf(errBuf, errBufLen, "%s()"

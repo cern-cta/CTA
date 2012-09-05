@@ -34,7 +34,7 @@ DependsOnLibrary(castor,castorclient)
 GCBIN_SRCS = GcDaemon.cpp DeletionThread.cpp SynchronizationThread.cpp
 GCBIN_OBJS = $(GCBIN_SRCS:.cpp=.o)
 NormalProgramTarget(gcd,$(GCBIN_OBJS),,,0755)
-MakeDir(LogPath,0755)
+MakeDir($(LOGPATH),0755)
 MakeDirWithOwnership(/var/spool/castor,stage,st,0755)
 ADMMANPAGE(gcd)
 LOGROTATE(castor-gc-server,install)

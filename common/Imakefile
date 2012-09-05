@@ -6,7 +6,6 @@ COMM
 
 COMM		Make common routines library
 
-CPPFLAGS += -DPATH_CONFIG=CastorConfigFile -DLOCALHOSTSFILE=LocalHostsList -DMAPPING_FILE=MappingFile -DRTHOSTSFILE=RemoteHostsList -DADMIN_HOSTS=AdminHosts
 AddLdFlags(-l UUIDLIBNAME -lstdc++)
 
 COMMONLIB_OBJS = $(SYSDEP_OBJS) \

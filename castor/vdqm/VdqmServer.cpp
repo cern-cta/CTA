@@ -271,14 +271,14 @@ void castor::vdqm::VdqmServer::usage()
 void castor::vdqm::VdqmServer::initDatabaseService(Cuuid_t &cuuid) {
 
   // Check the database connection details file exists
-  FILE *fp = fopen(ORAVDQMCONFIGFILE, "r");
+  FILE *fp = fopen(VDQMORACONFIGFILE.c_str(), "r");
   if(fp) {
     // The file exists
     fclose(fp);
   } else {
     // The file does not exist
     std::stringstream oss;
-    oss << "Database connection details file '" << ORAVDQMCONFIGFILE
+    oss << "Database connection details file '" << VDQMORACONFIGFILE
       << "' does not exist";
 
     // Log
@@ -315,7 +315,7 @@ void castor::vdqm::VdqmServer::initDatabaseService(Cuuid_t &cuuid) {
   }
 
   params->setSchemaVersion(castor::vdqm::VDQMSCHEMAVERSION);
-  params->setDbAccessConfFile(ORAVDQMCONFIGFILE);
+  params->setDbAccessConfFile(VDQMORACONFIGFILE);
 }
 
 

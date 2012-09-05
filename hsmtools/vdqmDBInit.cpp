@@ -301,7 +301,7 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
     params->setSchemaVersion(castor::vdqm::VDQMSCHEMAVERSION);
-    params->setDbAccessConfFile(ORAVDQMCONFIGFILE);
+    params->setDbAccessConfFile(castor::vdqm::VDQMORACONFIGFILE);
 
     // retrieve a Services object
     svcs = castor::BaseObject::services();

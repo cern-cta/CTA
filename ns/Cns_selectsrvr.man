@@ -34,10 +34,8 @@ if
 .I path
 is an absolute path and contains at least 3 components,
 the second component of the pathname is the domain name and the third component
-is prefixed by the value of
-.B CnsHostPfx
-(defined in
-.BR site.def )
+is prefixed by 
+.B "cns"
 to give the hostname or its alias else
 .LP
 the Name Server running on the local machine is used.
@@ -91,11 +89,7 @@ and
 /castor/cern.ch/user/b/baud/test
 .LP
 4) The environment variable is not set, there is no entry in
-.BR /etc/castor/castor.conf,
-NsHostPfx is defined as
-.B cns
-in
-.B site.def
+.BR /etc/castor/castor.conf
 and
 .I path 
 is

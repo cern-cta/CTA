@@ -10,9 +10,7 @@ COMM    Make UPV programs.
 CPPFLAGS += -DUPVCSEC
 #endif
 
-CPPFLAGS += -DCUPV_HOST=CupvHost \
-            -DCUPVLOGFILE=CupvLogFile -DCUPVCONFIG=CupvConfigFile \
-            $(ORACLE_CPPFLAGS)
+CPPFLAGS += $(ORACLE_CPPFLAGS)
 
 CommonDependsOnLibrary(common,castorcommon)
 CUPVLIB_OBJS = Cupv_apiinit.o Cupv_errmsg.o send2Cupv.o Cupv_delete.o Cupv_list.o Cupv_util.o Cupv_check.o Cupv_modify.o Cupv_add.o
@@ -39,7 +37,7 @@ CLIENTEXEMANPAGE(Cupvlist)
 
 PROC(Cupv_oracle_ifce)
 CUPVD_OBJS = Cupv_main.o Cupv_oracle_ifce.o Cupv_procreq.o sendrep.o Cupv_util.o Cupvlogit.o
-MakeDir(LogPath,0755)
+MakeDir($(LOGPATH),0755)
 ORALIBS= -L$(ORACLE_LIBDIR) -lclntsh
 NormalProgramTarget(cupvd,$(CUPVD_OBJS),,$(ORALIBS),755)
 ADMMANPAGE(cupvd)

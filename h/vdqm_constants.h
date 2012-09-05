@@ -183,9 +183,6 @@
 /*
  * Defaults
  */
-#ifndef VDQM_HOST
-#define VDQM_HOST        "vdqm"
-#endif /* VDQM_HOST */
 
 #ifndef VDQM_PORT
 #ifdef VDQMCSEC
@@ -222,14 +219,6 @@
 #else  /* VDQM_BACKLOG */
 #define VDQM_BACKLOG (5)
 #endif /* VDQM_BACKLOG */
-
-#ifndef VDQM_LOG_FILE
-#define VDQM_LOG_FILE "vdqm.log"
-#endif /* VDQM_LOG_FILE */
-
-#ifndef VDQM_DRIVES_FILE
-#define VDQM_DRIVES_FILE "vdqm.drives"
-#endif /* VDQM_DRIVES_FILE */
 
 #ifndef VALID_VDQM_MSGLEN
 #define VALID_VDQM_MSGLEN(X) ((X)>0 && (X)<(VDQM_MSGBUFSIZ))

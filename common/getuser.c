@@ -15,14 +15,7 @@
 #include <serrno.h>
 #include <log.h>
 
-#ifndef MAPPING_FILE
-#define MAPPING_FILE "/etc/ext.users"
-#endif  
-
-static char *infile = MAPPING_FILE;
-
-
-#define strtok(X,Y) strtok_r(X,Y,&last)
+static char *infile = "/etc/castor/ext.users";
 
 /*
  * function finds the corresponding entry in the
@@ -63,23 +56,23 @@ int get_user(char *from_node,
 
         log(LOG_DEBUG,"Entry >%s< in %s\n",buf,infile) ;
 
-        p = strtok( buf, " \t");
+        p = strtok_r( buf, " \t",&last);
         if ( p != NULL ) strcpy (maphostnam, p) ;
         else continue ;
 
-        p = strtok( NULL, " \t");
+        p = strtok_r( NULL, " \t",&last);
         if ( p != NULL ) strcpy (mapuser, p) ;
         else continue ;
 
-        p = strtok( NULL, " \t");
+        p = strtok_r( NULL, " \t",&last);
         if ( p != NULL ) strcpy (mapuid, p);
         else continue ;
 
-        p = strtok( NULL, " \t");
+        p = strtok_r( NULL, " \t",&last);
         if ( p != NULL ) strcpy (mapgid, p);
         else continue ;
 
-        p = strtok( NULL, " \t");
+        p = strtok_r( NULL, " \t",&last);
         if ( p != NULL ) strcpy (to_user,p);
         else continue ;
 

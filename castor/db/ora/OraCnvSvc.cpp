@@ -129,10 +129,10 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
   }
   
     if ("" == m_user || "" == m_dbName) {
-      // get the config file name. Defaults to ORASTAGERCONFIG
+      // get the config file name. Defaults to /etc/castor/ORASTAGERCONFIG
       std::string confFile = params->getDbAccessConfFile();
       if (confFile == "") {
-        confFile = std::string(ORASTAGERCONFIGFILE);
+        confFile = std::string("/etc/castor/ORASTAGERCONFIG");
       }
       // get the new values
       char* cuser = getconfent_fromfile(confFile.c_str(), nameVal.c_str(), "user", 0);

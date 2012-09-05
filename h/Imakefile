@@ -5,7 +5,6 @@ COMM  All rights reserved
 COMM
 COMM 		Makefile for CASTOR includes             GENERIC
 
-TOPINCLUDE=InstallIncludeDir
 DESTDIRCASTOR=$(TOPINCLUDE)/shift
 
 ClientInstallNonExecFile(shift.h,$(TOPINCLUDE),644)

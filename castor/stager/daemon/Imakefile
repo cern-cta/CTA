@@ -63,7 +63,7 @@ DBSERVICEDAEMONBIN_SRCS = \
 
 DBSERVICEDAEMONBIN_OBJS = $(DBSERVICEDAEMONBIN_SRCS:.cpp=.o)
 NormalProgramTarget(stagerd,$(DBSERVICEDAEMONBIN_OBJS),,,755)
-MakeDir(LogPath,0755)
+MakeDir($(LOGPATH),0755)
 MakeDirWithOwnership(/var/spool/castor,stage,st,0755)
 ADMMANPAGE(stagerd)
 LOGROTATE(castor-stager-server,install)

@@ -9,13 +9,13 @@ COMM    Make volume manager programs.
 CPPFLAGS += -DVMGRCSEC
 AddLdFlags(-ldl)
 #endif
-CPPFLAGS += -DVMGRLOGFILE=VmgrLogFile -DVMGRCONFIG=VmgrConfigFile $(ORACLE_CPPFLAGS)
+CPPFLAGS += $(ORACLE_CPPFLAGS)
 
 CommonDependsOnLibrary(ns,castorns)
 CommonDependsOnLibrary(common,castorcommon)
 CommonDependsOnLibrary(upv,castorupv)
 
-MakeDir(LogPath,0755)
+MakeDir($(LOGPATH),0755)
 PROC(vmgr_oracle_ifce)
 VMGRD_OBJS = vmgr_main.o vmgr_oracle_ifce.o vmgr_procreq.o sendrep.o vmgrlogit.o
 ORALIBS= -L$(ORACLE_LIBDIR) -lclntsh

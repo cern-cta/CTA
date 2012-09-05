@@ -148,11 +148,7 @@ static int rfio_parseln_old(char    *name,
     char     buffer1[CA_MAXPATHLEN+1],buffer2[CA_MAXPATHLEN+1];
 
     strcpy ( buffer1, name );
-#if defined(FollowRtLinks)
-    while ( (n= rfio_readlink(buffer1,buffer,CA_MAXPATHLEN+1)) > 0  && countln < 4 )
-#else
-      while ( (n= readlink(buffer1,buffer,CA_MAXPATHLEN+1)) > 0  && countln < 4 )
-#endif /* FollowRtLinks */
+    while ( (n= readlink(buffer1,buffer,CA_MAXPATHLEN+1)) > 0  && countln < 4 )
         {
           /* save original filename */
           if (strlen(buffer1) > CA_MAXPATHLEN) {
@@ -207,8 +203,7 @@ static int rfio_parseln_old(char    *name,
       cp3[0]='\0' ;
       return (1) ;
     }
-    TRACE(3,"rfio","rfio_parseln() check %s against castor root %s",
-          name_1,CNS_ROOT);
+    TRACE(3,"rfio","rfio_parseln() check %s against castor root %s",name_1,CNS_ROOT);
     if ( rfio_HsmIf_IsCnsFile(name_1) > 0 ) {
       cwd_server = rfio_HsmIf_GetCwdServer();
       *host = NULL;

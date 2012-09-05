@@ -83,8 +83,7 @@ CUPV	HOST	castor5
 .RE
 .RE
 .LP
-If none of these methods is used, the default host is taken from the
-definition of CupvHost in site.def.
+If none of these methods is used, the default host is "castorcupv".
 .LP
 The user privilege database keeps the information: uid, gid, source host, target host, privilege.
 .LP

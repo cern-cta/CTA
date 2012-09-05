@@ -17,6 +17,7 @@
 #include "Castor_limits.h"
 #include "common.h"
 #include "rfio.h"                       /* Remote file I/O              */
+#include "stage_constants.h"
 #include "rfio_constants.h"
 #include "rfioacct.h"
 #include "rfio_calls.h"
@@ -220,10 +221,8 @@ int main (int     argc,
 #if defined(linux)
   struct sigaction sa;
 #endif
-#ifdef STAGERSUPERUSER
   struct group *this_group;             /* Group structure */
   struct passwd *this_passwd;             /* password structure pointer */
-#endif
   int select_status;
   int select_timeout = CHECKI;
 
@@ -302,7 +301,7 @@ int main (int     argc,
     loglevel = LOG_DEBUG;
   }
   if (logging && !lfname) {
-    strcpy(logfile, RFIOLOGFILE);
+    strcpy(logfile, "/var/log/castor/rfiod.log");
   }
   if (!(strcmp(logfile, "stderr"))) {
     strcpy(logfile, "");
@@ -446,7 +445,6 @@ int main (int     argc,
 
     log(LOG_DEBUG,"setsockopt maxsnd=%d, maxrcv=%d\n", max_sndbuf, max_rcvbuf);
 
-#ifdef STAGERSUPERUSER
     /* Note: default is have_stagersuperuser = 0, e.g. none */
 
     log(LOG_INFO,"Checking existence of alternate super-user \"%s\" in password file\n", STAGERSUPERUSER);
@@ -456,7 +454,6 @@ int main (int     argc,
       log(LOG_ERR, "No alternate super-user in action\n");
     } else {
       stagersuperuser = *this_passwd;
-#ifdef STAGERSUPERGROUP
       log(LOG_INFO,"Checking existence of alternate super-group \"%s\" in group file\n", STAGERSUPERGROUP);
       if ((this_group = Cgetgrnam(STAGERSUPERGROUP)) == NULL) {
         log(LOG_ERR, "Cannot Cgetgrnam(\"%s\") (%s)\n",STAGERSUPERGROUP,strerror(errno));
@@ -475,22 +472,7 @@ int main (int     argc,
           have_stagersuperuser = 1;
         }
       }
-#else
-      log(LOG_INFO,"Checking existence of alternate super-group %d in group file\n", (int) stagersuperuser.pw_gid);
-      if ((this_group = Cgetgrgid(stagersuperuser.pw_gid)) == NULL) {
-        log(LOG_ERR, "Cannot Cgetgrgid(%d) (%s)\n",(int) stagersuperuser.pw_gid,strerror(errno));
-        log(LOG_ERR, "Please check existence of group %d in group file\n", (int) stagersuperuser.pw_gid);
-        log(LOG_ERR, "No alternate super-user in action\n");
-      } else {
-        /* An alternate super-user has been defined */
-        log(LOG_INFO, "Allowing the alternate super-user privileges for account: (\"%s\",\"%s\")=(%d,%d)\n", STAGERSUPERUSER, this_group->gr_name, (int) stagersuperuser.pw_uid, (int) stagersuperuser.pw_gid);
-        have_stagersuperuser = 1;
-      }
-#endif
     }
-#else
-    log(LOG_INFO,"No alternate super-user configured (STAGERSUPERUSER)\n");
-#endif
 
     for (;;) {
       check_child_exit((subrequest_id>0 ? have_a_child : 0)); /* check childs [pid,status] */

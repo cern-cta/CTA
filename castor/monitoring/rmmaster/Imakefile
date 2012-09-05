@@ -39,7 +39,7 @@ DependsOnLibrary(castor/db/cnv,castorcnvs)
 RMMASTERDAEMONBIN_SRCS = RmMasterDaemon.cpp CollectorThread.cpp DatabaseActuatorThread.cpp UpdateThread.cpp HeartbeatThread.cpp SchedulerStatus.cpp ora/OraRmMasterSvc.cpp ora/StatusUpdateHelper.cpp
 RMMASTERDAEMONBIN_OBJS = $(RMMASTERDAEMONBIN_SRCS:.cpp=.o)
 NormalProgramTarget(rmmasterd,$(RMMASTERDAEMONBIN_OBJS),,,755)
-MakeDir(LogPath,0755)
+MakeDir($(LOGPATH),0755)
 MakeDirWithOwnership(/var/spool/castor,stage,st,0755)
 LOGROTATE(castor-rmmaster-server,install)
 SYSCONFIG(rmmasterd,install)

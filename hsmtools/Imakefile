@@ -6,8 +6,6 @@ COMM       @(#)Imakefile,v 1.24 2005/12/06 10:52:56 CERN IT-PDP/DM Jean-Philippe
 
 COMM    Make HSM admin tools.
 
-CPPFLAGS += -DORAVDQMCONFIGFILE=VdqmConfigFile
-
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(dlf,castordlf)
 DependsOnLibrary(castor/db/cnv,castorcnvs)
@@ -24,7 +22,7 @@ NormalProgramTarget(c2probe,c2probe.o,,,755)
 LOCAL_PATH/rfcpupd.c: $(CASTOR_ROOT)/rfio/rfcp.c
 	sed 's/| *O_TRUNC//' $< | sed 's/O_WRONLY/O_RDWR|O_APPEND/' > $@
 PREFIX(FilesToClean) += LOCAL_PATH/rfcpupd.c
-COMPILEC(rfcpupd.c,-DSACCT $(STAGERSUPERUSER) $(STAGERSUPERGROUP))
+COMPILEC(rfcpupd.c,-DSACCT)
 NormalProgramTarget(rfcpupd,rfcpupd.o,,,755)
 NormalProgramTarget(stager_actualget,stager_actualget.o,,,755)
 NormalProgramTarget(stager_actualput,stager_actualput.o,,,755)

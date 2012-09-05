@@ -47,7 +47,7 @@ extern int Cinitdaemon (char *, void (*)(int));
 char *getconfent();
 
 static int ChdirWorkdir() {
-    char *workdir = WORKDIR, *p;
+    char *workdir = "/var/lib/castor/rtcpd", *p;
     struct stat st;
     mode_t save_mask;
     int rc;
@@ -103,7 +103,7 @@ S_IXGRP|S_IROTH|S_IWOTH|S_IXOTH);
 int rtcpd_main() {
     int rc;
     int pid;
-    char workdir[] = WORKDIR;
+    char workdir[] = "/var/lib/castor/rtcpd";
     char tpserver[CA_MAXHOSTNAMELEN+1];
     int *listen_socket = NULL;
     int *request_socket = NULL;

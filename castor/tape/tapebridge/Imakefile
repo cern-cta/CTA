@@ -69,7 +69,7 @@ TAPEBRIDGEBIN_SRCS = \
 TAPEBRIDGEBIN_OBJS = $(TAPEBRIDGEBIN_SRCS:.cpp=.o)
 
 NormalProgramTarget(tapebridged,$(TAPEBRIDGEBIN_OBJS),,,755)
-MakeDir(LogPath,0755)
+MakeDir($(LOGPATH),0755)
 ADMMANPAGE(tapebridged)
 LOGROTATE(castor-tapebridge-server,install)
 SYSCONFIG(tapebridged,install)

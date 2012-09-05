@@ -40,6 +40,7 @@
 #include <iostream>
 #include <fstream>
 #include "getconfent.h"
+#include "stage_constants.h"
 #include <sys/vfs.h>
 #include "errno.h"
 #include <mntent.h>      /* To get partition table */

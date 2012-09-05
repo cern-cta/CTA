@@ -60,7 +60,7 @@ $(DESTDIR)/dest/file: LOCAL_PATH/subdir/**/file deps               @@\
 insttarget: $(DESTDIR)/dest/file
 
 #define InstallTarget(file,mode) \
-InternalInstallTarget(file,mode,InstallBinDir,install,,)
+InternalInstallTarget(file,mode,$(BINDIR),install,,)
 
 #define InstallLink(tofile,fromfile,mode,dest,component) \
 $(DESTDIR)/dest/tofile: fromfile                       @@\
@@ -77,7 +77,7 @@ LOCAL_PATH/tofile: LOCAL_PATH/fromfile         @@\
 	ln -s $< $@                            @@\
 component: LOCAL_PATH/tofile                   @@\
 FilesToClobber += LOCAL_PATH/tofile            @@\
-InstallLink(tofile,LOCAL_PATH/fromfile,mode,InstallBinDir,component)
+InstallLink(tofile,LOCAL_PATH/fromfile,mode,$(BINDIR),component)
 
 #define DepSourceName(dirname,source)../dirname/source
 #define BareSharedLibraryTargetName(libname)libname.so
@@ -175,7 +175,7 @@ LOCAL_PATH/program: objects deplibs	                                         @@\
 	@echo "  Linking" $@                                                     @@\
 	$(CC) -o $@ $(LDFLAGS) $(PREFIX(LDFLAGS)) objects libs                   @@\
 alltarget: LOCAL_PATH/program                                                    @@\
-InternalInstallTarget(program,mode,InstallBinDir,install/**/installtarget,InstallLibraryTargetNames(deplibs),) @@\
+InternalInstallTarget(program,mode,$(BINDIR),install/**/installtarget,InstallLibraryTargetNames(deplibs),) @@\
 PREFIX(FilesToClean) += objects $(patsubst %.o,%.d,objects)                      @@\
 PREFIX(FilesToClobber) += LOCAL_PATH/program                                     @@\
 objects: %.o: %.d
