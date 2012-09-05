@@ -34,6 +34,7 @@
 #include "castor/server/IThread.hpp"
 #include <string>
 #include <vector>
+#include <set>
 #include <map>
 
 namespace castor {
@@ -113,16 +114,24 @@ namespace castor {
         throw (castor::exception::Exception);
 
       /**
-       * Synchronizes a list of files with the nameserver and stager catalog
+       * gets a list of files open for write in the given mountPoint
+       * @param mountPoint the mountPoint to be considered
+       * @throw exception in case of error
+       */
+      std::set<std::string> getFilesBeingWrittenTo(char* mountPoint)
+        throw(castor::exception::Exception);
+
+      /**
+       * Synchronizes a list of files from a given filesystem with the nameserver and stager catalog
        * @param nameServer the nameserver to use
-       * @param diskCopyIds a vector of diskCopyIds
-       * @param paths a map giving the full file name for each diskCopyId
+       * @param paths a map giving the full file name for each diskCopyId to be checked
        * @param disableStagerSync whether to disable the stager synchronization
+       * @param mountPoint the mountPoint of the filesystem on which the files reside
        */
       void synchronizeFiles(std::string nameServer,
-                            const std::vector<u_signed64> &diskCopyIds,
                             const std::map<u_signed64, std::string> &paths,
-                            bool disableStagerSync)
+                            bool disableStagerSync,
+                            char* mountPoint)
         throw();
 
     private:

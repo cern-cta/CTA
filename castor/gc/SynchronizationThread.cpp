@@ -43,6 +43,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <vector>
+#include <set>
 #include <map>
 #include <algorithm>
 
@@ -58,7 +59,6 @@
 //-----------------------------------------------------------------------------
 castor::gc::SynchronizationThread::SynchronizationThread(int startDelay) :
   m_startDelay(startDelay) { };
-
 
 //-----------------------------------------------------------------------------
 // Run
@@ -102,10 +102,8 @@ void castor::gc::SynchronizationThread::run(void*) {
     // Initialize random number generator
     srand(time(0));
 
-    std::map<std::string, std::vector<u_signed64> > diskCopyIds;
-    std::map<std::string, std::map<u_signed64, std::string> > paths;
-
     // Loop over the fileSystems starting in a random place
+    std::map<std::string, std::map<u_signed64, std::string> > paths;
     int fsIt = (int) (nbFs * (rand() / (RAND_MAX + 1.0)));
     for (int i = 0; i < nbFs; i++) {
 
@@ -163,15 +161,22 @@ void castor::gc::SynchronizationThread::run(void*) {
         struct dirent *file;
         while ((file = readdir(files))) {
 
-          // Ignore non regular files
+          // Ignore non regular files and files closed too recently (< 1mn)
+          // This protects in particular recently recalled files by giving time
+          // to the stager DB to create the associated DiskCopy. Otherwise,
+          // we would have a time window where the file exist on disk and can
+          // be considered by us, while it does not exist on the stager. Thus
+          // we would drop it
           struct stat64 filebuf;
           std::string filepath (*it + "/" + file->d_name);
           if (stat64(filepath.c_str(), &filebuf) < 0) {
             continue;
           } else if (!(filebuf.st_mode & S_IFREG)) {
             continue;  // not a file
+          } else if (filebuf.st_mtime > time(NULL) - 60) {
+            continue;
           }
-
+          
           // Extract the nameserver host and diskcopy id from the filename
           std::pair<std::string, u_signed64> fid;
           try {
@@ -186,59 +191,62 @@ void castor::gc::SynchronizationThread::run(void*) {
           }
 
           try {
-            diskCopyIds[fid.first].push_back(fid.second);
             paths[fid.first][fid.second] = *it + "/" + file->d_name;
 
             // In the case of a large number of files, synchronize them in
             // chunks so to not overwhelming central services
-            if (diskCopyIds[fid.first].size() >= chunkSize) {
+            if (paths[fid.first].size() >= chunkSize) {
 
               // "Synchronizing files with nameserver and stager catalog"
               castor::dlf::Param params[] =
-                {castor::dlf::Param("NbFiles", diskCopyIds[fid.first].size()),
+                {castor::dlf::Param("NbFiles", paths[fid.first].size()),
                  castor::dlf::Param("Nameserver", fid.first)};
               castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 31, 2, params);
 
-              synchronizeFiles(fid.first, diskCopyIds[fid.first],
-                               paths[fid.first], disableStagerSync);
-              diskCopyIds[fid.first].clear();
+              synchronizeFiles(fid.first, paths[fid.first], disableStagerSync, fs[fsIt]);
               paths[fid.first].clear();
               sleep(chunkInterval);
             }
           } catch (castor::exception::Exception& e) {
             // "Unexpected exception caught in synchronizeFiles"
-            castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 40, 0, 0);
+            castor::dlf::Param params[] =
+              {castor::dlf::Param("ErrorCode", e.code()),
+               castor::dlf::Param("ErrorMessage", e.getMessage().str())};
+            castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 40, 2, params);
             sleep(chunkInterval);
           }
         }
         closedir(files);
       }
-      free(fs[fsIt]);
-      fsIt = (fsIt + 1) % nbFs;
-    }
 
-    // Synchronize the remaining files not yet checked
-    for (std::map<std::string, std::vector<u_signed64> >::const_iterator it2 =
-           diskCopyIds.begin();
-         it2 != diskCopyIds.end();
-         it2++) {
-      try {
-        if (it2->second.size() > 0) {
-          // "Synchronizing files with nameserver and stager catalog"
-          castor::dlf::Param params[] =
-            {castor::dlf::Param("NbFiles", it2->second.size()),
-             castor::dlf::Param("Nameserver", it2->first)};
-          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 31, 2, params);
+      // Synchronize the remaining files not yet checked for this filesystem
+      for (std::map<std::string, std::map<u_signed64, std::string> > ::const_iterator it2 =
+             paths.begin();
+           it2 != paths.end();
+           it2++) {
+        try {
+          if (it2->second.size() > 0) {
+            // "Synchronizing files with nameserver and stager catalog"
+            castor::dlf::Param params[] =
+              {castor::dlf::Param("NbFiles", it2->second.size()),
+               castor::dlf::Param("Nameserver", it2->first)};
+            castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 31, 2, params);
 
-          synchronizeFiles(it2->first, it2->second,
-                           paths[it2->first], disableStagerSync);
+            synchronizeFiles(it2->first, it2->second, disableStagerSync, fs[fsIt]);
+            paths[it2->first].clear();
+            sleep(chunkInterval);
+          }
+        } catch (castor::exception::Exception& e) {
+          // "Unexpected exception caught in synchronizeFiles"
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 40, 0, 0);
           sleep(chunkInterval);
         }
-      } catch (castor::exception::Exception& e) {
-        // "Unexpected exception caught in synchronizeFiles"
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 40, 0, 0);
-        sleep(chunkInterval);
       }
+
+      // Go to next filesystem
+      free(fs[fsIt]);
+      fsIt = (fsIt + 1) % nbFs;
+
     }
 
     free(fs);
@@ -443,18 +451,85 @@ castor::gc::SynchronizationThread::fileIdFromFilePath(std::string filePath)
 
 
 //-----------------------------------------------------------------------------
+// getFilesBeingWrittenTo
+//-----------------------------------------------------------------------------
+std::set<std::string>
+castor::gc::SynchronizationThread::getFilesBeingWrittenTo(char* mountPoint)
+  throw(castor::exception::Exception) {
+  std::set<std::string> files;
+  // loop through the /proc/*/fd directories
+  DIR *procDir = opendir("/proc");
+  if (0 == procDir) {
+    castor::exception::Internal e;
+    e.getMessage() << "Unable to open /proc directory";
+    throw e;
+  }
+  struct dirent *pidDir;
+  while ((pidDir = readdir(procDir))) {
+    // disregard non dirs and non numeric dirs (non pids)
+    struct stat64 pidDirStat;
+    std::ostringstream path;
+    path << "/proc/" << pidDir->d_name;
+    if ((stat64(path.str().c_str(), &pidDirStat) < 0) ||
+        (!(pidDirStat.st_mode & S_IFDIR)) ||
+        (strspn(pidDir->d_name, "0123456789") != strlen(pidDir->d_name))) {
+      continue;
+    }
+    // list open files for this pid
+    path << "/fd";
+    DIR *fdDir = opendir(path.str().c_str());
+    if (0 == fdDir) {
+      // may have disappeared in the mean time
+      continue;
+    }
+    struct dirent *file;
+    while ((file = readdir(fdDir))) {
+      // only keep links to castor filesystems that are writable
+      struct stat64 fileStat;
+      std::ostringstream filePath;
+      filePath << path.str() << "/" << file->d_name;
+      char buffer[1024];
+      if ((lstat64(filePath.str().c_str(), &fileStat) == 0) &&
+          S_ISLNK(fileStat.st_mode) &&
+          ((fileStat.st_mode & S_IWUSR) == S_IWUSR) &&
+          (readlink(filePath.str().c_str(), buffer, sizeof(buffer)) > 0)) {
+        if (strncmp(buffer, mountPoint, std::min(1024,int(strlen(mountPoint))))==0) {
+          files.insert(std::string(buffer));
+        }
+      }    
+    }
+    closedir(fdDir);
+  }
+  closedir(procDir);
+  return files;
+}
+
+//-----------------------------------------------------------------------------
 // synchronizeFiles
 //-----------------------------------------------------------------------------
 void castor::gc::SynchronizationThread::synchronizeFiles
 (std::string nameServer,
- const std::vector<u_signed64> &diskCopyIds,
  const std::map<u_signed64, std::string> &paths,
- bool disableStagerSync) throw() {
+ bool disableStagerSync,
+ char* mountPoint) throw() {
 
   // Make a copy of the disk copy id and file path containers so that they can
   // be modified safely
-  std::vector<u_signed64> dcIds = diskCopyIds;
-  std::map<u_signed64, std::string> filePaths = paths;
+  std::vector<u_signed64> dcIds;
+  std::map<u_signed64, std::string> filePaths;
+
+  // Fill the copies ignoring files being written to
+  // This in particular targets ongoing recalls as they do not have
+  // an associated DiskCopy in the stager DB
+  std::set<std::string> filesBeingWrittenTo = getFilesBeingWrittenTo(mountPoint);
+  for (std::map<u_signed64, std::string>::const_iterator it = paths.begin();
+       it != paths.end();
+       it++) {
+    if (filesBeingWrittenTo.find(it->second) == filesBeingWrittenTo.end()) {
+      dcIds.push_back(it->first);
+      filePaths[it->first] = it->second;
+    }
+  }
 
   // Get RemoteGCSvc
   castor::stager::IGCSvc *gcSvc = 0;
