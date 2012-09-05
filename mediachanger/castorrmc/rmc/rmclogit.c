@@ -31,7 +31,7 @@ int rmclogit(char *func, char *msg, ...)
 		tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, jid, func);
 	vsprintf (prtbuf+strlen(prtbuf), msg, args);
 	va_end (args);
-	fd_log = open (RMCLOGFILE, O_WRONLY | O_CREAT | O_APPEND, 0664);
+	fd_log = open("/var/log/castor/rmcd_legacy.log", O_WRONLY | O_CREAT | O_APPEND, 0664);
         if (fd_log < 0) return -1;        
 	write (fd_log, prtbuf, strlen(prtbuf));
 	close (fd_log);

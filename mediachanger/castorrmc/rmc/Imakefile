@@ -6,18 +6,15 @@ COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.8 $ $Date: 2009/08/18 09:43:
 
 COMM 	Make SCSI media changer server programs.
 
-CPPFLAGS += -DRMCLOGFILE=RmcLogFile
-
 TapeDependsOnLibrary(common,castorcommon)
 TapeDependsOnLibrary(upv,castorupv)
 TapeDependsOnLibrary(dlf,castordlf)
 TapeDependsOnLibrary(tape,castortape)
 
 RMCD_OBJS = rmc_serv.o rmc_procreq.o rmclogit.o sendrep.o usrmsg.o
-OPSGRP = OperatorGid
 TapeProgramTarget(rmcd,$(RMCD_OBJS),,,755)
 ADMMANPAGE(rmcd)
-TapeMakeDir(LogPath,0755)
+TapeMakeDir($(LOGPATH),0755)
 LOGROTATE(castor-rmc-server,installtape)
 SYSCONFIG(rmcd,installtape)
 INITSCRIPT(rmcd,installtape)

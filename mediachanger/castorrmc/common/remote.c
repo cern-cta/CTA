@@ -23,15 +23,6 @@
 #include <serrno.h>
 #include <Cnetdb.h>
 
-#define strtok(X,Y) strtok_r(X,Y,&last)
-
-#ifndef LOCALHOSTSFILE
-#define LOCALHOSTSFILE "/etc/shift.localhosts"
-#endif
-#ifndef RTHOSTSFILE
-#define RTHOSTSFILE "/etc/shift.rthosts"
-#endif
-
 extern char *getconfent();
 
 /*
@@ -59,16 +50,16 @@ int isremote(struct in_addr from_host,
     struct  sockaddr_in addr;
     char *last = NULL;
 
-    char lhfile[CA_MAXPATHLEN+1] =  LOCALHOSTSFILE;
-    char rthfile[CA_MAXPATHLEN+1] = RTHOSTSFILE;
+    char lhfile[CA_MAXPATHLEN+1] = "/etc/castor/castor.localhosts";
+    char rthfile[CA_MAXPATHLEN+1] = "/etc/castor/castor.remhosts";
 
     if ( (p=getconfent("SIMULATION","REMOTE",1))!=NULL &&
-        (p=(char *)strtok(p," \t"))!=NULL && !strcmp(p,"YES")) {
+         (p=(char *)strtok_r(p," \t",&last))!=NULL && !strcmp(p,"YES")) {
         log(LOG_DEBUG,"isremote(): Client simulates remote behaviour\n");
         return 1 ;
     }
     if ( (p=getconfent("ISREMOTE","CALLS",1))!=NULL &&
-        (p=(char *)strtok(p," \t") )!=NULL && !strcmp(p,"NO") ) {
+         (p=(char *)strtok_r(p," \t",&last) )!=NULL && !strcmp(p,"NO") ) {
         log(LOG_DEBUG,"isremote(): Any connection assumed from local site\n");
         return 0 ;
     }
@@ -96,7 +87,7 @@ int isremote(struct in_addr from_host,
         log(LOG_DEBUG,"isremote(): searching <%s> in %s\n",host_name, rthfile);
         if ( (fs = fopen( rthfile, "r")) != NULL ) {
             while ( fgets(s,CA_MAXHOSTNAMELEN+1,fs) != NULL ) {
-                if ( (cp= strtok(s," \n\t"))!=NULL ) {
+              if ( (cp= strtok_r(s," \n\t",&last))!=NULL ) {
                     if ( !isdigit(cp[0]) && (cp[0]!='#') &&  !strcmp(cp,host_name) ) {
                         log(LOG_DEBUG,"isremote(): %s is in list of external hosts\n",cp);
                         fclose(fs);
@@ -104,8 +95,8 @@ int isremote(struct in_addr from_host,
                     }
                     if ( isdigit(cp[0]) ) {
                         strcpy(ent,cp) ;
-                        if ( strtok(cp,".") ==  NULL ||
-                            strtok(NULL,".") == NULL )
+                        if ( strtok_r(cp,".",&last) ==  NULL ||
+                             strtok_r(NULL,".",&last) == NULL )
                             log(LOG_DEBUG,"%s ignored: IP specification too short\n", ent);
                         else {
                             if ( !strncmp( ent, inet_ntoa( from_host ), strlen(ent))) {
@@ -128,7 +119,7 @@ int isremote(struct in_addr from_host,
         log(LOG_DEBUG,"isremote(): searching <%s> in %s\n",host_name, lhfile);
         if ( (fs = fopen( lhfile, "r")) != NULL ) {
             while ( fgets(s,CA_MAXHOSTNAMELEN+1,fs) != NULL ) {
-                if ( (cp= strtok(s," \n\t")) != NULL ) {
+              if ( (cp= strtok_r(s," \n\t",&last)) != NULL ) {
                     if ( !isdigit(cp[0]) && (cp[0]!='#') &&  !strcmp(cp,host_name) ) {
                         log(LOG_DEBUG,"isremote(): %s is in list of local hosts\n",cp);
                         fclose(fs);
@@ -136,8 +127,8 @@ int isremote(struct in_addr from_host,
                     }
                     if ( isdigit(cp[0]) ) {
                         strcpy(ent,cp) ;
-                        if ( strtok(cp,".") ==  NULL || 
-                            strtok(NULL,".") == NULL )
+                        if ( strtok_r(cp,".",&last) ==  NULL || 
+                             strtok_r(NULL,".",&last) == NULL )
                             log(LOG_DEBUG,"%s ignored: IP specification too short \n", ent);
                         else {
                             if ( !strncmp( ent, inet_ntoa( from_host ), strlen(ent) )) {
@@ -247,9 +238,6 @@ int CDoubleDnsLookup(int s, char *host) {
 
 int isadminhost(int s, char *peerhost) {
     int i, rc;
-#if defined(ADMIN_HOSTS)
-    char *defined_admin_hosts = ADMIN_HOSTS;
-#endif /* ADMIN_HOSTS */
     char *admin_hosts, *admin_host;
 
     rc = CDoubleDnsLookup(s,peerhost);
@@ -258,9 +246,6 @@ int isadminhost(int s, char *peerhost) {
     admin_host = admin_hosts = NULL;
     if ( admin_hosts == NULL ) admin_hosts = getenv("ADMIN_HOSTS");
     if ( admin_hosts == NULL ) admin_hosts = getconfent("ADMIN","HOSTS",1);
-#if defined(ADMIN_HOSTS)
-    if ( admin_hosts == NULL ) admin_hosts = defined_admin_hosts;
-#endif /* ADMIN_HOSTS */
 
     if ( (admin_hosts != NULL) && 
          ((admin_host = strstr(admin_hosts,peerhost)) != NULL) ) {

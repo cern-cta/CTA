@@ -361,23 +361,6 @@ char *sys_uperrlist[EUPMAXERR-EUPBASEOFF+2] =
 
 /*
  *------------------------------------------------------------------------
- * Expert service specific error messages
- *------------------------------------------------------------------------
- */
-char *sys_experrlist[EEXPMAXERR-EEXPBASEOFF+2] =
-  {"Error 0",
-   "Expert service not active",
-   "Illegal request",
-   "Can't open the configuration file",
-   "Request wasn't found in the configuration file",
-   "Configuration file format error",
-   "Can't launch execv()",
-   "Can't change to working directory",
-   "BAD ERROR NUMBER"
-  };
-
-/*
- *------------------------------------------------------------------------
  * DNS specific error messages
  *------------------------------------------------------------------------
  */
@@ -550,11 +533,6 @@ char *  sstrerror_r(n,buf,buflen)
      * UPV specific error messages
      */
     tmpstr = sys_uperrlist[n-EUPBASEOFF];
-  } else if ((n>EEXPBASEOFF) && (n<=EEXPMAXERR)) {
-    /*
-     * Expert service specific error messages
-     */
-    tmpstr = sys_experrlist[n-EEXPBASEOFF];
   } else if ((n>EDNSBASEOFF) && (n<=EDNSMAXERR)) {
     /*
      * DNS specific error messages
