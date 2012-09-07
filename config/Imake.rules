@@ -90,7 +90,7 @@ InstallLink(tofile,LOCAL_PATH/fromfile,mode,$(BINDIR),component)
 #define InternalSchModTarget(libname,obj,deplibs,libs,directory)                                                \
 LOCAL_PATH/BareSharedLibraryTargetName(libname): obj deplibs $(PREFIX(DEPLIB))                                @@\
 	@echo "  Linking" $@                                                                                  @@\
-	$(CC) DYLIBLINKEROPTION -fPIC -o $@ $(LDFLAGS) $(PREFIX(LDFLAGS)) obj libs $(PREFIX(LIBS))            @@\
+	$(CC) DYLIBLINKEROPTION -fPIC -o $@ obj libs $(PREFIX(LIBS)) $(LDFLAGS) $(PREFIX(LDFLAGS))            @@\
 $(DESTDIR)/directory/BareSharedLibraryTargetName(libname): LOCAL_PATH/BareSharedLibraryTargetName(libname)    @@\
 	install -d $(DESTDIR)/directory                                                                       @@\
 	install -m 644 LOCAL_PATH/BareSharedLibraryTargetName(libname) $(DESTDIR)/directory/BareSharedLibraryTargetName(libname) @@\
@@ -105,7 +105,7 @@ libname: LOCAL_PATH/SharedLibraryName(libname)                                  
 BareSharedLibraryTargetName(libname): LOCAL_PATH/SharedLibraryName(libname)                        @@\
 LOCAL_PATH/SharedLibraryName(libname): objects deplibs                                             @@\
 	@echo "  Linking" $@                                                                       @@\
-	$(CC) DYLIBLINKEROPTION NOUNDEFLINKEROPTION -o $@ $(LDFLAGS) $(PREFIX(LDFLAGS)) -Wl,SONAMELINKEROPTION,SharedLibraryName(libname) objects $(LIBS) libs              @@\
+	$(CC) DYLIBLINKEROPTION NOUNDEFLINKEROPTION -o $@ -Wl,SONAMELINKEROPTION,SharedLibraryName(libname) objects $(LIBS) libs $(LDFLAGS) $(PREFIX(LDFLAGS))             @@\
 $(DESTDIR)/directory/BareSharedLibraryTargetName(libname): LOCAL_PATH/SharedLibraryName(libname) InstallLibraryTargetNames(deplibs) InstallLibraryTargetNames(deplibs) @@\
 	install -d $(DESTDIR)/directory                                                            @@\
 	install $< $(DESTDIR)/directory/SharedLibraryFullName(libname)                             @@\
@@ -173,7 +173,7 @@ install: $(DESTDIR)/dirname
 program: LOCAL_PATH/program                                                      @@\
 LOCAL_PATH/program: objects deplibs	                                         @@\
 	@echo "  Linking" $@                                                     @@\
-	$(CC) -o $@ $(LDFLAGS) $(PREFIX(LDFLAGS)) objects libs                   @@\
+	$(CC) -o $@ objects libs $(LDFLAGS) $(PREFIX(LDFLAGS))                   @@\
 alltarget: LOCAL_PATH/program                                                    @@\
 InternalInstallTarget(program,mode,$(BINDIR),install/**/installtarget,InstallLibraryTargetNames(deplibs),) @@\
 PREFIX(FilesToClean) += objects $(patsubst %.o,%.d,objects)                      @@\
