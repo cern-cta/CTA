@@ -254,7 +254,11 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
   }
     
   // Get the Current Working Directory
-  getcwd(m_cwd, CA_MAXPATHLEN+1);
+  if(NULL == getcwd(m_cwd, sizeof(m_cwd))) {
+    castor::exception::Exception ex(ECANCELED);
+    ex.getMessage() << "Failed to determine the current working directory";
+    throw ex;
+  }
 
   // This command cannot be ran as root
   if(m_userId == 0 && m_groupId == 0) {
