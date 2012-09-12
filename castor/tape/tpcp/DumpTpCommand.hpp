@@ -110,6 +110,17 @@ protected:
    */
   void performTransfer() throw(castor::exception::Exception);
 
+  /**
+   * Dispatches the appropriate handler for the specified tape-gateway message.
+   *
+   * @param obj  The tape-gateway message for which a handler should be
+   *             dispatched.
+   * @param sock The socket on which to reply to the message.
+   * @return     True if there is more work to be done, else false.
+   */
+  bool dispatchMsgHandler(castor::IObject *const obj,
+    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+
 
 private:
 

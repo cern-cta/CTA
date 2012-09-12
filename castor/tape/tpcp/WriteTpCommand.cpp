@@ -55,18 +55,6 @@
 castor::tape::tpcp::WriteTpCommand::WriteTpCommand() throw() :
   TpcpCommand("writetp"),
   m_nbMigratedFiles(0) {
-
-  // Register the Tapebridge message handler member functions
-  registerMsgHandler(OBJ_FilesToMigrateListRequest, this,
-    &WriteTpCommand::handleFilesToMigrateListRequest);
-  registerMsgHandler(OBJ_FileMigrationReportList, this,
-    &WriteTpCommand::handleFileMigrationReportList);
-  registerMsgHandler(OBJ_EndNotification, this,
-    &WriteTpCommand::handleEndNotification);
-  registerMsgHandler(OBJ_EndNotificationErrorReport, this,
-    &WriteTpCommand::handleEndNotificationErrorReport);
-  registerMsgHandler(OBJ_PingNotification, this,
-    &WriteTpCommand::handlePingNotification);
 }
 
 
@@ -467,7 +455,7 @@ void castor::tape::tpcp::WriteTpCommand::performTransfer()
     << std::endl;
 
   // Spin in the wait for and dispatch message loop until there is no more work
-  while(waitForAndDispatchMessage()) {
+  while(waitForMsgAndDispatchHandler()) {
     // Do nothing
   }
 
@@ -502,6 +490,43 @@ void castor::tape::tpcp::WriteTpCommand::performTransfer()
   }
 
   os << std::endl;
+}
+
+
+//------------------------------------------------------------------------------
+// dispatchMsgHandler
+//------------------------------------------------------------------------------
+bool castor::tape::tpcp::WriteTpCommand::dispatchMsgHandler(
+  castor::IObject *const obj, castor::io::AbstractSocket &sock)
+  throw(castor::exception::Exception) {
+  switch(obj->type()) {
+  case OBJ_FilesToMigrateListRequest:
+    return handleFilesToMigrateListRequest(obj, sock);
+  case OBJ_FileMigrationReportList:
+    return handleFileMigrationReportList(obj, sock);
+  case OBJ_EndNotification:
+    return handleEndNotification(obj, sock);
+  case OBJ_EndNotificationErrorReport:
+    return handleEndNotificationErrorReport(obj, sock);
+  case OBJ_PingNotification:
+    return handlePingNotification(obj, sock);
+  default:
+    {
+      std::stringstream oss;
+
+      oss <<
+        "Received unexpected tapebridge message"
+        ": Message type = " << utils::objectTypeToString(obj->type());
+
+      const uint64_t tapebridgeTransactionId = 0; // Unknown transaction ID
+      sendEndNotificationErrorReport(tapebridgeTransactionId, EBADMSG,
+        oss.str(), sock);
+
+      TAPE_THROW_CODE(EBADMSG,
+        ": Received unexpected tapebridge message "
+        ": Message type = " << utils::objectTypeToString(obj->type()));
+    }
+  }
 }
 
 

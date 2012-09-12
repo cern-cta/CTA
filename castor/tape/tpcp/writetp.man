@@ -61,7 +61,10 @@ of providing filenames on the command-line.
 Ok.
 .TP
 \fB 1
-Command failed.
+Command failed for a reason other than reaching the physical end of tape.
+.TP
+\fB 28
+Command failed because the physical end of tape was reached.
 
 .SH CASTOR CONFIGURATION PARAMETERS
 The \fBwritetp\fP command reads and uses the following CASTOR configuration

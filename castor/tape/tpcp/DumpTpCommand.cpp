@@ -44,18 +44,6 @@
 //------------------------------------------------------------------------------
 castor::tape::tpcp::DumpTpCommand::DumpTpCommand() throw():
   TpcpCommand("dumptp") {
-
-  // Register the Tapebridge message handler member functions
-  registerMsgHandler(OBJ_DumpParametersRequest, this,
-    &DumpTpCommand::handleDumpParametersRequest);
-  registerMsgHandler(OBJ_DumpNotification, this,
-    &DumpTpCommand::handleDumpNotification);
-  registerMsgHandler(OBJ_EndNotification, this,
-    &DumpTpCommand::handleEndNotification);
-  registerMsgHandler(OBJ_EndNotificationErrorReport, this,
-    &DumpTpCommand::handleEndNotificationErrorReport);
-  registerMsgHandler(OBJ_PingNotification, this,
-    &DumpTpCommand::handlePingNotification);
 }
 
 
@@ -424,8 +412,9 @@ void castor::tape::tpcp::DumpTpCommand::sendVolumeToTapeBridge(
 void castor::tape::tpcp::DumpTpCommand::performTransfer()
   throw (castor::exception::Exception) {
 
-  // Spin in the wait for and dispatch message loop until there is no more work
-  while(waitForAndDispatchMessage()) {
+  // Spin in the wait for message and dispatch handler loop until there is no
+  // more work
+  while(waitForMsgAndDispatchHandler()) {
     // Do nothing
   }
 
@@ -435,6 +424,43 @@ void castor::tape::tpcp::DumpTpCommand::performTransfer()
   utils::writeTime(os, now, TIMEFORMAT);
   os << " Finished dumping tape" << std::endl
      << std::endl;
+}
+
+
+//------------------------------------------------------------------------------
+// dispatchMsgHandler
+//------------------------------------------------------------------------------
+bool castor::tape::tpcp::DumpTpCommand::dispatchMsgHandler(
+  castor::IObject *const obj, castor::io::AbstractSocket &sock)
+  throw(castor::exception::Exception) {
+  switch(obj->type()) {
+  case OBJ_DumpParametersRequest:
+    return handleDumpParametersRequest(obj, sock);
+  case OBJ_DumpNotification:
+    return handleDumpNotification(obj, sock);
+  case OBJ_EndNotification:
+    return handleEndNotification(obj, sock);
+  case OBJ_EndNotificationErrorReport:
+    return handleEndNotificationErrorReport(obj, sock);
+  case OBJ_PingNotification:
+    return handlePingNotification(obj, sock);
+  default:
+    {
+      std::stringstream oss;
+
+      oss <<
+        "Received unexpected tapebridge message"
+        ": Message type = " << utils::objectTypeToString(obj->type());
+
+      const uint64_t tapebridgeTransactionId = 0; // Unknown transaction ID
+      sendEndNotificationErrorReport(tapebridgeTransactionId, EBADMSG,
+        oss.str(), sock);
+
+      TAPE_THROW_CODE(EBADMSG,
+        ": Received unexpected tapebridge message "
+        ": Message type = " << utils::objectTypeToString(obj->type()));
+    }
+  }
 }
 
 

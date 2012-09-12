@@ -92,7 +92,8 @@ castor::tape::tpcp::TpcpCommand::TpcpCommand(const char *const programName)
   m_callbackSock(false),
   m_gotVolReqId(false),
   m_volReqId(0),
-  m_fileTransactionId(1) {
+  m_fileTransactionId(1),
+  m_tapeServerReportedATapeSessionError(false) {
 
   memset(m_hostname, 0, sizeof(m_hostname));
   memset(m_cwd, 0, sizeof(m_cwd));
@@ -176,7 +177,24 @@ int castor::tape::tpcp::TpcpCommand::main(const int argc, char **argv) throw() {
     displayErrorMsgCleanUpAndExit("Caught unknown exception");
   }
 
-  return 0; // Success
+  return determineCommandLineReturnCode();
+}
+
+
+//------------------------------------------------------------------------------
+// determineCommandlineReturnCode
+//------------------------------------------------------------------------------
+int castor::tape::tpcp::TpcpCommand::determineCommandLineReturnCode()
+  const throw() {
+  if(m_tapeServerReportedATapeSessionError) {
+    if(ENOSPC == m_tapeSessionErrorReportedByTapeServer.errorCode) {
+      return ENOSPC; // Reached the physical end of tape
+    } else {
+      return 1; // Error other than reaching the physical end of tape
+    }
+  } else {
+    return 0; // Success
+  }
 }
 
 
@@ -589,9 +607,9 @@ void castor::tape::tpcp::TpcpCommand::requestDriveFromVdqm(
 
 
 //------------------------------------------------------------------------------
-// waitForAndDispatchMessage
+// waitForMsgAndDispatchHandler
 //------------------------------------------------------------------------------
-bool castor::tape::tpcp::TpcpCommand::waitForAndDispatchMessage()
+bool castor::tape::tpcp::TpcpCommand::waitForMsgAndDispatchHandler()
   throw(castor::exception::Exception) {
 
   // Socket file descriptor for a callback connection from the tapebridge
@@ -704,27 +722,7 @@ bool castor::tape::tpcp::TpcpCommand::waitForAndDispatchMessage()
     }
   }
 
-  // Find the message type's corresponding handler
-  MsgHandlerMap::const_iterator itor = m_msgHandlers.find(obj->type());
-  if(itor == m_msgHandlers.end()) {
-    std::stringstream oss;
-
-    oss <<
-      "Received unexpected tapebridge message"
-      ": Message type = " << utils::objectTypeToString(obj->type());
-
-    const uint64_t tapebridgeTransactionId = 0; // Unknown transaction ID
-    sendEndNotificationErrorReport(tapebridgeTransactionId, EBADMSG, oss.str(),
-      sock);
-
-    TAPE_THROW_CODE(EBADMSG,
-         ": Received unexpected tapebridge message "
-         ": Message type = " << utils::objectTypeToString(obj->type()));
-  }
-  const AbstractMsgHandler &handler = *itor->second;
-
-  // Invoke the handler
-  const bool moreWork = handler(obj.get(), sock);
+  const bool moreWork = dispatchMsgHandler(obj.get(), sock);
 
   // Close the tapebridge callback connection
   sock.close();
@@ -843,6 +841,14 @@ bool castor::tape::tpcp::TpcpCommand::handleEndNotificationErrorReport(
   castMessage(obj, msg, sock);
   Helper::displayRcvdMsgIfDebug(*msg, m_cmdLine.debugSet);
 
+  // Store a description of the tape session error and note that it was
+  // reported by the tape server.
+  m_tapeSessionErrorReportedByTapeServer.errorCode = msg->errorCode();
+  m_tapeSessionErrorReportedByTapeServer.errorCodeString =
+    sstrerror(msg->errorCode());
+  m_tapeSessionErrorReportedByTapeServer.errorMessage = msg->errorMessage();
+  m_tapeServerReportedATapeSessionError = true;
+
   // Command-line user feedback
   {
     std::ostream &os = std::cout;
@@ -852,11 +858,14 @@ bool castor::tape::tpcp::TpcpCommand::handleEndNotificationErrorReport(
     os <<
       " Tapebridge encountered the following error:" << std::endl <<
       std::endl <<
-      "Error code        = "   << msg->errorCode()            << std::endl <<
-      "Error code string = \"" << sstrerror(msg->errorCode()) << "\"" <<
+      "Error code        = " <<
+      m_tapeSessionErrorReportedByTapeServer.errorCode  << std::endl <<
+      "Error code string = \"" <<
+      m_tapeSessionErrorReportedByTapeServer.errorCodeString << "\"" <<
       std::endl <<
-      "Error message     = \"" << msg->errorMessage() << "\"" << std::endl <<
-      std::endl;
+      "Error message     = \"" <<
+      m_tapeSessionErrorReportedByTapeServer.errorMessage << "\"" <<
+      std::endl << std::endl;
   }
 
   // Create the NotificationAcknowledge message for the tapebridge
@@ -868,7 +877,7 @@ bool castor::tape::tpcp::TpcpCommand::handleEndNotificationErrorReport(
   sock.sendObject(acknowledge);
 
   Helper::displaySentMsgIfDebug(acknowledge, m_cmdLine.debugSet);
-
+  
   return false;
 }
 

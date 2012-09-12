@@ -54,34 +54,7 @@ namespace tape   {
 namespace tpcp   {
 
 /**
- * This class carries out the following steps:
- * <ul>
- * <li>Delegates to a sub-class the parsing of the command-line.
- * <li>Gets the DGN of the tape to be used from the VMGR.
- * <li>Creates the tape-bridge callback socket.
- * <li>Sends the request for a drive to the VDQM.
- * <li>Waits for the callback from the tape-bridge on the chosen tape server.
- * <li>Receives and replies to the volume request from the tape-bridge.
- * <li>Delegates the tape transfer action (DUMP, READ or WRITE) to a
- *     sub-class.
- * </ul>
- *
- * Sub-classes must do the following:
- * <ul>
- * <li>Implement the usage() method.
- * <li>Implement the parseCommandLine() mthod.
- * <li>Implement one message handling method for each type of message that is
- *     a part of the sub-class' protocol.  For example the DumpTpCommand
- *     sub-class should implement a message handler method for DumpNotification
- *     messages.
- * <li>Register in their constructor the message handling methods they have
- *     implemented by calling TpcpCommand::registerMsgHandler for each of their
- *     message handling methods.
- * </ul>
- *
- * Please note that TpcpCommand checks the mount transaction ID of all
- * incomming tape-bridge messages.  Sub-classes therefore do not need to check
- * the mount transaction ID in their message handler methods.
+ * The common code of the command-line clients of the tapebridged daemon.
  */
 class TpcpCommand : public castor::BaseObject {
 public:
@@ -293,29 +266,26 @@ protected:
     throw(castor::exception::Exception);
 
   /**
-   * Registers the specified tape-bridge message handler member function.
-   *
-   * @param messageType The type of tape-bridge message.
-   * @param obj         The object to handle the tape-bridge message.
-   * @param func        The member function to handle the tape-bridge message.
-   */
-  template<class T> void registerMsgHandler(
-    const int messageType,
-    T         *obj,
-    bool (T::*func)(castor::IObject *, castor::io::AbstractSocket &))
-    throw() {
-
-    m_msgHandlers[messageType] = new MsgHandler<T>(obj, func);
-  }
-
-  /**
    * Waits for and accepts an incoming tape-bridge connection, reads in the
    * tape-bridge message and then dispatches it to appropriate message handler
    * member function.
    *
    * @return True if there is more work to be done, else false.
    */
-  bool waitForAndDispatchMessage() throw(castor::exception::Exception);
+  bool waitForMsgAndDispatchHandler() throw(castor::exception::Exception);
+
+  /**
+   * To be implemented by sub-classes.
+   *
+   * Dispatches the appropriate handler for the specified tape-gateway message.
+   *
+   * @param obj  The tape-gateway message for which a handler should be
+   *             dispatched.
+   * @param sock The socket on which to reply to the message.
+   * @return     True if there is more work to be done, else false.
+   */
+  virtual bool dispatchMsgHandler(castor::IObject *const obj,
+    castor::io::AbstractSocket &sock) throw(castor::exception::Exception) = 0;
 
   /**
    * PingNotification message handler.
@@ -438,7 +408,7 @@ private:
 
   /**
    * Displays the specified error message, cleans up (at least deletes the
-   * volume-request id if there is one) and then calls exit(1) indicating ani
+   * volume-request id if there is one) and then calls exit(1) indicating an
    * error.
    */
   void displayErrorMsgCleanUpAndExit(
@@ -453,114 +423,15 @@ private:
   void executeCommand();
 
   /**
+   * Determines and returns the numeric code that should be returned by this
+   * command-line tool.
+   */
+  int determineCommandLineReturnCode() const throw();
+
+  /**
    * Deletes the specified VDQM volume request.
    */
   void deleteVdqmVolumeRequest() throw (castor::exception::Exception);
-
-  /**
-   * An abstract functor to handle incomming tape-bridge messages.
-   */
-  class AbstractMsgHandler {
-  public:
-
-    /**
-     * operator().
-     *
-     * @param obj  The tape-bridge message to be processed.
-     * @param sock The socket on which to reply to the tape-bridge.
-     * @return     True if there is more work to be done else false.
-     */
-    virtual bool operator()(
-      castor::IObject            *obj,
-      castor::io::AbstractSocket &sock
-      ) const throw(castor::exception::Exception) = 0;
-
-    /**
-     * Destructor.
-     */
-    virtual ~AbstractMsgHandler() {
-      // DO nothing
-    }
-  };
-
-  /**
-   * Concrete tape-bridge message handler template functor.
-   */
-  template<class T> class MsgHandler : public AbstractMsgHandler {
-  public:
-
-    /**
-     * Constructor.
-     */
-    MsgHandler(
-      T *const obj,
-      bool (T::*const func)(
-        castor::IObject            *obj,
-        castor::io::AbstractSocket &sock)) :
-      m_obj(obj), m_func(func) {
-      // Do nothing
-    }
-
-    /**
-     * operator().
-     *
-     * @param obj  The tape-bridge message to be processed.
-     * @param sock The socket on which to reply to the tape-bridge.
-     * @return     True if there is more work to be done else false.
-     */
-    virtual bool operator()(
-      castor::IObject            *obj,
-      castor::io::AbstractSocket &sock) const
-      throw(castor::exception::Exception) {
-
-      return (m_obj->*m_func)(obj, sock);
-    }
-
-    /**
-     * destructor.
-     */
-    virtual ~MsgHandler() {
-      // Do nothing
-    }
-
-  private:
-
-    /**
-     * The object of class T on which the member function pointed to by m_func
-     * will be called when the operator() function is called.
-     */
-    T *const m_obj;
-
-    /**
-     * The member function of class T to be called by operator().
-     */
-    bool (T::*const m_func)(
-      castor::IObject            *obj,
-      castor::io::AbstractSocket &sock);
-  };  // template<class T> class MsgHandler
-
-  /**
-   * Map from message type (int) to pointer message handler
-   * (AbstractMsgHandler *).
-   *
-   * The destructor of this map is responsible for and will deallocate the
-   * MsgHandlers it points to.
-   */
-  class MsgHandlerMap : public std::map<int, AbstractMsgHandler *> {
-  public:
-
-    /**
-     * Destructor.
-     *
-     * Deallocates the MsgHandlers pointed to by this map.
-     */
-    ~MsgHandlerMap() {
-      for(iterator itor=begin(); itor!=end(); itor++) {
-        // Delete the MsgHandler
-        delete(itor->second);
-      }
-    }
-  }; // MsgHandlerMap
 
   /**
    * The SIGINT signal handler.
@@ -571,15 +442,6 @@ private:
    * The SIGINT action handler structure to be used with sigaction.
    */
   struct sigaction m_sigintAction;
-
-  /**
-   * Map from message type (uint32_t) to pointer message handler
-   * (AbstractMsgHandler *).
-   *
-   * The destructor of this map is responsible for and will deallocate the
-   * MsgHandlers it points to.
-   */
-  MsgHandlerMap m_msgHandlers;
 
   /**
    * Check the format of the filename, that MUST BE of the form: 
@@ -597,6 +459,30 @@ private:
    * The current working directory where tpcp command is run.
    */
   char m_cwd[CA_MAXPATHLEN+1];
+
+  /**
+   * Structure used to describe a tape session error.
+   */
+  struct TapeSessionError {
+    int         errorCode;
+    std::string errorCodeString;
+    std::string errorMessage;
+
+    TapeSessionError(): errorCode(0), errorCodeString(""),
+      errorMessage("Success") {
+    }
+  };
+
+  /**
+   * If the tape server reported a tape session error then this member variable
+   * shall contain a decription of that error.
+   */
+  TapeSessionError m_tapeSessionErrorReportedByTapeServer;
+
+  /**
+   * True if the tape server reported a tape session error.
+   */
+  bool m_tapeServerReportedATapeSessionError;
 
 }; // class TpcpCommand
 
