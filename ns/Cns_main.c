@@ -80,6 +80,7 @@ int Cns_main(struct main_args *main_args)
   fd_set readfd, readmask;
   int rqfd;
   int security = 0; /* Flag set to 1 when security is enable */
+  int local_only = 0; /* Flag for listening on lo only */
 
   struct sockaddr_in sin;
   struct servent *sp;
@@ -91,7 +92,7 @@ int Cns_main(struct main_args *main_args)
   strcpy (nshostname, "castorns");
 
   /* Process command line options if any */
-  while ((c = getopt (main_args->argc, main_args->argv, "fc:l:rt:sn:")) != EOF) {
+  while ((c = getopt (main_args->argc, main_args->argv, "fc:l:rt:sn:L")) != EOF) {
     switch (c) {
     case 'f':
       daemonize = 0;
@@ -120,6 +121,9 @@ int Cns_main(struct main_args *main_args)
     case 'n':
       strncpy (nshostname, optarg, sizeof(nshostname));
       logfile[sizeof(nshostname) - 1] = '\0';
+      break;
+    case 'L':
+      local_only = 1;
       break;
     }
   }
@@ -253,7 +257,7 @@ int Cns_main(struct main_args *main_args)
       sin.sin_port = htons ((unsigned short)CNS_PORT);
     }
   }
-  sin.sin_addr.s_addr = htonl(INADDR_ANY);
+  sin.sin_addr.s_addr = local_only ? htonl(INADDR_LOOPBACK) : htonl(INADDR_ANY);
   serrno = 0;
   if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0) {
     nslogit("MSG=\"Error: Failed to set socket option\" "

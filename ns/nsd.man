@@ -20,6 +20,8 @@ nsd \- start the name server
 .B -s
 ] [
 .B -n " nshostname"
+] [
+.B -L
 ]
 .SH DESCRIPTION
 .LP
@@ -47,27 +49,33 @@ on the name server itself in either of the following ways:
 .LP
 setting an environment variable CNS_PORT and CNS_SEC_PORT for the secure port
 .RS
-.HP
+.PP
+.nf
 setenv CNS_PORT 5010
-setenv CNS_SEC_PORT 5510 (For Secure server)
+setenv CNS_SEC_PORT 5510 (For secure server)
+.fi
 .RE
 .LP
 an entry in
 .B /etc/castor/castor.conf
 like:
 .RS
-.HP
+.PP
+.nf
 CNS	PORT     5010
 CNS	SEC_PORT 5510 (For secure server)
+.fi
 .RE
 .LP
 an entry in
 .B /etc/services
 like:
 .RS
-.HP
-cns           5010/tcp                        # CASTOR name server
-cns_sec	      5510/tcp (For secure server)
+.PP
+.nf
+cns           5010/tcp # CASTOR name server
+cns_sec       5510/tcp (For secure server)
+.fi
 .RE
 .RE
 .LP
@@ -135,6 +143,9 @@ Enables strong authentication mode.
 .BI -n " nshostname"
 Specifies the value of the NSHOSTNAME attribute used in Name Server log files.
 By default the value is castorns.
+.TP
+.B -L
+Forces nsd to listen on the loopback interface only.
 .SH FILES
 .TP 1.5i
 .B /etc/NSCONFIG
