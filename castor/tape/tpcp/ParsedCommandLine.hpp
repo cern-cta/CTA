@@ -108,11 +108,6 @@ struct ParsedCommandLine {
   /**
    * Corresponds to the similarly named field of the RTCP_DUMPTAPE_REQ message.
    */
-  int32_t dumpTapeConverter;
-
-  /**
-   * Corresponds to the similarly named field of the RTCP_DUMPTAPE_REQ message.
-   */
   int32_t dumpTapeErrAction;
 
   /**
@@ -146,7 +141,6 @@ struct ParsedCommandLine {
     nodataSet(false),
     dumpTapeMaxBytes(320),
     dumpTapeBlockSize(DEFAULTDUMPBLOCKSIZE),
-    dumpTapeConverter(-1),
     dumpTapeErrAction(-1),
     dumpTapeFromFile(1),
     dumpTapeMaxFiles(1),
