@@ -332,6 +332,7 @@ runUnitTestsMain.o: runUnitTestsMain.cpp
 runUnitTestsMain.cpp: \
   $(ROOT_DIR)/test/unittest/castor/tape/net/NetTest.hpp \
   $(ROOT_DIR)/test/unittest/tape/Ctape_reserveTest.hpp \
+  $(ROOT_DIR)/test/unittest/tape/CvtdenTest.hpp \
   $(ROOT_DIR)/test/unittest/tape/InitlabelTest.hpp \
   $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/BridgeClientInfo2SenderTest.hpp \
   $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/BridgeProtocolEngineTest.hpp \

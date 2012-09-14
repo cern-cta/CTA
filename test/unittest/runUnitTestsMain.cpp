@@ -46,6 +46,7 @@
 #include "test/unittest/castor/tape/utils/UtilsTest.hpp"
 #include "test/unittest/rtcopy/RtcopyTest.hpp"
 #include "test/unittest/tape/Ctape_reserveTest.hpp"
+#include "test/unittest/tape/CvtdenTest.hpp"
 #include "test/unittest/tape/InitlabelTest.hpp"
 #include "test/unittest/tapebridge/MarshallTapeBridgeClientInfo2Test.hpp"
 #include "test/unittest/tapebridge/MarshallTapeBridgeFlushedToTapeTest.hpp"
