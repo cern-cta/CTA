@@ -1,0 +1,36 @@
+{% extends "dlfui/base.html" %}
+{% load dlfui_extras %}
+
+<a name="top" />
+
+{% block content %}
+
+<div id="content">
+
+    {% if filter %}
+    <div class="filter">
+        Query : <b>{{ filter.msg }}</b><br />
+        <input type="hidden" id="request_type" value="{{ filter.type }}" />
+        <input type="hidden" id="request_id" value="{{ filter.id }}" />
+    </div>
+    {% endif %}
+    
+    <table id="datatable">
+        <thead>
+           {% include "dlfui/table_header.html" %} 
+        </thead>
+        <tfoot>
+            {% include "dlfui/table_header.html" %}
+        </tfoot>
+        <tbody>
+        </tbody>
+    </table>
+
+    <br />
+    <a href="#top"><img class="top" src="/static/img/go-top.png" alt="Go to the top" title="Go to the top" /></a>
+
+</div>
+
+{% include "dlfui/footer.html" %}
+
+{% endblock %}

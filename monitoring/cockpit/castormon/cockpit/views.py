@@ -287,6 +287,7 @@ def get_metric_data(request, metric_name, timestamp_from=None, timestamp_to=None
                 continue
             else:
                 for e in entries: 
+                    # handl Avg (list)
                     if type(e) is list:
                         l.append(e[0])
                     else:
@@ -328,6 +329,10 @@ def get_metric_data(request, metric_name, timestamp_from=None, timestamp_to=None
                     for datakey in res['datakeys']:
                         # we add as much zero as there are datakeys
                         l[1][groupk].append(0)
+                # handle avg (list)
+                for index, entry in enumerate(l[1][groupk]):
+                    if type(entry) is list:
+                        l[1][groupk][index] = l[1][groupk][index][0]
             result_data.append(l)
         # here we handle counterhz datakey
         #res['debug']['begin counterhz'] = str(datetime.datetime.now())# debug
@@ -492,4 +497,5 @@ def pushdata(request):
         delta = finish_time - begin_time # debug
         msg = "delta : "+str(delta)+" -- "+simplejson.dumps(debug)+" -- "+simplejson.dumps(data) # debug
         return HttpResponse('ok '+msg, status=200) # 200 OK
+
 

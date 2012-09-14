@@ -228,7 +228,18 @@ function getTimelineChartOptions(metric_name) {
                 shared: true,
                 crosshairs: true,
                 pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b><br/>',
-                valueDecimals: 4
+                yDecimals: 3
+                /*formatter: function() {
+                    var s = new Date(this.x) +'<br />';
+                    
+                    $.each(this.points, function(i, point) {
+                        s += '<span style="color:'+ point.series.color + ' ">'+
+                            point.series.name + '</span>: <b>' +
+                            parseInt(point.y).toFixed(3) +'</b><br />';
+                    });
+                    
+                    return s;
+                },*/
             },
             legend: {
                 enabled: true,
@@ -348,7 +359,7 @@ function _drawTimelineChart(metric_container, from, to) {
                         }
                         $.each(json["data"], function(index, d) {
                             var tmp;
-                            if (d[1][i] == 0) {
+                            if (d[1][i] <= 0) {
                                 if (log == '') {
                                     tmp = 0;
                                 } else {
@@ -365,35 +376,37 @@ function _drawTimelineChart(metric_container, from, to) {
                     });
                     break;
                 case 1:
-                    $.each(json["groupkeys"], function (i, groupkey) {
-                        // serie initialisation
-                        var seriesOptions = {
-                            name : groupkey,
-                            dataGrouping:{
-                                enabled: true,
-                                groupPixelWidth: 10
-                            },
-                            data : []
-                        };
-                        if (hiddenSeries[groupkey]) {
-                            seriesOptions.visible = false;
-                        }
-                        $.each(json["data"], function(i, d) {
-                            var tmp;
-                            if (d[1][groupkey][0] == 0){
-                                if (log == '') {
-                                    tmp = 0;
-                                } else {
-                                    tmp = null;
-                                }
-                            } else {
-                                tmp = d[1][groupkey][0];
+                    $.each(json["groupkeys"], function (i1, groupkey) {
+                        $.each(json["datakeys"], function (i2, datakey) {
+                            // serie initialisation
+                            var seriesOptions = {
+                                name : groupkey+'-'+datakey,
+                                dataGrouping:{
+                                    enabled: true,
+                                    groupPixelWidth: 10
+                                },
+                                data : []
+                            };
+                            if (hiddenSeries[seriesOptions.name]) {
+                                seriesOptions.visible = false;
                             }
-                            seriesOptions.data.push(
-                                [ d[0] * 1000, tmp ]
-                            );
+                            $.each(json["data"], function(i, d) {
+                                var tmp;
+                                if (d[1][groupkey][i2] <= 0){
+                                    if (log == '') {
+                                        tmp = 0;
+                                    } else {
+                                        tmp = null;
+                                    }
+                                } else {
+                                    tmp = d[1][groupkey][i2];
+                                }
+                                seriesOptions.data.push(
+                                    [ d[0] * 1000, tmp ]
+                                );
+                            });
+                            options.series.push( seriesOptions );
                         });
-                        options.series.push( seriesOptions );
                     });
                     break;
                 /*case 2:
@@ -427,7 +440,8 @@ function _drawTimelineChart(metric_container, from, to) {
                     break;
             } // switch end
             if (options.series.length) {
-                options.yAxis.title = { text: json['unit']};
+                if (json['unit'])
+                    options.yAxis.title = { text: json['unit']};
                 chart = new Highcharts.Chart(options);
             } else {
                 chart = null;
@@ -478,7 +492,7 @@ function _drawSumChart(metric_container, from, to, format_type) {
                         }
                         $.each(json["data"]["keys1"], function (i, key1) {
                             var tmp;
-                            if (json["data"][key1][key2][0] == 0){
+                            if (json["data"][key1][key2][0] <= 0){
                                 if (log == '') {
                                     tmp = 0;
                                 } else {
@@ -534,7 +548,7 @@ function _drawSumChart(metric_container, from, to, format_type) {
                                 };
                                 var tmp_3;
                                 $.each(json["data"][key1][key2]['keys3'], function (i, key3) {
-                                    if (json["data"][key1][key2][key3]['sum'][0] == 0){
+                                    if (json["data"][key1][key2][key3]['sum'][0] <= 0){
                                         if (log == '') {
                                             tmp_3 = 0;
                                         } else {
@@ -588,7 +602,8 @@ function _drawSumChart(metric_container, from, to, format_type) {
                     break;
             } // switch end
             if (options.series.length) {
-                options.yAxis.title = { text: json['unit']};
+                if (json['unit'])
+                    options.yAxis.title = { text: json['unit']};
                 chart = new Highcharts.Chart(options);
             } else {
                 chart = null;
@@ -613,7 +628,12 @@ $(document).ready(function () {
     Highcharts.setOptions({
 		global: {
 			useUTC: false
-		}
+		},
+        lang : {
+            thousandsSep : ',',
+            decimalPoint: '.'
+        }
+
 	});
 
     /****************
