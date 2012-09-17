@@ -417,7 +417,7 @@ BEGIN
       RETURNING copyNo, segSize, compression, vid, fseq, blockId, checksum_name, checksum
            INTO varOwSeg.copyNo, varOwSeg.segSize, varOwSeg.comprSize, varOwSeg.vid,
                 varOwSeg.fseq, varOwSeg.blockId, varOwSeg.checksum_name, varOwSeg.checksum;
-      -- Log overwritten segment metadata. ErrorCode = -1 => taken as pure log by the stager
+      -- Log overwritten segment metadata
       SELECT varOwSeg.blockId INTO varBlockId FROM Dual;
       varParams := 'CopyNo='|| varOwSeg.copyNo ||' Fsec=1 SegmentSize='|| varOwSeg.segSize
         ||' Compression='|| varOwSeg.comprSize ||' TPVID='|| varOwSeg.vid
@@ -533,7 +533,7 @@ BEGIN
     varCount := varCount + 1;
   END LOOP;
   IF varCount > 0 THEN
-    -- Final logging. ErrorCode = -1 => taken as pure log by the stager
+    -- Final logging
     varParams := 'Function="setOrRepackSegmentsForFiles" NbFiles='|| varCount
       ||' ElapsedTime='|| getSecs(varStartTime, SYSTIMESTAMP)
       ||' AvgProcessingTime='|| getSecs(varStartTime, SYSTIMESTAMP)/varCount;
