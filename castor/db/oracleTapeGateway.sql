@@ -1358,8 +1358,7 @@ BEGIN
 
       ELSE
         -- Attempt to retry for all other NS errors. To be reviewed whether some of the NS errors are to be considered fatal.
-        varParams := 'mountTransactionId='|| to_char(inMountTrId) ||' ErrorCode='|| to_char(varNSErrorCodes(i))
-                     ||' ErrorMessage="'|| varNSMsgs(i) ||'" '|| inLogContext;
+        varParams := 'mountTransactionId='|| to_char(inMountTrId) ||' '|| varNSParams(i) ||' '|| inLogContext;
         logToDLF(varReqid, dlf.LVL_WARNING, dlf.MIGRATION_RETRY, varNSFileIds(i), varNsHost, 'tapegatewayd', varParams);
         retryOrFailMigration(inMountTrId, varNSFileIds(i), varNsHost, varNSErrorCodes(i), varReqId);
       END CASE;
