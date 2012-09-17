@@ -476,7 +476,7 @@ BEGIN
          FROM DrainingDiskCopy DDC
         WHERE DDC.fileSystem = fsId
           AND DDC.status = 0  -- CREATED
-        ORDER BY DDC.priority DESC, DDC.creationTime ASC)
+        ORDER BY DDC.priority ASC, DDC.creationTime ASC)
      WHERE rownum < 2)
   RETURNING diskCopy INTO dcId;
   IF dcId = 0 THEN
@@ -628,14 +628,14 @@ CREATE OR REPLACE PROCEDURE drainManager AS
 BEGIN
   -- Delete (and restart if necessary) the filesystems which are:
   --  A) in a DELETING state and have no transfers pending in the scheduler.
-  --  B) are COMPLETED and older than 7 days.
+  --  B) COMPLETED and older than 7 days.
   FOR A IN (SELECT fileSystem, status FROM DrainingFileSystem
              WHERE (NOT EXISTS
                (SELECT 'x' FROM DrainingDiskCopy
                  WHERE fileSystem = DrainingFileSystem.fileSystem
                    AND status = 3)  -- WAITD2D
                AND status IN (6, 7))  -- DELETING, RESTART
-                OR (status = 5 AND lastUpdateTime < getTime() - (7 * 86400)))
+                OR (status = 5 AND lastUpdateTime < getTime() - (7 * 86400)))  -- COMPLETED
   LOOP
     -- If the status is RESTART, reset the draining filesystem entry to
     -- its default values and set its status to CREATED, otherwise delete it!
@@ -670,7 +670,7 @@ BEGIN
      SET status = 1  -- INITIALIZING
    WHERE status = 0  -- CREATED
   RETURNING fileSystem BULK COLLECT INTO fsIds;
-  -- Commit, this isn't really necessary but its done so that the user gets
+  -- Commit: this isn't really necessary but it's done so that the user gets
   -- feedback when listing the filesystems which are being drained.
   COMMIT;
   IF fsIds.COUNT = 0 THEN
@@ -682,7 +682,8 @@ BEGIN
   INSERT /*+ APPEND */ INTO DrainingDiskCopy
     (fileSystem, diskCopy, creationTime, priority, fileSize)
       (SELECT /*+ index(DC I_DiskCopy_FileSystem) */
-              DC.fileSystem, DC.id, DC.creationTime, DC.status,
+              DC.fileSystem, DC.id, DC.creationTime,
+              CASE DC.status WHEN 10 THEN 0 ELSE 1 END,   -- CANBEMIGRs get higher priority than STAGED
               DC.diskCopySize
          FROM DiskCopy DC, DrainingFileSystem DFS
         WHERE DFS.fileSystem = DC.fileSystem

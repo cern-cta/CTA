@@ -145,7 +145,7 @@ CREATE INDEX I_DrainingDCs_Status
 
 /* For the in-order processing, see drainFileSystem */
 CREATE INDEX I_DrainingDCs_FSStPrioTimeDC
-  ON DrainingDiskCopy (fileSystem, status, priority DESC, creationTime ASC, diskCopy);
+  ON DrainingDiskCopy (fileSystem, status, priority, creationTime, diskCopy);
 
 CREATE INDEX I_DrainingDCs_Parent
   ON DrainingDiskCopy (parent);
