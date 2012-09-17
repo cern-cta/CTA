@@ -144,11 +144,11 @@ END;
 /
 
 /* A function to extract the full path of a file in one go */
-CREATE OR REPLACE FUNCTION getPathForFileid(varFid IN NUMBER) RETURN VARCHAR2 IS
+CREATE OR REPLACE FUNCTION getPathForFileid(inFid IN NUMBER) RETURN VARCHAR2 IS
   CURSOR c IS
     SELECT /*+ NO_CONNECT_BY_COST_BASED */ name
-      FROM cns_file_metadata
-    START WITH fileid = varFid
+      FROM Cns_file_metadata
+    START WITH fileid = inFid
     CONNECT BY fileid = PRIOR parent_fileid
     ORDER BY level DESC;
   p VARCHAR2(2048) := '';
@@ -165,6 +165,48 @@ BEGIN
    RETURN p;
 END;
 /
+
+/**
+ * This function drops a potentially existing segment with given copyNo, and then
+ * checks for another copy of the same file on the same tape
+ */
+CREATE OR REPLACE FUNCTION checkAndDropSameCopynbSeg(inReqId IN VARCHAR2,
+                                                     inFid IN INTEGER,
+                                                     inVid IN VARCHAR2,
+                                                     inCopyNo IN INTEGER) RETURN INTEGER IS
+  varNb INTEGER;
+  varRepSeg castorns.Segment_Rec;
+  varBlockId VARCHAR2(8);
+  varParams VARCHAR2(2048);
+BEGIN
+  -- First try and delete a previous segment with the same copyNo: this may exist
+  -- even on fresh migrations when the stager fails to commit a previous migration attempt
+  DELETE FROM Cns_seg_metadata
+   WHERE s_fileid = inFid AND copyNo = inCopyNo
+  RETURNING copyNo, segSize, compression, vid, fseq, blockId, checksum_name, checksum
+       INTO varRepSeg.copyNo, varRepSeg.segSize, varRepSeg.comprSize, varRepSeg.vid,
+            varRepSeg.fseq, varRepSeg.blockId, varRepSeg.checksum_name, varRepSeg.checksum;
+  IF varRepSeg.vid IS NOT NULL THEN
+    -- we have some data, log
+    SELECT varRepSeg.blockId INTO varBlockId FROM Dual;  -- to_char() of a RAW type does not work. This does the trick...
+    varParams := 'copyNb='|| varRepSeg.copyNo ||' SegmentSize='|| varRepSeg.segSize
+      ||' Compression='|| varRepSeg.comprSize ||' TPVID='|| varRepSeg.vid
+      ||' fseq='|| varRepSeg.fseq ||' BlockId="' || varBlockId
+      ||'" ChecksumType="'|| varRepSeg.checksum_name ||'" ChecksumValue=' || varRepSeg.checksum;
+    addSegResult(1, inReqId, 0, 'Unlinking segment (replaced)', inFid, varParams);
+  END IF;
+  -- Now that no previous segment exists with the same copyNo, prevent 2nd copy in the same tape
+  SELECT count(*) INTO varNb
+    FROM Cns_seg_metadata
+   WHERE s_fileid = inFid AND s_status = '-' AND vid = inVid;
+  IF varNb > 0 THEN
+    RETURN serrno.EEXIST;
+  ELSE
+    RETURN 0;
+  END IF;
+END;
+/
+
 
 /**
  * This procedure creates a segment for a given file.
@@ -213,7 +255,8 @@ BEGIN
   -- Has the file been changed meanwhile?
   IF varFLastMTime > inSegEntry.lastModTime AND inSegEntry.lastModTime > 0 THEN
     rc := serrno.ENSFILECHG;
-    msg := serrno.ENSFILECHG_MSG;
+    msg := serrno.ENSFILECHG_MSG ||' : NSLastModTime='|| to_char(varFLastMTime)
+      ||', StagerLastModTime='|| to_char(inSegEntry.lastModTime);
     ROLLBACK;
     RETURN;
   END IF;
@@ -235,46 +278,34 @@ BEGIN
     ROLLBACK;
     RETURN;
   END IF;
-  -- Prevent to write a second copy of this file
-  -- on a tape that already holds a valid copy
-  SELECT count(*) INTO varNb
-    FROM Cns_seg_metadata
-   WHERE s_fileid = varFid AND s_status = '-' AND vid = inSegEntry.vid;
-  IF varNb > 0 THEN
-    rc := serrno.EEXIST;
-    msg := 'File already has a copy on the tape';
+  -- Prevent to write a second copy of this file on a tape that already holds a valid copy,
+  -- whilst allowing the overwrite of a same copyNo segment: this makes the NS operation
+  -- fully idempotent and allows to compensate from possible errors in the tapegateway
+  -- after a segment had been committed in the namespace.
+  rc := checkAndDropSameCopynbSeg(inReqId, varFid, inSegEntry.vid, inSegEntry.copyNo);
+  IF rc != 0 THEN
+    msg := 'File already has a copy on VID '|| inSegEntry.vid;
     ROLLBACK;
     RETURN;
   END IF;
   
   -- We're done with the pre-checks, try and insert the segment metadata
-  -- and deal with the possible exceptions: PK violation, unique (vid,fseq) violation
+  -- and deal with the possible unique (vid,fseq) constraint violation exception
   BEGIN
     INSERT INTO Cns_seg_metadata (s_fileId, copyNo, fsec, segSize, s_status,
       vid, fseq, blockId, compression, side, checksum_name, checksum)
     VALUES (varFid, inSegEntry.copyNo, 1, inSegEntry.segSize, '-',
-      inSegEntry.vid, inSegEntry.fseq, inSegEntry.blockId, trunc(inSegEntry.segSize*100/inSegEntry.comprSize),
+      inSegEntry.vid, inSegEntry.fseq, inSegEntry.blockId,
+      trunc(inSegEntry.segSize*100/inSegEntry.comprSize),
       0, inSegEntry.checksum_name, inSegEntry.checksum);
   EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
-    -- We assume the PK was violated, i.e. a previous segment already exists and we need to update it.
-    -- XXX This won't happen anymore once we will drop previous versions of the segments at
-    -- XXX file creation/truncation time!
-    UPDATE Cns_seg_metadata
-       SET fsec = 1, segSize = inSegEntry.segSize, s_status = '-',
-           vid = inSegEntry.vid, fseq = inSegEntry.fseq, blockId = inSegEntry.blockId,
-           compression = trunc(inSegEntry.segSize*100/inSegEntry.comprSize),
-           side = 0, checksum_name = inSegEntry.checksum_name,
-           checksum = inSegEntry.checksum
-     WHERE s_fileId = varFid
-       AND copyNo = inSegEntry.copyNo;
-    IF SQL%ROWCOUNT = 0 THEN
-      -- The update failed, thus the CONSTRAINT_VIOLATED was due to an existing segment at that fseq position.
-      -- This is forbidden!
-      rc := serrno.SEINTERNAL;
-      msg := 'A file already exists at fseq '|| inSegEntry.fseq ||' on VID '|| inSegEntry.vid;
-      ROLLBACK;
-      RETURN;
-    END IF;
+    -- This can be due to a PK violation or to the unique (vid,fseq) violation. The first
+    -- is excluded because of checkAndDropSameCopynbSeg(), thus the second is the case:
+    -- we have an existing segment at that fseq position. This is forbidden!
+    rc := serrno.SEINTERNAL;
+    msg := 'A file already exists at fseq '|| inSegEntry.fseq ||' on VID '|| inSegEntry.vid;
+    ROLLBACK;
+    RETURN;
   END;
   -- Finally check for too many segments for this file
   SELECT nbCopies INTO varFCNbCopies
@@ -285,17 +316,19 @@ BEGIN
    WHERE s_fileid = varFid AND s_status = '-';
   IF varNb > varFCNbCopies THEN
     rc := serrno.ENSTOOMANYSEGS;
-    msg := serrno.ENSTOOMANYSEGS_MSG ||', VID='|| inSegEntry.vid;
+    msg := serrno.ENSTOOMANYSEGS_MSG ||' : expected '|| to_char(varFCNbCopies) ||', got '
+      || to_char(varNb) ||' attempting to write a new segment on VID '|| inSegEntry.vid;
     ROLLBACK;
     RETURN;
   END IF;
   -- Update file status
   UPDATE Cns_file_metadata SET status = 'm' WHERE fileid = varFid;
+  -- Commit and log
   COMMIT;
   SELECT inSegEntry.blockId INTO varBlockId FROM Dual;  -- to_char() of a RAW type does not work. This does the trick...
-  varParams := 'CopyNo='|| inSegEntry.copyNo ||' Fsec=1 SegmentSize='|| inSegEntry.segSize
+  varParams := 'copyNb='|| inSegEntry.copyNo ||' SegmentSize='|| inSegEntry.segSize
     ||' Compression='|| trunc(inSegEntry.segSize*100/inSegEntry.comprSize) ||' TPVID='|| inSegEntry.vid
-    ||' Fseq='|| inSegEntry.fseq ||' BlockId="' || varBlockId
+    ||' fseq='|| inSegEntry.fseq ||' BlockId="' || varBlockId
     ||'" ChecksumType="'|| inSegEntry.checksum_name ||'" ChecksumValue=' || varFCksum;
   addSegResult(0, inReqId, 0, 'New segment information', varFid, varParams);
 EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -359,7 +392,8 @@ BEGIN
   -- Has the file been changed meanwhile?
   IF varFLastMTime > inSegEntry.lastModTime AND inSegEntry.lastModTime > 0 THEN
     rc := serrno.ENSFILECHG;
-    msg := serrno.ENSFILECHG_MSG;
+    msg := serrno.ENSFILECHG_MSG ||' : NSLastModTime='|| to_char(varFLastMTime)
+      ||', StagerLastModTime='|| to_char(inSegEntry.lastModTime);
     ROLLBACK;
     RETURN;
   END IF;
@@ -381,17 +415,6 @@ BEGIN
     ROLLBACK;
     RETURN;
   END IF;
-  -- Prevent to write a second copy of this file
-  -- on a tape that already holds a valid copy
-  SELECT count(*) INTO varNb
-    FROM Cns_seg_metadata
-   WHERE s_fileid = varFid AND s_status = '-' AND vid = inSegEntry.vid;
-  IF varNb > 0 THEN
-    rc := serrno.EEXIST;
-    msg := 'File already has a copy on the tape';
-    ROLLBACK;
-    RETURN;
-  END IF;
   -- Repack specific: --
   -- Make sure a segment exists for the given copyNo. There can only be one segment
   -- as we don't support multi-segmented files any longer.
@@ -401,7 +424,7 @@ BEGIN
     SELECT s_status INTO varStatus
       FROM Cns_seg_metadata
      WHERE s_fileid = varFid AND copyNo = inSegEntry.copyNo;
-    -- Check status of segment to be replaced in case it's a different copyNo
+    -- Check status of segment to be replaced in case it has a different copyNo
     IF inSegEntry.copyNo != inOldCopyNo THEN
       IF varStatus = '-' THEN
         -- We are asked to overwrite a valid segment and replace another one.
@@ -419,9 +442,9 @@ BEGIN
                 varOwSeg.fseq, varOwSeg.blockId, varOwSeg.checksum_name, varOwSeg.checksum;
       -- Log overwritten segment metadata
       SELECT varOwSeg.blockId INTO varBlockId FROM Dual;
-      varParams := 'CopyNo='|| varOwSeg.copyNo ||' Fsec=1 SegmentSize='|| varOwSeg.segSize
+      varParams := 'copyNb='|| varOwSeg.copyNo ||' SegmentSize='|| varOwSeg.segSize
         ||' Compression='|| varOwSeg.comprSize ||' TPVID='|| varOwSeg.vid
-        ||' Fseq='|| varOwSeg.fseq ||' BlockId="' || varBlockId
+        ||' fseq='|| varOwSeg.fseq ||' BlockId="' || varBlockId
         ||'" ChecksumType="'|| varOwSeg.checksum_name ||'" ChecksumValue=' || varOwSeg.checksum;
       addSegResult(1, inReqId, 0, 'Unlinking segment (overwritten)', varFid, varParams);
     END IF;
@@ -429,6 +452,34 @@ BEGIN
     -- Previous segment not found, give up
     rc := serrno.ENSNOSEG;
     msg := serrno.ENSNOSEG_MSG;
+    ROLLBACK;
+    RETURN;
+  END;
+  -- Prevent to write a second copy of this file on a tape that already holds a valid copy,
+  -- whilst allowing the overwrite of a same copyNo segment: this makes the NS operation
+  -- fully idempotent and allows to compensate from possible errors in the tapegateway
+  -- after a segment had been committed in the namespace.
+  rc := checkAndDropSameCopynbSeg(inReqId, varFid, inSegEntry.vid, inSegEntry.copyNo);
+  IF rc != 0 THEN
+    msg := 'File already has a copy on VID '|| inSegEntry.vid;
+    ROLLBACK;
+    RETURN;
+  END IF;
+  
+  -- We're done with the pre-checks, try and insert the segment metadata
+  -- and deal with the possible unique (vid,fseq) constraint violation exception
+  BEGIN
+    INSERT INTO Cns_seg_metadata (s_fileId, copyNo, fsec, segSize, s_status,
+      vid, fseq, blockId, compression, side, checksum_name, checksum)
+    VALUES (varFid, inSegEntry.copyNo, 1, inSegEntry.segSize, '-',
+      inSegEntry.vid, inSegEntry.fseq, inSegEntry.blockId,
+      trunc(inSegEntry.segSize*100/inSegEntry.comprSize),
+      0, inSegEntry.checksum_name, inSegEntry.checksum);
+  EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
+    -- There must already be an existing segment at that fseq position for a different file.
+    -- This is forbidden! Abort the entire operation.
+    rc := serrno.SEINTERNAL;
+    msg := 'A file already exists at fseq '|| inSegEntry.fseq ||' on VID '|| inSegEntry.vid;
     ROLLBACK;
     RETURN;
   END;
@@ -443,45 +494,18 @@ BEGIN
    WHERE s_fileid = varFid AND s_status = '-';
   IF varNb > varFCNbCopies THEN
     rc := serrno.ENSTOOMANYSEGS;
-    msg := serrno.ENSTOOMANYSEGS_MSG ||', VID='|| inSegEntry.vid;
+    msg := serrno.ENSTOOMANYSEGS_MSG ||' : expected '|| to_char(varFCNbCopies) ||', got '
+      || to_char(varNb) ||' attempting to write a new segment on VID '|| inSegEntry.vid;
     ROLLBACK;
     RETURN;
   END IF;
-  
-  -- We're done with the pre-checks. Remove and log old segment metadata
-  DELETE FROM Cns_seg_metadata
-   WHERE s_fileid = varFid AND copyNo = inOldCopyNo
-  RETURNING copyNo, segSize, compression, vid, fseq, blockId, checksum_name, checksum
-       INTO varRepSeg.copyNo, varRepSeg.segSize, varRepSeg.comprSize, varRepSeg.vid,
-            varRepSeg.fseq, varRepSeg.blockId, varRepSeg.checksum_name, varRepSeg.checksum;
-  SELECT varRepSeg.blockId INTO varBlockId FROM Dual;
-  varParams := 'CopyNo='|| varRepSeg.copyNo ||' Fsec=1 SegmentSize='|| varRepSeg.segSize
-    ||' Compression='|| varRepSeg.comprSize ||' TPVID='|| varRepSeg.vid
-    ||' Fseq='|| varRepSeg.fseq ||' BlockId="' || varBlockId
-    ||'" ChecksumType="'|| varRepSeg.checksum_name ||'" ChecksumValue=' || varRepSeg.checksum;
-  addSegResult(1, inReqId, 0, 'Unlinking segment (replaced)', varFid, varParams);
-  -- Insert new segment metadata and deal with possible collisions with the fseq position
-  BEGIN
-    INSERT INTO Cns_seg_metadata (s_fileId, copyNo, fsec, segSize, s_status,
-      vid, fseq, blockId, compression, side, checksum_name, checksum)
-    VALUES (varFid, inSegEntry.copyNo, 1, inSegEntry.segSize, '-',
-      inSegEntry.vid, inSegEntry.fseq, inSegEntry.blockId, trunc(inSegEntry.segSize*100/inSegEntry.comprSize),
-      0, inSegEntry.checksum_name, inSegEntry.checksum);
-  EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
-    -- There must already be an existing segment at that fseq position for a different file.
-    -- This is forbidden! Abort the entire operation.
-    rc := serrno.SEINTERNAL;
-    msg := 'A file already exists at fseq '|| inSegEntry.fseq ||' on VID '|| inSegEntry.vid;
-    ROLLBACK;
-    RETURN;
-  END;
   -- All right, commit and log
   COMMIT;
   SELECT inSegEntry.blockId INTO varBlockId FROM Dual;  -- to_char() of a RAW type does not work. This does the trick...
-  varParams := 'CopyNo='|| inSegEntry.copyNo ||' Fsec=1 SegmentSize='|| inSegEntry.segSize
+  varParams := 'copyNb='|| inSegEntry.copyNo ||' SegmentSize='|| inSegEntry.segSize
     ||' Compression='|| trunc(inSegEntry.segSize*100/inSegEntry.comprSize) ||' TPVID='|| inSegEntry.vid
-    ||' Fseq='|| inSegEntry.fseq ||' BlockId="' || varBlockId
-    ||'" ChecksumType="'|| inSegEntry.checksum_name ||'" ChecksumValue=' || varFCksum;
+    ||' fseq='|| inSegEntry.fseq ||' blockId="' || varBlockId
+    ||'" ChecksumType="'|| inSegEntry.checksum_name ||'" ChecksumValue=' || varFCksum || ' Repack=True';
   addSegResult(0, inReqId, 0, 'New segment information', varFid, varParams);
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- The file entry was not found, just give up
@@ -492,9 +516,11 @@ END;
 
 /**
  * This procedure sets or replaces segments for multiple files by calling either setSegmentForFile
- * or replaceSegmentForFile in a loop, the choice depending on the inOldCopyNos values:
+ * or replaceSegmentForFile in a loop, the choice depending on the oldCopyNo values:
  * when 0, a normal migration is assumed and setSegmentForFile is called.
- * The output is a set of arrays of logs to be sent to DLF from a stager database.
+ * The input is fetched from SetSegsForFilesInputHelper and deleted,
+ * the output is stored into SetSegsForFilesResultsHelper. In both cases the
+ * inReqId UUID is a unique key identifying one invocation of this procedure.
  */
 CREATE OR REPLACE PROCEDURE setOrReplaceSegmentsForFiles(inReqId IN VARCHAR2) AS
   varRC INTEGER;
@@ -534,7 +560,7 @@ BEGIN
   END LOOP;
   IF varCount > 0 THEN
     -- Final logging
-    varParams := 'Function="setOrRepackSegmentsForFiles" NbFiles='|| varCount
+    varParams := 'Function="setOrReplaceSegmentsForFiles" NbFiles='|| varCount
       ||' ElapsedTime='|| getSecs(varStartTime, SYSTIMESTAMP)
       ||' AvgProcessingTime='|| getSecs(varStartTime, SYSTIMESTAMP)/varCount;
     addSegResult(1, inReqId, 0, 'Bulk processing complete', 0, varParams);

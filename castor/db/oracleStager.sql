@@ -3025,7 +3025,7 @@ BEGIN
         varCreatedMJs := varCreatedMJs + 1;
         -- log "create new MigrationJob to migrate missing copy"
         logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_MJ_FOR_MISSING_COPY, inFileId, inNsHost, 'stagerd',
-                 inLogParams || ' COPYNB=' || TO_CHAR(varNextCopyNb));
+                 inLogParams || ' copyNb=' || TO_CHAR(varNextCopyNb));
       END;
       varNextCopyNb := varNextCopyNb + 1;
     END LOOP;
@@ -3089,7 +3089,7 @@ BEGIN
               varSeg.blockId, NULL);
       -- log "created new RecallJob"
       logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_CREATING_RECALLJOB, inFileId, inNsHost, 'stagerd',
-               inLogParams || ' COPYNB=' || TO_CHAR(varSeg.copyno) || ' TPVID=' || varSeg.vid ||
+               inLogParams || ' copyNb=' || TO_CHAR(varSeg.copyno) || ' TPVID=' || varSeg.vid ||
                ' FSEQ=' || TO_CHAR(varSeg.fseq || ' FileSize=' || TO_CHAR(inFileSize)));
       -- remember the copy number and tape
       varAllCopyNbs.EXTEND;
