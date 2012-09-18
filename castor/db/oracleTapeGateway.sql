@@ -1638,7 +1638,7 @@ BEGIN
       WHEN bestFSForRecall_error THEN
         -- log 'bestFileSystemForRecall could not find a suitable destination for this recall' and skip it
         logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_FS_NOT_FOUND, varFileId, varNsHost, 'tapegatewayd',
-                 'errorMessage="' || SQLERRM || '"');
+                 'errorMessage="' || SQLERRM || '" mountTransactionId=' || to_char(inMountTrId) ||' '|| inLogContext);
         -- mark the recall job as failed, and maybe retry
         retryOrFailRecall(varCfId, varVID);
       WHEN NO_DATA_FOUND THEN
