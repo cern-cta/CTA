@@ -146,8 +146,8 @@ END;
 /
 
 /* find all migration mounts involving a set of tapes */
-CREATE OR REPLACE PROCEDURE tg_getMigMountReqsForVids(inVids              IN  strListTable,
-                                                            outBlockingSessions OUT SYS_REFCURSOR) AS
+CREATE OR REPLACE PROCEDURE tg_getMigMountReqsForVids(inVids IN strListTable,
+                                                      outBlockingSessions OUT SYS_REFCURSOR) AS
 BEGIN
     OPEN  outBlockingSessions FOR
       SELECT vid TPVID, mountTransactionId VDQMREQID
@@ -1216,8 +1216,12 @@ PRAGMA AUTONOMOUS_TRANSACTION;
 BEGIN
   -- "Bulk" transfer data to the NS DB
   INSERT /*+ APPEND */ INTO SetSegsForFilesInputHelper@RemoteNS
-    SELECT * FROM FileMigrationResultsHelper
-     WHERE reqId = inReqId;
+    (reqId, fileId, lastModTime, copyNo, oldCopyNo, transfSize, comprSize,
+     vid, fseq, blockId, checksumType, checksum) (
+    SELECT reqId, fileId, lastModTime, copyNo, oldCopyNo, transfSize, comprSize,
+           vid, fseq, blockId, checksumType, checksum
+      FROM FileMigrationResultsHelper
+     WHERE reqId = inReqId);
   DELETE FROM FileMigrationResultsHelper
    WHERE reqId = inReqId;
   -- This call autocommits all segments in the NameServer
@@ -1418,7 +1422,8 @@ BEGIN
        AND status= dconst.DISKCOPY_CANBEMIGR;
   ELSE
     -- another migration ongoing, keep track of the one just completed
-    INSERT INTO MigratedSegment VALUES (varCfId, varCopyNb, varVID);
+    INSERT INTO MigratedSegment (castorFile, copyNb, vid)
+    VALUES (varCfId, varCopyNb, varVID);
   END IF;
   -- Do we have to deal with a repack ?
   IF varOrigVID IS NOT NULL THEN

@@ -840,7 +840,7 @@ BEGIN
       FROM Castorfile, SubRequest
      WHERE SubRequest.subreqId = subReqIds(i)
        AND SubRequest.castorFile = CastorFile.id;
-    INSERT INTO getFileIdsForSrsHelper VALUES (i, fid, nh);
+    INSERT INTO GetFileIdsForSrsHelper (rowno, fileId, nsHost) VALUES (i, fid, nh);
   END LOOP;
   OPEN fileids FOR SELECT nh, fileid FROM getFileIdsForSrsHelper ORDER BY rowno;
 END;
@@ -1156,9 +1156,9 @@ PROCEDURE syncRunningTransfers(machine IN VARCHAR2,
                                transfers IN castor."strList",
                                killedTransfersCur OUT castor.TransferRecord_Cur) AS
   unused VARCHAR2(2048);
-  fileid NUMBER;
-  nsHost VARCHAR2(2048);
-  reqId VARCHAR2(2048);
+  varFileid NUMBER;
+  varNsHost VARCHAR2(2048);
+  varReqId VARCHAR2(2048);
   killedTransfers castor."strList";
   errnos castor."cnumList";
   errmsg castor."strList";
@@ -1167,7 +1167,7 @@ BEGIN
   DELETE FROM SyncRunningTransfersHelper2;
   -- insert the list of running transfers into a temporary table for easy access
   FORALL i IN transfers.FIRST .. transfers.LAST
-    INSERT INTO SyncRunningTransfersHelper VALUES (transfers(i));
+    INSERT INTO SyncRunningTransfersHelper (subreqId) VALUES (transfers(i));
   -- Go through all running transfers from the DB point of view for the given diskserver
   FOR SR IN (SELECT SubRequest.id, SubRequest.subreqId, SubRequest.castorfile, SubRequest.request
                FROM SubRequest, DiskCopy, FileSystem, DiskServer
@@ -1185,15 +1185,16 @@ BEGIN
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- this transfer is not running anymore although the stager DB believes it is
       -- we first get its reqid and fileid
-      SELECT Request.reqId INTO reqId FROM
+      SELECT Request.reqId INTO varReqId FROM
         (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ reqId, id from StageGetRequest UNION ALL
          SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */ reqId, id from StagePutRequest UNION ALL
          SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ reqId, id from StageUpdateRequest UNION ALL
          SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */ reqId, id from StageRepackRequest) Request
        WHERE Request.id = SR.request;
-      SELECT fileid, nsHost INTO fileid, nsHost FROM CastorFile WHERE id = SR.castorFile;
+      SELECT fileid, nsHost INTO varFileid, varNsHost FROM CastorFile WHERE id = SR.castorFile;
       -- and we put it in the list of transfers to be failed with code 1015 (SEINTERNAL)
-      INSERT INTO SyncRunningTransfersHelper2 VALUES (SR.subreqId, reqId, fileid, nsHost, 1015, 'Transfer has been killed while running');
+      INSERT INTO SyncRunningTransfersHelper2 (subreqId, reqId, fileid, nsHost, errorCode, errorMsg)
+      VALUES (SR.subreqId, varReqId, varFileid, varNsHost, 1015, 'Transfer has been killed while running');
     END;
   END LOOP;
   -- fail the transfers that are no more running
@@ -1205,6 +1206,7 @@ BEGIN
   -- is a temporary table so it's content is only visible to our connection.
   transferFailedSafe(killedTransfers, errnos, errmsg);
   -- and return list of transfers that have been failed, for logging purposes
-  OPEN killedTransfersCur FOR SELECT subreqId, reqId, fileid, nsHost FROM SyncRunningTransfersHelper2;
+  OPEN killedTransfersCur FOR
+    SELECT subreqId, reqId, fileid, nsHost FROM SyncRunningTransfersHelper2;
 END;
 /

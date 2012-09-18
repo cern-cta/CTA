@@ -431,9 +431,9 @@ BEGIN
   IF dcIds.COUNT > 0 THEN
     -- List the castorfiles to be cleaned up afterwards
     FORALL i IN dcIds.FIRST .. dcIds.LAST
-      INSERT INTO filesDeletedProcHelper VALUES
-           ((SELECT castorFile FROM DiskCopy
-              WHERE id = dcIds(i)));
+      INSERT INTO FilesDeletedProcHelper (cfId) (
+        SELECT castorFile FROM DiskCopy
+         WHERE id = dcIds(i));
     -- Loop over the deleted files; first use FORALL for bulk operation
     FORALL i IN dcIds.FIRST .. dcIds.LAST
       DELETE FROM DiskCopy WHERE id = dcIds(i);
@@ -479,7 +479,7 @@ BEGIN
             -- So removing it from the stager means erasing
             -- it completely. We should thus also remove it
             -- from the name server
-            INSERT INTO FilesDeletedProcOutput VALUES (fid, nsh);
+            INSERT INTO FilesDeletedProcOutput (fileId, nsHost) VALUES (fid, nsh);
           END IF;
         END IF;
       EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -535,7 +535,7 @@ BEGIN
       -- this file was dropped from nameServer AND stager
       -- and still exists on disk. We put it into the list
       -- of orphan fileids to return
-      INSERT INTO NsFilesDeletedOrphans VALUES(fileIds(fid));
+      INSERT INTO NsFilesDeletedOrphans (fileId) VALUES (fileIds(fid));
     END;
   END LOOP;
   -- return orphan ones
@@ -556,7 +556,7 @@ BEGIN
   END IF;
   -- Insert diskcopy ids into a temporary table
   FORALL i IN dcIds.FIRST..dcIds.LAST
-   INSERT INTO StgFilesDeletedOrphans VALUES(dcIds(i));
+   INSERT INTO StgFilesDeletedOrphans (diskCopyId) VALUES (dcIds(i));
   -- Return a list of diskcopy ids which no longer exist
   OPEN stgOrphans FOR
     SELECT diskCopyId FROM StgFilesDeletedOrphans
@@ -623,7 +623,7 @@ BEGIN
   -- and keeping a cursor opened on the original select may take
   -- too long, leading to ORA-01555 'snapshot too old' errors.
   EXECUTE IMMEDIATE 'TRUNCATE TABLE DeleteTermReqHelper';
-  INSERT /*+ APPEND */ INTO DeleteTermReqHelper
+  INSERT /*+ APPEND */ INTO DeleteTermReqHelper (srId, cfId)
     (SELECT id, castorFile FROM SubRequest
       WHERE status IN (9, 11)
         AND lastModificationTime < getTime() - timeOut);

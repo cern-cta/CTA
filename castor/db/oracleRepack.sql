@@ -142,19 +142,20 @@ BEGIN
   -- Get the list of files to repack from the NS DB via DBLink and store them in memory
   -- in a temporary table. We do that so that we do not keep an open cursor for too long
   -- in the nameserver DB
-  INSERT INTO RepackTapeSegments (SELECT s_fileid, blockid, fseq, segSize,
-                                         copyno, fileclass,
-                                         (SELECT LISTAGG(TO_CHAR(oseg.copyno)||','||oseg.vid, ',') 
-                                          WITHIN GROUP (ORDER BY copyno)
-                                            FROM Cns_Seg_Metadata@remotens oseg
-                                           WHERE oseg.s_fileid = seg.s_fileid
-                                             AND oseg.s_status = '-'
-                                           GROUP BY oseg.s_fileid)
-                                    FROM Cns_Seg_Metadata@remotens seg, Cns_File_Metadata@remotens fileEntry
-                                   WHERE seg.vid = varRepackVID
-                                     AND seg.s_fileid = fileEntry.fileid
-                                     AND seg.s_status = '-'
-                                     AND fileEntry.status != 'D');
+  INSERT INTO RepackTapeSegments (fileId, blockId, fseq, segSize, copyNb, fileClass, allSegments)
+    (SELECT s_fileid, blockid, fseq, segSize,
+            copyno, fileclass,
+            (SELECT LISTAGG(TO_CHAR(oseg.copyno)||','||oseg.vid, ',')
+             WITHIN GROUP (ORDER BY copyno)
+               FROM Cns_Seg_Metadata@remotens oseg
+              WHERE oseg.s_fileid = seg.s_fileid
+                AND oseg.s_status = '-'
+              GROUP BY oseg.s_fileid)
+       FROM Cns_Seg_Metadata@remotens seg, Cns_File_Metadata@remotens fileEntry
+      WHERE seg.vid = varRepackVID
+        AND seg.s_fileid = fileEntry.fileid
+        AND seg.s_status = '-'
+        AND fileEntry.status != 'D');
   FOR segment IN (SELECT * FROM RepackTapeSegments) LOOP
     DECLARE
       varSubreqId INTEGER;

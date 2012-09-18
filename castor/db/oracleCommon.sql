@@ -292,7 +292,7 @@ BEGIN
               -- So removing it from the stager means erasing
               -- it completely. We should thus also remove it
               -- from the name server
-              INSERT INTO FilesDeletedProcOutput VALUES (fid, nsh);
+              INSERT INTO FilesDeletedProcOutput (fileId, nsHost) VALUES (fid, nsh);
             END IF;
           END;
         END IF;

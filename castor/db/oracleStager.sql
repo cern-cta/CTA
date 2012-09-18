@@ -368,7 +368,7 @@ BEGIN
   END;
   -- Insert an entry into the TooManyReplicasHelper table.
   BEGIN
-    INSERT INTO TooManyReplicasHelper
+    INSERT INTO TooManyReplicasHelper (svcClass, castorFile)
     VALUES (svcId, :new.castorfile);
   EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
     RETURN;  -- Entry already exists!
@@ -524,28 +524,30 @@ BEGIN
       OR abortedSRstatus = dconst.SUBREQUEST_BEINGSCHED THEN
       -- standard case, we only have to fail the subrequest
       UPDATE SubRequest SET status = dconst.SUBREQUEST_FAILED WHERE id = sr.srId;
-      INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 0, '');
+      INSERT INTO ProcessBulkRequestHelper (fileId, nsHost, errorCode, errorMessage)
+      VALUES (sr.fileId, sr.nsHost, 0, '');
     WHEN abortedSRstatus = dconst.SUBREQUEST_WAITTAPERECALL THEN
         failRecallSubReq(sr.srId, sr.cfId);
-        INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 0, '');
+        INSERT INTO ProcessBulkRequestHelper (fileId, nsHost, errorCode, errorMessage)
+        VALUES (sr.fileId, sr.nsHost, 0, '');
     WHEN abortedSRstatus = dconst.SUBREQUEST_FAILED
       OR abortedSRstatus = dconst.SUBREQUEST_FAILED_FINISHED THEN
       -- subrequest has failed, nothing to abort
-      INSERT INTO ProcessBulkRequestHelper
+      INSERT INTO ProcessBulkRequestHelper (fileId, nsHost, errorCode, errorMessage)
       VALUES (sr.fileId, sr.nsHost, serrno.EINVAL, 'Cannot abort failed subRequest');
     WHEN abortedSRstatus = dconst.SUBREQUEST_FINISHED
       OR abortedSRstatus = dconst.SUBREQUEST_ARCHIVED THEN
       -- subrequest is over, nothing to abort
-      INSERT INTO ProcessBulkRequestHelper
+      INSERT INTO ProcessBulkRequestHelper (fileId, nsHost, errorCode, errorMessage)
       VALUES (sr.fileId, sr.nsHost, serrno.EINVAL, 'Cannot abort completed subRequest');
     ELSE
       -- unknown status !
-      INSERT INTO ProcessBulkRequestHelper
+      INSERT INTO ProcessBulkRequestHelper (fileId, nsHost, errorCode, errorMessage)
       VALUES (sr.fileId, sr.nsHost, serrno.SEINTERNAL, 'Found unknown status for request : ' || TO_CHAR(abortedSRstatus));
   END CASE;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- subRequest was deleted in the mean time !
-  INSERT INTO ProcessBulkRequestHelper
+  INSERT INTO ProcessBulkRequestHelper (fileId, nsHost, errorCode, errorMessage)
   VALUES (sr.fileId, sr.nsHost, serrno.ENOENT, 'Targeted SubRequest has just been deleted');
 END;
 /
@@ -575,25 +577,26 @@ BEGIN
        WHERE castorfile = sr.cfid AND status IN (dconst.DISKCOPY_STAGEOUT,
                                                  dconst.DISKCOPY_WAITFS,
                                                  dconst.DISKCOPY_WAITFS_SCHEDULING);
-      INSERT INTO ProcessBulkRequestHelper VALUES (sr.fileId, sr.nsHost, 0, '');
+      INSERT INTO ProcessBulkRequestHelper (fileId, nsHost, errorCode, errorMessage)
+      VALUES (sr.fileId, sr.nsHost, 0, '');
     WHEN abortedSRstatus = dconst.SUBREQUEST_FAILED
       OR abortedSRstatus = dconst.SUBREQUEST_FAILED_FINISHED THEN
       -- subrequest has failed, nothing to abort
-      INSERT INTO ProcessBulkRequestHelper
+      INSERT INTO ProcessBulkRequestHelper (fileId, nsHost, errorCode, errorMessage)
       VALUES (sr.fileId, sr.nsHost, serrno.EINVAL, 'Cannot abort failed subRequest');
     WHEN abortedSRstatus = dconst.SUBREQUEST_FINISHED
       OR abortedSRstatus = dconst.SUBREQUEST_ARCHIVED THEN
       -- subrequest is over, nothing to abort
-      INSERT INTO ProcessBulkRequestHelper
+      INSERT INTO ProcessBulkRequestHelper (fileId, nsHost, errorCode, errorMessage)
       VALUES (sr.fileId, sr.nsHost, serrno.EINVAL, 'Cannot abort completed subRequest');
     ELSE
       -- unknown status !
-      INSERT INTO ProcessBulkRequestHelper
+      INSERT INTO ProcessBulkRequestHelper (fileId, nsHost, errorCode, errorMessage)
       VALUES (sr.fileId, sr.nsHost, serrno.SEINTERNAL, 'Found unknown status for request : ' || TO_CHAR(abortedSRstatus));
   END CASE;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- subRequest was deleted in the mean time !
-  INSERT INTO ProcessBulkRequestHelper
+  INSERT INTO ProcessBulkRequestHelper (fileId, nsHost, errorCode, errorMessage)
   VALUES (sr.fileId, sr.nsHost, serrno.ENOENT, 'Targeted SubRequest has just been deleted');
 END;
 /
@@ -615,7 +618,7 @@ BEGIN
   -- get the VID of the aborted repack request
   SELECT repackVID INTO varOriginalVID FROM StageRepackRequest WHERE id = origReqId;
   -- Gather the list of subrequests to abort
-  INSERT INTO ProcessBulkAbortFileReqsHelper (
+  INSERT INTO ProcessBulkAbortFileReqsHelper (srId, cfId, fileId, nsHost, uuid) (
     SELECT /*+ INDEX(Subrequest I_Subrequest_CastorFile)*/
            SubRequest.id, CastorFile.id, CastorFile.fileId, CastorFile.nsHost, SubRequest.subreqId
       FROM SubRequest, CastorFile
@@ -654,13 +657,13 @@ BEGIN
             OR abortedSRstatus = dconst.SUBREQUEST_RETRY
             OR abortedSRstatus = dconst.SUBREQUEST_WAITSUBREQ THEN
             -- easy case, we only have to fail the subrequest
-            INSERT INTO ProcessRepackAbortHelperSR VALUES (sr.srId);
+            INSERT INTO ProcessRepackAbortHelperSR (srId) VALUES (sr.srId);
           WHEN abortedSRstatus = dconst.SUBREQUEST_WAITTAPERECALL THEN
             -- recall case, fail the subRequest and cancel the recall if needed
             failRecallSubReq(sr.srId, sr.cfId);
           WHEN abortedSRstatus = dconst.SUBREQUEST_REPACK THEN
             -- trigger the update the subrequest status to FAILED
-            INSERT INTO ProcessRepackAbortHelperSR VALUES (sr.srId);
+            INSERT INTO ProcessRepackAbortHelperSR (srId) VALUES (sr.srId);
             -- delete migration jobs of this repack, hence stopping selectively the migrations
             DELETE FROM MigrationJob WHERE castorfile = sr.cfId AND originalVID = varOriginalVID;
             -- delete migrated segments if no migration jobs remain
@@ -669,7 +672,7 @@ BEGIN
             EXCEPTION WHEN NO_DATA_FOUND THEN
               DELETE FROM MigratedSegment WHERE castorfile = sr.cfId;
               -- trigger the update of the DiskCopy to STAGED as no more migrations remain
-              INSERT INTO ProcessRepackAbortHelperDCmigr VALUES (sr.cfId);
+              INSERT INTO ProcessRepackAbortHelperDCmigr (cfId) VALUES (sr.cfId);
             END;
            WHEN abortedSRstatus IN (dconst.SUBREQUEST_FAILED,
                                     dconst.SUBREQUEST_FINISHED,
@@ -735,7 +738,7 @@ BEGIN
   -- Gather the list of subrequests to abort
   IF fileIds.count() = 0 THEN
     -- handle the case of an empty request, meaning that all files should be aborted
-    INSERT INTO processBulkAbortFileReqsHelper (
+    INSERT INTO ProcessBulkAbortFileReqsHelper (srId, cfId, fileId, nsHost, uuid) (
       SELECT /*+ INDEX(Subrequest I_Subrequest_Request)*/
              SubRequest.id, CastorFile.id, CastorFile.fileId, CastorFile.nsHost, SubRequest.subreqId
         FROM SubRequest, CastorFile
@@ -756,10 +759,11 @@ BEGIN
            AND SubRequest.castorFile = CastorFile.id
            AND CastorFile.fileid = fileIds(i)
            AND CastorFile.nsHost = nsHosts(i);
-        INSERT INTO processBulkAbortFileReqsHelper VALUES (srId, cfId, fileIds(i), nsHosts(i), srUuid);
+        INSERT INTO processBulkAbortFileReqsHelper (srId, cfId, fileId, nsHost, uuid)
+        VALUES (srId, cfId, fileIds(i), nsHosts(i), srUuid);
       EXCEPTION WHEN NO_DATA_FOUND THEN
         -- this fileid/nshost did not exist in the request, send an error back
-        INSERT INTO ProcessBulkRequestHelper
+        INSERT INTO ProcessBulkRequestHelper (fileId, nsHost, errorCode, errorMessage)
         VALUES (fileIds(i), nsHosts(i), serrno.ENOENT, 'No subRequest found for this fileId/nsHost');
       END;
     END LOOP;
@@ -789,7 +793,7 @@ BEGIN
         END CASE;
         DELETE FROM processBulkAbortFileReqsHelper WHERE srId = sr.srId;
         -- make the scheduler aware so that it can remove the transfer from the queues if needed
-        INSERT INTO TransfersToAbort VALUES (sr.uuid);
+        INSERT INTO TransfersToAbort (uuid) VALUES (sr.uuid);
         nbItemsDone := nbItemsDone + 1;
       EXCEPTION WHEN SrLocked THEN
         commitWork := TRUE;
@@ -854,7 +858,7 @@ BEGIN
      WHERE reqId = abortedReqUuid;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- abort on non supported request type
-    INSERT INTO ProcessBulkRequestHelper
+    INSERT INTO ProcessBulkRequestHelper (fileId, nsHost, errorCode, errorMessage)
     VALUES (0, '', serrno.ENOENT, 'Request not found, or abort not supported for this request type');
     RETURN;
   END;
@@ -2335,7 +2339,7 @@ BEGIN
     SELECT ids_seq.nextval INTO dcId FROM DUAL;
     buildPathFromFileId(fid, nh, dcId, rpath);
     INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status, creationTime, lastAccessTime, gcWeight, diskCopySize, nbCopyAccesses, owneruid, ownergid)
-         VALUES (rpath, dcId, 0, cfId, 5, getTime(), getTime(), 0, 0, 0, ouid, ogid); -- status WAITFS
+      VALUES (rpath, dcId, 0, cfId, 5, getTime(), getTime(), 0, 0, 0, ouid, ogid); -- status WAITFS
     rstatus := 5; -- WAITFS
     rmountPoint := '';
     rdiskServer := '';
@@ -2669,7 +2673,7 @@ BEGIN
              errorMessage = 'Canceled by another user request'
        WHERE id = sr.id OR parent = sr.id;
       -- make the scheduler aware so that it can remove the transfer from the queues if needed
-      INSERT INTO TransfersToAbort VALUES (sr.subreqId);
+      INSERT INTO TransfersToAbort (uuid) VALUES (sr.subreqId);
     END LOOP;
     -- wake up the scheduler so that it can remove the transfer from the queues now
     DBMS_ALERT.SIGNAL('transfersToAbort', '');
@@ -2967,7 +2971,7 @@ BEGIN
     BULK COLLECT INTO timeinfos, uuids, priorities, msgs, fileIds, nsHosts, sources, paramss;
   -- insert into tmp table so that we can open a cursor on it
   FORALL i IN timeinfos.FIRST .. timeinfos.LAST
-    INSERT INTO DLFLogsHelper
+    INSERT INTO DLFLogsHelper (timeinfo, uuid, priority, msg, fileId, nsHost, source, params)
     VALUES (timeinfos(i), uuids(i), priorities(i), msgs(i), fileIds(i), nsHosts(i), sources(i), paramss(i));
   -- return list of entries by opening a cursor on temp table
   OPEN logEntries FOR

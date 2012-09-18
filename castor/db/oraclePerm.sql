@@ -31,7 +31,7 @@ BEGIN
       adminUserId := TO_NUMBER(SUBSTR(admin.s, 1, ind - 1));
       errMsg := 'Invalid groupid ' || SUBSTR(admin.s, ind) || ', ignoring';
       adminGroupId := TO_NUMBER(SUBSTR(admin.s, ind+1));
-      INSERT INTO AdminUsers VALUES (adminUserId, adminGroupId);
+      INSERT INTO AdminUsers (euid, egid) VALUES (adminUserId, adminGroupId);
     EXCEPTION WHEN INVALID_NUMBER THEN
       dbms_output.put_line(errMsg);
     END;
@@ -232,7 +232,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
         wlr.egid := r.egid;
         wlr.reqType := r.reqType;
         tmp := intersection(wlr, p);
-        INSERT INTO RemovePrivilegeTmpTable
+        INSERT INTO RemovePrivilegeTmpTable (svcClass, euid, egid, reqType)
         VALUES (tmp.svcClass, tmp.euid, tmp.egid, tmp.reqType);
       EXCEPTION WHEN empty_privilege THEN
         NULL;
