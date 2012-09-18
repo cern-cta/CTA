@@ -7,6 +7,7 @@
  * rtcp_InitNW.c - Initialise the RTCP network interface (server only).
  */
 
+#include <arpa/inet.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -129,7 +130,14 @@ int rtcp_InitNW(int **ListenSocket, int *port, rtcp_type_t type, char *serviceNa
     }
     
     (void)memset(&sin,'\0',sizeof(sin));
-    sin.sin_addr.s_addr = htonl(INADDR_ANY);
+    /* Bind to localhost because the tapebridged daemon should be the only */
+    /* client of the rtcpd daemon and the tapebridged daemon should always */
+    /* be ran on the same host as the rtcpd daemon.                        */
+    if(0 == inet_aton("127.0.0.1", &sin.sin_addr)) {
+        rtcp_log(LOG_ERR,"rtcp_InitNW() inet_aton(): Invalid address\n");
+        serrno = SECOMERR;
+        return(-1);
+    }
     sin.sin_family = AF_INET;
     sin.sin_port = htons((u_short)rtcp_port);
     rc = bind(**ListenSocket, (struct sockaddr *)&sin, sizeof(sin));
