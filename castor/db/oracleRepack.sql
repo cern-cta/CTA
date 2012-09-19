@@ -316,7 +316,7 @@ END;
 CREATE OR REPLACE PROCEDURE triggerRepackMigration
 (cfId IN INTEGER, vid IN VARCHAR2, fileid IN INTEGER, copyNb IN INTEGER,
  fileclass IN INTEGER, fileSize IN INTEGER, allSegments IN VARCHAR2,
- MJStatus IN INTEGER, migrationTriggered OUT boolean) AS
+ inMJStatus IN INTEGER, migrationTriggered OUT boolean) AS
   varMjId INTEGER;
   varNb INTEGER;
   varDestCopyNb INTEGER;
@@ -359,7 +359,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
         BEGIN
           -- check whether this copy number is already in use by a valid copy
           SELECT * INTO varNb FROM TABLE(varAllCopyNbs)
-           WHERE COLUMN_VALUE=i;
+           WHERE COLUMN_VALUE = i;
           -- this copy number is in use, go to next one
         EXCEPTION WHEN NO_DATA_FOUND THEN
           BEGIN
@@ -381,7 +381,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
         'The file probably has too many valid copies.');
     END IF;
     -- create new migration
-    initMigration(cfId, fileSize, vid, copyNb, varDestCopyNb, MJStatus);
+    initMigration(cfId, fileSize, vid, copyNb, varDestCopyNb, inMJStatus);
     -- create migrated segments for the existing segments if there are none
     SELECT /*+ INDEX_RS_ASC (MigratedSegment I_MigratedSegment_CFCopyNbVID) */ count(*) INTO varNb
       FROM MigratedSegment
@@ -422,8 +422,8 @@ BEGIN
   -- log "created new RecallJob"
   varLogParam := 'SUBREQID=' || inSubReqUUID || ' RecallGroup=' || inRecallGroupName;
   logToDLF(inReqUUID, dlf.LVL_SYSTEM, dlf.RECALL_CREATING_RECALLJOB, inFileId, inNsHost, 'stagerd',
-           varLogParam || ' fileClass=' || TO_CHAR(inFileClass) || ' CopyNb=' || TO_CHAR(inCopynb)
-           || ' TPVID=' || inVid || ' FSEQ=' || TO_CHAR(inFseq) || ' FileSize=' || TO_CHAR(inFileSize));
+           varLogParam || ' fileClass=' || TO_CHAR(inFileClass) || ' copyNb=' || TO_CHAR(inCopynb)
+           || ' TPVID=' || inVid || ' fseq=' || TO_CHAR(inFseq) || ' FileSize=' || TO_CHAR(inFileSize));
   -- create missing segments if needed
   SELECT * BULK COLLECT INTO varAllSegments
     FROM TABLE(strTokenizer(inAllSegments));

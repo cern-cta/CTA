@@ -3095,7 +3095,7 @@ BEGIN
       -- log "created new RecallJob"
       logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_CREATING_RECALLJOB, inFileId, inNsHost, 'stagerd',
                inLogParams || ' copyNb=' || TO_CHAR(varSeg.copyno) || ' TPVID=' || varSeg.vid ||
-               ' FSEQ=' || TO_CHAR(varSeg.fseq || ' FileSize=' || TO_CHAR(inFileSize)));
+               ' fseq=' || TO_CHAR(varSeg.fseq || ' FileSize=' || TO_CHAR(inFileSize)));
       -- remember the copy number and tape
       varAllCopyNbs.EXTEND;
       varAllCopyNbs(varI) := varSeg.copyno;
