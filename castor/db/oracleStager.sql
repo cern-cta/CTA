@@ -3067,6 +3067,7 @@ CREATE OR REPLACE FUNCTION createRecallJobs(inCfId IN INTEGER,
                                             inSvcClassId IN INTEGER,
                                             inEuid IN INTEGER,
                                             inEgid IN INTEGER,
+                                            inRequestTime IN NUMBER,
                                             inLogParams IN VARCHAR2) RETURN INTEGER AS
   varAllCopyNbs "numList" := "numList"();
   varAllVIDs strListTable := strListTable();
@@ -3089,7 +3090,7 @@ BEGIN
       INSERT INTO RecallJob (id, castorFile, copyNb, recallGroup, svcClass, euid, egid,
                              vid, fseq, status, fileSize, creationTime, blockId, fileTransactionId)
       VALUES (ids_seq.nextval, inCfId, varSeg.copyno, inRecallGroupId, inSvcClassId,
-              inEuid, inEgid, varSeg.vid, varSeg.fseq, tconst.RECALLJOB_PENDING, inFileSize, getTime(),
+              inEuid, inEgid, varSeg.vid, varSeg.fseq, tconst.RECALLJOB_PENDING, inFileSize, inRequestTime,
               varSeg.blockId, NULL);
       -- log "created new RecallJob"
       logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_CREATING_RECALLJOB, inFileId, inNsHost, 'stagerd',
@@ -3175,6 +3176,7 @@ CREATE OR REPLACE FUNCTION createRecallCandidate(inSrId IN INTEGER) RETURN INTEG
   varSubReqUUID VARCHAR2(2048);
   varEuid INTEGER;
   varEgid INTEGER;
+  varReqTime NUMBER;
   varReqUUID VARCHAR2(2048);
   varReqId INTEGER;
   varIsBeingRecalled INTEGER;
@@ -3186,16 +3188,16 @@ BEGIN
     FROM SubRequest WHERE id = inSrId;
   SELECT fileid, nsHost, fileClass, fileSize INTO varFileId, varNsHost, varFileClassId, varFileSize
     FROM CastorFile WHERE id = varCfId;
-  SELECT Request.reqId, Request.svcClass, Request.euid, Request.egid
-    INTO varReqUUID, varSvcClassId, varEuid, varEgid
+  SELECT Request.reqId, Request.svcClass, Request.euid, Request.egid, Request.creationTime
+    INTO varReqUUID, varSvcClassId, varEuid, varEgid, varReqTime
     FROM (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */
-                 id, svcClass, euid, egid, reqId FROM StageGetRequest UNION ALL
+                 id, svcClass, euid, egid, reqId, creationTime FROM StageGetRequest UNION ALL
           SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */
-                 id, svcClass, euid, egid, reqId FROM StagePrepareToGetRequest UNION ALL
+                 id, svcClass, euid, egid, reqId, creationTime FROM StagePrepareToGetRequest UNION ALL
           SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */
-                 id, svcClass, euid, egid, reqId FROM StageUpdateRequest UNION ALL
+                 id, svcClass, euid, egid, reqId, creationTime FROM StageUpdateRequest UNION ALL
           SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequest_Id) */
-                 id, svcClass, euid, egid, reqId FROM StagePrepareToUpdateRequest) Request
+                 id, svcClass, euid, egid, reqId, creationTime FROM StagePrepareToUpdateRequest) Request
    WHERE Request.id = varReqId;
   -- get the RecallGroup
   getRecallGroup(varEuid, varEgid, varRecallGroup, varRecallGroupName);
@@ -3212,8 +3214,8 @@ BEGIN
              'FileName=' || varFileName || ' REQID=' || varReqUUID ||
              ' SUBREQID=' || varSubReqUUID || ' RecallGroup=' || varRecallGroupName);
   ELSE
-    varRc := createRecallJobs(varCfId, varFileId, varNsHost, varFileSize,
-                              varFileClassId, varRecallGroup, varSvcClassId, varEuid, varEgid,
+    varRc := createRecallJobs(varCfId, varFileId, varNsHost, varFileSize, varFileClassId,
+                              varRecallGroup, varSvcClassId, varEuid, varEgid, varReqTime,
                               'FileName=' || varFileName || ' REQID=' || varReqUUID ||
                               ' SUBREQID=' || varSubReqUUID || ' RecallGroup=' || varRecallGroupName);
   END IF;
