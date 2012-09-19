@@ -402,6 +402,42 @@ BEGIN
 END;
 /
 
+/* Checks whether repack requests are ongoing for a file and archives them depending on the
+ * provided error code.
+ * Can be called because of Nameserver errors after recalls or after migrations
+ * (cf. failFileMigration and checkRecallInNS).
+ */
+CREATE OR REPLACE PROCEDURE archiveOrFailRepackSubreq(inCfId INTEGER, inErrorCode INTEGER) AS
+  varSrIds "numList";
+BEGIN
+  -- find and archive any repack subrequest(s)
+  SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile) */
+         SubRequest.id BULK COLLECT INTO varSrIds
+    FROM SubRequest
+   WHERE SubRequest.castorfile = inCfId
+     AND subrequest.reqType = 119;  -- OBJ_StageRepackRequest
+  FOR i IN varSrIds.FIRST .. varSrIds.LAST LOOP
+    -- archive: ENOENT and ENSFILECHG are considered as non-errors in a Repack context (#97529)
+    archiveSubReq(varSrIds(i), CASE WHEN inErrorCode IN (serrno.ENOENT, serrno.ENSFILECHG)
+      THEN dconst.SUBREQUEST_FINISHED ELSE dconst.SUBREQUEST_FAILED_FINISHED END);
+    -- for error reporting
+    UPDATE SubRequest
+       SET errorCode = inErrorCode,
+           errorMessage = CASE
+             WHEN inErrorCode IN (serrno.ENOENT, serrno.ENSFILECHG) THEN
+               ''
+             WHEN inErrorCode = serrno.ENSNOSEG THEN
+               'Segment was dropped during repack, skipping'
+             WHEN inErrorCode = serrno.ENSTOOMANYSEGS THEN
+               'File has too many segments on tape, skipping'
+             ELSE
+               'Migration failed, reached maximum number of retries'
+             END
+     WHERE id = varSrIds(i);
+  END LOOP;
+END;
+/
+
 /* Checks whether a recall that was reported successful is ok from the namespace
  * point of view. This includes :
  *   - checking that the file still exists
@@ -438,7 +474,10 @@ BEGIN
   IF varNSLastUpdateTime > inLastUpdateTime THEN
     -- yes ! reset it and thus restart the recall from scratch
     resetOverwrittenCastorFile(inCfId, varNSLastUpdateTime, varNSSize);
-    -- log "setFileRecalled : file was overwritten during recall, restarting from scratch"
+    -- in case of repack, just stop and archive the corresponding request(s) as we're not interested
+    -- any longer (the original segment disappeared). This potentially stops the entire recall process.
+    archiveOrFailRepackSubreq(inCfId, serrno.ENSFILECHG);
+    -- log "setFileRecalled : file was overwritten during recall, restarting from scratch or skipping repack"
     logToDLF(inReqId, dlf.LVL_NOTICE, dlf.RECALL_FILE_OVERWRITTEN, inFileId, inNsHost, 'tapegatewayd',
              'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || inVID ||
              ' fseq=' || TO_CHAR(inFseq) || ' NsLastUpdateTime=' || TO_CHAR(varNSLastUpdateTime) ||
@@ -452,8 +491,8 @@ BEGIN
     setSegChecksumWhenNull@remoteNS(inFileId, inCopyNb, inCksumName, inCksumValue);
     -- log 'setFileRecalled : created missing checksum in the namespace'
     logToDLF(inReqId, dlf.LVL_SYSTEM, dlf.RECALL_CREATED_CHECKSUM, inFileId, inNsHost, 'nsd',
-             'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' CopyNo=' || inCopyNb ||
-             ' TPVID=' || inVID || ' Fseq=' || TO_CHAR(inFseq) || ' checksumType='  || inCksumName ||
+             'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' copyNb=' || TO_CHAR(inCopyNb) ||
+             ' TPVID=' || inVID || ' fseq=' || TO_CHAR(inFseq) || ' checksumType='  || inCksumName ||
              ' checksumValue=' || TO_CHAR(inCksumValue));
   ELSE
     -- is the checksum matching ?
@@ -464,7 +503,7 @@ BEGIN
       -- log "setFileRecalled : bad checksum detected, will retry if allowed"
       logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_BAD_CHECKSUM, inFileId, inNsHost, 'tapegatewayd',
                'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || inVID ||
-               ' fseq=' || TO_CHAR(inFseq) || ' checksumType='  || inCksumName ||
+               ' fseq=' || TO_CHAR(inFseq) || ' copyNb=' || TO_CHAR(inCopyNb) || ' checksumType=' || inCksumName ||
                ' expectedChecksumValue=' || varNSCsumvalue ||
                ' checksumValue=' || TO_CHAR(inCksumValue, 'XXXXXXXX'));
       RETURN FALSE;
@@ -472,12 +511,15 @@ BEGIN
   END IF;
   RETURN TRUE;
 EXCEPTION WHEN NO_DATA_FOUND THEN
-  -- file got dropped from the namespace, recall should be cancelled and requests failed
+  -- file got dropped from the namespace, recall should be cancelled
   deleteRecallJobs(inCfId);
+  -- potentially terminate repack requests
+  archiveOrFailRepackSubreq(inCfId, serrno.ENOENT);
+  -- and fail remaining requests
   UPDATE SubRequest
        SET status = dconst.SUBREQUEST_FAILED,
            errorCode = serrno.ENOENT,
-           errorMessage = 'File disappeared from namespace during recall'
+           errorMessage = 'File was removed during recall'
      WHERE castorFile = inCfId
        AND status = dconst.SUBREQUEST_WAITTAPERECALL;
   -- log "setFileRecalled : file was dropped from namespace during recall, giving up"
@@ -548,7 +590,7 @@ BEGIN
   END;
   -- Check that the file is still there in the namespace (and did not get overwritten)
   -- Note that error handling and logging is done inside the function
-  IF NOT checkRecallInNS(varCfId, inMountTransactionId, varVID, varCopyNb, inFseq, varFileId, varNsHost, 
+  IF NOT checkRecallInNS(varCfId, inMountTransactionId, varVID, varCopyNb, inFseq, varFileId, varNsHost,
                          inCksumName, inCksumValue, varLastUpdateTime, inReqId, inLogContext) THEN
     RETURN;
   END IF;
@@ -613,7 +655,6 @@ BEGIN
   END IF;
 
   -- Finally deal with user requests
-
   UPDATE SubRequest
      SET status = decode(reqType,
                          119, dconst.SUBREQUEST_REPACK, -- repack case
@@ -1477,29 +1518,9 @@ BEGIN
      DELETE FROM MigratedSegment
       WHERE castorfile = varCfId;
   END IF;
-  -- fail repack subrequests
+  -- terminate repack subrequests
   IF varOriginalCopyNb IS NOT NULL THEN
-    -- find and archive the repack subrequest(s)
-    SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile) */
-           SubRequest.id BULK COLLECT INTO varSrIds
-      FROM SubRequest
-     WHERE SubRequest.castorfile = varCfId
-       AND subrequest.status = dconst.SUBREQUEST_REPACK;
-    FOR i IN varSrIds.FIRST .. varSrIds.LAST LOOP
-      archiveSubReq(varSrIds(i), dconst.SUBREQUEST_FAILED_FINISHED);
-      -- For error reporting
-      UPDATE SubRequest
-         SET errorCode = inErrorCode,
-             errorMessage = CASE
-               WHEN inErrorCode IN (serrno.ENOENT, serrno.ENSFILECHG, serrno.ENSNOSEG) THEN
-                 'File was dropped or modified during repack, skipping'
-               WHEN inErrorCode = serrno.ENSTOOMANYSEGS THEN
-                 'File has too many segments on tape, skipping'
-               ELSE
-                 'Migration failed, reached maximum number of retries'
-               END
-       WHERE id = varSrIds(i);
-    END LOOP;
+    archiveOrFailRepackSubreq(varCfId, inErrorCode);
     -- set back the diskcopies to STAGED otherwise repack will wait forever
     UPDATE DiskCopy
        SET status = dconst.DISKCOPY_STAGED
@@ -1515,8 +1536,8 @@ BEGIN
        AND castorFile = varCfId;
     -- Log 'file was dropped or modified during migration, giving up'
     logToDLF(inReqid, dlf.LVL_NOTICE, dlf.MIGRATION_FILE_DROPPED, inFileId, varNsHost, 'tapegatewayd',
-             'mountTransactionId=' || to_char(inMountTrId) || ' ErrorCode=' || to_char(inErrorCode)
-             ||' lastUpdateTime=' || to_char(varCFLastUpdateTime));
+             'mountTransactionId=' || to_char(inMountTrId) || ' ErrorCode=' || to_char(inErrorCode) ||
+             ' lastUpdateTime=' || to_char(varCFLastUpdateTime));
   ELSIF inErrorCode = serrno.ENSTOOMANYSEGS THEN
     -- do as if migration was successful
     UPDATE DiskCopy SET status = dconst.DISKCOPY_STAGED

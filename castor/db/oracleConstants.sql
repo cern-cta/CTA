@@ -167,7 +167,7 @@ AS
   RECALL_NOT_FOUND             CONSTANT VARCHAR2(2048) := 'setFileRecalled: unable to identify recall, giving up';
   RECALL_INVALID_PATH          CONSTANT VARCHAR2(2048) := 'setFileRecalled: unable to parse input path, giving up';
   RECALL_COMPLETED_DB          CONSTANT VARCHAR2(2048) := 'setFileRecalled: db updates after full recall completed';
-  RECALL_FILE_OVERWRITTEN      CONSTANT VARCHAR2(2048) := 'setFileRecalled: file was overwritten during recall, restarting from scratch';
+  RECALL_FILE_OVERWRITTEN      CONSTANT VARCHAR2(2048) := 'setFileRecalled: file was overwritten during recall, restarting from scratch or skipping repack';
   RECALL_FILE_DROPPED          CONSTANT VARCHAR2(2048) := 'setFileRecalled: file was dropped from namespace during recall, giving up';
   RECALL_BAD_CHECKSUM          CONSTANT VARCHAR2(2048) := 'setFileRecalled: bad checksum detected, will retry if allowed';
   RECALL_CREATED_CHECKSUM      CONSTANT VARCHAR2(2048) := 'setFileRecalled: created missing checksum in the namespace';
