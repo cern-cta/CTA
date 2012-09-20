@@ -126,13 +126,14 @@ class Pusher(threading.Thread):
 
     def _flush_batches(self):
         """ Juste flush the 3 batches """
-        while not self.STOP_FLAG.is_set():
+        for i in range(10):
             try:
                 self._tape_b.send()
                 self._req_b.send()
                 self._file_b.send()
             except IOError, exc:
                 self._handle_disconnect(exc)
+                time.sleep(1)
                 continue
             else:
                 return
