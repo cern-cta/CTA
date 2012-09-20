@@ -38,7 +38,7 @@ install:
 	cp Csec_server $(INSTALL_PATH); cp run_server.sh $(INSTALL_PATH); \
 	cp Csec_client $(INSTALL_PATH); cp run_client.sh $(INSTALL_PATH); \
 	mkdir -p $(INSTALL_PATH)/shlib; \
-	cp shlib/libCsec_plugin_*.so* $(INSTALL_PATH)/shlib; \
+	cp shlib/libcastorsec_plugin_*.so* $(INSTALL_PATH)/shlib; \
 	cp -u shlib/libshift.so.__MAJOR_CASTOR_VERSION__.__MINOR_CASTOR_VERSION__ $(INSTALL_PATH)/shlib; \
 	cd $(INSTALL_PATH)/shlib; \
 	rm libshift.so.__MAJOR_CASTOR_VERSION__; \

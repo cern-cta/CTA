@@ -240,7 +240,7 @@ int Cns_main(struct main_args *main_args)
     }
     /* Pre-load the KRB5 plugin library */
     char filename[CA_MAXNAMELEN];
-    snprintf(filename, CA_MAXNAMELEN, "libCsec_plugin_KRB5.so.%d.%d",
+    snprintf(filename, CA_MAXNAMELEN, "libcastorsec_plugin_KRB5.so.%d.%d",
              MAJORVERSION, MINORVERSION);
     void *handle = dlopen (filename, RTLD_LAZY);
     if (!handle) {

@@ -8,10 +8,14 @@ COMM    Make CASTOR Security package
 
 #if UseGSI
 #define GSIMech GSI
+#else
+#define GSIMech
 #endif
 
 #if UseKRB5
 #define KRB5Mech KRB5
+#else
+#define KRBMech
 #endif
 
 #define CSEC_Mechlist KRB5Mech GSIMech ID
@@ -24,9 +28,9 @@ ClientSharedLibraryTarget(castorsecurity,$(SECLIB_OBJS),$(GLOBLIB),$(LIBS) -ldl)
 
 #if UseGSI
 GSITLIB_OBJS = Csec_plugin_GSI_pthr.o Csec_plugin_GSI_pthr_mapper.o
-SharedLibraryTarget(Csec_plugin_GSI_thread,$(GSITLIB_OBJS),,$(GLOBUS_GSSLIB_THR) -lssl -lc -ldl)
+SharedLibraryTarget(castorsec_plugin_GSI_thread,$(GSITLIB_OBJS),,$(GLOBUS_GSSLIB_THR) -lssl -lc -ldl)
 GSILIB_OBJS = Csec_plugin_GSI.o Csec_plugin_GSI_mapper.o
-SharedLibraryTarget(Csec_plugin_GSI,$(GSILIB_OBJS),,$(GLOBUS_GSSLIB) -lssl -lc -ldl)
+SharedLibraryTarget(castorsec_plugin_GSI,$(GSILIB_OBJS),,$(GLOBUS_GSSLIB) -lssl -lc -ldl)
 
 LOCAL_PATH/Csec_plugin_GSI.o: LOCAL_PATH/Csec_plugin_GSS.c
 	@echo Compiling $@
@@ -58,7 +62,7 @@ LOCAL_PATH/Csec_plugin_GSI_pthr_mapper.d: LOCAL_PATH/Csec_plugin_GSS_mapper.c
 #define SecLibsKRB5 $(shell $(Krb5Config) gssapi --libs)
 KRB5LIB_OBJS = Csec_plugin_KRB5.o Csec_plugin_KRB5_mapper.o
 KRB5LIB = SecLibsKRB5 -lc -ldl
-ClientSharedLibraryTarget(Csec_plugin_KRB5,$(KRB5LIB_OBJS),,$(KRB5LIB))
+ClientSharedLibraryTarget(castorsec_plugin_KRB5,$(KRB5LIB_OBJS),,$(KRB5LIB))
 
 LOCAL_PATH/Csec_plugin_KRB5.o: LOCAL_PATH/Csec_plugin_GSS.c
 	@echo Compiling $@
@@ -75,6 +79,6 @@ LOCAL_PATH/Csec_plugin_KRB5_mapper.d:  LOCAL_PATH/Csec_plugin_GSS_mapper.c
 
 IDLIB_OBJS = Csec_plugin_ID.o
 IDLIB = -lc -ldl
-ClientSharedLibraryTarget(Csec_plugin_ID,$(KRB5LIB_OBJS),,$(KRB5LIB))
+ClientSharedLibraryTarget(castorsec_plugin_ID,$(KRB5LIB_OBJS),,$(KRB5LIB))
 
 CLIENTLIBMANPAGE(Csec_api)

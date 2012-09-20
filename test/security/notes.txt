@@ -51,7 +51,7 @@ STRANGE, IT SHOULD WORK CORRECTLY (AS DESCRIBED IN THE DOC)
 2. How to get *.so.1
 	
 	Is this enough: 
-	ln -s libCsec_plugin_KRB5.so libCsec_plugin_KRB5.so.1
+	ln -s libcastorsec_plugin_KRB5.so libcastorsec_plugin_KRB5.so.1
 	
 YES
 

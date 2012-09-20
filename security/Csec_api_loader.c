@@ -277,7 +277,7 @@ void *Csec_get_shlib(Csec_context_t *ctx) {
     Csec_trace(func, "Could not find library in linked list. Will try to load it\n");
 
     /* Creating the library name */
-    snprintf(filename, CA_MAXNAMELEN, "libCsec_plugin_%s.so.%d.%d",
+    snprintf(filename, CA_MAXNAMELEN, "libcastorsec_plugin_%s.so.%d.%d",
              ctx->protocols[ctx->current_protocol].id, MAJORVERSION, MINORVERSION);
     snprintf(filename_thread,CA_MAXNAMELEN-1,"%s_thread.so",filename);
     filename_thread[CA_MAXNAMELEN-1] = 0;

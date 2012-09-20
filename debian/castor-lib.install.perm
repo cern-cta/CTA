@@ -8,5 +8,5 @@
 %attr(-,root,root) usr/lib/libcastorclient.so.*
 %attr(-,root,root) usr/lib/libcastorvdqm.so.*
 %attr(-,root,root) usr/lib/libcastorvmgr.so.*
-%attr(-,root,root) usr/lib/libCsec_plugin_ID.so*
-%attr(-,root,root) usr/lib/libCsec_plugin_KRB5.so*
+%attr(-,root,root) usr/lib/libcastorsec_plugin_ID.so*
+%attr(-,root,root) usr/lib/libcastorsec_plugin_KRB5.so*
