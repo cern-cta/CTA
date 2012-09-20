@@ -1,0 +1,4 @@
+%attr(0755,root,root) usr/bin/hbase-consumer.py*
+%attr(0755,root,root) usr/lib/python*/site-packages/hbaseconsumerlib/*
+%attr(0644,root,root) etc/hbase-consumer/hbase-consumer.conf.example
+%attr(0644,root,root) etc/logrotate.d/castor-hbase-consumer

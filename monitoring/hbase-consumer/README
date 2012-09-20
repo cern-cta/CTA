@@ -1,0 +1,14 @@
+AI messaging consumer that forward CASTOR log messages to HBase. 
+
+Dependencies : 
+    * python 2.6
+    * simplejson
+    * python-dirq
+    * python-messaging 
+          (see https://twiki.cern.ch/twiki/bin/view/EMI/MessagingLibraries)
+    * thrift
+    * happybase
+
+To set up the tables, see :
+    * http://wiki.apache.org/hadoop/Hbase/Shell
+    * http://hbase.apache.org/book/quickstart.html

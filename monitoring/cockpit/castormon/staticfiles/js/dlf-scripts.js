@@ -95,6 +95,9 @@ $(document).ready(function () {
                     case "Error":
                         $('td', nRow).closest('tr').addClass('lvlError');
                         break;
+                    case "Warn":
+                        $('td', nRow).closest('tr').addClass('lvlWarn');
+                        break;
                     default:
                         $('td', nRow).closest('tr').addClass('lvlOther');
                         break;

@@ -1,0 +1,9 @@
+/var/log/castor/hbase-consumer*.log {
+    compress
+    daily
+    missingok
+    rotate 200
+    postrotate
+        /bin/kill -HUP `ps -eo pid,ppid,comm | egrep "hbase-consumer" | awk '{print $1}' 2> /dev/null` 2> /dev/null || true
+    delaycompress
+}

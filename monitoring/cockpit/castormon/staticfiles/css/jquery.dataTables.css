@@ -43,8 +43,15 @@ table.dataTable tr.odd.lvlInfo { background-color: #CEF6CE; }
 table.dataTable tr.even.lvlError { background-color: #F6CECE; }
 table.dataTable tr.odd.lvlError { background-color: #F5A9A9; }
 
+table.dataTable tr.even.lvlWarn { background-color: #FFFFCC; }
+table.dataTable tr.odd.lvlWarn { background-color: #FFFF99; }
+
 table.dataTable tr.even.lvlDebug { background-color: #E6E6E6; }
 table.dataTable tr.odd.lvlDebug { background-color: #D8D8D8; }
+
+
+table.dataTable tr.even.lvlOther { background-color: #9999FF; }
+table.dataTable tr.odd.lvlOther { background-color: #9966FF; }
 
 /*
 table.dataTable tr.odd { background-color: #E2E4FF; }
