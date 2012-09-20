@@ -29,6 +29,5 @@ InstallSubTree(mae,$(PYTHON_LIBDIR),0755,install)
 COMM Exec
 InstallTarget(mae-consumer.py,755)
 
-LOGROTATE(castor-mae,install)
 EXAMPLEFILE(mae.conf,/etc/mae,install)
 

@@ -29,6 +29,5 @@ InstallSubTree(hbaseconsumerlib,$(PYTHON_LIBDIR),0755,install)
 COMM Exec
 InstallTarget(hbase-consumer.py,755)
 
-LOGROTATE(castor-hbase-consumer,install)
 EXAMPLEFILE(hbase-consumer.conf,/etc/hbase-consumer,install)
 
