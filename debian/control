@@ -313,12 +313,12 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-mae
 Architecture: any
-Depends: logrotate, python, python-rpyc, python-dirq, python-messaging, python-simplejson
+Depends: python, python-rpyc, python-dirq, python-messaging, python-simplejson
 Description: castor (Cern Advanced STORage system)
  AI messaging consumer for the Metric Analysis Engine.
 
 Package: castor-hbase-consumer
 Architecture: any
-Depends: logrotate, python, python-dirq, python-messaging, python-simplejson
+Depends: python, python-dirq, python-messaging, python-simplejson
 Description: castor (Cern Advanced STORage system)
  AI messaging consumer for HBase.

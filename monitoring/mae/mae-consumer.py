@@ -54,6 +54,7 @@ STOP_FLAG = threading.Event()
 def sigHupHandler( signum, frame ):
     logging.info('Caught SIGHUP signal, reopening logfile')
     utils.redirect_output(log_file_path)
+    logging.info('Logfile opened.')
 
 def exit_handler(signum=None, frame=None):
     """
@@ -160,6 +161,6 @@ if __name__ == '__main__':
     # Assign handler to signals
     signal.signal(signal.SIGINT, exit_handler)
     signal.signal(signal.SIGTERM, exit_handler)
-    signal.signal(signal.SIGHUP, sigHupHandler)
+    #signal.signal(signal.SIGHUP, sigHupHandler)
     # Start main thread
     main()

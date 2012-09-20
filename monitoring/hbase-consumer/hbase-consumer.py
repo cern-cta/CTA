@@ -147,10 +147,10 @@ def main():
 # Bootstrap
 if __name__ == '__main__':
     # Redirect output to log file
-    utils.redirect_output(log_file_path)
+    #utils.redirect_output(log_file_path)
     # Assign handler to signals
     signal.signal(signal.SIGINT, exit_handler)
     signal.signal(signal.SIGTERM, exit_handler)
-    signal.signal(signal.SIGHUP, sigHupHandler)
+    #signal.signal(signal.SIGHUP, sigHupHandler)
     # Then start main thread
     main()
