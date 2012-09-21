@@ -298,7 +298,7 @@ def get_metric_data(request, metric_name, timestamp_from=None, timestamp_to=None
             position = res['datakeys'].index("CounterHz") # get position in the list
             for d in result_data:
                 tmp = d[1].pop(position)
-                freq = tmp / float(metric.window) / float(metric.nbins)
+                freq = tmp / float(metric.window) * float(metric.nbins)
                 d[1].insert(position, freq)
         # format the data according to the requested format, default is timeline
         res['data'] = _format_data.get(format_type, _format_data_timeline)(result_data, 0)
@@ -343,7 +343,7 @@ def get_metric_data(request, metric_name, timestamp_from=None, timestamp_to=None
                     if l[1][groupk][position] == 0: # skip if 0
                         continue
                     tmp = l[1][groupk].pop(position)
-                    freq = tmp / float(metric.window) / float(metric.nbins)
+                    freq = tmp / float(metric.window) * float(metric.nbins)
                     l[1][groupk].insert(position, freq)
         # format the data according to the requested format, default is timeline
         res['data'] = _format_data.get(format_type, _format_data_timeline)(result_data, 1)
@@ -391,7 +391,7 @@ def get_metric_data(request, metric_name, timestamp_from=None, timestamp_to=None
                         if l[1][key1][key2][position] == 0: # skip if 0
                             continue
                         tmp = l[1][key1][key2].pop(position)
-                        freq = tmp / float(metric.window) / float(metric.nbins)
+                        freq = tmp / float(metric.window) * float(metric.nbins)
                         l[1][key1][key2].insert(position, freq)
         # format the data according to the requested format, default is timeline
         res['data'] = _format_data.get(format_type, _format_data_timeline)(result_data, 2)
