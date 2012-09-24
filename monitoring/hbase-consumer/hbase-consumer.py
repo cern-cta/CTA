@@ -25,21 +25,14 @@ from hbaseconsumerlib.pusher import Pusher
 
 
 # Configuration
-logging.basicConfig(format='%(asctime)s:%(levelname)-8s  %(message)s', 
+logging.basicConfig(format='%(asctime)s:%(levelname)s  %(message)s', 
                     level=logging.DEBUG)
 pprint = pprint.PrettyPrinter(indent=2)
-log_file_path = "/var/log/castor/hbase-consumer.log"
 
 
 # GLobals
 STOP_FLAG = None
 BUFFER = None
-
-def sigHupHandler( signum, frame ):
-    """ """
-    logging.info('Caught SIGHUP signal, reopening logfile')
-    utils.redirect_output(log_file_path)
-    logging.info('Log file opened.')
 
 def exit_handler(signum=None, frame=None):
     """
@@ -63,6 +56,14 @@ def main():
         config_file = sys.argv[1]
     except IndexError:
         utils.print_usage(sys.argv[0])
+    try:
+        log_file = sys.argv[2]
+    except IndexError:
+        logging.info("Using stdout for logging")
+    else:
+        utils.redirect_output(log_file)
+        logging.info("Log file opened.")
+
     logging.info("Main : Starting with config file " + config_file)
 
     # Parse the config
@@ -93,37 +94,42 @@ def main():
     start_time = time.time()
     message_queue = DQS(path=config_dic['message_queue_path'])
     while not STOP_FLAG.is_set():
-        for name in message_queue:
-            if STOP_FLAG.is_set():
-                break
-            if message_queue.lock(name):
-                # Try to get the message
-                try:
-                    message = message_queue.get_message(name)
-                except MessageError, err:
-                    message_queue.remove(name)
-                    logging.warning("Main : " + str(err))
-                    continue
-                except Exception:
-                    raise
-                # look if we already sent the msg
-                if name in _history:
-                    # if yes, just drop it, it's too old
-                    _history.remove(name)
+        try:
+            for name in message_queue:
+                if STOP_FLAG.is_set():
+                    break
+                if message_queue.lock(name):
+                    # Try to get the message
                     try:
+                        message = message_queue.get_message(name)
+                    except MessageError, err:
                         message_queue.remove(name)
-                    except OSError, exc:
-                        logging.warning(str(exc))
-                else:
-                    # if no, put it in history list, and send it
-                    _history.append(name)
-                    # get list of messages
-                    data_list = json.loads(message.body)['data']
-                    # push to buffer
-                    BUFFER.appendleft(data_list)
-                    # accounting/debug
-                    msg_c += 1
-                    log_line_c += len(data_list)
+                        logging.warning("Main : " + str(err))
+                        continue
+                    except Exception:
+                        raise
+                    # look if we already sent the msg
+                    if name in _history:
+                        # if yes, just drop it, it's too old
+                        _history.remove(name)
+                        try:
+                            message_queue.remove(name)
+                        except OSError, exc:
+                            logging.warning(str(exc))
+                    else:
+                        # if no, put it in history list, and send it
+                        _history.append(name)
+                        # get list of messages
+                        data_list = json.loads(message.body)['data']
+                        # push to buffer
+                        BUFFER.appendleft(data_list)
+                        # accounting/debug
+                        msg_c += 1
+                        log_line_c += len(data_list)
+        except Exception:
+            logging.critical("Found critical error : exiting")
+            logging.critical(str(traceback.format_exc()))
+            exit_handler()
                 
         time.sleep(0.5)
         try:
@@ -146,8 +152,6 @@ def main():
 
 # Bootstrap
 if __name__ == '__main__':
-    # Redirect output to log file
-    #utils.redirect_output(log_file_path)
     # Assign handler to signals
     signal.signal(signal.SIGINT, exit_handler)
     signal.signal(signal.SIGTERM, exit_handler)
