@@ -16,8 +16,7 @@ def print_usage(script_name):
 
     :param script_name: sys.argv[0], name of the calling script
     """
-    sys.exit("Usage : python " + script_name + " /path/to/config/file.conf /path/to/log/file.log\n"
-            "Path to log file is optional. If empty, stdout is used")
+    sys.exit("Usage : python " + script_name + " /path/to/config/file.conf [/path/to/log/file.log]")
 
 
 def parse_config(config_file):
