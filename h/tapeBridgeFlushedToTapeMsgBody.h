@@ -46,10 +46,16 @@ typedef struct {
    * The value of this field must be greater than 0.
    */
   uint32_t tapeFseq;
+
+  /**
+   * The number of bytes the flush caused to be written to tape.
+   */
+  uint64_t bytesWrittenToTapeByFlush;
 } tapeBridgeFlushedToTapeMsgBody_t;
 
 #define TAPEBRIDGEFLUSHEDTOTAPEMSGBODY_SIZE ( \
-  LONGSIZE + /* volReqID */                  \
-  LONGSIZE   /* tapeFseq */)
+  LONGSIZE + /* volReqID                  */  \
+  LONGSIZE + /* tapeFseq                  */  \
+  HYPERSIZE  /* bytesWrittenToTapeByFlush */)
 
 #endif /* H_TAPEBRIDGEFLUSHEDTOTAPEMSGBODY_H */

@@ -213,11 +213,12 @@ int32_t tapebridge_marshallTapeBridgeFlushedToTapeMsg(char *const buf,
   }
 
   p = buf;
-  marshall_LONG(p, RTCOPY_MAGIC            ); /* Magic number */
-  marshall_LONG(p, TAPEBRIDGE_FLUSHEDTOTAPE); /* Request type */
-  marshall_LONG(p, msgBodyLen              );
-  marshall_LONG(p, msgBody->volReqId       );
-  marshall_LONG(p, msgBody->tapeFseq       );
+  marshall_LONG (p, RTCOPY_MAGIC                      ); /* Magic number */
+  marshall_LONG (p, TAPEBRIDGE_FLUSHEDTOTAPE          ); /* Request type */
+  marshall_LONG (p, msgBodyLen                        );
+  marshall_LONG (p, msgBody->volReqId                 );
+  marshall_LONG (p, msgBody->tapeFseq                 );
+  marshall_HYPER(p, msgBody->bytesWrittenToTapeByFlush);
   nbBytesMarshalled = p - buf;
   if(nbBytesMarshalled != msgTotalLen) {
     serrno = SEINTERNAL;
