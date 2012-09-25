@@ -139,7 +139,7 @@ castor::tape::tapegateway::VdqmRequestsProducerThread::checkInVMGR
   throw() {
   castor::tape::utils::Timer timer;
   try {
-    TapeInfo info = VmgrTapeGatewayHelper::getTapeInfo(vid, m_shuttingDown);
+    TapeInfo info = VmgrTapeGatewayHelper::getTapeInfoAssertAvailable(vid, m_shuttingDown);
     castor::dlf::Param paramsVmgr[] = {
       castor::dlf::Param("TPVID", vid),
       castor::dlf::Param("dgn", info.dgnBuffer),
