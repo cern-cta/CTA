@@ -65,14 +65,12 @@ done
 #
 ## Replace __X__ macros in patchlevel.h
 #
-timestamp=`date "+%s"`
 perl -pi -e s/\ \ __MAJORVERSION__/${a}/ h/patchlevel.h
 perl -pi -e s/\ \ __MINORVERSION__/${b}/ h/patchlevel.h
 perl -pi -e s/\ \ __MAJORRELEASE__/${c}/ h/patchlevel.h
 perl -pi -e s/\ \ __MINORRELEASE__/${d}/ h/patchlevel.h
 perl -pi -e s/__BASEVERSION__/\"${a}.${b}.${c}\"/ h/patchlevel.h
 perl -pi -e s/__PATCHLEVEL__/${d}/ h/patchlevel.h
-perl -pi -e s/__TIMESTAMP__/\"${timestamp}\"/ h/patchlevel.h
 
 echo "### Building Makefiles"
 make -s -f Makefile.ini Makefiles

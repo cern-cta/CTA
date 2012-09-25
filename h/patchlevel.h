@@ -21,7 +21,6 @@
 #define MAJORRELEASE    __MAJORRELEASE__
 #define MINORRELEASE    __MINORRELEASE__
 #define BASEVERSION     __BASEVERSION__
-#define TIMESTAMP       __TIMESTAMP__
 
 /* For untagged builds (e.g. from CVS) we redefine the replacement macros */
 /* warning: there must be ONLY ONE space between define and the macro here to work! */
