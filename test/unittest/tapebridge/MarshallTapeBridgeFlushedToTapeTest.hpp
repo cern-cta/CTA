@@ -44,7 +44,6 @@ private:
   char m_buf[TAPEBRIDGE_MSGBUFSIZ];
   tapeBridgeFlushedToTapeMsgBody_t m_msgBody;
   const int32_t m_sizeOfMarshalledMsgHeader;
-  const int32_t m_sizeOfMarshalledMsgBody;
   const int32_t m_sizeOfMarshalledMsgHeaderPlusBody;
 
 public:
@@ -52,9 +51,8 @@ public:
   MarshallTapeBridgeFlushedToTapeTest():
     // Header size = magic + reqType + bodyLen
     m_sizeOfMarshalledMsgHeader(3 * LONGSIZE),
-    m_sizeOfMarshalledMsgBody(TAPEBRIDGEFLUSHEDTOTAPEMSGBODY_SIZE),
     m_sizeOfMarshalledMsgHeaderPlusBody(m_sizeOfMarshalledMsgHeader +
-      m_sizeOfMarshalledMsgBody) {
+      TAPEBRIDGEFLUSHEDTOTAPEMSGBODY_SIZE) {
 
     memset(m_buf     , '\0', sizeof(m_buf)    );
     memset(&m_msgBody, '\0', sizeof(m_msgBody));
@@ -126,7 +124,7 @@ public:
 
     unmarshall_LONG(p, unmarshalledLen);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("len marshalled",
-      (uint32_t)m_sizeOfMarshalledMsgBody,
+      (uint32_t)TAPEBRIDGEFLUSHEDTOTAPEMSGBODY_SIZE,
       unmarshalledLen);
 
     unmarshall_LONG(p, unmarshalledVolReqId);
@@ -159,7 +157,7 @@ public:
   }
 
   void testUnmarshalCorrectCall() {
-    char buf[m_sizeOfMarshalledMsgBody];
+    char buf[TAPEBRIDGEFLUSHEDTOTAPEMSGBODY_SIZE];
     size_t bytesLeftInBuffer = sizeof(buf);
 
     {
@@ -169,7 +167,7 @@ public:
       marshall_HYPER(p, m_msgBody.bytesWrittenToTapeByFlush);
 
       CPPUNIT_ASSERT_EQUAL_MESSAGE("marshalled correct number of bytes",
-        m_sizeOfMarshalledMsgBody,
+        (size_t)TAPEBRIDGEFLUSHEDTOTAPEMSGBODY_SIZE,
         size_t(p - buf));
     }
 
