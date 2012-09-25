@@ -160,7 +160,7 @@ public:
     &reply) throw(std::exception) {
     const std::string  rtcpdHost("127.0.0.1");;
     const unsigned int rtcpdPort = FAKE_RTCPD_LISTEN_PORT;
-    const int          netReadWriteTimeout = 0;
+    const int          netReadWriteTimeout = 5; /* 5 seconds */
 
     try {
       BridgeClientInfo2Sender::send(
