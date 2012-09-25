@@ -50,10 +50,9 @@ private:
 public:
 
   MarshallTapeBridgeFlushedToTapeTest():
-    /* Header size = magic + reqType + bodyLen */
+    // Header size = magic + reqType + bodyLen
     m_sizeOfMarshalledMsgHeader(3 * LONGSIZE),
-    /* Body size = volReqId + tapeFseq + bytesWrittenToTapeByFlush */
-    m_sizeOfMarshalledMsgBody(2 * LONGSIZE + HYPERSIZE),
+    m_sizeOfMarshalledMsgBody(TAPEBRIDGEFLUSHEDTOTAPEMSGBODY_SIZE),
     m_sizeOfMarshalledMsgHeaderPlusBody(m_sizeOfMarshalledMsgHeader +
       m_sizeOfMarshalledMsgBody) {
 
@@ -127,7 +126,7 @@ public:
 
     unmarshall_LONG(p, unmarshalledLen);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("len marshalled",
-      (uint32_t)(2 * LONGSIZE),
+      (uint32_t)m_sizeOfMarshalledMsgBody,
       unmarshalledLen);
 
     unmarshall_LONG(p, unmarshalledVolReqId);
@@ -160,7 +159,7 @@ public:
   }
 
   void testUnmarshalCorrectCall() {
-    char buf[2 * LONGSIZE]; // volReqId + tapeFseq
+    char buf[m_sizeOfMarshalledMsgBody];
     size_t bytesLeftInBuffer = sizeof(buf);
 
     {
@@ -170,7 +169,7 @@ public:
       marshall_HYPER(p, m_msgBody.bytesWrittenToTapeByFlush);
 
       CPPUNIT_ASSERT_EQUAL_MESSAGE("marshalled correct number of bytes",
-        size_t(2 * LONGSIZE + HYPERSIZE),
+        m_sizeOfMarshalledMsgBody,
         size_t(p - buf));
     }
 

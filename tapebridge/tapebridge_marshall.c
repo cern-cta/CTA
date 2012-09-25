@@ -195,8 +195,9 @@ int32_t tapebridge_marshallTapeBridgeClientInfo2Ack(char *const buf,
 int32_t tapebridge_marshallTapeBridgeFlushedToTapeMsg(char *const buf,
   const size_t bufLen, const tapeBridgeFlushedToTapeMsgBody_t *const msgBody) {
   char           *p           = NULL;
-  const uint32_t msgHdrLen    = 3 * LONGSIZE; /* magic + reqType + msgBodyLen */
-  const uint32_t msgBodyLen   = 2 * LONGSIZE; /* volReqId + tapeFseq */
+  /* msgHdrLen = magic + reqType + msgBodyLen */
+  const uint32_t msgHdrLen    = 3 * LONGSIZE;
+  const uint32_t msgBodyLen   = TAPEBRIDGEFLUSHEDTOTAPEMSGBODY_SIZE;
   const uint32_t msgTotalLen  = msgHdrLen + msgBodyLen;
   uint32_t       nbBytesMarshalled = 0;
 

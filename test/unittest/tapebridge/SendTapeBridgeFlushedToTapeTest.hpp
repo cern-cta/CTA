@@ -233,8 +233,9 @@ public:
     uint32_t sendRc = 0;
     {
       tapeBridgeFlushedToTapeMsgBody_t msgBody;
-      msgBody.volReqId = 1111;
-      msgBody.tapeFseq = 2222;
+      msgBody.volReqId                  = 1111;
+      msgBody.tapeFseq                  = 2222;
+      msgBody.bytesWrittenToTapeByFlush = 3333;
       sendRc = tapebridge_sendTapeBridgeFlushedToTape(
         clientConnectionSock.get(), netReadWriteTimeout, &msgBody);
     }
@@ -257,7 +258,7 @@ public:
       threadParams.outReadInAndUnmarshalledBody);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("sendTapeBridgeFlushedToTape",
-      (uint32_t)(5 * LONGSIZE), // magic + reqType + len + volReqId + tapeFseq
+      (uint32_t)(3 * LONGSIZE + TAPEBRIDGEFLUSHEDTOTAPEMSGBODY_SIZE),
       sendRc);
 
     close(clientConnectionSock.release());
