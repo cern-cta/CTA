@@ -109,7 +109,7 @@ EXTERN_C int chkdirw       (char *);
 EXTERN_C int checkjobdied  (int[]);
 
 /* tape/cvtden.c       */
-EXTERN_C int cvtden        (char *);
+EXTERN_C int cvtden        (const char *const);
 
 /* tape/ebc2asc.c      */
 EXTERN_C void ebc2asc      (char *, int);

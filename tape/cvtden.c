@@ -30,7 +30,7 @@ static char *adensc[CA_MAXDENNUM] = {
     "10GC",       "",       "",   "DDSC",  "20GC",  "25GC",  "35GC",  "50GC",  "40GC",   "60GC",
    "100GC",  "200GC",  "110GC",  "160GC", "300GC", "400GC", "500GC", "700GC", "800GC", "1000GC",
   "1500GC", "5000GC", "1600GC", "4000GC"};
-int cvtden(char	*aden)
+int cvtden(const char *const aden)
 {
 	int i;
 
