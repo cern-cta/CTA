@@ -249,11 +249,11 @@ int nslogreq(struct Cns_srv_request_info *reqinfo,
    * processing time of the request */
   if (errorcode) {
     len += snprintf(buffer + len, sizeof(buffer) - len,
-                    "RtnCode=%d ErrorMessage=\"%s\" ElapsedTime=%.3f ",
+                    "RtnCode=%d ErrorMessage=\"%s\" ProcessingTime=%.3f ",
                     errorcode, sstrerror(errorcode), elapsed);
   } else {
     len += snprintf(buffer + len, sizeof(buffer) - len,
-                    "RtnCode=%d ElapsedTime=%.3f ", errorcode, elapsed);
+                    "RtnCode=%d ProcessingTime=%.3f ", errorcode, elapsed);
   }
 
   /* Write the message to the log file. */
