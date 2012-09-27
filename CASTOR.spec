@@ -1,8 +1,8 @@
 # Generic macros
 #---------------
 %define name castor
-%define version __A__.__B__.__C__
-%define release __D__
+%define castorVersion __A__.__B__.__C__
+%define castorRelease __D__
 
 # Partial compilations
 #---------------------
@@ -13,9 +13,9 @@
 #-----------------
 Summary: Cern Advanced mass STORage
 Name: %{name}
-Version: %{version}
-Release: %{release}
-Source: %{name}-%{version}-%{release}.tar.gz
+Version: %{castorVersion}
+Release: %{castorRelease}%{?dist}
+Source: %{name}-%{version}-%{castorRelease}.tar.gz
 URL: http://cern.ch/castor
 License: http://cern.ch/castor/DIST/CONDITIONS
 Group: Application/Castor
