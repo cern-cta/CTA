@@ -65,6 +65,10 @@ namespace castor{
             castor::stager::SubRequestStatusCodes srStatus =
               reqHelper->stagerService->createRecallCandidate(reqHelper->subrequest->id());
             reqHelper->subrequest->setStatus(srStatus);
+            if(srStatus == SUBREQUEST_FAILED) {
+                // the recall cannot be performed: the error service will reply to the failed request
+                reply = false;
+            }
           }
           break;
         }
