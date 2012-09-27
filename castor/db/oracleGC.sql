@@ -449,38 +449,43 @@ BEGIN
           FROM CastorFile
          WHERE id = cf.cfId FOR UPDATE;
         -- Cleanup:
-        -- See whether it has any DiskCopy
+        -- See whether it has any other DiskCopy or any new Recall request:
+        -- if so, skip the rest
         SELECT count(*) INTO nb FROM DiskCopy
          WHERE castorFile = cf.cfId;
-        -- If any DiskCopy, nothing to do
+        IF nb > 0 THEN
+          CONTINUE;
+        END IF;
+        SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ count(*) INTO nb
+          FROM SubRequest
+         WHERE castorFile = cf.cfId
+           AND status = dconst.SUBREQUEST_WAITTAPERECALL;
+        IF nb > 0 THEN
+          CONTINUE;
+        END IF;
+        -- Nothing found, check for any other subrequests
+        SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ count(*) INTO nb
+          FROM SubRequest
+         WHERE castorFile = cf.cfId
+           AND status IN (1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14);  -- all but START, FINISHED, FAILED_FINISHED, ARCHIVED
         IF nb = 0 THEN
-          -- Delete the migrations and recalls
-          deleteMigrationJobs(cf.cfId);
-          deleteRecallJobs(cf.cfId);
-          -- Check for existing subrequests
-          SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ count(*) INTO nb
-            FROM SubRequest
+          -- Nothing left, delete the CastorFile
+          DELETE FROM CastorFile WHERE id = cf.cfId;
+        ELSE
+          -- Fail existing subrequests for this file
+          UPDATE /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest
+             SET status = dconst.SUBREQUEST_FAILED
            WHERE castorFile = cf.cfId
-             AND status IN (1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14);  -- all but START, FINISHED, FAILED_FINISHED, ARCHIVED
-          IF nb = 0 THEN
-            -- Nothing left, delete the CastorFile
-            DELETE FROM CastorFile WHERE id = cf.cfId;
-          ELSE
-            -- Fail existing subrequests for this file
-            UPDATE /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest
-               SET status = dconst.SUBREQUEST_FAILED
-             WHERE castorFile = cf.cfId
-               AND status IN (1, 2, 3, 4, 5, 6, 12, 13, 14);  -- same as above
-          END IF;
-          -- Check whether this file potentially had copies on tape
-          SELECT nbCopies INTO nb FROM FileClass WHERE id = fc;
-          IF nb = 0 THEN
-            -- This castorfile was created with no copy on tape
-            -- So removing it from the stager means erasing
-            -- it completely. We should thus also remove it
-            -- from the name server
-            INSERT INTO FilesDeletedProcOutput (fileId, nsHost) VALUES (fid, nsh);
-          END IF;
+             AND status IN (1, 2, 3, 4, 5, 6, 12, 13, 14);  -- same as above
+        END IF;
+        -- Check whether this file potentially had copies on tape
+        SELECT nbCopies INTO nb FROM FileClass WHERE id = fc;
+        IF nb = 0 THEN
+          -- This castorfile was created with no copy on tape
+          -- So removing it from the stager means erasing
+          -- it completely. We should thus also remove it
+          -- from the name server
+          INSERT INTO FilesDeletedProcOutput (fileId, nsHost) VALUES (fid, nsh);
         END IF;
       EXCEPTION WHEN NO_DATA_FOUND THEN
         -- Ignore, this means that the castorFile did not exist.
