@@ -230,8 +230,8 @@ int nslogreq(struct Cns_srv_request_info *reqinfo,
 
   /* Append the request credentials which are part of every message. */
   len += snprintf(buffer + len, sizeof(buffer) - len,
-                  "Username=\"%.30s\" Uid=%d Gid=%d ClientHost=\"%.255s\" ",
-                  reqinfo->username, reqinfo->uid, reqinfo->gid,
+                  "Username=\"%.30s\" Uid=%d Gid=%d Secure=\"%s\" ClientHost=\"%.255s\" ",
+                  reqinfo->username, reqinfo->uid, reqinfo->gid, reqinfo->secure ? "Yes" : "No",
                   reqinfo->clienthost);
 
   /* Append the log buffer associated to the request. */

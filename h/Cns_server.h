@@ -95,6 +95,7 @@ struct Cns_srv_request_info {
         char               logbuf[LOGBUFSZ];
         u_signed64         starttime;
         u_signed64         fileid;
+        int                secure;             /* flag to indicate whether security is enabled */
 };
 
 struct Cns_srv_thread_info {
@@ -106,7 +107,6 @@ struct Cns_srv_thread_info {
         gid_t              Csec_gid;
         char               *Csec_mech;
         char               *Csec_auth_id;
-        int                secure;             /* flag to indicate whether security is enabled */
         struct             Cns_srv_request_info reqinfo;
 };
 

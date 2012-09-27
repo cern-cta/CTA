@@ -57,7 +57,7 @@ void get_client_actual_id (struct Cns_srv_thread_info *thip)
   /* If security is enabled, ignore the uid and gid transmitted by the client
    * and use the authenticated values.
    */
-  if (thip->secure) {
+  if (thip->reqinfo.secure) {
     thip->reqinfo.uid      = thip->Csec_uid;
     thip->reqinfo.gid      = thip->Csec_gid;
     thip->reqinfo.username = thip->Csec_auth_id;

@@ -316,7 +316,7 @@ int Cns_main(struct main_args *main_args)
           return (SYERR);
       }
       (Cns_srv_thread_info + thread_index)->s = rqfd;
-      (Cns_srv_thread_info + thread_index)->secure = security;
+      (Cns_srv_thread_info + thread_index)->reqinfo.secure = security;
       if (Cpool_assign (ipool, &doit,
                         Cns_srv_thread_info + thread_index, 1) < 0) {
         (Cns_srv_thread_info + thread_index)->s = -1;
@@ -734,7 +734,7 @@ doit(void *arg)
   thip->reqinfo.starttime =
     ((double)tv.tv_sec * 1000) + ((double)tv.tv_usec / 1000);
 
-  if (thip->secure) {
+  if (thip->reqinfo.secure) {
     /* In secure mode, we try and extract info from the client for logging purposes */
     const char *clientip = NULL;
     int clientport;
