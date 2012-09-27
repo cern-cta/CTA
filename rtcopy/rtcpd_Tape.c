@@ -243,7 +243,8 @@ static int MemoryToTape(
     uint64_t *const    nbFilesWrittenWithoutFlush,
     const uint64_t     maxBytesBeforeFlush,
     const uint64_t     maxFilesBeforeFlush,
-    int                *flushedToTapeAfterNFiles) {
+    int                *flushedToTapeAfterNFiles,
+    uint64_t           *bytesWrittenToTapeByFlush) {
     int rc = 0;
     int nb_bytes, i, j, last_sz, blksiz, severity, lrecl;
     int end_of_tpfile, buf_done, nb_truncated, spill, bytes_used, proc_err;
@@ -866,6 +867,10 @@ static int MemoryToTape(
     TP_STATUS(RTCP_PS_CLOSE);
     if ( proc_err == 0 ) rc = tclose(tape_fd,tape,file,tapeFlushMode);
     TP_STATUS(RTCP_PS_NOBLOCKING);
+
+    /* tclose updates compression statistics per file */
+    *bytesWrittenToTapeByFlush += file->filereq.bytes_out;
+
     return(rc);
 }
 
@@ -1451,6 +1456,7 @@ void *tapeIOthread(void *arg) {
     int clientIsTapeBridge = 0;
 
     uint32_t tapeFlushMode = TAPEBRIDGE_N_FLUSHES_PER_FILE;
+    uint64_t bytesWrittenToTapeByFlush = 0;
 
     /* The value of maxBytesBeforeFlush is only applicable if tapeFlushMode */
     /* is TAPEBRIDGE_N_FLUSHES_PER_FILE                                     */
@@ -1701,7 +1707,19 @@ void *tapeIOthread(void *arg) {
 
                             rtcp_log(LOG_INFO, logMsg);
                         }
-
+                        {
+                        /*
+                        *  We have to get compression statistics before closing
+                        *  the tape device.
+                        */  
+                            COMPRESSION_STATS compstats;
+                            if (0 == get_compression_stats(tape_fd,
+                                     tapePathForFlush,
+                                     tape->tapereq.devtype,&compstats) ) {
+                                bytesWrittenToTapeByFlush   +=
+                                     ((uint64_t)compstats.to_tape)*1024;
+                            }
+                        }
                         /* Close the tape device */
                         rc = close(tape_fd);
                         tape_fd = -1;
@@ -1717,6 +1735,8 @@ void *tapeIOthread(void *arg) {
                           nextfile->prev->filereq.VolReqID;
                         flushedMsgBody.tapeFseq =
                           nextfile->prev->filereq.tape_fseq;
+                        flushedMsgBody.bytesWrittenToTapeByFlush =
+                          bytesWrittenToTapeByFlush;
                         rc = tapebridge_sendTapeBridgeFlushedToTape(
                             client_socket, RTCP_NETTIMEOUT, &flushedMsgBody);
                         if(0 > rc) {
@@ -1745,9 +1765,12 @@ void *tapeIOthread(void *arg) {
                             ": tapeFlushMode=%s,"
                             " event=noMoreFiles,"
                             " volReqId=%u,"
-                            " fseq=%u\n",
+                            " fseq=%u,"
+                            " bytesWrittenToTapeByFlush=%llu\n",
                             tapebridge_tapeFlushModeToStr(tapeFlushMode),
-                            flushedMsgBody.volReqId, flushedMsgBody.tapeFseq);
+                            flushedMsgBody.volReqId, flushedMsgBody.tapeFseq,
+                            flushedMsgBody.bytesWrittenToTapeByFlush);
+                        bytesWrittenToTapeByFlush = 0;
                     } /* If flushing to tape every N files and ... */
 
                     break;
@@ -1963,7 +1986,8 @@ void *tapeIOthread(void *arg) {
                         nexttape,nextfile,tapeFlushMode,
                         &nbBytesWrittenWithoutFlush,&nbFilesWrittenWithoutFlush,
                         maxBytesBeforeFlush,maxFilesBeforeFlush,
-                        &flushedToTapeAfterNFiles);
+                        &flushedToTapeAfterNFiles,
+                        &bytesWrittenToTapeByFlush);
                     CHECK_PROC_ERR(NULL,nextfile,"MemoryToTape() error");
                 } else {
                     rc = TapeToMemory(tape_fd,&indxp,&firstblk,
@@ -2178,6 +2202,8 @@ void *tapeIOthread(void *arg) {
 
                         flushedMsgBody.volReqId = nextfile->filereq.VolReqID;
                         flushedMsgBody.tapeFseq = nextfile->filereq.tape_fseq;
+                        flushedMsgBody.bytesWrittenToTapeByFlush =
+                            bytesWrittenToTapeByFlush;
                         rc = tapebridge_sendTapeBridgeFlushedToTape(
                             client_socket, RTCP_NETTIMEOUT, &flushedMsgBody);
                         if(0 > rc) {
@@ -2205,9 +2231,12 @@ void *tapeIOthread(void *arg) {
                             ": tapeFlushMode=%s,"
                             " event=fileWritten,"
                             " volReqId=%u,"
-                            " fseq=%u\n",
+                            " fseq=%u,"
+                            " bytesWrittenToTapeByFlush=%llu\n",
                             tapebridge_tapeFlushModeToStr(tapeFlushMode),
-                            flushedMsgBody.volReqId, flushedMsgBody.tapeFseq);
+                            flushedMsgBody.volReqId, flushedMsgBody.tapeFseq,
+                            flushedMsgBody.bytesWrittenToTapeByFlush);
+                        bytesWrittenToTapeByFlush = 0 ;
                     }
                     break;
                 case TAPEBRIDGE_ONE_FLUSH_PER_N_FILES:
@@ -2220,6 +2249,8 @@ void *tapeIOthread(void *arg) {
                         memset(&flushedAckMsg , '\0', sizeof(flushedAckMsg) );
                         flushedMsgBody.volReqId = nextfile->filereq.VolReqID;
                         flushedMsgBody.tapeFseq = nextfile->filereq.tape_fseq;
+                        flushedMsgBody.bytesWrittenToTapeByFlush = 
+                            bytesWrittenToTapeByFlush;
                         rc = tapebridge_sendTapeBridgeFlushedToTape(
                             client_socket, RTCP_NETTIMEOUT, &flushedMsgBody);
                         if(0 > rc) {
@@ -2247,9 +2278,12 @@ void *tapeIOthread(void *arg) {
                             ": tapeFlushMode=%s,"
                             " event=flushedToTapeAfterNFiles,"
                             " volReqId=%u,"
-                            " fseq=%u\n",
+                            " fseq=%u,"
+                            " bytesWrittenToTapeByFlush=%llu\n",
                             tapebridge_tapeFlushModeToStr(tapeFlushMode),
-                            flushedMsgBody.volReqId, flushedMsgBody.tapeFseq);
+                            flushedMsgBody.volReqId, flushedMsgBody.tapeFseq,
+                            flushedMsgBody.bytesWrittenToTapeByFlush);
+                        bytesWrittenToTapeByFlush = 0;
                     }
                     break;
                 default:
