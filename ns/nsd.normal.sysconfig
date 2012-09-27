@@ -6,6 +6,7 @@
 #   -t <nbthreads>  the number of server threads
 #   -s              enable security
 #   -n <nshostname> the name of the nshostname used in log files
+#   -L              binds to localhost only
 #
 # Options to pass to the ns daemon
 #NSD_OPTIONS=
