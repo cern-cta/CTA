@@ -840,8 +840,8 @@ BEGIN
   -- log "Canceling RecallJobs for given VID"
   logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_CANCEL_RECALLJOB_VID, varFileId, varNsHost, 'tapegatewayd',
            'errorCode=' || TO_CHAR(inErrorCode) ||
-           ' errorMessage=' || inErrorMsg ||
-           ' TPVID=' || inVID);
+           ' errorMessage="' || inErrorMsg ||
+           '" TPVID=' || inVID);
   -- remove recallJobs that need the non existing tape
   DELETE FROM RecallJob WHERE castorfile = inCfId AND VID=inVID;
   -- check if other recallJobs remain (typically dual copy tapes)
@@ -851,8 +851,8 @@ BEGIN
     -- log "Failing Recall(s)"
     logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_FAILING, varFileId, varNsHost, 'tapegatewayd',
              'errorCode=' || TO_CHAR(inErrorCode) ||
-             ' errorMessage=' || inErrorMsg ||
-             ' TPVID=' || inVID);
+             ' errorMessage="' || inErrorMsg ||
+             '" TPVID=' || inVID);
     -- delete potential migration jobs waiting on recalls
     deleteMigrationJobsForRecall(inCfId);
     -- Fail the associated subrequest(s)
