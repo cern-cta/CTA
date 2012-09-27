@@ -871,13 +871,17 @@ BEGIN
 END;
 /
 
+/* Cancel a tape session before startup e.g. in case of a VMGR errors when checking the tape.
+ * Not to be called on a running session as the procedure assumes no running migration/recall job
+ * is attached to the session being deleted.
+ */
 CREATE OR REPLACE PROCEDURE cancelMigrationOrRecall(inMode IN INTEGER,
                                                     inVID IN VARCHAR2,
                                                     inErrorCode IN INTEGER,
                                                     inErrorMsg IN VARCHAR2) AS
 BEGIN
   IF inMode = tconst.WRITE_ENABLE THEN
-    -- cancel the migration
+    -- cancel the migration. No job has been attached yet
     DELETE FROM MigrationMount WHERE VID = inVID;
   ELSE
     -- cancel the recall
@@ -1414,7 +1418,7 @@ BEGIN
     -- Nothing to do after processing the error cases
     NULL;
   END;
-  -- Final log
+  -- Final log, "setBulkFileMigrationResult: bulk migration completed"
   varParams := 'mountTransactionId='|| to_char(inMountTrId)
                ||' NbFiles='|| inFileIds.COUNT ||' '|| inLogContext
                ||' ElapsedTime='|| getSecs(varStartTime, SYSTIMESTAMP)
