@@ -265,7 +265,7 @@ castor::rh::RateLimiter::checkAndUpdateLimit(const std::string user,
 
     // Retrieve the keys from memcache
     memcached_return rc =
-      memcached_mget(m_memc, (char**)&keylist[0], &lengths[0], keylist.size());
+      memcached_mget(m_memc, &keylist[0], &lengths[0], keylist.size());
     if (rc != MEMCACHED_SUCCESS) {
       castor::exception::Exception ex(SEINTERNAL);
       ex.getMessage() << "Failure in call to memcached_mget: "
