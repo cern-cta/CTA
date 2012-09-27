@@ -1,8 +1,6 @@
-castor (2.1.13-4) unstable; urgency=low
+castor (2.1.14-0) unstable; urgency=low
 
-  * Internal release
-
- -- Steven Murray <steven.murray@cern.ch> Tue, 28 Aug 14:52:34 +0100
+  * First 2.1.14 production release 
 
 castor (2.1.13-3) unstable; urgency=low
 
