@@ -767,14 +767,14 @@ BEGIN
       EXCEPTION WHEN NO_DATA_FOUND THEN
         NULL;
       END;
-      logToDLF(NULL, dlf.LVL_WARNING, dlf.FILE_DROPPED_BY_CLEANING, f.fileId, f.nsHost, 'stagerdb', '');
+      logToDLF(NULL, dlf.LVL_WARNING, dlf.FILE_DROPPED_BY_CLEANING, f.fileId, f.nsHost, 'stagerd', '');
     ELSE
       -- here we issue a putDone
       -- context 2 : real putDone. Missing PPut requests are ignored.
       -- svcClass 0 since we don't know it. This will trigger a
       -- default behavior in the putDoneFunc
       putDoneFunc(f.id, f.fileSize, 2, 0);
-      logToDLF(NULL, dlf.LVL_WARNING, dlf.PUTDONE_ENFORCED_BY_CLEANING, f.fileId, f.nsHost, 'stagerdb', '');
+      logToDLF(NULL, dlf.LVL_WARNING, dlf.PUTDONE_ENFORCED_BY_CLEANING, f.fileId, f.nsHost, 'stagerd', '');
     END IF;
   END LOOP;
   COMMIT;
