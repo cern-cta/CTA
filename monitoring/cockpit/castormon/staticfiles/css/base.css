@@ -28,9 +28,11 @@ a.accordion-toggle:visited {
 a.accordion-toggle:active {
     border: none;
 }
+a.accordion-toggle.current {
+    color: #f77b21;
+}
 
-
-a.current {
+a.metric.current {
     color: #f77b21;
     border-bottom: 1px dotted;
 }
@@ -442,6 +444,8 @@ select {
 }
 
 .accordion-group {
+    border: 0px;
+    border-top: 1px solid #CCC;
     -webkit-border-radius: 0px;
     -moz-border-radius: 0px;
     border-radius: 0px;

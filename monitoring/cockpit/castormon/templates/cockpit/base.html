@@ -34,21 +34,15 @@
                 {% for category in metrics.keys %}
                 <div class="accordion-group">
                     <div class="accordion-heading">
-                        <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#accordion{{ category }}">{{ category }}</a>
+                        
+                        <a class="accordion-toggle {% if metric_name and metric_name in metrics.dict|get:category %}current{% endif %}" data-toggle="collapse" data-parent="#accordion" href="#accordion{{ category }}">{{ category }}</a>
+                        
                     </div>
-                    {% if metric_name and metric_name in metrics.dict|get:category %}
-                    <div id="accordion{{ category }}" class="accordion-body collapse in">
-                    {% else %}
-                    <div id="accordion{{ category }}" class="accordion-body collapse">
-                    {% endif%}
+                    <div id="accordion{{ category }}" class="accordion-body collapse {% if metric_name and metric_name in metrics.dict|get:category %}in{% endif%}">
                         <div class="accordion-inner">
                             <ul>
                             {% for metric in metrics.dict|get:category %}
-                            {% if metric_name and metric_name == metric %}
-                            <li><a href="/metric/{{ metric }}" class="current">{{ metric }}</a></li>
-                            {% else %}
-                            <li><a href="/metric/{{ metric }}">{{ metric }}</a></li>
-                            {% endif %}
+                            <li><a href="/metric/{{ metric }}" class="{% if metric_name and metric_name == metric %}metric current{% endif %}">{{ metric }}</a></li>
                             {% endfor %}
                             </ul>
                         </div>
