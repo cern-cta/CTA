@@ -20,6 +20,7 @@ class Metric(models.Model):
     """
     name = models.CharField(max_length=200, default="", primary_key=True, db_index=True)
     unit = models.TextField(default="")
+    category = models.TextField(default="")
     window = models.IntegerField(default=0)
     conditions = models.TextField(default="")
     groupbykeys = models.TextField(default="")

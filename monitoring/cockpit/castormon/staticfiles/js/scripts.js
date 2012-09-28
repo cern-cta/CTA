@@ -31,6 +31,9 @@ function drawChart(metric_container, from, to) {
         case 'average':
             _drawSumChart(metric_container, from, to, 'average');
             break;
+        case 'stacked':
+            _drawTopChart(metric_container);
+            break;
         default:
             break;
     }
@@ -43,6 +46,9 @@ function getAjaxURL(metric_name, from, to, format_type) {
      * NB : we use join instead of string concatenation, for performance purpose
      */
     var url = null;
+    if (format_type == "Top")
+        return ['/data/metric/', metric_name].join('') ;
+
     if(from) {
         if(to) {
             url = ['/data/metric/', metric_name, '/', from, '/', to, '/', format_type].join('') ;
@@ -343,6 +349,9 @@ function _drawTimelineChart(metric_container, from, to) {
         // preprocess the data, and give them to highchart
         $.getJSON(url, function(json) {
             switch (json["groupby"]) {
+                case 'Top':
+                    metric_container.find('select.graph-type').val('stacked').change();
+                    break;
                 case 0:
                     $.each(json["datakeys"], function (i, datakey) {
                         // serie initialisation
@@ -359,7 +368,7 @@ function _drawTimelineChart(metric_container, from, to) {
                         }
                         $.each(json["data"], function(index, d) {
                             var tmp;
-                            if (d[1][i] <= 0) {
+                            if (d[1][i] <= 0 && d[1][i] != null) {
                                 if (log == '') {
                                     tmp = 0;
                                 } else {
@@ -392,7 +401,7 @@ function _drawTimelineChart(metric_container, from, to) {
                             }
                             $.each(json["data"], function(i, d) {
                                 var tmp;
-                                if (d[1][groupkey][i2] <= 0){
+                                if (d[1][groupkey][i2] <= 0 && d[1][groupkey][i2] != null){
                                     if (log == '') {
                                         tmp = 0;
                                     } else {
@@ -465,6 +474,9 @@ function _drawSumChart(metric_container, from, to, format_type) {
         // preprocess the data, and give them to highchart
         $.getJSON(url, function(json) {
             switch (json["groupby"]) {
+                case 'Top':
+                    metric_container.find('select.graph-type').val('stacked').change();
+                    break;
                 case 0:
                     options.xAxis.categories = json["datakeys"];
                     options.series.push( { name: metric_name, data: json["data"]} );
@@ -492,7 +504,7 @@ function _drawSumChart(metric_container, from, to, format_type) {
                         }
                         $.each(json["data"]["keys1"], function (i, key1) {
                             var tmp;
-                            if (json["data"][key1][key2][0] <= 0){
+                            if (json["data"][key1][key2][0] <= 0 && json["data"][key1][key2][0] != null ){
                                 if (log == '') {
                                     tmp = 0;
                                 } else {
@@ -612,6 +624,104 @@ function _drawSumChart(metric_container, from, to, format_type) {
     }
 }
 
+function getTopChartOptions(metric_name) {
+    /*
+     * Just build and return the options for a Top chart.
+     */
+    var start = + new Date(); // Create a timer
+    return {
+            chart: {
+                renderTo: metric_display[0],
+                events: {
+                        load: function(chart) {
+                            this.setTitle(null, {
+                                text: 'Built chart in '+ (new Date() - start) +'ms'
+                            });
+                        }
+                    },
+                animation: false,
+                shadow: false,
+                type: 'column'
+            },
+            credits: {
+                enabled: false
+            },
+            title: {
+                text: metric_name
+            },
+            xAxis: {
+                categories: []
+            },
+            yAxis: {
+                title: null,
+                stackLabels: {
+                    enabled: true,
+                    style: {
+                        fontWeight: 'bold',
+                        color: (Highcharts.theme && Highcharts.theme.textColor) || 'gray'
+                    }
+                }
+            },
+            legend: {
+                enabled: false
+            },
+            tooltip: {
+                formatter: function() {
+                    return '<b>'+ this.x +'</b><br/>'+
+                        this.series.name +': '+ this.y +'<br/>'+
+                        'Total: '+ this.point.stackTotal;
+                }
+            },
+            plotOptions: {
+                series: {
+                    grouping:false,
+                    minPointLength:5 
+                },
+                column: {
+                    stacking: 'normal',
+                    dataLabels: {
+                        enabled: true,
+                        formatter: function() {
+                            if (this.y)
+                                return this.y;
+                        },
+                        color: (Highcharts.theme && Highcharts.theme.dataLabelsColor) || 'white'
+                    }
+                }
+            },
+            series: []
+    };
+}
+
+function _drawTopChart(metric_container) {
+
+    var metric_name = metric_container.attr('id');
+
+    // if we are on a display page
+    if (metric_name) {
+
+        // initialize char options
+        var options = getTopChartOptions(metric_name); 
+
+        var url = getAjaxURL(metric_name, null, null, "Top");
+
+        // preprocess the data, and give them to highchart
+        $.getJSON(url, function(json) {
+            options.xAxis.categories = json["categories"];
+            $.each(json["data"][1], function (key, value) {
+                options.series.push( { name: key, data: value} );
+            });
+
+            if (options.series.length) {
+                if (json['unit'])
+                    options.yAxis.title = { text: json['unit']};
+                chart = new Highcharts.Chart(options);
+            } else {
+                chart = null;
+            }
+        });
+    }
+}
 
 $(document).ready(function () {
 

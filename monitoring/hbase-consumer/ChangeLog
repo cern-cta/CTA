@@ -1,6 +1,3 @@
-2012-09-20 Benjamin Fiorini <benjamin.fiorini@cern.ch>
-
-* Handle logrotate with a SIGHUP
 
 2012-09-18 Benjamin Fiorini <benjamin.fiorini@cern.ch>
 

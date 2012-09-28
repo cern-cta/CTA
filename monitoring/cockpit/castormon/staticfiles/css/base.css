@@ -1,6 +1,5 @@
 html {
     font-family: arial, helvetica, sans-serif;
-    font-size: 10pt;
     height: 100%;
     margin: 0px;
     padding: 0px;
@@ -9,11 +8,27 @@ html {
 body {
     margin: 0px;
     padding: 0px;
+    font-size: 12px;
 }
 
 img {
     border: none;
 }
+
+a.accordion-toggle {
+    border: none;
+    margin: 0px;
+}
+a.accordion-toggle:hover {
+    border: none;
+}
+a.accordion-toggle:visited {
+    border: none;
+}
+a.accordion-toggle:active {
+    border: none;
+}
+
 
 a.current {
     color: #f77b21;
@@ -31,12 +46,15 @@ a {
 a:hover {
     color: #f77b21;
     border-bottom:1px dotted #f77b21;
+    text-decoration: none;
 }
 
 a:visited {
+    text-decoration: none;
 }
 
 a:active {
+    text-decoration: none;
 }
 
 a.refresh-plot {
@@ -102,18 +120,19 @@ iframe {
 }
 
 #sidebar-content {
-    padding: 5px;
+    padding: 0px;
 }
 
 #sidebar h1 {
     background-color: #CCC;
     padding: 3px 5px 0px 5px;
-    margin: 13px -5px 0px -5px;
+    margin: 13px 0px 0px 0px;
 }
 
 #sidebar ul {
     padding-left:0px;
     list-style-type:none;
+    margin: 10px 10px 0 10px ;
 }
 
 #sidebar li {
@@ -174,7 +193,7 @@ div.metric-display img {
 div.filter-container {
     height: 50px;
     margin: 5px;
-    width: 470px;
+    width: 450px;
     float: left;
 }
 
@@ -408,3 +427,31 @@ a.refresh-plot img:hover {
 }
 
 
+select {
+    width: 90px;
+    margin-right: 10px;
+}
+
+.accordion {
+    margin-bottom: 0px;
+}
+
+.accordion-heading .accordion-toggle {
+    padding: 8px 10px;
+    font-size: 14px;
+}
+
+.accordion-group {
+    -webkit-border-radius: 0px;
+    -moz-border-radius: 0px;
+    border-radius: 0px;
+    margin: 0px -1px;
+}
+
+.accordion-inner {
+    padding: 0 0 5px 10px;
+}
+
+.accordion + h1 {
+    margin-top: 0px;
+}

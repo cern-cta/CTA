@@ -1,9 +1,12 @@
+{% load extra_filter %}
+
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
   <head>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
     <meta name="Keywords" content="Cockpit" />
 
+    <link href="/static/css/bootstrap.css" rel="stylesheet" />
     <link href="/static/css/base.css" rel="stylesheet" />
     <link href="/static/css/jquery-ui-1.8.18.custom.css" rel="Stylesheet" />
 
@@ -11,6 +14,7 @@
     <script type="text/javascript" src="/static/js/jquery-ui-1.8.18.custom.min.js"></script> 
     <script type="text/javascript" src="/static/js/highstock.js"></script>
     <script type="text/javascript" src="/static/js/modules/exporting.js"></script>
+    <script type="text/javascript" src="/static/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="/static/js/scripts.js"></script>
 
     {% block extrahead %}{% endblock %}
@@ -26,21 +30,39 @@
             <h1>
                 Metrics
             </h1>
-            <ul>
-                {% for metric in metrics %}
-                {% if metric_name and metric_name == metric %}
-                    <li><a href="/metric/{{ metric }}" class="current">{{ metric }}</a></li>
-                {% else %}
-                    <li><a href="/metric/{{ metric }}">{{ metric }}</a></li>
-                {% endif %}
+            <div class="accordion" id="accordion">
+                {% for category in metrics.keys %}
+                <div class="accordion-group">
+                    <div class="accordion-heading">
+                        <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#accordion{{ category }}">{{ category }}</a>
+                    </div>
+                    {% if metric_name and metric_name in metrics.dict|get:category %}
+                    <div id="accordion{{ category }}" class="accordion-body collapse in">
+                    {% else %}
+                    <div id="accordion{{ category }}" class="accordion-body collapse">
+                    {% endif%}
+                        <div class="accordion-inner">
+                            <ul>
+                            {% for metric in metrics.dict|get:category %}
+                            {% if metric_name and metric_name == metric %}
+                            <li><a href="/metric/{{ metric }}" class="current">{{ metric }}</a></li>
+                            {% else %}
+                            <li><a href="/metric/{{ metric }}">{{ metric }}</a></li>
+                            {% endif %}
+                            {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
                 {% endfor %}
-            </ul>
+            </div>
             <h1>
                 Info
             </h1>
             <ul>
                 <li><a href="https://twiki.cern.ch/twiki/bin/view/DSSGroup/CockpitWebInterface">Twiki page</a></li>
                 <li><a href="/sls">SLS overview</a></li>
+                <li><a href="/dlf">Log viewer</a></li>
             {% if rpyc_status %}
                 <li class="rpyc-status rpyc-up">RPyC Server : <img src="/static/img/button_ok.png" alt="UP" /></li>
             {% else %}
