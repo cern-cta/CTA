@@ -13,16 +13,6 @@ CREATE TABLE DrainingFileSystem
    startTime      NUMBER DEFAULT 0,
    lastUpdateTime NUMBER DEFAULT 0,
    fileSystem     NUMBER CONSTRAINT NN_DrainingFs_FileSystem NOT NULL,
-   /* Current state of the draining process, one of:
-    *   0 -- CREATED
-    *   1 -- INITIALIZING
-    *   2 -- RUNNING
-    *   3 -- INTERRUPTED
-    *   4 -- FAILED
-    *   5 -- COMPLETED
-    *   6 -- DELETING
-    *   7 -- RESTART
-    */
    status         NUMBER DEFAULT 0,
    svcClass       NUMBER CONSTRAINT NN_DrainingFs_SvcClass NOT NULL,
    /* Flag to indicate whether files should be invalidated so that they can be
@@ -45,6 +35,14 @@ CREATE TABLE DrainingFileSystem
    comments       VARCHAR2(50) DEFAULT 'N/A' CONSTRAINT NN_DrainingFs_Comments NOT NULL)
   /* Allow shrink operations */
   ENABLE ROW MOVEMENT;
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DrainingFileSystem', 'status', 0, 'CREATED');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DrainingFileSystem', 'status', 1, 'INITIALIZING');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DrainingFileSystem', 'status', 2, 'RUNNING');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DrainingFileSystem', 'status', 3, 'INTERRUPTED');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DrainingFileSystem', 'status', 4, 'FAILED');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DrainingFileSystem', 'status', 5, 'COMPLETED');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DrainingFileSystem', 'status', 6, 'DELETING');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DrainingFileSystem', 'status', 7, 'RESTART');
 
 /* SQL statement for primary key constraint on DrainingFileSystem */
 ALTER TABLE DrainingFileSystem
@@ -101,11 +99,7 @@ CREATE TABLE DrainingDiskCopy
     * the status of the diskcopy i.e. STAGED, CANBEMIGR. It is an internal
     * status assigned to each diskcopy (file) as a means of tracking how far the
     * file is in the lifecycle of draining a filesystem.
-    * The status can be one of:
-    *   0 -- CREATED
-    *   2 -- PROCESSING    (Transient state)
-    *   3 -- WAITD2D
-    *   4 -- FAILED
+    * PROCESSING is a transient state.
     */
    status         NUMBER DEFAULT 0 CONSTRAINT NN_DrainingDCs_Status NOT NULL,
    /* A link to the diskcopy. Note: this is deliberately not enforced with a
@@ -119,6 +113,11 @@ CREATE TABLE DrainingDiskCopy
    comments       VARCHAR2(2048) DEFAULT NULL)
   /* Allow shrink operations */
   ENABLE ROW MOVEMENT;
+
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DrainingDiskCopy', 'status', 0, 'CREATED');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DrainingDiskCopy', 'status', 2, 'PROCESSING');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DrainingDiskCopy', 'status', 3, 'WAITD2D');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DrainingDiskCopy', 'status', 4, 'FAILED');
 
 /* SQL statement for primary key constraint on DrainingDiskCopy */
 ALTER TABLE DrainingDiskCopy
