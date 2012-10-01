@@ -610,6 +610,11 @@ int tclose(
     memset(&compstats,'\0',sizeof(compstats));
     comp_rc = get_compression_stats(fd,filereq->tape_path,
                                     tapereq->devtype,&compstats);
+    /* We need to reset stats on the drive here to get correct values
+    *  for the bytesWrittenToTapeByFlush in noMoreFiles section.
+    *  rc means nothing here for us and we just ignore it.
+    */
+    clear_compression_stats(fd,filereq->tape_path,tapereq->devtype);
     if ( comp_rc == 0 ) {
       if ( tapereq->mode == WRITE_ENABLE ) {
         rtcp_log(LOG_DEBUG,"compression: from_host %d, to_tape %d\n",
