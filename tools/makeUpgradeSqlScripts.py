@@ -243,7 +243,7 @@ def writeTrailer(fd, newVersion):
     '''Writes trailer of the upgrade script'''
     fd.write('''/* Flag the schema upgrade as COMPLETE */
 /***************************************/
-UPDATE UpgradeLog SET endDate = sysdate, state = 'COMPLETE'
+UPDATE UpgradeLog SET endDate = systimestamp, state = 'COMPLETE'
  WHERE release = '%s';
 COMMIT;\n''' % newVersion.tag())
 
