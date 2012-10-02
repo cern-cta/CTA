@@ -2706,7 +2706,12 @@ double castor::tape::tapebridge::BridgeProtocolEngine::
 
   totalCompressedFileSize += bytesWrittenToTapeByFlush;
 
-  return (double)totalCompressedFileSize / (double)totalFileSize;
+  // Calculate the ratio taking into account the fact that if the sum of the
+  // orginal file sizes is zero thenn the ratio should be 1.0
+  const double compressionRatio = (double)0.0 == totalFileSize ? 1.0 :
+    (double)totalCompressedFileSize / (double)totalFileSize;
+
+  return compressionRatio;
 }
 
 

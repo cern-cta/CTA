@@ -843,6 +843,10 @@ protected:
    * information of each file was read out asynchronously with respect to the
    * physical write operations of the drive.
    *
+   * If the sum of the original file sizes is zero, then this method shall not
+   * throw an exception but rather set the compressed size of each file to
+   * zero.
+   *
    * @param migrations                The list of notifications about a batch
    *                                  of files written to tape.
    * @param bytesWrittenToTapeByFlush The number of bytes written to tape by
@@ -863,6 +867,10 @@ protected:
    * original file sizes.  For example if the the resulting compression factor
    * is 0.5, then this means the compressed files are on average half the size
    * of the original files.
+   *
+   * If the sum of the original file sizes is zero, then this method shall not
+   * throw an exception but rather return a compression ration of 1.0
+   * indicating no difference between the original and compressed file sizes.
    *
    * @param migrations                The list of notifications about a batch
    *                                  of files written to tape.
