@@ -204,6 +204,23 @@ void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
     return;
   }
 
+  // If the received message is a statistics one then log its reception and
+  // then ignore it
+  if(VDQM_MAGIC == magicNumber && VDQM_DRV_REQ == reqtype &&
+    (VDQM_UNIT_MBCOUNT & driveRequest.status)) {
+    std::ostringstream statusHex;
+
+    statusHex <<  "0x" << std::hex << driveRequest.status;
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("DrvReqID"       , driveRequest.DrvReqID),
+      castor::dlf::Param("VolReqID"       , driveRequest.VolReqID),
+      castor::dlf::Param("jobID"          , driveRequest.jobID   ),
+      castor::dlf::Param("statusHex"      , statusHex.str()      )};
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+      VDQM_RECEIVED_UNIT_MBCOUNT, 4, params);
+    return;
+  }
+
   // Initialization of the OldRequestFacade, which provides the essential
   // functions
   OldRequestFacade oldRequestFacade(&volumeRequest, &driveRequest, &header,

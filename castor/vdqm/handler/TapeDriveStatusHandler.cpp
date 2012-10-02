@@ -85,16 +85,6 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleOldStatus()
   if ( ptr_tapeDrive->status() != UNIT_DOWN &&  
        ptr_tapeDrive->status() != STATUS_UNKNOWN) {
 
-    if ( (ptr_driveRequest->status & VDQM_UNIT_MBCOUNT) ) {
-
-      // Update TotalMB counter. Since this request is sent by
-      // RTCOPY rather than the tape daemon we cannot yet reset
-      // unknown status if it was previously set.
-      ptr_tapeDrive->setTransferredMB(ptr_driveRequest->MBtransf);
-      ptr_tapeDrive->setTotalMB(ptr_tapeDrive->totalMB() +
-        ptr_driveRequest->MBtransf);
-    }
-    
     if ( (ptr_driveRequest->status & VDQM_UNIT_ERROR) ) {
       // Update error counter.
       ptr_tapeDrive->setErrcount(ptr_tapeDrive->errcount() + 1);

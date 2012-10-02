@@ -1132,8 +1132,6 @@ static void rtcpd_FreeResources(int **client_socket,
   char label[CA_MAXLBLTYPLEN+1] = "N/A";
   int mode = 0;
   int jobID = 0;
-  int status = 0;
-  int rc = 0;
   int VolReqID = -1;
   int client_uid = -1;
   int client_gid = -1;
@@ -1300,20 +1298,6 @@ static void rtcpd_FreeResources(int **client_socket,
 
   totKBSz = (int)(totSz / 1024);
   totMBSz = totKBSz / 1024;
-
-  if ( totMBSz > 0 ) {
-    status = VDQM_UNIT_MBCOUNT;
-    rc = vdqm_UnitStatus(NULL,NULL,dgn,NULL,unit,&status,&totMBSz,jobID);
-    if ( rc == -1 ) {
-      rtcp_log(LOG_ERR,"vdqm_UnitStatus(VDQM_UNIT_MBCOUNT,%d MB): %s\n",
-               totMBSz,sstrerror(serrno));
-      tl_rtcpd.tl_log( &tl_rtcpd, 3, 4,
-                       "func"             , TL_MSG_PARAM_STR, "rtcpd_FreeResources",
-                       "Message"          , TL_MSG_PARAM_STR, "vdqm_UnitStatus",
-                       "VDQM_UNIT_MBCOUNT", TL_MSG_PARAM_INT, totMBSz,
-                       "Error"            , TL_MSG_PARAM_STR, sstrerror(serrno) );
-    }
-  }
 
   if ( (rtcpd_CheckProcError() & RTCP_OK) != 0 ) {
     rtcp_log(LOG_INFO,"total number of Kbytes transferred is %d\n",totKBSz);

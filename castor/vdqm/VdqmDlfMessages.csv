@@ -118,3 +118,4 @@ VDQM_REMOTECONNECTION_DAEMON_ERROR,115,"RTCPD or tape aggregator daemon returned
 VDQM_REMOTECONNECTION_MSG_TOO_LARGE,116,"RTCPD or tape aggregator daemon message is too large"
 VDQM_STARTED,117,"vdqmserver started"
 VDQM_SEND_RTCOPY_JOB,118,"Sending remote copy job"
+VDQM_RECEIVED_UNIT_MBCOUNT,119,"Received VDQM_UNIT_MBCOUNT"
