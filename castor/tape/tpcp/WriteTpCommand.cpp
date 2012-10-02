@@ -724,7 +724,8 @@ void castor::tape::tpcp::WriteTpCommand::handleSuccessfulMigration(
        " Migrated"
        " \"" << filename << "\""
        " size=" << file.fileSize() <<
-       " checksum=0x" << std::hex << file.checksum() << std::dec << std::endl;
+       " checksum=0x" << std::hex << file.checksum() << std::dec <<
+       " compressed size=" << file.compressedFileSize() << std::endl;
 
     // The file has been transfer so remove it from the map of pending
     // transfers

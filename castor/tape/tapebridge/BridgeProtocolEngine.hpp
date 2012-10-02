@@ -847,8 +847,9 @@ protected:
    * throw an exception but rather set the compressed size of each file to
    * zero.
    *
-   * @param migrations                The list of notifications about a batch
-   *                                  of files written to tape.
+   * @param migrations                In/out parameter: The list of
+   *                                  notifications about a batch of files
+   *                                  written to tape.
    * @param bytesWrittenToTapeByFlush The number of bytes written to tape by
    *                                  the flush perfromed at the end of the
    *                                  batch of files written to tape.
@@ -856,7 +857,7 @@ protected:
   void correctMigrationCompressionStatistics(
     FileWrittenNotificationList &migrations,
     const uint64_t              bytesWrittenToTapeByFlush)
-    throw(castor::exception::Exception);
+    throw();
 
   /**
    * Calculates and returns the compression ratio of the specified batch of

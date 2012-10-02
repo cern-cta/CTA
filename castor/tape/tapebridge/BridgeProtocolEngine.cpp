@@ -2515,18 +2515,18 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId"       , m_jobRequest.volReqId  ),
-      castor::dlf::Param("volReqId"                 , m_jobRequest.volReqId  ),
-      castor::dlf::Param("TPVID"                    , m_volume.vid()         ),
-      castor::dlf::Param("driveUnit"                , m_jobRequest.driveUnit ),
-      castor::dlf::Param("dgn"                      , m_jobRequest.dgn       ),
-      castor::dlf::Param("clientHost"               , m_jobRequest.clientHost),
-      castor::dlf::Param("clientPort"               , m_jobRequest.clientPort),
-      castor::dlf::Param("clientType"               ,
+      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
+      castor::dlf::Param("TPVID"             , m_volume.vid()         ),
+      castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+      castor::dlf::Param("dgn"               , m_jobRequest.dgn       ),
+      castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
+      castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+      castor::dlf::Param("clientType"        ,
         utils::volumeClientTypeToString(m_volume.clientType())),
-      castor::dlf::Param("volReqId"                 , body.volReqId          ),
-      castor::dlf::Param("tapeFseq"                 , body.tapeFseq          ),
-      castor::dlf::Param("bytesWrittenToTapeByFlush",
+      castor::dlf::Param("volReqId"          , body.volReqId          ),
+      castor::dlf::Param("tapeFseq"          , body.tapeFseq          ),
+      castor::dlf::Param("bytesFlushed"      ,
         body.bytesWrittenToTapeByFlush)};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       TAPEBRIDGE_RECEIVED_TAPEBRIDGE_FLUSHEDTOTAPE, params);
@@ -2623,7 +2623,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   try {
     // Get and remove the batch of now flushed file-migrations that have a
     // tape-file sequence-number less than or equal to that of the flush
-    const FileWrittenNotificationList migrations =
+    FileWrittenNotificationList migrations =
       m_pendingMigrationsStore.dataFlushedToTape(body.tapeFseq);
 
     // Correct the compression information of each file in the batch, taking
@@ -2631,6 +2631,8 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
     // fact that the current compression information of each file was read out
     // asynchronously with respect to the physical write operations of the
     // drive
+    correctMigrationCompressionStatistics(migrations,
+      body.bytesWrittenToTapeByFlush);
 
     // If there is currently no client migration-report connection, then open
     // one and send the batch of flushed file-migrations to the client
@@ -2669,7 +2671,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   correctMigrationCompressionStatistics(
   FileWrittenNotificationList &migrations,
   const uint64_t              bytesWrittenToTapeByFlush)
-  throw(castor::exception::Exception) {
+  throw() {
   const double compressionRatio =
     calcMigrationCompressionRatio(migrations, bytesWrittenToTapeByFlush);
 
@@ -2707,7 +2709,7 @@ double castor::tape::tapebridge::BridgeProtocolEngine::
   totalCompressedFileSize += bytesWrittenToTapeByFlush;
 
   // Calculate the ratio taking into account the fact that if the sum of the
-  // orginal file sizes is zero thenn the ratio should be 1.0
+  // orginal file sizes is zero then the ratio should be 1.0
   const double compressionRatio = (double)0.0 == totalFileSize ? 1.0 :
     (double)totalCompressedFileSize / (double)totalFileSize;
 
