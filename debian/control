@@ -117,7 +117,7 @@ Description: castor (Cern Advanced STORage system)
 Package: castor-rh-server
 Architecture: any
 Depends: logrotate, castor-lib-oracle
-Build-Depends: libmemcached-devel
+Build-Depends: libmemcached-devel >= 0.34
 Description: castor (Cern Advanced STORage system)
  Request Handler server
 
