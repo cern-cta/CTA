@@ -243,8 +243,8 @@ static int MemoryToTape(
     uint64_t *const    nbFilesWrittenWithoutFlush,
     const uint64_t     maxBytesBeforeFlush,
     const uint64_t     maxFilesBeforeFlush,
-    int                *flushedToTapeAfterNFiles,
-    uint64_t           *bytesWrittenToTapeByFlush) {
+    int *const         flushedToTapeAfterNFiles,
+    uint64_t *const    bytesWrittenToTapeByFlush) {
     int rc = 0;
     int nb_bytes, i, j, last_sz, blksiz, severity, lrecl;
     int end_of_tpfile, buf_done, nb_truncated, spill, bytes_used, proc_err;

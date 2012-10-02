@@ -2219,123 +2219,146 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeProtocolEngine::
   processSuccessfullRtcpFileFinishedRequest(
-  const uint64_t fileTransactonId,
-  legacymsg::RtcpFileRqstErrMsgBody &body)
+  const uint64_t                          fileTransactonId,
+  const legacymsg::RtcpFileRqstErrMsgBody &body)
   throw(castor::exception::Exception) {
 
   // If migrating
   if(m_volume.mode() == tapegateway::WRITE) {
-
-    // Mark the migrated file as written but not yet flushed to tape.  This
-    // includes created the file-migrated notification message that will be
-    // sent to the tapegatewayd daemon once the rtcpd daemon has
-    // notified the tapebridged daemon that the file has been flushed to
-    // tape.
-    const uint64_t fileSize     = body.rqst.bytesIn; // "in" from the disk
-    uint64_t compressedFileSize = fileSize; // without compression
-    if(0 < body.rqst.bytesOut && body.rqst.bytesOut < fileSize) {
-      compressedFileSize        = body.rqst.bytesOut; // "Out" to the tape
-    }
-    {
-      FileWrittenNotification notification;
-      notification.fileTransactionId   = fileTransactonId;
-      notification.nsHost              = body.rqst.segAttr.nameServerHostName;
-      notification.nsFileId            = body.rqst.segAttr.castorFileId;
-      notification.tapeFSeq            = body.rqst.tapeFseq;
-      notification.positionCommandCode = body.rqst.positionMethod;
-      notification.fileSize            = fileSize;
-      notification.checksumName        = body.rqst.segAttr.segmCksumAlgorithm;
-      notification.checksum            = body.rqst.segAttr.segmCksum;
-      notification.compressedFileSize  = compressedFileSize;
-      notification.blockId0            = body.rqst.blockId[0];
-      notification.blockId1            = body.rqst.blockId[1];
-      notification.blockId2            = body.rqst.blockId[2];
-      notification.blockId3            = body.rqst.blockId[3];
-
-      // The pending-migrations store will throw an exception if it finds any
-      // inconsistencies in the file-written notification
-      m_pendingMigrationsStore.fileWrittenWithoutFlush(notification);
-    }
-    {
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("tapeFSeq", body.rqst.tapeFseq)};
-      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-        TAPEBRIDGE_MARKED_PENDING_MIGRATION_WRITTEN_WITHOUT_FLUSH, params);
-    }
+    processSuccessfullRtcpWriteFileFinishedRequest(fileTransactonId, body);
 
   // Else recall (READ or DUMP)
   } else {
-    const uint64_t fileSize = body.rqst.bytesOut; // "out" from the tape
-    const uint64_t tapebridgeTransId = m_tapebridgeTransactionCounter.next();
+    processSuccessfullRtcpRecallFileFinishedRequest(fileTransactonId, body);
+  }
+}
 
-    // Create the report message
-    std::auto_ptr<tapegateway::FileRecalledNotificationStruct> recalledFile(
-      new tapegateway::FileRecalledNotificationStruct());
-    recalledFile->setFileTransactionId(fileTransactonId);
-    recalledFile->setNshost(body.rqst.segAttr.nameServerHostName);
-    recalledFile->setFileid(body.rqst.segAttr.castorFileId);
-    recalledFile->setFseq(body.rqst.tapeFseq);
-    recalledFile->setPositionCommandCode((tapegateway::PositionCommandCode)
-      body.rqst.positionMethod);
-    recalledFile->setPath(body.rqst.filePath);
-    recalledFile->setChecksumName(body.rqst.segAttr.segmCksumAlgorithm);
-    recalledFile->setChecksum(body.rqst.segAttr.segmCksum);
-    recalledFile->setFileSize(fileSize);
-    tapegateway::FileRecallReportList report;
-    report.setMountTransactionId(m_jobRequest.volReqId);
-    report.setAggregatorTransactionId(tapebridgeTransId);
-    report.addSuccessfulRecalls(recalledFile.release());
 
-    // Send the report to the client
-    timeval connectDuration = {0, 0};
-    utils::SmartFd clientSock(m_clientProxy.connectAndSendMessage(report,
-      connectDuration));
-    {
-      const double connectDurationDouble =
-        utils::timevalToDouble(connectDuration);
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("tapebridgeTransId", tapebridgeTransId),
-        castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId),
-        castor::dlf::Param("volReqId", m_jobRequest.volReqId),
-        castor::dlf::Param("TPVID", m_volume.vid()),
-        castor::dlf::Param("driveUnit", m_jobRequest.driveUnit),
-        castor::dlf::Param("dgn", m_jobRequest.dgn),
-        castor::dlf::Param("clientHost", m_jobRequest.clientHost),
-        castor::dlf::Param("clientPort", m_jobRequest.clientPort),
-        castor::dlf::Param("clientType",
-          utils::volumeClientTypeToString(m_volume.clientType())),
-        castor::dlf::Param("clientSock", clientSock.get()),
-        castor::dlf::Param("connectDuration", connectDurationDouble),
-        castor::dlf::Param("nbSuccessful", report.successfulRecalls().size()),
-        castor::dlf::Param("nbFailed", report.failedRecalls().size())};
-      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-        TAPEBRIDGE_SENT_FILERECALLREPORTLIST, params);
-    }
+//-----------------------------------------------------------------------------
+// processSuccessfullRtcpWriteFileFinishedRequest
+//-----------------------------------------------------------------------------
+void castor::tape::tapebridge::BridgeProtocolEngine::
+  processSuccessfullRtcpWriteFileFinishedRequest(
+  const uint64_t                          fileTransactonId,
+  const legacymsg::RtcpFileRqstErrMsgBody &body)
+  throw(castor::exception::Exception) {
+  // Mark the migrated file as written but not yet flushed to tape.  This
+  // includes created the file-migrated notification message that will be
+  // sent to the tapegatewayd daemon once the rtcpd daemon has
+  // notified the tapebridged daemon that the file has been flushed to
+  // tape.
+  const uint64_t fileSize     = body.rqst.bytesIn; // "in" from the disk
+  uint64_t compressedFileSize = fileSize; // without compression
+  if(0 < body.rqst.bytesOut && body.rqst.bytesOut < fileSize) {
+    compressedFileSize        = body.rqst.bytesOut; // "Out" to the tape
+  }
+  {
+    FileWrittenNotification notification;
+    notification.fileTransactionId   = fileTransactonId;
+    notification.nsHost              = body.rqst.segAttr.nameServerHostName;
+    notification.nsFileId            = body.rqst.segAttr.castorFileId;
+    notification.tapeFSeq            = body.rqst.tapeFseq;
+    notification.positionCommandCode = body.rqst.positionMethod;
+    notification.fileSize            = fileSize;
+    notification.checksumName        = body.rqst.segAttr.segmCksumAlgorithm;
+    notification.checksum            = body.rqst.segAttr.segmCksum;
+    notification.compressedFileSize  = compressedFileSize;
+    notification.blockId0            = body.rqst.blockId[0];
+    notification.blockId1            = body.rqst.blockId[1];
+    notification.blockId2            = body.rqst.blockId[2];
+    notification.blockId3            = body.rqst.blockId[3];
 
-    const int closedClientSock = clientSock.release();
-    try {
-      m_clientProxy.receiveNotificationReplyAndClose(tapebridgeTransId,
-        closedClientSock);
-    } catch(castor::exception::Exception &ex) {
-      // Add some context information and rethrow exception
-      TAPE_THROW_CODE(ex.code(), ": " << ex.getMessage().str());
-    }
-    {
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId      ),
-        castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
-        castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
-        castor::dlf::Param("TPVID"             , m_volume.vid()         ),
-        castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
-        castor::dlf::Param("dgn"               , m_jobRequest.dgn       ),
-        castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
-        castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
-        castor::dlf::Param("clientType",
-          utils::volumeClientTypeToString(m_volume.clientType())),
-        castor::dlf::Param("clientSock"        , closedClientSock       )};
-      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-        TAPEBRIDGE_RECEIVED_ACK_OF_NOTIFICATION, params);
-    }
+    // The pending-migrations store will throw an exception if it finds any
+    // inconsistencies in the file-written notification
+    m_pendingMigrationsStore.fileWrittenWithoutFlush(notification);
+  }
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("tapeFSeq", body.rqst.tapeFseq)};
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+      TAPEBRIDGE_MARKED_PENDING_MIGRATION_WRITTEN_WITHOUT_FLUSH, params);
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// processSuccessfullRtcpRecallFileFinishedRequest
+//-----------------------------------------------------------------------------
+void castor::tape::tapebridge::BridgeProtocolEngine::
+  processSuccessfullRtcpRecallFileFinishedRequest(
+  const uint64_t                          fileTransactonId,
+  const legacymsg::RtcpFileRqstErrMsgBody &body)
+  throw(castor::exception::Exception) {
+  const uint64_t fileSize = body.rqst.bytesOut; // "out" from the tape
+  const uint64_t tapebridgeTransId = m_tapebridgeTransactionCounter.next();
+
+  // Create the report message
+  std::auto_ptr<tapegateway::FileRecalledNotificationStruct> recalledFile(
+    new tapegateway::FileRecalledNotificationStruct());
+  recalledFile->setFileTransactionId(fileTransactonId);
+  recalledFile->setNshost(body.rqst.segAttr.nameServerHostName);
+  recalledFile->setFileid(body.rqst.segAttr.castorFileId);
+  recalledFile->setFseq(body.rqst.tapeFseq);
+  recalledFile->setPositionCommandCode((tapegateway::PositionCommandCode)
+    body.rqst.positionMethod);
+  recalledFile->setPath(body.rqst.filePath);
+  recalledFile->setChecksumName(body.rqst.segAttr.segmCksumAlgorithm);
+  recalledFile->setChecksum(body.rqst.segAttr.segmCksum);
+  recalledFile->setFileSize(fileSize);
+  tapegateway::FileRecallReportList report;
+  report.setMountTransactionId(m_jobRequest.volReqId);
+  report.setAggregatorTransactionId(tapebridgeTransId);
+  report.addSuccessfulRecalls(recalledFile.release());
+
+  // Send the report to the client
+  timeval connectDuration = {0, 0};
+  utils::SmartFd clientSock(m_clientProxy.connectAndSendMessage(report,
+    connectDuration));
+  {
+    const double connectDurationDouble =
+      utils::timevalToDouble(connectDuration);
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("tapebridgeTransId", tapebridgeTransId),
+      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId),
+      castor::dlf::Param("volReqId", m_jobRequest.volReqId),
+      castor::dlf::Param("TPVID", m_volume.vid()),
+      castor::dlf::Param("driveUnit", m_jobRequest.driveUnit),
+      castor::dlf::Param("dgn", m_jobRequest.dgn),
+      castor::dlf::Param("clientHost", m_jobRequest.clientHost),
+      castor::dlf::Param("clientPort", m_jobRequest.clientPort),
+      castor::dlf::Param("clientType",
+        utils::volumeClientTypeToString(m_volume.clientType())),
+      castor::dlf::Param("clientSock", clientSock.get()),
+      castor::dlf::Param("connectDuration", connectDurationDouble),
+      castor::dlf::Param("nbSuccessful", report.successfulRecalls().size()),
+      castor::dlf::Param("nbFailed", report.failedRecalls().size())};
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+      TAPEBRIDGE_SENT_FILERECALLREPORTLIST, params);
+  }
+
+  const int closedClientSock = clientSock.release();
+  try {
+    m_clientProxy.receiveNotificationReplyAndClose(tapebridgeTransId,
+      closedClientSock);
+  } catch(castor::exception::Exception &ex) {
+    // Add some context information and rethrow exception
+    TAPE_THROW_CODE(ex.code(), ": " << ex.getMessage().str());
+  }
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId      ),
+      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
+      castor::dlf::Param("TPVID"             , m_volume.vid()         ),
+      castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+      castor::dlf::Param("dgn"               , m_jobRequest.dgn       ),
+      castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
+      castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+      castor::dlf::Param("clientType",
+        utils::volumeClientTypeToString(m_volume.clientType())),
+      castor::dlf::Param("clientSock"        , closedClientSock       )};
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+      TAPEBRIDGE_RECEIVED_ACK_OF_NOTIFICATION, params);
   }
 }
 
@@ -2492,17 +2515,19 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 
   {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
-      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
-      castor::dlf::Param("TPVID"             , m_volume.vid()         ),
-      castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
-      castor::dlf::Param("dgn"               , m_jobRequest.dgn       ),
-      castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
-      castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
-      castor::dlf::Param("clientType"        ,
+      castor::dlf::Param("mountTransactionId"       , m_jobRequest.volReqId  ),
+      castor::dlf::Param("volReqId"                 , m_jobRequest.volReqId  ),
+      castor::dlf::Param("TPVID"                    , m_volume.vid()         ),
+      castor::dlf::Param("driveUnit"                , m_jobRequest.driveUnit ),
+      castor::dlf::Param("dgn"                      , m_jobRequest.dgn       ),
+      castor::dlf::Param("clientHost"               , m_jobRequest.clientHost),
+      castor::dlf::Param("clientPort"               , m_jobRequest.clientPort),
+      castor::dlf::Param("clientType"               ,
         utils::volumeClientTypeToString(m_volume.clientType())),
-      castor::dlf::Param("volReqId"          , body.volReqId          ),
-      castor::dlf::Param("tapeFseq"          , body.tapeFseq          )};
+      castor::dlf::Param("volReqId"                 , body.volReqId          ),
+      castor::dlf::Param("tapeFseq"                 , body.tapeFseq          ),
+      castor::dlf::Param("bytesWrittenToTapeByFlush",
+        body.bytesWrittenToTapeByFlush)};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       TAPEBRIDGE_RECEIVED_TAPEBRIDGE_FLUSHEDTOTAPE, params);
   }
@@ -2601,6 +2626,12 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
     const FileWrittenNotificationList migrations =
       m_pendingMigrationsStore.dataFlushedToTape(body.tapeFseq);
 
+    // Correct the compression information of each file in the batch, taking
+    // into account the number of bytes written to tape by the flush and the
+    // fact that the current compression information of each file was read out
+    // asynchronously with respect to the physical write operations of the
+    // drive
+
     // If there is currently no client migration-report connection, then open
     // one and send the batch of flushed file-migrations to the client
     if(!m_sockCatalogue.clientMigrationReportSockIsSet()) {
@@ -2628,6 +2659,54 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
     // There is nothing else to do
     return;
   }
+}
+
+
+//-----------------------------------------------------------------------------
+// correctMigrationCompressionStatistics
+//-----------------------------------------------------------------------------
+void castor::tape::tapebridge::BridgeProtocolEngine::
+  correctMigrationCompressionStatistics(
+  FileWrittenNotificationList &migrations,
+  const uint64_t              bytesWrittenToTapeByFlush)
+  throw(castor::exception::Exception) {
+  const double compressionRatio =
+    calcMigrationCompressionRatio(migrations, bytesWrittenToTapeByFlush);
+
+  // Set each compressed file size to be the original file size multipled by
+  // the compression ratio
+  for(FileWrittenNotificationList::iterator itor = migrations.begin();
+    itor != migrations.end(); itor++) {
+    FileWrittenNotification &notification = *itor;
+
+    notification.compressedFileSize =
+      (uint64_t)(notification.fileSize * compressionRatio);
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// calcMigrationCompressionRatio
+//-----------------------------------------------------------------------------
+double castor::tape::tapebridge::BridgeProtocolEngine::
+  calcMigrationCompressionRatio(
+  const FileWrittenNotificationList &migrations,
+  const uint64_t                    bytesWrittenToTapeByFlush)
+  throw() {
+  uint64_t totalFileSize           = 0;
+  uint64_t totalCompressedFileSize = 0;
+
+  for(FileWrittenNotificationList::const_iterator itor = migrations.begin();
+    itor != migrations.end(); itor++) {
+    const FileWrittenNotification &notification = *itor;
+
+    totalFileSize += notification.fileSize;
+    totalCompressedFileSize += notification.compressedFileSize;
+  }
+
+  totalCompressedFileSize += bytesWrittenToTapeByFlush;
+
+  return (double)totalCompressedFileSize / (double)totalFileSize;
 }
 
 

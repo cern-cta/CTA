@@ -26,7 +26,6 @@
 #define CASTOR_TAPE_TAPEBRIDGE_PENDINGMIGRATIONSSTORE_HPP 1
 
 #include "castor/exception/Exception.hpp"
-#include "castor/tape/tapebridge/FileWrittenNotification.hpp"
 #include "castor/tape/tapebridge/FileWrittenNotificationList.hpp"
 #include "castor/tape/tapebridge/RequestToMigrateFile.hpp"
 #include "castor/tape/tapebridge/TapeFlushConfigParams.hpp"

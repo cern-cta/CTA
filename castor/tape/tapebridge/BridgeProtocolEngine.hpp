@@ -729,20 +729,49 @@ protected:
    * Processes the specified successful (no embedded error message) RTCP file
    * transfer finished request.
    *
-   * If the current tape-mount is for migration then this method adds the
-   * file-written notification to the pending migrations store as the
-   * associated data has not yet been flushed to the physical tape.
-   *
-   * If the current tape-mount is for recall then this method tries to notify
-   * the client (readtp, tapegatewayd or writetp) of the successful recall.
-   *
    * @param fileTransactonId The file transaction ID that was sent by the
    *                         client (the tapegatewayd daemon or the readtp or
    *                         writetp command-line tool)
    * @param body             The body of the RTCP request.
    */
   void processSuccessfullRtcpFileFinishedRequest(
-    const uint64_t fileTransactonId, legacymsg::RtcpFileRqstErrMsgBody &body)
+    const uint64_t                          fileTransactonId,
+    const legacymsg::RtcpFileRqstErrMsgBody &body)
+    throw(castor::exception::Exception);
+
+
+  /**
+   * Processes the specified successful (no embedded error message) RTCP file
+   * transfer to tape (write) finished request.
+   *
+   * This method adds the file-written notification to the pending migrations
+   * store as the associated data has not yet been flushed to the physical tape.
+   *
+   * @param fileTransactonId The file transaction ID that was sent by the
+   *                         client (the tapegatewayd daemon or the readtp or
+   *                         writetp command-line tool)
+   * @param body             The body of the RTCP request.
+   */
+  void processSuccessfullRtcpWriteFileFinishedRequest(
+    const uint64_t                          fileTransactonId,
+    const legacymsg::RtcpFileRqstErrMsgBody &body)
+    throw(castor::exception::Exception);
+
+  /**
+   * Processes the specified successful (no embedded error message) RTCP file
+   * transfer from tape (recall) finished request.
+   *
+   * This method tries to notify the client (readtp or tapegatewayd) of the
+   * successful recall.
+   *
+   * @param fileTransactonId The file transaction ID that was sent by the
+   *                         client (the tapegatewayd daemon or the readtp or
+   *                         writetp command-line tool)
+   * @param body             The body of the RTCP request.
+   */
+  void processSuccessfullRtcpRecallFileFinishedRequest(
+    const uint64_t                          fileTransactonId,
+    const legacymsg::RtcpFileRqstErrMsgBody &body)
     throw(castor::exception::Exception);
 
   /**
@@ -806,6 +835,44 @@ protected:
     const legacymsg::MessageHeader &header,
     const int                      socketFd)
     throw(castor::exception::Exception);
+
+  /**
+   * Corrects the compression information of each file in the specified batch
+   * migrated files, taking into account the specified number of bytes written
+   * to tape by the flush and the fact that the current compression
+   * information of each file was read out asynchronously with respect to the
+   * physical write operations of the drive.
+   *
+   * @param migrations                The list of notifications about a batch
+   *                                  of files written to tape.
+   * @param bytesWrittenToTapeByFlush The number of bytes written to tape by
+   *                                  the flush perfromed at the end of the
+   *                                  batch of files written to tape.
+   */
+  void correctMigrationCompressionStatistics(
+    FileWrittenNotificationList &migrations,
+    const uint64_t              bytesWrittenToTapeByFlush)
+    throw(castor::exception::Exception);
+
+  /**
+   * Calculates and returns the compression ratio of the specified batch of
+   * migrations.
+   *
+   * The compression factor is calculated by dividing the sum of the compressed
+   * file sizes and the number of bytes written by the flush by the sum of the
+   * original file sizes.  For example if the the resulting compression factor
+   * is 0.5, then this means the compressed files are on average half the size
+   * of the original files.
+   *
+   * @param migrations                The list of notifications about a batch
+   *                                  of files written to tape.
+   * @param bytesWrittenToTapeByFlush The number of bytes written to tape by
+   *                                  the flush perfromed at the end of the
+   *                                  batch of files written to tape.
+   */
+  double calcMigrationCompressionRatio(
+    const FileWrittenNotificationList &migrations,
+    const uint64_t                    bytesWrittenToTapeByFlush) throw();
 
   /**
    * Sends the "file flushed to tape" notifications that correspond to the
