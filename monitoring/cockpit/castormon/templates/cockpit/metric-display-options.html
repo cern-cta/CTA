@@ -1,9 +1,9 @@
 <div class="filter-container">
     <div class="quick-filter">
         Quick data filter : 
-        <input class="data-filter" type="submit" value="last 3 hours" /> 
-        <input class="data-filter" type="submit" value="last day" /> 
-        <input class="data-filter" type="submit" value="last 3 days" /> 
+        <input class="data-filter btn" type="submit" value="last 3 hours" /> 
+        <input class="data-filter btn" type="submit" value="last day" /> 
+        <input class="data-filter btn" type="submit" value="last 3 days" /> 
         <!-- <input class="data-filter" type="submit" value="all data" />-->
         <br />
         <a class="toggle-filter">>Switch to advanced filter</a>
@@ -12,7 +12,7 @@
         Advanced data filter : 
         FROM <input type="text" class="datepicker-from" size="8"/> 
         TO <input type="text" class="datepicker-to" size="8"/> 
-        <input type="submit" value="Filter" class="do-advanced-filter" /> 
+        <input type="submit" value="Filter" class="do-advanced-filter btn" /> 
         <br />
         <a class="toggle-filter">>Switch to quick filter</a>
     </div>
@@ -20,7 +20,7 @@
 
 <div class="plot-options">
     Visualization options :
-    <input class="toggle-log-scale" type="submit" value="Logarithmic scale" title="Display data using logarithmic scale" />
+    <input class="toggle-log-scale btn" type="submit" value="Logarithmic scale" title="Display data using logarithmic scale" />
     Graph type :
     <select class="graph-type">
         <option value="timeline">Timeline</option>
@@ -35,6 +35,7 @@
         <option value="60000">1 min</option>
         <option value="300000">5 min</option>
     </select>
+    <button class="hide-all-series btn">Hide all series</button>
 </div>
 
 <div class="plot-misc">

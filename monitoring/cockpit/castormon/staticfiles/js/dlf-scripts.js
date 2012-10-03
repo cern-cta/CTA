@@ -26,10 +26,10 @@ function _search_columns_content(mode) {
     var html = "";
     for(i=0; i<columns.length; i++) {
         if (mode=="filter"){
-            html += '<button class="search_columns_button_'+mode+' btn '+( columns[i].bSearchable ? 'active' : '')+'" id='+i+'>';
+            html += '<button class="search_columns_button_'+mode+' btn btn-small '+( columns[i].bSearchable ? 'active' : '')+'" id='+i+'>';
             html += '<input type="checkbox" ' + ( columns[i].bSearchable ? 'checked="checked"' : '') + ' />';
         } else if (mode=="showhide") {
-            html += '<button class="search_columns_button_'+mode+' btn '+( columns[i].bVisible ? 'active' : '')+'" id='+i+'>';
+            html += '<button class="search_columns_button_'+mode+' btn btn-small '+( columns[i].bVisible ? 'active' : '')+'" id='+i+'>';
             html += '<input type="checkbox" ' + ( columns[i].bVisible ? 'checked="checked"' : '') + ' />';
         }
         html += columns[i].sTitle + "</button>";
@@ -140,7 +140,7 @@ $(document).ready(function () {
     /****************************
      * Show/hide column stuff 
      ****************************/
-    var showhide_buttons = '<button class="showhide_columns btn">Show / hide columns</button>';
+    var showhide_buttons = '<button class="showhide_columns btn btn-small" type="button">Show / hide columns</button>';
     // append buttons to the div
     $('div.dataTables_showhide').html(showhide_buttons);
     // popover options
@@ -174,7 +174,7 @@ $(document).ready(function () {
     /**************************************************
      * Filtering stuff : input box and submit button 
      **************************************************/
-    var filter_buttons = '<button class="search_columns btn">Search columns</button><form id="dataTables_filter_form" class="form-inline"><label>Treat as <a href="http://docs.python.org/library/re.html">regexp</a> : <input type="checkbox" id="global_regex" /></label> <div class="input-append"><input type="text" id="dataTables_filter_value" placeholder="String or Regexp" /><input type="submit" value="Search" id="dataTables_filter_submit" class="btn" /><input type="reset" value="Reset" id="dataTables_filter_submit_clear" class="btn" /></div></form>';
+    var filter_buttons = '<button class="search_columns btn btn-small" type="button">Search columns</button><form id="dataTables_filter_form" class="form-inline"><label>Treat as <a href="http://docs.python.org/library/re.html">regexp</a> : <input type="checkbox" id="global_regex" /></label> <div class="input-append"><input type="text" id="dataTables_filter_value" placeholder="String or Regexp" /><input type="submit" value="Search" id="dataTables_filter_submit" class="btn btn-small" /><input type="reset" value="Reset" id="dataTables_filter_submit_clear" class="btn btn-small" /></div></form>';
     // append buttons to the div
     $('div.dataTables_filter').html(filter_buttons);
     // filtering on submit event (by pressing return and clicking submit button)
@@ -215,7 +215,7 @@ $(document).ready(function () {
     });
     // hide popovers on outside click
     $(document).on('click', function(event) {
-        if ( $('div.popover').has(event.target).length === 0 && $(event.target).attr("class") != "search_columns btn" && $(event.target).attr("class") != "showhide_columns btn" ) {
+        if ( $('div.popover').has(event.target).length === 0 && $(event.target).attr("class") != "search_columns btn btn-small" && $(event.target).attr("class") != "showhide_columns btn btn-small" ) {
             $('div#datatable_wrapper button.search_columns').popover('hide');
             $('div#datatable_wrapper button.showhide_columns').popover('hide');
         }

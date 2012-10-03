@@ -200,7 +200,11 @@ div.filter-container {
 }
 
 div.advanced-filter {
-   display: none; 
+   display: none;
+}
+
+div.advanced-filter input[type="text"] {
+    height: 26px;
 }
 
 div.metric-options {
@@ -227,198 +231,10 @@ div.metric-info-text {
     display: none;
 }
 
-input.do-advanced-filter {
-    padding: 5px;
-    border: 1px solid #aaa;
-    cursor: pointer;
-    background-image: linear-gradient(bottom, rgb(204,204,204) 0%, rgb(255,255,255) 100%);
-    background-image: -o-linear-gradient(bottom, rgb(204,204,204) 0%, rgb(255,255,255) 100%);
-    background-image: -moz-linear-gradient(bottom, rgb(204,204,204) 0%, rgb(255,255,255) 100%);
-    background-image: -webkit-linear-gradient(bottom, rgb(204,204,204) 0%, rgb(255,255,255) 100%);
-    background-image: -ms-linear-gradient(bottom, rgb(204,204,204) 0%, rgb(255,255,255) 100%);
 
-    background-image: -webkit-gradient(
-        linear,
-        left bottom,
-        left top,
-        color-stop(0, rgb(204,204,204)),
-        color-stop(1, rgb(255,255,255))
-    );
+div.quick-filter input.btn {
+    vertical-align: middle;
 }
-
-input.do-advanced-filter:hover {
-    background-image: linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
-    background-image: -o-linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
-    background-image: -moz-linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
-    background-image: -webkit-linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
-    background-image: -ms-linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
-
-    background-image: -webkit-gradient(
-        linear,
-        left bottom,
-        left top,
-        color-stop(1, rgb(204,204,204)),
-        color-stop(0, rgb(255,255,255))
-    );
-}
-
-input.do-advanced-filter:active {
-    background-image: linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
-    background-image: -o-linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
-    background-image: -moz-linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
-    background-image: -webkit-linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
-    background-image: -ms-linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
-
-    background-image: -webkit-gradient(
-        linear,
-        left bottom,
-        left top,
-        color-stop(1, rgb(204,204,204)),
-        color-stop(0, rgb(255,255,255))
-    );
-}
-
-input.data-filter {
-    padding: 5px;
-    border: 1px solid #aaa;
-    cursor: pointer;
-    background-image: linear-gradient(bottom, rgb(204,204,204) 0%, rgb(255,255,255) 100%);
-    background-image: -o-linear-gradient(bottom, rgb(204,204,204) 0%, rgb(255,255,255) 100%);
-    background-image: -moz-linear-gradient(bottom, rgb(204,204,204) 0%, rgb(255,255,255) 100%);
-    background-image: -webkit-linear-gradient(bottom, rgb(204,204,204) 0%, rgb(255,255,255) 100%);
-    background-image: -ms-linear-gradient(bottom, rgb(204,204,204) 0%, rgb(255,255,255) 100%);
-
-    background-image: -webkit-gradient(
-        linear,
-        left bottom,
-        left top,
-        color-stop(0, rgb(204,204,204)),
-        color-stop(1, rgb(255,255,255))
-    );   
-}
-
-input.data-filter:hover {
-    background-image: linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
-    background-image: -o-linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
-    background-image: -moz-linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
-    background-image: -webkit-linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
-    background-image: -ms-linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
-
-    background-image: -webkit-gradient(
-        linear,
-        left bottom,
-        left top,
-        color-stop(1, rgb(204,204,204)),
-        color-stop(0, rgb(255,255,255))
-    );
-}
-
-input.data-filter.selected {
-    background-image: linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
-    background-image: -o-linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
-    background-image: -moz-linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
-    background-image: -webkit-linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
-    background-image: -ms-linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
-
-    background-image: -webkit-gradient(
-        linear,
-        left bottom,
-        left top,
-        color-stop(0, rgb(255,255,255)),
-        color-stop(1, rgb(247,122,33))
-    );
-    color: black;
-}
-
-input.data-filter:active {
-    background-image: linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
-    background-image: -o-linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
-    background-image: -moz-linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
-    background-image: -webkit-linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
-    background-image: -ms-linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
-
-    background-image: -webkit-gradient(
-        linear,
-        left bottom,
-        left top,
-        color-stop(0, rgb(255,255,255)),
-        color-stop(1, rgb(247,122,33))
-    );
-    color: black;
-}
-
-
-
-
-input.toggle-log-scale {
-    padding: 5px;
-    border: 1px solid #aaa;
-    cursor: pointer;
-    background-image: linear-gradient(bottom, rgb(204,204,204) 0%, rgb(255,255,255) 100%);
-    background-image: -o-linear-gradient(bottom, rgb(204,204,204) 0%, rgb(255,255,255) 100%);
-    background-image: -moz-linear-gradient(bottom, rgb(204,204,204) 0%, rgb(255,255,255) 100%);
-    background-image: -webkit-linear-gradient(bottom, rgb(204,204,204) 0%, rgb(255,255,255) 100%);
-    background-image: -ms-linear-gradient(bottom, rgb(204,204,204) 0%, rgb(255,255,255) 100%);
-
-    background-image: -webkit-gradient(
-        linear,
-        left bottom,
-        left top,
-        color-stop(0, rgb(204,204,204)),
-        color-stop(1, rgb(255,255,255))
-    );   
-}
-
-input.toggle-log-scale:hover{
-    background-image: linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
-    background-image: -o-linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
-    background-image: -moz-linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
-    background-image: -webkit-linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
-    background-image: -ms-linear-gradient(bottom, rgb(204,204,204) 100%, rgb(255,255,255) 0%);
-
-    background-image: -webkit-gradient(
-        linear,
-        left bottom,
-        left top,
-        color-stop(1, rgb(204,204,204)),
-        color-stop(0, rgb(255,255,255))
-    );  
-}
-
-input.toggle-log-scale:active {
-    background-image: linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
-    background-image: -o-linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
-    background-image: -moz-linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
-    background-image: -webkit-linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
-    background-image: -ms-linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
-
-    background-image: -webkit-gradient(
-        linear,
-        left bottom,
-        left top,
-        color-stop(0, rgb(255,255,255)),
-        color-stop(1, rgb(247,122,33))
-    );
-    color: black;  
-}
-
-input.toggle-log-scale.selected {
-    background-image: linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
-    background-image: -o-linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
-    background-image: -moz-linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
-    background-image: -webkit-linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
-    background-image: -ms-linear-gradient(bottom, rgb(255,255,255) 0%, rgb(247,122,33) 100%);
-
-    background-image: -webkit-gradient(
-        linear,
-        left bottom,
-        left top,
-        color-stop(0, rgb(255,255,255)),
-        color-stop(1, rgb(247,122,33))
-    );
-    color: black;  
-}
-
 
 a.refresh-plot img:hover {
     transform:rotate(20deg);

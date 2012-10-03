@@ -89,8 +89,14 @@ def _update_metrics_info():
             # if the metric is created, then we specify the infos
             me = conn.root.get_metric(metric_name)
             # save infos
-            m.unit = me.unit
-            m.category = me.category
+            try:
+                m.unit = me.unit
+            except:
+                pass
+            try:
+                m.category = me.category
+            except:
+                pass
             m.window = me.window
             m.conditions = me.conditions
             m.groupbykeys = simplejson.dumps(list(me.groupbykeys)) # save list as json

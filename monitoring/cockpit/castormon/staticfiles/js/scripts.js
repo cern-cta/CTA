@@ -84,7 +84,7 @@ function refreshChart(input) {
      */
     metric_container = input.closest('.metric_container');
     if (filter_type == 'quick') {
-        metric_container.find('input.data-filter.selected').trigger('click');
+        metric_container.find('input.data-filter.active').trigger('click');
     } else if (filter_type == 'advanced') {
         metric_container.find('input.do-advanced-filter').trigger('click');
     }
@@ -785,8 +785,8 @@ $(document).ready(function () {
     $('.metric_container').on('click', 'input.data-filter', function () {
         metric_container = $(this).closest('.metric_container');
         metric_display = metric_container.find('div.metric-display');
-        metric_container.find('input.data-filter.selected').removeClass('selected');
-        $(this).attr('class', 'data-filter selected');
+        metric_container.find('input.data-filter.active').removeClass('btn-warning active');
+        $(this).addClass('btn btn-warning active');
         if (chart) {
             updateHiddenSeries();
             chart.destroy();
@@ -841,11 +841,11 @@ $(document).ready(function () {
      * Logarithmic scale    *
      ************************/
     $('input.toggle-log-scale').toggle( function () {
-        $(this).addClass('selected');
+        $(this).addClass('btn-warning active');
         log = 'logarithmic';
         refreshChart($(this));
     }, function() {
-        $(this).removeClass('selected');
+        $(this).removeClass('btn-warning active');
         log = '';
         refreshChart($(this));
     });
@@ -890,6 +890,25 @@ $(document).ready(function () {
         show = "Metric details <img src=\"/static/img/arrow-down-double-2.png\" title=\"Show details\" />"
         $(this).empty().html(show);
         $(this).next('div.metric-info-text').slideUp();
+    });
+
+    /*****************************
+     * Hide all series button    *
+     *****************************/
+    $('.metric_container button.hide-all-series').toggle( function () {
+        if(chart && chart.series){
+            for (var i = 0 ; i < chart.series.length ; i++) {
+                chart.series[i].hide();
+            }
+        }
+        $(this).html('Show all series');
+    }, function() {
+        if(chart && chart.series){
+            for (var i = 0 ; i < chart.series.length ; i++) {
+                chart.series[i].show();
+            }
+        }
+        $(this).html('Hide all series');
     });
     
     // Datepicker
