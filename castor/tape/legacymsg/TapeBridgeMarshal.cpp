@@ -44,5 +44,5 @@ void castor::tape::legacymsg::unmarshal(const char * &src,
 
   unmarshalUint32(src, srcLen, dst.volReqId);
   unmarshalUint32(src, srcLen, dst.tapeFseq);
-  unmarshalUint64(src, srcLen, dst.bytesWrittenToTapeByFlush);
+  unmarshalUint64(src, srcLen, dst.batchBytesToTape);
 }

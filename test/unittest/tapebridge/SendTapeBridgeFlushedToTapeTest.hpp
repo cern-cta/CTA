@@ -233,9 +233,9 @@ public:
     uint32_t sendRc = 0;
     {
       tapeBridgeFlushedToTapeMsgBody_t msgBody;
-      msgBody.volReqId                  = 1111;
-      msgBody.tapeFseq                  = 2222;
-      msgBody.bytesWrittenToTapeByFlush = 3333;
+      msgBody.volReqId         = 1111;
+      msgBody.tapeFseq         = 2222;
+      msgBody.batchBytesToTape = 3333;
       sendRc = tapebridge_sendTapeBridgeFlushedToTape(
         clientConnectionSock.get(), netReadWriteTimeout, &msgBody);
     }

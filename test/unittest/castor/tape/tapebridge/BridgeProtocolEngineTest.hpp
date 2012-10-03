@@ -2167,10 +2167,6 @@ public:
   /**
    * A good day scenario where the compressed files are half the size of the
    * orginal files.
-   *
-   * Please note that each file is reported at the time of writing to be a
-   * quarter of the size of the original and the flush at the end the writing
-   * the batch writes one quarter of the total of the original file sizes.
    */
   void testCalcMigrationCompressionRatio() {
     // Create the BridgeProtocolEngine for a migration session
@@ -2202,23 +2198,23 @@ public:
       FileWrittenNotification notification;
 
       notification.fileSize           = fileSize;
-      notification.compressedFileSize = (uint64_t)(fileSize * 0.25);
+      notification.compressedFileSize = 12345;
       migrations.push_back(notification);
     }
 
-    const uint64_t bytesWrittenToTapeByFlush =
-      (uint64_t)(nbFiles * fileSize * (double)0.25);
+    const uint64_t batchBytesToTape =
+      (uint64_t)(nbFiles * fileSize * (double)0.5);
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Checking compression ratio",
       (double)0.5,
       m_engine->calcMigrationCompressionRatio(migrations,
-        bytesWrittenToTapeByFlush));
+        batchBytesToTape));
   }
 
   /**
    * A bad day scenario where the original file sizes are zero.  In this
    * scenario the calcMigrationCompressionRatio() method should not throw an
-   * exception but rather return a compression ration of 1.0 indicating no
+   * exception but rather return a compression ratio of 1.0 indicating no
    * difference between the original and compressed file sizes.
    */
   void testCalcMigrationCompressionRatioWithZeroFileSize() {
@@ -2250,29 +2246,74 @@ public:
       FileWrittenNotification notification;
 
       notification.fileSize           = 0;
-      notification.compressedFileSize = 256;
+      notification.compressedFileSize = 12345;
       migrations.push_back(notification);
     }
 
-    const uint64_t bytesWrittenToTapeByFlush = nbFiles * 256;
+    const uint64_t batchBytesToTape = nbFiles * 512;
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Checking compression ratio",
       (double)1.0,
       m_engine->calcMigrationCompressionRatio(migrations,
-        bytesWrittenToTapeByFlush));
+        batchBytesToTape));
+  }
+
+  /**
+   * A bad day scenario where the reported number of bytes written to tape for
+   * the batch is zero.  In this scenario the calcMigrationCompressionRatio()
+   * method should not throw an exception but rather return a compression
+   * ratio of 1.0 indicating no difference between the original and compressed
+   * file sizes.
+   */
+  void testCalcMigrationCompressionRatioWithZeroBatchBytesToTape() {
+    // Create the BridgeProtocolEngine for a migration session
+    m_volume.setMode(tapegateway::WRITE);
+    const bool logPeerOfCallbackConnectionsFromRtcpd = false;
+    const bool checkRtcpdIsConnectingFromLocalHost = false;
+    m_engine = newTestingBridgeProtocolEngine(
+      m_fileCloser,
+      m_bulkRequestConfigParams,
+      m_tapeFlushConfigParams,
+      m_cuuid,
+      m_bridgeListenSock,
+      m_initialRtcpdSockBridgeSide,
+      m_jobRequest,
+      m_volume,
+      m_nbFilesOnDestinationTape,
+      m_stoppingGracefully,
+      m_tapebridgeTransactionCounter,
+      logPeerOfCallbackConnectionsFromRtcpd,
+      checkRtcpdIsConnectingFromLocalHost,
+      m_clientProxy,
+      m_legacyTxRx);
+
+    const unsigned int nbFiles = 10;
+    FileWrittenNotificationList migrations;
+
+    for(uint64_t i=1; i<=nbFiles; i++) {
+      FileWrittenNotification notification;
+
+      notification.fileSize           = 1024;
+      notification.compressedFileSize = 12345;
+      migrations.push_back(notification);
+    }
+
+    const uint64_t batchBytesToTape = 0;
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Checking compression ratio",
+      (double)1.0,
+      m_engine->calcMigrationCompressionRatio(migrations,
+        batchBytesToTape));
   }
 
   /**
    * A good day scenario test of the method named
-   * BridgeProtocolEngine::correctMigrationCompressionStatistics().
+   * BridgeProtocolEngine::setMigrationCompressedFileSize().
    *
    * The overal compression ratio is 0.5, that is to say the tape writes half
-   * as much data to tape than it receives.  However due to the asynchronous
-   * reading out of the bytes written to tape, the drive only reports that a
-   * quarter of each file has been written when the drive is queried, and only
-   * the final flush does the rest of the data get reported.
+   * as much data to tape than it receives.
    */
-  void testCorrectMigrationCompressionStatistics() {
+  void testSetMigrationCompressedFileSize() {
     // Create the BridgeProtocolEngine for a migration session
     m_volume.setMode(tapegateway::WRITE);
     const bool logPeerOfCallbackConnectionsFromRtcpd = false;
@@ -2297,7 +2338,6 @@ public:
     const unsigned int nbFiles = 10;
     const uint64_t fileSize = 1024;
     FileWrittenNotificationList migrations;
-    const uint64_t bytesWrittenToTapeByFlush = nbFiles * fileSize / 4;
 
     for(uint64_t i=1; i<=nbFiles; i++) {
       FileWrittenNotification notification;
@@ -2305,12 +2345,13 @@ public:
       notification.fileTransactionId  = i;
       notification.nsFileId           = i * 2;
       notification.fileSize           = fileSize;
-      notification.compressedFileSize = fileSize / 4;
+      notification.compressedFileSize = 12345;
       migrations.push_back(notification);
     }
 
-    m_engine->correctMigrationCompressionStatistics(migrations,
-      bytesWrittenToTapeByFlush);
+    const uint64_t batchBytesToTape = nbFiles * fileSize / 2;
+    m_engine->setMigrationCompressedFileSize(migrations,
+      batchBytesToTape);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Checking size of notification list did not change",
@@ -2347,13 +2388,13 @@ public:
 
   /**
    * A bad day scenario test of the method named
-   * BridgeProtocolEngine::correctMigrationCompressionStatistics().
+   * BridgeProtocolEngine::setMigrationCompressedFileSize().
    *
    * The sum of the orginal file sizes is zero.  The
-   * correctMigrationCompressionStatistics() should not throw an exception in
-   * this case but rather set each compressed file size to zero.
+   * setMigrationCompressedFileSize() method should not throw an exception
+   * in this case but rather set each compressed file size to zero.
    */
-  void testCorrectMigrationCompressionStatisticsWithZeroFileSize() {
+  void testSetMigrationCompressedFileSizeWithZeroFileSize() {
     // Create the BridgeProtocolEngine for a migration session
     m_volume.setMode(tapegateway::WRITE);
     const bool logPeerOfCallbackConnectionsFromRtcpd = false;
@@ -2377,7 +2418,6 @@ public:
 
     const unsigned int nbFiles = 10;
     FileWrittenNotificationList migrations;
-    const uint64_t bytesWrittenToTapeByFlush = nbFiles * 256;
 
     for(uint64_t i=1; i<=nbFiles; i++) {
       FileWrittenNotification notification;
@@ -2385,12 +2425,12 @@ public:
       notification.fileTransactionId  = i;
       notification.nsFileId           = i * 2;
       notification.fileSize           = 0;
-      notification.compressedFileSize = 256;
+      notification.compressedFileSize = 12345;
       migrations.push_back(notification);
     }
 
-    m_engine->correctMigrationCompressionStatistics(migrations,
-      bytesWrittenToTapeByFlush);
+    const uint64_t batchBytesToTape = nbFiles * 512;
+    m_engine->setMigrationCompressedFileSize(migrations, batchBytesToTape);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Checking size of notification list did not change",
@@ -2425,6 +2465,125 @@ public:
     }
   }
 
+  /**
+   * A bad day scenario test of the method named
+   * BridgeProtocolEngine::setMigrationCompressedFileSize().
+   *
+   * The number of bytes reported to have been written to tape for the batch
+   * is zero bytes.  The setMigrationCompressedFileSize() method should not
+   * throw an exception in this case but rather set each compressed file size
+   * to be equal to its corresponding original file size.
+   */
+  void testSetMigrationCompressedFileSizeWithZeroBatchBytesToTape() {
+    // Create the BridgeProtocolEngine for a migration session
+    m_volume.setMode(tapegateway::WRITE);
+    const bool logPeerOfCallbackConnectionsFromRtcpd = false;
+    const bool checkRtcpdIsConnectingFromLocalHost = false;
+    m_engine = newTestingBridgeProtocolEngine(
+      m_fileCloser,
+      m_bulkRequestConfigParams,
+      m_tapeFlushConfigParams,
+      m_cuuid,
+      m_bridgeListenSock,
+      m_initialRtcpdSockBridgeSide,
+      m_jobRequest,
+      m_volume,
+      m_nbFilesOnDestinationTape,
+      m_stoppingGracefully,
+      m_tapebridgeTransactionCounter,
+      logPeerOfCallbackConnectionsFromRtcpd,
+      checkRtcpdIsConnectingFromLocalHost,
+      m_clientProxy,
+      m_legacyTxRx);
+
+    const unsigned int nbFiles = 10;
+    FileWrittenNotificationList migrations;
+
+    for(uint64_t i=1; i<=nbFiles; i++) {
+      FileWrittenNotification notification;
+
+      notification.fileTransactionId  = i;
+      notification.nsFileId           = i * 2;
+      notification.fileSize           = 1024;
+      notification.compressedFileSize = 12345;
+      migrations.push_back(notification);
+    }
+
+    const uint64_t batchBytesToTape = 0;
+    m_engine->setMigrationCompressedFileSize(migrations, batchBytesToTape);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Checking size of notification list did not change",
+      nbFiles,
+      (unsigned int)migrations.size());
+
+    {
+      uint64_t i = 1;
+      for(
+        FileWrittenNotificationList::const_iterator itor = migrations.begin();
+        itor != migrations.end();
+        itor++, i++) {
+        const FileWrittenNotification &notification = *itor;
+
+        CPPUNIT_ASSERT_EQUAL_MESSAGE(
+          "Checking fileTransactionId",
+          i,
+          notification.fileTransactionId);
+        CPPUNIT_ASSERT_EQUAL_MESSAGE(
+          "Checking nsFileId",
+          i * 2,
+          notification.nsFileId);
+        CPPUNIT_ASSERT_EQUAL_MESSAGE(
+          "Checking fileSize",
+          (uint64_t)1024,
+          notification.fileSize);
+        CPPUNIT_ASSERT_EQUAL_MESSAGE(
+          "Checking compressedFileSize",
+          (uint64_t)1024,
+          notification.compressedFileSize);
+      }
+    }
+  }
+
+  void testCalcSumOfFileSizes() {
+    // Create the BridgeProtocolEngine for a migration session
+    m_volume.setMode(tapegateway::WRITE);
+    const bool logPeerOfCallbackConnectionsFromRtcpd = false;
+    const bool checkRtcpdIsConnectingFromLocalHost = false;
+    m_engine = newTestingBridgeProtocolEngine(
+      m_fileCloser,
+      m_bulkRequestConfigParams,
+      m_tapeFlushConfigParams,
+      m_cuuid,
+      m_bridgeListenSock,
+      m_initialRtcpdSockBridgeSide,
+      m_jobRequest,
+      m_volume,
+      m_nbFilesOnDestinationTape,
+      m_stoppingGracefully,
+      m_tapebridgeTransactionCounter,
+      logPeerOfCallbackConnectionsFromRtcpd,
+      checkRtcpdIsConnectingFromLocalHost,
+      m_clientProxy,
+      m_legacyTxRx);
+
+    const unsigned int nbFiles = 10;
+    const uint64_t fileSize = 1024;
+    FileWrittenNotificationList migrations;
+
+    for(uint64_t i=1; i<=nbFiles; i++) {
+      FileWrittenNotification notification;
+      
+      notification.fileSize = fileSize;
+      migrations.push_back(notification);
+    } 
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Checking calcSumOfFileSizes()",
+      nbFiles * fileSize,
+      m_engine->calcSumOfFileSizes(migrations));
+  }
+
   CPPUNIT_TEST_SUITE(BridgeProtocolEngineTest);
 
   CPPUNIT_TEST(testShutdownOfProtocolUsingLocalDomain);
@@ -2434,8 +2593,11 @@ public:
   CPPUNIT_TEST(testGenerateMigrationTapeFileId);
   CPPUNIT_TEST(testCalcMigrationCompressionRatio);
   CPPUNIT_TEST(testCalcMigrationCompressionRatioWithZeroFileSize);
-  CPPUNIT_TEST(testCorrectMigrationCompressionStatistics);
-  CPPUNIT_TEST(testCorrectMigrationCompressionStatisticsWithZeroFileSize);
+  CPPUNIT_TEST(testCalcMigrationCompressionRatioWithZeroBatchBytesToTape);
+  CPPUNIT_TEST(testSetMigrationCompressedFileSize);
+  CPPUNIT_TEST(testSetMigrationCompressedFileSizeWithZeroFileSize);
+  CPPUNIT_TEST(testSetMigrationCompressedFileSizeWithZeroBatchBytesToTape);
+  CPPUNIT_TEST(testCalcSumOfFileSizes);
 
   CPPUNIT_TEST_SUITE_END();
 };

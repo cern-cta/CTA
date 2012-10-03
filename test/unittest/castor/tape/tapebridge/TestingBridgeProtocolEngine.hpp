@@ -122,8 +122,9 @@ public:
   using BridgeProtocolEngine::rtcpTapeErrReqRtcpdCallback;
   using BridgeProtocolEngine::rtcpEndOfReqRtcpdCallback;
   using BridgeProtocolEngine::tapeBridgeFlushedToTapeCallback;
-  using BridgeProtocolEngine::correctMigrationCompressionStatistics;
+  using BridgeProtocolEngine::setMigrationCompressedFileSize;
   using BridgeProtocolEngine::calcMigrationCompressionRatio;
+  using BridgeProtocolEngine::calcSumOfFileSizes;
   using BridgeProtocolEngine::sendFlushedMigrationsToClient;
   using BridgeProtocolEngine::giveOutpRtcpdCallback;
   using BridgeProtocolEngine::startMigrationSession;

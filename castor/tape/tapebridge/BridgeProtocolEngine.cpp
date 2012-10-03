@@ -2247,11 +2247,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   // sent to the tapegatewayd daemon once the rtcpd daemon has
   // notified the tapebridged daemon that the file has been flushed to
   // tape.
-  const uint64_t fileSize     = body.rqst.bytesIn; // "in" from the disk
-  uint64_t compressedFileSize = fileSize; // without compression
-  if(0 < body.rqst.bytesOut && body.rqst.bytesOut < fileSize) {
-    compressedFileSize        = body.rqst.bytesOut; // "Out" to the tape
-  }
+  const uint64_t fileSize = body.rqst.bytesIn; // "in" from the disk
   {
     FileWrittenNotification notification;
     notification.fileTransactionId   = fileTransactonId;
@@ -2262,7 +2258,9 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
     notification.fileSize            = fileSize;
     notification.checksumName        = body.rqst.segAttr.segmCksumAlgorithm;
     notification.checksum            = body.rqst.segAttr.segmCksum;
-    notification.compressedFileSize  = compressedFileSize;
+    // The value of notification.compressedFileSize will be calculated on the
+    // reception of the "flushed to tape" message
+    notification.compressedFileSize  = 0;
     notification.blockId0            = body.rqst.blockId[0];
     notification.blockId1            = body.rqst.blockId[1];
     notification.blockId2            = body.rqst.blockId[2];
@@ -2526,8 +2524,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
         utils::volumeClientTypeToString(m_volume.clientType())),
       castor::dlf::Param("volReqId"          , body.volReqId          ),
       castor::dlf::Param("tapeFseq"          , body.tapeFseq          ),
-      castor::dlf::Param("bytesFlushed"      ,
-        body.bytesWrittenToTapeByFlush)};
+      castor::dlf::Param("batchBytesToTape"  , body.batchBytesToTape  )};
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       TAPEBRIDGE_RECEIVED_TAPEBRIDGE_FLUSHEDTOTAPE, params);
   }
@@ -2626,13 +2623,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
     FileWrittenNotificationList migrations =
       m_pendingMigrationsStore.dataFlushedToTape(body.tapeFseq);
 
-    // Correct the compression information of each file in the batch, taking
-    // into account the number of bytes written to tape by the flush and the
-    // fact that the current compression information of each file was read out
-    // asynchronously with respect to the physical write operations of the
-    // drive
-    correctMigrationCompressionStatistics(migrations,
-      body.bytesWrittenToTapeByFlush);
+    setMigrationCompressedFileSize(migrations, body.batchBytesToTape);
 
     // If there is currently no client migration-report connection, then open
     // one and send the batch of flushed file-migrations to the client
@@ -2665,15 +2656,15 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 
 
 //-----------------------------------------------------------------------------
-// correctMigrationCompressionStatistics
+// setMigrationCompressedFileSize
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeProtocolEngine::
-  correctMigrationCompressionStatistics(
+  setMigrationCompressedFileSize(
   FileWrittenNotificationList &migrations,
-  const uint64_t              bytesWrittenToTapeByFlush)
+  const uint64_t              batchBytesToTape)
   throw() {
   const double compressionRatio =
-    calcMigrationCompressionRatio(migrations, bytesWrittenToTapeByFlush);
+    calcMigrationCompressionRatio(migrations, batchBytesToTape);
 
   // Set each compressed file size to be the original file size multipled by
   // the compression ratio
@@ -2693,27 +2684,35 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 double castor::tape::tapebridge::BridgeProtocolEngine::
   calcMigrationCompressionRatio(
   const FileWrittenNotificationList &migrations,
-  const uint64_t                    bytesWrittenToTapeByFlush)
+  const uint64_t                    batchBytesToTape)
   throw() {
-  uint64_t totalFileSize           = 0;
-  uint64_t totalCompressedFileSize = 0;
+  const uint64_t totalFileSize = calcSumOfFileSizes(migrations);
+
+  // If either the sum of the original file sizes is zero or the number of
+  // bytes physically written to tape to store the batch of files is zero then
+  // the ratio should be 1.0
+  const double compressionRatio = 0 == totalFileSize || 0 == batchBytesToTape ?
+    1.0 : (double)batchBytesToTape / (double)totalFileSize;
+
+  return compressionRatio;
+}
+
+
+//-----------------------------------------------------------------------------
+// calcSumOfFileSizes
+//-----------------------------------------------------------------------------
+uint64_t castor::tape::tapebridge::BridgeProtocolEngine::calcSumOfFileSizes(
+  const FileWrittenNotificationList &migrations) throw () {
+  uint64_t totalFileSize = 0;
 
   for(FileWrittenNotificationList::const_iterator itor = migrations.begin();
     itor != migrations.end(); itor++) {
     const FileWrittenNotification &notification = *itor;
 
     totalFileSize += notification.fileSize;
-    totalCompressedFileSize += notification.compressedFileSize;
   }
 
-  totalCompressedFileSize += bytesWrittenToTapeByFlush;
-
-  // Calculate the ratio taking into account the fact that if the sum of the
-  // orginal file sizes is zero then the ratio should be 1.0
-  const double compressionRatio = (double)0.0 == totalFileSize ? 1.0 :
-    (double)totalCompressedFileSize / (double)totalFileSize;
-
-  return compressionRatio;
+  return totalFileSize;
 }
 
 

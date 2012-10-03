@@ -62,9 +62,9 @@ public:
     memset(m_buf     , '\0', sizeof(m_buf)    );
     memset(&m_msgBody, '\0', sizeof(m_msgBody));
 
-    m_msgBody.volReqId                  = 1111;
-    m_msgBody.tapeFseq                  = 2222;
-    m_msgBody.bytesWrittenToTapeByFlush = 3333;
+    m_msgBody.volReqId         = 1111;
+    m_msgBody.tapeFseq         = 2222;
+    m_msgBody.batchBytesToTape = 3333;
 
     serrno = 0;
   }
@@ -104,13 +104,13 @@ public:
       tapebridge_marshallTapeBridgeFlushedToTapeMsg(m_buf, sizeof(m_buf),
       &m_msgBody));
 
-    char     *p                                    = m_buf;
-    uint32_t unmarshalledMagic                     = 0;
-    uint32_t unmarshalledReqType                   = 0;
-    uint32_t unmarshalledLen                       = 0;
-    uint32_t unmarshalledVolReqId                  = 0;
-    uint32_t unmarshalledTapeFseq                  = 0;
-    uint64_t unmarshalledBytesWrittenToTapeByFlush = 0;
+    char     *p                           = m_buf;
+    uint32_t unmarshalledMagic            = 0;
+    uint32_t unmarshalledReqType          = 0;
+    uint32_t unmarshalledLen              = 0;
+    uint32_t unmarshalledVolReqId         = 0;
+    uint32_t unmarshalledTapeFseq         = 0;
+    uint64_t unmarshalledBatchBytesToTape = 0;
 
     unmarshall_LONG(p, unmarshalledMagic);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("magic marshalled",
@@ -137,10 +137,10 @@ public:
       m_msgBody.tapeFseq,
       unmarshalledTapeFseq);
 
-    unmarshall_HYPER(p, unmarshalledBytesWrittenToTapeByFlush);
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("bytesWrittenToTapeByFlush marshalled",
-      m_msgBody.bytesWrittenToTapeByFlush,
-      unmarshalledBytesWrittenToTapeByFlush);
+    unmarshall_HYPER(p, unmarshalledBatchBytesToTape);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("batchBytesToTape marshalled",
+      m_msgBody.batchBytesToTape,
+      unmarshalledBatchBytesToTape);
   }
 
   void testUnmarshalBufNull() {
@@ -162,9 +162,9 @@ public:
 
     {
       char *p = buf;
-      marshall_LONG (p, m_msgBody.volReqId                 );
-      marshall_LONG (p, m_msgBody.tapeFseq                 );
-      marshall_HYPER(p, m_msgBody.bytesWrittenToTapeByFlush);
+      marshall_LONG (p, m_msgBody.volReqId        );
+      marshall_LONG (p, m_msgBody.tapeFseq        );
+      marshall_HYPER(p, m_msgBody.batchBytesToTape);
 
       CPPUNIT_ASSERT_EQUAL_MESSAGE("marshalled correct number of bytes",
         (size_t)TAPEBRIDGEFLUSHEDTOTAPEMSGBODY_SIZE,
@@ -192,9 +192,9 @@ public:
       m_msgBody.tapeFseq,
       unmarshalledMsgBody.tapeFseq);
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("bytesWrittenToTapeByFlush unmarshalled",
-      m_msgBody.bytesWrittenToTapeByFlush,
-      unmarshalledMsgBody.bytesWrittenToTapeByFlush);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("batchBytesToTape unmarshalled",
+      m_msgBody.batchBytesToTape,
+      unmarshalledMsgBody.batchBytesToTape);
   }
 
   CPPUNIT_TEST_SUITE(MarshallTapeBridgeFlushedToTapeTest);

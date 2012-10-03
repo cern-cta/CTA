@@ -837,51 +837,78 @@ protected:
     throw(castor::exception::Exception);
 
   /**
-   * Corrects the compression information of each file in the specified batch
-   * migrated files, taking into account the specified number of bytes written
-   * to tape by the flush and the fact that the current compression
-   * information of each file was read out asynchronously with respect to the
-   * physical write operations of the drive.
+   * Sets the compressed file-size of each file in the specified batch of
+   * migrated files using the specified number of bytes written to tape for
+   * the whole batch.
    *
    * If the sum of the original file sizes is zero, then this method shall not
    * throw an exception but rather set the compressed size of each file to
    * zero.
    *
-   * @param migrations                In/out parameter: The list of
-   *                                  notifications about a batch of files
-   *                                  written to tape.
-   * @param bytesWrittenToTapeByFlush The number of bytes written to tape by
-   *                                  the flush perfromed at the end of the
-   *                                  batch of files written to tape.
+   * @param migrations       In/out parameter: The list of notifications
+   *                         about a batch of files written to tape.  This
+   *                         method reads the fileSize attribute of each
+   *                         member of this list.  This method sets the
+   *                         compressedFileSize member of each member of this
+   *                         list.
+   * @param batchBytesToTape The total number of bytes actually written to
+   *                         tape in order to record every file within the
+   *                         batch.
    */
-  void correctMigrationCompressionStatistics(
+  void setMigrationCompressedFileSize(
     FileWrittenNotificationList &migrations,
-    const uint64_t              bytesWrittenToTapeByFlush)
+    const uint64_t              batchBytesToTape)
     throw();
 
   /**
-   * Calculates and returns the compression ratio of the specified batch of
+   * Calculates and ratio the compression ratio of the specified batch of
    * migrations.
    *
-   * The compression factor is calculated by dividing the sum of the compressed
-   * file sizes and the number of bytes written by the flush by the sum of the
-   * original file sizes.  For example if the the resulting compression factor
-   * is 0.5, then this means the compressed files are on average half the size
-   * of the original files.
+   * When a file is migrated to tape the underlying tape system compresses the
+   * file before it is physically written to tape.  Files are migrated to tape
+   * in batches and the resulting compression is seen as the difference between
+   * the sum of the original sizes of the files in a batch and the total amount
+   * of data pysically written to the tape in order to record the complete
+   * batch of files.
    *
-   * If the sum of the original file sizes is zero, then this method shall not
-   * throw an exception but rather return a compression ration of 1.0
-   * indicating no difference between the original and compressed file sizes.
+   * The compression ratio is calculated by dividing the specified number of
+   * bytes written to tape to store a batch of files by the sum of the original
+   * file sizes.  For example if the resulting compression factor is 0.5, then
+   * then this means the compressed files are on average half the size of the
+   * original files.
    *
-   * @param migrations                The list of notifications about a batch
-   *                                  of files written to tape.
-   * @param bytesWrittenToTapeByFlush The number of bytes written to tape by
-   *                                  the flush perfromed at the end of the
-   *                                  batch of files written to tape.
+   * If the sum of the original file sizes is zero, then this method will
+   * return a compression ration of 1.0 indicating no difference between the
+   * original and compressed file sizes.
+   *
+   * If the number of bytes physically written to tape to store the entire
+   * batch is set to zero, then this method will return a compression ration of
+   * 1.0 indicating no difference between the original and compressed file
+   * sizes.
+   *
+   * @param migrations       The list of notifications about a batch of files
+   *                         written to tape.
+   * @param batchBytesToTape The total number of bytes physically written to
+   *                         tape in order to record every file within the
+   *                         batch.
+   * @return                 The compression ratio.
    */
   double calcMigrationCompressionRatio(
     const FileWrittenNotificationList &migrations,
-    const uint64_t                    bytesWrittenToTapeByFlush) throw();
+    const uint64_t                    batchBytesToTape) throw();
+
+  /**
+   * Calculates and returns the sum of the original file sizes of the specified
+   * batch of file migrations.  More specifically this method returns the sum
+   * of the FileWrittenNotification.fileSize attribute of each member of the
+   * specified migrations list.
+   *
+   * @param migrations The list of notifications about a batch of files written
+   *                   to tape.
+   * @return           The sum of the original file sizes.
+   */
+  uint64_t calcSumOfFileSizes(const FileWrittenNotificationList &migrations)
+    throw();
 
   /**
    * Sends the "file flushed to tape" notifications that correspond to the

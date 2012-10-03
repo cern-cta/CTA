@@ -48,9 +48,10 @@ typedef struct {
   uint32_t tapeFseq;
 
   /**
-   * The number of bytes the flush caused to be written to tape.
+   * The total number of bytes actually written to tape in order to record
+   * every file within the batch of files for which this flush was done.
    */
-  uint64_t bytesWrittenToTapeByFlush;
+  uint64_t batchBytesToTape;
 } tapeBridgeFlushedToTapeMsgBody_t;
 
 #define TAPEBRIDGEFLUSHEDTOTAPEMSGBODY_SIZE ( \
