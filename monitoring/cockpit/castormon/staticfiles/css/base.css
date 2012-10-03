@@ -453,7 +453,8 @@ select {
 }
 
 .accordion-inner {
-    padding: 0 0 5px 10px;
+    padding: 0 0 10px 10px;
+    border-top: 1px dashed #E5E5E5;
 }
 
 .accordion + h1 {

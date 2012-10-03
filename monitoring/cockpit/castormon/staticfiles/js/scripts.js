@@ -256,7 +256,20 @@ function getTimelineChartOptions(metric_name) {
                 layout: 'vertical',
                 verticalAlign: 'top',
                 y: 100,
-                shadow: true
+                shadow: true,
+                labelFormatter: function() {
+                    // var words = this.name.match(/.{1,20}/g); // split every 20 char
+                    var words = this.name.split(/[\s]+/);
+                    var numWordsPerLine = 4;
+                    var str = [];
+                    for (var word in words) {
+                        if (word > 0 && word % numWordsPerLine == 0)
+                            str.push('<br>');
+
+                         str.push(words[word]);
+                    }
+                    return str.join(' ');
+                }
             },
             credits: {
                 enabled: false
@@ -321,7 +334,19 @@ function getSumChartOptions(metric_name) {
                 layout: 'vertical',
                 verticalAlign: 'top',
                 y: 100,
-                shadow: true
+                shadow: true,
+                labelFormatter: function() {
+                    var words = this.name.split(/[\s]+/);
+                    var numWordsPerLine = 4;
+                    var str = [];
+                    for (var word in words) {
+                        if (word > 0 && word % numWordsPerLine == 0)
+                            str.push('<br>');
+
+                         str.push(words[word]);
+                    }
+                    return str.join(' ');
+                }
             },
             credits: {
                 enabled: false
@@ -866,7 +891,7 @@ $(document).ready(function () {
         $(this).empty().html(show);
         $(this).next('div.metric-info-text').slideUp();
     });
-
+    
     // Datepicker
     $(".datepicker-from").datepicker();
     $(".datepicker-to").datepicker();
