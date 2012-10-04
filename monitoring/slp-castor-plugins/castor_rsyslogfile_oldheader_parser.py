@@ -30,7 +30,7 @@ class RSyslogFileOldHeaderParser(BaseFileParser):
         # formatted log message.
         self._regexhdrold = re.compile(r"""
             (\w+)                \s*           # Month
-            (\d{2})              \s*           # Day
+            (\d+)                \s*           # Day
             (\d\d:\d\d:\d\d)     \s*           # Hour
             (\w+)                              # Daemon name
             \[
