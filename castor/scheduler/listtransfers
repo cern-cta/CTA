@@ -171,6 +171,8 @@ def processTransfersListing(useOnlyCentralLists):
         n = 1
       else:
         n = n + 1
+  if n > 100:
+    nodesWithManyTransfers.append(lastExecHost)
   if nodesWithManyTransfers:
     print 'Note that the list has been truncated to 100 transfers for the following hosts :'
     print ', '.join(nodesWithManyTransfers)
