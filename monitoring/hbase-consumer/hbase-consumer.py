@@ -15,6 +15,7 @@ import logging
 import os, sys
 from collections import deque # used for the buffer
 import pprint
+import traceback
 
 from messaging.message import Message
 from messaging.queue.dqs import DQS
@@ -155,6 +156,5 @@ if __name__ == '__main__':
     # Assign handler to signals
     signal.signal(signal.SIGINT, exit_handler)
     signal.signal(signal.SIGTERM, exit_handler)
-    #signal.signal(signal.SIGHUP, sigHupHandler)
     # Then start main thread
     main()

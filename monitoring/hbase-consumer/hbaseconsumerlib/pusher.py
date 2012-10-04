@@ -46,6 +46,7 @@ class Pusher(threading.Thread):
         """
         Connect to Thrift HBase server, set the tables and batches
         """
+        logging.debug('Connecting to hbase...')
         while not self.STOP_FLAG.is_set():
             try:
                 connection = happybase.Connection(self.nameserver)
@@ -145,22 +146,25 @@ class Pusher(threading.Thread):
     def run(self):
         """ Simply run the thread """
         if self.STOP_FLAG.is_set(): return
-        while not self.STOP_FLAG.is_set():
-            # infinite loop over the buffer
-            try:
-                to_push_data = self.BUFFER.pop()
-            except IndexError:
-                time.sleep(0.5) # continue if buffer is empty
-                continue
-            self._send_data(to_push_data)
-        else:
-            # try to empty buffer before exiting
-            while True:
+        try:
+            while not self.STOP_FLAG.is_set():
+                # infinite loop over the buffer
                 try:
                     to_push_data = self.BUFFER.pop()
                 except IndexError:
-                    break
+                    time.sleep(0.5) # continue if buffer is empty
+                    continue
                 self._send_data(to_push_data)
-            self._flush_batches()
-            logging.debug(self.name + " : return !")
-            return
+            else:
+                # try to empty buffer before exiting
+                while True:
+                    try:
+                        to_push_data = self.BUFFER.pop()
+                    except IndexError:
+                        break
+                    self._send_data(to_push_data)
+                self._flush_batches()
+                logging.debug(self.name + " : return !")
+                return
+        except:
+            self.STOP_FLAG.set()

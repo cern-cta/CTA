@@ -1,4 +1,3 @@
-
 2012-09-18 Benjamin Fiorini <benjamin.fiorini@cern.ch>
 
 * Better handling in case of failure, try to lose the minimum amount of
