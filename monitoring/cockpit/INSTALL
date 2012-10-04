@@ -8,6 +8,7 @@
 2*) start mysqld then change root password of mysql
     
     # /etc/init.d/mysqld start
+    # /usr/bin/mysqladmin -u root password 'yourpasswordhere'
 
 3*) change/update login/passwd in /etc/castor/cockpit-credentials.conf for the DB
 3bis*) change the SECRET_KEY in /etc/castor/cockpit-credentials.conf
@@ -16,8 +17,7 @@
 4*) create cockpit database using :
 NB : if not already done, change root password of mysql !
 
-    $ mysql -u root -p
-    mysql> CREATE DATABASE cockpit CHARACTER SET utf8;
+    $ mysql -u root -p -e "CREATE DATABASE cockpit CHARACTER SET utf8;";
 
 5*) in the directory of the application (by default /var/www/castormon ), use :
 
