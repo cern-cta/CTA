@@ -146,6 +146,13 @@ number representing a combination of RTCOPY severity flags, see \fBrtcpc(3)\fP.
 As an example: \fBRTCOPYD SD3R_ERRACTION 2056\fP forces a immediate
 failure with \fBRTCP_NORETRY\fP severity in case of tape media errors
 (2056 == \fBRTCP_FAILED|RTCP_NORETRY\fP).
+.PP
+.B RTCOPY REUSE_MOUNT
+\- Set RTCOPY REUSE_MOUNT to TRUE (case insensitive) if the rtcpd daemon should
+request the vdqmd daemon to try and reuse tape mounts across requests.  It
+is recommended not to set this value to TRUE.  If this value is not set or is
+set to a string other than TRUE (case insensitive) then the default value of
+FALSE is assumed.
 
 .SH FILES
 .TP 1.2i
