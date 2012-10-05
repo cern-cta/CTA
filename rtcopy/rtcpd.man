@@ -152,7 +152,9 @@ failure with \fBRTCP_NORETRY\fP severity in case of tape media errors
 request the vdqmd daemon to try and reuse tape mounts across requests.  It
 is recommended not to set this value to TRUE.  If this value is not set or is
 set to a string other than TRUE (case insensitive) then the default value of
-FALSE is assumed.
+FALSE is assumed.  This parameter is always read just before a tape is
+unmounted, therefore the rtcpd daemon does not need to be restarted in order
+for a new value for this parameter to take affect.
 
 .SH FILES
 .TP 1.2i
