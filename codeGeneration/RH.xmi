@@ -729,9 +729,10 @@ Resources can be allocated to one or many projects are are composed of a set of 
            <UML:Classifier.feature>
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="mY1OJFTaPC7B" initialValue="0" type="133771" name="GCTYPE_AUTO" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="R2S0RhABu9xH" initialValue="1" type="133771" name="GCTYPE_USER" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="3Z7EzNuKT1PH" initialValue="2" type="133771" name="GCTYPE_TOO_MANY_REPLICAS" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="TQsDdgK76NZ0" initialValue="3" type="133771" name="GCTYPE_DRAINING_FS" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="0TjEFQ5iS3Gq" initialValue="4" type="133771" name="GCTYPE_NS_SYNCH" />
+            <UML:Attribute isSpecification="false" visibility="public" xmi.id="3Z7EzNuKT1PH" initialValue="2" type="133771" name="GCTYPE_TOOMANYREPLICAS" />
+            <UML:Attribute isSpecification="false" visibility="public" xmi.id="TQsDdgK76NZ0" initialValue="3" type="133771" name="GCTYPE_DRAINING" />
+            <UML:Attribute isSpecification="false" visibility="public" xmi.id="0TjEFQ5iS3Gq" initialValue="4" type="133771" name="GCTYPE_NSSYNCH" />
+            <UML:Attribute isSpecification="false" visibility="public" xmi.id="0TjEFQ5iS3Gq" initialValue="5" type="133771" name="GCTYPE_OVERWRITTEN" />
            </UML:Classifier.feature>
           </UML:Class>
           <UML:Class stereotype="53500" comment="Class used as the result set for any StageFileQueryRequest's. It does not need to be streamable." isSpecification="false" isLeaf="false" visibility="public" namespace="2105" xmi.id="EUZD3o1xamfm" isRoot="false" isAbstract="false" name="StageQueryResult" >

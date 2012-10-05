@@ -563,8 +563,8 @@ BEGIN
     IF autoDelete = 1 THEN
       -- Invalidate the diskcopy so that it can be garbage collected.
       UPDATE DiskCopy
-         SET status = 7,  -- INVALID
-             gctype = 3   -- Draining filesystem
+         SET status = dconst.DISKCOPY_INVALID,
+             gcType = dconst.GCTYPE_DRAINING
        WHERE id = dcId AND fileSystem = fsId;
     END IF;
     -- Delete the diskcopy from the snapshot as no action is required.

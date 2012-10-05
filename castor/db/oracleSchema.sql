@@ -108,9 +108,10 @@ CREATE TABLE DiskCopy (path VARCHAR2(2048), gcWeight NUMBER, creationTime INTEGE
 
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DiskCopy', 'gcType', 0, 'GCTYPE_AUTO');
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DiskCopy', 'gcType', 1, 'GCTYPE_USER');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DiskCopy', 'gcType', 2, 'GCTYPE_TOO_MANY_REPLICAS');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DiskCopy', 'gcType', 3, 'GCTYPE_DRAINING_FS');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DiskCopy', 'gcType', 4, 'GCTYPE_NS_SYNCH');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DiskCopy', 'gcType', 2, 'GCTYPE_TOOMANYREPLICAS');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DiskCopy', 'gcType', 3, 'GCTYPE_DRAINING');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DiskCopy', 'gcType', 4, 'GCTYPE_NSSYNCH');
+INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DiskCopy', 'gcType', 5, 'GCTYPE_OVERWRITTEN');
 
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DiskCopy', 'status', 0, 'DISKCOPY_STAGED');
 INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DiskCopy', 'status', 1, 'DISKCOPY_WAITDISK2DISKCOPY');
@@ -353,7 +354,6 @@ INSERT INTO Type2Obj (type, object) VALUES (166, 'FileToRecallRequest');
 INSERT INTO Type2Obj (type, object) VALUES (167, 'FileToRecall');
 INSERT INTO Type2Obj (type, object) VALUES (168, 'VolumeRequest');
 INSERT INTO Type2Obj (type, object) VALUES (169, 'Volume');
-INSERT INTO Type2Obj (type, object) VALUES (170, 'TapeGatewayRequest');
 INSERT INTO Type2Obj (type, object) VALUES (171, 'DbInfoRetryPolicy');
 INSERT INTO Type2Obj (type, object) VALUES (172, 'EndNotification');
 INSERT INTO Type2Obj (type, object) VALUES (173, 'NoMoreFiles');
@@ -371,7 +371,6 @@ INSERT INTO Type2Obj (type, object) VALUES (186, 'RecallPolicyElement');
 INSERT INTO Type2Obj (type, object) VALUES (187, 'MigrationPolicyElement');
 INSERT INTO Type2Obj (type, object) VALUES (188, 'StreamPolicyElement');
 INSERT INTO Type2Obj (type, object) VALUES (189, 'RetryPolicyElement');
-INSERT INTO Type2Obj (type, object) VALUES (190, 'VdqmTapeGatewayRequest');
 INSERT INTO Type2Obj (type, object) VALUES (191, 'StageQueryResult');
 INSERT INTO Type2Obj (type, object) VALUES (192, 'NsFileId');
 INSERT INTO Type2Obj (type, object) VALUES (193, 'BulkRequestResult');

@@ -275,7 +275,7 @@ BEGIN
     -- Process diskcopies that are in an INVALID state.
     UPDATE /*+ INDEX(DiskCopy I_DiskCopy_Status_7) */ DiskCopy
        SET status = 9, -- BEINGDELETED
-           gcType = decode(gcType, NULL, 1, gcType)
+           gcType = decode(gcType, NULL, dconst.GCTYPE_USER, gcType)
      WHERE fileSystem = fs.id
        AND decode(status, 7, status, NULL) = 7  -- INVALID (decode used to use function-based index)
        AND NOT EXISTS
@@ -357,8 +357,8 @@ BEGIN
              WHERE id = dc.castorFile FOR UPDATE NOWAIT;
             -- Mark the DiskCopy as being deleted
             UPDATE DiskCopy
-               SET status = 9, -- BEINGDELETED
-                   gcType = 0  -- GCTYPE_AUTO
+               SET status = dconst.DISKCOPY_BEINGDELETED,
+                   gcType = dconst.GCTYPE_AUTO
              WHERE id = dc.id RETURNING diskCopySize INTO deltaFree;
             totalCount := totalCount + 1;
             -- Update freed space
@@ -393,11 +393,12 @@ BEGIN
            DiskCopy.id,
            Castorfile.fileid, Castorfile.nshost,
            DiskCopy.lastAccessTime, DiskCopy.nbCopyAccesses, DiskCopy.gcWeight,
-           CASE WHEN DiskCopy.gcType = 0 THEN 'Automatic'
-                WHEN DiskCopy.gcType = 1 THEN 'User Requested'
-                WHEN DiskCopy.gcType = 2 THEN 'Too many replicas'
-                WHEN DiskCopy.gcType = 3 THEN 'Draining filesystem'
-                WHEN DiskCopy.gcType = 4 THEN 'NS synchronization'
+           CASE WHEN DiskCopy.gcType = dconst.GCTYPE_AUTO            THEN 'Automatic'
+                WHEN DiskCopy.gcType = dconst.GCTYPE_USER            THEN 'User requested'
+                WHEN DiskCopy.gcType = dconst.GCTYPE_TOOMANYREPLICAS THEN 'Too many replicas'
+                WHEN DiskCopy.gcType = dconst.GCTYPE_DRAINING        THEN 'Draining filesystem'
+                WHEN DiskCopy.gcType = dconst.GCTYPE_NSSYNCH         THEN 'NS synchronization'
+                WHEN DiskCopy.gcType = dconst.GCTYPE_OVERWRITTEN     THEN 'Overwritten'
                 ELSE 'Unknown' END,
            getSvcClassList(FileSystem.id)
       FROM CastorFile, DiskCopy, FileSystem, DiskServer
@@ -535,7 +536,7 @@ BEGIN
     BEGIN
       SELECT id INTO unused FROM CastorFile
        WHERE fileid = fileIds(fid) AND nsHost = nsHostName;
-      stageForcedRm(fileIds(fid), nsHostName, 4);  -- GCTYPE_NS_SYNCH
+      stageForcedRm(fileIds(fid), nsHostName, dconst.GCTYPE_NSSYNCH);
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- this file was dropped from nameServer AND stager
       -- and still exists on disk. We put it into the list

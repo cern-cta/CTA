@@ -323,8 +323,8 @@ BEGIN
       END IF;
       -- Invalidate the diskcopy
       UPDATE DiskCopy
-         SET status = 7,  -- INVALID
-             gcType = 2   -- Too many replicas
+         SET status = dconst.DISKCOPY_INVALID,
+             gcType = dconst.GCTYPE_TOOMANYREPLICAS
        WHERE id = b.id;
     END LOOP;
   END LOOP;
@@ -2332,7 +2332,9 @@ BEGIN
     -- delete ongoing migrations
     deleteMigrationJobs(cfId);
     -- set DiskCopies to INVALID
-    UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
+    UPDATE DiskCopy
+       SET status = dconst.DISKCOPY_INVALID,
+           gcType = dconst.GCTYPE_OVERWRITTEN
      WHERE castorFile = cfId AND status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR);
     -- create new DiskCopy
     SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfId;
@@ -2560,7 +2562,7 @@ BEGIN
   -- Set selected DiskCopies to INVALID
   FORALL i IN dcsToRm.FIRST .. dcsToRm.LAST
     UPDATE DiskCopy
-       SET status = 7, -- INVALID
+       SET status = dconst.DISKCOPY_INVALID,
            gcType = inGcType
      WHERE id = dcsToRm(i);
 END;
