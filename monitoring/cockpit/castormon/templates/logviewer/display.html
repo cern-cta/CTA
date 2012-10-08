@@ -1,5 +1,5 @@
-{% extends "dlfui/base.html" %}
-{% load dlfui_extras %}
+{% extends "logviewer/base.html" %}
+{% load logviewer_extras %}
 
 <a name="top" />
 
@@ -17,10 +17,10 @@
     
     <table id="datatable">
         <thead>
-           {% include "dlfui/table_header.html" %} 
+           {% include "logviewer/table_header.html" %} 
         </thead>
         <tfoot>
-            {% include "dlfui/table_header.html" %}
+            {% include "logviewer/table_header.html" %}
         </tfoot>
         <tbody>
         </tbody>
@@ -31,6 +31,6 @@
 
 </div>
 
-{% include "dlfui/footer.html" %}
+{% include "logviewer/footer.html" %}
 
 {% endblock %}

@@ -147,7 +147,7 @@ INSTALLED_APPS = (
     'south',
     # Product
     'cockpit',
-    'dlfui',
+    'logviewer',
 )
 
 # A sample logging configuration. The only tangible logging

@@ -1,6 +1,6 @@
 <div id="search-bar">
-    <span><a href="/dlf"><img src="/static/img/home.png" title="Home" alt="Home"/></a><a href="/"><img src="/static/img/exit.png" alt="Go to Cockpit" title="Go to Cockpit" /></a></span>
-    <form action="/dlfurl" method="post">
+    <span><a href="/logviewer"><img src="/static/img/home.png" title="Home" alt="Home"/></a><a href="/"><img src="/static/img/exit.png" alt="Go to Cockpit" title="Go to Cockpit" /></a></span>
+    <form action="/logviewerurl" method="post">
         {% csrf_token %}
         File ID : <input type="text" name="file_id" size="12" placeholder="NSFILEID" />
         Request ID : <input type="text" name="req_id" size="33" placeholder="REQID" />

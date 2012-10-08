@@ -820,6 +820,7 @@ $(document).ready(function () {
         }
         metric_container = $(this).closest('.metric_container');
         metric_display = metric_container.find('div.metric-display');
+        metric_container.find('input.data-filter.active').removeClass('btn-warning active');
         filter_type = 'advanced';
         if (chart) {
             updateHiddenSeries();

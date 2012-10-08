@@ -1,6 +1,6 @@
 from django.conf.urls.defaults import patterns, include, url
 
-DLF_BASE = 'dlf'
+LOGVIEWER_BASE = 'logviewer'
 
 urlpatterns = patterns('',
     # sls overview page
@@ -16,11 +16,11 @@ urlpatterns = patterns('',
     url(r'^pushdata$', 'castormon.cockpit.views.pushdata'), # used by the MAE to push data right into the cockpit
 
     # DLF urls
-    url(r'^' + DLF_BASE + '$', 'castormon.dlfui.views.home'),
-    url(r'^dlfurl$', 'castormon.dlfui.views.url_dispatcher'),
-    url(r'^dlfgetdata$', 'castormon.dlfui.views.get_data'),
-    url(r'^' + DLF_BASE + '/file_id/(?P<file_id>[a-zA-Z0-9_\-]+)$', 'castormon.dlfui.views.display_data'),
-    url(r'^' + DLF_BASE + '/req_id/(?P<req_id>[a-zA-Z0-9_\-]+)$', 'castormon.dlfui.views.display_data'),
-    url(r'^' + DLF_BASE + '/tape_id/(?P<tape_id>[a-zA-Z0-9_\-]+)$', 'castormon.dlfui.views.display_data'),
+    url(r'^' + LOGVIEWER_BASE + '$', 'castormon.logviewer.views.home'),
+    url(r'^' + LOGVIEWER_BASE + 'url$', 'castormon.logviewer.views.url_dispatcher'),
+    url(r'^' + LOGVIEWER_BASE + 'getdata$', 'castormon.logviewer.views.get_data'),
+    url(r'^' + LOGVIEWER_BASE + '/file_id/(?P<file_id>[a-zA-Z0-9_\-]+)$', 'castormon.logviewer.views.display_data'),
+    url(r'^' + LOGVIEWER_BASE + '/req_id/(?P<req_id>[a-zA-Z0-9_\-]+)$', 'castormon.logviewer.views.display_data'),
+    url(r'^' + LOGVIEWER_BASE + '/tape_id/(?P<tape_id>[a-zA-Z0-9_\-]+)$', 'castormon.logviewer.views.display_data'),
 
 )

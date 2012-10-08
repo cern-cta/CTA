@@ -5,20 +5,20 @@
     <meta http-equiv="Content-Language" content="en-us" />
 
     <link href="/static/css/bootstrap.css" rel="stylesheet" />
-    <link href="/static/css/dlfui.css" rel="stylesheet" />
+    <link href="/static/css/logviewer.css" rel="stylesheet" />
     <link href="/static/css/jquery.dataTables.css" rel="stylesheet" />
 
     <script type="text/javascript" src="/static/js/jquery-1.7.2.min.js"></script>
     <script type="text/javascript" src="/static/js/jquery.dataTables.min.js"></script>
     <script type="text/javascript" src="/static/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="/static/js/dlf-scripts.js"></script>
+    <script type="text/javascript" src="/static/js/logviewer-scripts.js"></script>
 
     {% block extrahead %}{% endblock %}
 
     <title>{% block title %}CASTOR DLF{% endblock %}</title>
   </head>
   <body>
-    {% include "dlfui/searchbar.html" %}
+    {% include "logviewer/searchbar.html" %}
     {% block content %}{% endblock %}
   </body>
 </html>

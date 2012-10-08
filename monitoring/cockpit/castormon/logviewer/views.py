@@ -1,5 +1,5 @@
 """
-Views for DLFUI appli.
+Views for logviewer appli.
 """
 
 # Imports
@@ -31,7 +31,7 @@ HBASE_NAMESERVER = settings.HBASE_NAMESERVER
 TAPE_T = settings.TAPE_TABLE # table indexed by timestamp
 REQ_T = settings.REQ_TABLE # table indexed by request_id
 FILE_T = settings.FILE_TABLE # table indexed by file_id
-BASE_URL = '/' + castormon.urls.DLF_BASE
+BASE_URL = '/' + castormon.urls.LOGVIEWER_BASE
 T_COLUMNS = ['TIMESTAMP', 'LVL', 'INSTANCE', 'HOSTNAME', 'DAEMON', 'PID', 
              'TID', 'MSG', 'NSFILEID', 'REQID', 'TPVID']
 CACHE = {'tape_id' : dict(), 'file_id' : dict(), 'req_id' : dict()}
@@ -132,17 +132,17 @@ def _get_formated_data(raw_data):
         except KeyError:
             tmp_row.append('N/A')
         try:
-            tmp_row.append(''.join(['<a href="/dlf/file_id/', col['NSFILEID'],
+            tmp_row.append(''.join(['<a href="/logviewer/file_id/', col['NSFILEID'],
                                     '">', col['NSFILEID'], '</a>']))
         except KeyError:
             tmp_row.append(' - ')
         try:
-            tmp_row.append(''.join(['<a href="/dlf/req_id/', col['REQID'], 
+            tmp_row.append(''.join(['<a href="/logviewer/req_id/', col['REQID'], 
                                     '">', col['REQID'], '</a>']))
         except KeyError:
             tmp_row.append(' - ')
         try:
-            tmp_row.append(''.join(['<a href="/dlf/tape_id/', col['TPVID'],
+            tmp_row.append(''.join(['<a href="/logviewer/tape_id/', col['TPVID'],
                                     '">', col['TPVID'], '</a>']))
         except KeyError:
             tmp_row.append(' - ')
@@ -221,7 +221,7 @@ def _trim_cache():
 def home(request):
     """ Home view """
     return render_to_response(
-        'dlfui/home.html',
+        'logviewer/home.html',
         context_instance=RequestContext(request))
 
 def url_dispatcher(request):
@@ -261,7 +261,7 @@ def display_data(request, file_id=None, req_id=None, tape_id=None):
     debug['elapsed_time'] = _get_elapsed_time(start, finish)
 
     return render_to_response(
-            'dlfui/display.html',
+            'logviewer/display.html',
             {'filter' : _request,
              'debug' : debug},
             context_instance=RequestContext(request))
@@ -317,9 +317,8 @@ def get_data(request):
         data['iTotalRecords'] = len(full_data)
         data['iTotalDisplayRecords'] = len(filtered_data)
         try:
-            data['size_full'] = format((len(full_data) *
-                                       sys.getsizeof(full_data[0])),
-                                       "6,d")
+            data['size_full'] = str(len(full_data) *
+                                       sys.getsizeof(full_data[0]))
         except IndexError, exc:
             # in case we end up with no data
             data['size_full'] = 0
