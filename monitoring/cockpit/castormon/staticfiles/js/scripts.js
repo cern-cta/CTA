@@ -366,7 +366,7 @@ function _drawTimelineChart(metric_container, from, to) {
     // if we are on a display page
     if (metric_name) {
 
-        // initialize char options
+        // initialize chart options
         var options = getTimelineChartOptions(metric_name); 
 
         var url = getAjaxURL(metric_name, from, to, "timeline");
@@ -679,8 +679,12 @@ function getTopChartOptions(metric_name) {
             },
             yAxis: {
                 title: null,
+                type: log, // 'logarithmic'
                 stackLabels: {
                     enabled: true,
+                    formatter: function() {
+                        return 'Total : ' + this.total;
+                    },
                     style: {
                         fontWeight: 'bold',
                         color: (Highcharts.theme && Highcharts.theme.textColor) || 'gray'
@@ -693,8 +697,8 @@ function getTopChartOptions(metric_name) {
             tooltip: {
                 formatter: function() {
                     return '<b>'+ this.x +'</b><br/>'+
-                        this.series.name +': '+ this.y +'<br/>'+
-                        'Total: '+ this.point.stackTotal;
+                        this.series.name +' : '+ this.y +'<br/>'+
+                        'Total : '+ this.point.stackTotal;
                 }
             },
             plotOptions: {
