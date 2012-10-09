@@ -292,7 +292,7 @@ castor::rh::RateLimiter::checkAndUpdateLimit(const std::string user,
         break;
       }
     }
-    if (rc != MEMCACHED_END) {
+    if (rc != MEMCACHED_END && rc != MEMCACHED_NOTFOUND) {
       castor::exception::Exception ex(SEINTERNAL);
       ex.getMessage() << "Failure in call to memcached_result_value: "
                       << memcached_strerror(m_memc, rc);
