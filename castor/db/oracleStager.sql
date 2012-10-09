@@ -84,13 +84,13 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE StreamReport IS RECORD (
    diskserver VARCHAR2(2048),
    mountPoint VARCHAR2(2048));
-  TYPE StreamReport_Cur IS REF CURSOR RETURN StreamReport;  
+  TYPE StreamReport_Cur IS REF CURSOR RETURN StreamReport;
   TYPE FileResult IS RECORD (
    fileid INTEGER,
    nshost VARCHAR2(2048),
    errorcode INTEGER,
    errormessage VARCHAR2(2048));
-  TYPE FileResult_Cur IS REF CURSOR RETURN FileResult;  
+  TYPE FileResult_Cur IS REF CURSOR RETURN FileResult;
   TYPE LogEntry IS RECORD (
     timeinfo NUMBER,
     uuid VARCHAR2(2048),
@@ -124,25 +124,25 @@ BEGIN
 END;
 /
 
-/* Checks consistency of DiskCopies when a FileSystem comes  	 
- * back in production after a period spent in a DRAINING or a 	 
- * DISABLED status. 	 
- * Current checks/fixes include : 	 
- *   - Canceling recalls for files that are STAGED or CANBEMIGR 	 
- *     on the fileSystem that comes back. (Scheduled for bulk 	 
- *     operation) 	 
- *   - Dealing with files that are STAGEOUT on the fileSystem 	 
- *     coming back but already exist on another one 	 
- */ 	 
-CREATE OR REPLACE PROCEDURE checkFSBackInProd(fsId NUMBER) AS 	 
-BEGIN 	 
-  -- Flag the filesystem for processing in a bulk operation later. 	 
-  -- We need to do this because some operations are database intensive 	 
-  -- and therefore it is often better to process several filesystems 	 
-  -- simultaneous with one query as opposed to one by one. Especially 	 
-  -- where full table scans are involved. 	 
-  UPDATE FileSystemsToCheck SET toBeChecked = 1 	 
-   WHERE fileSystem = fsId; 	 
+/* Checks consistency of DiskCopies when a FileSystem comes
+ * back in production after a period spent in a DRAINING or a
+ * DISABLED status.
+ * Current checks/fixes include :
+ *   - Canceling recalls for files that are STAGED or CANBEMIGR
+ *     on the fileSystem that comes back. (Scheduled for bulk
+ *     operation)
+ *   - Dealing with files that are STAGEOUT on the fileSystem
+ *     coming back but already exist on another one
+ */
+CREATE OR REPLACE PROCEDURE checkFSBackInProd(fsId NUMBER) AS
+BEGIN
+  -- Flag the filesystem for processing in a bulk operation later.
+  -- We need to do this because some operations are database intensive
+  -- and therefore it is often better to process several filesystems
+  -- simultaneous with one query as opposed to one by one. Especially
+  -- where full table scans are involved.
+  UPDATE FileSystemsToCheck SET toBeChecked = 1
+   WHERE fileSystem = fsId;
   -- Look for files that are STAGEOUT on the filesystem coming back to life
   -- but already STAGED/CANBEMIGR/WAITTAPERECALL/WAITFS/STAGEOUT/
   -- WAITFS_SCHEDULING somewhere else
@@ -156,7 +156,7 @@ BEGIN
                 AND E.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR,
                                  dconst.DISKCOPY_WAITFS, dconst.DISKCOPY_STAGEOUT,
                                  dconst.DISKCOPY_WAITFS_SCHEDULING)) LOOP
-    -- Invalidate the DiskCopy 	 
+    -- Invalidate the DiskCopy
     UPDATE DiskCopy
        SET status = dconst.DISKCOPY_INVALID
      WHERE id = cf.dcId;
@@ -252,7 +252,7 @@ BEGIN
          WHERE FileSystem.diskServer = :new.id)
        AND status IN (0, 1, 2, 7);  -- CREATED, INITIALIZING, RUNNING, RESTART
   END IF;
-  -- If the diskserver is in PRODUCTION cancel the draining operation of 
+  -- If the diskserver is in PRODUCTION cancel the draining operation of
   -- filesystems not in DRAINING.
   IF :new.status = 0 THEN  -- PRODUCTION
     UPDATE DrainingFileSystem
@@ -262,7 +262,7 @@ BEGIN
          WHERE FileSystem.diskServer = :new.ID
            AND FileSystem.status != 1)  -- DRAINING
        AND status IN (0, 1, 2, 7);  -- CREATED, INITIALIZING, RUNNING, RESTART
-  END IF; 
+  END IF;
 END;
 /
 
@@ -335,14 +335,14 @@ END;
 /
 
 
-/* Trigger used to provide input to the statement level trigger 
+/* Trigger used to provide input to the statement level trigger
  * defined above
  */
 CREATE OR REPLACE TRIGGER tr_DiskCopy_Online
 AFTER UPDATE OF status ON DiskCopy
 FOR EACH ROW
 WHEN ((old.status != 10) AND    -- !CANBEMIGR -> {STAGED, CANBEMIGR}
-      (new.status = 0 OR new.status = 10))     
+      (new.status = 0 OR new.status = 10))
 DECLARE
   svcId  NUMBER;
   unused NUMBER;
@@ -415,57 +415,9 @@ BEGIN
          SET status = dconst.SUBREQUEST_WAITSCHED, subReqId = nvl(subReqId, uuidGen())
        WHERE id = varSrId
       RETURNING id, retryCounter, fileName, protocol, xsize, modeBits, flags, subReqId,
-        answered, reqType, request, (SELECT object FROM Type2Obj WHERE type = reqType) 
+        answered, reqType, request, (SELECT object FROM Type2Obj WHERE type = reqType)
         INTO srId, srRetryCounter, srFileName, srProtocol, srXsize, srModeBits, srFlags, srSubReqId,
         srAnswered, srReqType, rId, varRName;
-      -- XXX This could be done in a single EXECUTE IMMEDIATE statement, but to make it
-      -- XXX efficient we implement a CASE construct. At a later time the FileRequests should
-      -- XXX be merged in a single table (partitioned by reqType) to avoid the following block.
-      CASE
-        WHEN varRName = 'StagePrepareToPutRequest' THEN 
-          SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, client
-            INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, varClientId
-            FROM StagePrepareToPutRequest WHERE id = rId;
-        WHEN varRName = 'StagePrepareToGetRequest' THEN 
-          SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, client
-            INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, varClientId
-            FROM StagePrepareToGetRequest WHERE id = rId;
-        WHEN varRName = 'StagePrepareToUpdateRequest' THEN 
-          SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, client
-            INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, varClientId
-            FROM StagePrepareToUpdateRequest WHERE id = rId;
-        WHEN varRName = 'StageRepackRequest' THEN 
-          SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, repackVid, client
-            INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, rRepackVid, varClientId
-            FROM StageRepackRequest WHERE id = rId;
-        WHEN varRName = 'StagePutRequest' THEN 
-          SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, client
-            INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, varClientId
-            FROM StagePutRequest WHERE id = rId;
-        WHEN varRName = 'StageGetRequest' THEN 
-          SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, client
-            INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, varClientId
-            FROM StageGetRequest WHERE id = rId;
-        WHEN varRName = 'StageUpdateRequest' THEN 
-          SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, client
-            INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, varClientId
-            FROM StageUpdateRequest WHERE id = rId;
-        WHEN varRName = 'StagePutDoneRequest' THEN 
-          SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, client
-            INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, varClientId
-            FROM StagePutDoneRequest WHERE id = rId;
-        WHEN varRName = 'StageRmRequest' THEN 
-          SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, client
-            INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, varClientId
-            FROM StageRmRequest WHERE id = rId;
-        WHEN varRName = 'SetFileGCWeight' THEN 
-          SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, weight, client
-            INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, rGcWeight, varClientId
-            FROM SetFileGCWeight WHERE id = rId;
-      END CASE;
-      SELECT ipAddress, port, version
-        INTO clIpAddress, clPort, clVersion
-        FROM Client WHERE id = varClientId;
       EXIT;
     EXCEPTION
       WHEN NO_DATA_FOUND THEN
@@ -477,6 +429,64 @@ BEGIN
     END;
   END LOOP;
   CLOSE SRcur;
+
+  BEGIN
+    -- XXX This could be done in a single EXECUTE IMMEDIATE statement, but to make it
+    -- XXX efficient we implement a CASE construct. At a later time the FileRequests should
+    -- XXX be merged in a single table (partitioned by reqType) to avoid the following block.
+    CASE
+      WHEN varRName = 'StagePrepareToPutRequest' THEN
+        SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, client
+          INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, varClientId
+          FROM StagePrepareToPutRequest WHERE id = rId;
+      WHEN varRName = 'StagePrepareToGetRequest' THEN
+        SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, client
+          INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, varClientId
+          FROM StagePrepareToGetRequest WHERE id = rId;
+      WHEN varRName = 'StagePrepareToUpdateRequest' THEN
+        SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, client
+          INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, varClientId
+          FROM StagePrepareToUpdateRequest WHERE id = rId;
+      WHEN varRName = 'StageRepackRequest' THEN
+        SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, repackVid, client
+          INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, rRepackVid, varClientId
+          FROM StageRepackRequest WHERE id = rId;
+      WHEN varRName = 'StagePutRequest' THEN
+        SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, client
+          INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, varClientId
+          FROM StagePutRequest WHERE id = rId;
+      WHEN varRName = 'StageGetRequest' THEN
+        SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, client
+          INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, varClientId
+          FROM StageGetRequest WHERE id = rId;
+      WHEN varRName = 'StageUpdateRequest' THEN
+        SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, client
+          INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, varClientId
+          FROM StageUpdateRequest WHERE id = rId;
+      WHEN varRName = 'StagePutDoneRequest' THEN
+        SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, client
+          INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, varClientId
+          FROM StagePutDoneRequest WHERE id = rId;
+      WHEN varRName = 'StageRmRequest' THEN
+        SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, client
+          INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, varClientId
+          FROM StageRmRequest WHERE id = rId;
+      WHEN varRName = 'SetFileGCWeight' THEN
+        SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, weight, client
+          INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, rGcWeight, varClientId
+          FROM SetFileGCWeight WHERE id = rId;
+    END CASE;
+    SELECT ipAddress, port, version
+      INTO clIpAddress, clPort, clVersion
+      FROM Client WHERE id = varClientId;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- Something went really wrong, our subrequest does not have the corresponding request or client.
+    -- Just drop it and re-raise exception. Some rare occurrences have happened in the past,
+    -- this catch-all logic protects the stager-scheduling system from getting stuck with a single such case.
+    archiveSubReq(varSrId, dconst.SUBREQUEST_FAILED_FINISHED);
+    COMMIT;
+    raise_application_error(-20100, 'Request got corrupted and could not be processed');
+  END;
 END;
 /
 
@@ -677,7 +687,7 @@ BEGIN
            WHEN abortedSRstatus IN (dconst.SUBREQUEST_FAILED,
                                     dconst.SUBREQUEST_FINISHED,
                                     dconst.SUBREQUEST_FAILED_FINISHED,
-                                    dconst.SUBREQUEST_ARCHIVED) THEN 
+                                    dconst.SUBREQUEST_ARCHIVED) THEN
              -- nothing to be done here
              NULL;
         END CASE;
@@ -950,7 +960,7 @@ BEGIN
     EXIT WHEN c%NOTFOUND;
     BEGIN
       SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ answered INTO varSrAnswered
-        FROM SubRequest PARTITION (P_STATUS_7) 
+        FROM SubRequest PARTITION (P_STATUS_7)
        WHERE id = varSRId FOR UPDATE NOWAIT;
       IF varSrAnswered = 1 THEN
         -- already answered, archive and move on
@@ -1023,7 +1033,7 @@ BEGIN
           -- This should never happen, we have either an orphaned subrequest
           -- or a request with an unsupported type.
           -- As we couldn't get the client, we just archive and move on.
-          -- XXX For next version, call logToDLF() instead of silently archive. 
+          -- XXX For next version, call logToDLF() instead of silently archive.
           srId := 0;
           archiveSubReq(varSRId, dconst.SUBREQUEST_FAILED_FINISHED);
           COMMIT;
@@ -1158,7 +1168,7 @@ BEGIN
   -- Check that the pool has space, taking into account current
   -- availability and space reserved by Put requests in the queue
   IF (failJobsFlag = 1) THEN
-    SELECT count(*), sum(free - totalSize * minAllowedFreeSpace) 
+    SELECT count(*), sum(free - totalSize * minAllowedFreeSpace)
       INTO c, availSpace
       FROM DiskPool2SvcClass, FileSystem, DiskServer
      WHERE DiskPool2SvcClass.child = svcClassId
@@ -1320,7 +1330,7 @@ BEGIN
        AND ROWNUM < 2;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     NULL;  -- Nothing
-  END; 
+  END;
   -- If we are in this procedure then we did not find a copy of the
   -- file in the target service class that could be used. So, we check
   -- to see if the user has the rights to create a file in the destination
@@ -1589,7 +1599,7 @@ BEGIN
            requestedFileSystems = fsPath,
            xsize = 0, status = 13, -- READYFORSCHED
            getNextStatus = 1 -- FILESTAGED
-     WHERE id = srId;    
+     WHERE id = srId;
   END IF;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   raise_application_error(-20115, 'No suitable filesystem found for this empty file');
@@ -1811,7 +1821,7 @@ BEGIN
               result := dconst.DISKCOPY_WAITDISK2DISKCOPY;
             EXCEPTION WHEN NO_DATA_FOUND THEN
               -- replication failed. We still go ahead with the access
-              result := dconst.DISKCOPY_STAGED;  
+              result := dconst.DISKCOPY_STAGED;
             END;
           ELSE
             -- no replication to be done
@@ -2030,7 +2040,7 @@ BEGIN
        AND StageDiskCopyReplicaRequest.svcclass = svcClassId
        AND DiskCopy.castorfile = cfId
        AND DiskCopy.status = 1); -- WAITDISK2DISKCOPY
-  
+
   IF nbDCs > 0 THEN
     -- Yes, we have some
     result := 0;  -- DISKCOPY_STAGED
@@ -2048,7 +2058,7 @@ BEGIN
       -- check whether there's already a recall, and get its svcClass
       SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ Request.svcClass, DiskCopy.id
         INTO recSvcClass, recDcId
-        FROM (SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */ 
+        FROM (SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */
                      id, svcClass FROM StagePrepareToGetRequest UNION ALL
               SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */
                      id, svcClass FROM StageGetRequest UNION ALL
@@ -2629,7 +2639,7 @@ BEGIN
                          dconst.DISKCOPY_WAITFS_SCHEDULING);
 
   -- in case we are dropping CANBEMIGR diskcopies, ensure that we have at least one copy left on disk
-  IF dcsToRmStatus.COUNT > 0 THEN 
+  IF dcsToRmStatus.COUNT > 0 THEN
     IF dcsToRmStatus(1) = dconst.DISKCOPY_CANBEMIGR THEN
       BEGIN
         SELECT castorFile INTO cfId
@@ -3133,7 +3143,7 @@ BEGIN
       ||'" stackTrace="' || dbms_utility.format_error_backtrace ||'"');
   END;
   RETURN 0;
-END; 
+END;
 /
 
 /* PL/SQL method that selects the recallGroup to be used */

@@ -971,7 +971,7 @@ PROCEDURE transferToSchedule(srId OUT INTEGER,              srSubReqId OUT VARCH
      ORDER BY status ASC, SR.creationTime ASC;
   SrLocked EXCEPTION;
   PRAGMA EXCEPTION_INIT (SrLocked, -54);
-  srIntId NUMBER;
+  varSrId NUMBER;
   svcClassId NUMBER;
   unusedMessage VARCHAR2(2048);
   unusedStatus INTEGER;
@@ -979,7 +979,7 @@ BEGIN
   -- Open a cursor on potential candidates
   OPEN c;
   -- Retrieve the first candidate
-  FETCH c INTO srIntId;
+  FETCH c INTO varSrId;
   IF c%NOTFOUND THEN
     -- There is no candidate available. Wait for next alert concerning something
     -- to schedule for a maximum of 3 seconds.
@@ -990,7 +990,7 @@ BEGIN
     DBMS_ALERT.WAITONE('transferReadyToSchedule', unusedMessage, unusedStatus, 3);
     -- try again to find something now that we waited
     OPEN c;
-    FETCH c INTO srIntId;
+    FETCH c INTO varSrId;
     IF c%NOTFOUND THEN
       -- still nothing. We will give back the control to the application
       -- so that it can handle cases like signals and exit. We will probably
@@ -1005,9 +1005,9 @@ BEGIN
       -- Try to lock the current candidate, verify that the status is valid. A
       -- valid subrequest is either in READYFORSCHED or has been stuck in
       -- BEINGSCHED for more than 1800 seconds (30 mins)
-      SELECT /*+ INDEX(SR PK_SubRequest_ID) */ id INTO srIntId
+      SELECT /*+ INDEX(SR PK_SubRequest_ID) */ id INTO varSrId
         FROM SubRequest PARTITION (P_STATUS_13_14) SR
-       WHERE id = srIntId
+       WHERE id = varSrId
          AND status = dconst.SUBREQUEST_READYFORSCHED
          FOR UPDATE NOWAIT;
       -- We have successfully acquired the lock, so we update the subrequest
@@ -1015,7 +1015,7 @@ BEGIN
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
          SET status = dconst.SUBREQUEST_READY,
              lastModificationTime = getTime()
-       WHERE id = srIntId
+       WHERE id = varSrId
       RETURNING id, subReqId, protocol, xsize, requestedFileSystems
         INTO srId, srSubReqId, srProtocol, srXsize, srRfs;
       -- and we exit the loop on candidates
@@ -1030,7 +1030,7 @@ BEGIN
     END;
     -- we are here because the current candidate could not be handled
     -- let's go to the next one
-    FETCH c INTO srIntId;
+    FETCH c INTO varSrId;
     IF c%NOTFOUND THEN
       -- no next one ? then we can return
       RETURN;
@@ -1038,49 +1038,58 @@ BEGIN
   END LOOP;
   CLOSE c;
 
-  -- We finally got a valid candidate, let's process it
-  -- Extract the rest of the information required by transfer manager
-  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/
-         CastorFile.id, CastorFile.fileId, CastorFile.nsHost, SvcClass.name, SvcClass.id,
-         Request.type, Request.reqId, Request.euid, Request.egid, Request.username,
-         Request.direction, Request.sourceDiskCopy, Request.destDiskCopy,
-         Request.sourceSvcClass, Client.ipAddress, Client.port, Client.version,
-         129 clientType, Client.secure, Request.creationTime,
-         decode(SvcClass.defaultFileSize, 0, 2000000000, SvcClass.defaultFileSize)
-    INTO cfId, cfFileId, cfNsHost, reqSvcClass, svcClassId, reqType, reqId, reqEuid, reqEgid,
-         reqUsername, srOpenFlags, reqSourceDiskCopy, reqDestDiskCopy, reqSourceSvcClass,
-         clientIp, clientPort, clientVersion, clientType, clientSecure, reqCreationTime,
-         reqDefaultFileSize
-    FROM SubRequest, CastorFile, SvcClass, Client,
-         (SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */
-                 id, username, euid, egid, reqid, client, creationTime,
-                 'w' direction, svcClass, NULL sourceDiskCopy,
-                 NULL destDiskCopy, NULL sourceSvcClass, 40 type
-            FROM StagePutRequest
-           UNION ALL
-          SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */
-                 id, username, euid, egid, reqid, client, creationTime,
-                 'r' direction, svcClass, NULL sourceDiskCopy,
-                 NULL destDiskCopy, NULL sourceSvcClass, 35 type
-            FROM StageGetRequest
-           UNION ALL
-          SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */
-                 id, username, euid, egid, reqid, client, creationTime,
-                 'o' direction, svcClass, NULL sourceDiskCopy,
-                 NULL destDiskCopy, NULL sourceSvcClass, 44 type
-            FROM StageUpdateRequest
-           UNION ALL
-          SELECT /*+ INDEX(StageDiskCopyReplicaRequest PK_StageDiskCopyReplicaRequ_Id) */
-                 id, username, euid, egid, reqid, client, creationTime,
-                 'w' direction, svcClass, sourceDiskCopy, destDiskCopy,
-                 (SELECT name FROM SvcClass WHERE id = sourceSvcClass), 133 type
-            FROM StageDiskCopyReplicaRequest) Request
-   WHERE SubRequest.id = srId
-     AND SubRequest.castorFile = CastorFile.id
-     AND Request.svcClass = SvcClass.id
-     AND Request.id = SubRequest.request
-     AND Request.client = Client.id;
-
+  BEGIN
+    -- We finally got a valid candidate, let's process it
+    -- Extract the rest of the information required by transfer manager
+    SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/
+           CastorFile.id, CastorFile.fileId, CastorFile.nsHost, SvcClass.name, SvcClass.id,
+           Request.type, Request.reqId, Request.euid, Request.egid, Request.username,
+           Request.direction, Request.sourceDiskCopy, Request.destDiskCopy,
+           Request.sourceSvcClass, Client.ipAddress, Client.port, Client.version,
+           129 clientType, Client.secure, Request.creationTime,
+           decode(SvcClass.defaultFileSize, 0, 2000000000, SvcClass.defaultFileSize)
+      INTO cfId, cfFileId, cfNsHost, reqSvcClass, svcClassId, reqType, reqId, reqEuid, reqEgid,
+           reqUsername, srOpenFlags, reqSourceDiskCopy, reqDestDiskCopy, reqSourceSvcClass,
+           clientIp, clientPort, clientVersion, clientType, clientSecure, reqCreationTime,
+           reqDefaultFileSize
+      FROM SubRequest, CastorFile, SvcClass, Client,
+           (SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */
+                   id, username, euid, egid, reqid, client, creationTime,
+                   'w' direction, svcClass, NULL sourceDiskCopy,
+                   NULL destDiskCopy, NULL sourceSvcClass, 40 type
+              FROM StagePutRequest
+             UNION ALL
+            SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */
+                   id, username, euid, egid, reqid, client, creationTime,
+                   'r' direction, svcClass, NULL sourceDiskCopy,
+                   NULL destDiskCopy, NULL sourceSvcClass, 35 type
+              FROM StageGetRequest
+             UNION ALL
+            SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */
+                   id, username, euid, egid, reqid, client, creationTime,
+                   'o' direction, svcClass, NULL sourceDiskCopy,
+                   NULL destDiskCopy, NULL sourceSvcClass, 44 type
+              FROM StageUpdateRequest
+             UNION ALL
+            SELECT /*+ INDEX(StageDiskCopyReplicaRequest PK_StageDiskCopyReplicaRequ_Id) */
+                   id, username, euid, egid, reqid, client, creationTime,
+                   'w' direction, svcClass, sourceDiskCopy, destDiskCopy,
+                   (SELECT name FROM SvcClass WHERE id = sourceSvcClass), 133 type
+              FROM StageDiskCopyReplicaRequest) Request
+     WHERE SubRequest.id = srId
+       AND SubRequest.castorFile = CastorFile.id
+       AND Request.svcClass = SvcClass.id
+       AND Request.id = SubRequest.request
+       AND Request.client = Client.id;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- Something went really wrong, our subrequest does not have the corresponding request or client.
+    -- Just drop it and re-raise exception. Some rare occurrences have happened in the past,
+    -- this catch-all logic protects the stager-scheduling system from getting stuck with a single such case.
+    archiveSubReq(varSrId, dconst.SUBREQUEST_FAILED_FINISHED);
+    COMMIT;
+    raise_application_error(-20100, 'Request got corrupted and could not be processed');
+  END;
+  
   -- In case of disk2disk copies, requested filesystems are concerning the sources
   -- destinations are free
   IF reqType = 133 THEN  -- StageDiskCopyReplicaRequest
@@ -1114,7 +1123,6 @@ BEGIN
       srRfs := srRfs || line.candidate;
     END LOOP;
   END IF;
-
 END;
 /
 
