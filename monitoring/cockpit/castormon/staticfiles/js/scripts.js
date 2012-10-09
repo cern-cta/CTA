@@ -165,7 +165,36 @@ function getTimelineChartOptions(metric_name) {
                 animation: false,
                 shadow: false,
                 marginTop: 20,
-                type: 'spline'
+                type: 'spline',
+                resetZoomButton: {
+                    position: {
+                        align: 'right',
+                        verticalAlign: 'top',
+                        x: 90,
+                        //y: -20
+                    },
+                    theme: {
+                        r: 4,
+                        height: 25,
+                        stroke: '#bfbfbf',
+                        style: {
+                            color: '#333',
+                        },
+                        fill: {
+                            linear_gradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+				            stops: [[0, '#FFF'], [1, '#E6E6E6']]
+				        },
+                        states: {
+                            hover: {
+                                fill: '#e6e6e6',
+                                style: {
+                                    color: '#333',
+                                },
+                                stroke: '#BBB',
+                            }
+                        }
+                    }
+                }
             },
             plotOptions: {
                 series: {
@@ -194,7 +223,7 @@ function getTimelineChartOptions(metric_name) {
                 }              
             },
             rangeSelector: {
-                enabled: true,
+                enabled: false /*,
                 buttons : [
                     {
                         type : 'minute',
@@ -212,7 +241,7 @@ function getTimelineChartOptions(metric_name) {
                     }
                 ],
                 selected: 2,
-                inputEnabled: false
+                inputEnabled: false*/
             },
             navigator: {
                 enabled : false
@@ -222,6 +251,7 @@ function getTimelineChartOptions(metric_name) {
             },
             xAxis: {
                 type: 'datetime',
+                minRange: 600 * 1000, // 10 minutes
                 ordinal: false
             },
             yAxis: {
