@@ -1538,6 +1538,8 @@ BEGIN
     UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
      WHERE status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR)
        AND castorFile = varCfId;
+    -- cleanup other migration jobs for that file if any
+    DELETE FROM MigrationJob WHERE castorfile = varCfId;
     -- Log 'file was dropped or modified during migration, giving up'
     logToDLF(inReqid, dlf.LVL_NOTICE, dlf.MIGRATION_FILE_DROPPED, inFileId, varNsHost, 'tapegatewayd',
              'mountTransactionId=' || to_char(inMountTrId) || ' ErrorCode=' || to_char(inErrorCode) ||
