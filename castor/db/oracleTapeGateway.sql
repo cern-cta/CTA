@@ -481,7 +481,7 @@ BEGIN
     logToDLF(inReqId, dlf.LVL_NOTICE, dlf.RECALL_FILE_OVERWRITTEN, inFileId, inNsHost, 'tapegatewayd',
              'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || inVID ||
              ' fseq=' || TO_CHAR(inFseq) || ' NsLastUpdateTime=' || TO_CHAR(varNSLastUpdateTime) ||
-             ' CFLastUpdateTime=' || TO_CHAR(inLastUpdateTime));
+             ' CFLastUpdateTime=' || TO_CHAR(inLastUpdateTime) || inLogContext);
     RETURN FALSE;
   END IF;
 
@@ -489,7 +489,7 @@ BEGIN
   IF varNSCsumtype IS NULL THEN
     -- no -> let's set it (note that the function called commits in the remote DB)
     setSegChecksumWhenNull@remoteNS(inFileId, inCopyNb, inCksumName, inCksumValue);
-    -- log 'setFileRecalled : created missing checksum in the namespace'
+    -- log 'checkRecallInNS : created missing checksum in the namespace'
     logToDLF(inReqId, dlf.LVL_SYSTEM, dlf.RECALL_CREATED_CHECKSUM, inFileId, inNsHost, 'nsd',
              'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' copyNb=' || TO_CHAR(inCopyNb) ||
              ' TPVID=' || inVID || ' fseq=' || TO_CHAR(inFseq) || ' checksumType='  || inCksumName ||
@@ -498,14 +498,13 @@ BEGIN
     -- is the checksum matching ?
     -- note that this is probably useless as it was already checked at transfer time
     IF inCksumName = varNSCsumtype AND TO_CHAR(inCksumValue, 'XXXXXXXX') != varNSCsumvalue THEN
-      -- not matching ! Retry the recall
-      retryOrFailRecall(inCfId, inVID);
-      -- log "setFileRecalled : bad checksum detected, will retry if allowed"
+      -- not matching ! log "checkRecallInNS : bad checksum detected, will retry if allowed"
       logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_BAD_CHECKSUM, inFileId, inNsHost, 'tapegatewayd',
                'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || inVID ||
                ' fseq=' || TO_CHAR(inFseq) || ' copyNb=' || TO_CHAR(inCopyNb) || ' checksumType=' || inCksumName ||
                ' expectedChecksumValue=' || varNSCsumvalue ||
-               ' checksumValue=' || TO_CHAR(inCksumValue, 'XXXXXXXX'));
+               ' checksumValue=' || TO_CHAR(inCksumValue, 'XXXXXXXX') || inLogContext);
+      retryOrFailRecall(inCfId, inVID, inReqId, inLogContext);
       RETURN FALSE;
     END IF;
   END IF;
@@ -522,7 +521,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
            errorMessage = 'File was removed during recall'
      WHERE castorFile = inCfId
        AND status = dconst.SUBREQUEST_WAITTAPERECALL;
-  -- log "setFileRecalled : file was dropped from namespace during recall, giving up"
+  -- log "checkRecallInNS : file was dropped from namespace during recall, giving up"
   logToDLF(inReqId, dlf.LVL_NOTICE, dlf.RECALL_FILE_DROPPED, inFileId, inNsHost, 'tapegatewayd',
            'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || inVID ||
            ' fseq=' || TO_CHAR(inFseq) || ' CFLastUpdateTime=' || TO_CHAR(inLastUpdateTime) || ' ' || inLogContext);
@@ -676,12 +675,15 @@ END;
 /
 
 /* Attempt to retry a recall. Fail it in case it should not be retried anymore */
-CREATE OR REPLACE PROCEDURE retryOrFailRecall(inCfId IN NUMBER, inVID IN VARCHAR2) AS
-  varUnused INTEGER;
+CREATE OR REPLACE PROCEDURE retryOrFailRecall(inCfId IN NUMBER, inVID IN VARCHAR2,
+                                              inReqId IN VARCHAR2, inLogContext IN VARCHAR2) AS
+  varFileId INTEGER;
+  varNsHost VARCHAR2(2048);
   varRecallStillAlive INTEGER;
 BEGIN
   -- lock castorFile
-  SELECT id INTO varUnused FROM CastorFile WHERE id = inCfId FOR UPDATE;
+  SELECT fileId, nsHost INTO varFileId, varNsHost
+    FROM CastorFile WHERE id = inCfId FOR UPDATE;
   -- increase retry counters within mount and set recallJob status to NEW
   UPDATE RecallJob
      SET nbRetriesWithinMount = nbRetriesWithinMount + 1,
@@ -718,6 +720,9 @@ BEGIN
            errorMessage = 'File recall from tape has failed, please try again later'
      WHERE castorFile = inCfId 
        AND status = dconst.SUBREQUEST_WAITTAPERECALL;
+     -- log 'File recall has permanently failed'
+    logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_PERMANENTLY_FAILED, varFileId, varNsHost,
+      'tapegatewayd', ' TPVID=' || inVID ||' '|| inLogContext);
   END IF;
 END;
 /
@@ -1672,7 +1677,7 @@ BEGIN
         logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_FS_NOT_FOUND, varFileId, varNsHost, 'tapegatewayd',
                  'errorMessage="' || SQLERRM || '" mountTransactionId=' || to_char(inMountTrId) ||' '|| inLogContext);
         -- mark the recall job as failed, and maybe retry
-        retryOrFailRecall(varCfId, varVID);
+        retryOrFailRecall(varCfId, varVID, NULL, inLogContext);
       WHEN NO_DATA_FOUND THEN
         -- nothing found. In case we did not try so far, try to restart with low fseqs
         IF varNewFseq > -1 THEN
@@ -1735,7 +1740,7 @@ BEGIN
          AND nsHost = varNsHost
          FOR UPDATE;
     EXCEPTION WHEN NO_DATA_FOUND THEN
-      -- log "setFileRecalled : unable to identify Recall. giving up"
+      -- log "setBulkFileRecallResult : unable to identify Recall. giving up"
       logToDLF(varReqId, dlf.LVL_ERROR, dlf.RECALL_NOT_FOUND, inFileIds(i), varNsHost, 'tapegatewayd',
                'mountTransactionId=' || TO_CHAR(inMountTrId) || ' TPVID=' || varVID ||
                ' fseq=' || TO_CHAR(inFseqs(i)) || ' filePath=' || inFilePaths(i) || ' ' || inLogContext);
@@ -1749,10 +1754,10 @@ BEGIN
     ELSE
       -- Recall failed at tapeserver level, attempt to retry it
       -- log "setBulkFileRecallResult : recall process failed, will retry if allowed"
-      logToDLF(varReqId, dlf.LVL_ERROR, dlf.RECALL_FAILED, inFileIds(i), varNsHost, 'tapegatewayd',
+      logToDLF(varReqId, dlf.LVL_WARNING, dlf.RECALL_FAILED, inFileIds(i), varNsHost, 'tapegatewayd',
                'mountTransactionId=' || TO_CHAR(inMountTrId) || ' TPVID=' || varVID ||
                ' fseq=' || TO_CHAR(inFseqs(i)) || ' errorMessage="' || inErrorMsgs(i) ||'" '|| inLogContext);
-      retryOrFailRecall(varCfId, varVID);
+      retryOrFailRecall(varCfId, varVID, varReqId, inLogContext);
     END IF;
     COMMIT;
   END LOOP;
