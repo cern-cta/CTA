@@ -532,7 +532,8 @@ BEGIN
     -- Set all diskcopies to FAILED. We're preemptying the NS synchronization here
     UPDATE DiskCopy SET status = 4 -- FAILED
      WHERE castorFile =
-       (SELECT castorFile FROM DiskCopy WHERE id = dcId);
+       (SELECT castorFile FROM DiskCopy WHERE id = dcId)
+       AND status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR);
     -- drop ongoing recalls and migrations
     deleteRecallJobs(cfId);
     deleteMigrationJobs(cfId);

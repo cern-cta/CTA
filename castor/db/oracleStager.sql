@@ -583,7 +583,10 @@ BEGIN
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
          SET status = dconst.SUBREQUEST_FAILED
        WHERE id = sr.srId;
-      UPDATE DiskCopy SET status = dconst.DISKCOPY_FAILED
+      UPDATE DiskCopy
+         SET status = decode(status, dconst.DISKCOPY_WAITFS, dconst.DISKCOPY_FAILED,
+                                     dconst.DISKCOPY_WAITFS_SCHEDULING, dconst.DISKCOPY_FAILED,
+                                     dconst.DISKCOPY_INVALID)
        WHERE castorfile = sr.cfid AND status IN (dconst.DISKCOPY_STAGEOUT,
                                                  dconst.DISKCOPY_WAITFS,
                                                  dconst.DISKCOPY_WAITFS_SCHEDULING);
