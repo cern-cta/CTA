@@ -404,7 +404,10 @@ BEGIN
   LOOP
     -- Fetch next candidate
     FETCH SRcur INTO varSrId;
-    EXIT WHEN SRcur%NOTFOUND;
+    IF SRcur%NOTFOUND THEN
+      -- No candidate, just return
+      RETURN;
+    END IF;
     BEGIN
       -- Try to take a lock on the current candidate, and revalidate its status
       SELECT /*+ INDEX(SR PK_SubRequest_ID) */ id INTO varSrId
@@ -479,7 +482,7 @@ BEGIN
     SELECT ipAddress, port, version
       INTO clIpAddress, clPort, clVersion
       FROM Client WHERE id = varClientId;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
+  EXCEPTION WHEN OTHERS THEN
     -- Something went really wrong, our subrequest does not have the corresponding request or client.
     -- Just drop it and re-raise exception. Some rare occurrences have happened in the past,
     -- this catch-all logic protects the stager-scheduling system from getting stuck with a single such case.
