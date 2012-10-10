@@ -353,7 +353,7 @@ BEGIN
      AND FileSystem.diskserver = dsId
      AND DiskCopy.castorfile = cfId
      AND DiskCopy.id != dcId
-     AND DiskCopy.status IN (0, 1, 2, 10); -- STAGED, DISK2DISKCOPY, WAITTAPERECALL, CANBEMIGR
+     AND DiskCopy.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_DISK2DISKCOPY, dconst.DISKCOPY_CANBEMIGR);
   IF nbCopies > 0 THEN
     raise_application_error(-20112, 'Multiple copies of this file already found on this diskserver');
   END IF;

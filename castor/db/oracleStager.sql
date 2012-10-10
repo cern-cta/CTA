@@ -144,7 +144,7 @@ BEGIN
   UPDATE FileSystemsToCheck SET toBeChecked = 1
    WHERE fileSystem = fsId;
   -- Look for files that are STAGEOUT on the filesystem coming back to life
-  -- but already STAGED/CANBEMIGR/WAITTAPERECALL/WAITFS/STAGEOUT/
+  -- but already STAGED/CANBEMIGR/WAITFS/STAGEOUT/
   -- WAITFS_SCHEDULING somewhere else
   FOR cf IN (SELECT /*+ USE_NL(D E) INDEX(D I_DiskCopy_Status6) */
                     UNIQUE D.castorfile, D.id dcId
@@ -1083,8 +1083,8 @@ BEGIN
                     WHERE SubRequest.diskCopy = DiskCopy.id
                       AND DiskCopy.id = dci
                       AND SubRequest.reqType <> 37  -- OBJ_PrepareToPut
-                      AND DiskCopy.status IN (1, 2, 5, 6, 11) -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, STAGEOUT, WAITFS_SCHEDULING
-                      AND SubRequest.status IN (4, 13, 14, 6)), -- WAITTAPERECALL, READYFORSCHED, BEINGSCHED, READY
+                      AND DiskCopy.status IN (dconst.DISKCOPY_WAITDISK2DISKCOPY, dconst.DISKCOPY_WAITFS, dconst.DISKCOPY_STAGEOUT, dconst.DISKCOPY_WAITFS_SCHEDULING)
+                      AND SubRequest.status IN (dconst.SUBREQUEST_WAITTAPERECALL, dconst.SUBREQUEST_READYFORSCHED, dconst.SUBREQUEST_BEINGSCHED, dconst.SUBREQUEST_READY)),
         status = 5, -- WAITSUBREQ
         lastModificationTime = getTime()
   WHERE SubRequest.id = srId;
@@ -1711,7 +1711,7 @@ BEGIN
      AND nvl(FileSystem.status, 0) = 0 -- PRODUCTION
      AND DiskServer.id(+) = FileSystem.diskServer
      AND nvl(DiskServer.status, 0) = 0 -- PRODUCTION
-     AND DiskCopy.status IN (2, 11); -- WAITTAPERECALL, WAITFS_SCHEDULING
+     AND DiskCopy.status = dconst.DISKCOPY_WAITFS_SCHEDULING;
   IF dcIds.COUNT > 0 THEN
     -- DiskCopy is in WAIT*, make SubRequest wait on previous subrequest and do not schedule
     makeSubRequestWait(srId, dcIds(1));
@@ -2054,41 +2054,8 @@ BEGIN
     createDiskCopyReplicaRequest(srId, srcDcId, srvSvcClassId, svcClassId, reuid, regid);
     result := 1;  -- DISKCOPY_WAITDISK2DISKCOPY, for logging purposes
   ELSIF srcDcId = 0 THEN  -- recall
-    BEGIN
-      -- check whether there's already a recall, and get its svcClass
-      SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ Request.svcClass, DiskCopy.id
-        INTO recSvcClass, recDcId
-        FROM (SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */
-                     id, svcClass FROM StagePrepareToGetRequest UNION ALL
-              SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */
-                     id, svcClass FROM StageGetRequest UNION ALL
-              SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */
-                     id, svcClass FROM StageRepackRequest UNION ALL
-              SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */
-                     id, svcClass FROM StageUpdateRequest UNION ALL
-              SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */
-                     id, svcClass FROM StagePrepareToUpdateRequest) Request,
-             SubRequest, DiskCopy
-       WHERE SubRequest.request = Request.id
-         AND SubRequest.castorFile = cfId
-         AND DiskCopy.castorFile = cfId
-         AND DiskCopy.status = 2  -- WAITTAPERECALL
-         AND SubRequest.status = 4;  -- WAITTAPERECALL
-      -- we found one: we need to wait if either we are in a different svcClass
-      -- so that afterwards a disk-to-disk copy is triggered
-      IF svcClassId <> recSvcClass THEN
-        -- make this request wait on the existing WAITTAPERECALL diskcopy
-        makeSubRequestWait(srId, recDcId);
-        result := -2;
-      ELSE
-        -- this is a PrepareToGet, and another request is recalling the file
-        -- on our svcClass, so we can archive this one
-        result := 0;  -- DISKCOPY_STAGED
-      END IF;
-    EXCEPTION WHEN NO_DATA_FOUND THEN
-      -- let the stager trigger the recall
-      result := 2;  -- Tape Recall
-    END;
+    -- let the stager trigger the recall
+    result := 2;  -- Tape Recall
   ELSE
     result := -1;  -- user error
   END IF;
@@ -2319,7 +2286,7 @@ BEGIN
     END IF;
     -- check if recreation is possible for DiskCopies
     SELECT count(*) INTO nbRes FROM DiskCopy
-     WHERE status IN (1, 2, 5, 6, 11) -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, STAGEOUT, WAITFS_SCHEDULING
+     WHERE status = dconst.DISKCOPY_WAITDISK2DISKCOPY
        AND castorFile = cfId;
     IF nbRes > 0 THEN
       -- We found something, thus we cannot recreate
@@ -2327,7 +2294,7 @@ BEGIN
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
          SET status = dconst.SUBREQUEST_FAILED,
              errorCode = serrno.EBUSY,
-             errorMessage = 'File recreation canceled since file is either being recalled, or replicated or created by another user'
+             errorMessage = 'File recreation canceled since file is being replicated'
        WHERE id = srId;
       RETURN;
     END IF;
