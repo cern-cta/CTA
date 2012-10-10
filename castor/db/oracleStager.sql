@@ -2268,23 +2268,7 @@ BEGIN
        WHERE id = srId;
       RETURN;
     END IF;
-    -- check if recreation is possible for migrations
-    SELECT /*+ INDEX(MigrationJob I_MigrationJob_CFVID) */ count(*)
-      INTO nbRes FROM MigrationJob
-     WHERE status = tconst.MIGRATIONJOB_SELECTED
-      AND castorFile = cfId
-      AND ROWNUM < 2;
-    IF nbRes > 0 THEN
-      -- We found something, thus we cannot recreate
-      dcId := 0;
-      UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-         SET status = dconst.SUBREQUEST_FAILED,
-             errorCode = serrno.EBUSY,
-             errorMessage = 'File recreation canceled since file is being migrated'
-        WHERE id = srId;
-      RETURN;
-    END IF;
-    -- check if recreation is possible for DiskCopies
+    -- check if recreation is possible for disk2DiskCopies
     SELECT count(*) INTO nbRes FROM DiskCopy
      WHERE status = dconst.DISKCOPY_WAITDISK2DISKCOPY
        AND castorFile = cfId;
