@@ -10,57 +10,26 @@ var data_drilldown;
 var hc_colors = Highcharts.getOptions().colors;
 
 
-function getYAxisMin(log) {
-    if (log == '')
-        return 0
-    else
-        return null
-}
-
-function drawChart(metric_container, from, to) {
-    /*
-     * Wrapper function to draw the chart, according to the type of graph selected
-     */
-    switch(graphType) {
-        case 'timeline':
-            _drawTimelineChart(metric_container, from, to);
-            break;
-        case 'sum':
-            _drawSumChart(metric_container, from, to, 'sum');
-            break;
-        case 'average':
-            _drawSumChart(metric_container, from, to, 'average');
-            break;
-        case 'stacked':
-            _drawTopChart(metric_container);
-            break;
-        default:
-            break;
-    }
-}
-
-
 function getAjaxURL(metric_name, from, to, format_type) {
     /*
      * Build the URL for the Ajax request
      * NB : we use join instead of string concatenation, for performance purpose
      */
     var url = null;
-    if (format_type == "Top")
-        return ['/data/metric/', metric_name].join('') ;
-
-    if(from) {
-        if(to) {
-            url = ['/data/metric/', metric_name, '/', from, '/', to, '/', format_type].join('') ;
+    if (format_type == "Top") {
+        return ['/data/metric/', metric_name].join('');
+    }
+    if (from) {
+        if (to) {
+            url = ['/data/metric/', metric_name, '/', from, '/', to, '/', format_type].join('');
         } else {
-            url = ['/data/metric/', metric_name, '/', from, '/', format_type].join('') ;
+            url = ['/data/metric/', metric_name, '/', from, '/', format_type].join('');
         }
     } else {
-        url = ['/data/metric/', metric_name, '/', format_type].join('') ; 
+        url = ['/data/metric/', metric_name, '/', format_type].join('');
     }
     return url;
 }
-
 
 function updateHiddenSeries() {
     /*
@@ -82,6 +51,7 @@ function refreshChart(input) {
      * when user un/select logarithmic scale.
      * :param input: the button clicked
      */
+    var metric_container;
     metric_container = input.closest('.metric_container');
     if (filter_type == 'quick') {
         metric_container.find('input.data-filter.active').trigger('click');
@@ -90,23 +60,20 @@ function refreshChart(input) {
     }
 }
 
-
 function autoRefresh(rate) {
     /*
      * This function un/set the time for auto-refresh, with a provided rate.
      * :param rate: the wanted auto-refresh rate
      */
-    if(rate == 0) {
+    if (rate == 0) {
         clearInterval(autoRefreshTimer);
-    }
-    else {
+    } else {
         // first refresh so the user sees his action has triggered something,
         // then set the timer
         $('a.refresh-plot').trigger('click');
         autoRefreshTimer = setInterval("$('a.refresh-plot').trigger('click')", rate);
     }
 }
-
 
 function getPythonTimestamp(tmp) {
     /*
@@ -119,32 +86,29 @@ function getPythonTimestamp(tmp) {
     return parseInt(str);
 }
 
-
 function getTimestamp(string) {
     /*
      * util for the quick filtering :
      * return the timestamp that corresponds to the button pushed
      */
     var timestamp;
-    switch(string) {
-        case "last 3 hours":
-            timestamp = new Date() - 1000*3600*3;
-            break;
-        case "last day":
-            timestamp = new Date() - 1000*3600*24;
-            break;            
-        case "last 3 days":
-            timestamp = new Date() - 1000*3600*24*3;
-            break;            
-        case "all data":
-            return null;
-        default:
-            break;
+    switch (string) {
+    case "last 3 hours":
+        timestamp = new Date() - 1000*3600*3;
+        break;
+    case "last day":
+        timestamp = new Date() - 1000*3600*24;
+        break;            
+    case "last 3 days":
+        timestamp = new Date() - 1000*3600*24*3;
+        break;            
+    case "all data":
+        return null;
+    default:
+        break;
     }
-    
     return getPythonTimestamp(timestamp);
 }
-
 
 function getTimelineChartOptions(metric_name) {
     /*
@@ -223,25 +187,7 @@ function getTimelineChartOptions(metric_name) {
                 }              
             },
             rangeSelector: {
-                enabled: false /*,
-                buttons : [
-                    {
-                        type : 'minute',
-                        count : '60',
-                        text : '1h'
-                    },
-                    {
-                        type : 'minute',
-                        count : '1440',
-                        text : '1d'
-                    },
-                    {
-                        type: 'all',
-                        text: 'All'
-                    }
-                ],
-                selected: 2,
-                inputEnabled: false*/
+                enabled: false 
             },
             navigator: {
                 enabled : false
@@ -255,7 +201,6 @@ function getTimelineChartOptions(metric_name) {
                 ordinal: false
             },
             yAxis: {
-                // min: getYAxisMin(log),
                 startOnTick: false,
                 title: null,
                 type: log // 'logarithmic'
@@ -265,17 +210,6 @@ function getTimelineChartOptions(metric_name) {
                 crosshairs: true,
                 pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b><br/>',
                 yDecimals: 3
-                /*formatter: function() {
-                    var s = new Date(this.x) +'<br />';
-                    
-                    $.each(this.points, function(i, point) {
-                        s += '<span style="color:'+ point.series.color + ' ">'+
-                            point.series.name + '</span>: <b>' +
-                            parseInt(point.y).toFixed(3) +'</b><br />';
-                    });
-                    
-                    return s;
-                },*/
             },
             legend: {
                 enabled: true,
@@ -389,7 +323,10 @@ function getSumChartOptions(metric_name) {
 }
 
 
-function _drawTimelineChart(metric_container, from, to) {
+function drawTimelineChart(metric_container, from, to) {
+    /*
+     * Draw a timeline chart
+     */
 
     var metric_name = metric_container.attr('id');
 
@@ -404,108 +341,109 @@ function _drawTimelineChart(metric_container, from, to) {
         // preprocess the data, and give them to highchart
         $.getJSON(url, function(json) {
             switch (json["groupby"]) {
-                case 'Top':
-                    metric_container.find('select.graph-type').val('stacked').change();
-                    break;
-                case 0:
-                    $.each(json["datakeys"], function (i, datakey) {
+            case 'Top':
+                metric_container.find('select.graph-type').val('stacked').change();
+                break;
+            case 0:
+                $.each(json["datakeys"], function (i, datakey) {
+                    // serie initialisation
+                    var seriesOptions = {
+                        name : datakey,
+                        dataGrouping:{
+                            enabled: true,
+                            groupPixelWidth: 10
+                        },
+                        data : []
+                    };
+                    if (hiddenSeries[datakey]) {
+                        seriesOptions.visible = false;
+                    }
+                    $.each(json["data"], function(index, d) {
+                        var tmp;
+                        if (d[1][i] <= 0 && d[1][i] != null) {
+                            if (log == '') {
+                                tmp = 0;
+                            } else {
+                                tmp = null;
+                            }
+                        } else {
+                            tmp = d[1][i];
+                        }
+                        seriesOptions.data.push(
+                            [ d[0] * 1000 , tmp ]
+                        );
+                    });
+                    options.series.push( seriesOptions );
+                });
+                break;
+            case 1:
+                $.each(json["groupkeys"], function (i1, groupkey) {
+                    $.each(json["datakeys"], function (i2, datakey) {
                         // serie initialisation
                         var seriesOptions = {
-                            name : datakey,
+                            name : groupkey+'-'+datakey,
                             dataGrouping:{
                                 enabled: true,
                                 groupPixelWidth: 10
                             },
                             data : []
                         };
-                        if (hiddenSeries[datakey]) {
+                        if (hiddenSeries[seriesOptions.name]) {
                             seriesOptions.visible = false;
                         }
-                        $.each(json["data"], function(index, d) {
+                        $.each(json["data"], function(i, d) {
                             var tmp;
-                            if (d[1][i] <= 0 && d[1][i] != null) {
+                            if (d[1][groupkey][i2] <= 0 && d[1][groupkey][i2] != null){
                                 if (log == '') {
                                     tmp = 0;
                                 } else {
                                     tmp = null;
                                 }
                             } else {
-                                tmp = d[1][i];
+                                tmp = d[1][groupkey][i2];
                             }
                             seriesOptions.data.push(
-                                [ d[0] * 1000 , tmp ]
+                                [ d[0] * 1000, tmp ]
                             );
                         });
                         options.series.push( seriesOptions );
                     });
-                    break;
-                case 1:
-                    $.each(json["groupkeys"], function (i1, groupkey) {
-                        $.each(json["datakeys"], function (i2, datakey) {
-                            // serie initialisation
-                            var seriesOptions = {
-                                name : groupkey+'-'+datakey,
-                                dataGrouping:{
-                                    enabled: true,
-                                    groupPixelWidth: 10
-                                },
-                                data : []
-                            };
-                            if (hiddenSeries[seriesOptions.name]) {
-                                seriesOptions.visible = false;
+                });
+                break;
+            /*case 2:
+                $.each(json['keys1'], function (i, key1) {
+                    $.each(json['keys2'], function (i, key2) {
+                        var seriesOptions = {
+                            name : key1+'-'+key2,
+                            dataGrouping:{
+                                enabled: true,
+                                groupPixelWidth: 12
+                            },
+                            data : []
+                        };
+                        $.each(json["data"], function(i, d) {
+                            var tmp;
+                            if (log == "logarithmic" && d[1][key1][key2][0] == 0){
+                                tmp = null;
+                            } else {
+                                tmp = d[1][key1][key2][0];
                             }
-                            $.each(json["data"], function(i, d) {
-                                var tmp;
-                                if (d[1][groupkey][i2] <= 0 && d[1][groupkey][i2] != null){
-                                    if (log == '') {
-                                        tmp = 0;
-                                    } else {
-                                        tmp = null;
-                                    }
-                                } else {
-                                    tmp = d[1][groupkey][i2];
-                                }
-                                seriesOptions.data.push(
-                                    [ d[0] * 1000, tmp ]
-                                );
-                            });
-                            options.series.push( seriesOptions );
+                            seriesOptions.data.push(
+                                [ d[0] * 1000, tmp ]
+                            );
                         });
+                        options.series.push( seriesOptions );
                     });
-                    break;
-                /*case 2:
-                    $.each(json['keys1'], function (i, key1) {
-                        $.each(json['keys2'], function (i, key2) {
-                            var seriesOptions = {
-                                name : key1+'-'+key2,
-                                dataGrouping:{
-                                    enabled: true,
-                                    groupPixelWidth: 12
-                                },
-                                data : []
-                            };
-                            $.each(json["data"], function(i, d) {
-                                var tmp;
-                                if (log == "logarithmic" && d[1][key1][key2][0] == 0){
-                                    tmp = null;
-                                } else {
-                                    tmp = d[1][key1][key2][0];
-                                }
-                                seriesOptions.data.push(
-                                    [ d[0] * 1000, tmp ]
-                                );
-                            });
-                            options.series.push( seriesOptions );
-                        });
-                    });*/
-                default:
-                    metric_container.find('select.graph-type').val('sum').change();
-                    //metric_display.empty().html("<br /><br /><b><p>This metric cannot be plotted with this graph type</p></b>");
-                    break;
+                });*/
+            default:
+                metric_container.find('select.graph-type').val('sum').change();
+                //metric_display.empty().html("<br /><br /><b><p>This metric cannot be plotted with this graph type</p></b>");
+                break;
             } // switch end
             if (options.series.length) {
-                if (json['unit'])
+                if (json['unit']) {
                     options.yAxis.title = { text: json['unit']};
+                }
                 chart = new Highcharts.Chart(options);
             } else {
                 chart = null;
@@ -515,7 +453,11 @@ function _drawTimelineChart(metric_container, from, to) {
 }
 
 
-function _drawSumChart(metric_container, from, to, format_type) {
+function drawSumChart(metric_container, from, to, format_type) {
+    /*
+     * Draw a sum chart
+     */
+
     var metric_name = metric_container.attr('id');
 
     // if we are on a display page
@@ -529,148 +471,152 @@ function _drawSumChart(metric_container, from, to, format_type) {
         // preprocess the data, and give them to highchart
         $.getJSON(url, function(json) {
             switch (json["groupby"]) {
-                case 'Top':
-                    metric_container.find('select.graph-type').val('stacked').change();
-                    break;
-                case 0:
-                    options.xAxis.categories = json["datakeys"];
-                    options.series.push( { name: metric_name, data: json["data"]} );
-                    break;
-                case 1:
-                    options.xAxis.categories = json["groupkeys"];
-                    var data = [];
-                    $.each(json["groupkeys"], function (i, groupkey) {
-                        data.push(json["data"][groupkey][0]);
-                    });
-                    options.series.push( { name: metric_name, data: data} );
-                    break;
-                case 2:
-                    var data = {};
-                    options.xAxis.categories = json["data"]["keys1"];
-                    options.plotOptions.series.colorByPoint = false;
-                    $.each(json["data"]["keys2"], function (i, key2) {
-                        // serie initialisation
-                        var seriesOptions = {
-                            name : key2,
-                            data : []
-                        };
-                        if (hiddenSeries[key2]) {
-                            seriesOptions.visible = false;
-                        }
-                        $.each(json["data"]["keys1"], function (i, key1) {
-                            var tmp;
-                            if (json["data"][key1][key2][0] <= 0 && json["data"][key1][key2][0] != null ){
-                                if (log == '') {
-                                    tmp = 0;
-                                } else {
-                                    tmp = null;
-                                }
-                            } else {
-                                tmp = json["data"][key1][key2][0];
-                            }
-                            seriesOptions.data.push(tmp);
-                        });
-                        options.series.push( seriesOptions );
-                    });
-                    break;
-                case 3:
-                    categories_drilldown = json["data"]["keys1"];
-                    data_drilldown = [];
-                    
-                    $.each(json["data"]["keys2"], function (i2, key2) {
-                        // serie initialisation
-                        var seriesOptions = {
-                            name : key2,
-                            color : hc_colors[i2 % hc_colors.length],
-                            data : []
-                        };
-                        if (hiddenSeries[key2]) {
-                            seriesOptions.visible = false;
-                        }
-                        $.each(json["data"]["keys1"], function (i1, key1) {
-                            var tmp_value;
-                            if (!json["data"][key1][key2] || json["data"][key1][key2]['sum'][0] == 0){
-                                if (log == '') {
-                                    tmp_value = 0;
-                                } else {
-                                    tmp_value = null;
-                                }
-                            } else {
-                                tmp_value = json["data"][key1][key2]['sum'][0];
-                            }
-                            // build point
-                            var tmp_point = {
-                                y : tmp_value,
-                                name : [key1, '-', key2].join(''),
-                                drilldown: {}
-                            }
-                            
-                            // build drilldown on this point if not null
-                            if (json["data"][key1][key2]) {
-                                var tmp_drilldown = {
-                                    name : [key1, '-', key2].join(''),
-                                    categories: json["data"][key1][key2]['keys3'],
-                                    color : hc_colors[i2 % hc_colors.length],
-                                    data: []
-                                };
-                                var tmp_3;
-                                $.each(json["data"][key1][key2]['keys3'], function (i, key3) {
-                                    if (json["data"][key1][key2][key3]['sum'][0] <= 0){
-                                        if (log == '') {
-                                            tmp_3 = 0;
-                                        } else {
-                                            tmp_3 = null;
-                                        }
-                                    } else {
-                                        tmp_3 = json["data"][key1][key2][key3]['sum'][0];
-                                    }
-                                    tmp_drilldown.data.push(tmp_3);
-                                });
-                                tmp_point.drilldown = tmp_drilldown;
-                            }
-                            seriesOptions.data.push(tmp_point);
-                        });
-                        data_drilldown.push( seriesOptions );
-                    });
-                    
-                    options.xAxis.categories = categories_drilldown;
-                    options.series = data_drilldown;
-
-                    options.plotOptions.series.colorByPoint = false;
-                    options.plotOptions.column = {
-                        cursor: 'pointer',
-                        point: {
-                            events: {
-                                click: function() {
-                                    var drilldown = this.drilldown;
-
-                                    if (drilldown) { // drill down
-                                        this.series.xAxis.setCategories(drilldown.categories);
-                                        while(chart.series.length)
-                                            chart.series[0].remove(false);
-                                        chart.addSeries({name : drilldown.name,
-                                                         data : drilldown.data,
-                                                         color : drilldown.color});
-                                     } else { // restore
-                                         chart.xAxis[0].setCategories(categories_drilldown);
-                                        while(chart.series.length)
-                                            chart.series[0].remove(false);
-                                        for(i=0;i<=data_drilldown.length;i++)
-                                            chart.addSeries(data_drilldown[i], false);
-                                         chart.redraw();
-                                     }
-                                }
-                            }
-                        }
+            case 'Top':
+                metric_container.find('select.graph-type').val('stacked').change();
+                break;
+            case 0:
+                options.xAxis.categories = json["datakeys"];
+                options.series.push( { name: metric_name, data: json["data"]} );
+                break;
+            case 1:
+                options.xAxis.categories = json["groupkeys"];
+                var data = [];
+                $.each(json["groupkeys"], function (i, groupkey) {
+                    data.push(json["data"][groupkey][0]);
+                });
+                options.series.push( { name: metric_name, data: data} );
+                break;
+            case 2:
+                var data = {};
+                options.xAxis.categories = json["data"]["keys1"];
+                options.plotOptions.series.colorByPoint = false;
+                $.each(json["data"]["keys2"], function (i, key2) {
+                    // serie initialisation
+                    var seriesOptions = {
+                        name : key2,
+                        data : []
                     };
-                    break;
-                default:
-                    metric_display.empty().html("<br /><br /><b>This metric cannot be plotted with this graph type</b>");
-                    break;
+                    if (hiddenSeries[key2]) {
+                        seriesOptions.visible = false;
+                    }
+                    $.each(json["data"]["keys1"], function (i, key1) {
+                        var tmp;
+                        if (json["data"][key1][key2][0] <= 0 && json["data"][key1][key2][0] != null ){
+                            if (log == '') {
+                                tmp = 0;
+                            } else {
+                                tmp = null;
+                            }
+                        } else {
+                            tmp = json["data"][key1][key2][0];
+                        }
+                        seriesOptions.data.push(tmp);
+                    });
+                    options.series.push( seriesOptions );
+                });
+                break;
+            case 3:
+                categories_drilldown = json["data"]["keys1"];
+                data_drilldown = [];
+                
+                $.each(json["data"]["keys2"], function (i2, key2) {
+                    // serie initialisation
+                    var seriesOptions = {
+                        name : key2,
+                        color : hc_colors[i2 % hc_colors.length],
+                        data : []
+                    };
+                    if (hiddenSeries[key2]) {
+                        seriesOptions.visible = false;
+                    }
+                    $.each(json["data"]["keys1"], function (i1, key1) {
+                        var tmp_value;
+                        if (!json["data"][key1][key2] || json["data"][key1][key2]['sum'][0] == 0){
+                            if (log == '') {
+                                tmp_value = 0;
+                            } else {
+                                tmp_value = null;
+                            }
+                        } else {
+                            tmp_value = json["data"][key1][key2]['sum'][0];
+                        }
+                        // build point
+                        var tmp_point = {
+                            y : tmp_value,
+                            name : [key1, '-', key2].join(''),
+                            drilldown: {}
+                        }
+                        
+                        // build drilldown on this point if not null
+                        if (json["data"][key1][key2]) {
+                            var tmp_drilldown = {
+                                name : [key1, '-', key2].join(''),
+                                categories: json["data"][key1][key2]['keys3'],
+                                color : hc_colors[i2 % hc_colors.length],
+                                data: []
+                            };
+                            var tmp_3;
+                            $.each(json["data"][key1][key2]['keys3'], function (i, key3) {
+                                if (json["data"][key1][key2][key3]['sum'][0] <= 0){
+                                    if (log == '') {
+                                        tmp_3 = 0;
+                                    } else {
+                                        tmp_3 = null;
+                                    }
+                                } else {
+                                    tmp_3 = json["data"][key1][key2][key3]['sum'][0];
+                                }
+                                tmp_drilldown.data.push(tmp_3);
+                            });
+                            tmp_point.drilldown = tmp_drilldown;
+                        }
+                        seriesOptions.data.push(tmp_point);
+                    });
+                    data_drilldown.push( seriesOptions );
+                });
+                
+                options.xAxis.categories = categories_drilldown;
+                options.series = data_drilldown;
+
+                options.plotOptions.series.colorByPoint = false;
+                options.plotOptions.column = {
+                    cursor: 'pointer',
+                    point: {
+                        events: {
+                            click: function() {
+                                var drilldown = this.drilldown;
+
+                                if (drilldown) { // drill down
+                                    this.series.xAxis.setCategories(drilldown.categories);
+                                    while (chart.series.length) {
+                                        chart.series[0].remove(false);
+                                    }
+                                    chart.addSeries({name : drilldown.name,
+                                                     data : drilldown.data,
+                                                     color : drilldown.color});
+                                 } else { // restore
+                                     chart.xAxis[0].setCategories(categories_drilldown);
+                                    while (chart.series.length) {
+                                        chart.series[0].remove(false);
+                                    }
+                                    for (i=0 ; i<=data_drilldown.length ; i++) {
+                                        chart.addSeries(data_drilldown[i], false);
+                                    }
+                                    chart.redraw();
+                                 }
+                            }
+                        }
+                    }
+                };
+                break;
+            default:
+                metric_display.empty().html("<br /><br /><b>This metric cannot be plotted with this graph type</b>");
+                break;
             } // switch end
             if (options.series.length) {
-                if (json['unit'])
+                if (json['unit']) {
                     options.yAxis.title = { text: json['unit']};
+                }
                 chart = new Highcharts.Chart(options);
             } else {
                 chart = null;
@@ -752,7 +698,10 @@ function getTopChartOptions(metric_name) {
     };
 }
 
-function _drawTopChart(metric_container) {
+function drawTopChart(metric_container) {
+    /*
+     * Draw a Top chart
+     */
 
     var metric_name = metric_container.attr('id');
 
@@ -772,8 +721,9 @@ function _drawTopChart(metric_container) {
             });
 
             if (options.series.length) {
-                if (json['unit'])
+                if (json['unit']) {
                     options.yAxis.title = { text: json['unit']};
+                }
                 chart = new Highcharts.Chart(options);
             } else {
                 chart = null;
@@ -782,7 +732,32 @@ function _drawTopChart(metric_container) {
     }
 }
 
+
+function drawChart(metric_container, from, to) {
+    /*
+     * Wrapper function to draw the chart, according to the type of graph selected
+     */
+    switch (graphType) {
+    case 'timeline':
+        drawTimelineChart(metric_container, from, to);
+        break;
+    case 'sum':
+        drawSumChart(metric_container, from, to, 'sum');
+        break;
+    case 'average':
+        drawSumChart(metric_container, from, to, 'average');
+        break;
+    case 'stacked':
+        drawTopChart(metric_container);
+        break;
+    default:
+        break;
+    }
+}
+
+
 $(document).ready(function () {
+
 
     /****************************
      *  Auto size               *
@@ -802,7 +777,6 @@ $(document).ready(function () {
             thousandsSep : ',',
             decimalPoint: '.'
         }
-
 	});
 
     /****************
@@ -837,15 +811,15 @@ $(document).ready(function () {
         input_from = $(this).parent().find('input.datepicker-from').val();
         input_to = $(this).parent().find('input.datepicker-to').val();
 
-        if(input_from) {
+        if (input_from) {
             timestamp_from = getPythonTimestamp(new Date(input_from).getTime());
         } else {
             alert("Please fill in the FROM field");
             return;
         }
-        if(input_to) {
+        if (input_to) {
             timestamp_to = getPythonTimestamp(new Date(input_to).getTime() + 1000*3600*24);
-            if(timestamp_from >= timestamp_to) {
+            if (timestamp_from >= timestamp_to) {
                 alert("Did you build a time machine?");
                 return;
             }
@@ -875,7 +849,7 @@ $(document).ready(function () {
     /************************
      * Logarithmic scale    *
      ************************/
-    $('input.toggle-log-scale').toggle( function () {
+    $('input.toggle-log-scale').toggle(function () {
         $(this).addClass('btn-warning active');
         log = 'logarithmic';
         refreshChart($(this));
@@ -931,14 +905,14 @@ $(document).ready(function () {
      * Hide all series button    *
      *****************************/
     $('.metric_container button.hide-all-series').toggle( function () {
-        if(chart && chart.series){
+        if (chart && chart.series) {
             for (var i = 0 ; i < chart.series.length ; i++) {
                 chart.series[i].hide();
             }
         }
         $(this).html('Show all series');
     }, function() {
-        if(chart && chart.series){
+        if (chart && chart.series) {
             for (var i = 0 ; i < chart.series.length ; i++) {
                 chart.series[i].show();
             }

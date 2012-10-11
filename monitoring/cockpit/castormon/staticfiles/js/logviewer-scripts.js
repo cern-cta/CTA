@@ -11,21 +11,21 @@ function isVisible(field, request_type) {
 
 jQuery.fn.dataTableExt.oApi.fnProcessingIndicator = function ( oSettings, onoff )
 {
-    if( typeof(onoff) == 'undefined' )
+    if (typeof(onoff) == 'undefined')
     {
         onoff=true;
     }
     this.oApi._fnProcessingDisplay( oSettings, onoff );
 };
 
-function _search_columns_content(mode) {
+function search_columns_content(mode) {
     /*
      * Generate content of popovers
      */
     var columns = $('#datatable').dataTable().fnSettings().aoColumns;
     var html = "";
-    for(i=0; i<columns.length; i++) {
-        if (mode=="filter"){
+    for (i=0; i<columns.length; i++) {
+        if (mode=="filter") {
             html += '<button class="search_columns_button_'+mode+' btn btn-small '+( columns[i].bSearchable ? 'active' : '')+'" id='+i+'>';
             html += '<input type="checkbox" ' + ( columns[i].bSearchable ? 'checked="checked"' : '') + ' />';
         } else if (mode=="showhide") {
@@ -81,26 +81,26 @@ $(document).ready(function () {
         "bSortCellsTop": true,
         // pagination type
         "sPaginationType": "full_numbers",
-        "fnRowCallback": function( nRow, aData, iDisplayIndex, iDisplayIndexFull ) {
+        "fnRowCallback": function(nRow, aData, iDisplayIndex, iDisplayIndexFull) {
                 // format payload for display
                 $('td:last-child', nRow).html(aData[aData.length-1].replace(payload_reg, ' <b>$1</b>='));
                 // class according to severity lvl
-                switch(aData[1]) {
-                    case "Info":
-                        $('td', nRow).closest('tr').addClass('lvlInfo');
-                        break;
-                    case "Debug":
-                        $('td', nRow).closest('tr').addClass('lvlDebug');
-                        break;
-                    case "Error":
-                        $('td', nRow).closest('tr').addClass('lvlError');
-                        break;
-                    case "Warn":
-                        $('td', nRow).closest('tr').addClass('lvlWarn');
-                        break;
-                    default:
-                        $('td', nRow).closest('tr').addClass('lvlOther');
-                        break;
+                switch (aData[1]) {
+                case "Info":
+                    $('td', nRow).closest('tr').addClass('lvlInfo');
+                    break;
+                case "Debug":
+                    $('td', nRow).closest('tr').addClass('lvlDebug');
+                    break;
+                case "Error":
+                    $('td', nRow).closest('tr').addClass('lvlError');
+                    break;
+                case "Warn":
+                    $('td', nRow).closest('tr').addClass('lvlWarn');
+                    break;
+                default:
+                    $('td', nRow).closest('tr').addClass('lvlOther');
+                    break;
                 };
                 return nRow;
             },
@@ -147,7 +147,7 @@ $(document).ready(function () {
     var popoverOptionsShowHide = {
         placement : 'bottom',
         // here we need a function, to be called each time a display is asked
-        content : function() { return _search_columns_content('showhide'); } ,
+        content : function() { return search_columns_content('showhide'); } ,
         html: true,
         title : ''
     };
@@ -192,7 +192,7 @@ $(document).ready(function () {
     var popoverOptionsFilter = {
         placement : 'bottom',
         // here we need a function, to be called each time a display is asked
-        content : function() { return _search_columns_content('filter'); },
+        content : function() { return search_columns_content('filter'); },
         html: true,
         title : "Refine search"
     };
@@ -221,3 +221,4 @@ $(document).ready(function () {
         }
     });
 });
+
