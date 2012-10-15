@@ -75,7 +75,7 @@ EOF
   /bin/cat >> $1_oracle_create.sql <<EOF
 
 /* Flag the schema creation as COMPLETE */
-UPDATE UpgradeLog SET endDate = systeimstamp, state = 'COMPLETE';
+UPDATE UpgradeLog SET endDate = systimestamp, state = 'COMPLETE';
 COMMIT;
 EOF
 
