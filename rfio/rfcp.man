@@ -127,6 +127,10 @@ will use the value of the \fBSTAGE_SVCCLASS\fP environment variable if it is
 set. Please note the environment variable name \fBSTAGE_SVCCLASS\fP does not
 contain the letter \fBR\fP, unlike the corresponding configuration parameter
 in the castor configuration file \fB/etc/castor.conf\fP, see below.
+.TP
+.BI RFIO_TRACE
+Setting this environment variable to 3 causes the rfcp command to print a
+debugging trace to standard out.
 
 .SH CASTOR CONFIGURATION FILE PARAMETERS
 .TP
