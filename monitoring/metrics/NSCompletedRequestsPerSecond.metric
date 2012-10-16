@@ -1,0 +1,12 @@
+# Number of request completed per second (in the NameServer),
+# broken down by instance
+
+<metric>
+  name: NSCompletedRequestsPerSecond
+  window: 60
+  conditions: MSG=="Processing complete" and DAEMON=="nsd"
+  groupbykeys: INSTANCE
+  data: CounterHz(COUNT)
+  handle_unordered: time_threshold
+  nbins: 1
+</metric>

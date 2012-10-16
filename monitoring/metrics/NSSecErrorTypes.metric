@@ -1,0 +1,12 @@
+# Counts the occurrences of different types of Security errors per minute
+# NOTE: "Connection dropped by remote end" is most likely an expired/nonexistent token
+
+<metric>
+  name: NSSecErrorTypes
+  window: 60
+  conditions: MSG=="Error: Could not establish security context" and DAEMON=="nsd"
+  groupbykeys: Error
+  data: Counter(COUNT)
+  handle_unordered: time_threshold
+  nbins: 1
+</metric>

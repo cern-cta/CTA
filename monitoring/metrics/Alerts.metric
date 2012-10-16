@@ -1,0 +1,11 @@
+# Count of Crit and Alert msg broken down by instance and daemon
+
+<metric>
+  name: Alerts
+  window: 60
+  conditions: LVL in ["Crit","Alert"]
+  groupbykeys: INSTANCE, DAEMON
+  data: Counter(COUNT)
+  handle_unordered: time_threshold
+  nbins: 1
+</metric>

@@ -1,0 +1,12 @@
+# The rate of each instance in the daemon srmfed
+
+
+<metric>
+  name: SRMFEDRequestCount
+  window: 60
+  conditions: DAEMON=="srmfed"
+  groupbykeys: INSTANCE
+  data: CounterHz(COUNT)
+  handle_unordered: time_threshold
+  nbins: 1
+</metric>

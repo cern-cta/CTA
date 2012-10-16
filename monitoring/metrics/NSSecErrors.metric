@@ -1,0 +1,11 @@
+# Number of authentication errors per minute
+
+<metric>
+  name: NSSecErrors
+  window: 60
+  conditions: MSG=="Error: Could not establish security context" and DAEMON=="nsd"
+  groupbykeys: NONE
+  data: Counter(COUNT)
+  handle_unordered: time_threshold
+  nbins: 1
+</metric>

@@ -1,0 +1,11 @@
+# Count of error msg broken down by instance and daemon
+
+<metric>
+  name: ErrorsRmnoded
+  window: 60
+  conditions: LVL in ["Error"] and DAEMON in ["rmnoded"]
+  groupbykeys: INSTANCE, HOSTNAME
+  data: Counter(COUNT)
+  handle_unordered: time_threshold
+  nbins: 1
+</metric>

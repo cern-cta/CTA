@@ -1,0 +1,12 @@
+# Counts how many requests per second
+# breaking down by CASTOR instance
+
+<metric>
+  name: RequestsPerSecond
+  window: 60
+  conditions: MSG=="New Request Arrival" and DAEMON=="rhd"
+  groupbykeys: INSTANCE
+  data: CounterHz(COUNT)
+  handle_unordered: time_threshold
+  nbins: 1
+</metric>

@@ -1,0 +1,11 @@
+# Count of warning msg broken down by instance and daemon
+
+<metric>
+  name: Warnings
+  window: 60
+  conditions: LVL in ["Warn"]
+  groupbykeys: INSTANCE, DAEMON
+  data: Counter(COUNT)
+  handle_unordered: time_threshold
+  nbins: 1
+</metric>

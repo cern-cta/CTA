@@ -1,0 +1,12 @@
+# Counts how many requests per second
+# breaking down by CASTOR instance
+
+<metric>
+  name: UnablePerformRequest
+  window: 60
+  conditions: MSG=="Unable to perform request, notifying user" and DAEMON=="stagerd"
+  groupbykeys: INSTANCE
+  data: Counter(COUNT)
+  handle_unordered: time_threshold
+  nbins: 1
+</metric>

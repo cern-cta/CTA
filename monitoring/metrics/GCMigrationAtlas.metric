@@ -1,0 +1,33 @@
+# Measure the rate to tapeK
+# experimental
+# Gbytes to tape in the last 60s
+
+<metric>
+  name: GCMigrationAtlas
+  window: 60
+  conditions: DAEMON=="tapegatewayd" and INSTANCE=="c2atlas" and MSG=="Worker: updating nameserver for migrated file"
+  groupbykeys: NONE
+  data: AdderGB(fileSize)
+  handle_unordered: time_threshold
+  nbins: 1
+</metric>
+
+<metric>
+  name: GCMigrationbyTpsrvAtlas
+  window: 60
+  conditions: DAEMON=="tapegatewayd" and INSTANCE=="c2atlas" and MSG=="Worker: updating nameserver for migrated file"
+  groupbykeys: HostName
+  data: AdderGB(fileSize)
+  handle_unordered: time_threshold
+  nbins: 1
+</metric>
+
+<metric>
+  name: GCMigrationbyFclassAtlas
+  window: 60
+  conditions: DAEMON=="tapegatewayd" and INSTANCE=="c2atlas" and MSG=="Worker: updating nameserver for migrated file"
+  groupbykeys: fileClass
+  data: AdderGB(fileSize)
+  handle_unordered: time_threshold
+  nbins: 1
+</metric>
