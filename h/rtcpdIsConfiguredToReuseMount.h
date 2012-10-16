@@ -35,12 +35,14 @@
  * RTCOPYD/REUSEMOUNT parameter within the /etc/castor.conf file has been set
  * to the value of TRUE.  This value is case insensitive.
  *
- * This function returns false if it encounters an error such as a failure to
- * allocate memory whilst trying to determine the value of the
- * RTCOPYD/REUSEMOUNT parameter.
+ * This function returns the default value of true if the RTCOPYD/REUSEMOUNT
+ * parameter is not set within the /etc/castor.conf file.
  *
- * @return True if the RTCOPYD/REUSEMOUNT parameter within the
- *         /etc/castor.conf file has been set to the value of TRUE.
+ * This function returns the default value of true if it encounters an error
+ * such as a failure to allocate memory whilst trying to determine the value of
+ * the RTCOPYD/REUSEMOUNT parameter.
+ *
+ * @return The boolean value of the RTCOPYD/REUSEMOUNT configuration parameter.
  */
 EXTERN_C int rtcpdIsConfiguredToReuseMount();
 

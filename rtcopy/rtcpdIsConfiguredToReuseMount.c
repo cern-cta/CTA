@@ -8,19 +8,20 @@
 EXTERN_C int rtcpdIsConfiguredToReuseMount() {
   const char *const origParamValue = getconfent("RTCOPYD", "REUSE_MOUNT", 0);
   char *upperCaseParamValue = 0;
+  const int defaultValue = 1;
   int returnValue = 0;
 
-  /* Return false if there is no parameter value */
+  /* Return the default value if there is no parameter value */
   if(0 == origParamValue) {
-    return 0;
+    return defaultValue;
   }
 
   /* Duplicate the parameter value */
   upperCaseParamValue = strdup(origParamValue);
 
-  /* Return false if insufficeint memory was available */
+  /* Return the default value if insufficient memory was available */
   if(0 == upperCaseParamValue) {
-    return 0;
+    return defaultValue;
   }
 
   /* Convert the parameter value to upper case */

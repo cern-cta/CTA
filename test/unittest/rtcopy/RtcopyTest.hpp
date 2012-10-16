@@ -36,6 +36,7 @@
 #include <errno.h>
 #include <stdint.h>
 #include <string.h>
+#include <sys/stat.h>
 
 class RtcopyTest: public CppUnit::TestFixture {
 private:
@@ -198,14 +199,24 @@ public:
       std::string(msgBody.clientName));
   }
 
-  void testRtcpdIsConfiguredToReuseMountLowerCase() {
+  void testRtcpdIsConfiguredToReuseMountTrueLowerCase() {
+    const char *const configFilename =
+      "rtcpdIsConfiguredToReuseMountTrueLowerCase.conf";
+
+    {
+      struct stat statBuf;
+      memset(&statBuf, '\0', sizeof(statBuf));
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Check the configuration file exists",
+        0,
+        stat(configFilename, &statBuf));
+    }
+
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "setenv PATH_CONFIG",
       0,
-      setenv(
-        "PATH_CONFIG",
-        "rtcpdIsConfiguredToReuseMountLowerCase.conf",
-        1));
+      setenv("PATH_CONFIG", configFilename, 1));
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Test rtcpdIsConfiguredToReuseMount() returns 1 for true",
@@ -213,14 +224,24 @@ public:
       rtcpdIsConfiguredToReuseMount());
   }
 
-  void testRtcpdIsConfiguredToReuseMountUpperCase() {
+  void testRtcpdIsConfiguredToReuseMountTrueUpperCase() {
+    const char *const configFilename =
+      "rtcpdIsConfiguredToReuseMountTrueUpperCase.conf";
+
+    {
+      struct stat statBuf;
+      memset(&statBuf, '\0', sizeof(statBuf));
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Check the configuration file exists",
+        0,
+        stat(configFilename, &statBuf));
+    }
+
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "setenv PATH_CONFIG",
       0,
-      setenv(
-        "PATH_CONFIG",
-        "rtcpdIsConfiguredToReuseMountUpperCase.conf",
-        1));
+      setenv("PATH_CONFIG", configFilename, 1));
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Test rtcpdIsConfiguredToReuseMount() returns 1 for TRUE",
@@ -228,19 +249,53 @@ public:
       rtcpdIsConfiguredToReuseMount());
   }
 
-  void testRtcpdIsNotConfiguredToReuseDrive() {
+  void testRtcpdIsConfiguredToReuseMountFalseUpperCase() {
+    const char *const configFilename =
+      "rtcpdIsConfiguredToReuseMountFalseUpperCase.conf";
+
+    {
+      struct stat statBuf;
+      memset(&statBuf, '\0', sizeof(statBuf));
+      
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Check the configuration file exists",
+        0,
+        stat(configFilename, &statBuf));
+    } 
+
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "setenv PATH_CONFIG",
       0,
-      setenv(
-        "PATH_CONFIG",
-        "rtcpdIsNotConfiguredToReuseMount.conf",
-        1));
+      setenv("PATH_CONFIG", configFilename, 1));
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
-      "Test rtcpdIsConfiguredToReuseMount() returns 0 for no value",
+      "Test rtcpdIsConfiguredToReuseMount() returns 0 for FALSE",
       0,
       rtcpdIsConfiguredToReuseMount());
+  }
+
+  void testRtcpdIsConfiguredToReuseMountNoValue() {
+    const char *const configFilename =
+      "rtcpdIsConfiguredToReuseMountNoValue.conf";
+
+    {
+      struct stat statBuf;
+      memset(&statBuf, '\0', sizeof(statBuf));
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Check the configuration file exists",
+        0,
+        stat(configFilename, &statBuf));
+    }
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "setenv PATH_CONFIG",
+      0,
+      setenv("PATH_CONFIG", configFilename, 1));
+
+    CPPUNIT_ASSERT_MESSAGE(
+      "Test rtcpdIsConfiguredToReuseMount() returns true for no value",
+      0 != rtcpdIsConfiguredToReuseMount());
   }
 
   CPPUNIT_TEST_SUITE(RtcopyTest);
@@ -255,9 +310,10 @@ public:
   CPPUNIT_TEST(testUnmarshallBufLen1);
   CPPUNIT_TEST(testUnmarshallMsgBodyNull);
   CPPUNIT_TEST(testMarshallAndUnmarshallContents);
-  CPPUNIT_TEST(testRtcpdIsConfiguredToReuseMountLowerCase);
-  CPPUNIT_TEST(testRtcpdIsConfiguredToReuseMountUpperCase);
-  CPPUNIT_TEST(testRtcpdIsNotConfiguredToReuseDrive);
+  CPPUNIT_TEST(testRtcpdIsConfiguredToReuseMountTrueLowerCase);
+  CPPUNIT_TEST(testRtcpdIsConfiguredToReuseMountTrueUpperCase);
+  CPPUNIT_TEST(testRtcpdIsConfiguredToReuseMountFalseUpperCase);
+  CPPUNIT_TEST(testRtcpdIsConfiguredToReuseMountNoValue);
   CPPUNIT_TEST_SUITE_END();
 };
 
