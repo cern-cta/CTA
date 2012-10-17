@@ -1142,12 +1142,12 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFilesToRecallLi
     filesCount++;
     // Log the per-file information
     std::stringstream blockid;
-     blockid << std::hex << std::uppercase << std::noshowbase
-         << std::setw(2) << ftr->blockId0()
-         << std::setw(2) << ftr->blockId1()
-         << std::setw(2) << ftr->blockId2()
-         << std::setw(2) << ftr->blockId3();
-         castor::dlf::Param paramsComplete[] ={
+    blockid << std::hex << std::uppercase << std::noshowbase << std::setfill('0')
+        << std::setw(2) << (int)ftr->blockId0()
+        << std::setw(2) << (int)ftr->blockId1()
+        << std::setw(2) << (int)ftr->blockId2()
+        << std::setw(2) << (int)ftr->blockId3();
+    castor::dlf::Param paramsComplete[] ={
         castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
         castor::dlf::Param("Port",requester.port),
         castor::dlf::Param("HostName",requester.hostName),
@@ -1157,7 +1157,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFilesToRecallLi
         castor::dlf::Param("path",ftr->path()),
         castor::dlf::Param("blockId",blockid.str()),
         castor::dlf::Param("fileTransactionId", ftr->fileTransactionId())
-      };
+    };
     struct Cns_fileid fileId;
     memset(&fileId,'\0',sizeof(fileId));
     strncpy(fileId.server, ftr->nshost().c_str(), sizeof(fileId.server)-1);
