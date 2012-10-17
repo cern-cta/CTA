@@ -41,7 +41,6 @@
 #include "castor/dlf/Dlf.hpp"
 #include "castor/rh/Client.hpp"
 #include "castor/rh/IOResponse.hpp"
-#include "castor/rh/EndResponse.hpp"
 #include "castor/io/ClientSocket.hpp"
 #include "castor/stager/IJobSvc.hpp"
 #include "castor/stager/DiskCopy.hpp"
@@ -474,8 +473,6 @@ void castor::job::stagerjob::sendResponse
     castor::io::ClientSocket s(rhc->port(), rhc->ipAddress());
     s.connect();
     s.sendObject(response);
-    castor::rh::EndResponse endRes;
-    s.sendObject(endRes);
   } else {
     // The client has already been sent a response, trying to send a second
     // one will just result in a failure to connect.
