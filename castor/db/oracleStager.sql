@@ -710,14 +710,14 @@ BEGIN
     END LOOP;
     -- do the bulk updates
     SELECT srId BULK COLLECT INTO srsToUpdate FROM ProcessRepackAbortHelperSR;
-    FORALL i IN srsToUpdate.FIRST .. srsToUpdate.LAST
+    FORALL i IN 1 .. srsToUpdate.COUNT
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
          SET parent = NULL, diskCopy = NULL, lastModificationTime = getTime(),
              status = dconst.SUBREQUEST_FAILED_FINISHED,
              errorCode = 1701, errorMessage = 'Aborted explicitely'  -- ESTCLEARED
        WHERE id = srsToUpdate(i);
     SELECT cfId BULK COLLECT INTO dcmigrsToUpdate FROM ProcessRepackAbortHelperDCmigr;
-    FORALL i IN dcmigrsToUpdate.FIRST .. dcmigrsToUpdate.LAST
+    FORALL i IN 1 .. dcmigrsToUpdate.COUNT
       UPDATE DiskCopy SET status = dconst.DISKCOPY_STAGED
        WHERE castorfile = dcmigrsToUpdate(i) AND status = dconst.DISKCOPY_CANBEMIGR;
     -- commit
@@ -857,7 +857,7 @@ BEGIN
   SELECT fileid, decode(nsHostName, '', nsHost, nsHostName), id
     BULK COLLECT INTO fileIds, nsHosts, ids
     FROM NsFileId WHERE request = abortReqId;
-  FORALL i IN ids.FIRST .. ids.LAST DELETE FROM NsFileId WHERE id = ids(i);
+  FORALL i IN 1 .. COUNT DELETE FROM NsFileId WHERE id = ids(i);
   -- dispatch actual processing depending on request type
   BEGIN
     SELECT rType, id INTO reqType, requestId FROM
@@ -2527,7 +2527,7 @@ BEGIN
      WHERE (id = sr.id) OR (parent = sr.id);
   END LOOP;
   -- Set selected DiskCopies to INVALID
-  FORALL i IN dcsToRm.FIRST .. dcsToRm.LAST
+  FORALL i IN 1 .. COUNT
     UPDATE DiskCopy
        SET status = dconst.DISKCOPY_INVALID,
            gcType = inGcType
@@ -2939,7 +2939,7 @@ BEGIN
   RETURNING timeinfo, uuid, priority, msg, fileId, nsHost, source, params
     BULK COLLECT INTO timeinfos, uuids, priorities, msgs, fileIds, nsHosts, sources, paramss;
   -- insert into tmp table so that we can open a cursor on it
-  FORALL i IN timeinfos.FIRST .. timeinfos.LAST
+  FORALL i IN 1 .. timeinfos.COUNT
     INSERT INTO DLFLogsHelper (timeinfo, uuid, priority, msg, fileId, nsHost, source, params)
     VALUES (timeinfos(i), uuids(i), priorities(i), msgs(i), fileIds(i), nsHosts(i), sources(i), paramss(i));
   -- return list of entries by opening a cursor on temp table

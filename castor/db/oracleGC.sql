@@ -587,7 +587,7 @@ BEGIN
       OPEN s;
       FETCH s BULK COLLECT INTO ids LIMIT 100000;
       EXIT WHEN ids.count = 0;
-      FORALL i IN ids.FIRST..ids.LAST
+      FORALL i IN 1 .. ids.COUNT
         DELETE FROM '||tab||' WHERE id = ids(i);
       CLOSE s;
       COMMIT;
@@ -662,7 +662,7 @@ BEGIN
     LOOP
       FETCH s BULK COLLECT INTO ids LIMIT 10000;
       EXIT WHEN ids.count = 0;
-      FORALL i IN ids.FIRST..ids.LAST
+      FORALL i IN 1 .. ids.COUNT
         DELETE FROM SubRequest WHERE id = ids(i);
       COMMIT;
     END LOOP;
@@ -721,23 +721,21 @@ BEGIN
     FROM DiskCopy DC
    WHERE id IN (SELECT /*+ CARDINALITY(ids 5) */ * FROM TABLE(dcIds) ids);
   -- drop the DiskCopies
-  FORALL i IN dcIds.FIRST..dcIds.LAST
+  FORALL i IN 1 .. dcIds.COUNT
     DELETE FROM DiskCopy WHERE id = dcIds(i);
   COMMIT;
   -- maybe delete the CastorFiles if nothing is left for them
-  IF cfIds.COUNT > 0 THEN
-    ct := 0;
-    FOR c IN cfIds.FIRST..cfIds.LAST LOOP
-      deleteCastorFile(cfIds(c));
-      ct := ct + 1;
-      IF ct = 1000 THEN
-        -- commit every 1000, don't pause
-        ct := 0;
-        COMMIT;
-      END IF;
-    END LOOP;
-    COMMIT;
-  END IF;
+  ct := 0;
+  FOR i IN 1 .. cfIds.COUNT LOOP
+    deleteCastorFile(cfIds(i));
+    ct := ct + 1;
+    IF ct = 1000 THEN
+      -- commit every 1000, don't pause
+      ct := 0;
+      COMMIT;
+    END IF;
+  END LOOP;
+  COMMIT;
 END;
 /
 

@@ -427,7 +427,7 @@ BEGIN
   -- create missing segments if needed
   SELECT * BULK COLLECT INTO varAllSegments
     FROM TABLE(strTokenizer(inAllSegments));
-  FOR i IN varAllSegments.FIRST .. varAllSegments.LAST/2 LOOP
+  FOR i IN 1 .. varAllSegments.COUNT/2 LOOP
     varAllCopyNbs.EXTEND;
     varAllCopyNbs(i) := TO_NUMBER(varAllSegments(2*i-1));
     varAllVIDs.EXTEND;

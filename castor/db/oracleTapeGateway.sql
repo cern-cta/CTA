@@ -416,7 +416,7 @@ BEGIN
     FROM SubRequest
    WHERE SubRequest.castorfile = inCfId
      AND subrequest.reqType = 119;  -- OBJ_StageRepackRequest
-  FOR i IN varSrIds.FIRST .. varSrIds.LAST LOOP
+  FOR i IN 1 .. varSrIds.COUNT LOOP
     -- archive: ENOENT and ENSFILECHG are considered as non-errors in a Repack context (#97529)
     archiveSubReq(varSrIds(i), CASE WHEN inErrorCode IN (serrno.ENOENT, serrno.ENSFILECHG)
       THEN dconst.SUBREQUEST_FINISHED ELSE dconst.SUBREQUEST_FAILED_FINISHED END);
