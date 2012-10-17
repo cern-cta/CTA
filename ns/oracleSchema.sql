@@ -26,11 +26,11 @@ CREATE TABLE Cns_class_metadata (classid NUMBER(5), name VARCHAR2(15), owner_uid
 
 CREATE TABLE Cns_tp_pool (classid NUMBER(5), tape_pool VARCHAR2(15));
 
-CREATE TABLE Cns_file_metadata (fileid NUMBER, parent_fileid NUMBER, guid CHAR(36), name VARCHAR2(255), filemode NUMBER(6), nlink NUMBER(6), owner_uid NUMBER(6), gid NUMBER(6), filesize NUMBER, atime NUMBER(10), mtime NUMBER(10), ctime NUMBER(10), stagerTime NUMBER NOT NULL DEFAULT 0, fileclass NUMBER(5), status CHAR(1), csumtype VARCHAR2(2), csumvalue VARCHAR2(32), acl VARCHAR2(3900)) STORAGE (INITIAL 5M NEXT 5M PCTINCREASE 0);
+CREATE TABLE Cns_file_metadata (fileid NUMBER, parent_fileid NUMBER, guid CHAR(36), name VARCHAR2(255), filemode NUMBER(6), nlink NUMBER(6), owner_uid NUMBER(6), gid NUMBER(6), filesize NUMBER, atime NUMBER(10), mtime NUMBER(10), ctime NUMBER(10), fileclass NUMBER(5), status CHAR(1), csumtype VARCHAR2(2), csumvalue VARCHAR2(32), acl VARCHAR2(3900)) STORAGE (INITIAL 5M NEXT 5M PCTINCREASE 0);
 
 CREATE TABLE Cns_user_metadata (u_fileid NUMBER, comments VARCHAR2(255));
 
-CREATE TABLE Cns_seg_metadata (s_fileid NUMBER, copyno NUMBER(1),fsec NUMBER(3), segsize NUMBER, compression NUMBER, s_status CHAR(1), vid VARCHAR2(6), side NUMBER (1), fseq NUMBER(10), blockid RAW(4), checksum_name VARCHAR2(16), checksum NUMBER, gid NUMBER(6), creationTime NUMBER, lastModificationTime NUMBER);
+CREATE TABLE Cns_seg_metadata (s_fileid NUMBER, copyno NUMBER(1),fsec NUMBER(3), segsize NUMBER, compression NUMBER, s_status CHAR(1), vid VARCHAR2(6), side NUMBER (1), fseq NUMBER(10), blockid RAW(4), checksum_name VARCHAR2(16), checksum NUMBER);
 
 CREATE TABLE Cns_symlinks (fileid NUMBER, linkname VARCHAR2(1023));
 
@@ -89,11 +89,9 @@ ALTER TABLE Cns_file_metadata
 -- Create indexes on Cns_file_metadata
 CREATE INDEX Parent_FileId_Idx ON Cns_file_metadata (parent_fileid);
 CREATE INDEX I_file_metadata_fileclass ON Cns_file_metadata (fileclass);
-CREATE INDEX I_file_metadata_gid ON Cns_file_metadata (gid);
 
 -- Create indexes on Cns_seg_metadata
 CREATE INDEX I_seg_metadata_tapesum ON Cns_seg_metadata (vid, s_fileid, segsize, compression);
-CREATE INDEX I_seg_metadata_gid ON Cns_Seg_metadata (gid);
 
 -- Temporary table to support Cns_bulkexist calls
 CREATE GLOBAL TEMPORARY TABLE Cns_files_exist_tmp

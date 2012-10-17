@@ -36,9 +36,7 @@ CREATE OR REPLACE PACKAGE castorns AS
     fseq INTEGER,
     blockId RAW(4),
     checksum_name VARCHAR2(16),
-    checksum INTEGER,
-    gid INTEGER,
-    creationTime NUMBER
+    checksum INTEGER
   );
   TYPE Segment_Cur IS REF CURSOR RETURN Segment_Rec;
 END castorns;
@@ -229,7 +227,6 @@ CREATE OR REPLACE PROCEDURE setSegmentForFile(inSegEntry IN castorns.Segment_Rec
   varFmode NUMBER(6);
   varFLastMTime NUMBER;
   varFSize NUMBER;
-  varFGid INTEGER;
   varFClassId NUMBER;
   varFCNbCopies NUMBER;
   varFCksumName VARCHAR2(2);
@@ -244,8 +241,8 @@ BEGIN
   rc := 0;
   msg := '';
   -- Get file data and lock the entry, exit if not found
-  SELECT fileId, filemode, mtime, fileClass, fileSize, csumType, csumValue, gid
-    INTO varFid, varFmode, varFLastMTime, varFClassId, varFSize, varFCksumName, varFCksum, varFGid
+  SELECT fileId, filemode, mtime, fileClass, fileSize, csumType, csumValue
+    INTO varFid, varFmode, varFLastMTime, varFClassId, varFSize, varFCksumName, varFCksum
     FROM Cns_file_metadata
    WHERE fileId = inSegEntry.fileId FOR UPDATE;
   -- Is it a directory?
@@ -295,11 +292,12 @@ BEGIN
   -- We're done with the pre-checks, try and insert the segment metadata
   -- and deal with the possible unique (vid,fseq) constraint violation exception
   BEGIN
-    INSERT INTO Cns_seg_metadata (s_fileId, copyNo, fsec, segSize, s_status, vid,
-      fseq, blockId, compression, side, checksum_name, checksum, gid, creationTime, lastModificationTime)
-    VALUES (varFid, inSegEntry.copyNo, 1, inSegEntry.segSize, '-', inSegEntry.vid,
-      inSegEntry.fseq, inSegEntry.blockId, trunc(inSegEntry.segSize*100/inSegEntry.comprSize),
-      0, inSegEntry.checksum_name, inSegEntry.checksum, varFGid, getTime(), getTime());
+    INSERT INTO Cns_seg_metadata (s_fileId, copyNo, fsec, segSize, s_status,
+      vid, fseq, blockId, compression, side, checksum_name, checksum)
+    VALUES (varFid, inSegEntry.copyNo, 1, inSegEntry.segSize, '-',
+      inSegEntry.vid, inSegEntry.fseq, inSegEntry.blockId,
+      trunc(inSegEntry.segSize*100/inSegEntry.comprSize),
+      0, inSegEntry.checksum_name, inSegEntry.checksum);
   EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
     -- This can be due to a PK violation or to the unique (vid,fseq) violation. The first
     -- is excluded because of checkAndDropSameCopynbSeg(), thus the second is the case:
@@ -330,8 +328,8 @@ BEGIN
   SELECT inSegEntry.blockId INTO varBlockId FROM Dual;  -- to_char() of a RAW type does not work. This does the trick...
   varParams := 'copyNb='|| inSegEntry.copyNo ||' SegmentSize='|| inSegEntry.segSize
     ||' Compression='|| trunc(inSegEntry.segSize*100/inSegEntry.comprSize) ||' TPVID='|| inSegEntry.vid
-    ||' fseq='|| inSegEntry.fseq ||' BlockId="' || varBlockId ||'" gid=' || varFGid
-    ||' ChecksumType="'|| inSegEntry.checksum_name ||'" ChecksumValue=' || varFCksum;
+    ||' fseq='|| inSegEntry.fseq ||' BlockId="' || varBlockId
+    ||'" ChecksumType="'|| inSegEntry.checksum_name ||'" ChecksumValue=' || varFCksum;
   addSegResult(0, inReqId, 0, 'New segment information', varFid, varParams);
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- The file entry was not found, just give up
@@ -364,7 +362,6 @@ CREATE OR REPLACE PROCEDURE replaceSegmentForFile(inOldCopyNo IN INTEGER, inSegE
   varFmode NUMBER(6);
   varFLastMTime NUMBER;
   varFSize NUMBER;
-  varFGid INTEGER;
   varFClassId NUMBER;
   varFCNbCopies NUMBER;
   varFCksumName VARCHAR2(2);
@@ -381,8 +378,8 @@ BEGIN
   rc := 0;
   msg := '';
   -- Get file data and lock the entry, exit if not found
-  SELECT fileId, filemode, mtime, fileClass, csumType, csumValue, gid
-    INTO varFid, varFmode, varFLastMTime, varFClassId, varFCksumName, varFCksum, varFGid
+  SELECT fileId, filemode, mtime, fileClass, csumType, csumValue
+    INTO varFid, varFmode, varFLastMTime, varFClassId, varFCksumName, varFCksum
     FROM Cns_file_metadata
    WHERE fileId = inSegEntry.fileId FOR UPDATE;
   -- Is it a directory?
@@ -440,17 +437,15 @@ BEGIN
       -- OK, the segment being overwritten is invalid
       DELETE FROM Cns_seg_metadata
        WHERE s_fileid = varFid AND copyNo = inSegEntry.copyNo
-      RETURNING copyNo, segSize, compression, vid, fseq, blockId, checksum_name, checksum, gid, creationTime
+      RETURNING copyNo, segSize, compression, vid, fseq, blockId, checksum_name, checksum
            INTO varOwSeg.copyNo, varOwSeg.segSize, varOwSeg.comprSize, varOwSeg.vid,
-                varOwSeg.fseq, varOwSeg.blockId, varOwSeg.checksum_name, varOwSeg.checksum,
-                varOwSeg.gid, varOwSeg.creationTime;
+                varOwSeg.fseq, varOwSeg.blockId, varOwSeg.checksum_name, varOwSeg.checksum;
       -- Log overwritten segment metadata
       SELECT varOwSeg.blockId INTO varBlockId FROM Dual;
       varParams := 'copyNb='|| varOwSeg.copyNo ||' SegmentSize='|| varOwSeg.segSize
         ||' Compression='|| varOwSeg.comprSize ||' TPVID='|| varOwSeg.vid
-        ||' fseq='|| varOwSeg.fseq ||' BlockId="' || varBlockId ||'" gid=' || varOwSeg.gid
-        ||' ChecksumType="'|| varOwSeg.checksum_name ||'" ChecksumValue=' || varOwSeg.checksum
-        ||' creationTime=' || varOwSeg.creationTime;
+        ||' fseq='|| varOwSeg.fseq ||' BlockId="' || varBlockId
+        ||'" ChecksumType="'|| varOwSeg.checksum_name ||'" ChecksumValue=' || varOwSeg.checksum;
       addSegResult(1, inReqId, 0, 'Unlinking segment (overwritten)', varFid, varParams);
     END IF;
   EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -474,11 +469,12 @@ BEGIN
   -- We're done with the pre-checks, try and insert the segment metadata
   -- and deal with the possible unique (vid,fseq) constraint violation exception
   BEGIN
-    INSERT INTO Cns_seg_metadata (s_fileId, copyNo, fsec, segSize, s_status, vid,
-      fseq, blockId, compression, side, checksum_name, checksum, gid, creationTime, lastModificationTime)
-    VALUES (varFid, inSegEntry.copyNo, 1, inSegEntry.segSize, '-', inSegEntry.vid,
-      inSegEntry.fseq, inSegEntry.blockId, trunc(inSegEntry.segSize*100/inSegEntry.comprSize),
-      0, inSegEntry.checksum_name, inSegEntry.checksum, varFGid, getTime(), getTime());
+    INSERT INTO Cns_seg_metadata (s_fileId, copyNo, fsec, segSize, s_status,
+      vid, fseq, blockId, compression, side, checksum_name, checksum)
+    VALUES (varFid, inSegEntry.copyNo, 1, inSegEntry.segSize, '-',
+      inSegEntry.vid, inSegEntry.fseq, inSegEntry.blockId,
+      trunc(inSegEntry.segSize*100/inSegEntry.comprSize),
+      0, inSegEntry.checksum_name, inSegEntry.checksum);
   EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
     -- There must already be an existing segment at that fseq position for a different file.
     -- This is forbidden! Abort the entire operation.
@@ -508,8 +504,8 @@ BEGIN
   SELECT inSegEntry.blockId INTO varBlockId FROM Dual;  -- to_char() of a RAW type does not work. This does the trick...
   varParams := 'copyNb='|| inSegEntry.copyNo ||' SegmentSize='|| inSegEntry.segSize
     ||' Compression='|| trunc(inSegEntry.segSize*100/inSegEntry.comprSize) ||' TPVID='|| inSegEntry.vid
-    ||' fseq='|| inSegEntry.fseq ||' blockId="' || varBlockId ||'" gid=' || varFGid
-    ||' ChecksumType="'|| inSegEntry.checksum_name ||'" ChecksumValue=' || varFCksum || ' Repack=True';
+    ||' fseq='|| inSegEntry.fseq ||' blockId="' || varBlockId
+    ||'" ChecksumType="'|| inSegEntry.checksum_name ||'" ChecksumValue=' || varFCksum || ' Repack=True';
   addSegResult(0, inReqId, 0, 'New segment information', varFid, varParams);
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- The file entry was not found, just give up

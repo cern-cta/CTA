@@ -251,6 +251,23 @@ class TransferManagerService(rpyc.Service):
         raise IOError
     return nbTransfersPerPool
 
+  def exposed_listPendingTransfersCentrally(self, diskPool=None, user=None):
+    '''lists the pending transfers per diskpool for a given diskpool and user, as seen by the
+    transfer managers, without connecting to the diskservers'''
+    transfers = []
+    # get the timeout to be used
+    timeout = configuration.getValue('TransferManager', 'AdminTimeout', 5, float)
+    # go through all schedulers
+    for scheduler in configuration.getValue('DiskManager', 'ServerHosts').split():
+      try:
+        transfers += connections.listLocalPendingTransfersCentrally(scheduler, diskPool, user, timeout=timeout)
+      except Exception, e:
+        # 'Could not contact transfer manager' message
+        dlf.writenotice(msgs.COULDNOTCONTACTTM, Function='listPendingTransfersCentrally',
+                        TransferManager=scheduler, Type=str(e.__class__), Message=str(e))
+        raise IOError('Could not contact transfer manager on %s' % scheduler)
+    return tuple(transfers)
+
   def exposed_summarizeTransfersPerPool(self, diskPool=None, user=None, detailed=False):
     '''summarizes the number of running and pending transfers per diskpool for a given diskpool and user.
     Returns a tuple of tuples, with the diskpool name as first item, then a list of data that depends
@@ -337,28 +354,14 @@ class TransferManagerService(rpyc.Service):
     return tuple(res)
 
   def exposed_listTransfers(self, diskPool=None, user=None):
-    '''lists the running and pending transfers per diskpool for a given diskpool and user.
-    The queuing ones are fetched from the transfermanagers, the running ones from the nodes.'''
+    '''lists the running and pending transfers per diskpool for a given diskpool and user'''
     dlf.writedebug(msgs.INVOKINGLISTTRANSFERS, DiskPool=diskPool)
-    # get the running transfers from each node
-    res = self.dispatch('listRunningTransfers', diskPool, user)
-    # now go to the schedulers to get the queues: get the timeout to be used
-    timeout = configuration.getValue('TransferManager', 'AdminTimeout', 5, float)
-    # go through all schedulers
-    qtransfers = []
-    for scheduler in configuration.getValue('DiskManager', 'ServerHosts').split():
-      try:
-        qtransfers += connections.listLocalPendingTransfersCentrally(scheduler, diskPool, user, timeout=timeout)
-      except Exception, e:
-        # 'Could not contact transfer manager' message
-        dlf.writenotice(msgs.COULDNOTCONTACTTM, Function='listPendingTransfersCentrally',
-                        TransferManager=scheduler, Type=str(e.__class__), Message=str(e))
-        raise IOError('Could not contact transfer manager on %s' % scheduler)
-    # and extract all results
-    for diskPool in qtransfers:
-      for ds in qtransfers[diskPool]:
-        if qtransfers[diskPool][ds] != None:
-          for transferid, fileid, scheduler, user, status, transfertype, arrivalTime, startTime in qtransfers[diskPool][ds]:
+    transfers = self.dispatch('listTransfers', diskPool, user)
+    res = []
+    for diskPool in transfers:
+      for ds in transfers[diskPool]:
+        if transfers[diskPool][ds] != None:
+          for transferid, fileid, scheduler, user, status, transfertype, arrivalTime, startTime in transfers[diskPool][ds]:
             res.append((transferid, fileid, scheduler, user, status, diskPool, ds, transfertype, arrivalTime, startTime))
         else:
           res.append((None, ds))

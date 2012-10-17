@@ -1584,7 +1584,7 @@ int Cns_insert_fmd_entry(struct Cns_dbfd *dbfd,
     (FILEID, PARENT_FILEID,
      GUID, NAME, FILEMODE, NLINK,
      OWNER_UID, GID, FILESIZE,
-     ATIME, MTIME, CTIME, STAGERTIME,
+     ATIME, MTIME, CTIME,
      FILECLASS, STATUS, CSUMTYPE,
      CSUMVALUE, ACL)
     VALUES
@@ -1593,7 +1593,6 @@ int Cns_insert_fmd_entry(struct Cns_dbfd *dbfd,
      :fmd_entry->name, :fmd_entry->filemode, :fmd_entry->nlink,
      :fmd_entry->uid, :fmd_entry->gid, TO_NUMBER(:filesize_str),
      :fmd_entry->atime, :fmd_entry->mtime, :fmd_entry->ctime,
-     :fmd_entry->stagertime,
      :fmd_entry->fileclass INDICATOR :fileclass_indicator,
      :fmd_entry->status, :fmd_entry->csumtype,
      :fmd_entry->csumvalue, :fmd_entry->acl);
@@ -1659,14 +1658,12 @@ int Cns_insert_smd_entry(struct Cns_dbfd *dbfd,
   EXEC SQL INSERT INTO Cns_seg_metadata
     (S_FILEID, COPYNO, FSEC,
      SEGSIZE, COMPRESSION, S_STATUS,
-     VID, SIDE, FSEQ, BLOCKID, CHECKSUM_NAME, CHECKSUM,
-     GID, CREATIONTIME, LASTMODIFICATIONTIME)
+     VID, SIDE, FSEQ, BLOCKID, CHECKSUM_NAME, CHECKSUM)
     VALUES
     (TO_NUMBER(:fileid_str), :smd_entry->copyno, :smd_entry->fsec,
      TO_NUMBER(:segsize_str), :smd_entry->compression, :smd_entry->s_status,
      :smd_entry->vid, :smd_entry->side, :smd_entry->fseq, :smd_entry->blockid,
-     :smd_entry->checksum_name, :smd_entry->checksum,
-     :smd_entry->gid, getTime(), getTime());
+     :smd_entry->checksum_name, :smd_entry->checksum);
   switch (sqlca.sqlcode) {
   case 0:
     return (0);
@@ -2036,7 +2033,6 @@ int Cns_update_fmd_entry(struct Cns_dbfd *dbfd,
     ATIME         = :fmd_entry->atime,
     MTIME         = :fmd_entry->mtime,
     CTIME         = :fmd_entry->ctime,
-    STAGERTIME    = :fmd_entry->stagertime,
     FILECLASS     = :fmd_entry->fileclass INDICATOR :fileclass_indicator,
     STATUS        = :fmd_entry->status,
     CSUMTYPE      = :fmd_entry->csumtype,
@@ -2077,9 +2073,7 @@ int Cns_update_smd_entry(struct Cns_dbfd *dbfd,
     FSEQ          = :smd_entry->fseq,
     BLOCKID       = :smd_entry->blockid,
     CHECKSUM_NAME = :smd_entry->checksum_name,
-    CHECKSUM      = :smd_entry->checksum,
-    GID           = :smd_entry->gid,
-    LASTMODIFICATIONTIME = getTime()
+    CHECKSUM      = :smd_entry->checksum
     WHERE ROWID   = :rowid_value;
   if (sqlca.sqlcode) {
     Cns_oracle_error (func, "UPDATE", dbfd, &sqlca);

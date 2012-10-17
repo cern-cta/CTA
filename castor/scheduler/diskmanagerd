@@ -103,10 +103,10 @@ class DiskServerManagerService(rpyc.Service):
     runningData = runningTransfers.nbTransfers(user, detailed)
     return (configuration.getValue('DiskManager', 'NbSlots', 0, int),) + queueingData + runningData
 
-  def exposed_listRunningTransfers(self, user=None):
-    '''Lists all running transfers on this host'''
+  def exposed_listTransfers(self, user=None):
+    '''Lists all transfers running or pending on this host'''
     dlf.writedebug(msgs.INVOKINGLISTTRANSFERS, Username=user)
-    return tuple(runningTransfers.listTransfers(user))
+    return tuple(runningTransfers.listTransfers(user) + transferQueue.listTransfers(user))
 
   def exposed_transferset(self):
     '''Lists all pending and running transfers'''
