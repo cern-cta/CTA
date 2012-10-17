@@ -418,7 +418,6 @@ class RunningTransfersSet(object):
   def listTransfers(self, reqUser=None):
     '''lists running transfers'''
     res = []
-    n = 0
     # first list the standard transfers
     self.lock.acquire()
     try:
@@ -438,9 +437,6 @@ class RunningTransfersSet(object):
           user = 'stage'
         if not reqUser or user == reqUser:
           res.append((transferid, transfer[6], scheduler, user, 'RUN', protocol, arrivalTime, runTime))
-          n = n + 1
-          if n >= 100: # give up with full listing if too many transfers
-            break
     finally:
       self.lock.release()
     # then add the tape ones
