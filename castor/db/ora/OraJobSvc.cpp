@@ -104,7 +104,7 @@ const std::string castor::db::ora::OraJobSvc::s_disk2DiskCopyFailedStatementStri
 
 /// SQL statement for prepareForMigration
 const std::string castor::db::ora::OraJobSvc::s_prepareForMigrationStatementString =
-  "BEGIN prepareForMigration(:1, :2, :3, :4, :5, :6); END;";
+"BEGIN prepareForMigration(:1, :2, :3, :4, :5, :6, :7); END;";
 
 /// SQL statement for getUpdateDone
 const std::string castor::db::ora::OraJobSvc::s_getUpdateDoneStatementString =
@@ -576,6 +576,7 @@ void castor::db::ora::OraJobSvc::prepareForMigration
  const std::string csumtype,
  const std::string csumvalue)
   throw (castor::exception::Exception) {
+  u_signed64 lastModTime;
   try {
     // Check whether the statements are ok
     if (0 == m_prepareForMigrationStatement) {
@@ -588,6 +589,8 @@ void castor::db::ora::OraJobSvc::prepareForMigration
         (5, oracle::occi::OCCISTRING, 2048);
       m_prepareForMigrationStatement->registerOutParam
         (6, oracle::occi::OCCIINT);
+      m_prepareForMigrationStatement->registerOutParam
+        (7, oracle::occi::OCCIINT);
     }
     // Execute the statement and see whether we found something
     m_prepareForMigrationStatement->setDouble(1, subReqId);
@@ -617,10 +620,9 @@ void castor::db::ora::OraJobSvc::prepareForMigration
       // "File was deleted while it was written to. Giving up with migration."
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
                               DLF_BASE_ORACLELIB, 0, 0, &fileid);
-      // Rollback the prepareForMigration changes
-      cnvSvc()->rollback();
       return;
     }
+    lastModTime = (u_signed64)m_prepareForMigrationStatement->getDouble(7);
 
     // If we got this far we need to update the file size and checksum
     // information related to the file in the name server. By updating the
@@ -651,7 +653,7 @@ void castor::db::ora::OraJobSvc::prepareForMigration
     int rc = 0;
     if (useChkSum) {
       rc = Cns_closex(&fileid, fileSize, csumtype.c_str(), csumvalue.c_str(),
-                      timeStamp, timeStamp, NULL);
+                      timeStamp, lastModTime, NULL);
     } else {
       rc = Cns_closex(&fileid, fileSize, "", "", timeStamp, timeStamp, NULL);
     }
