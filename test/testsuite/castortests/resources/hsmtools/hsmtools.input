@@ -1,0 +1,1 @@
+rpm -q castor-hsmtools > /dev/null; echo $?
