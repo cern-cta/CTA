@@ -208,6 +208,7 @@ AS
   REPACK_SUBMITTED             CONSTANT VARCHAR2(2048) := 'New Repack request submitted';
   REPACK_ABORTING              CONSTANT VARCHAR2(2048) := 'Aborting Repack request';
   REPACK_ABORTED               CONSTANT VARCHAR2(2048) := 'Repack request aborted';
+  REPACK_ABORTED_FAILED        CONSTANT VARCHAR2(2048) := 'Aborting Repack request failed, dropping it';
   REPACK_JOB_ONGOING           CONSTANT VARCHAR2(2048) := 'repackManager: Repack processes still starting, no new ones will be started for this round';
   REPACK_STARTED               CONSTANT VARCHAR2(2048) := 'repackManager: Repack process started';
   REPACK_JOB_STATS             CONSTANT VARCHAR2(2048) := 'repackManager: Repack processes statistics';

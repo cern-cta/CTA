@@ -45,29 +45,38 @@ BEGIN
   UPDATE StageRepackRequest SET status = tconst.REPACK_ABORTING
    WHERE reqId = parentUUID;
   COMMIT;  -- so to make the status change visible
-  varStartTime := getTime();
-  logToDLF(parentUUID, dlf.LVL_SYSTEM, dlf.REPACK_ABORTING, 0, '', 'repackd', 'TPVID=' || varVID);
-  -- get unique ids for the request and the client and get current time
-  SELECT ids_seq.nextval INTO reqId FROM DUAL;
-  SELECT ids_seq.nextval INTO clientId FROM DUAL;
-  varCreationTime := getTime();
-  -- insert the request itself
-  INSERT INTO StageAbortRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName,
-    userTag, reqId, creationTime, lastModificationTime, parentUuid, id, svcClass, client)
-  VALUES (0, userName, euid, egid, 0, pid, machine, '', '', uuidgen(),
-    varCreationTime, varCreationTime, parentUUID, reqId, 0, clientId);
-  -- insert the client information
-  INSERT INTO Client (ipAddress, port, version, secure, id)
-  VALUES (clientIP, 0, 0, 0, clientId);
-  -- process the abort
-  processBulkAbort(reqId, rIpAddress, rport, rReqUuid);
-  -- mark the repack request as ABORTED
-  UPDATE StageRepackRequest SET status = tconst.REPACK_ABORTED WHERE reqId = parentUUID;
-  logToDLF(parentUUID, dlf.LVL_SYSTEM, dlf.REPACK_ABORTED, 0, '', 'repackd',
-    'TPVID=' || varVID || ' elapsedTime=' || to_char(getTime() - varStartTime));
-  -- return all results
-  OPEN rSubResults FOR
-    SELECT fileId, nsHost, errorCode, errorMessage FROM ProcessBulkRequestHelper;
+  BEGIN
+    varStartTime := getTime();
+    logToDLF(parentUUID, dlf.LVL_SYSTEM, dlf.REPACK_ABORTING, 0, '', 'repackd', 'TPVID=' || varVID);
+    -- get unique ids for the request and the client and get current time
+    SELECT ids_seq.nextval INTO reqId FROM DUAL;
+    SELECT ids_seq.nextval INTO clientId FROM DUAL;
+    varCreationTime := getTime();
+    -- insert the request itself
+    INSERT INTO StageAbortRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName,
+      userTag, reqId, creationTime, lastModificationTime, parentUuid, id, svcClass, client)
+    VALUES (0, userName, euid, egid, 0, pid, machine, '', '', uuidgen(),
+      varCreationTime, varCreationTime, parentUUID, reqId, 0, clientId);
+    -- insert the client information
+    INSERT INTO Client (ipAddress, port, version, secure, id)
+    VALUES (clientIP, 0, 0, 0, clientId);
+    -- process the abort
+    processBulkAbort(reqId, rIpAddress, rport, rReqUuid);
+    -- mark the repack request as ABORTED
+    UPDATE StageRepackRequest SET status = tconst.REPACK_ABORTED WHERE reqId = parentUUID;
+    logToDLF(parentUUID, dlf.LVL_SYSTEM, dlf.REPACK_ABORTED, 0, '', 'repackd',
+      'TPVID=' || varVID || ' elapsedTime=' || to_char(getTime() - varStartTime));
+    -- return all results
+    OPEN rSubResults FOR
+      SELECT fileId, nsHost, errorCode, errorMessage FROM ProcessBulkRequestHelper;
+  EXCEPTION WHEN OTHERS THEN
+    -- Something went wrong when aborting: log and fail
+    UPDATE StageRepackRequest SET status = tconst.REPACK_FAILED WHERE reqId = parentUUID;
+    logToDLF(parentUUID, dlf.LVL_ERROR, dlf.REPACK_ABORTED_FAILED, 0, '', 'repackd', 'TPVID=' || varVID
+      || ' errorMessage="' || SQLERRM || '" stackTrace="' || dbms_utility.format_error_backtrace ||'"');
+    COMMIT;
+    RAISE;
+  END;
 END;
 /
 

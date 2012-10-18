@@ -619,14 +619,15 @@ END;
 
 /* PL/SQL method to process bulk abort on a given Repack request */
 CREATE OR REPLACE PROCEDURE processBulkAbortForRepack(origReqId IN INTEGER) AS
-  abortedSRstatus NUMBER;
+  abortedSRstatus INTEGER := -1;
   srsToUpdate "numList";
   dcmigrsToUpdate "numList";
-  nbItems NUMBER;
-  nbItemsDone NUMBER := 0;
+  nbItems INTEGER;
+  nbItemsDone INTEGER := 0;
   SrLocked EXCEPTION;
   PRAGMA EXCEPTION_INIT (SrLocked, -54);
-  unused NUMBER;
+  cfId INTEGER;
+  srId INTEGER;
   firstOne BOOLEAN := TRUE;
   commitWork BOOLEAN := FALSE;
   varOriginalVID VARCHAR2(2048);
@@ -651,7 +652,7 @@ BEGIN
         IF firstOne THEN
           -- on the first item, we take a blocking lock as we are sure that we will not
           -- deadlock and we would like to process at least one item to not loop endlessly
-          SELECT id INTO unused FROM CastorFile WHERE id = sr.cfId FOR UPDATE;
+          SELECT id INTO cfId FROM CastorFile WHERE id = sr.cfId FOR UPDATE;
           firstOne := FALSE;
         ELSE
           -- on the other items, we go for a non blocking lock. If we get it, that's
@@ -659,7 +660,7 @@ BEGIN
           -- we do not get the lock, then we close the session here and go for a new
           -- one. This will prevent dead locks while ensuring that a minimal number of
           -- commits is performed.
-          SELECT id INTO unused FROM CastorFile WHERE id = sr.cfId FOR UPDATE NOWAIT;
+          SELECT id INTO cfId FROM CastorFile WHERE id = sr.cfId FOR UPDATE NOWAIT;
         END IF;
         -- note the revalidation of the status and even of the existence of the subrequest
         -- as it may have changed before we got the lock on the Castorfile in processBulkAbortFileReqs
@@ -684,7 +685,7 @@ BEGIN
             DELETE FROM MigrationJob WHERE castorfile = sr.cfId AND originalVID = varOriginalVID;
             -- delete migrated segments if no migration jobs remain
             BEGIN
-              SELECT id INTO unused FROM MigrationJob WHERE castorfile = sr.cfId AND ROWNUM < 2;
+              SELECT id INTO cfId FROM MigrationJob WHERE castorfile = sr.cfId AND ROWNUM < 2;
             EXCEPTION WHEN NO_DATA_FOUND THEN
               DELETE FROM MigratedSegment WHERE castorfile = sr.cfId;
               -- trigger the update of the DiskCopy to STAGED as no more migrations remain
@@ -728,13 +729,23 @@ BEGIN
     firstOne := TRUE;
     commitWork := FALSE;
   END LOOP;
-  -- avoid error if there is nothing to do actually
-  IF srsToUpdate.COUNT > 0 THEN
-    -- This procedure should really be called 'terminateSubReqAndArchiveRequest', and this is
-    -- why we call it here: we need to trigger the logic to mark the whole request and all of its subrequests
-    -- as ARCHIVED, so that they are cleaned up afterwards. Note that this is effectively
-    -- a no-op for the status change of the SubRequest pointed by srsToUpdate(1).
-    archiveSubReq(srsToUpdate(1), dconst.SUBREQUEST_FAILED_FINISHED);
+  -- make sure to archive if actually nothing was done
+  IF abortedSRstatus = -1 THEN
+    BEGIN
+      SELECT id, status INTO srId, abortedSRstatus
+        FROM SubRequest
+       WHERE request = origReqId
+         AND status IN (dconst.SUBREQUEST_FINISHED, dconst.SUBREQUEST_FAILED_FINISHED)
+         AND ROWNUM = 1;
+      -- This procedure should really be called 'terminateSubReqAndArchiveRequest', and this is
+      -- why we call it here: we need to trigger the logic to mark the whole request and all of its subrequests
+      -- as ARCHIVED, so that they are cleaned up afterwards. Note that this is effectively
+      -- a no-op for the status change of the single fetched SubRequest.
+      archiveSubReq(srId, abortedSRstatus);
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- Should never happen, anyway ignore as there's nothing else to do
+      NULL;
+    END;
   END IF;
   COMMIT;
 END;
