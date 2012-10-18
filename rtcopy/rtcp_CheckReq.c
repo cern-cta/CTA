@@ -22,6 +22,8 @@
 #include <string.h>
 #include <sys/stat.h>
 
+#include <XrdPosix/XrdPosixExtern.hh>
+
 #include <pwd.h>
 #include <Castor_limits.h>
 #include <Cglobals.h>
@@ -58,6 +60,42 @@ static int max_tpretry = MAX_TPRETRY;
 static int max_cpretry = MAX_CPRETRY;
 extern char *getconfent(char *, char *, int);
 extern int rtcp_CallVMGR (tape_list_t *, char *);
+
+extern int rfioToXroot;    /* we set this in rtcpd.c */
+
+/**
+ * Convert the rfio path server:/path  to xroot root://server:port//path
+ * @param rfioFilePath the rfio path to be converted.
+ * @param xrootFilePath the variable to return xroot path.
+ * @return 0 if convertion succeed and -1 in error case.
+ */
+static int RfioToXroot(const char *const rfioFilePath,
+                       char *const xrootFilePath) {    
+    const char *const xrootPort="1095";             
+    const char *pathWithoutServer;
+    
+    *xrootFilePath='\0';
+
+    if ( CA_MAXPATHLEN < 
+              (strlen("root://")+strlen(xrootPort)+strlen(rfioFilePath)+1) ) {
+      return (-1); 
+    }   
+    if ( NULL == (pathWithoutServer=strchr(rfioFilePath,'/'))) {
+      return (-1);
+    }   
+    /* protocol */
+    strcat(xrootFilePath,"root://");   
+    /* server name */
+    strncat(xrootFilePath,rfioFilePath, pathWithoutServer-rfioFilePath); 
+    /* port */
+    strcat(xrootFilePath,xrootPort);
+    /* path itself */
+    strcat(xrootFilePath,"/");
+    strcat(xrootFilePath,pathWithoutServer);    
+    
+    return (0);  
+}
+
 
 static int rtcp_CheckTapeReq(tape_list_t *tape) {
     file_list_t *file = NULL;
@@ -496,7 +534,29 @@ static int rtcp_CheckFileReq(file_list_t *file) {
         rtcp_log(LOG_DEBUG,"rtcp_CheckFileReq(%d,%s) (tpwrite) stat64() remote file\n",
             filereq->tape_fseq,filereq->file_path);
         rfio_errno = serrno = 0;
-        rc = rfio_mstat64(filereq->file_path,&st);
+
+        if ( strstr(filereq->file_path,"root://") ) {
+            /* we have an xroot url */
+            struct stat xrootStat;
+            rc = XrdPosix_Stat(filereq->file_path,&xrootStat);
+            st.st_mode=xrootStat.st_mode;
+            st.st_size=xrootStat.st_size;
+        } else if ( rfioToXroot ) { 
+            /* we have rfio to xroot convertion */
+            struct stat xrootStat;
+            char xrootFilePath[CA_MAXPATHLEN+1];
+            if ( -1 ==  RfioToXroot(filereq->file_path,xrootFilePath) ) {
+              errno = EFAULT; /* sets  "Bad address" errno */
+              rc = -1;
+            } else {
+              rc = XrdPosix_Stat(xrootFilePath,&xrootStat); 
+              st.st_mode=xrootStat.st_mode;
+              st.st_size=xrootStat.st_size;
+            }
+        } else {
+            rc = rfio_mstat64(filereq->file_path,&st);
+        }
+
         if ( rc == -1 ) {
             if ( rfio_errno != 0 ) serrno = rfio_errno;
             else if ( serrno == 0 ) serrno = errno;
@@ -590,7 +650,26 @@ static int rtcp_CheckFileReq(file_list_t *file) {
                 if ( rc == -1 ) return(rc);
             }
             rfio_errno = serrno = 0;
-            rc = rfio_mstat64(filereq->file_path,&st);
+            if ( strstr(filereq->file_path,"root://") ) {
+                /* we have an xroot url */
+                struct stat xrootStat;
+                rc = XrdPosix_Stat(filereq->file_path,&xrootStat);
+                st.st_mode=xrootStat.st_mode;
+            } else if ( rfioToXroot ) {
+                struct stat xrootStat;
+                char xrootFilePath[CA_MAXPATHLEN+1];
+                if ( -1 ==  RfioToXroot(filereq->file_path,
+                                            xrootFilePath) ) {
+                      errno = EFAULT; /* sets  "Bad address" errno */
+                      rc = -1;
+                } else {
+                      rc = XrdPosix_Stat(xrootFilePath,&xrootStat);
+                      st.st_mode=xrootStat.st_mode;
+                } 
+            } else {
+               rc = rfio_mstat64(filereq->file_path,&st);
+            }
+
             if ( rc != -1 ) rtcp_log(LOG_DEBUG,"rtcp_CheckFileReq(%d,%s) st_mode=0%o\n",
                 filereq->tape_fseq,filereq->file_path,st.st_mode);
             if ( rc != -1 && (((st.st_mode) & S_IFMT) == S_IFDIR) ) {
@@ -610,7 +689,27 @@ static int rtcp_CheckFileReq(file_list_t *file) {
                     dir_delim = *p;
                     *p = '\0';
                 }
-                rc = rfio_mstat64(filereq->file_path,&st);
+
+                if ( strstr(filereq->file_path,"root://") ) {
+                    /* we have a xroot url */
+                    struct stat xrootStat;
+                    rc = XrdPosix_Stat(filereq->file_path,&xrootStat);
+                    st.st_mode=xrootStat.st_mode;
+                } else if ( rfioToXroot ) {
+                    struct stat xrootStat;
+                    char xrootFilePath[CA_MAXPATHLEN+1];
+                    if ( -1 ==  RfioToXroot(filereq->file_path,
+                                            xrootFilePath) ) {
+                        errno = EFAULT; /* sets  "Bad address" errno */
+                        rc = -1;
+                    } else {
+                        rc = XrdPosix_Stat(xrootFilePath,&xrootStat);
+                        st.st_mode=xrootStat.st_mode;
+                    }
+                } else {
+                    rc = rfio_mstat64(filereq->file_path,&st);
+                }
+
                 if ( rc == -1 ) {
                     if ( rfio_errno != 0 ) serrno = rfio_errno;
                     else if ( serrno == 0 ) serrno = errno;
@@ -738,7 +837,9 @@ int rtcp_CheckReq(int *client_socket,
         }
         if ( rc == -1 ) break;
     } CLIST_ITERATE_END(tape,tl);
-    if ( rfio_end() < 0 && rc != -1 ) {
+    
+    if ( !(rfioToXroot) && strstr(filereq->file_path,"root://") == NULL ) {
+      if ( rfio_end() < 0 && rc != -1 ) {
         save_serrno = (errno > 0 ? errno : serrno);
         tapereq = &tape->tapereq;
         rtcp_log(LOG_ERR,"rtcp_CheckReq() rfio_end(): %s\n",
@@ -749,6 +850,7 @@ int rtcp_CheckReq(int *client_socket,
         SET_REQUEST_ERR(tapereq,RTCP_SYERR | RTCP_FAILED);
         tellClient(client_socket,tape,NULL,rc);
         (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPEMSG);
+      }
     }
     return(rc);
 }

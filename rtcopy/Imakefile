@@ -14,6 +14,9 @@ CFLAGS += -DRTCOPYCSEC
 AddLdFlags(-ldl)
 #endif
 
+CPPFLAGS += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -I$(XROOT_LOCATION)/include/xrootd
+AddLdFlags(-lXrdPosixPreload)
+
 CommonDependsOnLibrary(common,castorcommon)
 CommonDependsOnLibrary(vmgr,castorvmgr)
 CommonDependsOnLibrary(vdqm,castorvdqm)
