@@ -337,15 +337,15 @@ BEGIN
         -- Loop on file deletions
         FOR dc IN (SELECT /*+ INDEX(DiskCopy I_DiskCopy_FS_GCW) */ id, castorFile FROM DiskCopy
                     WHERE fileSystem = fs.id
-                      AND status = 0 -- STAGED
+                      AND status = dconst.DISKCOPY_STAGED
                       AND NOT EXISTS (
-                        SELECT /*+ INDEX(SubRequest I_SubRequest_DiskCopy) */ 'x'
+                        SELECT /*+ NL_AJ INDEX(SubRequest I_SubRequest_DiskCopy) */ 'x'
                           FROM SubRequest
                          WHERE SubRequest.diskcopy = DiskCopy.id
                            AND SubRequest.status IN (4, 5, 6, 12, 13, 14)) -- being processed (WAIT*, READY, *SCHED)
                       AND NOT EXISTS
                         -- Ignore diskcopies with active replications
-                        (SELECT /*+ INDEX(DCRR I_StageDiskCopyReplic_DestDC) */ 'x'
+                        (SELECT /*+ NL_AJ INDEX(DCRR I_StageDiskCopyReplic_DestDC) */ 'x'
                            FROM StageDiskCopyReplicaRequest DCRR, DiskCopy DD
                           WHERE DCRR.destDiskCopy = DD.id
                             AND DCRR.sourceDiskCopy = DiskCopy.id
