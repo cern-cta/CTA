@@ -544,7 +544,7 @@ CREATE INDEX I_DiskCopy_FileSystem ON DiskCopy (fileSystem);
 CREATE INDEX I_DiskCopy_FS_GCW ON DiskCopy (fileSystem, gcWeight);
 -- for queries on active statuses
 CREATE INDEX I_DiskCopy_Status_6 ON DiskCopy (decode(status,6,status,NULL));
-CREATE INDEX I_DiskCopy_Status_7 ON DiskCopy (decode(status,7,status,NULL));
+CREATE INDEX I_DiskCopy_Status_7_FS ON DiskCopy (decode(status,7,status,NULL), fileSystem);
 CREATE INDEX I_DiskCopy_Status_9 ON DiskCopy (decode(status,9,status,NULL));
 -- to speed up deleteOutOfDateStageOutDCs
 CREATE INDEX I_DiskCopy_Status_Open ON DiskCopy (decode(status,6,status,decode(status,5,status,decode(status,11,status,NULL))));

@@ -273,7 +273,7 @@ BEGIN
      WHERE s.sql_id = t.sql_id AND t.sql_text LIKE '%I_DiskCopy_FS_GCW%';
 
     -- Process diskcopies that are in an INVALID state.
-    UPDATE /*+ INDEX(DiskCopy I_DiskCopy_Status_7) */ DiskCopy
+    UPDATE /*+ INDEX(DiskCopy I_DiskCopy_Status_7_FS)) */ DiskCopy
        SET status = 9, -- BEINGDELETED
            gcType = decode(gcType, NULL, dconst.GCTYPE_USER, gcType)
      WHERE fileSystem = fs.id
