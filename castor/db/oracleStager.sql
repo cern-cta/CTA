@@ -309,7 +309,7 @@ BEGIN
                WHERE ind > maxReplicaNb)
     LOOP
       -- Sanity check, make sure that the last copy is never dropped!
-      SELECT count(*) INTO nbFiles
+      SELECT /*+ INDEX(DiskCopy I_DiskCopy_CastorFile) */ count(*) INTO nbFiles
         FROM DiskCopy, FileSystem, DiskPool2SvcClass, SvcClass, DiskServer
        WHERE DiskCopy.filesystem = FileSystem.id
          AND FileSystem.diskpool = DiskPool2SvcClass.parent

@@ -544,7 +544,7 @@ BEGIN
                  abs(available - maxReplicaNb), 0, 0, 1),
          decode(sign(available), 1, 0, 1)) INTO res
     FROM (
-      SELECT count(*) available
+      SELECT /*+ INDEX(DiskCopy I_DiskCopy_CastorFile) */ count(*) available
         FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
        WHERE DiskCopy.fileSystem = FileSystem.id
          AND DiskCopy.castorFile = cfId
