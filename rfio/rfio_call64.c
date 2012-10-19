@@ -1994,6 +1994,11 @@ static void *produce64_thread(int *ptr)
   char     *conf_ent;
   char     *ckSumalg="ADLER32";
   int      xattr_len;
+  time_t   startTime;
+  time_t   transferTime;
+
+  /* start of the transfer */
+  startTime = time(0);
 
   /* Check if checksum support is enabled */
   useCksum = 1;
@@ -2038,6 +2043,18 @@ static void *produce64_thread(int *ptr)
         log(LOG_DEBUG,"produce64_thread: End of reading : total produced = %s,buffers=%d\n",
             u64tostr(total_produced,tmpbuf,0),produced64);
         array[produced64 % daemonv3_rdmt_nbuf].len = 0;
+        transferTime = time(0) - startTime;
+        if ( transferTime > 0) {
+          snprintf(tmpbuf,21," ( %d KiB/sec)",
+          (int)(total_produced/1024/transferTime));
+        } else {
+          tmpbuf[0]='\0';
+        }
+        log(LOG_INFO,
+         "produce64_thread: %llu bytes in %u seconds%s read from "
+         "file: %s \n",
+          total_produced,transferTime,tmpbuf,
+          CORRECT_FILENAME(filename));
         if (useCksum) {
           sprintf(ckSumbuf,"%x", ckSum);
           log(LOG_DEBUG,"produce64_thread: file checksum=0x%s\n",ckSumbuf);
@@ -2081,6 +2098,11 @@ static void *consume64_thread(int *ptr)
   char     *conf_ent;
   char     *ckSumalg="ADLER32";
   int      mode;
+  time_t   startTime;
+  time_t   transferTime;
+  
+  /* start of the transfer */
+  startTime = time(0);
 
   /* Check if checksum support is enabled */
   useCksum = 1;
@@ -2203,6 +2225,19 @@ static void *consume64_thread(int *ptr)
         log(LOG_ERR,"consume64_thread: fsetxattr failed for user.castor.checksum.value, error=%d\n",errno);
     }
   }
+  transferTime = time(0) - startTime;
+  if ( transferTime > 0) {
+    snprintf(tmpbuf,21," ( %d KiB/sec)",
+    (int)(total_consumed/1024/transferTime));
+  } else {
+    tmpbuf[0]='\0';
+  }
+  log(LOG_INFO,
+         "consume64_thread: %llu bytes in %u seconds%s written to "
+         "file: %s\n",
+          total_consumed,transferTime, tmpbuf,
+          CORRECT_FILENAME(filename));
+
   return(NULL);
 }
 
