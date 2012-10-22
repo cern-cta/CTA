@@ -14,7 +14,7 @@ CFLAGS += -DRTCOPYCSEC
 AddLdFlags(-ldl)
 #endif
 
-CPPFLAGS += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -I$(XROOT_LOCATION)/include/xrootd
+CPPFLAGS += -D_LARGEFILE64_SOURCE -I$(XROOT_LOCATION)/include/xrootd
 AddLdFlags(-lXrdPosixPreload)
 
 CommonDependsOnLibrary(common,castorcommon)
@@ -23,6 +23,9 @@ CommonDependsOnLibrary(vdqm,castorvdqm)
 CommonDependsOnLibrary(tape,castortape)
 CommonDependsOnLibrary(tapebridge,castortapebridge)
 CommonDependsOnLibrary(rfio,castorrfio)
+
+COMPILEC(rtcpd_Disk.c,-D_FILE_OFFSET_BITS=64)
+COMPILEC(rtcp_CheckReq.c,-D_FILE_OFFSET_BITS=64)
 
 MakeDir(/var/lib/castor/rtcpd,777)
 RTCPD_OBJS =	rtcpd.o rtcp_CallVMGR.o rtcp_CheckReq.o \
