@@ -1,0 +1,5 @@
+dd if=/dev/urandom of=<tmpLocalFileName> bs=256k count=40 &>/dev/null; echo $?
+rfcp <tmpLocalFileName> <tapeFileName>
+status=`stager_qry -M <tapeFileName> | tail -1 | awk '{print $NF;}'`; while [[ $status == 'CANBEMIGR' ]]; do sleep 15; status=`stager_qry -M <tapeFileName> | tail -1 | awk '{print $NF;}'` ; done
+nsls -T <tapeFileName> | awk '{print $(NF-1);}'
+rm -f <tmpLocalFileName>
