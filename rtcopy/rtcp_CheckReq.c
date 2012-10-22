@@ -22,7 +22,7 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#include <XrdPosix/XrdPosixExtern.hh>
+#include <rtcp_xroot.h>
 
 #include <pwd.h>
 #include <Castor_limits.h>
@@ -538,7 +538,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
         if ( strstr(filereq->file_path,"root://") ) {
             /* we have an xroot url */
             struct stat xrootStat;
-            rc = XrdPosix_Stat(filereq->file_path,&xrootStat);
+            rc = rtcp_xroot_stat(filereq->file_path,&xrootStat);
             st.st_mode=xrootStat.st_mode;
             st.st_size=xrootStat.st_size;
         } else if ( rfioToXroot ) { 
@@ -549,7 +549,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
               errno = EFAULT; /* sets  "Bad address" errno */
               rc = -1;
             } else {
-              rc = XrdPosix_Stat(xrootFilePath,&xrootStat); 
+              rc = rtcp_xroot_stat(xrootFilePath,&xrootStat); 
               st.st_mode=xrootStat.st_mode;
               st.st_size=xrootStat.st_size;
             }
@@ -653,7 +653,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
             if ( strstr(filereq->file_path,"root://") ) {
                 /* we have an xroot url */
                 struct stat xrootStat;
-                rc = XrdPosix_Stat(filereq->file_path,&xrootStat);
+                rc = rtcp_xroot_stat(filereq->file_path,&xrootStat);
                 st.st_mode=xrootStat.st_mode;
             } else if ( rfioToXroot ) {
                 struct stat xrootStat;
@@ -663,7 +663,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
                       errno = EFAULT; /* sets  "Bad address" errno */
                       rc = -1;
                 } else {
-                      rc = XrdPosix_Stat(xrootFilePath,&xrootStat);
+                      rc = rtcp_xroot_stat(xrootFilePath,&xrootStat);
                       st.st_mode=xrootStat.st_mode;
                 } 
             } else {
@@ -693,7 +693,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
                 if ( strstr(filereq->file_path,"root://") ) {
                     /* we have a xroot url */
                     struct stat xrootStat;
-                    rc = XrdPosix_Stat(filereq->file_path,&xrootStat);
+                    rc = rtcp_xroot_stat(filereq->file_path,&xrootStat);
                     st.st_mode=xrootStat.st_mode;
                 } else if ( rfioToXroot ) {
                     struct stat xrootStat;
@@ -703,7 +703,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
                         errno = EFAULT; /* sets  "Bad address" errno */
                         rc = -1;
                     } else {
-                        rc = XrdPosix_Stat(xrootFilePath,&xrootStat);
+                        rc = rtcp_xroot_stat(xrootFilePath,&xrootStat);
                         st.st_mode=xrootStat.st_mode;
                     }
                 } else {

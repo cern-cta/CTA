@@ -24,7 +24,7 @@
 #include <stdarg.h>
 #include <sys/stat.h>
 
-#include <XrdPosix/XrdPosixExtern.hh>
+#include <rtcp_xroot.h>
 
 #include <pwd.h>
 #include <Castor_limits.h>
@@ -585,8 +585,8 @@ static int DiskFileOpen(int pool_index,
                 errno = EFAULT; /* sets  "Bad address" errno */
                 rc = -1;
             } else { 
-                rc = XrdPosix_Open(xrootFilePath, flags, 0666); 
-                rtcp_log(LOG_DEBUG,"DiskFileOpen() XrdPosix_Open for %s\n",
+                rc = rtcp_xroot_open(xrootFilePath, flags, 0666); 
+                rtcp_log(LOG_DEBUG,"DiskFileOpen() rtcp_xroot_open for %s\n",
                                     xrootFilePath);
             }
         } else if ( rfioToXroot )  {
@@ -595,8 +595,8 @@ static int DiskFileOpen(int pool_index,
                 errno = EFAULT; /* sets  "Bad address" errno */
                 rc = -1;
             } else {
-                rc = XrdPosix_Open(xrootFilePath, flags, 0666); 
-                rtcp_log(LOG_DEBUG,"XrdPosix_Open for %s\n",xrootFilePath);
+                rc = rtcp_xroot_open(xrootFilePath, flags, 0666); 
+                rtcp_log(LOG_DEBUG,"rtcp_xroot_open for %s\n",xrootFilePath);
             }  
         } else {
             rc = rfio_open64(filereq->file_path,flags,0666);
@@ -651,7 +651,8 @@ static int DiskFileOpen(int pool_index,
             errno = 0;
 
             if ( rfioToXroot || strstr(filereq->file_path,"root://") ) {
-              rc64 = XrdPosix_Lseek(disk_fd,(off64_t)filereq->offset,SEEK_SET);
+              rc64 = rtcp_xroot_lseek(disk_fd,
+                                      (off64_t)filereq->offset,SEEK_SET);
             } else {
               rc64 = rfio_lseek64(disk_fd,(off64_t)filereq->offset,SEEK_SET);
             }
@@ -868,7 +869,7 @@ static int DiskFileClose(int disk_fd,
     serrno = rfio_errno = 0;
     if ( (*filereq->recfm == 'F') || ((filereq->convert & NOF77CW) != 0) ) {
         if ( rfioToXroot || strstr(filereq->file_path,"root://") ) { 
-            rc = XrdPosix_Close(disk_fd);
+            rc = rtcp_xroot_close(disk_fd);
         } else {
             rc = rfio_close(disk_fd);
         }
@@ -1241,7 +1242,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                     if ( nb_bytes > 0 ) {
                       if ( rfioToXroot ||
                                        strstr(filereq->file_path,"root://") ) {
-                            rc = XrdPosix_Write(disk_fd,bufp,nb_bytes);
+                            rc = rtcp_xroot_write(disk_fd,bufp,nb_bytes);
                       } else {
                             rc = rfio_write(disk_fd,bufp,nb_bytes);
                       }
@@ -1614,7 +1615,7 @@ static int DiskToMemory(int disk_fd, int pool_index,
             DK_STATUS(RTCP_PS_READ);
             if ( nb_bytes > 0 ) {
               if ( rfioToXroot || strstr(filereq->file_path,"root://") ) {
-                    rc = XrdPosix_Read(disk_fd,bufp,nb_bytes); 
+                    rc = rtcp_xroot_read(disk_fd,bufp,nb_bytes); 
               } else { 
                     rc = rfio_read(disk_fd,bufp,nb_bytes);
               }

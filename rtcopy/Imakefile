@@ -24,9 +24,6 @@ CommonDependsOnLibrary(tape,castortape)
 CommonDependsOnLibrary(tapebridge,castortapebridge)
 CommonDependsOnLibrary(rfio,castorrfio)
 
-COMPILEC(rtcpd_Disk.c,-D_FILE_OFFSET_BITS=64)
-COMPILEC(rtcp_CheckReq.c,-D_FILE_OFFSET_BITS=64)
-
 MakeDir(/var/lib/castor/rtcpd,777)
 RTCPD_OBJS =	rtcpd.o rtcp_CallVMGR.o rtcp_CheckReq.o \
 		rtcp_Listen.o rtcp_SendRecv.o rtcp_log.o \
@@ -40,7 +37,8 @@ RTCPD_OBJS =	rtcpd.o rtcp_CallVMGR.o rtcp_CheckReq.o \
 		rtcpd_SendAckToVdqmOrTapeBridge.o \
 		rtcpd_GetClientInfoMsg.o \
 		rtcpd_GetClientInfo.o rtcp_tellClient.o \
-		rtcpdIsConfiguredToReuseMount.o
+		rtcpdIsConfiguredToReuseMount.o \
+                rtcp_xroot.o
 TapeProgramTarget(rtcpd,$(RTCPD_OBJS),,-lz,0750)
 EXEMANPAGE(rtcpd)
 LOGROTATE(castor-rtcopy-server,installtape)
