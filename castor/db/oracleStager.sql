@@ -389,10 +389,11 @@ CREATE OR REPLACE PROCEDURE subRequestToDo(service IN VARCHAR2,
                                            rCreationTime OUT INTEGER, rLastModificationTime OUT INTEGER,
                                            rRepackVid OUT VARCHAR2, rGCWeight OUT INTEGER,
                                            clIpAddress OUT INTEGER, clPort OUT INTEGER, clVersion OUT INTEGER) AS
-  CURSOR SRcur IS SELECT /*+ FIRST_ROWS(10) INDEX(SR I_SubRequest_RT_CT_ID) */ SR.id
-                    FROM SubRequest PARTITION (P_STATUS_0_1_2) SR
-                   WHERE SR.svcHandler = service
-                   ORDER BY SR.creationTime ASC;
+  CURSOR SRcur IS
+    SELECT /*+ FIRST_ROWS_10 INDEX(SR I_SubRequest_RT_CT_ID) */ SR.id
+      FROM SubRequest PARTITION (P_STATUS_0_1_2) SR  -- START, RESTART, RETRY
+     WHERE SR.svcHandler = service
+     ORDER BY SR.creationTime ASC;
   SrLocked EXCEPTION;
   PRAGMA EXCEPTION_INIT (SrLocked, -54);
   varSrId NUMBER;
@@ -478,12 +479,16 @@ BEGIN
         SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, weight, client
           INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, rGcWeight, varClientId
           FROM SetFileGCWeight WHERE id = rId;
+      WHEN varRName = 'StageDiskCopyReplicaRequest' THEN
+        -- This should never happen, a replication request cannot be restarted. Raise an error
+        RAISE VALUE_ERROR;
     END CASE;
     SELECT ipAddress, port, version
       INTO clIpAddress, clPort, clVersion
       FROM Client WHERE id = varClientId;
   EXCEPTION WHEN OTHERS THEN
-    -- Something went really wrong, our subrequest does not have the corresponding request or client.
+    -- Something went really wrong, our subrequest does not have the corresponding request or client,
+    -- or there has been an attempt to restart a replication subrequest.
     -- Just drop it and re-raise exception. Some rare occurrences have happened in the past,
     -- this catch-all logic protects the stager-scheduling system from getting stuck with a single such case.
     archiveSubReq(varSrId, dconst.SUBREQUEST_FAILED_FINISHED);
@@ -868,7 +873,7 @@ BEGIN
   SELECT fileid, decode(nsHostName, '', nsHost, nsHostName), id
     BULK COLLECT INTO fileIds, nsHosts, ids
     FROM NsFileId WHERE request = abortReqId;
-  FORALL i IN 1 .. COUNT DELETE FROM NsFileId WHERE id = ids(i);
+  FORALL i IN 1 .. ids.COUNT DELETE FROM NsFileId WHERE id = ids(i);
   -- dispatch actual processing depending on request type
   BEGIN
     SELECT rType, id INTO reqType, requestId FROM
@@ -1538,7 +1543,7 @@ BEGIN
      creationtime, lastmodificationtime, answered, id, diskcopy, castorfile, parent,
      status, request, getnextstatus, errorcode, requestedfilesystems, svcHandler, reqType)
   VALUES (0, fileName, 'rfio', fileSize, 0, uuidgen(), 0, 0, gettime(), gettime(),
-     0, srId, destDcId, cfId, 0, 13, reqId, 0, 0, rfs, 'NotNullNeeded', 133); -- OBJ_StageDiskCopyReplicaRequest;
+     0, srId, destDcId, cfId, 0, 13, reqId, 0, 0, rfs, 'JobReqSvc', 133); -- OBJ_StageDiskCopyReplicaRequest
 
   -- Create the DiskCopy without filesystem
   buildPathFromFileId(fileId, nsHost, destDcId, rpath);
@@ -2538,7 +2543,7 @@ BEGIN
      WHERE (id = sr.id) OR (parent = sr.id);
   END LOOP;
   -- Set selected DiskCopies to INVALID
-  FORALL i IN 1 .. COUNT
+  FORALL i IN 1 .. dcsToRm.COUNT
     UPDATE DiskCopy
        SET status = dconst.DISKCOPY_INVALID,
            gcType = inGcType

@@ -353,7 +353,7 @@ BEGIN
      AND FileSystem.diskserver = dsId
      AND DiskCopy.castorfile = cfId
      AND DiskCopy.id != dcId
-     AND DiskCopy.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_DISK2DISKCOPY, dconst.DISKCOPY_CANBEMIGR);
+     AND DiskCopy.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_WAITDISK2DISKCOPY, dconst.DISKCOPY_CANBEMIGR);
   IF nbCopies > 0 THEN
     raise_application_error(-20112, 'Multiple copies of this file already found on this diskserver');
   END IF;
@@ -965,11 +965,13 @@ PROCEDURE transferToSchedule(srId OUT INTEGER,              srSubReqId OUT VARCH
   cfId NUMBER;
   -- Cursor to select the next candidate for submission to the scheduler orderd
   -- by creation time.
+  -- Note that the where clause is not strictly needed, but this way Oracle is forced
+  -- to use an INDEX RANGE SCAN instead of its preferred (and unstable upon load) FULL SCAN!
   CURSOR c IS
-    SELECT /*+ FIRST_ROWS(10) INDEX(SR I_SubRequest_CT_ID) */ SR.id
-      FROM SubRequest
- PARTITION (P_STATUS_13_14) SR  -- RESTART, READYFORSCHED, BEINGSCHED
-     ORDER BY status ASC, SR.creationTime ASC;
+    SELECT /*+ FIRST_ROWS_10 INDEX(SR I_SubRequest_RT_CT_ID) */ SR.id
+      FROM SubRequest PARTITION (P_STATUS_13_14) SR  -- READYFORSCHED
+     WHERE svcHandler = 'JobReqSvc'
+     ORDER BY SR.creationTime ASC;
   SrLocked EXCEPTION;
   PRAGMA EXCEPTION_INIT (SrLocked, -54);
   varSrId NUMBER;
