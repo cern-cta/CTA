@@ -1427,7 +1427,7 @@ BEGIN
   varParams := 'mountTransactionId='|| to_char(inMountTrId)
                ||' NbFiles='|| inFileIds.COUNT ||' '|| inLogContext
                ||' ElapsedTime='|| getSecs(varStartTime, SYSTIMESTAMP)
-               ||' AvgProcessingTime='|| getSecs(varStartTime, SYSTIMESTAMP)/inFileIds.COUNT;
+               ||' AvgProcessingTime='|| trunc(getSecs(varStartTime, SYSTIMESTAMP)/inFileIds.COUNT, 6);
   logToDLF(varReqid, dlf.LVL_SYSTEM, dlf.BULK_MIGRATION_COMPLETED, 0, '', 'tapegatewayd', varParams);
 END;
 /
@@ -1765,7 +1765,7 @@ BEGIN
   varParams := 'mountTransactionId='|| to_char(inMountTrId)
                ||' NbFiles='|| inFileIds.COUNT ||' '|| inLogContext
                ||' ElapsedTime='|| getSecs(varStartTime, SYSTIMESTAMP)
-               ||' AvgProcessingTime='|| getSecs(varStartTime, SYSTIMESTAMP)/inFileIds.COUNT;
+               ||' AvgProcessingTime='|| trunc(getSecs(varStartTime, SYSTIMESTAMP)/inFileIds.COUNT, 6);
   logToDLF(varReqid, dlf.LVL_SYSTEM, dlf.BULK_RECALL_COMPLETED, 0, '', 'tapegatewayd', varParams);
 END;
 /

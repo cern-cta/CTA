@@ -562,7 +562,7 @@ BEGIN
     -- Final logging
     varParams := 'Function="setOrReplaceSegmentsForFiles" NbFiles='|| varCount
       ||' ElapsedTime='|| getSecs(varStartTime, SYSTIMESTAMP)
-      ||' AvgProcessingTime='|| getSecs(varStartTime, SYSTIMESTAMP)/varCount;
+      ||' AvgProcessingTime='|| trunc(getSecs(varStartTime, SYSTIMESTAMP)/varCount, 6);
     addSegResult(1, inReqId, 0, 'Bulk processing complete', 0, varParams);
   END IF;
   -- Clean input data
