@@ -704,38 +704,36 @@ END;
 CREATE OR REPLACE PROCEDURE deleteFailedDiskCopies(timeOut IN NUMBER) AS
   dcIds "numList";
   cfIds "numList";
-  ct INTEGER;
 BEGIN
-  -- select INVALID diskcopies without filesystem (they can exist after a
-  -- stageRm that came before the diskcopy had been created on disk) and ALL FAILED
-  -- ones (coming from failed recalls or failed removals from the GC daemon).
-  -- Note that we don't select INVALID diskcopies from recreation of files
-  -- because they are taken by the standard GC as they physically exist on disk.
-  SELECT id
-    BULK COLLECT INTO dcIds
-    FROM DiskCopy
-   WHERE (status = 4 OR (status = 7 AND fileSystem = 0))
-     AND creationTime < getTime() - timeOut;
-  SELECT /*+ INDEX(DC PK_DiskCopy_ID) */ UNIQUE castorFile
-    BULK COLLECT INTO cfIds
-    FROM DiskCopy DC
-   WHERE id IN (SELECT /*+ CARDINALITY(ids 5) */ * FROM TABLE(dcIds) ids);
-  -- drop the DiskCopies
-  FORALL i IN 1 .. dcIds.COUNT
-    DELETE FROM DiskCopy WHERE id = dcIds(i);
-  COMMIT;
-  -- maybe delete the CastorFiles if nothing is left for them
-  ct := 0;
-  FOR i IN 1 .. cfIds.COUNT LOOP
-    deleteCastorFile(cfIds(i));
-    ct := ct + 1;
-    IF ct = 1000 THEN
-      -- commit every 1000, don't pause
-      ct := 0;
-      COMMIT;
-    END IF;
+  LOOP
+    -- select INVALID diskcopies without filesystem (they can exist after a
+    -- stageRm that came before the diskcopy had been created on disk) and ALL FAILED
+    -- ones (coming from failed recalls or failed removals from the GC daemon).
+    -- Note that we don't select INVALID diskcopies from recreation of files
+    -- because they are taken by the standard GC as they physically exist on disk.
+    -- go only for 1000 at a time and retry if the limit was reached
+    SELECT id
+      BULK COLLECT INTO dcIds
+      FROM DiskCopy
+     WHERE (status = 4 OR (status = 7 AND fileSystem = 0))
+       AND creationTime < getTime() - timeOut
+       AND ROWNUM <= 1000;
+    SELECT /*+ INDEX(DC PK_DiskCopy_ID) */ UNIQUE castorFile
+      BULK COLLECT INTO cfIds
+      FROM DiskCopy DC
+     WHERE id IN (SELECT /*+ CARDINALITY(ids 5) */ * FROM TABLE(dcIds) ids);
+    -- drop the DiskCopies
+    FORALL i IN 1 .. dcIds.COUNT
+      DELETE FROM DiskCopy WHERE id = dcIds(i);
+    COMMIT;
+    -- maybe delete the CastorFiles if nothing is left for them
+    FOR i IN 1 .. cfIds.COUNT LOOP
+      deleteCastorFile(cfIds(i));
+    END LOOP;
+    COMMIT;
+    -- exit if we did less than 1000
+    IF dcIds.COUNT < 1000 THEN EXIT; END IF;
   END LOOP;
-  COMMIT;
 END;
 /
 
