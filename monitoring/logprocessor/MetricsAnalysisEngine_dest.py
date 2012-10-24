@@ -7,7 +7,7 @@ from collections import deque # used for the buffer
 
 from rpyc.utils.server import ThreadedServer
 import rpyc
-import simplejson as sj
+import simplejson as json
 
 import LoggingCommon
 import MetricsAnalysisEngine
@@ -21,12 +21,11 @@ logging.basicConfig(format='%(asctime)s:%(levelname)-8s  %(message)s', level=log
 # operations will continue.                                                  #
 ##############################################################################
 
-script_path = os.path.dirname(sys.argv[0])
-MetricsPath = script_path+"/metrics"
+MetricsPath = ''
 
-COCKPIT_ENABLED = True
+COCKPIT_ENABLED = False
 
-COCKPIT_PUSH_URL = 'http://137.138.32.154/pushdata'
+COCKPIT_PUSH_URL = ''
 
 COCKPIT_LAST_SENT = dict() # last sent timestamp, to avoid pushing multiple times the same data
 
@@ -65,7 +64,39 @@ class ComputeMetrics(LoggingCommon.MsgDestination):
     #---------------------------------------------------------------------------
     def initialize(self, config):
     
-        logging.info("Initializer")
+        logging.info("Initializer...")
+        #-----------------------------------------------------------------------
+        # 
+        #-----------------------------------------------------------------------
+        global COCKPIT_ENABLED
+        if config.has_key( 'cockpit_enabled' ) and config['cockpit_enabled'] == 'True':
+            COCKPIT_ENABLED = True 
+        else:
+            COCKPIT_ENABLED = False
+        logging.info("Initializer : Cockpit " + {True: "enabled", False: "disabled"}[COCKPIT_ENABLED]) 
+
+        #-----------------------------------------------------------------------
+        # 
+        #-----------------------------------------------------------------------
+        global COCKPIT_PUSH_URL
+        # COCKPIT_PUSH_URL = 'http://137.138.32.154/pushdata'
+        if config.has_key( 'cockpit_push_url' ):
+            COCKPIT_PUSH_URL = config['cockpit_push_url'] 
+        else:
+            COCKPIT_PUSH_URL = ''
+        logging.info("Initializer : Cockpit push URL : "+COCKPIT_PUSH_URL)
+
+        #-----------------------------------------------------------------------
+        # 
+        #-----------------------------------------------------------------------
+        global MetricsPath
+        if config.has_key( 'metric_path' ):
+            MetricsPath = config['metric_path'] 
+        else:
+            script_path = os.path.dirname(sys.argv[0])
+            MetricsPath = script_path+"/metrics"
+        logging.info("Initializer : metrics path : "+MetricsPath)
+
 
         # Here we have to create/start the 4 threads: 
         # 1) analyzer to apply metrics on incoming msg
@@ -344,7 +375,7 @@ class ComputeMetrics(LoggingCommon.MsgDestination):
                     except IndexError:
                         break # continue if buffer is empty
 
-                    values = {'data' : sj.dumps(to_push_data)}
+                    values = {'data' : json.dumps(to_push_data)}
                     data = urllib.urlencode(values)
                     req = urllib2.Request(COCKPIT_PUSH_URL)
                     try:
@@ -353,14 +384,13 @@ class ComputeMetrics(LoggingCommon.MsgDestination):
                         # if there is any problem while sending the data, put it back in the
                         # the buffer, wait 5sec and then loop to send again
                         COCKPIT_BUFFER.appendleft(to_push_data)
-                        logging.error("Pusher : could not send data to cockpit, buffer has : "+str(len(list(COCKPIT_BUFFER)))+" entries")
-                        logging.debug("Exception : " + str(e))
+                        logging.error("Pusher : could not send data to cockpit, buffer has : "+str(len(list(COCKPIT_BUFFER)))+" entries\nException : " + str(e) + "\n" + str(traceback.format_exc()))
                         time.sleep(5)
                         continue
                     else:
                         # data succesfully sent !
                         # so continue to loop in order to empty the buffer
-                        logging.debug("Pusher : data successfully sent")
+                        logging.debug("Pusher : data successfully sent : " +str(json.dumps(to_push_data)))
 
 
 
@@ -377,8 +407,10 @@ class ComputeMetrics(LoggingCommon.MsgDestination):
         def run(self):
             logging.info("RPyC Server started")
             # Run the thread...
-            t = ThreadedServer(ComputeMetrics.RPyCService, port = 18861, protocol_config={"allow_public_attrs":True})
-            t.start()
+            ThreadedServer(ComputeMetrics.RPyCService, 
+                           port=18861, 
+                           protocol_config={"allow_public_attrs":True}, 
+                           auto_register=False).start()
 
 
 
@@ -467,21 +499,21 @@ class ComputeMetrics(LoggingCommon.MsgDestination):
             if metric in self.Analyzer.metrics:
                 
                 if not metric.metricBins.ready: 
-                    return sj.dumps(data)
+                    return json.dumps(data)
 
                 try:                               
                     metricData=metric.getData("AllShiftedByOne")
                 except Exception:
                     logging.exception("RPyC : Error in processing metric "+metric.name+":\n"+traceback.format_exc())
                     # Skip the rest...
-                    return sj.dumps(data)
+                    return json.dumps(data)
                 else:
                     data[metric] = {}
                     data[metric]['metricData'] = metricData
                     data[metric]['timestamp'] = metric.metricBins.binValidFrom
                     # now that we have the data, we return it
-                    return sj.dumps(data[metric])
-            return sj.dumps(data)
+                    return json.dumps(data[metric])
+            return json.dumps(data)
 
         #-----------------------------------------------------------------
         def exposed_get_metric(self, name=None):
