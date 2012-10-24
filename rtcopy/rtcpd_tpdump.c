@@ -219,12 +219,12 @@ int rtcpd_tpdump(rtcpClientInfo_t *client, tape_list_t *tape) {
     if ( rc != -1 ) rc = 0;
     tellClient(client_socket,NULL,NULL,rc);
     rtcp_CloseConnection(client_socket);
-    free(client_socket);
-    free(msgtxtbuf);
     (void) rtcpd_DmpEnd();
 
     TP_STATUS(RTCP_PS_RELEASE);
     (void) rtcpd_Release(tape,NULL);
     TP_STATUS(RTCP_PS_NOBLOCKING);
+    free(client_socket);
+    free(msgtxtbuf);
     return(rc);
 }
