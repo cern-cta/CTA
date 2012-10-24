@@ -173,6 +173,8 @@ AS
   RECALL_FOUND_ONGOING_RECALL  CONSTANT VARCHAR2(2048) := 'createRecallCandidate: found already running recall';
   RECALL_UNKNOWN_NS_ERROR      CONSTANT VARCHAR2(2048) := 'createRecallCandidate: error when retrieving segments from namespace';
   RECALL_NO_SEG_FOUND          CONSTANT VARCHAR2(2048) := 'createRecallCandidate: no valid segment to recall found';
+  RECALL_NO_SEG_FOUND_AT_ALL   CONSTANT VARCHAR2(2048) := 'createRecallCandidate: no segment found for this file. File is probably lost';
+  RECALL_INVALID_SEGMENT       CONSTANT VARCHAR2(2048) := 'createRecallCandidate: found unusable segment';
   RECALL_CREATING_RECALLJOB    CONSTANT VARCHAR2(2048) := 'createRecallCandidate: created new RecallJob';
   RECALL_MISSING_COPIES        CONSTANT VARCHAR2(2048) := 'createRecallCandidate: detected missing copies on tape';
   RECALL_MISSING_COPIES_NOOP   CONSTANT VARCHAR2(2048) := 'createRecallCandidate: detected missing copies on tape, but migrations ongoing';
@@ -228,7 +230,8 @@ CREATE OR REPLACE PACKAGE serrno AS
   EEXIST          CONSTANT PLS_INTEGER := 17;   /* File exists */
   EISDIR          CONSTANT PLS_INTEGER := 21;   /* Is a directory */
   EINVAL          CONSTANT PLS_INTEGER := 22;   /* Invalid argument */
-  
+  ENOSPC          CONSTANT PLS_INTEGER := 28;   /* No space left on device */
+
   SEINTERNAL      CONSTANT PLS_INTEGER := 1015; /* Internal error */
   SECHECKSUM      CONSTANT PLS_INTEGER := 1037; /* Bad checksum */
   ENSFILECHG      CONSTANT PLS_INTEGER := 1402; /* File has been overwritten, request ignored */
@@ -236,6 +239,7 @@ CREATE OR REPLACE PACKAGE serrno AS
   ENSTOOMANYSEGS  CONSTANT PLS_INTEGER := 1406; /* Too many copies on tape */
   ENSOVERWHENREP  CONSTANT PLS_INTEGER := 1407; /* Cannot overwrite valid segment when replacing */
   ERTWRONGSIZE    CONSTANT PLS_INTEGER := 1613; /* (Recalled) file size incorrect */
+  ESTNOTAVAIL     CONSTANT PLS_INTEGER := 1718; /* File is currently not available */
   ESTNOSEGFOUND   CONSTANT PLS_INTEGER := 1723; /* File has no copy on tape or no diskcopies are accessible */
   
   /* messages */

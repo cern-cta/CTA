@@ -1327,7 +1327,7 @@ BEGIN
     dcId := -1;
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
        SET status = dconst.SUBREQUEST_FAILED,
-           errorCode = 28, -- ENOSPC
+           errorCode = serrno.ENOSPC, -- No space left on device
            errorMessage = 'File creation canceled since diskPool is full'
      WHERE id = srId;
     RETURN;
@@ -1343,12 +1343,12 @@ BEGIN
       FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
      WHERE DiskCopy.fileSystem = FileSystem.id
        AND DiskCopy.castorFile = cfId
-       AND DiskCopy.status IN (0, 10)  -- STAGED, CANBEMIGR
+       AND DiskCopy.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR)
        AND FileSystem.diskPool = DiskPool2SvcClass.parent
        AND DiskPool2SvcClass.child = svcClassId
        AND FileSystem.diskServer = DiskServer.id
-       AND (DiskServer.status != 0  -- !PRODUCTION
-        OR  FileSystem.status != 0) -- !PRODUCTION
+       AND (DiskServer.status != dconst.DISKSERVER_PRODUCTION
+        OR  FileSystem.status != dconst.FILESYSTEM_PRODUCTION)
        AND ROWNUM < 2;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     NULL;  -- Nothing
@@ -1373,7 +1373,7 @@ BEGIN
   -- copy from the existing diskcopy not available to this svcclass
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- We found no diskcopies at all. We should not schedule
-  -- and make a tape recall... except ... in 3 cases :
+  -- and make a tape recall... except ... in 4 cases :
   --   - if there is some temporarily unavailable diskcopy
   --     that is in CANBEMIGR or STAGEOUT
   -- in such a case, what we have is an existing file, that
@@ -1387,51 +1387,77 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   -- case, the file is declared BUSY.
   --   - if we have an available WAITFS, WAITFSSCHEDULING copy in such
   -- a case, we tell the client that the file is BUSY
+  --   - if we have some temporarily unavailable diskcopy(ies)
+  --     that is in status STAGED and the file is disk only.
+  -- In this case nothing can be recalled and the file is inaccessible
+  -- until we have one of the unvailable copies back
   DECLARE
     dcStatus NUMBER;
     fsStatus NUMBER;
     dsStatus NUMBER;
+    varNbCopies NUMBER;
   BEGIN
-    SELECT DiskCopy.status, nvl(FileSystem.status, 0), nvl(DiskServer.status, 0)
+    SELECT DiskCopy.status, nvl(FileSystem.status, dconst.FILESYSTEM_PRODUCTION),
+           nvl(DiskServer.status, dconst.DISKSERVER_PRODUCTION)
       INTO dcStatus, fsStatus, dsStatus
       FROM DiskCopy, FileSystem, DiskServer
      WHERE DiskCopy.castorfile = cfId
-       AND DiskCopy.status IN (5, 6, 10, 11) -- WAITFS, STAGEOUT, CANBEMIGR, WAITFSSCHEDULING
+       AND DiskCopy.status IN (dconst.DISKCOPY_WAITFS, dconst.DISKCOPY_STAGEOUT,
+                               dconst.DISKCOPY_CANBEMIGR, dconst.DISKCOPY_WAITFS_SCHEDULING)
        AND FileSystem.id(+) = DiskCopy.fileSystem
        AND DiskServer.id(+) = FileSystem.diskserver
        AND ROWNUM < 2;
-    -- We are in one of the special cases. Don't schedule, don't recall
+    -- We are in one of the 3 first special cases. Don't schedule, don't recall
     dcId := -1;
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
        SET status = dconst.SUBREQUEST_FAILED,
            errorCode = CASE
-             WHEN dcStatus IN (5, 11) THEN serrno.EBUSY -- WAITFS, WAITFSSCHEDULING
-             WHEN dcStatus = 6 AND fsStatus = 0 AND dsStatus = 0 THEN serrno.EBUSY -- STAGEOUT, PRODUCTION, PRODUCTION
-             ELSE 1718 -- ESTNOTAVAIL
+             WHEN dcStatus IN (dconst.DISKCOPY_WAITFS, dconst.DISKCOPY_WAITFS_SCHEDULING) THEN serrno.EBUSY
+             WHEN dcStatus = dconst.DISKCOPY_STAGEOUT AND fsStatus = dconst.FILESYSTEM_PRODUCTION AND
+                  dsStatus = dconst.DISKSERVER_PRODUCTION THEN serrno.EBUSY
+             ELSE serrno.ESTNOTAVAIL -- File is currently not available
            END,
            errorMessage = CASE
-             WHEN dcStatus IN (5, 11) THEN -- WAITFS, WAITFSSCHEDULING
+             WHEN dcStatus IN (dconst.DISKCOPY_WAITFS, dconst.DISKCOPY_WAITFS_SCHEDULING) THEN
                'File is being (re)created right now by another user'
-             WHEN dcStatus = 6 AND fsStatus = 0 and dsStatus = 0 THEN -- STAGEOUT, PRODUCTION, PRODUCTION
+             WHEN dcStatus = dconst.DISKCOPY_STAGEOUT AND fsStatus = dconst.FILESYSTEM_PRODUCTION AND
+                  dsStatus = dconst.DISKSERVER_PRODUCTION THEN
                'File is being written to in another service class'
              ELSE
                'All copies of this file are unavailable for now. Please retry later'
            END
      WHERE id = srId;
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- Check whether the user has the rights to issue a tape recall to
-    -- the destination service class.
-    IF checkPermission(destSvcClass, userid, groupid, 161) != 0 THEN
-      -- Fail the subrequest and notify the client
+    -- we are not in one of the 3 first special cases. Let's check the 4th one
+    -- by checking whether the file is diskonly
+    SELECT nbCopies INTO varNbCopies
+      FROM FileClass, CastorFile
+     WHERE FileClass.id = CastorFile.fileClass
+       AND CastorFile.id = cfId;
+    IF varNbCopies = 0 THEN
+      -- we have indeed a disk only file, so fail the request
       dcId := -1;
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
          SET status = dconst.SUBREQUEST_FAILED,
-             errorCode = 13, -- EACCES
-             errorMessage = 'Insufficient user privileges to trigger a tape recall to the '''||destSvcClass||''' service class'
+             errorCode = serrno.ESTNOTAVAIL, -- File is currently not available
+             errorMessage = 'All disk copies of this disk-only file are unavailable for now. Please retry later'
        WHERE id = srId;
     ELSE
-      -- We did not find the very special case so trigger a tape recall.
-      dcId := 0;
+      -- We did not find the very special case so we should recall from tape.
+      -- Check whether the user has the rights to issue a tape recall to
+      -- the destination service class.
+      IF checkPermission(destSvcClass, userid, groupid, 161) != 0 THEN
+        -- Fail the subrequest and notify the client
+        dcId := -1;
+        UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
+           SET status = dconst.SUBREQUEST_FAILED,
+               errorCode = serrno.EACCES, -- Permission denied
+               errorMessage = 'Insufficient user privileges to trigger a tape recall to the '''||destSvcClass||''' service class'
+         WHERE id = srId;
+      ELSE
+        -- user has enough rights, green light for the recall
+        dcId := 0;
+      END IF;
     END IF;
   END;
 END;
@@ -3056,6 +3082,7 @@ CREATE OR REPLACE FUNCTION createRecallJobs(inCfId IN INTEGER,
                                             inLogParams IN VARCHAR2) RETURN INTEGER AS
   varAllCopyNbs "numList" := "numList"();
   varAllVIDs strListTable := strListTable();
+  varFoundSeg boolean := FALSE;
   varI INTEGER := 1;
   NO_TAPE_ROUTE EXCEPTION;
   PRAGMA EXCEPTION_INIT(NO_TAPE_ROUTE, -20100);
@@ -3064,29 +3091,45 @@ BEGIN
   BEGIN
     -- loop over the existing segments
     FOR varSeg IN (SELECT s_fileId as fileId, 0 as lastModTime, copyNo, segSize, 0 as comprSize,
-                          Cns_seg_metadata.vid, fseq, blockId, checksum_name, nvl(checksum, 0) as checksum
+                          Cns_seg_metadata.vid, fseq, blockId, checksum_name, nvl(checksum, 0) as checksum,
+                          Cns_seg_metadata.s_status as segStatus, Vmgr_tape_side.status as tapeStatus
                      FROM Cns_seg_metadata@remotens, Vmgr_tape_side@remotens
                     WHERE Cns_seg_metadata.s_fileid = inFileId
-                      AND Cns_seg_metadata.s_status = '-'
                       AND Vmgr_tape_side.VID = Cns_seg_metadata.VID
-                      AND Vmgr_tape_side.status NOT IN (1, 2, 32)  -- DISABLED, EXPORTED, ARCHIVED
                     ORDER BY copyno, fsec) LOOP
-      -- create recallJob
-      INSERT INTO RecallJob (id, castorFile, copyNb, recallGroup, svcClass, euid, egid,
-                             vid, fseq, status, fileSize, creationTime, blockId, fileTransactionId)
-      VALUES (ids_seq.nextval, inCfId, varSeg.copyno, inRecallGroupId, inSvcClassId,
-              inEuid, inEgid, varSeg.vid, varSeg.fseq, tconst.RECALLJOB_PENDING, inFileSize, inRequestTime,
-              varSeg.blockId, NULL);
-      -- log "created new RecallJob"
-      logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_CREATING_RECALLJOB, inFileId, inNsHost, 'stagerd',
-               inLogParams || ' copyNb=' || TO_CHAR(varSeg.copyno) || ' TPVID=' || varSeg.vid ||
-               ' fseq=' || TO_CHAR(varSeg.fseq || ' FileSize=' || TO_CHAR(inFileSize)));
-      -- remember the copy number and tape
-      varAllCopyNbs.EXTEND;
-      varAllCopyNbs(varI) := varSeg.copyno;
-      varAllVIDs.EXTEND;
-      varAllVIDs(varI) := varSeg.vid;
-      varI := varI + 1;
+      varFoundSeg := TRUE;
+      -- Is the segment valid, on a valid tape ?
+      IF varSeg.segStatus = '-' AND varSeg.tapeStatus NOT IN (1, 2, 32) THEN  -- DISABLED, EXPORTED, ARCHIVED
+        -- create recallJob
+        INSERT INTO RecallJob (id, castorFile, copyNb, recallGroup, svcClass, euid, egid,
+                               vid, fseq, status, fileSize, creationTime, blockId, fileTransactionId)
+        VALUES (ids_seq.nextval, inCfId, varSeg.copyno, inRecallGroupId, inSvcClassId,
+                inEuid, inEgid, varSeg.vid, varSeg.fseq, tconst.RECALLJOB_PENDING, inFileSize, inRequestTime,
+                varSeg.blockId, NULL);
+        -- log "created new RecallJob"
+        logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_CREATING_RECALLJOB, inFileId, inNsHost, 'stagerd',
+                 inLogParams || ' copyNb=' || TO_CHAR(varSeg.copyno) || ' TPVID=' || varSeg.vid ||
+                 ' fseq=' || TO_CHAR(varSeg.fseq || ' FileSize=' || TO_CHAR(inFileSize)));
+        -- remember the copy number and tape
+        varAllCopyNbs.EXTEND;
+        varAllCopyNbs(varI) := varSeg.copyno;
+        varAllVIDs.EXTEND;
+        varAllVIDs(varI) := varSeg.vid;
+        varI := varI + 1;
+      ELSE
+        -- invalid segment or invalid tape found. Log it.
+        -- "createRecallCandidate: found unusable segment"
+        logToDLF(NULL, dlf.LVL_NOTICE, dlf.RECALL_INVALID_SEGMENT, inFileId, inNsHost, 'stagerd',
+                 inLogParams || ' segStatus=' || varSeg.segStatus || ', tapeStatus=' ||
+                 CASE varSeg.tapeStatus WHEN 0 THEN 'OK' 
+                                        WHEN 1 THEN 'DISABLED'
+                                        WHEN 2 THEN 'EXPORTED'
+                                        WHEN 4 THEN 'BUSY'
+                                        WHEN 8 THEN 'FULL'
+                                        WHEN 16 THEN 'RDONLY'
+                                        WHEN 32 THEN 'ARCHIVED'
+                                        ELSE 'UNKNOWN:' || TO_CHAR(varSeg.tapeStatus) END);
+      END IF;
     END LOOP;
   EXCEPTION WHEN OTHERS THEN
     -- log "error when retrieving segments from namespace"
@@ -3094,9 +3137,15 @@ BEGIN
              inLogParams || ' ErrorMessage=' || SQLERRM);
     RETURN serrno.SEINTERNAL;
   END;
-  -- Did we find at least one segment ?
+  -- If we did not find any valid segment to recall, log a critical error as the file is probably lost
+  IF NOT varFoundSeg THEN
+    -- log "createRecallCandidate: no segment found for this file. File is probably lost"
+    logToDLF(NULL, dlf.LVL_CRIT, dlf.RECALL_NO_SEG_FOUND_AT_ALL, inFileId, inNsHost, 'stagerd', inLogParams);
+    RETURN serrno.ESTNOSEGFOUND;
+  END IF;
+  -- If we found no valid segment (but some disabled ones), log a warning
   IF varAllCopyNbs.COUNT = 0 THEN
-    -- log "No recallJob found"
+    -- log "createRecallCandidate: no valid segment to recall found"
     logToDLF(NULL, dlf.LVL_WARNING, dlf.RECALL_NO_SEG_FOUND, inFileId, inNsHost, 'stagerd', inLogParams);
     RETURN serrno.ESTNOSEGFOUND;
   END IF;
