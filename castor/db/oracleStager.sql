@@ -3120,7 +3120,10 @@ BEGIN
         -- invalid segment or invalid tape found. Log it.
         -- "createRecallCandidate: found unusable segment"
         logToDLF(NULL, dlf.LVL_NOTICE, dlf.RECALL_INVALID_SEGMENT, inFileId, inNsHost, 'stagerd',
-                 inLogParams || ' segStatus=' || varSeg.segStatus || ', tapeStatus=' ||
+                 inLogParams || ' segStatus=' ||
+                 CASE varSeg.segStatus WHEN '-' THEN 'OK'
+                                       WHEN 'd' THEN 'DISABLED'
+                                       ELSE 'UNKNOWN:' || varSeg.segStatus END || ' tapeStatus=' ||
                  CASE varSeg.tapeStatus WHEN 0 THEN 'OK' 
                                         WHEN 1 THEN 'DISABLED'
                                         WHEN 2 THEN 'EXPORTED'
