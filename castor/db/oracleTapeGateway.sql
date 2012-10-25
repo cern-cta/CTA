@@ -843,7 +843,7 @@ BEGIN
     WHEN NO_DATA_FOUND THEN RETURN;
   END;
   -- log "Canceling RecallJobs for given VID"
-  logToDLF(NULL, dlf.LVL_INFO, dlf.RECALL_CANCEL_RECALLJOB_VID, varFileId, varNsHost, 'tapegatewayd',
+  logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_CANCEL_RECALLJOB_VID, varFileId, varNsHost, 'tapegatewayd',
            'errorCode=' || TO_CHAR(inErrorCode) ||
            ' errorMessage="' || inErrorMsg ||
            '" TPVID=' || inVID);
