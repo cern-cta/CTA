@@ -161,14 +161,6 @@ const std::string castor::db::ora::OraStagerSvc::s_archiveSubReqStatementString 
 const std::string castor::db::ora::OraStagerSvc::s_stageRmStatementString =
   "BEGIN stageRm(:1, :2, :3, :4, :5); END;";
 
-/// SQL statement for stageForcedRm
-const std::string castor::db::ora::OraStagerSvc::s_stageForcedRmStatementString =
-  "BEGIN stageForcedRm(:1, :2); END;";
-
-/// SQL statement for getCFByName
-const std::string castor::db::ora::OraStagerSvc::s_getCFByNameStatementString =
-  "SELECT /*+ INDEX(CastorFile I_CastorFile_LastKnownFileName) */ id FROM CastorFile WHERE lastKnownFileName = :1";
-
 /// SQL statement for setFileGCWeight
 const std::string castor::db::ora::OraStagerSvc::s_setFileGCWeightStatementString =
   "BEGIN setFileGCWeightProc(:1, :2, :3, :4, :5); END;";
@@ -213,8 +205,7 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_recreateCastorFileStatement(0),
   m_archiveSubReqStatement(0),
   m_stageRmStatement(0),
-  m_stageForcedRmStatement(0),
-  m_getCFByNameStatement(0),
+  m_renamedFileCleanupStatement(0),
   m_setFileGCWeightStatement(0),
   m_selectPriorityStatement(0),
   m_enterPriorityStatement(0),
@@ -267,8 +258,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     if (m_recreateCastorFileStatement) deleteStatement(m_recreateCastorFileStatement);
     if (m_archiveSubReqStatement) deleteStatement(m_archiveSubReqStatement);
     if (m_stageRmStatement) deleteStatement(m_stageRmStatement);
-    if (m_stageForcedRmStatement) deleteStatement(m_stageForcedRmStatement);
-    if (m_getCFByNameStatement) deleteStatement(m_getCFByNameStatement);
+    if (m_renamedFileCleanupStatement) deleteStatement(m_renamedFileCleanupStatement);
     if (m_setFileGCWeightStatement) deleteStatement(m_setFileGCWeightStatement);
     if (m_selectPriorityStatement) deleteStatement(m_selectPriorityStatement);
     if (m_enterPriorityStatement) deleteStatement(m_enterPriorityStatement);
@@ -293,8 +283,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_recreateCastorFileStatement = 0;
   m_archiveSubReqStatement = 0;
   m_stageRmStatement = 0;
-  m_stageForcedRmStatement = 0;
-  m_getCFByNameStatement = 0;
+  m_renamedFileCleanupStatement = 0;
   m_setFileGCWeightStatement = 0;
   m_selectPriorityStatement = 0;
   m_enterPriorityStatement = 0;
@@ -1169,83 +1158,21 @@ int castor::db::ora::OraStagerSvc::stageRm
       m_stageRmStatement->registerOutParam
         (5, oracle::occi::OCCIINT);
       m_stageRmStatement->setAutoCommit(true);
-      m_stageForcedRmStatement =
-        createStatement(s_stageForcedRmStatementString);
-      m_stageForcedRmStatement->setAutoCommit(true);
-      m_getCFByNameStatement =
-        createStatement(s_getCFByNameStatementString);
     }
-    if(fileId > 0) {
-      // the file exists, try to execute stageRm
-      m_stageRmStatement->setDouble(1, subreq->id());
-      m_stageRmStatement->setDouble(2, fileId);
-      m_stageRmStatement->setString(3, nsHost);
-      m_stageRmStatement->setDouble(4, svcClassId);
-      unsigned int nb = m_stageRmStatement->executeUpdate();
-      if (0 == nb) {
-        castor::exception::Internal ex;
-        ex.getMessage()
-          << "stageRm : No return code after PL/SQL call.";
-        throw ex;
-      }
-      // Return the return code given by the procedure
-      return m_stageRmStatement->getInt(5);
+    // try to execute stageRm
+    m_stageRmStatement->setDouble(1, subreq->id());
+    m_stageRmStatement->setDouble(2, fileId);
+    m_stageRmStatement->setString(3, nsHost);
+    m_stageRmStatement->setDouble(4, svcClassId);
+    unsigned int nb = m_stageRmStatement->executeUpdate();
+    if (0 == nb) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "stageRm : No return code after PL/SQL call.";
+      throw ex;
     }
-    else {
-      // the file does not exist, try to see whether it got renamed
-      castor::BaseAddress ad;
-      ad.setCnvSvcName("DbCnvSvc");
-      ad.setCnvSvcType(castor::SVC_DBCNV);
-      m_getCFByNameStatement->setString(1, subreq->fileName());
-      oracle::occi::ResultSet *rset = m_getCFByNameStatement->executeQuery();
-      if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-        // Nothing found, fail the request
-        m_getCFByNameStatement->closeResultSet(rset);
-        subreq->setStatus(castor::stager::SUBREQUEST_FAILED);
-        subreq->setErrorCode(ENOENT);
-        cnvSvc()->updateRep(&ad, subreq, true);
-        return 0;
-      }
-      // found something, let's validate it against the NameServer
-      castor::stager::CastorFile* cf = dynamic_cast<castor::stager::CastorFile*>
-        (cnvSvc()->getObjFromId((u_signed64)rset->getDouble(1), OBJ_CastorFile));
-      m_getCFByNameStatement->closeResultSet(rset);
-      char nspath[CA_MAXPATHLEN+1];
-
-      if(Cns_getpath((char*)cf->nsHost().c_str(), cf->fileId(), nspath) != 0
-         && serrno == ENOENT) {
-        // indeed the file exists only in the stager db,
-        // execute stageForcedRm (cf. ns synch performed in GC daemon)
-        m_stageForcedRmStatement->setDouble(1, cf->fileId());
-        m_stageForcedRmStatement->setString(2, cf->nsHost());
-        unsigned int nb = m_stageForcedRmStatement->executeUpdate();
-        if (0 == nb) {
-          castor::exception::Internal ex;
-          ex.getMessage()
-            << "stageRm : No return code after PL/SQL call.";
-          delete cf;
-          throw ex;
-        }
-        delete cf;
-        // The removal was successful
-        return 1;
-      }
-      else {
-        // the nameserver contains a file with this fileid, but
-        // with a different name than the stager. Obviously the
-        // file got renamed and the requested deletion cannot succeed;
-        // anyway we update the stager catalogue with the new name
-        cf->setLastKnownFileName(nspath);
-        cnvSvc()->updateRep(&ad, cf, false);
-        // and we fail the request
-        subreq->setStatus(castor::stager::SUBREQUEST_FAILED);
-        subreq->setErrorCode(ENOENT);
-        subreq->setErrorMessage("The file got renamed by another user request");
-        cnvSvc()->updateRep(&ad, subreq, true);
-        delete cf;
-        return 0;
-      }
-    }
+    // Return the return code given by the procedure
+    return m_stageRmStatement->getInt(5);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -1256,6 +1183,31 @@ int castor::db::ora::OraStagerSvc::stageRm
   }
 }
 
+
+//------------------------------------------------------------------------------
+// renamedFileCleanup
+//------------------------------------------------------------------------------
+void castor::db::ora::OraStagerSvc::renamedFileCleanup
+(const std::string &fileName, const u_signed64 subReqId)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statement is ok
+    if (0 == m_renamedFileCleanupStatement) {
+      m_renamedFileCleanupStatement =
+        createStatement("BEGIN renamedFileCleanup(:1,:2); END;");
+      m_renamedFileCleanupStatement->setAutoCommit(true);
+    }
+    // execute renamedFileCleanup
+    m_renamedFileCleanupStatement->setString(1, fileName);
+    m_renamedFileCleanupStatement->setDouble(2, subReqId);
+    m_renamedFileCleanupStatement->executeUpdate();
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage() << "Error caught in renamedFileCleanup." << std::endl << e.what();
+    throw ex;
+  }
+}
 
 //------------------------------------------------------------------------------
 // setFileGCWeight

@@ -311,6 +311,14 @@ namespace castor {
        const std::string nsHost, const u_signed64 svcClassId)
         throw (castor::exception::Exception) = 0;
 
+      /*
+       * cleanups the stager DB in case of a stagerRm for a renamed file
+       * Handles accordingly the subrequest (failing it if needed)
+       */
+      virtual void renamedFileCleanup
+      (const std::string &fileName, const u_signed64 subReqId)
+        throw (castor::exception::Exception) = 0;
+
       /**
        * Updates the gcWeight of some copies of a given file.
        * The passed weight (in seconds) is added to the current one,

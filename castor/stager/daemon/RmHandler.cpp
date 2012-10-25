@@ -61,26 +61,29 @@ namespace castor{
         }
 
         ReplyHelper* stgReplyHelper=NULL;
-        try{
-          // try to perform the stageRm; internally, the method checks for non existing files
-          if(reqHelper->stagerService->stageRm(reqHelper->subrequest,
-            reqHelper->cnsFileid.fileid, reqHelper->cnsFileid.server, svcClassId)) {
-
-            reqHelper->subrequest->setStatus(SUBREQUEST_FINISHED);
-
-            stgReplyHelper = new ReplyHelper();
-            stgReplyHelper->setAndSendIoResponse(reqHelper,&(reqHelper->cnsFileid), 0, "No error");
-            stgReplyHelper->endReplyToClient(reqHelper);
-            reqHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_RMPERFORMED, &(reqHelper->cnsFileid));
-            delete stgReplyHelper;
-            stgReplyHelper = NULL;
-          }
-          else {
-            // user error, log it only in case the file existed
-            // Otherwise, it is an internal double check that failed and this is not really relevant
-            if (reqHelper->cnsFileid.fileid > 0) {
-              reqHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(reqHelper->cnsFileid));
+        try {
+          if (reqHelper->cnsFileid.fileid > 0) {
+            // try to perform the stageRm; internally, the method checks for non existing files
+            if(reqHelper->stagerService->stageRm(reqHelper->subrequest, reqHelper->cnsFileid.fileid,
+                                                 reqHelper->cnsFileid.server, svcClassId)) {
+              reqHelper->subrequest->setStatus(SUBREQUEST_FINISHED);
+              stgReplyHelper = new ReplyHelper();
+              stgReplyHelper->setAndSendIoResponse(reqHelper,&(reqHelper->cnsFileid), 0, "No error");
+              stgReplyHelper->endReplyToClient(reqHelper);
+              reqHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_RMPERFORMED, &(reqHelper->cnsFileid));
+              delete stgReplyHelper;
+              stgReplyHelper = NULL;
+            } else {
+              // user error, log it only in case the file existed
+              // Otherwise, it is an internal double check that failed and this is not really relevant
+              if (reqHelper->cnsFileid.fileid > 0) {
+                reqHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(reqHelper->cnsFileid));
+              }
             }
+          } else {
+            // the file does not exist, but we may have to cleanup the DB in case it got renamed
+            reqHelper->stagerService->renamedFileCleanup(reqHelper->subrequest->fileName(),
+                                                         reqHelper->subrequest->id());
           }
         }
         catch(castor::exception::Exception& e){

@@ -2576,6 +2576,49 @@ END;
 /
 
 
+/* PL/SQL method implementing renamedFileCleanup */
+CREATE OR REPLACE PROCEDURE renamedFileCleanup(inFileName IN VARCHAR2,
+                                               inSrId IN INTEGER) AS
+  varCfId INTEGER;
+  varFileId INTEGER;
+  varNsHost VARCHAR2(2048);
+  varNsPath VARCHAR2(2048);
+BEGIN
+  -- try to find a file with the right name
+  SELECT /*+ INDEX(CastorFile I_CastorFile_LastKnownFileName) */ fileId, nshost, id
+    INTO varFileId, varNsHost, varCfId
+    FROM CastorFile
+   WHERE lastKnownFileName = inFileName;
+  -- validate this file against the NameServer
+  BEGIN
+    SELECT getPathForFileid@remotens(fileId) INTO varNsPath
+      FROM Cns_file_metadata@remotens
+     WHERE fileid = varFileId;
+    -- the nameserver contains a file with this fileid, but
+    -- with a different name than the stager. Obviously the
+    -- file got renamed and the requested deletion cannot succeed;
+    -- anyway we update the stager catalogue with the new name
+    UPDATE CastorFile SET lastKnownFileName = varNsPath
+     WHERE id = varCfId;
+    -- and we fail the request
+    UPDATE SubRequest
+       SET status = dconst.SUBREQUEST_FAILED, errorCode=serrno.ENOENT,
+           errorMessage = 'The file got renamed by another user request'
+     WHERE id = inSrId;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- the file exists only in the stager db,
+    -- execute stageForcedRm (cf. ns synch performed in GC daemon)
+    stageForcedRm(varFileId, varNsHost, dconst.GCTYPE_NSSYNCH);
+  END;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- No file found with the given name, fail the subrequest
+  UPDATE SubRequest
+     SET status = dconst.SUBREQUEST_FAILED, errorCode=serrno.ENOENT
+   WHERE id = inSrId;
+END;
+/
+
+
 /* PL/SQL method implementing stageRm */
 CREATE OR REPLACE PROCEDURE stageRm (srId IN INTEGER,
                                      fid IN INTEGER,

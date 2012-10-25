@@ -315,6 +315,14 @@ namespace castor {
          const std::string nsHost, const u_signed64 svcClassId)
           throw (castor::exception::Exception);
 
+        /*
+         * cleanups the stager DB in case of a stagerRm for a renamed file
+         * Handles accordingly the subrequest (failing it if needed)
+         */
+        virtual void renamedFileCleanup
+        (const std::string &fileName, const u_signed64 subReqId)
+          throw (castor::exception::Exception);
+
         /**
          * Updates the gcWeight of some copies of a given file.
          * The passed weight (in seconds) is added to the current one,
@@ -469,17 +477,8 @@ namespace castor {
         /// SQL statement object for function stageRm
         oracle::occi::Statement *m_stageRmStatement;
 
-        /// SQL statement for function stageRm
-        static const std::string s_stageForcedRmStatementString;
-
-        /// SQL statement object for function stageRm
-        oracle::occi::Statement *m_stageForcedRmStatement;
-
-        /// SQL statement for function stageRm
-        static const std::string s_getCFByNameStatementString;
-
-        /// SQL statement object for function stageRm
-        oracle::occi::Statement *m_getCFByNameStatement;
+        /// SQL statement object for function renamedFileCleanup
+        oracle::occi::Statement *m_renamedFileCleanupStatement;
 
         /// SQL statement for function setFileGCWeight
         static const std::string s_setFileGCWeightStatementString;
