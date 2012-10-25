@@ -552,7 +552,7 @@ BEGIN
     SELECT /*+ INDEX(Subrequest I_Subrequest_DiskCopy)*/ id INTO srId
       FROM SubRequest
      WHERE diskCopy = dcId
-       AND status IN (6, 14); -- READY, BEINGSHCED
+       AND status = dconst.SUBREQUEST_READY;
     -- Wake up other subrequests waiting on it
     UPDATE /*+ INDEX(Subrequest I_Subrequest_Parent)*/ SubRequest
        SET status = 1, -- RESTART

@@ -2784,7 +2784,7 @@ BEGIN
   -- Check whether it was the last subrequest in the request
   SELECT /*+ INDEX(Subrequest I_Subrequest_Request)*/ id INTO result FROM SubRequest
    WHERE request = reqId
-     AND status IN (0, 1, 2, 3, 4, 5, 7, 10, 12, 13, 14)   -- all but FINISHED, FAILED_FINISHED, ARCHIVED
+     AND status IN (0, 1, 2, 3, 4, 5, 7, 10, 12, 13)   -- all but FINISHED, FAILED_FINISHED, ARCHIVED
      AND answered = 0
      AND ROWNUM < 2;
 EXCEPTION WHEN NO_DATA_FOUND THEN

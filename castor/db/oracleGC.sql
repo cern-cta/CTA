@@ -283,7 +283,7 @@ BEGIN
          (SELECT /*+ INDEX(SubRequest I_SubRequest_DiskCopy) */ 'x'
             FROM SubRequest
            WHERE SubRequest.diskcopy = DiskCopy.id
-             AND SubRequest.status IN (4, 5, 6, 12, 13, 14)) -- being processed (WAIT*, READY, *SCHED)
+             AND SubRequest.status IN (4, 5, 6, 12, 13)) -- being processed (WAIT*, READY, BEINGSCHED)
        AND NOT EXISTS
          -- Ignore diskcopies with active replications
          (SELECT 'x' FROM StageDiskCopyReplicaRequest, DiskCopy D
@@ -342,7 +342,7 @@ BEGIN
                         SELECT /*+ NL_AJ INDEX(SubRequest I_SubRequest_DiskCopy) */ 'x'
                           FROM SubRequest
                          WHERE SubRequest.diskcopy = DiskCopy.id
-                           AND SubRequest.status IN (4, 5, 6, 12, 13, 14)) -- being processed (WAIT*, READY, *SCHED)
+                           AND SubRequest.status IN (4, 5, 6, 12, 13)) -- being processed (WAIT*, READY, BEINGSCHED)
                       AND NOT EXISTS
                         -- Ignore diskcopies with active replications
                         (SELECT /*+ NL_AJ INDEX(DCRR I_StageDiskCopyReplic_DestDC) */ 'x'
@@ -468,7 +468,7 @@ BEGIN
         SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ count(*) INTO nb
           FROM SubRequest
          WHERE castorFile = cf.cfId
-           AND status IN (1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14);  -- all but START, FINISHED, FAILED_FINISHED, ARCHIVED
+           AND status IN (1, 2, 3, 4, 5, 6, 7, 10, 12, 13);  -- all but START, FINISHED, FAILED_FINISHED, ARCHIVED
         IF nb = 0 THEN
           -- Nothing left, delete the CastorFile
           DELETE FROM CastorFile WHERE id = cf.cfId;
@@ -477,7 +477,7 @@ BEGIN
           UPDATE /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest
              SET status = dconst.SUBREQUEST_FAILED
            WHERE castorFile = cf.cfId
-             AND status IN (1, 2, 3, 4, 5, 6, 12, 13, 14);  -- same as above
+             AND status IN (1, 2, 3, 4, 5, 6, 12, 13);  -- same as above
         END IF;
         -- Check whether this file potentially had copies on tape
         SELECT nbCopies INTO nb FROM FileClass WHERE id = fc;
@@ -753,7 +753,7 @@ BEGIN
                  SELECT 'x'
                    FROM SubRequest
                   WHERE castorFile = C.id
-                    AND status IN (0, 1, 2, 3, 5, 6, 13, 14) -- all active
+                    AND status IN (0, 1, 2, 3, 5, 6, 13) -- all active
                     AND reqType NOT IN (37, 38))) LOOP -- ignore PrepareToPut, PrepareToUpdate
     IF (0 = f.fileSize) OR (f.dcStatus <> 6) THEN  -- DISKCOPY_STAGEOUT
       -- here we invalidate the diskcopy and let the GC run
