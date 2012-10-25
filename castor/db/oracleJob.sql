@@ -143,7 +143,7 @@ BEGIN
      AND FileSystem.mountPoint = selectedMountPoint;
   -- Check that a job has not already started for this diskcopy. Refer to
   -- bug #14358
-  IF prevFsId > 0 AND prevFsId <> fsId THEN
+  IF prevFsId > 0 THEN
     raise_application_error(-20107, 'This job has already started for this DiskCopy. Giving up.');
   END IF;
   -- In case the DiskCopy was in WAITFS_SCHEDULING,
