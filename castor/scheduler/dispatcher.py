@@ -107,22 +107,22 @@ class DBUpdater(threading.Thread):
       while self.running:
         # get something from the queue and then empty the queue and list all the updates to be done in one bulk
         failures = []
-        # check whether there is something to do
-        try:
-          # we go out every second in case the thread has ended in the meantime
-          transferid, fileid, errcode, errmsg, reqid = self.workqueue.get(True)
-          # transferid may be None in case we wanted to exit the blocking get in order to close the service
-          if transferid:
-            failures.append((transferid, fileid, errcode, errmsg, reqid))
-          else:
-            continue
-        except Queue.Empty:
+        # check whether there is something to do: we don't use timeouts because they cause spin locks,
+        # thus we rely on the stopper to push a None entry (cf. Dispatcher.join)...
+        transferid, fileid, errcode, errmsg, reqid = self.workqueue.get(True)
+        # ...in case we wanted to exit the blocking get in order to close the service
+        if transferid:
+          failures.append((transferid, fileid, errcode, errmsg, reqid))
+        else:
+          # we got None, we're about to exit
           continue
         # empty the queue so that we go only once to the DB
         try:
           while True:
             transferid, fileid, errcode, errmsg, reqid = self.workqueue.get(False)
-            failures.append((transferid, fileid, errcode, errmsg, reqid))
+            # skip None, this is a fake message because we are about to exit, so don't process
+            if transferid:
+              failures.append((transferid, fileid, errcode, errmsg, reqid))
         except Queue.Empty:
           # we are over, the queue is empty
           pass
@@ -196,7 +196,7 @@ class Dispatcher(threading.Thread):
     for w in self.workers:
       w.join(timeout)
     # put None values to the updateDBQueue so that dbthread goes out of its blocking call to get
-    self.updateDBQueue.put((None, None, None, None, None))
+    self.updateDBQueue.put((None, (None, None), None, None, None))
     # join the db thread
     self.dbthread.join(timeout)
     # join the master thread
