@@ -256,7 +256,7 @@ BEGIN
   -- If any DiskCopy, give up
   IF nb = 0 THEN
     -- See whether it has any RecallJob
-    SELECT /*+ INDEX_RS_ASC(I_RECALLJOB_CASTORFILE_VID) */ count(*) INTO nb FROM RecallJob
+    SELECT /*+ INDEX_RS_ASC(RecallJob I_RECALLJOB_CASTORFILE_VID) */ count(*) INTO nb FROM RecallJob
      WHERE castorFile = cfId;
     -- If any RecallJob, give up
     IF nb = 0 THEN
