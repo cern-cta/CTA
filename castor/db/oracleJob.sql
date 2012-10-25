@@ -869,13 +869,13 @@ BEGIN
         INTO srId, dcId, rType, cfId
         FROM SubRequest
        WHERE subReqId = subReqIds(i)
-         AND status IN (6, 14);  -- READY, BEINGSCHED
+         AND status = dconst.SUBREQUEST_READY;
       -- Lock the CastorFile.
       SELECT id INTO cfId FROM CastorFile
-      WHERE id = cfId FOR UPDATE;
+       WHERE id = cfId FOR UPDATE;
       -- Confirm SubRequest status hasn't changed after acquisition of lock
       SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ id INTO srId FROM SubRequest
-      WHERE id = srId AND status IN (6, 14);  -- READY, BEINGSCHED
+       WHERE id = srId AND status = dconst.SUBREQUEST_READY;
       -- Call the relevant cleanup procedure for the transfer, procedures that
       -- would have been called if the transfer failed on the remote execution host.
       IF rType = 40 THEN      -- StagePutRequest
@@ -918,7 +918,7 @@ BEGIN
         INTO srId, dcId, rType
         FROM SubRequest
        WHERE subReqId = subReqId(i)
-         AND status IN (6, 14);  -- READY, BEINGSCHED
+         AND status = dconst.SUBREQUEST_READY;
        -- Update the reason for termination.
        UPDATE SubRequest
           SET errorCode = decode(errno(i), 0, errorCode, errno(i)),
@@ -986,9 +986,8 @@ BEGIN
   IF c%NOTFOUND THEN
     -- There is no candidate available. Wait for next alert concerning something
     -- to schedule for a maximum of 3 seconds.
-    -- We do not wait forever in order to ensure that we will retry from time to
-    -- time to dig out candidates that timed out in status BEINGSCHED. Plus we
-    -- need to give the control back to the caller daemon in case it should exit
+    -- We do not wait forever in order to to give the control back to the
+    -- caller daemon in case it should exit.
     CLOSE c;
     DBMS_ALERT.WAITONE('transferReadyToSchedule', unusedMessage, unusedStatus, 3);
     -- try again to find something now that we waited
@@ -1006,8 +1005,7 @@ BEGIN
     -- let's loop on the candidates until we find one we can process
     BEGIN
       -- Try to lock the current candidate, verify that the status is valid. A
-      -- valid subrequest is either in READYFORSCHED or has been stuck in
-      -- BEINGSCHED for more than 1800 seconds (30 mins)
+      -- valid subrequest is in status READYFORSCHED
       SELECT /*+ INDEX(SR PK_SubRequest_ID) */ id INTO varSrId
         FROM SubRequest PARTITION (P_STATUS_13_14) SR
        WHERE id = varSrId

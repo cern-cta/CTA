@@ -538,8 +538,7 @@ BEGIN
       OR abortedSRstatus = dconst.SUBREQUEST_WAITSUBREQ
       OR abortedSRstatus = dconst.SUBREQUEST_READY
       OR abortedSRstatus = dconst.SUBREQUEST_REPACK
-      OR abortedSRstatus = dconst.SUBREQUEST_READYFORSCHED
-      OR abortedSRstatus = dconst.SUBREQUEST_BEINGSCHED THEN
+      OR abortedSRstatus = dconst.SUBREQUEST_READYFORSCHED THEN
       -- standard case, we only have to fail the subrequest
       UPDATE SubRequest SET status = dconst.SUBREQUEST_FAILED WHERE id = sr.srId;
       INSERT INTO ProcessBulkRequestHelper (fileId, nsHost, errorCode, errorMessage)
@@ -585,8 +584,7 @@ BEGIN
       OR abortedSRstatus = dconst.SUBREQUEST_WAITSUBREQ
       OR abortedSRstatus = dconst.SUBREQUEST_READY
       OR abortedSRstatus = dconst.SUBREQUEST_REPACK
-      OR abortedSRstatus = dconst.SUBREQUEST_READYFORSCHED
-      OR abortedSRstatus = dconst.SUBREQUEST_BEINGSCHED THEN
+      OR abortedSRstatus = dconst.SUBREQUEST_READYFORSCHED THEN
       -- standard case, we only have to fail the subrequest
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
          SET status = dconst.SUBREQUEST_FAILED
@@ -1106,7 +1104,7 @@ BEGIN
                       AND DiskCopy.id = dci
                       AND SubRequest.reqType <> 37  -- OBJ_PrepareToPut
                       AND DiskCopy.status IN (dconst.DISKCOPY_WAITDISK2DISKCOPY, dconst.DISKCOPY_WAITFS, dconst.DISKCOPY_STAGEOUT, dconst.DISKCOPY_WAITFS_SCHEDULING)
-                      AND SubRequest.status IN (dconst.SUBREQUEST_WAITTAPERECALL, dconst.SUBREQUEST_READYFORSCHED, dconst.SUBREQUEST_BEINGSCHED, dconst.SUBREQUEST_READY)),
+                      AND SubRequest.status IN (dconst.SUBREQUEST_WAITTAPERECALL, dconst.SUBREQUEST_READYFORSCHED, dconst.SUBREQUEST_READY)),
         status = 5, -- WAITSUBREQ
         lastModificationTime = getTime()
   WHERE SubRequest.id = srId;
@@ -1889,7 +1887,7 @@ BEGIN
         FROM StageDiskCopyReplicaRequest Req, SubRequest
        WHERE SubRequest.request = Req.id
          AND Req.svcClass = svcClassId    -- this is the destination service class
-         AND status IN (13, 14, 6)  -- WAITINGFORSCHED, BEINGSCHED, READY
+         AND status IN (dconst.SUBREQUEST_READYFORSCHED, dconst.SUBREQUEST_READY)
          AND castorFile = cfId;
       -- found it, wait on it
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
@@ -2139,7 +2137,7 @@ BEGIN
       FROM SubRequest
      WHERE castorfile = cfId
        AND reqType IN (40, 44)  -- Put, Update
-       AND status IN (0, 1, 2, 3, 6, 13, 14) -- START, RESTART, RETRY, WAITSCHED, READY, READYFORSCHED, BEINGSCHED
+       AND status IN (0, 1, 2, 3, 6, 13) -- START, RESTART, RETRY, WAITSCHED, READY, READYFORSCHED
        AND ROWNUM < 2;
     -- we've found one, we wait
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
@@ -2382,7 +2380,7 @@ BEGIN
             FROM SubRequest
            WHERE reqType IN (40, 44)  -- Put, Update
              AND diskCopy = dcId
-             AND status IN (13, 14, 6)  -- READYFORSCHED, BEINGSCHED, READY
+             AND status IN (dconst.SUBREQUEST_READYFORSCHED, dconst.SUBREQUEST_READY)
              AND ROWNUM < 2;   -- if we have more than one just take one of them
           UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
              SET status = 5, parent = srParent  -- WAITSUBREQ

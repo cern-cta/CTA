@@ -613,7 +613,6 @@ Resources can be allocated to one or many projects are are composed of a set of 
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="159064" initialValue="11" type="133771" name="SUBREQUEST_ARCHIVED" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="171301" initialValue="12" type="133771" name="SUBREQUEST_REPACK" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="e5EcIShJnwCc" initialValue="13" type="133771" name="SUBREQUEST_READYFORSCHED" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="bFJyHFRMWTI0" initialValue="14" type="133771" name="SUBREQUEST_BEINGSCHED" />
            </UML:Classifier.feature>
           </UML:Class>
           <UML:Class stereotype="53501" comment="Possible status codes for a DiskCopy" isSpecification="false" isLeaf="false" visibility="public" namespace="2105" xmi.id="1665" isRoot="false" isAbstract="false" name="DiskCopyStatusCodes" >

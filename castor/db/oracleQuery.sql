@@ -38,7 +38,7 @@ BEGIN
                          SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcClassName FROM StagePrepareToUpdateRequest UNION ALL
                          SELECT /*+ INDEX(StageDiskCopyReplicaRequest PK_StageDiskCopyReplicaRequ_Id) */ id, svcClassName FROM StageDiskCopyReplicaRequest) Req
                           WHERE SubRequest.diskCopy = DC.id
-                            AND SubRequest.status IN (5, 6, 13)  -- WAITSUBREQ, READY, BEINGSCHED
+                            AND SubRequest.status IN (5, 6, 13)  -- WAITSUBREQ, READY, READYFORSCHED
                             AND request = Req.id)              
                    ELSE DC.svcClass END AS svcClass,
                  DC.machine, DC.mountPoint, DC.nbCopyAccesses, CastorFile.lastKnownFileName,
@@ -95,7 +95,7 @@ BEGIN
                              SELECT /*+ INDEX(StageDiskCopyReplicaRequest PK_StageDiskCopyReplicaRequ_Id) */ id, svcclass, svcClassName FROM StageDiskCopyReplicaRequest) Req
                          WHERE SubRequest.CastorFile = CastorFile.id
                            AND SubRequest.request = Req.id
-                           AND SubRequest.status IN (5, 6, 13)  -- WAITSUBREQ, READY, BEINGSCHED
+                           AND SubRequest.status IN (5, 6, 13)  -- WAITSUBREQ, READY, READYFORSCHED
                            AND svcClass = svcClassId)
                       END AS status,
                  DC.machine, DC.mountPoint, DC.nbCopyAccesses, CastorFile.lastKnownFileName,
