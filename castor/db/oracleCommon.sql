@@ -187,14 +187,14 @@ FUNCTION checkIfFilesExist(diskServerName IN VARCHAR2, mountPointName IN VARCHAR
 RETURN NUMBER AS
   rtn NUMBER;
 BEGIN
-  SELECT count(*) INTO rtn
+  SELECT /*+ INDEX(DiskCopy I_DiskCopy_FileSystem) */ 1 INTO rtn
     FROM DiskCopy, FileSystem, DiskServer
    WHERE DiskCopy.fileSystem = FileSystem.id
      AND FileSystem.diskserver = DiskServer.id
      AND DiskServer.name = diskServerName
      AND (FileSystem.mountpoint = mountPointName 
       OR  length(mountPointName) IS NULL)
-     AND rownum = 1;
+     AND rownum < 2;
   RETURN rtn;
 END;
 /
@@ -256,7 +256,7 @@ BEGIN
   -- If any DiskCopy, give up
   IF nb = 0 THEN
     -- See whether it has any RecallJob
-    SELECT count(*) INTO nb FROM RecallJob
+    SELECT /*+ INDEX_RS_ASC(I_RECALLJOB_CASTORFILE_VID) */ count(*) INTO nb FROM RecallJob
      WHERE castorFile = cfId;
     -- If any RecallJob, give up
     IF nb = 0 THEN
