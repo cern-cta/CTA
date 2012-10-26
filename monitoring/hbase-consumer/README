@@ -4,11 +4,12 @@ Dependencies :
     * python 2.6
     * simplejson
     * python-dirq
-    * python-messaging 
-          (see https://twiki.cern.ch/twiki/bin/view/EMI/MessagingLibraries)
-    * thrift
-    * happybase
+    * python-messaging   
+    * thrift (eg 0.8.0)
+    * happybase (eg 0.4)
 
 To set up the tables, see :
     * http://wiki.apache.org/hadoop/Hbase/Shell
     * http://hbase.apache.org/book/quickstart.html
+
+NB : python-dirq and python-messaging can be found here : https://twiki.cern.ch/twiki/bin/view/EMI/MessagingLibraries

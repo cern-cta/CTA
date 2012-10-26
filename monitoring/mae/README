@@ -1,9 +1,13 @@
+RPM dependencies :
+ * python-dirq 
+ * python-messaging
+ * simplejson
+ * python-rpyc (to send data to Cockpit)
 
-Start with : python mae-consumer.py /path/to/config.conf
+Usage : python mae-consumer.py /path/to/config.conf
 Log file is : /var/log/castor/mae.log
 
 A good place to put the metrics is /etc/mae/metrics
 
-NB : simplejson, python-dirq and python-messaging are required
-They can be found here : https://twiki.cern.ch/twiki/bin/view/EMI/MessagingLibraries
+NB : python-dirq and python-messaging can be found here : https://twiki.cern.ch/twiki/bin/view/EMI/MessagingLibraries
 

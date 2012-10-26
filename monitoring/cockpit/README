@@ -1,3 +1,11 @@
+RPM dependencies :
+ * simplejson
+ * python-rpyc (to fetch data from MAE)
+ * Django-south (to migrate the DB)
+ * thrift (for LogViewer)
+ * happybase (for LogViewer)
+ * mod_wsgi
+
 *   cockpit-httpd.conf is the configuration file of Apache (httpd) for the cockpit
 *   Do not enable mod_python and mod_wsgi in the same apache process
-
+*   A working MySQL DB is required
