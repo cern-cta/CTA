@@ -2598,8 +2598,20 @@ BEGIN
     -- with a different name than the stager. Obviously the
     -- file got renamed and the requested deletion cannot succeed;
     -- anyway we update the stager catalogue with the new name
-    UPDATE CastorFile SET lastKnownFileName = varNsPath
-     WHERE id = varCfId;
+    DECLARE
+      CONSTRAINT_VIOLATED EXCEPTION;
+      PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
+    BEGIN
+      UPDATE CastorFile SET lastKnownFileName = varNsPath
+       WHERE id = varCfId;
+    EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
+      -- we have another file that already uses the new name of this one...
+      -- let's fix this, but we won't put the right name there
+      UPDATE CastorFile SET lastKnownFileName = TO_CHAR(id)
+       WHERE lastKnownFileName = varNsPath;
+      UPDATE CastorFile SET lastKnownFileName = varNsPath
+       WHERE id = varCfId;
+    END;
     -- and we fail the request
     UPDATE SubRequest
        SET status = dconst.SUBREQUEST_FAILED, errorCode=serrno.ENOENT,
