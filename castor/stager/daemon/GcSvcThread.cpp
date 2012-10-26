@@ -209,6 +209,7 @@ void castor::stager::daemon::GcSvcThread::handleNsFilesDeleted
   // Useful Variables
   castor::stager::NsFilesDeleted *uReq;
   std::vector<u_signed64> result;
+  std::vector<u_signed64> delFileIds;
   castor::stager::NsFilesDeletedResponse res;
   try {
     // get the NsFilesDeleted request
@@ -217,20 +218,41 @@ void castor::stager::daemon::GcSvcThread::handleNsFilesDeleted
     // Fills it with files to be deleted
     svcs->fillObj(&ad, req, castor::OBJ_GCFile);
     // collect input fileids
-    std::vector<u_signed64> input;
+    u_signed64 *input = (u_signed64 *) calloc(uReq->files().size(), sizeof(u_signed64));
+    int i = 0;
     for (std::vector<castor::stager::GCFile*>::const_iterator it =
            uReq->files().begin();
          it != uReq->files().end();
-         it++) {
+         it++, i++) {
       // despite the syntax, this IS a fileId.
       // Some bad reuse of exiting object, I apologize...
-      input.push_back((*it)->diskCopyId());
+      input[i] = (*it)->diskCopyId();
     }
-    // "Invoking nsFilesDeleted"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("NbFiles", uReq->files().size())};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_GCSVC_NSFILDEL, 1, params);
-    result = gcSvc->nsFilesDeleted(input, uReq->nsHost());
+
+    // Call the nameserver to determine which files have been deleted
+    int nbFids = uReq->files().size();
+    int rc = Cns_bulkexist(uReq->nsHost().c_str(), input, &nbFids);
+    if (rc != 0) {
+        free(input);
+        castor::exception::Exception e(serrno);
+        e.getMessage() << strerror(serrno);
+        throw e;
+    }
+
+    // Put the returned deleted files into a vector
+    for (i = 0; i < nbFids; i++) {
+        delFileIds.push_back(input[i]);
+    }
+    free(input);
+
+    // only if some files are to be deleted
+    if (nbFids > 0) {
+      // "Invoking nsFilesDeleted"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("NbFiles", uReq->files().size())};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_GCSVC_NSFILDEL, 1, params);
+      result = gcSvc->nsFilesDeleted(delFileIds, uReq->nsHost());
+    }
   } catch (castor::exception::Exception& e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
@@ -241,6 +263,8 @@ void castor::stager::daemon::GcSvcThread::handleNsFilesDeleted
     res.setErrorCode(e.code());
     res.setErrorMessage(e.getMessage().str());
   }
+
+  // Prepare reply to gcd and log
   Cns_fileid fileId;
   strncpy(fileId.server, uReq->nsHost().c_str(), CA_MAXHOSTNAMELEN+1);
   fileId.server[CA_MAXHOSTNAMELEN] = 0;

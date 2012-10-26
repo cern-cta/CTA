@@ -647,66 +647,28 @@ void castor::gc::SynchronizationThread::synchronizeFiles
 
   }
 
-  // Create an array of 64bit unsigned integers to pass to the Cns_bulkexist
-  // call
-  u_signed64 *cnsFileIds = (u_signed64 *) calloc(filePaths.size(), sizeof(u_signed64));
-  if (cnsFileIds == 0){
-    // "Memory allocation failure"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Function", "synchronizeFiles"),
-       castor::dlf::Param("Message", strerror(errno)) };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 29, 2, params);
-    return;
-  }
-
-  // Populate the array with fileids
-  int i = 0;
+  // Populate the vector and the map with fileids and their corresponding physical paths
   std::map<u_signed64, std::string> cnsFilePaths;
+  std::vector<u_signed64> fileIds;
   for (std::map<u_signed64, std::string>::iterator it = filePaths.begin();
        it != filePaths.end();
-       it++, i++) {
+       it++) {
     try {
       u_signed64 fid = fileIdFromFilePath(it->second);
       cnsFilePaths[fid] = it->second;
-      cnsFileIds[i] = fid;
+      fileIds.push_back(fid);
     } catch (castor::exception::Exception &e) {
       // "Could not get fileid from filepath, giving up for this file"
       castor::dlf::Param params[] =
         {castor::dlf::Param("Filename", it->second),
          castor::dlf::Param("Error", e.code()),
          castor::dlf::Param("ErrorMessage", e.getMessage().str())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 43, 3, params, &fileId);        
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 43, 3, params, &fileId);
     }
   }
 
-  // Call the nameserver to determine which files have been deleted
-  int nbFids = cnsFilePaths.size();
-  int rc = Cns_bulkexist(nameServer.c_str(), cnsFileIds, &nbFids);
-  if (rc != 0) {
-    // "Error calling nameserver function Cns_bulkexist"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Nameserver", nameServer),
-       castor::dlf::Param("Message", sstrerror(serrno))};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 32, 2, params);
-    free(cnsFileIds);
-    return;
-  }
-
-  // No files to be deleted
-  if (nbFids == 0) {
-    free(cnsFileIds);
-    return;
-  }
-
-  // Put the returned deleted files into a vector
-  std::vector<u_signed64> delFileIds;
-  for (i = 0; i < nbFids; i++) {
-    delFileIds.push_back(cnsFileIds[i]);
-  }
-  free(cnsFileIds);
-
   // Notify the stager to the deletion of the orphaned files
-  orphans = gcSvc->nsFilesDeleted(delFileIds, nameServer);
+  orphans = gcSvc->nsFilesDeleted(fileIds, nameServer);
 
   // Remove orphaned files
   spaceFreed = 0, nbOrphanFiles = 0;
@@ -755,30 +717,4 @@ void castor::gc::SynchronizationThread::synchronizeFiles
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 35, 2, params);
   }
 
-  // List all files that will be scheduled for later deletion using the normal
-  // selectFile2Delete logic
-  for (std::vector<u_signed64>::const_iterator it = delFileIds.begin();
-       it != delFileIds.end();
-       it++) {
-
-    // Exclude those files which we already removed above i.e. those which
-    // aren't in the stager catalogue
-    std::vector<u_signed64>::const_iterator it2 =
-      std::find(orphans.begin(), orphans.end(), *it);
-    if (it2 != orphans.end()) {
-      continue;
-    }
-    try {
-      fileId.fileid = fileIdFromFilePath(cnsFilePaths.find(*it)->second);
-    } catch (castor::exception::Exception &e) {
-      // fileid won't be set but this only impacts logging, so let it go
-    }
-
-    // "File scheduled for deletion as the file no longer exists in the
-    // nameserver but still exists in the stager"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Filename", cnsFilePaths.find(*it)->second)};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 42, 1, params, &fileId);
-
-  }
 }

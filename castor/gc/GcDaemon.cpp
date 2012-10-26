@@ -151,7 +151,6 @@ castor::gc::GcDaemon::GcDaemon(): castor::server::BaseDaemon("gcd") {
     { 39, "Ignoring filename that does not conform to castor naming conventions" },
     { 40, "Unexpected exception caught in synchronizeFiles" },
     { 41, "Failed to stat file" },
-    { 42, "File scheduled for deletion as the file no longer exists in the nameserver but still exists in the stager" },
     { 43, "Could not get fileid from filepath, giving up for this file" },
     { -1, "" }};
   dlfInit(messages);
