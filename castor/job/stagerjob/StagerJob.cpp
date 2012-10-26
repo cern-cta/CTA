@@ -695,10 +695,11 @@ int main(int argc, char** argv) {
       // to regular Exception objects by the internal remote procedure call
       // mechanism
       castor::dlf::Param params[] =
-        {castor::dlf::Param(arguments->subRequestUuid)};
+        {castor::dlf::Param(arguments->subRequestUuid),
+         castor::dlf::Param("Message", e.getMessage().str())};
       castor::dlf::dlf_writep
         (arguments->requestUuid, DLF_LVL_SYSTEM,
-         castor::job::stagerjob::REQCANCELED, 1, params, &arguments->fileId);
+         castor::job::stagerjob::REQCANCELED, 2, params, &arguments->fileId);
     } else {
       // "Job failed"
       castor::dlf::Param params[] =
