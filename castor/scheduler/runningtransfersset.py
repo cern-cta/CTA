@@ -349,7 +349,7 @@ class RunningTransfersSet(object):
           if self.fake:
             isEnded = True
           else:
-            rc = process.poll(-1)
+            rc = process.poll()
             isEnded = (rc!=None)
         if isEnded:
           # get fileid
