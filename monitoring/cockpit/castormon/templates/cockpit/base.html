@@ -7,11 +7,12 @@
     <meta name="Keywords" content="Cockpit" />
 
     <link href="/static/css/bootstrap.css" rel="stylesheet" />
+    <link href="/static/css/bootstrap-responsive.css" rel="stylesheet" />
     <link href="/static/css/base.css" rel="stylesheet" />
-    <link href="/static/css/jquery-ui-1.8.18.custom.css" rel="Stylesheet" />
+    <link href="/static/css/jquery-ui-1.9.1.custom.css" rel="Stylesheet" />
 
-    <script type="text/javascript" src="/static/js/jquery-1.7.2.min.js"></script>
-    <script type="text/javascript" src="/static/js/jquery-ui-1.8.18.custom.min.js"></script> 
+    <script type="text/javascript" src="/static/js/jquery-1.8.2.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery-ui-1.9.1.custom.min.js"></script> 
     <script type="text/javascript" src="/static/js/highstock.js"></script>
     <script type="text/javascript" src="/static/js/modules/exporting.js"></script>
     <script type="text/javascript" src="/static/js/bootstrap.min.js"></script>
@@ -22,14 +23,16 @@
     <title>{% block title %}CASTOR Cockpit{% endblock %}</title>
   </head>
   <body>
-    <div id="sidebar">
+    <div class="container-fluid">
+    <div class="row-fluid">
+    <div id="sidebar" class="span2">
         <div id="logo">
             <a href="/"><img class="logo" src="/static/img/CASTOR_logo_250.png" alt="CASTOR Logo"/></a>
         </div>
         <div id="sidebar-content">
-            <h1>
+            <h3>
                 Metrics
-            </h1>
+            </h3>
             <div class="accordion" id="accordion">
                 {% for category in metrics.keys %}
                 <div class="accordion-group">
@@ -40,9 +43,9 @@
                     </div>
                     <div id="accordion{{ category }}" class="accordion-body collapse {% if metric_name and metric_name in metrics.dict|get:category %}in{% endif%}">
                         <div class="accordion-inner">
-                            <ul>
+                            <ul class="unstyled">
                             {% for metric in metrics.dict|get:category %}
-                            <li><a href="/metric/{{ metric }}" class="{% if metric_name and metric_name == metric %}metric current{% endif %}">{{ metric }}</a></li>
+                            <li><a href="/metric/{{ metric }}" class="{% if metric_name and metric_name == metric %}metric current{% endif %}">{{ metric }}</a> {% if metric_name and metric_name == metric %}<img src="/static/img/info.png" class="metric-info-button" />{% endif %}</li>
                             {% endfor %}
                             </ul>
                         </div>
@@ -50,29 +53,29 @@
                 </div>
                 {% endfor %}
             </div>
-            <h1>
+            <h3>
                 Info
-            </h1>
-            <ul>
+            </h3>
+            <ul class="unstyled">
                 <li><a href="https://twiki.cern.ch/twiki/bin/view/DSSGroup/CockpitWebInterface">Twiki page</a></li>
                 <li><a href="/sls">SLS overview</a></li>
                 <li><a href="/logviewer">Log viewer</a></li>
-            {% if rpyc_status %}
-                <li class="rpyc-status rpyc-up">RPyC Server : <img src="/static/img/button_ok.png" alt="UP" /></li>
-            {% else %}
-                <li class="rpyc-status rpyc-down">RPyC Server : <img src="/static/img/button_cancel.png" alt="DOWN" /><p>Data not up-to-date !</p></li>
-                
-            {% endif %}
             </ul>
+            {% if rpyc_status %}
+                <div class="alert alert-block alert-success">
+                    <h4>MAE Server : <img class="rpyc-status" src="/static/img/button_ok.png" alt="UP" title="UP" /></h4>
+                </div>
+            {% else %}
+                <div class="alert alert-block alert-error">
+                    <h4>MAE Server : <img class="rpyc-status" src="/static/img/button_cancel.png" alt="DOWN" title="DOWN" /></h4> Data not up-to-date !
+                </div>
+            {% endif %}
         </div>
     </div>
-    <div id="main">
-            <div id="header">
-                {% block header %}{% endblock %}
-            </div>
-            <div id="content">
-                {% block content %}{% endblock %}
-            </div>
+    <div id="main" class="span10"> 
+        {% block content %}{% endblock %}
+    </div>
+    </div>
     </div>
     {% if messages %}
         <div id="messages">

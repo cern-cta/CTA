@@ -1,40 +1,24 @@
+
+/*****************************************************************************
+/*             GENERAL STUFF
+/*****************************************************************************/
 html {
     font-family: arial, helvetica, sans-serif;
-    height: 100%;
     margin: 0px;
     padding: 0px;
+    height: 100%;
 }
 
 body {
     margin: 0px;
     padding: 0px;
     font-size: 12px;
+    background-color: white;
+    height: 100%;
 }
 
 img {
     border: none;
-}
-
-a.accordion-toggle {
-    border: none;
-    margin: 0px;
-}
-a.accordion-toggle:hover {
-    border: none;
-}
-a.accordion-toggle:visited {
-    border: none;
-}
-a.accordion-toggle:active {
-    border: none;
-}
-a.accordion-toggle.current {
-    color: #f77b21;
-}
-
-a.metric.current {
-    color: #f77b21;
-    border-bottom: 1px dotted;
 }
 
 a {
@@ -67,188 +51,109 @@ p {
     padding: 5px;
 }
 
-li.rpyc-status {
-    margin-top: 15px;
-}
-
-li.rpyc-status img {
-    vertical-align:middle;
-    width:20px;
-}
-
-.rpyc-up {
-    color: green;
-}
-
-.rpyc-down {
-    color: red;
-    font-weight: bold;
-}
-
-table#sls {
-    margin: 0px auto;
-    border-collapse: collapse;
-}
-
-table#sls tr {
-}
-
-table#sls th {
-    background-color: #eee;
-    font-size: xx-large;
-    padding: 10px;
-    border: 1px solid #fff;
-}
-
-table#sls td {
-    background-color: #eee;
-    padding: 10px;
-    border: 1px solid #fff;
+select, 
+textarea, 
+input[type="text"], 
+input[type="password"], 
+input[type="datetime"], 
+input[type="datetime-local"], 
+input[type="date"], 
+input[type="month"], 
+input[type="time"], 
+input[type="week"], 
+input[type="number"], 
+input[type="email"], 
+input[type="url"], 
+input[type="search"], 
+input[type="tel"], 
+input[type="color"], 
+.uneditable-input {
+    margin-bottom: 0px;
 }
 
 
-iframe {
-    margin: 0px auto;
+/*****************************************************************************
+/*             SCAFFOLDING 
+/*****************************************************************************/
+div.container-fluid {
+    margin-top: 10px;
 }
 
+div.container-fluid,
+div.row-fluid {
+    height: 100%;
+}
+
+
+/*****************************************************************************
+/*              SIDEBAR MENU
+/*****************************************************************************/
 #sidebar {
-    width: 250px;
-    float: left;
-    background-color: transparent;
-    border: 1px solid #CCC;
-    margin: 0px 0px 0px 10px;
-    overflow: hidden;
-}
-
-#sidebar-content {
     padding: 0px;
+    border: 1px solid #CCC;
+    -webkit-border-radius: 6px;
+    -moz-border-radius: 6px;
+    border-radius: 6px;
+    -webkit-box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+    -moz-box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
 }
 
-#sidebar h1 {
+#sidebar #logo {
+    text-align: center;
+    margin: 5px 0px 10px 0px;
+}
+
+#sidebar h3 {
     background-color: #CCC;
-    padding: 3px 5px 0px 5px;
-    margin: 13px 0px 0px 0px;
+    margin: 0px 0px 0px 0px;
+    padding: 0px 0px 0px 10px;
 }
 
 #sidebar ul {
-    padding-left:0px;
-    list-style-type:none;
-    margin: 10px 10px 0 10px ;
+    margin: 10px 0px 10px 10px;
 }
 
 #sidebar li {
-    padding-bottom: 5px;
+    margin: 0px 0px 5px 0px;
 }
 
-#sidebar #logo a {
-    border: none;
+img.metric-info-button {
+    width: 20px;
+    vertical-align: bottom;
+    cursor: pointer;
 }
 
-#main {
-    margin: 10px 10px 10px 272px;
+img.metric-info-button:hover {
+    transform: translate(0px,1px);
+    -ms-transform: translate(0px,1px); /* IE 9 */
+    -webkit-transform: translate(0px,1px); /* Safari and Chrome */
+    -o-transform: translate(0px,1px); /* Opera */
+    -moz-transform: translate(0px,1px); /* Firefox */
 }
 
-#header {
-    height: 65px;
-    margin-bottom: 10px;
-    background-color: transparent; 
-    border: 1px solid #CCC;
-    padding-left: 5px;
-    overflow: hidden;
-    min-width:700px;
+a.metric.current {
+    color: #f77b21;
+    border-bottom: 1px dotted;
 }
 
-
-#content {
-    border: 1px solid #CCC;
-    min-width: 700px;
-}
-
-#messages {
-    z-index: 999;
-    position:absolute;
-    border:10px solid #CCCCCC;
-    top:25%;
-    left:50%;
-    margin-left:-100px;
-    width:200px;
-    background-color:white;
-    padding: 30px;
-    display:none;
-}
-
-div.metric_container {
-    overflow: hidden;
-}
-
-div.metric-display {
-    clear:left;
-}
-
-div.metric-display img {
-    margin-left: auto;
-    margin-right: auto;
-    overflow: hidden;
-}
-
-div.filter-container {
-    height: 50px;
-    margin: 5px;
-    width: 450px;
-    float: left;
-}
-
-div.advanced-filter {
-   display: none;
-}
-
-div.advanced-filter input[type="text"] {
-    height: 26px;
-}
-
-div.metric-options {
-}
-
-div.plot-options {
-    height: 50px;
-    margin: 5px;
-    float: left;
-}
-
-div.plot-misc {
-    height: 50px;
-    margin: 5px;
-    float: right;
-    overflow: hidden;
-}
-
-div.metric-info {
-    padding: 5px;
-}
-
-div.metric-info-text {
-    display: none;
-}
-
-
-div.quick-filter input.btn {
+img.rpyc-status {
+    width: 20px;
     vertical-align: middle;
 }
 
-a.refresh-plot img:hover {
-    transform:rotate(20deg);
-    -ms-transform:rotate(20deg); /* IE 9 */
-    -moz-transform:rotate(20deg); /* Firefox */
-    -webkit-transform:rotate(45deg); /* Safari and Chrome */
-    -o-transform:rotate(20deg); /* Opera */
+#sidebar div.alert {
+    margin: 20px 5px 20px 5px;
+}
+
+.popover {
+    width: auto;
 }
 
 
-select {
-    width: 90px;
-    margin-right: 10px;
-}
-
+/*****************************************************************************
+/*              ACCORDION STUFF
+/*****************************************************************************/
 .accordion {
     margin-bottom: 0px;
 }
@@ -276,27 +181,137 @@ select {
     margin-top: 0px !important;
 }
 
-
-select, 
-textarea, 
-input[type="text"], 
-input[type="password"], 
-input[type="datetime"], 
-input[type="datetime-local"], 
-input[type="date"], 
-input[type="month"], 
-input[type="time"], 
-input[type="week"], 
-input[type="number"], 
-input[type="email"], 
-input[type="url"], 
-input[type="search"], 
-input[type="tel"], 
-input[type="color"], 
-.uneditable-input {
-    margin-bottom: 0px;
+a.accordion-toggle {
+    border: none;
+    margin: 0px;
+}
+a.accordion-toggle:hover {
+    border: none;
+}
+a.accordion-toggle:visited {
+    border: none;
+}
+a.accordion-toggle:active {
+    border: none;
+}
+a.accordion-toggle.current {
+    color: #f77b21;
 }
 
+
+/*****************************************************************************
+/*              MAIN
+/*****************************************************************************/
+#main {
+    height: 100%;
+    min-height: 100%;
+    min-width: 800px;
+}
+
+#messages {
+    z-index: 999;
+    position:absolute;
+    border:10px solid #CCCCCC;
+    top:25%;
+    left:50%;
+    margin-left:-100px;
+    width:200px;
+    background-color:white;
+    padding: 30px;
+    display:none;
+}
+
+
+/*****************************************************************************
+/*             FILTER AND OPTIONS 
+/*****************************************************************************/
+div.filter-container {
+    height: 50px;
+    width: 450px;
+    float: left;
+    padding: 5px 0px 0px 5px;
+}
+
+div.advanced-filter {
+   display: none;
+}
+
+div.advanced-filter input[type="text"] {
+    height: 26px;
+}
+
+div.metric-options {
+    display: inline-block;
+    height: 50px;
+    width: 100%;
+}
+
+div.plot-options {
+    height: 50px;
+    float: left;
+    padding: 5px 0px 0px 0px;
+}
+
+div.plot-misc {
+    height: 50px;
+    float: right;
+    overflow: hidden;
+}
+
+div.quick-filter input.btn {
+    vertical-align: middle;
+}
+
+a.refresh-plot img:hover {
+    transform:rotate(20deg);
+    -ms-transform:rotate(20deg); /* IE 9 */
+    -moz-transform:rotate(20deg); /* Firefox */
+    -webkit-transform:rotate(20deg); /* Safari and Chrome */
+    -o-transform:rotate(20deg); /* Opera */
+}
+
+select {
+    width: 90px;
+    margin-right: 10px;
+}
+
+
+
+/*****************************************************************************
+/*             METRIC AND PLOT DISPLAY 
+/*****************************************************************************/
+
+div.metric_container {
+    height: 100%;
+}
+
+div.metric-display {
+    position: absolute;
+    top: 70px;
+    bottom: 10px;
+    right:20px;
+    left:341px;
+}
+
+div.metric-display div.alert {
+    margin: 20px;
+}
+
+
+div.metric-info { /* used to store metric details */
+    display: none;
+}
+
+div.alert.ajax-error {
+    min-height: 150px;
+    background: #f2dede url('/static/img/alert.png') no-repeat 20px 20px;
+    padding-left: 200px;
+}
+
+
+/*****************************************************************************
+/*             SVG for HighCharts 
+/*****************************************************************************/
 g[title="Reset zoom level 1:1"] rect {
     cursor: pointer;
 }
@@ -306,3 +321,34 @@ g[title="Reset zoom level 1:1"] text tspan {
     font-size: 14px;
     cursor: pointer;
 }
+
+
+/*****************************************************************************
+/*             SLS PAGE 
+/*****************************************************************************/
+table#sls {
+    margin: 20px auto 0px auto;
+    border-collapse: collapse;
+}
+
+table#sls tr {
+}
+
+table#sls th {
+    background-color: #eee;
+    font-size: xx-large;
+    padding: 10px;
+    border: 1px solid #fff;
+}
+
+table#sls td {
+    background-color: #eee;
+    padding: 10px;
+    border: 1px solid #fff;
+}
+
+iframe {
+    margin: 0px auto;
+}
+
+

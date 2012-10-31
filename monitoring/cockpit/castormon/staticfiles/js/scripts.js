@@ -8,7 +8,24 @@ var autoRefreshTimer;
 var categories_drilldown;
 var data_drilldown;
 var hc_colors = Highcharts.getOptions().colors;
+var noData = '<div class="alert alert-block"><h3>No data !</h3>There is no data for this metric, for the selected date.<br /><br /></div>'
 
+function errorMsg(_status, text) {
+    return '<div class="alert alert-error alert-block ajax-error"><br /><h3>Oups ! Error ' + _status + '</h3>' + text + '<br /><br /></div>';
+}
+
+function legendFormatter() {
+    var words = this.name.split(/[\s]+/);
+    var numWordsPerLine = 4;
+    var str = [];
+    for (var word in words) {
+        if (word > 0 && word % numWordsPerLine == 0)
+            str.push('<br>');
+
+         str.push(words[word]);
+    }
+    return str.join(' ');
+}
 
 function getAjaxURL(metric_name, from, to, format_type) {
     /*
@@ -126,16 +143,15 @@ function getTimelineChartOptions(metric_name) {
                         }
                     },
                 zoomType: 'x',
-                animation: false,
+                animation: true,
                 shadow: false,
-                marginTop: 20,
                 type: 'spline',
                 resetZoomButton: {
                     position: {
                         align: 'right',
                         verticalAlign: 'top',
-                        x: 90,
-                        //y: -20
+                        x: 0,
+                        y: -45
                     },
                     theme: {
                         r: 4,
@@ -221,28 +237,22 @@ function getTimelineChartOptions(metric_name) {
                 verticalAlign: 'top',
                 y: 100,
                 shadow: true,
-                labelFormatter: function() {
-                    // var words = this.name.match(/.{1,20}/g); // split every 20 char
-                    var words = this.name.split(/[\s]+/);
-                    var numWordsPerLine = 4;
-                    var str = [];
-                    for (var word in words) {
-                        if (word > 0 && word % numWordsPerLine == 0)
-                            str.push('<br>');
-
-                         str.push(words[word]);
-                    }
-                    return str.join(' ');
-                }
+                labelFormatter: legendFormatter
             },
             credits: {
                 enabled: false
             },
             title: {
+                align: 'center',
+                verticalAlign: 'top',
+                floating: false,
                 text: metric_name
             },
             scrollbar: {
                 enabled: true
+            },
+            subtitle: {
+                text: 'Built chart at...' // dummy text to reserve space for dynamic subtitle
             },
             series: []
         };
@@ -299,18 +309,7 @@ function getSumChartOptions(metric_name) {
                 verticalAlign: 'top',
                 y: 100,
                 shadow: true,
-                labelFormatter: function() {
-                    var words = this.name.split(/[\s]+/);
-                    var numWordsPerLine = 4;
-                    var str = [];
-                    for (var word in words) {
-                        if (word > 0 && word % numWordsPerLine == 0)
-                            str.push('<br>');
-
-                         str.push(words[word]);
-                    }
-                    return str.join(' ');
-                }
+                labelFormatter: legendFormatter
             },
             credits: {
                 enabled: false
@@ -339,7 +338,7 @@ function drawTimelineChart(metric_container, from, to) {
         var url = getAjaxURL(metric_name, from, to, "timeline");
         
         // preprocess the data, and give them to highchart
-        $.getJSON(url, function(json) {
+        var jqXHR = $.getJSON(url, function(json, textStatus, jqXHR) {
             switch (json["groupby"]) {
             case 'Top':
                 metric_container.find('select.graph-type').val('stacked').change();
@@ -373,7 +372,8 @@ function drawTimelineChart(metric_container, from, to) {
                             [ d[0] * 1000 , tmp ]
                         );
                     });
-                    options.series.push( seriesOptions );
+                    if (seriesOptions.data.length)
+                        options.series.push( seriesOptions );
                 });
                 break;
             case 1:
@@ -406,7 +406,8 @@ function drawTimelineChart(metric_container, from, to) {
                                 [ d[0] * 1000, tmp ]
                             );
                         });
-                        options.series.push( seriesOptions );
+                        if (seriesOptions.data.length)
+                            options.series.push( seriesOptions );
                     });
                 });
                 break;
@@ -437,9 +438,10 @@ function drawTimelineChart(metric_container, from, to) {
                 });*/
             default:
                 metric_container.find('select.graph-type').val('sum').change();
-                //metric_display.empty().html("<br /><br /><b><p>This metric cannot be plotted with this graph type</p></b>");
                 break;
-            } // switch end
+            } 
+            // -- switch end
+
             if (options.series.length) {
                 if (json['unit']) {
                     options.yAxis.title = { text: json['unit']};
@@ -447,7 +449,11 @@ function drawTimelineChart(metric_container, from, to) {
                 chart = new Highcharts.Chart(options);
             } else {
                 chart = null;
+                metric_display.empty().html(noData);
             }
+        })
+        .error( function (jqXHR, textStatus, errorThrown) {
+            metric_display.empty().html(errorMsg(jqXHR.status, errorThrown))
         });
     }
 }
@@ -512,7 +518,8 @@ function drawSumChart(metric_container, from, to, format_type) {
                         }
                         seriesOptions.data.push(tmp);
                     });
-                    options.series.push( seriesOptions );
+                    if (seriesOptions.data.length)
+                        options.series.push( seriesOptions );
                 });
                 break;
             case 3:
@@ -572,7 +579,8 @@ function drawSumChart(metric_container, from, to, format_type) {
                         }
                         seriesOptions.data.push(tmp_point);
                     });
-                    data_drilldown.push( seriesOptions );
+                    if (seriesOptions.data.length)
+                        data_drilldown.push( seriesOptions );
                 });
                 
                 options.xAxis.categories = categories_drilldown;
@@ -620,7 +628,11 @@ function drawSumChart(metric_container, from, to, format_type) {
                 chart = new Highcharts.Chart(options);
             } else {
                 chart = null;
+                metric_display.empty().html(noData);
             }
+        })
+        .error( function (jqXHR, textStatus, errorThrown) {
+            metric_display.empty().html(errorMsg(jqXHR.status, errorThrown))
         });
     }
 }
@@ -727,7 +739,11 @@ function drawTopChart(metric_container) {
                 chart = new Highcharts.Chart(options);
             } else {
                 chart = null;
+                metric_display.empty().html(noData);
             }
+        })
+        .error( function (jqXHR, textStatus, errorThrown) {
+            metric_display.empty().html(errorMsg(jqXHR.status, errorThrown))
         });
     }
 }
@@ -755,16 +771,8 @@ function drawChart(metric_container, from, to) {
     }
 }
 
-
+/* Start the show ! */
 $(document).ready(function () {
-
-
-    /****************************
-     *  Auto size               *
-     ****************************/
-    docHeight = $(document).height(); // height of HTML document
-    h = docHeight * 0.8;
-    $('div.metric-display').height(h);
 
     /*****************************
      * Hightchart global options *
@@ -891,15 +899,14 @@ $(document).ready(function () {
     /****************************
      *  Display Metric details  *
      ****************************/
-    $('a.metric-info-button').toggle( function() {
-        hide = "Hide metric details <img src=\"/static/img/arrow-up-double-2.png\" title=\"Hide details\" />"
-        $(this).empty().html(hide);
-        $(this).next('div.metric-info-text').slideDown();
-    }, function() {
-        show = "Metric details <img src=\"/static/img/arrow-down-double-2.png\" title=\"Show details\" />"
-        $(this).empty().html(show);
-        $(this).next('div.metric-info-text').slideUp();
-    });
+     var popoverOptionsMetricDetails = {
+        placement : 'right',
+        // here we need a function, to be called each time a display is asked
+        content : $('div.metric-info-text').html() ,
+        html: true,
+        title : '<strong>Metric details</strong>'
+    };
+    $('img.metric-info-button').popover(popoverOptionsMetricDetails);
 
     /*****************************
      * Hide all series button    *
