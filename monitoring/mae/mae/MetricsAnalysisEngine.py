@@ -18,6 +18,7 @@
 #  <metric>
 #   name: CountHosts
 #   unit: second
+#   category: Misc
 #   window: 300
 #   conditions: MESSAGES=='ALLMESSAGES'
 #   groupbykeys: INSTANCE, HOSTNAME
@@ -43,7 +44,7 @@
 
 #######################################################################
 #                           INITIALIZATION                            #
-#######################################################################
+#######################################################################font-size: 10pt;
 
 # Imports
 import time, calendar
@@ -51,6 +52,7 @@ import pickle as pk
 import sys
 import math
 import glob
+import logging
 
 # Nedeed for debugging (human-readable dates):
 import datetime
@@ -67,6 +69,71 @@ debug_on=False
 #                                                                     #
 #######################################################################
 
+
+#######################################################################
+#   Class Top
+#######################################################################
+class Top(dict):
+    """
+    Return the top x param by number of appaerance
+    """
+    def __init__(self, init_dict=None):
+        if init_dict == None:
+            self.data = dict()
+        else:
+            self.data = init_dict
+
+    def __add__(self, other):
+        result = dict()
+        # copy self
+        for element in self.data:
+            result[element] = int(self.data[element])
+        # insert element of the other
+        for element in other.data:
+            if element in result:
+                result[element] += other.data[element]
+            else:
+                result[element] = other.data[element]
+        return self.__class__(result) 
+
+    def add(self, element):
+        if element in self.data:
+            self.data[element] += 1
+        else:
+            self.data[element] = 1
+
+    def getData(self):
+        return self.data
+
+
+#######################################################################
+#   Class Top5
+#######################################################################
+class Top5(Top):
+    """
+    Return the top 5 param by number of appaerance
+    """
+    def getData(self):
+        top5_elements = sorted(self.data, key=self.data.get, reverse=True)
+        result = dict()
+        for element in top5_elements[:5]:
+            result[element] = self.data[element]
+        return result
+
+
+#######################################################################
+#   Class Top10
+#######################################################################
+class Top10(Top):
+    """
+    Return the top 10 param by number of appaerance
+    """
+    def getData(self):
+        top5_elements = sorted(self.data, key=self.data.get, reverse=True)
+        result = dict()
+        for element in top5_elements[:10]:
+            result[element] = self.data[element]
+        return result
 
 
 #######################################################################
@@ -166,7 +233,7 @@ class Avg(list):
 
     def getData(self):
         if len(self)==0:
-            return[0,0,0,0,0]
+            return None
         else:
         
             # http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
@@ -188,8 +255,38 @@ class Avg(list):
             stddev=math.sqrt(variance)
 
             #return [n, Sum, mean, Min, Max, stddev]
-            return [mean, n, Sum , Min, Max, stddev]
+            #return [mean, n, Sum , Min, Max, stddev]
+            return mean
 
+
+#######################################################################
+#   Class StdDev
+#######################################################################
+
+class StdDev(Avg):
+    def getData(self):
+        if len(self)==0 or self[0] < 2:
+            return None
+        else:
+        
+            # http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
+            # mean = Sum/n
+            # variance = (Sum_sqr - Sum*mean)/(n - 1)
+            
+            n        = self[0]
+            Sum      = self[3]
+            Sum_sqr  = self[4]
+            Min      = self[1]
+            Max      = self[2]
+            mean     = Sum/n
+            
+            variance = (Sum_sqr - Sum*mean)/(n-1)
+
+            stddev=math.sqrt(variance)
+
+            #return [n, Sum, mean, Min, Max, stddev]
+            #return [mean, n, Sum , Min, Max, stddev]
+            return stddev
 
 
 #######################################################################
@@ -1177,7 +1274,7 @@ class Bin:
             # bin with the data objects of the anotherBin. Data objects know how to sum themselves in the right way.
             
    
-            for i in range(0,len(self.dataobjects)):
+            for i in range(len(self.dataobjects)):
             
                 # For every data object of this bin sum it with the other one.
                 # Note: '+=' is not overloaded, just the '+' it is.
@@ -1628,7 +1725,7 @@ class Metric:
         return "<\'"+self.name+"\' metric object>"
     
     #---------------------------------------------------------------------------
-    def __init__(self, name, unit, window, nbins, conditions, groupbykeys, data, handle_unordered):
+    def __init__(self, name, unit, category, window, nbins, conditions, groupbykeys, data, handle_unordered):
 
         # Local vars..
 
@@ -1637,6 +1734,9 @@ class Metric:
 
         # - unit, string
         self.unit=unit
+
+        # - unit, string
+        self.category=category
         
         # - window, int
         self.window=int(window)
@@ -1926,6 +2026,10 @@ def parseMetrics(metricsfile):
                 # support old metric with no unit field
                 if not metric.has_key('unit'):
                     metric['unit'] = ''
+
+                # support old metric with no category field
+                if not metric.has_key('category'):
+                    metric['category'] = ''
                 
                 # Perfect, we have all the keys. Let's now rearrange the data array:
                 
@@ -2030,10 +2134,11 @@ def loadMetrics(path):
             #print metric
 
             # Create the metric
-            #def __init__( self, name, unit, window, nbins, conditions, groupbykeys, data, handle_unordered):
+            #def __init__( self, name, unit, category, window, nbins, conditions, groupbykeys, data, handle_unordered):
             try:
                 metrics.append(Metric(metric['name'],
                                         metric['unit'],
+                                        metric['category'],
                                         metric['window'],
                                         metric['nbins'],
                                         metric['conditions'],
