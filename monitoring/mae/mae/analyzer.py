@@ -36,16 +36,16 @@ class Analyzer(threading.Thread):
 
         # Then, infinite polling on the dirq to get new message
         while not self.STOP_FLAG.isSet():
-            for name in self._message_queue:
-                if self.STOP_FLAG.isSet():
-                    return
-                if self._message_queue.lock(name):
-                    msg = self._message_queue.get_message(name)
-                    for m in self._parse(msg):
-                        self._apply(m)
-                    self._message_queue.remove(name)
-            time.sleep(0.5) # wait and loop again if empty queue
             try:
+                for name in self._message_queue:
+                    if self.STOP_FLAG.isSet():
+                        return
+                    if self._message_queue.lock(name):
+                        msg = self._message_queue.get_message(name)
+                        for m in self._parse(msg):
+                            self._apply(m)
+                        self._message_queue.remove(name)
+                time.sleep(0.1) # wait and loop again if empty queue
                 # purge old messages
                 self._message_queue.purge(maxtemp=600, maxlock=600)
             except OSError, exc:
