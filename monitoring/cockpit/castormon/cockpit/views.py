@@ -134,13 +134,15 @@ def _format_data_sum(result_data, nb_group_keys):
             for md in result_data:
                 for i in range(len(md[1][key])):
                     try:
-                        data[key][i] += md[1][key][i]
+                        if md[1][key][i]: # handle None
+                         data[key][i] += md[1][key][i]
                     except KeyError:
                         data[key] = list()
                         for d in md[1][key]:
                             # initialize with zeroes
                             data[key].append(0)
-                        data[key][i] += md[1][key][i]
+                        if md[1][key][i]: # handle None
+                            data[key][i] += md[1][key][i]
     elif nb_group_keys == 2:
         data = dict()
         data['keys1'] = list()
@@ -158,7 +160,8 @@ def _format_data_sum(result_data, nb_group_keys):
                             # initialize with zeroes
                             data[key1][key2].append(0)
                     for i in range(len(md[1][key1][key2])):
-                        data[key1][key2][i] += md[1][key1][key2][i]
+                        if md[1][key1][key2][i]: # handle None
+                            data[key1][key2][i] += md[1][key1][key2][i]
         # sort the keys !
         data['keys1'].sort()
         data['keys2'].sort()
