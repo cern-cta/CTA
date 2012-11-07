@@ -1,6 +1,7 @@
 import rpyc
 import datetime, math
 import urllib, urllib2
+import os
 
 from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.http import HttpResponse, HttpResponseRedirect
@@ -55,6 +56,11 @@ def _get_server_status():
         return False
     else:
         return True
+
+def _get_statistics_pages():
+    path = settings.TEMPLATE_DIRS[0] + "/cockpit/statistics"
+    pages = [ p.split('.html')[0] for p in os.listdir(path) ]
+    return sorted(pages)
 
 
 
@@ -237,6 +243,24 @@ def home(request, template_name):
     """
     return render_to_response(template_name,
                               {'metrics' : _get_metrics(),
+                               'statistics_pages' : _get_statistics_pages(),
+                               'rpyc_status' : _get_server_status()},
+                              context_instance=RequestContext(request))
+
+def statistics(request, page):
+    """
+    Simple auto-discover page for statistics
+    :param page: the statistics page to display, correspond to the filename of the HTML template
+    """
+    statistics_pages = _get_statistics_pages()
+    if page not in statistics_pages:
+        messages.info(request, 'This page does not exist anymore.')
+        return redirect(home)
+    template_name = "cockpit/statistics/" + page + ".html"
+    return render_to_response(template_name,
+                              {'metrics' : _get_metrics(),
+                               'statistics_pages' : statistics_pages,
+                               'current_statistics_page' : page,
                                'rpyc_status' : _get_server_status()},
                               context_instance=RequestContext(request))
 
@@ -250,14 +274,15 @@ def display_metric(request, metric_name = None):
     metrics_names = [m.name for m in Metric.objects.all()]
 
     if metric_name not in metrics_names:
-        messages.info(request, 'This metric name does not exist.')
+        messages.info(request, 'This metric does not exist.')
         return redirect(home)
-        # return HttpResponseRedirect('/')
 
-    metric_file = Metric.objects.get(name=metric_name).config_file # get the metric configuration file
+    # get the metric configuration file
+    metric_file = Metric.objects.get(name=metric_name).config_file 
 
     return render_to_response('cockpit/display_metric.html', 
                               { 'metrics' : _get_metrics(),
+                                'statistics_pages' : _get_statistics_pages(),
                                 'rpyc_status' : _get_server_status(),
                                 'metric_name' : metric_name,
                                 'metric_file' : metric_file },

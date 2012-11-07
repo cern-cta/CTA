@@ -792,7 +792,8 @@ $(document).ready(function () {
      ****************/
     box = $("div#messages");
     if (box.length) {
-        box.show().delay(2000).fadeOut(200);
+        // make the msg box blink, then fade out
+        box.fadeIn(300).fadeOut(300).fadeIn(300).fadeOut(300).fadeIn(300).delay(3000).fadeOut(200);
     }
 
     /************************

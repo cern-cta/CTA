@@ -26,20 +26,22 @@
     <div class="container-fluid">
     <div class="row-fluid">
     <div id="sidebar" class="span2">
+        <!-- Logo section -->
         <div id="logo">
             <a href="/"><img class="logo" src="/static/img/CASTOR_logo_250.png" alt="CASTOR Logo"/></a>
         </div>
         <div id="sidebar-content">
+            <!-- Metrics section -->
             <h3>
                 Metrics
             </h3>
+            <!-- Accordion -->
             <div class="accordion" id="accordion">
+                <!-- Metrics accordion -->
                 {% for category in metrics.keys %}
                 <div class="accordion-group">
                     <div class="accordion-heading">
-                        
                         <a class="accordion-toggle {% if metric_name and metric_name in metrics.dict|get:category %}current{% endif %}" data-toggle="collapse" data-parent="#accordion" href="#accordion{{ category }}">{{ category }}</a>
-                        
                     </div>
                     <div id="accordion{{ category }}" class="accordion-body collapse {% if metric_name and metric_name in metrics.dict|get:category %}in{% endif%}">
                         <div class="accordion-inner">
@@ -52,7 +54,23 @@
                     </div>
                 </div>
                 {% endfor %}
+                <!-- Statistics accordion -->
+                <div class="accordion-group">
+                    <div class="accordion-heading">
+                        <a class="accordion-toggle {% if current_statistics_page %}current{% endif %}" data-toggle="collapse" data-parent="#accordion" href="#accordion-statistics">Statistics</a>
+                    </div>
+                    <div id="accordion-statistics" class="accordion-body collapse {% if current_statistics_page %}in{% endif%}">
+                        <div class="accordion-inner">
+                            <ul class="unstyled">
+                            {% for statistics_page in statistics_pages %}
+                            <li><a href="/statistics/{{ statistics_page }}" class="{% if current_statistics_page and current_statistics_page == statistics_page %}metric current{% endif %}">{{ statistics_page }}</a></li>
+                            {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
+            <!-- Info section -->
             <h3>
                 Info
             </h3>
@@ -61,6 +79,7 @@
                 <li><a href="/sls">SLS overview</a></li>
                 <li><a href="/logviewer">Log viewer</a></li>
             </ul>
+            <!-- RPyC status section -->
             {% if rpyc_status %}
                 <div class="alert alert-block alert-success">
                     <h4>MAE Server : <img class="rpyc-status" src="/static/img/button_ok.png" alt="UP" title="UP" /></h4>
@@ -79,9 +98,11 @@
     </div>
     {% if messages %}
         <div id="messages">
-        {% for message in messages %}
-        {{ message }}
-        {% endfor %}
+            <div class="alert alert-block alert-error">
+            {% for message in messages %}
+                <h4>{{ message }}</h4>
+            {% endfor %}
+            </div>
         </div>
     {% endif %}
   </body>
