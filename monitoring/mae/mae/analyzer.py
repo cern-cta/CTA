@@ -44,10 +44,13 @@ class Analyzer(threading.Thread):
                         msg = self._message_queue.get_message(name)
                         for m in self._parse(msg):
                             self._apply(m)
-                        self._message_queue.remove(name)
+                        try:
+                            self._message_queue.remove(name)
+                        except OSError, exc:
+                            logging.warning(str(exc))
                 time.sleep(0.1) # wait and loop again if empty queue
                 # purge old messages
-                self._message_queue.purge(maxtemp=600, maxlock=600)
+                self._message_queue.purge(maxtemp=0, maxlock=0)
             except OSError, exc:
                 logging.debug(str(exc))
         return
