@@ -50,7 +50,7 @@ class Analyzer(threading.Thread):
                             logging.warning(str(exc))
                 time.sleep(0.1) # wait and loop again if empty queue
                 # purge old messages
-                self._message_queue.purge(maxtemp=0, maxlock=0)
+                self._message_queue.purge(maxtemp=60, maxlock=60)
             except OSError, exc:
                 logging.debug(str(exc))
         return

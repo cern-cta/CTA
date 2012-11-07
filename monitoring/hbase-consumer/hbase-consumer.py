@@ -128,8 +128,8 @@ def main():
         time.sleep(0.1)
         try:
             # purge old messages
-            message_queue.purge(maxtemp=0, 
-                                maxlock=0)
+            message_queue.purge(maxtemp=60, 
+                                maxlock=60)
         except OSError, exc:
             logging.debug(str(exc))
     
