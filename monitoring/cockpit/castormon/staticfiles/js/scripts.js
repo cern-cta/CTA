@@ -905,9 +905,13 @@ $(document).ready(function () {
         // here we need a function, to be called each time a display is asked
         content : $('div.metric-info-text').html() ,
         html: true,
-        title : '<strong>Metric details</strong>'
+        title : '<strong>Metric details</strong><button type="button" class="close">&times;</button>'
     };
     $('img.metric-info-button').popover(popoverOptionsMetricDetails);
+    // assign close action to popover close button
+    $('body').on('click', '.popover-title button.close', function() {
+        $('img.metric-info-button').popover('toggle');
+    });
 
     /*****************************
      * Hide all series button    *
