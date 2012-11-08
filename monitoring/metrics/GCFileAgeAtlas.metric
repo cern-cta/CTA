@@ -4,6 +4,8 @@
 
 <metric>
   name: GCFileAgeAtlas
+  unit: FileAge in seconds
+  category: ATLAS
   window: 900
   conditions: DAEMON=="gcd" and INSTANCE=="c2atlas" and GcType=="Automatic"
   groupbykeys: SvcClass

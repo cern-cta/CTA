@@ -3,6 +3,8 @@
 
 <metric>
   name: LHCBSRMFEDRequestType
+  unit: Hz
+  category: LHCb
   window: 60
   conditions: DAEMON=="srmfed" and INSTANCE=="c2lhcb"
   groupbykeys: RequestType

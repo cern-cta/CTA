@@ -4,6 +4,8 @@
 
 <metric>
   name: GCFileAgeAlice 
+  unit: FileAge in seconds
+  category: ALICE
   window: 900
   conditions: DAEMON=="gcd" and INSTANCE=="c2alice" and GcType=="Automatic"
   groupbykeys: SvcClass

@@ -2,6 +2,8 @@
 
 <metric>
   name: ATLASSRMFEDRequestType
+  unit: Hz
+  category: ATLAS
   window: 60
   conditions: DAEMON=="srmfed" and INSTANCE=="c2atlas"
   groupbykeys: RequestType

@@ -3,6 +3,8 @@
 
 <metric>
   name: UnablePerformRequest
+  unit: Count of requests
+  category: General
   window: 60
   conditions: MSG=="Unable to perform request, notifying user" and DAEMON=="stagerd"
   groupbykeys: INSTANCE

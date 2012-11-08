@@ -4,6 +4,8 @@
 
 <metric>
   name: GCMigrationCms
+  unit: FileSize in GB
+  category: CMS
   window: 300
   conditions: DAEMON=="tapegatewayd" and INSTANCE=="c2cms" and MSG=="Worker: updating nameserver for migrated file"
   groupbykeys: NONE
@@ -14,6 +16,8 @@
 
 <metric>
   name: GCMigrationbyTpsrvCms
+  unit: FileSize in GB
+  category: CMS
   window: 300
   conditions: DAEMON=="tapegatewayd" and INSTANCE=="c2cms" and MSG=="Worker: updating nameserver for migrated file"
   groupbykeys: HostName
@@ -24,6 +28,8 @@
 
 <metric>
   name: GCMigrationbyFclassCms
+  unit: FileSize in GB
+  category: CMS
   window: 300
   conditions: DAEMON=="tapegatewayd" and INSTANCE=="c2cms" and MSG=="Worker: updating nameserver for migrated file"
   groupbykeys: fileClass
@@ -34,6 +40,8 @@
 
 <metric>
   name: GCMigrationbyTpPoolCms
+  unit: FileSize in GB
+  category: CMS
   window: 300
   conditions: DAEMON=="tapegatewayd" and INSTANCE=="c2cms" and MSG=="Worker: updating nameserver for migrated file"
   groupbykeys: tapePool

@@ -4,6 +4,8 @@
 
 <metric>
   name: GCFileAgeLhcb 
+  unit: FileAge in seconds
+  category: LHCb
   window: 900
   conditions: DAEMON=="gcd" and INSTANCE=="c2lhcb" and GcType=="Automatic"
   groupbykeys: SvcClass

@@ -4,6 +4,8 @@
 
 <metric>
   name: GCFileAgePublic 
+  unit: FileAge in seconds
+  category: Public
   window: 900
   conditions: DAEMON=="gcd" and INSTANCE=="c2public" and GcType=="Automatic"
   groupbykeys: SvcClass

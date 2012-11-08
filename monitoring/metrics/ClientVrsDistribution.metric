@@ -3,6 +3,8 @@
 
 <metric>
   name: ClientVrsDistribution  
+  unit: Hz
+  category: General
   window: 60
   conditions: MSG=="Reply sent to client" and DAEMON=="rhd"
   groupbykeys: ClientVersion

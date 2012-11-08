@@ -1,8 +1,9 @@
-# Statistical information on the latency to access files on the disk cache 
-# broken down by request type, service class and protocol
+# Frequence of log msg from headnodes and central nodes
 
 <metric>
   name: CountMsgOnHeadnodes
+  unit: Hz
+  category: Monitoring
   window: 60
   conditions: "srv" in HOSTNAME
   groupbykeys: HOSTNAME

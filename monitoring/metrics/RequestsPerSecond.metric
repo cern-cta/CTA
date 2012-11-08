@@ -3,6 +3,8 @@
 
 <metric>
   name: RequestsPerSecond
+  unit: Hz
+  category: General
   window: 60
   conditions: MSG=="New Request Arrival" and DAEMON=="rhd"
   groupbykeys: INSTANCE

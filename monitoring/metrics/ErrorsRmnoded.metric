@@ -1,7 +1,9 @@
-# Count of error msg broken down by instance and daemon
+# Count of error from rmnoded
 
 <metric>
   name: ErrorsRmnoded
+  unit: Count of error from rmnoded
+  category: General
   window: 60
   conditions: LVL in ["Error"] and DAEMON in ["rmnoded"]
   groupbykeys: INSTANCE, HOSTNAME

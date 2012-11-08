@@ -1,11 +1,13 @@
 # Frequence of log msg arrival
 
 <metric>
-name: CountTotal
-window: 60
-conditions: NONE 
-groupbykeys: NONE 
-data: CounterHz(COUNT)
-handle_unordered: time_threshold
-nbins: 1
+    name: CountTotal
+    unit: Hz
+    category: Monitoring
+    window: 60
+    conditions: NONE 
+    groupbykeys: NONE 
+    data: CounterHz(COUNT)
+    handle_unordered: time_threshold
+    nbins: 1
 </metric>

@@ -2,6 +2,8 @@
 
 <metric>
   name: CMSSRMFEDRequestType
+  unit: Hz
+  category: CMS
   window: 60
   conditions: DAEMON=="srmfed" and INSTANCE=="c2cms"
   groupbykeys: RequestType

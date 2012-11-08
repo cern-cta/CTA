@@ -3,6 +3,8 @@
 
 <metric>
   name: NSSecErrorTypes
+  unit: Count of errors
+  category: Nameserver
   window: 60
   conditions: MSG=="Error: Could not establish security context" and DAEMON=="nsd"
   groupbykeys: Error

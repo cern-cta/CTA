@@ -2,6 +2,8 @@
 
 <metric>
   name: CountMsgByHostC2PPS
+  unit: Hz
+  category: Monitoring
   window: 60
   conditions: INSTANCE == "c2pps"
   groupbykeys: HOSTNAME

@@ -4,6 +4,8 @@
 
 <metric>
   name: GCMigrationAtlas
+  unit: FileSie in GB
+  category: ATLAS
   window: 60
   conditions: DAEMON=="tapegatewayd" and INSTANCE=="c2atlas" and MSG=="Worker: updating nameserver for migrated file"
   groupbykeys: NONE
@@ -14,6 +16,8 @@
 
 <metric>
   name: GCMigrationbyTpsrvAtlas
+  unit: FileSize in GB
+  category: ATLAS
   window: 60
   conditions: DAEMON=="tapegatewayd" and INSTANCE=="c2atlas" and MSG=="Worker: updating nameserver for migrated file"
   groupbykeys: HostName
@@ -24,6 +28,8 @@
 
 <metric>
   name: GCMigrationbyFclassAtlas
+  unit: FileSize in GB
+  category: ATLAS
   window: 60
   conditions: DAEMON=="tapegatewayd" and INSTANCE=="c2atlas" and MSG=="Worker: updating nameserver for migrated file"
   groupbykeys: fileClass

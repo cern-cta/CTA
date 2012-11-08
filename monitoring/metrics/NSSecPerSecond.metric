@@ -3,6 +3,8 @@
 
 <metric>
   name: NSSecPerSecond
+  unit: Hz
+  category: Nameserver
   window: 60
   conditions: MSG=="Processing complete" and "@CERN.CH" in Username and DAEMON=="nsd"
   groupbykeys: NONE

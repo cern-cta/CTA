@@ -3,6 +3,8 @@
 
 <metric>
   name: NSCompletedRequestsPerSecond
+  unit: Hz
+  category: Nameserver
   window: 60
   conditions: MSG=="Processing complete" and DAEMON=="nsd"
   groupbykeys: INSTANCE

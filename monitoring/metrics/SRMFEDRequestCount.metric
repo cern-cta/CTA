@@ -3,6 +3,8 @@
 
 <metric>
   name: SRMFEDRequestCount
+  unit: Hz
+  category: General
   window: 60
   conditions: DAEMON=="srmfed"
   groupbykeys: INSTANCE

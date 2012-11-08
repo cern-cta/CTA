@@ -2,6 +2,8 @@
 
 <metric>
   name: Warnings
+  unit: Count of warnings
+  category: General
   window: 60
   conditions: LVL in ["Warn"]
   groupbykeys: INSTANCE, DAEMON

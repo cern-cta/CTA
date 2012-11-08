@@ -1,6 +1,8 @@
 # The rate of each instance in the daemon srmfed
 <metric>
   name: PUBLICSRMFEDRequestCount
+  unit: Hz
+  category: Public
   window: 60
   conditions: DAEMON=="srmfed" and INSTANCE=="c2public"
   groupbykeys: RequestType

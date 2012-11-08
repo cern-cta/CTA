@@ -912,6 +912,11 @@ $(document).ready(function () {
     $('body').on('click', '.popover-title button.close', function() {
         $('img.metric-info-button').popover('toggle');
     });
+    // tooltip on info button
+    var tooltipMetricDetailsOptions = {
+        title : 'Metric details (press to open/close)'
+    };
+    $('img.metric-info-button').tooltip(tooltipMetricDetailsOptions);
 
     /*****************************
      * Hide all series button    *
