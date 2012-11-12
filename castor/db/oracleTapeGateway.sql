@@ -997,7 +997,7 @@ BEGIN
       varTotalNbMounts := varTotalNbMounts + 1;
       IF varMountId = 0 THEN
         -- log "startMigrationMounts: failed migration mount creation due to lack of files"
-        logToDLF(NULL, dlf.LVL_WARNING, dlf.MIGMOUNT_NO_FILE, 0, '', 'tapegatewayd',
+        logToDLF(NULL, dlf.LVL_SYSTEM, dlf.MIGMOUNT_NO_FILE, 0, '', 'tapegatewayd',
                  'tapePool=' || t.name ||
                  ' nbPreExistingMounts=' || TO_CHAR(varNbPreExistingMounts) ||
                  ' nbMounts=' || TO_CHAR(varTotalNbMounts) ||
@@ -1024,7 +1024,7 @@ BEGIN
       insertMigrationMount(t.id, varMountId);
       IF varMountId = 0 THEN
         -- log "startMigrationMounts: failed migration mount creation due to lack of files"
-        logToDLF(NULL, dlf.LVL_WARNING, dlf.MIGMOUNT_AGE_NO_FILE, 0, '', 'tapegatewayd',
+        logToDLF(NULL, dlf.LVL_SYSTEM, dlf.MIGMOUNT_AGE_NO_FILE, 0, '', 'tapegatewayd',
                  'tapePool=' || t.name ||
                  ' nbPreExistingMounts=' || TO_CHAR(varNbPreExistingMounts) ||
                  ' nbMounts=' || TO_CHAR(varTotalNbMounts) ||
