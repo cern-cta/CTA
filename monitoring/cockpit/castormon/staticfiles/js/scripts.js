@@ -10,6 +10,14 @@ var data_drilldown;
 var hc_colors = Highcharts.getOptions().colors;
 var noData = '<div class="alert alert-block"><h3>No data !</h3>There is no data for this metric, for the selected date.<br /><br /></div>'
 
+
+function resizeChart() {
+    /* automatic size for chart zone */
+    var options = $('div.plot-options');
+    var optionsBottom = options.offset().top + options.height();
+    $('div.metric-display').css('top', optionsBottom);
+}
+
 function errorMsg(_status, text) {
     return '<div class="alert alert-error alert-block ajax-error"><br /><h3>Oups ! Error ' + _status + '</h3>' + text + '<br /><br /></div>';
 }
@@ -753,6 +761,8 @@ function drawChart(metric_container, from, to) {
     /*
      * Wrapper function to draw the chart, according to the type of graph selected
      */
+    // automatic size for chart zone
+    resizeChart();
     switch (graphType) {
     case 'timeline':
         drawTimelineChart(metric_container, from, to);
@@ -851,8 +861,8 @@ $(document).ready(function () {
      *   Quick/advanced filter switch  *
      ***********************************/
     $('.metric_container').on('click', 'a.toggle-filter', function () {
-        $(this).closest('div.filter-container').find('div.advanced-filter').slideToggle();
-        $(this).closest('div.filter-container').find('div.quick-filter').slideToggle();
+        $(this).closest('.filter-container').find('.advanced-filter').slideToggle();
+        $(this).closest('.filter-container').find('.quick-filter').slideToggle();
     });
 
     /************************
@@ -914,7 +924,7 @@ $(document).ready(function () {
     });
     // tooltip on info button
     var tooltipMetricDetailsOptions = {
-        title : 'Metric details (click to open/close)'
+        title : '<b>Metric details</b> (click to open/close)'
     };
     $('img.metric-info-button').tooltip(tooltipMetricDetailsOptions);
     // remove tooltip after click on info-button
@@ -941,6 +951,11 @@ $(document).ready(function () {
         $(this).html('Hide all series');
     });
     
+    // automatic size for chart zone
+    $(window).resize(function () {
+        resizeChart();
+    });
+
     // Datepicker
     $(".datepicker-from").datepicker();
     $(".datepicker-to").datepicker();
