@@ -897,9 +897,9 @@ $(document).ready(function () {
     $('select.auto-refresh').val(defaultRefreshRate);
 
     
-    /****************************
-     *  Display Metric details  *
-     ****************************/
+    /***********************************************
+     *  Display Metric details : tooltip & popover *
+     ***********************************************/
      var popoverOptionsMetricDetails = {
         placement : 'right',
         // here we need a function, to be called each time a display is asked
@@ -914,9 +914,13 @@ $(document).ready(function () {
     });
     // tooltip on info button
     var tooltipMetricDetailsOptions = {
-        title : 'Metric details (press to open/close)'
+        title : 'Metric details (click to open/close)'
     };
     $('img.metric-info-button').tooltip(tooltipMetricDetailsOptions);
+    // remove tooltip after click on info-button
+    $('body').on('click', 'img.metric-info-button', function() {
+        $(this).tooltip('toggle');
+    });
 
     /*****************************
      * Hide all series button    *
