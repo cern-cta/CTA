@@ -403,6 +403,7 @@ div.row-fluid.statistics.c5 {
 div.row-fluid.statistics.pie > div {
     min-height: 400px;
     padding: 20px;
+    min-width: 600px;
 }
 
 div.row-fluid.statistics.pie > div.container > h3 {

@@ -1,6 +1,13 @@
 {% extends "cockpit/base.html" %}
 
-{% block header %}<h1>CASTOR COCKPIT : {{ metric_name }}</h1>{% endblock %}
+{% block extrahead %}
+    <script type="text/javascript" src="/static/js/scripts.js"></script>
+{% endblock %}
+
+
+{% block title %}
+    CASTOR Cockpit - {{ metric_name }}
+{% endblock %}
 
 {% block content %}
     {% include "cockpit/metric-container.html" %}
