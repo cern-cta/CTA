@@ -402,7 +402,6 @@ int rtcpd_Reserve(tape_list_t *tape) {
 
 int rtcpd_Mount(tape_list_t *tape) {
     int rc, j, save_serrno,severity, retry, jobID;
-    char *p, confparam[16];
     struct stat st;
     rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
@@ -526,38 +525,12 @@ int rtcpd_Mount(tape_list_t *tape) {
             switch ( save_serrno ) {
             case EIO:
             case ETPARIT:
-                /*
-                 * Check if there is any configured error action
-                 * for this medium errors (like sending a mail to
-                 * operator or raising an alarm).
-                 */
-                sprintf(confparam,"%s_ERRACTION",tapereq->dgn);
-                if ( (p = getconfent("RTCOPYD",confparam,0)) != NULL ) {
-                    j = atoi(p);
-                    severity = j;
-                }
             case ETHWERR:
             case ETNOSNS:
-                if ( severity & RTCP_NORETRY ) {
-                    tapereq->err.max_tpretry = 0;
-                } else {
-                    tapereq->err.max_tpretry--;
-                    severity |= RTCP_RESELECT_SERV;
-                }
-                break;
             case ETVBSY:
-                /*
-                 * Retry forever on a volume busy
-                 */
-                tapereq->err.max_tpretry = MAX_TPRETRY;
             case EEXIST:
-                /*
-                 * This should not happen...
-                 */
             case ENXIO:
             case ETRSLT:
-                severity = RTCP_RESELECT_SERV;
-                break;
             case SYERR:
             case SECOMERR:
             case SENOSSERV:
@@ -565,6 +538,7 @@ int rtcpd_Mount(tape_list_t *tape) {
             case ETDNP:
             case ETIDN:
             case ETBADMIR:
+            case ETNDV:
                 severity = RTCP_FAILED | RTCP_SYERR;
                 break;
             case EINVAL: /* Wrong parameter...*/
@@ -581,17 +555,12 @@ int rtcpd_Mount(tape_list_t *tape) {
             case ETBLANK:
             case ETCOMPA:
             case ETUNREC:
+            case EINTR:
                 severity = RTCP_FAILED | RTCP_USERR;
-                break;
-            case ETNDV:
-                severity = RTCP_RESELECT_SERV;
                 break;
             case ETIDG:
             case ETNRS:
                 severity = RTCP_FAILED | RTCP_SEERR;
-                break;
-            case EINTR:
-                severity = RTCP_FAILED | RTCP_USERR;
                 break;
             case EBUSY:
                 rtcp_log(LOG_INFO,"rtcpd_Mount() retry %d on EBUSY, drive=%s\n",
