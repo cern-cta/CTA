@@ -7,10 +7,10 @@ if [ -e /etc/sysconfig/iptables ]; then
   chain="RH-Firewall-1-INPUT"
   %endif
   # Update the iptables sysconfig file if necessary.
-  if ! /bin/grep -q "controlled by CASTOR-client RPM" /etc/sysconfig/iptables; then
+  if ! /bin/grep -q "controlled by castor-lib RPM" /etc/sysconfig/iptables; then
     /bin/cat <<EOFiptable |\
 /bin/sed -i.castor -e "/-A $chain -m state --state ESTABLISHED,RELATED -j ACCEPT/r /dev/stdin" /etc/sysconfig/iptables
-# controlled by CASTOR-client RPM 
+# controlled by castor-lib RPM 
 # allow callbacks for RFIO, port range corresponds to default callback range
 -A $chain -m state --state NEW -m tcp -p tcp --dport 30000:30100 -j ACCEPT
 # end of CASTOR-client RPM modifications
