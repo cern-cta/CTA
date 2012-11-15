@@ -1,0 +1,13 @@
+# cernt3 migration backlog informations
+
+<metric>
+  name: MigrationBacklogStats-CERNT3
+  window: 60
+  unit: Nb of files and GB
+  category: CERNT3
+  conditions: DAEMON=="stagerd" and INSTANCE=="c2cernt3" and MSG=="waitTapeMigrationStats"
+  groupbykeys: NONE
+  data: AdderGB(totalFileSize), Adder(nbFiles)
+  handle_unordered: time_threshold
+  nbins: 1
+</metric>
