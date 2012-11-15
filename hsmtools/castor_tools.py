@@ -226,21 +226,25 @@ def getVdqmDBConnectParams():
 #-------------------------------------------------------------------------------
 def getNSDBConnectParam(filename):
     '''Gets the connection parameters for nameserver like DBs from the given config file'''
-    line = open('/etc/castor/' + filename).readline()
-    line = line[0:len(line)-1] #drop trailing \n
-    sl = line.find('/')
-    if sl == -1:
-        raise ValueError, 'Invalid connection string in /etc/castor/NSCONFIG'
-    ar = line.find('@', sl)
-    if ar == -1:
-        raise ValueError, 'Invalid connection string in /etc/castor/NSCONFIG'
-    user = line[0:sl]
-    passwd = line[sl+1:ar]
-    dbname = line[ar+1:]
-    _checkValueFound("user name", user, 'nameserver', file)
-    _checkValueFound("password", passwd, 'nameserver', file)
-    _checkValueFound("DB name", dbname, 'nameserver', file)
-    return user, passwd, dbname
+    for rawline in open('/etc/castor/' + filename).readlines():
+        # ignore empty and commented lines
+        line = rawline.strip()
+        if len(line) == 0 or line[0] == '#':
+            continue
+        sl = line.find('/')
+        if sl == -1:
+            raise ValueError, 'Invalid connection string in /etc/castor/NSCONFIG : "%s"' % line
+        ar = line.find('@', sl)
+        if ar == -1:
+            raise ValueError, 'Invalid connection string in /etc/castor/NSCONFIG : "%s"' % line
+        user = line[0:sl]
+        passwd = line[sl+1:ar]
+        dbname = line[ar+1:]
+        _checkValueFound("user name", user, 'nameserver', file)
+        _checkValueFound("password", passwd, 'nameserver', file)
+        _checkValueFound("DB name", dbname, 'nameserver', file)
+        return user, passwd, dbname
+    raise ValueError, 'empty config file /etc/castor/NSCONFIG'
 
 #-------------------------------------------------------------------------------
 # connectTo_ methods
