@@ -532,8 +532,10 @@ def pytest_keyboard_interrupt(excinfo):
 # build up our own list of tests #
 ##################################
 
+_topdir = py.std.os.getcwd()
+
 def pytest_collect_file(path, parent):
-    if path.basename.endswith('.input') and not path.relto(parent.config.topdir).split(os.sep)[1]=='resources':
+    if path.basename.endswith('.input') and not path.relto(_topdir).split(os.sep)[1]=='resources':
         return CustomFile(path, parent)
 
 class CustomItem(py.test.collect.Item):
@@ -542,13 +544,13 @@ class CustomItem(py.test.collect.Item):
         py.test.collect.Item.__init__(self, str(path), parent)
         
     def runtest(self):
-        filename = self.fspath.relto(self.config.topdir).replace('.input','')
+        filename = self.fspath.relto(_topdir).replace('.input','')
         testset = filename.split(os.sep)[1]
         testname = filename[filename.find(os.sep)+1:].replace('/','_')
         return globalsetup.runTest(testset,testname,filename)
 
     def reportinfo(self):
-        filename = self.fspath.relto(os.sep.join([str(self.config.topdir),globalsetup.testdir])).replace(os.sep,'_')
+        filename = self.fspath.relto(os.sep.join([str(_topdir),globalsetup.testdir])).replace(os.sep,'_')
         return self.fspath, None, filename.replace('.input','')
 
 

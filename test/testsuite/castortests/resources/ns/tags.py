@@ -5,7 +5,7 @@ UUID = None
 def sessionuuid(self):
     global UUID
     if UUID == None :
-        sys.path.append(str(self.config.topdir))
+        sys.path.append(str(_topdir))
         import uuid
         UUID = str(uuid.uuid4())
     return UUID
