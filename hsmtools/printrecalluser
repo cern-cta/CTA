@@ -169,18 +169,10 @@ try:
     existingUsers = set([(row[0],row[1]) for row in rows])
     # loop over recall users and print them
     if existingUsers:
-        maxUserLen = max([20] + (map(len, map(printUser, existingUsers))))
-        maxRecallGroupLen = max([11] + [len(row[2]) for row in rows])
-        maxLastEditorLen = max([10] + [len(row[3]) for row in rows])
-        maxLastEditionTimeLen = max([6] + [len(secsToDate(row[4])) for row in rows])
-        print '%*s %*s %*s %*s' % \
-              (maxUserLen, 'USER/GROUP (UID/GID)', maxRecallGroupLen, 'RECALLGROUP', \
-               maxLastEditorLen, 'LASTEDITOR', maxLastEditionTimeLen, 'LASTEDITION')
-        print '-' * (3 + maxUserLen + maxRecallGroupLen + maxLastEditorLen + maxLastEditionTimeLen)
-        for uid, gid, recallGroup, lastEditor, lastEdition in rows:
-            print '%*s %*s %*s %*s' % \
-                  (maxUserLen, printUser((uid,gid)), maxRecallGroupLen, recallGroup, \
-                   maxLastEditorLen, lastEditor, maxLastEditionTimeLen, secsToDate(lastEdition))
+        titles = ('USER/GROUP (UID/GID)', 'RECALLGROUP', 'LASTEDITOR', 'LASTEDITION')
+        data = [(printUser((uid,gid)), recallGroup, lastEditor, secsToDate(lastEdition))
+                for uid, gid, recallGroup, lastEditor, lastEdition in rows]
+        castor_tools.prettyPrintTable(titles, data)
     # close DB connections
     try:
         castor_tools.disconnectDB(stconn)

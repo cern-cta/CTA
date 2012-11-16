@@ -81,17 +81,10 @@ try:
         unknownDiskPools = diskPools - existingDiskPools
     # loop over disk pools and print them
     if existingDiskPools:
-        maxNameLen = max([4] + [len(row[0]) for row in rows])
-        maxSvcClassNameLen = max([10] + [len(', '.join(row[2])) for row in rows if row[2]])
-        maxIdLen = max([2] + [len(str(row[3])) for row in rows])
-        print '%*s NBFILESYSTEMS %*s %*s' % (maxNameLen, 'NAME', maxSvcClassNameLen, 'SVCCLASSES', maxIdLen, 'ID')
-        print '-' * (16+maxNameLen+maxSvcClassNameLen+maxIdLen)
-        for name, nbfs, svclasses, dpId in rows:
-            if svclasses:
-              svcClassStr = ','.join(svclasses)
-            else:
-              svcClassStr = '-'
-            print '%*s %13d %*s %*d' % (maxNameLen, name, nbfs, maxSvcClassNameLen, svcClassStr, maxIdLen, dpId)
+        titles = ('NAME', 'NBFILESYSTEMS', 'SVCCLASSES', 'ID')
+        data = [(name, nbfs, ','.join(svcclasses) if svcclasses else '-', dpId)
+                for name, nbfs, svcclasses, dpId in rows]
+        castor_tools.prettyPrintTable(titles, data)
     # check unknown disk pools
     if diskPools and unknownDiskPools:
         print 'WARNING : the following disk pools do not exist : ' + ', '.join(unknownDiskPools)

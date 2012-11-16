@@ -92,37 +92,16 @@ try:
         unknownSvcClasses = fileClasses - existingSvcClasses
     # loop over svcclasses and print them
     if existingSvcClasses:
-        maxNameLen = max([4]+[len(row[0]) for row in rows if row[0]])
-        maxFileClassNameLen = max([15]+[len(row[5]) for row in rows if row[5]])
-        maxGcPolicyLen = max([8]+[len(row[3]) for row in rows if row[3]])
-        maxRecallPolicyLen = max([14]+[len(row[7]) for row in rows if row[7]])
-        maxIdLen = max([2] + [len(str(row[9])) for row in rows])
-        maxDiskPoolsLen = max([9]+[len(','.join(row[10])) for row in rows if row[10]])
-        maxLastEditorLen = max([10] + [len(row[11]) for row in rows])
-        maxLastEditionTimeLen = max([11] + [len(secsToDate(row[12])) for row in rows])
-        print '%*s DEFAULTFILESIZE FAILJOBSWHENNOSPACE MAXREPLICANB %*s REPLICATEONCLOSE DISK1BEHAVIOR %*s %*s %*s %*s %*s %*s' % \
-              (maxNameLen, 'NAME', maxFileClassNameLen, 'FORCEDFILECLASS', \
-               maxGcPolicyLen, 'GCPOLICY', maxRecallPolicyLen, 'RECALLERPOLICY', \
-               maxDiskPoolsLen, 'DISKPOOLS', maxIdLen, 'ID', maxLastEditorLen, 'LASTEDITOR', \
-               maxLastEditionTimeLen, 'LASTEDITION')
-        print '-' * (87 + maxNameLen + maxFileClassNameLen + maxGcPolicyLen + maxRecallPolicyLen + \
-                     maxDiskPoolsLen + maxIdLen + maxLastEditorLen + maxLastEditionTimeLen)
-        for name, defaultfilesize, failjobswhennospace, gcPolicy, maxReplicaNb, forcedFileClass, \
-            replicateonclose, recallerPolicy, disk1behavior, scId, diskPools, lastEditor, lastEdition in rows:
-            if not forcedFileClass:
-                forcedFileClass = '-'
-            if not recallerPolicy:
-                recallerPolicy = '-'
-            if diskPools:
-              diskPoolsStr = ','.join(diskPools)
-            else:
-              diskPoolsStr = '-'
-            print '%*s %15s %19s %12d %*s %16s %13s %*s %*s %*s %*d %*s %*s' % \
-                  (maxNameLen, name, nbToDataAmount(defaultfilesize), bool(failjobswhennospace), \
-                   maxReplicaNb, maxFileClassNameLen, forcedFileClass, bool(replicateonclose), \
-                   bool(disk1behavior), maxGcPolicyLen, gcPolicy, maxRecallPolicyLen, recallerPolicy, \
-                   maxDiskPoolsLen, diskPoolsStr, maxIdLen, scId, maxLastEditorLen, lastEditor, \
-                   maxLastEditionTimeLen, secsToDate(lastEdition))
+        titles = ('NAME', 'DEFAULTFILESIZE', 'FAILJOBSWHENNOSPACE', 'MAXREPLICANB', 'FORCEDFILECLASS', 'REPLICATEONCLOSE',
+                  'DISK1BEHAVIOR', 'GCPOLICY', 'RECALLERPOLICY', 'DISKPOOLS', 'ID', 'LASTEDITOR', 'LASTEDITION')
+        data = [(name, nbToDataAmount(defaultfilesize), bool(failjobswhennospace), maxReplicaNb,
+                forcedFileClass if forcedFileClass else '-', bool(replicateonclose), bool(disk1behavior), gcPolicy,
+                recallerPolicy if recallerPolicy else '-', ','.join(diskPools) if diskPools else '-', scId, lastEditor,
+                secsToDate(lastEdition))
+                for name, defaultfilesize, failjobswhennospace, gcPolicy, maxReplicaNb, forcedFileClass,
+                    replicateonclose, recallerPolicy, disk1behavior, scId, diskPools, lastEditor, lastEdition in rows]
+
+        castor_tools.prettyPrintTable(titles, data)
     # check unknown svcclasses
     if fileClasses and unknownSvcClasses:
         print 'WARNING : the following service classes do not exist : ' + ', '.join(unknownSvcClasses)

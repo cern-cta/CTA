@@ -103,24 +103,11 @@ try:
         unknownRecallGroups = recallGroups - existingRecallGroups
     # loop over recall groups and print them
     if existingRecallGroups:
-        maxNameLen = max([4] + [len(row[0]) for row in rows])
-        maxMinAmountDataLen = max([13] + [len(nbToDataAmount(row[2])) for row in rows])
-        maxMinNbFilesLen = max([10] + [len(str(row[3])) for row in rows])
-        maxMaxFileAgeLen = max([10] + [len(nbToAge(row[4])) for row in rows])
-        maxLastEditorLen = max([10] + [len(row[6]) for row in rows if row[6]])
-        maxLastEditionTimeLen = max([11] + [len(secsToDate(row[7])) for row in rows])
-        maxIdLen = max([2] + [len(str(row[8])) for row in rows])
-        print '%*s NBDRIVES %*s %*s %*s VDQMPRIORITY %*s %*s %*s' % \
-              (maxNameLen, 'NAME', maxMinAmountDataLen, 'MINAMOUNTDATA', maxMinNbFilesLen, \
-               'MINNBFILES', maxMaxFileAgeLen, 'MAXFILEAGE', maxIdLen, 'ID', \
-               maxLastEditorLen, 'LASTEDITOR', maxLastEditionTimeLen, 'LASTEDITION')
-        print '-' * (28 + maxNameLen + maxMinAmountDataLen + maxMinNbFilesLen + maxMaxFileAgeLen + \
-                     maxLastEditorLen + maxLastEditionTimeLen + maxIdLen)
-        for name, nbdrives, minamountdata, minnbfiles, maxfileage, priority, lastEditor, lastEdition, tpid in rows:
-            print '%*s %8d %*s %*d %*s %12d %*d %*s %*s' % \
-                  (maxNameLen, name, nbdrives, maxMinAmountDataLen, nbToDataAmount(minamountdata), \
-                   maxMinNbFilesLen, minnbfiles, maxMaxFileAgeLen, nbToAge(maxfileage), priority, maxIdLen, tpid, \
-                   maxLastEditorLen, lastEditor, maxLastEditionTimeLen, secsToDate(lastEdition))
+        titles = ('NAME', 'NBDRIVES', 'MINAMOUNTDATA', 'MINNBFILES', 'MAXFILEAGE', 'VDQMPRIORITY', 'ID', 'LASTEDITOR', 'LASTEDITION')
+        data =  [(name, nbdrives, nbToDataAmount(minamountdata), minnbfiles,
+                  nbToAge(maxfileage), priority, tpid, lastEditor, secsToDate(lastEdition))
+                 for name, nbdrives, minamountdata, minnbfiles, maxfileage, priority, lastEditor, lastEdition, tpid in rows]
+        castor_tools.prettyPrintTable(titles, data)
     # check unknown recall groups
     if recallGroups and unknownRecallGroups:
         print 'WARNING : the following recall groups do not exist : ' + ', '.join(unknownRecallGroups)

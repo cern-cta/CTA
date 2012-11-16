@@ -58,23 +58,19 @@ try:
     # connect to stager and prepare statements
     stconn = castor_tools.connectToStager()
     stcur = stconn.cursor()
-    sql = 'SELECT id, name, classId, nbCopies FROM FileClass'
+    sql = 'SELECT name, classId, nbCopies, id FROM FileClass'
     if fileClasses:
         sql += " WHERE name IN ('" + "', '".join(fileClasses) + "')"
     stcur.execute(sql)
     # get results
     rows = stcur.fetchall()
-    existingFileClasses = set([row[1] for row in rows])
+    existingFileClasses = set([row[0] for row in rows])
     if fileClasses:
         unknownFileClasses = fileClasses - existingFileClasses
     # loop over fileclasses and print them
     if existingFileClasses:
-        maxNameLen = max([4] + [len(row[1]) for row in rows])
-        maxIdLen = max([0] + [len(str(row[0])) for row in rows])
-        print '%*s CLASSID NBCOPIES %*s' % (maxNameLen, 'NAME', maxIdLen, 'ID')
-        print '-' * (18+maxNameLen+maxIdLen)
-        for fcId, name, classId, nbCopies in rows:
-            print '%*s %7d %8d %*d' % (maxNameLen, name, classId, nbCopies, maxIdLen, fcId)
+        titles = ('NAME', 'CLASSID', 'NBCOPIES', 'ID')
+        castor_tools.prettyPrintTable(titles, rows)
     # check unknown fileclasses
     if fileClasses and unknownFileClasses:
         print 'WARNING : the following file classes do not exist : ' + ', '.join(unknownFileClasses)
