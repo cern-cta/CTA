@@ -3269,6 +3269,7 @@ CREATE OR REPLACE FUNCTION createRecallCandidate(inSrId IN INTEGER) RETURN INTEG
   varReqTime NUMBER;
   varReqUUID VARCHAR2(2048);
   varReqId INTEGER;
+  varReqType VARCHAR2(2048);
   varIsBeingRecalled INTEGER;
   varRc INTEGER := 0;
 BEGIN
@@ -3278,16 +3279,16 @@ BEGIN
     FROM SubRequest WHERE id = inSrId;
   SELECT fileid, nsHost, fileClass, fileSize INTO varFileId, varNsHost, varFileClassId, varFileSize
     FROM CastorFile WHERE id = varCfId;
-  SELECT Request.reqId, Request.svcClass, Request.euid, Request.egid, Request.creationTime
-    INTO varReqUUID, varSvcClassId, varEuid, varEgid, varReqTime
+  SELECT Request.reqId, Request.svcClass, Request.euid, Request.egid, Request.creationTime, Request.reqtype
+    INTO varReqUUID, varSvcClassId, varEuid, varEgid, varReqTime, varReqType
     FROM (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */
-                 id, svcClass, euid, egid, reqId, creationTime FROM StageGetRequest UNION ALL
+                 id, svcClass, euid, egid, reqId, creationTime, 'StageGetRequest' as reqtype FROM StageGetRequest UNION ALL
           SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */
-                 id, svcClass, euid, egid, reqId, creationTime FROM StagePrepareToGetRequest UNION ALL
+                 id, svcClass, euid, egid, reqId, creationTime, 'StagePrepareToGetRequest' as reqtype FROM StagePrepareToGetRequest UNION ALL
           SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */
-                 id, svcClass, euid, egid, reqId, creationTime FROM StageUpdateRequest UNION ALL
+                 id, svcClass, euid, egid, reqId, creationTime, 'StageUpdateRequest' as reqtype FROM StageUpdateRequest UNION ALL
           SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequest_Id) */
-                 id, svcClass, euid, egid, reqId, creationTime FROM StagePrepareToUpdateRequest) Request
+                 id, svcClass, euid, egid, reqId, creationTime, 'StagePrepareToUpdateRequest' as reqtype FROM StagePrepareToUpdateRequest) Request
    WHERE Request.id = varReqId;
   -- get the RecallGroup
   getRecallGroup(varEuid, varEgid, varRecallGroup, varRecallGroupName);
@@ -3302,12 +3303,14 @@ BEGIN
     -- createRecallCandidate: found already running recall
     logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_FOUND_ONGOING_RECALL, varFileId, varNsHost, 'stagerd',
              'FileName=' || varFileName || ' REQID=' || varReqUUID ||
-             ' SUBREQID=' || varSubReqUUID || ' RecallGroup=' || varRecallGroupName);
+             ' SUBREQID=' || varSubReqUUID || ' RecallGroup=' || varRecallGroupName ||
+             ' RequestType=' || varReqType);
   ELSE
     varRc := createRecallJobs(varCfId, varFileId, varNsHost, varFileSize, varFileClassId,
                               varRecallGroup, varSvcClassId, varEuid, varEgid, varReqTime,
                               'FileName=' || varFileName || ' REQID=' || varReqUUID ||
-                              ' SUBREQID=' || varSubReqUUID || ' RecallGroup=' || varRecallGroupName);
+                              ' SUBREQID=' || varSubReqUUID || ' RecallGroup=' || varRecallGroupName ||
+                              ' RequestType=' || varReqType);
   END IF;
   -- update the state of the SubRequest
   IF varRc = 0 THEN
