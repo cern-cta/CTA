@@ -8,6 +8,7 @@ import simplejson as json
 import threading
 import logging
 import time
+import traceback
 
 import happybase
 import thrift
@@ -166,5 +167,7 @@ class Pusher(threading.Thread):
                 self._flush_batches()
                 logging.debug(self.name + " : return !")
                 return
-        except:
+        except Exception, exc:
+            logging.critical(self.name + ' : ' + str(exc))
+            logging.critical(str(traceback.format_exc()))
             self.STOP_FLAG.set()
