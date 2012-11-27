@@ -7,6 +7,7 @@ import time
 
 from messaging.message import Message
 from messaging.queue.dqs import DQS
+from messaging.error import MessageError
 
 import MetricsAnalysisEngine
 
@@ -41,7 +42,12 @@ class Analyzer(threading.Thread):
                     if self.STOP_FLAG.isSet():
                         return
                     if self._message_queue.lock(name):
-                        msg = self._message_queue.get_message(name)
+                        try:
+                            msg = self._message_queue.get_message(name)
+                        except MessageError, exc:
+                            self._message_queue.remove(name)
+                            logging.warning("Analyzer : " + str(exc))
+                            continue
                         for m in self._parse(msg):
                             self._apply(m)
                         try:

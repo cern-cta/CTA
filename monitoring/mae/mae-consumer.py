@@ -105,6 +105,8 @@ def main():
             sys.exit(1)
     else :
         cockpit_enabled = False
+        cockpit_buffer_lock = None
+        cockpit_buffer = None
     
     # Set config variables
     metrics_path = conf['metrics_path']
