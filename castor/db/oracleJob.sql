@@ -615,10 +615,11 @@ END;
 */
 CREATE OR REPLACE PROCEDURE prepareForMigration (srId IN INTEGER,
                                                  fs IN INTEGER,
-                                                 ts IN NUMBER,
+                                                 newTimeStamp IN NUMBER,
                                                  fId OUT NUMBER,
                                                  nh OUT VARCHAR2,
-                                                 returnCode OUT INTEGER) AS
+                                                 returnCode OUT INTEGER,
+                                                 lastUpdTime OUT NUMBER) AS
   cfId INTEGER;
   dcId INTEGER;
   svcId INTEGER;
@@ -631,7 +632,8 @@ BEGIN
   SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ castorFile, diskCopy INTO cfId, dcId
     FROM SubRequest WHERE id = srId;
   -- Lock the CastorFile and get the fileid and name server host
-  SELECT id, fileid, nsHost INTO cfId, fId, nh
+  SELECT id, fileid, nsHost, nvl(lastUpdateTime, 0)
+    INTO cfId, fId, nh, lastUpdTime
     FROM CastorFile WHERE id = cfId FOR UPDATE;
   -- Determine the context (Put inside PrepareToPut or not)
   -- check that we are a Put or an Update
@@ -660,19 +662,22 @@ BEGIN
     contextPIPP := 1;
   END;
   -- Check whether the diskCopy is still in STAGEOUT. If not, the file
-  -- was deleted via stageRm while being written to. Thus, we should just give
-  -- up
+  -- was deleted via stageRm while being written to. Thus, we should just give up
   BEGIN
     SELECT status INTO unused
       FROM DiskCopy WHERE id = dcId AND status = 6; -- STAGEOUT
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- So we are in the case, we give up
     returnCode := 1;
+    ROLLBACK;
     RETURN;
   END;
-  -- Now we can safely update CastorFile's file size
-  UPDATE CastorFile SET fileSize = fs, lastUpdateTime = ts
-   WHERE id = cfId AND (lastUpdateTime IS NULL OR ts >= lastUpdateTime);
+  -- Check if the timestamps allow us to update
+  IF newTimeStamp >= lastUpdTime THEN
+    -- Now we can safely update CastorFile's file size and time stamps
+    UPDATE CastorFile SET fileSize = fs, lastUpdateTime = newTimeStamp
+     WHERE id = cfId;
+  END IF;
   -- If ts < lastUpdateTime, we were late and another job already updated the
   -- CastorFile. So we nevertheless retrieve the real file size.
   SELECT fileSize INTO realFileSize FROM CastorFile WHERE id = cfId;
