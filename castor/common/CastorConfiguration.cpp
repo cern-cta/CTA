@@ -53,7 +53,7 @@ castor::common::CastorConfiguration::getConfig(std::string fileName)
     // do we have this configuration already in cache ?
     if (s_castorConfigs.end() == s_castorConfigs.find(fileName)) {
       // no such configuration. Create it
-      s_castorConfigs[fileName] = CastorConfiguration(fileName);
+      s_castorConfigs.insert(std::make_pair(fileName, CastorConfiguration(fileName)));
     }
     // we can now release the lock. Concurrent read only access is ok.
     pthread_mutex_unlock(&s_globalConfigLock);
@@ -80,11 +80,42 @@ castor::common::CastorConfiguration::CastorConfiguration(std::string fileName)
 }
 
 //------------------------------------------------------------------------------
+// copy constructor
+//------------------------------------------------------------------------------
+castor::common::CastorConfiguration::CastorConfiguration(const CastorConfiguration & other)
+  throw (castor::exception::Exception): m_fileName(other.m_fileName),
+    m_lastUpdateTime(other.m_lastUpdateTime), m_config(other.m_config) {
+  // create a new internal r/w lock
+  int rc = pthread_rwlock_init(&m_lock, NULL);
+  if (0 != rc) {
+    castor::exception::Exception e(rc);
+    throw e;
+  }
+}
+
+//------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 castor::common::CastorConfiguration::~CastorConfiguration() {
   // relase read write lock
   pthread_rwlock_destroy(&m_lock);
+}
+
+//------------------------------------------------------------------------------
+// assignment operator
+//------------------------------------------------------------------------------
+castor::common::CastorConfiguration & castor::common::CastorConfiguration::operator=(const castor::common::CastorConfiguration & other)
+  throw (castor::exception::Exception) {
+  m_fileName = other.m_fileName;
+  m_lastUpdateTime = other.m_lastUpdateTime;
+  m_config = other.m_config;
+  // create a new internal r/w lock
+  int rc = pthread_rwlock_init(&m_lock, NULL);
+  if (0 != rc) {
+    castor::exception::Exception e(rc);
+    throw e;
+  }
+  return *this;
 }
 
 //------------------------------------------------------------------------------

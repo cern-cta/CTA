@@ -67,9 +67,23 @@ namespace castor {
       throw (castor::exception::Exception);
 
       /**
+       * copy constructor
+       * @param other instance of CastorConfiguration class
+       */
+      CastorConfiguration(const CastorConfiguration & other)
+        throw (castor::exception::Exception);
+
+      /**
        * destrcutor
        */
       virtual ~CastorConfiguration();
+
+      /**
+       * assignment operator
+       * @param other instance of CastorConfiguration class
+       */
+      CastorConfiguration & operator=(const CastorConfiguration & other)
+        throw (castor::exception::Exception);
 
       /**
        * retrieves a configuration entry
