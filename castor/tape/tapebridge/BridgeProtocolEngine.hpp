@@ -842,8 +842,8 @@ protected:
    * the whole batch.
    *
    * If the sum of the original file sizes is zero, then this method shall not
-   * throw an exception but rather set the compressed size of each file to
-   * zero.
+   * throw an exception but rather set the compressed size of each file to be
+   * one byte.
    *
    * @param migrations       In/out parameter: The list of notifications
    *                         about a batch of files written to tape.  This
