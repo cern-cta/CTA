@@ -861,8 +861,7 @@ protected:
     throw();
 
   /**
-   * Calculates and ratio the compression ratio of the specified batch of
-   * migrations.
+   * Calculates the compression ratio of the specified batch of migrations.
    *
    * When a file is migrated to tape the underlying tape system compresses the
    * file before it is physically written to tape.  Files are migrated to tape
@@ -878,11 +877,11 @@ protected:
    * original files.
    *
    * If the sum of the original file sizes is zero, then this method will
-   * return a compression ration of 1.0 indicating no difference between the
+   * return a compression ratio of 1.0 indicating no difference between the
    * original and compressed file sizes.
    *
    * If the number of bytes physically written to tape to store the entire
-   * batch is set to zero, then this method will return a compression ration of
+   * batch is set to zero, then this method will return a compression ratio of
    * 1.0 indicating no difference between the original and compressed file
    * sizes.
    *
