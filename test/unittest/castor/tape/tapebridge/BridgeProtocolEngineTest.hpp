@@ -2392,7 +2392,7 @@ public:
    *
    * The sum of the orginal file sizes is zero.  The
    * setMigrationCompressedFileSize() method should not throw an exception
-   * in this case but rather set each compressed file size to zero.
+   * in this case but rather set each compressed file size to be 1 byte.
    */
   void testSetMigrationCompressedFileSizeWithZeroFileSize() {
     // Create the BridgeProtocolEngine for a migration session
@@ -2459,7 +2459,7 @@ public:
           notification.fileSize);
         CPPUNIT_ASSERT_EQUAL_MESSAGE(
           "Checking compressedFileSize",
-          (uint64_t)0,
+          (uint64_t)1,
           notification.compressedFileSize);
       }
     }
@@ -2641,7 +2641,7 @@ public:
     }
 
     // Check the compressed file size of the 1 megabyte file is
-    // (250000 bytes / (1 byte + 1000000 bytes)) * 1000000 bytes = 249990 bytes
+    // (250000 bytes / (1 byte + 1000000 bytes)) * 1000000 bytes = 249999 bytes
     {     
       FileWrittenNotificationList::const_iterator itor = migrations.begin();
       itor++;
@@ -2649,19 +2649,19 @@ public:
 
       CPPUNIT_ASSERT_EQUAL_MESSAGE(
         "Checking fileTransactionId",
-        (uint64_t)1,
+        (uint64_t)2,
         notification.fileTransactionId);
       CPPUNIT_ASSERT_EQUAL_MESSAGE(
         "Checking nsFileId",
-        (uint64_t)2,
+        (uint64_t)4,
         notification.nsFileId);
       CPPUNIT_ASSERT_EQUAL_MESSAGE(
         "Checking fileSize",
-        (uint64_t)1,
+        (uint64_t)1000000,
         notification.fileSize);
       CPPUNIT_ASSERT_EQUAL_MESSAGE(
         "Checking compressedFileSize",
-        (uint64_t)249990,
+        (uint64_t)249999,
         notification.compressedFileSize);
     }
   }
