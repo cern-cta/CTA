@@ -1,5 +1,5 @@
 COMM
-COMM                      monitoring/Imakefile
+COMM                      lemon-sensor-py
 COMM
 COMM This file is part of the Castor project.
 COMM See http://castor.web.cern.ch/castor
@@ -18,13 +18,8 @@ COMM along with this program; if not, write to the Free Software
 COMM Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 COMM
 COMM
-COMM Makefile for the CASTOR2 monitoring tools
+COMM Makefile for the python Lemon Sensor
 COMM
 COMM @author Castor Dev team, castor-dev@cern.ch
 
-
-include LOCAL_PATH/cockpit/Makefile
-include LOCAL_PATH/logprocessor/Makefile
-include LOCAL_PATH/mae/Makefile
-include LOCAL_PATH/hbase-consumer/Makefile
-include LOCAL_PATH/lemon-sensor-py/Makefile
+InstallNonExecFile(CastorMon.py,/usr/libexec/sensors/,644)

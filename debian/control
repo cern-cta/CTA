@@ -322,3 +322,9 @@ Architecture: any
 Depends: python, python-dirq, python-messaging, python-simplejson
 Description: castor (Cern Advanced STORage system)
  AI messaging consumer for HBase.
+
+Package: castor-lemon-sensor-py
+Architecture: any
+Depends: python, python-rpyc, lemon-sensor-pythonAPI
+Description: castor (Cern Advanced STORage system)
+ Lemon sensor for the MAE
