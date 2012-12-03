@@ -2672,8 +2672,13 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
     itor != migrations.end(); itor++) {
     FileWrittenNotification &notification = *itor;
 
-    notification.compressedFileSize =
+    const uint64_t compressedFileSize =
       (uint64_t)(notification.fileSize * compressionRatio);
+
+    // The compressed file size should never be reported as being less than 1
+    // byte
+    notification.compressedFileSize = 0 < compressedFileSize ?
+      compressedFileSize : 1;
   }
 }
 
