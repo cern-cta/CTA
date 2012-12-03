@@ -88,8 +88,10 @@ function copyInstallPerm {
     #   - replace usr/lib by usr/lib64
     #   - except for /usr/lib/perl
     #   - except for /usr/lib/log
+    #   - except for /usr/lib/python
+    #   - except for /usr/libexec
     #   - replace gcc32dbg by gcc64dbg (gridFTP specific)
-    perl -p -e 's/usr\/lib/usr\/lib64/g;s/usr\/lib64\/perl/usr\/lib\/perl/g;s/usr\/lib64\/python/usr\/lib\/python/g;s/usr\/lib64\/log/usr\/lib\/log/g;s/gcc32dbg/gcc64dbg/g' debian/$package.install.perm.tmp > debian/$package.install.perm.64.tmp
+    perl -p -e 's/usr\/lib/usr\/lib64/g;s/usr\/lib64\/perl/usr\/lib\/perl/g;s/usr\/lib64\/python/usr\/lib\/python/g;s/usr\/lib64exec/usr\/libexec/g;s/usr\/lib64\/log/usr\/lib\/log/g;s/gcc32dbg/gcc64dbg/g' debian/$package.install.perm.tmp > debian/$package.install.perm.64.tmp
     # check whether to bother with 64 bits specific code
     diff -q debian/$package.install.perm.tmp debian/$package.install.perm.64.tmp > /dev/null
     if [ $? -eq 0 ]; then
