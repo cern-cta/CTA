@@ -2545,6 +2545,127 @@ public:
     }
   }
 
+  /**
+   * This test makes sure a floor value of 1 byte is used when calculating the
+   * compressed size of a file.  That is to say a file should never be reported
+   * as having a compressed file size of less than 1 byte.
+   *
+   * This test passes two files, one of 1 byte and one of 1 megabytes into the
+   * following method along with a number of bytes written to tape equal to a
+   * quarter of a megabyte.
+   *
+   * BridgeProtocolEngine::setMigrationCompressedFileSize()
+   *
+   * The compression ratio will be less than 0.5.  This means that without a
+   * floor of 1 byte the compressed size of the 1 byte file would be zero
+   * bytes, because 1 byte times a value less than 0.5 will round down to zero
+   * bytes.  The aforementioned method must implement a floor of 1 byte and
+   * therefore return 1 byte and not zero bytes.
+   */
+  void testSetMigrationCompressedFileSizeWith1B1MBAnd0Point4Ratio() {
+    // Create the BridgeProtocolEngine for a migration session
+    m_volume.setMode(tapegateway::WRITE);
+    const bool logPeerOfCallbackConnectionsFromRtcpd = false;
+    const bool checkRtcpdIsConnectingFromLocalHost = false;
+    m_engine = newTestingBridgeProtocolEngine(
+      m_fileCloser,
+      m_bulkRequestConfigParams,
+      m_tapeFlushConfigParams,
+      m_cuuid,
+      m_bridgeListenSock,
+      m_initialRtcpdSockBridgeSide,
+      m_jobRequest,
+      m_volume,
+      m_nbFilesOnDestinationTape,
+      m_stoppingGracefully,
+      m_tapebridgeTransactionCounter,
+      logPeerOfCallbackConnectionsFromRtcpd,
+      checkRtcpdIsConnectingFromLocalHost,
+      m_clientProxy,
+      m_legacyTxRx);
+
+    const FileWrittenNotificationList::size_type nbFiles = 2;
+    FileWrittenNotificationList migrations;
+
+    // Add the 1 byte file to the list of file written notifications
+    {
+      FileWrittenNotification notification;
+
+      notification.fileTransactionId  = 1;
+      notification.nsFileId           = 2;
+      notification.fileSize           = 1;
+      notification.compressedFileSize = 12345; // Shall be overwritten
+      migrations.push_back(notification);
+    }
+
+    // Add the 1 megabyte file to the list of file written notifications
+    {
+      FileWrittenNotification notification;
+
+      notification.fileTransactionId  = 2;
+      notification.nsFileId           = 4;
+      notification.fileSize           = 1000000;
+      notification.compressedFileSize = 12345; // Shall be overwritten
+      migrations.push_back(notification);
+    }
+
+    const uint64_t batchBytesToTape = 250000;
+    m_engine->setMigrationCompressedFileSize(migrations, batchBytesToTape);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Checking size of notification list did not change",
+      nbFiles,
+      migrations.size());
+
+    // Check the compressed file size of the 1 byte file is 1 byte
+    {
+      FileWrittenNotificationList::const_iterator itor = migrations.begin();
+      const FileWrittenNotification &notification = *itor;
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking fileTransactionId",
+        (uint64_t)1,
+        notification.fileTransactionId);
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking nsFileId",
+        (uint64_t)2,
+        notification.nsFileId);
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking fileSize",
+        (uint64_t)1,
+        notification.fileSize);
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking compressedFileSize",
+        (uint64_t)1,
+        notification.compressedFileSize);
+    }
+
+    // Check the compressed file size of the 1 megabyte file is
+    // (250000 bytes / (1 byte + 1000000 bytes)) * 1000000 bytes = 249990 bytes
+    {     
+      FileWrittenNotificationList::const_iterator itor = migrations.begin();
+      itor++;
+      const FileWrittenNotification &notification = *itor;
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking fileTransactionId",
+        (uint64_t)1,
+        notification.fileTransactionId);
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking nsFileId",
+        (uint64_t)2,
+        notification.nsFileId);
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking fileSize",
+        (uint64_t)1,
+        notification.fileSize);
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking compressedFileSize",
+        (uint64_t)249990,
+        notification.compressedFileSize);
+    }
+  }
+
   void testCalcSumOfFileSizes() {
     // Create the BridgeProtocolEngine for a migration session
     m_volume.setMode(tapegateway::WRITE);
@@ -2597,6 +2718,7 @@ public:
   CPPUNIT_TEST(testSetMigrationCompressedFileSize);
   CPPUNIT_TEST(testSetMigrationCompressedFileSizeWithZeroFileSize);
   CPPUNIT_TEST(testSetMigrationCompressedFileSizeWithZeroBatchBytesToTape);
+  CPPUNIT_TEST(testSetMigrationCompressedFileSizeWith1B1MBAnd0Point4Ratio);
   CPPUNIT_TEST(testCalcSumOfFileSizes);
 
   CPPUNIT_TEST_SUITE_END();
