@@ -36,11 +36,11 @@ class MigrationBacklogStats(Metric):
         if d:
             for instance in d[m]['metricData'].keys():
                 for TapePool in d[m]['metricData'][instance].keys():
-		    totalFileSize = d[m]['metricData'][instance][TapePool][0]
-		    nbFiles = d[m]['metricData'][instance][TapePool][1]
-		    value = "%d %s - 0 0 0 0 0 0 0 0 0 0 0 0 %s %s" % (m.window, TapePool, int(totalFileSize), int(nbFiles))
-	 	    self.storeSample03(d[m]['timestamp'], instance, self.numericId, value)
-                        
+                    totalFileSize = d[m]['metricData'][instance][TapePool][0]
+                    nbFiles = d[m]['metricData'][instance][TapePool][1]
+                    value = "%d %s - 0 0 0 0 0 0 0 0 0 0 0 0 %s %s" % (300, TapePool, int(totalFileSize), int(nbFiles))
+                    self.storeSample03(d[m]['timestamp'], instance, self.numericId, value)
+
         return 0
 
 #--------------------------------------------------------------------------------------------------
@@ -56,10 +56,11 @@ class RecallBacklogStats(Metric):
         if d:
             for instance in d[m]['metricData'].keys():
                 for SvcClass in d[m]['metricData'][instance].keys():
-		    totalFileSize = d[m]['metricData'][instance][SvcClass][0]
-		    nbFiles = d[m]['metricData'][instance][SvcClass][1]
-		    value = "%d %s - 0 0 0 0 0 0 0 0 0 0 0 0 %s %s" % (m.window, SvcClass, int(totalFileSize), int(nbFiles))
-	 	    self.storeSample03(d[m]['timestamp'], instance, self.numericId, value)
-                        
+                    totalFileSize = d[m]['metricData'][instance][SvcClass][0]
+                    nbFiles = d[m]['metricData'][instance][SvcClass][1]
+                    value = "%d %s 0 0 0 0 0 0 0 0 0 0 0 0 %s %s" % (300, SvcClass, int(totalFileSize), int(nbFiles))
+                    self.storeSample03(d[m]['timestamp'], instance, self.numericId, value)
+                    # self.storeSample03(d[m]['timestamp'], instance+':'+SvcClass, self.numericId, value)
+
         return 0
 
