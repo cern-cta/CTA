@@ -1,0 +1,13 @@
+# migration backlog informations
+
+<metric>
+  name: MigrationBacklogSize-CMS
+  window: 60
+  unit: GB
+  category: CMS
+  conditions: DAEMON=="stagerd" and INSTANCE=="c2cms" and MSG=="waitTapeMigrationStats"
+  groupbykeys: TapePool
+  data: AdderGB(totalFileSize)
+  handle_unordered: time_threshold
+  nbins: 1
+</metric>

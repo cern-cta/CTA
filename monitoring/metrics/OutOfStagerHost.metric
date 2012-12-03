@@ -1,0 +1,13 @@
+# Spot the hosts that are out of the stager
+
+<metric>
+    name: OutOfStagerHost
+    unit: 
+    category: General
+    window: 10800
+    conditions: NONE 
+    groupbykeys: INSTANCE
+    data: Top(outofstager_host)
+    handle_unordered: time_threshold
+    nbins: 3
+</metric>

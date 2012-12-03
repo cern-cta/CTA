@@ -1,0 +1,25 @@
+# migration backlog informations
+<metric>
+  name: MigrationBacklogStats-lemon
+  window: 300
+  unit: Nb of files and GB
+  category: Public
+  conditions: DAEMON=="stagerd" and MSG=="waitTapeMigrationStats"
+  groupbykeys: INSTANCE, TapePool 
+  data: Adder(totalFileSize), Adder(nbFiles)
+  handle_unordered: time_threshold
+  nbins: 1
+</metric>
+
+# recall backlog informations
+<metric>
+  name: RecallBacklogStats-lemon
+  window: 300
+  unit: Nb of files and GB
+  category: Lemon
+  conditions: DAEMON=="stagerd" and MSG=="waitTapeRecallStats"
+  groupbykeys: INSTANCE, SvcClass
+  data: Adder(totalFileSize), Adder(nbFiles)
+  handle_unordered: time_threshold
+  nbins: 1
+</metric>

@@ -6,7 +6,7 @@
   category: General
   window: 60
   conditions: LVL in ["Error"]
-  groupbykeys: INSTANCE, DAEMON
+  groupbykeys: INSTANCE, DAEMON, MSG
   data: Counter(COUNT)
   handle_unordered: time_threshold
   nbins: 1

@@ -1,0 +1,13 @@
+# recall backlog informations
+
+<metric>
+  name: RecallBacklogSize-ATLAS
+  window: 60
+  unit: GB
+  category: ATLAS
+  conditions: DAEMON=="stagerd" and INSTANCE=="c2atlas" and MSG=="waitTapeRecallStats"
+  groupbykeys: SvcClass
+  data: AdderGB(totalFileSize)
+  handle_unordered: time_threshold
+  nbins: 1
+</metric>
