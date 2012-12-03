@@ -111,6 +111,104 @@ For each user command there is one message VMG92 giving information about
 the requestor (hostname, uid, gid) and one message VMG98 giving the command
 itself.
 The completion code of the command is also logged.
+.SH TAPE STATES
+A tape can be in one or more of the following states within the database of the vmgrd daemon:
+.TP
+.BI BUSY 
+A
+.B BUSY
+tape is a tape that has been reserved by a stager for writing or is currently being written to by a tape server.  A tape is not put in the
+.B BUSY
+state for recalls.
+A tape is automatically put in the
+.B BUSY
+state by the CASTOR system.
+An operator should not manually put a tape in the
+.B BUSY
+state.
+.TP
+.BI FULL
+A
+.B FULL
+tape is a tape from which data can be read from but no longer written to.
+The CASTOR system will automatically put a tape in the
+.B FULL
+state when it detects the physical end of tape or if the total amount of data written to the tape exceeds the capacity specified in the VMGR.
+An operator may manually put a tape in the
+.B FULL
+state in order to stop the CASTOR system from writing to that tape and if they want to repack that tape.
+Repack will only repack a tape if is in the
+.B FULL
+state.
+.TP
+.BI DISABLED
+A
+.B DISABLED
+tape is a tape that is temporarily not accessible by the CASTOR system.
+A tape is automatically put in the
+.B DISABLED
+state by the CASTOR system in the event of some types of media and drive errors.
+An operator may manually put a tape in the
+.B DIABLED
+state in order to stop the CASTOR system from accessing that tape.
+A copy of a file on a
+.B DISABLED
+tape is counted as a valid copy in the total number of copies on tape.
+Under no circumstances will CASTOR try to create a new copy of a file on tape because it found a copy on a
+.B DISABLED
+tape.
+Repack will not repack a
+.B DISABLED
+tape because by definition such a tape is not accessible by the CASTOR system.
+.TP
+.BI RDONLY
+A
+.B RDONLY
+tape is a tape from which data can be read from but not written to.
+An operator may manually put a tape in the
+.B RDONLY
+state when they wish to block the CASTOR system from writing to that tape.
+A
+.B RDONLY
+tape can be repacked if it is also in the
+.B FULL
+state.
+.TP
+.BI ARCHIVED
+An
+.B ARCHIVED
+tape is a tape that is stored outside of the tape libraries connected to the CASTOR system.
+An
+.B ARCHIVED
+tape is by definition not reachable by CASTOR.
+An operator should manually put a tape in the
+.B ARCHIVED
+state before removing the tape from the libraries attached to the CASTOR system.
+A copy of a file on an
+.B ARCHIVED
+tape is counted as a valid copy in the total number of copies on tape.
+Under no circumstances will CASTOR try to create a new copy of a file on tape because it found a copy on an
+.B ARCHIVED
+tape.
+Repack will not repack an
+.B ARCHIVED 
+tape because by definition such a tape is not accessible by the CASTOR system.
+.TP
+.BI EXPORTED
+An
+.B EXPORTED
+tape is a tape under repair.
+The tape is outside of the tape libraries connected to the CASTOR system and is most probably off site for repair.
+An operator should manually put a tape in the
+.B EXPORTED
+state when they send it off site for repair.
+A copy of a file on an
+.B EXPORTED
+tape is not counted as a valid copy in the total number of copies on tape.
+If CASTOR detects the number of valid copies on tape is less than that specified by the file-class of the file, then it will try to create a new copy of a file on tape.
+Repack will not repack an
+.B EXPORTED 
+tape because by definition such a tape is not accessible by the CASTOR system.
 .SH OPTIONS
 .TP
 .BI -f
