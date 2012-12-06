@@ -1,0 +1,15 @@
+#
+# Configuration file for the castor_traffic_shaper init script
+#
+# This file can contain the network interface name (only one is supported)
+# default is eth0
+# ETH=eth0
+#
+# The list of favored hosts or network ranges are stored here in a shell variable 
+# array. The hosts ip should be in the form a.b.c.d (decimal) and the network
+# ranges should be in CIDR notation: a.b.c.d/n
+# The list can be any combination of the 2
+# exemple:
+# TAPE_SERVERS[0]=1.2.3.4
+# TAPE_SERVERS[1]=2.3.4.5/24
+# TAPE_SERVERS[2]=5.6.7.8

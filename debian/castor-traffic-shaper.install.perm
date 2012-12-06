@@ -1,0 +1,2 @@
+%attr(0755,root,root) etc/init.d/castor-traffic-shaper
+%attr(0644,root,root) etc/sysconfig/castor-traffic-shaper.example

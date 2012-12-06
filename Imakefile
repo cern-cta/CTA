@@ -46,3 +46,4 @@ include LOCAL_PATH/gridftp2/Makefile
 include LOCAL_PATH/shlib/Makefile
 include LOCAL_PATH/tapebridge/Makefile
 include LOCAL_PATH/monitoring/Makefile
+include LOCAL_PATH/traffic-shaping/Makefile

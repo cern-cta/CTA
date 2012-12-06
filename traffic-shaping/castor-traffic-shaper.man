@@ -1,0 +1,104 @@
+.TH "CASTOR-TRAFFIC-SHAPER" "8" "" "Castor development team <castor-dev@cern.ch>" ""
+.SH "NAME"
+castor\-traffic\-shaper \- A traffic shaper used to give priority to tape servers on output of disk servers
+.SH "SYNOPSIS"
+.B castor\-traffic\-shaper
+<
+.BI start
+|
+.BI stop
+|
+.BI restart
+|
+.BI status
+
+.SH "DESCRIPTION"
+.B castor\-traffic\-shaper
+is a traffic shaper dividing the best effort network traffic (which is the most common priority in Linux, lower than interactive, and higher than 
+bulk) between a prioritized and a non\-prioritized class. The prioritized class will get up to 90% of the bandwidth in case of competition
+with the low priority class, which is still guaranteed 10%. In the absence of the other class, any of the two will still use 100% of the badnwidth as 
+usual.
+
+The intended usage is to give priority to the tape servers on output of contenteded disk servers to make sure tape sessions will not string out
+forever. As this is targeted at 1Gb/s disk servers where network contention is an issue, it will not run on disk servers of a different speed.
+
+As a side effect, the traffic shaper will turn off the 
+.B TCP segmentation offload
+on the network interface card. It is turned back on when the traffic shaper is turned off.
+The number of priviledged hosts or networks is limited by the program to prevent impact on performace due to
+too man rules. 40 rules trigger a warning. Over 50 rules, the traffic shaper will not install.
+
+The traffic shaper is implemented as a standard init script. 
+.B start
+and
+.B restart
+options have a similar effect of removing all traffic shaping and re\-installing the rules.
+.B stop
+will remove all traffic shaping rules.
+.B status
+indicated whether the rules are in place or not.
+
+The traffic shaper is based on the 
+.B priotity qdisc
+(queueing discipline) and the 
+.B class based queue.
+.
+
+The prioritized hosts are listed in a standard
+.B /etc/sysconfig
+file. See below for file format description.
+.SH "CONFIGURATION FILE"
+The configuration is stored in 
+.B /etc/sysconfig/castor\-traffic\-shaper
+
+The file is sourced by a bash script. An example is:
+
+.nf
+#
+# Configuration file for the castor_traffic_shaper init script
+#
+# This file can contain the network interface name (only one is supported)
+# default is eth0
+# ETH=eth0
+#
+# The list of favored hosts or network ranges are stored here in a shell variable 
+# array. The hosts ip should be in the form a.b.c.d (decimal) and the network
+# ranges should be in CIDR notation: a.b.c.d/n
+# The list can be any combination of the 2
+# exemple:
+# TAPE_SERVERS[0]=1.2.3.4
+# TAPE_SERVERS[1]=2.3.4.5/24
+# TAPE_SERVERS[2]=5.6.7.8
+
+ETH=eth1
+
+TAPE_SERVERS[0]=1.2.3.4
+TAPE_SERVERS[1]=2.3.4.5/24
+TAPE_SERVERS[2]=5.6.7.8
+.fi
+
+The 
+.B TAPE_SERVERS[]
+entries can hold either simple host IPs or IP ranges in CIDR format.
+
+This is limited to IPV4.
+.SH "EXAMPLE"
+.fi 
+# /etc/init.d/castor\-traffic\-shaper start
+.fi 
+# /sbin/service castor\-traffic\-shaper stop
+
+.SH "EXIT STATUS"
+This program returns 0 if the operation was successful or > 0 if the operation
+failed.
+
+.SH "SEE ALSO"
+.BR tc (8),
+.BR tc\-prio (8),
+.BR tc\-cbq (8),
+.BR ethtool (8),
+.BR service (8),
+.BR chkconfig (8),
+RFC4632
+.SH "AUTHOR"
+\fBCASTOR\fP Team <castor.support@cern.ch>

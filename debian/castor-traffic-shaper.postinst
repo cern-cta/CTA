@@ -1,0 +1,2 @@
+/sbin/chkconfig --add castor-traffic-shaper
+/sbin/service castor-traffic-shaper start > /dev/null 2>&1 || :
