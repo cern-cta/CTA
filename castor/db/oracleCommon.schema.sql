@@ -374,7 +374,7 @@ BEGIN
   -- by its non NULL fileTransactionId
   setObjStatusName('RecallJob', 'status', 2, 'RECALLJOB_SELECTED');
   -- RETRYMOUNT status is when the file recall has failed and should be retried after remounting the tape
-  -- These will be reset to NEW on RecallMount deletion
+  -- These will be reset to PENDING on RecallMount deletion
   setObjStatusName('RecallJob', 'status', 3, 'RECALLJOB_RETRYMOUNT');
 END;
 /
