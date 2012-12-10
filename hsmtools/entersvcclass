@@ -38,55 +38,6 @@ def usage(exitCode):
           '[--diskpools <diskPoolName>:[...]] <svcClassName>'
     sys.exit(exitCode)
 
-def parsePositiveInt(name, svalue):
-    '''parses a positive int value and exits with proper error message in case the value does not fit'''
-    try:
-        value = int(svalue)
-        if value < 0:
-            raise ValueError
-        return value
-    except ValueError:
-        print 'Invalid %s %s' % (name, svalue)
-        usage(1)
-
-def parsePositiveNonNullInt(name, svalue):
-    '''parses a positive, non null int value and exits with proper error message in case the value does not fit'''
-    value = parsePositiveInt(name, svalue)
-    if value == 0:
-        print '%s cannot be set to 0' % name
-        usage(1)
-    return value
-
-def parseBool(name, svalue):
-    '''parses a boolean value and exits with proper error message in case the value does not fit'''
-    validTrues = ['true', '1', 't', 'y', 'yes']
-    validFalses = ['false', '0', 'f', 'n', 'no']
-    if svalue.lower() in validTrues:
-        return True
-    elif svalue.lower() in validFalses:
-        return False
-    else:
-        print 'Invalid %s %s' % (name, svalue)
-        print 'Note that accepted booleans are %s and %s' % (','.join(validTrues), ','.join(validFalses))
-        usage(1)
-
-def parseDataAmount(name, svalue):
-    '''parses a value describing an amount of data. Exits with proper error message in case the value does not fit'''
-    try:
-        exts = {'K' : 1000, 'M' : 1000*1000, 'G' : 1000*1000*1000, 'T' : 1000*1000*1000*1000,
-                'Ki' : 1024, 'Mi' : 1024*1024, 'Gi' : 1024*1024*1024, 'Ti' : 1024*1024*1024*1024}
-        regexp = re.compile('^(?P<nb>\d+)(?P<ext>(?:[KMGT]i?)?)B?$')
-        m = regexp.match(svalue)
-        if not m:
-            raise ValueError
-        value = int(m.group('nb'))
-        if m.group('ext'):
-            value *= exts[m.group('ext')]
-        return value
-    except ValueError:
-        print 'Invalid %s %s' % (name, svalue)
-        usage(1)
-
 # first parse the options
 try:
     options, args = getopt.getopt(sys.argv[1:], 'hv',
@@ -112,17 +63,17 @@ for f, v in options:
     elif f == '-v' or f == '--verbose':
         verbose = True
     elif f == '--defaultfilesize':
-        defaultfilesize = parseDataAmount('defaultfilesize', v)
+        defaultfilesize = castor_tools.parseDataAmount('defaultfilesize', v)
     elif f == '--maxreplicanb':
-        maxreplicanb = parsePositiveNonNullInt('maxreplicanb', v)
+        maxreplicanb = castor_tools.parsePositiveNonNullInt('maxreplicanb', v)
     elif f == '--failjobswhennospace':
-        failjobswhennospace = parseBool('failjobswhennospace', v)
+        failjobswhennospace = castor_tools.parseBool('failjobswhennospace', v)
     elif f == '--disk1behavior':
-        disk1behavior = parseBool('disk1behavior', v)
+        disk1behavior = castor_tools.parseBool('disk1behavior', v)
     elif f == '--forcedfileclass':
         forcedfileclass = v
     elif f == '--replicateonclose':
-        replicateonclose = parseBool('replicateonclose', v)
+        replicateonclose = castor_tools.parseBool('replicateonclose', v)
     elif f == '--gcpolicy':
         gcpolicy = v
     elif f == '--recallerpolicy':

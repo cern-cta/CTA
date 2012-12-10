@@ -534,7 +534,7 @@ def _interleaveIter(it1, it2):
     ''' interleaves 2 iterables, e.g. (1,3), (2,4) -> (1,2,3,4)'''
     return tuple([item for pair in map(None, it1, it2) for item in pair])
 
-def prettyPrintTable(titles, data):
+def prettyPrintTable(titles, data, hasSummary=False):
     '''Prints the given data in a table form.
     data must be an iterable of lines, themselves iterable of values matching the title
     data will be printed using their str function'''
@@ -549,6 +549,193 @@ def prettyPrintTable(titles, data):
     headerWidth = sum(widths)+nbCols-1  # do not forget spaces
     print lineFormat % headerContent
     print '-'*headerWidth
-    for row in data:
+    for row in data[:-1]:
         print lineFormat % _interleaveIter(widths, [str(item) for item in row])
+    if hasSummary:
+        print '-'*headerWidth
+    print lineFormat % _interleaveIter(widths, [str(item) for item in data[-1]])
+
+#-------------------------------------------------------------------------------
+# useful printing functions
+#-------------------------------------------------------------------------------
+def secsToDate(s):
+    '''converts number of seconds since the epoch into readable date'''
+    return time.strftime('%d-%b-%Y %H:%M:%S', time.localtime(s))
+
+def intToBool(b):
+    '''converts a boolean given as an int into a string, taking into account null values'''
+    if b == None:
+        return '-'
+    else:
+        return str(bool(b))
+
+def nbToDataAmount(n):
+    '''converts a number into a readable amount of data'''
+    ext = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB']
+    magn = 0
+    while n / 1024 > 5:
+        magn += 1
+        n = n / 1024
+    return str(n) + ext[magn]
+
+def nbToAge(n):
+    '''converts a number of seconds into a readable age'''
+    s = ''
+    if n >= 86400:
+        s = s + str(n/86400) + 'd'
+        n = n % 86400
+    if n >= 3600:
+        s = s + str(n/3600) + 'h'
+        n = n % 3600
+    if n >= 60:
+        s = s + str(n/60) + 'mn'
+        n = n % 60
+    if n > 0:
+        s = s + str(n) + 's'
+    if len(s) == 0:
+        s = '0s'
+    return s
+
+def printUser((uid, gid)):
+    '''converts uid/gid pair into printable string'''
+    if uid == None:
+        userName = ''
+        uid = ''
+    else:
+        try:
+            userName = pwd.getpwuid(uid)[0]
+        except KeyError:
+            userName = '<%d>' % uid
+        uid = str(uid)
+    try:
+        groupName = grp.getgrgid(gid)[0]
+    except KeyError:
+        groupName = '<%d>' % gid
+    return '%s:%s (%s:%d)' % (userName, groupName, uid, gid)
+
+#-------------------------------------------------------------------------------
+# useful parsing functions
+#-------------------------------------------------------------------------------
+def parseUser(rawUserGroup):
+    '''parses input of a given user.
+       format must be one of :
+          (<userName>|<uid>)
+          (<userName>|<uid>)?:(groupName|<gid>)
+    '''
+    # split user and group from input
+    colonindex = rawUserGroup.find(':')
+    if colonindex < 0:
+        rawUser = rawUserGroup
+        rawGroup = None
+    else:
+        rawUser = rawUserGroup[0:colonindex]
+        rawGroup = rawUserGroup[colonindex+1:]
+    # parse user
+    if rawUser == '':
+        uid = None
+    else:
+        try:
+            # suppose a uid is given
+            uid = int(rawUser)
+            if uid < 0:
+                print 'Invalid uid %d' % uid
+                usage(1)
+        except ValueError:
+            # was not a uid
+            try:
+                pwdEntry = pwd.getpwnam(rawUser)
+                uid = pwdEntry.pw_uid
+                gid = pwdEntry.pw_gid
+            except KeyError:
+                print 'Unknown user %s' % rawUser
+                usage(1)
+    # find out the group, if given
+    if rawGroup == None:
+        gid = None
+    else:
+        try:
+            # suppose a gid is given
+            gid = int(rawGroup)
+            if gid < 0:
+                print 'Invalid gid %d' % uid
+                usage(1)
+        except ValueError:
+            # was not a gid
+            try:
+                gid = grp.getgrnam(rawGroup).gr_gid
+            except KeyError:
+                print 'Unknown group %s' % rawGroup
+                usage(1)
+    return uid,gid
+
+def parsePositiveInt(name, svalue):
+    '''parses a positive int value and exits with proper error message in case the value does not fit'''
+    try:
+        value = int(svalue)
+        if value < 0:
+            raise ValueError
+        return value
+    except ValueError:
+        print 'Invalid %s %s' % (name, svalue)
+        usage(1)
+
+def parsePositiveNonNullInt(name, svalue):
+    '''parses a positive, non null int value and exits with proper error message in case the value does not fit'''
+    value = parsePositiveInt(name, svalue)
+    if value == 0:
+        print '%s cannot be set to 0' % name
+        usage(1)
+    return value
+
+def parseBool(name, svalue):
+    '''parses a boolean value and exits with proper error message in case the value does not fit'''
+    validTrues = ['true', '1', 't', 'y', 'yes']
+    validFalses = ['false', '0', 'f', 'n', 'no']
+    if svalue.lower() in validTrues:
+        return True
+    elif svalue.lower() in validFalses:
+        return False
+    else:
+        print 'Invalid %s %s' % (name, svalue)
+        print 'Note that accepted booleans are %s and %s' % (','.join(validTrues), ','.join(validFalses))
+        usage(1)
+
+def parseDataAmount(name, svalue):
+    '''parses a value describing an amount of data. Exits with proper error message in case the value does not fit'''
+    try:
+        exts = {'K' : 1000, 'M' : 1000*1000, 'G' : 1000*1000*1000, 'T' : 1000*1000*1000*1000,
+                'P' : 1000*1000*1000*1000*1000, 'E' : 1000*1000*1000*1000*1000*1000,
+                'Ki' : 1024, 'Mi' : 1024*1024, 'Gi' : 1024*1024*1024, 'Ti' : 1024*1024*1024*1024,
+                'Pi' : 1024*1024*1024*1024*1024, 'Ei' : 1024*1024*1024*1024*1024*1024}
+        regexp = re.compile('^(?P<nb>\d+)(?P<ext>(?:[KMGT]i?)?)B?$')
+        m = regexp.match(svalue)
+        if not m:
+            raise ValueError
+        value = int(m.group('nb'))
+        if m.group('ext'):
+            value *= exts[m.group('ext')]
+        return value
+    except ValueError:
+        print 'Invalid %s %s' % (name, svalue)
+        usage(1)
+
+def parseTimeDuration(name, svalue):
+    '''parses a value describing a time duration. Exits with proper error message in case the value does not fit'''
+    try:
+        # check validity
+        if not re.compile('^(\d+(s|mn?|h|d)?)+$').match(svalue):
+            raise ValueError
+        # parse
+        exts = {'s' : 1, 'm' : 60, 'mn' : 60, 'h' : 3600, 'd' : 86400}
+        regexp = re.compile('(\d+)(s|mn?|h|d)?')
+        value = 0
+        for nb, ext in regexp.findall(svalue):
+            partvalue = int(nb)
+            if ext:
+                partvalue *= exts[ext]
+            value += partvalue
+        return value
+    except ValueError:
+        print 'Invalid %s %s' % (name, svalue)
+        usage(1)
 

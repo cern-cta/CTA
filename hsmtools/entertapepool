@@ -35,54 +35,6 @@ def usage(exitCode):
           '[--maxfileage <maxFileAgeBeforeForcedMount>] <tapePoolName>'
     sys.exit(exitCode)
 
-def parsePositiveInt(name, svalue):
-    '''parses a positive int value and exits with proper error message in case the value does not fit'''
-    try:
-        value = int(svalue)
-        if value < 0:
-            raise ValueError
-        return value
-    except ValueError:
-        print 'Invalid %s %s' % (name, svalue)
-        usage(1)
-
-def parseDataAmount(name, svalue):
-    '''parses a value describing an amount of data. Exits with proper error message in case the value does not fit'''
-    try:
-        exts = {'K' : 1000, 'M' : 1000*1000, 'G' : 1000*1000*1000, 'T' : 1000*1000*1000*1000,
-                'Ki' : 1024, 'Mi' : 1024*1024, 'Gi' : 1024*1024*1024, 'Ti' : 1024*1024*1024*1024}
-        regexp = re.compile('^(?P<nb>\d+)(?P<ext>(?:[KMGT]i?)?)B?$')
-        m = regexp.match(svalue)
-        if not m:
-            raise ValueError
-        value = int(m.group('nb'))
-        if m.group('ext'):
-            value *= exts[m.group('ext')]
-        return value
-    except ValueError:
-        print 'Invalid %s %s' % (name, svalue)
-        usage(1)
-
-def parseTimeDuration(name, svalue):
-    '''parses a value describing a time duration. Exits with proper error message in case the value does not fit'''
-    try:
-        # check validity
-        if not re.compile('^(\d+(s|mn?|h|d)?)+$').match(svalue):
-            raise ValueError
-        # parse
-        exts = {'s' : 1, 'm' : 60, 'mn' : 60, 'h' : 3600, 'd' : 86400}
-        regexp = re.compile('(\d+)(s|mn?|h|d)?')
-        value = 0
-        for nb, ext in regexp.findall(svalue):
-            partvalue = int(nb)
-            if ext:
-                partvalue *= exts[ext]
-            value += partvalue
-        return value
-    except ValueError:
-        print 'Invalid %s %s' % (name, svalue)
-        usage(1)
-
 # first parse the options
 try:
     options, args = getopt.getopt(sys.argv[1:], 'hv', ['help', 'verbose', 'nbdrives=', 'minamountdata=',
@@ -101,13 +53,13 @@ for f, v in options:
     elif f == '-v' or f == '--verbose':
         verbose = True
     elif f == '--nbdrives':
-        nbdrives = parsePositiveInt('nbdrives', v)
+        nbdrives = castor_tools.parsePositiveInt('nbdrives', v)
     elif f == '--minamountdata':
-        minamountdata = parseDataAmount('minamountdata', v)
+        minamountdata = castor_tools.parseDataAmount('minamountdata', v)
     elif f == '--minnbfiles':
-        minnbfiles = parsePositiveInt('minnbfiles', v)
+        minnbfiles = castor_tools.parsePositiveInt('minnbfiles', v)
     elif f == '--maxfileage':
-        maxfileage = parseTimeDuration('maxfileage', v)
+        maxfileage = castor_tools.parseTimeDuration('maxfileage', v)
     else:
         print "unknown option : " + f
         usage(1)

@@ -33,37 +33,6 @@ def usage(exitCode):
     print 'Usage : ' + sys.argv[0] + ' [-h|--help] [<tapePoolName> [...]]'
     sys.exit(exitCode)
 
-def secsToDate(s):
-    '''converts number of seconds since the epoch into readable date'''
-    return time.strftime('%d-%b-%Y %H:%M:%S', time.localtime(s))
-
-def nbToDataAmount(n):
-    '''converts a number into a readable amount of data'''
-    ext = ['B', 'KiB', 'MiB', 'GiB', 'TiB']
-    magn = 0
-    while n / 1024 > 5:
-        magn += 1
-        n = n / 1024
-    return str(n) + ext[magn]
-
-def nbToAge(n):
-    '''converts a number of seconds into a readable age'''
-    s = ''
-    if n >= 86400:
-        s = s + str(n/86400) + 'd'
-        n = n % 86400
-    if n >= 3600:
-        s = s + str(n/3600) + 'h'
-        n = n % 3600
-    if n >= 60:
-        s = s + str(n/60) + 'mn'
-        n = n % 60
-    if n > 0:
-        s = s + str(n) + 's'
-    if len(s) == 0:
-        s = '0s'
-    return s
-
 # first parse the options
 try:
     options, args = getopt.getopt(sys.argv[1:], 'hv', ['help', 'verbose'])
@@ -104,8 +73,8 @@ try:
     # loop over tape pools and print them
     if existingTapePools:
         titles = ('NAME','NBDRIVES','MINAMOUNTDATA','MINNBFILES','MAXFILEAGE','ID','LASTEDITOR','LASTEDITION')
-        data = [(name, nbdrives, nbToDataAmount(minamountdata), minnbfiles,
-                 nbToAge(maxfileage), tpid, lastEditor, secsToDate(lastEdition))
+        data = [(name, nbdrives, castor_tools.nbToDataAmount(minamountdata), minnbfiles,
+                 castor_tools.nbToAge(maxfileage), tpid, lastEditor, secsToDate(lastEdition))
                 for name, nbdrives, minamountdata, minnbfiles, maxfileage, lastEditor, lastEdition, tpid in rows]
         castor_tools.prettyPrintTable(titles, data)
     # check unknown tape pools

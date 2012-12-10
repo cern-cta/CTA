@@ -33,19 +33,6 @@ def usage(exitCode):
     print 'Usage : ' + sys.argv[0] + ' [-h|--help] <SvcClassName> [...]'
     sys.exit(exitCode)
 
-def secsToDate(s):
-    '''converts number of seconds since the epoch into readable date'''
-    return time.strftime('%d-%b-%Y %H:%M:%S', time.localtime(s))
-
-def nbToDataAmount(n):
-    '''converts a number into a readable amount of data'''
-    ext = ['', 'KiB', 'MiB', 'GiB', 'TiB']
-    magn = 0
-    while n / 1024 > 5:
-        magn += 1
-        n = n / 1024
-    return str(n) + ext[magn]
-
 # first parse the options
 try:
     options, args = getopt.getopt(sys.argv[1:], 'hv', ['help', 'verbose'])
@@ -92,14 +79,17 @@ try:
         unknownSvcClasses = fileClasses - existingSvcClasses
     # loop over svcclasses and print them
     if existingSvcClasses:
-        titles = ('NAME', 'DEFAULTFILESIZE', 'FAILJOBSWHENNOSPACE', 'MAXREPLICANB', 'FORCEDFILECLASS', 'REPLICATEONCLOSE',
-                  'DISK1BEHAVIOR', 'GCPOLICY', 'RECALLERPOLICY', 'DISKPOOLS', 'ID', 'LASTEDITOR', 'LASTEDITION')
-        data = [(name, nbToDataAmount(defaultfilesize), bool(failjobswhennospace), maxReplicaNb,
-                forcedFileClass if forcedFileClass else '-', bool(replicateonclose), bool(disk1behavior), gcPolicy,
-                recallerPolicy if recallerPolicy else '-', ','.join(diskPools) if diskPools else '-', scId, lastEditor,
-                secsToDate(lastEdition))
-                for name, defaultfilesize, failjobswhennospace, gcPolicy, maxReplicaNb, forcedFileClass,
-                    replicateonclose, recallerPolicy, disk1behavior, scId, diskPools, lastEditor, lastEdition in rows]
+        titles = ('NAME', 'DEFAULTFILESIZE', 'FAILJOBSWHENNOSPACE', 'MAXREPLICANB',
+                  'FORCEDFILECLASS', 'REPLICATEONCLOSE', 'DISK1BEHAVIOR', 'GCPOLICY',
+                  'RECALLERPOLICY', 'DISKPOOLS', 'ID', 'LASTEDITOR', 'LASTEDITION')
+        data = [(name, castor_tools.nbToDataAmount(defaultfilesize), bool(failjobswhennospace), maxReplicaNb,
+                 forcedFileClass if forcedFileClass else '-', bool(replicateonclose),
+                 bool(disk1behavior), gcPolicy, recallerPolicy if recallerPolicy else '-',
+                 ','.join(diskPools) if diskPools else '-', scId, lastEditor,
+                 castor_tools.secsToDate(lastEdition))
+                for name, defaultfilesize, failjobswhennospace, gcPolicy, maxReplicaNb,
+                    forcedFileClass, replicateonclose, recallerPolicy, disk1behavior, scId,
+                    diskPools, lastEditor, lastEdition in rows]
 
         castor_tools.prettyPrintTable(titles, data)
     # check unknown svcclasses

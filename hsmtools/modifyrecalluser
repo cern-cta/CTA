@@ -34,52 +34,6 @@ def usage(exitCode):
           '        ' + sys.argv[0] + ' [-h|--help] (<userName>|<uid>)?:(<groupName>|<gid>) <newRecallGroup>\n'
     sys.exit(exitCode)
 
-def parseUser(rawUserGroup):
-    '''parses input of a given user'''
-    # split user and group from input
-    colonindex = rawUserGroup.find(':')
-    if colonindex < 0:
-        rawUser = rawUserGroup
-        rawGroup = None
-    else:
-        rawUser = rawUserGroup[0:colonindex]
-        rawGroup = rawUserGroup[colonindex+1:]
-    # parse user
-    if rawUser == '':
-        uid = None
-    else:
-        try:
-            # suppose a uid is given
-            uid = int(rawUser)
-            if uid < 0:
-                print 'Invalid uid %d' % uid
-                usage(1)
-        except ValueError:
-            # was not a uid
-            try:
-                pwdEntry = pwd.getpwnam(rawUser)
-                uid = pwdEntry.pw_uid
-                gid = pwdEntry.pw_gid
-            except KeyError:
-                print 'Unknown user %s' % rawUser
-                usage(1)
-    # find out the group, if given
-    if rawGroup != None:
-        try:
-            # suppose a gid is given
-            gid = int(rawGroup)
-            if gid < 0:
-                print 'Invalid gid %d' % uid
-                usage(1)
-        except ValueError:
-            # was not a gid
-            try:
-                gid = grp.getgrnam(rawGroup).gr_gid
-            except KeyError:
-                print 'Unknown group %s' % rawGroup
-                usage(1)
-    return uid, gid
-
 # first parse the options
 try:
     options, args = getopt.getopt(sys.argv[1:], 'hv', ['help', 'verbose'])
@@ -103,7 +57,7 @@ if len(args) < 2:
 elif len(args) > 2:
     print "Too many arguments"
     usage(1)
-uid, gid = parseUser(args[0])
+uid, gid = castor_tools.parseUser(args[0])
 recallGroup = args[1]
 
 try:

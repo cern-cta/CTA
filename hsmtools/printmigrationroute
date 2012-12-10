@@ -34,17 +34,6 @@ def usage(exitCode):
           '[-f|--fileclass <fileClassName] [-t|--tapepool <tapePoolName>]'
     sys.exit(exitCode)
 
-def secsToDate(s):
-    '''converts number of seconds since the epoch into readable date'''
-    return time.strftime('%d-%b-%Y %H:%M:%S', time.localtime(s))
-
-def intToBool(b):
-    '''converts a boolean given as an int into a string, taking into account null values'''
-    if b == None:
-        return '-'
-    else:
-        return str(bool(b))
-
 # first parse the options
 try:
     options, args = getopt.getopt(sys.argv[1:], 'hvs:S:f:t:',
@@ -113,7 +102,8 @@ try:
         sys.exit(0)
     # print
     titles = ('FILECLASS', 'COPYNB', 'ISSMALLFILE', 'TAPEPOOL', 'LASTEDITOR', 'LASTEDITION')
-    data = [(fileclass, copynb, intToBool(issmallfile), tapepool, lasteditor, secsToDate(lastedition))
+    data = [(fileclass, copynb, castor_tools.intToBool(issmallfile), tapepool, lasteditor,
+             castor_tools.secsToDate(lastedition))
             for issmallfile, copynb, lasteditor, lastedition, fileclass, tapepool in rows]
     castor_tools.prettyPrintTable(titles, data)
     # close DB connections

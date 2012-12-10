@@ -34,49 +34,17 @@ def usage(exitCode):
           '[<copyNb>[:<isSmallFile>]:]<tapePoolName>'
     sys.exit(exitCode)
 
-def parsePositiveInt(name, svalue):
-    '''parses a positive int value and exits with proper error message in case the value does not fit'''
-    try:
-        value = int(svalue)
-        if value < 0:
-            raise ValueError
-        return value
-    except ValueError:
-        print 'Invalid %s %s' % (name, svalue)
-        usage(1)
-
-def parsePositiveNonNullInt(name, svalue):
-    '''parses a positive, non null int value and exits with proper error message in case the value does not fit'''
-    value = parsePositiveInt(name, svalue)
-    if value == 0:
-        print '%s cannot be set to 0' % name
-        usage(1)
-    return value
-
-def parseBool(name, svalue):
-    '''parses a boolean value and exits with proper error message in case the value does not fit'''
-    validTrues = ['true', '1', 't', 'y', 'yes']
-    validFalses = ['false', '0', 'f', 'n', 'no']
-    if svalue.lower() in validTrues:
-        return True
-    elif svalue.lower() in validFalses:
-        return False
-    else:
-        print 'Invalid %s %s' % (name, svalue)
-        print 'Note that accepted booleans are %s and %s' % (','.join(validTrues), ','.join(validFalses))
-        usage(1)
-
 def parseMapping(name, svalue):
     '''parses a migration route target of the form <copyNb>[:<isSmallFile>]?:<tapePoolName>'''
     try:
         colonIndex = svalue.find(':')
         if colonIndex >= 0:
-            copyNb = parsePositiveNonNullInt('copyNb', svalue[0:colonIndex])
+            copyNb = castor_tools.parsePositiveNonNullInt('copyNb', svalue[0:colonIndex])
         else:
             copyNb = 1
         colonIndex2 = svalue.find(':', colonIndex + 1)
         if colonIndex2 >= 0:
-            isSmallFile = parseBool('isSmallFile', svalue[colonIndex+1:colonIndex2])
+            isSmallFile = castor_tools.parseBool('isSmallFile', svalue[colonIndex+1:colonIndex2])
             colonIndex = colonIndex2
         else:
             isSmallFile = None
