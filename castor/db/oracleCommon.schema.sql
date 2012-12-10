@@ -37,6 +37,28 @@ END;
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
 
+/* accessors to ObjStatus table */
+CREATE OR REPLACE FUNCTION getObjStatusName(inObject VARCHAR2, inField VARCHAR2, inStatusCode INTEGER)
+RETURN VARCHAR2 AS
+  varstatusName VARCHAR2(2048);
+BEGIN
+  SELECT statusName INTO varstatusName
+    FROM ObjStatus
+   WHERE object = inObject
+     AND field = inField
+     AND statusCode = inStatusCode;
+  RETURN varstatusName;
+END;
+/
+
+CREATE OR REPLACE PROCEDURE setObjStatusName(inObject VARCHAR2, inField VARCHAR2,
+                                             inStatusCode INTEGER, inStatusName VARCHAR2) AS
+BEGIN
+  INSERT INTO ObjStatus (object, field, statusCode, statusName)
+  VALUES (inObject, inField, inStatusCode, inStatusName);
+END;
+/
+
 /* SQL statements for requests status */
 /* Partitioning enables faster response (more than indexing) for the most frequent queries - credits to Nilo Segura */
 CREATE TABLE newRequests (type NUMBER(38) CONSTRAINT NN_NewRequests_Type NOT NULL, id NUMBER(38) CONSTRAINT NN_NewRequests_Id NOT NULL, creation DATE CONSTRAINT NN_NewRequests_Creation NOT NULL, CONSTRAINT PK_NewRequests_Type_Id PRIMARY KEY (type, id))
@@ -288,9 +310,12 @@ INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 -- touch any row while with the index, no row lock is taken at all, as one may expect
 CREATE INDEX I_RecallMount_RecallGroup ON RecallMount(recallGroup); 
 ALTER TABLE RecallMount ADD CONSTRAINT FK_RecallMount_RecallGroup FOREIGN KEY (recallGroup) REFERENCES RecallGroup(id);
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallMount', 'status', 0, 'RECALLMOUNT_NEW');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallMount', 'status', 1, 'RECALLMOUNT_WAITDRIVE');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallMount', 'status', 2, 'RECALLMOUNT_RECALLING');
+BEGIN
+  setObjStatusName('RecallMount', 'status', 0, 'RECALLMOUNT_NEW');
+  setObjStatusName('RecallMount', 'status', 1, 'RECALLMOUNT_WAITDRIVE');
+  setObjStatusName('RecallMount', 'status', 2, 'RECALLMOUNT_RECALLING');
+END;
+/
 
 /* Definition of the RecallJob table
  * id unique identifer of this RecallJob
@@ -339,18 +364,20 @@ ALTER TABLE RecallJob ADD CONSTRAINT FK_RecallJob_SvcClass FOREIGN KEY (svcClass
 ALTER TABLE RecallJob ADD CONSTRAINT FK_RecallJob_RecallGroup FOREIGN KEY (recallGroup) REFERENCES RecallGroup(id);
 ALTER TABLE RecallJob ADD CONSTRAINT FK_RecallJob_CastorFile FOREIGN KEY (castorFile) REFERENCES CastorFile(id);
 
--- PENDING status is when a RecallJob is created
--- It is immediately candidate for being recalled by an ongoing recallMount
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallJob', 'status', 1, 'RECALLJOB_PENDING');
--- SELECTED status is when the file is currently being recalled.
--- Note all recallJobs of a given file will have this state while the file is being recalled,
--- even if another copy is being recalled. The recallJob that is effectively used can be identified
--- by its non NULL fileTransactionId
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallJob', 'status', 2, 'RECALLJOB_SELECTED');
--- RETRYMOUNT status is when the file recall has failed and should be retried after remounting the tape
--- These will be reset to NEW on RecallMount deletion
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('RecallJob', 'status', 3, 'RECALLJOB_RETRYMOUNT');
-
+BEGIN
+  -- PENDING status is when a RecallJob is created
+  -- It is immediately candidate for being recalled by an ongoing recallMount
+  setObjStatusName('RecallJob', 'status', 1, 'RECALLJOB_PENDING');
+  -- SELECTED status is when the file is currently being recalled.
+  -- Note all recallJobs of a given file will have this state while the file is being recalled,
+  -- even if another copy is being recalled. The recallJob that is effectively used can be identified
+  -- by its non NULL fileTransactionId
+  setObjStatusName('RecallJob', 'status', 2, 'RECALLJOB_SELECTED');
+  -- RETRYMOUNT status is when the file recall has failed and should be retried after remounting the tape
+  -- These will be reset to NEW on RecallMount deletion
+  setObjStatusName('RecallJob', 'status', 3, 'RECALLJOB_RETRYMOUNT');
+END;
+/
 
 /* Definition of the TapePool table
  *   name : the name of the TapePool
@@ -399,11 +426,13 @@ INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE INDEX I_MigrationMount_TapePool ON MigrationMount(tapePool); 
 ALTER TABLE MigrationMount ADD CONSTRAINT FK_MigrationMount_TapePool
   FOREIGN KEY (tapePool) REFERENCES TapePool(id);
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationMount', 'status', 0, 'MIGRATIONMOUNT_WAITTAPE');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationMount', 'status', 1, 'MIGRATIONMOUNT_SEND_TO_VDQM');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationMount', 'status', 2, 'MIGRATIONMOUNT_WAITDRIVE');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationMount', 'status', 3, 'MIGRATIONMOUNT_MIGRATING');
-
+BEGIN
+  setObjStatusName('MigrationMount', 'status', 0, 'MIGRATIONMOUNT_WAITTAPE');
+  setObjStatusName('MigrationMount', 'status', 1, 'MIGRATIONMOUNT_SEND_TO_VDQM');
+  setObjStatusName('MigrationMount', 'status', 2, 'MIGRATIONMOUNT_WAITDRIVE');
+  setObjStatusName('MigrationMount', 'status', 3, 'MIGRATIONMOUNT_MIGRATING');
+END;
+/
 
 /* Definition of the MigratedSegment table
  * This table lists segments existing on tape for the files being
@@ -469,10 +498,12 @@ ALTER TABLE MigrationJob ADD CONSTRAINT FK_MigrationJob_TapePool
   FOREIGN KEY (tapePool) REFERENCES TapePool(id);
 ALTER TABLE MigrationJob ADD CONSTRAINT FK_MigrationJob_MigrationMount
   FOREIGN KEY (mountTransactionId) REFERENCES MigrationMount(mountTransactionId);
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationJob', 'status', 0, 'MIGRATIONJOB_PENDING');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationJob', 'status', 1, 'MIGRATIONJOB_SELECTED');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('MigrationJob', 'status', 3, 'MIGRATIONJOB_WAITINGONRECALL');
-
+BEGIN
+  setObjStatusName('MigrationJob', 'status', 0, 'MIGRATIONJOB_PENDING');
+  setObjStatusName('MigrationJob', 'status', 1, 'MIGRATIONJOB_SELECTED');
+  setObjStatusName('MigrationJob', 'status', 3, 'MIGRATIONJOB_WAITINGONRECALL');
+END;
+/
 
 /* Definition of the MigrationRouting table. Each line is a routing rule for migration jobs
  *   isSmallFile : whether this routing rule applies to small files. Null means it applies to all files

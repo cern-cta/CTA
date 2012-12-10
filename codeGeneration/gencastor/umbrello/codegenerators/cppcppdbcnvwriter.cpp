@@ -761,16 +761,17 @@ void CppCppDbCnvWriter::writeOraSqlStatements() {
     if (isEnum(c)) {
       QPtrList<UMLAttribute> atl =
         getClassifier(as->remotePart.typeName)->getAttributeList();
+      stream << "BEGIN" << endl;
       for (UMLAttribute *at = atl.first(); at; at = atl.next()) {
-        stream << "INSERT INTO ObjStatus "
-               << "(object, field, statusCode, statusName) VALUES ('"
+        stream << "  serObjStatusName('"
                << as->localPart.typeName << "', '"
                << as->remotePart.name << "', "
                << at->getInitialValue() << ", '"
                << at->getName() << "');"
                << endl;
       }
-      stream << endl;
+      stream << "END;" << endl;
+             << "/" << endl << endl;
     }
   }
 

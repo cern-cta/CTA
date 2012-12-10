@@ -35,14 +35,17 @@ CREATE TABLE DrainingFileSystem
    comments       VARCHAR2(50) DEFAULT 'N/A' CONSTRAINT NN_DrainingFs_Comments NOT NULL)
   /* Allow shrink operations */
   ENABLE ROW MOVEMENT;
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DrainingFileSystem', 'status', 0, 'CREATED');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DrainingFileSystem', 'status', 1, 'INITIALIZING');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DrainingFileSystem', 'status', 2, 'RUNNING');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DrainingFileSystem', 'status', 3, 'INTERRUPTED');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DrainingFileSystem', 'status', 4, 'FAILED');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DrainingFileSystem', 'status', 5, 'COMPLETED');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DrainingFileSystem', 'status', 6, 'DELETING');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DrainingFileSystem', 'status', 7, 'RESTART');
+BEGIN
+  setObjStatusName('DrainingFileSystem', 'status', 0, 'CREATED');
+  setObjStatusName('DrainingFileSystem', 'status', 1, 'INITIALIZING');
+  setObjStatusName('DrainingFileSystem', 'status', 2, 'RUNNING');
+  setObjStatusName('DrainingFileSystem', 'status', 3, 'INTERRUPTED');
+  setObjStatusName('DrainingFileSystem', 'status', 4, 'FAILED');
+  setObjStatusName('DrainingFileSystem', 'status', 5, 'COMPLETED');
+  setObjStatusName('DrainingFileSystem', 'status', 6, 'DELETING');
+  setObjStatusName('DrainingFileSystem', 'status', 7, 'RESTART');
+END;
+/
 
 /* SQL statement for primary key constraint on DrainingFileSystem */
 ALTER TABLE DrainingFileSystem
@@ -113,11 +116,13 @@ CREATE TABLE DrainingDiskCopy
    comments       VARCHAR2(2048) DEFAULT NULL)
   /* Allow shrink operations */
   ENABLE ROW MOVEMENT;
-
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DrainingDiskCopy', 'status', 0, 'CREATED');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DrainingDiskCopy', 'status', 2, 'PROCESSING');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DrainingDiskCopy', 'status', 3, 'WAITD2D');
-INSERT INTO ObjStatus (object, field, statusCode, statusName) VALUES ('DrainingDiskCopy', 'status', 4, 'FAILED');
+BEGIN
+  setObjStatusName('DrainingDiskCopy', 'status', 0, 'CREATED');
+  setObjStatusName('DrainingDiskCopy', 'status', 2, 'PROCESSING');
+  setObjStatusName('DrainingDiskCopy', 'status', 3, 'WAITD2D');
+  setObjStatusName('DrainingDiskCopy', 'status', 4, 'FAILED');
+END;
+/
 
 /* SQL statement for primary key constraint on DrainingDiskCopy */
 ALTER TABLE DrainingDiskCopy
