@@ -1,0 +1,167 @@
+.TH MODIFYDISKSERVER 1 "2011" CASTOR "stager catalogue administrative commands"
+.SH NAME
+modifydiskserver \- modifies existing disk servers in the stager catalog
+.SH SYNOPSIS
+.B modifydiskserver
+[
+.BI -h
+]
+.BI -f|--forcestate
+\<state>
+|
+.BI -r|--release
+|
+.BI -d|--diskpool
+\<diskPoolName>
+[
+.BI -m|--mountPoints
+\<mountPoint>[:...]
+]
+<diskPoolName>|<diskServerName>
+[...]
+
+.SH DESCRIPTION
+.B modifydiskserver
+modifies existing disk servers, or their related filesystems in the CASTOR stager catalog.
+Three actions are supported :
+  - release the state of diskservers/filesystems
+  - force the state of diskservers/filesystems to one of 'Production', 'Draining' and 'Disabled'
+  - move the diskserver/filesystems to a new diskpool
+  
+.TP
+.BI \-h,\ \-\-help
+Get usage information
+.TP
+.BI \-f,\-\-forcestate\ <state>
+Allows to force the diskservers/filesystems state to the given state.
+<state> muste be one of 'Production', 'Draining' and 'Disabled'
+.TP
+.BI \-r,\-\-release
+Release the state of the given diskservers/filesystems in case if was forced.
+.TP
+.BI \-d,\-\-diskpool\ <diskPoolName>
+Allows to move the filesystems given, or all filesystem of the given diskservers to a new diskPool.
+.TP
+.BI \-m,\-\-mountPoints\ <mountPoint>[:...]
+If given, applies the changes to this set of mountpoints rather than to the diskservers.
+
+Note that when -m,--mountPoints si used with a status related command (forcestate or release), the status changed will only be the ones of the filesystems. DiskServer states won't be touched.
+Symetrically, when it is not given, the fileSystems' states are untouched.
+
+The targeted mountPoints are all mountPoints with the given name accross the given diskServers.
+This means that the cross product of mountPoints and diskservers is considered
+.TP
+.BI <diskPoolName>|<diskServerName> [...]
+the set of diskServers to be considered, given by name or by diskPools.
+When diskPools are given, all diskServers of the diskPool are considered.
+
+.SH EXAMPLES
+.nf
+.ft CW
+
+#printdiskserver
+            DSNAME NBMOUNTPOINTS                STATUS ADMINSTATUS   FREE   SIZE NBRD NBWR NBMIGR NBREC      DISKPOOL ID
+------------------------------------------------------------------------------------------------------------------------
+lxc2dev1d1.cern.ch            10 DISKSERVER_PRODUCTION  ADMIN_NONE 259GiB 275GiB    0    0      0     0       default  6
+lxc2dev1d2.cern.ch            10 DISKSERVER_PRODUCTION  ADMIN_NONE 259GiB 275GiB    0    0      0     0         extra  7
+------------------------------------------------------------------------------------------------------------------------
+      TOTAL NB : 2            20                                   519GiB 551GiB    0    0      0     0 default,extra   
+
+#modifydiskserver -f Disabled lxc2dev1d1.cern.ch
+modified diskServers successfully
+
+#modifydiskserver -f Draining extra
+modified diskServers successfully
+
+#printdiskserver
+            DSNAME NBMOUNTPOINTS              STATUS ADMINSTATUS   FREE   SIZE NBRD NBWR NBMIGR NBREC      DISKPOOL ID
+----------------------------------------------------------------------------------------------------------------------
+lxc2dev1d1.cern.ch            10 DISKSERVER_DISABLED ADMIN_FORCE 259GiB 275GiB    0    0      0     0       default  6
+lxc2dev1d2.cern.ch            10 DISKSERVER_DRAINING ADMIN_FORCE 259GiB 275GiB    0    0      0     0         extra  7
+----------------------------------------------------------------------------------------------------------------------
+      TOTAL NB : 2            20                                 519GiB 551GiB    0    0      0     0 default,extra   
+
+#modifydiskserver -f Disabled -m /srv/castor/01/:/srv/castor/02/ extra
+modified fileSystems successfully
+
+#modifydiskserver -r extra
+modified diskServers successfully
+
+#printdiskserver -f
+            DSNAME      MOUNTPOINT                STATUS ADMINSTATUS   FREE MINFREE MAXFREE   SIZE NBRD NBWR NBMIGR NBREC      DISKPOOL ID
+------------------------------------------------------------------------------------------------------------------------------------------
+lxc2dev1d1.cern.ch                   DISKSERVER_DISABLED ADMIN_FORCE 259GiB      5%     15% 275GiB    0    0      0     0       default  6
+                   /srv/castor/01/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0       default  8
+                   /srv/castor/02/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0       default  9
+                   /srv/castor/03/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0       default 10
+                   /srv/castor/04/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0       default 11
+                   /srv/castor/05/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0       default 12
+                   /srv/castor/06/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0       default 13
+                   /srv/castor/07/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0       default 14
+                   /srv/castor/08/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0       default 15
+                   /srv/castor/09/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0       default 16
+                   /srv/castor/10/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0       default 17
+lxc2dev1d2.cern.ch                   DISKSERVER_DRAINING  ADMIN_NONE 259GiB      5%     15% 275GiB    0    0      0     0         extra  7
+                   /srv/castor/01/   FILESYSTEM_DISABLED ADMIN_FORCE  25GiB      5%     15%  27GiB    0    0      0     0         extra 19
+                   /srv/castor/02/   FILESYSTEM_DISABLED ADMIN_FORCE  25GiB      5%     15%  27GiB    0    0      0     0         extra 20
+                   /srv/castor/03/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 21
+                   /srv/castor/04/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 22
+                   /srv/castor/05/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 23
+                   /srv/castor/06/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 24
+                   /srv/castor/07/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 25
+                   /srv/castor/08/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 26
+                   /srv/castor/09/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 27
+                   /srv/castor/10/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 28
+------------------------------------------------------------------------------------------------------------------------------------------
+      TOTAL NB : 2   TOTAL NB : 20                                   519GiB      5%     15% 551GiB    0    0      0     0 default,extra   
+
+#modifydiskserver -d extra default
+modified diskServers successfully
+
+#modifydiskserver -d default -m /srv/castor/01/:/srv/castor/02/ lxc2dev1d1.cern.ch
+modified fileSystems successfully
+
+#printdiskserver -f
+            DSNAME      MOUNTPOINT                STATUS ADMINSTATUS   FREE MINFREE MAXFREE   SIZE NBRD NBWR NBMIGR NBREC      DISKPOOL ID
+------------------------------------------------------------------------------------------------------------------------------------------
+lxc2dev1d1.cern.ch                   DISKSERVER_DISABLED ADMIN_FORCE 259GiB      5%     15% 275GiB    0    0      0     0 default,extra  6
+                   /srv/castor/01/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0       default  8
+                   /srv/castor/02/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0       default  9
+                   /srv/castor/03/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 10
+                   /srv/castor/04/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 11
+                   /srv/castor/05/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 12
+                   /srv/castor/06/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 13
+                   /srv/castor/07/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 14
+                   /srv/castor/08/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 15
+                   /srv/castor/09/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 16
+                   /srv/castor/10/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 17
+lxc2dev1d2.cern.ch                 DISKSERVER_PRODUCTION  ADMIN_NONE 259GiB      5%     15% 275GiB    0    0      0     0         extra  7
+                   /srv/castor/01/   FILESYSTEM_DISABLED ADMIN_FORCE  25GiB      5%     15%  27GiB    0    0      0     0         extra 19
+                   /srv/castor/02/   FILESYSTEM_DISABLED ADMIN_FORCE  25GiB      5%     15%  27GiB    0    0      0     0         extra 20
+                   /srv/castor/03/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 21
+                   /srv/castor/04/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 22
+                   /srv/castor/05/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 23
+                   /srv/castor/06/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 24
+                   /srv/castor/07/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 25
+                   /srv/castor/08/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 26
+                   /srv/castor/09/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 27
+                   /srv/castor/10/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 28
+------------------------------------------------------------------------------------------------------------------------------------------
+      TOTAL NB : 2   TOTAL NB : 20                                   519GiB      5%     15% 551GiB    0    0      0     0 default,extra   
+
+.SH NOTES
+This command requires database client access to the stager catalog and nameserver DBs.
+Configuration for the database accesses is taken from castor.conf.
+
+.SH SEE ALSO
+.BR enterdiskserver
+.BR deletediskserver
+.BR printdiskserver
+.BR modifymigrationroute
+.BR modifyrecallgroup
+.BR modifyrecalluser
+.BR modifytapepool
+.BR adminMultiInstance
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

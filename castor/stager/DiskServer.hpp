@@ -118,131 +118,21 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_readRate
-       * Aggregated read rate over all filesystems of this diskServer
-       * @return the value of m_readRate
+       * Get the value of m_lastHeartBeatTime
+       * last time a heartbeat was received for this DiskServer
+       * @return the value of m_lastHeartBeatTime
        */
-      u_signed64 readRate() const {
-        return m_readRate;
+      u_signed64 lastHeartBeatTime() const {
+        return m_lastHeartBeatTime;
       }
 
       /**
-       * Set the value of m_readRate
-       * Aggregated read rate over all filesystems of this diskServer
-       * @param new_var the new value of m_readRate
+       * Set the value of m_lastHeartBeatTime
+       * last time a heartbeat was received for this DiskServer
+       * @param new_var the new value of m_lastHeartBeatTime
        */
-      void setReadRate(u_signed64 new_var) {
-        m_readRate = new_var;
-      }
-
-      /**
-       * Get the value of m_writeRate
-       * Aggregated write rate over all filesystems of this diskServer
-       * @return the value of m_writeRate
-       */
-      u_signed64 writeRate() const {
-        return m_writeRate;
-      }
-
-      /**
-       * Set the value of m_writeRate
-       * Aggregated write rate over all filesystems of this diskServer
-       * @param new_var the new value of m_writeRate
-       */
-      void setWriteRate(u_signed64 new_var) {
-        m_writeRate = new_var;
-      }
-
-      /**
-       * Get the value of m_nbReadStreams
-       * Aggregated nb of user read streams over all filesystems of this diskServer
-       * @return the value of m_nbReadStreams
-       */
-      unsigned int nbReadStreams() const {
-        return m_nbReadStreams;
-      }
-
-      /**
-       * Set the value of m_nbReadStreams
-       * Aggregated nb of user read streams over all filesystems of this diskServer
-       * @param new_var the new value of m_nbReadStreams
-       */
-      void setNbReadStreams(unsigned int new_var) {
-        m_nbReadStreams = new_var;
-      }
-
-      /**
-       * Get the value of m_nbWriteStreams
-       * Aggregated nb of user write streams over all filesystems of this diskServer
-       * @return the value of m_nbWriteStreams
-       */
-      unsigned int nbWriteStreams() const {
-        return m_nbWriteStreams;
-      }
-
-      /**
-       * Set the value of m_nbWriteStreams
-       * Aggregated nb of user write streams over all filesystems of this diskServer
-       * @param new_var the new value of m_nbWriteStreams
-       */
-      void setNbWriteStreams(unsigned int new_var) {
-        m_nbWriteStreams = new_var;
-      }
-
-      /**
-       * Get the value of m_nbReadWriteStreams
-       * Aggregated nb of user read/write streams over all filesystems of this
-       * diskServer
-       * @return the value of m_nbReadWriteStreams
-       */
-      unsigned int nbReadWriteStreams() const {
-        return m_nbReadWriteStreams;
-      }
-
-      /**
-       * Set the value of m_nbReadWriteStreams
-       * Aggregated nb of user read/write streams over all filesystems of this
-       * diskServer
-       * @param new_var the new value of m_nbReadWriteStreams
-       */
-      void setNbReadWriteStreams(unsigned int new_var) {
-        m_nbReadWriteStreams = new_var;
-      }
-
-      /**
-       * Get the value of m_nbMigratorStreams
-       * Aggregated nb of migrator streams over all filesystems of this diskServer
-       * @return the value of m_nbMigratorStreams
-       */
-      unsigned int nbMigratorStreams() const {
-        return m_nbMigratorStreams;
-      }
-
-      /**
-       * Set the value of m_nbMigratorStreams
-       * Aggregated nb of migrator streams over all filesystems of this diskServer
-       * @param new_var the new value of m_nbMigratorStreams
-       */
-      void setNbMigratorStreams(unsigned int new_var) {
-        m_nbMigratorStreams = new_var;
-      }
-
-      /**
-       * Get the value of m_nbRecallerStreams
-       * Aggregated nb of recaller streams over all filesystems of this diskServer
-       * @return the value of m_nbRecallerStreams
-       */
-      unsigned int nbRecallerStreams() const {
-        return m_nbRecallerStreams;
-      }
-
-      /**
-       * Set the value of m_nbRecallerStreams
-       * Aggregated nb of recaller streams over all filesystems of this diskServer
-       * @param new_var the new value of m_nbRecallerStreams
-       */
-      void setNbRecallerStreams(unsigned int new_var) {
-        m_nbRecallerStreams = new_var;
+      void setLastHeartBeatTime(u_signed64 new_var) {
+        m_lastHeartBeatTime = new_var;
       }
 
       /**
@@ -331,26 +221,8 @@ namespace castor {
       /// Name of the DiskServer
       std::string m_name;
 
-      /// Aggregated read rate over all filesystems of this diskServer
-      u_signed64 m_readRate;
-
-      /// Aggregated write rate over all filesystems of this diskServer
-      u_signed64 m_writeRate;
-
-      /// Aggregated nb of user read streams over all filesystems of this diskServer
-      unsigned int m_nbReadStreams;
-
-      /// Aggregated nb of user write streams over all filesystems of this diskServer
-      unsigned int m_nbWriteStreams;
-
-      /// Aggregated nb of user read/write streams over all filesystems of this diskServer
-      unsigned int m_nbReadWriteStreams;
-
-      /// Aggregated nb of migrator streams over all filesystems of this diskServer
-      unsigned int m_nbMigratorStreams;
-
-      /// Aggregated nb of recaller streams over all filesystems of this diskServer
-      unsigned int m_nbRecallerStreams;
+      /// last time a heartbeat was received for this DiskServer
+      u_signed64 m_lastHeartBeatTime;
 
       /// The id of this object
       u_signed64 m_id;

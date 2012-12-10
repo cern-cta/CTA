@@ -498,7 +498,6 @@ Stop all daemons
 /etc/init.d/expertd stop
 /etc/init.d/transfermanagerd stop
 /etc/init.d/rhd stop
-/etc/init.d/rmmasterd stop
 /etc/init.d/stagerd stop
 
 
@@ -526,11 +525,7 @@ Start all daemons
 /etc/init.d/expertd start
 /etc/init.d/transfermanagerd start
 /etc/init.d/rhd start
-/etc/init.d/rmmasterd start
 /etc/init.d/stagerd start
-
-Wait 10 seconds for rmmaster daemon to learn about the existence of the disk
-servers.
 
 for cname  in `nslistclass | grep NAME | awk '{print $2}'` ; do enterFileClass --Name $cname --GetFromCns ; done
 enterSvcClass --Name default --DiskPools default 

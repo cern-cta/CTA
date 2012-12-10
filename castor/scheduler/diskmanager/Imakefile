@@ -23,6 +23,10 @@ COMM @author Castor Dev team, castor-dev@cern.ch
 
 InstallNonExecFile(localqueue.py,$(PYTHON_LIBDIR),644)
 InstallNonExecFile(runningtransfersset.py,$(PYTHON_LIBDIR),644)
+InstallNonExecFile(activitycontrol.py,$(PYTHON_LIBDIR),644)
+InstallNonExecFile(activitycontrolchecker.py,$(PYTHON_LIBDIR),644)
+InstallNonExecFile(reporter.py,$(PYTHON_LIBDIR),644)
+InstallNonExecFile(manager.py,$(PYTHON_LIBDIR),644)
 InstallNonExecFile(diskmanagerdlf.py,$(PYTHON_LIBDIR),644)
 
 InstallTarget(diskmanagerd,755)

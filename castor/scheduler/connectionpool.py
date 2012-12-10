@@ -46,13 +46,15 @@ def asyncreq(proxy, handler, *args):
     oid = object.__getattribute__(proxy, "____oid__")
     return connection.async_request(handler, oid, *args)
 
+# initialization of the log messages
+msgs = dlf.enum('CONNLOST')
+dlf.addmessages({msgs.CONNLOST : 'Connection lost'})
+
 class ConnectionPool(object):
   '''Object handling a pool of connections to identical remote services'''
 
-  def __init__(self, msgs):
+  def __init__(self):
     '''constructor'''
-    # list of error msgs to be used. Needs to contain a CONNLOST message
-    self.msgs = msgs
     # the configuration of CASTOR
     self.config = castor_tools.castorConf()
     # cached connections
@@ -145,7 +147,7 @@ class ConnectionPool(object):
             return result.value
           except (exceptions.ReferenceError, EOFError), e:
             # log the connection loss
-            dlf.writenotice(self.msgs.CONNLOST, machine=machine, errortype=str(e.__class__), message=str(e))
+            dlf.writenotice(msgs.CONNLOST, machine=machine, errortype=str(e.__class__), message=str(e))
             # as connection was lost, drop it
             self.close(machine)
             # and try again with a brand new connection, if it was our first attempt
@@ -164,3 +166,6 @@ class ConnectionPool(object):
           raise Timeout(e.args)
         raise e
     return f
+
+# Global connection pool for connections to the DiskServers
+connections = ConnectionPool()

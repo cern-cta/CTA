@@ -156,15 +156,15 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
 
   "StageRepackRequest",
 
-  "DiskServerStateReport",
-  "DiskServerMetricsReport",
-  "FileSystemStateReport",
-  "FileSystemMetricsReport",
-  "DiskServerAdminReport",
-  "FileSystemAdminReport",
-  "StreamReport",
-  "FileSystemStateAck",
-  "MonitorMessageAck",
+  "DELETED TYPE",
+  "DELETED TYPE",
+  "DELETED TYPE",
+  "DELETED TYPE",
+  "DELETED TYPE",
+  "DELETED TYPE",
+  "DELETED TYPE",
+  "DELETED TYPE",
+  "DELETED TYPE",
 
   "Client",
 
@@ -220,7 +220,7 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "FileErrorReport",
   "BaseFileInfo",
   "DELETED TYPE", 
-  "RmMasterReport",
+  "DELETED TYPE",
   "EndNotificationErrorReport",
   "DELETED TYPE",
   "GatewayMessage",
@@ -302,7 +302,7 @@ const char* castor::ServicesIdStrings[ServicesIdsNb] = {
   "DBSRMDAEMONSVC",
 
   "ORACLEANSVC",
-  "ORARMMASTERSVC",
+  "DELETED SERVICE",
   "DBPARAMSSVC",
   "DELETED SERVICE",
 
@@ -311,8 +311,8 @@ const char* castor::ServicesIdStrings[ServicesIdsNb] = {
   "DELETED SERVICE",
   "ORAREPACKSVC" ,
   "ORATAPEGATEWAYSVC",
-  "ORAMIGHUNTERSVC",
-  "ORARECHANDLERSVC",
+  "DELETED SERVICE",
+  "DELETED SERVICE",
 
   "ORASRMDAEMONSVC",
 

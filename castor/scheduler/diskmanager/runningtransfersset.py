@@ -41,7 +41,8 @@ import subprocess
 def getProcessStartTime(pid):
   '''Little utility able to get the start time of a process
   Note that this is linux specific code'''
-  timeasstr = subprocess.Popen(['ps','-o','etime=','-p',str(pid)], stdout=subprocess.PIPE).stdout.read().strip()
+  timeasstr = subprocess.Popen(['ps', '-o', 'etime=', '-p', str(pid)],
+                               stdout=subprocess.PIPE).stdout.read().strip()
   m = re.match('(?:(?:(\d+)?-)?(\d+):)?(\d+):(\d+)', timeasstr)
   if m:
     elapsed = int(m.group(3))*60+int(m.group(4))
@@ -56,10 +57,8 @@ def getProcessStartTime(pid):
 class RunningTransfersSet(object):
   '''handles a list of running transfers and is able to poll them regularly and list the ones that ended'''
  
-  def __init__(self, connections, fake=False):
+  def __init__(self, fake=False):
     '''constructor'''
-    # connection pool to be used for sending messages to schedulers
-    self.connections = connections
     # do we run in fake mode ?
     self.fake = fake
     # standard transfers and disk2disk copy destinations
@@ -90,7 +89,7 @@ class RunningTransfersSet(object):
     for key in self.prevTapeTransfers.keys():
       if self.prevTapeTransfers[key][0] == 'recall':
         del self.prevTapeTransfers[key]  # always get rid of recall cases
-      elif self.prevTapeTransfers[key][4] < time.time() - 10:
+      elif self.prevTapeTransfers[key][5] < time.time() - 10:
         del self.prevTapeTransfers[key]
       else:
         # reset the hostname to '-', this is not strictly necessary but
@@ -136,15 +135,17 @@ class RunningTransfersSet(object):
           transfertype = 'recall'
         if transfertype == None:
           continue
-        # extract the fileid from the filename
+        # extract the fileid and mountpoint from the filename
         filepath = params['CASTOR_FILENAME']
         fileid = int(os.path.basename(filepath).split('@')[0])
+        mountpoint = filepath.rsplit(os.sep, 2)[0]+os.sep
         # we found a tape transfer
         key = str(pid) + ":" + params['CASTOR_OPENTIME']
         self.prevTapeTransfers[key] = (transfertype,
                                        int(params['CASTOR_OPENTIME']),
                                        params['CASTOR_CLIENTHOSTNAME'],
                                        fileid,
+                                       mountpoint,
                                        time.time())
       except Exception:
         # ignore any exceptions, these are probably related to attempts to
@@ -159,7 +160,7 @@ class RunningTransfersSet(object):
       self.tapeTransfers = []
       # update the list
       for values in self.prevTapeTransfers.itervalues():
-        self.tapeTransfers.append(values[0:4])
+        self.tapeTransfers.append(values[0:5])
     finally:
       self.tapelock.release()
 
@@ -208,7 +209,7 @@ class RunningTransfersSet(object):
       while True:
         try:
           timeout = self.config.getValue('TransferManager', 'AdminTimeout', 5, float)
-          self.connections.syncRunningTransfers(scheduler, socket.getfqdn(), tuple(leftOvers.keys()), timeout=timeout)
+          connectionpool.connections.syncRunningTransfers(scheduler, socket.getfqdn(), tuple(leftOvers.keys()), timeout=timeout)
           break
         except connectionpool.Timeout:
           # as long as we get a timeout, we retry. This will not last. We still wait a little bit
@@ -289,6 +290,49 @@ class RunningTransfersSet(object):
       return n, tuple(nproto.items()), ns, tuple(nsproto.items())
     else:
       return n, ns
+
+  def getStreamCount(self):
+    '''returns number of streams running per filesystem for each type of stream :
+       (read, write, recalls, migrations) as a dictionnary with the
+       mountPoint of the key'''
+    res = {}
+    # first we deal with the regular transfers
+    self.lock.acquire()
+    try:
+      for transfertuple in self.transfers:
+        transfer = transfertuple[2]
+        mountPoint = transfer[-1].split(':')[1]
+        if mountPoint not in res:
+          res[mountPoint] = [0, 0, 0, 0]
+        transfertype = transfertuple[5]
+        if transfertype == 'd2dsrc':
+          res[mountPoint][0] += 1
+        elif transfertype == 'd2ddest':
+          res[mountPoint][1] += 1
+        else:
+          openFlags = transfer[16]
+          # we consider read/writes as read AND write
+          if openFlags in ('o', 'r'):
+            res[mountPoint][0] += 1
+          if openFlags in ('o', 'w'):
+            res[mountPoint][1] += 1
+    finally:
+      self.lock.release()
+    # then we go for the tape transfers
+    self.tapelock.acquire()
+    try:
+      for transfertuple in self.tapeTransfers:
+        mountPoint = transfertuple[5]
+        if mountPoint not in res:
+          res[mountPoint] = [0, 0, 0, 0]        
+        transfertype = transfertuple[0]
+        if transfertype == 'migr':
+          res[mountPoint][4] += 1
+        else:
+          res[mountPoint][3] += 1
+    finally:
+      self.tapelock.release()
+    return res
 
   def nbUsedSlots(self):
     '''returns number of slots occupied by running transfers'''
@@ -384,7 +428,7 @@ class RunningTransfersSet(object):
     # inform schedulers of disk to disk transfers that are over
     for scheduler, transferid, fileid, reqid in sourcesToBeInformed:
       try:
-        self.connections.d2dend(scheduler, transferid, reqid, timeout=timeout)
+        connectionpool.connections.d2dend(scheduler, transferid, reqid, timeout=timeout)
       except connectionpool.Timeout, e:
         # "Failed to inform scheduler that a d2d transfer is over" message
         dlf.writenotice(msgs.INFORMTRANSFERISOVERFAILED, Scheduler=scheduler, subreqid=transferid, reqid=reqid, fileid=fileid, Type=str(e.__class__), Message=str(e))
@@ -394,7 +438,7 @@ class RunningTransfersSet(object):
     # inform schedulers of transfers killed
     for scheduler in killedTransfers:
       try:
-        self.connections.transfersKilled(scheduler, tuple(killedTransfers[scheduler]), timeout=timeout)
+        connectionpool.connections.transfersKilled(scheduler, tuple(killedTransfers[scheduler]), timeout=timeout)
         for transferid, fileid, rc, msg, reqid in killedTransfers[scheduler]:
           # "Informed scheduler that transfer was killed by a signal" message
           dlf.write(msgs.INFORMTRANSFERKILLED, Scheduler=scheduler, subreqid=transferid, reqid=reqid, fileid=fileid, signal=-rc, Message=msg)
@@ -446,7 +490,7 @@ class RunningTransfersSet(object):
     # then add the tape ones
     self.tapelock.acquire()
     try:
-      for transfertype, startTime, remotehost, fileid in self.tapeTransfers:
+      for transfertype, startTime, remotehost, fileid, mountpoint in self.tapeTransfers:
         res.append(('-', fileid, remotehost, 'stage', 'TAPE', transfertype, startTime, startTime))
     finally:
       self.tapelock.release()

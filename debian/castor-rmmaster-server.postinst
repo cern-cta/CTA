@@ -1,2 +1,0 @@
-/sbin/chkconfig --add rmmasterd
-/sbin/service rmmasterd condrestart > /dev/null 2>&1 || :

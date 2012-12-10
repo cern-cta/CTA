@@ -43,15 +43,11 @@
 castor::stager::FileSystem::FileSystem() throw() :
   m_free(0),
   m_mountPoint(""),
-  m_minFreeSpace(0.0),
   m_minAllowedFreeSpace(0.0),
   m_maxFreeSpace(0.0),
   m_totalSize(0),
-  m_readRate(0),
-  m_writeRate(0),
   m_nbReadStreams(0),
   m_nbWriteStreams(0),
-  m_nbReadWriteStreams(0),
   m_nbMigratorStreams(0),
   m_nbRecallerStreams(0),
   m_id(0),
@@ -92,15 +88,11 @@ void castor::stager::FileSystem::print(std::ostream& stream,
   // Output of all members
   stream << indent << "free : " << m_free << std::endl;
   stream << indent << "mountPoint : " << m_mountPoint << std::endl;
-  stream << indent << "minFreeSpace : " << m_minFreeSpace << std::endl;
   stream << indent << "minAllowedFreeSpace : " << m_minAllowedFreeSpace << std::endl;
   stream << indent << "maxFreeSpace : " << m_maxFreeSpace << std::endl;
   stream << indent << "totalSize : " << m_totalSize << std::endl;
-  stream << indent << "readRate : " << m_readRate << std::endl;
-  stream << indent << "writeRate : " << m_writeRate << std::endl;
   stream << indent << "nbReadStreams : " << m_nbReadStreams << std::endl;
   stream << indent << "nbWriteStreams : " << m_nbWriteStreams << std::endl;
-  stream << indent << "nbReadWriteStreams : " << m_nbReadWriteStreams << std::endl;
   stream << indent << "nbMigratorStreams : " << m_nbMigratorStreams << std::endl;
   stream << indent << "nbRecallerStreams : " << m_nbRecallerStreams << std::endl;
   stream << indent << "id : " << m_id << std::endl;

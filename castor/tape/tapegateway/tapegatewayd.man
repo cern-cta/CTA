@@ -13,8 +13,7 @@ This component is a multi-threaded application, database centric, which uses the
 It submits drive requests to VDQM when migrations and/or recalls are required.
 The migrations/recalls are triggered thanks to the interaction of different daemons ( stager, mighunter, rechandler), each of them is in charge of different db transactions.
 The tapegateway interacts with the VDQM using messages over TCP/IP.
-The tapegateway is also sending report to RmMaster over TCP/IP to monitor the load on the diskservers.
-The comunication between tapegateway and the several Tapebridge, which are running on the tape servers, is a based on TCP/IP messages too.
+The communication between tapegateway and the several Tapebridge, which are running on the tape servers, is a based on TCP/IP messages too.
 The tapegatewayd relies on the DLF logging interface. Logs can be accessed by web interface or locally on the machine using the /var/log/castor/tapegatewayd.log log file.
  
 .SH OPTIONS

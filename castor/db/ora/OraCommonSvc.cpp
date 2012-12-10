@@ -34,8 +34,6 @@
 #include "castor/stager/Request.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "castor/stager/FileClass.hpp"
-#include "castor/stager/FileSystem.hpp"
-#include "castor/stager/DiskServer.hpp"
 #include "castor/db/ora/OraCommonSvc.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/db/ora/OraStatement.hpp"

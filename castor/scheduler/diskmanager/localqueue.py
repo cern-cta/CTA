@@ -35,6 +35,7 @@ import socket
 import threading
 import dlf
 import castor_tools
+import connectionpool
 from diskmanagerdlf import msgs
 
 class LocalQueue(Queue.Queue):
@@ -52,11 +53,9 @@ class LocalQueue(Queue.Queue):
       information
   '''
 
-  def __init__(self, connections):
+  def __init__(self):
     '''constructor'''
     Queue.Queue.__init__(self)
-    # connection pool to be used for sending messages to schedulers
-    self.connections = connections
     # get configuration
     self.config = castor_tools.castorConf()
     # dictionnary of transfers
@@ -236,60 +235,51 @@ class LocalQueue(Queue.Queue):
     finally:
       self.lock.release()
 
-  def checkForDisabledHardwareTransfersCancelation(self, canceledTransfers):
-    '''Checks which transfers need to be canceled because hardware has been disabled'''
-    # get the hardware status
-    try :
-      state = dict([entry.rstrip().split('=') for entry in open('/etc/castor/status').readlines()])
-    except Exception:
-      # could not get the status, let's have it empty, meaning disabled
-      state = {}
-    # loop over the transfers
-    self.lock.acquire()
-    try:
-      toberemoved = []
-      for transferid, transfertuple in self.queueingTransfers.iteritems():
-        scheduler, transfer, transfertype = transfertuple[:3]
-        # get the concerned fileSystem
-        filesystem = transfer[-1].split(':')[1]
-        try:
-          # find out whether the transfer should be canceled
-          cancelTransfer = not ((state['DiskServerStatus'] == 'DISKSERVER_PRODUCTION' and
-                                 state[filesystem] == 'FILESYSTEM_PRODUCTION') or
-                                (transfertype == 'd2dsrc' and
-                                 state['DiskServerStatus'] in ('DISKSERVER_PRODUCTION', 'DISKSERVER_DRAINING') and
-                                 state[filesystem] in ('FILESYSTEM_PRODUCTION', 'FILESYSTEM_DRAINING')))
-        except KeyError:
-          # no state means disable
-          cancelTransfer = True
-        if cancelTransfer:
-          toberemoved.append(transferid)
-          if scheduler not in canceledTransfers:
-            canceledTransfers[scheduler] = []
-          if transfertype == 'd2dsrc':
-            msg = "Transfer terminated, source filesystem for disk2disk copy is DISABLED"
-          else: # standard, d2ddest
-            msg = "Transfer terminated, all filesystems are DRAINING or DISABLED"
-          fileid = (transfer[8], int(transfer[6]))
-          canceledTransfers[scheduler].append((transferid, fileid, 1023, msg, transfer[2])) # SEWOULDBLOCK, Resource temporarily unavailable
-          continue
-      self._remove(toberemoved)
-    finally:
-      self.lock.release()
-
   def checkForTransfersCancelation(self):
     '''Checks which transfers need to be canceled'''
     canceledTransfers = {}
     # check whether transfers need to be canceled for timeouts
     self.checkForTimeoutTransfersCancelation(canceledTransfers)
-    # All further processing requires resource killing to be active.
-    if self.config.getValue('TransferManager', 'KillRequests', 'yes').lower() != 'no':
-      # check whether transfers need to be canceled when hardware gets disabled
-      self.checkForDisabledHardwareTransfersCancelation(canceledTransfers)
     # Inform the schedulers of canceled transfers
     timeout = self.config.getValue('TransferManager', 'AdminTimeout', 5, float)
     for scheduler, transfers in canceledTransfers.iteritems():
-      self.connections.transfersCanceled(scheduler, socket.getfqdn(), tuple(transfers), timeout=timeout)
+      connectionpool.connections.transfersCanceled(scheduler, socket.getfqdn(), tuple(transfers), timeout=timeout)
+
+  def FSDisabled(self, mountPoints):
+    '''cancels queuing jobs when some filesystems are disabled.
+       mountPoints lists the filesystems. If mountPoints is None, then the whole
+       machine is considered to be disabled'''
+    canceledTransfers = {}
+    timeout = self.config.getValue('TransferManager', 'AdminTimeout', 5, float)
+    self.lock.acquire()
+    try:
+      toberemoved = []
+      # loop over all transfers
+      for transferid, transfertuple in self.queueingTransfers.iteritems():
+        scheduler, transfer, transfertype = transfertuple[:3]
+        transferMountPoint = transfer[-1].split(':')[1]
+        # do not cancel if not requested
+        if mountPoints and transferMountPoint not in mountPoints:
+          continue
+        # add transfer to list of transfers to be removed from this queue
+        toberemoved.append(transferid)
+        # add transfer to the list of transfers to be canceled in transfermanager
+        if transfertype == 'd2dsrc':
+          msg = "Transfer terminated, source filesystem for disk2disk copy is DISABLED"
+        else: # standard, d2ddest
+          msg = "Transfer terminated, all filesystems are DRAINING or DISABLED"
+        fileid = (transfer[8], int(transfer[6]))
+        if scheduler not in canceledTransfers:
+          canceledTransfers[scheduler] = []
+        canceledTransfers[scheduler].append((transferid, fileid, 1023, msg, transfer[2])) # SEWOULDBLOCK, Resource temporarily unavailable
+        continue
+      # Remove transfers locally
+      self._remove(toberemoved)
+    finally:
+      self.lock.release()
+    # Cancel transfers in transfermanagerd
+    for scheduler, transfers in canceledTransfers.iteritems():
+      connectionpool.connections.transfersCanceled(scheduler, socket.getfqdn(), tuple(transfers), timeout=timeout)
 
   def nbTransfers(self, reqUser=None, detailed=False):
     '''returns number of queueing transfers and number of queueing slots, plus details

@@ -869,6 +869,8 @@ INSERT INTO CastorConfig
   VALUES ('Migration', 'SizeThreshold', '300000000', 'The threshold to consider a file "small" or "large" when routing it to tape');
 INSERT INTO CastorConfig
   VALUES ('Migration', 'MaxNbMounts', '7', 'The maximum number of mounts for migrating a given file. When exceeded, the migration will be considered failed: the MigrationJob entry will be dropped and the corresponding diskcopy left in status CANBEMIGR. An operator intervention is required to resume the migration.');
+INSERT INTO CastorConfig
+  VALUES ('DiskServer', 'HeartbeatTimeout', '60', 'The maximum amount of time in seconds that a diskserver can spend without sending any hearbeat before it is automatically set to disabled state.');
 COMMIT;
 
 
@@ -919,21 +921,17 @@ AS
    of weight and fsDeviation. The goal is to be able to classify
    the fileSystems using a single value and to put an index on it */
 CREATE OR REPLACE FUNCTION fileSystemRate
-(readRate IN NUMBER,
- writeRate IN NUMBER,
- nbReadStreams IN NUMBER,
- nbWriteStreams IN NUMBER,
- nbReadWriteStreams IN NUMBER)
+(nbReadStreams IN NUMBER,
+ nbWriteStreams IN NUMBER)
 RETURN NUMBER DETERMINISTIC IS
 BEGIN
-  RETURN - nbReadStreams - nbWriteStreams - nbReadWriteStreams;
+  RETURN - nbReadStreams - nbWriteStreams;
 END;
 /
 
 /* FileSystem index based on the rate. */
 CREATE INDEX I_FileSystem_Rate
-    ON FileSystem(fileSystemRate(readRate, writeRate,
-                                 nbReadStreams, nbWriteStreams, nbReadWriteStreams));
+    ON FileSystem(fileSystemRate(nbReadStreams, nbWriteStreams));
 
 
 /************/
@@ -953,13 +951,6 @@ CREATE GLOBAL TEMPORARY TABLE SyncRunningTransfersHelper2
  fileid NUMBER, nsHost VARCHAR2(2048),
  errorCode NUMBER, errorMsg VARCHAR2(2048))
 ON COMMIT PRESERVE ROWS;
-
-/***************************************************/
-/* rmMaster main lock, only used to elect a master */
-/***************************************************/
-
-CREATE TABLE RmMasterLock (unused NUMBER);
-
 
 /********************************/
 /* DB link to the nameserver db */

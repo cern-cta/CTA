@@ -1,4 +1,0 @@
-%attr(0755,root,root) etc/init.d/rmnoded
-%attr(0644,root,root) etc/sysconfig/rmnoded.example
-%attr(0644,root,root) etc/logrotate.d/castor-rmnode-server
-%attr(0755,root,root) usr/bin/rmnoded

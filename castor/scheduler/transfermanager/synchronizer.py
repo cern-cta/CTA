@@ -37,29 +37,28 @@ import random
 import socket
 import dlf
 from transfermanagerdlf import msgs
-import connectionpool
+import connectionpool, diskserverlistcache
 
-class Synchronizer(threading.Thread):
+class SynchronizerThread(threading.Thread):
   '''synchronizer class of the transfer manager of the CASTOR project
   this class is responsible for regularly synchronizing the stager DB with the running
   transfers, meaning that it will check that transfers running for already long according to the DB
   are effectively still running. If they are not, is will update the DB accordingly'''
 
-  def __init__(self, connections, diskServerList):
+  def __init__(self):
     '''constructor of this thread'''
-    threading.Thread.__init__(self)
+    super(SynchronizerThread, self).__init__(name='Synchronizer')
     # whether we should continue running
     self.running = True
-    # a pool of connections to the diskservers
-    self.connections = connections
-    # list of diskservers
-    self.diskServerList = diskServerList
     # whether we are connected to the stager DB
     self.stagerConnection = None
     # our own name
     self.hostname = socket.getfqdn()
     # configuration
     self.config = castor_tools.castorConf()
+    # start the thread
+    self.setDaemon(True)
+    self.start()
 
   def dbConnection(self, autocommit=True):
     '''returns a connection to the stager DB.
@@ -88,10 +87,10 @@ class Synchronizer(threading.Thread):
       try:
         # list pending and running transfers in the scheduling system
         allTMTransfers = set()
-        diskservers = self.diskServerList.getset()
+        diskservers = diskserverlistcache.diskServerList.getset()
         for ds in diskservers:
           # call the function on the appropriate diskserver
-          allTMTransfers = allTMTransfers | set(self.connections.transferset(ds, timeout=timeout))
+          allTMTransfers = allTMTransfers | set(connectionpool.connections.transferset(ds, timeout=timeout))
         # find out the set of transfers in the DB and no more in the scheduling system
         transfersToFail = list(subReqIds - allTMTransfers)
         # and inform the stager
@@ -115,7 +114,7 @@ class Synchronizer(threading.Thread):
                                  ['Transfer has disappeared from the scheduling system'] * len(transfersToFail),
                                  [reqid for transferid, reqid in transfersToFail])])
           # finally inform the stager
-          self.connections.transfersKilled(self.hostname, transfers, timeout=timeout)
+          connectionpool.connections.transfersKilled(self.hostname, transfers, timeout=timeout)
         else:
           # 'No discrepancy during synchronization' message
           dlf.writedebug(msgs.SYNCNODISCREPANCY)
@@ -134,7 +133,7 @@ class Synchronizer(threading.Thread):
     dlf.writedebug(msgs.SYNCDBWITHD2DSRC)
     try:
       # list d2d source running and handled by this transfer manager
-      allTMD2dSrc = self.connections.getAllRunningD2dSourceTransfers(self.hostname, timeout=None)
+      allTMD2dSrc = connectionpool.connections.getAllRunningD2dSourceTransfers(self.hostname, timeout=None)
       allTMD2dSrcSet = set([(transferid, reqid) for transferid, reqid, fileid in allTMD2dSrc])
     except connectionpool.Timeout:
       # we could not list all pending running transfers in the system because of timeouts
@@ -165,7 +164,7 @@ class Synchronizer(threading.Thread):
           # 'Transfer ended by synchronization as the transfer disappeared from the DB' message
           dlf.write(msgs.SYNCHROENDEDTRANSFER, subreqid=transferid, reqid=reqid, fileid=tid2fileid[transferid])
           try:
-            self.connections.d2dend(self.hostname, transferid, reqid)
+            connectionpool.connections.d2dend(self.hostname, transferid, reqid)
           except Exception:
             # not a big deal, it may have ended in the mean time. Otherwise, we will retry later
             pass

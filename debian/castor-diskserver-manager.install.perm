@@ -4,6 +4,10 @@
 %attr(0644,root,root) etc/logrotate.d/castor-diskserver-manager
 %attr(0644,root,root) usr/lib/python*/site-packages/localqueue.py*
 %attr(0644,root,root) usr/lib/python*/site-packages/runningtransfersset.py*
+%attr(0644,root,root) usr/lib/python*/site-packages/activitycontrol.py*
+%attr(0644,root,root) usr/lib/python*/site-packages/activitycontrolchecker.py*
+%attr(0644,root,root) usr/lib/python*/site-packages/manager.py*
+%attr(0644,root,root) usr/lib/python*/site-packages/reporter.py*
 %attr(0644,root,root) usr/lib/python*/site-packages/castor_tools.py*
 %attr(0644,root,root) usr/lib/python*/site-packages/connectionpool.py*
 %attr(0644,root,root) usr/lib/python*/site-packages/dlf.py*

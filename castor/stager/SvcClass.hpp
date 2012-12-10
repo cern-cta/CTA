@@ -161,24 +161,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_recallerPolicy
-       * Policy ruling the recall of files.
-       * @return the value of m_recallerPolicy
-       */
-      std::string recallerPolicy() const {
-        return m_recallerPolicy;
-      }
-
-      /**
-       * Set the value of m_recallerPolicy
-       * Policy ruling the recall of files.
-       * @param new_var the new value of m_recallerPolicy
-       */
-      void setRecallerPolicy(std::string new_var) {
-        m_recallerPolicy = new_var;
-      }
-
-      /**
        * Get the value of m_gcPolicy
        * Policy ruling the behavior of the garbage collector, when enabled.
        * @return the value of m_gcPolicy
@@ -367,9 +349,6 @@ namespace castor {
 
       /// Maximum number of replicas for a file created with this service class. If 0, the replication is ruled by the replication policy. If there is none, then 0 means infinity.
       int m_maxReplicaNb;
-
-      /// Policy ruling the recall of files.
-      std::string m_recallerPolicy;
 
       /// Policy ruling the behavior of the garbage collector, when enabled.
       std::string m_gcPolicy;

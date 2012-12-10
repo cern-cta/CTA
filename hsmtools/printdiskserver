@@ -1,0 +1,185 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                      printdiskserver
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+
+'''command line printing data concerning the given disk server(s)'''
+
+import sys
+import getopt
+import castor_tools
+
+# usage function
+def usage(exitCode):
+    '''prints usage'''
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-f|--filesystems] <diskpool>|<diskServerName> [...]]'
+    sys.exit(exitCode)
+
+# first parse the options
+try:
+    options, args = getopt.getopt(sys.argv[1:], 'hvfd:', ['help', 'verbose', 'filesystems='])
+except Exception, e:
+    print e
+    usage(1)
+
+verbose = False
+displayFS = False
+for f, v in options:
+    if f == '-h' or f == '--help':
+        usage(0)
+    elif f == '-v' or f == '--verbose':
+        verbose = True
+    elif f == '-f' or f == '--filesystems':
+        displayFS = True
+    else:
+        print "unknown option : " + f
+        usage(1)
+
+# Deal with arguments
+targets = None
+if len(args) != 0:
+    targets = set(args)
+
+try:
+    # connect to stager and prepare statements
+    stconn = castor_tools.connectToStager()
+    stcur = stconn.cursor()
+    if targets:
+        # check diskpools
+        sqlStatement = 'SELECT id, name FROM DiskPool WHERE name = :dpname'
+        diskPoolIds = []
+        diskPools = set([])
+        for target in targets:
+            stcur.execute(sqlStatement, target)
+            row = stcur.fetchone()
+            if row:
+                diskPoolIds.append(row[0])
+                diskPools.add(row[1])
+        # check diskservers
+        sqlStatement = 'SELECT id, name FROM DiskServer WHERE name = :dsname'
+        diskServerIds = []
+        diskServers = set([])
+        for target in targets:
+            stcur.execute(sqlStatement, target)
+            row = stcur.fetchone()
+            if row:
+                diskServerIds.append(row[0])
+                diskServers.add(row[1])
+        unknownTargets = targets - diskPools - diskServers
+        if not diskPools and not diskServers:
+            print 'None of the provided diskpools/diskservers could be found. Giving up'
+            usage(1)
+    # build statement
+    sqlStatement = '''
+    SELECT CASE WHEN GROUPING(DiskServer.name) = 1
+                THEN 'TOTAL NB : '||TO_CHAR(COUNT(UNIQUE DiskServer.name))
+                ELSE CASE WHEN GROUPING(FileSystem.mountPoint) = 1
+                          THEN DiskServer.name
+                          ELSE ''
+                     END
+                END,
+           CASE WHEN GROUPING(DiskServer.name) = 1
+                THEN 'TOTAL NB : '||TO_CHAR(COUNT(FileSystem.mountPoint))
+                ELSE FileSystem.mountPoint
+                END,
+           COUNT(FileSystem.mountPoint),
+           CASE WHEN GROUPING(DiskServer.name) = 1 THEN ''
+                ELSE CASE WHEN GROUPING(FileSystem.mountPoint) = 1
+                          THEN MIN(getObjStatusName('DiskServer','status', Diskserver.status))
+                          ELSE MIN(getObjStatusName('FileSystem','status', FileSystem.status))
+                     END
+                END status,
+           CASE WHEN GROUPING(DiskServer.name) = 1 THEN ''
+                ELSE CASE WHEN GROUPING(FileSystem.mountPoint) = 1
+                          THEN MIN(getObjStatusName('DiskServer','adminStatus', Diskserver.adminStatus))
+                          ELSE MIN(getObjStatusName('FileSystem','adminStatus', FileSystem.adminStatus))
+                     END
+                END adminStatus,
+           SUM(FileSystem.free),
+           TO_CHAR(ROUND(100*MIN(FileSystem.minAllowedFreeSpace),2))||'%',
+           TO_CHAR(ROUND(100*MAX(FileSystem.maxFreeSpace),2))||'%',
+           SUM(FileSystem.totalSize), SUM(FileSystem.nbReadStreams), SUM(FileSystem.nbWriteStreams),
+           SUM(FileSystem.nbMigratorStreams), SUM(FileSystem.nbRecallerStreams),
+           CAST(COLLECT(DISTINCT DiskPool.name) AS strListTable) AS names,
+           CASE WHEN GROUPING(DiskServer.name) = 1 THEN ''
+                ELSE CASE WHEN GROUPING(FileSystem.mountPoint) = 1
+                          THEN TO_CHAR(MIN(Diskserver.id))
+                          ELSE TO_CHAR(MIN(FileSystem.id))
+                     END
+                END id,
+           GROUPING(DiskServer.name)
+      FROM DiskServer, FileSystem, DiskPool
+     WHERE DiskServer.id = FileSystem.diskServer(+)
+       AND FileSystem.diskPool = DiskPool.id (+)'''
+    if targets:
+        sqlStatement += 'AND ('
+        if diskServerIds:
+            sqlStatement += 'DiskServer.id IN (' + ', '.join([str(x) for x in diskServerIds]) + ')'
+        if diskPoolIds:
+            if diskServerIds:
+                sqlStatement += ' OR '
+            sqlStatement += 'FileSystem.diskPool IN (' + ', '.join([str(x) for x in diskPoolIds]) + ')'
+        sqlStatement += ')'
+    sqlStatement += '''
+     GROUP BY GROUPING SETS ((DiskServer.name, FileSystem.mountPoint),
+           (DiskServer.name), ())
+     ORDER BY DiskServer.name, grouping(DiskServer.name), grouping(FileSystem.mountPoint) DESC'''
+    stcur.execute(sqlStatement)
+    # display results
+    rows = stcur.fetchall()
+    # loop over disk pools and print them
+    if rows:
+        if displayFS:
+            titles = ('DSNAME', 'MOUNTPOINT', 'STATUS', 'ADMINSTATUS', 'FREE', 'MINFREE', 'MAXFREE',
+                      'SIZE', 'NBRD', 'NBWR', 'NBMIGR', 'NBREC', 'DISKPOOL', 'ID')
+            data = [(dsname if dsname else '', fsmountpoint if fsmountpoint else '',
+                     status if status else '', adminstatus if adminstatus else '',
+                     castor_tools.nbToDataAmount(free),
+                     minfree, maxfree, castor_tools.nbToDataAmount(size), nbrd, nbwr, nbmigr, nbrec,
+                     ','.join(diskpools), dsid if dsid else '')
+                    for dsname, fsmountpoint, nbmountpoints, status, adminstatus, free,
+                        minfree, maxfree, size, nbrd, nbwr, nbmigr, nbrec, diskpools, dsid, summary in rows]
+        else:
+            titles = ('DSNAME', 'NBMOUNTPOINTS', 'STATUS', 'ADMINSTATUS', 'FREE', 'SIZE', 'NBRD',
+                      'NBWR', 'NBMIGR', 'NBREC', 'DISKPOOL', 'ID')
+            data = [(dsname if dsname else '', nbmountpoints,
+                     status if status else '', adminstatus if adminstatus else '',
+                     castor_tools.nbToDataAmount(free),
+                     castor_tools.nbToDataAmount(size), nbrd, nbwr, nbmigr, nbrec, ','.join(diskpools),
+                     dsid if dsid else '')
+                    for dsname, fsmountpoint, nbmountpoints, status, adminstatus, free,
+                        minfree, maxfree, size, nbrd, nbwr, nbmigr, nbrec, diskpools, dsid, summary in rows
+                    if not fsmountpoint or summary]
+        castor_tools.prettyPrintTable(titles, data, hasSummary=True)
+    # mention unknown targets
+    if targets and unknownTargets:
+        print 'WARNING : the following diskpools/diskservers do not exist : ' + ', '.join(unknownTargets)
+    # close DB connections
+    try:
+        castor_tools.disconnectDB(stconn)
+    except Exception:
+        pass
+except Exception, e:
+    print e
+    if verbose:
+        import traceback
+        traceback.print_exc()
+    sys.exit(-1)

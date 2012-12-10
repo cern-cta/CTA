@@ -34,23 +34,23 @@ import time
 import threading
 import cx_Oracle
 import socket
-import castor_tools
+import castor_tools, connectionpool
 import Queue
 import dlf
 from transfermanagerdlf import msgs
 
-class Worker(threading.Thread):
+class WorkerThread(threading.Thread):
   '''Worker thread, responsible for scheduling effectively the transfers on the diskservers'''
 
   def __init__(self, workqueue):
     '''constructor'''
-    threading.Thread.__init__(self)
+    super(WorkerThread, self).__init__(name='Worker')
     # the queue to work with
     self.workqueue = workqueue
     # whether to continue running
     self.running = True
     # start the thread
-    self.daemon = True
+    self.setDaemon(True)
     self.start()
 
   def stop(self):
@@ -73,12 +73,12 @@ class Worker(threading.Thread):
         # "Caught exception in Worker thread" message
         dlf.writeerr(msgs.WORKEREXCEPTION, Type=str(e.__class__), Message=str(e))
 
-class DBUpdater(threading.Thread):
+class DBUpdaterThread(threading.Thread):
   '''Worker thread, responsible for updating DB asynchronously and in bulk after the transfer scheduling'''
 
   def __init__(self, workqueue):
     '''constructor'''
-    threading.Thread.__init__(self)
+    super(DBUpdaterThread, self).__init__(name='DBUpdater')
     # whether we are connected to the stager DB
     self.stagerConnection = None
     # the queue to work with
@@ -86,7 +86,7 @@ class DBUpdater(threading.Thread):
     # whether to continue running
     self.running = True
     # start the thread
-    self.daemon = True
+    self.setDaemon(True)
     self.start()
 
   def stop(self):
@@ -154,16 +154,14 @@ class DBUpdater(threading.Thread):
           pass
 
 
-class Dispatcher(threading.Thread):
+class DispatcherThread(threading.Thread):
   '''scheduling thread, responsible for connecting to the stager database and scheduling transfers'''
 
-  def __init__(self, connections, queueingTransfers, nbWorkers=5):
+  def __init__(self, queueingTransfers, nbWorkers=5):
     '''constructor of this thread. Arguments are the connection pool and the transfer queue to use'''
-    threading.Thread.__init__(self)
+    super(DispatcherThread, self).__init__(name='DBUpdater')
     # whether we should continue running
     self.running = True
-    # a pool of connections to the diskservers
-    self.connections = connections
     # the list of queueing transfers
     self.queueingTransfers = queueingTransfers
     # our own name
@@ -181,12 +179,13 @@ class Dispatcher(threading.Thread):
     # a thread pool of Schedulers
     self.workers = []
     for i in range(nbWorkers):          # pylint: disable=W0612
-      t = Worker(self.workToDispatch)
-      t.setName('Worker')
+      t = WorkerThread(self.workToDispatch)
       self.workers.append(t)
     # a DBUpdater thread
-    self.dbthread = DBUpdater(self.updateDBQueue)
-    self.dbthread.setName('DBUpdater')
+    self.dbthread = DBUpdaterThread(self.updateDBQueue)
+    # start the thread
+    self.setDaemon(True)
+    self.start()
 
   def join(self, timeout=None):
     # put None values to the worker queue so that workers go out of their blocking call to get
@@ -229,7 +228,7 @@ class Dispatcher(threading.Thread):
       nbRetries = nbRetries + 1
       for diskserver, cmd in transferlist:
         try:
-          self.connections.scheduleTransfer(diskserver, self.hostname, transferid, cmd, arrivaltime, transfertype)
+          connectionpool.connections.scheduleTransfer(diskserver, self.hostname, transferid, cmd, arrivaltime, transfertype)
           scheduleHosts.append(diskserver)
         except Exception, e:
           # 'Failed to schedule xxx' message

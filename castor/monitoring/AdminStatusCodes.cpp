@@ -28,10 +28,8 @@
 //------------------------------------------------------------------------------
 // AdminStatusCodesStrings
 //------------------------------------------------------------------------------
-const char* castor::monitoring::AdminStatusCodesStrings[4] = {
+const char* castor::monitoring::AdminStatusCodesStrings[2] = {
   "ADMIN_NONE",
-  "ADMIN_FORCE",
-  "ADMIN_RELEASE",
-  "ADMIN_DELETED"
+  "ADMIN_FORCE"
 };
 

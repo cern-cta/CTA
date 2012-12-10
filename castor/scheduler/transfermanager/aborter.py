@@ -31,24 +31,25 @@ Deals with abort requests by polling the stager DB for new ones'''
 
 import time
 import threading
-import castor_tools
+import castor_tools, connectionpool
 import dlf
 from transfermanagerdlf import msgs
 
-class Aborter(threading.Thread):
+class AborterThread(threading.Thread):
   '''Aborter thread, responsible for connecting to the stager database and getting the list of transfers to be aborted'''
 
-  def __init__(self, connections):
+  def __init__(self):
     '''constructor of this thread'''
-    threading.Thread.__init__(self)
+    super(AborterThread, self).__init__(name='Aborter')
     # whether we should continue running
     self.running = True
-    # a pool of connections to the diskservers
-    self.connections = connections
     # whether we are connected to the stager DB
     self.stagerConnection = None
     # the global configuration object
     self.config = castor_tools.castorConf()
+    # start the thread
+    self.setDaemon(True)
+    self.start()
 
   def dbConnection(self):
     '''returns a connection to the stager DB.
@@ -87,7 +88,7 @@ class Aborter(threading.Thread):
                 # as it would creates too many intricated calls
                 for scheduler in self.config.getValue('DiskManager', 'ServerHosts').split():
                   timeout = self.config.getValue('TransferManager', 'AdminTimeout', 5, float)
-                  self.connections.killtransfersinternal(scheduler, subReqIds, timeout=timeout)
+                  connectionpool.connections.killtransfersinternal(scheduler, subReqIds, timeout=timeout)
                 # and commit the changes in the DB so that we do not try to drop these transfers again
                 self.dbConnection().commit()
           finally:

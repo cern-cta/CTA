@@ -1,0 +1,47 @@
+.TH DELETEDISKSERVER 1 "2011" CASTOR "stager catalogue administrative commands"
+.SH NAME
+deletediskserver \- deletes existing disk servers from the stager catalogue
+
+.SH SYNOPSIS
+.B deletediskserver
+[
+.BI -h
+]
+.BI <diskServerName>
+[...]
+
+.SH DESCRIPTION
+.B deletediskserver
+deletes existing disk servers ad associated filesystems from the CASTOR stager catalog.
+It first checks that the diskservers are empty.
+.LP
+.BI \-h,\ \-\-help
+Get usage information
+.TP
+.BI <diskServerName>
+name of disk servers to delete. Several names can be given
+
+.SH EXAMPLES
+.nf
+.ft CW
+
+
+
+
+.SH NOTES
+This command requires database client access to the stager catalogue.
+Configuration for the database access is taken from castor.conf.
+
+.SH SEE ALSO
+.BR enterdiskserver
+.BR printdiskserver
+.BR deletefileclass
+.BR deletemigrationroute
+.BR deleterecallgroup
+.BR deleterecalluser
+.BR deletesvcclass
+.BR deletetapepool
+.BR adminMultiInstance
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

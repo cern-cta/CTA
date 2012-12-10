@@ -127,24 +127,6 @@ Depends: logrotate
 Description: castor (Cern Advanced STORage system)
  Remote Media Controller server
 
-Package: castor-rmmaster-client
-Architecture: any
-Depends: castor-lib-monitor
-Description: castor (Cern Advanced STORage system)
- Resource Monitoring Master clients
-
-Package: castor-rmmaster-server
-Architecture: any
-Depends: logrotate, castor-lib-monitor
-Description: castor (Cern Advanced STORage system)
- Resource Monitoring Master server
-
-Package: castor-rmnode-server
-Architecture: any
-Depends: logrotate, castor-lib-monitor
-Description: castor (Cern Advanced STORage system)
- Resource Monitoring running on each worker node
-
 Package: castor-rtcopy-server
 Architecture: any
 Depends: logrotate, zlib-devel
@@ -233,12 +215,6 @@ Architecture: any
 Depends: php-oci8
 Description: castor (Cern Advanced STORage system)
  Distributed Logging Facility Web Interface
-
-Package: castor-lib-monitor
-Architecture: any
-Depends: castor-lib
-Description: castor (Cern Advanced STORage system)
- Shared libraries for monitoring framework
 
 Package: castor-lib-tape
 Architecture: any

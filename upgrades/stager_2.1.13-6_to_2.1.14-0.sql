@@ -86,6 +86,73 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 END;
 /
 
+-- replace DiskCopy index on status 7 with one including the filesystem
+DROP INDEX I_DiskCopy_Status_7;
+CREATE INDEX I_DiskCopy_Status_7_FS ON DiskCopy (decode(status,7,status,NULL), fileSystem);
+
+/* new rating of filesystems */
+CREATE OR REPLACE FUNCTION fileSystemRate(nbReadStreams IN NUMBER, nbWriteStreams IN NUMBER)
+RETURN NUMBER DETERMINISTIC IS
+BEGIN
+  RETURN - nbReadStreams - nbWriteStreams;
+END;
+/
+
+/* change index on filesystem rating. */
+DROP INDEX I_FileSystem_Rate;
+CREATE INDEX I_FileSystem_Rate ON FileSystem(fileSystemRate(nbReadStreams, nbWriteStreams));
+
+/* amend FileSystem and DiskServer tables */
+ALTER TABLE FileSystem DROP (minFreeSpace, readRate, writeRate, nbReadWriteStreams);
+ALTER TABLE DiskServer DROP (readRate, writeRate, nbReadStreams, nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams);
+ALTER TABLE DiskServer ADD (lastHeartBeatTime NUMBER DEFAULT 0);
+
+/* accessors to ObjStatus table */
+CREATE OR REPLACE FUNCTION getObjStatusName(inObject VARCHAR2, inField VARCHAR2, inStatusCode INTEGER)
+RETURN VARCHAR2 AS
+  varstatusName VARCHAR2(2048);
+BEGIN
+  SELECT statusName INTO varstatusName
+    FROM ObjStatus
+   WHERE object = inObject
+     AND field = inField
+     AND statusCode = inStatusCode;
+  RETURN varstatusName;
+END;
+/
+
+CREATE OR REPLACE PROCEDURE setObjStatusName(inObject VARCHAR2, inField VARCHAR2,
+                                             inStatusCode INTEGER, inStatusName VARCHAR2) AS
+BEGIN
+  INSERT INTO ObjStatus (object, field, statusCode, statusName)
+  VALUES (inObject, inField, inStatusCode, inStatusName);
+END;
+/
+
+-- cleanup ObjStatus table
+DELETE FROM ObjStatus
+ WHERE object='FileSystem' AND field='adminStatus' AND statusName IN ('ADMIN_RELEASE', 'ADMIN_DELETED');
+DELETE FROM ObjStatus
+ WHERE object='DiskServer' AND field='adminStatus' AND statusName IN ('ADMIN_RELEASE', 'ADMIN_DELETED');
+
+BEGIN
+  setObjStatusName('StageRepackRequest', 'status', 6, 'REPACK_SUBMITTED');
+END;
+/
+
+-- cleanup Type2Obj table
+DELETE FROM Type2Obj
+ WHERE object IN ('DiskServerStateReport', 'DiskServerMetricsReport', 'FileSystemStateReport',
+                  'FileSystemMetricsReport', 'DiskServerAdminReport', 'FileSystemAdminReport',
+                  'StreamReport', 'FileSystemStateAck', 'MonitorMessageAck', 'RmMasterReport');
+COMMIT;
+
+-- drop unused function to elect rmmaster master
+DROP FUNCTION isMonitoringMaster;
+
+-- add the HeartBeatTimeout parameter with default value (60s)
+INSERT INTO CastorConfig
+  VALUES ('DiskServer', 'HeartbeatTimeout', '60', 'The maximum amount of time in seconds that a diskserver can spend without sending any hearbeat before it is automatically set to disabled state.');
 
 /* Recompile all invalid procedures, triggers and functions */
 /************************************************************/

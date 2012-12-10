@@ -29,21 +29,15 @@
 import sys, os, time
 
 # list of log files per facility, and whether it is a server log file
-logfiles = { 'Mighunter' : ('mighunter', 'log', True),
-             'Rechandler' : ('rechandler', 'log', True),
-             'RequestHandler' : ('rhserver', 'log', True),
-             'migrator' : ('rtcpclientd', 'migrator', True),
-             'recaller' : ('rtcpclientd', 'recaller', True),
-             'rtcpcld' : ('rtcpclientd', 'rtcpcld', True),
+logfiles = { 'RequestHandler' : ('rhserver', 'log', True),
              'TapeErrorHandler' : ('rtcpclientd', 'TapeErrorHandler', True),
              'Stager' : ('stager', 'log', True),
-             'RmMaster' : ('rmmaster', 'log', True),
              'Scheduler' : ('scheduler', 'log', True),
              'Job' : ('job', 'log', False),
              'DiskCopy' : ('job', 'diskcopy', False),
              'GC' : ('gc', 'log', False),
-             'RmNode' : ('rmnode', 'log', False)
-             'TransferManager' : ('transfermanagerd', 'log', True)
+             'TransferManager' : ('transfermanagerd', 'log', True),
+             'TapeGateway' : ('tapegatewayd', 'log', True)
              }
 
 def usage():

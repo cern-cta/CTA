@@ -32,7 +32,7 @@ Manages the transfers pending on the different diskservers'''
 
 import threading, socket
 import dlf, pwd, time
-import castor_tools
+import castor_tools, diskserverlistcache, connectionpool
 from transfermanagerdlf import msgs
 
 class RecentSchedules(object):
@@ -73,11 +73,9 @@ class ServerQueue(dict):
   '''a dictionnary of queueing transfers, with the list of machines to which they were sent
   and a reverse lookup facility by machine'''
 
-  def __init__(self, connections):
+  def __init__(self):
     '''constructor'''
     dict.__init__(self)
-    # a pool of connections to the diskservers
-    self.connections = connections
     # a global lock for this queue
     self.lock = threading.Lock()
     # dictionnary containing the set of machines on which each transfer is queueing
@@ -178,7 +176,7 @@ class ServerQueue(dict):
       self.lock.release()
     # then tell the machines to remove these transfers from their queues
     for machine in transfersPerMachine:
-      self.connections.killtransfers(machine, tuple(transfersPerMachine[machine]))
+      connectionpool.connections.killtransfers(machine, tuple(transfersPerMachine[machine]))
     # return
     return fileids
 
@@ -225,7 +223,7 @@ class ServerQueue(dict):
     # then tell the machines to remove these transfers from their queues
     timeout = self.config.getValue('TransferManager', 'AdminTimeout', 5, float)
     for machine in transfersPerMachine:
-      self.connections.killtransfers(machine, tuple(transfersPerMachine[machine]), timeout=timeout)
+      connectionpool.connections.killtransfers(machine, tuple(transfersPerMachine[machine]), timeout=timeout)
     # return
     return fileids
 
@@ -250,7 +248,7 @@ class ServerQueue(dict):
           for ds in self.transfersLocations[transferid]:
             self[ds][transferid] = self[ds][transferid][0:3]+[True]
             try:
-              self.connections.retryD2dDest(ds, transferid, reqid)
+              connectionpool.connections.retryD2dDest(ds, transferid, reqid)
             except Exception:
               # not a big deal, the destination will retry it soon by itself
               pass
@@ -302,7 +300,7 @@ class ServerQueue(dict):
           try:
             # "Informing diskserver that job started somewhere else" message
             dlf.writedebug(msgs.INFODSJOBSTARTED, DiskServer=machine, subreqid=transferid, reqid=reqid)
-            self.connections.transferAlreadyStarted(machine, transferid, reqid)
+            connectionpool.connections.transferAlreadyStarted(machine, transferid, reqid)
           except Exception, e:
             # "Failed to inform diskserver that job started elsewhere" message
             dlf.writenotice(msgs.INFODSJOBSTARTEDFAILED, DiskServer=machine, subreqid=transferid, reqid=reqid, Type=str(e.__class__), Message=str(e))
@@ -341,7 +339,7 @@ class ServerQueue(dict):
         self.lock.release()
     # inform the source diskserver
     try:
-      self.connections.d2dend(diskserver, transferid, reqid)
+      connectionpool.connections.d2dend(diskserver, transferid, reqid)
     except Exception, e:
       # "Failed to inform diskserver that a d2d copy is over"
       dlf.writenotice(msgs.D2DOVERINFORMFAILED, DiskServer=diskserver, subreqid=transferid, reqid=reqid, fileid=fileid, Type=str(e.__class__), Message=str(e))
@@ -394,7 +392,7 @@ class ServerQueue(dict):
     # transfer matches the filter
     return diskpool
 
-  def listTransfers(self, diskServerList, reqdiskpool=None, reqUser=None):
+  def listTransfers(self, reqdiskpool=None, reqUser=None):
     '''lists pending transfers'''
     res = []
     self.lock.acquire()
@@ -402,7 +400,8 @@ class ServerQueue(dict):
       # for each transfer
       for transferid in self.transfersLocations:
         # check that we are interested in it
-        diskpool = self._isTransferMatchingAndGetPool(transferid, diskServerList, reqdiskpool, reqUser)
+        diskpool = self._isTransferMatchingAndGetPool(transferid, diskserverlistcache.diskServerList,
+                                                      reqdiskpool, reqUser)
         if diskpool:
           # go through the different instances of this transfer
           for diskserver in self.transfersLocations[transferid]:
@@ -422,7 +421,7 @@ class ServerQueue(dict):
     return res
 
 
-  def nbTransfersPerPool(self, diskServerList, reqdiskpool=None, requser=None):
+  def nbTransfersPerPool(self, reqdiskpool=None, requser=None):
     '''returns the number of unique transfers pending on the pool given (or all pools)
     for the given user (or all users)'''
     res = {}
@@ -431,7 +430,8 @@ class ServerQueue(dict):
       # for each transfer
       for transferid in self.transfersLocations:
         # check that we are interested in it
-        diskpool = self._isTransferMatchingAndGetPool(transferid, diskServerList, reqdiskpool, requser)
+        diskpool = self._isTransferMatchingAndGetPool(transferid, diskserverlistcache.diskServerList,
+                                                      reqdiskpool, requser)
         if diskpool:
           # increase counter for corresponding diskpool
           if diskpool not in res:

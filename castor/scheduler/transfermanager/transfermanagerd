@@ -30,11 +30,11 @@
 import sys
 import getopt
 import rpyc
-import time
 import threading
 import socket
 import daemon
-import castor_tools, connectionpool, dispatcher, serverqueue, aborter, synchronizer
+import castor_tools, connectionpool, dispatcher, serverqueue, aborter
+import synchronizer, suicider, reportmanager, diskserverlistcache
 import dlf
 from transfermanagerdlf import msgs
 from threadpoolserver import ThreadPoolServer
@@ -71,81 +71,6 @@ for f, v in options:
 if len(arguments) != 0:
   print "Unknown arguments : " + ' '.join(arguments) + "\n"
   usage(1)
-
-class DiskServerListCache:
-  '''cache for the list of diskservers.
-  Automatically refreshes the list regularly, by default every 5mn.
-  Set the refresh delay to 0 to always refresh (not recommended) and
-  to a negative number to never refresh'''
-
-  def __init__(self, refreshDelay=300):
-    '''constructor'''
-    # a dictionnary of diskpools with the list of diskservers in each of them
-    self.diskPool2DiskServer = {}
-    # a dictionnary of diskservers with the associated pool for each of them
-    self.diskServer2DiskPool = {}
-    self.refreshDelay = refreshDelay
-    self.lastRefresh = 0
-    # build the cache right now
-    self.refresh()
-
-  def refresh(self):
-    '''refreshes the cache of diskservers/diskpools'''
-    try:
-      # query the stager database
-      stconn = castor_tools.connectToStager()
-      try:
-        stcur = stconn.cursor()
-        stcur.arraysize = 50
-        stDiskServers = '''SELECT UNIQUE DiskServer.name, DiskPool.name
-                             FROM FileSystem, DiskServer, DiskPool
-                            WHERE FileSystem.diskServer = DiskServer.id
-                              AND FileSystem.diskPool = DiskPool.id
-                              AND DiskServer.status IN (0,1)
-                              AND FileSystem.status IN (0,1)'''
-        stcur.execute(stDiskServers)
-        rows = stcur.fetchall()
-        # build up the list of new ones
-        self.diskPool2DiskServer = {}
-        self.diskServer2DiskPool = {}
-        for diskserver, diskPool in rows:
-          if diskPool not in self.diskPool2DiskServer:
-            self.diskPool2DiskServer[diskPool] = []
-          self.diskPool2DiskServer[diskPool].append(diskserver)
-          self.diskServer2DiskPool[diskserver] = diskPool
-        self.lastRefresh = time.time()
-      finally:
-        try:
-          castor_tools.disconnectDB(stconn)
-        except Exception:
-          pass
-    except Exception, e:
-      # 'failed to refresh list of diskservers, kept old list' message
-      dlf.writewarning(msgs.DSREFRESHFAILED, Type=str(e.__class__), Message=str(e))
-
-  def getlist(self):
-    '''returns the list of diskservers from the cache, clustered by diskpool.
-    Builds this list form the DB if needed'''
-    # check whether we need to refresh our data first
-    if self.refreshDelay >= 0 and time.time() > self.lastRefresh + self.refreshDelay:
-      self.refresh()
-    # return the list
-    return self.diskPool2DiskServer
-
-  def getset(self):
-    '''returns the set of diskservers from the cache, or builds it from the DB if needed'''
-    # check whether we need to refresh our data first
-    if self.refreshDelay >= 0 and time.time() > self.lastRefresh + self.refreshDelay:
-      self.refresh()
-    # return the set
-    return self.diskServer2DiskPool.keys()
-
-  def getDiskServerPool(self, diskserver):
-    # check whether we need to refresh our data first
-    if self.refreshDelay >= 0 and time.time() > self.lastRefresh + self.refreshDelay:
-      self.refresh()
-    '''returns the pool in which a given diskserver lives'''
-    return self.diskServer2DiskPool[diskserver]
 
 def extendedSum(t):
   '''behaves like sum for tuples of numbers but is also able to handle a special case of
@@ -199,7 +124,7 @@ class TransferManagerService(rpyc.Service):
   def dispatch(self, func, diskPool, *args):
     '''gather the results of the call to func for all diskServers'''
     res = {}
-    dslist = diskServerList.getlist()
+    dslist = diskserverlistcache.diskServerList.getlist()
     if diskPool != None:
       if diskPool in dslist:
         dslist = {diskPool : dslist[diskPool]}
@@ -210,7 +135,7 @@ class TransferManagerService(rpyc.Service):
       for ds in dslist[diskPool]:
         try:
           # call the function on the appropriate diskserver
-          res[diskPool][ds] = getattr(connections, func)(ds, *args)
+          res[diskPool][ds] = getattr(connectionpool.connections, func)(ds, *args)
         except Exception, e:
           # 'Could not contact diskserver' message
           dlf.writenotice(msgs.COULDNOTCONTACTDS, Function=func, DiskServer=ds,
@@ -223,11 +148,11 @@ class TransferManagerService(rpyc.Service):
     '''returns the number of unique transfers pending on the pool given (or all pools)
     for the given user (or all users). Only tansfers handled by this transfer manager
     are reported'''
-    return tuple(queueingTransfers.nbTransfersPerPool(diskServerList, diskPool, user).items())
+    return tuple(queueingTransfers.nbTransfersPerPool(diskPool, user).items())
 
   def exposed_listLocalPendingTransfersCentrally(self, diskPool=None, user=None):
     '''lists the pending transfers known by this headnode per diskpool for a given diskpool and user'''
-    return tuple(queueingTransfers.listTransfers(diskServerList, diskPool, user))
+    return tuple(queueingTransfers.listTransfers(diskPool, user))
 
   def _computeNbTransfersPerPool(self, diskPool=None, user=None):
     '''internal method to compute the number of unique transfers pending per pool
@@ -240,7 +165,8 @@ class TransferManagerService(rpyc.Service):
     # go through all schedulers
     for scheduler in configuration.getValue('DiskManager', 'ServerHosts').split():
       try:
-        for diskpool, n in connections.nbTransfersPerPool(scheduler, diskPool, user, timeout=timeout):
+        for diskpool, n in connectionpool.connections.nbTransfersPerPool(scheduler, diskPool,
+                                                                         user, timeout=timeout):
           if diskpool not in nbTransfersPerPool:
             nbTransfersPerPool[diskpool] = 0
           nbTransfersPerPool[diskpool] = nbTransfersPerPool[diskpool] + n
@@ -260,7 +186,8 @@ class TransferManagerService(rpyc.Service):
     # go through all schedulers
     for scheduler in configuration.getValue('DiskManager', 'ServerHosts').split():
       try:
-        transfers += connections.listLocalPendingTransfersCentrally(scheduler, diskPool, user, timeout=timeout)
+        transfers += connectionpool.connections.listLocalPendingTransfersCentrally(scheduler, diskPool,
+                                                                                   user, timeout=timeout)
       except Exception, e:
         # 'Could not contact transfer manager' message
         dlf.writenotice(msgs.COULDNOTCONTACTTM, Function='listPendingTransfersCentrally',
@@ -377,7 +304,7 @@ class TransferManagerService(rpyc.Service):
     killedtransfers = []
     killedtransferids = []
     for scheduler in configuration.getValue('DiskManager', 'ServerHosts').split():
-      for transferid, (fileid, reqid) in getattr(connections, method)(scheduler, arg, timeout=timeout):
+      for transferid, (fileid, reqid) in getattr(connectionpool.connections, method)(scheduler, arg, timeout=timeout):
         # for the transfers actually killed (and only once per tranfer
         if transferid not in killedtransferids:
           # Remember to fail the transfer in the stager DB with ESTKILLED error code
@@ -516,64 +443,44 @@ class TransferManagerService(rpyc.Service):
     finally:
       self.__class__.releaseDbConnection()
 
+  def exposed_stateReport(self, report):
+    '''called by diskservers to report there state. Passes the report over to the ReportManager
+       that will handle it and ultimately update the stager database.
+       Returns the status of the diskserver and all its fileSystems'''
+    reportmanager.handleStateReport(report)
+
 def initQueues():
   '''initializes the queue of pending transfers by rebuilding it from the local queues of each diskserver'''
   # get the timeout to be used
   timeout = configuration.getValue('TransferManager', 'AdminTimeout', 5, float)
   # loop through diskservers
-  dslist = diskServerList.getlist()
+  dslist = diskserverlistcache.diskServerList.getlist()
   for diskPool in dslist:
     for ds in dslist[diskPool]:
       try:
         # first list the running d2dsrc transfers
-        for transferid, transfer, arrivaltime in connections.getRunningD2dSource(ds, socket.getfqdn(), timeout=timeout):
+        for transferid, transfer, arrivaltime in connectionpool.connections.getRunningD2dSource(ds, socket.getfqdn(), timeout=timeout):
           queueingTransfers.putRunningD2dSource(ds, transferid, transfer, arrivaltime)
         # then list queueing transfers
-        for transferid, transfer, transfertype, arrivaltime in connections.getQueueingTransfers(ds, socket.getfqdn(), timeout=timeout):
+        for transferid, transfer, transfertype, arrivaltime in connectionpool.connections.getQueueingTransfers(ds, socket.getfqdn(), timeout=timeout):
           queueingTransfers.put(transferid, arrivaltime, [(ds, transfer)], transfertype)
       except Exception, e:
         # we could not connect. No problem, the scheduler is probably not running, so no queue to retrieve
         # 'No queue could be retrieved' message
         dlf.writenotice(msgs.NOQUEUERETRIEVED, DiskServer=ds, Type=str(e.__class__), Message=str(e))
 
-class Suicider(threading.Thread):
-  '''Regularly checks the number of ongoing transfers and commits suicide when it goes down to 0'''
-
-  def run(self):
-    '''main method, containing the infinite loop checking for the transfers to be over'''
-    # loop until we commit suicide
-    while True:
-      oktodie = True
-      # checks whether it is ok to die
-      dslist = diskServerList.getlist()
-      for diskPool in dslist:
-        for ds in dslist[diskPool]:
-          try:
-            oktodie = not connections.anyTransfersFromScheduler(ds, socket.getfqdn())
-          except Exception, e:
-            # 'Could not contact diskserver' message
-            dlf.writenotice(msgs.COULDNOTCONTACTDS, Function='anyTransfersFromScheduler', DiskServer=ds,
-                            Type=str(e.__class__), Message=str(e))
-          # do not continue contacting machines if some are already not ok
-          if not oktodie:
-            break
-        if not oktodie:
-          break
-      # if all is over, commit suicide
-      if oktodie:
-        transfermanager.close()
-        break
-      else:
-        # else sleep one second between two checks
-        time.sleep(1)
-
 def drain(wait=False):
   '''moves the server to drain mode where dispatcher, aborter and synchronizer threads are stopped.
   Then launches a thread that will wait for ongoing transfers to be over before it stops the whole daemon.
   In case the wait argument is true, wait for this thread to be over'''
-  # first stop threads handling new requests, aborts and synchronization
+  # first stop threads handling new requests, aborts, synchronization and reports
   # note that these threads may not be defined yet. In such a case, a NameError will be raised
   # and caught by the corresponding except
+  try:
+    reportManagerThread.stop()
+    reportManagerThread.join()
+  except Exception:
+    pass
   try:
     dispatchThread.stop()
     dispatchThread.join()
@@ -590,10 +497,7 @@ def drain(wait=False):
   except Exception:
     pass
   # then launch a new thread that will wait for the remaining transfers to be over and then will commit suicide
-  suicideThread = Suicider()
-  suicideThread.setName('Suicider')
-  suicideThread.setDaemon(True)
-  suicideThread.start()
+  suicideThread = suicider.SuiciderThread(transfermanager)
   # wait in the suicide if needed
   if wait:
     suicideThread.join()
@@ -628,12 +532,8 @@ try:
     dlf.init('transfermanagerd')
     # 'TransferManager Daemon started'
     dlf.write(msgs.TRANSFERMANAGERDSTARTED)
-    # global cache on the list of diskservers
-    diskServerList = DiskServerListCache()
-    # create a connection pool for connections to the DiskServers
-    connections = connectionpool.ConnectionPool(msgs)
     # a dictionnary holding the list of transfers submitted by us and still queueing for each diskserver
-    queueingTransfers = serverqueue.ServerQueue(connections)
+    queueingTransfers = serverqueue.ServerQueue()
     # initialize the queues of pending and running transfers using the knowledge of the diskservers
     initQueues()
     # from now on, we want to drain if we exit
@@ -644,24 +544,18 @@ try:
                                        auto_register=False,
                                        nbThreads = configuration.getValue('TransferManager', 'NbRpycThreads', 20, int))
     transfermanager.daemon = True
+    # launch a report manager thread, handling reports from diskservers about their state and
+    # updating the stager DB regularly
+    reportManagerThread = reportmanager.ReportManagerThread()
     # launch a processing thread that will regularly check if we need to schedule new transfers
     # and dispatch them on the relevant diskservers
-    dispatchThread = dispatcher.Dispatcher(connections, queueingTransfers, nbWorkers)
-    dispatchThread.setName('Dispatcher')
-    dispatchThread.setDaemon(True)
-    dispatchThread.start()
+    dispatchThread = dispatcher.DispatcherThread(queueingTransfers, nbWorkers)
     # launch a processing thread that will regularly check if there are transfers to abort
-    abortThread = aborter.Aborter(connections)
-    abortThread.setName('Aborter')
-    abortThread.setDaemon(True)
-    abortThread.start()
+    abortThread = aborter.AborterThread()
     # launch a processing thread that will regularly synchronize the stager DB with the running
     # transfers, meaning that it will check that transfers running for already long according to the DB
     # are effectively still running. If they are not, is will update the DB accordingly
-    synchroThread = synchronizer.Synchronizer(connections, diskServerList)
-    synchroThread.setName('Synchronize')
-    synchroThread.setDaemon(True)
-    synchroThread.start()
+    synchroThread = synchronizer.SynchronizerThread()
     # starts listening
     transfermanager.start()
   except SystemExit:
@@ -678,7 +572,7 @@ try:
 finally:
   # clean up all connections and threads that may be running
   try:
-    connections.closeall()
+    connectionpool.connections.closeall()
   except Exception:
     pass
   # drain will stop the dispatch, abort and synchro threads

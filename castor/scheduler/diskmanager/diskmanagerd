@@ -27,16 +27,13 @@
 
 """disk server manager daemon of CASTOR."""
 
-import os, sys
+import sys
 import getopt
-import time
 import rpyc
-import subprocess
 import socket
-import tempfile
-import threading
 import traceback
 import connectionpool, castor_tools, localqueue, runningtransfersset
+import manager, activitycontrol, activitycontrolchecker, reporter
 import daemon
 import dlf
 from diskmanagerdlf import msgs
@@ -150,231 +147,16 @@ class DiskServerManagerService(rpyc.Service):
     dlf.writedebug(msgs.ANYTRANSFERFROMSCHED, Scheduler=scheduler)
     return transferQueue.anyTransfersFromScheduler(scheduler) or runningTransfers.anyTransfersFromScheduler(scheduler)
 
-def checkSpaceLeftOnFS(transfertype, transfer):
-  ''' check whether there is space available for a given transfer'''
-  # check whether this transfer will write data
-  if transfertype == 'd2dsrc':
-    return True
-  if transfertype == 'standard' and transfer[16] == 'r' :
-    return True
-  # get the transfer filesystem
-  fs = transfer[-1].split(':')[1]
-  # find out the limit in terms of free space, from the config file
-  minFreeSpacePerc = configuration.getValue('RmNode', 'MinAllowedFreeSpace', 0, float)
-  # get status of the filesystem
-  stat = os.statvfs(fs)
-  availableSpace = stat.f_bavail * stat.f_frsize
-  totalSpace = stat.f_blocks * stat.f_bsize
-  # do the check
-  return availableSpace > minFreeSpacePerc * totalSpace
+  def exposed_machineDisabled(self):
+    '''called when the machine is disabled by an admin'''
+    dlf.writedebug(msgs.INVOKINGMACHINEDISABLED)
+    transferQueue.FSDisabled(None)
 
-class ActivityControl(threading.Thread):
-  '''activity control thread.
-  This thread is responsible for starting new transfers when free slots are available'''
+  def exposed_FSDisabled(self, mountPoints):
+    '''called when some filsystems are disabled by an admin'''
+    dlf.writedebug(msgs.INVOKINGFSDISABLED, mountPoints=''.join(mountPoints))
+    transferQueue.FSDisabled(mountPoints)
 
-  def __init__(self):
-    '''constructor'''
-    super(ActivityControl, self).__init__(name='ActivityControl')
-    self.alive = True
-
-  def run(self):
-    '''main method, containing the infinite loop'''
-    global lastschedattempt
-    while self.alive:
-      try:
-        # check number of running transfers against limit
-        if runningTransfers.nbUsedSlots() < configuration.getValue('DiskManager', 'NbSlots', 0, int):
-          # get a new transfer from the transferQueue
-          scheduler, transferid, transfer, transfertype, arrivalTime = transferQueue.get()
-          lastschedattempt = time.time()
-          # check whether we got something or timed out
-          if scheduler == None:
-            # We timed out, retry straight
-            continue
-          fileid = (transfer[8], int(transfer[6]))
-          try:
-            # in case of transfers wanting to write data, we check that space is available
-            if not checkSpaceLeftOnFS(transfertype, transfer):
-              # not enough space, we cancel the transfer
-              connections.transfersCanceled(scheduler, socket.getfqdn(), tuple([(transferid, fileid, 28, 'No space left on device', transfer[2])])) # ENOSPC
-            else:
-              # notifies the central scheduler that we want to start this transfer
-              # this may raise a ValueError exception if it already started
-              # somewhere else
-              connections.transferStarting(scheduler, socket.getfqdn(), transferid, transfer[2], transfertype)
-              # "Transfer starting" message
-              dlf.write(msgs.TRANSFERSTARTING, subreqid=transferid, reqid=transfer[2], fileid=fileid, TransferType=transfertype)
-              # in case of d2dsrc, do not actually start for real, only take note
-              if transfertype == 'd2dsrc':
-                runningTransfers.add(transferid, scheduler, transfer, None, None, transfertype, arrivalTime)
-              else:
-                # create a local file to hold the former scheduler info
-                # Note that this is inherited from the former scheduler limitations andd
-                # should be dropped in favour of passing directly the value to
-                # the stagerJob on the command line
-                try:
-                  notifFileHandle, notifFileName = tempfile.mkstemp()
-                  notifFile = os.fdopen(notifFileHandle, 'w')
-                  notifFile.write(transfer[-1])
-                  notifFile.close()
-                  os.chmod(notifFileName, 0444)
-                except Exception, e:
-                  # avoid raising standard exception, as some are used for dedicated purposes
-                  raise Exception(str(e))
-                # build the stagerTransfer command line and execute it
-                cmd = list(transfer[:-1])
-                cmd.append('file://'+notifFileName)
-                # start the transfer
-                if not fake:
-                  try:
-                    process = subprocess.Popen(cmd, close_fds=True, stderr=subprocess.PIPE)
-                  except Exception, e:
-                    # avoid raising standard exception, as some are used for dedicated purposes
-                    raise Exception(str(e))
-                else:
-                  process = 0
-                runningTransfers.add(transferid, scheduler, transfer, notifFileName, process, transfertype, arrivalTime)
-          except connectionpool.Timeout:
-            # we timed out in the call to transfersCanceled or transferStarting. We need to try again
-            # thus we put the transfer into the priority queue and inform the scheduler
-            # note that we need to pass a tuple of tuples
-            transferList = ((socket.getfqdn(), transfer),)
-            try:
-              connections.transferBackToQueue(scheduler, transferid, arrivalTime, transferList, transfertype)
-              transferQueue.putPriority(scheduler, transferid, transfer, transfertype, arrivalTime)
-              # 'Timeout when trying to start/cancel transfer. Putting it back to the queue' message
-              dlf.writenotice(msgs.TRANSFERSTARTTIMEOUT, subreqid=transferid, reqid=transfer[2], fileid=fileid)
-            except connectionpool.Timeout:
-              # 'Failed to start transfer and got timeout when putting back to queue'
-              dlf.writenotice(msgs.TRANSFERBACKTOQUEUEFAILED, subreqid=transferid, reqid=transfer[2], fileid=fileid)
-          except ValueError:
-            if transfertype == 'd2dsrc':
-              # 'source transfer has been canceled while queuing. Not starting it'
-              dlf.writedebug(msgs.SRCTRANSFERCANCELED, subreqid=transferid, reqid=transfer[2], fileid=fileid)
-            else:
-              # 'Transfer start canceled (already started on another host)' message
-              dlf.writedebug(msgs.TRANSFERALREADYSTARTED, subreqid=transferid, reqid=transfer[2], fileid=fileid)
-              # the transfer has already started somewhere else, so give up
-          except EnvironmentError:
-            # we have tried to start a disk to disk copy and the source is not yet ready
-            # we will put it in a pending queue
-            # "Start postponned until source is ready" message
-            dlf.write(msgs.POSTPONEDFORSRCNOTREADY, subreqid=transferid, reqid=transfer[2], fileid=fileid)
-            # put the transfer into the pending queue
-            transferQueue.d2dDestReady(scheduler, transferid, transfer, arrivalTime, transfertype)
-          except Exception:
-            # startup of the transfer failed with unexpected error
-            # We need to try again thus we put the transfer into the priority queue and inform the scheduler
-            # note that we need to pass a tuple of tuples
-            transferList = ((socket.getfqdn(), transfer),)
-            try:
-              connections.transferBackToQueue(scheduler, transferid, arrivalTime, transferList, transfertype)
-              transferQueue.putPriority(scheduler, transferid, transfer, transfertype, arrivalTime)
-              # 'Failed to start transfer. Putting it back to the queue' message
-              dlf.writeerr(msgs.TRANSFERSTARTINGFAILED, subreqid=transferid, reqid=transfer[2], fileid=fileid)
-              time.sleep(1)
-            except connectionpool.Timeout:
-              # clear this exception context, i.e. the Timeout, so that we log the original error
-              sys.exc_clear()
-              # 'Failed to start transfer and got timeout when putting back to queue'
-              dlf.writeerr(msgs.TRANSFERBACKTOQUEUEFAILED, subreqid=transferid, reqid=transfer[2], fileid=fileid)
-        else:
-          time.sleep(.05)
-      except Exception:
-        # "Caught exception in ActivityControl thread" message
-        dlf.writeerr(msgs.ACTIVITYCONTROLEXCEPTION)
-        time.sleep(1)
-
-  def stop(self):
-    '''stops processing in this thread'''
-    self.alive = False
-
-class ActivityControlChecker(threading.Thread):
-  '''ActivityControlChecker thread of the disk server manager, checking the status
-  of the ActivityControl thread.
-  This thread regularly checks whether there are jobs waiting in the queue with slots
-  available for too long. In such a case, it drops the rpyc connections.
-  This is actually a work around some rpyc instabilities where we can get stuck in
-  receiving an rpyc message forever. This happens if only half of the message arrives,
-  as the reading of the rest of it has no timeout'''
-
-  def __init__(self):
-    '''constructor'''
-    super(ActivityControlChecker, self).__init__(name='ActivityControlChecker')
-    self.alive = True
-
-  def run(self):
-    '''main method, containing the infinite loop'''
-    while self.alive:
-      # do not loop too fast, but be able to exit in < 1s
-      for i in range(5):
-        if not self.alive:
-          return
-        time.sleep(1)
-      # go for the checks
-      try:
-        # if empty queue, nothing looks bad
-        if transferQueue.empty():
-          continue
-        # if too few slots left, nothing looks bad
-        nbslots = configuration.getValue('DiskManager', 'NbSlots', 0, int)
-        maxnbemptyslots = int(configuration.getValue('DiskManager', 'maxNbEmptySlotsUnderLoad'))
-        if nbslots - runningTransfers.nbUsedSlots() < maxnbemptyslots:
-          continue
-        # did we scheduler recently ? Then it's ok, we are emptying the queue
-        if time.time() - lastschedattempt < 1:
-          continue
-        # We did not schedule recently.
-        # Let's wait for a bit so that the system has a chance to schedule something
-        time.sleep(1)
-        # check whether something was scheduled in the meantime
-        if time.time() - lastschedattempt > 1.5:
-          # nothing scheduled, this looks bad -> drop the connections
-          connections.closeall()
-          # 'Detected stuck ActivityControl thread. Killed connections to transfermanagerd' message
-          dlf.writenotice(msgs.ACTIVITYCHECKDROPCONN)
-      except Exception, e:
-        # 'Caught exception in ActivityControlChecker thread. Giving up for this round' message
-        dlf.writeerr(msgs.ACTIVITYCHECKEXCEPTION, Type=str(e.__class__), Message=str(e))
-
-  def stop(self):
-    '''stops processing in this thread'''
-    self.alive = False
-
-class ManagementThread(threading.Thread):
-  '''Management thread of the disk server manager, dealing with transfer completion control and associated cleanup,
-  with transfer cancelation in case of no space, timeouts, etc... and with restart of disk to disk transfer
-  that are waiting on the sources when these are ready'''
-
-  def __init__(self):
-    '''constructor'''
-    super(ManagementThread, self).__init__(name='ManagementThread')
-    self.alive = True
-
-  def run(self):
-    '''main method, containing the infinite loop'''
-    while self.alive:
-      try:
-        # check for running transfers that have completed
-        runningTransfers.poll()
-        # check for d2d destination transfers that could now start
-        transferQueue.pollD2dDest()
-        # check for transfer to be canceled for various reasons (timeout, missing resources, ...)
-        transferQueue.checkForTransfersCancelation()
-        # recompute list of ongoing tape transfers
-        runningTransfers.listTapeTransfers()
-      except connectionpool.Timeout, e:
-        # 'Caught exception in Management thread' message
-        dlf.writenotice(msgs.MGMTEXCEPTION, Type=str(e.__class__), Message=str(e))
-      except Exception, e:
-        # 'Caught exception in Management thread' message
-        dlf.writeerr(msgs.MGMTEXCEPTION, Type=str(e.__class__), Message=str(e))
-      # do not loop too fast
-      time.sleep(1)
-
-  def stop(self):
-    '''stops processing in this thread'''
-    self.alive = False
 
 def initQueues():
   '''Initializes the queue of pending transfers by rebuilding it from the knowledge of the transfermanagers'''
@@ -386,11 +168,11 @@ def initQueues():
     try:
       # rebuild list of running d2dsrc transfers
       for transferid, transfer, arrivaltime in \
-              connections.getRunningD2dSourceTransfers(scheduler, socket.getfqdn(), timeout=timeout):
+              connectionpool.connections.getRunningD2dSourceTransfers(scheduler, socket.getfqdn(), timeout=timeout):
         runningTransfers.add(transferid, scheduler, transfer, None, None, 'd2dsrc', arrivaltime)
       # rebuild transfer's queue
       for transferid, transfer, arrivaltime, transfertype in \
-              connections.getQueueingTransfers(scheduler, socket.getfqdn(), timeout=timeout):
+              connectionpool.connections.getQueueingTransfers(scheduler, socket.getfqdn(), timeout=timeout):
         transferQueue.put(scheduler, transferid, transfer, transfertype, arrivaltime)
     except connectionpool.Timeout:
       dlf.writeerr(msgs.NOQUEUERETRIEVED, Scheduler=scheduler, Type='Timeout', Message='Timeout used : %d' % timeout)
@@ -428,30 +210,23 @@ try:
     dlf.init('diskmanagerd')
     # 'DiskManager Daemon started'
     dlf.write(msgs.DISKMANAGERDSTARTED)
-    # create a connection pool for connections to the stagers
-    connections = connectionpool.ConnectionPool(msgs)
     # create a queue of transfers to be run
-    transferQueue = localqueue.LocalQueue(connections)
+    transferQueue = localqueue.LocalQueue()
     # create a list of running Transfers
-    runningTransfers = runningtransfersset.RunningTransfersSet(connections, fake)
+    runningTransfers = runningtransfersset.RunningTransfersSet(fake)
     # initialize the queues of pending and running transfers using the knowledge of the central schedulers
     initQueues()
-    # last time we've tried to schedule a transfer. This is used by the ActivityControlChecker
-    # to find out whether the ActivityControl thread is dead or not
-    lastschedattempt = 0
     # launch a processing thread that will regularly check if we need to start new transfers from the queue
-    activityControl = ActivityControl()
-    activityControl.setDaemon(True)
-    activityControl.start()
+    activityControl = activitycontrol.ActivityControlThread(runningTransfers, transferQueue,
+                                                            configuration, fake)
     # launch a processing thread that will regularly check if the activityControl one gets stuck
-    activityControlChecker = ActivityControlChecker()
-    activityControlChecker.setDaemon(True)
-    activityControlChecker.start()
+    activityControlChecker = activitycontrolchecker.ActivityControlCheckerThread \
+                             (runningTransfers, transferQueue, configuration, activityControl)
     # launch a management thread that will regularly check transfer completions, d2d transfer to be restarted
     # and transfers to be dropped from the queue, because of timeouts, lack of space, etc...
-    management = ManagementThread()
-    management.setDaemon(True)
-    management.start()
+    managerThr = manager.ManagerThread(runningTransfers, transferQueue)
+    # launch a reporting thread that will regularly report status of this machine to transfermanagerd
+    reporterThr = reporter.ReporterThread(runningTransfers, configuration)
     # launch a service listening for new transfers from the central scheduler and filling the queue
     # By default, the number of threads in the server is the number of server hosts + 1
     t = ThreadPoolServer(DiskServerManagerService,
@@ -464,7 +239,8 @@ try:
     # so let's stop the other threads
     activityControlChecker.stop()
     activityControl.stop()
-    management.stop()
+    managerThr.stop()
+    reporterThr.stop()
   except SystemExit:
     # we are exiting, fine
     pass
@@ -487,8 +263,13 @@ finally:
   except Exception:
     pass
   try:
-    management.stop()
-    management.join()
+    managerThr.stop()
+    managerThr.join()
+  except Exception:
+    pass
+  try:
+    reporterThr.stop()
+    reporterThr.join()
   except Exception:
     pass
   if daemonize:

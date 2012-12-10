@@ -27,7 +27,10 @@ BEGIN
   setObjStatusName('SubRequest', 'status', 11, 'SUBREQUEST_ARCHIVED');
   setObjStatusName('SubRequest', 'status', 12, 'SUBREQUEST_REPACK');
   setObjStatusName('SubRequest', 'status', 13, 'SUBREQUEST_READYFORSCHED');
+END;
+/
 
+BEGIN
   setObjStatusName('SubRequest', 'getNextStatus', 0, 'GETNEXTSTATUS_NOTAPPLICABLE');
   setObjStatusName('SubRequest', 'getNextStatus', 1, 'GETNEXTSTATUS_FILESTAGED');
   setObjStatusName('SubRequest', 'getNextStatus', 2, 'GETNEXTSTATUS_NOTIFIED');
@@ -118,7 +121,10 @@ BEGIN
   setObjStatusName('DiskCopy', 'gcType', 3, 'GCTYPE_DRAINING');
   setObjStatusName('DiskCopy', 'gcType', 4, 'GCTYPE_NSSYNCH');
   setObjStatusName('DiskCopy', 'gcType', 5, 'GCTYPE_OVERWRITTEN');
+END;
+/
 
+BEGIN
   setObjStatusName('DiskCopy', 'status', 0, 'DISKCOPY_STAGED');
   setObjStatusName('DiskCopy', 'status', 1, 'DISKCOPY_WAITDISK2DISKCOPY');
   setObjStatusName('DiskCopy', 'status', 3, 'DISKCOPY_DELETED');
@@ -133,13 +139,16 @@ END;
 /
 
 /* SQL statements for type FileSystem */
-CREATE TABLE FileSystem (free INTEGER, mountPoint VARCHAR2(2048), minFreeSpace NUMBER, minAllowedFreeSpace NUMBER, maxFreeSpace NUMBER, totalSize INTEGER, readRate INTEGER, writeRate INTEGER, nbReadStreams NUMBER, nbWriteStreams NUMBER, nbReadWriteStreams NUMBER, nbMigratorStreams NUMBER, nbRecallerStreams NUMBER, id INTEGER CONSTRAINT PK_FileSystem_Id PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER, adminStatus INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE FileSystem (free INTEGER, mountPoint VARCHAR2(2048), minAllowedFreeSpace NUMBER, maxFreeSpace NUMBER, totalSize INTEGER, nbReadStreams NUMBER, nbWriteStreams NUMBER, nbMigratorStreams NUMBER, nbRecallerStreams NUMBER, id INTEGER CONSTRAINT PK_FileSystem_Id PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER, adminStatus INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 BEGIN
   setObjStatusName('FileSystem', 'status', 0, 'FILESYSTEM_PRODUCTION');
   setObjStatusName('FileSystem', 'status', 1, 'FILESYSTEM_DRAINING');
   setObjStatusName('FileSystem', 'status', 2, 'FILESYSTEM_DISABLED');
+END;
+/
 
+BEGIN
   setObjStatusName('FileSystem', 'adminStatus', 0, 'ADMIN_NONE');
   setObjStatusName('FileSystem', 'adminStatus', 1, 'ADMIN_FORCE');
 END;
@@ -155,13 +164,16 @@ CREATE INDEX I_DiskPool2SvcClass_C on DiskPool2SvcClass (child);
 CREATE INDEX I_DiskPool2SvcClass_P on DiskPool2SvcClass (parent);
 
 /* SQL statements for type DiskServer */
-CREATE TABLE DiskServer (name VARCHAR2(2048), readRate INTEGER, writeRate INTEGER, nbReadStreams NUMBER, nbWriteStreams NUMBER, nbReadWriteStreams NUMBER, nbMigratorStreams NUMBER, nbRecallerStreams NUMBER, id INTEGER CONSTRAINT PK_DiskServer_Id PRIMARY KEY, status INTEGER, adminStatus INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE DiskServer (name VARCHAR2(2048), lastHeartBeatTime NUMBER, id INTEGER CONSTRAINT PK_DiskServer_Id PRIMARY KEY, status INTEGER, adminStatus INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 BEGIN
   setObjStatusName('DiskServer', 'status', 0, 'DISKSERVER_PRODUCTION');
   setObjStatusName('DiskServer', 'status', 1, 'DISKSERVER_DRAINING');
   setObjStatusName('DiskServer', 'status', 2, 'DISKSERVER_DISABLED');
+END;
+/
 
+BEGIN
   setObjStatusName('DiskServer', 'adminStatus', 0, 'ADMIN_NONE');
   setObjStatusName('DiskServer', 'adminStatus', 1, 'ADMIN_FORCE');
 END;
@@ -180,7 +192,6 @@ BEGIN
   setObjStatusName('StageRepackRequest', 'status', 3, 'REPACK_FAILED');
   setObjStatusName('StageRepackRequest', 'status', 4, 'REPACK_ABORTING');
   setObjStatusName('StageRepackRequest', 'status', 5, 'REPACK_ABORTED');
-  setObjStatusName('StageRepackRequest', 'status', 6, 'REPACK_SUBMITTED');
 END;
 /
 
@@ -222,6 +233,7 @@ BEGIN
   setObjStatusName('DiskPoolQuery', 'queryType', 1, 'DISKPOOLQUERYTYPE_AVAILABLE');
   setObjStatusName('DiskPoolQuery', 'queryType', 2, 'DISKPOOLQUERYTYPE_TOTAL');
 END;
+/
 
 /* SQL statements for type ChangePrivilege */
 CREATE TABLE ChangePrivilege (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, isGranted NUMBER, id INTEGER CONSTRAINT PK_ChangePrivilege_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
@@ -321,15 +333,6 @@ INSERT INTO Type2Obj (type, object) VALUES (116, 'GCFilesResponse');
 INSERT INTO Type2Obj (type, object) VALUES (117, 'FileQryResponse');
 INSERT INTO Type2Obj (type, object) VALUES (118, 'DiskPoolQueryResponse');
 INSERT INTO Type2Obj (type, object) VALUES (119, 'StageRepackRequest');
-INSERT INTO Type2Obj (type, object) VALUES (120, 'DiskServerStateReport');
-INSERT INTO Type2Obj (type, object) VALUES (121, 'DiskServerMetricsReport');
-INSERT INTO Type2Obj (type, object) VALUES (122, 'FileSystemStateReport');
-INSERT INTO Type2Obj (type, object) VALUES (123, 'FileSystemMetricsReport');
-INSERT INTO Type2Obj (type, object) VALUES (124, 'DiskServerAdminReport');
-INSERT INTO Type2Obj (type, object) VALUES (125, 'FileSystemAdminReport');
-INSERT INTO Type2Obj (type, object) VALUES (126, 'StreamReport');
-INSERT INTO Type2Obj (type, object) VALUES (127, 'FileSystemStateAck');
-INSERT INTO Type2Obj (type, object) VALUES (128, 'MonitorMessageAck');
 INSERT INTO Type2Obj (type, object) VALUES (129, 'Client');
 INSERT INTO Type2Obj (type, object) VALUES (130, 'JobSubmissionRequest');
 INSERT INTO Type2Obj (type, object) VALUES (131, 'VersionQuery');
@@ -376,7 +379,6 @@ INSERT INTO Type2Obj (type, object) VALUES (173, 'NoMoreFiles');
 INSERT INTO Type2Obj (type, object) VALUES (174, 'NotificationAcknowledge');
 INSERT INTO Type2Obj (type, object) VALUES (175, 'FileErrorReport');
 INSERT INTO Type2Obj (type, object) VALUES (176, 'BaseFileInfo');
-INSERT INTO Type2Obj (type, object) VALUES (178, 'RmMasterReport');
 INSERT INTO Type2Obj (type, object) VALUES (179, 'EndNotificationErrorReport');
 INSERT INTO Type2Obj (type, object) VALUES (181, 'GatewayMessage');
 INSERT INTO Type2Obj (type, object) VALUES (182, 'DumpNotification');

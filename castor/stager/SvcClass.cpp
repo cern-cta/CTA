@@ -41,7 +41,6 @@ castor::stager::SvcClass::SvcClass() throw() :
   m_name(""),
   m_defaultFileSize(0),
   m_maxReplicaNb(0),
-  m_recallerPolicy(""),
   m_gcPolicy(""),
   m_disk1Behavior(false),
   m_replicateOnClose(false),
@@ -78,7 +77,6 @@ void castor::stager::SvcClass::print(std::ostream& stream,
   stream << indent << "name : " << m_name << std::endl;
   stream << indent << "defaultFileSize : " << m_defaultFileSize << std::endl;
   stream << indent << "maxReplicaNb : " << m_maxReplicaNb << std::endl;
-  stream << indent << "recallerPolicy : " << m_recallerPolicy << std::endl;
   stream << indent << "gcPolicy : " << m_gcPolicy << std::endl;
   stream << indent << "disk1Behavior : " << (m_disk1Behavior ? "Yes" : "No") << std::endl;
   stream << indent << "replicateOnClose : " << (m_replicateOnClose ? "Yes" : "No") << std::endl;

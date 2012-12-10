@@ -92,7 +92,7 @@ void castor::gc::SynchronizationThread::run(void*) {
     // Get the list of filesystem to be checked
     char** fs;
     int nbFs;
-    if (getconfent_multi("RmNode", "MountPoints", 1, &fs, &nbFs) < 0) {
+    if (getconfent_multi("DiskManager", "MountPoints", 1, &fs, &nbFs) < 0) {
       // "Unable to retrieve mountpoints, giving up with synchronization"
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 23);
       sleep(syncInterval);

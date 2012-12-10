@@ -70,8 +70,8 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE UUIDPairRecord_Cur IS REF CURSOR RETURN UUIDPairRecord;
   TYPE TransferRecord IS RECORD (subreId VARCHAR(2048), resId VARCHAR(2048), fileId NUMBER, nsHost VARCHAR2(2048));
   TYPE TransferRecord_Cur IS REF CURSOR RETURN TransferRecord;
-  TYPE DiskServerName IS RECORD (diskServer VARCHAR(2048));
-  TYPE DiskServerList_Cur IS REF CURSOR RETURN DiskServerName;
+  TYPE StringValue IS RECORD (value VARCHAR(2048));
+  TYPE StringList_Cur IS REF CURSOR RETURN StringValue;
   TYPE FileEntry IS RECORD (
     fileid INTEGER,
     nshost VARCHAR2(2048));
@@ -1268,8 +1268,7 @@ BEGIN
               AND R.sourceDiskCopy = DiskCopy.id
               AND SubRequest.status = 9 -- FAILED_FINISHED
            HAVING COUNT(*) >= 10)
-       ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
-                               FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams) DESC,
+       ORDER BY FileSystemRate(FileSystem.nbReadStreams, FileSystem.nbWriteStreams) DESC,
                 DBMS_Random.value)
    WHERE ROWNUM < 2;
 EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -1299,8 +1298,7 @@ BEGIN
        AND FileSystem.diskserver = DiskServer.id
        AND DiskServer.status = 0 -- PRODUCTION
        AND DiskCopy.status IN (0, 6, 10)  -- STAGED, STAGEOUT, CANBEMIGR
-     ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
-                             FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams) DESC,
+     ORDER BY FileSystemRate(FileSystem.nbReadStreams, FileSystem.nbWriteStreams) DESC,
               DBMS_Random.value)
    WHERE rownum < 2;
 EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -1621,8 +1619,7 @@ BEGIN
              AND DiskServer.id = FileSystem.diskServer
              AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
         ORDER BY -- order by rate as defined by the function
-                 fileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
-                                FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams) DESC,
+                 fileSystemRate(FileSystem.nbReadStreams, FileSystem.nbWriteStreams) DESC,
                  -- finally use randomness to avoid preferring always the same FS
                  DBMS_Random.value)
    WHERE ROWNUM < 2;
@@ -1798,8 +1795,7 @@ BEGIN
     -- List available diskcopies for job scheduling
     OPEN sources
       FOR SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ DiskCopy.id, DiskCopy.path, DiskCopy.status,
-                 FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
-                                FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams) fsRate,
+                 FileSystemRate(FileSystem.nbReadStreams, FileSystem.nbWriteStreams) fsRate,
                  FileSystem.mountPoint, DiskServer.name
             FROM DiskCopy, SubRequest, FileSystem, DiskServer, DiskPool2SvcClass
            WHERE SubRequest.id = srId
@@ -2851,169 +2847,102 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 END;
 /
 
-/* PL/SQL function to elect a rmmaster master */
-CREATE OR REPLACE FUNCTION isMonitoringMaster RETURN NUMBER IS
-  locked EXCEPTION;
-  PRAGMA EXCEPTION_INIT (locked, -54);
+/* PL/SQL method implementing storeReports. This procedure stores new reports
+ * and disables nodes for which last report (aka heartbeat) is too old. 
+ * For efficiency reasons the input parameters to this method
+ * are 2 vectors. The first ones is a list of strings with format :
+ *  (diskServerName1, mountPoint1, diskServerName2, mountPoint2, ...)
+ * representing a set of mountpoints with the diskservername repeated
+ * for each mountPoint.
+ * The second vector is a list of numbers with format :
+ *  (maxFreeSpace1, minAllowedFreeSpace1, totalSpace1, freeSpace1,
+ *   nbReadStreams1, nbWriteStreams1, nbRecalls1, nbMigrations1,
+ *   maxFreeSpace2, ...)
+ * where 8 values are given for each of the mountPoints in the first vector
+ */
+CREATE OR REPLACE PROCEDURE storeReports
+(inStrParams IN castor."strList",
+ inNumParams IN castor."cnumList") AS
+ varDsId NUMBER;
+ varFsId NUMBER;
+ varHeartBeatTimeout NUMBER;
+ emptyReport BOOLEAN := False;
 BEGIN
-  LOCK TABLE RmMasterLock IN EXCLUSIVE MODE NOWAIT;
-  RETURN 1;
-EXCEPTION WHEN locked THEN
-  RETURN 0;
-END;
-/
-
-/* PL/SQL method implementing storeClusterStatus */
-CREATE OR REPLACE PROCEDURE storeClusterStatus
-(machines IN castor."strList",
- fileSystems IN castor."strList",
- machineValues IN castor."cnumList",
- fileSystemValues IN castor."cnumList") AS
- found   NUMBER;
- ind     NUMBER;
- dsId    NUMBER := 0;
- fs      NUMBER := 0;
- fsIds   "numList";
-BEGIN
-  -- Sanity check
-  IF machines.COUNT = 0 OR fileSystems.COUNT = 0 THEN
-    RETURN;
+  -- quick check of the vector lengths
+  IF MOD(inStrParams.COUNT,2) != 0 THEN
+    IF inStrParams.COUNT = 1 AND inStrParams(1) = 'Empty' THEN
+      -- work around the "PLS-00418: array bind type must match PL/SQL table row type"
+      -- error launched by Oracle when empty arrays are passed as parameters
+      emptyReport := True;
+    ELSE
+      RAISE_APPLICATION_ERROR (-20125, 'Invalid call to storeReports : ' ||
+                                       '1st vector has odd number of elements (' ||
+                                       TO_CHAR(inStrParams.COUNT) || ')');
+    END IF;
   END IF;
-  -- First Update Machines
-  FOR i IN machines.FIRST .. machines.LAST LOOP
-    ind := machineValues.FIRST + 9 * (i - machines.FIRST);
-    IF machineValues(ind + 1) = 3 THEN -- ADMIN DELETED
-      BEGIN
-        -- Resolve the machine name to its id
-        SELECT id INTO dsId FROM DiskServer
-         WHERE name = machines(i);
-        -- If any of the filesystems belonging to the diskserver are currently
-        -- in the process of being drained then do not delete the diskserver or
-        -- its associated filesystems. Why? Because of unique constraint
-        -- violations between the FileSystem and DrainingDiskCopy table.
-        SELECT fileSystem BULK COLLECT INTO fsIds
-          FROM DrainingFileSystem DFS, FileSystem FS
-         WHERE DFS.fileSystem = FS.id
-           AND FS.diskServer = dsId;
-        IF fsIds.COUNT > 0 THEN
-          -- Entries found so flag the draining process as DELETING
-          UPDATE DrainingFileSystem
-             SET status = 6  -- DELETING
-           WHERE fileSystem IN
-             (SELECT /*+ CARDINALITY(fsIdTable 5) */ *
-                FROM TABLE (fsIds) fsIdTable);
-        ELSE
-          -- There is no outstanding process to drain the diskservers
-          -- filesystems so we can now delete it.
-          DELETE FROM FileSystem WHERE diskServer = dsId;
-          DELETE FROM DiskServer WHERE name = machines(i);
-        END IF;
-      EXCEPTION WHEN NO_DATA_FOUND THEN
-        NULL;  -- Already deleted
-      END;
-    ELSE
-      BEGIN
-        SELECT id INTO dsId FROM DiskServer
-         WHERE name = machines(i);
-        UPDATE DiskServer
-           SET status             = machineValues(ind),
-               adminStatus        = machineValues(ind + 1),
-               readRate           = machineValues(ind + 2),
-               writeRate          = machineValues(ind + 3),
-               nbReadStreams      = machineValues(ind + 4),
-               nbWriteStreams     = machineValues(ind + 5),
-               nbReadWriteStreams = machineValues(ind + 6),
-               nbMigratorStreams  = machineValues(ind + 7),
-               nbRecallerStreams  = machineValues(ind + 8)
-         WHERE name = machines(i);
-      EXCEPTION WHEN NO_DATA_FOUND THEN
-        -- We should insert a new machine here
-        INSERT INTO DiskServer (name, id, status, adminStatus, readRate,
-                                writeRate, nbReadStreams, nbWriteStreams,
-                                nbReadWriteStreams, nbMigratorStreams,
-                                nbRecallerStreams)
-         VALUES (machines(i), ids_seq.nextval, machineValues(ind),
-                 machineValues(ind + 1), machineValues(ind + 2),
-                 machineValues(ind + 3), machineValues(ind + 4),
-                 machineValues(ind + 5), machineValues(ind + 6),
-                 machineValues(ind + 7), machineValues(ind + 8));
-      END;
-    END IF;
-    -- Release the lock on the DiskServer as soon as possible to prevent
-    -- deadlocks with other activities e.g. recaller
-    COMMIT;
-  END LOOP;
-  -- And then FileSystems
-  ind := fileSystemValues.FIRST;
-  FOR i in fileSystems.FIRST .. fileSystems.LAST LOOP
-    IF fileSystems(i) NOT LIKE ('/%') THEN
-      SELECT id INTO dsId FROM DiskServer
-       WHERE name = fileSystems(i);
-    ELSE
-      IF fileSystemValues(ind + 1) = 3 THEN -- ADMIN DELETED
-        BEGIN
-          -- Resolve the mountpoint name to its id
-          SELECT id INTO fs
-            FROM FileSystem
-           WHERE mountPoint = fileSystems(i)
-             AND diskServer = dsId;
-          -- Check to see if the filesystem is currently in the process of
-          -- being drained. If so, we flag it for deletion.
-          found := 0;
-          UPDATE DrainingFileSystem
-             SET status = 6  -- DELETING
-           WHERE fileSystem = fs
-          RETURNING fs INTO found;
-          -- No entry found so delete the filesystem.
-          IF found = 0 THEN
-            DELETE FROM FileSystem WHERE id = fs;
-          END IF;
-        EXCEPTION WHEN NO_DATA_FOUND THEN
-          NULL;  -- Already deleted
-        END;
-      ELSE
-        BEGIN
-          SELECT diskServer INTO dsId FROM FileSystem
-           WHERE mountPoint = fileSystems(i) AND diskServer = dsId;
-          UPDATE FileSystem
-             SET status              = fileSystemValues(ind),
-                 adminStatus         = fileSystemValues(ind + 1),
-                 readRate            = fileSystemValues(ind + 2),
-                 writeRate           = fileSystemValues(ind + 3),
-                 nbReadStreams       = fileSystemValues(ind + 4),
-                 nbWriteStreams      = fileSystemValues(ind + 5),
-                 nbReadWriteStreams  = fileSystemValues(ind + 6),
-                 nbMigratorStreams   = fileSystemValues(ind + 7),
-                 nbRecallerStreams   = fileSystemValues(ind + 8),
-                 free                = fileSystemValues(ind + 9),
-                 totalSize           = fileSystemValues(ind + 10),
-                 minFreeSpace        = fileSystemValues(ind + 11),
-                 maxFreeSpace        = fileSystemValues(ind + 12),
-                 minAllowedFreeSpace = fileSystemValues(ind + 13)
-           WHERE mountPoint          = fileSystems(i)
-             AND diskServer          = dsId;
-        EXCEPTION WHEN NO_DATA_FOUND THEN
-          -- we should insert a new filesystem here
-          INSERT INTO FileSystem (free, mountPoint, minFreeSpace,
-                                  minAllowedFreeSpace, maxFreeSpace, totalSize,
-                                  readRate, writeRate, nbReadStreams,
-                                  nbWriteStreams, nbReadWriteStreams,
-                                  nbMigratorStreams, nbRecallerStreams, id,
-                                  diskPool, diskserver, status, adminStatus)
-          VALUES (fileSystemValues(ind + 9), fileSystems(i), fileSystemValues(ind+11),
-                  fileSystemValues(ind + 13), fileSystemValues(ind + 12),
-                  fileSystemValues(ind + 10), fileSystemValues(ind + 2),
-                  fileSystemValues(ind + 3), fileSystemValues(ind + 4),
-                  fileSystemValues(ind + 5), fileSystemValues(ind + 6),
-                  fileSystemValues(ind + 7), fileSystemValues(ind + 8),
-                  ids_seq.nextval, 0, dsId, 2, 1); -- FILESYSTEM_DISABLED, ADMIN_FORCE
-        END;
+  IF MOD(inNumParams.COUNT,8) != 0 AND NOT emptyReport THEN
+    RAISE_APPLICATION_ERROR (-20125, 'Invalid call to storeReports : ' ||
+                             '2nd vector has wrong number of elements (' ||
+                             TO_CHAR(inNumParams.COUNT) || ' instead of ' ||
+                             TO_CHAR(inStrParams.COUNT*4) || ')');
+  END IF;
+  IF NOT emptyReport THEN
+    -- Go through the concerned filesystems
+    FOR i IN 0 .. inStrParams.COUNT/2-1 LOOP
+      -- update DiskServer
+      varDsId := NULL;
+      UPDATE DiskServer
+         SET status = CASE WHEN (adminStatus = dconst.ADMIN_NONE) AND
+                                (status = dconst.DISKSERVER_DISABLED)
+                           THEN dconst.DISKSERVER_PRODUCTION
+                           ELSE status END,
+             lastHeartBeatTime = getTime()
+       WHERE name = inStrParams(2*i+1)
+      RETURNING id INTO varDsId;
+      -- if it did not exist, create it
+      IF varDsId IS NULL THEN
+        INSERT INTO DiskServer (name, id, status, adminStatus, lastHeartBeatTime)
+         VALUES (inStrParams(2*i+1), ids_seq.nextval, dconst.DISKSERVER_DISABLED, dconst.ADMIN_FORCE, getTime())
+        RETURNING id INTO varDsId;
       END IF;
-      ind := ind + 14;
-    END IF;
-    -- Release the lock on the FileSystem as soon as possible to prevent
-    -- deadlocks with other activities e.g. recaller
-    COMMIT;
+      -- update FileSystem
+      varFsId := NULL;
+      UPDATE FileSystem
+         SET maxFreeSpace = inNumParams(8*i+1),
+             minAllowedFreeSpace = inNumParams(8*i+2),
+             totalSize = inNumParams(8*i+3),
+             free = inNumParams(8*i+4),
+             nbReadStreams = inNumParams(8*i+5),
+             nbWriteStreams = inNumParams(8*i+6),
+             nbRecallerStreams = inNumParams(8*i+7),
+             nbMigratorStreams = inNumParams(8*i+8),
+             status = CASE WHEN (adminStatus = dconst.ADMIN_NONE) AND
+                                (status = dconst.FILESYSTEM_DISABLED)
+                           THEN dconst.FILESYSTEM_PRODUCTION
+                           ELSE status END
+       WHERE diskServer=varDsId AND mountPoint=inStrParams(2*i+2)
+      RETURNING id INTO varFsId;
+      -- if it did not exist, create it
+      IF varFsId IS NULL THEN
+        INSERT INTO FileSystem (mountPoint, maxFreeSpace, minAllowedFreeSpace, totalSize, free,
+                                nbReadStreams, nbWriteStreams, nbRecallerStreams, nbMigratorStreams,
+                                id, diskPool, diskserver, status, adminStatus)
+        VALUES (inStrParams(2*i+2), inNumParams(8*i+1), inNumParams(8*i+2), inNumParams(8*i+3),
+                inNumParams(8*i+4), inNumParams(8*i+5), inNumParams(8*i+6), inNumParams(8*i+7),
+                inNumParams(8*i+8), ids_seq.nextval, 0, varDsId,
+                dconst.FILESYSTEM_DISABLED, dconst.ADMIN_FORCE);
+      END IF;
+    END LOOP;
+  END IF;
+
+  -- now disable nodes that have too old reports
+  varHeartBeatTimeout := TO_NUMBER(getConfigOption('DiskServer', 'HeartBeatTimeout', '60'));
+  FOR ds IN (SELECT id
+               FROM DiskServer
+              WHERE lastHeartBeatTime < getTime() - varHeartBeatTimeout
+                AND status = dconst.DISKSERVER_PRODUCTION
+                AND adminStatus = dconst.ADMIN_NONE) LOOP
+    UPDATE DiskServer SET status = dconst.DISKSERVER_DISABLED WHERE id = ds.id;
   END LOOP;
 END;
 /

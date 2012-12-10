@@ -58,7 +58,6 @@
 %attr(0644,root,root) usr/include/shift/rmc.h
 %attr(0644,root,root) usr/include/shift/rmc_api.h
 %attr(0644,root,root) usr/include/shift/rmc_constants.h
-%attr(0644,root,root) usr/include/shift/rmnode_util.h
 %attr(0644,root,root) usr/include/shift/rtcp.h
 %attr(0644,root,root) usr/include/shift/rtcp_api.h
 %attr(0644,root,root) usr/include/shift/rtcp_constants.h

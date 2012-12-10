@@ -101,6 +101,9 @@ AS
   DRAININGDC_WAITD2D      CONSTANT PLS_INTEGER := 2;
   DRAININGDC_FAILED       CONSTANT PLS_INTEGER := 3;
 
+  ADMIN_NONE CONSTANT PLS_INTEGER    := 0;
+  ADMIN_FORCE CONSTANT PLS_INTEGER   := 1;
+
   SUBREQUEST_START            CONSTANT PLS_INTEGER :=  0;
   SUBREQUEST_RESTART          CONSTANT PLS_INTEGER :=  1;
   SUBREQUEST_RETRY            CONSTANT PLS_INTEGER :=  2;
@@ -214,6 +217,8 @@ AS
   REPACK_STARTED               CONSTANT VARCHAR2(2048) := 'repackManager: Repack process started';
   REPACK_JOB_STATS             CONSTANT VARCHAR2(2048) := 'repackManager: Repack processes statistics';
   REPACK_UNEXPECTED_EXCEPTION  CONSTANT VARCHAR2(2048) := 'handleRepackRequest: unexpected exception caught';
+
+  REPORT_HEART_BEAT_RESUMED    CONSTANT VARCHAR2(2048) := 'Heartbeat resumed for diskserver, status changed to PRODUCTION';
 END dlf;
 /
 

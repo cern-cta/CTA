@@ -102,7 +102,7 @@
 102,WORKER_FAIL_RELEASE_TAPE,"Worker: releasing BUSY tape after end notification error report"
 103,ORA_FILE_TO_MIGRATE_NS_ERROR,"Worker: OraTapeGatewaySvc: failed check against the nameserver for file to migrate"
 104,ORA_DB_ERROR,"Worker: OraTapeGatewaySvc: impossible to update db after failure"
-105,ORA_IMPOSSIBLE_TO_SEND_RMMASTER_REPORT,"Worker: OraTapeGatewaySvc: impossible to send rmmaster report"
+105,ORA_IMPOSSIBLE_TO_SEND_RMMASTER_REPORT_NOT_USED,"Deleted Message - Should not be used"
 106,ORA_FILE_TO_RECALL_NS_ERROR,"Worker: OraTapeGatewaySvc: failed check against the nameserver for file to recall"
 107,LINKER_NOT_POOL_REPL_107,"TapeStreamLinker: this tapepool does not exist"
 108,TAPE_GATEWAY_FAILED_TO_START,"TapeGateway failed to start"

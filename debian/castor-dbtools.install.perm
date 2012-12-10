@@ -24,10 +24,12 @@
 %attr(0755,root,root) usr/bin/modifymigrationroute
 %attr(0755,root,root) usr/bin/deletemigrationroute
 %attr(0755,root,root) usr/bin/printmigrationroute
+%attr(0755,root,root) usr/bin/modifydiskserver
+%attr(0755,root,root) usr/bin/deletediskserver
+%attr(0755,root,root) usr/bin/printdiskserver
 %attr(0755,root,root) usr/bin/cleanLostFiles
 %attr(0755,root,root) usr/bin/diskServer_qry
 %attr(0755,root,root) usr/bin/draindiskserver
-%attr(0755,root,root) usr/bin/moveDiskServer
 %attr(0755,root,root) usr/lib/perl/CASTOR/castor_tools.pm
 %attr(0644,root,root) usr/lib/python*/site-packages/castor_tools.py*
 %attr(0644,root,root) usr/lib/python*/site-packages/dlf.py*

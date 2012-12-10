@@ -37,9 +37,7 @@ CNVSLIB_SRCS = DbBaseAddressCnv.cpp \
      DbDiskCopyCnv.cpp \
      DbDiskPoolCnv.cpp \
      DbDiskPoolQueryCnv.cpp \
-     DbDiskServerCnv.cpp \
      DbFileClassCnv.cpp \
-     DbFileSystemCnv.cpp \
      DbFiles2DeleteCnv.cpp \
      DbFilesDeletedCnv.cpp \
      DbNsFilesDeletedCnv.cpp \

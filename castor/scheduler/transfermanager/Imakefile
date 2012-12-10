@@ -24,8 +24,11 @@ COMM @author Castor Dev team, castor-dev@cern.ch
 InstallNonExecFile(dispatcher.py,$(PYTHON_LIBDIR),644)
 InstallNonExecFile(aborter.py,$(PYTHON_LIBDIR),644)
 InstallNonExecFile(synchronizer.py,$(PYTHON_LIBDIR),644)
+InstallNonExecFile(reportmanager.py,$(PYTHON_LIBDIR),644)
+InstallNonExecFile(suicider.py,$(PYTHON_LIBDIR),644)
 InstallNonExecFile(serverqueue.py,$(PYTHON_LIBDIR),644)
 InstallNonExecFile(transfermanagerdlf.py,$(PYTHON_LIBDIR),644)
+InstallNonExecFile(diskserverlistcache.py,$(PYTHON_LIBDIR),644)
 
 InstallTarget(transfermanagerd,755)
 ADMMANPAGE(transfermanagerd)

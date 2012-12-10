@@ -1,0 +1,230 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                      modifydiskserver
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @author castor dev team
+# *****************************************************************************/
+
+'''allows to modify an existing DiskServer in the castor stager'''
+
+import sys
+import getopt
+import castor_tools
+
+# usage function
+def usage(exitCode):
+    '''prints usage'''
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] ' + \
+          '-f|--forcestate <state>|-r|--releasestate|-d|--diskpool <diskpool> ' + \
+          '[-m|--mountpoints <mountpoint>[:...]] <diskpool>|<diskServerName> [...]]'
+    print '  where state can be "Production", "Draining" or "Disabled"'
+    sys.exit(exitCode)
+
+# Possible forced states
+forcedStates = ['Production', 'Draining', 'Disabled']
+
+# first parse the options
+try:
+    options, args = getopt.getopt(sys.argv[1:], 'hvf:rm:d:',
+                                  ['help', 'verbose', 'forcestate=', 'releasestate', 'mountpoints=', 'diskpool='])
+except Exception, e:
+    print e
+    usage(1)
+verbose = False
+forceState = None
+release = False
+mountPoints = None
+diskPool = None
+targets = None
+for f, v in options:
+    if f == '-h' or f == '--help':
+        usage(0)
+    elif f == '-v' or f == '--verbose':
+        verbose = True
+    elif f == '-f' or f == '--forcestate':
+        if v not in forcedStates:
+            print 'Unkown state %s' % v
+            usage(1)
+        forceState = v
+    elif f == '-r' or f == '--releasestate':
+        release = True
+    elif f == '-m' or f == '--mountpoints':
+        mountPoints = set(v.split(':'))
+    elif f == '-d' or f == '--diskpool':
+        diskPool = v
+    else:
+        print "unknown option : " + f
+        usage(1)
+
+# Deal with arguments
+if len(args) != 0:
+    targets = set(args)
+
+# some consistency checks
+if forceState and release:
+    print 'Conflicting options -f,--force and -r,--release. Giving up'
+    usage(1)
+if not forceState and not release and not diskPool:
+    print 'Nothing to do. Please specify at least one of options -f,--force, -r,--release and -d.--diskpool'
+    usage(1)
+if not targets:
+    print 'Nothing to do ! Please give a few diskpools/diskservers'
+    usage(1)
+
+try:
+    # connect to stager
+    stconn = castor_tools.connectToStager()
+    stcur = stconn.cursor()
+    # check target diskpool if any
+    if diskPool:
+        sqlStatement = "SELECT id, name FROM DiskPool WHERE name = :diskPool"
+        stcur.execute(sqlStatement, diskPool=diskPool)
+        rows = stcur.fetchall()
+        if not rows:
+            print 'DiskPool %d does not exist. Giving up' % diskPool
+            try:
+                castor_tools.disconnectDB(stconn)
+            except Exception:
+                pass
+            sys.exit(1)
+        diskPoolId = rows[0][0]
+    # check diskpools
+    sqlStatement = 'SELECT id, name FROM DiskPool WHERE name = :dpname'
+    diskPools = set([])
+    diskPoolIds = []
+    for target in targets:
+        stcur.execute(sqlStatement, dpname=target)
+        row = stcur.fetchone()
+        if row:
+            diskPoolIds.append(row[0])
+            diskPools.add(row[1])
+    # check diskservers
+    sqlStatement = 'SELECT id, name FROM DiskServer WHERE name = :dsname'
+    diskServers = set([])
+    diskServerIds = []
+    for target in targets:
+        stcur.execute(sqlStatement, dsname=target)
+        row = stcur.fetchone()
+        if row:
+            diskServerIds.append(row[0])
+            diskServers.add(row[1])
+    unknownTargets = targets - diskPools - diskServers
+    if not diskPools and not diskServers:
+        print 'None of the provided diskpools/diskservers could be found. Giving up'
+        usage(1)
+    # go for the update
+    if mountPoints:
+        # check MountPoints
+        sqlStatement = '''SELECT id, mountPoint FROM FileSystem
+                           WHERE mountPoint = :mountPoint'''
+        if targets:
+            sqlStatement += ' AND ('
+            if diskPoolIds:
+                sqlStatement += 'diskPool IN (' + ', '.join([str(x) for x in diskPoolIds]) + ')'
+            if diskServerIds:
+                if diskPoolIds:
+                    sqlStatement += ' OR '
+                sqlStatement += 'diskServer IN (' + ', '.join([str(x) for x in diskServerIds]) + ')'
+            sqlStatement += ')'
+        mountPointIds = []
+        existingMountPoints = set([])
+        for mountPoint in mountPoints:
+            stcur.execute(sqlStatement, mountPoint=mountPoint)
+            row = stcur.fetchone()
+            if row:
+                mountPointIds.append(row[0])
+                existingMountPoints.add(row[1])
+        unknownMountPoints = mountPoints - existingMountPoints
+        # update mountPoints
+        varDict = {}
+        sqlStatement = 'UPDATE FileSystem SET'
+        setClause = ''
+        whereClause = ' WHERE id IN (' + ', '.join([str(x) for x in mountPointIds]) + ')'
+        if release:
+            if setClause:
+                setClause += ','
+            setClause += ' adminStatus = :adminStatus'
+            varDict['adminStatus'] = 0
+        if forceState:
+            if setClause:
+                setClause += ','
+            setClause += ' adminStatus = :adminStatus'
+            varDict['adminStatus'] = 1
+            setClause += ', status = :status'
+            varDict['status'] = forcedStates.index(forceState)
+        if diskPool:
+            if setClause:
+                setClause += ','
+            setClause += ' diskPool = :diskPool'
+            varDict['diskPool'] = diskPoolId
+        stcur.execute(sqlStatement + setClause + whereClause, varDict)
+        # commit update and tell user
+        stconn.commit()
+        print 'modified fileSystems successfully'
+        # mention unknown mountPoints
+        if mountPoints and unknownMountPoints:
+            print 'WARNING : the following mountPoints could not be found : ' + ', '.join(unknownMountPoints)
+    else:
+        # check DiskServers
+        if diskPools:
+            sqlStatement = '''SELECT UNIQUE DiskServer.id FROM DiskServer, FileSystem
+                               WHERE DiskServer.id = FileSystem.diskServer
+                                 AND FileSystem.diskPool IN (''' + "'" + \
+                           "', '".join([str(x) for x in diskPoolIds]) + "')"
+            stcur.execute(sqlStatement)
+            rows = stcur.fetchall()
+            diskServerIds.extend([row[0] for row in rows])
+            if not diskServerIds:
+                print 'No diskserver matching your request'
+        # update diskServers for status
+        if diskServerIds:
+            if release or forceState:
+                varDict = {}
+                sqlStatement = 'UPDATE DiskServer SET adminStatus = :adminStatus'
+                whereClause = ' WHERE id IN (' + ', '.join([str(x) for x in diskServerIds]) + ')'
+                if release:
+                    varDict['adminStatus'] = 0
+                if forceState:
+                    varDict['adminStatus'] = 1
+                    sqlStatement += ', status = :status'
+                    varDict['status'] = forcedStates.index(forceState)
+                stcur.execute(sqlStatement + whereClause, varDict)
+            # update fileSystems for diskPool
+            if diskPool:
+                varDict = {}
+                sqlStatement = '''UPDATE FileSystem SET diskPool = :diskPoolId
+                                   WHERE diskServer IN (''' + ', '.join([str(x) for x in diskServerIds]) + ')'
+                stcur.execute(sqlStatement, diskPoolId=diskPoolId)
+            # commit update and tell user
+            stconn.commit()
+            print 'modified diskServers successfully'
+    # mention unknown targets
+    if unknownTargets:
+        print 'WARNING : the following diskpools/diskservers do not exist : ' + ', '.join(unknownTargets)
+    # close DB connections
+    try:
+        castor_tools.disconnectDB(stconn)
+    except Exception:
+        pass
+except Exception, e:
+    print e
+    if verbose:
+        import traceback
+        traceback.print_exc()
+    sys.exit(-1)

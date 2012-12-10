@@ -127,17 +127,6 @@ namespace castor {
 
     OBJ_StageRepackRequest = 119,
 
-    /* Monitoring Objects */
-    OBJ_DiskServerStateReport = 120,
-    OBJ_DiskServerMetricsReport = 121,
-    OBJ_FileSystemStateReport = 122,
-    OBJ_FileSystemMetricsReport = 123,
-    OBJ_DiskServerAdminReport = 124,
-    OBJ_FileSystemAdminReport = 125,
-    OBJ_StreamReport = 126,
-    OBJ_FileSystemStateAck = 127,
-    OBJ_MonitorMessageAck = 128,
-
     OBJ_Client = 129,
 
     OBJ_JobSubmissionRequest = 130,
@@ -208,7 +197,6 @@ namespace castor {
     OBJ_FileErrorReport = 175,
     OBJ_BaseFileInfo = 176,
    
-    OBJ_RmMasterReport = 178,
     OBJ_EndNotificationErrorReport = 179,
     OBJ_GatewayMessage = 181,
     OBJ_DumpNotification = 182,
@@ -273,15 +261,11 @@ namespace castor {
     SVC_DBSRMDAEMONSVC = 36,
 
     SVC_ORACLEANSVC = 37,
-    SVC_ORARMMASTERSVC = 38,
     SVC_DBPARAMSSVC = 39,
     SVC_DBRHSVC = 41,
     SVC_ORARHSVC = 42,
-    SVC_ORAPOLICYSVC = 43,
     SVC_ORAREPACKSVC = 44,
     SVC_ORATAPEGATEWAYSVC = 45,
-    SVC_ORAMIGHUNTERSVC = 46,
-    SVC_ORARECHANDLERSVC = 47,
 
     SVC_ORASRMDAEMONSVC = 48
 

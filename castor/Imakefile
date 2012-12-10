@@ -50,6 +50,7 @@ STGLIB_SRCS = BaseAddress.cpp \
               client/BaseClient.cpp \
               client/BasicResponseHandler.cpp \
               client/VectorResponseHandler.cpp \
+              monitoring/AdminStatusCodes.cpp \
               dlf/Dlf.cpp \
               dlf/IPAddress.cpp \
               dlf/Message.cpp \
@@ -74,7 +75,6 @@ STGLIB_SRCS = BaseAddress.cpp \
 	      io/StreamDiskCopyInfoCnv.cpp \
               io/StreamEndResponseCnv.cpp \
               io/StreamFileResponseCnv.cpp\
-              io/StreamFileSystemCnv.cpp \
               io/StreamFiles2DeleteCnv.cpp \
               io/StreamFilesDeletedCnv.cpp \
               io/StreamNsFilesDeletedCnv.cpp \
@@ -98,7 +98,6 @@ STGLIB_SRCS = BaseAddress.cpp \
               io/StreamDisk2DiskCopyStartResponseCnv.cpp \
               io/StreamBasicResponseCnv.cpp \
               io/StreamSetFileGCWeightCnv.cpp \
-              io/StreamStreamReportCnv.cpp \
               io/StreamStringResponseCnv.cpp \
               io/StreamSubRequestCnv.cpp \
               io/StreamStageAbortRequestCnv.cpp \
@@ -147,9 +146,6 @@ STGLIB_SRCS = BaseAddress.cpp \
               rh/FileQryResponse.cpp \
               rh/IOResponse.cpp \
               rh/BasicResponse.cpp \
-              monitoring/AdminStatusCodes.cpp \
-              monitoring/StreamDirection.cpp \
-              monitoring/StreamReport.cpp \
               server/BaseDaemon.cpp \
               server/BaseServer.cpp \
               server/AuthListenerThreadPool.cpp \
@@ -180,15 +176,15 @@ STGLIB_SRCS = BaseAddress.cpp \
               stager/DiskFile.cpp \
               stager/DiskPool.cpp \
               stager/DiskServer.cpp \
+              stager/FileSystem.cpp \
               stager/DiskServerStatusCode.cpp \
+              stager/FileSystemStatusCodes.cpp \
               stager/Disk2DiskCopyDoneRequest.cpp \
               stager/Disk2DiskCopyStartRequest.cpp \
               stager/DLFInit.cpp \
               stager/FileClass.cpp \
               stager/FileRequest.cpp \
               stager/ErrorFileRequest.cpp \
-              stager/FileSystem.cpp \
-              stager/FileSystemStatusCodes.cpp \
               stager/Files2Delete.cpp \
               stager/FilesDeleted.cpp \
               stager/NsFilesDeleted.cpp \
@@ -255,12 +251,7 @@ STGLIB_SRCS = BaseAddress.cpp \
               query/DiskPoolQuery.cpp \
               query/DiskPoolQueryType.cpp \
               query/VersionQuery.cpp \
-              query/VersionResponse.cpp \
-              sharedMemory/BasicBlock.cpp \
-              sharedMemory/LocalBlock.cpp \
-              sharedMemory/BlockKey.cpp \
-              sharedMemory/BlockDict.cpp \
-              sharedMemory/DLFInit.cpp
+              query/VersionResponse.cpp
 
 STAGERLIB_OBJS = \
 		../client/src/stager/stager_client_api_common.o \
@@ -424,7 +415,6 @@ include LOCAL_PATH/db/Makefile
 include LOCAL_PATH/rh/Makefile
 include LOCAL_PATH/vdqm/Makefile
 include LOCAL_PATH/gc/Makefile
-include LOCAL_PATH/monitoring/Makefile
 include LOCAL_PATH/stager/daemon/Makefile
 include LOCAL_PATH/job/Makefile
 include LOCAL_PATH/scheduler/Makefile

@@ -26,7 +26,7 @@
 
 """utility functions for castor tools written in python"""
 
-import os, sys, time, thread, subprocess
+import os, sys, time, thread, subprocess, re
 import dlf
 
 def _checkValueFound(name, value, instance, configFile):

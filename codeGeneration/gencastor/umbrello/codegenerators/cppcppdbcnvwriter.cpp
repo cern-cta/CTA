@@ -770,7 +770,7 @@ void CppCppDbCnvWriter::writeOraSqlStatements() {
                << at->getName() << "');"
                << endl;
       }
-      stream << "END;" << endl;
+      stream << "END;" << endl
              << "/" << endl << endl;
     }
   }

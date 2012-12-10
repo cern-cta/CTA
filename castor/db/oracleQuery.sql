@@ -411,7 +411,7 @@ BEGIN
              sum(getSpace(fs.status + ds.status,
                           fs.totalSize,
                           queryType, dconst.DISKPOOLSPACETYPE_CAPACITY)) AS totalSize,
-             fs.minFreeSpace, fs.maxFreeSpace, fs.status
+             0, fs.maxFreeSpace, fs.status
         FROM FileSystem fs, DiskServer ds, DiskPool dp
        WHERE dp.id = fs.diskPool
          AND ds.id = fs.diskServer
@@ -423,7 +423,7 @@ BEGIN
               getSpace(fs.status + ds.status,
                        fs.totalSize,
                        queryType, dconst.DISKPOOLSPACETYPE_CAPACITY),
-              fs.minFreeSpace, fs.maxFreeSpace, fs.status),
+              fs.maxFreeSpace, fs.status),
              (dp.name, ds.name, ds.status),
              (dp.name)
             )
@@ -439,7 +439,7 @@ BEGIN
              sum(getSpace(fs.status + ds.status,
                           fs.totalSize,
                           queryType, dconst.DISKPOOLSPACETYPE_CAPACITY)) AS totalSize,
-             fs.minFreeSpace, fs.maxFreeSpace, fs.status
+             0, fs.maxFreeSpace, fs.status
         FROM FileSystem fs, DiskServer ds, DiskPool dp,
              DiskPool2SvcClass d2s, SvcClass sc
        WHERE sc.name = svcClassName
@@ -456,7 +456,7 @@ BEGIN
               getSpace(fs.status + ds.status,
                        fs.totalSize,
                        queryType, dconst.DISKPOOLSPACETYPE_CAPACITY),
-              fs.minFreeSpace, fs.maxFreeSpace, fs.status),
+              fs.maxFreeSpace, fs.status),
              (dp.name, ds.name, ds.status),
              (dp.name)
             )
@@ -501,7 +501,7 @@ BEGIN
              sum(getSpace(fs.status + ds.status,
                           fs.totalSize,
                           queryType, dconst.DISKPOOLSPACETYPE_CAPACITY)) AS totalSize,
-             fs.minFreeSpace, fs.maxFreeSpace, fs.status
+             0, fs.maxFreeSpace, fs.status
         FROM FileSystem fs, DiskServer ds, DiskPool dp
        WHERE dp.id = fs.diskPool
          AND ds.id = fs.diskServer
@@ -514,7 +514,7 @@ BEGIN
               getSpace(fs.status + ds.status,
                        fs.totalSize,
                        queryType, dconst.DISKPOOLSPACETYPE_CAPACITY),
-              fs.minFreeSpace, fs.maxFreeSpace, fs.status),
+              fs.maxFreeSpace, fs.status),
              (ds.name, ds.status),
              (dp.name)
             )
@@ -530,7 +530,7 @@ BEGIN
              sum(getSpace(fs.status + ds.status,
                           fs.totalSize,
                           queryType, dconst.DISKPOOLSPACETYPE_CAPACITY)) AS totalSize,
-             fs.minFreeSpace, fs.maxFreeSpace, fs.status
+             0, fs.maxFreeSpace, fs.status
         FROM FileSystem fs, DiskServer ds, DiskPool dp,
              DiskPool2SvcClass d2s, SvcClass sc
        WHERE sc.name = svcClassName
@@ -547,7 +547,7 @@ BEGIN
               getSpace(fs.status + ds.status,
                        fs.totalSize,
                        queryType, dconst.DISKPOOLSPACETYPE_CAPACITY),
-              fs.minFreeSpace, fs.maxFreeSpace, fs.status),
+              fs.maxFreeSpace, fs.status),
              (ds.name, ds.status),
              (dp.name)
             )

@@ -136,28 +136,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_minFreeSpace
-       * Minimum free space that should be kept on this FileSystem. This limit can be
-       * transgressed but the garbage collector will then be launched. This is given as a
-       * fraction of the totalSize.
-       * @return the value of m_minFreeSpace
-       */
-      float minFreeSpace() const {
-        return m_minFreeSpace;
-      }
-
-      /**
-       * Set the value of m_minFreeSpace
-       * Minimum free space that should be kept on this FileSystem. This limit can be
-       * transgressed but the garbage collector will then be launched. This is given as a
-       * fraction of the totalSize.
-       * @param new_var the new value of m_minFreeSpace
-       */
-      void setMinFreeSpace(float new_var) {
-        m_minFreeSpace = new_var;
-      }
-
-      /**
        * Get the value of m_minAllowedFreeSpace
        * Minimum free space that shall be kept on this FileSystem. If this limit is
        * transgressed no jobs will be scheduled on this FileSystem. This is given as a
@@ -220,42 +198,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_readRate
-       * The read rate for the fileSystem
-       * @return the value of m_readRate
-       */
-      u_signed64 readRate() const {
-        return m_readRate;
-      }
-
-      /**
-       * Set the value of m_readRate
-       * The read rate for the fileSystem
-       * @param new_var the new value of m_readRate
-       */
-      void setReadRate(u_signed64 new_var) {
-        m_readRate = new_var;
-      }
-
-      /**
-       * Get the value of m_writeRate
-       * The write rate for the fileSystem
-       * @return the value of m_writeRate
-       */
-      u_signed64 writeRate() const {
-        return m_writeRate;
-      }
-
-      /**
-       * Set the value of m_writeRate
-       * The write rate for the fileSystem
-       * @param new_var the new value of m_writeRate
-       */
-      void setWriteRate(u_signed64 new_var) {
-        m_writeRate = new_var;
-      }
-
-      /**
        * Get the value of m_nbReadStreams
        * Nb of read streams running on this fileSystem
        * @return the value of m_nbReadStreams
@@ -289,24 +231,6 @@ namespace castor {
        */
       void setNbWriteStreams(unsigned int new_var) {
         m_nbWriteStreams = new_var;
-      }
-
-      /**
-       * Get the value of m_nbReadWriteStreams
-       * Nb of read/write streams running on this fileSystem
-       * @return the value of m_nbReadWriteStreams
-       */
-      unsigned int nbReadWriteStreams() const {
-        return m_nbReadWriteStreams;
-      }
-
-      /**
-       * Set the value of m_nbReadWriteStreams
-       * Nb of read/write streams running on this fileSystem
-       * @param new_var the new value of m_nbReadWriteStreams
-       */
-      void setNbReadWriteStreams(unsigned int new_var) {
-        m_nbReadWriteStreams = new_var;
       }
 
       /**
@@ -465,9 +389,6 @@ namespace castor {
 
       std::string m_mountPoint;
 
-      /// Minimum free space that should be kept on this FileSystem. This limit can be transgressed but the garbage collector will then be launched. This is given as a fraction of the totalSize.
-      float m_minFreeSpace;
-
       /// Minimum free space that shall be kept on this FileSystem. If this limit is transgressed no jobs will be scheduled on this FileSystem. This is given as a fraction of the totalSize.
       float m_minAllowedFreeSpace;
 
@@ -477,20 +398,11 @@ namespace castor {
       /// Total size of the fileSystem (given in bytes)
       u_signed64 m_totalSize;
 
-      /// The read rate for the fileSystem
-      u_signed64 m_readRate;
-
-      /// The write rate for the fileSystem
-      u_signed64 m_writeRate;
-
       /// Nb of read streams running on this fileSystem
       unsigned int m_nbReadStreams;
 
       /// Nb of write streams running on this fileSystem
       unsigned int m_nbWriteStreams;
-
-      /// Nb of read/write streams running on this fileSystem
-      unsigned int m_nbReadWriteStreams;
 
       /// Nb of migrator streams running on this fileSystem
       unsigned int m_nbMigratorStreams;

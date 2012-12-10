@@ -525,7 +525,7 @@ int check_path_whitelist(const char *hostname,
     return -1;
   }
 
-  if (getconfent_multi("RmNode", "MountPoints", 1, &white_list, &count)<0) {
+  if (getconfent_multi("DiskManager", "MountPoints", 1, &white_list, &count)<0) {
     white_list = NULL; count = 0;
   } else if (count==0) {
     l_free_strlist(white_list); white_list = NULL;
