@@ -1,5 +1,5 @@
 COMM
-COMM                      castor/scheduler/Imakefile
+COMM                      castor/scheduler/tools/Imakefile
 COMM
 COMM This file is part of the Castor project.
 COMM See http://castor.web.cern.ch/castor
@@ -17,13 +17,13 @@ COMM You should have received a copy of the GNU General Public License
 COMM along with this program; if not, write to the Free Software
 COMM Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 COMM
-COMM Makefile for the CASTOR2 scheduler
+COMM Makefile for the tools of the CASTOR2 scheduler
 COMM
 COMM @author Castor Dev team, castor-dev@cern.ch
 
-InstallNonExecFile(connectionpool.py,$(PYTHON_LIBDIR),644)
-InstallNonExecFile(threadpoolserver.py,$(PYTHON_LIBDIR),644)
-
-include LOCAL_PATH/tools/Makefile
-include LOCAL_PATH/diskmanager/Makefile
-include LOCAL_PATH/transfermanager/Makefile
+InstallTarget(listtransfers,755)
+InstallTarget(draintransfers,755)
+InstallTarget(killtransfers,755)
+EXEMANPAGE(listtransfers)
+EXEMANPAGE(draintransfers)
+EXEMANPAGE(killtransfers)
