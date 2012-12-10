@@ -296,7 +296,7 @@ BEGIN
       vid, fseq, blockId, compression, side, checksum_name, checksum)
     VALUES (varFid, inSegEntry.copyNo, 1, inSegEntry.segSize, '-',
       inSegEntry.vid, inSegEntry.fseq, inSegEntry.blockId,
-      trunc(inSegEntry.segSize*100/inSegEntry.comprSize),
+      CASE inSegEntry.comprSize WHEN 0 THEN 100 ELSE trunc(inSegEntry.segSize*100/inSegEntry.comprSize) END,
       0, inSegEntry.checksum_name, inSegEntry.checksum);
   EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
     -- This can be due to a PK violation or to the unique (vid,fseq) violation. The first
@@ -327,7 +327,7 @@ BEGIN
   COMMIT;
   SELECT inSegEntry.blockId INTO varBlockId FROM Dual;  -- to_char() of a RAW type does not work. This does the trick...
   varParams := 'copyNb='|| inSegEntry.copyNo ||' SegmentSize='|| inSegEntry.segSize
-    ||' Compression='|| trunc(inSegEntry.segSize*100/inSegEntry.comprSize) ||' TPVID='|| inSegEntry.vid
+    ||' Compression='|| CASE inSegEntry.comprSize WHEN 0 THEN 'inf' ELSE trunc(inSegEntry.segSize*100/inSegEntry.comprSize) END ||' TPVID='|| inSegEntry.vid
     ||' fseq='|| inSegEntry.fseq ||' BlockId="' || varBlockId
     ||'" ChecksumType="'|| inSegEntry.checksum_name ||'" ChecksumValue=' || varFCksum;
   addSegResult(0, inReqId, 0, 'New segment information', varFid, varParams);
@@ -473,7 +473,7 @@ BEGIN
       vid, fseq, blockId, compression, side, checksum_name, checksum)
     VALUES (varFid, inSegEntry.copyNo, 1, inSegEntry.segSize, '-',
       inSegEntry.vid, inSegEntry.fseq, inSegEntry.blockId,
-      trunc(inSegEntry.segSize*100/inSegEntry.comprSize),
+      CASE inSegEntry.comprSize WHEN 0 THEN 100 ELSE trunc(inSegEntry.segSize*100/inSegEntry.comprSize) END,
       0, inSegEntry.checksum_name, inSegEntry.checksum);
   EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
     -- There must already be an existing segment at that fseq position for a different file.
@@ -503,7 +503,8 @@ BEGIN
   COMMIT;
   SELECT inSegEntry.blockId INTO varBlockId FROM Dual;  -- to_char() of a RAW type does not work. This does the trick...
   varParams := 'copyNb='|| inSegEntry.copyNo ||' SegmentSize='|| inSegEntry.segSize
-    ||' Compression='|| trunc(inSegEntry.segSize*100/inSegEntry.comprSize) ||' TPVID='|| inSegEntry.vid
+    ||' Compression='|| CASE inSegEntry.comprSize WHEN 0 THEN 'inf' ELSE trunc(inSegEntry.segSize*100/inSegEntry.comprSize) END
+    ||' TPVID='|| inSegEntry.vid
     ||' fseq='|| inSegEntry.fseq ||' blockId="' || varBlockId
     ||'" ChecksumType="'|| inSegEntry.checksum_name ||'" ChecksumValue=' || varFCksum || ' Repack=True';
   addSegResult(0, inReqId, 0, 'New segment information', varFid, varParams);
