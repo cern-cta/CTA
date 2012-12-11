@@ -645,14 +645,6 @@ Resources can be allocated to one or many projects are are composed of a set of 
             <UML:Attribute comment="The new weight of the file(s)" isSpecification="false" visibility="public" xmi.id="151693" type="131662" name="weight" />
            </UML:Classifier.feature>
           </UML:Class>
-          <UML:Class stereotype="53500" isSpecification="false" isLeaf="false" visibility="public" namespace="2105" xmi.id="175262" isRoot="false" isAbstract="false" name="StageRepackRequest" >
-           <UML:GeneralizableElement.generalization>
-            <UML:Generalization xmi.idref="175300" />
-           </UML:GeneralizableElement.generalization>
-           <UML:Classifier.feature>
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="175269" type="137289" name="repackVid" />
-           </UML:Classifier.feature>
-          </UML:Class>
           <UML:Class isSpecification="false" isLeaf="false" visibility="public" namespace="2105" xmi.id="DMKAs4xmumsq" isRoot="false" isAbstract="false" name="StageDiskCopyReplicaRequest" >
            <UML:GeneralizableElement.generalization>
             <UML:Generalization xmi.idref="yNUQdd97KTbi" />
@@ -773,16 +765,6 @@ Resources can be allocated to one or many projects are are composed of a set of 
            </UML:GeneralizableElement.generalization>
            <UML:Classifier.feature>
             <UML:Attribute comment="UUID of the referenced request. Deprecated." isSpecification="false" visibility="public" xmi.id="SweoL0lKLBD0" type="137289" name="parentUuid" />
-           </UML:Classifier.feature>
-          </UML:Class>
-          <UML:Class stereotype="53501" isSpecification="false" isLeaf="false" visibility="public" namespace="2105" xmi.id="TLM3KBxc70iv" isRoot="false" isAbstract="false" name="StageRepackRequestStatusCodes" >
-           <UML:Classifier.feature>
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="XrRCkN5YTXUp" initialValue="0" type="zOogYpE5st4r" name="REPACK_STARTING" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="M7QH8AumHzI3" initialValue="1" type="zOogYpE5st4r" name="REPACK_ONGOING" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="zR4kuFIP6jZq" initialValue="2" type="2142" name="REPACK_FINISHED" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="4cPVAtIUyhl6" initialValue="3" type="2153" name="REPACK_FAILED" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="rfr7c78aWAKQ" initialValue="4" type="2165" name="REPACK_ABORTING" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="rfr7c78aWAKR" initialValue="5" type="2165" name="REPACK_ABORTED" />
            </UML:Classifier.feature>
           </UML:Class>
          </UML:Namespace.ownedElement>
@@ -1273,17 +1255,10 @@ Concerning the user list, an empty list means all users and all groups are conce
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="159992" client="159985" name="" supplier="1216" />
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="159995" client="159962" name="" supplier="1216" />
       <UML:Generalization isSpecification="false" child="160031" visibility="public" namespace="1" xmi.id="160032" parent="696" discriminator="" name="" />
-      <UML:Generalization isSpecification="false" child="175262" visibility="public" namespace="1" xmi.id="175300" parent="46353" discriminator="" name="" />
       <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="skyxC60JJSpz" name="" >
        <UML:Association.connection>
         <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="7g8i0YCgff2F" aggregation="composite" type="16310" name="" />
         <UML:AssociationEnd comment="Admin status of the DiskServer" isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="Xkq3ioFHrIbM" aggregation="none" type="179343" name="adminStatus" multiplicity="1" />
-       </UML:Association.connection>
-      </UML:Association>
-      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="AssocRepackStatus" name="" >
-       <UML:Association.connection>
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="NM8XbZgiFmPD" aggregation="composite" type="175262" name="" />
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="JbryHsBoczpK" aggregation="none" type="TLM3KBxc70iv" name="status" multiplicity="1" />
        </UML:Association.connection>
       </UML:Association>
       <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="jgl37Y0mg2gS" name="" >
@@ -1719,7 +1694,6 @@ Concerning the user list, an empty list means all users and all groups are conce
          <classwidget usesdiagramfillcolor="1" width="410" showattsigs="600" x="16" fillcolor="none" y="546" showopsigs="601" linewidth="none" height="54" usefillcolor="1" showpubliconly="1" showattributes="1" isinstance="0" xmi.id="44732" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,50,0,0,0,0,0" linecolor="none" />
          <classwidget usesdiagramfillcolor="1" width="440" showattsigs="600" x="12" fillcolor="none" y="623" showopsigs="601" linewidth="none" height="54" usefillcolor="1" showpubliconly="1" showattributes="1" isinstance="0" xmi.id="44733" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,50,0,0,0,0,0" linecolor="none" />
          <classwidget usesdiagramfillcolor="1" width="320" showattsigs="600" x="383" fillcolor="none" y="865" showopsigs="601" linewidth="none" height="54" usefillcolor="1" showpubliconly="1" showattributes="1" isinstance="0" xmi.id="44735" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-         <classwidget usesdiagramfillcolor="1" width="350" showattsigs="600" x="782" fillcolor="none" y="751" showopsigs="601" linewidth="none" height="63" usefillcolor="1" showpubliconly="1" showattributes="1" isinstance="0" xmi.id="175262" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,50,0,0,0,0,0" linecolor="none" />
          <classwidget usesdiagramfillcolor="1" width="310" showattsigs="600" x="844" fillcolor="none" y="644" showopsigs="601" linewidth="none" height="54" usefillcolor="1" showpubliconly="1" showattributes="1" isinstance="0" xmi.id="44737" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,50,0,0,0,0,0" linecolor="none" />
          <classwidget usesdiagramfillcolor="1" width="350" showattsigs="600" x="514" fillcolor="none" y="950" showopsigs="601" linewidth="none" height="54" usefillcolor="1" showpubliconly="1" showattributes="1" isinstance="0" xmi.id="44736" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,50,0,0,0,0,0" linecolor="none" />
          <classwidget usesdiagramfillcolor="1" width="292" showattsigs="600" x="1207" fillcolor="none" y="194" drawascircle="0" showopsigs="601" linewidth="none" height="135" usefillcolor="1" showpubliconly="1" showattributes="1" isinstance="0" xmi.id="72046" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,50,0,0,0,0,0" linecolor="none" />
@@ -1848,12 +1822,6 @@ Concerning the user list, an empty list means all users and all groups are conce
           <linepath>
            <startpoint startx="543" starty="865" />
            <endpoint endx="645" endy="617" />
-          </linepath>
-         </assocwidget>
-         <assocwidget totalcounta="2" indexa="1" totalcountb="8" indexb="6" linewidth="none" widgetbid="46353" widgetaid="175262" xmi.id="175300" type="500" linecolor="none" >
-          <linepath>
-           <startpoint startx="957" starty="751" />
-           <endpoint endx="751" endy="617" />
           </linepath>
          </assocwidget>
          <assocwidget totalcounta="2" indexa="1" totalcountb="8" indexb="7" linewidth="none" widgetbid="46353" widgetaid="44737" xmi.id="47164" type="500" linecolor="none" >
@@ -2363,17 +2331,6 @@ Concerning the user list, an empty list means all users and all groups are conce
         <listitem open="0" type="814" id="e8IhoFD1R0eK" />
         <listitem open="0" type="814" id="i67A7kUtoT9r" />
         <listitem open="0" type="814" id="5mwbyTV5ZtrA" />
-       </listitem>
-       <listitem open="0" type="813" id="175262" >
-        <listitem open="0" type="814" id="175269" />
-       </listitem>
-       <listitem open="0" type="813" id="TLM3KBxc70iv" >
-        <listitem open="0" type="814" id="XrRCkN5YTXUp" />
-        <listitem open="0" type="814" id="M7QH8AumHzI3" />
-        <listitem open="0" type="814" id="zR4kuFIP6jZq" />
-        <listitem open="0" type="814" id="4cPVAtIUyhl6" />
-        <listitem open="0" type="814" id="rfr7c78aWAKQ" />
-        <listitem open="0" type="814" id="rfr7c78aWAKR" />
        </listitem>
        <listitem open="0" type="813" id="44737" />
        <listitem open="0" type="813" id="44736" />
