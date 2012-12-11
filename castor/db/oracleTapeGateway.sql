@@ -742,7 +742,7 @@ BEGIN
        AND MJ.castorFile = CF.id
        AND CF.fileId = inFileId
        AND CF.nsHost = inNsHost
-       AND nbRetries < TO_NUMBER(getConfigOption('Migration', 'MaxNbMounts', 7)))
+       AND nbRetries <= TO_NUMBER(getConfigOption('Migration', 'MaxNbMounts', 7)))
     SET nbRetries = nbRetries + 1,
         status = tconst.MIGRATIONJOB_PENDING,
         vid = NULL,
