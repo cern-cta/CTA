@@ -2455,6 +2455,7 @@ CREATE OR REPLACE PROCEDURE selectCastorFileInternal (fId IN INTEGER,
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
   previousLastKnownFileName VARCHAR2(2048);
   fcId NUMBER;
+  varReqType INTEGER;
 BEGIN
   -- Resolve the fileclass
   BEGIN
@@ -2490,7 +2491,20 @@ BEGIN
                           lastKnownFileName = normalizePath(fn)
      WHERE id = rid;
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET castorFile = rid
-     WHERE id = srId;
+     WHERE id = srId
+     RETURNING reqType INTO varReqType;
+    IF varReqType IN (37, 38, 40, 44) THEN  -- all write operations
+      UPDATE CastorFile SET lastUpdateTime = lut
+       WHERE id = rid;
+    ELSE
+      -- On pure read operations, we should actually check whether our disk cache is stale,
+      -- that is IF CF.lastUpdateTime < lut THEN invalidate our diskcopies.
+      -- This is pending the full implementation of bug #95189: Time discrepencies between
+      -- disk servers and name servers can lead to silent data loss on input.
+      -- The problem being that lut is the namespace's mtime, which can be modified by nstouch,
+      -- hence nstouch followed by a Get would destroy the data on disk!
+      NULL;
+    END IF;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- we did not find the file, let's create a new one
     -- take care that the name of the new file is not already the lastKnownFileName
