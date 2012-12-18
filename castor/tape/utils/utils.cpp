@@ -112,6 +112,10 @@ void castor::tape::utils::toHex(uint32_t number, char *buf, size_t len)
 void castor::tape::utils::splitString(const std::string &str,
   const char separator, std::vector<std::string> &result) throw() {
 
+  if(str.empty()) {
+    return;
+  }
+
   std::string::size_type beginIndex = 0;
   std::string::size_type endIndex   = str.find(separator);
 
@@ -121,6 +125,8 @@ void castor::tape::utils::splitString(const std::string &str,
     endIndex = str.find(separator, endIndex);
   }
 
+  // If no separator could not be found then simply append the whole input
+  // string to the result
   if(endIndex == std::string::npos) {
     result.push_back(str.substr(beginIndex, str.length()));
   }
