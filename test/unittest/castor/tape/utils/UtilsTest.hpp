@@ -307,30 +307,91 @@ public:
     CPPUNIT_ASSERT_MESSAGE("path appended", combinedPaths == getenvResult);
   }
 
-  void testSplitString() {
-    const std::string line("col1 col2 col3 col4 col5 col6 col7 col8");
+  /**
+   * Tests the good day senario of passing a multi-column string to the
+   * splitString() method.
+   */
+  void testGoodDaySplitString() {
+    const std::string line("col0 col1 col2 col3 col4 col5 col6 col7");
     std::vector<std::string> columns;
 
-    splitString(line, ' ', columns);
+    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+      "Checking splitString does not throw an exception",
+      splitString(line, ' ', columns));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Checking columns.size()",
+      (std::vector<std::string>::size_type)8,
+      columns.size());
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Checking columns[0]",
+      std::string("col0"),
+      columns[0]);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Checing columns[1]",
+      std::string("col1"),
+      columns[1]);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Checking columns[2]",
+      std::string("col2"),
+       columns[2]);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Checking columns[3]",
+      std::string("col3"),
+      columns[3]);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Checking columns[4]",
+      std::string("col4"),
+      columns[4]);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "columns[5]",
+      std::string("col5"),
+      columns[5]);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "columns[6]",
+      std::string("col6"),
+       columns[6]);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "columns[7]",
+      std::string("col7"),
+      columns[7]);
+  }
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("columns.size()",
-      (std::vector<std::string>::size_type)8, columns.size());
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("columns[0]",
-      std::string("col1"), columns[0]);
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("columns[0]",
-      std::string("col2"), columns[1]);
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("columns[0]",
-      std::string("col3"), columns[2]);
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("columns[0]",
-      std::string("col4"), columns[3]);
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("columns[0]",
-      std::string("col5"), columns[4]);
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("columns[0]",
-      std::string("col6"), columns[5]);
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("columns[0]",
-      std::string("col7"), columns[6]);
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("columns[0]",
-      std::string("col8"), columns[7]);
+  /**
+   * Test the case of an empty string being passed to the splitString() method.
+   */
+  void testSplitStringWithEmptyString() {
+    const std::string emptyString;
+    std::vector<std::string> columns;
+
+    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+      "Checking splitString does not throw an exception",
+      splitString(emptyString, ' ', columns));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Checking columns.size()",
+      (std::vector<std::string>::size_type)0,
+      columns.size());
+  }
+
+  /**
+   * Test the case of a non-empty string containing no separator character
+   * passed to the splitString() method.
+   */
+  void testSplitStringWithNoSeparatorInString() {
+    const std::string stringContainingNoSeparator =
+      "stringContainingNoSeparator";
+    std::vector<std::string> columns;
+
+    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+      "Checking splitString does not throw an exception",
+      splitString(stringContainingNoSeparator, ' ', columns));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Checking columns.size()",
+      (std::vector<std::string>::size_type)1,
+      columns.size());
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Checking columns[0]",
+      stringContainingNoSeparator,
+      columns[0]);
   }
 
   void testTimevalGreaterThan_BigSecSmallSec_BigUsecSmallUsec() {
@@ -510,7 +571,9 @@ public:
   CPPUNIT_TEST(testAppendPathToUnsetEnvVar);
   CPPUNIT_TEST(testAppendPathToEmptyEnvVar);
   CPPUNIT_TEST(testAppendPathToNonEmptyEnvVar);
-  CPPUNIT_TEST(testSplitString);
+  CPPUNIT_TEST(testGoodDaySplitString);
+  CPPUNIT_TEST(testSplitStringWithEmptyString);
+  CPPUNIT_TEST(testSplitStringWithNoSeparatorInString);
   CPPUNIT_TEST(testTimevalGreaterThan_BigSecSmallSec_BigUsecSmallUsec);
   CPPUNIT_TEST(testTimevalGreaterThan_BigSecSmallSec_BigUsecSmallUsec_swapped);
   CPPUNIT_TEST(testTimevalGreaterThan_BigSecSmallSec_SmallUsecBigUsec);
