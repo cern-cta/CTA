@@ -8,9 +8,11 @@
 
     <link href="/static/css/bootstrap.css" rel="stylesheet" />
     <link href="/static/css/base.css" rel="stylesheet" />
+    <link href="/static/css/cockpit-graph.css" rel="stylesheet" />
     <link href="/static/css/jquery-ui-1.9.1.custom.css" rel="Stylesheet" />
 
     <script type="text/javascript" src="/static/js/jquery-1.8.2.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery-ajax-django.js"></script>
     <script type="text/javascript" src="/static/js/jquery-ui-1.9.1.custom.min.js"></script> 
     <script type="text/javascript" src="/static/js/highstock.js"></script>
     <script type="text/javascript" src="/static/js/modules/exporting.js"></script>
@@ -43,7 +45,7 @@
                         <div class="accordion-inner">
                             <ul class="unstyled">
                             {% for metric in metrics.dict|get:category %}
-                            <li><a href="/metric/{{ metric }}" class="{% if metric_name and metric_name == metric %}metric current{% endif %}">{{ metric }}</a> {% if metric_name and metric_name == metric %}<img src="/static/img/info.png" class="metric-info-button" />{% endif %}</li>
+                            <li><a href="/metric/{{ metric }}" class="{% if metric_name and metric_name == metric %}metric current{% endif %}" title="{{ metric }}">{{ metric }}</a> {% if metric_name and metric_name == metric %}<img src="/static/img/info.png" class="metric-info-button" />{% endif %}</li>
                             {% endfor %}
                             </ul>
                         </div>

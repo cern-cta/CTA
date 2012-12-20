@@ -1,10 +1,9 @@
 <div class="filter-container">
     <div class="quick-filter">
         Quick data filter : 
-        <input class="data-filter btn" type="submit" value="last 3 hours" /> 
-        <input class="data-filter btn" type="submit" value="last day" /> 
-        <input class="data-filter btn" type="submit" value="last 3 days" /> 
-        <!-- <input class="data-filter" type="submit" value="all data" />-->
+        <button class="data-filter btn" value="last 3 hours">last 3 hours</button>
+        <button class="data-filter btn" value="last day">last day</button>
+        <button class="data-filter btn" value="last 3 days">last 3 days</button>
         <br />
         <a class="toggle-filter">>Switch to advanced filter</a>
     </div>
@@ -12,7 +11,7 @@
         Advanced data filter : 
         FROM <input type="text" class="datepicker-from" size="8"/> 
         TO <input type="text" class="datepicker-to" size="8"/> 
-        <input type="submit" value="Filter" class="do-advanced-filter btn" /> 
+        <button class="do-advanced-filter btn">Filter</button>
         <br />
         <a class="toggle-filter">>Switch to quick filter</a>
     </div>
@@ -20,14 +19,7 @@
 
 <div class="plot-options">
     Visualization options :
-    <input class="toggle-log-scale btn" type="submit" value="Logarithmic scale" title="Display data using logarithmic scale" />
-    Graph type :
-    <select class="graph-type">
-        <option value="timeline">Timeline</option>
-        <option value="sum">Sum</option>
-        <option value="stacked">Stacked</option>
-        <!--<option value="average">Average</option> -->
-    </select>
+    <button class="toggle-log-scale btn" title="Display data using logarithmic scale">Logarithmic scale</button>
     Auto-refresh : 
     <select class="auto-refresh">
         <option value="0">Disabled</option>
@@ -36,6 +28,25 @@
         <option value="300000">5 min</option>
     </select>
     <button class="hide-all-series btn">Hide all series</button>
+    <button class="advanced-options btn">Advanced options</button>
+    <div class="advanced-options">
+        <p>
+            Graph type :
+            <select class="graph-type">
+            </select>
+            Operation : 
+            <select class="graph-operator">
+                <option value="None">None</option>
+                <option value="*">*</option>
+                <option value="/">/</option>
+                <option value="+">+</option>
+                <option value="-">-</option>
+            </select>
+            by : 
+            <input type="text" class="graph-operand" size="5" />
+            {# TODO <button class="stack-lemon-metric btn"><img src="/static/img/plus.png" /><span>Stack a Lemon metric</span><img src="/static/img/lemon_16.ico" /></button> #}
+        </p>
+    </div>
     <a class="refresh-plot">
         <img src="/static/img/update.png" title="Refresh chart" alt="Refresh chart" />
     </a>

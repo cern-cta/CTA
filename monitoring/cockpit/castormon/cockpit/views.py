@@ -2,6 +2,7 @@ import rpyc
 import datetime, math
 import urllib, urllib2
 import os
+import sys
 
 from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.http import HttpResponse, HttpResponseRedirect
@@ -13,12 +14,12 @@ from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 
 from castormon.cockpit.models import MetricData, Metric
+from castormon.cockpit.graph import CockpitGraph
 
 
 ###################################################################################################
 #                               "API" for the RPyC server
 ###################################################################################################
-
 def _get_rpyc_connexion():
     """
     return an RPyC connexion
@@ -67,25 +68,24 @@ def _get_statistics_pages():
 ###################################################################################################
 #                               Misc
 ###################################################################################################
-
 def _get_metrics():
-    metrics = dict()
+    """ Used to fetch the metrics and their categories """
+    catego_metrics = dict()
     for m in Metric.objects.all():
         if m.category:
             category = m.category
         else:
             category = 'Unsorted'
-        if category in metrics:
-            metrics[category].append(m.name)
-            metrics[category].sort()
+        if category in catego_metrics:
+            catego_metrics[category].append(m.name)
+            catego_metrics[category].sort()
         else:
-            metrics[category] = [m.name]
-    return {'keys' : sorted(metrics.keys()), 'dict' : metrics}
+            catego_metrics[category] = [m.name]
+    return {'keys' : sorted(catego_metrics.keys()), 'dict' : catego_metrics}
+
 
 def _update_metrics_info():
-    """
-    update the local infos about the running metrics
-    """
+    """ Update the local infos about the running metrics """
     conn = _get_rpyc_connexion()
     ## firs step : add new metric
     metrics_names = _get_metrics_names() # get the names of the running metrics
@@ -123,124 +123,12 @@ def _update_metrics_info():
             # secondly delete the metric info
             metric.delete()
 
-# here we define what we do to format the data, according on the requested format
-def _format_data_timeline(result_data, nb_group_keys):
-    return result_data
-
-def _format_data_sum(result_data, nb_group_keys):
-    if nb_group_keys == 0:
-        # we merge and add the elements of the lists one bye one
-        data = reduce((lambda x, y : [math.fsum(tup) for tup in zip(x, y)]),
-                      [raw[1] for raw in result_data])
-    elif nb_group_keys == 1:
-        data = dict()
-        # first get all the keys
-        for key in result_data[0][1].keys():
-            # then loop over the data for every key
-            for md in result_data:
-                for i in range(len(md[1][key])):
-                    try:
-                        if md[1][key][i]: # handle None
-                         data[key][i] += md[1][key][i]
-                    except KeyError:
-                        data[key] = list()
-                        for d in md[1][key]:
-                            # initialize with zeroes
-                            data[key].append(0)
-                        if md[1][key][i]: # handle None
-                            data[key][i] += md[1][key][i]
-    elif nb_group_keys == 2:
-        data = dict()
-        data['keys1'] = list()
-        data['keys2'] = list()
-        for md in result_data:
-            for key1 in md[1].keys():
-                if key1 not in data.keys():
-                    if key1 not in data['keys1'] : data['keys1'].append(key1)
-                    data[key1] = dict()
-                for key2 in md[1][key1]:
-                    if key2 not in data[key1].keys():
-                        if key2 not in data['keys2'] : data['keys2'].append(key2)
-                        data[key1][key2] = list()
-                        for d in md[1][key1][key2]:
-                            # initialize with zeroes
-                            data[key1][key2].append(0)
-                    for i in range(len(md[1][key1][key2])):
-                        if md[1][key1][key2][i]: # handle None
-                            data[key1][key2][i] += md[1][key1][key2][i]
-        # sort the keys !
-        data['keys1'].sort()
-        data['keys2'].sort()
-    else:
-        data = list()
-    return data
-    
-def _format_data_average(result_data, nb_group_keys):
-    if nb_group_keys == 0:
-        # we merge and add the elements of the lists one bye one
-        _sum = reduce((lambda x, y : [math.fsum(tup) for tup in zip(x, y)]),
-                      [raw[1] for raw in result_data])
-        data = [float(subsum) / len(result_data) for subsum in _sum]
-    elif nb_group_keys == 1:
-        data = dict()
-        # first get all the keys
-        for key in result_data[0][1].keys():
-            nb_datakeys = len(result_data[0][1][key])
-            # then loop over the data for every key
-            for md in result_data:
-                for i in range(nb_datakeys):
-                    try:
-                        data[key][i] += md[1][key][i]
-                    except KeyError:
-                        data[key] = list()
-                        for d in range(nb_datakeys):
-                            data[key].append(0)
-                        data[key][i] += md[1][key][i]
-            for i in range(nb_datakeys):
-                data[key][i] = float(data[key][i]) / len(result_data)
-    elif nb_group_keys == 2:
-        data = dict()
-        data['keys1'] = list()
-        data['keys2'] = list()
-        for md in result_data:
-            for key1 in md[1].keys():
-                if key1 not in data.keys():
-                    if key1 not in data['keys1'] : data['keys1'].append(key1)
-                    data[key1] = dict()
-                for key2 in md[1][key1]:
-                    if key2 not in data[key1].keys():
-                        if key2 not in data['keys2'] : data['keys2'].append(key2)
-                        data[key1][key2] = list()
-                        for d in md[1][key1][key2]:
-                            # initialize with zeroes
-                            data[key1][key2].append(0)
-                    for i in range(len(md[1][key1][key2])):
-                        data[key1][key2][i] += md[1][key1][key2][i]
-        for key1 in data.keys():
-            if key1 in ['keys1','keys2']: continue
-            for key2 in data[key1].keys():
-                for i in range(len(data[key1][key2])):
-                    data[key1][key2][i] = float(data[key1][key2][i]) / len(result_data)
-        # sort the keys !
-        data['keys1'].sort()
-        data['keys2'].sort()
-    else:
-        data = list()
-    return data
-
-_format_data = {
-    "timeline"  : _format_data_timeline,
-    "sum"       : _format_data_sum,
-    "average"   : _format_data_average,
-}
 
 ###################################################################################################
 #                                   Django Views
 ###################################################################################################
 def home(request, template_name):
-    """
-    Simple home and sls overview
-    """
+    """ Simple home and sls overview """
     return render_to_response(template_name,
                               {'metrics' : _get_metrics(),
                                'statistics_pages' : _get_statistics_pages(),
@@ -264,14 +152,12 @@ def statistics(request, page):
                                'rpyc_status' : _get_server_status()},
                               context_instance=RequestContext(request))
 
-
 def display_metric(request, metric_name = None):
     """
     display the data of the given metric
     :param metric_name:
     """
-
-    metrics_names = [m.name for m in Metric.objects.all()]
+    metrics_names = [ m.name for m in Metric.objects.all() ]
 
     if metric_name not in metrics_names:
         messages.info(request, 'This metric does not exist.')
@@ -289,268 +175,12 @@ def display_metric(request, metric_name = None):
                               context_instance=RequestContext(request))
 
 
-def get_metric_data(request, metric_name, timestamp_from=None, timestamp_to=None, format_type=None):
-    """
-    return the data for the given metric
-    NB : used only by ajax calls
-    :param metric_name:
-    :param timestamp_from:
-    :param timestamp_to:
-    :param format_type: the type of data you want (timeline, sum, average, ...)
-    """
-    bt = datetime.datetime.now() # debug
-    res = dict()
-    res['debug'] = dict()# debug
-    res['debug']['start'] = str(bt)# debug
-    
-    metric = get_object_or_404(Metric, name=metric_name)
-    groupkeys = simplejson.loads(metric.groupbykeys)
-    res['datakeys'] = simplejson.loads(metric.data)[1]
-    res['unit'] = metric.unit
-
-    ###############################################################################################
-    # Handle Top data
-    ###############################################################################################
-    if [datakey for datakey in res['datakeys'] if "Top" in datakey ]:
-        res['data'] = None
-        res['groupby'] = 'Top'
-        # Fetch data from DB : get only the LAST record !
-        try:
-            metric_data = MetricData.objects.filter(name=metric_name).order_by('-timestamp')[:1][0]
-        except IndexError:
-            res['debug']['end'] = str(datetime.datetime.now())# debug
-            return HttpResponse(simplejson.dumps(res))
-        data = simplejson.loads(metric_data.data)
-        res['categories'] = data.keys()
-
-        ###########################################################################################
-        # 0) No group key
-        ###########################################################################################
-        if len(groupkeys) == 1 and groupkeys[0] == "NONE" :
-            pass
-
-        ###########################################################################################
-        # 1) one group key
-        ###########################################################################################
-        elif len(groupkeys) == 1 and groupkeys[0] != "NONE" :
-            data_list = dict()
-            # First, fetch the series for highchart ()
-            # series_nb = sum([ len(s) for s in [b[0].keys() for b in data.values()]])
-            for index_cat, key in enumerate(res['categories']):
-                for serie in data[key][0].items():
-                    serie_list = [ None for i in range(len(res['categories']) - 1) ]
-                    serie_list.insert(index_cat, serie[1])
-                    data_list[serie[0]] = serie_list
-
-            res['data'] = [metric_data.timestamp, data_list]
-
-        ###########################################################################################
-        # 2) two group keys
-        ###########################################################################################
-        elif len(groupkeys) == 2 :
-            pass
-
-        res['debug']['end'] = str(datetime.datetime.now())# debug
-        return HttpResponse(simplejson.dumps(res))
-    
-
-    ###############################################################################################
-    ###############################################################################################
-    ###############################################################################################
-    ###############################################################################################
-    # Handle non-top data
-    ###############################################################################################
-    # fetch data from DB
-    if timestamp_from:
-        if timestamp_to:
-            metric_data = MetricData.objects.filter(name=metric_name).filter(timestamp__gt=timestamp_from).filter(timestamp__lt=timestamp_to).order_by('timestamp')
-        else:
-            metric_data = MetricData.objects.filter(name=metric_name).filter(timestamp__gt=timestamp_from).order_by('timestamp')
-    else:
-        # no from nor to : we take all the data for this metric
-        metric_data = MetricData.objects.filter(name=metric_name).order_by('timestamp')
-
-   
-    ###############################################################################################
-    #   we need to know how many groupby keys there are
-    ###############################################################################################
-    #   0) No group key, we plot the data "as is"
-    ###############################################################################################
-    if len(groupkeys) == 1 and groupkeys[0] == "NONE" :
-        res['groupby'] = 0
-        result_data = list()
-        for md in metric_data:
-            try:
-                result_data.append([md.timestamp, simplejson.loads(md.data)["Grouped by NONE"]])
-            except KeyError:
-                continue
-        # here we handle counterhz datakey
-        if "CounterHz" in res['datakeys']:
-            position = res['datakeys'].index("CounterHz") # get position in the list
-            for d in result_data:
-                tmp = d[1].pop(position)
-                freq = tmp / float(metric.window)
-                d[1].insert(position, freq)
-        # format the data according to the requested format, default is timeline
-        res['data'] = _format_data.get(format_type, _format_data_timeline)(result_data, 0)
-   
-    ###############################################################################################
-    #   1) one group key
-    ###############################################################################################
-    elif len(groupkeys) == 1 and groupkeys[0] != "NONE" :
-        #res['debug']['begin process'] = str(datetime.datetime.now())# debug
-        res['groupby'] = 1
-        result_data = list()
-        res['groupkeys'] = list()
-        # get ALL the groupby keywords for future process (we don't want to miss a groupby)
-        for md in metric_data:
-            for groupk in simplejson.loads(md.data).keys():
-                if groupk not in res['groupkeys']:
-                    res['groupkeys'].append(groupk)
-        # sort the keys !
-        res['groupkeys'].sort()
-        ## add the data
-        #res['debug']['begin add data'] = str(datetime.datetime.now())# debug
-        for md in metric_data:
-            l = [md.timestamp, simplejson.loads(md.data)]
-            # check if we didnt miss a groupkey, if so fill it with null (None)
-            for groupk in res['groupkeys']:
-                if groupk not in l[1].keys():
-                    l[1][groupk] = []
-                    for datakey in res['datakeys']:
-                        # we add as much zero as there are datakeys
-                        l[1][groupk].append(None)
-                # handle avg (list)
-                for index, entry in enumerate(l[1][groupk]):
-                    if type(entry) is list:
-                        l[1][groupk][index] = l[1][groupk][index][0]
-            result_data.append(l)
-        # here we handle counterhz datakey
-        #res['debug']['begin counterhz'] = str(datetime.datetime.now())# debug
-        if "CounterHz" in res['datakeys']:
-            position = res['datakeys'].index("CounterHz") # get position in the list
-            for l in result_data:
-                for groupk in res['groupkeys']:
-                    if not l[1][groupk][position]: # special case 0 or None
-                        tmp = l[1][groupk].pop(position)
-                        freq = 0 
-                        l[1][groupk].insert(position, freq)
-                    tmp = l[1][groupk].pop(position)
-                    freq = tmp / float(metric.window)
-                    l[1][groupk].insert(position, freq)
-        # format the data according to the requested format, default is timeline
-        res['data'] = _format_data.get(format_type, _format_data_timeline)(result_data, 1)
-
-    ###############################################################################################
-    #   2) two group keys
-    ###############################################################################################
-    elif len(groupkeys) == 2 :
-        res['groupby'] = 2
-        res['groupcategories'] = groupkeys
-        res['keys1'] = list()
-        res['keys2'] = list()
-        result_data = list()
-        # get ALL the groupby keywords for future process (we don't want to miss a groupby)
-        for md in metric_data:
-            data = simplejson.loads(md.data)
-            for key1 in data.keys():
-                if key1 not in res['keys1']:
-                    res['keys1'].append(key1)
-                for key2 in data[key1].keys():
-                    if key2 not in res['keys2']:
-                        res['keys2'].append(key2)
-        # sort the keys !
-        res['keys1'].sort()
-        res['keys2'].sort()
-        for md in metric_data:
-            l = [ md.timestamp, simplejson.loads(md.data)]
-            for key1 in res['keys1']:
-                if key1 not in l[1].keys():
-                    l[1][key1] = dict()
-                for key2 in res['keys2']:
-                    if key2 not in l[1][key1].keys():
-                        l[1][key1][key2] = []
-                        for datakey in res['datakeys']:
-                            # we add as much zero as there are datakeys
-                            l[1][key1][key2].append(None)
-            result_data.append(l)
-        # here we handle counterhz datakey
-        #res['debug']['begin counterhz'] = str(datetime.datetime.now())# debug
-        if "CounterHz" in res['datakeys']:
-            position = res['datakeys'].index("CounterHz") # get position in the list
-            for l in result_data:
-                for key1 in res['keys1']:
-                    for key2 in res['keys2']:
-                        if not l[1][key1][key2][position]: # skip if 0
-                            tmp = l[1][key1][key2].pop(position)
-                            freq = 0
-                            l[1][key1][key2].insert(position, freq)
-                        tmp = l[1][key1][key2].pop(position)
-                        freq = tmp / float(metric.window)
-                        l[1][key1][key2].insert(position, freq)
-        # format the data according to the requested format, default is timeline
-        res['data'] = _format_data.get(format_type, _format_data_timeline)(result_data, 2)
-
-    ###############################################################################################
-    #   3) three group keys
-    ###############################################################################################
-    elif len(groupkeys) == 3 :
-        res['groupby'] = 3
-        res['groupcategories'] = groupkeys
-        result_data = dict()
-        result_data['keys1'] = list()
-        result_data['keys2'] = list()
-        # build result dictionnary
-        for md in metric_data:
-            data = simplejson.loads(md.data)
-            # for each lvl 1 key
-            for key1 in data.keys():
-                # init the key
-                if key1 not in result_data['keys1']:
-                    result_data['keys1'].append(key1)
-                    result_data[key1] = dict()
-                    result_data[key1]['keys2'] = list()
-                # for each lvl 2 key
-                for key2 in data[key1].keys():
-                    #init the key
-                    if key2 not in result_data[key1]['keys2']:
-                        result_data[key1]['keys2'].append(key2)
-                        result_data[key1]['keys2'].sort()
-                        result_data['keys2'].append(key2)
-                        result_data[key1][key2] = dict()
-                        result_data[key1][key2]['keys3'] = list()
-                        result_data[key1][key2]['sum'] = [ 0 for i in range(len(res['datakeys']))]
-                        #result_data[key1][key2]['avg'] = list()
-                    # for each lvl 3 key
-                    for key3 in data[key1][key2].keys():
-                        # init the key
-                        if key3 not in result_data[key1][key2]['keys3']:
-                            result_data[key1][key2]['keys3'].append(key3)
-                            result_data[key1][key2]['keys3'].sort()
-                            result_data[key1][key2][key3] = dict()
-                            result_data[key1][key2][key3]['sum'] = [ 0 for i in range(len(res['datakeys']))]
-                        # compute the sum of lvl 3
-                        for i in range(len(res['datakeys'])):
-                            result_data[key1][key2][key3]['sum'][i] += data[key1][key2][key3][i]
-                        # compute the sum of lvl 2
-                        for i in range(len(res['datakeys'])):
-                            result_data[key1][key2]['sum'][i] += data[key1][key2][key3][i]
-        result_data['keys1'].sort()
-        result_data['keys2'] = list(set(result_data['keys2'])) # to remove duplicate
-        result_data['keys2'].sort()
-        res['data'] = result_data
-
-    ###############################################################################################
-    res['debug']['end'] = str(datetime.datetime.now())# debug
-
-    return HttpResponse(simplejson.dumps(res))
-
-
+###################################################################################################
+#                               Reception of the MAE pushed data
+###################################################################################################
 @csrf_exempt
 def pushdata(request):
-    """
-    Method used to push data via a POST HTTP request
-    """
+    """ Method used to push data via a POST HTTP request """
     begin_time = datetime.datetime.now() # debug
     debug = dict() # debug
 
@@ -566,7 +196,7 @@ def pushdata(request):
         metrics_names = data.keys()
 
         if set([m.name for m in Metric.objects.all()]) != set(metrics_names):
-            # check if we have new/removed metrics (set are unordered)
+            # check if we have new/removed metrics (sets are unordered)
             _update_metrics_info()
 
         for m in metrics_names:
@@ -593,4 +223,29 @@ def pushdata(request):
         msg = "delta : "+str(delta)+" -- "+simplejson.dumps(debug)+" -- "+simplejson.dumps(data) # debug
         return HttpResponse('ok '+msg, status=200) # 200 OK
 
+
+###################################################################################################
+#                                   Used By AJAX
+###################################################################################################
+@csrf_exempt
+def get_metric_data(request):
+    """
+    return the data for the given metric
+    NB : used only by ajax calls
+    """
+    res = dict()
+    debug = dict()
+    debug['start'] = datetime.datetime.now() # debug
+    
+    # Refuse requests that are : not POST or not AJAX
+    if request.method != 'POST' or not request.is_ajax():
+        return HttpResponse('NON', status=403) # 403 Forbidden
+
+    # Built graph, options, and everything
+    graph = CockpitGraph(request)
+    res['options'], res['available_graph_types'] = graph.get_options()
+
+    debug['end'] = datetime.datetime.now()# debug
+    res['debug_delta_time'] = str(debug['end'] - debug['start'])
+    return HttpResponse(simplejson.dumps(res))
 

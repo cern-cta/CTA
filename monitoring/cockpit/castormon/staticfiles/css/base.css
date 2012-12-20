@@ -45,9 +45,6 @@ a.refresh-plot {
     border:none;
 }
 
-p {
-    padding: 5px;
-}
 
 select, 
 textarea, 
@@ -143,6 +140,10 @@ img.rpyc-status {
     width: auto;
 }
 
+.tooltip {
+    font-size: 12px;
+}
+
 
 /*****************************************************************************
 /*              ACCORDION STUFF
@@ -214,6 +215,10 @@ div#home {
     margin-bottom: 50px;
 }
 
+div#home h1 {
+    margin: 30px 0px 50px 0px;
+}
+
 #messages {
     z-index: 999;
     text-align: center;
@@ -240,99 +245,6 @@ div#home div.home-footer a {
 
 div#home div.home-footer img {
     height: 32px;
-}
-
-/*****************************************************************************
-/*             FILTER AND OPTIONS 
-/*****************************************************************************/
-div.metric-options {
-}
-
-div.filter-container {
-    min-width: 460px;
-    height: 50px;
-    float: left;
-}
-
-div.plot-options {
-    min-width: 850px;
-    height: 50px;
-    float: left;
-}
-
-div.advanced-filter {
-    display: none;
-}
-
-div.advanced-filter input[type="text"] {
-    height: 26px;
-}
-
-a.refresh-plot {
-    position: absolute;
-    top: 0px;
-    right: 0px;
-}
-
-a.refresh-plot img:hover {
-    transform:rotate(20deg);
-    -ms-transform:rotate(20deg); /* IE 9 */
-    -moz-transform:rotate(20deg); /* Firefox */
-    -webkit-transform:rotate(20deg); /* Safari and Chrome */
-    -o-transform:rotate(20deg); /* Opera */
-}
-
-.metric-options select {
-    width: 100px;
-    margin-right: 10px;
-}
-
-
-
-/*****************************************************************************
-/*             METRIC AND PLOT DISPLAY 
-/*****************************************************************************/
-div.metric_container {
-    height: 100%;
-    width: 100%;
-}
-
-div.metric-display {
-    position: absolute;
-    top: 50px;
-    left: 0px;
-    right: 0px;
-    bottom: 0px;
-    min-width: 800px;
-}
-
-div.metric-display div.alert {
-    margin: 20px;
-}
-
-
-div.metric-info { /* used to store metric details */
-    display: none;
-}
-
-div.alert.ajax-error {
-    min-height: 150px;
-    background: #f2dede url('/static/img/alert.png') no-repeat 20px 20px;
-    padding-left: 200px;
-}
-
-
-/*****************************************************************************
-/*             SVG for HighCharts 
-/*****************************************************************************/
-g[title="Reset zoom level 1:1"] rect {
-    cursor: pointer;
-}
-
-g[title="Reset zoom level 1:1"] text tspan {
-    dominant-baseline: central;
-    font-size: 14px;
-    cursor: pointer;
 }
 
 
