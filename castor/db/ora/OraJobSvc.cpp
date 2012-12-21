@@ -571,7 +571,7 @@ void castor::db::ora::OraJobSvc::prepareForMigration
       m_prepareForMigrationStatement->registerOutParam
         (6, oracle::occi::OCCIINT);
       m_prepareForMigrationStatement->registerOutParam
-        (7, oracle::occi::OCCIINT);
+        (7, oracle::occi::OCCIDOUBLE);
     }
     // Execute the statement and see whether we found something
     m_prepareForMigrationStatement->setDouble(1, subReqId);
