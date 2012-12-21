@@ -23,8 +23,6 @@ COMM Makefile for the DLF client library
 COMM
 COMM @author Castor Dev team, castor-dev@cern.ch
 
-PREFIX(MANSUBDIR) = doc/man/
-
 ClientDependsOnLibrary(common,castorcommon)
 
 DLFLIB_OBJS = dlf_lib.o

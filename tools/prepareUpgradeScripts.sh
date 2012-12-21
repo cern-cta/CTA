@@ -3,7 +3,7 @@
 # check arguments
 if [ $# != 3 ]; then
   echo usage: $0 component previousReleaseTag newReleaseTag
-  echo valid components are: stager, dlf, repack, vdqm, cns, vmgr, cupv, mon, srm.
+  echo valid components are: stager, repack, vdqm, cns, vmgr, cupv, mon, srm.
   echo
   exit
 fi
