@@ -60,7 +60,7 @@ for f, v in options:
 
 # All arguments are supposed to be components
 # if none, this means all
-allcomponents = ['cns', 'mon', 'stager', 'cupv', 'vdqm', 'vmgr']
+allcomponents = ['cns', 'stager', 'cupv', 'vdqm', 'vmgr']
 if not arguments:
     components = set(allcomponents)
 else:

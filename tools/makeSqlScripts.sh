@@ -3,7 +3,7 @@
 # check arguments
 if [ $# != 3 -a $# != 4 ]; then
   echo usage: $0 component releaseTag targetDir [installDir]
-  echo valid components are: stager, repack, vdqm, cns, vmgr, cupv, mon, srm.
+  echo valid components are: stager, repack, vdqm, cns, vmgr, cupv, srm.
   echo
   exit
 fi
