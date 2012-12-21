@@ -36,4 +36,3 @@ CLIENTLIBMANPAGE(dlf_regtext)
 CLIENTLIBMANPAGE(dlf_write)
 CLIENTLIBMANPAGE(dlf_shutdown)
 
-include LOCAL_PATH/web/Makefile

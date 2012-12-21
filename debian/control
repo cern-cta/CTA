@@ -210,12 +210,6 @@ Build-Depends: oracle-instantclient-precomp
 Description: castor (Cern Advanced STORage system)
  Volume Manager server
 
-Package: castor-dlf-web
-Architecture: any
-Depends: php-oci8
-Description: castor (Cern Advanced STORage system)
- Distributed Logging Facility Web Interface
-
 Package: castor-lib-tape
 Architecture: any
 Depends: castor-lib
