@@ -43,6 +43,7 @@ CppCastorWriter::CppCastorWriter(UMLDoc* parent, const char *name) :
   // Types to ignore
   m_ignoreClasses.insert(QString("IPersistent"));
   m_ignoreClasses.insert(QString("IStreamable"));
+  m_ignoreClasses.insert(QString("SubRequest"));
 }
 
 //=============================================================================

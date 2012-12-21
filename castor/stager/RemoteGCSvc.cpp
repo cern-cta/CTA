@@ -34,7 +34,6 @@
 #include "castor/client/IResponseHandler.hpp"
 #include "castor/client/BasicResponseHandler.hpp"
 #include "castor/client/BaseClient.hpp"
-#include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/Files2Delete.hpp"
 #include "castor/stager/FilesDeleted.hpp"

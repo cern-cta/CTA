@@ -26,13 +26,11 @@
 #include "castor/Constants.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
-#include "castor/stager/DiskPool.hpp"
 #include "castor/stager/FileClass.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
-#include <vector>
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -55,10 +53,6 @@ castor::stager::SvcClass::SvcClass() throw() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::SvcClass::~SvcClass() throw() {
-  for (unsigned int i = 0; i < m_diskPoolsVector.size(); i++) {
-    m_diskPoolsVector[i]->removeSvcClasses(this);
-  }
-  m_diskPoolsVector.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -85,17 +79,6 @@ void castor::stager::SvcClass::print(std::ostream& stream,
   stream << indent << "lastEditionTime : " << m_lastEditionTime << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
-  {
-    stream << indent << "DiskPools : " << std::endl;
-    int i;
-    std::vector<DiskPool*>::const_iterator it;
-    for (it = m_diskPoolsVector.begin(), i = 0;
-         it != m_diskPoolsVector.end();
-         it++, i++) {
-      stream << indent << "  " << i << " :" << std::endl;
-      (*it)->print(stream, indent + "    ", alreadyPrinted);
-    }
-  }
   stream << indent << "ForcedFileClass : " << std::endl;
   if (0 != m_forcedFileClass) {
     m_forcedFileClass->print(stream, indent + "  ", alreadyPrinted);

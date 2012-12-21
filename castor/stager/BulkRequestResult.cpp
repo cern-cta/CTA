@@ -30,7 +30,6 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/BulkRequestResult.hpp"
-#include "castor/stager/FileSystem.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "osdep.h"
 #include <iostream>

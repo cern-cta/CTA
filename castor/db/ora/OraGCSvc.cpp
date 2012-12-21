@@ -32,8 +32,6 @@
 #include "castor/Constants.hpp"
 #include "castor/IClient.hpp"
 #include "castor/stager/Request.hpp"
-#include "castor/stager/DiskCopy.hpp"
-#include "castor/stager/DiskPool.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "castor/stager/FileClass.hpp"
 #include "castor/stager/CastorFile.hpp"

@@ -70,7 +70,6 @@ STGLIB_SRCS = BaseAddress.cpp \
               io/StreamClientCnv.cpp \
               io/StreamStartResponseCnv.cpp \
               io/StreamCnvSvc.cpp \
-              io/StreamDiskCopyCnv.cpp \
               io/StreamDiskCopyForRecallCnv.cpp \
 	      io/StreamDiskCopyInfoCnv.cpp \
               io/StreamEndResponseCnv.cpp \
@@ -169,14 +168,10 @@ STGLIB_SRCS = BaseAddress.cpp \
               metrics/UpdateThread.cpp \
               metrics/ObjTypeCounter.cpp \
               stager/CastorFile.cpp \
-              stager/DiskCopy.cpp \
               stager/DiskCopyInfo.cpp \
               stager/DiskCopyForRecall.cpp \
               stager/DiskCopyStatusCodes.cpp \
               stager/DiskFile.cpp \
-              stager/DiskPool.cpp \
-              stager/DiskServer.cpp \
-              stager/FileSystem.cpp \
               stager/DiskServerStatusCode.cpp \
               stager/FileSystemStatusCodes.cpp \
               stager/Disk2DiskCopyDoneRequest.cpp \
@@ -197,7 +192,6 @@ STGLIB_SRCS = BaseAddress.cpp \
               stager/GetUpdateFailed.cpp \
               stager/GetUpdateStartRequest.cpp \
               stager/GCLocalFile.cpp \
-              stager/GCTypeCodes.cpp \
               stager/GCFile.cpp \
               stager/GCFileList.cpp \
               stager/MoverCloseRequest.cpp \

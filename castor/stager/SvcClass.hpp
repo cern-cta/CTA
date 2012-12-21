@@ -30,7 +30,6 @@
 #include "osdep.h"
 #include <iostream>
 #include <string>
-#include <vector>
 
 namespace castor {
 
@@ -41,7 +40,6 @@ namespace castor {
 
     // Forward declarations
     class FileClass;
-    class DiskPool;
 
     /**
      * class SvcClass
@@ -295,35 +293,6 @@ namespace castor {
       }
 
       /**
-       * Add a DiskPool* object to the m_diskPoolsVector list
-       */
-      void addDiskPools(DiskPool* add_object) {
-        m_diskPoolsVector.push_back(add_object);
-      }
-
-      /**
-       * Remove a DiskPool* object from m_diskPoolsVector
-       */
-      void removeDiskPools(DiskPool* remove_object) {
-        for (unsigned int i = 0; i < m_diskPoolsVector.size(); i++) {
-          DiskPool* item = m_diskPoolsVector[i];
-          if (item == remove_object) {
-            std::vector<DiskPool*>::iterator it = m_diskPoolsVector.begin() + i;
-            m_diskPoolsVector.erase(it);
-            return;
-          }
-        }
-      }
-
-      /**
-       * Get the list of DiskPool* objects held by m_diskPoolsVector
-       * @return list of DiskPool* objects held by m_diskPoolsVector
-       */
-      std::vector<DiskPool*>& diskPools() {
-        return m_diskPoolsVector;
-      }
-
-      /**
        * Get the value of m_forcedFileClass
        * @return the value of m_forcedFileClass
        */
@@ -370,8 +339,6 @@ namespace castor {
 
       /// The id of this object
       u_signed64 m_id;
-
-      std::vector<DiskPool*> m_diskPoolsVector;
 
       /// In case hasDiskOnlyBehavior is set, this is the file class that will be used for all files created in this svcclass, independently of the fileclass of the directory where they are created
       FileClass* m_forcedFileClass;

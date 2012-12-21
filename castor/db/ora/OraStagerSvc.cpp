@@ -43,8 +43,6 @@
 #include "castor/stager/StagePutDoneRequest.hpp"
 #include "castor/stager/StageRmRequest.hpp"
 #include "castor/stager/SetFileGCWeight.hpp"
-#include "castor/stager/DiskCopy.hpp"
-#include "castor/stager/DiskPool.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "castor/stager/FileClass.hpp"
 #include "castor/stager/CastorFile.hpp"
@@ -668,7 +666,6 @@ int castor::db::ora::OraStagerSvc::getDiskCopiesForJob
           castor::stager::DiskCopyForRecall* item =
             new castor::stager::DiskCopyForRecall();
           item->setId((u_signed64) rs->getDouble(1));
-          item->setPath(rs->getString(2));
           item->setStatus((castor::stager::DiskCopyStatusCodes)rs->getInt(3));
           item->setFsWeight(rs->getFloat(4));
           item->setMountPoint(rs->getString(5));

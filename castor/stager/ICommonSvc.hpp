@@ -50,7 +50,6 @@ namespace castor {
     class Request;
     class SvcClass;
     class FileClass;
-    class FileSystem;
 
     /**
      * This class provides common methods useful to the stager to

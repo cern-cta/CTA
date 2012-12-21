@@ -34,11 +34,8 @@
 #include "castor/client/IResponseHandler.hpp"
 #include "castor/client/BasicResponseHandler.hpp"
 #include "castor/client/BaseClient.hpp"
-#include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/DiskCopyInfo.hpp"
-#include "castor/stager/DiskServer.hpp"
 #include "castor/stager/SubRequest.hpp"
-#include "castor/stager/FileSystem.hpp"
 #include "castor/stager/Files2Delete.hpp"
 #include "castor/stager/FilesDeleted.hpp"
 #include "castor/stager/FilesDeletionFailed.hpp"
@@ -129,9 +126,9 @@ castor::stager::RemoteJobSvc::requestToDo(std::string)
 class GetUpdateStartResponseHandler : public castor::client::IResponseHandler {
 public:
   GetUpdateStartResponseHandler
-  (castor::stager::DiskCopy** diskCopy,
+  (std::string* diskCopyPath,
    bool *emptyFile) :
-    m_diskCopy(diskCopy),
+    m_diskCopyPath(diskCopyPath),
     m_emptyFile(emptyFile){}
 
   virtual void handleResponse(castor::rh::Response& r)
@@ -143,14 +140,14 @@ public:
       e.getMessage() << resp->errorMessage();
       throw e;
     }
-    *m_diskCopy = resp->diskCopy();
+    *m_diskCopyPath = resp->diskCopyPath();
     *m_emptyFile = resp->emptyFile();
   };
   virtual void terminate()
     throw (castor::exception::Exception) {};
 private:
   // Where to store the diskCopy
-  castor::stager::DiskCopy** m_diskCopy;
+  std::string* m_diskCopyPath;
   // Where to store the emptyFile flag
   bool* m_emptyFile;
 };
@@ -158,24 +155,25 @@ private:
 //------------------------------------------------------------------------------
 // getUpdateStart
 //------------------------------------------------------------------------------
-castor::stager::DiskCopy*
+std::string
 castor::stager::RemoteJobSvc::getUpdateStart
 (castor::stager::SubRequest* subreq,
- castor::stager::FileSystem* fileSystem,
+ std::string diskServerName,
+ std::string mountPoint,
  bool* emptyFile,
  u_signed64 fileId,
  const std::string nsHost)
   throw (castor::exception::Exception) {
   // placeholders for the result
-  castor::stager::DiskCopy* result;
+  std::string result;
   // Build a response Handler
   GetUpdateStartResponseHandler rh
     (&result, emptyFile);
   // Build the GetUpdateStartRequest
   castor::stager::GetUpdateStartRequest req;
   req.setSubreqId(subreq->id());
-  req.setDiskServer(fileSystem->diskserver()->name());
-  req.setFileSystem(fileSystem->mountPoint());
+  req.setDiskServer(diskServerName);
+  req.setFileSystem(mountPoint);
   req.setFileId(fileId);
   req.setNsHost(nsHost);
   // Uses a BaseClient to handle the request
@@ -196,8 +194,8 @@ castor::stager::RemoteJobSvc::getUpdateStart
  */
 class PutStartResponseHandler : public castor::client::IResponseHandler {
 public:
-  PutStartResponseHandler (castor::stager::DiskCopy** diskCopy) :
-    m_diskCopy(diskCopy) {}
+  PutStartResponseHandler (std::string* diskCopyPath) :
+    m_diskCopyPath(diskCopyPath) {}
 
   virtual void handleResponse(castor::rh::Response& r)
     throw (castor::exception::Exception) {
@@ -215,34 +213,35 @@ public:
 		     << castor::ObjectsIdStrings[r.type()];
       throw e;
     }
-    *m_diskCopy = resp->diskCopy();
+    *m_diskCopyPath = resp->diskCopyPath();
   };
   virtual void terminate()
     throw (castor::exception::Exception) {};
 private:
-  // Where to store the diskCopy
-  castor::stager::DiskCopy** m_diskCopy;
+  // Where to store the diskCopyPath
+  std::string* m_diskCopyPath;
 };
 
 //------------------------------------------------------------------------------
 // putStart
 //------------------------------------------------------------------------------
-castor::stager::DiskCopy*
+std::string
 castor::stager::RemoteJobSvc::putStart
 (castor::stager::SubRequest* subreq,
- castor::stager::FileSystem* fileSystem,
+ std::string diskServerName,
+ std::string mountPoint,
  u_signed64 fileId,
  const std::string nsHost)
   throw (castor::exception::Exception) {
   // placeholders for the result
-  castor::stager::DiskCopy* result;
+  std::string result;
   // Build a response Handler
   PutStartResponseHandler rh(&result);
   // Build the PutStartRequest
   castor::stager::PutStartRequest req;
   req.setSubreqId(subreq->id());
-  req.setDiskServer(fileSystem->diskserver()->name());
-  req.setFileSystem(fileSystem->mountPoint());
+  req.setDiskServer(diskServerName);
+  req.setFileSystem(mountPoint);
   req.setFileId(fileId);
   req.setNsHost(nsHost);
   // Uses a BaseClient to handle the request

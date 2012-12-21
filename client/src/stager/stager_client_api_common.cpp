@@ -28,7 +28,6 @@
 #include "getconfent.h"
 #include "stager_client_api_common.hpp"
 #include "castor/stager/SubRequest.hpp"
-#include "castor/stager/DiskCopy.hpp"
 #include "castor/client/BaseClient.hpp"
 #include "castor/stager/DiskServerStatusCode.hpp"
 #include "castor/stager/FileSystemStatusCodes.hpp"

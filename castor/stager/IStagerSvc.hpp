@@ -53,12 +53,8 @@ namespace castor {
     class Stream;
     class Request;
     class Segment;
-    class DiskCopy;
-    class DiskPool;
     class SvcClass;
     class FileClass;
-    class FileSystem;
-    class DiskServer;
     class SubRequest;
     class CastorFile;
     class GCLocalFile;

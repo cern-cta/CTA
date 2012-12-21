@@ -27,12 +27,10 @@
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/CastorFile.hpp"
-#include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/FileClass.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
-#include <vector>
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -53,10 +51,6 @@ castor::stager::CastorFile::CastorFile() throw() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::CastorFile::~CastorFile() throw() {
-  for (unsigned int i = 0; i < m_diskCopiesVector.size(); i++) {
-    m_diskCopiesVector[i]->setCastorFile(0);
-  }
-  m_diskCopiesVector.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -86,17 +80,6 @@ void castor::stager::CastorFile::print(std::ostream& stream,
     m_fileClass->print(stream, indent + "  ", alreadyPrinted);
   } else {
     stream << indent << "  null" << std::endl;
-  }
-  {
-    stream << indent << "DiskCopies : " << std::endl;
-    int i;
-    std::vector<DiskCopy*>::const_iterator it;
-    for (it = m_diskCopiesVector.begin(), i = 0;
-         it != m_diskCopiesVector.end();
-         it++, i++) {
-      stream << indent << "  " << i << " :" << std::endl;
-      (*it)->print(stream, indent + "    ", alreadyPrinted);
-    }
   }
 }
 

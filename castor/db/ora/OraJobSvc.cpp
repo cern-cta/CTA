@@ -32,15 +32,11 @@
 #include "castor/Constants.hpp"
 #include "castor/IClient.hpp"
 #include "castor/stager/Request.hpp"
-#include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/DiskCopyInfo.hpp"
-#include "castor/stager/DiskPool.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "castor/stager/FileClass.hpp"
-#include "castor/stager/DiskServer.hpp"
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/SubRequest.hpp"
-#include "castor/stager/FileSystem.hpp"
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/Files2Delete.hpp"
 #include "castor/stager/FilesDeleted.hpp"
@@ -196,10 +192,11 @@ void castor::db::ora::OraJobSvc::reset() throw() {
 //------------------------------------------------------------------------------
 // getUpdateStart
 //------------------------------------------------------------------------------
-castor::stager::DiskCopy*
+std::string
 castor::db::ora::OraJobSvc::getUpdateStart
 (castor::stager::SubRequest* subreq,
- castor::stager::FileSystem* fileSystem,
+ std::string diskServerName,
+ std::string mountPoint,
  bool* emptyFile,
  u_signed64,
  const std::string)
@@ -226,8 +223,8 @@ castor::db::ora::OraJobSvc::getUpdateStart
     }
     // execute the statement and see whether we found something
     m_getUpdateStartStatement->setDouble(1, subreq->id());
-    m_getUpdateStartStatement->setString(2, fileSystem->diskserver()->name());
-    m_getUpdateStartStatement->setString(3, fileSystem->mountPoint());
+    m_getUpdateStartStatement->setString(2, diskServerName);
+    m_getUpdateStartStatement->setString(3, mountPoint);
     unsigned int nb = m_getUpdateStartStatement->executeUpdate();
     if (0 == nb) {
       rollback();
@@ -244,22 +241,17 @@ castor::db::ora::OraJobSvc::getUpdateStart
       return 0;
     }
 
-    castor::stager::DiskCopy* result =
-      new castor::stager::DiskCopy();
-    result->setId(id);
-    result->setPath(m_getUpdateStartStatement->getString(5));
-    result->setStatus
-      ((enum castor::stager::DiskCopyStatusCodes)
-       m_getUpdateStartStatement->getInt(6));
+    enum castor::stager::DiskCopyStatusCodes status =
+       (enum castor::stager::DiskCopyStatusCodes) m_getUpdateStartStatement->getInt(6);
     // Deal with recalls of empty files
     // the file may have been declared recalled without being created on disk
-    if (result->status() == castor::stager::DISKCOPY_STAGED &&
+    if (status == castor::stager::DISKCOPY_STAGED &&
         0 == (u_signed64)m_getUpdateStartStatement->getDouble(9)) {
       *emptyFile = true;
     }
 
-    // return
-    return result;
+    // return diskCopy Path
+    return m_getUpdateStartStatement->getString(5);
   } catch (oracle::occi::SQLException e) {
     // Application specific errors
     if (e.getErrorCode() == 20114) {
@@ -281,14 +273,14 @@ castor::db::ora::OraJobSvc::getUpdateStart
 //------------------------------------------------------------------------------
 // putStart
 //------------------------------------------------------------------------------
-castor::stager::DiskCopy*
+std::string
 castor::db::ora::OraJobSvc::putStart
 (castor::stager::SubRequest* subreq,
- castor::stager::FileSystem* fileSystem,
+ std::string diskServerName,
+ std::string mountPoint,
  u_signed64,
  const std::string)
   throw (castor::exception::Exception) {
-  castor::stager::DiskCopy* result = 0;
   try {
     // Check whether the statements are ok
     if (0 == m_putStartStatement) {
@@ -304,8 +296,8 @@ castor::db::ora::OraJobSvc::putStart
     }
     // execute the statement and see whether we found something
     m_putStartStatement->setDouble(1, subreq->id());
-    m_putStartStatement->setString(2, fileSystem->diskserver()->name());
-    m_putStartStatement->setString(3, fileSystem->mountPoint());
+    m_putStartStatement->setString(2, diskServerName);
+    m_putStartStatement->setString(3, mountPoint);
     unsigned int nb = m_putStartStatement->executeUpdate();
     if (0 == nb) {
       rollback();
@@ -314,19 +306,9 @@ castor::db::ora::OraJobSvc::putStart
         << "putStart : unable to schedule SubRequest.";
       throw ex;
     }
-    // Get the result
-    result = new castor::stager::DiskCopy();
-    result->setId((u_signed64)m_putStartStatement->getDouble(4));
-    result->setStatus
-      ((enum castor::stager::DiskCopyStatusCodes)
-       m_putStartStatement->getInt(5));
-    result->setPath(m_putStartStatement->getString(6));
-    // return
-    return result;
+    // return diskCopy Path
+    return m_putStartStatement->getString(6);
   } catch (oracle::occi::SQLException e) {
-    if (0 != result) {
-      delete result;
-    }
     handleException(e);
     // Application specific errors
     if ((e.getErrorCode() == 20104) ||

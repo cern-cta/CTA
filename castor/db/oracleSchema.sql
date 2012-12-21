@@ -10,33 +10,6 @@ CREATE TABLE BaseAddress (objType NUMBER, cnvSvcName VARCHAR2(2048), cnvSvcType 
 /* SQL statements for type Client */
 CREATE TABLE Client (ipAddress NUMBER, port NUMBER, version NUMBER, secure NUMBER, id INTEGER CONSTRAINT PK_Client_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
-/* SQL statements for type SubRequest */
-CREATE TABLE SubRequest (retryCounter NUMBER, fileName VARCHAR2(2048), protocol VARCHAR2(2048), xsize INTEGER, priority NUMBER, subreqId VARCHAR2(2048), flags NUMBER, modeBits NUMBER, creationTime INTEGER, lastModificationTime INTEGER, answered NUMBER, errorCode NUMBER, errorMessage VARCHAR2(2048), requestedFileSystems VARCHAR2(2048), svcHandler VARCHAR2(2048), reqType NUMBER, id INTEGER CONSTRAINT PK_SubRequest_Id PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER, request INTEGER, getNextStatus INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
-BEGIN
-  setObjStatusName('SubRequest', 'status', 0, 'SUBREQUEST_START');
-  setObjStatusName('SubRequest', 'status', 1, 'SUBREQUEST_RESTART');
-  setObjStatusName('SubRequest', 'status', 2, 'SUBREQUEST_RETRY');
-  setObjStatusName('SubRequest', 'status', 3, 'SUBREQUEST_WAITSCHED');
-  setObjStatusName('SubRequest', 'status', 4, 'SUBREQUEST_WAITTAPERECALL');
-  setObjStatusName('SubRequest', 'status', 5, 'SUBREQUEST_WAITSUBREQ');
-  setObjStatusName('SubRequest', 'status', 6, 'SUBREQUEST_READY');
-  setObjStatusName('SubRequest', 'status', 7, 'SUBREQUEST_FAILED');
-  setObjStatusName('SubRequest', 'status', 8, 'SUBREQUEST_FINISHED');
-  setObjStatusName('SubRequest', 'status', 9, 'SUBREQUEST_FAILED_FINISHED');
-  setObjStatusName('SubRequest', 'status', 11, 'SUBREQUEST_ARCHIVED');
-  setObjStatusName('SubRequest', 'status', 12, 'SUBREQUEST_REPACK');
-  setObjStatusName('SubRequest', 'status', 13, 'SUBREQUEST_READYFORSCHED');
-END;
-/
-
-BEGIN
-  setObjStatusName('SubRequest', 'getNextStatus', 0, 'GETNEXTSTATUS_NOTAPPLICABLE');
-  setObjStatusName('SubRequest', 'getNextStatus', 1, 'GETNEXTSTATUS_FILESTAGED');
-  setObjStatusName('SubRequest', 'getNextStatus', 2, 'GETNEXTSTATUS_NOTIFIED');
-END;
-/
-
 /* SQL statements for type Disk2DiskCopyDoneRequest */
 CREATE TABLE Disk2DiskCopyDoneRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskCopyId INTEGER, sourceDiskCopyId INTEGER, fileId INTEGER, nsHost VARCHAR2(2048), replicaFileSize INTEGER, id INTEGER CONSTRAINT PK_Disk2DiskCopyDoneRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
@@ -80,13 +53,13 @@ CREATE TABLE GetUpdateStartRequest (subreqId INTEGER, diskServer VARCHAR2(2048),
 CREATE TABLE QueryParameter (value VARCHAR2(2048), id INTEGER CONSTRAINT PK_QueryParameter_Id PRIMARY KEY, query INTEGER, queryType INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 BEGIN
-  setObjStatusName('QueryParameter', 'queryType', 0, 'REQUESTQUERYTYPE_FILENAME');
-  setObjStatusName('QueryParameter', 'queryType', 1, 'REQUESTQUERYTYPE_REQID');
-  setObjStatusName('QueryParameter', 'queryType', 2, 'REQUESTQUERYTYPE_USERTAG');
-  setObjStatusName('QueryParameter', 'queryType', 3, 'REQUESTQUERYTYPE_FILEID');
-  setObjStatusName('QueryParameter', 'queryType', 4, 'REQUESTQUERYTYPE_REQID_GETNEXT');
-  setObjStatusName('QueryParameter', 'queryType', 5, 'REQUESTQUERYTYPE_USERTAG_GETNEXT');
-  setObjStatusName('QueryParameter', 'queryType', 6, 'REQUESTQUERYTYPE_FILENAME_ALLSC');
+  serObjStatusName('QueryParameter', 'queryType', 0, 'REQUESTQUERYTYPE_FILENAME');
+  serObjStatusName('QueryParameter', 'queryType', 1, 'REQUESTQUERYTYPE_REQID');
+  serObjStatusName('QueryParameter', 'queryType', 2, 'REQUESTQUERYTYPE_USERTAG');
+  serObjStatusName('QueryParameter', 'queryType', 3, 'REQUESTQUERYTYPE_FILEID');
+  serObjStatusName('QueryParameter', 'queryType', 4, 'REQUESTQUERYTYPE_REQID_GETNEXT');
+  serObjStatusName('QueryParameter', 'queryType', 5, 'REQUESTQUERYTYPE_USERTAG_GETNEXT');
+  serObjStatusName('QueryParameter', 'queryType', 6, 'REQUESTQUERYTYPE_FILENAME_ALLSC');
 END;
 /
 
@@ -111,79 +84,8 @@ CREATE TABLE StageRmRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER
 /* SQL statements for type StageFileQueryRequest */
 CREATE TABLE StageFileQueryRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, fileName VARCHAR2(2048), id INTEGER CONSTRAINT PK_StageFileQueryRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
-/* SQL statements for type DiskCopy */
-CREATE TABLE DiskCopy (path VARCHAR2(2048), gcWeight NUMBER, creationTime INTEGER, lastAccessTime INTEGER, diskCopySize INTEGER, nbCopyAccesses NUMBER, owneruid NUMBER, ownergid NUMBER, id INTEGER CONSTRAINT PK_DiskCopy_Id PRIMARY KEY, gcType INTEGER, fileSystem INTEGER, castorFile INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
-BEGIN
-  setObjStatusName('DiskCopy', 'gcType', 0, 'GCTYPE_AUTO');
-  setObjStatusName('DiskCopy', 'gcType', 1, 'GCTYPE_USER');
-  setObjStatusName('DiskCopy', 'gcType', 2, 'GCTYPE_TOOMANYREPLICAS');
-  setObjStatusName('DiskCopy', 'gcType', 3, 'GCTYPE_DRAINING');
-  setObjStatusName('DiskCopy', 'gcType', 4, 'GCTYPE_NSSYNCH');
-  setObjStatusName('DiskCopy', 'gcType', 5, 'GCTYPE_OVERWRITTEN');
-END;
-/
-
-BEGIN
-  setObjStatusName('DiskCopy', 'status', 0, 'DISKCOPY_STAGED');
-  setObjStatusName('DiskCopy', 'status', 1, 'DISKCOPY_WAITDISK2DISKCOPY');
-  setObjStatusName('DiskCopy', 'status', 3, 'DISKCOPY_DELETED');
-  setObjStatusName('DiskCopy', 'status', 4, 'DISKCOPY_FAILED');
-  setObjStatusName('DiskCopy', 'status', 5, 'DISKCOPY_WAITFS');
-  setObjStatusName('DiskCopy', 'status', 6, 'DISKCOPY_STAGEOUT');
-  setObjStatusName('DiskCopy', 'status', 7, 'DISKCOPY_INVALID');
-  setObjStatusName('DiskCopy', 'status', 9, 'DISKCOPY_BEINGDELETED');
-  setObjStatusName('DiskCopy', 'status', 10, 'DISKCOPY_CANBEMIGR');
-  setObjStatusName('DiskCopy', 'status', 11, 'DISKCOPY_WAITFS_SCHEDULING');
-END;
-/
-
-/* SQL statements for type FileSystem */
-CREATE TABLE FileSystem (free INTEGER, mountPoint VARCHAR2(2048), minAllowedFreeSpace NUMBER, maxFreeSpace NUMBER, totalSize INTEGER, nbReadStreams NUMBER, nbWriteStreams NUMBER, nbMigratorStreams NUMBER, nbRecallerStreams NUMBER, id INTEGER CONSTRAINT PK_FileSystem_Id PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER, adminStatus INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
-BEGIN
-  setObjStatusName('FileSystem', 'status', 0, 'FILESYSTEM_PRODUCTION');
-  setObjStatusName('FileSystem', 'status', 1, 'FILESYSTEM_DRAINING');
-  setObjStatusName('FileSystem', 'status', 2, 'FILESYSTEM_DISABLED');
-END;
-/
-
-BEGIN
-  setObjStatusName('FileSystem', 'adminStatus', 0, 'ADMIN_NONE');
-  setObjStatusName('FileSystem', 'adminStatus', 1, 'ADMIN_FORCE');
-END;
-/
-
-/* SQL statements for type SvcClass */
-CREATE TABLE SvcClass (name VARCHAR2(2048), defaultFileSize INTEGER, maxReplicaNb NUMBER, gcPolicy VARCHAR2(2048), disk1Behavior NUMBER, replicateOnClose NUMBER, failJobsWhenNoSpace NUMBER, lastEditor VARCHAR2(2048), lastEditionTime INTEGER, id INTEGER CONSTRAINT PK_SvcClass_Id PRIMARY KEY, forcedFileClass INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
-/* SQL statements for type DiskPool */
-CREATE TABLE DiskPool (name VARCHAR2(2048), id INTEGER CONSTRAINT PK_DiskPool_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-CREATE TABLE DiskPool2SvcClass (Parent INTEGER, Child INTEGER) INITRANS 50 PCTFREE 50;
-CREATE INDEX I_DiskPool2SvcClass_C on DiskPool2SvcClass (child);
-CREATE INDEX I_DiskPool2SvcClass_P on DiskPool2SvcClass (parent);
-
-/* SQL statements for type DiskServer */
-CREATE TABLE DiskServer (name VARCHAR2(2048), lastHeartBeatTime NUMBER, id INTEGER CONSTRAINT PK_DiskServer_Id PRIMARY KEY, status INTEGER, adminStatus INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
-BEGIN
-  setObjStatusName('DiskServer', 'status', 0, 'DISKSERVER_PRODUCTION');
-  setObjStatusName('DiskServer', 'status', 1, 'DISKSERVER_DRAINING');
-  setObjStatusName('DiskServer', 'status', 2, 'DISKSERVER_DISABLED');
-END;
-/
-
-BEGIN
-  setObjStatusName('DiskServer', 'adminStatus', 0, 'ADMIN_NONE');
-  setObjStatusName('DiskServer', 'adminStatus', 1, 'ADMIN_FORCE');
-END;
-/
-
 /* SQL statements for type SetFileGCWeight */
 CREATE TABLE SetFileGCWeight (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, weight NUMBER, id INTEGER CONSTRAINT PK_SetFileGCWeight_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
-/* SQL statements for type StageDiskCopyReplicaRequest */
-CREATE TABLE StageDiskCopyReplicaRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StageDiskCopyReplicaRequ_Id PRIMARY KEY, svcClass INTEGER, client INTEGER, sourceSvcClass INTEGER, destDiskCopy INTEGER, sourceDiskCopy INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type NsFilesDeleted */
 CREATE TABLE NsFilesDeleted (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, nsHost VARCHAR2(2048), id INTEGER CONSTRAINT PK_NsFilesDeleted_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
@@ -216,9 +118,9 @@ CREATE TABLE VersionQuery (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, 
 CREATE TABLE DiskPoolQuery (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskPoolName VARCHAR2(2048), id INTEGER CONSTRAINT PK_DiskPoolQuery_Id PRIMARY KEY, svcClass INTEGER, client INTEGER, queryType INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 BEGIN
-  setObjStatusName('DiskPoolQuery', 'queryType', 0, 'DISKPOOLQUERYTYPE_DEFAULT');
-  setObjStatusName('DiskPoolQuery', 'queryType', 1, 'DISKPOOLQUERYTYPE_AVAILABLE');
-  setObjStatusName('DiskPoolQuery', 'queryType', 2, 'DISKPOOLQUERYTYPE_TOTAL');
+  serObjStatusName('DiskPoolQuery', 'queryType', 0, 'DISKPOOLQUERYTYPE_DEFAULT');
+  serObjStatusName('DiskPoolQuery', 'queryType', 1, 'DISKPOOLQUERYTYPE_AVAILABLE');
+  serObjStatusName('DiskPoolQuery', 'queryType', 2, 'DISKPOOLQUERYTYPE_TOTAL');
 END;
 /
 
@@ -234,22 +136,14 @@ CREATE TABLE RequestType (reqType NUMBER, id INTEGER CONSTRAINT PK_RequestType_I
 /* SQL statements for type ListPrivileges */
 CREATE TABLE ListPrivileges (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, userId NUMBER, groupId NUMBER, requestType NUMBER, id INTEGER CONSTRAINT PK_ListPrivileges_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
-/* SQL statements for constraints on DiskPool */
-ALTER TABLE DiskPool2SvcClass
-  ADD CONSTRAINT FK_DiskPool2SvcClass_P FOREIGN KEY (Parent) REFERENCES DiskPool (id)
-  ADD CONSTRAINT FK_DiskPool2SvcClass_C FOREIGN KEY (Child) REFERENCES SvcClass (id);
-
 /* Fill Type2Obj metatable */
 INSERT INTO Type2Obj (type, object) VALUES (0, 'INVALID');
 INSERT INTO Type2Obj (type, object) VALUES (1, 'Ptr');
 INSERT INTO Type2Obj (type, object) VALUES (2, 'CastorFile');
 INSERT INTO Type2Obj (type, object) VALUES (4, 'Cuuid');
-INSERT INTO Type2Obj (type, object) VALUES (5, 'DiskCopy');
 INSERT INTO Type2Obj (type, object) VALUES (6, 'DiskFile');
 INSERT INTO Type2Obj (type, object) VALUES (7, 'DiskPool');
-INSERT INTO Type2Obj (type, object) VALUES (8, 'DiskServer');
 INSERT INTO Type2Obj (type, object) VALUES (10, 'FileClass');
-INSERT INTO Type2Obj (type, object) VALUES (12, 'FileSystem');
 INSERT INTO Type2Obj (type, object) VALUES (13, 'IClient');
 INSERT INTO Type2Obj (type, object) VALUES (14, 'MessageAck');
 INSERT INTO Type2Obj (type, object) VALUES (17, 'Request');
@@ -324,7 +218,6 @@ INSERT INTO Type2Obj (type, object) VALUES (129, 'Client');
 INSERT INTO Type2Obj (type, object) VALUES (130, 'JobSubmissionRequest');
 INSERT INTO Type2Obj (type, object) VALUES (131, 'VersionQuery');
 INSERT INTO Type2Obj (type, object) VALUES (132, 'VersionResponse');
-INSERT INTO Type2Obj (type, object) VALUES (133, 'StageDiskCopyReplicaRequest');
 INSERT INTO Type2Obj (type, object) VALUES (134, 'RepackResponse');
 INSERT INTO Type2Obj (type, object) VALUES (135, 'RepackFileQry');
 INSERT INTO Type2Obj (type, object) VALUES (136, 'CnsInfoMigrationPolicy');

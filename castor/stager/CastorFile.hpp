@@ -30,7 +30,6 @@
 #include "osdep.h"
 #include <iostream>
 #include <string>
-#include <vector>
 
 namespace castor {
 
@@ -41,7 +40,6 @@ namespace castor {
 
     // Forward declarations
     class FileClass;
-    class DiskCopy;
 
     /**
      * class CastorFile
@@ -262,35 +260,6 @@ namespace castor {
         m_fileClass = new_var;
       }
 
-      /**
-       * Add a DiskCopy* object to the m_diskCopiesVector list
-       */
-      void addDiskCopies(DiskCopy* add_object) {
-        m_diskCopiesVector.push_back(add_object);
-      }
-
-      /**
-       * Remove a DiskCopy* object from m_diskCopiesVector
-       */
-      void removeDiskCopies(DiskCopy* remove_object) {
-        for (unsigned int i = 0; i < m_diskCopiesVector.size(); i++) {
-          DiskCopy* item = m_diskCopiesVector[i];
-          if (item == remove_object) {
-            std::vector<DiskCopy*>::iterator it = m_diskCopiesVector.begin() + i;
-            m_diskCopiesVector.erase(it);
-            return;
-          }
-        }
-      }
-
-      /**
-       * Get the list of DiskCopy* objects held by m_diskCopiesVector
-       * @return list of DiskCopy* objects held by m_diskCopiesVector
-       */
-      std::vector<DiskCopy*>& diskCopies() {
-        return m_diskCopiesVector;
-      }
-
     private:
 
       /// The id of this castor file. This identifies it uniquely
@@ -320,8 +289,6 @@ namespace castor {
       u_signed64 m_id;
 
       FileClass* m_fileClass;
-
-      std::vector<DiskCopy*> m_diskCopiesVector;
 
     }; /* end of class CastorFile */
 

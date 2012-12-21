@@ -37,7 +37,6 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/exception/OutOfMemory.hpp"
-#include "castor/stager/DiskPool.hpp"
 #include "castor/stager/FileClass.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include <algorithm>
@@ -93,20 +92,6 @@ const std::string castor::db::cnv::DbSvcClassCnv::s_bulkSelectStatementString =
 const std::string castor::db::cnv::DbSvcClassCnv::s_updateStatementString =
 "UPDATE SvcClass SET name = :1, defaultFileSize = :2, maxReplicaNb = :3, gcPolicy = :4, disk1Behavior = :5, replicateOnClose = :6, failJobsWhenNoSpace = :7, lastEditor = :8, lastEditionTime = :9 WHERE id = :10";
 
-/// SQL insert statement for member diskPools
-const std::string castor::db::cnv::DbSvcClassCnv::s_insertDiskPoolStatementString =
-"INSERT INTO DiskPool2SvcClass (Child, Parent) VALUES (:1, :2)";
-
-/// SQL delete statement for member diskPools
-const std::string castor::db::cnv::DbSvcClassCnv::s_deleteDiskPoolStatementString =
-"DELETE FROM DiskPool2SvcClass WHERE Child = :1 AND Parent = :2";
-
-/// SQL select statement for member diskPools
-// The FOR UPDATE is needed in order to avoid deletion
-// of a segment after listing and before update/remove
-const std::string castor::db::cnv::DbSvcClassCnv::s_selectDiskPoolStatementString =
-"SELECT Parent FROM DiskPool2SvcClass WHERE Child = :1 FOR UPDATE";
-
 /// SQL existence statement for member forcedFileClass
 const std::string castor::db::cnv::DbSvcClassCnv::s_checkFileClassExistStatementString =
 "SELECT id FROM FileClass WHERE id = :1";
@@ -126,9 +111,6 @@ castor::db::cnv::DbSvcClassCnv::DbSvcClassCnv(castor::ICnvSvc* cnvSvc) :
   m_selectStatement(0),
   m_bulkSelectStatement(0),
   m_updateStatement(0),
-  m_insertDiskPoolStatement(0),
-  m_deleteDiskPoolStatement(0),
-  m_selectDiskPoolStatement(0),
   m_checkFileClassExistStatement(0),
   m_updateFileClassStatement(0) {}
 
@@ -145,9 +127,6 @@ castor::db::cnv::DbSvcClassCnv::~DbSvcClassCnv() throw() {
     if(m_selectStatement) delete m_selectStatement;
     if(m_bulkSelectStatement) delete m_bulkSelectStatement;
     if(m_updateStatement) delete m_updateStatement;
-    if(m_insertDiskPoolStatement) delete m_insertDiskPoolStatement;
-    if(m_deleteDiskPoolStatement) delete m_deleteDiskPoolStatement;
-    if(m_selectDiskPoolStatement) delete m_selectDiskPoolStatement;
     if(m_checkFileClassExistStatement) delete m_checkFileClassExistStatement;
     if(m_updateFileClassStatement) delete m_updateFileClassStatement;
   } catch (castor::exception::Exception& ignored) {};
@@ -179,9 +158,6 @@ void castor::db::cnv::DbSvcClassCnv::fillRep(castor::IAddress*,
     dynamic_cast<castor::stager::SvcClass*>(object);
   try {
     switch (type) {
-    case castor::OBJ_DiskPool :
-      fillRepDiskPool(obj);
-      break;
     case castor::OBJ_FileClass :
       fillRepFileClass(obj);
       break;
@@ -200,55 +176,6 @@ void castor::db::cnv::DbSvcClassCnv::fillRep(castor::IAddress*,
     ex.getMessage() << "Error in fillRep for type " << type
                     << std::endl << e.getMessage().str() << std::endl;
     throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// fillRepDiskPool
-//------------------------------------------------------------------------------
-void castor::db::cnv::DbSvcClassCnv::fillRepDiskPool(castor::stager::SvcClass* obj)
-  throw (castor::exception::Exception) {
-  // check select statement
-  if (0 == m_selectDiskPoolStatement) {
-    m_selectDiskPoolStatement = createStatement(s_selectDiskPoolStatementString);
-  }
-  // Get current database data
-  std::set<u_signed64> diskPoolsList;
-  m_selectDiskPoolStatement->setUInt64(1, obj->id());
-  castor::db::IDbResultSet *rset = m_selectDiskPoolStatement->executeQuery();
-  while (rset->next()) {
-    diskPoolsList.insert(rset->getUInt64(1));
-  }
-  delete rset;
-  // update diskPools and create new ones
-  for (std::vector<castor::stager::DiskPool*>::iterator it = obj->diskPools().begin();
-       it != obj->diskPools().end();
-       it++) {
-    if (0 == (*it)->id()) {
-      cnvSvc()->createRep(0, *it, false);
-    }
-    std::set<u_signed64>::iterator item;
-    if ((item = diskPoolsList.find((*it)->id())) != diskPoolsList.end()) {
-      diskPoolsList.erase(item);
-    } else {
-      if (0 == m_insertDiskPoolStatement) {
-        m_insertDiskPoolStatement = createStatement(s_insertDiskPoolStatementString);
-      }
-      m_insertDiskPoolStatement->setUInt64(1, obj->id());
-      m_insertDiskPoolStatement->setUInt64(2, (*it)->id());
-      m_insertDiskPoolStatement->execute();
-    }
-  }
-  // Delete old links
-  for (std::set<u_signed64>::iterator it = diskPoolsList.begin();
-       it != diskPoolsList.end();
-       it++) {
-    if (0 == m_deleteDiskPoolStatement) {
-      m_deleteDiskPoolStatement = createStatement(s_deleteDiskPoolStatementString);
-    }
-    m_deleteDiskPoolStatement->setUInt64(1, obj->id());
-    m_deleteDiskPoolStatement->setUInt64(2, *it);
-    m_deleteDiskPoolStatement->execute();
   }
 }
 
@@ -295,9 +222,6 @@ void castor::db::cnv::DbSvcClassCnv::fillObj(castor::IAddress*,
   castor::stager::SvcClass* obj = 
     dynamic_cast<castor::stager::SvcClass*>(object);
   switch (type) {
-  case castor::OBJ_DiskPool :
-    fillObjDiskPool(obj);
-    break;
   case castor::OBJ_FileClass :
     fillObjFileClass(obj);
     break;
@@ -310,58 +234,6 @@ void castor::db::cnv::DbSvcClassCnv::fillObj(castor::IAddress*,
   }
   if (endTransaction) {
     cnvSvc()->commit();
-  }
-}
-
-//------------------------------------------------------------------------------
-// fillObjDiskPool
-//------------------------------------------------------------------------------
-void castor::db::cnv::DbSvcClassCnv::fillObjDiskPool(castor::stager::SvcClass* obj)
-  throw (castor::exception::Exception) {
-  // Check select statement
-  if (0 == m_selectDiskPoolStatement) {
-    m_selectDiskPoolStatement = createStatement(s_selectDiskPoolStatementString);
-  }
-  // retrieve the object from the database
-  std::vector<u_signed64> diskPoolsList;
-  m_selectDiskPoolStatement->setUInt64(1, obj->id());
-  castor::db::IDbResultSet *rset = m_selectDiskPoolStatement->executeQuery();
-  while (rset->next()) {
-    diskPoolsList.push_back(rset->getUInt64(1));
-  }
-  // Close ResultSet
-  delete rset;
-  // Update objects and mark old ones for deletion
-  std::vector<castor::stager::DiskPool*> toBeDeleted;
-  for (std::vector<castor::stager::DiskPool*>::iterator it = obj->diskPools().begin();
-       it != obj->diskPools().end();
-       it++) {
-    std::vector<u_signed64>::iterator item =
-      std::find(diskPoolsList.begin(), diskPoolsList.end(), (*it)->id());
-    if (item == diskPoolsList.end()) {
-      toBeDeleted.push_back(*it);
-    } else {
-      diskPoolsList.erase(item);
-      cnvSvc()->updateObj((*it));
-    }
-  }
-  // Delete old objects
-  for (std::vector<castor::stager::DiskPool*>::iterator it = toBeDeleted.begin();
-       it != toBeDeleted.end();
-       it++) {
-    obj->removeDiskPools(*it);
-    (*it)->removeSvcClasses(obj);
-  }
-  // Create new objects
-  std::vector<castor::IObject*> newDiskPools =
-    cnvSvc()->getObjsFromIds(diskPoolsList, OBJ_DiskPool);
-  for (std::vector<castor::IObject*>::iterator it = newDiskPools.begin();
-       it != newDiskPools.end();
-       it++) {
-    castor::stager::DiskPool* remoteObj = 
-      dynamic_cast<castor::stager::DiskPool*>(*it);
-    obj->addDiskPools(remoteObj);
-    remoteObj->addSvcClasses(obj);
   }
 }
 

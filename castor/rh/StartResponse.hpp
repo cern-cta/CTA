@@ -37,14 +37,6 @@ namespace castor {
   class ObjectSet;
   class IObject;
 
-  // Forward declarations
-  namespace stager {
-
-    // Forward declarations
-    class DiskCopy;
-
-  } /* end of namespace stager */
-
   namespace rh {
 
     /**
@@ -104,6 +96,24 @@ namespace castor {
       /* End of IObject abstract class */
       /*********************************/
       /**
+       * Get the value of m_diskCopyPath
+       * The path of the returned diskCopy
+       * @return the value of m_diskCopyPath
+       */
+      std::string diskCopyPath() const {
+        return m_diskCopyPath;
+      }
+
+      /**
+       * Set the value of m_diskCopyPath
+       * The path of the returned diskCopy
+       * @param new_var the new value of m_diskCopyPath
+       */
+      void setDiskCopyPath(std::string new_var) {
+        m_diskCopyPath = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -121,28 +131,13 @@ namespace castor {
         m_id = new_var;
       }
 
-      /**
-       * Get the value of m_diskCopy
-       * @return the value of m_diskCopy
-       */
-      castor::stager::DiskCopy* diskCopy() const {
-        return m_diskCopy;
-      }
-
-      /**
-       * Set the value of m_diskCopy
-       * @param new_var the new value of m_diskCopy
-       */
-      void setDiskCopy(castor::stager::DiskCopy* new_var) {
-        m_diskCopy = new_var;
-      }
-
     private:
+
+      /// The path of the returned diskCopy
+      std::string m_diskCopyPath;
 
       /// The id of this object
       u_signed64 m_id;
-
-      castor::stager::DiskCopy* m_diskCopy;
 
     }; /* end of class StartResponse */
 

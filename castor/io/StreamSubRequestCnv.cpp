@@ -36,7 +36,6 @@
 #include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/stager/CastorFile.hpp"
-#include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/FileRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
@@ -174,7 +173,9 @@ void castor::io::StreamSubRequestCnv::marshalObject(castor::IObject* object,
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
-    cnvSvc()->marshalObject(obj->diskcopy(), address, alreadyDone);
+    // former diskCopy field, that has disappeared now. As we
+    // do not want to change the protocol, we marshall a null pointer
+    address->stream() << castor::OBJ_Ptr << ((unsigned int)0);
     cnvSvc()->marshalObject(obj->castorFile(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->parent(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->request(), address, alreadyDone);
@@ -198,8 +199,10 @@ castor::IObject* castor::io::StreamSubRequestCnv::unmarshalObject(castor::io::bi
   castor::stager::SubRequest* obj = 
     dynamic_cast<castor::stager::SubRequest*>(object);
   ad.setObjType(castor::OBJ_INVALID);
-  castor::IObject* objDiskcopy = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setDiskcopy(dynamic_cast<castor::stager::DiskCopy*>(objDiskcopy));
+  (void)cnvSvc()->unmarshalObject(ad, newlyCreated);
+  // the diskCopy object has been dropped from the SubRequest class, so we ignore
+  // the unmarshalled value (a 0 pointer anyway). This is only here so that
+  // the protocol does not change.
   ad.setObjType(castor::OBJ_INVALID);
   castor::IObject* objCastorFile = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setCastorFile(dynamic_cast<castor::stager::CastorFile*>(objCastorFile));

@@ -35,14 +35,10 @@
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
-#include "castor/stager/CastorFile.hpp"
 #include "castor/stager/DiskCopyForRecall.hpp"
 #include "castor/stager/DiskCopyStatusCodes.hpp"
-#include "castor/stager/FileSystem.hpp"
-#include "castor/stager/SubRequest.hpp"
 #include "osdep.h"
 #include <string>
-#include <vector>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
@@ -89,14 +85,10 @@ void castor::io::StreamDiskCopyForRecallCnv::createRep(castor::IAddress* address
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
-  ad->stream() << obj->path();
-  ad->stream() << obj->gcWeight();
-  ad->stream() << obj->creationTime();
-  ad->stream() << obj->lastAccessTime();
-  ad->stream() << obj->id();
   ad->stream() << obj->mountPoint();
   ad->stream() << obj->diskServer();
   ad->stream() << obj->fsWeight();
+  ad->stream() << obj->id();
   ad->stream() << obj->status();
 }
 
@@ -110,21 +102,6 @@ castor::IObject* castor::io::StreamDiskCopyForRecallCnv::createObj(castor::IAddr
   // create the new Object
   castor::stager::DiskCopyForRecall* object = new castor::stager::DiskCopyForRecall();
   // Now retrieve and set members
-  std::string path;
-  ad->stream() >> path;
-  object->setPath(path);
-  double gcWeight;
-  ad->stream() >> gcWeight;
-  object->setGcWeight(gcWeight);
-  u_signed64 creationTime;
-  ad->stream() >> creationTime;
-  object->setCreationTime(creationTime);
-  u_signed64 lastAccessTime;
-  ad->stream() >> lastAccessTime;
-  object->setLastAccessTime(lastAccessTime);
-  u_signed64 id;
-  ad->stream() >> id;
-  object->setId(id);
   std::string mountPoint;
   ad->stream() >> mountPoint;
   object->setMountPoint(mountPoint);
@@ -134,6 +111,9 @@ castor::IObject* castor::io::StreamDiskCopyForRecallCnv::createObj(castor::IAddr
   float fsWeight;
   ad->stream() >> fsWeight;
   object->setFsWeight(fsWeight);
+  u_signed64 id;
+  ad->stream() >> id;
+  object->setId(id);
   int status;
   ad->stream() >> status;
   object->setStatus((castor::stager::DiskCopyStatusCodes)status);
@@ -157,14 +137,6 @@ void castor::io::StreamDiskCopyForRecallCnv::marshalObject(castor::IObject* obje
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
-    address->stream() << obj->subRequests().size();
-    for (std::vector<castor::stager::SubRequest*>::iterator it = obj->subRequests().begin();
-         it != obj->subRequests().end();
-         it++) {
-      cnvSvc()->marshalObject(*it, address, alreadyDone);
-    }
-    cnvSvc()->marshalObject(obj->fileSystem(), address, alreadyDone);
-    cnvSvc()->marshalObject(obj->castorFile(), address, alreadyDone);
   } else {
     // case of a pointer to an already streamed object
     address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
@@ -181,22 +153,6 @@ castor::IObject* castor::io::StreamDiskCopyForRecallCnv::unmarshalObject(castor:
   castor::IObject* object = createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);
-  // Fill object with associations
-  castor::stager::DiskCopyForRecall* obj = 
-    dynamic_cast<castor::stager::DiskCopyForRecall*>(object);
-  unsigned int subRequestsNb;
-  ad.stream() >> subRequestsNb;
-  for (unsigned int i = 0; i < subRequestsNb; i++) {
-    ad.setObjType(castor::OBJ_INVALID);
-    castor::IObject* objSubRequests = cnvSvc()->unmarshalObject(ad, newlyCreated);
-    obj->addSubRequests(dynamic_cast<castor::stager::SubRequest*>(objSubRequests));
-  }
-  ad.setObjType(castor::OBJ_INVALID);
-  castor::IObject* objFileSystem = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setFileSystem(dynamic_cast<castor::stager::FileSystem*>(objFileSystem));
-  ad.setObjType(castor::OBJ_INVALID);
-  castor::IObject* objCastorFile = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setCastorFile(dynamic_cast<castor::stager::CastorFile*>(objCastorFile));
   return object;
 }
 

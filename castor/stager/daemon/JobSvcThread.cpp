@@ -45,11 +45,8 @@
 #include "castor/BaseObject.hpp"
 #include "castor/stager/Request.hpp"
 #include "castor/stager/SubRequest.hpp"
-#include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/DiskCopyInfo.hpp"
-#include "castor/stager/DiskServer.hpp"
 #include "castor/stager/DiskCopyForRecall.hpp"
-#include "castor/stager/FileSystem.hpp"
 #include "castor/stager/GetUpdateStartRequest.hpp"
 #include "castor/stager/GetUpdateDone.hpp"
 #include "castor/stager/GetUpdateFailed.hpp"
@@ -85,10 +82,8 @@ void castor::stager::daemon::JobSvcThread::handleStartRequest
  castor::BaseAddress &ad,
  Cuuid_t uuid) throw() {
   // Useful Variables
-  castor::stager::FileSystem fs;
-  castor::stager::DiskServer ds;
   castor::stager::SubRequest *subreq = 0;
-  castor::stager::DiskCopy *dc = 0;
+  std::string dcPath;
   castor::stager::StartRequest *sReq;
   bool emptyFile = false;
   Cuuid_t suuid = nullCuuid;
@@ -135,31 +130,26 @@ void castor::stager::daemon::JobSvcThread::handleStartRequest
       throw e;
     }
     string2Cuuid(&suuid, (char*)subreq->subreqId().c_str());
-    // Create diskserver and filesystem in memory
-    ds.setName(sReq->diskServer());
-    fs.setMountPoint(sReq->fileSystem());
-    fs.setDiskserver(&ds);
-    ds.addFileSystems(&fs);
     // Invoking the method
     if (castor::OBJ_GetUpdateStartRequest == sReq->type()) {
       // "Invoking getUpdateStart"
       castor::dlf::Param params[] =
-        {castor::dlf::Param("DiskServer", ds.name()),
-         castor::dlf::Param("FileSystem", fs.mountPoint()),
+        {castor::dlf::Param("DiskServer", sReq->diskServer()),
+         castor::dlf::Param("FileSystem", sReq->fileSystem()),
          castor::dlf::Param(suuid)};
       castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_JOBSVC_GETUPDS,
                               fileId, nsHost, 3, params);
-      dc = jobSvc->getUpdateStart(subreq, &fs, &emptyFile, fileId, nsHost);
+      dcPath = jobSvc->getUpdateStart(subreq, sReq->diskServer(), sReq->fileSystem(), &emptyFile, fileId, nsHost);
     } else {
       // "Invoking PutStart"
       castor::dlf::Param params[] =
-        {castor::dlf::Param("DiskServer", ds.name()),
-         castor::dlf::Param("FileSystem", fs.mountPoint()),
+        {castor::dlf::Param("DiskServer", sReq->diskServer()),
+         castor::dlf::Param("FileSystem", sReq->fileSystem()),
          castor::dlf::Param(suuid)};
       castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_JOBSVC_PUTS,
                               fileId, nsHost, 3, params);
       try {
-        dc = jobSvc->putStart(subreq, &fs, fileId, nsHost);
+        dcPath = jobSvc->putStart(subreq, sReq->diskServer(), sReq->fileSystem(), fileId, nsHost);
       } catch (castor::exception::RequestCanceled& e) {
         // special case of canceled requests, don't log
         res.setErrorCode(e.code());
@@ -182,7 +172,7 @@ void castor::stager::daemon::JobSvcThread::handleStartRequest
   }
   // Build the response
   if (!failed) {
-    res.setDiskCopy(dc);
+    res.setDiskCopyPath(dcPath);
     res.setEmptyFile(emptyFile);
   }
   // Reply To Client
@@ -203,7 +193,6 @@ void castor::stager::daemon::JobSvcThread::handleStartRequest
   }
   // Cleanup
   if (subreq) delete subreq;
-  if (dc) delete dc;
 }
 
 //-----------------------------------------------------------------------------

@@ -36,7 +36,6 @@
 #include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/rh/StartResponse.hpp"
-#include "castor/stager/DiskCopy.hpp"
 #include "osdep.h"
 #include <string>
 
@@ -88,6 +87,7 @@ void castor::io::StreamStartResponseCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->errorCode();
   ad->stream() << obj->errorMessage();
   ad->stream() << obj->reqAssociated();
+  ad->stream() << obj->diskCopyPath();
   ad->stream() << obj->id();
 }
 
@@ -110,6 +110,9 @@ castor::IObject* castor::io::StreamStartResponseCnv::createObj(castor::IAddress*
   std::string reqAssociated;
   ad->stream() >> reqAssociated;
   object->setReqAssociated(reqAssociated);
+  std::string diskCopyPath;
+  ad->stream() >> diskCopyPath;
+  object->setDiskCopyPath(diskCopyPath);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
@@ -133,7 +136,6 @@ void castor::io::StreamStartResponseCnv::marshalObject(castor::IObject* object,
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
-    cnvSvc()->marshalObject(obj->diskCopy(), address, alreadyDone);
   } else {
     // case of a pointer to an already streamed object
     address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
@@ -150,12 +152,6 @@ castor::IObject* castor::io::StreamStartResponseCnv::unmarshalObject(castor::io:
   castor::IObject* object = createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);
-  // Fill object with associations
-  castor::rh::StartResponse* obj = 
-    dynamic_cast<castor::rh::StartResponse*>(object);
-  ad.setObjType(castor::OBJ_INVALID);
-  castor::IObject* objDiskCopy = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setDiskCopy(dynamic_cast<castor::stager::DiskCopy*>(objDiskCopy));
   return object;
 }
 

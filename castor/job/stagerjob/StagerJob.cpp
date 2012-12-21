@@ -43,9 +43,6 @@
 #include "castor/rh/IOResponse.hpp"
 #include "castor/io/ClientSocket.hpp"
 #include "castor/stager/IJobSvc.hpp"
-#include "castor/stager/DiskCopy.hpp"
-#include "castor/stager/DiskServer.hpp"
-#include "castor/stager/FileSystem.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/job/stagerjob/IPlugin.hpp"
 #include "castor/job/stagerjob/StagerJob.hpp"
@@ -119,14 +116,6 @@ std::string startAndGetPath
  castor::job::stagerjob::PluginContext& context)
   throw (castor::exception::Exception) {
 
-  // Create diskserver and filesystem in memory
-  castor::stager::DiskServer diskServer;
-  diskServer.setName(args->diskServer);
-  castor::stager::FileSystem fileSystem;
-  fileSystem.setMountPoint(args->fileSystem);
-  fileSystem.setDiskserver(&diskServer);
-  diskServer.addFileSystems(&fileSystem);
-
   // Create a subreq in memory and we will just fill its id
   castor::stager::SubRequest subrequest;
   subrequest.setId(args->subRequestId);
@@ -135,11 +124,11 @@ std::string startAndGetPath
   if ((args->accessMode == castor::job::stagerjob::ReadOnly) ||
       (args->accessMode == castor::job::stagerjob::ReadWrite)) {
     bool emptyFile;
-    castor::stager::DiskCopy* diskCopy =
+    std::string diskCopyPath =
       context.jobSvc->getUpdateStart
-      (&subrequest, &fileSystem, &emptyFile,
+      (&subrequest, args->diskServer, args->fileSystem, &emptyFile,
        args->fileId.fileid, args->fileId.server);
-    if (diskCopy == NULL) {
+    if (diskCopyPath == "") {
       // No DiskCopy return, nothing should be done
       // The job was scheduled for nothing
       // This happens in particular when a diskCopy gets invalidated
@@ -151,7 +140,7 @@ std::string startAndGetPath
          castor::job::stagerjob::JOBNOOP, 1, params, &args->fileId);
       return "";
     }
-    std::string fullDestPath = args->fileSystem + diskCopy->path();
+    std::string fullDestPath = args->fileSystem + diskCopyPath;
     // Deal with recalls of empty files
     // the file may have been declared recalled without being created on disk
     // so let's check and create when needed
@@ -168,7 +157,6 @@ std::string startAndGetPath
           castor::dlf::dlf_writep
             (args->requestUuid, DLF_LVL_ERROR,
              castor::job::stagerjob::CREATFAILED, 3, params, &args->fileId);
-          delete diskCopy;
           castor::exception::Exception e(errno);
           e.getMessage() << "Failed to create empty file";
           throw e;
@@ -193,18 +181,16 @@ std::string startAndGetPath
       removexattr(fullDestPath.c_str(), "user.castor.checksum.type");
     }
 
-    delete diskCopy;
     return fullDestPath;
 
     // Put case
   } else {
     // Call putStart
-    castor::stager::DiskCopy* diskCopy =
+    std::string diskCopyPath =
       context.jobSvc->putStart
-      (&subrequest, &fileSystem,
+      (&subrequest, args->diskServer, args->fileSystem,
        args->fileId.fileid, args->fileId.server);
-    std::string fullDestPath = args->fileSystem + diskCopy->path();
-    delete diskCopy;
+    std::string fullDestPath = args->fileSystem + diskCopyPath;
     return fullDestPath;
   }
 }

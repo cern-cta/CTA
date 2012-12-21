@@ -106,10 +106,7 @@ PARTITION BY LIST (type)
 /* SQL statements for type CastorFile */
 CREATE TABLE CastorFile (fileId INTEGER, nsHost VARCHAR2(2048), fileSize INTEGER, creationTime INTEGER, lastAccessTime INTEGER, lastKnownFileName VARCHAR2(2048), lastUpdateTime INTEGER, id INTEGER CONSTRAINT PK_CastorFile_Id PRIMARY KEY, fileClass INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
-/* Redefinition of table SubRequest to make it partitioned by status */
-/* Unfortunately it has already been defined, so we drop and recreate it */
-/* Note that if the schema changes, this part has to be updated manually! */
-DROP TABLE SubRequest;
+/* SQL statement for table SubRequest */
 CREATE TABLE SubRequest
   (retryCounter NUMBER, fileName VARCHAR2(2048), protocol VARCHAR2(2048),
    xsize INTEGER, priority NUMBER, subreqId VARCHAR2(2048), flags NUMBER,
@@ -158,6 +155,34 @@ CREATE INDEX I_SubRequest_RT_CT_ID ON SubRequest(svcHandler, creationTime, id) L
 
 /* this index is dedicated to archivesubreq */
 CREATE INDEX I_SubRequest_Req_Stat_no89 ON SubRequest (request, decode(status,8,NULL,9,NULL,status));
+
+CREATE INDEX I_SubRequest_Castorfile ON SubRequest (castorFile);
+CREATE INDEX I_SubRequest_DiskCopy ON SubRequest (diskCopy);
+CREATE INDEX I_SubRequest_Request ON SubRequest (request);
+CREATE INDEX I_SubRequest_Parent ON SubRequest (parent);
+CREATE INDEX I_SubRequest_SubReqId ON SubRequest (subReqId);
+CREATE INDEX I_SubRequest_LastModTime ON SubRequest (lastModificationTime) LOCAL;
+
+BEGIN
+  setObjStatusName('SubRequest', 'status', 0, 'SUBREQUEST_START');
+  setObjStatusName('SubRequest', 'status', 1, 'SUBREQUEST_RESTART');
+  setObjStatusName('SubRequest', 'status', 2, 'SUBREQUEST_RETRY');
+  setObjStatusName('SubRequest', 'status', 3, 'SUBREQUEST_WAITSCHED');
+  setObjStatusName('SubRequest', 'status', 4, 'SUBREQUEST_WAITTAPERECALL');
+  setObjStatusName('SubRequest', 'status', 5, 'SUBREQUEST_WAITSUBREQ');
+  setObjStatusName('SubRequest', 'status', 6, 'SUBREQUEST_READY');
+  setObjStatusName('SubRequest', 'status', 7, 'SUBREQUEST_FAILED');
+  setObjStatusName('SubRequest', 'status', 8, 'SUBREQUEST_FINISHED');
+  setObjStatusName('SubRequest', 'status', 9, 'SUBREQUEST_FAILED_FINISHED');
+  setObjStatusName('SubRequest', 'status', 11, 'SUBREQUEST_ARCHIVED');
+  setObjStatusName('SubRequest', 'status', 12, 'SUBREQUEST_REPACK');
+  setObjStatusName('SubRequest', 'status', 13, 'SUBREQUEST_READYFORSCHED');
+  setObjStatusName('SubRequest', 'getNextStatus', 0, 'GETNEXTSTATUS_NOTAPPLICABLE');
+  setObjStatusName('SubRequest', 'getNextStatus', 1, 'GETNEXTSTATUS_FILESTAGED');
+  setObjStatusName('SubRequest', 'getNextStatus', 2, 'GETNEXTSTATUS_NOTIFIED');
+END;
+/
+
 
 /************************************/
 /* Garbage collection related table */
@@ -549,13 +574,58 @@ CREATE TABLE FileMigrationResultsHelper
  (reqId VARCHAR2(36), fileId NUMBER, lastModTime NUMBER, copyNo NUMBER, oldCopyNo NUMBER, transfSize NUMBER,
   comprSize NUMBER, vid VARCHAR2(6), fSeq NUMBER, blockId RAW(4), checksumType VARCHAR2(16), checksum NUMBER);
 
-
-/* Indexes related to most used entities */
+/* SQL statements for type DiskServer */
+CREATE TABLE DiskServer (name VARCHAR2(2048), lastHeartBeatTime NUMBER, id INTEGER CONSTRAINT PK_DiskServer_Id PRIMARY KEY, status INTEGER, adminStatus INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE UNIQUE INDEX I_DiskServer_name ON DiskServer (name);
+ALTER TABLE DiskServer MODIFY
+  (status CONSTRAINT NN_DiskServer_Status NOT NULL,
+   name CONSTRAINT NN_DiskServer_Name NOT NULL);
+ALTER TABLE DiskServer ADD CONSTRAINT UN_DiskServer_Name UNIQUE (name);
+
+BEGIN
+  setObjStatusName('DiskServer', 'status', 0, 'DISKSERVER_PRODUCTION');
+  setObjStatusName('DiskServer', 'status', 1, 'DISKSERVER_DRAINING');
+  setObjStatusName('DiskServer', 'status', 2, 'DISKSERVER_DISABLED');
+  setObjStatusName('DiskServer', 'adminStatus', 0, 'ADMIN_NONE');
+  setObjStatusName('DiskServer', 'adminStatus', 1, 'ADMIN_FORCE');
+END;
+/
+
+/* SQL statements for type FileSystem */
+CREATE TABLE FileSystem (free INTEGER, mountPoint VARCHAR2(2048), minAllowedFreeSpace NUMBER, maxFreeSpace NUMBER, totalSize INTEGER, nbReadStreams NUMBER, nbWriteStreams NUMBER, nbMigratorStreams NUMBER, nbRe
+callerStreams NUMBER, id INTEGER CONSTRAINT PK_FileSystem_Id PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER, adminStatus INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+ALTER TABLE FileSystem ADD CONSTRAINT FK_FileSystem_DiskServer 
+  FOREIGN KEY (diskServer) REFERENCES DiskServer(id);
+ALTER TABLE FileSystem MODIFY
+  (status     CONSTRAINT NN_FileSystem_Status NOT NULL,
+   diskServer CONSTRAINT NN_FileSystem_DiskServer NOT NULL,
+   mountPoint CONSTRAINT NN_FileSystem_MountPoint NOT NULL);
+ALTER TABLE FileSystem ADD CONSTRAINT UN_FileSystem_DSMountPoint
+  UNIQUE (diskServer, mountPoint);
+CREATE INDEX I_FileSystem_DiskPool ON FileSystem (diskPool);
+CREATE INDEX I_FileSystem_DiskServer ON FileSystem (diskServer);
+
+BEGIN
+  setObjStatusName('FileSystem', 'status', 0, 'FILESYSTEM_PRODUCTION');
+  setObjStatusName('FileSystem', 'status', 1, 'FILESYSTEM_DRAINING');
+  setObjStatusName('FileSystem', 'status', 2, 'FILESYSTEM_DISABLED');
+  setObjStatusName('FileSystem', 'adminStatus', 0, 'ADMIN_NONE');
+  setObjStatusName('FileSystem', 'adminStatus', 1, 'ADMIN_FORCE');
+END;
+/
+
+/* SQL statements for type DiskPool */
+CREATE TABLE DiskPool (name VARCHAR2(2048), id INTEGER CONSTRAINT PK_DiskPool_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE DiskPool2SvcClass (Parent INTEGER, Child INTEGER) INITRANS 50 PCTFREE 50;
+CREATE INDEX I_DiskPool2SvcClass_C on DiskPool2SvcClass (child);
+CREATE INDEX I_DiskPool2SvcClass_P on DiskPool2SvcClass (parent);
+
 
 CREATE UNIQUE INDEX I_CastorFile_FileIdNsHost ON CastorFile (fileId, nsHost);
 CREATE UNIQUE INDEX I_CastorFile_LastKnownFileName ON CastorFile (lastKnownFileName);
 
+/* SQL statements for type DiskCopy */
+CREATE TABLE DiskCopy (path VARCHAR2(2048), gcWeight NUMBER, creationTime INTEGER, lastAccessTime INTEGER, diskCopySize INTEGER, nbCopyAccesses NUMBER, owneruid NUMBER, ownergid NUMBER, id INTEGER CONSTRAINT PK_DiskCopy_Id PRIMARY KEY, gcType INTEGER, fileSystem INTEGER, castorFile INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE INDEX I_DiskCopy_Castorfile ON DiskCopy (castorFile);
 CREATE INDEX I_DiskCopy_FileSystem ON DiskCopy (fileSystem);
 CREATE INDEX I_DiskCopy_FS_GCW ON DiskCopy (fileSystem, gcWeight);
@@ -566,15 +636,25 @@ CREATE INDEX I_DiskCopy_Status_9 ON DiskCopy (decode(status,9,status,NULL));
 -- to speed up deleteOutOfDateStageOutDCs
 CREATE INDEX I_DiskCopy_Status_Open ON DiskCopy (decode(status,6,status,decode(status,5,status,decode(status,11,status,NULL))));
 
-CREATE INDEX I_FileSystem_DiskPool ON FileSystem (diskPool);
-CREATE INDEX I_FileSystem_DiskServer ON FileSystem (diskServer);
-
-CREATE INDEX I_SubRequest_Castorfile ON SubRequest (castorFile);
-CREATE INDEX I_SubRequest_DiskCopy ON SubRequest (diskCopy);
-CREATE INDEX I_SubRequest_Request ON SubRequest (request);
-CREATE INDEX I_SubRequest_Parent ON SubRequest (parent);
-CREATE INDEX I_SubRequest_SubReqId ON SubRequest (subReqId);
-CREATE INDEX I_SubRequest_LastModTime ON SubRequest (lastModificationTime) LOCAL;
+BEGIN
+  setObjStatusName('DiskCopy', 'gcType', 0, 'GCTYPE_AUTO');
+  setObjStatusName('DiskCopy', 'gcType', 1, 'GCTYPE_USER');
+  setObjStatusName('DiskCopy', 'gcType', 2, 'GCTYPE_TOOMANYREPLICAS');
+  setObjStatusName('DiskCopy', 'gcType', 3, 'GCTYPE_DRAINING');
+  setObjStatusName('DiskCopy', 'gcType', 4, 'GCTYPE_NSSYNCH');
+  setObjStatusName('DiskCopy', 'gcType', 5, 'GCTYPE_OVERWRITTEN');
+  setObjStatusName('DiskCopy', 'status', 0, 'DISKCOPY_STAGED');
+  setObjStatusName('DiskCopy', 'status', 1, 'DISKCOPY_WAITDISK2DISKCOPY');
+  setObjStatusName('DiskCopy', 'status', 3, 'DISKCOPY_DELETED');
+  setObjStatusName('DiskCopy', 'status', 4, 'DISKCOPY_FAILED');
+  setObjStatusName('DiskCopy', 'status', 5, 'DISKCOPY_WAITFS');
+  setObjStatusName('DiskCopy', 'status', 6, 'DISKCOPY_STAGEOUT');
+  setObjStatusName('DiskCopy', 'status', 7, 'DISKCOPY_INVALID');
+  setObjStatusName('DiskCopy', 'status', 9, 'DISKCOPY_BEINGDELETED');
+  setObjStatusName('DiskCopy', 'status', 10, 'DISKCOPY_CANBEMIGR');
+  setObjStatusName('DiskCopy', 'status', 11, 'DISKCOPY_WAITFS_SCHEDULING');
+END;
+/
 
 CREATE INDEX I_StagePTGRequest_ReqId ON StagePrepareToGetRequest (reqId);
 CREATE INDEX I_StagePTPRequest_ReqId ON StagePrepareToPutRequest (reqId);
@@ -587,25 +667,6 @@ CREATE INDEX I_StagePutRequest_SvcClass ON StagePutRequest (svcClass);
 
 /* Indexing GCFile by Request */
 CREATE INDEX I_GCFile_Request ON GCFile (request);
-
-/* FileSystem constraints */
-ALTER TABLE FileSystem ADD CONSTRAINT FK_FileSystem_DiskServer 
-  FOREIGN KEY (diskServer) REFERENCES DiskServer(id);
-
-ALTER TABLE FileSystem MODIFY
-  (status     CONSTRAINT NN_FileSystem_Status NOT NULL,
-   diskServer CONSTRAINT NN_FileSystem_DiskServer NOT NULL,
-   mountPoint CONSTRAINT NN_FileSystem_MountPoint NOT NULL);
-
-ALTER TABLE FileSystem ADD CONSTRAINT UN_FileSystem_DSMountPoint
-  UNIQUE (diskServer, mountPoint);
-
-/* DiskServer constraints */
-ALTER TABLE DiskServer MODIFY
-  (status CONSTRAINT NN_DiskServer_Status NOT NULL,
-   name CONSTRAINT NN_DiskServer_Name NOT NULL);
-
-ALTER TABLE DiskServer ADD CONSTRAINT UN_DiskServer_Name UNIQUE (name);
 
 /* An index to speed up queries in FileQueryRequest, FindRequestRequest, RequestQueryRequest */
 CREATE INDEX I_QueryParameter_Query ON QueryParameter (query);
@@ -810,6 +871,9 @@ UPDATE Type2Obj SET svcHandler = 'QueryReqSvc' WHERE type IN (33, 34, 41, 103, 1
 UPDATE Type2Obj SET svcHandler = 'JobSvc' WHERE type IN (60, 64, 65, 67, 78, 79, 80, 93, 144, 147);
 UPDATE Type2Obj SET svcHandler = 'GCSvc' WHERE type IN (73, 74, 83, 142, 149);
 UPDATE Type2Obj SET svcHandler = 'BulkStageReqSvc' WHERE type IN (50, 119);
+
+/* SQL statements for type StageDiskCopyReplicaRequest */
+CREATE TABLE StageDiskCopyReplicaRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StageDiskCopyReplicaRequ_Id PRIMARY KEY, svcClass INTEGER, client INTEGER, sourceSvcClass INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* Set default values for the StageDiskCopyReplicaRequest table */
 ALTER TABLE StageDiskCopyReplicaRequest MODIFY flags DEFAULT 0;

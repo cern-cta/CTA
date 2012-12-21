@@ -36,7 +36,6 @@
 #include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/rh/GetUpdateStartResponse.hpp"
-#include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/DiskCopyForRecall.hpp"
 #include "osdep.h"
 #include <string>
@@ -87,6 +86,7 @@ void castor::io::StreamGetUpdateStartResponseCnv::createRep(castor::IAddress* ad
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
+  ad->stream() << obj->diskCopyPath();
   ad->stream() << obj->id();
   ad->stream() << obj->errorCode();
   ad->stream() << obj->errorMessage();
@@ -104,6 +104,9 @@ castor::IObject* castor::io::StreamGetUpdateStartResponseCnv::createObj(castor::
   // create the new Object
   castor::rh::GetUpdateStartResponse* object = new castor::rh::GetUpdateStartResponse();
   // Now retrieve and set members
+  std::string diskCopyPath;
+  ad->stream() >> diskCopyPath;
+  object->setDiskCopyPath(diskCopyPath);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
@@ -139,7 +142,6 @@ void castor::io::StreamGetUpdateStartResponseCnv::marshalObject(castor::IObject*
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
-    cnvSvc()->marshalObject(obj->diskCopy(), address, alreadyDone);
     address->stream() << obj->sources().size();
     for (std::vector<castor::stager::DiskCopyForRecall*>::iterator it = obj->sources().begin();
          it != obj->sources().end();
@@ -165,9 +167,6 @@ castor::IObject* castor::io::StreamGetUpdateStartResponseCnv::unmarshalObject(ca
   // Fill object with associations
   castor::rh::GetUpdateStartResponse* obj = 
     dynamic_cast<castor::rh::GetUpdateStartResponse*>(object);
-  ad.setObjType(castor::OBJ_INVALID);
-  castor::IObject* objDiskCopy = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setDiskCopy(dynamic_cast<castor::stager::DiskCopy*>(objDiskCopy));
   unsigned int sourcesNb;
   ad.stream() >> sourcesNb;
   for (unsigned int i = 0; i < sourcesNb; i++) {

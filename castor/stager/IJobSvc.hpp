@@ -48,13 +48,9 @@ namespace castor {
     class Stream;
     class Request;
     class Segment;
-    class DiskCopy;
     class DiskCopyInfo;
-    class DiskPool;
     class SvcClass;
     class FileClass;
-    class FileSystem;
-    class DiskServer;
     class SubRequest;
     class CastorFile;
     class GCLocalFile;
@@ -69,53 +65,22 @@ namespace castor {
 
       /**
        * Handles the start of a Get or Update job.
-       * Schedules the corresponding SubRequest on a given
-       * FileSystem and returns the DiskCopy to use for data
-       * access.
-       * Note that deallocation of the DiskCopy is the
-       * responsability of the caller.
-       * Depending on the available DiskCopies for the file
-       * the SubRequest deals with, we have different cases :
-       *  - no DiskCopy at all and file is not of size 0 :
-       * a DiskCopy is created with status DISKCOPY_WAITTAPERECALL.
-       * Null pointer is returned
-       *  - no DiskCopy at all and file is of size 0 :
-       * a DiskCopy is created with status DISKCOPY_WAIDISK2DISKCOPY.
-       * This diskCopy is returned and the emptyFile content is
-       * set to true.
-       *  - one DiskCopy in DISKCOPY_WAITTAPERECALL, DISKCOPY_WAITFS
-       * or DISKCOPY_WAITDISK2DISKCOPY status :
-       * the SubRequest is linked to the one recalling and
-       * put in SUBREQUEST_WAITSUBREQ status. Null pointer is
-       * returned.
-       *  - no valid (STAGE*, WAIT*) DiskCopy on the selected
-       * FileSystem but some in status DISKCOPY_STAGEOUT or
-       * DISKCOPY_STAGED on other FileSystems : a new DiskCopy
-       * is created with status DISKCOPY_WAITDISK2DISKCOPY.
-       * It is returned and the sources parameter is filed
-       * with the DiskCopies found on the non selected FileSystems.
-       *  - one DiskCopy on the selected FileSystem in
-       * DISKCOPY_STAGEOUT or DISKCOPY_STAGED status :
-       * the SubRequest is ready, the DiskCopy is returned and
-       * sources remains empty.
        * @param subreq the SubRequest to consider
-       * @param fileSystem the selected FileSystem
+       * @param diskServerName the selected diskServer
+       * @param mountPoint the mounPoint of the selected fileSystem
        * @param emptyFile whether the resulting diskCopy
        * deals with the recall of an empty file
        * @param fileId the id of the castorFile
        * @param nsHost the name server hosting this castorFile
-       * @return the DiskCopy to use for the data access or
-       * a null pointer if the data access will have to wait
-       * and there is nothing more to be done. Even in case
-       * of a non null pointer, the data access will have to
-       * wait for a disk to disk copy if the returned DiskCopy
-       * is in DISKCOPY_WAITDISKTODISKCOPY status. This
-       * disk to disk copy is the responsability of the caller.
+       * @return the DiskCopyPath to use for the data access or
+       * an empty string if the data access will have to wait
+       * and there is nothing more to be done.
        * @exception Exception in case of error
        */
-      virtual castor::stager::DiskCopy* getUpdateStart
+      virtual std::string getUpdateStart
       (castor::stager::SubRequest* subreq,
-       castor::stager::FileSystem* fileSystem,
+       std::string diskServerName,
+       std::string mountPoint,
        bool* emptyFile,
        u_signed64 fileId,
        const std::string nsHost)
@@ -123,27 +88,24 @@ namespace castor {
 
       /**
        * Handles the start of a Put job.
-       * Links the DiskCopy associated to the SubRequest to
-       * the given FileSystem and updates the DiskCopy status
-       * to DISKCOPY_STAGEOUT.
-       * Note that deallocation of the DiskCopy is the
-       * responsability of the caller.
        * @param subreq the SubRequest to consider
-       * @param fileSystem the selected FileSystem
+       * @param diskServerName the selected diskServer
+       * @param mountPoint the mounPoint of the selected fileSystem
        * @param fileId the id of the castorFile
        * @param nsHost the name server hosting this castorFile
-       * @return the DiskCopy to use for the data access
+       * @return the DiskCopyPath to use for the data access
        * @exception Exception in case of error
        */
-      virtual castor::stager::DiskCopy* putStart
+      virtual std::string putStart
       (castor::stager::SubRequest* subreq,
-       castor::stager::FileSystem* fileSystem,
+       std::string diskServerName,
+       std::string mountPoint,
        u_signed64 fileId,
        const std::string nsHost)
         throw (castor::exception::Exception) = 0;
 
       /**
-       * Handles the start of a StageDiskCopyReplicaRequest. It checks
+       * Handles the start of a disk to disk copy. It checks
        * that the source DiskCopy stills exists i.e. hasn't been
        * garbage collected. Updates the filesystem of the destination
        * DiskCoy and verifies that the selected destination diskserver

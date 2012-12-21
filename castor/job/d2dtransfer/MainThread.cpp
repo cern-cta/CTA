@@ -375,7 +375,7 @@ void castor::job::d2dtransfer::MainThread::run(void*) {
      castor::dlf::Param("SourceDiskCopyId", m_sourceDiskCopyId),
      castor::dlf::Param("Protocol", m_protocol),
      castor::dlf::Param("SvcClass", m_svcClass),
-     castor::dlf::Param("Type", castor::ObjectsIdStrings[OBJ_StageDiskCopyReplicaRequest]),
+     castor::dlf::Param("Type", "DiskCopyReplicaRequest"),
      castor::dlf::Param("TotalWaitTime",
                         totalWaitTime > 0 ? totalWaitTime * 0.000001 : 0),
      castor::dlf::Param(m_subRequestUuid)};
