@@ -83,9 +83,6 @@ Configuration for the database accesses is taken from castor.conf.
 .BR deletetapepool
 .BR printtapepool
 .BR modifymigrationroute
-.BR modifyrecallgroup
-.BR modifyrecalluser
-.BR modifysvcclass
 .BR adminMultiInstance
 
 .SH AUTHOR

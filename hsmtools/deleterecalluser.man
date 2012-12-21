@@ -80,12 +80,7 @@ Configuration for the database accesses is taken from castor.conf.
 .BR enterrecalluser
 .BR modifyrecalluser
 .BR printrecalluser
-.BR deletediskpool
-.BR deletefileclass
-.BR deletemigrationroute
 .BR deleterecallgroup
-.BR deletesvcclass
-.BR deletetapepool
 .BR adminMultiInstance
 
 .SH AUTHOR

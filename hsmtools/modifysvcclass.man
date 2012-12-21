@@ -143,9 +143,6 @@ Configuration for the database accesses is taken from castor.conf.
 .BR deletesvcclass
 .BR printsvcclass
 .BR modifymigrationroute
-.BR modifyrecallgroup
-.BR modifyrecalluser
-.BR modifytapepool
 .BR adminMultiInstance
 
 .SH AUTHOR

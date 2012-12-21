@@ -102,9 +102,6 @@ Configuration for the database accesses is taken from castor.conf.
 .BR entermigrationroute
 .BR deletemigrationroute
 .BR printmigrationroute
-.BR modifyrecallgroup
-.BR modifyrecalluser
-.BR modifysvcclass
 .BR modifytapepool
 .BR adminMultiInstance
 

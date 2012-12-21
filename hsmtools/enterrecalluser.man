@@ -107,12 +107,7 @@ Configuration for the database accesses is taken from castor.conf.
 .BR modifyrecalluser
 .BR deleterecalluser
 .BR printrecalluser
-.BR enterdiskpool
-.BR enterfileclass
-.BR entermigrationroute
 .BR enterrecallgroup
-.BR entersvcclass
-.BR entertapepool
 .BR adminMultiInstance
 
 .SH AUTHOR

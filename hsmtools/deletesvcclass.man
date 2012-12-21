@@ -52,11 +52,7 @@ Configuration for the database access is taken from castor.conf.
 .BR modifysvcclass
 .BR printsvcclass
 .BR deletediskpool
-.BR deletefileclass
 .BR deletemigrationroute
-.BR deleterecallgroup
-.BR deleterecalluser
-.BR deletetapepool
 .BR adminMultiInstance
 
 .SH AUTHOR

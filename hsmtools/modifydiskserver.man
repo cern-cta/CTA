@@ -157,10 +157,6 @@ Configuration for the database accesses is taken from castor.conf.
 .BR enterdiskserver
 .BR deletediskserver
 .BR printdiskserver
-.BR modifymigrationroute
-.BR modifyrecallgroup
-.BR modifyrecalluser
-.BR modifytapepool
 .BR adminMultiInstance
 
 .SH AUTHOR

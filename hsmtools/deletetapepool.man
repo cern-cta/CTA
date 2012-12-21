@@ -61,12 +61,7 @@ Configuration for the database access is taken from castor.conf.
 .BR entertapepool
 .BR modifytapepool
 .BR printtapepool
-.BR deletediskpool
-.BR deletefileclass
 .BR deletemigrationroute
-.BR deleterecallgroup
-.BR deleterecalluser
-.BR deletesvcclass
 .BR adminMultiInstance
 
 .SH AUTHOR

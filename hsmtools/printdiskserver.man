@@ -88,12 +88,7 @@ Configuration for the database access is taken from castor.conf.
 .SH SEE ALSO
 .BR enterdiskserver
 .BR deletediskserver
-.BR printfileclass
-.BR printmigrationroute
-.BR printrecallgroup
-.BR printrecalluser
-.BR printsvcclass
-.BR printtapepool
+.BR printdiskpool
 .BR adminMultiInstance
 
 .SH AUTHOR

@@ -42,12 +42,8 @@ Configuration for the database access is taken from castor.conf.
 .SH SEE ALSO
 .BR enterdiskpool
 .BR deletediskpool
-.BR printfileclass
-.BR printmigrationroute
-.BR printrecallgroup
-.BR printrecalluser
 .BR printsvcclass
-.BR printtapepool
+.BR printdiskserver
 .BR adminMultiInstance
 
 .SH AUTHOR
