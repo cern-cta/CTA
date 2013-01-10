@@ -41,3 +41,9 @@
 %attr(0755,root,root) usr/bin/migrateNewCopy
 %attr(0755,root,root) usr/bin/fixFileSize
 %attr(0755,root,root) usr/bin/repack
+%attr(0755,root,root) usr/bin/printmigrationstatus
+%attr(0755,root,root) usr/bin/printrecallstatus
+%attr(0755,root,root) usr/bin/printrecallfilestatus
+%attr(0755,root,root) usr/bin/printrecalltapequeue
+%attr(0755,root,root) usr/bin/printrecalluserqueue
+

@@ -38,3 +38,8 @@ debian/castor/usr/share/man/man1/vdqmsetpriority.1castor.gz
 debian/castor/usr/share/man/man1/adminMultiInstance.1castor.gz
 debian/castor/usr/share/man/man1/migrateNewCopy.1castor.gz
 debian/castor/usr/share/man/man1/repack.1castor.gz
+debian/castor/usr/share/man/man1/printmigrationstatus.1castor.gz
+debian/castor/usr/share/man/man1/printrecallstatus.1castor.gz
+debian/castor/usr/share/man/man1/printrecallfilestatus.1castor.gz
+debian/castor/usr/share/man/man1/printrecalltapequeue.1castor.gz
+debian/castor/usr/share/man/man1/printrecalluserqueue.1castor.gz

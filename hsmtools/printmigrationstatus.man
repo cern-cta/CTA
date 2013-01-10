@@ -1,0 +1,38 @@
+.TH "PRINTMIGRATIONSTATUS" "8" "2.1.14" "CASTOR" "Castor stager tools"
+.SH "NAME"
+printmigrationstatus \- Prints the pending migrations statistics by tape pool
+.SH "SYNOPSIS"
+[CASTOR_STAGER=<stager_name>]
+.B 
+printmigrationstatus
+[
+.BI \-h
+]
+
+.SH "DESCRIPTION"
+.B printmigrationstatus
+prints out pending migrations statistics, by tapepool
+.LP 
+.BI \-h,\ \-\-help
+Get usage information
+.TP 
+
+.SH "EXAMPLES"
+.nf 
+.ft CW
+# CASTOR_INSTANCE=castorcms printmigrationstatus
+      TAPEPOOL FILES FILES_MIGRATING   TOTAL_SIZE SIZE_MIGRATING MIGRATIONS MIGRATIONS_QUEUED MIGRATIONS_RUNNING MIN_AGE_DAYS MAX_AGE_DAYS
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+cmsfamily_new1    13               0  14774906880              0          0                 0                  0         0.00         0.02
+      cms_user   642               0 239046738745              0          0                 0                  0         0.00         0.03
+.SH "NOTES"
+This command requires database client access to the stager catalogue.
+Configuration for the database access is taken from ORASTAGERCONFIG.
+
+.SH "SEE ALSO"
+.BR printrecallstatus
+.BR printrecallfilestatus
+.BR printrecalltapequeue
+.BR printrecalluserqueue
+.SH "AUTHOR"
+\fBCASTOR\fP Team <castor.support@cern.ch>

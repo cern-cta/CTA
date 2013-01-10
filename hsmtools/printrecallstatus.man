@@ -1,0 +1,39 @@
+.TH "PRINTRECALLSTATUS" "8" "2.1.14" "CASTOR" "Castor stager tools"
+.SH "NAME"
+printrecallstatus \- Prints the pending recall statistics by tape pool
+.SH "SYNOPSIS"
+[CASTOR_STAGER=<stager_name>]
+.B 
+printrecallstatus
+[
+.BI \-h
+]
+
+.SH "DESCRIPTION"
+.B printrecallstatus
+prints out pending recall statistics, by tapepool. For each tape pool, 3 totals are available: the total of data (tapes, files and bytes) to be recalled, the total submitted to VDQM (currently mounted or not) and the total for tapes currently mounted.
+.LP 
+.BI \-h,\ \-\-help
+Get usage information
+.TP 
+
+.SH "EXAMPLES"
+.nf 
+.ft CW
+# CASTOR_INSTANCE=castorcms printrecallstatus
+   TAPEPOOL FILES FILES_QUEUED FILES_RECALLING     TOTAL_SIZE    SIZE_QUEUED SIZE_RECALLING TAPES TAPES_QUEUED TAPES_RECALLING MIN_AGE_DAYS MAX_AGE_DAYS
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+   cms_user 35990        13574           13574 42179527595964 16474498660135 16474498660135   195           22              22         0.00         0.93
+ r_cms_user    10            0               0    11955607801              0              0     2            0               0         0.01         0.69
+cms_prod_08     3            0               0    15004075245              0              0     3            0               0         0.01         0.61
+.SH "NOTES"
+This command requires database client access to the stager catalogue.
+Configuration for the database access is taken from ORASTAGERCONFIG.
+
+.SH "SEE ALSO"
+.BR printmigrationstatus
+.BR printrecallfilestatus
+.BR printrecalltapequeue
+.BR printrecalluserqueue
+.SH "AUTHOR"
+\fBCASTOR\fP Team <castor.support@cern.ch>

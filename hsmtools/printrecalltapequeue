@@ -1,0 +1,119 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                      printrecalltapequeue
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+
+'''command line printing the summary of stager-queued, vdqm queued and ongoing recalls'''
+
+import sys, pwd, grp
+import getopt, time
+import castor_tools
+
+# usage function
+def usage(exitCode):
+    '''prints usage'''
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help]'
+    sys.exit(exitCode)
+
+# first parse the options
+try:
+    options, args = getopt.getopt(sys.argv[1:], 'hv', ['help', 'verbose'])
+except Exception, e:
+    print e
+    usage(1)
+verbose = False
+for f, v in options:
+    if f == '-h' or f == '--help':
+        usage(0)
+    if f == '-v' or f == '--verbose':
+        verbose = True
+    else:
+        print "unknown option : " + f
+        usage(1)
+
+try:
+    # connect to stager and prepare statements
+    stconn = castor_tools.connectToStager()
+    stcur = stconn.cursor()
+    sqlStatement = '''
+        with tapes_recall_group as
+        (select rj.vid vid, rg.name recallgroup, count(*) files, sum(rj.filesize) total_size, gettime() - min(rj.creationtime) max_age,
+           greatest (0, rg.minamountdataformount - sum(rj.filesize)) size_till_mount,
+           greatest (0, rg.maxfileagebeforemount - count(*)) files_till_mount, 
+           greatest (0, rg.maxfileagebeforemount - (gettime() - min(rj.creationtime))) time_till_mount,
+           rg.nbdrives nbdrives
+           from recalljob rj
+           left outer join recallgroup rg on rg.id = rj.recallgroup
+           left outer join recallmount rm on rm.vid = rj.vid
+          group by rj.vid, rg.name, rm.status, rg.minamountdataformount, rg.maxfileagebeforemount, rg.maxfileagebeforemount, rg.nbdrives),
+        tapes_criteria as
+        (select trg.*,
+          case when size_till_mount > 0 and files_till_mount > 0 and time_till_mount > 0 then 'HELD'
+          else
+             case when rm.status IS NULL then 'CANDIDATE' ELSE
+                CASE when rm.status = 2 then 'RUNNING' ELSE 'QUEUED' END
+             END
+          end status
+          from tapes_recall_group trg
+          left outer join recallmount rm on rm.vid = trg.vid),
+        tapes_in_disneyland as
+        (select tc.*,
+           case when tc.status != 'CANDIDATE' OR (SELECT count(*) FROM tapes_criteria WHERE status = 'CANDIDATE' and max_age > tc.max_age) = 0  
+           then 0 ELSE
+             (SELECT SUM(total_size) from tapes_criteria WHERE status = 'CANDIDATE' AND max_age > tc.max_age AND recallgroup = tc.recallgroup)
+           END size_before_queued,
+           case when status != 'CANDIDATE' then 0 ELSE
+             (SELECT count(*) from tapes_criteria WHERE status = 'CANDIDATE' AND max_age > tc.max_age AND recallgroup = tc.recallgroup)
+           END tapes_before_queued
+           from tapes_criteria tc)
+        select * from tapes_in_disneyland order by max_age desc'''
+    stcur.execute(sqlStatement)
+    # get results
+    rows = stcur.fetchall()
+    # Compute column widths (dry-run print)
+    columnTitles = ['VID', 'RECALLGROUP', 'FILES', 'TOTAL_SIZE', 'MAX_AGE',
+                       'SIZE_TILL_MOUNT', 'FILES_TILL_MOUNT', 'TIME_TILL_MOUNT', 'NBDRIVES', 'STATUS', 
+                       'SIZE_BEFORE_QUEUED', 'TAPES_BEFORE_QUEUED']
+    columnFormats = ['%*s', '%*s', '%*d', '%*d', '%*d', '%*d', '%*d', '%*.0f', '%*d', '%*s', '%*d', '%*d']
+    columnWidths = []
+    for k in range(0, len(columnTitles)):
+        columnWidths.append(max([len(columnTitles[k])]+[len(columnFormats[k] % (1, row[k])) for row in rows]))
+    # Print header
+    for k in range(0, len(columnTitles)):
+        print '%*s' % ( columnWidths[k], columnTitles[k] ),
+    print
+    print '-' * (sum(columnWidths) +  len(columnWidths) -1)
+    # Print data
+    for row in rows:
+        for k in range(0, len(columnTitles)):
+               print columnFormats[k] % ( columnWidths[k], row[k] ),
+        print
+    # close DB connections
+    try:
+        castor_tools.disconnectDB(stconn)
+    except Exception:
+        pass
+except Exception, e:
+    print e
+    if verbose:
+        import traceback
+        traceback.print_exc()
+    sys.exit(-1)

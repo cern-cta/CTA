@@ -1,0 +1,51 @@
+.TH "PRINTRECALLFILESTATUS" "8" "2.1.14" "CASTOR" "Castor stager tools"
+.SH "NAME"
+printrecallfilestatus \- Prints positions in the recall queue for file.
+.SH "SYNOPSIS"
+[CASTOR_STAGER=<stager_name>]
+.B 
+printrecallfilestatus
+[
+.BI \-h
+]
+.BI <ns_file_id>
+
+
+.SH "DESCRIPTION"
+.B printmigrationstatus
+prints out the recall queue information for the tapes involved ni the recall of a file, indicated by ns file id.
+.LP 
+
+.BI \-h,\ \-\-help
+Get usage information
+.TP 
+
+There are 4 possible statuses for the tape: 
+
+\- HELD, which means that the tape is not allowed to be nounted for recall yet at it does not fullfil any of the critetions for mounting:
+sufficient amount of data to recall, sufficient number of files to recall or age of oldest recall request.
+
+\- CANDIDATE, which means the tape passes one of the criterias to be mounted, but there are older tapes queued already, and only a fixed number of tapes is allowed to be queued per recall group.
+
+\- QUEUED: the tape is waiting for a free drive and has been submited to the VDQM
+
+\- MOUNTED: the tape is mounted for recall.
+
+.SH "EXAMPLES"
+.nf 
+.ft CW
+# CASTOR_INSTANCE=castorcms printrecallfilestatus 1176400175
+    FILEID    VID FSEQ RECALLGROUP FILES    TOTAL_SIZE MAX_AGE SIZE_TILL_MOUNT FILES_TILL_MOUNT TIME_TILL_MOUNT NBDRIVES    STATUS SIZE_BEFORE_QUEUED TAPES_BEFORE_QUEUED
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+1176400175 I40063 2408     default  1113 1668541632951   37870               0            13287               0       20 CANDIDATE      2054528189562                 162
+.SH "NOTES"
+This command requires database client access to the stager catalogue.
+Configuration for the database access is taken from ORASTAGERCONFIG.
+
+.SH "SEE ALSO"
+.BR printmigrationstatus
+.BR printrecallstatus
+.BR printrecalltapequeue
+.BR printrecalluserqueue
+.SH "AUTHOR"
+\fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,0 +1,73 @@
+.TH "PRINTRECALLTAPEQUEUE" "8" "2.1.14" "CASTOR" "Castor stager tools"
+.SH "NAME"
+printrecalltapequeue \- Prints the tapes having pending recalls and their queuing related information
+.SH "SYNOPSIS"
+[CASTOR_STAGER=<stager_name>]
+.B 
+printrecalltapequeue
+[
+.BI \-h
+]
+
+.SH "DESCRIPTION"
+.B printrecalltapequeue
+Prints the tapes having pending recalls and their queuing related information (data size, number of files, age of request, and rank in the queue).
+.LP 
+.BI \-h,\ \-\-help
+Get usage information
+.TP 
+
+
+There are 4 possible statuses for the tape: 
+
+\- HELD, which means that the tape is not allowed to be nounted for recall yet at it does not fullfil any of the critetions for mounting:
+sufficient amount of data to recall, sufficient number of files to recall or age of oldest recall request.
+
+\- CANDIDATE, which means the tape passes one of the criterias to be mounted, but there are older tapes queued already, and only a fixed number of tapes is allowed to be queued per recall group.
+
+\- QUEUED: the tape is waiting for a free drive and has been submited to the VDQM
+
+\- MOUNTED: the tape is mounted for recall.
+.SH "EXAMPLES"
+.nf 
+.ft CW
+# CASTOR_INSTANCE=castorcms printrecalltapequeue
+   VID RECALLGROUP FILES    TOTAL_SIZE MAX_AGE SIZE_TILL_MOUNT FILES_TILL_MOUNT TIME_TILL_MOUNT NBDRIVES    STATUS SIZE_BEFORE_QUEUED TAPES_BEFORE_QUEUED
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+I42041     default   232  315635642617   84429               0            14168               0       20   RUNNING                  0                   0
+T55371     default   566  735933131492   84225               0            13834               0       20   RUNNING                  0                   0
+T56008     default  1017 1398258786497   83617               0            13383               0       20   RUNNING                  0                   0
+T50314     default  1742 1961098967465   83617               0            12658               0       20   RUNNING                  0                   0
+I42615     default   685  852789838869   83617               0            13715               0       20   RUNNING                  0                   0
+[...]
+T56168     default   335  407927686214   74684               0            14065               0       20 CANDIDATE                  0                   0
+T55901     default   157  132366651220   74684               0            14243               0       20   RUNNING                  0                   0
+T53483     default   875 1113013356689   74684               0            13525               0       20   RUNNING                  0                   0
+T51261     default   395  525034305949   74684               0            14005               0       20   RUNNING                  0                   0
+T51090     default   100  132655855265   74684               0            14300               0       20   RUNNING                  0                   0
+I42538     default   372  445536987291   74684               0            14028               0       20 CANDIDATE       407927686214                   1
+T54079     default    64   89304987183   74417               0            14336               0       20   RUNNING                  0                   0
+T54391     default  1831 2520816129499   74412               0            12569               0       20 CANDIDATE       853464673505                   2
+T53506     default  1381 1829671309248   74154               0            13019               0       20 CANDIDATE      3374280803004                   3
+[...]
+I42904         vip     3   11747799638     216     95626382762              597             383       40      HELD                  0                   0
+I42711         vip     3   11724947074     216     95649235326              597             383       40      HELD                  0                   0
+I42435         vip     1        765686     216    107373416714              599             383       40      HELD                  0                   0
+I42106         vip     5   19854901561     216     87519280839              595             383       40      HELD                  0                   0
+I41690         vip     1        782139     216    107373400261              599             383       40      HELD                  0                   0
+T54809         vip     1    3926688907     213    103447493493              599             386       40      HELD                  0                   0
+I40157         vip     1    3993481642     213    103380700758              599             386       40      HELD                  0                   0
+I45737     default     1    1202109988     141      9535308252            14399           14258       20      HELD                  0                   0
+T56435     default     1    1290957883     111      9446460357            14399           14288       20      HELD                  0                   0
+
+.SH "NOTES"
+This command requires database client access to the stager catalogue.
+Configuration for the database access is taken from ORASTAGERCONFIG.
+
+.SH "SEE ALSO"
+.BR printmigrationstatus
+.BR printrecallstatus
+.BR printrecallfilestatus
+.BR printrecalluserqueue
+.SH "AUTHOR"
+\fBCASTOR\fP Team <castor.support@cern.ch>

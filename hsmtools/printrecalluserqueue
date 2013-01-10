@@ -1,0 +1,93 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                      printrecalluserqueue
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+
+'''command line printing the summary of stager-queued, by user ids'''
+
+import sys, pwd, grp
+import getopt, time
+import castor_tools
+
+# usage function
+def usage(exitCode):
+    '''prints usage'''
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help]'
+    sys.exit(exitCode)
+
+# first parse the options
+try:
+    options, args = getopt.getopt(sys.argv[1:], 'hv', ['help', 'verbose'])
+except Exception, e:
+    print e
+    usage(1)
+verbose = False
+for f, v in options:
+    if f == '-h' or f == '--help':
+        usage(0)
+    if f == '-v' or f == '--verbose':
+        verbose = True
+    else:
+        print "unknown option : " + f
+        usage(1)
+
+try:
+    # connect to stager and prepare statements
+    stconn = castor_tools.connectToStager()
+    stcur = stconn.cursor()
+    sqlStatement = '''
+          with user_tapes_recall as
+          (select rj.euid, rj.egid, rj.vid vid, sum(rj.filesize) files_size, count(*) files_count
+             from recalljob rj
+            group by rj.euid, rj.egid, rj.vid)
+          select euid, egid, count (*) tape_count, sum(files_count) files_count, sum(files_size) files_sizes from user_tapes_recall 
+          group by euid, egid
+          order by count(*) desc'''
+    stcur.execute(sqlStatement)
+    # get results
+    rows = stcur.fetchall()
+    # Compute column widths (dry-run print)
+    columnTitles = ['EUID', 'EGID', 'TAPE_COUNT', 'FILES_COUNT', 'FILES_SIZES']
+    columnFormats = ['%*d', '%*d', '%*d', '%*d', '%*d']
+    columnWidths = []
+    for k in range(0, len(columnTitles)):
+        columnWidths.append(max([len(columnTitles[k])]+[len(columnFormats[k] % (1, row[k])) for row in rows]))
+    # Print header
+    for k in range(0, len(columnTitles)):
+        print '%*s' % ( columnWidths[k], columnTitles[k] ),
+    print
+    print '-' * (sum(columnWidths) +  len(columnWidths) -1)
+    # Print data
+    for row in rows:
+        for k in range(0, len(columnTitles)):
+               print columnFormats[k] % ( columnWidths[k], row[k] ),
+        print
+    # close DB connections
+    try:
+        castor_tools.disconnectDB(stconn)
+    except Exception:
+        pass
+except Exception, e:
+    print e
+    if verbose:
+        import traceback
+        traceback.print_exc()
+    sys.exit(-1)

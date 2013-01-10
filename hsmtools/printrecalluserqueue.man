@@ -1,0 +1,38 @@
+.TH "PRINTRECALLUSERQUEUE" "8" "2.1.14" "CASTOR" "Castor stager tools"
+.SH "NAME"
+printrecalluserqueue \- Prints the pending recalls, by user who triggered the recall.
+.SH "SYNOPSIS"
+[CASTOR_STAGER=<stager_name>]
+.B 
+printrecalluserqueue
+[
+.BI \-h
+]
+
+.SH "DESCRIPTION"
+.B printmigrationstatus
+Prints the pending recalls, by user who triggered the recall.
+.LP 
+.BI \-h,\ \-\-help
+Get usage information
+.TP 
+
+.SH "EXAMPLES"
+.nf 
+.ft CW
+# CASTOR_INSTANCE=castorcms printrecalluserqueue
+ EUID EGID TAPE_COUNT FILES_COUNT    FILES_SIZES
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+31961 1399        177       33293 39299070051319
+22014 1399         27         123   454559431081
+.SH "NOTES"
+This command requires database client access to the stager catalogue.
+Configuration for the database access is taken from ORASTAGERCONFIG.
+
+.SH "SEE ALSO"
+.BR printmigrationstatus
+.BR printrecallstatus
+.BR printrecallfilestatus
+.BR printrecalltapequeue
+.SH "AUTHOR"
+\fBCASTOR\fP Team <castor.support@cern.ch>
