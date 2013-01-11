@@ -205,12 +205,14 @@ void castor::db::ora::OraCommonSvc::rollback() {
 //  handleException
 //------------------------------------------------------------------------------
 void castor::db::ora::OraCommonSvc::handleException
-(oracle::occi::SQLException& e) {
+  (oracle::occi::SQLException& e) throw () {
   try {
     dynamic_cast<castor::db::ora::OraCnvSvc*>(cnvSvc())->handleException(e);
   } catch (castor::exception::Exception &) {
     // we could not find the conversion service !
     // give up with the handling of this exception.
+  } catch (...) {
+    // any other exception, including bad casting, is ignored
   }
 }
 

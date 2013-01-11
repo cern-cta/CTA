@@ -105,7 +105,7 @@ namespace castor {
          * Helper method to handle exceptions - see OraCnvSvc
          * @param e an Oracle exception
          */
-        void handleException(oracle::occi::SQLException& e);
+        void handleException(oracle::occi::SQLException& e) throw ();
 
         /**
          * helper method to create Oracle statement
