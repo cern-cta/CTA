@@ -22,9 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_UNITTEST_TAPE_CTAPERESERVETESTTEST_HPP
-#define TEST_UNITTEST_TAPE_CTAPERESERVETESTTEST_HPP 1
-
+#include <sys/types.h>
 #include "h/Ctape_api.h"
 #include "h/serrno.h"
 #include "test/unittest/test_exception.hpp"
@@ -106,5 +104,3 @@ public:
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION(Ctape_reserveTest);
-
-#endif // TEST_UNITTEST_TAPE_CTAPERESERVETESTTEST

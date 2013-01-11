@@ -309,6 +309,36 @@ rununittests: \
   tapegateway_VolumeRequest.o \
   test_exception.o \
   unittest.o \
+  unittest_CvtdenTest.o \
+  unittest_InitlabelTest.o \
+  unittest_Ctape_reserveTest.o \
+  unittest_RecvTapeBridgeFlushedToTapeAckTest.o \
+  unittest_MarshallTapeBridgeFlushedToTapeTest.o \
+  unittest_SendTapeBridgeFlushedToTapeTest.o \
+  unittest_MarshallTapeBridgeClientInfo2Test.o \
+  unittest_NetTest.o \
+  unittest_FileToRecallTest.o \
+  unittest_MigrationReportConnectionTest.o \
+  unittest_SessionErrorTest.o \
+  unittest_ClientAddressLocalTest.o \
+  unittest_TapeBridgeDaemonTest.o \
+  unittest_FileToMigrateTest.o \
+  unittest_VdqmRequestHandlerTest.o \
+  unittest_SessionErrorListTest.o \
+  unittest_ClientProxyTest.o \
+  unittest_BridgeSocketCatalogueTest.o \
+  unittest_BridgeProtocolEngineTest.o \
+  unittest_ConfigParamTest.o \
+  unittest_BridgeClientInfo2SenderTest.o \
+  unittest_TapeFlushConfigParamsTest.o \
+  unittest_LegacyTxRxTest.o \
+  unittest_GetMoreWorkConnectionTest.o \
+  unittest_ClientAddressTcpIpTest.o \
+  unittest_PendingMigrationsStoreTest.o \
+  unittest_BulkRequestConfigParamsTest.o \
+  unittest_IndexedContainerTest.o \
+  unittest_UtilsTest.o \
+  unittest_RtcopyTest.o \
   upv_Cupv_check.o \
   upv_send2Cupv.o \
   upv_Cupv_errmsg.o \
@@ -328,45 +358,6 @@ rununittests: \
 
 runUnitTestsMain.o: runUnitTestsMain.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-runUnitTestsMain.cpp: \
-  $(ROOT_DIR)/test/unittest/castor/tape/net/NetTest.hpp \
-  $(ROOT_DIR)/test/unittest/tape/Ctape_reserveTest.hpp \
-  $(ROOT_DIR)/test/unittest/tape/CvtdenTest.hpp \
-  $(ROOT_DIR)/test/unittest/tape/InitlabelTest.hpp \
-  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/BridgeClientInfo2SenderTest.hpp \
-  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/BridgeProtocolEngineTest.hpp \
-  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/BridgeSocketCatalogueTest.hpp \
-  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/BulkRequestConfigParamsTest.hpp \
-  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/ClientAddressLocalTest.hpp \
-  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/ClientProxyTest.hpp \
-  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/ClientAddressTcpIpTest.hpp \
-  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/ConfigParamTest.hpp \
-  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/FileToMigrateTest.hpp \
-  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/FileToRecallTest.hpp \
-  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/GetMoreWorkConnectionTest.hpp \
-  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/LegacyTxRxTest.hpp \
-  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/MigrationReportConnectionTest.hpp \
-  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/TapeBridgeDaemonTest.hpp \
-  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/TapeFlushConfigParamsTest.hpp \
-  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/TestingBridgeProtocolEngine.hpp \
-  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/TestingBridgeSocketCatalogue.hpp \
-  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/TestingBulkRequestConfigParams.hpp \
-  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/TestingTapeFlushConfigParams.hpp \
-  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/TraceableDummyFileCloser.hpp \
-  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/TraceableSystemFileCloser.hpp \
-  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/PendingMigrationsStoreTest.hpp \
-  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/SessionErrorTest.hpp \
-  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/SessionErrorListTest.hpp \
-  $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/VdqmRequestHandlerTest.hpp \
-  $(ROOT_DIR)/test/unittest/castor/tape/utils/IndexedContainerTest.hpp \
-  $(ROOT_DIR)/test/unittest/castor/tape/utils/UtilsTest.hpp \
-  $(ROOT_DIR)/test/unittest/rtcopy/RtcopyTest.hpp \
-  $(ROOT_DIR)/test/unittest/tapebridge/MarshallTapeBridgeClientInfo2Test.hpp \
-  $(ROOT_DIR)/test/unittest/tapebridge/MarshallTapeBridgeFlushedToTapeTest.hpp \
-  $(ROOT_DIR)/test/unittest/tapebridge/RecvTapeBridgeFlushedToTapeAckTest.hpp \
-  $(ROOT_DIR)/test/unittest/tapebridge/SendTapeBridgeFlushedToTapeTest.hpp
-	touch $@
 
 castor_Services.o: $(ROOT_DIR)/castor/Services.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
@@ -1468,6 +1459,96 @@ unittest.o: unittest.cpp
 
 unittest.cpp: unittest.hpp
 	touch $@
+
+unittest_CvtdenTest.o: $(ROOT_DIR)/test/unittest/tape/CvtdenTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+ 
+unittest_InitlabelTest.o: $(ROOT_DIR)/test/unittest/tape/InitlabelTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+ 
+unittest_Ctape_reserveTest.o: $(ROOT_DIR)/test/unittest/tape/Ctape_reserveTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+ 
+unittest_RecvTapeBridgeFlushedToTapeAckTest.o: $(ROOT_DIR)/test/unittest/tapebridge/RecvTapeBridgeFlushedToTapeAckTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+ 
+unittest_MarshallTapeBridgeFlushedToTapeTest.o: $(ROOT_DIR)/test/unittest/tapebridge/MarshallTapeBridgeFlushedToTapeTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+ 
+unittest_SendTapeBridgeFlushedToTapeTest.o: $(ROOT_DIR)/test/unittest/tapebridge/SendTapeBridgeFlushedToTapeTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+ 
+unittest_MarshallTapeBridgeClientInfo2Test.o: $(ROOT_DIR)/test/unittest/tapebridge/MarshallTapeBridgeClientInfo2Test.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+ 
+unittest_NetTest.o: $(ROOT_DIR)/test/unittest/castor/tape/net/NetTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+ 
+unittest_FileToRecallTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/FileToRecallTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+ 
+unittest_MigrationReportConnectionTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/MigrationReportConnectionTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+ 
+unittest_SessionErrorTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/SessionErrorTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+ 
+unittest_ClientAddressLocalTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/ClientAddressLocalTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+ 
+unittest_TapeBridgeDaemonTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/TapeBridgeDaemonTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+ 
+unittest_FileToMigrateTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/FileToMigrateTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+ 
+unittest_VdqmRequestHandlerTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/VdqmRequestHandlerTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+ 
+unittest_SessionErrorListTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/SessionErrorListTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+ 
+unittest_ClientProxyTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/ClientProxyTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+ 
+unittest_BridgeSocketCatalogueTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/BridgeSocketCatalogueTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+ 
+unittest_BridgeProtocolEngineTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/BridgeProtocolEngineTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+ 
+unittest_ConfigParamTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/ConfigParamTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+ 
+unittest_BridgeClientInfo2SenderTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/BridgeClientInfo2SenderTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+ 
+unittest_TapeFlushConfigParamsTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/TapeFlushConfigParamsTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+ 
+unittest_LegacyTxRxTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/LegacyTxRxTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+ 
+unittest_GetMoreWorkConnectionTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/GetMoreWorkConnectionTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+ 
+unittest_ClientAddressTcpIpTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/ClientAddressTcpIpTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+ 
+unittest_PendingMigrationsStoreTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/PendingMigrationsStoreTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+ 
+unittest_BulkRequestConfigParamsTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/BulkRequestConfigParamsTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+ 
+unittest_IndexedContainerTest.o: $(ROOT_DIR)/test/unittest/castor/tape/utils/IndexedContainerTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+ 
+unittest_UtilsTest.o: $(ROOT_DIR)/test/unittest/castor/tape/utils/UtilsTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+ 
+unittest_RtcopyTest.o: $(ROOT_DIR)/test/unittest/rtcopy/RtcopyTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 upv_Cupv_check.o: $(ROOT_DIR)/upv/Cupv_check.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^

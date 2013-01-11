@@ -22,9 +22,6 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_BRIDGECLIENTINFO2SENDERTEST_HPP
-#define TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_BRIDGECLIENTINFO2SENDERTEST_HPP 1
-
 #include "rtcp_recvRtcpHdr.h"
 #include "h/marshall.h"
 #include "h/rtcp_constants.h"
@@ -333,5 +330,3 @@ CPPUNIT_TEST_SUITE_REGISTRATION(BridgeClientInfo2SenderTest);
 } // namespace tapebridge
 } // namespace tape
 } // namespace castor
-
-#endif // TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_BRIDGECLIENTINFO2SENDERTEST_HPP

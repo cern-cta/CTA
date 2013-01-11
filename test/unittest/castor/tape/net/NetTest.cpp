@@ -22,9 +22,6 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_UNITTEST_CASTOR_TAPE_NET_NETTEST_HPP
-#define TEST_UNITTEST_CASTOR_TAPE_NET_NETTEST_HPP 1
-
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/utils/SmartFd.hpp"
 #include "test/unittest/test_exception.hpp"
@@ -193,5 +190,3 @@ CPPUNIT_TEST_SUITE_REGISTRATION(NetTest);
 } // namespace net
 } // namespace tape
 } // namespace castor
-
-#endif // TEST_UNITTEST_CASTOR_TAPE_NET_NETTEST_HPP

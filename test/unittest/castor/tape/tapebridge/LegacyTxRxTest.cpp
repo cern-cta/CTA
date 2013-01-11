@@ -22,9 +22,6 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_LEGACYTXRXTEST_HPP
-#define TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_LEGACYTXRXTEST_HPP 1
-
 #include "castor/tape/tapebridge/LegacyTxRx.hpp"
 #include "castor/tape/utils/SmartFd.hpp"
 #include "h/serrno.h"
@@ -235,5 +232,3 @@ CPPUNIT_TEST_SUITE_REGISTRATION(LegacyTxRxTest);
 } // namespace tapebridge
 } // namespace tape
 } // namespace castor
-
-#endif // TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_LEGACYTXRXTEST_HPP

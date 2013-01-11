@@ -1,5 +1,5 @@
 /******************************************************************************
- *    test/unittest/castor/tape/tapebridge/MigrationReportConnectionTest.hpp
+ *    test/unittest/castor/tape/tapebridge/TapeBridgeDaemonTest.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,22 +22,18 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_MIGRATIONREPORTCONNECTIONTEST_HPP
-#define TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_MIGRATIONREPORTCONNECTIONTEST_HPP 1
-
-#include "castor/tape/tapebridge/MigrationReportConnection.hpp"
+#include "castor/tape/tapebridge/TapeBridgeDaemon.hpp"
 
 #include <cppunit/extensions/HelperMacros.h>
+#include <exception>
+#include <memory>
 
 namespace castor     {
 namespace tape       {
 namespace tapebridge {
 
-class MigrationReportConnectionTest: public CppUnit::TestFixture {
+class TapeBridgeDaemonTest: public CppUnit::TestFixture {
 public:
-
-  MigrationReportConnectionTest() {
-  }
 
   void setUp() {
   }
@@ -46,30 +42,23 @@ public:
   }
 
   void testConstructor() {
-    castor::tape::tapebridge::MigrationReportConnection connection;
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE(
-      "Check clientSock is initialised correctly",
-      -1,
-      connection.clientSock);
+    std::auto_ptr<TapeBridgeDaemon> daemon;
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE(
-      "Check tapebridgeTransId is initialised correctly",
-      (uint64_t)0,
-      connection.tapebridgeTransId);
-  }
+    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+      "Check new TapeBridgeDaemon",
+      daemon.reset(new TapeBridgeDaemon()));
+  } // void testConstructor()
 
-  CPPUNIT_TEST_SUITE(MigrationReportConnectionTest);
+  CPPUNIT_TEST_SUITE(TapeBridgeDaemonTest);
 
   CPPUNIT_TEST(testConstructor);
 
   CPPUNIT_TEST_SUITE_END();
 };
 
-CPPUNIT_TEST_SUITE_REGISTRATION(MigrationReportConnectionTest);
+CPPUNIT_TEST_SUITE_REGISTRATION(TapeBridgeDaemonTest);
 
 } // namespace tapebridge
 } // namespace tape
 } // namespace castor
-
-#endif // TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_MIGRATIONREPORTCONNECTIONTEST_HPP

@@ -22,9 +22,6 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_FILETORECALLTEST_HPP
-#define TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_FILETORECALLTEST_HPP 1
-
 #include "castor/tape/tapebridge/FileToRecall.hpp"
 
 #include <cppunit/extensions/HelperMacros.h>
@@ -75,5 +72,3 @@ CPPUNIT_TEST_SUITE_REGISTRATION(FileToRecallTest);
 } // namespace tapebridge
 } // namespace tape
 } // namespace castor
-
-#endif // TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_FILETORECALLTEST_HPP

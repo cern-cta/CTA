@@ -26,6 +26,7 @@
 #define TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_TESTINGTAPEFLUSHCONFIGPARAMS_HPP 1
 
 #include "castor/tape/tapebridge/TapeFlushConfigParams.hpp"
+#include "test/unittest/test_exception.hpp"
 
 #include <cppunit/extensions/HelperMacros.h>
 

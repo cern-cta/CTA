@@ -22,9 +22,6 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_UNITTEST_CASTOR_TAPE_UTILS_INDEXEDCONTAINERTEST_HPP
-#define TEST_UNITTEST_CASTOR_TAPE_UTILS_INDEXEDCONTAINERTEST_HPP 1
-
 #include "castor/tape/utils/IndexedContainer.hpp"
 #include "test/unittest/test_exception.hpp"
 
@@ -120,5 +117,3 @@ CPPUNIT_TEST_SUITE_REGISTRATION(IndexedContainerTest);
 } // namespace utils
 } // namespace tape
 } // namespace castor
-
-#endif // TEST_UNITTEST_CASTOR_TAPE_UTILS_INDEXEDCONTAINERTEST_HPP

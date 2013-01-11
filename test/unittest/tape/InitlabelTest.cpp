@@ -22,9 +22,6 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_UNITTEST_TAPE_INITLABELTEST_HPP
-#define TEST_UNITTEST_TAPE_INITLABELTEST_HPP 1
-
 #include "castor/tape/utils/utils.hpp"
 #include "h/Ctape.h"
 #include "h/serrno.h"
@@ -229,7 +226,4 @@ public:
   CPPUNIT_TEST_SUITE_END();
 };
 
-
 CPPUNIT_TEST_SUITE_REGISTRATION(InitlabelTest);
-
-#endif // TEST_UNITTEST_TAPE_INITLABELTEST

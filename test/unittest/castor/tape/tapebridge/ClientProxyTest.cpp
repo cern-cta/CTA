@@ -22,9 +22,8 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_CLIENTPROXYTEST_HPP
-#define TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_CLIENTPROXYTEST_HPP 1
-
+#include "castor/Constants.hpp"
+#include "castor/io/AbstractTCPSocket.hpp"
 #include "castor/tape/tapebridge/ClientAddressTcpIp.hpp"
 #include "castor/tape/tapebridge/ClientProxy.hpp"
 #include "castor/tape/tapegateway/FilesToMigrateListRequest.hpp"
@@ -343,5 +342,3 @@ CPPUNIT_TEST_SUITE_REGISTRATION(ClientProxyTest);
 } // namespace tapebridge
 } // namespace tape  
 } // namespace castor
-
-#endif // TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_CLIENTPROXYTEST_HPP

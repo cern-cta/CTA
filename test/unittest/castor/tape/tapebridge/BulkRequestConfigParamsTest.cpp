@@ -22,9 +22,6 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_BULKREQUESTCONFIGPARAMSTEST_HPP
-#define TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_BULKREQUESTCONFIGPARAMSTEST_HPP 1
-
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/tape/tapebridge/BulkRequestConfigParams.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"
@@ -630,5 +627,3 @@ CPPUNIT_TEST_SUITE_REGISTRATION(BulkRequestConfigParamsTest);
 } // namespace tapebridge
 } // namespace tape
 } // namespace castor
-
-#endif // TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_BULKREQUESTCONFIGPARAMSTEST_HPP

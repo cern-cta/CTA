@@ -22,9 +22,6 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_CONFIGPARAMTEST_HPP
-#define TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_CONFIGPARAMTEST_HPP 1
-
 #include "castor/tape/tapebridge/ConfigParam.hpp"
 
 #include <cppunit/extensions/HelperMacros.h>
@@ -233,5 +230,3 @@ CPPUNIT_TEST_SUITE_REGISTRATION(ConfigParamTest);
 } // namespace tapebridge
 } // namespace tape
 } // namespace castor
-
-#endif // TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_CONFIGPARAMTEST_HPP

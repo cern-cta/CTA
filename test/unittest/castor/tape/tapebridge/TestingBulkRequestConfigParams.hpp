@@ -26,6 +26,7 @@
 #define TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_TESTINGBULKREQUESTCONFIGPARAMS_HPP 1
 
 #include "castor/tape/tapebridge/BulkRequestConfigParams.hpp"
+#include "test/unittest/test_exception.hpp"
 
 #include <exception>
 

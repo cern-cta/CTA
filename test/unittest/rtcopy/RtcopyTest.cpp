@@ -1,5 +1,5 @@
 /******************************************************************************
- *    test/unitest/tapebridge/MarshallTapeBridgeClientInfo2Test.hpp
+ *                test/unittest/RtcopyTest.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,30 +22,30 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_UNITTEST_TAPEBRIDGE_MARSHALLTAPEBRIDGECLIENTINFO2TEST_HPP
-#define TEST_UNITTEST_TAPEBRIDGE_MARSHALLTAPEBRIDGECLIENTINFO2TEST_HPP 1
-
 #include "h/osdep.h"
 #include "h/serrno.h"
-#include "h/tapebridge_constants.h"
-#include "h/tapebridge_marshall.h"
+#include "h/rtcp.h"
+#include "h/rtcp_constants.h"
+#include "h/rtcp_marshallVdqmClientInfoMsg.h"
+#include "h/rtcpdIsConfiguredToReuseMount.h"
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <errno.h>
 #include <stdint.h>
 #include <string.h>
+#include <sys/stat.h>
 
-class MarshallTapeBridgeClientInfo2Test: public CppUnit::TestFixture {
+class RtcopyTest: public CppUnit::TestFixture {
 private:
-  char m_buf[TAPEBRIDGE_MSGBUFSIZ];
-  tapeBridgeClientInfo2MsgBody_t m_msgBody;
+  char m_buf[RTCP_MSGBUFSIZ];
+  vdqmClientInfoMsgBody_t m_msgBody;
   const int32_t m_sizeOfMarshalledMsgHeader;
   int32_t m_sizeOfMarshalledMsgHeaderPlusBody;
   int32_t m_sizeOfMarshalledMsgBody;
 
 public:
 
-  MarshallTapeBridgeClientInfo2Test():
+  RtcopyTest():
     m_sizeOfMarshalledMsgHeader(3 * LONGSIZE), /* magic, reqType, bodyLen */
     m_sizeOfMarshalledMsgHeaderPlusBody(0),
     m_sizeOfMarshalledMsgBody(0) {
@@ -58,20 +58,13 @@ public:
     memset(m_buf     , 0, sizeof(m_buf)    );
     memset(&m_msgBody, 0, sizeof(m_msgBody));
 
-    m_msgBody.volReqId                 = 1111;
-    m_msgBody.bridgeCallbackPort       = 2222;
-    m_msgBody.bridgeClientCallbackPort = 3333;
-    m_msgBody.clientUID                = 4444;
-    m_msgBody.clientGID                = 5555;
-    m_msgBody.maxBytesBeforeFlush      = 6666;
-    m_msgBody.maxFilesBeforeFlush      = 7777;
+    m_msgBody.volReqId           = 1111;
+    m_msgBody.clientCallbackPort = 2222;
+    m_msgBody.clientUID          = 3333;
+    m_msgBody.clientGID          = 4444;
 
-    strncpy(m_msgBody.bridgeHost, "bridgeHost", sizeof(m_msgBody.bridgeHost));
-    m_msgBody.bridgeHost[sizeof(m_msgBody.bridgeHost) - 1] = '\0';
-
-    strncpy(m_msgBody.bridgeClientHost, "bridgeClientHost",
-      sizeof(m_msgBody.bridgeClientHost));
-    m_msgBody.bridgeClientHost[sizeof(m_msgBody.bridgeClientHost) - 1] = '\0';
+    strncpy(m_msgBody.clientHost, "clientHost", sizeof(m_msgBody.clientHost));
+    m_msgBody.clientHost[sizeof(m_msgBody.clientHost) - 1] = '\0';
 
     strncpy(m_msgBody.dgn, "dgn", sizeof(m_msgBody.dgn));
     m_msgBody.dgn[sizeof(m_msgBody.dgn) - 1] = '\0';
@@ -83,19 +76,14 @@ public:
     m_msgBody.clientName[sizeof(m_msgBody.clientName) - 1] = '\0';
 
     m_sizeOfMarshalledMsgBody =
-      LONGSIZE  + /* volReqID                              */
-      LONGSIZE  + /* bridgeCallbackPort                    */
-      LONGSIZE  + /* bridgeClientCallbackPort              */
-      LONGSIZE  + /* clientUID                             */
-      LONGSIZE  + /* clientGID                             */
-      LONGSIZE  + /* useBufferedTapeMarksOverMultipleFiles */
-      HYPERSIZE + /* maxBytesBeforeFlush                   */
-      HYPERSIZE + /* maxFilesBeforeFlush                   */
-      strlen(m_msgBody.bridgeHost)       + 1 +
-      strlen(m_msgBody.bridgeClientHost) + 1 +
-      strlen(m_msgBody.dgn)              + 1 +
-      strlen(m_msgBody.drive)            + 1 +
-      strlen(m_msgBody.clientName)       + 1;
+      LONGSIZE + /* volReqID           */
+      LONGSIZE + /* clientCallbackPort */
+      LONGSIZE + /* clientUID          */
+      LONGSIZE + /* clientGID          */
+      strlen(m_msgBody.clientHost) + 1 +
+      strlen(m_msgBody.dgn)        + 1 +
+      strlen(m_msgBody.drive)      + 1 +
+      strlen(m_msgBody.clientName) + 1;
 
     m_sizeOfMarshalledMsgHeaderPlusBody =
       m_sizeOfMarshalledMsgHeader +
@@ -110,31 +98,31 @@ public:
   void testMsgBodyMarshalledSize() {
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Message body marshalled size",
       m_sizeOfMarshalledMsgBody,
-      tapebridge_tapeBridgeClientInfo2MsgBodyMarshalledSize(&m_msgBody));
+      rtcp_vdqmClientInfoMsgBodyMarshalledSize(&m_msgBody));
   }
 
   void testMarshallBufNull() {
     CPPUNIT_ASSERT_EQUAL_MESSAGE("buf = NULL", -1,
-      tapebridge_marshallTapeBridgeClientInfo2Msg(NULL, sizeof(m_buf),
+      rtcp_marshallVdqmClientInfoMsg(NULL, sizeof(m_buf),
       &m_msgBody));
     CPPUNIT_ASSERT_EQUAL_MESSAGE("serrno for buf = NULL", EINVAL, serrno);
   }
 
   void testMarshallBufLen0() {
     CPPUNIT_ASSERT_EQUAL_MESSAGE("bufLen = 0", -1,
-      tapebridge_marshallTapeBridgeClientInfo2Msg(m_buf, 0, &m_msgBody));
+      rtcp_marshallVdqmClientInfoMsg(m_buf, 0, &m_msgBody));
     CPPUNIT_ASSERT_EQUAL_MESSAGE("serrno for bufLen = 0", EINVAL, serrno);
   }
 
   void testMarshallBufLen1() {
     CPPUNIT_ASSERT_EQUAL_MESSAGE("bufLen = 1", -1,
-      tapebridge_marshallTapeBridgeClientInfo2Msg(m_buf, 1, &m_msgBody));
+      rtcp_marshallVdqmClientInfoMsg(m_buf, 1, &m_msgBody));
     CPPUNIT_ASSERT_EQUAL_MESSAGE("serrno for bufLen = 1", EINVAL, serrno);
   }
 
   void testMarshallMsgBodyNull() {
     CPPUNIT_ASSERT_EQUAL_MESSAGE("msgBody = NULL", -1,
-      tapebridge_marshallTapeBridgeClientInfo2Msg(m_buf, sizeof(m_buf),
+      rtcp_marshallVdqmClientInfoMsg(m_buf, sizeof(m_buf),
       NULL));
     CPPUNIT_ASSERT_EQUAL_MESSAGE("serrno for msgBody = NULL", EINVAL, serrno);
   }
@@ -142,72 +130,61 @@ public:
   void testMarshallCorrectCall() {
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Correct call",
       m_sizeOfMarshalledMsgHeaderPlusBody,
-      tapebridge_marshallTapeBridgeClientInfo2Msg(m_buf, sizeof(m_buf),
+      rtcp_marshallVdqmClientInfoMsg(m_buf, sizeof(m_buf),
       &m_msgBody));
   }
 
   void testUnmarshallBufNull() {
     CPPUNIT_ASSERT_EQUAL_MESSAGE("buf = NULL", -1,
-      tapebridge_unmarshallTapeBridgeClientInfo2MsgBody(NULL, sizeof(m_buf),
+      rtcp_unmarshallVdqmClientInfoMsgBody(NULL, sizeof(m_buf),
       &m_msgBody));
     CPPUNIT_ASSERT_EQUAL_MESSAGE("serrno for buf = NULL", EINVAL, serrno);
   }
 
   void testUnmarshallBufLen0() {
     CPPUNIT_ASSERT_EQUAL_MESSAGE("bufLen = 0", -1,
-      tapebridge_unmarshallTapeBridgeClientInfo2MsgBody(m_buf, 0, &m_msgBody));
+      rtcp_unmarshallVdqmClientInfoMsgBody(m_buf, 0, &m_msgBody));
     CPPUNIT_ASSERT_EQUAL_MESSAGE("serrno for bufLen = 0", EINVAL, serrno);
   }
 
   void testUnmarshallBufLen1() {
     CPPUNIT_ASSERT_EQUAL_MESSAGE("bufLen = 1", -1,
-      tapebridge_unmarshallTapeBridgeClientInfo2MsgBody(m_buf, 1, &m_msgBody));
+      rtcp_unmarshallVdqmClientInfoMsgBody(m_buf, 1, &m_msgBody));
     CPPUNIT_ASSERT_EQUAL_MESSAGE("serrno for bufLen = 1", EINVAL, serrno);
   }
 
   void testUnmarshallMsgBodyNull() {
     CPPUNIT_ASSERT_EQUAL_MESSAGE("msgBody = NULL", -1,
-      tapebridge_unmarshallTapeBridgeClientInfo2MsgBody(m_buf, sizeof(m_buf),
+      rtcp_unmarshallVdqmClientInfoMsgBody(m_buf, sizeof(m_buf),
       NULL));
     CPPUNIT_ASSERT_EQUAL_MESSAGE("serrno for msgBody = NULL", EINVAL, serrno);
   }
 
   void testMarshallAndUnmarshallContents() {
-    tapeBridgeClientInfo2MsgBody_t msgBody;
+    vdqmClientInfoMsgBody_t msgBody;
 
     memset(&msgBody, '\0', sizeof(msgBody));
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("marshall",
       m_sizeOfMarshalledMsgHeaderPlusBody,
-      tapebridge_marshallTapeBridgeClientInfo2Msg(m_buf, sizeof(m_buf),
+      rtcp_marshallVdqmClientInfoMsg(m_buf, sizeof(m_buf),
       &m_msgBody));
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("unmarshall", m_sizeOfMarshalledMsgBody,
-      tapebridge_unmarshallTapeBridgeClientInfo2MsgBody(m_buf +
+      rtcp_unmarshallVdqmClientInfoMsgBody(m_buf +
       m_sizeOfMarshalledMsgHeader, sizeof(m_buf), &msgBody));
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("volReqId", m_msgBody.volReqId,
       msgBody.volReqId);
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("bridgeCallbackPort",
-      m_msgBody.bridgeCallbackPort, msgBody.bridgeCallbackPort);
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("bridgeClientCallbackPort",
-      m_msgBody.bridgeClientCallbackPort, msgBody.bridgeClientCallbackPort);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("clientCallbackPort",
+      m_msgBody.clientCallbackPort, msgBody.clientCallbackPort);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("clientUID", m_msgBody.clientUID,
       msgBody.clientUID);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("clientGID", m_msgBody.clientGID,
       msgBody.clientGID);
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("maxBytesBeforeFlush",
-      m_msgBody.maxBytesBeforeFlush,
-      msgBody.maxBytesBeforeFlush);
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("maxFilesBeforeFlush",
-      m_msgBody.maxFilesBeforeFlush,
-      msgBody.maxFilesBeforeFlush);
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("bridgeHost",
-      std::string(m_msgBody.bridgeHost),
-      std::string(msgBody.bridgeHost));
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("bridgeClientHost",
-      std::string(m_msgBody.bridgeClientHost),
-      std::string(msgBody.bridgeClientHost));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("clientHost",
+      std::string(m_msgBody.clientHost),
+      std::string(msgBody.clientHost));
     CPPUNIT_ASSERT_EQUAL_MESSAGE("dgn",
       std::string(m_msgBody.dgn),
       std::string(msgBody.dgn));
@@ -219,7 +196,106 @@ public:
       std::string(msgBody.clientName));
   }
 
-  CPPUNIT_TEST_SUITE(MarshallTapeBridgeClientInfo2Test);
+  void testRtcpdIsConfiguredToReuseMountTrueLowerCase() {
+    const char *const configFilename =
+      "rtcpdIsConfiguredToReuseMountTrueLowerCase.conf";
+
+    {
+      struct stat statBuf;
+      memset(&statBuf, '\0', sizeof(statBuf));
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Check the configuration file exists",
+        0,
+        stat(configFilename, &statBuf));
+    }
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "setenv PATH_CONFIG",
+      0,
+      setenv("PATH_CONFIG", configFilename, 1));
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Test rtcpdIsConfiguredToReuseMount() returns 1 for true",
+      1,
+      rtcpdIsConfiguredToReuseMount());
+  }
+
+  void testRtcpdIsConfiguredToReuseMountTrueUpperCase() {
+    const char *const configFilename =
+      "rtcpdIsConfiguredToReuseMountTrueUpperCase.conf";
+
+    {
+      struct stat statBuf;
+      memset(&statBuf, '\0', sizeof(statBuf));
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Check the configuration file exists",
+        0,
+        stat(configFilename, &statBuf));
+    }
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "setenv PATH_CONFIG",
+      0,
+      setenv("PATH_CONFIG", configFilename, 1));
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Test rtcpdIsConfiguredToReuseMount() returns 1 for TRUE",
+      1,
+      rtcpdIsConfiguredToReuseMount());
+  }
+
+  void testRtcpdIsConfiguredToReuseMountFalseUpperCase() {
+    const char *const configFilename =
+      "rtcpdIsConfiguredToReuseMountFalseUpperCase.conf";
+
+    {
+      struct stat statBuf;
+      memset(&statBuf, '\0', sizeof(statBuf));
+      
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Check the configuration file exists",
+        0,
+        stat(configFilename, &statBuf));
+    } 
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "setenv PATH_CONFIG",
+      0,
+      setenv("PATH_CONFIG", configFilename, 1));
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Test rtcpdIsConfiguredToReuseMount() returns 0 for FALSE",
+      0,
+      rtcpdIsConfiguredToReuseMount());
+  }
+
+  void testRtcpdIsConfiguredToReuseMountNoValue() {
+    const char *const configFilename =
+      "rtcpdIsConfiguredToReuseMountNoValue.conf";
+
+    {
+      struct stat statBuf;
+      memset(&statBuf, '\0', sizeof(statBuf));
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Check the configuration file exists",
+        0,
+        stat(configFilename, &statBuf));
+    }
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "setenv PATH_CONFIG",
+      0,
+      setenv("PATH_CONFIG", configFilename, 1));
+
+    CPPUNIT_ASSERT_MESSAGE(
+      "Test rtcpdIsConfiguredToReuseMount() returns true for no value",
+      0 != rtcpdIsConfiguredToReuseMount());
+  }
+
+  CPPUNIT_TEST_SUITE(RtcopyTest);
   CPPUNIT_TEST(testMsgBodyMarshalledSize);
   CPPUNIT_TEST(testMarshallBufNull);
   CPPUNIT_TEST(testMarshallBufLen0);
@@ -231,9 +307,11 @@ public:
   CPPUNIT_TEST(testUnmarshallBufLen1);
   CPPUNIT_TEST(testUnmarshallMsgBodyNull);
   CPPUNIT_TEST(testMarshallAndUnmarshallContents);
+  CPPUNIT_TEST(testRtcpdIsConfiguredToReuseMountTrueLowerCase);
+  CPPUNIT_TEST(testRtcpdIsConfiguredToReuseMountTrueUpperCase);
+  CPPUNIT_TEST(testRtcpdIsConfiguredToReuseMountFalseUpperCase);
+  CPPUNIT_TEST(testRtcpdIsConfiguredToReuseMountNoValue);
   CPPUNIT_TEST_SUITE_END();
 };
 
-CPPUNIT_TEST_SUITE_REGISTRATION(MarshallTapeBridgeClientInfo2Test);
-
-#endif // TEST_UNITTEST_TAPEBRIDGE_MARSHALLTAPEBRIDGECLIENTINFO2TEST_HPP
+CPPUNIT_TEST_SUITE_REGISTRATION(RtcopyTest);

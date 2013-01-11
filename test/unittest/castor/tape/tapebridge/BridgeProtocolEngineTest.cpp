@@ -22,9 +22,6 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_BRIDGEPROTOCOLENGINETEST_HPP
-#define TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_BRIDGEPROTOCOLENGINETEST_HPP 1
-
 #include "castor/Constants.hpp"
 #include "castor/Services.hpp"
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
@@ -47,6 +44,7 @@
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/utils/SmartFd.hpp"
 #include "h/Castor_limits.h"
+#include "h/rtcp_constants.h"
 #include "h/serrno.h"
 #include "h/tapebridge_constants.h"
 #include "h/tapebridge_sendTapeBridgeFlushedToTape.h"
@@ -2729,5 +2727,3 @@ CPPUNIT_TEST_SUITE_REGISTRATION(BridgeProtocolEngineTest);
 } // namespace tapebridge
 } // namespace tape
 } // namespace castor
-
-#endif // TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_BRIDGEPROTOCOLENGINETEST_HPP

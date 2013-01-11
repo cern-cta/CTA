@@ -26,6 +26,7 @@
 #define TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_TESTINGBRIDGEPROTOCOLENGINE_HPP 1
 
 #include "castor/tape/tapebridge/BridgeProtocolEngine.hpp"
+#include "test/unittest/test_exception.hpp"
 
 #include <exception>
 

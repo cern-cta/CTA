@@ -22,9 +22,6 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_UNITTEST_TAPEBRIDGE_MARSHALLTAPEBRIDGEFLUSHEDTOTAPE_HPP
-#define TEST_UNITTEST_TAPEBRIDGE_MARSHALLTAPEBRIDGEFLUSHEDTOTAPE_HPP 1
-
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/legacymsg/TapeBridgeMarshal.hpp"
 #include "h/marshall.h"
@@ -209,5 +206,3 @@ public:
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION(MarshallTapeBridgeFlushedToTapeTest);
-
-#endif // TEST_UNITTEST_TAPEBRIDGE_MARSHALLTAPEBRIDGEFLUSHEDTOTAPE_HPP

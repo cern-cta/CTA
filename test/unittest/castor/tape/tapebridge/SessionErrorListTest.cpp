@@ -22,9 +22,6 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_SESSIONERRORLISTTEST_HPP
-#define TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_SESSIONERRORLISTTEST_HPP 1
-
 #include "castor/tape/tapebridge/SessionError.hpp"
 #include "castor/tape/tapebridge/SessionErrorList.hpp"
 
@@ -134,5 +131,3 @@ CPPUNIT_TEST_SUITE_REGISTRATION(SessionErrorListTest);
 } // namespace tapebridge
 } // namespace tape
 } // namespace castor
-
-#endif // TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_SESSIONERRORLISTTEST_HPP

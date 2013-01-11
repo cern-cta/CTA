@@ -1,5 +1,5 @@
 /******************************************************************************
- *    test/unittest/castor/tape/tapebridge/ClientAddressTcpIpTest.hpp
+ *    test/unittest/castor/tape/tapebridge/MigrationReportConnectionTest.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,22 +22,18 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_CLIENTADDRESSTCPIP_HPP
-#define TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_CLIENTADDRESSTCPIP_HPP 1
-
-#include "castor/tape/tapebridge/ClientAddressTcpIp.hpp"
+#include "castor/tape/tapebridge/MigrationReportConnection.hpp"
 
 #include <cppunit/extensions/HelperMacros.h>
-#include <memory>
 
 namespace castor     {
 namespace tape       {
 namespace tapebridge {
 
-class ClientAddressTcpIpTest: public CppUnit::TestFixture {
+class MigrationReportConnectionTest: public CppUnit::TestFixture {
 public:
 
-  ClientAddressTcpIpTest() {
+  MigrationReportConnectionTest() {
   }
 
   void setUp() {
@@ -47,41 +43,28 @@ public:
   }
 
   void testConstructor() {
-    const std::string hostname = "hostname";
-    const uint32_t port = 1234;
-    std::auto_ptr<ClientAddressTcpIp> smartAddress;
-
-    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
-      "Check new ClientAddressTcpIp()",
-      smartAddress.reset(new ClientAddressTcpIp(hostname, port));
-    );
-
-    CPPUNIT_ASSERT_MESSAGE(
-      "Check description is not an empty string",
-      !smartAddress->getDescription().empty());
+    castor::tape::tapebridge::MigrationReportConnection connection;
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
-      "Check getHostname()",
-      hostname,
-      smartAddress->getHostname());
+      "Check clientSock is initialised correctly",
+      -1,
+      connection.clientSock);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
-      "Check getPort()",
-      port,
-      smartAddress->getPort());
+      "Check tapebridgeTransId is initialised correctly",
+      (uint64_t)0,
+      connection.tapebridgeTransId);
   }
 
-  CPPUNIT_TEST_SUITE(ClientAddressTcpIpTest);
+  CPPUNIT_TEST_SUITE(MigrationReportConnectionTest);
 
   CPPUNIT_TEST(testConstructor);
 
   CPPUNIT_TEST_SUITE_END();
 };
 
-CPPUNIT_TEST_SUITE_REGISTRATION(ClientAddressTcpIpTest);
+CPPUNIT_TEST_SUITE_REGISTRATION(MigrationReportConnectionTest);
 
 } // namespace tapebridge
 } // namespace tape
 } // namespace castor
-
-#endif // TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_CLIENTADDRESSTCPIP_HPP

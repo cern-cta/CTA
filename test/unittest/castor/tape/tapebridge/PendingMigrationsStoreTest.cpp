@@ -22,13 +22,11 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_PENDINGMIGRATIONSTEST_HPP
-#define TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_PENDINGMIGRATIONSTEST_HPP 1
-
 #include "castor/tape/tapebridge/FileWrittenNotificationList.hpp"
 #include "castor/tape/tapebridge/PendingMigrationsStore.hpp"
 #include "h/Cuuid.h"
 #include "h/rtcpd_constants.h"
+#include "h/tapebridge_constants.h"
 #include "test/unittest/castor/tape/tapebridge/TestingTapeFlushConfigParams.hpp"
 #include "test/unittest/test_exception.hpp"
 
@@ -386,5 +384,3 @@ CPPUNIT_TEST_SUITE_REGISTRATION(PendingMigrationsStoreTest);
 } // namespace tapebridge
 } // namespace tape
 } // namespace castor
-
-#endif // TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_PENDINGMIGRATIONSTEST_HPP

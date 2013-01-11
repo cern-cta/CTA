@@ -22,9 +22,6 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_GETMOREWORKCONNECTIONTEST_HPP
-#define TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_GETMOREWORKCONNECTIONTEST_HPP 1
-
 #include "castor/tape/tapebridge/GetMoreWorkConnection.hpp"
 
 #include <cppunit/extensions/HelperMacros.h>
@@ -105,5 +102,3 @@ CPPUNIT_TEST_SUITE_REGISTRATION(GetMoreWorkConnectionTest);
 } // namespace tapebridge
 } // namespace tape
 } // namespace castor
-
-#endif // TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_GETMOREWORKCONNECTIONTEST_HPP

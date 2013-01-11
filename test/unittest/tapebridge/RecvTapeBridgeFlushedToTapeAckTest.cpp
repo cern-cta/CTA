@@ -1,5 +1,5 @@
 /******************************************************************************
- *    test/unittest/tapebridge/SendTapeBridgeFlushedToTapeTest.hpp
+ *    test/unittest/tapebridge/RecvTapeBridgeFlushedToTapeAckTest.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,15 +22,13 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_UNITTEST_TAPEBRIDGE_SENDTAPEBRIDGEFLUSHEDTOTAPETEST_HPP
-#define TEST_UNITTEST_TAPEBRIDGE_SENDTAPEBRIDGEFLUSHEDTOTAPETEST_HPP 1
-
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/legacymsg/MessageHeader.hpp"
 #include "castor/tape/legacymsg/TapeBridgeMarshal.hpp"
 #include "castor/tape/net/net.hpp"
-#include "castor/tape/tapebridge/RtcpTxRx.hpp"
+#include "castor/tape/tapebridge/LegacyTxRx.hpp"
 #include "castor/tape/utils/SmartFd.hpp"
+#include "h/Cuuid.h"
 #include "h/marshall.h"
 #include "h/net.h"
 #include "h/osdep.h"
@@ -38,7 +36,7 @@
 #include "h/serrno.h"
 #include "h/tapebridge_constants.h"
 #include "h/tapebridge_marshall.h"
-#include "h/tapebridge_sendTapeBridgeFlushedToTape.h"
+#include "h/tapebridge_recvTapeBridgeFlushedToTapeAck.h"
 #include "test/unittest/test_exception.hpp"
 
 #include <cppunit/extensions/HelperMacros.h>
@@ -49,15 +47,17 @@
 
 #define FAKE_TAPEBRIDGE_LISTEN_PORT 64000
 
-class SendTapeBridgeFlushedToTapeTest: public CppUnit::TestFixture {
+namespace castor     {
+namespace tape       {
+namespace tapebridge {
+
+class RecvTapeBridgeFlushedToTapeAckTest: public CppUnit::TestFixture {
 private:
 
   typedef struct {
     int  inListenSocketFd;
     bool outAcceptedConnection;
-    bool outReadInHeader;
-    bool outUnmarshalledHeader;
-    bool outReadInAndUnmarshalledBody;
+    bool outReadInAndUnmarshalledMsg;
   } tapebridgedThreadParams_t;
 
   static void *tapebridged_thread(void *arg) {
@@ -67,10 +67,8 @@ private:
 
     try {
       // Not successful until proven otherwise
-      threadParams->outAcceptedConnection        = false;
-      threadParams->outReadInHeader              = false;
-      threadParams->outUnmarshalledHeader        = false;
-      threadParams->outReadInAndUnmarshalledBody = false;
+      threadParams->outAcceptedConnection       = false;
+      threadParams->outReadInAndUnmarshalledMsg = false;
 
       // Wrap the listen socket in a smart file-descriptor
       castor::tape::utils::SmartFd listenSockFd(threadParams->inListenSocketFd);
@@ -81,43 +79,19 @@ private:
         castor::tape::net::acceptConnection(listenSockFd.get(), acceptTimeout));
       threadParams->outAcceptedConnection = true;
 
-      // Read in the message header
-      char headerBuf[3 * LONGSIZE]; // magic + reqType + len
-      memset(headerBuf, '\0', sizeof(headerBuf));
-      const ssize_t headerBytesRead = netread_timeout(connectionSockFd.get(),
-        headerBuf, sizeof(headerBuf), netReadWriteTimeout);
-      if(sizeof(headerBuf) != headerBytesRead) {
-        test_exception te("netread_timeout of message header failed");
+      // Read in and unmarshall the message
+      tapeBridgeFlushedToTapeAckMsg_t msg;
+      memset(&msg, '\0', sizeof(msg));
+      const uint32_t recvRc = tapebridge_recvTapeBridgeFlushedToTapeAck(
+        connectionSockFd.get(), netReadWriteTimeout, &msg);
+      if(3 * LONGSIZE != recvRc || // magic + reqType + status
+        RTCOPY_MAGIC != msg.magic ||
+        TAPEBRIDGE_FLUSHEDTOTAPE != msg.reqType ||
+        0 != msg.status) {
+        test_exception te("failed to read in and unmarshall the message");
         throw te;
       }
-      threadParams->outReadInHeader = true;
-
-      // Un-marshall the message header
-      castor::tape::legacymsg::MessageHeader header;
-      memset(&header, '\0', sizeof(header));
-      char *p = headerBuf;
-      unmarshall_LONG(p, header.magic);
-      unmarshall_LONG(p, header.reqType);
-      unmarshall_LONG(p, header.lenOrStatus);
-      if((p - headerBuf) != 3 * LONGSIZE) {
-        test_exception te("failed to un-marshall header");
-        throw te;
-      }
-      if(RTCOPY_MAGIC != header.magic ||
-        TAPEBRIDGE_FLUSHEDTOTAPE != header.reqType ||
-        TAPEBRIDGEFLUSHEDTOTAPEMSGBODY_SIZE != header.lenOrStatus) {
-        test_exception te("failed to un-marshall header");
-        throw te;
-      }
-      threadParams->outUnmarshalledHeader = true;
-
-      // Read in and unmarshall message body
-      const uint32_t dummyVolReqId = 7777;
-      tapeBridgeFlushedToTapeMsgBody_t body;
-      castor::tape::tapebridge::RtcpTxRx::receiveMsgBody(nullCuuid,
-        dummyVolReqId, connectionSockFd.get(), netReadWriteTimeout, header,
-        body);
-      threadParams->outReadInAndUnmarshalledBody = true;
+      threadParams->outReadInAndUnmarshalledMsg = true;
 
       close(connectionSockFd.release());
       close(listenSockFd.release());
@@ -151,11 +125,11 @@ public:
   void testInvalidSocketFd() {
     const int invalidSocketFd = -10;
     const int netReadWriteTimeout = 60;
-    tapeBridgeFlushedToTapeMsgBody_t msgBody;
+    tapeBridgeFlushedToTapeAckMsg_t msg;
 
-    memset(&msgBody, '\0', sizeof(msgBody));
-    const int rc = tapebridge_sendTapeBridgeFlushedToTape(invalidSocketFd,
-      netReadWriteTimeout, &msgBody);
+    memset(&msg, '\0', sizeof(msg));
+    const int rc = tapebridge_recvTapeBridgeFlushedToTapeAck(invalidSocketFd,
+      netReadWriteTimeout, &msg);
     const int saved_serrno = serrno;
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("rc for invalid socket file-descriptor",
@@ -171,15 +145,15 @@ public:
     const int validSocketFd = 0;
     const int netReadWriteTimeout = 60;
 
-    const int rc = tapebridge_sendTapeBridgeFlushedToTape(validSocketFd,
+    const int rc = tapebridge_recvTapeBridgeFlushedToTapeAck(validSocketFd,
       netReadWriteTimeout, NULL);
     const int saved_serrno = serrno;
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("rc for NULL msgBody",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("rc for NULL msg",
       -1,
       rc);
 
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("serrno for NULL msgBody",
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("serrno for NULL msg",
       EINVAL,
       saved_serrno);
   }
@@ -212,8 +186,8 @@ public:
       &threadParams));
 
     // Create client connection
-    castor::tape::utils::SmartFd clientConnectionSock(socket(PF_INET,
-      SOCK_STREAM, IPPROTO_TCP));
+    utils::SmartFd clientConnectionSock(socket(PF_INET, SOCK_STREAM,
+      IPPROTO_TCP));
     CPPUNIT_ASSERT_MESSAGE("create client connection socket",
       0 <= clientConnectionSock.get());
     {
@@ -229,16 +203,15 @@ public:
           sizeof(sockAddr)));
     }
 
-    // Send TAPEBRIDGE_FLUSHEDTOTAPE message using client connection
-    uint32_t sendRc = 0;
-    {
-      tapeBridgeFlushedToTapeMsgBody_t msgBody;
-      msgBody.volReqId         = 1111;
-      msgBody.tapeFseq         = 2222;
-      msgBody.batchBytesToTape = 3333;
-      sendRc = tapebridge_sendTapeBridgeFlushedToTape(
-        clientConnectionSock.get(), netReadWriteTimeout, &msgBody);
-    }
+    // Send TAPEBRIDGE_FLUSHEDTOTAPE acknowledgement message using client
+    // connection
+    legacymsg::MessageHeader ackMsg;
+    memset(&ackMsg, '\0', sizeof(ackMsg));
+    ackMsg.magic       = RTCOPY_MAGIC;
+    ackMsg.reqType     = TAPEBRIDGE_FLUSHEDTOTAPE;
+    ackMsg.lenOrStatus = 0;
+    LegacyTxRx legacyTxRx(netReadWriteTimeout);
+    legacyTxRx.sendMsgHeader(clientConnectionSock.get(), ackMsg);
 
     void *tapebridged_thread_result = NULL;
       CPPUNIT_ASSERT_EQUAL_MESSAGE("pthread_join", 0,
@@ -250,27 +223,21 @@ public:
 
     CPPUNIT_ASSERT_MESSAGE("threadParams.outAcceptedConnection",
       threadParams.outAcceptedConnection);
-    CPPUNIT_ASSERT_MESSAGE("threadParams.outReadInHeader",
-      threadParams.outReadInHeader);
-    CPPUNIT_ASSERT_MESSAGE("threadParams.outUnmarshalledHeader",
-      threadParams.outUnmarshalledHeader);
-    CPPUNIT_ASSERT_MESSAGE("threadParams.outReadInAndUnmarshalledBody",
-      threadParams.outReadInAndUnmarshalledBody);
-
-    CPPUNIT_ASSERT_EQUAL_MESSAGE("sendTapeBridgeFlushedToTape",
-      (uint32_t)(3 * LONGSIZE + TAPEBRIDGEFLUSHEDTOTAPEMSGBODY_SIZE),
-      sendRc);
+    CPPUNIT_ASSERT_MESSAGE("threadParams.outReadInAndUnmarshalledMsg",
+      threadParams.outReadInAndUnmarshalledMsg);
 
     close(clientConnectionSock.release());
   }
 
-  CPPUNIT_TEST_SUITE(SendTapeBridgeFlushedToTapeTest);
+  CPPUNIT_TEST_SUITE(RecvTapeBridgeFlushedToTapeAckTest);
   CPPUNIT_TEST(testInvalidSocketFd);
   CPPUNIT_TEST(testNullMsgBody);
   CPPUNIT_TEST(testSendAndRecv);
   CPPUNIT_TEST_SUITE_END();
 };
 
-CPPUNIT_TEST_SUITE_REGISTRATION(SendTapeBridgeFlushedToTapeTest);
+CPPUNIT_TEST_SUITE_REGISTRATION(RecvTapeBridgeFlushedToTapeAckTest);
 
-#endif // TEST_UNITTEST_TAPEBRIDGE_SENDTAPEBRIDGEFLUSHEDTOTAPETEST_HPP
+} // namespace tapebridge
+} // namespace tape
+} // namespace castor
