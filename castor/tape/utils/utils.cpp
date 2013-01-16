@@ -582,11 +582,11 @@ std::string castor::tape::utils::trimString(const std::string &str) throw() {
 //------------------------------------------------------------------------------
 std::string castor::tape::utils::singleSpaceString(
   const std::string &str) throw() {
-
   bool inWhitespace = false;
+  bool strContainsNonWhiteSpace = false;
 
-  // Output string stream used to construct the new string
-  std::ostringstream oss;
+  // Output string stream used to construct the result
+  std::ostringstream result;
 
   // For each character in the original string
   for(std::string::const_iterator itor = str.begin(); itor != str.end();
@@ -598,7 +598,7 @@ std::string castor::tape::utils::singleSpaceString(
       // Remember we are in whitespace
       inWhitespace = true;
 
-    // Else the character is not a tab
+    // Else the character is not a space or a tab
     } else {
 
       // If we are leaving whitespace
@@ -607,18 +607,27 @@ std::string castor::tape::utils::singleSpaceString(
         // Remember we have left whitespace
         inWhitespace = false;
 
+        // Remember str contains non-whitespace
+        strContainsNonWhiteSpace = true;
+
         // Insert a single space into the output string stream
-        oss << " ";
+        result << " ";
       }
 
       // Insert the character into the output string stream
-      oss << *itor;
+      result << *itor;
 
     }
   }
 
-  // Return the new string
-  return oss.str();
+  // If str is not emtpy and does not contain any non-whitespace characters
+  // then nothing has been written to the result stream, therefore write a
+  // single space
+  if(!str.empty() && !strContainsNonWhiteSpace) {
+    result << " ";
+  }
+
+  return result.str();
 }
 
 
