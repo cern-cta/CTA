@@ -556,6 +556,111 @@ public:
       true, sleepDuration == testDuration.tv_sec);
   }
 
+  void testSingleSpaceStringWithEmptyString() {
+    const std::string original;
+    std::string result;
+
+    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+      "Checking singleSpaceString does not throw an exception",
+      result = singleSpaceString(original));
+    CPPUNIT_ASSERT_MESSAGE(
+      "Check result string is an empty string",
+      result.empty());
+  }
+
+  void testSingleSpaceStringWithOneSpace() {
+    const std::string original = " ";
+    std::string result;
+
+    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+      "Checking singleSpaceString does not throw an exception",
+      result = singleSpaceString(original));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Checking singleSpaceString has not changed the string",
+      original,
+      result);
+  }
+
+  void testSingleSpaceStringWithTwoSpaces() {
+    const std::string original = "  ";
+    std::string result;
+
+    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+      "Checking singleSpaceString does not throw an exception",
+      result = singleSpaceString(original));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Checking two spaces compacted to one space",
+      std::string(" "),
+      result);
+  }
+
+  void testSingleSpaceStringWithOneTab() {
+    const std::string original = "\t";
+    std::string result;
+
+    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+      "Checking singleSpaceString does not throw an exception",
+      result = singleSpaceString(original));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Checking singleSpaceString has translated the tab into a space",
+      std::string(" "),
+      result);
+  }
+
+  void testSingleSpaceStringWithTwoTabs() {
+    const std::string original = "\t\t";
+    std::string result;
+
+    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+      "Checking singleSpaceString does not throw an exception",
+      result = singleSpaceString(original));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Checking singleSpaceString has translated the 2 tabs into a space",
+      std::string(" "),
+      result);
+  }
+
+  void testSingleSpaceStringWithOneSpaceOneTab() {
+    const std::string original = " \t";
+    std::string result;
+
+    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+      "Checking singleSpaceString does not throw an exception",
+      result = singleSpaceString(original));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Checking singleSpaceString has translated 1 space 1 tab into a space",
+      std::string(" "),
+      result);
+  }
+
+  void testSingleSpaceStringWithOneTabOneSpace() {
+    const std::string original = "\t ";
+    std::string result;
+
+    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+      "Checking singleSpaceString does not throw an exception",
+      result = singleSpaceString(original));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Checking singleSpaceString has translated 1 tab 1 space into a space",
+      std::string(" "),
+      result);
+  }
+
+  void testSingleSpaceStringWithComplexString() {
+    const std::string original =
+      "Hello \t World\t\t\t\t   -\tthis is \ta\t test";
+    const std::string expectedResult = "Hello World - this is a test";
+    std::string result;
+
+    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+      "Checking singleSpaceString does not throw an exception",
+      result = singleSpaceString(original));
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "Checking singleSpaceString has worked correctly with a complex string",
+      expectedResult,
+      result);
+  }
+
   CPPUNIT_TEST_SUITE(UtilsTest);
   CPPUNIT_TEST(testToHex);
   CPPUNIT_TEST(testCopyStringNullDst);
@@ -583,6 +688,14 @@ public:
   CPPUNIT_TEST(testTimevalAbsDiff_EqualSec_EqualUsec);
   CPPUNIT_TEST(testTimevalToDouble);
   CPPUNIT_TEST(testGetTimeOfDay);
+  CPPUNIT_TEST(testSingleSpaceStringWithEmptyString);
+  CPPUNIT_TEST(testSingleSpaceStringWithOneSpace);
+  CPPUNIT_TEST(testSingleSpaceStringWithTwoSpaces);
+  CPPUNIT_TEST(testSingleSpaceStringWithOneTab);
+  CPPUNIT_TEST(testSingleSpaceStringWithTwoTabs);
+  CPPUNIT_TEST(testSingleSpaceStringWithOneSpaceOneTab);
+  CPPUNIT_TEST(testSingleSpaceStringWithOneTabOneSpace);
+  CPPUNIT_TEST(testSingleSpaceStringWithComplexString);
   CPPUNIT_TEST_SUITE_END();
 };
 
