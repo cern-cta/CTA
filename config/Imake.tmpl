@@ -46,7 +46,7 @@ LIBNOARCHDIR := /usr/lib
 ifneq ($(wildcard /etc/debian_version),)
   LIBDIR = /usr/lib
 else
-#if defined(__x86_64)
+#if defined(__x86_64) && !defined(__APPLE__)
   LIBDIR = /usr/lib64
 #else
   LIBDIR = /usr/lib
