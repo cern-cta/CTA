@@ -157,5 +157,5 @@
 160,PRODUCER_REQUEST_SUBMITTED,"VdqmRequestsProducer: request submitted to vdqm successfully"
 161,WORKER_SET_SESSION_CLOSING,"Worker: set the session to closing after error"
 162,LINKER_SESSION_IN_THE_WAY,"TapeMigrationMountLinker: found existing session for same tape and ended it"
-
+163,WORKER_RECALL_LIST_RETRIEVED,"Worker: files to recall retrieved in bulk from db"
 

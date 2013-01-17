@@ -1054,7 +1054,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFilesToMigrateL
         castor::dlf::Param("ProcessingTime", timer.secs()),
         castor::dlf::Param("ProcessingTimePerFile", timer.secs()/filesCount)
     };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, WORKER_MIGRATION_LIST_RETRIEVED,params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_MIGRATION_LIST_RETRIEVED,params);
   }
   // and reply to requester.
   return files_response.release();
@@ -1188,7 +1188,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFilesToRecallLi
         castor::dlf::Param("ProcessingTime", timer.secs()),
         castor::dlf::Param("ProcessingTimePerFile", timer.secs()/filesCount)
     };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, WORKER_MIGRATION_LIST_RETRIEVED,params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, WORKER_RECALL_LIST_RETRIEVED,params);
   }
   // and reply to requester.
   return files_response.release();
