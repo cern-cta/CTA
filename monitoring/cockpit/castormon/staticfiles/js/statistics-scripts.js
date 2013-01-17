@@ -92,9 +92,9 @@ $(document).ready(function () {
         var table = $(this);
         
         // Add the buttons in the tfoot
-        var newTfoot = $(document.createElement('tfoot'));
+        var tfoot = table.find('tfoot');
         var newRow = $(document.createElement('tr'));
-        $('tr:first-child td', table).each(function (j) {
+        $('tbody tr:first-child td', table).each(function (j) {
             var newCell = $(document.createElement('td'));
             // Add button to cell
             if (j > 0) { // ignore first column
@@ -104,10 +104,10 @@ $(document).ready(function () {
                 newButton.attr('class', 'showPie btn');
                 newCell.append(newButton);
                 // Add callback to button
-                var title = table.find('th')[j].innerHTML;
+                var title = table.find('thead th')[j].innerHTML;
                 newButton.click(function () {
                     // Remove style of previously selected button
-                    $('tr td button', newTfoot).each(function() {
+                    $('tr td button', tfoot).each(function() {
                         $(this).removeClass('btn-warning active');
                     });
                     // Add style to currently selected button
@@ -118,8 +118,7 @@ $(document).ready(function () {
             }
             newRow.append(newCell);
         });
-        newTfoot.append(newRow);
-        table.append(newTfoot);
+        tfoot.append(newRow);
 
         // add container div
         var newDiv = $(document.createElement('div'));
