@@ -318,6 +318,10 @@ div.row-fluid.statistics.pie > div {
     min-width: 600px;
 }
 
+div.row-fluid.statistics.pie > div:first-of-type {
+    overflow-x: auto;
+}
+
 div.row-fluid.statistics.pie > div.container > h3 {
     margin-top: 150px;
     text-align: center;

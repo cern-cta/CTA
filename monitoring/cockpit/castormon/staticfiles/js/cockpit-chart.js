@@ -61,8 +61,8 @@
                     useUTC: false
                 },
                 lang : {
-                    thousandsSep : ',',
-                    decimalPoint: '.'
+                    thousandsSep : ' ',
+                    decimalPoint: ','
                 }
             });
         },
@@ -422,9 +422,9 @@
         },
 
         chartOptionsCallback: function(options, start) {
+            // Callback to massage chart options
             var that = this,
                 graphType = this.getGraphType();
-            // Callback to massage chart otions
             // Specify the DOM where to render the chart
             options.chart.renderTo = this.$metricDisplay[0];
             // Bind the legendFormater function
