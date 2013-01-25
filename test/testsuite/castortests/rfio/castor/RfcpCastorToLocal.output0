@@ -11,4 +11,4 @@
     stager: Waiting for callback from castor
     stager: <uuid0> CBK <answer duration0> s before callback from <server ip0> was received
 <nb bytes> bytes in <time to transfer0> seconds through <interface in1> and eth0 (out)
-<nb bytes> bytes in remote file
+<nb bytes or 0> bytes in remote file
