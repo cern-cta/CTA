@@ -12,7 +12,7 @@ def read(fname):
 
 setup(
     name = "slp-castor-plugins",
-    version = "0.1.8",
+    version = "0.1.9",
     author = "Benjamin Fiorini",
     author_email = "benjamin.fiorini@cern.ch",
     description = ("Simple log producer - Simple producer for messaging, tailing log file. Plugins pack for CASTOR"),
