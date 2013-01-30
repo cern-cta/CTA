@@ -210,13 +210,13 @@ FOR EACH ROW WHEN (old.status != new.status)
 BEGIN
   -- If the filesystem is coming back into PRODUCTION, initiate a consistency
   -- check for the diskcopies which reside on the filesystem.
-  IF :old.status IN (1, 2) AND  -- DRAINING, DISABLED
-     :new.status = 0 THEN       -- PRODUCTION
+  IF :old.status != dconst.FILESYSTEM_PRODUCTION AND
+     :new.status = dconst.FILESYSTEM_PRODUCTION THEN
     checkFsBackInProd(:old.id);
   END IF;
   -- Cancel any ongoing draining operations if the filesystem is not in a
   -- DRAINING state
-  IF :new.status != 1 THEN  -- DRAINING
+  IF :new.status != dconst.FILESYSTEM_DRAINING THEN
     UPDATE DrainingFileSystem
        SET status = 3  -- INTERRUPTED
      WHERE fileSystem = :new.id
@@ -233,18 +233,18 @@ FOR EACH ROW WHEN (old.status != new.status)
 BEGIN
   -- If the diskserver is coming back into PRODUCTION, initiate a consistency
   -- check for all the diskcopies on its associated filesystems which are in
-  -- a PRODUCTION.
-  IF :old.status IN (1, 2) AND  -- DRAINING, DISABLED
-     :new.status = 0 THEN       -- PRODUCTION
+  -- PRODUCTION.
+  IF :old.status != dconst.DISKSERVER_PRODUCTION AND
+     :new.status = dconst.DISKSERVER_PRODUCTION AND :new.hwOnline = 1 THEN
     FOR fs IN (SELECT id FROM FileSystem
                 WHERE diskServer = :old.id
-                  AND status = 0)  -- PRODUCTION
+                  AND status = dconst.FILESYSTEM_PRODUCTION)
     LOOP
       checkFsBackInProd(fs.id);
     END LOOP;
   END IF;
   -- Cancel all draining operations if the diskserver is disabled.
-  IF :new.status = 2 THEN  -- DISABLED
+  IF :new.status = dconst.DISKSERVER_DISABLED THEN
     UPDATE DrainingFileSystem
        SET status = 3  -- INTERRUPTED
      WHERE fileSystem IN
@@ -254,7 +254,7 @@ BEGIN
   END IF;
   -- If the diskserver is in PRODUCTION cancel the draining operation of
   -- filesystems not in DRAINING.
-  IF :new.status = 0 THEN  -- PRODUCTION
+  IF :new.status = dconst.DISKSERVER_PRODUCTION THEN
     UPDATE DrainingFileSystem
        SET status = 3  -- INTERRUPTED
      WHERE fileSystem IN
@@ -302,7 +302,7 @@ BEGIN
                      AND DiskCopy.castorfile = a.castorfile
                      AND DiskCopy.status IN (0, 10)  -- STAGED, CANBEMIGR
                      AND SvcClass.id = a.svcclass
-                   -- Select DISABLED or DRAINING hardware first
+                   -- Select non-PRODUCTION hardware first
                    ORDER BY decode(FileSystem.status, 0,
                             decode(DiskServer.status, 0, 0, 1), 1) ASC,
                             DiskCopy.gcWeight DESC))
@@ -1194,8 +1194,9 @@ BEGIN
      WHERE DiskPool2SvcClass.child = svcClassId
        AND DiskPool2SvcClass.parent = FileSystem.diskPool
        AND FileSystem.diskServer = DiskServer.id
-       AND FileSystem.status = 0 -- PRODUCTION
-       AND DiskServer.status = 0 -- PRODUCTION
+       AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
+       AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+       AND DiskServer.hwOnline = 1
        AND totalSize * minAllowedFreeSpace < free - defFileSize;
     IF (c = 0) THEN
       RETURN 1;
@@ -1249,9 +1250,10 @@ BEGIN
          AND FileSystem.id = DiskCopy.fileSystem
          AND FileSystem.diskpool = DiskPool2SvcClass.parent
          AND DiskPool2SvcClass.child = SvcClass.id
-         AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
+         AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING, dconst.FILESYSTEM_READONLY)
          AND DiskServer.id = FileSystem.diskserver
-         AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
+         AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING, dconst.DISKSERVER_READONLY)
+         AND DiskServer.hwOnline = 1
          -- If this is an internal replication request make sure that the diskcopy
          -- is in the same service class as the source.
          AND (SvcClass.id = destSvcClassId OR internal = 0)
@@ -1294,10 +1296,11 @@ BEGIN
        AND DiskCopy.fileSystem = FileSystem.id
        AND FileSystem.diskpool = DiskPool2SvcClass.parent
        AND DiskPool2SvcClass.child = svcClassId
-       AND FileSystem.status = 0 -- PRODUCTION
+       AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
        AND FileSystem.diskserver = DiskServer.id
-       AND DiskServer.status = 0 -- PRODUCTION
-       AND DiskCopy.status IN (0, 6, 10)  -- STAGED, STAGEOUT, CANBEMIGR
+       AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
+       AND DiskServer.hwOnline = 1
+       AND DiskCopy.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_STAGEOUT, dconst.DISKCOPY_CANBEMIGR)
      ORDER BY FileSystemRate(FileSystem.nbReadStreams, FileSystem.nbWriteStreams) DESC,
               DBMS_Random.value)
    WHERE rownum < 2;
@@ -1331,7 +1334,7 @@ BEGIN
   -- Resolve the destination service class id to a name
   SELECT name INTO destSvcClass FROM SvcClass WHERE id = svcClassId;
   -- Determine if there are any copies of the file in the same service class
-  -- on DISABLED or DRAINING hardware. If we found something then set the user
+  -- on non PRODUCTION hardware. If we found something then set the user
   -- and group id to -1 this effectively disables the later privilege checks
   -- to see if the user can trigger a d2d or recall. (#55745)
   BEGIN
@@ -1409,15 +1412,17 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
        SET status = dconst.SUBREQUEST_FAILED,
            errorCode = CASE
              WHEN dcStatus IN (dconst.DISKCOPY_WAITFS, dconst.DISKCOPY_WAITFS_SCHEDULING) THEN serrno.EBUSY
-             WHEN dcStatus = dconst.DISKCOPY_STAGEOUT AND fsStatus = dconst.FILESYSTEM_PRODUCTION AND
-                  dsStatus = dconst.DISKSERVER_PRODUCTION THEN serrno.EBUSY
+             WHEN dcStatus = dconst.DISKCOPY_STAGEOUT
+               AND fsStatus IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
+               AND dsStatus IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY) THEN serrno.EBUSY
              ELSE serrno.ESTNOTAVAIL -- File is currently not available
            END,
            errorMessage = CASE
              WHEN dcStatus IN (dconst.DISKCOPY_WAITFS, dconst.DISKCOPY_WAITFS_SCHEDULING) THEN
                'File is being (re)created right now by another user'
-             WHEN dcStatus = dconst.DISKCOPY_STAGEOUT AND fsStatus = dconst.FILESYSTEM_PRODUCTION AND
-                  dsStatus = dconst.DISKSERVER_PRODUCTION THEN
+             WHEN dcStatus = dconst.DISKCOPY_STAGEOUT
+               AND fsStatus IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
+               AND dsStatus IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY) THEN
                'File is being written to in another service class'
              ELSE
                'All copies of this file are unavailable for now. Please retry later'
@@ -1615,9 +1620,10 @@ BEGIN
              AND Request.id = SubRequest.request
              AND Request.svcclass = DiskPool2SvcClass.child
              AND FileSystem.diskpool = DiskPool2SvcClass.parent
-             AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
+             AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
              AND DiskServer.id = FileSystem.diskServer
-             AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
+             AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+             AND DiskServer.hwOnline = 1
         ORDER BY -- order by rate as defined by the function
                  fileSystemRate(FileSystem.nbReadStreams, FileSystem.nbWriteStreams) DESC,
                  -- finally use randomness to avoid preferring always the same FS
@@ -1669,9 +1675,11 @@ BEGIN
                    AND FileSystem.diskpool = DiskPool2SvcClass.parent
                    AND DiskPool2SvcClass.child = SvcClass.id
                    AND DiskCopy.status IN (0, 1, 10)  -- STAGED, WAITDISK2DISKCOPY, CANBEMIGR
-                   AND FileSystem.status IN (0, 1)  -- PRODUCTION, DRAINING
+                   AND FileSystem.status IN
+                       (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING, dconst.FILESYSTEM_READONLY)
                    AND DiskServer.id = FileSystem.diskserver
-                   AND DiskServer.status IN (0, 1)  -- PRODUCTION, DRAINING
+                   AND DiskServer.status IN
+                       (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING, dconst.DISKSERVER_READONLY)
                  GROUP BY SvcClass.id)
              ) results, SvcClass
              -- Join the results with the service class table and determine if
@@ -1751,9 +1759,10 @@ BEGIN
     FROM DiskCopy, FileSystem, DiskServer
    WHERE cfId = DiskCopy.castorFile
      AND FileSystem.id(+) = DiskCopy.fileSystem
-     AND nvl(FileSystem.status, 0) = 0 -- PRODUCTION
+     AND nvl(FileSystem.status, 0) IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
      AND DiskServer.id(+) = FileSystem.diskServer
-     AND nvl(DiskServer.status, 0) = 0 -- PRODUCTION
+     AND nvl(DiskServer.status, 0) IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
+     AND nvl(DiskServer.hwOnline, 1) = 1
      AND DiskCopy.status = dconst.DISKCOPY_WAITFS_SCHEDULING;
   IF dcIds.COUNT > 0 THEN
     -- DiskCopy is in WAIT*, make SubRequest wait on previous subrequest and do not schedule
@@ -1765,15 +1774,18 @@ BEGIN
   -- Look for available diskcopies. The status is needed for the
   -- internal replication processing, and only if count = 1, hence
   -- the min() function does not represent anything here.
+  -- Note that we accept copies in READONLY hardware here as we're processing Get
+  -- and Update requests, and we would deny Updates switching to write mode in that case.
   SELECT COUNT(DiskCopy.id), min(DiskCopy.status) INTO nbDCs, dcStatus
     FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
    WHERE DiskCopy.castorfile = cfId
      AND DiskCopy.fileSystem = FileSystem.id
      AND FileSystem.diskpool = DiskPool2SvcClass.parent
      AND DiskPool2SvcClass.child = svcClassId
-     AND FileSystem.status = 0 -- PRODUCTION
+     AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
      AND FileSystem.diskserver = DiskServer.id
-     AND DiskServer.status = 0 -- PRODUCTION
+     AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
+     AND DiskServer.hwOnline = 1
      AND DiskCopy.status IN (0, 6, 10);  -- STAGED, STAGEOUT, CANBEMIGR
   IF nbDCs = 0 AND upd = 1 THEN
     -- we may be the first update inside a prepareToPut, and this is allowed
@@ -1804,9 +1816,10 @@ BEGIN
              AND DiskPool2SvcClass.child = svcClassId
              AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
              AND FileSystem.id = DiskCopy.fileSystem
-             AND FileSystem.status = 0  -- PRODUCTION
+             AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
              AND DiskServer.id = FileSystem.diskServer
-             AND DiskServer.status = 0  -- PRODUCTION
+             AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
+             AND DiskServer.hwOnline = 1
            ORDER BY fsRate DESC;
     -- Internal replication processing
     IF upd = 1 OR (nbDCs = 1 AND dcStatus = 6) THEN -- DISKCOPY_STAGEOUT
@@ -1843,8 +1856,9 @@ BEGIN
            WHERE FileSystem.diskServer = DiskServer.id
              AND FileSystem.diskPool = DiskPool2SvcClass.parent
              AND DiskPool2SvcClass.child = svcClassId
-             AND FileSystem.status = 0 -- PRODUCTION
-             AND DiskServer.status = 0 -- PRODUCTION
+             AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
+             AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+             AND DiskServer.hwOnline = 1
              AND DiskServer.id NOT IN (
                SELECT DISTINCT(DiskServer.id)
                  FROM DiskCopy, FileSystem, DiskServer
@@ -2071,9 +2085,10 @@ BEGIN
        AND DiskCopy.fileSystem = FileSystem.id
        AND FileSystem.diskpool = DiskPool2SvcClass.parent
        AND DiskPool2SvcClass.child = svcClassId
-       AND FileSystem.status = 0 -- PRODUCTION
+       AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
        AND FileSystem.diskserver = DiskServer.id
-       AND DiskServer.status = 0 -- PRODUCTION
+       AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
+       AND DiskServer.hwOnline = 1
        AND DiskCopy.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_STAGEOUT, dconst.DISKCOPY_CANBEMIGR)
      UNION ALL
     SELECT /*+ INDEX(StageDiskCopyReplicaRequest I_StageDiskCopyReplic_DestDC) */ DiskCopy.id
@@ -2879,7 +2894,7 @@ CREATE OR REPLACE PROCEDURE storeReports
  inNumParams IN castor."cnumList") AS
  varDsId NUMBER;
  varFsId NUMBER;
- varHeartBeatTimeout NUMBER;
+ varHeartbeatTimeout NUMBER;
  emptyReport BOOLEAN := False;
 BEGIN
   -- quick check of the vector lengths
@@ -2906,17 +2921,14 @@ BEGIN
       -- update DiskServer
       varDsId := NULL;
       UPDATE DiskServer
-         SET status = CASE WHEN (adminStatus = dconst.ADMIN_NONE) AND
-                                (status = dconst.DISKSERVER_DISABLED)
-                           THEN dconst.DISKSERVER_PRODUCTION
-                           ELSE status END,
-             lastHeartBeatTime = getTime()
+         SET hwOnline = 1,
+             lastHeartbeatTime = getTime()
        WHERE name = inStrParams(2*i+1)
       RETURNING id INTO varDsId;
       -- if it did not exist, create it
       IF varDsId IS NULL THEN
-        INSERT INTO DiskServer (name, id, status, adminStatus, lastHeartBeatTime)
-         VALUES (inStrParams(2*i+1), ids_seq.nextval, dconst.DISKSERVER_DISABLED, dconst.ADMIN_FORCE, getTime())
+        INSERT INTO DiskServer (name, id, status, hwOnline, lastHeartbeatTime)
+         VALUES (inStrParams(2*i+1), ids_seq.nextval, dconst.DISKSERVER_DISABLED, 1, getTime())
         RETURNING id INTO varDsId;
       END IF;
       -- update FileSystem
@@ -2929,35 +2941,27 @@ BEGIN
              nbReadStreams = inNumParams(8*i+5),
              nbWriteStreams = inNumParams(8*i+6),
              nbRecallerStreams = inNumParams(8*i+7),
-             nbMigratorStreams = inNumParams(8*i+8),
-             status = CASE WHEN (adminStatus = dconst.ADMIN_NONE) AND
-                                (status = dconst.FILESYSTEM_DISABLED)
-                           THEN dconst.FILESYSTEM_PRODUCTION
-                           ELSE status END
+             nbMigratorStreams = inNumParams(8*i+8)
        WHERE diskServer=varDsId AND mountPoint=inStrParams(2*i+2)
       RETURNING id INTO varFsId;
       -- if it did not exist, create it
       IF varFsId IS NULL THEN
         INSERT INTO FileSystem (mountPoint, maxFreeSpace, minAllowedFreeSpace, totalSize, free,
                                 nbReadStreams, nbWriteStreams, nbRecallerStreams, nbMigratorStreams,
-                                id, diskPool, diskserver, status, adminStatus)
+                                id, diskPool, diskserver, status)
         VALUES (inStrParams(2*i+2), inNumParams(8*i+1), inNumParams(8*i+2), inNumParams(8*i+3),
                 inNumParams(8*i+4), inNumParams(8*i+5), inNumParams(8*i+6), inNumParams(8*i+7),
-                inNumParams(8*i+8), ids_seq.nextval, 0, varDsId,
-                dconst.FILESYSTEM_DISABLED, dconst.ADMIN_FORCE);
+                inNumParams(8*i+8), ids_seq.nextval, 0, varDsId, dconst.FILESYSTEM_DISABLED);
       END IF;
     END LOOP;
   END IF;
 
   -- now disable nodes that have too old reports
-  varHeartBeatTimeout := TO_NUMBER(getConfigOption('DiskServer', 'HeartBeatTimeout', '60'));
-  FOR ds IN (SELECT id
-               FROM DiskServer
-              WHERE lastHeartBeatTime < getTime() - varHeartBeatTimeout
-                AND status = dconst.DISKSERVER_PRODUCTION
-                AND adminStatus = dconst.ADMIN_NONE) LOOP
-    UPDATE DiskServer SET status = dconst.DISKSERVER_DISABLED WHERE id = ds.id;
-  END LOOP;
+  varHeartbeatTimeout := TO_NUMBER(getConfigOption('DiskServer', 'HeartbeatTimeout', '180'));
+  UPDATE DiskServer
+     SET hwOnline = 0
+   WHERE lastHeartbeatTime < getTime() - varHeartbeatTimeout
+     AND hwOnline = 1;
 END;
 /
 

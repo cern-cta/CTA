@@ -31,24 +31,23 @@ import castor_tools
 def usage(exitCode):
     '''prints usage'''
     print 'Usage : ' + sys.argv[0] + ' [-h|--help] ' + \
-          '-f|--forcestate <state>|-r|--releasestate|-d|--diskpool <diskpool> ' + \
+          '-s|--state <state>|-d|--diskpool <diskpool> ' + \
           '[-m|--mountpoints <mountpoint>[:...]] <diskpool>|<diskServerName> [...]]'
-    print '  where state can be "Production", "Draining" or "Disabled"'
+    print '  where state can be "Production", "Draining", "Disabled", "Readonly"'
     sys.exit(exitCode)
 
-# Possible forced states
-forcedStates = ['Production', 'Draining', 'Disabled']
+# Possible states
+states = ['Production', 'Draining', 'Disabled', 'Readonly']
 
 # first parse the options
 try:
-    options, args = getopt.getopt(sys.argv[1:], 'hvf:rm:d:',
-                                  ['help', 'verbose', 'forcestate=', 'releasestate', 'mountpoints=', 'diskpool='])
+    options, args = getopt.getopt(sys.argv[1:], 'hvs:m:d:',
+                                  ['help', 'verbose', 'state=', 'mountpoints=', 'diskpool='])
 except Exception, e:
     print e
     usage(1)
 verbose = False
-forceState = None
-release = False
+state = None
 mountPoints = None
 diskPool = None
 targets = None
@@ -57,13 +56,11 @@ for f, v in options:
         usage(0)
     elif f == '-v' or f == '--verbose':
         verbose = True
-    elif f == '-f' or f == '--forcestate':
-        if v not in forcedStates:
+    elif f == '-s' or f == '--state':
+        if v not in states:
             print 'Unkown state %s' % v
             usage(1)
-        forceState = v
-    elif f == '-r' or f == '--releasestate':
-        release = True
+        state = v
     elif f == '-m' or f == '--mountpoints':
         mountPoints = set(v.split(':'))
     elif f == '-d' or f == '--diskpool':
@@ -77,11 +74,8 @@ if len(args) != 0:
     targets = set(args)
 
 # some consistency checks
-if forceState and release:
-    print 'Conflicting options -f,--force and -r,--release. Giving up'
-    usage(1)
-if not forceState and not release and not diskPool:
-    print 'Nothing to do. Please specify at least one of options -f,--force, -r,--release and -d.--diskpool'
+if not state and not diskPool:
+    print 'Nothing to do. Please specify at least one of options -s,--state and -d,--diskpool'
     usage(1)
 if not targets:
     print 'Nothing to do ! Please give a few diskpools/diskservers'
@@ -153,21 +147,12 @@ try:
         unknownMountPoints = mountPoints - existingMountPoints
         # update mountPoints
         varDict = {}
-        sqlStatement = 'UPDATE FileSystem SET'
+        sqlStatement = 'UPDATE FileSystem SET '
         setClause = ''
         whereClause = ' WHERE id IN (' + ', '.join([str(x) for x in mountPointIds]) + ')'
-        if release:
-            if setClause:
-                setClause += ','
-            setClause += ' adminStatus = :adminStatus'
-            varDict['adminStatus'] = 0
-        if forceState:
-            if setClause:
-                setClause += ','
-            setClause += ' adminStatus = :adminStatus'
-            varDict['adminStatus'] = 1
-            setClause += ', status = :status'
-            varDict['status'] = forcedStates.index(forceState)
+        if state:
+            setClause = 'status = :status'
+            varDict['status'] = states.index(state)
         if diskPool:
             if setClause:
                 setClause += ','
@@ -194,17 +179,12 @@ try:
                 print 'No diskserver matching your request'
         # update diskServers for status
         if diskServerIds:
-            if release or forceState:
+            if state:
                 varDict = {}
-                sqlStatement = 'UPDATE DiskServer SET adminStatus = :adminStatus'
-                whereClause = ' WHERE id IN (' + ', '.join([str(x) for x in diskServerIds]) + ')'
-                if release:
-                    varDict['adminStatus'] = 0
-                if forceState:
-                    varDict['adminStatus'] = 1
-                    sqlStatement += ', status = :status'
-                    varDict['status'] = forcedStates.index(forceState)
-                stcur.execute(sqlStatement + whereClause, varDict)
+                sqlStatement = '''UPDATE DiskServer SET status = :status
+                                   WHERE id IN (''' + ', '.join([str(x) for x in diskServerIds]) + ')'
+                varDict['status'] = states.index(state)
+                stcur.execute(sqlStatement, varDict)
             # update fileSystems for diskPool
             if diskPool:
                 varDict = {}

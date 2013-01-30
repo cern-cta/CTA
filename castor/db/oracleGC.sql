@@ -311,9 +311,10 @@ BEGIN
         SELECT FileSystem.id INTO unused
           FROM DiskServer, FileSystem
          WHERE FileSystem.id = fs.id
-           AND FileSystem.status = 0  -- PRODUCTION
+           AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
            AND FileSystem.diskserver = DiskServer.id
-           AND DiskServer.status = 0; -- PRODUCTION
+           AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
+           AND DiskServer.hwOnline = 1;
       EXCEPTION WHEN NO_DATA_FOUND THEN
         EXIT;
       END;

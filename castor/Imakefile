@@ -50,7 +50,6 @@ STGLIB_SRCS = BaseAddress.cpp \
               client/BaseClient.cpp \
               client/BasicResponseHandler.cpp \
               client/VectorResponseHandler.cpp \
-              monitoring/AdminStatusCodes.cpp \
               dlf/Dlf.cpp \
               dlf/IPAddress.cpp \
               dlf/Message.cpp \

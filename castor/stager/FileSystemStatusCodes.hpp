@@ -38,14 +38,15 @@ namespace castor {
     enum FileSystemStatusCodes {
       FILESYSTEM_PRODUCTION = 0,
       FILESYSTEM_DRAINING = 1,
-      FILESYSTEM_DISABLED = 2
+      FILESYSTEM_DISABLED = 2,
+      FILESYSTEM_READONLY = 3
     }; /* end of enum FileSystemStatusCodes */
 
     /**
      * Names of the differents representations, used to display
      * correctly the FileSystemStatusCodes enum
      */
-    extern const char* FileSystemStatusCodesStrings[3];
+    extern const char* FileSystemStatusCodesStrings[4];
 
 #ifdef __cplusplus
   } /* end of namespace stager */

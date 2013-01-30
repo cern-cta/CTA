@@ -28,9 +28,10 @@
 //------------------------------------------------------------------------------
 // DiskServerStatusCodeStrings
 //------------------------------------------------------------------------------
-const char* castor::stager::DiskServerStatusCodeStrings[3] = {
+const char* castor::stager::DiskServerStatusCodeStrings[4] = {
   "DISKSERVER_PRODUCTION",
   "DISKSERVER_DRAINING",
-  "DISKSERVER_DISABLED"
+  "DISKSERVER_DISABLED",
+  "DISKSERVER_READONLY"
 };
 

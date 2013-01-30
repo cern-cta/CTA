@@ -189,6 +189,7 @@ BEGIN
                AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
                AND DiskServer.id = FileSystem.diskServer
                AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+               AND DiskServer.hwOnline = 1
           ORDER BY -- use randomness to scatter recalls everywhere in the pool. This works unless the pool starts to be overloaded:
                    -- once a hot spot develops, recalls start to take longer and longer and thus tend to accumulate. However,
                    -- until we have a faster feedback system to rank filesystems, the fileSystemRate order has not proven to be better.
@@ -945,9 +946,10 @@ BEGIN
      AND CastorFile.id = DiskCopy.castorFile
      AND DiskCopy.status = dconst.DISKCOPY_CANBEMIGR
      AND FileSystem.id = DiskCopy.fileSystem
-     AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING)
+     AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING, dconst.FILESYSTEM_READONLY)
      AND DiskServer.id = FileSystem.diskServer
-     AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING)
+     AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING, dconst.DISKSERVER_READONLY)
+     AND DiskServer.hwOnline = 1
      AND ROWNUM < 2;
   -- The select worked out, create a mount for this tape pool
   INSERT INTO MigrationMount
@@ -1189,9 +1191,10 @@ BEGIN
        AND CastorFile.id = DiskCopy.castorFile
        AND DiskCopy.status = dconst.DISKCOPY_CANBEMIGR
        AND FileSystem.id = DiskCopy.fileSystem
-       AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING)
+       AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING, dconst.FILESYSTEM_READONLY)
        AND DiskServer.id = FileSystem.diskServer
-       AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING)
+       AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING, dconst.DISKSERVER_READONLY)
+       AND DiskServer.hwOnline = 1
        AND NOT EXISTS (SELECT /*+ INDEX_RS_ASC(MigratedSegment I_MigratedSegment_CFCopyNBVID) */ 1
                          FROM MigratedSegment
                         WHERE MigratedSegment.castorFile = MigrationJob.castorfile

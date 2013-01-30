@@ -95,11 +95,11 @@ try:
                           THEN DiskServer.name
                           ELSE ''
                      END
-                END,
+                END name,
            CASE WHEN GROUPING(DiskServer.name) = 1
                 THEN 'TOTAL NB : '||TO_CHAR(COUNT(FileSystem.mountPoint))
                 ELSE FileSystem.mountPoint
-                END,
+                END mountPoint,
            COUNT(FileSystem.mountPoint),
            CASE WHEN GROUPING(DiskServer.name) = 1 THEN ''
                 ELSE CASE WHEN GROUPING(FileSystem.mountPoint) = 1
@@ -108,11 +108,8 @@ try:
                      END
                 END status,
            CASE WHEN GROUPING(DiskServer.name) = 1 THEN ''
-                ELSE CASE WHEN GROUPING(FileSystem.mountPoint) = 1
-                          THEN MIN(getObjStatusName('DiskServer','adminStatus', Diskserver.adminStatus))
-                          ELSE MIN(getObjStatusName('FileSystem','adminStatus', FileSystem.adminStatus))
-                     END
-                END adminStatus,
+                ELSE CASE WHEN MIN(Diskserver.hwOnline) = 1 THEN 'YES' ELSE 'NO' END
+                END hwOnline,
            SUM(FileSystem.free),
            TO_CHAR(ROUND(100*MIN(FileSystem.minAllowedFreeSpace),2))||'%',
            TO_CHAR(ROUND(100*MAX(FileSystem.maxFreeSpace),2))||'%',
@@ -148,24 +145,24 @@ try:
     # loop over disk pools and print them
     if rows:
         if displayFS:
-            titles = ('DSNAME', 'MOUNTPOINT', 'STATUS', 'ADMINSTATUS', 'FREE', 'MINFREE', 'MAXFREE',
+            titles = ('DSNAME', 'MOUNTPOINT', 'STATUS', 'ONLINE', 'FREE', 'MINFREE', 'MAXFREE',
                       'SIZE', 'NBRD', 'NBWR', 'NBMIGR', 'NBREC', 'DISKPOOL', 'ID')
             data = [(dsname if dsname else '', fsmountpoint if fsmountpoint else '',
-                     status if status else '', adminstatus if adminstatus else '',
+                     status if status else '', online if online else '',
                      castor_tools.nbToDataAmount(free),
                      minfree, maxfree, castor_tools.nbToDataAmount(size), nbrd, nbwr, nbmigr, nbrec,
                      ','.join(diskpools), dsid if dsid else '')
-                    for dsname, fsmountpoint, nbmountpoints, status, adminstatus, free,
+                    for dsname, fsmountpoint, nbmountpoints, status, online, free,
                         minfree, maxfree, size, nbrd, nbwr, nbmigr, nbrec, diskpools, dsid, summary in rows]
         else:
-            titles = ('DSNAME', 'NBMOUNTPOINTS', 'STATUS', 'ADMINSTATUS', 'FREE', 'SIZE', 'NBRD',
+            titles = ('DSNAME', 'NBMOUNTPOINTS', 'STATUS', 'ONLINE', 'FREE', 'SIZE', 'NBRD',
                       'NBWR', 'NBMIGR', 'NBREC', 'DISKPOOL', 'ID')
             data = [(dsname if dsname else '', nbmountpoints,
-                     status if status else '', adminstatus if adminstatus else '',
+                     status if status else '', online if online else '',
                      castor_tools.nbToDataAmount(free),
                      castor_tools.nbToDataAmount(size), nbrd, nbwr, nbmigr, nbrec, ','.join(diskpools),
                      dsid if dsid else '')
-                    for dsname, fsmountpoint, nbmountpoints, status, adminstatus, free,
+                    for dsname, fsmountpoint, nbmountpoints, status, online, free,
                         minfree, maxfree, size, nbrd, nbwr, nbmigr, nbrec, diskpools, dsid, summary in rows
                     if not fsmountpoint or summary]
         castor_tools.prettyPrintTable(titles, data, hasSummary=True)

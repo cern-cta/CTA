@@ -105,7 +105,7 @@ CREATE INDEX I_FileSystem_Rate ON FileSystem(fileSystemRate(nbReadStreams, nbWri
 /* amend FileSystem and DiskServer tables */
 ALTER TABLE FileSystem DROP (minFreeSpace, readRate, writeRate, nbReadWriteStreams);
 ALTER TABLE DiskServer DROP (readRate, writeRate, nbReadStreams, nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams);
-ALTER TABLE DiskServer ADD (lastHeartBeatTime NUMBER DEFAULT 0);
+ALTER TABLE DiskServer ADD (lastHeartbeatTime NUMBER DEFAULT 0);
 
 /* accessors to ObjStatus table */
 CREATE OR REPLACE FUNCTION getObjStatusName(inObject VARCHAR2, inField VARCHAR2, inStatusCode INTEGER)
@@ -129,11 +129,13 @@ BEGIN
 END;
 /
 
--- cleanup ObjStatus table
+-- drop obsoleted adminStatus fields
+ALTER TABLE DiskServer DROP (adminStatus);
+ALTER TABLE FileSystem DROP (adminStatus);
 DELETE FROM ObjStatus
- WHERE object='FileSystem' AND field='adminStatus' AND statusName IN ('ADMIN_RELEASE', 'ADMIN_DELETED');
+ WHERE object='FileSystem' AND field='adminStatus';
 DELETE FROM ObjStatus
- WHERE object='DiskServer' AND field='adminStatus' AND statusName IN ('ADMIN_RELEASE', 'ADMIN_DELETED');
+ WHERE object='DiskServer' AND field='adminStatus';
 
 BEGIN
   setObjStatusName('StageRepackRequest', 'status', 6, 'REPACK_SUBMITTED');
@@ -145,14 +147,29 @@ DELETE FROM Type2Obj
  WHERE object IN ('DiskServerStateReport', 'DiskServerMetricsReport', 'FileSystemStateReport',
                   'FileSystemMetricsReport', 'DiskServerAdminReport', 'FileSystemAdminReport',
                   'StreamReport', 'FileSystemStateAck', 'MonitorMessageAck', 'RmMasterReport');
-COMMIT;
 
--- drop unused function to elect rmmaster master
+-- drop unused function to elect rmmaster master and its related lock table
 DROP FUNCTION isMonitoringMaster;
+DROP TABLE RMMasterLock;
 
--- add the HeartBeatTimeout parameter with default value (60s)
+-- add the HeartbeatTimeout parameter with default value (180s)
 INSERT INTO CastorConfig
-  VALUES ('DiskServer', 'HeartbeatTimeout', '60', 'The maximum amount of time in seconds that a diskserver can spend without sending any hearbeat before it is automatically set to disabled state.');
+  VALUES ('DiskServer', 'HeartbeatTimeout', '180', 'The maximum amount of time in seconds that a diskserver can spend without sending any hearbeat before it is automatically set to disabled state.');
+
+-- introduce new statuses for read-only support
+BEGIN
+  setObjStatusName('DiskServer', 'status', 3, 'DISKSERVER_READONLY');
+  setObjStatusName('FileSystem', 'status', 3, 'FILESYSTEM_READONLY');
+END;
+/
+
+-- add online flag to diskservers 
+ALTER TABLE DiskServer ADD (hwOnline INTEGER DEFAULT 0 CONSTRAINT NN_DiskServer_hwOnline NOT NULL);
+
+
+/* PL/SQL code revalidation */
+/****************************/
+
 
 /* Recompile all invalid procedures, triggers and functions */
 /************************************************************/

@@ -575,25 +575,25 @@ CREATE TABLE FileMigrationResultsHelper
   comprSize NUMBER, vid VARCHAR2(6), fSeq NUMBER, blockId RAW(4), checksumType VARCHAR2(16), checksum NUMBER);
 
 /* SQL statements for type DiskServer */
-CREATE TABLE DiskServer (name VARCHAR2(2048), lastHeartBeatTime NUMBER, id INTEGER CONSTRAINT PK_DiskServer_Id PRIMARY KEY, status INTEGER, adminStatus INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE DiskServer (name VARCHAR2(2048), lastHeartbeatTime NUMBER, id INTEGER CONSTRAINT PK_DiskServer_Id PRIMARY KEY, status INTEGER, hwOnline INTEGER DEFAULT 0) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE UNIQUE INDEX I_DiskServer_name ON DiskServer (name);
 ALTER TABLE DiskServer MODIFY
   (status CONSTRAINT NN_DiskServer_Status NOT NULL,
-   name CONSTRAINT NN_DiskServer_Name NOT NULL);
+   name CONSTRAINT NN_DiskServer_Name NOT NULL,
+   hwOnline CONSTRAINT NN_DiskServer_hwOnline NOT NULL);
 ALTER TABLE DiskServer ADD CONSTRAINT UN_DiskServer_Name UNIQUE (name);
 
 BEGIN
   setObjStatusName('DiskServer', 'status', 0, 'DISKSERVER_PRODUCTION');
   setObjStatusName('DiskServer', 'status', 1, 'DISKSERVER_DRAINING');
   setObjStatusName('DiskServer', 'status', 2, 'DISKSERVER_DISABLED');
-  setObjStatusName('DiskServer', 'adminStatus', 0, 'ADMIN_NONE');
-  setObjStatusName('DiskServer', 'adminStatus', 1, 'ADMIN_FORCE');
+  setObjStatusName('DiskServer', 'status', 3, 'DISKSERVER_READONLY');
 END;
 /
 
 /* SQL statements for type FileSystem */
 CREATE TABLE FileSystem (free INTEGER, mountPoint VARCHAR2(2048), minAllowedFreeSpace NUMBER, maxFreeSpace NUMBER, totalSize INTEGER, nbReadStreams NUMBER, nbWriteStreams NUMBER, nbMigratorStreams NUMBER, nbRe
-callerStreams NUMBER, id INTEGER CONSTRAINT PK_FileSystem_Id PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER, adminStatus INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+callerStreams NUMBER, id INTEGER CONSTRAINT PK_FileSystem_Id PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 ALTER TABLE FileSystem ADD CONSTRAINT FK_FileSystem_DiskServer 
   FOREIGN KEY (diskServer) REFERENCES DiskServer(id);
 ALTER TABLE FileSystem MODIFY
@@ -609,8 +609,7 @@ BEGIN
   setObjStatusName('FileSystem', 'status', 0, 'FILESYSTEM_PRODUCTION');
   setObjStatusName('FileSystem', 'status', 1, 'FILESYSTEM_DRAINING');
   setObjStatusName('FileSystem', 'status', 2, 'FILESYSTEM_DISABLED');
-  setObjStatusName('FileSystem', 'adminStatus', 0, 'ADMIN_NONE');
-  setObjStatusName('FileSystem', 'adminStatus', 1, 'ADMIN_FORCE');
+  setObjStatusName('FileSystem', 'status', 3, 'FILESYSTEM_READONLY');
 END;
 /
 
@@ -932,7 +931,7 @@ INSERT INTO CastorConfig
 INSERT INTO CastorConfig
   VALUES ('Migration', 'MaxNbMounts', '7', 'The maximum number of mounts for migrating a given file. When exceeded, the migration will be considered failed: the MigrationJob entry will be dropped and the corresponding diskcopy left in status CANBEMIGR. An operator intervention is required to resume the migration.');
 INSERT INTO CastorConfig
-  VALUES ('DiskServer', 'HeartbeatTimeout', '60', 'The maximum amount of time in seconds that a diskserver can spend without sending any hearbeat before it is automatically set to disabled state.');
+  VALUES ('DiskServer', 'HeartbeatTimeout', '180', 'The maximum amount of time in seconds that a diskserver can spend without sending any hearbeat before it is automatically set to offline.');
 COMMIT;
 
 

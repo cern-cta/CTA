@@ -28,58 +28,58 @@ Restricts the set of diskservers/filesystems displayed to the listed DiskServers
 .nf
 .ft CW
 # printdiskserver
-            DSNAME NBMOUNTPOINTS                STATUS ADMINSTATUS   FREE   SIZE NBRD NBWR NBMIGR NBREC      DISKPOOL ID
-------------------------------------------------------------------------------------------------------------------------
-lxc2dev1d1.cern.ch            10 DISKSERVER_PRODUCTION  ADMIN_NONE 259GiB 275GiB    0    0      0     0       default  6
-lxc2dev1d2.cern.ch            10 DISKSERVER_PRODUCTION  ADMIN_NONE 259GiB 275GiB    0    0      0     0         extra  7
-------------------------------------------------------------------------------------------------------------------------
-      TOTAL NB : 2            20                                   519GiB 551GiB    0    0      0     0 default,extra   
+            DSNAME NBMOUNTPOINTS                STATUS ONLINE   FREE   SIZE NBRD NBWR NBMIGR NBREC      DISKPOOL ID
+-------------------------------------------------------------------------------------------------------------------
+lxc2dev1d1.cern.ch            10 DISKSERVER_PRODUCTION    YES 259GiB 275GiB    0    0      0     0       default  6
+lxc2dev1d2.cern.ch            10 DISKSERVER_PRODUCTION    YES 259GiB 275GiB    0    0      0     0         extra  7
+-------------------------------------------------------------------------------------------------------------------
+      TOTAL NB : 2            20                              519GiB 551GiB    0    0      0     0 default,extra   
 
 
 # printdiskserver default nonexisting
-            DSNAME NBMOUNTPOINTS                STATUS ADMINSTATUS   FREE   SIZE NBRD NBWR NBMIGR NBREC DISKPOOL ID
--------------------------------------------------------------------------------------------------------------------
-lxc2dev1d1.cern.ch            10 DISKSERVER_PRODUCTION  ADMIN_NONE 259GiB 275GiB    0    0      0     0  default  6
--------------------------------------------------------------------------------------------------------------------
-      TOTAL NB : 1            10                                   259GiB 275GiB    0    0      0     0  default   
+            DSNAME NBMOUNTPOINTS                STATUS ONLINE   FREE   SIZE NBRD NBWR NBMIGR NBREC DISKPOOL ID
+--------------------------------------------------------------------------------------------------------------
+lxc2dev1d1.cern.ch            10 DISKSERVER_PRODUCTION    YES 259GiB 275GiB    0    0      0     0  default  6
+--------------------------------------------------------------------------------------------------------------
+      TOTAL NB : 1            10                              259GiB 275GiB    0    0      0     0  default   
 WARNING : the following diskpools/diskservers do not exist : nonexisting
 
 
 # printdiskserver lxc2dev1d1.cern.ch extra
-            DSNAME NBMOUNTPOINTS                STATUS ADMINSTATUS   FREE   SIZE NBRD NBWR NBMIGR NBREC      DISKPOOL ID
-------------------------------------------------------------------------------------------------------------------------
-lxc2dev1d1.cern.ch            10 DISKSERVER_PRODUCTION  ADMIN_NONE 259GiB 275GiB    0    0      0     0       default  6
-lxc2dev1d2.cern.ch            10 DISKSERVER_PRODUCTION  ADMIN_NONE 259GiB 275GiB    0    0      0     0         extra  7
-------------------------------------------------------------------------------------------------------------------------
-      TOTAL NB : 2            20                                   519GiB 551GiB    0    0      0     0 default,extra   
+            DSNAME NBMOUNTPOINTS                STATUS ONLINE   FREE   SIZE NBRD NBWR NBMIGR NBREC      DISKPOOL ID
+-------------------------------------------------------------------------------------------------------------------
+lxc2dev1d1.cern.ch            10 DISKSERVER_PRODUCTION     NO 259GiB 275GiB    0    0      0     0       default  6
+lxc2dev1d2.cern.ch            10 DISKSERVER_PRODUCTION    YES 259GiB 275GiB    0    0      0     0         extra  7
+-------------------------------------------------------------------------------------------------------------------
+      TOTAL NB : 2            20                              519GiB 551GiB    0    0      0     0 default,extra   
 
 # printdiskserver -f
-            DSNAME      MOUNTPOINT                STATUS ADMINSTATUS   FREE MINFREE MAXFREE   SIZE NBRD NBWR NBMIGR NBREC      DISKPOOL ID
-------------------------------------------------------------------------------------------------------------------------------------------
-lxc2dev1d1.cern.ch                 DISKSERVER_PRODUCTION  ADMIN_NONE 259GiB      5%     15% 275GiB    0    0      0     0       default  6
-                   /srv/castor/01/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0       default  8
-                   /srv/castor/02/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0       default  9
-                   /srv/castor/03/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0       default 10
-                   /srv/castor/04/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0       default 11
-                   /srv/castor/05/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0       default 12
-                   /srv/castor/06/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0       default 13
-                   /srv/castor/07/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0       default 14
-                   /srv/castor/08/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0       default 15
-                   /srv/castor/09/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0       default 16
-                   /srv/castor/10/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0       default 17
-lxc2dev1d2.cern.ch                 DISKSERVER_PRODUCTION  ADMIN_NONE 259GiB      5%     15% 275GiB    0    0      0     0         extra  7
-                   /srv/castor/01/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 19
-                   /srv/castor/02/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 20
-                   /srv/castor/03/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 21
-                   /srv/castor/04/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 22
-                   /srv/castor/05/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 23
-                   /srv/castor/06/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 24
-                   /srv/castor/07/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 25
-                   /srv/castor/08/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 26
-                   /srv/castor/09/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 27
-                   /srv/castor/10/ FILESYSTEM_PRODUCTION  ADMIN_NONE  25GiB      5%     15%  27GiB    0    0      0     0         extra 28
-------------------------------------------------------------------------------------------------------------------------------------------
-      TOTAL NB : 2   TOTAL NB : 20                                   519GiB      5%     15% 551GiB    0    0      0     0 default,extra   
+            DSNAME      MOUNTPOINT                STATUS ONLINE   FREE MINFREE MAXFREE   SIZE NBRD NBWR NBMIGR NBREC      DISKPOOL ID
+-------------------------------------------------------------------------------------------------------------------------------------
+lxc2dev1d1.cern.ch                 DISKSERVER_PRODUCTION     NO 259GiB      5%     15% 275GiB    0    0      0     0       default  6
+                   /srv/castor/01/ FILESYSTEM_PRODUCTION     NO  25GiB      5%     15%  27GiB    0    0      0     0       default  8
+                   /srv/castor/02/ FILESYSTEM_PRODUCTION     NO  25GiB      5%     15%  27GiB    0    0      0     0       default  9
+                   /srv/castor/03/ FILESYSTEM_PRODUCTION     NO  25GiB      5%     15%  27GiB    0    0      0     0       default 10
+                   /srv/castor/04/ FILESYSTEM_PRODUCTION     NO  25GiB      5%     15%  27GiB    0    0      0     0       default 11
+                   /srv/castor/05/ FILESYSTEM_PRODUCTION     NO  25GiB      5%     15%  27GiB    0    0      0     0       default 12
+                   /srv/castor/06/ FILESYSTEM_PRODUCTION     NO  25GiB      5%     15%  27GiB    0    0      0     0       default 13
+                   /srv/castor/07/ FILESYSTEM_PRODUCTION     NO  25GiB      5%     15%  27GiB    0    0      0     0       default 14
+                   /srv/castor/08/ FILESYSTEM_PRODUCTION     NO  25GiB      5%     15%  27GiB    0    0      0     0       default 15
+                   /srv/castor/09/ FILESYSTEM_PRODUCTION     NO  25GiB      5%     15%  27GiB    0    0      0     0       default 16
+                   /srv/castor/10/ FILESYSTEM_PRODUCTION     NO  25GiB      5%     15%  27GiB    0    0      0     0       default 17
+lxc2dev1d2.cern.ch                 DISKSERVER_PRODUCTION    YES 259GiB      5%     15% 275GiB    0    0      0     0         extra  7
+                   /srv/castor/01/ FILESYSTEM_PRODUCTION    YES  25GiB      5%     15%  27GiB    0    0      0     0         extra 19
+                   /srv/castor/02/ FILESYSTEM_PRODUCTION    YES  25GiB      5%     15%  27GiB    0    0      0     0         extra 20
+                   /srv/castor/03/ FILESYSTEM_PRODUCTION    YES  25GiB      5%     15%  27GiB    0    0      0     0         extra 21
+                   /srv/castor/04/ FILESYSTEM_PRODUCTION    YES  25GiB      5%     15%  27GiB    0    0      0     0         extra 22
+                   /srv/castor/05/ FILESYSTEM_PRODUCTION    YES  25GiB      5%     15%  27GiB    0    0      0     0         extra 23
+                   /srv/castor/06/ FILESYSTEM_PRODUCTION    YES  25GiB      5%     15%  27GiB    0    0      0     0         extra 24
+                   /srv/castor/07/ FILESYSTEM_PRODUCTION    YES  25GiB      5%     15%  27GiB    0    0      0     0         extra 25
+                   /srv/castor/08/ FILESYSTEM_PRODUCTION    YES  25GiB      5%     15%  27GiB    0    0      0     0         extra 26
+                   /srv/castor/09/ FILESYSTEM_PRODUCTION    YES  25GiB      5%     15%  27GiB    0    0      0     0         extra 27
+                   /srv/castor/10/ FILESYSTEM_PRODUCTION    YES  25GiB      5%     15%  27GiB    0    0      0     0         extra 28
+-------------------------------------------------------------------------------------------------------------------------------------
+      TOTAL NB : 2   TOTAL NB : 20                              519GiB      5%     15% 551GiB    0    0      0     0 default,extra   
 
 .SH NOTES
 This command requires database client access to the stager catalogue.

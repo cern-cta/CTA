@@ -13,33 +13,6 @@ CREATE TABLE BaseAddress (objType NUMBER, cnvSvcName VARCHAR2(2048), cnvSvcType 
 /* SQL statements for type Client */
 CREATE TABLE Client (ipAddress NUMBER, port NUMBER, version NUMBER, secure NUMBER, id INTEGER CONSTRAINT PK_Client_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
-/* SQL statements for type SubRequest */
-CREATE TABLE SubRequest (retryCounter NUMBER, fileName VARCHAR2(2048), protocol VARCHAR2(2048), xsize INTEGER, priority NUMBER, subreqId VARCHAR2(2048), flags NUMBER, modeBits NUMBER, creationTime INTEGER, lastModificationTime INTEGER, answered NUMBER, errorCode NUMBER, errorMessage VARCHAR2(2048), requestedFileSystems VARCHAR2(2048), svcHandler VARCHAR2(2048), reqType NUMBER, id INTEGER CONSTRAINT PK_SubRequest_Id PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER, request INTEGER, getNextStatus INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
-BEGIN
-  setObjStatusName('SubRequest', 'status', 0, 'SUBREQUEST_START');
-  setObjStatusName('SubRequest', 'status', 1, 'SUBREQUEST_RESTART');
-  setObjStatusName('SubRequest', 'status', 2, 'SUBREQUEST_RETRY');
-  setObjStatusName('SubRequest', 'status', 3, 'SUBREQUEST_WAITSCHED');
-  setObjStatusName('SubRequest', 'status', 4, 'SUBREQUEST_WAITTAPERECALL');
-  setObjStatusName('SubRequest', 'status', 5, 'SUBREQUEST_WAITSUBREQ');
-  setObjStatusName('SubRequest', 'status', 6, 'SUBREQUEST_READY');
-  setObjStatusName('SubRequest', 'status', 7, 'SUBREQUEST_FAILED');
-  setObjStatusName('SubRequest', 'status', 8, 'SUBREQUEST_FINISHED');
-  setObjStatusName('SubRequest', 'status', 9, 'SUBREQUEST_FAILED_FINISHED');
-  setObjStatusName('SubRequest', 'status', 11, 'SUBREQUEST_ARCHIVED');
-  setObjStatusName('SubRequest', 'status', 12, 'SUBREQUEST_REPACK');
-  setObjStatusName('SubRequest', 'status', 13, 'SUBREQUEST_READYFORSCHED');
-END;
-/
-
-BEGIN
-  setObjStatusName('SubRequest', 'getNextStatus', 0, 'GETNEXTSTATUS_NOTAPPLICABLE');
-  setObjStatusName('SubRequest', 'getNextStatus', 1, 'GETNEXTSTATUS_FILESTAGED');
-  setObjStatusName('SubRequest', 'getNextStatus', 2, 'GETNEXTSTATUS_NOTIFIED');
-END;
-/
-
 /* SQL statements for type Disk2DiskCopyDoneRequest */
 CREATE TABLE Disk2DiskCopyDoneRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskCopyId INTEGER, sourceDiskCopyId INTEGER, fileId INTEGER, nsHost VARCHAR2(2048), replicaFileSize INTEGER, id INTEGER CONSTRAINT PK_Disk2DiskCopyDoneRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
@@ -83,13 +56,13 @@ CREATE TABLE GetUpdateStartRequest (subreqId INTEGER, diskServer VARCHAR2(2048),
 CREATE TABLE QueryParameter (value VARCHAR2(2048), id INTEGER CONSTRAINT PK_QueryParameter_Id PRIMARY KEY, query INTEGER, queryType INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 BEGIN
-  setObjStatusName('QueryParameter', 'queryType', 0, 'REQUESTQUERYTYPE_FILENAME');
-  setObjStatusName('QueryParameter', 'queryType', 1, 'REQUESTQUERYTYPE_REQID');
-  setObjStatusName('QueryParameter', 'queryType', 2, 'REQUESTQUERYTYPE_USERTAG');
-  setObjStatusName('QueryParameter', 'queryType', 3, 'REQUESTQUERYTYPE_FILEID');
-  setObjStatusName('QueryParameter', 'queryType', 4, 'REQUESTQUERYTYPE_REQID_GETNEXT');
-  setObjStatusName('QueryParameter', 'queryType', 5, 'REQUESTQUERYTYPE_USERTAG_GETNEXT');
-  setObjStatusName('QueryParameter', 'queryType', 6, 'REQUESTQUERYTYPE_FILENAME_ALLSC');
+  serObjStatusName('QueryParameter', 'queryType', 0, 'REQUESTQUERYTYPE_FILENAME');
+  serObjStatusName('QueryParameter', 'queryType', 1, 'REQUESTQUERYTYPE_REQID');
+  serObjStatusName('QueryParameter', 'queryType', 2, 'REQUESTQUERYTYPE_USERTAG');
+  serObjStatusName('QueryParameter', 'queryType', 3, 'REQUESTQUERYTYPE_FILEID');
+  serObjStatusName('QueryParameter', 'queryType', 4, 'REQUESTQUERYTYPE_REQID_GETNEXT');
+  serObjStatusName('QueryParameter', 'queryType', 5, 'REQUESTQUERYTYPE_USERTAG_GETNEXT');
+  serObjStatusName('QueryParameter', 'queryType', 6, 'REQUESTQUERYTYPE_FILENAME_ALLSC');
 END;
 /
 
@@ -114,92 +87,8 @@ CREATE TABLE StageRmRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER
 /* SQL statements for type StageFileQueryRequest */
 CREATE TABLE StageFileQueryRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, fileName VARCHAR2(2048), id INTEGER CONSTRAINT PK_StageFileQueryRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
-/* SQL statements for type DiskCopy */
-CREATE TABLE DiskCopy (path VARCHAR2(2048), gcWeight NUMBER, creationTime INTEGER, lastAccessTime INTEGER, diskCopySize INTEGER, nbCopyAccesses NUMBER, owneruid NUMBER, ownergid NUMBER, id INTEGER CONSTRAINT PK_DiskCopy_Id PRIMARY KEY, gcType INTEGER, fileSystem INTEGER, castorFile INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
-BEGIN
-  setObjStatusName('DiskCopy', 'gcType', 0, 'GCTYPE_AUTO');
-  setObjStatusName('DiskCopy', 'gcType', 1, 'GCTYPE_USER');
-  setObjStatusName('DiskCopy', 'gcType', 2, 'GCTYPE_TOOMANYREPLICAS');
-  setObjStatusName('DiskCopy', 'gcType', 3, 'GCTYPE_DRAINING');
-  setObjStatusName('DiskCopy', 'gcType', 4, 'GCTYPE_NSSYNCH');
-  setObjStatusName('DiskCopy', 'gcType', 5, 'GCTYPE_OVERWRITTEN');
-END;
-/
-
-BEGIN
-  setObjStatusName('DiskCopy', 'status', 0, 'DISKCOPY_STAGED');
-  setObjStatusName('DiskCopy', 'status', 1, 'DISKCOPY_WAITDISK2DISKCOPY');
-  setObjStatusName('DiskCopy', 'status', 3, 'DISKCOPY_DELETED');
-  setObjStatusName('DiskCopy', 'status', 4, 'DISKCOPY_FAILED');
-  setObjStatusName('DiskCopy', 'status', 5, 'DISKCOPY_WAITFS');
-  setObjStatusName('DiskCopy', 'status', 6, 'DISKCOPY_STAGEOUT');
-  setObjStatusName('DiskCopy', 'status', 7, 'DISKCOPY_INVALID');
-  setObjStatusName('DiskCopy', 'status', 9, 'DISKCOPY_BEINGDELETED');
-  setObjStatusName('DiskCopy', 'status', 10, 'DISKCOPY_CANBEMIGR');
-  setObjStatusName('DiskCopy', 'status', 11, 'DISKCOPY_WAITFS_SCHEDULING');
-END;
-/
-
-/* SQL statements for type FileSystem */
-CREATE TABLE FileSystem (free INTEGER, mountPoint VARCHAR2(2048), minAllowedFreeSpace NUMBER, maxFreeSpace NUMBER, totalSize INTEGER, nbReadStreams NUMBER, nbWriteStreams NUMBER, nbMigratorStreams NUMBER, nbRecallerStreams NUMBER, id INTEGER CONSTRAINT PK_FileSystem_Id PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER, adminStatus INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
-BEGIN
-  setObjStatusName('FileSystem', 'status', 0, 'FILESYSTEM_PRODUCTION');
-  setObjStatusName('FileSystem', 'status', 1, 'FILESYSTEM_DRAINING');
-  setObjStatusName('FileSystem', 'status', 2, 'FILESYSTEM_DISABLED');
-END;
-/
-
-BEGIN
-  setObjStatusName('FileSystem', 'adminStatus', 0, 'ADMIN_NONE');
-  setObjStatusName('FileSystem', 'adminStatus', 1, 'ADMIN_FORCE');
-END;
-/
-
-/* SQL statements for type SvcClass */
-CREATE TABLE SvcClass (name VARCHAR2(2048), defaultFileSize INTEGER, maxReplicaNb NUMBER, gcPolicy VARCHAR2(2048), disk1Behavior NUMBER, replicateOnClose NUMBER, failJobsWhenNoSpace NUMBER, lastEditor VARCHAR2(2048), lastEditionTime INTEGER, id INTEGER CONSTRAINT PK_SvcClass_Id PRIMARY KEY, forcedFileClass INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
-/* SQL statements for type DiskPool */
-CREATE TABLE DiskPool (name VARCHAR2(2048), id INTEGER CONSTRAINT PK_DiskPool_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-CREATE TABLE DiskPool2SvcClass (Parent INTEGER, Child INTEGER) INITRANS 50 PCTFREE 50;
-CREATE INDEX I_DiskPool2SvcClass_C on DiskPool2SvcClass (child);
-CREATE INDEX I_DiskPool2SvcClass_P on DiskPool2SvcClass (parent);
-
-/* SQL statements for type DiskServer */
-CREATE TABLE DiskServer (name VARCHAR2(2048), lastHeartBeatTime NUMBER, id INTEGER CONSTRAINT PK_DiskServer_Id PRIMARY KEY, status INTEGER, adminStatus INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
-BEGIN
-  setObjStatusName('DiskServer', 'status', 0, 'DISKSERVER_PRODUCTION');
-  setObjStatusName('DiskServer', 'status', 1, 'DISKSERVER_DRAINING');
-  setObjStatusName('DiskServer', 'status', 2, 'DISKSERVER_DISABLED');
-END;
-/
-
-BEGIN
-  setObjStatusName('DiskServer', 'adminStatus', 0, 'ADMIN_NONE');
-  setObjStatusName('DiskServer', 'adminStatus', 1, 'ADMIN_FORCE');
-END;
-/
-
 /* SQL statements for type SetFileGCWeight */
 CREATE TABLE SetFileGCWeight (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, weight NUMBER, id INTEGER CONSTRAINT PK_SetFileGCWeight_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
-/* SQL statements for type StageRepackRequest */
-CREATE TABLE StageRepackRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, repackVid VARCHAR2(2048), id INTEGER CONSTRAINT PK_StageRepackRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
-BEGIN
-  setObjStatusName('StageRepackRequest', 'status', 0, 'REPACK_STARTING');
-  setObjStatusName('StageRepackRequest', 'status', 1, 'REPACK_ONGOING');
-  setObjStatusName('StageRepackRequest', 'status', 2, 'REPACK_FINISHED');
-  setObjStatusName('StageRepackRequest', 'status', 3, 'REPACK_FAILED');
-  setObjStatusName('StageRepackRequest', 'status', 4, 'REPACK_ABORTING');
-  setObjStatusName('StageRepackRequest', 'status', 5, 'REPACK_ABORTED');
-END;
-/
-
-/* SQL statements for type StageDiskCopyReplicaRequest */
-CREATE TABLE StageDiskCopyReplicaRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StageDiskCopyReplicaRequ_Id PRIMARY KEY, svcClass INTEGER, client INTEGER, sourceSvcClass INTEGER, destDiskCopy INTEGER, sourceDiskCopy INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type NsFilesDeleted */
 CREATE TABLE NsFilesDeleted (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, nsHost VARCHAR2(2048), id INTEGER CONSTRAINT PK_NsFilesDeleted_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
@@ -232,9 +121,9 @@ CREATE TABLE VersionQuery (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, 
 CREATE TABLE DiskPoolQuery (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskPoolName VARCHAR2(2048), id INTEGER CONSTRAINT PK_DiskPoolQuery_Id PRIMARY KEY, svcClass INTEGER, client INTEGER, queryType INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 BEGIN
-  setObjStatusName('DiskPoolQuery', 'queryType', 0, 'DISKPOOLQUERYTYPE_DEFAULT');
-  setObjStatusName('DiskPoolQuery', 'queryType', 1, 'DISKPOOLQUERYTYPE_AVAILABLE');
-  setObjStatusName('DiskPoolQuery', 'queryType', 2, 'DISKPOOLQUERYTYPE_TOTAL');
+  serObjStatusName('DiskPoolQuery', 'queryType', 0, 'DISKPOOLQUERYTYPE_DEFAULT');
+  serObjStatusName('DiskPoolQuery', 'queryType', 1, 'DISKPOOLQUERYTYPE_AVAILABLE');
+  serObjStatusName('DiskPoolQuery', 'queryType', 2, 'DISKPOOLQUERYTYPE_TOTAL');
 END;
 /
 
@@ -250,22 +139,14 @@ CREATE TABLE RequestType (reqType NUMBER, id INTEGER CONSTRAINT PK_RequestType_I
 /* SQL statements for type ListPrivileges */
 CREATE TABLE ListPrivileges (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, userId NUMBER, groupId NUMBER, requestType NUMBER, id INTEGER CONSTRAINT PK_ListPrivileges_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
-/* SQL statements for constraints on DiskPool */
-ALTER TABLE DiskPool2SvcClass
-  ADD CONSTRAINT FK_DiskPool2SvcClass_P FOREIGN KEY (Parent) REFERENCES DiskPool (id)
-  ADD CONSTRAINT FK_DiskPool2SvcClass_C FOREIGN KEY (Child) REFERENCES SvcClass (id);
-
 /* Fill Type2Obj metatable */
 INSERT INTO Type2Obj (type, object) VALUES (0, 'INVALID');
 INSERT INTO Type2Obj (type, object) VALUES (1, 'Ptr');
 INSERT INTO Type2Obj (type, object) VALUES (2, 'CastorFile');
 INSERT INTO Type2Obj (type, object) VALUES (4, 'Cuuid');
-INSERT INTO Type2Obj (type, object) VALUES (5, 'DiskCopy');
 INSERT INTO Type2Obj (type, object) VALUES (6, 'DiskFile');
 INSERT INTO Type2Obj (type, object) VALUES (7, 'DiskPool');
-INSERT INTO Type2Obj (type, object) VALUES (8, 'DiskServer');
 INSERT INTO Type2Obj (type, object) VALUES (10, 'FileClass');
-INSERT INTO Type2Obj (type, object) VALUES (12, 'FileSystem');
 INSERT INTO Type2Obj (type, object) VALUES (13, 'IClient');
 INSERT INTO Type2Obj (type, object) VALUES (14, 'MessageAck');
 INSERT INTO Type2Obj (type, object) VALUES (17, 'Request');
@@ -340,7 +221,6 @@ INSERT INTO Type2Obj (type, object) VALUES (129, 'Client');
 INSERT INTO Type2Obj (type, object) VALUES (130, 'JobSubmissionRequest');
 INSERT INTO Type2Obj (type, object) VALUES (131, 'VersionQuery');
 INSERT INTO Type2Obj (type, object) VALUES (132, 'VersionResponse');
-INSERT INTO Type2Obj (type, object) VALUES (133, 'StageDiskCopyReplicaRequest');
 INSERT INTO Type2Obj (type, object) VALUES (134, 'RepackResponse');
 INSERT INTO Type2Obj (type, object) VALUES (135, 'RepackFileQry');
 INSERT INTO Type2Obj (type, object) VALUES (136, 'CnsInfoMigrationPolicy');
@@ -548,10 +428,7 @@ PARTITION BY LIST (type)
 /* SQL statements for type CastorFile */
 CREATE TABLE CastorFile (fileId INTEGER, nsHost VARCHAR2(2048), fileSize INTEGER, creationTime INTEGER, lastAccessTime INTEGER, lastKnownFileName VARCHAR2(2048), lastUpdateTime INTEGER, id INTEGER CONSTRAINT PK_CastorFile_Id PRIMARY KEY, fileClass INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
-/* Redefinition of table SubRequest to make it partitioned by status */
-/* Unfortunately it has already been defined, so we drop and recreate it */
-/* Note that if the schema changes, this part has to be updated manually! */
-DROP TABLE SubRequest;
+/* SQL statement for table SubRequest */
 CREATE TABLE SubRequest
   (retryCounter NUMBER, fileName VARCHAR2(2048), protocol VARCHAR2(2048),
    xsize INTEGER, priority NUMBER, subreqId VARCHAR2(2048), flags NUMBER,
@@ -600,6 +477,34 @@ CREATE INDEX I_SubRequest_RT_CT_ID ON SubRequest(svcHandler, creationTime, id) L
 
 /* this index is dedicated to archivesubreq */
 CREATE INDEX I_SubRequest_Req_Stat_no89 ON SubRequest (request, decode(status,8,NULL,9,NULL,status));
+
+CREATE INDEX I_SubRequest_Castorfile ON SubRequest (castorFile);
+CREATE INDEX I_SubRequest_DiskCopy ON SubRequest (diskCopy);
+CREATE INDEX I_SubRequest_Request ON SubRequest (request);
+CREATE INDEX I_SubRequest_Parent ON SubRequest (parent);
+CREATE INDEX I_SubRequest_SubReqId ON SubRequest (subReqId);
+CREATE INDEX I_SubRequest_LastModTime ON SubRequest (lastModificationTime) LOCAL;
+
+BEGIN
+  setObjStatusName('SubRequest', 'status', 0, 'SUBREQUEST_START');
+  setObjStatusName('SubRequest', 'status', 1, 'SUBREQUEST_RESTART');
+  setObjStatusName('SubRequest', 'status', 2, 'SUBREQUEST_RETRY');
+  setObjStatusName('SubRequest', 'status', 3, 'SUBREQUEST_WAITSCHED');
+  setObjStatusName('SubRequest', 'status', 4, 'SUBREQUEST_WAITTAPERECALL');
+  setObjStatusName('SubRequest', 'status', 5, 'SUBREQUEST_WAITSUBREQ');
+  setObjStatusName('SubRequest', 'status', 6, 'SUBREQUEST_READY');
+  setObjStatusName('SubRequest', 'status', 7, 'SUBREQUEST_FAILED');
+  setObjStatusName('SubRequest', 'status', 8, 'SUBREQUEST_FINISHED');
+  setObjStatusName('SubRequest', 'status', 9, 'SUBREQUEST_FAILED_FINISHED');
+  setObjStatusName('SubRequest', 'status', 11, 'SUBREQUEST_ARCHIVED');
+  setObjStatusName('SubRequest', 'status', 12, 'SUBREQUEST_REPACK');
+  setObjStatusName('SubRequest', 'status', 13, 'SUBREQUEST_READYFORSCHED');
+  setObjStatusName('SubRequest', 'getNextStatus', 0, 'GETNEXTSTATUS_NOTAPPLICABLE');
+  setObjStatusName('SubRequest', 'getNextStatus', 1, 'GETNEXTSTATUS_FILESTAGED');
+  setObjStatusName('SubRequest', 'getNextStatus', 2, 'GETNEXTSTATUS_NOTIFIED');
+END;
+/
+
 
 /************************************/
 /* Garbage collection related table */
@@ -991,13 +896,57 @@ CREATE TABLE FileMigrationResultsHelper
  (reqId VARCHAR2(36), fileId NUMBER, lastModTime NUMBER, copyNo NUMBER, oldCopyNo NUMBER, transfSize NUMBER,
   comprSize NUMBER, vid VARCHAR2(6), fSeq NUMBER, blockId RAW(4), checksumType VARCHAR2(16), checksum NUMBER);
 
-
-/* Indexes related to most used entities */
+/* SQL statements for type DiskServer */
+CREATE TABLE DiskServer (name VARCHAR2(2048), lastHeartbeatTime NUMBER, id INTEGER CONSTRAINT PK_DiskServer_Id PRIMARY KEY, status INTEGER, hwOnline INTEGER DEFAULT 0) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE UNIQUE INDEX I_DiskServer_name ON DiskServer (name);
+ALTER TABLE DiskServer MODIFY
+  (status CONSTRAINT NN_DiskServer_Status NOT NULL,
+   name CONSTRAINT NN_DiskServer_Name NOT NULL,
+   hwOnline CONSTRAINT NN_DiskServer_hwOnline NOT NULL);
+ALTER TABLE DiskServer ADD CONSTRAINT UN_DiskServer_Name UNIQUE (name);
+
+BEGIN
+  setObjStatusName('DiskServer', 'status', 0, 'DISKSERVER_PRODUCTION');
+  setObjStatusName('DiskServer', 'status', 1, 'DISKSERVER_DRAINING');
+  setObjStatusName('DiskServer', 'status', 2, 'DISKSERVER_DISABLED');
+  setObjStatusName('DiskServer', 'status', 3, 'DISKSERVER_READONLY');
+END;
+/
+
+/* SQL statements for type FileSystem */
+CREATE TABLE FileSystem (free INTEGER, mountPoint VARCHAR2(2048), minAllowedFreeSpace NUMBER, maxFreeSpace NUMBER, totalSize INTEGER, nbReadStreams NUMBER, nbWriteStreams NUMBER, nbMigratorStreams NUMBER, nbRe
+callerStreams NUMBER, id INTEGER CONSTRAINT PK_FileSystem_Id PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+ALTER TABLE FileSystem ADD CONSTRAINT FK_FileSystem_DiskServer 
+  FOREIGN KEY (diskServer) REFERENCES DiskServer(id);
+ALTER TABLE FileSystem MODIFY
+  (status     CONSTRAINT NN_FileSystem_Status NOT NULL,
+   diskServer CONSTRAINT NN_FileSystem_DiskServer NOT NULL,
+   mountPoint CONSTRAINT NN_FileSystem_MountPoint NOT NULL);
+ALTER TABLE FileSystem ADD CONSTRAINT UN_FileSystem_DSMountPoint
+  UNIQUE (diskServer, mountPoint);
+CREATE INDEX I_FileSystem_DiskPool ON FileSystem (diskPool);
+CREATE INDEX I_FileSystem_DiskServer ON FileSystem (diskServer);
+
+BEGIN
+  setObjStatusName('FileSystem', 'status', 0, 'FILESYSTEM_PRODUCTION');
+  setObjStatusName('FileSystem', 'status', 1, 'FILESYSTEM_DRAINING');
+  setObjStatusName('FileSystem', 'status', 2, 'FILESYSTEM_DISABLED');
+  setObjStatusName('FileSystem', 'status', 3, 'FILESYSTEM_READONLY');
+END;
+/
+
+/* SQL statements for type DiskPool */
+CREATE TABLE DiskPool (name VARCHAR2(2048), id INTEGER CONSTRAINT PK_DiskPool_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE DiskPool2SvcClass (Parent INTEGER, Child INTEGER) INITRANS 50 PCTFREE 50;
+CREATE INDEX I_DiskPool2SvcClass_C on DiskPool2SvcClass (child);
+CREATE INDEX I_DiskPool2SvcClass_P on DiskPool2SvcClass (parent);
+
 
 CREATE UNIQUE INDEX I_CastorFile_FileIdNsHost ON CastorFile (fileId, nsHost);
 CREATE UNIQUE INDEX I_CastorFile_LastKnownFileName ON CastorFile (lastKnownFileName);
 
+/* SQL statements for type DiskCopy */
+CREATE TABLE DiskCopy (path VARCHAR2(2048), gcWeight NUMBER, creationTime INTEGER, lastAccessTime INTEGER, diskCopySize INTEGER, nbCopyAccesses NUMBER, owneruid NUMBER, ownergid NUMBER, id INTEGER CONSTRAINT PK_DiskCopy_Id PRIMARY KEY, gcType INTEGER, fileSystem INTEGER, castorFile INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE INDEX I_DiskCopy_Castorfile ON DiskCopy (castorFile);
 CREATE INDEX I_DiskCopy_FileSystem ON DiskCopy (fileSystem);
 CREATE INDEX I_DiskCopy_FS_GCW ON DiskCopy (fileSystem, gcWeight);
@@ -1008,47 +957,36 @@ CREATE INDEX I_DiskCopy_Status_9 ON DiskCopy (decode(status,9,status,NULL));
 -- to speed up deleteOutOfDateStageOutDCs
 CREATE INDEX I_DiskCopy_Status_Open ON DiskCopy (decode(status,6,status,decode(status,5,status,decode(status,11,status,NULL))));
 
-CREATE INDEX I_FileSystem_DiskPool ON FileSystem (diskPool);
-CREATE INDEX I_FileSystem_DiskServer ON FileSystem (diskServer);
-
-CREATE INDEX I_SubRequest_Castorfile ON SubRequest (castorFile);
-CREATE INDEX I_SubRequest_DiskCopy ON SubRequest (diskCopy);
-CREATE INDEX I_SubRequest_Request ON SubRequest (request);
-CREATE INDEX I_SubRequest_Parent ON SubRequest (parent);
-CREATE INDEX I_SubRequest_SubReqId ON SubRequest (subReqId);
-CREATE INDEX I_SubRequest_LastModTime ON SubRequest (lastModificationTime) LOCAL;
+BEGIN
+  setObjStatusName('DiskCopy', 'gcType', 0, 'GCTYPE_AUTO');
+  setObjStatusName('DiskCopy', 'gcType', 1, 'GCTYPE_USER');
+  setObjStatusName('DiskCopy', 'gcType', 2, 'GCTYPE_TOOMANYREPLICAS');
+  setObjStatusName('DiskCopy', 'gcType', 3, 'GCTYPE_DRAINING');
+  setObjStatusName('DiskCopy', 'gcType', 4, 'GCTYPE_NSSYNCH');
+  setObjStatusName('DiskCopy', 'gcType', 5, 'GCTYPE_OVERWRITTEN');
+  setObjStatusName('DiskCopy', 'status', 0, 'DISKCOPY_STAGED');
+  setObjStatusName('DiskCopy', 'status', 1, 'DISKCOPY_WAITDISK2DISKCOPY');
+  setObjStatusName('DiskCopy', 'status', 4, 'DISKCOPY_FAILED');
+  setObjStatusName('DiskCopy', 'status', 5, 'DISKCOPY_WAITFS');
+  setObjStatusName('DiskCopy', 'status', 6, 'DISKCOPY_STAGEOUT');
+  setObjStatusName('DiskCopy', 'status', 7, 'DISKCOPY_INVALID');
+  setObjStatusName('DiskCopy', 'status', 9, 'DISKCOPY_BEINGDELETED');
+  setObjStatusName('DiskCopy', 'status', 10, 'DISKCOPY_CANBEMIGR');
+  setObjStatusName('DiskCopy', 'status', 11, 'DISKCOPY_WAITFS_SCHEDULING');
+END;
+/
 
 CREATE INDEX I_StagePTGRequest_ReqId ON StagePrepareToGetRequest (reqId);
 CREATE INDEX I_StagePTPRequest_ReqId ON StagePrepareToPutRequest (reqId);
 CREATE INDEX I_StagePTURequest_ReqId ON StagePrepareToUpdateRequest (reqId);
 CREATE INDEX I_StageGetRequest_ReqId ON StageGetRequest (reqId);
 CREATE INDEX I_StagePutRequest_ReqId ON StagePutRequest (reqId);
-CREATE INDEX I_StageRepackRequest_ReqId ON StageRepackRequest (reqId);
 
 /* Improve query execution in the checkFailJobsWhenNoSpace function */
 CREATE INDEX I_StagePutRequest_SvcClass ON StagePutRequest (svcClass);
 
 /* Indexing GCFile by Request */
 CREATE INDEX I_GCFile_Request ON GCFile (request);
-
-/* FileSystem constraints */
-ALTER TABLE FileSystem ADD CONSTRAINT FK_FileSystem_DiskServer 
-  FOREIGN KEY (diskServer) REFERENCES DiskServer(id);
-
-ALTER TABLE FileSystem MODIFY
-  (status     CONSTRAINT NN_FileSystem_Status NOT NULL,
-   diskServer CONSTRAINT NN_FileSystem_DiskServer NOT NULL,
-   mountPoint CONSTRAINT NN_FileSystem_MountPoint NOT NULL);
-
-ALTER TABLE FileSystem ADD CONSTRAINT UN_FileSystem_DSMountPoint
-  UNIQUE (diskServer, mountPoint);
-
-/* DiskServer constraints */
-ALTER TABLE DiskServer MODIFY
-  (status CONSTRAINT NN_DiskServer_Status NOT NULL,
-   name CONSTRAINT NN_DiskServer_Name NOT NULL);
-
-ALTER TABLE DiskServer ADD CONSTRAINT UN_DiskServer_Name UNIQUE (name);
 
 /* An index to speed up queries in FileQueryRequest, FindRequestRequest, RequestQueryRequest */
 CREATE INDEX I_QueryParameter_Query ON QueryParameter (query);
@@ -1254,6 +1192,9 @@ UPDATE Type2Obj SET svcHandler = 'JobSvc' WHERE type IN (60, 64, 65, 67, 78, 79,
 UPDATE Type2Obj SET svcHandler = 'GCSvc' WHERE type IN (73, 74, 83, 142, 149);
 UPDATE Type2Obj SET svcHandler = 'BulkStageReqSvc' WHERE type IN (50, 119);
 
+/* SQL statements for type StageDiskCopyReplicaRequest */
+CREATE TABLE StageDiskCopyReplicaRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StageDiskCopyReplicaRequ_Id PRIMARY KEY, svcClass INTEGER, client INTEGER, sourceSvcClass INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
 /* Set default values for the StageDiskCopyReplicaRequest table */
 ALTER TABLE StageDiskCopyReplicaRequest MODIFY flags DEFAULT 0;
 ALTER TABLE StageDiskCopyReplicaRequest MODIFY euid DEFAULT 0;
@@ -1312,7 +1253,7 @@ INSERT INTO CastorConfig
 INSERT INTO CastorConfig
   VALUES ('Migration', 'MaxNbMounts', '7', 'The maximum number of mounts for migrating a given file. When exceeded, the migration will be considered failed: the MigrationJob entry will be dropped and the corresponding diskcopy left in status CANBEMIGR. An operator intervention is required to resume the migration.');
 INSERT INTO CastorConfig
-  VALUES ('DiskServer', 'HeartbeatTimeout', '60', 'The maximum amount of time in seconds that a diskserver can spend without sending any hearbeat before it is automatically set to disabled state.');
+  VALUES ('DiskServer', 'HeartbeatTimeout', '180', 'The maximum amount of time in seconds that a diskserver can spend without sending any hearbeat before it is automatically set to offline.');
 COMMIT;
 
 
@@ -1413,6 +1354,21 @@ CREATE DATABASE LINK remotens
 /* Repack */
 /**********/
 
+/* SQL statements for type StageRepackRequest (not autogenerated any more) */
+CREATE TABLE StageRepackRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, repackVid VARCHAR2(2048), id INTEGER CONSTRAINT PK_StageRepackRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
+BEGIN
+  setObjStatusName('StageRepackRequest', 'status', 0, 'REPACK_STARTING');
+  setObjStatusName('StageRepackRequest', 'status', 1, 'REPACK_ONGOING');
+  setObjStatusName('StageRepackRequest', 'status', 2, 'REPACK_FINISHED');
+  setObjStatusName('StageRepackRequest', 'status', 3, 'REPACK_FAILED');
+  setObjStatusName('StageRepackRequest', 'status', 4, 'REPACK_ABORTING');
+  setObjStatusName('StageRepackRequest', 'status', 5, 'REPACK_ABORTED');
+  setObjStatusName('StageRepackRequest', 'status', 6, 'REPACK_SUBMITTED');
+END;
+/
+CREATE INDEX I_StageRepackRequest_ReqId ON StageRepackRequest (reqId);
+
 /* Temporary table used for listing segments of a tape */
 /* efficiently via DB link when repacking              */
 CREATE GLOBAL TEMPORARY TABLE RepackTapeSegments
@@ -1431,6 +1387,7 @@ BEGIN
   EXECUTE IMMEDIATE 'ALTER SESSION SET REMOTE_DEPENDENCIES_MODE=SIGNATURE';
 END;
 /
+
 /*******************************************************************
  * @(#)RCSfile: oracleDrain.schema.sql,v  Revision: 1.4  Date: 2009/07/05 13:49:08  Author: waldron 
  * Schema creation code for Draining FileSystems Logic
@@ -1616,7 +1573,6 @@ CREATE INDEX I_DrainingDCs_Parent
  */
 CREATE OR REPLACE PACKAGE tconst
 AS
-
   -- TPMODE
   WRITE_DISABLE CONSTANT PLS_INTEGER :=  0;
   WRITE_ENABLE  CONSTANT PLS_INTEGER :=  1;
@@ -1658,7 +1614,6 @@ AS
 
   DISKCOPY_STAGED            CONSTANT PLS_INTEGER :=  0;
   DISKCOPY_WAITDISK2DISKCOPY CONSTANT PLS_INTEGER :=  1;
-  DISKCOPY_DELETED           CONSTANT PLS_INTEGER :=  3;
   DISKCOPY_FAILED            CONSTANT PLS_INTEGER :=  4;
   DISKCOPY_WAITFS            CONSTANT PLS_INTEGER :=  5;
   DISKCOPY_STAGEOUT          CONSTANT PLS_INTEGER :=  6;
@@ -1670,10 +1625,12 @@ AS
   DISKSERVER_PRODUCTION CONSTANT PLS_INTEGER := 0;
   DISKSERVER_DRAINING   CONSTANT PLS_INTEGER := 1;
   DISKSERVER_DISABLED   CONSTANT PLS_INTEGER := 2;
+  DISKSERVER_READONLY   CONSTANT PLS_INTEGER := 3;
 
   FILESYSTEM_PRODUCTION CONSTANT PLS_INTEGER := 0;
   FILESYSTEM_DRAINING   CONSTANT PLS_INTEGER := 1;
   FILESYSTEM_DISABLED   CONSTANT PLS_INTEGER := 2;
+  FILESYSTEM_READONLY   CONSTANT PLS_INTEGER := 3;
   
   DRAININGFS_CREATED      CONSTANT PLS_INTEGER := 0;
   DRAININGFS_INITIALIZING CONSTANT PLS_INTEGER := 1;
@@ -1688,9 +1645,6 @@ AS
   DRAININGDC_PROCESSING   CONSTANT PLS_INTEGER := 1;
   DRAININGDC_WAITD2D      CONSTANT PLS_INTEGER := 2;
   DRAININGDC_FAILED       CONSTANT PLS_INTEGER := 3;
-
-  ADMIN_NONE CONSTANT PLS_INTEGER    := 0;
-  ADMIN_FORCE CONSTANT PLS_INTEGER   := 1;
 
   SUBREQUEST_START            CONSTANT PLS_INTEGER :=  0;
   SUBREQUEST_RESTART          CONSTANT PLS_INTEGER :=  1;
@@ -2949,9 +2903,10 @@ BEGIN
           FROM DiskCopy DC, FileSystem, DiskServer
          WHERE DC.castorfile = cfId
            AND DC.fileSystem = FileSystem.id
-           AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
+           AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
            AND FileSystem.diskserver = DiskServer.id
-           AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+           AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
+           AND DiskServer.hwOnline = 1
            AND DC.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR);
         IF varNbCopies = 0 THEN
           -- find out whether this file is already being recalled
@@ -3458,13 +3413,13 @@ FOR EACH ROW WHEN (old.status != new.status)
 BEGIN
   -- If the filesystem is coming back into PRODUCTION, initiate a consistency
   -- check for the diskcopies which reside on the filesystem.
-  IF :old.status IN (1, 2) AND  -- DRAINING, DISABLED
-     :new.status = 0 THEN       -- PRODUCTION
+  IF :old.status != dconst.FILESYSTEM_PRODUCTION AND
+     :new.status = dconst.FILESYSTEM_PRODUCTION THEN
     checkFsBackInProd(:old.id);
   END IF;
   -- Cancel any ongoing draining operations if the filesystem is not in a
   -- DRAINING state
-  IF :new.status != 1 THEN  -- DRAINING
+  IF :new.status != dconst.FILESYSTEM_DRAINING THEN
     UPDATE DrainingFileSystem
        SET status = 3  -- INTERRUPTED
      WHERE fileSystem = :new.id
@@ -3481,18 +3436,18 @@ FOR EACH ROW WHEN (old.status != new.status)
 BEGIN
   -- If the diskserver is coming back into PRODUCTION, initiate a consistency
   -- check for all the diskcopies on its associated filesystems which are in
-  -- a PRODUCTION.
-  IF :old.status IN (1, 2) AND  -- DRAINING, DISABLED
-     :new.status = 0 THEN       -- PRODUCTION
+  -- PRODUCTION.
+  IF :old.status != dconst.DISKSERVER_PRODUCTION AND
+     :new.status = dconst.DISKSERVER_PRODUCTION AND :new.hwOnline = 1 THEN
     FOR fs IN (SELECT id FROM FileSystem
                 WHERE diskServer = :old.id
-                  AND status = 0)  -- PRODUCTION
+                  AND status = dconst.FILESYSTEM_PRODUCTION)
     LOOP
       checkFsBackInProd(fs.id);
     END LOOP;
   END IF;
   -- Cancel all draining operations if the diskserver is disabled.
-  IF :new.status = 2 THEN  -- DISABLED
+  IF :new.status = dconst.DISKSERVER_DISABLED THEN
     UPDATE DrainingFileSystem
        SET status = 3  -- INTERRUPTED
      WHERE fileSystem IN
@@ -3502,7 +3457,7 @@ BEGIN
   END IF;
   -- If the diskserver is in PRODUCTION cancel the draining operation of
   -- filesystems not in DRAINING.
-  IF :new.status = 0 THEN  -- PRODUCTION
+  IF :new.status = dconst.DISKSERVER_PRODUCTION THEN
     UPDATE DrainingFileSystem
        SET status = 3  -- INTERRUPTED
      WHERE fileSystem IN
@@ -3550,7 +3505,7 @@ BEGIN
                      AND DiskCopy.castorfile = a.castorfile
                      AND DiskCopy.status IN (0, 10)  -- STAGED, CANBEMIGR
                      AND SvcClass.id = a.svcclass
-                   -- Select DISABLED or DRAINING hardware first
+                   -- Select non-PRODUCTION hardware first
                    ORDER BY decode(FileSystem.status, 0,
                             decode(DiskServer.status, 0, 0, 1), 1) ASC,
                             DiskCopy.gcWeight DESC))
@@ -4442,8 +4397,9 @@ BEGIN
      WHERE DiskPool2SvcClass.child = svcClassId
        AND DiskPool2SvcClass.parent = FileSystem.diskPool
        AND FileSystem.diskServer = DiskServer.id
-       AND FileSystem.status = 0 -- PRODUCTION
-       AND DiskServer.status = 0 -- PRODUCTION
+       AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
+       AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+       AND DiskServer.hwOnline = 1
        AND totalSize * minAllowedFreeSpace < free - defFileSize;
     IF (c = 0) THEN
       RETURN 1;
@@ -4497,9 +4453,10 @@ BEGIN
          AND FileSystem.id = DiskCopy.fileSystem
          AND FileSystem.diskpool = DiskPool2SvcClass.parent
          AND DiskPool2SvcClass.child = SvcClass.id
-         AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
+         AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING, dconst.FILESYSTEM_READONLY)
          AND DiskServer.id = FileSystem.diskserver
-         AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
+         AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING, dconst.DISKSERVER_READONLY)
+         AND DiskServer.hwOnline = 1
          -- If this is an internal replication request make sure that the diskcopy
          -- is in the same service class as the source.
          AND (SvcClass.id = destSvcClassId OR internal = 0)
@@ -4542,10 +4499,11 @@ BEGIN
        AND DiskCopy.fileSystem = FileSystem.id
        AND FileSystem.diskpool = DiskPool2SvcClass.parent
        AND DiskPool2SvcClass.child = svcClassId
-       AND FileSystem.status = 0 -- PRODUCTION
+       AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
        AND FileSystem.diskserver = DiskServer.id
-       AND DiskServer.status = 0 -- PRODUCTION
-       AND DiskCopy.status IN (0, 6, 10)  -- STAGED, STAGEOUT, CANBEMIGR
+       AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
+       AND DiskServer.hwOnline = 1
+       AND DiskCopy.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_STAGEOUT, dconst.DISKCOPY_CANBEMIGR)
      ORDER BY FileSystemRate(FileSystem.nbReadStreams, FileSystem.nbWriteStreams) DESC,
               DBMS_Random.value)
    WHERE rownum < 2;
@@ -4579,7 +4537,7 @@ BEGIN
   -- Resolve the destination service class id to a name
   SELECT name INTO destSvcClass FROM SvcClass WHERE id = svcClassId;
   -- Determine if there are any copies of the file in the same service class
-  -- on DISABLED or DRAINING hardware. If we found something then set the user
+  -- on non PRODUCTION hardware. If we found something then set the user
   -- and group id to -1 this effectively disables the later privilege checks
   -- to see if the user can trigger a d2d or recall. (#55745)
   BEGIN
@@ -4657,15 +4615,17 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
        SET status = dconst.SUBREQUEST_FAILED,
            errorCode = CASE
              WHEN dcStatus IN (dconst.DISKCOPY_WAITFS, dconst.DISKCOPY_WAITFS_SCHEDULING) THEN serrno.EBUSY
-             WHEN dcStatus = dconst.DISKCOPY_STAGEOUT AND fsStatus = dconst.FILESYSTEM_PRODUCTION AND
-                  dsStatus = dconst.DISKSERVER_PRODUCTION THEN serrno.EBUSY
+             WHEN dcStatus = dconst.DISKCOPY_STAGEOUT
+               AND fsStatus IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
+               AND dsStatus IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY) THEN serrno.EBUSY
              ELSE serrno.ESTNOTAVAIL -- File is currently not available
            END,
            errorMessage = CASE
              WHEN dcStatus IN (dconst.DISKCOPY_WAITFS, dconst.DISKCOPY_WAITFS_SCHEDULING) THEN
                'File is being (re)created right now by another user'
-             WHEN dcStatus = dconst.DISKCOPY_STAGEOUT AND fsStatus = dconst.FILESYSTEM_PRODUCTION AND
-                  dsStatus = dconst.DISKSERVER_PRODUCTION THEN
+             WHEN dcStatus = dconst.DISKCOPY_STAGEOUT
+               AND fsStatus IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
+               AND dsStatus IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY) THEN
                'File is being written to in another service class'
              ELSE
                'All copies of this file are unavailable for now. Please retry later'
@@ -4863,9 +4823,10 @@ BEGIN
              AND Request.id = SubRequest.request
              AND Request.svcclass = DiskPool2SvcClass.child
              AND FileSystem.diskpool = DiskPool2SvcClass.parent
-             AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
+             AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
              AND DiskServer.id = FileSystem.diskServer
-             AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
+             AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+             AND DiskServer.hwOnline = 1
         ORDER BY -- order by rate as defined by the function
                  fileSystemRate(FileSystem.nbReadStreams, FileSystem.nbWriteStreams) DESC,
                  -- finally use randomness to avoid preferring always the same FS
@@ -4917,9 +4878,11 @@ BEGIN
                    AND FileSystem.diskpool = DiskPool2SvcClass.parent
                    AND DiskPool2SvcClass.child = SvcClass.id
                    AND DiskCopy.status IN (0, 1, 10)  -- STAGED, WAITDISK2DISKCOPY, CANBEMIGR
-                   AND FileSystem.status IN (0, 1)  -- PRODUCTION, DRAINING
+                   AND FileSystem.status IN
+                       (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING, dconst.FILESYSTEM_READONLY)
                    AND DiskServer.id = FileSystem.diskserver
-                   AND DiskServer.status IN (0, 1)  -- PRODUCTION, DRAINING
+                   AND DiskServer.status IN
+                       (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING, dconst.DISKSERVER_READONLY)
                  GROUP BY SvcClass.id)
              ) results, SvcClass
              -- Join the results with the service class table and determine if
@@ -4999,9 +4962,10 @@ BEGIN
     FROM DiskCopy, FileSystem, DiskServer
    WHERE cfId = DiskCopy.castorFile
      AND FileSystem.id(+) = DiskCopy.fileSystem
-     AND nvl(FileSystem.status, 0) = 0 -- PRODUCTION
+     AND nvl(FileSystem.status, 0) IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
      AND DiskServer.id(+) = FileSystem.diskServer
-     AND nvl(DiskServer.status, 0) = 0 -- PRODUCTION
+     AND nvl(DiskServer.status, 0) IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
+     AND nvl(DiskServer.hwOnline, 1) = 1
      AND DiskCopy.status = dconst.DISKCOPY_WAITFS_SCHEDULING;
   IF dcIds.COUNT > 0 THEN
     -- DiskCopy is in WAIT*, make SubRequest wait on previous subrequest and do not schedule
@@ -5013,15 +4977,18 @@ BEGIN
   -- Look for available diskcopies. The status is needed for the
   -- internal replication processing, and only if count = 1, hence
   -- the min() function does not represent anything here.
+  -- Note that we accept copies in READONLY hardware here as we're processing Get
+  -- and Update requests, and we would deny Updates switching to write mode in that case.
   SELECT COUNT(DiskCopy.id), min(DiskCopy.status) INTO nbDCs, dcStatus
     FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
    WHERE DiskCopy.castorfile = cfId
      AND DiskCopy.fileSystem = FileSystem.id
      AND FileSystem.diskpool = DiskPool2SvcClass.parent
      AND DiskPool2SvcClass.child = svcClassId
-     AND FileSystem.status = 0 -- PRODUCTION
+     AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
      AND FileSystem.diskserver = DiskServer.id
-     AND DiskServer.status = 0 -- PRODUCTION
+     AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
+     AND DiskServer.hwOnline = 1
      AND DiskCopy.status IN (0, 6, 10);  -- STAGED, STAGEOUT, CANBEMIGR
   IF nbDCs = 0 AND upd = 1 THEN
     -- we may be the first update inside a prepareToPut, and this is allowed
@@ -5052,9 +5019,10 @@ BEGIN
              AND DiskPool2SvcClass.child = svcClassId
              AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
              AND FileSystem.id = DiskCopy.fileSystem
-             AND FileSystem.status = 0  -- PRODUCTION
+             AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
              AND DiskServer.id = FileSystem.diskServer
-             AND DiskServer.status = 0  -- PRODUCTION
+             AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
+             AND DiskServer.hwOnline = 1
            ORDER BY fsRate DESC;
     -- Internal replication processing
     IF upd = 1 OR (nbDCs = 1 AND dcStatus = 6) THEN -- DISKCOPY_STAGEOUT
@@ -5091,8 +5059,9 @@ BEGIN
            WHERE FileSystem.diskServer = DiskServer.id
              AND FileSystem.diskPool = DiskPool2SvcClass.parent
              AND DiskPool2SvcClass.child = svcClassId
-             AND FileSystem.status = 0 -- PRODUCTION
-             AND DiskServer.status = 0 -- PRODUCTION
+             AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
+             AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+             AND DiskServer.hwOnline = 1
              AND DiskServer.id NOT IN (
                SELECT DISTINCT(DiskServer.id)
                  FROM DiskCopy, FileSystem, DiskServer
@@ -5319,9 +5288,10 @@ BEGIN
        AND DiskCopy.fileSystem = FileSystem.id
        AND FileSystem.diskpool = DiskPool2SvcClass.parent
        AND DiskPool2SvcClass.child = svcClassId
-       AND FileSystem.status = 0 -- PRODUCTION
+       AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
        AND FileSystem.diskserver = DiskServer.id
-       AND DiskServer.status = 0 -- PRODUCTION
+       AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
+       AND DiskServer.hwOnline = 1
        AND DiskCopy.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_STAGEOUT, dconst.DISKCOPY_CANBEMIGR)
      UNION ALL
     SELECT /*+ INDEX(StageDiskCopyReplicaRequest I_StageDiskCopyReplic_DestDC) */ DiskCopy.id
@@ -5703,6 +5673,7 @@ CREATE OR REPLACE PROCEDURE selectCastorFileInternal (fId IN INTEGER,
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
   previousLastKnownFileName VARCHAR2(2048);
   fcId NUMBER;
+  varReqType INTEGER;
 BEGIN
   -- Resolve the fileclass
   BEGIN
@@ -5738,7 +5709,20 @@ BEGIN
                           lastKnownFileName = normalizePath(fn)
      WHERE id = rid;
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET castorFile = rid
-     WHERE id = srId;
+     WHERE id = srId
+     RETURNING reqType INTO varReqType;
+    IF varReqType IN (37, 38, 40, 44) THEN  -- all write operations
+      UPDATE CastorFile SET lastUpdateTime = lut
+       WHERE id = rid;
+    ELSE
+      -- On pure read operations, we should actually check whether our disk cache is stale,
+      -- that is IF CF.lastUpdateTime < lut THEN invalidate our diskcopies.
+      -- This is pending the full implementation of bug #95189: Time discrepencies between
+      -- disk servers and name servers can lead to silent data loss on input.
+      -- The problem being that lut is the namespace's mtime, which can be modified by nstouch,
+      -- hence nstouch followed by a Get would destroy the data on disk!
+      NULL;
+    END IF;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- we did not find the file, let's create a new one
     -- take care that the name of the new file is not already the lastKnownFileName
@@ -6113,78 +6097,74 @@ CREATE OR REPLACE PROCEDURE storeReports
  inNumParams IN castor."cnumList") AS
  varDsId NUMBER;
  varFsId NUMBER;
- varHeartBeatTimeout NUMBER;
+ varHeartbeatTimeout NUMBER;
+ emptyReport BOOLEAN := False;
 BEGIN
   -- quick check of the vector lengths
   IF MOD(inStrParams.COUNT,2) != 0 THEN
-    RAISE_APPLICATION_ERROR (-20125, 'Invalid call to storeReports : ' ||
-                                     '1st vector has odd number of elements (' ||
-                                     TO_CHAR(inStrParams.COUNT) || ')');
+    IF inStrParams.COUNT = 1 AND inStrParams(1) = 'Empty' THEN
+      -- work around the "PLS-00418: array bind type must match PL/SQL table row type"
+      -- error launched by Oracle when empty arrays are passed as parameters
+      emptyReport := True;
+    ELSE
+      RAISE_APPLICATION_ERROR (-20125, 'Invalid call to storeReports : ' ||
+                                       '1st vector has odd number of elements (' ||
+                                       TO_CHAR(inStrParams.COUNT) || ')');
+    END IF;
   END IF;
-  IF MOD(inNumParams.COUNT,8) != 0 THEN
+  IF MOD(inNumParams.COUNT,8) != 0 AND NOT emptyReport THEN
     RAISE_APPLICATION_ERROR (-20125, 'Invalid call to storeReports : ' ||
                              '2nd vector has wrong number of elements (' ||
                              TO_CHAR(inNumParams.COUNT) || ' instead of ' ||
                              TO_CHAR(inStrParams.COUNT*4) || ')');
   END IF;
-  -- Go through the concerned filesystems
-  FOR i IN 0 .. inStrParams.COUNT/2-1 LOOP
-    -- update DiskServer
-    varDsId := NULL;
-    UPDATE DiskServer
-       SET status = CASE WHEN (adminStatus = dconst.ADMIN_NONE) AND
-                              (status = dconst.DISKSERVER_DISABLED)
-                         THEN dconst.DISKSERVER_PRODUCTION
-                         ELSE status END,
-           lastHeartBeatTime = getTime()
-     WHERE name = inStrParams(2*i+1)
-    RETURNING id INTO varDsId;
-    -- if it did not exist, create it
-    IF varDsId IS NULL THEN
-      INSERT INTO DiskServer (name, id, status, adminStatus, lastHeartBeatTime)
-       VALUES (inStrParams(2*i+1), ids_seq.nextval, dconst.DISKSERVER_DISABLED, dconst.ADMIN_FORCE, getTime())
+  IF NOT emptyReport THEN
+    -- Go through the concerned filesystems
+    FOR i IN 0 .. inStrParams.COUNT/2-1 LOOP
+      -- update DiskServer
+      varDsId := NULL;
+      UPDATE DiskServer
+         SET hwOnline = 1,
+             lastHeartbeatTime = getTime()
+       WHERE name = inStrParams(2*i+1)
       RETURNING id INTO varDsId;
-    END IF;
-    -- update FileSystem
-    varFsId := NULL;
-    UPDATE FileSystem
-       SET maxFreeSpace = inNumParams(8*i+1),
-           minAllowedFreeSpace = inNumParams(8*i+2),
-           totalSize = inNumParams(8*i+3),
-           free = inNumParams(8*i+4),
-           nbReadStreams = inNumParams(8*i+5),
-           nbWriteStreams = inNumParams(8*i+6),
-           nbRecallerStreams = inNumParams(8*i+7),
-           nbMigratorStreams = inNumParams(8*i+8),
-           status = CASE WHEN (adminStatus = dconst.ADMIN_NONE) AND
-                              (status = dconst.FILESYSTEM_DISABLED)
-                         THEN dconst.FILESYSTEM_PRODUCTION
-                         ELSE status END
-     WHERE diskServer=varDsId AND mountPoint=inStrParams(2*i+2)
-    RETURNING id INTO varFsId;
-    -- if it did not exist, create it
-    IF varFsId IS NULL THEN
-      INSERT INTO FileSystem (mountPoint, maxFreeSpace, minAllowedFreeSpace, totalSize, free,
-                              nbReadStreams, nbWriteStreams, nbRecallerStreams, nbMigratorStreams,
-                              id, diskPool, diskserver, status, adminStatus)
-      VALUES (inStrParams(2*i+2), inNumParams(8*i+1), inNumParams(8*i+2), inNumParams(8*i+3),
-              inNumParams(8*i+4), inNumParams(8*i+5), inNumParams(8*i+6), inNumParams(8*i+7),
-              inNumParams(8*i+8), ids_seq.nextval, 0, varDsId,
-              dconst.FILESYSTEM_DISABLED, dconst.ADMIN_FORCE);
-    END IF;
-    -- go to next mountPoint
-    
-  END LOOP;
+      -- if it did not exist, create it
+      IF varDsId IS NULL THEN
+        INSERT INTO DiskServer (name, id, status, hwOnline, lastHeartbeatTime)
+         VALUES (inStrParams(2*i+1), ids_seq.nextval, dconst.DISKSERVER_DISABLED, 1, getTime())
+        RETURNING id INTO varDsId;
+      END IF;
+      -- update FileSystem
+      varFsId := NULL;
+      UPDATE FileSystem
+         SET maxFreeSpace = inNumParams(8*i+1),
+             minAllowedFreeSpace = inNumParams(8*i+2),
+             totalSize = inNumParams(8*i+3),
+             free = inNumParams(8*i+4),
+             nbReadStreams = inNumParams(8*i+5),
+             nbWriteStreams = inNumParams(8*i+6),
+             nbRecallerStreams = inNumParams(8*i+7),
+             nbMigratorStreams = inNumParams(8*i+8)
+       WHERE diskServer=varDsId AND mountPoint=inStrParams(2*i+2)
+      RETURNING id INTO varFsId;
+      -- if it did not exist, create it
+      IF varFsId IS NULL THEN
+        INSERT INTO FileSystem (mountPoint, maxFreeSpace, minAllowedFreeSpace, totalSize, free,
+                                nbReadStreams, nbWriteStreams, nbRecallerStreams, nbMigratorStreams,
+                                id, diskPool, diskserver, status)
+        VALUES (inStrParams(2*i+2), inNumParams(8*i+1), inNumParams(8*i+2), inNumParams(8*i+3),
+                inNumParams(8*i+4), inNumParams(8*i+5), inNumParams(8*i+6), inNumParams(8*i+7),
+                inNumParams(8*i+8), ids_seq.nextval, 0, varDsId, dconst.FILESYSTEM_DISABLED);
+      END IF;
+    END LOOP;
+  END IF;
 
   -- now disable nodes that have too old reports
-  varHeartBeatTimeout := TO_NUMBER(getConfigOption('Migration', 'SizeThreshold', '300000000'));
-  FOR ds IN (SELECT id
-               FROM DiskServer
-              WHERE lastHeartBeatTime < getTime() - varHeartBeatTimeout
-                AND status = dconst.DISKSERVER_PRODUCTION
-                AND adminStatus = dconst.ADMIN_NONE) LOOP
-    UPDATE DiskServer SET status = dconst.DISKSERVER_DISABLED WHERE id = ds.id;
-  END LOOP;
+  varHeartbeatTimeout := TO_NUMBER(getConfigOption('DiskServer', 'HeartbeatTimeout', '180'));
+  UPDATE DiskServer
+     SET hwOnline = 0
+   WHERE lastHeartbeatTime < getTime() - varHeartbeatTimeout
+     AND hwOnline = 1;
 END;
 /
 
@@ -6521,30 +6501,35 @@ BEGIN
     INTO cfId, dcId
     FROM SubRequest WHERE id = srId;
   SELECT fileclass INTO fclassId FROM CastorFile WHERE id = cfId FOR UPDATE;
-  -- Check that the file is not busy, i.e. that we are not
-  -- in the middle of migrating it. If we are, just stop and raise
-  -- a user exception
-  SELECT count(*) INTO nbRes FROM MigrationJob
-    WHERE status = tconst.MIGRATIONJOB_SELECTED
-    AND castorFile = cfId;
-  IF nbRes > 0 THEN
-    raise_application_error(-20106, 'Trying to update a busy file (ongoing migration)');
-  END IF;
   -- Check that we can indeed open the file in write mode
-  -- 3 criteria have to be met :
+  -- 4 criteria have to be met :
   --   - we are not using a INVALID copy (we should not update an old version)
   --   - we are not in a disk only svcClass and the file class asks for tape copy
+  --   - the filesystem/diskserver is not in READONLY state
   --   - there is no other update/put going on or there is a prepareTo and we are
   --     dealing with the same copy.
   SELECT status INTO stat FROM DiskCopy WHERE id = dcId;
   -- First the invalid case
   IF stat = 7 THEN -- INVALID
-    raise_application_error(-20106, 'Trying to update an invalid copy of a file (file has been modified by somebody else concurrently)');
+    raise_application_error(-20106, 'Could not update an invalid copy of a file (file has been modified by somebody else concurrently)');
   END IF;
   -- Then the disk only check
   IF checkNoTapeRouting(fclassId) = 1 THEN
      raise_application_error(-20106, 'File update canceled since the file cannot be routed to tape');
   END IF;
+  -- Then the hardware status check
+  BEGIN
+    SELECT 1 INTO nbres
+      FROM DiskServer, FileSystem, DiskCopy
+     WHERE DiskCopy.id = dcId
+       AND DiskCopy.fileSystem = FileSystem.id
+       AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
+       AND FileSystem.diskServer = DiskServer.id
+       AND DiskServer.status = dconst.DISKSERVER_PRODUCTION;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- hardware is not in PRODUCTION, prevent the writing
+    raise_application_error(-20106, 'Could not update the file, hardware was set to read-only mode by the administrator');
+  END;
   -- Otherwise, either we are alone or we are on the right copy and we
   -- only have to check that there is a prepareTo statement. We do the check
   -- only when needed, that is STAGEOUT case
@@ -6569,7 +6554,7 @@ BEGIN
       -- we do have a prepareTo, so eveything is fine
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- No prepareTo, so prevent the writing
-      raise_application_error(-20106, 'Trying to update a file already open for write (and no prepareToPut/Update context found)');
+      raise_application_error(-20106, 'Could not update a file already open for write (and no prepareToPut/Update context found)');
     END;
   ELSE
     -- If we are not having a STAGEOUT diskCopy, we are the only ones to write,
@@ -6830,11 +6815,12 @@ BEGIN
        AND DiskCopy.castorfile = CastorFile.id
        AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
        AND FileSystem.id = DiskCopy.filesystem
-       AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
+       AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING, dconst.FILESYSTEM_READONLY)
        AND FileSystem.diskPool = DiskPool2SvcClass.parent
        AND DiskPool2SvcClass.child = SvcClass.id
        AND DiskServer.id = FileSystem.diskserver
-       AND DiskServer.status IN (0, 1)
+       AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING, dconst.DISKSERVER_READONLY)
+       AND DiskServer.hwOnline = 1
        -- For diskpools which belong to multiple service classes, make sure
        -- we are checking for the file in the correct service class!
        AND StageDiskCopyReplicaRequest.sourceDiskCopy = DiskCopy.id
@@ -7600,7 +7586,8 @@ BEGIN
     srRfs := NULL;
   END IF;
 
-  -- Select random filesystems to use if none is already requested
+  -- Select random filesystems to use if none is already requested. This only happens
+  -- on Put or DiskCopyReplica requests, so we discard READONLY hardware and filter only the PRODUCTION one.
   IF LENGTH(srRfs) IS NULL THEN
     FOR line IN
       (SELECT candidate FROM
@@ -7612,6 +7599,7 @@ BEGIN
              AND DiskPool2SvcClass.child = SvcClassId
              AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
              AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
+             AND DiskServer.hwOnline = 1
              AND FileSystem.free - FileSystem.minAllowedFreeSpace * FileSystem.totalSize > srXsize
              -- this is to avoid disk2diskcopies to create new copies on diskservers already having one
              AND DiskServer.id NOT IN
@@ -7775,9 +7763,12 @@ BEGIN
                 WHERE Diskcopy.castorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
                   AND Diskcopy.status IN (0, 1, 4, 5, 6, 7, 10, 11) -- search for diskCopies not BEINGDELETED
                   AND FileSystem.id(+) = DiskCopy.fileSystem
-                  AND nvl(FileSystem.status, 0) IN (0, 1) -- PRODUCTION, DRAINING
+                  AND nvl(FileSystem.status, 0) IN
+                      (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING, dconst.FILESYSTEM_READONLY)
                   AND DiskServer.id(+) = FileSystem.diskServer
-                  AND nvl(DiskServer.status, 0) IN (0, 1) -- PRODUCTION, DRAINING
+                  AND nvl(DiskServer.status, 0) IN
+                      (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING, dconst.DISKSERVER_READONLY)
+                  AND nvl(DiskServer.hwOnline, 1) = 1
                   AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool
                   AND SvcClass.id(+) = DiskPool2SvcClass.child
                   AND (euid = 0 OR SvcClass.id IS NULL OR   -- if euid > 0 check read permissions for srmLs (see bug #69678)
@@ -7832,9 +7823,12 @@ BEGIN
                 WHERE Diskcopy.castorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
                   AND DiskCopy.status IN (0, 1, 4, 5, 6, 7, 10, 11)  -- search for diskCopies not GCCANDIDATE or BEINGDELETED
                   AND FileSystem.id(+) = DiskCopy.fileSystem
-                  AND nvl(FileSystem.status, 0) IN (0, 1) -- PRODUCTION, DRAINING
+                  AND nvl(FileSystem.status, 0) IN
+                      (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING, dconst.FILESYSTEM_READONLY)
                   AND DiskServer.id(+) = FileSystem.diskServer
-                  AND nvl(DiskServer.status, 0) IN (0, 1) -- PRODUCTION, DRAINING
+                  AND nvl(DiskServer.status, 0) IN
+                      (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING, dconst.DISKSERVER_READONLY)
+                  AND nvl(DiskServer.hwOnline, 1) = 1
                   AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool) DC
                   -- No extra check on read permissions here, it is not relevant
            WHERE CastorFile.id = DC.castorFile)
@@ -8094,15 +8088,15 @@ END;
 /* Internal function used by describeDiskPool[s] to return either available
  * (i.e. the space on PRODUCTION status resources) or total space depending on
  * the type of query */
-CREATE OR REPLACE FUNCTION getSpace(status IN NUMBER, space IN NUMBER,
-                                    queryType IN NUMBER, spaceType IN NUMBER)
+CREATE OR REPLACE FUNCTION getSpace(status IN INTEGER, hwOnline IN INTEGER, space IN INTEGER,
+                                    queryType IN INTEGER, spaceType IN INTEGER)
 RETURN NUMBER IS
 BEGIN
   IF space < 0 THEN
     -- over used filesystems may report negative numbers, just cut to 0
     RETURN 0;
   END IF;
-  IF (status > 0) AND  -- not in production
+  IF ((hwOnline = 0) OR (status > 0 AND status <= 4)) AND  -- either OFFLINE or DRAINING or DISABLED
      (queryType = dconst.DISKPOOLQUERYTYPE_AVAILABLE OR
       (queryType = dconst.DISKPOOLQUERYTYPE_DEFAULT AND spaceType = dconst.DISKPOOLSPACETYPE_FREE)) THEN
     return 0;
@@ -8127,11 +8121,11 @@ BEGIN
     OPEN result FOR
       SELECT grouping(ds.name) AS IsDSGrouped,
              grouping(fs.mountPoint) AS IsFSGrouped,
-             dp.name, ds.name, ds.status, fs.mountPoint,
-             sum(getSpace(fs.status + ds.status,
+             dp.name, ds.name, max(decode(ds.hwOnline, 0, dconst.DISKSERVER_DISABLED, ds.status)), fs.mountPoint,
+             sum(getSpace(fs.status + ds.status, ds.hwOnline,
                           fs.free - fs.minAllowedFreeSpace * fs.totalSize,
                           queryType, dconst.DISKPOOLSPACETYPE_FREE)) AS freeSpace,
-             sum(getSpace(fs.status + ds.status,
+             sum(getSpace(fs.status + ds.status, ds.hwOnline,
                           fs.totalSize,
                           queryType, dconst.DISKPOOLSPACETYPE_CAPACITY)) AS totalSize,
              0, fs.maxFreeSpace, fs.status
@@ -8140,14 +8134,14 @@ BEGIN
          AND ds.id = fs.diskServer
          GROUP BY grouping sets(
              (dp.name, ds.name, ds.status, fs.mountPoint,
-              getSpace(fs.status + ds.status,
+              getSpace(fs.status + ds.status, ds.hwOnline,
                        fs.free - fs.minAllowedFreeSpace * fs.totalSize,
                        queryType, dconst.DISKPOOLSPACETYPE_FREE),
-              getSpace(fs.status + ds.status,
+              getSpace(fs.status + ds.status, ds.hwOnline,
                        fs.totalSize,
                        queryType, dconst.DISKPOOLSPACETYPE_CAPACITY),
               fs.maxFreeSpace, fs.status),
-             (dp.name, ds.name, ds.status),
+             (dp.name, ds.name),
              (dp.name)
             )
          ORDER BY dp.name, IsDSGrouped DESC, ds.name, IsFSGrouped DESC, fs.mountpoint;
@@ -8155,11 +8149,11 @@ BEGIN
     OPEN result FOR
       SELECT grouping(ds.name) AS IsDSGrouped,
              grouping(fs.mountPoint) AS IsFSGrouped,
-             dp.name, ds.name, ds.status, fs.mountPoint,
-             sum(getSpace(fs.status + ds.status,
+             dp.name, ds.name, max(decode(ds.hwOnline, 0, dconst.DISKSERVER_DISABLED, ds.status)), fs.mountPoint,
+             sum(getSpace(fs.status + ds.status, ds.hwOnline,
                           fs.free - fs.minAllowedFreeSpace * fs.totalSize,
                           queryType, dconst.DISKPOOLSPACETYPE_FREE)) AS freeSpace,
-             sum(getSpace(fs.status + ds.status,
+             sum(getSpace(fs.status + ds.status, ds.hwOnline,
                           fs.totalSize,
                           queryType, dconst.DISKPOOLSPACETYPE_CAPACITY)) AS totalSize,
              0, fs.maxFreeSpace, fs.status
@@ -8172,15 +8166,15 @@ BEGIN
          AND dp.id = fs.diskPool
          AND ds.id = fs.diskServer
          GROUP BY grouping sets(
-             (dp.name, ds.name, ds.status, fs.mountPoint,
-              getSpace(fs.status + ds.status,
+             (dp.name, ds.name, fs.mountPoint,
+              getSpace(fs.status + ds.status, ds.hwOnline,
                        fs.free - fs.minAllowedFreeSpace * fs.totalSize,
                        queryType, dconst.DISKPOOLSPACETYPE_FREE),
-              getSpace(fs.status + ds.status,
+              getSpace(fs.status + ds.status, ds.hwOnline,
                        fs.totalSize,
                        queryType, dconst.DISKPOOLSPACETYPE_CAPACITY),
               fs.maxFreeSpace, fs.status),
-             (dp.name, ds.name, ds.status),
+             (dp.name, ds.name),
              (dp.name)
             )
          ORDER BY dp.name, IsDSGrouped DESC, ds.name, IsFSGrouped DESC, fs.mountpoint;
@@ -8217,11 +8211,11 @@ BEGIN
     OPEN result FOR
       SELECT grouping(ds.name) AS IsDSGrouped,
              grouping(fs.mountPoint) AS IsGrouped,
-             ds.name, ds.status, fs.mountPoint,
-             sum(getSpace(fs.status + ds.status,
+             ds.name, max(decode(ds.hwOnline, 0, dconst.DISKSERVER_DISABLED, ds.status)), fs.mountPoint,
+             sum(getSpace(fs.status + ds.status, ds.hwOnline,
                           fs.free - fs.minAllowedFreeSpace * fs.totalSize,
                           queryType, dconst.DISKPOOLSPACETYPE_FREE)) AS freeSpace,
-             sum(getSpace(fs.status + ds.status,
+             sum(getSpace(fs.status + ds.status, ds.hwOnline,
                           fs.totalSize,
                           queryType, dconst.DISKPOOLSPACETYPE_CAPACITY)) AS totalSize,
              0, fs.maxFreeSpace, fs.status
@@ -8230,15 +8224,15 @@ BEGIN
          AND ds.id = fs.diskServer
          AND dp.name = diskPoolName
          GROUP BY grouping sets(
-             (ds.name, ds.status, fs.mountPoint,
-              getSpace(fs.status + ds.status,
+             (ds.name, fs.mountPoint,
+              getSpace(fs.status + ds.status, ds.hwOnline,
                        fs.free - fs.minAllowedFreeSpace * fs.totalSize,
                        queryType, dconst.DISKPOOLSPACETYPE_FREE),
-              getSpace(fs.status + ds.status,
+              getSpace(fs.status + ds.status, ds.hwOnline,
                        fs.totalSize,
                        queryType, dconst.DISKPOOLSPACETYPE_CAPACITY),
               fs.maxFreeSpace, fs.status),
-             (ds.name, ds.status),
+             (ds.name),
              (dp.name)
             )
          ORDER BY IsDSGrouped DESC, ds.name, IsGrouped DESC, fs.mountpoint;
@@ -8246,11 +8240,11 @@ BEGIN
     OPEN result FOR
       SELECT grouping(ds.name) AS IsDSGrouped,
              grouping(fs.mountPoint) AS IsGrouped,
-             ds.name, ds.status, fs.mountPoint,
-             sum(getSpace(fs.status + ds.status,
+             ds.name, max(decode(ds.hwOnline, 0, dconst.DISKSERVER_DISABLED, ds.status)), fs.mountPoint,
+             sum(getSpace(fs.status + ds.status, ds.hwOnline,
                           fs.free - fs.minAllowedFreeSpace * fs.totalSize,
                           queryType, dconst.DISKPOOLSPACETYPE_FREE)) AS freeSpace,
-             sum(getSpace(fs.status + ds.status,
+             sum(getSpace(fs.status + ds.status, ds.hwOnline,
                           fs.totalSize,
                           queryType, dconst.DISKPOOLSPACETYPE_CAPACITY)) AS totalSize,
              0, fs.maxFreeSpace, fs.status
@@ -8263,15 +8257,15 @@ BEGIN
          AND ds.id = fs.diskServer
          AND dp.name = diskPoolName
          GROUP BY grouping sets(
-             (ds.name, ds.status, fs.mountPoint,
-              getSpace(fs.status + ds.status,
+             (ds.name, fs.mountPoint,
+              getSpace(fs.status + ds.status, ds.hwOnline,
                        fs.free - fs.minAllowedFreeSpace * fs.totalSize,
                        queryType, dconst.DISKPOOLSPACETYPE_FREE),
-              getSpace(fs.status + ds.status,
+              getSpace(fs.status + ds.status, ds.hwOnline,
                        fs.totalSize,
                        queryType, dconst.DISKPOOLSPACETYPE_CAPACITY),
               fs.maxFreeSpace, fs.status),
-             (ds.name, ds.status),
+             (ds.name),
              (dp.name)
             )
          ORDER BY IsDSGrouped DESC, ds.name, IsGrouped DESC, fs.mountpoint;
@@ -8480,6 +8474,7 @@ BEGIN
                AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
                AND DiskServer.id = FileSystem.diskServer
                AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+               AND DiskServer.hwOnline = 1
           ORDER BY -- use randomness to scatter recalls everywhere in the pool. This works unless the pool starts to be overloaded:
                    -- once a hot spot develops, recalls start to take longer and longer and thus tend to accumulate. However,
                    -- until we have a faster feedback system to rank filesystems, the fileSystemRate order has not proven to be better.
@@ -9033,7 +9028,7 @@ BEGIN
        AND MJ.castorFile = CF.id
        AND CF.fileId = inFileId
        AND CF.nsHost = inNsHost
-       AND nbRetries < TO_NUMBER(getConfigOption('Migration', 'MaxNbMounts', 7)))
+       AND nbRetries <= TO_NUMBER(getConfigOption('Migration', 'MaxNbMounts', 7)))
     SET nbRetries = nbRetries + 1,
         status = tconst.MIGRATIONJOB_PENDING,
         vid = NULL,
@@ -9236,9 +9231,10 @@ BEGIN
      AND CastorFile.id = DiskCopy.castorFile
      AND DiskCopy.status = dconst.DISKCOPY_CANBEMIGR
      AND FileSystem.id = DiskCopy.fileSystem
-     AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING)
+     AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING, dconst.FILESYSTEM_READONLY)
      AND DiskServer.id = FileSystem.diskServer
-     AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING)
+     AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING, dconst.DISKSERVER_READONLY)
+     AND DiskServer.hwOnline = 1
      AND ROWNUM < 2;
   -- The select worked out, create a mount for this tape pool
   INSERT INTO MigrationMount
@@ -9480,9 +9476,10 @@ BEGIN
        AND CastorFile.id = DiskCopy.castorFile
        AND DiskCopy.status = dconst.DISKCOPY_CANBEMIGR
        AND FileSystem.id = DiskCopy.fileSystem
-       AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING)
+       AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING, dconst.FILESYSTEM_READONLY)
        AND DiskServer.id = FileSystem.diskServer
-       AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING)
+       AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING, dconst.DISKSERVER_READONLY)
+       AND DiskServer.hwOnline = 1
        AND NOT EXISTS (SELECT /*+ INDEX_RS_ASC(MigratedSegment I_MigratedSegment_CFCopyNBVID) */ 1
                          FROM MigratedSegment
                         WHERE MigratedSegment.castorFile = MigrationJob.castorfile
@@ -10409,9 +10406,10 @@ BEGIN
         SELECT FileSystem.id INTO unused
           FROM DiskServer, FileSystem
          WHERE FileSystem.id = fs.id
-           AND FileSystem.status = 0  -- PRODUCTION
+           AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
            AND FileSystem.diskserver = DiskServer.id
-           AND DiskServer.status = 0; -- PRODUCTION
+           AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
+           AND DiskServer.hwOnline = 1;
       EXCEPTION WHEN NO_DATA_FOUND THEN
         EXIT;
       END;
@@ -11056,7 +11054,8 @@ AS
            decode(FS.status, 0, DS.status, FS.status),
                   0, 'PRODUCTION',
                   1, 'DRAINING',
-                  2, 'DISABLED', 'UNKNOWN') FileSystemStatus,
+                  2, 'DISABLED',
+                  3, 'READONLY', 'UNKNOWN') FileSystemStatus,
          DFS.username Username,
          DFS.machine Machine,
          DFS.comments Comments,

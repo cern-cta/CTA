@@ -549,6 +549,7 @@ This information is only here for efficient and approximate querying. It should 
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="59891" initialValue="0" type="133771" name="FILESYSTEM_PRODUCTION" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="59892" initialValue="1" type="133771" name="FILESYSTEM_DRAINING" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="59893" initialValue="2" type="133771" name="FILESYSTEM_DISABLED" />
+            <UML:Attribute isSpecification="false" visibility="public" xmi.id="FS_RO" initialValue="3" type="133771" name="FILESYSTEM_READONLY" />
            </UML:Classifier.feature>
           </UML:Class>
           <UML:Class stereotype="53500" comment="A service, as seen by the user.
@@ -600,6 +601,7 @@ A SvcClass is a container of resources and may be given as parameter of the requ
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="20444" initialValue="0" type="133771" name="DISKSERVER_PRODUCTION" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="20445" initialValue="1" type="133771" name="DISKSERVER_DRAINING" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="59890" initialValue="2" type="133771" name="DISKSERVER_DISABLED" />
+            <UML:Attribute isSpecification="false" visibility="public" xmi.id="DS_RO" initialValue="3" type="133771" name="DISKSERVER_READONLY" />
            </UML:Classifier.feature>
           </UML:Class>
           <UML:Class stereotype="53500" comment="Request for setting the weight of all diskcopies of a given files. This weight may then be used by the Garbage Collector" isSpecification="false" isLeaf="false" visibility="public" namespace="2105" xmi.id="150147" isRoot="false" isAbstract="false" name="SetFileGCWeight" >
@@ -781,16 +783,6 @@ A SvcClass is a container of resources and may be given as parameter of the requ
            </UML:GeneralizableElement.generalization>
            <UML:Classifier.feature>
             <UML:Attribute comment="Name of the diskpool that should be described, or empty string for a description of all existing diskpools" isSpecification="false" visibility="public" xmi.id="160041" type="137289" name="diskPoolName" />
-           </UML:Classifier.feature>
-          </UML:Class>
-         </UML:Namespace.ownedElement>
-        </UML:Package>
-        <UML:Package isSpecification="false" isLeaf="false" visibility="public" namespace="2103" xmi.id="178139" isRoot="false" isAbstract="false" name="monitoring" >
-         <UML:Namespace.ownedElement>
-          <UML:Class stereotype="53501" comment="The administrative status of the Diskserver" isSpecification="false" isLeaf="false" visibility="public" namespace="178139" xmi.id="179343" isRoot="false" isAbstract="false" name="AdminStatusCodes" >
-           <UML:Classifier.feature>
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="179356" initialValue="0" type="133771" name="ADMIN_NONE" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="179363" initialValue="1" type="133771" name="ADMIN_FORCE" />
            </UML:Classifier.feature>
           </UML:Class>
          </UML:Namespace.ownedElement>
@@ -1180,18 +1172,6 @@ Concerning the user list, an empty list means all users and all groups are conce
         <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="kr50LK3yHdqk" aggregation="none" type="zOogYpE5st4r" name="status" multiplicity="1" />
        </UML:Association.connection>
       </UML:Association>
-      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="7XEAjm4HMJZP" name="" >
-       <UML:Association.connection>
-        <UML:AssociationEnd comment="The admin status of the diskserver." isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="Bc2QFsAIrXKz" aggregation="none" type="179343" name="adminStatus" multiplicity="1" />
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="K6rHjNmEo0Wh" aggregation="none" type="zOogYpE5st4r" name="adminStatus" multiplicity="1" />
-       </UML:Association.connection>
-      </UML:Association>
-      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="B8ZVR7uD6glU" name="" >
-       <UML:Association.connection>
-        <UML:AssociationEnd comment="The admin status of the filesystem." isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="uIHc9qgISiif" aggregation="none" type="179343" name="adminStatus" multiplicity="1" />
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="atvPOFOiMEx3" aggregation="none" type="zOogYpE5st4r" name="adminStatus" multiplicity="1" />
-       </UML:Association.connection>
-      </UML:Association>
       <UML:Generalization isSpecification="false" child="wXilHp2RIhSk" visibility="public" namespace="1" xmi.id="afloHUtGL3kC" parent="97872" discriminator="" name="" />
       <UML:Generalization isSpecification="false" child="RZYBAWDaUfHC" visibility="public" namespace="1" xmi.id="XfR6rVsVSwUQ" parent="50325" discriminator="" name="" />
       <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="dkA3ecTNEM64" name="" >
@@ -1443,7 +1423,6 @@ Concerning the user list, an empty list means all users and all groups are conce
        </diagram>
        <diagram snapgrid="1" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="1" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="1360" snapy="10" showatts="1" xmi.id="XIkFhDYti2xM" documentation="" type="1" showops="1" showpackage="0" name="Monitoring" localid="" showstereotype="0" showscope="1" snapcsgrid="0" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="967" >
         <widgets>
-         <classwidget usesdiagramfillcolor="1" width="217" showattsigs="601" x="480" fillcolor="none" y="340" showopsigs="601" linewidth="none" height="115" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="179343" showoperations="1" showpackage="0" showscope="1" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
          <classwidget usesdiagramfillcolor="1" width="221" showattsigs="601" x="0" fillcolor="none" y="680" showopsigs="601" linewidth="none" height="67" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="59466" showoperations="1" showpackage="0" showscope="1" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
          <interfacewidget usesdiagramfillcolor="1" width="98" x="440" fillcolor="none" y="240" drawascircle="0" showopsigs="601" linewidth="none" height="56" usefillcolor="1" showpubliconly="0" isinstance="0" xmi.id="1216" showoperations="1" showpackage="0" showscope="1" showstereotype="1" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
         </widgets>
@@ -1775,12 +1754,6 @@ Concerning the user list, an empty list means all users and all groups are conce
        </listitem>
        <listitem open="0" type="813" id="xTFkkzXCEMmf" >
         <listitem open="0" type="814" id="Redxp4j8O5br" />
-       </listitem>
-      </listitem>
-      <listitem open="0" type="818" id="178139" >
-       <listitem open="0" type="813" id="179343" >
-        <listitem open="0" type="814" id="179356" />
-        <listitem open="0" type="814" id="179363" />
        </listitem>
       </listitem>
       <listitem open="0" type="818" id="161822" >

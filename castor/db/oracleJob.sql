@@ -24,30 +24,35 @@ BEGIN
     INTO cfId, dcId
     FROM SubRequest WHERE id = srId;
   SELECT fileclass INTO fclassId FROM CastorFile WHERE id = cfId FOR UPDATE;
-  -- Check that the file is not busy, i.e. that we are not
-  -- in the middle of migrating it. If we are, just stop and raise
-  -- a user exception
-  SELECT count(*) INTO nbRes FROM MigrationJob
-    WHERE status = tconst.MIGRATIONJOB_SELECTED
-    AND castorFile = cfId;
-  IF nbRes > 0 THEN
-    raise_application_error(-20106, 'Trying to update a busy file (ongoing migration)');
-  END IF;
   -- Check that we can indeed open the file in write mode
-  -- 3 criteria have to be met :
+  -- 4 criteria have to be met :
   --   - we are not using a INVALID copy (we should not update an old version)
   --   - we are not in a disk only svcClass and the file class asks for tape copy
+  --   - the filesystem/diskserver is not in READONLY state
   --   - there is no other update/put going on or there is a prepareTo and we are
   --     dealing with the same copy.
   SELECT status INTO stat FROM DiskCopy WHERE id = dcId;
   -- First the invalid case
   IF stat = 7 THEN -- INVALID
-    raise_application_error(-20106, 'Trying to update an invalid copy of a file (file has been modified by somebody else concurrently)');
+    raise_application_error(-20106, 'Could not update an invalid copy of a file (file has been modified by somebody else concurrently)');
   END IF;
   -- Then the disk only check
   IF checkNoTapeRouting(fclassId) = 1 THEN
      raise_application_error(-20106, 'File update canceled since the file cannot be routed to tape');
   END IF;
+  -- Then the hardware status check
+  BEGIN
+    SELECT 1 INTO nbres
+      FROM DiskServer, FileSystem, DiskCopy
+     WHERE DiskCopy.id = dcId
+       AND DiskCopy.fileSystem = FileSystem.id
+       AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
+       AND FileSystem.diskServer = DiskServer.id
+       AND DiskServer.status = dconst.DISKSERVER_PRODUCTION;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- hardware is not in PRODUCTION, prevent the writing
+    raise_application_error(-20106, 'Could not update the file, hardware was set to read-only mode by the administrator');
+  END;
   -- Otherwise, either we are alone or we are on the right copy and we
   -- only have to check that there is a prepareTo statement. We do the check
   -- only when needed, that is STAGEOUT case
@@ -72,7 +77,7 @@ BEGIN
       -- we do have a prepareTo, so eveything is fine
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- No prepareTo, so prevent the writing
-      raise_application_error(-20106, 'Trying to update a file already open for write (and no prepareToPut/Update context found)');
+      raise_application_error(-20106, 'Could not update a file already open for write (and no prepareToPut/Update context found)');
     END;
   ELSE
     -- If we are not having a STAGEOUT diskCopy, we are the only ones to write,
@@ -333,11 +338,12 @@ BEGIN
        AND DiskCopy.castorfile = CastorFile.id
        AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
        AND FileSystem.id = DiskCopy.filesystem
-       AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
+       AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING, dconst.FILESYSTEM_READONLY)
        AND FileSystem.diskPool = DiskPool2SvcClass.parent
        AND DiskPool2SvcClass.child = SvcClass.id
        AND DiskServer.id = FileSystem.diskserver
-       AND DiskServer.status IN (0, 1)
+       AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING, dconst.DISKSERVER_READONLY)
+       AND DiskServer.hwOnline = 1
        -- For diskpools which belong to multiple service classes, make sure
        -- we are checking for the file in the correct service class!
        AND StageDiskCopyReplicaRequest.sourceDiskCopy = DiskCopy.id
@@ -1103,7 +1109,8 @@ BEGIN
     srRfs := NULL;
   END IF;
 
-  -- Select random filesystems to use if none is already requested
+  -- Select random filesystems to use if none is already requested. This only happens
+  -- on Put or DiskCopyReplica requests, so we discard READONLY hardware and filter only the PRODUCTION one.
   IF LENGTH(srRfs) IS NULL THEN
     FOR line IN
       (SELECT candidate FROM
@@ -1115,6 +1122,7 @@ BEGIN
              AND DiskPool2SvcClass.child = SvcClassId
              AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
              AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
+             AND DiskServer.hwOnline = 1
              AND FileSystem.free - FileSystem.minAllowedFreeSpace * FileSystem.totalSize > srXsize
              -- this is to avoid disk2diskcopies to create new copies on diskservers already having one
              AND DiskServer.id NOT IN

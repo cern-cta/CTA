@@ -229,9 +229,10 @@ BEGIN
           FROM DiskCopy DC, FileSystem, DiskServer
          WHERE DC.castorfile = cfId
            AND DC.fileSystem = FileSystem.id
-           AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
+           AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
            AND FileSystem.diskserver = DiskServer.id
-           AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+           AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
+           AND DiskServer.hwOnline = 1
            AND DC.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR);
         IF varNbCopies = 0 THEN
           -- find out whether this file is already being recalled

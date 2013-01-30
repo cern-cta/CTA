@@ -28,9 +28,10 @@
 //------------------------------------------------------------------------------
 // FileSystemStatusCodesStrings
 //------------------------------------------------------------------------------
-const char* castor::stager::FileSystemStatusCodesStrings[3] = {
+const char* castor::stager::FileSystemStatusCodesStrings[4] = {
   "FILESYSTEM_PRODUCTION",
   "FILESYSTEM_DRAINING",
-  "FILESYSTEM_DISABLED"
+  "FILESYSTEM_DISABLED",
+  "FILESYSTEM_READONLY"
 };
 

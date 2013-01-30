@@ -79,7 +79,6 @@ def handleStateReport(report):
        ((diskServerName, mountPoint, maxFreeSpace, minAllowedFreeSpace, totalSpace,
          freeSpace, nbReadStreams, nbWriteStreams, nbRecalls, nbMigrations), ...) '''
     # add receive report to the cache of reports to be sent to the stager DB
-    print 'HERE;'
     _reportCache.push(report)
 
 class ReportManagerThread(threading.Thread):

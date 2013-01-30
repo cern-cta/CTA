@@ -52,9 +52,12 @@ BEGIN
                 WHERE Diskcopy.castorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
                   AND Diskcopy.status IN (0, 1, 4, 5, 6, 7, 10, 11) -- search for diskCopies not BEINGDELETED
                   AND FileSystem.id(+) = DiskCopy.fileSystem
-                  AND nvl(FileSystem.status, 0) IN (0, 1) -- PRODUCTION, DRAINING
+                  AND nvl(FileSystem.status, 0) IN
+                      (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING, dconst.FILESYSTEM_READONLY)
                   AND DiskServer.id(+) = FileSystem.diskServer
-                  AND nvl(DiskServer.status, 0) IN (0, 1) -- PRODUCTION, DRAINING
+                  AND nvl(DiskServer.status, 0) IN
+                      (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING, dconst.DISKSERVER_READONLY)
+                  AND nvl(DiskServer.hwOnline, 1) = 1
                   AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool
                   AND SvcClass.id(+) = DiskPool2SvcClass.child
                   AND (euid = 0 OR SvcClass.id IS NULL OR   -- if euid > 0 check read permissions for srmLs (see bug #69678)
@@ -109,9 +112,12 @@ BEGIN
                 WHERE Diskcopy.castorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
                   AND DiskCopy.status IN (0, 1, 4, 5, 6, 7, 10, 11)  -- search for diskCopies not GCCANDIDATE or BEINGDELETED
                   AND FileSystem.id(+) = DiskCopy.fileSystem
-                  AND nvl(FileSystem.status, 0) IN (0, 1) -- PRODUCTION, DRAINING
+                  AND nvl(FileSystem.status, 0) IN
+                      (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING, dconst.FILESYSTEM_READONLY)
                   AND DiskServer.id(+) = FileSystem.diskServer
-                  AND nvl(DiskServer.status, 0) IN (0, 1) -- PRODUCTION, DRAINING
+                  AND nvl(DiskServer.status, 0) IN
+                      (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING, dconst.DISKSERVER_READONLY)
+                  AND nvl(DiskServer.hwOnline, 1) = 1
                   AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool) DC
                   -- No extra check on read permissions here, it is not relevant
            WHERE CastorFile.id = DC.castorFile)
@@ -371,15 +377,15 @@ END;
 /* Internal function used by describeDiskPool[s] to return either available
  * (i.e. the space on PRODUCTION status resources) or total space depending on
  * the type of query */
-CREATE OR REPLACE FUNCTION getSpace(status IN NUMBER, space IN NUMBER,
-                                    queryType IN NUMBER, spaceType IN NUMBER)
+CREATE OR REPLACE FUNCTION getSpace(status IN INTEGER, hwOnline IN INTEGER, space IN INTEGER,
+                                    queryType IN INTEGER, spaceType IN INTEGER)
 RETURN NUMBER IS
 BEGIN
   IF space < 0 THEN
     -- over used filesystems may report negative numbers, just cut to 0
     RETURN 0;
   END IF;
-  IF (status > 0) AND  -- not in production
+  IF ((hwOnline = 0) OR (status > 0 AND status <= 4)) AND  -- either OFFLINE or DRAINING or DISABLED
      (queryType = dconst.DISKPOOLQUERYTYPE_AVAILABLE OR
       (queryType = dconst.DISKPOOLQUERYTYPE_DEFAULT AND spaceType = dconst.DISKPOOLSPACETYPE_FREE)) THEN
     return 0;
@@ -404,11 +410,11 @@ BEGIN
     OPEN result FOR
       SELECT grouping(ds.name) AS IsDSGrouped,
              grouping(fs.mountPoint) AS IsFSGrouped,
-             dp.name, ds.name, ds.status, fs.mountPoint,
-             sum(getSpace(fs.status + ds.status,
+             dp.name, ds.name, max(decode(ds.hwOnline, 0, dconst.DISKSERVER_DISABLED, ds.status)), fs.mountPoint,
+             sum(getSpace(fs.status + ds.status, ds.hwOnline,
                           fs.free - fs.minAllowedFreeSpace * fs.totalSize,
                           queryType, dconst.DISKPOOLSPACETYPE_FREE)) AS freeSpace,
-             sum(getSpace(fs.status + ds.status,
+             sum(getSpace(fs.status + ds.status, ds.hwOnline,
                           fs.totalSize,
                           queryType, dconst.DISKPOOLSPACETYPE_CAPACITY)) AS totalSize,
              0, fs.maxFreeSpace, fs.status
@@ -417,14 +423,14 @@ BEGIN
          AND ds.id = fs.diskServer
          GROUP BY grouping sets(
              (dp.name, ds.name, ds.status, fs.mountPoint,
-              getSpace(fs.status + ds.status,
+              getSpace(fs.status + ds.status, ds.hwOnline,
                        fs.free - fs.minAllowedFreeSpace * fs.totalSize,
                        queryType, dconst.DISKPOOLSPACETYPE_FREE),
-              getSpace(fs.status + ds.status,
+              getSpace(fs.status + ds.status, ds.hwOnline,
                        fs.totalSize,
                        queryType, dconst.DISKPOOLSPACETYPE_CAPACITY),
               fs.maxFreeSpace, fs.status),
-             (dp.name, ds.name, ds.status),
+             (dp.name, ds.name),
              (dp.name)
             )
          ORDER BY dp.name, IsDSGrouped DESC, ds.name, IsFSGrouped DESC, fs.mountpoint;
@@ -432,11 +438,11 @@ BEGIN
     OPEN result FOR
       SELECT grouping(ds.name) AS IsDSGrouped,
              grouping(fs.mountPoint) AS IsFSGrouped,
-             dp.name, ds.name, ds.status, fs.mountPoint,
-             sum(getSpace(fs.status + ds.status,
+             dp.name, ds.name, max(decode(ds.hwOnline, 0, dconst.DISKSERVER_DISABLED, ds.status)), fs.mountPoint,
+             sum(getSpace(fs.status + ds.status, ds.hwOnline,
                           fs.free - fs.minAllowedFreeSpace * fs.totalSize,
                           queryType, dconst.DISKPOOLSPACETYPE_FREE)) AS freeSpace,
-             sum(getSpace(fs.status + ds.status,
+             sum(getSpace(fs.status + ds.status, ds.hwOnline,
                           fs.totalSize,
                           queryType, dconst.DISKPOOLSPACETYPE_CAPACITY)) AS totalSize,
              0, fs.maxFreeSpace, fs.status
@@ -449,15 +455,15 @@ BEGIN
          AND dp.id = fs.diskPool
          AND ds.id = fs.diskServer
          GROUP BY grouping sets(
-             (dp.name, ds.name, ds.status, fs.mountPoint,
-              getSpace(fs.status + ds.status,
+             (dp.name, ds.name, fs.mountPoint,
+              getSpace(fs.status + ds.status, ds.hwOnline,
                        fs.free - fs.minAllowedFreeSpace * fs.totalSize,
                        queryType, dconst.DISKPOOLSPACETYPE_FREE),
-              getSpace(fs.status + ds.status,
+              getSpace(fs.status + ds.status, ds.hwOnline,
                        fs.totalSize,
                        queryType, dconst.DISKPOOLSPACETYPE_CAPACITY),
               fs.maxFreeSpace, fs.status),
-             (dp.name, ds.name, ds.status),
+             (dp.name, ds.name),
              (dp.name)
             )
          ORDER BY dp.name, IsDSGrouped DESC, ds.name, IsFSGrouped DESC, fs.mountpoint;
@@ -494,11 +500,11 @@ BEGIN
     OPEN result FOR
       SELECT grouping(ds.name) AS IsDSGrouped,
              grouping(fs.mountPoint) AS IsGrouped,
-             ds.name, ds.status, fs.mountPoint,
-             sum(getSpace(fs.status + ds.status,
+             ds.name, max(decode(ds.hwOnline, 0, dconst.DISKSERVER_DISABLED, ds.status)), fs.mountPoint,
+             sum(getSpace(fs.status + ds.status, ds.hwOnline,
                           fs.free - fs.minAllowedFreeSpace * fs.totalSize,
                           queryType, dconst.DISKPOOLSPACETYPE_FREE)) AS freeSpace,
-             sum(getSpace(fs.status + ds.status,
+             sum(getSpace(fs.status + ds.status, ds.hwOnline,
                           fs.totalSize,
                           queryType, dconst.DISKPOOLSPACETYPE_CAPACITY)) AS totalSize,
              0, fs.maxFreeSpace, fs.status
@@ -507,15 +513,15 @@ BEGIN
          AND ds.id = fs.diskServer
          AND dp.name = diskPoolName
          GROUP BY grouping sets(
-             (ds.name, ds.status, fs.mountPoint,
-              getSpace(fs.status + ds.status,
+             (ds.name, fs.mountPoint,
+              getSpace(fs.status + ds.status, ds.hwOnline,
                        fs.free - fs.minAllowedFreeSpace * fs.totalSize,
                        queryType, dconst.DISKPOOLSPACETYPE_FREE),
-              getSpace(fs.status + ds.status,
+              getSpace(fs.status + ds.status, ds.hwOnline,
                        fs.totalSize,
                        queryType, dconst.DISKPOOLSPACETYPE_CAPACITY),
               fs.maxFreeSpace, fs.status),
-             (ds.name, ds.status),
+             (ds.name),
              (dp.name)
             )
          ORDER BY IsDSGrouped DESC, ds.name, IsGrouped DESC, fs.mountpoint;
@@ -523,11 +529,11 @@ BEGIN
     OPEN result FOR
       SELECT grouping(ds.name) AS IsDSGrouped,
              grouping(fs.mountPoint) AS IsGrouped,
-             ds.name, ds.status, fs.mountPoint,
-             sum(getSpace(fs.status + ds.status,
+             ds.name, max(decode(ds.hwOnline, 0, dconst.DISKSERVER_DISABLED, ds.status)), fs.mountPoint,
+             sum(getSpace(fs.status + ds.status, ds.hwOnline,
                           fs.free - fs.minAllowedFreeSpace * fs.totalSize,
                           queryType, dconst.DISKPOOLSPACETYPE_FREE)) AS freeSpace,
-             sum(getSpace(fs.status + ds.status,
+             sum(getSpace(fs.status + ds.status, ds.hwOnline,
                           fs.totalSize,
                           queryType, dconst.DISKPOOLSPACETYPE_CAPACITY)) AS totalSize,
              0, fs.maxFreeSpace, fs.status
@@ -540,15 +546,15 @@ BEGIN
          AND ds.id = fs.diskServer
          AND dp.name = diskPoolName
          GROUP BY grouping sets(
-             (ds.name, ds.status, fs.mountPoint,
-              getSpace(fs.status + ds.status,
+             (ds.name, fs.mountPoint,
+              getSpace(fs.status + ds.status, ds.hwOnline,
                        fs.free - fs.minAllowedFreeSpace * fs.totalSize,
                        queryType, dconst.DISKPOOLSPACETYPE_FREE),
-              getSpace(fs.status + ds.status,
+              getSpace(fs.status + ds.status, ds.hwOnline,
                        fs.totalSize,
                        queryType, dconst.DISKPOOLSPACETYPE_CAPACITY),
               fs.maxFreeSpace, fs.status),
-             (ds.name, ds.status),
+             (ds.name),
              (dp.name)
             )
          ORDER BY IsDSGrouped DESC, ds.name, IsGrouped DESC, fs.mountpoint;
