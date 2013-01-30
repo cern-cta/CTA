@@ -119,12 +119,10 @@ def shutdown():
 
 def addmessages(msgs):
     '''Add new messages to the set of known messages'''
-    # add messages given to the list of known ones (or overwrite any 
-    # existing one) and specifiy that we did not yet send them to the server
-    # messages should be passed as a dictionary with the key being the message
-    # number and the value being the message itself
+    # add messages given to the list of known ones
+    # (or overwrite any existing one)
     for msgnb in msgs:
-        _messages[msgnb] = [msgs[msgnb], False]
+        _messages[msgnb] = msgs[msgnb]
 
 def _writep(priority, msgnb, **params):
     '''Writes a log message with the given priority.
@@ -148,11 +146,6 @@ def _writep(priority, msgnb, **params):
             params['TraceBack'] = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
             if hasattr(exc_value, '_remote_tb'):
                 params['RemoteTraceBack'] = str(exc_value._remote_tb[0])
-    # check whether this is the first log of this message
-    if not _messages[msgnb][1]:
-        # then send the message to the server
-    #    syslog.syslog(syslog.LOG_INFO | syslog.LOG_LOCAL2, 'MSGNO=%d MSGTEXT="%s"' % (msgnb, _messages[msgnb][0]))
-        _messages[msgnb][1] = True
     # build the message raw text
     # note that the thread id is not the actual linux thread id but the 
     # "fake" python one
@@ -161,7 +154,7 @@ def _writep(priority, msgnb, **params):
     # (e.g. syslog)
     rawmsg = 'LVL=%s TID=%d MSG="%s" ' % (_priorities[priority], 
                                           thread.get_ident()%10000, 
-                                          _messages[msgnb][0])
+                                          _messages[msgnb])
     if params.has_key('fileid'):
         rawmsg += 'NSHOSTNAME=%s NSFILEID=%d ' % (params['fileid'])
     if params.has_key('reqid'):
