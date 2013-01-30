@@ -97,8 +97,7 @@ void castor::stager::daemon::QueryRequestSvcThread::setFileResponseStatus
 
   switch(dc->diskCopyStatus()) {
   case DISKCOPY_BEINGDELETED:
-  case DISKCOPY_DELETED:
-    // just IGNORE the discopies in those statuses
+    // just IGNORE the discopies in this status
     return;
 
   case DISKCOPY_INVALID:

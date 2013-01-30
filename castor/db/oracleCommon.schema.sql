@@ -645,7 +645,6 @@ BEGIN
   setObjStatusName('DiskCopy', 'gcType', 5, 'GCTYPE_OVERWRITTEN');
   setObjStatusName('DiskCopy', 'status', 0, 'DISKCOPY_STAGED');
   setObjStatusName('DiskCopy', 'status', 1, 'DISKCOPY_WAITDISK2DISKCOPY');
-  setObjStatusName('DiskCopy', 'status', 3, 'DISKCOPY_DELETED');
   setObjStatusName('DiskCopy', 'status', 4, 'DISKCOPY_FAILED');
   setObjStatusName('DiskCopy', 'status', 5, 'DISKCOPY_WAITFS');
   setObjStatusName('DiskCopy', 'status', 6, 'DISKCOPY_STAGEOUT');

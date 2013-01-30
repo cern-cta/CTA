@@ -586,7 +586,6 @@ A SvcClass is a container of resources and may be given as parameter of the requ
            <UML:Classifier.feature>
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="1674" initialValue="0" type="133771" name="DISKCOPY_STAGED" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="1675" initialValue="1" type="133771" name="DISKCOPY_WAITDISK2DISKCOPY" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="1677" initialValue="3" type="133771" name="DISKCOPY_DELETED" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="1678" initialValue="4" type="133771" name="DISKCOPY_FAILED" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="2075" initialValue="5" type="133771" name="DISKCOPY_WAITFS" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="2076" initialValue="6" type="133771" name="DISKCOPY_STAGEOUT" />
@@ -1933,7 +1932,6 @@ Concerning the user list, an empty list means all users and all groups are conce
         <listitem open="0" type="814" id="1674" />
         <listitem open="0" type="814" id="1675" />
         <listitem open="0" type="814" id="1676" />
-        <listitem open="0" type="814" id="1677" />
         <listitem open="0" type="814" id="1678" />
         <listitem open="0" type="814" id="2075" />
         <listitem open="0" type="814" id="2076" />
