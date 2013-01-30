@@ -860,6 +860,36 @@ PROMPT <userid>:<groupid> pairs. userid can be empty, meaning any user
 PROMPT in the specified group.
 UNDEF adminList
 ACCEPT adminList CHAR PROMPT 'List of admins: ';
+DECLARE
+  adminUserId NUMBER;
+  adminGroupId NUMBER;
+  ind NUMBER;
+  errmsg VARCHAR(2048);
+BEGIN
+  -- If the adminList is empty do nothing
+  IF '&adminList' IS NULL THEN
+    RETURN;
+  END IF;
+  -- Loop over the adminList
+  FOR admin IN (SELECT column_value AS s
+                  FROM TABLE(strTokenizer('&adminList',' '))) LOOP
+    BEGIN
+      ind := INSTR(admin.s, ':');
+      IF ind = 0 THEN
+        errMsg := 'Invalid <userid>:<groupid> ' || admin.s || ', ignoring';
+        RAISE INVALID_NUMBER;
+      END IF;
+      errMsg := 'Invalid userid ' || SUBSTR(admin.s, 1, ind - 1) || ', ignoring';
+      adminUserId := TO_NUMBER(SUBSTR(admin.s, 1, ind - 1));
+      errMsg := 'Invalid groupid ' || SUBSTR(admin.s, ind) || ', ignoring';
+      adminGroupId := TO_NUMBER(SUBSTR(admin.s, ind+1));
+      INSERT INTO AdminUsers (euid, egid) VALUES (adminUserId, adminGroupId);
+    EXCEPTION WHEN INVALID_NUMBER THEN
+      dbms_output.put_line(errMsg);
+    END;
+  END LOOP;
+END;
+/
 
 /* Define the service handlers for the appropriate sets of stage request objects */
 UPDATE Type2Obj SET svcHandler = 'JobReqSvc' WHERE type IN (35, 40, 44);
