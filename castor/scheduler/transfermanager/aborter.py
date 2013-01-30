@@ -75,7 +75,7 @@ class AborterThread(threading.Thread):
             # infinite loop over the polling of the DB
             while self.running:
               # see whether there is something to do
-              # not that this will hang until something comes or the internal timeout is reached
+              # note that this will hang until something comes or the internal timeout is reached
               stcur.callproc('transfersToAbortProc', [subReqIdsCur])
               # kill the corresponding transfers
               subReqIds = tuple(id for item in subReqIdsCur.fetchall() for id in item)
