@@ -11516,9 +11516,9 @@ BEGIN
          AND DiskCopy.status IN (0, 10)  -- STAGED, CANBEMIGR
          AND FileSystem.diskPool = DiskPool2SvcClass.parent
          AND DiskPool2SvcClass.child = svcId
-         AND FileSystem.status IN (0, 1)  -- PRODUCTION, DRAINING
+         AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
          AND FileSystem.diskServer = DiskServer.id
-         AND DiskServer.status IN (0, 1)  -- PRODUCTION, DRAINING
+         AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
      ) results, SvcClass
    WHERE SvcClass.id = svcId;
   IF res = 0 THEN

@@ -53,13 +53,13 @@ CREATE TABLE GetUpdateStartRequest (subreqId INTEGER, diskServer VARCHAR2(2048),
 CREATE TABLE QueryParameter (value VARCHAR2(2048), id INTEGER CONSTRAINT PK_QueryParameter_Id PRIMARY KEY, query INTEGER, queryType INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 BEGIN
-  serObjStatusName('QueryParameter', 'queryType', 0, 'REQUESTQUERYTYPE_FILENAME');
-  serObjStatusName('QueryParameter', 'queryType', 1, 'REQUESTQUERYTYPE_REQID');
-  serObjStatusName('QueryParameter', 'queryType', 2, 'REQUESTQUERYTYPE_USERTAG');
-  serObjStatusName('QueryParameter', 'queryType', 3, 'REQUESTQUERYTYPE_FILEID');
-  serObjStatusName('QueryParameter', 'queryType', 4, 'REQUESTQUERYTYPE_REQID_GETNEXT');
-  serObjStatusName('QueryParameter', 'queryType', 5, 'REQUESTQUERYTYPE_USERTAG_GETNEXT');
-  serObjStatusName('QueryParameter', 'queryType', 6, 'REQUESTQUERYTYPE_FILENAME_ALLSC');
+  setObjStatusName('QueryParameter', 'queryType', 0, 'REQUESTQUERYTYPE_FILENAME');
+  setObjStatusName('QueryParameter', 'queryType', 1, 'REQUESTQUERYTYPE_REQID');
+  setObjStatusName('QueryParameter', 'queryType', 2, 'REQUESTQUERYTYPE_USERTAG');
+  setObjStatusName('QueryParameter', 'queryType', 3, 'REQUESTQUERYTYPE_FILEID');
+  setObjStatusName('QueryParameter', 'queryType', 4, 'REQUESTQUERYTYPE_REQID_GETNEXT');
+  setObjStatusName('QueryParameter', 'queryType', 5, 'REQUESTQUERYTYPE_USERTAG_GETNEXT');
+  setObjStatusName('QueryParameter', 'queryType', 6, 'REQUESTQUERYTYPE_FILENAME_ALLSC');
 END;
 /
 
@@ -118,9 +118,9 @@ CREATE TABLE VersionQuery (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, 
 CREATE TABLE DiskPoolQuery (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskPoolName VARCHAR2(2048), id INTEGER CONSTRAINT PK_DiskPoolQuery_Id PRIMARY KEY, svcClass INTEGER, client INTEGER, queryType INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 BEGIN
-  serObjStatusName('DiskPoolQuery', 'queryType', 0, 'DISKPOOLQUERYTYPE_DEFAULT');
-  serObjStatusName('DiskPoolQuery', 'queryType', 1, 'DISKPOOLQUERYTYPE_AVAILABLE');
-  serObjStatusName('DiskPoolQuery', 'queryType', 2, 'DISKPOOLQUERYTYPE_TOTAL');
+  setObjStatusName('DiskPoolQuery', 'queryType', 0, 'DISKPOOLQUERYTYPE_DEFAULT');
+  setObjStatusName('DiskPoolQuery', 'queryType', 1, 'DISKPOOLQUERYTYPE_AVAILABLE');
+  setObjStatusName('DiskPoolQuery', 'queryType', 2, 'DISKPOOLQUERYTYPE_TOTAL');
 END;
 /
 
