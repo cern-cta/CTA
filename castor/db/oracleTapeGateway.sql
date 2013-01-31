@@ -1348,7 +1348,7 @@ BEGIN
           (reqId, fileId, lastModTime, copyNo, oldCopyNo, transfSize, comprSize,
            vid, fseq, blockId, checksumType, checksum)
         VALUES (varReqId, inFileIds(i), varLastUpdTime, varCopyNo, varOldCopyNo,
-                inTransferredSizes(i), inComprSizes(i), varVid, inFseqs(i),
+                inTransferredSizes(i), CASE inComprSizes(i) WHEN 0 THEN 1 ELSE inComprSizes(i) END, varVid, inFseqs(i),
                 strtoRaw4(inBlockIds(i)), inChecksumTypes(i), inChecksums(i));
       EXCEPTION WHEN NO_DATA_FOUND THEN
         -- Log 'unable to identify migration, giving up'
