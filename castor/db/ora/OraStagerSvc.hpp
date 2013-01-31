@@ -261,8 +261,8 @@ namespace castor {
          * of WAITFS_SCHEDULING, where a DiskCopy is still returned
          * for logging purposes.
          * Else, all DiskCopies for the given file are marked
-         * INVALID (that is those not in DISKCOPY_FAILED and
-         * DISKCOPY_DELETED status) and all Recall and MigrationJobs are
+         * INVALID (that is those not in DISKCOPY_FAILED
+         *status) and all Recall and MigrationJobs are
          * deleted. A new DiskCopy is then created in
          * DISKCOPY_WAITFS status, linked to the given
          * SubRequest returned.
