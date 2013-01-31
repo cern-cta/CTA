@@ -74,7 +74,7 @@ int Csec_trace(char *func, char *msg, ...) {
 
   va_start (args, msg);
   if (func) {
-    sprintf (prtbuf, "%*s: ", SECPRTBUFSZ-2, func);
+    snprintf (prtbuf, SECPRTBUFSZ+1, "%s: ", func);
     prtbuf[SECPRTBUFSZ] = 0;
   } else {
     *prtbuf = '\0';
