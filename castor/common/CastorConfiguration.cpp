@@ -267,6 +267,7 @@ void castor::common::CastorConfiguration::renewConfigNolock()
     while (sline.get() == ' '){}; sline.unget(); // skip spaces
     std::string value;
     std::getline(sline, value, '#');
+    value.erase(value.find_last_not_of(" \n\r\t")+1); // right trim
     m_config[category][key] = value;
   }
   m_lastUpdateTime = time(0);
