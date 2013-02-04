@@ -51,7 +51,7 @@
 #define MSGCLOSELEN  10
 
 #define SELECT_TIMEOUT_XROOT_OPEN  30
-#define SELECT_TIMEOUT_XROOT_CLOSE 172800 // 2 days
+#define SELECT_TIMEOUT_XROOT_CLOSE 7200
 
 // Static instance of the XRootPlugin
 castor::job::stagerjob::XRootPlugin xrootPlugin;

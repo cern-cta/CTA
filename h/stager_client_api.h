@@ -1507,7 +1507,7 @@ EXTERN_C char* stage_fileSystemStatusName (int statusCode);
 /**********************************************************
  *    Utility to get the current client timeout           *
  **********************************************************/
-#define STAGER_TIMEOUT_DEFAULT 172800
+#define STAGER_TIMEOUT_DEFAULT 7200
 
 EXTERN_C int stage_getClientTimeout ();
 
