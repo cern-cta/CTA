@@ -763,7 +763,7 @@ void CppCppDbCnvWriter::writeOraSqlStatements() {
         getClassifier(as->remotePart.typeName)->getAttributeList();
       stream << "BEGIN" << endl;
       for (UMLAttribute *at = atl.first(); at; at = atl.next()) {
-        stream << "  serObjStatusName('"
+        stream << "  setObjStatusName('"
                << as->localPart.typeName << "', '"
                << as->remotePart.name << "', "
                << at->getInitialValue() << ", '"

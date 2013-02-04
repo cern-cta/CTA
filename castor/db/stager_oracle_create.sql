@@ -56,13 +56,13 @@ CREATE TABLE GetUpdateStartRequest (subreqId INTEGER, diskServer VARCHAR2(2048),
 CREATE TABLE QueryParameter (value VARCHAR2(2048), id INTEGER CONSTRAINT PK_QueryParameter_Id PRIMARY KEY, query INTEGER, queryType INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 BEGIN
-  serObjStatusName('QueryParameter', 'queryType', 0, 'REQUESTQUERYTYPE_FILENAME');
-  serObjStatusName('QueryParameter', 'queryType', 1, 'REQUESTQUERYTYPE_REQID');
-  serObjStatusName('QueryParameter', 'queryType', 2, 'REQUESTQUERYTYPE_USERTAG');
-  serObjStatusName('QueryParameter', 'queryType', 3, 'REQUESTQUERYTYPE_FILEID');
-  serObjStatusName('QueryParameter', 'queryType', 4, 'REQUESTQUERYTYPE_REQID_GETNEXT');
-  serObjStatusName('QueryParameter', 'queryType', 5, 'REQUESTQUERYTYPE_USERTAG_GETNEXT');
-  serObjStatusName('QueryParameter', 'queryType', 6, 'REQUESTQUERYTYPE_FILENAME_ALLSC');
+  setObjStatusName('QueryParameter', 'queryType', 0, 'REQUESTQUERYTYPE_FILENAME');
+  setObjStatusName('QueryParameter', 'queryType', 1, 'REQUESTQUERYTYPE_REQID');
+  setObjStatusName('QueryParameter', 'queryType', 2, 'REQUESTQUERYTYPE_USERTAG');
+  setObjStatusName('QueryParameter', 'queryType', 3, 'REQUESTQUERYTYPE_FILEID');
+  setObjStatusName('QueryParameter', 'queryType', 4, 'REQUESTQUERYTYPE_REQID_GETNEXT');
+  setObjStatusName('QueryParameter', 'queryType', 5, 'REQUESTQUERYTYPE_USERTAG_GETNEXT');
+  setObjStatusName('QueryParameter', 'queryType', 6, 'REQUESTQUERYTYPE_FILENAME_ALLSC');
 END;
 /
 
@@ -121,9 +121,9 @@ CREATE TABLE VersionQuery (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, 
 CREATE TABLE DiskPoolQuery (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskPoolName VARCHAR2(2048), id INTEGER CONSTRAINT PK_DiskPoolQuery_Id PRIMARY KEY, svcClass INTEGER, client INTEGER, queryType INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 BEGIN
-  serObjStatusName('DiskPoolQuery', 'queryType', 0, 'DISKPOOLQUERYTYPE_DEFAULT');
-  serObjStatusName('DiskPoolQuery', 'queryType', 1, 'DISKPOOLQUERYTYPE_AVAILABLE');
-  serObjStatusName('DiskPoolQuery', 'queryType', 2, 'DISKPOOLQUERYTYPE_TOTAL');
+  setObjStatusName('DiskPoolQuery', 'queryType', 0, 'DISKPOOLQUERYTYPE_DEFAULT');
+  setObjStatusName('DiskPoolQuery', 'queryType', 1, 'DISKPOOLQUERYTYPE_AVAILABLE');
+  setObjStatusName('DiskPoolQuery', 'queryType', 2, 'DISKPOOLQUERYTYPE_TOTAL');
 END;
 /
 
@@ -914,8 +914,7 @@ END;
 /
 
 /* SQL statements for type FileSystem */
-CREATE TABLE FileSystem (free INTEGER, mountPoint VARCHAR2(2048), minAllowedFreeSpace NUMBER, maxFreeSpace NUMBER, totalSize INTEGER, nbReadStreams NUMBER, nbWriteStreams NUMBER, nbMigratorStreams NUMBER, nbRe
-callerStreams NUMBER, id INTEGER CONSTRAINT PK_FileSystem_Id PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE FileSystem (free INTEGER, mountPoint VARCHAR2(2048), minAllowedFreeSpace NUMBER, maxFreeSpace NUMBER, totalSize INTEGER, nbReadStreams NUMBER, nbWriteStreams NUMBER, nbMigratorStreams NUMBER, nbRecallerStreams NUMBER, id INTEGER CONSTRAINT PK_FileSystem_Id PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 ALTER TABLE FileSystem ADD CONSTRAINT FK_FileSystem_DiskServer 
   FOREIGN KEY (diskServer) REFERENCES DiskServer(id);
 ALTER TABLE FileSystem MODIFY
@@ -1182,6 +1181,36 @@ PROMPT <userid>:<groupid> pairs. userid can be empty, meaning any user
 PROMPT in the specified group.
 UNDEF adminList
 ACCEPT adminList CHAR PROMPT 'List of admins: ';
+DECLARE
+  adminUserId NUMBER;
+  adminGroupId NUMBER;
+  ind NUMBER;
+  errmsg VARCHAR(2048);
+BEGIN
+  -- If the adminList is empty do nothing
+  IF '&adminList' IS NULL THEN
+    RETURN;
+  END IF;
+  -- Loop over the adminList
+  FOR admin IN (SELECT column_value AS s
+                  FROM TABLE(strTokenizer('&adminList',' '))) LOOP
+    BEGIN
+      ind := INSTR(admin.s, ':');
+      IF ind = 0 THEN
+        errMsg := 'Invalid <userid>:<groupid> ' || admin.s || ', ignoring';
+        RAISE INVALID_NUMBER;
+      END IF;
+      errMsg := 'Invalid userid ' || SUBSTR(admin.s, 1, ind - 1) || ', ignoring';
+      adminUserId := TO_NUMBER(SUBSTR(admin.s, 1, ind - 1));
+      errMsg := 'Invalid groupid ' || SUBSTR(admin.s, ind) || ', ignoring';
+      adminGroupId := TO_NUMBER(SUBSTR(admin.s, ind+1));
+      INSERT INTO AdminUsers (euid, egid) VALUES (adminUserId, adminGroupId);
+    EXCEPTION WHEN INVALID_NUMBER THEN
+      dbms_output.put_line(errMsg);
+    END;
+  END LOOP;
+END;
+/
 
 /* Define the service handlers for the appropriate sets of stage request objects */
 UPDATE Type2Obj SET svcHandler = 'JobReqSvc' WHERE type IN (35, 40, 44);
@@ -2161,38 +2190,6 @@ END;
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
-
-/* Process the adminList provided by the user in oracleCommon.schema */
-DECLARE
-  adminUserId NUMBER;
-  adminGroupId NUMBER;
-  ind NUMBER;
-  errmsg VARCHAR(2048);
-BEGIN
-  -- If the adminList is empty do nothing
-  IF '&adminList' IS NULL THEN
-    RETURN;
-  END IF;
-  -- Loop over the adminList
-  FOR admin IN (SELECT column_value AS s
-                  FROM TABLE(strTokenizer('&adminList',' '))) LOOP
-    BEGIN
-      ind := INSTR(admin.s, ':');
-      IF ind = 0 THEN
-        errMsg := 'Invalid <userid>:<groupid> ' || admin.s || ', ignoring';
-        RAISE INVALID_NUMBER;
-      END IF;
-      errMsg := 'Invalid userid ' || SUBSTR(admin.s, 1, ind - 1) || ', ignoring';
-      adminUserId := TO_NUMBER(SUBSTR(admin.s, 1, ind - 1));
-      errMsg := 'Invalid groupid ' || SUBSTR(admin.s, ind) || ', ignoring';
-      adminGroupId := TO_NUMBER(SUBSTR(admin.s, ind+1));
-      INSERT INTO AdminUsers (euid, egid) VALUES (adminUserId, adminGroupId);
-    EXCEPTION WHEN INVALID_NUMBER THEN
-      dbms_output.put_line(errMsg);
-    END;
-  END LOOP;
-END;
-/
 
 
 /* PL/SQL method implementing checkPermission
@@ -9633,7 +9630,7 @@ BEGIN
           (reqId, fileId, lastModTime, copyNo, oldCopyNo, transfSize, comprSize,
            vid, fseq, blockId, checksumType, checksum)
         VALUES (varReqId, inFileIds(i), varLastUpdTime, varCopyNo, varOldCopyNo,
-                inTransferredSizes(i), inComprSizes(i), varVid, inFseqs(i),
+                inTransferredSizes(i), CASE inComprSizes(i) WHEN 0 THEN 1 ELSE inComprSizes(i) END, varVid, inFseqs(i),
                 strtoRaw4(inBlockIds(i)), inChecksumTypes(i), inChecksums(i));
       EXCEPTION WHEN NO_DATA_FOUND THEN
         -- Log 'unable to identify migration, giving up'
