@@ -1,3 +1,4 @@
 %attr(0755,root,root) usr/bin/listtransfers
 %attr(0755,root,root) usr/bin/draintransfers
 %attr(0755,root,root) usr/bin/killtransfers
+%attr(0755,root,root) usr/bin/modifydiskserver

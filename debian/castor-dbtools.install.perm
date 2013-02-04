@@ -24,7 +24,6 @@
 %attr(0755,root,root) usr/bin/modifymigrationroute
 %attr(0755,root,root) usr/bin/deletemigrationroute
 %attr(0755,root,root) usr/bin/printmigrationroute
-%attr(0755,root,root) usr/bin/modifydiskserver
 %attr(0755,root,root) usr/bin/deletediskserver
 %attr(0755,root,root) usr/bin/printdiskserver
 %attr(0755,root,root) usr/bin/cleanLostFiles

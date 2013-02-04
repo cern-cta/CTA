@@ -9,6 +9,7 @@
 %attr(0644,root,root) usr/lib/python*/site-packages/suicider.py*
 %attr(0644,root,root) usr/lib/python*/site-packages/reportmanager.py*
 %attr(0644,root,root) usr/lib/python*/site-packages/diskserverlistcache.py*
+%attr(0644,root,root) usr/lib/python*/site-packages/modifydiskservers.py*
 %attr(0644,root,root) usr/lib/python*/site-packages/connectionpool.py*
 %attr(0644,root,root) usr/lib/python*/site-packages/transfermanagerdlf.py*
 %attr(0644,root,root) usr/lib/python*/site-packages/threadpoolserver.py*

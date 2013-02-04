@@ -25,6 +25,7 @@
 
 import sys
 import getopt
+import rpyc
 import castor_tools
 
 # usage function
@@ -50,7 +51,6 @@ verbose = False
 state = None
 mountPoints = None
 diskPool = None
-targets = None
 for f, v in options:
     if f == '-h' or f == '--help':
         usage(0)
@@ -62,149 +62,35 @@ for f, v in options:
             usage(1)
         state = v
     elif f == '-m' or f == '--mountpoints':
-        mountPoints = set(v.split(':'))
+        mountPoints = tuple(v.split(':'))
     elif f == '-d' or f == '--diskpool':
         diskPool = v
     else:
         print "unknown option : " + f
         usage(1)
 
-# Deal with arguments
-if len(args) != 0:
-    targets = set(args)
-
 # some consistency checks
 if not state and not diskPool:
     print 'Nothing to do. Please specify at least one of options -s,--state and -d,--diskpool'
     usage(1)
-if not targets:
+if len(args) == 0:
     print 'Nothing to do ! Please give a few diskpools/diskservers'
     usage(1)
 
 try:
-    # connect to stager
-    stconn = castor_tools.connectToStager()
-    stcur = stconn.cursor()
-    # check target diskpool if any
-    if diskPool:
-        sqlStatement = "SELECT id, name FROM DiskPool WHERE name = :diskPool"
-        stcur.execute(sqlStatement, diskPool=diskPool)
-        rows = stcur.fetchall()
-        if not rows:
-            print 'DiskPool %d does not exist. Giving up' % diskPool
-            try:
-                castor_tools.disconnectDB(stconn)
-            except Exception:
-                pass
-            sys.exit(1)
-        diskPoolId = rows[0][0]
-    # check diskpools
-    sqlStatement = 'SELECT id, name FROM DiskPool WHERE name = :dpname'
-    diskPools = set([])
-    diskPoolIds = []
-    for target in targets:
-        stcur.execute(sqlStatement, dpname=target)
-        row = stcur.fetchone()
-        if row:
-            diskPoolIds.append(row[0])
-            diskPools.add(row[1])
-    # check diskservers
-    sqlStatement = 'SELECT id, name FROM DiskServer WHERE name = :dsname'
-    diskServers = set([])
-    diskServerIds = []
-    for target in targets:
-        stcur.execute(sqlStatement, dsname=target)
-        row = stcur.fetchone()
-        if row:
-            diskServerIds.append(row[0])
-            diskServers.add(row[1])
-    unknownTargets = targets - diskPools - diskServers
-    if not diskPools and not diskServers:
-        print 'None of the provided diskpools/diskservers could be found. Giving up'
-        usage(1)
-    # go for the update
-    if mountPoints:
-        # check MountPoints
-        sqlStatement = '''SELECT id, mountPoint FROM FileSystem
-                           WHERE mountPoint = :mountPoint'''
-        if targets:
-            sqlStatement += ' AND ('
-            if diskPoolIds:
-                sqlStatement += 'diskPool IN (' + ', '.join([str(x) for x in diskPoolIds]) + ')'
-            if diskServerIds:
-                if diskPoolIds:
-                    sqlStatement += ' OR '
-                sqlStatement += 'diskServer IN (' + ', '.join([str(x) for x in diskServerIds]) + ')'
-            sqlStatement += ')'
-        mountPointIds = []
-        existingMountPoints = set([])
-        for mountPoint in mountPoints:
-            stcur.execute(sqlStatement, mountPoint=mountPoint)
-            row = stcur.fetchone()
-            if row:
-                mountPointIds.append(row[0])
-                existingMountPoints.add(row[1])
-        unknownMountPoints = mountPoints - existingMountPoints
-        # update mountPoints
-        varDict = {}
-        sqlStatement = 'UPDATE FileSystem SET '
-        setClause = ''
-        whereClause = ' WHERE id IN (' + ', '.join([str(x) for x in mountPointIds]) + ')'
-        if state:
-            setClause = 'status = :status'
-            varDict['status'] = states.index(state)
-        if diskPool:
-            if setClause:
-                setClause += ','
-            setClause += ' diskPool = :diskPool'
-            varDict['diskPool'] = diskPoolId
-        stcur.execute(sqlStatement + setClause + whereClause, varDict)
-        # commit update and tell user
-        stconn.commit()
-        print 'modified fileSystems successfully'
-        # mention unknown mountPoints
-        if mountPoints and unknownMountPoints:
-            print 'WARNING : the following mountPoints could not be found : ' + ', '.join(unknownMountPoints)
-    else:
-        # check DiskServers
-        if diskPools:
-            sqlStatement = '''SELECT UNIQUE DiskServer.id FROM DiskServer, FileSystem
-                               WHERE DiskServer.id = FileSystem.diskServer
-                                 AND FileSystem.diskPool IN (''' + "'" + \
-                           "', '".join([str(x) for x in diskPoolIds]) + "')"
-            stcur.execute(sqlStatement)
-            rows = stcur.fetchall()
-            diskServerIds.extend([row[0] for row in rows])
-            if not diskServerIds:
-                print 'No diskserver matching your request'
-        # update diskServers for status
-        if diskServerIds:
-            if state:
-                varDict = {}
-                sqlStatement = '''UPDATE DiskServer SET status = :status
-                                   WHERE id IN (''' + ', '.join([str(x) for x in diskServerIds]) + ')'
-                varDict['status'] = states.index(state)
-                stcur.execute(sqlStatement, varDict)
-            # update fileSystems for diskPool
-            if diskPool:
-                varDict = {}
-                sqlStatement = '''UPDATE FileSystem SET diskPool = :diskPoolId
-                                   WHERE diskServer IN (''' + ', '.join([str(x) for x in diskServerIds]) + ')'
-                stcur.execute(sqlStatement, diskPoolId=diskPoolId)
-            # commit update and tell user
-            stconn.commit()
-            print 'modified diskServers successfully'
-    # mention unknown targets
-    if unknownTargets:
-        print 'WARNING : the following diskpools/diskservers do not exist : ' + ', '.join(unknownTargets)
-    # close DB connections
-    try:
-        castor_tools.disconnectDB(stconn)
-    except Exception:
-        pass
+    if state:
+        state = states.index(state)
+    conf = castor_tools.castorConf()
+    rpycconn = rpyc.connect(conf.getValue('DiskManager', 'ServerHosts').split()[0],
+                            conf.getValue('TransferManager', 'Port', 15011, int))
+    returnMsg = rpycconn.root.modifyDiskServers(args, state, mountPoints, diskPool)
+    print returnMsg
 except Exception, e:
-    print e
+    print 'Caught exception : (' + str(e.__class__) + ') : ' + str(e)
     if verbose:
+        if hasattr(e, "_remote_tb"):
+            print 'Remote trace :'
+            print e._remote_tb[0]
         import traceback
         traceback.print_exc()
     sys.exit(-1)

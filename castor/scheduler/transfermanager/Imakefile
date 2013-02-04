@@ -29,6 +29,7 @@ InstallNonExecFile(suicider.py,$(PYTHON_LIBDIR),644)
 InstallNonExecFile(serverqueue.py,$(PYTHON_LIBDIR),644)
 InstallNonExecFile(transfermanagerdlf.py,$(PYTHON_LIBDIR),644)
 InstallNonExecFile(diskserverlistcache.py,$(PYTHON_LIBDIR),644)
+InstallNonExecFile(modifydiskservers.py,$(PYTHON_LIBDIR),644)
 
 InstallTarget(transfermanagerd,755)
 ADMMANPAGE(transfermanagerd)

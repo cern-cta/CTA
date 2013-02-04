@@ -34,7 +34,7 @@ import threading
 import socket
 import daemon
 import castor_tools, connectionpool, dispatcher, serverqueue, aborter
-import synchronizer, suicider, reportmanager, diskserverlistcache
+import synchronizer, suicider, reportmanager, diskserverlistcache, modifydiskservers
 import dlf
 from transfermanagerdlf import msgs
 from threadpoolserver import ThreadPoolServer
@@ -444,10 +444,27 @@ class TransferManagerService(rpyc.Service):
       self.__class__.releaseDbConnection()
 
   def exposed_stateReport(self, report):
-    '''called by diskservers to report there state. Passes the report over to the ReportManager
+    '''called by diskservers to report their state. Passes the report over to the ReportManager
        that will handle it and ultimately update the stager database.
        Returns the status of the diskserver and all its fileSystems'''
     reportmanager.handleStateReport(report)
+
+  def exposed_modifyDiskServers(self, targets, state, mountPoints, diskPool):
+    '''called by the modifydiskserver CLI to modify a set of diskservers. Returns a user-friendly message .'''
+    dlf.write(msgs.INVOKINGMODIFYDISKSERVERS, Targets=str(targets), State=state, MountPoints=str(mountPoints))
+    try:
+      try:
+        self.__class__.acquireDbConnection()
+        return modifydiskservers.modifyDiskServers(self.__class__.dbConnection(), targets, state, mountPoints, diskPool)
+      except Exception, e:
+        # "Exception caught while modifying diskserver(s), giving up" message
+        dlf.writeerr(msgs.MODIFYDISKSERVERSEXCEPTION, Message=str(e), Type=str(e.__class__), Targets=str(targets), State=state, MountPoints=str(mountPoints), DiskPool=diskPool)
+        # check whether we should reconnect to DB, and do so if needed
+        self.__class__.dbConnection().checkForReconnection(e)
+        raise e
+    finally:
+      self.__class__.releaseDbConnection()
+
 
 def initQueues():
   '''initializes the queue of pending transfers by rebuilding it from the local queues of each diskserver'''

@@ -170,14 +170,14 @@ def _writep(priority, msgnb, **params):
 
         # Integers
         try:
-            rawmsg += '%s=%s ' % (param[0:20], int(value))
+            rawmsg += '%s=%d ' % (param[0:20], int(value))
             continue
         except ValueError:
             pass
 
         # Floats
         try:
-            rawmsg += '%s=%s ' % (param[0:20], float(value))
+            rawmsg += '%s=%f ' % (param[0:20], float(value))
             continue
         except ValueError:
             pass

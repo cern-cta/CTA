@@ -49,7 +49,8 @@ msgs = dlf.enum('ABORTEREXCEPTION', 'SYNCHROFAILED', 'SYNCHROEXCEPTION',
                 'D2DSYNCFAILED', 'SYNCHROENDEDTRANSFER', 'INVOKINGGETALLRUNNINGD2DSOURCETRANSFERS',
                 'SYNCDBWITHD2DSRC', 'COULDNOTCONTACTTM', 'TRANSFERSTARTCONFIRMED',
                 'D2DENDEXCEPTION', 'D2DDESTRESTARTERROR', 'INVOKINGTRANSFERBACKTOQUEUE',
-                'TRANSFERSRCCANCELED', 'REPORTMANAGEREXCEPTION')
+                'TRANSFERSRCCANCELED', 'REPORTMANAGEREXCEPTION', 'INVOKINGMODIFYDISKSERVERS',
+                'MODIFYDISKSERVERSEXCEPTION')
 
 # initialization of the messages
 dlf.addmessages({msgs.ABORTEREXCEPTION : 'Caught exception in Aborter thread',
@@ -112,5 +113,8 @@ dlf.addmessages({msgs.ABORTEREXCEPTION : 'Caught exception in Aborter thread',
                  msgs.D2DDESTRESTARTERROR : 'Unable to put d2ddest back in queue as sources are missing. Probable race condition',
                  msgs.INVOKINGTRANSFERBACKTOQUEUE : 'Invoking transferBackToQueue',
                  msgs.TRANSFERSRCCANCELED : 'denying start of source transfer as it has been canceled',
-                 msgs.REPORTMANAGEREXCEPTION : 'Caught exception in Aborter thread'})
+                 msgs.REPORTMANAGEREXCEPTION : 'Caught exception in Aborter thread',
+                 msgs.INVOKINGMODIFYDISKSERVERS : 'Invoking modifyDiskServers',
+                 msgs.MODIFYDISKSERVERSEXCEPTION : 'Exception caught while modifying diskserver(s), giving up'
+})
 

@@ -24,7 +24,6 @@ debian/castor/usr/share/man/man1/entermigrationroute.1castor.gz
 debian/castor/usr/share/man/man1/modifymigrationroute.1castor.gz
 debian/castor/usr/share/man/man1/deletemigrationroute.1castor.gz
 debian/castor/usr/share/man/man1/printmigrationroute.1castor.gz
-debian/castor/usr/share/man/man1/modifydiskserver.1castor.gz
 debian/castor/usr/share/man/man1/deletediskserver.1castor.gz
 debian/castor/usr/share/man/man1/printdiskserver.1castor.gz
 debian/castor/usr/share/man/man1/cleanLostFiles.1castor.gz
