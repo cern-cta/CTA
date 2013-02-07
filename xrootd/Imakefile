@@ -26,6 +26,7 @@ CXXFLAGS += -I$(XROOT_LOCATION)/include/xrootd -Wno-error
 AddLdFlags( -L$(XROOT_LIB_LOCATION) -lstdc++ )
 
 XCASTOR2FS_SRCS= XrdxCastor2Fs.cc \
+	         XrdxCastor2FsStats.cc\
 	         XrdxCastor2ServerAcc.cc \
                  XrdxCastor2Stager.cc \
                  XrdxCastor2Proc.cc \

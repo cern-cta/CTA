@@ -1,8 +1,31 @@
-//         $Id: XrdxCastor2Fs.hh,v 1.6 2009/07/06 08:27:11 apeters Exp $
+/*******************************************************************************
+ *                      XrdxCastor2Fs.hh
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2012  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ *
+ * @author Elvin Sindrilaru & Andreas Peters - CERN
+ * 
+ ******************************************************************************/
 
 #ifndef __XCASTOR2_FS_H__
 #define __XCASTOR2_FS_H__
 
+/*-----------------------------------------------------------------------------*/
 #include <sys/types.h>
 #include <unistd.h>
 #include <dirent.h>
@@ -18,795 +41,995 @@
 #include <attr/xattr.h>
 #include <utime.h>
 #include <pwd.h>
-
+/*-----------------------------------------------------------------------------*/
+#include "serrno.h"
+#include "Cns_api.h"
+/*-----------------------------------------------------------------------------*/
+#include "XrdxCastor2FsStats.hh"
 #include "XrdAcc/XrdAccAuthorize.hh"
 #include "XrdClient/XrdClientAdmin.hh"
 #include "XrdSfs/XrdSfsInterface.hh"
-#include "XrdOuc/XrdOucHash.hh"
-#include "XrdOuc/XrdOucTable.hh"
 #include "XrdOuc/XrdOucTrace.hh"
 #include "XrdOfs/XrdOfsEvr.hh"
 #include "XrdCms/XrdCmsFinder.hh"
 #include "XrdSec/XrdSecEntity.hh"
-#include "XrdxCastor2FsConstants.hh"
 #include "XrdxCastor2ServerAcc.hh"
 #include "XrdxCastor2Proc.hh"
 #include "XrdxCastor2ClientAdmin.hh"
-#include "XrdSys/XrdSysPthread.hh"
-#include "XrdSys/XrdSysTimer.hh"
-
+/*-----------------------------------------------------------------------------*/
 #define RFIO_NOREDEFINE
-#include "serrno.h"
-#include "Cns_api.h"
 
+//------------------------------------------------------------------------------
+//! Get authorization plugin object 
+//------------------------------------------------------------------------------
+extern "C" XrdAccAuthorize* XrdAccAuthorizeObject( XrdSysLogger* lp,
+                                                   const char*   cfn,
+                                                   const char*   parm );
 
-extern "C" XrdAccAuthorize *XrdAccAuthorizeObject(XrdSysLogger *lp,
-                                                  const char   *cfn,
-                                                  const char   *parm);
-
+//! Forward declarations
 class XrdSysError;
 class XrdSysLogger;
-
-/******************************************************************************/
-/*            U n i x   F i l e   S y s t e m   I n t e r f a c e             */
-/******************************************************************************/
-
-class XrdxCastor2FsUFS
-{
-public:
-
-static int Chmod(const char *fn, mode_t mode) {return Cns_chmod(fn, mode);}
-
-static int Chown(const char *fn, uid_t owner, gid_t group) {return Cns_chown(fn, owner,group);}
-
-static int Lchown(const char *fn, uid_t owner, gid_t group) {return Cns_lchown(fn, owner,group);}
-
-static int Close(int fd) {return close(fd);}
-
-static int Mkdir(const char *fn, mode_t mode) {return Cns_mkdir(fn, mode);}
-
-static int Open(const char *path, int oflag, mode_t omode)
-               {return open(path, oflag, omode);}
-
-static int Creat(const char *path, mode_t omode)
-               {return Cns_creat(path, omode);}
-
-static int Rem(const char *fn) {return Cns_unlink(fn);}
-
-static int Remdir(const char *fn) {return Cns_rmdir(fn);}
-
-static int Rename(const char *ofn, const char *nfn) {return Cns_rename(ofn, nfn);}
-
-static int SetFileSize(const char *fn, unsigned long long size, time_t mtime) { return Cns_setfsize(fn, NULL,size,mtime,0);}
-
-static int Statfd(int fd, struct stat *buf) {return fstat(fd, buf);}
-
-static int Statfn(const char *fn, struct Cns_filestatcs *buf) {return Cns_statcs(fn, buf);}
-
-static int Lstatfn(const char *fn, struct Cns_filestat *buf) {return Cns_lstat(fn, buf);}
-
-static int Readlink(const char *fn, char *buf, size_t bufsize) {return Cns_readlink(fn, buf,bufsize);}
-
-static int SetId(uid_t uid, gid_t gid) { return Cns_setid(uid,gid); }
-   
-static int Symlink(const char *oldn, const char *newn) {return Cns_symlink(oldn, newn);}
-
-static int Unlink(const char* fn) {return Cns_unlink(fn);}
-
-static int Access(const char* fn, int mode) {return Cns_access(fn,mode);}
-
-  static int Utimes(const char* /*fn*/, struct timeval* /*tvp*/) {return 0;/* return Cns_utimes(fn,tvp);*/}
-
-static DIR* OpenDir(const char* dn) { return (DIR*)Cns_opendir(dn);}
-static struct dirent*  ReadDir(DIR* dp) { return Cns_readdir((Cns_DIR*) dp); }
-static int  CloseDir(DIR* dp) { return Cns_closedir((Cns_DIR*) dp); }
-
-};
-
-/******************************************************************************/
-/*                 X r d C a t a l o g F s P e r m s                          */
-/******************************************************************************/
-class XrdxCastor2FsPerms {
-protected:
-public:
-
-  XrdOucString name;
-  uid_t owner_id;
-  gid_t group_id;
-  mode_t mode;
-
-  XrdxCastor2FsPerms(const char* path, uid_t oid,  gid_t gid, mode_t m);
-
-  bool       allows(const XrdSecEntity* client,const char* privs, XrdOucErrInfo &error);
-  static int Lifetime;
-  virtual ~XrdxCastor2FsPerms(){ };
-private:
-};
-
-class XrdxCastor2FsGroupInfo {
-public:
-  XrdOucString DefaultGroup;
-  XrdOucString AllGroups;
-  struct passwd Passwd;
-  int Lifetime;
-
-  XrdxCastor2FsGroupInfo(const char* defgroup="", const char* allgrps="", struct passwd *pw=0, int lf=60) { DefaultGroup = defgroup; AllGroups = allgrps; if (pw) memcpy(&Passwd,pw,sizeof(struct passwd)); Lifetime=lf;}
-  virtual ~XrdxCastor2FsGroupInfo() {}
-};
-
-class XrdxCastor2FsNotifier {
-public:
-  XrdOucString NotifyDirectory;
-  
-  bool Notify(const char* owner, const char* grouprole, const char* filename);
-
-  XrdxCastor2FsNotifier(const char* notifydir) {
-    NotifyDirectory = notifydir;
-  }
-
-private:
-  FILE* NotifyFile;
-  time_t NotifyTime;
-  XrdOucString NotifyFileName;
-
-  virtual ~XrdxCastor2FsNotifier() {}
-};
-
-/******************************************************************************/
-/*                 X r d C a t a l o g F s D i r e c t o r y                  */
-/******************************************************************************/
-  
-class XrdxCastor2FsDirectory : public XrdSfsDirectory
-{
-public:
-
-        int         open(const char              *dirName,
-                         const XrdSecClientName  *client = 0,
-                         const char              *opaque = 0);
-
-        const char *nextEntry();
-
-        int         close();
-
-const   char       *FName() {return (const char *)fname;}
-
-                    XrdxCastor2FsDirectory(char *user=0, int MonID=0) : XrdSfsDirectory(user,MonID)
-                                {ateof = 0; fname = 0;
-                                 dh    = (DIR *)0;
-                                 d_pnt = &dirent_full.d_entry;
-                                }
-
-                   ~XrdxCastor2FsDirectory() {if (dh) close();}
-private:
-
-DIR           *dh;  // Directory stream handle
-char           ateof;
-char          *fname;
-XrdOucString   entry;
-
-struct {struct dirent d_entry;
-               char   pad[MAXNAMLEN];   // This is only required for Solaris!
-       } dirent_full;
-
-struct dirent *d_pnt;
-
-};
-
-/******************************************************************************/
-/*                      X r d C a t a l o g F s S t a t s                       */
-/******************************************************************************/
-
-
-class XrdxCastor2StatULongLong {
-private:
-  unsigned long long cnt;
-  
-public:
-  void Inc() {cnt++;}
-  unsigned long long Get() {return cnt;}
-  void Reset() {cnt=0;}
-  XrdxCastor2StatULongLong() {Reset();};
-  virtual ~XrdxCastor2StatULongLong() {};
-};
-
-
-class XrdxCastor2FsStats 
-{
-private:
- 
-  long long read300s[300];
-  long long write300s[300];
-  long long stat300s[300];
-  long long readd300s[300];
-  long long rm300s[300];
-  long long cmd300s[300];
-
-  double readrate1s;
-  double readrate60s;
-  double readrate300s;
-  
-  double writerate1s;
-  double writerate60s;
-  double writerate300s;
-
-  double statrate1s;
-  double statrate60s;
-  double statrate300s;
-
-  double readdrate1s;
-  double readdrate60s;
-  double readdrate300s;
-
-  double rmrate1s;
-  double rmrate60s;
-  double rmrate300s;
-
-  double cmdrate1s;
-  double cmdrate60s;
-  double cmdrate300s;
-
-  XrdOucHash<XrdxCastor2StatULongLong> ServerRead;
-  XrdOucHash<XrdxCastor2StatULongLong> ServerWrite;
-  XrdOucTable<XrdOucString> *ServerTable;
-
-  XrdOucHash<XrdxCastor2StatULongLong> UserRead;
-  XrdOucHash<XrdxCastor2StatULongLong> UserWrite;
-  XrdOucTable<XrdOucString> *UserTable;
-
-  XrdSysMutex statmutex;
-  XrdxCastor2Proc* Proc;
-
-public:
-
-  void IncRead() {
-    time_t now = time(NULL);
-    statmutex.Lock();
-    read300s[(now+1)%300] = 0;
-    read300s[now%300]++;
-    IncCmd(false);
-    statmutex.UnLock();
-  }
-
-  void IncWrite() {
-    time_t now = time(NULL);
-    statmutex.Lock();
-    write300s[(now+1)%300] = 0;
-    write300s[now%300]++;
-    IncCmd(false);
-    statmutex.UnLock();
-  }
-
-  void IncStat() {
-    time_t now = time(NULL);
-    statmutex.Lock();
-    stat300s[(now+1)%300] = 0;
-    stat300s[now%300]++;
-    IncCmd(false);
-    statmutex.UnLock();
-  }
-
-  void IncReadd() {
-    time_t now = time(NULL);
-    statmutex.Lock();
-    readd300s[(now+1)%300] = 0;
-    readd300s[now%300]++;
-    IncCmd(false);
-    statmutex.UnLock();
-  }
-
-  void IncRm() {
-    time_t now = time(NULL);
-    statmutex.Lock();
-    rm300s[(now+1)%300] = 0;
-    rm300s[now%300]++;
-    IncCmd(false);
-    statmutex.UnLock();
-  }
-
-  void IncCmd(bool lock=true) {
-    time_t now = time(NULL);
-    if (lock) statmutex.Lock();
-    cmd300s[(now+1)%300] = 0;
-    cmd300s[now%300]++;
-    if (lock) statmutex.UnLock();
-  }
-  
-  void IncServerRead(const char* server) {
-    statmutex.Lock();
-    XrdxCastor2StatULongLong* rc = ServerRead.Find(server);
-    if (!rc) {
-      rc = new XrdxCastor2StatULongLong();
-      rc->Inc();
-      ServerRead.Add(server,rc);
-      if (!ServerTable->Find(server)) {
-	ServerTable->Insert(new XrdOucString(server),server);
-      }
-    } else {
-      rc->Inc();
-    }
-    statmutex.UnLock();
-  }
-
-  void IncServerWrite(const char* server) {
-    statmutex.Lock();
-    XrdxCastor2StatULongLong* rc = ServerWrite.Find(server);
-    if (!rc) {
-      rc = new XrdxCastor2StatULongLong();
-      rc->Inc();
-      ServerWrite.Add(server,rc);
-      if (!ServerTable->Find(server)) {
-	ServerTable->Insert(new XrdOucString(server),server);
-      }
-    } else {
-      rc->Inc();
-    }
-    statmutex.UnLock();
-  }
-
-  void IncUserRead(const char* user) {
-    statmutex.Lock();
-    XrdxCastor2StatULongLong* rc = UserRead.Find(user);
-    if (!rc) {
-      rc = new XrdxCastor2StatULongLong();
-      rc->Inc();
-      UserRead.Add(user,rc);
-      UserTable->Insert(new XrdOucString(user),user);
-    } else {
-      rc->Inc();
-    }
-    statmutex.UnLock();
-  }
-
-  void IncUserWrite(const char* user) {
-    statmutex.Lock();
-    XrdxCastor2StatULongLong* rc = UserWrite.Find(user);
-    if (!rc) {
-      rc = new XrdxCastor2StatULongLong();
-      rc->Inc();
-      UserWrite.Add(user,rc);
-      UserTable->Insert(new XrdOucString(user),user);
-    } else {
-      rc->Inc();
-    }
-    statmutex.UnLock();
-  }
-
-  double ReadRate(int nbins) {
-    if (!nbins)
-      return 0;
-
-    time_t now = time(NULL);
-    double sum=0;
-    for (int i=0 ;i < nbins; i++) {
-      sum+= (read300s[(now-1-i)%300]);
-    }
-    sum /= nbins;
-    return sum;
-  }
-
-  double WriteRate(int nbins) {
-    if (!nbins)
-      return 0;
-    time_t now = time(NULL);
-    double sum=0;
-    for (int i=0 ;i < nbins; i++) {
-      sum+= (write300s[(now-1-i)%300]);
-    }
-    sum /= nbins;
-    return sum;
-  }
-
-
-  double StatRate(int nbins) {
-    if (!nbins)
-      return 0;
-    time_t now = time(NULL);
-    double sum=0;
-    for (int i=0 ;i < nbins; i++) {
-      sum+= (stat300s[(now-1-i)%300]);
-    }
-    sum /= nbins;
-    return sum;
-  }
-
-  double ReaddRate(int nbins) {
-    if (!nbins)
-      return 0;
-    time_t now = time(NULL);
-    double sum=0;
-    for (int i=0 ;i < nbins; i++) {
-      sum+= (readd300s[(now-1-i)%300]);
-    }
-    sum /= nbins;
-    return sum;
-  }
-
-  double RmRate(int nbins) {
-    if (!nbins)
-      return 0;
-    time_t now = time(NULL);
-    double sum=0;
-    for (int i=0 ;i < nbins; i++) {
-      sum+= (rm300s[(now-1-i)%300]);
-    }
-    sum /= nbins;
-    return sum;
-  }
-
-  double CmdRate(int nbins) {
-    if (!nbins)
-      return 0;
-
-    time_t now = time(NULL);
-    double sum=0;
-    for (int i=0 ;i < nbins; i++) {
-      sum+= (cmd300s[(now-1-i)%300]);
-    }
-    sum /= nbins;
-    return sum;
-  }
-  void Update(); 
-    
-  void UpdateLoop() {
-    while (1) {
-      XrdSysTimer::Wait(490);
-      time_t now = time(NULL);
-      read300s[(now+1)%300] = 0;
-      write300s[(now+1)%300] = 0;
-      stat300s[(now+1)%300] = 0;
-      readd300s[(now+1)%300] = 0;
-      rm300s[(now+1)%300] = 0;
-      cmd300s[(now+1)%300] = 0;
-      Update();
-    }
-  }
-
-  void Lock() {
-    statmutex.Lock();
-  }
-
-  void UnLock() {
-    statmutex.UnLock();
-  }
-
-  XrdxCastor2FsStats(XrdxCastor2Proc* proc=NULL){
-    Lock();
-    readrate1s=readrate60s=readrate300s=0;
-    writerate1s=writerate60s=writerate300s=0;
-    statrate1s=statrate60s=statrate300s=0;
-    readdrate1s=readdrate60s=readdrate300s=0;
-    rmrate1s=rmrate60s=rmrate300s=0;
-    cmdrate1s=cmdrate60s=cmdrate300s=0;
-
-    memset(read300s,0,sizeof(read300s));
-    memset(write300s,0,sizeof(write300s));
-    memset(stat300s,0,sizeof(stat300s));
-    memset(readd300s,0,sizeof(readd300s));
-    memset(rm300s,0,sizeof(rm300s));
-    memset(cmd300s,0,sizeof(cmd300s));
-
-    ServerTable = new XrdOucTable<XrdOucString> (XCASTOR2FS_MAXFILESYSTEMS);
-    UserTable   = new XrdOucTable<XrdOucString> (XCASTOR2FS_MAXDISTINCTUSERS);
-
-    Proc = proc;
-    UnLock();
-  }
-
-  void SetProc(XrdxCastor2Proc* proc) {
-    Proc = proc;
-  }
-
-  virtual ~XrdxCastor2FsStats(){
-    if (ServerTable) delete ServerTable;
-    if (UserTable)   delete UserTable;
-  };
-};
-
-extern void* XrdxCastor2FsStatsStart(void *pp) ;
-
-/******************************************************************************/
-/*                      X r d C a t a l o g F s F i l e                         */
-/******************************************************************************/
-  
 class XrdSfsAio;
 
-class XrdxCastor2FsFile : public XrdSfsFile
+/******************************************************************************/
+/*                    X r d x C a s t o r 2 F s U F S                         */
+/******************************************************************************/
+
+//------------------------------------------------------------------------------
+//! Class XrdxCastor2UFS - Unix File System Interface - this is the interface
+//! with the Castor name space
+//------------------------------------------------------------------------------
+class XrdxCastor2FsUFS
 {
-public:
+  public:
 
-        int            open(const char                *fileName,
-                                  XrdSfsFileOpenMode   openMode,
-                                  mode_t               createMode,
-                            const XrdSecEntity        *client = 0,
-                            const char                *opaque = 0);
+    static int Chmod( const char* fn, mode_t mode ) {
+      return Cns_chmod( fn, mode );
+    }
 
-        int            close();
+    static int Chown( const char* fn, uid_t owner, gid_t group ) {
+      return Cns_chown( fn, owner, group );
+    }
 
-        const char    *FName() {return fname;}
+    static int Lchown( const char* fn, uid_t owner, gid_t group ) {
+      return Cns_lchown( fn, owner, group );
+    }
 
+    static int Close( int fd ) {
+      return close( fd );
+    }
 
-  int Fscmd( const char*         /*path*/,  
-             const char*         /*path2*/, 
-             const char*         /*orgipath*/, 
-             const XrdSecEntity* /*client*/,  
-             XrdOucErrInfo&      /*error*/, 
-             const char*         /*info*/ ) { return SFS_OK;}
+    static int Mkdir( const char* fn, mode_t mode ) {
+      return Cns_mkdir( fn, mode );
+    }
 
-        int            getMmap(void **Addr, off_t &Size)
-                              {if (Addr) Addr = 0; Size = 0; return SFS_OK;}
+    static int Open( const char* path, int oflag, mode_t omode ) {
+      return open( path, oflag, omode );
+    }
 
-  int read(XrdSfsFileOffset /*fileOffset*/,
-           XrdSfsXferSize /*preread_sz*/) {return SFS_OK;}
+    static int Creat( const char* path, mode_t omode ) {
+      return Cns_creat( path, omode );
+    }
 
-        XrdSfsXferSize read(XrdSfsFileOffset   fileOffset,
-                            char              *buffer,
-                            XrdSfsXferSize     buffer_size);
+    static int Rem( const char* fn ) {
+      return Cns_unlink( fn );
+    }
 
-        int            read(XrdSfsAio *aioparm);
+    static int Remdir( const char* fn ) {
+      return Cns_rmdir( fn );
+    }
 
-        XrdSfsXferSize write(XrdSfsFileOffset   fileOffset,
-                             const char        *buffer,
-                             XrdSfsXferSize     buffer_size);
+    static int Rename( const char* ofn, const char* nfn ) {
+      return Cns_rename( ofn, nfn );
+    }
 
-        int            write(XrdSfsAio *aioparm);
+    static int SetFileSize( const char* fn, unsigned long long size, time_t mtime ) {
+      return Cns_setfsize( fn, NULL, size, mtime, 0 );
+    }
 
-        int            sync();
+    static int Statfd( int fd, struct stat* buf ) {
+      return fstat( fd, buf );
+    }
 
-        int            sync(XrdSfsAio *aiop);
+    static int Statfn( const char* fn, struct Cns_filestatcs* buf ) {
+      return Cns_statcs( fn, buf );
+    }
 
-        int            stat(struct stat *buf);
+    static int Lstatfn( const char* fn, struct Cns_filestat* buf ) {
+      return Cns_lstat( fn, buf );
+    }
 
-        int            truncate(XrdSfsFileOffset   fileOffset);
+    static int Readlink( const char* fn, char* buf, size_t bufsize ) {
+      return Cns_readlink( fn, buf, bufsize );
+    }
 
-  int getCXinfo(char* /*cxtype[4]*/, int &cxrsz) {return cxrsz = 0;}
+    static int SetId( uid_t uid, gid_t gid ) {
+      return Cns_setid( uid, gid );
+    }
 
-        int            fctl(int, const char*, XrdOucErrInfo&) {return 0;}
+    static int Symlink( const char* oldn, const char* newn ) {
+      return Cns_symlink( oldn, newn );
+    }
 
-        XrdxCastor2FsFile(char *user=0, int MonID=0) : XrdSfsFile(user,MonID)
-                                          {oh = -1; fname = 0; ohp = NULL; ohperror = NULL; ohperror_cnt=0;}
-                      ~XrdxCastor2FsFile() {if (oh) close(); if (ohp) pclose(ohp); if (ohperror) pclose(ohperror);}
-private:
+    static int Unlink( const char* fn ) {
+      return Cns_unlink( fn );
+    }
 
-int   oh;
-FILE* ohp;            // file pointer to fs command pipe
-FILE* ohperror;       // file pointer to fs command stderr file 
-int   ohperror_cnt;   // cnt to find stderr file 
-XrdSysMutex     fscmdLock;  
+    static int Access( const char* fn, int mode ) {
+      return Cns_access( fn, mode );
+    }
 
-char *fname;
+    static int Utimes( const char* /*fn*/, struct timeval* /*tvp*/ ) {
+      return 0; /* return Cns_utimes(fn,tvp);*/
+    }
+
+    static DIR* OpenDir( const char* dn ) {
+      return ( DIR* )Cns_opendir( dn );
+    }
+    static struct dirent*  ReadDir( DIR* dp ) {
+      return Cns_readdir( ( Cns_DIR* ) dp );
+    }
+    static int  CloseDir( DIR* dp ) {
+      return Cns_closedir( ( Cns_DIR* ) dp );
+    }
 };
 
 
 /******************************************************************************/
-/*                          X r d C a t a l o g F s                           */
+/*               X r d x C a s t o r 2 F s G r o u p I n f o                  */
 /******************************************************************************/
-  
+
+//------------------------------------------------------------------------------
+//! Class XrdxCastor2FsGroupInfo
+//------------------------------------------------------------------------------
+class XrdxCastor2FsGroupInfo
+{
+  public:
+
+  XrdOucString DefaultGroup; ///<
+    XrdOucString AllGroups;  ///<
+    struct passwd Passwd;    ///<
+    int Lifetime;            ///<
+
+
+    //--------------------------------------------------------------------------
+    //! Constructor
+    //--------------------------------------------------------------------------
+    XrdxCastor2FsGroupInfo( const char*    defgroup = "", 
+                            const char*    allgrps = "", 
+                            struct passwd* pw = 0, 
+                            int            lf = 60 ) {
+      DefaultGroup = defgroup;
+      AllGroups = allgrps;
+
+      if ( pw ) memcpy( &Passwd, pw, sizeof( struct passwd ) );
+
+      Lifetime = lf;
+    }
+
+    //--------------------------------------------------------------------------
+    //! Destructor
+    //--------------------------------------------------------------------------
+    virtual ~XrdxCastor2FsGroupInfo() {}
+};
+
+
+/******************************************************************************/
+/*              X r d x C a s t o r 2 F s D i r e c t o r y                   */
+/******************************************************************************/
+
+//------------------------------------------------------------------------------
+//! Class XrdxCastor2FsDirectory
+//------------------------------------------------------------------------------
+class XrdxCastor2FsDirectory : public XrdSfsDirectory
+{
+  public:
+
+    //--------------------------------------------------------------------------
+    //! Constructor
+    //--------------------------------------------------------------------------
+    XrdxCastor2FsDirectory( char* user = 0, int MonID = 0 );
+
+
+    //--------------------------------------------------------------------------
+    //! Destructor
+    //--------------------------------------------------------------------------
+    virtual ~XrdxCastor2FsDirectory();
+
+
+    //--------------------------------------------------------------------------
+    //! Open the directory `path' and prepare for reading
+    //!
+    //! @param path fully qualified name of the directory to open.
+    //! @param cred authentication credentials, if any
+    //! @param info opaque information, if any
+    //!
+    //! @return SFS_OK upon success, otherwise SFS_ERROR
+    //!
+    //--------------------------------------------------------------------------
+    int open( const char*              dirName,
+              const XrdSecClientName*  client = 0,
+              const char*              opaque = 0 );
+
+
+    //--------------------------------------------------------------------------
+    //! Read the next directory entry
+    //!
+    //! @return Upon success, returns the contents of the next directory entry as
+    //!         a null terminated string. Returns a null pointer upon EOF or an
+    //!         error. To differentiate the two cases, getErrorInfo will return
+    //!         0 upon EOF and an actual error code (i.e., not 0) on error.
+    //!
+    //--------------------------------------------------------------------------
+    const char* nextEntry();
+
+
+    //--------------------------------------------------------------------------
+    //! Close the directory object
+    //!
+    //! @param cred authentication credentials, if any
+    //!
+    //! @return SFS_OK upon success and SFS_ERROR upon failure
+    //!
+    //--------------------------------------------------------------------------
+    int close();
+
+
+    //--------------------------------------------------------------------------
+    //! Get directory name 
+    //--------------------------------------------------------------------------
+    const char* FName() {
+      return ( const char* )fname;
+    }
+
+  private:
+
+    DIR*           dh;    ///< directory stream handle
+    char           ateof; ///< mark the end of dir entries
+    char*          fname; ///< directory name 
+    XrdOucString   entry; ///<
+
+    struct {
+      struct dirent d_entry; ///<
+      char   pad[MAXNAMLEN]; ///< This is only required for Solaris!
+    } dirent_full;
+
+    struct dirent* d_pnt; ///<
+
+};
+
+
+/******************************************************************************/
+/*                  X r d x C a s t o r 2 F s F i l e                         */
+/******************************************************************************/
+
+//------------------------------------------------------------------------------
+//! Class XrdxCastor2FsFile
+//------------------------------------------------------------------------------
+class XrdxCastor2FsFile : public XrdSfsFile
+{
+  public:
+
+    //--------------------------------------------------------------------------
+    //! Constructor
+    //--------------------------------------------------------------------------
+    XrdxCastor2FsFile( char* user = 0, int MonID = 0 );
+
+
+    //--------------------------------------------------------------------------
+    //! Destructor
+    //--------------------------------------------------------------------------
+    ~XrdxCastor2FsFile(); 
+
+    //--------------------------------------------------------------------------
+    //! Open the file `path' in the mode indicated by `open_mode'
+    //!
+    //! @param path fully qualified name of the file to open.
+    //! @param open_mode one of the following flag values:
+    //!                    SFS_O_RDONLY - Open file for reading.
+    //!                    SFS_O_WRONLY - Open file for writing.
+    //!                    SFS_O_RDWR   - Open file for update
+    //!                    SFS_O_CREAT  - Create the file open in RDWR mode
+    //!                    SFS_O_TRUNC  - Trunc  the file open in RDWR mode
+    //! @param Mode Posix access mode bits to be assigned to the file.
+    //!              These bits correspond to the standard Unix permission
+    //!              bits (e.g., 744 == "rwxr--r--"). Mode may also conatin
+    //!              SFS_O_MKPTH is the full path is to be created. The
+    //!              agument is ignored unless open_mode = SFS_O_CREAT.
+    //! @param client authentication credentials, if any
+    //! @param info opaque information to be used as seen fit
+    //!
+    //! @return OOSS_OK upon success, otherwise SFS_ERROR is returned
+    //!
+    //--------------------------------------------------------------------------
+    int open( const char*         fileName,
+              XrdSfsFileOpenMode  openMode,
+              mode_t              createMode,
+              const XrdSecEntity* client = 0,
+              const char*         opaque = 0 );
+
+
+    //--------------------------------------------------------------------------
+    //! Close the file object
+    //!
+    //! @return SFS_OK upon success and SFS_ERROR upon failure
+    //!
+    //--------------------------------------------------------------------------
+    int close();
+
+
+    //--------------------------------------------------------------------------
+    //! Get file name
+    //--------------------------------------------------------------------------
+    const char* FName() {
+      return fname;
+    }
+
+
+    //--------------------------------------------------------------------------
+    //!
+    //--------------------------------------------------------------------------
+    int Fscmd( const char*         /*path*/,
+               const char*         /*path2*/,
+               const char*         /*orgipath*/,
+               const XrdSecEntity* /*client*/,
+               XrdOucErrInfo&      /*error*/,
+               const char*         /*info*/ ) {
+      return SFS_OK;
+    }
+
+
+    //--------------------------------------------------------------------------
+    //!
+    //--------------------------------------------------------------------------
+    int getMmap( void** Addr, off_t& Size ) {
+      if ( Addr ) Addr = 0;
+      Size = 0;
+      return SFS_OK;
+    }
+
+
+    //--------------------------------------------------------------------------
+    //! Preread from file - disabled
+    //--------------------------------------------------------------------------
+    int read( XrdSfsFileOffset /*fileOffset*/,
+              XrdSfsXferSize   /*preread_sz*/ ) {
+      return SFS_OK;
+    }
+
+    //--------------------------------------------------------------------------
+    //! Read `blen' bytes at `offset' into 'buff' and return the actual
+    //!        number of bytes read.
+    //!
+    //! @param offset absolute byte offset at which to start the read
+    //! @param buff address of the buffer in which to place the data
+    //! @param blen size of the buffer. This is the maximum number
+    //!             of bytes that will be read from 'fd'
+    //!
+    //! @return number of bytes read upon success and SFS_ERROR o/w
+    //!
+    //--------------------------------------------------------------------------
+    XrdSfsXferSize read( XrdSfsFileOffset offset,
+                         char*            buff,
+                         XrdSfsXferSize   blen );
+
+
+    //--------------------------------------------------------------------------
+    //! Read from file asynchronous
+    //--------------------------------------------------------------------------
+    int read( XrdSfsAio* aioparm );
+
+
+    //--------------------------------------------------------------------------
+    //! Write `blen' bytes at `offset' from 'buff' and return the actual
+    //! number of bytes written.
+    //!
+    //! @param offset absolute byte offset at which to start the write.
+    //! @param buff address of the buffer from which to get the data.
+    //! @param blen size of the buffer. This is the maximum number
+    //!             of bytes that will be written to 'fd'.
+    //!
+    //! @return  number of bytes written upon success and SFS_ERROR o/w.
+    //!
+    //!  Notes: An error return may be delayed until the next write(), close(),
+    //!         or sync() call.
+    //!
+    //--------------------------------------------------------------------------
+    XrdSfsXferSize write( XrdSfsFileOffset offset,
+                          const char*      buff,
+                          XrdSfsXferSize   blen );
+
+
+    //--------------------------------------------------------------------------
+    //! Write to file - asynchrnous
+    //--------------------------------------------------------------------------
+    int write( XrdSfsAio* aioparm );
+
+
+    //--------------------------------------------------------------------------
+    //! Commit all unwritten bytes to physical media
+    //!
+    //! @return SFS_OK upon success and SFS_ERROR upon failure
+    //!
+    //--------------------------------------------------------------------------
+    int sync();
+
+
+    //--------------------------------------------------------------------------
+    //! Sync file - async mode
+    //--------------------------------------------------------------------------
+    int sync( XrdSfsAio* aiop );
+
+
+    //--------------------------------------------------------------------------
+    //! Function: Return file status information
+    //!
+    //! @param buf stat structure to hold the results
+    //!
+    //! @return SFS_OK upon success and SFS_ERROR upon failure
+    //!
+    //--------------------------------------------------------------------------
+    int stat( struct stat* buf );
+
+
+    //--------------------------------------------------------------------------
+    //! Set the length of the file object to 'flen' bytes
+    //!
+    //! @param flen new size of the file.
+    //!
+    //! @return SFS_OK upon success and SFS_ERROR upon failure.
+    //!
+    //!  Notes: If 'flen' is smaller than the current size of the file, the file
+    //!         is made smaller and the data past 'flen' is discarded. If 'flen'
+    //!         is larger than the current size of the file, a hole is created
+    //!         (i.e., the file is logically extended by filling the extra bytes
+    //!         with zeroes).
+    //!
+    //--------------------------------------------------------------------------
+    int truncate( XrdSfsFileOffset   fileOffset );
+
+
+    //--------------------------------------------------------------------------
+    //!
+    //--------------------------------------------------------------------------
+    int getCXinfo( char* /*cxtype[4]*/, int& cxrsz ) {
+      return cxrsz = 0;
+    }
+
+
+    //--------------------------------------------------------------------------
+    //!
+    //--------------------------------------------------------------------------
+    int fctl( int, const char*, XrdOucErrInfo& ) {
+      return 0;
+    }
+
+  private:
+
+    int   oh;
+    FILE* ohp;             ///< file pointer to fs command pipe
+    FILE* ohperror;        ///< file pointer to fs command stderr file
+    int   ohperror_cnt;    ///< cnt to find stderr file
+    XrdSysMutex fscmdLock; ///<
+    char* fname;           ///<
+};
+
+
+/******************************************************************************/
+/*                           X r d x C a s t o r 2 F s                        */
+/******************************************************************************/
+
+//------------------------------------------------------------------------------
+//! Class XrdxCastor2Fs
+//------------------------------------------------------------------------------
 class XrdxCastor2Fs : public XrdSfsFileSystem
 {
-  friend class XrdxCastor2FsFile;
-  friend class XrdxCastor2FsDirectory;
-  friend class XrdxCastor2FsStats;
+    friend class XrdxCastor2FsFile;
+    friend class XrdxCastor2FsDirectory;
+    friend class XrdxCastor2FsStats;
 
-public:
+  public:
 
-// Object Allocation Functions
-//
-        XrdSfsDirectory *newDir(char *user=0, int MonID=0)
-                        {return (XrdSfsDirectory *)new XrdxCastor2FsDirectory(user,MonID);}
+    enum eFSCTL { kFsctlxCastor2FsOffset = 40000, kFsctlSetMeta = 40001 };
 
-        XrdSfsFile      *newFile(char *user=0, int MonID=0)
-                        {return      (XrdSfsFile *)new XrdxCastor2FsFile(user,MonID);}
-
-// Other Functions
-//
-        int            chmod(const char             *Name,
-                                   XrdSfsMode        Mode,
-                                   XrdOucErrInfo    &out_error,
-                             const XrdSecEntity *client = 0,
-                             const char             *opaque = 0);
-
-        int            exists(const char                *fileName,
-                                    XrdSfsFileExistence &exists_flag,
-                                    XrdOucErrInfo       &out_error,
-                              const XrdSecEntity    *client = 0,
-                              const char                *opaque = 0);
-
-        int            _exists(const char                *fileName,
-                                    XrdSfsFileExistence &exists_flag,
-                                    XrdOucErrInfo       &out_error,
-                              const XrdSecEntity    *client = 0,
-                              const char                *opaque = 0);
-
-  enum eFSCTL { kFsctlxCastor2FsOffset= 40000, kFsctlSetMeta=40001 };
-
-        int            fsctl(const int               cmd,
-                             const char             *args,
-                                   XrdOucErrInfo    &out_error,
-			     const XrdSecEntity *client = 0);
-
-  int getStats(char* /*buff*/, int /*blen*/) {return 0;}
-
-const   char          *getVersion();
+    //--------------------------------------------------------------------------
+    //! Constructor
+    //--------------------------------------------------------------------------
+    XrdxCastor2Fs( XrdSysError* lp );
 
 
-        int            mkdir(const char             *dirName,
-                                   XrdSfsMode        Mode,
-                                   XrdOucErrInfo    &out_error,
-                             const XrdSecClientName *client = 0,
-                             const char             *opaque = 0);
+    //--------------------------------------------------------------------------
+    //! Destructor
+    //--------------------------------------------------------------------------
+    virtual ~XrdxCastor2Fs() {}
 
-        int            _mkdir(const char             *dirName,
-			      XrdSfsMode        Mode,
-                                   XrdOucErrInfo    &out_error,
-                             const XrdSecClientName *client = 0,
-                             const char             *opaque = 0);
 
-        int       stageprepare(const char           *path, 
-			       XrdOucErrInfo        &error, 
-			       const XrdSecEntity   *client, 
-			       const char* info);
+    //--------------------------------------------------------------------------
+    //! Configure plugin
+    //--------------------------------------------------------------------------
+    virtual int Configure( XrdSysError& );
+
+
+    //--------------------------------------------------------------------------
+    //! Initialisation
+    //--------------------------------------------------------------------------
+    virtual bool Init();
+
+
+    //--------------------------------------------------------------------------
+    //! Create new directory
+    //--------------------------------------------------------------------------
+    XrdSfsDirectory* newDir( char* user = 0, int MonID = 0 ) {
+      return ( XrdSfsDirectory* )new XrdxCastor2FsDirectory( user, MonID );
+    }
+
+
+    //--------------------------------------------------------------------------
+    //! Create new file
+    //--------------------------------------------------------------------------
+    XrdSfsFile* newFile( char* user = 0, int MonID = 0 ) {
+      return ( XrdSfsFile* )new XrdxCastor2FsFile( user, MonID );
+    }
+
+
+    //--------------------------------------------------------------------------
+    //! Change the mode on a file or directory
+    //!
+    //! @param path fully qualified name of the file tob created
+    //! @param Mode POSIX mode
+    //! @param out_error error information object to hold error details
+    //! @param client authentication credentials, if any
+    //! @param info opaque information, if any
+    //!
+    //! @return SFS_OK upon success and SFS_ERROR upon failure
+    //!
+    //--------------------------------------------------------------------------
+    int chmod( const char*         Name,
+               XrdSfsMode          Mode,
+               XrdOucErrInfo&      out_error,
+               const XrdSecEntity* client = 0,
+               const char*         opaque = 0 );
+
+
+    //--------------------------------------------------------------------------
+    //! Determine if file 'path' actually exists
+    //!
+    //! @param path fully qualified name of the file to be tested
+    //! @param file_exists address of the variable to hold the status of
+    //!             'path' when success is returned. The values may be:
+    //!              XrdSfsFileExistsIsDirectory - file not found but path is valid
+    //!              XrdSfsFileExistsIsFile      - file found
+    //!              XrdSfsFileExistsIsNo        - neither file nor directory
+    //! @param error error information object holding the details
+    //! @param client authentication credentials, if any
+    //! @param info opaque information, if any
+    //!
+    //! @return SFS_OK upon success and SFS_ERROR upon failure
+    //! Notes:    When failure occurs, 'file_exists' is not modified.
+    //!
+    //--------------------------------------------------------------------------
+    int exists( const char*          path,
+                XrdSfsFileExistence& exists_flag,
+                XrdOucErrInfo&       error,
+                const XrdSecEntity*  client = 0,
+                const char*          info = 0 );
+
+
+    //--------------------------------------------------------------------------
+    //! Determine if file 'path' actually exists - low level
+    //--------------------------------------------------------------------------
+    int _exists( const char*          path,
+                 XrdSfsFileExistence& exists_flag,
+                 XrdOucErrInfo&       error,
+                 const XrdSecEntity*  client = 0,
+                 const char*          info = 0 );
+
+
+    //--------------------------------------------------------------------------
+    //!
+    //--------------------------------------------------------------------------
+    int fsctl( const int               cmd,
+               const char*             args,
+               XrdOucErrInfo&    out_error,
+               const XrdSecEntity* client = 0 );
+
+
+    //--------------------------------------------------------------------------
+    //!
+    //--------------------------------------------------------------------------
+    int getStats( char* /*buff*/, int /*blen*/ ) {
+      return 0;
+    }
+
+
+    //--------------------------------------------------------------------------
+    //! Get version of the plugin
+    //--------------------------------------------------------------------------
+    const char* getVersion();
+
+
+    //--------------------------------------------------------------------------
+    //! Create a directory entry
+    //!
+    //! @param path fully qualified name of the file tob created
+    //! @param Mode POSIX mode setting for the directory. If the
+    //!        mode contains SFS_O_MKPTH, the full path is created
+    //! @param out_error error information object to hold error details
+    //! @param client authentication credentials, if any
+    //! @param info opaque information, if any
+    //!
+    //! @return SFS_OK upon success and SFS_ERROR upon failure
+    //!
+    //--------------------------------------------------------------------------
+    int mkdir( const char*             dirName,
+               XrdSfsMode              Mode,
+               XrdOucErrInfo&          out_error,
+               const XrdSecClientName* client = 0,
+               const char*             opaque = 0 );
+
+
+    //--------------------------------------------------------------------------
+    //! Create a directory entry - same as above
+    //--------------------------------------------------------------------------
+    int _mkdir( const char*             dirName,
+                XrdSfsMode              Mode,
+                XrdOucErrInfo&          out_error,
+                const XrdSecClientName* client = 0,
+                const char*             opaque = 0 );
+
+
+    //--------------------------------------------------------------------------
+    //!
+    //--------------------------------------------------------------------------
+    int stageprepare( const char*         path,
+                      XrdOucErrInfo&      error,
+                      const XrdSecEntity* client,
+                      const char*         info );
+
+
+    //--------------------------------------------------------------------------
+    //!
+    //--------------------------------------------------------------------------
+    int prepare( XrdSfsPrep&         pargs,
+                 XrdOucErrInfo&      out_error,
+                 const XrdSecEntity* client = 0 );
+
+
+    //--------------------------------------------------------------------------
+    //! Delete a file - stager_rm
+    //!
+    //! @param path fully qualified name of the file to be removed
+    //! @param einfo error information object to hold error details
+    //! @param client authentication credentials, if any
+    //! @param info opaque information, if any
+    //!
+    //! @return SFS_OK upon success and SFS_ERROR upon failure
+    //! 
+    //--------------------------------------------------------------------------
+    int rem( const char*         path,
+             XrdOucErrInfo&      out_error,
+             const XrdSecEntity* client = 0,
+             const char*         opaque = 0 );
+
+
+    //--------------------------------------------------------------------------
+    //! Delete a file from the namespace
+    //!
+    //! @param path fully qualified name of the file to be removed
+    //! @param einfo error information object to hold error details
+    //! @param client authentication credentials, if any
+    //! @param info opaque information, if any
+    //!
+    //! @return SFS_OK upon success and SFS_ERROR upon failure
+    //! 
+    //--------------------------------------------------------------------------
+    int _rem( const char*         path,
+              XrdOucErrInfo&      out_error,
+              const XrdSecEntity* client = 0,
+              const char*         opaque = 0 );
+
+
+    //--------------------------------------------------------------------------
+    //! Delete a directory from the namespace
+    //!
+    //! @param fully qualified name of the dir to be removed
+    //! @param einfo error information object to hold error details
+    //! @param client authentication credentials, if any
+    //! @param info opaque information, if any
+    //!
+    //! @return SFS_OK upon success and SFS_ERROR upon failure
+    //!
+    //--------------------------------------------------------------------------
+    int remdir( const char*         path,
+                XrdOucErrInfo&      out_error,
+                const XrdSecEntity* client = 0,
+                const char*         info = 0 );
+
+
+    //--------------------------------------------------------------------------
+    //! Delete a directory from the namespace
+    //!
+    //! @param fully qualified name of the dir to be removed
+    //! @param einfo error information object to hold error details
+    //! @param client authentication credentials, if any
+    //! @param info opaque information, if any
+    //!
+    //! @return SFS_OK upon success and SFS_ERROR upon failure
+    //!
+    //--------------------------------------------------------------------------
+    int _remdir( const char*         path,
+                 XrdOucErrInfo&      out_error,
+                 const XrdSecEntity* client = 0,
+                 const char*         opaque = 0 );
+
+
+    //--------------------------------------------------------------------------
+    //! Renames a file/directory with name 'old_name' to 'new_name'
+    //!
+    //! @param old_name fully qualified name of the file to be renamed
+    //! @param new_name fully qualified name that the file is to have
+    //! @param error error information structure, if an error occurs
+    //! @param client authentication credentials, if any
+    //! @param infoO old_name opaque information, if any
+    //! @param infoN new_name opaque information, if any
+    //!
+    //! @return SFS_OK upon success and SFS_ERROR upon failure
+    //!
+    //--------------------------------------------------------------------------
+    int rename( const char*         old_name,
+                const char*         new_name,
+                XrdOucErrInfo&      error,
+                const XrdSecEntity* client = 0,
+                const char*         infoO = 0,
+                const char*         infoN = 0 );
+
+
+    //--------------------------------------------------------------------------
+    //!  Get info on 'path' - all
+    //!
+    //! @param path fully qualified name of the file to be tested
+    //! @param buf stat structure to hold the results
+    //! @param error error information object holding the details
+    //! @param client authentication credentials, if any
+    //! @param info opaque information, if any
+    //!
+    //! @return SFS_OK upon success and SFS_ERROR upon failure
+    //!
+    //--------------------------------------------------------------------------
+    int stat( const char*         path,
+              struct stat*        buf,
+              XrdOucErrInfo&      error,
+              const XrdSecEntity* client = 0,
+              const char*         info = 0 );
+
+
+    //--------------------------------------------------------------------------
+    //!  Get info on 'path' - mode
+    //!
+    //! @param path fully qualified name of the file to be tested
+    //! @param buf stat structure to hold the results
+    //! @param error error information object holding the details
+    //! @param client authentication credentials, if any
+    //! @param info opaque information, if any
+    //!
+    //! @return SFS_OK upon success and SFS_ERROR upon failure
+    //!
+    //--------------------------------------------------------------------------
+    int stat( const char*          Name,
+              mode_t&              mode,
+              XrdOucErrInfo&       out_error,
+              const XrdSecEntity*  client = 0,
+              const char*          opaque = 0 );
   
-        int            prepare(      XrdSfsPrep       &pargs,
-                                     XrdOucErrInfo    &out_error,
-			     const XrdSecEntity *client = 0);
 
-        int            rem(const char             *path,
-                                 XrdOucErrInfo    &out_error,
-                           const XrdSecEntity *client = 0,
-                           const char             *opaque = 0);
-
-        int            _rem(const char             *path,
-                                 XrdOucErrInfo    &out_error,
-                           const XrdSecEntity *client = 0,
-                           const char             *opaque = 0);
-
-
-        int            remdir(const char             *dirName,
-                                    XrdOucErrInfo    &out_error,
-                              const XrdSecEntity *client = 0,
-                              const char             *opaque = 0);
-
-        int            _remdir(const char             *dirName,
-                                    XrdOucErrInfo    &out_error,
-                              const XrdSecEntity *client = 0,
-                              const char             *opaque = 0);
-
-        int            rename(const char             *oldFileName,
-                              const char             *newFileName,
-                                    XrdOucErrInfo    &out_error,
-                              const XrdSecEntity *client = 0,
-                              const char             *opaqueO = 0,
-                              const char             *opaqueN = 0);
-
-        int            stat(const char             *Name,
-                                  struct stat      *buf,
-                                  XrdOucErrInfo    &out_error,
-                            const XrdSecEntity *client = 0,
-                            const char             *opaque = 0);
-
-        int            lstat(const char            *Name,
-                                  struct stat      *buf,
-                                  XrdOucErrInfo    &out_error,
-                            const XrdSecEntity *client = 0,
-                            const char             *opaque = 0);
-
-        int            stat(const char             *Name,
-                                  mode_t           &mode,
-                                  XrdOucErrInfo    &out_error,
-                            const XrdSecEntity     *client = 0,
-                            const char             *opaque = 0)
-                       {struct stat bfr;
-                        int rc = stat(Name, &bfr, out_error, client,opaque);
-                        if (!rc) mode = bfr.st_mode;
-                        return rc;
-                       }
-
-        int            truncate(const char*, XrdSfsFileOffset, XrdOucErrInfo&, const XrdSecEntity*, const char*);
+    //--------------------------------------------------------------------------
+    //! Get info on 'path'
+    //!
+    //! @param path fully qualified name of the file to be tested
+    //! @param buf stat structiure to hold the results
+    //! @param error error information object holding the details
+    //! @param client authentication credentials, if any
+    //! @param info opaque information, if any
+    //!
+    //! @return SFS_OK upon success and SFS_ERROR upon failure
+    //!
+    //--------------------------------------------------------------------------
+    int lstat( const char*         path,
+               struct stat*        buf,
+               XrdOucErrInfo&      error,
+               const XrdSecEntity* client = 0,
+               const char*         info = 0 );
 
 
-        int            symlink(const char*, const char*, XrdOucErrInfo&, const XrdSecEntity*, const char*);
+    //--------------------------------------------------------------------------
+    //! Truncate 
+    //--------------------------------------------------------------------------
+    int truncate( const char*, XrdSfsFileOffset, XrdOucErrInfo&, 
+                  const XrdSecEntity*, const char* );
 
-        int            readlink(const char*, XrdOucString& ,  XrdOucErrInfo&, const XrdSecEntity*, const char*);
+    //--------------------------------------------------------------------------
+    //! Symbolic link
+    //--------------------------------------------------------------------------
+    int symlink( const char*, const char*, XrdOucErrInfo&, 
+                 const XrdSecEntity*, const char* );
 
-        int            access(const char*, int mode, XrdOucErrInfo&, const XrdSecEntity*, const char*);
+    //--------------------------------------------------------------------------
+    //! Read link
+    //--------------------------------------------------------------------------
+    int readlink( const char*, XrdOucString& ,  XrdOucErrInfo&, 
+                  const XrdSecEntity*, const char* );
 
-        int            utimes(const char*, struct timeval *tvp, XrdOucErrInfo&, const XrdSecEntity*, const char*);
+    //--------------------------------------------------------------------------
+    //! Access
+    //--------------------------------------------------------------------------
+    int access( const char*, int mode, XrdOucErrInfo&, const XrdSecEntity*, 
+                const char* );
 
-// Common functions
-//
-static  int            Mkpath(const char *path, mode_t mode, 
-                              const char *info=0, XrdSecEntity* client = NULL, XrdOucErrInfo* error = NULL);
-
-static  int            Emsg(const char *, XrdOucErrInfo&, int, const char *x,
-                            const char *y="");
-
-                       XrdxCastor2Fs(XrdSysError *lp);
-virtual               ~XrdxCastor2Fs() {}
-
-virtual int            Configure(XrdSysError &);
-virtual bool           Init();
-        int            Stall(XrdOucErrInfo &error, int stime, const char *msg);
-        bool           GetStageVariables(const char* Path, const char* Opaque, XrdOucString &stagevariables, uid_t client_uid, gid_t client_gid, const char* tident); 
-        int           SetStageVariables(const char* Path, const char* Opaque, XrdOucString stagevariables, XrdOucString &stagehost, XrdOucString &serviceclass, int n, const char* tident);
-
-
-        char          *ConfigFN;       
-
-static  bool           Map(XrdOucString inmap, XrdOucString &outmap);
-        bool           MapCernCertificates;
-        XrdOucString   GridMapFile;
-        XrdOucString   VomsMapFile;
-        XrdOucString   LocationCacheDir;
-        void           ReloadGridMapFile();
-        void           ReloadVomsMapFile();
-        bool           VomsMapGroups(const XrdSecEntity* client, XrdSecEntity& mappedclient, XrdOucString& allgroups, XrdOucString& defaultgroup); 
-
-// we must check if all this things need to be thread safed with a mutex ...
-static  XrdOucHash<XrdOucString> *filesystemhosttable;
-static  XrdSysMutex               filesystemhosttablelock;
-static  XrdOucHash<XrdOucString> *nstable;
-static  XrdOucHash<XrdOucString> *stagertable;
-static  XrdOucHash<XrdOucString> *stagerpolicy;
-static  XrdOucHash<XrdOucString> *roletable;
-static  XrdOucHash<XrdOucString> *stringstore;
-static  XrdOucHash<XrdSecEntity> *secentitystore; 
-static  XrdOucHash<struct passwd> *passwdstore;
-static  XrdOucHash<XrdOucString>  *gridmapstore;
-static  XrdOucHash<XrdOucString>  *vomsmapstore;
-static  XrdOucHash<XrdxCastor2FsPerms> *nsperms;
-static  XrdOucHash<XrdxCastor2FsGroupInfo>  *groupinfocache;
-static  XrdOucHash<XrdxCastor2ClientAdmin> *clientadmintable;
+    //--------------------------------------------------------------------------
+    //! Utimes
+    //--------------------------------------------------------------------------
+    int utimes( const char*, struct timeval* tvp, XrdOucErrInfo&, 
+                const XrdSecEntity*, const char* );
 
 
-static  int TokenLockTime;  // -> specifies the grace period for client to show up on a disk server in seconds before the token expires
+   //---------------------------------------------------------------------------
+   //! Create a directory path
+   //!
+   //! @param path fully qualified name of the new path.
+   //! @param mode new mode that each new directory is to have.
+   //! @param info opaque information, if any
+   //!
+   //! @return 0 upon success and -errno upon failure
+   //!
+   //---------------------------------------------------------------------------
+   static int Mkpath( const char*    path, 
+                      mode_t         mode,
+                      const char*    info = 0, 
+                      XrdSecEntity*  client = NULL, 
+                      XrdOucErrInfo* error = NULL );
 
-        XrdxCastor2ServerAcc* ServerAcc; // -> authorization module for token encryption/decryption
-        XrdSysMutex     encodeLock;
-        XrdSysMutex     locatorLock;
-        XrdSysMutex     PermissionMutex;      // -> protecting the permission hash
-        XrdSysMutex     StoreMutex;           // -> protecting the string+pwd store hash
-        XrdSysMutex     MapMutex;             // -> protecting all ROLEMAP, GETID etc. functions
-        XrdSysMutex     SecEntityMutex;       // -> protecting the sec entity hash
-        XrdSysMutex     GridMapMutex;         // -> protecting the gridmap store hash
-        XrdSysMutex     VomsMapMutex;         // -> protecting the vomsmap store hash
-        XrdSysMutex     ClientMutex;
-        XrdOucString     xCastor2FsName;       // -> mount point of the catalog fs
-        XrdOucString     xCastor2FsTargetPort;  // -> xrootd port where redirections go on the OSTs -default is 1094
-        XrdOucString     xCastor2FsLocatePolicy; // -> can be configured to read only from the primary FS, from the twin FS or balanced between both 
-
-        long long        xCastor2FsDelayRead;  // if true, all reads get a default delay to come back later
-        long long        xCastor2FsDelayWrite; // if true, all writes get a default dealy to come back later
-        XrdOucString     Procfilesystem;     // -> location of the proc file system directory
-        bool             ProcfilesystemSync; // -> sync every access on disk
-        XrdOucString     DeletionDirectory;  // -> directory where deletion spool files are stored
-        XrdOucString     zeroProc;           // -> path to a 0-byte file in the proc filesystem
-
-        XrdOucString     AuthLib;            // -> path to a possible authorizationn library
-        bool             authorize;          // -> determins if the autorization should be applied or not
-        XrdAccAuthorize *Authorization;      // ->Authorization   Service
-
-protected:
-        char*            HostName;           // -> our hostname as derived in XrdOfs
-        char*            HostPref;           // -> our hostname as derived in XrdOfs without domain
-        XrdOucString     ManagerId;          // -> manager id in <host>:<port> format
-        XrdOucString     ManagerLocation;    // -> [::<IP>]:<port>
-        bool             IssueCapability;    // -> attach an opaque capability for verification on the disk server
-        XrdxCastor2Proc*  Proc;              // -> proc handling object
-        XrdxCastor2FsStats Stats;
-        XrdOfsEvr        evrObject;          // Event receiver
-        XrdCmsFinderTRG* Balancer;           // 
+    //--------------------------------------------------------------------------
+    //! Compose error message
+    //!
+    //! @param pfx message prefix value
+    //! @param einfo place to put text and error code 
+    //! @param ecode the error code 
+    //! @param op operation beegin performed
+    //! @param tager the taget (e.g. file name )
+    //!
+    //--------------------------------------------------------------------------
+    static int Emsg( const char*    pfx, 
+                     XrdOucErrInfo& einfo, 
+                     int            ecode , 
+                     const char*    op,
+                     const char*    tagert = "" );
 
 
-private:
+    //--------------------------------------------------------------------------
+    //! Stall message
+    //!
+    //! @param error error text and code 
+    //! @param stime seconds to stall 
+    //! @param msg message to give
+    //!
+    //! @return number of seconds to stall
+    //!
+    //--------------------------------------------------------------------------
+    int Stall( XrdOucErrInfo& error, int stime, const char* msg );
 
-static  XrdSysError *eDest;
 
-        XrdxCastor2FsPerms *getpermission( const XrdSecEntity    *client,
-					   const char            *path,
-					   const Access_Operation oper,
-					   const char            *opaque,
-					   XrdOucErrInfo   &error);
+    //--------------------------------------------------------------------------
+    //! Get stage variables
+    //--------------------------------------------------------------------------
+    bool GetStageVariables( const char*   Path, 
+                            const char*   Opaque, 
+                            XrdOucString& stagevariables, 
+                            uid_t         client_uid, 
+                            gid_t         client_gid, 
+                            const char*   tident );
 
+
+    //--------------------------------------------------------------------------
+    //! Set stage variables
+    //--------------------------------------------------------------------------
+    int SetStageVariables( const char*   Path, 
+                           const char*   Opaque, 
+                           XrdOucString  stagevariables, 
+                           XrdOucString& stagehost, 
+                           XrdOucString& serviceclass, 
+                           int           n, 
+                           const char*   tident );
+
+
+    //--------------------------------------------------------------------------
+    //! Map
+    //--------------------------------------------------------------------------
+    static bool Map( XrdOucString inmap, XrdOucString& outmap );
+
+    //--------------------------------------------------------------------------
+    //! Reload grid map file
+    //--------------------------------------------------------------------------
+    void ReloadGridMapFile();
+
+
+    //--------------------------------------------------------------------------
+    //! Reload VOMS map file 
+    //--------------------------------------------------------------------------
+    void ReloadVomsMapFile();
+
+
+    //--------------------------------------------------------------------------
+    //! VOMS map groups
+    //--------------------------------------------------------------------------
+    bool VomsMapGroups( const XrdSecEntity* client, 
+                        XrdSecEntity&       mappedclient, 
+                        XrdOucString&       allgroups, 
+                        XrdOucString&       defaultgroup );
+
+    bool MapCernCertificates;
+    XrdOucString GridMapFile;
+    XrdOucString VomsMapFile;
+    XrdOucString LocationCacheDir;
+    char* ConfigFN;  ///< path to config file 
+
+    // we must check if all this things need to be thread safed with a mutex ...
+    static  XrdOucHash<XrdOucString>* filesystemhosttable;
+    static  XrdSysMutex               filesystemhosttablelock;
+    static  XrdOucHash<XrdOucString>* nstable;
+    static  XrdOucHash<XrdOucString>* stagertable;
+    static  XrdOucHash<XrdOucString>* stagerpolicy;
+    static  XrdOucHash<XrdOucString>* roletable;
+    static  XrdOucHash<XrdOucString>* stringstore;
+    static  XrdOucHash<XrdSecEntity>* secentitystore;
+    static  XrdOucHash<struct passwd>* passwdstore;
+    static  XrdOucHash<XrdOucString>*  gridmapstore;
+    static  XrdOucHash<XrdOucString>*  vomsmapstore;
+    static  XrdOucHash<XrdxCastor2FsGroupInfo>*  groupinfocache;
+    static  XrdOucHash<XrdxCastor2ClientAdmin>* clientadmintable;
+
+    static  int TokenLockTime;  ///< specifies the grace period for client to show 
+                                ///<up on a disk server in seconds before the token expires
+
+    XrdxCastor2ServerAcc* ServerAcc;     ///< authorization module for token encryption/decryption
+    XrdSysMutex encodeLock;              ///<
+    XrdSysMutex locatorLock;             ///< 
+    XrdSysMutex PermissionMutex;         ///< protecting the permission hash
+    XrdSysMutex StoreMutex;              ///< protecting the string+pwd store hash
+    XrdSysMutex MapMutex;                ///< protecting all ROLEMAP, GETID etc. functions
+    XrdSysMutex SecEntityMutex;          ///< protecting the sec entity hash
+    XrdSysMutex GridMapMutex;            ///< protecting the gridmap store hash
+    XrdSysMutex VomsMapMutex;            ///< protecting the vomsmap store hash
+    XrdSysMutex ClientMutex;             ///<
+    XrdOucString xCastor2FsName;         ///< mount point of the catalog fs
+    XrdOucString xCastor2FsTargetPort;   ///< xrootd port where redirections go on the OSTs -default is 1094
+    XrdOucString xCastor2FsLocatePolicy; ///< can be configured to read only from the primary FS, from the twin FS or balanced between both
+
+    long long xCastor2FsDelayRead;   ///< if true, all reads get a default delay to come back later
+    long long xCastor2FsDelayWrite;  ///< if true, all writes get a default dealy to come back later
+    XrdOucString Procfilesystem;     ///< location of the proc file system directory
+    bool ProcfilesystemSync;         ///< sync every access on disk
+    XrdOucString DeletionDirectory;  ///< directory where deletion spool files are stored
+    XrdOucString zeroProc;           ///< path to a 0-byte file in the proc filesystem
+
+    XrdOucString AuthLib;            ///< path to a possible authorizationn library
+    bool authorize;                  ///< determins if the autorization should be applied or not
+    XrdAccAuthorize* Authorization;  ///< authorization service
+
+  protected:
+
+    char*        HostName;        ///< our hostname as derived in XrdOfs
+    char*        HostPref;        ///< our hostname as derived in XrdOfs without domain
+    XrdOucString ManagerId;       ///< manager id in <host>:<port> format
+    XrdOucString ManagerLocation; ///< [::<IP>]:<port>
+    bool         IssueCapability; ///< attach an opaque capability for verification on the disk server
+    XrdxCastor2Proc* Proc;        ///< proc handling object
+    XrdxCastor2FsStats Stats;     ///<
+    XrdOfsEvr evrObject;          ///< Event receiver
+    XrdCmsFinderTRG* Balancer;    ///<
+
+  private:
+
+    static  XrdSysError* eDest;
 };
 
 #endif

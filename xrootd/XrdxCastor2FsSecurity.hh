@@ -1,8 +1,29 @@
-//         $Id: XrdxCastor2FsSecurity.hh,v 1.1 2008/09/15 10:04:02 apeters Exp $
+/*******************************************************************************
+ *                      XrdxCastor2FsSecurity.hh
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2012  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ *
+ * @author Elvin Sindrilaru & Andreas Peters - CERN
+ * 
+ ******************************************************************************/
 
-#ifndef ___XrdxCastor2FsSECURITY_H___
-#define ___XrdxCastor2FsSECURITY_H___
-
+#ifndef __XrdxCastor2FsSECURITY_H__
+#define __XrdxCastor2FsSECURITY_H__
 
 #include "XrdAcc/XrdAccAuthorize.hh"
 
@@ -19,4 +40,5 @@
 #define OOIDENTENV(usr, env) \
     if (usr) {if (usr->name) env.Put(SEC_USER, usr->name); \
               if (usr->host) env.Put(SEC_HOST, usr->host);}
-#endif
+
+#endif // __XrdxCastor2FsSECURITY_H__

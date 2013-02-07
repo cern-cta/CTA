@@ -18,7 +18,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * @author Elvin Sindrilaru & Andreas Peters
+ * @author Elvin Sindrilaru & Andreas Peters - CERN
+ * 
  ******************************************************************************/
 
 /*-----------------------------------------------------------------------------*/
@@ -99,7 +100,7 @@ XrdxCastor2ServerAcc::~XrdxCastor2ServerAcc() {}
 
 
 //------------------------------------------------------------------------------
-// Configure the plugin
+// Configure the authorisation plugin
 //------------------------------------------------------------------------------
 bool
 XrdxCastor2ServerAcc::Configure( const char* conf_file )
@@ -119,14 +120,12 @@ XrdxCastor2ServerAcc::Configure( const char* conf_file )
     TkEroute.Emsg( "Config", "Configuration file not specified." );
   } else {
     // Try to open the configuration file
-    //
     if ( ( cfgFD = open( conf_file, O_RDONLY, 0 ) ) < 0 )
       return TkEroute.Emsg( "Config", errno, "open config file", conf_file );
 
     Config.Attach( cfgFD );
 
     // Now start reading records until eof
-    //
     while ( ( var = Config.GetMyFirstWord() ) ) {
       if ( !strncmp( var, "xcastor2.", 9 ) ) {
         var += 9;
@@ -296,7 +295,6 @@ XrdxCastor2ServerAcc::Init()
     }
 
     // Get the public key 
-    //
     x509public = PEM_read_X509( fpcert, NULL, NULL, NULL );
     fclose( fpcert );
 
@@ -305,7 +303,6 @@ XrdxCastor2ServerAcc::Init()
       return false;
     } else {
       // Get public key 
-      //
       publickey = X509_get_pubkey( x509public );
 
       if ( publickey == NULL ) {
@@ -384,8 +381,7 @@ XrdxCastor2ServerAcc::SignBase64( unsigned char* input,
   EVP_PKEY* usekey = privatekey.Find( keyclass );
 
   if ( !usekey ) {
-    // if not for this keyclass, look for default
-    //
+    // If not for this keyclass, look for default
     usekey = privatekey.Find( "default" );
   }
 
@@ -411,7 +407,6 @@ XrdxCastor2ServerAcc::SignBase64( unsigned char* input,
   EVP_MD_CTX_cleanup( &md_ctx );
   TIMING( TkTrace, "EVPCLEANUP", &signtiming );
   // base64 encode 
-  //
   b64 = BIO_new( BIO_f_base64() );
   bmem = BIO_new( BIO_s_mem() );
   b64 = BIO_push( b64, bmem );
@@ -424,7 +419,6 @@ XrdxCastor2ServerAcc::SignBase64( unsigned char* input,
   int cnt = 0;
 
   // Remove the backslash from the signature buffer 
-  //
   for ( int i = 0; i <= ( bptr->length - 1 ); i++ ) {
     if ( buff[i] != '\n' ) {
       signed_signature_buff[cnt] = buff[i];
@@ -460,7 +454,6 @@ XrdxCastor2ServerAcc::VerifyUnbase64( const char*    data,
   EVP_MD_CTX     md_ctx;
 
   // Base64 decode 
-  //
   while ( 1 ) {
     BIO* b64, *bmem;
     int cpcnt = 0;
@@ -473,7 +466,6 @@ XrdxCastor2ServerAcc::VerifyUnbase64( const char*    data,
     for ( int i = 0; i < ( inputlen + 1 ); i++ ) {
       // Fill a '\n' every 64 characters which have been removed to be
       // compliant with the HTTP URL syntax
-      //
       if ( i && ( !( i % 64 ) ) ) {
         modinput[cpcnt] = '\n';
         cpcnt++;
@@ -510,7 +502,6 @@ XrdxCastor2ServerAcc::VerifyUnbase64( const char*    data,
   TIMING( TkTrace, "UNBASE64", &verifytiming );
   // Verify the signature using the public key
   // printf("Verify %d %s %d %d\n",strlen((char*)data),data,publickey, sig_len);
-  //
   EVP_VerifyInit( &md_ctx, EVP_sha1() );
   EVP_VerifyUpdate( &md_ctx, data, strlen( ( char* )data ) );
   err = EVP_VerifyFinal( &md_ctx, ( ( unsigned char* )( sig_buf ) ), sig_len, publickey );
@@ -536,7 +527,6 @@ XrdxCastor2ServerAcc::Decode( const char* opaque )
 
   XrdOucString sop = opaque;
   // Convert the '&' seperated tokens into '\n' seperated tokens
-  //
   sop.replace( "&", "\n" );
   XrdOucTokenizer authztokens( ( char* )sop.c_str() );
   XrdxCastor2ServerAcc::AuthzInfo* authz = new XrdxCastor2ServerAcc::AuthzInfo( true );
@@ -547,7 +537,6 @@ XrdxCastor2ServerAcc::Decode( const char* opaque )
     XrdOucString token = stoken;
 
     // Check the existance of the castor2fs token in the opaque info
-    //
     if ( token.beginswith( "castor2fs.sfn=" ) ) {
       authz->sfn = strdup( token.c_str() + 14 );
       ntoken++;
@@ -616,7 +605,6 @@ XrdxCastor2ServerAcc::Decode( const char* opaque )
   }
 
   // We expect 11 opaque castor2fs tokens to be present
-  //
   if ( ntoken != 11 ) {
     //    printf("Wrong Number of tokens %d\n",ntoken);
     XrdOucString ntk = "";
@@ -740,29 +728,35 @@ XrdxCastor2ServerAcc::Access( const XrdSecEntity*    Entity,
   char* opaque = 0;
   envlen = 0;
   XrdxCastor2ServerAcc::AuthzInfo* authz;
-  // do a bypass for the /proc file system, we check the client identity in the XrdxCastorOfsFile::open method
+  // Do a bypass for the /proc file system, we check the client identity 
+  // in the XrdxCastorOfsFile::open method
   XrdOucString spath = path;
 
-  // We take care in XrdxCastorOfs::open that a user cannot give a fake opaque to get all permissions!
-  //
-  if ( Env->Get( "castor2ofsproc" ) && ( !strcmp( Env->Get( "castor2ofsproc" ), "true" ) ) ) {
+  // We take care in XrdxCastorOfs::open that a user cannot give a fake 
+  // opaque to get all permissions!
+  if ( Env->Get( "castor2ofsproc" ) && 
+       ( !strcmp( Env->Get( "castor2ofsproc" ), "true" ) ) ) 
+  {
     decodeLock.UnLock();
     return XrdAccPriv_All;
   }
 
   // Check for localhost host connection
-  //
   if ( AllowLocalhost ) {
     XrdOucString chost = Entity->host;
 
-    if ( ( chost == "localhost" || ( chost == "localhost.localdomain" ) || ( chost == "127.0.0.1" ) ) ) {
+    if ( ( chost == "localhost" || 
+           ( chost == "localhost.localdomain" ) || 
+           ( chost == "127.0.0.1" ) ) ) 
+    {
       decodeLock.UnLock();
       return XrdAccPriv_All;
     }
   }
 
   // Check for xfer request
-  // We must be very careful that all other requirements are checked within the OFS, to avoid security holes
+  // We must be very careful that all other requirements are checked within 
+  // the OFS, to avoid security holes
   if ( Env->Get( "xferuuid" ) && ( Env->Get( "ofsgranted" ) ) ) {
     decodeLock.UnLock();
     return XrdAccPriv_All;
@@ -777,15 +771,14 @@ XrdxCastor2ServerAcc::Access( const XrdSecEntity*    Entity,
     return XrdAccPriv_None;
   }
 
-  // This is not nice, but ROOT puts a ? into the opaque string, if there is a user opaque info 
-  //
+  // This is not nice, but ROOT puts a ? into the opaque string, 
+  // if there is a user opaque info 
   for ( unsigned int i = 0; i < strlen( opaque ); i++ ) {
     if ( opaque[i] == '?' )
       opaque[i] = '&';
   }
 
   // Decode the authz information from the opaque info 
-  //
   if ( RequireCapability && !( authz = Decode( opaque ) ) ) {
     TkEroute.Emsg( "Access", EACCES, "decode access token for sfn=", path );
     decodeLock.UnLock();
@@ -794,7 +787,6 @@ XrdxCastor2ServerAcc::Access( const XrdSecEntity*    Entity,
 
   if ( RequireCapability ) {
     // Verify that the token information is identical to the explicit tokens 
-    //
     XrdOucString reftoken;
 
     if ( !BuildToken( authz, reftoken ) ) {
@@ -814,7 +806,6 @@ XrdxCastor2ServerAcc::Access( const XrdSecEntity*    Entity,
     }
 
     // Verify the signature of authz information 
-    //
     if ( ( !VerifyUnbase64( ( const char* )authz->token, ( unsigned char* )authz->signature, path ) ) ) {
       TkEroute.Emsg( "Access", EACCES, "verify signature in request sfn=", path );
       delete authz;;
@@ -823,7 +814,6 @@ XrdxCastor2ServerAcc::Access( const XrdSecEntity*    Entity,
     }
 
     // Check that path in token and request are identical 
-    //
     if ( strcmp( path, authz->pfn1 ) && strcmp( path, authz->pfn2 ) ) {
       // If it does not fit, check that it is a replica location
       XrdOucString spfn2 = authz->pfn2;
@@ -837,7 +827,6 @@ XrdxCastor2ServerAcc::Access( const XrdSecEntity*    Entity,
     }
 
     // Check validity time in authz 
-    //
     if ( authz->exptime < now ) {
       TkEroute.Emsg( "check_user_access", EACCES, "give access - the signature has expired already!" );
       delete authz;
@@ -845,8 +834,8 @@ XrdxCastor2ServerAcc::Access( const XrdSecEntity*    Entity,
       return XrdAccPriv_None;
     }
 
-    // Check that the connected client is identical to the client connected to the manager
-    //
+    // Check that the connected client is identical to the client connected 
+    // to the manager
     if ( 0 ) {
       delete authz;;
       decodeLock.UnLock();
@@ -854,7 +843,6 @@ XrdxCastor2ServerAcc::Access( const XrdSecEntity*    Entity,
     }
 
     // Check that the client name is identical to the client name used at the manager 
-    //
     if ( 0 ) {
       delete authz;;
       decodeLock.UnLock();
@@ -865,7 +853,6 @@ XrdxCastor2ServerAcc::Access( const XrdSecEntity*    Entity,
   }
 
   // If we have an open with a write we have to send a fsctl message to the manager 
-  //
   decodeLock.UnLock();
   return XrdAccPriv_All;
 }

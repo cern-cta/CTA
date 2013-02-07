@@ -1,43 +1,136 @@
-//          $Id: XrdxCastor2Stager.hh,v 1.3 2009/07/06 08:27:11 apeters Exp $
+/*******************************************************************************
+ *                      XrdxCastor2Stager.hh
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2012  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ *
+ * @author Elvin Sindrilaru & Andreas Peters - CERN
+ * 
+ ******************************************************************************/
 
 #ifndef __XCASTOR2_STAGER_H__
 #define __XCASTOR2_STAGER_H__
 
+/*-----------------------------------------------------------------------------*/
 #include <XrdOuc/XrdOucHash.hh>
 #include <XrdOuc/XrdOucErrInfo.hh>
 #include <XrdOuc/XrdOucString.hh>
-
-class XrdxCastor2Stager {
-public:
-  static XrdOucHash<XrdOucString> *prepare2getstore;
-  static XrdOucHash<XrdOucString> *getstore;
-  static XrdOucHash<XrdOucString> *putstore;
-  static XrdOucHash<XrdOucString> *delaystore;
-
-  static int GetDelayValue(const char* tag);
-  
-  XrdxCastor2Stager() {};
+/*-----------------------------------------------------------------------------*/
 
 
-  ~XrdxCastor2Stager() {};
+//------------------------------------------------------------------------------
+//! Class XrdxCastor2Stager
+//------------------------------------------------------------------------------
+class XrdxCastor2Stager
+{
+  public:
+    static XrdOucHash<XrdOucString>* prepare2getstore;
+    static XrdOucHash<XrdOucString>* getstore;
+    static XrdOucHash<XrdOucString>* putstore;
+    static XrdOucHash<XrdOucString>* delaystore;
 
-  static bool Prepare2Get(XrdOucErrInfo &error, uid_t uid, gid_t gid,const char* path, const char* stagehost, const char* serviceclass, XrdOucString &redirectionhost, XrdOucString &redirectionpfn, XrdOucString &stagestatus) ;
-  static bool Get(XrdOucErrInfo &error, uid_t uid, gid_t gid,const char* path, const char* stagehost, const char* serviceclass, XrdOucString &redirectionhost, XrdOucString &redirectionpfn, XrdOucString &redirectionpfn2, XrdOucString &stagestatus); 
-  static bool Put(XrdOucErrInfo & error, uid_t uid, gid_t gid,const char* path, const char* stagehost, const char* serviceclass, XrdOucString &redirectionhost, XrdOucString &redirectionpfn, XrdOucString &redirectionpfn2, XrdOucString &stagestatus); 
+    static int GetDelayValue( const char* tag );
 
-  static bool Rm(XrdOucErrInfo & error, uid_t uid, gid_t gid, const char* path, const char* stagehost, const char* serviceclass );
+    //----------------------------------------------------------------------------
+    //! Constructor
+    //----------------------------------------------------------------------------
+    XrdxCastor2Stager() {};
 
-  static bool Update(XrdOucErrInfo & error, uid_t uid, gid_t gid,const char* path, const char* stagehost, const char* serviceclass, XrdOucString &redirectionhost, XrdOucString &redirectionpfn, XrdOucString &redirectionpfn2, XrdOucString &stagestatus); 
+    //----------------------------------------------------------------------------
+    //! Destructor
+    //----------------------------------------------------------------------------
+    ~XrdxCastor2Stager() {};
 
-  static bool StagerQuery(XrdOucErrInfo &error, uid_t uid, gid_t gid, const char* path, const char* stagehost, const char* serviceclass, XrdOucString &stagestatus);
-  
-  //  static bool PrepareForMigration(XrdOucErrInfo &error, const char* path, const char* reqid, const char* fileid, const char* nameserver, const char* stagehost, const char* serviceclass, const char* filesize, const char* mtime);
-  
-  static bool UpdateDone(XrdOucErrInfo &error, const char* path, const char* reqid, const char* fileid, const char* nameserver, const char* stagehost, const char* serviceclass);
 
-  static bool FirstWrite(XrdOucErrInfo &error, const char* path, const char* reqid, const char* fileid, const char* nameserver, const char* stagehost, const char* serviceclass );
-  
-  static bool PutFailed(XrdOucErrInfo &error, const char* path, const char* reqid, const char* fileid, const char* nameserver, const char* stagehost, const char* serviceclass );
+    static bool Prepare2Get( XrdOucErrInfo& error,
+                             uid_t uid, gid_t gid,
+                             const char* path,
+                             const char* stagehost,
+                             const char* serviceclass,
+                             XrdOucString& redirectionhost,
+                             XrdOucString& redirectionpfn,
+                             XrdOucString& stagestatus ) ;
+
+    static bool Get( XrdOucErrInfo& error,
+                     uid_t uid, gid_t gid,
+                     const char* path,
+                     const char* stagehost,
+                     const char* serviceclass,
+                     XrdOucString& redirectionhost,
+                     XrdOucString& redirectionpfn,
+                     XrdOucString& redirectionpfn2,
+                     XrdOucString& stagestatus );
+
+    static bool Put( XrdOucErrInfo& error,
+                     uid_t uid, gid_t gid,
+                     const char* path,
+                     const char* stagehost,
+                     const char* serviceclass,
+                     XrdOucString& redirectionhost,
+                     XrdOucString& redirectionpfn,
+                     XrdOucString& redirectionpfn2,
+                     XrdOucString& stagestatus );
+
+    static bool Rm( XrdOucErrInfo& error,
+                    uid_t uid, gid_t gid,
+                    const char* path,
+                    const char* stagehost,
+                    const char* serviceclass );
+
+    static bool Update( XrdOucErrInfo& error,
+                        uid_t uid, gid_t gid,
+                        const char* path,
+                        const char* stagehost,
+                        const char* serviceclass,
+                        XrdOucString& redirectionhost,
+                        XrdOucString& redirectionpfn,
+                        XrdOucString& redirectionpfn2,
+                        XrdOucString& stagestatus );
+
+    static bool StagerQuery( XrdOucErrInfo& error,
+                             uid_t uid, gid_t gid,
+                             const char* path,
+                             const char* stagehost,
+                             const char* serviceclass,
+                             XrdOucString& stagestatus );
+
+    static bool UpdateDone( XrdOucErrInfo& error,
+                            const char* path,
+                            const char* reqid,
+                            const char* fileid,
+                            const char* nameserver,
+                            const char* stagehost,
+                            const char* serviceclass );
+
+    static bool FirstWrite( XrdOucErrInfo& error,
+                            const char* path,
+                            const char* reqid,
+                            const char* fileid,
+                            const char* nameserver,
+                            const char* stagehost,
+                            const char* serviceclass );
+
+    static bool PutFailed( XrdOucErrInfo& error,
+                           const char* path,
+                           const char* reqid,
+                           const char* fileid,
+                           const char* nameserver,
+                           const char* stagehost,
+                           const char* serviceclass );
 };
 
-#endif
+#endif // __XCASTOR2_STAGER_H__

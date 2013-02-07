@@ -18,7 +18,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * @author Elvin Sindrilaru & Andreas Peters
+ * @author Elvin Sindrilaru & Andreas Peters - CERN
+ * 
  ******************************************************************************/
 
 
@@ -51,7 +52,8 @@ XrdxCastor2OfsFile::ThirdPartyTransfer( const char*         fileName,
   uuid_t uuid;
 
   if ( uuid_parse( val, uuid ) ) {
-    return XrdxCastor2OfsFS.Emsg( epname, error, EINVAL, "open file for transfering - illegal xferuuid" );
+    return XrdxCastor2OfsFS.Emsg( epname, error, EINVAL, 
+                                  "open file for transfering - illegal xferuuid" );
   }
 
   XrdTransfer* transfer;
@@ -60,7 +62,6 @@ XrdxCastor2OfsFile::ThirdPartyTransfer( const char*         fileName,
        ( transfer = XrdTransferManager::TM()->GetTransfer( uuid, error.getErrUser() ) ) ) 
   {
     // Cool, this transfer exists ....
-    //
     if ( ( val = Open_Env.Get( "xfercmd" ) ) ) {
       XrdOucString newaction = val;
 
@@ -70,7 +71,6 @@ XrdxCastor2OfsFile::ThirdPartyTransfer( const char*         fileName,
     }
   } else {
     // This transfer doesn't exist, we create a new one
-    //
     ZTRACE( open, "Creating new thirdparty transfer xferuuid=" << val );
     enum e3p {kInvalid, kPrepareToGet, kPrepareToPut};
     int op = kInvalid;
@@ -79,7 +79,6 @@ XrdxCastor2OfsFile::ThirdPartyTransfer( const char*         fileName,
     if ( ( val = Open_Env.Get( "xfercmd" ) ) ) {
       if ( !strcmp( val, "preparetoget" ) ) {
         // Prepare a get
-        //
         if ( ( val = Open_Env.Get( "source" ) ) ) {
           op = kPrepareToGet;
           e3pstring = "preparetoget";
@@ -90,7 +89,6 @@ XrdxCastor2OfsFile::ThirdPartyTransfer( const char*         fileName,
 
       if ( !strcmp( val, "preparetoput" ) ) {
         // Prepare a put
-        //
         if ( ( val = Open_Env.Get( "target" ) ) ) {
           op = kPrepareToPut;
           e3pstring = "preparetoput";
@@ -105,7 +103,6 @@ XrdxCastor2OfsFile::ThirdPartyTransfer( const char*         fileName,
     }
 
     // Create the transfer object
-    //
     XrdOucString transferentry = Spath;
     transferentry += "?";
     transferentry += opaque;
@@ -115,18 +112,15 @@ XrdxCastor2OfsFile::ThirdPartyTransfer( const char*         fileName,
          ( !XrdTransferManager::TM()->SetupTransfer( transferentry.c_str(), uuid, true ) ) ) 
     {
       // OK, that worked out
-      //
     } else {
       return XrdOfs::Emsg( epname, error, errno, "process your request - can't setup the transfer for you", Spath.c_str() );
     }
 
     // Try to attach to the new transfer
-    //
     if ( XrdTransferManager::TM() && 
          ( transfer = XrdTransferManager::TM()->GetTransfer( uuid, error.getErrUser() ) ) ) 
     {
       // Cool, this transfer exists now....
-      //
     } else {
       return XrdOfs::Emsg( epname, error, EIO, "process you request - can't setup the transfer for you", Spath.c_str() );
     }
@@ -137,7 +131,6 @@ XrdxCastor2OfsFile::ThirdPartyTransfer( const char*         fileName,
   ZTRACE( open, "transfer-path=" << transfer->Path.c_str() << " request-path=" << Spath.c_str() );
 
   // Check that the registered transfer path is the same like in this open
-  //
   if ( transfer->Path != Spath ) {
     XrdTransferManager::TM()->DetachTransfer( uuidstring );
     return XrdxCastor2OfsFS.Emsg( epname, error, EPERM,  "proceed with transfer "
@@ -149,10 +142,8 @@ XrdxCastor2OfsFile::ThirdPartyTransfer( const char*         fileName,
        ( transfer->Action == XrdTransfer::kState ) ) 
   {
     // This is used to watch active transfer or get final states
-    //
     if ( transfer->State == XrdTransfer::kUninitialized ) {
       // This is a fresh transfer
-      //
       if ( !transfer->Initialize() ) {
         XrdTransferManager::TM()->DetachTransfer( uuidstring );
         return XrdxCastor2OfsFS.Emsg( epname, error, EIO , "proceed with transfer - initialization failed" );
@@ -184,7 +175,6 @@ XrdxCastor2OfsFile::ThirdPartyTransfer( const char*         fileName,
     transfer->Action = XrdTransfer::kGet;
 
     // This is the 3rd party copy client starting the copy
-    //
     if ( envOpaque->Get( "xferbytes" ) ) {
       transfer->Options->Put( "xferbytes", envOpaque->Get( "xferbytes" ) );
     }
@@ -197,16 +187,14 @@ XrdxCastor2OfsFile::ThirdPartyTransfer( const char*         fileName,
     } else {
       ZTRACE( open, "no scheduling - send delay" );
       // Sent a stall to the client
-      //
       XrdTransferManager::TM()->DetachTransfer( uuidstring );
       return XrdxCastor2OfsFS.Emsg( epname, error, EBUSY, "schedule transfer - all slots busy" );
     }
 
     // Wait that this transfer get's into running stage
-    //
     while ( transfer->State == XrdTransfer::kScheduled ) {
-      // That is not really the 'nicest' way to do that but typically it is scheduled immediatly
-      // (we could just use a mutex for that
+      // That is not really the 'nicest' way to do that but typically 
+      // it is scheduled immediatly (we could just use a mutex for that )
       usleep( 100000 );
     }
 
@@ -242,14 +230,12 @@ XrdxCastor2OfsFile::ThirdPartyTransferClose( const char* uuidstring )
        ( transfer = XrdTransferManager::TM()->GetTransfer( uuid, error.getErrUser() ) ) ) 
   {
     // This is the 3rd party copy client finishing the copy
-    //
     if ( transfer->State <= XrdTransfer::kScheduled ) {
       transfer->SetState( XrdTransfer::kError );
     } else {
       if ( transfer->State == XrdTransfer::kRunning ) {
         // This tells the running thread that it can set this transfer job 
         // to finished or error and terminate
-        //
         transfer->SetState( XrdTransfer::kTerminate );
       }
     }

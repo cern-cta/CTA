@@ -1,10 +1,10 @@
-/******************************************************************************
- *                      XrdxCastor2OfsFsctl.cc
+/*******************************************************************************
+ *                      XrdxCastor2Stager.hh
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
  *
- * Copyright (C) 2003  CERN
+ * Copyright (C) 2012  CERN
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
@@ -18,8 +18,9 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * @author Elvin Sindrilaru
- *****************************************************************************/
+ * @author Elvin Sindrilaru & Andreas Peters - CERN
+ * 
+ ******************************************************************************/
 
 /*-----------------------------------------------------------------------------*/
 #include <sys/types.h>
@@ -49,7 +50,7 @@ XrdxCastor2Ofs::FSctl( const int           cmd,
   char iopaque[XRDXCASTOR2NS_FSCTLOPAQUELEN];
   static const char* epname = "FSctl";
   const char* tident = error.getErrUser();
-  // accept only plugin calls!
+  // Accept only plugin calls!
   ZTRACE( fsctl, "Calling FSctl" );
 
   if ( cmd != SFS_FSCTL_PLUGIN ) {
@@ -82,21 +83,19 @@ XrdxCastor2Ofs::FSctl( const int           cmd,
   }
 
   // From here on we can deal with XrdOucString which is more 'comfortable'
-  //
   XrdOucString path    = ipath;
   XrdOucString opaque  = iopaque;
   XrdOucString result  = "";
   ZTRACE( fsctl, ipath );
   ZTRACE( fsctl, iopaque );
+  
   // Check if this is a put or get operation
-  //
   XrdOucEnv env( opaque.c_str() );
   const char* val;
   uuid_t uuid;
   const char* uuidstring;
 
   // Create the transfer object
-  //
   if ( ( val = env.Get( "xferuuid" ) ) ) {
     uuidstring = val;
 
@@ -111,7 +110,6 @@ XrdxCastor2Ofs::FSctl( const int           cmd,
          ( transfer = XrdTransferManager::TM()->GetTransfer( uuid, error.getErrUser() ) ) ) 
     {
       // This transfer has been initialized
-      //
       if ( ( val = env.Get( "xfercmd" ) ) ) {
         XrdOucString cmd = val;
 
@@ -140,7 +138,6 @@ XrdxCastor2Ofs::FSctl( const int           cmd,
                ( transfer->GetState() == XrdTransfer::kPaused ) ) 
           {
             // Schedule the transfer
-            //
             if ( transfer->SetState( XrdTransfer::kScheduled ) ) {
               result = "cmd=schedule" ;
               result += " " ;
@@ -156,7 +153,6 @@ XrdxCastor2Ofs::FSctl( const int           cmd,
             }
           } else {
             // This transfer is not anymore initialized
-            //
             if ( ( transfer->State == XrdTransfer::kScheduled ) ) {
               XrdTransferManager::TM()->DetachTransfer( uuidstring );
               return XrdxCastor2Ofs::Emsg( epname, error, EINPROGRESS, "set schedule - transfer already scheduled", path.c_str() );

@@ -18,7 +18,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * @author Elvin Sindrilaru & Andreas Peters
+ * @author Elvin Sindrilaru & Andreas Peters - CERN
+ * 
  ******************************************************************************/
 
 #ifndef __XCASTOR2_SERVER_ACC__
@@ -46,15 +47,18 @@ class XrdSecEntity;
 
 //------------------------------------------------------------------------------
 //! Class XrdxCastor2ServerAcc
-//! This class can be used in two ways: either by taking ownership of the 
-//! object passed to it by using strdup as they are all chars and then in the 
-//! destructor one needs to free these objects by calling free(), or by not 
-//! taking ownership and then we don't need to do any memory management.
 //------------------------------------------------------------------------------
 class XrdxCastor2ServerAcc: public XrdAccAuthorize
 {
   public:
 
+    //--------------------------------------------------------------------------
+    //! Struct AuthzInfo
+    //! This struct can be used in two ways: either by taking ownership of the 
+    //! object passed to it by using strdup as they are all chars and then in the 
+    //! destructor one needs to free these objects by calling free(), or by not 
+    //! taking ownership and then we don't need to do any memory management.
+    //--------------------------------------------------------------------------
     struct AuthzInfo {
 
       bool takeOwnership;    ///< if true then we need to free memory in the destructor

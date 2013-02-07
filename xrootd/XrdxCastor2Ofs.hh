@@ -18,7 +18,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * @author Elvin Sindrilaru & Andreas Peters
+ * @author Elvin Sindrilaru & Andreas Peters - CERN
+ * 
  ******************************************************************************/
 
 #ifndef __XCASTOR2OFS_H__
@@ -195,7 +196,7 @@ class XrdxCastor2OfsFile : public XrdOfsFile
 
 
     //--------------------------------------------------------------------------
-    //! Sync file 
+    //! Sync file - async 
     //--------------------------------------------------------------------------
     int sync( XrdSfsAio* aiop );
 
@@ -207,7 +208,8 @@ class XrdxCastor2OfsFile : public XrdOfsFile
 
 
     //--------------------------------------------------------------------------
-    //! Update meta data
+    //! Update meta data - used to inform the manager node that the first byte 
+    //! was written
     //--------------------------------------------------------------------------
     int UpdateMeta();
 
@@ -219,7 +221,7 @@ class XrdxCastor2OfsFile : public XrdOfsFile
 
 
     //--------------------------------------------------------------------------
-    //! 
+    //! Verify checksum 
     //--------------------------------------------------------------------------
     bool VerifyChecksum();
 
@@ -240,7 +242,6 @@ class XrdxCastor2OfsFile : public XrdOfsFile
 
 
     XrdxCastor2Ofs2StagerJob* StagerJob; ///< interface to communicate with stagerjob
-    XrdSysTimer  RateTimer;              ///<
     XrdTransfer* Transfer;               ///<
     int          StagerJobPid;           ///< pid of an assigned stagerjob
 
@@ -327,7 +328,7 @@ class XrdxCastor2Ofs : public XrdOfs
 
 
     //--------------------------------------------------------------------------
-    //!
+    //! Create new directory object
     //--------------------------------------------------------------------------
     XrdSfsDirectory* newDir( char* user = 0, int MonID = 0 ) {
       return ( XrdSfsDirectory* ) new XrdxCastor2OfsDirectory( user, MonID );
@@ -335,7 +336,7 @@ class XrdxCastor2Ofs : public XrdOfs
 
 
     //--------------------------------------------------------------------------
-    //!
+    //! Create new file object 
     //--------------------------------------------------------------------------
     XrdSfsFile* newFile( char* user = 0, int MonID = 0 ) {
       return ( XrdSfsFile* ) new XrdxCastor2OfsFile( user, MonID );
@@ -399,15 +400,6 @@ class XrdxCastor2Ofs : public XrdOfs
     //--------------------------------------------------------------------------
     //!
     //--------------------------------------------------------------------------
-    int rem( const char*         path,
-             XrdOucErrInfo&      out_error,
-             const XrdSecEntity* client,
-             const char*         info = 0 );
-
-
-    //--------------------------------------------------------------------------
-    //!
-    //--------------------------------------------------------------------------
     int remdir( const char*         /*dirName*/,
                 XrdOucErrInfo&      /*out_error*/,
                 const XrdSecEntity* /*client*/,
@@ -426,7 +418,16 @@ class XrdxCastor2Ofs : public XrdOfs
 
 
     //--------------------------------------------------------------------------
-    //!  this function we need to work without authorization
+    //!
+    //--------------------------------------------------------------------------
+    int rem( const char*         path,
+             XrdOucErrInfo&      out_error,
+             const XrdSecEntity* client,
+             const char*         info = 0 );
+
+
+    //--------------------------------------------------------------------------
+    //! This function we needs to work without authorization
     //--------------------------------------------------------------------------
     int stat( const char*         Name,
               struct stat*        buf,
@@ -437,7 +438,7 @@ class XrdxCastor2Ofs : public XrdOfs
 
 
     //--------------------------------------------------------------------------
-    //! this function deals with plugin calls
+    //! This function deals with plugin calls
     //--------------------------------------------------------------------------
     int FSctl( int, XrdSfsFSctl&, XrdOucErrInfo&, const XrdSecEntity* );
 
@@ -478,16 +479,10 @@ class XrdxCastor2Ofs : public XrdOfs
     int                 ThirdPartyCopySlotRate;       ///< default from Configure
     XrdOucString        ThirdPartyCopyStateDirectory; ///< default from Configure
 
-
-  protected:
-
-    XrdSysMutex StatisticMutex;  // mutex for read/write statistic
-
-
   private:
 
-    vecString procUsers;   ///< vector of users (reduced tidents <user>@host 
-                           ///< which can write into /proc
+    vecString procUsers;   ///< vector of users ( reduced tidents <user>@host 
+                           ///< which can write into /proc )
 
     //--------------------------------------------------------------------------
     //! Write values to the /proc file system - source in XrdxCastor2OfsProc.cc

@@ -18,7 +18,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * @author Elvin Sindrilaru & Andreas Peters
+ * @author Elvin Sindrilaru & Andreas Peters - CERN
+ * 
  ******************************************************************************/
 
 /*-----------------------------------------------------------------------------*/
@@ -130,7 +131,6 @@ XrdxCastor2Ofs::ReadAllProc()
 
   if ( ThirdPartyCopy ) {
     if ( !ReadFromProc( "thirdpartycopyslots" ) ) result = false;
-
     if ( !ReadFromProc( "thirdpartycopyslotrate" ) ) result = false;
   }
 
