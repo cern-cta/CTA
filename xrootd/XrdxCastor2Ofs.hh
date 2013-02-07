@@ -44,7 +44,7 @@
 #include "XrdClient/XrdClient.hh"
 #include "XrdxCastor2ClientAdmin.hh"
 /*-----------------------------------------------------------------------------*/
-#include "XrdTransferManager/XrdTransferManager.hh"
+#include "XrdTransferManager.hh"
 /*-----------------------------------------------------------------------------*/
 
 

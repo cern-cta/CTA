@@ -1023,6 +1023,7 @@ XrdxCastor2FsDirectory::open( const char*         dir_path,
   XrdOucEnv Open_Env( info );
   AUTHORIZE( client, &Open_Env, AOP_Readdir, "open directory", dir_path, error );
   MAP( ( dir_path ) );
+  ZTRACE( open, "Open directory: " << dir_path );
 
   if ( !dir_path ) {
     return XrdxCastor2Fs::Emsg( epname, error, ENOMEDIUM,
@@ -1044,8 +1045,9 @@ XrdxCastor2FsDirectory::open( const char*         dir_path,
   fname = strdup( dir_path );
 
   // Open the directory and get it's id
-  if ( !( dh = XrdxCastor2FsUFS::OpenDir( dir_path ) ) )
+  if ( !( dh = XrdxCastor2FsUFS::OpenDir( dir_path ) ) ) {
     return  XrdxCastor2Fs::Emsg( epname, error, serrno, "open directory", dir_path );
+  }
 
   return SFS_OK;
 }
@@ -1082,6 +1084,8 @@ XrdxCastor2FsDirectory::nextEntry()
   }
 
   entry = d_pnt->d_name;
+  char* tident = "user";
+  ZTRACE( open, "Dir next entry: " << entry.c_str() );
 
   // Return the actual entry
   return ( const char* )( entry.c_str() );

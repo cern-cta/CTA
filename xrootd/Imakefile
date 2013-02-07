@@ -48,10 +48,12 @@ SharedLibraryTarget(XrdxCastor2ServerAcc,$(XCASTOR2SERVERACC_OBJS),,-lXrdUtils -
 XCASTOR2OFS_SRCS= XrdxCastor2Ofs.cc \
 	          XrdxCastor2OfsFSctl.cc \
                   XrdxCastor2OfsTransfer.cc \
-                  XrdxCastor2OfsProc.cc    
+                  XrdxCastor2OfsProc.cc\
+                  XrdTransfer.cc \
+                  XrdTransferManager.cc 
 
 XCASTOR2OFS_OBJS=$(XCASTOR2OFS_SRCS:.cc=.o)
-SharedLibraryTarget(XrdxCastor2Ofs,$(XCASTOR2OFS_OBJS),,-lXrdUtils -lXrdOfs -lXrdClient -l UUIDLIBNAME -lXrdTransferManager -lz)
+SharedLibraryTarget(XrdxCastor2Ofs,$(XCASTOR2OFS_OBJS),,-lXrdUtils -lXrdOfs -lXrdClient -l UUIDLIBNAME -lcrypto -lz)
 
 InstallNonExecFile(x2proc,/usr/bin,755)
 InstallNonExecFile(x2cp,/usr/bin,755)
