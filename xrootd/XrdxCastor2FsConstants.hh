@@ -1,0 +1,10 @@
+//         $Id: XrdxCastor2FsConstants.hh,v 1.1 2008/09/15 10:04:02 apeters Exp $
+#ifndef __XCASTOR2_FS_CONSTANTS_H__
+#define __XCASTOR2_FS_CONSTANTS_H__
+
+#define XCASTOR2FS_GRIDMAPCHECKINTERVAL 60 // in seconds
+#define XCASTOR2FS_VOMSMAPCHECKINTERVAL 60 // in seconds
+#define XCASTOR2FS_METADATAUPDATEINTERVAL 1 // in seconds
+#define XCASTOR2FS_MAXFILESYSTEMS       8192
+#define XCASTOR2FS_MAXDISTINCTUSERS     8192
+#endif

@@ -304,3 +304,9 @@ Architecture: any
 Depends: bash, initscripts, chkconfig, iproute, ethtool
 Description: castor (Cern Advanced STORage system)
  Traffic shaper for disk server's output, giving priority to tape servers
+
+Package: castor-xrootd-plugin
+Architecture: any
+Depends: xrootd-server, xrootd-client, xrootd-libs-devel, xrootd-client-devel
+Description: castor (Cern Advanced STORage system)
+ Xrootd support of Castor

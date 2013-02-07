@@ -1,0 +1,2 @@
+/sbin/chkconfig --add xrd
+/sbin/service xrd condrestart > /dev/null 2>&1 

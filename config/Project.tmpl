@@ -170,6 +170,9 @@ create_d = gcc -MM $(CPPFLAGS) -MT $(@:.d=.o) -MT $@ -MF $@ $<
 %.d: %.cpp
 	$(create_d)
 
+%.d: %.cc
+	$(create_d)
+
 /*
  * close the ifndef IMAKETMPL started in Imake.tmpl
  */

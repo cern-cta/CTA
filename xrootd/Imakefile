@@ -1,0 +1,81 @@
+COMM
+COMM                    xrootd/Imakefile
+COMM
+COMM This file is part of the Castor project.
+COMM See http://castor.web.cern.ch/castor
+COMM
+COMM Copyright (C) 2012  CERN
+COMM This program is free software; you can redistribute it and/or
+COMM modify it under the terms of the GNU General Public License
+COMM as published by the Free Software Foundation; either version 2
+COMM of the License, or (at your option) any later version.
+COMM This program is distributed in the hope that it will be useful,
+COMM but WITHOUT ANY WARRANTY; without even the implied warranty of
+COMM MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+COMM GNU General Public License for more details.
+COMM You should have received a copy of the GNU General Public License
+COMM along with this program; if not, write to the Free Software
+COMM Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+COMM
+COMM @(#)$RCSfile: Imakefile,v $ $Revision: 0.1 $ $Release$ $Date: 2012/01/21 09:42:59 $ $Author: esindril $
+COMM
+COMM @author castor-dev@cern.ch
+COMM
+
+CXXFLAGS += -I$(XROOT_LOCATION)/include/xrootd -Wno-error
+AddLdFlags( -L$(XROOT_LIB_LOCATION) -lstdc++ )
+
+XCASTOR2FS_SRCS= XrdxCastor2Fs.cc \
+	             XrdxCastor2ServerAcc.cc \
+                     XrdxCastor2Stager.cc \
+                     XrdxCastor2Proc.cc \
+                     XrdxCastor2Config.cc \
+                     XrdxCastor2Namespace.cc    
+
+XCASTOR2FS_OBJS=$(XCASTOR2FS_SRCS:.cc=.o)
+
+DependsOnLibrary(common,castorcommon)
+DependsOnLibrary(castor,castorclient)
+DependsOnLibrary(ns,castorns)
+
+SharedLibraryTarget(XrdxCastor2Fs,$(XCASTOR2FS_OBJS),,-lXrdUtils -lXrdClient -lXrdOfs -l UUIDLIBNAME -lcrypto )
+
+XCASTOR2SERVERACC_SRCS= XrdxCastor2ServerAcc.cc
+XCASTOR2SERVERACC_OBJS=$(XCASTOR2SERVERACC_SRCS:.cc=.o)
+SharedLibraryTarget(XrdxCastor2ServerAcc,$(XCASTOR2SERVERACC_OBJS),,-lXrdUtils -lcrypto )
+
+XCASTOR2OFS_SRC= XrdxCastor2Ofs.cc \
+	         XrdxCastor2OfsRateLimit.cc \
+                 XrdxCastor2OfsFSctl.cc \
+                 XrdxCastor2OfsTransfer.cc \
+                 XrdxCastor2OfsProc.cc    
+
+XCASTOR2OFS_OBJS=$(XCASTOR2OFS_SRCS:.cc=.o)
+SharedLibraryTarget(XrdxCastor2Ofs,$(XCASTOR2OFS_OBJS),,-lXrdUtils -lXrdOfs -lXrdClient -lXrdTransferManager -lz  )
+
+
+XRDSTAGERGET_SRCS=XrdStagerGet.cc
+XRDSTAGERGET_OBJS=$(XRDSTAGERGET_SRCS:.cc=.o)
+NormalProgramTarget(xrdstager_get,$(XRDSTAGERGET_OBJS),,-lXrdClient,755)
+
+XRDSTAGERQRY_SRCS=XrdStagerQry.cc
+XRDSTAGERQRY_OBJS=$(XRDSTAGERQRY_SRCS:.cc=.o)
+NormalProgramTarget(xrdstager_qry,$(XRDSTAGERQRY_OBJS),,-lXrdClient,755)
+
+InstallNonExecFile(x2proc,/usr/bin,755)
+InstallNonExecFile(x2cp,/usr/bin,755)
+InstallNonExecFile(xrd,/etc/rc.d/init.d,755)
+InstallNonExecFile(xrd.example,/etc/sysconfig,775)
+InstallNonExecFile(xrd-logs,/etc/cron.d,775)
+
+EXAMPLEFILE(xrd.cf,/etc,install)
+
+MakeDir(/var/log/xroot/manager,775)
+MakeDir(/var/log/xroot/server,775)
+MakeDir(/var/log/xroot/server/proc,775)
+
+MakeDir(/var/spool/xroot/admin,775)
+MakeDir(/var/spool/xroot/core,775)
+
+
+
