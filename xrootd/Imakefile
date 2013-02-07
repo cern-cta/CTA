@@ -22,7 +22,7 @@ COMM
 COMM @author castor-dev@cern.ch
 COMM
 
-CXXFLAGS += -I$(XROOT_LOCATION)/include/xrootd -Wno-error
+CXXFLAGS += -I$(XROOT_LOCATION)/include/xrootd -Wno-error -D_FILE_OFFSET_BITS=64
 AddLdFlags( -L$(XROOT_LIB_LOCATION) -lstdc++ )
 
 XCASTOR2FS_SRCS= XrdxCastor2Fs.cc \
