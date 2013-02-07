@@ -1,8 +1,6 @@
 %attr(0755,root,root) usr/lib/libXrdxCastor2ServerAcc.so*
 %attr(0755,root,root) usr/lib/libXrdxCastor2Ofs.so*
 %attr(0755,root,root) usr/lib/libXrdxCastor2Fs.so*
-%attr(0755,root,root) usr/bin/xrdstager_get
-%attr(0755,root,root) usr/bin/xrdstager_qry
 %attr(0755,root,root) usr/bin/x2proc
 %attr(0755,root,root) usr/bin/x2cp
 %attr(0755,root,root) etc/sysconfig/xrd.example

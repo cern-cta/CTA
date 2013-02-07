@@ -62,40 +62,6 @@ XrdxCastor2Ofs::UpdateProc(const char *inname)
   modname.assign(modname,modname.find("/proc"));
   const char* name = modname.c_str();
 
-  if (!strcmp(name,"/proc/totalreadbytes")) {
-    return Write2ProcFile("totalreadbytes", TotalReadBytes);
-  }
-
-  if (!strcmp(name,"/proc/totalwritebytes")) {
-    return Write2ProcFile("totalwritebytes", TotalWriteBytes);
-  }
-
-  if (!strcmp(name,"/proc/totalstreamreadbytes")) {
-    return Write2ProcFile("totalstreamreadbytes", TotalStreamReadBytes);
-  }
-
-  if (!strcmp(name,"/proc/totalstreamwritebytes")) {
-    return Write2ProcFile("totalstreamwritebytes", TotalStreamWriteBytes);
-  }
-  
-  if (!strcmp(name,"/proc/readdelay")) {
-    return Write2ProcFile("readdelay",(long long)ReadDelay);
-  }
-  
-  if (!strcmp(name,"/proc/writedelay")) {
-    return Write2ProcFile("writedelay",(long long)WriteDelay);
-  }
-
-  if (RunRateLimiter){
-    if (!strcmp(name,"/proc/readratelimit")) {
-      return Write2ProcFile("readratelimit",(long long)ReadRateLimit);
-    }
-    
-    if (!strcmp(name,"/proc/writeratelimit")) {
-      return Write2ProcFile("writeratelimit",(long long)WriteRateLimit);
-    }
-  }
-
   if (ThirdPartyCopy) {
     if (!strcmp(name, "/proc/thirdpartycopyslots")) {
       return Write2ProcFile("thirdpartycopyslots",(long long)ThirdPartyCopySlots);
@@ -112,17 +78,6 @@ XrdxCastor2Ofs::UpdateProc(const char *inname)
 
   if (!strcmp(name,"*")) {
     bool result=true;
-    result *=Write2ProcFile("totalreadbytes" , TotalReadBytes);
-    result *=Write2ProcFile("totalwritebytes", TotalWriteBytes);
-    result *=Write2ProcFile("totalstreamreadbytes" , TotalStreamReadBytes);
-    result *=Write2ProcFile("totalstreamwritebytes", TotalStreamWriteBytes);
-    result *=Write2ProcFile("readdelay"      , ReadDelay);
-    result *=Write2ProcFile("writedelay"     , WriteDelay);
-    if (RunRateLimiter){
-      result *=Write2ProcFile("readratelimit"  , ReadRateLimit);
-      result *=Write2ProcFile("writeratelimit" , WriteRateLimit);
-    }
-
     if (ThirdPartyCopy) {
       result *=Write2ProcFile("thirdpartycopyslots", ThirdPartyCopySlots);
       result *=Write2ProcFile("thirdpartycopyslotrate", ThirdPartyCopySlotRate);
@@ -140,16 +95,6 @@ bool
 XrdxCastor2Ofs::ReadAllProc() 
 {
   bool result=true;
-  if (!ReadFromProc("totalreadbytes")) result=false;
-  if (!ReadFromProc("totalwritebytes")) result=false;
-  if (!ReadFromProc("totalstreamreadbytes")) result=false;
-  if (!ReadFromProc("totalstreamwritebytes")) result=false;
-  if (!ReadFromProc("readdelay")) result=false;
-  if (!ReadFromProc("writedelay")) result=false;
-  if (RunRateLimiter){
-    if (!ReadFromProc("readratelimit")) result=false;
-    if (!ReadFromProc("writeratelimit")) result=false;
-  }
   if (ThirdPartyCopy) {
     if (!ReadFromProc("thirdpartycopyslots")) result=false;
     if (!ReadFromProc("thirdpartycopyslotrate")) result=false;
@@ -174,38 +119,6 @@ XrdxCastor2Ofs::ReadFromProc(const char* entryname) {
   if (val == -1)
     return false;
 
-  if (entryname == "totalreadbytes") {
-    TotalReadBytes = (long long)val;
-    return true;
-  }
-  if (entryname == "totalwritebytes") {
-    TotalWriteBytes = (long long)val;
-    return true;
-  }
-  if (entryname == "totalstreamreadbytes") {
-    TotalStreamReadBytes = (long long)val;
-    return true;
-  }
-  if (entryname == "totalstreamwritebytes") {
-    TotalStreamWriteBytes = (long long)val;
-    return true;
-  }
-  if (entryname == "readdelay") {
-    ReadDelay = (unsigned int)val;
-    return true;
-  }
-  if (entryname == "writedelay") {
-    WriteDelay = (unsigned int)val;
-    return true;
-  }
-  if (entryname == "readratelimit") {
-    ReadRateLimit = (unsigned int)val;
-    return true;
-  }
-  if (entryname == "writeratelimit") {
-    WriteRateLimit = (unsigned int) val;
-    return true;
-  }
   if (entryname == "thirdpartycopyslots") {
     ThirdPartyCopySlots = (unsigned int)val;
     return true;

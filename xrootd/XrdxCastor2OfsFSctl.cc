@@ -1,24 +1,49 @@
-//         $Id: XrdxCastor2OfsFSctl.cc,v 1.00 2007/10/04 01:34:19 abh Exp $
+/******************************************************************************
+ *                      XrdxCastor2OfsFsctl.cc
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2003  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ *
+ * @author Elvin Sindrilaru
+ *****************************************************************************/
 
+/*-----------------------------------------------------------------------------*/
+#include <sys/types.h>
+#include <attr/xattr.h>
+/*-----------------------------------------------------------------------------*/
 #include "XrdxCastor2Ofs.hh"
 #include "XrdOfs/XrdOfsTrace.hh"
 #include "XrdOuc/XrdOucEnv.hh"
 #include "XrdTransferManager/XrdTransferManager.hh"
-
-#include <sys/types.h>
-#include <attr/xattr.h>
+/*-----------------------------------------------------------------------------*/
 
 #define XRDXCASTOR2NS_FSCTLPATHLEN 4096
 #define XRDXCASTOR2NS_FSCTLOPAQUELEN 16384
 
 extern XrdOucTrace OfsTrace;
 
-/////////////////////////////////////////////////////////////////////////////
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
 int
 XrdxCastor2Ofs::FSctl(const int               cmd,
-                    XrdSfsFSctl            &args,
-                    XrdOucErrInfo          &error,
-                    const XrdSecEntity     *client) {
+                      XrdSfsFSctl            &args,
+                      XrdOucErrInfo          &error,
+                      const XrdSecEntity     *client) {
   char ipath[XRDXCASTOR2NS_FSCTLPATHLEN];
   char iopaque[XRDXCASTOR2NS_FSCTLOPAQUELEN];
 

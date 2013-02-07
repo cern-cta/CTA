@@ -8,12 +8,16 @@
 
 extern XrdOucTrace OfsTrace;
 
+
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
 int 
-XrdxCastor2OfsFile::ThirdPartyTransfer(const char   *fileName,
-			     XrdSfsFileOpenMode   openMode,
-			     mode_t               createMode,
-			     const XrdSecEntity        *client,
-			     const char                *opaque) {
+XrdxCastor2OfsFile::ThirdPartyTransfer(const char*         fileName,
+                                       XrdSfsFileOpenMode  openMode,
+                                       mode_t              createMode,
+                                       const XrdSecEntity* client,
+                                       const char*         opaque) {
   EPNAME("ThirdPartyTransfer");
   
   XrdOucEnv Open_Env(opaque);
@@ -197,6 +201,10 @@ XrdxCastor2OfsFile::ThirdPartyTransferClose(const char* uuidstring) {
   return SFS_ERROR;
 }
 
+
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
 void
 XrdxCastor2Ofs::ThirdPartySetup(const char* transferdirectory, int slots, int rate) {
   
@@ -207,6 +215,10 @@ XrdxCastor2Ofs::ThirdPartySetup(const char* transferdirectory, int slots, int ra
   }
 }
 
+
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
 void
 XrdxCastor2Ofs::ThirdPartyCleanupOnRestart() {
   XrdTransferCleanup::CleanupOnRestart();

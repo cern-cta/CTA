@@ -147,22 +147,22 @@ try:
         if displayFS:
             titles = ('DSNAME', 'MOUNTPOINT', 'STATUS', 'ONLINE', 'FREE', 'MINFREE', 'MAXFREE',
                       'SIZE', 'NBRD', 'NBWR', 'NBMIGR', 'NBREC', 'DISKPOOL', 'ID')
-            data = [(dsname if dsname else '', fsmountpoint if fsmountpoint else '',
-                     status if status else '', online if online else '',
+            data = [(dsname or '', fsmountpoint or '',
+                     status or '', adminstatus or '',
                      castor_tools.nbToDataAmount(free),
                      minfree, maxfree, castor_tools.nbToDataAmount(size), nbrd, nbwr, nbmigr, nbrec,
-                     ','.join(diskpools), dsid if dsid else '')
-                    for dsname, fsmountpoint, nbmountpoints, status, online, free,
+                     ','.join(diskpools), dsid or '')
+                    for dsname, fsmountpoint, nbmountpoints, status, adminstatus, free,
                         minfree, maxfree, size, nbrd, nbwr, nbmigr, nbrec, diskpools, dsid, summary in rows]
         else:
             titles = ('DSNAME', 'NBMOUNTPOINTS', 'STATUS', 'ONLINE', 'FREE', 'SIZE', 'NBRD',
                       'NBWR', 'NBMIGR', 'NBREC', 'DISKPOOL', 'ID')
-            data = [(dsname if dsname else '', nbmountpoints,
-                     status if status else '', online if online else '',
+            data = [(dsname or '', nbmountpoints,
+                     status or '', adminstatus or '',
                      castor_tools.nbToDataAmount(free),
                      castor_tools.nbToDataAmount(size), nbrd, nbwr, nbmigr, nbrec, ','.join(diskpools),
-                     dsid if dsid else '')
-                    for dsname, fsmountpoint, nbmountpoints, status, online, free,
+                     dsid or '')
+                    for dsname, fsmountpoint, nbmountpoints, status, adminstatus, free,
                         minfree, maxfree, size, nbrd, nbwr, nbmigr, nbrec, diskpools, dsid, summary in rows
                     if not fsmountpoint or summary]
         castor_tools.prettyPrintTable(titles, data, hasSummary=True)
