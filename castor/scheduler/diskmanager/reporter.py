@@ -110,7 +110,7 @@ class ReporterThread(threading.Thread):
         # "Caught exception in ActivityControl thread" message
         dlf.writeerr(msgs.REPORTEREXCEPTION)
       # do not loop too fast, send only one report every second
-      time.sleep(self.configuration.getValue('DiskManager', 'HeartBeatInterval', 1.0, float))
+      time.sleep(self.configuration.getValue('DiskManager', 'HeartbeatInterval', 1.0, float))
 
   def stop(self):
     '''stops processing in this thread'''
