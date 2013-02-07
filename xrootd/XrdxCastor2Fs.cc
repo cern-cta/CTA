@@ -1790,59 +1790,58 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
      // for read & write
      XrdOucString accopaque="";
    
-     XrdxCastor2ServerAcc::AuthzInfo authz;
-     authz.sfn = (char*)origpath;
-     authz.pfn1 = (char*) redirectionpfn1.c_str();
-     authz.pfn2 = (char*) redirectionpfn2.c_str();
-     //     authz.pfn2 = strdup("-");
-
-     authz.id  = (char*)tident;
-
-     authz.client_sec_uid = STRINGSTORE(sclient_uid.c_str());
-     authz.client_sec_gid = STRINGSTORE(sclient_gid.c_str());
-
-     authz.accessop = aop;
+     XrdxCastor2ServerAcc::AuthzInfo* authz = new XrdxCastor2ServerAcc::AuthzInfo( false );
+     authz->sfn = (char*) origpath;
+     authz->pfn1 = (char*) redirectionpfn1.c_str();
+     authz->pfn2 = (char*) redirectionpfn2.c_str();
+     authz->id  = (char*)tident;
+     authz->client_sec_uid = STRINGSTORE(sclient_uid.c_str());
+     authz->client_sec_gid = STRINGSTORE(sclient_gid.c_str());
+     authz->accessop = aop;
      time_t now = time(NULL);
-     authz.exptime  = (now + XrdxCastor2FS->TokenLockTime);
+     authz->exptime  = (now + XrdxCastor2FS->TokenLockTime);
      
      if (XrdxCastor2FS->IssueCapability) {
-       authz.token = NULL;
-       authz.signature= NULL;
+       authz->token = NULL;
+       authz->signature= NULL;
      } else {
-       authz.token = "";
-       authz.signature="";
+       authz->token = "";
+       authz->signature = "";
      }
      
-     authz.manager=(char*)XrdxCastor2FS->ManagerId.c_str();
+     authz->manager=(char*)XrdxCastor2FS->ManagerId.c_str();
      
      XrdOucString authztoken;
      XrdOucString sb64;
      
-     if (!XrdxCastor2ServerAcc::BuildToken(&authz,authztoken)) {
+     if (!XrdxCastor2ServerAcc::BuildToken( authz, authztoken)) {
        XrdxCastor2Fs::Emsg(epname, error, retc, "build authorization token for sfn = ", path);	   
+       delete authz;
        return SFS_ERROR;
      }
      
-     authz.token = (char*) authztoken.c_str();
+     authz->token = (char*) authztoken.c_str();
 
      TIMING(xCastor2FsTrace,"BUILDTOKEN",&opentiming);
 
      if (XrdxCastor2FS->IssueCapability) {
-       //       XrdxCastor2FS->encodeLock.Lock();
        int sig64len=0;
-       if(!XrdxCastor2FS->ServerAcc->SignBase64((unsigned char*)authz.token,strlen(authz.token),sb64,sig64len,stagehost.c_str())) {
+       if(!XrdxCastor2FS->ServerAcc->SignBase64((unsigned char*)authz->token, 
+                                                strlen(authz->token), sb64, 
+                                                sig64len,stagehost.c_str())) 
+       {
 	 XrdxCastor2Fs::Emsg(epname, error, retc, "sign authorization token for sfn = ", path);	   
-	 //	 XrdxCastor2FS->encodeLock.UnLock();
+         delete authz;
 	 return SFS_ERROR;
        }					
-       authz.signature = (char*)sb64.c_str();
+       authz->signature = (char*)sb64.c_str();
      }
      
      TIMING(xCastor2FsTrace,"SIGNBASE64",&opentiming);
 
-     if (!XrdxCastor2ServerAcc::BuildOpaque(&authz,accopaque)) {
+     if (!XrdxCastor2ServerAcc::BuildOpaque( authz, accopaque)) {
        XrdxCastor2Fs::Emsg(epname, error, retc, "build authorization opaque string for sfn = ", path);	   
-       //       XrdxCastor2FS->encodeLock.UnLock();
+       delete authz;
        return SFS_ERROR;
      }
 
@@ -1874,15 +1873,12 @@ int XrdxCastor2FsFile::open(const char          *path,      // In
        }
      }
 
-     //     if (XrdxCastor2FS->xCastor2FsTargetPort != "1094") {
-       ecode = atoi(XrdxCastor2FS->xCastor2FsTargetPort.c_str());
-       //     }
-
+     ecode = atoi(XrdxCastor2FS->xCastor2FsTargetPort.c_str());
      error.setErrInfo(ecode,redirectionhost.c_str());
-     if (XrdxCastor2FS->IssueCapability) {
-       //       XrdxCastor2FS->encodeLock.UnLock();
-     }
-       
+
+     // Free used memory 
+     //
+     delete authz;       
    }
 
    TIMING(xCastor2FsTrace,"AUTHZ",&opentiming);

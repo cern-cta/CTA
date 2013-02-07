@@ -46,20 +46,26 @@ class XrdSecEntity;
 
 //------------------------------------------------------------------------------
 //! Class XrdxCastor2ServerAcc
+//! This class can be used in two ways: either by taking ownership of the 
+//! object passed to it by using strdup as they are all chars and then in the 
+//! destructor one needs to free these objects by calling free(), or by not 
+//! taking ownership and then we don't need to do any memory management.
 //------------------------------------------------------------------------------
-class XrdxCastor2ServerAcc
+class XrdxCastor2ServerAcc: public XrdAccAuthorize
 {
   public:
 
     struct AuthzInfo {
+
+      bool takeOwnership;    ///< if true then we need to free memory in the destructor
+      int accessop;          ///< the access operation allowed -> see XrdAcc/XrdAccAuthorize.hh
+      time_t exptime;        ///< time when the authorization expires 
       char* sfn;             ///< sfn
       char* pfn1;            ///< physical mount filename 
       char* pfn2;            ///< physical replica filename, if exists otherwise '-'
       char* id;              ///< the client connection id 
       char* client_sec_uid;  ///< the sec identity eg. user name 
       char* client_sec_gid;  ///< the sec identity eg. group name 
-      int accessop;          ///< the access operation allowed -> see XrdAcc/XrdAccAuthorize.hh
-      time_t exptime;        ///< time when the authorization expires 
       char* token;           ///< the full token
       char* signature;       ///< signature for 'token' 
       char* manager;         ///< hostname of the managernode 
@@ -67,28 +73,35 @@ class XrdxCastor2ServerAcc
       
       //------------------------------------------------------------------------
       //! Constructor 
+      //!
+      //! @param ownObj if true then the class attribute will be dynamically 
+      //!               allocated and the memeory must be freed in the destructor,
+      //!               otherwise if false than we dont't need to do any 
+      //!               memory management 
+      //!
       //------------------------------------------------------------------------
-      AuthzInfo() {
-        sfn = pfn1 = pfn2 = id = client_sec_uid = NULL;
-        client_sec_gid = token = signature = manager = NULL;
-        accessop = 0;
-        exptime = 0;
-      }
+      AuthzInfo( bool ownObj ) :
+        takeOwnership( ownObj ), accessop( 0 ), exptime( 0 ), 
+        sfn( NULL ), pfn1( NULL ), pfn2( NULL ), id( NULL ), client_sec_uid( NULL ),
+        client_sec_gid( NULL ), token( NULL ), signature( NULL ), manager( NULL )
+      { }
 
 
       //------------------------------------------------------------------------
       //! Destructor 
       //------------------------------------------------------------------------
       ~AuthzInfo() {
-        if ( sfn )  delete sfn;
-        if ( pfn1 ) delete pfn1;
-        if ( pfn2 ) delete pfn2;
-        if ( id )   delete id;
-        if ( client_sec_uid ) delete client_sec_uid;
-        if ( client_sec_gid ) delete client_sec_gid;
-        if ( token )          delete token;
-        if ( signature )      delete signature;
-        if ( manager )        delete manager;
+        if ( takeOwnership ) {
+          if ( sfn )            free( sfn );
+          if ( pfn1 )           free( pfn1 );
+          if ( pfn2 )           free( pfn2 );
+          if ( id )             free( id );
+          if ( client_sec_uid ) free( client_sec_uid );
+          if ( client_sec_gid ) free( client_sec_gid );
+          if ( token )          free( token );
+          if ( signature )      free( signature );
+          if ( manager )        free( manager );
+        }
       }
     };
 

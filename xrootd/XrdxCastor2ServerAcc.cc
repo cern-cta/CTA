@@ -40,8 +40,6 @@
 #include "XrdSys/XrdSysError.hh"
 /*-----------------------------------------------------------------------------*/
 
-#define IS_SLASH(s) (s == '/')
-
 XrdSysError TkEroute( 0, "xCastorServerAcc" );
 XrdOucTrace TkTrace( &TkEroute );
 
@@ -127,7 +125,7 @@ XrdxCastor2ServerAcc::Configure( const char* conf_file )
 
     Config.Attach( cfgFD );
 
-    // Now start reading records until eof.
+    // Now start reading records until eof
     //
     while ( ( var = Config.GetMyFirstWord() ) ) {
       if ( !strncmp( var, "xcastor2.", 9 ) ) {
@@ -395,6 +393,7 @@ XrdxCastor2ServerAcc::SignBase64( unsigned char* input,
     TkTrace.Beg( "SignBase64" );
     cerr << "Unable to find privave key for key class " << keyclass << endl;
     TkTrace.End();
+    encodeLock.UnLock();
     return false;
   }
 
@@ -540,7 +539,7 @@ XrdxCastor2ServerAcc::Decode( const char* opaque )
   //
   sop.replace( "&", "\n" );
   XrdOucTokenizer authztokens( ( char* )sop.c_str() );
-  XrdxCastor2ServerAcc::AuthzInfo* authz = new XrdxCastor2ServerAcc::AuthzInfo;
+  XrdxCastor2ServerAcc::AuthzInfo* authz = new XrdxCastor2ServerAcc::AuthzInfo( true );
   const char* stoken;
   int ntoken = 0;
 
@@ -723,10 +722,10 @@ XrdxCastor2ServerAcc::BuildOpaque( XrdxCastor2ServerAcc::AuthzInfo* authz,
 XrdAccPrivs
 XrdxCastor2ServerAcc::Access( const XrdSecEntity*    Entity,
                               const char*            path,
-                              const Access_Operation /*oper*/,
+                              const Access_Operation oper,
                               XrdOucEnv*             Env )
 {
-  //  TkTrace.Beg("Access");
+  //TkTrace.Beg("Access");
   decodeLock.Lock();
   XrdOucString envstring = "";
   int envlen = 0;
@@ -735,8 +734,9 @@ XrdxCastor2ServerAcc::Access( const XrdSecEntity*    Entity,
     envstring.assign( Env->Env( envlen ), 0, envlen );
   }
 
-  //  cerr << "path="<< path<< " operation=" <<(int)oper << " env="<< envstring.c_str();
-  //  TkTrace.End();
+  //cerr << "path="<< path<< " operation=" <<(int)oper << " env="<< envstring.c_str();
+  //TkTrace.End();
+
   char* opaque = 0;
   envlen = 0;
   XrdxCastor2ServerAcc::AuthzInfo* authz;
@@ -773,6 +773,7 @@ XrdxCastor2ServerAcc::Access( const XrdSecEntity*    Entity,
 
   if ( !opaque ) {
     decodeLock.UnLock();
+    TkEroute.Emsg( "Access", EIO, "no opaque information for sfn=", path );
     return XrdAccPriv_None;
   }
 
@@ -829,7 +830,7 @@ XrdxCastor2ServerAcc::Access( const XrdSecEntity*    Entity,
 
       if ( !spfn2.find( authz->pfn1 ) ) {
         TkEroute.Emsg( "Access", EACCES, "give access - the signature was not provided for this path!" );
-        delete authz;;
+        delete authz;
         decodeLock.UnLock();
         return XrdAccPriv_None;
       }
@@ -839,7 +840,7 @@ XrdxCastor2ServerAcc::Access( const XrdSecEntity*    Entity,
     //
     if ( authz->exptime < now ) {
       TkEroute.Emsg( "check_user_access", EACCES, "give access - the signature has expired already!" );
-      delete authz;;
+      delete authz;
       decodeLock.UnLock();
       return XrdAccPriv_None;
     }
@@ -860,7 +861,7 @@ XrdxCastor2ServerAcc::Access( const XrdSecEntity*    Entity,
       return XrdAccPriv_None;
     }
 
-    delete authz;;
+    delete authz;
   }
 
   // If we have an open with a write we have to send a fsctl message to the manager 

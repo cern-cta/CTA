@@ -498,6 +498,7 @@ XrdxCastor2OfsFile::open( const char*         path,
                           const char*         opaque )
 {
   EPNAME( "XrdxCastor2OfsFile_open" );
+  TRACES( "Begin open. " );
   // the OFS open is caugth to set the access/modify time in the nameserver
   procRequest = kProcNone;
   char* val = 0;
@@ -877,11 +878,12 @@ XrdxCastor2OfsFile::open( const char*         path,
       }
     }
 
-    if ( isTruncate )
+    if ( isTruncate ) {
       truncate( 0 );
+    }
   }
-  //////////////////////////////////////////////////////////////////////////////
 
+  //////////////////////////////////////////////////////////////////////////////
   if ( IsThirdPartyStreamCopy ) {
     // retrieve the req id from the opaque info
 
