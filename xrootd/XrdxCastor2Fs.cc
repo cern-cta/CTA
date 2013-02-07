@@ -3412,7 +3412,6 @@ XrdxCastor2Fs::stat( const char*         path,
   uid_t client_uid;
   uid_t client_gid;
   GETID( path, mappedclient, client_uid, client_gid );
-  //int rc;
   XrdOucString stagehost = "";
   XrdOucString serviceclass = "default";
   XrdOucString stagestatus = "";

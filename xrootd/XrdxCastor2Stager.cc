@@ -837,11 +837,12 @@ XrdxCastor2Stager::StagerQuery( XrdOucErrInfo& error,
   ErrPrefix += stagehost;
   ErrPrefix += " serviceclass=";
   ErrPrefix += serviceclass;
-  struct stage_query_req       requests[1];
-  struct stage_filequery_resp*  resp;
-  int                           nbresps, i;
+
+  struct stage_query_req requests[1];
+  struct stage_filequery_resp* resp;
+  int  nbresps, i;
   char errbuf[1024];
-  struct stage_options                  Opts;
+  struct stage_options Opts;
   errbuf[0] = 0;
   Opts.stage_host    = ( char* )stagehost;
   Opts.service_class = ( char* )serviceclass;
