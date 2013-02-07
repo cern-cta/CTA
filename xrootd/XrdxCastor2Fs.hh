@@ -95,7 +95,7 @@ static int Unlink(const char* fn) {return Cns_unlink(fn);}
 
 static int Access(const char* fn, int mode) {return Cns_access(fn,mode);}
 
-static int Utimes(const char* fn, struct timeval *tvp) {return 0;/* return Cns_utimes(fn,tvp);*/}
+  static int Utimes(const char* /*fn*/, struct timeval* /*tvp*/) {return 0;/* return Cns_utimes(fn,tvp);*/}
 
 static DIR* OpenDir(const char* dn) { return (DIR*)Cns_opendir(dn);}
 static struct dirent*  ReadDir(DIR* dp) { return Cns_readdir((Cns_DIR*) dp); }
@@ -525,13 +525,18 @@ public:
         const char    *FName() {return fname;}
 
 
-        int            Fscmd(const char* path,  const char* path2, const char* orgipath, const XrdSecEntity *client,  XrdOucErrInfo &error, const char* info) { return SFS_OK;}
+  int Fscmd( const char*         /*path*/,  
+             const char*         /*path2*/, 
+             const char*         /*orgipath*/, 
+             const XrdSecEntity* /*client*/,  
+             XrdOucErrInfo&      /*error*/, 
+             const char*         /*info*/ ) { return SFS_OK;}
 
         int            getMmap(void **Addr, off_t &Size)
                               {if (Addr) Addr = 0; Size = 0; return SFS_OK;}
 
-        int            read(XrdSfsFileOffset   fileOffset,
-                            XrdSfsXferSize     preread_sz) {return SFS_OK;}
+  int read(XrdSfsFileOffset /*fileOffset*/,
+           XrdSfsXferSize /*preread_sz*/) {return SFS_OK;}
 
         XrdSfsXferSize read(XrdSfsFileOffset   fileOffset,
                             char              *buffer,
@@ -553,7 +558,7 @@ public:
 
         int            truncate(XrdSfsFileOffset   fileOffset);
 
-        int            getCXinfo(char cxtype[4], int &cxrsz) {return cxrsz = 0;}
+  int getCXinfo(char* /*cxtype[4]*/, int &cxrsz) {return cxrsz = 0;}
 
         int            fctl(int, const char*, XrdOucErrInfo&) {return 0;}
 
@@ -619,7 +624,7 @@ public:
                                    XrdOucErrInfo    &out_error,
 			     const XrdSecEntity *client = 0);
 
-        int            getStats(char *buff, int blen) {return 0;}
+  int getStats(char* /*buff*/, int /*blen*/) {return 0;}
 
 const   char          *getVersion();
 
@@ -719,7 +724,7 @@ static  int            Emsg(const char *, XrdOucErrInfo&, int, const char *x,
 virtual               ~XrdxCastor2Fs() {}
 
 virtual int            Configure(XrdSysError &);
-virtual bool           Init(XrdSysError &);
+virtual bool           Init();
         int            Stall(XrdOucErrInfo &error, int stime, const char *msg);
         bool           GetStageVariables(const char* Path, const char* Opaque, XrdOucString &stagevariables, uid_t client_uid, gid_t client_gid, const char* tident); 
         int           SetStageVariables(const char* Path, const char* Opaque, XrdOucString stagevariables, XrdOucString &stagehost, XrdOucString &serviceclass, int n, const char* tident);

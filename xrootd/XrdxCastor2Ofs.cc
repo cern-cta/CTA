@@ -70,7 +70,7 @@ XrdOucHash<XrdxCastor2ClientAdmin>* XrdxCastor2Ofs::clientadmintable;
 //------------------------------------------------------------------------------
 extern "C"
 {
-  XrdSfsFileSystem* XrdSfsGetFileSystem( XrdSfsFileSystem* native_fs,
+  XrdSfsFileSystem* XrdSfsGetFileSystem( XrdSfsFileSystem* /*native_fs*/,
                                          XrdSysLogger*     lp,
                                          const char*       configfn )
   {
@@ -326,10 +326,10 @@ int XrdxCastor2Ofs::Configure( XrdSysError& Eroute )
 // Remove
 //------------------------------------------------------------------------------
 int
-XrdxCastor2Ofs::rem( const char*             path,
-                     XrdOucErrInfo&          error,
-                     const XrdSecEntity*     client,
-                     const char*             info )
+XrdxCastor2Ofs::rem( const char*         path,
+                     XrdOucErrInfo&      error,
+                     const XrdSecEntity* /*client*/,
+                     const char*         /*info*/ )
 {
   EPNAME( "rem" );
   const char* tident = error.getErrUser();
@@ -375,9 +375,9 @@ XrdxCastor2Ofs::rem( const char*             path,
 int
 XrdxCastor2Ofs::stat( const char*         Name,
                       struct stat*        buf,
-                      XrdOucErrInfo&      out_error,
-                      const XrdSecEntity* client,
-                      const char*         opaque )
+                      XrdOucErrInfo&      /*out_error*/,
+                      const XrdSecEntity* /*client*/,
+                      const char*         /*opaque*/ )
 {
   int fd = ::open( "/etc/castor/status", O_RDONLY );
 
@@ -453,7 +453,7 @@ XrdxCastor2OfsFile::XrdxCastor2OfsFile( const char* user, int MonID ) :
   adleroffset = 0;
   DiskChecksum = "";
   DiskChecksumAlgorithm = "";
-  VerifyChecksum = true;
+  verifyChecksum = true;
   hasadlererror = false;
   castorlfn = "";
   Transfer = 0;
@@ -502,7 +502,6 @@ XrdxCastor2OfsFile::open( const char*         path,
   procRequest = kProcNone;
   char* val = 0;
   const char* tident = error.getErrUser();
-  TRACES( "Begin." );
   XrdxCastor2Timing opentiming( "ofsf::open" );
   TIMING( OfsTrace, "START", &opentiming );
   XrdOucString spath = path;
@@ -579,7 +578,7 @@ XrdxCastor2OfsFile::open( const char*         path,
   if ( ( verifytag == "false" ) ||
        ( verifytag == "0" ) ||
        ( verifytag == "off" ) ) {
-    VerifyChecksum = false;
+    verifyChecksum = false;
   }
 
   open_mode |= SFS_O_MKPTH;
@@ -595,8 +594,9 @@ XrdxCastor2OfsFile::open( const char*         path,
   if ( spath.beginswith( "/proc/" ) ) {
     procRequest = kProcRead;
 
-    if ( isRW )
+    if ( isRW ) {
       procRequest = kProcWrite;
+    }
 
     // declare this as a proc path to the authorization plugin
     newopaque += "&";
@@ -904,7 +904,6 @@ XrdxCastor2OfsFile::open( const char*         path,
 
   opentiming.Print( OfsTrace );
   TIMING( OfsTrace, "DONE", &opentiming );
-  TRACES( "Finish." );
   return rc;
 }
 
@@ -916,7 +915,6 @@ XrdxCastor2OfsFile::close()
 {
   EPNAME( "XrdxCastor2OfsFile_close" );
   char* tident = "";
-  TRACES( "Begin." );
   int rc = SFS_OK;
 
   if ( IsClosed )
@@ -1034,25 +1032,24 @@ XrdxCastor2OfsFile::close()
     }
   }
 
-  TRACES( "Finish." );
   return rc;
 }
 
 
 //------------------------------------------------------------------------------
-// XrdxCastor2OfsFile::verifychecksum
+// XrdxCastor2OfsFile::VerifyChecksum
 //------------------------------------------------------------------------------
 bool
-XrdxCastor2OfsFile::verifychecksum()
+XrdxCastor2OfsFile::VerifyChecksum()
 {
-  EPNAME( "verifychecksum" );
+  EPNAME( "VerifyChecksum" );
   bool rc = true;
   XrdOucString CalcChecksum;
   XrdOucString CalcChecksumAlgorithm;
 
   if ( ( DiskChecksum != "" ) &&
        ( DiskChecksumAlgorithm != "" ) &&
-       VerifyChecksum ) 
+       verifyChecksum ) 
   {
     char ckSumbuf[32 + 1];
     sprintf( ckSumbuf, "%x", adler );
@@ -1124,7 +1121,7 @@ XrdxCastor2OfsFile::read( XrdSfsFileOffset fileOffset,
 
   if ( hasadler && ( fileOffset + buffer_size >= statinfo.st_size ) ) {
     // invoke the checksum verification
-    if ( !verifychecksum() ) {
+    if ( !VerifyChecksum() ) {
       hasadlererror = true;
       rc = SFS_ERROR;
     }
@@ -1308,7 +1305,7 @@ XrdxCastor2OfsFile::sync()
 // Sync
 //------------------------------------------------------------------------------
 int
-XrdxCastor2OfsFile::sync( XrdSfsAio* aiop )
+XrdxCastor2OfsFile::sync( XrdSfsAio* /*aiop*/ )
 {
   return XrdOfsFile::sync();
 }
@@ -1515,8 +1512,9 @@ XrdxCastor2Ofs2StagerJob::Open()
 {
   EPNAME( "StagerJob_Open" );
   char* tident = "";
-  TRACES( "Calling XrdxCastor2Ofs2StagerJob::Open." );
-  // if there shouldn't be a port, we don't inform anybode
+
+  // If there shouldn't be a port, we don't inform anybode
+  //
   if ( !Port )
     return true;
 
@@ -1526,7 +1524,6 @@ XrdxCastor2Ofs2StagerJob::Open()
     return false;
   }
 
-  //int on = 1;
   Socket->setOpts( Socket->SockNum(), XRDNET_KEEPALIVE | XRDNET_DELAY );
   // build IDENT message
   XrdOucString ident = "IDENT ";
@@ -1541,8 +1538,6 @@ XrdxCastor2Ofs2StagerJob::Open()
   }
 
   IsConnected = true;
-  // everything ok
-  TRACES( "Calling XrdxCastor2Ofs2StagerJob::Open return true" );
   return true;
 }
 
@@ -1585,7 +1580,6 @@ XrdxCastor2Ofs2StagerJob::Close( bool ok, bool haswrite )
 {
   EPNAME( "StagerJob_Close" );
   const char* tident = "";
-  TRACES( "Calling Close" );
 
   if ( !Port || !Socket || !IsConnected) {
     return true;
@@ -1607,7 +1601,6 @@ XrdxCastor2Ofs2StagerJob::Close( bool ok, bool haswrite )
 
   // send CLOSE message
   ZTRACE( debug, "Trying to send CLOSE message to StagerJob" );
-  TRACES( "Trying to send CLOSE message to StagerJob" );
   int nwrite = write( Socket->SockNum(), ident.c_str(), ident.length() );
 
   if ( nwrite != ident.length() ) {
@@ -1624,7 +1617,6 @@ XrdxCastor2Ofs2StagerJob::Close( bool ok, bool haswrite )
   char respmesg[16384];
   int nread = 0;
   ZTRACE( debug, "Trying to read CLOSE response from StagerJob" );
-  TRACES( "Trying to read CLOSE response from StagerJob" );
   nread = ::read( Socket->SockNum(), closeresp, sizeof( closeresp ) );
   ZTRACE( debug, "This read gave " << nread << " errno: " << errno );
 
@@ -1655,6 +1647,5 @@ XrdxCastor2Ofs2StagerJob::Close( bool ok, bool haswrite )
     return false;
   }
 
-  TRACES( "Return true " );
   return true;
 }

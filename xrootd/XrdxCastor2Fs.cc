@@ -837,7 +837,7 @@ XrdxCastor2Fs::XrdxCastor2Fs(XrdSysError *ep)
 /*                           I n i t i a l i z a t i o n                      */
 /******************************************************************************/
 bool
-XrdxCastor2Fs::Init(XrdSysError &ep)
+XrdxCastor2Fs::Init()
 {
   filesystemhosttable = new XrdOucHash<XrdOucString> ();
   nstable   = new XrdOucHash<XrdOucString> ();
@@ -863,9 +863,9 @@ XrdxCastor2Fs::Init(XrdSysError &ep)
 /******************************************************************************/
 
 extern "C"   
-XrdSfsFileSystem *XrdSfsGetFileSystem(XrdSfsFileSystem *native_fs, 
-                                      XrdSysLogger     *lp,
-				      const char       *configfn)
+XrdSfsFileSystem *XrdSfsGetFileSystem( XrdSfsFileSystem* /*native_fs*/, 
+                                       XrdSysLogger*     lp,
+                                       const char*       configfn )
 {
   xCastor2FsEroute.SetPrefix("xcastor2fs_");
   xCastor2FsEroute.logger(lp);
@@ -878,7 +878,7 @@ XrdSfsFileSystem *XrdSfsGetFileSystem(XrdSfsFileSystem *native_fs,
   
   // Initialize the subsystems
   //
-  if (!myFS.Init(xCastor2FsEroute) ) return 0;
+  if (!myFS.Init() ) return 0;
 
   myFS.ConfigFN = (configfn && *configfn ? strdup(configfn) : 0);
   if ( myFS.Configure(xCastor2FsEroute) ) return 0;
@@ -2826,11 +2826,9 @@ int XrdxCastor2Fs::exists(const char                *path,        // In
   return _exists(path,file_exists,error,&mappedclient,info);
 }
 
-int XrdxCastor2Fs::_exists(const char                *path,        // In
-                               XrdSfsFileExistence &file_exists, // Out
-                               XrdOucErrInfo       &error,       // Out
-                         const XrdSecEntity    *client,          // In
-                         const char                *info)        // In
+
+
+
 /*
   Function: Determine if file 'path' actually exists.
 
@@ -2848,6 +2846,13 @@ int XrdxCastor2Fs::_exists(const char                *path,        // In
 
   Notes:    When failure occurs, 'file_exists' is not modified.
 */
+
+int XrdxCastor2Fs::_exists( const char*          path,        
+                            XrdSfsFileExistence& file_exists, 
+                            XrdOucErrInfo&       error,       
+                            const XrdSecEntity*  /*client*/,      
+                            const char*          /*info*/ )        
+
 {
    static const char *epname = "exists";
    struct Cns_filestatcs fstat;
@@ -2916,11 +2921,11 @@ int XrdxCastor2Fs::mkdir(const char             *path,    // In
 
 /******************************************************************************/
 
-int XrdxCastor2Fs::_mkdir(const char            *path,    // In
-                              XrdSfsMode        Mode,    // In
-                              XrdOucErrInfo    &error,   // Out
-                        const XrdSecEntity     *client,  // In
-                        const char             *info)    // In
+int XrdxCastor2Fs::_mkdir(const char            *path,   
+                          XrdSfsMode        Mode,    
+                          XrdOucErrInfo    &error,   
+                          const XrdSecEntity     *client, 
+                          const char*             /*info*/)  
 /*
   Function: Create a directory entry.
 
@@ -3550,10 +3555,10 @@ int XrdxCastor2Fs::rem(const char             *path,    // In
 }
 
 
-int XrdxCastor2Fs::_rem(   const char             *path,    // In
-                               XrdOucErrInfo    &error,   // Out
-                         const XrdSecEntity *client,  // In
-                         const char             *info)    // In
+int XrdxCastor2Fs::_rem( const char*         path,    
+                         XrdOucErrInfo&      error,   
+                         const XrdSecEntity* /*client*/, 
+                         const char*         /*info*/ ) 
 /*
   Function: Delete a file from the namespace.
 
@@ -3626,10 +3631,10 @@ int XrdxCastor2Fs::remdir(const char             *path,    // In
 
 
 
-int XrdxCastor2Fs::_remdir(const char             *path,    // In
-                               XrdOucErrInfo    &error,   // Out
-                         const XrdSecEntity *client,  // In
-                         const char             *info)    // In
+int XrdxCastor2Fs::_remdir( const char*         path,   
+                            XrdOucErrInfo&      error,  
+                            const XrdSecEntity* /*client*/,  
+                            const char*         /*info*/ )
 /*
   Function: Delete a directory from the namespace.
 
@@ -4095,11 +4100,11 @@ int XrdxCastor2Fs::symlink(const char           *path,        // In
 /******************************************************************************/
 /*                             a c c e s s                                    */
 /******************************************************************************/
-int XrdxCastor2Fs::access( const char           *path,        // In
-                          int                   mode,        // In
-			  XrdOucErrInfo        &error,       // Out
-			  const XrdSecEntity   *client,      // In
-			  const char           *info)        // In
+int XrdxCastor2Fs::access( const char           *path, 
+                           int                   /*mode*/,  
+			  XrdOucErrInfo        &error, 
+			  const XrdSecEntity   *client,
+			  const char           *info)  
 {
   static const char *epname = "access";
   const char *tident = error.getErrUser(); 

@@ -66,15 +66,18 @@ class XrdxCastor2Ofs2StagerJob
     //--------------------------------------------------------------------------
     XrdxCastor2Ofs2StagerJob( const char* sjobuuid, int port );
 
+
     //--------------------------------------------------------------------------
     //! Destructor
     //--------------------------------------------------------------------------
     ~XrdxCastor2Ofs2StagerJob();
 
+
     //--------------------------------------------------------------------------
     //! Open new connection to the StagerJob
     //--------------------------------------------------------------------------
     bool Open();
+
 
     //--------------------------------------------------------------------------
     //! Close connection
@@ -87,10 +90,12 @@ class XrdxCastor2Ofs2StagerJob
     //--------------------------------------------------------------------------
     bool Close( bool ok, bool update );
 
+
     //--------------------------------------------------------------------------
     //! Test if connection still alive
     //--------------------------------------------------------------------------
     bool StillConnected();
+
 
     //--------------------------------------------------------------------------
     //! Get connection status
@@ -101,12 +106,12 @@ class XrdxCastor2Ofs2StagerJob
 
   private:
 
-    int Port;
-    bool IsConnected;
-    XrdOucString SjobUuid;
-    XrdNetSocket* Socket;
-    struct timeval to;
-    fd_set check_set;
+    int Port;              ///<
+    bool IsConnected;      ///<
+    XrdOucString SjobUuid; ///<
+    XrdNetSocket* Socket;  ///<
+    struct timeval to;     ///<
+    fd_set check_set;      ///<
 };
 
 
@@ -149,7 +154,7 @@ class XrdxCastor2OfsFile : public XrdOfsFile
 
 
     //--------------------------------------------------------------------------
-    //! 
+    //! Read from file
     //--------------------------------------------------------------------------
     int read( XrdSfsFileOffset fileOffset,  // Preread only
               XrdSfsXferSize   amount );
@@ -216,7 +221,7 @@ class XrdxCastor2OfsFile : public XrdOfsFile
     //--------------------------------------------------------------------------
     //! 
     //--------------------------------------------------------------------------
-    bool verifychecksum();
+    bool VerifyChecksum();
 
 
     //--------------------------------------------------------------------------
@@ -246,28 +251,29 @@ class XrdxCastor2OfsFile : public XrdOfsFile
     time_t       LastMdsUpdate;          ///<
 
   private:
-    int              procRequest;
-    XrdOucEnv*       envOpaque;
-    bool             isRW;
-    bool             isTruncate;
-    bool             hasWrite;
-    bool             firstWrite;
-    bool             isOpen;
-    bool             viaDestructor;
-    XrdOucString     reqid;
-    XrdOucString     stagehost;
-    XrdOucString     serviceclass;
-    int              stagerjobport;
-    XrdOucString     SjobUuid;
-    XrdOucString     castorlfn;
-    unsigned int     adler;
-    bool             hasadler;
-    bool             hasadlererror;
-    XrdSfsFileOffset adleroffset;
-    struct stat      statinfo;
-    XrdOucString     DiskChecksum;
-    XrdOucString     DiskChecksumAlgorithm;
-    bool             VerifyChecksum;
+  
+    int              procRequest;    ///<
+    XrdOucEnv*       envOpaque;      ///<
+    bool             isRW;           ///<
+    bool             isTruncate;     ///<
+    bool             hasWrite;       ///<
+    bool             firstWrite;     ///<
+    bool             isOpen;         ///<
+    bool             viaDestructor;  ///<
+    XrdOucString     reqid;          ///< 
+    XrdOucString     stagehost;      ///<
+    XrdOucString     serviceclass;   ///<
+    int              stagerjobport;  ///<
+    XrdOucString     SjobUuid;       ///<
+    XrdOucString     castorlfn;      ///<
+    unsigned int     adler;          ///<
+    bool             hasadler;       ///<
+    bool             hasadlererror;  ///<
+    XrdSfsFileOffset adleroffset;    ///<
+    struct stat      statinfo;       ///<
+    XrdOucString     DiskChecksum;   ///<
+    XrdOucString     DiskChecksumAlgorithm; ///<
+    bool             verifyChecksum; ///<
 
 };
 
@@ -299,38 +305,8 @@ class XrdxCastor2Ofs : public XrdOfs
 {
     friend class XrdxCastor2OfsDirectory;
     friend class XrdxCastor2OfsFile;
-
-  private:
-    vecString procUsers;   ///< vector of users (reduced tidents <user>@host which can write into /proc
-
-    //--------------------------------------------------------------------------
-    //! Write values to the /proc file system - source in XrdxCastor2OfsProc.cc
-    //--------------------------------------------------------------------------
-    bool Write2ProcFile( const char* name, long long value );
-
-
-    //--------------------------------------------------------------------------
-    //! Read values out of the /proc file system
-    //--------------------------------------------------------------------------
-    bool ReadAllProc();
-
-
-    //--------------------------------------------------------------------------
-    //! Read values out of the /proc file system
-    //--------------------------------------------------------------------------
-    bool ReadFromProc( const char* entryname );
-
-
-  protected:
-    XrdSysMutex         StatisticMutex;  // mutex for read/write statistic
-
+  
   public:
-
-    //--------------------------------------------------------------------------
-    //! Configure function
-    //--------------------------------------------------------------------------
-    int Configure( XrdSysError& error );
-
 
     //--------------------------------------------------------------------------
     //! Constructor
@@ -342,6 +318,12 @@ class XrdxCastor2Ofs : public XrdOfs
     //! Destructor
     //--------------------------------------------------------------------------
     virtual ~XrdxCastor2Ofs() {};
+
+
+    //--------------------------------------------------------------------------
+    //! Configure function
+    //--------------------------------------------------------------------------
+    int Configure( XrdSysError& error );
 
 
     //--------------------------------------------------------------------------
@@ -366,62 +348,52 @@ class XrdxCastor2Ofs : public XrdOfs
     bool UpdateProc( const char* name );
 
 
-    // here we mask all illegal operations
+    // *** Here we mask all illegal operations ***
     //--------------------------------------------------------------------------
     //!
     //--------------------------------------------------------------------------
-    int chmod( const char*         Name,
-               XrdSfsMode          Mode,
-               XrdOucErrInfo&      out_error,
-               const XrdSecEntity* client,
-               const char*         opaque = 0 ) {
-      return SFS_OK;
-    }
-
-
-    //--------------------------------------------------------------------------
-    //!
-    //--------------------------------------------------------------------------
-    int exists( const char*          fileName,
-                XrdSfsFileExistence& exists_flag,
-                XrdOucErrInfo&       out_error,
-                const XrdSecEntity*  client,
-                const char*          opaque = 0 ) {
-      return SFS_OK;
-    }
+    int chmod( const char*         /*Name*/,
+               XrdSfsMode          /*Mode*/,
+               XrdOucErrInfo&      /*out_error*/,
+               const XrdSecEntity* /*client*/,
+               const char*         /*opaque = 0*/ ) { return SFS_OK; }
 
 
     //--------------------------------------------------------------------------
     //!
     //--------------------------------------------------------------------------
-    int fsctl( const int           cmd,
-               const char*         args,
-               XrdOucErrInfo&      out_error,
-               const XrdSecEntity* client ) {
-      return SFS_OK;
-    }
+    int exists( const char*          /*fileName*/,
+                XrdSfsFileExistence& /*exists_flag*/,
+                XrdOucErrInfo&       /*out_error*/,
+                const XrdSecEntity*  /*client*/,
+                const char*          /*opaque = 0*/ ) { return SFS_OK; }
 
 
     //--------------------------------------------------------------------------
     //!
     //--------------------------------------------------------------------------
-    int mkdir( const char*         dirName,
-               XrdSfsMode          Mode,
-               XrdOucErrInfo&      out_error,
-               const XrdSecEntity* client,
-               const char*         opaque = 0 ) {
-      return SFS_OK;
-    }
+    int fsctl( const int           /*cmd*/,
+               const char*         /*args*/,
+               XrdOucErrInfo&      /*out_error*/,
+               const XrdSecEntity* /*client*/ ) { return SFS_OK; }
 
 
     //--------------------------------------------------------------------------
     //!
     //--------------------------------------------------------------------------
-    int prepare( XrdSfsPrep&         pargs,
-                 XrdOucErrInfo&      out_error,
-                 const XrdSecEntity* client = 0 ) {
-      return SFS_OK;
-    }
+    int mkdir( const char*         /*dirName*/,
+               XrdSfsMode          /*Mode*/,
+               XrdOucErrInfo&      /*out_error*/,
+               const XrdSecEntity* /*client*/,
+               const char*         /*opaque = 0*/ ) { return SFS_OK; }
+
+
+    //--------------------------------------------------------------------------
+    //!
+    //--------------------------------------------------------------------------
+    int prepare( XrdSfsPrep&         /*pargs*/,
+                 XrdOucErrInfo&      /*out_error*/,
+                 const XrdSecEntity* /*client = 0*/ ) { return SFS_OK; }
 
 
     //--------------------------------------------------------------------------
@@ -436,25 +408,21 @@ class XrdxCastor2Ofs : public XrdOfs
     //--------------------------------------------------------------------------
     //!
     //--------------------------------------------------------------------------
-    int remdir( const char*         dirName,
-                XrdOucErrInfo&      out_error,
-                const XrdSecEntity* client,
-                const char*         info = 0 ) {
-      return SFS_OK;
-    }
+    int remdir( const char*         /*dirName*/,
+                XrdOucErrInfo&      /*out_error*/,
+                const XrdSecEntity* /*client*/,
+                const char*         /*info = 0*/ ) { return SFS_OK; }
 
 
     //--------------------------------------------------------------------------
     //!
     //--------------------------------------------------------------------------
-    int rename( const char*         oldFileName,
-                const char*         newFileName,
-                XrdOucErrInfo&      out_error,
-                const XrdSecEntity* client,
-                const char*         infoO = 0,
-                const char*         infoN = 0 ) {
-      return SFS_OK;
-    }
+    int rename( const char*         /*oldFileName*/,
+                const char*         /*newFileName*/,
+                XrdOucErrInfo&      /*out_error*/,
+                const XrdSecEntity* /*client*/,
+                const char*         /*infoO = 0*/,
+                const char*         /*infoN = 0*/ ) { return SFS_OK; }
 
 
     //--------------------------------------------------------------------------
@@ -492,24 +460,53 @@ class XrdxCastor2Ofs : public XrdOfs
     static XrdOucHash<XrdxCastor2ClientAdmin>* clientadmintable; ///<
     static XrdOucHash<struct passwd>* passwdstore;               ///<
 
-    XrdOucHash<XrdOucString> FileNameMap;     ///< keeping the mapping LFN->PFN for open files
-    XrdSysMutex         FileNameMapLock;      ///< protecting the MAP hash for LFN->PFN
+    XrdOucHash<XrdOucString> FileNameMap;    ///< keeping the mapping LFN->PFN for open files
+    XrdSysMutex         FileNameMapLock;     ///< protecting the MAP hash for LFN->PFN
 
-    XrdOucString        Procfilesystem;       ///< location of the proc file system directory
-    bool                ProcfilesystemSync;   ///< sync every access on disk
+    XrdOucString        Procfilesystem;      ///< location of the proc file system directory
+    bool                ProcfilesystemSync;  ///< sync every access on disk
 
     XrdSysError*        Eroute;
-    const char*         LocalRoot;            ///< we need this to write /proc variables directly to the FS
+    const char*         LocalRoot;           ///< we need this to write /proc variables directly to the FS
 
-    bool                doChecksumStreaming;
-    bool                doChecksumUpdates;
-    bool                doPOSC;
+    bool                doChecksumStreaming; ///<
+    bool                doChecksumUpdates;   ///<
+    bool                doPOSC;              ///<
 
     bool                ThirdPartyCopy;               ///< default from Configure
     int                 ThirdPartyCopySlots;          ///< default from Configure
     int                 ThirdPartyCopySlotRate;       ///< default from Configure
     XrdOucString        ThirdPartyCopyStateDirectory; ///< default from Configure
+
+
+  protected:
+
+    XrdSysMutex StatisticMutex;  // mutex for read/write statistic
+
+
+  private:
+
+    vecString procUsers;   ///< vector of users (reduced tidents <user>@host 
+                           ///< which can write into /proc
+
+    //--------------------------------------------------------------------------
+    //! Write values to the /proc file system - source in XrdxCastor2OfsProc.cc
+    //--------------------------------------------------------------------------
+    bool Write2ProcFile( const char* name, long long value );
+
+
+    //--------------------------------------------------------------------------
+    //! Read values out of the /proc file system
+    //--------------------------------------------------------------------------
+    bool ReadAllProc();
+
+
+    //--------------------------------------------------------------------------
+    //! Read values out of the /proc file system
+    //--------------------------------------------------------------------------
+    bool ReadFromProc( const char* entryname );
 };
 
-extern XrdxCastor2Ofs XrdxCastor2OfsFS;
+extern XrdxCastor2Ofs XrdxCastor2OfsFS;  ///< global instance of the Ofs subsystem
+
 #endif
