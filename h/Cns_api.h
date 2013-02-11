@@ -320,7 +320,6 @@ EXTERN_C int Cns_setid (uid_t, gid_t);
 EXTERN_C int Cns_getid (uid_t *, gid_t *);
 EXTERN_C int Cns_getrealid (uid_t *, gid_t *);
 EXTERN_C int Cns_unsetid ();
-EXTERN_C int send2nsdx_wrapper (int *, char *, char *, int, char *, int, void **, int *);
-EXTERN_C int send2nsdx (int *, char *, char *, int, char *, int, void **, int *, int);
+EXTERN_C int send2nsdx (int *, char *, char *, int, char *, int, void **, int *);
 
 #endif

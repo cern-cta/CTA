@@ -22,52 +22,6 @@
 
 /* send2nsd - send a request to the name server and wait for the reply */
 
-
-/* This wrapper tries to contact the secure nameserver first and if
- * authentication fails it falls back on the unsecure port.
- * Failures are memorized so that daemons (e.g. stagerd) can go straight
- * to the unsecure port after the first failure.
- * NOTE1: normal errors do NOT trigger a retry.
- * NOTE2: in order to know the kind of problem encountered, we define
- *        these return codes for send2nsdx:
- *          -1 -> generic error
- *          -2 -> security error
- */
-int send2nsdx_wrapper(int *socketp,
-                      char *host,
-                      char *reqp,
-                      int reql,
-                      char *user_repbuf,
-                      int user_repbuf_len,
-                      void **repbuf2,
-                      int *nbstruct)
-{
-  static int useSecureNS = 1; /* Special variable for daemons:
-                               * try to use security the first time
-                               * but remember if that didn't work */
-
-  /* Default is to go in the unsecure branch */
-  int returnValue = -2;
-
-  if (useSecureNS) {
-    /* Try to go secure */
-    returnValue = send2nsdx (socketp, host, reqp, reql, user_repbuf,
-                             user_repbuf_len, repbuf2, nbstruct, 1);
-  }
-
-  if (returnValue == -2) {
-    /* Ok, we failed, avoid retrying security the next time.
-     * NOTE: only useful for daemons (e.g. stagerd) */
-    useSecureNS = 0;
-    /* Now retry unsecured */
-    serrno = 0; /* Reset to ignore security errors */
-    returnValue = send2nsdx (socketp, host, reqp, reql, user_repbuf,
-                             user_repbuf_len, repbuf2, nbstruct, 0);
-  }
-  return returnValue;
-}
-
-
 int send2nsdx(int *socketp,
               char *host,
               char *reqp,
@@ -75,8 +29,7 @@ int send2nsdx(int *socketp,
               char *user_repbuf,
               int user_repbuf_len,
               void **repbuf2,
-              int *nbstruct,
-              int securityOpt)
+              int *nbstruct)
 {
   int actual_replen = 0;
   int alloced = 0;
@@ -105,19 +58,11 @@ int send2nsdx(int *socketp,
   struct servent *sp,*sec_sp;
   struct Cns_api_thread_info *thip = NULL;
   int timeout;
-  int errorRetVal;
-  int needsLogging = !securityOpt; /* This controls the logging:
-                                      log only if authenticated or
-                                      running unsecured */
-
-  /* Set a different return error value for security to allow for
-   * specialized behavior */
-  if (securityOpt) errorRetVal = -2;
-  else errorRetVal = -1;
+  int securityOpt = 1;
 
   strncpy (func, "send2nsd", 16);
   if (Cns_apiinit (&thip))
-    return errorRetVal;
+    return (-1);
   if (*thip->defserver)
     host = thip->defserver;
   if (socketp && *socketp >= 0) { /* connection opened by Cns_list... */
@@ -142,19 +87,25 @@ int send2nsdx(int *socketp,
       sin.sin_port = htons (atoi (p + 1));
     }
     if ((hp = Cgethostbyname (Cnshost)) == NULL) {
-      /* Log only if in non-secure mode */
-      if (needsLogging) Cns_errmsg (func, NS009, "Host unknown:", Cnshost);
+      Cns_errmsg (func, NS009, "Host unknown:", Cnshost);
       serrno = SENOSHOST;
-      return errorRetVal;
+      return (-1);
     }
     sin.sin_addr.s_addr = ((struct in_addr *)(hp->h_addr))->s_addr;
     if (! sin.sin_port) {
       /* If the security option is set it will try ONLY in that port, if it fails to
        * connect it won't retry in an unsecure port
        */
+      {
+        char *disableSec;
+        if ((disableSec = getenv ("CSEC_DISABLE")) ||
+            (disableSec = getconfent("CSEC", "DISABLE", 0))) {
+          securityOpt = strcasecmp(disableSec, "YES");
+        }
+      }
       if (securityOpt) {
         if ((sec_p = getenv (CNS_SPORT_ENV)) ||
-           ((sec_p = getconfent (CNS_SCE, "SEC_PORT", 0)))) {
+            (sec_p = getconfent (CNS_SCE, "SEC_PORT", 0))) {
           sin.sin_port = htons ((unsigned short)atoi (sec_p));
         } else if ((sec_sp = getservbyname (CNS_SEC_SVC, "tcp"))) {
           sin.sin_port = sec_sp->s_port;
@@ -179,95 +130,89 @@ int send2nsdx(int *socketp,
     } else {
       timeout = atoi (p);
     }
-    if (securityOpt) {
-        /* TRANSITIONAL: Don't loop and go straight to unsecure if needed */
-        retrycnt = 0;
-        nbretry = 0;
-    } else {
-      /* get retry environment variables */
-      nbretry = DEFAULT_RETRYCNT;
-      if ((p = getenv (CNS_CONRETRY_ENV)) ||
-          (p = getconfent (CNS_SCE, "CONRETRY", 0))) {
-        nbretry = atoi(p);
-      }
 
-      retryint = RETRYI;
-      if ((p = getenv (CNS_CONRETRYINT_ENV)) ||
-          (p = getconfent (CNS_SCE, "CONRETRYINT", 0))) {
-        retryint = atoi(p);
-      }
+    nbretry = DEFAULT_RETRYCNT;
+    if ((p = getenv (CNS_CONRETRY_ENV)) ||
+        (p = getconfent (CNS_SCE, "CONRETRY", 0))) {
+      nbretry = atoi(p);
+    }
+
+    retryint = RETRYI;
+    if ((p = getenv (CNS_CONRETRYINT_ENV)) ||
+        (p = getconfent (CNS_SCE, "CONRETRYINT", 0))) {
+      retryint = atoi(p);
     }
 
     /* retry as much as the user wishes */
     while (retrycnt <= nbretry) {
 
       if ((s = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
-        if (needsLogging) Cns_errmsg (func, NS002, "socket", neterror());
+        Cns_errmsg (func, NS002, "socket", neterror());
         serrno = SECOMERR;
-        return errorRetVal;
+        return (-1);
       }
 
+      /* try to establish a connection to the Nameserver */
       if (netconnect_timeout (s, (struct sockaddr *)&sin,
                               sizeof(struct sockaddr_in), timeout) < 0) {
-
+        /* connection failed, handle errors */
         if (serrno == SETIMEDOUT) {
           if (retrycnt == nbretry) {
-            if (needsLogging) Cns_errmsg (func, NS002, "connect", neterror());
+            Cns_errmsg (func, NS002, "connect", neterror());
             (void) close(s);
-            return errorRetVal;
+            return (-1);
           }
         } else {
-
           if (serrno == ECONNREFUSED) {
             if (retrycnt == nbretry) {
-              if (needsLogging) Cns_errmsg (func, NS000, Cnshost);
+              Cns_errmsg (func, NS000, Cnshost);
               (void) close (s);
               serrno = ENSNACT;
-              return errorRetVal;
+              return (-1);
             }
           } else {
             if (retrycnt == nbretry) {
-              if (needsLogging) Cns_errmsg (func, NS002, "connect", neterror());
+              Cns_errmsg (func, NS002, "connect", neterror());
               (void) close (s);
               serrno = SECOMERR;
-              return errorRetVal;
+              return (-1);
             }
           }
         }
         (void) close (s);
       } else {
+        /* connection established, go for the security context if needed */
         if (securityOpt) {
           Csec_client_initContext (&ctx, CSEC_SERVICE_TYPE_HOST, NULL);
           if (Csec_client_establishContext (&ctx, s) != 0) {
             switch (serrno) {
-            case SECOMERR:
-              if (needsLogging) Cns_errmsg (func, NS002, "send", "Communication error");
-              (void) close (s);
-              Csec_clearContext (&ctx);
-              return errorRetVal;
-            case SETIMEDOUT:
-              if (retrycnt == nbretry) {
-                if (needsLogging) Cns_errmsg (func, NS002, "send", "Operation timed out");
+              case SECOMERR:
+                Cns_errmsg (func, NS002, "send", "Communication error");
                 (void) close (s);
                 Csec_clearContext (&ctx);
-                return errorRetVal;
-              }
-              break;
-            default:
-              if (needsLogging) Cns_errmsg (func, NS002, "send", "No valid credential found");
-              (void) close (s);
-              Csec_clearContext (&ctx);
-              return errorRetVal;
+                return (-1);
+              case SETIMEDOUT:
+                if (retrycnt == nbretry) {
+                  Cns_errmsg (func, NS002, "send", "Operation timed out");
+                  (void) close (s);
+                  Csec_clearContext (&ctx);
+                  return (-1);
+                }
+                break;
+              default:
+                Cns_errmsg (func, NS002, "send", "No valid credential found");
+                (void) close (s);
+                Csec_clearContext (&ctx);
+                return (-1);
             }
-
             (void) close (s);
             Csec_clearContext (&ctx);
           } else {
-            /* This is the exit point of a successful loop w/security enabled */
-            needsLogging = 1; /* turn on logging now */
+            /* This is the exit point of a successful loop in secure mode */
             break;
           }
         } else {
+          /* This is the exit point of a successful loop when security is disabled */
           break;
         }
       }
@@ -281,15 +226,11 @@ int send2nsdx(int *socketp,
       *socketp = s;
   }
 
-  /* From now on we don't need to split the error codes anymore */
-
   /* send request to name server */
   serrno = 0;
   if ((n = netwrite (s, reqp, reql)) <= 0) {
-    if (needsLogging) {
-      if (n == 0) Cns_errmsg (func, NS002, "send", sys_serrlist[SERRNO]);
-      else Cns_errmsg (func, NS002, "send", neterror());
-    }
+    if (n == 0) Cns_errmsg (func, NS002, "send", sys_serrlist[SERRNO]);
+    else Cns_errmsg (func, NS002, "send", neterror());
     (void) close (s);
     serrno = SECOMERR;
     return (-1);
@@ -299,10 +240,8 @@ int send2nsdx(int *socketp,
 
   while (1) {
     if ((n = netread (s, repbuf, 3 * LONGSIZE)) <= 0) {
-      if (needsLogging) {
-        if (n == 0) Cns_errmsg (func, NS002, "recv", sys_serrlist[SERRNO]);
-        else Cns_errmsg (func, NS002, "recv", neterror());
-      }
+      if (n == 0) Cns_errmsg (func, NS002, "recv", sys_serrlist[SERRNO]);
+      else Cns_errmsg (func, NS002, "recv", neterror());
       (void) close (s);
       serrno = SECOMERR;
       return (-1);
@@ -324,16 +263,14 @@ int send2nsdx(int *socketp,
       break;
     }
     if (c > REPBUFSZ) {
-      if (needsLogging) Cns_errmsg (func, "reply too large\n");
+      Cns_errmsg (func, "reply too large\n");
       (void) close (s);
       serrno = SEINTERNAL;
       return (-1);
     }
     if ((n = netread (s, repbuf, c)) <= 0) {
-      if (needsLogging) {
-        if (n == 0) Cns_errmsg (func, NS002, "recv", sys_serrlist[SERRNO]);
-        else Cns_errmsg (func, NS002, "recv", neterror());
-      }
+      if (n == 0) Cns_errmsg (func, NS002, "recv", sys_serrlist[SERRNO]);
+      else Cns_errmsg (func, NS002, "recv", neterror());
       (void) close (s);
       serrno = SECOMERR;
       return (-1);
@@ -341,7 +278,7 @@ int send2nsdx(int *socketp,
     p = repbuf;
     if (rep_type == MSG_ERR) {
       unmarshall_STRING (p, prtbuf);
-      if (needsLogging) Cns_errmsg (NULL, "%s", prtbuf);
+      Cns_errmsg (NULL, "%s", prtbuf);
     } else if (rep_type == MSG_LINKS) {
       if (errflag) continue;
       if (alloced == 0) {
@@ -383,6 +320,7 @@ int send2nsdx(int *socketp,
   return (c);
 }
 
+
 int send2nsd(int *socketp,
              char *host,
              char *reqp,
@@ -390,6 +328,6 @@ int send2nsd(int *socketp,
              char *user_repbuf,
              int user_repbuf_len)
 {
-  return (send2nsdx_wrapper (socketp, host, reqp, reql, user_repbuf, user_repbuf_len,
+  return (send2nsdx (socketp, host, reqp, reql, user_repbuf, user_repbuf_len,
                      NULL, NULL));
 }
