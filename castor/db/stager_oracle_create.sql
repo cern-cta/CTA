@@ -1573,7 +1573,7 @@ CREATE INDEX I_DrainingDCs_FSStPrioTimeDC
 CREATE INDEX I_DrainingDCs_Parent
   ON DrainingDiskCopy (parent);
 /******************************************************************************
- *                 castor/db/oracleTapeConstants.sql
+ *                 castor/db/oracleConstants.sql
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -1593,11 +1593,11 @@ CREATE INDEX I_DrainingDCs_Parent
  *
  *
  *
- * @author Nicola Bessone and Steven Murray
+ * @author castor-dev@cern.ch
  *****************************************************************************/
 
 /**
- * Package containing the definition of all tape-archieve related PL/SQL 
+ * Package containing the definition of all tape-archive related PL/SQL
  * constants.
  */
 CREATE OR REPLACE PACKAGE tconst

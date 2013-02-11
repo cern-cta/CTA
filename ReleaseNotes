@@ -1,4 +1,110 @@
 ------------
+- 2.1.14-0 -
+------------
+
+  Summary of major features
+  -------------------------
+
+  - support for Read-Only hardware. DiskServers and FileSystems can be marked as Read-Only so that only
+    read transfers are scheduled, without having to put them in draining and triggering replications
+  - replacement on rmnode/rmmaster infrastructure. They have been integrated to transfermanager and
+    diskmanager. Also the command lines moveDiskServer, rmGetNodes and rmAdminNodes are replaced by
+    modify/printdiskserver
+  - the CASTOR plugin to XROOT has been integrated into the CASTOR code so that it is build/tested/
+    distributed with the core CASTOR software. It comes under the form of a new RPM called
+    castor-xroot-plugin which replaces previous both xrootd-xcastor2fs and xrootd-libtransfermanager
+
+  Note
+  ----
+
+  - similarly to release 2.1.12-* and 2.1.13-*, in the test suite some test cases will still fail, namely :
+       touch_updateFileAccess,
+       touch_updateFileModification
+    see details in the release notes of release 2.1.12-1
+
+
+  CASTOR Core Framework
+  ---------------------
+
+  [Bug]
+
+     #99466 srmbed crash around srm::daemon::OraSrmDaemonSvc::getSubRequestById
+
+  [Features]
+
+     #99888 CM: replace rmmaster/rmnode infrastructure
+
+  [Code Maintenance]
+
+     #98774 Remove deadwood class DbRepackRequestCnv from SVN
+
+  CASTOR Stager
+  -------------
+
+  [Bug]
+
+     #95189 Time discrepencies between disk servers and name servers can lead to silent data loss on input
+
+  [Features]
+
+     #99889 RFE: Enable support for read-only hardware
+
+  CASTOR Protocols
+  ----------------
+
+  [Bug]
+
+     #91038 RFE: add transfer time to rfiod logs
+
+  [Features]
+
+     #100373 RFE : integrate Xroot plugin into CASTOR code
+
+  CASTOR Tape
+  -----------
+
+  [Bug]
+
+     #99222 Divide by zero in tape gateway code
+     #98430 rtcpd coredumps in case of dumptp
+
+  [Features]
+
+     #98275 RFE: rtcpd should support an xroot protocol for data transfers
+
+
+  Package Changes
+  ---------------
+
+  - castor-xroot-plugin comes as replacement of previous xrootd-xcastor2fs and xrootd-libtransfermanager
+    that were not distributed with CASTOR
+  - castor-rmmaster-client, castor-rmmaster-server and castor-rmnode-server have been dropped as part
+    of the rmmaster/rmnode integration into transfermanager/diskmanager
+  - castor-dlf-web and castor-lib-monitor have been dropped as they have been superseeded in 2.1.13 by
+    the mae and hbase-consumer and were already deprecated
+
+
+  Deployment Changes
+  ------------------
+
+  - rmmasterd and rmnoded are gone and thus should not be monitored anymore
+  - rmGetNodes, rmAdminNode and moveDiskServer are replaced by modifydiskserver and printdiskserver.
+    So scripts should be adapted
+  - handling of fileSystem and diskServer state has slightly changed with the introduction of the
+    READONLY state and the drop of the adminStatus field replaced by a hwOnline flag on the diskServer
+    that cannot be changed by command line tools. However, the output of stager_qry remains backward
+    compatible with staus DISABLED being displayed when hwOnline is false.
+  - the DLF database has gone. Thus no upgrade script is given and the database can be safely dismantled.
+
+
+  Upgrade Instructions from 2.1.13-9
+  -----------------------------------
+
+  To be filled for the first production release. For the moment, only installation from scratch is
+  supported.
+
+
+------------
 - 2.1.13-0 -
 ------------
 
