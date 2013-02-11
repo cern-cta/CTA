@@ -13,6 +13,9 @@
   - the CASTOR plugin to XROOT has been integrated into the CASTOR code so that it is build/tested/
     distributed with the core CASTOR software. It comes under the form of a new RPM called
     castor-xroot-plugin which replaces previous both xrootd-xcastor2fs and xrootd-libtransfermanager
+  - the Nameserver client API has been made secure by default, without falling back to attempting
+    a non-secure connection. To disable security access, the CNS_DISABLE variable needs to be set
+    to YES in castor.conf.
 
   Note
   ----
