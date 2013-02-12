@@ -98,6 +98,10 @@
     that cannot be changed by command line tools. However, the output of stager_qry remains backward
     compatible with staus DISABLED being displayed when hwOnline is false.
   - the DLF database has gone. Thus no upgrade script is given and the database can be safely dismantled.
+  - one needs to modify the declaration of the plugin libraries in /etc/xrd.cf by adding the major
+    version number : 
+      + on the head node: /usr/lib64/libXrdxCastor2Fs.so.2.1 
+      + on the disk servers: /usr/lib64/libXrdxCastor2Ofs.so.2.1 and /usr/lib64/libXrdxCastor2ServerAcc.so.2.1
 
 
   Upgrade Instructions from 2.1.13-9
