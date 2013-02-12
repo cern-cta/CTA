@@ -1,6 +1,28 @@
 /* Stop on errors */
 WHENEVER SQLERROR EXIT FAILURE;
 
+/* accessors to ObjStatus table */
+CREATE OR REPLACE FUNCTION getObjStatusName(inObject VARCHAR2, inField VARCHAR2, inStatusCode INTEGER)
+RETURN VARCHAR2 AS
+  varstatusName VARCHAR2(2048);
+BEGIN
+  SELECT statusName INTO varstatusName
+    FROM ObjStatus
+   WHERE object = inObject
+     AND field = inField
+     AND statusCode = inStatusCode;
+  RETURN varstatusName;
+END;
+/
+
+CREATE OR REPLACE PROCEDURE setObjStatusName(inObject VARCHAR2, inField VARCHAR2,
+                                             inStatusCode INTEGER, inStatusName VARCHAR2) AS
+BEGIN
+  INSERT INTO ObjStatus (object, field, statusCode, statusName)
+  VALUES (inObject, inField, inStatusCode, inStatusName);
+END;
+/
+
 /* Type2Obj metatable definition */
 CREATE TABLE Type2Obj (type INTEGER CONSTRAINT PK_Type2Obj_Type PRIMARY KEY, object VARCHAR2(100) CONSTRAINT NN_Type2Obj_Object NOT NULL, svcHandler VARCHAR2(100), CONSTRAINT UN_Type2Obj_typeObject UNIQUE (type, object));
 
@@ -322,8 +344,6 @@ AS
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleCommon.schema.sql,v  Revision: 1.19  Date: 2009/08/10 15:30:12  Author: itglp 
- *
  * This file contains all schema definitions which are not generated automatically.
  *
  * @author Castor Dev team, castor-dev@cern.ch
@@ -358,28 +378,6 @@ END;
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
-
-/* accessors to ObjStatus table */
-CREATE OR REPLACE FUNCTION getObjStatusName(inObject VARCHAR2, inField VARCHAR2, inStatusCode INTEGER)
-RETURN VARCHAR2 AS
-  varstatusName VARCHAR2(2048);
-BEGIN
-  SELECT statusName INTO varstatusName
-    FROM ObjStatus
-   WHERE object = inObject
-     AND field = inField
-     AND statusCode = inStatusCode;
-  RETURN varstatusName;
-END;
-/
-
-CREATE OR REPLACE PROCEDURE setObjStatusName(inObject VARCHAR2, inField VARCHAR2,
-                                             inStatusCode INTEGER, inStatusName VARCHAR2) AS
-BEGIN
-  INSERT INTO ObjStatus (object, field, statusCode, statusName)
-  VALUES (inObject, inField, inStatusCode, inStatusName);
-END;
-/
 
 /* SQL statements for requests status */
 /* Partitioning enables faster response (more than indexing) for the most frequent queries - credits to Nilo Segura */

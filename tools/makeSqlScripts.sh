@@ -28,6 +28,10 @@ WHENEVER SQLERROR EXIT FAILURE;
 
 EOF
 
+  if [ -f oracleHeader.sql ]; then
+    cat oracleHeader.sql >> $1_oracle_create.sql
+  fi
+
   cat oracleSchema.sql >> $1_oracle_create.sql
 
   # insert release number
