@@ -9,7 +9,7 @@ from collections import deque
 import sys
 from threading import Lock
 import re
-import gc
+import traceback
 
 from django.shortcuts import render_to_response, redirect
 from django.http import HttpResponse
@@ -293,8 +293,14 @@ def get_data(request):
             raw_data, cache_hit = _get_raw_data(request.POST['request_type'],
                                                 request.POST['request_id'])
         except thrift.transport.TTransport.TTransportException:
-            error = ("Could not connect to Thrift server. " + 
-                     "Please try again later.")
+            error = ("Could not connect to Thrift server. " +
+                     "Please try again later.<br />" +
+                     str(traceback.format_exc()))
+            data['error'] = error
+            return HttpResponse(json.dumps(data))
+        except Exception, exc:
+            error = ("Error with HBase :<br />" +
+                     str(traceback.format_exc()))
             data['error'] = error
             return HttpResponse(json.dumps(data))
         finish_fetch = time.time()
