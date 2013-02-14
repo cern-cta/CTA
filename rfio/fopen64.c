@@ -57,7 +57,6 @@ RFILE *rfio_fopen64(char * file,
 
   if ( (f_index = rfio_rfilefdt_findentry(f,FINDRFILE_WITHOUT_SCAN)) != -1  ) {
     END_TRACE() ;
-    rfio_close(f);
     return (RFILE *) rfilefdt[f_index] ;
   }
   else {
