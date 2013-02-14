@@ -1,7 +1,7 @@
 <rfcp> <localFileName> <tmpLocalFileName>
-ls -l <tmpLocalFileName> | awk '{print $(1)" "$(NF)}'
+ls -l <tmpLocalFileName> | awk '{print substr($(1),0,10)" "$(NF)}'
 rfchmod 777 <tmpLocalFileName>
-ls -l <tmpLocalFileName> | awk '{print $(1)" "$(NF)}'
+ls -l <tmpLocalFileName> | awk '{print substr($(1),0,10)" "$(NF)}'
 rfchmod 600 <tmpLocalFileName>
-ls -l <tmpLocalFileName> | awk '{print $(1)" "$(NF)}'
+ls -l <tmpLocalFileName> | awk '{print substr($(1),0,10)" "$(NF)}'
 rm <tmpLocalFileName>

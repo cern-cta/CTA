@@ -1,4 +1,4 @@
 <rfcp> <localFileName> <tmpLocalFileName>
 rfrename <tmpLocalFileName>  <tmpLocalFileName1>
-ls <tmpLocalFileName>
+ls <tmpLocalFileName> 2>&1 | sed 's/cannot access //'
 ls <tmpLocalFileName1>
