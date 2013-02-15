@@ -88,7 +88,7 @@ BEGIN
       JOB_NAME        => 'monitoringJob_1min',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'BEGIN startDbJob(''BEGIN CastorMon.waitTapeMigrationStats(); CastorMon.waitTapeRecallStats(); END;'', ''stagerd''); END;',
-      JOB_CLASS       => 'CASTOR_MON_JOB_CLASS',
+      JOB_CLASS       => 'CASTOR_JOB_CLASS',
       START_DATE      => SYSDATE + 1/3600,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=1',
       ENABLED         => TRUE,
