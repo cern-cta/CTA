@@ -8,6 +8,111 @@
 /* SQL statement to populate the intial schema version */
 UPDATE UpgradeLog SET schemaVersion = '2_1_13_0';
 
+/* Define a table for some configuration key-value pairs and populate it */
+CREATE TABLE CastorConfig
+  (class VARCHAR2(2048) CONSTRAINT NN_CastorConfig_Class NOT NULL,
+   key VARCHAR2(2048) CONSTRAINT NN_CastorConfig_Key NOT NULL,
+   value VARCHAR2(2048) CONSTRAINT NN_CastorConfig_Value NOT NULL,
+   description VARCHAR2(2048));
+
+ALTER TABLE CastorConfig ADD CONSTRAINT UN_CastorConfig_class_key UNIQUE (class, key);
+
+/* Prompt for the value of the general/instance option */
+UNDEF instanceName
+ACCEPT instanceName DEFAULT castor_stager PROMPT 'Enter the name of the castor instance: (default: castor_stager, example: castoratlas) '
+SET VER OFF
+
+INSERT INTO CastorConfig
+  VALUES ('general', 'instance', '&instanceName', 'Name of this Castor instance');
+
+/* Prompt for the value of the stager/nsHost option */
+UNDEF stagerNsHost
+ACCEPT stagerNsHost DEFAULT NULL PROMPT 'Enter the name of the nameserver host: (example: castorns; this value is mandatory) '
+
+BEGIN
+  IF &stagerNsHost IS NULL THEN
+    -- Error, this variable must be filled
+    raise_application_error(-20000, 'This value is necessary for the correct functioning of the stager. Aborting...');
+  ELSE
+    INSERT INTO CastorConfig
+      VALUES ('stager', 'nsHost', '&stagerNsHost', 'The name of the name server host to set in the CastorFile table overriding the CNS/HOST option defined in castor.conf');
+  END IF;
+END;
+/
+
+INSERT INTO CastorConfig
+  VALUES ('general', 'owner', sys_context('USERENV', 'CURRENT_USER'), 'The database owner of the schema');
+INSERT INTO CastorConfig
+  VALUES ('cleaning', 'terminatedRequestsTimeout', '120', 'Maximum timeout for successful and failed requests in hours');
+INSERT INTO CastorConfig
+  VALUES ('cleaning', 'outOfDateStageOutDCsTimeout', '72', 'Timeout for STAGEOUT diskCopies in hours');
+INSERT INTO CastorConfig
+  VALUES ('cleaning', 'failedDCsTimeout', '72', 'Timeout for failed diskCopies in hours');
+INSERT INTO CastorConfig
+  VALUES ('Repack', 'Protocol', 'rfio', 'The protocol that repack should use for writing files to disk');
+INSERT INTO CastorConfig
+  VALUES ('Recall', 'MaxNbRetriesWithinMount', '2', 'The maximum number of retries for recalling a file within the same tape mount. When exceeded, the recall may still be retried in another mount. See Recall/MaxNbMount entry');
+INSERT INTO CastorConfig
+  VALUES ('Recall', 'MaxNbMounts', '2', 'The maximum number of mounts for recalling a given file. When exceeded, the recall will be failed if no other tapecopy can be used. See also Recall/MaxNbRetriesWithinMount entry');
+INSERT INTO CastorConfig
+  VALUES ('Migration', 'SizeThreshold', '300000000', 'The threshold to consider a file "small" or "large" when routing it to tape');
+INSERT INTO CastorConfig
+  VALUES ('Migration', 'MaxNbMounts', '7', 'The maximum number of mounts for migrating a given file. When exceeded, the migration will be considered failed: the MigrationJob entry will be dropped and the corresponding diskcopy left in status CANBEMIGR. An operator intervention is required to resume the migration.');
+INSERT INTO CastorConfig
+  VALUES ('DiskServer', 'HeartbeatTimeout', '180', 'The maximum amount of time in seconds that a diskserver can spend without sending any hearbeat before it is automatically set to offline.');
+
+/* Create the AdminUsers table */
+CREATE TABLE AdminUsers (euid NUMBER, egid NUMBER);
+ALTER TABLE AdminUsers ADD CONSTRAINT UN_AdminUsers_euid_egid UNIQUE (euid, egid);
+INSERT INTO AdminUsers VALUES (0, 0);   -- root/root, to be removed
+INSERT INTO AdminUsers VALUES (-1, -1); -- internal requests
+
+/* Prompt for stage:st account */
+PROMPT Configuration of the admin part of the B/W list
+UNDEF stageUid
+ACCEPT stageUid NUMBER PROMPT 'Enter the stage user id: ';
+UNDEF stageGid
+ACCEPT stageGid NUMBER PROMPT 'Enter the st group id: ';
+INSERT INTO AdminUsers VALUES (&stageUid, &stageGid);
+
+/* Prompt for additional administrators */
+PROMPT In order to define admins that will be exempt of B/W list checks,
+PROMPT (e.g. c3 group at CERN), please give a space separated list of
+PROMPT <userid>:<groupid> pairs. userid can be empty, meaning any user
+PROMPT in the specified group.
+UNDEF adminList
+ACCEPT adminList CHAR PROMPT 'List of admins: ';
+DECLARE
+  adminUserId NUMBER;
+  adminGroupId NUMBER;
+  ind NUMBER;
+  errmsg VARCHAR(2048);
+BEGIN
+  -- If the adminList is empty do nothing
+  IF '&adminList' IS NULL THEN
+    RETURN;
+  END IF;
+  -- Loop over the adminList
+  FOR admin IN (SELECT column_value AS s
+                  FROM TABLE(strTokenizer('&adminList',' '))) LOOP
+    BEGIN
+      ind := INSTR(admin.s, ':');
+      IF ind = 0 THEN
+        errMsg := 'Invalid <userid>:<groupid> ' || admin.s || ', ignoring';
+        RAISE INVALID_NUMBER;
+      END IF;
+      errMsg := 'Invalid userid ' || SUBSTR(admin.s, 1, ind - 1) || ', ignoring';
+      adminUserId := TO_NUMBER(SUBSTR(admin.s, 1, ind - 1));
+      errMsg := 'Invalid groupid ' || SUBSTR(admin.s, ind) || ', ignoring';
+      adminGroupId := TO_NUMBER(SUBSTR(admin.s, ind+1));
+      INSERT INTO AdminUsers (euid, egid) VALUES (adminUserId, adminGroupId);
+    EXCEPTION WHEN INVALID_NUMBER THEN
+      dbms_output.put_line(errMsg);
+    END;
+  END LOOP;
+END;
+/
+
 /* Get current time as a time_t. Not that easy in ORACLE */
 CREATE OR REPLACE FUNCTION getTime RETURN NUMBER IS
   epoch            TIMESTAMP WITH TIME ZONE;
@@ -814,58 +919,6 @@ CREATE GLOBAL TEMPORARY TABLE getFileIdsForSrsHelper (rowno NUMBER, fileId NUMBE
 CREATE TABLE WhiteList (svcClass VARCHAR2(2048), euid NUMBER, egid NUMBER, reqType NUMBER);
 CREATE TABLE BlackList (svcClass VARCHAR2(2048), euid NUMBER, egid NUMBER, reqType NUMBER);
 
-/* Create the AdminUsers table */
-CREATE TABLE AdminUsers (euid NUMBER, egid NUMBER);
-ALTER TABLE AdminUsers ADD CONSTRAINT UN_AdminUsers_euid_egid UNIQUE (euid, egid);
-INSERT INTO AdminUsers VALUES (0, 0);   -- root/root, to be removed
-INSERT INTO AdminUsers VALUES (-1, -1); -- internal requests
-
-/* Prompt for stage:st account */
-PROMPT Configuration of the admin part of the B/W list
-UNDEF stageUid
-ACCEPT stageUid NUMBER PROMPT 'Enter the stage user id: ';
-UNDEF stageGid
-ACCEPT stageGid NUMBER PROMPT 'Enter the st group id: ';
-INSERT INTO AdminUsers VALUES (&stageUid, &stageGid);
-
-/* Prompt for additional administrators */
-PROMPT In order to define admins that will be exempt of B/W list checks,
-PROMPT (e.g. c3 group at CERN), please give a space separated list of
-PROMPT <userid>:<groupid> pairs. userid can be empty, meaning any user
-PROMPT in the specified group.
-UNDEF adminList
-ACCEPT adminList CHAR PROMPT 'List of admins: ';
-DECLARE
-  adminUserId NUMBER;
-  adminGroupId NUMBER;
-  ind NUMBER;
-  errmsg VARCHAR(2048);
-BEGIN
-  -- If the adminList is empty do nothing
-  IF '&adminList' IS NULL THEN
-    RETURN;
-  END IF;
-  -- Loop over the adminList
-  FOR admin IN (SELECT column_value AS s
-                  FROM TABLE(strTokenizer('&adminList',' '))) LOOP
-    BEGIN
-      ind := INSTR(admin.s, ':');
-      IF ind = 0 THEN
-        errMsg := 'Invalid <userid>:<groupid> ' || admin.s || ', ignoring';
-        RAISE INVALID_NUMBER;
-      END IF;
-      errMsg := 'Invalid userid ' || SUBSTR(admin.s, 1, ind - 1) || ', ignoring';
-      adminUserId := TO_NUMBER(SUBSTR(admin.s, 1, ind - 1));
-      errMsg := 'Invalid groupid ' || SUBSTR(admin.s, ind) || ', ignoring';
-      adminGroupId := TO_NUMBER(SUBSTR(admin.s, ind+1));
-      INSERT INTO AdminUsers (euid, egid) VALUES (adminUserId, adminGroupId);
-    EXCEPTION WHEN INVALID_NUMBER THEN
-      dbms_output.put_line(errMsg);
-    END;
-  END LOOP;
-END;
-/
-
 /* Define the service handlers for the appropriate sets of stage request objects */
 UPDATE Type2Obj SET svcHandler = 'JobReqSvc' WHERE type IN (35, 40, 44);
 UPDATE Type2Obj SET svcHandler = 'PrepReqSvc' WHERE type IN (36, 37, 38);
@@ -891,54 +944,6 @@ CREATE INDEX I_StageDiskCopyReplic_SourceDC
   ON StageDiskCopyReplicaRequest (sourceDiskCopy);
 CREATE INDEX I_StageDiskCopyReplic_DestDC 
   ON StageDiskCopyReplicaRequest (destDiskCopy);
-
-/* Define a table for some configuration key-value pairs and populate it */
-CREATE TABLE CastorConfig
-  (class VARCHAR2(2048) CONSTRAINT NN_CastorConfig_Class NOT NULL, 
-   key VARCHAR2(2048) CONSTRAINT NN_CastorConfig_Key NOT NULL, 
-   value VARCHAR2(2048) CONSTRAINT NN_CastorConfig_Value NOT NULL, 
-   description VARCHAR2(2048));
-
-ALTER TABLE CastorConfig ADD CONSTRAINT UN_CastorConfig_class_key UNIQUE (class, key);
-
-/* Prompt for the value of the general/instance options */
-UNDEF instanceName
-ACCEPT instanceName DEFAULT castor_stager PROMPT 'Enter the name of the castor instance: (default: castor_stager, example: castoratlas) '
-SET VER OFF
-
-INSERT INTO CastorConfig
-  VALUES ('general', 'instance', '&instanceName', 'Name of this Castor instance');
-
-/* Prompt for the value of the stager/nsHost option */
-UNDEF stagerNsHost
-ACCEPT stagerNsHost DEFAULT undefined PROMPT 'Enter the name of the stager/nsHost: (default: undefined, example: castorns) '
-
-INSERT INTO CastorConfig
-  VALUES ('stager', 'nsHost', '&stagerNsHost', 'The name of the name server host to set in the CastorFile table overriding the CNS/HOST option defined in castor.conf');
-
-
-INSERT INTO CastorConfig
-  VALUES ('general', 'owner', sys_context('USERENV', 'CURRENT_USER'), 'The database owner of the schema');
-INSERT INTO CastorConfig
-  VALUES ('cleaning', 'terminatedRequestsTimeout', '120', 'Maximum timeout for successful and failed requests in hours');
-INSERT INTO CastorConfig
-  VALUES ('cleaning', 'outOfDateStageOutDCsTimeout', '72', 'Timeout for STAGEOUT diskCopies in hours');
-INSERT INTO CastorConfig
-  VALUES ('cleaning', 'failedDCsTimeout', '72', 'Timeout for failed diskCopies in hours');
-INSERT INTO CastorConfig
-  VALUES ('Repack', 'Protocol', 'rfio', 'The protocol that repack should use for writing files to disk');
-INSERT INTO CastorConfig
-  VALUES ('Recall', 'MaxNbRetriesWithinMount', '2', 'The maximum number of retries for recalling a file within the same tape mount. When exceeded, the recall may still be retried in another mount. See Recall/MaxNbMount entry');
-INSERT INTO CastorConfig
-  VALUES ('Recall', 'MaxNbMounts', '2', 'The maximum number of mounts for recalling a given file. When exceeded, the recall will be failed if no other tapecopy can be used. See also Recall/MaxNbRetriesWithinMount entry');
-INSERT INTO CastorConfig
-  VALUES ('Migration', 'SizeThreshold', '300000000', 'The threshold to consider a file "small" or "large" when routing it to tape');
-INSERT INTO CastorConfig
-  VALUES ('Migration', 'MaxNbMounts', '7', 'The maximum number of mounts for migrating a given file. When exceeded, the migration will be considered failed: the MigrationJob entry will be dropped and the corresponding diskcopy left in status CANBEMIGR. An operator intervention is required to resume the migration.');
-INSERT INTO CastorConfig
-  VALUES ('DiskServer', 'HeartbeatTimeout', '180', 'The maximum amount of time in seconds that a diskserver can spend without sending any hearbeat before it is automatically set to offline.');
-COMMIT;
-
 
 /*********************************************************************/
 /* FileSystemsToCheck used to optimise the processing of filesystems */
