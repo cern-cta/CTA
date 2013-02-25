@@ -305,7 +305,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   -- file from the nameserver. For safety, we thus keep it
   NULL;
 WHEN LockError THEN
-  -- ignore, somebody else is dealing with this castorFile, 
+  -- ignore, somebody else is dealing with this castorFile
   NULL;
 END;
 /

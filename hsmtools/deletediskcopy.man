@@ -1,0 +1,78 @@
+.TH DELETEDISKCOPY 1 "2011" CASTOR "stager catalog administrative commands"
+.SH NAME
+deletediskcopy \- triggers garbage collection of specific disk copies or cleans the stager for
+disk copies that were lost.
+.SH SYNOPSIS
+.B deletediskcopy
+[
+.BI -h, 
+.BI --help
+]
+[
+.BI -f, 
+.BI --force
+]
+[
+.BI -d,
+.BI --dry-run
+]
+.BI fullPhysicalPath [...]
+.SH DESCRIPTION
+.B deletediskcopy
+triggers garbage collection of the given disk copies or deletes the
+metadata associated with disk copies when they had been lost.
+The stager log will contain the performed action and the
+disk copy metadata for each provided entry.
+
+In case some of the files that were lost have no tapecopy, they will also
+be removed from the name server, otherwise a restaging (either from tape
+or from another pool) will take place. The result includes the action taken
+for each file, and at the end a summary of all lost files grouped by user id is given.
+.TP
+.BI \-h,
+.BI \-\-help
+Get usage information
+.TP
+.BI \-f,
+.BI \-\-force
+Force deletion of all metadata for the given disk copies, which are deemed lost.
+The default (without -f) is a normal garbage collection in case it does not cause a data loss.
+.TP
+.BI \-d,
+.BI \-\-dry-run
+Prints everything as if the commands are really executed, but no change is effectively
+committed. In this case the log is not filled.
+.TP
+.BI fullPhysicalPath [...]
+The full path (in the form host:/mountpoint/path/fileid@nameserver.diskcopyid) of the disk copies that are to be deleted. This is the same format returned by diskServer_qry, so that
+those commands may be chained.
+
+.SH EXAMPLES
+.nf
+.ft CW
+
+# deletediskcopy -f `diskServer_qry lxc2dev2d1.cern.ch | awk '{print $2}'`
+incorrect/incomplete value found as argument, ignoring Physical
+1684504 dropped from disk pool, restaging
+1508591 dropped from disk pool, restaging
+1441841 dropped from disk pool, restaging
+1506925 dropped LAST COPY from stager, file is LOST
+1447383 dropped LAST COPY from stager, file is LOST
+1684549 dropped from disk pool, restaging
+...
+The following file(s) have been permanently removed:
+--- owned by user itglp :
+          5001069762 -rw-r--r--   1 itglp    c3                     1114 Oct 25 10:44 AD 12005d9d /castor/cern.ch/dev/i/itglp/notape/lxc2dev2_919519c4-d5cb-4676-9943-074a6f73efd9
+          5001069763 -rw-r--r--   1 itglp    c3                     1114 Oct 25 10:50 AD 12005d9d /castor/cern.ch/dev/i/itglp/notape/lxc2dev2_8846f101-9711-4e8b-84ff-e40299b6661c
+...
+
+.SH NOTES
+This command requires database client access to the stager catalog and CUPV admin privileges
+in the namespace in order to perform the required actions for lost files.
+Configuration for the database accesses is taken from castor.conf.
+
+.SH SEE ALSO
+.BR adminMultiInstance(1castor)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,4 +1,3 @@
-.\" @(#)$RCSfile: diskServer_qry.man,v $ $Revision: 1.5 $ $Date: 2006/08/04 14:46:47 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN IT/ADC
 .\" All rights reserved
 .\"
@@ -42,31 +41,31 @@ is the name of the disk server to be queried. It needs to be fully qualified.
 
 
 .SH EXAMPLES
-.BI #\ diskServer_qry\ lxfsrk605.cern.ch
+.BI #\ diskServer_qry\ lxfsrk60a05.cern.ch
 .fi
 Status               Physical FileName
 .fi
-DISKCOPY_CANBEMIGR   /shift/lxfsrk605/data01/05/61263405@lxs5010.450
+DISKCOPY_CANBEMIGR   lxfsrk60a05.cern.ch:/srv/castor/01/05/61263405@lxs5010.450
 .fi
-DISKCOPY_CANBEMIGR   /shift/lxfsrk605/data01/21/61270821@lxs5010.529
+DISKCOPY_CANBEMIGR   lxfsrk60a05.cern.ch:/srv/castor/01/21/61270821@lxs5010.529
 .fi
-DISKCOPY_STAGEOUT    /shift/lxfsrk605/data01/46/61312846@lxs5010.718
+DISKCOPY_STAGEOUT    lxfsrk60a05.cern.ch:/srv/castor/01/46/61312846@lxs5010.718
 .ft
 
-.BI #\ diskServer_qry\ -id\ lxfsrk605.cern.ch
+.BI #\ diskServer_qry\ -id\ lxfsrk60a05.cern.ch
 .fi
 FileId     DiskCopyId   Status               Physical FileName                                  Last known FileName
 .fi
-61263405   450          DISKCOPY_CANBEMIGR   /shift/lxfsrk605/data01/05/61263405@lxs5010.450    /castor/cern.ch/some/hsm/path
+61263405   450          DISKCOPY_CANBEMIGR   lxfsrk60a05.cern.ch:/srv/castor/01/05/61263405@lxs5010.450    /castor/cern.ch/some/hsm/path
 .fi
-61270821   529          DISKCOPY_CANBEMIGR   /shift/lxfsrk605/data01/21/61270821@lxs5010.529    /castor/cern.ch/some/hsm/path
+61270821   529          DISKCOPY_CANBEMIGR   lxfsrk60a05.cern.ch:/srv/castor/01/21/61270821@lxs5010.529    /castor/cern.ch/some/hsm/path
 .fi
-61312846   718          DISKCOPY_STAGEOUT    /shift/lxfsrk605/data01/46/61312846@lxs5010.718    /castor/cern.ch/some/hsm/path
+61312846   718          DISKCOPY_STAGEOUT    lxfsrk60a05.cern.ch:/srv/castor/01/46/61312846@lxs5010.718    /castor/cern.ch/some/hsm/path
 .ft
 
-.BI #\ diskServer_qry\ -id\ lxfsrk605
+.BI #\ diskServer_qry\ -id\ lxfsrk60a05
 .fi
-Unknown diskserver lxfsrk605. Did you provide a fully qualified name ?
+Unknown diskserver lxfsrk60a05. Did you provide a fully qualified name ?
 .fi
 .SH NOTES
 This command connects directly to the stager database through

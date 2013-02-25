@@ -400,6 +400,7 @@ BEGIN
                 WHEN DiskCopy.gcType = dconst.GCTYPE_DRAINING        THEN 'Draining filesystem'
                 WHEN DiskCopy.gcType = dconst.GCTYPE_NSSYNCH         THEN 'NS synchronization'
                 WHEN DiskCopy.gcType = dconst.GCTYPE_OVERWRITTEN     THEN 'Overwritten'
+                WHEN DiskCopy.gcType = dconst.GCTYPE_ADMIN           THEN 'Dropped by admin'
                 ELSE 'Unknown' END,
            getSvcClassList(FileSystem.id)
       FROM CastorFile, DiskCopy, FileSystem, DiskServer

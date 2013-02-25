@@ -1021,7 +1021,12 @@ CREATE GLOBAL TEMPORARY TABLE SyncRunningTransfersHelper2
 (subreqId VARCHAR2(2048), reqId VARCHAR2(2048),
  fileid NUMBER, nsHost VARCHAR2(2048),
  errorCode NUMBER, errorMsg VARCHAR2(2048))
-ON COMMIT PRESERVE ROWS;
+ ON COMMIT PRESERVE ROWS;
+
+/* For deleteDiskCopy */
+CREATE GLOBAL TEMPORARY TABLE DeleteDiskCopyHelper
+  (dcId INTEGER CONSTRAINT PK_DDCHelper_dcId PRIMARY KEY, rc INTEGER)
+  ON COMMIT PRESERVE ROWS;
 
 /********************************/
 /* DB link to the nameserver db */

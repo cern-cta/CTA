@@ -1,0 +1,166 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                      deletediskcopy
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+
+'''command line deleting the given diskcopies and potentially removing the corresponding namespace entries'''
+
+import sys, getopt, re, subprocess
+import castor_tools
+import cx_Oracle
+
+# usage function
+def usage(exitCode):
+    '''usage'''
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-f|--force] [-d|--dry-run] [<fullPhysicalPath> [...]]'
+    print '        fullPhysicalPath must follow the CASTOR internal format host:/mountpoint/path/fileid@nameserver.diskcopyid'
+    sys.exit(exitCode)
+
+# possible return codes
+def enum(**enums):
+    return type('Enum', (), enums)
+
+rcs = enum(ENOENT=1, RECALL=2, REPLICATION=3, LOST=4, GC=5, NOOP=6)
+
+# first parse the options
+try:
+    options, args = getopt.getopt(sys.argv[1:], 'hfdv', ['help', 'force', 'dry-run', 'verbose'])
+except Exception, e:
+    print e
+    usage(1)
+force = False
+dryrun = False
+verbose = False
+for f, v in options:
+    if f == '-h' or f == '--help':
+        usage(0)
+    elif f == '-f' or f == '--force':
+        force = True
+    elif f == '-d' or f == '--dry-run':
+        dryrun = True
+    elif f == '-v' or f == '--verbose':
+        verbose = True
+    else:
+        print "unknown option : " + f
+        usage(1)
+
+# deal with arguments
+dcIds = []
+fileIds = []
+dcToFile = {}
+if len(args) > 0:
+    for p in args:
+        # validate input
+        if 0 in [c in p for c in ':/@.']:
+            print 'incorrect/incomplete value found as argument, ignoring', p
+            continue
+        tok = re.compile(r'[\/@\.]').split(p)
+        if len(tok) < 6:    # minimum 6 elements are expected in a CASTOR physical path 
+            print 'incorrect/incomplete value found as argument, ignoring', p
+            continue
+        dcIds += [int(tok[-1])]
+        fileIds += [int(tok[-3])]
+        dcToFile[int(tok[-1])] = tok[-3]
+if len(dcIds) == 0:
+    print 'missing argument'
+    usage(1)
+
+try:
+    if dryrun:
+      print 'DRY RUN option enabled, no modification will actually take place!'
+    nsstats = {}
+    # connect to stager and prepare statement
+    stconn = castor_tools.connectToStager()
+    stcur = stconn.cursor()
+    rescur = stconn.cursor()
+    rescur.arraysize = 200
+    diskPool = stcur.var(cx_Oracle.STRING)
+    stcur.callproc('deleteDiskCopies', [dcIds, fileIds, force, dryrun, rescur, diskPool])
+    # fetch results and display
+    for (dcId, rc) in rescur.fetchall():
+      if rc == rcs.ENOENT:
+        print dcId, 'not found in stager, skipping'
+
+      elif rc == rcs.RECALL or rc == rcs.REPLICATION:
+        print dcId, 'dropped from disk pool, restaging'
+        try:
+          castorFilename = subprocess.Popen(['nsgetpath', dcToFile[dcId]], stdout=subprocess.PIPE).stdout.read().rstrip()
+          # issue the restaging command: we deliberately use diskPool as the service class name
+          if not dryrun:
+            p = subprocess.Popen(['stager_get', '-M', castorFilename, '-S', diskPool.getvalue()],
+                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            p.wait()
+            if p.returncode:
+              print 'Error restaging file', castorFilename, ':', p.stdout.read()
+        except Exception, e:
+          print '*** failed to trigger restaging:', e
+          if verbose:
+            import traceback
+            traceback.print_exc()
+
+      elif rc == rcs.LOST:
+        print dcId, 'dropped LAST COPY from stager, file is LOST'
+        try:
+          castorFilename = subprocess.Popen(['nsgetpath', dcToFile[dcId]], stdout=subprocess.PIPE).stdout.read().rstrip()
+          # get metadata and drop from namespace. It is assumed the user has full rights to do so
+          nsstat = subprocess.Popen(['nsls', '-li', '--class', '--checksum', castorFilename],
+                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
+          u = nsstat.split()[4]  # collect outputs per user
+          try:
+            nsstats[u] += nsstat
+          except KeyError:
+            nsstats[u] = nsstat
+          if not dryrun:
+            p = subprocess.Popen(['nsrm', '-r', castorFilename], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            p.wait()
+            if p.returncode:
+              print 'Error removing file', castorFilename, ':', p.stdout.read()
+        except Exception, e:
+          print '*** failed to get nameserver metadata:', e
+          if verbose:
+            import traceback
+            traceback.print_exc()
+
+      elif rc == rcs.GC:
+        print dcId, 'garbage collected from stager'
+
+      elif rc == rcs.NOOP:
+        print dcId, 'NOT garbage collected from stager'
+
+      else:
+        print 'Unknown return code', rc, 'for diskcopy', dcId
+
+    # close and print statistics
+    castor_tools.disconnectDB(stconn)
+    if nsstats:
+      print '\nThe following file(s) have been permanently removed:'
+      for u in nsstats:
+        print '--- owned by user', u, ':'
+        print nsstats[u]
+    else:
+      print 'Removal completed, no file got lost'
+
+except Exception, e:
+    print e
+    if verbose:
+        import traceback
+        traceback.print_exc()
+    sys.exit(-1)

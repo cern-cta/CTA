@@ -72,7 +72,7 @@ try:
     stcur.arraysize = 50
     if printFileId:
       stCheckSQL = '''
-        SELECT /*+ index(DC I_DiskCopy_FileSystem) */
+        SELECT /*+ INDEX(DC I_DiskCopy_FileSystem) */
               FileSystem.mountPoint||DC.path, DC.status,
               DC.id, CastorFile.fileId, CastorFile.lastKnownFileName
          FROM FileSystem, DiskServer, DiskCopy DC, CastorFile
@@ -82,7 +82,7 @@ try:
           AND DiskServer.name = :diskServerName'''
     else:
       stCheckSQL = '''
-        SELECT /*+ index(DC I_DiskCopy_FileSystem) */
+        SELECT /*+ INDEX(DC I_DiskCopy_FileSystem) */
               FileSystem.mountPoint||DC.path, DC.status, DC.id
          FROM FileSystem, DiskServer, DiskCopy DC
         WHERE FileSystem.diskServer = DiskServer.id
@@ -118,7 +118,7 @@ try:
           statusStr = castor_tools.DiskCopyStatus[row[1]]
         else:
           statusStr = "Unknown status : " + str(row[1])
-        line = line + "%-20s %-50s " % (statusStr, row[0])
+        line = line + "%-20s %-50s " % (statusStr, diskServerName + ':' + row[0])
         if printFileId:
           line = line + row[4]
         print line

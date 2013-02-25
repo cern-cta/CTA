@@ -82,15 +82,19 @@ CREATE OR REPLACE PACKAGE castor AS
     priority INTEGER);
   TYPE TapeAccessPriority_Cur IS REF CURSOR RETURN TapeAccessPriority;
   TYPE StreamReport IS RECORD (
-   diskserver VARCHAR2(2048),
-   mountPoint VARCHAR2(2048));
+    diskserver VARCHAR2(2048),
+    mountPoint VARCHAR2(2048));
   TYPE StreamReport_Cur IS REF CURSOR RETURN StreamReport;
   TYPE FileResult IS RECORD (
-   fileid INTEGER,
-   nshost VARCHAR2(2048),
-   errorcode INTEGER,
-   errormessage VARCHAR2(2048));
+    fileid INTEGER,
+    nshost VARCHAR2(2048),
+    errorcode INTEGER,
+    errormessage VARCHAR2(2048));
   TYPE FileResult_Cur IS REF CURSOR RETURN FileResult;
+  TYPE DiskCopyResult IS RECORD (
+    dcId INTEGER,
+    retCode INTEGER);
+  TYPE DiskCopyResult_Cur IS REF CURSOR RETURN DiskCopyResult;
   TYPE LogEntry IS RECORD (
     timeinfo NUMBER,
     uuid VARCHAR2(2048),
@@ -3270,5 +3274,143 @@ BEGIN
      WHERE id = inSrId;
     RETURN dconst.SUBREQUEST_FAILED;
   END IF;
+END;
+/
+
+CREATE OR REPLACE PROCEDURE deleteDiskCopies(inDcIds IN castor."cnumList", inFileIds IN castor."cnumList", inForce IN BOOLEAN, inDryRun IN BOOLEAN, outRes OUT castor.DiskCopyResult_Cur, outDiskPool OUT VARCHAR2) AS
+  varNsHost VARCHAR2(100);
+  varFileName VARCHAR2(2048);
+  varCfId INTEGER;
+  varNbRemaining INTEGER;
+  varStatus INTEGER;
+  varFStatus VARCHAR2(1);
+  varLogParams VARCHAR2(2048);
+BEGIN
+  DELETE FROM DeleteDiskCopyHelper;
+  FOR i IN 1..inDcIds.COUNT LOOP
+    BEGIN
+      -- get data and lock
+      SELECT castorFile, DiskCopy.status, DiskPool.name
+        INTO varCfId, varStatus, outDiskPool
+        FROM DiskPool, FileSystem, DiskCopy
+       WHERE DiskCopy.id = inDcIds(i)
+         AND DiskCopy.fileSystem = FileSystem.id
+         AND FileSystem.diskPool = DiskPool.id;
+      SELECT nsHost, lastKnownFileName
+        INTO varNsHost, varFileName
+        FROM CastorFile
+       WHERE id = varCfId
+         AND fileId = inFileIds(i)
+         FOR UPDATE;
+      varLogParams := 'FileName="' || varFileName ||'" DiskPool="'|| outDiskPool
+        ||'" dcId='|| inDcIds(i) ||' status='
+        || getObjStatusName('DiskCopy', 'status', varStatus);
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- diskcopy not found in stager
+      INSERT INTO DeleteDiskCopyHelper (dcId, rc)
+        VALUES (inDcIds(i), dconst.DELDC_ENOENT);
+      COMMIT;
+      CONTINUE;
+    END;
+    BEGIN
+      -- get also the Nameserver status in case we have to also drop the namespace entry
+      SELECT status INTO varFStatus FROM Cns_file_metadata@RemoteNS
+       WHERE fileid = inFileIds(i);
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- not found in the Nameserver means that we can scrap everything and there's no data loss
+      -- as we're anticipating the NS synchronization
+      varFStatus = 'd';
+    END;
+    -- count remaining ones
+    SELECT count(*) INTO varNbRemaining FROM DiskCopy
+     WHERE castorFile = varCfId
+       AND status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR)
+       AND id != inDcIds(i);
+    IF inForce = TRUE THEN
+      -- the physical diskcopy is deemed lost: delete the diskcopy entry
+      -- and potentially drop dangling entities
+      IF NOT inDryRun THEN
+        DELETE FROM DiskCopy WHERE id = inDcIds(i);
+      END IF;
+      IF varStatus = dconst.DISKCOPY_STAGEOUT THEN
+        -- fail outstanding requests
+        UPDATE SubRequest
+           SET status = dconst.SUBREQUEST_FAILED,
+               errorCode = serrno.SEINTERNAL,
+               errorMessage = 'File got lost while being written to'
+         WHERE diskCopy = inDcIds(i)
+           AND status = dconst.SUBREQUEST_READY;
+      END IF;
+      -- was it the last active one?
+      IF varNbRemaining = 0 THEN
+        IF varStatus = dconst.DISKCOPY_CANBEMIGR AND NOT inDryRun THEN
+          -- yes, drop the (now bound to fail) migration job(s)
+          deleteMigrationJobs(varCfId);
+        END IF;
+        -- check if the entire castorFile chain can be dropped
+        IF NOT inDryRun THEN
+          deleteCastorFile(varCfId);
+        END IF;
+        IF varFStatus = 'm' THEN
+          -- file is on tape: let's recall it. This may potentially trigger a new migration
+          INSERT INTO DeleteDiskCopyHelper (dcId, rc)
+            VALUES (inDcIds(i), dconst.DELDC_RECALL);
+          IF NOT inDryRun THEN
+            logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DELETEDISKCOPY_RECALL, inFileIds(i), varNsHost, 'stagerd', varLogParams);
+          END IF;
+        ELSIF varFStatus = 'd' THEN
+          -- file was dropped, report as if we have run a standard GC
+          INSERT INTO DeleteDiskCopyHelper (dcId, rc)
+            VALUES (inDcIds(i), dconst.DELDC_GC);
+          IF NOT inDryRun THEN
+            logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DELETEDISKCOPY_GC, inFileIds(i), varNsHost, 'stagerd', varLogParams);
+          END IF;
+        ELSE
+          -- file is really lost, we'll remove the namespace entry afterwards
+          INSERT INTO DeleteDiskCopyHelper (dcId, rc)
+            VALUES (inDcIds(i), dconst.DELDC_LOST);
+          IF NOT inDryRun THEN
+            logToDLF(NULL, dlf.LVL_WARNING, dlf.DELETEDISKCOPY_LOST, inFileIds(i), varNsHost, 'stagerd', varLogParams);
+          END IF;
+        END IF;
+      ELSE
+        -- it was not the last valid copy, replicate from another one
+        INSERT INTO DeleteDiskCopyHelper (dcId, rc)
+          VALUES (inDcIds(i), dconst.DELDC_REPLICATION);
+        IF NOT inDryRun THEN
+          logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DELETEDISKCOPY_REPLICATION, inFileIds(i), varNsHost, 'stagerd', varLogParams);
+        END IF;
+      END IF;
+    ELSE
+      -- similarly to stageRm, check that the deletion is allowed:
+      -- basically only STAGED files may be dropped in case no data loss is provoked,
+      -- or files already dropped from the namespace. The rest is forbidden.
+      IF (varStatus = dconst.DISKCOPY_STAGED AND (varNbRemaining > 0 OR varFStatus = 'm'))
+         OR varFStatus = 'd' THEN
+        INSERT INTO DeleteDiskCopyHelper (dcId, rc)
+          VALUES (inDcIds(i), dconst.DELDC_GC);
+        IF NOT inDryRun THEN
+          UPDATE DiskCopy
+             SET status = dconst.DISKCOPY_INVALID, gcType = dconst.GCTYPE_ADMIN
+           WHERE id = inDcIds(i);
+           logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DELETEDISKCOPY_GC, inFileIds(i), varNsHost, 'stagerd', varLogParams);
+        END IF;
+      ELSE
+        -- nothing is done, just record no-action
+        INSERT INTO DeleteDiskCopyHelper (dcId, rc)
+          VALUES (inDcIds(i), dconst.DELDC_NOOP);
+        IF NOT inDryRun THEN
+          logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DELETEDISKCOPY_NOOP, inFileIds(i), varNsHost, 'stagerd',   varLogParams);
+        END IF;
+        COMMIT;
+        CONTINUE;
+      END IF;
+    END IF;
+    COMMIT;   -- release locks file by file
+  END LOOP;
+  -- return back all results for the python script to post-process them,
+  -- including performing all required acations
+  OPEN outRes FOR
+    SELECT dcId, rc FROM DeleteDiskCopyHelper;
 END;
 /
