@@ -526,7 +526,6 @@ void ROLEMAP( const XrdSecEntity* _client,
 void
 XrdxCastor2Fs::ReloadGridMapFile()
 {
-  const char* tident = "pool-thread";
   static time_t         GridMapMtime = 0;
   static time_t         GridMapCheckTime = 0;
   int now = time( NULL );
@@ -594,7 +593,6 @@ XrdxCastor2Fs::ReloadGridMapFile()
 void
 XrdxCastor2Fs::ReloadVomsMapFile()
 {
-  const char* tident = "pool-thread";
   static time_t         VomsMapMtime = 0;
   static time_t         VomsMapCheckTime = 0;
   int now = time( NULL );
@@ -736,7 +734,7 @@ XrdxCastor2Fs::SetStageVariables( const char*   Path,
                                   XrdOucString& stagehost, 
                                   XrdOucString& serviceclass,  
                                   int           n, 
-                                  const char*   tident )
+                                  const char*   /*tident*/ )
 {
   XrdOucEnv Open_Env( Opaque );
 
@@ -872,7 +870,7 @@ XrdxCastor2Fs::GetStageVariables( const char*   Path,
                                   XrdOucString& stagevariables, 
                                   uid_t         client_uid, 
                                   gid_t         client_gid, 
-                                  const char*   tident )
+                                  const char*   /*tident*/ )
 {
   if ( Opaque ) {
     xcastor_debug("path=%s, opaqu=%s", Path, Opaque);
@@ -1067,7 +1065,6 @@ XrdxCastor2FsDirectory::nextEntry()
   }
 
   entry = d_pnt->d_name;
-  char* tident = "user";
   xcastor_debug("dir next entry: %s", entry.c_str());
 
   // Return the actual entry
@@ -1666,12 +1663,13 @@ XrdxCastor2FsFile::open( const char*         path,
                 slinklookup.insert( addport.c_str(), pathposition );
                 TIMING("CACHESTAT", &opentiming);
                 xcastor_debug("doing file lookup on cache location=%s, path=%s", slinklookup.c_str(), slinkpath.c_str());
-                EnvPutInt( NAME_CONNECTTIMEOUT, 1 );
-                EnvPutInt( NAME_REQUESTTIMEOUT, 10 );
-                EnvPutInt( NAME_MAXREDIRECTCOUNT, 1 );
+                //TODO: fix this by using the new XrdCl
+                //EnvPutInt( NAME_CONNECTTIMEOUT, 1 );
+                //EnvPutInt( NAME_REQUESTTIMEOUT, 10 );
+                //EnvPutInt( NAME_MAXREDIRECTCOUNT, 1 );
                 //    EnvPutInt(NAME_RECONNECTWAIT,1);
-                EnvPutInt( NAME_FIRSTCONNECTMAXCNT, 1 );
-                EnvPutInt( NAME_DATASERVERCONN_TTL, 60 );
+                //EnvPutInt( NAME_FIRSTCONNECTMAXCNT, 1 );
+                //EnvPutInt( NAME_DATASERVERCONN_TTL, 60 );
                 // this has to be further investigated ... under load we have seen SEGVs during the XrdClientAdmin creation
                 XrdxCastor2FS->ClientMutex.Lock();
                 XrdClientAdmin* newadmin = new XrdClientAdmin( slinklookup.c_str() );
@@ -2609,7 +2607,6 @@ XrdxCastor2Fs::mkdir( const char*         path,
                       const XrdSecEntity* client,
                       const char*         info ) 
 {
-  //static const char* epname = "mkdir";
   const char* tident = error.getErrUser();
   XrdOucEnv mkdir_Env( info );
   XrdSecEntity mappedclient;
@@ -2646,7 +2643,6 @@ XrdxCastor2Fs::_mkdir( const char*         path,
 {
   static const char* epname = "mkdir";
   mode_t acc_mode = ( Mode & S_IAMB ) | S_IFDIR;
-  const char* tident = error.getErrUser();
 
   // Create the path if it does not already exist
   if ( Mode & SFS_O_MKPTH ) {
@@ -3280,7 +3276,6 @@ XrdxCastor2Fs::_rem( const char*         path,
                      const char*         /*info*/ )
 {
   static const char* epname = "rem";
-  //const char* tident = error.getErrUser();
   xcastor_debug("path=%s", path);
 
   // Perform the actual deletion
@@ -3852,7 +3847,6 @@ int XrdxCastor2Fs::Stall( XrdOucErrInfo& error,
   smessage += "; come back in ";
   smessage += stime;
   smessage += " seconds!";
-  //const char* tident = error.getErrUser();
   xcastor_debug("Stall %i : %s", stime, smessage.c_str());
  
   // Place the error message in the error object and return
@@ -3873,8 +3867,6 @@ XrdxCastor2Fs::fsctl( const int           cmd,
                       const XrdSecEntity* client )
 
 {
-  //static const char* epname = "fsctl";
-  //const char* tident = error.getErrUser();
   XrdOucString path = args;
   XrdOucString opaque;
   opaque.assign( path, path.find( "?" ) + 1 );

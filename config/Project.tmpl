@@ -6,7 +6,7 @@
 DLFWEB=/var/www/html/dlf
 DLFCONF=/var/www/conf/dlf
 
-.PHONY : install clean clobber checkDESTDIR checkORACLE checkGLOBUS checkSTK checkXROOT checkVERSION client installclient tape installtape purge
+.PHONY : install clean clobber checkDESTDIR checkORACLE checkGLOBUS checkSTK checkXROOTD checkVERSION client installclient tape installtape purge
 
 /**
  * Meaning of the different rules :
@@ -20,13 +20,15 @@ DLFCONF=/var/www/conf/dlf
  * - clobber is cleaning all files resulting from compilation
  * - purge is clobber + the drop of all Makefiles
  * - the check rules are testing the presence of one component and exiting if they fail
- *   + checkORACLE checkGLOBUS checkSTK checkXROOT checkMEMCACHED checkXFS are obvious
+ *   + checkORACLE checkGLOBUS checkSTK checkXROOTD checkMEMCACHED checkXFS are obvious
  *   + checkDESTDIR checks whether the DESTDIR environment variable is set
- *   + checkVERSION checks whether the MAJOR/MINOR_CASTOR_VERSION environment variables
- *     are set
+ *   + checkVERSION checks whether the MAJOR/MINOR_CASTOR_VERSION environment variables 
+ *                   are set
+ *   + checkXROOTD also checks whether the XROOTD private headers are present and if not it 
+ *                 tries to get them by cloning the official XROOTD repository
  */
 
-all: checkORACLE checkGLOBUS checkXROOT checkMEMCACHED checkXFS tape client
+all: checkORACLE checkGLOBUS checkXROOTD checkMEMCACHED checkXFS tape client
 tape: checkSTK
 install: checkDESTDIR checkVERSION all installtape installclient
 
@@ -81,7 +83,7 @@ checkSTK:
 
 XROOT_LIB_LOCATION ?= $(LIBDIR)
 XROOT_LOCATION ?= $(dir $(XROOT_LIB_LOCATION))
-checkXROOT:
+checkXROOTD:
 	@if [ ! -r $(XROOT_LOCATION)/include/xrootd/XrdPosix/XrdPosixXrootd.hh ]; then \
 	  echo "Unable to find XROOT header files at $(XROOT_LOCATION). Giving up."; \
 	  exit 1; \
@@ -89,7 +91,11 @@ checkXROOT:
 	if [ ! -e $(XROOT_LIB_LOCATION)/libXrdPosix.so ]; then \
 	  echo "Unable to find XROOT library files at $(XROOT_LIB_LOCATION). Giving up."; \
 	  exit 1; \
-	fi
+	fi; \
+	if [ ! -e $(CASTOR_ROOT)/xrootd/xrootd_hdr/src/XrdOfs/XrdOfs.hh ]; then \
+	  echo "Unable to find XROOTD private header files so we git clone the XROOTD repository."; \
+          /bin/bash $(CASTOR_ROOT)/xrootd/get-xrootd-git-stable.sh; \
+	fi 
 
 MEMCACHED_LIB_LOCATION ?= $(LIBDIR)
 MEMCACHED_LOCATION ?= $(dir $(MEMCACHED_LIB_LOCATION))

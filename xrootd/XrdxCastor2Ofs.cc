@@ -960,7 +960,6 @@ XrdxCastor2OfsFile::open( const char*         path,
 int
 XrdxCastor2OfsFile::close()
 {
-  char* tident = "";
   int rc = SFS_OK;
 
   if ( IsClosed )
@@ -1196,8 +1195,6 @@ XrdxCastor2OfsFile::write( XrdSfsFileOffset fileOffset,
                            const char*      buffer,
                            XrdSfsXferSize   buffer_size )
 {
-  char* tident = "";
-
   // If we are a transfer - check if we are still in running state,
   if ( Transfer ) {
     if ( Transfer->State != XrdTransfer::kRunning ) {
@@ -1275,8 +1272,6 @@ XrdxCastor2OfsFile::write( XrdSfsFileOffset fileOffset,
 int
 XrdxCastor2OfsFile::write( XrdSfsAio* aioparm )
 {
-  char* tident = "";
-
   // If we are a transfer - check if we are still in running state,
   if ( Transfer ) {
     if ( Transfer->State != XrdTransfer::kRunning ) {
@@ -1387,7 +1382,6 @@ XrdxCastor2OfsFile::Unlink()
   if ( procRequest != kProcNone )
     return SFS_OK;
 
-  const char* tident = error.getErrUser();
   XrdOucString mdsaddress = "root://";
   mdsaddress += envOpaque->Get( "castor2fs.manager" );
   mdsaddress += "//dummy";
@@ -1455,7 +1449,6 @@ XrdxCastor2OfsFile::UpdateMeta()
   if ( procRequest != kProcNone )
     return SFS_OK;
 
-  const char* tident = error.getErrUser();
   XrdOucString mdsaddress = "root://";
   mdsaddress += envOpaque->Get( "castor2fs.manager" );
   mdsaddress += "//dummy";
@@ -1549,8 +1542,6 @@ XrdxCastor2Ofs2StagerJob::~XrdxCastor2Ofs2StagerJob()
 bool
 XrdxCastor2Ofs2StagerJob::Open()
 {
-  char* tident = "";
-
   // If no port is specified then we don't inform anybode
   if ( !Port )
     return true;
@@ -1615,8 +1606,6 @@ XrdxCastor2Ofs2StagerJob::StillConnected()
 bool
 XrdxCastor2Ofs2StagerJob::Close( bool ok, bool haswrite )
 {
-  const char* tident = "";
-
   if ( !Port || !Socket || !IsConnected) {
     return true;
   }

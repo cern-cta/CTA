@@ -709,7 +709,7 @@ XrdxCastor2ServerAcc::BuildOpaque( XrdxCastor2ServerAcc::AuthzInfo* authz,
 XrdAccPrivs
 XrdxCastor2ServerAcc::Access( const XrdSecEntity*    Entity,
                               const char*            path,
-                              const Access_Operation oper,
+                              const Access_Operation /*oper*/,
                               XrdOucEnv*             Env )
 {
   //TkTrace.Beg("Access");

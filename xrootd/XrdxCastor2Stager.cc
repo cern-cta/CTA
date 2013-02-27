@@ -159,7 +159,7 @@ XrdxCastor2Stager::Prepare2Get( XrdOucErrInfo& error,
     delete respvec[0];
     return false;
   }  else {
-    xcastor_static_debug("%s status=%s, path=%s:%s ( %s ) id=%i", 
+    xcastor_static_debug("%s status=%u, path=%s:%s ( %s ) id=%i", 
                   stage_requestStatusName( fr->status() ), fr->status(),
                   fr->server().c_str(), fr->fileName().c_str(), 
                   fr->castorFileName().c_str(), fr->id());
@@ -599,8 +599,8 @@ XrdxCastor2Stager::Update( XrdOucErrInfo& error,
 
   if ( fr->errorCode() ) {
     xcastor_static_debug("received error errc=%i, errmsg=%s\%i, subreqid=%s, reqid=%s",
-                  fr->errorCode(), fr->errorMessage().c_str(),
-                  ErrPrefix, fr->subreqId().c_str(), fr->reqAssociated().c_str());
+                         fr->errorCode(), fr->errorMessage().c_str(),
+                         ErrPrefix.c_str(), fr->subreqId().c_str(), fr->reqAssociated().c_str());
     XrdOucString emsg = "received error errc=";
     emsg += ( int )fr->errorCode();
     emsg += " errmsg=\"";
