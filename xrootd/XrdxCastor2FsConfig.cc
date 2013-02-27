@@ -1,5 +1,5 @@
 /*******************************************************************************
- *                      XrdxCastor2Config.cc
+ *                      XrdxCastor2FsConfig.cc
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -68,6 +68,18 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
   VomsMapFile = "";
   LocationCacheDir = "";
   long myPort = 0;
+
+  // Setup the circular in-memory logging buffer  
+  XrdOucString unit = "rdr@";
+  unit += XrdSysDNS::getHostName();
+  unit += ":";
+  unit += xCastor2FsTargetPort;
+
+  Logging::Init();
+  Logging::SetLogPriority( LOG_DEBUG );
+  Logging::SetUnit( unit.c_str() );
+
+  xcastor_info( "info=\"logging configured\" " );
 
   if ( getenv( "XRDDEBUG" ) ) xCastor2FsTrace.What = TRACE_MOST | TRACE_debug;
 
@@ -200,7 +212,7 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
           sayit += nsout;
           Eroute.Say( "=====> xcastor2.nsmap: ", sayit.c_str(), "" );
           XrdOucString* mnsout = new XrdOucString( nsout.c_str() );
-          nstable->Add( nsin.c_str(), mnsout );
+          nsMap->Add( nsin.c_str(), mnsout );
         }
 
         if ( !strcmp( "proc", var ) )

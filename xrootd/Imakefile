@@ -25,13 +25,13 @@ COMM
 CXXFLAGS += -I$(XROOT_LOCATION)/include/xrootd -Wno-error -D_FILE_OFFSET_BITS=64
 AddLdFlags( -L$(XROOT_LIB_LOCATION) -lstdc++ )
 
-XCASTOR2FS_SRCS= XrdxCastor2Fs.cc \
-	         XrdxCastor2FsStats.cc\
+XCASTOR2FS_SRCS= XrdxCastor2Fs.cc        \
+                 XrdxCastor2FsConfig.cc  \
+	         XrdxCastor2FsStats.cc   \
 	         XrdxCastor2ServerAcc.cc \
-                 XrdxCastor2Stager.cc \
-                 XrdxCastor2Proc.cc \
-                 XrdxCastor2Config.cc \
-                 XrdxCastor2Namespace.cc    
+                 XrdxCastor2Stager.cc    \
+                 XrdxCastor2Proc.cc      \
+                 XrdxCastorLogging.cc    
 
 XCASTOR2FS_OBJS=$(XCASTOR2FS_SRCS:.cc=.o)
 

@@ -69,7 +69,7 @@ XrdSysError* XrdxCastor2Fs::eDest;
 XrdOucTrace  xCastor2FsTrace( &xCastor2FsEroute );
 XrdOucHash<XrdOucString>* XrdxCastor2Fs::filesystemhosttable;
 XrdSysMutex               XrdxCastor2Fs::filesystemhosttablelock;
-XrdOucHash<XrdOucString>* XrdxCastor2Fs::nstable;
+XrdOucHash<XrdOucString>* XrdxCastor2Fs::nsMap;
 XrdOucHash<XrdOucString>* XrdxCastor2Fs::stagertable;
 XrdOucHash<XrdOucString>* XrdxCastor2Fs::stagerpolicy;
 XrdOucHash<XrdOucString>* XrdxCastor2Stager::delaystore;
@@ -118,14 +118,6 @@ STRINGSTORE( const char* __charptr__ )
 /******************************************************************************/
 /*                        D e f i n e s                                       */
 /******************************************************************************/
-
-//------------------------------------------------------------------------------
-// Mapping
-//------------------------------------------------------------------------------
-#define MAP(x)                                                    \
-  XrdOucString _inmap = x; XrdOucString _outmap;                  \
-  if (XrdxCastor2Fs::Map(_inmap,_outmap)) x = _outmap.c_str();    \
-  else x = NULL;
 
 
 //------------------------------------------------------------------------------
@@ -1020,12 +1012,13 @@ XrdxCastor2FsDirectory::open( const char*         dir_path,
   static const char* epname = "open";
   const char* tident = error.getErrUser();
   XrdSecEntity mappedclient;
+  XrdOucString map_dir;
   XrdOucEnv Open_Env( info );
   AUTHORIZE( client, &Open_Env, AOP_Readdir, "open directory", dir_path, error );
-  MAP( ( dir_path ) );
-  ZTRACE( open, "Open directory: " << dir_path );
+  map_dir = XrdxCastor2Fs::NsMapping( dir_path ) ;
+  ZTRACE( open, "Open directory: " << map_dir.c_str() );
 
-  if ( !dir_path ) {
+  if ( map_dir == "" ) {
     return XrdxCastor2Fs::Emsg( epname, error, ENOMEDIUM,
                                 "map filename", dir_path );
   }
@@ -1038,15 +1031,15 @@ XrdxCastor2FsDirectory::open( const char*         dir_path,
 
   // Verify that this object is not already associated with an open directory
    if ( dh ) return XrdxCastor2Fs::Emsg( epname, error, EADDRINUSE,
-                                         "open directory", dir_path );
+                                         "open directory", map_dir.c_str() );
 
   // Set up values for this directory object
   ateof = 0;
-  fname = strdup( dir_path );
+  fname = strdup( map_dir.c_str() );
 
   // Open the directory and get it's id
-  if ( !( dh = XrdxCastor2FsUFS::OpenDir( dir_path ) ) ) {
-    return  XrdxCastor2Fs::Emsg( epname, error, serrno, "open directory", dir_path );
+  if ( !( dh = XrdxCastor2FsUFS::OpenDir( map_dir.c_str() ) ) ) {
+    return  XrdxCastor2Fs::Emsg( epname, error, serrno, "open directory", map_dir.c_str() );
   }
 
   return SFS_OK;
@@ -1162,6 +1155,7 @@ XrdxCastor2FsFile::open( const char*         path,
   XrdSecEntity mappedclient;
   XrdxCastor2Timing opentiming( "fileopen" );
   XrdOucString sinfo = ( ininfo ? ininfo : "" );
+  XrdOucString map_path;
   const char* info;
   XTRACE( open, path, "" );
   int qpos = 0;
@@ -1191,11 +1185,11 @@ XrdxCastor2FsFile::open( const char*         path,
     XTRACE( open, info, "" );
 
   TIMING( xCastor2FsTrace, "START", &opentiming );
-  MAP( ( path ) );
+  map_path = XrdxCastor2Fs::NsMapping( path );
   ROLEMAP( client, info, mappedclient, tident );
   TIMING( xCastor2FsTrace, "MAPPING", &opentiming );
 
-  if ( !path ) {
+  if ( map_path == "" ) {
     error.setErrInfo( ENOMEDIUM, "No mapping for file name" );
     return SFS_ERROR;
   }
@@ -1211,7 +1205,7 @@ XrdxCastor2FsFile::open( const char*         path,
   XrdOucString redirectionhost = "";
   int ecode = 0;
   ZTRACE( open, std::hex << open_mode << "-" << std::oct << 
-          Mode << std::dec << " fn = " << path );
+          Mode << std::dec << " fn = " << map_path.c_str() );
 
   // Set the actual open mode and find mode
   if ( open_mode & SFS_O_CREAT ) open_mode = SFS_O_CREAT;
@@ -1252,9 +1246,9 @@ XrdxCastor2FsFile::open( const char*         path,
   }
 
   if ( open_flag & O_CREAT ) {
-    AUTHORIZE( client, &Open_Env, AOP_Create, "create", path, error );
+    AUTHORIZE( client, &Open_Env, AOP_Create, "create", map_path.c_str(), error );
   } else {
-    AUTHORIZE( client, &Open_Env, ( isRW ? AOP_Update : AOP_Read ), "open", path, error );
+    AUTHORIZE( client, &Open_Env, ( isRW ? AOP_Update : AOP_Read ), "open", map_path.c_str(), error );
   }
 
   // See if the cluster is in maintenance mode and has delays configured for write/read
@@ -1328,17 +1322,18 @@ XrdxCastor2FsFile::open( const char*         path,
 
   // Prepare to create or open the file, as needed
   if ( isRW ) {
-    if ( !( retc = XrdxCastor2FsUFS::Statfn( path, &buf ) ) ) {
+    if ( !( retc = XrdxCastor2FsUFS::Statfn( map_path.c_str(), &buf ) ) ) {
       if ( buf.filemode & S_IFDIR )
-        return XrdxCastor2Fs::Emsg( epname, error, EISDIR, "open directory as file", path );
+        return XrdxCastor2Fs::Emsg( epname, error, EISDIR, "open directory as file", map_path.c_str() );
 
       if ( crOpts & XRDOSS_new ) {
         return XrdxCastor2Fs::Emsg( epname, error, EEXIST, "open file in create mode - file exists" );
       } else {
         if ( open_mode == SFS_O_TRUNC ) {
           // We delete the file because the open specified the truncate flag
-          if ( ( retc = XrdxCastor2FsUFS::Rem( path ) ) ) {
-            return XrdxCastor2Fs::Emsg( epname, error, serrno, "remove file as requested by truncate flag", path );
+          if ( ( retc = XrdxCastor2FsUFS::Rem( map_path.c_str() ) ) ) {
+            return XrdxCastor2Fs::Emsg( epname, error, serrno, "remove file as requested by truncate flag", 
+                                        map_path.c_str() );
           }
         } else {
           isRewrite = 1;
@@ -1347,15 +1342,15 @@ XrdxCastor2FsFile::open( const char*         path,
     }
   } else {
     // This is the read/stage case
-    if ( ( retc = XrdxCastor2FsUFS::Statfn( path, &buf ) ) ) {
-      return XrdxCastor2Fs::Emsg( epname, error, serrno, "stat file", path );
+    if ( ( retc = XrdxCastor2FsUFS::Statfn( map_path.c_str(), &buf ) ) ) {
+      return XrdxCastor2Fs::Emsg( epname, error, serrno, "stat file", map_path.c_str() );
     }
 
     if ( !retc && !( buf.filemode & S_IFREG ) ) {
       if ( buf.filemode & S_IFDIR )
-        return XrdxCastor2Fs::Emsg( epname, error, EISDIR, "open directory as file", path );
+        return XrdxCastor2Fs::Emsg( epname, error, EISDIR, "open directory as file", map_path.c_str() );
       else
-        return XrdxCastor2Fs::Emsg( epname, error, ENOTBLK, "open not regular file", path );
+        return XrdxCastor2Fs::Emsg( epname, error, ENOTBLK, "open not regular file", map_path.c_str() );
     }
 
     if ( buf.filesize == 0 ) {
@@ -1370,7 +1365,7 @@ XrdxCastor2FsFile::open( const char*         path,
   gid_t client_gid;
   XrdOucString sclient_uid = "";
   XrdOucString sclient_gid = "";
-  GETID( path, mappedclient, client_uid, client_gid );
+  GETID( map_path.c_str(), mappedclient, client_uid, client_gid );
   sclient_uid += ( int ) client_uid;
   sclient_gid += ( int ) client_gid;
   XrdOucString redirectionpfn1 = "";
@@ -1381,9 +1376,9 @@ XrdxCastor2FsFile::open( const char*         path,
   XrdOucString stagevariables = "";
   const char* val;
 
-  if ( !XrdxCastor2FS->GetStageVariables( path, info, stagevariables, client_uid, client_gid, tident ) ) {
+  if ( !XrdxCastor2FS->GetStageVariables( map_path.c_str(), info, stagevariables, client_uid, client_gid, tident ) ) {
     return XrdxCastor2Fs::Emsg( epname, error, EINVAL, "set the stager host - you didn't specify a valid"
-                                " one and I have no stager map for fn = ", path );
+                                " one and I have no stager map for fn = ", map_path.c_str() );
   }
 
   XrdOucString* policy = NULL;
@@ -1402,7 +1397,7 @@ XrdxCastor2FsFile::open( const char*         path,
 
     if ( stagehost.length() && serviceclass.length() ) {
       // Try the user specified pair
-      if ( ( XrdxCastor2FS->SetStageVariables( path, info, stagevariables, stagehost, 
+      if ( ( XrdxCastor2FS->SetStageVariables( map_path.c_str(), info, stagevariables, stagehost, 
                                                serviceclass, XCASTOR2FS_EXACT_MATCH, tident ) ) == 1 ) 
       {
         // Select the policy
@@ -1430,11 +1425,12 @@ XrdxCastor2FsFile::open( const char*         path,
         }
 
         if ( policy && ( strstr( policy->c_str(), "ronly" ) ) && isRW ) {
-          return XrdxCastor2Fs::Emsg( epname, error, EPERM, "write - path is forced readonly for you : fn = ", path );
+          return XrdxCastor2Fs::Emsg( epname, error, EPERM, "write - path is forced readonly for you : fn = ", 
+                                      map_path.c_str() );
         }
       } else
         return XrdxCastor2Fs::Emsg( epname, error, EINVAL, "write - cannot find any valid "
-                                    "stager/service class mapping for you for fn = ", path );
+                                    "stager/service class mapping for you for fn = ", map_path.c_str() );
     } else {
       int n = 0;
       bool allowed = false;
@@ -1442,7 +1438,7 @@ XrdxCastor2FsFile::open( const char*         path,
 
       // Try the list and stop when we find a matching policy tag
       do {
-        if ( ( hasmore = XrdxCastor2FS->SetStageVariables( path, info, stagevariables, 
+        if ( ( hasmore = XrdxCastor2FS->SetStageVariables( map_path.c_str(), info, stagevariables, 
                                                            stagehost, serviceclass, n++, tident ) ) == 1 ) 
         {
           // Select the policy
@@ -1479,7 +1475,7 @@ XrdxCastor2FsFile::open( const char*         path,
 
       if ( !allowed ) {
         return XrdxCastor2Fs::Emsg( epname, error, EPERM, "write - you are not "
-                                    "allowed to do write requests for fn = ", path );
+                                    "allowed to do write requests for fn = ", map_path.c_str() );
       }
     }
   }
@@ -1495,7 +1491,7 @@ XrdxCastor2FsFile::open( const char*         path,
   bool nocachelookup = true;
   XrdOucString delaytag = tident;
   delaytag += "::";
-  delaytag += path;
+  delaytag += map_path.c_str();
 
   if ( isRW ) {
     if ( isRewrite ) {
@@ -1503,7 +1499,7 @@ XrdxCastor2FsFile::open( const char*         path,
     } else {
       // Check if we have to execute mkpath
       if ( ( Mode & SFS_O_MKPTH ) || ( policy && ( strstr( policy->c_str(), "mkpath" ) ) ) ) {
-        XrdOucString newpath = path;
+        XrdOucString newpath = map_path;
         
         while ( newpath.replace( "//", "/" ) ) {};
 
@@ -1560,10 +1556,10 @@ XrdxCastor2FsFile::open( const char*         path,
 
     if ( !isRewrite ) {
       ZTRACE( open, "Doing Put [stagehost=" << stagehost.c_str() << " serviceclass=" << serviceclass.c_str() );
-      wopenretc = XrdxCastor2Stager::Put( error, ( uid_t ) client_uid, ( gid_t ) client_gid, path, stagehost.c_str(), serviceclass.c_str(), redirectionhost, redirectionpfn1, redirectionpfn2, stagestatus );
+      wopenretc = XrdxCastor2Stager::Put( error, ( uid_t ) client_uid, ( gid_t ) client_gid, map_path.c_str(), stagehost.c_str(), serviceclass.c_str(), redirectionhost, redirectionpfn1, redirectionpfn2, stagestatus );
       aop = AOP_Create;
     } else {
-      wopenretc = XrdxCastor2Stager::Update( error, ( uid_t ) client_uid, ( gid_t ) client_gid, path, stagehost.c_str(), serviceclass.c_str(), redirectionhost, redirectionpfn1, redirectionpfn2, stagestatus );
+      wopenretc = XrdxCastor2Stager::Update( error, ( uid_t ) client_uid, ( gid_t ) client_gid, map_path.c_str(), stagehost.c_str(), serviceclass.c_str(), redirectionhost, redirectionpfn1, redirectionpfn2, stagestatus );
       aop = AOP_Update;
     }
 
@@ -1583,7 +1579,8 @@ XrdxCastor2FsFile::open( const char*         path,
     if ( stagestatus != "READY" ) {
       TIMING( xCastor2FsTrace, "RETURN", &opentiming );
       opentiming.Print( xCastor2FsTrace );
-      return XrdxCastor2Fs::Emsg( epname, error, EINVAL, "access file in stager (Put request failed)  fn = ", path );
+      return XrdxCastor2Fs::Emsg( epname, error, EINVAL, "access file in stager (Put request failed)  fn = ", 
+                                  map_path.c_str() );
     }
   } else {
     XrdOucString usedpolicytag = "";
@@ -1597,7 +1594,9 @@ XrdxCastor2FsFile::open( const char*         path,
 
       // Loop through the possible stager settings to find the file somewhere staged
       do {
-        if ( ( hasmore = XrdxCastor2FS->SetStageVariables( path, info, stagevariables, stagehost, serviceclass, n++, tident ) ) == 1 ) {
+        if ( ( hasmore = XrdxCastor2FS->SetStageVariables( map_path.c_str(), info, 
+                                                           stagevariables, stagehost, 
+                                                           serviceclass, n++, tident ) ) == 1 ) {
           // Select the policy
           policy = NULL;
           XrdOucString* wildcardpolicy = NULL;
@@ -1645,7 +1644,7 @@ XrdxCastor2FsFile::open( const char*         path,
             locationfile += stagehost;
             locationfile += "/";
             locationfile += serviceclass;
-            locationfile += path;
+            locationfile += map_path;
             TIMING( xCastor2FsTrace, "CACHELOOKUP", &opentiming );
             ZTRACE( open, "Doing cache lookup: " << locationfile.c_str() );
             char linklookup[8192];
@@ -1721,7 +1720,7 @@ XrdxCastor2FsFile::open( const char*         path,
           // Query the staging status
           TIMING( xCastor2FsTrace, "STAGERQUERY", &opentiming );
 
-          if ( !XrdxCastor2Stager::StagerQuery( error, ( uid_t ) client_uid, ( gid_t ) client_gid, path, stagehost.c_str(), serviceclass.c_str(), stagestatus ) ) {
+          if ( !XrdxCastor2Stager::StagerQuery( error, ( uid_t ) client_uid, ( gid_t ) client_gid, map_path.c_str(), stagehost.c_str(), serviceclass.c_str(), stagestatus ) ) {
             stagestatus = "NA";
           }
 
@@ -1736,7 +1735,7 @@ XrdxCastor2FsFile::open( const char*         path,
 
           TIMING( xCastor2FsTrace, "PREP2GET", &opentiming );
 
-          if ( !XrdxCastor2Stager::Prepare2Get( error, ( uid_t ) client_uid, ( gid_t ) client_gid, path, stagehost.c_str(), serviceclass.c_str(), redirectionhost, redirectionpfn1, stagestatus ) ) {
+          if ( !XrdxCastor2Stager::Prepare2Get( error, ( uid_t ) client_uid, ( gid_t ) client_gid, map_path.c_str(), stagehost.c_str(), serviceclass.c_str(), redirectionhost, redirectionpfn1, stagestatus ) ) {
             TIMING( xCastor2FsTrace, "RETURN", &opentiming );
             opentiming.Print( xCastor2FsTrace );
             continue;
@@ -1752,7 +1751,7 @@ XrdxCastor2FsFile::open( const char*         path,
 
           XrdOucString delaytag = tident;
           delaytag += "::";
-          delaytag += path;
+          delaytag += map_path;
 
           // We select this setting and tell the client to wait for the staging in this pool/svc class
           if ( ( stagestatus == "READY" ) ) {
@@ -1770,7 +1769,7 @@ XrdxCastor2FsFile::open( const char*         path,
       if ( !possible ) {
         TIMING( xCastor2FsTrace, "RETURN", &opentiming );
         opentiming.Print( xCastor2FsTrace );
-        return XrdxCastor2Fs::Emsg( epname, error, EINVAL, "access file in ANY stager (all prepare2get failed)  fn = ", path );
+        return XrdxCastor2Fs::Emsg( epname, error, EINVAL, "access file in ANY stager (all prepare2get failed)  fn = ", map_path.c_str() );
       }
 
       // If there was no stager get we fill request id 0
@@ -1792,7 +1791,7 @@ XrdxCastor2FsFile::open( const char*         path,
         //
         TIMING( xCastor2FsTrace, "GET", &opentiming );
 
-        if ( !XrdxCastor2Stager::Get( error, ( uid_t ) client_uid, ( gid_t ) client_gid, path, stagehost.c_str(), serviceclass.c_str(), redirectionhost, redirectionpfn1, redirectionpfn2, stagestatus ) ) {
+        if ( !XrdxCastor2Stager::Get( error, ( uid_t ) client_uid, ( gid_t ) client_gid, map_path.c_str(), stagehost.c_str(), serviceclass.c_str(), redirectionhost, redirectionpfn1, redirectionpfn2, stagestatus ) ) {
           TIMING( xCastor2FsTrace, "RETURN", &opentiming );
           opentiming.Print( xCastor2FsTrace );
           return SFS_ERROR;
@@ -1801,7 +1800,7 @@ XrdxCastor2FsFile::open( const char*         path,
         if ( stagestatus != "READY" ) {
           TIMING( xCastor2FsTrace, "RETURN", &opentiming );
           opentiming.Print( xCastor2FsTrace );
-          return XrdxCastor2Fs::Emsg( epname, error, EINVAL, "access file in stager (Get request failed)  fn = ", path );
+          return XrdxCastor2Fs::Emsg( epname, error, EINVAL, "access file in stager (Get request failed)  fn = ", map_path.c_str() );
         }
       }
     }
@@ -1815,7 +1814,7 @@ XrdxCastor2FsFile::open( const char*         path,
     locationfile += stagehost;
     locationfile += "/";
     locationfile += serviceclass;
-    locationfile += path;
+    locationfile += map_path.c_str();
     TIMING( xCastor2FsTrace, "CACHESTORE", &opentiming );
     ZTRACE( open, "Doing cache store: " << locationfile.c_str() );
     ::unlink( locationfile.c_str() );
@@ -1940,7 +1939,7 @@ XrdxCastor2FsFile::open( const char*         path,
     XrdOucString sb64;
 
     if ( !XrdxCastor2ServerAcc::BuildToken( authz, authztoken ) ) {
-      XrdxCastor2Fs::Emsg( epname, error, retc, "build authorization token for sfn = ", path );
+      XrdxCastor2Fs::Emsg( epname, error, retc, "build authorization token for sfn = ", map_path.c_str() );
       delete authz;
       return SFS_ERROR;
     }
@@ -1954,7 +1953,7 @@ XrdxCastor2FsFile::open( const char*         path,
       if ( !XrdxCastor2FS->ServerAcc->SignBase64( ( unsigned char* )authz->token,
            strlen( authz->token ), sb64,
            sig64len, stagehost.c_str() ) ) {
-        XrdxCastor2Fs::Emsg( epname, error, retc, "sign authorization token for sfn = ", path );
+        XrdxCastor2Fs::Emsg( epname, error, retc, "sign authorization token for sfn = ", map_path.c_str() );
         delete authz;
         return SFS_ERROR;
       }
@@ -1965,7 +1964,7 @@ XrdxCastor2FsFile::open( const char*         path,
     TIMING( xCastor2FsTrace, "SIGNBASE64", &opentiming );
 
     if ( !XrdxCastor2ServerAcc::BuildOpaque( authz, accopaque ) ) {
-      XrdxCastor2Fs::Emsg( epname, error, retc, "build authorization opaque string for sfn = ", path );
+      XrdxCastor2Fs::Emsg( epname, error, retc, "build authorization opaque string for sfn = ", map_path.c_str() );
       delete authz;
       return SFS_ERROR;
     }
@@ -2025,8 +2024,8 @@ XrdxCastor2FsFile::open( const char*         path,
   if ( Open_Env.Get( "mode" ) ) {
     mode_t mode = strtol( Open_Env.Get( "mode" ), NULL, 8 );
 
-    if ( XrdxCastor2FsUFS::Chmod( path, mode ) )
-      return XrdxCastor2Fs::Emsg( epname, error, serrno, "set mode on", path );
+    if ( XrdxCastor2FsUFS::Chmod( map_path.c_str(), mode ) )
+      return XrdxCastor2Fs::Emsg( epname, error, serrno, "set mode on", map_path.c_str() );
   }
 
   TIMING( xCastor2FsTrace, "PROC/DONE", &opentiming );
@@ -2431,7 +2430,7 @@ bool
 XrdxCastor2Fs::Init()
 {
   filesystemhosttable = new XrdOucHash<XrdOucString> ();
-  nstable   = new XrdOucHash<XrdOucString> ();
+  nsMap   = new XrdOucHash<XrdOucString> ();
   stagertable   = new XrdOucHash<XrdOucString> ();
   stagerpolicy  = new XrdOucHash<XrdOucString> ();
   roletable = new XrdOucHash<XrdOucString> ();
@@ -2444,6 +2443,50 @@ XrdxCastor2Fs::Init()
   clientadmintable = new XrdOucHash<XrdxCastor2ClientAdmin> ();
   XrdxCastor2Stager::delaystore   = new XrdOucHash<XrdOucString> ();
   return true;
+}
+
+
+//------------------------------------------------------------------------------
+// Do namespace mappping
+//------------------------------------------------------------------------------
+XrdOucString
+XrdxCastor2Fs::NsMapping( XrdOucString input )
+{
+  XrdOucString output = "";
+  XrdOucString prefix;
+  XrdOucString* value;
+  int pos = input.find( '/', 1 );
+
+  if ( pos == STR_NPOS ) {
+    if ( !( value = nsMap->Find( "/" ) ) ) {
+      return false;
+    }
+    
+    pos = 0;
+    prefix = "/";
+  }
+  else {
+    prefix.assign( input, 0, pos );
+    
+    // First check the namespace with deepness 1
+    if ( !( value = nsMap->Find( prefix.c_str() ) ) ) {
+      // If not found then check the namespace with deepness 0 
+      // e.g. look for a root mapping
+      if ( !( value = nsMap->Find( "/" ) ) ) {
+        return output;
+      }
+      
+      pos = 0;
+      prefix = "/";
+    }
+  }
+
+  output.assign( value->c_str(), 0, value->length() - 1 );
+  input.erase( prefix, 0, prefix.length() );
+  output += input;
+
+  xcastor_static_debug( "input=%s, output=%s", input.c_str(), output.c_str() );
+  return output;
 }
 
 
@@ -2462,11 +2505,12 @@ XrdxCastor2Fs::chmod( const char*         path,
   mode_t acc_mode = Mode & S_IAMB;
   XrdOucEnv chmod_Env( info );
   XrdSecEntity mappedclient;
+  XrdOucString map_path;
   XTRACE( chmod, path, "" );
   AUTHORIZE( client, &chmod_Env, AOP_Chmod, "chmod", path, error );
-  MAP( ( path ) );
+  map_path = XrdxCastor2Fs::NsMapping( path );
 
-  if ( !path ) {
+  if ( map_path == "" ) {
     error.setErrInfo( ENOMEDIUM, "No mapping for file name" );
     return SFS_ERROR;
   }
@@ -2478,8 +2522,8 @@ XrdxCastor2Fs::chmod( const char*         path,
   }
 
   // Perform the actual chmod
-  if ( XrdxCastor2FsUFS::Chmod( path, acc_mode ) ) {
-    return XrdxCastor2Fs::Emsg( epname, error, serrno, "change mode on", path );
+  if ( XrdxCastor2FsUFS::Chmod( map_path.c_str(), acc_mode ) ) {
+    return XrdxCastor2Fs::Emsg( epname, error, serrno, "change mode on", map_path.c_str() );
   }
   
   return SFS_OK;
@@ -2501,12 +2545,13 @@ XrdxCastor2Fs::exists( const char*          path,
   const char* tident = error.getErrUser();
   XrdOucEnv exists_Env( info );
   XrdSecEntity mappedclient;
+  XrdOucString map_path;
   XTRACE( exists, path, "" );
   AUTHORIZE( client, &exists_Env, AOP_Stat, "execute exists", path, error );
-  MAP( ( path ) );
+  map_path = XrdxCastor2Fs::NsMapping( path );
   ROLEMAP( client, info, mappedclient, tident );
 
-  if ( !path ) {
+  if ( map_path == "" ) {
     error.setErrInfo( ENOMEDIUM, "No mapping for file name" );
     return SFS_ERROR;
   }
@@ -2515,7 +2560,7 @@ XrdxCastor2Fs::exists( const char*          path,
     XrdxCastor2FS->Stats.IncCmd();
   }
 
-  return _exists( path, file_exists, error, &mappedclient, info );
+  return _exists( map_path.c_str(), file_exists, error, &mappedclient, info );
 }
 
 
@@ -2566,11 +2611,12 @@ XrdxCastor2Fs::mkdir( const char*         path,
   const char* tident = error.getErrUser();
   XrdOucEnv mkdir_Env( info );
   XrdSecEntity mappedclient;
+  XrdOucString map_path;
   XTRACE( mkdir, path, "" );
-  MAP( ( path ) );
+  map_path = XrdxCastor2Fs::NsMapping( path );
   ROLEMAP( client, info, mappedclient, tident );
 
-  if ( !path ) {
+  if ( map_path == "" ) {
     error.setErrInfo( ENOMEDIUM, "No mapping for file name" );
     return SFS_ERROR;
   }
@@ -2579,7 +2625,7 @@ XrdxCastor2Fs::mkdir( const char*         path,
     XrdxCastor2FS->Stats.IncCmd();
   }
 
-  int r1 = _mkdir( path, Mode, error, &mappedclient, info );
+  int r1 = _mkdir( map_path.c_str(), Mode, error, &mappedclient, info );
   int r2 = SFS_OK;
   return ( r1 | r2 );
 }
@@ -2730,6 +2776,7 @@ XrdxCastor2Fs::stageprepare( const char*         path,
   const char* tident = error.getErrUser();
   XrdSecEntity mappedclient;
   XrdOucString sinfo = ( ininfo ? ininfo : "" );
+  XrdOucString map_path;
   const char* info = 0;
   int qpos = 0;
 
@@ -2747,9 +2794,9 @@ XrdxCastor2Fs::stageprepare( const char*         path,
 
   XrdOucEnv Open_Env( info );
   XrdxCastor2Timing preparetiming( "stageprepare" );
-  MAP( ( path ) );
+  map_path = XrdxCastor2Fs::NsMapping( path );
 
-  if ( !path ) {
+  if ( map_path == "" ) {
     error.setErrInfo( ENOMEDIUM, "No mapping for file name" );
     return SFS_ERROR;
   }
@@ -2757,21 +2804,21 @@ XrdxCastor2Fs::stageprepare( const char*         path,
   ROLEMAP( client, info, mappedclient, tident );
   struct Cns_filestatcs cstat;
 
-  if ( XrdxCastor2FsUFS::Statfn( path, &cstat ) ) {
-    return XrdxCastor2Fs::Emsg( epname, error, serrno, "stat", path );
+  if ( XrdxCastor2FsUFS::Statfn( map_path.c_str(), &cstat ) ) {
+    return XrdxCastor2Fs::Emsg( epname, error, serrno, "stat", map_path.c_str() );
   }
 
   uid_t client_uid;
   gid_t client_gid;
-  GETID( path, mappedclient, client_uid, client_gid );
+  GETID( map_path.c_str(), mappedclient, client_uid, client_gid );
   XrdOucString stagehost = "";
   XrdOucString serviceclass = "default";
   XrdOucString stagestatus = "";
   XrdOucString stagevariables = "";
 
-  if ( !XrdxCastor2FS->GetStageVariables( path, info, stagevariables, client_uid, client_gid, tident ) ) {
+  if ( !XrdxCastor2FS->GetStageVariables( map_path.c_str(), info, stagevariables, client_uid, client_gid, tident ) ) {
     return XrdxCastor2Fs::Emsg( epname, error, EINVAL, "set the stager host - " 
-                                "you didn't specify it and I have no stager map for fn = ", path );
+                                "you didn't specify it and I have no stager map for fn = ", map_path.c_str() );
   }
 
   int n = 0;
@@ -2788,7 +2835,7 @@ XrdxCastor2Fs::stageprepare( const char*         path,
 
   if ( stagehost.length() && serviceclass.length() ) {
     // Try the user specified pair
-    if ( ( XrdxCastor2FS->SetStageVariables( path, info, stagevariables, 
+    if ( ( XrdxCastor2FS->SetStageVariables( map_path.c_str(), info, stagevariables, 
                                              stagehost, serviceclass, 
                                              XCASTOR2FS_EXACT_MATCH, tident ) ) == 1 ) 
     {
@@ -2819,11 +2866,11 @@ XrdxCastor2Fs::stageprepare( const char*         path,
 
       if ( policy && ( strstr( policy->c_str(), "nostage" ) ) ) {
         return XrdxCastor2Fs::Emsg( epname, error, EPERM, "do prepare request - "
-                                    "you are not allowed to do stage requests fn = ", path );
+                                    "you are not allowed to do stage requests fn = ", map_path.c_str() );
       }
     } else {
       return XrdxCastor2Fs::Emsg( epname, error, EINVAL, "write - cannot find any"
-                                  " valid stager/service class mapping for you for fn = ", path );
+                                  " valid stager/service class mapping for you for fn = ", map_path.c_str() );
     }
   } else {
     // Try the list and stop when we find a matching policy tag
@@ -2831,7 +2878,7 @@ XrdxCastor2Fs::stageprepare( const char*         path,
     int hasmore = 0;
 
     do {
-      if ( ( hasmore = XrdxCastor2FS->SetStageVariables( path, info, stagevariables, 
+      if ( ( hasmore = XrdxCastor2FS->SetStageVariables( map_path.c_str(), info, stagevariables, 
                                                          stagehost, serviceclass, n++, tident ) ) == 1 ) 
       {
         // Select the policy
@@ -2868,7 +2915,7 @@ XrdxCastor2Fs::stageprepare( const char*         path,
 
     if ( !allowed ) {
       return XrdxCastor2Fs::Emsg( epname, error, EPERM, "do prepare request - "
-                                  "you are not allowed to do stage requests fn = ", path );
+                                  "you are not allowed to do stage requests fn = ", map_path.c_str() );
     }
   }
 
@@ -2877,7 +2924,7 @@ XrdxCastor2Fs::stageprepare( const char*         path,
   XrdOucString dummy1;
   XrdOucString dummy2;
 
-  if ( !XrdxCastor2Stager::Prepare2Get( error, ( uid_t ) client_uid, ( gid_t ) client_gid, path, stagehost.c_str(), serviceclass.c_str(), dummy1, dummy2, stagestatus ) ) {
+  if ( !XrdxCastor2Stager::Prepare2Get( error, ( uid_t ) client_uid, ( gid_t ) client_gid, map_path.c_str(), stagehost.c_str(), serviceclass.c_str(), dummy1, dummy2, stagestatus ) ) {
     TIMING( xCastor2FsTrace, "END", &preparetiming );
     preparetiming.Print( xCastor2FsTrace );
     return SFS_ERROR;
@@ -2953,7 +3000,8 @@ XrdxCastor2Fs::prepare( XrdSfsPrep&         pargs,
   ZTRACE( prepare, "updating opaque: " << pargs.oinfo->text );
   XrdOucEnv oenv( pargs.oinfo->text );
   const char* path = pargs.paths->text;
-  MAP( ( path ) );
+  XrdOucString map_path;
+  map_path = XrdxCastor2Fs::NsMapping( path );
   TIMING( xCastor2FsTrace, "CNSID", &preparetiming );
 
   // Unlink files which are not properly closed on a disk server
@@ -2962,20 +3010,20 @@ XrdxCastor2Fs::prepare( XrdSfsPrep&         pargs,
     char nds[4096];
     char* acpath;
     TIMING( xCastor2FsTrace, "CNSSELSERV", &preparetiming );
-    Cns_selectsrvr( path, cds, nds, &acpath );
+    Cns_selectsrvr( map_path.c_str(), cds, nds, &acpath );
     ZTRACE( prepare, "nameserver is " << nds );
     TIMING( xCastor2FsTrace, "CNSUNLINK", &preparetiming );
 
     if ( ( !oenv.Get( "uid" ) ) || ( !oenv.Get( "gid" ) ) ) {
-      return XrdxCastor2Fs::Emsg( epname, error, EINVAL, "missing sec uid/gid", path );
+      return XrdxCastor2Fs::Emsg( epname, error, EINVAL, "missing sec uid/gid", map_path.c_str() );
     }
 
     ZTRACE( prepare, "running rm as uid:" << oenv.Get( "uid" ) << " gid:" << oenv.Get( "gid" ) );
     // Do the unlink as the authorized user in the open
     XrdxCastor2FsUFS::SetId( atoi( oenv.Get( "uid" ) ), atoi( oenv.Get( "gid" ) ) );
 
-    if ( XrdxCastor2FsUFS::Rem( path ) ) {
-      return XrdxCastor2Fs::Emsg( epname, error, serrno, "unlink", path );
+    if ( XrdxCastor2FsUFS::Rem( map_path.c_str() ) ) {
+      return XrdxCastor2Fs::Emsg( epname, error, serrno, "unlink", map_path.c_str() );
     }
   }
 
@@ -2985,13 +3033,13 @@ XrdxCastor2Fs::prepare( XrdSfsPrep&         pargs,
     char nds[4096];
     char* acpath;
     TIMING( xCastor2FsTrace, "CNSSELSERV", &preparetiming );
-    Cns_selectsrvr( path, cds, nds, &acpath );
+    Cns_selectsrvr( map_path.c_str(), cds, nds, &acpath );
     ZTRACE( prepare, "nameserver is " << nds );
     struct Cns_filestatcs cstat;
     TIMING( xCastor2FsTrace, "CNSSTAT", &preparetiming );
 
-    if ( XrdxCastor2FsUFS::Statfn( path, &cstat ) ) {
-      return XrdxCastor2Fs::Emsg( epname, error, serrno, "stat", path );
+    if ( XrdxCastor2FsUFS::Statfn( map_path.c_str(), &cstat ) ) {
+      return XrdxCastor2Fs::Emsg( epname, error, serrno, "stat", map_path.c_str() );
     }
 
     XrdxCastor2FsUFS::SetId( geteuid(), getegid() );
@@ -2999,7 +3047,7 @@ XrdxCastor2Fs::prepare( XrdSfsPrep&         pargs,
     sprintf( fileid, "%llu", cstat.fileid );
     TIMING( xCastor2FsTrace, "1STBYTEW", &preparetiming );
 
-    if ( !XrdxCastor2Stager::FirstWrite( error, path, oenv.Get( "reqid" ), 
+    if ( !XrdxCastor2Stager::FirstWrite( error, map_path.c_str(), oenv.Get( "reqid" ), 
                                          fileid, nds, oenv.Get( "stagehost" ), 
                                          oenv.Get( "serviceclass" ) ) ) 
     {
@@ -3014,8 +3062,8 @@ XrdxCastor2Fs::prepare( XrdSfsPrep&         pargs,
     time_t mtime   = ( time_t ) strtol( oenv.Get( "mtime" ), NULL, 0 );
     XrdxCastor2FsUFS::SetId( 0, 0 );
 
-    if ( XrdxCastor2FsUFS::SetFileSize( path, filesize, mtime ) ) {
-      return XrdxCastor2Fs::Emsg( epname, error, serrno, "setfilesize", path );
+    if ( XrdxCastor2FsUFS::SetFileSize( map_path.c_str(), filesize, mtime ) ) {
+      return XrdxCastor2Fs::Emsg( epname, error, serrno, "setfilesize", map_path.c_str() );
     }
   }
 
@@ -3025,20 +3073,20 @@ XrdxCastor2Fs::prepare( XrdSfsPrep&         pargs,
     char nds[4096];
     char* acpath;
     TIMING( xCastor2FsTrace, "CNSSELSERV", &preparetiming );
-    Cns_selectsrvr( path, cds, nds, &acpath );
+    Cns_selectsrvr( map_path.c_str(), cds, nds, &acpath );
     ZTRACE( prepare, "nameserver is " << nds );
     struct Cns_filestatcs cstat;
     TIMING( xCastor2FsTrace, "CNSSTAT", &preparetiming );
 
-    if ( XrdxCastor2FsUFS::Statfn( path, &cstat ) ) {
-      return XrdxCastor2Fs::Emsg( epname, error, serrno, "stat", path );
+    if ( XrdxCastor2FsUFS::Statfn( map_path.c_str(), &cstat ) ) {
+      return XrdxCastor2Fs::Emsg( epname, error, serrno, "stat", map_path.c_str() );
     }
 
     char fileid[4096];
     sprintf( fileid, "%llu", cstat.fileid );
     TIMING( xCastor2FsTrace, "GETUPDDONE", &preparetiming );
 
-    if ( !XrdxCastor2Stager::UpdateDone( error, path, oenv.Get( "reqid" ), oenv.Get( "stagehost" ), oenv.Get( "serviceclass" ), fileid, nds ) ) {
+    if ( !XrdxCastor2Stager::UpdateDone( error, map_path.c_str(), oenv.Get( "reqid" ), oenv.Get( "stagehost" ), oenv.Get( "serviceclass" ), fileid, nds ) ) {
       TIMING( xCastor2FsTrace, "END", &preparetiming );
       preparetiming.Print( xCastor2FsTrace );
       return SFS_ERROR;
@@ -3064,22 +3112,23 @@ XrdxCastor2Fs::rem( const char*         path,
   const char* tident = error.getErrUser();
   XrdSecEntity mappedclient;
   XrdxCastor2Timing rmtiming( "fileremove" );
+  XrdOucString map_path;
   TIMING( xCastor2FsTrace, "START", &rmtiming );
   XTRACE( remove, path, "" );
   XrdOucEnv env( info );
   AUTHORIZE( client, &env, AOP_Delete, "remove", path, error );
-  MAP( ( path ) );
-  XTRACE( remove, path, "" );
+  map_path = XrdxCastor2Fs::NsMapping( path );
+  XTRACE( remove, map_path.c_str(), "" );
   ROLEMAP( client, info, mappedclient, tident );
 
-  if ( !path ) {
+  if ( map_path == "" ) {
     error.setErrInfo( ENOMEDIUM, "No mapping for file name" );
     return SFS_ERROR;
   }
 
   uid_t client_uid;
   gid_t client_gid;
-  GETID( path, mappedclient, client_uid, client_gid );
+  GETID( map_path.c_str(), mappedclient, client_uid, client_gid );
 
   if ( XrdxCastor2FS->Proc ) {
     XrdxCastor2FS->Stats.IncRm();
@@ -3092,10 +3141,10 @@ XrdxCastor2Fs::rem( const char*         path,
     XrdOucString stagehost = "";
     XrdOucString serviceclass = "";
 
-    if ( !XrdxCastor2FS->GetStageVariables( path, info, stagevariables, client_uid, client_gid, tident ) ) {
+    if ( !XrdxCastor2FS->GetStageVariables( map_path.c_str(), info, stagevariables, client_uid, client_gid, tident ) ) {
       return XrdxCastor2Fs::Emsg( epname, error, EINVAL, "set the stager host - "
                                   "add remove opaque tag stagerm=<..> or specify a "
-                                  "valid one because I have no stager map for fn = ", path );
+                                  "valid one because I have no stager map for fn = ", map_path.c_str() );
     }
 
     int n = 0;
@@ -3112,7 +3161,7 @@ XrdxCastor2Fs::rem( const char*         path,
 
     if ( stagehost.length() && serviceclass.length() ) {
       // Try the user specified pair
-      if ( ( XrdxCastor2FS->SetStageVariables( path, info, stagevariables, 
+      if ( ( XrdxCastor2FS->SetStageVariables( map_path.c_str(), info, stagevariables, 
                                                stagehost, serviceclass, 
                                                XCASTOR2FS_EXACT_MATCH, tident ) ) == 1 ) 
       {
@@ -3143,11 +3192,11 @@ XrdxCastor2Fs::rem( const char*         path,
 
         if ( policy && ( strstr( policy->c_str(), "nodelete" ) ) ) {
           return XrdxCastor2Fs::Emsg( epname, error, EPERM, "do stage_rm request - "
-                                      "you are not allowed to do stage_rm requests fn = ", path );
+                                      "you are not allowed to do stage_rm requests fn = ", map_path.c_str() );
         }
       } else {
         return XrdxCastor2Fs::Emsg( epname, error, EINVAL, "write - cannot find any "
-                                    "valid stager/service class mapping for you for fn = ", path );
+                                    "valid stager/service class mapping for you for fn = ", map_path.c_str() );
       }
     } else {
       // Try the list and stop when we find a matching policy tag
@@ -3155,7 +3204,7 @@ XrdxCastor2Fs::rem( const char*         path,
       int hasmore = 0;
 
       do {
-        if ( ( hasmore = XrdxCastor2FS->SetStageVariables( path, info, stagevariables, 
+        if ( ( hasmore = XrdxCastor2FS->SetStageVariables( map_path.c_str(), info, stagevariables, 
                                                            stagehost, serviceclass, n++, tident ) ) == 1 ) 
         {
           // Select the policy
@@ -3192,7 +3241,7 @@ XrdxCastor2Fs::rem( const char*         path,
 
       if ( !allowed ) {
         return XrdxCastor2Fs::Emsg( epname, error, EPERM, "do stage_rm request - "
-                                    "you are not allowed to do stage_rm requests for fn = ", path );
+                                    "you are not allowed to do stage_rm requests for fn = ", map_path.c_str() );
       }
     }
 
@@ -3200,7 +3249,7 @@ XrdxCastor2Fs::rem( const char*         path,
     TIMING( xCastor2FsTrace, "STAGERRM", &rmtiming );
 
     if ( !XrdxCastor2Stager::Rm( error, ( uid_t ) client_uid, 
-                                 ( gid_t ) client_gid, path, 
+                                 ( gid_t ) client_gid, map_path.c_str(), 
                                  stagehost.c_str(), serviceclass.c_str() ) ) 
     {
       TIMING( xCastor2FsTrace, "END", &rmtiming );
@@ -3212,7 +3261,7 @@ XrdxCastor2Fs::rem( const char*         path,
   }
 
   int retc = 0;
-  retc = _rem( path, error, &mappedclient, info );
+  retc = _rem( map_path.c_str(), error, &mappedclient, info );
   TIMING( xCastor2FsTrace, "RemoveNamespace", &rmtiming );
   rmtiming.Print( xCastor2FsTrace );
   return retc;
@@ -3254,12 +3303,13 @@ XrdxCastor2Fs::remdir( const char*         path,
   const char* tident = error.getErrUser();
   XrdOucEnv remdir_Env( info );
   XrdSecEntity mappedclient;
+  XrdOucString map_path;
   XTRACE( remove, path, "" );
   AUTHORIZE( client, &remdir_Env, AOP_Delete, "remove", path, error );
-  MAP( ( path ) );
+  map_path = XrdxCastor2Fs::NsMapping( path );
   ROLEMAP( client, info, mappedclient, tident );
 
-  if ( !path ) {
+  if ( map_path == "" ) {
     error.setErrInfo( ENOMEDIUM, "No mapping for file name" );
     return SFS_ERROR;
   }
@@ -3268,7 +3318,7 @@ XrdxCastor2Fs::remdir( const char*         path,
     XrdxCastor2FS->Stats.IncCmd();
   }
 
-  return _remdir( path, error, &mappedclient, info );
+  return _remdir( map_path.c_str(), error, &mappedclient, info );
 }
 
 
@@ -3313,19 +3363,17 @@ XrdxCastor2Fs::rename( const char*         old_name,
   AUTHORIZE( client, &renameo_Env, AOP_Update, "rename", old_name, error );
   AUTHORIZE( client, &renamen_Env, AOP_Update, "rename", new_name, error );
   {
-    MAP( ( old_name ) );
-    oldn = old_name;
+    oldn = XrdxCastor2Fs::NsMapping( old_name );
 
-    if ( !old_name ) {
+    if ( oldn == "" ) {
       error.setErrInfo( ENOMEDIUM, "No mapping for file name" );
       return SFS_ERROR;
     }
   }
   {
-    MAP( ( new_name ) );
-    newn = new_name;
+    newn = XrdxCastor2Fs::NsMapping( new_name );
 
-    if ( !new_name ) {
+    if ( newn == "" ) {
       error.setErrInfo( ENOMEDIUM, "No mapping for file name" );
       return SFS_ERROR;
     }
@@ -3393,14 +3441,15 @@ XrdxCastor2Fs::stat( const char*         path,
   static const char* epname = "stat";
   const char* tident = error.getErrUser();
   XrdSecEntity mappedclient;
+  XrdOucString map_path;
   XrdxCastor2Timing stattiming( "filestat" );
   XrdOucEnv Open_Env( info );
   TIMING( xCastor2FsTrace, "START", &stattiming );
   XTRACE( stat, path, "" );
   AUTHORIZE( client, &Open_Env, AOP_Stat, "stat", path, error );
-  MAP( ( path ) );
+  map_path = XrdxCastor2Fs::NsMapping( path );
 
-  if ( !path ) {
+  if ( map_path == "" ) {
     error.setErrInfo( ENOMEDIUM, "No mapping for file name" );
     return SFS_ERROR;
   }
@@ -3409,13 +3458,13 @@ XrdxCastor2Fs::stat( const char*         path,
   TIMING( xCastor2FsTrace, "CNSSTAT", &stattiming );
   struct Cns_filestatcs cstat;
 
-  if ( XrdxCastor2FsUFS::Statfn( path, &cstat ) ) {
-    return XrdxCastor2Fs::Emsg( epname, error, serrno, "stat", path );
+  if ( XrdxCastor2FsUFS::Statfn( map_path.c_str(), &cstat ) ) {
+    return XrdxCastor2Fs::Emsg( epname, error, serrno, "stat", map_path.c_str() );
   }
 
   uid_t client_uid;
   uid_t client_gid;
-  GETID( path, mappedclient, client_uid, client_gid );
+  GETID( map_path.c_str(), mappedclient, client_uid, client_gid );
   XrdOucString stagehost = "";
   XrdOucString serviceclass = "default";
   XrdOucString stagestatus = "";
@@ -3423,9 +3472,9 @@ XrdxCastor2Fs::stat( const char*         path,
 
   if ( !( Open_Env.Get( "nostagerquery" ) ) ) {
     if ( !S_ISDIR( cstat.filemode ) ) {
-      if ( !XrdxCastor2FS->GetStageVariables( path, info, stagevariables, client_uid, client_gid, tident ) ) {
+      if ( !XrdxCastor2FS->GetStageVariables( map_path.c_str(), info, stagevariables, client_uid, client_gid, tident ) ) {
         return XrdxCastor2Fs::Emsg( epname, error, EINVAL, "set the stager host - "
-                                    "you didn't specify it and I have no stager map for fn = ", path );
+                                    "you didn't specify it and I have no stager map for fn = ", map_path.c_str() );
       }
 
       // Now loop over all possible stager/svc combinations and to find an online one
@@ -3436,7 +3485,7 @@ XrdxCastor2Fs::stat( const char*         path,
       do {
         stagestatus = "NA";
 
-        if ( ( hasmore = XrdxCastor2FS->SetStageVariables( path, info, stagevariables, 
+        if ( ( hasmore = XrdxCastor2FS->SetStageVariables( map_path.c_str(), info, stagevariables, 
                                                            stagehost, serviceclass, n++, tident ) ) == 1 ) 
         { 
           // We don't care about policies for stat's
@@ -3445,7 +3494,7 @@ XrdxCastor2Fs::stat( const char*         path,
           TIMING( xCastor2FsTrace, qrytag.c_str(), &stattiming );
 
           if ( !XrdxCastor2Stager::StagerQuery( error, ( uid_t ) client_uid, 
-                                                ( gid_t ) client_gid, path, stagehost.c_str(), 
+                                                ( gid_t ) client_gid, map_path.c_str(), stagehost.c_str(), 
                                                 serviceclass.c_str(), stagestatus ) ) 
           {
             stagestatus = "NA";
@@ -3491,7 +3540,7 @@ XrdxCastor2Fs::stat( const char*         path,
       buf->st_dev   = 0;
     }
 
-    XTRACE( stat, path, stagestatus.c_str() );
+    XTRACE( stat, map_path.c_str(), stagestatus.c_str() );
   }
 
   TIMING( xCastor2FsTrace, "END", &stattiming );
@@ -3531,21 +3580,22 @@ XrdxCastor2Fs::lstat( const char*         path,
   static const char* epname = "lstat";
   const char* tident = error.getErrUser();
   XrdSecEntity mappedclient;
+  XrdOucString map_path;
   XrdOucEnv lstat_Env( info );
   XrdxCastor2Timing stattiming( "filelstat" );
   TIMING( xCastor2FsTrace, "START", &stattiming );
   XTRACE( stat, path, "" );
   AUTHORIZE( client, &lstat_Env, AOP_Stat, "lstat", path, error );
-  MAP( ( path ) );
+  map_path = XrdxCastor2Fs::NsMapping( path );
 
-  if ( !path ) {
+  if ( map_path == ""  ) {
     error.setErrInfo( ENOMEDIUM, "No mapping for file name" );
     return SFS_ERROR;
   }
 
   ROLEMAP( client, info, mappedclient, tident );
 
-  if ( !strcmp( path, "/" ) ) {
+  if ( !strcmp( map_path.c_str(), "/" ) ) {
     buf->st_dev     = 0xcaff;
     buf->st_ino     = 0;
     buf->st_mode    = S_IFDIR | S_IRUSR | S_IRGRP | S_IROTH | S_IXUSR | S_IXGRP | S_IXOTH ;
@@ -3566,8 +3616,8 @@ XrdxCastor2Fs::lstat( const char*         path,
 
   TIMING( xCastor2FsTrace, "CNSLSTAT", &stattiming );
 
-  if ( XrdxCastor2FsUFS::Lstatfn( path, &cstat ) ) {
-    return XrdxCastor2Fs::Emsg( epname, error, serrno, "lstat", path );
+  if ( XrdxCastor2FsUFS::Lstatfn( map_path.c_str(), &cstat ) ) {
+    return XrdxCastor2Fs::Emsg( epname, error, serrno, "lstat", map_path.c_str() );
   }
 
   if ( XrdxCastor2FS->Proc ) {
@@ -3621,12 +3671,13 @@ XrdxCastor2Fs::readlink( const char*         path,
   static const char* epname = "readlink";
   const char* tident = error.getErrUser();
   XrdSecEntity mappedclient;
+  XrdOucString map_path;
   XrdOucEnv rl_Env( info );
   XTRACE( fsctl, path, "" );
   AUTHORIZE( client, &rl_Env, AOP_Stat, "readlink", path, error );
-  MAP( ( path ) );
+  map_path = XrdxCastor2Fs::NsMapping( path );
 
-  if ( !path ) {
+  if ( map_path == "" ) {
     error.setErrInfo( ENOMEDIUM, "No mapping for file name" );
     return SFS_ERROR;
   }
@@ -3635,8 +3686,8 @@ XrdxCastor2Fs::readlink( const char*         path,
   char lp[4097];
   int nlen;
 
-  if ( ( nlen = XrdxCastor2FsUFS::Readlink( path, lp, 4096 ) ) == -1 ) {
-    return XrdxCastor2Fs::Emsg( epname, error, serrno, "readlink", path );
+  if ( ( nlen = XrdxCastor2FsUFS::Readlink( map_path.c_str(), lp, 4096 ) ) == -1 ) {
+    return XrdxCastor2Fs::Emsg( epname, error, serrno, "readlink", map_path.c_str() );
   }
 
   lp[nlen] = 0;
@@ -3666,20 +3717,18 @@ XrdxCastor2Fs::symlink( const char*         path,
   source = path;
 
   if ( path[0] == '/' ) {
-    MAP( ( path ) );
-    source = path;
+    source = XrdxCastor2Fs::NsMapping( path );
 
-    if ( !path ) {
+    if ( source == ""  ) {
       error.setErrInfo( ENOMEDIUM, "No mapping for file name" );
       return SFS_ERROR;
     }
   }
 
   {
-    MAP( ( linkpath ) );
-    destination = linkpath;
+    destination = XrdxCastor2Fs::NsMapping( linkpath );
 
-    if ( !linkpath ) {
+    if ( destination == "") {
       error.setErrInfo( ENOMEDIUM, "No mapping for file name" );
       return SFS_ERROR;
     }
@@ -3711,11 +3760,12 @@ XrdxCastor2Fs::access( const char*         path,
   const char* tident = error.getErrUser();
   XrdSecEntity mappedclient;
   XrdOucEnv access_Env( info );
+  XrdOucString map_path;
   XTRACE( fsctl, path, "" );
   AUTHORIZE( client, &access_Env, AOP_Stat, "access", path, error );
-  MAP( ( path ) );
+  map_path = XrdxCastor2Fs::NsMapping( path );
 
-  if ( !path ) {
+  if ( map_path == "" ) {
     error.setErrInfo( ENOMEDIUM, "No mapping for file name" );
     return SFS_ERROR;
   }
@@ -3737,20 +3787,21 @@ int XrdxCastor2Fs::utimes( const char*         path,
   static const char* epname = "utimes";
   const char* tident = error.getErrUser();
   XrdSecEntity mappedclient;
+  XrdOucString map_path;
   XrdOucEnv utimes_Env( info );
   XTRACE( fsctl, path, "" );
   AUTHORIZE( client, &utimes_Env, AOP_Update, "set utimes", path, error );
-  MAP( ( path ) );
+  map_path = XrdxCastor2Fs::NsMapping( path );
 
-  if ( !path ) {
+  if ( map_path == "" ) {
     error.setErrInfo( ENOMEDIUM, "No mapping for file name" );
     return SFS_ERROR;
   }
 
   ROLEMAP( client, info, mappedclient, tident );
 
-  if ( ( XrdxCastor2FsUFS::Utimes( path, tvp ) ) ) {
-    return XrdxCastor2Fs::Emsg( epname, error, serrno, "utimes", path );
+  if ( ( XrdxCastor2FsUFS::Utimes( map_path.c_str(), tvp ) ) ) {
+    return XrdxCastor2Fs::Emsg( epname, error, serrno, "utimes", map_path.c_str() );
   }
 
   return SFS_OK;

@@ -45,7 +45,6 @@
 #include "serrno.h"
 #include "Cns_api.h"
 /*-----------------------------------------------------------------------------*/
-#include "XrdxCastor2FsStats.hh"
 #include "XrdAcc/XrdAccAuthorize.hh"
 #include "XrdClient/XrdClientAdmin.hh"
 #include "XrdSfs/XrdSfsInterface.hh"
@@ -53,6 +52,9 @@
 #include "XrdOfs/XrdOfsEvr.hh"
 #include "XrdCms/XrdCmsFinder.hh"
 #include "XrdSec/XrdSecEntity.hh"
+/*-----------------------------------------------------------------------------*/
+#include "XrdxCastorLogging.hh"
+#include "XrdxCastor2FsStats.hh"
 #include "XrdxCastor2ServerAcc.hh"
 #include "XrdxCastor2Proc.hh"
 #include "XrdxCastor2ClientAdmin.hh"
@@ -221,7 +223,7 @@ class XrdxCastor2FsGroupInfo
 //------------------------------------------------------------------------------
 //! Class XrdxCastor2FsDirectory
 //------------------------------------------------------------------------------
-class XrdxCastor2FsDirectory : public XrdSfsDirectory
+class XrdxCastor2FsDirectory : public XrdSfsDirectory, public LogId
 {
   public:
 
@@ -522,7 +524,7 @@ class XrdxCastor2FsFile : public XrdSfsFile
 //------------------------------------------------------------------------------
 //! Class XrdxCastor2Fs
 //------------------------------------------------------------------------------
-class XrdxCastor2Fs : public XrdSfsFileSystem
+class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
 {
     friend class XrdxCastor2FsFile;
     friend class XrdxCastor2FsDirectory;
@@ -942,9 +944,15 @@ class XrdxCastor2Fs : public XrdSfsFileSystem
 
 
     //--------------------------------------------------------------------------
-    //! Map
+    //! Map input path according to policy
+    //!
+    //! @param input the initial input path
+    //!
+    //! @return the mapped path according to the directives in the xrd.cf file
+    //!
     //--------------------------------------------------------------------------
-    static bool Map( XrdOucString inmap, XrdOucString& outmap );
+    static XrdOucString NsMapping( XrdOucString input );
+
 
     //--------------------------------------------------------------------------
     //! Reload grid map file
@@ -975,7 +983,7 @@ class XrdxCastor2Fs : public XrdSfsFileSystem
     // we must check if all this things need to be thread safed with a mutex ...
     static  XrdOucHash<XrdOucString>* filesystemhosttable;
     static  XrdSysMutex               filesystemhosttablelock;
-    static  XrdOucHash<XrdOucString>* nstable;
+    static  XrdOucHash<XrdOucString>* nsMap;
     static  XrdOucHash<XrdOucString>* stagertable;
     static  XrdOucHash<XrdOucString>* stagerpolicy;
     static  XrdOucHash<XrdOucString>* roletable;
@@ -988,7 +996,7 @@ class XrdxCastor2Fs : public XrdSfsFileSystem
     static  XrdOucHash<XrdxCastor2ClientAdmin>* clientadmintable;
 
     static  int TokenLockTime;  ///< specifies the grace period for client to show 
-                                ///<up on a disk server in seconds before the token expires
+                                ///< up on a disk server in seconds before the token expires
 
     XrdxCastor2ServerAcc* ServerAcc;     ///< authorization module for token encryption/decryption
     XrdSysMutex encodeLock;              ///<
