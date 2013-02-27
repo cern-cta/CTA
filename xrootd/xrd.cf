@@ -21,6 +21,13 @@ xcastor2.capability true
 xcastor2.publickey /opt/xrootd/keys/pkey.pem
 xcastor2.ratelimiter true
 
+#-------------------------------------------------------------------------------
+# Set the debug level and a filter. The debug levels are similar to the ones used
+# by syslog. The debug filter prints out only the messages from a certain function.
+#-------------------------------------------------------------------------------
+#xcastor2.debuglevel err
+#xcasto2.debugfileter main
+
 # to enable persistency on successful close, you have to allow all disk servers 
 # to call back to the manager by adding
 # sec.protbind lxfs*.cern.ch only unix

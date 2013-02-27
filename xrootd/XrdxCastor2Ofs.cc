@@ -96,6 +96,16 @@ extern "C"
 /******************************************************************************/
 
 //------------------------------------------------------------------------------
+// Constructor
+//------------------------------------------------------------------------------
+XrdxCastor2Ofs::XrdxCastor2Ofs(): 
+  LogId() 
+{
+  mLogLevel = LOG_ERR; // log everything above err
+}
+
+
+//------------------------------------------------------------------------------
 // Configure
 //------------------------------------------------------------------------------
 int XrdxCastor2Ofs::Configure( XrdSysError& Eroute )
@@ -130,6 +140,37 @@ int XrdxCastor2Ofs::Configure( XrdSysError& Eroute )
     while ( ( var = config_stream.GetMyFirstWord() ) ) {
       if ( !strncmp( var, "xcastor2.", 9 ) ) {
         var += 9;
+
+        // Get the debug level
+        if ( !strcmp( "debuglevel", var ) ) {
+          if ( !( val = config_stream.GetWord() ) ) {
+            Eroute.Emsg( "Config", "argument for debug level invalid set to ERR." );
+            mLogLevel = LOG_ERR;
+          } else {
+            std::string str_val(val);
+            if (isdigit(str_val[0])) {
+              // The level is given as a number 
+              mLogLevel = atoi(val);
+            }
+            else {
+              // The level is given as a string
+              mLogLevel = Logging::GetPriorityByString(val);
+            }
+            Logging::SetLogPriority(mLogLevel);
+            Eroute.Say( "=====> xcastor2.debuglevel: ", 
+                        Logging::GetPriorityString(mLogLevel), "" );
+          }
+        }
+
+        // Get any debug filter name 
+        if ( !strcmp( "debugfilter", var ) ) {
+          if ( !( val = config_stream.GetWord() ) ) {
+            Eroute.Emsg( "Config", "argument for debug filter invalid set to none." );
+          } else {
+            Logging::SetFilter(val);
+            Eroute.Say( "=====> xcastor2.debugfileter: ", val, "" );
+          }
+        }
 
         if ( !strcmp( "procuser", var ) ) {
           if ( ( val = config_stream.GetWord() ) ) {
@@ -306,7 +347,7 @@ int XrdxCastor2Ofs::Configure( XrdSysError& Eroute )
   unit += ":1094";
 
   Logging::Init();
-  Logging::SetLogPriority( LOG_DEBUG );
+  Logging::SetLogPriority( mLogLevel );
   Logging::SetUnit( unit.c_str() );
   xcastor_info( "info=\"logging configured\" " );
 

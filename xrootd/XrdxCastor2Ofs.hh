@@ -312,7 +312,7 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
     //--------------------------------------------------------------------------
     //! Constructor
     //--------------------------------------------------------------------------
-    XrdxCastor2Ofs(): LogId() {};
+    XrdxCastor2Ofs();
 
 
     //--------------------------------------------------------------------------
@@ -478,6 +478,7 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
     int                 ThirdPartyCopySlots;          ///< default from Configure
     int                 ThirdPartyCopySlotRate;       ///< default from Configure
     XrdOucString        ThirdPartyCopyStateDirectory; ///< default from Configure
+    int                 mLogLevel; ///< log level from configuration file
 
   private:
 

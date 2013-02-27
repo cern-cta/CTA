@@ -2415,6 +2415,7 @@ XrdxCastor2Fs::XrdxCastor2Fs( XrdSysError* ep ):
 {
   eDest = ep;
   ConfigFN  = 0;
+  mLogLevel = LOG_ERR; // log everything above error
 }
 
 

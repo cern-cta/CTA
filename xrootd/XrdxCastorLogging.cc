@@ -147,15 +147,8 @@ Logging::log(const char*                     func,
   static int logmsgbuffersize=1024*1024;
   static char* buffer=0;
 
-  // Short cut if log messages are masked
-  if (!((LOG_MASK(priority) & gLogMask)))
+  if (!shouldlog(func, priority)) {
     return "";
-
-  // Apply filter to avoid message flooding for debug messages
-  if (priority >= LOG_INFO) {
-    if ( (gFilter.find(func))!=STR_NPOS) {
-      return "";
-    }
   }
 
   if (!buffer) {

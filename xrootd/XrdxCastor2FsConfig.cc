@@ -48,7 +48,7 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
   char* var;
   const char* val;
   int  cfgFD, retc, NoGo = 0;
-  XrdOucStream Config( &Eroute, getenv( "XRDINSTANCE" ) );
+  XrdOucStream config_stream( &Eroute, getenv( "XRDINSTANCE" ) );
   XrdOucString role = "server";
   bool xcastor2fsdefined = false;
   bool SubscribeCms = false;
@@ -67,17 +67,6 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
   VomsMapFile = "";
   LocationCacheDir = "";
   long myPort = 0;
-
-  // Setup the circular in-memory logging buffer  
-  XrdOucString unit = "rdr@";
-  unit += XrdSysDNS::getHostName();
-  unit += ":";
-  unit += xCastor2FsTargetPort;
-
-  Logging::Init();
-  Logging::SetLogPriority( LOG_DEBUG );
-  Logging::SetUnit( unit.c_str() );
-  xcastor_info( "info=\"logging configured\" " );
 
   {
     // borrowed from XrdOfs
@@ -116,28 +105,30 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
     Eroute.Emsg( "Config", "Configuration file not specified." );
   } else {
     // Try to open the configuration file.
-    if ( ( cfgFD = open( ConfigFN, O_RDONLY, 0 ) ) < 0 )
+    if ( ( cfgFD = open( ConfigFN, O_RDONLY, 0 ) ) < 0 ) {
       return Eroute.Emsg( "Config", errno, "open config file", ConfigFN );
+    }
 
-    Config.Attach( cfgFD );
+    config_stream.Attach( cfgFD );
     // Now start reading records until eof.
     XrdOucString nsin;
     XrdOucString nsout;
 
-    while ( ( var = Config.GetMyFirstWord() ) ) {
+    while ( ( var = config_stream.GetMyFirstWord() ) ) {
+      // Get the all.* configuration values
       if ( !strncmp( var, "all.", 4 ) ) {
         var += 4;
-
+        
         if ( !strcmp( "role", var ) ) {
-          if ( !( val = Config.GetWord() ) ) {
+          if ( !( val = config_stream.GetWord() ) ) {
             Eroute.Emsg( "Config", "argument for all.role missing." );
             NoGo = 1;
           } else {
             XrdOucString lrole = val;
 
-            if ( ( val = Config.GetWord() ) ) {
+            if ( ( val = config_stream.GetWord() ) ) {
               if ( !strcmp( val, "if" ) ) {
-                if ( ( val = Config.GetWord() ) ) {
+                if ( ( val = config_stream.GetWord() ) ) {
                   if ( !strcmp( val, HostName ) ) {
                     role = lrole;
                   }
@@ -156,11 +147,13 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
         }
       }
 
+      // Get the xcasto2.* configuration values
       if ( !strncmp( var, "xcastor2.", 9 ) ) {
         var += 9;
 
+        // Get the fs name 
         if ( !strcmp( "fs", var ) ) {
-          if ( !( val = Config.GetWord() ) ) {
+          if ( !( val = config_stream.GetWord() ) ) {
             Eroute.Emsg( "Config", "argument for fs invalid." );
             NoGo = 1;
           } else {
@@ -170,8 +163,40 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
           }
         }
 
+        // Get the debug level
+        if ( !strcmp( "debuglevel", var ) ) {
+          if ( !( val = config_stream.GetWord() ) ) {
+            Eroute.Emsg( "Config", "argument for debug level invalid set to ERR." );
+            mLogLevel = LOG_ERR;
+          } else {
+            std::string str_val(val);
+            if (isdigit(str_val[0])) {
+              // The level is given as a number 
+              mLogLevel = atoi(val);
+            }
+            else {
+              // The level is given as a string
+              mLogLevel = Logging::GetPriorityByString(val);
+            }
+            Logging::SetLogPriority(mLogLevel);
+            Eroute.Say( "=====> xcastor2.debuglevel: ", 
+                        Logging::GetPriorityString(mLogLevel), "" );
+          }
+        }
+
+        // Get any debug filter name 
+        if ( !strcmp( "debugfilter", var ) ) {
+          if ( !( val = config_stream.GetWord() ) ) {
+            Eroute.Emsg( "Config", "argument for debug filter invalid set to none." );
+          } else {
+            Logging::SetFilter(val);
+            Eroute.Say( "=====> xcastor2.debugfileter: ", val, "" );
+          }
+        }
+
+        // Get the target port
         if ( !strcmp( "targetport", var ) ) {
-          if ( !( val = Config.GetWord() ) ) {
+          if ( !( val = config_stream.GetWord() ) ) {
             Eroute.Emsg( "Config", "argument for fs invalid." );
             NoGo = 1;
           } else {
@@ -180,15 +205,16 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
           }
         }
 
+        // Get the namespace mapping
         if ( !strcmp( "nsmap", var ) ) {
-          if ( !( val = Config.GetWord() ) ) {
+          if ( !( val = config_stream.GetWord() ) ) {
             Eroute.Emsg( "Config", "argument for nsmap invalid." );
             NoGo = 1;
           } else {
             nsin = val;
           }
 
-          if ( !( val = Config.GetWord() ) ) {
+          if ( !( val = config_stream.GetWord() ) ) {
             Eroute.Emsg( "Config", "argument 2 for nsmap missing." );
             NoGo = 1;
           } else {
@@ -212,7 +238,7 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
         }
 
         if ( !strcmp( "proc", var ) )
-          if ( !( val = Config.GetWord() ) ) {
+          if ( !( val = config_stream.GetWord() ) ) {
             Eroute.Emsg( "Config", "argument for proc invalid." );
             NoGo = 1;
           } else {
@@ -221,7 +247,7 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
 
             while ( Procfilesystem.replace( "//", "/" ) ) {};
 
-            if ( ( val = Config.GetWord() ) ) {
+            if ( ( val = config_stream.GetWord() ) ) {
               if ( ( !strcmp( val, "sync" ) ) || ( !strcmp( val, "async" ) ) ) {
                 if ( !strcmp( val, "sync" ) ) ProcfilesystemSync = true;
 
@@ -239,14 +265,14 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
           }
 
         if ( !strcmp( "role", var ) ) {
-          if ( !( val = Config.GetWord() ) ) {
+          if ( !( val = config_stream.GetWord() ) ) {
             Eroute.Emsg( "Config", "argument for role invalid." );
             NoGo = 1;
           } else {
             nsin = val;
           }
 
-          if ( !( val = Config.GetWord() ) ) {
+          if ( !( val = config_stream.GetWord() ) ) {
             Eroute.Emsg( "Config", "argument 2 for role missing." );
             NoGo = 1;
           } else {
@@ -264,7 +290,7 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
       }
 
       if ( !strcmp( "capability", var ) ) {
-        if ( !( val = Config.GetWord() ) ) {
+        if ( !( val = config_stream.GetWord() ) ) {
           Eroute.Emsg( "Config", "argument 2 for capbility missing. Can be true/lazy/1 or false/0" );
           NoGo = 1;
         } else {
@@ -282,7 +308,7 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
       }
 
       if ( !strcmp( "tokenlocktime", var ) ) {
-        if ( !( val = Config.GetWord() ) ) {
+        if ( !( val = config_stream.GetWord() ) ) {
           Eroute.Emsg( "Config", "argument 2 for writelocktime missing. Specifies the grace period for a client to show up with a write on a disk server in seconds." );
           NoGo = 1;
         } else {
@@ -296,7 +322,7 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
       }
 
       if ( !strcmp( "locatepolicy", var ) ) {
-        if ( ( !( val = Config.GetWord() ) ) || ( strcmp( "fs", val ) && strcmp( "twin", val ) && strcmp( "balanced", val ) ) ) {
+        if ( ( !( val = config_stream.GetWord() ) ) || ( strcmp( "fs", val ) && strcmp( "twin", val ) && strcmp( "balanced", val ) ) ) {
           Eroute.Emsg( "Config", "argument 2 for locatepolicy missing. Can be <fs>, <twin> or <balanced> " );
           NoGo = 1;
         } else {
@@ -305,7 +331,7 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
       }
 
       if ( !strcmp( "mapcerncertificates", var ) ) {
-        if ( ( !( val = Config.GetWord() ) ) || ( strcmp( "true", val ) && strcmp( "false", val ) && strcmp( "1", val ) && strcmp( "0", val ) ) ) {
+        if ( ( !( val = config_stream.GetWord() ) ) || ( strcmp( "true", val ) && strcmp( "false", val ) && strcmp( "1", val ) && strcmp( "0", val ) ) ) {
           Eroute.Emsg( "Config", "argument 2 for mapcerncertificates illegal or missing. Must be <true>,<false>,<1> or <0>!" );
           NoGo = 1;
         } else {
@@ -316,7 +342,7 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
       }
 
       if ( !strcmp( "gridmapfile", var ) ) {
-        if ( ( !( val = Config.GetWord() ) ) || ( ::access( val, R_OK ) ) ) {
+        if ( ( !( val = config_stream.GetWord() ) ) || ( ::access( val, R_OK ) ) ) {
           Eroute.Emsg( "Config", "I cannot access your specified gridmap file!" );
           NoGo = 1;
         } else {
@@ -331,13 +357,13 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
       }
 
       if ( !strcmp( "stagermap", var ) ) {
-        if ( ( !( val = Config.GetWord() ) ) ) {
+        if ( ( !( val = config_stream.GetWord() ) ) ) {
           Eroute.Emsg( "Config", "you have to give a path + the stagerhost to assign" );
           NoGo = 1;
         } else {
           XrdOucString stagepath = val;
 
-          if ( ( !( val = Config.GetWord() ) ) ) {
+          if ( ( !( val = config_stream.GetWord() ) ) ) {
             Eroute.Emsg( "Config", "you have to give a path + the stagerhost to assign" );
             NoGo = 1;
           } else {
@@ -354,13 +380,13 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
       }
 
       if ( !strcmp( "stagerpolicy", var ) ) {
-        if ( ( !( val = Config.GetWord() ) ) ) {
+        if ( ( !( val = config_stream.GetWord() ) ) ) {
           Eroute.Emsg( "Config", "you have to give a stagerhost::svcclass tag and a policy ( schedall|schedread|schedwrite| )" );
           NoGo = 1;
         } else {
           XrdOucString stagepair = val;
 
-          if ( ( !( val = Config.GetWord() ) ) || ( ( !strstr( val, "schedall" ) ) && ( !strstr( val, "schedread" ) ) && ( !strstr( val, "schedwrite" ) ) ) ) {
+          if ( ( !( val = config_stream.GetWord() ) ) || ( ( !strstr( val, "schedall" ) ) && ( !strstr( val, "schedread" ) ) && ( !strstr( val, "schedwrite" ) ) ) ) {
             Eroute.Emsg( "Config", "you have to give a stagerhost::svcclass tag and a policy ( schedall|schedread|schedwrite| )" );
             NoGo = 1;
           } else {
@@ -377,7 +403,7 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
       }
 
       if ( !strcmp( "vomsmapfile", var ) ) {
-        if ( ( !( val = Config.GetWord() ) ) || ( ::access( val, R_OK ) ) ) {
+        if ( ( !( val = config_stream.GetWord() ) ) || ( ::access( val, R_OK ) ) ) {
           Eroute.Emsg( "Config", "I cannot access your specified vomsmap file!" );
           NoGo = 1;
         } else {
@@ -388,7 +414,7 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
       }
 
       if ( !strcmp( "locationcache", var ) ) {
-        if ( ( !( val = Config.GetWord() ) ) || ( ::access( val, W_OK ) ) ) {
+        if ( ( !( val = config_stream.GetWord() ) ) || ( ::access( val, W_OK ) ) ) {
           Eroute.Emsg( "Config", "I cannot access your location cache directory!" );
           NoGo = 1;
         } else {
@@ -399,7 +425,7 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
       }
 
       if ( !strcmp( "subscribe", var ) ) {
-        if ( ( !( val = Config.GetWord() ) ) || ( strcmp( "true", val ) && strcmp( "false", val ) && strcmp( "1", val ) && strcmp( "0", val ) ) ) {
+        if ( ( !( val = config_stream.GetWord() ) ) || ( strcmp( "true", val ) && strcmp( "false", val ) && strcmp( "1", val ) && strcmp( "0", val ) ) ) {
           Eroute.Emsg( "Config", "argument 2 for subscribe illegal or missing. Must be <true>,<false>,<1> or <0>!" );
           NoGo = 1;
         } else {
@@ -415,7 +441,7 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
       }
 
       if ( !strcmp( "authlib", var ) ) {
-        if ( ( !( val = Config.GetWord() ) ) || ( ::access( val, R_OK ) ) ) {
+        if ( ( !( val = config_stream.GetWord() ) ) || ( ::access( val, R_OK ) ) ) {
           Eroute.Emsg( "Config", "I cannot acccess you authorization library!" );
           NoGo = 1;
         } else {
@@ -426,7 +452,7 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
       }
 
       if ( !strcmp( "authorize", var ) ) {
-        if ( ( !( val = Config.GetWord() ) ) || ( strcmp( "true", val ) && strcmp( "false", val ) && strcmp( "1", val ) && strcmp( "0", val ) ) ) {
+        if ( ( !( val = config_stream.GetWord() ) ) || ( strcmp( "true", val ) && strcmp( "false", val ) && strcmp( "1", val ) && strcmp( "0", val ) ) ) {
           Eroute.Emsg( "Config", "argument 2 for authorize ilegal or missing. Must be <true>,<false>,<1> or <0>!" );
           NoGo = 1;
         } else {
@@ -443,7 +469,17 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
     }
   }
 
-  //TODO:: introduce new option xrootd.debuglevel and take it into account
+  // Setup the circular in-memory logging buffer  
+  XrdOucString unit = "rdr@";
+  unit += XrdSysDNS::getHostName();
+  unit += ":";
+  unit += xCastor2FsTargetPort;
+
+  Logging::Init();
+  Logging::SetLogPriority( mLogLevel );
+  Logging::SetUnit( unit.c_str() );
+  xcastor_info( "info=\"logging configured\" " );
+
   
   // Check if xcastor2fs has been set
   if ( !xcastor2fsdefined ) {
@@ -553,9 +589,9 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
     Eroute.Say( "=====> xcastor2.proc: ", "unspecified", "" );
   }
 
-  if ( ( retc = Config.LastError() ) )
+  if ( ( retc = config_stream.LastError() ) )
     NoGo = Eroute.Emsg( "Config", -retc, "read config file", ConfigFN );
 
-  Config.Close();
+  config_stream.Close();
   return NoGo;
 }

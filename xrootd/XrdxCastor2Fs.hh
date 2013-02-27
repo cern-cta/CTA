@@ -980,7 +980,7 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
     XrdOucString LocationCacheDir;
     char* ConfigFN;  ///< path to config file 
 
-    // we must check if all this things need to be thread safed with a mutex ...
+    // we must check if all these things need to be thread safed with a mutex ...
     static  XrdOucHash<XrdOucString>* filesystemhosttable;
     static  XrdSysMutex               filesystemhosttablelock;
     static  XrdOucHash<XrdOucString>* nsMap;
@@ -1037,6 +1037,7 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
 
   private:
 
+    int mLogLevel; ///< log level from config file
     static  XrdSysError* eDest;
 };
 
