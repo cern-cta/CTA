@@ -22,92 +22,133 @@
  *
  ******************************************************************************/
 
-#ifndef __XCASTOR2FS__TIMING__HH
-#define __XCASTOR2FS__TIMING__HH
+#ifndef __XCASTOR_TIMING_HH__
+#define __XCASTOR_TIMING_HH__
 
-/*-----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 #include <sys/time.h>
-/*-----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+#include "XrdxCastorNamespace.hh"
+/*----------------------------------------------------------------------------*/
+#include "XrdOuc/XrdOucString.hh"
 #include "XrdOuc/XrdOucTrace.hh"
-/*-----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 
+XCASTORNAMESPACE_BEGIN
 
-//------------------------------------------------------------------------------
-//! Class XrdxCastor2Timing
-//------------------------------------------------------------------------------
-class XrdxCastor2Timing
-{
-  public:
-    struct timeval tv;
-    XrdOucString tag;
-    XrdOucString maintag;
-    XrdxCastor2Timing* next;
-    XrdxCastor2Timing* ptr;
+/*----------------------------------------------------------------------------*/
+//! Class implementing comfortable time measurements through methods/functions
+//! 
+//! Example
+//! Timing tm("Test");
+//! COMMONTIMING("START",&tm);
+//! ...
+//! COMMONTIMING("CHECKPOINT1",&tm);
+//! ...
+//! COMMONTIMING("CHECKPOINT2",&tm);
+//! ...
+//! COMMONTIMING("STOP", &tm);
+//! tm.Print();
+//! fprintf(stdout,"realtime = %.02f", tm.RealTime());
+/*----------------------------------------------------------------------------*/
+class Timing {
+public:
+  struct timeval tv;
+  XrdOucString tag;
+  XrdOucString maintag;
+  Timing* next;
+  Timing* ptr;
 
-    //--------------------------------------------------------------------------
-    //! Constructor
-    //--------------------------------------------------------------------------
-    XrdxCastor2Timing( const char* name, struct timeval& i_tv ) {
-      memcpy( &tv, &i_tv, sizeof( struct timeval ) );
-      tag = name;
-      next = NULL;
-      ptr  = this;
-    }
+  //----------------------------------------------------------------------------
+  //! Constructor - used only internally
+  //----------------------------------------------------------------------------
+  Timing(const char* name, struct timeval &i_tv) {
+    memcpy(&tv, &i_tv, sizeof(struct timeval));
+    tag = name;
+    next = 0;
+    ptr  = this;
+  }
 
-    //--------------------------------------------------------------------------
-    //! Constructor
-    //--------------------------------------------------------------------------
-    XrdxCastor2Timing( const char* i_maintag ) {
-      tag = "BEGIN";
-      next = NULL;
-      ptr  = this;
-      maintag = i_maintag;
-    }
+  //----------------------------------------------------------------------------
+  //! Constructor - tag is used as the name for the measurement in Print
+  //----------------------------------------------------------------------------
+  Timing(const char* i_maintag) {
+    tag = "BEGIN";
+    next = 0;
+    ptr  = this;
+    maintag = i_maintag;
+  }
 
-    //--------------------------------------------------------------------------
-    //! Print function
-    //--------------------------------------------------------------------------
-    void Print( XrdOucTrace& trace ) {
-      char msg[512];
+  //----------------------------------------------------------------------------
+  //! Print method to display measurements on STDERR
+  //----------------------------------------------------------------------------
+  void Print() {
+    char msg[512];
+    Timing* p = this->next;
+    Timing* n; 
+    cerr << std::endl;
+    while ((n =p->next)) {
 
-      if ( !( trace.What & 0x8000 ) )
-        return;
-
-      XrdxCastor2Timing* p = this->next;
-      XrdxCastor2Timing* n;
-      trace.Beg( "Timing" );
-      cerr << std::endl;
-
-      while ( ( n = p->next ) ) {
-        sprintf( msg, "                                        [%12s] %12s<=>%-12s : %.03f\n", maintag.c_str(), p->tag.c_str(), n->tag.c_str(), ( float )( ( n->tv.tv_sec - p->tv.tv_sec ) * 1000000 + ( n->tv.tv_usec - p->tv.tv_usec ) ) / 1000.0 );
-        cerr << msg;
-        p = n;
-      }
-
-      n = p;
-      p = this->next;
-      sprintf( msg, "                                        =%12s= %12s<=>%-12s : %.03f\n", maintag.c_str(), p->tag.c_str(), n->tag.c_str(), ( float )( ( n->tv.tv_sec - p->tv.tv_sec ) * 1000000 + ( n->tv.tv_usec - p->tv.tv_usec ) ) / 1000.0 );
+      sprintf(msg,"                                        [%12s] %12s<=>%-12s : %.03f\n",maintag.c_str(),p->tag.c_str(),n->tag.c_str(), (float)((n->tv.tv_sec - p->tv.tv_sec) *1000000 + (n->tv.tv_usec - p->tv.tv_usec))/1000.0);
       cerr << msg;
-      trace.End();
+      p = n;
     }
+    n = p;
+    p = this->next;
+    sprintf(msg,"                                        =%12s= %12s<=>%-12s : %.03f\n",maintag.c_str(),p->tag.c_str(), n->tag.c_str(), (float)((n->tv.tv_sec - p->tv.tv_sec) *1000000 + (n->tv.tv_usec - p->tv.tv_usec))/1000.0);
+    cerr << msg;
+  }
 
-    //--------------------------------------------------------------------------
-    //! Destructor
-    //--------------------------------------------------------------------------
-    virtual ~XrdxCastor2Timing() {
-      XrdxCastor2Timing* n = next;
-      if ( n ) delete n;
-    };
+  //----------------------------------------------------------------------------
+  //! Return total Realtime
+  //----------------------------------------------------------------------------
+  double RealTime() {
+    Timing* p = this->next;
+    Timing* n; 
+    while ((n =p->next)) {
+      p = n;
+    }
+    n = p;
+    p = this->next;
+    return (double) ((n->tv.tv_sec - p->tv.tv_sec) *1000000 + (n->tv.tv_usec - p->tv.tv_usec))/1000.0;
+  }
+
+  //----------------------------------------------------------------------------
+  //! Destructor
+  //----------------------------------------------------------------------------
+  virtual ~Timing(){Timing* n = next; if (n) delete n;}
+
+
+  //----------------------------------------------------------------------------
+  //! Wrapper Function to hide difference between Apple and Linux
+  //----------------------------------------------------------------------------
+  static void GetTimeSpec(struct timespec &ts) {
+#ifdef __APPLE__
+    struct timeval tv;
+    gettimeofday(&tv, 0);
+    ts.tv_sec = tv.tv_sec;
+    ts.tv_nsec = tv.tv_usec * 1000;
+#else
+    clock_gettime(CLOCK_REALTIME, &ts);
+#endif
+  }    
 };
 
-#define TIMING(__trace__, __ID__,__LIST__)                              \
-if (__trace__.What & TRACE_debug)                                       \
-do {                                                                    \
-     struct timeval tp;                                                 \
-     struct timezone tz;                                                \
-     gettimeofday(&tp, &tz);                                            \
-     (__LIST__)->ptr->next=new XrdxCastor2Timing(__ID__,tp);            \
-     (__LIST__)->ptr = (__LIST__)->ptr->next;                           \
-} while(0);                                                             \
- 
-#endif // __XCASTOR2FS__TIMING__HH
+
+//----------------------------------------------------------------------------
+//! Macro to place a measurement throughout the code
+//----------------------------------------------------------------------------
+#define TIMING(__ID__, __LIST__)                \
+  do {                                          \
+    struct timeval tp;                          \
+    struct timezone tz;                         \
+    gettimeofday(&tp, &tz);                     \
+    (__LIST__)->ptr->next=new xcastor::Timing(__ID__,tp);       \
+    (__LIST__)->ptr = (__LIST__)->ptr->next;    \
+  } while(0);
+
+XCASTORNAMESPACE_END
+
+#endif // __XCASTOR_TIMING_HH__
+
+

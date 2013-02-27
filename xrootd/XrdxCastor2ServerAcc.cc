@@ -28,7 +28,6 @@
 #include <fcntl.h>
 #include <string.h>
 /*-----------------------------------------------------------------------------*/
-#include "XrdxCastor2Trace.hh"
 #include "XrdxCastor2ServerAcc.hh"
 #include "XrdxCastor2Ofs.hh"
 #include "XrdxCastor2Timing.hh"
@@ -364,8 +363,8 @@ XrdxCastor2ServerAcc::SignBase64( unsigned char* input,
   unsigned int sig_len;
   unsigned char sig_buf[16384];
   char signed_signature_buff[16384];
-  XrdxCastor2Timing signtiming( "SignBase64" );
-  TIMING( TkTrace, "START", &signtiming );
+  xcastor::Timing signtiming("SignBase64");
+  TIMING("START", &signtiming);
   EVP_MD_CTX md_ctx;
   EVP_MD_CTX_init( &md_ctx );
   BIO* bmem, *b64;
@@ -376,7 +375,7 @@ XrdxCastor2ServerAcc::SignBase64( unsigned char* input,
   EVP_SignInit( &md_ctx, EVP_sha1() );
   EVP_SignUpdate( &md_ctx, input, inputlen );
   sig_len = sizeof( sig_buf );
-  TIMING( TkTrace, "EVPINIT/UPDATE", &signtiming );
+  TIMING("EVPINIT/UPDATE", &signtiming);
   encodeLock.Lock();
   EVP_PKEY* usekey = privatekey.Find( keyclass );
 
@@ -395,7 +394,7 @@ XrdxCastor2ServerAcc::SignBase64( unsigned char* input,
 
   err = EVP_SignFinal( &md_ctx, sig_buf, &sig_len, usekey );
   encodeLock.UnLock();
-  TIMING( TkTrace, "EVPSIGNFINAL", &signtiming );
+  TIMING("EVPSIGNFINAL", &signtiming);
 
   if ( !err ) {
     TkTrace.Beg( "SignBase64" );
@@ -405,7 +404,7 @@ XrdxCastor2ServerAcc::SignBase64( unsigned char* input,
   }
 
   EVP_MD_CTX_cleanup( &md_ctx );
-  TIMING( TkTrace, "EVPCLEANUP", &signtiming );
+  TIMING("EVPCLEANUP", &signtiming);
   // base64 encode 
   b64 = BIO_new( BIO_f_base64() );
   bmem = BIO_new( BIO_s_mem() );
@@ -413,7 +412,7 @@ XrdxCastor2ServerAcc::SignBase64( unsigned char* input,
   BIO_write( b64, sig_buf, sig_len );
   err = BIO_flush( b64 );
   BIO_get_mem_ptr( b64, &bptr );
-  TIMING( TkTrace, "BASE64", &signtiming );
+  TIMING("BASE64", &signtiming);
 
   char* buff = bptr->data;
   int cnt = 0;
@@ -431,8 +430,8 @@ XrdxCastor2ServerAcc::SignBase64( unsigned char* input,
   sb64 = signed_signature_buff;
   BIO_free( bmem );
   BIO_free( b64 );
-  TIMING( TkTrace, "BIOFREE", &signtiming );
-  signtiming.Print( TkTrace );
+  TIMING("BIOFREE", &signtiming);
+  signtiming.Print();
   return true;
 }
 
@@ -449,8 +448,8 @@ XrdxCastor2ServerAcc::VerifyUnbase64( const char*    data,
   int sig_len;
   int unbase64error = 1;
   char sig_buf[16384];
-  XrdxCastor2Timing verifytiming( "VerifyUb64" );
-  TIMING( TkTrace, "START", &verifytiming );
+  xcastor::Timing verifytiming( "VerifyUb64" );
+  TIMING("START", &verifytiming);
   EVP_MD_CTX     md_ctx;
 
   // Base64 decode 
@@ -499,15 +498,15 @@ XrdxCastor2ServerAcc::VerifyUnbase64( const char*    data,
     return false;
   }
 
-  TIMING( TkTrace, "UNBASE64", &verifytiming );
+  TIMING("UNBASE64", &verifytiming);
   // Verify the signature using the public key
   // printf("Verify %d %s %d %d\n",strlen((char*)data),data,publickey, sig_len);
   EVP_VerifyInit( &md_ctx, EVP_sha1() );
   EVP_VerifyUpdate( &md_ctx, data, strlen( ( char* )data ) );
   err = EVP_VerifyFinal( &md_ctx, ( ( unsigned char* )( sig_buf ) ), sig_len, publickey );
   EVP_MD_CTX_cleanup( &md_ctx );
-  TIMING( TkTrace, "EVPVERIFY", &verifytiming );
-  verifytiming.Print( TkTrace );
+  TIMING("EVPVERIFY", &verifytiming);
+  verifytiming.Print();
 
   if ( err != 1 ) {
     return false;

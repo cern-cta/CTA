@@ -22,8 +22,8 @@
  * 
  ******************************************************************************/
 
-#ifndef __XCASTOR2OFS_H__
-#define __XCASTOR2OFS_H__
+#ifndef __XCASTOR_OFS_HH__
+#define __XCASTOR_OFS_HH__
 
 /*-----------------------------------------------------------------------------*/
 #include "pwd.h"
@@ -35,7 +35,6 @@
 #include "XrdNet/XrdNetSocket.hh"
 #include "XrdOuc/XrdOucEnv.hh"
 #include "XrdOuc/XrdOucString.hh"
-#include "XrdOuc/XrdOucTrace.hh"
 #include "XrdOfs/XrdOfs.hh"
 #include "XrdSfs/XrdSfsInterface.hh"
 #include "XrdSys/XrdSysTimer.hh"
@@ -43,6 +42,7 @@
 #include "XrdClient/XrdClientAdmin.hh"
 #include "XrdClient/XrdClient.hh"
 #include "XrdxCastor2ClientAdmin.hh"
+#include "XrdxCastorLogging.hh"
 /*-----------------------------------------------------------------------------*/
 #include "XrdTransferManager.hh"
 /*-----------------------------------------------------------------------------*/
@@ -51,7 +51,7 @@
 //------------------------------------------------------------------------------
 //! Class XrdxCastor2Ofs2StagerJob
 //------------------------------------------------------------------------------
-class XrdxCastor2Ofs2StagerJob
+class XrdxCastor2Ofs2StagerJob : public LogId
 {
   public:
 
@@ -119,7 +119,7 @@ class XrdxCastor2Ofs2StagerJob
 //------------------------------------------------------------------------------
 //! Class XrdxCastor2OfsFile
 //------------------------------------------------------------------------------
-class XrdxCastor2OfsFile : public XrdOfsFile
+class XrdxCastor2OfsFile : public XrdOfsFile, public LogId
 {
   public:
 
@@ -302,7 +302,7 @@ class XrdxCastor2OfsDirectory : public XrdOfsDirectory
 //------------------------------------------------------------------------------
 //! Class XrdxCastor2Ofs
 //------------------------------------------------------------------------------
-class XrdxCastor2Ofs : public XrdOfs
+class XrdxCastor2Ofs : public XrdOfs, public LogId
 {
     friend class XrdxCastor2OfsDirectory;
     friend class XrdxCastor2OfsFile;
@@ -312,7 +312,7 @@ class XrdxCastor2Ofs : public XrdOfs
     //--------------------------------------------------------------------------
     //! Constructor
     //--------------------------------------------------------------------------
-    XrdxCastor2Ofs() {};
+    XrdxCastor2Ofs(): LogId() {};
 
 
     //--------------------------------------------------------------------------
@@ -504,4 +504,4 @@ class XrdxCastor2Ofs : public XrdOfs
 
 extern XrdxCastor2Ofs XrdxCastor2OfsFS;  ///< global instance of the Ofs subsystem
 
-#endif
+#endif // __XCASTOR_OFS_HH__

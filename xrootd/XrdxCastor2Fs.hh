@@ -22,8 +22,8 @@
  * 
  ******************************************************************************/
 
-#ifndef __XCASTOR2_FS_H__
-#define __XCASTOR2_FS_H__
+#ifndef __XCASTOR_FS_HH__
+#define __XCASTOR_FS_HH__
 
 /*-----------------------------------------------------------------------------*/
 #include <sys/types.h>
@@ -308,7 +308,7 @@ class XrdxCastor2FsDirectory : public XrdSfsDirectory, public LogId
 //------------------------------------------------------------------------------
 //! Class XrdxCastor2FsFile
 //------------------------------------------------------------------------------
-class XrdxCastor2FsFile : public XrdSfsFile
+class XrdxCastor2FsFile : public XrdSfsFile, public LogId
 {
   public:
 
@@ -1040,4 +1040,4 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
     static  XrdSysError* eDest;
 };
 
-#endif
+#endif // __XCASTOR_FS_HH__

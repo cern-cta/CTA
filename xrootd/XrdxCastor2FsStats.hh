@@ -22,8 +22,8 @@
  * 
  ******************************************************************************/
 
-#ifndef __XCASTOR2FS_STATS_H__
-#define __XCASTOR2FS_STATS_H__
+#ifndef __XCASTOR_FSSTATS_HH__
+#define __XCASTOR_FSSTATS_HH__
 
 /*-----------------------------------------------------------------------------*/
 #include "XrdOuc/XrdOucHash.hh"
@@ -160,4 +160,4 @@ class XrdxCastor2FsStats
 
 extern void* XrdxCastor2FsStatsStart( void* pp );
 
-#endif // __XCASTOR2FS_STATS_H__
+#endif // __XCASTOR_FSSTATS_HH__

@@ -31,7 +31,6 @@
 #include <string.h>
 /*-----------------------------------------------------------------------------*/
 #include "XrdxCastor2Fs.hh"
-#include "XrdxCastor2Trace.hh"
 #include "XrdSys/XrdSysDNS.hh"
 #include "XrdOuc/XrdOucStream.hh"
 #include "XrdOuc/XrdOucTrace.hh"
@@ -78,10 +77,7 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
   Logging::Init();
   Logging::SetLogPriority( LOG_DEBUG );
   Logging::SetUnit( unit.c_str() );
-
   xcastor_info( "info=\"logging configured\" " );
-
-  if ( getenv( "XRDDEBUG" ) ) xCastor2FsTrace.What = TRACE_MOST | TRACE_debug;
 
   {
     // borrowed from XrdOfs
@@ -444,81 +440,11 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
         else
           Eroute.Say( "=====> xcastor2.authorize : false" );
       }
-
-      if ( !strcmp( "trace", var ) ) {
-        static struct traceopts {
-          const char* opname;
-          int opval;
-        } tropts[] = {
-          {"aio",      TRACE_aio},
-          {"all",      TRACE_ALL},
-          {"chmod",    TRACE_chmod},
-          {"close",    TRACE_close},
-          {"closedir", TRACE_closedir},
-          {"debug",    TRACE_debug},
-          {"delay",    TRACE_delay},
-          {"dir",      TRACE_dir},
-          {"exists",   TRACE_exists},
-          {"getstats", TRACE_getstats},
-          {"fsctl",    TRACE_fsctl},
-          {"io",       TRACE_IO},
-          {"mkdir",    TRACE_mkdir},
-          {"most",     TRACE_MOST},
-          {"open",     TRACE_open},
-          {"opendir",  TRACE_opendir},
-          {"qscan",    TRACE_qscan},
-          {"read",     TRACE_read},
-          {"readdir",  TRACE_readdir},
-          {"redirect", TRACE_redirect},
-          {"remove",   TRACE_remove},
-          {"rename",   TRACE_rename},
-          {"sync",     TRACE_sync},
-          {"truncate", TRACE_truncate},
-          {"write",    TRACE_write},
-          {"authorize", TRACE_authorize},
-          {"map",      TRACE_map},
-          {"role",     TRACE_role},
-          {"access",   TRACE_access},
-          {"attributes", TRACE_attributes},
-          {"allows",   TRACE_allows}
-        };
-        
-        int i, neg, trval = 0;
-        int numopts = sizeof( tropts ) / sizeof( struct traceopts );
-
-        if ( !( val = Config.GetWord() ) ) {
-          Eroute.Emsg( "Config", "trace option not specified" );
-          return 1;
-        }
-
-        while ( val ) {
-          Eroute.Say( "=====> xcastor2.trace: ", val, "" );
-
-          if ( !strcmp( val, "off" ) ) trval = 0;
-          else {
-            if ( ( neg = ( val[0] == '-' && val[1] ) ) ) val++;
-
-            for ( i = 0; i < numopts; i++ ) {
-              if ( !strcmp( val, tropts[i].opname ) ) {
-                if ( neg ) trval &= ~tropts[i].opval;
-                else  trval |=  tropts[i].opval;
-
-                break;
-              }
-            }
-
-            if ( i >= numopts )
-              Eroute.Say( "Config warning: ignoring invalid trace option '", val, "'." );
-          }
-
-          val = Config.GetWord();
-        }
-
-        xCastor2FsTrace.What = trval;
-      }
     }
   }
 
+  //TODO:: introduce new option xrootd.debuglevel and take it into account
+  
   // Check if xcastor2fs has been set
   if ( !xcastor2fsdefined ) {
     Eroute.Say( "Config error: no xcastor2 fs has been defined (xcastor2.fs /...)", "", "" );

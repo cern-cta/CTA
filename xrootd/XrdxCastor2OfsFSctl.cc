@@ -51,7 +51,7 @@ XrdxCastor2Ofs::FSctl( const int           cmd,
   static const char* epname = "FSctl";
   const char* tident = error.getErrUser();
   // Accept only plugin calls!
-  ZTRACE( fsctl, "Calling FSctl" );
+  xcastor_debug("Calling FSctl");
 
   if ( cmd != SFS_FSCTL_PLUGIN ) {
     XrdxCastor2Ofs::Emsg( epname, error, EPERM, "execute non-plugin function", "" );
@@ -86,8 +86,9 @@ XrdxCastor2Ofs::FSctl( const int           cmd,
   XrdOucString path    = ipath;
   XrdOucString opaque  = iopaque;
   XrdOucString result  = "";
-  ZTRACE( fsctl, ipath );
-  ZTRACE( fsctl, iopaque );
+  xcastor_debug("path=%s", ipath);
+  xcastor_debug("opaque=%s", iopaque);
+
   
   // Check if this is a put or get operation
   XrdOucEnv env( opaque.c_str() );
@@ -114,7 +115,7 @@ XrdxCastor2Ofs::FSctl( const int           cmd,
         XrdOucString cmd = val;
 
         if ( cmd == "cancel" ) {
-          ZTRACE( fsctl, "canceling" );
+          xcastor_debug("cancelling");
 
           if ( transfer->SetState( XrdTransfer::kCanceled ) ) {
             result = "cmd=cancel" ;
@@ -132,7 +133,7 @@ XrdxCastor2Ofs::FSctl( const int           cmd,
         }
 
         if ( cmd == "schedule" ) {
-          ZTRACE( fsctl, "scheduling" );
+          xcastor_debug("schedulling");
 
           if ( ( transfer->GetState() == XrdTransfer::kInitialized ) || 
                ( transfer->GetState() == XrdTransfer::kPaused ) ) 
@@ -186,7 +187,7 @@ XrdxCastor2Ofs::FSctl( const int           cmd,
         }
 
         if ( cmd == "pause" ) {
-          ZTRACE( fsctl, "pausing" );
+          xcastor_debug("pausing");
 
           if ( ( transfer->State == XrdTransfer::kInitialized ) ||
                ( transfer->State == XrdTransfer::kScheduled ) ||
@@ -210,7 +211,7 @@ XrdxCastor2Ofs::FSctl( const int           cmd,
         }
 
         if ( cmd == "status" ) {
-          ZTRACE( fsctl, "status" );
+          xcastor_debug("status");
           transfer->GetState();
           result = "cmd=";
           result += cmd.c_str();
@@ -226,7 +227,7 @@ XrdxCastor2Ofs::FSctl( const int           cmd,
         }
 
         if ( cmd == "checksum" ) {
-          ZTRACE( fsctl, "checksum" );
+          xcastor_debug("checksum");
           char diskckSumbuf[32 + 1];
           char diskckSumalg[32];
           diskckSumbuf[0] = diskckSumalg[0] = 0;
@@ -266,7 +267,7 @@ XrdxCastor2Ofs::FSctl( const int           cmd,
         }
 
         if ( cmd == "progress" ) {
-          ZTRACE( fsctl, "progress" );
+          xcastor_debug("progress");
           char progresstail[XRDTRANSFERMANAGER_LOGFILETAIL];
           int progressfd = open( transfer->ProgressFile.c_str(), O_RDONLY );
           progresstail[0] = 0;
@@ -296,7 +297,7 @@ XrdxCastor2Ofs::FSctl( const int           cmd,
         }
 
         if ( cmd == "log" ) {
-          ZTRACE( fsctl, "log" );
+          xcastor_debug("log");
           char logtail[XRDTRANSFERMANAGER_LOGFILETAIL];
           int logfd = open( transfer->LogFile.c_str(), O_RDONLY );
 

@@ -22,8 +22,8 @@
  * 
  ******************************************************************************/
 
-#ifndef __XrdxCastor2FsSECURITY_H__
-#define __XrdxCastor2FsSECURITY_H__
+#ifndef __XCASTOR_FSSECURITY_HH__
+#define __XCASTOR_FSSECURITY_HH__
 
 #include "XrdAcc/XrdAccAuthorize.hh"
 
@@ -41,4 +41,4 @@
     if (usr) {if (usr->name) env.Put(SEC_USER, usr->name); \
               if (usr->host) env.Put(SEC_HOST, usr->host);}
 
-#endif // __XrdxCastor2FsSECURITY_H__
+#endif // __XCASTOR_FSSECURITY_HH__

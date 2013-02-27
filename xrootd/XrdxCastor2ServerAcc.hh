@@ -22,8 +22,8 @@
  * 
  ******************************************************************************/
 
-#ifndef __XCASTOR2_SERVER_ACC__
-#define __XCASTOR2_SERVER_ACC__
+#ifndef __XCASTOR_SERVERACC_HH__
+#define __XCASTOR_SERVERACC_HH__
 
 /*-----------------------------------------------------------------------------*/
 #include <openssl/rsa.h>
@@ -280,4 +280,4 @@ class XrdxCastor2ServerAcc: public XrdAccAuthorize
     XrdSysMutex          encodeLock;
 };
 
-#endif
+#endif  // __XCASTOR_SERVERACC_HH__

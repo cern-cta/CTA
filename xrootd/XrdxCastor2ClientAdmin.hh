@@ -22,8 +22,8 @@
  *
  ******************************************************************************/
 
-#ifndef __XCASTOR2_CLIENT_ADMIN_H__
-#define __XCASTOR2_CLIENT_ADMIN_H__
+#ifndef __XCASTOR_CLIENTADMIN_HH__
+#define __XCASTOR_CLIENTADMIN_HH__
 
 //------------------------------------------------------------------------------
 //! Class XrdxCastor2ClientAdmin
@@ -56,4 +56,4 @@ class XrdxCastor2ClientAdmin
     };
 };
 
-#endif /// __XCASTOR2_CLIENT_ADMIN_H__
+#endif // __XCASTOR_CLIENTADMIN_HH__

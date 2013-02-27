@@ -225,4 +225,4 @@ public:
                            const char*                     msg, ...);
 };
 
-#endif
+#endif // __XCASTOR_LOGGING_HH__

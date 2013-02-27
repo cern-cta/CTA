@@ -27,7 +27,6 @@
 #include <string.h>
 /*-----------------------------------------------------------------------------*/
 #include "XrdxCastor2Ofs.hh"
-#include "XrdOfs/XrdOfsTrace.hh"
 /*-----------------------------------------------------------------------------*/
 
 extern XrdOucTrace OfsTrace;
@@ -43,16 +42,15 @@ XrdxCastor2OfsFile::ThirdPartyTransfer( const char*         fileName,
                                         const XrdSecEntity* /*client*/,
                                         const char*         opaque )
 {
-  EPNAME( "ThirdPartyTransfer" );
   XrdOucEnv Open_Env( opaque );
   const char* val = Open_Env.Get( "xferuuid" );
   const char* uuidstring = val;
   XrdOucString Spath = fileName;
-  ZTRACE( open, "path=" << fileName << " opaque" << opaque );
+  xcastor_debug("path=%s, opaque=%s", fileName, opaque);
   uuid_t uuid;
 
   if ( uuid_parse( val, uuid ) ) {
-    return XrdxCastor2OfsFS.Emsg( epname, error, EINVAL, 
+    return XrdxCastor2OfsFS.Emsg( "3rdParty", error, EINVAL, 
                                   "open file for transfering - illegal xferuuid" );
   }
 
@@ -71,7 +69,7 @@ XrdxCastor2OfsFile::ThirdPartyTransfer( const char*         fileName,
     }
   } else {
     // This transfer doesn't exist, we create a new one
-    ZTRACE( open, "Creating new thirdparty transfer xferuuid=" << val );
+    xcastor_debug("Creating new thirdparty transfer xferuuid=%s", val);
     enum e3p {kInvalid, kPrepareToGet, kPrepareToPut};
     int op = kInvalid;
     XrdOucString e3pstring = "";
@@ -83,7 +81,7 @@ XrdxCastor2OfsFile::ThirdPartyTransfer( const char*         fileName,
           op = kPrepareToGet;
           e3pstring = "preparetoget";
         } else {
-          return XrdOfs::Emsg( epname, error, EINVAL, "process your request - source missing", Spath.c_str() );
+          return XrdOfs::Emsg( "3rdParty", error, EINVAL, "process your request - source missing", Spath.c_str() );
         }
       }
 
@@ -93,27 +91,27 @@ XrdxCastor2OfsFile::ThirdPartyTransfer( const char*         fileName,
           op = kPrepareToPut;
           e3pstring = "preparetoput";
         } else {
-          return XrdOfs::Emsg( epname, error, EINVAL, "process your request - target missing", Spath.c_str() );
+          return XrdOfs::Emsg( "3rdParty", error, EINVAL, "process your request - target missing", Spath.c_str() );
         }
       }
     }
 
     if ( op == kInvalid ) {
-      return XrdOfs::Emsg( epname, error, EINVAL, "process your request", Spath.c_str() );
+      return XrdOfs::Emsg( "3rdParty", error, EINVAL, "process your request", Spath.c_str() );
     }
 
     // Create the transfer object
     XrdOucString transferentry = Spath;
     transferentry += "?";
     transferentry += opaque;
-    ZTRACE( open, "transferentry=" << transferentry.c_str() );
+    xcastor_debug("transferentry=%s", transferentry.c_str());
 
     if ( XrdTransferManager::TM() && 
          ( !XrdTransferManager::TM()->SetupTransfer( transferentry.c_str(), uuid, true ) ) ) 
     {
       // OK, that worked out
     } else {
-      return XrdOfs::Emsg( epname, error, errno, "process your request - can't setup the transfer for you", Spath.c_str() );
+      return XrdOfs::Emsg( "3rdParty", error, errno, "process your request - can't setup the transfer for you", Spath.c_str() );
     }
 
     // Try to attach to the new transfer
@@ -122,18 +120,19 @@ XrdxCastor2OfsFile::ThirdPartyTransfer( const char*         fileName,
     {
       // Cool, this transfer exists now....
     } else {
-      return XrdOfs::Emsg( epname, error, EIO, "process you request - can't setup the transfer for you", Spath.c_str() );
+      return XrdOfs::Emsg( "3rdParty", error, EIO, "process you request - can't setup the transfer for you", Spath.c_str() );
     }
   }
 
-  ZTRACE( open, "state=" << transfer->StateAsString() << " action=" << 
-          transfer->ActionAsString() << " xferuuid=" << transfer->UuidString.c_str() );
-  ZTRACE( open, "transfer-path=" << transfer->Path.c_str() << " request-path=" << Spath.c_str() );
+  xcastor_debug("state=%s, action=%s. xferuuid=%s", transfer->StateAsString(),
+                transfer->ActionAsString(), transfer->UuidString.c_str());
+  xcastor_debug("transfer_path=%s, request_path=%s", transfer->Path.c_str(),
+                Spath.c_str() );
 
   // Check that the registered transfer path is the same like in this open
   if ( transfer->Path != Spath ) {
     XrdTransferManager::TM()->DetachTransfer( uuidstring );
-    return XrdxCastor2OfsFS.Emsg( epname, error, EPERM,  "proceed with transfer "
+    return XrdxCastor2OfsFS.Emsg( "3rdParty", error, EPERM,  "proceed with transfer "
                                   "- the registered path differs from the open path" );
   }
 
@@ -146,28 +145,28 @@ XrdxCastor2OfsFile::ThirdPartyTransfer( const char*         fileName,
       // This is a fresh transfer
       if ( !transfer->Initialize() ) {
         XrdTransferManager::TM()->DetachTransfer( uuidstring );
-        return XrdxCastor2OfsFS.Emsg( epname, error, EIO , "proceed with transfer - initialization failed" );
+        return XrdxCastor2OfsFS.Emsg( "3rdParty", error, EIO , "proceed with transfer - initialization failed" );
       }
     }
 
     if ( transfer->State == XrdTransfer::kIllegal ) {
       XrdTransferManager::TM()->DetachTransfer( uuidstring );
-      return XrdxCastor2OfsFS.Emsg( epname, error, EILSEQ, "proceed with transfer - transfer is in state <illegal>" );
+      return XrdxCastor2OfsFS.Emsg( "3rdParty", error, EILSEQ, "proceed with transfer - transfer is in state <illegal>" );
     }
 
     if ( transfer->State == XrdTransfer::kFinished ) {
       XrdTransferManager::TM()->DetachTransfer( uuidstring );
-      return XrdxCastor2OfsFS.Emsg( epname, error, 0, "proceed with transfer - transfer finished successfully" );
+      return XrdxCastor2OfsFS.Emsg( "3rdParty", error, 0, "proceed with transfer - transfer finished successfully" );
     }
 
     if ( transfer->State == XrdTransfer::kCanceled ) {
       XrdTransferManager::TM()->DetachTransfer( uuidstring );
-      return XrdxCastor2OfsFS.Emsg( epname, error, ECANCELED, "proceed with transfer - transfer has been canceled" );
+      return XrdxCastor2OfsFS.Emsg( "3rdParty", error, ECANCELED, "proceed with transfer - transfer has been canceled" );
     }
 
     if ( transfer->State == XrdTransfer::kError ) {
       XrdTransferManager::TM()->DetachTransfer( uuidstring );
-      return XrdxCastor2OfsFS.Emsg( epname, error, EIO, "proceed with transfer - transfer is in error state" );
+      return XrdxCastor2OfsFS.Emsg( "3rdParty", error, EIO, "proceed with transfer - transfer is in error state" );
     }
   }
 
@@ -182,13 +181,13 @@ XrdxCastor2OfsFile::ThirdPartyTransfer( const char*         fileName,
     transfer->SetState( XrdTransfer::kScheduled );
 
     if ( XrdTransferManager::TM()->ScheduledTransfers.Num() < XrdxCastor2OfsFS.ThirdPartyCopySlots ) {
-      ZTRACE( open, "scheduling" );
+      xcastor_debug("scheduling" );
       transfer->SetState( XrdTransfer::kScheduled );
     } else {
-      ZTRACE( open, "no scheduling - send delay" );
+      xcastor_debug("no scheduling - send delay");
       // Sent a stall to the client
       XrdTransferManager::TM()->DetachTransfer( uuidstring );
-      return XrdxCastor2OfsFS.Emsg( epname, error, EBUSY, "schedule transfer - all slots busy" );
+      return XrdxCastor2OfsFS.Emsg( "3rdParty", error, EBUSY, "schedule transfer - all slots busy" );
     }
 
     // Wait that this transfer get's into running stage

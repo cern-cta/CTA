@@ -22,20 +22,22 @@
  * 
  ******************************************************************************/
 
-#ifndef __XCASTOR2_STAGER_H__
-#define __XCASTOR2_STAGER_H__
+#ifndef __XCASTOR_STAGER_HH__
+#define __XCASTOR_STAGER_HH__
 
 /*-----------------------------------------------------------------------------*/
 #include <XrdOuc/XrdOucHash.hh>
 #include <XrdOuc/XrdOucErrInfo.hh>
 #include <XrdOuc/XrdOucString.hh>
 /*-----------------------------------------------------------------------------*/
+#include "XrdxCastorLogging.hh"
+/*-----------------------------------------------------------------------------*/
 
 
 //------------------------------------------------------------------------------
 //! Class XrdxCastor2Stager
 //------------------------------------------------------------------------------
-class XrdxCastor2Stager
+class XrdxCastor2Stager : public LogId
 {
   public:
     static XrdOucHash<XrdOucString>* prepare2getstore;
@@ -48,7 +50,7 @@ class XrdxCastor2Stager
     //----------------------------------------------------------------------------
     //! Constructor
     //----------------------------------------------------------------------------
-    XrdxCastor2Stager() {};
+    XrdxCastor2Stager(): LogId() {};
 
     //----------------------------------------------------------------------------
     //! Destructor
@@ -133,4 +135,4 @@ class XrdxCastor2Stager
                            const char* serviceclass );
 };
 
-#endif // __XCASTOR2_STAGER_H__
+#endif // __XCASTOR_STAGER_HH__

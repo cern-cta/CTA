@@ -1,5 +1,5 @@
 /*******************************************************************************
- *                      XrdxCastor2Stager.hh
+ *                      XrdxCastorNamespace.hh
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,13 +22,15 @@
  * 
  ******************************************************************************/
 
-#ifndef __XCASTOR_FSCONSTANTS_HH__
-#define __XCASTOR_FSCONSTANTS_HH__
+//------------------------------------------------------------------------------
+//! Macros defining the castor xrootd plugin namespace
+//------------------------------------------------------------------------------
 
-#define XCASTOR2FS_GRIDMAPCHECKINTERVAL 60 // in seconds
-#define XCASTOR2FS_VOMSMAPCHECKINTERVAL 60 // in seconds
-#define XCASTOR2FS_METADATAUPDATEINTERVAL 1 // in seconds
-#define XCASTOR2FS_MAXFILESYSTEMS       8192
-#define XCASTOR2FS_MAXDISTINCTUSERS     8192
+#ifndef __XCASTOR_NAMESPACE_HH__
+#define __XCASTOR_NAMESPACE_HH__
 
-#endif // __XCASTOR_FSCONSTANTS_HH__
+#define XCASTORNAMESPACE_BEGIN  namespace xcastor { 
+
+#define XCASTORNAMESPACE_END }
+
+#endif
