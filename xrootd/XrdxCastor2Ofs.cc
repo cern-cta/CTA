@@ -44,7 +44,7 @@
 /*----------------------------------------------------------------------------*/
 #include "XrdxCastor2Ofs.hh"
 #include "XrdxCastor2FsConstants.hh"
-#include "XrdxCastor2Timing.hh"
+#include "XrdxCastorTiming.hh"
 #include "XrdxCastor2ClientAdmin.hh"
 /*----------------------------------------------------------------------------*/
 

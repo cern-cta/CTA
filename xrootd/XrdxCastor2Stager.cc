@@ -70,7 +70,7 @@ XrdxCastor2Stager::Prepare2Get( XrdOucErrInfo& error,
                                 XrdOucString&  redirectionpfn,
                                 XrdOucString&  status )
 {
-  const char* tident = error.getErrUser();
+  //const char* tident = error.getErrUser();
   struct stage_options                  Opts;
   xcastor_static_debug("uid=%i, gid=%i, path=%s, stagehost=%s, sericeclass=%s",
                 uid, gid, path, stagehost, serviceclass );
@@ -189,7 +189,7 @@ XrdxCastor2Stager::Get( XrdOucErrInfo& error,
                         XrdOucString&  redirectionpfn2,
                         XrdOucString&  status )
 {
-  const char* tident = error.getErrUser();
+  //const char* tident = error.getErrUser();
   struct stage_options                  Opts;
   xcastor_static_debug("uid=%i, gid=%i, path=%s, stagehost=%s, sericeclass=%s",
                 uid, gid, path, stagehost, serviceclass );
@@ -322,7 +322,7 @@ XrdxCastor2Stager::Put( XrdOucErrInfo& error,
                         XrdOucString&  redirectionpfn2,
                         XrdOucString&  status )
 {
-  const char* tident = error.getErrUser();
+  //const char* tident = error.getErrUser();
   struct stage_options Opts;
   xcastor_static_debug("uid=%i, gid=%i, path=%s, stagehost=%s, sericeclass=%s",
                 uid, gid, path, stagehost, serviceclass );
@@ -451,7 +451,7 @@ XrdxCastor2Stager::Rm( XrdOucErrInfo& error,
                        const char*    stagehost,
                        const char*    serviceclass )
 {
-  const char* tident = error.getErrUser();
+  //const char* tident = error.getErrUser();
   XrdOucString ErrPrefix = "uid=";
   ErrPrefix += ( int )uid;
   ErrPrefix += " gid=";
@@ -527,7 +527,7 @@ XrdxCastor2Stager::Update( XrdOucErrInfo& error,
                            XrdOucString&  redirectionpfn2,
                            XrdOucString&  status )
 {
-  const char* tident = error.getErrUser();
+  //const char* tident = error.getErrUser();
   struct stage_options Opts;
   xcastor_static_debug("uid=%i, gid=%i, path=%s, stagehost=%s, sericeclass=%s",
                 uid, gid, path, stagehost, serviceclass );
@@ -656,7 +656,7 @@ XrdxCastor2Stager::UpdateDone( XrdOucErrInfo& error,
                                const char*    stagehost,
                                const char*    serviceclass )
 {
-  const char* tident = error.getErrUser();
+  //const char* tident = error.getErrUser();
   xcastor_static_debug("path=%s, stagehost=%s, sericeclass=%s",
                        path, stagehost, serviceclass );
   castor::stager::SubRequest subReq;
@@ -714,7 +714,7 @@ XrdxCastor2Stager::FirstWrite( XrdOucErrInfo& error,
                                const char*    stagehost,
                                const char*    serviceclass )
 {
-  const char* tident = error.getErrUser();
+  //const char* tident = error.getErrUser();
   xcastor_static_debug("path=%s, stagehost=%s, sericeclass=%s",
                        path, stagehost, serviceclass );
   castor::stager::SubRequest subReq;
@@ -767,7 +767,7 @@ XrdxCastor2Stager::PutFailed( XrdOucErrInfo& error,
                               const char*    stagehost,
                               const char*    serviceclass )
 {
-  const char* tident = error.getErrUser();
+  //const char* tident = error.getErrUser();
   xcastor_static_debug("path=%s, stagehost=%s, sericeclass=%s",
                        path, stagehost, serviceclass );
   castor::stager::SubRequest subReq;
@@ -820,7 +820,7 @@ XrdxCastor2Stager::StagerQuery( XrdOucErrInfo& error,
                                 const char*    serviceclass,
                                 XrdOucString&  status )
 {
-  const char* tident = error.getErrUser();
+  //const char* tident = error.getErrUser();
   xcastor_static_debug("uid=%i, gid=%i, path=%s, stagehost=%s, sericeclass=%s",
                 uid, gid, path, stagehost, serviceclass );
   XrdOucString ErrPrefix = "uid=";

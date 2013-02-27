@@ -30,7 +30,7 @@
 /*-----------------------------------------------------------------------------*/
 #include "XrdxCastor2ServerAcc.hh"
 #include "XrdxCastor2Ofs.hh"
-#include "XrdxCastor2Timing.hh"
+#include "XrdxCastorTiming.hh"
 #include "XrdSec/XrdSecInterface.hh"
 #include "XrdOuc/XrdOucEnv.hh"
 #include "XrdOuc/XrdOucTokenizer.hh"

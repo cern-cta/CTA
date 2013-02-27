@@ -152,7 +152,7 @@ Logging::log(const char*                     func,
   }
 
   if (!buffer) {
-    // 1 M print buffer
+    // 1MB print buffer
     buffer = (char*) malloc(logmsgbuffersize);
   }
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- *                      XrdxCastor2Timing.hh
+ *                      XrdxCastorTiming.hh
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -26,7 +26,7 @@
 #define __XCASTOR_TIMING_HH__
 
 /*----------------------------------------------------------------------------*/
-#include <sys/time.h>
+#include <time.h>
 /*----------------------------------------------------------------------------*/
 #include "XrdxCastorNamespace.hh"
 /*----------------------------------------------------------------------------*/
@@ -51,6 +51,7 @@ XCASTORNAMESPACE_BEGIN
 //! tm.Print();
 //! fprintf(stdout,"realtime = %.02f", tm.RealTime());
 /*----------------------------------------------------------------------------*/
+
 class Timing {
 public:
   struct timeval tv;
@@ -61,77 +62,45 @@ public:
 
   //----------------------------------------------------------------------------
   //! Constructor - used only internally
+  //!
+  //! @param name tag name
+  //! @param i_tv initial time value
+  //!
   //----------------------------------------------------------------------------
-  Timing(const char* name, struct timeval &i_tv) {
-    memcpy(&tv, &i_tv, sizeof(struct timeval));
-    tag = name;
-    next = 0;
-    ptr  = this;
-  }
+  Timing(const char* name, struct timeval &i_tv);
+
 
   //----------------------------------------------------------------------------
   //! Constructor - tag is used as the name for the measurement in Print
+  //! 
+  //! @param i_maintag set the name of the measurement 
+  //!
   //----------------------------------------------------------------------------
-  Timing(const char* i_maintag) {
-    tag = "BEGIN";
-    next = 0;
-    ptr  = this;
-    maintag = i_maintag;
-  }
+  Timing(const char* i_maintag); 
+
 
   //----------------------------------------------------------------------------
   //! Print method to display measurements on STDERR
   //----------------------------------------------------------------------------
-  void Print() {
-    char msg[512];
-    Timing* p = this->next;
-    Timing* n; 
-    cerr << std::endl;
-    while ((n =p->next)) {
+  void Print(); 
 
-      sprintf(msg,"                                        [%12s] %12s<=>%-12s : %.03f\n",maintag.c_str(),p->tag.c_str(),n->tag.c_str(), (float)((n->tv.tv_sec - p->tv.tv_sec) *1000000 + (n->tv.tv_usec - p->tv.tv_usec))/1000.0);
-      cerr << msg;
-      p = n;
-    }
-    n = p;
-    p = this->next;
-    sprintf(msg,"                                        =%12s= %12s<=>%-12s : %.03f\n",maintag.c_str(),p->tag.c_str(), n->tag.c_str(), (float)((n->tv.tv_sec - p->tv.tv_sec) *1000000 + (n->tv.tv_usec - p->tv.tv_usec))/1000.0);
-    cerr << msg;
-  }
 
   //----------------------------------------------------------------------------
   //! Return total Realtime
   //----------------------------------------------------------------------------
-  double RealTime() {
-    Timing* p = this->next;
-    Timing* n; 
-    while ((n =p->next)) {
-      p = n;
-    }
-    n = p;
-    p = this->next;
-    return (double) ((n->tv.tv_sec - p->tv.tv_sec) *1000000 + (n->tv.tv_usec - p->tv.tv_usec))/1000.0;
-  }
+  double RealTime(); 
+
 
   //----------------------------------------------------------------------------
   //! Destructor
   //----------------------------------------------------------------------------
-  virtual ~Timing(){Timing* n = next; if (n) delete n;}
+    virtual ~Timing();
 
 
   //----------------------------------------------------------------------------
   //! Wrapper Function to hide difference between Apple and Linux
   //----------------------------------------------------------------------------
-  static void GetTimeSpec(struct timespec &ts) {
-#ifdef __APPLE__
-    struct timeval tv;
-    gettimeofday(&tv, 0);
-    ts.tv_sec = tv.tv_sec;
-    ts.tv_nsec = tv.tv_usec * 1000;
-#else
-    clock_gettime(CLOCK_REALTIME, &ts);
-#endif
-  }    
+  static void GetTimeSpec(struct timespec &ts);
 };
 
 

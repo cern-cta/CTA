@@ -39,8 +39,8 @@
 #include "XrdClient/XrdClientEnv.hh"
 /*-----------------------------------------------------------------------------*/
 #include "XrdxCastor2Fs.hh"
+#include "XrdxCastorTiming.hh"
 #include "XrdxCastor2FsConstants.hh"
-#include "XrdxCastor2Timing.hh"
 #include "XrdxCastor2Stager.hh"
 #include "XrdxCastor2FsSecurity.hh"
 /*-----------------------------------------------------------------------------*/
@@ -290,7 +290,10 @@ void GETALLGROUPS( const char*   __name__,
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
-void ROLEMAP( const XrdSecEntity* _client, const char* _env, XrdSecEntity& _mappedclient, const char* tident )
+void ROLEMAP( const XrdSecEntity* _client, 
+              const char*         _env, 
+              XrdSecEntity&       _mappedclient, 
+              const char*         tident )
 {
   XrdSecEntity* entity = NULL;
   XrdOucEnv lenv( _env );
@@ -429,7 +432,8 @@ void ROLEMAP( const XrdSecEntity* _client, const char* _env, XrdSecEntity& _mapp
       match += role;
       match += ":";
 
-      if ( 0 )printf( "default %s all %s match %s role %sn", defaultgroup.c_str(), allgroups.c_str(), match.c_str(), role );
+      xcastor_static_debug("default %s all %s match %s role %sn", defaultgroup.c_str(), 
+                    allgroups.c_str(), match.c_str(), role);
 
       if ( hisroles )
         if ( ( hisroles->find( match.c_str() ) ) != STR_NPOS ) {
@@ -780,8 +784,9 @@ XrdxCastor2Fs::SetStageVariables( const char*   Path,
     }
 
     xcastor_debug("0 path=%s, dstagehost=%s, dserviceclass=%s, stagehost=%s, "
-                  "serviceclass=%s, n=%i, ntoken=%i", Path, desiredstagehost.c_str(),
-                  desiredserviceclass.c_str(), stagehost.c_str(), n, ntoken );
+                  "serviceclass=%s, n=%i, ntoken=%i", Path, 
+                  desiredstagehost.c_str(), desiredserviceclass.c_str(), 
+                  stagehost.c_str(), serviceclass.c_str(), n, ntoken );
 
     if ( !desiredstagehost.length() ) {
       if ( stagehost == "*" ) {
@@ -822,8 +827,9 @@ XrdxCastor2Fs::SetStageVariables( const char*   Path,
     }
 
     xcastor_debug("1 path=%s, dstagehost=%s, dserviceclass=%s, stagehost=%s, "
-                  "serviceclass=%s, n=%i, ntoken=%i", Path, desiredstagehost.c_str(),
-                  desiredserviceclass.c_str(), stagehost.c_str(), n, ntoken );
+                  "serviceclass=%s, n=%i, ntoken=%i", 
+                  Path, desiredstagehost.c_str(), desiredserviceclass.c_str(), 
+                  stagehost.c_str(), serviceclass.c_str(), n, ntoken );
 
     // This handles the case, where  only the stager is set
     if ( ( desiredstagehost == stagehost ) && ( !desiredserviceclass.length() ) ) {
@@ -833,16 +839,17 @@ XrdxCastor2Fs::SetStageVariables( const char*   Path,
     }
 
     xcastor_debug("2 path=%s, dstagehost=%s, dserviceclass=%s, stagehost=%s, "
-                  "serviceclass=%s, n=%i, ntoken=%i", Path, desiredstagehost.c_str(),
-                  desiredserviceclass.c_str(), stagehost.c_str(), n, ntoken );
+                  "serviceclass=%s, n=%i, ntoken=%i", 
+                  Path, desiredstagehost.c_str(), desiredserviceclass.c_str(), 
+                  stagehost.c_str(), serviceclass.c_str(), n, ntoken );
 
     // We are successfull if we either return the appropriate token or if 
     // the token matches the user specified stager/svc class pair as a result: 
     // if the host/svc class pair is not defined, a user cannot request it!
     // this now also supports to allow any service class or host via *::default or stager::* to be user selected
     if ( ( ( desiredstagehost == stagehost ) && ( desiredserviceclass == serviceclass ) ) && ( ( n == ntoken ) || ( n == XCASTOR2FS_EXACT_MATCH ) ) ) {
-      xcastor_debug("path=%s, stagehost=%s, serviceclass=%s", Path, 
-                    stagehost.c_str(), serviceclass.c_str() );
+      xcastor_debug("path=%s, stagehost=%s, serviceclass=%s", 
+                    Path, stagehost.c_str(), serviceclass.c_str() );
       return 1;
     } else {
       if ( ( n != XCASTOR2FS_EXACT_MATCH ) && ( ntoken == n ) )
@@ -1141,7 +1148,6 @@ XrdxCastor2FsFile::open( const char*         path,
   XrdOucString sinfo = ( ininfo ? ininfo : "" );
   XrdOucString map_path;
   const char* info;
-  xcastor_debug("path=%s", path);
   int qpos = 0;
 
   // => case where open fails and client bounces back
@@ -1166,7 +1172,7 @@ XrdxCastor2FsFile::open( const char*         path,
   }
 
   if ( info ) {
-    xcastor_debug("info=%s", info);
+    xcastor_debug("path=%s, info=%s", path, info);
   }
 
   TIMING("START", &opentiming);
@@ -1659,7 +1665,7 @@ XrdxCastor2FsFile::open( const char*         path,
                 addport += XrdxCastor2FS->xCastor2FsTargetPort.c_str();
                 slinklookup.insert( addport.c_str(), pathposition );
                 TIMING("CACHESTAT", &opentiming);
-                xcastor_debug("doing file lookup on cache location=%s, path=%s", slinklookup.c_str(), slinkpath);
+                xcastor_debug("doing file lookup on cache location=%s, path=%s", slinklookup.c_str(), slinkpath.c_str());
                 EnvPutInt( NAME_CONNECTTIMEOUT, 1 );
                 EnvPutInt( NAME_REQUESTTIMEOUT, 10 );
                 EnvPutInt( NAME_MAXREDIRECTCOUNT, 1 );
@@ -2603,7 +2609,7 @@ XrdxCastor2Fs::mkdir( const char*         path,
                       const XrdSecEntity* client,
                       const char*         info ) 
 {
-  static const char* epname = "mkdir";
+  //static const char* epname = "mkdir";
   const char* tident = error.getErrUser();
   XrdOucEnv mkdir_Env( info );
   XrdSecEntity mappedclient;
@@ -2960,7 +2966,7 @@ XrdxCastor2Fs::prepare( XrdSfsPrep&         pargs,
     XrdxCastor2FS->Stats.IncCmd();
   }
 
-  xcastor_debug("checking tident=%s, hostname=%s", tident, hostname);
+  xcastor_debug("checking tident=%s, hostname=%s", tident, hostname.c_str());
   XrdxCastor2FS->filesystemhosttablelock.Lock();
 
   if ( !filesystemhosttable->Find( hostname.c_str() ) )  {
@@ -3274,7 +3280,7 @@ XrdxCastor2Fs::_rem( const char*         path,
                      const char*         /*info*/ )
 {
   static const char* epname = "rem";
-  const char* tident = error.getErrUser();
+  //const char* tident = error.getErrUser();
   xcastor_debug("path=%s", path);
 
   // Perform the actual deletion
@@ -3846,7 +3852,7 @@ int XrdxCastor2Fs::Stall( XrdOucErrInfo& error,
   smessage += "; come back in ";
   smessage += stime;
   smessage += " seconds!";
-  const char* tident = error.getErrUser();
+  //const char* tident = error.getErrUser();
   xcastor_debug("Stall %i : %s", stime, smessage.c_str());
  
   // Place the error message in the error object and return
@@ -3867,8 +3873,8 @@ XrdxCastor2Fs::fsctl( const int           cmd,
                       const XrdSecEntity* client )
 
 {
-  static const char* epname = "fsctl";
-  const char* tident = error.getErrUser();
+  //static const char* epname = "fsctl";
+  //const char* tident = error.getErrUser();
   XrdOucString path = args;
   XrdOucString opaque;
   opaque.assign( path, path.find( "?" ) + 1 );

@@ -22,7 +22,8 @@ COMM
 COMM @author castor-dev@cern.ch
 COMM
 
-CXXFLAGS += -I$(XROOT_LOCATION)/include/xrootd -Wno-error -D_FILE_OFFSET_BITS=64
+CXXFLAGS += -I$(XROOT_LOCATION)/include/xrootd -I./xrootd/src/include/xrootd -Wno-error -D_FILE_OFFSET_BITS=64
+
 AddLdFlags( -L$(XROOT_LIB_LOCATION) -lstdc++ )
 
 XCASTOR2FS_SRCS= XrdxCastor2Fs.cc        \
@@ -31,7 +32,8 @@ XCASTOR2FS_SRCS= XrdxCastor2Fs.cc        \
 	         XrdxCastor2ServerAcc.cc \
                  XrdxCastor2Stager.cc    \
                  XrdxCastor2Proc.cc      \
-                 XrdxCastorLogging.cc    
+                 XrdxCastorLogging.cc    \
+                 XrdxCastorTiming.cc
 
 XCASTOR2FS_OBJS=$(XCASTOR2FS_SRCS:.cc=.o)
 
@@ -39,22 +41,27 @@ DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(castor,castorclient)
 DependsOnLibrary(ns,castorns)
 
-SharedLibraryTarget(XrdxCastor2Fs,$(XCASTOR2FS_OBJS),,-lXrdUtils -lXrdClient -lXrdOfs -l UUIDLIBNAME -lcrypto)
+SharedLibraryTarget(XrdxCastor2Fs,$(XCASTOR2FS_OBJS),,-lXrdUtils -lXrdClient -lXrdOfs -l UUIDLIBNAME -lcrypto -lrt)
 
-XCASTOR2SERVERACC_SRCS= XrdxCastor2ServerAcc.cc
+XCASTOR2SERVERACC_SRCS= XrdxCastor2ServerAcc.cc \
+                        XrdxCastorTiming.cc
+
 XCASTOR2SERVERACC_OBJS=$(XCASTOR2SERVERACC_SRCS:.cc=.o)
-SharedLibraryTarget(XrdxCastor2ServerAcc,$(XCASTOR2SERVERACC_OBJS),,-lXrdUtils -lcrypto )
 
-XCASTOR2OFS_SRCS= XrdxCastor2Ofs.cc \
-	          XrdxCastor2OfsFSctl.cc \
+SharedLibraryTarget(XrdxCastor2ServerAcc,$(XCASTOR2SERVERACC_OBJS),,-lXrdUtils -lcrypto -lrt)
+
+XCASTOR2OFS_SRCS= XrdxCastor2Ofs.cc         \
+	          XrdxCastor2OfsFSctl.cc    \
                   XrdxCastor2OfsTransfer.cc \
-                  XrdxCastor2OfsProc.cc\
-                  XrdTransfer.cc\
-                  XrdxCastorLogging.cc\
-                  XrdTransferManager.cc 
+                  XrdxCastor2OfsProc.cc     \
+                  XrdTransfer.cc            \
+                  XrdTransferManager.cc     \
+                  XrdxCastorLogging.cc      \
+                  XrdxCastorTiming.cc
 
 XCASTOR2OFS_OBJS=$(XCASTOR2OFS_SRCS:.cc=.o)
-SharedLibraryTarget(XrdxCastor2Ofs,$(XCASTOR2OFS_OBJS),,-lXrdUtils -lXrdOfs -lXrdClient -l UUIDLIBNAME -lcrypto -lz)
+
+SharedLibraryTarget(XrdxCastor2Ofs,$(XCASTOR2OFS_OBJS),,-lXrdUtils -lXrdOfs -lXrdClient -l UUIDLIBNAME -lcrypto -lz -lrt)
 
 InstallNonExecFile(x2proc,/usr/bin,755)
 InstallNonExecFile(x2cp,/usr/bin,755)

@@ -114,7 +114,8 @@ public:
 
 
     //--------------------------------------------------------------------------
-    //! For calls which are not client initiated this function set's a unique dummy log id
+    //! For calls which are not client initiated this function set's a unique 
+    //! dummy log id
     //--------------------------------------------------------------------------
     void SetSingleShotLogId(const char* td="<single-exec>");
 
@@ -125,9 +126,9 @@ public:
     void SetLogId(const char* newlogid, const char* td= "<service>");
 
 
-    char logId[40];    ///< the log Id for message printout
-    char cident[256];  ///< the client identifier
-    XrdOucString vid;  ///< client identity
+    char logId[40];       ///< the log Id for message printout
+    char cident[256];     ///< the client identifier
+    VirtualIdentity vid;  ///< client identity
   
 };
 
