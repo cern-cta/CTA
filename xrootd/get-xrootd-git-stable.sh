@@ -6,7 +6,7 @@
 #-------------------------------------------------------------------------------
 
 XROOTD_VERSION=`xrdcp --version`
-if [ $? ]; then
+if [ $? -ne 0 ]; then
     echo "Incorrect xrootd version found, required v3.3.0 at least"
     exit 1
 fi

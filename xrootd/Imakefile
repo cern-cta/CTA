@@ -22,7 +22,7 @@ COMM
 COMM @author castor-dev@cern.ch
 COMM
 
-CPPFLAGS += -I$(CASTOR_ROOT)/xrootd/xrootd_hdr/src/ -I$(XROOT_LOCATION)/include/xrootd -Wno-error -D_FILE_OFFSET_BITS=64
+CPPFLAGS += -I$(CASTOR_ROOT)/xrootd/xrootd_hdr/src/ -Wno-error -D_FILE_OFFSET_BITS=64
 
 AddLdFlags( -L$(XROOT_LIB_LOCATION) -lstdc++ )
 
