@@ -6,6 +6,10 @@
 #-------------------------------------------------------------------------------
 
 XROOTD_VERSION=`xrdcp --version`
+if [ $? ]; then
+    echo "Incorrect xrootd version found, required v3.3.0 at least"
+    exit 1
+fi
 
 if [ -d xrootd/xrootd_hdr ]; then
     echo "Clone already present, just have to checkout the correct version."
@@ -15,6 +19,6 @@ fi
 
 cd xrootd/xrootd_hdr
 git pull
-echo "Try to checkout the correct version of header files i.e. v$XROOTD_VERSION"
+echo "Try to checkout the xroot header files from version $XROOTD_VERSION"
 git checkout -b local-$XROOTD_VERSION $XROOTD_VERSION
 
