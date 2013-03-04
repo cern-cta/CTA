@@ -58,6 +58,9 @@ class ReporterThread(threading.Thread):
     streamCount = self.runningTransfers.getStreamCount()
     reports = []
     for mountPoint in mountPoints:
+      # check we really have a mount point, abort if not
+      if not os.path.ismount(mountPoint):
+        raise Exception("mountPoint %s is not a physical mount point" % mountPoint)
       # get total and free space
       stat = os.statvfs(mountPoint)
       totalSpace = stat.f_blocks*stat.f_bsize
@@ -106,9 +109,9 @@ class ReporterThread(threading.Thread):
           if notSent:
             # "Could not send report to any transfermanager, giving up" message
             dlf.writeerr(msgs.SENDREPORTFAILURE, schedulers=str(schedulers), error=str(e))
-      except Exception:
-        # "Caught exception in ActivityControl thread" message
-        dlf.writeerr(msgs.REPORTEREXCEPTION)
+      except Exception, e:
+        # "Caught exception in Reporter thread" message
+        dlf.writeerr(msgs.REPORTEREXCEPTION, error=str(e))
       # do not loop too fast, send only one report every second
       time.sleep(self.configuration.getValue('DiskManager', 'HeartbeatInterval', 1.0, float))
 
