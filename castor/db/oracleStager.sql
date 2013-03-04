@@ -3306,13 +3306,13 @@ BEGIN
       CONTINUE;
     END;
     BEGIN
-      -- get also the Nameserver status in case we have to also drop the namespace entry
+      -- get the Nameserver status in case we have to also drop the namespace entry
       SELECT status INTO varFStatus FROM Cns_file_metadata@RemoteNS
        WHERE fileid = inFileIds(i);
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- not found in the Nameserver means that we can scrap everything and there's no data loss
       -- as we're anticipating the NS synchronization
-      varFStatus = 'd';
+      varFStatus := 'd';
     END;
     -- count remaining ones
     SELECT count(*) INTO varNbRemaining FROM DiskCopy
