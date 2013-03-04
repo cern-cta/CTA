@@ -6,7 +6,7 @@
  *******************************************************************/
 
 /* SQL statement to populate the intial schema version */
-UPDATE UpgradeLog SET schemaVersion = '2_1_13_0';
+UPDATE UpgradeLog SET schemaVersion = '2_1_14_0';
 
 /* Define a table for some configuration key-value pairs and populate it */
 CREATE TABLE CastorConfig
