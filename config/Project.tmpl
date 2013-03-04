@@ -24,8 +24,7 @@ DLFCONF=/var/www/conf/dlf
  *   + checkDESTDIR checks whether the DESTDIR environment variable is set
  *   + checkVERSION checks whether the MAJOR/MINOR_CASTOR_VERSION environment variables 
  *                   are set
- *   + checkXROOTD also checks whether the XROOTD private headers are present and if not it 
- *                 tries to get them by cloning the official XROOTD repository
+ *   + checkXROOTD also checks whether the XROOTD private headers are present
  */
 
 all: checkORACLE checkGLOBUS checkXROOTD checkMEMCACHED checkXFS tape client
@@ -88,14 +87,14 @@ checkXROOTD:
 	  echo "Unable to find XROOT header files at $(XROOT_LOCATION). Giving up."; \
 	  exit 1; \
 	fi; \
+	if [ ! -e $(XROOT_LOCATION)/include/xrootd/private/XrdOfs/XrdOfs.hh ]; then \
+       	  echo "Unable to find XROOT private header files at $(XROOT_LOCATION). Giving up."; \
+	  exit 1; \
+	fi; \
 	if [ ! -e $(XROOT_LIB_LOCATION)/libXrdPosix.so ]; then \
 	  echo "Unable to find XROOT library files at $(XROOT_LIB_LOCATION). Giving up."; \
 	  exit 1; \
-	fi; \
-	if [ ! -e $(CASTOR_ROOT)/xrootd/xrootd_hdr/src/XrdOfs/XrdOfs.hh ]; then \
-	  echo "Unable to find XROOTD private header files so we git clone the XROOTD repository."; \
-          /bin/bash $(CASTOR_ROOT)/xrootd/get-xrootd-git-stable.sh; \
-	fi 
+	fi
 
 MEMCACHED_LIB_LOCATION ?= $(LIBDIR)
 MEMCACHED_LOCATION ?= $(dir $(MEMCACHED_LIB_LOCATION))

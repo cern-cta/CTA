@@ -40,8 +40,6 @@
 #include "XrdSys/XrdSysTimer.hh"
 #include "XrdSys/XrdSysPthread.hh"
 #include "XrdClient/XrdClientAdmin.hh"
-#include "XrdClient/XrdClient.hh"
-#include "XrdxCastor2ClientAdmin.hh"
 #include "XrdxCastorLogging.hh"
 /*-----------------------------------------------------------------------------*/
 #include "XrdTransferManager.hh"
@@ -458,7 +456,6 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
     XrdSysMutex         MetaMutex;     ///< mutex to protect the UpdateMeta function
     XrdSysMutex         PasswdMutex;   ///< mutex to protect the passwd expiry hash
 
-    static XrdOucHash<XrdxCastor2ClientAdmin>* clientadmintable; ///<
     static XrdOucHash<struct passwd>* passwdstore;               ///<
 
     XrdOucHash<XrdOucString> FileNameMap;    ///< keeping the mapping LFN->PFN for open files

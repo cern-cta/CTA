@@ -35,8 +35,8 @@
 #include "XrdSys/XrdSysLogger.hh"
 #include "XrdSec/XrdSecInterface.hh"
 #include "XrdSfs/XrdSfsAio.hh"
-#include "XrdClient/XrdClientAdmin.hh"
 #include "XrdClient/XrdClientEnv.hh"
+#include "XrdCl/XrdClFileSystem.hh"
 /*-----------------------------------------------------------------------------*/
 #include "XrdxCastor2Fs.hh"
 #include "XrdxCastorTiming.hh"
@@ -79,7 +79,6 @@ XrdOucHash<XrdOucString>* XrdxCastor2Fs::gridmapstore;
 XrdOucHash<XrdOucString>* XrdxCastor2Fs::vomsmapstore;
 XrdOucHash<struct passwd>* XrdxCastor2Fs::passwdstore;
 XrdOucHash<XrdxCastor2FsGroupInfo>*  XrdxCastor2Fs::groupinfocache;
-XrdOucHash<XrdxCastor2ClientAdmin>* XrdxCastor2Fs::clientadmintable;
 
 int XrdxCastor2Fs::TokenLockTime = 5;
 XrdxCastor2Fs* XrdxCastor2FS = 0;
@@ -1663,30 +1662,26 @@ XrdxCastor2FsFile::open( const char*         path,
                 slinklookup.insert( addport.c_str(), pathposition );
                 TIMING("CACHESTAT", &opentiming);
                 xcastor_debug("doing file lookup on cache location=%s, path=%s", slinklookup.c_str(), slinkpath.c_str());
-                //TODO: fix this by using the new XrdCl
-                //EnvPutInt( NAME_CONNECTTIMEOUT, 1 );
-                //EnvPutInt( NAME_REQUESTTIMEOUT, 10 );
-                //EnvPutInt( NAME_MAXREDIRECTCOUNT, 1 );
-                //    EnvPutInt(NAME_RECONNECTWAIT,1);
-                //EnvPutInt( NAME_FIRSTCONNECTMAXCNT, 1 );
-                //EnvPutInt( NAME_DATASERVERCONN_TTL, 60 );
-                // this has to be further investigated ... under load we have seen SEGVs during the XrdClientAdmin creation
-                XrdxCastor2FS->ClientMutex.Lock();
-                XrdClientAdmin* newadmin = new XrdClientAdmin( slinklookup.c_str() );
 
-                if ( !newadmin ) {
-                  XrdxCastor2FS->ClientMutex.UnLock();
-                  return XrdxCastor2Fs::Emsg( epname, error, ENOMEM, "open file: cannot create client admin to check cached location ", path );
+                XrdCl::URL url(slinklookup.c_str());
+                
+                if (!url.IsValid()) {
+                  xcastor_debug("URL is not valid: %s", slinklookup.c_str());
+                  return XrdxCastor2Fs::Emsg( epname, error, ENOENT, "URL is not valid ", "" );
                 }
 
-                newadmin->Connect();
-                XrdxCastor2FS->ClientMutex.UnLock();
-                long id;
-                long long size;
-                long flags;
-                long modtime;
+                XrdCl::FileSystem* newadmin = new XrdCl::FileSystem(url);
 
-                if ( newadmin->Stat( slinkpath.c_str(), id, size, flags, modtime ) ) {
+                if (!newadmin) {
+                  xcastor_err("Could not create XrdCl::FileSystem object.");
+                  return XrdxCastor2Fs::Emsg( epname, error, ENOMEM, "open file: "
+                                              "cannot create client admin to check cached location ", path );                
+                }
+            
+                XrdCl::StatInfo* response = 0;
+                XrdCl::XRootDStatus status = newadmin->Stat(slinkpath.c_str(), response);
+                
+                if ( status.IsOK() ) {
                   redirectionhost = slinkhost;
                   redirectionpfn1 = slinkpath;
                   nocachelookup = false;
@@ -1696,6 +1691,7 @@ XrdxCastor2FsFile::open( const char*         path,
                 }
 
                 delete newadmin;
+                delete response;
               } else {
                 // Illegal location
                 ::unlink( locationfile.c_str() );
@@ -2440,7 +2436,6 @@ XrdxCastor2Fs::Init()
   vomsmapstore = new XrdOucHash<XrdOucString> ();
   passwdstore = new XrdOucHash<struct passwd> ();
   groupinfocache   = new XrdOucHash<XrdxCastor2FsGroupInfo> ();
-  clientadmintable = new XrdOucHash<XrdxCastor2ClientAdmin> ();
   XrdxCastor2Stager::delaystore   = new XrdOucHash<XrdOucString> ();
   return true;
 }

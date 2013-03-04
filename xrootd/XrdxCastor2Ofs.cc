@@ -33,7 +33,6 @@
 /*----------------------------------------------------------------------------*/
 #include "XrdAcc/XrdAccAuthorize.hh"
 #include "XrdOfs/XrdOfsTrace.hh"
-#include "XrdClient/XrdClientAdmin.hh"
 #include "XrdOfs/XrdOfs.hh"
 #include "XrdSfs/XrdSfsAio.hh"
 #include "XrdSys/XrdSysDNS.hh"
@@ -41,11 +40,11 @@
 #include "XrdOuc/XrdOucTrace.hh"
 #include "XrdOuc/XrdOucHash.hh"
 #include "XrdNet/XrdNetOpts.hh"
+#include "XrdCl/XrdClFileSystem.hh"
 /*----------------------------------------------------------------------------*/
 #include "XrdxCastor2Ofs.hh"
 #include "XrdxCastor2FsConstants.hh"
 #include "XrdxCastorTiming.hh"
-#include "XrdxCastor2ClientAdmin.hh"
 /*----------------------------------------------------------------------------*/
 
 XrdxCastor2Ofs XrdxCastor2OfsFS;
@@ -59,7 +58,6 @@ extern XrdOucTrace OfsTrace;
 
 // global singletons
 XrdOucHash<struct passwd>* XrdxCastor2Ofs::passwdstore;
-XrdOucHash<XrdxCastor2ClientAdmin>* XrdxCastor2Ofs::clientadmintable;
 
 
 //------------------------------------------------------------------------------
@@ -80,7 +78,6 @@ extern "C"
     // Initialize the subsystems
     XrdxCastor2OfsFS.ConfigFN = ( configfn && *configfn ? strdup( configfn ) : 0 );
     XrdxCastor2OfsFS.passwdstore = new XrdOucHash<struct passwd> ();
-    XrdxCastor2OfsFS.clientadmintable = new XrdOucHash<XrdxCastor2ClientAdmin> ();
 
     if ( XrdxCastor2OfsFS.Configure( OfsEroute ) ) return 0;
 
@@ -1385,22 +1382,19 @@ XrdxCastor2OfsFile::Unlink()
   XrdOucString mdsaddress = "root://";
   mdsaddress += envOpaque->Get( "castor2fs.manager" );
   mdsaddress += "//dummy";
-  XrdxCastor2OfsFS.MetaMutex.Lock();
-  XrdxCastor2ClientAdmin* mdsclient;
-
-  if ( ( mdsclient = XrdxCastor2OfsFS.clientadmintable->Find( mdsaddress.c_str() ) ) ) {
-  } else {
-    mdsclient = new XrdxCastor2ClientAdmin( mdsaddress.c_str() );
-    mdsclient->GetAdmin()->Connect();
-    XrdxCastor2OfsFS.clientadmintable->Add( mdsaddress.c_str(), mdsclient );
+  XrdCl::URL url(mdsaddress.c_str());
+  XrdCl::Buffer* buffer = 0;
+  std::vector<std::string> list;
+  
+  if (!url.IsValid()) {
+    xcastor_debug("URL is not valid: %s", mdsaddress.c_str());
+    return XrdxCastor2OfsFS.Emsg( "Unlink", error, ENOENT, "URL is not valid ", "" );
   }
+  
+  XrdCl::FileSystem* mdsclient = new XrdCl::FileSystem(url);
 
-  if ( !mdsclient ) {
-    if ( mdsclient ) {
-      XrdxCastor2OfsFS.clientadmintable->Del( mdsaddress.c_str() );
-    }
-
-    XrdxCastor2OfsFS.MetaMutex.UnLock();
+  if (!mdsclient) {
+    xcastor_err("Could not create XrdCl::FileSystem object.");
     return XrdxCastor2OfsFS.Emsg( "Unlink", error, EHOSTUNREACH, 
                                   "connect to the mds host (normally the manager) ", "" );
   }
@@ -1417,15 +1411,22 @@ XrdxCastor2OfsFile::Unlink()
   preparename += secuid;
   preparename += "&gid=";
   preparename += secgid;
-  xcastor_debug("informing about %s", preparename.c_str());
 
-  if ( !mdsclient->GetAdmin()->Prepare( preparename.c_str(), 0, 0 ) ) {
-    XrdxCastor2OfsFS.clientadmintable->Del( mdsaddress.c_str() );
+  list.push_back(preparename.c_str());
+  xcastor_debug("Informing about %s", preparename.c_str());
+
+  XrdxCastor2OfsFS.MetaMutex.Lock();
+  XrdCl::XRootDStatus status = mdsclient->Prepare(list, XrdCl::PrepareFlags::Stage, 1, buffer); 
+
+  if (!status.IsOK()) {
+    xcastor_err("Prepare response invalid.");
     XrdxCastor2OfsFS.MetaMutex.UnLock();
-    return XrdxCastor2OfsFS.Emsg( "Unlink", error, ESHUTDOWN, "unlink", FName() );
+    delete buffer;
+    return XrdxCastor2OfsFS.Emsg("Unlink", error, ESHUTDOWN, "unlink ", FName());
   }
 
   XrdxCastor2OfsFS.MetaMutex.UnLock();
+  delete buffer;
   return SFS_OK;
 }
 
@@ -1452,22 +1453,19 @@ XrdxCastor2OfsFile::UpdateMeta()
   XrdOucString mdsaddress = "root://";
   mdsaddress += envOpaque->Get( "castor2fs.manager" );
   mdsaddress += "//dummy";
-  XrdxCastor2OfsFS.MetaMutex.Lock();
-  XrdxCastor2ClientAdmin* mdsclient;
-
-  if ( ( mdsclient = XrdxCastor2OfsFS.clientadmintable->Find( mdsaddress.c_str() ) ) ) {
-  } else {
-    mdsclient = new XrdxCastor2ClientAdmin( mdsaddress.c_str() );
-    mdsclient->GetAdmin()->Connect();
-    XrdxCastor2OfsFS.clientadmintable->Add( mdsaddress.c_str(), mdsclient );
+  XrdCl::URL url(mdsaddress.c_str());
+  XrdCl::Buffer* buffer = 0;
+  std::vector<std::string> list;
+  
+  if (!url.IsValid()) {
+    xcastor_debug("URL is not valid: %s", mdsaddress.c_str());
+    return XrdxCastor2OfsFS.Emsg( "UpdateMeta", error, ENOENT, "URL is not valid ", "" );
   }
+  
+  XrdCl::FileSystem* mdsclient = new XrdCl::FileSystem(url);
 
-  if ( !mdsclient ) {
-    if ( mdsclient ) {
-      XrdxCastor2OfsFS.clientadmintable->Del( mdsaddress.c_str() );
-    }
-
-    XrdxCastor2OfsFS.MetaMutex.UnLock();
+  if (!mdsclient) {
+    xcastor_err("Could not create XrdCl::FileSystem object.");
     return XrdxCastor2OfsFS.Emsg( "UpdateMeta", error, EHOSTUNREACH, 
                                   "connect to the mds host (normally the manager) ", "" );
   }
@@ -1477,7 +1475,6 @@ XrdxCastor2OfsFile::UpdateMeta()
   if ( firstWrite && hasWrite )
     preparename += "&firstbytewritten=true";
   else {
-    XrdxCastor2OfsFS.MetaMutex.UnLock();
     return SFS_OK;
   }
 
@@ -1487,15 +1484,21 @@ XrdxCastor2OfsFile::UpdateMeta()
   preparename += stagehost;
   preparename += "&serviceclass=";
   preparename += serviceclass;
+  list.push_back(preparename.c_str());
   xcastor_debug("informing about %s", preparename.c_str());
 
-  if ( !mdsclient->GetAdmin()->Prepare( preparename.c_str(), 0, 0 ) ) {
-    XrdxCastor2OfsFS.clientadmintable->Del( mdsaddress.c_str() );
+  XrdxCastor2OfsFS.MetaMutex.Lock();
+  XrdCl::XRootDStatus status = mdsclient->Prepare(list, XrdCl::PrepareFlags::Stage, 1, buffer); 
+  
+  if (!status.IsOK()) {
+    xcastor_err("Prepare response invalid.");
     XrdxCastor2OfsFS.MetaMutex.UnLock();
-    return XrdxCastor2OfsFS.Emsg( "UpdateMeta", error, ESHUTDOWN, "update mds size/modtime", FName() );
+    delete buffer;
+    return XrdxCastor2OfsFS.Emsg( "Unlink", error, ESHUTDOWN, "update mds size/modtime", FName());
   }
 
   XrdxCastor2OfsFS.MetaMutex.UnLock();
+  delete buffer;
   return SFS_OK;
 }
 

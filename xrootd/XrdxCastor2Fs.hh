@@ -46,18 +46,15 @@
 #include "Cns_api.h"
 /*-----------------------------------------------------------------------------*/
 #include "XrdAcc/XrdAccAuthorize.hh"
-#include "XrdClient/XrdClientAdmin.hh"
 #include "XrdSfs/XrdSfsInterface.hh"
 #include "XrdOuc/XrdOucTrace.hh"
 #include "XrdOfs/XrdOfsEvr.hh"
-#include "XrdCms/XrdCmsFinder.hh"
 #include "XrdSec/XrdSecEntity.hh"
 /*-----------------------------------------------------------------------------*/
 #include "XrdxCastorLogging.hh"
 #include "XrdxCastor2FsStats.hh"
 #include "XrdxCastor2ServerAcc.hh"
 #include "XrdxCastor2Proc.hh"
-#include "XrdxCastor2ClientAdmin.hh"
 /*-----------------------------------------------------------------------------*/
 #define RFIO_NOREDEFINE
 
@@ -993,7 +990,6 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
     static  XrdOucHash<XrdOucString>*  gridmapstore;
     static  XrdOucHash<XrdOucString>*  vomsmapstore;
     static  XrdOucHash<XrdxCastor2FsGroupInfo>*  groupinfocache;
-    static  XrdOucHash<XrdxCastor2ClientAdmin>* clientadmintable;
 
     static  int TokenLockTime;  ///< specifies the grace period for client to show 
                                 ///< up on a disk server in seconds before the token expires
@@ -1007,7 +1003,6 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
     XrdSysMutex SecEntityMutex;          ///< protecting the sec entity hash
     XrdSysMutex GridMapMutex;            ///< protecting the gridmap store hash
     XrdSysMutex VomsMapMutex;            ///< protecting the vomsmap store hash
-    XrdSysMutex ClientMutex;             ///<
     XrdOucString xCastor2FsName;         ///< mount point of the catalog fs
     XrdOucString xCastor2FsTargetPort;   ///< xrootd port where redirections go on the OSTs -default is 1094
     XrdOucString xCastor2FsLocatePolicy; ///< can be configured to read only from the primary FS, from the twin FS or balanced between both
@@ -1033,7 +1028,6 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
     XrdxCastor2Proc* Proc;        ///< proc handling object
     XrdxCastor2FsStats Stats;     ///<
     XrdOfsEvr evrObject;          ///< Event receiver
-    XrdCmsFinderTRG* Balancer;    ///<
 
   private:
 

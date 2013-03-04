@@ -22,7 +22,7 @@ COMM
 COMM @author castor-dev@cern.ch
 COMM
 
-CPPFLAGS += -I$(CASTOR_ROOT)/xrootd/xrootd_hdr/src/ -Wno-error -D_FILE_OFFSET_BITS=64
+CPPFLAGS += -I$(XROOT_LOCATION)/include/xrootd -I$(XROOT_LOCATION)/include/xrootd/private -Wno-error -D_FILE_OFFSET_BITS=64
 
 AddLdFlags( -L$(XROOT_LIB_LOCATION) -lstdc++ )
 
@@ -41,7 +41,7 @@ DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(castor,castorclient)
 DependsOnLibrary(ns,castorns)
 
-SharedLibraryTarget(XrdxCastor2Fs,$(XCASTOR2FS_OBJS),,-lXrdUtils -lXrdClient -lXrdOfs -l UUIDLIBNAME -lcrypto -lrt)
+SharedLibraryTarget(XrdxCastor2Fs,$(XCASTOR2FS_OBJS),,-lXrdUtils -lXrdCl -lXrdClient -lXrdOfs -l UUIDLIBNAME -lcrypto -lrt)
 
 XCASTOR2SERVERACC_SRCS= XrdxCastor2ServerAcc.cc \
                         XrdxCastorTiming.cc
@@ -61,7 +61,7 @@ XCASTOR2OFS_SRCS= XrdxCastor2Ofs.cc         \
 
 XCASTOR2OFS_OBJS=$(XCASTOR2OFS_SRCS:.cc=.o)
 
-SharedLibraryTarget(XrdxCastor2Ofs,$(XCASTOR2OFS_OBJS),,-lXrdUtils -lXrdOfs -lXrdClient -l UUIDLIBNAME -lcrypto -lz -lrt)
+SharedLibraryTarget(XrdxCastor2Ofs,$(XCASTOR2OFS_OBJS),,-lXrdUtils -lXrdOfs -lXrdCl -lXrdClient -l UUIDLIBNAME -lcrypto -lz -lrt)
 
 InstallNonExecFile(x2proc,/usr/bin,755)
 InstallNonExecFile(x2cp,/usr/bin,755)
