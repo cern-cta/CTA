@@ -2971,23 +2971,16 @@ END;
 
 /* PL/SQL method used by the stager to collect the logging made in the DB */
 CREATE OR REPLACE PROCEDURE dumpDBLogs(logEntries OUT castor.LogEntry_Cur) AS
-  timeinfos floatList;
-  uuids strListTable;
-  priorities "numList";
-  msgs strListTable;
-  fileIds "numList";
-  nsHosts strListTable;
-  sources strListTable;
-  paramss strListTable;
+  rowIds strListTable;
 BEGIN
-  -- get whatever we can from the table
-  DELETE FROM DLFLogs
-  RETURNING timeinfo, uuid, priority, msg, fileId, nsHost, source, params
-    BULK COLLECT INTO timeinfos, uuids, priorities, msgs, fileIds, nsHosts, sources, paramss;
-  -- insert into tmp table so that we can open a cursor on it
-  FORALL i IN 1 .. timeinfos.COUNT
-    INSERT INTO DLFLogsHelper (timeinfo, uuid, priority, msg, fileId, nsHost, source, params)
-    VALUES (timeinfos(i), uuids(i), priorities(i), msgs(i), fileIds(i), nsHosts(i), sources(i), paramss(i));
+  -- lock whatever we can from the table. This is to prevent deadlocks.
+  SELECT ROWID BULK COLLECT INTO rowIds
+    FROM DLFLogs FOR UPDATE NOWAIT;
+  -- insert data on tmp table and drop selected entries
+  INSERT INTO DLFLogsHelper (timeinfo, uuid, priority, msg, fileId, nsHost, SOURCE, params)
+   (SELECT timeinfo, uuid, priority, msg, fileId, nsHost, SOURCE, params
+    FROM DLFLogs WHERE ROWID IN (SELECT * FROM TABLE(rowIds)));
+  DELETE FROM DLFLogs WHERE ROWID IN (SELECT * FROM TABLE(rowIds));
   -- return list of entries by opening a cursor on temp table
   OPEN logEntries FOR
     SELECT timeinfo, uuid, priority, msg, fileId, nsHost, source, params FROM DLFLogsHelper;
