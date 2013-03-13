@@ -31,6 +31,7 @@ DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(dlf,castordlf)
 DependsOnLibrary(castor,castorclient)
 DependsOnLibrary(castor/db/cnv,castorcnvs)
+DependsOnLibrary(castor/db/ora,castorcommonora)
 DependsOnLibrary(security,castorsecurity)
 
 RHBIN_SRCS = Server.cpp RHThread.cpp RateLimiter.cpp RatingGroup.cpp UserCounter.cpp SvcClassCounter.cpp

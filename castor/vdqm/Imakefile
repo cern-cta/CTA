@@ -31,6 +31,8 @@ DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(dlf,castordlf)
 DependsOnLibrary(castor,castorclient)
 DependsOnLibrary(castor/db/cnv,castorcnvs)
+DependsOnLibrary(castor/db/ora,castorcommonora)
+DependsOnLibrary(castor/db/ora,castorvdqmora)
 DependsOnLibrary(upv,castorupv)
 DependsOnLibrary(vmgr,castorvmgr)
 

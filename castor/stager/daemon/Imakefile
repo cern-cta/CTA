@@ -33,6 +33,7 @@ DependsOnLibrary(dlf,castordlf)
 DependsOnLibrary(ns,castorns)
 DependsOnLibrary(castor,castorclient)
 DependsOnLibrary(castor/db/cnv,castorcnvs)
+DependsOnLibrary(castor/db/ora,castorcommonora)
 
 DBSERVICEDAEMONBIN_SRCS = \
 	StagerDaemon.cpp \

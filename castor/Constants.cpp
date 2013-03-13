@@ -288,7 +288,6 @@ const char* castor::ServicesIdStrings[ServicesIdsNb] = {
   "ORAGCSVC",
   "ORAQUERYSVC",
   "ORAVDQMSVC",
-  "PGCNV",
   "DELETED SERVICE",
   "DELETED SERVICE",
   "DELETED SERVICE",
@@ -297,11 +296,12 @@ const char* castor::ServicesIdStrings[ServicesIdsNb] = {
   "DELETED SERVICE",
   "DELETED SERVICE",
   "DELETED SERVICE",
-  "MYCNV",  
+  "DELETED SERVICE",
+  "DELETED SERVICE",
   "DBSRMSVC",
   "DBSRMDAEMONSVC",
 
-  "ORACLEANSVC",
+  "DELETED SERVICE",
   "DELETED SERVICE",
   "DBPARAMSSVC",
   "DELETED SERVICE",
@@ -309,13 +309,12 @@ const char* castor::ServicesIdStrings[ServicesIdsNb] = {
   "DBRHSVC",
   "ORARHSVC",
   "DELETED SERVICE",
-  "ORAREPACKSVC" ,
+  "DELETED SERVICE",
   "ORATAPEGATEWAYSVC",
   "DELETED SERVICE",
   "DELETED SERVICE",
 
-  "ORASRMDAEMONSVC",
-
+  "ORASRMDAEMONSVC"
 };
 
 //=============================================================================
