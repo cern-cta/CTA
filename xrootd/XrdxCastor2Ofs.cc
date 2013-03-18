@@ -571,12 +571,12 @@ XrdxCastor2OfsFile::open( const char*         path,
     newopaque.erase( firstpos, lastpos - 2 - firstpos );
   }
 
-  //Erase the tried paramaeter from the opaque information
+  //Erase the tried parameter from the opaque information
   int tried_pos = newopaque.find( "tried=" );
-  int question_pos = newopaque.find ( '&', tried_pos );
+  int amp_pos = newopaque.find ( '&', tried_pos );
 
   if ( tried_pos != STR_NPOS ) {
-    newopaque.erase( tried_pos, question_pos - tried_pos );
+    newopaque.erase( tried_pos, amp_pos - tried_pos );
   }
 
   if ( newopaque.find( "castor2fs.signature=" ) == STR_NPOS ) {
