@@ -4077,28 +4077,29 @@ listening thread, a single self monitoring thread, three disk I/O threads and
 a single tape I/O thread.
 
 PSEUDO CODE OF THE MAIN THREAD
- 1. Create the single client listening thread to service client pings and abort
-   requests
- 2. If dumping a tape then
-      3. Dump the tape
-      4. Join with the client listening thread
- 5. Else
-      6. Create the pool of Disk I/O threads (3 threads by default).
-      7. Create the single self monitoring thread
-      8. Create the single tape I/O
-      9. Loop while not finished
-          10. If writing to tape
-              11. Get more work from the client
-          12. Else
-	      13. Wait for tape I/O thread to request more work
-          14. End if writing to tape
-          15. If more work then
-               16. Assign work to pool of Disk I/O threads
-          17. End if more work
-     18. End loop while not finished
-     19. Join with tape I/O thread
-     20. Join with client listening thread
-21. End if dumping a tape.
+ 1. Get the full request from client
+ 2. Create the single client listening thread to service client pings and abort
+    requests
+ 3. If dumping a tape then
+      4. Dump the tape
+      5. Join with the client listening thread
+ 6. Else
+      7. Create the pool of Disk I/O threads (3 threads by default).
+      8. Create the single self monitoring thread
+      9. Create the single tape I/O
+     10. Loop while not finished
+          11. If writing to tape
+              12. Get more work from the client
+          13. Else
+	      14. Wait for tape I/O thread to request more work
+          15. End if writing to tape
+          16. If more work then
+               17. Assign work to pool of Disk I/O threads
+          18. End if more work
+     19. End loop while not finished
+     20. Join with tape I/O thread
+     21. Join with client listening thread
+22. End if dumping a tape.
 
 PSEUDO CODE OF THE CLIENT LISTENING THREAD
  1. Loop while not finished
