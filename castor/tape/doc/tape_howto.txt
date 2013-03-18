@@ -4063,3 +4063,86 @@ exec dbms_scheduler.enable('MIGRATIONMOUNTSJOB');
 exec dbms_scheduler.disable('RECALLMOUNTSJOB' );
 exec dbms_scheduler.set_attribute(name => 'RECALLMOUNTSJOB', attribute => 'repeat_interval', value => 'FREQ=secondly; INTERVAL=10');
 exec dbms_scheduler.enable('RECALLMOUNTSJOB');
+
+How to know what the rtcpd daemon is doing
+==========================================
+
+The best best way to know what the rtcpd daemon is doing is know how it uses
+threads.
+
+The rtcpd daemon uses 5 types of thread: main, client listening, self
+monitoring, disk I/O and tape I/O.  An rtcpd daemon with the default
+configuration runs with a total of 7 threads: the main thread, a single client
+listening thread, a single self monitoring thread, three disk I/O threads and
+a single tape I/O thread.
+
+PSEUDO CODE OF THE MAIN THREAD
+ 1. Create the single client listening thread to service client pings and abort
+   requests
+ 2. If dumping a tape then
+      3. Dump the tape
+      4. Join with the client listening thread
+ 5. Else
+      6. Create the pool of Disk I/O threads (3 threads by default).
+      7. Create the single self monitoring thread
+      8. Create the single tape I/O
+      9. Loop while not finished
+          10. If writing to tape
+              11. Get more work from the client
+          12. Else
+	      13. Wait for tape I/O thread to request more work
+          14. End if writing to tape
+          15. If more work then
+               16. Assign work to pool of Disk I/O threads
+          17. End if more work
+     18. End loop while not finished
+     19. Join with tape I/O thread
+     20. Join with client listening thread
+21. End if dumping a tape.
+
+PSEUDO CODE OF THE CLIENT LISTENING THREAD
+ 1. Loop while not finished
+      2. Listen with a time out for data on the client connection
+      3. If data is available
+           4. Read in message from client
+           5. Handle ABORT, ENDOF, KILLJID, RSLCT or PING message
+      6. End if data was received
+ 7. End while don’t stop
+
+PSEUDO CODE OF THE SELF MONITORING THREAD
+ 1. Loop forever
+      2. Sleep 30 seconds
+      3. If the rtcpd daemon has hung then
+           4. Take action
+      5. End if the rtcpd daemon has hung
+ 6. End loop foever
+
+PSEUDO CODE OF THE DISK I/O THREAD
+ 1. Open disk file
+ 2. If writing to tape then
+      3. Write memory to disk
+      4. Close disk file
+ 5. Else
+      6. Write disk to memory
+      7. Close disk file
+ 8. End if writing to tape
+
+
+PSEUDO CODE OF THE TAPE I/O THREAD
+ 1. Mount tape
+ 2. Loop while not finished
+      3. If reading from tape then
+           4. Get more work from the client
+      5. Else
+           6. Wait for more work
+      7. End if reading from tape
+      8. If more work
+           9. Position tape
+          10. If writing to tape then
+              11. Write memory to tape
+          12. Else
+              13. Write tape to memory
+          15. End if writing to tape
+     16. End if more work
+17. End loop while not finished
+18. Unmount tape
