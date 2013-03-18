@@ -546,7 +546,7 @@ XrdxCastor2OfsFile::open( const char*         path,
   isRW = false;
   isTruncate = false;
   castorlfn = path;
-  xcastor_debug("castorlfn=%s", castorlfn.c_str());
+  xcastor_debug("castorlfn=%s, opaque=%s", castorlfn.c_str(), opaque);
   XrdOucString newpath = "";
   XrdOucString newopaque = opaque;
 
@@ -571,10 +571,12 @@ XrdxCastor2OfsFile::open( const char*         path,
     newopaque.erase( firstpos, lastpos - 2 - firstpos );
   }
 
-  int triedpos = newopaque.find( "tried=" );
+  //Erase the tried paramaeter from the opaque information
+  int tried_pos = newopaque.find( "tried=" );
+  int question_pos = newopaque.find ( '&', tried_pos );
 
-  if ( triedpos != STR_NPOS ) {
-    newopaque.erase( triedpos );
+  if ( tried_pos != STR_NPOS ) {
+    newopaque.erase( tried_pos, question_pos - tried_pos );
   }
 
   if ( newopaque.find( "castor2fs.signature=" ) == STR_NPOS ) {
