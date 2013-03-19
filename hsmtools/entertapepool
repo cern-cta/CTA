@@ -23,7 +23,7 @@
 
 '''allows to enter a new tape pool into the castor stager'''
 
-import sys, re, os, pwd
+import sys, re, os, pwd, subprocess
 import getopt
 import castor_tools
 
@@ -85,12 +85,10 @@ try:
         print 'You may want to use modifytapepool'
         sys.exit(1)
     # check that the tapepool exists in the vmgr
-    stconnvmgr = castor_tools.connectToVmgr()
-    stcurvmgr = stconnvmgr.cursor()
-    stcurvmgr.execute('SELECT * FROM VMGR_TAPE_POOL WHERE name=:name', name=tapePoolName)
-    rows = stcurvmgr.fetchall()
-    if len(rows) == 0:
-        print 'Tape pool %s does not exist in VMGR' % tapePoolName
+    vmgrlistp = subprocess.Popen(['vmgrlistpool', '-P', tapePoolName], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    vmgrlistp.wait()
+    if vmgrlistp.returncode:
+        print 'Tape pool %s does not exist, or unable to connect to VMGR' % tapePoolName
         print 'Giving up'
         sys.exit(1)
     # get info on user running this command
