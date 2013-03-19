@@ -38,6 +38,7 @@ import synchronizer, suicider, reportmanager, diskserverlistcache, modifydiskser
 import dlf
 from transfermanagerdlf import msgs
 from threadpoolserver import ThreadPoolServer
+from transfer import tupleToTransfer, TransferType
 
 # usage function
 def usage(exitCode):
@@ -288,8 +289,8 @@ class TransferManagerService(rpyc.Service):
     for diskPool in transfers:
       for ds in transfers[diskPool]:
         if transfers[diskPool][ds] != None:
-          for transferid, fileid, scheduler, user, status, transfertype, arrivalTime, startTime in transfers[diskPool][ds]:
-            res.append((transferid, fileid, scheduler, user, status, diskPool, ds, transfertype, arrivalTime, startTime))
+          for transferId, fileid, scheduler, user, status, transfertype, arrivalTime, startTime in transfers[diskPool][ds]:
+            res.append((transferId, fileid, scheduler, user, status, diskPool, ds, transfertype, arrivalTime, startTime))
         else:
           res.append((None, ds))
     return tuple(res)
@@ -302,14 +303,16 @@ class TransferManagerService(rpyc.Service):
     timeout = configuration.getValue('TransferManager', 'AdminTimeout', 5, float)
     # call the internal method on all schedulers (including ourselves)
     killedtransfers = []
-    killedtransferids = []
+    killedtransferIds = []
     for scheduler in configuration.getValue('DiskManager', 'ServerHosts').split():
-      for transferid, (fileid, reqid) in getattr(connectionpool.connections, method)(scheduler, arg, timeout=timeout):
-        # for the transfers actually killed (and only once per tranfer
-        if transferid not in killedtransferids:
+      for transferTuple in getattr(connectionpool.connections, method)(scheduler, arg, timeout=timeout):
+        transfer = tupleToTransfer(transferTuple)
+        # for the transfers actually killed (and only once per transfer
+        if transfer.transferId not in killedtransferIds:
           # Remember to fail the transfer in the stager DB with ESTKILLED error code
-          killedtransferids.append(transferid)
-          killedtransfers.append([transferid, fileid, 1713, 'Transfer killed by admin', reqid])
+          killedtransferIds.append(transfer.transferId)
+          killedtransfers.append((transfer.transferId, transfer.fileId, 1713,
+                                  'Transfer killed by admin', transfer.reqId))
     # update stagerDB
     self.exposed_transfersKilled(killedtransfers)
 
@@ -319,72 +322,76 @@ class TransferManagerService(rpyc.Service):
     # call the internal method
     self._killtransfers('killalltransfersinternal', user)
 
-  def exposed_killtransfers(self, transferids):
+  def exposed_killtransfers(self, transferIds):
     '''killtransfers removes given transfers from all queues on all servers and diskservers'''
-    for transferid in transferids:
-      dlf.writedebug(msgs.INVOKINGKILLTRANSFERS, subreqid=transferid)
+    for transferId in transferIds:
+      dlf.writedebug(msgs.INVOKINGKILLTRANSFERS, subreqId=transferId)
     # call the internal method
-    self._killtransfers('killtransfersinternal', transferids)
+    self._killtransfers('killtransfersinternal', transferIds)
 
   def exposed_killalltransfersinternal(self, user):
     '''killalltransfersinternal removes all transfers from the queues handled by this scheduler.
-    Return a tuple of (transferid, file) tuples for the transfers actually removed'''
+    Return a tuple of (transferId, file) tuples for the transfers actually removed'''
     dlf.writedebug(msgs.INVOKINGKILLALLTRANSFERSINTERNAL, Username=user)
-    return tuple(queueingTransfers.removeall(user).items())
+    return tuple([transfer.asTuple() for transfer in queueingTransfers.removeall(user)])
 
-  def exposed_killtransfersinternal(self, transferids=None):
+  def exposed_killtransfersinternal(self, transferIds=None):
     '''killtransfersinternal removes transfers from the queues handled by this scheduler.
-    Return a tuple of (transferid, file) tuples for the transfers actually removed'''
-    for transferid in transferids:
-      dlf.writedebug(msgs.INVOKINGKILLTRANSFERSINTERNAL, subreqid=transferid)
-    return tuple(queueingTransfers.remove(transferids).items())
+    Return a tuple of (transferId, file) tuples for the transfers actually removed'''
+    for transferId in transferIds:
+      dlf.writedebug(msgs.INVOKINGKILLTRANSFERSINTERNAL, subreqId=transferId)
+    return tuple([transfer.asTuple() for transfer in queueingTransfers.remove(transferIds)])
 
   def exposed_transfersKilled(self, transfers):
     '''informs the stager that these transfers have been killed'''
-    for transferid, fileid, errno, errmsg, reqid in transfers:
-      dlf.writedebug(msgs.INVOKINGTRANSFERSKILLED, subreqid=transferid, reqid=reqid, fileid=fileid, Errno=errno, ErrorMessage=errmsg)
+    transferIds, errnos, errmsgs = [], [], []
+    for transferId, fileId, errno, errmsg, reqId in transfers:
+      dlf.writedebug(msgs.INVOKINGTRANSFERSKILLED, subreqId=transferId,
+                     reqId=reqId, fileid=fileId, Errno=errno, ErrorMessage=errmsg)
+      transferIds.append(transferId)
+      errnos.append(errno)
+      errmsgs.append(errmsg)
     # only inform the stager
     try:
       self.__class__.acquireDbConnection()
       try:
         stcur = self.__class__.dbConnection().cursor()
         stcur.arraysize = 50
-        data = [list(item) for item in zip(*transfers)]
-        transferids = data[0]
-        errnos, errmsgs = data[2:4]
-        stcur.execute("BEGIN transferFailedSafe(:1, :2, :3); END;", [transferids, errnos, errmsgs])
+        stcur.execute("BEGIN transferFailedSafe(:1, :2, :3); END;", [transferIds, errnos, errmsgs])
         stcur.close()
       except Exception, e:
-        for transferid, fileid, errno, errmsg, reqid in transfers:
+        for transferId, fileId, errno, errmsg, reqId in transfers:
           # "Exception caught while failing transfer" message
-          dlf.writeerr(msgs.FAILTRANSFEREXCEPTION, subreqid=transferid, reqid=reqid, fileid=fileid, Type=str(e.__class__), Message=str(e))
+          dlf.writeerr(msgs.FAILTRANSFEREXCEPTION, subreqId=transferId,
+                       reqId=reqId, fileid=fileId, Type=str(e.__class__), Message=str(e))
         # check whether we should reconnect to DB, and do so if needed
         self.__class__.dbConnection().checkForReconnection(e)
     finally:
       self.__class__.releaseDbConnection()
 
-  def exposed_transfersCanceled(self, machine, transfers):
+  def exposed_transfersCanceled(self, transfers):
     '''cancels transfers in the queues and informs the stager in case there is no
     remaining machines where it could run'''
-    for transferid, fileid, rc, s, reqid in transfers:
-      dlf.writedebug(msgs.INVOKINGTRANSFERSCANCELED, Diskserver=machine,
-                     subreqid=transferid, reqid=reqid, fileid=fileid, ErrorCode=rc, ErrorMessage=s)
     # first cancel transfers in the queue
-    transferskilled = queueingTransfers.transfersCanceled(machine, transfers)
+    transferskilled = queueingTransfers.transfersCanceled(transfers)
     # for those that are really over, inform the stager
     if transferskilled:
       self.exposed_transfersKilled(transferskilled)
 
-  def exposed_transferStarting(self, diskserver, transferid, reqid, transfertype):
+  def exposed_transferStarting(self, transferTuple):
     '''called when a transfer started on a given diskserver'''
-    dlf.writedebug(msgs.INVOKINGTRANSFERSTARTING, DiskServer=diskserver, subreqid=transferid, reqid=reqid, TransferType=transfertype)
-    queueingTransfers.transferStarting(diskserver, transferid, reqid, transfertype)
+    transfer = tupleToTransfer(transferTuple)
+    dlf.writedebug(msgs.INVOKINGTRANSFERSTARTING, DiskServer=transfer.diskServer,
+                   subreqId=transfer.transferId, reqId=transfer.reqId,
+                   TransferType=transfer.transferType)
+    queueingTransfers.transferStarting(transfer)
 
-  def exposed_transferBackToQueue(self, transferid, arrivaltime, transferList, transfertype):
+  def exposed_transferBackToQueue(self, transferTuple):
     '''puts a transfer back to the server queue when a transfer could not be started and was queued back'''
-    dlf.writedebug(msgs.INVOKINGTRANSFERBACKTOQUEUE, subreqid=transferid, arrivalTime=arrivaltime,
-                                                     transferList=str(transferList), TransferType=transfertype)
-    queueingTransfers.put(transferid, arrivaltime, transferList, transfertype, putback=True)
+    transfer = tupleToTransfer(transferTuple)
+    dlf.writedebug(msgs.INVOKINGTRANSFERBACKTOQUEUE, subreqId=transfer.transferId,
+                   fileid=transfer.fileId, TransferType=TransferType.toStr(transfer.transferType))
+    queueingTransfers.put(transfer, True)
 
   def exposed_getQueueingTransfers(self, diskserver):
     '''called on the (re)start of the diskManager to rebuild the queue of transfers'''
@@ -401,10 +408,11 @@ class TransferManagerService(rpyc.Service):
     dlf.writedebug(msgs.INVOKINGGETALLRUNNINGD2DSOURCETRANSFERS)
     return tuple(queueingTransfers.listAllRunningD2dSources())
 
-  def exposed_d2dend(self, transferid, reqid):
+  def exposed_d2dend(self, transferTuple):
     '''called when a d2d is over. Responsible for informing the source of the d2d'''
-    dlf.writedebug(msgs.INVOKINGD2DEND, subreqid=transferid, reqid=reqid)
-    queueingTransfers.d2dend(transferid, reqid)
+    transfer = tupleToTransfer(transferTuple)
+    dlf.writedebug(msgs.INVOKINGD2DEND, subreqId=transfer.transferId, reqId=transfer.reqId)
+    queueingTransfers.d2dend(transfer.transferId, transfer.reqId)
 
   def exposed_drain(self):
     '''when called, moves the daemon to drain mode, where only ongoing transfers are handled
@@ -434,7 +442,7 @@ class TransferManagerService(rpyc.Service):
         # log the termination of the terminated transfers
         for transferId, reqId, fileid, nsHost in terminatedtransfers:
           # 'Transfer was marked as failed in stager DB after it disappeared from the diskserver' message
-          dlf.write(msgs.RUNTRANSFERDISAPPEARED, DiskServer=diskserver, subreqid=transferId, reqid=reqId, fileid=(nsHost, fileid))
+          dlf.write(msgs.RUNTRANSFERDISAPPEARED, DiskServer=diskserver, subreqId=transferId, reqId=reqId, fileid=(nsHost, fileid))
       except Exception, e:
         # "Exception caught while synchronizing running transfers, giving up with synchronization" message
         dlf.writeerr(msgs.SYNCRUNEXCEPTION, DiskServer=diskserver, Type=str(e.__class__), Message=str(e))
@@ -476,11 +484,11 @@ def initQueues():
     for ds in dslist[diskPool]:
       try:
         # first list the running d2dsrc transfers
-        for transferid, transfer, arrivaltime in connectionpool.connections.getRunningD2dSource(ds, socket.getfqdn(), timeout=timeout):
-          queueingTransfers.putRunningD2dSource(ds, transferid, transfer, arrivaltime)
+        for transferTuple in connectionpool.connections.getRunningD2dSource(ds, socket.getfqdn(), timeout=timeout):
+          queueingTransfers.putRunningD2dSource(ds, tupleToTransfer(transferTuple))
         # then list queueing transfers
-        for transferid, transfer, transfertype, arrivaltime in connectionpool.connections.getQueueingTransfers(ds, socket.getfqdn(), timeout=timeout):
-          queueingTransfers.put(transferid, arrivaltime, [(ds, transfer)], transfertype)
+        for transferTuple in connectionpool.connections.getQueueingTransfers(ds, socket.getfqdn(), timeout=timeout):
+          queueingTransfers.put(tupleToTransfer(transferTuple))
       except Exception, e:
         # we could not connect. No problem, the scheduler is probably not running, so no queue to retrieve
         # 'No queue could be retrieved' message
@@ -520,7 +528,7 @@ def drain(wait=False):
     suicideThread.join()
 
 import signal
-def handler(signum, frame):
+def handler(signum, _unused_frame):
   '''signal handler for the transfer manager daemon, only logging and calling sys.exit'''
   # 'Received signal' message
   dlf.write(msgs.SIGNALRECEIVED, Signal=signum)

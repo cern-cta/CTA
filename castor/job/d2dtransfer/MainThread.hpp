@@ -27,7 +27,6 @@
 
 // Include files
 #include "castor/job/d2dtransfer/IMover.hpp"
-#include "castor/job/SharedResourceHelper.hpp"
 #include "castor/server/IThread.hpp"
 #include "castor/stager/IJobSvc.hpp"
 #include "castor/stager/DiskCopyInfo.hpp"
@@ -127,9 +126,6 @@ namespace castor {
         /// The mover responsible for the actual data transfer
         castor::job::d2dtransfer::IMover *m_mover;
 
-        /// The helper to download the resource file
-        castor::job::SharedResourceHelper *m_resHelper;
-
         /// The start time of the mover
         u_signed64 m_startTime;
 
@@ -154,9 +150,17 @@ namespace castor {
         /// The id of the source diskcopy
         u_signed64 m_sourceDiskCopyId;
 
-        /// The location of the file to retrieve containing the diskserver and
-        /// filesystem to write too
-        std::string m_resourceFile;
+        /// The diskserver where to write the file
+        std::string m_diskServer;
+
+        /// The selected filesystem where to write the file
+        std::string m_fileSystem;
+
+        /// the euid of the user that triggered this job
+        uid_t m_euid;
+
+        /// the egid of the user that triggered this job
+        gid_t m_egid;
 
         /// The creation time of the original request in seconds since EPOCH
         u_signed64 m_requestCreationTime;

@@ -95,12 +95,9 @@ castor::job::d2dtransfer::DiskCopyTransfer::DiskCopyTransfer():
     { 10, "Unable to get RemoteJobSvc, transfer terminated" },
     { 11, "Could not convert newly retrieved service into IJobSvc" },
     { 14, "Failed to initialize mover" },
-    { 15, "Failed to create sharedResource helper" },
 
     // Run
     { 20, "Failed to change uid and gid" },
-    { 21, "Invalid Uniform Resource Indicator, cannot download resource file" },
-    { 23, "Exception caught trying to download resource file" },
     { 24, "Exception caught trying to getHostName, unable to determine which end of a disk2disk copy transfer is the destination" },
     { 25, "DiskCopyTransfer started" },
     { 26, "Exception caught trying to get information on destination and source disk copies" },
@@ -109,7 +106,6 @@ castor::job::d2dtransfer::DiskCopyTransfer::DiskCopyTransfer():
     { 29, "Exception caught transferring file" },
     { 30, "Exception caught trying to finalize disk2disk copy transfer, transfer failed" },
     { 31, "Failed to remotely execute disk2DiskCopyDone" },
-    { 32, "The content of the resource file is invalid" },
     { 33, "Starting source end of mover" },
     { 34, "Source end of mover terminated" },
     { 35, "Downloading resource file" },

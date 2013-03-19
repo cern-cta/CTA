@@ -203,7 +203,10 @@ namespace castor {
           castorFile = stagerService->selectCastorFile(subrequest, &cnsFileid, &cnsFilestat);
         }
         catch (castor::exception::Exception& e) {
-          logToDlf(DLF_LVL_ERROR, STAGER_CASTORFILE_EXCEPTION, &cnsFileid);
+          castor::dlf::Param params[] = {
+            castor::dlf::Param("ErrorMessage", e.getMessage().str())};
+          castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CASTORFILE_EXCEPTION,
+                                  1, params, &cnsFileid);
 
           castor::exception::Exception ex(e.code());
           ex.getMessage() << "Impossible to perform the request: " << e.getMessage().str();

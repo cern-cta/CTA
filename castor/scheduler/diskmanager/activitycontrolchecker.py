@@ -54,7 +54,7 @@ class ActivityControlCheckerThread(threading.Thread):
     '''main method, containing the infinite loop'''
     while self.alive:
       # do not loop too fast, but be able to exit in < 1s
-      for i in range(5):
+      for _unused_i in range(5):
         if not self.alive:
           return
         time.sleep(1)

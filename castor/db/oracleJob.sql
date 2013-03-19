@@ -968,7 +968,7 @@ PROCEDURE transferToSchedule(srId OUT INTEGER,              srSubReqId OUT VARCH
                              reqEuid OUT INTEGER,           reqEgid OUT INTEGER,
                              reqUsername OUT VARCHAR2,      srOpenFlags OUT VARCHAR2,
                              clientIp OUT INTEGER,          clientPort OUT INTEGER,
-                             clientVersion OUT INTEGER,     clientType OUT INTEGER,
+                             clientVersion OUT INTEGER,
                              reqSourceDiskCopy OUT INTEGER, reqDestDiskCopy OUT INTEGER,
                              clientSecure OUT INTEGER,      reqSourceSvcClass OUT VARCHAR2,
                              reqCreationTime OUT INTEGER,   reqDefaultFileSize OUT INTEGER,
@@ -1058,11 +1058,11 @@ BEGIN
            Request.type, Request.reqId, Request.euid, Request.egid, Request.username,
            Request.direction, Request.sourceDiskCopy, Request.destDiskCopy,
            Request.sourceSvcClass, Client.ipAddress, Client.port, Client.version,
-           129 clientType, Client.secure, Request.creationTime,
+           Client.secure, Request.creationTime,
            decode(SvcClass.defaultFileSize, 0, 2000000000, SvcClass.defaultFileSize)
       INTO cfId, cfFileId, cfNsHost, reqSvcClass, svcClassId, reqType, reqId, reqEuid, reqEgid,
            reqUsername, srOpenFlags, reqSourceDiskCopy, reqDestDiskCopy, reqSourceSvcClass,
-           clientIp, clientPort, clientVersion, clientType, clientSecure, reqCreationTime,
+           clientIp, clientPort, clientVersion, clientSecure, reqCreationTime,
            reqDefaultFileSize
       FROM SubRequest, CastorFile, SvcClass, Client,
            (SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */

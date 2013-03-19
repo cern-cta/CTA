@@ -23,6 +23,7 @@ COMM @author Castor Dev team, castor-dev@cern.ch
 
 InstallNonExecFile(connectionpool.py,$(PYTHON_LIBDIR),644)
 InstallNonExecFile(threadpoolserver.py,$(PYTHON_LIBDIR),644)
+InstallNonExecFile(transfer.py,$(PYTHON_LIBDIR),644)
 
 include LOCAL_PATH/tools/Makefile
 include LOCAL_PATH/diskmanager/Makefile

@@ -27,9 +27,11 @@
 '''This module allows to modify the properties of a set of diskservers
 (e.g. state or diskPool) from a remote location such as the diskserver itself.'''
 
+import sys
 import castor_tools
 
 def modifyDiskServers(dbconn, targets, state, mountPoints, diskPool):
+    '''modifies the properties of a set of diskservers'''
     stcur = dbconn.cursor()
     # check target diskpool if any
     if diskPool:

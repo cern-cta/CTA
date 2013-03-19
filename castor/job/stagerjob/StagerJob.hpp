@@ -76,12 +76,6 @@ namespace castor {
         MOVERNOTEXEC =    6, /* Mover program cannot be executed. Check permissions */
         EXECFAILED =      7, /* Failed to exec mover */
 
-        // Invalid configurations or parameters
-        DOWNRESFILE =     15, /* Downloading resource file */
-        INVALIDURI =      16, /* Invalid Uniform Resource Indicator, cannot download resource file */
-        DOWNEXCEPT =      18, /* Exception caught trying to download resource file */
-        INVALRESCONT =    19, /* The content of the resource file is invalid */
-
         // Informative logs
         JOBSTARTED =      20, /* Job Started */
         JOBENDED =        21, /* Job finished successfully */

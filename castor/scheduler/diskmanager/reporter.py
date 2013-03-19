@@ -30,6 +30,15 @@ import connectionpool
 import dlf
 from diskmanagerdlf import msgs
 
+class StreamCount(object):
+  '''a small object handling count of streams'''
+  def __init__(self):
+    '''constructor'''
+    self.nbReads = 0
+    self.nbWrites = 0
+    self.nbRecalls = 0
+    self.nbMigrations = 0
+
 class ReporterThread(threading.Thread):
   '''activity control thread.
   This thread is responsible for regularly sending the resource monitoring and status
@@ -67,13 +76,13 @@ class ReporterThread(threading.Thread):
       freeSpace = stat.f_bavail*stat.f_bsize
       # get number of streams of each kind
       try:
-        nbReadStreams, nbWriteStreams, nbRecalls, nbMigrations = streamCount[mountPoint]
+        sc = streamCount[mountPoint]
       except KeyError:
         # no stream at all on this filesystem
-        nbReadStreams, nbWriteStreams, nbRecalls, nbMigrations = (0, 0, 0, 0)
+        sc = StreamCount()
       # fill report
       reports.append((diskServerName, mountPoint, maxFreeSpace, minAllowedFreeSpace,
-                      totalSpace, freeSpace, nbReadStreams, nbWriteStreams, nbRecalls, nbMigrations))
+                      totalSpace, freeSpace, sc.nbReads, sc.nbWrites, sc.nbRecalls, sc.nbMigrations))
       # check whether we should create subdirectories in the mountPoints, that is
       # whether this is a brand new mountPoints that we should populate
       try:
@@ -86,6 +95,8 @@ class ReporterThread(threading.Thread):
 
   def run(self):
     '''main method, containing the infinite loop'''
+    # remember time of the last error log
+    lastErrorLogTime = 0.0
     while self.alive:
       try:
         # build and send report
@@ -107,8 +118,16 @@ class ReporterThread(threading.Thread):
                dlf.writedebug(msgs.SENDREPORTEXCEPTION, transferManager=schedulers[i], error=str(e))
              i += 1
           if notSent:
-            # "Could not send report to any transfermanager, giving up" message
-            dlf.writeerr(msgs.SENDREPORTFAILURE, schedulers=str(schedulers), error=str(e))
+             # no more than one error log every HeartbeatNotSentLogInterval to not flood the logs
+             if time.time() > lastErrorLogTime + \
+                self.configuration.getValue('DiskManager', 'HeartbeatNotSentLogInterval', 300.0, float):
+                # "Could not send report to any transfermanager, giving up" message
+                dlf.writeerr(msgs.SENDREPORTFAILURE, schedulers=str(schedulers), error=str(e))
+                # remember last error time
+                lastErrorLogTime = time.time()
+             else:
+                # "Could not send report to any transfermanager, giving up" message
+                dlf.writedebug(msgs.SENDREPORTFAILURE, schedulers=str(schedulers), error=str(e))
       except Exception, e:
         # "Caught exception in Reporter thread" message
         dlf.writeerr(msgs.REPORTEREXCEPTION, error=str(e))

@@ -155,14 +155,20 @@ def _writep(priority, msgnb, **params):
     rawmsg = 'LVL=%s TID=%d MSG="%s" ' % (_priorities[priority], 
                                           thread.get_ident()%10000, 
                                           _messages[msgnb])
+    if params.has_key('fileId'):
+        rawmsg += 'NSHOSTNAME=%s NSFILEID=%d ' % (params['fileId'])
     if params.has_key('fileid'):
         rawmsg += 'NSHOSTNAME=%s NSFILEID=%d ' % (params['fileid'])
+    if params.has_key('reqId'):
+        rawmsg += 'REQID=%s ' % (params['reqId'])
     if params.has_key('reqid'):
         rawmsg += 'REQID=%s ' % (params['reqid'])
+    if params.has_key('subreqId'):
+        rawmsg += 'SUBREQID=%s ' % (params['subreqId']) 
     if params.has_key('subreqid'):
         rawmsg += 'SUBREQID=%s ' % (params['subreqid']) 
     for param in params:
-        if param in ['reqid', 'fileid', 'subreqid']:
+        if param in ['reqId', 'fileId', 'subreqId', 'reqid', 'fileid', 'subreqid']:
             continue
         value = params[param]
         if value == None:

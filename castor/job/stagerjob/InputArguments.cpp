@@ -34,7 +34,6 @@
 #include "castor/IClientFactory.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
-#include "castor/job/SharedResourceHelper.hpp"
 #include "castor/job/stagerjob/StagerJob.hpp"
 #include "castor/job/stagerjob/InputArguments.hpp"
 
@@ -58,7 +57,6 @@ castor::job::stagerjob::InputArguments::InputArguments(int argc, char** argv)
   euid(0),
   egid(0),
   requestCreationTime(0),
-  resourceFile(""),
   svcClass("") {
 
   // Initialize the Cns_fileid structure
@@ -76,7 +74,7 @@ castor::job::stagerjob::InputArguments::InputArguments(int argc, char** argv)
 
     // Resources
     { "svcclass",      REQUIRED_ARGUMENT, NULL, 'S' },
-    { "resfile",       REQUIRED_ARGUMENT, NULL, 'R' },
+    { "dsmp",          REQUIRED_ARGUMENT, NULL, 'R' },
 
     // Mover specific
     { "protocol",      REQUIRED_ARGUMENT, NULL, 'p' },
@@ -117,7 +115,11 @@ castor::job::stagerjob::InputArguments::InputArguments(int argc, char** argv)
       fileId.server[CA_MAXHOSTNAMELEN] = '\0';
       break;
     case 'R':
-      resourceFile = Coptarg;
+      {
+        std::istringstream iss(Coptarg);
+        std::getline(iss, diskServer, ':');
+        std::getline(iss, fileSystem);
+      }
       break;
     case 'p':
       protocol = Coptarg;
@@ -193,7 +195,7 @@ castor::job::stagerjob::InputArguments::InputArguments(int argc, char** argv)
   }
 
   // Check that all mandatory command line options have been specified
-  if (resourceFile.empty() || !fileId.fileid || !fileId.server[0] ||
+  if (diskServer.empty() || fileSystem.empty() || !fileId.fileid || !fileId.server[0] ||
       !client || !type || !subRequestId) {
     castor::exception::InvalidArgument e;
     e.getMessage() << "Mandatory command line arguments missing";
@@ -215,53 +217,4 @@ castor::job::stagerjob::InputArguments::InputArguments(int argc, char** argv)
     throw e;
   }
 
-  // Download the resource file
-  std::string content("");
-  castor::job::SharedResourceHelper resHelper;
-  try {
-    // "Downloading resource file"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("ResourceFile", resourceFile),
-       castor::dlf::Param(subRequestUuid)};
-    castor::dlf::dlf_writep
-      (requestUuid, DLF_LVL_DEBUG, DOWNRESFILE, 2, params, &fileId);
-
-    resHelper.setUrl(resourceFile);
-    content = resHelper.download();
-  } catch (castor::exception::Exception& e) {
-    if (e.code() == EINVAL) {
-
-      // "Invalid Uniform Resource Indicator, cannot download resource file"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("URI", resourceFile.substr(0, 7))};
-      castor::dlf::dlf_writep
-        (requestUuid, DLF_LVL_ERROR, INVALIDURI, 1, params, &fileId);
-    } else {
-      // "Exception caught trying to download resource file"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("Message", e.getMessage().str()),
-         castor::dlf::Param("Filename", resourceFile.substr(7)),
-         castor::dlf::Param(subRequestUuid)};
-      castor::dlf::dlf_writep
-        (requestUuid, DLF_LVL_ERROR, DOWNEXCEPT, 3, params, &fileId);
-    }
-    throw e;
-  }
-
-  std::istringstream iss(content);
-  std::getline(iss, diskServer, ':');
-  std::getline(iss, fileSystem, '\n');
-
-  // "The content of the resource file is invalid"
-  if (iss.fail() || diskServer.empty() || fileSystem.empty()) {
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("RequiredFormat", "diskserver:filesystem"),
-       castor::dlf::Param(subRequestUuid)};
-    castor::dlf::dlf_writep
-      (requestUuid, DLF_LVL_ERROR, INVALRESCONT, 2, params, &fileId);
-
-    castor::exception::Internal e;
-    e.getMessage() << "Invalid resource file";
-    throw e;
-  }
 }

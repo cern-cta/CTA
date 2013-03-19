@@ -38,8 +38,7 @@ JOB_SRCS = StagerJob.cpp \
            RfioPlugin.cpp \
            RootPlugin.cpp \
            XRootPlugin.cpp \
-           GridFTPPlugin.cpp \
-           ../SharedResourceHelper.cpp
+           GridFTPPlugin.cpp
 JOBS_OBJS = $(JOB_SRCS:.cpp=.o)
 NormalProgramTarget(stagerjob,$(JOBS_OBJS),,,6755)
 MakeDir($(LOGPATH),0755)

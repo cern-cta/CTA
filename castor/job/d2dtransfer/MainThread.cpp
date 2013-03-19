@@ -25,7 +25,6 @@
 // Include files
 #include "castor/job/d2dtransfer/MainThread.hpp"
 #include "castor/job/d2dtransfer/RfioMover.hpp"
-#include "castor/job/SharedResourceHelper.hpp"
 #include "castor/System.hpp"
 #include "Cgetopt.h"
 #include "u64subr.h"
@@ -44,14 +43,14 @@ castor::job::d2dtransfer::MainThread::MainThread(int argc, char *argv[])
   throw(castor::exception::Exception) :
   m_jobSvc(0),
   m_mover(0),
-  m_resHelper(0),
   m_protocol("rfio"),
   m_requestUuid(nullCuuid),
   m_subRequestUuid(nullCuuid),
   m_svcClass(""),
   m_diskCopyId(0),
   m_sourceDiskCopyId(0),
-  m_resourceFile(""),
+  m_euid(-1),
+  m_egid(-1),
   m_requestCreationTime(0) {
 
   // Initialize the Cns_fileid structure
@@ -128,20 +127,6 @@ void castor::job::d2dtransfer::MainThread::init() {
     terminate(0, EXIT_FAILURE);
   }
 
-  // Initialize the shared resource helper
-  try {
-    m_resHelper =
-      new castor::job::SharedResourceHelper();
-  } catch (castor::exception::Exception& e) {
-
-    // "Failed to create sharedResource helper"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Type", sstrerror(e.code())),
-       castor::dlf::Param("Message", e.getMessage().str()),
-       castor::dlf::Param(m_subRequestUuid)};
-    castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_ERROR, 15, 3, params, &m_fileId);
-    terminate(0, EXIT_FAILURE);
-  }
 }
 
 
@@ -174,7 +159,11 @@ void castor::job::d2dtransfer::MainThread::parseCommandLine
 
     // Resources
     { "svcclass",      REQUIRED_ARGUMENT, NULL, 'S' },
-    { "resfile",       REQUIRED_ARGUMENT, NULL, 'R' },
+    { "dsmp",          REQUIRED_ARGUMENT, NULL, 'R' },
+
+    // user and group
+    { "euid",          REQUIRED_ARGUMENT, NULL, 'u' },
+    { "egid",          REQUIRED_ARGUMENT, NULL, 'g' },
 
     // Logging/statistics
     { "rcreationtime", REQUIRED_ARGUMENT, NULL, 't' },
@@ -187,7 +176,7 @@ void castor::job::d2dtransfer::MainThread::parseCommandLine
 
   // Parse command line arguments
   char c;
-  while ((c = Cgetopt_long(argc, argv, "c:hr:s:F:H:D:X:S:R:t:", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long(argc, argv, "c:hr:s:F:H:D:X:S:R:u:g:t:", longopts, NULL)) != -1) {
     switch (c) {
     case 'c':
     case 'h':
@@ -215,7 +204,17 @@ void castor::job::d2dtransfer::MainThread::parseCommandLine
       m_svcClass = Coptarg;
       break;
     case 'R':
-      m_resourceFile = Coptarg;
+      {
+        std::istringstream iss(Coptarg);
+        std::getline(iss, m_diskServer, ':');
+        std::getline(iss, m_fileSystem);
+      }
+      break;
+    case 'u':
+      m_euid = strtou64(Coptarg);
+      break;
+    case 'g':
+      m_egid = strtou64(Coptarg);
       break;
     case 't':
       m_requestCreationTime = strutou64(Coptarg);
@@ -227,7 +226,7 @@ void castor::job::d2dtransfer::MainThread::parseCommandLine
   }
 
   // Check that all mandatory command line options have been specified
-  if (m_svcClass.empty() || m_resourceFile.empty() || !m_diskCopyId ||
+  if (m_svcClass.empty() || m_diskServer.empty() || m_fileSystem.empty() || !m_diskCopyId ||
       !m_sourceDiskCopyId || !m_fileId.fileid || !m_fileId.server[0]) {
     castor::exception::Exception e(EINVAL);
     e.getMessage() << "mandatory command line arguments missing";
@@ -261,7 +260,9 @@ void castor::job::d2dtransfer::MainThread::help(std::string programName) {
     "\t--destdc <id>           or -D  \tThe diskcopy id of the destination file to be created\n"
     "\t--srcdc <id>            or -X  \tThe diskcopy id of the source file to be copied\n"
     "\t--svcclass <name>       or -S  \tThe service class of the file to be created\n"
-    "\t--resfile <location>    or -R  \tThe location of the resource file\n"
+    "\t--dsmp <location>       or -R  \tThe diskServer and mountPoint where to write in format ds:mp\n"
+    "\t--euid <euid>           or -u  \tThe user that triggered the d2d copy\n"
+    "\t--egid <egid>           or -g  \tThe group of the user that triggered the d2d copy\n"
     "\t--rcreationtime <time>  or -t  \tThe creation time of the disk copy replication request\n"
     "\n"
     "Comments to: Castor.Support@cern.ch\n";
@@ -273,62 +274,13 @@ void castor::job::d2dtransfer::MainThread::help(std::string programName) {
 //-----------------------------------------------------------------------------
 void castor::job::d2dtransfer::MainThread::run(void*) {
 
-  // Download the resource file
-  std::string content("");
-  try {
-    // "Downloading resource file"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("ResourceFile", m_resourceFile),
-       castor::dlf::Param(m_subRequestUuid)};
-    castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_DEBUG, 35, 2, params, &m_fileId);
-
-    m_resHelper->setUrl(m_resourceFile);
-    content = m_resHelper->download();
-  } catch (castor::exception::Exception& e) {
-    if (e.code() == EINVAL) {
-
-      // "Invalid Uniform Resource Indicator, cannot download resource file"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("URI", m_resourceFile.substr(0, 7))};
-      castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_ERROR, 21, 1, params, &m_fileId);
-    } else {
-
-      // "Exception caught trying to download resource file"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("Message", e.getMessage().str()),
-         castor::dlf::Param("Filename", m_resourceFile.substr(7)),
-         castor::dlf::Param(m_subRequestUuid)};
-      castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_ERROR, 23, 3, params, &m_fileId);
-    }
-    terminate(m_diskCopyId, EXIT_FAILURE);
-  }
-
-  // If the diskserver name from the resource file is the same as the
+  // If the diskserver name from the parameters is the same as the
   // execution host that the mover is running on, then this is the destination
   // end of the transfer. Otherwise, its the source.
-  std::string hostname, diskserver, filesystem;
-  std::istringstream iss(content);
-  std::getline(iss, diskserver, ':');
-  std::getline(iss, filesystem, '\n');
-
-  // "The content of the resource file is invalid"
-  if (iss.fail() || diskserver.empty() || filesystem.empty()) {
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("RequiredFormat", "diskserver:filesystem"),
-       castor::dlf::Param(m_subRequestUuid)};
-    castor::dlf::dlf_writep(m_requestUuid, DLF_LVL_ERROR, 32, 2, params, &m_fileId);
-
-    // If the content of the resource file is invalid both the destination and
-    // source ends will try and fail the disk2disk copy transfer. The first one
-    // to be processed by the stager will succeed the second will throw an
-    // Oracle exception. (nothing can be done about this!)
-    terminate(m_diskCopyId, EXIT_FAILURE);
-  }
-
+  std::string hostname;
   try {
     hostname = castor::System::getHostName();
   } catch (castor::exception::Exception& e) {
-
     // "Exception caught trying to getHostName, unable to determine which
     // end of a disk2disk copy transfer is the destination"
     castor::dlf::Param params[] =
@@ -339,7 +291,7 @@ void castor::job::d2dtransfer::MainThread::run(void*) {
     terminate(m_diskCopyId, EXIT_FAILURE);
   }
 
-  if (hostname != diskserver) {
+  if (hostname != m_diskServer) {
     // "Starting source end of mover"
     castor::dlf::Param params[] =
       {castor::dlf::Param(m_subRequestUuid)};
@@ -389,8 +341,8 @@ void castor::job::d2dtransfer::MainThread::run(void*) {
   try {
     m_jobSvc->disk2DiskCopyStart(m_diskCopyId,
                                  m_sourceDiskCopyId,
-                                 diskserver,
-                                 filesystem,
+                                 m_diskServer,
+                                 m_fileSystem,
                                  diskCopy,
                                  sourceDiskCopy,
                                  m_fileId.fileid,

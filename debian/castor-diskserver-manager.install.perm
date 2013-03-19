@@ -13,3 +13,4 @@
 %attr(0644,root,root) usr/lib/python*/site-packages/dlf.py*
 %attr(0644,root,root) usr/lib/python*/site-packages/diskmanagerdlf.py*
 %attr(0644,root,root) usr/lib/python*/site-packages/threadpoolserver.py*
+%attr(0644,root,root) usr/lib/python*/site-packages/transfer.py*

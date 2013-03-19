@@ -116,10 +116,6 @@ namespace castor {
         /// The creation time of the original request in seconds since EPOCH
         u_signed64 requestCreationTime;
 
-        /// The location of the file to retrieve containing the diskserver and
-        /// filesystem to write too
-        std::string resourceFile;
-
         /// The name of the service class for the castor file
         std::string svcClass;
 

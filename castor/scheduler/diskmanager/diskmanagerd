@@ -38,6 +38,7 @@ import daemon
 import dlf
 from diskmanagerdlf import msgs
 from threadpoolserver import ThreadPoolServer
+from transfer import tupleToTransfer, RunningTransfer
 
 # usage function
 def usage(exitCode):
@@ -78,12 +79,13 @@ class DiskServerManagerService(rpyc.Service):
   This service handles all the calls from the central scheduling, from
   transfer starting to monitoring'''
 
-  def exposed_scheduleTransfer(self, scheduler, transferid, transfer, arrivaltime, transfertype='standard'):
+  def exposed_scheduleTransfer(self, scheduler, transferTuple):
     '''Called when a new transfer needs to be scheduled.
     Queues the new transfer.'''
-    dlf.writedebug(msgs.INVOKINGSCHEDULETRANSFER, Scheduler=scheduler, subreqid=transferid, reqid=transfer[2],
-                   TransferType=transfertype, fileid=(transfer[8],int(transfer[6])))
-    transferQueue.put(scheduler, transferid, transfer, transfertype, arrivaltime)
+    transfer = tupleToTransfer(transferTuple)
+    dlf.writedebug(msgs.INVOKINGSCHEDULETRANSFER, Scheduler=scheduler, subreqId=transfer.transferId,
+                   reqId=transfer.reqId, TransferType=transfer.transferType, fileid=transfer.fileId)
+    transferQueue.put(scheduler, transfer)
 
   def exposed_summarizeTransfers(self, user=None, detailed=False):
     '''Returns a summary of the number of slots, of running and of pending transfers.
@@ -110,16 +112,16 @@ class DiskServerManagerService(rpyc.Service):
     dlf.writedebug(msgs.INVOKINGTRANSFERSET)
     return tuple(runningTransfers.transferset() | transferQueue.transferset())
 
-  def exposed_killtransfers(self, transferids):
+  def exposed_killtransfers(self, transferIds):
     '''Called when some transfers should be killed'''
-    dlf.writedebug(msgs.INVOKINGKILLTRANSFERS, TransferIds=', '.join(transferids))
+    dlf.writedebug(msgs.INVOKINGKILLTRANSFERS, TransferIds=', '.join(transferIds))
     # remove transfers from the local queue
-    transferQueue.remove(transferids)
+    transferQueue.remove(transferIds)
 
-  def exposed_transferAlreadyStarted(self, transferid, reqid):
-    '''Called when a job has started on another diskserver and can be canceled on this one'''
-    dlf.writedebug(msgs.INVOKINGTRANSFERALREADYSTARTED, subreqid=transferid, reqid=reqid)
-    transferQueue.remove([transferid])
+  def exposed_transferAlreadyStarted(self, transferId, reqId):
+    '''Called when a job has started on another diskServer and can be canceled on this one'''
+    dlf.writedebug(msgs.INVOKINGTRANSFERALREADYSTARTED, subreqId=transferId, reqId=reqId)
+    transferQueue.remove([transferId])
 
   def exposed_getQueueingTransfers(self, scheduler):
     '''returns the list of transfers in the queue'''
@@ -131,15 +133,16 @@ class DiskServerManagerService(rpyc.Service):
     dlf.writedebug(msgs.INVOKINGGETRUNNINGD2DSOURCE, Scheduler=scheduler)
     return tuple(runningTransfers.listRunningD2dSources(scheduler))
 
-  def exposed_retryD2dDest(self, transferid, reqid):
+  def exposed_retryD2dDest(self, transferId, reqId):
     '''called when a d2d copy source has just started and the destination should be started'''
-    dlf.writedebug(msgs.INVOKINGRETRYD2DDEST, subreqid=transferid, reqid=reqid)
-    transferQueue.retryD2dDest(transferid, reqid)
+    dlf.writedebug(msgs.INVOKINGRETRYD2DDEST, subreqId=transferId, reqId=reqId)
+    transferQueue.retryD2dDest(transferId, reqId)
 
-  def exposed_d2dend(self, transferid, reqid):
+  def exposed_d2dend(self, transferTuple):
     '''called when a d2d copy is over and we are the source'''
-    dlf.writedebug(msgs.INVOKINGD2DEND, subreqid=transferid, reqid=reqid)
-    runningTransfers.d2dend(transferid)
+    transfer = tupleToTransfer(transferTuple)
+    dlf.writedebug(msgs.INVOKINGD2DEND, subreqId=transfer.transferId, reqId=transfer.reqId)
+    runningTransfers.d2dend(transfer.transferId)
 
   def exposed_anyTransfersFromScheduler(self, scheduler):
     '''Tells whether any transfer is queueing/ongoing that is handled
@@ -167,13 +170,13 @@ def initQueues():
   for scheduler in configuration.getValue('DiskManager', 'ServerHosts').split():
     try:
       # rebuild list of running d2dsrc transfers
-      for transferid, transfer, arrivaltime in \
+      for transferId, transfer, arrivaltime in \
               connectionpool.connections.getRunningD2dSourceTransfers(scheduler, socket.getfqdn(), timeout=timeout):
-        runningTransfers.add(transferid, scheduler, transfer, None, None, 'd2dsrc', arrivaltime)
+        runningTransfers.add(RunningTransfer(scheduler, None, arrivaltime, transfer))
       # rebuild transfer's queue
-      for transferid, transfer, arrivaltime, transfertype in \
+      for transferId, transfer, arrivaltime, transferType in \
               connectionpool.connections.getQueueingTransfers(scheduler, socket.getfqdn(), timeout=timeout):
-        transferQueue.put(scheduler, transferid, transfer, transfertype, arrivaltime)
+        transferQueue.put(scheduler, transferId, transfer, transferType, arrivaltime)
     except connectionpool.Timeout:
       dlf.writeerr(msgs.NOQUEUERETRIEVED, Scheduler=scheduler, Type='Timeout', Message='Timeout used : %d' % timeout)
       raise SystemExit
@@ -183,7 +186,7 @@ def initQueues():
       dlf.writenotice(msgs.NOQUEUERETRIEVED, Scheduler=scheduler, Type=str(e.__class__), Message=str(e))
 
 import signal
-def handler(signum, frame):
+def handler(signum, _unused_frame):
   '''signal handler for the disk server manager daemon, only logging and calling sys.exit'''
   # 'Caught signal' message
   dlf.write(msgs.SIGNALRECEIVED, Signal=signum)

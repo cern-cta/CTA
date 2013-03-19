@@ -543,12 +543,6 @@ int main(int argc, char** argv) {
       { MOVERNOTEXEC,    "Mover program cannot be executed. Check permissions" },
       { EXECFAILED,      "Failed to exec mover" },
 
-      // Invalid configurations or parameters
-      { DOWNRESFILE,     "Downloading resource file" },
-      { INVALIDURI,      "Invalid Uniform Resource Indicator, cannot download resource file" },
-      { DOWNEXCEPT,      "Exception caught trying to download resource file" },
-      { INVALRESCONT,    "The content of the resource file is invalid" },
-
       // Informative logs
       { JOBSTARTED,      "Job Started" },
       { JOBENDED,        "Job finished successfully" },
