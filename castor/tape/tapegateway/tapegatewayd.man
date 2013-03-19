@@ -34,20 +34,6 @@ Specifies the maximum number of threads that can be in the Worker thread pool.
 \fBTAPEGATEWAY PORT
 Specifies the TCP/IP port used by the tapegateway to receive messages from the
 tape server.  The default is 62801 and should NOT normally be modified.
-.TP
-\fBTAPEGATEWAY MIG_RETRY_POLICY
-Specifies the name of the Python module used by the tapegateway daemon to
-decide what to to do with failed migrations.  The module should contain a
-Python function with the same name as the module.  The tapegateway daemon
-will always call that function.  If this parameter is not specified then all
-failed migrations will be retried.
-.TP
-\fBTAPEGATEWAY REC_RETRY_POLICY
-Specifies the name of the Python module used by the tapegateway daemon to
-decide what to to do with failed recalls.  The module should contain a Python
-function with the same name as the module.  The tapegateway daemon will always
-call that function.  If this parameter is not specified then all
-failed recalls will be retried.
 
 .SH EXAMPLE
 .fi

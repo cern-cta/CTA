@@ -58,7 +58,7 @@ class ActivityControlThread(threading.Thread):
     # get the transfer filesystem
     fs = transfer[-1].split(':')[1]
     # find out the limit in terms of free space, from the config file
-    minFreeSpacePerc = self.configuration.getValue('DiskManager', 'FSMinAllowedFreeSpace', 0, float)
+    minFreeSpacePerc = self.configuration.getValue('DiskManager', 'FSMinAllowedFreeSpace', 0.05, float)
     # get status of the filesystem
     stat = os.statvfs(fs)
     availableSpace = stat.f_bavail * stat.f_frsize

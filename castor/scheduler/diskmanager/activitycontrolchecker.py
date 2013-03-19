@@ -65,7 +65,7 @@ class ActivityControlCheckerThread(threading.Thread):
           continue
         # if too few slots left, nothing looks bad
         nbslots = self.configuration.getValue('DiskManager', 'NbSlots', 0, int)
-        maxnbemptyslots = int(self.configuration.getValue('DiskManager', 'maxNbEmptySlotsUnderLoad'))
+        maxnbemptyslots = self.configuration.getValue('DiskManager', 'maxNbEmptySlotsUnderLoad', 10, int)
         if nbslots - self.runningTransfers.nbUsedSlots() < maxnbemptyslots:
           continue
         # did we scheduler recently ? Then it's ok, we are emptying the queue
