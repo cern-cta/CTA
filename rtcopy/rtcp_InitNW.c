@@ -183,13 +183,6 @@ int rtcpc_InitNW(int **ListenSocket, int *port) {
     return(rtcp_InitNW(ListenSocket,port,type,NULL,NULL));
 }
 
-int rtcpcld_InitNW(int **rtcpdCallback) {
-    int rc;
-    rtcp_type_t type = server;
-    rc = rtcp_InitNW(rtcpdCallback,NULL,type,"rtcpcld","RTCPCLD");
-    return(rc);
-}
-
 /*
  * Cleanup routine to be used in a return statement like,
  *    return(rtcp_CleanUp(ListenSocket,-1));
