@@ -46,7 +46,7 @@ Architecture: any
 Depends: logrotate
 Build-Depends: libattr-devel
 Description: castor (Cern Advanced STORage system)
- The job giving user access to data on the worder nodes
+ The job giving user access to data on the worker nodes
 
 Package: castor-lib
 Architecture: any
