@@ -1,6 +1,6 @@
 Cluster:
-  lxtest/filesystemtest
+  castordev/client
 
 Example:
-  STAGER_TRACE=0 $CASTOR_ROOT/trunk/stressTest/rfio --basedir /castor/cern.ch/c3/castorcert5/notape/stresstest --stager castorcert5-lb --svcclass default --writers 5 --delay 0 --nbfiles 0 --daemonize 2>&1 1>>/tmp/default.log &
+  STAGER_TRACE=0 rfio --basedir /castor/cern.ch/user/s/sponcec3/tape/stress2114 --stager castorcert5-lb --svcclass largedisk2 --nbthreads 20 --nbreads 1 --delay 0 --nbiterations 0 
 
