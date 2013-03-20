@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * g++ -g -pthread -Wall -Werror -D_LARGEFILE64_SOURCE -fPIC -I $CASTOR_ROOT -I $CASTOR_ROOT/h /usr/lib64/libshift.so.2.1 -o rfio rfio.cpp
+ * g++ -g -pthread -Wall -Werror -D_LARGEFILE64_SOURCE -fPIC -I $CASTOR_ROOT -I $CASTOR_ROOT/h -I /usr/include/xrootd/ /usr/lib64/libXrdCl.so /usr/lib64/libshift.so.2.1 -o rfio rfio.cpp
  *
  * Not the best code in the world but it works!
  *  - Still need to add race condition test, same file random operations
