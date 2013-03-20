@@ -55,6 +55,8 @@
 #include "castor/stager/StagePutDoneRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
 
+#include "XrdCl/XrdClFile.hh"
+
 #include "Cns_api.h"
 #include "Cthread_api.h"
 #include "Cuuid.h"
@@ -90,6 +92,7 @@
 #define OPTION_DAEMONIZE          12
 #define OPTION_RACECOND           13
 #define OPTION_RANDOM             14
+#define OPTION_XROOTD             15
 
 // Definitions (Maximum)
 #define MAX_NBTHREADS             50
@@ -118,6 +121,7 @@ static bool        nbfilesArgGiven= false;
 static bool        daemonize      = false;
 static bool        racecondMode   = false;
 static bool        randomMode     = false;
+static bool        doXrootd       = false;
 static pthread_mutex_t globalMutex = PTHREAD_MUTEX_INITIALIZER;;
 
 // some useful types
@@ -360,6 +364,163 @@ int writeFileUsingRFIO(const std::string &filepath,
 
   return 0;
 }
+
+
+//-----------------------------------------------------------------------------
+// ReadFileUsingXROOTD
+//-----------------------------------------------------------------------------
+int readFileUsingXROOTD(const std::string &filepath,
+                        std::string &requestId,
+                        std::string &requestStatus,
+                        const uint64_t expectedFileSize) {
+  const uint32_t MB = 1024*1024;
+  std::string::size_type bufsize = (size_t)(4*MB);
+  std::string buffer;
+  serrno = 0;
+
+  if (bufsize > expectedFileSize) {
+    bufsize = expectedFileSize;
+  }
+
+  buffer.reserve(bufsize);
+
+  XrdCl::File f; 
+  XrdCl::XRootDStatus status;
+  std::string file_url = stagerHost + "/"; file_url += filepath;
+  XrdCl::URL url(file_url);
+
+  if (!url.IsValid()) {
+    serrno = ENXIO;
+    return -1;
+  }
+
+  // Open xrd file for reading
+  status = f.Open(file_url, XrdCl::OpenFlags::Read);
+
+  if (!status.IsOK()) {
+    serrno = status.errNo;
+    return -1;
+  }
+  
+  // Stat the file and get the file size 
+  XrdCl::StatInfo* stat = 0;
+  status = f.Stat(false, stat);
+
+  if (!status.IsOK()) {
+    delete stat;
+    serrno = status.errNo;
+    return -1;
+  }
+
+  uint64_t offset = 0;
+  uint32_t bytes_read = 0;
+  uint64_t file_size = stat->GetSize();
+  delete stat; 
+
+  // Shrink read buffer if too big
+  if (bufsize > file_size) {
+    bufsize = file_size;
+  }
+
+  buffer.reserve(bufsize);
+
+  // Read the entire file
+  do {
+    status = f.Read(offset, bufsize, 
+                    (void *)(buffer.c_str()), bytes_read);
+
+    if (!status.IsOK()) {
+      serrno = status.errNo;
+      return -1;     
+    }
+
+    offset += bytes_read;
+    file_size -= bytes_read;
+    bufsize = ((bufsize > file_size) ? file_size : bufsize);
+  } while (file_size > 0);
+
+  // Close xrootd file 
+  status = f.Close();
+
+  if (!status.IsOK()) {
+    serrno = status.errNo;
+    return -1;
+  }
+
+  return 0;
+}
+
+
+//-----------------------------------------------------------------------------
+// WriteFileUsingXROOTD
+//-----------------------------------------------------------------------------
+int writeFileUsingXROOTD(const std::string &filepath,
+                         std::string &requestId,
+                         std::string &requestStatus,
+                         const uint64_t fileSize) {
+  // Create the temporary buffer for storing data before write
+  uint64_t offset = 0;
+  const uint32_t MB = 1024*1024;
+  std::string::size_type bufsize = (size_t)(4*MB);
+  std::string buffer;
+  serrno = 0;
+
+  // If the fileSize is less than the buffer reset the size and then reserve
+  // the amount of storage required.
+  if (bufsize > fileSize) {
+    bufsize = fileSize;
+  }
+  buffer.reserve(bufsize);
+
+  // The buffer should contain random data
+  generate_n(std::back_inserter(buffer), bufsize - buffer.length(), randAlnum);
+
+  XrdCl::File f; 
+  XrdCl::XRootDStatus status;
+  std::string file_url = stagerHost + "/"; file_url += filepath;
+  XrdCl::URL url(file_url);
+
+  if (!url.IsValid()) {
+    serrno = status.errNo;
+    return -1;
+  }
+
+  // Open xrootd file for writing 
+  status = f.Open(file_url, 
+                  XrdCl::OpenFlags::Delete | XrdCl::OpenFlags::Update,
+                  XrdCl::Access::UR | XrdCl::Access::UW);
+  
+  if (!status.IsOK()) {
+    serrno = status.errNo;
+    return -1;
+  }
+
+  // Write to the file 
+  do {
+    status = f.Write(offset, bufsize, 
+                     (void *)(buffer.c_str()) );
+    
+    if (!status.IsOK()) {
+      serrno = status.errNo;
+      return -1;     
+    }
+
+    offset += bufsize;
+    bufsize = ((bufsize > (fileSize - offset)) ? 
+               (fileSize - offset) : bufsize);
+  } while (offset < fileSize);
+
+  // Close xrootd file 
+  status = f.Close();
+
+  if (!status.IsOK()) {
+    serrno = status.errNo;
+    return -1;
+  }
+
+  return 0;
+}
+
 
 //-----------------------------------------------------------------------------
 // PrepareStagerRequest
@@ -802,49 +963,68 @@ void standardWorker(void) {
     std::string dirpath = buildDirPath(tid, hostname, tv);
     std::ostringstream filepath;
     filepath << dirpath << uuid;
-    // Invoke PrepareToPut if needed
-    if (putDoneCycle) {
+    if (doXrootd) {
+      // Do test using xrootd 
+      // Write the file
       if (0 != issueCommand(dirpath, filepath.str(), tid,
-                            sendPrepareToPutRequest,
-                            "sendPrepareToPutRequest")) {
-	continue;
-      }
-    }
-    // Write the file
-    if (0 != issueCommand(dirpath, filepath.str(), tid,
-                          writeFileUsingRFIO, "writeFileUsingRFIO",
-                          writeFileSize)) {
-      continue;
-    }
-    // Invoke PutDone if needed
-    if (putDoneCycle) {
-      if (0 != issueCommand(dirpath, filepath.str(), tid,
-                            sendPutDoneRequest, "sendPutDoneRequest")) {
-	continue;
-      }
-    }
-    // Stat the file
-    if (fileStat) {
-      if (0 != issueCommand(dirpath, filepath.str(), tid,
-                            sendStatRequest, "sendStatRequest",
-                            0, false)) {
-	continue;
-      }
-    }
-    // Perform a file query if needed
-    if (fileQuery) {
-      if (0 != issueCommand(dirpath, filepath.str(), tid,
-                            sendFileQueryRequest, "sendFileQueryRequest",
-                            0, false)) {
-	continue;
-      }
-    }
-    // Read the file back n times
-    for (int j = 0; j < nbReads; j++) {
-      if (0 != issueCommand(dirpath, filepath.str(), tid,
-                            readFileUsingRFIO, "readFileUsingRFIO",
-                            writeFileSize, false)) {
+                            writeFileUsingXROOTD, "writeFileUsingXROOTD",
+                            writeFileSize)) {
         continue;
+      }
+      // Read the file back n times
+      for (int j = 0; j < nbReads; j++) {
+        if (0 != issueCommand(dirpath, filepath.str(), tid,
+                              readFileUsingXROOTD, "readFileUsingXROOTD",
+                              writeFileSize, false)) {
+          continue;
+        }
+      }
+    }
+    else {
+      // Invoke PrepareToPut if needed
+      if (putDoneCycle) {
+        if (0 != issueCommand(dirpath, filepath.str(), tid,
+                              sendPrepareToPutRequest,
+                              "sendPrepareToPutRequest")) {
+          continue;
+        }
+      }
+      // Write the file
+      if (0 != issueCommand(dirpath, filepath.str(), tid,
+                            writeFileUsingRFIO, "writeFileUsingRFIO",
+                            writeFileSize)) {
+        continue;
+      }
+      // Invoke PutDone if needed
+      if (putDoneCycle) {
+        if (0 != issueCommand(dirpath, filepath.str(), tid,
+                              sendPutDoneRequest, "sendPutDoneRequest")) {
+          continue;
+        }
+      }
+      // Stat the file
+      if (fileStat) {
+        if (0 != issueCommand(dirpath, filepath.str(), tid,
+                              sendStatRequest, "sendStatRequest",
+                              0, false)) {
+          continue;
+        }
+      }
+      // Perform a file query if needed
+      if (fileQuery) {
+        if (0 != issueCommand(dirpath, filepath.str(), tid,
+                              sendFileQueryRequest, "sendFileQueryRequest",
+                              0, false)) {
+          continue;
+        }
+      }
+      // Read the file back n times
+      for (int j = 0; j < nbReads; j++) {
+        if (0 != issueCommand(dirpath, filepath.str(), tid,
+                              readFileUsingRFIO, "readFileUsingRFIO",
+                              writeFileSize, false)) {
+          continue;
+        }
       }
     }
     // Sleep a bit if delay is greater than 0
@@ -879,19 +1059,47 @@ void racecondWorker(void) {
     // Construct the filepath
     std::ostringstream filepath;
     filepath << dirpath << "file" << fileNumber;
+    // Randomly select a protocol for writing RFIO / XROOTD
+    unsigned int protocolType = rand_r(&seed) % 2;
     // Write the file
-    int rc = issueCommand(dirpath, filepath.str(), tid,
-                          writeFileUsingRFIO, "writeFileUsingRFIO",
-                          writeFileSize, false);
-    if ((0 != rc) && (EBUSY != rc)) {
-      continue;
+    if ( protocolType == 0 ) {
+      // Use RFIO
+      int rc = issueCommand(dirpath, filepath.str(), tid,
+                            writeFileUsingRFIO, "writeFileUsingRFIO",
+                            writeFileSize, false);
+      if ((0 != rc) && (EBUSY != rc)) {
+        continue;
+      }
+    }
+    else {
+      // Use XROOTD
+      int rc = issueCommand(dirpath, filepath.str(), tid,
+                            writeFileUsingXROOTD, "writeFileUsingXROOTD",
+                            writeFileSize, false);
+      if ((0 != rc) && (EBUSY != rc)) {
+        continue;
+      }
     }
     // Read the file back n times
-    rc = issueCommand(dirpath, filepath.str(), tid,
-                      readFileUsingRFIO, "readFileUsingRFIO",
-                      writeFileSize, false);
-    if ((0 != rc) && (ENOENT != rc) && (EBUSY != rc)) {
-      continue;
+    // Randomly select a protocol for reading RFIO / XROOTD
+    protocolType = rand_r(&seed) % 2;
+    if (protocolType == 0) {
+      // Use RFIO
+      int rc = issueCommand(dirpath, filepath.str(), tid,
+                        readFileUsingRFIO, "readFileUsingRFIO",
+                        writeFileSize, false);
+      if ((0 != rc) && (ENOENT != rc) && (EBUSY != rc)) {
+        continue;
+      }
+    }
+    else {
+      // Use XROOTD 
+      int rc = issueCommand(dirpath, filepath.str(), tid,
+                        readFileUsingXROOTD, "readFileUsingXROOTD",
+                        writeFileSize, false);
+      if ((0 != rc) && (ENOENT != rc) && (EBUSY != rc)) {
+        continue;
+      }
     }
   }
   // Exit
@@ -923,6 +1131,8 @@ void randomWorker(void) {
   availableCommands.push_back(cmd_t(sendPutDoneRequest, "sendPutDoneRequest"));
   availableCommands.push_back(cmd_t(writeFileUsingRFIO, "writeFileUsingRFIO"));
   availableCommands.push_back(cmd_t(readFileUsingRFIO, "readFileUsingRFIO"));
+  availableCommands.push_back(cmd_t(writeFileUsingXROOTD, "writeFileUsingXROOTD"));
+  availableCommands.push_back(cmd_t(readFileUsingXROOTD, "readFileUsingXROOTD"));
   unsigned int nbAvailableCommands = availableCommands.size();
   // Main transfer loop
   for (unsigned int i = 0; (i < iterations) || (iterations == 0); i++) {
@@ -1007,6 +1217,7 @@ int main (int argc, char **argv) {
     { "racecond",    no_argument,       NULL,  OPTION_RACECOND      },
     { "random",      no_argument,       NULL,  OPTION_RANDOM        },
     { "nbfiles",     required_argument, NULL,  OPTION_NBFILES       },
+    { "xrd",         no_argument,       NULL,  OPTION_XROOTD        },
     { NULL,          0,                 NULL,  0                    }
   };
 
@@ -1091,6 +1302,9 @@ int main (int argc, char **argv) {
       break;
     case OPTION_RANDOM:
       randomMode = true;
+      break;
+    case OPTION_XROOTD:
+      doXrootd = true;
       break;
 
       // Commands with short option
