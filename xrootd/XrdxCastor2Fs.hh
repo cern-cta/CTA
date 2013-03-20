@@ -185,7 +185,7 @@ class XrdxCastor2FsGroupInfo
 {
   public:
 
-  XrdOucString DefaultGroup; ///<
+    XrdOucString DefaultGroup; ///<
     XrdOucString AllGroups;  ///<
     struct passwd Passwd;    ///<
     int Lifetime;            ///<
@@ -941,6 +941,56 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
 
 
     //--------------------------------------------------------------------------
+    //! Get uid and gid for current path and client 
+    //!
+    //! @param path file path 
+    //! @param client client entity
+    //! @param uid uid corresponding to the client 
+    //! @param gid gid corresponding to the client 
+    //!
+    //--------------------------------------------------------------------------
+    void GetId( const char* path, XrdSecEntity client, uid_t& uid, gid_t& gid);
+
+
+    //--------------------------------------------------------------------------
+    //! Set the acl for a file given the current client 
+    //!
+    //! @param path file path
+    //! @param client client entity
+    //! @param isLink true if file is link
+    //!
+    //--------------------------------------------------------------------------
+    void SetAcl( const char* path, XrdSecEntity client, bool isLink ); 
+
+
+    //--------------------------------------------------------------------------
+    //! Get all groups for a user name 
+    //!
+    //! @param name client name 
+    //! @param allGroups all groups for the given client 
+    //! @param defaultGroup default group for the given client 
+    //!
+    //--------------------------------------------------------------------------
+    void GetAllGroups( const char*   name, 
+                       XrdOucString& allGroups, 
+                       XrdOucString& defaultGroup );
+
+    //--------------------------------------------------------------------------
+    //! Map client to role 
+    //!
+    //! @param client client entity
+    //! @param env env information 
+    //! @param mappedClient mapped client information
+    //! @param tident tident information
+    //! 
+    //--------------------------------------------------------------------------
+    void RoleMap( const XrdSecEntity* client, 
+                  const char*         env, 
+                  XrdSecEntity&       mappedClient, 
+                  const char*         tident );
+
+
+    //--------------------------------------------------------------------------
     //! Map input path according to policy
     //!
     //! @param input the initial input path
@@ -957,23 +1007,8 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
     void ReloadGridMapFile();
 
 
-    //--------------------------------------------------------------------------
-    //! Reload VOMS map file 
-    //--------------------------------------------------------------------------
-    void ReloadVomsMapFile();
-
-
-    //--------------------------------------------------------------------------
-    //! VOMS map groups
-    //--------------------------------------------------------------------------
-    bool VomsMapGroups( const XrdSecEntity* client, 
-                        XrdSecEntity&       mappedclient, 
-                        XrdOucString&       allgroups, 
-                        XrdOucString&       defaultgroup );
-
     bool MapCernCertificates;
     XrdOucString GridMapFile;
-    XrdOucString VomsMapFile;
     XrdOucString LocationCacheDir;
     char* ConfigFN;  ///< path to config file 
 

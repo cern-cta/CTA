@@ -64,7 +64,6 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
   xCastor2FsDelayRead = 0;
   xCastor2FsDelayWrite = 0;
   GridMapFile = "";
-  VomsMapFile = "";
   LocationCacheDir = "";
   long myPort = 0;
 
@@ -400,17 +399,6 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
             }
           }
         }
-      }
-
-      if ( !strcmp( "vomsmapfile", var ) ) {
-        if ( ( !( val = config_stream.GetWord() ) ) || ( ::access( val, R_OK ) ) ) {
-          Eroute.Emsg( "Config", "I cannot access your specified vomsmap file!" );
-          NoGo = 1;
-        } else {
-          VomsMapFile = val;
-        }
-
-        Eroute.Say( "=====> xcastor2.vomsmapfile : ", val );
       }
 
       if ( !strcmp( "locationcache", var ) ) {

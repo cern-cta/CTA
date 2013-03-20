@@ -113,239 +113,243 @@ STRINGSTORE( const char* __charptr__ )
   }
 }
 
-/******************************************************************************/
-/*                        D e f i n e s                                       */
-/******************************************************************************/
-
 
 //------------------------------------------------------------------------------
-//
+// Get uid and gid for current path and client 
 //------------------------------------------------------------------------------
-#define GETID(_x,_client, _uid, _gid)                                    \
-  do {                                                                   \
-    XrdxCastor2FS->MapMutex.Lock();                                      \
-    _uid=99;                                                             \
-    _gid=99;                                                             \
-    struct passwd* pw = NULL;                                            \
-    XrdxCastor2FsGroupInfo* ginfo=NULL;                                  \
-    if (_client.name) {                                                  \
-      if ((ginfo = XrdxCastor2FS->groupinfocache->Find(_client.name))) { \
-        pw = &(ginfo->Passwd);                                           \
-        if (pw) _uid=pw->pw_uid;                                         \
-  if (pw) _gid=pw->pw_gid;                                               \
-      } else {                                                           \
-        if (!(pw = XrdxCastor2Fs::passwdstore->Find(_client.name))) {    \
-          pw = getpwnam(_client.name);                                   \
-          if (pw) {                                                      \
-            struct passwd* pwdcpy = (struct passwd*) malloc(sizeof(struct passwd)); \
-            memcpy(pwdcpy,pw,sizeof(struct passwd));                    \
-            pw = pwdcpy;                                                \
-            XrdxCastor2Fs::passwdstore->Add(_client.name,pwdcpy,60);    \
-          }                                                             \
-        }                                                               \
-        if (pw) _uid=pw->pw_uid;                                        \
-        if (pw) _gid=pw->pw_gid;                                        \
-      }                                                                 \
-    }                                                                   \
-    if (_client.role) {                                                 \
-      char buffer[65536];                                               \
-      struct group* gr=0;                                               \
-      struct group group;                                               \
-      getgrnam_r(_client.role, &group, buffer, 65536, &gr);             \
-      if (gr) _gid= gr->gr_gid;                                         \
-    } else {                                                            \
-      if (pw) _gid=pw->pw_gid;                                          \
-    }                                                                   \
-    if (_uid==0) {_gid=0;}                                              \
-    XrdOucString tracestring = "getgid ";                               \
-    tracestring += (int)_uid;                                           \
-    tracestring += "/";                                                 \
-    tracestring += (int)_gid;                                           \
-    xcastor_static_debug("file=%s, tracestring=%s", _x, tracestring.c_str()); \
-    XrdxCastor2FS->MapMutex.UnLock();                                   \
-  } while (0);                                                          \
+void
+XrdxCastor2Fs::GetId( const char* path, XrdSecEntity client, uid_t& uid, gid_t& gid)
+{
+  MapMutex.Lock();
+  uid = 99;
+  gid = 99;
+  struct passwd* pw = NULL;
+  XrdxCastor2FsGroupInfo* ginfo = NULL;
+
+  if (client.name) {
+    if ((ginfo = groupinfocache->Find(client.name))) {
+      pw = &(ginfo->Passwd);
+      if (pw) uid = pw->pw_uid;
+      if (pw) gid = pw->pw_gid;
+    } else {   
+      if (!(pw = passwdstore->Find(client.name))) {
+        pw = getpwnam(client.name); 
+        if (pw) { 
+          struct passwd* pwdcpy = (struct passwd*) malloc(sizeof(struct passwd));
+          memcpy(pwdcpy,pw,sizeof(struct passwd));
+          pw = pwdcpy;
+          passwdstore->Add(client.name,pwdcpy,60);
+        } 
+      }
+      if (pw) {
+        uid=pw->pw_uid; 
+        gid=pw->pw_gid; 
+      }
+    }
+  }  
+
+  if (client.role) { 
+    char buffer[65536];
+    struct group* gr=0;
+    struct group group;
+    getgrnam_r(client.role, &group, buffer, 65536, &gr); 
+    if (gr) gid = gr->gr_gid; 
+  } else {                    
+    if (pw) gid = pw->pw_gid; 
+  } 
+
+  if (uid == 0) { gid = 0; } 
+
+  XrdOucString tracestring = "getgid "; 
+  tracestring += (int) uid; 
+  tracestring += "/";
+  tracestring += (int) gid; 
+  xcastor_debug("file=%s, tracestring=%s", path, tracestring.c_str());
+  MapMutex.UnLock();
+}
 
  
 //------------------------------------------------------------------------------
-//
+// Set the ACL for a file 
 //------------------------------------------------------------------------------
-#define SETACL(_x,_client,_link) \
-  do {                                                                  \
-    XrdxCastor2FS->MapMutex.Lock();                                     \
-    uid_t uid=99;                                                       \
-    uid_t gid=0;                                                        \
-    struct passwd* pw = NULL;                                           \
-    XrdxCastor2FsGroupInfo* ginfo=NULL;                                 \
-    if (_client.name) {                                                 \
-      if ((ginfo = XrdxCastor2FS->groupinfocache->Find(_client.name))) {\
-        pw = &(ginfo->Passwd);                                          \
-        if (pw) uid=pw->pw_uid;                                         \
-      } else {                                                          \
-        if (!(pw = XrdxCastor2Fs::passwdstore->Find(_client.name))) {   \
-          pw = getpwnam(_client.name);                                  \
-          struct passwd* pwdcpy = (struct passwd*) malloc(sizeof(struct passwd));\
-          memcpy(pwdcpy,pw,sizeof(struct passwd));                      \
-          pw = pwdcpy;                                                  \
-          XrdxCastor2Fs::passwdstore->Add(_client.name,pwdcpy,60);      \
-        }                                                               \
-        if (pw) uid=pw->pw_uid;                                         \
-      }                                                                 \
-    }                                                                   \
-    if (_client.role) {                                                 \
-      char buffer[65536];                                               \
-      struct group* gr=0;                                               \
-      struct group group;                                               \
-      getgrnam_r(_client.role, &group, buffer, 65536, &gr);             \
-      if (gr) gid= gr->gr_gid;                                          \
-    } else {                                                            \
-      if (pw) gid=pw->pw_gid;                                           \
-    }                                                                   \
-    XrdOucString tracestring = "setacl ";                               \
-    tracestring += (int)uid;                                            \
-    tracestring += "/";                                                 \
-    tracestring += (int)gid;                                            \
-    xcastor_static_debug("file=%s, tracestring=%s", _x, tracestring.c_str()); \
-    if (_link) {                                                        \
-      if (XrdxCastor2FsUFS::Lchown(_x , uid,gid)) {                     \
-        xcastor_debug("file=%s, error:chown failed");                   \
-      }                                                                 \
-    } else {                                                            \
-      if (XrdxCastor2FsUFS::Chown(_x , uid,gid)) {                      \
-        xcastor_debug("file=%s, error:chown failed");                   \
-      }                                                                 \
-    }                                                                   \
-    XrdxCastor2FS->MapMutex.UnLock();                                   \
-  } while (0);
-
-
-//------------------------------------------------------------------------------
-//
-//------------------------------------------------------------------------------
-void GETALLGROUPS( const char*   __name__, 
-                   XrdOucString& __allgroups__, 
-                   XrdOucString& __defaultgroup__ )
+void 
+XrdxCastor2Fs::SetAcl( const char* path, XrdSecEntity client, bool isLink )                   
 {
-  do {
-    __allgroups__ = ":";
-    __defaultgroup__ = "";
-    XrdxCastor2FsGroupInfo* ginfo = NULL;
+  MapMutex.Lock();  // -->
+  uid_t uid = 99;
+  uid_t gid = 0;
+  struct passwd* pw = NULL;                                           
+  XrdxCastor2FsGroupInfo* ginfo=NULL;                                 
+  if (client.name) {                                                  
+    if ((ginfo = groupinfocache->Find(client.name))) {
+      pw = &(ginfo->Passwd);                                          
+      if (pw) uid=pw->pw_uid;                                         
+    } else {                                                          
+      if (!(pw = passwdstore->Find(client.name))) {   
+        pw = getpwnam(client.name);                                  
+        struct passwd* pwdcpy = (struct passwd*) malloc(sizeof(struct passwd));
+        memcpy(pwdcpy,pw,sizeof(struct passwd));                      
+        pw = pwdcpy;                                                  
+        passwdstore->Add(client.name,pwdcpy,60);      
+      }                                                               
+      if (pw) uid=pw->pw_uid;                                         
+    }                                                                 
+  }                                                                   
+  if (client.role) {                                                 
+    char buffer[65536];                                               
+    struct group* gr=0;                                               
+    struct group group;                                               
+    getgrnam_r(client.role, &group, buffer, 65536, &gr);             
+    if (gr) gid= gr->gr_gid;                                          
+  } else {                                                            
+    if (pw) gid=pw->pw_gid;                                           
+  }                     
+                                              
+  XrdOucString tracestring = "setacl ";                               
+  tracestring += (int)uid;                                            
+  tracestring += "/";                                                 
+  tracestring += (int)gid;                                            
+  xcastor_debug("file=%s, tracestring=%s", path, tracestring.c_str()); 
 
-    if ( ( ginfo = XrdxCastor2FS->groupinfocache->Find( __name__ ) ) ) {
-      __allgroups__ = ginfo->AllGroups;
-      __defaultgroup__ = ginfo->DefaultGroup;
-      break;
-    }
-
-    struct group* gr;
-
-    struct passwd* passwdinfo = NULL;
-
-    if ( !( passwdinfo = XrdxCastor2Fs::passwdstore->Find( __name__ ) ) ) {
-      passwdinfo = getpwnam( __name__ );
-
-      if ( passwdinfo ) {
-        struct passwd* pwdcpy = ( struct passwd* ) malloc( sizeof( struct passwd ) );
-        memcpy( pwdcpy, passwdinfo, sizeof( struct passwd ) );
-        passwdinfo = pwdcpy;
-        XrdxCastor2Fs::passwdstore->Add( __name__, pwdcpy, 60 );
-      }
-    }
-
-    if ( !passwdinfo )
-      continue;
-
-    setgrent();
-    char buf[65536];
-    struct group grp;
-
-    while ( ( !getgrent_r( &grp, buf, 65536, &gr ) ) ) {
-      int cnt;
-      cnt = 0;
-
-      if ( gr->gr_gid == passwdinfo->pw_gid ) {
-        if ( !__defaultgroup__.length() ) __defaultgroup__ += gr->gr_name;
-
-        __allgroups__ += gr->gr_name;
-        __allgroups__ += ":";
-      }
-
-      while ( gr->gr_mem[cnt] ) {
-        if ( !strcmp( gr->gr_mem[cnt], __name__ ) ) {
-          __allgroups__ += gr->gr_name;
-          __allgroups__ += ":";
-        }
-
-        cnt++;
-      }
-    }
-
-    endgrent();
-    ginfo = new XrdxCastor2FsGroupInfo( __defaultgroup__.c_str(), __allgroups__.c_str(), passwdinfo );
-    XrdxCastor2FS->groupinfocache->Add( __name__, ginfo, ginfo->Lifetime );
-  } while ( 0 );
+  if (isLink) {                                                       
+    if ( XrdxCastor2FsUFS::Lchown(path , uid, gid)) {                  
+      xcastor_debug("file=%s, error:chown failed");                   
+    }                                                                 
+  } else {                                                            
+    if (XrdxCastor2FsUFS::Chown(path, uid, gid)) {                    
+      xcastor_debug("file=%s, error:chown failed");                   
+    }                                                                 
+  }                                                                   
+  
+  MapMutex.UnLock(); // <--
 }
 
 
 //------------------------------------------------------------------------------
-//
+// Get all groups for a user name 
 //------------------------------------------------------------------------------
-void ROLEMAP( const XrdSecEntity* _client, 
-              const char*         _env, 
-              XrdSecEntity&       _mappedclient, 
-              const char*         tident )
+void 
+XrdxCastor2Fs::GetAllGroups( const char*   name, 
+                             XrdOucString& allGroups, 
+                             XrdOucString& defaultGroup )
 {
-  XrdSecEntity* entity = NULL;
-  XrdOucEnv lenv( _env );
-  const char* role = lenv.Get( "role" );
-  XrdxCastor2FS->SecEntityMutex.Lock();
-  char clientid[1024];
-  sprintf( clientid, "%s:%llu", tident, ( unsigned long long ) _client );
+  allGroups = ":";
+  defaultGroup = "";
+  XrdxCastor2FsGroupInfo* ginfo = NULL;
 
-  if ( ( !role ) && ( entity = XrdxCastor2FS->secentitystore->Find( clientid ) ) ) {
-    // Find existing client rolemaps ....
-    _mappedclient.name = entity->name;
-    _mappedclient.role = entity->role;
-    _mappedclient.host = entity->host;
-    _mappedclient.vorg = entity->vorg;
-    _mappedclient.grps = entity->grps;
-    _mappedclient.endorsements = entity->endorsements;
-    _mappedclient.tident = entity->endorsements;
-    uid_t _client_uid;
-    gid_t _client_gid;
-    GETID( "-", _mappedclient, _client_uid, _client_gid );
-    XrdxCastor2FsUFS::SetId( _client_uid, _client_gid );
-    XrdxCastor2FS->SecEntityMutex.UnLock();
+  if ( ( ginfo = groupinfocache->Find( name ) ) ) {
+    allGroups = ginfo->AllGroups;
+    defaultGroup = ginfo->DefaultGroup;
     return;
   }
 
-  // (re-)create client rolemaps
+  struct group* gr;
+  struct passwd* passwdinfo = NULL;
+
+  if ( !( passwdinfo = XrdxCastor2Fs::passwdstore->Find( name ) ) ) {
+    passwdinfo = getpwnam( name );
+
+    if ( passwdinfo ) {
+      struct passwd* pwdcpy = ( struct passwd* ) malloc( sizeof( struct passwd ) );
+      memcpy( pwdcpy, passwdinfo, sizeof( struct passwd ) );
+      passwdinfo = pwdcpy;
+      XrdxCastor2Fs::passwdstore->Add( name, pwdcpy, 60 );
+    }
+  }
+
+  setgrent();
+  char buf[65536];
+  struct group grp;
+
+  while ( ( !getgrent_r( &grp, buf, 65536, &gr ) ) ) {
+    int cnt;
+    cnt = 0;
+
+    if ( gr->gr_gid == passwdinfo->pw_gid ) {
+      if ( !defaultGroup.length() ) defaultGroup += gr->gr_name;
+
+      allGroups += gr->gr_name;
+      allGroups += ":";
+    }
+
+    while ( gr->gr_mem[cnt] ) {
+      if ( !strcmp( gr->gr_mem[cnt], name ) ) {
+        allGroups += gr->gr_name;
+        allGroups += ":";
+      }
+
+      cnt++;
+    }
+  }
+
+  endgrent();
+  ginfo = new XrdxCastor2FsGroupInfo( defaultGroup.c_str(), allGroups.c_str(), passwdinfo );
+  groupinfocache->Add( name, ginfo, ginfo->Lifetime );
+}
+
+
+//------------------------------------------------------------------------------
+// Map client to role
+//------------------------------------------------------------------------------
+void 
+XrdxCastor2Fs::RoleMap( const XrdSecEntity* client, 
+                        const char*         env, 
+                        XrdSecEntity&       mappedClient, 
+                        const char*         tident )
+{
+  XrdSecEntity* entity = NULL;
+  int len_env;
+  XrdOucEnv lenv( env );
+  const char* role = lenv.Get( "role" );
+  SecEntityMutex.Lock();  // -->
+  char clientid[1024];
+  sprintf( clientid, "%s:%llu", tident, ( unsigned long long ) client );
+  xcastor_debug( "tident=%s env=%s", tident, lenv.Env( len_env ) );
+
+  if ( ( !role ) && ( entity = secentitystore->Find( clientid ) ) ) {
+    // Find existing client rolemaps ....
+    mappedClient.name = entity->name;
+    mappedClient.role = entity->role;
+    mappedClient.host = entity->host;
+    mappedClient.vorg = entity->vorg;
+    mappedClient.grps = entity->grps;
+    mappedClient.endorsements = entity->endorsements;
+    mappedClient.tident = entity->endorsements;
+    uid_t _client_uid;
+    gid_t _client_gid;
+    GetId( "-", mappedClient, _client_uid, _client_gid );
+    XrdxCastor2FsUFS::SetId( _client_uid, _client_gid );
+    SecEntityMutex.UnLock();  // <--
+    return;
+  }
+
   do {
-    XrdxCastor2FS->MapMutex.Lock();
-    _mappedclient.name = "__noauth__";
-    _mappedclient.role = "__noauth__";
-    _mappedclient.host = "";
-    _mappedclient.vorg = "";
-    _mappedclient.role = "";
-    _mappedclient.grps = "__noauth__";
-    _mappedclient.endorsements = "";
-    _mappedclient.tident = "";
+    // (re-)create client rolemaps
+    MapMutex.Lock();  // -->
 
-    if ( _client ) {
-      if ( _client->prot )
-        strcpy( _mappedclient.prot, _client->prot );
+    mappedClient.name = "__noauth__";
+    mappedClient.role = "__noauth__";
+    mappedClient.host = "";
+    mappedClient.vorg = "";
+    mappedClient.role = "";
+    mappedClient.grps = "__noauth__";
+    mappedClient.endorsements = "";
+    mappedClient.tident = "";
 
-      if ( _client->name )_mappedclient.name = STRINGSTORE( _client->name );
-      if ( _client->host )_mappedclient.host = STRINGSTORE( _client->host );
-      if ( _client->vorg )_mappedclient.vorg = STRINGSTORE( _client->vorg );
-      if ( _client->role )_mappedclient.role = STRINGSTORE( _client->role );
-      if ( _client->grps )_mappedclient.grps = STRINGSTORE( _client->grps );
-      if ( _client->endorsements )_mappedclient.endorsements = STRINGSTORE( _client->endorsements );
-      if ( _client->tident )_mappedclient.tident = STRINGSTORE( _client->tident );
+    if ( client ) {
+      if ( client->prot ) strcpy( mappedClient.prot, client->prot );
+      if ( client->name ) mappedClient.name = STRINGSTORE( client->name );
+      if ( client->host ) mappedClient.host = STRINGSTORE( client->host );
+      if ( client->vorg ) mappedClient.vorg = STRINGSTORE( client->vorg );
+      if ( client->role ) mappedClient.role = STRINGSTORE( client->role );
+      if ( client->grps ) mappedClient.grps = STRINGSTORE( client->grps );
+      if ( client->endorsements ) mappedClient.endorsements = STRINGSTORE( client->endorsements );
+      if ( client->tident ) mappedClient.tident = STRINGSTORE( client->tident );
 
       // Static user mapping
       XrdOucString* hisroles;
 
-      if ( ( hisroles = XrdxCastor2FS->roletable->Find( "*" ) ) ) {
+      if ( ( hisroles = roletable->Find( "*" ) ) ) {
         XrdOucString allgroups;
         XrdOucString defaultgroup;
         XrdOucString FixedName;
@@ -360,103 +364,100 @@ void ROLEMAP( const XrdSecEntity* _client,
           FixedName.replace( ":", "" );
         }
 
-        _mappedclient.name = STRINGSTORE( FixedName.c_str() );
-        GETALLGROUPS( _mappedclient.name, allgroups, defaultgroup );
-        _mappedclient.grps = STRINGSTORE( defaultgroup.c_str() );
-        _mappedclient.role = STRINGSTORE( defaultgroup.c_str() );
+        mappedClient.name = STRINGSTORE( FixedName.c_str() );
+        GetAllGroups( mappedClient.name, allgroups, defaultgroup );
+        mappedClient.grps = STRINGSTORE( defaultgroup.c_str() );
+        mappedClient.role = STRINGSTORE( defaultgroup.c_str() );
         break;
       }
 
-      if ( ( _client->prot ) && ( ( !strcmp( _client->prot, "gsi" ) ) || 
-                                  ( !strcmp( _client->prot, "ssl" ) ) ) ) 
-      {
-        XrdOucString certsubject = _client->name;
-
-        if ( ( XrdxCastor2FS->MapCernCertificates ) && 
-             ( certsubject.beginswith( "/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=" ) ) ) 
+      if ( ( client->prot ) && ( ( !strcmp( client->prot, "gsi" ) ) || 
+                                 ( !strcmp( client->prot, "ssl" ) ) ) ) 
         {
-          certsubject.erasefromstart( strlen( "/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=" ) );
-          int pos = certsubject.find( '/' );
+          XrdOucString certsubject = client->name;
 
-          if ( pos != STR_NPOS )
-            certsubject.erase( pos );
+          if ( ( MapCernCertificates ) && 
+               ( certsubject.beginswith( "/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=" ) ) ) 
+            {
+              certsubject.erasefromstart( strlen( "/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=" ) );
+              int pos = certsubject.find( '/' );
 
-          _mappedclient.name = STRINGSTORE( certsubject.c_str() );
+              if ( pos != STR_NPOS )
+                certsubject.erase( pos );
+
+              mappedClient.name = STRINGSTORE( certsubject.c_str() );
+            }
+
+          certsubject.replace( "/CN=proxy", "" );
+          // Leave only the first CN=, cut the rest
+          int pos = certsubject.find( "CN=" );
+          int pos2 = certsubject.find( "/", pos );
+
+          if ( pos2 > 0 ) certsubject.erase( pos2 );
+
+          XrdOucString* gridmaprole;
+
+          if ( GridMapFile.length() ) { ReloadGridMapFile(); }
+
+          GridMapMutex.Lock();    // -->
+
+          if ( ( gridmaprole = gridmapstore->Find( certsubject.c_str() ) ) ) {
+            mappedClient.name = STRINGSTORE( gridmaprole->c_str() );
+            mappedClient.role = 0;
+          }
+
+          GridMapMutex.UnLock();  // <--
         }
-
-        certsubject.replace( "/CN=proxy", "" );
-        // Leave only the first CN=, cut the rest
-        int pos = certsubject.find( "CN=" );
-        int pos2 = certsubject.find( "/", pos );
-
-        if ( pos2 > 0 ) certsubject.erase( pos2 );
-
-        XrdOucString* gridmaprole;
-
-        if ( XrdxCastor2FS->GridMapFile.length() ) XrdxCastor2FS->ReloadGridMapFile();
-
-        XrdxCastor2FS->GridMapMutex.Lock();
-
-        if ( ( gridmaprole = XrdxCastor2FS->gridmapstore->Find( certsubject.c_str() ) ) ) {
-          _mappedclient.name = STRINGSTORE( gridmaprole->c_str() );
-          _mappedclient.role = 0;
-        }
-
-        XrdxCastor2FS->GridMapMutex.UnLock();
-      }
     }
 
-    if ( _client && _mappedclient.name ) {
+    if ( client && mappedClient.name ) {
       XrdOucString defaultgroup = "";
       XrdOucString allgroups = "";
 
-      if ( _client->role ) {
-        defaultgroup = _client->role;
+      if ( client->role ) {
+        defaultgroup = client->role;
       }
 
-      if ( ( _client->grps == 0 ) || ( !strlen( _client->grps ) ) ) {
-        GETALLGROUPS( _mappedclient.name, allgroups, defaultgroup );
-        _mappedclient.grps = STRINGSTORE( allgroups.c_str() );
-      } else {
-        if ( XrdxCastor2FS->VomsMapGroups( _client, _mappedclient, allgroups, defaultgroup ) )
-          if ( ! role ) role = _mappedclient.role;
+      if ( ( client->grps == 0 ) || ( !strlen( client->grps ) ) ) {
+        GetAllGroups( mappedClient.name, allgroups, defaultgroup );
+        mappedClient.grps = STRINGSTORE( allgroups.c_str() );
       }
 
-      if ( ( ( ! _mappedclient.role ) || ( !strlen( _mappedclient.role ) ) ) && ( !role ) ) {
+      if ( ( ( ! mappedClient.role ) || ( !strlen( mappedClient.role ) ) ) && ( !role ) ) {
         role = STRINGSTORE( defaultgroup.c_str() );
       }
 
-      XrdOucString* hisroles = XrdxCastor2FS->roletable->Find( _mappedclient.name );
+      XrdOucString* hisroles = roletable->Find( mappedClient.name );
       XrdOucString match = ":";
       match += role;
       match += ":";
 
-      xcastor_static_debug("default %s all %s match %s role %sn", defaultgroup.c_str(), 
+      xcastor_debug("default %s all %s match %s role %sn", defaultgroup.c_str(), 
                     allgroups.c_str(), match.c_str(), role);
 
       if ( hisroles )
         if ( ( hisroles->find( match.c_str() ) ) != STR_NPOS ) {
-          _mappedclient.role = STRINGSTORE( role );
+          mappedClient.role = STRINGSTORE( role );
         } else {
           if ( hisroles->beginswith( "static:" ) ) {
-            _mappedclient.role = STRINGSTORE( hisroles->c_str() + 7 );
+            mappedClient.role = STRINGSTORE( hisroles->c_str() + 7 );
           } else {
             if ( ( allgroups.find( match.c_str() ) ) != STR_NPOS )
-              _mappedclient.role = STRINGSTORE( role );
+              mappedClient.role = STRINGSTORE( role );
             else
-              _mappedclient.role = STRINGSTORE( defaultgroup.c_str() );
+              mappedClient.role = STRINGSTORE( defaultgroup.c_str() );
           }
         }
       else {
         if ( ( allgroups.find( match.c_str() ) ) != STR_NPOS ) {
-          _mappedclient.role = STRINGSTORE( role );
+          mappedClient.role = STRINGSTORE( role );
         } else {
-          _mappedclient.role = STRINGSTORE( defaultgroup.c_str() );
+          mappedClient.role = STRINGSTORE( defaultgroup.c_str() );
         }
       }
 
-      if ( ( !strlen( _mappedclient.role ) ) && ( _client->grps ) )
-        _mappedclient.role = STRINGSTORE( _client->grps );
+      if ( ( !strlen( mappedClient.role ) ) && ( client->grps ) )
+        mappedClient.role = STRINGSTORE( client->grps );
     }
 
     {
@@ -471,255 +472,117 @@ void ROLEMAP( const XrdSecEntity* _client,
       int adpos  = stident.find( "@" );
       user.assign( tident, adpos + 1 );
       reducedTident += user;
-      XrdOucString* hisroles = XrdxCastor2FS->roletable->Find( reducedTident.c_str() );
+      XrdOucString* hisroles = roletable->Find( reducedTident.c_str() );
       XrdOucString match = ":";
       match += role;
       match += ":";
 
       if ( hisroles )
         if ( ( hisroles->find( match.c_str() ) ) != STR_NPOS ) {
-          _mappedclient.role = STRINGSTORE( role );
-          _mappedclient.name = STRINGSTORE( role );
+          mappedClient.role = STRINGSTORE( role );
+          mappedClient.name = STRINGSTORE( role );
         } else {
           if ( hisroles->beginswith( "static:" ) ) {
-            if ( _mappedclient.role )( _mappedclient.role );
+            if ( mappedClient.role )( mappedClient.role );
 
-            _mappedclient.role = STRINGSTORE( hisroles->c_str() + 7 );
-            _mappedclient.name = STRINGSTORE( hisroles->c_str() + 7 );
+            mappedClient.role = STRINGSTORE( hisroles->c_str() + 7 );
+            mappedClient.name = STRINGSTORE( hisroles->c_str() + 7 );
           }
         }
     }
 
-    if ( _mappedclient.role && ( !strcmp( _mappedclient.role, "root" ) ) )
-      _mappedclient.name = STRINGSTORE( "root" );
+    if ( mappedClient.role && ( !strcmp( mappedClient.role, "root" ) ) ) {
+      mappedClient.name = STRINGSTORE( "root" );
+    }
 
-    break;
-  } while ( 0 );
+    MapMutex.UnLock();  // <--
+  } while (0);
 
-  XrdxCastor2FS->MapMutex.UnLock();
   XrdSecEntity* newentity = new XrdSecEntity();
 
   if ( newentity ) {
-    newentity->name = _mappedclient.name;
-    newentity->role = _mappedclient.role;
-    newentity->host = _mappedclient.host;
-    newentity->vorg = _mappedclient.vorg;
-    newentity->grps = _mappedclient.grps;
-    newentity->endorsements = _mappedclient.endorsements;
-    newentity->tident = _mappedclient.tident;
-    XrdxCastor2FS->secentitystore->Add( clientid, newentity, 60 );
+    newentity->name = mappedClient.name;
+    newentity->role = mappedClient.role;
+    newentity->host = mappedClient.host;
+    newentity->vorg = mappedClient.vorg;
+    newentity->grps = mappedClient.grps;
+    newentity->endorsements = mappedClient.endorsements;
+    newentity->tident = mappedClient.tident;
+    secentitystore->Add( clientid, newentity, 60 );
   }
 
-  XrdxCastor2FS->SecEntityMutex.UnLock();
+  SecEntityMutex.UnLock();  // <--
   uid_t _client_uid;
   gid_t _client_gid;
-  GETID( "-", _mappedclient, _client_uid, _client_gid );
+  GetId( "-", mappedClient, _client_uid, _client_gid );
   XrdxCastor2FsUFS::SetId( _client_uid, _client_gid );
   return;
 }
 
 
 //------------------------------------------------------------------------------
-//
+// Reload grid map file
 //------------------------------------------------------------------------------
 void
 XrdxCastor2Fs::ReloadGridMapFile()
 {
-  static time_t         GridMapMtime = 0;
-  static time_t         GridMapCheckTime = 0;
-  int now = time( NULL );
+  static time_t GridMapMtime = 0;
+  static time_t GridMapCheckTime = 0;
+  time_t now = time( NULL );
 
+  // Load it for the first time or again
   if ( ( !GridMapCheckTime ) || 
-       ( ( now > GridMapCheckTime + XCASTOR2FS_GRIDMAPCHECKINTERVAL ) ) ) 
-  {
-    // Load it for the first time or again
-    struct stat buf;
+       ( now > GridMapCheckTime + XCASTOR2FS_GRIDMAPCHECKINTERVAL ) ) 
+    {
+      struct stat buf;
 
-    if ( !::stat( GridMapFile.c_str(), &buf ) ) {
-      if ( buf.st_mtime != GridMapMtime ) {
-        GridMapMutex.Lock();
-        // Store the last modification time
-        GridMapMtime = buf.st_mtime;
-        // Store the current time of the check
-        GridMapCheckTime = now;
-        // Dump the current table
-        gridmapstore->Purge();
-        // Open the gridmap file
-        FILE* mapin = fopen( GridMapFile.c_str(), "r" );
+      if ( !::stat( GridMapFile.c_str(), &buf ) ) {
+        if ( buf.st_mtime != GridMapMtime ) {
+          GridMapMutex.Lock();
+          // Store the last modification time
+          GridMapMtime = buf.st_mtime;
+          // Store the current time of the check
+          GridMapCheckTime = now;
+          // Dump the current table
+          gridmapstore->Purge();
+          // Open the gridmap file
+          FILE* mapin = fopen( GridMapFile.c_str(), "r" );
 
-        if ( !mapin ) {
-          // error no grid map possible
-          xcastor_debug("Unable to open gridmapfile:%s - no mapping!", GridMapFile.c_str());
+          if ( !mapin ) {
+            // Error no grid map possible
+            xcastor_debug("Unable to open gridmapfile:%s - no mapping!", GridMapFile.c_str());
+          } else {
+            char userdnin[4096];
+            char usernameout[4096];
+            int nitems;
+
+            // Parse it
+            while ( ( nitems = fscanf( mapin, "\"%[^\"]\" %s\n", userdnin, usernameout ) ) == 2 ) {
+              XrdOucString dn = userdnin;
+              dn.replace( "\"", "" );
+              // Leave only the first CN=, cut the rest
+              int pos = dn.find( "CN=" );
+              int pos2 = dn.find( "/", pos );
+
+              if ( pos2 > 0 ) dn.erase( pos2 );
+
+              if ( !gridmapstore->Find( dn.c_str() ) ) {
+                gridmapstore->Add( dn.c_str(), new XrdOucString( usernameout ) );
+                xcastor_debug("GridMapFile mapping added: %s => %s", dn.c_str(), usernameout);
+              }
+            }
+
+            fclose( mapin );
+          }
+
+          GridMapMutex.UnLock();
         } else {
-          char userdnin[4096];
-          char usernameout[4096];
-          int nitems;
-
-          // Parse it
-          while ( ( nitems = fscanf( mapin, "\"%[^\"]\" %s\n", userdnin, usernameout ) ) == 2 ) {
-            XrdOucString dn = userdnin;
-            dn.replace( "\"", "" );
-            // Leave only the first CN=, cut the rest
-            int pos = dn.find( "CN=" );
-            int pos2 = dn.find( "/", pos );
-
-            if ( pos2 > 0 ) dn.erase( pos2 );
-
-            if ( !gridmapstore->Find( dn.c_str() ) ) {
-              gridmapstore->Add( dn.c_str(), new XrdOucString( usernameout ) );
-              xcastor_debug("GridMapFile mapping added: %s => %s", dn.c_str(), usernameout);
-            }
-          }
-
-          fclose( mapin );
+          // The file didn't change, we don't do anything
         }
-
-        GridMapMutex.UnLock();
       } else {
-        // The file didn't change, we don't do anything
-      }
-    } else {
-      // printf("Gridmapfile %s\n",GridMapFile.c_str());
-      xcastor_debug("Unbale to stat gridmapfile:%s - no mapping!", GridMapFile.c_str());
-    }
-  }
-}
-
-
-//------------------------------------------------------------------------------
-//
-//------------------------------------------------------------------------------
-void
-XrdxCastor2Fs::ReloadVomsMapFile()
-{
-  static time_t         VomsMapMtime = 0;
-  static time_t         VomsMapCheckTime = 0;
-  int now = time( NULL );
-
-  if ( ( !VomsMapCheckTime ) || 
-       ( ( now > VomsMapCheckTime + XCASTOR2FS_VOMSMAPCHECKINTERVAL ) ) ) 
-  {
-    // Load it for the first time or again
-    struct stat buf;
-
-    if ( !::stat( VomsMapFile.c_str(), &buf ) ) {
-      if ( buf.st_mtime != VomsMapMtime ) {
-        VomsMapMutex.Lock();
-        // Store the last modification time
-        VomsMapMtime = buf.st_mtime;
-        // Store the current time of the check
-        VomsMapCheckTime = now;
-        // Dump the current table
-        vomsmapstore->Purge();
-        // Open the vomsmap file
-        FILE* mapin = fopen( VomsMapFile.c_str(), "r" );
-
-        if ( !mapin ) {
-          // Error no voms map possible
-          xcastor_debug("Unable to open vomsmapfile:%s - no mapping!", VomsMapFile.c_str());
-        } else {
-          char userdnin[4096];
-          char usernameout[4096];
-          int nitems;
-
-          // Parse it
-          while ( ( nitems = fscanf( mapin, "\"%[^\"]\" %s\n", userdnin, usernameout ) ) == 2 ) {
-            XrdOucString dn = userdnin;
-            dn.replace( "\"", "" );
-
-            if ( !vomsmapstore->Find( dn.c_str() ) ) {
-              vomsmapstore->Add( dn.c_str(), new XrdOucString( usernameout ) );
-              xcastor_debug("VomsMapFile mapping added: %s => %s", dn.c_str(), usernameout);
-            }
-          }
-
-          fclose( mapin );
-        }
-
-        VomsMapMutex.UnLock();
-      } else {
-        // The file didn't change, we don't do anything
-      }
-    } else {
-      // printf("Vomsmapfile %s\n",VomsMapFile.c_str());
-      xcastor_debug("Unable to open vomsmapfile:%s - no mapping!", VomsMapFile.c_str());
-    }
-  }
-}
-
-
-//------------------------------------------------------------------------------
-//
-//------------------------------------------------------------------------------
-bool
-XrdxCastor2Fs::VomsMapGroups( const XrdSecEntity* client, 
-                              XrdSecEntity&       mappedclient, 
-                              XrdOucString&       allgroups, 
-                              XrdOucString&       defaultgroup )
-{
-  if ( client->grps ) {
-    if ( XrdxCastor2FS->VomsMapFile.length() )
-      XrdxCastor2FS->ReloadVomsMapFile();
-    else
-      return false;
-
-    // Loop over all VOMS groups and replace them according to the mapping
-    XrdOucString vomsline = client->grps;
-    allgroups = ":";
-    defaultgroup = "";
-    vomsline.replace( ":", "\n" );
-    XrdOucTokenizer vomsgroups( ( char* )vomsline.c_str() );
-    const char* stoken;
-    int ntoken = 0;
-    XrdOucString* vomsmaprole;
-
-    while ( ( stoken = vomsgroups.GetLine() ) ) {
-      // Exact match
-      if ( ( vomsmaprole = XrdxCastor2FS->vomsmapstore->Find( stoken ) ) ) {
-        allgroups += vomsmaprole->c_str();
-        allgroups += ":";
-
-        if ( ntoken == 0 ) {
-          defaultgroup = vomsmaprole->c_str();
-        }
-
-        ntoken++;
-      }  else {
-        // Scan for a wildcard rule
-        XrdOucString vomsattribute = stoken;
-        int rpos = STR_NPOS;
-
-        while ( ( rpos = vomsattribute.rfind( "/", rpos ) ) != STR_NPOS ) {
-          rpos--;
-          XrdOucString wildcardattribute = vomsattribute;
-          wildcardattribute.erase( rpos + 2 );
-          wildcardattribute += "*";
-
-          if ( ( vomsmaprole = XrdxCastor2FS->vomsmapstore->Find( wildcardattribute.c_str() ) ) ) {
-            allgroups += vomsmaprole->c_str();
-            allgroups += ":";
-
-            if ( ntoken == 0 ) {
-              defaultgroup = vomsmaprole->c_str();
-            }
-
-            ntoken++;
-            break; // leave the wildcard loop
-          }
-
-          if ( rpos < 0 ) {
-            break;
-          }
-        }
+        xcastor_debug("Unbale to stat gridmapfile:%s - no mapping!", GridMapFile.c_str());
       }
     }
-
-    mappedclient.role = STRINGSTORE( defaultgroup.c_str() );
-    mappedclient.grps = STRINGSTORE( allgroups.c_str() );
-    return true;
-  } else {
-    return false;
-  }
 }
 
 
@@ -1010,15 +873,15 @@ XrdxCastor2FsDirectory::open( const char*         dir_path,
                                 "map filename", dir_path );
   }
 
-  ROLEMAP( client, info, mappedclient, tident );
+  XrdxCastor2FS->RoleMap( client, info, mappedclient, tident );
 
   if ( XrdxCastor2FS->Proc ) {
     XrdxCastor2FS->Stats.IncCmd();
   }
 
   // Verify that this object is not already associated with an open directory
-   if ( dh ) return XrdxCastor2Fs::Emsg( epname, error, EADDRINUSE,
-                                         "open directory", map_dir.c_str() );
+  if ( dh ) return XrdxCastor2Fs::Emsg( epname, error, EADDRINUSE,
+                                        "open directory", map_dir.c_str() );
 
   // Set up values for this directory object
   ateof = 0;
@@ -1173,7 +1036,7 @@ XrdxCastor2FsFile::open( const char*         path,
 
   TIMING("START", &opentiming);
   map_path = XrdxCastor2Fs::NsMapping( path );
-  ROLEMAP( client, info, mappedclient, tident );
+  XrdxCastor2FS->RoleMap( client, info, mappedclient, tident );
   TIMING("MAPPING", &opentiming);
 
   if ( map_path == "" ) {
@@ -1352,7 +1215,7 @@ XrdxCastor2FsFile::open( const char*         path,
   gid_t client_gid;
   XrdOucString sclient_uid = "";
   XrdOucString sclient_gid = "";
-  GETID( map_path.c_str(), mappedclient, client_uid, client_gid );
+  XrdxCastor2FS->GetId( map_path.c_str(), mappedclient, client_uid, client_gid );
   sclient_uid += ( int ) client_uid;
   sclient_gid += ( int ) client_gid;
   XrdOucString redirectionpfn1 = "";
@@ -1386,50 +1249,8 @@ XrdxCastor2FsFile::open( const char*         path,
       // Try the user specified pair
       if ( ( XrdxCastor2FS->SetStageVariables( map_path.c_str(), info, stagevariables, stagehost, 
                                                serviceclass, XCASTOR2FS_EXACT_MATCH, tident ) ) == 1 ) 
-      {
-        // Select the policy
-        XrdOucString* wildcardpolicy = NULL;
-        XrdOucString policytag = stagehost;
-        policytag += "::";
-        policytag += serviceclass;
-        XrdOucString grouppolicytag = policytag;
-        grouppolicytag += "::gid:";
-        grouppolicytag += ( int )client_gid;
-        XrdOucString userpolicytag  = policytag;
-        userpolicytag += "::uid:";
-        userpolicytag += ( int )client_uid;
-        XrdOucString wildcardpolicytag = stagehost;
-        wildcardpolicytag += "::";
-        wildcardpolicytag += "*";
-        wildcardpolicy = XrdxCastor2FS->stagerpolicy->Find( wildcardpolicytag.c_str() );
-
-        if ( !( policy = XrdxCastor2FS->stagerpolicy->Find( userpolicytag.c_str() ) ) )
-          if ( !( policy = XrdxCastor2FS->stagerpolicy->Find( grouppolicytag.c_str() ) ) )
-            policy = XrdxCastor2FS->stagerpolicy->Find( policytag.c_str() );
-
-        if ( ( !policy ) && ( wildcardpolicy ) ) {
-          policy = wildcardpolicy;
-        }
-
-        if ( policy && ( strstr( policy->c_str(), "ronly" ) ) && isRW ) {
-          return XrdxCastor2Fs::Emsg( epname, error, EPERM, "write - path is forced readonly for you : fn = ", 
-                                      map_path.c_str() );
-        }
-      } else
-        return XrdxCastor2Fs::Emsg( epname, error, EINVAL, "write - cannot find any valid "
-                                    "stager/service class mapping for you for fn = ", map_path.c_str() );
-    } else {
-      int n = 0;
-      bool allowed = false;
-      int hasmore = 0;
-
-      // Try the list and stop when we find a matching policy tag
-      do {
-        if ( ( hasmore = XrdxCastor2FS->SetStageVariables( map_path.c_str(), info, stagevariables, 
-                                                           stagehost, serviceclass, n++, tident ) ) == 1 ) 
         {
           // Select the policy
-          policy = NULL;
           XrdOucString* wildcardpolicy = NULL;
           XrdOucString policytag = stagehost;
           policytag += "::";
@@ -1453,11 +1274,53 @@ XrdxCastor2FsFile::open( const char*         path,
             policy = wildcardpolicy;
           }
 
-          if ( policy && ( !strstr( policy->c_str(), "ronly" ) ) ) {
-            allowed = true;
-            break;
+          if ( policy && ( strstr( policy->c_str(), "ronly" ) ) && isRW ) {
+            return XrdxCastor2Fs::Emsg( epname, error, EPERM, "write - path is forced readonly for you : fn = ", 
+                                        map_path.c_str() );
           }
-        }
+        } else
+        return XrdxCastor2Fs::Emsg( epname, error, EINVAL, "write - cannot find any valid "
+                                    "stager/service class mapping for you for fn = ", map_path.c_str() );
+    } else {
+      int n = 0;
+      bool allowed = false;
+      int hasmore = 0;
+
+      // Try the list and stop when we find a matching policy tag
+      do {
+        if ( ( hasmore = XrdxCastor2FS->SetStageVariables( map_path.c_str(), info, stagevariables, 
+                                                           stagehost, serviceclass, n++, tident ) ) == 1 ) 
+          {
+            // Select the policy
+            policy = NULL;
+            XrdOucString* wildcardpolicy = NULL;
+            XrdOucString policytag = stagehost;
+            policytag += "::";
+            policytag += serviceclass;
+            XrdOucString grouppolicytag = policytag;
+            grouppolicytag += "::gid:";
+            grouppolicytag += ( int )client_gid;
+            XrdOucString userpolicytag  = policytag;
+            userpolicytag += "::uid:";
+            userpolicytag += ( int )client_uid;
+            XrdOucString wildcardpolicytag = stagehost;
+            wildcardpolicytag += "::";
+            wildcardpolicytag += "*";
+            wildcardpolicy = XrdxCastor2FS->stagerpolicy->Find( wildcardpolicytag.c_str() );
+
+            if ( !( policy = XrdxCastor2FS->stagerpolicy->Find( userpolicytag.c_str() ) ) )
+              if ( !( policy = XrdxCastor2FS->stagerpolicy->Find( grouppolicytag.c_str() ) ) )
+                policy = XrdxCastor2FS->stagerpolicy->Find( policytag.c_str() );
+
+            if ( ( !policy ) && ( wildcardpolicy ) ) {
+              policy = wildcardpolicy;
+            }
+
+            if ( policy && ( !strstr( policy->c_str(), "ronly" ) ) ) {
+              allowed = true;
+              break;
+            }
+          }
       } while ( ( n < 20 ) && ( hasmore >= 0 ) );
 
       if ( !allowed ) {
@@ -1785,11 +1648,11 @@ XrdxCastor2FsFile::open( const char*         path,
                                       map_path.c_str(), stagehost.c_str(), 
                                       serviceclass.c_str(), redirectionhost, 
                                       redirectionpfn1, redirectionpfn2, stagestatus ) ) 
-        {
-          TIMING("RETURN", &opentiming);
-          opentiming.Print();
-          return SFS_ERROR;
-        }
+          {
+            TIMING("RETURN", &opentiming);
+            opentiming.Print();
+            return SFS_ERROR;
+          }
 
         if ( stagestatus != "READY" ) {
           TIMING("RETURN", &opentiming);
@@ -1945,8 +1808,8 @@ XrdxCastor2FsFile::open( const char*         path,
       int sig64len = 0;
 
       if ( !XrdxCastor2FS->ServerAcc->SignBase64( ( unsigned char* )authz->token,
-           strlen( authz->token ), sb64,
-           sig64len, stagehost.c_str() ) ) {
+                                                  strlen( authz->token ), sb64,
+                                                  sig64len, stagehost.c_str() ) ) {
         XrdxCastor2Fs::Emsg( epname, error, retc, "sign authorization token for sfn = ", map_path.c_str() );
         delete authz;
         return SFS_ERROR;
@@ -2087,7 +1950,7 @@ XrdxCastor2FsFile::read( XrdSfsFileOffset offset,
     XrdxCastor2FS->Stats.IncCmd();
   }
 
-// Make sure the offset is not too large
+  // Make sure the offset is not too large
 #if _FILE_OFFSET_BITS!=64
 
   if ( offset >  0x000000007fffffff )
@@ -2510,7 +2373,7 @@ XrdxCastor2Fs::chmod( const char*         path,
     return SFS_ERROR;
   }
 
-  ROLEMAP( client, info, mappedclient, tident );
+  RoleMap( client, info, mappedclient, tident );
 
   if ( XrdxCastor2FS->Proc ) {
     XrdxCastor2FS->Stats.IncCmd();
@@ -2544,7 +2407,7 @@ XrdxCastor2Fs::exists( const char*          path,
   xcastor_debug("path=%s", path);
   AUTHORIZE( client, &exists_Env, AOP_Stat, "execute exists", path, error );
   map_path = XrdxCastor2Fs::NsMapping( path );
-  ROLEMAP( client, info, mappedclient, tident );
+  RoleMap( client, info, mappedclient, tident );
 
   if ( map_path == "" ) {
     error.setErrInfo( ENOMEDIUM, "No mapping for file name" );
@@ -2608,7 +2471,7 @@ XrdxCastor2Fs::mkdir( const char*         path,
   XrdOucString map_path;
   xcastor_debug("path=%s", path);
   map_path = XrdxCastor2Fs::NsMapping( path );
-  ROLEMAP( client, info, mappedclient, tident );
+  RoleMap( client, info, mappedclient, tident );
 
   if ( map_path == "" ) {
     error.setErrInfo( ENOMEDIUM, "No mapping for file name" );
@@ -2670,13 +2533,13 @@ XrdxCastor2Fs::_mkdir( const char*         path,
 
         if ( ( rc = XrdxCastor2FsUFS::Mkdir( actual_path, S_IRWXU ) ) && 
              ( serrno != EEXIST ) ) 
-        {
-          return -serrno;
-        }
+          {
+            return -serrno;
+          }
 
         // Set acl on directory
         if ( !rc ) {
-          if ( client ) SETACL( actual_path, ( *client ), 0 );
+          if ( client ) SetAcl( actual_path, ( *client ), 0 );
         }
 
         *next_path = '/';
@@ -2690,7 +2553,9 @@ XrdxCastor2Fs::_mkdir( const char*         path,
     return XrdxCastor2Fs::Emsg( epname, error, serrno, "create directory", path );
   
   // Set acl on directory
-  if ( client )SETACL( path, ( *client ), 0 );
+  if ( client ) {
+    SetAcl( path, ( *client ), 0 );
+  }
 
   return SFS_OK;
 }
@@ -2731,7 +2596,7 @@ XrdxCastor2Fs::Mkpath( const char*    path,
   *local_path = '/';
   // Start creating directories starting with the root. Notice that we will not
   // do anything with the last component. The caller is responsible for that.
-    local_path = actual_path + 1;
+  local_path = actual_path + 1;
 
   while ( ( next_path = index( local_path, int( '/' ) ) ) ) {
     *next_path = '\0';
@@ -2794,7 +2659,7 @@ XrdxCastor2Fs::stageprepare( const char*         path,
     return SFS_ERROR;
   }
 
-  ROLEMAP( client, info, mappedclient, tident );
+  RoleMap( client, info, mappedclient, tident );
   struct Cns_filestatcs cstat;
 
   if ( XrdxCastor2FsUFS::Statfn( map_path.c_str(), &cstat ) ) {
@@ -2803,7 +2668,7 @@ XrdxCastor2Fs::stageprepare( const char*         path,
 
   uid_t client_uid;
   gid_t client_gid;
-  GETID( map_path.c_str(), mappedclient, client_uid, client_gid );
+  GetId( map_path.c_str(), mappedclient, client_uid, client_gid );
   XrdOucString stagehost = "";
   XrdOucString serviceclass = "default";
   XrdOucString stagestatus = "";
@@ -2831,48 +2696,6 @@ XrdxCastor2Fs::stageprepare( const char*         path,
     if ( ( XrdxCastor2FS->SetStageVariables( map_path.c_str(), info, stagevariables, 
                                              stagehost, serviceclass, 
                                              XCASTOR2FS_EXACT_MATCH, tident ) ) == 1 ) 
-    {
-      // Select the policy
-      XrdOucString* policy = NULL;
-      XrdOucString* wildcardpolicy = NULL;
-      XrdOucString policytag = stagehost;
-      policytag += "::";
-      policytag += serviceclass;
-      XrdOucString grouppolicytag = policytag;
-      grouppolicytag += "::gid:";
-      grouppolicytag += ( int )client_gid;
-      XrdOucString userpolicytag  = policytag;
-      userpolicytag += "::uid:";
-      userpolicytag += ( int )client_uid;
-      XrdOucString wildcardpolicytag = stagehost;
-      wildcardpolicytag += "::";
-      wildcardpolicytag += "*";
-      wildcardpolicy = XrdxCastor2FS->stagerpolicy->Find( wildcardpolicytag.c_str() );
-
-      if ( !( policy = XrdxCastor2FS->stagerpolicy->Find( userpolicytag.c_str() ) ) )
-        if ( !( policy = XrdxCastor2FS->stagerpolicy->Find( grouppolicytag.c_str() ) ) )
-          policy = XrdxCastor2FS->stagerpolicy->Find( policytag.c_str() );
-
-      if ( ( !policy ) && ( wildcardpolicy ) ) {
-        policy = wildcardpolicy;
-      }
-
-      if ( policy && ( strstr( policy->c_str(), "nostage" ) ) ) {
-        return XrdxCastor2Fs::Emsg( epname, error, EPERM, "do prepare request - "
-                                    "you are not allowed to do stage requests fn = ", map_path.c_str() );
-      }
-    } else {
-      return XrdxCastor2Fs::Emsg( epname, error, EINVAL, "write - cannot find any"
-                                  " valid stager/service class mapping for you for fn = ", map_path.c_str() );
-    }
-  } else {
-    // Try the list and stop when we find a matching policy tag
-    bool allowed = false;
-    int hasmore = 0;
-
-    do {
-      if ( ( hasmore = XrdxCastor2FS->SetStageVariables( map_path.c_str(), info, stagevariables, 
-                                                         stagehost, serviceclass, n++, tident ) ) == 1 ) 
       {
         // Select the policy
         XrdOucString* policy = NULL;
@@ -2899,11 +2722,53 @@ XrdxCastor2Fs::stageprepare( const char*         path,
           policy = wildcardpolicy;
         }
 
-        if ( policy && ( !strstr( policy->c_str(), "nostage" ) ) ) {
-          allowed = true;
-          break;
+        if ( policy && ( strstr( policy->c_str(), "nostage" ) ) ) {
+          return XrdxCastor2Fs::Emsg( epname, error, EPERM, "do prepare request - "
+                                      "you are not allowed to do stage requests fn = ", map_path.c_str() );
         }
-      }
+      } else {
+      return XrdxCastor2Fs::Emsg( epname, error, EINVAL, "write - cannot find any"
+                                  " valid stager/service class mapping for you for fn = ", map_path.c_str() );
+    }
+  } else {
+    // Try the list and stop when we find a matching policy tag
+    bool allowed = false;
+    int hasmore = 0;
+
+    do {
+      if ( ( hasmore = XrdxCastor2FS->SetStageVariables( map_path.c_str(), info, stagevariables, 
+                                                         stagehost, serviceclass, n++, tident ) ) == 1 ) 
+        {
+          // Select the policy
+          XrdOucString* policy = NULL;
+          XrdOucString* wildcardpolicy = NULL;
+          XrdOucString policytag = stagehost;
+          policytag += "::";
+          policytag += serviceclass;
+          XrdOucString grouppolicytag = policytag;
+          grouppolicytag += "::gid:";
+          grouppolicytag += ( int )client_gid;
+          XrdOucString userpolicytag  = policytag;
+          userpolicytag += "::uid:";
+          userpolicytag += ( int )client_uid;
+          XrdOucString wildcardpolicytag = stagehost;
+          wildcardpolicytag += "::";
+          wildcardpolicytag += "*";
+          wildcardpolicy = XrdxCastor2FS->stagerpolicy->Find( wildcardpolicytag.c_str() );
+
+          if ( !( policy = XrdxCastor2FS->stagerpolicy->Find( userpolicytag.c_str() ) ) )
+            if ( !( policy = XrdxCastor2FS->stagerpolicy->Find( grouppolicytag.c_str() ) ) )
+              policy = XrdxCastor2FS->stagerpolicy->Find( policytag.c_str() );
+
+          if ( ( !policy ) && ( wildcardpolicy ) ) {
+            policy = wildcardpolicy;
+          }
+
+          if ( policy && ( !strstr( policy->c_str(), "nostage" ) ) ) {
+            allowed = true;
+            break;
+          }
+        }
     } while ( ( n < 20 ) && ( hasmore >= 0 ) );
 
     if ( !allowed ) {
@@ -3043,11 +2908,11 @@ XrdxCastor2Fs::prepare( XrdSfsPrep&         pargs,
     if ( !XrdxCastor2Stager::FirstWrite( error, map_path.c_str(), oenv.Get( "reqid" ), 
                                          fileid, nds, oenv.Get( "stagehost" ), 
                                          oenv.Get( "serviceclass" ) ) ) 
-    {
-      TIMING("END", &preparetiming);
-      preparetiming.Print();
-      return SFS_ERROR;
-    }
+      {
+        TIMING("END", &preparetiming);
+        preparetiming.Print();
+        return SFS_ERROR;
+      }
   }
 
   if ( oenv.Get( "filesize" ) && oenv.Get( "mtime" ) ) {
@@ -3112,7 +2977,7 @@ XrdxCastor2Fs::rem( const char*         path,
   AUTHORIZE( client, &env, AOP_Delete, "remove", path, error );
   map_path = XrdxCastor2Fs::NsMapping( path );
   xcastor_debug("map_path=%s", map_path.c_str());
-  ROLEMAP( client, info, mappedclient, tident );
+  RoleMap( client, info, mappedclient, tident );
 
   if ( map_path == "" ) {
     error.setErrInfo( ENOMEDIUM, "No mapping for file name" );
@@ -3121,7 +2986,7 @@ XrdxCastor2Fs::rem( const char*         path,
 
   uid_t client_uid;
   gid_t client_gid;
-  GETID( map_path.c_str(), mappedclient, client_uid, client_gid );
+  GetId( map_path.c_str(), mappedclient, client_uid, client_gid );
 
   if ( XrdxCastor2FS->Proc ) {
     XrdxCastor2FS->Stats.IncRm();
@@ -3157,48 +3022,6 @@ XrdxCastor2Fs::rem( const char*         path,
       if ( ( XrdxCastor2FS->SetStageVariables( map_path.c_str(), info, stagevariables, 
                                                stagehost, serviceclass, 
                                                XCASTOR2FS_EXACT_MATCH, tident ) ) == 1 ) 
-      {
-        // Select the policy
-        XrdOucString* policy = NULL;
-        XrdOucString* wildcardpolicy = NULL;
-        XrdOucString policytag = stagehost;
-        policytag += "::";
-        policytag += serviceclass;
-        XrdOucString grouppolicytag = policytag;
-        grouppolicytag += "::gid:";
-        grouppolicytag += ( int )client_gid;
-        XrdOucString userpolicytag  = policytag;
-        userpolicytag += "::uid:";
-        userpolicytag += ( int )client_uid;
-        XrdOucString wildcardpolicytag = stagehost;
-        wildcardpolicytag += "::";
-        wildcardpolicytag += "*";
-        wildcardpolicy = XrdxCastor2FS->stagerpolicy->Find( wildcardpolicytag.c_str() );
-
-        if ( !( policy = XrdxCastor2FS->stagerpolicy->Find( userpolicytag.c_str() ) ) )
-          if ( !( policy = XrdxCastor2FS->stagerpolicy->Find( grouppolicytag.c_str() ) ) )
-            policy = XrdxCastor2FS->stagerpolicy->Find( policytag.c_str() );
-
-        if ( ( !policy ) && ( wildcardpolicy ) ) {
-          policy = wildcardpolicy;
-        }
-
-        if ( policy && ( strstr( policy->c_str(), "nodelete" ) ) ) {
-          return XrdxCastor2Fs::Emsg( epname, error, EPERM, "do stage_rm request - "
-                                      "you are not allowed to do stage_rm requests fn = ", map_path.c_str() );
-        }
-      } else {
-        return XrdxCastor2Fs::Emsg( epname, error, EINVAL, "write - cannot find any "
-                                    "valid stager/service class mapping for you for fn = ", map_path.c_str() );
-      }
-    } else {
-      // Try the list and stop when we find a matching policy tag
-      bool allowed = false;
-      int hasmore = 0;
-
-      do {
-        if ( ( hasmore = XrdxCastor2FS->SetStageVariables( map_path.c_str(), info, stagevariables, 
-                                                           stagehost, serviceclass, n++, tident ) ) == 1 ) 
         {
           // Select the policy
           XrdOucString* policy = NULL;
@@ -3225,11 +3048,53 @@ XrdxCastor2Fs::rem( const char*         path,
             policy = wildcardpolicy;
           }
 
-          if ( policy && ( !strstr( policy->c_str(), "nodelete" ) ) ) {
-            allowed = true;
-            break;
+          if ( policy && ( strstr( policy->c_str(), "nodelete" ) ) ) {
+            return XrdxCastor2Fs::Emsg( epname, error, EPERM, "do stage_rm request - "
+                                        "you are not allowed to do stage_rm requests fn = ", map_path.c_str() );
           }
-        }
+        } else {
+        return XrdxCastor2Fs::Emsg( epname, error, EINVAL, "write - cannot find any "
+                                    "valid stager/service class mapping for you for fn = ", map_path.c_str() );
+      }
+    } else {
+      // Try the list and stop when we find a matching policy tag
+      bool allowed = false;
+      int hasmore = 0;
+
+      do {
+        if ( ( hasmore = XrdxCastor2FS->SetStageVariables( map_path.c_str(), info, stagevariables, 
+                                                           stagehost, serviceclass, n++, tident ) ) == 1 ) 
+          {
+            // Select the policy
+            XrdOucString* policy = NULL;
+            XrdOucString* wildcardpolicy = NULL;
+            XrdOucString policytag = stagehost;
+            policytag += "::";
+            policytag += serviceclass;
+            XrdOucString grouppolicytag = policytag;
+            grouppolicytag += "::gid:";
+            grouppolicytag += ( int )client_gid;
+            XrdOucString userpolicytag  = policytag;
+            userpolicytag += "::uid:";
+            userpolicytag += ( int )client_uid;
+            XrdOucString wildcardpolicytag = stagehost;
+            wildcardpolicytag += "::";
+            wildcardpolicytag += "*";
+            wildcardpolicy = XrdxCastor2FS->stagerpolicy->Find( wildcardpolicytag.c_str() );
+
+            if ( !( policy = XrdxCastor2FS->stagerpolicy->Find( userpolicytag.c_str() ) ) )
+              if ( !( policy = XrdxCastor2FS->stagerpolicy->Find( grouppolicytag.c_str() ) ) )
+                policy = XrdxCastor2FS->stagerpolicy->Find( policytag.c_str() );
+
+            if ( ( !policy ) && ( wildcardpolicy ) ) {
+              policy = wildcardpolicy;
+            }
+
+            if ( policy && ( !strstr( policy->c_str(), "nodelete" ) ) ) {
+              allowed = true;
+              break;
+            }
+          }
       } while ( ( n < 20 ) && ( hasmore >= 0 ) );
 
       if ( !allowed ) {
@@ -3244,11 +3109,11 @@ XrdxCastor2Fs::rem( const char*         path,
     if ( !XrdxCastor2Stager::Rm( error, ( uid_t ) client_uid, 
                                  ( gid_t ) client_gid, map_path.c_str(), 
                                  stagehost.c_str(), serviceclass.c_str() ) ) 
-    {
-      TIMING("END", &rmtiming);
-      rmtiming.Print();
-      return SFS_ERROR;
-    }
+      {
+        TIMING("END", &rmtiming);
+        rmtiming.Print();
+        return SFS_ERROR;
+      }
 
     // The stage_rm worked, let's proceed with the namespace
   }
@@ -3299,7 +3164,7 @@ XrdxCastor2Fs::remdir( const char*         path,
   xcastor_debug("path=%s", path);
   AUTHORIZE( client, &remdir_Env, AOP_Delete, "remove", path, error );
   map_path = XrdxCastor2Fs::NsMapping( path );
-  ROLEMAP( client, info, mappedclient, tident );
+  RoleMap( client, info, mappedclient, tident );
 
   if ( map_path == "" ) {
     error.setErrInfo( ENOMEDIUM, "No mapping for file name" );
@@ -3370,7 +3235,7 @@ XrdxCastor2Fs::rename( const char*         old_name,
       return SFS_ERROR;
     }
   }
-  ROLEMAP( client, infoO, mappedclient, tident );
+  RoleMap( client, infoO, mappedclient, tident );
 
   if ( XrdxCastor2FS->Proc ) {
     XrdxCastor2FS->Stats.IncCmd();
@@ -3446,7 +3311,7 @@ XrdxCastor2Fs::stat( const char*         path,
     return SFS_ERROR;
   }
 
-  ROLEMAP( client, info, mappedclient, tident );
+  RoleMap( client, info, mappedclient, tident );
   TIMING("CNSSTAT", &stattiming);
   struct Cns_filestatcs cstat;
 
@@ -3456,7 +3321,7 @@ XrdxCastor2Fs::stat( const char*         path,
 
   uid_t client_uid;
   uid_t client_gid;
-  GETID( map_path.c_str(), mappedclient, client_uid, client_gid );
+  GetId( map_path.c_str(), mappedclient, client_uid, client_gid );
   XrdOucString stagehost = "";
   XrdOucString serviceclass = "default";
   XrdOucString stagestatus = "";
@@ -3479,26 +3344,26 @@ XrdxCastor2Fs::stat( const char*         path,
 
         if ( ( hasmore = XrdxCastor2FS->SetStageVariables( map_path.c_str(), info, stagevariables, 
                                                            stagehost, serviceclass, n++, tident ) ) == 1 ) 
-        { 
-          // We don't care about policies for stat's
-          XrdOucString qrytag = "STAGERQUERY-";
-          qrytag += n;
-          TIMING(qrytag.c_str(), &stattiming);
+          { 
+            // We don't care about policies for stat's
+            XrdOucString qrytag = "STAGERQUERY-";
+            qrytag += n;
+            TIMING(qrytag.c_str(), &stattiming);
 
-          if ( !XrdxCastor2Stager::StagerQuery( error, ( uid_t ) client_uid, 
-                                                ( gid_t ) client_gid, map_path.c_str(), stagehost.c_str(), 
-                                                serviceclass.c_str(), stagestatus ) ) 
-          {
-            stagestatus = "NA";
-          }
+            if ( !XrdxCastor2Stager::StagerQuery( error, ( uid_t ) client_uid, 
+                                                  ( gid_t ) client_gid, map_path.c_str(), stagehost.c_str(), 
+                                                  serviceclass.c_str(), stagestatus ) ) 
+              {
+                stagestatus = "NA";
+              }
 
-          if ( ( stagestatus == "STAGED" ) || 
-               ( stagestatus == "CANBEMIGR" ) || 
-               ( stagestatus == "STAGEOUT" ) ) 
-          {
-            break;
+            if ( ( stagestatus == "STAGED" ) || 
+                 ( stagestatus == "CANBEMIGR" ) || 
+                 ( stagestatus == "STAGEOUT" ) ) 
+              {
+                break;
+              }
           }
-        }
       } while ( ( n < 20 ) && ( hasmore >= 0 ) );
     }
   }
@@ -3526,11 +3391,11 @@ XrdxCastor2Fs::stat( const char*         path,
     if ( ( stagestatus != "STAGED" ) && 
          ( stagestatus != "CANBEMIGR" ) && 
          ( stagestatus != "STAGEOUT" ) ) 
-    {
-      // This file is offline
-      buf->st_mode = ( mode_t ) - 1;
-      buf->st_dev   = 0;
-    }
+      {
+        // This file is offline
+        buf->st_mode = ( mode_t ) - 1;
+        buf->st_dev   = 0;
+      }
 
     xcastor_debug("map_path=%s, stagestatus=%s", map_path.c_str(), stagestatus.c_str());
   }
@@ -3585,7 +3450,7 @@ XrdxCastor2Fs::lstat( const char*         path,
     return SFS_ERROR;
   }
 
-  ROLEMAP( client, info, mappedclient, tident );
+  RoleMap( client, info, mappedclient, tident );
 
   if ( !strcmp( map_path.c_str(), "/" ) ) {
     buf->st_dev     = 0xcaff;
@@ -3673,7 +3538,7 @@ XrdxCastor2Fs::readlink( const char*         path,
     return SFS_ERROR;
   }
 
-  ROLEMAP( client, info, mappedclient, tident );
+  RoleMap( client, info, mappedclient, tident );
   char lp[4097];
   int nlen;
 
@@ -3725,14 +3590,14 @@ XrdxCastor2Fs::symlink( const char*         path,
     }
   }
 
-  ROLEMAP( client, info, mappedclient, tident );
+  RoleMap( client, info, mappedclient, tident );
   char lp[4096];
 
   if ( XrdxCastor2FsUFS::Symlink( source.c_str(), destination.c_str() ) ) {
     return XrdxCastor2Fs::Emsg( epname, error, serrno, "symlink", source.c_str() );
   }
 
-  SETACL( destination.c_str(), mappedclient, 1 );
+  SetAcl( destination.c_str(), mappedclient, 1 );
   linkpath = lp;
   return SFS_OK;
 }
@@ -3761,7 +3626,7 @@ XrdxCastor2Fs::access( const char*         path,
     return SFS_ERROR;
   }
 
-  ROLEMAP( client, info, mappedclient, tident );
+  RoleMap( client, info, mappedclient, tident );
   return SFS_OK;
 }
 
@@ -3789,7 +3654,7 @@ int XrdxCastor2Fs::utimes( const char*         path,
     return SFS_ERROR;
   }
 
-  ROLEMAP( client, info, mappedclient, tident );
+  RoleMap( client, info, mappedclient, tident );
 
   if ( ( XrdxCastor2FsUFS::Utimes( map_path.c_str(), tvp ) ) ) {
     return XrdxCastor2Fs::Emsg( epname, error, serrno, "utimes", map_path.c_str() );
@@ -3880,9 +3745,9 @@ XrdxCastor2Fs::fsctl( const int           cmd,
 
     if ( ( _exists( path.c_str(), file_exists, error, client, 0 ) ) || 
          ( file_exists == XrdSfsFileExistNo ) ) 
-    {
-      return SFS_ERROR;
-    }
+      {
+        return SFS_ERROR;
+      }
 
     char locResp[4096];
     char rType[3], *Resp[] = {rType, locResp};
