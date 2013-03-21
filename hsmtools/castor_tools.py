@@ -553,7 +553,8 @@ def prettyPrintTable(titles, data, hasSummary=False):
         print lineFormat % _interleaveIter(widths, [str(item) for item in row])
     if hasSummary:
         print '-'*headerWidth
-    print lineFormat % _interleaveIter(widths, [str(item) for item in data[-1]])
+    if data:
+        print lineFormat % _interleaveIter(widths, [str(item) for item in data[-1]])
 
 #-------------------------------------------------------------------------------
 # useful printing functions
