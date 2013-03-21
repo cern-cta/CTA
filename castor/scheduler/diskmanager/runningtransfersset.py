@@ -358,7 +358,7 @@ class RunningTransfersSet(object):
           # append to list of ended transfers
           ended.append(transferId)
           # in case of disk to disk copy, remember to inform source
-          if rTransfer.transfer.transferType == 'd2ddest':
+          if rTransfer.transfer.transferType == TransferType.D2DDST:
             sourcesToBeInformed.append(rTransfer)
           # in case of transfers killed by a signal, remember to inform the DB
           if rc < 0:
