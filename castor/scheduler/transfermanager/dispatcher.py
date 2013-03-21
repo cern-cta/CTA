@@ -309,7 +309,10 @@ class DispatcherThread(threading.Thread):
   def _scheduleStandard(self, transfer, srRfs):
     '''Schedules a disk to disk copy and handle issues '''
     # extract list of candidates where to schedule and log
-    schedCandidates = [candidate.split(':') for candidate in srRfs.split('|')]
+    if None == srRfs:
+      schedCandidates = []
+    else:
+      schedCandidates = [candidate.split(':') for candidate in srRfs.split('|')]
     # 'Scheduling standard transfer' message
     dlf.writedebug(msgs.SCHEDTRANSFER, subreqid=transfer.transferId, reqid=transfer.reqId,
                    fileId=transfer.fileId, DiskServers=str(schedCandidates))
