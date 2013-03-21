@@ -34,6 +34,7 @@ import time
 import getopt
 import rpyc
 import castor_tools
+from itertools import groupby
 
 # usage function
 def usage(exitCode):
@@ -149,30 +150,18 @@ def processTransfersListing(useOnlyCentralLists):
     if not transfer[0]:
       print 'WARNING : was unable to contact ' + transfer[1] + '. Some transfers may be missing'
   maxDiskPoolNameLen = max([5] + [len(t[5]) for t in transfers if t[0]])+1
-  # Display head line
-  print 'TRANSFERID                           FILEID      USER     STAT  TYPE      POOL' + ' '*(maxDiskPoolNameLen-4) + 'SCHEDULER                DISKSERVER               SUBMIT_TIME       START_TIME'
-  n = 0
-  lastExecHost = ''
-  nodesWithManyTransfers = []
-  # loop to display real transfers
-  for transfer in transfers:
-    if transfer[0]:
-      transid, fileid, scheduler, user, status, diskpool, execHost, transfertype, submitTime, startTime = transfer
-      ssubmitTime = time.strftime('%b %d %H:%M:%S', time.localtime(submitTime))
-      if startTime != None :
-        sstartTime = time.strftime('%b %d %H:%M:%S', time.localtime(startTime))
-      else:
-        sstartTime = ''
-      print '%-37s%-12s%-9s%-6s%-10s%-*s%-25s%-25s%-18s%-18s' % (transid, fileid, user, status, transfertype, maxDiskPoolNameLen, diskpool, scheduler, execHost, ssubmitTime, sstartTime)
-      if execHost != lastExecHost:
-        if n > 100:
-          nodesWithManyTransfers.append(lastExecHost)
-        lastExecHost = execHost
-        n = 1
-      else:
-        n = n + 1
-  if n > 100:
-    nodesWithManyTransfers.append(lastExecHost)
+  # Display valid lines
+  titles = ('TRANSFERID', 'FILEID', 'USER', 'STAT', 'TYPE', 'POOL',
+            'SCHEDULER', 'DISKSERVER', 'SUBMIT_TIME', 'START_TIME')
+  data = [(transId, fileId[1], user, status, transferType, diskpool,
+           scheduler, execHost, time.strftime('%b %d %H:%M:%S', time.localtime(submitTime)),
+           time.strftime('%b %d %H:%M:%S', time.localtime(startTime)) if startTime else '')
+           for transId, fileId, scheduler, user, status, diskpool,
+           execHost, transferType, submitTime, startTime in transfers if transfer[0]]
+  
+  castor_tools.prettyPrintTable(titles, data)
+  # check for nodes with Too Many transfers
+  nodesWithManyTransfers = [scheduler for scheduler, group in groupby([line[6] for line in data]) if len(list(group)) > 100]
   if nodesWithManyTransfers:
     print 'Note that the list has been truncated to 100 transfers for the following hosts :'
     print ', '.join(nodesWithManyTransfers)
