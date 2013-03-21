@@ -180,7 +180,11 @@ class ServerQueue(dict):
       self.lock.release()
     # then tell the machines to remove these transfers from their queues
     for machine in transfersPerMachine:
-      connectionpool.connections.killtransfers(machine, tuple(transfersPerMachine[machine]))
+      try:
+        connectionpool.connections.killtransfers(machine, tuple(transfersPerMachine[machine]))
+      except Exception:
+        # ignore, we've tried, there is not much more we can do
+        None
     # return
     return results
 
