@@ -473,8 +473,8 @@ class ServerQueue(dict):
     try:
       for transferId in [transferId for transferId in self.d2dsrcrunning
                          if self.d2dsrcrunning[transferId] == diskServer]:
-        transfer = self[diskServer][transferId].transfer
-        res.append(transfer)
+        qTransfer = self[diskServer][transferId]
+        res.append((qTransfer.transfer.asTuple(), qTransfer.startTime))
     finally:
       self.lock.release()
     return res

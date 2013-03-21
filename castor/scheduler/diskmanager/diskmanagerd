@@ -170,13 +170,14 @@ def initQueues():
   for scheduler in configuration.getValue('DiskManager', 'ServerHosts').split():
     try:
       # rebuild list of running d2dsrc transfers
-      for transferId, transfer, arrivaltime in \
+      for transferTuple, startTime in \
               connectionpool.connections.getRunningD2dSourceTransfers(scheduler, socket.getfqdn(), timeout=timeout):
-        runningTransfers.add(RunningTransfer(scheduler, None, arrivaltime, transfer))
+        transfer = tupleToTransfer(transferTuple)
+        runningTransfers.add(RunningTransfer(scheduler, None, startTime, transfer))
       # rebuild transfer's queue
-      for transferId, transfer, arrivaltime, transferType in \
+      for transfer in \
               connectionpool.connections.getQueueingTransfers(scheduler, socket.getfqdn(), timeout=timeout):
-        transferQueue.put(scheduler, transferId, transfer, transferType, arrivaltime)
+        transferQueue.put(scheduler, transfer)
     except connectionpool.Timeout:
       dlf.writeerr(msgs.NOQUEUERETRIEVED, Scheduler=scheduler, Type='Timeout', Message='Timeout used : %d' % timeout)
       raise SystemExit
