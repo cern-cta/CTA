@@ -1,5 +1,4 @@
 export KRB5RCACHETYPE=none
 #workaround for ORACLE11g shipping own GSSAPI
 export LD_PRELOAD=libgssapi.so.2:libgssapi_krb5.so.2:libkrb5.so.3:libkrb5support.so.0:libcom_err.so.2
-DAEMON_COREFILE_LIMIT=unlimited
 NSD_OPTIONS="-s -t 15"

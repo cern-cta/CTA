@@ -30,6 +30,7 @@
 
 # Variables
 prog="nsd"
+export DAEMON_COREFILE_LIMIT="unlimited"
 FRETVAL=0
 RETVAL=0
 

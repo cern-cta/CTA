@@ -6,14 +6,3 @@
 #
 # Options to pass to the vmgr daemon
 #VMGRD_OPTIONS=
-
-# Should we run with another limit on the core file size other than the default?
-DAEMON_COREFILE_LIMIT=unlimited
-
-# Security
-if [ -f /etc/sysconfig/castor_security ]; then
-        . /etc/sysconfig/castor_security CENTRAL
-        export SECURE_CASTOR=1
-        export CSEC_TRACE=1
-        export CSEC_TRACEFILE=/var/log/castor/vmgrd.csec.log
-fi
