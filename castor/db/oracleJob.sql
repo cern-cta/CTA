@@ -822,7 +822,7 @@ BEGIN
                 id, svcClass, reqid, 44  AS reqType FROM StageUpdateRequest) Request
      WHERE SR.status = 6  -- READY
        AND SR.request = Request.id
-       AND SR.lastModificationTime < getTime() - 3600;
+       AND SR.lastModificationTime < getTime() - 300;
 END;
 /
 
