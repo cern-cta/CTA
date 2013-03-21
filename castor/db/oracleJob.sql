@@ -864,7 +864,7 @@ END;
 CREATE OR REPLACE
 PROCEDURE transferFailedSafe(subReqIds IN castor."strList",
                              errnos IN castor."cnumList",
-                             errmsg IN castor."strList") AS
+                             errmsgs IN castor."strList") AS
   srId  NUMBER;
   dcId  NUMBER;
   cfId  NUMBER;
@@ -890,17 +890,12 @@ BEGIN
       -- Call the relevant cleanup procedure for the transfer, procedures that
       -- would have been called if the transfer failed on the remote execution host.
       IF rType = 40 THEN      -- StagePutRequest
-       putFailedProc(srId);
+       putFailedProcExt(srId, errnos(i), errmsgs(i));
       ELSIF rType = 133 THEN  -- StageDiskCopyReplicaRequest
        disk2DiskCopyFailed(dcId, 0);
       ELSE                    -- StageGetRequest or StageUpdateRequest
-       getUpdateFailedProc(srId);
+       getUpdateFailedProcExt(srId, errnos(i), errmsgs(i));
       END IF;
-      -- Update the reason for termination, overriding the error code set above
-      UPDATE SubRequest
-         SET errorCode = decode(errnos(i), 0, errorCode, errnos(i)),
-             errorMessage = decode(errmsg(i), NULL, errorMessage, errmsg(i))
-       WHERE id = srId;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       NULL;  -- The SubRequest may have be removed, nothing to be done.
     END;
@@ -915,8 +910,8 @@ END;
  */
 CREATE OR REPLACE
 PROCEDURE transferFailedLockedFile(subReqId IN castor."strList",
-                                   errno IN castor."cnumList",
-                                   errmsg IN castor."strList")
+                                   errnos IN castor."cnumList",
+                                   errmsgs IN castor."strList")
 AS
   srId  NUMBER;
   dcId  NUMBER;
@@ -930,19 +925,14 @@ BEGIN
         FROM SubRequest
        WHERE subReqId = subReqId(i)
          AND status = dconst.SUBREQUEST_READY;
-       -- Update the reason for termination.
-       UPDATE SubRequest
-          SET errorCode = decode(errno(i), 0, errorCode, errno(i)),
-              errorMessage = decode(errmsg(i), NULL, errorMessage, errmsg(i))
-        WHERE id = srId;
        -- Call the relevant cleanup procedure for the transfer, procedures that
        -- would have been called if the transfer failed on the remote execution host.
        IF rType = 40 THEN      -- StagePutRequest
-         putFailedProc(srId);
+         putFailedProcExt(srId, errnos(i), errmsgs(i));
        ELSIF rType = 133 THEN  -- StageDiskCopyReplicaRequest
          disk2DiskCopyFailed(dcId, 0);
        ELSE                    -- StageGetRequest or StageUpdateRequest
-         getUpdateFailedProc(srId);
+         getUpdateFailedProcExt(srId, errnos(i), errmsgs(i));
        END IF;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       NULL;  -- The SubRequest may have be removed, nothing to be done.
