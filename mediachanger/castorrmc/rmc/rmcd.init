@@ -32,6 +32,7 @@
 
 # Variables
 prog="rmcd"
+export DAEMON_COREFILE_LIMIT="unlimited"
 RETVAL=0
 
 # Source sysconfig files
