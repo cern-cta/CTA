@@ -208,13 +208,9 @@ int Csec_server_lookup_protocols(long client_address,
   a.s_addr = client_address;
   Csec_trace(func, "Looking for allowed security protocols for %s\n", inet_ntoa (a));
 	     
-  /* Getting the protocol list from environment variable, configuration file
-     or default value */
-  if (!((p = (char *)getenv (CSEC_AUTH_MECH)) 
-	|| (p = (char *)getconfent (CSEC_CONF_SECTION, CSEC_CONF_ENTRY_AUTHMECH, 0)))) {
-    p = CSEC_DEFAULT_MECHS;
-    serrno = 0;
-  }
+  /* Getting the protocol list: this used to be configurable but as the GSI protocol
+     is not supported, we hardcode the list = KRB5 only here */
+  p = CSEC_DEFAULT_MECHS;
 
   buf = (char *)malloc(strlen(p)+1);
   if (NULL == buf) {

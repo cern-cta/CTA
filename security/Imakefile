@@ -6,27 +6,12 @@ COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.22 $ $Date: 2009/06/03 09:26
  
 COMM    Make CASTOR Security package
 
-#if UseGSI
-#define GSIMech GSI
-#else
-#define GSIMech
-#endif
-
-#if UseKRB5
-#define KRB5Mech KRB5
-#else
-#define KRBMech
-#endif
-
-#define CSEC_Mechlist KRB5Mech GSIMech ID
-CSEC_MECHLIST=CSEC_Mechlist
-CPPFLAGS += -DCSEC_DEFAULT_MECHS="\"$(CSEC_MECHLIST)\""
-
 SECLIB_OBJS = Csec_api_loader.o Csec_protocol_policy.o Csec_api.o Csec_errmsg.o Csec_apiinit.o Csec_common.o
 ClientDependsOnLibrary(common,castorcommon)
 ClientSharedLibraryTarget(castorsecurity,$(SECLIB_OBJS),$(GLOBLIB),$(LIBS) -ldl)
 
-#if UseGSI
+#ifdef UseGSI
+COMM   GSI Plugin, deprecated
 GSITLIB_OBJS = Csec_plugin_GSI_pthr.o Csec_plugin_GSI_pthr_mapper.o
 SharedLibraryTarget(castorsec_plugin_GSI_thread,$(GSITLIB_OBJS),,$(GLOBUS_GSSLIB_THR) -lssl -lc -ldl)
 GSILIB_OBJS = Csec_plugin_GSI.o Csec_plugin_GSI_mapper.o
@@ -57,7 +42,7 @@ LOCAL_PATH/Csec_plugin_GSI_pthr_mapper.d: LOCAL_PATH/Csec_plugin_GSS_mapper.c
 	gcc -MM $(CPPFLAGS) -Dwith_pthr_suffix -DGSI $(GLOBUS_INC) $< | sed "s,\($(basename $@)\).o[ :]*,\1.o $@ : ," > $@
 #endif
 
-#if UseKRB5
+COMM   KRB5 Plugin
 #define SecIncludeDirKRB5 $(shell $(Krb5Config) gssapi --cflags)
 #define SecLibsKRB5 $(shell $(Krb5Config) gssapi --libs)
 KRB5LIB_OBJS = Csec_plugin_KRB5.o Csec_plugin_KRB5_mapper.o
@@ -75,7 +60,6 @@ LOCAL_PATH/Csec_plugin_KRB5_mapper.o:  LOCAL_PATH/Csec_plugin_GSS_mapper.c
 	$(COMPILE.c) $(OUTPUT_OPTION) -DKRB5 SecIncludeDirKRB5 $<
 LOCAL_PATH/Csec_plugin_KRB5_mapper.d:  LOCAL_PATH/Csec_plugin_GSS_mapper.c
 	gcc -MM $(CPPFLAGS) -DKRB5 SecIncludeDirKRB5 $< | sed "s,\($(basename $@)\).o[ :]*,\1.o $@ : ," > $@
-#endif
 
 IDLIB_OBJS = Csec_plugin_ID.o
 IDLIB = -lc -ldl

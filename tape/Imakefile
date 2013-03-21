@@ -7,10 +7,6 @@ COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.22 $ $Date: 2009/08/18 09:43
 COMM 	Make tape daemon programs.
 
 TAPEACCT = tapeacct.o
-#if BuildSecureTape
-CPPFLAGS += -DTPCSEC
-AddLdFlags(-ldl)
-#endif
 
 CPPFLAGS += -DBIN=\"$(BINDIR)\"
 

@@ -49,20 +49,6 @@ fullversion=${version}-${d}
 echo "### Customizing build directory"
 
 #
-## Force build rules to YES for a lot of things
-#
-for this in HasNroff UseKRB5 UseXFSPrealloc; do
-    perl -pi -e "s/$this(?: |\t)+.*(YES|NO)/$this\tYES/g" config/site.def
-done
-
-#
-## Force build rules to NO for a lot of things
-#
-for this in UseGSI UseKRB4 UseHeimdalKrb5 BuildSecureCupv BuildSecureRtcopy BuildSecureTape BuildSecureVdqm BuildSecureVmgr; do
-    perl -pi -e "s/$this.*(YES|NO)/$this\tNO/g" config/site.def
-done
-
-#
 ## Replace __X__ macros in patchlevel.h
 #
 perl -pi -e s/\ \ __MAJORVERSION__/${a}/ h/patchlevel.h

@@ -5,10 +5,6 @@ COMM
 
 COMM    Make volume manager programs.
 
-#if BuildSecureVmgr
-CPPFLAGS += -DVMGRCSEC
-AddLdFlags(-ldl)
-#endif
 CPPFLAGS += $(ORACLE_CPPFLAGS)
 
 CommonDependsOnLibrary(ns,castorns)

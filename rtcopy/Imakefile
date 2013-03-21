@@ -9,11 +9,6 @@ COMM
 
 COMM         Make RTCOPY server
 
-#if BuildSecureRtcopy
-CFLAGS += -DRTCOPYCSEC
-AddLdFlags(-ldl)
-#endif
-
 CPPFLAGS += -D_LARGEFILE64_SOURCE -I$(XROOT_LOCATION)/include/xrootd
 AddLdFlags(-lXrdPosixPreload)
 

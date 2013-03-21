@@ -23,11 +23,6 @@ COMM Makefile for the VDQM API library and client
 COMM
 COMM @author Castor Dev team, castor-dev@cern.ch
 
-#if BuildSecureVdqm
-CPPFLAGS += -DVDQMCSEC
-LDLIBS += -ldl
-#endif  
-
 CommonDependsOnLibrary(common,castorcommon)
 
 LOCAL_PATH/vdqmc_SendRecv.c: LOCAL_PATH/vdqm_SendRecv.c

@@ -2,6 +2,7 @@
 #define _CSEC_PROTOCOL_POLICY_H
 
 #include <Csec_common.h>
+#define CSEC_DEFAULT_MECHS "KRB5"
 
 int Csec_client_lookup_protocols(Csec_protocol **protocols, int *nbprotocols);
 int Csec_server_lookup_protocols(long client_address,

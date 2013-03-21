@@ -13,7 +13,6 @@ ifndef IMAKETMPL
 #define COMM	#
 #define NO	0
 #define YES	1
-#include <site.def>
 
 CASTOR_ROOT = __back_to_root__
 MAJOR_CASTOR_VERSION ?= $(shell egrep -m 1 "^castor" $(CASTOR_ROOT)/debian/changelog | awk '{ print $$2 }' | cut -d . -f 1,2 | cut -c 2-)
