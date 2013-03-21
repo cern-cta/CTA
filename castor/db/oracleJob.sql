@@ -1184,9 +1184,9 @@ BEGIN
   FOR SR IN (SELECT SubRequest.id, SubRequest.subreqId, SubRequest.castorfile, SubRequest.request
                FROM SubRequest, DiskCopy, FileSystem, DiskServer
               WHERE SubRequest.status = dconst.SUBREQUEST_READY
+                AND Subrequest.reqType IN (35, 37, 44)  -- StageGet/Put/UpdateRequest
                 AND Subrequest.diskCopy = DiskCopy.id
                 AND DiskCopy.fileSystem = FileSystem.id
-                AND DiskCopy.status = dconst.DISKCOPY_STAGEOUT
                 AND FileSystem.diskServer = DiskServer.id
                 AND DiskServer.name = machine) LOOP
     BEGIN
@@ -1200,8 +1200,7 @@ BEGIN
       SELECT Request.reqId INTO varReqId FROM
         (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ reqId, id from StageGetRequest UNION ALL
          SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */ reqId, id from StagePutRequest UNION ALL
-         SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ reqId, id from StageUpdateRequest UNION ALL
-         SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */ reqId, id from StageRepackRequest) Request
+         SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ reqId, id from StageUpdateRequest) Request
        WHERE Request.id = SR.request;
       SELECT fileid, nsHost INTO varFileid, varNsHost FROM CastorFile WHERE id = SR.castorFile;
       -- and we put it in the list of transfers to be failed with code 1015 (SEINTERNAL)
