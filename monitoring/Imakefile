@@ -24,7 +24,6 @@ COMM @author Castor Dev team, castor-dev@cern.ch
 
 
 include LOCAL_PATH/cockpit/Makefile
-include LOCAL_PATH/logprocessor/Makefile
 include LOCAL_PATH/mae/Makefile
 include LOCAL_PATH/hbase-consumer/Makefile
 include LOCAL_PATH/lemon-sensor-py/Makefile

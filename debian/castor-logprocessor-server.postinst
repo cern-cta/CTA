@@ -1,2 +1,0 @@
-/sbin/chkconfig --add logprocessord
-/sbin/service logprocessord condrestart > /dev/null 2>&1 || :

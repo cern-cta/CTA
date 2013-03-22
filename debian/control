@@ -258,12 +258,6 @@ XBS-Obsoletes: castor-aggregator-client
 Description: castor (Cern Advanced STORage system)
  Tape Bridge Clients
 
-Package: castor-logprocessor-server
-Architecture: any
-Depends: logrotate, cx_Oracle
-Description: castor (Cern Advanced STORage system)
- Log Processor Daemon
-
 Package: castor-tapegateway-server
 Architecture: any
 Depends: logrotate, castor-lib-oracle, castor-lib-tape
