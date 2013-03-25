@@ -140,6 +140,9 @@ END;
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
 
+/* SQL statements for type SvcClass */        
+CREATE TABLE SvcClass (name VARCHAR2(2048), defaultFileSize INTEGER, maxReplicaNb NUMBER, gcPolicy VARCHAR2(2048), disk1Behavior NUMBER, replicateOnClose NUMBER, failJobsWhenNoSpace NUMBER, lastEditor VARCHAR2(2048), lastEditionTime INTEGER, id INTEGER CONSTRAINT PK_SvcClass_Id PRIMARY KEY, forcedFileClass INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
 /* SQL statements for requests status */
 /* Partitioning enables faster response (more than indexing) for the most frequent queries - credits to Nilo Segura */
 CREATE TABLE newRequests (type NUMBER(38) CONSTRAINT NN_NewRequests_Type NOT NULL, id NUMBER(38) CONSTRAINT NN_NewRequests_Id NOT NULL, creation DATE CONSTRAINT NN_NewRequests_Creation NOT NULL, CONSTRAINT PK_NewRequests_Type_Id PRIMARY KEY (type, id))
