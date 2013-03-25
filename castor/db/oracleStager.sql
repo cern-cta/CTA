@@ -2641,18 +2641,18 @@ BEGIN
       UPDATE CastorFile SET lastKnownFileName = varNsPath
        WHERE id = varCfId;
     END;
-    -- and we fail the request
-    UPDATE SubRequest
-       SET status = dconst.SUBREQUEST_FAILED, errorCode=serrno.ENOENT,
-           errorMessage = 'The file got renamed by another user request'
-     WHERE id = inSrId;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- the file exists only in the stager db,
     -- execute stageForcedRm (cf. ns synch performed in GC daemon)
     stageForcedRm(varFileId, varNsHost, dconst.GCTYPE_NSSYNCH);
   END;
+  -- in all cases we fail the subrequest
+  UPDATE SubRequest
+     SET status = dconst.SUBREQUEST_FAILED, errorCode=serrno.ENOENT,
+         errorMessage = 'The file got renamed by another user request'
+   WHERE id = inSrId;
 EXCEPTION WHEN NO_DATA_FOUND THEN
-  -- No file found with the given name, fail the subrequest
+  -- No file found with the given name, fail the subrequest with a generic ENOENT
   UPDATE SubRequest
      SET status = dconst.SUBREQUEST_FAILED, errorCode=serrno.ENOENT
    WHERE id = inSrId;
