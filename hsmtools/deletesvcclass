@@ -71,6 +71,8 @@ try:
     if existingSvcClasses:
         stcur.execute('DELETE FROM DiskPool2SvcClass WHERE child IN (' + svcClassIds + ')')
         stcur.execute('DELETE FROM SvcClass WHERE id IN (' + svcClassIds + ')')
+        stcur.execute("DELETE FROM WhiteList WHERE svcClass IN ('" + "', '".join(svcClasses) + "')")
+        stcur.execute("DELETE FROM BlackList WHERE svcClass IN ('" + "', '".join(svcClasses) + "')")
         stconn.commit()
         # loop over svcclasses and delete them from stager
         print 'successfully dropped the following service class(es) : %s' % (', '.join(existingSvcClasses))
