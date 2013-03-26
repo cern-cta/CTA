@@ -50,6 +50,7 @@
 
      #95189  Time discrepencies between disk servers and name servers can lead to silent data loss on input
      #100992 stuck xrootd threads on stage_rm
+     #100941 Bad reaction of scheduler to empty set of diskserver
 
   [Features]
 
@@ -85,7 +86,7 @@
   ---------------
 
   - castor-xroot-plugin comes as replacement of previous xrootd-xcastor2fs and xrootd-libtransfermanager
-    that were not distributed with CASTOR
+    that were not distributed with CASTOR. This RPM depends on xrootd-server version 3.3.1.
   - castor-rmmaster-client, castor-rmmaster-server and castor-rmnode-server have been dropped as part
     of the rmmaster/rmnode integration into transfermanager/diskmanager
   - castor-dlf-web and castor-lib-monitor have been dropped as they have been superseeded in 2.1.13 by
