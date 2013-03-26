@@ -133,7 +133,7 @@ AS
   GCTYPE_NSSYNCH             CONSTANT PLS_INTEGER :=  4;
   GCTYPE_OVERWRITTEN         CONSTANT PLS_INTEGER :=  5;
   GCTYPE_ADMIN               CONSTANT PLS_INTEGER :=  6;
-  
+
   DELDC_ENOENT               CONSTANT PLS_INTEGER :=  1;
   DELDC_RECALL               CONSTANT PLS_INTEGER :=  2;
   DELDC_REPLICATION          CONSTANT PLS_INTEGER :=  3;
@@ -224,7 +224,7 @@ AS
   REPACK_UNEXPECTED_EXCEPTION  CONSTANT VARCHAR2(2048) := 'handleRepackRequest: unexpected exception caught';
 
   REPORT_HEART_BEAT_RESUMED    CONSTANT VARCHAR2(2048) := 'Heartbeat resumed for diskserver';
-  
+
   DELETEDISKCOPY_RECALL        CONSTANT VARCHAR2(2048) := 'deleteDiskCopy: diskCopy was lost, about to recall from tape';
   DELETEDISKCOPY_REPLICATION   CONSTANT VARCHAR2(2048) := 'deleteDiskCopy: diskCopy was lost, about to replicate from another pool';
   DELETEDISKCOPY_LOST          CONSTANT VARCHAR2(2048) := 'deleteDiskCopy: file was LOST and is being dropped from the system';

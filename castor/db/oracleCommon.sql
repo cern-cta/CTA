@@ -132,31 +132,6 @@ BEGIN
 END;
 /
 
-/* Function to tokenize a string using a specified delimiter. If no delimiter
- * is specified the default is ','. The results are returned as a table e.g.
- * SELECT * FROM TABLE (strTokenizer(inputValue, delimiter))
- */
-CREATE OR REPLACE FUNCTION strTokenizer(p_list VARCHAR2, p_del VARCHAR2 := ',')
-  RETURN strListTable pipelined IS
-  l_idx   INTEGER;
-  l_list  VARCHAR2(32767) := p_list;
-  l_value VARCHAR2(32767);
-BEGIN
-  LOOP
-    l_idx := instr(l_list, p_del);
-    IF l_idx > 0 THEN
-      PIPE ROW(ltrim(rtrim(substr(l_list, 1, l_idx - 1))));
-      l_list := substr(l_list, l_idx + length(p_del));
-    ELSE
-      IF l_list IS NOT NULL THEN
-        PIPE ROW(ltrim(rtrim(l_list)));
-      END IF;
-      EXIT;
-    END IF;
-  END LOOP;
-  RETURN;
-END;
-/
 
 /* Function to normalize a filepath, i.e. to drop multiple '/'s and resolve any '..' */
 CREATE OR REPLACE FUNCTION normalizePath(path IN VARCHAR2) RETURN VARCHAR2 IS

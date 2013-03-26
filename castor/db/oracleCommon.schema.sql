@@ -8,38 +8,110 @@
 /* SQL statement to populate the intial schema version */
 UPDATE UpgradeLog SET schemaVersion = '2_1_14_0';
 
+/* Sequence for indices */
+CREATE SEQUENCE ids_seq CACHE 300;
+
+/* Custom type to handle int arrays */
+CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
+/
+
+/* Custom type to handle float arrays */
+CREATE OR REPLACE TYPE floatList IS TABLE OF NUMBER;
+/
+
+/* Custom type to handle strings returned by pipelined functions */
+CREATE OR REPLACE TYPE strListTable AS TABLE OF VARCHAR2(2048);
+/
+
+/* Function to tokenize a string using a specified delimiter. If no delimiter
+ * is specified the default is ','. The results are returned as a table e.g.
+ * SELECT * FROM TABLE (strTokenizer(inputValue, delimiter))
+ */
+CREATE OR REPLACE FUNCTION strTokenizer(p_list VARCHAR2, p_del VARCHAR2 := ',')
+  RETURN strListTable pipelined IS
+  l_idx   INTEGER;
+  l_list  VARCHAR2(32767) := p_list;
+  l_value VARCHAR2(32767);
+BEGIN
+  LOOP
+    l_idx := instr(l_list, p_del);
+    IF l_idx > 0 THEN
+      PIPE ROW(ltrim(rtrim(substr(l_list, 1, l_idx - 1))));
+      l_list := substr(l_list, l_idx + length(p_del));
+    ELSE
+      IF l_list IS NOT NULL THEN
+        PIPE ROW(ltrim(rtrim(l_list)));
+      END IF;
+      EXIT;
+    END IF;
+  END LOOP;
+  RETURN;
+END;
+/
+
+/* Get current time as a time_t. Not that easy in ORACLE */
+CREATE OR REPLACE FUNCTION getTime RETURN NUMBER IS
+  epoch            TIMESTAMP WITH TIME ZONE;
+  now              TIMESTAMP WITH TIME ZONE;
+  interval         INTERVAL DAY(9) TO SECOND;
+  interval_days    NUMBER;
+  interval_hours   NUMBER;
+  interval_minutes NUMBER;
+  interval_seconds NUMBER;
+BEGIN
+  epoch := TO_TIMESTAMP_TZ('01-JAN-1970 00:00:00 00:00',
+    'DD-MON-YYYY HH24:MI:SS TZH:TZM');
+  now := SYSTIMESTAMP AT TIME ZONE '00:00';
+  interval         := now - epoch;
+  interval_days    := EXTRACT(DAY    FROM (interval));
+  interval_hours   := EXTRACT(HOUR   FROM (interval));
+  interval_minutes := EXTRACT(MINUTE FROM (interval));
+  interval_seconds := EXTRACT(SECOND FROM (interval));
+
+  RETURN interval_days * 24 * 60 * 60 + interval_hours * 60 * 60 +
+    interval_minutes * 60 + interval_seconds;
+END;
+/
+
+
+/****************/
+/* CastorConfig */
+/****************/
+
 /* Define a table for some configuration key-value pairs and populate it */
 CREATE TABLE CastorConfig
-  (class VARCHAR2(2048) CONSTRAINT NN_CastorConfig_Class NOT NULL,
-   key VARCHAR2(2048) CONSTRAINT NN_CastorConfig_Key NOT NULL,
-   value VARCHAR2(2048) CONSTRAINT NN_CastorConfig_Value NOT NULL,
+  (class VARCHAR2(2048) CONSTRAINT NN_CastorConfig_class NOT NULL,
+   key VARCHAR2(2048) CONSTRAINT NN_CastorConfig_key NOT NULL,
+   value VARCHAR2(2048) CONSTRAINT NN_CastorConfig_value NOT NULL,
    description VARCHAR2(2048));
 
 ALTER TABLE CastorConfig ADD CONSTRAINT UN_CastorConfig_class_key UNIQUE (class, key);
 
 /* Prompt for the value of the general/instance option */
 UNDEF instanceName
-ACCEPT instanceName DEFAULT castor_stager PROMPT 'Enter the name of the castor instance: (default: castor_stager, example: castoratlas) '
+ACCEPT instanceName CHAR DEFAULT castor_stager PROMPT 'Enter the castor instance name (default: castor_stager, example: castoratlas): '
 SET VER OFF
-
 INSERT INTO CastorConfig
   VALUES ('general', 'instance', '&instanceName', 'Name of this Castor instance');
 
 /* Prompt for the value of the stager/nsHost option */
 UNDEF stagerNsHost
-ACCEPT stagerNsHost DEFAULT NULL PROMPT 'Enter the name of the nameserver host: (example: castorns; this value is mandatory) '
+ACCEPT stagerNsHost CHAR PROMPT 'Enter the name of the nameserver host (example: castorns; this value is mandatory): '
+INSERT INTO CastorConfig
+  VALUES ('stager', 'nsHost', '&stagerNsHost', 'The name of the name server host to set in the CastorFile table overriding the CNS/HOST option defined in castor.conf');
 
-BEGIN
-  IF &stagerNsHost IS NULL THEN
-    -- Error, this variable must be filled
-    raise_application_error(-20000, 'This value is necessary for the correct functioning of the stager. Aborting...');
-  ELSE
-    INSERT INTO CastorConfig
-      VALUES ('stager', 'nsHost', '&stagerNsHost', 'The name of the name server host to set in the CastorFile table overriding the CNS/HOST option defined in castor.conf');
-  END IF;
-END;
-/
+/* DB link to the nameserver db */
+PROMPT Configuration of the database link to the CASTOR name space
+UNDEF cnsUser
+ACCEPT cnsUser CHAR DEFAULT 'castor' PROMPT 'Enter the nameserver db username (default castor): ';
+UNDEF cnsPasswd
+ACCEPT cnsPasswd CHAR PROMPT 'Enter the nameserver db password: ';
+UNDEF cnsDbName
+ACCEPT cnsDbName CHAR PROMPT 'Enter the nameserver db TNS name: ';
+CREATE DATABASE LINK remotens
+  CONNECT TO &cnsUser IDENTIFIED BY &cnsPasswd USING '&cnsDbName';
 
+/* Insert other default values */
 INSERT INTO CastorConfig
   VALUES ('general', 'owner', sys_context('USERENV', 'CURRENT_USER'), 'The database owner of the schema');
 INSERT INTO CastorConfig
@@ -113,35 +185,92 @@ BEGIN
 END;
 /
 
-/* Get current time as a time_t. Not that easy in ORACLE */
-CREATE OR REPLACE FUNCTION getTime RETURN NUMBER IS
-  epoch            TIMESTAMP WITH TIME ZONE;
-  now              TIMESTAMP WITH TIME ZONE;
-  interval         INTERVAL DAY(9) TO SECOND;
-  interval_days    NUMBER;
-  interval_hours   NUMBER;
-  interval_minutes NUMBER;
-  interval_seconds NUMBER;
-BEGIN
-  epoch := TO_TIMESTAMP_TZ('01-JAN-1970 00:00:00 00:00',
-    'DD-MON-YYYY HH24:MI:SS TZH:TZM');
-  now := SYSTIMESTAMP AT TIME ZONE '00:00';
-  interval         := now - epoch;
-  interval_days    := EXTRACT(DAY    FROM (interval));
-  interval_hours   := EXTRACT(HOUR   FROM (interval));
-  interval_minutes := EXTRACT(MINUTE FROM (interval));
-  interval_seconds := EXTRACT(SECOND FROM (interval));
 
-  RETURN interval_days * 24 * 60 * 60 + interval_hours * 60 * 60 +
-    interval_minutes * 60 + interval_seconds;
-END;
-/
+/************************************/
+/* Garbage collection related table */
+/************************************/
 
-/* Sequence for indices */
-CREATE SEQUENCE ids_seq CACHE 300;
+/* A table storing the Gc policies and detailing there configuration
+ * For each policy, identified by a name, parameters are :
+ *   - userWeight : the name of the PL/SQL function to be called to
+ *     precompute the GC weight when a file is written by the user.
+ *   - recallWeight : the name of the PL/SQL function to be called to
+ *     precompute the GC weight when a file is recalled
+ *   - copyWeight : the name of the PL/SQL function to be called to
+ *     precompute the GC weight when a file is disk to disk copied
+ *   - firstAccessHook : the name of the PL/SQL function to be called
+ *     when the file is accessed for the first time. Can be NULL.
+ *   - accessHook : the name of the PL/SQL function to be called
+ *     when the file is accessed (except for the first time). Can be NULL.
+ *   - userSetGCWeight : the name of the PL/SQL function to be called
+ *     when a setFileGcWeight user request is processed can be NULL.
+ * All functions return a number that is the new gcWeight.
+ * In general, here are the signatures :
+ *   userWeight(fileSize NUMBER, DiskCopyStatus NUMBER)
+ *   recallWeight(fileSize NUMBER)
+ *   copyWeight(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER))
+ *   firstAccessHook(oldGcWeight NUMBER, creationTime NUMBER)
+ *   accessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER)
+ *   userSetGCWeight(oldGcWeight NUMBER, userDelta NUMBER)
+ * Few notes :
+ *   diskCopyStatus can be STAGED(0) or CANBEMIGR(10)
+ */
+CREATE TABLE GcPolicy (name VARCHAR2(2048) CONSTRAINT NN_GcPolicy_Name NOT NULL CONSTRAINT PK_GcPolicy_Name PRIMARY KEY,
+                       userWeight VARCHAR2(2048) CONSTRAINT NN_GcPolicy_UserWeight NOT NULL,
+                       recallWeight VARCHAR2(2048) CONSTRAINT NN_GcPolicy_RecallWeight NOT NULL,
+                       copyWeight VARCHAR2(2048) CONSTRAINT NN_GcPolicy_CopyWeight NOT NULL,
+                       firstAccessHook VARCHAR2(2048) DEFAULT NULL,
+                       accessHook VARCHAR2(2048) DEFAULT NULL,
+                       userSetGCWeight VARCHAR2(2048) DEFAULT NULL);
 
-/* SQL statements for type SvcClass */        
-CREATE TABLE SvcClass (name VARCHAR2(2048), defaultFileSize INTEGER, maxReplicaNb NUMBER, gcPolicy VARCHAR2(2048), disk1Behavior NUMBER, replicateOnClose NUMBER, failJobsWhenNoSpace NUMBER, lastEditor VARCHAR2(2048), lastEditionTime INTEGER, id INTEGER CONSTRAINT PK_SvcClass_Id PRIMARY KEY, forcedFileClass INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+/* Default policy, mainly based on file sizes */
+INSERT INTO GcPolicy VALUES ('default',
+                             'castorGC.sizeRelatedUserWeight',
+                             'castorGC.sizeRelatedRecallWeight',
+                             'castorGC.sizeRelatedCopyWeight',
+                             'castorGC.dayBonusFirstAccessHook',
+                             'castorGC.halfHourBonusAccessHook',
+                             'castorGC.cappedUserSetGCWeight');
+INSERT INTO GcPolicy VALUES ('FIFO',
+                             'castorGC.creationTimeUserWeight',
+                             'castorGC.creationTimeRecallWeight',
+                             'castorGC.creationTimeCopyWeight',
+                             NULL,
+                             NULL,
+                             NULL);
+INSERT INTO GcPolicy VALUES ('LRU',
+                             'castorGC.creationTimeUserWeight',
+                             'castorGC.creationTimeRecallWeight',
+                             'castorGC.creationTimeCopyWeight',
+                             'castorGC.LRUFirstAccessHook',
+                             'castorGC.LRUAccessHook',
+                             NULL);
+INSERT INTO GcPolicy VALUES ('LRUpin',
+                             'castorGC.creationTimeUserWeight',
+                             'castorGC.creationTimeRecallWeight',
+                             'castorGC.creationTimeCopyWeight',
+                             'castorGC.LRUFirstAccessHook',
+                             'castorGC.LRUAccessHook',
+                             'castorGC.LRUpinUserSetGCWeight');
+
+
+/* SQL statements for type SvcClass */
+CREATE TABLE SvcClass (name VARCHAR2(2048) CONSTRAINT NN_SvcClass_Name NOT NULL,
+                       defaultFileSize INTEGER,
+                       maxReplicaNb NUMBER,
+                       gcPolicy VARCHAR2(2048) DEFAULT 'default' CONSTRAINT NN_SvcClass_GcPolicy NOT NULL,
+                       disk1Behavior NUMBER,
+                       replicateOnClose NUMBER,
+                       failJobsWhenNoSpace NUMBER,
+                       lastEditor VARCHAR2(2048) CONSTRAINT NN_SvcClass_LastEditor NOT NULL,
+                       lastEditionTime INTEGER CONSTRAINT NN_SvcClass_LastEditionTime NOT NULL,
+                       id INTEGER CONSTRAINT PK_SvcClass_Id PRIMARY KEY,
+                       forcedFileClass INTEGER CONSTRAINT NN_SvcClass_ForcedFileClass NOT NULL)
+INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+ALTER TABLE SvcClass ADD CONSTRAINT UN_SvcClass_Name UNIQUE (name);
+ALTER TABLE SvcClass ADD CONSTRAINT FK_SvcClass_GCPolicy
+  FOREIGN KEY (gcPolicy) REFERENCES GcPolicy (name);
+CREATE INDEX I_SvcClass_GcPolicy ON SvcClass (gcPolicy);
 
 /* SQL statements for requests status */
 /* Partitioning enables faster response (more than indexing) for the most frequent queries - credits to Nilo Segura */
@@ -187,8 +316,25 @@ PARTITION BY LIST (type)
   PARTITION notlisted VALUES (default) TABLESPACE stager_data
  );
 
+
 /* SQL statements for type CastorFile */
-CREATE TABLE CastorFile (fileId INTEGER, nsHost VARCHAR2(2048), fileSize INTEGER, creationTime INTEGER, lastAccessTime INTEGER, lastKnownFileName VARCHAR2(2048), lastUpdateTime INTEGER, id INTEGER CONSTRAINT PK_CastorFile_Id PRIMARY KEY, fileClass INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE CastorFile (fileId INTEGER,
+                         nsHost VARCHAR2(2048),
+                         fileSize INTEGER,
+                         creationTime INTEGER,
+                         lastAccessTime INTEGER,
+                         lastKnownFileName VARCHAR2(2048) CONSTRAINT NN_CastorFile_LKFileName NOT NULL,
+                         lastUpdateTime INTEGER,
+                         id INTEGER CONSTRAINT PK_CastorFile_Id PRIMARY KEY,
+                         fileClass INTEGER)
+INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_FileClass
+  FOREIGN KEY (fileClass) REFERENCES FileClass (id)
+  INITIALLY DEFERRED DEFERRABLE;
+ALTER TABLE CastorFile ADD CONSTRAINT UN_CastorFile_LKFileName UNIQUE (lastKnownFileName);
+CREATE INDEX I_CastorFile_FileClass ON CastorFile(FileClass);
+CREATE UNIQUE INDEX I_CastorFile_FileIdNsHost ON CastorFile (fileId, nsHost);
+
 
 /* SQL statement for table SubRequest */
 CREATE TABLE SubRequest
@@ -267,73 +413,6 @@ BEGIN
 END;
 /
 
-
-/************************************/
-/* Garbage collection related table */
-/************************************/
-
-/* A table storing the Gc policies and detailing there configuration
- * For each policy, identified by a name, parameters are :
- *   - userWeight : the name of the PL/SQL function to be called to
- *     precompute the GC weight when a file is written by the user.
- *   - recallWeight : the name of the PL/SQL function to be called to
- *     precompute the GC weight when a file is recalled
- *   - copyWeight : the name of the PL/SQL function to be called to
- *     precompute the GC weight when a file is disk to disk copied
- *   - firstAccessHook : the name of the PL/SQL function to be called
- *     when the file is accessed for the first time. Can be NULL.
- *   - accessHook : the name of the PL/SQL function to be called
- *     when the file is accessed (except for the first time). Can be NULL.
- *   - userSetGCWeight : the name of the PL/SQL function to be called
- *     when a setFileGcWeight user request is processed can be NULL.
- * All functions return a number that is the new gcWeight.
- * In general, here are the signatures :
- *   userWeight(fileSize NUMBER, DiskCopyStatus NUMBER)
- *   recallWeight(fileSize NUMBER)
- *   copyWeight(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER))
- *   firstAccessHook(oldGcWeight NUMBER, creationTime NUMBER)
- *   accessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER)
- *   userSetGCWeight(oldGcWeight NUMBER, userDelta NUMBER)
- * Few notes :
- *   diskCopyStatus can be STAGED(0) or CANBEMIGR(10)
- */
-CREATE TABLE GcPolicy (name VARCHAR2(2048) CONSTRAINT NN_GcPolicy_Name NOT NULL CONSTRAINT PK_GcPolicy_Name PRIMARY KEY,
-                       userWeight VARCHAR2(2048) CONSTRAINT NN_GcPolicy_UserWeight NOT NULL,
-                       recallWeight VARCHAR2(2048) CONSTRAINT NN_GcPolicy_RecallWeight NOT NULL,
-                       copyWeight VARCHAR2(2048) CONSTRAINT NN_GcPolicy_CopyWeight NOT NULL,
-                       firstAccessHook VARCHAR2(2048) DEFAULT NULL,
-                       accessHook VARCHAR2(2048) DEFAULT NULL,
-                       userSetGCWeight VARCHAR2(2048) DEFAULT NULL);
-
-/* Default policy, mainly based on file sizes */
-INSERT INTO GcPolicy VALUES ('default',
-                             'castorGC.sizeRelatedUserWeight',
-                             'castorGC.sizeRelatedRecallWeight',
-                             'castorGC.sizeRelatedCopyWeight',
-                             'castorGC.dayBonusFirstAccessHook',
-                             'castorGC.halfHourBonusAccessHook',
-                             'castorGC.cappedUserSetGCWeight');
-INSERT INTO GcPolicy VALUES ('FIFO',
-                             'castorGC.creationTimeUserWeight',
-                             'castorGC.creationTimeRecallWeight',
-                             'castorGC.creationTimeCopyWeight',
-                             NULL,
-                             NULL,
-                             NULL);
-INSERT INTO GcPolicy VALUES ('LRU',
-                             'castorGC.creationTimeUserWeight',
-                             'castorGC.creationTimeRecallWeight',
-                             'castorGC.creationTimeCopyWeight',
-                             'castorGC.LRUFirstAccessHook',
-                             'castorGC.LRUAccessHook',
-                             NULL);
-INSERT INTO GcPolicy VALUES ('LRUpin',
-                             'castorGC.creationTimeUserWeight',
-                             'castorGC.creationTimeRecallWeight',
-                             'castorGC.creationTimeCopyWeight',
-                             'castorGC.LRUFirstAccessHook',
-                             'castorGC.LRUAccessHook',
-                             'castorGC.LRUpinUserSetGCWeight');
 
 /**********************************/
 /* Recall/Migration related table */
@@ -702,12 +781,9 @@ CREATE TABLE DiskPool2SvcClass (Parent INTEGER, Child INTEGER) INITRANS 50 PCTFR
 CREATE INDEX I_DiskPool2SvcClass_C on DiskPool2SvcClass (child);
 CREATE INDEX I_DiskPool2SvcClass_P on DiskPool2SvcClass (parent);
 
-
-CREATE UNIQUE INDEX I_CastorFile_FileIdNsHost ON CastorFile (fileId, nsHost);
-CREATE UNIQUE INDEX I_CastorFile_LastKnownFileName ON CastorFile (lastKnownFileName);
-
 /* SQL statements for type DiskCopy */
 CREATE TABLE DiskCopy (path VARCHAR2(2048), gcWeight NUMBER, creationTime INTEGER, lastAccessTime INTEGER, diskCopySize INTEGER, nbCopyAccesses NUMBER, owneruid NUMBER, ownergid NUMBER, id INTEGER CONSTRAINT PK_DiskCopy_Id PRIMARY KEY, gcType INTEGER, fileSystem INTEGER, castorFile INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
 CREATE INDEX I_DiskCopy_Castorfile ON DiskCopy (castorFile);
 CREATE INDEX I_DiskCopy_FileSystem ON DiskCopy (fileSystem);
 CREATE INDEX I_DiskCopy_FS_GCW ON DiskCopy (fileSystem, gcWeight);
@@ -717,6 +793,15 @@ CREATE INDEX I_DiskCopy_Status_7_FS ON DiskCopy (decode(status,7,status,NULL), f
 CREATE INDEX I_DiskCopy_Status_9 ON DiskCopy (decode(status,9,status,NULL));
 -- to speed up deleteOutOfDateStageOutDCs
 CREATE INDEX I_DiskCopy_Status_Open ON DiskCopy (decode(status,6,status,decode(status,5,status,decode(status,11,status,NULL))));
+
+/* DiskCopy constraints */
+ALTER TABLE DiskCopy MODIFY (nbCopyAccesses DEFAULT 0);
+ALTER TABLE DiskCopy MODIFY (gcType DEFAULT NULL);
+ALTER TABLE DiskCopy ADD CONSTRAINT FK_DiskCopy_CastorFile
+  FOREIGN KEY (castorFile) REFERENCES CastorFile (id)
+  INITIALLY DEFERRED DEFERRABLE;
+ALTER TABLE DiskCopy
+  MODIFY (status CONSTRAINT NN_DiskCopy_Status NOT NULL);
 
 BEGIN
   setObjStatusName('DiskCopy', 'gcType', 0, 'GCTYPE_AUTO');
@@ -755,60 +840,6 @@ CREATE INDEX I_QueryParameter_Query ON QueryParameter (query);
 /* Constraint on FileClass name */
 ALTER TABLE FileClass ADD CONSTRAINT UN_FileClass_Name UNIQUE (name);
 ALTER TABLE FileClass MODIFY (classid CONSTRAINT NN_FileClass_Name NOT NULL);
-
-/* Add unique constraint on svcClass name */
-ALTER TABLE SvcClass ADD CONSTRAINT UN_SvcClass_Name UNIQUE (name);
-
-/* Custom type to handle int arrays */
-CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
-/
-
-/* Custom type to handle float arrays */
-CREATE OR REPLACE TYPE floatList IS TABLE OF NUMBER;
-/
-
-/* Custom type to handle strings returned by pipelined functions */
-CREATE OR REPLACE TYPE strListTable AS TABLE OF VARCHAR2(2048);
-/
-
-/* SvcClass constraints */
-ALTER TABLE SvcClass
-  MODIFY (name CONSTRAINT NN_SvcClass_Name NOT NULL);
-
-ALTER TABLE SvcClass 
-  MODIFY (forcedFileClass CONSTRAINT NN_SvcClass_ForcedFileClass NOT NULL);
-
-ALTER TABLE SvcClass MODIFY (gcPolicy CONSTRAINT NN_SvcClass_GcPolicy NOT NULL);
-ALTER TABLE SvcClass MODIFY (gcPolicy DEFAULT 'default');
-ALTER TABLE SvcClass ADD CONSTRAINT FK_SvcClass_GCPolicy
-  FOREIGN KEY (gcPolicy) REFERENCES GcPolicy (name);
-CREATE INDEX I_SvcClass_GcPolicy ON SvcClass (gcPolicy);
-
-ALTER TABLE SvcClass MODIFY (lastEditor CONSTRAINT NN_SvcClass_LastEditor NOT NULL);
-
-ALTER TABLE SvcClass MODIFY (lastEditionTime CONSTRAINT NN_SvcClass_LastEditionTime NOT NULL);
-
-/* DiskCopy constraints */
-ALTER TABLE DiskCopy MODIFY (nbCopyAccesses DEFAULT 0);
-
-ALTER TABLE DiskCopy MODIFY (gcType DEFAULT NULL);
-
-ALTER TABLE DiskCopy ADD CONSTRAINT FK_DiskCopy_CastorFile
-  FOREIGN KEY (castorFile) REFERENCES CastorFile (id)
-  INITIALLY DEFERRED DEFERRABLE;
-
-ALTER TABLE DiskCopy
-  MODIFY (status CONSTRAINT NN_DiskCopy_Status NOT NULL);
-
-/* CastorFile constraints */
-ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_FileClass
-  FOREIGN KEY (fileClass) REFERENCES FileClass (id)
-  INITIALLY DEFERRED DEFERRABLE;
-CREATE INDEX I_CastorFile_FileClass ON CastorFile(FileClass);
-
-ALTER TABLE CastorFile ADD CONSTRAINT UN_CastorFile_LKFileName UNIQUE (LastKnownFileName);
-
-ALTER TABLE CastorFile MODIFY (LastKnownFileName CONSTRAINT NN_CastorFile_LKFileName NOT NULL);
 
 /* DiskPool2SvcClass constraints */
 ALTER TABLE DiskPool2SvcClass ADD CONSTRAINT PK_DiskPool2SvcClass_PC
@@ -932,7 +963,7 @@ UPDATE Type2Obj SET svcHandler = 'GCSvc' WHERE type IN (73, 74, 83, 142, 149);
 UPDATE Type2Obj SET svcHandler = 'BulkStageReqSvc' WHERE type IN (50, 119);
 
 /* SQL statements for type StageDiskCopyReplicaRequest */
-CREATE TABLE StageDiskCopyReplicaRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StageDiskCopyReplicaRequ_Id PRIMARY KEY, svcClass INTEGER, client INTEGER, sourceSvcClass INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE StageDiskCopyReplicaRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StageDiskCopyReplicaRequ_Id PRIMARY KEY, svcClass INTEGER, client INTEGER, sourceSvcClass INTEGER, destDiskCopy INTEGER, sourceDiskCopy INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* Set default values for the StageDiskCopyReplicaRequest table */
 ALTER TABLE StageDiskCopyReplicaRequest MODIFY flags DEFAULT 0;
@@ -1030,21 +1061,6 @@ CREATE GLOBAL TEMPORARY TABLE SyncRunningTransfersHelper2
 CREATE GLOBAL TEMPORARY TABLE DeleteDiskCopyHelper
   (dcId INTEGER CONSTRAINT PK_DDCHelper_dcId PRIMARY KEY, rc INTEGER)
   ON COMMIT PRESERVE ROWS;
-
-/********************************/
-/* DB link to the nameserver db */
-/********************************/
-
-PROMPT Configuration of the database link to the CASTOR name space
-UNDEF cnsUser
-ACCEPT cnsUser CHAR DEFAULT 'castor' PROMPT 'Enter the nameserver db username (default castor): ';
-UNDEF cnsPasswd
-ACCEPT cnsPasswd CHAR PROMPT 'Enter the nameserver db password: ';
-UNDEF cnsDbName
-ACCEPT cnsDbName CHAR PROMPT 'Enter the nameserver db TNS name: ';
-CREATE DATABASE LINK remotens
-  CONNECT TO &cnsUser IDENTIFIED BY &cnsPasswd USING '&cnsDbName';
-
 
 /**********/
 /* Repack */

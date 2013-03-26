@@ -350,7 +350,48 @@ AS
  *******************************************************************/
 
 /* SQL statement to populate the intial schema version */
-UPDATE UpgradeLog SET schemaVersion = '2_1_13_0';
+UPDATE UpgradeLog SET schemaVersion = '2_1_14_0';
+
+/* Sequence for indices */
+CREATE SEQUENCE ids_seq CACHE 300;
+
+/* Custom type to handle int arrays */
+CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
+/
+
+/* Custom type to handle float arrays */
+CREATE OR REPLACE TYPE floatList IS TABLE OF NUMBER;
+/
+
+/* Custom type to handle strings returned by pipelined functions */
+CREATE OR REPLACE TYPE strListTable AS TABLE OF VARCHAR2(2048);
+/
+
+/* Function to tokenize a string using a specified delimiter. If no delimiter
+ * is specified the default is ','. The results are returned as a table e.g.
+ * SELECT * FROM TABLE (strTokenizer(inputValue, delimiter))
+ */
+CREATE OR REPLACE FUNCTION strTokenizer(p_list VARCHAR2, p_del VARCHAR2 := ',')
+  RETURN strListTable pipelined IS
+  l_idx   INTEGER;
+  l_list  VARCHAR2(32767) := p_list;
+  l_value VARCHAR2(32767);
+BEGIN
+  LOOP
+    l_idx := instr(l_list, p_del);
+    IF l_idx > 0 THEN
+      PIPE ROW(ltrim(rtrim(substr(l_list, 1, l_idx - 1))));
+      l_list := substr(l_list, l_idx + length(p_del));
+    ELSE
+      IF l_list IS NOT NULL THEN
+        PIPE ROW(ltrim(rtrim(l_list)));
+      END IF;
+      EXIT;
+    END IF;
+  END LOOP;
+  RETURN;
+END;
+/
 
 /* Get current time as a time_t. Not that easy in ORACLE */
 CREATE OR REPLACE FUNCTION getTime RETURN NUMBER IS
@@ -376,8 +417,204 @@ BEGIN
 END;
 /
 
-/* Sequence for indices */
-CREATE SEQUENCE ids_seq CACHE 300;
+
+/****************/
+/* CastorConfig */
+/****************/
+
+/* Define a table for some configuration key-value pairs and populate it */
+CREATE TABLE CastorConfig
+  (class VARCHAR2(2048) CONSTRAINT NN_CastorConfig_class NOT NULL,
+   key VARCHAR2(2048) CONSTRAINT NN_CastorConfig_key NOT NULL,
+   value VARCHAR2(2048) CONSTRAINT NN_CastorConfig_value NOT NULL,
+   description VARCHAR2(2048));
+
+ALTER TABLE CastorConfig ADD CONSTRAINT UN_CastorConfig_class_key UNIQUE (class, key);
+
+/* Prompt for the value of the general/instance option */
+UNDEF instanceName
+ACCEPT instanceName CHAR DEFAULT castor_stager PROMPT 'Enter the castor instance name (default: castor_stager, example: castoratlas): '
+SET VER OFF
+INSERT INTO CastorConfig
+  VALUES ('general', 'instance', '&instanceName', 'Name of this Castor instance');
+
+/* Prompt for the value of the stager/nsHost option */
+UNDEF stagerNsHost
+ACCEPT stagerNsHost CHAR PROMPT 'Enter the name of the nameserver host (example: castorns; this value is mandatory): '
+INSERT INTO CastorConfig
+  VALUES ('stager', 'nsHost', '&stagerNsHost', 'The name of the name server host to set in the CastorFile table overriding the CNS/HOST option defined in castor.conf');
+
+/* DB link to the nameserver db */
+PROMPT Configuration of the database link to the CASTOR name space
+UNDEF cnsUser
+ACCEPT cnsUser CHAR DEFAULT 'castor' PROMPT 'Enter the nameserver db username (default castor): ';
+UNDEF cnsPasswd
+ACCEPT cnsPasswd CHAR PROMPT 'Enter the nameserver db password: ';
+UNDEF cnsDbName
+ACCEPT cnsDbName CHAR PROMPT 'Enter the nameserver db TNS name: ';
+CREATE DATABASE LINK remotens
+  CONNECT TO &cnsUser IDENTIFIED BY &cnsPasswd USING '&cnsDbName';
+
+/* Insert other default values */
+INSERT INTO CastorConfig
+  VALUES ('general', 'owner', sys_context('USERENV', 'CURRENT_USER'), 'The database owner of the schema');
+INSERT INTO CastorConfig
+  VALUES ('cleaning', 'terminatedRequestsTimeout', '120', 'Maximum timeout for successful and failed requests in hours');
+INSERT INTO CastorConfig
+  VALUES ('cleaning', 'outOfDateStageOutDCsTimeout', '72', 'Timeout for STAGEOUT diskCopies in hours');
+INSERT INTO CastorConfig
+  VALUES ('cleaning', 'failedDCsTimeout', '72', 'Timeout for failed diskCopies in hours');
+INSERT INTO CastorConfig
+  VALUES ('Repack', 'Protocol', 'rfio', 'The protocol that repack should use for writing files to disk');
+INSERT INTO CastorConfig
+  VALUES ('Recall', 'MaxNbRetriesWithinMount', '2', 'The maximum number of retries for recalling a file within the same tape mount. When exceeded, the recall may still be retried in another mount. See Recall/MaxNbMount entry');
+INSERT INTO CastorConfig
+  VALUES ('Recall', 'MaxNbMounts', '2', 'The maximum number of mounts for recalling a given file. When exceeded, the recall will be failed if no other tapecopy can be used. See also Recall/MaxNbRetriesWithinMount entry');
+INSERT INTO CastorConfig
+  VALUES ('Migration', 'SizeThreshold', '300000000', 'The threshold to consider a file "small" or "large" when routing it to tape');
+INSERT INTO CastorConfig
+  VALUES ('Migration', 'MaxNbMounts', '7', 'The maximum number of mounts for migrating a given file. When exceeded, the migration will be considered failed: the MigrationJob entry will be dropped and the corresponding diskcopy left in status CANBEMIGR. An operator intervention is required to resume the migration.');
+INSERT INTO CastorConfig
+  VALUES ('DiskServer', 'HeartbeatTimeout', '180', 'The maximum amount of time in seconds that a diskserver can spend without sending any hearbeat before it is automatically set to offline.');
+
+/* Create the AdminUsers table */
+CREATE TABLE AdminUsers (euid NUMBER, egid NUMBER);
+ALTER TABLE AdminUsers ADD CONSTRAINT UN_AdminUsers_euid_egid UNIQUE (euid, egid);
+INSERT INTO AdminUsers VALUES (0, 0);   -- root/root, to be removed
+INSERT INTO AdminUsers VALUES (-1, -1); -- internal requests
+
+/* Prompt for stage:st account */
+PROMPT Configuration of the admin part of the B/W list
+UNDEF stageUid
+ACCEPT stageUid NUMBER PROMPT 'Enter the stage user id: ';
+UNDEF stageGid
+ACCEPT stageGid NUMBER PROMPT 'Enter the st group id: ';
+INSERT INTO AdminUsers VALUES (&stageUid, &stageGid);
+
+/* Prompt for additional administrators */
+PROMPT In order to define admins that will be exempt of B/W list checks,
+PROMPT (e.g. c3 group at CERN), please give a space separated list of
+PROMPT <userid>:<groupid> pairs. userid can be empty, meaning any user
+PROMPT in the specified group.
+UNDEF adminList
+ACCEPT adminList CHAR PROMPT 'List of admins: ';
+DECLARE
+  adminUserId NUMBER;
+  adminGroupId NUMBER;
+  ind NUMBER;
+  errmsg VARCHAR(2048);
+BEGIN
+  -- If the adminList is empty do nothing
+  IF '&adminList' IS NULL THEN
+    RETURN;
+  END IF;
+  -- Loop over the adminList
+  FOR admin IN (SELECT column_value AS s
+                  FROM TABLE(strTokenizer('&adminList',' '))) LOOP
+    BEGIN
+      ind := INSTR(admin.s, ':');
+      IF ind = 0 THEN
+        errMsg := 'Invalid <userid>:<groupid> ' || admin.s || ', ignoring';
+        RAISE INVALID_NUMBER;
+      END IF;
+      errMsg := 'Invalid userid ' || SUBSTR(admin.s, 1, ind - 1) || ', ignoring';
+      adminUserId := TO_NUMBER(SUBSTR(admin.s, 1, ind - 1));
+      errMsg := 'Invalid groupid ' || SUBSTR(admin.s, ind) || ', ignoring';
+      adminGroupId := TO_NUMBER(SUBSTR(admin.s, ind+1));
+      INSERT INTO AdminUsers (euid, egid) VALUES (adminUserId, adminGroupId);
+    EXCEPTION WHEN INVALID_NUMBER THEN
+      dbms_output.put_line(errMsg);
+    END;
+  END LOOP;
+END;
+/
+
+
+/************************************/
+/* Garbage collection related table */
+/************************************/
+
+/* A table storing the Gc policies and detailing there configuration
+ * For each policy, identified by a name, parameters are :
+ *   - userWeight : the name of the PL/SQL function to be called to
+ *     precompute the GC weight when a file is written by the user.
+ *   - recallWeight : the name of the PL/SQL function to be called to
+ *     precompute the GC weight when a file is recalled
+ *   - copyWeight : the name of the PL/SQL function to be called to
+ *     precompute the GC weight when a file is disk to disk copied
+ *   - firstAccessHook : the name of the PL/SQL function to be called
+ *     when the file is accessed for the first time. Can be NULL.
+ *   - accessHook : the name of the PL/SQL function to be called
+ *     when the file is accessed (except for the first time). Can be NULL.
+ *   - userSetGCWeight : the name of the PL/SQL function to be called
+ *     when a setFileGcWeight user request is processed can be NULL.
+ * All functions return a number that is the new gcWeight.
+ * In general, here are the signatures :
+ *   userWeight(fileSize NUMBER, DiskCopyStatus NUMBER)
+ *   recallWeight(fileSize NUMBER)
+ *   copyWeight(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER))
+ *   firstAccessHook(oldGcWeight NUMBER, creationTime NUMBER)
+ *   accessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER)
+ *   userSetGCWeight(oldGcWeight NUMBER, userDelta NUMBER)
+ * Few notes :
+ *   diskCopyStatus can be STAGED(0) or CANBEMIGR(10)
+ */
+CREATE TABLE GcPolicy (name VARCHAR2(2048) CONSTRAINT NN_GcPolicy_Name NOT NULL CONSTRAINT PK_GcPolicy_Name PRIMARY KEY,
+                       userWeight VARCHAR2(2048) CONSTRAINT NN_GcPolicy_UserWeight NOT NULL,
+                       recallWeight VARCHAR2(2048) CONSTRAINT NN_GcPolicy_RecallWeight NOT NULL,
+                       copyWeight VARCHAR2(2048) CONSTRAINT NN_GcPolicy_CopyWeight NOT NULL,
+                       firstAccessHook VARCHAR2(2048) DEFAULT NULL,
+                       accessHook VARCHAR2(2048) DEFAULT NULL,
+                       userSetGCWeight VARCHAR2(2048) DEFAULT NULL);
+
+/* Default policy, mainly based on file sizes */
+INSERT INTO GcPolicy VALUES ('default',
+                             'castorGC.sizeRelatedUserWeight',
+                             'castorGC.sizeRelatedRecallWeight',
+                             'castorGC.sizeRelatedCopyWeight',
+                             'castorGC.dayBonusFirstAccessHook',
+                             'castorGC.halfHourBonusAccessHook',
+                             'castorGC.cappedUserSetGCWeight');
+INSERT INTO GcPolicy VALUES ('FIFO',
+                             'castorGC.creationTimeUserWeight',
+                             'castorGC.creationTimeRecallWeight',
+                             'castorGC.creationTimeCopyWeight',
+                             NULL,
+                             NULL,
+                             NULL);
+INSERT INTO GcPolicy VALUES ('LRU',
+                             'castorGC.creationTimeUserWeight',
+                             'castorGC.creationTimeRecallWeight',
+                             'castorGC.creationTimeCopyWeight',
+                             'castorGC.LRUFirstAccessHook',
+                             'castorGC.LRUAccessHook',
+                             NULL);
+INSERT INTO GcPolicy VALUES ('LRUpin',
+                             'castorGC.creationTimeUserWeight',
+                             'castorGC.creationTimeRecallWeight',
+                             'castorGC.creationTimeCopyWeight',
+                             'castorGC.LRUFirstAccessHook',
+                             'castorGC.LRUAccessHook',
+                             'castorGC.LRUpinUserSetGCWeight');
+
+
+/* SQL statements for type SvcClass */
+CREATE TABLE SvcClass (name VARCHAR2(2048) CONSTRAINT NN_SvcClass_Name NOT NULL,
+                       defaultFileSize INTEGER,
+                       maxReplicaNb NUMBER,
+                       gcPolicy VARCHAR2(2048) DEFAULT 'default' CONSTRAINT NN_SvcClass_GcPolicy NOT NULL,
+                       disk1Behavior NUMBER,
+                       replicateOnClose NUMBER,
+                       failJobsWhenNoSpace NUMBER,
+                       lastEditor VARCHAR2(2048) CONSTRAINT NN_SvcClass_LastEditor NOT NULL,
+                       lastEditionTime INTEGER CONSTRAINT NN_SvcClass_LastEditionTime NOT NULL,
+                       id INTEGER CONSTRAINT PK_SvcClass_Id PRIMARY KEY,
+                       forcedFileClass INTEGER CONSTRAINT NN_SvcClass_ForcedFileClass NOT NULL)
+INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+ALTER TABLE SvcClass ADD CONSTRAINT UN_SvcClass_Name UNIQUE (name);
+ALTER TABLE SvcClass ADD CONSTRAINT FK_SvcClass_GCPolicy
+  FOREIGN KEY (gcPolicy) REFERENCES GcPolicy (name);
+CREATE INDEX I_SvcClass_GcPolicy ON SvcClass (gcPolicy);
 
 /* SQL statements for requests status */
 /* Partitioning enables faster response (more than indexing) for the most frequent queries - credits to Nilo Segura */
@@ -423,8 +660,25 @@ PARTITION BY LIST (type)
   PARTITION notlisted VALUES (default) TABLESPACE stager_data
  );
 
+
 /* SQL statements for type CastorFile */
-CREATE TABLE CastorFile (fileId INTEGER, nsHost VARCHAR2(2048), fileSize INTEGER, creationTime INTEGER, lastAccessTime INTEGER, lastKnownFileName VARCHAR2(2048), lastUpdateTime INTEGER, id INTEGER CONSTRAINT PK_CastorFile_Id PRIMARY KEY, fileClass INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE CastorFile (fileId INTEGER,
+                         nsHost VARCHAR2(2048),
+                         fileSize INTEGER,
+                         creationTime INTEGER,
+                         lastAccessTime INTEGER,
+                         lastKnownFileName VARCHAR2(2048) CONSTRAINT NN_CastorFile_LKFileName NOT NULL,
+                         lastUpdateTime INTEGER,
+                         id INTEGER CONSTRAINT PK_CastorFile_Id PRIMARY KEY,
+                         fileClass INTEGER)
+INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_FileClass
+  FOREIGN KEY (fileClass) REFERENCES FileClass (id)
+  INITIALLY DEFERRED DEFERRABLE;
+ALTER TABLE CastorFile ADD CONSTRAINT UN_CastorFile_LKFileName UNIQUE (lastKnownFileName);
+CREATE INDEX I_CastorFile_FileClass ON CastorFile(FileClass);
+CREATE UNIQUE INDEX I_CastorFile_FileIdNsHost ON CastorFile (fileId, nsHost);
+
 
 /* SQL statement for table SubRequest */
 CREATE TABLE SubRequest
@@ -503,73 +757,6 @@ BEGIN
 END;
 /
 
-
-/************************************/
-/* Garbage collection related table */
-/************************************/
-
-/* A table storing the Gc policies and detailing there configuration
- * For each policy, identified by a name, parameters are :
- *   - userWeight : the name of the PL/SQL function to be called to
- *     precompute the GC weight when a file is written by the user.
- *   - recallWeight : the name of the PL/SQL function to be called to
- *     precompute the GC weight when a file is recalled
- *   - copyWeight : the name of the PL/SQL function to be called to
- *     precompute the GC weight when a file is disk to disk copied
- *   - firstAccessHook : the name of the PL/SQL function to be called
- *     when the file is accessed for the first time. Can be NULL.
- *   - accessHook : the name of the PL/SQL function to be called
- *     when the file is accessed (except for the first time). Can be NULL.
- *   - userSetGCWeight : the name of the PL/SQL function to be called
- *     when a setFileGcWeight user request is processed can be NULL.
- * All functions return a number that is the new gcWeight.
- * In general, here are the signatures :
- *   userWeight(fileSize NUMBER, DiskCopyStatus NUMBER)
- *   recallWeight(fileSize NUMBER)
- *   copyWeight(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER))
- *   firstAccessHook(oldGcWeight NUMBER, creationTime NUMBER)
- *   accessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER)
- *   userSetGCWeight(oldGcWeight NUMBER, userDelta NUMBER)
- * Few notes :
- *   diskCopyStatus can be STAGED(0) or CANBEMIGR(10)
- */
-CREATE TABLE GcPolicy (name VARCHAR2(2048) CONSTRAINT NN_GcPolicy_Name NOT NULL CONSTRAINT PK_GcPolicy_Name PRIMARY KEY,
-                       userWeight VARCHAR2(2048) CONSTRAINT NN_GcPolicy_UserWeight NOT NULL,
-                       recallWeight VARCHAR2(2048) CONSTRAINT NN_GcPolicy_RecallWeight NOT NULL,
-                       copyWeight VARCHAR2(2048) CONSTRAINT NN_GcPolicy_CopyWeight NOT NULL,
-                       firstAccessHook VARCHAR2(2048) DEFAULT NULL,
-                       accessHook VARCHAR2(2048) DEFAULT NULL,
-                       userSetGCWeight VARCHAR2(2048) DEFAULT NULL);
-
-/* Default policy, mainly based on file sizes */
-INSERT INTO GcPolicy VALUES ('default',
-                             'castorGC.sizeRelatedUserWeight',
-                             'castorGC.sizeRelatedRecallWeight',
-                             'castorGC.sizeRelatedCopyWeight',
-                             'castorGC.dayBonusFirstAccessHook',
-                             'castorGC.halfHourBonusAccessHook',
-                             'castorGC.cappedUserSetGCWeight');
-INSERT INTO GcPolicy VALUES ('FIFO',
-                             'castorGC.creationTimeUserWeight',
-                             'castorGC.creationTimeRecallWeight',
-                             'castorGC.creationTimeCopyWeight',
-                             NULL,
-                             NULL,
-                             NULL);
-INSERT INTO GcPolicy VALUES ('LRU',
-                             'castorGC.creationTimeUserWeight',
-                             'castorGC.creationTimeRecallWeight',
-                             'castorGC.creationTimeCopyWeight',
-                             'castorGC.LRUFirstAccessHook',
-                             'castorGC.LRUAccessHook',
-                             NULL);
-INSERT INTO GcPolicy VALUES ('LRUpin',
-                             'castorGC.creationTimeUserWeight',
-                             'castorGC.creationTimeRecallWeight',
-                             'castorGC.creationTimeCopyWeight',
-                             'castorGC.LRUFirstAccessHook',
-                             'castorGC.LRUAccessHook',
-                             'castorGC.LRUpinUserSetGCWeight');
 
 /**********************************/
 /* Recall/Migration related table */
@@ -938,12 +1125,9 @@ CREATE TABLE DiskPool2SvcClass (Parent INTEGER, Child INTEGER) INITRANS 50 PCTFR
 CREATE INDEX I_DiskPool2SvcClass_C on DiskPool2SvcClass (child);
 CREATE INDEX I_DiskPool2SvcClass_P on DiskPool2SvcClass (parent);
 
-
-CREATE UNIQUE INDEX I_CastorFile_FileIdNsHost ON CastorFile (fileId, nsHost);
-CREATE UNIQUE INDEX I_CastorFile_LastKnownFileName ON CastorFile (lastKnownFileName);
-
 /* SQL statements for type DiskCopy */
 CREATE TABLE DiskCopy (path VARCHAR2(2048), gcWeight NUMBER, creationTime INTEGER, lastAccessTime INTEGER, diskCopySize INTEGER, nbCopyAccesses NUMBER, owneruid NUMBER, ownergid NUMBER, id INTEGER CONSTRAINT PK_DiskCopy_Id PRIMARY KEY, gcType INTEGER, fileSystem INTEGER, castorFile INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
 CREATE INDEX I_DiskCopy_Castorfile ON DiskCopy (castorFile);
 CREATE INDEX I_DiskCopy_FileSystem ON DiskCopy (fileSystem);
 CREATE INDEX I_DiskCopy_FS_GCW ON DiskCopy (fileSystem, gcWeight);
@@ -953,6 +1137,15 @@ CREATE INDEX I_DiskCopy_Status_7_FS ON DiskCopy (decode(status,7,status,NULL), f
 CREATE INDEX I_DiskCopy_Status_9 ON DiskCopy (decode(status,9,status,NULL));
 -- to speed up deleteOutOfDateStageOutDCs
 CREATE INDEX I_DiskCopy_Status_Open ON DiskCopy (decode(status,6,status,decode(status,5,status,decode(status,11,status,NULL))));
+
+/* DiskCopy constraints */
+ALTER TABLE DiskCopy MODIFY (nbCopyAccesses DEFAULT 0);
+ALTER TABLE DiskCopy MODIFY (gcType DEFAULT NULL);
+ALTER TABLE DiskCopy ADD CONSTRAINT FK_DiskCopy_CastorFile
+  FOREIGN KEY (castorFile) REFERENCES CastorFile (id)
+  INITIALLY DEFERRED DEFERRABLE;
+ALTER TABLE DiskCopy
+  MODIFY (status CONSTRAINT NN_DiskCopy_Status NOT NULL);
 
 BEGIN
   setObjStatusName('DiskCopy', 'gcType', 0, 'GCTYPE_AUTO');
@@ -991,60 +1184,6 @@ CREATE INDEX I_QueryParameter_Query ON QueryParameter (query);
 /* Constraint on FileClass name */
 ALTER TABLE FileClass ADD CONSTRAINT UN_FileClass_Name UNIQUE (name);
 ALTER TABLE FileClass MODIFY (classid CONSTRAINT NN_FileClass_Name NOT NULL);
-
-/* Add unique constraint on svcClass name */
-ALTER TABLE SvcClass ADD CONSTRAINT UN_SvcClass_Name UNIQUE (name);
-
-/* Custom type to handle int arrays */
-CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
-/
-
-/* Custom type to handle float arrays */
-CREATE OR REPLACE TYPE floatList IS TABLE OF NUMBER;
-/
-
-/* Custom type to handle strings returned by pipelined functions */
-CREATE OR REPLACE TYPE strListTable AS TABLE OF VARCHAR2(2048);
-/
-
-/* SvcClass constraints */
-ALTER TABLE SvcClass
-  MODIFY (name CONSTRAINT NN_SvcClass_Name NOT NULL);
-
-ALTER TABLE SvcClass 
-  MODIFY (forcedFileClass CONSTRAINT NN_SvcClass_ForcedFileClass NOT NULL);
-
-ALTER TABLE SvcClass MODIFY (gcPolicy CONSTRAINT NN_SvcClass_GcPolicy NOT NULL);
-ALTER TABLE SvcClass MODIFY (gcPolicy DEFAULT 'default');
-ALTER TABLE SvcClass ADD CONSTRAINT FK_SvcClass_GCPolicy
-  FOREIGN KEY (gcPolicy) REFERENCES GcPolicy (name);
-CREATE INDEX I_SvcClass_GcPolicy ON SvcClass (gcPolicy);
-
-ALTER TABLE SvcClass MODIFY (lastEditor CONSTRAINT NN_SvcClass_LastEditor NOT NULL);
-
-ALTER TABLE SvcClass MODIFY (lastEditionTime CONSTRAINT NN_SvcClass_LastEditionTime NOT NULL);
-
-/* DiskCopy constraints */
-ALTER TABLE DiskCopy MODIFY (nbCopyAccesses DEFAULT 0);
-
-ALTER TABLE DiskCopy MODIFY (gcType DEFAULT NULL);
-
-ALTER TABLE DiskCopy ADD CONSTRAINT FK_DiskCopy_CastorFile
-  FOREIGN KEY (castorFile) REFERENCES CastorFile (id)
-  INITIALLY DEFERRED DEFERRABLE;
-
-ALTER TABLE DiskCopy
-  MODIFY (status CONSTRAINT NN_DiskCopy_Status NOT NULL);
-
-/* CastorFile constraints */
-ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_FileClass
-  FOREIGN KEY (fileClass) REFERENCES FileClass (id)
-  INITIALLY DEFERRED DEFERRABLE;
-CREATE INDEX I_CastorFile_FileClass ON CastorFile(FileClass);
-
-ALTER TABLE CastorFile ADD CONSTRAINT UN_CastorFile_LKFileName UNIQUE (LastKnownFileName);
-
-ALTER TABLE CastorFile MODIFY (LastKnownFileName CONSTRAINT NN_CastorFile_LKFileName NOT NULL);
 
 /* DiskPool2SvcClass constraints */
 ALTER TABLE DiskPool2SvcClass ADD CONSTRAINT PK_DiskPool2SvcClass_PC
@@ -1158,58 +1297,6 @@ CREATE GLOBAL TEMPORARY TABLE getFileIdsForSrsHelper (rowno NUMBER, fileId NUMBE
 CREATE TABLE WhiteList (svcClass VARCHAR2(2048), euid NUMBER, egid NUMBER, reqType NUMBER);
 CREATE TABLE BlackList (svcClass VARCHAR2(2048), euid NUMBER, egid NUMBER, reqType NUMBER);
 
-/* Create the AdminUsers table */
-CREATE TABLE AdminUsers (euid NUMBER, egid NUMBER);
-ALTER TABLE AdminUsers ADD CONSTRAINT UN_AdminUsers_euid_egid UNIQUE (euid, egid);
-INSERT INTO AdminUsers VALUES (0, 0);   -- root/root, to be removed
-INSERT INTO AdminUsers VALUES (-1, -1); -- internal requests
-
-/* Prompt for stage:st account */
-PROMPT Configuration of the admin part of the B/W list
-UNDEF stageUid
-ACCEPT stageUid NUMBER PROMPT 'Enter the stage user id: ';
-UNDEF stageGid
-ACCEPT stageGid NUMBER PROMPT 'Enter the st group id: ';
-INSERT INTO AdminUsers VALUES (&stageUid, &stageGid);
-
-/* Prompt for additional administrators */
-PROMPT In order to define admins that will be exempt of B/W list checks,
-PROMPT (e.g. c3 group at CERN), please give a space separated list of
-PROMPT <userid>:<groupid> pairs. userid can be empty, meaning any user
-PROMPT in the specified group.
-UNDEF adminList
-ACCEPT adminList CHAR PROMPT 'List of admins: ';
-DECLARE
-  adminUserId NUMBER;
-  adminGroupId NUMBER;
-  ind NUMBER;
-  errmsg VARCHAR(2048);
-BEGIN
-  -- If the adminList is empty do nothing
-  IF '&adminList' IS NULL THEN
-    RETURN;
-  END IF;
-  -- Loop over the adminList
-  FOR admin IN (SELECT column_value AS s
-                  FROM TABLE(strTokenizer('&adminList',' '))) LOOP
-    BEGIN
-      ind := INSTR(admin.s, ':');
-      IF ind = 0 THEN
-        errMsg := 'Invalid <userid>:<groupid> ' || admin.s || ', ignoring';
-        RAISE INVALID_NUMBER;
-      END IF;
-      errMsg := 'Invalid userid ' || SUBSTR(admin.s, 1, ind - 1) || ', ignoring';
-      adminUserId := TO_NUMBER(SUBSTR(admin.s, 1, ind - 1));
-      errMsg := 'Invalid groupid ' || SUBSTR(admin.s, ind) || ', ignoring';
-      adminGroupId := TO_NUMBER(SUBSTR(admin.s, ind+1));
-      INSERT INTO AdminUsers (euid, egid) VALUES (adminUserId, adminGroupId);
-    EXCEPTION WHEN INVALID_NUMBER THEN
-      dbms_output.put_line(errMsg);
-    END;
-  END LOOP;
-END;
-/
-
 /* Define the service handlers for the appropriate sets of stage request objects */
 UPDATE Type2Obj SET svcHandler = 'JobReqSvc' WHERE type IN (35, 40, 44);
 UPDATE Type2Obj SET svcHandler = 'PrepReqSvc' WHERE type IN (36, 37, 38);
@@ -1220,7 +1307,7 @@ UPDATE Type2Obj SET svcHandler = 'GCSvc' WHERE type IN (73, 74, 83, 142, 149);
 UPDATE Type2Obj SET svcHandler = 'BulkStageReqSvc' WHERE type IN (50, 119);
 
 /* SQL statements for type StageDiskCopyReplicaRequest */
-CREATE TABLE StageDiskCopyReplicaRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StageDiskCopyReplicaRequ_Id PRIMARY KEY, svcClass INTEGER, client INTEGER, sourceSvcClass INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE StageDiskCopyReplicaRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StageDiskCopyReplicaRequ_Id PRIMARY KEY, svcClass INTEGER, client INTEGER, sourceSvcClass INTEGER, destDiskCopy INTEGER, sourceDiskCopy INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* Set default values for the StageDiskCopyReplicaRequest table */
 ALTER TABLE StageDiskCopyReplicaRequest MODIFY flags DEFAULT 0;
@@ -1235,54 +1322,6 @@ CREATE INDEX I_StageDiskCopyReplic_SourceDC
   ON StageDiskCopyReplicaRequest (sourceDiskCopy);
 CREATE INDEX I_StageDiskCopyReplic_DestDC 
   ON StageDiskCopyReplicaRequest (destDiskCopy);
-
-/* Define a table for some configuration key-value pairs and populate it */
-CREATE TABLE CastorConfig
-  (class VARCHAR2(2048) CONSTRAINT NN_CastorConfig_Class NOT NULL, 
-   key VARCHAR2(2048) CONSTRAINT NN_CastorConfig_Key NOT NULL, 
-   value VARCHAR2(2048) CONSTRAINT NN_CastorConfig_Value NOT NULL, 
-   description VARCHAR2(2048));
-
-ALTER TABLE CastorConfig ADD CONSTRAINT UN_CastorConfig_class_key UNIQUE (class, key);
-
-/* Prompt for the value of the general/instance options */
-UNDEF instanceName
-ACCEPT instanceName DEFAULT castor_stager PROMPT 'Enter the name of the castor instance: (default: castor_stager, example: castoratlas) '
-SET VER OFF
-
-INSERT INTO CastorConfig
-  VALUES ('general', 'instance', '&instanceName', 'Name of this Castor instance');
-
-/* Prompt for the value of the stager/nsHost option */
-UNDEF stagerNsHost
-ACCEPT stagerNsHost DEFAULT undefined PROMPT 'Enter the name of the stager/nsHost: (default: undefined, example: castorns) '
-
-INSERT INTO CastorConfig
-  VALUES ('stager', 'nsHost', '&stagerNsHost', 'The name of the name server host to set in the CastorFile table overriding the CNS/HOST option defined in castor.conf');
-
-
-INSERT INTO CastorConfig
-  VALUES ('general', 'owner', sys_context('USERENV', 'CURRENT_USER'), 'The database owner of the schema');
-INSERT INTO CastorConfig
-  VALUES ('cleaning', 'terminatedRequestsTimeout', '120', 'Maximum timeout for successful and failed requests in hours');
-INSERT INTO CastorConfig
-  VALUES ('cleaning', 'outOfDateStageOutDCsTimeout', '72', 'Timeout for STAGEOUT diskCopies in hours');
-INSERT INTO CastorConfig
-  VALUES ('cleaning', 'failedDCsTimeout', '72', 'Timeout for failed diskCopies in hours');
-INSERT INTO CastorConfig
-  VALUES ('Repack', 'Protocol', 'rfio', 'The protocol that repack should use for writing files to disk');
-INSERT INTO CastorConfig
-  VALUES ('Recall', 'MaxNbRetriesWithinMount', '2', 'The maximum number of retries for recalling a file within the same tape mount. When exceeded, the recall may still be retried in another mount. See Recall/MaxNbMount entry');
-INSERT INTO CastorConfig
-  VALUES ('Recall', 'MaxNbMounts', '2', 'The maximum number of mounts for recalling a given file. When exceeded, the recall will be failed if no other tapecopy can be used. See also Recall/MaxNbRetriesWithinMount entry');
-INSERT INTO CastorConfig
-  VALUES ('Migration', 'SizeThreshold', '300000000', 'The threshold to consider a file "small" or "large" when routing it to tape');
-INSERT INTO CastorConfig
-  VALUES ('Migration', 'MaxNbMounts', '7', 'The maximum number of mounts for migrating a given file. When exceeded, the migration will be considered failed: the MigrationJob entry will be dropped and the corresponding diskcopy left in status CANBEMIGR. An operator intervention is required to resume the migration.');
-INSERT INTO CastorConfig
-  VALUES ('DiskServer', 'HeartbeatTimeout', '180', 'The maximum amount of time in seconds that a diskserver can spend without sending any hearbeat before it is automatically set to offline.');
-COMMIT;
-
 
 /*********************************************************************/
 /* FileSystemsToCheck used to optimise the processing of filesystems */
@@ -1360,22 +1399,12 @@ CREATE GLOBAL TEMPORARY TABLE SyncRunningTransfersHelper2
 (subreqId VARCHAR2(2048), reqId VARCHAR2(2048),
  fileid NUMBER, nsHost VARCHAR2(2048),
  errorCode NUMBER, errorMsg VARCHAR2(2048))
-ON COMMIT PRESERVE ROWS;
+ ON COMMIT PRESERVE ROWS;
 
-/********************************/
-/* DB link to the nameserver db */
-/********************************/
-
-PROMPT Configuration of the database link to the CASTOR name space
-UNDEF cnsUser
-ACCEPT cnsUser CHAR DEFAULT 'castor' PROMPT 'Enter the nameserver db username (default castor): ';
-UNDEF cnsPasswd
-ACCEPT cnsPasswd CHAR PROMPT 'Enter the nameserver db password: ';
-UNDEF cnsDbName
-ACCEPT cnsDbName CHAR PROMPT 'Enter the nameserver db TNS name: ';
-CREATE DATABASE LINK remotens
-  CONNECT TO &cnsUser IDENTIFIED BY &cnsPasswd USING '&cnsDbName';
-
+/* For deleteDiskCopy */
+CREATE GLOBAL TEMPORARY TABLE DeleteDiskCopyHelper
+  (dcId INTEGER CONSTRAINT PK_DDCHelper_dcId PRIMARY KEY, rc INTEGER)
+  ON COMMIT PRESERVE ROWS;
 
 /**********/
 /* Repack */
@@ -1704,6 +1733,14 @@ AS
   GCTYPE_DRAINING            CONSTANT PLS_INTEGER :=  3;
   GCTYPE_NSSYNCH             CONSTANT PLS_INTEGER :=  4;
   GCTYPE_OVERWRITTEN         CONSTANT PLS_INTEGER :=  5;
+  GCTYPE_ADMIN               CONSTANT PLS_INTEGER :=  6;
+
+  DELDC_ENOENT               CONSTANT PLS_INTEGER :=  1;
+  DELDC_RECALL               CONSTANT PLS_INTEGER :=  2;
+  DELDC_REPLICATION          CONSTANT PLS_INTEGER :=  3;
+  DELDC_LOST                 CONSTANT PLS_INTEGER :=  4;
+  DELDC_GC                   CONSTANT PLS_INTEGER :=  5;
+  DELDC_NOOP                 CONSTANT PLS_INTEGER :=  6;
 END dconst;
 /
 
@@ -1787,7 +1824,13 @@ AS
   REPACK_JOB_STATS             CONSTANT VARCHAR2(2048) := 'repackManager: Repack processes statistics';
   REPACK_UNEXPECTED_EXCEPTION  CONSTANT VARCHAR2(2048) := 'handleRepackRequest: unexpected exception caught';
 
-  REPORT_HEART_BEAT_RESUMED    CONSTANT VARCHAR2(2048) := 'Heartbeat resumed for diskserver, status changed to PRODUCTION';
+  REPORT_HEART_BEAT_RESUMED    CONSTANT VARCHAR2(2048) := 'Heartbeat resumed for diskserver';
+
+  DELETEDISKCOPY_RECALL        CONSTANT VARCHAR2(2048) := 'deleteDiskCopy: diskCopy was lost, about to recall from tape';
+  DELETEDISKCOPY_REPLICATION   CONSTANT VARCHAR2(2048) := 'deleteDiskCopy: diskCopy was lost, about to replicate from another pool';
+  DELETEDISKCOPY_LOST          CONSTANT VARCHAR2(2048) := 'deleteDiskCopy: file was LOST and is being dropped from the system';
+  DELETEDISKCOPY_GC            CONSTANT VARCHAR2(2048) := 'deleteDiskCopy: diskCopy is being garbage collected';
+  DELETEDISKCOPY_NOOP          CONSTANT VARCHAR2(2048) := 'deleteDiskCopy: diskCopy could not be garbage collected';
 END dlf;
 /
 
@@ -1968,31 +2011,6 @@ BEGIN
 END;
 /
 
-/* Function to tokenize a string using a specified delimiter. If no delimiter
- * is specified the default is ','. The results are returned as a table e.g.
- * SELECT * FROM TABLE (strTokenizer(inputValue, delimiter))
- */
-CREATE OR REPLACE FUNCTION strTokenizer(p_list VARCHAR2, p_del VARCHAR2 := ',')
-  RETURN strListTable pipelined IS
-  l_idx   INTEGER;
-  l_list  VARCHAR2(32767) := p_list;
-  l_value VARCHAR2(32767);
-BEGIN
-  LOOP
-    l_idx := instr(l_list, p_del);
-    IF l_idx > 0 THEN
-      PIPE ROW(ltrim(rtrim(substr(l_list, 1, l_idx - 1))));
-      l_list := substr(l_list, l_idx + length(p_del));
-    ELSE
-      IF l_list IS NOT NULL THEN
-        PIPE ROW(ltrim(rtrim(l_list)));
-      END IF;
-      EXIT;
-    END IF;
-  END LOOP;
-  RETURN;
-END;
-/
 
 /* Function to normalize a filepath, i.e. to drop multiple '/'s and resolve any '..' */
 CREATE OR REPLACE FUNCTION normalizePath(path IN VARCHAR2) RETURN VARCHAR2 IS
@@ -2141,7 +2159,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   -- file from the nameserver. For safety, we thus keep it
   NULL;
 WHEN LockError THEN
-  -- ignore, somebody else is dealing with this castorFile, 
+  -- ignore, somebody else is dealing with this castorFile
   NULL;
 END;
 /
@@ -3280,15 +3298,19 @@ CREATE OR REPLACE PACKAGE castor AS
     priority INTEGER);
   TYPE TapeAccessPriority_Cur IS REF CURSOR RETURN TapeAccessPriority;
   TYPE StreamReport IS RECORD (
-   diskserver VARCHAR2(2048),
-   mountPoint VARCHAR2(2048));
+    diskserver VARCHAR2(2048),
+    mountPoint VARCHAR2(2048));
   TYPE StreamReport_Cur IS REF CURSOR RETURN StreamReport;
   TYPE FileResult IS RECORD (
-   fileid INTEGER,
-   nshost VARCHAR2(2048),
-   errorcode INTEGER,
-   errormessage VARCHAR2(2048));
+    fileid INTEGER,
+    nshost VARCHAR2(2048),
+    errorcode INTEGER,
+    errormessage VARCHAR2(2048));
   TYPE FileResult_Cur IS REF CURSOR RETURN FileResult;
+  TYPE DiskCopyResult IS RECORD (
+    dcId INTEGER,
+    retCode INTEGER);
+  TYPE DiskCopyResult_Cur IS REF CURSOR RETURN DiskCopyResult;
   TYPE LogEntry IS RECORD (
     timeinfo NUMBER,
     uuid VARCHAR2(2048),
@@ -5835,18 +5857,18 @@ BEGIN
       UPDATE CastorFile SET lastKnownFileName = varNsPath
        WHERE id = varCfId;
     END;
-    -- and we fail the request
-    UPDATE SubRequest
-       SET status = dconst.SUBREQUEST_FAILED, errorCode=serrno.ENOENT,
-           errorMessage = 'The file got renamed by another user request'
-     WHERE id = inSrId;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- the file exists only in the stager db,
     -- execute stageForcedRm (cf. ns synch performed in GC daemon)
     stageForcedRm(varFileId, varNsHost, dconst.GCTYPE_NSSYNCH);
   END;
+  -- in all cases we fail the subrequest
+  UPDATE SubRequest
+     SET status = dconst.SUBREQUEST_FAILED, errorCode=serrno.ENOENT,
+         errorMessage = 'The file got renamed by another user request'
+   WHERE id = inSrId;
 EXCEPTION WHEN NO_DATA_FOUND THEN
-  -- No file found with the given name, fail the subrequest
+  -- No file found with the given name, fail the subrequest with a generic ENOENT
   UPDATE SubRequest
      SET status = dconst.SUBREQUEST_FAILED, errorCode=serrno.ENOENT
    WHERE id = inSrId;
@@ -6165,23 +6187,16 @@ END;
 
 /* PL/SQL method used by the stager to collect the logging made in the DB */
 CREATE OR REPLACE PROCEDURE dumpDBLogs(logEntries OUT castor.LogEntry_Cur) AS
-  timeinfos floatList;
-  uuids strListTable;
-  priorities "numList";
-  msgs strListTable;
-  fileIds "numList";
-  nsHosts strListTable;
-  sources strListTable;
-  paramss strListTable;
+  rowIds strListTable;
 BEGIN
-  -- get whatever we can from the table
-  DELETE FROM DLFLogs
-  RETURNING timeinfo, uuid, priority, msg, fileId, nsHost, source, params
-    BULK COLLECT INTO timeinfos, uuids, priorities, msgs, fileIds, nsHosts, sources, paramss;
-  -- insert into tmp table so that we can open a cursor on it
-  FORALL i IN 1 .. timeinfos.COUNT
-    INSERT INTO DLFLogsHelper (timeinfo, uuid, priority, msg, fileId, nsHost, source, params)
-    VALUES (timeinfos(i), uuids(i), priorities(i), msgs(i), fileIds(i), nsHosts(i), sources(i), paramss(i));
+  -- lock whatever we can from the table. This is to prevent deadlocks.
+  SELECT ROWID BULK COLLECT INTO rowIds
+    FROM DLFLogs FOR UPDATE NOWAIT;
+  -- insert data on tmp table and drop selected entries
+  INSERT INTO DLFLogsHelper (timeinfo, uuid, priority, msg, fileId, nsHost, SOURCE, params)
+   (SELECT timeinfo, uuid, priority, msg, fileId, nsHost, SOURCE, params
+    FROM DLFLogs WHERE ROWID IN (SELECT * FROM TABLE(rowIds)));
+  DELETE FROM DLFLogs WHERE ROWID IN (SELECT * FROM TABLE(rowIds));
   -- return list of entries by opening a cursor on temp table
   OPEN logEntries FOR
     SELECT timeinfo, uuid, priority, msg, fileId, nsHost, source, params FROM DLFLogsHelper;
@@ -6468,6 +6483,145 @@ BEGIN
      WHERE id = inSrId;
     RETURN dconst.SUBREQUEST_FAILED;
   END IF;
+END;
+/
+
+CREATE OR REPLACE PROCEDURE deleteDiskCopies(inDcIds IN castor."cnumList", inFileIds IN castor."cnumList", inForce IN BOOLEAN, inDryRun IN BOOLEAN, outRes OUT castor.DiskCopyResult_Cur, outDiskPool OUT VARCHAR2) AS
+  varNsHost VARCHAR2(100);
+  varFileName VARCHAR2(2048);
+  varCfId INTEGER;
+  varNbRemaining INTEGER;
+  varStatus INTEGER;
+  varFStatus VARCHAR2(1);
+  varLogParams VARCHAR2(2048);
+BEGIN
+  DELETE FROM DeleteDiskCopyHelper;
+  FOR i IN 1..inDcIds.COUNT LOOP
+    BEGIN
+      -- get data and lock
+      SELECT castorFile, DiskCopy.status, DiskPool.name
+        INTO varCfId, varStatus, outDiskPool
+        FROM DiskPool, FileSystem, DiskCopy
+       WHERE DiskCopy.id = inDcIds(i)
+         AND DiskCopy.fileSystem = FileSystem.id
+         AND FileSystem.diskPool = DiskPool.id;
+      SELECT nsHost, lastKnownFileName
+        INTO varNsHost, varFileName
+        FROM CastorFile
+       WHERE id = varCfId
+         AND fileId = inFileIds(i)
+         FOR UPDATE;
+      varLogParams := 'FileName="' || varFileName ||'" DiskPool="'|| outDiskPool
+        ||'" dcId='|| inDcIds(i) ||' status='
+        || getObjStatusName('DiskCopy', 'status', varStatus);
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- diskcopy not found in stager
+      INSERT INTO DeleteDiskCopyHelper (dcId, rc)
+        VALUES (inDcIds(i), dconst.DELDC_ENOENT);
+      COMMIT;
+      CONTINUE;
+    END;
+    BEGIN
+      -- get the Nameserver status in case we have to also drop the namespace entry
+      SELECT status INTO varFStatus FROM Cns_file_metadata@RemoteNS
+       WHERE fileid = inFileIds(i);
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- not found in the Nameserver means that we can scrap everything and there's no data loss
+      -- as we're anticipating the NS synchronization
+      varFStatus := 'd';
+    END;
+    -- count remaining ones
+    SELECT count(*) INTO varNbRemaining FROM DiskCopy
+     WHERE castorFile = varCfId
+       AND status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR)
+       AND id != inDcIds(i);
+    IF inForce = TRUE THEN
+      -- the physical diskcopy is deemed lost: delete the diskcopy entry
+      -- and potentially drop dangling entities
+      IF NOT inDryRun THEN
+        DELETE FROM DiskCopy WHERE id = inDcIds(i);
+      END IF;
+      IF varStatus = dconst.DISKCOPY_STAGEOUT THEN
+        -- fail outstanding requests
+        UPDATE SubRequest
+           SET status = dconst.SUBREQUEST_FAILED,
+               errorCode = serrno.SEINTERNAL,
+               errorMessage = 'File got lost while being written to'
+         WHERE diskCopy = inDcIds(i)
+           AND status = dconst.SUBREQUEST_READY;
+      END IF;
+      -- was it the last active one?
+      IF varNbRemaining = 0 THEN
+        IF varStatus = dconst.DISKCOPY_CANBEMIGR AND NOT inDryRun THEN
+          -- yes, drop the (now bound to fail) migration job(s)
+          deleteMigrationJobs(varCfId);
+        END IF;
+        -- check if the entire castorFile chain can be dropped
+        IF NOT inDryRun THEN
+          deleteCastorFile(varCfId);
+        END IF;
+        IF varFStatus = 'm' THEN
+          -- file is on tape: let's recall it. This may potentially trigger a new migration
+          INSERT INTO DeleteDiskCopyHelper (dcId, rc)
+            VALUES (inDcIds(i), dconst.DELDC_RECALL);
+          IF NOT inDryRun THEN
+            logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DELETEDISKCOPY_RECALL, inFileIds(i), varNsHost, 'stagerd', varLogParams);
+          END IF;
+        ELSIF varFStatus = 'd' THEN
+          -- file was dropped, report as if we have run a standard GC
+          INSERT INTO DeleteDiskCopyHelper (dcId, rc)
+            VALUES (inDcIds(i), dconst.DELDC_GC);
+          IF NOT inDryRun THEN
+            logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DELETEDISKCOPY_GC, inFileIds(i), varNsHost, 'stagerd', varLogParams);
+          END IF;
+        ELSE
+          -- file is really lost, we'll remove the namespace entry afterwards
+          INSERT INTO DeleteDiskCopyHelper (dcId, rc)
+            VALUES (inDcIds(i), dconst.DELDC_LOST);
+          IF NOT inDryRun THEN
+            logToDLF(NULL, dlf.LVL_WARNING, dlf.DELETEDISKCOPY_LOST, inFileIds(i), varNsHost, 'stagerd', varLogParams);
+          END IF;
+        END IF;
+      ELSE
+        -- it was not the last valid copy, replicate from another one
+        INSERT INTO DeleteDiskCopyHelper (dcId, rc)
+          VALUES (inDcIds(i), dconst.DELDC_REPLICATION);
+        IF NOT inDryRun THEN
+          logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DELETEDISKCOPY_REPLICATION, inFileIds(i), varNsHost, 'stagerd', varLogParams);
+        END IF;
+      END IF;
+    ELSE
+      -- similarly to stageRm, check that the deletion is allowed:
+      -- basically only STAGED files may be dropped in case no data loss is provoked,
+      -- or files already dropped from the namespace. The rest is forbidden.
+      IF (varStatus = dconst.DISKCOPY_STAGED AND (varNbRemaining > 0 OR varFStatus = 'm'))
+         OR varFStatus = 'd'
+         OR varStatus = dconst.DISKCOPY_FAILED THEN    -- this will eventually disappear
+        INSERT INTO DeleteDiskCopyHelper (dcId, rc)
+          VALUES (inDcIds(i), dconst.DELDC_GC);
+        IF NOT inDryRun THEN
+          UPDATE DiskCopy
+             SET status = dconst.DISKCOPY_INVALID, gcType = dconst.GCTYPE_ADMIN
+           WHERE id = inDcIds(i);
+           logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DELETEDISKCOPY_GC, inFileIds(i), varNsHost, 'stagerd', varLogParams);
+        END IF;
+      ELSE
+        -- nothing is done, just record no-action
+        INSERT INTO DeleteDiskCopyHelper (dcId, rc)
+          VALUES (inDcIds(i), dconst.DELDC_NOOP);
+        IF NOT inDryRun THEN
+          logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DELETEDISKCOPY_NOOP, inFileIds(i), varNsHost, 'stagerd',   varLogParams);
+        END IF;
+        COMMIT;
+        CONTINUE;
+      END IF;
+    END IF;
+    COMMIT;   -- release locks file by file
+  END LOOP;
+  -- return back all results for the python script to post-process them,
+  -- including performing all required acations
+  OPEN outRes FOR
+    SELECT dcId, rc FROM DeleteDiskCopyHelper;
 END;
 /
 /*******************************************************************
@@ -7294,7 +7448,7 @@ BEGIN
                 id, svcClass, reqid, 44  AS reqType FROM StageUpdateRequest) Request
      WHERE SR.status = 6  -- READY
        AND SR.request = Request.id
-       AND SR.lastModificationTime < getTime() - 3600;
+       AND SR.lastModificationTime < getTime() - 300;
 END;
 /
 
@@ -7336,7 +7490,7 @@ END;
 CREATE OR REPLACE
 PROCEDURE transferFailedSafe(subReqIds IN castor."strList",
                              errnos IN castor."cnumList",
-                             errmsg IN castor."strList") AS
+                             errmsgs IN castor."strList") AS
   srId  NUMBER;
   dcId  NUMBER;
   cfId  NUMBER;
@@ -7362,17 +7516,12 @@ BEGIN
       -- Call the relevant cleanup procedure for the transfer, procedures that
       -- would have been called if the transfer failed on the remote execution host.
       IF rType = 40 THEN      -- StagePutRequest
-       putFailedProc(srId);
+       putFailedProcExt(srId, errnos(i), errmsgs(i));
       ELSIF rType = 133 THEN  -- StageDiskCopyReplicaRequest
        disk2DiskCopyFailed(dcId, 0);
       ELSE                    -- StageGetRequest or StageUpdateRequest
-       getUpdateFailedProc(srId);
+       getUpdateFailedProcExt(srId, errnos(i), errmsgs(i));
       END IF;
-      -- Update the reason for termination, overriding the error code set above
-      UPDATE SubRequest
-         SET errorCode = decode(errnos(i), 0, errorCode, errnos(i)),
-             errorMessage = decode(errmsg(i), NULL, errorMessage, errmsg(i))
-       WHERE id = srId;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       NULL;  -- The SubRequest may have be removed, nothing to be done.
     END;
@@ -7387,8 +7536,8 @@ END;
  */
 CREATE OR REPLACE
 PROCEDURE transferFailedLockedFile(subReqId IN castor."strList",
-                                   errno IN castor."cnumList",
-                                   errmsg IN castor."strList")
+                                   errnos IN castor."cnumList",
+                                   errmsgs IN castor."strList")
 AS
   srId  NUMBER;
   dcId  NUMBER;
@@ -7402,19 +7551,14 @@ BEGIN
         FROM SubRequest
        WHERE subReqId = subReqId(i)
          AND status = dconst.SUBREQUEST_READY;
-       -- Update the reason for termination.
-       UPDATE SubRequest
-          SET errorCode = decode(errno(i), 0, errorCode, errno(i)),
-              errorMessage = decode(errmsg(i), NULL, errorMessage, errmsg(i))
-        WHERE id = srId;
        -- Call the relevant cleanup procedure for the transfer, procedures that
        -- would have been called if the transfer failed on the remote execution host.
        IF rType = 40 THEN      -- StagePutRequest
-         putFailedProc(srId);
+         putFailedProcExt(srId, errnos(i), errmsgs(i));
        ELSIF rType = 133 THEN  -- StageDiskCopyReplicaRequest
          disk2DiskCopyFailed(dcId, 0);
        ELSE                    -- StageGetRequest or StageUpdateRequest
-         getUpdateFailedProc(srId);
+         getUpdateFailedProcExt(srId, errnos(i), errmsgs(i));
        END IF;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       NULL;  -- The SubRequest may have be removed, nothing to be done.
@@ -7440,7 +7584,7 @@ PROCEDURE transferToSchedule(srId OUT INTEGER,              srSubReqId OUT VARCH
                              reqEuid OUT INTEGER,           reqEgid OUT INTEGER,
                              reqUsername OUT VARCHAR2,      srOpenFlags OUT VARCHAR2,
                              clientIp OUT INTEGER,          clientPort OUT INTEGER,
-                             clientVersion OUT INTEGER,     clientType OUT INTEGER,
+                             clientVersion OUT INTEGER,
                              reqSourceDiskCopy OUT INTEGER, reqDestDiskCopy OUT INTEGER,
                              clientSecure OUT INTEGER,      reqSourceSvcClass OUT VARCHAR2,
                              reqCreationTime OUT INTEGER,   reqDefaultFileSize OUT INTEGER,
@@ -7530,11 +7674,11 @@ BEGIN
            Request.type, Request.reqId, Request.euid, Request.egid, Request.username,
            Request.direction, Request.sourceDiskCopy, Request.destDiskCopy,
            Request.sourceSvcClass, Client.ipAddress, Client.port, Client.version,
-           129 clientType, Client.secure, Request.creationTime,
+           Client.secure, Request.creationTime,
            decode(SvcClass.defaultFileSize, 0, 2000000000, SvcClass.defaultFileSize)
       INTO cfId, cfFileId, cfNsHost, reqSvcClass, svcClassId, reqType, reqId, reqEuid, reqEgid,
            reqUsername, srOpenFlags, reqSourceDiskCopy, reqDestDiskCopy, reqSourceSvcClass,
-           clientIp, clientPort, clientVersion, clientType, clientSecure, reqCreationTime,
+           clientIp, clientPort, clientVersion, clientSecure, reqCreationTime,
            reqDefaultFileSize
       FROM SubRequest, CastorFile, SvcClass, Client,
            (SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */
@@ -7666,9 +7810,9 @@ BEGIN
   FOR SR IN (SELECT SubRequest.id, SubRequest.subreqId, SubRequest.castorfile, SubRequest.request
                FROM SubRequest, DiskCopy, FileSystem, DiskServer
               WHERE SubRequest.status = dconst.SUBREQUEST_READY
+                AND Subrequest.reqType IN (35, 37, 44)  -- StageGet/Put/UpdateRequest
                 AND Subrequest.diskCopy = DiskCopy.id
                 AND DiskCopy.fileSystem = FileSystem.id
-                AND DiskCopy.status = dconst.DISKCOPY_STAGEOUT
                 AND FileSystem.diskServer = DiskServer.id
                 AND DiskServer.name = machine) LOOP
     BEGIN
@@ -7682,8 +7826,7 @@ BEGIN
       SELECT Request.reqId INTO varReqId FROM
         (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ reqId, id from StageGetRequest UNION ALL
          SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */ reqId, id from StagePutRequest UNION ALL
-         SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ reqId, id from StageUpdateRequest UNION ALL
-         SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */ reqId, id from StageRepackRequest) Request
+         SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ reqId, id from StageUpdateRequest) Request
        WHERE Request.id = SR.request;
       SELECT fileid, nsHost INTO varFileid, varNsHost FROM CastorFile WHERE id = SR.castorFile;
       -- and we put it in the list of transfers to be failed with code 1015 (SEINTERNAL)
@@ -10490,6 +10633,7 @@ BEGIN
                 WHEN DiskCopy.gcType = dconst.GCTYPE_DRAINING        THEN 'Draining filesystem'
                 WHEN DiskCopy.gcType = dconst.GCTYPE_NSSYNCH         THEN 'NS synchronization'
                 WHEN DiskCopy.gcType = dconst.GCTYPE_OVERWRITTEN     THEN 'Overwritten'
+                WHEN DiskCopy.gcType = dconst.GCTYPE_ADMIN           THEN 'Dropped by admin'
                 ELSE 'Unknown' END,
            getSvcClassList(FileSystem.id)
       FROM CastorFile, DiskCopy, FileSystem, DiskServer
@@ -11977,7 +12121,7 @@ BEGIN
       JOB_NAME        => 'monitoringJob_1min',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'BEGIN startDbJob(''BEGIN CastorMon.waitTapeMigrationStats(); CastorMon.waitTapeRecallStats(); END;'', ''stagerd''); END;',
-      JOB_CLASS       => 'CASTOR_MON_JOB_CLASS',
+      JOB_CLASS       => 'CASTOR_JOB_CLASS',
       START_DATE      => SYSDATE + 1/3600,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=1',
       ENABLED         => TRUE,
