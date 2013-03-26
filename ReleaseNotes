@@ -1,5 +1,5 @@
 ------------
-- 2.1.14-0 -
+- 2.1.14-1 -
 ------------
 
   Summary of major features
@@ -16,6 +16,8 @@
   - the Nameserver client API has been made secure by default, without falling back to attempting
     a non-secure connection. To disable security access, the CNS_DISABLE variable needs to be set
     to YES in castor.conf.
+  - major cleanup of castor.conf. Most entries have been commented out as sensible defaults are
+    provided, thus reducing the set of parameters to be configured on each node.
 
   Note
   ----
@@ -46,18 +48,21 @@
 
   [Bug]
 
-     #95189 Time discrepencies between disk servers and name servers can lead to silent data loss on input
+     #95189  Time discrepencies between disk servers and name servers can lead to silent data loss on input
+     #100992 stuck xrootd threads on stage_rm
 
   [Features]
 
      #99889 RFE: Enable support for read-only hardware
+     #87929 RFE: improvements around cleanLostFiles
 
   CASTOR Protocols
   ----------------
 
   [Bug]
 
-     #91038 RFE: add transfer time to rfiod logs
+     #91038  RFE: add transfer time to rfiod logs
+     #100899 Problems accessing CASTOR files via xrootd when using "?tried=..."
 
   [Features]
 
@@ -85,6 +90,8 @@
     of the rmmaster/rmnode integration into transfermanager/diskmanager
   - castor-dlf-web and castor-lib-monitor have been dropped as they have been superseeded in 2.1.13 by
     the mae and hbase-consumer and were already deprecated
+  - log-processor-server has been dropped as its functionality has been superseded by the
+    simple-log-producer package and the new monitoring infrastructure
 
 
   Deployment Changes
