@@ -3379,7 +3379,8 @@ BEGIN
       -- basically only STAGED files may be dropped in case no data loss is provoked,
       -- or files already dropped from the namespace. The rest is forbidden.
       IF (varStatus = dconst.DISKCOPY_STAGED AND (varNbRemaining > 0 OR varFStatus = 'm'))
-         OR varFStatus = 'd' THEN
+         OR varFStatus = 'd'
+         OR varStatus = dconst.DISKCOPY_FAILED THEN    -- this will eventually disappear
         INSERT INTO DeleteDiskCopyHelper (dcId, rc)
           VALUES (inDcIds(i), dconst.DELDC_GC);
         IF NOT inDryRun THEN
