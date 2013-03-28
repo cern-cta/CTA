@@ -1,4 +1,3 @@
-.\" @(#)$RCSfile: rmcd.man,v $ $Revision: 1.2 $ $Date: 2009/08/18 09:43:01 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"

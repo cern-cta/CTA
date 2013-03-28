@@ -3,7 +3,6 @@
  */
 
 /*
- * @(#)$RCSfile: marshall.h,v $ $Revision: 1.15 $ $Date: 2005/02/22 13:28:13 $ CERN IT-PDP/DM  Fabrizio Cane
  */
 
 /*
