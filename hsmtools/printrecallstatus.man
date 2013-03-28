@@ -20,12 +20,14 @@ Get usage information
 .SH "EXAMPLES"
 .nf 
 .ft CW
-# CASTOR_INSTANCE=castorcms printrecallstatus
-   TAPEPOOL FILES FILES_QUEUED FILES_RECALLING     TOTAL_SIZE    SIZE_QUEUED SIZE_RECALLING TAPES TAPES_QUEUED TAPES_RECALLING MIN_AGE_DAYS MAX_AGE_DAYS
-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
-   cms_user 35990        13574           13574 42179527595964 16474498660135 16474498660135   195           22              22         0.00         0.93
- r_cms_user    10            0               0    11955607801              0              0     2            0               0         0.01         0.69
-cms_prod_08     3            0               0    15004075245              0              0     3            0               0         0.01         0.61
+# printrecallstatus
+   TAPEPOOL FILES FILES_QUEUED FILES_RECALLING TOTAL_SIZE SIZE_QUEUED SIZE_RECALLING TAPES TAPES_QUEUED TAPES_RECALLING MIN_AGE   MAX_AGE
+-----------------------------------------------------------------------------------------------------------------------------------------
+   cms_user   712          634             634     987GiB      897GiB         897GiB    38           12              12      0s 3h42mn15s
+ r_cms_user    39           39              39      52GiB       52GiB          52GiB     2            2               2      0s  1h3mn18s
+cms_prod_08     3            0               0       7GiB          0B             0B     3            0               0 27mn35s  3h8mn45s
+ cms_raw_08     3            0               0    3875MiB          0B             0B     3            0               0  2mn15s    35mn4s
+
 .SH "NOTES"
 This command requires database client access to the stager catalogue.
 Configuration for the database access is taken from ORASTAGERCONFIG.

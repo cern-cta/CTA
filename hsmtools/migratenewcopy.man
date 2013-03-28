@@ -1,8 +1,8 @@
 .TH MIGRATENEWCOPY 1 "$Date: 2009/06/17 15:07:40 $" CASTOR "(re)creates an extra copy of a file on tape"
 .SH NAME
-migrateNewCopy
+migratenewcopy
 .SH SYNOPSIS
-.B migrateNewCopy
+.B migratenewcopy
 [
 .BI -h, 
 .BI --help
@@ -10,7 +10,7 @@ migrateNewCopy
 fileId[:copynb]
 [...]
 .SH DESCRIPTION
-.B migrateNewCopy
+.B migratenewcopy
 creates/replaces a copy of a file on tape for files that are already on disk
 .LP
 .BI \-h,\ \-\-help
@@ -42,7 +42,7 @@ Note also that you need to have the proper migration routes defined in order to 
 # nsls -T /castor/cern.ch/dev/s/sponcec3/tape2copy/testmigratenewcopy
 - 1   1 V12004       1 00000000                  738 100 /castor/cern.ch/dev/s/sponcec3/tape2copy/testmigratenewcopy
 
-# migrateNewCopy.py 5001051293    # here I'm replacing copy 1 !
+# migratenewcopy.py 5001051293    # here I'm replacing copy 1 !
 All files have been found on disk, triggering migrations
 Done
 
@@ -51,11 +51,11 @@ Done
 # nsls -T /castor/cern.ch/dev/s/sponcec3/tape2copy/testmigratenewcopy
 - 1   1 V12002       1 00000000                  738 100 /castor/cern.ch/dev/s/sponcec3/tape2copy/testmigratenewcopy
 
-# migrateNewCopy 5001051293:2    # this is creating copy 2
+# migratenewcopy 5001051293:2    # this is creating copy 2
 All files have been found on disk, triggering migrations
 Done
 
-# migrateNewCopy 5001051293:2    # this is trying to create copy 2 again
+# migratenewcopy 5001051293:2    # this is trying to create copy 2 again
 Fileid 5001051293 already has a migration job for that copy. Giving up with the whole request
 
 <wait a bit>
@@ -64,7 +64,7 @@ Fileid 5001051293 already has a migration job for that copy. Giving up with the 
 - 1   1 V12002       1 00000000                  738 100 /castor/cern.ch/dev/s/sponcec3/tape2copy/testmigratenewcopy
 - 2   1 V11005       1 00000000                  738 100 /castor/cern.ch/dev/s/sponcec3/tape2copy/testmigratenewcopy
 
-# migrateNewCopy 5001051293:3    # let's try copy 3
+# migratenewcopy 5001051293:3    # let's try copy 3
 All files have been found on disk, triggering migrations
 ORA-20100: Cannot find an appropriate tape routing for this file, aborting
 ORA-06512: at "STAGER_DEV01.INITMIGRATION", line 17

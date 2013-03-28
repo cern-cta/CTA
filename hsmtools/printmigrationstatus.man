@@ -11,7 +11,13 @@ printmigrationstatus
 
 .SH "DESCRIPTION"
 .B printmigrationstatus
-prints out pending migrations statistics, by tapepool
+prints out pending migrations statistics by tapepool, and a final line for the stuck migrations,
+i.e. the ones that had reached the configured maximum number of attempts and thus need to be unblocked
+by the operator.
+Once any possible tape issues have been fixed, one has to use the
+.B
+migratenewcopy
+command to reinitiate the migration of all stuck files.
 .LP 
 .BI \-h,\ \-\-help
 Get usage information
@@ -20,11 +26,11 @@ Get usage information
 .SH "EXAMPLES"
 .nf 
 .ft CW
-# CASTOR_INSTANCE=castorcms printmigrationstatus
-      TAPEPOOL FILES FILES_MIGRATING   TOTAL_SIZE SIZE_MIGRATING MIGRATIONS MIGRATIONS_QUEUED MIGRATIONS_RUNNING MIN_AGE_DAYS MAX_AGE_DAYS
-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
-cmsfamily_new1    13               0  14774906880              0          0                 0                  0         0.00         0.02
-      cms_user   642               0 239046738745              0          0                 0                  0         0.00         0.03
+# printmigrationstatus
+        TAPEPOOL FILES FILES_MIGRATING TOTAL_SIZE SIZE_MIGRATING MIGRATIONS MIGRATIONS_QUEUED MIGRATIONS_RUNNING  MIN_AGE       MAX_AGE
+---------------------------------------------------------------------------------------------------------------------------------------
+    stager_dev01     6               0      4339B             0B          1                 1                  0   31mn9s    9d2h30mn3s
+stuck migrations    13               0      10MiB             0B          0                 0                  0 42d5h47s 156d8h27mn20s
 .SH "NOTES"
 This command requires database client access to the stager catalogue.
 Configuration for the database access is taken from ORASTAGERCONFIG.
@@ -34,5 +40,6 @@ Configuration for the database access is taken from ORASTAGERCONFIG.
 .BR printrecallfilestatus
 .BR printrecalltapequeue
 .BR printrecalluserqueue
+.BR migratenewcopy
 .SH "AUTHOR"
 \fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #/******************************************************************************
-# *                      printrecallstatus
+# *                      printmigrationstatus
 # *
 # * This file is part of the Castor project.
 # * See http://castor.web.cern.ch/castor
@@ -21,7 +21,7 @@
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
 
-'''command line printing the summary of stager-queued, vdqm queued and ongoing recalls'''
+'''command line printing the summary of stager-queued, vdqm queued and ongoing migrations'''
 
 import sys, pwd, grp
 import getopt, time
@@ -54,41 +54,44 @@ try:
     stconn = castor_tools.connectToStager()
     stcur = stconn.cursor()
     sqlStatement = '''
-        select /*+ use_nl (tp mj) */ tp.name tapepool, count(*) files,
-        sum((case when mj.status = 1 then 1 else 0 end)) files_migrating,
-        sum(mj.filesize) total_size,
-        sum((case when mj.status = 1 then mj.filesize else 0 end)) size_migrating,
-        (select count(*) from migrationmount mm where mm.tapepool = tp.id) migrations,
-        (select count(*) from migrationmount mm where mm.tapepool = tp.id and mm.status in (2, 3)) migrations_queued,
-        (select count(*) from migrationmount mm where mm.tapepool = tp.id and mm.status = 3) migrations_running,
-        round(min(gettime() - mj.creationtime)/3600/24,2) min_age_days,
-        round(max(gettime() - mj.creationtime)/3600/24,2) max_age_days
-        from migrationjob mj
-        left outer join tapepool tp on tp.id = mj.tapepool
-        where mj.status in (0,  1)
-        group by tp.name, tp.id'''
+        SELECT /*+ use_nl (tp mj) */ tp.name tapepool, count(*) files,
+               sum((case when mj.status = 1 then 1 else 0 end)) files_migrating,
+               nvl(sum(mj.filesize), 0) total_size,
+               sum((case when mj.status = 1 then mj.filesize else 0 end)) size_migrating,
+               (select count(*) from migrationmount mm where mm.tapepool = tp.id) migrations,
+               (select count(*) from migrationmount mm where mm.tapepool = tp.id and mm.status in (2, 3)) migrations_queued,
+               (select count(*) from migrationmount mm where mm.tapepool = tp.id and mm.status = 3) migrations_running,
+               nvl(min(gettime() - mj.creationtime), 0) min_age,
+               nvl(max(gettime() - mj.creationtime), 0) max_age
+          FROM migrationjob mj
+               LEFT OUTER JOIN tapepool tp on tp.id = mj.tapepool
+         WHERE mj.status in (0, 1)
+         GROUP BY tp.name, tp.id
+        UNION ALL
+        SELECT 'stuck migrations' tapepool, count(*) files, 0 files_migrating,
+               nvl(sum(dc.diskcopysize), 0) total_size, 0 size_migrating,
+               0 migrations, 0 migrations_queued, 0 migrations_running,
+               nvl(min(gettime() - dc.creationtime), 0) min_age,
+               nvl(max(gettime() - dc.creationtime), 0) max_age
+          FROM DiskCopy dc
+         WHERE dc.status = 10 AND NOT EXISTS
+           (SELECT 1 FROM MigrationJob WHERE castorFile = dc.castorFile)
+        '''
     stcur.execute(sqlStatement)
-    # get results
+    # get results and print them
     rows = stcur.fetchall()
     # Compute column widths (dry-run print)
-    columnTitles = ['TAPEPOOL', 'FILES', 'FILES_MIGRATING', 'TOTAL_SIZE', 'SIZE_MIGRATING',
-                       'MIGRATIONS', 'MIGRATIONS_QUEUED', 'MIGRATIONS_RUNNING', 
-                       'MIN_AGE_DAYS', 'MAX_AGE_DAYS']
-    columnFormats = ['%*s', '%*d', '%*d', '%*d', '%*d', '%*d', '%*d', '%*d', '%*.2f', '%*.2f']
-    columnWidths = []
-    for k in range(0, len(columnTitles)):
-        columnWidths.append(max([len(columnTitles[k])]+[len(columnFormats[k] % (1, row[k])) for row in rows]))
-    # Print header
-    for k in range(0, len(columnTitles)):
-        print '%*s' % ( columnWidths[k], columnTitles[k] ),
-    print
-    print '-' * (sum(columnWidths) +  len(columnWidths) -1)
-    # Print data
-    for row in rows:
-        for k in range(0, len(columnTitles)):
-               print columnFormats[k] % ( columnWidths[k], row[k] ),
-        print
-    # close DB connections
+    titles = ['TAPEPOOL', 'FILES', 'FILES_MIGRATING', 'TOTAL_SIZE', 'SIZE_MIGRATING',
+              'MIGRATIONS', 'MIGRATIONS_QUEUED', 'MIGRATIONS_RUNNING',
+              'MIN_AGE', 'MAX_AGE']
+    data = [(tapepool, files, files_migrating, castor_tools.nbToDataAmount(total_size),
+             castor_tools.nbToDataAmount(size_migrating), migrations, migrations_queued, migrations_running,
+             castor_tools.nbToAge(int(min_age)), castor_tools.nbToAge(int(max_age)))
+            for tapepool, files, files_migrating, total_size,
+                size_migrating, migrations, migrations_queued, migrations_running,
+                min_age, max_age in rows]
+    castor_tools.prettyPrintTable(titles, data)
+    # close DB connection
     try:
         castor_tools.disconnectDB(stconn)
     except Exception:

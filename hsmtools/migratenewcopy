@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #/******************************************************************************
-# *                      migrateNewCopy
+# *                      migratenewcopy
 # *
 # * This file is part of the Castor project.
 # * See http://castor.web.cern.ch/castor
@@ -18,7 +18,7 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: migrateNewCopy,v $ $Revision: 1.1 $ $Release$ $Date: 2009/06/17 15:07:40 $ $Author: sponcec3 $
+# * @(#)$RCSfile: migratenewcopy,v $ $Revision: 1.1 $ $Release$ $Date: 2009/06/17 15:07:40 $ $Author: sponcec3 $
 # *
 # * migrates a new copy to tape for files that are already on disk
 # *

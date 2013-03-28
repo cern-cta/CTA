@@ -54,47 +54,40 @@ try:
     stconn = castor_tools.connectToStager()
     stcur = stconn.cursor()
     sqlStatement = '''
-        with recalltapes as (select rt.vid vid, vts.poolname poolname from (select unique vid from recalljob) rt
+        WITH recalltapes as (select rt.vid vid, vts.poolname poolname from (select unique vid from recalljob) rt
                left outer join Vmgr_tape_side@remotens vts on vts.vid= rt.vid)
-        select /*+ USE_NL(cf rj)  */ rt.poolname tapepool, count(*) files,
-        sum((select count(*) from recallmount rm where rm.vid = rj.vid)) files_queued,
-        sum((select count(*) from recallmount rm where rm.vid = rj.vid and rm.status = 2)) files_recalling,
-        sum (rj.filesize) total_size,
-        sum((select count(*) from recallmount rm where rm.vid = rj.vid) * rj.filesize) size_queued,
-        sum((select count(*) from recallmount rm where rm.vid = rj.vid and rm.status = 2) * rj.filesize) size_recalling,
-        (select count(*) from recalltapes rt2 where rt2.poolname = rt.poolname) tapes,
-        (select count(*) from recallmount rm inner join recalltapes rt2 on rt2.vid = rm.vid where rt2.poolname = rt.poolname) tapes_queued,
-        (select count(*) from recallmount rm inner join recalltapes rt2 on rt2.vid = rm.vid where rt2.poolname = rt.poolname and rm.status = 2) tapes_recalling,
-        round( min(gettime() - rj.creationtime)/3600/24,2) min_age_days, 
-        round(max(gettime() - rj.creationtime)/3600/24,2) max_age_days/*, cf.fileid*/
-         from recalljob rj
-         left outer join castorfile cf on cf.id = rj.castorfile
-         left outer join recalltapes rt on rt.vid = rj.vid
-        group by rt.poolname
-        order by case when sum((select count(*) from recallmount rm where rm.vid = rj.vid)) != 0 then 1 else 0 end desc,
-        round(max(gettime() - rj.creationtime)/3600/24,2) desc, round(min(gettime() - rj.creationtime)/3600/24,2) desc'''
+        SELECT /*+ USE_NL(cf rj)  */ rt.poolname tapepool, count(*) files,
+               sum((select count(*) from recallmount rm where rm.vid = rj.vid)) files_queued,
+               sum((select count(*) from recallmount rm where rm.vid = rj.vid and rm.status = 2)) files_recalling,
+               sum (rj.filesize) total_size,
+               sum((select count(*) from recallmount rm where rm.vid = rj.vid) * rj.filesize) size_queued,
+               sum((select count(*) from recallmount rm where rm.vid = rj.vid and rm.status = 2) * rj.filesize)  size_recalling,
+               (select count(*) from recalltapes rt2 where rt2.poolname = rt.poolname) tapes,
+               (select count(*) from recallmount rm inner join recalltapes rt2 on rt2.vid = rm.vid where rt2.poolname = rt.poolname)  tapes_queued,
+               (select count(*) from recallmount rm inner join recalltapes rt2 on rt2.vid = rm.vid where rt2.poolname = rt.poolname and rm.status = 2) tapes_recalling,
+               min(gettime() - rj.creationtime) min_age,
+               max(gettime() - rj.creationtime) max_age
+          FROM recalljob rj
+          LEFT OUTER JOIN castorfile cf on cf.id = rj.castorfile
+          LEFT OUTER JOIN recalltapes rt on rt.vid = rj.vid
+        GROUP BY rt.poolname
+        ORDER BY case when sum((select count(*) from recallmount rm where rm.vid = rj.vid)) != 0 then 1 else 0 end desc,
+                 max(gettime() - rj.creationtime) desc, min(gettime() - rj.creationtime) desc'''
     stcur.execute(sqlStatement)
-    # get results
+    # get results and print them
     rows = stcur.fetchall()
-    # Compute column widths (dry-run print)
-    columnTitles = ['TAPEPOOL', 'FILES', 'FILES_QUEUED', 'FILES_RECALLING', 'TOTAL_SIZE',
-                       'SIZE_QUEUED', 'SIZE_RECALLING', 'TAPES', 'TAPES_QUEUED', 'TAPES_RECALLING', 
-                       'MIN_AGE_DAYS', 'MAX_AGE_DAYS']
-    columnFormats = ['%*s', '%*d', '%*d', '%*d', '%*d', '%*d', '%*d', '%*d', '%*d', '%*d', '%*.2f', '%*.2f']
-    columnWidths = []
-    for k in range(0, len(columnTitles)):
-        columnWidths.append(max([len(columnTitles[k])]+[len(columnFormats[k] % (1, row[k])) for row in rows]))
-    # Print header
-    for k in range(0, len(columnTitles)):
-        print '%*s' % ( columnWidths[k], columnTitles[k] ),
-    print
-    print '-' * (sum(columnWidths) +  len(columnWidths) -1)
-    # Print data
-    for row in rows:
-        for k in range(0, len(columnTitles)):
-               print columnFormats[k] % ( columnWidths[k], row[k] ),
-        print
-    # close DB connections
+    titles = ['TAPEPOOL', 'FILES', 'FILES_QUEUED', 'FILES_RECALLING', 'TOTAL_SIZE',
+              'SIZE_QUEUED', 'SIZE_RECALLING', 'TAPES', 'TAPES_QUEUED', 'TAPES_RECALLING', 
+              'MIN_AGE', 'MAX_AGE']
+    data = [(tapepool, files, files_queued, files_recalling, castor_tools.nbToDataAmount(total_size),
+             castor_tools.nbToDataAmount(size_queued), castor_tools.nbToDataAmount(size_recalling),
+             tapes, tapes_queued, tapes_recalling,
+             castor_tools.nbToAge(int(min_age)), castor_tools.nbToAge(int(max_age)))
+            for tapepool, files, files_queued, files_recalling, total_size,
+                size_queued, size_recalling, tapes, tapes_queued, tapes_recalling,
+                min_age, max_age in rows]
+    castor_tools.prettyPrintTable(titles, data)
+    # close DB connection
     try:
         castor_tools.disconnectDB(stconn)
     except Exception:

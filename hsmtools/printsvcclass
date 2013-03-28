@@ -50,9 +50,9 @@ for f, v in options:
         usage(1)
 
 # Deal with arguments
-fileClasses = None
+svcClasses = None
 if len(args) != 0:
-    fileClasses = set(args)
+    svcClasses = set(args)
 
 try:
     # connect to stager and prepare statements
@@ -69,14 +69,14 @@ try:
              GROUP BY child) DiskPools
      WHERE SvcClass.id = DiskPools.svcClassId(+)
        AND SvcClass.forcedFileClass = FileClass.id(+)'''
-    if fileClasses:
-        sqlstatement = sqlstatement + " AND SvcClass.name IN ('" + "', '".join(fileClasses) + "')"
+    if svcClasses:
+        sqlstatement = sqlstatement + " AND SvcClass.name IN ('" + "', '".join(svcClasses) + "')"
     # get results
     stcur.execute(sqlstatement)
     rows = stcur.fetchall()
     existingSvcClasses = set([row[0] for row in rows])
-    if fileClasses:
-        unknownSvcClasses = fileClasses - existingSvcClasses
+    if svcClasses:
+        unknownSvcClasses = svcClasses - existingSvcClasses
     # loop over svcclasses and print them
     if existingSvcClasses:
         titles = ('NAME', 'DEFAULTFILESIZE', 'FAILJOBSWHENNOSPACE', 'MAXREPLICANB',
@@ -92,9 +92,9 @@ try:
 
         castor_tools.prettyPrintTable(titles, data)
     # check unknown svcclasses
-    if fileClasses and unknownSvcClasses:
+    if svcClasses and unknownSvcClasses:
         print 'WARNING : the following service classes do not exist : ' + ', '.join(unknownSvcClasses)
-    # close DB connections
+    # close DB connection
     try:
         castor_tools.disconnectDB(stconn)
     except Exception:
