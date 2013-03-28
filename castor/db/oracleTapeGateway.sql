@@ -1326,45 +1326,46 @@ BEGIN
   varReqId := uuidGen();
   -- Get the NS host name
   varNsHost := getConfigOption('stager', 'nsHost', '');
-  -- Prepare input for nameserver
   FOR i IN inFileTrIds.FIRST .. inFileTrIds.LAST LOOP
-    IF inErrorCodes(i) = 0 THEN
-      -- Successful migration, collect additional data.
-      -- Note that this is NOT bulk to preserve the order in the input arrays.
-      BEGIN
-        SELECT CF.lastUpdateTime, nvl(MJ.originalCopyNb, 0), MJ.vid, MJ.destCopyNb
-          INTO varLastUpdTime, varOldCopyNo, varVid, varCopyNo
-          FROM CastorFile CF, MigrationJob MJ
-         WHERE MJ.castorFile = CF.id
-           AND CF.fileid = inFileIds(i)
-           AND MJ.mountTransactionId = inMountTrId
-           AND MJ.fileTransactionId = inFileTrIds(i)
-           AND status = tconst.MIGRATIONJOB_SELECTED;
+    BEGIN
+      -- Collect additional data. Note that this is NOT bulk
+      -- to preserve the order in the input arrays.
+      SELECT CF.lastUpdateTime, nvl(MJ.originalCopyNb, 0), MJ.vid, MJ.destCopyNb
+        INTO varLastUpdTime, varOldCopyNo, varVid, varCopyNo
+        FROM CastorFile CF, MigrationJob MJ
+       WHERE MJ.castorFile = CF.id
+         AND CF.fileid = inFileIds(i)
+         AND MJ.mountTransactionId = inMountTrId
+         AND MJ.fileTransactionId = inFileTrIds(i)
+         AND status = tconst.MIGRATIONJOB_SELECTED;
         -- Store in a temporary table, to be transfered to the NS DB.
         -- Note that this is an ON COMMIT DELETE table and we never take locks or commit until
         -- after the NS call: if anything goes bad (including the db link being broken) we bail out
         -- without needing to rollback.
+      IF inErrorCodes(i) = 0 THEN
+        -- Successful migration
         INSERT INTO FileMigrationResultsHelper
           (reqId, fileId, lastModTime, copyNo, oldCopyNo, transfSize, comprSize,
            vid, fseq, blockId, checksumType, checksum)
         VALUES (varReqId, inFileIds(i), varLastUpdTime, varCopyNo, varOldCopyNo,
                 inTransferredSizes(i), CASE inComprSizes(i) WHEN 0 THEN 1 ELSE inComprSizes(i) END, varVid, inFseqs(i),
                 strtoRaw4(inBlockIds(i)), inChecksumTypes(i), inChecksums(i));
-      EXCEPTION WHEN NO_DATA_FOUND THEN
-        -- Log 'unable to identify migration, giving up'
-        varParams := 'mountTransactionId='|| to_char(inMountTrId) ||' fileTransactionId='|| to_char(inFileTrIds(i))
-          ||' '|| inLogContext;
-        logToDLF(varReqid, dlf.LVL_ERROR, dlf.MIGRATION_NOT_FOUND, inFileIds(i), varNsHost, 'tapegatewayd', varParams);
-      END;
-    ELSE
-      -- Fail/retry this migration, log 'migration failed, will retry if allowed'
-      varParams := 'mountTransactionId='|| to_char(inMountTrId) ||' ErrorCode='|| to_char(inErrorCodes(i))
-                   ||' ErrorMessage="'|| inErrorMsgs(i) ||'" VID='|| varVid
-                   ||' copyNb='|| to_char(varCopyNo) ||' '|| inLogContext;
-      logToDLF(varReqid, dlf.LVL_WARNING, dlf.MIGRATION_RETRY, inFileIds(i), varNsHost, 'tapegatewayd', varParams);
-      retryOrFailMigration(inMountTrId, inFileIds(i), varNsHost, inErrorCodes(i), varReqId);
-      COMMIT;
-    END IF;
+      ELSE
+        -- Fail/retry this migration, log 'migration failed, will retry if allowed'
+        varParams := 'mountTransactionId='|| to_char(inMountTrId) ||' ErrorCode='|| to_char(inErrorCodes(i))
+                     ||' ErrorMessage="'|| inErrorMsgs(i) ||'" VID='|| varVid
+                     ||' copyNb='|| to_char(varCopyNo) ||' '|| inLogContext;
+        logToDLF(varReqid, dlf.LVL_WARNING, dlf.MIGRATION_RETRY, inFileIds(i), varNsHost, 'tapegatewayd', varParams);
+        retryOrFailMigration(inMountTrId, inFileIds(i), varNsHost, inErrorCodes(i), varReqId);
+        -- here we commit immediately
+        COMMIT;
+      END IF;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- Log 'unable to identify migration, giving up'
+      varParams := 'mountTransactionId='|| to_char(inMountTrId) ||' fileTransactionId='|| to_char(inFileTrIds(i))
+        ||' '|| inLogContext;
+      logToDLF(varReqid, dlf.LVL_ERROR, dlf.MIGRATION_NOT_FOUND, inFileIds(i), varNsHost, 'tapegatewayd', varParams);
+    END;
   END LOOP;
   -- Commit all the entries in FileMigrationResultsHelper so that the next call can take them
   COMMIT;
@@ -1391,10 +1392,10 @@ BEGIN
       INSERT INTO DLFLogs (timeinfo, uuid, priority, msg, fileId, nsHost, source, params)
         VALUES (varNSTimeinfos(i), varReqid,
                 CASE varNSErrorCodes(i) 
-                  WHEN                  0 THEN dlf.LVL_SYSTEM
-                  WHEN  serrno.ENOENT     THEN dlf.LVL_WARNING
-                  WHEN  serrno.ENSFILECHG THEN dlf.LVL_WARNING
-                  ELSE                         dlf.LVL_ERROR 
+                  WHEN 0                 THEN dlf.LVL_SYSTEM
+                  WHEN serrno.ENOENT     THEN dlf.LVL_WARNING
+                  WHEN serrno.ENSFILECHG THEN dlf.LVL_WARNING
+                  ELSE                        dlf.LVL_ERROR
                 END,
                 varNSMsgs(i), varNSFileIds(i), varNsHost, 'nsd', varNSParams(i));
       
@@ -1513,6 +1514,7 @@ CREATE OR REPLACE PROCEDURE failFileMigration(inMountTrId IN NUMBER, inFileId IN
   varSrIds "numList";
   varOriginalCopyNb NUMBER;
   varMigJobCount NUMBER;
+  varErrorCode INTEGER := inErrorCode;
 BEGIN
   varNsHost := getConfigOption('stager', 'nsHost', '');
   -- Lock castor file
@@ -1540,8 +1542,19 @@ BEGIN
        AND status = dconst.DISKCOPY_CANBEMIGR;
   END IF;
   
+  IF varErrorCode = serrno.ENOENT THEN
+    -- unfortunately, tape servers can throw this error too (see SR #136759), so we have to double check
+    -- prior to taking destructive actions on the file: if the file does exist in the Nameserver, then
+    -- replace the error code to a generic ETSYS (taped system error), otherwise keep ENOENT
+    BEGIN
+      SELECT 1902 INTO varErrorCode FROM Dual
+       WHERE EXISTS (SELECT 1 FROM Cns_file_metadata@RemoteNS WHERE fileid = inFileId);
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      NULL;
+    END;
+  END IF;
   -- Log depending on the error: some are not pathological and have dedicated handling
-  IF inErrorCode = serrno.ENOENT OR inErrorCode = serrno.ENSFILECHG OR inErrorCode = serrno.ENSNOSEG THEN
+  IF varErrorCode = serrno.ENOENT OR varErrorCode = serrno.ENSFILECHG OR varErrorCode = serrno.ENSNOSEG THEN
     -- in this case, disk cache is stale
     UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
      WHERE status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR)
@@ -1550,9 +1563,9 @@ BEGIN
     DELETE FROM MigrationJob WHERE castorfile = varCfId;
     -- Log 'file was dropped or modified during migration, giving up'
     logToDLF(inReqid, dlf.LVL_NOTICE, dlf.MIGRATION_FILE_DROPPED, inFileId, varNsHost, 'tapegatewayd',
-             'mountTransactionId=' || to_char(inMountTrId) || ' ErrorCode=' || to_char(inErrorCode) ||
+             'mountTransactionId=' || to_char(inMountTrId) || ' ErrorCode=' || to_char(varErrorCode) ||
              ' lastUpdateTime=' || to_char(varCFLastUpdateTime));
-  ELSIF inErrorCode = serrno.ENSTOOMANYSEGS THEN
+  ELSIF varErrorCode = serrno.ENSTOOMANYSEGS THEN
     -- do as if migration was successful
     UPDATE DiskCopy SET status = dconst.DISKCOPY_STAGED
      WHERE status = dconst.DISKCOPY_CANBEMIGR
@@ -1563,12 +1576,12 @@ BEGIN
   ELSE
     -- Any other case, log 'migration to tape failed for this file, giving up'
     logToDLF(inReqid, dlf.LVL_ERROR, dlf.MIGRATION_FAILED, inFileId, varNsHost, 'tapegatewayd',
-             'mountTransactionId=' || to_char(inMountTrId) || ' LastErrorCode=' || to_char(inErrorCode));
+             'mountTransactionId=' || to_char(inMountTrId) || ' LastErrorCode=' || to_char(varErrorCode));
   END IF;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- File was dropped, log 'file not found when failing migration'
   logToDLF(inReqid, dlf.LVL_ERROR, dlf.MIGRATION_FAILED_NOT_FOUND, inFileId, varNsHost, 'tapegatewayd',
-           'mountTransactionId=' || to_char(inMountTrId) || ' LastErrorCode=' || to_char(inErrorCode));
+           'mountTransactionId=' || to_char(inMountTrId) || ' LastErrorCode=' || to_char(varErrorCode));
 END;
 /
 
