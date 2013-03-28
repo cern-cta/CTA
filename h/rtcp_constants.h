@@ -223,7 +223,7 @@
 #endif /* NB_RTCP_BUFS */
 
 #if !defined(RTCP_BUFS)
-#define RTCP_BUFSZ         (4 * 1024 * 1024)
+#define RTCP_BUFSZ         (5 * 1024 * 1024)
 #endif /* RTCP_BUFSZ */
 
 #if !defined(RTCPC_PING_INTERVAL)

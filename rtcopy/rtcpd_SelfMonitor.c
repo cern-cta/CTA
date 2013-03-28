@@ -329,9 +329,10 @@ int rtcpd_StartMonitor(int pool_size) {
     static int _pool_size;
     char *p;
 
-    if ( ((p = getenv("RTCOPYD_SELF_MONITOR")) == NULL) &&
-         ((p = getconfent("RTCOPYD","SELF_MONITOR",0)) == NULL) ) return(0);
-    if ( strcmp(p,"NO") == 0 ) return(0);
+    if ( ((p = getenv("RTCOPYD_SELF_MONITOR")) != NULL) ||
+         ((p = getconfent("RTCOPYD","SELF_MONITOR",0)) == NULL) ) {
+      if ( strcmp(p,"NO") == 0 ) return(0);
+    }
     if ( pool_size > 0 ) _pool_size = pool_size;
     return(Cthread_create_detached(rtcpd_MonitorThread,(void *)&_pool_size));
 } 

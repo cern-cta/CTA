@@ -24,7 +24,7 @@ int tapeacct(int subtype,
 	char *getconfent();
 	char *p;
 
-	if ((p = getconfent("ACCT", "TAPE", 0)) == NULL ||
+	if ((p = getconfent("ACCT", "TAPE", 0)) != NULL &&
 	    (strcmp (p, "YES") && strcmp (p, "yes"))) return (0);
 	memset ((char *) &accttape, 0, sizeof(struct accttape));
 	accttape.subtype = subtype;

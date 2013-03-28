@@ -375,7 +375,7 @@ int tpd_main() {
                can take as long as (old) vdqmchkintvl seconds. 
             */
             p = getconfent( "TAPE", "CONFIRM_DRIVE_FREE", 0 );
-            if ((NULL != p) && (0 == strcasecmp( p, "YES" ))) {
+            if ((NULL == p) || (0 == strcasecmp( p, "YES" ))) {
                                                                                 
                 p = getconfent( "TAPE", "CONFIRM_DRIVE_FREE_INTVL", 0 );
                 if (NULL != p) {
@@ -2770,9 +2770,8 @@ void check_child_exit()
                                         "vid"    , TL_MSG_PARAM_STR  , tunp->vid,
                                         "TPVID"  , TL_MSG_PARAM_TPVID, tunp->vid );
                     p = getconfent( "TAPE", "CRASHED_RLS_HANDLING", 0 );
-                    if (NULL != p) {                                                
 
-                        if (0 == strcasecmp( p, "RETRY" )) { 
+                        if (NULL == p || 0 == strcasecmp( p, "RETRY" )) { 
 
                             /* 
                             **  retry the release or ...
@@ -2896,17 +2895,6 @@ void check_child_exit()
                                                 "vid"    , TL_MSG_PARAM_STR  , tunp->vid,
                                                 "TPVID"  , TL_MSG_PARAM_TPVID, tunp->vid );
                         }
-
-                    } else {
-                                                
-                        tplogit (func, "rlstape crashed, CRASHED_RLS_HANDLING not defined\n"); 
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 5,
-                                            "func"   , TL_MSG_PARAM_STR  , func,
-                                            "Message", TL_MSG_PARAM_STR  , "rlstape crashed, CRASHED_RLS_HANDLING not defined",
-                                            "JobID"  , TL_MSG_PARAM_INT  , tunp->jid,
-                                            "vid"    , TL_MSG_PARAM_STR  , tunp->vid,
-                                            "TPVID"  , TL_MSG_PARAM_TPVID, tunp->vid );
-                    }
 
                 } else {
                     

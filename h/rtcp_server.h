@@ -168,7 +168,7 @@ typedef struct processing_status {
          ((__p = getconfent(#X,#Y,0)) != NULL) ) Z = atoi(__p); \
     else Z = X##_##Y;}
 
-#define RTCOPYD_MOUNT_TIME          60*60
+#define RTCOPYD_MOUNT_TIME          15*60
 #define RTCOPYD_POSITION_TIME       60*60
 #define RTCOPYD_OPEN_TIME            5*60
 #define RTCOPYD_READ_TIME            5*60

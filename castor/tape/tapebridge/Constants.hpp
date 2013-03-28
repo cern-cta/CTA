@@ -134,7 +134,7 @@ namespace tapebridge {
    * The value of this parameter defines the mode of flush behaviour used when
    * writing data to tape.
    */
-  const uint32_t TAPEBRIDGE_TAPEFLUSHMODE = TAPEBRIDGE_N_FLUSHES_PER_FILE;
+  const uint32_t TAPEBRIDGE_TAPEFLUSHMODE = TAPEBRIDGE_ONE_FLUSH_PER_N_FILES;
 
   /**
    * The compile-time default value of the tapebridged configuration parameter
@@ -149,7 +149,7 @@ namespace tapebridge {
    * used over multiple files as defined by the parameter named
    * TAPEBRIDGE/USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES.
    */
-  const uint64_t TAPEBRIDGE_MAXBYTESBEFOREFLUSH = 8589934592ULL; // 8 GiB
+  const uint64_t TAPEBRIDGE_MAXBYTESBEFOREFLUSH = 32000000000ULL; // 32 GB
 
   /**
    * The compile-time default value of the tapebridged configuration parameter
@@ -162,7 +162,7 @@ namespace tapebridge {
    * used over multiple files as defined by the parameter named
    * TAPEBRIDGE/USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES.
    */
-  const uint64_t TAPEBRIDGE_MAXFILESBEFOREFLUSH = 1;
+  const uint64_t TAPEBRIDGE_MAXFILESBEFOREFLUSH = 200;
 
   /**
    * When the tapegatewayd daemon is asked for a set of files to migrate to

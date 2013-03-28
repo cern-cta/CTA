@@ -289,6 +289,11 @@ static int actionChanged(int cc, int rt, short *act, int *slp, int *rtr) {
                         if (*slp<60) {*slp = 60;}
                         changed = 1;
                 }
+        } else {
+          *act = RBT_FAST_RETRY;
+          *rtr = 3;
+          *slp = 300;
+          changed = 1;
         }
         return changed;
 }

@@ -121,9 +121,9 @@ int main(int	argc,
                             "TPVID"   , TL_MSG_PARAM_TPVID, vid );
         
         if (rlsflags & TPRLS_DELAY) {
-                int slp = 60;
+                int slp = 300;
                 if ((p = getconfent ("TAPE", "CRASHED_RLS_HANDLING_RETRY_DELAY", 0))) {
-                        slp = atoi(p)>0?atoi(p):60;
+                        slp = atoi(p)>0?atoi(p):300;
                 }                
                 tplogit (func, "release delayed for %d seconds\n", slp);
                 tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 5,
@@ -189,14 +189,13 @@ int main(int	argc,
                               }
                       } else {
                               /* default: configure the drive down */
-                              tplogit( func, "Configure the drive down (default)\n" );
+                              tplogit( func, "Leave the drive up (default)\n" );
                               tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 5,
                                                   "func"   , TL_MSG_PARAM_STR  , func,
-                                                  "Message", TL_MSG_PARAM_STR  , "Configure the drive down (default)",
+                                                  "Message", TL_MSG_PARAM_STR  , "Leave the drive up (default)",
                                                   "JobID"  , TL_MSG_PARAM_INT,   jid,
                                                   "vid"    , TL_MSG_PARAM_STR  , vid,
                                                   "TPVID"  , TL_MSG_PARAM_TPVID, vid );
-                              configdown (drive);
                       }
               }
 
@@ -286,7 +285,7 @@ unload_loop:
 				if (unldtape (tapefd, dvn) < 0) {                                        
                                         char *p = NULL;                                        
                                         p = getconfent( "TAPE", "DOWN_ON_UNLOAD_FAILURE", 0 );
-                                        if ((NULL != p) && (0 == strcasecmp(p, "NO"))) {
+                                        if ((NULL == p) || (0 == strcasecmp(p, "NO"))) {
                                                 char msg[] = "Leave drive up after unload failure";
                                                 tplogit(func, "%s\n", msg);
                                                 tl_tpdaemon.tl_log(&tl_tpdaemon, 104, 2,

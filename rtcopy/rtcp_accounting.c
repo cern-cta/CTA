@@ -42,7 +42,7 @@ int rtcp_wacct(int   subtype,
     char *getconfent();
     char *p;
 
-    if ((p = getconfent("ACCT", "RTCOPY", 0)) == NULL ||
+    if ((p = getconfent("ACCT", "RTCOPY", 0)) != NULL &&
         (strcmp (p, "YES") != 0 && strcmp (p, "yes")) != 0) return(0);
     memset ((char *) &acctrtcp, 0, sizeof(struct acctrtcp));
     acctrtcp.subtype = subtype;
