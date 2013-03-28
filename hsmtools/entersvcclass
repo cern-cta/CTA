@@ -34,7 +34,7 @@ def usage(exitCode):
           '[--defaultfilesize <defaultFileSize>] [--maxreplicanb <maxReplicaNb>] ' + \
           '[--failjobswhennospace <[yes|no]>] [--disk1behavior <[yes|no]>] ' + \
           '[--forcedfileclass <forcedFileClass>] [--replicateonclose <[yes|no]>] ' + \
-          '--gcpolicy <gcPolicyName> [--recallerpolicy <recallerPolicy>] ' + \
+          '--gcpolicy <gcPolicyName> ' + \
           '[--diskpools <diskPoolName>:[...]] <svcClassName>'
     sys.exit(exitCode)
 
@@ -43,7 +43,7 @@ try:
     options, args = getopt.getopt(sys.argv[1:], 'hv',
                                   ['help', 'verbose', 'defaultfilesize=', 'maxreplicanb=',
                                    'failjobswhennospace=', 'disk1behavior=', 'forcedfileclass=',
-                                   'replicateonclose=', 'gcpolicy=', 'recallerpolicy=', 'diskpools='])
+                                   'replicateonclose=', 'gcpolicy=', 'diskpools='])
 except Exception, e:
     print e
     usage(1)
@@ -55,7 +55,6 @@ disk1behavior = False
 forcedfileclass = None
 replicateonclose = False
 gcpolicy = None
-recallerpolicy = None
 diskpools = []
 for f, v in options:
     if f == '-h' or f == '--help':
@@ -76,8 +75,6 @@ for f, v in options:
         replicateonclose = castor_tools.parseBool('replicateonclose', v)
     elif f == '--gcpolicy':
         gcpolicy = v
-    elif f == '--recallerpolicy':
-        recallerpolicy = v
     elif f == '--diskpools':
         diskpools = set(v.split(':'))
     else:
@@ -153,10 +150,10 @@ try:
       diskPoolIds castor."cnumList" := :diskPoolIds;
     BEGIN
       INSERT INTO SvcClass (name, defaultFileSize, maxReplicaNb,
-                            recallerPolicy, gcPolicy, disk1Behavior, replicateOnClose,
+                            gcPolicy, disk1Behavior, replicateOnClose,
                             failJobsWhenNoSpace, id, forcedFileClass, lastEditor, lastEditionTime)
              VALUES (:name, :defaultFileSize, :maxReplicaNb,
-                     :recallerPolicy, :gcPolicy, :disk1Behavior, :replicateOnClose,
+                     :gcPolicy, :disk1Behavior, :replicateOnClose,
                      :failJobsWhenNoSpace, ids_seq.nextval, :forcedFileClass, :lastEditor, gettime())
              RETURNING id INTO scId;
       IF diskPoolIds.COUNT != 1 OR diskPoolIds(1) != -1 THEN
@@ -165,8 +162,7 @@ try:
       END IF;
     END;'''
     stcur.execute(insertFCSQL, name=svcclassname, defaultFileSize=defaultfilesize,
-                  maxReplicaNb=maxreplicanb, recallerPolicy=recallerpolicy,
-                  gcPolicy=gcpolicy, disk1Behavior=disk1behavior,
+                  maxReplicaNb=maxreplicanb, gcPolicy=gcpolicy, disk1Behavior=disk1behavior,
                   replicateOnClose=replicateonclose, failJobsWhenNoSpace=failjobswhennospace,
                   forcedFileClass=forcedfileclass, diskPoolIds=diskpools,
                   lastEditor=lasteditor)

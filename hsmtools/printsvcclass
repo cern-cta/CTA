@@ -60,7 +60,7 @@ try:
     stcur = stconn.cursor()
     sqlstatement = '''
     SELECT SvcClass.name, SvcClass.defaultfilesize, SvcClass.failjobswhennospace, SvcClass.gcPolicy,
-           SvcClass.maxReplicaNb, FileClass.name, SvcClass.replicateonclose, SvcClass.recallerPolicy,
+           SvcClass.maxReplicaNb, FileClass.name, SvcClass.replicateonclose,
            SvcClass.disk1behavior, SvcClass.id, DiskPools.names, SvcClass.lastEditor, SvcClass.lastEditionTime
       FROM SvcClass, FileClass,
            (SELECT DiskPool2SvcClass.child AS svcClassId, cast(collect(DiskPool.name) AS strListTable) AS names
@@ -81,14 +81,13 @@ try:
     if existingSvcClasses:
         titles = ('NAME', 'DEFAULTFILESIZE', 'FAILJOBSWHENNOSPACE', 'MAXREPLICANB',
                   'FORCEDFILECLASS', 'REPLICATEONCLOSE', 'DISK1BEHAVIOR', 'GCPOLICY',
-                  'RECALLERPOLICY', 'DISKPOOLS', 'ID', 'LASTEDITOR', 'LASTEDITION')
+                  'DISKPOOLS', 'ID', 'LASTEDITOR', 'LASTEDITION')
         data = [(name, castor_tools.nbToDataAmount(defaultfilesize), bool(failjobswhennospace), maxReplicaNb,
                  forcedFileClass if forcedFileClass else '-', bool(replicateonclose),
-                 bool(disk1behavior), gcPolicy, recallerPolicy if recallerPolicy else '-',
-                 ','.join(diskPools) if diskPools else '-', scId, lastEditor,
-                 castor_tools.secsToDate(lastEdition))
+                 bool(disk1behavior), gcPolicy, ','.join(diskPools) if diskPools else '-',
+                 scId, lastEditor, castor_tools.secsToDate(lastEdition))
                 for name, defaultfilesize, failjobswhennospace, gcPolicy, maxReplicaNb,
-                    forcedFileClass, replicateonclose, recallerPolicy, disk1behavior, scId,
+                    forcedFileClass, replicateonclose, disk1behavior, scId,
                     diskPools, lastEditor, lastEdition in rows]
 
         castor_tools.prettyPrintTable(titles, data)

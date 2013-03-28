@@ -35,10 +35,6 @@ modifysvcclass \- modifies an existing service class in the stager catalog
 <gcPolicyName>
 ]
 [
-.BI --recallerpolicy
-<recallerPolicy>
-]
-[
 .BI --adddiskpools
 <diskPoolName>:[...]
 ]
@@ -94,9 +90,6 @@ diskservers which are no longer in production!
 If given, modifies the name of the garbage collection policy to be used for this service class.
 This value is irrelevant if Disk1Behavior is set to yes.
 .TP
-.BI \-\-recallerpolicy <recallerPolicy>
-If given, modifies the name of the recaller policy to be used for this service class.
-.TP
 .BI \-\-adddiskpools <diskPool1:diskPool2:...>
 If given, adds the given disk pools to the set that this service class is allowed to use.
 More than one disk pool can be specified, colon separated. All specified disk
@@ -114,25 +107,25 @@ name of the service class to modify.
 .nf
 .ft CW
 #printsvcclass default
-   NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR GCPOLICY RECALLERPOLICY DISKPOOLS ID LASTEDITOR          LASTEDITION
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-default           10MiB                True            1               -            False         False        -              -   default 15   sponcec3 30-Aug-2011 17:02:00
+   NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR GCPOLICY DISKPOOLS ID LASTEDITOR          LASTEDITION
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+default           10MiB                True            1               -            False         False        -   default 15   sponcec3 30-Aug-2011 17:02:00
 
 # modifysvcclass --defaultfilesize 20GiB --maxreplicanb 2 --gcpolicy dropall --forcedfileclass temp --removediskpools default default
 modified service class default successfully
 
 # printsvcclass test
-   NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR GCPOLICY RECALLERPOLICY DISKPOOLS ID LASTEDITOR          LASTEDITION
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-default           10MiB                True            2            temp            False         False  dropall              -         - 15   sponcec3 30-Aug-2011 17:09:44
+   NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR GCPOLICY DISKPOOLS ID LASTEDITOR          LASTEDITION
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+default           10MiB                True            2            temp            False         False  dropall         - 15   sponcec3 30-Aug-2011 17:09:44
 
 # modifysvcclass --forcedfileclass '' --adddiskpools default default
 modified service class default successfully
 
 # printsvcclass test
-   NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR GCPOLICY RECALLERPOLICY DISKPOOLS ID LASTEDITOR          LASTEDITION
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-default           10MiB                True            2               -            False         False  dropall              -   default 15   sponcec3 30-Aug-2011 17:10:39
+   NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR GCPOLICY DISKPOOLS ID LASTEDITOR          LASTEDITION
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+default           10MiB                True            2               -            False         False  dropall   default 15   sponcec3 30-Aug-2011 17:10:39
 
 .SH NOTES
 This command requires database client access to the stager catalog and nameserver DBs.

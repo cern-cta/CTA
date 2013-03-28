@@ -34,7 +34,7 @@ def usage(exitCode):
           '[--defaultfilesize <defaultFileSize>] [--maxreplicanb <maxReplicaNb>] ' + \
           '[--failjobswhennospace <[yes|no]>] [--disk1behavior <[yes|no]>] ' + \
           '[--forcedfileclass <forcedFileClass>] [--replicateonclose <[yes|no]>] ' + \
-          '[--gcpolicy <gcPolicyName>] [--recallerpolicy <recallerPolicy>] ' + \
+          '[--gcpolicy <gcPolicyName>] ' + \
           '[--adddiskpools <diskPoolName>:[...]] [--removediskpools <diskPoolName>:[...]] <svcClassName>'
     sys.exit(exitCode)
 
@@ -43,7 +43,7 @@ try:
     options, args = getopt.getopt(sys.argv[1:], 'hv',
                                   ['help', 'verbose', 'defaultfilesize=', 'maxreplicanb=',
                                    'failjobswhennospace=', 'disk1behavior=', 'forcedfileclass=',
-                                   'replicateonclose=', 'gcpolicy=', 'recallerpolicy=',
+                                   'replicateonclose=', 'gcpolicy=',
                                    'adddiskpools=', 'removediskpools='])
 except Exception, e:
     print e
@@ -57,7 +57,6 @@ forcedfileclass = None
 forcedfileclassset = False
 replicateonclose = None
 gcpolicy = None
-recallerpolicy = None
 adddiskpools = None
 removediskpools = None
 for f, v in options:
@@ -80,8 +79,6 @@ for f, v in options:
         replicateonclose = castor_tools.parseBool('replicateonclose', v)
     elif f == '--gcpolicy':
         gcpolicy = v
-    elif f == '--recallerpolicy':
-        recallerpolicy = v
     elif f == '--adddiskpools':
         adddiskpools = set(v.split(':'))
     elif f == '--removediskpools':
@@ -103,7 +100,7 @@ else:
 # check we have something to do
 if defaultfilesize == None and maxreplicanb == None and failjobswhennospace == None and \
    disk1behavior == None and forcedfileclass == None and replicateonclose == None and gcpolicy == None and \
-   recallerpolicy == None and adddiskpools == None and removediskpools == None:
+   adddiskpools == None and removediskpools == None:
     print 'Nothing to modify. Did you forget some argument ?'
     usage(1)
 
@@ -145,9 +142,6 @@ try:
         # update svcclass
         stcur.execute('UPDATE SvcClass SET gcpolicy=:value WHERE id = :svcClassId',
                       value=gcpolicy, svcClassId=svcClassId)
-    if recallerpolicy != None:
-        stcur.execute('UPDATE SvcClass SET recallerpolicy=:value WHERE id = :svcClassId',
-                      value=recallerpolicy, svcClassId=svcClassId)
     # Deal with adddiskpools
     if adddiskpools != None:
         # check existence, and get ids
