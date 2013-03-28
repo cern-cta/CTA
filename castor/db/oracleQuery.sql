@@ -1,6 +1,5 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.661 $ $Date: 2009/06/17 10:55:44 $ $Author: itglp $
  *
  * PL/SQL code for the stager query service
  *

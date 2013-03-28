@@ -5,7 +5,6 @@
 #
 # @author Castor dev team, castor-dev@cern.ch
 #
-# @(#)$RCSfile: codemerge.py,v $ $Revision: 1.1 $ $Release$ $Date: 2006/08/07 14:44:59 $ $Author: itglp $
 #
 
 import sys

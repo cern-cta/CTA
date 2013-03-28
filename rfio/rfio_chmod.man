@@ -1,7 +1,6 @@
 .\"
 .\" $Id: rfio_chmod.man,v 1.7 2007/09/10 13:40:52 obarring Exp $
 .\"
-.\" @(#)$RCSfile: rfio_chmod.man,v $ $Revision: 1.7 $ $Date: 2007/09/10 13:40:52 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"

@@ -8,7 +8,6 @@
  */
 
 /*
- * @(#)$RCSfile: vmgr_api.h,v $ $Revision: 1.31 $ $Date: 2003/10/29 12:17:23 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _VMGR_API_H

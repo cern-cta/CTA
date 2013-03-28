@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TooBig.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2006/02/01 10:35:30 $ $Author: sponcec3 $
  *
  * TooBig error exception
  *

@@ -1,5 +1,4 @@
 /*
- * $RCSfile: Cgetopt.h,v $ $Revision: 1.5 $ $Date: 2007/12/07 11:40:53 $ Jean-Damien Durand IT-PDP/DM
  */
 
 /*

@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestReplier.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2006/12/05 17:01:42 $ $Author: felixehm $
  *
  *
  *

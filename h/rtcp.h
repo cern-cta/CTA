@@ -4,7 +4,6 @@
  */
 
 /*
- * @(#)$RCSfile: rtcp.h,v $ $Revision: 1.23 $ $Date: 2007/04/19 15:18:19 $ CERN IT/ADC Olof Barring
  */
 
 /*

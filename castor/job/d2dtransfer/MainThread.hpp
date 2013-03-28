@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MainThread.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2009/03/23 15:26:20 $ $Author: sponcec3 $
  *
  * @author Dennis Waldron
  *****************************************************************************/

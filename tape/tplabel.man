@@ -1,4 +1,3 @@
-.\" @(#)$RCSfile: tplabel.man,v $ $Revision: 1.9 $ $Date: 2007/12/04 08:51:51 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"

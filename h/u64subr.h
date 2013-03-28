@@ -4,7 +4,6 @@
  */
 
 /*
- * @(#)$RCSfile: u64subr.h,v $ $Revision: 1.2 $ $Date: 2008/05/05 08:51:59 $ CERN/IT/ADC/CA Jean-Damien Durand
  */
 
 #ifndef __u64subr_h

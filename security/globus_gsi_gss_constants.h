@@ -3,7 +3,6 @@
  * @file globus_gsi_gssapi_constants.h
  * @author Sam Lang, Sam Meder
  * 
- * $RCSfile: globus_gsi_gss_constants.h,v $
  * $Revision: 1.3 $
  * $Date: 2008/01/16 15:37:28 $
  */

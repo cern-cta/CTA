@@ -8,7 +8,6 @@
  */
 
 /*
- * $RCSfile: Cgrp.h,v $ $Revision: 1.1 $ $Date: 2000/10/27 13:55:55 $ CERN IT-PDP/DM Jean-Damien Durand
  */
 
 

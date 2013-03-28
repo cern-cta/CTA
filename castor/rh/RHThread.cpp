@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.45 $ $Release$ $Date: 2009/08/18 09:42:53 $ $Author: waldron $
  *
  * @author Sebastien Ponce
  *****************************************************************************/

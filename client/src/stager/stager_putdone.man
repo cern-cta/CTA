@@ -1,4 +1,3 @@
-.\" @(#)$RCSfile: stager_putdone.man,v $ $Revision: 1.6 $ $Date: 2008/06/02 16:27:29 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"

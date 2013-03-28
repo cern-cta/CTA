@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.42 $ $Release$ $Date: 2009/03/26 10:59:47 $ $Author: itglp $
  *
  * Implementation of the ICommonSvc for Oracle - CDBC version
  *

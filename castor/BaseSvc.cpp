@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseSvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/12/14 16:10:38 $ $Author: sponcec3 $
  *
  * 
  *

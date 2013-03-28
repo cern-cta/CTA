@@ -8,7 +8,6 @@
  */
 
 /*
- * @(#)$RCSfile: Cupv_constants.h,v $ $Revision: 1.2 $ $Date: 2008/11/24 17:47:47 $ CERN IT-PDP/DM Ben Couturier
  */
 
 #ifndef _CUPV_CONSTANTS_H

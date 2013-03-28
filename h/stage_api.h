@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
  * This is an old file from the CASTOR1 times that had been dropped.
  * A minimum set of empty functions was readded as a transitionnal measure,

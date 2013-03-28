@@ -1,5 +1,4 @@
 /*******************************************************************
- * @(#)$RCSfile: oracleMonitoring.sql,v $ $Revision: 1.8 $ $Date: 2009/07/05 13:46:14 $ $Author: waldron $
  * PL/SQL code for stager monitoring
  *
  * @author Castor Dev team, castor-dev@cern.ch

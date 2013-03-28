@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api_authid.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/02/03 11:40:17 $ $Author: sponcec3 $
  *
  * Interface to set the Authorization id of a client
  *

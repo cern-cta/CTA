@@ -1,7 +1,6 @@
 .\"
 .\" $Id: rfio_fileno.man,v 1.2 2007/09/10 13:40:52 obarring Exp $
 .\"
-.\" @(#)$RCSfile: rfio_fileno.man,v $ $Revision: 1.2 $ $Date: 2007/09/10 13:40:52 $ CERN IT-DS/HSM Jean-Philippe Baud
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"

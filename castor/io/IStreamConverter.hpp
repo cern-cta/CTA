@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStreamConverter.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/10/11 16:48:14 $ $Author: sponcec3 $
  *
  *
  *

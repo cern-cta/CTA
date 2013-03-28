@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: dsi_CASTOR2xroot.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2009/05/13 08:33:58 $ $Author: sponcec3 $
  *
  *
  *

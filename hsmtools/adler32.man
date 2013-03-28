@@ -17,7 +17,6 @@
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 .\"
-.\" @(.\")$RCSfile: adler32.man,v $ $Revision: 1.1 $ $Release$ $Date: 2007/06/07 14:11:11 $ $Author: obarring $
 .\"
 .\" man page for the adler32 command
 .\"

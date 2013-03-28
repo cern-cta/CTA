@@ -3,7 +3,6 @@
 #  Copyright (C) 1990-2000 by CERN/IT/PDP/DM
 #  All rights reserved
 #
-#       @(#)$RCSfile: rtcpcheck.fix,v $ $Revision: 1.4 $ $Date: 2004/03/11 17:43:09 $ CERN IT-PDP/DM Jean-Philippe Baud
 #
 #	rtcpcheck.fix - test rtcopy in fixed format mode
 #

@@ -4,7 +4,6 @@
  */
 
 /*
- * @(#)$RCSfile: getacctent.h,v $ $Revision: 1.3 $ $Date: 2001/05/04 07:12:02 $ CERN CN-PDP/CS Antony Simmins
  */
 
 

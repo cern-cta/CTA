@@ -1,4 +1,3 @@
-.\" @(#)$RCSfile: rfioreadopt.man,v $ $Revision: 1.3 $ $Date: 2007/09/10 13:40:51 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"

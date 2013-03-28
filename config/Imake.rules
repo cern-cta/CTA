@@ -4,7 +4,6 @@
  */
 
 /*
- * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.33 $ $Date: 2009/06/05 08:11:27 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #define NullParameter

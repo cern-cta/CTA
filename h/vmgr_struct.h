@@ -8,7 +8,6 @@
  */
  
 /*
- * @(#)$RCSfile: vmgr_struct.h,v $ $Revision: 1.3 $ $Date: 2008/01/09 12:32:19 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
  
 #ifndef _VMGR_STRUCT_H

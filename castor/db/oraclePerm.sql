@@ -1,6 +1,5 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.655 $ $Date: 2009/03/26 14:11:58 $ $Author: itglp $
  *
  * PL/SQL code for permission and B/W list handling
  *

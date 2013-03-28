@@ -3,7 +3,6 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: expert_constants.h,v $ $Revision: 1.2 $ $Date: 2004/07/06 14:53:27 $ CERN IT-ADC Vitaly Motyakov
  */
 
 #ifndef _EXPERT_CONSTANTS_H

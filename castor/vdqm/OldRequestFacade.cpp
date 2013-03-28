@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)RCSfile: OldRequestFacade.cpp  Revision: 1.0  Release Date: Apr 18, 2005  Author: mbraeger 
  *
  *
  *

@@ -6,7 +6,6 @@
  */
 
 /*
- * @(#)$RCSfile: rtcp_constants.h,v $ $Revision: 1.6 $ $Date: 2009/06/11 09:39:13 $ CERN IT/ADC Olof Barring
  */
 
 /*

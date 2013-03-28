@@ -17,19 +17,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.48 $ $Release$ $Date: 2009/05/13 08:37:56 $ $Author: sponcec3 $
  *
  * the client API to the castor stager
  *
  * @author castor dev team
  *****************************************************************************/
 
-/** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.48 $
- * @date $Date: 2009/05/13 08:37:56 $
- */
-/** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.48 $
+/** @mainpage CASTOR Stager API
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 

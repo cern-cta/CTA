@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RrTest.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/08/19 10:06:23 $ $Author: bcouturi $
  *
  * 
  *

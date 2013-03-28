@@ -1,5 +1,4 @@
 .\"
-.\" @(#)$RCSfile: vdqm_DelDrive.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:56 $ CERN IT-PDP/DM O.Barring
 .\"
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\"

@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rfio_callhandlers.h,v $ $Revision: 1.1 $ $Release$ $Date: 2008/07/31 13:10:27 $ $Author: sponcec3 $
  *
  * functions definitions for the callhandler interface of rfio
  *

@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
  * This file only exists so that applications that were using concurrently
  * CASTOR1 and CASTOR2, using use_castor2_api to decide which can

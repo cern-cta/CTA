@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.104 $ $Release$ $Date: 2009/06/16 14:03:49 $ $Author: sponcec3 $
  *
  * This class provides specific stager methods and includes scheduler
  * and error related methods

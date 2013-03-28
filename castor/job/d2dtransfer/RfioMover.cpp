@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RfioMover.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/11/10 09:33:40 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/

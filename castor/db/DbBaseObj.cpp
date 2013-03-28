@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbBaseObj.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/09/10 06:46:46 $ $Author: waldron $
  *
  * Base class for all database oriented objects
  *

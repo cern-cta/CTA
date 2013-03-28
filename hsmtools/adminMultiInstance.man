@@ -17,7 +17,6 @@
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 .\"
-.\" @(.\")$RCSfile: adminMultiInstance.man,v $ $Revision: 1.1 $ $Release$ $Date: 2006/04/24 16:13:40 $ $Author: sponcec3 $
 .\"
 .\" man page concerning the administration of several castor
 .\" instances from the same administration node

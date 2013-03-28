@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: grant_oracle_user.sql,v $ $Release: 1.2 $ $Release$ $Date: 2009/03/06 15:05:48 $ $Author: waldron $
  *
  * This script grants SELECT rights on all tables and views within a database
  * schema to a given user.

@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_actualget.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2009/04/17 13:36:25 $ $Author: sponcec3 $
  *
  * command line for stage_prepareToGet 
  *

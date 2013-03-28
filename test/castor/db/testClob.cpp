@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: testClob.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2008/05/21 10:00:42 $ $Author: itglp $
  *
  * Some code to test and play around with Oracle CLOBS
  *

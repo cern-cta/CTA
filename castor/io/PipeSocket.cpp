@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: PipeSocket.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/12/04 12:21:01 $ $Author: waldron $
  *
  * A dedicated socket on top of standard file descriptors to be used
  * as communication channel between a parent and its forked children process

@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.48 $ $Release$ $Date: 2009/05/13 08:37:56 $ $Author: sponcec3 $
  *
  * the internal extensions to the client API to the castor stager
  *

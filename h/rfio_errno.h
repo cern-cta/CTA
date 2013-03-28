@@ -8,7 +8,6 @@
  */
 
 /*
- * $RCSfile: rfio_errno.h,v $ $Revision: 1.6 $ $Date: 2001/06/17 14:06:24 $
  */
 
 /* rfio_errno.h   Thread safe rfio_errno  */

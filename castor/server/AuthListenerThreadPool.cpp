@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AuthListenerThreadPool.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2009/08/10 15:27:31 $ $Author: itglp $
  *
  * A ListenerThreadPool which uses AuthSockets to handle the connections
  *

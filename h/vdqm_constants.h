@@ -8,7 +8,6 @@
  */
 
 /*
- * @(#)$RCSfile: vdqm_constants.h,v $ $Revision: 1.8 $ $Date: 2008/10/11 11:33:34 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*

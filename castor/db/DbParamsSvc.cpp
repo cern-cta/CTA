@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbParamsSvc.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2009/05/19 08:26:50 $ $Author: gtaur $
  *  
  * A service to provide parameters to access the db layer of a Castor application
  *

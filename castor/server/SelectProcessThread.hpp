@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SelectProcessThread.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/05/30 14:08:25 $ $Author: itglp $
  *
  * Base thread for the select/process model: it loops until select() returns
  * something to do. If stop() is called, the underlying database connection is dropped.

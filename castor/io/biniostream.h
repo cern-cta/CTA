@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: biniostream.h,v $ $Revision: 1.10 $ $Release$ $Date: 2009/07/06 16:27:41 $ $Author: itglp $
  *
  *
  *

@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_service_helper.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/08/18 16:00:13 $ $Author: sponcec3 $
  *
  * Just a little helper function replying to a client
  *

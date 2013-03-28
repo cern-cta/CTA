@@ -3,7 +3,6 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: RfioTURL.h,v $ $Revision: 1.7 $ $Release$ $Date: 2009/01/14 17:38:21 $ $Author: sponcec3 $
  *
  *
  *

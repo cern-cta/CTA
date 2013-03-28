@@ -4,7 +4,6 @@
  * Globus GSI Credential Library
  * @author Sam Lang, Sam Meder
  *
- * $RCSfile: globus_i_gsi_credential.h,v $
  * $Revision: 1.3 $
  * $Date: 2008/01/16 15:37:29 $
  */

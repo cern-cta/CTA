@@ -4,7 +4,6 @@
  */
 
 /*
- * @(#)$RCSfile: ypgetacctent.h,v $ $Revision: 1.2 $ $Date: 2001/09/21 04:29:14 $ CERN CN-PDP/CS Antony Simmins
  */
 
 

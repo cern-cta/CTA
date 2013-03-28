@@ -4,7 +4,6 @@
  */
 
 /*
- * $RCSfile: Cnetdb.h,v $ $Revision: 1.11 $ $Date: 2007/07/11 14:27:12 $ CERN IT-PDP/DM Olof Barring
  */
 
 

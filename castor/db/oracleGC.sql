@@ -1,6 +1,5 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.698 $ $Date: 2009/08/17 15:08:33 $ $Author: sponcec3 $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *

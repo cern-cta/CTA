@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: dlf_lib.c,v $ $Revision: 1.33 $ $Release$ $Date: 2009/08/18 09:42:58 $ $Author: waldron $
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/

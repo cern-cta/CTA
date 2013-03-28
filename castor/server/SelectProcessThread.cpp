@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SelectProcessThread.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2009/01/08 09:28:46 $ $Author: itglp $
  *
  * Base thread for the select/process model: it loops until select() returns
  * something to do, or until a stop signal is received.

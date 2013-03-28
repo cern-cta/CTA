@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DLFInit.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/11/20 17:20:34 $ $Author: sponcec3 $
  *
  * Initialization of the DLF messages for the stager common part
  *

@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Busy.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/04/20 14:03:41 $ $Author: sponcec3 $
  *
  * Busy exception
  *

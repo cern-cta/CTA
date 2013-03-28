@@ -17,19 +17,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_mover_api.h,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/29 13:31:07 $ $Author: bcouturi $
  *
  * 
  *
  * @author Ben Couturier
  *****************************************************************************/
 
-/** @file $RCSfile: stager_mover_api.h,v $
  * @version $Revision: 1.2 $
  * @date $Date: 2004/10/29 13:31:07 $
  */
 /** @mainpage CASTOR Disk Mover Interface
- * $RCSfile: stager_mover_api.h,v $ $Revision: 1.2 $
  *
  * @section intro Introduction
  * In the new CASTOR stager, it is foreseen to use other movers than RFIO, that

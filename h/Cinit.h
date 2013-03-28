@@ -8,7 +8,6 @@
  */
 
 /*
- * @(#)$RCSfile: Cinit.h,v $ $Revision: 1.3 $ $Date: 2001/06/21 11:41:19 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CINIT_H

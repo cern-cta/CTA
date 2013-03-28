@@ -8,7 +8,6 @@
  */
 
 /*
- * @(#)$RCSfile: vmgr_constants.h,v $ $Revision: 1.5 $ $Date: 2008/11/06 16:45:42 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _VMGR_CONSTANTS_H

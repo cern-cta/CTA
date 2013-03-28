@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2009/05/18 16:47:48 $ $Author: itglp $
  *
  * Service thread for dealing with requests that failed
  *

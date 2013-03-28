@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IObject.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/29 16:04:26 $ $Author: sponcec3 $
  *
  * Implementation of the streaming operator << for IObject
  *

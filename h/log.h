@@ -4,7 +4,6 @@
  */
 
 /*
- * @(#)$RCSfile: log.h,v $ $Revision: 1.11 $ $Date: 2003/04/22 09:50:00 $ CERN CN-PDP/CS F. Hemmer
  */
 
 /* log.h        generalized logging facilities                          */

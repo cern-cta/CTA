@@ -17,7 +17,6 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: castor_tools.py,v $ $Revision: 1.9 $ $Release$ $Date: 2009/03/23 15:47:41 $ $Author: sponcec3 $
 # *
 # * This class implements the distributed logging facility of CASTOR for
 # * the python tools. It basically uses syslog to send well formatted

@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: testio.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/07/19 10:10:19 $ $Author: sponcec3 $
  *
  * 
  *

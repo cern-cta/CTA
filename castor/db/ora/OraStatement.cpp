@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStatement.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2009/03/26 14:30:12 $ $Author: itglp $
  *
  * @author Giuseppe Lo Presti, giuseppe.lopresti@cern.ch
  *****************************************************************************/

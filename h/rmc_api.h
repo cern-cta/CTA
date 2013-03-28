@@ -8,7 +8,6 @@
  */
 
 /*
- * @(#)$RCSfile: rmc_api.h,v $ $Revision: 1.2 $ $Date: 2003/10/29 12:37:27 $ CERN IT-DS/HSM Jean-Philippe Baud
  */
 
 #ifndef _RMC_API_H

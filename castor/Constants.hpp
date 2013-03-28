@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
  * Here are defined all constants used in Castor.
  * This includes :

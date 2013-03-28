@@ -1,4 +1,3 @@
-.\" @(#)$RCSfile: getacctent.man,v $ $Revision: 1.3 $ $Date: 2001/09/26 09:13:49 $ CERN IT-PDP/CS Antony Simmins
 .\" Copyright (C) 1995-2000 by CERN IT-PDP/CS
 .\" All rights reserved
 .\"

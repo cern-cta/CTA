@@ -1,7 +1,6 @@
 .\"
 .\" $Id: rfio_read.man,v 1.5 2007/09/10 13:40:51 obarring Exp $
 .\"
-.\" @(#)$RCSfile: rfio_read.man,v $ $Revision: 1.5 $ $Date: 2007/09/10 13:40:51 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"

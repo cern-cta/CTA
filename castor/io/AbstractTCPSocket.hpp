@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AbstractTCPSocket.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/09/26 07:38:34 $ $Author: waldron $
  *
  * defines a dedicated socket that handles most of the network
  * calls

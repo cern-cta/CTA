@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Mutex.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2009/01/08 09:27:30 $ $Author: itglp $
  *
  * C++ interface to mutex handling with the Cthread API
  *

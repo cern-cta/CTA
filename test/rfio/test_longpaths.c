@@ -3,7 +3,6 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: test_longpaths.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/03/02 17:42:26 $ $Author: obarring $
  *
  *
  *

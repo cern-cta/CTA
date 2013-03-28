@@ -8,7 +8,6 @@
  */
 
 /*
- * @(#)$RCSfile: Cupv_api.h,v $ $Revision: 1.3 $ $Date: 2006/12/05 14:00:43 $ CERN IT-PDP/DM Ben Couturier
  */
 
 #ifndef _CUPV_API_H

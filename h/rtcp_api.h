@@ -5,7 +5,6 @@
 
 
 /*
- * $RCSfile: rtcp_api.h,v $ $Revision: 1.14 $ $Date: 2004/03/05 08:41:06 $ CERN IT/ADC Olof Barring
  */
 
 /*

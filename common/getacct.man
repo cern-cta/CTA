@@ -1,2 +1,1 @@
 .so ./getacctent.man
-.\" @(#)$RCSfile: getacct.man,v $ $Revision: 1.2 $ $Date: 2000/02/04 14:50:08 $ CERN IT-PDP/DM Jean-Philippe Baud

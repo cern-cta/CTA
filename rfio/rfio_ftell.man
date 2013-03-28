@@ -1,7 +1,6 @@
 .\"
 .\" $Id: rfio_ftell.man,v 1.4 2007/09/10 13:40:52 obarring Exp $
 .\"
-.\" @(#)$RCSfile: rfio_ftell.man,v $ $Revision: 1.4 $ $Date: 2007/09/10 13:40:52 $ CERN IT-DS-HSM Benjamin Couturier
 .\" Copyright (C) 2002 by CERN/IT-DS-HSM
 .\" All rights reserved
 .\"

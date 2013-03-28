@@ -4,7 +4,6 @@
  */
 
 /*
- * @(#)$RCSfile: common.h,v $ $Revision: 1.3 $ $Date: 2007/12/07 16:09:40 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*

@@ -3,7 +3,6 @@
  */
 
 /*
- * @(#)$RCSfile: shift.h,v $ $Revision: 1.4 $ $Date: 2001/05/21 11:07:18 $ CERN IT-PDP/DC Frederic Hemmer
  */
 
 /*

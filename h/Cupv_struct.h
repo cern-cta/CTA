@@ -8,7 +8,6 @@
  */
 
 /*
- * @(#)$RCSfile: Cupv_struct.h,v $ $Revision: 1.3 $ $Date: 2002/06/07 15:56:17 $ CERN IT-PDP/DM Ben Couturier
  */
  
 #ifndef _CUPV_STRUCT_H

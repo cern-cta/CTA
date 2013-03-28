@@ -3,7 +3,6 @@
  */
 
 /*
- * @(#)$RCSfile: patchlevel.h,v $ $Revision: 1.8 $ $Date: 2007/12/07 17:19:31 $ CERN IT-PDP/CS F. Hemmer
  */
 
 /*

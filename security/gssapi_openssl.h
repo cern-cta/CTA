@@ -3,7 +3,6 @@
  * @file gssapi_openssl.h
  * @author Sam Lang, Sam Meder
  * 
- * $RCSfile: gssapi_openssl.h,v $
  * $Revision: 1.3 $
  * $Date: 2008/01/16 15:37:29 $
  */

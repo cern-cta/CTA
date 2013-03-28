@@ -1,7 +1,6 @@
 .\"
 .\" $Id: rfchmod.man,v 1.3 2009/01/14 17:39:21 sponcec3 Exp $
 .\"
-.\" @(#)$RCSfile: rfchmod.man,v $ $Revision: 1.3 $ $Date: 2009/01/14 17:39:21 $  IN2P3 CC Philippe Gaillardon
 .\" Copyright (C) 1998-2002 by IN2P3 CC
 .\" All rights reserved
 .\"

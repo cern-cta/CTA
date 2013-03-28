@@ -19,7 +19,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: stagerd.init,v $ $Revision: 1.2 $ $Release$ $Date: 2009/08/18 09:42:55 $ $Author: waldron $
 #
 # chkconfig: 345 70 35
 # description: Stager Daemon Initialisation Script

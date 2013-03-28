@@ -8,7 +8,6 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.33 $ $Date: 2008/02/21 18:25:27 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_API_H

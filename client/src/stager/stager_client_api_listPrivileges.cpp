@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api_listPrivileges.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2009/07/13 06:22:08 $ $Author: waldron $
  *
  * api to list privileges i.e. the content of the black and white list
  *

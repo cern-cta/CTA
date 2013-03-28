@@ -1,7 +1,6 @@
 .\"
 .\" $Id: rfio_lockf.man,v 1.6 2007/09/10 13:40:52 obarring Exp $
 .\"
-.\" @(#)$RCSfile: rfio_lockf.man,v $ $Revision: 1.6 $ $Date: 2007/09/10 13:40:52 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"

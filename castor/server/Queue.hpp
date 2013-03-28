@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Queue.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2008/10/21 08:36:38 $ $Author: waldron $
  *
  * Simple implementation of a thread safe FIFO bounded queue
  *

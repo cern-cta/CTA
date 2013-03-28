@@ -8,7 +8,6 @@
  */
 
 /*
- * @(#)$RCSfile: rmc_constants.h,v $ $Revision: 1.1 $ $Date: 2002/12/01 07:31:57 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _RMC_CONSTANTS_H

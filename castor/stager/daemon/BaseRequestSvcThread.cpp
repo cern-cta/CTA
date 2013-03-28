@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseRequestSvcThread.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/01/18 17:57:28 $ $Author: itglp $
  *
  * Base service thread for handling stager requests
  *

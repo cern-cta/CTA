@@ -1,5 +1,4 @@
 .\"
-.\" @(#)$RCSfile: vdqm_SendVolPriority.man,v $ $Revision: 1.5 $ $Date: 2008/05/29 08:41:54 $ CERN IT-PDP/DM O.Barring
 .\"
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\"

@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rfio_calls.h,v $ $Revision: 1.1 $ $Release$ $Date: 2008/07/31 13:17:11 $ $Author: sponcec3 $
  *
  * header file for functions implemented in rfio_calls.c
  *

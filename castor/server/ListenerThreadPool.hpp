@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ListenerThreadPool.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2009/08/10 15:27:12 $ $Author: itglp $
  *
  * Abstract class defining a listener thread pool
  *

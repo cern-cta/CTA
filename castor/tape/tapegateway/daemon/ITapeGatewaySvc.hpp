@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeGatewaySvc.hpp,v $ $Revision: 1.17 $ $Release$ $Date: 2009/07/15 08:39:33 $ $Author: gtaur $
  *
  * This class provides methods related to tape handling
  *

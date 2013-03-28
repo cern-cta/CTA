@@ -1,5 +1,4 @@
 /*******************************************************************
- * @(#)$RCSfile: oracleDrain.schema.sql,v $ $Revision: 1.4 $ $Date: 2009/07/05 13:49:08 $ $Author: waldron $
  * Schema creation code for Draining FileSystems Logic
  *
  * @author Castor Dev team, castor-dev@cern.ch

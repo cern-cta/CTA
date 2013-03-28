@@ -17,19 +17,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_mapper.h,v $ $Revision: 1.6 $ $Release$ $Date: 2009/01/14 17:38:21 $ $Author: sponcec3 $
  *
  *
  *
  * @author Ben Couturier
  *****************************************************************************/
 
-/** @file $RCSfile: stager_mapper.h,v $
- * @version $Revision: 1.6 $
- * @date $Date: 2009/01/14 17:38:21 $
- */
 /** @mainpage CASTOR Mapper
- * $RCSfile: stager_mapper.h,v $ $Revision: 1.6 $
  *
  * @section intro Introduction
  * The stage mapper consists of utility functions to help applications

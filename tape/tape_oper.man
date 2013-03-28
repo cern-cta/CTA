@@ -1,4 +1,3 @@
-.\" @(#)$RCSfile: tape_oper.man,v $ $Revision: 1.6 $ $Date: 2001/09/26 09:13:56 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1996-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"

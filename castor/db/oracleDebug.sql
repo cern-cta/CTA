@@ -1,6 +1,5 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleDebug.sql,v $ $Revision: 1.14 $ $Date: 2009/08/13 13:34:16 $ $Author: itglp $
  *
  * Some SQL code to ease support and debugging
  *

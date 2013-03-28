@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SynchronizationThread.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2009/07/13 06:22:06 $ $Author: waldron $
  *
  * Thread going through the files stored on the CASTOR related filesystem and
  * checking their existence in the nameserver and in the stager catalog. In

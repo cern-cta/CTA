@@ -1,5 +1,4 @@
 /*
- * $RCSfile: rfio_api.h,v $ $Revision: 1.47 $ $Date: 2009/05/13 10:06:27 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*

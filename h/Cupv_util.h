@@ -8,7 +8,6 @@
  */
  
 /*
- * @(#)$RCSfile: Cupv_util.h,v $ $Revision: 1.2 $ $Date: 2006/12/05 14:00:43 $ CERN IT-DS/HSM Ben Couturier
  */
 
 #ifndef _CUPV_UTIL_H

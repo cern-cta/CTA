@@ -8,7 +8,6 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape_constants.h,v $ $Revision: 1.6 $ $Date: 2009/01/12 08:32:34 $ CERN IT-PDP/DM Jean-Philippe Baud - Benjamin Couturier
  */
 
 #ifndef _CTAPE_CONSTANTS_H

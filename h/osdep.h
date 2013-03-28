@@ -8,7 +8,6 @@
  */
 
 /*
- * @(#)$RCSfile: osdep.h,v $ $Revision: 1.22 $ $Date: 2009/05/13 10:06:27 $ CERN IT-PDP/IP Frederic Hemmer
  */
 
 /* osdep.h      Operating system dependencies                           */

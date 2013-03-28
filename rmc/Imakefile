@@ -2,7 +2,6 @@ COMM
 COMM  Copyright (C) 2001-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.8 $ $Date: 2009/08/18 09:43:01 $ CERN IT-PDP/DM Jean-Philippe Baud
 
 COMM 	Make SCSI media changer server programs.
 

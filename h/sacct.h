@@ -8,7 +8,6 @@
  */
 
 /*
- * @(#)$RCSfile: sacct.h,v $ $Revision: 1.17 $ $Date: 2009/07/23 12:22:03 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 /* Include file for CASTOR software accounting */
 

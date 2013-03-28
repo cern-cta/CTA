@@ -17,7 +17,6 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: JobRequestSvcThread.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2009/07/13 06:22:08 $ $Author: waldron $
 *
 * Service thread for handling Job oriented requests
 *

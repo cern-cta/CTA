@@ -1,7 +1,6 @@
 .\"
 .\" $Id: rfcp.man,v 1.19 2009/01/14 17:39:21 sponcec3 Exp $
 .\"
-.\" @(#)$RCSfile: rfcp.man,v $ $Revision: 1.19 $ $Date: 2009/01/14 17:39:21 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand
 .\" Copyright (C) 1998-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"

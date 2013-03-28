@@ -8,7 +8,6 @@
  */
 
 /*
- * @(#)$RCSfile: rmc.h,v $ $Revision: 1.2 $ $Date: 2007/04/19 15:18:19 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _RMC_H

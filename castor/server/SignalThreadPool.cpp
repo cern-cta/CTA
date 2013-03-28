@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2009/08/11 10:34:43 $ $Author: itglp $
  *
  * Thread pool supporting wakeup on signals and periodical run after timeout
  *

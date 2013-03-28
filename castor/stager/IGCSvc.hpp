@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IGCSvc.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2008/05/30 08:21:43 $ $Author: itglp $
  *
  * This class provides stager methods related to Garbage Collection
  *

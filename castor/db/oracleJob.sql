@@ -1,6 +1,5 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.687 $ $Date: 2009/07/31 15:17:04 $ $Author: waldron $
  *
  * PL/SQL code for scheduling and job handling
  *

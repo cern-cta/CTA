@@ -8,7 +8,6 @@
  */
 
 /*
- * $RCSfile: Cpwd.h,v $ $Revision: 1.4 $ $Date: 2000/03/14 14:40:27 $ CERN IT-PDP/DM Olof Barring
  */
 
 

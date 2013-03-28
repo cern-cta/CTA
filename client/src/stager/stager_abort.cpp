@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_abort.c,v $ $Revision: 1.14 $ $Release$ $Date: 2009/01/14 17:33:32 $ $Author: sponcec3 $
  *
  * command line for stager_abort
  *

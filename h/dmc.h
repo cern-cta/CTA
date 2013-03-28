@@ -6,7 +6,6 @@
  * Copyright (C) 1997-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
-/* @(#)$RCSfile: dmc.h,v $ $Revision: 1.5 $ $Date: 2009/08/18 09:42:59 $ CERN IT-PDP/DM  Olof Barring */
 
 /*
  * CERN interface to DEC Media Robot Driver (MRD) library.

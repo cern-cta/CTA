@@ -1,5 +1,4 @@
 /*******************************************************************
- * @(#)$RCSfile: oracleDrain.sql,v $ $Revision: 1.7 $ $Date: 2009/08/13 14:11:04 $ $Author: itglp $
  * PL/SQL code for Draining FileSystems Logic
  *
  * Additional procedures modified to support the DrainingFileSystems

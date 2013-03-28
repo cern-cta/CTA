@@ -1445,7 +1445,6 @@ END;
 /
 
 /*******************************************************************
- * @(#)RCSfile: oracleDrain.schema.sql,v  Revision: 1.4  Date: 2009/07/05 13:49:08  Author: waldron 
  * Schema creation code for Draining FileSystems Logic
  *
  * @author Castor Dev team, castor-dev@cern.ch
@@ -1879,7 +1878,6 @@ END serrno;
 /
 /*******************************************************************
  *
- * @(#)RCSfile: oracleCommon.sql,v  Revision: 1.697  Date: 2009/08/13 14:11:33  Author: itglp 
  *
  * This file contains some common PL/SQL utilities for the stager database.
  *
@@ -2200,7 +2198,6 @@ END;
 /
 /*******************************************************************
  *
- * @(#)RCSfile: oraclePerm.sql,v  Revision: 1.655  Date: 2009/03/26 14:11:58  Author: itglp 
  *
  * PL/SQL code for permission and B/W list handling
  *
@@ -6626,7 +6623,6 @@ END;
 /
 /*******************************************************************
  *
- * @(#)RCSfile: oracleJob.sql,v  Revision: 1.687  Date: 2009/07/31 15:17:04  Author: waldron 
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -7849,7 +7845,6 @@ END;
 /
 /*******************************************************************
  *
- * @(#)RCSfile: oracleQuery.sql,v  Revision: 1.661  Date: 2009/06/17 10:55:44  Author: itglp 
  *
  * PL/SQL code for the stager query service
  *
@@ -10233,7 +10228,6 @@ END;
 /
 /*******************************************************************
  *
- * @(#)RCSfile: oracleGC.sql,v  Revision: 1.698  Date: 2009/08/17 15:08:33  Author: sponcec3 
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -11101,7 +11095,6 @@ END;
 /
 
 /*******************************************************************
- * @(#)RCSfile: oracleDrain.sql,v  Revision: 1.7  Date: 2009/08/13 14:11:04  Author: itglp 
  * PL/SQL code for Draining FileSystems Logic
  *
  * Additional procedures modified to support the DrainingFileSystems
@@ -11865,7 +11858,6 @@ END;
 /
 /*******************************************************************
  *
- * @(#)RCSfile: oracleDebug.sql,v  Revision: 1.14  Date: 2009/08/13 13:34:16  Author: itglp 
  *
  * Some SQL code to ease support and debugging
  *
@@ -12032,7 +12024,6 @@ BEGIN
 END;
 /
 /*******************************************************************
- * @(#)RCSfile: oracleMonitoring.sql,v  Revision: 1.8  Date: 2009/07/05 13:46:14  Author: waldron 
  * PL/SQL code for stager monitoring
  *
  * @author Castor Dev team, castor-dev@cern.ch

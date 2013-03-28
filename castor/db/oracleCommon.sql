@@ -1,6 +1,5 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.697 $ $Date: 2009/08/13 14:11:33 $ $Author: itglp $
  *
  * This file contains some common PL/SQL utilities for the stager database.
  *

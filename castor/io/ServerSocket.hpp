@@ -17,7 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServerSocket.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/01/16 15:42:25 $ $Author: sponcec3 $
  *
  * defines a dedicated socket that handles most of the network
  * calls

@@ -4,7 +4,6 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * $RCSfile: Cuuid.h,v $ $Revision: 1.10 $ $Date: 2009/03/26 11:25:41 $ CERN IT-PDP/DM Jean-Damien Durand
  */
 
 #ifndef _CUUID_H

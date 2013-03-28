@@ -1,6 +1,5 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: drop_oracle_schema.sql,v $ $Revision: 1.5 $ $Date: 2009/04/14 14:12:45 $ $Author: waldron $
  *
  * This file drops all defined objects from a database schema.
  *

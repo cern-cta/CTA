@@ -84,8 +84,6 @@ COMMIT;
 EOF
 
   echo Creation script for $1 generated with tag $2
-  # remove CVS keywords (Drop the '$' character in the line containing "@(#)$RCSfile")
-  perl -p -i -e 'if (/@\(\#\)\$RCSfile/) { $_ =~ s/\$//g; }'  $1_oracle_create.sql
 
 else
   # install
