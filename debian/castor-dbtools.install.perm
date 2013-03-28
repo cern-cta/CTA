@@ -37,7 +37,7 @@
 %attr(0755,root,root) usr/bin/vdqmlistpriority
 %attr(0755,root,root) usr/bin/vdqmlistrequest
 %attr(0755,root,root) usr/bin/vdqmsetpriority
-%attr(0755,root,root) usr/bin/migrateNewCopy
+%attr(0755,root,root) usr/bin/migratenewcopy
 %attr(0755,root,root) usr/bin/fixFileSize
 %attr(0755,root,root) usr/bin/repack
 %attr(0755,root,root) usr/bin/printmigrationstatus
