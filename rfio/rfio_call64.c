@@ -69,7 +69,7 @@ extern int ignore_uid_gid;
    size DAEMONV3_RDMT_BUFSIZE. Defaults values are defined below */
 #define DAEMONV3_RDMT (1)
 #define DAEMONV3_RDMT_NBUF (4)
-#define DAEMONV3_RDMT_BUFSIZE (256*1024)
+#define DAEMONV3_RDMT_BUFSIZE (2097152)
 
 static int daemonv3_rdmt, daemonv3_rdmt_nbuf, daemonv3_rdmt_bufsize;
 
@@ -78,7 +78,7 @@ static int daemonv3_rdmt, daemonv3_rdmt_nbuf, daemonv3_rdmt_bufsize;
    size DAEMONV3_WRMT_BUFSIZE. Defaults values are defined below */
 #define DAEMONV3_WRMT (1)
 #define DAEMONV3_WRMT_NBUF (4)
-#define DAEMONV3_WRMT_BUFSIZE (256*1024)
+#define DAEMONV3_WRMT_BUFSIZE (2097152)
 
 static int daemonv3_wrmt, daemonv3_wrmt_nbuf, daemonv3_wrmt_bufsize;
 
@@ -2358,7 +2358,7 @@ static int   readerror64_v3(int            s,
   struct stat64 st;
   char        rfio_buf[BUFSIZ];
   int         eof_met;
-  int         DISKBUFSIZE_READ = (1 * 1024 * 1024);
+  int         DISKBUFSIZE_READ = 2097152;
   int         n;
   int         cid1 = -1;
   int         el;
@@ -2863,7 +2863,7 @@ int srwrite64_v3(int            s,
   int         byte_in_diskbuffer = 0;
   char        *iobuffer_p;
   struct      timeval t;
-  int         DISKBUFSIZE_WRITE = (1*1024*1024);
+  int         DISKBUFSIZE_WRITE = 2097152;
   int         el;
   int         cid2 = -1;
   int         saved_errno;

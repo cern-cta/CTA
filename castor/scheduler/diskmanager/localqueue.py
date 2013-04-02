@@ -310,7 +310,7 @@ class LocalQueue(Queue.Queue):
             user = str(qTransfer.transfer.euid)
         if not reqUser or reqUser == user:
           n = n + 1
-          nbslots = self.config.getValue('DiskManager', protocol+'Weight', None, int)
+          nbslots = self.config.getValue('DiskManager', protocol+'Weight', 1, int)
           ns = ns + nbslots
           if protocol not in nproto:
             nproto[protocol] = 0

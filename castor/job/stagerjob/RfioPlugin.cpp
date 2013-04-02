@@ -134,7 +134,7 @@ void castor::job::stagerjob::RfioPlugin::getLogLevel
 (std::string &logFile, bool &debug)
   throw() {
   // Get log file
-  logFile = "/dev/null";
+  logFile = "/var/log/castor/rfiod.log";
   char* value = getconfent("RFIOD", "LOGFILE", 0);
   if (value != NULL) {
     logFile = strdup(value);

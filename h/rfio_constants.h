@@ -83,7 +83,7 @@
 
 #define DEFRETRYCNT     38880   /* Default retry count 38880*60=1 week  */
 #define DEFRETRYINT     60      /* Default retry interval               */
-#define DEFCONNTIMEOUT  (2*60)  /* Default connect timeout limit =2mins.*/
+#define DEFCONNTIMEOUT  10      /* Default connect timeout limit        */
 
 #define _NFFILE 10              /* Maximum simultaneously open files    */
 #define MAXFILENAMSIZE 1024     /* Maximum length of a file path name   */

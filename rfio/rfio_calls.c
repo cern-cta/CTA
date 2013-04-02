@@ -77,7 +77,7 @@ static int daemonv3_rdmt, daemonv3_wrmt;
    size DAEMONV3_RDMT_BUFSIZE. Defaults values are defined below */
 #define DAEMONV3_RDMT (1)
 #define DAEMONV3_RDMT_NBUF (4)
-#define DAEMONV3_RDMT_BUFSIZE (256*1024)
+#define DAEMONV3_RDMT_BUFSIZE (2097152)
 
 static int daemonv3_rdmt_nbuf, daemonv3_rdmt_bufsize;
 
@@ -86,7 +86,7 @@ static int daemonv3_rdmt_nbuf, daemonv3_rdmt_bufsize;
    size DAEMONV3_WRMT_BUFSIZE. Defaults values are defined below */
 #define DAEMONV3_WRMT (1)
 #define DAEMONV3_WRMT_NBUF (4)
-#define DAEMONV3_WRMT_BUFSIZE (256*1024)
+#define DAEMONV3_WRMT_BUFSIZE (2097152)
 
 static int daemonv3_wrmt_nbuf, daemonv3_wrmt_bufsize;
 
@@ -4267,7 +4267,7 @@ void wait_consumer_thread(int cid)
   char rfio_buf[BUFSIZ];
   int eof_met;
   int join_done;
-  int DISKBUFSIZE_READ = (1 * 1024 * 1024);
+  int DISKBUFSIZE_READ = 2097152;
   int n;
   int cid1;
   int el;
@@ -4589,7 +4589,7 @@ int srwrite_v3(int     s,
    * Put dummy on heap to avoid large arrays in thread stack
    */
   unsigned char *dummy;
-  int DISKBUFSIZE_WRITE = (1*1024*1024);
+  int DISKBUFSIZE_WRITE = 2097152;
   int el;
   int cid2;
   int saved_errno;

@@ -492,14 +492,12 @@ int main (int     argc,
         {
           char *p;
 
-          if (((p = getenv("RFIOD_TCP_NODELAY")) != NULL) ||
-              ((p = getconfent("RFIOD", "TCP_NODELAY", 0)) != NULL)
-              ) {
-            if ((strcmp(p,"YES") == 0) || (strcmp(p,"yes") == 0)) {
-              int rcode = 1;
-              if ( setsockopt(ns,IPPROTO_TCP,TCP_NODELAY,(char *)&rcode,sizeof(rcode)) == -1 ) {
-                log(LOG_ERR, "setsockopt(..,TCP_NODELAY,...): %s\n",strerror(errno));
-              }
+          if ((((p = getenv("RFIOD_TCP_NODELAY")) == NULL) &&
+               ((p = getconfent("RFIOD", "TCP_NODELAY", 0)) == NULL)) ||
+              ((strcmp(p,"NO") != 0) || (strcmp(p,"no") != 0))) {
+            int rcode = 1;
+            if ( setsockopt(ns,IPPROTO_TCP,TCP_NODELAY,(char *)&rcode,sizeof(rcode)) == -1 ) {
+              log(LOG_ERR, "setsockopt(..,TCP_NODELAY,...): %s\n",strerror(errno));
             }
           }
         }
@@ -711,7 +709,7 @@ int doit(int      s,
   info.rnbr= (off64_t)0 ;
   info.wnbr= (off64_t)0 ;
 
-  if ( (p1 = getconfent("RFIOD","KEEPALIVE",0)) != NULL && !strcmp(p1,"YES") ) {
+  if ( (p1 = getconfent("RFIOD","KEEPALIVE",0)) == NULL || !strcmp(p1,"YES") ) {
     yes = 1;
     if (setsockopt(s, SOL_SOCKET, SO_KEEPALIVE,(char *)&yes, sizeof (yes) ) == -1) {
       log(LOG_ERR,"setsockopt(SO_KEEPALIVE) failed\n");

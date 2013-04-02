@@ -220,7 +220,7 @@ class RunningTransfersSet(object):
       for rTransfer in self.transfers:
         if not reqUser or reqUser == rTransfer.transfer.user:
           n = n + 1
-          nbslots = self.config.getValue('DiskManager', rTransfer.transfer.protocol+'Weight', None, int)
+          nbslots = self.config.getValue('DiskManager', rTransfer.transfer.protocol+'Weight', 1, int)
           ns = ns + nbslots
           if not detailed:
             continue
@@ -239,7 +239,7 @@ class RunningTransfersSet(object):
       try:
         for tTransfer in self.tapeTransfers:
           n = n + 1
-          nbslots = self.config.getValue('DiskManager', tTransfer.transfer.transferType+'Weight', None, int)
+          nbslots = self.config.getValue('DiskManager', tTransfer.transfer.transferType+'Weight', 1, int)
           ns = ns + nbslots
           if not detailed:
             continue
@@ -303,14 +303,14 @@ class RunningTransfersSet(object):
     self.lock.acquire()
     try:
       for rTransfer in self.transfers:
-        n = n + self.config.getValue('DiskManager', rTransfer.transfer.protocol+'Weight', None, int)
+        n = n + self.config.getValue('DiskManager', rTransfer.transfer.protocol+'Weight', 1, int)
     finally:
       self.lock.release()
     # and now tape transfers
     self.tapelock.acquire()
     try:
       for tTransfer in self.tapeTransfers:
-        n = n + self.config.getValue('DiskManager', tTransfer.transfer.transferType+'Weight', None, int)
+        n = n + self.config.getValue('DiskManager', tTransfer.transfer.transferType+'Weight', 1, int)
     finally:
       self.tapelock.release()
     return n
