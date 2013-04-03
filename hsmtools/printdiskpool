@@ -82,8 +82,12 @@ try:
     # loop over disk pools and print them
     if existingDiskPools:
         titles = ('NAME', 'NBFILESYSTEMS', 'SVCCLASSES', 'ID')
-        data = [(name, nbfs, ','.join(svcclasses) if svcclasses else '-', dpId)
-                for name, nbfs, svcclasses, dpId in rows]
+        data = []
+        for name, nbfs, svcclasses, dpId in rows:
+            if svcclasses:
+                data.append((name, nbfs, ','.join(svcclasses), dpId))
+            else:
+                data.append((name, nbfs, '-', dpId))
         castor_tools.prettyPrintTable(titles, data)
     # check unknown disk pools
     if diskPools and unknownDiskPools:

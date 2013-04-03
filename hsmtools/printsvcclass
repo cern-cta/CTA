@@ -82,13 +82,20 @@ try:
         titles = ('NAME', 'DEFAULTFILESIZE', 'FAILJOBSWHENNOSPACE', 'MAXREPLICANB',
                   'FORCEDFILECLASS', 'REPLICATEONCLOSE', 'DISK1BEHAVIOR', 'GCPOLICY',
                   'DISKPOOLS', 'ID', 'LASTEDITOR', 'LASTEDITION')
-        data = [(name, castor_tools.nbToDataAmount(defaultfilesize), bool(failjobswhennospace), maxReplicaNb,
-                 forcedFileClass if forcedFileClass else '-', bool(replicateonclose),
-                 bool(disk1behavior), gcPolicy, ','.join(diskPools) if diskPools else '-',
-                 scId, lastEditor, castor_tools.secsToDate(lastEdition))
-                for name, defaultfilesize, failjobswhennospace, gcPolicy, maxReplicaNb,
-                    forcedFileClass, replicateonclose, disk1behavior, scId,
-                    diskPools, lastEditor, lastEdition in rows]
+        data = []
+        for name, defaultfilesize, failjobswhennospace, gcPolicy, maxReplicaNb, \
+                forcedFileClass, replicateonclose, disk1behavior, scId, diskPools, \
+                lastEditor, lastEdition in rows:
+            if diskPools:
+                data.append((name, castor_tools.nbToDataAmount(defaultfilesize), bool(failjobswhennospace),
+                             maxReplicaNb, forcedFileClass or '-', bool(replicateonclose),
+                             bool(disk1behavior), gcPolicy, ','.join(diskPools),
+                             scId, lastEditor, castor_tools.secsToDate(lastEdition)))
+            else:
+                data.append((name, castor_tools.nbToDataAmount(defaultfilesize), bool(failjobswhennospace),
+                             maxReplicaNb, forcedFileClass or '-', bool(replicateonclose),
+                             bool(disk1behavior), gcPolicy, '-',
+                             scId, lastEditor, castor_tools.secsToDate(lastEdition)))
 
         castor_tools.prettyPrintTable(titles, data)
     # check unknown svcclasses

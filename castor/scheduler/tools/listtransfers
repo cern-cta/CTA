@@ -152,12 +152,17 @@ def processTransfersListing(useOnlyCentralLists):
   # Display valid lines
   titles = ('TRANSFERID', 'FILEID', 'USER', 'STAT', 'TYPE', 'POOL',
             'SCHEDULER', 'DISKSERVER', 'SUBMIT_TIME', 'START_TIME')
-  data = [(transId, fileId[1], user, status, transferType, diskpool,
-           scheduler, execHost, time.strftime('%b %d %H:%M:%S', time.localtime(submitTime)),
-           time.strftime('%b %d %H:%M:%S', time.localtime(startTime)) if startTime else '')
-           for transId, fileId, scheduler, user, status, diskpool,
-           execHost, transferType, submitTime, startTime in transfers if transfer[0]]
-  
+  data = []
+  for transId, fileId, scheduler, user, status, diskpool, \
+        execHost, transferType, submitTime, startTime in transfers:
+      if transfer[0]:
+          if startTime:
+              data.append((transId, fileId[1], user, status, transferType, diskpool,
+                           scheduler, execHost, time.strftime('%b %d %H:%M:%S', time.localtime(submitTime)),
+                           time.strftime('%b %d %H:%M:%S', time.localtime(startTime))))
+          else:
+              data.append((transId, fileId[1], user, status, transferType, diskpool,
+                           scheduler, execHost, time.strftime('%b %d %H:%M:%S', time.localtime(submitTime)), ''))
   castor_tools.prettyPrintTable(titles, data)
   # check for nodes with Too Many transfers
   nodesWithManyTransfers = [scheduler for scheduler, group in groupby([line[6] for line in data]) if len(list(group)) > 100]
