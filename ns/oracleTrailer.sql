@@ -283,7 +283,7 @@ BEGIN
   -- fully idempotent and allows to compensate from possible errors in the tapegateway
   -- after a segment had been committed in the namespace.
   rc := checkAndDropSameCopynbSeg(inReqId, varFid, inSegEntry.vid, inSegEntry.copyNo);
-  IF rc != 0 THEN
+  IF rc = serrno.EEXIST THEN
     msg := 'File already has a copy on VID '|| inSegEntry.vid;
     ROLLBACK;
     RETURN;
@@ -370,6 +370,7 @@ CREATE OR REPLACE PROCEDURE replaceSegmentForFile(inOldCopyNo IN INTEGER, inSegE
   varBlockId VARCHAR2(8);
   varOwSeg castorns.Segment_Rec;
   varRepSeg castorns.Segment_Rec;
+  varStatus CHAR(1);
   varParams VARCHAR2(2048);
   -- Trap `ORA-00001: unique constraint violated` errors
   CONSTRAINT_VIOLATED EXCEPTION;
@@ -416,16 +417,25 @@ BEGIN
     RETURN;
   END IF;
   -- Repack specific: --
-  -- Make sure a segment exists for the given copyNo. There can only be one segment
-  -- as we don't support multi-segmented files any longer.
-  DECLARE
-    varStatus CHAR(1);
+  -- Make sure the segment for the given oldCopyNo still exists
   BEGIN
     SELECT s_status INTO varStatus
       FROM Cns_seg_metadata
-     WHERE s_fileid = varFid AND copyNo = inSegEntry.copyNo;
-    -- Check status of segment to be replaced in case it has a different copyNo
-    IF inSegEntry.copyNo != inOldCopyNo THEN
+     WHERE s_fileid = varFid AND copyNo = inOldCopyNo;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- Previous segment not found, give up
+    rc := serrno.ENSNOSEG;
+    msg := serrno.ENSNOSEG_MSG;
+    ROLLBACK;
+    RETURN;
+  END;
+  -- Check if a segment exists with the target copyNo, in case this is different from the
+  -- old copyNo: such a segment is about to be overwritten
+  IF inSegEntry.copyNo != inOldCopyNo THEN
+    BEGIN
+      SELECT s_status INTO varStatus
+        FROM Cns_seg_metadata
+       WHERE s_fileid = varFid AND copyNo = inSegEntry.copyNo;
       IF varStatus = '-' THEN
         -- We are asked to overwrite a valid segment and replace another one.
         -- This is forbidden.
@@ -434,7 +444,7 @@ BEGIN
         ROLLBACK;
         RETURN;
       END IF;
-      -- OK, the segment being overwritten is invalid
+      -- OK, the segment being overwritten is invalid, we can drop it
       DELETE FROM Cns_seg_metadata
        WHERE s_fileid = varFid AND copyNo = inSegEntry.copyNo
       RETURNING copyNo, segSize, compression, vid, fseq, blockId, checksum_name, checksum
@@ -447,25 +457,31 @@ BEGIN
         ||' fseq='|| varOwSeg.fseq ||' BlockId="' || varBlockId
         ||'" ChecksumType="'|| varOwSeg.checksum_name ||'" ChecksumValue=' || varOwSeg.checksum;
       addSegResult(1, inReqId, 0, 'Unlinking segment (overwritten)', varFid, varParams);
-    END IF;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- Previous segment not found, give up
-    rc := serrno.ENSNOSEG;
-    msg := serrno.ENSNOSEG_MSG;
-    ROLLBACK;
-    RETURN;
-  END;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- Nothing found with the target copyNo: this means the existing segment we're repacking
+      -- actually had an incorrect copyNo (e.g. it was 2 but no copyNo=1 existed). In such a case
+      -- we want to fix the existing segment so that it gets properly replaced.
+      -- Note that we won't throw CONSTRAINT_VIOLATED because we know inSegEntry.copyNo
+      -- does not exist, and we won't throw NO_DATA_FOUND because inOldCopyNo does exist.
+      UPDATE Cns_seg_metadata
+         SET copyNo = inSegEntry.copyNo
+       WHERE s_fileid = varFid
+         AND copyNo = inOldCopyNo;
+      addSegResult(1, inReqId, 0, 'Updating copy number', varFid, 'oldCopyNb='|| inOldCopyNo
+                   ||' newCopyNb='|| inSegEntry.copyNo);
+    END;
+  END IF;
   -- Prevent to write a second copy of this file on a tape that already holds a valid copy,
   -- whilst allowing the overwrite of a same copyNo segment: this makes the NS operation
   -- fully idempotent and allows to compensate from possible errors in the tapegateway
   -- after a segment had been committed in the namespace.
   rc := checkAndDropSameCopynbSeg(inReqId, varFid, inSegEntry.vid, inSegEntry.copyNo);
-  IF rc != 0 THEN
+  IF rc = serrno.EEXIST THEN
     msg := 'File already has a copy on VID '|| inSegEntry.vid;
     ROLLBACK;
     RETURN;
   END IF;
-  
+
   -- We're done with the pre-checks, try and insert the segment metadata
   -- and deal with the possible unique (vid,fseq) constraint violation exception
   BEGIN
@@ -573,8 +589,8 @@ BEGIN
   -- Return results and logs to the stager. Unfortunately we can't OPEN CURSOR FOR ...
   -- because we would get ORA-24338: 'statement handle not executed' at run time.
   -- Moreover, temporary tables are not supported with distributed transactions,
-  -- so the stager will remotely open the ResultsLogHelper table, and we clean
-  -- the tables by hand using the reqId key.
+  -- so the stager will remotely open the SetSegsForFilesResultsHelper table, and
+  -- we clean the tables by hand using the reqId key.
 END;
 /
 
