@@ -874,7 +874,7 @@ XrdxCastor2OfsFile::open( const char*         path,
       xcastor_err("error: open => couldn't run the Open towards StagerJob: "
                   "reqid=%s, stagerjobport=%i, stagerjobuuid=%s",
                   reqid.c_str(), stagerjobport, SjobUuid.c_str() );
-      return XrdxCastor2OfsFS.Emsg( "open", error, EIO, "signal open to the corresponding LSF stagerjob", "" );
+      return XrdxCastor2OfsFS.Emsg( "open", error, EIO, "signal open to the corresponding stagerjob", "" );
     }
 
     if ( IsThirdPartyStream ) {
@@ -1229,7 +1229,7 @@ XrdxCastor2OfsFile::write( XrdSfsFileOffset fileOffset,
         close();
       }
 
-      XrdxCastor2OfsFS.Emsg( "write", error, ECANCELED, "write - the LSF write slot has been canceled ", "" );
+      XrdxCastor2OfsFS.Emsg( "write", error, ECANCELED, "write - the stagerjob write slot has been canceled ", "" );
       return SFS_ERROR;
     } else {
       xcastor_debug("my StagerJob is alive");
@@ -1305,7 +1305,7 @@ XrdxCastor2OfsFile::write( XrdSfsAio* aioparm )
         close();
       }
 
-      XrdxCastor2OfsFS.Emsg( "write", error, ECANCELED, "write - the LSF write slot has been canceled ", "" );
+      XrdxCastor2OfsFS.Emsg( "write", error, ECANCELED, "write - the stagerjob write slot has been canceled ", "" );
       return SFS_ERROR;
     } else {
       xcastor_err("my StagerJob is alive");
