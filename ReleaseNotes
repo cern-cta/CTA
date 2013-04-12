@@ -1,3 +1,47 @@
+
+  Note
+  ----
+
+  - the castor.conf.example file has been cleaned up in this release so that all its lines
+    can be left commented in a default setup. This means that in most cases, the castor.conf
+    file can be written from scratch and should contain only a handful of lines (mostly
+    given host names where the different components are running).
+    During the cleanup, some defaults have been revisited. All changes are listed below
+    with their new value
+
+    Here are first the changes that may have an impact on your setup and that you want to
+    review and understand :
+      + CLIENT   HIGHPORT    30100
+        This used to be 40000 in the castor.conf and needs to stay so on disk servers and very
+        active clients, so make sure you overwrite it.
+      + TransferManager   MaxNbTransfersScheduledPerSecond     -1
+        This used to be 25, limiting the rate of scheduled transfer. The new default is to not
+        limit rates, which could hit your stager DB. So make sure you're overwriting this if
+        you fear for your DB
+      + DiskManager     NbSlots       0
+        This used to be 60. However, you were very probably already changing it
+      + DiskManager     [xroot,root,rfio,rfio3,gsiftp,d2dsrc,d2ddest,recall,migr]Weight   1
+        Previous values had more variation (1 to 10, 3 for rfio). This may imply that you review
+        your number of slots.
+      + ACCT    RTCOPY          NO
+        ACCT    TAPE            NO
+        Previous values were YES in both cases. This disables tape accounting.
+        If you are using it, you will need to reenable it.
+      + TAPE    DOWN_ON_TPALERT         NO
+        Used to be YES
+      + TAPE    BADMIR_HANDLING         REPAIR
+        Used to be CANCEL
+
+    This is the list of other changes that should not have a big impact. You may still want to
+    review them quickly :
+      + DiskManager          FSMaxFreeSpace           .10   # .15
+      + RFIO                 CONRETRY                 3     # 10
+      + RFIO                 CONRETRYINT              10    # 1
+      + TAPE    CRASHED_RLS_HANDLING_RETRY_DELAY      300   # 60
+      + TAPE    ACS_MOUNT_LIBRARY_FAILURE_HANDLING    retry 3 300  # retry 1 300
+      + TAPE    ACS_UNMOUNT_LIBRARY_FAILURE_HANDLING  retry 3 300  # retry 1 300
+ 
+
 ------------
 - 2.1.14-1 -
 ------------
