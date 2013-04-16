@@ -258,12 +258,30 @@ namespace castor      {
           throw (castor::exception::Exception)=0;
 
         /**
+         * Structure extending the FileToRecallStruct to allow detailed logging.
+         */
+        class FileToRecallStructWithContext: public castor::tape::tapegateway::FileToRecallStruct {
+        public:
+          /* We need to define the constructors for exceptions throwing specs. (Inheritance would bread otherwise) */
+          FileToRecallStructWithContext() throw() {};
+          virtual ~FileToRecallStructWithContext() throw () {};
+          u_signed64 copyNb;
+          u_signed64 eUid;
+          u_signed64 eGid;
+          std::string VID;
+          u_signed64 fileSize;
+          u_signed64 creationTime;
+          u_signed64 nbRetriesInMount;
+          u_signed64 nbMounts;
+        };
+
+        /**
          * Get the next best files to recall
          */
         virtual void getBulkFilesToRecall (
             const std::string & context,
             u_signed64 mountTransactionId, u_signed64 maxFiles, u_signed64 maxBytes,
-            std::queue<castor::tape::tapegateway::FileToRecallStruct>& filesToRecall)
+            std::queue<FileToRecallStructWithContext>& filesToRecall)
           throw (castor::exception::Exception)=0;
 
         /**

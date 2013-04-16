@@ -1089,7 +1089,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFilesToRecallLi
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, WORKER_RECALL_REQUESTED, params_outloop);
 
   // Prepare the file list container
-  std::queue <FileToRecallStruct> files_list;
+  std::queue <castor::tape::tapegateway::ITapeGatewaySvc::FileToRecallStructWithContext> files_list;
   bool dbFailure = false;
   double dbServingTime;
   castor::tape::utils::Timer timer;
@@ -1137,7 +1137,8 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFilesToRecallLi
   files_response->setMountTransactionId(ftrlr.mountTransactionId());
   while (!files_list.empty()) {
     std::auto_ptr<FileToRecallStruct> ftr (new FileToRecallStruct);
-    *ftr = files_list.front();
+    castor::tape::tapegateway::ITapeGatewaySvc::FileToRecallStructWithContext & ftrwc = files_list.front();
+    *ftr = ftrwc;
     filesCount++;
     // Log the per-file information
     std::stringstream blockid;
@@ -1155,7 +1156,15 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFilesToRecallLi
         castor::dlf::Param("fseq",ftr->fseq()),
         castor::dlf::Param("path",ftr->path()),
         castor::dlf::Param("blockId",blockid.str()),
-        castor::dlf::Param("fileTransactionId", ftr->fileTransactionId())
+        castor::dlf::Param("fileTransactionId", ftr->fileTransactionId()),
+        castor::dlf::Param("copyNb", ftrwc.copyNb),
+        castor::dlf::Param("eUid", ftrwc.eUid),
+        castor::dlf::Param("eGid", ftrwc.eGid),
+        castor::dlf::Param("TPVID", ftrwc.VID),
+        castor::dlf::Param("fileSize", ftrwc.fileSize),
+        castor::dlf::Param("creationTime", ftrwc.creationTime),
+        castor::dlf::Param("nbRetriesWithinMount", ftrwc.nbRetriesInMount),
+        castor::dlf::Param("nbMounts", ftrwc.nbMounts)
     };
     struct Cns_fileid fileId;
     memset(&fileId,'\0',sizeof(fileId));

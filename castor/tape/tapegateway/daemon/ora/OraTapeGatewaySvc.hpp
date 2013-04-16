@@ -211,7 +211,7 @@ namespace castor      {
            */
           virtual void getBulkFilesToRecall (const std::string & context,
               u_signed64 mountTransactionId, u_signed64 maxFiles, u_signed64 maxBytes,
-              std::queue<castor::tape::tapegateway::FileToRecallStruct>& filesToRecall)
+              std::queue<castor::tape::tapegateway::ITapeGatewaySvc::FileToRecallStructWithContext>& filesToRecall)
           throw (castor::exception::Exception);
 
           /**

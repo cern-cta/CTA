@@ -14,14 +14,6 @@ CREATE OR REPLACE PACKAGE castorTape AS
   TYPE TapeGatewayRequest_Cur IS REF CURSOR RETURN TapeGatewayRequest;
   TYPE VIDPriorityRec IS RECORD (vid VARCHAR2(2048), vdqmPriority INTEGER);
   TYPE VIDPriority_Cur IS REF CURSOR RETURN VIDPriorityRec;
-  TYPE FileToRecallCore IS RECORD (
-   fileId NUMBER,
-   nsHost VARCHAR2(2048),
-   fileTransactionId NUMBER,
-   filePath VARCHAR2(2048),
-   blockId RAW(4),
-   fseq INTEGER);
-  TYPE FileToRecallCore_Cur IS REF CURSOR RETURN  FileToRecallCore;  
   TYPE FileToMigrateCore IS RECORD (
    fileId NUMBER,
    nsHost VARCHAR2(2048),
@@ -1592,11 +1584,12 @@ END;
  * input:  VDQM transaction id, count and total size
  * output: outFiles, a cursor for the set of recall candidates.
  */
-CREATE OR REPLACE PROCEDURE tg_getBulkFilesToRecall(inLogContext IN VARCHAR2,
+create or replace 
+PROCEDURE tg_getBulkFilesToRecall(inLogContext IN VARCHAR2,
                                                     inMountTrId IN NUMBER,
                                                     inCount IN INTEGER,
                                                     inTotalSize IN INTEGER,
-                                                    outFiles OUT castorTape.FileToRecallCore_cur) AS
+                                                    outFiles OUT SYS_REFCURSOR) AS
   varVid VARCHAR2(10);
   varPreviousFseq INTEGER;
   varCount INTEGER;
@@ -1616,7 +1609,8 @@ BEGIN
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- recall is over or unknown request: return an empty cursor
     OPEN outFiles FOR
-      SELECT fileId, nsHost, fileTransactionId, filePath, blockId, fseq
+      SELECT fileId, nsHost, fileTransactionId, filePath, blockId, fseq, copyNb,
+             euid, egid, VID, fileSize, creationTime, nbRetriesInMount, nbMounts
         FROM FilesToRecallHelper;
     RETURN;
   END;
@@ -1634,13 +1628,22 @@ BEGIN
       varCfId INTEGER;
       varFileId INTEGER;
       varNsHost VARCHAR2(2048);
+      varCopyNb NUMBER;
+      varEuid NUMBER;
+      varEgid NUMBER;
+      varCreationTime NUMBER;
+      varNbRetriesInMount NUMBER;
+      varNbMounts NUMBER;
       CfLocked EXCEPTION;
       PRAGMA EXCEPTION_INIT (CfLocked, -54);
     BEGIN
       -- Find the unprocessed recallJobs of this tape with lowest fSeq
       -- that is above the previous one
-      SELECT * INTO varRjId, varFSeq, varBlockId, varFileSize, varCfId
-        FROM (SELECT id, fSeq, blockId, fileSize, castorFile
+      SELECT * INTO varRjId, varFSeq, varBlockId, varFileSize, varCfId, varCopyNb,
+                    varEuid, varEgid, varCreationTime, varNbRetriesInMount,
+                    varNbMounts
+        FROM (SELECT id, fSeq, blockId, fileSize, castorFile, copyNb, eUid, eGid,
+                     creationTime, nbRetriesWithinMount,  nbMounts
                 FROM RecallJob
                WHERE vid = varVid
                  AND status = tconst.RECALLJOB_PENDING
@@ -1672,8 +1675,11 @@ BEGIN
       bestFileSystemForRecall(varCfId, varPath);
       varCount := varCount + 1;
       varTotalSize := varTotalSize + varFileSize;
-      INSERT INTO FilesToRecallHelper (fileId, nsHost, fileTransactionId, filePath, blockId, fSeq)
-        VALUES (varFileId, varNsHost, ids_seq.nextval, varPath, varBlockId, varFSeq)
+      INSERT INTO FilesToRecallHelper (fileId, nsHost, fileTransactionId, filePath, blockId, fSeq,
+                 copyNb, euid, egid, VID, fileSize, creationTime, nbRetriesInMount, nbMounts)
+        VALUES (varFileId, varNsHost, ids_seq.nextval, varPath, varBlockId, varFSeq,
+                varCopyNb, varEuid, varEgid, varVID, varFileSize, varCreationTime, varNbRetriesInMount,
+                varNbMounts)
         RETURNING fileTransactionId INTO varFileTrId;
       -- update RecallJobs of this file. Only the recalled one gets a fileTransactionId
       UPDATE RecallJob
@@ -1711,7 +1717,9 @@ BEGIN
   -- Return all candidates. Don't commit now, this will be done in C++
   -- after the results have been collected as the temporary table will be emptied.
   OPEN outFiles FOR
-    SELECT fileId, nsHost, fileTransactionId, filePath, blockId, fseq
+    SELECT fileId, nsHost, fileTransactionId, filePath, blockId, fseq,
+           copyNb, euid, egid, VID, fileSize, creationTime,
+           nbRetriesInMount, nbMounts
       FROM FilesToRecallHelper;
 END;
 /

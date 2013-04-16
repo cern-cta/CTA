@@ -1095,7 +1095,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getBulkFilesToMigrate (
 void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getBulkFilesToRecall (
     const std::string & context,
     u_signed64 mountTransactionId, u_signed64 maxFiles, u_signed64 maxBytes,
-    std::queue<castor::tape::tapegateway::FileToRecallStruct>& filesToRecall)
+    std::queue<castor::tape::tapegateway::ITapeGatewaySvc::FileToRecallStructWithContext>& filesToRecall)
   throw (castor::exception::Exception){
   // container for result should be clean!
   if (!filesToRecall.empty()) {
@@ -1122,31 +1122,51 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getBulkFilesToRecall (
     castor::db::ora::SmartOcciResultSet rs (m_getBulkFilesToRecall, m_getBulkFilesToRecall->getCursor(5));
     // Find columns for the cursor
     resultSetIntrospector resIntros (rs.get());
-    int fileTransIdIdx   = resIntros.findColumnIndex(   "FILETRANSACTIONID", oracle::occi::OCCI_SQLT_NUM);
-    int nsFileIdIdx      = resIntros.findColumnIndex(              "FILEID", oracle::occi::OCCI_SQLT_NUM);
-    int nsHostIdx        = resIntros.findColumnIndex(              "NSHOST", oracle::occi::OCCI_SQLT_CHR);
-    int fSeqIdx          = resIntros.findColumnIndex(                "FSEQ", oracle::occi::OCCI_SQLT_NUM);
-    int blockIdIdx       = resIntros.findColumnIndex(             "BLOCKID", oracle::occi::OCCI_SQLT_BIN);
-    int pathIdx          = resIntros.findColumnIndex(            "FILEPATH", oracle::occi::OCCI_SQLT_CHR);
+    int fileTransIdIdx   = resIntros.findColumnIndex("FILETRANSACTIONID", oracle::occi::OCCI_SQLT_NUM);
+    int nsFileIdIdx      = resIntros.findColumnIndex(           "FILEID", oracle::occi::OCCI_SQLT_NUM);
+    int nsHostIdx        = resIntros.findColumnIndex(           "NSHOST", oracle::occi::OCCI_SQLT_CHR);
+    int fSeqIdx          = resIntros.findColumnIndex(             "FSEQ", oracle::occi::OCCI_SQLT_NUM);
+    int blockIdIdx       = resIntros.findColumnIndex(          "BLOCKID", oracle::occi::OCCI_SQLT_BIN);
+    int pathIdx          = resIntros.findColumnIndex(         "FILEPATH", oracle::occi::OCCI_SQLT_CHR);
+    // Context part just for logging
+    int copyNbIdx        = resIntros.findColumnIndex(           "COPYNB", oracle::occi::OCCI_SQLT_NUM);
+    int eUidIdx          = resIntros.findColumnIndex(             "EUID", oracle::occi::OCCI_SQLT_NUM);
+    int eGidIdx          = resIntros.findColumnIndex(             "EGID", oracle::occi::OCCI_SQLT_NUM);
+    int vidIdx           = resIntros.findColumnIndex(              "VID", oracle::occi::OCCI_SQLT_CHR);
+    int fileSizeIdx      = resIntros.findColumnIndex(         "FILESIZE", oracle::occi::OCCI_SQLT_NUM);
+    int creationTimeIdx  = resIntros.findColumnIndex(     "CREATIONTIME", oracle::occi::OCCI_SQLT_NUM);
+    int nbRetInMountIdx  = resIntros.findColumnIndex( "NBRETRIESINMOUNT", oracle::occi::OCCI_SQLT_NUM);
+    int nbMountsIdx      = resIntros.findColumnIndex(         "NBMOUNTS", oracle::occi::OCCI_SQLT_NUM);
+
     // Run through the cursor
     while (rs->next() == oracle::occi::ResultSet::DATA_AVAILABLE) {
-      castor::tape::tapegateway::FileToRecallStruct ftr;
-      ftr.setFileTransactionId   (occiNumber(rs->getNumber(  fileTransIdIdx)));
-      ftr.setFileid              (occiNumber(rs->getNumber(     nsFileIdIdx)));
-      ftr.setNshost              (           rs->getString(       nsHostIdx));
-      ftr.setFseq                (occiNumber(rs->getNumber(         fSeqIdx)));
-      ftr.setPath                (           rs->getString(         pathIdx));
-      ftr.setUmask               (022);
-      ftr.setPositionCommandCode (TPPOSIT_FSEQ);
+      castor::tape::tapegateway::ITapeGatewaySvc::FileToRecallStructWithContext ftrwc;
+      // Fill up the FileToRecallStruct. This will be forwarded to the tape server
+      ftrwc.setFileTransactionId   (occiNumber(rs->getNumber(  fileTransIdIdx)));
+      ftrwc.setFileid              (occiNumber(rs->getNumber(     nsFileIdIdx)));
+      ftrwc.setNshost              (           rs->getString(       nsHostIdx));
+      ftrwc.setFseq                (occiNumber(rs->getNumber(         fSeqIdx)));
+      ftrwc.setPath                (           rs->getString(         pathIdx));
+      ftrwc.setUmask               (022);
+      ftrwc.setPositionCommandCode (TPPOSIT_FSEQ);
+      // Fill the context part of the FileToRecallStructWithContext
+      ftrwc.copyNb           = occiNumber(rs->getNumber(      copyNbIdx));
+      ftrwc.eUid             = occiNumber(rs->getNumber(        eUidIdx));
+      ftrwc.eGid             = occiNumber(rs->getNumber(        eGidIdx));
+      ftrwc.VID              =            rs->getString(         vidIdx);
+      ftrwc.fileSize         = occiNumber(rs->getNumber(    fileSizeIdx));
+      ftrwc.creationTime     = occiNumber(rs->getNumber(creationTimeIdx));
+      ftrwc.nbRetriesInMount = occiNumber(rs->getNumber(nbRetInMountIdx));
+      ftrwc.nbMounts         = occiNumber(rs->getNumber(    nbMountsIdx));
       // Extract the block ID. The query passes us the raw bytes, which we just
       // chop into the 4-bytes representation.
       oracle::occi::Bytes blockId(            rs->getBytes(      blockIdIdx));
-      ftr.setBlockId0(blockId.byteAt(0));
-      ftr.setBlockId1(blockId.byteAt(1));
-      ftr.setBlockId2(blockId.byteAt(2));
-      ftr.setBlockId3(blockId.byteAt(3));
+      ftrwc.setBlockId0(blockId.byteAt(0));
+      ftrwc.setBlockId1(blockId.byteAt(1));
+      ftrwc.setBlockId2(blockId.byteAt(2));
+      ftrwc.setBlockId3(blockId.byteAt(3));
       // And done
-      filesToRecall.push(ftr);
+      filesToRecall.push(ftrwc);
     }
     // Close result set and transaction.
     rs.close();

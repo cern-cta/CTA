@@ -721,7 +721,9 @@ ALTER TABLE MigrationRouting ADD CONSTRAINT FK_MigrationRouting_TapePool
 /* Temporary table used to bulk select next candidates for recall and migration */
 CREATE GLOBAL TEMPORARY TABLE FilesToRecallHelper
  (fileId NUMBER, nsHost VARCHAR2(100), fileTransactionId NUMBER,
-  filePath VARCHAR2(2048), blockId RAW(4), fSeq INTEGER)
+  filePath VARCHAR2(2048), blockId RAW(4), fSeq INTEGER, copyNb INTEGER,
+  euid NUMBER, egid NUMBER, VID VARCHAR2(10), fileSize INTEGER, creationTime INTEGER,
+  nbRetriesInMount INTEGER, nbMounts INTEGER)
  ON COMMIT DELETE ROWS;
 
 CREATE GLOBAL TEMPORARY TABLE FilesToMigrateHelper
