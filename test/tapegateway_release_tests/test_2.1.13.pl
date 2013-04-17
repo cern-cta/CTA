@@ -494,8 +494,8 @@ sub main ( $ )
     print "t=".CastorTapeTests::elapsed_time."s. ";
     print "Test done.\n";
     
-    print "Cleaning up test directories $castor_directory\{$single_subdir,$dual_subdir\}\n";
-    print `su $username -c "for p in $castor_directory\{$single_subdir,$dual_subdir\}; do nsrm -r -f \\\$p; done"`;
+    #print "Cleaning up test directories $castor_directory\{$single_subdir,$dual_subdir\}\n";
+    #print `su $username -c "for p in $castor_directory\{$single_subdir,$dual_subdir\}; do nsrm -r -f \\\$p; done"`;
     exit 0;
 }
 

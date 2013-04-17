@@ -109,14 +109,14 @@ sub main ()
     
     # On first run, clean house
     print "Cleaning up test directories $castor_directory\{$single_subdir,$dual_subdir\}\n";
-    print `su $username -c "for p in $castor_directory\{$single_subdir,$dual_subdir\}; do nsrm -r -f \\\$p; done"`;
+    print `su $username -c "CSEC_DISABLE=yes for p in $castor_directory\{$single_subdir,$dual_subdir\}; do nsrm -r -f \\\$p; done"`;
 
     # Re-create the directories:
-    print `su $username -c "nsmkdir $castor_directory$single_subdir"`;
-    print `su $username -c "nschclass largeuser $castor_directory$single_subdir"`;
+    print `su $username -c "CSEC_DISABLE=yes nsmkdir $castor_directory$single_subdir"`;
+    print `su $username -c "CSEC_DISABLE=yes nschclass largeuser $castor_directory$single_subdir"`;
     CastorTapeTests::register_remote ( $castor_directory.$single_subdir, "directory" );
-    print `su $username -c "nsmkdir $castor_directory$dual_subdir"`;
-    print `su $username -c "nschclass test2 $castor_directory$dual_subdir"`;
+    print `su $username -c "CSEC_DISABLE=yes nsmkdir $castor_directory$dual_subdir"`;
+    print `su $username -c "CSEC_DISABLE=yes nschclass test2 $castor_directory$dual_subdir"`;
     CastorTapeTests::register_remote ( $castor_directory.$dual_subdir, "directory" );
 
     # Let the dust settle
@@ -149,7 +149,7 @@ sub main ()
         print CastorTapeTests::wait_testsuite ( $testsuite_pid, $testsuite_rd );
     }
     print "Cleaning up test directories $castor_directory\{$single_subdir,$dual_subdir\}\n";
-    print `su $username -c "for p in $castor_directory\{$single_subdir,$dual_subdir\}; do nsrm -r -f \\\$p; done"`;
+    print `su $username -c "CSEC_DISABLE=yes for p in $castor_directory\{$single_subdir,$dual_subdir\}; do nsrm -r -f \\\$p; done"`;
     exit 0;
 }
 

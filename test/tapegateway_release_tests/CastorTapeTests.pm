@@ -83,6 +83,7 @@ our @export   = qw(
                    configure_headnode_2111
                    configure_headnode_2112
                    configure_headnode_2113
+                   configure_headnode_2114
                    ); # Symbols to autoexport (:DEFAULT tag)
 
 # keep track of the locally created files and of the recalled and locally rfcped files.
@@ -269,7 +270,7 @@ sub poll_fileserver_readyness ( $$ )
     my ( $interval, $timeout ) = ( shift, shift );
     my $start_time = time();
     while ( ($start_time + $timeout) >= time()) {
-        my $query=`su $environment{username} -c \"stager_qry -s\"`;
+        my $query=`su $environment{username} -c \"CSEC_DISABLE=yes stager_qry -s\"`;
         if ( $query =~ /FILESYSTEM_PRODUCTION/ ) {
 	    print "Fileservers ready after ".(time() - $start_time)."s.\n";
             return;
@@ -391,7 +392,7 @@ sub check_migrated_in_ns ( $ )
 sub check_invalid ( $ )
 {
     my $file_name = shift;
-    my $stager_qry=`su $environment{username} -c \"stager_qry -M $file_name\"`;
+    my $stager_qry=`su $environment{username} -c \"CSEC_DISABLE=yes stager_qry -M $file_name\"`;
     return ( $stager_qry=~ /INVALID|No such file or directory/ || $stager_qry=~ /^$/);
 }
 
@@ -399,7 +400,7 @@ sub check_invalid ( $ )
 sub check_recalled_or_fully_migrated ( $ )
 {
     my $file_name = shift;
-    my $stager_qry=`su $environment{username} -c \"stager_qry -M $file_name\"`;
+    my $stager_qry=`su $environment{username} -c \"CSEC_DISABLE=yes stager_qry -M $file_name\"`;
     return $stager_qry=~ /STAGED/;
 }
 
@@ -423,7 +424,7 @@ sub remove_castorfile( $$ )
 sub remove_second_segment ( $$ )
 {
     my ($dbh, $name) = (shift, shift);
-    `su $environment{username} -c \"nsdelsegment --copyno=2 $name\"`;
+    `su $environment{username} -c \"CSEC_DISABLE=yes nsdelsegment --copyno=2 $name\"`;
     print "t=".elapsed_time()."s. Removed from ns second segment for file: $name\n";
 }
 
@@ -577,7 +578,7 @@ sub remove_segment( $$ )
 sub remove_ns_entry( $$ )
 {
     my ($dbh, $name) = (shift, shift);
-    `su $environment{username} -c \"nsrm $name\"`;
+    `su $environment{username} -c \"CSEC_DISABLE=yes nsrm $name\"`;
     print "t=".elapsed_time()."s. Removed ns entry for file: $name\n";
 }
 
@@ -585,21 +586,21 @@ sub remove_ns_entry( $$ )
 sub corrupt_checksum( $$ )
 {
     my ($dbh, $name) = (shift, shift);
-    `su $environment{username} -c \"nssetchecksum -n AD -k deadbeef $name\"`;
+    `su $environment{username} -c \"CSEC_DISABLE=yes nssetchecksum -n AD -k deadbeef $name\"`;
     print "t=".elapsed_time()."s. Corrupted checksum in ns for file: $name\n";
 }
 
 sub corrupt_size( $$ )
 {
     my ($dbh, $name) = (shift, shift);
-    `su $environment{username} -c \"nssetfsize -x 1337 $name\"`;
+    `su $environment{username} -c \"CSEC_DISABLE=yes nssetfsize -x 1337 $name\"`;
     print "t=".elapsed_time()."s. Corrupted size in ns for file: $name\n";
 }
 
 sub corrupt_segment( $$ )
 {
     my ($dbh, $name) = (shift, shift);
-    `su $environment{username} -c \"nssetsegment -s 1 -c 1 -d $name\"`;
+    `su $environment{username} -c \"CSEC_DISABLE=yes nssetsegment -s 1 -c 1 -d $name\"`;
     print "t=".elapsed_time()."s. Corrupted segment in ns for file: $name\n";
 }
 
@@ -708,7 +709,7 @@ sub rfcp_localfile ( $$ )
     } else {
         die "Wrong file path in rfcp_localfile";
     }
-    my $rfcp_ret=`su $environment{username} -c \"STAGE_SVCCLASS=$environment{svcclass} rfcp $local $remote\" 2>&1`;
+    my $rfcp_ret=`su $environment{username} -c \"CSEC_DISABLE=yes STAGE_SVCCLASS=$environment{svcclass} rfcp $local $remote\" 2>&1`;
     my %remote_entry = ( 'name' => $remote, 
                          'type' => "file",
                          'size' => $local_files[$local_index]->{size},
@@ -742,7 +743,7 @@ sub rfcp_localfile_break ( $$$$ )
     } else {
         die "Wrong file path in rfcp_localfile";
     }
-    my $rfcp_ret=`su $environment{username} -c \"STAGE_SVCCLASS=$environment{svcclass} rfcp $local $remote\" 2>&1`;
+    my $rfcp_ret=`su $environment{username} -c \"CSEC_DISABLE=yes STAGE_SVCCLASS=$environment{svcclass} rfcp $local $remote\" 2>&1`;
     my %remote_entry = ( 'name' => $remote, 
                          'type' => "file",
                          'size' => $local_files[$local_index]->{size},
@@ -773,7 +774,7 @@ sub cleanup_migrated ( $ )
     for ( my $i =0; $i < scalar (@remote_files); $i++ ) {
 	my %f = %{$remote_files[$i]};
 	if ( $f{type} eq "file" && $f{status} eq "migrated" ) {
-	    `su $environment{username} -c \"STAGE_SVCCLASS=$environment{svcclass} stager_rm -M $f{name}\"`;
+	    `su $environment{username} -c \"CSEC_DISABLE=yes STAGE_SVCCLASS=$environment{svcclass} stager_rm -M $f{name}\"`;
 	    $remote_files[$i]->{status} = "invalidation requested";
 	    print "t=".elapsed_time()."s. Removed $f{name} (was migrated) from stager.\n";
             
@@ -789,7 +790,7 @@ sub stager_reget_from_tape ( $ )
     for ( my $i =0; $i < scalar (@remote_files); $i++ ) {
 	my %f = %{$remote_files[$i]};
 	if ( $f{type} eq "file" && $f{status} eq "on tape" ) {
-	    `su $environment{username} -c \"STAGE_SVCCLASS=$environment{svcclass} stager_get -M $f{name}\"`;
+	    `su $environment{username} -c \"CSEC_DISABLE=yes STAGE_SVCCLASS=$environment{svcclass} stager_get -M $f{name}\"`;
 	    $remote_files[$i]->{status} = "being recalled";
 	    print "t=".elapsed_time()."s. Initiated recall for $f{name}.\n";
             
@@ -825,7 +826,7 @@ sub check_remote_entries ( $ )
 		    print "t=".elapsed_time()."s. File ".$entry{name}." now partially migrated to tape (has 'm' bit).\n";
                     $remote_files[$i]->{status} = "partially migrated";
 		    # Validate the checksum.
-		    my $remote_checksum_string = `su $environment{username} -c \"nsls --checksum $entry{name}\"`;
+		    my $remote_checksum_string = `CSEC_DISABLE=yes su $environment{username} -c \"nsls --checksum $entry{name}\"`;
 		    chomp $remote_checksum_string;
 		    my ( $remote_checksum, $local_checksum );
 		    if ( $remote_checksum_string =~ /AD\s+([[:xdigit:]]+)\s/ ) {
@@ -851,16 +852,16 @@ sub check_remote_entries ( $ )
 		    print "t=".elapsed_time()."s. File ".$entry{name}." now fully migrated to tape (from stager's point of view).\n";
 		    $remote_files[$i]->{status} = "migrated";
 		    # Check that dual tape copies got mirgated as expected (and on different tapes)
-		    $nslsresult = `su $environment{username} -c \"nsls --class $entry{name}\"`;
+		    $nslsresult = `su $environment{username} -c \"CSEC_DISABLE=yes nsls --class $entry{name}\"`;
 		    if ( $nslsresult =~ /^\s+(\d+)\s+\/castor/ ) {
 			my $class = $1;
-			my $nslistclass_result = `su $environment{username} -c \"nslistclass --id=$class\"`;
+			my $nslistclass_result = `su $environment{username} -c \"CSEC_DISABLE=yes nslistclass --id=$class\"`;
 			if ( $nslistclass_result =~ /NBCOPIES\s+(\d+)/ ) {
 			    my $expected_copynb = $1;
-			    my $found_copynb = `su $environment{username} -c \"nsls -T $entry{name} 2>/dev/null | wc -l\"`;
+			    my $found_copynb = `su $environment{username} -c \"CSEC_DISABLE=yes nsls -T $entry{name} 2>/dev/null | wc -l\"`;
 			    if ( $expected_copynb != $found_copynb ) {
 				print "ERROR: Unexpected number of copies for $entry{name}. Expected: $expected_copynb, found:$found_copynb\n";
-				print "stager record: ".`su $environment{username} -c \"stager_qry -M $entry{name}\"`;
+				print "stager record: ".`su $environment{username} -c \"CSEC_DISABLE=yes stager_qry -M $entry{name}\"`;
 				print "TODO: handle this state as partially migrated\n";
 			    }
 			} else {
@@ -891,7 +892,7 @@ sub check_remote_entries ( $ )
 		    # hand over the file to the user
 		    `chown $environment{username} $local_copy`;
 		    # rfcp the recalled copy
-		    `su $environment{username} -c \"STAGE_SVCCLASS=$environment{svcclass} rfcp $entry{name} $local_copy\"`;
+		    `su $environment{username} -c \"CSEC_DISABLE=yes STAGE_SVCCLASS=$environment{svcclass} rfcp $entry{name} $local_copy\"`;
 		    # compute checksum, get size and get rid of file
 		    my $local_size = ( -s $local_copy );
 		    my $local_checksum_string = `adler32 $local_copy 2>&1`;
@@ -949,11 +950,11 @@ sub unblock_stuck_files ()
 	    # check the migration status and compare checksums.
             if (0 && $entry{status} =~ /^(rfcped|partially migrated|being recalled)$/) {
                 print "t=".elapsed_time()."s. File ".$entry{name}." still in ".$entry{status}." state.\n";
-                my $nsid = `su $environment{username} -c \"nsls -i $entry{name}\"`;
+                my $nsid = `su $environment{username} -c \"CSEC_DISABLE=yes nsls -i $entry{name}\"`;
                 if ($nsid =~ /^\s+(\d+)/ ) {
                     print "t=".elapsed_time()."s. NSFILE=".$1."\n";
                 }
-                my $stager_status = `su $environment{username} -c \"stager_qry -M $entry{name}\"`;
+                my $stager_status = `su $environment{username} -c \"CSEC_DISABLE=yes stager_qry -M $entry{name}\"`;
                 print "t=".elapsed_time()."s. stager status=".$stager_status."\n";
                 if (defined $entry{breaking_type} && $entry{breaking_done}) {
                     print "t=".elapsed_time()."s. This file WAS broken by:".$entry{breaking_type}."\n";
@@ -1004,9 +1005,9 @@ sub unblock_stuck_files ()
                 $stmt->bind_param (":NSNAME", $entry{name});
                 $stmt->execute();
                 # File is now "migrated" dump it from stager...
-                `su $environment{username} -c \"stager_rm -M $entry{name}\"`;
+                `su $environment{username} -c \"CSEC_DISABLE=yes stager_rm -M $entry{name}\"`;
                 # ...and from ns
-                `su $environment{username} -c \"nsrm $entry{name}\"`;
+                `su $environment{username} -c \"CSEC_DISABLE=yes nsrm $entry{name}\"`;
                 print "t=".elapsed_time()."s. FAILURE: File ".$entry{name}.
                   " forcedfully dropped. Previous state was :".
                   $entry{status}."\n";
@@ -1017,11 +1018,11 @@ sub unblock_stuck_files ()
 		if (!defined $dbh) { $dbh = open_db(); }
 		if ( !check_invalid $entry{name} )  {
                     print "t=".elapsed_time()."s. File ".$entry{name}." still in ".$entry{status}." state.\n";
-                    my $nsid = `su $environment{username} -c \"nsls -i $entry{name}\"`;
+                    my $nsid = `su $environment{username} -c \"CSEC_DISABLE=yes nsls -i $entry{name}\"`;
                     if ($nsid =~ /^\s+(\d+)/ ) {
                         print "t=".elapsed_time()."s. NSFILE=".$1."\n";
                     }
-                    my $stager_status = `su $environment{username} -c \"stager_qry -M $entry{name}\"`;
+                    my $stager_status = `su $environment{username} -c \"CSEC_DISABLE=yes stager_qry -M $entry{name}\"`;
                     print "t=".elapsed_time()."s. stager status=".$stager_status."\n";
                     if (defined $entry{breaking_type} && $entry{breaking_done}) {
                         print "t=".elapsed_time()."s. This file WAS broken by:".$entry{breaking_type}."\n";
@@ -1079,7 +1080,7 @@ sub unblock_stuck_files ()
                                     END;");
                     $stmt->bind_param(":NSNAME", $entry{name});
                     $stmt->execute();
-                    `su $environment{username} -c \"nsrm $entry{name}\"`;
+                    `su $environment{username} -c \"CSEC_DISABLE=yes nsrm $entry{name}\"`;
                     print "t=".elapsed_time()."s. FAILURE: File ".$entry{name}." dropped via DB.\n";
                     $remote_files[$i]->{status} = "nuked from DB after stuck rfcp";
                     push ( @dropped_files_indexes, $i ); 
@@ -1569,7 +1570,7 @@ sub check_leftovers ( $ )
     }
     
     my $schemaversion = get_db_version ( $dbh );
-    if ( $schemaversion =~ /^2_1_1[23]/ ) {
+    if ( $schemaversion =~ /^2_1_1[234]/ ) {
         $sth = $dbh -> prepare("SELECT count (*) from ( 
                               SELECT dc.id from diskcopy dc where
                                 dc.status NOT IN ( 0, 7, 4 )
@@ -1622,7 +1623,7 @@ sub print_leftovers ( $ )
 {
     my $dbh = shift;
     my $schemaversion = get_db_version ( $dbh );
-    if ( $schemaversion =~ /^2_1_1[23]/ ) {
+    if ( $schemaversion =~ /^2_1_1[234]/ ) {
         # Print by castofile with corresponding tapecopies
         my $sth = $dbh -> prepare ("SELECT cf.lastknownfilename, dc.id, dc.status, mj.id, mj.status,
                                     rj.id, rj.status
@@ -1655,7 +1656,7 @@ sub print_leftovers ( $ )
     } else {
         die "Unexpected schema version: $schemaversion";
     }
-    if ( $schemaversion =~ /^2_1_1[23]/ ) {
+    if ( $schemaversion =~ /^2_1_1[234]/ ) {
         # print any other migration and recall jobs not covered previously
         my $sth = $dbh -> prepare ("SELECT cf.lastknownfilename, dc.id, dc.status, mj.id, mj.status, rj.id, rj.status
                                  FROM castorfile cf
@@ -2386,9 +2387,9 @@ sub configure_headnode_2112 ( )
 {
     my @diskServers = get_disk_servers();
     my $nbDiskServers = @diskServers;
-    poll_rm_readyness ( 1, 15 );
-    print "Sleeping extra 15 seconds\n";
-    sleep (15);
+    # poll_rm_readyness ( 1, 15 );
+    print "Sleeping extra 5 seconds\n";
+    sleep (5);
     
     my $rmGetNodesResult = `rmGetNodes | egrep 'name:'`;
     print("\n");
@@ -2438,9 +2439,67 @@ sub configure_headnode_2113 ( )
 {
     my @diskServers = get_disk_servers();
     my $nbDiskServers = @diskServers;
-    poll_rm_readyness ( 1, 15 );
-    print "Sleeping extra 15 seconds\n";
-    sleep (15);
+    # poll_rm_readyness ( 1, 15 );
+    print "Sleeping extra 5 seconds\n";
+    sleep (5);
+    
+    my $rmGetNodesResult = `rmGetNodes | egrep 'name:'`;
+    print("\n");
+    print("rmGetNodes RESULTS\n");
+    print("==================\n");
+    print($rmGetNodesResult);
+    
+    # Fill database with the standard set-up for a dev-box
+    # Re-create the name server's file classes first:
+    print `nsenterclass --name=temp --id=58`;
+    print `nsenterclass --name=largeuser --id=95 --nbcopies=1`;
+    print `nsenterclass --name=test2 --id=27 --nbcopies=2`;
+    
+    # populate the stager.
+    print `enterfileclass -a`;
+
+    print `enterdiskpool default`;
+    print `enterdiskpool extra`;
+    
+    print `entersvcclass --diskpools default --defaultfilesize 10485760 --failjobswhennospace yes  --gcpolicy default default`;
+    my $main_tapepool=`vmgrlistpool  | head -1  | awk '{print \$1}' | tr -d "\\n"`;
+    print `entertapepool --nbdrives 2 --minamountdata 0 --minnbfiles 0 --maxfileage 0 $main_tapepool`;
+    print `entersvcclass --diskpools extra --defaultfilesize 10485760 --failjobswhennospace yes  --gcpolicy default dev`;
+    print `entersvcclass --diskpools extra --forcedfileclass temp --defaultfilesize 10485760 --disk1behavior yes --failjobswhennospace yes  --gcpolicy default diskonly`;
+    
+    print `rmAdminNode -r -R -n $diskServers[0]`;
+    print `rmAdminNode -r -R -n $diskServers[1]`;
+    sleep 10;
+    print `moveDiskServer default $diskServers[0]`;
+    print `moveDiskServer extra $diskServers[1]`;
+
+    # Add the tapecopy routing rules
+    my $single_copy_dir = $environment{castor_directory} . $environment{castor_single_subdirectory};
+    my $dual_copy_dir = $environment{castor_directory} . $environment{castor_dual_subdirectory};
+    #my $single_file_class_number = `nsls -d --class $single_copy_dir |  awk '{print \$1}'`;
+    #my $single_copy_class = `printfileclass  | perl -e 'while (<>) { if (/\\s*(\\w+)\\s+(\\w+)\\s+(\\w+)\\s+(\\w+)/ && \$2 eq $single_file_class_number) { print \$1 }}'`;
+    my  $single_copy_class = 'largeuser';
+    #my $dual_file_class_number = `nsls -d --class $dual_copy_dir |  awk '{print \$1}'`;
+    #my $dual_copy_class = `printfileclass  | perl -e 'while (<>) { if (/\\s*(\\w+)\\s+(\\w+)\\s+(\\w+)\\s+(\\w+)/ && \$2 eq $dual_file_class_number) { print \$1 }}'`;
+    my $dual_copy_class ='test2';
+    my $svcclass = $environment{svcclass};
+    my $tapepool = $environment{tapepool};
+    print `entertapepool --nbdrives 2 --minamountdata 0 --minnbfiles 0 --maxfileage 0 $tapepool`;
+    print `entermigrationroute $single_copy_class 1:$tapepool`;
+    print `entermigrationroute $dual_copy_class 1:$tapepool 2:$tapepool`;
+    
+    # Add a single copy default-default route using first pool name
+    my $default_pool = `vmgrlistpool | head -1  | awk '{print \$1}'`;
+    print `entermigrationroute largeuser 1:$default_pool`;
+}
+
+sub configure_headnode_2114 ( )
+{
+    my @diskServers = get_disk_servers();
+    my $nbDiskServers = @diskServers;
+    # poll_rm_readyness ( 1, 15 );
+    print "Sleeping extra 5 seconds\n";
+    sleep (5);
     
     my $rmGetNodesResult = `rmGetNodes | egrep 'name:'`;
     print("\n");
@@ -2509,9 +2568,9 @@ sub cleanup () {
         #reverse order remotees removal to removes directories in the end.
         print "t=".elapsed_time()."s. Cleanup: removing ".$remote_files[$i]->{name}."\n";
 	if ($remote_files[$i]->{type} eq "file") {
-            `su $environment{username} -c \"STAGE_SVCCLASS=$environment{svcclass} stager_rm -M $remote_files[$i]->{name}\"`;
+            `su $environment{username} -c \"STAGE_SVCCLASS=$environment{svcclass} CSEC_DISABLE=yes stager_rm -M $remote_files[$i]->{name}\"`;
         }
-        `su $environment{username} -c \"nsrm $remote_files[$i]->{name}\"`;
+        `su $environment{username} -c \"CSEC_DISABLE=yes nsrm $remote_files[$i]->{name}\"`;
     }
 }
 
@@ -2560,7 +2619,7 @@ END {
         print "t=".elapsed_time()."s. Nuking leftovers, if any.\n";
         my $stmt;
         my $schemaversion = get_db_version ( $dbh );
-        if ( $schemaversion =~ /^2_1_13/ ) {
+        if ( $schemaversion =~ /^2_1_1[34]/ ) {
             $stmt = $dbh->prepare("BEGIN
                                     DELETE FROM MigrationJob;
                                     DELETE FROM RecallJob;

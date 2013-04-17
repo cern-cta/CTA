@@ -23,18 +23,14 @@
 #  @author Castor Dev team, castor-dev@cern.ch
 ###############################################################################
 
-# This test script will wipe and reinstall a fresh 2.1.11 tape gateway system.
-# It will inject new migrations to it.
-# Then the daemons will be shut down, and the stager upgraded to 2.1.12
-# The daemons will be restarted, the test suite launched, and additionnal migrations 
+# This test script will wipe and reinstall a fresh 2.1.13 tape gateway system.
+# The daemons will be restarted, the test suite launched, and migrations 
 # will be injected into the system.
 # Results of all the steps will be checked.
 
 # To run, the script:
-# - needs a 2.1.12 checkout (of which is it part).
-# - A reference 2.1.11 checkout (production release recommended).
+# - needs a 2.1.13 checkout (of which is it part).
 # - The RPMS for both releases.
-
 
 # This perl script that has to be run as root on the stager host will connect to
 # the DB and report wether there are any pending migrations for this stager
@@ -49,13 +45,341 @@ use BSD::Resource;
 use Cwd 'abs_path';
 use File::Basename;
 use CastorTapeTests;
+
+
+my @packages_headnode=  
+(
+ "castor-tape-tools",
+ "castor-vmgr-client",
+ "castor-lib-oracle",
+ "castor-debuginfo",
+ "castor-vdqm2-client",
+ "castor-hsmtools",
+ "castor-lib",
+ "castor-dbtools",
+ "castor-vmgr-server",
+ "castor-rh-server",
+ "castor-tapegateway-server",
+ "castor-config",
+ "castor-ns-client",
+ "castor-vdqm2-server",
+ "castor-stager-client",
+ "castor-lib-tape",
+ "castor-transfer-manager",
+ "castor-stager-server",
+ "castor-transfer-manager-client",
+ "castor-upv-server",
+ "castor-vdqm2-lib-oracle",
+ "castor-upv-client",
+ "castor-rfio-client",
+ "castor-ns-server"
+ );
+
+
+my @packages_disktape_server=
+(
+ "castor-tape-server-nostk",
+ "castor-stager-client",
+ "castor-diskserver-manager",
+ "castor-tapebridge-server",
+ "castor-tapebridge-client",
+ "castor-vmgr-client",
+ "castor-ns-client",
+ "castor-config",
+ "castor-lib",
+ "castor-gridftp-dsi-common",
+ "castor-job",
+ "castor-gc-server",
+ "castor-debuginfo",
+ "castor-gridftp-dsi-ext",
+ "castor-rmc-server",
+ "castor-vdqm2-client",
+ "castor-rfio-server",
+ "castor-rtcopy-server",
+ "castor-sacct",
+ "castor-gridftp-dsi-int",
+ "castor-lib-tape",
+ "castor-tape-tools",
+ "castor-rfio-client"
+ );
+
+my @services_headnode =
+(
+ "nsd",
+ "vmgrd",
+ "rhd",
+ "tapegatewayd",
+ "vdqmd",
+ "transfermanagerd",
+ "stagerd",
+ "cupvd"
+ );
+
+my @services_disktape_server=
+(
+ "taped",
+ "diskmanagerd",
+ "tapebridged",
+ "gcd",
+ "rmcd",
+ "rfiod",
+ "rtcpd"
+ );
  
-sub main ();
+sub main ( $ );
 sub set_checkout_location ();
+sub get_current_castor_packages ();
+sub get_current_castor_packages_remote ( $ );
+sub build_change_list ( $$$$ );
+sub send_packages ( $$$ );
+sub deploy_packages ( $ );
+sub deploy_packages_remote ( $$ );
+sub upgrade_cluster ( $$$ );
+sub downgrade_cluster ( $$$$$ );
+sub stop_daemons_remote( $ );
+sub stop_daemons();
+sub start_daemons_remote ( $ );
+sub start_daemons();
+sub check_daemons_remote ( $ );
+sub check_daemons();
+sub wipe_reinstall_stager_Db ();
+sub wipe_reinstall_vdqm_Db ();
+sub upgrade_stager_Db ();
+sub upgrade_vdqm_Db ();
 sub get_release_number ( $ );
 sub preparePreTransitionBacklog ( $$$ );
 sub managePostTransitionBacklog ( $ );
 sub checkTapes ( );
+
+
+sub get_current_castor_packages ()
+{
+    my $list = `rpm -qa | egrep "castor-.*2\.1\.1[123]" | sort`;
+    return split ("\n", $list);
+}
+
+sub get_current_castor_packages_remote ( $ )
+{
+    my $host = shift;
+    my $list = `ssh $host rpm -qa | egrep "castor-.*2\.1\.1[123]" | sort`;
+    return split ("\n", $list);
+}
+
+sub build_change_list ( $$$$ )
+{
+    my $current_packages = shift;
+    my $targeted_packages = shift;
+    my $targeted_version = shift;
+    my $RPMS_directory = shift;
+    my @to_remove;
+    my @to_update;
+    my @to_install;
+    my $rpmt_file;
+    # Find the packages to install or update (among the targeted ones)
+    my $p;
+    for $p (@{$targeted_packages}) {
+        $p =~ s/-2\.1\.1[123]\.\d+$//;
+        if (!grep /$p/, @{$current_packages}) {
+            push @to_install, $p;
+        } else {
+            push @to_update, $p;
+        }
+    }
+    # Find the packages to remove (among the current ones)
+    for $p (@{$current_packages}) {
+        if (!grep /$p/,@{$targeted_packages}) {
+            push @to_remove, $p;
+        }
+    }
+    for $p (@to_remove) {
+        $rpmt_file .= "-e ".$p."\n";
+    }
+    for $p (@to_update) {
+        $rpmt_file .= "-u ".$RPMS_directory."/".$p."-".$targeted_version.".x86_64.rpm\n";
+    }
+    for $p (@to_install) {
+        $rpmt_file .= "-i ".$RPMS_directory."/".$p."-".$targeted_version.".x86_64.rpm\n";
+    }
+    return $rpmt_file;
+}
+
+sub send_packages ( $$$ )
+{
+    my ( $rpmt_file, $host,  $RPMS_directory ) = ( shift, shift, shift );
+    my @lines = split ( /\n/, $rpmt_file);
+    my @selected_and_changed_lines = grep ( s:(-u|-i) .*/([^/]*)$:$RPMS_directory/$2:, @lines);
+    my $file_list = join ( " ", @selected_and_changed_lines );
+    print `ssh $host mkdir -p RPMS`;
+    print `scp $file_list $host:RPMS`;
+}
+
+sub deploy_packages ( $ )
+{
+    my ( $file_list ) = ( shift );
+    my $tempfile = `mktemp`;
+    chomp $tempfile;
+    open RPMT, "> $tempfile" or die "Could not open file $tempfile";
+    print RPMT $file_list;
+    close RPMT;
+    print "t=".CastorTapeTests::elapsed_time."s. Deploying packages locally\n";
+    print `rpmt-py --force -i$tempfile 2>&1`;
+    unlink $tempfile;
+    print `ldconfig`;
+}
+
+sub deploy_packages_remote ( $$ )
+{
+    my ( $file_list, $host ) = ( shift, shift );
+    my $tempfile = `mktemp`;
+    my $remote_file = `ssh $host mktemp`;
+    chomp $tempfile;
+    open RPMT, "> $tempfile" or die "Could not open file $tempfile";
+    print RPMT $file_list;
+    close RPMT;
+    print "t=".CastorTapeTests::elapsed_time."s. Deploying packages to host $host\n";
+    print `scp $tempfile $host:$remote_file`;
+    print `ssh $host rpmt-py --force -i$remote_file 2>&1`;
+    unlink $tempfile;
+    print `ssh $host rm -f $remote_file`;
+    print `ssh $host ldconfig`;
+}
+
+sub reinstall_cluster ( $$$$ )
+{
+    # Get parameters
+    my ( $targeted_version, $RPMS_directory, $checkout_directory, $dbh ) 
+           = ( shift, shift, shift, shift );
+    defined $RPMS_directory or die "Missing parameter in renstall_cluster";
+
+    # get test parameters
+    my $castor_directory = CastorTapeTests::get_environment('castor_directory');
+    my $single_subdir = CastorTapeTests::get_environment('castor_single_subdirectory');
+    my $dual_subdir = CastorTapeTests::get_environment('castor_dual_subdirectory');
+    my $file_number = CastorTapeTests::get_environment('file_number');
+    my $username = CastorTapeTests::get_environment('username');
+    my $run_testsuite = CastorTapeTests::get_environment('run_testsuite');
+
+    # Get the list of the targeted diskservers
+    my @disk_servers = CastorTapeTests::get_disk_servers();
+    
+    # Stop daemons
+    for my $ds ( @disk_servers ) {
+        stop_daemons_remote ( $ds );
+    }
+    stop_daemons ();
+    
+    # Reinstall software on disk servers then server
+    my @current_packages;
+    my $change_list;
+    for my $ds ( @disk_servers ) {
+        @current_packages  = get_current_castor_packages_remote ( $ds );
+        $change_list = build_change_list ( \@current_packages, \@packages_disktape_server, 
+            $targeted_version, "RPMS/" );
+        send_packages ( $change_list, $ds, $RPMS_directory );
+        deploy_packages_remote ( $change_list, $ds );
+    }
+    @current_packages  = get_current_castor_packages ();
+    $change_list = build_change_list ( \@current_packages, \@packages_headnode, 
+        $targeted_version,  $RPMS_directory );
+    deploy_packages ( $change_list );
+
+    # Reinstall the DBs: wipe and reinstall the stager Db, the vdqm Db,
+    # the VMGR DB and the name server
+    
+    # First, name server get reinstalled
+    CastorTapeTests::reinstall_ns_db_from_checkout  ( $checkout_directory );
+    print `service nsd start`;
+    
+    CastorTapeTests::reinstall_stager_db_from_checkout  ( $checkout_directory );
+    CastorTapeTests::reinstall_vdqm_db_from_checkout ( $checkout_directory );
+    print `service vmgrd start`;
+    sleep 2;
+    # Now feed the VDQM with defaults (name server runs outside of the test environment)
+    print `vdqmDBInit`;
+    
+    # Restart daemons on the headnode (some will fail)
+    start_daemons ();
+    # Restart the daemons on the disk/tape servers
+    # Start daemons
+    for my $ds ( @disk_servers ) {
+        start_daemons_remote ( $ds );
+    }   
+
+    # Configure the fileclasses, service classes, fileclasses, etc... 
+    # (diskservers are needed at that point)
+    CastorTapeTests::configure_headnode_2113 ( );
+
+    # Second pass to start daemons
+    start_daemons ();
+
+    # Re-create the directories:
+    print `su $username -c "CSEC_DISABLE=yes nsmkdir -p $castor_directory$single_subdir"`;
+    print `su $username -c "CSEC_DISABLE=yes nschclass largeuser $castor_directory$single_subdir"`;
+    CastorTapeTests::register_remote ( $castor_directory.$single_subdir, "directory" );
+    print `su $username -c "CSEC_DISABLE=yes nsmkdir -p $castor_directory$dual_subdir"`;
+    print `su $username -c "CSEC_DISABLE=yes nschclass test2 $castor_directory$dual_subdir"`;
+    CastorTapeTests::register_remote ( $castor_directory.$dual_subdir, "directory" );
+
+    # This should make sure the tape drives are up
+    for my $ds ( @disk_servers ) {
+        start_daemons_remote ( $ds );
+    }   
+}
+
+sub stop_daemons()
+{
+    for my $d ( @services_headnode ) {
+       print `service $d stop`; 
+    }
+}
+
+sub stop_daemons_remote( $ )
+{
+    my $host = shift;
+    for my $d ( @services_disktape_server ) {
+        print `ssh $host service $d stop`;
+    }
+}
+
+sub start_daemons_remote ( $ )
+{
+    my $host = shift;
+    for my $d ( @services_disktape_server ) {
+        print `ssh $host service $d start`;
+    }
+    sleep 5;
+    # put the remote drives up.
+    my $drives_list = `ssh $host cat /etc/castor/TPCONFIG | cut -d " " -f 1`;
+    my @drives= split ( /\n/, $drives_list );
+    for my $d ( @drives ) {
+        print "calling /usr/bin/tpconfig $d down\n";
+        print `ssh $host /usr/bin/tpconfig $d down`;
+        print "calling /usr/bin/tpconfig $d up\n";
+        print `ssh $host /usr/bin/tpconfig $d up`;
+     }
+}
+
+sub start_daemons()
+{
+    for my $d ( @services_headnode ) {
+       print `service $d start`; 
+    }
+}
+
+sub check_daemons()
+{
+    for my $d ( @services_headnode ) {
+       print `service $d status`; 
+    }
+}
+
+sub check_daemons_remote ( $ )
+{
+    my $host = shift;
+    for my $d ( @services_disktape_server ) {
+        print `ssh $host service $d status`;
+    }
+}
 
 # Check that the tapes in the vmgr are not busy. Reset them if needed.
 sub checkTapes ( )
@@ -75,10 +399,13 @@ sub checkTapes ( )
     }
 }
 
-main ();
+my $RPM_repository = shift;
+main ($RPM_repository);
 
-sub main ()
+sub main ( $ )
 {
+    # Get the path to the RPMS.
+    my ($RPM_repository) = ( shift );
     
     # Nuke and start clean, but make sure we're where we should be
     my $host = `hostname -s`; chomp $host;
@@ -102,11 +429,30 @@ sub main ()
     my $conffile = './tapetests-lxcastordev.conf';
     CastorTapeTests::read_config($conffile);
     set_checkout_location();
-    CastorTapeTests::check_environment ();   
+    CastorTapeTests::check_environment ();    
 
     # Check the contents of the Db before proceeding
     my $dbh = CastorTapeTests::open_db();
     my $ret = 0;
+    if (CastorTapeTests::check_leftovers ( $dbh )) {
+        my $useless; # workaround to prevent emacs from fscking the indentation.
+        #CastorTapeTests::print_leftovers ( $dbh );
+        $dbh->disconnect();
+        die "FATAL: Leftovers found in the database. Aborting test.";
+    }
+
+    # Past this point, we are good to go.
+    reinstall_cluster ( $version, $RPM_repository, "../..", $dbh  );
+    
+        
+    # Semi-hardcoded setup of the diskservers
+    my @diskpools = ( "default", "extra" );
+    my $index = 0;
+    for my $diskserver ( split ( /,/, CastorTapeTests::get_environment('diskservers')) ) {
+  		print `modifydiskserver -s  Production -d $diskpools[$index++] $diskserver 2>&1 `;
+  		print `modifydiskserver -m /srv/castor/01/:/srv/castor/02/:/srv/castor/03/:/srv/castor/04/:/srv/castor/05/:/srv/castor/06/:/srv/castor/07/:/srv/castor/08/:/srv/castor/09/:/srv/castor/10/ -s Production $diskserver 2>&1`;
+    }
+    
     my $file_size =  CastorTapeTests::get_environment('file_size');
     my $seed_index = CastorTapeTests::make_seed ($file_size);
 
@@ -118,14 +464,10 @@ sub main ()
     my $username = CastorTapeTests::get_environment('username');
     my $run_testsuite = CastorTapeTests::get_environment('run_testsuite');
 
-    # Check tapes
-    checkTapes ( );
+
     
-    # Re-create the directories:
-    print `su $username -c "CSEC_DISABLE=yes nsmkdir -p $castor_directory$single_subdir"`;
-    print `su $username -c "CSEC_DISABLE=yes nschclass largeuser $castor_directory$single_subdir"`;
-    CastorTapeTests::register_remote ( $castor_directory.$single_subdir, "directory" );
-    print `su $username -c "CSEC_DISABLE=yes nsmkdir -p $castor_directory$dual_subdir"`;
+    print `nsmkdir -p $castor_directory`;
+    
     
     # First iteration of the test
     # Start testsuite in the background
@@ -136,6 +478,8 @@ sub main ()
         print "t=".CastorTapeTests::elapsed_time."s. ";
         print "Started testsuite -------------\n";
     }
+    # Sleep a bit
+    sleep 5;
     # We can inject dual tape copies here as they will be handled by the tapegateway.
     SingleAndDualCopyTest ( $dbh, $seed_index, $file_number, 1);
     # Wait for testsuite to complete and print out the result
@@ -150,6 +494,9 @@ sub main ()
     CastorTapeTests::print_leftovers ( $dbh );
     print "t=".CastorTapeTests::elapsed_time."s. ";
     print "Test done.\n";
+    
+    #print "Cleaning up test directories $castor_directory\{$single_subdir,$dual_subdir\}\n";
+    #print `su $username -c "CSEC_DISABLE=yes for p in $castor_directory\{$single_subdir,$dual_subdir\}; do nsrm -r -f \\\$p; done"`;
     exit 0;
 }
 
