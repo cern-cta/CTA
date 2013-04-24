@@ -74,7 +74,7 @@ try:
     if existingTapePools:
         titles = ('NAME','NBDRIVES','MINAMOUNTDATA','MINNBFILES','MAXFILEAGE','ID','LASTEDITOR','LASTEDITION')
         data = [(name, nbdrives, castor_tools.nbToDataAmount(minamountdata), minnbfiles,
-                 castor_tools.nbToAge(maxfileage), tpid, lastEditor, secsToDate(lastEdition))
+                 castor_tools.nbToAge(maxfileage), tpid, lastEditor, castor_tools.secsToDate(lastEdition))
                 for name, nbdrives, minamountdata, minnbfiles, maxfileage, lastEditor, lastEdition, tpid in rows]
         castor_tools.prettyPrintTable(titles, data)
     # check unknown tape pools
