@@ -27,155 +27,17 @@ extern char *getconfent();
 
 /*
  * isremote(): returns 0 if requestor is in site
- *                   1 if requestor is out of site
- *          -1 in case of an error
+ *                     1 if requestor is out of site
+ *                    -1 in case of an error
+ * *DEPRECATED*: this concept is obsolete, isremote
+ * always returns 0.
  */
 int isremote(struct in_addr from_host,
-             char *host_name)
+             char* host_name)
 {
-    char *p ;
-    char local[CA_MAXHOSTNAMELEN+1];
-    char buf[BUFSIZ];            /* A buffer                     */
-    char ent[25] ;
-    struct hostent  *h;
-    int   s_s;
-    struct  ifconf  ifc;     /* ifconf structure      */
-    struct  ifreq   *ifr;    /* Pointer on ifreq structure */
-    int n ;          
-    union adr {
-        u_long adr_i;
-        unsigned char adr_c[4];
-    } *ladd;
-    struct in_addr in ;
-    struct  sockaddr_in addr;
-    char *last = NULL;
-
-    char lhfile[CA_MAXPATHLEN+1] = "/etc/castor/castor.localhosts";
-    char rthfile[CA_MAXPATHLEN+1] = "/etc/castor/castor.remhosts";
-
-    if ( (p=getconfent("SIMULATION","REMOTE",1))!=NULL &&
-         (p=(char *)strtok_r(p," \t",&last))!=NULL && !strcmp(p,"YES")) {
-        log(LOG_DEBUG,"isremote(): Client simulates remote behaviour\n");
-        return 1 ;
-    }
-    if ( (p=getconfent("ISREMOTE","CALLS",1))!=NULL &&
-         (p=(char *)strtok_r(p," \t",&last) )!=NULL && !strcmp(p,"NO") ) {
-        log(LOG_DEBUG,"isremote(): Any connection assumed from local site\n");
-        return 0 ;
-    }
-
-    /*
-     * getting local IP number
-     */
-    gethostname(local, CA_MAXHOSTNAMELEN+1);
-     
-    if ( (h=(struct hostent *)Cgethostbyname(local))==NULL) {
-        log(LOG_ERR,"isremote(): gethostbyname() error\n");
-        return -1 ;
-    }
-    ladd=(union adr *)h->h_addr_list[0];
-    in.s_addr=ladd->adr_i ;
-    log(LOG_DEBUG, "isremote(): Local host is %s\n",inet_ntoa( in ));
-
-    if ( host_name != NULL ) {
-        FILE *fs;
-        char *cp ;
-        char s[CA_MAXHOSTNAMELEN+1];
-        /*
-         * Is the hostname declared as a "remote" site host ?
-         */
-        log(LOG_DEBUG,"isremote(): searching <%s> in %s\n",host_name, rthfile);
-        if ( (fs = fopen( rthfile, "r")) != NULL ) {
-            while ( fgets(s,CA_MAXHOSTNAMELEN+1,fs) != NULL ) {
-              if ( (cp= strtok_r(s," \n\t",&last))!=NULL ) {
-                    if ( !isdigit(cp[0]) && (cp[0]!='#') &&  !strcmp(cp,host_name) ) {
-                        log(LOG_DEBUG,"isremote(): %s is in list of external hosts\n",cp);
-                        fclose(fs);
-                        return 1;
-                    }
-                    if ( isdigit(cp[0]) ) {
-                        strcpy(ent,cp) ;
-                        if ( strtok_r(cp,".",&last) ==  NULL ||
-                             strtok_r(NULL,".",&last) == NULL )
-                            log(LOG_DEBUG,"%s ignored: IP specification too short\n", ent);
-                        else {
-                            if ( !strncmp( ent, inet_ntoa( from_host ), strlen(ent))) {
-                                log(LOG_DEBUG,"Entry %s matches to %s\n",ent,inet_ntoa(from_host));
-                                log(LOG_INFO,"isremote(): %s is classified as remote\n",host_name);
-                                fclose(fs) ;
-                                return 1 ;
-                            }
-                        }
-                    }
-                }
-            }
-            fclose(fs);
-        }
-
-
-        /*
-         * Is the hostname declared local ?
-         */
-        log(LOG_DEBUG,"isremote(): searching <%s> in %s\n",host_name, lhfile);
-        if ( (fs = fopen( lhfile, "r")) != NULL ) {
-            while ( fgets(s,CA_MAXHOSTNAMELEN+1,fs) != NULL ) {
-              if ( (cp= strtok_r(s," \n\t",&last)) != NULL ) {
-                    if ( !isdigit(cp[0]) && (cp[0]!='#') &&  !strcmp(cp,host_name) ) {
-                        log(LOG_DEBUG,"isremote(): %s is in list of local hosts\n",cp);
-                        fclose(fs);
-                        return 0;
-                    }
-                    if ( isdigit(cp[0]) ) {
-                        strcpy(ent,cp) ;
-                        if ( strtok_r(cp,".",&last) ==  NULL || 
-                             strtok_r(NULL,".",&last) == NULL )
-                            log(LOG_DEBUG,"%s ignored: IP specification too short \n", ent);
-                        else {
-                            if ( !strncmp( ent, inet_ntoa( from_host ), strlen(ent) )) {
-                                log(LOG_DEBUG,"Entry %s matches to %s\n",ent,inet_ntoa(from_host));
-                                log(LOG_DEBUG,"isremote(): %s is classified as local\n",host_name);
-                                fclose (fs);
-                                return 0 ;
-                            }
-                        }
-                    }
-                }
-            }
-            fclose(fs);
-        }
-    } /* if ( host_name != NULL ) */
-
-    log(LOG_DEBUG, "isremote(): Client host is %s\n",inet_ntoa( from_host )) ;
-
-    if( (s_s = socket(AF_INET, SOCK_DGRAM, 0)) == -1 )  {
-        log(LOG_ERR, "socket: %s\n",strerror(errno));
-        return -1;
-    }
-   
-    ifc.ifc_len = sizeof(buf);
-    ifc.ifc_buf = buf;
-    ifr = ifc.ifc_req;
-
-    if ((n = ioctl(s_s, SIOCGIFCONF, (char *)&ifc)) < 0) {
-        log(LOG_ERR, "ioctl(SIOCGIFCONF): %s\n",strerror(errno));
-        close(s_s);
-        return -1;
-    } 
-    else 
-    {
-        for (n = ifc.ifc_len/sizeof(struct ifreq); --n >= 0; ifr++)  {
-            memcpy (&addr, &ifr->ifr_addr, sizeof(struct sockaddr_in));
-            log(LOG_DEBUG , "Comparing %d and %d \n",  inet_netof(addr.sin_addr), inet_netof(from_host));
-            if ( inet_netof(addr.sin_addr) == inet_netof(from_host) ) {
-                close(s_s);
-                log(LOG_DEBUG ,"isremote(): client is in same site\n");
-                return 0;
-            }
-        }
-    }
-    close(s_s);
-    log(LOG_INFO ,"isremote(): client is in another site\n");
-    return 1;
+    (void)from_host;
+    (void)host_name;
+    return 0;
 }
 
 int CDoubleDnsLookup(int s, char *host) {
