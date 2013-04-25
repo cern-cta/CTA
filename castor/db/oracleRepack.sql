@@ -114,7 +114,8 @@ END;
 /
 
 /* PL/SQL method to handle a Repack request. This is performed as part of a DB job. */
-CREATE OR REPLACE PROCEDURE handleRepackRequest(inReqUUID IN VARCHAR2) AS
+CREATE OR REPLACE PROCEDURE handleRepackRequest(inReqUUID IN VARCHAR2,
+                                                outNbFilesProcessed OUT INTEGER, outNbFailures OUT INTEGER) AS
   varEuid INTEGER;
   varEgid INTEGER;
   svcClassId INTEGER;
@@ -130,8 +131,6 @@ CREATE OR REPLACE PROCEDURE handleRepackRequest(inReqUUID IN VARCHAR2) AS
   varRecallGroupName VARCHAR2(2048);
   unused INTEGER;
   firstCF boolean := True;
-  nbFilesProcessed NUMBER := 0;
-  nbFilesFailed NUMBER := 0;
   isOngoing boolean := False;
 BEGIN
   UPDATE StageRepackRequest SET status = tconst.REPACK_STARTING
@@ -140,6 +139,8 @@ BEGIN
     INTO varReqId, varEuid, varEgid, svcClassId, varRepackVID;
   -- commit so that the status change is visible, even if the request is empty for the moment
   COMMIT;
+  outNbFilesProcessed := 0;
+  outNbFailures := 0;
   -- Check which protocol should be used for writing files to disk
   repackProtocol := getConfigOption('Repack', 'Protocol', 'rfio');
   -- name server host name
@@ -178,10 +179,9 @@ BEGIN
       varMigrationTriggered BOOLEAN := False;
     BEGIN
       -- Commit from time to time
-      IF nbFilesProcessed = 1000 THEN
+      IF MOD(outNbFilesProcessed, 1000) = 0 THEN
         COMMIT;
         firstCF := TRUE;
-        nbFilesProcessed := 0;
       END IF;
       -- lastKnownFileName we will have in the DB
       lastKnownFileName := CONCAT('Repack_', TO_CHAR(segment.fileid));
@@ -206,7 +206,7 @@ BEGIN
         selectCastorFileInternal(segment.fileid, nsHostName, segment.fileclass,
                                  segment.segSize, lastKnownFileName, 0, varCreationTime, TRUE, cfid, unused);
       END;
-      nbFilesProcessed := nbFilesProcessed + 1;
+      outNbFilesProcessed := outNbFilesProcessed + 1;
       -- create  subrequest for this file.
       -- Note that the svcHandler is not set. It will actually never be used as repacks are handled purely in PL/SQL
       INSERT INTO SubRequest (retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, creationTime, lastModificationTime, answered, errorCode, errorMessage, requestedFileSystems, svcHandler, id, diskcopy, castorFile, parent, status, request, getNextStatus, reqType)
@@ -221,7 +221,7 @@ BEGIN
         varSrStatus := dconst.SUBREQUEST_FAILED;
         varSrErrorCode := serrno.EBUSY;
         varSrErrorMsg := 'File is currently being overwritten';
-        nbFilesFailed := nbFilesFailed + 1;
+        outNbFailures := outNbFailures + 1;
       ELSE
         -- find out whether this file is already staged
         SELECT /*+ INDEX(DC I_DiskCopy_CastorFile) */ count(DC.id)
@@ -275,7 +275,7 @@ BEGIN
           varSrStatus := dconst.SUBREQUEST_FAILED;
           varSrErrorCode := serrno.EINVAL;
           varSrErrorMsg := SQLERRM;
-          nbFilesFailed := nbFilesFailed + 1;
+          outNbFailures := outNbFailures + 1;
         END;
       END IF;
       -- update SubRequest
@@ -311,7 +311,7 @@ BEGIN
   IF isOngoing THEN
     UPDATE StageRepackRequest SET status = tconst.REPACK_ONGOING WHERE StageRepackRequest.id = varReqId;
   ELSE
-    IF nbFilesFailed > 0 THEN
+    IF outNbFailures > 0 THEN
       UPDATE StageRepackRequest SET status = tconst.REPACK_FAILED WHERE StageRepackRequest.id = varReqId;
     ELSE
       -- CASE of an 'empty' repack : the tape had no files at all
@@ -458,12 +458,14 @@ CREATE OR REPLACE PROCEDURE repackManager AS
   varRepackVID VARCHAR2(10);
   varStartTime NUMBER;
   varTapeStartTime NUMBER;
-  nbRepacks INTEGER;
+  varNbRepacks INTEGER;
+  varNbFiles INTEGER;
+  varNbFailures INTEGER;
 BEGIN
-  SELECT count(*) INTO nbRepacks
+  SELECT count(*) INTO varNbRepacks
     FROM StageRepackRequest
    WHERE status = tconst.REPACK_STARTING;
-  IF nbRepacks > 0 THEN
+  IF varNbRepacks > 0 THEN
     -- this shouldn't happen, possibly this procedure is running in parallel: give up and log
     -- "repackManager: Repack processes still starting, no new ones will be started for this round"
     logToDLF(NULL, dlf.LVL_NOTICE, dlf.REPACK_JOB_ONGOING, 0, '', 'repackd', '');
@@ -485,20 +487,22 @@ BEGIN
                     WHERE ROWNUM < 2)
          FOR UPDATE;
       -- start the repack for this request: this can take some considerable time
-      handleRepackRequest(varReqUUID);
+      handleRepackRequest(varReqUUID, varNbFiles, varNbFailures);
       -- log 'Repack process started'
       logToDLF(varReqUUID, dlf.LVL_SYSTEM, dlf.REPACK_STARTED, 0, '', 'repackd',
-        'TPVID=' || varRepackVID || ' elapsedTime=' || TO_CHAR(getTime() - varTapeStartTime));
-      nbRepacks := nbRepacks + 1;
+        'TPVID=' || varRepackVID || ' nbFiles=' || TO_CHAR(varNbFiles)
+        || ' nbFailures=' || TO_CHAR(varNbFailures)
+        || ' elapsedTime=' || TO_CHAR(getTime() - varTapeStartTime));
+      varNbRepacks := varNbRepacks + 1;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- if no new repack is found to start, terminate
       EXIT;
     END;
   END LOOP;
-  IF nbRepacks > 0 THEN
+  IF varNbRepacks > 0 THEN
     -- log some statistics
     logToDLF(NULL, dlf.LVL_SYSTEM, dlf.REPACK_JOB_STATS, 0, '', 'repackd',
-      'nbStarted=' || TO_CHAR(nbRepacks) || ' elapsedTime=' || TO_CHAR(TRUNC(getTime() - varStartTime)));
+      'nbStarted=' || TO_CHAR(varNbRepacks) || ' elapsedTime=' || TO_CHAR(TRUNC(getTime() - varStartTime)));
   END IF;
 END;
 /
