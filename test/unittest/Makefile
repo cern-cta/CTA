@@ -15,7 +15,7 @@ INCLUDE_OPS=-I$(ROOT_DIR) -I$(ROOT_DIR)/h $(MACPORTS_CPPUNIT_INCLUDE_OP)
 LIB_DIR_OPS=$(MACPORTS_CPPUNIT_LIB_OP)
 EXECUTABLES=rununittests
 CSEC_MECHLIST=KRB5 GSI ID
-COMMON_OPS=-DCNS_ROOT=\"/castor\" -DCSEC_DEFAULT_MECHS="\"$(CSEC_MECHLIST)\"" -DSTAGERSUPERUSER=\"stage\" -DSTAGERSUPERGROUP=\"st\" -DSTAGEMAP=\"/etc/castor/stagemap.conf\" -DCNS_HOST=\"castorns\" -DSCNS_HOST=\"scnsdev\" -DCNSHOSTPFX=\"cns\" -DSCNSHOSTPFX=\"scns\" -DACCTFILE=\"/var/log/castor/sacct\" -DNOMORETAPES=\"/var/run/nomoretapes\" -DTAPELOGFILE=\"/var/log/castor/taped_legacy.log\" -DSCSIINC=\"scsi/sg.h\" -DNOMORERFIO=\"/var/run/nomorerfio\" -DRFIOLOGFILE=\"/var/log/castor/rfiod.log\" -D_LARGEFILE64_SOURCE -Werror -Wno-long-long -pedantic -Wall -g -pthread
+COMMON_OPS=-DCNS_ROOT=\"/castor\" -DSTAGERSUPERUSER=\"stage\" -DSTAGERSUPERGROUP=\"st\" -DSTAGEMAP=\"/etc/castor/stagemap.conf\" -DCNS_HOST=\"castorns\" -DSCNS_HOST=\"scnsdev\" -DCNSHOSTPFX=\"cns\" -DSCNSHOSTPFX=\"scns\" -DACCTFILE=\"/var/log/castor/sacct\" -DNOMORETAPES=\"/var/run/nomoretapes\" -DTAPELOGFILE=\"/var/log/castor/taped_legacy.log\" -DSCSIINC=\"scsi/sg.h\" -DNOMORERFIO=\"/var/run/nomorerfio\" -DRFIOLOGFILE=\"/var/log/castor/rfiod.log\" -D_LARGEFILE64_SOURCE -Werror -Wno-long-long -pedantic -Wall -g -pthread
 
 all: $(EXECUTABLES)
 
