@@ -280,10 +280,10 @@ class TransferManagerService(rpyc.Service):
         res.append((host[0], '-'))
     return tuple(res)
 
-  def exposed_listTransfers(self, diskPool=None, user=None):
-    '''lists the running and pending transfers per diskpool for a given diskpool and user'''
+  def exposed_listRunningTransfers(self, diskPool=None, user=None):
+    '''lists the running transfers per diskpool for a given diskpool and user'''
     dlf.writedebug(msgs.INVOKINGLISTTRANSFERS, DiskPool=diskPool)
-    transfers = self.dispatch('listTransfers', diskPool, user)
+    transfers = self.dispatch('listRunningTransfers', diskPool, user)
     res = []
     for diskPool in transfers:
       for ds in transfers[diskPool]:

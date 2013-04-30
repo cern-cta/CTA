@@ -416,7 +416,7 @@ class ServerQueue(dict):
             # add the transfer to list of results
             res.append((transferId, transfer.fileId, socket.getfqdn(),
                         transfer.user, 'PEND', diskpool, diskServer,
-                        protocol, transfer.arrivaltime, None))
+                        protocol, transfer.creationTime, None))
     finally:
       self.lock.release()
     return res

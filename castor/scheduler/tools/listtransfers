@@ -39,20 +39,19 @@ from itertools import groupby
 def usage(exitCode):
   '''prints usage'''
   print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-s|--summary [-c|--clean]] ' + \
-        '[-p|--poolsummary] [-q|--queues] [-u|--user <user>] [-x|--extra ' + \
+        '[-p|--poolsummary] [-u|--user <user>] [-x|--extra ' + \
         '[-r|--restrict p1[:...]]] [-t|--transfermanager <node>[:<port>]] [diskpool]'
   sys.exit(exitCode)
 
 # first parse the options
 try:
-  options, args = getopt.getopt(sys.argv[1:], 'hscpqu:vxr:t:', ['help', 'summary', 'clean', 'poolsummary', 'queues', 'user', 'verbose', 'extra', 'restrict', 'transfermanager'])
+  options, args = getopt.getopt(sys.argv[1:], 'hscpqu:vxr:t:', ['help', 'summary', 'clean', 'poolsummary', 'user', 'verbose', 'extra', 'restrict', 'transfermanager'])
 except Exception, parseException:
   print parseException
   usage(1)
 issummary = False
 clean = False
 ispoolsummary = False
-isqueuelist = False
 requser = None
 verbose = False
 extra = False
@@ -72,11 +71,6 @@ for f, v in options:
       print "-p/--poolsummary cannot be given twice"
       usage(1)
     ispoolsummary = True
-  elif f == '-q' or f == '--queues':
-    if isqueuelist:
-      print "-q/--queues cannot be given twice"
-      usage(1)
-    isqueuelist = True
   elif f == '-u' or f == '--user':
     if requser != None:
       print "-u/--user cannot be given twice"
@@ -109,12 +103,6 @@ for f, v in options:
 if issummary and ispoolsummary:
   print "cannot use -s|--summary and -p|--poolsummary' at the same time"
   usage(1)
-if issummary and isqueuelist:
-  print "cannot use -s|--summary and -q|--queues' at the same time"
-  usage(1)
-if isqueuelist and ispoolsummary:
-  print "cannot use -q|--queues and -p|--poolsummary' at the same time"
-  usage(1)
 if extra and not (issummary or ispoolsummary):
   if extraprotocols:
     print "-x|--extra and -r|--restrict cannot be used for job listing"
@@ -136,14 +124,12 @@ if len(args) > 0:
     print "Too many arguments, only one diskpool can be given"
     usage(1)
 
-def processTransfersListing(useOnlyCentralLists):
+def processTransfersListing():
   '''retrieves and display the list of queuing and running transfers for the given diskpool and user.
-  In case useOnlyCentralLists is True, only queuing transfers will be listed and the diskservers
-  will not be contacted at all'''
-  if useOnlyCentralLists:
-    transfers = rpconn.root.listPendingTransfersCentrally(reqdiskpool, requser)
-  else:
-    transfers = rpconn.root.listTransfers(reqdiskpool, requser)
+  The queuing transfers are listed from the central transfermanager, the running ones are requested
+  to the diskservers'''
+  transfers = rpconn.root.listRunningTransfers(reqdiskpool, requser)
+  transfers += rpconn.root.listPendingTransfersCentrally(reqdiskpool, requser)
   # loop to display errors
   for transfer in transfers:
     if not transfer[0]:
@@ -162,13 +148,8 @@ def processTransfersListing(useOnlyCentralLists):
                            time.strftime('%b %d %H:%M:%S', time.localtime(startTime))))
           else:
               data.append((transId, fileId[1], user, status, transferType, diskpool,
-                           scheduler, execHost, time.strftime('%b %d %H:%M:%S', time.localtime(submitTime)), ''))
+                           scheduler, execHost, time.strftime('%b %d %H:%M:%S', time.localtime(submitTime)), '-'))
   castor_tools.prettyPrintTable(titles, data)
-  # check for nodes with Too Many transfers
-  nodesWithManyTransfers = [scheduler for scheduler, group in groupby([line[6] for line in data]) if len(list(group)) > 100]
-  if nodesWithManyTransfers:
-    print 'Note that the list has been truncated to 100 transfers for the following hosts :'
-    print ', '.join(nodesWithManyTransfers)
 
 def _buildProtocolList(summaryreport):
   '''helper function to list the set of protocols reported in the summary'''
@@ -335,8 +316,8 @@ def processDiskPoolListing():
   # deal with unreachable machines if any
   if allUnreachableMachines:
     print '(*) Note that these numbers are incomplete as the following machines were unreachable :'
-    for machine in allUnreachableMachines:
-      print '  pool ' + machine + ' : ' + ', '.join(allUnreachableMachines[machine])
+    for p in allUnreachableMachines:
+      print '  pool ' + p + ' : ' + ', '.join(allUnreachableMachines[p])
 
 # connect to server and gather numbers
 try:
@@ -354,10 +335,8 @@ try:
       processHostListing()
     elif ispoolsummary:
       processDiskPoolListing()
-    elif isqueuelist:
-      processTransfersListing(True)
     else:
-      processTransfersListing(False)
+      processTransfersListing()
   except Exception, unexpectedException:
     print 'Caught exception : ' + str(unexpectedException)
     if verbose:
