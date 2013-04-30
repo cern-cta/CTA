@@ -85,7 +85,7 @@ void castor::tape::tapebridge::TapeFlushConfigParams::determineTapeFlushMode()
     const ConfigParamSource::Enum source = ConfigParamSource::CASTOR_CONF;
     m_tapeFlushMode.setValueAndSource(value, source);
   } else {
-    const uint32_t value = TAPEBRIDGE_N_FLUSHES_PER_FILE;
+    const uint32_t value = TAPEBRIDGE_TAPEFLUSHMODE;
     const ConfigParamSource::Enum source =
       ConfigParamSource::COMPILE_TIME_DEFAULT;
     m_tapeFlushMode.setValueAndSource(value, source);
