@@ -1091,7 +1091,7 @@ void castor::tape::tapebridge::ClientProxy::notifyEndOfFailedSession(
         m_clientAddress.getDescription()),
       castor::dlf::Param("errorCode"         , errorCode           ),
       castor::dlf::Param("errorMessage"      , errorMessage        )};
-    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
       TAPEBRIDGE_NOTIFIED_CLIENT_END_OF_FAILED_SESSION, params);
   }
 }
