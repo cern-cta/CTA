@@ -82,21 +82,21 @@ int reldrive( struct tptab*, char*, int, int );
 int initdrvtab( void );
 int initrrt( void );
 
-void procreq( int, char*, char* );
-void procconfreq( char*, char* );
-void procdinforeq( char*, char* );
-void procfrdrvreq( char*, char* );
-void procinforeq( char*, char* );
-void procuvsnreq( char*, char* );
-void procufilreq( char*, char* );
-void procstatreq( char*, char* );
-void procmountreq( char*, char* );
-void prockilltreq( char*, char* );
-void procposreq( char*, char* );
-void procrlsreq( char*, char* );
-void procrsltreq( char*, char* );
-void procrsvreq( char*, char* );
-void procrstatreq( char*, char* );
+static void procreq( int, char*, char* );
+static void procconfreq( char*, char* );
+static void procdinforeq( char*, char* );
+static void procfrdrvreq( char*, char* );
+static void procinforeq( char*, char* );
+static void procuvsnreq( char*, char* );
+static void procufilreq( char*, char* );
+static void procstatreq( char*, char* );
+static void procmountreq( char*, char* );
+static void prockilltreq( char*, char* );
+static void procposreq( char*, char* );
+static void procrlsreq( char*, char* );
+static void procrsltreq( char*, char* );
+static void procrsvreq( char*, char* );
+static void procrstatreq( char*, char* );
 
 char *getconfent();
 
@@ -902,7 +902,7 @@ int initrrt()
 	return (0);
 }
 
-void procreq(int req_type,
+static void procreq(int req_type,
              char *req_data,
              char *clienthost)
 {
@@ -958,7 +958,7 @@ void procreq(int req_type,
 	}
 }
 
-void procconfreq(char *req_data,
+static void procconfreq(char *req_data,
                  char *clienthost)
 {
 	int c;
@@ -1036,7 +1036,7 @@ reply:
 		close (rpfd);
 }
 
-void procdinforeq(char *req_data,
+static void procdinforeq(char *req_data,
                   char *clienthost)
 {
 	int c;
@@ -1105,7 +1105,7 @@ reply:
 	sendrep (rpfd, TAPERC, c);
 }
 
-void procfrdrvreq(char *req_data,
+static void procfrdrvreq(char *req_data,
                   char *clienthost)
 {
 	int found;
@@ -1206,7 +1206,7 @@ void procfrdrvreq(char *req_data,
 	close (rpfd);
 }
 
-void procinforeq(char *req_data,
+static void procinforeq(char *req_data,
                  char *clienthost)
 {
 	int c;
@@ -1274,7 +1274,7 @@ reply:
 	sendrep (rpfd, TAPERC, c);
 }
 
-void prockilltreq(char *req_data,
+static void prockilltreq(char *req_data,
                   char *clienthost)
 {
 	unsigned int i;
@@ -1335,7 +1335,7 @@ void prockilltreq(char *req_data,
 	close (rpfd);
 }
 
-void procmountreq(char *req_data,
+static void procmountreq(char *req_data,
                   char *clienthost)
 {
 	char *acctname;
@@ -1708,7 +1708,7 @@ reply:
 		close (rpfd);
 }
 
-void procposreq(char *req_data,
+static void procposreq(char *req_data,
                 char *clienthost)
 {
 	int blksize;
@@ -1994,7 +1994,7 @@ reply:
 		close (rpfd);
 }
 
-void procrlsreq(char *req_data,
+static void procrlsreq(char *req_data,
                 char *clienthost)
 {
 	int c, n;
@@ -2119,7 +2119,7 @@ reply:
 		sendrep (rpfd, TAPERC, c);
 }
 
-void procrsltreq(char *req_data,
+static void procrsltreq(char *req_data,
                  char *clienthost)
 {
 	int c;
@@ -2285,7 +2285,7 @@ reply:
 	sendrep (rpfd, TAPERC, c);
 }
 
-void procrsvreq(char *req_data,
+static void procrsvreq(char *req_data,
                 char *clienthost)
 {
 	int c;
@@ -2405,7 +2405,7 @@ reply:
 	sendrep (rpfd, TAPERC, c);
 }
 
-void procrstatreq(char *req_data,
+static void procrstatreq(char *req_data,
                   char *clienthost)
 {
 	gid_t gid;
@@ -2448,7 +2448,7 @@ void procrstatreq(char *req_data,
 	sendrep (rpfd, TAPERC, 0);
 }
 
-void procstatreq(char *req_data,
+static void procstatreq(char *req_data,
                  char *clienthost)
 {
 	gid_t gid;
@@ -2502,7 +2502,7 @@ void procstatreq(char *req_data,
 	sendrep (rpfd, TAPERC, 0);
 }
 
-void procufilreq(char *req_data,
+static void procufilreq(char *req_data,
                  char *clienthost)
 {
 	int blksize;
@@ -2550,7 +2550,7 @@ void procufilreq(char *req_data,
 	close (rpfd);
 }
 
-void procuvsnreq(char *req_data,
+static void procuvsnreq(char *req_data,
                  char *clienthost)
 {
 	gid_t gid;
