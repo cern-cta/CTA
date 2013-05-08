@@ -11,39 +11,39 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-config
 Architecture: any
-Recommends: castor-lib, castor-lib-oracle
 Description: castor (Cern Advanced STORage system)
  castor.conf example
 
 Package: castor-devel
 Architecture: any
-Depends: castor-lib
+Depends: castor-lib = %{version}-%{release}
 XBS-Group: Client
 Description: castor (Cern Advanced STORage system)
  API
 
 Package: castor-gc-server
 Architecture: any
-Depends: logrotate
+Depends: logrotate, castor-lib = %{version}-%{release}
 Description: castor (Cern Advanced STORage system)
  Garbage collector, running on every worker node
 
 Package: castor-hsmtools
 Architecture: any
-Depends: castor-lib
+Depends: castor-lib = %{version}-%{release}
 Build-Depends: zlib-devel
 Description: castor (Cern Advanced STORage system)
  HSM Administration tools e.g. reclaim
 
 Package: castor-dbtools
 Architecture: any
+Depends: castor-lib-oracle, cx_Oracle >= 5.1.1, castor-lib = %{version}-%{release}
 XBS-Obsoletes: castor-repack-client, castor-repack-server
 Description: castor (Cern Advanced STORage system)
  DB Administration tools
 
 Package: castor-job
 Architecture: any
-Depends: logrotate
+Depends: logrotate, castor-lib = %{version}-%{release}
 Build-Depends: libattr-devel
 Description: castor (Cern Advanced STORage system)
  The job giving user access to data on the worker nodes
@@ -65,19 +65,19 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-transfer-manager
 Architecture: any
-Depends: python, logrotate, python-daemon, castor-dbtools, python-rpyc
+Depends: python, logrotate, python-daemon, castor-dbtools, python-rpyc, castor-lib = %{version}-%{release}
 Description: castor (Cern Advanced STORage system)
  Transfer manager daemon for Castor, central server package
 
 Package: castor-transfer-manager-client
 Architecture: any
-Depends: python, logrotate, python-rpyc
+Depends: python, logrotate, python-rpyc, castor-lib = %{version}-%{release}
 Description: castor (Cern Advanced STORage system)
  Transfer manager daemon for Castor, client package
 
 Package: castor-diskserver-manager
 Architecture: any
-Depends: python, logrotate, python-daemon, python-rpyc, castor-job
+Depends: python, logrotate, python-daemon, python-rpyc, castor-job, castor-lib = %{version}-%{release}
 Conflicts: castor-dbtools, castor-transfer-manager
 Description: castor (Cern Advanced STORage system)
  Disk server manager of CASTOR
@@ -85,74 +85,79 @@ Description: castor (Cern Advanced STORage system)
 Package: castor-lib-oracle
 Architecture: any
 Build-Depends: oracle-instantclient-devel
+Depends: castor-lib = %{version}-%{release}
 Description: castor (Cern Advanced STORage system)
  Static and shared libraries for Oracle access
 
 Package: castor-ns-client
 Architecture: any
+Depends: castor-lib = %{version}-%{release}
 XBS-Group: Client
 Description: castor (Cern Advanced STORage system)
  Name server clients
 
 Package: castor-ns-server
 Architecture: any
-Depends: logrotate
+Depends: logrotate, castor-lib = %{version}-%{release}
 Build-Depends: oracle-instantclient-precomp
 Description: castor (Cern Advanced STORage system)
  Name server daemon
 
 Package: castor-rfio-client
 Architecture: any
+Depends: castor-lib = %{version}-%{release}
 XBS-Group: Client
 Description: castor (Cern Advanced STORage system)
  RFIO clients
 
 Package: castor-rfio-server
 Architecture: any
-Depends: logrotate
+Depends: logrotate, castor-lib = %{version}-%{release}
 Build-Depends: xfsprogs-devel, libattr-devel, zlib-devel
 Description: castor (Cern Advanced STORage system)
  RFIO server
 
 Package: castor-rh-server
 Architecture: any
-Depends: logrotate, castor-lib-oracle
+Depends: logrotate, libmemcached >= 0.34, castor-lib-oracle, castor-lib = %{version}-%{release}
 Build-Depends: libmemcached-devel >= 0.34
 Description: castor (Cern Advanced STORage system)
  Request Handler server
 
 Package: castor-rmc-server
 Architecture: any
-Depends: logrotate
+Depends: logrotate, castor-lib = %{version}-%{release}
 Description: castor (Cern Advanced STORage system)
  Remote Media Controller server
 
 Package: castor-rtcopy-server
 Architecture: any
-Depends: logrotate, zlib-devel
+Depends: logrotate, zlib-devel, castor-lib = %{version}-%{release}
 Description: castor (Cern Advanced STORage system)
  Remote Tape Copy server running on a tape server
 
 Package: castor-stager-client
 Architecture: any
+Depends: castor-lib = %{version}-%{release}
 XBS-Group: Client
 Description: castor (Cern Advanced STORage system)
  Stager clients
 
 Package: castor-stager-server
 Architecture: any
-Depends: logrotate, castor-lib-oracle
+Depends: logrotate, castor-lib-oracle, castor-lib = %{version}-%{release}
 Description: castor (Cern Advanced STORage system)
  Stager server
 
 Package: castor-tape-tools
 Architecture: any
+Depends: castor-lib = %{version}-%{release}
 Description: castor (Cern Advanced STORage system)
  Tape tools
 
 Package: castor-tape-server
 Architecture: any
-Depends: logrotate, stk-ssi
+Depends: logrotate, stk-ssi, castor-lib = %{version}-%{release}
 Conflicts: castor-tape-server-nostk
 Build-Depends: stk-ssi-devel, stk-ssi
 Description: castor (Cern Advanced STORage system)
@@ -160,25 +165,27 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-tape-server-nostk
 Architecture: any
-Depends: logrotate
+Depends: logrotate, castor-lib = %{version}-%{release}
 Description: castor (Cern Advanced STORage system)
  Tape server
 
 Package: castor-upv-client
 Architecture: any
+Depends: castor-lib = %{version}-%{release}
 XBS-Group: Client
 Description: castor (Cern Advanced STORage system)
  User Privilege clients
 
 Package: castor-upv-server
 Architecture: any
-Depends: logrotate
+Depends: logrotate, castor-lib = %{version}-%{release}
 Build-Depends: oracle-instantclient-precomp
 Description: castor (Cern Advanced STORage system)
  User Privilege server
 
 Package: castor-vdqm2-client
 Architecture: any
+Depends: castor-lib = %{version}-%{release}
 XBS-Obsoletes: castor-vdqm-client
 XBS-Group: Client
 Description: castor (Cern Advanced STORage system)
@@ -186,33 +193,34 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-vdqm2-server
 Architecture: any
+Depends: logrotate, castor-lib-oracle, castor-vdqm2-lib-oracle, castor-lib = %{version}-%{release}
 XBS-Obsoletes: castor-vdqm-server
-Depends: logrotate, castor-lib-oracle, castor-vdqm2-lib-oracle
 Description: castor (Cern Advanced STORage system)
  Volume Drive and Queue Manager server version 2
 
 Package: castor-vdqm2-lib-oracle
 Architecture: any
-Depends: logrotate
+Depends: logrotate, castor-lib = %{version}-%{release}
 Description: castor (Cern Advanced STORage system)
  Volume Drive and Queue Manager server version 2 library
 
 Package: castor-vmgr-client
 Architecture: any
+Depends: castor-lib = %{version}-%{release}
 XBS-Group: Client
 Description: castor (Cern Advanced STORage system)
  Volume Manager clients
 
 Package: castor-vmgr-server
 Architecture: any
-Depends: logrotate
+Depends: logrotate, castor-lib = %{version}-%{release}
 Build-Depends: oracle-instantclient-precomp
 Description: castor (Cern Advanced STORage system)
  Volume Manager server
 
 Package: castor-lib-tape
 Architecture: any
-Depends: castor-lib
+Depends: castor-lib = %{version}-%{release}
 Build-Depends: python-devel
 XBS-Obsoletes: castor-lib-policy, castor-lib-tapeutils
 Description: castor (Cern Advanced STORage system)
@@ -220,6 +228,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-gridftp-dsi-common
 Architecture: any
+Depends: castor-lib = %{version}-%{release}
 Description: castor (Cern Advanced STORage system)
  Commonnalities between internal and external CASTOR2 gridftp2 DSI module
 
@@ -232,35 +241,35 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-gridftp-dsi-ext
 Architecture: any
-Depends: castor-lib, xinetd, globus-gridftp-server, globus-common, castor-gridftp-dsi-common
+Depends: xinetd, globus-gridftp-server, globus-common, castor-gridftp-dsi-common
 Build-Depends: globus-gridftp-server-devel, globus-common-devel
 Description: castor (Cern Advanced STORage system)
  External CASTOR2 gridftp2 DSI module
 
 Package: castor-gridftp-dsi-xroot
 Architecture: any
-Depends: castor-lib, globus-gridftp-server, globus-common, castor-gridftp-dsi-common, xrootd-server, xrootd-client
+Depends: globus-gridftp-server, globus-common, castor-gridftp-dsi-common, xrootd-server, xrootd-client
 Build-Depends: globus-gridftp-server-devel, globus-common-devel, xrootd-server, xrootd-client, xrootd-libs-devel, xrootd-client-devel
 Description: castor (Cern Advanced STORage system)
  External CASTOR2 gridftp2 DSI module with xroot support
 
 Package: castor-tapebridge-server
 Architecture: any
-Depends: logrotate, castor-lib-tape, castor-rtcopy-server = %{version}-%{release}
+Depends: logrotate, castor-rtcopy-server, castor-lib-tape = %{version}-%{release}
 XBS-Obsoletes: castor-aggregator-server
 Description: castor (Cern Advanced STORage system)
  Tape Bridge Daemon
 
 Package: castor-tapebridge-client
 Architecture: any
-Depends: logrotate, castor-lib-tape
+Depends: logrotate, castor-lib-tape = %{version}-%{release}
 XBS-Obsoletes: castor-aggregator-client
 Description: castor (Cern Advanced STORage system)
  Tape Bridge Clients
 
 Package: castor-tapegateway-server
 Architecture: any
-Depends: logrotate, castor-lib-oracle, castor-lib-tape
+Depends: logrotate, castor-lib-oracle, castor-lib-tape = %{version}-%{release}
 Description: castor (Cern Advanced STORage system)
  Tape Gateway Daemon
 
@@ -301,7 +310,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-xrootd-plugin
 Architecture: any
-Depends: xrootd-server
+Depends: xrootd-server = 3.3.2, castor-lib = %{version}-%{release}
 Build-Depends: xrootd-server, xrootd-client, xrootd-libs-devel, xrootd-client-devel, xrootd-server-devel, xrootd-private-devel, xrootd-cl, xrootd-cl-devel
 Description: castor (Cern Advanced STORage system)
  Xrootd support of Castor
