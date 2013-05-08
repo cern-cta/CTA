@@ -1270,12 +1270,10 @@ BEGIN
   -- This call autocommits all segments in the NameServer
   setOrReplaceSegmentsForFiles@RemoteNS(inReqId);
   -- Retrieve results from the NS DB in bulk and clean data
-  SELECT isOnlyLog, timeinfo, errorCode, msg, fileId, params
-    BULK COLLECT INTO outNSIsOnlyLogs, outNSTimeInfos, outNSErrorCodes, outNSMsgs, outNSFileIds, outNSParams
-    FROM SetSegsForFilesResultsHelper@RemoteNS
-   WHERE reqId = inReqId;
   DELETE FROM SetSegsForFilesResultsHelper@RemoteNS
-   WHERE reqId = inReqId;
+   WHERE reqId = inReqId
+  RETURNING isOnlyLog, timeinfo, errorCode, msg, fileId, params
+    BULK COLLECT INTO outNSIsOnlyLogs, outNSTimeInfos, outNSErrorCodes, outNSMsgs, outNSFileIds, outNSParams;
   -- this commits the remote transaction
   COMMIT;
 END;
@@ -1371,7 +1369,7 @@ BEGIN
     ns_setOrReplaceSegments(varReqId, varNSIsOnlyLogs, varNSTimeInfos, varNSErrorCodes, varNSMsgs, varNSFileIds, varNSParams);
 
     -- Process the results
-    FOR i IN varNSFileIds.FIRST .. varNSFileIds.LAST LOOP
+    FOR i IN 1 .. varNSFileIds.COUNT LOOP
       -- First log on behalf of the NS
       -- We classify the log level based on the error code here.
       -- Current error codes are:
