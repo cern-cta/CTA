@@ -65,7 +65,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-transfer-manager
 Architecture: any
-Depends: python, logrotate, python-daemon, castor-dbtools, python-rpyc, castor-lib = %{version}-%{release}
+Depends: python, logrotate, cx_Oracle >= 5.1.1, python-daemon, python-rpyc, castor-lib = %{version}-%{release}
 Description: castor (Cern Advanced STORage system)
  Transfer manager daemon for Castor, central server package
 
@@ -234,21 +234,21 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-gridftp-dsi-int
 Architecture: any
-Depends: globus-gridftp-server, globus-common, castor-gridftp-dsi-common
+Depends: globus-gridftp-server-progs, globus-common, castor-gridftp-dsi-common
 Build-Depends: libattr-devel, zlib-devel, globus-gridftp-server-devel, globus-common-devel
 Description: castor (Cern Advanced STORage system)
  Internal CASTOR2 gridftp2 DSI module
 
 Package: castor-gridftp-dsi-ext
 Architecture: any
-Depends: xinetd, globus-gridftp-server, globus-common, castor-gridftp-dsi-common
+Depends: xinetd, globus-gridftp-server-progs, globus-common, castor-gridftp-dsi-common
 Build-Depends: globus-gridftp-server-devel, globus-common-devel
 Description: castor (Cern Advanced STORage system)
  External CASTOR2 gridftp2 DSI module
 
 Package: castor-gridftp-dsi-xroot
 Architecture: any
-Depends: globus-gridftp-server, globus-common, castor-gridftp-dsi-common, xrootd-server, xrootd-client
+Depends: globus-gridftp-server-progs, globus-common, castor-gridftp-dsi-common, xrootd-server, xrootd-client
 Build-Depends: globus-gridftp-server-devel, globus-common-devel, xrootd-server, xrootd-client, xrootd-libs-devel, xrootd-client-devel
 Description: castor (Cern Advanced STORage system)
  External CASTOR2 gridftp2 DSI module with xroot support
