@@ -119,9 +119,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- Small infusion of paranoia ;-) We should never reach that point...
     ROLLBACK;
-    RAISE_APPLICATION_ERROR (-20119,
-      'No recall or migration mount found for mountTransactionId ' ||
-       inMountTransactionId || ' in tg_endTapeSession');
+    RAISE_APPLICATION_ERROR (-20119, 'endTapeSession: no recall or migration mount found');
   END;
 END;
 /
@@ -997,7 +995,7 @@ BEGIN
                  ' nbMounts=' || TO_CHAR(varTotalNbMounts) ||
                  ' dataAmountInQueue=' || TO_CHAR(varDataAmount) ||
                  ' nbFilesInQueue=' || TO_CHAR(varNbFiles) ||
-                 ' oldestCreationTime=' || TO_CHAR(varOldestCreationTime));
+                 ' oldestCreationTime=' || TO_CHAR(TRUNC(varOldestCreationTime)));
         -- no need to continue as we could not find a single file to migrate
         EXIT;
       ELSE
@@ -1009,7 +1007,7 @@ BEGIN
                  ' nbMounts=' || TO_CHAR(varTotalNbMounts) ||
                  ' dataAmountInQueue=' || TO_CHAR(varDataAmount) ||
                  ' nbFilesInQueue=' || TO_CHAR(varNbFiles) ||
-                 ' oldestCreationTime=' || TO_CHAR(varOldestCreationTime));
+                 ' oldestCreationTime=' || TO_CHAR(TRUNC(varOldestCreationTime)));
       END IF;
     END LOOP;
     -- force creation of a unique mount in case no mount was created at all and some files are too old
@@ -1024,7 +1022,7 @@ BEGIN
                  ' nbMounts=' || TO_CHAR(varTotalNbMounts) ||
                  ' dataAmountInQueue=' || TO_CHAR(varDataAmount) ||
                  ' nbFilesInQueue=' || TO_CHAR(varNbFiles) ||
-                 ' oldestCreationTime=' || TO_CHAR(varOldestCreationTime));
+                 ' oldestCreationTime=' || TO_CHAR(TRUNC(varOldestCreationTime)));
       ELSE
         -- log "startMigrationMounts: created new migration mount based on age"
         logToDLF(NULL, dlf.LVL_SYSTEM, dlf.MIGMOUNT_NEW_MOUNT_AGE, 0, '', 'tapegatewayd',
@@ -1034,7 +1032,7 @@ BEGIN
                  ' nbMounts=' || TO_CHAR(varTotalNbMounts) ||
                  ' dataAmountInQueue=' || TO_CHAR(varDataAmount) ||
                  ' nbFilesInQueue=' || TO_CHAR(varNbFiles) ||
-                 ' oldestCreationTime=' || TO_CHAR(varOldestCreationTime));
+                 ' oldestCreationTime=' || TO_CHAR(TRUNC(varOldestCreationTime)));
       END IF;
     ELSE
       IF varTotalNbMounts = varNbPreExistingMounts THEN 
@@ -1045,7 +1043,7 @@ BEGIN
                  ' nbMounts=' || TO_CHAR(varTotalNbMounts) ||
                  ' dataAmountInQueue=' || TO_CHAR(nvl(varDataAmount,0)) ||
                  ' nbFilesInQueue=' || TO_CHAR(nvl(varNbFiles,0)) ||
-                 ' oldestCreationTime=' || TO_CHAR(nvl(varOldestCreationTime,0)));
+                 ' oldestCreationTime=' || TO_CHAR(TRUNC(nvl(varOldestCreationTime,0))));
       END IF;
     END IF;
     COMMIT;
@@ -1073,12 +1071,12 @@ BEGIN
         varVID VARCHAR2(2048);
         varDataAmount INTEGER;
         varNbFiles INTEGER;
-        varMaxAge NUMBER;
+        varOldestCreationTime NUMBER;
       BEGIN
         -- loop over the best candidates until we have enough mounts
         WHILE varNbMounts + varNbExtraMounts < rg.nbDrives LOOP
-          SELECT * INTO varVID, varDataAmount, varNbFiles, varMaxAge FROM (
-            SELECT vid, SUM(fileSize) dataAmount, COUNT(*) nbFiles, gettime() - MIN(creationTime) maxAge
+          SELECT * INTO varVID, varDataAmount, varNbFiles, varOldestCreationTime FROM (
+            SELECT vid, SUM(fileSize) dataAmount, COUNT(*) nbFiles, MIN(creationTime)
               FROM RecallJob
              WHERE recallGroup = rg.id
              GROUP BY vid
@@ -1100,7 +1098,7 @@ BEGIN
                    ' nbNewMountsSoFar=' || TO_CHAR(varNbExtraMounts) ||
                    ' dataAmountInQueue=' || TO_CHAR(varDataAmount) ||
                    ' nbFilesInQueue=' || TO_CHAR(varNbFiles) ||
-                   ' oldestCreationTime=' || TO_CHAR(varMaxAge));
+                   ' oldestCreationTime=' || TO_CHAR(TRUNC(varOldestCreationTime)));
         END LOOP;
       EXCEPTION WHEN NO_DATA_FOUND THEN
         -- nothing left to recall, just exit nicely
