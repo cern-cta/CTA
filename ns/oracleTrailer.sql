@@ -571,7 +571,6 @@ BEGIN
     IF varRC != 0 THEN
       varParams := 'ErrorCode='|| to_char(varRC) ||' ErrorMessage="'|| varParams ||'"';
       addSegResult(0, inReqId, varRC, 'Error creating/replacing segment', s.fileId, varParams);
-      COMMIT;
     END IF;
     varCount := varCount + 1;
   END LOOP;
@@ -591,6 +590,16 @@ BEGIN
   -- Moreover, temporary tables are not supported with distributed transactions,
   -- so the stager will remotely open the SetSegsForFilesResultsHelper table, and
   -- we clean the tables by hand using the reqId key.
+EXCEPTION WHEN OTHERS THEN
+  -- In case of an uncaught exception, log it and preserve the SetSegsForFilesResultsHelper
+  -- content for the stager as other files may have already been committed. Any other
+  -- remaining file from the input will have to be migrated again.
+  varParams := 'Function="setOrReplaceSegmentsForFiles" errorMessage="' || SQLERRM
+        ||'" stackTrace="' || dbms_utility.format_error_backtrace ||'"';
+  addSegResult(1, inReqId, SQLCODE, 'Uncaught exception', 0, varParams);
+  DELETE FROM SetSegsForFilesInputHelper
+   WHERE reqId = inReqId;
+  COMMIT;
 END;
 /
 
