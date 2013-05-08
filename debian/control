@@ -310,7 +310,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-xrootd-plugin
 Architecture: any
-Depends: xrootd-server = 3.3.2, castor-lib = %{version}-%{release}
+Depends: xrootd-server >= 3.3.2, castor-lib = %{version}-%{release}
 Build-Depends: xrootd-server, xrootd-client, xrootd-libs-devel, xrootd-client-devel, xrootd-server-devel, xrootd-private-devel, xrootd-cl, xrootd-cl-devel
 Description: castor (Cern Advanced STORage system)
  Xrootd support of Castor
