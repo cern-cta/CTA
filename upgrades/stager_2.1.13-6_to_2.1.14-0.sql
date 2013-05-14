@@ -166,6 +166,10 @@ END;
 -- add online flag to diskservers 
 ALTER TABLE DiskServer ADD (hwOnline INTEGER DEFAULT 0 CONSTRAINT NN_DiskServer_hwOnline NOT NULL);
 
+-- add parameters for mount statistics to FilesToRecallHelper table
+ALTER TABLE FilesToRecallHelper ADD (copyNb INTEGER, euid NUMBER, egid NUMBER,
+                                     VID VARCHAR2(10), fileSize INTEGER, creationTime INTEGER,
+                                     nbRetriesInMount INTEGER, nbMounts INTEGER);
 
 /* PL/SQL code revalidation */
 /****************************/
