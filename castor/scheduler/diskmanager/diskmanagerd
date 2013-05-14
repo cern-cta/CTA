@@ -179,8 +179,9 @@ def initQueues():
         transfer = tupleToTransfer(transferTuple)
         runningTransfers.add(RunningTransfer(scheduler, None, startTime, transfer))
       # rebuild transfer's queue
-      for transfer in \
+      for transferTuple in \
               connectionpool.connections.getQueueingTransfers(scheduler, socket.getfqdn(), timeout=timeout):
+        transfer = tupleToTransfer(transferTuple)
         transferQueue.put(scheduler, transfer)
     except connectionpool.Timeout:
       dlf.writeerr(msgs.NOQUEUERETRIEVED, Scheduler=scheduler, Type='Timeout', Message='Timeout used : %d' % timeout)
