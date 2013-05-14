@@ -57,9 +57,55 @@ AS
   REPACK_ABORTING        CONSTANT PLS_INTEGER := 4;
   REPACK_ABORTED         CONSTANT PLS_INTEGER := 5;
 
+  TAPE_DISABLED          CONSTANT PLS_INTEGER := 1;
+  TAPE_EXPORTED          CONSTANT PLS_INTEGER := 2;
+  TAPE_BUSY              CONSTANT PLS_INTEGER := 4;
+  TAPE_FULL              CONSTANT PLS_INTEGER := 8;
+  TAPE_RDONLY            CONSTANT PLS_INTEGER := 16;
+  TAPE_ARCHIVED          CONSTANT PLS_INTEGER := 32;
 END tconst;
 /
 
+CREATE OR REPLACE FUNCTION tapeStatusToString(status IN NUMBER) RETURN VARCHAR2 AS
+  res VARCHAR2(2048);
+  rebuildValue NUMBER := 0;
+BEGIN
+  IF status = 0 THEN RETURN 'OK'; END IF;
+  IF BITAND(status, tconst.TAPE_DISABLED) != 0 THEN
+    res := res || '|DISABLED';
+    rebuildValue := rebuildValue + tconst.TAPE_DISABLED;
+  END IF;
+  IF BITAND(status, tconst.TAPE_EXPORTED) != 0  THEN
+    res := res || '|EXPORTED';
+    rebuildValue := rebuildValue + tconst.TAPE_EXPORTED;
+  END IF;
+  IF BITAND(status, tconst.TAPE_BUSY) != 0  THEN
+    res := res || '|BUSY';
+    rebuildValue := rebuildValue + tconst.TAPE_BUSY;
+  END IF;
+  IF BITAND(status, tconst.TAPE_FULL) != 0  THEN
+    res := res || '|FULL';
+    rebuildValue := rebuildValue + tconst.TAPE_FULL;
+  END IF;
+  IF BITAND(status, tconst.TAPE_RDONLY) != 0  THEN
+    res := res || '|RDONLY';
+    rebuildValue := rebuildValue + tconst.TAPE_RDONLY;
+  END IF;
+  IF BITAND(status, tconst.TAPE_ARCHIVED) != 0  THEN
+    res := res || '|ARCHIVED';
+    rebuildValue := rebuildValue + tconst.TAPE_ARCHIVED;
+  END IF;
+  IF res IS NULL THEN
+    res := 'UNKNOWN:' || TO_CHAR(status);
+  ELSE
+    res := SUBSTR(res, 2);
+    IF rebuildValue != status THEN
+      res := res || '|UNKNOWN:' || TO_CHAR(status-rebuildValue);
+    END IF;
+  END IF;
+  RETURN res;
+END;
+/
 
 /**
  * Package containing the definition of all disk related PL/SQL constants.
@@ -182,6 +228,7 @@ AS
   RECALL_NO_SEG_FOUND          CONSTANT VARCHAR2(2048) := 'createRecallCandidate: no valid segment to recall found';
   RECALL_NO_SEG_FOUND_AT_ALL   CONSTANT VARCHAR2(2048) := 'createRecallCandidate: no segment found for this file. File is probably lost';
   RECALL_INVALID_SEGMENT       CONSTANT VARCHAR2(2048) := 'createRecallCandidate: found unusable segment';
+  RECALL_UNUSABLE_TAPE         CONSTANT VARCHAR2(2048) := 'createRecallCandidate: found segment on unusable tape';
   RECALL_CREATING_RECALLJOB    CONSTANT VARCHAR2(2048) := 'createRecallCandidate: created new RecallJob';
   RECALL_MISSING_COPIES        CONSTANT VARCHAR2(2048) := 'createRecallCandidate: detected missing copies on tape';
   RECALL_MISSING_COPIES_NOOP   CONSTANT VARCHAR2(2048) := 'createRecallCandidate: detected missing copies on tape, but migrations ongoing';

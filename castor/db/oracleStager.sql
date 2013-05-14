@@ -3077,8 +3077,10 @@ CREATE OR REPLACE FUNCTION createRecallJobs(inCfId IN INTEGER,
                                             inEgid IN INTEGER,
                                             inRequestTime IN NUMBER,
                                             inLogParams IN VARCHAR2) RETURN INTEGER AS
+  -- list of all valid segments, whatever the tape status. Used to trigger remigrations
   varAllCopyNbs "numList" := "numList"();
   varAllVIDs strListTable := strListTable();
+  -- whether we found a segment at all (valid or not). Used to detect potentially lost files
   varFoundSeg boolean := FALSE;
   varI INTEGER := 1;
   NO_TAPE_ROUTE EXCEPTION;
@@ -3095,40 +3097,42 @@ BEGIN
                       AND Vmgr_tape_side.VID = Cns_seg_metadata.VID
                     ORDER BY copyno, fsec) LOOP
       varFoundSeg := TRUE;
-      -- Is the segment valid, on a valid tape ?
-      IF varSeg.segStatus = '-' AND varSeg.tapeStatus NOT IN (1, 2, 32) THEN  -- DISABLED, EXPORTED, ARCHIVED
-        -- create recallJob
-        INSERT INTO RecallJob (id, castorFile, copyNb, recallGroup, svcClass, euid, egid,
-                               vid, fseq, status, fileSize, creationTime, blockId, fileTransactionId)
-        VALUES (ids_seq.nextval, inCfId, varSeg.copyno, inRecallGroupId, inSvcClassId,
-                inEuid, inEgid, varSeg.vid, varSeg.fseq, tconst.RECALLJOB_PENDING, inFileSize, inRequestTime,
-                varSeg.blockId, NULL);
-        -- log "created new RecallJob"
-        logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_CREATING_RECALLJOB, inFileId, inNsHost, 'stagerd',
-                 inLogParams || ' copyNb=' || TO_CHAR(varSeg.copyno) || ' TPVID=' || varSeg.vid ||
-                 ' fseq=' || TO_CHAR(varSeg.fseq || ' FileSize=' || TO_CHAR(inFileSize)));
+      -- Is the segment valid
+      IF varSeg.segStatus = '-' THEN
         -- remember the copy number and tape
         varAllCopyNbs.EXTEND;
         varAllCopyNbs(varI) := varSeg.copyno;
         varAllVIDs.EXTEND;
         varAllVIDs(varI) := varSeg.vid;
         varI := varI + 1;
+        -- Is the segment on a valid tape from recall point of view ?
+        IF BITAND(varSeg.tapeStatus, TAPE_DISABLED) = 0 AND
+           BITAND(varSeg.tapeStatus, TAPE_EXPORTED) = 0 AND
+           BITAND(varSeg.tapeStatus, TAPE_ARCHIVED) = 0 THEN
+          -- create recallJob
+          INSERT INTO RecallJob (id, castorFile, copyNb, recallGroup, svcClass, euid, egid,
+                                 vid, fseq, status, fileSize, creationTime, blockId, fileTransactionId)
+          VALUES (ids_seq.nextval, inCfId, varSeg.copyno, inRecallGroupId, inSvcClassId,
+                  inEuid, inEgid, varSeg.vid, varSeg.fseq, tconst.RECALLJOB_PENDING, inFileSize, inRequestTime,
+                  varSeg.blockId, NULL);
+          -- log "created new RecallJob"
+          logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_CREATING_RECALLJOB, inFileId, inNsHost, 'stagerd',
+                   inLogParams || ' copyNb=' || TO_CHAR(varSeg.copyno) || ' TPVID=' || varSeg.vid ||
+                   ' fseq=' || TO_CHAR(varSeg.fseq || ' FileSize=' || TO_CHAR(inFileSize)));
+        ELSE
+          -- invalid tape found. Log it.
+          -- "createRecallCandidate: found segment on unusable tape"
+          logToDLF(NULL, dlf.LVL_DEBUG, dlf.RECALL_UNUSABLE_TAPE, inFileId, inNsHost, 'stagerd',
+                   inLogParams || ' segStatus=OK tapeStatus=' || tapeStatusToString(varSeg.tapeStatus));
+        END IF;
       ELSE
-        -- invalid segment or invalid tape found. Log it.
+        -- invalid segment tape found. Log it.
         -- "createRecallCandidate: found unusable segment"
         logToDLF(NULL, dlf.LVL_NOTICE, dlf.RECALL_INVALID_SEGMENT, inFileId, inNsHost, 'stagerd',
                  inLogParams || ' segStatus=' ||
                  CASE varSeg.segStatus WHEN '-' THEN 'OK'
                                        WHEN 'd' THEN 'DISABLED'
-                                       ELSE 'UNKNOWN:' || varSeg.segStatus END || ' tapeStatus=' ||
-                 CASE varSeg.tapeStatus WHEN 0 THEN 'OK' 
-                                        WHEN 1 THEN 'DISABLED'
-                                        WHEN 2 THEN 'EXPORTED'
-                                        WHEN 4 THEN 'BUSY'
-                                        WHEN 8 THEN 'FULL'
-                                        WHEN 16 THEN 'RDONLY'
-                                        WHEN 32 THEN 'ARCHIVED'
-                                        ELSE 'UNKNOWN:' || TO_CHAR(varSeg.tapeStatus) END);
+                                       ELSE 'UNKNOWN:' || varSeg.segStatus END);
       END IF;
     END LOOP;
   EXCEPTION WHEN OTHERS THEN
