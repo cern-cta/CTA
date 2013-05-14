@@ -10,7 +10,6 @@
 #include <string>
 
 #include "castor/stager/daemon/RmHandler.hpp"
-#include "castor/stager/daemon/OpenRequestHandler.hpp"
 #include "castor/stager/daemon/RequestHelper.hpp"
 #include "castor/stager/daemon/ReplyHelper.hpp"
 
@@ -28,7 +27,7 @@ namespace castor{
     namespace daemon{
 
 
-      void RmHandler::handle() throw(castor::exception::Exception)
+      bool RmHandler::handle() throw(castor::exception::Exception)
       {
         // We completely override the inherited behavior
         // set the username and groupname for logging
@@ -97,6 +96,7 @@ namespace castor{
           castor::dlf::dlf_writep(reqHelper->requestUuid, DLF_LVL_ERROR, STAGER_RM, 2, params, &(reqHelper->cnsFileid));
           throw(e);
         }
+        return true;
       }
 
     }//end daemon

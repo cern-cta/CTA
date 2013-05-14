@@ -26,7 +26,6 @@
 #include "castor/stager/daemon/RequestHelper.hpp"
 #include "castor/stager/daemon/ReplyHelper.hpp"
 #include "castor/stager/daemon/RequestHandler.hpp"
-#include "castor/stager/daemon/OpenRequestHandler.hpp"
 #include "castor/stager/daemon/StageRequestSvcThread.hpp"
 
 #include "castor/stager/daemon/PutDoneHandler.hpp"

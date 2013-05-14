@@ -41,7 +41,7 @@ namespace castor{
         ~UpdateHandler() throw() {};
         
         /* handler for the Update request  */
-        virtual void handle() throw(castor::exception::Exception);
+        virtual bool handle() throw(castor::exception::Exception);
         
       }; //end UpdateHandler class
       

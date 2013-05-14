@@ -105,39 +105,6 @@ namespace castor {
         throw (castor::exception::Exception) = 0;
 
       /**
-       * Retrieves a list of diskcopies for a Read job to be scheduled.
-       * Looks at all diskCopies for the file a SubRequest
-       * deals with and depending on them, decides whether
-       * to schedule the SubRequest. In case it can be scheduled,
-       * also returns a list of diskcopies available to the
-       * subrequest.
-       * The return value is a valid DiskCopy status and
-       * the scheduling decision is taken this way :
-       * -2,-3: no scheduling, subrequest put on WAITSUBREQ status.
-       * -1: no scheduling because of user error.
-       * DISKCOPY_STAGED (0): schedule + list of avail sources,
-         a DiskCopy was found and the SubRequest can be scheduled.
-       * DISKCOPY_WAITDISK2DISKCOPY (1): like above, plus the
-       * stager is allowed to replicate according to policies.
-       * DISKCOPY_WAITTAPERECALL (2): no scheduling, no DiskCopy
-         found anywhere, a tape recall is needed.
-       * DISKCOPY_WAITFS (5): the only available DiskCopy is in
-       * WAITFS, i.e. this is an Update inside PrepareToPut:
-       * recreateCastorFile is to be called in such a case.
-       * @param subreq the SubRequest to consider
-       * @param sources this is a list of DiskCopies that
-       * can be used by the subrequest.
-       * Note that the DiskCopies returned in sources must be
-       * deallocated by the caller.
-       * @return -3,-2,-1,0,1,2,5
-       * @exception Exception in case of system error
-       */
-      virtual int getDiskCopiesForJob
-      (castor::stager::SubRequest* subreq,
-       std::list<castor::stager::DiskCopyForRecall*>& sources)
-        throw (castor::exception::Exception) = 0;
-
-      /**
        * Processes a PToGet and PToUpdate subrequest.
        * @param subreq the SubRequest to consider
        * @return -2,-1,0,1,2, cf. return value for getDiskCopiesForJob.
@@ -229,45 +196,6 @@ namespace castor {
        */
       virtual bool updateAndCheckSubRequest
       (castor::stager::SubRequest *subreq)
-        throw (castor::exception::Exception) = 0;
-
-      /**
-       * Recreates a castorFile.
-       * Depending on the context, this method cleans up the
-       * database when a castor file is recreated or gets
-       * the unique DiskCopy of a castor file.
-       * When called in the context of a Put inside a
-       * PrepareToPut, the method returns the unique DiskCopy
-       * associated to the castorFile. This DiskCopy can be
-       * either in WAITFS, WAITFS_SCHEDULING or STAGEOUT
-       * status and is linked to the SubRequest.
-       * In all others cases, the method first
-       * checks whether the recreation is possible.
-       * A recreation is considered to be possible if
-       * no MigrationJob of the given file is in MIGRATIONJOB_SELECTED
-       * status and no DiskCopy of the file is in either
-       * WAITFS, WAITFS_SCHEDULING, WAITTAPERECALL or
-       * WAITDISK2DISKCOPY status. When recreation is not
-       * possible, a null pointer is returned, with the exception
-       * of WAITFS_SCHEDULING, where a DiskCopy is still returned
-       * for logging purposes.
-       * Else, all DiskCopies for the given file are marked
-       * INVALID (that is those not in DISKCOPY_FAILED
-       * status) and all TapeCopies are
-       * deleted. A new DiskCopy is then created in
-       * DISKCOPY_WAITFS status, linked to the given
-       * SubRequest returned.
-       * Note that the caller is responsible for the
-       * deletion of the returned DiskCopy (if any)
-       * @param castorFile the file to recreate
-       * @param subreq the SubRequest recreating the file
-       * @return the new DiskCopy in DISKCOPY_WAITFS|DISKCOPY_WAITFS_SCHEDULING
-       * status, or null if recreation is not possible.
-       * @exception Exception throws an Exception in case of error
-       */
-      virtual castor::stager::DiskCopyForRecall* recreateCastorFile
-      (castor::stager::CastorFile *castorFile,
-       castor::stager::SubRequest *subreq)
         throw (castor::exception::Exception) = 0;
 
       /**
@@ -370,6 +298,59 @@ namespace castor {
       virtual std::string getConfigOption(std::string confClass,
                                           std::string confKey,
                                           std::string defaultValue)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * handles a get request
+       * @param cfId the id of the castorFile concerned
+       * @param srId the id of the subrequest concerned
+       * @param fileId the fileId of the file concerned
+       * @param fileSize the size of the file concerned
+       */
+      virtual void handleGet(u_signed64 cfId,
+                             u_signed64 srId,
+                             struct Cns_fileid &fileId,
+                             u_signed64 fileSize)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * handles a prepareToGet request and returns a subrequest's status
+       * indicating whether we are going for a recall/d2dcopy (WAITTAPERECALL),
+       * whether we failed (FAILED) or whether we foudn the file (FINISHED)
+       * @param cfId the id of the castorFile concerned
+       * @param srId the id of the subrequest concerned
+       * @param fileId the fileId of the file concerned
+       * @param fileSize the size of the file concerned
+       */
+      virtual castor::stager::SubRequestStatusCodes
+      handlePrepareToGet(u_signed64 cfId,
+                         u_signed64 srId,
+                         struct Cns_fileid &fileId,
+                         u_signed64 fileSize)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * handles a put request
+       * @param cfId the id of the castorFile concerned
+       * @param srId the id of the subrequest concerned
+       * @param fileId the fileId of the file concerned
+       */
+      virtual void handlePut(u_signed64 cfId,
+                             u_signed64 srId,
+                             struct Cns_fileid &fileId)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * handles a prepareToPut request and returns a boolean indicating
+       * whether we need to reply to the client or not
+       * @param cfId the id of the castorFile concerned
+       * @param srId the id of the subrequest concerned
+       * @param fileId the fileId of the file concerned
+       * @param fileSize the size of the file concerned
+       */
+      virtual bool handlePrepareToPut(u_signed64 cfId,
+                                      u_signed64 srId,
+                                      struct Cns_fileid &fileId)
         throw (castor::exception::Exception) = 0;
 
       /**

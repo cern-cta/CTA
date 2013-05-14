@@ -43,31 +43,74 @@ namespace castor{
   namespace stager{
     namespace daemon{
 
-      void PrepareToUpdateHandler::handle() throw(castor::exception::Exception)
-      {
-        // Inherited behavior from RequestHandler, overriding the OpenRequestHandler one
-        RequestHandler::handle();
-        
-        /* check permissions and open the file according to the request type file */
-        bool recreate = reqHelper->openNameServerFile() || ((reqHelper->subrequest->flags() & O_TRUNC) == O_TRUNC);
-
+      bool PrepareToUpdateHandler::handle() throw(castor::exception::Exception) {
+        // call parent's handler method, check permissions and open the file according to the requested flags
+        bool recreate = OpenRequestHandler::handle() || ((reqHelper->subrequest->flags() & O_TRUNC) == O_TRUNC);
         /* get the castorFile entity and populate its links in the db */
         reqHelper->getCastorFile();
-
         reqHelper->logToDlf(DLF_LVL_DEBUG, STAGER_PREPARETOUPDATE, &(reqHelper->cnsFileid));
-        
         if(recreate) {
-          // delegate to PrepareToPut (may throw exception, which are forwarded)
-          PrepareToPutHandler* h = new PrepareToPutHandler(reqHelper);
-          h->handlePut();
-          delete h;
+          // call PL/SQL handlePrepareToPut method
+          ReplyHelper* stgReplyHelper = NULL;
+          try {
+            bool replyNeeded = reqHelper->stagerService->handlePrepareToPut(reqHelper->castorFile->id(),
+                                                                            reqHelper->subrequest->id(),
+                                                                            reqHelper->cnsFileid);
+            if (replyNeeded) {
+              /* we are gonna replyToClient so we dont  updateRep on DB explicitly */
+              reqHelper->subrequest->setStatus(SUBREQUEST_READY);
+              stgReplyHelper = new ReplyHelper();
+              stgReplyHelper->setAndSendIoResponse(reqHelper,&(reqHelper->cnsFileid), 0, "No Error");
+              stgReplyHelper->endReplyToClient(reqHelper);
+              delete stgReplyHelper;
+            }
+          } catch (oracle::occi::SQLException e) {
+            if (stgReplyHelper != NULL) delete stgReplyHelper;
+            throw(e);
+          }          
+        } else {
+          ReplyHelper* stgReplyHelper = NULL;
+          castor::stager::DiskCopyInfo *diskCopy = NULL;
+          try {
+            castor::stager::SubRequestStatusCodes srStatus =
+              reqHelper->stagerService->handlePrepareToGet(reqHelper->castorFile->id(),
+                                                           reqHelper->subrequest->id(),
+                                                           reqHelper->cnsFileid,
+                                                           reqHelper->cnsFilestat.filesize);
+            reqHelper->subrequest->setStatus(srStatus);
+            if (srStatus == SUBREQUEST_WAITTAPERECALL) { 
+              // reset the filesize to the nameserver one, as we don't have anything in the db
+              reqHelper->subrequest->castorFile()->setFileSize(reqHelper->cnsFilestat.filesize);
+            }
+            // answer client if needed
+            if (srStatus != SUBREQUEST_FAILED) {
+              if (reqHelper->subrequest->answered() == 0) {
+                stgReplyHelper = new ReplyHelper();
+                if(reqHelper->subrequest->protocol() == "xroot") {
+                  diskCopy = reqHelper->stagerService->
+                    getBestDiskCopyToRead(reqHelper->subrequest->castorFile(),
+                                          reqHelper->svcClass);
+                }
+                if (diskCopy) {
+                  stgReplyHelper->setAndSendIoResponse(reqHelper,&(reqHelper->cnsFileid), 0, "", diskCopy);
+                } else {              
+                  stgReplyHelper->setAndSendIoResponse(reqHelper,&(reqHelper->cnsFileid), 0, "");
+                }
+                stgReplyHelper->endReplyToClient(reqHelper);
+                delete stgReplyHelper;
+                if (diskCopy) delete diskCopy;
+              } else {
+                // no reply needs to be sent to the client, archive the subrequest
+                reqHelper->stagerService->archiveSubReq(reqHelper->subrequest->id(), SUBREQUEST_FINISHED);
+              }
+            }
+          } catch(castor::exception::Exception& e) {
+            if (stgReplyHelper != NULL) delete stgReplyHelper;
+            if (diskCopy != NULL) delete diskCopy;
+            throw(e);
+          }        
         }
-        else {
-          // delegate to PrepareToGet (may throw exception, which are forwarded)
-          PrepareToGetHandler* h = new PrepareToGetHandler(reqHelper);
-          h->handleGet();
-          delete h;
-        }      
+        return true;
       }
       
     }// end daemon namespace

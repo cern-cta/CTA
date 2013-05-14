@@ -199,7 +199,7 @@ namespace castor {
         try{
           // get the castorFile from the stagerService and fill it on the subrequest
           // note that for a Put request we should truncate the size, but this is done later on by
-          // recreateCastorFile after all necessary checks
+          // handlePut after all necessary checks
           castorFile = stagerService->selectCastorFile(subrequest, &cnsFileid, &cnsFilestat);
         }
         catch (castor::exception::Exception& e) {

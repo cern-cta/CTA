@@ -277,6 +277,22 @@ AS
   DELETEDISKCOPY_LOST          CONSTANT VARCHAR2(2048) := 'deleteDiskCopy: file was LOST and is being dropped from the system';
   DELETEDISKCOPY_GC            CONSTANT VARCHAR2(2048) := 'deleteDiskCopy: diskCopy is being garbage collected';
   DELETEDISKCOPY_NOOP          CONSTANT VARCHAR2(2048) := 'deleteDiskCopy: diskCopy could not be garbage collected';
+
+  STAGER_GET                   CONSTANT VARCHAR2(2048) := 'Get Request';
+  STAGER_PUT                   CONSTANT VARCHAR2(2048) := 'Put Request';
+  STAGER_UPDATE                CONSTANT VARCHAR2(2048) := 'Update Request';
+  STAGER_PREPARETOGET          CONSTANT VARCHAR2(2048) := 'PrepareToGet Request';
+  STAGER_PREPARETOPUT          CONSTANT VARCHAR2(2048) := 'PrepareToPut Request';
+  STAGER_PREPARETOUPDATE       CONSTANT VARCHAR2(2048) := 'PrepareToUpdate Request';
+
+  STAGER_D2D_TRIGGERED         CONSTANT VARCHAR2(2048) := 'Triggering DiskCopy replication';
+  STAGER_WAITSUBREQ            CONSTANT VARCHAR2(2048) := 'Request moved to Wait';
+  STAGER_UNABLETOPERFORM       CONSTANT VARCHAR2(2048) := 'Unable to perform request, notifying user';
+  STAGER_RECREATION_IMPOSSIBLE CONSTANT VARCHAR2(2048) := 'Impossible to recreate CastorFile';
+  STAGER_CASTORFILE_RECREATION CONSTANT VARCHAR2(2048) := 'Recreating CastorFile';
+  STAGER_GET_REPLICATION       CONSTANT VARCHAR2(2048) := 'Triggering internal DiskCopy replication';
+  STAGER_GET_REPLICATION_FAIL  CONSTANT VARCHAR2(2048) := 'Triggering internal DiskCopy replication failed';
+  STAGER_DISKCOPY_FOUND        CONSTANT VARCHAR2(2048) := 'Available DiskCopy found';
 END dlf;
 /
 
@@ -303,6 +319,7 @@ CREATE OR REPLACE PACKAGE serrno AS
   ERTWRONGSIZE    CONSTANT PLS_INTEGER := 1613; /* (Recalled) file size incorrect */
   ESTNOTAVAIL     CONSTANT PLS_INTEGER := 1718; /* File is currently not available */
   ESTNOSEGFOUND   CONSTANT PLS_INTEGER := 1723; /* File has no copy on tape or no diskcopies are accessible */
+  ESTNOTAPEROUTE  CONSTANT PLS_INTEGER := 1727; /* File recreation canceled since the file cannot be routed to tape */
   
   /* messages */
   ENOENT_MSG          CONSTANT VARCHAR2(2048) := 'No such file or directory';
@@ -321,5 +338,6 @@ CREATE OR REPLACE PACKAGE serrno AS
   ENSOVERWHENREP_MSG  CONSTANT VARCHAR2(2048) := 'Cannot overwrite valid segment when replacing';
   ERTWRONGSIZE_MSG    CONSTANT VARCHAR2(2048) := 'Incorrect file size';
   ESTNOSEGFOUND_MSG   CONSTANT VARCHAR2(2048) := 'File has no copy on tape or no diskcopies are accessible';
+  ESTNOTAPEROUTE_MSG  CONSTANT VARCHAR2(2048) := 'File recreation canceled since the file cannot be routed to tape';
 END serrno;
 /

@@ -67,14 +67,9 @@ namespace castor{
         /*  SYSTEM LEVEL */
         /****************/
         /* after calling the corresponding stagerService function, to show the decision taken */
-        STAGER_ARCHIVE_SUBREQ = 51, /* Archiving subrequest" */
         STAGER_WAITSUBREQ = 53, /* Request moved to Wait" */
         STAGER_REPACK_MIGRATION = 54, /* Starting Repack Migration" */
-        STAGER_GET_REPLICATION = 55, /* Triggering internal DiskCopy replication */
-        STAGER_PREPARETOGET_DISK2DISKCOPY = 56,  /* Triggering DiskCopy replication */
         STAGER_TAPE_RECALL = 57, /* Triggering Tape Recall" */
-        STAGER_CASTORFILE_RECREATION = 58, /*Recreating CastorFile" */
-        STAGER_RECREATION_IMPOSSIBLE = 59, /* "Impossible to recreate CastorFile" "*/
         STAGER_SCHEDULINGJOB = 60, /* Diskcopy available, scheduling job */
 
         /* DLF_LVL_ERROR */

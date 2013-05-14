@@ -36,7 +36,7 @@ namespace castor{
         ~PrepareToUpdateHandler() throw() {};
         
         /* PrepareToUpdate request handler */
-        virtual void handle() throw(castor::exception::Exception);
+        virtual bool handle() throw(castor::exception::Exception);
 	
       };
 

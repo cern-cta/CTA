@@ -16,14 +16,12 @@ namespace castor{
   namespace stager{
     namespace daemon{
       
-      void OpenRequestHandler::handle() throw(castor::exception::Exception)
+      bool OpenRequestHandler::handle() throw(castor::exception::Exception)
       {
         /* inherited behavior */
         RequestHandler::handle();
         /* check permissions and open the file according to the request type file */
-        reqHelper->openNameServerFile();
-        /* get the castorFile entity and populate its links in the db */
-        reqHelper->getCastorFile();
+        return reqHelper->openNameServerFile();
       }
       
     }//end namespace daemon

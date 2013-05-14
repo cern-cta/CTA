@@ -43,31 +43,29 @@ namespace castor{
       /************************************/
       /* handler for the update request  */
       /**********************************/
-      void UpdateHandler::handle() throw(castor::exception::Exception)
+      bool UpdateHandler::handle() throw(castor::exception::Exception)
       {
-        // Inherited behavior from RequestHandler, overriding the OpenRequestHandler one
-        RequestHandler::handle();
-        
-        /* check permissions and open the file according to the request type file */
-        bool recreate = reqHelper->openNameServerFile() || ((reqHelper->subrequest->flags() & O_TRUNC) == O_TRUNC);
+        // call parent's handler method, check permissions and open the file according to the requested flags
+        bool recreate = OpenRequestHandler::handle() || ((reqHelper->subrequest->flags() & O_TRUNC) == O_TRUNC);
 
         /* get the castorFile entity and populate its links in the db */
         reqHelper->getCastorFile();
 
         reqHelper->logToDlf(DLF_LVL_DEBUG, STAGER_UPDATE, &(reqHelper->cnsFileid));
         
-        if(recreate) {
-          // delegate to Put (may throw exception, which are forwarded)
-          PutHandler* h = new PutHandler(reqHelper);
-          h->handlePut();
-          delete h;
+        if (recreate) {
+          // call PL/SQL handlePut method
+          reqHelper->stagerService->handlePut(reqHelper->castorFile->id(),
+                                              reqHelper->subrequest->id(),
+                                              reqHelper->cnsFileid);
+        } else {
+          // call PL/SQL handleGet method
+          reqHelper->stagerService->handleGet(reqHelper->castorFile->id(),
+                                              reqHelper->subrequest->id(),
+                                              reqHelper->cnsFileid,
+                                              reqHelper->cnsFilestat.filesize);
         }
-        else {
-          // delegate to Get (may throw exception, which are forwarded)
-          GetHandler* h = new GetHandler(reqHelper);
-          h->handleGet();
-          delete h;
-        }      
+        return true;
       }
       
     }//end namespace daemon

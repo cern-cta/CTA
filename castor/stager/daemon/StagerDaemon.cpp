@@ -197,7 +197,6 @@ castor::stager::daemon::StagerDaemon::StagerDaemon()
     { STAGER_UPDATE, "Update Request"},
     { STAGER_PUT,"Put Request"},
 
-
     /************************/
     /* PreRequestSvcThread */
     { STAGER_PREREQSVC_CREATION,"Created new PreRequestSvc Thread"},
@@ -226,14 +225,9 @@ castor::stager::daemon::StagerDaemon::StagerDaemon()
     /* after calling the corresponding stagerService function, to show the decision taken */
     { STAGER_SUBREQ_SELECTED, "Request selected by subRequestToDo"},
     { STAGER_REQ_PROCESSED, "Request processed"},
-    { STAGER_ARCHIVE_SUBREQ, "Archiving subrequest"},
     { STAGER_WAITSUBREQ, "Request moved to Wait"},
     { STAGER_REPACK_MIGRATION, "Starting Repack Migration"},
-    { STAGER_GET_REPLICATION, "Triggering internal DiskCopy replication"},
-    { STAGER_PREPARETOGET_DISK2DISKCOPY, "Triggering DiskCopy replication"},
     { STAGER_TAPE_RECALL, "Triggering Tape Recall"},
-    { STAGER_CASTORFILE_RECREATION, "Recreating CastorFile"},
-    { STAGER_RECREATION_IMPOSSIBLE, "Impossible to recreate CastorFile"},
     { STAGER_SCHEDULINGJOB, "Diskcopy available, scheduling job"},
 
     /* DLF_LVL_ERROR */

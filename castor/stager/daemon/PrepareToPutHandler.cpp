@@ -1,80 +1,76 @@
-/**************************************************************************************************/
-/* PrepareToPutHandler: Constructor and implementation of the PrepareToPut request handler */
-/************************************************************************************************/
+/*****************************************************************************
+ *                      PrepareToPutHandler.cpp
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2003  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * Implementation of the prepareToPut subrequest's handler
+ *
+ * @author Castor Dev team, castor-dev@cern.ch
+ *****************************************************************************/
 
-
-
+// Include Files
+#include "castor/dlf/Dlf.hpp"
+#include "castor/exception/Exception.hpp"
 #include "castor/stager/daemon/RequestHelper.hpp"
 #include "castor/stager/daemon/ReplyHelper.hpp"
 #include "castor/stager/daemon/PrepareToPutHandler.hpp"
 
-#include "stager_uuid.h"
-#include "stager_constants.h"
-#include "Cns_api.h"
-
-#include "Cpwd.h"
-#include "Cgrp.h"
-
-#include "castor/stager/SubRequestStatusCodes.hpp"
-#include "castor/stager/DiskCopyForRecall.hpp"
-#include "castor/exception/Exception.hpp"
-#include "castor/dlf/Dlf.hpp"
-#include "castor/dlf/Message.hpp"
-#include "castor/stager/daemon/DlfMessages.hpp"
-
-#include "serrno.h"
-#include <errno.h>
-
-#include <iostream>
-#include <string>
-
-
-
 namespace castor{
   namespace stager{
     namespace daemon{
-                  
-      /* handler for the PrepareToPut request  */
-      void PrepareToPutHandler::handle() throw(castor::exception::Exception)
-      {
-        // Inherited behavior
-        OpenRequestHandler::handle();
-        
-        handlePut();
-      }
       
-      void PrepareToPutHandler::handlePut() throw(castor::exception::Exception)
-      {        
-        ReplyHelper* stgReplyHelper=NULL;
+      /**
+       * constructor
+       */
+      PrepareToPutHandler::PrepareToPutHandler(RequestHelper* reqHelper)
+        throw(castor::exception::Exception) :
+        OpenRequestHandler(reqHelper), m_handlePPutStatement(0) {
+      };
+
+      /**
+       * handler for the put requests
+       */
+      bool PrepareToPutHandler::handle() throw (castor::exception::Exception) {
+        // call parent's handler method
+        OpenRequestHandler::handle();
+        /* get the castorFile entity and populate its links in the db */
+        reqHelper->getCastorFile();
+        // call PL/SQL handlePrepareToPut method
+        ReplyHelper* stgReplyHelper = NULL;
         try {
-          reqHelper->logToDlf(DLF_LVL_DEBUG, STAGER_PREPARETOPUT, &(reqHelper->cnsFileid));
-          /* use the stagerService to recreate castor file */
-          castor::stager::DiskCopyForRecall* diskCopyForRecall =
-            reqHelper->stagerService->recreateCastorFile(reqHelper->castorFile,reqHelper->subrequest);
-          if(diskCopyForRecall == NULL){
-            reqHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_RECREATION_IMPOSSIBLE, &(reqHelper->cnsFileid));
-          }
-          else{
-            reqHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_CASTORFILE_RECREATION, &(reqHelper->cnsFileid));
-            reqHelper->subrequest->setStatus(SUBREQUEST_READY);
-            
+          bool replyNeeded = reqHelper->stagerService->handlePrepareToPut(reqHelper->castorFile->id(),
+                                                                          reqHelper->subrequest->id(),
+                                                                          reqHelper->cnsFileid);
+          if (replyNeeded) {
             /* we are gonna replyToClient so we dont  updateRep on DB explicitly */
+            reqHelper->subrequest->setStatus(SUBREQUEST_READY);
             stgReplyHelper = new ReplyHelper();
             stgReplyHelper->setAndSendIoResponse(reqHelper,&(reqHelper->cnsFileid), 0, "No Error");
             stgReplyHelper->endReplyToClient(reqHelper);
             delete stgReplyHelper;
-            delete diskCopyForRecall;
           }
-        } catch(castor::exception::Exception& e) {          
-          if(stgReplyHelper != NULL) delete stgReplyHelper;
-          castor::dlf::Param params[]={castor::dlf::Param("Error Code",sstrerror(e.code())),
-            castor::dlf::Param("Error Message",e.getMessage().str())
-          };          
-          castor::dlf::dlf_writep(reqHelper->requestUuid, DLF_LVL_ERROR, STAGER_PREPARETOPUT, 2 ,params, &(reqHelper->cnsFileid));
+        } catch (oracle::occi::SQLException e) {
+          if (stgReplyHelper != NULL) delete stgReplyHelper;
+          reqHelper->dbSvc->handleException(e);
           throw(e);
-        }  
+        }
+        return true;
       }
       
-    }// end daemon namespace
-  }// end stager namespace
-}//end castor namespace 
+    } // end daemon namespace
+  } // end stager namespace
+} //end castor namespace 

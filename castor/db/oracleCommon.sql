@@ -67,6 +67,24 @@ BEGIN
 END;
 /
 
+/* Function to return the name of a given file class */
+CREATE OR REPLACE FUNCTION getFileClassName(fileClassId NUMBER) RETURN VARCHAR2 IS
+  varFileClassName VARCHAR2(2048);
+BEGIN
+  SELECT name INTO varFileClassName FROM FileClass WHERE id = fileClassId;
+  RETURN varFileClassName;
+END;
+/
+
+/* Function to return the name of a given service class */
+CREATE OR REPLACE FUNCTION getSvcClassName(svcClassId NUMBER) RETURN VARCHAR2 IS
+  varSvcClassName VARCHAR2(2048);
+BEGIN
+  SELECT name INTO varSvcClassName FROM SvcClass WHERE id = svcClassId;
+  RETURN varSvcClassName;
+END;
+/
+
 /* Function to return a comma separate list of service classes that a
  * filesystem belongs to.
  */

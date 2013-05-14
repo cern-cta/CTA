@@ -26,8 +26,8 @@ namespace castor{
 
         virtual ~OpenRequestHandler() throw() {};
         
-        virtual void handle() throw(castor::exception::Exception);
-        
+        virtual bool handle() throw(castor::exception::Exception);
+
       }; //end class OpenRequestHandler
       
     } //end namespace daemon
