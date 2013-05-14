@@ -2619,7 +2619,7 @@ BEGIN
         logToDLF(NULL, dlf.LVL_NOTICE, dlf.RECALL_INVALID_SEGMENT, inFileId, inNsHost, 'stagerd',
                  inLogParams || ' segStatus=' ||
                  CASE varSeg.segStatus WHEN '-' THEN 'OK'
-                                       WHEN 'd' THEN 'DISABLED'
+                                       WHEN 'D' THEN 'DISABLED'
                                        ELSE 'UNKNOWN:' || varSeg.segStatus END);
       END IF;
     END LOOP;
