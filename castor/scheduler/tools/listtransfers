@@ -139,9 +139,10 @@ def processTransfersListing():
   titles = ('TRANSFERID', 'FILEID', 'USER', 'STAT', 'TYPE', 'POOL',
             'SCHEDULER', 'DISKSERVER', 'SUBMIT_TIME', 'START_TIME')
   data = []
-  for transId, fileId, scheduler, user, status, diskpool, \
-        execHost, transferType, submitTime, startTime in transfers:
+  for transfer in transfers:
       if transfer[0]:
+          transId, fileId, scheduler, user, status, diskpool, \
+            execHost, transferType, submitTime, startTime = transfer
           if startTime:
               data.append((transId, fileId[1], user, status, transferType, diskpool,
                            scheduler, execHost, time.strftime('%b %d %H:%M:%S', time.localtime(submitTime)),
