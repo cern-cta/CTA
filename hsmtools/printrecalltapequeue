@@ -76,7 +76,8 @@ try:
           left outer join recallmount rm on rm.vid = trg.vid),
         tapes_in_disneyland as
         (select tc.*,
-           case when tc.status != 'CANDIDATE' OR (SELECT count(*) FROM tapes_criteria WHERE status = 'CANDIDATE' and max_age > tc.max_age) = 0  
+           case when tc.status != 'CANDIDATE' OR
+             (SELECT count(*) FROM tapes_criteria WHERE status = 'CANDIDATE' and max_age > tc.max_age AND recallgroup = tc.recallgroup) = 0  
            then 0 ELSE
              (SELECT SUM(total_size) from tapes_criteria WHERE status = 'CANDIDATE' AND max_age > tc.max_age AND recallgroup = tc.recallgroup)
            END size_before_queued,
