@@ -198,7 +198,7 @@ BEGIN
       FROM DiskCopy
      WHERE fileSystem = f.id
        AND castorfile = inCfid
-       AND status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR);
+       AND status = dconst.DISKCOPY_VALID;
     IF nb != 0 THEN
       raise_application_error(-20115, 'Recaller could not find a FileSystem in production in the requested SvcClass and without copies of this file');
     END IF;
@@ -379,7 +379,7 @@ BEGIN
   -- invalidate existing DiskCopies, if any
   UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
    WHERE castorFile = inCfId
-     AND status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR);
+     AND status = dconst.DISKCOPY_VALID;
   -- restart ongoing requests
   -- Note that we reset the "answered" flag of the subrequest. This will potentially lead to
   -- a wrong attempt to answer again the client (but won't harm as the client is gone in that case)
@@ -633,15 +633,10 @@ BEGIN
   INSERT INTO DiskCopy (path, gcWeight, creationTime, lastAccessTime, diskCopySize, nbCopyAccesses,
                         ownerUid, ownerGid, id, gcType, fileSystem, castorFile, status)
   VALUES (varDCPath, varGcWeight, getTime(), getTime(), varFileSize, 0,
-          varEuid, varEgid, varDCId, NULL, varFSId, varCfId,
-          decode(varNbMigrationsStarted, -- status
-                 0, dconst.DISKCOPY_STAGED,   -- STAGED if no migrations
-                 dconst.DISKCOPY_CANBEMIGR)); -- otherwise CANBEMIGR
-  -- in case there are migrations, update remaining STAGED diskcopies to CANBEMIGR
-  -- we may have them in case we've reacalled a staged file, and so far we only dealt with dcId
+          varEuid, varEgid, varDCId, NULL, varFSId, varCfId, dconst.DISKCOPY_VALID);
+  -- in case there are migrations, update CastorFile's tapeStatus to NOTONTAPE
   IF varNbMigrationsStarted > 0 THEN
-    UPDATE DiskCopy SET status = 10  -- DISKCOPY_CANBEMIGR
-     WHERE castorFile = varCfId AND status = 0;  -- DISKCOPY_STAGED
+    UPDATE CastorFile SET tapeStatus = dconst.CASTORFILE_NOTONTAPE WHERE id = varCfId;
   END IF;
 
   -- Finally deal with user requests
@@ -934,7 +929,8 @@ BEGIN
      AND MigrationJob.status = tconst.MIGRATIONJOB_PENDING
      AND CastorFile.id = MigrationJob.castorFile
      AND CastorFile.id = DiskCopy.castorFile
-     AND DiskCopy.status = dconst.DISKCOPY_CANBEMIGR
+     AND CastorFile.tapeStatus = dconst.CASTORFILE_NOTONTAPE
+     AND DiskCopy.status = dconst.DISKCOPY_VALID
      AND FileSystem.id = DiskCopy.fileSystem
      AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING, dconst.FILESYSTEM_READONLY)
      AND DiskServer.id = FileSystem.diskServer
@@ -1179,7 +1175,8 @@ BEGIN
        AND MigrationJob.status = tconst.MIGRATIONJOB_PENDING
        AND CastorFile.id = MigrationJob.castorFile
        AND CastorFile.id = DiskCopy.castorFile
-       AND DiskCopy.status = dconst.DISKCOPY_CANBEMIGR
+       AND CastorFile.tapeStatus = dconst.CASTORFILE_NOTONTAPE
+       AND DiskCopy.status = dconst.DISKCOPY_VALID
        AND FileSystem.id = DiskCopy.fileSystem
        AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING, dconst.FILESYSTEM_READONLY)
        AND DiskServer.id = FileSystem.diskServer
@@ -1457,11 +1454,10 @@ BEGIN
     -- no more migrations, delete all migrated segments 
     DELETE FROM MigratedSegment
      WHERE castorFile = varCfId;
-    -- And mark all disk copies as staged
-    UPDATE DiskCopy
-       SET status= dconst.DISKCOPY_STAGED
-     WHERE castorFile = varCfId
-       AND status= dconst.DISKCOPY_CANBEMIGR;
+    -- And mark CastorFile as ONTAPE
+    UPDATE CastorFile
+       SET tapeStatus= dconst.CASTORFILE_ONTAPE
+     WHERE id = varCfId;
   ELSE
     -- another migration ongoing, keep track of the one just completed
     INSERT INTO MigratedSegment (castorFile, copyNb, vid)
@@ -1523,11 +1519,10 @@ BEGIN
   -- terminate repack subrequests
   IF varOriginalCopyNb IS NOT NULL THEN
     archiveOrFailRepackSubreq(varCfId, inErrorCode);
-    -- set back the diskcopies to STAGED otherwise repack will wait forever
-    UPDATE DiskCopy
-       SET status = dconst.DISKCOPY_STAGED
-     WHERE castorfile = varCfId
-       AND status = dconst.DISKCOPY_CANBEMIGR;
+    -- set back the CastorFile to ONTAPE otherwise repack will wait forever
+    UPDATE CastorFile
+       SET tapeStatus = dconst.CASTORFILE_ONTAPE
+     WHERE id = varCfId;
   END IF;
   
   IF varErrorCode = serrno.ENOENT THEN
@@ -1545,7 +1540,7 @@ BEGIN
   IF varErrorCode = serrno.ENOENT OR varErrorCode = serrno.ENSFILECHG OR varErrorCode = serrno.ENSNOSEG THEN
     -- in this case, disk cache is stale
     UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
-     WHERE status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR)
+     WHERE status = dconst.DISKCOPY_VALID
        AND castorFile = varCfId;
     -- cleanup other migration jobs for that file if any
     DELETE FROM MigrationJob WHERE castorfile = varCfId;
@@ -1555,9 +1550,7 @@ BEGIN
              ' lastUpdateTime=' || to_char(varCFLastUpdateTime));
   ELSIF varErrorCode = serrno.ENSTOOMANYSEGS THEN
     -- do as if migration was successful
-    UPDATE DiskCopy SET status = dconst.DISKCOPY_STAGED
-     WHERE status = dconst.DISKCOPY_CANBEMIGR
-       AND castorFile = varCfId;
+    UPDATE CastorFile SET tapeStatus = dconst.CASTORFILE_ONTAPE WHERE id = varCfId;
     -- Log 'file already had enough copies on tape, ignoring new segment'
     logToDLF(inReqid, dlf.LVL_NOTICE, dlf.MIGRATION_SUPERFLUOUS_COPY, inFileId, varNsHost, 'tapegatewayd',
              'mountTransactionId=' || to_char(inMountTrId));

@@ -512,6 +512,7 @@ This request exists to avoid the jobs on the diskservers to handle a connection 
             <UML:Attribute comment="The name of the castorfile at the time it was created in this database. This can very well be different from the current name if the file was renamed.
 This information is only here for efficient and approximate querying. It should never be used in processing. There, only the fileid/nshost couple is trustable" isSpecification="false" visibility="public" xmi.id="155731" type="137289" name="lastKnownFileName" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="zo4yEqNDOdWd" type="131665" name="lastUpdateTime" />
+            <UML:Attribute comment="Whether the file is on tape" isSpecification="false" visibility="public" xmi.id="26325" type="131665" name="isOnTape" />
            </UML:Classifier.feature>
           </UML:Class>
           <UML:Class stereotype="53500" comment="Streamable class used to exchange DiskCopy related information for the d2dtransfer job" isSpecification="false" isLeaf="false" visibility="public" namespace="2105" xmi.id="85782" isRoot="false" isAbstract="false" name="DiskCopyInfo" >
@@ -585,14 +586,13 @@ A SvcClass is a container of resources and may be given as parameter of the requ
           </UML:Class>
           <UML:Class stereotype="53501" comment="Possible status codes for a DiskCopy" isSpecification="false" isLeaf="false" visibility="public" namespace="2105" xmi.id="1665" isRoot="false" isAbstract="false" name="DiskCopyStatusCodes" >
            <UML:Classifier.feature>
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="1674" initialValue="0" type="133771" name="DISKCOPY_STAGED" />
+            <UML:Attribute isSpecification="false" visibility="public" xmi.id="1674" initialValue="0" type="133771" name="DISKCOPY_VALID" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="1675" initialValue="1" type="133771" name="DISKCOPY_WAITDISK2DISKCOPY" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="1678" initialValue="4" type="133771" name="DISKCOPY_FAILED" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="2075" initialValue="5" type="133771" name="DISKCOPY_WAITFS" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="2076" initialValue="6" type="133771" name="DISKCOPY_STAGEOUT" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="2077" initialValue="7" type="133771" name="DISKCOPY_INVALID" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="79182" initialValue="9" type="133771" name="DISKCOPY_BEINGDELETED" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="87429" initialValue="10" type="133771" name="DISKCOPY_CANBEMIGR" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="101189" initialValue="11" type="133771" name="DISKCOPY_WAITFS_SCHEDULING" />
            </UML:Classifier.feature>
           </UML:Class>

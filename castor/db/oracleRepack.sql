@@ -223,7 +223,7 @@ BEGIN
         varSrErrorMsg := 'File is currently being overwritten';
         outNbFailures := outNbFailures + 1;
       ELSE
-        -- find out whether this file is already staged
+        -- find out whether this file is already on disk
         SELECT /*+ INDEX(DC I_DiskCopy_CastorFile) */ count(DC.id)
           INTO varNbCopies
           FROM DiskCopy DC, FileSystem, DiskServer
@@ -233,7 +233,7 @@ BEGIN
            AND FileSystem.diskserver = DiskServer.id
            AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
            AND DiskServer.hwOnline = 1
-           AND DC.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR);
+           AND DC.status = dconst.DISKCOPY_VALID;
         IF varNbCopies = 0 THEN
           -- find out whether this file is already being recalled
           SELECT count(*) INTO varWasRecalled FROM RecallJob WHERE castorfile = cfId AND ROWNUM < 2;
@@ -261,9 +261,8 @@ BEGIN
           triggerRepackMigration(cfId, varRepackVID, segment.fileid, segment.copyNb, segment.fileclass,
                                  segment.segSize, segment.allSegments, varMJStatus, varMigrationTriggered);
           IF varMigrationTriggered THEN
-            -- update STAGED diskcopies to CANBEMIGR
-            UPDATE DiskCopy SET status = 10  -- DISKCOPY_CANBEMIGR
-             WHERE castorFile = cfId AND status = 0;  -- DISKCOPY_STAGED
+            -- update CastorFile tapeStatus
+            UPDATE CastorFile SET tapeStatus = dconst.CASTORFILE_NOTONTAPE WHERE id = cfId;
           END IF;
           isOngoing := True;
         EXCEPTION WHEN noValidCopyNbFound OR noMigrationRoute THEN

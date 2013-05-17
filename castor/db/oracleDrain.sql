@@ -502,20 +502,21 @@ BEGIN
   -- be valid as the snapshot information is outdated. Here we simply verify
   -- that the diskcopy is still what we expected.
   BEGIN
-    -- Determine the castorfile id
-    SELECT castorFile INTO cfId FROM DiskCopy WHERE id = dcId;
-    -- Lock the castorfile
-    SELECT id INTO cfId FROM CastorFile
-     WHERE id = cfId FOR UPDATE;
-    -- Check that the status of the diskcopy matches what was specified in the
-    -- filemask for the filesystem. If the diskcopy is not in the expected
-    -- status then it is no longer a candidate to be replicated.
-    SELECT ownerUid, ownerGid INTO ouid, ogid
+    -- Determine the castorfile id and the existence of a diskCopy
+    SELECT castorFile, ownerUid, ownerGid INTO cfId, ouid, ogid
       FROM DiskCopy
      WHERE id = dcId
-       AND ((status = 0        AND fileMask = 0)    -- STAGED
-        OR  (status = 10       AND fileMask = 1)    -- CANBEMIGR
-        OR  (status IN (0, 10) AND fileMask = 2));  -- ALL
+       AND status = dconst.DISKCOPY_VALID;
+    -- Lock the castorfile and check that its status matches what was specified in the
+    -- filemask for the filesystem. If the castorFile is not in the expected
+    -- status then it is no longer a candidate to be replicated.
+    SELECT id INTO cfId
+      FROM CastorFile
+     WHERE id = cfId
+       AND ((fileMask = 0 AND tapeStatus IN (dconst.CASTORFILE_DISKONLY, dconst.CASTORFILE_ONTAPE)) OR
+            (fileMask = 1 AND tapeStatus = dconst.CASTORFILE_NOTONTAPE) OR
+            (fileMask = 2))
+       FOR UPDATE;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- The diskcopy no longer exists or is not of interest so we delete it from
     -- the snapshot of files to be processed.
@@ -549,7 +550,7 @@ BEGIN
        WHERE DiskCopy.fileSystem = FileSystem.id
          AND DiskCopy.castorFile = cfId
          AND DiskCopy.id != dcId
-         AND DiskCopy.status IN (0, 10)  -- STAGED, CANBEMIGR
+         AND DiskCopy.status = dconst.DISKCOPY_VALID
          AND FileSystem.diskPool = DiskPool2SvcClass.parent
          AND DiskPool2SvcClass.child = svcId
          AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
@@ -683,17 +684,17 @@ BEGIN
     (fileSystem, diskCopy, creationTime, priority, fileSize)
       (SELECT /*+ index(DC I_DiskCopy_FileSystem) */
               DC.fileSystem, DC.id, DC.creationTime,
-              CASE DC.status WHEN 10 THEN 0 ELSE 1 END,   -- CANBEMIGRs get higher priority than STAGED
+              -- higher priority when no on tape
+              CASE CF.tapeStatus WHEN dconst.CASTORFILE_NOTONTAPE THEN 0 ELSE 1 END,
               DC.diskCopySize
-         FROM DiskCopy DC, DrainingFileSystem DFS
+         FROM DiskCopy DC, DrainingFileSystem DFS, CastorFile CF
         WHERE DFS.fileSystem = DC.fileSystem
-          AND DFS.fileSystem IN
-            (SELECT /*+ CARDINALITY(fsIdTable 5) */ *
-               FROM TABLE (fsIds) fsIdTable)
-          AND ((DC.status = 0         AND DFS.fileMask = 0)    -- STAGED
-           OR  (DC.status = decode(DC.status, 10, DC.status, NULL)
-                AND DFS.fileMask = 1)                          -- CANBEMIGR
-           OR  (DC.status IN (0, 10)  AND DFS.fileMask = 2))); -- ALL
+          AND DFS.fileSystem IN (SELECT /*+ CARDINALITY(fsIdTable 5) */ * FROM TABLE (fsIds) fsIdTable)
+          AND CF.id = DC.castorFile
+          AND ((DFS.fileMask = 0 AND CF.tapeStatus IN (dconst.CASTORFILE_ONTAPE, dconst.CASTORFILE_DISKONLY)) OR
+               (DFS.fileMask = 1 AND CF.tapeStatus = dconst.CASTORFILE_NOTONTAPE) OR
+               (DFS.fileMask = 2))
+          AND DC.status = dconst.DISKCOPY_VALID); -- ALL
   -- Regenerate the statistics for the DrainingDiskCopy table
   DBMS_STATS.GATHER_TABLE_STATS
     (OWNNAME          => sys_context('USERENV', 'CURRENT_SCHEMA'),

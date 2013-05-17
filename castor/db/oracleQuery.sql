@@ -29,7 +29,14 @@ BEGIN
              lastKnownFileName, creationTime, svcClass, lastAccessTime, hwStatus
         FROM (
           SELECT UNIQUE CastorFile.id, CastorFile.fileId, CastorFile.nsHost, DC.id AS dcId,
-                 DC.path, CastorFile.fileSize, DC.status,
+                 DC.path, CastorFile.fileSize,
+                 CASE WHEN DC.status = dconst.DISKCOPY_VALID
+                      THEN CASE WHEN CastorFile.tapeStatus = dconst.CASTORFILE_NOTONTAPE
+                                THEN 10 -- CANBEMIGR
+                                ELSE 0  -- STAGED
+                                END
+                      ELSE DC.status
+                      END AS status,
                  CASE WHEN DC.svcClass IS NULL THEN
                    (SELECT /*+ INDEX(Subrequest I_Subrequest_DiskCopy)*/ UNIQUE Req.svcClassName
                       FROM SubRequest,
@@ -87,7 +94,14 @@ BEGIN
         FROM (
           SELECT UNIQUE CastorFile.id, CastorFile.fileId, CastorFile.nsHost, DC.id AS dcId,
                  DC.path, CastorFile.fileSize,
-                 CASE WHEN DC.dcSvcClass = svcClassId THEN DC.status
+                 CASE WHEN DC.dcSvcClass = svcClassId
+                      THEN CASE WHEN DC.status = dconst.DISKCOPY_VALID
+                                THEN CASE WHEN CastorFile.tapeStatus = dconst.CASTORFILE_NOTONTAPE
+                                          THEN 10 -- CANBEMIGR
+                                          ELSE 0  -- STAGED
+                                          END
+                                ELSE DC.status
+                                END
                       WHEN DC.fileSystem = 0 THEN
                        (SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/
                         UNIQUE decode(nvl(SubRequest.status, -1), -1, -1, DC.status)

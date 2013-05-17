@@ -213,7 +213,7 @@ BEGIN
     FROM DiskCopy
    WHERE DiskCopy.castorfile = cfId
      AND DiskCopy.filesystem = fsId
-     AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
+     AND DiskCopy.status IN (dconst.DISKCOPY_VALID, dconst.DISKCOPY_STAGEOUT)
      AND ROWNUM < 2;
   -- We found it, so we are settled and we'll use the local copy.
   -- It might happen that we have more than one, because the scheduling may have
@@ -335,7 +335,7 @@ BEGIN
            SvcClass, StageDiskCopyReplicaRequest
      WHERE DiskCopy.id = srcDcId
        AND DiskCopy.castorfile = CastorFile.id
-       AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
+       AND DiskCopy.status = dconst.DISKCOPY_VALID
        AND FileSystem.id = DiskCopy.filesystem
        AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING, dconst.FILESYSTEM_READONLY)
        AND FileSystem.diskPool = DiskPool2SvcClass.parent
@@ -358,7 +358,7 @@ BEGIN
      AND FileSystem.diskserver = dsId
      AND DiskCopy.castorfile = cfId
      AND DiskCopy.id != dcId
-     AND DiskCopy.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_WAITDISK2DISKCOPY, dconst.DISKCOPY_CANBEMIGR);
+     AND DiskCopy.status IN (dconst.DISKCOPY_VALID, dconst.DISKCOPY_WAITDISK2DISKCOPY);
   IF nbCopies > 0 THEN
     raise_application_error(-20112, 'Multiple copies of this file already found on this diskserver');
   END IF;
@@ -405,13 +405,13 @@ BEGIN
       INTO srcStatus, gcw, fileSize, srcFsId
       FROM DiskCopy
      WHERE id = srcDcId
-       AND status IN (0, 10);  -- STAGED, CANBEMIGR
+       AND status = dconst.DISKCOPY_VALID;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     NULL;
   END;
   -- If no diskcopy was returned it means that the source has either:
   --   A) Been garbage collected while the copying was taking place OR
-  --   B) The diskcopy is no longer in a STAGED or CANBEMIGR state. As
+  --   B) The diskcopy is no longer in a VALID state. As
   --      A result we do not know which status to put the new copy in
   --      and/or cannot trust that the file was not modified mid transfer
   --
@@ -538,7 +538,7 @@ BEGIN
     UPDATE DiskCopy SET status = 4 -- FAILED
      WHERE castorFile =
        (SELECT castorFile FROM DiskCopy WHERE id = dcId)
-       AND status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR);
+       AND status = dconst.DISKCOPY_VALID;
     -- drop ongoing recalls and migrations
     deleteRecallJobs(cfId);
     deleteMigrationJobs(cfId);
@@ -1117,8 +1117,7 @@ BEGIN
              AND DiskServer.id NOT IN
                (SELECT diskserver FROM DiskCopy, FileSystem
                  WHERE DiskCopy.castorFile = cfId
-                   AND DiskCopy.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_WAITDISK2DISKCOPY,
-                                           dconst.DISKCOPY_CANBEMIGR)
+                   AND DiskCopy.status IN (dconst.DISKCOPY_VALID, dconst.DISKCOPY_WAITDISK2DISKCOPY)
                    AND FileSystem.id = DiskCopy.fileSystem)
            ORDER BY DBMS_Random.value)
         WHERE ROWNUM <= 5) LOOP

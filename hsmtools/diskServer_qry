@@ -62,6 +62,19 @@ if len(args) > 1:
 # otherwise, the argument is the diskserver name
 diskServerName = args[0]
 
+DiskCopyStatus = ["DISKCOPY_VALID",
+                  "INVALID_STATUS",
+                  "INVALID_STATUS",
+                  "INVALID_STATUS",
+                  "DISKCOPY_FAILED",
+                  "DISKCOPY_WAITFS",
+                  "DISKCOPY_STAGEOUT",
+                  "DISKCOPY_INVALID",
+                  "INVALID_STATUS",
+                  "DISKCOPY_BEINGDELETED",
+                  "INVALID_STATUS",
+                  "DISKCOPY_WAITFS_SCHEDULING"]
+
 # connect to the stager and execute the query
 rc = 0
 try:

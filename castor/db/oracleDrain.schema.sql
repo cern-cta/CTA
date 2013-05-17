@@ -20,8 +20,8 @@ CREATE TABLE DrainingFileSystem
     */
    autoDelete     NUMBER DEFAULT 0,
    /* Column to indicate which files should be replicated. Valid values are:
-    *   0 -- STAGED,
-    *   1 -- CANBEMIGR
+    *   0 -- ONTAPE & DISKONLY,
+    *   1 -- NOTONTAPE
     *   2 -- ALL
     */
    fileMask       NUMBER DEFAULT 1,
@@ -98,7 +98,7 @@ CREATE INDEX I_DrainingFileSystem_SvcClass
 CREATE TABLE DrainingDiskCopy
   (fileSystem     NUMBER CONSTRAINT NN_DrainingDCs_FileSystem NOT NULL,
    /* Status of the diskcopy to be replicated. Note: this is not the same as
-    * the status of the diskcopy i.e. STAGED, CANBEMIGR. It is an internal
+    * the status of the diskcopy i.e. VALID, STAGEOUT. It is an internal
     * status assigned to each diskcopy (file) as a means of tracking how far the
     * file is in the lifecycle of draining a filesystem.
     * PROCESSING is a transient state.

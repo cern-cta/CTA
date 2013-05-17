@@ -23,8 +23,8 @@
 
 '''command line printing the summary of stager-queued, vdqm queued and ongoing migrations'''
 
-import sys, pwd, grp
-import getopt, time
+import sys
+import getopt
 import castor_tools
 
 # usage function
@@ -73,8 +73,9 @@ try:
                0 migrations, 0 migrations_queued, 0 migrations_running,
                nvl(min(gettime() - dc.creationtime), 0) min_age,
                nvl(max(gettime() - dc.creationtime), 0) max_age
-          FROM DiskCopy dc
-         WHERE dc.status = 10 AND NOT EXISTS
+          FROM DiskCopy dc, CastorFile cf
+         WHERE dc.castorFile = cf.id
+           AND tapeStatus = 0 AND NOT EXISTS    -- CASTORFILE_NOTONTAPE
            (SELECT 1 FROM MigrationJob WHERE castorFile = dc.castorFile)
         '''
     stcur.execute(sqlStatement)

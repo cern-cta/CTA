@@ -269,7 +269,7 @@ namespace castor {
 
         /**
          * Creates an empty (i.e. 0 size) file in the DB.
-         * A proper diskcopy in status STAGED will be created
+         * A proper diskcopy in status VALID will be created
          * and the subrequest will be updated to schedule an
          * access to the file if requested
          * @param subreq the subreq of the file to recall

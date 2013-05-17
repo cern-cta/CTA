@@ -132,7 +132,7 @@ END;
  * back in production after a period spent in a DRAINING or a
  * DISABLED status.
  * Current checks/fixes include :
- *   - Canceling recalls for files that are STAGED or CANBEMIGR
+ *   - Canceling recalls for files that are VALID
  *     on the fileSystem that comes back. (Scheduled for bulk
  *     operation)
  *   - Dealing with files that are STAGEOUT on the fileSystem
@@ -148,7 +148,7 @@ BEGIN
   UPDATE FileSystemsToCheck SET toBeChecked = 1
    WHERE fileSystem = fsId;
   -- Look for files that are STAGEOUT on the filesystem coming back to life
-  -- but already STAGED/CANBEMIGR/WAITFS/STAGEOUT/
+  -- but already VALID/WAITFS/STAGEOUT/
   -- WAITFS_SCHEDULING somewhere else
   FOR cf IN (SELECT /*+ USE_NL(D E) INDEX(D I_DiskCopy_Status6) */
                     UNIQUE D.castorfile, D.id dcId
@@ -157,7 +157,7 @@ BEGIN
                 AND D.fileSystem = fsId
                 AND E.fileSystem != fsId
                 AND decode(D.status,6,D.status,NULL) = dconst.DISKCOPY_STAGEOUT
-                AND E.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR,
+                AND E.status IN (dconst.DISKCOPY_VALID,
                                  dconst.DISKCOPY_WAITFS, dconst.DISKCOPY_STAGEOUT,
                                  dconst.DISKCOPY_WAITFS_SCHEDULING)) LOOP
     -- Invalidate the DiskCopy
@@ -183,7 +183,7 @@ BEGIN
   IF fsIds.COUNT = 0 THEN
     RETURN;
   END IF;
-  -- Look for recalls concerning files that are STAGED or CANBEMIGR
+  -- Look for recalls concerning files that are VALID
   -- on all filesystems scheduled to be checked, and restart their
   -- subrequests (reconsidering the recall source).
   FOR file IN (SELECT UNIQUE DiskCopy.castorFile
@@ -192,7 +192,7 @@ BEGIN
                 AND DiskCopy.fileSystem IN
                   (SELECT /*+ CARDINALITY(fsidTable 5) */ *
                      FROM TABLE(fsIds) fsidTable)
-                AND DiskCopy.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR)) LOOP
+                AND DiskCopy.status = dconst.DISKCOPY_VALID) LOOP
     -- cancel the recall for that file
     deleteRecallJobs(file.castorFile);
     -- restart subrequests that were waiting on the recall
@@ -272,7 +272,7 @@ END;
 
 
 /* Trigger used to check if the maxReplicaNb has been exceeded
- * after a diskcopy has changed its status to STAGED or CANBEMIGR
+ * after a diskcopy has changed its status to VALID
  */
 CREATE OR REPLACE TRIGGER tr_DiskCopy_Stmt_Online
 AFTER UPDATE OF STATUS ON DISKCOPY
@@ -304,7 +304,7 @@ BEGIN
                      AND FileSystem.diskserver = DiskServer.id
                      AND DiskPool2SvcClass.child = SvcClass.id
                      AND DiskCopy.castorfile = a.castorfile
-                     AND DiskCopy.status IN (0, 10)  -- STAGED, CANBEMIGR
+                     AND DiskCopy.status = dconst.DISKCOPY_VALID
                      AND SvcClass.id = a.svcclass
                    -- Select non-PRODUCTION hardware first
                    ORDER BY decode(FileSystem.status, 0,
@@ -320,7 +320,7 @@ BEGIN
          AND FileSystem.diskserver = DiskServer.id
          AND DiskPool2SvcClass.child = SvcClass.id
          AND DiskCopy.castorfile = a.castorfile
-         AND DiskCopy.status IN (0, 10)  -- STAGED, CANBEMIGR
+         AND DiskCopy.status = dconst.DISKCOPY_VALID
          AND SvcClass.id = a.svcclass;
       IF nbFiles = 1 THEN
         EXIT;  -- Last file, so exit the loop
@@ -342,11 +342,10 @@ END;
 /* Trigger used to provide input to the statement level trigger
  * defined above
  */
-CREATE OR REPLACE TRIGGER tr_DiskCopy_Online
-AFTER UPDATE OF status ON DiskCopy
+CREATE OR REPLACE TRIGGER tr_DiskCopy_Created
+AFTER INSERT ON DiskCopy
 FOR EACH ROW
-WHEN ((old.status != 10) AND    -- !CANBEMIGR -> {STAGED, CANBEMIGR}
-      (new.status = 0 OR new.status = 10))
+WHEN (new.status = 0) -- dconst.DISKCOPY_VALID
 DECLARE
   svcId  NUMBER;
   unused NUMBER;
@@ -695,7 +694,7 @@ BEGIN
               SELECT id INTO cfId FROM MigrationJob WHERE castorfile = sr.cfId AND ROWNUM < 2;
             EXCEPTION WHEN NO_DATA_FOUND THEN
               DELETE FROM MigratedSegment WHERE castorfile = sr.cfId;
-              -- trigger the update of the DiskCopy to STAGED as no more migrations remain
+              -- trigger the update of the CastorFile's tapeStatus to ONTAPE as no more migrations remain
               INSERT INTO ProcessRepackAbortHelperDCmigr (cfId) VALUES (sr.cfId);
             END;
            WHEN abortedSRstatus IN (dconst.SUBREQUEST_FAILED,
@@ -726,8 +725,7 @@ BEGIN
        WHERE id = srsToUpdate(i);
     SELECT cfId BULK COLLECT INTO dcmigrsToUpdate FROM ProcessRepackAbortHelperDCmigr;
     FORALL i IN 1 .. dcmigrsToUpdate.COUNT
-      UPDATE DiskCopy SET status = dconst.DISKCOPY_STAGED
-       WHERE castorfile = dcmigrsToUpdate(i) AND status = dconst.DISKCOPY_CANBEMIGR;
+      UPDATE CastorFile SET tapeStatus = dconst.CASTORFILE_ONTAPE WHERE id = dcmigrsToUpdate(i);
     -- commit
     COMMIT;
     -- reset all counters
@@ -1249,7 +1247,7 @@ BEGIN
       SELECT DiskCopy.id, SvcClass.id srcSvcClassId
         FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass, SvcClass
        WHERE DiskCopy.castorfile = cfId
-         AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
+         AND DiskCopy.status = dconst.DISKCOPY_VALID
          AND FileSystem.id = DiskCopy.fileSystem
          AND FileSystem.diskpool = DiskPool2SvcClass.parent
          AND DiskPool2SvcClass.child = SvcClass.id
@@ -1303,7 +1301,7 @@ BEGIN
        AND FileSystem.diskserver = DiskServer.id
        AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
        AND DiskServer.hwOnline = 1
-       AND DiskCopy.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_STAGEOUT, dconst.DISKCOPY_CANBEMIGR)
+       AND DiskCopy.status IN (dconst.DISKCOPY_VALID, dconst.DISKCOPY_STAGEOUT)
      ORDER BY FileSystemRate(FileSystem.nbReadStreams, FileSystem.nbWriteStreams) DESC,
               DBMS_Random.value)
    WHERE rownum < 2;
@@ -1344,7 +1342,7 @@ BEGIN
       FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
      WHERE DiskCopy.fileSystem = FileSystem.id
        AND DiskCopy.castorFile = cfId
-       AND DiskCopy.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR)
+       AND DiskCopy.status = dconst.DISKCOPY_VALID
        AND FileSystem.diskPool = DiskPool2SvcClass.parent
        AND DiskPool2SvcClass.child = svcClassId
        AND FileSystem.diskServer = DiskServer.id
@@ -1376,7 +1374,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   -- We found no diskcopies at all. We should not schedule
   -- and make a tape recall... except ... in 4 cases :
   --   - if there is some temporarily unavailable diskcopy
-  --     that is in CANBEMIGR or STAGEOUT
+  --     that is in STAGEOUT or is VALID but not on tape yet
   -- in such a case, what we have is an existing file, that
   -- was migrated, then overwritten but never migrated again.
   -- So the unavailable diskCopy is the only copy that is valid.
@@ -1389,7 +1387,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   --   - if we have an available WAITFS, WAITFSSCHEDULING copy in such
   -- a case, we tell the client that the file is BUSY
   --   - if we have some temporarily unavailable diskcopy(ies)
-  --     that is in status STAGED and the file is disk only.
+  --     that is in status VALID and the file is disk only.
   -- In this case nothing can be recalled and the file is inaccessible
   -- until we have one of the unvailable copies back
   DECLARE
@@ -1401,10 +1399,13 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
     SELECT DiskCopy.status, nvl(FileSystem.status, dconst.FILESYSTEM_PRODUCTION),
            nvl(DiskServer.status, dconst.DISKSERVER_PRODUCTION)
       INTO dcStatus, fsStatus, dsStatus
-      FROM DiskCopy, FileSystem, DiskServer
+      FROM DiskCopy, FileSystem, DiskServer, CastorFile
      WHERE DiskCopy.castorfile = cfId
-       AND DiskCopy.status IN (dconst.DISKCOPY_WAITFS, dconst.DISKCOPY_STAGEOUT,
-                               dconst.DISKCOPY_CANBEMIGR, dconst.DISKCOPY_WAITFS_SCHEDULING)
+       AND Castorfile.id = cfId
+       AND (DiskCopy.status IN (dconst.DISKCOPY_WAITFS, dconst.DISKCOPY_STAGEOUT,
+                                dconst.DISKCOPY_WAITFS_SCHEDULING)
+            OR (DiskCopy.status = dconst.DISKCOPY_VALID AND
+                CastorFile.tapeStatus = dconst.CASTORFILE_NOTONTAPE))
        AND FileSystem.id(+) = DiskCopy.fileSystem
        AND DiskServer.id(+) = FileSystem.diskserver
        AND ROWNUM < 2;
@@ -1639,7 +1640,7 @@ BEGIN
   INSERT INTO DiskCopy
     (path, id, filesystem, castorfile, status,
      creationTime, lastAccessTime, gcWeight, diskCopySize, nbCopyAccesses, owneruid, ownergid)
-  VALUES (dcPath, dcId, fsId, cfId, 0,   -- STAGED
+  VALUES (dcPath, dcId, fsId, cfId, dconst.CASTORFILE_DISKONLY,
           getTime(), getTime(), GCw, 0, 0, ouid, ogid);
   -- link to the SubRequest and schedule an access if requested
   IF schedule = 0 THEN
@@ -1676,7 +1677,7 @@ BEGIN
                    AND DiskCopy.castorfile = cfId
                    AND FileSystem.diskpool = DiskPool2SvcClass.parent
                    AND DiskPool2SvcClass.child = SvcClass.id
-                   AND DiskCopy.status IN (0, 1, 10)  -- STAGED, WAITDISK2DISKCOPY, CANBEMIGR
+                   AND DiskCopy.status IN (dconst.DISKCOPY_VALID, dconst.DISKCOPY_WAITDISK2DISKCOPY)
                    AND FileSystem.status IN
                        (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING, dconst.FILESYSTEM_READONLY)
                    AND DiskServer.id = FileSystem.diskserver
@@ -1722,7 +1723,6 @@ END;
 /
 
 
-
 /*** initMigration ***/
 CREATE OR REPLACE PROCEDURE initMigration
 (cfId IN INTEGER, datasize IN INTEGER, originalVID IN VARCHAR2,
@@ -1759,45 +1759,34 @@ CREATE OR REPLACE PROCEDURE internalPutDoneFunc (cfId IN INTEGER,
                                                  nbTC IN INTEGER,
                                                  svcClassId IN INTEGER) AS
   tcId INTEGER;
-  dcId INTEGER;
   gcwProc VARCHAR2(2048);
   gcw NUMBER;
   ouid INTEGER;
   ogid INTEGER;
 BEGIN
-  -- get function to use for computing the gc weight of the brand new diskCopy
+  -- compute the gc weight of the brand new diskCopy
+  EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:fs); END;'
+    USING OUT gcw, IN fs;
   gcwProc := castorGC.getUserWeight(svcClassId);
-  -- if no tape copy or 0 length file, no migration
-  -- so we go directly to status STAGED
-  IF nbTC = 0 OR fs = 0 THEN
-    EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:fs, 0); END;'
-      USING OUT gcw, IN fs;
-    UPDATE DiskCopy
-       SET status = 0, -- STAGED
-           lastAccessTime = getTime(),  -- for the GC, effective lifetime of this diskcopy starts now
-           gcWeight = gcw,
-	   diskCopySize = fs
-     WHERE castorFile = cfId AND status = 6 -- STAGEOUT
-     RETURNING owneruid, ownergid INTO ouid, ogid;
-  ELSE
-    EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:fs, 10); END;'
-      USING OUT gcw, IN fs;
-    -- update the DiskCopy status to CANBEMIGR
-    dcId := 0;
-    UPDATE DiskCopy
-       SET status = 10, -- CANBEMIGR
-           lastAccessTime = getTime(),  -- for the GC, effective lifetime of this diskcopy starts now
-           gcWeight = gcw,
-	   diskCopySize = fs
-     WHERE castorFile = cfId AND status = 6 -- STAGEOUT
-     RETURNING id, owneruid, ownergid INTO dcId, ouid, ogid;
-    IF dcId > 0 THEN
-      -- Only if we really found the relevant diskcopy, create migration jobs
-      -- This is an extra sanity check, see also the deleteOutOfDateStageOutDCs procedure
-      FOR i IN 1..nbTC LOOP
-        initMigration(cfId, fs, NULL, NULL, i, tconst.MIGRATIONJOB_PENDING);
-      END LOOP;
-    END IF;
+  -- update the DiskCopy
+  UPDATE DiskCopy
+     SET status = dconst.DISKCOPY_VALID,
+         lastAccessTime = getTime(),  -- for the GC, effective lifetime of this diskcopy starts now
+         gcWeight = gcw,
+         diskCopySize = fs
+   WHERE castorFile = cfId AND status = dconst.DISKCOPY_STAGEOUT
+   RETURNING owneruid, ownergid INTO ouid, ogid;
+  -- update the CastorFile
+  UPDATE Castorfile SET tapeStatus = (CASE WHEN nbTC = 0 OR fs = 0
+                                           THEN dconst.CASTORFILE_DISKONLY
+                                           ELSE dconst.CASTORFILE_NOTONTAPE
+                                       END)
+   WHERE id = cfId;
+  -- trigger migration when needed
+  IF nbTC > 0 AND fs > 0 THEN
+    FOR i IN 1..nbTC LOOP
+      initMigration(cfId, fs, NULL, NULL, i, tconst.MIGRATIONJOB_PENDING);
+    END LOOP;
   END IF;
   -- If we are a real PutDone (and not a put outside of a prepareToPut/Update)
   -- then we have to archive the original prepareToPut/Update subRequest
@@ -1841,7 +1830,6 @@ BEGIN
   internalPutDoneFunc(cfId, fs, context, nc, svcClassId);
 END;
 /
-
 
 /* PL/SQL method implementing processPutDoneRequest */
 CREATE OR REPLACE PROCEDURE processPutDoneRequest
@@ -1893,7 +1881,7 @@ BEGIN
        AND FileSystem.diskpool = DiskPool2SvcClass.parent
        AND DiskPool2SvcClass.child = svcClassId
        AND FileSystem.diskserver = DiskServer.id
-       AND DiskCopy.status = 6;  -- STAGEOUT
+       AND DiskCopy.status = dconst.DISKCOPY_STAGEOUT;
     IF nbDCs = 0 THEN
       -- This is a PutDone without a put (otherwise we would have found
       -- a DiskCopy on a FileSystem), so we fail the subrequest.
@@ -1911,7 +1899,6 @@ BEGIN
   END;
 END;
 /
-
 
 /* This procedure resets the lastKnownFileName the CastorFile that has a given name
    inside an autonomous transaction. This should be called before creating/renaming any
@@ -2064,7 +2051,8 @@ BEGIN
   SELECT id BULK COLLECT INTO dcsToRm
     FROM DiskCopy
    WHERE castorFile = cfId
-     AND status IN (0, 5, 6, 10, 11);  -- STAGED, WAITFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
+     AND status IN (dconst.DISKCOPY_VALID, dconst.DISKCOPY_WAITFS,
+                    dconst.DISKCOPY_STAGEOUT, dconst.DISKCOPY_WAITFS_SCHEDULING);
   -- Stop ongoing recalls and migrations
   deleteRecallJobs(cfId);
   deleteMigrationJobs(cfId);
@@ -2158,6 +2146,7 @@ CREATE OR REPLACE PROCEDURE stageRm (srId IN INTEGER,
   cfId INTEGER;
   dcsToRm "numList";
   dcsToRmStatus "numList";
+  dcsToRmCfStatus "numList";
   nbRJsDeleted INTEGER;
 BEGIN
   ret := 0;
@@ -2181,40 +2170,42 @@ BEGIN
   END;
 
   -- select the list of DiskCopies to be deleted
-  SELECT id, status BULK COLLECT INTO dcsToRm, dcsToRmStatus FROM (
+  SELECT id, status, tapeStatus BULK COLLECT INTO dcsToRm, dcsToRmStatus, dcsToRmCfStatus FROM (
     -- first physical diskcopies
-    SELECT /*+ INDEX(DC I_DiskCopy_CastorFile) */ DC.id, DC.status
-      FROM DiskCopy DC, FileSystem, DiskPool2SvcClass DP2SC
+    SELECT /*+ INDEX(DC I_DiskCopy_CastorFile) */ DC.id, DC.status, CastorFile.tapeStatus
+      FROM DiskCopy DC, FileSystem, DiskPool2SvcClass DP2SC, CastorFile
      WHERE DC.castorFile = cfId
-       AND DC.status IN (0, 6, 10)  -- STAGED, STAGEOUT, CANBEMIGR
+       AND DC.status IN (dconst.DISKCOPY_VALID, dconst.DISKCOPY_STAGEOUT)
        AND DC.fileSystem = FileSystem.id
        AND FileSystem.diskPool = DP2SC.parent
-       AND (DP2SC.child = svcClassId OR svcClassId = 0))
+       AND (DP2SC.child = svcClassId OR svcClassId = 0)
+       AND CastorFile.id = cfId)
   UNION ALL
     -- and then diskcopies resulting from ongoing requests, for which the previous
     -- query wouldn't return any entry because of e.g. missing filesystem
-    SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ DC.id, DC.status
+    SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ DC.id, DC.status, CastorFile.tapeStatus
       FROM (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id
               FROM StagePrepareToPutRequest WHERE svcClass = svcClassId UNION ALL
             SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */ id
               FROM StagePutRequest WHERE svcClass = svcClassId UNION ALL
             SELECT /*+ INDEX(StageDiskCopyReplicaRequest PK_StageDiskCopyReplicaRequ_Id) */ id
               FROM StageDiskCopyReplicaRequest WHERE svcClass = svcClassId) Request,
-           SubRequest, DiskCopy DC
+           SubRequest, DiskCopy DC, CastorFile
      WHERE SubRequest.diskCopy = DC.id
        AND Request.id = SubRequest.request
        AND DC.castorFile = cfId
        AND DC.status IN (dconst.DISKCOPY_WAITDISK2DISKCOPY, dconst.DISKCOPY_WAITFS,
-                         dconst.DISKCOPY_WAITFS_SCHEDULING);
+                         dconst.DISKCOPY_WAITFS_SCHEDULING)
+       AND CastorFile.id = cfId;
 
-  -- in case we are dropping CANBEMIGR diskcopies, ensure that we have at least one copy left on disk
+  -- in case we are dropping diskcopies not yet on tape, ensure that we have at least one copy left on disk
   IF dcsToRmStatus.COUNT > 0 THEN
-    IF dcsToRmStatus(1) = dconst.DISKCOPY_CANBEMIGR THEN
+    IF dcsToRmStatus(1) = dconst.DISKCOPY_VALID AND dcsToRmCfStatus(1) = dconst.CASTORFILE_NOTONTAPE THEN
       BEGIN
         SELECT castorFile INTO cfId
           FROM DiskCopy
          WHERE castorFile = cfId
-           AND status = dconst.DISKCOPY_CANBEMIGR
+           AND status = dconst.DISKCOPY_VALID
            AND id NOT IN (SELECT /*+ CARDINALITY(dcidTable 5) */ * FROM TABLE(dcsToRm) dcidTable)
            AND ROWNUM < 2;
       EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -2809,7 +2800,7 @@ BEGIN
     -- count remaining ones
     SELECT count(*) INTO varNbRemaining FROM DiskCopy
      WHERE castorFile = varCfId
-       AND status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR)
+       AND status = dconst.DISKCOPY_VALID
        AND id != inDcIds(i);
     IF inForce = TRUE THEN
       -- the physical diskcopy is deemed lost: delete the diskcopy entry
@@ -2828,7 +2819,7 @@ BEGIN
       END IF;
       -- was it the last active one?
       IF varNbRemaining = 0 THEN
-        IF varStatus = dconst.DISKCOPY_CANBEMIGR AND NOT inDryRun THEN
+        IF NOT inDryRun THEN
           -- yes, drop the (now bound to fail) migration job(s)
           deleteMigrationJobs(varCfId);
         END IF;
@@ -2868,9 +2859,9 @@ BEGIN
       END IF;
     ELSE
       -- similarly to stageRm, check that the deletion is allowed:
-      -- basically only STAGED files may be dropped in case no data loss is provoked,
+      -- basically only files on tape may be dropped in case no data loss is provoked,
       -- or files already dropped from the namespace. The rest is forbidden.
-      IF (varStatus = dconst.DISKCOPY_STAGED AND (varNbRemaining > 0 OR varFStatus = 'm'))
+      IF (varStatus = dconst.DISKCOPY_VALID AND (varNbRemaining > 0 OR varFStatus = 'm'))
          OR varFStatus = 'd'
          OR varStatus = dconst.DISKCOPY_FAILED THEN    -- this will eventually disappear
         INSERT INTO DeleteDiskCopyHelper (dcId, rc)
@@ -2933,7 +2924,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
          AND FileSystem.diskpool = DiskPool2SvcClass.parent
          AND DiskPool2SvcClass.child = SvcClass.id
          AND SvcClass.id = inSvcClassId
-         AND DiskCopy.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR));
+         AND DiskCopy.status = dconst.DISKCOPY_VALID);
     IF varNbDCs < varMaxDCs OR varMaxDCs = 0 THEN
       -- we have to replicate. But we should ony do it if we have enough available diskservers.
       SELECT COUNT(DISTINCT(DiskServer.name)) INTO varNbDSs
@@ -2950,7 +2941,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
             WHERE DiskCopy.castorfile = inCfId
               AND DiskCopy.fileSystem = FileSystem.id
               AND FileSystem.diskserver = DiskServer.id
-              AND DiskCopy.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR));
+              AND DiskCopy.status = dconst.DISKCOPY_VALID);
       IF varNbDSs > 0 THEN
         DECLARE
           varSrcDcId NUMBER;
@@ -3088,7 +3079,7 @@ BEGIN
      AND FileSystem.diskserver = DiskServer.id
      AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
      AND DiskServer.hwOnline = 1
-     AND DiskCopy.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_STAGEOUT, dconst.DISKCOPY_CANBEMIGR);
+     AND DiskCopy.status IN (dconst.DISKCOPY_VALID, dconst.DISKCOPY_STAGEOUT);
 
   -- we may be the first update inside a prepareToPut. Check for this case
   IF varNbDCs = 0 AND varUpd = 1 THEN
@@ -3123,7 +3114,7 @@ BEGIN
        WHERE DiskCopy.castorfile = inCfId
          AND FileSystem.diskpool = DiskPool2SvcClass.parent
          AND DiskPool2SvcClass.child = varSvcClassId
-         AND DiskCopy.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_STAGEOUT, dconst.DISKCOPY_CANBEMIGR)
+         AND DiskCopy.status IN (dconst.DISKCOPY_VALID, dconst.DISKCOPY_STAGEOUT)
          AND FileSystem.id = DiskCopy.fileSystem
          AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
          AND DiskServer.id = FileSystem.diskServer
@@ -3222,7 +3213,7 @@ BEGIN
          AND FileSystem.diskserver = DiskServer.id
          AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
          AND DiskServer.hwOnline = 1
-         AND DiskCopy.status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_STAGEOUT, dconst.DISKCOPY_CANBEMIGR)
+         AND DiskCopy.status IN (dconst.DISKCOPY_VALID, dconst.DISKCOPY_STAGEOUT)
        UNION ALL
       SELECT /*+ INDEX(StageDiskCopyReplicaRequest I_StageDiskCopyReplic_DestDC) */ DiskCopy.id
         FROM DiskCopy, StageDiskCopyReplicaRequest
@@ -3311,7 +3302,7 @@ BEGIN
      SET status = dconst.DISKCOPY_INVALID,
          gcType = dconst.GCTYPE_OVERWRITTEN
    WHERE castorFile = inCfId
-     AND status IN (dconst.DISKCOPY_STAGED, dconst.DISKCOPY_CANBEMIGR);
+     AND status = dconst.DISKCOPY_VALID;
 
   -- create new DiskCopy, associate it to SubRequest and schedule
   DECLARE

@@ -19,10 +19,10 @@
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
 # *
-# * migrates a new copy to tape for files that are already on disk
-# *
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
+
+'''migrates a new copy to tape for files that are already on disk'''
 
 import sys
 import getopt
@@ -30,8 +30,9 @@ import castor_tools
 
 # usage function
 def usage(exitCode):
-  print 'Usage : ' + sys.argv[0] + ' [-h|--help] fileId[:copynb] [...]'
-  sys.exit(exitCode)
+    '''prints usage'''
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] fileId[:copynb] [...]'
+    sys.exit(exitCode)
 
 # first parse the options
 try:
@@ -70,8 +71,15 @@ try:
     stconn = castor_tools.connectToStager()
     stcur = stconn.cursor()
     stcur.arraysize = 50
-    stCheckDCSQL = 'SELECT UNIQUE Castorfile.Id, CastorFile.fileSize, DiskCopy.status FROM DiskCopy, CastorFile WHERE fileId = :fid and Castorfile.Id = DiskCopy.castorfile AND status in (0, 10)'
-    stCheckMJSQL = 'SELECT MigrationJob.Id FROM MigrationJob WHERE castorFile=:cfId and destCopyNb=:copyNb'
+    stCheckDCSQL = '''SELECT UNIQUE Castorfile.Id, CastorFile.fileSize, CastorFile.tapetatus
+                        FROM DiskCopy, CastorFile
+                       WHERE fileId = :fid
+                         AND Castorfile.Id = DiskCopy.castorfile
+                         AND status = 0'''   # DISKCOPY_VALID
+    stCheckMJSQL = '''SELECT MigrationJob.Id
+                        FROM MigrationJob
+                       WHERE castorFile=:cfId
+                         AND destCopyNb=:copyNb'''
     cfs = []
     for fileid, copynb in fileids:
         # check existence of a copy on disk
@@ -80,9 +88,9 @@ try:
         if len(rows) == 0:
           print 'Fileid ' + str(fileid) + ' has no staged copy on disk. Giving up with the whole request'
           sys.exit(1)
-        # in case of CANBEMIGR files, check absence of Migration job
+        # in case of CASTORFILE_NOTONTAPE status, check absence of Migration job
         cfId, fs, status = rows[0]
-        if status == 10:
+        if status == 0:  # CASTORFILE_NOTONTAPE
           stcur.execute(stCheckMJSQL, cfId=cfId, copyNb=copynb)
           rows = stcur.fetchall()
           if len(rows) != 0:
@@ -96,7 +104,7 @@ try:
     stMigSQL = '''DECLARE
                     tcId INTEGER;
                   BEGIN
-                    UPDATE DiskCopy SET status = 10 WHERE castorFile = :cf AND status = 0;
+                    UPDATE CastorFile SET tapeStatus = 0 WHERE id = :cf;
                     initMigration(:cf, :fs, NULL, NULL, :cn, tconst.MIGRATIONJOB_PENDING);
                     UPDATE MigrationJob SET creationTime = (SELECT lastUpdateTime FROM CastorFile WHERE id = :cf)
                      WHERE castorFile = :cf;

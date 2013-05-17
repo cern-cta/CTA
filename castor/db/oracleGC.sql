@@ -29,14 +29,14 @@ CREATE OR REPLACE PACKAGE castorGC AS
   -- compute gcWeight from size
   FUNCTION size2GCWeight(s NUMBER) RETURN NUMBER;
   -- Default gc policy
-  FUNCTION sizeRelatedUserWeight(fileSize NUMBER, DiskCopyStatus NUMBER) RETURN NUMBER;
+  FUNCTION sizeRelatedUserWeight(fileSize NUMBER) RETURN NUMBER;
   FUNCTION sizeRelatedRecallWeight(fileSize NUMBER) RETURN NUMBER;
   FUNCTION sizeRelatedCopyWeight(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER) RETURN NUMBER;
   FUNCTION dayBonusFirstAccessHook(oldGcWeight NUMBER, creationTime NUMBER) RETURN NUMBER;
   FUNCTION halfHourBonusAccessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER) RETURN NUMBER;
   FUNCTION cappedUserSetGCWeight(oldGcWeight NUMBER, userDelta NUMBER) RETURN NUMBER;
   -- FIFO gc policy
-  FUNCTION creationTimeUserWeight(fileSize NUMBER, DiskCopyStatus NUMBER) RETURN NUMBER;
+  FUNCTION creationTimeUserWeight(fileSize NUMBER) RETURN NUMBER;
   FUNCTION creationTimeRecallWeight(fileSize NUMBER) RETURN NUMBER;
   FUNCTION creationTimeCopyWeight(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER) RETURN NUMBER;
   -- LRU gc policy
@@ -141,7 +141,7 @@ CREATE OR REPLACE PACKAGE BODY castorGC AS
     END IF;
   END;
 
-  FUNCTION sizeRelatedUserWeight(fileSize NUMBER, DiskCopyStatus NUMBER) RETURN NUMBER AS
+  FUNCTION sizeRelatedUserWeight(fileSize NUMBER) RETURN NUMBER AS
   BEGIN
     RETURN size2GCWeight(fileSize);
   END;
@@ -176,7 +176,7 @@ CREATE OR REPLACE PACKAGE BODY castorGC AS
   END;
 
   -- FIFO gc policy
-  FUNCTION creationTimeUserWeight(fileSize NUMBER, DiskCopyStatus NUMBER) RETURN NUMBER AS
+  FUNCTION creationTimeUserWeight(fileSize NUMBER) RETURN NUMBER AS
   BEGIN
     RETURN getTime();
   END;
@@ -215,8 +215,8 @@ END castorGC;
 /
 
 /* PL/SQL method implementing selectFiles2Delete
-   This is the standard garbage collector: it sorts STAGED
-   diskcopies by gcWeight and selects them for deletion up to
+   This is the standard garbage collector: it sorts VALID diskcopies
+   that do not need to go to tape by gcWeight and selects them for deletion up to
    the desired free space watermark */
 CREATE OR REPLACE
 PROCEDURE selectFiles2Delete(diskServerName IN VARCHAR2,
@@ -241,7 +241,7 @@ BEGIN
                 AND FileSystem.diskServer = DiskServer.id
                 AND DiskServer.name = diskServerName) LOOP
     -- If any of the service classes to which we belong (normally a single one)
-    -- say this is Disk1, we don't GC STAGED files.
+    -- say this is Disk1, we don't GC files.
     IF sc.disk1Behavior = 1 THEN
       dontGC := 1;
       EXIT;
@@ -266,7 +266,7 @@ BEGIN
        AND decode(status, 9, status, NULL) = 9;  -- BEINGDELETED (decode used to use function-based index)
 
     -- estimate the number of GC running the "long" query, that is the one dealing with the GCing of
-    -- STAGED files.
+    -- VALID files.
     SELECT COUNT(*) INTO backoff
       FROM v$session s, v$sqltext t
      WHERE s.sql_id = t.sql_id AND t.sql_text LIKE '%I_DiskCopy_FS_GCW%';
@@ -303,9 +303,9 @@ BEGIN
     totalCount := totalCount + dcIds.COUNT();
     EXIT WHEN totalCount >= 10000;
 
-    -- Continue processing but with STAGED files, only in case we are not already loaded
+    -- Continue processing but with VALID files, only in case we are not already loaded
     IF dontGC = 0 AND backoff < 4 THEN
-      -- Do not delete STAGED files from non production hardware
+      -- Do not delete VALID files from non production hardware
       BEGIN
         SELECT FileSystem.id INTO unused
           FROM DiskServer, FileSystem
@@ -332,12 +332,15 @@ BEGIN
         FROM FileSystem
        WHERE id = fs.id;
       -- If space is still required even after removal of INVALID files, consider
-      -- removing STAGED files until we are below the free space watermark
+      -- removing VALID files until we are below the free space watermark
       IF freed < toBeFreed THEN
         -- Loop on file deletions
-        FOR dc IN (SELECT /*+ INDEX(DiskCopy I_DiskCopy_FS_GCW) */ id, castorFile FROM DiskCopy
+        FOR dc IN (SELECT /*+ INDEX(DiskCopy I_DiskCopy_FS_GCW) */ DiskCopy.id, castorFile
+                     FROM DiskCopy, CastorFile
                     WHERE fileSystem = fs.id
-                      AND status = dconst.DISKCOPY_STAGED
+                      AND status = dconst.DISKCOPY_VALID
+                      AND CastorFile.id = DiskCopy.castorFile
+                      AND CastorFile.tapeStatus IN (dconst.CASTORFILE_DISKONLY, dconst.CASTORFILE_ONTAPE)
                       AND NOT EXISTS (
                         SELECT /*+ NL_AJ INDEX(SubRequest I_SubRequest_DiskCopy) */ 'x'
                           FROM SubRequest

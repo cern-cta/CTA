@@ -129,7 +129,7 @@ INSERT INTO CastorConfig
 INSERT INTO CastorConfig
   VALUES ('Migration', 'SizeThreshold', '300000000', 'The threshold to consider a file "small" or "large" when routing it to tape');
 INSERT INTO CastorConfig
-  VALUES ('Migration', 'MaxNbMounts', '7', 'The maximum number of mounts for migrating a given file. When exceeded, the migration will be considered failed: the MigrationJob entry will be dropped and the corresponding diskcopy left in status CANBEMIGR. An operator intervention is required to resume the migration.');
+  VALUES ('Migration', 'MaxNbMounts', '7', 'The maximum number of mounts for migrating a given file. When exceeded, the migration will be considered failed: the MigrationJob entry will be dropped and the corresponding castorFile left in status NOTONTAPE. An operator intervention is required to resume the migration.');
 INSERT INTO CastorConfig
   VALUES ('DiskServer', 'HeartbeatTimeout', '180', 'The maximum amount of time in seconds that a diskserver can spend without sending any hearbeat before it is automatically set to offline.');
 
@@ -212,8 +212,6 @@ END;
  *   firstAccessHook(oldGcWeight NUMBER, creationTime NUMBER)
  *   accessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER)
  *   userSetGCWeight(oldGcWeight NUMBER, userDelta NUMBER)
- * Few notes :
- *   diskCopyStatus can be STAGED(0) or CANBEMIGR(10)
  */
 CREATE TABLE GcPolicy (name VARCHAR2(2048) CONSTRAINT NN_GcPolicy_Name NOT NULL CONSTRAINT PK_GcPolicy_Name PRIMARY KEY,
                        userWeight VARCHAR2(2048) CONSTRAINT NN_GcPolicy_UserWeight NOT NULL,
@@ -326,7 +324,8 @@ CREATE TABLE CastorFile (fileId INTEGER,
                          lastKnownFileName VARCHAR2(2048) CONSTRAINT NN_CastorFile_LKFileName NOT NULL,
                          lastUpdateTime INTEGER,
                          id INTEGER CONSTRAINT PK_CastorFile_Id PRIMARY KEY,
-                         fileClass INTEGER)
+                         fileClass INTEGER,
+                         tapeStatus INTEGER)  -- can be ONTAPE, NOTONTAPE or DISKONLY
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_FileClass
   FOREIGN KEY (fileClass) REFERENCES FileClass (id)
@@ -812,14 +811,13 @@ BEGIN
   setObjStatusName('DiskCopy', 'gcType', 3, 'GCTYPE_DRAINING');
   setObjStatusName('DiskCopy', 'gcType', 4, 'GCTYPE_NSSYNCH');
   setObjStatusName('DiskCopy', 'gcType', 5, 'GCTYPE_OVERWRITTEN');
-  setObjStatusName('DiskCopy', 'status', 0, 'DISKCOPY_STAGED');
+  setObjStatusName('DiskCopy', 'status', 0, 'DISKCOPY_VALID');
   setObjStatusName('DiskCopy', 'status', 1, 'DISKCOPY_WAITDISK2DISKCOPY');
   setObjStatusName('DiskCopy', 'status', 4, 'DISKCOPY_FAILED');
   setObjStatusName('DiskCopy', 'status', 5, 'DISKCOPY_WAITFS');
   setObjStatusName('DiskCopy', 'status', 6, 'DISKCOPY_STAGEOUT');
   setObjStatusName('DiskCopy', 'status', 7, 'DISKCOPY_INVALID');
   setObjStatusName('DiskCopy', 'status', 9, 'DISKCOPY_BEINGDELETED');
-  setObjStatusName('DiskCopy', 'status', 10, 'DISKCOPY_CANBEMIGR');
   setObjStatusName('DiskCopy', 'status', 11, 'DISKCOPY_WAITFS_SCHEDULING');
 END;
 /

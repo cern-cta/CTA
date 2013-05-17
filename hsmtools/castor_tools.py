@@ -283,19 +283,6 @@ def connectToNS():
     user, passwd, dbname = getNSDBConnectParam('NSCONFIG')
     return connectToDB(user, passwd, dbname, NSSCHEMAVERSION, enforceCheck=False)
 
-DiskCopyStatus = ["DISKCOPY_STAGED",
-                  "DISKCOPY_WAITDISK2DISKCOPY",
-                  "DISKCOPY_WAITTAPERECALL",
-                  "DISKCOPY_DELETED",
-                  "DISKCOPY_FAILED",
-                  "DISKCOPY_WAITFS",
-                  "DISKCOPY_STAGEOUT",
-                  "DISKCOPY_INVALID",
-                  "DISKCOPY_GCCANDIDATE",
-                  "DISKCOPY_BEINGDELETED",
-                  "DISKCOPY_CANBEMIGR",
-                  "DISKCOPY_WAITFS_SCHEDULING"]
-
 areBooleans = ["aborted",
                "emptyfile",
                "disk1behavior",
