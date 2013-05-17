@@ -64,6 +64,12 @@ VDQMBIN_SRCS = CDevTools.cpp \
                handler/VdqmMagic4RequestHandler.cpp
 VDQMBIN_OBJS = $(VDQMBIN_SRCS:.cpp=.o)
 NormalProgramTarget(vdqmd,$(VDQMBIN_OBJS),,,755)
+
+COMM This is part of the castor-dbtools RPM, but it is compiled here for dependencies reasons.
+COMM Eventually it should become a python script like the others in that package.
+NormalProgramTarget(vdqmDBInit,vdqmDBInit.o,,-lstdc++,755)
+EXEMANPAGE(vdqmDBInit)
+
 MakeDir($(LOGPATH),0755)
 ADMMANPAGE(vdqmd)
 LOGROTATE(castor-vdqm2-server,install)

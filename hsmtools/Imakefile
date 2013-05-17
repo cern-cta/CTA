@@ -7,12 +7,10 @@ COMM       @(#)Imakefile,v 1.24 2005/12/06 10:52:56 CERN IT-PDP/DM Jean-Philippe
 COMM    Make HSM admin tools.
 
 DependsOnLibrary(common,castorcommon)
-DependsOnLibrary(dlf,castordlf)
-DependsOnLibrary(castor/db/cnv,castorcnvs)
 DependsOnLibrary(ns,castorns)
 DependsOnLibrary(castor,castorclient)
-DependsOnLibrary(vmgr,castorvmgr)
 DependsOnLibrary(rfio,castorrfio)
+DependsOnLibrary(vmgr,castorvmgr)
 
 NormalProgramTarget(reclaim,reclaim.o,,,755)
 InstallTarget(repack,755)
@@ -26,8 +24,6 @@ COMPILEC(rfcpupd.c,-DSACCT)
 NormalProgramTarget(rfcpupd,rfcpupd.o,,,755)
 NormalProgramTarget(stager_actualget,stager_actualget.o,,,755)
 NormalProgramTarget(stager_actualput,stager_actualput.o,,,755)
-
-NormalProgramTarget(vdqmDBInit,vdqmDBInit.o,,-lstdc++,755)
 
 InstallTarget(enterfileclass,755)
 InstallTarget(deletefileclass,755)
@@ -134,7 +130,6 @@ EXEMANPAGE(adminMultiInstance)
 EXEMANPAGE(draindiskserver)
 EXEMANPAGE(migratenewcopy)
 
-EXEMANPAGE(vdqmDBInit)
 EXEMANPAGE(vdqmsetpriority)
 EXEMANPAGE(vdqmdeletepriority)
 EXEMANPAGE(vdqmlistpriority)
