@@ -178,6 +178,7 @@ BEGIN
       varWasRecalled NUMBER;
       varMigrationTriggered BOOLEAN := False;
     BEGIN
+      outNbFilesProcessed := outNbFilesProcessed + 1;
       -- Commit from time to time
       IF MOD(outNbFilesProcessed, 1000) = 0 THEN
         COMMIT;
@@ -206,7 +207,6 @@ BEGIN
         selectCastorFileInternal(segment.fileid, nsHostName, segment.fileclass,
                                  segment.segSize, lastKnownFileName, 0, varCreationTime, TRUE, cfid, unused);
       END;
-      outNbFilesProcessed := outNbFilesProcessed + 1;
       -- create  subrequest for this file.
       -- Note that the svcHandler is not set. It will actually never be used as repacks are handled purely in PL/SQL
       INSERT INTO SubRequest (retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, creationTime, lastModificationTime, answered, errorCode, errorMessage, requestedFileSystems, svcHandler, id, diskcopy, castorFile, parent, status, request, getNextStatus, reqType)
@@ -285,6 +285,7 @@ BEGIN
        WHERE id = varSubreqId;
     EXCEPTION WHEN OTHERS THEN
       -- something went wrong: log "handleRepackRequest: unexpected exception caught"
+      outNbFailures := outNbFailures + 1;
       varSrErrorMsg := 'Oracle error caught : ' || SQLERRM;
       logToDLF(NULL, dlf.LVL_ERROR, dlf.REPACK_UNEXPECTED_EXCEPTION, segment.fileId, nsHostName, 'repackd',
         'errorCode=' || to_char(SQLCODE) ||' errorMessage="' || varSrErrorMsg
