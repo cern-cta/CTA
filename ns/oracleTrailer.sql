@@ -266,7 +266,7 @@ BEGIN
      inSegEntry.checksum != to_number(varFCksum, 'XXXXXXXX') THEN
     rc := serrno.SECHECKSUM;
     msg := serrno.SECHECKSUM_MSG ||' : '
-      || varFCksum ||' vs '|| to_char(inSegEntry.checksum, 'XXXXXXXX');
+      || upper(varFCksum) ||' vs '|| to_char(inSegEntry.checksum, 'XXXXXXXX');
     ROLLBACK;
     RETURN;
   END IF;
