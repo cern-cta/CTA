@@ -1264,14 +1264,18 @@ BEGIN
      WHERE reqId = inReqId);
   DELETE FROM FileMigrationResultsHelper
    WHERE reqId = inReqId;
-  -- This call autocommits all segments in the NameServer
+  COMMIT;  -- commit the remote insertion, otherwise a ORA-01002 (fetch out of sequence) may happen
+  -- This call autocommits all successful segments in the NameServer, and reports
+  -- successes and errors as entries in the SetSegsForFilesResultsHelper table
   setOrReplaceSegmentsForFiles@RemoteNS(inReqId);
   -- Retrieve results from the NS DB in bulk and clean data
+  SELECT isOnlyLog, timeinfo, errorCode, msg, fileId, params
+    BULK COLLECT INTO outNSIsOnlyLogs, outNSTimeInfos, outNSErrorCodes, outNSMsgs, outNSFileIds, outNSParams
+    FROM SetSegsForFilesResultsHelper@RemoteNS
+   WHERE reqId = inReqId;
   DELETE FROM SetSegsForFilesResultsHelper@RemoteNS
-   WHERE reqId = inReqId
-  RETURNING isOnlyLog, timeinfo, errorCode, msg, fileId, params
-    BULK COLLECT INTO outNSIsOnlyLogs, outNSTimeInfos, outNSErrorCodes, outNSMsgs, outNSFileIds, outNSParams;
-  -- this commits the remote transaction
+   WHERE reqId = inReqId;
+  -- this commits the remote deletion
   COMMIT;
 END;
 /
