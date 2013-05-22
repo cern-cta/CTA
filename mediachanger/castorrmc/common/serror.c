@@ -332,6 +332,7 @@ char *sys_terrlist[ETMAXERR-ETBASEOFF+2] =
    "Label information not found in memory",
    "Multi-drive reservations are not supported",
    "No memory available for label information",
+   "Tape session error",
    "BAD ERROR NUMBER"
   };
 
