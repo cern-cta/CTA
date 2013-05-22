@@ -337,8 +337,10 @@
 #define ETNOLBLINFO	ETBASEOFF+35    /* Label information not found in memory */
 #define ETMLTDRVRSV	ETBASEOFF+36    /* Multi-drive reservations are not supported */
 #define ETNOLBLINFOMEM	ETBASEOFF+37    /* No memory available for label information */
-#define ETSESSIONERROR	ETBASEOFF+38    /* Tape session error */
-#define ETMAXERR        ETBASEOFF+38
+#define ETSESSIONERROR	ETBASEOFF+38    /* Tape-session error */
+#define ETINVALIDTFSEQ	ETBASEOFF+39    /* Invalid tape-file sequence-number */
+#define ETINVALIDTFSIZE	ETBASEOFF+40    /* Invalid tape-file file-size */
+#define ETMAXERR        ETBASEOFF+40
 
 /*
  *------------------------------------------------------------------------
