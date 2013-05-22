@@ -45,7 +45,7 @@ castor::tape::tapebridge::PendingMigrationsStore::PendingMigrationsStore(
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::PendingMigrationsStore::
   receivedRequestToMigrateFile(const RequestToMigrateFile &request)
-  throw(castor::exception::Exception) {
+  throw(SessionException, castor::exception::Exception) {
 
   const char *const task = "add pending file-migration to pending"
     " file-migration store";

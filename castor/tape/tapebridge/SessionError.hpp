@@ -25,8 +25,6 @@
 #ifndef CASTOR_TAPE_TAPEBRIDGE_SESSIONERROR_HPP
 #define CASTOR_TAPE_TAPEBRIDGE_SESSIONERROR_HPP 1
 
-#include "castor/exception/InvalidArgument.hpp"
-
 #include <string>
 #include <stdint.h>
 
@@ -38,8 +36,7 @@ namespace tapebridge {
 /**
  * An error that occurred during the tape session daemon that could not be
  * sent immediately to the tapegatewayd daemon, but instead had to be held back
- * until the lats message to the tapegatewayd daemon at the end of the tape
- * session.
+ * until the shutdown message sequence of the tapegatewayd session.
  */
 class SessionError {
 public:

@@ -28,6 +28,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/tapebridge/FileWrittenNotificationList.hpp"
 #include "castor/tape/tapebridge/RequestToMigrateFile.hpp"
+#include "castor/tape/tapebridge/SessionException.hpp"
 #include "castor/tape/tapebridge/TapeFlushConfigParams.hpp"
 
 #include <list>
@@ -60,15 +61,13 @@ public:
    * This method throws an exception if a file with the same tape-file
    * sequence-number has already been added to the store.
    *
-   * This method throws an exception if the tape-file sequence-number of the
-   * file to be added is not 1 plus the tape-file sequence-number of the
-   * previously added file.  This test is of course not applicable when the
-   * pending migrations store is empty and the very first file is being added.
+   * This method throws a SessionException of FILE_SCOPE if the file to be
+   * migrated is invalid.
    *
    * @param request The request to migrate a file to tape.
    */
   void receivedRequestToMigrateFile(const RequestToMigrateFile &request)
-    throw(castor::exception::Exception);
+    throw(SessionException, castor::exception::Exception);
 
   /**
    * Marks the pending file-migration identified by the specified file-migrated

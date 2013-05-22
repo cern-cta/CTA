@@ -337,11 +337,153 @@ public:
     }
   }
 
+  void testMigrateToFSeqZero() {
+    TestingTapeFlushConfigParams tapeFlushConfigParams;
+    tapeFlushConfigParams.setTapeFlushMode(
+      TAPEBRIDGE_ONE_FLUSH_PER_N_FILES,
+      ConfigParamSource::COMPILE_TIME_DEFAULT);
+    tapeFlushConfigParams.setMaxBytesBeforeFlush(
+      8,
+      ConfigParamSource::COMPILE_TIME_DEFAULT);
+    tapeFlushConfigParams.setMaxFilesBeforeFlush(
+      20,
+      ConfigParamSource::COMPILE_TIME_DEFAULT);
+    castor::tape::tapebridge::PendingMigrationsStore store(
+      tapeFlushConfigParams);
+
+    castor::tape::tapebridge::RequestToMigrateFile request;
+    request.fileTransactionId = 1000;
+    request.nsHost = "Name server host";
+    request.nsFileId = 2000;
+    request.tapeFSeq = 0;
+    request.fileSize = 4000;
+
+    try {
+      store.receivedRequestToMigrateFile(request);
+      CPPUNIT_ASSERT_MESSAGE(
+        "receivedRequestToMigrateFile failed to throw an exception",
+        false);
+    } catch(SessionException &se) {
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking code of session exception",
+        ETSESSIONERROR,
+        se.code());
+
+      const SessionError &error = se.getSessionError();
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking errorScope of session error",
+        SessionError::FILE_SCOPE,
+        error.getErrorScope());
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking errorCode of session error",
+        ETINVALIDTFSEQ,
+        error.getErrorCode());
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking fileTransactionId of session error",
+        request.fileTransactionId,
+        error.getFileTransactionId());
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking nsHost of session error",
+        request.nsHost,
+        error.getNsHost());
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking nsFileId of session error",
+        request.nsFileId,
+        error.getNsFileId());
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking tapeFSeq of session error",
+        request.tapeFSeq,
+        error.getTapeFSeq());
+    } catch(...) {
+      CPPUNIT_ASSERT_MESSAGE(
+        "receivedRequestToMigrateFile failed to throw SessionException",
+        false);
+    }
+  }
+
+  void testMigrateZeroLengthFile() {
+    TestingTapeFlushConfigParams tapeFlushConfigParams;
+    tapeFlushConfigParams.setTapeFlushMode(
+      TAPEBRIDGE_ONE_FLUSH_PER_N_FILES,
+      ConfigParamSource::COMPILE_TIME_DEFAULT);
+    tapeFlushConfigParams.setMaxBytesBeforeFlush(
+      8,
+      ConfigParamSource::COMPILE_TIME_DEFAULT);
+    tapeFlushConfigParams.setMaxFilesBeforeFlush(
+      20,
+      ConfigParamSource::COMPILE_TIME_DEFAULT);
+    castor::tape::tapebridge::PendingMigrationsStore store(
+      tapeFlushConfigParams);
+
+    castor::tape::tapebridge::RequestToMigrateFile request;
+    request.fileTransactionId = 1000;
+    request.nsHost = "Name server host";
+    request.nsFileId = 2000;
+    request.tapeFSeq = 3000;
+    request.fileSize = 0;
+
+    try {
+      store.receivedRequestToMigrateFile(request);
+      CPPUNIT_ASSERT_MESSAGE(
+        "receivedRequestToMigrateFile failed to throw an exception",
+        false);
+    } catch(SessionException &se) {
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking code of session exception",
+        ETSESSIONERROR,
+        se.code());
+
+      const SessionError &error = se.getSessionError();
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking errorScope of session error",
+        SessionError::FILE_SCOPE,
+        error.getErrorScope());
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking errorCode of session error",
+        ETINVALIDTFSIZE,
+        error.getErrorCode());
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking fileTransactionId of session error",
+        request.fileTransactionId,
+        error.getFileTransactionId());
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking nsHost of session error",
+        request.nsHost,
+        error.getNsHost());
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking nsFileId of session error",
+        request.nsFileId,
+        error.getNsFileId());
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking tapeFSeq of session error",
+        request.tapeFSeq,
+        error.getTapeFSeq());
+    } catch(...) {
+      CPPUNIT_ASSERT_MESSAGE(
+        "receivedRequestToMigrateFile failed to throw SessionException",
+        false);
+    }
+  }
+
   CPPUNIT_TEST_SUITE(PendingMigrationsStoreTest);
   CPPUNIT_TEST(testFlushEveryNthByte);
   CPPUNIT_TEST(testFlushEveryNthFile);
   CPPUNIT_TEST(testInvalidFlushFseqMaxBytes);
   CPPUNIT_TEST(testInvalidFlushFseqMaxFiles);
+  CPPUNIT_TEST(testMigrateToFSeqZero);
+  CPPUNIT_TEST(testMigrateZeroLengthFile);
   CPPUNIT_TEST_SUITE_END();
 
 private:

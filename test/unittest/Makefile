@@ -272,6 +272,7 @@ rununittests: \
   tapebridge_RtcpTxRx.o \
   tapebridge_SessionError.o \
   tapebridge_SessionErrorList.o \
+  tapebridge_SessionException.o \
   tapebridge_sendTapeBridgeClientInfo2Ack.o \
   tapebridge_sendTapeBridgeFlushedToTape.o \
   tapebridge_SystemFileCloser.o \
@@ -1277,6 +1278,10 @@ tapebridge_SessionError.o: \
 
 tapebridge_SessionErrorList.o: \
   $(ROOT_DIR)/castor/tape/tapebridge/SessionErrorList.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tapebridge_SessionException.o: \
+  $(ROOT_DIR)/castor/tape/tapebridge/SessionException.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tapebridge_RtcpTxRx.o: \

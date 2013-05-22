@@ -58,6 +58,7 @@ TAPEBRIDGEBIN_SRCS = \
   RtcpTxRx.cpp \
   SessionError.cpp \
   SessionErrorList.cpp \
+  SessionException.cpp \
   SystemFileCloser.cpp \
   TapeBridgeDaemon.cpp \
   TapeBridgeMain.cpp \
