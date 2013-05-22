@@ -724,7 +724,13 @@ The following error values are returned only by the tape package:
 (1937) No memory available for label information
 .TP
 .B ETSESSIONERROR
-(1938) Tape session error
+(1938) Tape-session error
+.TP
+.B ETINVALIDTFSEQ
+(1939) Invalid tape-file sequence-number
+.TP
+.B ETINVALIDTFSIZE
+(1940) Invalid tape-file file-size
 
 .SH VMGR ERRORS
 The following error values are returned only by the volume manager package:
