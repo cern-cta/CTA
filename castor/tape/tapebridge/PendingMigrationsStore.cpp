@@ -30,83 +30,105 @@
 #include <sstream>
 
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Constructor
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::tape::tapebridge::PendingMigrationsStore::PendingMigrationsStore(
   const TapeFlushConfigParams &tapeFlushConfigParams):
   m_tapeFlushConfigParams(tapeFlushConfigParams) {
   clear();
 }
 
-
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // receivedRequestToMigrateFile
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::tape::tapebridge::PendingMigrationsStore::
   receivedRequestToMigrateFile(const RequestToMigrateFile &request)
   throw(SessionException, castor::exception::Exception) {
 
-  const char *const task = "add pending file-migration to pending"
-    " file-migration store";
-
-  // Throw an exception if the tape-file sequence-number of the request is
-  // invalid
-  if(0 == request.tapeFSeq) {
-    TAPE_THROW_CODE(EBADMSG,
-    ": Failed to " << task <<
-    ": Request to migrate file to tape contains an invalid tape-file"
-    " sequence-number"
-    ": value=" << request.tapeFSeq);
-  }
-
-  // Throw an exception if the size of the file to be migrated is invalid
-  if(0 == request.fileSize) {
-    TAPE_THROW_CODE(EBADMSG,
-    ": Failed to " << task <<
-    ": Invalid file-size"
-    ": value=0");
-  }
-
-  // Throw an exception if the store already contains a file with the same
-  // tape-file sequence-number
-  MigrationMap::iterator itor = m_migrations.find(request.tapeFSeq);
-  if(itor != m_migrations.end()) {
-    TAPE_THROW_EX(castor::exception::InvalidArgument,
-      ": Failed to " << task <<
-      ": Store already contains a file with the same tape-file sequence-number"
-      ": value=" << request.tapeFSeq);
-  }
-
-  // Throw an exception if the store is not empty and the tape-file
-  // sequence-number of the file to be migrated is not 1 plus the tape-file
-  // sequence-number of the previously added file to be migrated
-  {
-    const int32_t expectedTapeFSeq = m_tapeFSeqOfLastFileAdded + 1;
-    if(!m_migrations.empty() && expectedTapeFSeq != request.tapeFSeq) {
-      TAPE_THROW_EX(castor::exception::InvalidArgument,
-        ": Failed to add pending file-migration to pending file-migration store"
-        ": Tape-file sequence-number of file is not 1 plus the value of the"
-        " previously added file"
-        ": expected=" << expectedTapeFSeq <<
-        ": actual=" << request.tapeFSeq);
-    }
-  }
+  checkRequestToMigrateFile(request);
 
   // Add the file-migration request
-  {
-    const Migration migration(Migration::SENT_TO_RTCPD, request);
-    m_migrations[request.tapeFSeq] = migration;
-  }
+  m_migrations[request.tapeFSeq] = Migration(Migration::SENT_TO_RTCPD, request);
 
   // Update the tape-file sequence-number of the last file added
   m_tapeFSeqOfLastFileAdded = request.tapeFSeq;
 }
 
+//------------------------------------------------------------------------------
+// checkRequestToMigrateFile
+//------------------------------------------------------------------------------
+void castor::tape::tapebridge::PendingMigrationsStore::
+  checkRequestToMigrateFile(const RequestToMigrateFile &request)
+  throw(SessionException) {
+  // Throw an exception if the tape-file sequence-number of the request is zero
+  if(0 == request.tapeFSeq) {
+    SessionError sError;
+    sError.setErrorScope(SessionError::FILE_SCOPE);
+    sError.setErrorCode(ETINVALIDTFSEQ);
+    sError.setErrorMessage("Request to migrate file to tape contains a"
+      " tape-file sequence-number of zero");
+    sError.setFileTransactionId(request.fileTransactionId);
+    sError.setNsHost(request.nsHost);
+    sError.setNsFileId(request.nsFileId);
+    sError.setTapeFSeq(request.tapeFSeq);
+    SessionException sException(sError);
 
-//-----------------------------------------------------------------------------
+    TAPE_EX_LOCALE(sException);
+    sException.getMessage() << ": " << sError.getErrorMessage();
+    throw sException;
+  }
+
+  // Throw an exception if the size of the file to be migrated is zero
+  if(0 == request.fileSize) {
+    SessionError sError;
+    sError.setErrorScope(SessionError::FILE_SCOPE);
+    sError.setErrorCode(ETINVALIDTFSIZE);
+    sError.setErrorMessage("Request to migrate file to tape contains a"
+      " file size of zero");
+    sError.setFileTransactionId(request.fileTransactionId);
+    sError.setNsHost(request.nsHost);
+    sError.setNsFileId(request.nsFileId);
+    sError.setTapeFSeq(request.tapeFSeq);
+    SessionException sException(sError);
+
+    TAPE_EX_LOCALE(sException);
+    sException.getMessage() << ": " << sError.getErrorMessage();
+    throw sException;
+  }
+
+  // Throw an exception if the store is not empty and the tape-file
+  // sequence-number of the file to be migrated is not 1 plus the tape-file
+  // sequence-number of the previously added file to be migrated
+  if(!m_migrations.empty()) {
+    const int32_t expectedTapeFSeq = m_tapeFSeqOfLastFileAdded + 1;
+
+    if(expectedTapeFSeq != request.tapeFSeq) {
+      std::ostringstream oss;
+      oss << "Tape-file sequence-number of file is not 1 plus the value of"
+        " the previously added file" <<
+        ": expected=" << expectedTapeFSeq <<
+        ": actual=" << request.tapeFSeq;
+      SessionError sError;
+      sError.setErrorScope(SessionError::FILE_SCOPE);
+      sError.setErrorCode(ETINVALIDTFSEQ);
+      sError.setErrorMessage(oss.str());
+      sError.setFileTransactionId(request.fileTransactionId);
+      sError.setNsHost(request.nsHost);
+      sError.setNsFileId(request.nsFileId);
+      sError.setTapeFSeq(request.tapeFSeq);
+      SessionException sException(sError);
+
+      TAPE_EX_LOCALE(sException);
+      sException.getMessage() << ": " << sError.getErrorMessage();
+      throw sException;
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
 // noMoreFilesToMigrate
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::tape::tapebridge::PendingMigrationsStore::noMoreFilesToMigrate()
   throw(castor::exception::Exception) {
   const bool endOfSessionFileIsKnown = 0 != m_tapeFSeqOfEndOfSessionFile;
@@ -121,10 +143,9 @@ void castor::tape::tapebridge::PendingMigrationsStore::noMoreFilesToMigrate()
   m_tapeFSeqOfEndOfSessionFile = m_tapeFSeqOfLastFileAdded;
 }
 
-
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // fileWrittenWithoutFlush
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::tape::tapebridge::PendingMigrationsStore::fileWrittenWithoutFlush(
   const FileWrittenNotification &notification)
   throw(castor::exception::Exception) {
@@ -236,10 +257,9 @@ void castor::tape::tapebridge::PendingMigrationsStore::fileWrittenWithoutFlush(
   }
 }
 
-
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // checkForMismatches
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::tape::tapebridge::PendingMigrationsStore::checkForMismatches(
   const RequestToMigrateFile    &request,
   const FileWrittenNotification &notification)
@@ -302,10 +322,9 @@ void castor::tape::tapebridge::PendingMigrationsStore::checkForMismatches(
   }
 }
 
-
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // dataFlushedToTape
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::tape::tapebridge::FileWrittenNotificationList
   castor::tape::tapebridge::PendingMigrationsStore::dataFlushedToTape(
   const int32_t tapeFSeqOfFlush) throw(castor::exception::Exception) {
@@ -385,10 +404,9 @@ castor::tape::tapebridge::FileWrittenNotificationList
   return outputList;
 }
 
-
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // clear
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::tape::tapebridge::PendingMigrationsStore::clear() {
   m_nbBytesWrittenWithoutFlush            = 0;
   m_nbFilesWrittenWithoutFlush            = 0;
@@ -401,10 +419,9 @@ void castor::tape::tapebridge::PendingMigrationsStore::clear() {
   m_migrations.clear();
 }
 
-
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // getMaxBytesBeforeFlush
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 uint64_t castor::tape::tapebridge::PendingMigrationsStore::
   getMaxBytesBeforeFlush() const throw(castor::exception::Exception) {
   if(TAPEBRIDGE_ONE_FLUSH_PER_N_FILES ==
@@ -415,10 +432,9 @@ uint64_t castor::tape::tapebridge::PendingMigrationsStore::
   }
 }
 
-
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // getMaxFilesBeforeFlush
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 uint64_t castor::tape::tapebridge::PendingMigrationsStore::
   getMaxFilesBeforeFlush() const throw(castor::exception::Exception) {
   if(TAPEBRIDGE_ONE_FLUSH_PER_N_FILES ==
@@ -429,10 +445,9 @@ uint64_t castor::tape::tapebridge::PendingMigrationsStore::
   }
 }
 
-
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // getNbPendingMigrations
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 uint32_t castor::tape::tapebridge::PendingMigrationsStore::
   getNbPendingMigrations() const {
   return m_migrations.size();

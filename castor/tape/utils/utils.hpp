@@ -47,6 +47,17 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+/**
+ * The TAPE_EX_LOCALE macro streams the current locale (file, line and
+ * function) into the message stream of the specified
+ * castor::exception::Exception.
+ */
+#define TAPE_EX_LOCALE(EX) {         \
+  EX.getMessage()                  \
+    <<  "File="     << __FILE__      \
+    << " Line="     << __LINE__      \
+    << " Function=" << __FUNCTION__; \
+}
 
 /**
  * The TAPE_THROW_EX macro throws an exception and automatically adds file,

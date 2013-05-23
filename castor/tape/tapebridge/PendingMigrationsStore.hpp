@@ -58,11 +58,8 @@ public:
   /**
    * Adds the specified file-migration request to the store.
    *
-   * This method throws an exception if a file with the same tape-file
-   * sequence-number has already been added to the store.
-   *
-   * This method throws a SessionException of FILE_SCOPE if the file to be
-   * migrated is invalid.
+   * This method throws a SessionException of FILE_SCOPE if the specified
+   * request to migrate a file is invalid.
    *
    * @param request The request to migrate a file to tape.
    */
@@ -336,6 +333,13 @@ private:
    * be flushed.
    */
   uint64_t getMaxFilesBeforeFlush() const throw(castor::exception::Exception);
+
+  /**
+   * This method throws a SessionException of FILE_SCOPE if the specified
+   * request to migrate a file is invalid.
+   */
+  void checkRequestToMigrateFile(const RequestToMigrateFile &request)
+    throw(SessionException);
 
 }; // class PendingMigrationsStore
 
