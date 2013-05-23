@@ -477,6 +477,172 @@ public:
     }
   }
 
+  void testMigrateSameTapeFSeqTwice() {
+    TestingTapeFlushConfigParams tapeFlushConfigParams;
+    tapeFlushConfigParams.setTapeFlushMode(
+      TAPEBRIDGE_ONE_FLUSH_PER_N_FILES,
+      ConfigParamSource::COMPILE_TIME_DEFAULT);
+    tapeFlushConfigParams.setMaxBytesBeforeFlush(
+      8,
+      ConfigParamSource::COMPILE_TIME_DEFAULT);
+    tapeFlushConfigParams.setMaxFilesBeforeFlush(
+      20,
+      ConfigParamSource::COMPILE_TIME_DEFAULT);
+    castor::tape::tapebridge::PendingMigrationsStore store(
+      tapeFlushConfigParams);
+
+    castor::tape::tapebridge::RequestToMigrateFile request1;
+    request1.fileTransactionId = 1000;
+    request1.nsHost = "Name server host";
+    request1.nsFileId = 2000;
+    request1.tapeFSeq = 3000;
+    request1.fileSize = 4000;
+
+    castor::tape::tapebridge::RequestToMigrateFile request2;
+    request2.fileTransactionId = 5000;
+    request2.nsHost = "Name server host";
+    request2.nsFileId = 6000;
+    request2.tapeFSeq = 3000;
+    request2.fileSize = 7000;
+
+    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+      "Checking receivedRequestToMigrateFile does not throw with first file",
+      store.receivedRequestToMigrateFile(request1)
+    );
+
+    try {
+      store.receivedRequestToMigrateFile(request2);
+      CPPUNIT_ASSERT_MESSAGE(
+        "receivedRequestToMigrateFile failed to throw with second file",
+        false);
+    } catch(SessionException &se) {
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking code of session exception",
+        ETSESSIONERROR,
+        se.code());
+
+      const SessionError &error = se.getSessionError();
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking errorScope of session error",
+        SessionError::FILE_SCOPE,
+        error.getErrorScope());
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking errorCode of session error",
+        ETINVALIDTFSEQ,
+        error.getErrorCode());
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking fileTransactionId of session error",
+        request2.fileTransactionId,
+        error.getFileTransactionId());
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking nsHost of session error",
+        request2.nsHost,
+        error.getNsHost());
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking nsFileId of session error",
+        request2.nsFileId,
+        error.getNsFileId());
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking tapeFSeq of session error",
+        request2.tapeFSeq,
+        error.getTapeFSeq());
+    } catch(...) {
+      CPPUNIT_ASSERT_MESSAGE(
+        "receivedRequestToMigrateFile failed to throw SessionException with"
+          " second file",
+        false);
+    }
+  }
+
+  void testMigrateNonConsecutiveTapeFSeqs() {
+    TestingTapeFlushConfigParams tapeFlushConfigParams;
+    tapeFlushConfigParams.setTapeFlushMode(
+      TAPEBRIDGE_ONE_FLUSH_PER_N_FILES,
+      ConfigParamSource::COMPILE_TIME_DEFAULT);
+    tapeFlushConfigParams.setMaxBytesBeforeFlush(
+      8,
+      ConfigParamSource::COMPILE_TIME_DEFAULT);
+    tapeFlushConfigParams.setMaxFilesBeforeFlush(
+      20,
+      ConfigParamSource::COMPILE_TIME_DEFAULT);
+    castor::tape::tapebridge::PendingMigrationsStore store(
+      tapeFlushConfigParams);
+
+    castor::tape::tapebridge::RequestToMigrateFile request1;
+    request1.fileTransactionId = 1000;
+    request1.nsHost = "Name server host";
+    request1.nsFileId = 2000;
+    request1.tapeFSeq = 3000;
+    request1.fileSize = 4000;
+
+    castor::tape::tapebridge::RequestToMigrateFile request2;
+    request2.fileTransactionId = 5000;
+    request2.nsHost = "Name server host";
+    request2.nsFileId = 6000;
+    request2.tapeFSeq = 3003;
+    request2.fileSize = 7000;
+
+    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+      "Checking receivedRequestToMigrateFile does not throw with first file",
+      store.receivedRequestToMigrateFile(request1)
+    );
+
+    try {
+      store.receivedRequestToMigrateFile(request2);
+      CPPUNIT_ASSERT_MESSAGE(
+        "receivedRequestToMigrateFile failed to throw with second file",
+        false);
+    } catch(SessionException &se) {
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking code of session exception",
+        ETSESSIONERROR,
+        se.code());
+
+      const SessionError &error = se.getSessionError();
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking errorScope of session error",
+        SessionError::FILE_SCOPE,
+        error.getErrorScope());
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking errorCode of session error",
+        ETINVALIDTFSEQ,
+        error.getErrorCode());
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking fileTransactionId of session error",
+        request2.fileTransactionId,
+        error.getFileTransactionId());
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking nsHost of session error",
+        request2.nsHost,
+        error.getNsHost());
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking nsFileId of session error",
+        request2.nsFileId,
+        error.getNsFileId());
+
+      CPPUNIT_ASSERT_EQUAL_MESSAGE(
+        "Checking tapeFSeq of session error",
+        request2.tapeFSeq,
+        error.getTapeFSeq());
+    } catch(...) {
+      CPPUNIT_ASSERT_MESSAGE(
+        "receivedRequestToMigrateFile failed to throw SessionException with"
+          " second file",
+        false);
+    }
+  }
+
   CPPUNIT_TEST_SUITE(PendingMigrationsStoreTest);
   CPPUNIT_TEST(testFlushEveryNthByte);
   CPPUNIT_TEST(testFlushEveryNthFile);
@@ -484,6 +650,8 @@ public:
   CPPUNIT_TEST(testInvalidFlushFseqMaxFiles);
   CPPUNIT_TEST(testMigrateToFSeqZero);
   CPPUNIT_TEST(testMigrateZeroLengthFile);
+  CPPUNIT_TEST(testMigrateSameTapeFSeqTwice);
+  CPPUNIT_TEST(testMigrateNonConsecutiveTapeFSeqs);
   CPPUNIT_TEST_SUITE_END();
 
 private:
