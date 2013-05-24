@@ -233,17 +233,39 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
     // (...) to castor::exception::Exception
     try {
       processSocksInALoop();
-    } catch(std::exception &se) {
-      TAPE_THROW_EX(castor::exception::Internal,
-        ": Caught a std::exception"
-        ": what=" << se.what());
+    } catch(SessionException &se) {
+      // Simply rethrow as there is no need to convert exception type
+      throw se;
     } catch(castor::exception::Exception &ex) {
       // Simply rethrow as there is no need to convert exception type
       throw ex;
+    } catch(std::exception &e) {
+      TAPE_THROW_EX(castor::exception::Internal,
+        ": Caught a std::exception"
+        ": what=" << e.what());
     } catch(...) {
       TAPE_THROW_EX(castor::exception::Internal,
         ": Caught an unknown exception");
     }
+  } catch(SessionException &se) {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
+      castor::dlf::Param("TPVID"             , m_volume.vid()         ),
+      castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+      castor::dlf::Param("dgn"               , m_jobRequest.dgn       ),
+      castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
+      castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+      castor::dlf::Param("clientType",
+        utils::volumeClientTypeToString(m_volume.clientType())),
+      castor::dlf::Param("errorCode"         , se.code()              ),
+      castor::dlf::Param("errorMessage"      , se.getMessage().str()  )};
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
+      TAPEBRIDGE_EXCEPTION_RUNNING_RTCPD_SESSION, params);
+
+    // Push the error onto the back of the list of errors generated during the
+    // sesion with the rtcpd daemon
+    m_sessionErrors.push_back(se.getSessionError());
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
       castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
@@ -290,7 +312,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 // processSocksInALoop
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeProtocolEngine::processSocksInALoop()
-  throw(castor::exception::Exception) {
+  throw(SessionException, castor::exception::Exception) {
 
   const struct timeval selectTimeout = {1 /* tv_sec */, 0 /* tv_usec */};
 
@@ -317,7 +339,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processSocksInALoop()
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeProtocolEngine::handleSelectEvents(
   struct timeval selectTimeout)
-  throw(castor::exception::Exception) {
+  throw(SessionException, castor::exception::Exception) {
   int     maxFd = -1;
   fd_set  readFdSet;
 
@@ -415,7 +437,7 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::continueProcessingSocks()
 // processAPendingSocket
 //------------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeProtocolEngine::processAPendingSocket(
-  fd_set &readFdSet) throw(castor::exception::Exception) {
+  fd_set &readFdSet) throw(SessionException, castor::exception::Exception) {
 
   BridgeSocketCatalogue::SocketType sockType = BridgeSocketCatalogue::LISTEN;
   const int pendingSock = m_sockCatalogue.getAPendingSock(readFdSet, sockType);
@@ -531,7 +553,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 //------------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeProtocolEngine::
   processPendingRtcpdDiskTapeIOControlSocket(const int pendingSock)
-  throw(castor::exception::Exception) {
+  throw(SessionException, castor::exception::Exception) {
 
   // Check function arguments
   if(pendingSock < 0) {
@@ -583,7 +605,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 //------------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeProtocolEngine::
   processPendingClientGetMoreWorkSocket(const int pendingSock)
-  throw(castor::exception::Exception) {
+  throw(SessionException, castor::exception::Exception) {
 
   // Check function arguments
   if(pendingSock < 0) {
@@ -646,7 +668,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   dispatchCallbackForReplyToGetMoreWork(
   IObject *const              obj,
   const GetMoreWorkConnection &getMoreWorkConnection)
-  throw(castor::exception::Exception) {
+  throw(SessionException, castor::exception::Exception) {
   try {
     switch(obj->type()) {
     case OBJ_FilesToMigrateList:
@@ -680,7 +702,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 //------------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeProtocolEngine::
   processPendingClientMigrationReportSocket(const int pendingSock)
-  throw(castor::exception::Exception) {
+  throw(SessionException, castor::exception::Exception) {
 
   // Check function arguments
   if(pendingSock < 0) {
@@ -807,18 +829,42 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::startRtcpdSession()
           ": Unknown VolumeMode"
           ": Actual=" << m_volume.mode());
       }
-    } catch(std::exception &se) {
-      TAPE_THROW_EX(castor::exception::Internal,
-        ": Caught a std::exception"
-        ": what=" << se.what());
+    } catch(SessionException &se) {
+      // Simply rethrow as there is no need to convert exception type
+      throw se;
     } catch(castor::exception::Exception &ex) {
       // Simply rethrow as there is no need to convert exception type
       throw ex;
+    } catch(std::exception &e) {
+      TAPE_THROW_EX(castor::exception::Internal,
+        ": Caught a std::exception"
+        ": what=" << e.what());
     } catch(...) {
       TAPE_THROW_EX(castor::exception::Internal,
         ": Caught an unknown exception");
     }
 
+  } catch(SessionException &se) {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
+      castor::dlf::Param("TPVID"             , m_volume.vid()         ),
+      castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+      castor::dlf::Param("dgn"               , m_jobRequest.dgn       ),
+      castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
+      castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+      castor::dlf::Param("clientType",
+        utils::volumeClientTypeToString(m_volume.clientType())),
+      castor::dlf::Param("errorCode"         , se.code()              ),
+      castor::dlf::Param("errorMessage"      , se.getMessage().str()  )};
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR,
+      TAPEBRIDGE_FAILED_TO_START_RTCPD_SESSION, params);
+
+    // Push the error onto the back of the list of errors generated during the
+    // sesion with the rtcpd daemon
+    m_sessionErrors.push_back(se.getSessionError());
+
+    rtcpdSessionStarted = false;
   } catch(castor::exception::Exception &ex) {
     castor::dlf::Param params[] = {
       castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
@@ -856,7 +902,7 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::startRtcpdSession()
 // startMigrationSession
 //-----------------------------------------------------------------------------
 bool castor::tape::tapebridge::BridgeProtocolEngine::startMigrationSession()
-  throw(castor::exception::Exception) {
+  throw(SessionException, castor::exception::Exception) {
 
   const char *const task = "start migration session";
 
@@ -1084,7 +1130,7 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::startMigrationSession()
 // startRecallSession
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeProtocolEngine::startRecallSession()
-  throw(castor::exception::Exception) {
+  throw(SessionException, castor::exception::Exception) {
 
   // Give volume to rtcpd
   legacymsg::RtcpTapeRqstErrMsgBody rtcpVolume;
@@ -1121,7 +1167,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::startRecallSession()
 // startDumpSession
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeProtocolEngine::startDumpSession()
-  throw(castor::exception::Exception) {
+  throw(SessionException, castor::exception::Exception) {
 
   // Give volume to rtcpd
   legacymsg::RtcpTapeRqstErrMsgBody rtcpVolume;
@@ -1255,7 +1301,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::endRtcpdSession() throw() {
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpdRequest(
   const legacymsg::MessageHeader &header, const int socketFd)
-  throw(castor::exception::Exception) {
+  throw(SessionException, castor::exception::Exception) {
 
   {
     std::ostringstream magicHexStream;
@@ -1299,7 +1345,7 @@ void
   castor::tape::tapebridge::BridgeProtocolEngine::dispatchRtcpdRequestHandler(
   const legacymsg::MessageHeader &header,
   const int                      socketFd)
-  throw(castor::exception::Exception) {
+  throw(SessionException, castor::exception::Exception) {
   const char *const task = "dispatch rtcpd request handler";
 
   switch(header.magic) {
@@ -1352,7 +1398,7 @@ void
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeProtocolEngine::rtcpFileReqRtcpdCallback(
   const legacymsg::MessageHeader &header, const int socketFd)
-  throw(castor::exception::Exception) {
+  throw(SessionException, castor::exception::Exception) {
 
   legacymsg::RtcpFileRqstMsgBody body;
 
@@ -1378,7 +1424,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::dispatchRtcpFileErrReq(
   const legacymsg::MessageHeader &header,
   legacymsg::RtcpFileRqstErrMsgBody &body,
   const int                         rtcpdSock)
-  throw(castor::exception::Exception) {
+  throw(SessionException, castor::exception::Exception) {
 
   // Dispatch the appropriate helper method to process the message
   if(m_volume.mode() == tapegateway::DUMP) {
@@ -1416,7 +1462,7 @@ void
   castor::tape::tapebridge::BridgeProtocolEngine::rtcpFileErrReqRtcpdCallback(
   const legacymsg::MessageHeader &header,
   const int                      socketFd)
-  throw(castor::exception::Exception) {
+  throw(SessionException, castor::exception::Exception) {
 
   legacymsg::RtcpFileRqstErrMsgBody body;
 
@@ -1441,7 +1487,7 @@ void
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpFileErrReqDump(
   const legacymsg::MessageHeader &header, const int rtcpdSock)
-  throw(castor::exception::Exception) {
+  throw(SessionException, castor::exception::Exception) {
   // Reply to rtcpd with a positive acknowledgement
   legacymsg::MessageHeader ackMsg;
   ackMsg.magic       = header.magic;
@@ -1560,7 +1606,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpWaiting(
 void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpRequestMoreWork(
   const legacymsg::MessageHeader &header,
   legacymsg::RtcpFileRqstErrMsgBody &body, const int rtcpdSock)
-  throw(castor::exception::Exception) {
+  throw(SessionException, castor::exception::Exception) {
 
   if(shuttingDownRtcpdSession()) {
     castor::dlf::Param params[] = {
@@ -1597,7 +1643,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   const legacymsg::MessageHeader    &header,
   legacymsg::RtcpFileRqstErrMsgBody &body,
   const int                         rtcpdSock)
-  throw(castor::exception::Exception) {
+  throw(SessionException, castor::exception::Exception) {
 
   // If the cache of files to migrate is empty then request another set of
   // files, else send to the rtcpd daemon a file to migrate from the cache.
@@ -1687,7 +1733,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   const int      rtcpdSock,
   const uint32_t rtcpdReqMagic,
   const uint32_t rtcpdReqType)
-  throw(castor::exception::Exception) {
+  throw(SessionException, castor::exception::Exception) {
 
   if(m_filesToMigrate.empty()) {
     // This should never happen
@@ -1714,7 +1760,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   const legacymsg::MessageHeader    &header,
   legacymsg::RtcpFileRqstErrMsgBody &body,
   const int                         rtcpdSock)
-  throw(castor::exception::Exception) {
+  throw(SessionException, castor::exception::Exception) {
 
   // If the cache of files to recall is empty then request another set of
   // files, else send to the rtcpd daemon a file to recall from the cache.
@@ -2366,7 +2412,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeProtocolEngine::rtcpTapeReqRtcpdCallback(
   const legacymsg::MessageHeader &header, const int socketFd)
-  throw(castor::exception::Exception) {
+  throw(SessionException, castor::exception::Exception) {
 
   legacymsg::RtcpTapeRqstMsgBody body;
   RtcpTxRx::receiveMsgBody(m_cuuid, m_jobRequest.volReqId, socketFd,
@@ -2388,7 +2434,7 @@ void
   castor::tape::tapebridge::BridgeProtocolEngine::rtcpTapeErrReqRtcpdCallback(
   const legacymsg::MessageHeader &header,
   const int                      socketFd)
-  throw(castor::exception::Exception) {
+  throw(SessionException, castor::exception::Exception) {
 
   legacymsg::RtcpTapeRqstErrMsgBody body;
   RtcpTxRx::receiveMsgBody(m_cuuid, m_jobRequest.volReqId, socketFd,
@@ -2502,7 +2548,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   tapeBridgeFlushedToTapeCallback(
   const legacymsg::MessageHeader &header,
   const int                      socketFd)
-  throw(castor::exception::Exception) {
+  throw(SessionException, castor::exception::Exception) {
 
   const char *const task = "process TAPEBRIDGE_FLUSHEDTOTAPE message";
 
@@ -2823,7 +2869,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   filesToMigrateListClientCallback(
   IObject *const              obj,
   const GetMoreWorkConnection &getMoreWorkConnection)
-  throw(castor::exception::Exception) {
+  throw(SessionException, castor::exception::Exception) {
 
   const char *const task = "process FilesToMigrateList message from client";
 
@@ -2888,7 +2934,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeProtocolEngine::addFilesToMigrateToCache(
   const std::vector<tapegateway::FileToMigrateStruct*> &clientFilesToMigrate)
-  throw(castor::exception::Exception) {
+  throw(SessionException, castor::exception::Exception) {
 
   for(std::vector<tapegateway::FileToMigrateStruct*>::const_iterator itor =
     clientFilesToMigrate.begin(); itor != clientFilesToMigrate.end(); itor++) {
@@ -2910,7 +2956,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::addFilesToMigrateToCache(
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeProtocolEngine::addFileToMigrateToCache(
   const tapegateway::FileToMigrateStruct &clientFileToMigrate)
-  throw(castor::exception::Exception) {
+  throw(SessionException, castor::exception::Exception) {
 
   // Throw an exception if the tape file sequence number from the client is
   // invalid
@@ -2949,7 +2995,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::sendFileToMigrateToRtcpd(
   const int           rtcpdSock,
   const uint32_t      rtcpdReqMagic,
   const uint32_t      rtcpdReqType)
-  throw(castor::exception::Exception) {
+  throw(SessionException, castor::exception::Exception) {
 
   // Remember the file transaction ID and get its unique index to be
   // passed to rtcpd through the "rtcpFileRequest.disk_fseq" message
@@ -3097,7 +3143,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   filesToRecallListClientCallback(
   IObject *const              obj,
   const GetMoreWorkConnection &getMoreWorkConnection)
-  throw(castor::exception::Exception) {
+  throw(SessionException, castor::exception::Exception) {
 
   const char *const task = "process FilesToRecallList message from client";
 
@@ -3169,7 +3215,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeProtocolEngine::addFilesToRecallToCache(
   const std::vector<tapegateway::FileToRecallStruct*> &clientFilesToRecall)
-  throw(castor::exception::Exception) {
+  throw(SessionException, castor::exception::Exception) {
 
   for(std::vector<tapegateway::FileToRecallStruct*>::const_iterator itor =
     clientFilesToRecall.begin(); itor != clientFilesToRecall.end(); itor++) {
@@ -3191,7 +3237,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::addFilesToRecallToCache(
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeProtocolEngine::addFileToRecallToCache(
   const tapegateway::FileToRecallStruct &clientFileToRecall)
-  throw(castor::exception::Exception) {
+  throw(SessionException, castor::exception::Exception) {
 
   // Push the file to migrate onto the back of the cache
   FileToRecall fileToRecall;
@@ -3705,7 +3751,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::notifyClientEndOfSession()
 // shuttingDownRtcpdSession
 //-----------------------------------------------------------------------------
 bool castor::tape::tapebridge::BridgeProtocolEngine::shuttingDownRtcpdSession()
-  const {
+  const throw() {
   // The session with the rtcpd daemon should be shut down if there has been at
   // least one error detected during the tape session
   return !m_sessionErrors.empty();

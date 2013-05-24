@@ -39,6 +39,7 @@
 #include "castor/tape/tapebridge/ILegacyTxRx.hpp"
 #include "castor/tape/tapebridge/PendingMigrationsStore.hpp"
 #include "castor/tape/tapebridge/SessionErrorList.hpp"
+#include "castor/tape/tapebridge/SessionException.hpp"
 #include "castor/tape/tapebridge/TapeFlushConfigParams.hpp"
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include "castor/tape/tapegateway/FileToRecallStruct.hpp"
@@ -342,7 +343,8 @@ protected:
    * message to the rtcpd daemon and close the initial rtcpd-connection; these
    * are the responsibilities of the caller.
    */
-  void processSocksInALoop() throw(castor::exception::Exception);
+  void processSocksInALoop()
+    throw(SessionException, castor::exception::Exception);
 
   /**
    * Handles the events returned by a call to select with all of the open rtcpd
@@ -351,7 +353,7 @@ protected:
    * @param selectTimeout The timeout value to be passed to select.
    */
   void handleSelectEvents(struct timeval selectTimeout)
-    throw(castor::exception::Exception);
+    throw(SessionException, castor::exception::Exception);
 
   /**
    * Accepts an rtcpd connection using the specified listener-socket.
@@ -380,7 +382,7 @@ protected:
    * @param readFdSet The read file-descriptor set from calling select().
    */
   void processAPendingSocket(fd_set &readFdSet)
-    throw (castor::exception::Exception);
+    throw(SessionException, castor::exception::Exception);
 
   /**
    * Processes the socket listening for connection from the rtcpd daemon.  The
@@ -410,7 +412,7 @@ protected:
    * @param pendingSock the file descriptior of the pending socket.
    */
   void processPendingRtcpdDiskTapeIOControlSocket(const int pendingSock)
-    throw (castor::exception::Exception);
+    throw(SessionException, castor::exception::Exception);
 
   /**
    * Processes the specified socket which must be both pending and a
@@ -423,7 +425,7 @@ protected:
    * @param pendingSock the file descriptior of the pending socket.
    */
   void processPendingClientGetMoreWorkSocket(const int pendingSock)
-    throw (castor::exception::Exception);
+    throw(SessionException, castor::exception::Exception);
 
   /**
    * Dispatches the appropriate client-reply callback-method for the reply
@@ -440,7 +442,7 @@ protected:
   void dispatchCallbackForReplyToGetMoreWork(
     IObject *const              obj,
     const GetMoreWorkConnection &getMoreWorkConnection)
-    throw(castor::exception::Exception);
+    throw(SessionException, castor::exception::Exception);
 
   /**
    * Processes the specified socket which must be both pending and a connection
@@ -453,7 +455,7 @@ protected:
    * @param pendingSock the file descriptior of the pending socket.
    */
   void processPendingClientMigrationReportSocket(const int pendingSock)
-    throw (castor::exception::Exception);
+    throw(SessionException, castor::exception::Exception);
 
   /**
    * Processes the specified rtcpd request.
@@ -465,7 +467,7 @@ protected:
   void processRtcpdRequest(
     const legacymsg::MessageHeader &header,
     const int                      socketFd)
-    throw(castor::exception::Exception);
+    throw(SessionException, castor::exception::Exception);
 
   /**
    * Dispatches the appropriate rtcpd request handler.
@@ -477,7 +479,7 @@ protected:
   void dispatchRtcpdRequestHandler(
     const legacymsg::MessageHeader &header,
     const int                      socketFd)
-    throw(castor::exception::Exception);
+    throw(SessionException, castor::exception::Exception);
 
   /**
    * RTCP_FILE_REQ rtcpd message-body handler.
@@ -491,7 +493,7 @@ protected:
   void rtcpFileReqRtcpdCallback(
     const legacymsg::MessageHeader &header,
     const int                      socketFd)
-    throw(castor::exception::Exception);
+    throw(SessionException, castor::exception::Exception);
 
   /**
    * RTCP_FILEERR_REQ rtcpd message-body handler.
@@ -506,7 +508,7 @@ protected:
   void rtcpFileErrReqRtcpdCallback(
     const legacymsg::MessageHeader &header,
     const int                      socketFd)
-    throw(castor::exception::Exception);
+    throw(SessionException, castor::exception::Exception);
 
   /**
    * Dispatches the appropriate helper-method based on the value of the
@@ -523,7 +525,7 @@ protected:
    */
   void dispatchRtcpFileErrReq(const legacymsg::MessageHeader &header,
     legacymsg::RtcpFileRqstErrMsgBody &body, const int rtcpdSock)
-    throw(castor::exception::Exception);
+    throw(SessionException, castor::exception::Exception);
 
   /**
    * Processes the specified RTCP file request in the context of dumping a
@@ -538,7 +540,7 @@ protected:
    *                  from.
    */
   void processRtcpFileErrReqDump(const legacymsg::MessageHeader &header,
-    const int rtcpdSock) throw(castor::exception::Exception);
+    const int rtcpdSock) throw(SessionException, castor::exception::Exception);
 
   /**
    * Processes the specified RTCP waiting request.
@@ -572,7 +574,7 @@ protected:
    */
   void processRtcpRequestMoreWork(const legacymsg::MessageHeader &header,
     legacymsg::RtcpFileRqstErrMsgBody &body, const int rtcpdSock)
-    throw(castor::exception::Exception);
+    throw(SessionException, castor::exception::Exception);
 
   /**
    * Processes the specified RTCP file request for more migration work.
@@ -587,7 +589,7 @@ protected:
     const legacymsg::MessageHeader    &header,
     legacymsg::RtcpFileRqstErrMsgBody &body,
     const int                         rtcpdSock)
-    throw(castor::exception::Exception);
+    throw(SessionException, castor::exception::Exception);
 
   /**
    * Sends a FilesToMigrateListRequest message to the client.
@@ -612,7 +614,7 @@ protected:
     const int      rtcpdSock,
     const uint32_t rtcpdReqMagic,
     const uint32_t rtcpdReqType)
-    throw(castor::exception::Exception);
+    throw(SessionException, castor::exception::Exception);
 
   /**
    * Processes the specified RTCP file request for more recall work.
@@ -627,7 +629,7 @@ protected:
     const legacymsg::MessageHeader    &header,
     legacymsg::RtcpFileRqstErrMsgBody &body,
     const int                         rtcpdSock)
-    throw(castor::exception::Exception);
+    throw(SessionException, castor::exception::Exception);
 
   /**
    * Sends a FilesToRecallListRequest message to the client.
@@ -787,7 +789,7 @@ protected:
   void rtcpTapeReqRtcpdCallback(
     const legacymsg::MessageHeader &header,
     const int                      socketFd)
-    throw(castor::exception::Exception);
+    throw(SessionException, castor::exception::Exception);
 
   /**
    * RTCP_TAPEERR rtcpd message-body handler.
@@ -805,7 +807,7 @@ protected:
   void rtcpTapeErrReqRtcpdCallback(
     const legacymsg::MessageHeader &header,
     const int                      socketFd)
-    throw(castor::exception::Exception);
+    throw(SessionException, castor::exception::Exception);
 
   /**
    * RTCP_ENDOF_REQ rtcpd message-body handler.
@@ -834,7 +836,7 @@ protected:
   void tapeBridgeFlushedToTapeCallback(
     const legacymsg::MessageHeader &header,
     const int                      socketFd)
-    throw(castor::exception::Exception);
+    throw(SessionException, castor::exception::Exception);
 
   /**
    * Sets the compressed file-size of each file in the specified batch of
@@ -916,7 +918,7 @@ protected:
    */
   void sendFlushedMigrationsToClient(
     const FileWrittenNotificationList &notifications)
-    throw (castor::exception::Exception);
+    throw(castor::exception::Exception);
 
   /**
    * GIVE_OUTP rtcpd message-body handler.
@@ -938,17 +940,20 @@ protected:
    *
    * @return true if the session was started, else false
    */
-  bool startMigrationSession() throw(castor::exception::Exception);
+  bool startMigrationSession()
+    throw(SessionException, castor::exception::Exception);
 
   /**
    * Starts a recall session.
    */
-  void startRecallSession() throw(castor::exception::Exception);
+  void startRecallSession()
+    throw(SessionException, castor::exception::Exception);
 
   /**
    * Starts a dump session.
    */
-  void startDumpSession() throw(castor::exception::Exception);
+  void startDumpSession()
+    throw(SessionException, castor::exception::Exception);
 
   /**
    * Throws an exception if the peer host associated with the specified
@@ -973,7 +978,7 @@ protected:
   void filesToMigrateListClientCallback(
     IObject *const              obj,
     const GetMoreWorkConnection &getMoreWorkConnection)
-    throw(castor::exception::Exception);
+    throw(SessionException, castor::exception::Exception);
 
   /**
    * Adds the specified files to be migrated that have been received from the
@@ -984,7 +989,7 @@ protected:
    */
   void addFilesToMigrateToCache(
     const std::vector<tapegateway::FileToMigrateStruct*> &clientFilesToMigrate)
-    throw(castor::exception::Exception);
+    throw(SessionException, castor::exception::Exception);
 
   /**
    * Adds the specified file to be migrated that has been received from the
@@ -995,7 +1000,7 @@ protected:
    */
   void addFileToMigrateToCache(
     const tapegateway::FileToMigrateStruct &clientFileToMigrate)
-    throw(castor::exception::Exception);
+    throw(SessionException, castor::exception::Exception);
 
   /**
    * Sends the specified file to migrate to the rtcpd daemon.
@@ -1012,7 +1017,7 @@ protected:
     const int           rtcpdSock,
     const uint32_t      rtcpdReqMagic,
     const uint32_t      rtcpdReqType)
-    throw(castor::exception::Exception);
+    throw(SessionException, castor::exception::Exception);
 
   /**
    * FilesToRecallListClientCallback client message handler.
@@ -1028,7 +1033,7 @@ protected:
   void filesToRecallListClientCallback(
     IObject *const              obj,
     const GetMoreWorkConnection &getMoreWorkConnection)
-    throw(castor::exception::Exception);
+    throw(SessionException, castor::exception::Exception);
 
   /**
    * Adds the specified files to be recalled that have been received from the
@@ -1039,7 +1044,7 @@ protected:
    */
   void addFilesToRecallToCache(
     const std::vector<tapegateway::FileToRecallStruct*> &clientFilesToRecall)
-    throw(castor::exception::Exception);
+    throw(SessionException, castor::exception::Exception);
 
   /**
    * Adds the specified file to be migrated that has been received from the
@@ -1050,7 +1055,7 @@ protected:
    */
   void addFileToRecallToCache(
     const tapegateway::FileToRecallStruct &clientFileToRecall)
-    throw(castor::exception::Exception);
+    throw(SessionException, castor::exception::Exception);
 
   /**
    * NoMoreFiles client message handler.
@@ -1151,7 +1156,7 @@ protected:
    * Returns true if for any reason the session with the rtcpd daemon is being
    * shutdown.
    */
-  bool shuttingDownRtcpdSession() const;
+  bool shuttingDownRtcpdSession() const throw();
 
   /**
    * Returns true if the session with the rtcpd daemon is finished else false.
