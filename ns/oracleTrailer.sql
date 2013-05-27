@@ -379,8 +379,8 @@ BEGIN
   rc := 0;
   msg := '';
   -- Get file data and lock the entry, exit if not found
-  SELECT fileId, filemode, mtime, fileClass, csumType, csumValue
-    INTO varFid, varFmode, varFLastMTime, varFClassId, varFCksumName, varFCksum
+  SELECT fileId, filemode, mtime, fileClass, fileSize, csumType, csumValue
+    INTO varFid, varFmode, varFLastMTime, varFClassId, varFSize, varFCksumName, varFCksum
     FROM Cns_file_metadata
    WHERE fileId = inSegEntry.fileId FOR UPDATE;
   -- Is it a directory?
