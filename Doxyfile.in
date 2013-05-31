@@ -1,0 +1,26 @@
+#---------------------------------------------------------------------------
+# Project related configuration options
+#---------------------------------------------------------------------------
+PROJECT_NAME           = "@CMAKE_PROJECT_NAME@"
+PROJECT_NUMBER         = "@VERSION_MAJOR@.@VERSION_MINOR@.@VERSION_PATCH@-@VERSION_TWEAK@"
+OUTPUT_DIRECTORY       = dox
+CREATE_SUBDIRS         = NO
+INPUT                  = @CMAKE_SOURCE_DIR@/disk_transfer @CMAKE_SOURCE_DIR@/main @CMAKE_SOURCE_DIR@/bandwidth_simulation  
+
+CLASS_GRAPH            = YES
+HAVE_DOT               = YES
+CALL_GRAPH             = YES
+CALLER_GRAPH           = YES
+
+EXTRACT_ALL            = YES
+EXTRACT_STATIC         = YES
+EXTRACT_PRIVATE        = YES
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = YES
+WARN_IF_DOC_ERROR      = YES
+WARN_NO_PARAMDOC       = YES
+WARN_FORMAT            = $file:$line: $text
+WARN_LOGFILE           = 
+GRAPHICAL_HIERARCHY    = YES
+UML_LOOK               = YES
+#USE_MATHJAX            = NO
