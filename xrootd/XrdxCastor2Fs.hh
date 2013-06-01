@@ -76,7 +76,8 @@ class XrdSfsAio;
 
 //------------------------------------------------------------------------------
 //! Class XrdxCastor2UFS - Unix File System Interface - this is the interface
-//! with the Castor name space
+//! with the Castor name space, except for the open() and close() calls,
+//! which deal with a local file descriptor.
 //------------------------------------------------------------------------------
 class XrdxCastor2FsUFS
 {
@@ -120,10 +121,6 @@ class XrdxCastor2FsUFS
 
     static int Rename( const char* ofn, const char* nfn ) {
       return Cns_rename( ofn, nfn );
-    }
-
-    static int SetFileSize( const char* fn, unsigned long long size, time_t mtime ) {
-      return Cns_setfsize( fn, NULL, size, mtime, 0 );
     }
 
     static int Statfd( int fd, struct stat* buf ) {

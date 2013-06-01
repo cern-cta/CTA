@@ -2915,42 +2915,6 @@ XrdxCastor2Fs::prepare( XrdSfsPrep&         pargs,
       }
   }
 
-  if ( oenv.Get( "filesize" ) && oenv.Get( "mtime" ) ) {
-    off_t filesize = strtoll( oenv.Get( "filesize" ), NULL, 0 );
-    time_t mtime   = ( time_t ) strtol( oenv.Get( "mtime" ), NULL, 0 );
-    XrdxCastor2FsUFS::SetId( 0, 0 );
-
-    if ( XrdxCastor2FsUFS::SetFileSize( map_path.c_str(), filesize, mtime ) ) {
-      return XrdxCastor2Fs::Emsg( epname, error, serrno, "setfilesize", map_path.c_str() );
-    }
-  }
-
-  // This is currently not needed anymore
-  if ( oenv.Get( "getupdatedone" ) ) {
-    char cds[4096];
-    char nds[4096];
-    char* acpath;
-    TIMING("CNSSELSERV", &preparetiming);
-    Cns_selectsrvr( map_path.c_str(), cds, nds, &acpath );
-    xcastor_debug("nameserver is: %s", nds);
-    struct Cns_filestatcs cstat;
-    TIMING("CNSSTAT", &preparetiming);
-
-    if ( XrdxCastor2FsUFS::Statfn( map_path.c_str(), &cstat ) ) {
-      return XrdxCastor2Fs::Emsg( epname, error, serrno, "stat", map_path.c_str() );
-    }
-
-    char fileid[4096];
-    sprintf( fileid, "%llu", cstat.fileid );
-    TIMING("GETUPDDONE", &preparetiming);
-
-    if ( !XrdxCastor2Stager::UpdateDone( error, map_path.c_str(), oenv.Get( "reqid" ), oenv.Get( "stagehost" ), oenv.Get( "serviceclass" ), fileid, nds ) ) {
-      TIMING("END", &preparetiming);
-      preparetiming.Print();
-      return SFS_ERROR;
-    }
-  }
-
   TIMING("END", &preparetiming);
   preparetiming.Print();
   return SFS_OK;
