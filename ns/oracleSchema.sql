@@ -26,11 +26,11 @@ CREATE TABLE Cns_class_metadata (classid NUMBER(5), name VARCHAR2(15), owner_uid
 
 CREATE TABLE Cns_tp_pool (classid NUMBER(5), tape_pool VARCHAR2(15));
 
-CREATE TABLE Cns_file_metadata (fileid NUMBER, parent_fileid NUMBER, guid CHAR(36), name VARCHAR2(255), filemode NUMBER(6), nlink NUMBER, owner_uid NUMBER(6), gid NUMBER(6), filesize NUMBER, atime NUMBER(10), mtime NUMBER(10), ctime NUMBER(10), fileclass NUMBER(5), status CHAR(1), csumtype VARCHAR2(2), csumvalue VARCHAR2(32), acl VARCHAR2(3900)) STORAGE (INITIAL 5M NEXT 5M PCTINCREASE 0);
+CREATE TABLE Cns_file_metadata (fileid NUMBER, parent_fileid NUMBER, guid CHAR(36), name VARCHAR2(255), filemode NUMBER(6), nlink NUMBER, owner_uid NUMBER(6), gid NUMBER(6), filesize NUMBER, atime NUMBER(10), mtime NUMBER(10), ctime NUMBER(10), stagertime NUMBER NOT NULL DEFAULT 0, fileclass NUMBER(5), status CHAR(1), csumtype VARCHAR2(2), csumvalue VARCHAR2(32), acl VARCHAR2(3900)) STORAGE (INITIAL 5M NEXT 5M PCTINCREASE 0);
 
 CREATE TABLE Cns_user_metadata (u_fileid NUMBER, comments VARCHAR2(255));
 
-CREATE TABLE Cns_seg_metadata (s_fileid NUMBER, copyno NUMBER(1),fsec NUMBER(3), segsize NUMBER, compression NUMBER, s_status CHAR(1), vid VARCHAR2(6), side NUMBER (1), fseq NUMBER(10), blockid RAW(4), checksum_name VARCHAR2(16), checksum NUMBER);
+CREATE TABLE Cns_seg_metadata (s_fileid NUMBER, copyno NUMBER(1),fsec NUMBER(3), segsize NUMBER, compression NUMBER, s_status CHAR(1), vid VARCHAR2(6), side NUMBER (1), fseq NUMBER(10), blockid RAW(4), checksum_name VARCHAR2(16), checksum NUMBER, gid NUMBER(6), creationTime NUMBER, lastModificationTime NUMBER);
 
 CREATE TABLE Cns_symlinks (fileid NUMBER, linkname VARCHAR2(1023));
 
@@ -121,6 +121,6 @@ INSERT INTO cns_class_metadata (classid, name, owner_uid, gid, min_filesize, max
   max_segsize, migr_time_interval, mintime_beforemigr, nbcopies, retenp_on_disk) 
   VALUES (1, 'system', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 INSERT INTO cns_file_metadata (fileid, parent_fileid, guid, name, filemode, nlink, owner_uid, gid, filesize,
-  atime, mtime, ctime, fileclass, status, csumtype, csumvalue, acl) 
-  VALUES (2, 0, NULL,  '/', 16877, 0, 0, 0, 0,  0, 0, 0, 1, '-', NULL, NULL, NULL);
+  atime, mtime, ctime, stagertime, fileclass, status, csumtype, csumvalue, acl)
+  VALUES (2, 0, NULL,  '/', 16877, 0, 0, 0, 0, 0,  0, 0, 0, 1, '-', NULL, NULL, NULL);
 COMMIT;
