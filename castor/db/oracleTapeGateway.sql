@@ -1346,7 +1346,7 @@ BEGIN
                      ||' copyNb='|| to_char(varCopyNo) ||' '|| inLogContext;
         logToDLF(varReqid, dlf.LVL_WARNING, dlf.MIGRATION_RETRY, inFileIds(i), varNsHost, 'tapegatewayd', varParams);
         retryOrFailMigration(inMountTrId, inFileIds(i), varNsHost, inErrorCodes(i), varReqId);
-        -- here we commit immediately
+        -- here we commit immediately because retryOrFailMigration took a lock on the CastorFile
         COMMIT;
       END IF;
     EXCEPTION WHEN NO_DATA_FOUND THEN
