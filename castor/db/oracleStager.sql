@@ -2753,6 +2753,7 @@ BEGIN
 END;
 /
 
+/* PL/SQL method to either force GC of the given diskCopies or delete them when the physical files behind have been lost */
 CREATE OR REPLACE PROCEDURE deleteDiskCopies(inDcIds IN castor."cnumList", inFileIds IN castor."cnumList", inForce IN BOOLEAN, inDryRun IN BOOLEAN, outRes OUT castor.DiskCopyResult_Cur, outDiskPool OUT VARCHAR2) AS
   varNsHost VARCHAR2(100);
   varFileName VARCHAR2(2048);
@@ -2892,7 +2893,7 @@ BEGIN
 END;
 /
 
-
+/* PL/SQL procedure to handle disk-to-disk copy replication */
 CREATE OR REPLACE PROCEDURE handleReplication(inSRId IN INTEGER,
                                               inFileId IN INTEGER, inNsHost IN VARCHAR2,
                                               inCfId IN INTEGER, inSvcClassId IN INTEGER,
@@ -2969,7 +2970,7 @@ END;
 /
 
 /* PL/SQL method implementing triggerD2dOrRecall
- * returns status of the SubRequest : FAILED, FINISHED, WAITTAPERECALL OR WAITDISKTODSIKCOPY
+ * returns 1 if a recall was successfully triggered
  */
 CREATE OR REPLACE FUNCTION triggerD2dOrRecall(inCfId IN INTEGER, inSrId IN INTEGER,
                                               inFileId IN INTEGER, inNsHost IN VARCHAR2,
