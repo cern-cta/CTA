@@ -1,5 +1,5 @@
-/*****************************************************************************
- *              oracleTrailer.sql
+/******************************************************************************
+ *                 cns_2.1.13-9_to_2.1.14-X.sql
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,11 +17,71 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
+ * This script upgrades a CASTOR v2.1.13-9 CNS database to v2.1.14-X 
+ *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-/* SQL statement to populate the intial schema version */
-UPDATE UpgradeLog SET schemaVersion = '2_1_14_0';
+/* Stop on errors */
+WHENEVER SQLERROR EXIT FAILURE
+BEGIN
+  -- If we have encountered an error rollback any previously non committed
+  -- operations. This prevents the UPDATE of the UpgradeLog from committing
+  -- inconsistent data to the database.
+  ROLLBACK;
+  UPDATE UpgradeLog
+     SET failureCount = failureCount + 1
+   WHERE schemaVersion = '2_1_14_0'
+     AND release = '2_1_14_X'
+     AND state != 'COMPLETE';
+  COMMIT;
+END;
+/
+
+/* Verify that the script is running against the correct schema and version */
+DECLARE
+  unused VARCHAR(100);
+BEGIN
+  SELECT release INTO unused FROM CastorVersion
+   WHERE schemaName = 'CNS'
+     AND release LIKE '2_1_13_9%';
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- Error, we cannot apply this script
+  raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts for the CNS before this one.');
+END;
+/
+
+INSERT INTO UpgradeLog (schemaVersion, release, type)
+VALUES ('2_1_14_0', '2_1_14_X', 'NON TRANSPARENT');
+COMMIT;
+
+/* Schema changes go here */
+/**************************/
+
+/* The following changes may have been performed by the 2.1.14-0pre upgrade, check them */
+--BEGIN
+--XXX EXECUTE IMMEDIATE ...
+ALTER TABLE Cns_seg_metadata ADD (
+  gid NUMBER(6), creationTime NUMBER, lastModificationTime NUMBER);
+  
+ALTER TABLE Cns_file_metadata ADD (stagerTime NUMBER);
+--END;
+--/
+
+-- Table to store configuration items at the DB level
+CREATE TABLE CastorConfig
+  (class VARCHAR2(50) CONSTRAINT NN_CastorConfig_class NOT NULL,
+   key VARCHAR2(50) CONSTRAINT NN_CastorConfig_key NOT NULL,
+   value VARCHAR2(100) CONSTRAINT NN_CastorConfig_value NOT NULL,
+   description VARCHAR2(1000));
+
+-- Provide a default configuration
+INSERT INTO CastorConfig (class, key, value, description)
+  VALUES ('stager', 'openmode', 'C', 'Mode for stager open/close operations: C for Compatibility (pre 2.1.14), N for New (from 2.1.14 onwards)');
+
+
+/* Update and revalidation of PL-SQL code */
+/******************************************/
 
 /* Package holding type declarations for the NameServer PL/SQL API */
 CREATE OR REPLACE PACKAGE castorns AS
@@ -696,3 +756,29 @@ BEGIN
   COMMIT;
 END;
 /
+
+
+/* Recompile all invalid procedures, triggers and functions */
+/************************************************************/
+BEGIN
+  FOR a IN (SELECT object_name, object_type
+              FROM user_objects
+             WHERE object_type IN ('PROCEDURE', 'TRIGGER', 'FUNCTION', 'VIEW', 'PACKAGE BODY')
+               AND status = 'INVALID')
+  LOOP
+    IF a.object_type = 'PACKAGE BODY' THEN a.object_type := 'PACKAGE'; END IF;
+    BEGIN
+      EXECUTE IMMEDIATE 'ALTER ' ||a.object_type||' '||a.object_name||' COMPILE';
+    EXCEPTION WHEN OTHERS THEN
+      -- ignore, so that we continue compiling the other invalid items
+      NULL;
+    END;
+  END LOOP;
+END;
+/
+
+/* Flag the schema upgrade as COMPLETE */
+/***************************************/
+UPDATE UpgradeLog SET endDate = sysdate, state = 'COMPLETE'
+ WHERE release = '2_1_14_X';
+COMMIT;

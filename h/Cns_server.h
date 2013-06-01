@@ -1,8 +1,4 @@
 /*
- * $Id: Cns_server.h,v 1.30 2009/06/30 15:04:59 waldron Exp $
- */
-
-/*
  * Copyright (C) 1999-2005 by CERN/IT/PDP/DM
  * All rights reserved
  */
@@ -14,7 +10,7 @@
 #include "Cuuid.h"
 #include "Csec_api.h"
 
-                        /* name server constants and macros */
+/* name server constants and macros */
 
 #define CHECKI           5    /* max interval to check for work to be done */
 #define CNS_MAXNBTHREADS 100  /* maximum number of threads */
@@ -79,8 +75,9 @@ struct Cns_file_metadata {
         time_t             atime;              /* last access to file */
         time_t             mtime;              /* last file modification */
         time_t             ctime;              /* last metadata modification */
+        double             stagertime;         /* last openx time from a stager */
         short              fileclass;
-        char               status;             /* '-' --> online, 'm' --> migrated */
+        char               status;             /* '-' --> online, 'm' --> migrated, 'D' --> deleted */
         char               csumtype[3];
         char               csumvalue[CA_MAXCKSUMLEN+1];
         char               acl[CA_MAXACLENTRIES*13];
@@ -112,17 +109,20 @@ struct Cns_srv_thread_info {
 
 struct Cns_seg_metadata {
         u_signed64         s_fileid;
+        gid_t              gid;                /* group id, same as in Cns_file_metadata */
         int                copyno;
         int                fsec;               /* file section number */
         u_signed64         segsize;            /* file section size */
         int                compression;        /* compression factor */
-        char               s_status;           /* 'd' --> deleted */
+        char               s_status;           /* '-' --> valid, 'D' --> deleted */
         char               vid[CA_MAXVIDLEN+1];
         int                side;
         int                fseq;               /* file sequence number */
         unsigned char      blockid[4];         /* for positionning with locate command */
         char               checksum_name[CA_MAXCKSUMNAMELEN+1];
         unsigned long      checksum;
+        double             creationtime;
+        double             lastmodificationtime;
 };
 
 struct Cns_symlinks {
@@ -188,6 +188,7 @@ EXTERN_C int Cns_get_umd_by_fileid (struct Cns_dbfd *, u_signed64, struct Cns_us
 EXTERN_C int Cns_getpath_by_fileid (struct Cns_dbfd *, u_signed64, char **);
 EXTERN_C int Cns_insert_class_entry (struct Cns_dbfd *, struct Cns_class_metadata *);
 EXTERN_C int Cns_insert_fmd_entry (struct Cns_dbfd *, struct Cns_file_metadata *);
+EXTERN_C int Cns_insert_fmd_entry_open (struct Cns_dbfd *, struct Cns_file_metadata *);
 EXTERN_C int Cns_insert_lnk_entry (struct Cns_dbfd *, struct Cns_symlinks *);
 EXTERN_C int Cns_insert_smd_entry (struct Cns_dbfd *, struct Cns_seg_metadata *);
 EXTERN_C int Cns_insert_tppool_entry (struct Cns_dbfd *, struct Cns_tp_pool *);
@@ -200,8 +201,10 @@ EXTERN_C int Cns_start_tr (struct Cns_dbfd *);
 EXTERN_C int Cns_unique_id (struct Cns_dbfd *, u_signed64 *);
 EXTERN_C int Cns_update_class_entry (struct Cns_dbfd *, Cns_dbrec_addr *, struct Cns_class_metadata *);
 EXTERN_C int Cns_update_fmd_entry (struct Cns_dbfd *, Cns_dbrec_addr *, struct Cns_file_metadata *);
+EXTERN_C int Cns_update_fmd_entry_open (struct Cns_dbfd *, Cns_dbrec_addr *, struct Cns_file_metadata *);
 EXTERN_C int Cns_update_smd_entry (struct Cns_dbfd *, Cns_dbrec_addr *, struct Cns_seg_metadata *);
 EXTERN_C int Cns_update_umd_entry (struct Cns_dbfd *, Cns_dbrec_addr *, struct Cns_user_metadata *);
+EXTERN_C int Cns_is_concurrent_open (struct Cns_dbfd *, struct Cns_file_metadata *, double, char *);
 
 EXTERN_C int Cns_srv_aborttrans (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_access (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);

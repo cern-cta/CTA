@@ -14,7 +14,7 @@ Cns_closex \- close a file, setting its size and checksum attributes
 .BI "const char * " csumtype,
 .BI "const char * " csumvalue,
 .BI "const time_t " new_mod_time,
-.BI "const time_t " last_mod_time,
+.BI "const double " last_stagertime,
 .BI "struct Cns_filestatcs * " statbuf)
 .SH DESCRIPTION
 .B ---- FOR INTERNAL USE ONLY! ----
@@ -37,10 +37,11 @@ cleared.
 .LP
 .I new_mod_time
 specifies the new modification time of the file.
-.I last_mod_time
-specifies the last modification time as known by the requester. This is used to
+.I last_stagertime
+specifies the last open time as known by the requester stager. This is used to
 verify that no concurrent modifications have occurred to the file while being
 modified.
+Note that this value is marshalled on the wire as an integer at microsecond precision.
 .LP
 The structure pointed to by
 .IR statbuf

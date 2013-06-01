@@ -1299,7 +1299,7 @@ CREATE OR REPLACE PROCEDURE tg_setBulkFileMigrationResult(inLogContext IN VARCHA
   varStartTime TIMESTAMP;
   varNsHost VARCHAR2(2048);
   varReqId VARCHAR2(36);
-  varLastUpdTime NUMBER;
+  varNsOpenTime NUMBER;
   varCopyNo NUMBER;
   varOldCopyNo NUMBER;
   varVid VARCHAR2(10);
@@ -1319,8 +1319,8 @@ BEGIN
     BEGIN
       -- Collect additional data. Note that this is NOT bulk
       -- to preserve the order in the input arrays.
-      SELECT CF.lastUpdateTime, nvl(MJ.originalCopyNb, 0), MJ.vid, MJ.destCopyNb
-        INTO varLastUpdTime, varOldCopyNo, varVid, varCopyNo
+      SELECT CF.nsOpenTime, nvl(MJ.originalCopyNb, 0), MJ.vid, MJ.destCopyNb
+        INTO varNsOpenTime, varOldCopyNo, varVid, varCopyNo
         FROM CastorFile CF, MigrationJob MJ
        WHERE MJ.castorFile = CF.id
          AND CF.fileid = inFileIds(i)
@@ -1336,7 +1336,7 @@ BEGIN
         INSERT INTO FileMigrationResultsHelper
           (reqId, fileId, lastModTime, copyNo, oldCopyNo, transfSize, comprSize,
            vid, fseq, blockId, checksumType, checksum)
-        VALUES (varReqId, inFileIds(i), varLastUpdTime, varCopyNo, varOldCopyNo,
+        VALUES (varReqId, inFileIds(i), varNsOpenTime, varCopyNo, varOldCopyNo,
                 inTransferredSizes(i), CASE inComprSizes(i) WHEN 0 THEN 1 ELSE inComprSizes(i) END, varVid, inFseqs(i),
                 strtoRaw4(inBlockIds(i)), inChecksumTypes(i), inChecksums(i));
       ELSE
@@ -1498,7 +1498,7 @@ CREATE OR REPLACE PROCEDURE failFileMigration(inMountTrId IN NUMBER, inFileId IN
                                               inErrorCode IN INTEGER, inReqId IN VARCHAR2) AS
   varNsHost VARCHAR2(2048);
   varCfId NUMBER;
-  varCFLastUpdateTime NUMBER;
+  varNsOpenTime NUMBER;
   varSrIds "numList";
   varOriginalCopyNb NUMBER;
   varMigJobCount NUMBER;
@@ -1506,9 +1506,10 @@ CREATE OR REPLACE PROCEDURE failFileMigration(inMountTrId IN NUMBER, inFileId IN
 BEGIN
   varNsHost := getConfigOption('stager', 'nsHost', '');
   -- Lock castor file
-  SELECT id, lastUpdateTime INTO varCfId, varCFLastUpdateTime FROM CastorFile WHERE fileId = inFileId FOR UPDATE;
+  SELECT id, nsOpenTime INTO varCfId, varNsOpenTime
+    FROM CastorFile WHERE fileId = inFileId FOR UPDATE;
   -- delete migration job
-  DELETE FROM MigrationJob 
+  DELETE FROM MigrationJob
    WHERE castorFile = varCFId AND mountTransactionId = inMountTrId
   RETURNING originalCopyNb INTO varOriginalCopyNb;
   -- check if another migration should be performed
@@ -1550,23 +1551,23 @@ BEGIN
     DELETE FROM MigrationJob WHERE castorfile = varCfId;
     -- Log 'file was dropped or modified during migration, giving up'
     logToDLF(inReqid, dlf.LVL_NOTICE, dlf.MIGRATION_FILE_DROPPED, inFileId, varNsHost, 'tapegatewayd',
-             'mountTransactionId=' || to_char(inMountTrId) || ' ErrorCode=' || to_char(varErrorCode) ||
-             ' lastUpdateTime=' || to_char(varCFLastUpdateTime));
+             'mountTransactionId=' || inMountTrId || ' ErrorCode=' || varErrorCode ||
+             ' NsOpenTimeAtStager=' || trunc(varNsOpenTime, 6));
   ELSIF varErrorCode = serrno.ENSTOOMANYSEGS THEN
     -- do as if migration was successful
     UPDATE CastorFile SET tapeStatus = dconst.CASTORFILE_ONTAPE WHERE id = varCfId;
     -- Log 'file already had enough copies on tape, ignoring new segment'
     logToDLF(inReqid, dlf.LVL_NOTICE, dlf.MIGRATION_SUPERFLUOUS_COPY, inFileId, varNsHost, 'tapegatewayd',
-             'mountTransactionId=' || to_char(inMountTrId));
+             'mountTransactionId=' || inMountTrId);
   ELSE
     -- Any other case, log 'migration to tape failed for this file, giving up'
     logToDLF(inReqid, dlf.LVL_ERROR, dlf.MIGRATION_FAILED, inFileId, varNsHost, 'tapegatewayd',
-             'mountTransactionId=' || to_char(inMountTrId) || ' LastErrorCode=' || to_char(varErrorCode));
+             'mountTransactionId=' || inMountTrId || ' LastErrorCode=' || varErrorCode);
   END IF;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- File was dropped, log 'file not found when failing migration'
   logToDLF(inReqid, dlf.LVL_ERROR, dlf.MIGRATION_FAILED_NOT_FOUND, inFileId, varNsHost, 'tapegatewayd',
-           'mountTransactionId=' || to_char(inMountTrId) || ' LastErrorCode=' || to_char(varErrorCode));
+           'mountTransactionId=' || inMountTrId || ' LastErrorCode=' || varErrorCode);
 END;
 /
 

@@ -1,4 +1,16 @@
-alter table CastorFile ADD (tapeStatus INTEGER);
+/***** TO BE MERGED INTO stager_2.1.13-6_to_2.1.14-0.sql *****/
+
+INSERT INTO UpgradeLog (schemaVersion, release, type)
+VALUES ('2_1_14_0', '2_1_14_X', 'NON TRANSPARENT');
+COMMIT;
+
+/* For deleteDiskCopy */
+CREATE GLOBAL TEMPORARY TABLE DeleteDiskCopyHelper
+  (dcId INTEGER CONSTRAINT PK_DDCHelper_dcId PRIMARY KEY, rc INTEGER)
+  ON COMMIT PRESERVE ROWS;
+
+
+ALTER TABLE CastorFile ADD (tapeStatus INTEGER, nsOpenTime NUMBER);
 DELETE FROM ObjStatus WHERE object='DiskCopy' AND field='status'
                         AND statusName IN ('DISKCOPY_STAGED', 'DISKCOPY_CANBEMIGR');
 BEGIN setObjStatusName('DiskCopy', 'status', 0, 'DISKCOPY_VALID'); END;
@@ -35,3 +47,7 @@ DROP TRIGGER tr_DiskCopy_Online;
 DROP PROCEDURE getDiskCopiesForJob;
 DROP PROCEDURE processPrepareRequest;
 DROP PROCEDURE recreateCastorFile;
+
+UPDATE UpgradeLog SET endDate = systimestamp, state = 'COMPLETE'
+ WHERE release = '2_1_14_X';
+COMMIT;

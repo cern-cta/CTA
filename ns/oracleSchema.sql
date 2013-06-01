@@ -89,13 +89,26 @@ ALTER TABLE Cns_file_metadata
 -- Create indexes on Cns_file_metadata
 CREATE INDEX Parent_FileId_Idx ON Cns_file_metadata (parent_fileid);
 CREATE INDEX I_file_metadata_fileclass ON Cns_file_metadata (fileclass);
+CREATE INDEX I_file_metadata_gid ON Cns_file_metadata (gid);
 
 -- Create indexes on Cns_seg_metadata
 CREATE INDEX I_seg_metadata_tapesum ON Cns_seg_metadata (vid, s_fileid, segsize, compression);
+CREATE INDEX I_seg_metadata_gid ON Cns_Seg_metadata (gid);
 
 -- Temporary table to support Cns_bulkexist calls
 CREATE GLOBAL TEMPORARY TABLE Cns_files_exist_tmp
   (tmpFileId NUMBER) ON COMMIT DELETE ROWS;
+
+-- Table to store configuration items at the DB level
+CREATE TABLE CastorConfig
+  (class VARCHAR2(50) CONSTRAINT NN_CastorConfig_class NOT NULL,
+   key VARCHAR2(50) CONSTRAINT NN_CastorConfig_key NOT NULL,
+   value VARCHAR2(100) CONSTRAINT NN_CastorConfig_value NOT NULL,
+   description VARCHAR2(1000));
+
+-- Provide a default configuration
+INSERT INTO CastorConfig (class, key, value, description)
+  VALUES ('stager', 'openmode', 'C', 'Mode for stager open/close operations: C for Compatibility (pre 2.1.14), N for New (from 2.1.14 onwards)');
 
 -- A synonym allowing to acces the VMGR_TAPE_SIDE table from within the nameserver DB.
 -- Note that the VMGR schema shall grant read access to the NS account with something like:
@@ -117,8 +130,8 @@ CREATE TABLE SetSegsForFilesResultsHelper
  * - Create a default 'system' fileclass. Pre-requisite to next step.
  * - Create the root directory.
  */
-INSERT INTO cns_class_metadata (classid, name, owner_uid, gid, min_filesize, max_filesize, flags, maxdrives,
-  max_segsize, migr_time_interval, mintime_beforemigr, nbcopies, retenp_on_disk) 
+INSERT INTO Cns_class_metadata (classid, name, owner_uid, gid, min_filesize, max_filesize, flags, maxdrives,
+  max_segsize, migr_time_interval, mintime_beforemigr, nbcopies, retenp_on_disk)
   VALUES (1, 'system', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 INSERT INTO cns_file_metadata (fileid, parent_fileid, guid, name, filemode, nlink, owner_uid, gid, filesize,
   atime, mtime, ctime, stagertime, fileclass, status, csumtype, csumvalue, acl)

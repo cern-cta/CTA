@@ -819,7 +819,7 @@ castor::db::ora::OraStagerSvc::createRecallCandidate(u_signed64 srId)
 //------------------------------------------------------------------------------
 castor::stager::CastorFile*
 castor::db::ora::OraStagerSvc::selectCastorFile(castor::stager::SubRequest* subreq,
-  const Cns_fileid* cnsFileId, const Cns_filestatcs* cnsFileStat)
+  const Cns_fileid* cnsFileId, const Cns_filestatcs* cnsFileStat, const double nsOpenTime)
   throw (castor::exception::Exception) {
   // Check whether the statements are ok
   if (0 == m_selectCastorFileStatement) {
@@ -839,7 +839,7 @@ castor::db::ora::OraStagerSvc::selectCastorFile(castor::stager::SubRequest* subr
     m_selectCastorFileStatement->setDouble(4, cnsFileStat->filesize);
     m_selectCastorFileStatement->setString(5, subreq->fileName());
     m_selectCastorFileStatement->setDouble(6, subreq->id());
-    m_selectCastorFileStatement->setDouble(7, cnsFileStat->mtime);
+    m_selectCastorFileStatement->setDouble(7, nsOpenTime);
 
     int nb  = m_selectCastorFileStatement->executeUpdate();
     if (0 == nb) {
@@ -857,7 +857,6 @@ castor::db::ora::OraStagerSvc::selectCastorFile(castor::stager::SubRequest* subr
     result->setNsHost(cnsFileId->server);
     result->setLastKnownFileName(subreq->fileName());
     result->setFileSize((u_signed64)m_selectCastorFileStatement->getDouble(9));
-    result->setLastUpdateTime(cnsFileStat->mtime);
     subreq->setCastorFile(result);    // executed in the PL/SQL procedure
     return result;
   } catch (oracle::occi::SQLException e) {

@@ -82,6 +82,7 @@ namespace castor {
         // NameServer data
         struct Cns_fileid cnsFileid;
         struct Cns_filestatcs cnsFilestat;
+        double m_stagerOpenTime;
       
         // request & co
         castor::stager::SubRequest* subrequest;

@@ -619,47 +619,41 @@ END;
     - 1 : The file got deleted while it was being written to
 */
 CREATE OR REPLACE PROCEDURE prepareForMigration (srId IN INTEGER,
-                                                 fs IN INTEGER,
-                                                 newTimeStamp IN NUMBER,
-                                                 fId OUT NUMBER,
-                                                 nh OUT VARCHAR2,
-                                                 returnCode OUT INTEGER,
-                                                 lastUpdTime OUT NUMBER) AS
+                                                 inFileSize IN INTEGER,
+                                                 inNewTimeStamp IN NUMBER,
+                                                 outFileId OUT NUMBER,
+                                                 outNsHost OUT VARCHAR2,
+                                                 outRC OUT INTEGER,
+                                                 outNsOpenTime OUT NUMBER) AS
   cfId INTEGER;
   dcId INTEGER;
   svcId INTEGER;
   realFileSize INTEGER;
   unused INTEGER;
   contextPIPP INTEGER;
+  lastUpdTime NUMBER;
 BEGIN
-  returnCode := 0;
+  outRC := 0;
   -- Get CastorFile
   SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ castorFile, diskCopy INTO cfId, dcId
     FROM SubRequest WHERE id = srId;
   -- Lock the CastorFile and get the fileid and name server host
-  SELECT id, fileid, nsHost, nvl(lastUpdateTime, 0)
-    INTO cfId, fId, nh, lastUpdTime
+  SELECT id, fileid, nsHost, nvl(lastUpdateTime, 0), nsOpenTime
+    INTO cfId, outFileId, outNsHost, lastUpdTime, outNsOpenTime
     FROM CastorFile WHERE id = cfId FOR UPDATE;
   -- Determine the context (Put inside PrepareToPut or not)
-  -- check that we are a Put or an Update
-  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ Request.id INTO unused
-    FROM SubRequest,
-       (SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */ id FROM StagePutRequest UNION ALL
-        SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ id FROM StageUpdateRequest) Request
-   WHERE SubRequest.id = srId
-     AND Request.id = SubRequest.request;
   BEGIN
     -- Check that there is a PrepareToPut/Update going on. There can be only a
     -- single one or none. If there was a PrepareTo, any subsequent PPut would
     -- be rejected and any subsequent PUpdate would be directly archived (cf.
     -- processPrepareRequest).
-    SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest.diskCopy INTO unused
+    SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile) */ SubRequest.id INTO unused
       FROM SubRequest,
        (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id FROM StagePrepareToPutRequest UNION ALL
         SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id FROM StagePrepareToUpdateRequest) Request
      WHERE SubRequest.CastorFile = cfId
        AND Request.id = SubRequest.request
-       AND SubRequest.status = 6; -- READY
+       AND SubRequest.status = dconst.SUBREQUEST_READY;
     -- If we got here, we are a Put inside a PrepareToPut
     contextPIPP := 0;
   EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -670,17 +664,17 @@ BEGIN
   -- was deleted via stageRm while being written to. Thus, we should just give up
   BEGIN
     SELECT status INTO unused
-      FROM DiskCopy WHERE id = dcId AND status = 6; -- STAGEOUT
+      FROM DiskCopy WHERE id = dcId AND status = dconst.DISKCOPY_STAGEOUT;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- So we are in the case, we give up
-    returnCode := 1;
+    outRC := 1;
     ROLLBACK;
     RETURN;
   END;
   -- Check if the timestamps allow us to update
-  IF newTimeStamp >= lastUpdTime THEN
+  IF inNewTimeStamp >= lastUpdTime THEN
     -- Now we can safely update CastorFile's file size and time stamps
-    UPDATE CastorFile SET fileSize = fs, lastUpdateTime = newTimeStamp
+    UPDATE CastorFile SET fileSize = inFileSize, lastUpdateTime = inNewTimeStamp
      WHERE id = cfId;
   END IF;
   -- If ts < lastUpdateTime, we were late and another job already updated the

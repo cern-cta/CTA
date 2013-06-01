@@ -726,11 +726,12 @@ int Cns_srv_creat(int magic,
     filentry.filesize = 0;
     filentry.mtime = time (0);
     filentry.ctime = filentry.mtime;
+    filentry.stagertime = 0.0;
     filentry.status = '-';
     if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &filentry))
       RETURN (serrno);
 
-    /* Ammend logging paramaters */
+    /* Amend logging paramaters */
     sprintf (reqinfo->logbuf + strlen(reqinfo->logbuf), " Truncated=\"True\"");
   } else { /* Must create the file */
     if (parent_dir.fileclass <= 0)
@@ -769,7 +770,7 @@ int Cns_srv_creat(int magic,
     if (Cns_update_fmd_entry (&thip->dbfd, &rec_addrp, &parent_dir))
       RETURN (serrno);
 
-    /* Ammend log message */
+    /* Amend log message */
     sprintf (reqinfo->logbuf + strlen(reqinfo->logbuf), " NewFile=\"True\"");
   }
   sbp = repbuf;
@@ -3497,13 +3498,9 @@ int Cns_srv_replaceseg(int magic,
   if (filentry.filemode & S_IFDIR)
     RETURN (EISDIR);
 
-  /* Check that the file in nameserver is not newer than what is given. This
-   * can happen in case of multiple stagers concurrently modifying a file.
-   * In such a case, raise the appropriate error and ignore the request.
-   */
-  if ((filentry.mtime > last_mod_time) && (last_mod_time > 0)) {
-    RETURN (ENSFILECHG);
-  }
+  /* DON'T check for concurrent modifications in another stager:
+   * we can be here only from a command line client with admin rights,
+   * thus that check is not applicable. */
 
   if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1))
     RETURN (EINVAL);
@@ -3988,7 +3985,7 @@ int Cns_srv_setfsize(int magic,
   char *rbp;
   Cns_dbrec_addr rec_addr;
   time_t last_mod_time = 0;
-  time_t new_mod_time = 0;
+  time_t new_mtime = 0;
 
   /* Unmarshall message body */
   rbp = req_data;
@@ -4003,7 +4000,7 @@ int Cns_srv_setfsize(int magic,
     RETURN (SENAMETOOLONG);
   unmarshall_HYPER (rbp, filesize);
   if (magic >= CNS_MAGIC2) {
-    unmarshall_TIME_T (rbp, new_mod_time);
+    unmarshall_TIME_T (rbp, new_mtime);
     unmarshall_TIME_T (rbp, last_mod_time);
   }
 
@@ -4016,7 +4013,7 @@ int Cns_srv_setfsize(int magic,
   sprintf (reqinfo->logbuf,
            "Cwd=\"%s\" Path=\"%s\" FileSize=%llu NewModTime=%lld "
            "LastModTime=%lld",
-           cwdpath, path, filesize, (long long int)new_mod_time,
+           cwdpath, path, filesize, (long long int)new_mtime,
            (long long int)last_mod_time);
 
   /* Check if the user is authorized to set the file size of a file */
@@ -4061,18 +4058,14 @@ int Cns_srv_setfsize(int magic,
                         reqinfo->clienthost))
     RETURN (EACCES);
 
-  /* Check that the file in nameserver is not newer than what is given. This
-   * can happen in case of multiple stagers concurrently modifying a file. In
-   * such a case, raise the appropriate error and ignore the request.
-   */
-  if ((filentry.mtime > last_mod_time) && (last_mod_time > 0)) {
-    RETURN (ENSFILECHG);
-  }
+  /* Check for concurrent modifications */
+  if (Cns_is_concurrent_open(&thip->dbfd, &filentry, last_mod_time, reqinfo->logbuf))
+    RETURN (serrno);
 
   /* Update entry */
   filentry.filesize = filesize;
   if (magic >= CNS_MAGIC2) {
-    filentry.mtime = new_mod_time;
+    filentry.mtime = new_mtime;
   } else {
     filentry.mtime = time (0);
   }
@@ -4104,7 +4097,7 @@ int Cns_srv_setfsizecs(int magic,
   char csumtype[3];
   char csumvalue[CA_MAXCKSUMLEN+1];
   time_t last_mod_time = 0;
-  time_t new_mod_time = 0;
+  time_t new_mtime = 0;
 
   /* Unmarshall message body */
   rbp = req_data;
@@ -4123,7 +4116,7 @@ int Cns_srv_setfsizecs(int magic,
   if (unmarshall_STRINGN (rbp, csumvalue, CA_MAXCKSUMLEN+1))
     RETURN (EINVAL);
   if (magic >= CNS_MAGIC2) {
-    unmarshall_TIME_T (rbp, new_mod_time);
+    unmarshall_TIME_T (rbp, new_mtime);
     unmarshall_TIME_T (rbp, last_mod_time);
   }
 
@@ -4137,7 +4130,7 @@ int Cns_srv_setfsizecs(int magic,
            "Cwd=\"%s\" Path=\"%s\" FileSize=%llu ChecksumType=\"%s\" "
            "ChecksumValue=\"%s\" NewModTime=%lld LastModTime=%lld",
            cwdpath, path, filesize, csumtype, csumvalue,
-           (long long int)new_mod_time, (long long int)last_mod_time);
+           (long long int)new_mtime, (long long int)last_mod_time);
 
   if (*csumtype &&
       (strcmp (csumtype, "AD") && strcmp (csumtype, "PA")))
@@ -4185,13 +4178,9 @@ int Cns_srv_setfsizecs(int magic,
                         reqinfo->clienthost))
     RETURN (EACCES);
 
-  /* Check that the file in nameserver is not newer than what is given. This
-   * can happen in case of multiple stagers concurrently modifying a file. In
-   * such a case, raise the appropriate error and ignore the request.
-   */
-  if ((filentry.mtime > last_mod_time) && (last_mod_time > 0)) {
-    RETURN (ENSFILECHG);
-  }
+  /* Check for concurrent modifications */
+  if (Cns_is_concurrent_open(&thip->dbfd, &filentry, last_mod_time, reqinfo->logbuf))
+    RETURN (serrno);
 
   if ((strcmp(filentry.csumtype, "PA") == 0 && strcmp(csumtype, "AD") == 0)) {
     /* We have predefined checksums then should check them with new ones */
@@ -4208,7 +4197,7 @@ int Cns_srv_setfsizecs(int magic,
   /* Update entry */
   filentry.filesize = filesize;
   if (magic >= CNS_MAGIC2) {
-    filentry.mtime = new_mod_time;
+    filentry.mtime = new_mtime;
   } else {
     filentry.mtime = time (0);
   }
@@ -5263,7 +5252,7 @@ int Cns_srv_openx(char *req_data,
       sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
       RETURN (EEXIST);
     }
-    if (*fmd_entry.name == '/') { /* Cns_create / */
+    if (*fmd_entry.name == '/') { /* Cns_creat / */
       sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
       RETURN (EISDIR);
     }
@@ -5294,20 +5283,22 @@ int Cns_srv_openx(char *req_data,
           RETURN (serrno);
         }
       }
-      
+
       /* Reset the filesize and update the time attributes */
       fmd_entry.filesize = 0;
-      fmd_entry.mtime = time (0);
+      fmd_entry.mtime = time(0);
       fmd_entry.ctime = fmd_entry.mtime;
       fmd_entry.status = '-';
-      if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &fmd_entry)) {
+
+      /* update the db and retrieve the new stagertime */
+      if (Cns_update_fmd_entry_open (&thip->dbfd, &rec_addr, &fmd_entry)) {
         sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
         RETURN (serrno);
       }
 
-      /* Ammend logging parameters */
+      /* Amend logging parameters */
       sprintf (reqinfo->logbuf + strlen(reqinfo->logbuf),
-               " Truncated=\"True\"");
+               " NSOpenTime=%.6f Truncated=\"True\"", fmd_entry.stagertime);
     }
   } else {  /* New file */
     if ((flags & O_CREAT) == 0)
@@ -5327,7 +5318,7 @@ int Cns_srv_openx(char *req_data,
       }
       fmd_entry.fileclass = classid;
 
-      /* Ammend logging parameters */
+      /* Amend logging parameters */
       sprintf (reqinfo->logbuf + strlen(reqinfo->logbuf), " ClassName=\"%s\"",
                class_entry.name);
     }
@@ -5357,8 +5348,8 @@ int Cns_srv_openx(char *req_data,
     if (*parent_dir.acl)
       Cns_acl_inherit (&parent_dir, &fmd_entry, mode);
 
-    /* Write the new file entry */
-    if (Cns_insert_fmd_entry (&thip->dbfd, &fmd_entry))
+    /* Write the new file entry and retrieve stagertime from db */
+    if (Cns_insert_fmd_entry_open (&thip->dbfd, &fmd_entry))
       RETURN (serrno);
 
     /* Update the parent directory entry */
@@ -5368,8 +5359,9 @@ int Cns_srv_openx(char *req_data,
     if (Cns_update_fmd_entry (&thip->dbfd, &rec_addrp, &parent_dir))
       RETURN (serrno);
 
-    /* Ammend logging parameters */
-    sprintf (reqinfo->logbuf + strlen(reqinfo->logbuf), " NewFile=\"True\"");
+    /* Amend logging parameters */
+    sprintf (reqinfo->logbuf + strlen(reqinfo->logbuf),
+             " NSOpenTime=%.6f NewFile=\"True\"", fmd_entry.stagertime);
 
     /* Marshall the newfile flag */
     marshall_LONG (sbp, 1);
@@ -5393,6 +5385,7 @@ int Cns_srv_openx(char *req_data,
   marshall_BYTE (sbp, fmd_entry.status);
   marshall_STRING (sbp, fmd_entry.csumtype);
   marshall_STRING (sbp, fmd_entry.csumvalue);
+  marshall_HYPER (sbp, fmd_entry.stagertime*1E6);  /* time in usecs as integer */
   sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
   RETURN (0);
 }
@@ -5410,8 +5403,8 @@ int Cns_srv_closex(char *req_data,
   char         *rbp;
   char         csumtype[3];
   char         csumvalue[CA_MAXCKSUMLEN + 1];
-  time_t       last_mod_time = 0;
-  time_t       new_mod_time = 0;
+  double       last_stagertime = 0;
+  time_t       new_mtime = 0;
   u_signed64   fileid;
   u_signed64   filesize;
   char         *dp = NULL;
@@ -5432,8 +5425,9 @@ int Cns_srv_closex(char *req_data,
     RETURN (EINVAL);
   if (unmarshall_STRINGN (rbp, csumvalue, CA_MAXCKSUMLEN + 1))
     RETURN (EINVAL);
-  unmarshall_TIME_T (rbp, new_mod_time);
-  unmarshall_TIME_T (rbp, last_mod_time);
+  unmarshall_TIME_T (rbp, new_mtime);
+  unmarshall_HYPER (rbp, last_stagertime);
+  last_stagertime *= 1E-6;   /* we get usecs, convert back to secs */
 
   /* Check if namespace is in 'readonly' mode */
   if (rdonly)
@@ -5442,9 +5436,9 @@ int Cns_srv_closex(char *req_data,
   /* Construct log message */
   sprintf (reqinfo->logbuf,
            "FileSize=%llu ChecksumType=\"%s\" ChecksumValue=\"%s\" "
-           "NewModTime=%lld LastModTime=%lld",
+           "NewModTime=%lld StagerLastOpenTime=%.6f",
            filesize, csumtype, csumvalue,
-           (long long int)new_mod_time, (long long int)last_mod_time);
+           (long long int)new_mtime, last_stagertime);
 
   /* Check that the checksum type and value are valid. For now only adler32 (AD)
    * and pre-adler32 (PA) are supported.
@@ -5479,13 +5473,10 @@ int Cns_srv_closex(char *req_data,
 
   if (fmd_entry.filemode & S_IFDIR) /* Operation not permitted on directories */
     RETURN (EISDIR);
-
-  /* Check for concurrent modifications, this can be seen when the timestamp of
-   * the current name server file is newer than the last known modification
-   * time
-   */
-  if ((fmd_entry.mtime > last_mod_time) && (last_mod_time > 0))
-    RETURN (ENSFILECHG);
+  
+  /* Check for concurrent modifications */
+  if (Cns_is_concurrent_open(&thip->dbfd, &fmd_entry, last_stagertime, reqinfo->logbuf))
+    RETURN (serrno);
 
   /* Check for end-to-end checksum mismatch */
   if ((strcmp (fmd_entry.csumtype, "PA") == 0) &&
@@ -5502,8 +5493,7 @@ int Cns_srv_closex(char *req_data,
 
   /* Update the file metadata entry */
   fmd_entry.filesize = filesize;
-  fmd_entry.mtime = new_mod_time;
-  fmd_entry.ctime = fmd_entry.mtime;
+  fmd_entry.ctime = fmd_entry.mtime = new_mtime;
   strcpy (fmd_entry.csumtype, csumtype);
   strcpy (fmd_entry.csumvalue, csumvalue);
 

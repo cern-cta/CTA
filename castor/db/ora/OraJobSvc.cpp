@@ -556,7 +556,7 @@ void castor::db::ora::OraJobSvc::prepareForMigration
  const std::string csumtype,
  const std::string csumvalue)
   throw (castor::exception::Exception) {
-  u_signed64 lastModTime;
+  double lastNsOpenTime;
   try {
     // Check whether the statements are ok
     if (0 == m_prepareForMigrationStatement) {
@@ -595,14 +595,14 @@ void castor::db::ora::OraJobSvc::prepareForMigration
     // Check for errors
     int returnCode = m_prepareForMigrationStatement->getInt(6);
     if (returnCode == 1) {
-      // The file got deleted while it was begin written to. This by itself is
+      // The file got deleted while it was being written to. This by itself is
       // not an error, but we should not take any action here.
       // "File was deleted while it was written to. Giving up with migration."
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
                               DLF_BASE_ORACLELIB, 0, 0, &fileid);
       return;
     }
-    lastModTime = (u_signed64)m_prepareForMigrationStatement->getDouble(7);
+    lastNsOpenTime = m_prepareForMigrationStatement->getDouble(7);
 
     // If we got this far we need to update the file size and checksum
     // information related to the file in the name server. By updating the
@@ -633,9 +633,9 @@ void castor::db::ora::OraJobSvc::prepareForMigration
     int rc = 0;
     if (useChkSum) {
       rc = Cns_closex(&fileid, fileSize, csumtype.c_str(), csumvalue.c_str(),
-                      timeStamp, lastModTime, NULL);
+                      timeStamp, lastNsOpenTime, NULL);
     } else {
-      rc = Cns_closex(&fileid, fileSize, "", "", timeStamp, timeStamp, NULL);
+      rc = Cns_closex(&fileid, fileSize, "", "", timeStamp, lastNsOpenTime, NULL);
     }
 
     if (rc != 0) {

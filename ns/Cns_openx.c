@@ -27,7 +27,8 @@ Cns_openx(const uid_t owneruid,
           const int classid,
           int *newfile,
           struct Cns_fileid *file_uniqueid,
-          struct Cns_filestatcs *statbuf)
+          struct Cns_filestatcs *statbuf,
+          double* stagertime)
 {
   /* Variables */
   struct Cns_api_thread_info *thip;
@@ -115,6 +116,8 @@ Cns_openx(const uid_t owneruid,
       unmarshall_BYTE (rbp, statbuf->status);
       unmarshall_STRING (rbp, statbuf->csumtype);
       unmarshall_STRING (rbp, statbuf->csumvalue);
+      unmarshall_HYPER (rbp, *stagertime);
+      *stagertime *= 1E-6;   /* we get usecs, convert back to secs */
     }
 
     strcpy (file_uniqueid->server, server);

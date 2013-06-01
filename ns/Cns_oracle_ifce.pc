@@ -8,6 +8,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <stdio.h>
+#include <math.h>
 #include <sqlca.h>
 #include <sqlcpr.h>
 #include "Cns.h"
@@ -369,7 +370,7 @@ int Cns_get_fmd_by_fileid(struct Cns_dbfd *dbfd,
     TO_CHAR(FILEID), TO_CHAR(PARENT_FILEID),
     GUID, NAME, FILEMODE, NLINK,
     OWNER_UID, GID, TO_CHAR(FILESIZE),
-    ATIME, MTIME, CTIME,
+    ATIME, MTIME, CTIME, NVL(STAGERTIME, 0),
     FILECLASS, STATUS, CSUMTYPE,
     CSUMVALUE, ACL
     FROM Cns_file_metadata
@@ -379,7 +380,7 @@ int Cns_get_fmd_by_fileid(struct Cns_dbfd *dbfd,
     TO_CHAR(FILEID), TO_CHAR(PARENT_FILEID),
     GUID, NAME, FILEMODE, NLINK,
     OWNER_UID, GID, TO_CHAR(FILESIZE),
-    ATIME, MTIME, CTIME,
+    ATIME, MTIME, CTIME, NVL(STAGERTIME, 0),
     FILECLASS, STATUS, CSUMTYPE,
     CSUMVALUE, ACL
     FROM Cns_file_metadata
@@ -400,6 +401,7 @@ int Cns_get_fmd_by_fileid(struct Cns_dbfd *dbfd,
       :fmd_entry->name, :fmd_entry->filemode, :fmd_entry->nlink,
       :fmd_entry->uid, :fmd_entry->gid, :filesize_str,
       :fmd_entry->atime, :fmd_entry->mtime, :fmd_entry->ctime,
+      :fmd_entry->stagertime,
       :fmd_entry->fileclass INDICATOR :fileclass_indicator,
       :fmd_entry->status,
       :fmd_entry->csumtype:ct_ind, :fmd_entry->csumvalue:cv_ind,
@@ -416,6 +418,7 @@ int Cns_get_fmd_by_fileid(struct Cns_dbfd *dbfd,
       :fmd_entry->name, :fmd_entry->filemode, :fmd_entry->nlink,
       :fmd_entry->uid, :fmd_entry->gid, :filesize_str,
       :fmd_entry->atime, :fmd_entry->mtime, :fmd_entry->ctime,
+      :fmd_entry->stagertime,
       :fmd_entry->fileclass INDICATOR :fileclass_indicator,
       :fmd_entry->status,
       :fmd_entry->csumtype:ct_ind, :fmd_entry->csumvalue:cv_ind,
@@ -428,7 +431,7 @@ int Cns_get_fmd_by_fileid(struct Cns_dbfd *dbfd,
     fmd_entry->fileid = fileid;
     fmd_entry->parent_fileid = strtou64 (parent_fileid_str);
     fmd_entry->filesize = strtou64 (filesize_str);
-    // Deal with NULL value for the fileclass
+    /* Deal with NULL value for the fileclass */
     if (-1 == fileclass_indicator) fmd_entry->fileclass = 0;
     if (guid_ind == -1)
       *fmd_entry->guid = '\0';
@@ -471,7 +474,7 @@ int Cns_get_fmd_by_fullid(struct Cns_dbfd *dbfd,
     TO_CHAR(FILEID), TO_CHAR(PARENT_FILEID),
     GUID, NAME, FILEMODE, NLINK,
     OWNER_UID, GID, TO_CHAR(FILESIZE),
-    ATIME, MTIME, CTIME,
+    ATIME, MTIME, CTIME, NVL(STAGERTIME, 0),
     FILECLASS, STATUS, CSUMTYPE,
     CSUMVALUE, ACL
     FROM Cns_file_metadata
@@ -482,7 +485,7 @@ int Cns_get_fmd_by_fullid(struct Cns_dbfd *dbfd,
     TO_CHAR(FILEID), TO_CHAR(PARENT_FILEID),
     GUID, NAME, FILEMODE, NLINK,
     OWNER_UID, GID, TO_CHAR(FILESIZE),
-    ATIME, MTIME, CTIME,
+    ATIME, MTIME, CTIME, NVL(STAGERTIME, 0),
     FILECLASS, STATUS, CSUMTYPE,
     CSUMVALUE, ACL
     FROM Cns_file_metadata
@@ -504,6 +507,7 @@ int Cns_get_fmd_by_fullid(struct Cns_dbfd *dbfd,
       :fmd_entry->name, :fmd_entry->filemode, :fmd_entry->nlink,
       :fmd_entry->uid, :fmd_entry->gid, :filesize_str,
       :fmd_entry->atime, :fmd_entry->mtime, :fmd_entry->ctime,
+      :fmd_entry->stagertime,
       :fmd_entry->fileclass INDICATOR :fileclass_indicator,
       :fmd_entry->status,
       :fmd_entry->csumtype:ct_ind, :fmd_entry->csumvalue:cv_ind,
@@ -520,6 +524,7 @@ int Cns_get_fmd_by_fullid(struct Cns_dbfd *dbfd,
       :fmd_entry->name, :fmd_entry->filemode, :fmd_entry->nlink,
       :fmd_entry->uid, :fmd_entry->gid, :filesize_str,
       :fmd_entry->atime, :fmd_entry->mtime, :fmd_entry->ctime,
+      :fmd_entry->stagertime,
       :fmd_entry->fileclass INDICATOR :fileclass_indicator,
       :fmd_entry->status,
       :fmd_entry->csumtype:ct_ind, :fmd_entry->csumvalue:cv_ind,
@@ -532,7 +537,7 @@ int Cns_get_fmd_by_fullid(struct Cns_dbfd *dbfd,
     fmd_entry->fileid = strtou64 (fileid_str);
     fmd_entry->parent_fileid = parent_fileid;
     fmd_entry->filesize = strtou64 (filesize_str);
-    // Deal with NULL value for the fileclass
+    /* Deal with NULL value for the fileclass */
     if (-1 == fileclass_indicator)
       fmd_entry->fileclass = 0;
     if (guid_ind == -1)
@@ -575,7 +580,7 @@ int Cns_get_fmd_by_guid(struct Cns_dbfd *dbfd,
     TO_CHAR(FILEID), TO_CHAR(PARENT_FILEID),
     GUID, NAME, FILEMODE, NLINK,
     OWNER_UID, GID, TO_CHAR(FILESIZE),
-    ATIME, MTIME, CTIME,
+    ATIME, MTIME, CTIME, NVL(STAGERTIME, 0),
     FILECLASS, STATUS, CSUMTYPE,
     CSUMVALUE, ACL
     FROM Cns_file_metadata
@@ -585,7 +590,7 @@ int Cns_get_fmd_by_guid(struct Cns_dbfd *dbfd,
     TO_CHAR(FILEID), TO_CHAR(PARENT_FILEID),
     GUID, NAME, FILEMODE, NLINK,
     OWNER_UID, GID, TO_CHAR(FILESIZE),
-    ATIME, MTIME, CTIME,
+    ATIME, MTIME, CTIME, NVL(STAGERTIME, 0),
     FILECLASS, STATUS, CSUMTYPE,
     CSUMVALUE, ACL
     FROM Cns_file_metadata
@@ -605,6 +610,7 @@ int Cns_get_fmd_by_guid(struct Cns_dbfd *dbfd,
       :fmd_entry->name, :fmd_entry->filemode, :fmd_entry->nlink,
       :fmd_entry->uid, :fmd_entry->gid, :filesize_str,
       :fmd_entry->atime, :fmd_entry->mtime, :fmd_entry->ctime,
+      :fmd_entry->stagertime,
       :fmd_entry->fileclass INDICATOR :fileclass_indicator,
       :fmd_entry->status,
       :fmd_entry->csumtype:ct_ind, :fmd_entry->csumvalue:cv_ind,
@@ -621,6 +627,7 @@ int Cns_get_fmd_by_guid(struct Cns_dbfd *dbfd,
       :fmd_entry->name, :fmd_entry->filemode, :fmd_entry->nlink,
       :fmd_entry->uid, :fmd_entry->gid, :filesize_str,
       :fmd_entry->atime, :fmd_entry->mtime, :fmd_entry->ctime,
+      :fmd_entry->stagertime,
       :fmd_entry->fileclass INDICATOR :fileclass_indicator,
       :fmd_entry->status,
       :fmd_entry->csumtype:ct_ind, :fmd_entry->csumvalue:cv_ind,
@@ -633,7 +640,7 @@ int Cns_get_fmd_by_guid(struct Cns_dbfd *dbfd,
     fmd_entry->fileid = strtou64 (fileid_str);
     fmd_entry->parent_fileid = strtou64 (parent_fileid_str);
     fmd_entry->filesize = strtou64 (filesize_str);
-    // Deal with NULL value for the fileclass
+    /* Deal with NULL value for the fileclass */
     if (-1 == fileclass_indicator)
       fmd_entry->fileclass = 0;
     if (guid_ind == -1)
@@ -676,7 +683,7 @@ int Cns_get_fmd_by_pfid(struct Cns_dbfd *dbfd,
     TO_CHAR(FILEID), TO_CHAR(PARENT_FILEID),
     GUID, NAME, FILEMODE, NLINK,
     OWNER_UID, GID, TO_CHAR(FILESIZE),
-    ATIME, MTIME, CTIME,
+    ATIME, MTIME, CTIME, NVL(STAGERTIME, 0),
     FILECLASS, STATUS, CSUMTYPE,
     CSUMVALUE, ACL
     FROM Cns_file_metadata
@@ -713,6 +720,7 @@ int Cns_get_fmd_by_pfid(struct Cns_dbfd *dbfd,
       :fmd_entry->name, :fmd_entry->filemode, :fmd_entry->nlink,
       :fmd_entry->uid, :fmd_entry->gid, :filesize_str,
       :fmd_entry->atime, :fmd_entry->mtime, :fmd_entry->ctime,
+      :fmd_entry->stagertime,
       :fmd_entry->fileclass INDICATOR :fileclass_indicator,
       :fmd_entry->status,
       :fmd_entry->csumtype:ct_ind, :fmd_entry->csumvalue:cv_ind,
@@ -903,7 +911,8 @@ int Cns_get_smd_by_copyno(struct Cns_dbfd *dbfd,
     SELECT ROWID,
     TO_CHAR(S_FILEID), COPYNO, FSEC,
     TO_CHAR(SEGSIZE), NVL(COMPRESSION,100), S_STATUS,
-    VID, SIDE, FSEQ, BLOCKID, CHECKSUM_NAME, NVL(CHECKSUM,0)
+    VID, SIDE, FSEQ, BLOCKID, CHECKSUM_NAME, NVL(CHECKSUM,0),
+    NVL(GID,0), NVL(CREATIONTIME,0), NVL(LASTMODIFICATIONTIME,0)
     FROM Cns_seg_metadata
     WHERE s_fileid = TO_NUMBER(:fileid_str)
     AND copyno = :copyno;
@@ -913,7 +922,8 @@ int Cns_get_smd_by_copyno(struct Cns_dbfd *dbfd,
     SELECT ROWID,
     TO_CHAR(S_FILEID), COPYNO, FSEC,
     TO_CHAR(SEGSIZE), NVL(COMPRESSION,100), S_STATUS,
-    VID, SIDE, FSEQ, BLOCKID, CHECKSUM_NAME, NVL(CHECKSUM,0)
+    VID, SIDE, FSEQ, BLOCKID, CHECKSUM_NAME, NVL(CHECKSUM,0),
+    NVL(GID,0), NVL(CREATIONTIME,0), NVL(LASTMODIFICATIONTIME,0)
     FROM Cns_seg_metadata
     WHERE s_fileid = TO_NUMBER(:fileid_str)
     AND copyno = :copyno
@@ -942,14 +952,16 @@ int Cns_get_smd_by_copyno(struct Cns_dbfd *dbfd,
       :segsize_str, :smd_entry->compression, :smd_entry->s_status,
       :smd_entry->vid, :smd_entry->side, :smd_entry->fseq,
       :smd_entry->blockid, :smd_entry->checksum_name:checksum_name_ind,
-      :smd_entry->checksum;
+      :smd_entry->checksum, :smd_entry->gid,
+      :smd_entry->creationtime, :smd_entry->lastmodificationtime;
   } else {
     EXEC SQL FETCH smd_copyno_cursor INTO
       :fileid_str, :smd_entry->copyno, :smd_entry->fsec,
       :segsize_str, :smd_entry->compression, :smd_entry->s_status,
       :smd_entry->vid, :smd_entry->side, :smd_entry->fseq,
       :smd_entry->blockid, :smd_entry->checksum_name:checksum_name_ind,
-      :smd_entry->checksum;
+      :smd_entry->checksum, :smd_entry->gid,
+      :smd_entry->creationtime, :smd_entry->lastmodificationtime;
   }
 
   switch (sqlca.sqlcode) {
@@ -987,7 +999,8 @@ int Cns_get_smd_by_fullid(struct Cns_dbfd *dbfd,
     SELECT
     TO_CHAR(S_FILEID), COPYNO, FSEC,
     TO_CHAR(SEGSIZE), NVL(COMPRESSION,100), S_STATUS,
-    VID, SIDE, FSEQ, BLOCKID, CHECKSUM_NAME, NVL(CHECKSUM,0)
+    VID, SIDE, FSEQ, BLOCKID, CHECKSUM_NAME, NVL(CHECKSUM,0),
+    NVL(GID,0), NVL(CREATIONTIME,0), NVL(LASTMODIFICATIONTIME,0)
     FROM Cns_seg_metadata
     WHERE s_fileid = TO_NUMBER(:fileid_str)
     AND copyno = :copyno AND fsec = :fsec;
@@ -995,7 +1008,8 @@ int Cns_get_smd_by_fullid(struct Cns_dbfd *dbfd,
     SELECT ROWID,
     TO_CHAR(S_FILEID), COPYNO, FSEC,
     TO_CHAR(SEGSIZE), NVL(COMPRESSION,100), S_STATUS,
-    VID, SIDE, FSEQ, BLOCKID, CHECKSUM_NAME, NVL(CHECKSUM,0)
+    VID, SIDE, FSEQ, BLOCKID, CHECKSUM_NAME, NVL(CHECKSUM,0),
+    NVL(GID,0), NVL(CREATIONTIME,0), NVL(LASTMODIFICATIONTIME,0)
     FROM Cns_seg_metadata
     WHERE s_fileid = TO_NUMBER(:fileid_str)
     AND copyno = :copyno AND fsec = :fsec
@@ -1014,7 +1028,8 @@ int Cns_get_smd_by_fullid(struct Cns_dbfd *dbfd,
       :segsize_str, :smd_entry->compression, :smd_entry->s_status,
       :smd_entry->vid, :smd_entry->side, :smd_entry->fseq,
       :smd_entry->blockid, :smd_entry->checksum_name:checksum_name_ind,
-      :smd_entry->checksum;
+      :smd_entry->checksum, :smd_entry->gid,
+      :smd_entry->creationtime, :smd_entry->lastmodificationtime;
   } else {
     EXEC SQL OPEN smd_fullid_cursor;
     if (sqlca.sqlcode) {
@@ -1026,7 +1041,8 @@ int Cns_get_smd_by_fullid(struct Cns_dbfd *dbfd,
       :segsize_str, :smd_entry->compression, :smd_entry->s_status,
       :smd_entry->vid, :smd_entry->side, :smd_entry->fseq,
       :smd_entry->blockid, :smd_entry->checksum_name:checksum_name_ind,
-      :smd_entry->checksum;
+      :smd_entry->checksum, :smd_entry->gid,
+      :smd_entry->creationtime, :smd_entry->lastmodificationtime;
   }
   switch (sqlca.sqlcode) {
   case 0:
@@ -1063,7 +1079,8 @@ int Cns_get_smd_by_pfid(struct Cns_dbfd *dbfd,
     SELECT
     TO_CHAR(S_FILEID), COPYNO, FSEC,
     TO_CHAR(SEGSIZE), NVL(COMPRESSION,100), S_STATUS,
-    VID, SIDE, FSEQ, BLOCKID, CHECKSUM_NAME, NVL(CHECKSUM,0)
+    VID, SIDE, FSEQ, BLOCKID, CHECKSUM_NAME, NVL(CHECKSUM,0),
+    NVL(GID,0), NVL(CREATIONTIME,0), NVL(LASTMODIFICATIONTIME,0)
     FROM Cns_seg_metadata
     WHERE s_fileid = TO_NUMBER(:fileid_str)
     ORDER BY copyno, fsec;
@@ -1071,7 +1088,8 @@ int Cns_get_smd_by_pfid(struct Cns_dbfd *dbfd,
     SELECT ROWID,
     TO_CHAR(S_FILEID), COPYNO, FSEC,
     TO_CHAR(SEGSIZE), NVL(COMPRESSION,100), S_STATUS,
-    VID, SIDE, FSEQ, BLOCKID, CHECKSUM_NAME, NVL(CHECKSUM,0)
+    VID, SIDE, FSEQ, BLOCKID, CHECKSUM_NAME, NVL(CHECKSUM,0),
+    NVL(GID,0), NVL(CREATIONTIME,0), NVL(LASTMODIFICATIONTIME,0)
     FROM Cns_seg_metadata
     WHERE s_fileid = TO_NUMBER(:fileid_str)
     ORDER BY copyno, fsec
@@ -1098,14 +1116,16 @@ int Cns_get_smd_by_pfid(struct Cns_dbfd *dbfd,
       :segsize_str, :smd_entry->compression, :smd_entry->s_status,
       :smd_entry->vid, :smd_entry->side, :smd_entry->fseq,
       :smd_entry->blockid, :smd_entry->checksum_name:checksum_name_ind,
-      :smd_entry->checksum;
+      :smd_entry->checksum, :smd_entry->gid,
+      :smd_entry->creationtime, :smd_entry->lastmodificationtime;
   else
     EXEC SQL FETCH smd_pfid_cursor INTO
       :fileid_str, :smd_entry->copyno, :smd_entry->fsec,
       :segsize_str, :smd_entry->compression, :smd_entry->s_status,
       :smd_entry->vid, :smd_entry->side, :smd_entry->fseq,
       :smd_entry->blockid,:smd_entry->checksum_name:checksum_name_ind,
-      :smd_entry->checksum;
+      :smd_entry->checksum, :smd_entry->gid,
+      :smd_entry->creationtime, :smd_entry->lastmodificationtime;
   switch (sqlca.sqlcode) {
   case 0:
     if (lock)
@@ -1170,7 +1190,8 @@ int Cns_get_last_smd_by_vid(struct Cns_dbfd *dbfd,
     SELECT
     TO_CHAR(S_FILEID), COPYNO, FSEC,
     TO_CHAR(SEGSIZE), NVL(COMPRESSION,100), S_STATUS,
-    VID, SIDE, FSEQ, BLOCKID, CHECKSUM_NAME, NVL(CHECKSUM,0)
+    VID, SIDE, FSEQ, BLOCKID, CHECKSUM_NAME, NVL(CHECKSUM,0),
+    NVL(GID,0), NVL(CREATIONTIME,0), NVL(LASTMODIFICATIONTIME,0)
     FROM Cns_seg_metadata
     WHERE vid = :vid
     AND side = :side
@@ -1191,7 +1212,8 @@ int Cns_get_last_smd_by_vid(struct Cns_dbfd *dbfd,
     :segsize_str, :smd_entry->compression, :smd_entry->s_status,
     :smd_entry->vid, :smd_entry->side, :smd_entry->fseq,
     :smd_entry->blockid, :smd_entry->checksum_name:checksum_name_ind,
-    :smd_entry->checksum;
+    :smd_entry->checksum, :smd_entry->gid,
+    :smd_entry->creationtime, :smd_entry->lastmodificationtime;
 
   switch (sqlca.sqlcode) {
   case 0:
@@ -1345,7 +1367,8 @@ int Cns_get_smd_by_vid(struct Cns_dbfd *dbfd,
     SELECT
     TO_CHAR(S_FILEID), COPYNO, FSEC,
     TO_CHAR(SEGSIZE), NVL(COMPRESSION,100), S_STATUS,
-    VID, SIDE, FSEQ, BLOCKID, CHECKSUM_NAME, NVL(CHECKSUM,0)
+    VID, SIDE, FSEQ, BLOCKID, CHECKSUM_NAME, NVL(CHECKSUM,0),
+    NVL(GID,0), NVL(CREATIONTIME,0), NVL(LASTMODIFICATIONTIME,0)
     FROM Cns_seg_metadata
     WHERE vid = :vid
     ORDER BY side, fseq;
@@ -1353,7 +1376,8 @@ int Cns_get_smd_by_vid(struct Cns_dbfd *dbfd,
     SELECT
     TO_CHAR(S_FILEID), COPYNO, FSEC,
     TO_CHAR(SEGSIZE), NVL(COMPRESSION,100), S_STATUS,
-    VID, SIDE, FSEQ, BLOCKID, CHECKSUM_NAME, NVL(CHECKSUM,0)
+    VID, SIDE, FSEQ, BLOCKID, CHECKSUM_NAME, NVL(CHECKSUM,0),
+    NVL(GID,0), NVL(CREATIONTIME,0), NVL(LASTMODIFICATIONTIME,0)
     FROM Cns_seg_metadata
     WHERE vid = :vid
     AND fseq = :fseq
@@ -1379,14 +1403,16 @@ int Cns_get_smd_by_vid(struct Cns_dbfd *dbfd,
       :segsize_str, :smd_entry->compression, :smd_entry->s_status,
       :smd_entry->vid, :smd_entry->side, :smd_entry->fseq,
       :smd_entry->blockid, :smd_entry->checksum_name:checksum_name_ind,
-      :smd_entry->checksum;
+      :smd_entry->checksum, :smd_entry->gid,
+    :smd_entry->creationtime, :smd_entry->lastmodificationtime;
   } else {
     EXEC SQL FETCH smd_vid_cursor INTO
       :fileid_str, :smd_entry->copyno, :smd_entry->fsec,
       :segsize_str, :smd_entry->compression, :smd_entry->s_status,
       :smd_entry->vid, :smd_entry->side, :smd_entry->fseq,
       :smd_entry->blockid, :smd_entry->checksum_name:checksum_name_ind,
-      :smd_entry->checksum;
+      :smd_entry->checksum, :smd_entry->gid,
+    :smd_entry->creationtime, :smd_entry->lastmodificationtime;
   }
 
   switch (sqlca.sqlcode) {
@@ -1573,7 +1599,7 @@ int Cns_insert_fmd_entry(struct Cns_dbfd *dbfd,
   struct sqlca sqlca;
   short fileclass_indicator = 0;
 
-  // handle the case of NULL fileclasses
+  /* handle the case of NULL fileclasses */
   if (0 == fmd_entry->fileclass)
     fileclass_indicator = -1;
   strncpy (func, "Cns_insert_fmd_entry", 21);
@@ -1584,7 +1610,7 @@ int Cns_insert_fmd_entry(struct Cns_dbfd *dbfd,
     (FILEID, PARENT_FILEID,
      GUID, NAME, FILEMODE, NLINK,
      OWNER_UID, GID, FILESIZE,
-     ATIME, MTIME, CTIME,
+     ATIME, MTIME, CTIME, STAGERTIME,
      FILECLASS, STATUS, CSUMTYPE,
      CSUMVALUE, ACL)
     VALUES
@@ -1593,9 +1619,64 @@ int Cns_insert_fmd_entry(struct Cns_dbfd *dbfd,
      :fmd_entry->name, :fmd_entry->filemode, :fmd_entry->nlink,
      :fmd_entry->uid, :fmd_entry->gid, TO_NUMBER(:filesize_str),
      :fmd_entry->atime, :fmd_entry->mtime, :fmd_entry->ctime,
+     0,
      :fmd_entry->fileclass INDICATOR :fileclass_indicator,
      :fmd_entry->status, :fmd_entry->csumtype,
      :fmd_entry->csumvalue, :fmd_entry->acl);
+  switch (sqlca.sqlcode) {
+  case 0:
+    return (0);
+  case -1:
+    serrno = EEXIST;
+    break;
+  case -1631:
+  case -1632:
+  case -1654:
+    serrno = ENOSPC;
+    break;
+  default:
+    Cns_oracle_error (func, "INSERT", dbfd, &sqlca);
+  }
+  return (-1);
+}
+
+int Cns_insert_fmd_entry_open(struct Cns_dbfd *dbfd,
+                              struct Cns_file_metadata *fmd_entry)
+{
+  char fileid_str[21];
+  char filesize_str[21];
+  char func[26];
+  char parent_fileid_str[21];
+  struct sqlca sqlca;
+  short fileclass_indicator = 0;
+
+  /* handle the case of NULL fileclasses */
+  if (0 == fmd_entry->fileclass)
+    fileclass_indicator = -1;
+  strncpy (func, "Cns_insert_fmd_entry_open", 26);
+  (void) u64tostr (fmd_entry->fileid, fileid_str, -1);
+  (void) u64tostr (fmd_entry->parent_fileid, parent_fileid_str, -1);
+  (void) u64tostr (fmd_entry->filesize, filesize_str, -1);
+  /* insert db entry and get a new stagertime. We truncate it
+     to make it fit on an integer without loss of precision */
+  EXEC SQL INSERT INTO Cns_file_metadata
+    (FILEID, PARENT_FILEID,
+     GUID, NAME, FILEMODE, NLINK,
+     OWNER_UID, GID, FILESIZE,
+     ATIME, MTIME, CTIME, STAGERTIME,
+     FILECLASS, STATUS, CSUMTYPE,
+     CSUMVALUE, ACL)
+    VALUES
+    (TO_NUMBER(:fileid_str), TO_NUMBER(:parent_fileid_str),
+     :fmd_entry->guid,
+     :fmd_entry->name, :fmd_entry->filemode, :fmd_entry->nlink,
+     :fmd_entry->uid, :fmd_entry->gid, TO_NUMBER(:filesize_str),
+     :fmd_entry->atime, :fmd_entry->mtime, :fmd_entry->ctime,
+     TRUNC(GETTIME(), 5),
+     :fmd_entry->fileclass INDICATOR :fileclass_indicator,
+     :fmd_entry->status, :fmd_entry->csumtype,
+     :fmd_entry->csumvalue, :fmd_entry->acl)
+    RETURNING STAGERTIME INTO :fmd_entry->stagertime;
   switch (sqlca.sqlcode) {
   case 0:
     return (0);
@@ -1658,12 +1739,14 @@ int Cns_insert_smd_entry(struct Cns_dbfd *dbfd,
   EXEC SQL INSERT INTO Cns_seg_metadata
     (S_FILEID, COPYNO, FSEC,
      SEGSIZE, COMPRESSION, S_STATUS,
-     VID, SIDE, FSEQ, BLOCKID, CHECKSUM_NAME, CHECKSUM)
+     VID, SIDE, FSEQ, BLOCKID, CHECKSUM_NAME, CHECKSUM,
+     GID, CREATIONTIME, LASTMODIFICATIONTIME)
     VALUES
     (TO_NUMBER(:fileid_str), :smd_entry->copyno, :smd_entry->fsec,
      TO_NUMBER(:segsize_str), :smd_entry->compression, :smd_entry->s_status,
      :smd_entry->vid, :smd_entry->side, :smd_entry->fseq, :smd_entry->blockid,
-     :smd_entry->checksum_name, :smd_entry->checksum);
+     :smd_entry->checksum_name, :smd_entry->checksum,
+     :smd_entry->gid, GETTIME(), GETTIME());
   switch (sqlca.sqlcode) {
   case 0:
     return (0);
@@ -2014,7 +2097,7 @@ int Cns_update_fmd_entry(struct Cns_dbfd *dbfd,
   struct sqlca sqlca;
   short fileclass_indicator = 0;
 
-  // handle the case of NULL fileclasses
+  /* handle the case of NULL fileclasses */
   if (0 == fmd_entry->fileclass)
     fileclass_indicator = -1;
   strncpy (func, "Cns_update_fmd_entry", 21);
@@ -2051,6 +2134,58 @@ int Cns_update_fmd_entry(struct Cns_dbfd *dbfd,
   return (-1);
 }
 
+int Cns_update_fmd_entry_open(struct Cns_dbfd *dbfd,
+                              Cns_dbrec_addr *rec_addr,
+                              struct Cns_file_metadata *fmd_entry)
+{
+  char filesize_str[21];
+  char func[26];
+  char parent_fileid_str[21];
+  char rowid_value[19];
+  struct sqlca sqlca;
+  short fileclass_indicator = 0;
+
+  /* handle the case of NULL fileclasses */
+  if (0 == fmd_entry->fileclass)
+    fileclass_indicator = -1;
+  strncpy (func, "Cns_update_fmd_entry_open", 26);
+  memcpy (rowid_value, rec_addr, sizeof(rowid_value));
+  (void) u64tostr (fmd_entry->parent_fileid, parent_fileid_str, -1);
+  (void) u64tostr (fmd_entry->filesize, filesize_str, -1);
+  /* update db entry and get a new stagertime. We truncate it
+     to make it fit on an integer without loss of precision */
+  EXEC SQL UPDATE Cns_file_metadata SET
+    PARENT_FILEID = TO_NUMBER(:parent_fileid_str),
+    GUID          = :fmd_entry->guid,
+    NAME          = :fmd_entry->name,
+    FILEMODE      = :fmd_entry->filemode,
+    NLINK         = :fmd_entry->nlink,
+    OWNER_UID     = :fmd_entry->uid,
+    GID           = :fmd_entry->gid,
+    FILESIZE      = TO_NUMBER(:filesize_str),
+    ATIME         = :fmd_entry->atime,
+    MTIME         = :fmd_entry->mtime,
+    CTIME         = :fmd_entry->ctime,
+    STAGERTIME    = TRUNC(GETTIME(), 5),
+    FILECLASS     = :fmd_entry->fileclass INDICATOR :fileclass_indicator,
+    STATUS        = :fmd_entry->status,
+    CSUMTYPE      = :fmd_entry->csumtype,
+    CSUMVALUE     = :fmd_entry->csumvalue,
+    ACL           = :fmd_entry->acl
+    WHERE ROWID   = :rowid_value
+    RETURNING STAGERTIME INTO :fmd_entry->stagertime;
+  switch (sqlca.sqlcode) {
+  case 0:
+    return (0);
+  case -1438:
+    serrno = EMLINK;
+    break;
+  default:
+    Cns_oracle_error (func, "UPDATE", dbfd, &sqlca);
+  }
+  return (-1);
+}
+
 int Cns_update_smd_entry(struct Cns_dbfd *dbfd,
                          Cns_dbrec_addr *rec_addr,
                          struct Cns_seg_metadata *smd_entry)
@@ -2073,7 +2208,9 @@ int Cns_update_smd_entry(struct Cns_dbfd *dbfd,
     FSEQ          = :smd_entry->fseq,
     BLOCKID       = :smd_entry->blockid,
     CHECKSUM_NAME = :smd_entry->checksum_name,
-    CHECKSUM      = :smd_entry->checksum
+    CHECKSUM      = :smd_entry->checksum,
+    GID           = :smd_entry->gid,
+    LASTMODIFICATIONTIME = GETTIME()
     WHERE ROWID   = :rowid_value;
   if (sqlca.sqlcode) {
     Cns_oracle_error (func, "UPDATE", dbfd, &sqlca);
@@ -2098,6 +2235,58 @@ int Cns_update_umd_entry(struct Cns_dbfd *dbfd,
   if (sqlca.sqlcode) {
     Cns_oracle_error (func, "UPDATE", dbfd, &sqlca);
     return (-1);
-  }
+  }    
   return (0);
 }
+
+
+int Cns_is_concurrent_open(struct Cns_dbfd *dbfd,
+                           struct Cns_file_metadata *fmd_entry,
+                           double last_stagertime,
+                           char* logbuf)
+{
+  char open_mode[50];
+  char func[23];
+  struct sqlca sqlca;
+
+  strncpy (func, "Cns_is_concurrent_open", 23);
+  
+  /* Retrieve the flag to decide whether we check for concurrent modifications:
+   * N for 'new' mode (v2.1.14+)
+   * C for 'compatibility' mode (previous versions)
+   * This is to be dropped and the old mode deprecated once we move to 2.1.15.
+   */
+  EXEC SQL SELECT VALUE INTO :open_mode
+             FROM CastorConfig
+            WHERE class = 'stager'
+              AND key = 'openmode';
+  if (sqlca.sqlcode) {
+    Cns_oracle_error (func, "SELECT", dbfd, &sqlca);
+    return (-1);
+  }
+  
+  /* Sanity check */
+  if(open_mode[0] != 'C' && open_mode[0] != 'N') {
+    /* amend log */
+    sprintf (logbuf + strlen(logbuf),
+             " ErrorMessage=\"Incorrect value found for openmode in CastorConfig: found %c, expected either C or N\"", open_mode[0]);
+    serrno = EINVAL;
+    return (-1);
+  }
+  
+  /* Check for concurrent modifications, this can be seen when the current timestamp
+   * in the name server is newer than the last known stager modification time.
+   * Note that in compatibility mode we only have seconds precision, thus we have
+   * to ceil the given last_stagertime for a safe comparison with mtime.
+   * After deploying 2.1.14, only the check with fmd_entry.stagertime shall stay.
+   */
+  if (  ((open_mode[0] == 'C') && (fmd_entry->mtime > ceil(last_stagertime)))
+     || ((open_mode[0] == 'N') && (fmd_entry->stagertime - last_stagertime > 1E-6)) ) {
+    sprintf (logbuf + strlen(logbuf), " NSLastOpenTime=%.6f",
+             (open_mode[0] == 'C' ? fmd_entry->mtime : fmd_entry->stagertime));
+    serrno = ENSFILECHG;
+    return (-1);
+  }
+  
+  return (0);
+  }

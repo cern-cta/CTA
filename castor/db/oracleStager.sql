@@ -1941,7 +1941,7 @@ CREATE OR REPLACE PROCEDURE selectCastorFileInternal (fId IN INTEGER,
                                                       fs IN INTEGER,
                                                       fn IN VARCHAR2,
                                                       srId IN NUMBER,
-                                                      lut IN NUMBER,
+                                                      inNsOpenTime IN NUMBER,
                                                       waitForLock IN BOOLEAN,
                                                       rid OUT INTEGER,
                                                       rfs OUT INTEGER) AS
@@ -1980,27 +1980,33 @@ BEGIN
     ELSE
       SELECT id INTO rid FROM CastorFile WHERE id = rid FOR UPDATE NOWAIT;
     END IF;
-    -- The file is still there, so update lastAccessTime and lastKnownFileName.
+    -- The file is still there, so update timestamps
     UPDATE CastorFile SET lastAccessTime = getTime(),
-                          lastKnownFileName = normalizePath(fn)
+                          lastKnownFileName = normalizePath(fn),
+                          nsOpenTime = inNsOpenTime
      WHERE id = rid;
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET castorFile = rid
      WHERE id = srId
      RETURNING reqType INTO varReqType;
     IF varReqType IN (37, 38, 40, 44) THEN  -- all write operations
-      UPDATE CastorFile SET lastUpdateTime = lut
+      -- reset lastUpdateTime: this is used to prevent parallel Put operations from
+      -- overtaking each other. As it is still relying on diskservers' timestamps
+      -- with seconds precision, we truncate the usec-precision nameserver timestamp
+      UPDATE CastorFile SET lastUpdateTime = TRUNC(inNsOpenTime)
        WHERE id = rid;
     ELSE
       -- On pure read operations, we should actually check whether our disk cache is stale,
-      -- that is IF CF.lastUpdateTime < lut THEN invalidate our diskcopies.
-      -- This is pending the full implementation of bug #95189: Time discrepencies between
+      -- that is IF CF.nsOpenTime < inNsOpenTime THEN invalidate our diskcopies.
+      -- This is pending the full deployment of the 'new open mode' as implemented
+      -- in the fix of bug #95189: Time discrepencies between
       -- disk servers and name servers can lead to silent data loss on input.
-      -- The problem being that lut is the namespace's mtime, which can be modified by nstouch,
+      -- The problem being that in 'Compatibility' mode inNsOpenTime is the
+      -- namespace's mtime, which can be modified by nstouch,
       -- hence nstouch followed by a Get would destroy the data on disk!
       NULL;
     END IF;
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- we did not find the file, let's create a new one
+    -- we did not find the file, let's create a new one:
     -- take care that the name of the new file is not already the lastKnownFileName
     -- of another file, that was renamed but for which the lastKnownFileName has
     -- not been updated.
@@ -2008,10 +2014,11 @@ BEGIN
     -- Note that this procedure will run in an autonomous transaction so that
     -- no dead lock can result from taking a second lock within this transaction
     dropReusedLastKnownFileName(fn);
-    -- insert new row
-    INSERT INTO CastorFile (id, fileId, nsHost, fileClass, fileSize,
-                            creationTime, lastAccessTime, lastUpdateTime, lastKnownFileName)
-      VALUES (ids_seq.nextval, fId, nh, fcId, fs, getTime(), getTime(), lut, normalizePath(fn))
+    -- insert new row (see above for the TRUNC() operation)
+    INSERT INTO CastorFile (id, fileId, nsHost, fileClass, fileSize, creationTime,
+                            lastAccessTime, lastUpdateTime, nsOpenTime, lastKnownFileName)
+      VALUES (ids_seq.nextval, fId, nh, fcId, fs, getTime(), getTime(),
+              TRUNC(inNsOpenTime), inNsOpenTime, normalizePath(fn))
       RETURNING id, fileSize INTO rid, rfs;
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET castorFile = rid
      WHERE id = srId;

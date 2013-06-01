@@ -76,6 +76,7 @@ namespace castor {
           }
           memset(&cnsFileid, 0, sizeof(cnsFileid));
           memset(&cnsFilestat, 0, sizeof(cnsFilestat));
+          m_stagerOpenTime = 0;
         }
         catch(castor::exception::Exception& e){
           // should never happen: the db service is initialized in the main as well
@@ -200,7 +201,7 @@ namespace castor {
           // get the castorFile from the stagerService and fill it on the subrequest
           // note that for a Put request we should truncate the size, but this is done later on by
           // handlePut after all necessary checks
-          castorFile = stagerService->selectCastorFile(subrequest, &cnsFileid, &cnsFilestat);
+          castorFile = stagerService->selectCastorFile(subrequest, &cnsFileid, &cnsFilestat, m_stagerOpenTime);
         }
         catch (castor::exception::Exception& e) {
           castor::dlf::Param params[] = {
@@ -265,7 +266,7 @@ namespace castor {
         int rc = Cns_openx(fileRequest->euid(), fileRequest->egid(),
                   subrequest->fileName().c_str(), subrequest->flags(), subrequest->modeBits(),
                   (svcClass && svcClass->forcedFileClass() ? svcClass->forcedFileClass()->classId() : 0),
-                  &newFile, &cnsFileid, &cnsFilestat);
+                  &newFile, &cnsFileid, &cnsFilestat, &m_stagerOpenTime);
         
         // replace for logging purposes the CNS host in case it has been overridden
         std::string cnsHost = NsOverride::getInstance()->getTargetCnsHost();
