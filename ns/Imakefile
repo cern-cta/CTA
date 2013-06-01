@@ -71,14 +71,12 @@ NSLIB_OBJS	=	Cns_aborttrans.o \
                         Cns_rename.o \
                         Cns_rewinddir.o \
                         Cns_replaceseg.o \
-                        Cns_replacetapecopy.o \
                         Cns_rmdir.o \
                         Cns_selectsrvr.o \
                         Cns_setacl.o \
                         Cns_setatime.o \
                         Cns_setcomment.o \
                         Cns_setfsize.o \
-                        Cns_setsegattrs.o \
                         Cns_startsess.o \
                         Cns_starttrans.o \
                         Cns_stat.o \
@@ -172,7 +170,6 @@ CLIENTLIBMANPAGE(Cns_setacl)
 CLIENTLIBMANPAGE(Cns_setatime)
 CLIENTLIBMANPAGE(Cns_setcomment)
 CLIENTLIBMANPAGE(Cns_setfsize)
-CLIENTLIBMANPAGE(Cns_setsegattrs)
 CLIENTLIBMANPAGE(Cns_startsess)
 CLIENTLIBMANPAGE(Cns_starttrans)
 CLIENTLIBMANPAGE(Cns_stat)

@@ -37,7 +37,6 @@ debian/castor/usr/share/man/man3/Cns_selectsrvr.3castor.gz
 debian/castor/usr/share/man/man3/Cns_setatime.3castor.gz
 debian/castor/usr/share/man/man3/Cns_setcomment.3castor.gz
 debian/castor/usr/share/man/man3/Cns_setfsize.3castor.gz
-debian/castor/usr/share/man/man3/Cns_setsegattrs.3castor.gz
 debian/castor/usr/share/man/man3/Cns_stat.3castor.gz
 debian/castor/usr/share/man/man3/Cns_tapesum.3castor.gz
 debian/castor/usr/share/man/man3/Cns_umask.3castor.gz

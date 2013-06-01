@@ -66,7 +66,7 @@
 #define CNS_SETFSIZE            16
 #define CNS_SHUTDOWN            17 /* deprecated */
 #define CNS_GETSEGAT            18
-#define CNS_SETSEGAT            19
+#define CNS_SETSEGAT            19 /* removed */
 #define CNS_LISTTAPE            20
 #define CNS_ENDLIST             21
 #define CNS_GETPATH             22
@@ -122,7 +122,7 @@
 #define CNS_GETREPLICA          72 /* removed */
 #define CNS_ENTGRPMAP           73 /* removed */
 #define CNS_ENTUSRMAP           74 /* removed */
-#define CNS_REPLACETAPECOPY     75
+#define CNS_REPLACETAPECOPY     75 /* removed */
 #define CNS_LASTFSEQ            76
 #define CNS_BULKEXIST           77
 #define CNS_TAPESUM             79
@@ -136,7 +136,7 @@
 #define CNS_DELSEGBYCOPYNO      89
 #define CNS_OPENX               90
 #define CNS_CLOSEX              91
-#define CNS_REPLACEORMOVETAPECOPY 92
+#define CNS_REPLACEORMOVETAPECOPY 92 /* removed */
 
                         /* name server reply types */
 

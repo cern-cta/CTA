@@ -240,8 +240,6 @@ EXTERN_C int Cns_srv_queryclass (char *, struct Cns_srv_thread_info *, struct Cn
 EXTERN_C int Cns_srv_readlink (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_rename (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_replaceseg (int, char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
-EXTERN_C int Cns_srv_replacetapecopy (int, char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
-EXTERN_C int Cns_srv_replaceormovetapecopy (int, char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_rmdir (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_setacl (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_setatime (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
@@ -249,7 +247,6 @@ EXTERN_C int Cns_srv_setcomment (char *, struct Cns_srv_thread_info *, struct Cn
 EXTERN_C int Cns_srv_setfsize (int, char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_setfsizecs (int, char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_setfsizeg (int, char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
-EXTERN_C int Cns_srv_setsegattrs (int, char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_shutdown (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_stat (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_statcs (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
