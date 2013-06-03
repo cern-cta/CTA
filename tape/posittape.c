@@ -52,17 +52,8 @@ static int gethdr2uhl1(const int tapefd,
 {
 	int c;
 	int cfseq;
-	char func[16];
-
-	ENTRY (gethdr2uhl1);
-	tplogit (func, "MURRAYC3 ENTERED gethdr2uhl1\n");
-	tplogit (func, "MURRAYC3 VALUE OF FIRST 4 CHARS OF hdr1 = %c%c%c%c\n", hdr1[0], hdr1[1], hdr1[2], hdr1[3]);
 
 	if ((c = readlbl (tapefd, path, hdr2)) < 0) return (c);
-	if(0 == c) {
-		tplogit (func, "MURRAYC3 READ hdr2\n");
-		tplogit (func, "MURRAYC3 VALUE OF FIRST 4 CHARS OF hdr2 = %c%c%c%c\n", hdr2[0], hdr2[1], hdr2[2], hdr2[3]);
-	}
 	if (c == 1) {
                 
                 sprintf( badLabelReason, "Read unexpected number of bytes. HDR2 Label corrupted? Length: %zd", 
@@ -80,8 +71,6 @@ static int gethdr2uhl1(const int tapefd,
 	}
 	if (lblcode == SL) ebc2asc (hdr2, 80);
 	if (strncmp (hdr2, (*hdr1 == 'H') ? "HDR2" : "EOF2", 4)) {
-		tplogit (func, "MURRAYC3 FAILED TO READ EITHER HDR2 OR EOF2\n");
-		tplogit (func, "MURRAYC3 READ %c%c%c%c\n", hdr2[0], hdr2[1], hdr2[2], hdr2[3]);
 
                 sprintf( badLabelReason, "Unexpected hdr2 label content: exp %s",
                          (*hdr1 == 'H') ? "HDR2" : "EOF2" );
@@ -91,10 +80,6 @@ static int gethdr2uhl1(const int tapefd,
 		return (-1);
         }
 	if ((c = readlbl (tapefd, path, uhl1)) < 0) return (c);
-	if(0 == c) {
-		tplogit (func, "MURRAYC3 READ uhl1\n");
-		tplogit (func, "MURRAYC3 VALUE OF FIRST 4 CHARS OF uhl1 = %c%c%c%c\n", uhl1[0], uhl1[1], uhl1[2], uhl1[3]);
-	}
 	if (c == 1) {
 
                 sprintf( badLabelReason, "Read unexpected number of bytes. UHL1 Label corrupted? Length: %zd", 
@@ -123,7 +108,6 @@ static int gethdr2uhl1(const int tapefd,
 	*tmr = 0;
 	return (cfseq);
 }
-
 
 int posittape(const int tapefd,
               const char *const path,
@@ -164,7 +148,6 @@ int posittape(const int tapefd,
 	ENTRY (posittape);
 	c = 0;
 
-        tplogit (func, "MURRAYC3 ENTERED posittape - VERSION 2 (fsec=%d, fseq=%d, flags=%d)\n", fsec, fseq, flags);
         posStart = time(NULL);
 
 	sprintf (sfseq, "%d", fseq);
@@ -174,7 +157,6 @@ int posittape(const int tapefd,
 	if (strcmp (devtype, "8200") && den != D8200 && den != D8200C)
 		rewritetm = 0;
 	if (lblcode == NL || lblcode == BLP) {
-		tplogit (func, "MURRAYC3 ENTERED if(lblcode == NL || lblcode == BLP)\n");
 		if ((flags & NOPOS) || (flags & LOCATE_DONE)) {	/* tape is already positionned */
 			if (filstat == CHECK_FILE) {	/* must check if the file exist */
 				if ((c = readlbl (tapefd, path, vol1)) < 0) goto reply;
@@ -318,16 +300,11 @@ int posittape(const int tapefd,
 			(*cfseq)++;
 		}
 	} else {	/* AL or SL */
-		tplogit (func, "MURRAYC3 ENTERED ELSE OF if(lblcode == NL || lblcode == BLP)\n");
-		tplogit (func, "MURRAYC3 VALUE OF flags = %d (NOPOS=%d)\n", flags, NOPOS);
-		tplogit (func, "MURRAYC3 VALUE OF filstat = %d (NEW_FILE=%d)\n", filstat, NEW_FILE);
 		if (flags & NOPOS && filstat == NEW_FILE) {	/* already positionned */
-			tplogit (func, "MURRAYC3 ENTERED if (flags & NOPOS && filstat == NEW_FILE)\n");
 			(*cfseq)++;
 			return (0);
 		}
 		if (flags & LOCATE_DONE) {
-			tplogit (func, "MURRAYC3 ENTERED if (flags & LOCATE_DONE)\n");
 			if ((c = readlbl (tapefd, path, hdr1)) < 0) goto reply;
 			if (c) {
 
@@ -372,27 +349,11 @@ int posittape(const int tapefd,
 			}
 			goto prthdrs;
 		}
-		tplogit (func, "MURRAYC3 BEFORE if (*cfseq == 0 || fseq == 1 || fsec > 1 || ..\n");
-                tplogit (func, "MURRAYC3 VALUE OF *cfseq = %d\n", *cfseq);
-                tplogit (func, "MURRAYC3 VALUE OF fseq = %d\n", fseq);
-                tplogit (func, "MURRAYC3 VALUE OF fsec = %d\n", fsec);
-                tplogit (func, "MURRAYC3 VALUE OF mode = %d\n", mode);
 		if (*cfseq == 0 || fseq == 1 || fsec > 1 || 
 		    (fseq == *cfseq && mode == WRITE_ENABLE)) {
-			tplogit (func, "MURRAYC3 ENTERED if (*cfseq == 0 || fseq == 1 || fsec > 1 || ..\n");
-			tplogit (func, "MURRAYC3 REWINDING AND READING BEGINNING\n");
 			if ((c = rwndtape (tapefd, path))) goto reply;
-			if (0 == c) {
-				tplogit (func, "MURRAYC3 REWOUND TAPE\n");
-			}
 			if ((c = readlbl (tapefd, path, vol1)) < 0) goto reply;
-			if (0 == c) {
-				tplogit (func, "MURRAYC3 READ vol1\n");
-			}
 			if ((c = readlbl (tapefd, path, hdr1)) < 0) goto reply;
-			if (0 == c) {
-				tplogit (func, "MURRAYC3 READ hdr1\n");
-			}
 			if (c) {
                                 
                                 if (1 == c) {
@@ -424,11 +385,8 @@ int posittape(const int tapefd,
 			if ((c = gethdr2uhl1 (tapefd, path, lblcode, hdr1, hdr2,
 			    uhl1, &tmr)) < 0)
 				goto reply;
-			if (c) {
-				tplogit (func, "MURRAYC3 VALUE OF *cfseq BEFORE BEING SET TO c = %d\n", *cfseq);
+			if (c)
 				*cfseq = c;
-				tplogit (func, "MURRAYC3 VALUE OF *cfseq AFTER  BEING SET TO c = %d\n", *cfseq);
-			}
 			if (fsec > 1)	{ /* nth file section in multivolume set */
 				if (*cfseq != fseq && filstat != NEW_FILE) {
 
@@ -441,7 +399,6 @@ int posittape(const int tapefd,
 				} else
 					*cfseq = fseq;
 			} else if (*cfseq != 1) {
-				tplogit (func, "MURRAYC3 ENTERED else if (*cfseq != 1)\n");
 				if (fseq != 1 || filstat != NEW_FILE) {
 
                                         sprintf( badLabelReason, "Unexpected file sequence no: %d or file status %d is not %d (NEW_FILE)",
@@ -451,7 +408,6 @@ int posittape(const int tapefd,
 					c = ETLBL;
 					goto reply;
 				} else {
-					tplogit (func, "MURRAYC3 FORCING *cfseq = 1\n");
 					*cfseq = 1;
 				}
 			}
@@ -462,7 +418,6 @@ int posittape(const int tapefd,
 				if (strcmp (tpfid, fid) == 0) fseq = *cfseq;
 			}
 			if (fseq != *cfseq) {
-				tplogit (func, "MURRAYC3 ENTERED if (fseq != *cfseq)\n");
 				if (tmr == 0 && (c = skiptpff (tapefd, path, 1))) goto reply;
 				if (fseq == -1) {	/* -q n */
 					if ((c = readlbl (tapefd, path, hdr1)) < 0)
@@ -473,11 +428,7 @@ int posittape(const int tapefd,
 				}
 			}
 		} else if (fseq == *cfseq) {
-			tplogit (func, "MURRAYC3 ENTERED else if (fseq == *cfseq)\n");
 			if ((c = skiptpfb (tapefd, path, 3))) goto reply;
-			if(0 == c) {
-				tplogit (func, "MURRAYC3 SKIPPED 3 FILES BACKWARDS\n");
-			}
 			if ((c = skiptpff (tapefd, path, 1))) goto reply;
 			if ((c = readlbl (tapefd, path, hdr1)) < 0) goto reply;
 			if (lblcode == SL) ebc2asc (hdr1, 80);
@@ -570,26 +521,14 @@ int posittape(const int tapefd,
 				*cfseq = fseq - 1;
 		} else
 #endif
-			{
-				tplogit (func, "MURRAYC3 BEFORE if ((pfseq == 0 || filstat == CHECK_FILE) && (fseq > *cfseq || fseq < 0))\n");
-				if ((pfseq == 0 || filstat == CHECK_FILE) && (fseq > *cfseq || fseq < 0)) {
-					tplogit (func, "MURRAYC3 ENTERED if ((pfseq == 0 || filstat == CHECK_FILE) && (fseq > *cfseq || fseq < 0))\n");
-					tplogit (func, "MURRAYC3 SKIPPING SOMETHING\n");
-					if ((c = skiptpff (tapefd, path, 1))) goto reply;
-				}
-			}
+			if ((pfseq == 0 || filstat == CHECK_FILE) && (fseq > *cfseq || fseq < 0))
+				if ((c = skiptpff (tapefd, path, 1))) goto reply;
 
-		tplogit (func, "MURRAYC3 BEFORE while (fseq > *cfseq || fseq < 0)\n");
-                tplogit (func, "MURRAYC3 VALUE OF fseq = %d\n", fseq);
-                tplogit (func, "MURRAYC3 VALUE OF *cfseq = %d\n", *cfseq);
 		while (fseq > *cfseq || fseq < 0) {
-			tplogit (func, "MURRAYC3 ENTERED while (fseq > *cfseq || fseq < 0)\n");
 			if ((c = readlbl (tapefd, path, hdr1)) < 0) goto reply;
 			if (c == 0) {
 				if (lblcode == SL) ebc2asc (hdr1, 80);
 				if (strncmp (hdr1, "EOF1", 4) == 0) {
-					tplogit (func, "MURRAYC3 ENTERED if (strncmp (hdr1, \"EOF1\", 4) == 0)\n");
-					tplogit (func, "MURRAYC3 SKIPPNG SOMETHING ELSE\n");
 					if ((c = skiptpff (tapefd, path, 1))) goto reply;
 					if ((c = readlbl (tapefd, path, hdr1)) < 0) goto reply;
 					if (c == 0 && lblcode == SL) ebc2asc (hdr1, 80);
@@ -604,9 +543,7 @@ int posittape(const int tapefd,
 				c = ETLBL;
 				goto reply;
 			}
-			tplogit (func, "MURRAYC3 BEFORE if double tape mark or blank tape found\n");
 			if (c > 1) {	/* double tape mark or blank tape found */
-				tplogit (func, "MURRAYC3 ENTERED if double tape mark or blank tape found\n");
 				(*cfseq)++;
 				if (fseq == -1) fseq = *cfseq;
 				if (fseq != *cfseq) {
@@ -670,9 +607,7 @@ int posittape(const int tapefd,
 			if ((c = skiptpff (tapefd, path, (tmr == 0) ? 3 : 2)))
 				goto reply;
 		}
-		tplogit (func, "MURRAYC3 BEFORE if (fseq < *cfseq)\n");
 		if (fseq < *cfseq) {
-			tplogit (func, "MURRAYC3 ENTERED if (fseq < *cfseq)\n");
 			skiptpfb (tapefd, path, (*cfseq - fseq + 1) * 3);
 			if ((c = skiptpff (tapefd, path, 1))) goto reply;
 			if ((c = readlbl (tapefd, path, hdr1)) != 0) goto reply;

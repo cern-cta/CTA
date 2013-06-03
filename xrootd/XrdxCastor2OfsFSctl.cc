@@ -49,6 +49,7 @@ XrdxCastor2Ofs::FSctl( const int           cmd,
   char ipath[XRDXCASTOR2NS_FSCTLPATHLEN];
   char iopaque[XRDXCASTOR2NS_FSCTLOPAQUELEN];
   static const char* epname = "FSctl";
+  const char* tident = error.getErrUser();
   // Accept only plugin calls!
   xcastor_debug("Calling FSctl");
 

@@ -675,6 +675,7 @@ XrdTransfer::DoIt()
     // fprintf(stderr,"[exec]=> pid=%d\n", pid);
 
     if ( pid ) {
+      int retcode = -1;
       bool canceled = false;
       SetState( kRunning );
       time_t starttime = time( NULL );
