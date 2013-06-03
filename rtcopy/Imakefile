@@ -9,7 +9,7 @@ COMM
 
 COMM         Make RTCOPY server
 
-CPPFLAGS += -D_LARGEFILE64_SOURCE -I$(XROOT_LOCATION)/include/xrootd
+CPPFLAGS += -I$(XROOT_LOCATION)/include/xrootd
 AddLdFlags(-lXrdPosixPreload)
 
 CommonDependsOnLibrary(common,castorcommon)
