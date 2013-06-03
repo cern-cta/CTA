@@ -30,8 +30,8 @@ DEBUG = -O0 -g
 #define LOCAL_PATH $(CASTOR_ROOT)/__local_path__
 #define PREFIX(VAR) __root_prefix__/**/_/**/VAR
 
-CC += -fPIC -D_LARGEFILE64_SOURCE -Wall -Wextra -Werror
-CXX += -fPIC -D_LARGEFILE64_SOURCE -Wall -Wextra -Werror
+CC += -fPIC -D_LARGEFILE64_SOURCE -Wall -Wextra -Werror -Wno-unused-parameter
+CXX += -fPIC -D_LARGEFILE64_SOURCE -Wall -Wextra -Werror -Wno-unused-parameter
 CXXFLAGS += -I$(CASTOR_ROOT) -I$(CASTOR_ROOT)/h $(DEBUG)
 CFLAGS += $(CXXFLAGS)
 CPPFLAGS += -pthread -I$(CASTOR_ROOT) -I$(CASTOR_ROOT)/h
