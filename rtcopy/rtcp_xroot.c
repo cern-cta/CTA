@@ -12,7 +12,9 @@
 
 #include <rtcp_xroot.h>
 
-/* we need FILE_OFFSET_BITS 64 for xroot API calls */
+/* XrdPosixExtern.hh requires the following three compilation options */
+#define _LARGEFILE_SOURCE
+#define _LARGEFILE64_SOURCE
 #define _FILE_OFFSET_BITS 64
 
 #include <XrdPosix/XrdPosixExtern.hh>
