@@ -11,7 +11,7 @@
 #include "rmc.h"
 #include <Ctape_api.h>
 
-int usrmsg(char *func, char *msg, ...)
+int usrmsg(const char *func, const char *const msg, ...)
 {
 	va_list args;
 	char *p;
