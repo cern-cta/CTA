@@ -10,7 +10,7 @@ COMM
 COMM         Make RTCOPY server
 
 CPPFLAGS += -I$(XROOT_LOCATION)/include/xrootd
-AddLdFlags(-lXrdPosixPreload)
+AddLdFlags(-lXrdPosix)
 
 CommonDependsOnLibrary(common,castorcommon)
 CommonDependsOnLibrary(vmgr,castorvmgr)
