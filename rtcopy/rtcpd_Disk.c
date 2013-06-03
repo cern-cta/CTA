@@ -24,8 +24,6 @@
 #include <stdarg.h>
 #include <sys/stat.h>
 
-#include <rtcp_xroot.h>
-
 #include <pwd.h>
 #include <Castor_limits.h>
 #include <Cglobals.h>
@@ -71,8 +69,6 @@ typedef struct thread_arg {
 
 thread_arg_t *thargs = NULL;
 
-extern int rfioToXroot;              /* we set this in rtcpd.c */
-
 extern int Debug;
 
 extern int nb_bufs;
@@ -93,148 +89,6 @@ static int FortranUnitTable[NB_FORTRAN_UNITS];  /* Table of Fortran units */
 
 int success = 0;
 int failure = -1;
-
-/**
- * Convert the rfio path server:/path  to the CASTOR xroot
- * root://server:port//dummy?castor2fs.pfn1=path&castor2fs.pfn2=dummy&
- * streamout=xxx&streamin=xxx
- * @param rfioFilePath the rfio path to be converted.
- * @param xrootFilePath the variable to return xroot path.
- * @return 0 if convertion succeed and -1 in error case.
- */
-static int rfioToCastorXroot(const char *const rfioFilePath,
-                             char *const xrootFilePath) {  
-    const char *const xrootPort="1095";
-    const char *pathWithoutServer;
-    extern char *getconfent();
- 
-    *xrootFilePath='\0';
-    
-    if ( CA_MAXPATHLEN <
-      (strlen("root://")+strlen(xrootPort)+strlen(rfioFilePath)+
-       strlen("//dummy?castor2fs.pfn1=&castor2fs.pfn2=dummy&")+
-       strlen("streamout=xxx&streamin=xxx")) ) {
-         return (-1); 
-    } 
-    if ( NULL == (pathWithoutServer=strchr(rfioFilePath,'/'))) {
-      return (-1);
-    }
-    /* protocol */   
-    strcat(xrootFilePath,"root://");
-    /* server name */
-    strncat(xrootFilePath,rfioFilePath, pathWithoutServer-rfioFilePath);
-    /* port */
-    strcat(xrootFilePath,xrootPort);
-    /* castor2fs.pfn1 */
-    strcat(xrootFilePath,"//dummy?castor2fs.pfn1=");
-    strcat(xrootFilePath,pathWithoutServer);
-    /* castor2fs.pfn2 */
-    strcat(xrootFilePath,"&castor2fs.pfn2=dummy");
-    {
-      const char *const xrootReadThreshold = 
-                        getconfent("RTCOPYD","XROOT_READ_THRESHOLD",0);
-      char xrootReadThresholdStr[4];
-      int  xrootReadThresholdNum = 999;
-      if ( NULL != xrootReadThreshold ) {
-        xrootReadThresholdNum = atoi(xrootReadThreshold);
-        if ( 0 > xrootReadThresholdNum || 999 < xrootReadThresholdNum ) {
-          xrootReadThresholdNum = 999;
-        }
-      }
-      snprintf(xrootReadThresholdStr,4,"%d",xrootReadThresholdNum);
-      /* streamout=xxx - reading from disk server threshold in MB */
-      strcat(xrootFilePath,"&streamout=");
-      strcat(xrootFilePath,xrootReadThresholdStr);
-    }  
-    {
-      const char *const xrootWriteThreshold = 
-                        getconfent("RTCOPYD","XROOT_WRITE_THRESHOLD",0);
-      char xrootWriteThresholdStr[4];
-      int  xrootWriteThresholdNum = 999;
-      if ( NULL != xrootWriteThreshold ) {
-        xrootWriteThresholdNum = atoi(xrootWriteThreshold);
-        if ( 0 > xrootWriteThresholdNum || 999 < xrootWriteThresholdNum ) {
-          xrootWriteThresholdNum = 999;
-        }
-      }
-      snprintf(xrootWriteThresholdStr,4,"%d",xrootWriteThresholdNum);
-      /* streamin=xxx - writing to disk server threshold in MB */
-      strcat(xrootFilePath,"&streamin=");
-      strcat(xrootFilePath,xrootWriteThresholdStr);
-    } 
-    return (0);  
-}
-
-/**
- * Convert the generic xroot path root://server:port//path  to the CASTOR xroot
- * root://server:port//dummy?castor2fs.pfn1=path&castor2fs.pfn2=dummy
- * streamout=xxx&streamin=xxx
- * @param xrootFromFilePath the original xroot path to be converted.
- * @param xrootToFilePath the variable to return xroot path after convertion.
- * @return 0 if convertion succeed and -1 in error case.
- */
-static int xrootToCastorXroot(const char *const xrootFromFilePath,
-                              char *const xrootToFilePath) { 
-    const char *tmp_ptr, *tmp_ptr2;
-    extern char *getconfent();    
-   
-    *xrootToFilePath='\0';
-
-    if ( CA_MAXPATHLEN <  
-        (strlen(xrootFromFilePath)+
-         strlen("//dummy?castor2fs.pfn1=&castor2fs.pfn2=dummy")+
-         strlen("streamout=xxx&streamin=xxx")) ) {
-        return (-1);
-    } 
-    if ( NULL == (tmp_ptr=strchr(xrootFromFilePath,'/'))) {
-        return (-1);
-    }   /* found root:/ */
-
-    if ( NULL == (tmp_ptr2=strchr(tmp_ptr+2,'/'))) {
-        return (-1);
-    }   /* found root://server:port/ */
-
-    strncat(xrootToFilePath,xrootFromFilePath, tmp_ptr2-xrootFromFilePath);
-    /* castor2fs.pfn1 */
-    strcat(xrootToFilePath,"//dummy?castor2fs.pfn1=");
-    strcat(xrootToFilePath,tmp_ptr2);
-    /* castor2fs.pfn2 */
-    strcat(xrootToFilePath,"&castor2fs.pfn2=dummy");
-    {
-      const char *const xrootReadThreshold =
-                        getconfent("RTCOPYD","XROOT_READ_THRESHOLD",0);
-      char xrootReadThresholdStr[4];
-      int  xrootReadThresholdNum = 999;
-      if ( NULL != xrootReadThreshold ) {
-        xrootReadThresholdNum = atoi(xrootReadThreshold);
-        if ( 0 > xrootReadThresholdNum || 999 < xrootReadThresholdNum ) {
-          xrootReadThresholdNum = 999;
-        }
-      }
-      snprintf(xrootReadThresholdStr,4,"%d",xrootReadThresholdNum);
-      /* streamout=xxx - reading from disk server threshold in MB */
-      strcat(xrootToFilePath,"&streamout=");
-      strcat(xrootToFilePath,xrootReadThresholdStr);
-    }
-    {
-      const char *const xrootWriteThreshold = 
-                        getconfent("RTCOPYD","XROOT_WRITE_THRESHOLD",0);
-      char xrootWriteThresholdStr[4];
-      int  xrootWriteThresholdNum = 999;
-      if ( NULL != xrootWriteThreshold ) {
-        xrootWriteThresholdNum = atoi(xrootWriteThreshold);
-        if ( 0 > xrootWriteThresholdNum || 999 < xrootWriteThresholdNum ) {
-          xrootWriteThresholdNum = 999;
-        }
-      }
-      snprintf(xrootWriteThresholdStr,4,"%d",xrootWriteThresholdNum);
-      /* streamin=xxx - writing to disk server threshold in MB */
-      strcat(xrootToFilePath,"&streamin=");
-      strcat(xrootToFilePath,xrootWriteThresholdStr);
-    }
-    return (0);  
-}
-
 
 static int DiskIOstarted() {
     int rc;
@@ -577,42 +431,14 @@ static int DiskFileOpen(int pool_index,
                                  "Flags"    , TL_MSG_PARAM_STR, __flags );
         }
         DK_STATUS(RTCP_PS_OPEN);
-
-        if ( strstr(filereq->file_path,"root://") ) {
-            /* we have an xroot url */
-            char xrootFilePath[CA_MAXPATHLEN+1];   
-            if ( -1 == xrootToCastorXroot(filereq->file_path,xrootFilePath) ) {
-                errno = EFAULT; /* sets  "Bad address" errno */
-                rc = -1;
-            } else { 
-                rc = rtcp_xroot_open(xrootFilePath, flags, 0666); 
-                rtcp_log(LOG_DEBUG,"DiskFileOpen() rtcp_xroot_open for %s\n",
-                                    xrootFilePath);
-            }
-        } else if ( rfioToXroot )  {
-            char xrootFilePath[CA_MAXPATHLEN+1];
-            if ( -1 == rfioToCastorXroot(filereq->file_path,xrootFilePath) ) {
-                errno = EFAULT; /* sets  "Bad address" errno */
-                rc = -1;
-            } else {
-                rc = rtcp_xroot_open(xrootFilePath, flags, 0666); 
-                rtcp_log(LOG_DEBUG,"rtcp_xroot_open for %s\n",xrootFilePath);
-            }  
-        } else {
-            rc = rfio_open64(filereq->file_path,flags,0666);
-        }
-
+        rc = rfio_open64(filereq->file_path,flags,0666);
         DK_STATUS(RTCP_PS_NOBLOCKING);
-        if ( rc == -1 ) { 
-            /*
-            * if it is an xroot error we have only errno and 
-            * serrno and rfio_errno are 0.
-            */
+        if ( rc == -1 ) {
             save_errno = errno;
             save_serrno = serrno;
             save_rfio_errno = rfio_errno;
             rtcp_log(LOG_ERR,
-                "DiskFileOpen() open(%s,0x%x): errno = %d, serrno = %d, rfio_errno = %d\n",
+                "DiskFileOpen() rfio_open64(%s,0x%x): errno = %d, serrno = %d, rfio_errno = %d\n",
                 filereq->file_path,flags,errno,serrno,rfio_errno);
             {
                     char __flags[32];
@@ -630,11 +456,11 @@ static int DiskFileOpen(int pool_index,
             disk_fd = rc;
             rc = 0;
         }
-        rtcp_log(LOG_DEBUG,"DiskFileOpen() open() returned fd=%d\n",
+        rtcp_log(LOG_DEBUG,"DiskFileOpen() rfio_open() returned fd=%d\n",
             disk_fd);
         tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
                          "func"   , TL_MSG_PARAM_STR, "DiskFileOpen",
-                         "Message", TL_MSG_PARAM_STR, "open returned",
+                         "Message", TL_MSG_PARAM_STR, "rfio_open returned",
                          "fd"     , TL_MSG_PARAM_INT, disk_fd );                         
         if ( rc == 0 && filereq->offset > 0 ) {
 			char tmpbuf[21];
@@ -649,27 +475,20 @@ static int DiskFileOpen(int pool_index,
             rfio_errno = 0;
             serrno = 0;
             errno = 0;
-
-            if ( rfioToXroot || strstr(filereq->file_path,"root://") ) {
-              rc64 = rtcp_xroot_lseek(disk_fd,
-                                      (off64_t)filereq->offset,SEEK_SET);
-            } else {
-              rc64 = rfio_lseek64(disk_fd,(off64_t)filereq->offset,SEEK_SET);
-            }
-
+            rc64 = rfio_lseek64(disk_fd,(off64_t)filereq->offset,SEEK_SET);
             if ( rc64 == -1 ) {
                 save_errno = errno;
                 save_serrno = serrno;
                 save_rfio_errno = rfio_errno;
                 rtcp_log(LOG_ERR,
-                 "DiskFileOpen() lseek64(%d,%s,0x%x): errno = %d, serrno = %d, rfio_errno = %d\n",
+                 "DiskFileOpen() rfio_lseek64(%d,%s,0x%x): errno = %d, serrno = %d, rfio_errno = %d\n",
                  disk_fd,u64tostr((u_signed64)filereq->offset,tmpbuf,0),SEEK_SET,errno,serrno,rfio_errno);
                 {
                         char __seek_set[32];
                         sprintf( __seek_set, "0x%x", SEEK_SET );
                         tl_rtcpd.tl_log( &tl_rtcpd, 3, 8, 
                                          "func"      , TL_MSG_PARAM_STR, "DiskFileOpen",
-                                         "Message"   , TL_MSG_PARAM_STR, "lseek64",
+                                         "Message"   , TL_MSG_PARAM_STR, "rfio_lseek64",
                                          "disk_fd"   , TL_MSG_PARAM_INT, disk_fd,                                 
                                          "offset"    , TL_MSG_PARAM_STR, u64tostr((u_signed64) filereq->offset, tmpbuf, 0),
                                          "SEEK_SET"  , TL_MSG_PARAM_STR, SEEK_SET, 
@@ -682,14 +501,14 @@ static int DiskFileOpen(int pool_index,
                 save_errno = errno;
                 save_serrno = serrno;
                 save_rfio_errno = rfio_errno;
-                rtcp_log(LOG_ERR,"lseek64(%d,%s,%d) returned %s\n",
+                rtcp_log(LOG_ERR,"rfio_lseek64(%d,%s,%d) returned %s\n",
                          disk_fd,u64tostr((u_signed64)filereq->offset,tmpbuf,0),SEEK_SET,u64tostr((u_signed64)rc64,tmpbuf2,0));
                 {
                         char __seek_set[32];
                         sprintf( __seek_set, "0x%x", SEEK_SET );
                         tl_rtcpd.tl_log( &tl_rtcpd, 3, 6, 
                                          "func"        , TL_MSG_PARAM_STR, "DiskFileOpen",
-                                         "Message"     , TL_MSG_PARAM_STR, "lseek64 returned",
+                                         "Message"     , TL_MSG_PARAM_STR, "rfio_lseek64 returned",
                                          "disk_fd"     , TL_MSG_PARAM_INT, disk_fd,                                 
                                          "offset"      , TL_MSG_PARAM_STR, u64tostr((u_signed64) filereq->offset, tmpbuf, 0),
                                          "SEEK_SET"    , TL_MSG_PARAM_STR, SEEK_SET, 
@@ -812,10 +631,6 @@ static int DiskFileOpen(int pool_index,
         return(-1);
     }
     if ( disk_fd != -1 ) {
-        if ( rfioToXroot || strstr(filereq->file_path,"root://") ) {
-             strcpy(filereq->ifce,"Xrd");
-             /* there is no way to know interface name for XrdPosix */
-        } else {
         /*
          * Note: this works as long as rfio_open() returns a socket.
          * If we implement internal file descriptor tables in RFIO
@@ -830,7 +645,6 @@ static int DiskFileOpen(int pool_index,
             strcpy(filereq->ifce,"???");
         else
             strcpy(filereq->ifce,ifce);
-        }
     }
 
     if (disk_fd>0) {
@@ -868,11 +682,7 @@ static int DiskFileClose(int disk_fd,
     save_serrno = serrno;
     serrno = rfio_errno = 0;
     if ( (*filereq->recfm == 'F') || ((filereq->convert & NOF77CW) != 0) ) {
-        if ( rfioToXroot || strstr(filereq->file_path,"root://") ) { 
-            rc = rtcp_xroot_close(disk_fd);
-        } else {
-            rc = rfio_close(disk_fd);
-        }
+        rc = rfio_close(disk_fd);
         save_errno = errno;
         save_serrno = serrno;
         save_rfio_errno = rfio_errno;
@@ -885,7 +695,7 @@ static int DiskFileClose(int disk_fd,
         (void)ReturnFortranUnit(pool_index,file);
     }
     if ( rc == -1 ) {
-        rtcpd_AppendClientMsg(NULL, file,RT108,"CPTPDSK",rfio_serror()); /* 0 for Xrd */
+        rtcpd_AppendClientMsg(NULL, file,RT108,"CPTPDSK",rfio_serror());
 
         rtcp_log(LOG_ERR,"%s: errno = %d, serrno = %d, rfio_errno = %d\n",
                  (((*filereq->recfm == 'F') || 
@@ -1239,22 +1049,16 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                             rtcpd_AppendClientMsg(NULL, file,errmsgtxt);
                     }
                     DK_STATUS(RTCP_PS_WRITE);
-                    if ( nb_bytes > 0 ) {
-                      if ( rfioToXroot ||
-                                       strstr(filereq->file_path,"root://") ) {
-                            rc = rtcp_xroot_write(disk_fd,bufp,nb_bytes);
-                      } else {
-                            rc = rfio_write(disk_fd,bufp,nb_bytes);
-                      }
-                    } else rc = nb_bytes;
+                    if ( nb_bytes > 0 ) rc = rfio_write(disk_fd,bufp,nb_bytes);
+                    else rc = nb_bytes;
                     DK_STATUS(RTCP_PS_NOBLOCKING);
                     if ( rc == -1 || rc != nb_bytes ) {
                         last_errno = errno;
                         save_serrno = rfio_serrno();
-                        rtcp_log(LOG_ERR,"write(): errno = %d, serrno = %d, rfio_errno = %d\n",last_errno,serrno,save_serrno);
+                        rtcp_log(LOG_ERR,"rfio_write(): errno = %d, serrno = %d, rfio_errno = %d\n",last_errno,serrno,save_serrno);
                         tl_rtcpd.tl_log( &tl_rtcpd, 3, 5, 
                                          "func"      , TL_MSG_PARAM_STR, "MemoryToDisk",
-                                         "Message"   , TL_MSG_PARAM_STR, "write",
+                                         "Message"   , TL_MSG_PARAM_STR, "rfio_write",
                                          "last_errno", TL_MSG_PARAM_INT, last_errno, 
                                          "serrno"    , TL_MSG_PARAM_INT, serrno, 
                                          "save_errno", TL_MSG_PARAM_INT, save_serrno );
@@ -1613,13 +1417,8 @@ static int DiskToMemory(int disk_fd, int pool_index,
         if ( (Uformat == FALSE) || ((convert & NOF77CW) != 0) ) {
             bufp = databufs[i]->buffer + *offset;
             DK_STATUS(RTCP_PS_READ);
-            if ( nb_bytes > 0 ) {
-              if ( rfioToXroot || strstr(filereq->file_path,"root://") ) {
-                    rc = rtcp_xroot_read(disk_fd,bufp,nb_bytes); 
-              } else { 
-                    rc = rfio_read(disk_fd,bufp,nb_bytes);
-              }
-            } else rc = nb_bytes;
+            if ( nb_bytes > 0 ) rc = rfio_read(disk_fd,bufp,nb_bytes);
+            else rc = nb_bytes;
             DK_STATUS(RTCP_PS_NOBLOCKING);
             if ( rc == -1 ) save_serrno = rfio_serrno();
         } else {
@@ -1653,11 +1452,11 @@ static int DiskToMemory(int disk_fd, int pool_index,
             lrecl = 0;
         }
         if ( rc == -1 ) {
-            rtcp_log(LOG_ERR,"DiskToMemory() read(): errno = %d, serrno = %d, rfio_errno = %d\n",
+            rtcp_log(LOG_ERR,"DiskToMemory() rfio_read(): errno = %d, serrno = %d, rfio_errno = %d\n",
                 errno,serrno,rfio_errno);
             tl_rtcpd.tl_log( &tl_rtcpd, 3, 5, 
                              "func"      , TL_MSG_PARAM_STR, "DiskToMemory",
-                             "Message"   , TL_MSG_PARAM_STR, "read",
+                             "Message"   , TL_MSG_PARAM_STR, "rfio_read",
                              "errno"     , TL_MSG_PARAM_INT, errno,
                              "serrno"    , TL_MSG_PARAM_INT, serrno, 
                              "rfio_errno", TL_MSG_PARAM_INT, rfio_errno );

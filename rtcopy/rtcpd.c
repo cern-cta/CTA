@@ -46,9 +46,6 @@ extern int Cinitdaemon (char *, void (*)(int));
 
 char *getconfent();
 
-/* Global variable to use rfio to xroot convertion for data tranfers */
-int rfioToXroot;
-
 static int ChdirWorkdir() {
     char *workdir = "/var/lib/castor/rtcpd", *p;
     struct stat st;
@@ -186,27 +183,6 @@ int rtcpd_main() {
                      "tpserver", TL_MSG_PARAM_STR, tpserver,
                      "workdir",  TL_MSG_PARAM_STR, workdir );
 #endif /* __DATE__ && __TIME__ */
-    {
-        const char *const convertRfioToXroot = 
-                                    getconfent ("RTCOPYD", "RFIO_TO_XROOT", 0);
-        const char *convertRfioToXrootMsg = "UNKNOWN";
-
-        if ( NULL != convertRfioToXroot && 
-          0 == strcasecmp(convertRfioToXroot, "yes")) {
-          rfioToXroot=1;    
-          convertRfioToXrootMsg =
-           "Converting all RFIO transfers to XROOT RTCOPYD/RFIO_TO_XROOT=YES"; 
-        } else {
-          rfioToXroot=0;
-          convertRfioToXrootMsg =
-           "Converting all RFIO transfers to XROOT RTCOPYD/RFIO_TO_XROOT=NO";
-        }
-
-      rtcp_log(LOG_INFO, "%s(): %s\n", __FUNCTION__, convertRfioToXrootMsg);
-      tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
-        "func"   , TL_MSG_PARAM_STR, __FUNCTION__,
-        "Message", TL_MSG_PARAM_STR, convertRfioToXrootMsg);
-    }
 
     rc = 0;
     for (;;) {

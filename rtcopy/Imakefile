@@ -9,9 +9,6 @@ COMM
 
 COMM         Make RTCOPY server
 
-CPPFLAGS += -I$(XROOT_LOCATION)/include/xrootd
-AddLdFlags(-lXrdPosix)
-
 CommonDependsOnLibrary(common,castorcommon)
 CommonDependsOnLibrary(vmgr,castorvmgr)
 CommonDependsOnLibrary(vdqm,castorvdqm)
@@ -32,8 +29,7 @@ RTCPD_OBJS =	rtcpd.o rtcp_CallVMGR.o rtcp_CheckReq.o \
 		rtcpd_SendAckToVdqmOrTapeBridge.o \
 		rtcpd_GetClientInfoMsg.o \
 		rtcpd_GetClientInfo.o rtcp_tellClient.o \
-		rtcpdIsConfiguredToReuseMount.o \
-                rtcp_xroot.o
+		rtcpdIsConfiguredToReuseMount.o
 TapeProgramTarget(rtcpd,$(RTCPD_OBJS),,-lz,0750)
 EXEMANPAGE(rtcpd)
 LOGROTATE(castor-rtcopy-server,installtape)
