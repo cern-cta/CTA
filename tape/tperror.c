@@ -64,8 +64,8 @@ static char tp_err_msgbuf[TPERRMSGBUSZ];
 
 int get_sk_msg(char *, int, int, int, char **);
 
-int gettperror(int tapefd,
-               char *path,
+int gettperror(const int tapefd,
+               const char *const path,
                char **msgaddr)
 {
 #ifndef NOTRACE
@@ -184,10 +184,10 @@ int get_sk_msg(char *devtype,
 	return (rc);
 }
 
-int rpttperror(char *func,
-               int tapefd,
-               char *path,
-               char *cmd)
+int rpttperror(const char *const func,
+               const int tapefd,
+               const char *const path,
+               const char *const cmd)
 {
 	char *msgaddr;
 	int rc;

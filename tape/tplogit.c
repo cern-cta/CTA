@@ -15,7 +15,7 @@
 #include "Ctape.h"
 extern int jid;
 
-int tplogit(char *func, char *msg, ...)
+int tplogit(const char *const func, const char *const msg, ...)
 {
 	va_list args;
 	char prtbuf[PRTBUFSZ];

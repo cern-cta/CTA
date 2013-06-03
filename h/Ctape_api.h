@@ -76,7 +76,7 @@ EXTERN_C int Ctape_dmpfil (char *, char *, int *, char *, int *, int *, int *, c
 EXTERN_C int Ctape_dmpinit (char *, char *, char *, char *, char *, int, int, int, int, int, int, int, int);
 EXTERN_C void (*Ctape_dmpmsg) (int, const char *, ...);
 EXTERN_C int Ctape_drvinfo (char *, struct devinfo *);
-EXTERN_C int Ctape_errmsg (char *, char *, ...);
+EXTERN_C int Ctape_errmsg (const char *const, const char *const, ...);
 EXTERN_C int Ctape_info (char *, int *, unsigned char *, char *, char *, char *, char *, int *, int *, char *);
 EXTERN_C int Ctape_kill (char *);
 EXTERN_C int Ctape_label (char *, char *, int, char *, char *, char *, char *, char *, int, int, int);
@@ -139,7 +139,24 @@ EXTERN_C int locate        (int, char*, unsigned char*);
 EXTERN_C int read_pos      (int, char *, unsigned char *);
 
 /* tape/posittape.c    */
-EXTERN_C int posittape     (int, char*, char*, int, int, int*, char*, int, int, int, int, int, int, int, char*, char*, char*, char*);
+EXTERN_C int posittape(const int tapefd,
+              const char *const path,
+              const char *const devtype,
+              const int lblcode,
+              const int mode,
+              int *const cfseq,
+              const char *const fid,
+              const int filstat,
+              const int fsec,
+              int fseq,
+              const int den,
+              const int flags,
+              const int Qfirst,
+              const int Qlast,
+              char *vol1,
+              char *hdr1,
+              char *hdr2,
+              char *uhl1);
 
 /* tape/rbtsubr.c      */
 /* EXTERN_C int rbtdemount    (char*, char*, char*, char*, unsigned int, int ); */
@@ -149,11 +166,11 @@ EXTERN_C int rbtdemount    (char*, char*, char*, char*, unsigned int, int);
 EXTERN_C int wait4acsfinalresp();
 
 /* tape/readlbl.c      */
-EXTERN_C int readlbl       (int, char*, char *);
+EXTERN_C int readlbl       (const int, const char *const, char *const);
 EXTERN_C void closesmc();
 
 /* tape/rwndtape.c     */
-EXTERN_C int rwndtape      (int, char *);
+EXTERN_C int rwndtape      (const int, const char *const);
 
 /* tape/sendrep.c      */
 EXTERN_C int sendrep       (int, int, ...);
@@ -162,21 +179,21 @@ EXTERN_C int sendrep       (int, int, ...);
 EXTERN_C int setdens       (int, char*, char*, int);
 
 /* tape/skiptape.c     */
-EXTERN_C int skiptpfb      (int, char *, int);
-EXTERN_C int skiptpff      (int, char *, int);
+EXTERN_C int skiptpfb      (const int, const char *const, const int);
+EXTERN_C int skiptpff      (const int, const char *const, const int);
 #if defined(linux)
-EXTERN_C int skiptpfff     (int, char*, int);
+EXTERN_C int skiptpfff     (const int, const char *const, const int);
 #endif
 
 /* tape/tperror.c      */
-EXTERN_C int gettperror    (int, char *, char **);
-EXTERN_C int rpttperror    (char *, int, char *, char *);
+EXTERN_C int gettperror    (const int, const char *const, char **);
+EXTERN_C int rpttperror    (const char *const, const int, const char *const , const char *const);
 
 /* tape/unldtape.c     */
-EXTERN_C int unldtape      (int, char*);
+EXTERN_C int unldtape      (const int, const char *const);
 
 /* tape/usrmsg.c       */
-EXTERN_C int usrmsg        (char *, char *, ...);
+EXTERN_C int usrmsg        (const char *const, const char *const, ...);
 
 /* tape/writelbl.c     */
 EXTERN_C int writelbl      (int, char *, char*);

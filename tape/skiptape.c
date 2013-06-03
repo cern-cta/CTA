@@ -16,7 +16,7 @@
 
 extern int mt_rescnt;
 
-int skiptpfff(int tapefd, char *path, int n) {
+int skiptpfff(const int tapefd, const char *const path, const int n) {
 
 	/* skip n files forward */
 
@@ -61,7 +61,7 @@ int skiptpfff(int tapefd, char *path, int n) {
 	RETURN (0);
 }
 
-int skiptpff(int tapefd, char *path, int n) {
+int skiptpff(const int tapefd, const char *const path, const int n) {
 
 	/* skip n files forward */
 
@@ -85,7 +85,7 @@ int skiptpff(int tapefd, char *path, int n) {
 	RETURN (0);
 }
 
-int skiptpfb(int tapefd, char *path, int n) {
+int skiptpfb(const int tapefd, const char *const path, const int n) {
 
         /* skip n files backward */
 
@@ -109,7 +109,7 @@ int skiptpfb(int tapefd, char *path, int n) {
 	RETURN (0);
 }
 
-int skiptprf(int tapefd, char *path, int n, int silent) {
+int skiptprf(const int tapefd, const char *const path, const int n, const int silent) {
 
 	/* skip n blocks forward */
 
@@ -135,7 +135,7 @@ int skiptprf(int tapefd, char *path, int n, int silent) {
 	RETURN (0);
 }
 
-int skiptprb(int tapefd, char *path, int n) {
+int skiptprb(const int tapefd, const char *const path, const int n) {
 
         /* skip n blocks backward */
 
@@ -159,7 +159,7 @@ int skiptprb(int tapefd, char *path, int n) {
 	RETURN (0);
 }
 
-int skip2eod(int tapefd, char *path) {
+int skip2eod(const int tapefd, const char *const path) {
         
         /* Skip to the end of data. */
 

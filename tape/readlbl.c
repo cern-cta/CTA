@@ -22,12 +22,12 @@
 #include "Ctape_api.h"
 #include "serrno.h"
 
-int skiptprf(int, char *, int, int);
+int skiptprf(int, const char *const, int, int);
 char *getconfent();
 
-int readlbl(int tapefd,
-            char *path,
-            char *lblbuf)
+int readlbl(const int tapefd,
+            const char *const path,
+            char *const lblbuf)
 {
 	/* int errcat; */
 	char func[16];

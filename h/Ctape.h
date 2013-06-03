@@ -350,5 +350,5 @@ EXTERN_C int getlabelinfo (const char *const, struct devlblinfo  **const);
 EXTERN_C int setlabelinfo (const char *const, const int, const int, const char *const, const char *const , const char *const , const char *const);
 EXTERN_C int rmlabelinfo (const char *const, const int);
 EXTERN_C int setdevinfo (const char *const, const char *const , const int, const int);
-EXTERN_C int tplogit (char *, char *, ...);
+EXTERN_C int tplogit (const char *const, const char *const, ...);
 #endif

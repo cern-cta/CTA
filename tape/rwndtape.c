@@ -11,8 +11,8 @@
 #include "Ctape.h"
 #include "Ctape_api.h"
 #include "serrno.h"
-int rwndtape(int tapefd,
-             char *path)
+int rwndtape(const int tapefd,
+             const char *const path)
 {
 	char func[16];
 	struct mtop mtop;

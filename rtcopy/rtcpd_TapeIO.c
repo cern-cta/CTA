@@ -38,7 +38,7 @@
 extern int AbortFlag;
 
 char *getconfent (char *, char *, int);
-int gettperror (int, char *, char **);
+int gettperror (const int, const char *const, char **);
 static int read_sony ();
 static int write_sony ();
 

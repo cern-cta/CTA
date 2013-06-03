@@ -20,7 +20,7 @@ static char badLabelContent[LBLBUFSZ];
 
 char *getconfent();
 
-int getMaxPosTime() {
+static int getMaxPosTime() {
 
         int position_timeout = 900;
         char *p = NULL;
@@ -42,13 +42,13 @@ int getMaxPosTime() {
 }
 
 
-int gethdr2uhl1(int tapefd,
-                char *path,
-                int lblcode,
-                char *hdr1,
-                char *hdr2,
-                char *uhl1,
-                int *tmr)
+static int gethdr2uhl1(const int tapefd,
+                const char *path,
+                const int lblcode,
+                const char *const hdr1,
+                char *const hdr2,
+                char *const uhl1,
+                int *const tmr)
 {
 	int c;
 	int cfseq;
@@ -109,20 +109,20 @@ int gethdr2uhl1(int tapefd,
 	return (cfseq);
 }
 
-int posittape(int tapefd,
-              char *path,
-              char *devtype,
-              int lblcode,
-              int mode,
-              int *cfseq,
-              char *fid,
-              int filstat,
-              int fsec,
+int posittape(const int tapefd,
+              const char *const path,
+              const char *const devtype,
+              const int lblcode,
+              const int mode,
+              int *const cfseq,
+              const char *const fid,
+              const int filstat,
+              const int fsec,
               int fseq,
-              int den,
-              int flags,
-              int Qfirst,
-              int Qlast,
+              const int den,
+              const int flags,
+              const int Qfirst,
+              const int Qlast,
               char *vol1,
               char *hdr1,
               char *hdr2,

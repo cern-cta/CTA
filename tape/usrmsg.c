@@ -12,7 +12,7 @@
 #include "Ctape.h"
 #include "Ctape_api.h"
 
-int usrmsg(char *func, char *msg, ...)
+int usrmsg(const char *const func, const char *const msg, ...)
 {
 	va_list args;
 	char prtbuf[PRTBUFSZ];
