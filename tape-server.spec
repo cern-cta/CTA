@@ -31,9 +31,9 @@ The CERN tape server utilities
 
 %build
 test -e $RPM_BUILD_ROOT && rm -r $RPM_BUILD_ROOT
-%if 0%{?rhel} < 6 && %{?fedora}%{!?fedora:0} <= 1
-export CC=/usr/bin/gcc44 CXX=/usr/bin/g++44 
-%endif
+#%if 0%{?rhel} < 6 && %{?fedora}%{!?fedora:0} <= 1
+#export CC=/usr/bin/gcc44 CXX=/usr/bin/g++44 
+#%endif
 
 mkdir -p build
 cd build
