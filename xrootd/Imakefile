@@ -56,9 +56,6 @@ XCASTOR2SERVERACC_SRCS= XrdxCastor2ServerAcc.cpp \
 
 XCASTOR2SERVERACC_OBJS=$(XCASTOR2SERVERACC_SRCS:.cpp=.o)
 
-COMPILECPP(XrdxCastor2ServerAcc.cpp, -D_FILE_OFFSET_BITS=64)
-COMPILECPP(XrdxCastorTiming.cpp, -D_FILE_OFFSET_BITS=64)
-
 SharedLibraryTarget(XrdxCastor2ServerAcc,$(XCASTOR2SERVERACC_OBJS),,-lXrdUtils -lcrypto -lrt)
 
 XCASTOR2OFS_SRCS= XrdxCastor2Ofs.cpp         \
@@ -78,8 +75,6 @@ COMPILECPP(XrdxCastor2OfsTransfer.cpp, -D_FILE_OFFSET_BITS=64 -Wno-error)
 COMPILECPP(XrdxCastor2OfsProc.cpp, -D_FILE_OFFSET_BITS=64 -Wno-error)
 COMPILECPP(XrdTransfer.cpp, -D_FILE_OFFSET_BITS=64 -Wno-error)
 COMPILECPP(XrdTransferManager.cpp, -D_FILE_OFFSET_BITS=64 -Wno-error)
-COMPILECPP(XrdxCastorLogging.cpp, -D_FILE_OFFSET_BITS=64 -Wno-error)
-COMPILECPP(XrdxCastorTiming.cpp, -D_FILE_OFFSET_BITS=64 -Wno-error)
 
 SharedLibraryTarget(XrdxCastor2Ofs,$(XCASTOR2OFS_OBJS),,-lXrdUtils -lXrdOfs -lXrdCl -lXrdClient -l UUIDLIBNAME -lcrypto -lz -lrt)
 
