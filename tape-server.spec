@@ -12,6 +12,8 @@ BuildRoot: %{_tmppath}/%{name}-root
 BuildRequires: cmake >= 2.6
 BuildRequires: gtest >= 1.5.0
 BuildRequires: gmock >= 1.5.0
+BuildRequires: gtest-devel >= 1.5.0
+BuildRequires: gmock-devel  >= 1.5.0
 
 %description
 The CERN tape server project.
