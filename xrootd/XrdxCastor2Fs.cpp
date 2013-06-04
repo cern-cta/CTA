@@ -93,7 +93,7 @@ XrdxCastor2Fs* XrdxCastor2FS = 0;
 // This helps to avoid memory leaks by strdup, we maintain a string hash to
 // keep all used user ids/group ids etc.
 //------------------------------------------------------------------------------
-const char*
+char*
 STRINGSTORE( const char* __charptr__ )
 {
   XrdOucString* yourstring;
