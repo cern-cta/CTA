@@ -18,7 +18,7 @@
 
 EXTERN_C void (*logfunc) (int, char *, ...);  
                                 /* logging function to use */
-EXTERN_C void initlog (char *, int, char *);
+EXTERN_C void initlog (const char *const , const int, char *const);
 EXTERN_C void logit (int, char *, ...);
 EXTERN_C void setlogbits (int);
 EXTERN_C int getloglv (void);

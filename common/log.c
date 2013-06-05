@@ -28,7 +28,6 @@ static char logfilename[64]=""; /* log file name                        */
 static char strftime_format[] = "%b %e %H:%M:%S";
 
 static int pid;                 /* process identifier                   */
-static int logfd ;              /* logging file descriptor              */
 
 extern char *getenv();
 
@@ -40,9 +39,9 @@ void setlogbits (int);
  * Storing the process pid.
  */
 void initlog(
-	     char    *name,                  /* facility name                        */
-	     int     level,                  /* logging level                        */
-	     char    *output)                /* output specifier                     */
+  const char *const name,  /* facility name    */
+  const int        level,  /* logging level    */
+  char *const      output) /* output specifier */
 {
   register char  *p;
 
@@ -63,14 +62,9 @@ void initlog(
    */
   if (!strcmp(output,"syslog"))   {
     logfunc=(void (*) (int, char *, ...))syslog;
-  } else if (!strcmp(output,"stdout"))   {
-    logfunc=(void (*) (int, char *, ...))logit;
-    logfd= fileno(stdout) ; /* standard output       */
   } else {
     logfunc=(void (*) (int, char *, ...))logit;
-    if (strlen(output) == 0) {
-      logfd= fileno(stderr) ; /* standard error       */
-    } else {
+    if (0 != strlen(output)) {
       strcpy(logfilename,output);
     }
   }
@@ -96,7 +90,6 @@ void logit(int level, char *format, ...)
   struct tm *tp;
   char    timestr[64] ;   /* Time in its ASCII format             */
   char    line[BUFSIZ] ;  /* Formatted log message                */
-  int     fd;             /* log file descriptor                  */
   int     Tid = 0;        /* Thread ID if MT                      */
   int     save_errno;
 
@@ -119,26 +112,24 @@ void logit(int level, char *format, ...)
       (void) sprintf(line,"%s %s[%d,%d]: ",timestr,logname,pid,Tid) ;
     }
     (void) vsprintf(line+strlen(line),format,args);
-    if (strlen(logfilename)!=0) {
-      if ( (fd= open(logfilename,O_CREAT|O_WRONLY|
-		     O_APPEND,logbits)) == -1 ) {
-	syslog(LOG_ERR,"open: %s", logfilename);
-	/* FH we probably should retry */
-	va_end(args);
-	errno = save_errno;
-	return;
-      } else
-	/*
-	 * To be sure that file access is enables
-	 * even if root umask is not 0
-	 */
-	(void) chmod( logfilename, logbits );
-    } else {
-      if  (strlen(logfilename)==0)
-	fd= fileno (stderr); /* standard error */
+    if (0 != strlen(logfilename)) {
+      const int fd = open(logfilename,O_CREAT|O_WRONLY| O_APPEND,logbits);
+      if ( -1 == fd ) {
+        syslog(LOG_ERR,"open: %s", logfilename);
+        /* FH we probably should retry */
+        va_end(args);
+        errno = save_errno;
+        return;
+      } else {
+        /*
+         * Write log message mahing sure file access is enabled
+         * even if root umask is not 0
+         */
+        (void) chmod(logfilename, logbits);
+        (void) write(fd,line,strlen(line));
+        (void) close(fd);
+      }
     }
-    (void) write(fd,line,strlen(line)) ;
-    if (strlen(logfilename)!=0) (void) close(fd);
   }
   va_end(args);
   errno = save_errno;
