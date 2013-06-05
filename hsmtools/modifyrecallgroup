@@ -23,7 +23,7 @@
 
 '''allows to modify an existing recall group in the castor stager'''
 
-import sys, re, os, pwd
+import sys, re, os
 import getopt
 import castor_tools
 
@@ -106,7 +106,7 @@ try:
     if priority != None:
         stcur.execute('UPDATE RecallGroup SET VDQMPriority=:value WHERE id = :recallGroupId', value=priority, recallGroupId=recallGroupId)
     # in all cases, update the lastEditor and lastEditionTime
-    lasteditor = pwd.getpwuid(os.getuid())[0]
+    lasteditor = castor_tools.getCurrentUsername()
     stcur.execute('UPDATE RecallGroup SET lastEditor=:lasteditor, lastEditionTime=gettime() WHERE id = :recallGroupId', lasteditor=lasteditor, recallGroupId=recallGroupId)
     # commit insertion and tell user
     stconn.commit()

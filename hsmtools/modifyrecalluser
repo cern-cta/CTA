@@ -23,7 +23,7 @@
 
 '''allows to modify the mapping of a recall user in the castor stager'''
 
-import sys, re, os, pwd, grp
+import sys, re, os, grp
 import getopt
 import castor_tools
 
@@ -73,7 +73,7 @@ try:
         sys.exit(1)
     recallGroupId = rows[0][0]
     # get info on user running this command
-    lasteditor = pwd.getpwuid(os.getuid())[0]
+    lasteditor = castor_tools.getCurrentUsername()
     # check that the entry exists and update it
     if uid != None:
         stcur.execute('''UPDATE RecallUser

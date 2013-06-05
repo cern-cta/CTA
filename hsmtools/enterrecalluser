@@ -23,7 +23,7 @@
 
 '''allows to enter a new recall user into the castor stager'''
 
-import sys, re, os, pwd, grp
+import sys, re, os, grp
 import getopt
 import castor_tools
 
@@ -41,7 +41,7 @@ def printUser((uid, gid)):
         uid = ''
     else:
         try:
-            userName = pwd.getpwuid(uid)[0]
+            userName = castor_tools.getCurrentUsername()
         except KeyError:
             userName = '<%d>' % uid
         uid = str(uid)
@@ -133,7 +133,7 @@ try:
             print 'You may want to use deleteRecallUser to drop the specific users'
             sys.exit(1)
     # get info on user running this command
-    lasteditor = pwd.getpwuid(os.getuid())[0]
+    lasteditor = castor_tools.getCurrentUsername()
     # insert new recalluser
     if uid != None:
         stcur.execute('''INSERT INTO RecallUser (euid, egid, recallGroup, lastEditor, lastEditionTime)

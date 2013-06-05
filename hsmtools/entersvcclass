@@ -23,7 +23,7 @@
 
 '''allows to enter a new service class into the castor stager'''
 
-import sys, re, os, pwd
+import sys, re, os
 import getopt
 import castor_tools
 
@@ -142,7 +142,7 @@ try:
     else:
         forcedfileclass = 0
     # get info on user running this command
-    lasteditor = pwd.getpwuid(os.getuid())[0]
+    lasteditor = castor_tools.getCurrentUsername()
     # insert new SvcClass
     insertFCSQL = '''
     DECLARE

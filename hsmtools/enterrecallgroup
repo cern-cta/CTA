@@ -23,7 +23,7 @@
 
 '''allows to enter a new recall group into the castor stager'''
 
-import sys, re, os, pwd
+import sys, re, os
 import getopt
 import castor_tools
 
@@ -88,7 +88,7 @@ try:
         print 'You may want to use modifyrecallgroup'
         sys.exit(1)
     # get info on user running this command
-    lasteditor = pwd.getpwuid(os.getuid())[0]
+    lasteditor = castor_tools.getCurrentUsername()
     # insert new recallGroup
     stcur.execute('''INSERT INTO RecallGroup
                      (name, nbDrives, minAmountDataForMount, minNbFilesForMount, maxFileAgeBeforeMount,

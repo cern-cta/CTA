@@ -23,7 +23,7 @@
 
 '''allows to modify an existing migration route in the castor stager'''
 
-import sys, os, pwd
+import sys, os
 import getopt
 import castor_tools
 
@@ -119,7 +119,7 @@ try:
         print 'In case you wanted to modify several routes in one go, you will have to delete and recreate'
         sys.exit(1)
     # get the name of the current user
-    lastEditor = pwd.getpwuid(os.getuid())[0]
+    lastEditor = castor_tools.getCurrentUsername()
     # Do the actual update
     varDict['tapePool'] = tapePoolId
     varDict['lastEditor'] = lastEditor

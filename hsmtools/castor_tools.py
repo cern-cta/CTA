@@ -25,7 +25,7 @@
 
 """utility functions for castor tools written in python"""
 
-import os, sys, time, thread, subprocess, re
+import os, pwd, sys, time, thread, subprocess, re, krbV
 import dlf
 
 def _checkValueFound(name, value, instance, configFile):
@@ -725,4 +725,14 @@ def parseTimeDuration(name, svalue):
     except ValueError:
         print 'Invalid %s %s' % (name, svalue)
         usage(1)
+
+#--------------------
+# getCurrentUsername
+#--------------------
+def getCurrentUsername():
+    '''retrieves current username from the kerberos principal if available, or from the OS otherwise'''
+    try:
+        return krbV.default_context().default_ccache().principal().name
+    except krbV.Krb5Error:
+        return pwd.getpwuid(os.getuid())[0]
 

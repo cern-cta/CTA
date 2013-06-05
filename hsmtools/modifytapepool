@@ -23,7 +23,7 @@
 
 '''allows to modify an existing tape pool in the castor stager'''
 
-import sys, re, os, pwd
+import sys, re, os
 import getopt
 import castor_tools
 
@@ -101,7 +101,7 @@ try:
     if maxfileage != None:
         stcur.execute('UPDATE TapePool SET maxFileAgeBeforeMount=:value WHERE id = :tapePoolId', value=maxfileage, tapePoolId=tapePoolId)
     # in all cases, update the lastEditor and lastEditionTime
-    lasteditor = pwd.getpwuid(os.getuid())[0]
+    lasteditor = castor_tools.getCurrentUsername()
     stcur.execute('UPDATE TapePool SET lastEditor=:lasteditor, lastEditionTime=gettime() WHERE id = :tapePoolId', lasteditor=lasteditor, tapePoolId=tapePoolId)
     # commit insertion and tell user
     stconn.commit()

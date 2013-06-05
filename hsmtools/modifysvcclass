@@ -23,7 +23,7 @@
 
 '''allows to modify an existing service class in the castor stager'''
 
-import sys, re, os, pwd
+import sys, re, os
 import getopt
 import castor_tools
 
@@ -216,7 +216,7 @@ try:
         else:
             stcur.execute('UPDATE SvcClass SET forcedfileclass=0 WHERE id = :svcClassId', svcClassId=svcClassId)
     # in all cases, update the lastEditor and lastEditionTime
-    lasteditor = pwd.getpwuid(os.getuid())[0]
+    lasteditor = castor_tools.getCurrentUsername()
     stcur.execute('UPDATE SvcClass SET lastEditor=:lasteditor, lastEditionTime=gettime() WHERE id = :svcClassId', lasteditor=lasteditor, svcClassId=svcClassId)
     # commit insertion and tell user
     stconn.commit()

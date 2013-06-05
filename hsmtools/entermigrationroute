@@ -23,7 +23,7 @@
 
 '''allows to enter a new migration route into the castor stager'''
 
-import sys, os, pwd
+import sys, os
 import getopt
 import castor_tools
 import cx_Oracle
@@ -135,7 +135,7 @@ try:
             print 'They are thus colliding. Giving up'
             sys.exit(1)
     # get info on user running this command
-    lasteditor = pwd.getpwuid(os.getuid())[0]
+    lasteditor = castor_tools.getCurrentUsername()
     # insert new migration routes
     insertSQL = '''INSERT INTO MigrationRouting
                    (isSmallFile, copyNb, fileClass, lastEditor, lastEditionTime, tapePool)
