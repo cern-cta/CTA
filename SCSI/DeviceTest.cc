@@ -38,7 +38,7 @@ TEST(DeviceList, TriesToFind) {
   /* _ means anything goes */
   EXPECT_CALL(sysWrapper, opendir(_)).Times(1);
   EXPECT_CALL(sysWrapper, readdir(sysWrapper.m_DIR)).Times(1);
-  EXPECT_CALL(sysWrapper, closedir(sysWrapper.m_DIR)).Times(1);
+  EXPECT_CALL(sysWrapper, closedir(sysWrapper.m_DIR)).Times(2);
   
   SCSI::DeviceList<Tape::System::mockWrapper> dl(sysWrapper);
 }
