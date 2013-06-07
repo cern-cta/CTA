@@ -83,6 +83,11 @@ int main(int argc,
   if (Coptind < argc) {
     errflg++;
   }
+  /* vmgrmodifypool must be passed at least two arguments */
+  /* --name and pool_name                                 */
+  if (2 >= argc) {
+    errflg++;
+  }
   if (errflg) {
     fprintf (stderr, "usage: %s %s %s", argv[0],
              "--name pool_name [--gid pool_gid] [--group pool_group]\n",
