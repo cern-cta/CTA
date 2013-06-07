@@ -1,5 +1,5 @@
 add_executable(unitTest unitTest.cc ../SCSI/DeviceTest.cc)
-target_link_libraries(unitTest SCSI ${GTEST_LIBRARY} gmock pthread)
+target_link_libraries(unitTest SCSI System Exception ${GTEST_LIBRARY} gmock pthread)
 install(TARGETS unitTest
   RUNTIME DESTINATION bin)
 

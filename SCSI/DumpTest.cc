@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------
-// File: Drive/DriveList.hh
+// File: SCSI/DumpTest.cc
 // Author: Eric Cano - CERN
 // ----------------------------------------------------------------------
 
@@ -21,29 +21,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.*
  ************************************************************************/
 
-#pragma once
-#include <vector>
-
-
-namespace Tape{
 /**
- * Contains data about a tape drive
+ * Test main program. For development use.
  */
-  struct DriveInfo: public SCSI::Device {
-    
-  };
-  
-/**
- * Detects the present tape drives on the system and gathers the basic
- * information about them.
- */
-  class DriveList {
-  public:
-    DriveList();
-    virtual ~DriveList();
-  private:
-    listScsi();
-    std::vector<DriveInfo> m_
-  };
-  
-}; // namespace Tape
+
+#include "../system/Wrapper.hh"
+#include "Device.hh"
+#include <iostream>
+
+int main ()
+{
+  Tape::System::realWrapper sWrapper;
+  SCSI::DeviceVector<Tape::System::realWrapper> dl(sWrapper);
+  for(SCSI::DeviceVector<Tape::System::realWrapper>::iterator i = dl.begin();
+          i != dl.end(); i++) {
+    SCSI::DeviceInfo & dev = (*i);
+    std::cout << dev.sg_path << std::endl;
+  }
+}

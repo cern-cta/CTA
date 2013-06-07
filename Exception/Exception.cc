@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------
-// File: Drive/DriveList.hh
+// File: Exception/Exception.cc
 // Author: Eric Cano - CERN
 // ----------------------------------------------------------------------
 
@@ -21,29 +21,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.*
  ************************************************************************/
 
-#pragma once
-#include <vector>
+#include "Exception.hh"
+#include <errno.h>
+/* We want the thread safe (and portable) version of strerror */
+#define _XOPEN_SOURCE 600
+#include <string.h>
+#include <sstream>
+#include <iosfwd>
+#include <sstream>
 
-
-namespace Tape{
-/**
- * Contains data about a tape drive
- */
-  struct DriveInfo: public SCSI::Device {
-    
-  };
-  
-/**
- * Detects the present tape drives on the system and gathers the basic
- * information about them.
- */
-  class DriveList {
-  public:
-    DriveList();
-    virtual ~DriveList();
-  private:
-    listScsi();
-    std::vector<DriveInfo> m_
-  };
-  
-}; // namespace Tape
+Tape::Exceptions::Errnum::Errnum(std::string what):Exception(what) {
+  m_errnum = errno;
+  char s[1000];
+  if (::strerror_r(m_errnum, s, sizeof(s))) {
+    int new_errno = errno;
+    std::stringstream w;
+    w << "Errno=" << m_errnum << ". In addition, failed to read the corresponding error string (with errno="
+            << new_errno << ")";
+    m_strerror = w.str();
+  } else {
+    m_strerror = std::string(s);
+  }
+  std::stringstream w2;
+  w2 << "Errno=" << m_errnum << ": " << m_strerror;
+  if (m_what.size())
+    m_what += " ";
+  m_what += w2.str();
+}

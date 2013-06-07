@@ -57,6 +57,8 @@ set(CTEST_OUTPUT_ON_FAILURE 1)
 # Add parts first in dependency order
 add_subdirectory(SCSI)
 add_subdirectory(Drive)
+add_subdirectory(system)
+add_subdirectory(Exception)
 
 # .. and then tools, tests, and daemon
 # add_subdirectory(tools)
@@ -64,6 +66,12 @@ add_subdirectory(Drive)
 
 # .. and of course, the tests
 add_subdirectory(test)
+
+###########################################################################
+# compiler options
+###########################################################################
+set (CMAKE_CXX_FLAGS “${CMAKE_CXX_FLAGS} -Wall -Werror -pedantic”)
+
 
 ###########################################################################
 # documentation

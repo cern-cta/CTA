@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------
-// File: Drive/DriveList.hh
+// File: Exception/Exception.hh
 // Author: Eric Cano - CERN
 // ----------------------------------------------------------------------
 
@@ -22,28 +22,32 @@
  ************************************************************************/
 
 #pragma once
-#include <vector>
+#include <exception>
+#include <string>
 
-
-namespace Tape{
-/**
- * Contains data about a tape drive
- */
-  struct DriveInfo: public SCSI::Device {
-    
-  };
-  
-/**
- * Detects the present tape drives on the system and gathers the basic
- * information about them.
- */
-  class DriveList {
+namespace Tape {
+  class Exception: public std::exception {
   public:
-    DriveList();
-    virtual ~DriveList();
-  private:
-    listScsi();
-    std::vector<DriveInfo> m_
+    Exception(const std::string& what): m_what(what) {};
+    virtual ~Exception() throw() {};
+    virtual const char * what() { return m_what.c_str(); } 
+  protected:
+    std::string m_what;
   };
-  
-}; // namespace Tape
+}
+
+namespace Tape {
+  namespace Exceptions {
+    class Errnum: public Tape::Exception {
+    public:
+      Errnum(std::string what = "");
+      virtual ~Errnum() throw() {};
+      int ErrorNumber() { return m_errnum; }
+      std::string strError() { return m_strerror; }
+      virtual const char * what() { return m_what.c_str(); }
+    protected:
+      int m_errnum;
+      std::string m_strerror;
+    };
+  }
+}
