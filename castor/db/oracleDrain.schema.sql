@@ -20,7 +20,7 @@ CREATE TABLE DrainingFileSystem
     */
    autoDelete     NUMBER DEFAULT 0,
    /* Column to indicate which files should be replicated. Valid values are:
-    *   0 -- ONTAPE & DISKONLY,
+    *   0 -- ONTAPE AND DISKONLY,
     *   1 -- NOTONTAPE
     *   2 -- ALL
     */
