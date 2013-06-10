@@ -252,6 +252,85 @@ BEGIN
 END VMGR_UPDATE_POOL_OWNER;
 /
 
+
+/**
+ * Returns the status bitset of the tape with the specified VID.
+ *
+ * This function raises application error number -20509 if a tape with the
+ * specified VID could not be found in the VMGR database.
+ *
+ * @param vid_in The VID of the tape to be queried.
+ * @return the status bitset of the tape with the specified VID.
+ */
+CREATE OR REPLACE FUNCTION VMGR_GET_TAPE_STATUS(
+  vid_in IN VARCHAR2)
+RETURN NUMBER
+AS
+  status_var NUMBER(2);
+BEGIN
+  SELECT VMGR_TAPE_SIDE.status
+    INTO status_var
+    FROM VMGR_TAPE_SIDE
+   WHERE VMGR_TAPE_SIDE.vid = vid_in
+     AND VMGR_TAPE_SIDE.side = 0;
+
+  RETURN status_var;
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN RAISE_APPLICATION_ERROR (-20509,
+    'Failed to get the status of tape ' || vid_in || '.' ||
+    ' The tape could not be found in the VMGR database.');
+  WHEN OTHERS THEN RAISE_APPLICATION_ERROR (-20509,
+    'Failed to get the status of tape ' || vid_in || '.' ||
+    ' An unknown PL/SQL exception was raised.');
+END VMGR_GET_TAPE_STATUS;
+/
+
+
+/**
+ * Returns 1 if the tape with the specified VID can potentially be mounted for
+ * read access and 0 otherwise.
+ *
+ * The return type in INTEGER as opposed to BOOLEAN because SQL does not
+ * support the BOOLEAN type.
+ *
+ * A tape can be only be mounted for read access if none of the following
+ * status bits are set: tconst.TAPE_DISABLED, tconst.TAPE_EXPORTED and
+ * tconst.TAPE_EXPORTED.
+ *
+ * This function raises application error number -20510 if an error occurred
+ * whilst trying to determine whether or not the tape with the specified VID
+ * can potentially be mounted for read access.
+ *
+ * @param vid_in The VID of the tape to be queried.
+ * @return 1 if the tape with the specified VID can potentially be mounted for
+ * read access and 0 otherwise.
+ * access and 0 otherwise.
+ */
+CREATE OR REPLACE FUNCTION VMGR_TAPE_IS_RECALLABLE(
+  vid_in IN VARCHAR2)
+RETURN INTEGER
+AS
+  TAPE_DISABLED CONSTANT PLS_INTEGER := 1;
+  TAPE_EXPORTED CONSTANT PLS_INTEGER := 2;
+  TAPE_ARCHIVED CONSTANT PLS_INTEGER := 32;
+  status_var NUMBER(2);
+BEGIN
+  status_var := VMGR_GET_TAPE_STATUS(vid_in);
+
+  IF BITAND(status_var, TAPE_DISABLED) = 0 AND
+     BITAND(status_var, TAPE_EXPORTED) = 0 AND
+     BITAND(status_var, TAPE_ARCHIVED) = 0 THEN
+    RETURN 1; -- The tape is recallable
+  ELSE
+    RETURN 0; -- The tape is not recallable
+  END IF;
+EXCEPTION
+  WHEN OTHERS THEN RAISE_APPLICATION_ERROR (-20510,
+    'Failed to determine if tape ' || vid_in || ' is recallable: ' || SQLERRM);
+END VMGR_TAPE_IS_RECALLABLE;
+/
+
+
 /*
  * Create and populate the table VMGR_TAPE_STATUS_CODE.
  *
