@@ -25,7 +25,7 @@
 
 """utility functions for castor tools written in python"""
 
-import os, pwd, sys, time, thread, subprocess, re, krbV
+import os, pwd, sys, time, thread, subprocess, re
 import dlf
 
 def _checkValueFound(name, value, instance, configFile):
@@ -732,7 +732,9 @@ def parseTimeDuration(name, svalue):
 def getCurrentUsername():
     '''retrieves current username from the kerberos principal if available, or from the OS otherwise'''
     try:
+        import krbV
         return krbV.default_context().default_ccache().principal().name
-    except krbV.Krb5Error:
+    except ImportError:         # no krbV module available
         return pwd.getpwuid(os.getuid())[0]
-
+    except krbV.Krb5Error:      # no valid token found
+        return pwd.getpwuid(os.getuid())[0]
