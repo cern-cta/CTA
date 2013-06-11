@@ -50,6 +50,7 @@ COMPILECPP(XrdxCastor2Stager.cpp, -D_FILE_OFFSET_BITS=64 -Wno-error)
 COMPILECPP(XrdxCastor2Proc.cpp, -D_FILE_OFFSET_BITS=64 -Wno-error)      
 COMPILECPP(XrdxCastorLogging.cpp, -D_FILE_OFFSET_BITS=64 -Wno-error)    
 COMPILECPP(XrdxCastorTiming.cpp, -D_FILE_OFFSET_BITS=64 -Wno-error)
+COMPILECPP(XrdxCastorClient.cpp, -D_FILE_OFFSET_BITS=64 -Wno-error)
 
 SharedLibraryTarget(XrdxCastor2Fs,$(XCASTOR2FS_OBJS),,-lXrdUtils -lXrdCl -lXrdClient -lXrdOfs -l UUIDLIBNAME -lcrypto -lrt)
 
