@@ -25,10 +25,14 @@
 #ifndef __XCASTOR_FSCONSTANTS_HH__
 #define __XCASTOR_FSCONSTANTS_HH__
 
-#define XCASTOR2FS_GRIDMAPCHECKINTERVAL 60 // in seconds
-#define XCASTOR2FS_VOMSMAPCHECKINTERVAL 60 // in seconds
-#define XCASTOR2FS_METADATAUPDATEINTERVAL 1 // in seconds
-#define XCASTOR2FS_MAXFILESYSTEMS       8192
-#define XCASTOR2FS_MAXDISTINCTUSERS     8192
+#define XCASTOR2FS_GRIDMAPCHECKINTERVAL     60 // in seconds
+#define XCASTOR2FS_METADATAUPDATEINTERVAL    1 // in seconds
+#define XCASTOR2FS_MAXFILESYSTEMS         8192
+#define XCASTOR2FS_MAXDISTINCTUSERS       8192
+
+//! Constants dealing with async requests for the stager 
+#define XCASTOR2FS_CALLBACKPORT          30000 ///< async requests callback port
+#define XCASTOR2FS_RESP_TIMEOUT            300 ///< timeout for async responses 
+#define XCASTOR2FS_MAX_REQUESTS           5000 ///< max no. of requests on-the-fly
 
 #endif // __XCASTOR_FSCONSTANTS_HH__

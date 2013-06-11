@@ -32,13 +32,15 @@ XCASTOR2FS_SRCS= XrdxCastor2Fs.cpp        \
                  XrdxCastor2Stager.cpp    \
                  XrdxCastor2Proc.cpp      \
                  XrdxCastorLogging.cpp    \
-                 XrdxCastorTiming.cpp
+                 XrdxCastorTiming.cpp     \
+                 XrdxCastorClient.cpp
 
 XCASTOR2FS_OBJS=$(XCASTOR2FS_SRCS:.cpp=.o)
 
 DependsOnLibrary(common,castorcommon)
 DependsOnLibrary(castor,castorclient)
 DependsOnLibrary(ns,castorns)
+
 
 COMPILECPP(XrdxCastor2Fs.cpp, -D_FILE_OFFSET_BITS=64 -Wno-error)        
 COMPILECPP(XrdxCastor2FsConfig.cpp, -D_FILE_OFFSET_BITS=64 -Wno-error)
@@ -51,14 +53,11 @@ COMPILECPP(XrdxCastorTiming.cpp, -D_FILE_OFFSET_BITS=64 -Wno-error)
 
 SharedLibraryTarget(XrdxCastor2Fs,$(XCASTOR2FS_OBJS),,-lXrdUtils -lXrdCl -lXrdClient -lXrdOfs -l UUIDLIBNAME -lcrypto -lrt)
 
+
 XCASTOR2SERVERACC_SRCS= XrdxCastor2ServerAcc.cpp \
                         XrdxCastorTiming.cpp
 
 XCASTOR2SERVERACC_OBJS=$(XCASTOR2SERVERACC_SRCS:.cpp=.o)
-
-COMPILECPP(XrdxCastor2ServerAcc.cpp, -D_FILE_OFFSET_BITS=64)
-COMPILECPP(XrdxCastorTiming.cpp, -D_FILE_OFFSET_BITS=64)
-
 SharedLibraryTarget(XrdxCastor2ServerAcc,$(XCASTOR2SERVERACC_OBJS),,-lXrdUtils -lcrypto -lrt)
 
 
@@ -81,6 +80,7 @@ COMPILECPP(XrdTransfer.cpp, -D_FILE_OFFSET_BITS=64 -Wno-error)
 COMPILECPP(XrdTransferManager.cpp, -D_FILE_OFFSET_BITS=64 -Wno-error)
 
 SharedLibraryTarget(XrdxCastor2Ofs,$(XCASTOR2OFS_OBJS),,-lXrdUtils -lXrdOfs -lXrdCl -lXrdClient -l UUIDLIBNAME -lcrypto -lz -lrt)
+
 
 InstallNonExecFile(x2proc,/usr/bin,755)
 InstallNonExecFile(x2cp,/usr/bin,755)

@@ -70,6 +70,11 @@ class XrdSysError;
 class XrdSysLogger;
 class XrdSfsAio;
 
+namespace xcastor
+{
+  class XrdxCastorClient;
+}
+
 /******************************************************************************/
 /*                    X r d x C a s t o r 2 F s U F S                         */
 /******************************************************************************/
@@ -542,14 +547,16 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
 
     //--------------------------------------------------------------------------
     //! Configure plugin
+    //!
+    //! @return 0 upon success or non zero otherwise.
     //--------------------------------------------------------------------------
-    virtual int Configure( XrdSysError& );
+    virtual int Configure( XrdSysError& fsEroute);
 
 
     //--------------------------------------------------------------------------
     //! Initialisation
     //--------------------------------------------------------------------------
-    virtual bool Init();
+    virtual bool Init(XrdSysError& fsEroute);
 
 
     //--------------------------------------------------------------------------
@@ -1004,6 +1011,30 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
     void ReloadGridMapFile();
 
 
+    //--------------------------------------------------------------------------
+    //! Get delay for the current operation set for the entire instance by the 
+    //! admin. The delay value is read from the xcastor2.proc value specified 
+    //! in the /etc/xrd.cf file. 
+    //!
+    //! @param msg message to be returned to the client 
+    //! @param isRW true if delay value is requested for a write operation, 
+    //!        otherwise false for read operations
+    //! 
+    //! @return the delay value specified in seconds
+    //!
+    //--------------------------------------------------------------------------
+    int64_t GetAdminDelay(XrdOucString& msg, bool isRW);
+
+
+    //--------------------------------------------------------------------------
+    //! Set the log level for the manager xrootd server
+    //!
+    //! @param logLevel interger representing the log level according to syslog
+    //!
+    //--------------------------------------------------------------------------
+    void SetLogLevel(int logLevel);
+
+
     bool MapCernCertificates;
     XrdOucString GridMapFile;
     XrdOucString LocationCacheDir;
@@ -1020,8 +1051,9 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
     static  XrdOucHash<XrdSecEntity>* secentitystore;
     static  XrdOucHash<struct passwd>* passwdstore;
     static  XrdOucHash<XrdOucString>*  gridmapstore;
-    static  XrdOucHash<XrdOucString>*  vomsmapstore;
     static  XrdOucHash<XrdxCastor2FsGroupInfo>*  groupinfocache;
+
+    static xcastor::XrdxCastorClient* msCastorClient; ///< obj dealing with async requests/responses
 
     static  int TokenLockTime;  ///< specifies the grace period for client to show 
                                 ///< up on a disk server in seconds before the token expires
@@ -1063,7 +1095,7 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
 
   private:
 
-    int mLogLevel; ///< log level from config file
+    int mLogLevel; ///< log level from config file or set in the proc "trace" file
     static  XrdSysError* eDest;
 };
 

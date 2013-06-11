@@ -31,7 +31,28 @@
 #include <XrdOuc/XrdOucString.hh>
 /*-----------------------------------------------------------------------------*/
 #include "XrdxCastorLogging.hh"
+#include "XrdxCastorClient.hh"
 /*-----------------------------------------------------------------------------*/
+
+
+//! Forward declarations
+namespace castor
+{
+  namespace stager
+  {
+    class FileRequest;
+  }
+
+  namespace client
+  {
+    class IResponseHandler;
+  }
+
+  namespace rh
+  {
+    class Response;
+  }
+}
 
 
 //------------------------------------------------------------------------------
@@ -40,76 +61,170 @@
 class XrdxCastor2Stager : public LogId
 {
   public:
-    static XrdOucHash<XrdOucString>* prepare2getstore;
-    static XrdOucHash<XrdOucString>* getstore;
-    static XrdOucHash<XrdOucString>* putstore;
-    static XrdOucHash<XrdOucString>* delaystore;
 
-    static int GetDelayValue( const char* tag );
+    ///! Delay store for each of the users
+    static XrdOucHash<XrdOucString>* msDelayStore;
+    static XrdSysRWLock msLockDelay; ///< RW lock for the delay map
 
-    //----------------------------------------------------------------------------
+    
+    //--------------------------------------------------------------------------
+    //! Request information structure
+    //--------------------------------------------------------------------------
+    struct ReqInfo
+    {
+       uid_t mUid;
+       gid_t mGid;
+       const char* mPath;
+       const char* mStageHost;
+       const char* mServiceClass;
+
+       //-----------------------------------------------------------------------
+       //! Constructor
+       //-----------------------------------------------------------------------
+       ReqInfo(uid_t uid, gid_t gid, const char* path, 
+              const char* stagehost, const char* serviceclass):
+         mUid(uid),
+         mGid(gid),
+         mPath(path),
+         mStageHost(stagehost),
+         mServiceClass(serviceclass)
+       {
+         // empty
+       }
+    };
+  
+
+
+    //--------------------------------------------------------------------------
+    //! Response information structure
+    //--------------------------------------------------------------------------
+    struct RespInfo
+    {
+       XrdOucString mRedirectionHost;
+       XrdOucString mRedirectionPfn1;
+       XrdOucString mRedirectionPfn2;
+       XrdOucString mStageStatus;
+       
+       //-----------------------------------------------------------------------
+       //! Constructor
+       //-----------------------------------------------------------------------
+       RespInfo():
+         mRedirectionHost(""),
+         mRedirectionPfn1(""),
+         mRedirectionPfn2(""),
+         mStageStatus("")
+       {
+         //empty
+       }
+    };
+
+
+    //--------------------------------------------------------------------------
     //! Constructor
-    //----------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
     XrdxCastor2Stager(): LogId() {};
 
-    //----------------------------------------------------------------------------
+
+    //--------------------------------------------------------------------------
     //! Destructor
-    //----------------------------------------------------------------------------
+    //--------------------------------------------------------------------------
     ~XrdxCastor2Stager() {};
 
 
+    //--------------------------------------------------------------------------
+    //! Get a delay value for the corresponding tag 
+    //!
+    //! @param tag is made by concatenating the tident with the path of the req
+    //!
+    //! @return delay in seconds
+    //--------------------------------------------------------------------------
+    static int GetDelayValue(const char* tag);
+
+
+    //------------------------------------------------------------------------------
+    //! Drop delay tag from mapping
+    //!
+    //! @param tag tag to be dropped from mapping
+    //!
+    //------------------------------------------------------------------------------
+    static void DropDelayTag(const char* tag);
+
+
+    //--------------------------------------------------------------------------
+    //! Delete the request and response objects 
+    //!
+    //! @param req request object 
+    //! @param resp response object 
+    //! @param respvect response vector
+    //!
+    //--------------------------------------------------------------------------
+    static void DeleteReqResp(castor::stager::FileRequest* req,
+                              castor::client::IResponseHandler* resp,
+                              std::vector<castor::rh::Response*>* respvec);
+
+
+  
+    //--------------------------------------------------------------------------
+    //! Process response received form the stager
+    //! 
+    //! @param error error object
+    //! @param respElem ReqElemement structure defined in XrdxCastorClient.hh
+    //! @param opType opertation type
+    //! @param reqInfo request informatio structure
+    //! @param respInfo response info structure to be filled in
+    //!
+    //! @return 
+    //--------------------------------------------------------------------------
+    static int ProcessResponse(XrdOucErrInfo& error,
+                               struct xcastor::XrdxCastorClient::ReqElement*& respElem,
+                               const std::string& opType,
+                               struct ReqInfo* reqInfo,
+                               struct RespInfo& respInfo);
+  
+
+    //--------------------------------------------------------------------------
+    //! Prepare2Get
+    //--------------------------------------------------------------------------
     static bool Prepare2Get( XrdOucErrInfo& error,
                              uid_t uid, gid_t gid,
                              const char* path,
                              const char* stagehost,
                              const char* serviceclass,
-                             XrdOucString& redirectionhost,
-                             XrdOucString& redirectionpfn,
-                             XrdOucString& stagestatus ) ;
+                             struct RespInfo& respInfo);
 
-    static bool Get( XrdOucErrInfo& error,
-                     uid_t uid, gid_t gid,
-                     const char* path,
-                     const char* stagehost,
-                     const char* serviceclass,
-                     XrdOucString& redirectionhost,
-                     XrdOucString& redirectionpfn,
-                     XrdOucString& redirectionpfn2,
-                     XrdOucString& stagestatus );
+    //--------------------------------------------------------------------------
+    //! Send an async request to the stager. This request can be a GET or a PUT
+    //! or an UPDATE.
+    //!
+    //! @param error error object 
+    //! @param opType type of operation: get, put or update
+    //! @param reqInfo request information stucture
+    //! @param respInfo response information structure
+    //! 
+    //! @return SFS_OK answer received and successfully parsed
+    //!         SFS_ERROR there was an error
+    //!         SFS_STALL response not available yet, stall the client 
+    //!         
+    //--------------------------------------------------------------------------
+    static int DoAsyncReq(XrdOucErrInfo& error,
+                          const std::string& opType,
+                          struct ReqInfo* reqInfo,
+                          struct RespInfo& respInfo);
 
-    static bool Put( XrdOucErrInfo& error,
-                     uid_t uid, gid_t gid,
-                     const char* path,
-                     const char* stagehost,
-                     const char* serviceclass,
-                     XrdOucString& redirectionhost,
-                     XrdOucString& redirectionpfn,
-                     XrdOucString& redirectionpfn2,
-                     XrdOucString& stagestatus );
 
+    //--------------------------------------------------------------------------
+    //! Rm
+    //--------------------------------------------------------------------------
     static bool Rm( XrdOucErrInfo& error,
                     uid_t uid, gid_t gid,
                     const char* path,
                     const char* stagehost,
                     const char* serviceclass );
+  
 
-    static bool Update( XrdOucErrInfo& error,
-                        uid_t uid, gid_t gid,
-                        const char* path,
-                        const char* stagehost,
-                        const char* serviceclass,
-                        XrdOucString& redirectionhost,
-                        XrdOucString& redirectionpfn,
-                        XrdOucString& redirectionpfn2,
-                        XrdOucString& stagestatus );
-
-    static bool StagerQuery( XrdOucErrInfo& error,
-                             uid_t uid, gid_t gid,
-                             const char* path,
-                             const char* stagehost,
-                             const char* serviceclass,
-                             XrdOucString& stagestatus );
-
+    //--------------------------------------------------------------------------
+    //! UpdateDone
+    //--------------------------------------------------------------------------
     static bool UpdateDone( XrdOucErrInfo& error,
                             const char* path,
                             const char* reqid,
@@ -118,6 +233,21 @@ class XrdxCastor2Stager : public LogId
                             const char* stagehost,
                             const char* serviceclass );
 
+
+    //--------------------------------------------------------------------------
+    //! StagerQuery
+    //--------------------------------------------------------------------------
+    static bool StagerQuery( XrdOucErrInfo& error,
+                             uid_t uid, gid_t gid,
+                             const char* path,
+                             const char* stagehost,
+                             const char* serviceclass,
+                             XrdOucString& stagestatus );
+
+
+    //--------------------------------------------------------------------------
+    //! FirstWrite
+    //--------------------------------------------------------------------------
     static bool FirstWrite( XrdOucErrInfo& error,
                             const char* path,
                             const char* reqid,
@@ -125,14 +255,6 @@ class XrdxCastor2Stager : public LogId
                             const char* nameserver,
                             const char* stagehost,
                             const char* serviceclass );
-
-    static bool PutFailed( XrdOucErrInfo& error,
-                           const char* path,
-                           const char* reqid,
-                           const char* fileid,
-                           const char* nameserver,
-                           const char* stagehost,
-                           const char* serviceclass );
 };
 
 #endif // __XCASTOR_STAGER_HH__

@@ -19,7 +19,7 @@
  *
  *
  * @author Elvin Sindrilaru & Andreas Peters - CERN
- * 
+ *
  ******************************************************************************/
 
 
@@ -50,356 +50,130 @@
 #include "stager_api.h"
 /*-----------------------------------------------------------------------------*/
 #include "XrdxCastor2Stager.hh"
-/*-----------------------------------------------------------------------------*/
-#include <XrdOuc/XrdOucTrace.hh>
+#include "XrdxCastor2Fs.hh"
 /*-----------------------------------------------------------------------------*/
 
-extern XrdOucTrace xCastor2FsTrace;
+
+extern XrdxCastor2Fs* XrdxCastor2FS;  ///< defined in XrdxCastor2Fs.cpp
+XrdSysRWLock XrdxCastor2Stager::msLockDelay;  ///< lock for delay map
+
+
+//------------------------------------------------------------------------------
+// Delete the request and response objects
+//------------------------------------------------------------------------------
+void
+XrdxCastor2Stager::DeleteReqResp(castor::stager::FileRequest* req,
+                                 castor::client::IResponseHandler* resp,
+                                 std::vector<castor::rh::Response*>* respvec)
+{
+  // Delete request
+  delete req;
+  // Delete the responses and the vector
+  delete resp;
+  castor::rh::Response* ptr = 0;
+
+  for (unsigned int i = 0; i < respvec->size(); i++)
+  {
+    ptr = respvec->at(i);
+    delete ptr;
+  }
+
+  respvec->clear();
+  delete respvec;
+}
+
+
 
 //------------------------------------------------------------------------------
 // Prepare to get
 //------------------------------------------------------------------------------
 bool
-XrdxCastor2Stager::Prepare2Get( XrdOucErrInfo& error,
-                                uid_t          uid,
-                                gid_t          gid,
-                                const char*    path,
-                                const char*    stagehost,
-                                const char*    serviceclass,
-                                XrdOucString&  redirectionhost,
-                                XrdOucString&  redirectionpfn,
-                                XrdOucString&  status )
-{
-  //const char* tident = error.getErrUser();
-  struct stage_options                  Opts;
-  xcastor_static_debug("uid=%i, gid=%i, path=%s, stagehost=%s, sericeclass=%s",
-                uid, gid, path, stagehost, serviceclass );
-  XrdOucString ErrPrefix = "uid=";
-  ErrPrefix += ( int )uid;
-  ErrPrefix += " gid=";
-  ErrPrefix += ( int )gid;
-  ErrPrefix += " path=";
-  ErrPrefix += path;
-  ErrPrefix += " stagehost=";
-  ErrPrefix += stagehost;
-  ErrPrefix += " serviceclass=";
-  ErrPrefix += serviceclass;
-  const char* stageTag = "xCastor2P2Get";
-  castor::stager::StagePrepareToGetRequest  getReq_ro;
-  castor::stager::SubRequest*      subreq = new castor::stager::SubRequest();
-  std::vector<castor::rh::Response*>respvec;
-  castor::client::VectorResponseHandler rh( &respvec );
-  int mask = umask( 0 );
-  umask( mask );
-  getReq_ro.setUserTag( stageTag );
-  getReq_ro.setMask( mask );
-  getReq_ro.addSubRequests( subreq );
-  subreq->setRequest( &getReq_ro );
-  subreq->setProtocol( std::string( "xroot" ) );
-  subreq->setFileName( std::string( path ) );
-  subreq->setModeBits( 0744 );
-  castor::client::BaseClient       cs2client( stage_getClientTimeout(), -1 );
-  Opts.stage_host    = ( char* )stagehost;
-  Opts.service_class = ( char* )serviceclass;
-  Opts.stage_version = 2;
-  Opts.stage_port    = 0;
-  cs2client.setOptions( &Opts );
-  cs2client.setAuthorizationId( uid, gid );
-
-  try   {
-    xcastor_static_debug("Sending Prepare2Get path=%s, uid=%i, gid=%i, stagehost=%s, svc=%s",
-                  path, uid, gid, stagehost, serviceclass);
-    std::string reqid = cs2client.sendRequest( &getReq_ro, &rh );
-  } catch ( castor::exception::Communication e ) {
-    xcastor_static_debug("Communication error: %s", e.getMessage().str().c_str());
-    error.setErrInfo( ECOMM, e.getMessage().str().c_str() );
-    delete subreq;
-    return false;
-  } catch ( castor::exception::Exception e ) {
-    xcastor_static_debug("sendRequest exception: %s", e.getMessage().str().c_str());
-    error.setErrInfo( ECOMM, e.getMessage().str().c_str() );
-    delete subreq;
-    return false;
-  }
-
-  if ( respvec.size() <= 0 ) {
-    xcastor_static_debug("No response for prepare2get for: %s", path);
-    error.setErrInfo( ECOMM, "No response" );
-    delete subreq;
-    return false;
-  }
-
-  // Proccess the response.
-  castor::rh::IOResponse* fr =
-    dynamic_cast<castor::rh::IOResponse*>( respvec[0] );
-
-  if ( 0 == fr ) {
-    xcastor_static_debug("Invalid response object for prepare2get: %s ", path);
-    error.setErrInfo( ECOMM, "Invalid response object for prepare2get" );
-    delete subreq;
-    return false;
-  }
-
-  if ( fr->errorCode() ) {
-    xcastor_static_debug("received error errc=%i, errmsg=%s\%i, subreqid=%s, reqid=%s", 
-                         fr->errorCode(), fr->errorMessage().c_str(), ErrPrefix.c_str(),
-                         fr->subreqId().c_str(), fr->reqAssociated().c_str() );
-    XrdOucString emsg = "received error errc=";
-    emsg += ( int )fr->errorCode();
-    emsg += " errmsg=\"";
-    emsg += fr->errorMessage().c_str();
-    emsg += "\" ";
-    emsg += ErrPrefix;
-    emsg += " subreqid=";
-    emsg += fr->subreqId().c_str();
-    emsg += " reqid=";
-    emsg += fr->reqAssociated().c_str();
-    error.setErrInfo( fr->errorCode(), emsg.c_str() );
-    delete subreq;
-    delete respvec[0];
-    return false;
-  }  else {
-    xcastor_static_debug("%s status=%u, path=%s:%s ( %s ) id=%i", 
-                  stage_requestStatusName( fr->status() ), fr->status(),
-                  fr->server().c_str(), fr->fileName().c_str(), 
-                  fr->castorFileName().c_str(), fr->id());
-  }
-
-  redirectionhost = fr->server().c_str();
-  redirectionpfn  = fr->fileName().c_str();
-  status          = stage_requestStatusName( fr->status() );
-  delete subreq;
-  delete respvec[0];
-  return true;
-}
-
-
-//------------------------------------------------------------------------------
-// Get
-//------------------------------------------------------------------------------
-bool
-XrdxCastor2Stager::Get( XrdOucErrInfo& error,
-                        uid_t          uid,
-                        gid_t          gid,
-                        const char*    path,
-                        const char*    stagehost,
-                        const char*    serviceclass,
-                        XrdOucString&  redirectionhost,
-                        XrdOucString&  redirectionpfn,
-                        XrdOucString&  redirectionpfn2,
-                        XrdOucString&  status )
-{
-  //const char* tident = error.getErrUser();
-  struct stage_options                  Opts;
-  xcastor_static_debug("uid=%i, gid=%i, path=%s, stagehost=%s, serviceclass=%s",
-                uid, gid, path, stagehost, serviceclass );
-  XrdOucString ErrPrefix = "uid=";
-  ErrPrefix += ( int )uid;
-  ErrPrefix += " gid=";
-  ErrPrefix += ( int )gid;
-  ErrPrefix += " path=";
-  ErrPrefix += path;
-  ErrPrefix += " stagehost=";
-  ErrPrefix += stagehost;
-  ErrPrefix += " serviceclass=";
-  ErrPrefix += serviceclass;
-  const char* stageTag = "xCastor2Get";
-  castor::stager::StageGetRequest  getReq_ro;
-  castor::stager::SubRequest*      subreq = new castor::stager::SubRequest();
-  std::vector<castor::rh::Response*>respvec;
-  castor::client::VectorResponseHandler rh( &respvec );
-  int mask = umask( 0 );
-  umask( mask );
-  getReq_ro.setUserTag( stageTag );
-  getReq_ro.setMask( mask );
-  getReq_ro.addSubRequests( subreq );
-  subreq->setRequest( &getReq_ro );
-  subreq->setProtocol( std::string( "xroot" ) );
-  subreq->setFileName( std::string( path ) );
-  subreq->setModeBits( 0744 );
-
-  castor::client::BaseClient cs2client( stage_getClientTimeout(), -1 );
-  Opts.stage_host    = ( char* )stagehost;
-  Opts.service_class = ( char* )serviceclass;
-  Opts.stage_version = 2;
-  Opts.stage_port    = 0;
-  cs2client.setOptions( &Opts );
-  cs2client.setAuthorizationId( uid, gid );
-
-  try   {
-    xcastor_static_debug("Sending Get path=%s, uid=%i, gid=%i, stagehost=%s, svc=%s",
-                  path, uid, gid, stagehost, serviceclass);
-    std::string reqid = cs2client.sendRequest( &getReq_ro, &rh );
-  } catch ( castor::exception::Communication e ) {
-    xcastor_static_debug("Communications error: %s", e.getMessage().str().c_str());
-    error.setErrInfo( ECOMM, e.getMessage().str().c_str() );
-    delete subreq;
-    return false;
-  } catch ( castor::exception::Exception e ) {
-    xcastor_static_debug("sendRequest exception: %s", e.getMessage().str().c_str());
-    error.setErrInfo( ECOMM, e.getMessage().str().c_str() );
-    delete subreq;
-    return false;
-  }
-
-  if ( respvec.size() <= 0 ) {
-    xcastor_static_debug("No response for get for: %s", path);
-    error.setErrInfo( ECOMM, "No response" );
-    delete subreq;
-    return false;
-  }
-
-  // Proccess the response.
-  castor::rh::IOResponse* fr = 
-    dynamic_cast<castor::rh::IOResponse*>( respvec[0] );
-
-  if ( 0 == fr ) {
-    xcastor_static_debug("Invalid response object for get for: %s",path );
-    error.setErrInfo( ECOMM, "Invalid response object for get" );
-    delete subreq;
-    return false;
-  }
-
-  if ( fr->errorCode() ) {
-    xcastor_static_debug("received error errc=%i, errmsg=%s\%i, subreqid=%s, reqid=%s",
-                         fr->errorCode(), fr->errorMessage().c_str(),
-                         ErrPrefix.c_str(), fr->subreqId().c_str(), 
-                         fr->reqAssociated().c_str());
-    XrdOucString emsg = "received error errc=";
-    emsg += ( int )fr->errorCode();
-    emsg += " errmsg=\"";
-    emsg += fr->errorMessage().c_str();
-    emsg += "\" ";
-    emsg += ErrPrefix;
-    emsg += " subreqid=";
-    emsg += fr->subreqId().c_str();
-    emsg += " reqid=";
-    emsg += fr->reqAssociated().c_str();
-    error.setErrInfo( fr->errorCode(), emsg.c_str() );
-    delete subreq;
-    delete respvec[0];
-    return false;
-  }  else {
-    xcastor_static_debug("%s rc=%i, path=%s:%s ( %s ) id=%i", 
-                         stage_requestStatusName( fr->status() ), fr->errorCode(),
-                         fr->server().c_str(), fr->fileName().c_str(), 
-                         fr->castorFileName().c_str(), fr->id());
-  }
-
-  redirectionhost = fr->server().c_str();
-  redirectionpfn  = fr->fileName().c_str();
-  status          = stage_requestStatusName( fr->status() );
-  char sid[4096];
-  sprintf( sid, "%llu", fr->id() );
-  redirectionpfn2 = sid;  // request id
-  redirectionpfn2 += ":";
-  redirectionpfn2 += stagehost;
-  redirectionpfn2 += ":";
-  redirectionpfn2 += serviceclass;
-  // Attach the port for the local host connection on a diskserver to talk with stagerJob
-  redirectionpfn2 += ":";
-  redirectionpfn2 += fr->port();
-  // Attach the sub req ID needed to identity the local host connection
-  redirectionpfn2 += ":";
-  redirectionpfn2 += fr->subreqId().c_str();
-  delete subreq;
-  delete respvec[0];
-  return true;
-}
-
-
-//------------------------------------------------------------------------------
-// Put
-//------------------------------------------------------------------------------
-bool
-XrdxCastor2Stager::Put( XrdOucErrInfo& error,
-                        uid_t          uid,
-                        gid_t          gid,
-                        const char*    path,
-                        const char*    stagehost,
-                        const char*    serviceclass,
-                        XrdOucString&  redirectionhost,
-                        XrdOucString&  redirectionpfn,
-                        XrdOucString&  redirectionpfn2,
-                        XrdOucString&  status )
+XrdxCastor2Stager::Prepare2Get(XrdOucErrInfo& error,
+                               uid_t          uid,
+                               gid_t          gid,
+                               const char*    path,
+                               const char*    stagehost,
+                               const char*    serviceclass,
+                               struct RespInfo& respInfo)
 {
   //const char* tident = error.getErrUser();
   struct stage_options Opts;
   xcastor_static_debug("uid=%i, gid=%i, path=%s, stagehost=%s, sericeclass=%s",
-                uid, gid, path, stagehost, serviceclass );
-  XrdOucString ErrPrefix = "uid=";
-  ErrPrefix += ( int )uid;
-  ErrPrefix += " gid=";
-  ErrPrefix += ( int )gid;
-  ErrPrefix += " path=";
-  ErrPrefix += path;
-  ErrPrefix += " stagehost=";
-  ErrPrefix += stagehost;
-  ErrPrefix += " serviceclass=";
-  ErrPrefix += serviceclass;
-  const char* stageTag = "xCastor2Put";
-  castor::stager::StagePutRequest  putReq_rw;
-  castor::stager::SubRequest*      subreq = new castor::stager::SubRequest();
+                       uid, gid, path, stagehost, serviceclass);
+  // Construct the request and subrequest objects
+  castor::stager::StagePrepareToGetRequest  getReq_ro;
+  castor::stager::SubRequest* subreq = new castor::stager::SubRequest();
   std::vector<castor::rh::Response*>respvec;
-  castor::client::VectorResponseHandler rh( &respvec );
-  int mask = umask( 0 );
-  umask( mask );
-  putReq_rw.setUserTag( stageTag );
-  putReq_rw.setMask( mask );
-  putReq_rw.addSubRequests( subreq );
-  subreq->setRequest( &putReq_rw );
-  subreq->setProtocol( std::string( "xroot" ) );
-  subreq->setFileName( std::string( path ) );
-  subreq->setModeBits( 0744 );
-  castor::client::BaseClient cs2client( stage_getClientTimeout(), -1 );
-  Opts.stage_host    = ( char* )stagehost;
-  Opts.service_class = ( char* )serviceclass;
+  castor::client::VectorResponseHandler rh(&respvec);
+  int mask = umask(0);
+  umask(mask);
+  getReq_ro.setUserTag("xCastor2P2Get");
+  getReq_ro.setMask(mask);
+  getReq_ro.addSubRequests(subreq);
+  subreq->setRequest(&getReq_ro);
+  subreq->setProtocol(std::string("xroot"));
+  subreq->setFileName(std::string(path));
+  subreq->setModeBits(0744);
+  castor::client::BaseClient cs2client(stage_getClientTimeout(), -1);
+  Opts.stage_host    = (char*)stagehost;
+  Opts.service_class = (char*)serviceclass;
   Opts.stage_version = 2;
   Opts.stage_port    = 0;
-  cs2client.setOptions( &Opts );
-  cs2client.setAuthorizationId( uid, gid );
+  cs2client.setOptions(&Opts);
+  cs2client.setAuthorizationId(uid, gid);
 
-  try   {
-    xcastor_static_debug("Sending Put path=%s, uid=%i, gid=%i, stagehost=%s, svc=%s", 
-                  path, uid, gid, stagehost, serviceclass);
-    std::string reqid = cs2client.sendRequest( &putReq_rw, &rh );
-  } catch ( castor::exception::Communication e ) {
-    xcastor_static_debug("Communications error: %s", e.getMessage().str().c_str());
-    error.setErrInfo( ECOMM, e.getMessage().str().c_str() );
+  try
+  {
+    xcastor_static_debug("Sending Prepare2Get path=%s, uid=%i, gid=%i, stagehost=%s, svc=%s",
+                         path, uid, gid, stagehost, serviceclass);
+    std::string reqid = cs2client.sendRequest(&getReq_ro, &rh);
+  }
+  catch (castor::exception::Communication e)
+  {
+    xcastor_static_debug("Communication error: %s", e.getMessage().str().c_str());
+    error.setErrInfo(ECOMM, e.getMessage().str().c_str());
     delete subreq;
     return false;
-  } catch ( castor::exception::Exception e ) {
+  }
+  catch (castor::exception::Exception e)
+  {
     xcastor_static_debug("sendRequest exception: %s", e.getMessage().str().c_str());
-    error.setErrInfo( ECOMM, e.getMessage().str().c_str() );
+    error.setErrInfo(ECOMM, e.getMessage().str().c_str());
     delete subreq;
     return false;
   }
 
-  if ( respvec.size() <= 0 ) {
-    xcastor_static_debug("No response for put for: %s", path);
-    error.setErrInfo( ECOMM, "No response" );
+  if (respvec.size() <= 0)
+  {
+    xcastor_static_debug("No response for prepare2get for: %s", path);
+    error.setErrInfo(ECOMM, "No response");
     delete subreq;
     return false;
   }
 
   // Proccess the response.
   castor::rh::IOResponse* fr =
-    dynamic_cast<castor::rh::IOResponse*>( respvec[0] );
+    dynamic_cast<castor::rh::IOResponse*>(respvec[0]);
 
-  if ( 0 == fr ) {
-    xcastor_static_debug("Invalid response object for put for: %s", path);
-    error.setErrInfo( ECOMM, "Invalid response object for put" );
+  if (0 == fr)
+  {
+    xcastor_static_debug("Invalid response object for prepare2get: %s ", path);
+    error.setErrInfo(ECOMM, "Invalid response object for prepare2get");
     delete subreq;
     return false;
   }
 
-  if ( fr->errorCode() ) {
+  if (fr->errorCode())
+  {
+    std::stringstream sstr;
+    sstr << "uid=" << (int)uid << " gid=" << (int)gid << " path=" << path
+         << " stagehost=" << stagehost << " serviceclass=" << serviceclass;
+    XrdOucString ErrPrefix = sstr.str().c_str();
     xcastor_static_debug("received error errc=%i, errmsg=%s\%i, subreqid=%s, reqid=%s",
-                         fr->errorCode(), fr->errorMessage().c_str(),
-                         ErrPrefix.c_str(), fr->subreqId().c_str(), 
-                         fr->reqAssociated().c_str());
+                         fr->errorCode(), fr->errorMessage().c_str(), ErrPrefix.c_str(),
+                         fr->subreqId().c_str(), fr->reqAssociated().c_str());
     XrdOucString emsg = "received error errc=";
-    emsg += ( int )fr->errorCode();
+    emsg += (int)fr->errorCode();
     emsg += " errmsg=\"";
     emsg += fr->errorMessage().c_str();
     emsg += "\" ";
@@ -408,36 +182,177 @@ XrdxCastor2Stager::Put( XrdOucErrInfo& error,
     emsg += fr->subreqId().c_str();
     emsg += " reqid=";
     emsg += fr->reqAssociated().c_str();
-    error.setErrInfo( fr->errorCode(), emsg.c_str() );
+    error.setErrInfo(fr->errorCode(), emsg.c_str());
     delete subreq;
     delete respvec[0];
     return false;
-  }  else {
-    xcastor_static_debug("%s rc=%i, path=%s:%s ( %s ) id=%i", 
-                         stage_requestStatusName( fr->status() ), fr->errorCode(),
-                         fr->server().c_str(), fr->fileName().c_str(), 
+  }
+  else
+  {
+    xcastor_static_debug("%s status=%u, path=%s:%s ( %s ) id=%i",
+                         stage_requestStatusName(fr->status()), fr->status(),
+                         fr->server().c_str(), fr->fileName().c_str(),
                          fr->castorFileName().c_str(), fr->id());
   }
 
-  redirectionhost = fr->server().c_str();
-  redirectionpfn  = fr->fileName().c_str();
-  char sid[4096];
-  sprintf( sid, "%llu", fr->id() );
-  redirectionpfn2 = sid;  // request id
-  redirectionpfn2 += ":";
-  redirectionpfn2 += stagehost;
-  redirectionpfn2 += ":";
-  redirectionpfn2 += serviceclass;
-  // Attach the port for the local host connection on a diskserver to talk with stagerJob
-  redirectionpfn2 += ":";
-  redirectionpfn2 += fr->port();
-  // Attach the sub req ID needed to identity the local host connection
-  redirectionpfn2 += ":";
-  redirectionpfn2 += fr->subreqId().c_str();
-  status          = stage_requestStatusName( fr->status() );
+  respInfo.mRedirectionHost = fr->server().c_str();
+  respInfo.mRedirectionPfn1 = fr->fileName().c_str();
+  respInfo.mStageStatus = stage_requestStatusName(fr->status());
   delete subreq;
   delete respvec[0];
   return true;
+}
+
+
+//------------------------------------------------------------------------------
+// Send an async request to the stager. This request can be a GET or a PUT
+// or an UPDATE.
+//------------------------------------------------------------------------------
+int 
+XrdxCastor2Stager::DoAsyncReq(XrdOucErrInfo& error,
+                              const std::string& opType,
+                              struct ReqInfo* reqInfo,
+                              struct RespInfo& respInfo)
+{
+ xcastor_static_debug("op=%s uid=%i, gid=%i, path=%s, stagehost=%s, serviceclass=%s",
+                      opType.c_str(), reqInfo->mUid, reqInfo->mGid, reqInfo->mPath, 
+                      reqInfo->mStageHost, reqInfo->mServiceClass);
+  // Build the user id
+  std::string user_tag;
+  const char* tident = error.getErrUser();
+  std::stringstream sstr;
+  sstr << tident << ":" << reqInfo->mPath << ":" << opType;
+  std::string user_id = sstr.str();
+
+  // Check if we are coming back for an old request
+  bool found = false;
+  struct xcastor::XrdxCastorClient::ReqElement* elem = 0;
+  elem = XrdxCastor2FS->msCastorClient->GetResponse(user_id, found);
+  
+  // We are looking for a previous request 
+  if (found) 
+  {
+    if (elem)
+    {
+      // Response was received, we just need to process it 
+      xcastor_static_debug("found response for previous request");
+      DropDelayTag(user_id.c_str());
+      return ProcessResponse(error, elem, opType, reqInfo, respInfo);     
+    }
+    else 
+    {
+      // Response not received, we need to stall the client some more
+      xcastor_static_debug("response for previous request hasn't arrived yer");
+      return SFS_STALL;
+    }
+  }
+  
+  // Build the request and response objects
+  castor::stager::FileRequest* request;
+  
+  if (opType == "get")
+  {
+    user_tag = "xCasto2Get";
+    request = new castor::stager::StageGetRequest();
+  }
+  else if (opType == "put")
+  {
+    user_tag = "xCastor2Put";
+    request = new castor::stager::StagePutRequest();
+    
+  }
+  else if (opType == "update")
+  {
+    user_tag = "xCastor2Update";
+    request = new castor::stager::StageUpdateRequest();
+  }
+  else 
+  {
+    xcastor_static_err("unknown operation type: %s", opType.c_str());
+    return SFS_ERROR;      
+  }
+
+  castor::stager::SubRequest* subreq = new castor::stager::SubRequest();
+  std::vector<castor::rh::Response*>* respvec =  new std::vector<castor::rh::Response*>();
+  castor::client::VectorResponseHandler* rh = new castor::client::VectorResponseHandler(respvec);
+  int mask = umask(0);
+  umask(mask);
+  request->setUserTag(user_tag);
+  request->setMask(mask);
+  request->addSubRequests(subreq);
+  request->setEuid(reqInfo->mUid);
+  request->setEgid(reqInfo->mGid);
+  request->setUserName(std::string(tident));
+  request->setPid(getpid());
+  request->setSvcClassName(std::string(reqInfo->mServiceClass));
+  subreq->setRequest(request);
+  subreq->setProtocol(std::string("xroot"));
+  subreq->setFileName(std::string(reqInfo->mPath));
+  subreq->setModeBits(0744);
+
+  try
+  {
+    // Sending asynchronous get requests
+    xcastor_static_debug("op=%s path=%s, uid=%i, gid=%i, stagehost=%s, svc=%s",
+                         opType.c_str(), reqInfo->mPath, reqInfo->mUid, reqInfo->mGid, 
+                         reqInfo->mStageHost, reqInfo->mServiceClass);
+
+    int retc = XrdxCastor2FS->msCastorClient->SendAsyncRequest( user_id, 
+                    std::string(reqInfo->mStageHost), 0, request, rh, respvec);
+
+    if (retc == SFS_ERROR)
+    {
+      // Error occured, free memory
+      xcastor_static_err("error while sending the async request");
+      DeleteReqResp(request, rh, respvec);
+      return retc;
+    }
+    else if (retc > SFS_OK)
+    {      
+      // Free memory and stall the client 
+      DeleteReqResp(request, rh, respvec);
+      return SFS_STALL;
+    }
+  }
+  catch (castor::exception::Communication e)
+  {
+    xcastor_static_debug("Communications error: %s", e.getMessage().str().c_str());
+    error.setErrInfo(ECOMM, e.getMessage().str().c_str());
+    return SFS_ERROR;
+  }
+  catch (castor::exception::Exception e)
+  {
+    xcastor_static_debug("% request exception: %s", opType.c_str(),
+                         e.getMessage().str().c_str());
+    error.setErrInfo(ECOMM, e.getMessage().str().c_str());
+    return SFS_ERROR;
+  }
+
+  // Try to get the response, maybe we are lucky ...
+  elem = 0;
+  found = false;
+  elem = XrdxCastor2FS->msCastorClient->GetResponse(user_id, found);
+
+  if (elem)
+  {
+    // Response found, process it
+    return ProcessResponse(error, elem, opType, reqInfo, respInfo);
+  }
+  else
+  {
+    if (found)
+    {
+      // Request found, but response not yet ready => stall the client
+      xcastor_static_debug("%s request found, but response hasn't arrived", opType.c_str());
+      return SFS_STALL;
+    }
+    else
+    {
+      // Request not found => return error to the client
+      xcastor_static_err("%s request not found, although we were expecting it", opType.c_str());
+      return SFS_ERROR;
+    }
+  }
 }
 
 
@@ -445,18 +360,18 @@ XrdxCastor2Stager::Put( XrdOucErrInfo& error,
 // Remove
 //------------------------------------------------------------------------------
 bool
-XrdxCastor2Stager::Rm( XrdOucErrInfo& error,
-                       uid_t          uid,
-                       gid_t          gid,
-                       const char*    path,
-                       const char*    stagehost,
-                       const char*    serviceclass )
+XrdxCastor2Stager::Rm(XrdOucErrInfo& error,
+                      uid_t          uid,
+                      gid_t          gid,
+                      const char*    path,
+                      const char*    stagehost,
+                      const char*    serviceclass)
 {
   //const char* tident = error.getErrUser();
   XrdOucString ErrPrefix = "uid=";
-  ErrPrefix += ( int )uid;
+  ErrPrefix += (int)uid;
   ErrPrefix += " gid=";
-  ErrPrefix += ( int )gid;
+  ErrPrefix += (int)gid;
   ErrPrefix += " path=";
   ErrPrefix += path;
   ErrPrefix += " stagehost=";
@@ -470,177 +385,52 @@ XrdxCastor2Stager::Rm( XrdOucErrInfo& error,
   int nbresps;
   char* reqid;
   char errbuf[1024];
-  Opts.stage_host    = ( char* )stagehost;
-  Opts.service_class = ( char* )serviceclass;
+  Opts.stage_host    = (char*)stagehost;
+  Opts.service_class = (char*)serviceclass;
   Opts.stage_version = 2;
   Opts.stage_port    = 0;
-  requests[0].filename = ( char* ) path;
-  stage_setid( uid, gid );
-  stager_seterrbuf( errbuf, sizeof( errbuf ) );
+  requests[0].filename = (char*) path;
+  stage_setid(uid, gid);
+  stager_seterrbuf(errbuf, sizeof(errbuf));
 
-  if ( stage_rm( requests, 1, &resp, &nbresps, &reqid, &Opts ) < 0 ) {
-    if ( serrno != 0 ) {
+  if (stage_rm(requests, 1, &resp, &nbresps, &reqid, &Opts) < 0)
+  {
+    if (serrno != 0)
+    {
       xcastor_static_debug("error: %s", sstrerror(serrno));
-      error.setErrInfo( ECOMM, sstrerror( serrno ) );
+      error.setErrInfo(ECOMM, sstrerror(serrno));
     }
 
-    if ( *errbuf ) {
+    if (*errbuf)
+    {
       xcastor_static_debug("err buffer: %s", errbuf);
-      error.setErrInfo( ECOMM, errbuf );
+      error.setErrInfo(ECOMM, errbuf);
     }
 
     return false;
-  } else {
+  }
+  else
+  {
     xcastor_static_debug("Received %i stage_rm() responses.", nbresps);
 
-    for ( i = 0; i < nbresps; i++ ) {
-      xcastor_static_debug("reqid=%s, rc=%i, msg=%s", reqid, 
-                    resp[i].errorCode, resp[i].errorMessage);
+    for (i = 0; i < nbresps; i++)
+    {
+      xcastor_static_debug("reqid=%s, rc=%i, msg=%s", reqid,
+                           resp[i].errorCode, resp[i].errorMessage);
 
-      if ( resp[i].errorCode ) {
+      if (resp[i].errorCode)
+      {
         xcastor_static_debug("path=%s, reqid=%s, rc=%i, msg=%s",
-                      path, reqid, resp[i].errorCode, resp[i].errorMessage);
-        error.setErrInfo( EINVAL, resp[i].errorMessage );
-        free_fileresp( resp, nbresps );
+                             path, reqid, resp[i].errorCode, resp[i].errorMessage);
+        error.setErrInfo(EINVAL, resp[i].errorMessage);
+        free_fileresp(resp, nbresps);
         return false;
       }
     }
 
-    free_fileresp( resp, nbresps );
+    free_fileresp(resp, nbresps);
   }
 
-  return true;
-}
-
-
-//------------------------------------------------------------------------------
-// Update
-//------------------------------------------------------------------------------
-bool
-XrdxCastor2Stager::Update( XrdOucErrInfo& error,
-                           uid_t          uid,
-                           gid_t          gid,
-                           const char*    path,
-                           const char*    stagehost,
-                           const char*    serviceclass,
-                           XrdOucString&  redirectionhost,
-                           XrdOucString&  redirectionpfn,
-                           XrdOucString&  redirectionpfn2,
-                           XrdOucString&  status )
-{
-  //const char* tident = error.getErrUser();
-  struct stage_options Opts;
-  xcastor_static_debug("uid=%i, gid=%i, path=%s, stagehost=%s, sericeclass=%s",
-                uid, gid, path, stagehost, serviceclass );
-  XrdOucString ErrPrefix = "uid=";
-  ErrPrefix += ( int )uid;
-  ErrPrefix += " gid=";
-  ErrPrefix += ( int )gid;
-  ErrPrefix += " path=";
-  ErrPrefix += path;
-  ErrPrefix += " stagehost=";
-  ErrPrefix += stagehost;
-  ErrPrefix += " serviceclass=";
-  ErrPrefix += serviceclass;
-  const char* stageTag = "xCastor2Update";
-  castor::stager::StageUpdateRequest  putReq_rw;
-  castor::stager::SubRequest*      subreq = new castor::stager::SubRequest();
-  std::vector<castor::rh::Response*>respvec;
-  castor::client::VectorResponseHandler rh( &respvec );
-  int mask = umask( 0 );
-  umask( mask );
-  putReq_rw.setUserTag( stageTag );
-  putReq_rw.setMask( mask );
-  putReq_rw.addSubRequests( subreq );
-  subreq->setRequest( &putReq_rw );
-  subreq->setProtocol( std::string( "xroot" ) );
-  subreq->setFileName( std::string( path ) );
-  subreq->setModeBits( 0744 );
-  castor::client::BaseClient       cs2client( stage_getClientTimeout(), -1 );
-  Opts.stage_host    = ( char* )stagehost;
-  Opts.service_class = ( char* )serviceclass;
-  Opts.stage_version = 2;
-  Opts.stage_port    = 0;
-  cs2client.setOptions( &Opts );
-  cs2client.setAuthorizationId( uid, gid );
-
-  try   {
-    xcastor_static_debug("Sending Update path=%s, uid=%i, gid=%i, stagehost=%s, svc=%s", 
-                  path, uid, gid, stagehost, serviceclass);
-    std::string reqid = cs2client.sendRequest( &putReq_rw, &rh );
-  } catch ( castor::exception::Communication e ) {
-    xcastor_static_debug("Communications error: %s", e.getMessage().str().c_str());
-    error.setErrInfo( ECOMM, e.getMessage().str().c_str() );
-    delete subreq;
-    return false;
-  } catch ( castor::exception::Exception e ) {
-    xcastor_static_debug("sendRequest exception: %s", e.getMessage().str().c_str());
-    error.setErrInfo( ECOMM, e.getMessage().str().c_str() );
-    delete subreq;
-    return false;
-  }
-
-  if ( respvec.size() <= 0 ) {
-    xcastor_static_debug("No response for update for: %s", path);
-    error.setErrInfo( ECOMM, "No response" );
-    delete subreq;
-    return false;
-  }
-
-  // Proccess the response.
-  castor::rh::IOResponse* fr =
-    dynamic_cast<castor::rh::IOResponse*>( respvec[0] );
-
-  if ( 0 == fr ) {
-    xcastor_static_debug("Invalid response object for update for: %s", path );
-    error.setErrInfo( ECOMM, "Invalid response object for update" );
-    delete subreq;
-    return false;
-  }
-
-  if ( fr->errorCode() ) {
-    xcastor_static_debug("received error errc=%i, errmsg=%s\%i, subreqid=%s, reqid=%s",
-                         fr->errorCode(), fr->errorMessage().c_str(),
-                         ErrPrefix.c_str(), fr->subreqId().c_str(), fr->reqAssociated().c_str());
-    XrdOucString emsg = "received error errc=";
-    emsg += ( int )fr->errorCode();
-    emsg += " errmsg=\"";
-    emsg += fr->errorMessage().c_str();
-    emsg += "\" ";
-    emsg += ErrPrefix;
-    emsg += " subreqid=";
-    emsg += fr->subreqId().c_str();
-    emsg += " reqid=";
-    emsg += fr->reqAssociated().c_str();
-    error.setErrInfo( fr->errorCode(), emsg.c_str() );
-    delete subreq;
-    delete respvec[0];
-    return false;
-  }  else {
-    xcastor_static_debug("%s rc=%i, path=%s:%s ( %s ) id=%i", 
-                         stage_requestStatusName( fr->status() ), fr->errorCode(),
-                         fr->server().c_str(), fr->fileName().c_str(), 
-                         fr->castorFileName().c_str(), fr->id());
-  }
-
-  redirectionhost = fr->server().c_str();
-  redirectionpfn  = fr->fileName().c_str();
-  char sid[4096];
-  sprintf( sid, "%llu", fr->id() );
-  redirectionpfn2 = sid;  // request id
-  redirectionpfn2 += ":";
-  redirectionpfn2 += stagehost;
-  redirectionpfn2 += ":";
-  redirectionpfn2 += serviceclass;
-  // Attach the port for the local host connection on a diskserver to talk with stagerJob
-  redirectionpfn2 += ":";
-  redirectionpfn2 += fr->port();
-  // Attach the sub req ID needed to identity the local host connection
-  redirectionpfn2 += ":";
-  redirectionpfn2 += fr->subreqId().c_str();
-  status          = stage_requestStatusName( fr->status() );
-  delete subreq;
-  delete respvec[0];
   return true;
 }
 
@@ -649,56 +439,63 @@ XrdxCastor2Stager::Update( XrdOucErrInfo& error,
 // Update done
 //------------------------------------------------------------------------------
 bool
-XrdxCastor2Stager::UpdateDone( XrdOucErrInfo& error,
-                               const char*    path,
-                               const char*    reqid,
-                               const char*    fileid,
-                               const char*    nameserver,
-                               const char*    stagehost,
-                               const char*    serviceclass )
+XrdxCastor2Stager::UpdateDone(XrdOucErrInfo& error,
+                              const char*    path,
+                              const char*    reqid,
+                              const char*    fileid,
+                              const char*    nameserver,
+                              const char*    stagehost,
+                              const char*    serviceclass)
 {
   //const char* tident = error.getErrUser();
   xcastor_static_debug("path=%s, stagehost=%s, sericeclass=%s",
-                       path, stagehost, serviceclass );
+                       path, stagehost, serviceclass);
   castor::stager::SubRequest subReq;
-  subReq.setId( atoll( reqid ) );
+  subReq.setId(atoll(reqid));
   castor::Services* cs2service = castor::BaseObject::services();
 
-  if ( !cs2service ) {
-    error.setErrInfo( ENOMEM, "get castor2 baseobject services" );
+  if (!cs2service)
+  {
+    error.setErrInfo(ENOMEM, "get castor2 baseobject services");
     return false;
   }
 
-  castor::IService* cs2iservice = cs2service->service( "RemoteJobSvc", castor::SVC_REMOTEJOBSVC );
+  castor::IService* cs2iservice = cs2service->service("RemoteJobSvc", castor::SVC_REMOTEJOBSVC);
   castor::stager::IJobSvc* jobSvc;
-  jobSvc = dynamic_cast<castor::stager::IJobSvc*>( cs2iservice );
+  jobSvc = dynamic_cast<castor::stager::IJobSvc*>(cs2iservice);
 
-  if ( !cs2iservice ) {
-    error.setErrInfo( ENOMEM, "get castor2 remote job service" );
+  if (!cs2iservice)
+  {
+    error.setErrInfo(ENOMEM, "get castor2 remote job service");
     return false;
   }
 
-  try {
-    xcastor_static_debug("Calling getUpdateDone( %s ) for: %s ", reqid, path );
-    jobSvc->getUpdateDone( ( unsigned long long ) atoll( reqid ), 
-                           ( unsigned long long ) atoll( fileid ), 
-                           nameserver );
-  } catch ( castor::exception::Communication e ) {
-    xcastor_static_debug("Communications error: %s", e.getMessage().str().c_str() );
-    error.setErrInfo( ECOMM, e.getMessage().str().c_str() );
+  try
+  {
+    xcastor_static_debug("Calling getUpdateDone( %s ) for: %s ", reqid, path);
+    jobSvc->getUpdateDone((unsigned long long) atoll(reqid),
+                          (unsigned long long) atoll(fileid),
+                          nameserver);
+  }
+  catch (castor::exception::Communication e)
+  {
+    xcastor_static_debug("Communications error: %s", e.getMessage().str().c_str());
+    error.setErrInfo(ECOMM, e.getMessage().str().c_str());
     // delete cs2iservice;
-    //    delete cs2service;
+    // delete cs2service;
     return false;
-  } catch ( castor::exception::Exception e ) {
-    xcastor_static_debug("Fatal exception: %s", e.getMessage().str().c_str() );
-    error.setErrInfo( ECOMM, e.getMessage().str().c_str() );
+  }
+  catch (castor::exception::Exception e)
+  {
+    xcastor_static_debug("Fatal exception: %s", e.getMessage().str().c_str());
+    error.setErrInfo(ECOMM, e.getMessage().str().c_str());
     // delete cs2iservice;
-    //    delete cs2service;
+    // delete cs2service;
     return false;
   }
 
   // delete cs2iservice;
-  //  delete cs2service;
+  // delete cs2service;
   return true;
 }
 
@@ -707,101 +504,55 @@ XrdxCastor2Stager::UpdateDone( XrdOucErrInfo& error,
 // First write
 //------------------------------------------------------------------------------
 bool
-XrdxCastor2Stager::FirstWrite( XrdOucErrInfo& error,
-                               const char*    path,
-                               const char*    reqid,
-                               const char*    fileid,
-                               const char*    nameserver,
-                               const char*    stagehost,
-                               const char*    serviceclass )
-{
-  //const char* tident = error.getErrUser();
-  xcastor_static_debug("path=%s, stagehost=%s, sericeclass=%s",
-                       path, stagehost, serviceclass );
-  castor::stager::SubRequest subReq;
-  subReq.setId( atoll( reqid ) );
-  castor::Services* cs2service = castor::BaseObject::services();
-
-  if ( !cs2service ) {
-    error.setErrInfo( ENOMEM, "get castor2 baseobject services" );
-    return false;
-  }
-
-  castor::IService* cs2iservice = cs2service->service( "RemoteJobSvc", 
-                                                       castor::SVC_REMOTEJOBSVC );
-  castor::stager::IJobSvc* jobSvc;
-  jobSvc = dynamic_cast<castor::stager::IJobSvc*>( cs2iservice );
-
-  if ( !cs2iservice ) {
-    error.setErrInfo( ENOMEM, "get castor2 remote job service" );
-    return false;
-  }
-
-  try {
-    xcastor_static_debug("Calling firstByteWritten( %s ) for: %s ", reqid, path );
-    jobSvc->firstByteWritten( ( unsigned long long ) atoll( reqid ), 
-                              ( unsigned long long ) atoll( fileid ), 
-                              nameserver );
-  } catch ( castor::exception::Communication e ) {
-    xcastor_static_debug("Communications error: %s", e.getMessage().str().c_str() );
-    error.setErrInfo( ECOMM, e.getMessage().str().c_str() );
-    return false;
-  } catch ( castor::exception::Exception e ) {
-    xcastor_static_debug("Fatal exception: %s", e.getMessage().str().c_str() );
-    error.setErrInfo( ECOMM, e.getMessage().str().c_str() );
-    return false;
-  }
-
-  return true;
-}
-
-
-//------------------------------------------------------------------------------
-// Put failed
-//------------------------------------------------------------------------------
-bool
-XrdxCastor2Stager::PutFailed( XrdOucErrInfo& error,
+XrdxCastor2Stager::FirstWrite(XrdOucErrInfo& error,
                               const char*    path,
                               const char*    reqid,
                               const char*    fileid,
                               const char*    nameserver,
                               const char*    stagehost,
-                              const char*    serviceclass )
+                              const char*    serviceclass)
 {
   //const char* tident = error.getErrUser();
   xcastor_static_debug("path=%s, stagehost=%s, sericeclass=%s",
-                       path, stagehost, serviceclass );
+                       path, stagehost, serviceclass);
   castor::stager::SubRequest subReq;
-  subReq.setId( atoll( reqid ) );
+  subReq.setId(atoll(reqid));
   castor::Services* cs2service = castor::BaseObject::services();
 
-  if ( !cs2service ) {
-    error.setErrInfo( ENOMEM, "get castor2 baseobject services" );
+  if (!cs2service)
+  {
+    error.setErrInfo(ENOMEM, "get castor2 baseobject services");
     return false;
   }
 
-  castor::IService* cs2iservice = cs2service->service( "RemoteJobSvc", 
-                                                       castor::SVC_REMOTEJOBSVC );
+  castor::IService* cs2iservice = cs2service->service("RemoteJobSvc",
+                                  castor::SVC_REMOTEJOBSVC);
   castor::stager::IJobSvc* jobSvc;
-  jobSvc = dynamic_cast<castor::stager::IJobSvc*>( cs2iservice );
+  jobSvc = dynamic_cast<castor::stager::IJobSvc*>(cs2iservice);
 
-  if ( !cs2iservice ) {
-    error.setErrInfo( ENOMEM, "get castor2 remote job service" );
+  if (!cs2iservice)
+  {
+    error.setErrInfo(ENOMEM, "get castor2 remote job service");
     return false;
   }
 
-  try {
-    xcastor_static_debug("Calling PutFailed( %s ) for: %s ", reqid, path );
-    jobSvc->putFailed( ( unsigned long long ) atoll( reqid ), 
-                       ( unsigned long long ) atoll( fileid ), 
-                       nameserver );
-  } catch ( castor::exception::Communication e ) {
-    xcastor_static_debug("Communications error: %s", e.getMessage().str().c_str() );
-    error.setErrInfo( ECOMM, e.getMessage().str().c_str() );
+  try
+  {
+    xcastor_static_debug("Calling firstByteWritten( %s ) for: %s ", reqid, path);
+    jobSvc->firstByteWritten((unsigned long long) atoll(reqid),
+                             (unsigned long long) atoll(fileid),
+                             nameserver);
+  }
+  catch (castor::exception::Communication e)
+  {
+    xcastor_static_debug("Communications error: %s", e.getMessage().str().c_str());
+    error.setErrInfo(ECOMM, e.getMessage().str().c_str());
     return false;
-  } catch ( castor::exception::Exception e ) {
-    xcastor_static_debug("Fatal exception: %s", e.getMessage().str().c_str() );
-    error.setErrInfo( ECOMM, e.getMessage().str().c_str() );
+  }
+  catch (castor::exception::Exception e)
+  {
+    xcastor_static_debug("Fatal exception: %s", e.getMessage().str().c_str());
+    error.setErrInfo(ECOMM, e.getMessage().str().c_str());
     return false;
   }
 
@@ -813,83 +564,180 @@ XrdxCastor2Stager::PutFailed( XrdOucErrInfo& error,
 // Stager query
 //------------------------------------------------------------------------------
 bool
-XrdxCastor2Stager::StagerQuery( XrdOucErrInfo& error,
-                                uid_t          uid,
-                                gid_t          gid,
-                                const char*    path,
-                                const char*    stagehost,
-                                const char*    serviceclass,
-                                XrdOucString&  status )
+XrdxCastor2Stager::StagerQuery(XrdOucErrInfo& error,
+                               uid_t          uid,
+                               gid_t          gid,
+                               const char*    path,
+                               const char*    stagehost,
+                               const char*    serviceclass,
+                               XrdOucString&  status)
 {
   //const char* tident = error.getErrUser();
   xcastor_static_debug("uid=%i, gid=%i, path=%s, stagehost=%s, sericeclass=%s",
-                uid, gid, path, stagehost, serviceclass );
+                       uid, gid, path, stagehost, serviceclass);
   XrdOucString ErrPrefix = "uid=";
-  ErrPrefix += ( int )uid;
+  ErrPrefix += (int)uid;
   ErrPrefix += " gid=";
-  ErrPrefix += ( int )gid;
+  ErrPrefix += (int)gid;
   ErrPrefix += " path=";
   ErrPrefix += path;
   ErrPrefix += " stagehost=";
   ErrPrefix += stagehost;
   ErrPrefix += " serviceclass=";
   ErrPrefix += serviceclass;
-
   struct stage_query_req requests[1];
   struct stage_filequery_resp* resp;
   int  nbresps, i;
   char errbuf[1024];
   struct stage_options Opts;
   errbuf[0] = 0;
-  Opts.stage_host    = ( char* )stagehost;
-  Opts.service_class = ( char* )serviceclass;
+  Opts.stage_host    = (char*)stagehost;
+  Opts.service_class = (char*)serviceclass;
   Opts.stage_version = 2;
   Opts.stage_port    = 0;
   requests[0].type  = BY_FILENAME;
-  requests[0].param = ( char* ) path;
-  stager_seterrbuf( errbuf, sizeof( errbuf ) );
-  stage_setid( uid, gid );
+  requests[0].param = (char*) path;
+  stager_seterrbuf(errbuf, sizeof(errbuf));
+  stage_setid(uid, gid);
 
-  if ( stage_filequery( requests, 1, &resp, &nbresps, &Opts ) < 0 ) {
-    if ( serrno != 0 ) {
+  if (stage_filequery(requests, 1, &resp, &nbresps, &Opts) < 0)
+  {
+    if (serrno != 0)
+    {
       xcastor_static_debug("error: %s", sstrerror(serrno));
-      error.setErrInfo( ECOMM, sstrerror( serrno ) );
+      error.setErrInfo(ECOMM, sstrerror(serrno));
     }
 
-    if ( *errbuf ) {
+    if (*errbuf)
+    {
       xcastor_static_debug("error buff: %s", errbuf);
-      error.setErrInfo( ECOMM, errbuf );
+      error.setErrInfo(ECOMM, errbuf);
     }
 
     return false;
-  } else {
-    xcastor_static_debug("Received %i stage_filequery() responses", nbresps );
+  }
+  else
+  {
+    xcastor_static_debug("Received %i stage_filequery() responses", nbresps);
 
-    for ( i = 0; i < nbresps; i++ ) {
-      xcastor_static_debug("status=%s rc=%i, path=%s:%s ( %s ) id=%i", 
-                           stage_requestStatusName( resp[i].status ), resp[i].errorCode,
-                           resp[i].diskserver, resp[i].filename, 
+    for (i = 0; i < nbresps; i++)
+    {
+      xcastor_static_debug("status=%s rc=%i, path=%s:%s ( %s ) id=%i",
+                           stage_requestStatusName(resp[i].status), resp[i].errorCode,
+                           resp[i].diskserver, resp[i].filename,
                            resp[i].castorfilename);
-      status = stage_fileStatusName( resp[i].status );
-      
-      if ( *resp[i].castorfilename ) {
-        if ( !resp[i].errorCode ) {
-          xcastor_static_debug("File status: %s for path: %s", status.c_str(), path );
-        } else {
-          xcastor_static_debug("Error for path: %s", path );
-          free_filequery_resp( resp, nbresps );
-          error.setErrInfo( EBUSY, "file is not staged in requested stager" );
+      status = stage_fileStatusName(resp[i].status);
+
+      if (*resp[i].castorfilename)
+      {
+        if (!resp[i].errorCode)
+        {
+          xcastor_static_debug("File status: %s for path: %s", status.c_str(), path);
+        }
+        else
+        {
+          xcastor_static_debug("Error for path: %s", path);
+          free_filequery_resp(resp, nbresps);
+          error.setErrInfo(EBUSY, "file is not staged in requested stager");
           return false;
         }
-      } else {
+      }
+      else
+      {
         status = "NA";
       }
     }
 
-    free_filequery_resp( resp, nbresps );
+    free_filequery_resp(resp, nbresps);
   }
 
   return true;
+}
+
+
+//--------------------------------------------------------------------------
+// Process response received form the stager
+//--------------------------------------------------------------------------
+int 
+XrdxCastor2Stager::ProcessResponse(XrdOucErrInfo& error,
+                                   struct xcastor::XrdxCastorClient::ReqElement*& respElem,
+                                   const std::string& opType,
+                                   struct ReqInfo* reqInfo,
+                                   struct RespInfo& respInfo)
+{
+  if (respElem->mRespVec->size() <= 0)
+  {
+    xcastor_static_debug("No response for %s for path %s", 
+                         opType.c_str(), reqInfo->mPath);
+    error.setErrInfo(ECOMM, "No response from stager ");
+    delete respElem;
+    return SFS_ERROR;
+  }
+
+  // Proccess the response
+  castor::rh::IOResponse* fr =
+    dynamic_cast<castor::rh::IOResponse*>(respElem->mRespVec->at(0));
+
+  if (0 == fr)
+  {
+    xcastor_static_debug("Invalid response object for %s for path %s", 
+                         opType.c_str(), reqInfo->mPath);
+    error.setErrInfo(ECOMM, "Invalid response object");
+    delete respElem;
+    return SFS_ERROR;
+  }
+
+  if (fr->errorCode())
+  {
+    std::stringstream sstr;
+    sstr.str(std::string());
+    sstr << "uid=" << (int)reqInfo->mUid << " gid=" << (int)reqInfo->mGid 
+         << " path=" << reqInfo->mPath << " stagehost=" << reqInfo->mStageHost 
+         << " serviceclass=" << reqInfo->mServiceClass;
+    XrdOucString ErrPrefix = sstr.str().c_str();
+
+    xcastor_static_debug("received error errc=%i, errmsg=%s\%i, subreqid=%s, reqid=%s",
+                         fr->errorCode(), fr->errorMessage().c_str(),
+                         ErrPrefix.c_str(), fr->subreqId().c_str(),
+                         fr->reqAssociated().c_str());
+
+    sstr.str(std::string());
+    sstr << "received error errc=" << (int)fr->errorCode() << " errmsg=\""
+         << fr->errorMessage() << "\" " << ErrPrefix.c_str() << "subreqid="
+         << fr->subreqId() << " reqid=" << fr->reqAssociated();
+    XrdOucString emsg = sstr.str().c_str();
+    error.setErrInfo(fr->errorCode(), emsg.c_str());
+    delete respElem;
+    return SFS_ERROR;
+  }
+  else
+  {
+    xcastor_static_debug("%s rc=%i, path=%s:%s ( %s ) id=%i",
+                         stage_requestStatusName(fr->status()), fr->errorCode(),
+                         fr->server().c_str(), fr->fileName().c_str(),
+                         fr->castorFileName().c_str(), fr->id());
+  }
+
+  respInfo.mStageStatus = stage_requestStatusName(fr->status());
+  respInfo.mRedirectionHost = fr->server().c_str();
+  respInfo.mRedirectionPfn1 = fr->fileName().c_str();
+ 
+  char sid[4096];
+  sprintf(sid, "%llu", fr->id());
+  respInfo.mRedirectionPfn2 = sid;  // request id
+  respInfo.mRedirectionPfn2 += ":";
+  respInfo.mRedirectionPfn2 += reqInfo->mStageHost;
+  respInfo.mRedirectionPfn2 += ":";
+  respInfo.mRedirectionPfn2 += reqInfo->mServiceClass;
+  // Attach the port for the local host connection on a diskserver to talk with stagerJob
+  respInfo.mRedirectionPfn2 += ":";
+  respInfo.mRedirectionPfn2 += fr->port();
+  // Attach the sub req ID needed to identity the local host connection
+  respInfo.mRedirectionPfn2 += ":";
+  respInfo.mRedirectionPfn2 += fr->subreqId().c_str();
+
+  delete respElem;
+  return SFS_OK;
 }
 
 
@@ -897,28 +745,44 @@ XrdxCastor2Stager::StagerQuery( XrdOucErrInfo& error,
 // Get delay value
 //------------------------------------------------------------------------------
 int
-XrdxCastor2Stager::GetDelayValue( const char* tag )
+XrdxCastor2Stager::GetDelayValue(const char* tag)
 {
   XrdOucString* delayval;
+  XrdSysRWLockHelper rd_lock(msLockDelay);
 
-  if ( ( delayval = delaystore->Find( tag ) ) ) {
-    float oldval = atoi( delayval->c_str() );
+  if ((delayval = msDelayStore->Find(tag)))
+  {
+    float oldval = atoi(delayval->c_str());
     oldval *= 1.8;
 
-    if ( oldval > 3600 ) {
+    if (oldval > 3600)
+    {
       // More than 1 hour, doesn't make sense
       oldval = 3600;
     }
 
     // We double always the delay value
-    ( *delayval ) = "";
-    *( delayval ) += ( int ) oldval;
-  } else {
+    (*delayval) = "";
+    *(delayval) += (int) oldval;
+  }
+  else
+  {
     delayval = new XrdOucString();
-    *delayval = 20 + ( rand() % 20 );
-    delaystore->Add( tag, delayval, 3600 );
+    *delayval = 5 + (rand() % 5);
+    msDelayStore->Add(tag, delayval, 3600);
   }
 
-  return atoi( delayval->c_str() );
+  return atoi(delayval->c_str());
+}
+
+
+//------------------------------------------------------------------------------
+// Drop delay tag from mapping
+//------------------------------------------------------------------------------
+void
+XrdxCastor2Stager::DropDelayTag(const char* tag)
+{
+  XrdSysRWLockHelper wr_lock(msLockDelay, 0);
+  msDelayStore->Del(tag);
 }
 

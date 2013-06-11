@@ -40,9 +40,9 @@
 /*-----------------------------------------------------------------------------*/
 #include "XrdxCastor2Fs.hh"
 #include "XrdxCastorTiming.hh"
-#include "XrdxCastor2FsConstants.hh"
 #include "XrdxCastor2Stager.hh"
 #include "XrdxCastor2FsSecurity.hh"
+#include "XrdxCastorClient.hh"
 /*-----------------------------------------------------------------------------*/
 
 #include "Cthread_api.h"
@@ -65,20 +65,19 @@
 
 XrdSysError  xCastor2FsEroute(0);
 XrdSysError* XrdxCastor2Fs::eDest;
-XrdOucTrace  xCastor2FsTrace(&xCastor2FsEroute);
 XrdOucHash<XrdOucString>* XrdxCastor2Fs::filesystemhosttable;
 XrdSysMutex               XrdxCastor2Fs::filesystemhosttablelock;
 XrdOucHash<XrdOucString>* XrdxCastor2Fs::nsMap;
 XrdOucHash<XrdOucString>* XrdxCastor2Fs::stagertable;
 XrdOucHash<XrdOucString>* XrdxCastor2Fs::stagerpolicy;
-XrdOucHash<XrdOucString>* XrdxCastor2Stager::delaystore;
 XrdOucHash<XrdOucString>* XrdxCastor2Fs::roletable;
 XrdOucHash<XrdOucString>* XrdxCastor2Fs::stringstore;
 XrdOucHash<XrdSecEntity>* XrdxCastor2Fs::secentitystore;
 XrdOucHash<XrdOucString>* XrdxCastor2Fs::gridmapstore;
-XrdOucHash<XrdOucString>* XrdxCastor2Fs::vomsmapstore;
 XrdOucHash<struct passwd>* XrdxCastor2Fs::passwdstore;
 XrdOucHash<XrdxCastor2FsGroupInfo>*  XrdxCastor2Fs::groupinfocache;
+XrdOucHash<XrdOucString>* XrdxCastor2Stager::msDelayStore;
+xcastor::XrdxCastorClient* XrdxCastor2Fs::msCastorClient;
 
 int XrdxCastor2Fs::TokenLockTime = 5;
 XrdxCastor2Fs* XrdxCastor2FS = 0;
@@ -818,8 +817,8 @@ XrdxCastor2Fs::SetStageVariables(const char*   Path,
     // if the host/svc class pair is not defined, a user cannot request it!
     // this now also supports to allow any service class or host via *::default
     // or stager::* to be user selected
-    if (((desiredstagehost == stagehost) && 
-         (desiredserviceclass == serviceclass)) && 
+    if (((desiredstagehost == stagehost) &&
+         (desiredserviceclass == serviceclass)) &&
         ((n == ntoken) || (n == XCASTOR2FS_EXACT_MATCH)))
     {
       xcastor_debug("path=%s, stagehost=%s, serviceclass=%s",
@@ -1001,8 +1000,7 @@ XrdxCastor2FsDirectory::open(const char*         dir_path,
 
   if (map_dir == "")
   {
-    return XrdxCastor2Fs::Emsg(epname, error, ENOMEDIUM,
-                               "map filename", dir_path);
+    return XrdxCastor2Fs::Emsg(epname, error, ENOMEDIUM, "map filename", dir_path);
   }
 
   XrdxCastor2FS->RoleMap(client, info, mappedclient, tident);
@@ -1160,14 +1158,10 @@ XrdxCastor2FsFile::open(const char*         path,
     sinfo.erase(qpos);
 
   if (ininfo)
-  {
     info = sinfo.c_str();
-  }
   else
-  {
     info = 0;
-  }
-
+  
   if (info)
     xcastor_debug("path=%s, info=%s", path, info);
 
@@ -1190,7 +1184,6 @@ XrdxCastor2FsFile::open(const char*         path,
   int crOpts = (Mode & SFS_O_MKPTH ? XRDOSS_mkpath : 0);
   XrdOucEnv Open_Env(info);
   int rcode = SFS_ERROR;
-  XrdOucString redirectionhost = "";
   int ecode = 0;
   //TODO: print the open mode in hex
   xcastor_debug("open_mode=%i, fn=%s, tident=%s", Mode, map_path.c_str(), tident);
@@ -1244,81 +1237,14 @@ XrdxCastor2FsFile::open(const char*         path,
   }
 
   // See if the cluster is in maintenance mode and has delays configured for write/read
-  if (!isRW)
+  XrdOucString msg_delay;
+  int64_t delay = XrdxCastor2FS->GetAdminDelay(msg_delay, isRW);
+
+  if (delay) 
   {
-    if (XrdxCastor2FS->xCastor2FsDelayRead)
-    {
-      // Send a delay response to the client
-      int delay = 0;
-
-      if (XrdxCastor2FS->xCastor2FsDelayRead <= 0)
-      {
-        delay = 0;
-      }
-      else
-      {
-        if (XrdxCastor2FS->xCastor2FsDelayRead > (4 * 3600))
-        {
-          // We don't delay for more than 4 hours
-          delay = (4 * 3600);
-        }
-
-        XrdOucString adminmessage = "";
-
-        if (XrdxCastor2FS->Proc)
-        {
-          XrdxCastor2ProcFile* pf = XrdxCastor2FS->Proc->Handle("sysmsg");
-
-          if (pf)
-            pf->Read(adminmessage);
-        }
-
-        if (adminmessage == "")
-          adminmessage = "system is in maintenance mode for READ";
-
-        TIMING("RETURN", &opentiming);
-        opentiming.Print();
-        return XrdxCastor2FS->Stall(error, XrdxCastor2FS->xCastor2FsDelayRead, adminmessage.c_str());
-      }
-    }
-  }
-  else
-  {
-    if (XrdxCastor2FS->xCastor2FsDelayWrite)
-    {
-      // Send a delay response to the client
-      int delay = 0;
-
-      if (XrdxCastor2FS->xCastor2FsDelayWrite <= 0)
-      {
-        delay = 0;
-      }
-      else
-      {
-        if (XrdxCastor2FS->xCastor2FsDelayWrite > (4 * 3600))
-        {
-          // We don't delay for more than 4 hours
-          delay = (4 * 3600);
-        }
-
-        XrdOucString adminmessage = "";
-
-        if (XrdxCastor2FS->Proc)
-        {
-          XrdxCastor2ProcFile* pf = XrdxCastor2FS->Proc->Handle("sysmsg");
-
-          if (pf)
-            pf->Read(adminmessage);
-        }
-
-        if (adminmessage == "")
-          adminmessage = "system is in maintenance mode for WRITE";
-
-        TIMING("RETURN", &opentiming);
-        opentiming.Print();
-        return XrdxCastor2FS->Stall(error, XrdxCastor2FS->xCastor2FsDelayWrite, adminmessage.c_str());
-      }
-    }
+    TIMING("RETURN", &opentiming);
+    opentiming.Print();
+    return XrdxCastor2FS->Stall(error, delay, msg_delay.c_str());
   }
 
   TIMING("DELAYCHECK", &opentiming);
@@ -1385,18 +1311,21 @@ XrdxCastor2FsFile::open(const char*         path,
   XrdxCastor2FS->GetId(map_path.c_str(), mappedclient, client_uid, client_gid);
   sclient_uid += (int) client_uid;
   sclient_gid += (int) client_gid;
-  XrdOucString redirectionpfn1 = "";
-  XrdOucString redirectionpfn2 = "";
+
+  // response structure
+  struct XrdxCastor2Stager::RespInfo resp_info;
+  
   XrdOucString stagehost = "";
   XrdOucString serviceclass = "default";
-  XrdOucString stagestatus = "";
   XrdOucString stagevariables = "";
   const char* val;
 
-  if (!XrdxCastor2FS->GetStageVariables(map_path.c_str(), info, stagevariables, client_uid, client_gid, tident))
+  if (!XrdxCastor2FS->GetStageVariables(map_path.c_str(), info, stagevariables, 
+                                        client_uid, client_gid, tident))
   {
-    return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "set the stager host - you didn't specify a valid"
-                               " one and I have no stager map for fn = ", map_path.c_str());
+    return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "set the stager host - you didn't "
+                               "specify a valid one and I have no stager map for fn = ", 
+                               map_path.c_str());
   }
 
   XrdOucString* policy = NULL;
@@ -1454,8 +1383,10 @@ XrdxCastor2FsFile::open(const char*         path,
         }
       }
       else
+      {
         return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "write - cannot find any valid "
                                    "stager/service class mapping for you for fn = ", map_path.c_str());
+      }
     }
     else
     {
@@ -1513,27 +1444,24 @@ XrdxCastor2FsFile::open(const char*         path,
   }
 
   // Initialize rpfn2 for not scheduled access
-  redirectionpfn2 = 0;
-  redirectionpfn2 += ":";
-  redirectionpfn2 += stagehost;
-  redirectionpfn2 += ":";
-  redirectionpfn2 += serviceclass;
-  redirectionpfn2 += ":0";
-  redirectionpfn2 += ":0";
-  bool nocachelookup = true;
+  resp_info.mRedirectionPfn2 = 0;
+  resp_info.mRedirectionPfn2 += ":";
+  resp_info.mRedirectionPfn2 += stagehost;
+  resp_info.mRedirectionPfn2 += ":";
+  resp_info.mRedirectionPfn2 += serviceclass;
+  resp_info.mRedirectionPfn2 += ":0";
+  resp_info.mRedirectionPfn2 += ":0";
+
+  // Delay tag used to stall the current client incrementaly
   XrdOucString delaytag = tident;
-  delaytag += "::";
+  delaytag += ":";
   delaytag += map_path.c_str();
 
   if (isRW)
   {
-    if (isRewrite)
+    if (!isRewrite)
     {
-      // The file existed already, we don't need to create the path
-    }
-    else
-    {
-      // Check if we have to execute mkpath
+      // File doesn't exist, we have to create the path - check if we need to mkpath
       if ((Mode & SFS_O_MKPTH) || (policy && (strstr(policy->c_str(), "mkpath"))))
       {
         XrdOucString newpath = map_path;
@@ -1596,44 +1524,57 @@ XrdxCastor2FsFile::open(const char*         path,
       }
     }
 
-    // For all writes
+    // For all write operations
     TIMING("PUT", &opentiming);
-    int wopenretc = 0;
+    int status = 0;
 
+    // Create structures for request and response and call the get method
+    struct XrdxCastor2Stager::ReqInfo req_info(client_uid, client_gid, map_path.c_str(), 
+                                               stagehost.c_str(), serviceclass.c_str());
+   
     if (!isRewrite)
     {
-      xcastor_debug("doing Put stagehost=%s, serviceclass=%s", stagehost.c_str(), serviceclass.c_str());
-      wopenretc = XrdxCastor2Stager::Put(error, (uid_t) client_uid, (gid_t) client_gid,
-                                         map_path.c_str(), stagehost.c_str(),
-                                         serviceclass.c_str(), redirectionhost,
-                                         redirectionpfn1, redirectionpfn2, stagestatus);
+      xcastor_debug("Put stagehost=%s, serviceclass=%s", stagehost.c_str(), serviceclass.c_str());
+      status = XrdxCastor2Stager::DoAsyncReq(error, "put", &req_info, resp_info);
+      delaytag += ":put";
       aop = AOP_Create;
     }
     else
     {
-      wopenretc = XrdxCastor2Stager::Update(error, (uid_t) client_uid, (gid_t) client_gid,
-                                            map_path.c_str(), stagehost.c_str(),
-                                            serviceclass.c_str(), redirectionhost,
-                                            redirectionpfn1, redirectionpfn2, stagestatus);
+      xcastor_debug("Update stagehost=%s, serviceclass=%s", stagehost.c_str(), serviceclass.c_str());
+      status = XrdxCastor2Stager::DoAsyncReq(error, "update", &req_info, resp_info);
+      delaytag += ":update";
       aop = AOP_Update;
     }
 
-    if (!wopenretc)
+    if (status == SFS_ERROR)
     {
       // If the file is not yet closed from the last write delay the client
       if (error.getErrInfo() == EBUSY)
       {
         TIMING("RETURN", &opentiming);
         opentiming.Print();
-        return XrdxCastor2FS->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()) , "file is still busy");
+        return XrdxCastor2FS->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()) , 
+                                    "file is still busy, please wait");
       }
 
       TIMING("RETURN", &opentiming);
       opentiming.Print();
-      return SFS_ERROR;
+      return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "async request failed");
+
+    }
+    else if (status >= SFS_STALL)
+    {
+      TIMING("RETURN", &opentiming);
+      opentiming.Print();
+      return XrdxCastor2FS->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()) , 
+                                  "request queue full or response not ready yet");
     }
 
-    if (stagestatus != "READY")
+    // Cleanup any possible delay tag reamingin 
+    XrdxCastor2Stager::DropDelayTag(delaytag.c_str());
+    
+    if (resp_info.mStageStatus != "READY")
     {
       TIMING("RETURN", &opentiming);
       opentiming.Print();
@@ -1643,359 +1584,207 @@ XrdxCastor2FsFile::open(const char*         path,
   }
   else
   {
+    // Read operation
     XrdOucString usedpolicytag = "";
+    int n = 0;
+    bool possible = false;
+    int hasmore = 0;
 
-    if (nocachelookup)
+    // Loop through the possible stager settings to find the file somewhere staged
+    do
     {
-      int n = 0;
-      bool possible = false;
-      XrdOucString possiblestagehost = "";
-      XrdOucString possibleserviceclass = "";
-      int hasmore = 0;
-
-      // Loop through the possible stager settings to find the file somewhere staged
-      do
+      if ((hasmore = XrdxCastor2FS->SetStageVariables(map_path.c_str(), info,
+                     stagevariables, stagehost, serviceclass, n++, tident)) == 1)
       {
-        if ((hasmore = XrdxCastor2FS->SetStageVariables(map_path.c_str(), info,
-                       stagevariables, stagehost, serviceclass, n++, tident)) == 1)
+        // Select the policy
+        policy = NULL;
+        XrdOucString* wildcardpolicy = NULL;
+        XrdOucString policytag = stagehost;
+        policytag += "::";
+        policytag += serviceclass;
+        XrdOucString grouppolicytag = policytag;
+        grouppolicytag += "::gid:";
+        grouppolicytag += (int)client_gid;
+        XrdOucString userpolicytag  = policytag;
+        userpolicytag += "::uid:";
+        userpolicytag += (int)client_uid;
+        XrdOucString wildcardpolicytag = stagehost;
+        wildcardpolicytag += "::";
+        wildcardpolicytag += "*";
+        wildcardpolicy = XrdxCastor2FS->stagerpolicy->Find(wildcardpolicytag.c_str());
+        usedpolicytag = userpolicytag.c_str();
+
+        if (!(policy = XrdxCastor2FS->stagerpolicy->Find(userpolicytag.c_str())))
         {
-          // Select the policy
-          policy = NULL;
-          XrdOucString* wildcardpolicy = NULL;
-          XrdOucString policytag = stagehost;
-          policytag += "::";
-          policytag += serviceclass;
-          XrdOucString grouppolicytag = policytag;
-          grouppolicytag += "::gid:";
-          grouppolicytag += (int)client_gid;
-          XrdOucString userpolicytag  = policytag;
-          userpolicytag += "::uid:";
-          userpolicytag += (int)client_uid;
-          XrdOucString wildcardpolicytag = stagehost;
-          wildcardpolicytag += "::";
-          wildcardpolicytag += "*";
-          wildcardpolicy = XrdxCastor2FS->stagerpolicy->Find(wildcardpolicytag.c_str());
-          usedpolicytag = userpolicytag.c_str();
+          usedpolicytag = grouppolicytag.c_str();
 
-          if (!(policy = XrdxCastor2FS->stagerpolicy->Find(userpolicytag.c_str())))
+          if (!(policy = XrdxCastor2FS->stagerpolicy->Find(grouppolicytag.c_str())))
           {
-            usedpolicytag = grouppolicytag.c_str();
-
-            if (!(policy = XrdxCastor2FS->stagerpolicy->Find(grouppolicytag.c_str())))
-            {
-              usedpolicytag = policytag;
-              policy = XrdxCastor2FS->stagerpolicy->Find(policytag.c_str());
-            }
+            usedpolicytag = policytag;
+            policy = XrdxCastor2FS->stagerpolicy->Find(policytag.c_str());
           }
+        }
 
-          if ((!policy) && (wildcardpolicy))
+        if ((!policy) && (wildcardpolicy))
+        {
+          policy = wildcardpolicy;
+          usedpolicytag = wildcardpolicytag;
+        }
+
+        // Query the staging status
+        TIMING("STAGERQUERY", &opentiming);
+        XrdOucString stage_status;
+        
+        if (!XrdxCastor2Stager::StagerQuery(error, (uid_t) client_uid, (gid_t) client_gid, 
+                                            map_path.c_str(), stagehost.c_str(), 
+                                            serviceclass.c_str(), stage_status))
+        {
+          stage_status = "NA";
+        }
+
+        if ((stage_status != "STAGED") && 
+            (stage_status != "CANBEMIGR") && 
+            (stage_status != "STAGEOUT"))
+        {
+          // Check if we want transparent staging
+          if (policy && ((strstr(policy->c_str(), "nohsm"))))
           {
-            policy = wildcardpolicy;
-            usedpolicytag = wildcardpolicytag;
-          }
-
-          if (policy && (!strstr(policy->c_str(), "nostage")))
-          {
-            // If the policy allows we set this pair for an eventual stagein command
-            if (!possiblestagehost.length())
-            {
-              possiblestagehost = stagehost;
-              possibleserviceclass = serviceclass;
-            }
-          }
-
-          if (policy && (strstr(policy->c_str(), "cache")))
-          {
-            // We try our cache
-            XrdOucString locationfile = XrdxCastor2FS->LocationCacheDir;
-            locationfile += "/";
-            locationfile += stagehost;
-            locationfile += "/";
-            locationfile += serviceclass;
-            locationfile += map_path;
-            TIMING("CACHELOOKUP", &opentiming);
-            xcastor_debug("doing cache lookup for file=%s", locationfile.c_str());
-            char linklookup[8192];
-            int lsize = 0;
-
-            if ((lsize =::readlink(locationfile.c_str(), linklookup, sizeof(linklookup))) > 0)
-            {
-              linklookup[lsize] = 0;
-              xcastor_debug("cache location=%s", linklookup);
-              XrdOucString slinklookup = linklookup;
-              XrdOucString slinkpath;
-              XrdOucString slinkhost;
-
-              while (slinklookup.replace("%", "/")) {};
-
-              int pathposition;
-
-              if ((slinklookup.length() > 7) && ((pathposition = slinklookup.find("//", 7)) != STR_NPOS))
-              {
-                slinkpath.assign(slinklookup, pathposition + 1);
-                slinkhost.assign(slinklookup, 7, pathposition - 1);
-                XrdOucString addport = ":";
-                addport += XrdxCastor2FS->xCastor2FsTargetPort.c_str();
-                slinklookup.insert(addport.c_str(), pathposition);
-                TIMING("CACHESTAT", &opentiming);
-                xcastor_debug("doing file lookup on cache location=%s, path=%s", slinklookup.c_str(), slinkpath.c_str());
-                XrdCl::URL url(slinklookup.c_str());
-
-                if (!url.IsValid())
-                {
-                  xcastor_debug("URL is not valid: %s", slinklookup.c_str());
-                  return XrdxCastor2Fs::Emsg(epname, error, ENOENT, "URL is not valid ", "");
-                }
-
-                XrdCl::FileSystem* newadmin = new XrdCl::FileSystem(url);
-
-                if (!newadmin)
-                {
-                  xcastor_err("Could not create XrdCl::FileSystem object.");
-                  return XrdxCastor2Fs::Emsg(epname, error, ENOMEM, "open file: "
-                                             "cannot create client admin to check cached location ", path);
-                }
-
-                XrdCl::StatInfo* response = 0;
-                XrdCl::XRootDStatus status = newadmin->Stat(slinkpath.c_str(), response);
-
-                if (status.IsOK())
-                {
-                  redirectionhost = slinkhost;
-                  redirectionpfn1 = slinkpath;
-                  nocachelookup = false;
-                }
-                else
-                {
-                  // Stat failed, remove location from cache
-                  ::unlink(locationfile.c_str());
-                }
-
-                delete newadmin;
-                delete response;
-              }
-              else
-              {
-                // Illegal location
-                ::unlink(locationfile.c_str());
-              }
-            }
-            else
-            {
-              // No cache location, proceed as usual
-            }
-
-            TIMING("CACHEDONE", &opentiming);
-          }
-
-          if (!nocachelookup)
-          {
-            possible = true;
-            break;
-          }
-
-          // Query the staging status
-          TIMING("STAGERQUERY", &opentiming);
-
-          if (!XrdxCastor2Stager::StagerQuery(error, (uid_t) client_uid, (gid_t) client_gid, map_path.c_str(), stagehost.c_str(), serviceclass.c_str(), stagestatus))
-            stagestatus = "NA";
-
-          if ((stagestatus == "STAGED") || (stagestatus == "CANBEMIGR") || (stagestatus == "STAGEOUT"))
-          {
-            // do nothing 
-          }
-          else
-          {
-            // Check if we want transparent staging
-            if (policy && ((strstr(policy->c_str(), "nohsm"))))
-            {
-              opentiming.Print();
-              continue;
-            }
-          }
-
-          TIMING("PREP2GET", &opentiming);
-
-          if (!XrdxCastor2Stager::Prepare2Get(error, (uid_t) client_uid, (gid_t) client_gid, map_path.c_str(), stagehost.c_str(), serviceclass.c_str(), redirectionhost, redirectionpfn1, stagestatus))
-          {
-            TIMING("RETURN", &opentiming);
-            opentiming.Print();
-            continue;
-          }
-
-          xcastor_debug("Got redirection to:%s and stagestaus is:%s", redirectionpfn1.c_str(), stagestatus.c_str());
-
-          if (redirectionpfn1.length() && (stagestatus == "READY"))
-          {
-            // That is perfect, we can use the setting to read
-            possible = true;
-            break;
-          }
-
-          XrdOucString delaytag = tident;
-          delaytag += "::";
-          delaytag += map_path;
-
-          // We select this setting and tell the client to wait for the staging in this pool/svc class
-          if (stagestatus == "READY")
-          {
-            TIMING("RETURN", &opentiming);
-            opentiming.Print();
-            return XrdxCastor2FS->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()) , "file is being staged in");
-          }
-          else
-          {
-            TIMING("RETURN", &opentiming);
             opentiming.Print();
             continue;
           }
         }
-      }
-      while ((n < 20) && (hasmore >= 0));
 
-      if (!possible)
+        TIMING("PREP2GET", &opentiming);
+        
+        if (!XrdxCastor2Stager::Prepare2Get(error, (uid_t) client_uid, (gid_t) client_gid, 
+                                            map_path.c_str(), stagehost.c_str(), serviceclass.c_str(), 
+                                            resp_info))
+        {
+          TIMING("RETURN", &opentiming);
+          opentiming.Print();
+          continue;
+        }
+
+        xcastor_debug("Got redirection to:%s and stagestatus is:%s", 
+                      resp_info.mRedirectionPfn1.c_str(), 
+                      resp_info.mStageStatus.c_str());
+
+        if (resp_info.mRedirectionPfn1.length() && (resp_info.mStageStatus == "READY"))
+        {
+          // That is perfect, we can use the setting to read
+          possible = true;
+          XrdxCastor2Stager::DropDelayTag(delaytag.c_str());
+          break;
+        }
+
+        // We select this setting and tell the client to wait for the staging in this pool/svc class
+        if (resp_info.mStageStatus == "READY")
+        {
+          TIMING("RETURN", &opentiming);
+          opentiming.Print();
+          return XrdxCastor2FS->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()) , 
+                                      "file is being staged in");
+        }
+        else
+        {
+          TIMING("RETURN", &opentiming);
+          opentiming.Print();
+          continue;
+        }
+      }
+    }
+    while ((n < 20) && (hasmore >= 0));
+
+    if (!possible)
+    {
+      TIMING("RETURN", &opentiming);
+      opentiming.Print();
+      XrdxCastor2Stager::DropDelayTag(delaytag.c_str());
+      return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "access file in ANY stager (all prepare2get failed) fn = ",
+                                 map_path.c_str());
+    }
+
+    // If there was no stager get we fill request id 0
+    if (!resp_info.mRedirectionPfn2.length())
+    {
+      resp_info.mRedirectionPfn2 += ":";
+      resp_info.mRedirectionPfn2 += stagehost;
+      resp_info.mRedirectionPfn2 += ":";
+      resp_info.mRedirectionPfn2 += serviceclass;
+    }
+
+    // CANBEMIGR or STAGED, STAGEOUT files can be read ;-)
+    if (policy)
+    {
+      xcastor_debug("policy for:%s is %s", usedpolicytag.c_str(), policy->c_str());
+    }
+    else
+    {
+      xcastor_debug("policy for:%s is default [read not scheduled]", usedpolicytag.c_str());
+    }
+
+    if (policy && ((strstr(policy->c_str(), "schedread")) || (strstr(policy->c_str(), "schedall"))))
+    {
+      TIMING("GET", &opentiming);
+
+      // Create structures for request and response and call the get method
+      struct XrdxCastor2Stager::ReqInfo req_info(client_uid, client_gid, map_path.c_str(), 
+                                                 stagehost.c_str(), serviceclass.c_str());
+
+      int status = XrdxCastor2Stager::DoAsyncReq(error, "get", &req_info, resp_info);
+      delaytag += ":get";
+
+      if (status == SFS_ERROR)
       {
         TIMING("RETURN", &opentiming);
         opentiming.Print();
-        return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "access file in ANY stager (all prepare2get failed)  fn = ", map_path.c_str());
+        return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "async req failed fn=", map_path.c_str());
+      }
+      else if (status >= SFS_STALL)
+      {
+        TIMING("RETURN", &opentiming);
+        opentiming.Print();
+        return XrdxCastor2FS->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()) , 
+                                    "request queue full or response not ready");
       }
 
-      // If there was no stager get we fill request id 0
-      if (!redirectionpfn2.length())
+      if (resp_info.mStageStatus != "READY")
       {
-        redirectionpfn2 += ":";
-        redirectionpfn2 += stagehost;
-        redirectionpfn2 += ":";
-        redirectionpfn2 += serviceclass;
-      }
-
-      // CANBEMIGR or STAGED, STAGEOUT files can be read ;-)
-      if (policy)
-      {
-        xcastor_debug("policy for:%s is %s", usedpolicytag.c_str(), policy->c_str());
-      }
-      else
-      {
-        xcastor_debug("policy for:%s is default [read not scheduled]", usedpolicytag.c_str());
-      }
-
-      if (policy && ((strstr(policy->c_str(), "schedread")) || (strstr(policy->c_str(), "schedall"))))
-      {
-        TIMING("GET", &opentiming);
-
-        if (!XrdxCastor2Stager::Get(error, (uid_t) client_uid, (gid_t) client_gid,
-                                    map_path.c_str(), stagehost.c_str(),
-                                    serviceclass.c_str(), redirectionhost,
-                                    redirectionpfn1, redirectionpfn2, stagestatus))
-        {
-          TIMING("RETURN", &opentiming);
-          opentiming.Print();
-          return SFS_ERROR;
-        }
-
-        if (stagestatus != "READY")
-        {
-          TIMING("RETURN", &opentiming);
-          opentiming.Print();
-          return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "access file in stager (Get request failed)  fn = ", map_path.c_str());
-        }
+        TIMING("RETURN", &opentiming);
+        opentiming.Print();
+        return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "access stager (Get request failed) fn=", 
+                                   map_path.c_str());
       }
     }
   }
 
-  // read + write
-  if (nocachelookup && (policy && (strstr(policy->c_str(), "cache"))))
-  {
-    // Update location in cache
-    XrdOucString locationfile = XrdxCastor2FS->LocationCacheDir;
-    locationfile += "/";
-    locationfile += stagehost;
-    locationfile += "/";
-    locationfile += serviceclass;
-    locationfile += map_path.c_str();
-    TIMING("CACHESTORE", &opentiming);
-    xcastor_debug("doing cache store:%s", locationfile.c_str());
-    ::unlink(locationfile.c_str());
-    XrdOucString linklocation = "root://";
-    linklocation += redirectionhost;
-    linklocation += "/";
-    linklocation += redirectionpfn1;
-
-    while (linklocation.replace("/", "%")) {};
-
-    int rpos = STR_NPOS;
-
-    while ((rpos = locationfile.rfind("/", rpos)) != STR_NPOS)
-    {
-      rpos--;
-      struct stat buf;
-      XrdOucString spath;
-      spath.assign(locationfile, 0, rpos);
-
-      if ((::stat(spath.c_str(), &buf)) && rpos >= 0)
-      {
-        continue;
-      }
-      else
-      {
-        // Start to create from here and finish
-        int fpos = rpos + 1;
-
-        while ((fpos = locationfile.find("/", fpos)) != STR_NPOS)
-        {
-          XrdOucString createpath;
-          createpath.assign(locationfile, 0, fpos);
-
-          if ((::mkdir(createpath.c_str(), S_IRWXU)) != 0)
-          {
-            if (errno == ENOTDIR)
-            {
-              // If this was previous a file, we have to remove it and try again
-              ::unlink(createpath.c_str());
-              ::mkdir(createpath.c_str(), S_IRWXU);
-            }
-          }
-
-          fpos++;
-        }
-
-        break;
-      }
-    }
-
-    if (::symlink(linklocation.c_str(), locationfile.c_str()))
-    {
-      xcastor_warning("cannot create symbolic location link:%s => %s", locationfile.c_str(), linklocation.c_str());
-    }
-  }
-
+  // Save the redirection host with and without the domain in the host table 
   XrdOucString nodomainhost = "";
   int pos;
 
-  if ((pos = redirectionhost.find(".")) != STR_NPOS)
+  if ((pos = resp_info.mRedirectionHost.find(".")) != STR_NPOS)
   {
-    nodomainhost.assign(redirectionhost, 0, pos - 1);
+    nodomainhost.assign(resp_info.mRedirectionHost, 0, pos - 1);
     XrdxCastor2FS->filesystemhosttablelock.Lock();
 
     if (!XrdxCastor2FS->filesystemhosttable->Find(nodomainhost.c_str()))
-    {
       XrdxCastor2FS->filesystemhosttable->Add(nodomainhost.c_str(), new XrdOucString(nodomainhost.c_str()));
-    }
-
+    
     XrdxCastor2FS->filesystemhosttablelock.UnLock();
   }
 
   XrdxCastor2FS->filesystemhosttablelock.Lock();
 
-  if (!XrdxCastor2FS->filesystemhosttable->Find(redirectionhost.c_str()))
-  {
-    XrdxCastor2FS->filesystemhosttable->Add(redirectionhost.c_str(), new XrdOucString(redirectionhost.c_str()));
-  }
-
+  if (!XrdxCastor2FS->filesystemhosttable->Find(resp_info.mRedirectionHost.c_str()))
+    XrdxCastor2FS->filesystemhosttable->Add(resp_info.mRedirectionHost.c_str(), 
+                                            new XrdOucString(resp_info.mRedirectionHost.c_str()));
+  
   XrdxCastor2FS->filesystemhosttablelock.UnLock();
-  TIMING("REDIRECTION", &opentiming);
-  xcastor_debug("redirection to:%s", redirectionhost.c_str());
 
+  TIMING("REDIRECTION", &opentiming);
+  xcastor_debug("redirection to:%s", resp_info.mRedirectionHost.c_str());
+
+  // Save statistics about server read/write operations 
   if (XrdxCastor2FS->Proc)
   {
     XrdOucString stagersvcclient = "";
@@ -2009,7 +1798,7 @@ XrdxCastor2FsFile::open(const char*         path,
     stagersvcserver += "::";
     stagersvcserver += serviceclass;
     stagersvcserver += "::";
-    stagersvcserver += redirectionhost.c_str();
+    stagersvcserver += resp_info.mRedirectionHost.c_str();
 
     if (isRW)
     {
@@ -2031,8 +1820,8 @@ XrdxCastor2FsFile::open(const char*         path,
     XrdOucString accopaque = "";
     XrdxCastor2ServerAcc::AuthzInfo* authz = new XrdxCastor2ServerAcc::AuthzInfo(false);
     authz->sfn = (char*) origpath;
-    authz->pfn1 = (char*) redirectionpfn1.c_str();
-    authz->pfn2 = (char*) redirectionpfn2.c_str();
+    authz->pfn1 = (char*) resp_info.mRedirectionPfn1.c_str();
+    authz->pfn2 = (char*) resp_info.mRedirectionPfn2.c_str();
     authz->id  = (char*)tident;
     authz->client_sec_uid = STRINGSTORE(sclient_uid.c_str());
     authz->client_sec_gid = STRINGSTORE(sclient_gid.c_str());
@@ -2092,46 +1881,46 @@ XrdxCastor2FsFile::open(const char*         path,
 
     TIMING("BUILDOPAQUE", &opentiming);
     // Add the internal token opaque tag
-    redirectionhost += "?";
+    resp_info.mRedirectionHost += "?";
 
     // We add the user defined stager selection also to the redirection in case
     // the client comes back from a failure
     if ((val = Open_Env.Get("svcClass")))
     {
-      redirectionhost += "svcClass=";
-      redirectionhost += val;
-      redirectionhost += "&";
+      resp_info.mRedirectionHost += "svcClass=";
+      resp_info.mRedirectionHost += val;
+      resp_info.mRedirectionHost += "&";
     }
 
     if ((val = Open_Env.Get("stagerHost")))
     {
-      redirectionhost += "stagerHost=";
-      redirectionhost += val;
-      redirectionhost += "&";
+      resp_info.mRedirectionHost += "stagerHost=";
+      resp_info.mRedirectionHost += val;
+      resp_info.mRedirectionHost += "&";
     }
 
     // Add the external token opaque tag
-    redirectionhost += accopaque;
+    resp_info.mRedirectionHost += accopaque;
 
     if (!isRW)
     {
       // We always assume adler, but we should check the type here ...
       if (!strcmp(buf.csumtype, "AD"))
       {
-        redirectionhost += "adler32=";
-        redirectionhost += buf.csumvalue;
-        redirectionhost += "&";
+        resp_info.mRedirectionHost += "adler32=";
+        resp_info.mRedirectionHost += buf.csumvalue;
+        resp_info.mRedirectionHost += "&";
       }
 
       // Add the 0-size create flag
       if (buf.filesize == 0)
       {
-        redirectionhost += "createifnotexist=1&";
+        resp_info.mRedirectionHost += "createifnotexist=1&";
       }
     }
 
     ecode = atoi(XrdxCastor2FS->xCastor2FsTargetPort.c_str());
-    error.setErrInfo(ecode, redirectionhost.c_str());
+    error.setErrInfo(ecode, resp_info.mRedirectionHost.c_str());
     delete authz;
   }
 
@@ -2156,12 +1945,14 @@ XrdxCastor2FsFile::open(const char*         path,
     mode_t mode = strtol(Open_Env.Get("mode"), NULL, 8);
 
     if (XrdxCastor2FsUFS::Chmod(map_path.c_str(), mode))
+    {
       return XrdxCastor2Fs::Emsg(epname, error, serrno, "set mode on", map_path.c_str());
+    }
   }
 
   TIMING("PROC/DONE", &opentiming);
   opentiming.Print();
-  xcastor_debug("redirection to:%s", redirectionhost.c_str());
+  xcastor_debug("redirection to:%s", resp_info.mRedirectionHost.c_str());
   return rcode;
 }
 
@@ -2549,7 +2340,7 @@ XrdSfsFileSystem* XrdSfsGetFileSystem(XrdSfsFileSystem* /*native_fs*/,
   xCastor2FsEroute.Say("++++++ (c) 2008 CERN/IT-DM-SMD ", vs.c_str());
 
   // Initialize the subsystems
-  if (!myFS.Init()) return 0;
+  if (!myFS.Init(xCastor2FsEroute)) return 0;
 
   myFS.ConfigFN = (configfn && *configfn ? strdup(configfn) : 0);
 
@@ -2586,7 +2377,7 @@ XrdxCastor2Fs::XrdxCastor2Fs(XrdSysError* ep):
 // Initialisation
 //------------------------------------------------------------------------------
 bool
-XrdxCastor2Fs::Init()
+XrdxCastor2Fs::Init(XrdSysError& fsEroute)
 {
   filesystemhosttable = new XrdOucHash<XrdOucString> ();
   nsMap   = new XrdOucHash<XrdOucString> ();
@@ -2596,10 +2387,16 @@ XrdxCastor2Fs::Init()
   stringstore = new XrdOucHash<XrdOucString> ();
   secentitystore = new XrdOucHash<XrdSecEntity> ();
   gridmapstore = new XrdOucHash<XrdOucString> ();
-  vomsmapstore = new XrdOucHash<XrdOucString> ();
   passwdstore = new XrdOucHash<struct passwd> ();
   groupinfocache   = new XrdOucHash<XrdxCastor2FsGroupInfo> ();
-  XrdxCastor2Stager::delaystore   = new XrdOucHash<XrdOucString> ();
+  XrdxCastor2Stager::msDelayStore = new XrdOucHash<XrdOucString> ();
+  msCastorClient = xcastor::XrdxCastorClient::Create();
+  if (!msCastorClient)
+  {
+    fsEroute.Emsg( "Config", "error=failed to create castor client object" );
+    return false;
+  }
+
   return true;
 }
 
@@ -3127,10 +2924,13 @@ XrdxCastor2Fs::stageprepare(const char*         path,
 
   // Here we have the allowed stager/service class setting to issue the prepare request
   TIMING("STAGERQUERY", &preparetiming);
-  XrdOucString dummy1;
-  XrdOucString dummy2;
+  //XrdOucString dummy1;
+  //XrdOucString dummy2;
+  struct XrdxCastor2Stager::RespInfo resp_info;
 
-  if (!XrdxCastor2Stager::Prepare2Get(error, (uid_t) client_uid, (gid_t) client_gid, map_path.c_str(), stagehost.c_str(), serviceclass.c_str(), dummy1, dummy2, stagestatus))
+  if (!XrdxCastor2Stager::Prepare2Get(error, (uid_t) client_uid, (gid_t) client_gid, 
+                                      map_path.c_str(), stagehost.c_str(), serviceclass.c_str(), 
+                                      resp_info))
   {
     TIMING("END", &preparetiming);
     preparetiming.Print();
@@ -4303,4 +4103,96 @@ XrdxCastor2Fs::fsctl(const int           cmd,
   }
 
   return SFS_ERROR;
+}
+
+
+//------------------------------------------------------------------------------
+// Get delay for the current operation if any. The delay value is read from
+// the xcastor2.proc value specified in the /etc/xrd.cf file, from the
+// corresponding delayread or delaywrite file.
+//------------------------------------------------------------------------------
+int64_t 
+XrdxCastor2Fs::GetAdminDelay(XrdOucString& msg, bool isRW)
+{
+  int64_t delay = 0;
+  msg = "";
+
+  if (isRW)
+  {
+    // Send a delay response to the client
+    delay = xCastor2FsDelayWrite;
+
+    if (delay > 0)
+    {
+      if (delay > (4 * 3600))
+      {
+        // We don't delay for more than 4 hours
+        delay = (4 * 3600);
+      }
+      
+      if (Proc)
+      {
+        XrdxCastor2ProcFile* pf = Proc->Handle("sysmsg");
+        
+        if (pf)
+          pf->Read(msg);
+      }
+
+      if (msg == "")
+        msg = "system is in maintenance mode for WRITE";
+    }
+    else 
+    {
+      delay = 0;
+    }
+  }
+  else 
+  {
+    // Send a delay response to the client
+    delay = xCastor2FsDelayRead;
+
+    if (delay > 0)
+    {
+      if (delay > (4 * 3600))
+      {
+        // We don't delay for more than 4 hours
+        delay = (4 * 3600);
+      }
+      
+      if (Proc)
+      {
+        XrdxCastor2ProcFile* pf = Proc->Handle("sysmsg");
+        
+        if (pf)
+          pf->Read(msg);
+      }
+      
+      if (msg == "")
+        msg = "system is in maintenance mode for READ";
+    }
+    else 
+    {
+      delay = 0;
+    }
+  }
+
+  return delay;
+}
+
+
+//--------------------------------------------------------------------------
+//! Set the log level for the manager xrootd server
+//--------------------------------------------------------------------------
+void 
+XrdxCastor2Fs::SetLogLevel(int logLevel)
+{
+  if (mLogLevel != logLevel)
+  {
+    xcastor_info("update log level from:%s to:%s",
+                 Logging::GetPriorityString(mLogLevel),
+                 Logging::GetPriorityString(logLevel));
+    
+    mLogLevel = logLevel;
+    Logging::SetLogPriority(mLogLevel);
+  }
 }

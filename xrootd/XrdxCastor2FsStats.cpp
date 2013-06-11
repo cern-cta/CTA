@@ -1,5 +1,5 @@
 /*******************************************************************************
- *                      XrdxCastor2Stager.hh
+ *                      XrdxCastor2FsStats.hh
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -29,9 +29,7 @@
 #include "XrdxCastor2Fs.hh"
 /*-----------------------------------------------------------------------------*/
 
-extern XrdxCastor2Fs* XrdxCastor2FS; // defined in XrdxCastor2Fs.cc
-extern XrdOucTrace xCastor2FsTrace;  // defined in XrdxCastor2Fs.cc
-
+extern XrdxCastor2Fs* XrdxCastor2FS; ///< defined in XrdxCastor2Fs.cpp
 
 //------------------------------------------------------------------------------
 // Function that starts the stats thread
@@ -519,11 +517,39 @@ XrdxCastor2FsStats::Update()
       XrdxCastor2ProcFile* pf = Proc->Handle( "trace" );
 
       if ( pf ) {
-        XrdOucString newtrace;
-        pf->Read( newtrace );
-        xCastor2FsTrace.What = strtol( newtrace.c_str(), NULL, 0 );
+        long int log_level = 0;
+        XrdOucString slog_level;
+        if (pf->Read(slog_level))
+        {
+          log_level = Logging::GetPriorityByString(slog_level.c_str());
+
+          if (log_level == -1)
+          {
+            // Maybe the log level is specified as an int from 0 to 7
+            char* end;
+            errno = 0;
+            log_level = (int) strtol(slog_level.c_str(), &end, 10);
+            
+            if (!(errno == ERANGE && ((log_level == LONG_MIN) || (log_level == LONG_MAX))) &&
+                !((errno != 0) && (log_level == 0)))
+            {
+              if (end != slog_level.c_str())
+              {
+                // Conversion successful - the log level was an int
+                if ((log_level >= 0) && (log_level <= 7))
+                  XrdxCastor2FS->SetLogLevel(log_level);
+              }
+            }
+          }
+          else
+          {
+            // Log level was a string
+            XrdxCastor2FS->SetLogLevel(log_level);
+          }
+        }
       }
     }
+
     XrdxCastor2FS->Stats.UnLock();
     {
       XrdxCastor2ProcFile* pf = Proc->Handle( "serverread" );

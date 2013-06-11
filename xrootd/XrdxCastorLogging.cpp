@@ -230,14 +230,14 @@ Logging::log(const char*                     func,
 int
 Logging::GetPriorityByString(const char* pri)
 {
-  if (!strcmp(pri,"info"))    return LOG_INFO;
-  if (!strcmp(pri,"debug"))   return LOG_DEBUG;
-  if (!strcmp(pri,"err"))     return LOG_ERR;
-  if (!strcmp(pri,"emerg"))   return LOG_EMERG;
-  if (!strcmp(pri,"alert"))   return LOG_ALERT;
-  if (!strcmp(pri,"crit"))    return LOG_CRIT;
-  if (!strcmp(pri,"warning")) return LOG_WARNING;
-  if (!strcmp(pri,"notice"))  return LOG_NOTICE;
+  if (!strncmp(pri,"info", 4))    return LOG_INFO;
+  if (!strncmp(pri,"debug", 5))   return LOG_DEBUG;
+  if (!strncmp(pri,"err", 3))     return LOG_ERR;
+  if (!strncmp(pri,"emerg", 5))   return LOG_EMERG;
+  if (!strncmp(pri,"alert", 5))   return LOG_ALERT;
+  if (!strncmp(pri,"crit", 4))    return LOG_CRIT;
+  if (!strncmp(pri,"warning", 7)) return LOG_WARNING;
+  if (!strncmp(pri,"notice", 6))  return LOG_NOTICE;
   return -1;
 }
 

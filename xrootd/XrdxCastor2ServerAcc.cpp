@@ -431,7 +431,7 @@ XrdxCastor2ServerAcc::SignBase64( unsigned char* input,
   BIO_free( bmem );
   BIO_free( b64 );
   TIMING("BIOFREE", &signtiming);
-  signtiming.Print();
+  //signtiming.Print();
   return true;
 }
 
