@@ -734,24 +734,22 @@ BEGIN
     firstOne := TRUE;
     commitWork := FALSE;
   END LOOP;
-  -- make sure to archive if actually nothing was done
-  IF abortedSRstatus = -1 THEN
-    BEGIN
-      SELECT id, status INTO srId, abortedSRstatus
-        FROM SubRequest
-       WHERE request = origReqId
-         AND status IN (dconst.SUBREQUEST_FINISHED, dconst.SUBREQUEST_FAILED_FINISHED)
-         AND ROWNUM = 1;
-      -- This procedure should really be called 'terminateSubReqAndArchiveRequest', and this is
-      -- why we call it here: we need to trigger the logic to mark the whole request and all of its subrequests
-      -- as ARCHIVED, so that they are cleaned up afterwards. Note that this is effectively
-      -- a no-op for the status change of the single fetched SubRequest.
-      archiveSubReq(srId, abortedSRstatus);
-    EXCEPTION WHEN NO_DATA_FOUND THEN
-      -- Should never happen, anyway ignore as there's nothing else to do
-      NULL;
-    END;
-  END IF;
+  -- archive the request
+  BEGIN
+    SELECT id, status INTO srId, abortedSRstatus
+      FROM SubRequest
+     WHERE request = origReqId
+       AND status IN (dconst.SUBREQUEST_FINISHED, dconst.SUBREQUEST_FAILED_FINISHED)
+       AND ROWNUM = 1;
+    -- This procedure should really be called 'terminateSubReqAndArchiveRequest', and this is
+    -- why we call it here: we need to trigger the logic to mark the whole request and all of its subrequests
+    -- as ARCHIVED, so that they are cleaned up afterwards. Note that this is effectively
+    -- a no-op for the status change of the single fetched SubRequest.
+    archiveSubReq(srId, abortedSRstatus);
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- Should never happen, anyway ignore as there's nothing else to do
+    NULL;
+  END;
   COMMIT;
 END;
 /
