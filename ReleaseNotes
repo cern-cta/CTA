@@ -1,3 +1,7 @@
+NOTE FROM STEVE ON 11TH JUNE 2013 - I don't know where to put this right now,
+however I guess the ReleaseNotes for 2.1.14-2 need to tell the DBA to run
+something like the following when logged into the VMGR database schema:
+GRANT SELECT ON VMGR_TAPE_STATUS_VIEW TO <CastorNsAccount>;
 
   Note
   ----

@@ -2575,10 +2575,10 @@ BEGIN
     -- loop over the existing segments
     FOR varSeg IN (SELECT s_fileId as fileId, 0 as lastModTime, copyNo, segSize, 0 as comprSize,
                           Cns_seg_metadata.vid, fseq, blockId, checksum_name, nvl(checksum, 0) as checksum,
-                          Cns_seg_metadata.s_status as segStatus, Vmgr_tape_side.status as tapeStatus
-                     FROM Cns_seg_metadata@remotens, Vmgr_tape_side@remotens
+                          Cns_seg_metadata.s_status as segStatus, Vmgr_tape_status_view.status as tapeStatus
+                     FROM Cns_seg_metadata@remotens, Vmgr_tape_status_view@remotens
                     WHERE Cns_seg_metadata.s_fileid = inFileId
-                      AND Vmgr_tape_side.VID = Cns_seg_metadata.VID
+                      AND Vmgr_tape_status_view.VID = Cns_seg_metadata.VID
                     ORDER BY copyno, fsec) LOOP
       varFoundSeg := TRUE;
       -- Is the segment valid
