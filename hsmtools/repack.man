@@ -41,10 +41,10 @@ repack \- Move files from tape(s) to other tape destination
 .BI \-\-bulkdelete\ <file>
 .br
 .B repack
-.BI \-s\
+.BI \-s|--statusAll\ [-d|--detailed]
 .br
 .B repack
-.BI \-S\ <VID>[:<VID>[...]]
+.BI \-S\ <VID>[:<VID>[...]]\ [-d|--detailed]
 .br
 .B repack
 .BI \-e\ <VID>[:<VID>[...]]\ [\-n\ <nbErrorsDisplayed>]
@@ -96,6 +96,10 @@ in the stager database. The default value is 5.
 shows the status of all ongoing and finished repacks. If multiple repack requests were issued for a given
 tape, only the last request is shown. Note that old completed repacks are automatically removed
 from the database and are not shown any longer.
+.BI \-d,\ \-\-detailed
+shows the status of all ongoing and finished repacks with detailed figures for the count of ongoing
+recalls and migrations and a completion percentage. If multiple repack requests were issued for a given
+tape, only the last request is shown.
 .TP
 .BI \-S,\ \-\-status
 shows the status of ongoing and finished repacks for the given tape(s). The tape(s) is(are) given by their
@@ -122,39 +126,53 @@ Repack submitted for tape I10551
 Repack submitted for tape I10552
 
 > repack -s
-===========================================================================================================================================================
-SubmitTime        RepackTime      User                   Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated  Compl%     Status
------------------------------------------------------------------------------------------------------------------------------------------------------------
-23-Jun-11 14:34     0d 03:10  sponcec3     lxcastordev01.cern.ch   I10551         44    47.41KiB         0        43         1         0      0%   STARTING
-22-Jun-11 17:19     1d 01:10  sponcec3     lxcastordev01.cern.ch   I10552          1        721B         0         0         0         1    100%   FINISHED
+=====================================================================================================================
+SubmitTime        RepackTime             User                      Machine      Vid      Total        Size     Status
+---------------------------------------------------------------------------------------------------------------------
+11-Jun-13 18:57       1mn20s    itglp@CERN.CH             lxc2dev2.cern.ch   V21002          4     3.29KiB   FINISHED
+10-Jun-13 15:42       1mn40s             root             lxc2dev2.cern.ch   V22003          1     2.93KiB   FINISHED
+---------------------------------------------------------------------------------------------------------------------
+11-Jun-13 19:29            -                -                            -    TOTAL          5     6.22KiB   FINISHED
 
-> repack -S I10552
-===========================================================================================================================================================
-SubmitTime        RepackTime      User                   Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated  Compl%     Status
------------------------------------------------------------------------------------------------------------------------------------------------------------
-23-Jun-11 14:34     0d 03:10  sponcec3     lxcastordev01.cern.ch   I10552          1        721B         0         0         1         0    100%    ABORTED
-22-Jun-11 17:19     1d 01:10  sponcec3     lxcastordev01.cern.ch   I10552          1        721B         0         0         0         1    100%   FINISHED
-22-Jun-11 17:18     1d 01:11  sponcec3     lxcastordev01.cern.ch   I10552          1        721B         0         0         1         0    100%     FAILED
+> repack -s -d
+=====================================================================================================================================================================
+SubmitTime        RepackTime             User                      Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated  Compl%     Status
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+11-Jun-13 18:57       1mn20s    itglp@CERN.CH             lxc2dev2.cern.ch   V21002          4     3.29KiB         0         0         0         4    100%   FINISHED
+10-Jun-13 15:42       1mn40s             root             lxc2dev2.cern.ch   V22003          1     2.93KiB         0         0         0         1    100%   FINISHED
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+11-Jun-13 19:29            -                -                            -    TOTAL          5     6.22KiB         0         0         0         5    100%   FINISHED
 
-> repack -S I10551
-===========================================================================================================================================================
-SubmitTime        RepackTime      User                   Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated  Compl%     Status
------------------------------------------------------------------------------------------------------------------------------------------------------------
-23-Jun-11 14:34     0d 03:10  sponcec3     lxcastordev01.cern.ch   I10551         44    47.41KiB         0        40         1         3      1%    ONGOING
+> repack -S V21002 -d
+=====================================================================================================================================================================
+SubmitTime        RepackTime             User                      Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated  Compl%     Status
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+11-Jun-13 18:57       1mn20s    itglp@CERN.CH             lxc2dev2.cern.ch   V21002          4     3.29KiB         0         0         0         4    100%   FINISHED
+10-Jun-13 15:00       1mn30s    itglp@CERN.CH             lxc2dev2.cern.ch   V21002          4     3.29KiB         0         0         2         2    100%     FAILED
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-> repack -R I10551
+> repack -S V21003
+=====================================================================================================================
+SubmitTime        RepackTime             User                      Machine      Vid      Total        Size     Status
+---------------------------------------------------------------------------------------------------------------------
+11-Jun-13 17:43       1mn10s    itglp@CERN.CH             lxc2dev2.cern.ch   V21003          4     3.29KiB    ONGOING
+---------------------------------------------------------------------------------------------------------------------
 
-> repack -S I10551
-===========================================================================================================================================================
-SubmitTime        RepackTime      User                   Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated  Compl%     Status
------------------------------------------------------------------------------------------------------------------------------------------------------------
-23-Jun-11 14:34     0d 03:10  sponcec3     lxcastordev01.cern.ch   I10551         44    47.41KiB         0        40         1         3      1%   ABORTING
+> repack -R V21003
 
-> repack -S I10551
-===========================================================================================================================================================
-SubmitTime        RepackTime      User                   Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated  Compl%     Status
------------------------------------------------------------------------------------------------------------------------------------------------------------
-23-Jun-11 14:34     0d 03:10  sponcec3     lxcastordev01.cern.ch   I10551         44    47.41KiB         0         0        41         3    100%    ABORTED
+> repack -S V21003
+=====================================================================================================================
+SubmitTime        RepackTime             User                      Machine      Vid      Total        Size     Status
+---------------------------------------------------------------------------------------------------------------------
+11-Jun-13 17:43       1mn15s    itglp@CERN.CH             lxc2dev2.cern.ch   V21003          4     3.29KiB   ABORTING
+---------------------------------------------------------------------------------------------------------------------
+
+> repack -S V21003 -d
+=====================================================================================================================================================================
+SubmitTime        RepackTime             User                      Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated  Compl%     Status
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+11-Jun-13 17:43       1mn20s    itglp@CERN.CH             lxc2dev2.cern.ch   V21003          4     3.29KiB         0         0         1         3    100%    ABORTED
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 > repack -e I10551
 
@@ -163,7 +181,6 @@ SubmitTime        RepackTime      User                   Machine      Vid      T
 --------------------------------------------------------------------------------------------
 Fileid         CopyNo         ErrorCode      ErrorMessage
 --------------------------------------------------------------------------------------------
-5000053222     n/a            16             File is currently being written or migrated
 5000157562     n/a            1701           Aborted explicitely
 5000157580     n/a            1701           Aborted explicitely
 5000156311     n/a            1701           Aborted explicitely
@@ -173,21 +190,21 @@ Fileid         CopyNo         ErrorCode      ErrorMessage
 5000157625     n/a            1701           Aborted explicitely
 5000157632     n/a            1701           Aborted explicitely
 5000157638     n/a            1701           Aborted explicitely
+5000157640     n/a            1701           Aborted explicitely
 
 Output restricted to 10 errors. There are more errors for this tape
 
-> repack -e I10551 -n 3
+> repack -e I10551 -n 2
 
      *** Tape  I10551  ***
 
 --------------------------------------------------------------------------------------------
 Fileid         CopyNo         ErrorCode      ErrorMessage
 --------------------------------------------------------------------------------------------
-5000053222     n/a            16             File is currently being written or migrated
 5000157562     n/a            1701           Aborted explicitely
 5000157580     n/a            1701           Aborted explicitely
 
-Output restricted to 3 errors. There are more errors for this tape
+Output restricted to 2 errors. There are more errors for this tape
 
 .SH NOTES
 This command requires database client access to the stager catalogue.

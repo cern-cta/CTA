@@ -26,7 +26,7 @@
 
 """repack command line of CASTOR."""
 
-import os, sys, time, pwd
+import os, sys, time
 import getopt, socket
 import castor_tools
 import subprocess
@@ -36,13 +36,13 @@ import cx_Oracle
 def usage(exitCode):
     '''prints usage'''
     print 'Usage :'
-    print '  repack -h/--help'
+    print '  repack -h|--help'
     print '  repack -V <VID>[:<VID>[:...]] -o serviceclass'
     print '  repack --bulkvolumeid <filename> -o serviceclass'
     print '  repack -R <VID>[:<VID>[:...]]'
     print '  repack --bulkdelete <filename>'
-    print '  repack -s'
-    print '  repack -S <VID>:<VID>[:...]]'
+    print '  repack -s|--statusAll [-d|--detailed]'
+    print '  repack -S <VID>:<VID>[:...]] [-d|--detailed]'
     print '  repack -e <VID>[:<VID>[:...]] [-n <nbErrorsDisplayed>]'
     sys.exit(exitCode)
 
@@ -52,7 +52,7 @@ def parseInputFile(fileName):
     
 # first parse the options
 try:
-    options, arguments = getopt.getopt(sys.argv[1:], 'V:o:sS:R:e:hn:v', ['volumeid=', 'bulkvolumeid=', 'svcclass=', 'statusAll', 'status=', 'delete=', 'bulkdelete=', 'errors=', 'help', 'nbErrorsDisplayed=', 'verbose'])
+    options, arguments = getopt.getopt(sys.argv[1:], 'V:o:sdS:R:e:hn:v', ['volumeid=', 'bulkvolumeid=', 'svcclass=', 'statusAll', 'detailed', 'status=', 'delete=', 'bulkdelete=', 'errors=', 'help', 'nbErrorsDisplayed=', 'verbose'])
 except Exception, parsingException:
     print parsingException
     usage(1)
@@ -61,6 +61,7 @@ vflag = False
 sflag = False
 rflag = False
 eflag = False
+detailFlag = False
 svcClass = None
 maxNbErrors = None
 verbose = False
@@ -75,6 +76,8 @@ for f, v in options:
         vflag = True
     elif f == '-s' or f == '--statusAll':
         sflag = True
+    elif f == '-d' or f == '--detailed':
+        detailFlag = True
     elif f == '-S' or f == '--status':
         vids.extend(v.split(':'))
         sflag = True
@@ -128,27 +131,12 @@ def _getIdentity():
     euid = os.getuid()
     egid = os.getgid()
     pid = os.getpid()
-    username = pwd.getpwuid(euid)[0]
+    username = castor_tools.getCurrentUsername()
     sip = socket.gethostbyname(machine).split('.')
     ip = (int(sip[0]) << 24 | int(sip[1]) << 16 | int(sip[2]) << 8 | int(sip[3]))
     if ip & 0x80000000 != 0:
         ip = ip - 0x100000000
     return machine, euid, egid, pid, username, ip
-
-_powerSuf = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB']
-def _humanReadableSize(size):
-    '''Converts a number of bytes into human readable format'''
-    if not size:
-        size = 0
-    order = 0
-    fsize = float(size)
-    while fsize >= 1000:
-        fsize = fsize / 1024
-        order = order + 1
-    if order == 0:
-        return str(size) + _powerSuf[order]
-    else:
-        return '%.2f' % fsize + _powerSuf[order]
 
 _repackRequestStatuses = ['STARTING', 'ONGOING', 'FINISHED', 'FAILED', 'ABORTING', 'ABORTED', 'SUBMITTED']
 def _printStatusLine(subTime, lastModTime, user, machine, vid, status, total, size, toRecall, toMigr, failed, migrated):
@@ -164,74 +152,73 @@ def _printStatusLine(subTime, lastModTime, user, machine, vid, status, total, si
       else:
         repackTime = time.time() - subTime
       # format elapsed time
-      d, rest = divmod(repackTime, 86400)
-      h, rest = divmod(rest, 3600)
-      repackTime = '%2dd %02d:%02d' % (d, h, rest / 60)
+      repackTime = castor_tools.nbToAge(int(repackTime))
     # times need to be transformed in human readable strings
     subTime = time.strftime('%d-%b-%y %H:%M', time.localtime(subTime))
-    # human readable size
-    size = _humanReadableSize(size)
+    # format size
+    size = castor_tools.nbToDataAmount(size)
     # actual printing
-    if total > 0:
-      # Completion % takes into account each operation (recall and migration) as 1, so that e.g. a tape with half files recalled and none migrated counts as 25% done;
-      # no weight is given to recalls vs. migrations nor is the file size taken into account.
-      print '%-18s%10s%10s%29s%9s%11d%12s%10d%10d%10d%10d%7d%%%11s' % (subTime, repackTime, user, machine, vid, total, size, toRecall, toMigr, failed, migrated, 100-(2*toRecall+toMigr)*50.0/total, status)
-    else:
-      print '%-18s%10s%10s%29s%9s%11d%12s%10d%10d%10d%10d    N/A %11s' % (subTime, repackTime, user, machine, vid, total, size, toRecall, toMigr, failed, migrated, status)
+    try:
+      if total > 0:
+        # Completion % takes into account each operation (recall and migration) as 1, so that e.g. a tape with half files recalled and none migrated counts as 25% done;
+        # no weight is given to recalls vs. migrations nor is the file size taken into account.
+        print '%-18s%10s%17s%29s%9s%11d%12s%10d%10d%10d%10d%7d%%%11s' % (subTime, repackTime, user, machine, vid, total, size, toRecall, toMigr, failed, migrated, 100-(2*toRecall+toMigr)*50.0/total, status)
+      else:
+        print '%-18s%10s%17s%29s%9s%11d%12s%10d%10d%10d%10d    N/A %11s' % (subTime, repackTime, user, machine, vid, total, size, toRecall, toMigr, failed, migrated, status)
+    except TypeError:
+      # case of reporting without details
+      print '%-18s%10s%17s%29s%9s%11d%12s%11s' % (subTime, repackTime, user, machine, vid, total, size, status)
 
-def displayStatus():
-    '''displays the ongoing repacks. If vids is not empty, the output is limited to these tapes'''
-    # prepare DB connection
-    stconn = castor_tools.connectToStager()
-    stcur = stconn.cursor()
-    stcur.arraysize = 50
-    stGetStatus = '''
-      SELECT StageRepackRequest.creationTime, StageRepackRequest.lastModificationTime, StageRepackRequest.username,
-             StageRepackRequest.machine, StageRepackRequest.repackVID, StageRepackRequest.status,
-             SUM(CASE WHEN SubRequest.status IS NULL THEN 0 ELSE 1 END) total,
-             SUM(SubRequest.xsize) totsize,
-             SUM(CASE WHEN SubRequest.status IN (4, 5) THEN 1 ELSE 0 END) toRecall,
-             SUM(CASE SubRequest.status WHEN 12 THEN 1 ELSE 0 END) toMigr,
-             SUM(CASE WHEN SubRequest.status IN (7, 9) THEN 1 ELSE 0 END) failed,
-             SUM(CASE WHEN SubRequest.status IN (8, 11) THEN 1 ELSE 0 END) migrated
-        FROM StageRepackRequest, SubRequest
-       WHERE SubRequest.request(+) = StageRepackRequest.id
-      '''
-    # query only the requested VIDs. This requires hard parsing but it's still more efficient
-    # than a later 'grep' and avoids the complexity of dealing with a string list as bind variable.
-    if vids:
-        stGetStatus += "AND StageRepackRequest.repackVID IN ('" + "','".join(vids) + "')"
-    stGetStatus += '''
-      GROUP BY StageRepackRequest.creationTime, StageRepackRequest.lastModificationTime, StageRepackRequest.username,
-               StageRepackRequest.machine, StageRepackRequest.repackVID, StageRepackRequest.status
-      ORDER BY creationTime DESC'''
-    # go to DB and get back the data
-    stcur.execute(stGetStatus)
-    rows = stcur.fetchall()
-    if len(rows) == 0:
-        print 'No repack activity found'
-        return
+
+def _displaySummary(rows):
+    '''prints a summary of all repack requests according to the given criteria'''
     # print out results
-    print '='*158
-    print 'SubmitTime        RepackTime      User                      Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated  Compl%     Status'
-    print '-'*158
-    sumTotal = sumSize = sumToRecall = sumToMigr = sumFailed = sumMigrated = 0
+    print '='*117
+    print 'SubmitTime        RepackTime             User                      Machine      Vid      Total        Size     Status'
+    print '-'*117
+    sumTotal = sumSize = 0
+    globalStatus = 2  # FINISHED
     shownVids = set()
-    for subTime, lastModTime, user, machine, vid, status, total, size, toRecall, toMigr, failed, migrated in rows:
+    for subTime, lastModTime, user, machine, vid, status, total, totsize in rows:
         if not vids and vid in shownVids:
             # when showing full statistics skip the less recent requests for each VID
             continue
         shownVids.add(vid)
-        _printStatusLine(subTime, lastModTime, user, machine, vid, status, total, size, toRecall, toMigr, failed, migrated)
+        _printStatusLine(subTime, lastModTime, user, machine, vid, status, total, totsize, '-', '-', '-', '-')
         sumTotal += total
-        if size > 0:
+        if totsize > 0:
             # it may have returned None
-            sumSize += size
+            sumSize += totsize
+        if status != 2 and status != 3 and status != 5:
+            globalStatus = 1  # ONGOING
+    print '-'*117
+    #  when showing full statistics, print out summary line
+    if not vids and sumTotal > 0:
+        _printStatusLine(time.time(), 0, '-', '-', 'TOTAL', globalStatus, sumTotal, sumSize, '-', '-', '-', '-')
+
+def _displayDetailed(rows):
+    '''prints the details of all repack requests according to the given criteria'''
+    # print out results
+    print '='*165
+    print 'SubmitTime        RepackTime             User                      Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated  Compl%     Status'
+    print '-'*165
+    sumTotal = sumSize = sumToRecall = sumToMigr = sumFailed = sumMigrated = 0
+    shownVids = set()
+    for subTime, lastModTime, user, machine, vid, status, total, totsize, toRecall, toMigr, failed, migrated in rows:
+        if not vids and vid in shownVids:
+            # when showing full statistics skip the less recent requests for each VID
+            continue
+        shownVids.add(vid)
+        _printStatusLine(subTime, lastModTime, user, machine, vid, status, total, totsize, toRecall, toMigr, failed, migrated)
+        sumTotal += total
+        if totsize > 0:
+            # it may have returned None
+            sumSize += totsize
         sumToRecall += toRecall
         sumToMigr += toMigr
         sumFailed += failed
         sumMigrated += migrated
-    print '-'*158
+    print '-'*165
     #  when showing full statistics, print out summary line
     if not vids and sumTotal > 0:
         if sumToRecall + sumToMigr > 0:
@@ -239,6 +226,54 @@ def displayStatus():
         else:
             globalStatus = 2  # FINISHED
         _printStatusLine(time.time(), 0, '-', '-', 'TOTAL', globalStatus, sumTotal, sumSize, sumToRecall, sumToMigr, sumFailed, sumMigrated)
+
+def displayStatus(detailed):
+    '''displays the ongoing repacks. If vids is not empty, the output is limited to these tapes'''
+    # prepare DB connection
+    stconn = castor_tools.connectToStager()
+    stcur = stconn.cursor()
+    stcur.arraysize = 50
+    if not detailed:
+      stGetStatus = '''
+        SELECT creationTime, lastModificationTime, username,
+               machine, repackVID, status, fileCount total, totalSize totsize
+          FROM StageRepackRequest
+        '''
+      # query only the requested VIDs. This requires hard parsing but it's still more efficient
+      # than a later 'grep' and avoids the complexity of dealing with a string list as bind variable.
+      if vids:
+          stGetStatus += "WHERE StageRepackRequest.repackVID IN ('" + "','".join(vids) + "')"
+    else:
+      stGetStatus = '''
+        SELECT StageRepackRequest.creationTime, StageRepackRequest.lastModificationTime, StageRepackRequest.username,
+               StageRepackRequest.machine, StageRepackRequest.repackVID, StageRepackRequest.status,
+               StageRepackRequest.fileCount total, StageRepackRequest.totalSize totsize,
+               SUM(CASE WHEN SubRequest.status IN (4, 5) THEN 1 ELSE 0 END) toRecall,
+               SUM(CASE SubRequest.status WHEN 12 THEN 1 ELSE 0 END) toMigr,
+               SUM(CASE WHEN SubRequest.status IN (7, 9) THEN 1 ELSE 0 END) failed,
+               SUM(CASE WHEN SubRequest.status IN (8, 11) THEN 1 ELSE 0 END) migrated
+          FROM StageRepackRequest, SubRequest
+         WHERE SubRequest.request(+) = StageRepackRequest.id
+        '''
+      # query only the requested VIDs, see above
+      if vids:
+          stGetStatus += "AND StageRepackRequest.repackVID IN ('" + "','".join(vids) + "')"
+      stGetStatus += '''
+        GROUP BY StageRepackRequest.creationTime, StageRepackRequest.lastModificationTime, StageRepackRequest.username,
+                 StageRepackRequest.machine, StageRepackRequest.repackVID, StageRepackRequest.status,
+                 StageRepackRequest.fileCount, StageRepackRequest.totalSize'''
+    stGetStatus += ' ORDER BY StageRepackRequest.creationTime DESC'
+    # go to DB and get back the data
+    stcur.execute(stGetStatus)
+    rows = stcur.fetchall()
+    if len(rows) == 0:
+        print 'No repack activity found'
+        return
+    # display
+    if detailed:
+      _displayDetailed(rows)
+    else:
+      _displaySummary(rows)
     # close DB connection
     castor_tools.disconnectDB(stconn)
 
@@ -424,7 +459,7 @@ try:
     if vflag:
         submitRepack()
     elif sflag:
-        displayStatus()
+        displayStatus(detailFlag)
     elif rflag:
         cancelRepack()
     elif eflag:

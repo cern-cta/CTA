@@ -16,10 +16,15 @@ DELETE FROM ObjStatus WHERE object='DiskCopy' AND field='status'
 BEGIN setObjStatusName('DiskCopy', 'status', 0, 'DISKCOPY_VALID'); END;
 /
 
+
+-- temporary function-based index to speed up the following update
+CREATE INDEX I_CF_OpenTimeNull
+    ON CastorFile(decode(nvl(nsOpenTime, -1), -1, 1, NULL));
+
 DECLARE
   remCF INTEGER;
   CURSOR cfs IS
-    SELECT id FROM CastorFile WHERE nsOpenTime IS NULL;
+    SELECT id FROM CastorFile WHERE decode(nvl(nsOpenTime, -1), -1, 1, NULL) = 1;
   ids "numList";
 BEGIN
   FOR cf IN (SELECT unique castorFile, status, nbCopies
@@ -39,8 +44,8 @@ BEGIN
   -- Update all nsOpenTime values
   LOOP
     OPEN cfs;
-    FETCH cfs BULK COLLECT INTO ids LIMIT 10000;
-    EXIT WHEN ifs.count = 0;
+    FETCH cfs BULK COLLECT INTO ids LIMIT 1000;
+    EXIT WHEN ids.count = 0;
     FORALL i IN 1 .. ids.COUNT
       UPDATE CastorFile SET nsOpenTime = lastUpdateTime WHERE id = ids(i);
     CLOSE cfs;
@@ -58,6 +63,11 @@ END;
 /
 
 ALTER TABLE CastorFile MODIFY (nsOpenTime CONSTRAINT NN_CastorFile_NsOpenTime NOT NULL);
+
+
+ALTER TABLE StageRepackRequest ADD (fileCount INTEGER, totalSize INTEGER);
+UPDATE StageRepackRequest SET fileCount = 0, totalSize = 0;  -- XXX do we need to recompute those figures? probably not...
+ALTER TABLE StageRepackRequest MODIFY (fileCount CONSTRAINT NN_StageRepackReq_fileCount NOT NULL, totalSize CONSTRAINT NN_StageRepackReq_totalSize NOT NULL, status CONSTRAINT NN_StageRepackReq_status NOT NULL, repackVid CONSTRAINT NN_StageRepackReq_repackVid NOT NULL);
 
 DROP TRIGGER tr_DiskCopy_Online;
 DROP PROCEDURE getDiskCopiesForJob;

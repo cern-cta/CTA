@@ -105,9 +105,9 @@ BEGIN
   varReqUUID := uuidGen();
   -- insert the request in status SUBMITTED, the SubRequests will be created afterwards
   INSERT INTO StageRepackRequest (reqId, machine, euid, egid, pid, userName, svcClassName, svcClass, client, repackVID,
-    userTag, flags, mask, creationTime, lastModificationTime, status, id)
+    userTag, flags, mask, creationTime, lastModificationTime, status, fileCount, totalSize, id)
   VALUES (varReqUUID, inMachine, inEuid, inEgid, inPid, inUserName, inSvcClassName, varSvcClassId, varClientId, reqVID,
-    varReqUUID, 0, 0, getTime(), getTime(), tconst.REPACK_SUBMITTED, ids_seq.nextval);
+    varReqUUID, 0, 0, getTime(), getTime(), tconst.REPACK_SUBMITTED, 0, 0, ids_seq.nextval);
   COMMIT;
   logToDLF(varReqUUID, dlf.LVL_SYSTEM, dlf.REPACK_SUBMITTED, 0, '', 'repackd', 'TPVID=' || reqVID);
 END;
@@ -132,6 +132,7 @@ CREATE OR REPLACE PROCEDURE handleRepackRequest(inReqUUID IN VARCHAR2,
   unused INTEGER;
   firstCF boolean := True;
   isOngoing boolean := False;
+  varTotalSize INTEGER := 0;
 BEGIN
   UPDATE StageRepackRequest SET status = tconst.REPACK_STARTING
    WHERE reqId = inReqUUID
@@ -179,6 +180,7 @@ BEGIN
       varMigrationTriggered BOOLEAN := False;
     BEGIN
       outNbFilesProcessed := outNbFilesProcessed + 1;
+      varTotalSize := varTotalSize + segment.segSize;
       -- Commit from time to time
       IF MOD(outNbFilesProcessed, 1000) = 0 THEN
         COMMIT;
@@ -309,13 +311,25 @@ BEGIN
   EXECUTE IMMEDIATE 'TRUNCATE TABLE RepackTapeSegments';
   -- update status of the RepackRequest
   IF isOngoing THEN
-    UPDATE StageRepackRequest SET status = tconst.REPACK_ONGOING WHERE StageRepackRequest.id = varReqId;
+    UPDATE StageRepackRequest
+       SET status = tconst.REPACK_ONGOING,
+           fileCount = outNbFilesProcessed,
+           totalSize = varTotalSize
+     WHERE StageRepackRequest.id = varReqId;
   ELSE
     IF outNbFailures > 0 THEN
-      UPDATE StageRepackRequest SET status = tconst.REPACK_FAILED WHERE StageRepackRequest.id = varReqId;
+      UPDATE StageRepackRequest
+         SET status = tconst.REPACK_FAILED,
+             fileCount = outNbFilesProcessed,
+             totalSize = varTotalSize
+       WHERE StageRepackRequest.id = varReqId;
     ELSE
       -- CASE of an 'empty' repack : the tape had no files at all
-      UPDATE StageRepackRequest SET status = tconst.REPACK_FINISHED WHERE StageRepackRequest.id = varReqId;
+      UPDATE StageRepackRequest
+         SET status = tconst.REPACK_FINISHED,
+             fileCount = 0,
+             totalSize = 0
+       WHERE StageRepackRequest.id = varReqId;
     END IF;
   END IF;
   COMMIT;
