@@ -56,7 +56,11 @@ XCASTOR2SERVERACC_SRCS= XrdxCastor2ServerAcc.cpp \
 
 XCASTOR2SERVERACC_OBJS=$(XCASTOR2SERVERACC_SRCS:.cpp=.o)
 
+COMPILECPP(XrdxCastor2ServerAcc.cpp, -D_FILE_OFFSET_BITS=64)
+COMPILECPP(XrdxCastorTiming.cpp, -D_FILE_OFFSET_BITS=64)
+
 SharedLibraryTarget(XrdxCastor2ServerAcc,$(XCASTOR2SERVERACC_OBJS),,-lXrdUtils -lcrypto -lrt)
+
 
 XCASTOR2OFS_SRCS= XrdxCastor2Ofs.cpp         \
 	          XrdxCastor2OfsFSctl.cpp    \
