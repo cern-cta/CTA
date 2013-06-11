@@ -43,7 +43,7 @@ namespace castor {
     
 
       /**
-       * StagePut Response Handler
+       * Multiple files response handler
        */
       class VectorResponseHandler : public castor::client::IResponseHandler {
         

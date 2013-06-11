@@ -18,7 +18,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * A simple Response Handler for command line clients
+ * A multi-file Response Handler for command line clients
  *
  * @author  Ben Couturier
  *****************************************************************************/
