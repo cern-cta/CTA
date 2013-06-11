@@ -38,11 +38,11 @@
 #include "XrdClient/XrdClientEnv.hh"
 #include "XrdCl/XrdClFileSystem.hh"
 /*-----------------------------------------------------------------------------*/
-#include "XrdxCastor2Fs.hh"
-#include "XrdxCastorTiming.hh"
-#include "XrdxCastor2Stager.hh"
-#include "XrdxCastor2FsSecurity.hh"
-#include "XrdxCastorClient.hh"
+#include "XrdxCastor2Fs.hpp"
+#include "XrdxCastorTiming.hpp"
+#include "XrdxCastor2Stager.hpp"
+#include "XrdxCastor2FsSecurity.hpp"
+#include "XrdxCastorClient.hpp"
 /*-----------------------------------------------------------------------------*/
 
 #include "Cthread_api.h"

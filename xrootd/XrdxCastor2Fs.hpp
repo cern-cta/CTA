@@ -51,10 +51,10 @@
 #include "XrdOfs/XrdOfsEvr.hh"
 #include "XrdSec/XrdSecEntity.hh"
 /*-----------------------------------------------------------------------------*/
-#include "XrdxCastorLogging.hh"
-#include "XrdxCastor2FsStats.hh"
-#include "XrdxCastor2ServerAcc.hh"
-#include "XrdxCastor2Proc.hh"
+#include "XrdxCastorLogging.hpp"
+#include "XrdxCastor2FsStats.hpp"
+#include "XrdxCastor2ServerAcc.hpp"
+#include "XrdxCastor2Proc.hpp"
 /*-----------------------------------------------------------------------------*/
 #define RFIO_NOREDEFINE
 

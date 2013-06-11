@@ -28,9 +28,10 @@
 #include <fcntl.h>
 #include <string.h>
 /*-----------------------------------------------------------------------------*/
-#include "XrdxCastor2ServerAcc.hh"
-#include "XrdxCastor2Ofs.hh"
-#include "XrdxCastorTiming.hh"
+#include "XrdxCastor2ServerAcc.hpp"
+#include "XrdxCastor2Ofs.hpp"
+#include "XrdxCastorTiming.hpp"
+/*-----------------------------------------------------------------------------*/
 #include "XrdSec/XrdSecInterface.hh"
 #include "XrdOuc/XrdOucEnv.hh"
 #include "XrdOuc/XrdOucTokenizer.hh"

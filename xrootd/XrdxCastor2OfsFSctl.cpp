@@ -23,13 +23,13 @@
  ******************************************************************************/
 
 /*-----------------------------------------------------------------------------*/
+#include "XrdxCastor2Ofs.hpp"
+#include "XrdTransferManager.hpp"
+/*-----------------------------------------------------------------------------*/
 #include <sys/types.h>
 #include <attr/xattr.h>
-/*-----------------------------------------------------------------------------*/
-#include "XrdxCastor2Ofs.hh"
 #include "XrdOfs/XrdOfsTrace.hh"
 #include "XrdOuc/XrdOucEnv.hh"
-#include "XrdTransferManager.hh"
 /*-----------------------------------------------------------------------------*/
 
 #define XRDXCASTOR2NS_FSCTLPATHLEN 4096

@@ -22,6 +22,9 @@
  *
  ******************************************************************************/
 
+
+/*-----------------------------------------------------------------------------*/
+#include "XrdxCastor2Fs.hpp"
 /*-----------------------------------------------------------------------------*/
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -30,7 +33,6 @@
 #include <dirent.h>
 #include <string.h>
 /*-----------------------------------------------------------------------------*/
-#include "XrdxCastor2Fs.hh"
 #include "XrdSys/XrdSysDNS.hh"
 #include "XrdOuc/XrdOucStream.hh"
 #include "XrdOuc/XrdOucTrace.hh"

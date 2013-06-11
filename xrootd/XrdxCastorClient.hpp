@@ -34,9 +34,9 @@
 #include <string>
 #include <map>
 /*----------------------------------------------------------------------------*/
-#include "XrdxCastorNamespace.hh"
-#include "XrdxCastorLogging.hh"
-#include "XrdxCastor2FsConstants.hh"
+#include "XrdxCastorNamespace.hpp"
+#include "XrdxCastorLogging.hpp"
+#include "XrdxCastor2FsConstants.hpp"
 /*----------------------------------------------------------------------------*/
 #include "castor/io/ServerSocket.hpp"
 #include "castor/exception/Exception.hpp"

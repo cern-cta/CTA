@@ -30,8 +30,8 @@
 #include "XrdOuc/XrdOucTable.hh"
 #include "XrdSys/XrdSysPthread.hh"
 /*-----------------------------------------------------------------------------*/
-#include "XrdxCastor2Proc.hh"
-#include "XrdxCastor2FsConstants.hh"
+#include "XrdxCastor2Proc.hpp"
+#include "XrdxCastor2FsConstants.hpp"
 /*-----------------------------------------------------------------------------*/
 
 

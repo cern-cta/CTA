@@ -42,9 +42,9 @@
 #include "XrdNet/XrdNetOpts.hh"
 #include "XrdCl/XrdClFileSystem.hh"
 /*----------------------------------------------------------------------------*/
-#include "XrdxCastor2Ofs.hh"
-#include "XrdxCastor2FsConstants.hh"
-#include "XrdxCastorTiming.hh"
+#include "XrdxCastor2Ofs.hpp"
+#include "XrdxCastor2FsConstants.hpp"
+#include "XrdxCastorTiming.hpp"
 /*----------------------------------------------------------------------------*/
 
 XrdxCastor2Ofs XrdxCastor2OfsFS;

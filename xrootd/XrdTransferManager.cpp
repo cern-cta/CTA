@@ -26,7 +26,7 @@
 #include <dirent.h>
 #include <signal.h>
 /*-----------------------------------------------------------------------------*/
-#include "XrdTransferManager.hh"
+#include "XrdTransferManager.hpp"
 /*-----------------------------------------------------------------------------*/
 
 XrdTransferManager* XrdTransferManager::XrdTM = NULL;

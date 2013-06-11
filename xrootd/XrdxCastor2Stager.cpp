@@ -49,8 +49,8 @@
 #include "stager_client_api_common.hpp"
 #include "stager_api.h"
 /*-----------------------------------------------------------------------------*/
-#include "XrdxCastor2Stager.hh"
-#include "XrdxCastor2Fs.hh"
+#include "XrdxCastor2Stager.hpp"
+#include "XrdxCastor2Fs.hpp"
 /*-----------------------------------------------------------------------------*/
 
 

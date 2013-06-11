@@ -40,9 +40,9 @@
 #include "XrdSys/XrdSysTimer.hh"
 #include "XrdSys/XrdSysPthread.hh"
 #include "XrdClient/XrdClientAdmin.hh"
-#include "XrdxCastorLogging.hh"
 /*-----------------------------------------------------------------------------*/
-#include "XrdTransferManager.hh"
+#include "XrdxCastorLogging.hpp"
+#include "XrdTransferManager.hpp"
 /*-----------------------------------------------------------------------------*/
 
 

@@ -23,10 +23,11 @@
  ******************************************************************************/
 
 /*-----------------------------------------------------------------------------*/
-#include "XrdxCastor2FsStats.hh" 
+#include "XrdxCastor2FsStats.hpp" 
+#include "XrdxCastor2Fs.hpp"
+/*-----------------------------------------------------------------------------*/
 #include "XrdSys/XrdSysTimer.hh"
 #include "XrdOuc/XrdOucTrace.hh"
-#include "XrdxCastor2Fs.hh"
 /*-----------------------------------------------------------------------------*/
 
 extern XrdxCastor2Fs* XrdxCastor2FS; ///< defined in XrdxCastor2Fs.cpp

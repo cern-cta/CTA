@@ -25,13 +25,14 @@
 #ifndef __XCASTOR_STAGER_HH__
 #define __XCASTOR_STAGER_HH__
 
+
+/*-----------------------------------------------------------------------------*/
+#include "XrdxCastorLogging.hpp"
+#include "XrdxCastorClient.hpp"
 /*-----------------------------------------------------------------------------*/
 #include <XrdOuc/XrdOucHash.hh>
 #include <XrdOuc/XrdOucErrInfo.hh>
 #include <XrdOuc/XrdOucString.hh>
-/*-----------------------------------------------------------------------------*/
-#include "XrdxCastorLogging.hh"
-#include "XrdxCastorClient.hh"
 /*-----------------------------------------------------------------------------*/
 
 

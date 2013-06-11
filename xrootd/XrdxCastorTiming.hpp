@@ -28,7 +28,7 @@
 /*----------------------------------------------------------------------------*/
 #include <time.h>
 /*----------------------------------------------------------------------------*/
-#include "XrdxCastorNamespace.hh"
+#include "XrdxCastorNamespace.hpp"
 /*----------------------------------------------------------------------------*/
 #include "XrdOuc/XrdOucString.hh"
 #include "XrdOuc/XrdOucTrace.hh"
