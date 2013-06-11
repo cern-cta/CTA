@@ -309,7 +309,7 @@ class XrdxCastor2FsFile : public XrdSfsFile, public LogId
     //--------------------------------------------------------------------------
     //! Constructor
     //--------------------------------------------------------------------------
-    XrdxCastor2FsFile( char* user = 0, int MonID = 0 );
+    XrdxCastor2FsFile( const char* user = 0, int MonID = 0 );
 
 
     //--------------------------------------------------------------------------

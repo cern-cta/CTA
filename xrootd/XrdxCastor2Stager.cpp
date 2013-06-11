@@ -191,7 +191,7 @@ XrdxCastor2Stager::Get( XrdOucErrInfo& error,
 {
   //const char* tident = error.getErrUser();
   struct stage_options                  Opts;
-  xcastor_static_debug("uid=%i, gid=%i, path=%s, stagehost=%s, sericeclass=%s",
+  xcastor_static_debug("uid=%i, gid=%i, path=%s, stagehost=%s, serviceclass=%s",
                 uid, gid, path, stagehost, serviceclass );
   XrdOucString ErrPrefix = "uid=";
   ErrPrefix += ( int )uid;
@@ -217,7 +217,8 @@ XrdxCastor2Stager::Get( XrdOucErrInfo& error,
   subreq->setProtocol( std::string( "xroot" ) );
   subreq->setFileName( std::string( path ) );
   subreq->setModeBits( 0744 );
-  castor::client::BaseClient       cs2client( stage_getClientTimeout(), -1 );
+
+  castor::client::BaseClient cs2client( stage_getClientTimeout(), -1 );
   Opts.stage_host    = ( char* )stagehost;
   Opts.service_class = ( char* )serviceclass;
   Opts.stage_version = 2;
@@ -350,7 +351,7 @@ XrdxCastor2Stager::Put( XrdOucErrInfo& error,
   subreq->setProtocol( std::string( "xroot" ) );
   subreq->setFileName( std::string( path ) );
   subreq->setModeBits( 0744 );
-  castor::client::BaseClient       cs2client( stage_getClientTimeout(), -1 );
+  castor::client::BaseClient cs2client( stage_getClientTimeout(), -1 );
   Opts.stage_host    = ( char* )stagehost;
   Opts.service_class = ( char* )serviceclass;
   Opts.stage_version = 2;
