@@ -326,7 +326,7 @@ CREATE TABLE CastorFile (fileId INTEGER,
                          id INTEGER CONSTRAINT PK_CastorFile_Id PRIMARY KEY,
                          fileClass INTEGER,
                          tapeStatus INTEGER, -- can be ONTAPE, NOTONTAPE or DISKONLY
-                         nsOpenTime NUMBER)  -- timestamp given by the Nameserver at Cns_openx()
+                         nsOpenTime NUMBER CONSTRAINT NN_CastorFile_NsOpenTime NOT NULL)  -- timestamp given by the Nameserver at Cns_openx()
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_FileClass
   FOREIGN KEY (fileClass) REFERENCES FileClass (id)

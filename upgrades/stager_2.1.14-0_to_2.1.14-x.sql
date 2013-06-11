@@ -18,6 +18,9 @@ BEGIN setObjStatusName('DiskCopy', 'status', 0, 'DISKCOPY_VALID'); END;
 
 DECLARE
   remCF INTEGER;
+  CURSOR cfs IS
+    SELECT id FROM CastorFile WHERE nsOpenTime IS NULL;
+  ids "numList";
 BEGIN
   FOR cf IN (SELECT unique castorFile, status, nbCopies
                FROM DiskCopy, CastorFile, FileClass
@@ -33,6 +36,17 @@ BEGIN
      WHERE id = cf.castorFile;
   END LOOP;
   COMMIT;
+  -- Update all nsOpenTime values
+  LOOP
+    OPEN cfs;
+    FETCH cfs BULK COLLECT INTO ids LIMIT 10000;
+    EXIT WHEN ifs.count = 0;
+    FORALL i IN 1 .. ids.COUNT
+      UPDATE CastorFile SET nsOpenTime = lastUpdateTime WHERE id = ids(i);
+    CLOSE cfs;
+    COMMIT;
+  END LOOP;
+
   SELECT COUNT(*) INTO remCF FROM CastorFile WHERE tapestatus IS NULL;
 
 XXX cleanup files with no diskcopy ???
@@ -42,6 +56,8 @@ XXX cleanup files with no diskcopy ???
   END IF;
 END;
 /
+
+ALTER TABLE CastorFile MODIFY (nsOpenTime CONSTRAINT NN_CastorFile_NsOpenTime NOT NULL);
 
 DROP TRIGGER tr_DiskCopy_Online;
 DROP PROCEDURE getDiskCopiesForJob;
