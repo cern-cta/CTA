@@ -117,6 +117,13 @@ UNDEF vmgrSchema
 ACCEPT vmgrSchema CHAR DEFAULT 'castor_vmgr' PROMPT 'Enter the name of the VMGR schema (default castor_vmgr): ';
 CREATE OR REPLACE SYNONYM Vmgr_tape_side FOR &vmgrSchema..Vmgr_tape_side;
 
+-- A synonym allowing access to the VMGR_TAPE_STATUS_VIEW view of the VMGR
+-- schema from within the nameserver DB.
+-- Note that the VMGR schema shall grant read access to the NS account with
+-- something like:
+-- GRANT SELECT ON VMGR_TAPE_STATUS_VIEW TO <CastorNsAccount>;
+CREATE OR REPLACE SYNONYM Vmgr_tape_status_view FOR &vmgrSchema..VMGR_TAPE_STATUS_VIEW;
+
 -- Tables to store intermediate data to be passed from/to the stager.
 -- Note that we cannot use temporary tables with distributed transactions.
 CREATE TABLE SetSegsForFilesInputHelper
