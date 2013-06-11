@@ -79,6 +79,9 @@ CREATE TABLE CastorConfig
 INSERT INTO CastorConfig (class, key, value, description)
   VALUES ('stager', 'openmode', 'C', 'Mode for stager open/close operations: C for Compatibility (pre 2.1.14), N for New (from 2.1.14 onwards)');
 
+-- bug #101714: RFE: VMGR DB should provide tape statuses independently of table definitions
+-- For Vmgr_tape_status_view
+CREATE OR REPLACE SYNONYM Vmgr_tape_status_view FOR &vmgrSchema..VMGR_TAPE_STATUS_VIEW;
 
 /* Update and revalidation of PL-SQL code */
 /******************************************/
