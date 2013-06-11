@@ -37,7 +37,7 @@ Description: castor (Cern Advanced STORage system)
 Package: castor-dbtools
 Architecture: any
 Depends: castor-lib-oracle, cx_Oracle >= 5.1.1, castor-lib = %{version}-%{release}
-XBS-Obsoletes: castor-repack-client, castor-repack-server
+Recommends: python-krbV
 Description: castor (Cern Advanced STORage system)
  DB Administration tools
 

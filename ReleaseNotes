@@ -1,17 +1,32 @@
-NOTE FROM STEVE ON 11TH JUNE 2013 - I don't know where to put this right now,
-however I guess the ReleaseNotes for 2.1.14-2 need to tell the DBA to run
-something like the following when logged into the VMGR database schema:
-GRANT SELECT ON VMGR_TAPE_STATUS_VIEW TO <CastorNsAccount>;
+------------
+- 2.1.14-x -
+------------
 
-  Note
-  ----
+  Summary of major features
+  -------------------------
+
+  - support for Read-Only hardware. DiskServers and FileSystems can be marked as Read-Only so that only
+    read transfers are scheduled, without having to put them in draining and triggering replications
+  - replacement on rmnode/rmmaster infrastructure. They have been integrated to transfermanager and
+    diskmanager. Also the command lines moveDiskServer, rmGetNodes and rmAdminNodes are replaced by
+    modify/printdiskserver
+  - the CASTOR plugin to XROOT has been integrated into the CASTOR code so that it is build/tested/
+    distributed with the core CASTOR software. It comes under the form of a new RPM called
+    castor-xroot-plugin which replaces previous both xrootd-xcastor2fs and xrootd-libtransfermanager
+  - the Nameserver client API has been made secure by default, without falling back to attempting
+    a non-secure connection. To disable security access, the CNS_DISABLE variable needs to be set
+    to YES in castor.conf.
+  - major cleanup of castor.conf.example. See notes below.
+
+  Notes
+  -----
 
   - the castor.conf.example file has been cleaned up in this release so that all its lines
     can be left commented in a default setup. This means that in most cases, the castor.conf
     file can be written from scratch and should contain only a handful of lines (mostly
     given host names where the different components are running).
     During the cleanup, some defaults have been revisited. All changes are listed below
-    with their new value
+    with their new value.
 
     Here are first the changes that may have an impact on your setup and that you want to
     review and understand :
@@ -44,31 +59,6 @@ GRANT SELECT ON VMGR_TAPE_STATUS_VIEW TO <CastorNsAccount>;
       + TAPE    CRASHED_RLS_HANDLING_RETRY_DELAY      300   # 60
       + TAPE    ACS_MOUNT_LIBRARY_FAILURE_HANDLING    retry 3 300  # retry 1 300
       + TAPE    ACS_UNMOUNT_LIBRARY_FAILURE_HANDLING  retry 3 300  # retry 1 300
- 
-
-------------
-- 2.1.14-1 -
-------------
-
-  Summary of major features
-  -------------------------
-
-  - support for Read-Only hardware. DiskServers and FileSystems can be marked as Read-Only so that only
-    read transfers are scheduled, without having to put them in draining and triggering replications
-  - replacement on rmnode/rmmaster infrastructure. They have been integrated to transfermanager and
-    diskmanager. Also the command lines moveDiskServer, rmGetNodes and rmAdminNodes are replaced by
-    modify/printdiskserver
-  - the CASTOR plugin to XROOT has been integrated into the CASTOR code so that it is build/tested/
-    distributed with the core CASTOR software. It comes under the form of a new RPM called
-    castor-xroot-plugin which replaces previous both xrootd-xcastor2fs and xrootd-libtransfermanager
-  - the Nameserver client API has been made secure by default, without falling back to attempting
-    a non-secure connection. To disable security access, the CNS_DISABLE variable needs to be set
-    to YES in castor.conf.
-  - major cleanup of castor.conf. Most entries have been commented out as sensible defaults are
-    provided, thus reducing the set of parameters to be configured on each node.
-
-  Note
-  ----
 
   - similarly to release 2.1.12-* and 2.1.13-*, in the test suite some test cases will still fail, namely :
        touch_updateFileAccess,
@@ -141,6 +131,8 @@ GRANT SELECT ON VMGR_TAPE_STATUS_VIEW TO <CastorNsAccount>;
     the mae and hbase-consumer and were already deprecated
   - log-processor-server has been dropped as its functionality has been superseded by the
     simple-log-producer package and the new monitoring infrastructure
+  - castor-hsmtools now recommends python-krbV. Sites not having a Kerberos infrastructure can safely
+    ignore this recommendation.
 
 
   Deployment Changes
@@ -165,6 +157,14 @@ GRANT SELECT ON VMGR_TAPE_STATUS_VIEW TO <CastorNsAccount>;
 
   To be filled for the first production release. For the moment, only installation from scratch is
   supported.
+
+  VMGR
+  ----
+  
+  - Ask your DBA to grant the following select privilege to the nameserver account when logged
+    into the VMGR database schema:
+
+         GRANT SELECT ON VMGR_TAPE_STATUS_VIEW TO <CastorNsAccount>;
 
 
 ------------
