@@ -35,8 +35,9 @@ def usage(exitCode):
 # first parse the options
 printFileId = False
 printDiskCopyId = False
+verbose = False
 try:
-  options, args = getopt.getopt(sys.argv[1:], 'hid', ['help', 'fileId', 'diskCopyId'])
+  options, args = getopt.getopt(sys.argv[1:], 'hidv', ['help', 'fileId', 'diskCopyId', 'verbose'])
 except Exception, e:
   print e
   usage(1)
@@ -47,6 +48,8 @@ for f, v in options:
     printFileId = True
   elif f == '-d' or f == '--diskCopyId':
     printDiskCopyId = True
+  elif f == '-v' or f == '--verbose':
+    verbose = True
   else:
     print "unknown option : " + f
     usage(1)
@@ -138,5 +141,8 @@ except SystemExit:
     sys.exit(rc)
 except Exception, e:
     print e
+    if verbose:
+         import traceback
+         traceback.print_exc()
     sys.exit(1)
 
