@@ -513,6 +513,19 @@ def castorConf():
     return globalCastorConf
 
 
+def getIdentity():
+    '''Retrieves identity of the user running this script'''
+    machine = socket.getfqdn()
+    euid = os.getuid()
+    egid = os.getgid()
+    pid = os.getpid()
+    username = pwd.getpwuid(euid)[0]
+    sip = socket.gethostbyname(machine).split('.')
+    ip = (int(sip[0]) << 24 | int(sip[1]) << 16 | int(sip[2]) << 8 | int(sip[3]))
+    if ip & 0x80000000 != 0:
+        ip = ip - 0x100000000
+    return machine, euid, egid, pid, username, ip
+
 #-------------------------------------------------------------------------------
 # prettyPrintTable
 #-------------------------------------------------------------------------------
@@ -542,6 +555,13 @@ def prettyPrintTable(titles, data, hasSummary=False):
     if data:
         print lineFormat % _interleaveIter(widths, [str(item) for item in data[-1]])
 
+def scriptPrintTable(data):
+    '''Prints the given data in a form easy to parse by scripts, that is colon delimited.
+    data must be an iterable of lines, themselves iterable of values
+    data will be printed using their str function'''
+    for row in data:
+        print ':'.join(str(item) for item in row)
+
 #-------------------------------------------------------------------------------
 # useful printing functions
 #-------------------------------------------------------------------------------
@@ -564,6 +584,13 @@ def nbToDataAmount(n):
         magn += 1
         n = n / 1024
     return str(n) + ext[magn]
+
+def printPercentage(portion, total):
+    '''converts portion/total couple to a percentage of completion'''
+    if total == 0:
+        return 'N/A'
+    perc = portion*1.0/total
+    return "%.2f" % perc
 
 def nbToAge(n):
     '''converts a number of seconds into a readable age'''
