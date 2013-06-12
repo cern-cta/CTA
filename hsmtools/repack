@@ -125,19 +125,6 @@ if maxNbErrors and not eflag:
 if eflag and not maxNbErrors:
     maxNbErrors = 10
 
-def _getIdentity():
-    '''Retrieves identity of the user running this script'''
-    machine = socket.getfqdn()
-    euid = os.getuid()
-    egid = os.getgid()
-    pid = os.getpid()
-    username = castor_tools.getCurrentUsername()
-    sip = socket.gethostbyname(machine).split('.')
-    ip = (int(sip[0]) << 24 | int(sip[1]) << 16 | int(sip[2]) << 8 | int(sip[3]))
-    if ip & 0x80000000 != 0:
-        ip = ip - 0x100000000
-    return machine, euid, egid, pid, username, ip
-
 _repackRequestStatuses = ['STARTING', 'ONGOING', 'FINISHED', 'FAILED', 'ABORTING', 'ABORTED', 'SUBMITTED']
 def _printStatusLine(subTime, lastModTime, user, machine, vid, status, total, size, toRecall, toMigr, failed, migrated):
     '''prints one status line'''
@@ -155,7 +142,7 @@ def _printStatusLine(subTime, lastModTime, user, machine, vid, status, total, si
       repackTime = castor_tools.nbToAge(int(repackTime))
     # times need to be transformed in human readable strings
     subTime = time.strftime('%d-%b-%y %H:%M', time.localtime(subTime))
-    # format size
+    # human readable size
     size = castor_tools.nbToDataAmount(size)
     # actual printing
     try:
@@ -286,7 +273,7 @@ def submitRepack():
             stcur = stconn.cursor()
             stcur.arraysize = 50
             # precompute some useful values about us
-            machine, euid, egid, pid, username, ip = _getIdentity()
+            machine, euid, egid, pid, username, ip = castor_tools.getIdentity()
             # check the service class
             stCheckSvcClass = '''
             DECLARE
@@ -362,7 +349,7 @@ def cancelRepack():
         END;
         '''
         # precompute some useful values about us
-        machine, euid, egid, pid, username, ip = _getIdentity()
+        machine, euid, egid, pid, username, ip = castor_tools.getIdentity()
         # loop over the tapes we should deal with
         for tape in vids:
             try:
