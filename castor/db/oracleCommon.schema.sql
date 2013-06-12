@@ -686,6 +686,7 @@ ALTER TABLE MigrationJob ADD CONSTRAINT FK_MigrationJob_TapePool
   FOREIGN KEY (tapePool) REFERENCES TapePool(id);
 ALTER TABLE MigrationJob ADD CONSTRAINT FK_MigrationJob_MigrationMount
   FOREIGN KEY (mountTransactionId) REFERENCES MigrationMount(mountTransactionId);
+ALTER TABLE MigrationJob ADD CONSTRAINT CK_MigrationJob_FS_Positive CHECK (fileSize > 0);
 BEGIN
   setObjStatusName('MigrationJob', 'status', 0, 'MIGRATIONJOB_PENDING');
   setObjStatusName('MigrationJob', 'status', 1, 'MIGRATIONJOB_SELECTED');

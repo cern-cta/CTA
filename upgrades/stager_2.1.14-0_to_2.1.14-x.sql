@@ -17,6 +17,9 @@ BEGIN setObjStatusName('DiskCopy', 'status', 0, 'DISKCOPY_VALID'); END;
 /
 
 
+ALTER TABLE MigrationJob ADD CONSTRAINT CK_MigrationJob_FS_Positive CHECK (fileSize > 0);
+
+
 -- temporary function-based index to speed up the following update
 CREATE INDEX I_CF_OpenTimeNull
     ON CastorFile(decode(nvl(nsOpenTime, -1), -1, 1, NULL));
