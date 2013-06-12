@@ -59,14 +59,16 @@ COMMIT;
 /**************************/
 
 /* The following changes may have been performed by the 2.1.14-0pre upgrade, check them */
---BEGIN
---XXX EXECUTE IMMEDIATE ...
-ALTER TABLE Cns_seg_metadata ADD (
-  gid NUMBER(6), creationTime NUMBER, lastModificationTime NUMBER);
-  
-ALTER TABLE Cns_file_metadata ADD (stagerTime NUMBER);
---END;
---/
+DECLARE
+  colName VARCHAR2(100);
+BEGIN
+  SELECT column_name INTO colName FROM all_tab_cols WHERE table_name = 'CNS_FILE_METADATA' AND column_name = 'STAGERTIME';
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  EXECUTE IMMEDIATE 'ALTER TABLE Cns_seg_metadata ADD (
+     gid NUMBER(6), creationTime NUMBER, lastModificationTime NUMBER);';
+  EXECUTE IMMEDIATE 'ALTER TABLE Cns_file_metadata ADD (stagerTime NUMBER);';
+END;
+/
 
 -- Table to store configuration items at the DB level
 CREATE TABLE CastorConfig
@@ -81,6 +83,8 @@ INSERT INTO CastorConfig (class, key, value, description)
 
 -- bug #101714: RFE: VMGR DB should provide tape statuses independently of table definitions
 -- For Vmgr_tape_status_view
+UNDEF vmgrSchema
+ACCEPT vmgrSchema CHAR PROMPT 'Enter the name of the VMGR schema: ';
 CREATE OR REPLACE SYNONYM Vmgr_tape_status_view FOR &vmgrSchema..VMGR_TAPE_STATUS_VIEW;
 
 /* Update and revalidation of PL-SQL code */
