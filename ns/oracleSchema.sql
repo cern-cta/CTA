@@ -34,6 +34,16 @@ CREATE TABLE Cns_seg_metadata (s_fileid NUMBER, copyno NUMBER(1),fsec NUMBER(3),
 
 CREATE TABLE Cns_symlinks (fileid NUMBER, linkname VARCHAR2(1023));
 
+-- Table for NS statistics
+CREATE TABLE UsageStats (
+  gid NUMBER(6) DEFAULT 0 CONSTRAINT NN_UsageStats_gid NOT NULL,
+  timestamp NUMBER  DEFAULT 0 CONSTRAINT NN_UsageStats_ts NOT NULL,
+  maxFileId INTEGER, fileCount INTEGER, fileSize INTEGER,
+  segCount INTEGER, segSize INTEGER, segCompressedSize INTEGER,
+  seg2Count INTEGER, seg2Size INTEGER, seg2CompressedSize INTEGER);
+
+ALTER TABLE UsageStats ADD CONSTRAINT PK_UsageStats_gid_ts PRIMARY KEY (gid, timestamp);
+
 CREATE SEQUENCE Cns_unique_id START WITH 3 INCREMENT BY 1 CACHE 1000;
 
 ALTER TABLE Cns_class_metadata

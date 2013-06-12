@@ -42,6 +42,28 @@ CREATE OR REPLACE PACKAGE castorns AS
     lastModificationTime NUMBER
   );
   TYPE Segment_Cur IS REF CURSOR RETURN Segment_Rec;
+  TYPE Stats_Rec IS RECORD (
+    gid INTEGER,
+    maxFileId INTEGER,
+    fileCount INTEGER,
+    fileSize INTEGER,
+    segCount INTEGER,
+    segSize INTEGER,
+    segCompressedSize INTEGER,
+    seg2Count INTEGER,
+    seg2Size INTEGER,
+    seg2CompressedSize INTEGER,
+    fileIdDelta INTEGER,
+    fileCountDelta INTEGER,
+    fileSizeDelta INTEGER,
+    segCountDelta INTEGER,
+    segSizeDelta INTEGER,
+    segCompressedSizeDelta INTEGER,
+    seg2CountDelta INTEGER,
+    seg2SizeDelta INTEGER,
+    seg2CompressedSizeDelta INTEGER
+  );
+  TYPE Stats IS TABLE OF Stats_Rec;
 END castorns;
 /
 
@@ -693,5 +715,125 @@ BEGIN
    WHERE s_fileid = fid AND copyno = copyNb AND fsec = 1
      AND checksum_name IS NULL AND checksum IS NULL;
   COMMIT;
+END;
+/
+
+CREATE OR REPLACE PROCEDURE insertNSStats(inGid IN INTEGER, inTimestamp IN NUMBER,
+                                          inMaxFileId IN INTEGER, inFileCount IN INTEGER, inFileSize IN INTEGER,
+                                          inSegCount IN INTEGER, inSegSize IN INTEGER, inSegCompressedSize IN INTEGER,
+                                          inSeg2Count IN INTEGER, inSeg2Size IN INTEGER, inSeg2CompressedSize IN INTEGER) AS
+  CONSTRAINT_VIOLATED EXCEPTION;
+  PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
+BEGIN
+  INSERT INTO UsageStats (gid, timestamp, maxFileId, fileCount, fileSize, segCount, segSize,
+                          segCompressedSize, seg2Count, seg2Size, seg2CompressedSize)
+    VALUES (inGid, inTimestamp, inMaxFileId, inFileCount, inFileSize, inSegCount, inSegSize,
+            inSegCompressedSize, inSeg2Count, inSeg2Size, inSeg2CompressedSize);
+EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
+  UPDATE UsageStats SET
+    maxFileId = CASE WHEN inMaxFileId > maxFileId THEN inMaxFileId ELSE maxFileId END,
+    fileCount = fileCount + inFileCount,
+    fileSize = fileSize + inFileSize,
+    segCount = segCount + inSegCount,
+    segSize = segSize + inSegSize,
+    segCompressedSize = segCompressedSize + inSegCompressedSize,
+    seg2Count = seg2Count + inSeg2Count,
+    seg2Size = seg2Size + inSeg2Size,
+    seg2CompressedSize = seg2CompressedSize + inSeg2CompressedSize
+  WHERE gid = inGid AND timestamp = inTimestamp;
+END;
+/
+
+/* This procedure is run as a database job to generate statistics from the namespace */
+CREATE OR REPLACE PROCEDURE gatherNSStats AS
+  varTimestamp NUMBER := getTime();
+BEGIN
+  -- File-level statistics
+  FOR g IN (SELECT gid, MAX(fileid) maxId, COUNT(*) fileCount, SUM(filesize) fileSize
+              FROM Cns_file_metadata
+             GROUP BY gid) LOOP
+    insertNSStats(g.gid, varTimestamp, g.maxId, g.fileCount, g.fileSize, 0, 0, 0, 0, 0, 0);
+  END LOOP;
+  COMMIT;
+  -- Tape-level statistics
+  FOR g IN (SELECT gid, copyNo, SUM(segSize * 100 / decode(compression,0,100,compression)) segComprSize,
+                   SUM(segSize) segSize, COUNT(*) segCount
+              FROM Cns_seg_metadata
+             GROUP BY gid, copyNo) LOOP
+    IF g.copyNo = 1 THEN
+      insertNSStats(g.gid, varTimestamp, 0, 0, 0, g.segCount, g.segSize, g.segComprSize, 0, 0, 0);
+    ELSE
+      insertNSStats(g.gid, varTimestamp, 0, 0, 0, 0, 0, 0, g.segCount, g.segSize, g.segComprSize);
+    END IF;
+  END LOOP;
+  COMMIT;
+  -- Also compute totals
+  INSERT INTO UsageStats (gid, timestamp, maxFileId, fileCount, fileSize, segCount, segSize,
+                          segCompressedSize, seg2Count, seg2Size, seg2CompressedSize)
+    (SELECT -1, varTimestamp, MAX(maxFileId), SUM(fileCount), SUM(fileSize),
+            SUM(segCount), SUM(segSize), SUM(segCompressedSize),
+            SUM(seg2Count), SUM(seg2Size), SUM(seg2CompressedSize)
+       FROM UsageStats
+      WHERE timestamp = varTimestamp);
+  COMMIT;
+END;
+/
+
+/* This pipelined function returns a report of namespace statistics over the given number of days */
+CREATE OR REPLACE FUNCTION NSStatsReport(inDays INTEGER) RETURN castorns.Stats PIPELINED IS
+BEGIN
+  FOR l IN (
+        SELECT NewStats.gid,
+               NewStats.maxFileId, NewStats.fileCount, NewStats.fileSize,
+               NewStats.segCount, NewStats.segSize, NewStats.segCompressedSize,
+               NewStats.seg2Count, NewStats.seg2Size, NewStats.seg2CompressedSize,
+               NewStats.maxFileId-OldStats.maxFileId fileIdDelta, NewStats.fileCount-OldStats.fileCount fileCountDelta,
+               NewStats.fileSize-OldStats.fileSize fileSizeDelta,
+               NewStats.segCount-OldStats.segCount segCountDelta, NewStats.segSize-OldStats.segSize segSizeDelta,
+               NewStats.segCompressedSize-OldStats.segCompressedSize segCompressedSizeDelta,
+               NewStats.seg2Count-OldStats.seg2Count seg2CountDelta, NewStats.seg2Size-OldStats.seg2Size seg2SizeDelta,
+               NewStats.seg2CompressedSize-OldStats.seg2CompressedSize seg2CompressedSizeDelta
+          FROM
+            (SELECT gid, timestamp, maxFileId, fileCount, fileSize, segCount, segSize, segCompressedSize,
+                    seg2Count, seg2Size, seg2CompressedSize
+               FROM UsageStats
+              WHERE timestamp = (SELECT MAX(timestamp) FROM UsageStats
+                                  WHERE timestamp < getTime() - 86400*inDays)) OldStats,
+            (SELECT gid, timestamp, maxFileId, fileCount, fileSize, segCount, segSize, segCompressedSize,
+                    seg2Count, seg2Size, seg2CompressedSize
+               FROM UsageStats
+              WHERE timestamp = (SELECT MAX(timestamp) FROM UsageStats)) NewStats
+         WHERE OldStats.gid = NewStats.gid
+         ORDER BY NewStats.gid DESC) LOOP    -- gid = -1, i.e. the totals line, comes last
+    PIPE ROW(l);
+  END LOOP;
+END;
+/
+
+/* A convenience view to get weekly statistics */
+CREATE OR REPLACE VIEW WeeklyReportView AS
+  SELECT * FROM TABLE(NSStatsReport(7));
+
+/*
+ * Database jobs
+ */
+BEGIN
+  -- Remove database jobs before recreating them
+  FOR j IN (SELECT job_name FROM user_scheduler_jobs
+             WHERE job_name = 'NSSTATSJOB')
+  LOOP
+    DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
+  END LOOP;
+
+  -- Create a db job to be run every day executing the gatherNSStats procedure
+  DBMS_SCHEDULER.CREATE_JOB(
+      JOB_NAME        => 'NSStatsJob',
+      JOB_TYPE        => 'PLSQL_BLOCK',
+      JOB_ACTION      => 'BEGIN gatherNSStats(); END;',
+      JOB_CLASS       => 'CASTOR_JOB_CLASS',
+      START_DATE      => SYSDATE + 60/1440,
+      REPEAT_INTERVAL => 'FREQ=DAILY; INTERVAL=1',
+      ENABLED         => TRUE,
+      COMMENTS        => 'Gathering of Nameserver usage statistics');
 END;
 /

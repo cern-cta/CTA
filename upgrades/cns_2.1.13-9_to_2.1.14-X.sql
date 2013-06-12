@@ -87,6 +87,17 @@ UNDEF vmgrSchema
 ACCEPT vmgrSchema CHAR PROMPT 'Enter the name of the VMGR schema: ';
 CREATE OR REPLACE SYNONYM Vmgr_tape_status_view FOR &vmgrSchema..VMGR_TAPE_STATUS_VIEW;
 
+-- Table for NS statistics
+CREATE TABLE UsageStats (
+  gid NUMBER(6) DEFAULT 0 CONSTRAINT NN_UsageStats_gid NOT NULL,
+  timestamp NUMBER  DEFAULT 0 CONSTRAINT NN_UsageStats_ts NOT NULL,
+  maxFileId INTEGER, fileCount INTEGER, fileSize INTEGER,
+  segCount INTEGER, segSize INTEGER, segCompressedSize INTEGER,
+  seg2Count INTEGER, seg2Size INTEGER, seg2CompressedSize INTEGER);
+
+ALTER TABLE UsageStats ADD CONSTRAINT PK_UsageStats_gid_ts PRIMARY KEY (gid, timestamp);
+
+
 /* Update and revalidation of PL-SQL code */
 /******************************************/
 
@@ -406,13 +417,13 @@ BEGIN
   -- We're done with the pre-checks, try and insert the segment metadata
   -- and deal with the possible unique (vid,fseq) constraint violation exception
   BEGIN
+    varSegCreationTime := getTime();
     INSERT INTO Cns_seg_metadata (s_fileId, copyNo, fsec, segSize, s_status, vid,
       fseq, blockId, compression, side, checksum_name, checksum, gid, creationTime, lastModificationTime)
     VALUES (varFid, inSegEntry.copyNo, 1, inSegEntry.segSize, '-', inSegEntry.vid,
       inSegEntry.fseq, inSegEntry.blockId,
       CASE inSegEntry.comprSize WHEN 0 THEN 100 ELSE trunc(inSegEntry.segSize*100/inSegEntry.comprSize) END,
-      0, inSegEntry.checksum_name, inSegEntry.checksum, varFGid, getTime(), getTime())
-    RETURNING creationTime INTO varSegCreationTime;
+      0, inSegEntry.checksum_name, inSegEntry.checksum, varFGid, varSegCreationTime, varSegCreationTime);
   EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
     -- This can be due to a PK violation or to the unique (vid,fseq) violation. The first
     -- is excluded because of checkAndDropSameCopynbSeg(), thus the second is the case:
@@ -558,7 +569,7 @@ BEGIN
   -- Repack specific: --
   -- Make sure the segment for the given oldCopyNo still exists
   BEGIN
-    SELECT s_status INTO varStatus
+    SELECT s_status, creationTime INTO varStatus, varSegCreationTime
       FROM Cns_seg_metadata
      WHERE s_fileid = varFid AND copyNo = inOldCopyNo;
   EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -633,8 +644,7 @@ BEGIN
     VALUES (varFid, inSegEntry.copyNo, 1, inSegEntry.segSize, '-', inSegEntry.vid,
       inSegEntry.fseq, inSegEntry.blockId,
       CASE inSegEntry.comprSize WHEN 0 THEN 100 ELSE trunc(inSegEntry.segSize*100/inSegEntry.comprSize) END,
-      0, inSegEntry.checksum_name, inSegEntry.checksum, varFGid, getTime(), getTime())
-    RETURNING creationTime INTO varSegCreationTime;
+      0, inSegEntry.checksum_name, inSegEntry.checksum, varFGid, varSegCreationTime, getTime());
   EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
     -- There must already be an existing segment at that fseq position for a different file.
     -- This is forbidden! Abort the entire operation.
@@ -761,6 +771,121 @@ BEGIN
    WHERE s_fileid = fid AND copyno = copyNb AND fsec = 1
      AND checksum_name IS NULL AND checksum IS NULL;
   COMMIT;
+END;
+/
+
+CREATE OR REPLACE PROCEDURE insertNSStats(inGid IN INTEGER, inTimestamp IN NUMBER,
+                                          inMaxFileId IN INTEGER, inFileCount IN INTEGER, inFileSize IN INTEGER,
+                                          inSegCount IN INTEGER, inSegSize IN INTEGER, inSegCompressedSize IN INTEGER,
+                                          inSeg2Count IN INTEGER, inSeg2Size IN INTEGER, inSeg2CompressedSize IN INTEGER) AS
+  CONSTRAINT_VIOLATED EXCEPTION;
+  PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
+BEGIN
+  INSERT INTO UsageStats (gid, timestamp, maxFileId, fileCount, fileSize, segCount, segSize,
+                          segCompressedSize, seg2Count, seg2Size, seg2CompressedSize)
+    VALUES (inGid, inTimestamp, inMaxFileId, inFileCount, inFileSize, inSegCount, inSegSize,
+            inSegCompressedSize, inSeg2Count, inSeg2Size, inSeg2CompressedSize);
+EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
+  UPDATE UsageStats SET
+    maxFileId = CASE WHEN inMaxFileId > maxFileId THEN inMaxFileId ELSE maxFileId END,
+    fileCount = fileCount + inFileCount,
+    fileSize = fileSize + inFileSize,
+    segCount = segCount + inSegCount,
+    segSize = segSize + inSegSize,
+    segCompressedSize = segCompressedSize + inSegCompressedSize,
+    seg2Count = seg2Count + inSeg2Count,
+    seg2Size = seg2Size + inSeg2Size,
+    seg2CompressedSize = seg2CompressedSize + inSeg2CompressedSize
+  WHERE gid = inGid AND timestamp = inTimestamp;
+END;
+/
+
+/* This procedure is run as a database job to generate statistics from the namespace */
+CREATE OR REPLACE PROCEDURE gatherNSStats AS
+  varTimestamp NUMBER := getTime();
+BEGIN
+  -- File-level statistics
+  FOR g IN (SELECT gid, MAX(fileid) maxId, COUNT(*) fileCount, SUM(filesize) fileSize
+              FROM Cns_file_metadata
+             GROUP BY gid) LOOP
+    insertNSStats(g.gid, varTimestamp, g.maxId, g.fileCount, g.fileSize, 0, 0, 0, 0, 0, 0);
+  END LOOP;
+  COMMIT;
+  -- Tape-level statistics
+  FOR g IN (SELECT gid, copyNo, SUM(segSize * 100 / decode(compression,0,100,compression)) segComprSize,
+                   SUM(segSize) segSize, COUNT(*) segCount
+              FROM Cns_seg_metadata
+             GROUP BY gid, copyNo) LOOP
+    IF g.copyNo = 1 THEN
+      insertNSStats(g.gid, varTimestamp, 0, 0, 0, g.segCount, g.segSize, g.segComprSize, 0, 0, 0);
+    ELSE
+      insertNSStats(g.gid, varTimestamp, 0, 0, 0, 0, 0, 0, g.segCount, g.segSize, g.segComprSize);
+    END IF;
+  END LOOP;
+  COMMIT;
+  -- Also compute totals
+  INSERT INTO UsageStats (gid, timestamp, maxFileId, fileCount, fileSize, segCount, segSize,
+                          segCompressedSize, seg2Count, seg2Size, seg2CompressedSize)
+    (SELECT -1, varTimestamp, MAX(maxFileId), SUM(fileCount), SUM(fileSize),
+            SUM(segCount), SUM(segSize), SUM(segCompressedSize),
+            SUM(seg2Count), SUM(seg2Size), SUM(seg2CompressedSize)
+       FROM UsageStats
+      WHERE timestamp = varTimestamp);
+  COMMIT;
+END;
+/
+
+CREATE OR REPLACE PROCEDURE weeklyReport(Stats OUT SYS_REFCURSOR) AS
+  varOldTime NUMBER;
+  varNewTime NUMBER;
+BEGIN
+  -- Pick the right time stamps
+  SELECT MAX(timestamp) INTO varNewTime FROM UsageStats;
+  SELECT MAX(timestamp) INTO varOldTime FROM UsageStats
+   WHERE timestamp <= varNewTime - 86400*7;
+  -- Extract a cursor with the relevant statistics for all groups
+  OPEN Stats FOR
+    SELECT NewStats.gid,
+           NewStats.maxFileId, NewStats.fileCount, NewStats.fileSize,
+           NewStats.segCount, NewStats.segSize, NewStats.segCompressedSize,
+           NewStats.maxFileId-OldStats.maxFileId fileIdDelta, NewStats.fileCount-OldStats.fileCount fileCountDelta,
+           NewStats.fileSize-OldStats.fileSize fileSizeDelta,
+           NewStats.segCount-OldStats.segCount segCountDelta, NewStats.segSize-OldStats.segSize segSizeDelta,
+           NewStats.segCompressedSize-OldStats.segCompressedSize segCompressedSizeDelta,
+           NewStats.seg2Count-OldStats.seg2Count seg2CountDelta, NewStats.seg2Size-OldStats.seg2Size seg2SizeDelta,
+           NewStats.seg2CompressedSize-OldStats.seg2CompressedSize seg2CompressedSizeDelta
+      FROM
+        (SELECT gid, timestamp, maxFileId, fileCount, fileSize, segCount, segSize, segCompressedSize,
+                seg2Count, seg2Size, seg2CompressedSize
+           FROM UsageStats WHERE timestamp = varOldTime) OldStats,
+        (SELECT gid, timestamp, maxFileId, fileCount, fileSize, segCount, segSize, segCompressedSize,
+                seg2Count, seg2Size, seg2CompressedSize
+           FROM UsageStats WHERE timestamp = varNewTime) NewStats
+     WHERE OldStats.gid = NewStats.gid;
+END;
+/
+
+/*
+ * Database jobs
+ */
+BEGIN
+  -- Remove database jobs before recreating them
+  FOR j IN (SELECT job_name FROM user_scheduler_jobs
+             WHERE job_name = 'NSSTATSJOB')
+  LOOP
+    DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
+  END LOOP;
+
+  -- Create a db job to be run every day executing the gatherNSStats procedure
+  DBMS_SCHEDULER.CREATE_JOB(
+      JOB_NAME        => 'NSStatsJob',
+      JOB_TYPE        => 'PLSQL_BLOCK',
+      JOB_ACTION      => 'BEGIN gatherNSStats(); END;',
+      JOB_CLASS       => 'CASTOR_JOB_CLASS',
+      START_DATE      => SYSDATE + 60/1440,
+      REPEAT_INTERVAL => 'FREQ=DAILY; INTERVAL=1',
+      ENABLED         => TRUE,
+      COMMENTS        => 'Gathering of Nameserver usage statistics');
 END;
 /
 

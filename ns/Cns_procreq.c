@@ -437,7 +437,7 @@ int Cns_srv_chmod(char *req_data,
   RETURN (0);
 }
 
-/* Cns_srv_chown - change owner and group of a file or a directory */
+/* Cns_srv_chown - change owner and group of a file or a directory, and update segments as well */
 
 int Cns_srv_chown(char *req_data,
                   struct Cns_srv_thread_info *thip,
@@ -458,6 +458,9 @@ int Cns_srv_chown(char *req_data,
   struct passwd *pw;
   char *rbp;
   Cns_dbrec_addr rec_addr;
+  Cns_dbrec_addr rec_addrs; /* Segment record address */
+  int bof, c;
+  struct Cns_seg_metadata smd_entry;
 
   /* Unmarshall message body */
   rbp = req_data;
@@ -541,7 +544,7 @@ int Cns_srv_chown(char *req_data,
       RETURN (EPERM);
   }
 
-  /* Update entry */
+  /* Update file entry */
   if ((int)new_uid != -1)
     fmd_entry.uid = new_uid;
   if ((int)new_gid != -1)
@@ -551,6 +554,20 @@ int Cns_srv_chown(char *req_data,
   fmd_entry.ctime = time (0);
   if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &fmd_entry))
     RETURN (serrno);
+  /* Update segments if any */
+  bof = 1;
+  while ((c = Cns_get_smd_by_pfid (&thip->dbfd, bof, fmd_entry.fileid,
+                                   &smd_entry, 1, &rec_addrs, 0)) == 0) {
+    smd_entry.gid = new_gid;
+    if (Cns_update_smd_entry (&thip->dbfd, &rec_addrs, &smd_entry))
+      RETURN (serrno);
+    bof = 0;
+  }
+  (void) Cns_get_smd_by_pfid (&thip->dbfd, bof, fmd_entry.fileid,
+                              &smd_entry, 1, &rec_addrs, 1);
+  if (c < 0)
+    RETURN (serrno);
+
   RETURN (0);
 }
 
@@ -1679,7 +1696,7 @@ int Cns_srv_getsegattrs(int magic,
   RETURN (0);
 }
 
-/* Cns_srv_lchown - change owner and group of a file or a directory */
+/* Cns_srv_lchown - change owner and group of a symbolic link to file or a directory */
 
 int Cns_srv_lchown(char *req_data,
                    struct Cns_srv_thread_info *thip,
@@ -1793,6 +1810,7 @@ int Cns_srv_lchown(char *req_data,
   fmd_entry.ctime = time (0);
   if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &fmd_entry))
     RETURN (serrno);
+  
   RETURN (0);
 }
 
