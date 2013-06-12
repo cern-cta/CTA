@@ -1,10 +1,112 @@
-.TH draindiskserver 1 "$Date: 2009/02/12 11:02:59 $" CASTOR "Draining Diskserver Commands"
+.\" ******************************************************************************
+.\"                      draindiskserver
+.\"
+.\" This file is part of the Castor project.
+.\" See http://castor.web.cern.ch/castor
+.\"
+.\" Copyright (C) 2003  CERN
+.\" This program is free software; you can redistribute it and/or
+.\" modify it under the terms of the GNU General Public License
+.\" as published by the Free Software Foundation; either version 2
+.\" of the License, or (at your option) any later version.
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program; if not, write to the Free Software
+.\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+.\"
+.\" man page for the draindiskserver command.
+.\"
+.\" @author Castor Dev team, castor-dev@cern.ch
+.\" *****************************************************************************/
+.TH draindiskserver 1 "June 2013 $" CASTOR "Allows to drain Diskserver/FileSystems"
 .SH NAME
 draindiskserver \- management of draining filesystems and diskservers
 
 .SH SYNOPSIS
 .B draindiskserver
-[\fIOPTIONS\fR]...
+.BI -h
+.br
+.B draindiskserver
+.BI -a\c
+|\c
+.BI --add
+.BI -n
+<diskServer>
+[
+.BI -m
+<mountpoint>
+]
+[
+.BI -S
+<serviceclass>
+]
+[
+.BI --auto-delete
+]
+[
+.BI --file-mask\c
+=(NOTONTAPE|ALL)
+]
+[
+.BI --comment\c
+=comment
+]
+.br
+.B draindiskserver
+.BI -q\c
+|\c
+.BI --query
+[
+.BI -n
+<diskServer>
+[
+.BI -m
+<mountpoint>
+]
+]
+[
+.BI -c\c
+|\c
+.BI --config
+]
+[
+.BI -r\c
+|\c
+.BI --running
+]
+[
+.BI --script
+]
+.br
+.B draindiskserver
+.BI -q\c
+|\c
+.BI --query
+[
+.BI -n
+<diskServer>
+[
+.BI -m
+<mountpoint>
+]
+]
+.BI -f\c
+|\c
+.BI --failures
+.br
+.B draindiskserver
+.BI -d\c
+|\c
+.BI --delete
+.BI -n
+<diskServer>
+[
+.BI -m
+<mountpoint>
+]
 
 .SH DESCRIPTION
 .B draindiskserver
@@ -13,168 +115,166 @@ diskservers in an automated way.
 
 .SH OPTIONS
 Supported operations:
+.RS
 .TP
-.B -a,\ \-\-add
-Add a new filesystem or diskserver to the list of those to be drained.
+.B -a, --add
+Add new filesystem(s) or diskserver to the list of those to be drained.
 .TP
-.B \-\-restart
-Restart the draining process of a given filesystem or diskserver with the
-previously defined options.
+.B -q, --query
+Query the filesystems currently being drained. With no option, displays a summary of
+the draining processes. with --config, displays the configuration of draining jobs
 .TP
-.B -d,\ \-\-delete
+.B -d, --delete
 Delete/Cancel the draining process of a given filesystem or diskserver.
-.TP
-.B -q,\ \-\-query
-Query the filesystems currently being drained.
+.RE
 
 .TP
-Add options (with \fB\-a\fR or \fB\-\-add\fR):
+Common options:
+.RS
 .TP
-.B -S,\ \-\-svcclass=\fINAME\fR
-The name of the service class that files should be replicated too. This option
+.B -h, --help
+Display this help and exit
+.TP
+.B -n, --nodename=<DiskServer>
+The name of the diskserver to perform the operation on.
+.TP
+.B -m, --mountpoint=<MountPoint>
+The name of the mountpoint to perform the operation on. Note: if the mountpoint
+option is omitted, the operation will apply to all filesystems associated with
+the diskserver.
+.RE
+
+.TP
+Add options (\fB-a\fR or \fB--add\fR):
+.RS
+.TP
+.B -S,\ \-\-svcclass=<svcClassName>
+The name of the service class that files should be replicated to. This option
 can be omitted if the filesystems to be added belong to a diskpool which is
 linked to only one service class.
-.TP
-.B -t,\ \-\-transfers=\fINUM\fR
-The maximum number of transfers allowed to run concurrently per filesystem.
-(Default: 50). The value must be greater than 0. It is recommended when setting
-this value to set more transfers than job slots in the scheduler. This compensates for any
-processing overhead that the diskserver draining logic introduces and makes sure
-that there are always transfers pending in the scheduler queue.
 .TP
 .B --auto-delete
 Delete files automatically after replication. (Default: NO). Files deleted as a
 resulted of the draining process will have the GcType: 'Draining filesystem'.
 .TP
-.B --file-mask=[\fISTAGED|CANBEMIGR|ALL\fR]
-Mask used to decide which files need to be replicated. (Default: CANBEMIGR)
+.B --file-mask=(NOTONTAPE|ALL)
+Mask used to decide which files need to be replicated. (Default: \fBALL\fR)
+Note that when \fBALL\fR is used, files that are not on tape, are still replicated first.
 .TP
-.B --comment=\fICOMMENT\fR
-Associate a comment with the draining process. The maximum length of the comment
-is restricted to 50 characters in length.
+.B --comment=<comment>
+Associates a comment with the draining process.
+.RE
 
 .TP
-Query options (with \fB\-q\fR or \fB\-\-query\fR):
+Query options (\fB-q\fR or \fB--query\fR):
+.RS
 .TP
 .B -c,\ \-\-config
-List the configuration options.
+if given, displays the configuration of draining jobs rather than their status
+.TP
+.B -r,\ \-\-running
+if given, only lists running drainings
+.TP
+.B --script
+if given, output uses a style suitable for parsing by scripts
 .TP
 .B -f,\ \-\-failures
-List the files which failed to be replicated and if available the reason why.
+List the files which failed to be replicated and the reason why.
 .TP
+.RE
 
-\fBNote:\fR  If no additional \fB\-\-query\fR options are specified, the default
-behaviour is to display a summary of the draining process for all registered
-filesystems. The output of the summary contains the following information
-grouped by diskserver:
+.TP
+Meaning of the columns in the output of \fB--query\fR:
 .RS
+.TP 12
+.B DiskServer
+The name of the diskserver.
 .TP
 .B MountPoint
 The name of the mountpoint/filesystem.
 .TP
 .B Created
-The creation time of the request to drain the filesystem in the format:
-\fB%d-%b-%Y %T\fR (see, `man strftime`).
+The creation time of the request to drain the filesystem
 .TP
 .B TFiles
-The total number of files to be replicated.
+The total number of files to be replicated
 .TP
 .B TSize
 The total size of the files to replicated expressed in a human readable format
-(e.g, 1K, 234M 2G) using powers of 1000 (SI Units).
+(e.g, 1KiB, 234MiB 2GiB) using powers of 2.
 .TP
 .B RFiles
 The remaining number of files to be replicated.
 .TP
 .B RSize
 The remaining size of the files to be replicated expressed in a human readable
-format (e.g, 1K, 234M 2G) using powers of 1000 (SI Units).
+(e.g, 1KiB, 234MiB 2GiB) using powers of 2.
 .TP
 .B Failed
 The number of files which have failed to be replicated. The exact files which
-failed can be listed using the \fB\-\-query\fR option.
+failed can be listed using the \fB--query --failures\fR options.
 .TP
 .B RunTime
-An interval format string representing the number of days, hours, minutes and
-seconds that the draining process has been running for the filesystem.
+Total time elapsed since the startof the draining process, in a human readable format.
 .TP
 .B Progress
 The progress of the draining process represented as a percentage of the size of
 the data transferred.
 .TP
 .B ETC
-\fBE\fRstimated \fBT\fRime \fBC\fRompletion represented as an interval format
-string showing the number of estimated days, hours, minutes and seconds left.
-Note: N/A will be displayed until at least 10% of the data has been replicated.
+\fBE\fRstimated \fBT\fRime to \fBC\fRompletion, computed base on the size of
+the data transferred versus data remaining to be transfered.
 .TP
 .B Status
-The status of the draining process. One of: \fBCREATED\fR, \fBINITIALIZING\fR,
-\fBRUNNING\fR, \fBSTALLED\fR, \fBINTERRUPTED\fR, \fBFAILED\fR, \fBCOMPLETED\fR,
-\fBDELETING\fR and \fBRESTART\fR
+The status of the draining process. One of: \fBSUBMITTED\fR, \fBSTARTING\fR,
+\fBRUNNING\fR, \fBFAILED\fR and \fBFINISHED\fR
 .RE
 
-.TP
-Common options for all operations:
-.TP
-.B -n,\ \-\-nodename=\fINODENAME\fR
-The name of the diskserver to perform the operation on.
-.TP
-.B -m,\ \-\-mountpoint=\fIMOUNTPOINT\fR
-The name of the mountpoint to perform the operation on. Note: if the mountpoint
-option is omitted, the operation will apply to all filesystems associated with
-the diskserver.
-.TP
-.B --script
-Display the output using a style suitable for parsing by scripts.
-.TP
-.B --help
-Display this help and exit
+.SH EXAMPLES
+.nf
+.ft CW
+# draindiskserver -a -n lxc2dev1d2.cern.ch -m /srv/castor/10/  -S default --comment="first test"
+Started draining for lxc2dev1.cern.ch:/srv/castor/10/
+
+# draindiskserver -q
+        DiskServer      MountPoint              Created TFiles TSize RFiles RSize Failed RunTime Progress ETC  Status
+---------------------------------------------------------------------------------------------------------------------
+lxc2dev1d2.cern.ch /srv/castor/10/ 12-Jun-2013 14:03:12      4 2878B      4 2878B      0   4.00s   0.00 % N/A RUNNING
+
+
+# draindiskserver -q
+        DiskServer      MountPoint              Created TFiles TSize RFiles RSize Failed RunTime Progress ETC Status
+--------------------------------------------------------------------------------------------------------------------
+lxc2dev1d2.cern.ch /srv/castor/10/ 12-Jun-2013 14:03:12      4 2878B      0    0B      4  12.00s 100.00 %  0s FAILED
+
+# draindiskserver -qf
+        DiskServer      MountPoint     fileId                                                                                                                      Error
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+lxc2dev1d2.cern.ch /srv/castor/10/ 5001075208                                                                                                  No destination host found
+lxc2dev1d2.cern.ch /srv/castor/10/ 5001075044                                                                                                  No destination host found
+lxc2dev1d2.cern.ch /srv/castor/10/ 5001068997 lxc2dev1d2.cern.ch:/srv/castor/10/97/5001068997@cnsdev.240687 : No such file or directory (error 2 on lxc2dev1d2.cern.ch)
+lxc2dev1d2.cern.ch /srv/castor/10/ 5001069822 lxc2dev1d2.cern.ch:/srv/castor/10/22/5001069822@cnsdev.268879 : No such file or directory (error 2 on lxc2dev1d2.cern.ch)
+
+# draindiskserver -d -n lxc2dev1d2.cern.ch
+No draining activity found for lxc2dev1d2.cern.ch:/srv/castor/01/. Ignoring it
+No draining activity found for lxc2dev1d2.cern.ch:/srv/castor/02/. Ignoring it
+No draining activity found for lxc2dev1d2.cern.ch:/srv/castor/03/. Ignoring it
+No draining activity found for lxc2dev1d2.cern.ch:/srv/castor/04/. Ignoring it
+No draining activity found for lxc2dev1d2.cern.ch:/srv/castor/05/. Ignoring it
+No draining activity found for lxc2dev1d2.cern.ch:/srv/castor/06/. Ignoring it
+No draining activity found for lxc2dev1d2.cern.ch:/srv/castor/07/. Ignoring it
+No draining activity found for lxc2dev1d2.cern.ch:/srv/castor/08/. Ignoring it
+No draining activity found for lxc2dev1d2.cern.ch:/srv/castor/09/. Ignoring it
+Draining activity for lxc2dev1d2.cern.ch:/srv/castor/10/ will be stopped
+Is this ok ? [N/y] y
+Stopping drain for lxc2dev1d2.cern.ch:/srv/castor/10/
+
+# draindiskserver -q
+Nothing found
 
 .SH NOTES
-When querying filesystems:
-
-.RS
-The \fBINTERRUPTED\fR status is displayed when a filesystem that was being
-drained was stopped due to a change of the diskserver or filesystem status which
-meant that the filesystem itself was no longer in a \fBDRAINING\fR state. To fix
-this, the filesystem must be placed into a \fBDRAINING\fR state using the
-`\fBrmAdminNode\fR` command and the filesystem resubmitted for draining.
-
-The \fBSTALLED\fR status is displayed when a filesystem that was being drained
-has not processed any files within the last 60 minutes.
-
-Filesystems that are in a \fBCOMPLETED\fR status will be automatically removed
-after 7 days or on an explicit call to delete the filesystem using the
-`\fBrmAdminNode\fR` command with the \fB-d\fR option.
-.RE
-
-The processing of filesystems:
-
-.RS
-All filesystems in a \fBRUNNING\fR status are processed in parallel and the order
-in which files are selected for replication is dependent on the status of the
-file and its age. Therefore, the files in a \fBCANBEMIGR\fR state will be
-replicated first, followed by \fBSTAGED\fR files.
-
-If a file being processed, already has an outstanding request to replicate it
-(e.g. a stager_get initiated by a user) the draining logic is instructed to wait
-for that transfer to complete and not start a second transfer.
-.RE
-
-.SH FILES
-The
-.B draindiskserver
-tool requires SQL access to the STAGER database and therefore users executing
-this command must be able to read the \fB/etc/castor/ORASTAGERCONFIG\fR password
-file.
-
-.SH EXIT STATUS
-This program returns 0 if the operation was successful or > 0 if the operation
-failed.
-
-.SH SEE ALSO
-.BR rmAdminNode(1),
-.BR diskServer_qry(1)
+This command requires database client access to the stager catalog DB.
+Configuration for the database access is taken from castor.conf.
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

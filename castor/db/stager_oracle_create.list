@@ -1,5 +1,4 @@
 oracleCommon.schema.sql
-oracleDrain.schema.sql
 oracleConstants.sql
 oracleCommon.sql
 oraclePerm.sql

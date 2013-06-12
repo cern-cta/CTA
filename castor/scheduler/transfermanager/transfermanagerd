@@ -289,8 +289,10 @@ class TransferManagerService(rpyc.Service):
     for diskPool in transfers:
       for ds in transfers[diskPool]:
         if transfers[diskPool][ds] != None:
-          for transferId, fileid, scheduler, user, status, transfertype, arrivalTime, startTime in transfers[diskPool][ds]:
-            res.append((transferId, fileid, scheduler, user, status, diskPool, ds, transfertype, arrivalTime, startTime))
+          for transferId, fileid, scheduler, user, status, transfertype, arrivalTime, \
+              startTime in transfers[diskPool][ds]:
+            res.append((transferId, fileid, scheduler, user, status, diskPool, ds,
+                        transfertype, arrivalTime, startTime))
         else:
           res.append((None, ds))
     return tuple(res)
@@ -405,11 +407,13 @@ class TransferManagerService(rpyc.Service):
         # check whether we should reconnect to DB, and do so if needed
         self.__class__.dbConnection().checkForReconnection(e)
         # detect special error where the client can give up
-        if isinstance(e, cx_Oracle._Error):
-          errorcode = e.code
-          if (errorcode == 20110):
-            # raise ValueError to tell the upper layer to give up
-            raise ValueError(e.message)
+        if isinstance(e, cx_Oracle.Error):
+          error, = e.args
+          if isinstance(error, cx_Oracle._Error):
+            errorcode = error.code
+            if (errorcode == 20110):
+              # raise ValueError to tell the upper layer to give up
+              raise ValueError(e.message)
         # otherwise reraise for the upper layer
         raise e
       finally:
@@ -456,11 +460,12 @@ class TransferManagerService(rpyc.Service):
         for transferId, reqId, fileId, diskServerName, localPath, fileSize, errMsg in transferTuples:
           dlf.writedebug(msgs.INVOKINGD2DEND, subreqid=transferId, reqid=reqId, fileid=fileId,
                          path=localPath, size=fileSize, errMsg=errMsg)
-          # end them in the stager DB
-          stcur.execute("BEGIN disk2DiskCopyEnded(:1, :2, :3, :4, :5); END;",
-                        (transferId, diskServerName, localPath, fileSize, errMsg))
           # cleanup source in our queues
           queueingTransfers.d2dendById(transferId)
+          # then end them in the stager DB
+          # the order is important as the synchronizer will remove d2dsrc with no entry in the DB
+          stcur.execute("BEGIN disk2DiskCopyEnded(:1, :2, :3, :4, :5); END;",
+                        (transferId, diskServerName, localPath, fileSize, errMsg))
         # close cursor
         stcur.close()
       except Exception, e:

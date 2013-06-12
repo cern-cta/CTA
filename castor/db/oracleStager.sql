@@ -218,14 +218,6 @@ BEGIN
      :new.status = dconst.FILESYSTEM_PRODUCTION THEN
     checkFsBackInProd(:old.id);
   END IF;
-  -- Cancel any ongoing draining operations if the filesystem is not in a
-  -- DRAINING state
-  IF :new.status != dconst.FILESYSTEM_DRAINING THEN
-    UPDATE DrainingFileSystem
-       SET status = 3  -- INTERRUPTED
-     WHERE fileSystem = :new.id
-       AND status IN (0, 1, 2, 7);  -- CREATED, INITIALIZING, RUNNING, RESTART
-  END IF;
 END;
 /
 
@@ -246,26 +238,6 @@ BEGIN
     LOOP
       checkFsBackInProd(fs.id);
     END LOOP;
-  END IF;
-  -- Cancel all draining operations if the diskserver is disabled.
-  IF :new.status = dconst.DISKSERVER_DISABLED THEN
-    UPDATE DrainingFileSystem
-       SET status = 3  -- INTERRUPTED
-     WHERE fileSystem IN
-       (SELECT FileSystem.id FROM FileSystem
-         WHERE FileSystem.diskServer = :new.id)
-       AND status IN (0, 1, 2, 7);  -- CREATED, INITIALIZING, RUNNING, RESTART
-  END IF;
-  -- If the diskserver is in PRODUCTION cancel the draining operation of
-  -- filesystems not in DRAINING.
-  IF :new.status = dconst.DISKSERVER_PRODUCTION THEN
-    UPDATE DrainingFileSystem
-       SET status = 3  -- INTERRUPTED
-     WHERE fileSystem IN
-       (SELECT FileSystem.id FROM FileSystem
-         WHERE FileSystem.diskServer = :new.ID
-           AND FileSystem.status != 1)  -- DRAINING
-       AND status IN (0, 1, 2, 7);  -- CREATED, INITIALIZING, RUNNING, RESTART
   END IF;
 END;
 /
@@ -1473,7 +1445,8 @@ END;
 /* PL/SQL method implementing createDisk2DiskCopyJob */
 CREATE OR REPLACE PROCEDURE createDisk2DiskCopyJob
 (inCfId IN INTEGER, inNsOpenTime IN INTEGER, inDestSvcClassId IN INTEGER,
- inOuid IN INTEGER, inOgid IN INTEGER, inReplicationType IN INTEGER, inReplacedDcId IN INTEGER) AS
+ inOuid IN INTEGER, inOgid IN INTEGER, inReplicationType IN INTEGER,
+ inReplacedDcId IN INTEGER, inDrainingJob IN INTEGER) AS
   varD2dCopyJobId INTEGER;
   varDestDcId INTEGER;
 BEGIN
@@ -1482,10 +1455,10 @@ BEGIN
   -- Create the Disk2DiskCopyJob
   INSERT INTO Disk2DiskCopyJob (id, transferId, creationTime, status, retryCounter, ouid, ogid,
                                 destSvcClass, castorFile, nsOpenTime, replicationType,
-                                replacedDcId, destDcId)
+                                replacedDcId, destDcId, drainingJob)
   VALUES (varD2dCopyJobId, uuidgen(), gettime(), dconst.DISK2DISKCOPYJOB_PENDING, 0, inOuid, inOgid,
           inDestSvcClassId, inCfId, inNsOpenTime, inReplicationType,
-          inReplacedDcId, varDestDcId);
+          inReplacedDcId, varDestDcId, inDrainingJob);
 
   -- log "Created new Disk2DiskCopyJob"
   DECLARE
@@ -1499,7 +1472,8 @@ BEGIN
              'destSvcClass=' || varSvcClassName || ' nsOpenTime=' || TO_CHAR(inNsOpenTime) ||
              ' uid=' || TO_CHAR(inOuid) || ' gid=' || TO_CHAR(inOgid) || ' replicationType=' ||
              getObjStatusName('Disk2DiskCopyJob', 'replicationType', inReplicationType) ||
-             ' TransferId=' || TO_CHAR(varD2dCopyJobId) || ' replacedDcId=' || TO_CHAR(inReplacedDcId));
+             ' TransferId=' || TO_CHAR(varD2dCopyJobId) || ' replacedDcId=' || TO_CHAR(inReplacedDcId ||
+             ' DrainReq=' || TO_CHAR(inDrainingJob)));
   END;
   
   -- wake up transfermanager
@@ -1616,7 +1590,7 @@ BEGIN
   LOOP
     BEGIN
       -- Trigger a replication request.
-      createDisk2DiskCopyJob(cfId, varNsOpenTime, a.id, ouid, ogid, dconst.REPLICATIONTYPE_INTERNAL, NULL);
+      createDisk2DiskCopyJob(cfId, varNsOpenTime, a.id, ouid, ogid, dconst.REPLICATIONTYPE_INTERNAL, NULL, NULL);
     EXCEPTION WHEN NO_DATA_FOUND THEN
       NULL;  -- No copies to replicate from
     END;
@@ -2853,7 +2827,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
         BEGIN
           -- yes, we can replicate, create a replication request without waiting on it.
           createDisk2DiskCopyJob(inCfId, inNsOpenTime, varSrcSvcClassId, inEuid, inEgid,
-                                 dconst.REPLICATIONTYPE_INTERNAL, NULL);
+                                 dconst.REPLICATIONTYPE_INTERNAL, NULL, NULL);
           -- log it
           logToDLF(inReqUUID, dlf.LVL_SYSTEM, dlf.STAGER_GET_REPLICATION, inFileId, inNsHost, 'stagerd',
                    'SUBREQID=' || inSrUUID || ' svcClassId=' || getSvcClassName(inSvcClassId) ||
@@ -2886,7 +2860,8 @@ BEGIN
   checkForD2DCopyOrRecall(inCfId, inSrId, inEuid, inEgid, inSvcClassId, varSrcDcId, varSrcSvcClassId);
   IF varSrcDcId > 0 THEN
     -- create DiskCopyCopyJob and make this subRequest wait on it
-    createDisk2DiskCopyJob(inCfId, inNsOpenTime, inSvcClassId, inEuid, inEgid, dconst.REPLICATIONTYPE_USER, NULL);
+    createDisk2DiskCopyJob(inCfId, inNsOpenTime, inSvcClassId, inEuid, inEgid,
+                           dconst.REPLICATIONTYPE_USER, NULL, NULL);
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
        SET status = dconst.SUBREQUEST_WAITSUBREQ
      WHERE id = inSrId;

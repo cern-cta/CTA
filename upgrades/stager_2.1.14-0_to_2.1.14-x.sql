@@ -9,7 +9,6 @@ CREATE GLOBAL TEMPORARY TABLE DeleteDiskCopyHelper
   (dcId INTEGER CONSTRAINT PK_DDCHelper_dcId PRIMARY KEY, rc INTEGER)
   ON COMMIT PRESERVE ROWS;
 
--- first round :
 --  - change the status of diskCopies to merge STAGED and CANBEMIGR
 --  - add a tapeStatus and nsOpenTime to CastorFile
 
@@ -80,10 +79,9 @@ DROP PROCEDURE getDiskCopiesForJob;
 DROP PROCEDURE processPrepareRequest;
 DROP PROCEDURE recreateCastorFile;
 
--- end of first round
-
 -- second round :
 --  - add missing constraints on statuses, 
+--  - new draining schema
 --  - create Disk2DiskCopyJob table
 --  - drop of stageDiskcopyReplicaRequest table
 --  - drop parent column from SubRequest
@@ -132,6 +130,102 @@ ALTER TABLE CastorFile
   ADD CONSTRAINT CK_CastorFile_TapeStatus
   CHECK (tapeStatus IN (0, 1, 2));
 
+/* Creation of the DrainingJob table
+ *   - id : unique identifier of the DrainingJob
+ *   - userName, euid, egid : identification of the originator of the job
+ *   - pid : process id of the originator of the job
+ *   - machine : machine where the originator of the job was running
+ *   - creationTime : time when the job was created
+ *   - lastModificationTime : lest time the job was updated
+ *   - fileSystem : id of the concerned filesystem
+ *   - status : current status of the job. One of SUBMITTED, STARTING,
+ *              RUNNING, FAILED, COMPLETED
+ *   - svcClass : the target service class for the draining
+ *   - autoDelete : whether source files should be invalidated after
+ *                  their replication. One of 0 (no) and 1 (yes)
+ *   - fileMask : indicates which files are concerned by the draining.
+ *                One of NOTONTAPE, ALL
+ *   - totalFiles, totalBytes : indication of the work to be done. These
+ *                numbers are partial and increasing while starting
+ *                and then stable while running
+ *   - nbFailedBytes/Files, nbSuccessBytes/Files : indication of the
+ *                work already done. These counters are updated while running
+ *   - userComment : a user comment
+ */
+CREATE TABLE DrainingJob
+  (id             INTEGER CONSTRAINT PK_DrainingJob_Id PRIMARY KEY,
+   userName       VARCHAR2(2048) CONSTRAINT NN_DrainingJob_UserName NOT NULL,
+   euid           INTEGER CONSTRAINT NN_DrainingJob_Euid NOT NULL,
+   egid           INTEGER CONSTRAINT NN_DrainingJob_Egid NOT NULL,
+   pid            INTEGER CONSTRAINT NN_DrainingJob_Pid NOT NULL,
+   machine        VARCHAR2(2048) CONSTRAINT NN_DrainingJob_Machine NOT NULL,
+   creationTime   INTEGER CONSTRAINT NN_DrainingJob_CT NOT NULL,
+   lastModificationTime INTEGER CONSTRAINT NN_DrainingJob_LMT NOT NULL,
+   status         INTEGER CONSTRAINT NN_DrainingJob_Status NOT NULL,
+   fileSystem     INTEGER CONSTRAINT NN_DrainingJob_FileSystem NOT NULL 
+                          CONSTRAINT UN_DrainingJob_FileSystem UNIQUE USING INDEX,
+   svcClass       INTEGER CONSTRAINT NN_DrainingJob_SvcClass NOT NULL,
+   autoDelete     INTEGER CONSTRAINT NN_DrainingJob_AutoDelete NOT NULL,
+   fileMask       INTEGER CONSTRAINT NN_DrainingJob_FileMask NOT NULL,
+   totalFiles     INTEGER CONSTRAINT NN_DrainingJob_TotFiles NOT NULL,
+   totalBytes     INTEGER CONSTRAINT NN_DrainingJob_TotBytes NOT NULL,
+   nbFailedBytes  INTEGER CONSTRAINT NN_DrainingJob_FailedFiles NOT NULL,
+   nbFailedFiles  INTEGER CONSTRAINT NN_DrainingJob_FailedBytes NOT NULL,
+   nbSuccessBytes INTEGER CONSTRAINT NN_DrainingJob_SuccessBytes NOT NULL,
+   nbSuccessFiles INTEGER CONSTRAINT NN_DrainingJob_SuccessFiles NOT NULL,
+   userComment    VARCHAR2(2048))
+ENABLE ROW MOVEMENT;
+
+BEGIN
+  setObjStatusName('DrainingJob', 'status', 0, 'SUBMITTED');
+  setObjStatusName('DrainingJob', 'status', 1, 'STARTING');
+  setObjStatusName('DrainingJob', 'status', 2, 'RUNNING');
+  setObjStatusName('DrainingJob', 'status', 4, 'FAILED');
+  setObjStatusName('DrainingJob', 'status', 5, 'COMPLETED');
+END;
+/
+
+ALTER TABLE DrainingJob
+  ADD CONSTRAINT FK_DrainingJob_FileSystem
+  FOREIGN KEY (fileSystem)
+  REFERENCES FileSystem (id);
+
+ALTER TABLE DrainingJob
+  ADD CONSTRAINT CK_DrainingJob_Status
+  CHECK (status IN (0, 1, 2, 4, 5));
+
+ALTER TABLE DrainingJob
+  ADD CONSTRAINT FK_DrainingJob_SvcClass
+  FOREIGN KEY (svcClass)
+  REFERENCES SvcClass (id);
+
+ALTER TABLE DrainingJob
+  ADD CONSTRAINT CK_DrainingJob_AutoDelete
+  CHECK (autoDelete IN (0, 1));
+
+ALTER TABLE DrainingJob
+  ADD CONSTRAINT CK_DrainingJob_FileMask
+  CHECK (fileMask IN (0, 1));
+
+/* Creation of the DrainingErrors table
+ *   - drainingJob : identifier of the concerned DrainingJob
+ *   - errorMsg : the error that occured
+ *   - fileId, nsHost : concerned file
+ */
+CREATE TABLE DrainingErrors
+  (drainingJob  INTEGER CONSTRAINT NN_DrainingErrors_DJ NOT NULL,
+   errorMsg     VARCHAR2(2048) CONSTRAINT NN_DrainingErrors_ErrorMsg NOT NULL,
+   fileId       INTEGER CONSTRAINT NN_DrainingErrors_FileId NOT NULL,
+   nsHost       VARCHAR2(2048) CONSTRAINT NN_DrainingErrors_NsHost NOT NULL)
+ENABLE ROW MOVEMENT;
+
+CREATE INDEX I_DrainingErrors_DJ ON DrainingErrors (drainingJob);
+
+ALTER TABLE DrainingErrors
+  ADD CONSTRAINT FK_DrainingErrors_DJ
+  FOREIGN KEY (drainingJob)
+  REFERENCES DrainingJob (id);
+
 /* Definition of the Disk2DiskCopyJob table. Each line is a disk2diskCopy job to process
  *   id : unique DB identifier for this job
  *   transferId : unique identifier for the transfer associated to this job
@@ -147,6 +241,7 @@ ALTER TABLE CastorFile
  *   replicationType : the type of replication involved (user, internal or draining)
  *   replacedDcId : in case of draining, the replaced diskCopy to be dropped
  *   destDcId : the destination diskCopy
+ *   drainingJob : the draining job behind this d2dJob. Not NULL only if replicationType is DRAINING'
  */
 CREATE TABLE Disk2DiskCopyJob
   (id NUMBER CONSTRAINT PK_Disk2DiskCopyJob_Id PRIMARY KEY 
@@ -162,11 +257,13 @@ CREATE TABLE Disk2DiskCopyJob
    destSvcClass INTEGER CONSTRAINT NN_Disk2DiskCopyJob_dstSC NOT NULL,
    replicationType INTEGER CONSTRAINT NN_Disk2DiskCopyJob_Type NOT NULL,
    replacedDcId INTEGER,
-   destDcId INTEGER  CONSTRAINT NN_Disk2DiskCopyJob_DCId NOT NULL)
+   destDcId INTEGER CONSTRAINT NN_Disk2DiskCopyJob_DCId NOT NULL,
+   drainingJob INTEGER)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE INDEX I_Disk2DiskCopyJob_Tid ON Disk2DiskCopyJob(transferId);
 CREATE INDEX I_Disk2DiskCopyJob_CfId ON Disk2DiskCopyJob(CastorFile);
 CREATE INDEX I_Disk2DiskCopyJob_CT_Id ON Disk2DiskCopyJob(creationTime, id);
+CREATE INDEX I_Disk2DiskCopyJob_drainingJob ON Disk2DiskCopyJob(drainingJob);
 BEGIN
   -- PENDING status is when a Disk2DiskCopyJob is created
   -- It is immediately candidate for being scheduled
@@ -187,12 +284,14 @@ ALTER TABLE Disk2DiskCopyJob ADD CONSTRAINT FK_Disk2DiskCopyJob_CastorFile
   FOREIGN KEY (castorFile) REFERENCES CastorFile(id);
 ALTER TABLE Disk2DiskCopyJob ADD CONSTRAINT FK_Disk2DiskCopyJob_SvcClass
   FOREIGN KEY (destSvcClass) REFERENCES SvcClass(id);
+ALTER TABLE Disk2DiskCopyJob ADD CONSTRAINT FK_Disk2DiskCopyJob_DrainJob
+  FOREIGN KEY (drainingJob) REFERENCES DrainingJob(id);
 ALTER TABLE Disk2DiskCopyJob
   ADD CONSTRAINT CK_Disk2DiskCopyJob_Status
   CHECK (status IN (0, 1, 2));
 ALTER TABLE Disk2DiskCopyJob
   ADD CONSTRAINT CK_Disk2DiskCopyJob_type
-  CHECK (replicationType IN (0, 1, 2)
+  CHECK (replicationType IN (0, 1, 2));
 
 INSERT INTO CastorConfig
   VALUES ('D2dCopy', 'MaxNbRetries', '2', 'The maximum number of retries for disk to disk copies before it is considered failed. Here 2 means we will do in total 3 attempts.');
@@ -205,6 +304,12 @@ DROP PROCEDURE disk2DiskCopyDone;
 DROP PROCEDURE createDiskCopyReplicaRequest;
 DROP PROCEDURE getBestDiskCopyToReplicate;
 DROP PROCEDURE transferToSchedule;
+DROP TABLE DrainingDiskCopy;
+DROP TABLE DrainingFileSystem;
+DROP PROCEDURE removeFailedDrainingTransfers;
+DROP PROCEDURE drainFileSystem;
+DROP PROCEDURE startDraining;
+DROP PROCEDURE stopDraining;
 
 UPDATE UpgradeLog SET endDate = systimestamp, state = 'COMPLETE'
  WHERE release = '2_1_14_X';

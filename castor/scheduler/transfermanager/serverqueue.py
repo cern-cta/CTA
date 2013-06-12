@@ -315,7 +315,7 @@ class ServerQueue(dict):
           del self[machine][transfer.transferId]
         # Add this transfer to the recently scheduled ones
         self.recentlyScheduled.add(transfer.transferId, transfer.diskServer)
-        # if return source transfer
+        # if D2DDST type, return source transfer
         if transfer.transferType == TransferType.D2DDST:
           return self.d2dsrcrunning[transfer.transferId].srcTransfer
       finally:
@@ -447,7 +447,7 @@ class ServerQueue(dict):
             try:
               protocol = transfer.protocol
             except AttributeError:
-              protocol = '-'
+              protocol = TransferType.toStr(transferType)
             # add the transfer to list of results
             res.append((transferId, transfer.fileId, socket.getfqdn(),
                         transfer.user, 'PEND', diskpool, diskServer,

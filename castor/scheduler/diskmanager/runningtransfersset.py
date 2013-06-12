@@ -366,9 +366,15 @@ class RunningTransfersSet(object):
               d2dEnded[rTransfer.scheduler] = []
             errMsg = ''
             if rc != 0 and rTransfer.process:
-              errMsg = rTransfer.process.stderr.read()
+              errMsg = rTransfer.process.stderr.read().replace('\n',' ')
             # Determine the size of the newly created file replica
-            replicaFileSize = os.stat(rTransfer.localPath).st_size
+            try:
+              replicaFileSize = os.stat(rTransfer.localPath).st_size
+            except OSError, e:
+              # not able to find file
+              replicaFileSize = 0
+              if errMsg == '':
+                errMsg = 'Not able to stat new file : %s' % str(e)
             d2dEnded[rTransfer.scheduler].append((rTransfer.transfer, rTransfer.localPath,
                                                   replicaFileSize, errMsg))
           else:
@@ -445,9 +451,13 @@ class RunningTransfersSet(object):
     try:
       for rTransfer in self.transfers:
         transfer = rTransfer.transfer
+        try:
+          protocol = transfer.protocol
+        except AttributeError:
+          protocol = TransferType.toStr(transferType)
         if not reqUser or transfer.user == transfer.user:
           res.append((transfer.transferId, transfer.fileId, rTransfer.scheduler,
-                      transfer.user, 'RUN', transfer.protocol, transfer.creationTime,
+                      transfer.user, 'RUN', protocol, transfer.creationTime,
                       rTransfer.startTime))
     finally:
       self.lock.release()

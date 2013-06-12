@@ -25,7 +25,7 @@
 
 """utility functions for castor tools written in python"""
 
-import os, pwd, sys, time, thread, subprocess, re
+import os, sys, time, thread, subprocess, re, socket, pwd
 import dlf
 
 def _checkValueFound(name, value, instance, configFile):
@@ -590,7 +590,7 @@ def printPercentage(portion, total):
     if total == 0:
         return 'N/A'
     perc = portion*1.0/total
-    return "%.2f" % perc
+    return "%.2f %%" % perc
 
 def nbToAge(n):
     '''converts a number of seconds into a readable age'''
@@ -609,6 +609,14 @@ def nbToAge(n):
     if len(s) == 0:
         s = '0s'
     return s
+
+def printETC(portion, total, runningTime):
+    '''computes and print Estimated Time to Completion based on the work done,
+       the total work to be done and the time alredy spent'''
+    if portion == 0:
+        return 'N/A'
+    totalTime = 1.0*runningTime/portion*total
+    return nbToAge(totalTime-runningTime)
 
 def printUser((uid, gid)):
     '''converts uid/gid pair into printable string'''

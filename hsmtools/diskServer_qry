@@ -125,8 +125,8 @@ try:
         line = ''
         if printFileId: line = line + "%-10d " % row[3]
         if printDiskCopyId: line = line + "%-12d " % row[2]
-        if row[1] <= len(castor_tools.DiskCopyStatus):
-          statusStr = castor_tools.DiskCopyStatus[row[1]]
+        if row[1] <= len(DiskCopyStatus):
+          statusStr = DiskCopyStatus[row[1]]
         else:
           statusStr = "Unknown status : " + str(row[1])
         line = line + "%-20s %-50s " % (statusStr, diskServerName + ':' + row[0])

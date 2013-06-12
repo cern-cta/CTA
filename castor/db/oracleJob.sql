@@ -283,6 +283,52 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 END;
 /
 
+/* update a drainingJob at then end of a disk2diskcopy */
+CREATE OR REPLACE PROCEDURE updateDrainingJobOnD2dEnd(inDjId IN INTEGER, inFileSize IN INTEGER,
+                                                      inHasFailed IN BOOLEAN) AS
+  varTotalFiles INTEGER;
+  varNbFailedBytes INTEGER;
+  varNbSuccessBytes INTEGER;
+  varNbFailedFiles INTEGER;
+  varNbSuccessFiles INTEGER;
+  varStatus INTEGER;
+BEGIN
+  -- note the locking that insures consistency of the counters
+  SELECT status, totalFiles, nbFailedBytes, nbSuccessBytes, nbFailedFiles, nbSuccessFiles
+    INTO varStatus, varTotalFiles, varNbFailedBytes, varNbSuccessBytes, varNbFailedFiles, varNbSuccessFiles
+    FROM DrainingJob
+   WHERE id = inDjId
+     FOR UPDATE;
+  -- update counters
+  IF inHasFailed THEN
+    -- case of failures
+    varNbFailedBytes := varNbFailedBytes + inFileSize;
+    varNbFailedFiles := varNbFailedFiles + 1;
+  ELSE
+    -- case of success
+    varNbSuccessBytes := varNbSuccessBytes + inFileSize;
+    varNbSuccessFiles := varNbSuccessFiles + 1;
+  END IF;
+  -- detect end of draining. Do not touch INTERRUPTED status
+  IF varStatus = dconst.DRAININGJOB_RUNNING AND
+     varNbSuccessFiles + varNbFailedFiles = varTotalFiles THEN
+    IF varNbFailedFiles = 0 THEN
+      varStatus := dconst.DRAININGJOB_FINISHED;
+    ELSE
+      varStatus := dconst.DRAININGJOB_FAILED;
+    END IF;
+  END IF;
+  -- update DrainingJob
+  UPDATE DrainingJob
+     SET status = varStatus,
+         totalFiles = varTotalFiles,
+         nbFailedBytes = varNbFailedBytes,
+         nbSuccessBytes = varNbSuccessBytes,
+         nbFailedFiles = varNbFailedFiles,
+         nbSuccessFiles = varNbSuccessFiles
+   WHERE id = inDjId;
+END;
+/
 
 /* PL/SQL method implementing disk2DiskCopyEnded
  * Note that inDestDsName, inDestPath and inReplicaFileSize are not used when inErrorMessage is not NULL
@@ -307,14 +353,15 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyEnded
   varNewDcStatus INTEGER := dconst.DISKCOPY_VALID;
   varLogMsg VARCHAR2(2048);
   varComment VARCHAR2(2048);
+  varDrainingJob VARCHAR2(2048);
 BEGIN
   varLogMsg := CASE WHEN inErrorMessage IS NULL THEN dlf.D2D_D2DDONE_OK ELSE dlf.D2D_D2DFAILED END;
   BEGIN
     -- Get data from the disk2DiskCopy Job
-    SELECT castorFile, ouid, ogid, destDcId,
-           destSvcClass, replicationType, replacedDcId, retryCounter
-      INTO varCfId, varUid, varGid, varDestDcId,
-           varDestSvcClass, varRepType, varReplacedDcId, varRetryCounter
+    SELECT castorFile, ouid, ogid, destDcId, destSvcClass, replicationType,
+           replacedDcId, retryCounter, drainingJob
+      INTO varCfId, varUid, varGid, varDestDcId, varDestSvcClass, varRepType,
+           varReplacedDcId, varRetryCounter, varDrainingJob
       FROM Disk2DiskCopyjob
      WHERE transferId = inTransferId;
   EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -389,6 +436,10 @@ BEGIN
       -- Trigger the creation of additional copies of the file, if any
       replicateOnClose(varCfId, varUid, varGid);
     END IF;
+    -- In case of draining, update DrainingJob
+    IF varDrainingJob IS NOT NULL THEN
+      updateDrainingJobOnD2dEnd(varDrainingJob, varFileSize, False);
+    END IF;
   ELSE
     DECLARE
       varMaxNbD2dRetries INTEGER := TO_NUMBER(getConfigOption('D2dCopy', 'MaxNbRetries', 2));
@@ -403,8 +454,16 @@ BEGIN
         logToDLF(NULL, dlf.LVL_SYSTEM, dlf.D2D_D2DDONE_RETRIED, varFileId, varNsHost, 'stagerd', varComment ||
                  ' RetryNb=' || TO_CHAR(varRetryCounter+1) || ' maxNbRetries=' || TO_CHAR(varMaxNbD2dRetries));
       ELSE
-        -- no more retries, let's fail the disk to disk copy
-        DELETE FROM Disk2DiskCopyjob WHERE transferId = inTransferId;
+        -- no more retries, let's delete the disk to disk job copy and remember the error
+        BEGIN
+          DELETE FROM Disk2DiskCopyjob WHERE transferId = inTransferId;
+          INSERT INTO DrainingErrors (drainingJob, errorMsg, fileId, nsHost)
+          VALUES (varDrainingJob, inErrorMessage, varFileId, varNsHost);
+        EXCEPTION WHEN NO_DATA_FOUND THEN
+          -- the Disk2DiskCopyjob was already dropped (e.g. because of an interrupted draining)
+          -- in such a case, forget about the error
+          NULL;
+        END;
         logToDLF(NULL, dlf.LVL_NOTICE, dlf.D2D_D2DDONE_NORETRY, varFileId, varNsHost, 'stagerd', varComment ||
                  ' maxNbRetries=' || TO_CHAR(varMaxNbD2dRetries));
         -- Fail waiting subrequests
@@ -412,15 +471,19 @@ BEGIN
            SET status = dconst.SUBREQUEST_FAILED,
                lastModificationTime = getTime(),
                errorCode = serrno.SEINTERNAL,
-               errorMessage = 'Disk to disk copy failed'
+               errorMessage = 'Disk to disk copy failed after ' || TO_CHAR(varMaxNbD2dRetries) ||
+                              'retries. Last error was : ' || inErrorMessage
          WHERE status = dconst.SUBREQUEST_WAITSUBREQ
-           AND castorfile = varCfId; 
+           AND castorfile = varCfId;
+        -- In case of draining, update DrainingJob
+        IF varDrainingJob IS NOT NULL THEN
+          updateDrainingJobOnD2dEnd(varDrainingJob, varFileSize, True);
+        END IF;
       END IF;
     END;
   END IF;
 END;
 /
-
 
 /* PL/SQL method implementing disk2DiskCopyStart
  * Note that cfId is only needed for proper logging in case the replication has been canceled.
@@ -865,7 +928,9 @@ BEGIN
 END;
 /
 
-CREATE OR REPLACE FUNCTION selectRandomDestinationFs(inSvcClassId IN INTEGER, inMinFreeSpace IN INTEGER)
+CREATE OR REPLACE FUNCTION selectRandomDestinationFs(inSvcClassId IN INTEGER,
+                                                     inMinFreeSpace IN INTEGER,
+                                                     inCfId IN INTEGER)
 RETURN VARCHAR2 AS
   varResult VARCHAR2(2048) := '';
 BEGIN
@@ -882,6 +947,11 @@ BEGIN
            AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
            AND DiskServer.hwOnline = 1
            AND FileSystem.free - FileSystem.minAllowedFreeSpace * FileSystem.totalSize > inMinFreeSpace
+           AND DiskServer.id NOT IN
+               (SELECT diskserver FROM DiskCopy, FileSystem
+                 WHERE DiskCopy.castorFile = inCfId
+                   AND DiskCopy.status = dconst.DISKCOPY_VALID
+                   AND FileSystem.id = DiskCopy.fileSystem)
          ORDER BY DBMS_Random.value)
       WHERE ROWNUM <= 5) LOOP
     IF LENGTH(varResult) IS NOT NULL THEN varResult := varResult || '|'; END IF;
@@ -1045,7 +1115,7 @@ BEGIN
   -- Select random filesystems to use if none is already requested. This only happens
   -- on Put requests, so we discard READONLY hardware and filter only the PRODUCTION one.
   IF LENGTH(srRfs) IS NULL THEN
-    srRFs := selectRandomDestinationFs(svcClassId, varXsize);
+    srRFs := selectRandomDestinationFs(svcClassId, varXsize, cfId);
   END IF;
 END;
 /
@@ -1140,7 +1210,7 @@ BEGIN
   -- We finally got a valid candidate, let's select potential sources
   outSourceFileSystems := selectAllSourceFs(varCfId);
   -- Select random filesystems to use as destination.
-  outDestFileSystems := selectRandomDestinationFs(varSvcClassId, varFileSize);
+  outDestFileSystems := selectRandomDestinationFs(varSvcClassId, varFileSize, varCfId);
 END;
 /
 

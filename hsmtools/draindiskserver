@@ -26,406 +26,400 @@
 
 '''Tool to manage the draining of filesystems and diskservers'''
 
-# modules
 import sys
 import getopt
 import castor_tools
 import cx_Oracle
 
-#
-# Usage
-#
-def usage(status):
-    '''Prints usage'''
-    if status != 0:
-        print >> sys.stderr, 'Try `' + sys.argv[0] + ' --help for more information.'
+# Usage function
+def usage(exitCode):
+    '''prints usage'''
+    print 'Usage :'
+    print '  draindiskserver -h/--help'
+    print '  draindiskserver -a/--add -n diskServer [-m mountpoint] [-S serviceclass] [--auto-delete] [--file-mask=(NOTONTAPE|ALL)] [--comment=comment]'
+    print '  draindiskserver -q/--query [-n diskServer [-m mountpoint]] [-c/--config] [-r/--running] [--script]'
+    print '  draindiskserver -q/--query [-n diskServer [-m mountpoint]] -f/--failures'
+    print '  draindiskserver -d/--delete -n diskServer [-m mountpoint]'
+    sys.exit(exitCode)
+
+# first parse the options
+try:
+    options, arguments = getopt.getopt(sys.argv[1:], 'han:m:S:qcfrdv',
+                                  ['help', 'add', 'nodename=', 'mountpoint=',
+                                   'svcclass=', 'auto-delete', 'file-mask=',
+                                   'comment=', 'query', 'config', 'failures',
+                                   'running', 'script', 'delete', 'verbose'])
+    # Any positional arguments left over after parsing?
+    if len(arguments):
+        usage(1)
+except Exception, parsingException:
+    print parsingException
+    usage(1)
+
+class FileMask(object):
+  '''Constants defining the existing types of transfer'''
+  NOTONTAPE = 0
+  ALL = 1
+  def __init__(self):
+    '''empty constructor, raises an exception'''
+    raise NotImplementedError
+  @staticmethod
+  def toStr(tType):
+    '''prints a readable version of the transfer types'''
+    if tType == FileMask.NOTONTAPE:
+      return 'NotOnTape'
+    elif tType == FileMask.ALL:
+      return 'All'
     else:
-        print 'Usage: ' + sys.argv[0] + ' [OPTIONS]...'
-        print 'Tool to manage the draining of filesystems and diskservers.'
-        print
-        print 'Supported operations:                                                        '
-        print '  -a, --add                    Add a new filesystem or diskserver to the list'
-        print '                               of those to be drained.                       '
-        print '      --restart                Restart the draining process of a given       '
-        print '                               filesystem or diskserver with the previously  '
-        print '                               defined options.                              '
-        print '  -d, --delete                 Delete/Cancel the draining process of a given '
-        print '                               filesystem or diskserver.                     '
-        print '  -q, --query                  Query the filesystems currently being drained.'
-        print
-        print 'Add options (with -a or --add):                                              '
-        print '  -S, --svcclass=NAME          The name of the service class that files      '
-        print '                               should be replicated too.                     '
-        print '  -t, --transfers=NUM          The maximum number of transfers allowed to run'
-        print '                               concurrently per filesystem. (Default: 50)   '
-        print '      --auto-delete            Delete files automatically after replication. '
-        print '                               (Default: NO).                                '
-        print '      --file-mask=[STAGED|CANBEMIGR|ALL]                                     '
-        print '                               Mask used to decide which files need to be    '
-        print '                               replicated. (Default: CANBEMIGR)              '
-        print
-        print 'Query options (with -q or --query):                                          '
-        print '  -c, --config                 List the configuration options.               '
-        print '  -f, --failures               List the files which failed to be replicated  '
-        print '                               and if available the reason why.              '
-        print '  -r, --running                List only filesystems in a RUNNING status.    '
-        print
-        print '  Note: If no additional --query options are supplied, the default behaviour '
-        print '        is to display a summary of the draining process for all registered   '
-        print '        filesystems.                                                         '
-        print
-        print 'Common options for all operations:                                           '
-        print '  -n, --nodename=NODENAME      The name of the diskserver to perform the     '
-        print '                               operation on.                                 '
-        print '  -m, --mountpoint=MOUNTPOINT  The name of the mountpoint to perform the     '
-        print '                               operation on. Note: if the mountpoint option  '
-        print '                               is omitted, the operation will apply to all   '
-        print '                               filesystems associated with the diskserver.   '
-        print '      --script                 Display the output using a style suitable for '
-        print '                               parsing by scripts.                           '
-        print
-        print '      --help                   Display this help and exit                    '
-        print
-        print 'Report bugs to <castor-support@cern.ch>'
+      return 'UNKNOWN'
 
-    sys.exit(status)
-
-
-#
-# InvalidInput exception class
-#
-class InvalidInput(Exception):
-    '''Exception to be used when input is invalid'''
-    pass
-
-
-#
-# Main
-#
-def main(argv):
-    '''main method'''
-    # Variables
-    operation   = None
-    querytype   = 'overview'
-    querystyle  = 'table'
-    queryfilter = None
-
-    # Initialize the bind values
-    bind = { 'InNodeName':     None,
-             'InMountPoint':   None,
-             'InSvcClass':     None,
-             'InFileMask':     1,
-             'InAutoDelete':   0,
-             'InMaxTransfers': 1,
-             'InRestart':      0,
-             'InComments':     'N/A' }
-
-    # Parse command line arguments
-    try:
-        options, args = getopt.getopt(argv, 'adqhn:m:S:t:cfr',
-                                      ['add', 'delete', 'query', 'help',
-                                       'nodename=', 'mountpoint=', 'svcclass=',
-                                       'file-mask=', 'auto-delete', 'transfers=',
-                                       'config', 'failures', 'script',
-                                       'running', 'restart', 'comment='])
-        # Any positional arguments left over after parsing?
-        if len(args):
+def drainingJobStatusToStr(status):
+  '''prints a readable version of the drainingJobStatus'''
+  if status == 0:
+    return 'SUBMITTED'
+  elif status == 1:
+    return 'STARTING'
+  elif status == 2:
+    return 'RUNNING'
+  elif status == 4:
+    return 'FAILED'
+  elif status == 5:
+    return 'FINISHED'
+  else:
+    return 'UNKNOWN'
+    
+addFlag = False
+queryFlag = False
+deleteFlag = False
+nodeName = None
+mountPoint = None
+svcClass = None
+fileMask = 1 # default is ALL
+fileMaskFlag = False
+autoDelete = 0
+autoDeleteFlag = False
+configFlag = False
+failuresFlag = False
+runningFlag = False
+scriptFlag = False
+comment = None
+verbose = False
+for opt, arg in options:
+    if opt in ('-h', '--help'):
+        usage(0)
+    elif opt in ('-a', '--add'):
+        addFlag = True
+    elif opt in ('-q', '--query'):
+        queryFlag = True
+    elif opt in ('-d', '--delete'):
+        deleteFlag = True
+    elif opt in ('-n', '--nodename'):
+        nodeName = arg
+    elif opt in ('-m', '--mountpoint'):
+        mountPoint = arg
+    elif opt in ('-S', '--svcclass'):
+        svcClass = arg
+    elif opt == '--file-mask':
+        fileMaskFlag = True
+        # Check that the user supplied filemask argument is valid
+        values = { 'NOTONTAPE': 0,
+                   'ALL':       1 }
+        if not values.has_key(arg.upper()):
+            print 'invalid option for --file-mask, must be one of NOTONTAPE or ALL'
             usage(1)
-    except getopt.GetoptError, e:
-        print >> sys.stderr, sys.argv[0] + ': ' + str(e)
+        fileMask = values[arg.upper()]
+    elif opt == '--auto-delete':
+        autoDelete = 1
+        autoDeleteFlag = True
+    elif opt in ('-c', '--config'):
+        configFlag = True
+    elif opt in ('-f', '--failures'):
+        failuresFlag = True
+    elif opt in ('-r', '--running'):
+        runningFalg = True
+    elif opt == '--script':
+        scriptFlag = True
+    elif opt == '--comment':
+        comment = arg
+    elif opt == '-v' or opt == '--verbose':
+        verbose = True
+    else:
+        print "unknown option : " + opt
         usage(1)
 
-    # Process command line arguments
-    try:
-        operations = {}
-        for opt, arg in options:
-            if opt in ('-h', '--help'):
-                usage(0)
-            elif opt in ('-a', '--add'):
-                operations['add']    = None
-            elif opt in ('-d', '--delete'):
-                operations['delete'] = None
-            elif opt in ('-q', '--query'):
-                operations['query']  = None
-            elif opt in ('-n', '--nodename'):
-                bind['InNodeName']   = arg
-            elif opt in ('-m', '--mountpoint'):
-                bind['InMountPoint'] = arg
-            elif opt in ('-S', '--svcclass'):
-                bind['InSvcClass']   = arg
-            elif opt == '--file-mask':
-                # Check that the user supplied filemask argument is valid
-                values = { 'STAGED':    0,
-                           'CANBEMIGR': 1,
-                           'ALL':       2 }
-                if not values.has_key(arg.upper()):
-                    raise InvalidInput, 'invalid option for --file-mask, must be one of STAGED, CANBEMIGR or ALL'
-                bind['InFileMask']   = values[arg.upper()]
-            elif opt == '--auto-delete':
-                bind['InAutoDelete'] = 1
-            elif opt in ('-t', '--transfers'):
-                # Check that the argument is a valid integer and that the value
-                # is greater than 0. Setting the number of transfers per
-                # filesystem to 0 is pointless as the draining process will
-                # never start.
-                try:
-                    bind['InMaxTransfers'] = int(arg)
-                except ValueError:
-                    raise InvalidInput, 'invalid argument for option -t, --transfers, value is not a valid integer'
-                if bind['InMaxTransfers'] <= 0:
-                    raise InvalidInput, 'invalid argument for option -t, --transfers, value must be greater than 0'
-            elif opt in ('-c', '--config'):
-                querytype = 'config'
-            elif opt in ('-f', '--failures'):
-                querytype = 'failures'
-            elif opt == '--script':
-                querystyle = 'script'
-            elif opt in ('-r', '--running'):
-                queryfilter = 'RUNNING'
-            elif opt == '--restart':
-                operations['restart'] = None
-                bind['InRestart']     = 1
-            elif opt == '--comment':
-                bind['InComments']    = arg
+# If any arg, complain and stop
+if len(arguments) != 0:
+    print "Unknown arguments : " + ' '.join(arguments) + "\n"
+    usage(1)
 
-        # Check for mutual exclusivity on the operation to be performed
-        if len(operations) == 0:
-            raise InvalidInput, 'missing operation, must specify one of --add, --delete, --restart or --query'
-        elif len(operations) > 1:
-            raise InvalidInput, 'options --add, --delete, --restart and --query are mutually exclusive'
-        operation = operations.keys()[0]
+# Check consistency of arguments
+if not (addFlag or queryFlag or deleteFlag):
+    print 'missing operation, must specify one of --add, --delete or --query'
+    usage(1)
+if [addFlag, queryFlag, deleteFlag].count(True) > 1:
+    print 'options --add, --delete and --query are mutually exclusive'
+    usage(1)
+if nodeName == None and (addFlag or deleteFlag):
+    print 'missing -n, --nodename option'
+    usage(1)
+if mountPoint != None and nodeName == None:
+    print '--nodename option is needed when --mountPoint is used'
+    usage(1)
+if (addFlag or deleteFlag) and (configFlag or failuresFlag or runningFlag or scriptFlag):
+    print 'incompatible set of options : --config, --failures, --running and --script are only valid with --query'
+    usage(1)
+if (queryFlag or deleteFlag) and (svcClass != None or autoDeleteFlag or fileMaskFlag or comment != None):
+    print 'incompatible set of options : --query. svcclass, auto-delete, file-mask and comment are only valid with --add'
+    usage(1)
+if failuresFlag and (configFlag or runningFlag or scriptFlag):
+    print 'option --running, --config and --scripts can not be used with --failures'
+    usage(1)
 
-        # Check that all arguments required for add, delete and restart 
-        # operations are supplied by the user
-        if operation in ('add', 'delete', 'restart'):
-            if bind['InNodeName'] == None:
-                raise InvalidInput, 'missing -n, --nodename option'
-
-        # Check that the query filter argument is not specified for --config
-        # and --failures options
-        if operation == 'query':
-            if queryfilter and querytype in ('config', 'failures'):
-                raise InvalidInput, 'option --running cannot be used when specifying the --config or --failures options'          
-
-    except InvalidInput, e:
-        print >> sys.stderr, sys.argv[0] + ': ' + str(e)
-        usage(1)
-
-    # Connect to the stager database and do some magic!
-    try:
-        connection = castor_tools.connectToStager()
-        cursor = connection.cursor()
-        cursor.arraysize = 50
-
-        if operation == 'add':
-            startDraining(cursor, { 'InNodeName':     bind['InNodeName'],
-                                    'InMountPoint':   bind['InMountPoint'],
-                                    'InSvcClass':     bind['InSvcClass'],
-                                    'InFileMask':     bind['InFileMask'],
-                                    'InAutoDelete':   bind['InAutoDelete'],
-                                    'InMaxTransfers': bind['InMaxTransfers'],
-                                    'InComments':     bind['InComments'] } )
-        elif operation in ('delete', 'restart'):
-            stopDraining(cursor,  { 'InNodeName':     bind['InNodeName'],
-                                    'InMountPoint':   bind['InMountPoint'],
-                                    'InRestart':      bind['InRestart'] } )
-        elif operation == 'query':
-            queryDraining(cursor, { 'InNodeName':     bind['InNodeName'],
-                                    'InMountPoint':   bind['InMountPoint'] },
-                          querytype, queryfilter, querystyle)
-
-        # Close the cursor and commit any pending changes
-        cursor.close()
-        connection.commit()
-
-        # Disconnect from the database
-        connection.close()
-
-    except Exception, e:
-        if isinstance(e, cx_Oracle.Error):
-            # For error codes in the 20000 range remove the stack trace provided by
-            # Oracle. Its nice but not meaningful for the end user.
-            error, = e.args
-            if hasattr(error, "code") and error.code > 20000 and error.code < 21000:
-                print >> sys.stderr, error.message.split('\n')[0].replace('ORA-', 'ERROR ')
-                sys.exit(1)
-        # all other errors are printed using standard str method
-        print >> sys.stderr, str(e)
+def getFileSystems(stcur):
+    '''check the nodeName and mountPoint, and returns the list of filesytem ids concerned'''
+    stGetFileSystemIds = '''
+    SELECT FileSystem.id, FileSystem.mountPoint
+      FROM FileSystem, DiskServer
+     WHERE DiskServer.name = :nodeName
+       AND FileSystem.diskServer = DiskServer.id
+       AND (FileSystem.mountPoint = :mountPoint OR :mountPoint IS NULL)'''
+    stcur.execute(stGetFileSystemIds, nodeName=nodeName, mountPoint=mountPoint)
+    fileSystems = stcur.fetchall()
+    if len(fileSystems) == 0:
+        print 'Unable to find concerned filesystems. Please check node name and/or mount point'
+        print 'in particular make sur that diskserver name is fully qualified and that mountPoint ends with /'
         sys.exit(1)
+    return fileSystems
 
 
-#
-# Add
-#
-def startDraining(c, bindvars):
-    '''starts draining a given filesystem'''
-    c.execute('''BEGIN
-                   startDraining(InNodeName     => :InNodeName,
-                                 InMountPoint   => :InMountPoint,
-                                 InSvcClass     => :InSvcClass,
-                                 InFileMask     => :InFileMask,
-                                 InAutoDelete   => :InAutoDelete,
-                                 InMaxTransfers => :InMaxTransfers,
-                                 InComments     => :InComments);
-                 END;''', bindvars)
+def getSvcClassId(stcur):
+    '''checks the given svcClass if any and gets its id. Else find out
+       the service class to be used, that is the one of the involved filesytems'''
+    # if any service class is given, get its id
+    if svcClass != None:
+        stCheckSvcClass = '''
+        BEGIN
+          :svcClassId := checkForValidSvcClass(:svcClassName, 0, 1);
+        END;'''
+        try:
+            varClassId = stcur.var(cx_Oracle.NUMBER)
+            stcur.execute(stCheckSvcClass, svcClassId=varClassId, svcClassName=svcClass)
+            return varClassId.getvalue()
+        except cx_Oracle.Error:
+            # not found, print an error and exit
+            print 'Unknown service class "%s". Giving up' % svcClass
+            sys.exit(1)
+    else:
+        # no service class given, get the one of the involved filesystems
+        stGetSvcClass = '''
+        SELECT DiskPool2SvcClass.child
+          FROM FileSystem, DiskServer, DiskPool2SvcClass
+         WHERE DiskServer.name = :nodeName
+           AND FileSystem.diskServer = DiskServer.id
+           AND (FileSystem.mountPoint = :mountPoint OR :mountPoint IS NULL)
+           AND FileSystem.diskpool = DiskPool2SvcClass.parent'''
+        stcur.execute(stGetSvcClass, nodeName=nodeName, mountPoint=mountPoint)
+        svcClassIds = stcur.fetchall()
+        if len(svcClassIds) == 0:
+            print 'Unable to find service class of the given node. Giving up'
+            sys.exit(1)
+        elif len(svcClassIds) > 1:
+            print 'Found several possible service classes for this drain. Please specify --svcclass option'
+            sys.exit(1)
+        return svcClassIds[0][0]
 
 
-#
-# Delete
-#
-def stopDraining(c, bindvars):
-    '''stops draining a given filesystem'''
-    c.execute('''BEGIN
-                   stopDraining(InNodeName   => :InNodeName,
-                                InMountPoint => :InMountPoint,
-                                InRestart    => :InRestart);
-                 END;''', bindvars)
+def submitDrain():
+    '''submits new draining jobs'''
+    # prepare DB connection
+    stconn = castor_tools.connectToStager()
+    try:
+        stcur = stconn.cursor()
+        stcur.arraysize = 50
+        # precompute some useful values about us
+        machine, euid, egid, pid, userName = castor_tools.getIdentity()[0:5]
+        # check the nodeName and mountPoint, and get the list of filesytem ids concerned
+        fileSystems = getFileSystems(stcur)
+        # check the service class and gets its id
+        svcClassId = getSvcClassId(stcur)
+        # create DrainingJob statement
+        stCreateDrainingJob = '''
+        INSERT INTO DrainingJob (id, userName, euid, egid, pid, machine,
+                                 creationTime, lastModificationTime, status, fileSystem,
+                                 svcClass, autoDelete, fileMask, totalFiles, totalBytes,
+                                 nbFailedBytes, nbFailedFiles, nbSuccessBytes,
+                                 nbSuccessFiles, userComment)
+        VALUES (ids_seq.nextval, :userName, :euid, :egid, :pid, :machine,
+                getTime(), getTime(), 0, :fsId, :svcClassId, :autoDelete, :fileMask,
+                0, 0, 0, 0, 0, 0, :userComment)'''
+        # check draining job statement
+        stCheckDrainingJob = '''
+        SELECT username, machine, creationTime
+          FROM DrainingJob
+         WHERE fileSystem = :fsId'''
+        for fsId, fsMountPoint in fileSystems:
+            # first check that the filesystem is not already draining
+            stcur.execute(stCheckDrainingJob, fsId=fsId)
+            drains = stcur.fetchall()
+            if (len(drains)) > 0:
+                print 'Filesystem %s:%s already has a draining session. Use --delete to cancel it' % \
+                  (machine, fsMountPoint)
+                print '    for info, drain was issued by %s on %s at %s' % \
+                  (drains[0][0], drains[0][1], castor_tools.secsToDate(drains[0][2]))
+                continue
+            stcur.execute(stCreateDrainingJob, userName=userName, euid=euid, egid=egid,
+                          pid=pid, machine=machine, fsId=fsId, svcClassId=svcClassId,
+                          autoDelete=autoDelete, fileMask=fileMask, userComment=comment)
+            print 'Started draining for %s:%s' % (machine, fsMountPoint)
+        stconn.commit()
+    finally:
+        # close DB connection
+        castor_tools.disconnectDB(stconn)
 
-
-#
-# Query
-#
-def queryDraining(c, bindvars, querytype, queryfilter, style):
+def queryFailures():
+    '''queries draining failures'''
+    # prepare DB connection
+    stconn = castor_tools.connectToStager()
+    try:
+        stcur = stconn.cursor()
+        stcur.arraysize = 50
+        stGetFailures = '''
+        SELECT DiskServer.name, fileSystem.mountPoint,
+               DrainingErrors.fileId, DrainingErrors.errorMsg
+          FROM DiskServer, FileSystem, DrainingJob, DrainingErrors
+         WHERE (DiskServer.name = :nodeName OR :nodeName IS NULL)
+           AND FileSystem.diskServer = DiskServer.id
+           AND (FileSystem.mountPoint = :mountPoint OR :mountPoint IS NULL)
+           AND DrainingJob.fileSystem = FileSystem.id
+           AND DrainingErrors.drainingJob = DrainingJob.id'''
+        stcur.execute(stGetFailures, nodeName=nodeName, mountPoint=mountPoint)
+        data = stcur.fetchall()
+        titles = ('DiskServer', 'MountPoint', 'fileId', 'Error')
+        castor_tools.prettyPrintTable(titles, data)
+    finally:
+        # close DB connection
+        castor_tools.disconnectDB(stconn)            
+        
+def queryDrain():
     '''queries ongoing drainings'''
-    # Metadata information
-    # Format is:
-    #  - Column name as returned by Oracle
-    #  - Alternative name to be displayed
-    #  - Minimum column width
-    #  - Index field
-    metadata = { 'overview':
-                 [ [ 'DiskServer',     '',       10, 0 ],
-                   [ 'MountPoint',     '',       10, 0 ],
-                   [ 'Created',        '',       20, 0 ],
-                   [ 'TotalFiles',     'TFiles', 6,  0 ],
-                   [ 'TotalSize',      'TSize',  6,  0 ],
-                   [ 'FilesRemaining', 'RFiles', 6,  0 ],
-                   [ 'SizeRemaining',  'RSize',  6,  0 ],
-                   [ 'Failed',         '',       6,  0 ],
-                   [ 'RunTime',        '',       11, 0 ],
-                   [ 'Progress',       '',       8,  0 ],
-                   [ 'ETC',            '',       11, 0 ],
-                   [ 'Status',         '',       12, 0 ] ],
-                 'config':
-                 [ [ 'DiskServer',     '',       10, 0 ],
-                   [ 'MountPoint',     '',       10, 0 ],
-                   [ 'Username',       '',       8,  0 ],
-                   [ 'Machine',        '',       7,  0 ],
-                   [ 'SvcClass',       '',       8,  0 ],
-                   [ 'FileMask',       '',       8,  0 ],
-                   [ 'AutoDelete',     '',       10, 0 ],
-                   [ 'MaxTransfers',   '',       12, 0 ],
-                   [ 'Comments',       '',       20, 0 ] ] }
+    # prepare DB connection
+    stconn = castor_tools.connectToStager()
+    try:
+        stcur = stconn.cursor()
+        stcur.arraysize = 50
+        stGetDrains = '''
+        SELECT DiskServer.name, FileSystem.mountPoint,
+               DrainingJob.username, DrainingJob.machine, DrainingJob.userComment,
+               DrainingJob.creationTime, DrainingJob.totalFiles, DrainingJob.totalBytes,
+               DrainingJob.fileMask, DrainingJob.autoDelete, getSvcClassName(DrainingJob.svcClass),
+               DrainingJob.status, DrainingJob.nbFailedBytes, DrainingJob.nbSuccessBytes,
+               DrainingJob.nbFailedFiles, DrainingJob.nbSuccessFiles, getTime()
+          FROM DrainingJob, FileSystem, DiskServer
+         WHERE DrainingJob.fileSystem = FileSystem.id
+           AND FileSystem.diskServer = DiskServer.id
+           AND (DiskServer.name = :nodeName OR :nodeName IS NULL)
+           AND (FileSystem.mountPoint = :mountPoint OR :mountPoint IS NULL)'''
+        if runningFlag:
+            stGetDrains += ' AND DrainingJob.status = 2'  # RUNNING
+        stGetDrains += ' ORDER BY DiskServer.name, FileSystem.mountPoint'
+        stcur.execute(stGetDrains, nodeName=nodeName, mountPoint=mountPoint)
+        results = stcur.fetchall()
+        # Check if we've found something
+        if len(results) == 0:
+            print 'Nothing found'
+            return
+        # depending on the presence of the config flag, we do not
+        # display the same set of columns
+        if configFlag:
+            titles = ['DiskServer', 'MountPoint', 'UserName', 'Machine', 'SvcClass',
+                      'FileMask', 'AutoDelete', 'Comment']
+            data = [(diskServerName, fsMountPoint, userName, machine, svcClassName,
+                     FileMask.toStr(DJFileMask), castor_tools.intToBool(DJAutoDelete), DJComment)
+                    for diskServerName, fsMountPoint, userName, machine,
+                    DJComment, creationTime, totalFiles, totalBytes, DJFileMask, DJAutoDelete,
+                    svcClassName, DJStatus, nbFailedBytes, nbSuccessBytes, nbFailedFiles,
+                    nbSuccessFiles, currentTime in results]
+        else:
+            titles = ['DiskServer', 'MountPoint', 'Created', 'TFiles', 'TSize',
+                      'RFiles', 'RSize', 'Failed', 'RunTime', 'Progress', 'ETC', 'Status']
+            data = [(diskServerName, fsMountPoint, castor_tools.secsToDate(creationTime), totalFiles,
+                     castor_tools.nbToDataAmount(totalBytes), totalFiles-nbFailedFiles-nbSuccessFiles,
+                     castor_tools.nbToDataAmount(totalBytes-nbFailedBytes-nbSuccessBytes), nbFailedFiles,
+                     castor_tools.nbToAge(int(currentTime-creationTime)),
+                     castor_tools.printPercentage((nbSuccessBytes+nbFailedBytes), totalBytes),
+                     castor_tools.printETC(nbSuccessBytes+nbFailedBytes, totalBytes, currentTime-creationTime),
+                     drainingJobStatusToStr(DJStatus))
+                    for diskServerName, fsMountPoint, userName, machine,
+                    DJComment, creationTime, totalFiles, totalBytes, DJFileMask, DJAutoDelete,
+                    svcClassName, DJStatus, nbFailedBytes, nbSuccessBytes, nbFailedFiles,
+                    nbSuccessFiles, currentTime in results]
+        # depending on the presence of the script flags, we use pretty
+        # printing or script printing
+        if scriptFlag:
+            castor_tools.scriptPrintTable(data)
+        else:
+            castor_tools.prettyPrintTable(titles, data)
+    finally:
+        # close DB connection
+        castor_tools.disconnectDB(stconn)
+        
+def deleteDrain():
+    '''interrupts and ongoing draining job'''
+    # prepare DB connection
+    stconn = castor_tools.connectToStager()
+    try:
+        stcur = stconn.cursor()
+        stcur.arraysize = 50
+        # check the nodeName and mountPoint, and get the list of filesytem ids concerned
+        fileSystems = getFileSystems(stcur)
+        # check draining job statement
+        stCheckDrainingJob = '''
+        SELECT id
+          FROM DrainingJob
+         WHERE fileSystem = :fsId'''
+        drainingJobs = []
+        for fsId, fsMountPoint in fileSystems:
+            # first check that the filesystem is not already draining
+            stcur.execute(stCheckDrainingJob, fsId=fsId)
+            drains = stcur.fetchall()
+            if len(drains) == 0:
+                print 'No draining activity found for %s:%s. Ignoring it' % (nodeName, fsMountPoint)
+                continue
+            print 'Draining activity for %s:%s will be stopped' % (nodeName, fsMountPoint)
+            drainingJobs.append((fsMountPoint, drains[0][0]))
+        if drainingJobs:
+            # get user confirmation
+            confirmation = castor_tools.parseBool('entry', raw_input("Is this ok ? [N/y] "))
+            if not confirmation:
+                return
+            # create DrainingJob statement
+            stDeleteDrainingJob = 'BEGIN deleteDrainingJob(:djId); END;'
+            # call it for each filesystem
+            for fsMountPoint, djId in drainingJobs:
+                print 'Stopping drain for %s:%s' % (nodeName, fsMountPoint)
+                stcur.execute(stDeleteDrainingJob, djId=djId)
+            stconn.commit()
+    finally:
+        # close DB connection
+        castor_tools.disconnectDB(stconn)
 
-    # Process the query type
-    if querytype == 'overview':
-        bindvars['InFilter'] = queryfilter
-        c.execute('''SELECT *
-                       FROM DrainingOverview
-                      WHERE (DiskServer = :InNodeName
-                         OR  :InNodeName IS NULL)
-                        AND (MountPoint = :InMountPoint
-                         OR  :InMountPoint IS NULL)
-                        AND (status = :InFilter
-                         OR  :InFilter IS NULL)''', bindvars)
-
-    elif querytype == 'config':
-        bindvars['InFilter'] = queryfilter
-        c.execute('''SELECT *
-                       FROM DrainingOverview
-                      WHERE (DiskServer = :InNodeName
-                         OR  :InNodeName IS NULL)
-                        AND (MountPoint = :InMountPoint
-                         OR  :InMountPoint IS NULL)
-                        AND (status = :InFilter
-                         OR  :InFilter IS NULL)''', bindvars)
-
-    elif querytype == 'failures':
-        c.execute('''SELECT DiskServer, Path, Comments
-                       FROM DrainingFailures
-                      WHERE (DiskServer = :InNodeName
-                         OR  :InNodeName IS NULL)
-                        AND (MountPoint = :InMountPoint
-                         OR  :InMountPoint IS NULL)''', bindvars)
+# process the request
+try:
+    if addFlag:
+        submitDrain()
+    elif queryFlag:
+        if failuresFlag:
+            queryFailures()
+        else:
+            queryDrain()
+    elif deleteDrain:
+        deleteDrain()
     else:
-        raise Exception, 'Unknown type: ' + querytype
-
-    # Check if the resultset has any rows
-    rset = c.fetchall()
-    if len(rset) == 0:
-        print 'No entries found'
-        return
-
-    # Print failure information
-    if querytype == 'failures':
-        for row in rset:
-            print row[0] + ' ' + row[1] + ' (' + row[2] + ')'
-        return
-
-    # Set the index field of the metadata structure
-    for i in range(len(c.description)):
-        for j in range(len(metadata[querytype])):
-            if c.description[i][0] == metadata[querytype][j][0].upper():
-                metadata[querytype][j][3] = i
-
-    # Determine the maximum length of all the columns
-    totallen = len(metadata[querytype])
-    for i in range(len(metadata[querytype])):
-        metadata[querytype][i].append(max([len(str(row[metadata[querytype][i][3]])) for row in rset]))
-        minwidth = metadata[querytype][i][2]
-        if minwidth > metadata[querytype][i][4]:
-            metadata[querytype][i][4] = minwidth
-        totallen += metadata[querytype][i][4]
-
-    # Output data
-    if style == 'script':
-        genSimple(rset, metadata[querytype])
-    else:
-        genTable(rset, totallen, metadata[querytype])
-
-
-#
-# genTable
-#
-def genTable(rset, totallen, metadata):
-    '''Generate a table output of ongoing drainings'''
-    # Print column headings
-    print '-' * totallen
-    for i in range(len(metadata)):
-        name = metadata[i][0]
-        if len(metadata[i][1]) > 0:
-            name = metadata[i][1]
-        print name.ljust(metadata[i][4]),
-    print
-    print '-' * totallen
-
-    # Print the rows
-    tot = [0 for i in range(len(metadata))]
-    for row in rset:
-        for i in range(len(metadata)):
-            value = row[metadata[i][3]]
-            print str(value).ljust(metadata[i][4]),
-            if isinstance(value, int ):
-                tot[i] += value
-        print ''
-    print '-' * totallen
-    for i in range(len(metadata)):
-        print str(tot[i]).ljust(metadata[i][4]),    
-
-#
-# genSimple
-#
-def genSimple(rset, metadata):
-    '''Generate a simple output of ongoing drainings'''
-    # Print the rows
-    for row in rset:
-        for i in range(len(metadata)):
-            print metadata[i][0].rjust(14) + ': ' + str(row[metadata[i][3]])
-        print
-
-
-if __name__ == '__main__':
-    main(sys.argv[1:])
-
-
-# end-of-file
+        print "No option specified\n"
+        usage(1)
+except Exception, e:
+    print e
+    if verbose:
+        import traceback
+        traceback.print_exc()
+    sys.exit(-1)
