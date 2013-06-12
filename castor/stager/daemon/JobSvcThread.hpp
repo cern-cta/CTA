@@ -79,40 +79,6 @@ namespace castor {
                                 Cuuid_t uuid) throw();
 
         /**
-         * Handles a Disk2DiskCopyStartRequest and reples to the client.
-         * If an exception occurs the call will attempt to fail the
-         * disk2disk copy transfer on behalf of the client
-         * @param req the request to handle
-         * @param client the client where to send the response
-         * @param svcs the Services object to use
-         * @param jobSvc the stager service to use
-         * @param ad the address where to load/store objects in the DB
-         * @param uuid the uuid of the request, for logging purposes
-         */
-        void handleDisk2DiskCopyStartRequest(castor::stager::Request* req,
-                                             castor::IClient *client,
-                                             castor::Services* svcs,
-                                             castor::stager::IJobSvc* jobSvc,
-                                             castor::BaseAddress &ad,
-                                             Cuuid_t uuid) throw();
-
-        /**
-         * Handles a Disk2DiskCopyDoneRequest and replies to the client.
-         * @param req the request to handle
-         * @param client the client where to send the response
-         * @param svcs the Services object to use
-         * @param jobSvc the stager service to use
-         * @param ad the address where to load/store objects in the DB
-         * @param uuid the uuid of the request, for logging purposes
-         */
-        void handleDisk2DiskCopyDoneRequest(castor::stager::Request* req,
-                                            castor::IClient *client,
-                                            castor::Services* svcs,
-                                            castor::stager::IJobSvc* jobSvc,
-                                            castor::BaseAddress &ad,
-                                            Cuuid_t uuid) throw();
-
-        /**
          * Handles a MoverCloseRequest and replies to the client.
          * @param req the request to handle
          * @param client the client where to send the response

@@ -51,13 +51,10 @@
 #include "castor/stager/GetUpdateFailed.hpp"
 #include "castor/stager/PutFailed.hpp"
 #include "castor/stager/PutStartRequest.hpp"
-#include "castor/stager/Disk2DiskCopyDoneRequest.hpp"
-#include "castor/stager/Disk2DiskCopyStartRequest.hpp"
 #include "castor/stager/MoverCloseRequest.hpp"
 #include "castor/stager/FirstByteWritten.hpp"
 #include "castor/rh/BasicResponse.hpp"
 #include "castor/rh/GetUpdateStartResponse.hpp"
-#include "castor/rh/Disk2DiskCopyStartResponse.hpp"
 #include "castor/replier/RequestReplier.hpp"
 #include "castor/stager/daemon/DlfMessages.hpp"
 #include "castor/stager/daemon/JobSvcThread.hpp"
@@ -192,175 +189,6 @@ void castor::stager::daemon::JobSvcThread::handleStartRequest
   }
   // Cleanup
   if (subreq) delete subreq;
-}
-
-//-----------------------------------------------------------------------------
-// handleDisk2DiskCopyStartRequest
-//-----------------------------------------------------------------------------
-void castor::stager::daemon::JobSvcThread::handleDisk2DiskCopyStartRequest
-(castor::stager::Request* req,
- castor::IClient *client,
- castor::Services*,
- castor::stager::IJobSvc* jobSvc,
- castor::BaseAddress&,
- Cuuid_t uuid) throw() {
-  // Useful Variables
-  castor::stager::Disk2DiskCopyStartRequest *uReq;
-  castor::rh::Disk2DiskCopyStartResponse res;
-  castor::stager::DiskCopyInfo *dc = 0;
-  castor::stager::DiskCopyInfo *srcDc = 0;
-  bool failed = false;
-  u_signed64 fileId;
-  std::string nsHost;
-  try {
-    // Retrieving request from the database
-    // Note that casting the request will never be
-    // null since select returns one for sure
-    uReq = dynamic_cast<castor::stager::Disk2DiskCopyStartRequest*> (req);
-    fileId = uReq->fileId();
-    nsHost = uReq->nsHost();
-    // "Invoking disk2DiskCopyStart"
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("DiskCopyId", uReq->diskCopyId()),
-      castor::dlf::Param("SourceDiskCopyId", uReq->sourceDiskCopyId()),
-      castor::dlf::Param("DiskServer", uReq->diskServer()),
-      castor::dlf::Param("FileSystem", uReq->mountPoint())};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_JOBSVC_D2DCS,
-                            fileId, nsHost, 4, params);
-    jobSvc->disk2DiskCopyStart(uReq->diskCopyId(),
-                               uReq->sourceDiskCopyId(),
-                               uReq->diskServer(),
-                               uReq->mountPoint(),
-                               dc, srcDc, fileId, nsHost);
-  } catch (castor::exception::Exception& e) {
-    // "Unexpected exception caught"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Function", "JobSvcThread::handleDisk2DiskCopyStartRequest"),
-       castor::dlf::Param("Message", e.getMessage().str()),
-       castor::dlf::Param("Code", e.code())};
-    castor::dlf::dlf_writep(uuid, (e.code() == ENOENT ? DLF_LVL_USER_ERROR : DLF_LVL_ERROR),
-                            STAGER_JOBSVC_EXCEPT, fileId, nsHost, 3, params);
-    res.setErrorCode(e.code());
-    res.setErrorMessage(e.getMessage().str());
-    failed = true;
-
-    // Fail the disk2disk copy transfer automatically on behalf of the client.
-    // This allows the client to just exit without having to manually call
-    // disk2DiskCopyFailed
-    try {
-      if (!nsHost.empty()) {
-        // "Invoking disk2DiskCopyFailed"
-        castor::dlf::Param params[] =
-          {castor::dlf::Param("DiskCopyId", uReq->diskCopyId())};
-        castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_JOBSVC_D2DCBAD,
-                                fileId, nsHost, 1, params);
-        jobSvc->disk2DiskCopyFailed(uReq->diskCopyId(), (e.code() == ENOENT), fileId, nsHost);
-      }
-    } catch (castor::exception::Exception& e) {
-      // "Unexpected exception caught"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("Function", "JobSvcThread::handleDisk2DiskCopyStartRequest"),
-         castor::dlf::Param("Message", e.getMessage().str()),
-         castor::dlf::Param("Code", e.code())};
-      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
-                              fileId, nsHost, 3, params);
-    }
-  }
-  // Build the response
-  if (!failed) {
-    res.setDiskCopy(dc);
-    res.setSourceDiskCopy(srcDc);
-  }
-  // Reply To client
-  try {
-    castor::replier::RequestReplier *rr =
-      castor::replier::RequestReplier::getInstance();
-    res.setReqAssociated(req->reqId());
-    rr->sendResponse(client, &res, true);
-  } catch (castor::exception::Exception& e) {
-    // "Unexpected exception caught"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Function", "JobSvcThread::handleDisk2DiskCopyStartRequest.reply"),
-       castor::dlf::Param("Message", e.getMessage().str()),
-       castor::dlf::Param("Code", e.code())};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
-                            fileId, nsHost, 3, params);
-  }
-  // Cleanup
-  if (0 != dc)
-    delete dc;
-  if (0 != srcDc)
-    delete srcDc;
-}
-
-//-----------------------------------------------------------------------------
-// handleDisk2DiskCopyDoneRequest
-//-----------------------------------------------------------------------------
-void castor::stager::daemon::JobSvcThread::handleDisk2DiskCopyDoneRequest
-(castor::stager::Request* req,
- castor::IClient *client,
- castor::Services*,
- castor::stager::IJobSvc* jobSvc,
- castor::BaseAddress&,
- Cuuid_t uuid) throw() {
-  // Useful Variables
-  castor::stager::Disk2DiskCopyDoneRequest *uReq;
-  castor::rh::BasicResponse res;
-  u_signed64 fileId;
-  std::string nsHost;
-  try {
-    // Retrieving request from the database
-    // Note that casting the request will never be
-    // null since select returns one for sure
-    uReq = dynamic_cast<castor::stager::Disk2DiskCopyDoneRequest*> (req);
-    fileId = uReq->fileId();
-    nsHost = uReq->nsHost();
-    // Invoking the method
-    u_signed64 srcDcId = uReq->sourceDiskCopyId();
-    if (0 == srcDcId) {
-      // "Invoking disk2DiskCopyFailed"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("DiskCopyId", uReq->diskCopyId())};
-      castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_JOBSVC_D2DCBAD,
-                              fileId, nsHost, 1, params);
-      jobSvc->disk2DiskCopyFailed(uReq->diskCopyId(), false, fileId, nsHost);
-    } else {
-      // "Invoking disk2DiskCopyDone"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("DiskCopyId", uReq->diskCopyId()),
-         castor::dlf::Param("SourceDiskCopyId", srcDcId),
-         castor::dlf::Param("ReplicaFileSize", uReq->replicaFileSize())};
-      castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_JOBSVC_D2DCOK,
-                              fileId, nsHost, 3, params);
-      jobSvc->disk2DiskCopyDone(uReq->diskCopyId(), srcDcId, fileId, nsHost,
-                                uReq->replicaFileSize());
-    }
-  } catch (castor::exception::Exception& e) {
-    // "Unexpected exception caught"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Function", "JobSvcThread::handleDisk2DiskCopyDoneRequest"),
-       castor::dlf::Param("Message", e.getMessage().str()),
-       castor::dlf::Param("Code", e.code())};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
-                            fileId, nsHost, 3, params);
-    res.setErrorCode(e.code());
-    res.setErrorMessage(e.getMessage().str());
-  }
-  // Reply To Client
-  try {
-    castor::replier::RequestReplier *rr =
-      castor::replier::RequestReplier::getInstance();
-    res.setReqAssociated(req->reqId());
-    rr->sendResponse(client, &res, true);
-  } catch (castor::exception::Exception& e) {
-    // "Unexpected exception caught"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Function", "JobSvcThread::handleDisk2DiskCopyDoneRequest.reply"),
-       castor::dlf::Param("Message", e.getMessage().str()),
-       castor::dlf::Param("Code", e.code())};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
-                            fileId, nsHost, 3, params);
-  }
 }
 
 //-----------------------------------------------------------------------------
@@ -735,14 +563,6 @@ void castor::stager::daemon::JobSvcThread::process
   case castor::OBJ_GetUpdateStartRequest:
   case castor::OBJ_PutStartRequest:
     castor::stager::daemon::JobSvcThread::handleStartRequest
-      (req, client, svcs, jobSvc, ad, uuid);
-    break;
-  case castor::OBJ_Disk2DiskCopyStartRequest:
-    castor::stager::daemon::JobSvcThread::handleDisk2DiskCopyStartRequest
-      (req, client, svcs, jobSvc, ad, uuid);
-    break;
-  case castor::OBJ_Disk2DiskCopyDoneRequest:
-    castor::stager::daemon::JobSvcThread::handleDisk2DiskCopyDoneRequest
       (req, client, svcs, jobSvc, ad, uuid);
     break;
   case castor::OBJ_MoverCloseRequest:

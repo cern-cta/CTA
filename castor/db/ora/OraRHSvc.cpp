@@ -47,8 +47,6 @@
 #include "castor/stager/GetUpdateFailed.hpp"
 #include "castor/stager/PutFailed.hpp"
 #include "castor/stager/FirstByteWritten.hpp"
-#include "castor/stager/Disk2DiskCopyDoneRequest.hpp"
-#include "castor/stager/Disk2DiskCopyStartRequest.hpp"
 #include "castor/query/VersionQuery.hpp"
 #include "castor/stager/StageFileQueryRequest.hpp"
 #include "castor/query/DiskPoolQuery.hpp"
@@ -90,10 +88,6 @@ const std::string castor::db::ora::OraRHSvc::s_storeFileRequestStatementString =
 /// SQL statement for storeStartRequest
 const std::string castor::db::ora::OraRHSvc::s_storeStartRequestStatementString =
   "BEGIN insertStartRequest(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15, :16, :17); END;";
-
-/// SQL statement for storeD2dRequest
-const std::string castor::db::ora::OraRHSvc::s_storeD2dRequestStatementString =
-  "BEGIN insertD2dRequest(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15, :16, :17, :18, :19); END;";
 
 /// SQL statement for storeVersionQueryRequest
 const std::string castor::db::ora::OraRHSvc::s_storeVersionQueryStatementString =
@@ -151,7 +145,6 @@ castor::db::ora::OraRHSvc::OraRHSvc(const std::string name) :
   m_storeSimpleRequestStatement(0),
   m_storeFileRequestStatement(0),
   m_storeStartRequestStatement(0),
-  m_storeD2dRequestStatement(0),
   m_storeVersionQueryStatement(0),
   m_storeStageFileQueryRequestStatement(0),
   m_storeDiskPoolQueryStatement(0),
@@ -198,7 +191,6 @@ void castor::db::ora::OraRHSvc::reset() throw() {
     if (m_storeSimpleRequestStatement) deleteStatement(m_storeSimpleRequestStatement);
     if (m_storeFileRequestStatement) deleteStatement(m_storeFileRequestStatement);
     if (m_storeStartRequestStatement) deleteStatement(m_storeStartRequestStatement);
-    if (m_storeD2dRequestStatement) deleteStatement(m_storeD2dRequestStatement);
     if (m_storeVersionQueryStatement) deleteStatement(m_storeVersionQueryStatement);
     if (m_storeStageFileQueryRequestStatement) deleteStatement(m_storeStageFileQueryRequestStatement);
     if (m_storeDiskPoolQueryStatement) deleteStatement(m_storeDiskPoolQueryStatement);
@@ -216,7 +208,6 @@ void castor::db::ora::OraRHSvc::reset() throw() {
   m_storeSimpleRequestStatement = 0;
   m_storeFileRequestStatement = 0;
   m_storeStartRequestStatement = 0;
-  m_storeD2dRequestStatement = 0;
   m_storeVersionQueryStatement = 0;
   m_storeStageFileQueryRequestStatement = 0;
   m_storeDiskPoolQueryStatement = 0;
@@ -316,24 +307,6 @@ void castor::db::ora::OraRHSvc::storeRequest
         castor::stager::StartRequest* sreq = dynamic_cast<castor::stager::StartRequest*>(req);
         // and store it
         storeStartRequest(sreq, client);        
-      }
-      break;
-    case castor::OBJ_Disk2DiskCopyDoneRequest:
-      {
-        // get the Disk2DiskCopyDoneRequest
-        castor::stager::Disk2DiskCopyDoneRequest* dreq = dynamic_cast<castor::stager::Disk2DiskCopyDoneRequest*>(req);
-        // and store it
-        storeD2dRequest(dreq, client, dreq->diskCopyId(), dreq->sourceDiskCopyId(), "", "",
-                        dreq->replicaFileSize(), dreq->fileId(), dreq->nsHost());
-      }
-      break;
-    case castor::OBJ_Disk2DiskCopyStartRequest:
-      {
-        // get the Disk2DiskCopyStartRequest
-        castor::stager::Disk2DiskCopyStartRequest* dreq = dynamic_cast<castor::stager::Disk2DiskCopyStartRequest*>(req);
-        // and store it
-        storeD2dRequest(dreq, client, dreq->diskCopyId(), dreq->sourceDiskCopyId(), dreq->diskServer(),
-                        dreq->mountPoint(), 0, dreq->fileId(), dreq->nsHost());
       }
       break;
     case castor::OBJ_VersionQuery:
@@ -720,53 +693,6 @@ void castor::db::ora::OraRHSvc::storeStartRequest (castor::stager::StartRequest*
   if (0 == rc) {
     castor::exception::Internal ex;
     ex.getMessage() << "Unable to store start request";
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// storeD2dRequest
-//------------------------------------------------------------------------------
-void castor::db::ora::OraRHSvc::storeD2dRequest (castor::stager::Request* req,
-                                                 const castor::rh::Client* client,
-                                                 const u_signed64 diskCopyId,
-                                                 const u_signed64 srcDiskCopyId,
-                                                 const std::string diskServer,
-                                                 const std::string mountPoint,
-                                                 const u_signed64 size,
-                                                 const u_signed64 fileId,
-                                                 const std::string nsHost)
-  throw (castor::exception::Exception, oracle::occi::SQLException) {
-  // Check whether the statement is ok
-  if (0 == m_storeD2dRequestStatement) {
-    m_storeD2dRequestStatement =
-      createStatement(s_storeD2dRequestStatementString);
-    m_storeD2dRequestStatement->setAutoCommit(true);
-  }
-  // execute the statement and see whether we found something
-  m_storeD2dRequestStatement->setString(1, req->machine());
-  m_storeD2dRequestStatement->setInt(2, req->euid());
-  m_storeD2dRequestStatement->setInt(3, req->egid());
-  m_storeD2dRequestStatement->setInt(4, req->pid());
-  m_storeD2dRequestStatement->setString(5, req->userName());
-  m_storeD2dRequestStatement->setString(6, req->svcClassName());
-  m_storeD2dRequestStatement->setString(7, req->reqId());
-  m_storeD2dRequestStatement->setInt(8, req->type());
-  m_storeD2dRequestStatement->setInt(9, client->ipAddress());
-  m_storeD2dRequestStatement->setInt(10, client->port());
-  m_storeD2dRequestStatement->setInt(11, client->version());
-  m_storeD2dRequestStatement->setInt(12, client->secure());
-  m_storeD2dRequestStatement->setDouble(13, diskCopyId);
-  m_storeD2dRequestStatement->setDouble(14, srcDiskCopyId);
-  m_storeD2dRequestStatement->setDouble(15, size);
-  m_storeD2dRequestStatement->setString(16, diskServer);
-  m_storeD2dRequestStatement->setString(17, mountPoint);
-  m_storeD2dRequestStatement->setDouble(18, fileId);
-  m_storeD2dRequestStatement->setString(19, nsHost);
-  unsigned int rc = m_storeD2dRequestStatement->executeUpdate();
-  if (0 == rc) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "Unable to store d2d request";
     throw ex;
   }
 }

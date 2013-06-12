@@ -160,12 +160,15 @@ def inttoip(n):
     n = (1<<32) + n
   return socket.inet_ntoa(hex(n)[2:].zfill(8).decode('hex'))
 
-class DispatcherThread(threading.Thread):
-  '''scheduling thread, responsible for connecting to the stager database and scheduling transfers'''
+class AbstractDispatcherThread(threading.Thread):
+  '''abstract version of a scheduling thread.
+     Contains all the threading code, the db connection code and the scheduling code.
+     Implementations should only implement the run method to connect to the stager,
+     get transfers and call the _schedule method.'''
 
-  def __init__(self, queueingTransfers, nbWorkers=5):
+  def __init__(self, queueingTransfers, name, nbWorkers=5):
     '''constructor of this thread. Arguments are the connection pool and the transfer queue to use'''
-    super(DispatcherThread, self).__init__(name='DBUpdater')
+    super(AbstractDispatcherThread, self).__init__(name=name)
     # whether we should continue running
     self.running = True
     # the list of queueing transfers
@@ -246,7 +249,7 @@ class DispatcherThread(threading.Thread):
       # we could not schedule anywhere.... so fail the transfer in the DB
       self.updateDBQueue.put((transferId, fileId, 1721, errorMessage, reqId)) # 1721 = ESTSCHEDERR
       # and remove it from the server queue
-      self.queueingTransfers.remove([transferId])
+      self.queueingTransfers.remove([(transferId, transferType)])
       return False
     else:
       # see where we could not schedule
@@ -268,50 +271,35 @@ class DispatcherThread(threading.Thread):
       dlf.write(msgs.TRANSFERSCHEDULED, subreqid=transferId, reqid=reqId, fileId=fileId, type=transferType, hosts=str(scheduleHosts))
       return True
 
-  def _scheduleD2d(self, srcTransfer, sourceRfs, srRfs):
-    '''Schedules a disk to disk copy on the source and destinations and handle issues '''
-    # check whether the destinations are not empty
-    if srRfs == None:
-      # fail the transfer immediately as we have nowhere to go. This will log the error too
-      self.updateDBQueue.put((srcTransfer.transferId, srcTransfer.fileId, 1721,   # 1721 = ESTSCHEDERR
-                              'No destination host found', srcTransfer.reqId))
-      return
-    # first schedule a transfer on the source node
-    schedSourceCandidates = [candidate.split(':') for candidate in sourceRfs.split('|')]
-    srcTransfer.diskServer, srcTransfer.mountPoint = schedSourceCandidates[0]
-    # 'Scheduling d2d source' message
-    dlf.writedebug(msgs.SCHEDD2DSRC, subreqid=srcTransfer.transferId, reqid=srcTransfer.reqId,
-                   fileId=srcTransfer.fileId, DiskServer=srcTransfer.diskServer,
-                   MountPoint=srcTransfer.mountPoint)
-    # effectively schedule the transfer onto its source
-    if not self._schedule(srcTransfer.transferId, srcTransfer.reqId, srcTransfer.fileId, [srcTransfer],
-                          'd2dsrc', msgs.SCHEDD2DSRCFAILED, 'Unable to schedule on source host'):
-      return
-    # now schedule on all potential destinations
-    schedDestCandidates = [candidate.split(':') for candidate in srRfs.split('|')]
-    # 'Scheduling d2d destination' message
-    dlf.writedebug(msgs.SCHEDD2DDEST, subreqid=srcTransfer.transferId, reqid=srcTransfer.reqId,
-                   fileId=srcTransfer.fileId, DiskServers=str(schedDestCandidates))
-    # build the list of hosts and transfers to launch
-    transferList = []
-    for diskServer, mountPoint in schedDestCandidates:
-      dtransfer = D2DTransfer(**srcTransfer.__dict__)
-      dtransfer.transferType = TransferType.D2DDST
-      dtransfer.protocol = 'd2ddest'
-      dtransfer.diskServer = diskServer
-      dtransfer.mountPoint = mountPoint
-      transferList.append(dtransfer)
-    # effectively schedule the transfer onto its destination
-    self._schedule(srcTransfer.transferId, srcTransfer.reqId, srcTransfer.fileId, transferList,
-                   'd2ddest', msgs.SCHEDD2DDESTFAILED, 'Failed to schedule d2d destination')
+  def stop(self):
+    '''Stops processing of this thread'''
+    # first stop the acitivity of taking new jobs from the DB
+    self.running = False
+    # now wait that the internal queue is empty
+    # note that this should be implemented with Queue.join and Queue.task_done if we would have python 2.5
+    while not self.workToDispatch.empty():
+      time.sleep(0.1)
+    # then stop the workers
+    for w in self.workers:
+      w.running = False
+    # and finally stop the DB thread
+    self.dbthread.running = False
 
-  def _scheduleStandard(self, transfer, srRfs):
+    
+class UserDispatcherThread(AbstractDispatcherThread):
+  '''Dispatcher thread dedicated to user transfers'''
+  
+  def __init__(self, queueingTransfers, nbWorkers=5):
+    '''constructor of this thread. Arguments are the connection pool and the transfer queue to use'''
+    super(UserDispatcherThread, self).__init__(queueingTransfers, 'UserDispatcherThread', nbWorkers)
+
+  def _scheduleStandard(self, transfer, destFilesystems):
     '''Schedules a disk to disk copy and handle issues '''
     # extract list of candidates where to schedule and log
-    if None == srRfs:
+    if None == destFilesystems:
       schedCandidates = []
     else:
-      schedCandidates = [candidate.split(':') for candidate in srRfs.split('|')]
+      schedCandidates = [candidate.split(':') for candidate in destFilesystems.split('|')]
     # 'Scheduling standard transfer' message
     dlf.writedebug(msgs.SCHEDTRANSFER, subreqid=transfer.transferId, reqid=transfer.reqId,
                    fileId=transfer.fileId, DiskServers=str(schedCandidates))
@@ -327,7 +315,7 @@ class DispatcherThread(threading.Thread):
                    msgs.SCHEDTRANSFERFAILED, 'Unable to schedule transfer')
 
   def run(self):
-    '''main method, containing the infinite loop'''
+    '''goes to the stager DB and retrieves user jobs to schedule'''
     configuration = castor_tools.castorConf()
     while self.running:
       try:
@@ -341,8 +329,7 @@ class DispatcherThread(threading.Thread):
           srId = stcur.var(cx_Oracle.NUMBER)
           srSubReqId = stcur.var(cx_Oracle.STRING)
           srProtocol = stcur.var(cx_Oracle.STRING)
-          srXsize = stcur.var(cx_Oracle.NUMBER)
-          srRfs = stcur.var(cx_Oracle.STRING)
+          destFilesystems = stcur.var(cx_Oracle.STRING)
           reqId = stcur.var(cx_Oracle.STRING)
           cfFileId = stcur.var(cx_Oracle.NUMBER)
           cfNsHost = stcur.var(cx_Oracle.STRING)
@@ -350,54 +337,34 @@ class DispatcherThread(threading.Thread):
           reqType = stcur.var(cx_Oracle.NUMBER)
           reqEuid = stcur.var(cx_Oracle.NUMBER)
           reqEgid = stcur.var(cx_Oracle.NUMBER)
-          reqUsername = stcur.var(cx_Oracle.STRING)
           srOpenFlags = stcur.var(cx_Oracle.STRING)
           clientIp = stcur.var(cx_Oracle.NUMBER)
           clientPort = stcur.var(cx_Oracle.NUMBER)
-          clientVersion = stcur.var(cx_Oracle.NUMBER)
-          reqSourceDiskCopy = stcur.var(cx_Oracle.NUMBER)
-          reqDestDiskCopy = stcur.var(cx_Oracle.NUMBER)
           clientSecure = stcur.var(cx_Oracle.NUMBER)
-          reqSourceSvcClass = stcur.var(cx_Oracle.STRING)
           reqCreationTime = stcur.var(cx_Oracle.NUMBER)
-          reqDefaultFileSize = stcur.var(cx_Oracle.NUMBER)
-          sourceRfs = stcur.var(cx_Oracle.STRING)
-          stTransferToSchedule = 'BEGIN transferToSchedule(:srId, :srSubReqId , :srProtocol, :srXsize, :srRfs, :reqId, :cfFileId, :cfNsHost, :reqSvcClass, :reqType, :reqEuid, :reqEgid, :reqUsername, :srOpenFlags, :clientIp, :clientPort, :clientVersion, :reqSourceDiskCopy, :reqDestDiskCopy, :clientSecure, :reqSourceSvcClass, :reqCreationTime, :reqDefaultFileSize, :sourceRfs); END;' # pylint: disable=C0301
+          stTransferToSchedule = 'BEGIN userTransferToSchedule(:srId, :srSubReqId , :srProtocol, :destFilesystems, :reqId, :cfFileId, :cfNsHost, :reqSvcClass, :reqType, :reqEuid, :reqEgid, :srOpenFlags, :clientIp, :clientPort, :clientSecure, :reqCreationTime); END;' # pylint: disable=C0301
           # infinite loop over the polling of the DB
           while self.running:
             # see whether there is something to do
-            # not that this will hang until something comes or the internal timeout is reached
-            stcur.execute(stTransferToSchedule, (srId, srSubReqId, srProtocol, srXsize, srRfs, reqId, cfFileId,
-                                                 cfNsHost, reqSvcClass, reqType, reqEuid, reqEgid, reqUsername,
-                                                 srOpenFlags, clientIp, clientPort, clientVersion,
-                                                 reqSourceDiskCopy, reqDestDiskCopy, clientSecure, reqSourceSvcClass,
-                                                 reqCreationTime, reqDefaultFileSize, sourceRfs))
+            # note that this will hang until something comes or the internal timeout is reached
+            stcur.execute(stTransferToSchedule, (srId, srSubReqId, srProtocol, destFilesystems, reqId, cfFileId,
+                                                 cfNsHost, reqSvcClass, reqType, reqEuid, reqEgid,
+                                                 srOpenFlags, clientIp, clientPort, clientSecure,
+                                                 reqCreationTime))
             # in case of timeout, we may have nothing to do
             if srId.getvalue() != None:
-              # standard transfers and disk to disk copies are not handled the same way
-              # but in both cases, errors are handled internally and no exception
-              # others than the ones implying the end of the processing
-              if int(reqType.getvalue() == 133): # OBJ_StageDiskCopyReplicaRequest
-                self.workToDispatch.put((self._scheduleD2d,
-                                         (D2DTransfer(srSubReqId.getvalue(), reqId.getvalue(),
-                                                      (cfNsHost.getvalue(), int(cfFileId.getvalue())),
-                                                      int(reqEuid.getvalue()), int(reqEgid.getvalue()),
-                                                      reqSvcClass.getvalue(), reqCreationTime.getvalue(),
-                                                      TransferType.D2DSRC, 'd2dsrc',
-                                                      int(reqDestDiskCopy.getvalue()),
-                                                      int(reqSourceDiskCopy.getvalue())),
-                                          sourceRfs.getvalue(), srRfs.getvalue())))
-              else:
-                self.workToDispatch.put((self._scheduleStandard,
-                                         (Transfer(srSubReqId.getvalue(), reqId.getvalue(),
-                                                   (cfNsHost.getvalue(), int(cfFileId.getvalue())),
-                                                   int(reqEuid.getvalue()), int(reqEgid.getvalue()),
-                                                   reqSvcClass.getvalue(), reqCreationTime.getvalue(),
-                                                   srProtocol.getvalue(), srId.getvalue(),
-                                                   int(reqType.getvalue()), srOpenFlags.getvalue(),
-                                                   inttoip(int(clientIp.getvalue())), 
-                                                   int(clientPort.getvalue()),int(clientSecure.getvalue())),
-                                          srRfs.getvalue())))
+              # errors are handled internally and there are no exception others than
+              # the ones implying the end of the processing
+              self.workToDispatch.put((self._scheduleStandard,
+                                       (Transfer(srSubReqId.getvalue(), reqId.getvalue(),
+                                                 (cfNsHost.getvalue(), int(cfFileId.getvalue())),
+                                                 int(reqEuid.getvalue()), int(reqEgid.getvalue()),
+                                                 reqSvcClass.getvalue(), reqCreationTime.getvalue(),
+                                                 srProtocol.getvalue(), srId.getvalue(),
+                                                 int(reqType.getvalue()), srOpenFlags.getvalue(),
+                                                 inttoip(int(clientIp.getvalue())), 
+                                                 int(clientPort.getvalue()),int(clientSecure.getvalue())),
+                                        destFilesystems.getvalue())))
               # if maxNbTransfersScheduledPerSecond is given, request throttling is active
               # What it does is keep a count of the number of scheduled request in the current second
               # and wait the rest of the second if it reached the limit
@@ -420,23 +387,106 @@ class DispatcherThread(threading.Thread):
         finally:
           stcur.close()
       except Exception, e:
-        # "Caught exception in Dispatcher thread" message
-        dlf.writeerr(msgs.DISPATCHEXCEPTION, Type=str(e.__class__), Message=str(e))
+        # "Caught exception in Dispatcher for regular Job" message
+        dlf.writeerr(msgs.DISPATCHJOBEXCEPTION, Type=str(e.__class__), Message=str(e))
         # check whether we should reconnect to DB, and do so if needed
         self.dbConnection().checkForReconnection(e)
         # then sleep a bit to not loop to fast on the error
         time.sleep(1)
+    
+class D2DDispatcherThread(AbstractDispatcherThread):
+  '''Dispatcher thread dedicated to disk to disk transfers'''
+  
+  def __init__(self, queueingTransfers, nbWorkers=5):
+    '''constructor of this thread. Arguments are the connection pool and the transfer queue to use'''
+    super(D2DDispatcherThread, self).__init__(queueingTransfers, 'D2DDispatcherThread', nbWorkers)
 
-  def stop(self):
-    '''Stops processing of this thread'''
-    # first stop the acitivity of taking new jobs from the DB
-    self.running = False
-    # now wait that the internal queue is empty
-    # note that this should be implemented with Queue.join and Queue.task_done if we would have python 2.5
-    while not self.workToDispatch.empty():
-      time.sleep(0.1)
-    # then stop the workers
-    for w in self.workers:
-      w.running = False
-    # and finally stop the DB thread
-    self.dbthread.running = False
+  def _scheduleD2d(self, srcTransfer, sourceFileSystems, destFilesystems):
+    '''Schedules a disk to disk copy on the source and destinations and handle issues '''
+    # check whether the destinations are not empty
+    if destFilesystems == None:
+      # fail the transfer immediately as we have nowhere to go. This will log the error too
+      self.updateDBQueue.put((srcTransfer.transferId, srcTransfer.fileId, 1721,   # 1721 = ESTSCHEDERR
+                              'No destination host found', srcTransfer.reqId))
+      return
+    # first schedule sources transfers
+    schedSourceCandidates = [candidate.split(':') for candidate in sourceFileSystems.split('|')]
+    # 'Scheduling d2d source' message
+    dlf.writedebug(msgs.SCHEDD2DSRC, subreqid=srcTransfer.transferId, reqid=srcTransfer.reqId,
+                   fileId=srcTransfer.fileId, DiskServers=str(schedSourceCandidates))
+    transferList = []
+    for diskServer, mountPoint in schedSourceCandidates:
+      stransfer = D2DTransfer(**srcTransfer.__dict__)
+      stransfer.diskServer = diskServer
+      stransfer.mountPoint = mountPoint
+      transferList.append(stransfer)
+    # effectively schedule the transfer onto its source
+    if not self._schedule(srcTransfer.transferId, srcTransfer.reqId, srcTransfer.fileId, transferList,
+                          'd2dsrc', msgs.SCHEDD2DSRCFAILED, 'Unable to schedule on source host'):
+      # source could not be scheduled. Give up. Note that the stagerDB has already been updated
+      return
+        
+    # now schedule on all potential destinations
+    schedDestCandidates = [candidate.split(':') for candidate in destFilesystems.split('|')]
+    # 'Scheduling d2d destination' message
+    dlf.writedebug(msgs.SCHEDD2DDEST, subreqid=srcTransfer.transferId, reqid=srcTransfer.reqId,
+                   fileId=srcTransfer.fileId, DiskServers=str(schedDestCandidates))
+    # build the list of hosts and transfers to launch
+    transferList = []
+    for diskServer, mountPoint in schedDestCandidates:
+      dtransfer = D2DTransfer(**srcTransfer.__dict__)
+      dtransfer.transferType = TransferType.D2DDST
+      dtransfer.diskServer = diskServer
+      dtransfer.mountPoint = mountPoint
+      transferList.append(dtransfer)
+    # effectively schedule the transfer onto its destination
+    self._schedule(srcTransfer.transferId, srcTransfer.reqId, srcTransfer.fileId, transferList,
+                   'd2ddest', msgs.SCHEDD2DDESTFAILED, 'Failed to schedule d2d destination')
+
+  def run(self):
+    '''main method, containing the infinite loop'''
+    while self.running:
+      try:
+        # setup an oracle connection and register our interest for 'transferReadyToSchedule' alerts
+        stcur = self.dbConnection().cursor()
+        try:
+          stcur.execute("BEGIN DBMS_ALERT.REGISTER('d2dReadyToSchedule'); END;")
+          # prepare a cursor for database polling
+          stcur = self.dbConnection().cursor()
+          stcur.arraysize = 50
+          transferId = stcur.var(cx_Oracle.STRING)
+          reqId = stcur.var(cx_Oracle.STRING)
+          fileId = stcur.var(cx_Oracle.NUMBER)
+          nsHost = stcur.var(cx_Oracle.STRING)
+          euid = stcur.var(cx_Oracle.NUMBER)
+          egid = stcur.var(cx_Oracle.NUMBER)
+          svcClassName = stcur.var(cx_Oracle.STRING)
+          creationTime = stcur.var(cx_Oracle.NUMBER)
+          destFileSystems = stcur.var(cx_Oracle.STRING)
+          srcFileSystems = stcur.var(cx_Oracle.STRING)
+          stTransferToSchedule = 'BEGIN D2dTransferToSchedule(:transferId, :reqId, :fileId, :nsHost, :euid, :egid, :svcClassName, :creationTime, :destFileSystems, :srcFileSystems); END;' # pylint: disable=C0301
+          # infinite loop over the polling of the DB
+          while self.running:
+            # see whether there is something to do
+            # not that this will hang until something comes or the internal timeout is reached
+            stcur.execute(stTransferToSchedule, (transferId, reqId, fileId, nsHost, euid, egid,
+                                                 svcClassName, creationTime,
+                                                 destFileSystems, srcFileSystems))
+            # in case of timeout, we may have nothing to do
+            if transferId.getvalue() != None:
+              self.workToDispatch.put((self._scheduleD2d,
+                                       (D2DTransfer(transferId.getvalue(), reqId.getvalue(),
+                                                    (nsHost.getvalue(), int(fileId.getvalue())),
+                                                    int(euid.getvalue()), int(egid.getvalue()),
+                                                    svcClassName.getvalue(), creationTime.getvalue(),
+                                                    TransferType.D2DSRC),
+                                        srcFileSystems.getvalue(), destFileSystems.getvalue())))
+        finally:
+          stcur.close()
+      except Exception, e:
+        # "Caught exception in Dispatcher thread" message
+        dlf.writeerr(msgs.DISPATCHJOBEXCEPTION, Type=str(e.__class__), Message=str(e))
+        # check whether we should reconnect to DB, and do so if needed
+        self.dbConnection().checkForReconnection(e)
+        # then sleep a bit to not loop to fast on the error
+        time.sleep(1)

@@ -118,7 +118,6 @@ AS
   CASTORFILE_DISKONLY        CONSTANT PLS_INTEGER :=  2;
 
   DISKCOPY_VALID             CONSTANT PLS_INTEGER :=  0;
-  DISKCOPY_WAITDISK2DISKCOPY CONSTANT PLS_INTEGER :=  1;
   DISKCOPY_FAILED            CONSTANT PLS_INTEGER :=  4;
   DISKCOPY_WAITFS            CONSTANT PLS_INTEGER :=  5;
   DISKCOPY_STAGEOUT          CONSTANT PLS_INTEGER :=  6;
@@ -146,9 +145,9 @@ AS
   DRAININGFS_RESTART      CONSTANT PLS_INTEGER := 7;
   
   DRAININGDC_CREATED      CONSTANT PLS_INTEGER := 0;
-  DRAININGDC_PROCESSING   CONSTANT PLS_INTEGER := 1;
-  DRAININGDC_WAITD2D      CONSTANT PLS_INTEGER := 2;
-  DRAININGDC_FAILED       CONSTANT PLS_INTEGER := 3;
+  DRAININGDC_PROCESSING   CONSTANT PLS_INTEGER := 2;
+  DRAININGDC_WAITD2D      CONSTANT PLS_INTEGER := 3;
+  DRAININGDC_FAILED       CONSTANT PLS_INTEGER := 4;
 
   SUBREQUEST_START            CONSTANT PLS_INTEGER :=  0;
   SUBREQUEST_RESTART          CONSTANT PLS_INTEGER :=  1;
@@ -182,13 +181,23 @@ AS
   GCTYPE_NSSYNCH             CONSTANT PLS_INTEGER :=  4;
   GCTYPE_OVERWRITTEN         CONSTANT PLS_INTEGER :=  5;
   GCTYPE_ADMIN               CONSTANT PLS_INTEGER :=  6;
-
+  GCTYPE_FAILEDD2D           CONSTANT PLS_INTEGER :=  7;
+  
   DELDC_ENOENT               CONSTANT PLS_INTEGER :=  1;
   DELDC_RECALL               CONSTANT PLS_INTEGER :=  2;
   DELDC_REPLICATION          CONSTANT PLS_INTEGER :=  3;
   DELDC_LOST                 CONSTANT PLS_INTEGER :=  4;
   DELDC_GC                   CONSTANT PLS_INTEGER :=  5;
   DELDC_NOOP                 CONSTANT PLS_INTEGER :=  6;
+
+  DISK2DISKCOPYJOB_PENDING   CONSTANT PLS_INTEGER :=  0;
+  DISK2DISKCOPYJOB_SCHEDULED CONSTANT PLS_INTEGER :=  1;
+  DISK2DISKCOPYJOB_RUNNING   CONSTANT PLS_INTEGER :=  2;
+
+  REPLICATIONTYPE_USER       CONSTANT PLS_INTEGER :=  0;
+  REPLICATIONTYPE_INTERNAL   CONSTANT PLS_INTEGER :=  1;
+  REPLICATIONTYPE_DRAINING   CONSTANT PLS_INTEGER :=  2;
+
 END dconst;
 /
 
@@ -273,8 +282,6 @@ AS
   REPACK_JOB_STATS             CONSTANT VARCHAR2(2048) := 'repackManager: Repack processes statistics';
   REPACK_UNEXPECTED_EXCEPTION  CONSTANT VARCHAR2(2048) := 'handleRepackRequest: unexpected exception caught';
 
-  REPORT_HEART_BEAT_RESUMED    CONSTANT VARCHAR2(2048) := 'Heartbeat resumed for diskserver';
-
   DELETEDISKCOPY_RECALL        CONSTANT VARCHAR2(2048) := 'deleteDiskCopy: diskCopy was lost, about to recall from tape';
   DELETEDISKCOPY_REPLICATION   CONSTANT VARCHAR2(2048) := 'deleteDiskCopy: diskCopy was lost, about to replicate from another pool';
   DELETEDISKCOPY_LOST          CONSTANT VARCHAR2(2048) := 'deleteDiskCopy: file was LOST and is being dropped from the system';
@@ -296,6 +303,20 @@ AS
   STAGER_GET_REPLICATION       CONSTANT VARCHAR2(2048) := 'Triggering internal DiskCopy replication';
   STAGER_GET_REPLICATION_FAIL  CONSTANT VARCHAR2(2048) := 'Triggering internal DiskCopy replication failed';
   STAGER_DISKCOPY_FOUND        CONSTANT VARCHAR2(2048) := 'Available DiskCopy found';
+
+  REPORT_HEART_BEAT_RESUMED    CONSTANT VARCHAR2(2048) := 'Heartbeat resumed for diskserver, status changed to PRODUCTION';
+  
+  D2D_CREATING_JOB             CONSTANT VARCHAR2(2048) := 'Created new Disk2DiskCopyJob';
+  D2D_CANCELED_AT_START        CONSTANT VARCHAR2(2048) := 'disk2DiskCopyStart : Replication request canceled while queuing in scheduler or transfer already started';
+  D2D_MULTIPLE_COPIES_ON_DS    CONSTANT VARCHAR2(2048) := 'disk2DiskCopyStart : Multiple copies of this file already found on this diskserver';
+  D2D_SOURCE_GONE              CONSTANT VARCHAR2(2048) := 'disk2DiskCopyStart : Source has disappeared while queuing in scheduler, retrying';
+  D2D_START_OK                 CONSTANT VARCHAR2(2048) := 'disk2DiskCopyStart called and returned successfully';
+  D2D_D2DDONE_CANCEL           CONSTANT VARCHAR2(2048) := 'disk2DiskCopyEnded : Invalidating new copy as job was canceled';
+  D2D_D2DDONE_BADSIZE          CONSTANT VARCHAR2(2048) := 'disk2DiskCopyEnded : File replication size mismatch';
+  D2D_D2DDONE_OK               CONSTANT VARCHAR2(2048) := 'disk2DiskCopyEnded : Replication successful';
+  D2D_D2DDONE_RETRIED          CONSTANT VARCHAR2(2048) := 'disk2DiskCopyEnded : Retrying disk to disk copy';
+  D2D_D2DDONE_NORETRY          CONSTANT VARCHAR2(2048) := 'disk2DiskCopyEnded : Exhausted retries, giving up';
+  D2D_D2DFAILED                CONSTANT VARCHAR2(2048) := 'disk2DiskCopyEnded : replication failed';
 END dlf;
 /
 

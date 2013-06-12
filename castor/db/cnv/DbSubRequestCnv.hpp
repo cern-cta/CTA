@@ -199,14 +199,6 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Fill the database with objects of type SubRequest refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillRepSubRequest(castor::stager::SubRequest* obj)
-          throw (castor::exception::Exception);
-
-        /**
          * Fill the database with objects of type FileRequest refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
@@ -233,15 +225,6 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjCastorFile(castor::stager::SubRequest* obj)
-          throw (castor::exception::Exception);
-
-        /**
-         * Retrieve from the database objects of type SubRequest refered by a given
-         * object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillObjSubRequest(castor::stager::SubRequest* obj)
           throw (castor::exception::Exception);
 
         /**
@@ -302,18 +285,6 @@ namespace castor {
 
         /// SQL update statement object for member castorFile
         castor::db::IDbStatement *m_updateCastorFileStatement;
-
-        /// SQL checkExist statement for member parent
-        static const std::string s_checkSubRequestExistStatementString;
-
-        /// SQL checkExist statement object for member parent
-        castor::db::IDbStatement *m_checkSubRequestExistStatement;
-
-        /// SQL update statement for member parent
-        static const std::string s_updateSubRequestStatementString;
-
-        /// SQL update statement object for member parent
-        castor::db::IDbStatement *m_updateSubRequestStatement;
 
         /// SQL update statement for member request
         static const std::string s_updateFileRequestStatementString;

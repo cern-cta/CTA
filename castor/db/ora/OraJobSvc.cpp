@@ -31,7 +31,6 @@
 #include "castor/Constants.hpp"
 #include "castor/IClient.hpp"
 #include "castor/stager/Request.hpp"
-#include "castor/stager/DiskCopyInfo.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "castor/stager/FileClass.hpp"
 #include "castor/stager/CastorFile.hpp"
@@ -85,18 +84,6 @@ const std::string castor::db::ora::OraJobSvc::s_getUpdateStartStatementString =
 const std::string castor::db::ora::OraJobSvc::s_putStartStatementString =
   "BEGIN putStart(:1, :2, :3, :4, :5, :6); END;";
 
-/// SQL statement for disk2DiskCopyStart
-const std::string castor::db::ora::OraJobSvc::s_disk2DiskCopyStartStatementString =
-  "BEGIN disk2DiskCopyStart(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10); END;";
-
-/// SQL statement for disk2DiskCopyDone
-const std::string castor::db::ora::OraJobSvc::s_disk2DiskCopyDoneStatementString =
-  "BEGIN disk2DiskCopyDone(:1, :2, :3); END;";
-
-/// SQL statement for disk2DiskCopyFailed
-const std::string castor::db::ora::OraJobSvc::s_disk2DiskCopyFailedStatementString =
-  "BEGIN disk2DiskCopyFailed(:1, :2); END;";
-
 /// SQL statement for prepareForMigration
 const std::string castor::db::ora::OraJobSvc::s_prepareForMigrationStatementString =
 "BEGIN prepareForMigration(:1, :2, :3, :4, :5, :6, :7); END;";
@@ -125,9 +112,6 @@ castor::db::ora::OraJobSvc::OraJobSvc(const std::string name) :
   m_getUpdateStartStatement(0),
   m_putStartStatement(0),
   m_putDoneStartStatement(0),
-  m_disk2DiskCopyStartStatement(0),
-  m_disk2DiskCopyDoneStatement(0),
-  m_disk2DiskCopyFailedStatement(0),
   m_prepareForMigrationStatement(0),
   m_getUpdateDoneStatement(0),
   m_getUpdateFailedStatement(0),
@@ -166,9 +150,6 @@ void castor::db::ora::OraJobSvc::reset() throw() {
   try {
     if (m_getUpdateStartStatement) deleteStatement(m_getUpdateStartStatement);
     if (m_putStartStatement) deleteStatement(m_putStartStatement);
-    if (m_disk2DiskCopyStartStatement) deleteStatement(m_disk2DiskCopyStartStatement);
-    if (m_disk2DiskCopyDoneStatement) deleteStatement(m_disk2DiskCopyDoneStatement);
-    if (m_disk2DiskCopyFailedStatement) deleteStatement(m_disk2DiskCopyFailedStatement);
     if (m_prepareForMigrationStatement) deleteStatement(m_prepareForMigrationStatement);
     if (m_getUpdateDoneStatement) deleteStatement(m_getUpdateDoneStatement);
     if (m_getUpdateFailedStatement) deleteStatement(m_getUpdateFailedStatement);
@@ -178,9 +159,6 @@ void castor::db::ora::OraJobSvc::reset() throw() {
   // Now reset all pointers to 0
   m_getUpdateStartStatement = 0;
   m_putStartStatement = 0;
-  m_disk2DiskCopyStartStatement = 0;
-  m_disk2DiskCopyDoneStatement = 0;
-  m_disk2DiskCopyFailedStatement = 0;
   m_prepareForMigrationStatement = 0;
   m_getUpdateDoneStatement = 0;
   m_getUpdateFailedStatement = 0;
@@ -321,224 +299,6 @@ castor::db::ora::OraJobSvc::putStart
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in putStart."
-      << std::endl << e.what();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// disk2DiskCopyStart
-//------------------------------------------------------------------------------
-void castor::db::ora::OraJobSvc::disk2DiskCopyStart
-(const u_signed64 diskCopyId,
- const u_signed64 sourceDiskCopyId,
- const std::string diskServer,
- const std::string fileSystem,
- castor::stager::DiskCopyInfo* &diskCopy,
- castor::stager::DiskCopyInfo* &sourceDiskCopy,
- u_signed64 fileId,
- const std::string nsHost)
-  throw (castor::exception::Exception) {
-
-  std::string csumtype;
-  std::string csumvalue;
-  try {
-    // Check whether the statements are ok
-    if (0 == m_disk2DiskCopyStartStatement) {
-      m_disk2DiskCopyStartStatement =
-        createStatement(s_disk2DiskCopyStartStatementString);
-      m_disk2DiskCopyStartStatement->registerOutParam
-        (5, oracle::occi::OCCISTRING, 2048);
-      m_disk2DiskCopyStartStatement->registerOutParam
-        (6, oracle::occi::OCCISTRING, 2048);
-      m_disk2DiskCopyStartStatement->registerOutParam
-        (7, oracle::occi::OCCISTRING, 2048);
-      m_disk2DiskCopyStartStatement->registerOutParam
-        (8, oracle::occi::OCCISTRING, 2048);
-      m_disk2DiskCopyStartStatement->registerOutParam
-        (9, oracle::occi::OCCISTRING, 2048);
-      m_disk2DiskCopyStartStatement->registerOutParam
-        (10, oracle::occi::OCCISTRING, 2048);
-    }
-
-    // Extract the checksum information of the file from the name server. We
-    // need to pass the checksum information to the job as the generation of
-    // checksums using the RFIO protocol is only computed over the network when
-    // running an rfiod process i.e. a server. It is not stored at the clients
-    // local disk!
-    bool useChkSum = true;
-    const char *confvalue = getconfent("CNS", "USE_CKSUM", 0);
-    if (confvalue != NULL) {
-      if (!strncasecmp(confvalue, "no", 2)) {
-        useChkSum = false;
-      }
-    }
-
-    if (useChkSum) {
-      struct Cns_filestatcs statbuf;
-      struct Cns_fileid fileid;
-      char fileName[CA_MAXPATHLEN+1];
-      fileName[0] = '\0';
-
-      // Initialize structures
-      fileid.fileid = fileId;
-      strncpy(fileid.server, nsHost.c_str(), CA_MAXHOSTNAMELEN);
-
-      // Extract checksum information for file
-      // Note: we do not call Cns_setid here as there is no need to perform the
-      // Cns_statcsx call under the users uid and gid
-      if (Cns_statcsx(fileName, &fileid, &statbuf) != 0) {
-        castor::exception::Exception ex(serrno);
-        ex.getMessage()
-          << "disk2DiskCopyStart : Cns_statcsx failed - "
-          << sstrerror(serrno);
-        // Don't do anything in the db, disk2DiskCopyFailed
-        // will be called and this serrno will be taken into account
-        throw ex;
-      }
-
-      // Check that the checksum type is supported. If its not we ignore it.
-      csumtype = "";
-      csumvalue = statbuf.csumvalue;
-      if ((strcmp(statbuf.csumtype, "AD") == 0) ||
-          (strcmp(statbuf.csumtype, "CS") == 0) ||
-          (strcmp(statbuf.csumtype, "MD") == 0)) {
-        csumtype = statbuf.csumtype;
-      }
-    }
-
-    // Execute the statement and see if we found something
-    m_disk2DiskCopyStartStatement->setDouble(1, diskCopyId);
-    m_disk2DiskCopyStartStatement->setDouble(2, sourceDiskCopyId);
-    m_disk2DiskCopyStartStatement->setString(3, diskServer);
-    m_disk2DiskCopyStartStatement->setString(4, fileSystem);
-
-    unsigned int nb = m_disk2DiskCopyStartStatement->executeUpdate();
-    if (nb == 0) {
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "disk2DiskCopyStart did not return any result.";
-      throw ex;
-    }
-
-    // Get the information about the destination disk copy
-    diskCopy = new castor::stager::DiskCopyInfo();
-    diskCopy->setDiskCopyId(diskCopyId);
-    diskCopy->setDiskServer(diskServer);
-    diskCopy->setMountPoint(fileSystem);
-    diskCopy->setDiskCopyPath(m_disk2DiskCopyStartStatement->getString(5));
-    diskCopy->setSvcClass(m_disk2DiskCopyStartStatement->getString(6));
-    diskCopy->setFileId(fileId);
-    diskCopy->setNsHost(nsHost);
-
-    // Get the information about the source disk copy
-    sourceDiskCopy = new castor::stager::DiskCopyInfo();
-    sourceDiskCopy->setDiskCopyId(sourceDiskCopyId);
-    sourceDiskCopy->setDiskServer(m_disk2DiskCopyStartStatement->getString(7));
-    sourceDiskCopy->setMountPoint(m_disk2DiskCopyStartStatement->getString(8));
-    sourceDiskCopy->setDiskCopyPath(m_disk2DiskCopyStartStatement->getString(9));
-    sourceDiskCopy->setSvcClass(m_disk2DiskCopyStartStatement->getString(10));
-    sourceDiskCopy->setFileId(fileId);
-    sourceDiskCopy->setNsHost(nsHost);
-
-    // Set the source and destination diskcopy checksum attributes.
-    if ((csumtype != "") && (csumvalue != "")) {
-      diskCopy->setCsumType(csumtype);
-      diskCopy->setCsumValue(csumvalue);
-      sourceDiskCopy->setCsumType(csumtype);
-      sourceDiskCopy->setCsumValue(csumvalue);
-    }
-
-    // Return
-    cnvSvc()->commit();
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    // Application specific errors
-    if ((e.getErrorCode() == 20108) ||
-        (e.getErrorCode() == 20109) ||
-        (e.getErrorCode() == 20110) ||
-        (e.getErrorCode() == 20111) ||
-        (e.getErrorCode() == 20112)) {
-      castor::exception::RequestCanceled ex;
-      std::string error = e.what();
-      ex.getMessage() << error.substr(error.find("ORA-") + 11,
-                                      error.find("ORA-", 4) - 12);
-      throw ex;
-    }
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in disk2DiskCopyStart. "
-      << std::endl << e.what();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// disk2DiskCopyDone
-//------------------------------------------------------------------------------
-void castor::db::ora::OraJobSvc::disk2DiskCopyDone
-(u_signed64 diskCopyId,
- u_signed64 sourceDiskCopyId,
- u_signed64,
- const std::string,
- u_signed64 replicaFileSize)
-  throw (castor::exception::Exception) {
-  try {
-    // Check whether the statements are ok
-    if (0 == m_disk2DiskCopyDoneStatement) {
-      m_disk2DiskCopyDoneStatement =
-        createStatement(s_disk2DiskCopyDoneStatementString);
-      m_disk2DiskCopyDoneStatement->setAutoCommit(true);
-    }
-    // execute the statement and see whether we found something
-    m_disk2DiskCopyDoneStatement->setDouble(1, diskCopyId);
-    m_disk2DiskCopyDoneStatement->setDouble(2, sourceDiskCopyId);
-    m_disk2DiskCopyDoneStatement->setDouble(3, replicaFileSize);
-
-    m_disk2DiskCopyDoneStatement->executeUpdate();
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    // Application specific errors
-    if (e.getErrorCode() == 20119) {
-      castor::exception::Internal ex;
-      std::string error = e.what();
-      ex.getMessage() << error.substr(error.find("ORA-") + 11,
-                                      error.find("ORA-", 4) - 12);
-      throw ex;
-    }
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in disk2DiskCopyDone."
-      << std::endl << e.what();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// disk2DiskCopyFailed
-//------------------------------------------------------------------------------
-void castor::db::ora::OraJobSvc::disk2DiskCopyFailed
-(u_signed64 diskCopyId,
- bool enoent,
- u_signed64,
- const std::string)
-  throw (castor::exception::Exception) {
-  try {
-    // Check whether the statements are ok
-    if (0 == m_disk2DiskCopyFailedStatement) {
-      m_disk2DiskCopyFailedStatement =
-        createStatement(s_disk2DiskCopyFailedStatementString);
-      m_disk2DiskCopyFailedStatement->setAutoCommit(true);
-    }
-    // execute the statement
-    m_disk2DiskCopyFailedStatement->setDouble(1, diskCopyId);
-    m_disk2DiskCopyFailedStatement->setInt(2, (int)enoent);
-    m_disk2DiskCopyFailedStatement->executeUpdate();
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in disk2DiskCopyFailed."
       << std::endl << e.what();
     throw ex;
   }

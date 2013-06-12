@@ -1,3 +1,2 @@
 %attr(0644,root,root) etc/logrotate.d/castor-job
 %attr(6755,stage,st) usr/bin/stagerjob
-%attr(6755,stage,st) usr/bin/d2dtransfer

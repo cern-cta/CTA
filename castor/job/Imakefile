@@ -22,5 +22,4 @@ COMM Makefile for the CASTOR2 job movers
 COMM
 COMM @author Castor Dev team, castor-dev@cern.ch
 
-include LOCAL_PATH/d2dtransfer/Makefile
 include LOCAL_PATH/stagerjob/Makefile

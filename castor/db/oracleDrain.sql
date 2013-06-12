@@ -444,6 +444,7 @@ AS
   res        NUMBER;
   dcId       NUMBER;
   cfId       NUMBER;
+  varNsOpenTime INTEGER;
   svcId      NUMBER;
   ouid       NUMBER;
   ogid       NUMBER;
@@ -510,7 +511,7 @@ BEGIN
     -- Lock the castorfile and check that its status matches what was specified in the
     -- filemask for the filesystem. If the castorFile is not in the expected
     -- status then it is no longer a candidate to be replicated.
-    SELECT id INTO cfId
+    SELECT id, nsOpenTime INTO cfId, varNsOpenTime
       FROM CastorFile
      WHERE id = cfId
        AND ((fileMask = 0 AND tapeStatus IN (dconst.CASTORFILE_DISKONLY, dconst.CASTORFILE_ONTAPE)) OR
@@ -614,7 +615,7 @@ BEGIN
     RETURN;  -- Try again
   END IF;
   -- Trigger a replication request for the file
-  createDiskCopyReplicaRequest(0, dcId, svcId, svcId, ouid, ogid);
+  createDisk2DiskCopyJob(cfId, varNsOpenTime, svcId, ouid, ogid, dconst.REPLICATIONTYPE_DRAINING, dcId);
   -- Update the status of the file
   UPDATE DrainingDiskCopy SET status = 3  -- WAITD2D
    WHERE diskCopy = dcId AND fileSystem = fsId;

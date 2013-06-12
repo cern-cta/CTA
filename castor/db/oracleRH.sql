@@ -178,8 +178,8 @@ BEGIN
     -- get unique ids for the subrequest
     SELECT ids_seq.nextval INTO subreqId FROM DUAL;
     -- insert the subrequest
-    INSERT INTO SubRequest (retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, creationTime, lastModificationTime, answered, errorCode, errorMessage, requestedFileSystems, svcHandler, id, diskcopy, castorFile, parent, status, request, getNextStatus, reqType)
-    VALUES (0, srFileNames(i), srProtocols(i), srXsizes(i), 0, NULL, srFlags(i), srModeBits(i), creationTime, creationTime, 0, 0, '', NULL, svcHandler, subreqId, NULL, NULL, NULL, 0, reqId, 0, inReqType);
+    INSERT INTO SubRequest (retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, creationTime, lastModificationTime, answered, errorCode, errorMessage, requestedFileSystems, svcHandler, id, diskcopy, castorFile, status, request, getNextStatus, reqType)
+    VALUES (0, srFileNames(i), srProtocols(i), srXsizes(i), 0, NULL, srFlags(i), srModeBits(i), creationTime, creationTime, 0, 0, '', NULL, svcHandler, subreqId, NULL, NULL, dconst.SUBREQUEST_START, reqId, 0, inReqType);
   END LOOP;
 END;
 /
@@ -227,60 +227,6 @@ BEGIN
       VALUES (subReqId,diskServer,fileSystem,fileId,nsHost,0,userName,euid,egid,0,pid,machine,svcClassName,'',reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
     ELSE
       raise_application_error(-20122, 'Unsupported request type in insertStartRequest : ' || TO_CHAR(reqType));
-  END CASE;
-  -- insert the client information
-  INSERT INTO Client (ipAddress, port, version, secure, id)
-  VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
-  -- insert a row into newRequests table to trigger the processing of the request
-  INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
-END;
-/
-
-/* inserts d2d Requests in the stager DB.
- * This handles Disk2DiskCopyDoneRequest and Disk2DiskCopyStartRequest
- * requests.
- */ 	 
-CREATE OR REPLACE PROCEDURE insertD2dRequest
-  (machine IN VARCHAR2,
-   euid IN INTEGER,
-   egid IN INTEGER,
-   pid IN INTEGER,
-   userName IN VARCHAR2,
-   svcClassName IN VARCHAR2,
-   reqUUID IN VARCHAR2,
-   reqType IN INTEGER,
-   clientIP IN INTEGER,
-   clientPort IN INTEGER,
-   clientVersion IN INTEGER,
-   clientSecure IN INTEGER,
-   diskCopyId IN INTEGER,
-   srcDiskCopyId IN INTEGER,
-   fileSize IN INTEGER,
-   diskServerName IN VARCHAR2,
-   mountPoint IN VARCHAR2,
-   fileId IN INTEGER,
-   nsHost IN VARCHAR2) AS
-  svcClassId NUMBER;
-  reqId NUMBER;
-  clientId NUMBER;
-  creationTime NUMBER;
-BEGIN
-  -- do prechecks and get the service class
-  svcClassId := insertPreChecks(euid, egid, svcClassName, reqType);
-  -- get unique ids for the request and the client and get current time
-  SELECT ids_seq.nextval INTO reqId FROM DUAL;
-  SELECT ids_seq.nextval INTO clientId FROM DUAL;
-  creationTime := getTime();
-  -- insert the request itself
-  CASE
-    WHEN reqType = 64 THEN -- Disk2DiskCopyDoneRequest
-      INSERT INTO Disk2DiskCopyDoneRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, diskCopyId, sourceDiskCopyId, fileId, nsHost, replicaFileSize, id, svcClass, client)
-      VALUES (0,userName,euid,egid,0,pid,machine,svcClassName,'',reqUUID,creationTime,creationTime,diskCopyId,srcDiskCopyId,fileId,nsHost,fileSize,reqId,svcClassId,clientId);
-    WHEN reqType = 144 THEN  -- Disk2DiskCopyStartRequest
-      INSERT INTO Disk2DiskCopyStartRequest  (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, diskCopyId, sourceDiskCopyId, diskServer, mountPoint, fileId, nsHost, id, svcClass, client)
-      VALUES (0,userName,euid,egid,0,pid,machine,svcClassName,'',reqUUID,creationTime,creationTime,diskCopyId,srcDiskCopyId,diskServerName,mountPoint,fileId,nsHost,reqId,svcClassId,clientId);
-    ELSE
-      raise_application_error(-20122, 'Unsupported request type in insertD2dRequest : ' || TO_CHAR(reqType));
   END CASE;
   -- insert the client information
   INSERT INTO Client (ipAddress, port, version, secure, id)

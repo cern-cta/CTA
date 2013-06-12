@@ -65,6 +65,19 @@ class ActivityControlThread(threading.Thread):
     # do the check
     return availableSpace > minFreeSpacePerc * totalSpace
 
+  def startD2DTransfer(self, scheduler, transfer, srcDcPath, destDcPath):
+    '''effectively starts a disk to disk transfer'''
+    # build command line
+    cmdLine = ['rfcp', srcDcPath, destDcPath]
+    # start transfer process
+    process = 0
+    try:
+      process = subprocess.Popen(cmdLine, close_fds=True, stderr=subprocess.PIPE)
+    except Exception, e:
+      # avoid raising standard exception, as some are used for dedicated purposes
+      raise Exception(str(e))
+    self.runningTransfers.add(RunningTransfer(scheduler, process, time.time(), transfer, destDcPath))
+
   def run(self):
     '''main method, containing the infinite loop'''
     while self.alive:
@@ -86,15 +99,20 @@ class ActivityControlThread(threading.Thread):
               connectionpool.connections.transfersCanceled(scheduler, (transfer.asTuple(), 28, 'No space left on device')) # ENOSPC
             else:
               # notifies the central scheduler that we want to start this transfer
-              # this may raise a ValueError exception if it already started
-              # somewhere else
-              connectionpool.connections.transferStarting(scheduler, transfer.asTuple())
+              # this may raise a ValueError exception if we should give up (e.g. the
+              # job has already started somewhere else)
+              result = connectionpool.connections.transferStarting(scheduler, transfer.asTuple())
               # "Transfer starting" message
               dlf.write(msgs.TRANSFERSTARTING, subreqid=transfer.transferId,
-                        reqid=transfer.reqId, fileId=transfer.fileId, TransferType=transfer.transferType)
+                        reqid=transfer.reqId, fileId=transfer.fileId,
+                        TransferType=TransferType.toStr(transfer.transferType))
               # in case of d2dsrc, do not actually start for real, only take note
               if transfer.transferType == TransferType.D2DSRC:
-                self.runningTransfers.add(RunningTransfer(scheduler, None, time.time(), transfer))
+                self.runningTransfers.add(RunningTransfer(scheduler, None, time.time(), transfer, None))
+              elif transfer.transferType == TransferType.D2DDST:
+                # we have to launch the actual transfer
+                srcPath, dstPath = result
+                self.startD2DTransfer(scheduler, transfer, srcPath, dstPath)
               else:
                 # start the transfer
                 if not self.fake:
@@ -105,7 +123,7 @@ class ActivityControlThread(threading.Thread):
                     raise Exception(str(e))
                 else:
                   process = 0
-                self.runningTransfers.add(RunningTransfer(scheduler, process, time.time(), transfer))
+                self.runningTransfers.add(RunningTransfer(scheduler, process, time.time(), transfer, None))
           except connectionpool.Timeout:
             # we timed out in the call to transfersCanceled or transferStarting. We need to try again
             # thus we put the transfer into the priority queue and inform the scheduler
@@ -119,16 +137,11 @@ class ActivityControlThread(threading.Thread):
               # 'Failed to start transfer and got timeout when putting back to queue'
               dlf.writenotice(msgs.TRANSFERBACKTOQUEUEFAILED, subreqid=transfer.transferId,
                               reqid=transfer.reqId, fileId=transfer.fileId)
-          except ValueError:
-            if transfer.transferType == TransferType.D2DSRC:
-              # 'source transfer has been canceled while queuing. Not starting it'
-              dlf.writedebug(msgs.SRCTRANSFERCANCELED, subreqid=transfer.transferId,
-                             reqid=transfer.reqId, fileId=transfer.fileId)
-            else:
-              # 'Transfer start canceled (already started on another host)' message
-              dlf.writedebug(msgs.TRANSFERALREADYSTARTED, subreqid=transfer.transferId,
-                             reqid=transfer.reqId, fileId=transfer.fileId)
-              # the transfer has already started somewhere else, so give up
+          except ValueError, e:
+            # 'Transfer start canceled' message
+            dlf.writedebug(msgs.TRANSFERSTARTCANCELED, reason=e.args, subreqid=transfer.transferId,
+                           reqid=transfer.reqId, fileId=transfer.fileId)
+            # the transfer has already started somewhere else, or has been canceled, so give up
           except EnvironmentError:
             # we have tried to start a disk to disk copy and the source is not yet ready
             # we will put it in a pending queue

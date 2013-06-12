@@ -78,6 +78,10 @@ class DiskServerManagerService(rpyc.Service):
   This service handles all the calls from the central scheduling, from
   transfer starting to monitoring'''
 
+  def __init__(self, conn):
+    '''constructor'''
+    rpyc.Service.__init__(self, conn)
+
   def exposed_scheduleTransfer(self, scheduler, transferTuple):
     '''Called when a new transfer needs to be scheduled.
     Queues the new transfer.'''
@@ -177,7 +181,7 @@ def initQueues():
       for transferTuple, startTime in \
               connectionpool.connections.getRunningD2dSourceTransfers(scheduler, socket.getfqdn(), timeout=timeout):
         transfer = tupleToTransfer(transferTuple)
-        runningTransfers.add(RunningTransfer(scheduler, None, startTime, transfer))
+        runningTransfers.add(RunningTransfer(scheduler, None, startTime, transfer, ''))
       # rebuild transfer's queue
       for transferTuple in \
               connectionpool.connections.getQueueingTransfers(scheduler, socket.getfqdn(), timeout=timeout):

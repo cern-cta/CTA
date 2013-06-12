@@ -161,33 +161,6 @@ namespace castor {
           throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
-         * stores a d2d request into the stager DB.
-         * This includes Disk2DiskCopyDoneRequest and Disk2DiskCopyStartRequest requests.
-         * @param request the Request object
-         * @param client the client object associated to the request
-         * @param diskCopyId the internal id of the destination diskcopy
-         * @param srcDiskCopyId the internal id of the source diskcopy
-         * @param diskserver name of the diskserver where the request is starting
-         *        (only relevant for Disk2DiskCopyStartRequest)
-         * @param mountPoint name of the mountPoint where the request is starting
-         *        (only relevant for Disk2DiskCopyStartRequest)
-         * @param size size of the newly created copy (only relevant for Disk2DiskCopyDoneRequest)
-         * @param fileId the fileid of the file concerned by this request
-         * @param nsHost the nameserver host where the file concerned by this request is located
-         * @exception throws Exception in case of errors, in particular in case of permission denial
-         */
-        virtual void storeD2dRequest(castor::stager::Request* req,
-                                     const castor::rh::Client *client,
-                                     const u_signed64 diskCopyId,
-                                     const u_signed64 srcDiskCopyId,
-                                     const std::string diskServer,
-                                     const std::string mountPoint,
-                                     const u_signed64 size,
-                                     const u_signed64 fileId,
-                                     const std::string nsHost)
-          throw (castor::exception::Exception, oracle::occi::SQLException);
-
-        /**
          * stores a VersionQuery request into the stager DB.
          * @param request the VersionQuery object
          * @param client the client object associated to the request
@@ -342,12 +315,6 @@ namespace castor {
 
         /// SQL statement object for function storeStartRequest
         oracle::occi::Statement *m_storeStartRequestStatement;
-
-        /// SQL statement for function storeD2dRequest
-        static const std::string s_storeD2dRequestStatementString;
-
-        /// SQL statement object for function storeD2dRequest
-        oracle::occi::Statement *m_storeD2dRequestStatement;
 
         /// SQL statement for function storeVersionQueryRequest
         static const std::string s_storeVersionQueryStatementString;

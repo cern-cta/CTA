@@ -47,14 +47,11 @@
 #include "castor/stager/DiskCopyForRecall.hpp"
 #include "castor/stager/GetUpdateStartRequest.hpp"
 #include "castor/stager/PutStartRequest.hpp"
-#include "castor/stager/Disk2DiskCopyDoneRequest.hpp"
-#include "castor/stager/Disk2DiskCopyStartRequest.hpp"
 #include "castor/stager/MoverCloseRequest.hpp"
 #include "castor/stager/FirstByteWritten.hpp"
 #include "castor/rh/GetUpdateStartResponse.hpp"
 #include "castor/rh/GCFilesResponse.hpp"
 #include "castor/rh/StartResponse.hpp"
-#include "castor/rh/Disk2DiskCopyStartResponse.hpp"
 #include "castor/exception/NotSupported.hpp"
 #include "castor/exception/Internal.hpp"
 #include <errno.h>
@@ -249,128 +246,6 @@ castor::stager::RemoteJobSvc::putStart
   client.sendRequest(&req, &rh);
   // return
   return result;
-}
-
-//------------------------------------------------------------------------------
-// DiskCopyStartResponseHandler
-//------------------------------------------------------------------------------
-
-/**
- * A dedicated little response handler for the Disk2DiskCopyStart
- * requests
- */
-class DiskCopyStartResponseHandler : public castor::client::IResponseHandler {
-public:
-  DiskCopyStartResponseHandler (castor::stager::DiskCopyInfo* &diskCopy,
-				castor::stager::DiskCopyInfo* &sourceDiskCopy) :
-    m_diskCopy(diskCopy),
-    m_sourceDiskCopy(sourceDiskCopy) {}
-
-  /// Handle the response
-  virtual void handleResponse(castor::rh::Response& r)
-    throw(castor::exception::Exception) {
-    if (0 != r.errorCode()) {
-      castor::exception::Exception e(r.errorCode());
-      e.getMessage() << r.errorMessage();
-      throw e;
-    }
-    castor::rh::Disk2DiskCopyStartResponse *resp =
-      dynamic_cast<castor::rh::Disk2DiskCopyStartResponse*>(&r);
-    if (0 == resp) {
-      castor::exception::Internal e;
-      e.getMessage() << "Could not cast response into Disk2DiskCopyStartResponse";
-      throw e;
-    }
-
-    m_diskCopy = resp->diskCopy();
-    m_sourceDiskCopy = resp->sourceDiskCopy();
-  }
-
-  /// Not implemented
-  virtual void terminate()
-    throw(castor::exception::Exception) {};
-
-private:
-
-  // Where to store the destination disk copy
-  castor::stager::DiskCopyInfo* &m_diskCopy;
-
-  // Where to store the source disk copy
-  castor::stager::DiskCopyInfo* &m_sourceDiskCopy;
-};
-
-//------------------------------------------------------------------------------
-// disk2DiskCopyStart
-//------------------------------------------------------------------------------
-void castor::stager::RemoteJobSvc::disk2DiskCopyStart
-(const u_signed64 diskCopyId,
- const u_signed64 sourceDiskCopyId,
- const std::string diskServer,
- const std::string fileSystem,
- castor::stager::DiskCopyInfo* &diskCopy,
- castor::stager::DiskCopyInfo* &sourceDiskCopy,
- u_signed64 fileId,
- const std::string nsHost)
-  throw(castor::exception::Exception) {
-  // Build the Disk2DiskCopyStartRequest
-  castor::stager::Disk2DiskCopyStartRequest req;
-  req.setDiskCopyId(diskCopyId);
-  req.setSourceDiskCopyId(sourceDiskCopyId);
-  req.setDiskServer(diskServer);
-  req.setMountPoint(fileSystem);
-  req.setFileId(fileId);
-  req.setNsHost(nsHost);
-  // Build a response Handler
-  DiskCopyStartResponseHandler rh(diskCopy, sourceDiskCopy);
-  // Uses a BaseClient to handle the request
-  castor::client::BaseClient client(getRemoteJobClientTimeout());
-  client.setOptions(0);
-  client.sendRequest(&req, &rh);
-}
-
-//------------------------------------------------------------------------------
-// disk2DiskCopyDone
-//------------------------------------------------------------------------------
-void castor::stager::RemoteJobSvc::disk2DiskCopyDone
-(u_signed64 diskCopyId,
- u_signed64 sourceDiskCopyId,
- u_signed64 fileId,
- const std::string nsHost,
- u_signed64 replicaFileSize)
-  throw (castor::exception::Exception) {
-  // Build the Disk2DiskCopyDoneRequest
-  castor::stager::Disk2DiskCopyDoneRequest req;
-  req.setDiskCopyId(diskCopyId);
-  req.setSourceDiskCopyId(sourceDiskCopyId);
-  req.setFileId(fileId);
-  req.setNsHost(nsHost);
-  req.setReplicaFileSize(replicaFileSize);
-  // Build a response Handler
-  castor::client::BasicResponseHandler rh;
-  // Uses a BaseClient to handle the request
-  castor::client::BaseClient client(getRemoteJobClientTimeout());
-  client.setOptions(0);
-  client.sendRequest(&req, &rh);
-}
-
-//------------------------------------------------------------------------------
-// disk2DiskCopyFailed
-//------------------------------------------------------------------------------
-void castor::stager::RemoteJobSvc::disk2DiskCopyFailed
-(u_signed64 diskCopyId, bool, u_signed64 fileId, const std::string nsHost)
-  throw (castor::exception::Exception) {
-  // Build the Disk2DiskCopyDoneRequest; the enoent parameter is irrelevant here
-  castor::stager::Disk2DiskCopyDoneRequest req;
-  req.setDiskCopyId(diskCopyId);
-  req.setSourceDiskCopyId(0);
-  req.setFileId(fileId);
-  req.setNsHost(nsHost);
-  // Build a response Handler
-  castor::client::BasicResponseHandler rh;
-  // Uses a BaseClient to handle the request
-  castor::client::BaseClient client(getRemoteJobClientTimeout());
-  client.setOptions(0);
-  client.sendRequest(&req, &rh);
 }
 
 //

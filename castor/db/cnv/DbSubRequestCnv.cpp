@@ -54,11 +54,11 @@ static castor::CnvFactory<castor::db::cnv::DbSubRequestCnv>* s_factoryDbSubReque
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbSubRequestCnv::s_insertStatementString =
-"INSERT INTO SubRequest (retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, creationTime, lastModificationTime, answered, errorCode, errorMessage, requestedFileSystems, svcHandler, reqType, id, diskcopy, castorFile, parent, status, request, getNextStatus) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14,:15,:16,ids_seq.nextval,:17,:18,:19,:20,:21,:22) RETURNING id INTO :23";
+"INSERT INTO SubRequest (retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, creationTime, lastModificationTime, answered, errorCode, errorMessage, requestedFileSystems, svcHandler, reqType, id, diskcopy, castorFile, status, request, getNextStatus) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14,:15,:16,ids_seq.nextval,:17,:18,:19,:20,:21) RETURNING id INTO :23";
 
 /// SQL statement for request bulk insertion
 const std::string castor::db::cnv::DbSubRequestCnv::s_bulkInsertStatementString =
-"INSERT /* bulk */ INTO SubRequest (retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, creationTime, lastModificationTime, answered, errorCode, errorMessage, requestedFileSystems, svcHandler, reqType, id, diskcopy, castorFile, parent, status, request, getNextStatus) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14,:15,:16,ids_seq.nextval,:17,:18,:19,:20,:21,:22) RETURNING id INTO :23";
+"INSERT /* bulk */ INTO SubRequest (retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, creationTime, lastModificationTime, answered, errorCode, errorMessage, requestedFileSystems, svcHandler, reqType, id, diskcopy, castorFile, status, request, getNextStatus) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14,:15,ids_seq.nextval,:17,:18,:19,:20,:21,:22) RETURNING id INTO :23";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbSubRequestCnv::s_deleteStatementString =
@@ -66,19 +66,19 @@ const std::string castor::db::cnv::DbSubRequestCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbSubRequestCnv::s_selectStatementString =
-"SELECT retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, creationTime, lastModificationTime, answered, errorCode, errorMessage, requestedFileSystems, svcHandler, reqType, id, diskcopy, castorFile, parent, status, request, getNextStatus FROM SubRequest WHERE id = :1";
+"SELECT retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, creationTime, lastModificationTime, answered, errorCode, errorMessage, requestedFileSystems, svcHandler, reqType, id, diskcopy, castorFile, status, request, getNextStatus FROM SubRequest WHERE id = :1";
 
 /// SQL statement for bulk request selection
 const std::string castor::db::cnv::DbSubRequestCnv::s_bulkSelectStatementString =
 "DECLARE \
-   TYPE RecordType IS RECORD (retryCounter NUMBER, fileName VARCHAR2(2048), protocol VARCHAR2(2048), xsize INTEGER, priority NUMBER, subreqId VARCHAR2(2048), flags NUMBER, modeBits NUMBER, creationTime INTEGER, lastModificationTime INTEGER, answered NUMBER, errorCode NUMBER, errorMessage VARCHAR2(2048), requestedFileSystems VARCHAR2(2048), svcHandler VARCHAR2(2048), reqType NUMBER, id INTEGER, diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER, request INTEGER, getNextStatus INTEGER); \
+   TYPE RecordType IS RECORD (retryCounter NUMBER, fileName VARCHAR2(2048), protocol VARCHAR2(2048), xsize INTEGER, priority NUMBER, subreqId VARCHAR2(2048), flags NUMBER, modeBits NUMBER, creationTime INTEGER, lastModificationTime INTEGER, answered NUMBER, errorCode NUMBER, errorMessage VARCHAR2(2048), requestedFileSystems VARCHAR2(2048), svcHandler VARCHAR2(2048), reqType NUMBER, id INTEGER, diskcopy INTEGER, castorFile INTEGER, status INTEGER, request INTEGER, getNextStatus INTEGER); \
    TYPE CurType IS REF CURSOR RETURN RecordType; \
    PROCEDURE bulkSelect(ids IN castor.\"cnumList\", \
                         objs OUT CurType) AS \
    BEGIN \
      FORALL i IN ids.FIRST..ids.LAST \
        INSERT INTO bulkSelectHelper VALUES(ids(i)); \
-     OPEN objs FOR SELECT retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, creationTime, lastModificationTime, answered, errorCode, errorMessage, requestedFileSystems, svcHandler, reqType, id, diskcopy, castorFile, parent, status, request, getNextStatus \
+     OPEN objs FOR SELECT retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, creationTime, lastModificationTime, answered, errorCode, errorMessage, requestedFileSystems, svcHandler, reqType, id, diskcopy, castorFile, status, request, getNextStatus \
                      FROM SubRequest t, bulkSelectHelper h \
                     WHERE t.id = h.objId; \
      DELETE FROM bulkSelectHelper; \
@@ -99,14 +99,6 @@ const std::string castor::db::cnv::DbSubRequestCnv::s_checkCastorFileExistStatem
 const std::string castor::db::cnv::DbSubRequestCnv::s_updateCastorFileStatementString =
 "UPDATE SubRequest SET castorFile = :1 WHERE id = :2";
 
-/// SQL existence statement for member parent
-const std::string castor::db::cnv::DbSubRequestCnv::s_checkSubRequestExistStatementString =
-"SELECT id FROM SubRequest WHERE id = :1";
-
-/// SQL update statement for member parent
-const std::string castor::db::cnv::DbSubRequestCnv::s_updateSubRequestStatementString =
-"UPDATE SubRequest SET parent = :1 WHERE id = :2";
-
 /// SQL update statement for member request
 const std::string castor::db::cnv::DbSubRequestCnv::s_updateFileRequestStatementString =
 "UPDATE SubRequest SET request = :1 WHERE id = :2";
@@ -124,8 +116,6 @@ castor::db::cnv::DbSubRequestCnv::DbSubRequestCnv(castor::ICnvSvc* cnvSvc) :
   m_updateStatement(0),
   m_checkCastorFileExistStatement(0),
   m_updateCastorFileStatement(0),
-  m_checkSubRequestExistStatement(0),
-  m_updateSubRequestStatement(0),
   m_updateFileRequestStatement(0) {}
 
 //------------------------------------------------------------------------------
@@ -143,8 +133,6 @@ castor::db::cnv::DbSubRequestCnv::~DbSubRequestCnv() throw() {
     if(m_updateStatement) delete m_updateStatement;
     if(m_checkCastorFileExistStatement) delete m_checkCastorFileExistStatement;
     if(m_updateCastorFileStatement) delete m_updateCastorFileStatement;
-    if(m_checkSubRequestExistStatement) delete m_checkSubRequestExistStatement;
-    if(m_updateSubRequestStatement) delete m_updateSubRequestStatement;
     if(m_updateFileRequestStatement) delete m_updateFileRequestStatement;
   } catch (castor::exception::Exception& ignored) {};
 }
@@ -177,9 +165,6 @@ void castor::db::cnv::DbSubRequestCnv::fillRep(castor::IAddress*,
     switch (type) {
     case castor::OBJ_CastorFile :
       fillRepCastorFile(obj);
-      break;
-    case castor::OBJ_SubRequest :
-      fillRepSubRequest(obj);
       break;
     case castor::OBJ_FileRequest :
       fillRepFileRequest(obj);
@@ -235,38 +220,6 @@ void castor::db::cnv::DbSubRequestCnv::fillRepCastorFile(castor::stager::SubRequ
 }
 
 //------------------------------------------------------------------------------
-// fillRepSubRequest
-//------------------------------------------------------------------------------
-void castor::db::cnv::DbSubRequestCnv::fillRepSubRequest(castor::stager::SubRequest* obj)
-  throw (castor::exception::Exception) {
-  if (0 != obj->parent()) {
-    // Check checkSubRequestExist statement
-    if (0 == m_checkSubRequestExistStatement) {
-      m_checkSubRequestExistStatement = createStatement(s_checkSubRequestExistStatementString);
-    }
-    // retrieve the object from the database
-    m_checkSubRequestExistStatement->setUInt64(1, obj->parent()->id());
-    castor::db::IDbResultSet *rset = m_checkSubRequestExistStatement->executeQuery();
-    if (!rset->next()) {
-      castor::BaseAddress ad;
-      ad.setCnvSvcName("DbCnvSvc");
-      ad.setCnvSvcType(castor::SVC_DBCNV);
-      cnvSvc()->createRep(&ad, obj->parent(), false);
-    }
-    // Close resultset
-    delete rset;
-  }
-  // Check update statement
-  if (0 == m_updateSubRequestStatement) {
-    m_updateSubRequestStatement = createStatement(s_updateSubRequestStatementString);
-  }
-  // Update local object
-  m_updateSubRequestStatement->setUInt64(1, 0 == obj->parent() ? 0 : obj->parent()->id());
-  m_updateSubRequestStatement->setUInt64(2, obj->id());
-  m_updateSubRequestStatement->execute();
-}
-
-//------------------------------------------------------------------------------
 // fillRepFileRequest
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbSubRequestCnv::fillRepFileRequest(castor::stager::SubRequest* obj)
@@ -294,9 +247,6 @@ void castor::db::cnv::DbSubRequestCnv::fillObj(castor::IAddress*,
   switch (type) {
   case castor::OBJ_CastorFile :
     fillObjCastorFile(obj);
-    break;
-  case castor::OBJ_SubRequest :
-    fillObjSubRequest(obj);
     break;
   case castor::OBJ_FileRequest :
     fillObjFileRequest(obj);
@@ -352,46 +302,6 @@ void castor::db::cnv::DbSubRequestCnv::fillObjCastorFile(castor::stager::SubRequ
 }
 
 //------------------------------------------------------------------------------
-// fillObjSubRequest
-//------------------------------------------------------------------------------
-void castor::db::cnv::DbSubRequestCnv::fillObjSubRequest(castor::stager::SubRequest* obj)
-  throw (castor::exception::Exception) {
-  // Check whether the statement is ok
-  if (0 == m_selectStatement) {
-    m_selectStatement = createStatement(s_selectStatementString);
-  }
-  // retrieve the object from the database
-  m_selectStatement->setUInt64(1, obj->id());
-  castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
-  if (!rset->next()) {
-    castor::exception::NoEntry ex;
-    ex.getMessage() << "No object found for id :" << obj->id();
-    throw ex;
-  }
-  u_signed64 parentId = rset->getInt64(20);
-  // Close ResultSet
-  delete rset;
-  // Check whether something should be deleted
-  if (0 != obj->parent() &&
-      (0 == parentId ||
-       obj->parent()->id() != parentId)) {
-    obj->parent()->removeChild(obj);
-    obj->setParent(0);
-  }
-  // Update object or create new one
-  if (0 != parentId) {
-    if (0 == obj->parent()) {
-      obj->setParent
-        (dynamic_cast<castor::stager::SubRequest*>
-         (cnvSvc()->getObjFromId(parentId, OBJ_SubRequest)));
-    } else {
-      cnvSvc()->updateObj(obj->parent());
-    }
-    obj->parent()->addChild(obj);
-  }
-}
-
-//------------------------------------------------------------------------------
 // fillObjFileRequest
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbSubRequestCnv::fillObjFileRequest(castor::stager::SubRequest* obj)
@@ -408,7 +318,7 @@ void castor::db::cnv::DbSubRequestCnv::fillObjFileRequest(castor::stager::SubReq
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 requestId = rset->getInt64(22);
+  u_signed64 requestId = rset->getInt64(21);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -469,12 +379,11 @@ void castor::db::cnv::DbSubRequestCnv::createRep(castor::IAddress*,
     m_insertStatement->setInt(16, obj->reqType());
     m_insertStatement->setUInt64(17, 0);
     m_insertStatement->setUInt64(18, (type == OBJ_CastorFile && obj->castorFile() != 0) ? obj->castorFile()->id() : 0);
-    m_insertStatement->setUInt64(19, (type == OBJ_SubRequest && obj->parent() != 0) ? obj->parent()->id() : 0);
-    m_insertStatement->setInt(20, (int)obj->status());
-    m_insertStatement->setUInt64(21, (type == OBJ_FileRequest && obj->request() != 0) ? obj->request()->id() : 0);
-    m_insertStatement->setInt(22, (int)obj->getNextStatus());
+    m_insertStatement->setInt(19, (int)obj->status());
+    m_insertStatement->setUInt64(20, (type == OBJ_FileRequest && obj->request() != 0) ? obj->request()->id() : 0);
+    m_insertStatement->setInt(21, (int)obj->getNextStatus());
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getUInt64(23));
+    obj->setId(m_insertStatement->getUInt64(22));
     if (endTransaction) {
       cnvSvc()->commit();
     }
@@ -508,7 +417,6 @@ void castor::db::cnv::DbSubRequestCnv::createRep(castor::IAddress*,
                     << "  id : " << obj->id() << std::endl
                     << "  diskcopy : " << 0 << std::endl
                     << "  castorFile : " << (obj->castorFile() ? obj->castorFile()->id() : 0) << std::endl
-                    << "  parent : " << (obj->parent() ? obj->parent()->id() : 0) << std::endl
                     << "  status : " << obj->status() << std::endl
                     << "  request : " << (obj->request() ? obj->request()->id() : 0) << std::endl
                     << "  getNextStatus : " << obj->getNextStatus() << std::endl;
@@ -911,25 +819,6 @@ void castor::db::cnv::DbSubRequestCnv::bulkCreateRep(castor::IAddress*,
     }
     m_bulkInsertStatement->setDataBuffer
       (18, castorFileBuffer, castor::db::DBTYPE_UINT64, sizeof(castorFileBuffer[0]), castorFileBufLens);
-    // build the buffers for parent
-    double* parentBuffer = (double*) malloc(nb * sizeof(double));
-    if (parentBuffer == 0) {
-      castor::exception::OutOfMemory e;
-      throw e;
-    }
-    allocMem.push_back(parentBuffer);
-    unsigned short* parentBufLens = (unsigned short*) malloc(nb * sizeof(unsigned short));
-    if (parentBufLens == 0) {
-      castor::exception::OutOfMemory e;
-      throw e;
-    }
-    allocMem.push_back(parentBufLens);
-    for (int i = 0; i < nb; i++) {
-      parentBuffer[i] = (type == OBJ_SubRequest && objs[i]->parent() != 0) ? objs[i]->parent()->id() : 0;
-      parentBufLens[i] = sizeof(double);
-    }
-    m_bulkInsertStatement->setDataBuffer
-      (19, parentBuffer, castor::db::DBTYPE_UINT64, sizeof(parentBuffer[0]), parentBufLens);
     // build the buffers for status
     int* statusBuffer = (int*) malloc(nb * sizeof(int));
     if (statusBuffer == 0) {
@@ -948,7 +837,7 @@ void castor::db::cnv::DbSubRequestCnv::bulkCreateRep(castor::IAddress*,
       statusBufLens[i] = sizeof(int);
     }
     m_bulkInsertStatement->setDataBuffer
-      (20, statusBuffer, castor::db::DBTYPE_INT, sizeof(statusBuffer[0]), statusBufLens);
+      (19, statusBuffer, castor::db::DBTYPE_INT, sizeof(statusBuffer[0]), statusBufLens);
     // build the buffers for request
     double* requestBuffer = (double*) malloc(nb * sizeof(double));
     if (requestBuffer == 0) {
@@ -967,7 +856,7 @@ void castor::db::cnv::DbSubRequestCnv::bulkCreateRep(castor::IAddress*,
       requestBufLens[i] = sizeof(double);
     }
     m_bulkInsertStatement->setDataBuffer
-      (21, requestBuffer, castor::db::DBTYPE_UINT64, sizeof(requestBuffer[0]), requestBufLens);
+      (20, requestBuffer, castor::db::DBTYPE_UINT64, sizeof(requestBuffer[0]), requestBufLens);
     // build the buffers for getNextStatus
     int* getNextStatusBuffer = (int*) malloc(nb * sizeof(int));
     if (getNextStatusBuffer == 0) {
@@ -986,7 +875,7 @@ void castor::db::cnv::DbSubRequestCnv::bulkCreateRep(castor::IAddress*,
       getNextStatusBufLens[i] = sizeof(int);
     }
     m_bulkInsertStatement->setDataBuffer
-      (22, getNextStatusBuffer, castor::db::DBTYPE_INT, sizeof(getNextStatusBuffer[0]), getNextStatusBufLens);
+      (21, getNextStatusBuffer, castor::db::DBTYPE_INT, sizeof(getNextStatusBuffer[0]), getNextStatusBufLens);
     // build the buffers for returned ids
     double* idBuffer = (double*) calloc(nb, sizeof(double));
     if (idBuffer == 0) {
@@ -1001,7 +890,7 @@ void castor::db::cnv::DbSubRequestCnv::bulkCreateRep(castor::IAddress*,
     }
     allocMem.push_back(idBufLens);
     m_bulkInsertStatement->setDataBuffer
-      (23, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
+      (22, idBuffer, castor::db::DBTYPE_UINT64, sizeof(double), idBufLens);
     m_bulkInsertStatement->execute(nb);
     for (int i = 0; i < nb; i++) {
       objects[i]->setId((u_signed64)idBuffer[i]);
@@ -1162,8 +1051,8 @@ castor::IObject* castor::db::cnv::DbSubRequestCnv::createObj(castor::IAddress* a
     object->setSvcHandler(rset->getString(15));
     object->setReqType(rset->getInt(16));
     object->setId(rset->getUInt64(17));
-    object->setStatus((enum castor::stager::SubRequestStatusCodes)rset->getInt(21));
-    object->setGetNextStatus((enum castor::stager::SubRequestGetNextStatusCodes)rset->getInt(23));
+    object->setStatus((enum castor::stager::SubRequestStatusCodes)rset->getInt(20));
+    object->setGetNextStatus((enum castor::stager::SubRequestGetNextStatusCodes)rset->getInt(22));
     delete rset;
     return object;
   } catch (castor::exception::SQLError& e) {
@@ -1226,8 +1115,8 @@ castor::db::cnv::DbSubRequestCnv::bulkCreateObj(castor::IAddress* address)
       object->setSvcHandler(rset->getString(15));
       object->setReqType(rset->getInt(16));
       object->setId(rset->getUInt64(17));
-      object->setStatus((enum castor::stager::SubRequestStatusCodes)rset->getInt(21));
-      object->setGetNextStatus((enum castor::stager::SubRequestGetNextStatusCodes)rset->getInt(23));
+      object->setStatus((enum castor::stager::SubRequestStatusCodes)rset->getInt(20));
+      object->setGetNextStatus((enum castor::stager::SubRequestGetNextStatusCodes)rset->getInt(22));
       // store object in results and loop;
       res.push_back(object);
       status = rset->next();
@@ -1282,8 +1171,8 @@ void castor::db::cnv::DbSubRequestCnv::updateObj(castor::IObject* obj)
     object->setSvcHandler(rset->getString(15));
     object->setReqType(rset->getInt(16));
     object->setId(rset->getUInt64(17));
-    object->setStatus((enum castor::stager::SubRequestStatusCodes)rset->getInt(21));
-    object->setGetNextStatus((enum castor::stager::SubRequestGetNextStatusCodes)rset->getInt(23));
+    object->setStatus((enum castor::stager::SubRequestStatusCodes)rset->getInt(20));
+    object->setGetNextStatus((enum castor::stager::SubRequestGetNextStatusCodes)rset->getInt(22));
     delete rset;
   } catch (castor::exception::SQLError& e) {
     castor::exception::InvalidArgument ex;

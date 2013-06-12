@@ -246,14 +246,11 @@ class Transfer(BaseTransfer):
 class D2DTransfer(BaseTransfer):
   '''little container describing a disk to disk transfer'''
   def __init__(self, transferId, reqId, fileId, euid, egid, svcClassName, creationTime, transferType,
-               protocol, destDiskCopyId, srcDiskCopyId, diskServer='', mountPoint=''):
+               diskServer='', mountPoint='', isSrcRunning=False):
     '''constructor'''
     super(D2DTransfer, self).__init__(transferId, reqId, fileId, euid, egid,
                                       svcClassName, creationTime, transferType, diskServer, mountPoint)
-    self.destDiskCopyId = destDiskCopyId
-    self.srcDiskCopyId = srcDiskCopyId
-    self.protocol = protocol
-
+    self.isSrcRunning = isSrcRunning
 
 class TapeTransfer(object):
   '''little container describing a tape transfer'''
@@ -269,10 +266,10 @@ class TapeTransfer(object):
 
 class RunningTransfer(object):
   '''little container describing a running transfer'''
-  def __init__(self, scheduler, process, startTime, transfer):
+  def __init__(self, scheduler, process, startTime, transfer, localPath):
     '''constructor'''
     self.scheduler = scheduler
     self.process = process
     self.startTime = startTime
     self.transfer = transfer
-
+    self.localPath = localPath

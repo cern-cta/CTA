@@ -94,7 +94,7 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "DELETED TYPE",
   "BaseAddress",
   "DELETED TYPE",
-  "Disk2DiskCopyDoneRequest",
+  "DELETED TYPE",
   "MoverCloseRequest",
   "StartRequest",
   "PutStartRequest",
@@ -183,8 +183,8 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "NsFilesDeleted",
   "NsFilesDeletedResponse",
 
-  "Disk2DiskCopyStartRequest",
-  "Disk2DiskCopyStartResponse",
+  "DELETED TYPE", 
+  "DELETED TYPE", 
   "ThreadNotification",
   "FirstByteWritten",
 

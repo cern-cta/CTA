@@ -38,6 +38,7 @@ import dlf
 from transfermanagerdlf import msgs
 from threadpoolserver import ThreadPoolServer
 from transfer import tupleToTransfer, TransferType
+import cx_Oracle
 
 # usage function
 def usage(exitCode):
@@ -339,7 +340,7 @@ class TransferManagerService(rpyc.Service):
     Return a tuple of (transferId, file) tuples for the transfers actually removed'''
     for transferId in transferIds:
       dlf.writedebug(msgs.INVOKINGKILLTRANSFERSINTERNAL, subreqId=transferId)
-    return tuple([transfer.asTuple() for transfer in queueingTransfers.remove(transferIds)])
+    return tuple([transfer.asTuple() for transfer in queueingTransfers.removeAnyType(transferIds)])
 
   def exposed_transfersKilled(self, transfers):
     '''informs the stager that these transfers have been killed'''
@@ -379,11 +380,42 @@ class TransferManagerService(rpyc.Service):
 
   def exposed_transferStarting(self, transferTuple):
     '''called when a transfer started on a given diskserver'''
+    # first log something
     transfer = tupleToTransfer(transferTuple)
     dlf.writedebug(msgs.INVOKINGTRANSFERSTARTING, DiskServer=transfer.diskServer,
                    subreqId=transfer.transferId, reqId=transfer.reqId,
-                   TransferType=transfer.transferType)
-    queueingTransfers.transferStarting(transfer)
+                   TransferType=TransferType.toStr(transfer.transferType))
+    # then handle the queuing part
+    srcTransfer = queueingTransfers.transferStarting(transfer)
+    # finally (if no exception), call the DB for d2d transfers (will be for all in the future)
+    if transfer.transferType == TransferType.D2DDST:
+      try:
+        self.__class__.acquireDbConnection()
+        stcur = self.__class__.dbConnection().cursor()
+        srcDcPath = stcur.var(cx_Oracle.STRING)
+        destDcPath = stcur.var(cx_Oracle.STRING)
+        stcur.execute("BEGIN disk2DiskCopyStart(:1, :2, :3, :4, :5, :6, :7, :8, :9); END;",
+                      (transfer.transferId, transfer.fileId[1], transfer.fileId[0],
+                       transfer.diskServer, transfer.mountPoint,
+                       srcTransfer.diskServer, srcTransfer.mountPoint,
+                       destDcPath, srcDcPath))
+        stcur.close()
+        return srcDcPath.getvalue(), destDcPath.getvalue()
+      except Exception, e:
+        # check whether we should reconnect to DB, and do so if needed
+        self.__class__.dbConnection().checkForReconnection(e)
+        # detect special error where the client can give up
+        if isinstance(e, cx_Oracle._Error):
+          errorcode = e.code
+          if (errorcode == 20110):
+            # raise ValueError to tell the upper layer to give up
+            raise ValueError(e.message)
+        # otherwise reraise for the upper layer
+        raise e
+      finally:
+        self.__class__.releaseDbConnection()
+    else:
+      return None
 
   def exposed_transferBackToQueue(self, transferTuple):
     '''puts a transfer back to the server queue when a transfer could not be started and was queued back'''
@@ -407,11 +439,39 @@ class TransferManagerService(rpyc.Service):
     dlf.writedebug(msgs.INVOKINGGETALLRUNNINGD2DSOURCETRANSFERS)
     return tuple(queueingTransfers.listAllRunningD2dSources())
 
-  def exposed_d2dend(self, transferTuple):
-    '''called when a d2d is over. Responsible for informing the source of the d2d'''
-    transfer = tupleToTransfer(transferTuple)
-    dlf.writedebug(msgs.INVOKINGD2DEND, subreqId=transfer.transferId, reqId=transfer.reqId)
-    queueingTransfers.d2dend(transfer.transferId, transfer.reqId)
+  def exposed_d2dendsrc(self, transferId):
+    '''called when a d2dsrc should be informed that transfer is over'''
+    dlf.writedebug(msgs.INVOKINGD2DENDSRC, subreqid=transferId)
+    queueingTransfers.d2dendById(transferId)
+
+  def exposed_d2dended(self, transferTuples):
+    '''called when d2ds are over. Responsible for updating the stager DB and informing the source of the d2d'''
+    # first deal with the stager DB
+    try:
+      self.__class__.acquireDbConnection()
+      try:
+        stcur = self.__class__.dbConnection().cursor()
+        stcur.arraysize = 50
+        # loop over the transfers to be ended
+        for transferId, reqId, fileId, diskServerName, localPath, fileSize, errMsg in transferTuples:
+          dlf.writedebug(msgs.INVOKINGD2DEND, subreqid=transferId, reqid=reqId, fileid=fileId,
+                         path=localPath, size=fileSize, errMsg=errMsg)
+          # end them in the stager DB
+          stcur.execute("BEGIN disk2DiskCopyEnded(:1, :2, :3, :4, :5); END;",
+                        (transferId, diskServerName, localPath, fileSize, errMsg))
+          # cleanup source in our queues
+          queueingTransfers.d2dendById(transferId)
+        # close cursor
+        stcur.close()
+      except Exception, e:
+        for transferId, reqId, fileId, localPath, fileSize, errMsg in transferTuples:
+          # "Exception caught while failing transfer" message
+          dlf.writeerr(msgs.FAILTRANSFEREXCEPTION, subreqid=transferId,
+                       reqid=reqId, fileid=fileId, Type=str(e.__class__), Message=str(e))
+          # check whether we should reconnect to DB, and do so if needed
+          self.__class__.dbConnection().checkForReconnection(e)
+    finally:
+      self.__class__.releaseDbConnection()
 
   def exposed_drain(self):
     '''when called, moves the daemon to drain mode, where only ongoing transfers are handled
@@ -484,7 +544,7 @@ def initQueues():
       try:
         # first list the running d2dsrc transfers
         for transferTuple in connectionpool.connections.getRunningD2dSource(ds, socket.getfqdn(), timeout=timeout):
-          queueingTransfers.putRunningD2dSource(ds, tupleToTransfer(transferTuple))
+          queueingTransfers.putRunningD2dSource(tupleToTransfer(transferTuple))
         # then list queueing transfers
         for transferTuple in connectionpool.connections.getQueueingTransfers(ds, socket.getfqdn(), timeout=timeout):
           queueingTransfers.put(tupleToTransfer(transferTuple))
@@ -506,8 +566,13 @@ def drain(wait=False):
   except Exception:
     pass
   try:
-    dispatchThread.stop()
-    dispatchThread.join()
+    userDispatchThread.stop()
+    userDispatchThread.join()
+  except Exception:
+    pass
+  try:
+    d2dDispatchThread.stop()
+    d2dDispatchThread.join()
   except Exception:
     pass
   try:
@@ -571,9 +636,10 @@ try:
     # launch a report manager thread, handling reports from diskservers about their state and
     # updating the stager DB regularly
     reportManagerThread = reportmanager.ReportManagerThread()
-    # launch a processing thread that will regularly check if we need to schedule new transfers
+    # launch a processing threads that will regularly check if we need to schedule new transfers
     # and dispatch them on the relevant diskservers
-    dispatchThread = dispatcher.DispatcherThread(queueingTransfers, nbWorkers)
+    userDispatchThread = dispatcher.UserDispatcherThread(queueingTransfers, nbWorkers)
+    d2dDispatchThread = dispatcher.D2DDispatcherThread(queueingTransfers, nbWorkers)
     # launch a processing thread that will regularly check if there are transfers to abort
     abortThread = aborter.AborterThread()
     # launch a processing thread that will regularly synchronize the stager DB with the running

@@ -31,14 +31,14 @@ CREATE OR REPLACE PACKAGE castorGC AS
   -- Default gc policy
   FUNCTION sizeRelatedUserWeight(fileSize NUMBER) RETURN NUMBER;
   FUNCTION sizeRelatedRecallWeight(fileSize NUMBER) RETURN NUMBER;
-  FUNCTION sizeRelatedCopyWeight(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER) RETURN NUMBER;
+  FUNCTION sizeRelatedCopyWeight(fileSize NUMBER) RETURN NUMBER;
   FUNCTION dayBonusFirstAccessHook(oldGcWeight NUMBER, creationTime NUMBER) RETURN NUMBER;
   FUNCTION halfHourBonusAccessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER) RETURN NUMBER;
   FUNCTION cappedUserSetGCWeight(oldGcWeight NUMBER, userDelta NUMBER) RETURN NUMBER;
   -- FIFO gc policy
   FUNCTION creationTimeUserWeight(fileSize NUMBER) RETURN NUMBER;
   FUNCTION creationTimeRecallWeight(fileSize NUMBER) RETURN NUMBER;
-  FUNCTION creationTimeCopyWeight(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER) RETURN NUMBER;
+  FUNCTION creationTimeCopyWeight(fileSize NUMBER) RETURN NUMBER;
   -- LRU gc policy
   FUNCTION LRUFirstAccessHook(oldGcWeight NUMBER, creationTime NUMBER) RETURN NUMBER;
   FUNCTION LRUAccessHook(oldGcWeight NUMBER, creationTime NUMBER, nbAccesses NUMBER) RETURN NUMBER;
@@ -151,7 +151,7 @@ CREATE OR REPLACE PACKAGE BODY castorGC AS
     RETURN size2GCWeight(fileSize);
   END;
 
-  FUNCTION sizeRelatedCopyWeight(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER) RETURN NUMBER AS
+  FUNCTION sizeRelatedCopyWeight(fileSize NUMBER) RETURN NUMBER AS
   BEGIN
     RETURN size2GCWeight(fileSize);
   END;
@@ -186,7 +186,7 @@ CREATE OR REPLACE PACKAGE BODY castorGC AS
     RETURN getTime();
   END;
 
-  FUNCTION creationTimeCopyWeight(fileSize NUMBER, DiskCopyStatus NUMBER, sourceWeight NUMBER) RETURN NUMBER AS
+  FUNCTION creationTimeCopyWeight(fileSize NUMBER) RETURN NUMBER AS
   BEGIN
     RETURN getTime();
   END;
@@ -277,18 +277,6 @@ BEGIN
            gcType = decode(gcType, NULL, dconst.GCTYPE_USER, gcType)
      WHERE fileSystem = fs.id
        AND decode(status, 7, status, NULL) = 7  -- INVALID (decode used to use function-based index)
-       AND NOT EXISTS
-         -- Ignore diskcopies with active subrequests
-         (SELECT /*+ INDEX(SubRequest I_SubRequest_DiskCopy) */ 'x'
-            FROM SubRequest
-           WHERE SubRequest.diskcopy = DiskCopy.id
-             AND SubRequest.status IN (4, 5, 6, 12, 13)) -- being processed (WAIT*, READY, BEINGSCHED)
-       AND NOT EXISTS
-         -- Ignore diskcopies with active replications
-         (SELECT 'x' FROM StageDiskCopyReplicaRequest, DiskCopy D
-           WHERE StageDiskCopyReplicaRequest.destDiskCopy = D.id
-             AND StageDiskCopyReplicaRequest.sourceDiskCopy = DiskCopy.id
-             AND D.status = 1)  -- WAITD2D
        AND rownum <= 10000 - totalCount
     RETURNING id BULK COLLECT INTO dcIds;
     COMMIT;
@@ -341,18 +329,6 @@ BEGIN
                       AND status = dconst.DISKCOPY_VALID
                       AND CastorFile.id = DiskCopy.castorFile
                       AND CastorFile.tapeStatus IN (dconst.CASTORFILE_DISKONLY, dconst.CASTORFILE_ONTAPE)
-                      AND NOT EXISTS (
-                        SELECT /*+ NL_AJ INDEX(SubRequest I_SubRequest_DiskCopy) */ 'x'
-                          FROM SubRequest
-                         WHERE SubRequest.diskcopy = DiskCopy.id
-                           AND SubRequest.status IN (4, 5, 6, 12, 13)) -- being processed (WAIT*, READY, BEINGSCHED)
-                      AND NOT EXISTS
-                        -- Ignore diskcopies with active replications
-                        (SELECT /*+ NL_AJ INDEX(DCRR I_StageDiskCopyReplic_DestDC) */ 'x'
-                           FROM StageDiskCopyReplicaRequest DCRR, DiskCopy DD
-                          WHERE DCRR.destDiskCopy = DD.id
-                            AND DCRR.sourceDiskCopy = DiskCopy.id
-                            AND DD.status = 1)  -- WAITD2D
                       ORDER BY gcWeight ASC) LOOP
           BEGIN
             -- Lock the CastorFile
@@ -396,15 +372,8 @@ BEGIN
            DiskCopy.id,
            Castorfile.fileid, Castorfile.nshost,
            DiskCopy.lastAccessTime, DiskCopy.nbCopyAccesses, DiskCopy.gcWeight,
-           CASE WHEN DiskCopy.gcType = dconst.GCTYPE_AUTO            THEN 'Automatic'
-                WHEN DiskCopy.gcType = dconst.GCTYPE_USER            THEN 'User requested'
-                WHEN DiskCopy.gcType = dconst.GCTYPE_TOOMANYREPLICAS THEN 'Too many replicas'
-                WHEN DiskCopy.gcType = dconst.GCTYPE_DRAINING        THEN 'Draining filesystem'
-                WHEN DiskCopy.gcType = dconst.GCTYPE_NSSYNCH         THEN 'NS synchronization'
-                WHEN DiskCopy.gcType = dconst.GCTYPE_OVERWRITTEN     THEN 'Overwritten'
-                WHEN DiskCopy.gcType = dconst.GCTYPE_ADMIN           THEN 'Dropped by admin'
-                ELSE 'Unknown' END,
-           getSvcClassList(FileSystem.id)
+           getObjStatusName('DiskCopy', 'gcType', DiskCopy.gcType),
+          getSvcClassList(FileSystem.id)
       FROM CastorFile, DiskCopy, FileSystem, DiskServer
      WHERE decode(DiskCopy.status, 9, DiskCopy.status, NULL) = 9 -- BEINGDELETED
        AND DiskCopy.castorfile = CastorFile.id
@@ -697,8 +666,6 @@ BEGIN
   bulkDeleteRequests('StageRmRequest', timeOut);
     ---- Repack ----
   bulkDeleteRequests('StageRepackRequest', timeOut);
-    ---- DiskCopyReplica ----
-  bulkDeleteRequests('StageDiskCopyReplicaRequest', timeOut);
     ---- SetGCWeight ----
   bulkDeleteRequests('SetFileGCWeight', timeOut);
 END;

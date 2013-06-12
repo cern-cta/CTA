@@ -109,8 +109,6 @@ castor::rh::RHThread::RHThread()
   m_svcHandler[OBJ_ChangePrivilege] = "Q";
   m_svcHandler[OBJ_ListPrivileges] = "Q";
   m_svcHandler[OBJ_GetUpdateStartRequest] = "j";
-  m_svcHandler[OBJ_Disk2DiskCopyDoneRequest] = "j";
-  m_svcHandler[OBJ_Disk2DiskCopyStartRequest] = "j";
   m_svcHandler[OBJ_MoverCloseRequest] = "j";
   m_svcHandler[OBJ_PutStartRequest] = "j";
   m_svcHandler[OBJ_GetUpdateDone] = "j";

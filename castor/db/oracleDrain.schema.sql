@@ -131,7 +131,7 @@ ALTER TABLE DrainingDiskCopy
 /* SQL statement for check constraints on the DrainingDiskCopy table */
 ALTER TABLE DrainingDiskCopy
   ADD CONSTRAINT CK_DrainingDCs_Status
-  CHECK (status IN (0, 1, 2, 3, 4));
+  CHECK (status IN (0, 2, 3, 4));
 
 /* SQL statement for foreign key constraints on DrainingDiskCopy */
 ALTER TABLE DrainingDiskCopy

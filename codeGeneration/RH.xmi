@@ -258,11 +258,6 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
             <UML:Attribute comment="The protocol to use to retrieve the file" isSpecification="false" visibility="public" xmi.id="1228" type="137289" name="protocol" />
            </UML:Classifier.feature>
           </UML:Class>
-          <UML:Class stereotype="53500" comment="Response to the Disk2DiskCopyRequest" isSpecification="false" isLeaf="false" visibility="public" namespace="2104" xmi.id="m9HuphYZODmf" isRoot="false" isAbstract="false" name="Disk2DiskCopyStartResponse" >
-           <UML:GeneralizableElement.generalization>
-            <UML:Generalization xmi.idref="nHxZzpL64Evl" />
-           </UML:GeneralizableElement.generalization>
-          </UML:Class>
          </UML:Namespace.ownedElement>
         </UML:Package>
         <UML:Package isSpecification="false" isLeaf="false" visibility="public" namespace="2103" xmi.id="2105" isRoot="false" isAbstract="false" name="stager" >
@@ -287,19 +282,6 @@ This was introduced to deal with prepareToGet where the answer is sent before th
             <UML:Attribute stereotype="jAc2zaXz4scq" comment="The filesystems requested to fulfil the jobs resource requirements in the scheduler" isSpecification="false" visibility="public" xmi.id="c9CUcCqLfyG3" type="137289" name="requestedFileSystems" />
             <UML:Attribute stereotype="jAc2zaXz4scq" comment="Stager service that should handle this subrequest. Clients should leave this field empty." isSpecification="false" visibility="public" xmi.id="MXVW5ZKZQxj4" type="137289" name="svcHandler" />
             <UML:Attribute stereotype="jAc2zaXz4scq" comment="The numeric type of the request. Clients should leave this field empty." isSpecification="false" visibility="public" xmi.id="quV9EbOv9afn" type="133771" name="reqType" />
-           </UML:Classifier.feature>
-          </UML:Class>
-          <UML:Class stereotype="53500" comment="Internal request for updating the database after a successful Disk to Disk copy.
-This request is there to avoid the jobs on the diskservers to handle a connection to the database." isSpecification="false" isLeaf="false" visibility="public" namespace="2105" xmi.id="64515" isRoot="false" isAbstract="false" name="Disk2DiskCopyDoneRequest" >
-           <UML:GeneralizableElement.generalization>
-            <UML:Generalization xmi.idref="64912" />
-           </UML:GeneralizableElement.generalization>
-           <UML:Classifier.feature>
-            <UML:Attribute comment="The DiskCopy created." isSpecification="false" visibility="public" xmi.id="79176" type="131665" name="diskCopyId" />
-            <UML:Attribute comment="The id of the source diskcopy" isSpecification="false" visibility="public" xmi.id="87434" type="131665" name="sourceDiskCopyId" />
-            <UML:Attribute comment="The id of the castor file" isSpecification="false" visibility="public" xmi.id="acXjpTudOA63" type="131665" name="fileId" />
-            <UML:Attribute comment="The name server hosting this castor file" isSpecification="false" visibility="public" xmi.id="uEUqB4DpOin0" type="137289" name="nsHost" />
-            <UML:Attribute comment="The size of the newly replicated file" isSpecification="false" visibility="public" xmi.id="Bfj0PLMBBPGU" type="131665" name="replicaFileSize" />
            </UML:Classifier.feature>
           </UML:Class>
           <UML:Class stereotype="53500" comment="The FileClass of a file defines several attributes like the number of copies of the file or its tapepool" isSpecification="false" isLeaf="false" visibility="public" namespace="2105" xmi.id="1581" isRoot="false" isAbstract="false" name="FileClass" >
@@ -587,7 +569,6 @@ A SvcClass is a container of resources and may be given as parameter of the requ
           <UML:Class stereotype="53501" comment="Possible status codes for a DiskCopy" isSpecification="false" isLeaf="false" visibility="public" namespace="2105" xmi.id="1665" isRoot="false" isAbstract="false" name="DiskCopyStatusCodes" >
            <UML:Classifier.feature>
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="1674" initialValue="0" type="133771" name="DISKCOPY_VALID" />
-            <UML:Attribute isSpecification="false" visibility="public" xmi.id="1675" initialValue="1" type="133771" name="DISKCOPY_WAITDISK2DISKCOPY" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="1678" initialValue="4" type="133771" name="DISKCOPY_FAILED" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="2075" initialValue="5" type="133771" name="DISKCOPY_WAITFS" />
             <UML:Attribute isSpecification="false" visibility="public" xmi.id="2076" initialValue="6" type="133771" name="DISKCOPY_STAGEOUT" />
@@ -624,20 +605,6 @@ A SvcClass is a container of resources and may be given as parameter of the requ
            <UML:GeneralizableElement.generalization>
             <UML:Generalization xmi.idref="XfR6rVsVSwUQ" />
            </UML:GeneralizableElement.generalization>
-          </UML:Class>
-          <UML:Class stereotype="53500" comment="Internal request for handling the start of StageDiskCopyReplicaRequest.
-" isSpecification="false" isLeaf="false" visibility="public" namespace="2105" xmi.id="pymVTLtOa7eh" isRoot="false" isAbstract="false" name="Disk2DiskCopyStartRequest" >
-           <UML:GeneralizableElement.generalization>
-            <UML:Generalization xmi.idref="mgnQgist7i0B" />
-           </UML:GeneralizableElement.generalization>
-           <UML:Classifier.feature>
-            <UML:Attribute comment="The id of the destination diskcopy" isSpecification="false" visibility="public" xmi.id="lQ2aMZ6iRf7f" type="131665" name="diskCopyId" />
-            <UML:Attribute comment="The id of the source diskcopy" isSpecification="false" visibility="public" xmi.id="Tn3B0c1yMURh" type="131665" name="sourceDiskCopyId" />
-            <UML:Attribute comment="The name of the destination diskserver." isSpecification="false" visibility="public" xmi.id="GqNhTVMxIO8I" type="137289" name="diskServer" />
-            <UML:Attribute comment="The mount point on the destination diskserver." isSpecification="false" visibility="public" xmi.id="07GKcgzxSFOs" type="137289" name="mountPoint" />
-            <UML:Attribute comment="The id of the castor file" isSpecification="false" visibility="public" xmi.id="w9zpqWTR8yAx" type="131665" name="fileId" />
-            <UML:Attribute comment="The name server hosting this castor file" isSpecification="false" visibility="public" xmi.id="R2boCfp4rKu2" type="137289" name="nsHost" />
-           </UML:Classifier.feature>
           </UML:Class>
           <UML:Class stereotype="53500" comment="Request informing the stager that an Update subrequest has performed the first write operation" isSpecification="false" isLeaf="false" visibility="public" namespace="2105" xmi.id="LyheFPFGZ6Ru" isRoot="false" isAbstract="false" name="FirstByteWritten" >
            <UML:GeneralizableElement.generalization>
@@ -1032,13 +999,6 @@ Concerning the user list, an empty list means all users and all groups are conce
         <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="YsR462W9dZ6m" aggregation="none" type="zOogYpE5st4r" name="" />
        </UML:Association.connection>
       </UML:Association>
-      <UML:Generalization isSpecification="false" child="64515" visibility="public" namespace="1" xmi.id="64912" parent="696" discriminator="" name="" />
-      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="66520" name="" >
-       <UML:Association.connection>
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="false" xmi.id="BQ2pKB4aBB38" aggregation="none" type="64515" name="" />
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="rMHWgwCCodFt" aggregation="none" type="66116" name="" multiplicity="1" />
-       </UML:Association.connection>
-      </UML:Association>
       <UML:Generalization isSpecification="false" child="66529" visibility="public" namespace="1" xmi.id="66932" parent="50325" discriminator="" name="" />
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="67470" client="66116" name="" supplier="960" />
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="67531" client="66116" name="" supplier="1216" />
@@ -1178,20 +1138,6 @@ Concerning the user list, an empty list means all users and all groups are conce
        <UML:Association.connection>
         <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="ZhFNij2c1KE8" aggregation="composite" type="RZYBAWDaUfHC" name="" multiplicity="1" />
         <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="AuQaa9DA28XQ" aggregation="none" type="89108" name="orphanFileIds" multiplicity="0..n" />
-       </UML:Association.connection>
-      </UML:Association>
-      <UML:Generalization isSpecification="false" child="pymVTLtOa7eh" visibility="public" namespace="1" xmi.id="mgnQgist7i0B" parent="696" discriminator="" name="" />
-      <UML:Generalization isSpecification="false" child="m9HuphYZODmf" visibility="public" namespace="1" xmi.id="nHxZzpL64Evl" parent="50325" discriminator="" name="" />
-      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="rsCO9kk3BAmF" name="" >
-       <UML:Association.connection>
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="Nu7h82lhk04S" aggregation="none" type="m9HuphYZODmf" name="" />
-        <UML:AssociationEnd comment="The information about the destination disk copy" isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="k72jPEsX7I5h" aggregation="none" type="85782" name="diskCopy" multiplicity="1" />
-       </UML:Association.connection>
-      </UML:Association>
-      <UML:Association isSpecification="false" visibility="public" namespace="1" xmi.id="hcvskh5M0aVa" name="" >
-       <UML:Association.connection>
-        <UML:AssociationEnd isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="RIqRONqlHvTP" aggregation="none" type="m9HuphYZODmf" name="" />
-        <UML:AssociationEnd comment="The information about the source disk copy" isSpecification="false" visibility="public" changeability="changeable" isNavigable="true" xmi.id="xC4fA97sE7cb" aggregation="none" type="85782" name="sourceDiskCopy" multiplicity="1" />
        </UML:Association.connection>
       </UML:Association>
       <UML:Abstraction isSpecification="false" visibility="public" namespace="1" xmi.id="SyykFRrANhWk" client="cRcpY3peSGUi" name="" supplier="960" />
@@ -1436,8 +1382,6 @@ Concerning the user list, an empty list means all users and all groups are conce
        <diagram snapgrid="0" showattsig="0" fillcolor="#ffffc0" linewidth="0" zoom="81" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="2738" snapy="10" showatts="1" xmi.id="wgCKlwyKCdlP" documentation="" type="1" showops="0" showpackage="1" name="Requests" localid="" showstereotype="1" showscope="1" snapcsgrid="0" font="Andale Mono,12,-1,5,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="1174" >
         <widgets>
          <classwidget usesdiagramfillcolor="0" width="351" showattsigs="600" x="211" fillcolor="#ffffc0" y="736" showopsigs="601" linewidth="none" height="66" usefillcolor="1" showpubliconly="1" showattributes="1" isinstance="0" xmi.id="44739" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="0" font="Sans Serif,12,-1,5,50,0,0,0,0,0" linecolor="#ff0000" />
-         <classwidget usesdiagramfillcolor="1" width="290" showattsigs="600" x="1556" fillcolor="none" y="601" showopsigs="601" linewidth="none" height="105" usefillcolor="1" showpubliconly="1" showattributes="1" isinstance="0" xmi.id="64515" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-         <classwidget usesdiagramfillcolor="1" width="420" showattsigs="600" x="1465" fillcolor="none" y="787" showopsigs="601" linewidth="none" height="153" usefillcolor="1" showpubliconly="1" showattributes="1" isinstance="0" xmi.id="pymVTLtOa7eh" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,50,0,0,0,0,0" linecolor="none" />
          <classwidget usesdiagramfillcolor="1" width="282" showattsigs="600" x="540" fillcolor="none" y="563" drawascircle="0" showopsigs="601" linewidth="none" height="54" usefillcolor="1" showpubliconly="1" showattributes="1" isinstance="0" xmi.id="46353" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,50,0,0,0,0,0" linecolor="none" />
          <classwidget usesdiagramfillcolor="1" width="330" showattsigs="600" x="1594" fillcolor="none" y="470" showopsigs="601" linewidth="none" height="99" usefillcolor="1" showpubliconly="1" showattributes="1" isinstance="0" xmi.id="LyheFPFGZ6Ru" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,50,0,0,0,0,0" linecolor="none" />
          <classwidget usesdiagramfillcolor="1" width="300" showattsigs="600" x="1555" fillcolor="none" y="297" showopsigs="601" linewidth="none" height="99" usefillcolor="1" showpubliconly="1" showattributes="1" isinstance="0" xmi.id="88535" showoperations="0" showpackage="1" showscope="1" showstereotype="1" usesdiagramusefillcolor="1" font="Andale Mono,12,-1,5,50,0,0,0,0,0" linecolor="none" />
@@ -1500,12 +1444,6 @@ Concerning the user list, an empty list means all users and all groups are conce
            <endpoint endx="1248" endy="590" />
           </linepath>
          </assocwidget>
-         <assocwidget totalcounta="2" indexa="1" totalcountb="6" indexb="4" linewidth="none" widgetbid="696" widgetaid="64515" xmi.id="64912" type="500" linecolor="none" >
-          <linepath>
-           <startpoint startx="1556" starty="653" />
-           <endpoint endx="1490" endy="608" />
-          </linepath>
-         </assocwidget>
          <assocwidget totalcounta="2" indexa="1" totalcountb="3" indexb="2" linewidth="none" widgetbid="696" widgetaid="69548" xmi.id="70044" type="500" linecolor="none" >
           <linepath>
            <startpoint startx="1458" starty="967" />
@@ -1528,12 +1466,6 @@ Concerning the user list, an empty list means all users and all groups are conce
           <linepath>
            <startpoint startx="1705" starty="396" />
            <endpoint endx="1490" endy="521" />
-          </linepath>
-         </assocwidget>
-         <assocwidget totalcounta="2" indexa="1" totalcountb="6" indexb="5" linewidth="none" widgetbid="696" widgetaid="pymVTLtOa7eh" xmi.id="mgnQgist7i0B" type="500" linecolor="none" >
-          <linepath>
-           <startpoint startx="1675" starty="787" />
-           <endpoint endx="1490" endy="651" />
           </linepath>
          </assocwidget>
          <assocwidget totalcounta="2" indexa="1" totalcountb="6" indexb="3" linewidth="none" widgetbid="696" widgetaid="LyheFPFGZ6Ru" xmi.id="jY5i5J311fHO" type="500" linecolor="none" >
@@ -1806,7 +1738,6 @@ Concerning the user list, an empty list means all users and all groups are conce
         <listitem open="0" type="814" id="fDnKqG1MyiFG" />
         <listitem open="0" type="814" id="GS6VR5Jq8EHh" />
        </listitem>
-       <listitem open="0" type="813" id="m9HuphYZODmf" />
        <listitem open="0" type="813" id="1218" />
        <listitem open="0" type="813" id="132400" >
         <listitem open="0" type="814" id="51917" />
@@ -1862,21 +1793,6 @@ Concerning the user list, an empty list means all users and all groups are conce
         <listitem open="0" type="814" id="87445" />
         <listitem open="0" type="814" id="155731" />
         <listitem open="0" type="814" id="zo4yEqNDOdWd" />
-       </listitem>
-       <listitem open="0" type="813" id="64515" >
-        <listitem open="0" type="814" id="79176" />
-        <listitem open="0" type="814" id="87434" />
-        <listitem open="0" type="814" id="acXjpTudOA63" />
-        <listitem open="0" type="814" id="uEUqB4DpOin0" />
-        <listitem open="1" type="814" id="Bfj0PLMBBPGU" />
-       </listitem>
-       <listitem open="0" type="813" id="pymVTLtOa7eh" >
-        <listitem open="0" type="814" id="lQ2aMZ6iRf7f" />
-        <listitem open="0" type="814" id="Tn3B0c1yMURh" />
-        <listitem open="0" type="814" id="GqNhTVMxIO8I" />
-        <listitem open="0" type="814" id="07GKcgzxSFOs" />
-        <listitem open="0" type="814" id="w9zpqWTR8yAx" />
-        <listitem open="0" type="814" id="R2boCfp4rKu2" />
        </listitem>
        <listitem open="0" type="813" id="40742" >
         <listitem open="0" type="814" id="41543" />

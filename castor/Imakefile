@@ -90,9 +90,6 @@ STGLIB_SRCS = BaseAddress.cpp \
               io/StreamPutFailedCnv.cpp \
               io/StreamPutStartRequestCnv.cpp \
               io/StreamQueryParameterCnv.cpp \
-              io/StreamDisk2DiskCopyDoneRequestCnv.cpp \
-              io/StreamDisk2DiskCopyStartRequestCnv.cpp \
-              io/StreamDisk2DiskCopyStartResponseCnv.cpp \
               io/StreamBasicResponseCnv.cpp \
               io/StreamSetFileGCWeightCnv.cpp \
               io/StreamStringResponseCnv.cpp \
@@ -135,7 +132,6 @@ STGLIB_SRCS = BaseAddress.cpp \
               rh/EndResponse.cpp \
               rh/FileResponse.cpp \
               rh/GetUpdateStartResponse.cpp \
-              rh/Disk2DiskCopyStartResponse.cpp \
               rh/GCFilesResponse.cpp \
               rh/Response.cpp \
               rh/StringResponse.cpp \
@@ -172,8 +168,6 @@ STGLIB_SRCS = BaseAddress.cpp \
               stager/DiskFile.cpp \
               stager/DiskServerStatusCode.cpp \
               stager/FileSystemStatusCodes.cpp \
-              stager/Disk2DiskCopyDoneRequest.cpp \
-              stager/Disk2DiskCopyStartRequest.cpp \
               stager/DLFInit.cpp \
               stager/FileClass.cpp \
               stager/FileRequest.cpp \

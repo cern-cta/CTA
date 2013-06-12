@@ -285,10 +285,10 @@ class RunningTransfersSet(object):
     self.tapelock.acquire()
     try:
       for tTransfer in self.tapeTransfers:
-        mountPoint = tTransfer.transfer.mountPoint
+        mountPoint = tTransfer.mountPoint
         if mountPoint not in res:
           res[mountPoint] = StreamCount()
-        if tTransfer.transfer.transferType == TapeTransferType.RECALL:
+        if tTransfer.transferType == TapeTransferType.RECALL:
           res[mountPoint].nbRecalls += 1
         else:
           res[mountPoint].nbMigrations += 1
@@ -303,7 +303,10 @@ class RunningTransfersSet(object):
     self.lock.acquire()
     try:
       for rTransfer in self.transfers:
-        n = n + self.config.getValue('DiskManager', rTransfer.transfer.protocol+'Weight', 1, int)
+        if rTransfer.transfer.transferType in (TransferType.D2DDST, TransferType.D2DSRC):
+          n = n + self.config.getValue('DiskManager', TransferType.toStr(rTransfer.transfer.transferType) + 'Weight', 1, int)
+        else:
+          n = n + self.config.getValue('DiskManager', rTransfer.transfer.protocol+'Weight', 1, int)
     finally:
       self.lock.release()
     # and now tape transfers
@@ -317,11 +320,11 @@ class RunningTransfersSet(object):
 
   def poll(self):
     '''checks for finished transfers and clean them up'''
-    sourcesToBeInformed = []
     killedTransfers = {}
     self.lock.acquire()
     try:
       ended = []
+      d2dEnded = {}
       for rTransfer in self.transfers:
         transferId = rTransfer.transfer.transferId
         # check whether the transfer is over
@@ -358,37 +361,55 @@ class RunningTransfersSet(object):
           ended.append(transferId)
           # in case of disk to disk copy, remember to inform source
           if rTransfer.transfer.transferType == TransferType.D2DDST:
-            sourcesToBeInformed.append(rTransfer)
-          # in case of transfers killed by a signal, remember to inform the DB
-          if rc < 0:
-            if rTransfer.scheduler not in killedTransfers:
-              killedTransfers[rTransfer.scheduler] = []
-            errMsg = 'Transfer has been killed'
-            if rTransfer.process:
-              errMsg += ' : ' + rTransfer.process.stderr.read()
-            killedTransfers[rTransfer.scheduler].append((rTransfer.transfer.transferId,
-                                                         rTransfer.transfer.fileId, rc, errMsg,
-                                                         rTransfer.transfer.reqId))
+            # inform the scheduler so that source is told and disk2DiskCopyDone/Failed is called in the DB
+            if rTransfer.scheduler not in d2dEnded:
+              d2dEnded[rTransfer.scheduler] = []
+            errMsg = ''
+            if rc != 0 and rTransfer.process:
+              errMsg = rTransfer.process.stderr.read()
+            # Determine the size of the newly created file replica
+            replicaFileSize = os.stat(rTransfer.localPath).st_size
+            d2dEnded[rTransfer.scheduler].append((rTransfer.transfer, rTransfer.localPath,
+                                                  replicaFileSize, errMsg))
+          else:
+            # in case of transfers killed by a signal, remember to inform the DB
+            if rc < 0:
+              if rTransfer.scheduler not in killedTransfers:
+                killedTransfers[rTransfer.scheduler] = []
+              errMsg = 'Transfer has been killed'
+              if rTransfer.process:
+                errMsg += ' : ' + rTransfer.process.stderr.read()
+              killedTransfers[rTransfer.scheduler].append((rTransfer.transfer.transferId,
+                                                           rTransfer.transfer.fileId, rc, errMsg,
+                                                           rTransfer.transfer.reqId))
       # cleanup ended transfers
       self.transfers = set(rTransfer for rTransfer in self.transfers if rTransfer.transfer.transferId not in ended)
     finally:
       self.lock.release()
     # get the admin timeout
     timeout = self.config.getValue('TransferManager', 'AdminTimeout', 5, float)
-    # inform schedulers of disk to disk transfers that are over
-    for rTransfer in sourcesToBeInformed:
+    # inform schedulers of d2d copy that ended
+    for scheduler in d2dEnded:
       try:
-        connectionpool.connections.d2dend(rTransfer.scheduler, rTransfer.transfer, timeout=timeout)
+        connectionpool.connections.d2dended(scheduler,
+                                            tuple([(transfer.transferId, transfer.reqId, transfer.fileId,
+                                                    socket.getfqdn(), localPath, fileSize, errMsg)
+                                                    for transfer, localPath, fileSize, errMsg
+                                                     in d2dEnded[scheduler]]), timeout=timeout)
       except connectionpool.Timeout, e:
-        # "Failed to inform scheduler that a d2d transfer is over" message
-        dlf.writenotice(msgs.INFORMTRANSFERISOVERFAILED, Scheduler=rTransfer.scheduler,
-                        subreqId=rTransfer.transfer.transferId, reqId=rTransfer.transfer.reqId,
-                        fileid=rTransfer.transfer.fileId, Type=str(e.__class__), Message=str(e))
+        for transfer, localPath, fileSize, errMsg in d2dEnded[scheduler]:
+          # "Failed to inform scheduler that a d2d transfer is over" message
+          dlf.writenotice(msgs.INFORMTRANSFERISOVERFAILED, Scheduler=scheduler,
+                          subreqId=transfer.transferId, reqId=transfer.reqId,
+                          fileid=transfer.fileId, localPath=localPath,
+                          Type=str(e.__class__), Message=str(e))
       except Exception, e:
-        # "Failed to inform scheduler that a d2d transfer is over" message
-        dlf.writeerr(msgs.INFORMTRANSFERISOVERFAILED, Scheduler=rTransfer.scheduler,
-                     subreqId=rTransfer.transfer.transferId, reqId=rTransfer.transfer.reqId,
-                     fileid=rTransfer.transfer.fileId, Type=str(e.__class__), Message=str(e))
+        for transfer, localPath, fileSize, errMsg in d2dEnded[scheduler]:
+          # "Failed to inform scheduler that a d2d transfer is over" message
+          dlf.writeerr(msgs.INFORMTRANSFERISOVERFAILED, Scheduler=scheduler,
+                       subreqId=transfer.transferId, reqId=transfer.reqId,
+                       fileid=transfer.fileId,  localPath=localPath,
+                       Type=str(e.__class__), Message=str(e))
     # inform schedulers of transfers killed
     for scheduler in killedTransfers:
       try:
@@ -412,7 +433,7 @@ class RunningTransfersSet(object):
     '''called when a disk to disk copy ends and we are the source of it'''
     self.lock.acquire()
     try:
-      self.transfers = set(transfer for transfer in self.transfers if transfer[0] != transferId)
+      self.transfers = set(rTransfer for rTransfer in self.transfers if rTransfer.transfer.transferId != transferId)
     finally:
       self.lock.release()
 

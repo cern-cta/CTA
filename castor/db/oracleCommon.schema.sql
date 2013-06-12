@@ -129,7 +129,9 @@ INSERT INTO CastorConfig
 INSERT INTO CastorConfig
   VALUES ('Migration', 'SizeThreshold', '300000000', 'The threshold to consider a file "small" or "large" when routing it to tape');
 INSERT INTO CastorConfig
-  VALUES ('Migration', 'MaxNbMounts', '7', 'The maximum number of mounts for migrating a given file. When exceeded, the migration will be considered failed: the MigrationJob entry will be dropped and the corresponding castorFile left in status NOTONTAPE. An operator intervention is required to resume the migration.');
+  VALUES ('D2dCopy', 'MaxNbRetries', '2', 'The maximum number of retries for disk to disk copies before it is considered failed. Here 2 means we will do in total 3 attempts.');
+INSERT INTO CastorConfig
+  VALUES ('Recall', 'MaxNbRetriesWithinMount', '2', 'The maximum number of retries for recalling a file within the same tape mount. When exceeded, the recall may still be retried in another mount. See Recall/MaxNbMount entry');
 INSERT INTO CastorConfig
   VALUES ('DiskServer', 'HeartbeatTimeout', '180', 'The maximum amount of time in seconds that a diskserver can spend without sending any hearbeat before it is automatically set to offline.');
 
@@ -325,7 +327,7 @@ CREATE TABLE CastorFile (fileId INTEGER,
                          lastUpdateTime INTEGER,
                          id INTEGER CONSTRAINT PK_CastorFile_Id PRIMARY KEY,
                          fileClass INTEGER,
-                         tapeStatus INTEGER, -- can be ONTAPE, NOTONTAPE or DISKONLY
+                         tapeStatus INTEGER, -- can be ONTAPE, NOTONTAPE, DISKONLY or NULL
                          nsOpenTime NUMBER CONSTRAINT NN_CastorFile_NsOpenTime NOT NULL)  -- timestamp given by the Nameserver at Cns_openx()
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_FileClass
@@ -334,7 +336,9 @@ ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_FileClass
 ALTER TABLE CastorFile ADD CONSTRAINT UN_CastorFile_LKFileName UNIQUE (lastKnownFileName);
 CREATE INDEX I_CastorFile_FileClass ON CastorFile(FileClass);
 CREATE UNIQUE INDEX I_CastorFile_FileIdNsHost ON CastorFile (fileId, nsHost);
-
+ALTER TABLE CastorFile
+  ADD CONSTRAINT CK_CastorFile_TapeStatus
+  CHECK (tapeStatus IN (0, 1, 2));
 
 /* SQL statement for table SubRequest */
 CREATE TABLE SubRequest
@@ -343,7 +347,7 @@ CREATE TABLE SubRequest
    modeBits NUMBER, creationTime INTEGER CONSTRAINT NN_SubRequest_CreationTime 
    NOT NULL, lastModificationTime INTEGER, answered NUMBER, errorCode NUMBER, 
    errorMessage VARCHAR2(2048), id NUMBER CONSTRAINT NN_SubRequest_Id NOT NULL,
-   diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER,
+   diskcopy INTEGER, castorFile INTEGER, status INTEGER,
    request INTEGER, getNextStatus INTEGER, requestedFileSystems VARCHAR2(2048),
    svcHandler VARCHAR2(2048) CONSTRAINT NN_SubRequest_SvcHandler NOT NULL,
    reqType INTEGER CONSTRAINT NN_SubRequest_reqType NOT NULL
@@ -380,8 +384,7 @@ CREATE INDEX I_SubRequest_RT_CT_ID ON SubRequest(svcHandler, creationTime, id) L
   PARTITION P_STATUS_9_10,
   PARTITION P_STATUS_11,
   PARTITION P_STATUS_12,
-  PARTITION P_STATUS_13_14,
-  PARTITION P_STATUS_OTHER);
+  PARTITION P_STATUS_13_14);
 
 /* this index is dedicated to archivesubreq */
 CREATE INDEX I_SubRequest_Req_Stat_no89 ON SubRequest (request, decode(status,8,NULL,9,NULL,status));
@@ -389,27 +392,29 @@ CREATE INDEX I_SubRequest_Req_Stat_no89 ON SubRequest (request, decode(status,8,
 CREATE INDEX I_SubRequest_Castorfile ON SubRequest (castorFile);
 CREATE INDEX I_SubRequest_DiskCopy ON SubRequest (diskCopy);
 CREATE INDEX I_SubRequest_Request ON SubRequest (request);
-CREATE INDEX I_SubRequest_Parent ON SubRequest (parent);
 CREATE INDEX I_SubRequest_SubReqId ON SubRequest (subReqId);
 CREATE INDEX I_SubRequest_LastModTime ON SubRequest (lastModificationTime) LOCAL;
+ALTER TABLE SubRequest
+  ADD CONSTRAINT CK_SubRequest_Status
+  CHECK (status IN (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13));
 
 BEGIN
-  setObjStatusName('SubRequest', 'status', 0, 'SUBREQUEST_START');
-  setObjStatusName('SubRequest', 'status', 1, 'SUBREQUEST_RESTART');
-  setObjStatusName('SubRequest', 'status', 2, 'SUBREQUEST_RETRY');
-  setObjStatusName('SubRequest', 'status', 3, 'SUBREQUEST_WAITSCHED');
-  setObjStatusName('SubRequest', 'status', 4, 'SUBREQUEST_WAITTAPERECALL');
-  setObjStatusName('SubRequest', 'status', 5, 'SUBREQUEST_WAITSUBREQ');
-  setObjStatusName('SubRequest', 'status', 6, 'SUBREQUEST_READY');
-  setObjStatusName('SubRequest', 'status', 7, 'SUBREQUEST_FAILED');
-  setObjStatusName('SubRequest', 'status', 8, 'SUBREQUEST_FINISHED');
-  setObjStatusName('SubRequest', 'status', 9, 'SUBREQUEST_FAILED_FINISHED');
-  setObjStatusName('SubRequest', 'status', 11, 'SUBREQUEST_ARCHIVED');
-  setObjStatusName('SubRequest', 'status', 12, 'SUBREQUEST_REPACK');
-  setObjStatusName('SubRequest', 'status', 13, 'SUBREQUEST_READYFORSCHED');
-  setObjStatusName('SubRequest', 'getNextStatus', 0, 'GETNEXTSTATUS_NOTAPPLICABLE');
-  setObjStatusName('SubRequest', 'getNextStatus', 1, 'GETNEXTSTATUS_FILESTAGED');
-  setObjStatusName('SubRequest', 'getNextStatus', 2, 'GETNEXTSTATUS_NOTIFIED');
+  setObjStatusName('SubRequest', 'status', dconst.SUBREQUEST_START, 'SUBREQUEST_START');
+  setObjStatusName('SubRequest', 'status', dconst.SUBREQUEST_RESTART, 'SUBREQUEST_RESTART');
+  setObjStatusName('SubRequest', 'status', dconst.SUBREQUEST_RETRY, 'SUBREQUEST_RETRY');
+  setObjStatusName('SubRequest', 'status', dconst.SUBREQUEST_WAITSCHED, 'SUBREQUEST_WAITSCHED');
+  setObjStatusName('SubRequest', 'status', dconst.SUBREQUEST_WAITTAPERECALL, 'SUBREQUEST_WAITTAPERECALL');
+  setObjStatusName('SubRequest', 'status', dconst.SUBREQUEST_WAITSUBREQ, 'SUBREQUEST_WAITSUBREQ');
+  setObjStatusName('SubRequest', 'status', dconst.SUBREQUEST_READY, 'SUBREQUEST_READY');
+  setObjStatusName('SubRequest', 'status', dconst.SUBREQUEST_FAILED, 'SUBREQUEST_FAILED');
+  setObjStatusName('SubRequest', 'status', dconst.SUBREQUEST_FINISHED, 'SUBREQUEST_FINISHED');
+  setObjStatusName('SubRequest', 'status', dconst.SUBREQUEST_FAILED_FINISHED, 'SUBREQUEST_FAILED_FINISHED');
+  setObjStatusName('SubRequest', 'status', dconst.SUBREQUEST_ARCHIVED, 'SUBREQUEST_ARCHIVED');
+  setObjStatusName('SubRequest', 'status', dconst.SUBREQUEST_REPACK, 'SUBREQUEST_REPACK');
+  setObjStatusName('SubRequest', 'status', dconst.SUBREQUEST_READYFORSCHED, 'SUBREQUEST_READYFORSCHED');
+  setObjStatusName('SubRequest', 'getNextStatus', dconst.GETNEXTSTATUS_NOTAPPLICABLE, 'GETNEXTSTATUS_NOTAPPLICABLE');
+  setObjStatusName('SubRequest', 'getNextStatus', dconst.GETNEXTSTATUS_FILESTAGED, 'GETNEXTSTATUS_FILESTAGED');
+  setObjStatusName('SubRequest', 'getNextStatus', dconst.GETNEXTSTATUS_NOTIFIED, 'GETNEXTSTATUS_NOTIFIED');
 END;
 /
 
@@ -499,11 +504,14 @@ INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE INDEX I_RecallMount_RecallGroup ON RecallMount(recallGroup); 
 ALTER TABLE RecallMount ADD CONSTRAINT FK_RecallMount_RecallGroup FOREIGN KEY (recallGroup) REFERENCES RecallGroup(id);
 BEGIN
-  setObjStatusName('RecallMount', 'status', 0, 'RECALLMOUNT_NEW');
-  setObjStatusName('RecallMount', 'status', 1, 'RECALLMOUNT_WAITDRIVE');
-  setObjStatusName('RecallMount', 'status', 2, 'RECALLMOUNT_RECALLING');
+  setObjStatusName('RecallMount', 'status', tconst.RECALLMOUNT_NEW, 'RECALLMOUNT_NEW');
+  setObjStatusName('RecallMount', 'status', tconst.RECALLMOUNT_WAITDRIVE, 'RECALLMOUNT_WAITDRIVE');
+  setObjStatusName('RecallMount', 'status', tconst.RECALLMOUNT_RECALLING, 'RECALLMOUNT_RECALLING');
 END;
 /
+ALTER TABLE RecallMount
+  ADD CONSTRAINT CK_RecallMount_Status
+  CHECK (status IN (0, 1, 2));
 
 /* Definition of the RecallJob table
  * id unique identifer of this RecallJob
@@ -555,17 +563,20 @@ ALTER TABLE RecallJob ADD CONSTRAINT FK_RecallJob_CastorFile FOREIGN KEY (castor
 BEGIN
   -- PENDING status is when a RecallJob is created
   -- It is immediately candidate for being recalled by an ongoing recallMount
-  setObjStatusName('RecallJob', 'status', 1, 'RECALLJOB_PENDING');
+  setObjStatusName('RecallJob', 'status', tconst.RECALLJOB_PENDING, 'RECALLJOB_PENDING');
   -- SELECTED status is when the file is currently being recalled.
   -- Note all recallJobs of a given file will have this state while the file is being recalled,
   -- even if another copy is being recalled. The recallJob that is effectively used can be identified
   -- by its non NULL fileTransactionId
-  setObjStatusName('RecallJob', 'status', 2, 'RECALLJOB_SELECTED');
+  setObjStatusName('RecallJob', 'status', tconst.RECALLJOB_SELECTED, 'RECALLJOB_SELECTED');
   -- RETRYMOUNT status is when the file recall has failed and should be retried after remounting the tape
   -- These will be reset to PENDING on RecallMount deletion
-  setObjStatusName('RecallJob', 'status', 3, 'RECALLJOB_RETRYMOUNT');
+  setObjStatusName('RecallJob', 'status', tconst.RECALLJOB_RETRYMOUNT, 'RECALLJOB_RETRYMOUNT');
 END;
 /
+ALTER TABLE RecallJob
+  ADD CONSTRAINT CK_RecallJob_Status
+  CHECK (status IN (0, 1, 2));
 
 /* Definition of the TapePool table
  *   name : the name of the TapePool
@@ -615,12 +626,15 @@ CREATE INDEX I_MigrationMount_TapePool ON MigrationMount(tapePool);
 ALTER TABLE MigrationMount ADD CONSTRAINT FK_MigrationMount_TapePool
   FOREIGN KEY (tapePool) REFERENCES TapePool(id);
 BEGIN
-  setObjStatusName('MigrationMount', 'status', 0, 'MIGRATIONMOUNT_WAITTAPE');
-  setObjStatusName('MigrationMount', 'status', 1, 'MIGRATIONMOUNT_SEND_TO_VDQM');
-  setObjStatusName('MigrationMount', 'status', 2, 'MIGRATIONMOUNT_WAITDRIVE');
-  setObjStatusName('MigrationMount', 'status', 3, 'MIGRATIONMOUNT_MIGRATING');
+  setObjStatusName('MigrationMount', 'status', tconst.MIGRATIONMOUNT_WAITTAPE, 'MIGRATIONMOUNT_WAITTAPE');
+  setObjStatusName('MigrationMount', 'status', tconst.MIGRATIONMOUNT_SEND_TO_VDQM, 'MIGRATIONMOUNT_SEND_TO_VDQM');
+  setObjStatusName('MigrationMount', 'status', tconst.MIGRATIONMOUNT_WAITDRIVE, 'MIGRATIONMOUNT_WAITDRIVE');
+  setObjStatusName('MigrationMount', 'status', tconst.MIGRATIONMOUNT_MIGRATING, 'MIGRATIONMOUNT_MIGRATING');
 END;
 /
+ALTER TABLE MigrationMount
+  ADD CONSTRAINT CK_MigrationMount_Status
+  CHECK (status IN (0, 1, 2, 3));
 
 /* Definition of the MigratedSegment table
  * This table lists segments existing on tape for the files being
@@ -688,11 +702,14 @@ ALTER TABLE MigrationJob ADD CONSTRAINT FK_MigrationJob_MigrationMount
   FOREIGN KEY (mountTransactionId) REFERENCES MigrationMount(mountTransactionId);
 ALTER TABLE MigrationJob ADD CONSTRAINT CK_MigrationJob_FS_Positive CHECK (fileSize > 0);
 BEGIN
-  setObjStatusName('MigrationJob', 'status', 0, 'MIGRATIONJOB_PENDING');
-  setObjStatusName('MigrationJob', 'status', 1, 'MIGRATIONJOB_SELECTED');
-  setObjStatusName('MigrationJob', 'status', 3, 'MIGRATIONJOB_WAITINGONRECALL');
+  setObjStatusName('MigrationJob', 'status', tconst.MIGRATIONJOB_PENDING, 'MIGRATIONJOB_PENDING');
+  setObjStatusName('MigrationJob', 'status', tconst.MIGRATIONJOB_SELECTED, 'MIGRATIONJOB_SELECTED');
+  setObjStatusName('MigrationJob', 'status', tconst.MIGRATIONJOB_WAITINGONRECALL, 'MIGRATIONJOB_WAITINGONRECALL');
 END;
 /
+ALTER TABLE MigrationJob
+  ADD CONSTRAINT CK_MigrationJob_Status
+  CHECK (status IN (0, 1, 3));
 
 /* Definition of the MigrationRouting table. Each line is a routing rule for migration jobs
  *   isSmallFile : whether this routing rule applies to small files. Null means it applies to all files
@@ -718,6 +735,68 @@ ALTER TABLE MigrationRouting ADD CONSTRAINT FK_MigrationRouting_FileClass
   FOREIGN KEY (fileClass) REFERENCES FileClass(id);
 ALTER TABLE MigrationRouting ADD CONSTRAINT FK_MigrationRouting_TapePool
   FOREIGN KEY (tapePool) REFERENCES TapePool(id);
+
+/* Definition of the Disk2DiskCopyJob table. Each line is a disk2diskCopy job to process
+ *   id : unique DB identifier for this job
+ *   transferId : unique identifier for the transfer associated to this job
+ *   creationTime : creation time of this item, allows to compute easily waiting times
+ *   status : status of the job (PENDING, SCHEDULED, RUNNING) 
+ *   retryCounter : number of times the copy was attempted
+ *   ouid : the originator user id
+ *   ogid : the originator group id
+ *   castorFile : the concerned file
+ *   nsOpenTime : the nsOpenTime of the castorFile when this job was created
+ *                Allows to detect if the file has been overwritten during replication
+ *   destSvcClass : the destination service class
+ *   replicationType : the type of replication involved (user, internal or draining)
+ *   replacedDcId : in case of draining, the replaced diskCopy to be dropped
+ *   destDcId : the destination diskCopy
+ */
+CREATE TABLE Disk2DiskCopyJob
+  (id NUMBER CONSTRAINT PK_Disk2DiskCopyJob_Id PRIMARY KEY 
+             CONSTRAINT NN_Disk2DiskCopyJob_Id NOT NULL,
+   transferId VARCHAR2(2048) CONSTRAINT NN_Disk2DiskCopyJob_TId NOT NULL,
+   creationTime INTEGER CONSTRAINT NN_Disk2DiskCopyJob_CTime NOT NULL,
+   status INTEGER CONSTRAINT NN_Disk2DiskCopyJob_Status NOT NULL,
+   retryCounter INTEGER DEFAULT 0 CONSTRAINT NN_Disk2DiskCopyJob_retryCnt NOT NULL,
+   ouid INTEGER CONSTRAINT NN_Disk2DiskCopyJob_ouid NOT NULL,
+   ogid INTEGER CONSTRAINT NN_Disk2DiskCopyJob_ogid NOT NULL,
+   castorFile INTEGER CONSTRAINT NN_Disk2DiskCopyJob_CastorFile NOT NULL,
+   nsOpenTime INTEGER CONSTRAINT NN_Disk2DiskCopyJob_NSOpenTime NOT NULL,
+   destSvcClass INTEGER CONSTRAINT NN_Disk2DiskCopyJob_dstSC NOT NULL,
+   replicationType INTEGER CONSTRAINT NN_Disk2DiskCopyJob_Type NOT NULL,
+   replacedDcId INTEGER,
+   destDcId INTEGER  CONSTRAINT NN_Disk2DiskCopyJob_DCId NOT NULL)
+INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE INDEX I_Disk2DiskCopyJob_Tid ON Disk2DiskCopyJob(transferId);
+CREATE INDEX I_Disk2DiskCopyJob_CfId ON Disk2DiskCopyJob(CastorFile);
+CREATE INDEX I_Disk2DiskCopyJob_CT_Id ON Disk2DiskCopyJob(creationTime, id);
+BEGIN
+  -- PENDING status is when a Disk2DiskCopyJob is created
+  -- It is immediately candidate for being scheduled
+  setObjStatusName('Disk2DiskCopyJob', 'status', dconst.DISK2DISKCOPYJOB_PENDING, 'DISK2DISKCOPYJOB_PENDING');
+  -- SCHEDULED status is when the Disk2DiskCopyJob has been scheduled and is not yet started
+  setObjStatusName('Disk2DiskCopyJob', 'status', dconst.DISK2DISKCOPYJOB_SCHEDULED, 'DISK2DISKCOPYJOB_SCHEDULED');
+  -- RUNNING status is when the disk to disk copy is ongoing
+  setObjStatusName('Disk2DiskCopyJob', 'status', dconst.DISK2DISKCOPYJOB_RUNNING, 'DISK2DISKCOPYJOB_RUNNING');
+  -- USER replication type is when replication is triggered by the user
+  setObjStatusName('Disk2DiskCopyJob', 'replicationType', dconst.REPLICATIONTYPE_USER, 'REPLICATIONTYPE_USER');
+  -- INTERNAL replication type is when replication is triggered internally (e.g. dual copy disk pools)
+  setObjStatusName('Disk2DiskCopyJob', 'replicationType', dconst.REPLICATIONTYPE_INTERNAL, 'REPLICATIONTYPE_INTERNAL');
+  -- DRAINING replication type is when replication is triggered by a drain operation
+  setObjStatusName('Disk2DiskCopyJob', 'replicationType', dconst.REPLICATIONTYPE_DRAINING, 'REPLICATIONTYPE_DRAINING');
+END;
+/
+ALTER TABLE Disk2DiskCopyJob ADD CONSTRAINT FK_Disk2DiskCopyJob_CastorFile
+  FOREIGN KEY (castorFile) REFERENCES CastorFile(id);
+ALTER TABLE Disk2DiskCopyJob ADD CONSTRAINT FK_Disk2DiskCopyJob_SvcClass
+  FOREIGN KEY (destSvcClass) REFERENCES SvcClass(id);
+ALTER TABLE Disk2DiskCopyJob
+  ADD CONSTRAINT CK_Disk2DiskCopyJob_Status
+  CHECK (status IN (0, 1, 2));
+ALTER TABLE Disk2DiskCopyJob
+  ADD CONSTRAINT CK_Disk2DiskCopyJob_type
+  CHECK (replicationType IN (0, 1, 2));
 
 /* Temporary table used to bulk select next candidates for recall and migration */
 CREATE GLOBAL TEMPORARY TABLE FilesToRecallHelper
@@ -750,12 +829,15 @@ ALTER TABLE DiskServer MODIFY
 ALTER TABLE DiskServer ADD CONSTRAINT UN_DiskServer_Name UNIQUE (name);
 
 BEGIN
-  setObjStatusName('DiskServer', 'status', 0, 'DISKSERVER_PRODUCTION');
-  setObjStatusName('DiskServer', 'status', 1, 'DISKSERVER_DRAINING');
-  setObjStatusName('DiskServer', 'status', 2, 'DISKSERVER_DISABLED');
-  setObjStatusName('DiskServer', 'status', 3, 'DISKSERVER_READONLY');
+  setObjStatusName('DiskServer', 'status', dconst.DISKSERVER_PRODUCTION, 'DISKSERVER_PRODUCTION');
+  setObjStatusName('DiskServer', 'status', dconst.DISKSERVER_DRAINING, 'DISKSERVER_DRAINING');
+  setObjStatusName('DiskServer', 'status', dconst.DISKSERVER_DISABLED, 'DISKSERVER_DISABLED');
+  setObjStatusName('DiskServer', 'status', dconst.DISKSERVER_READONLY, 'DISKSERVER_READONLY');
 END;
 /
+ALTER TABLE DiskServer
+  ADD CONSTRAINT CK_DiskServer_Status
+  CHECK (status IN (0, 1, 2, 3));
 
 /* SQL statements for type FileSystem */
 CREATE TABLE FileSystem (free INTEGER, mountPoint VARCHAR2(2048), minAllowedFreeSpace NUMBER, maxFreeSpace NUMBER, totalSize INTEGER, nbReadStreams NUMBER, nbWriteStreams NUMBER, nbMigratorStreams NUMBER, nbRecallerStreams NUMBER, id INTEGER CONSTRAINT PK_FileSystem_Id PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
@@ -771,12 +853,15 @@ CREATE INDEX I_FileSystem_DiskPool ON FileSystem (diskPool);
 CREATE INDEX I_FileSystem_DiskServer ON FileSystem (diskServer);
 
 BEGIN
-  setObjStatusName('FileSystem', 'status', 0, 'FILESYSTEM_PRODUCTION');
-  setObjStatusName('FileSystem', 'status', 1, 'FILESYSTEM_DRAINING');
-  setObjStatusName('FileSystem', 'status', 2, 'FILESYSTEM_DISABLED');
-  setObjStatusName('FileSystem', 'status', 3, 'FILESYSTEM_READONLY');
+  setObjStatusName('FileSystem', 'status', dconst.FILESYSTEM_PRODUCTION, 'FILESYSTEM_PRODUCTION');
+  setObjStatusName('FileSystem', 'status', dconst.FILESYSTEM_DRAINING, 'FILESYSTEM_DRAINING');
+  setObjStatusName('FileSystem', 'status', dconst.FILESYSTEM_DISABLED, 'FILESYSTEM_DISABLED');
+  setObjStatusName('FileSystem', 'status', dconst.FILESYSTEM_READONLY, 'FILESYSTEM_READONLY');
 END;
 /
+ALTER TABLE FileSystem
+  ADD CONSTRAINT CK_FileSystem_Status
+  CHECK (status IN (0, 1, 2, 3));
 
 /* SQL statements for type DiskPool */
 CREATE TABLE DiskPool (name VARCHAR2(2048), id INTEGER CONSTRAINT PK_DiskPool_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
@@ -807,22 +892,28 @@ ALTER TABLE DiskCopy
   MODIFY (status CONSTRAINT NN_DiskCopy_Status NOT NULL);
 
 BEGIN
-  setObjStatusName('DiskCopy', 'gcType', 0, 'GCTYPE_AUTO');
-  setObjStatusName('DiskCopy', 'gcType', 1, 'GCTYPE_USER');
-  setObjStatusName('DiskCopy', 'gcType', 2, 'GCTYPE_TOOMANYREPLICAS');
-  setObjStatusName('DiskCopy', 'gcType', 3, 'GCTYPE_DRAINING');
-  setObjStatusName('DiskCopy', 'gcType', 4, 'GCTYPE_NSSYNCH');
-  setObjStatusName('DiskCopy', 'gcType', 5, 'GCTYPE_OVERWRITTEN');
-  setObjStatusName('DiskCopy', 'status', 0, 'DISKCOPY_VALID');
-  setObjStatusName('DiskCopy', 'status', 1, 'DISKCOPY_WAITDISK2DISKCOPY');
-  setObjStatusName('DiskCopy', 'status', 4, 'DISKCOPY_FAILED');
-  setObjStatusName('DiskCopy', 'status', 5, 'DISKCOPY_WAITFS');
-  setObjStatusName('DiskCopy', 'status', 6, 'DISKCOPY_STAGEOUT');
-  setObjStatusName('DiskCopy', 'status', 7, 'DISKCOPY_INVALID');
-  setObjStatusName('DiskCopy', 'status', 9, 'DISKCOPY_BEINGDELETED');
-  setObjStatusName('DiskCopy', 'status', 11, 'DISKCOPY_WAITFS_SCHEDULING');
+  setObjStatusName('DiskCopy', 'gcType', dconst.GCTYPE_AUTO, 'GCTYPE_AUTO');
+  setObjStatusName('DiskCopy', 'gcType', dconst.GCTYPE_USER, 'GCTYPE_USER');
+  setObjStatusName('DiskCopy', 'gcType', dconst.GCTYPE_TOOMANYREPLICAS, 'GCTYPE_TOOMANYREPLICAS');
+  setObjStatusName('DiskCopy', 'gcType', dconst.GCTYPE_DRAINING, 'GCTYPE_DRAINING');
+  setObjStatusName('DiskCopy', 'gcType', dconst.GCTYPE_NSSYNCH, 'GCTYPE_NSSYNCH');
+  setObjStatusName('DiskCopy', 'gcType', dconst.GCTYPE_OVERWRITTEN, 'GCTYPE_OVERWRITTEN');
+  setObjStatusName('DiskCopy', 'gcType', dconst.GCTYPE_FAILEDD2D, 'GCTYPE_FAILEDD2D');
+  setObjStatusName('DiskCopy', 'status', dconst.DISKCOPY_VALID, 'DISKCOPY_VALID');
+  setObjStatusName('DiskCopy', 'status', dconst.DISKCOPY_FAILED, 'DISKCOPY_FAILED');
+  setObjStatusName('DiskCopy', 'status', dconst.DISKCOPY_WAITFS, 'DISKCOPY_WAITFS');
+  setObjStatusName('DiskCopy', 'status', dconst.DISKCOPY_STAGEOUT, 'DISKCOPY_STAGEOUT');
+  setObjStatusName('DiskCopy', 'status', dconst.DISKCOPY_INVALID, 'DISKCOPY_INVALID');
+  setObjStatusName('DiskCopy', 'status', dconst.DISKCOPY_BEINGDELETED, 'DISKCOPY_BEINGDELETED');
+  setObjStatusName('DiskCopy', 'status', dconst.DISKCOPY_WAITFS_SCHEDULING, 'DISKCOPY_WAITFS_SCHEDULING');
 END;
 /
+ALTER TABLE DiskCopy
+  ADD CONSTRAINT CK_DiskCopy_Status
+  CHECK (status IN (0, 4, 5, 6, 7, 9, 10, 11));
+ALTER TABLE DiskCopy
+  ADD CONSTRAINT CK_DiskCopy_GcType
+  CHECK (gcType IN (0, 1, 2, 3, 4, 5));
 
 CREATE INDEX I_StagePTGRequest_ReqId ON StagePrepareToGetRequest (reqId);
 CREATE INDEX I_StagePTPRequest_ReqId ON StagePrepareToPutRequest (reqId);
@@ -842,6 +933,57 @@ CREATE INDEX I_QueryParameter_Query ON QueryParameter (query);
 /* Constraint on FileClass name */
 ALTER TABLE FileClass ADD CONSTRAINT UN_FileClass_Name UNIQUE (name);
 ALTER TABLE FileClass MODIFY (classid CONSTRAINT NN_FileClass_Name NOT NULL);
+
+/* Add unique constraint on svcClass name */
+ALTER TABLE SvcClass ADD CONSTRAINT UN_SvcClass_Name UNIQUE (name);
+
+/* Custom type to handle int arrays */
+CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
+/
+
+/* Custom type to handle float arrays */
+CREATE OR REPLACE TYPE floatList IS TABLE OF NUMBER;
+/
+
+/* Custom type to handle strings returned by pipelined functions */
+CREATE OR REPLACE TYPE strListTable AS TABLE OF VARCHAR2(2048);
+/
+
+/* SvcClass constraints */
+ALTER TABLE SvcClass
+  MODIFY (name CONSTRAINT NN_SvcClass_Name NOT NULL);
+
+ALTER TABLE SvcClass 
+  MODIFY (forcedFileClass CONSTRAINT NN_SvcClass_ForcedFileClass NOT NULL);
+
+ALTER TABLE SvcClass MODIFY (gcPolicy CONSTRAINT NN_SvcClass_GcPolicy NOT NULL);
+ALTER TABLE SvcClass MODIFY (gcPolicy DEFAULT 'default');
+ALTER TABLE SvcClass ADD CONSTRAINT FK_SvcClass_GCPolicy
+  FOREIGN KEY (gcPolicy) REFERENCES GcPolicy (name);
+CREATE INDEX I_SvcClass_GcPolicy ON SvcClass (gcPolicy);
+
+ALTER TABLE SvcClass MODIFY (lastEditor CONSTRAINT NN_SvcClass_LastEditor NOT NULL);
+
+ALTER TABLE SvcClass MODIFY (lastEditionTime CONSTRAINT NN_SvcClass_LastEditionTime NOT NULL);
+
+/* DiskCopy constraints */
+ALTER TABLE DiskCopy MODIFY (nbCopyAccesses DEFAULT 0);
+
+ALTER TABLE DiskCopy MODIFY (gcType DEFAULT NULL);
+
+ALTER TABLE DiskCopy ADD CONSTRAINT FK_DiskCopy_CastorFile
+  FOREIGN KEY (castorFile) REFERENCES CastorFile (id)
+  INITIALLY DEFERRED DEFERRABLE;
+
+/* CastorFile constraints */
+ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_FileClass
+  FOREIGN KEY (fileClass) REFERENCES FileClass (id)
+  INITIALLY DEFERRED DEFERRABLE;
+CREATE INDEX I_CastorFile_FileClass ON CastorFile(FileClass);
+
+ALTER TABLE CastorFile ADD CONSTRAINT UN_CastorFile_LKFileName UNIQUE (LastKnownFileName);
+
+ALTER TABLE CastorFile MODIFY (LastKnownFileName CONSTRAINT NN_CastorFile_LKFileName NOT NULL);
 
 /* DiskPool2SvcClass constraints */
 ALTER TABLE DiskPool2SvcClass ADD CONSTRAINT PK_DiskPool2SvcClass_PC
@@ -964,23 +1106,6 @@ UPDATE Type2Obj SET svcHandler = 'JobSvc' WHERE type IN (60, 64, 65, 67, 78, 79,
 UPDATE Type2Obj SET svcHandler = 'GCSvc' WHERE type IN (73, 74, 83, 142, 149);
 UPDATE Type2Obj SET svcHandler = 'BulkStageReqSvc' WHERE type IN (50, 119);
 
-/* SQL statements for type StageDiskCopyReplicaRequest */
-CREATE TABLE StageDiskCopyReplicaRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StageDiskCopyReplicaRequ_Id PRIMARY KEY, svcClass INTEGER, client INTEGER, sourceSvcClass INTEGER, destDiskCopy INTEGER, sourceDiskCopy INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
-/* Set default values for the StageDiskCopyReplicaRequest table */
-ALTER TABLE StageDiskCopyReplicaRequest MODIFY flags DEFAULT 0;
-ALTER TABLE StageDiskCopyReplicaRequest MODIFY euid DEFAULT 0;
-ALTER TABLE StageDiskCopyReplicaRequest MODIFY egid DEFAULT 0;
-ALTER TABLE StageDiskCopyReplicaRequest MODIFY mask DEFAULT 0;
-ALTER TABLE StageDiskCopyReplicaRequest MODIFY pid DEFAULT 0;
-ALTER TABLE StageDiskCopyReplicaRequest MODIFY machine DEFAULT 'stager';
-
-/* Indexing StageDiskCopyReplicaRequest by source and destination diskcopy id */
-CREATE INDEX I_StageDiskCopyReplic_SourceDC 
-  ON StageDiskCopyReplicaRequest (sourceDiskCopy);
-CREATE INDEX I_StageDiskCopyReplic_DestDC 
-  ON StageDiskCopyReplicaRequest (destDiskCopy);
-
 /*********************************************************************/
 /* FileSystemsToCheck used to optimise the processing of filesystems */
 /* when they change status                                           */
@@ -1080,15 +1205,19 @@ CREATE TABLE StageRepackRequest (flags INTEGER, userName VARCHAR2(2048), euid NU
   INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 BEGIN
-  setObjStatusName('StageRepackRequest', 'status', 0, 'REPACK_STARTING');
-  setObjStatusName('StageRepackRequest', 'status', 1, 'REPACK_ONGOING');
-  setObjStatusName('StageRepackRequest', 'status', 2, 'REPACK_FINISHED');
-  setObjStatusName('StageRepackRequest', 'status', 3, 'REPACK_FAILED');
-  setObjStatusName('StageRepackRequest', 'status', 4, 'REPACK_ABORTING');
-  setObjStatusName('StageRepackRequest', 'status', 5, 'REPACK_ABORTED');
-  setObjStatusName('StageRepackRequest', 'status', 6, 'REPACK_SUBMITTED');
+  setObjStatusName('StageRepackRequest', 'status', tconst.REPACK_STARTING, 'REPACK_STARTING');
+  setObjStatusName('StageRepackRequest', 'status', tconst.REPACK_ONGOING, 'REPACK_ONGOING');
+  setObjStatusName('StageRepackRequest', 'status', tconst.REPACK_FINISHED, 'REPACK_FINISHED');
+  setObjStatusName('StageRepackRequest', 'status', tconst.REPACK_FAILED, 'REPACK_FAILED');
+  setObjStatusName('StageRepackRequest', 'status', tconst.REPACK_ABORTING, 'REPACK_ABORTING');
+  setObjStatusName('StageRepackRequest', 'status', tconst.REPACK_ABORTED, 'REPACK_ABORTED');
+  setObjStatusName('StageRepackRequest', 'status', tconst.REPACK_SUBMITTED, 'REPACK_SUBMITTED');
 END;
 /
+ALTER TABLE StageRepackRequest
+  ADD CONSTRAINT CK_StageRepackRequest_Status
+  CHECK (status IN (0, 1, 2, 3, 4, 5, 6));
+
 CREATE INDEX I_StageRepackRequest_ReqId ON StageRepackRequest (reqId);
 
 /* Temporary table used for listing segments of a tape */

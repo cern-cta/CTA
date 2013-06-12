@@ -191,6 +191,13 @@ BEGIN
 END;
 /
 
+/* PL/SQL method deleting disk2diskCopyJobs jobs of a castorfile */
+CREATE OR REPLACE PROCEDURE deleteDisk2DiskCopyJobs(inCfId INTEGER) AS
+BEGIN
+  DELETE FROM Disk2DiskCopyJob WHERE castorfile = inCfId;
+END;
+/
+
 /* PL/SQL method deleting migration jobs of a castorfile */
 CREATE OR REPLACE PROCEDURE deleteMigrationJobs(cfId NUMBER) AS
 BEGIN

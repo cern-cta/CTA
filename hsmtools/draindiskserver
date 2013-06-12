@@ -400,12 +400,17 @@ def genTable(rset, totallen, metadata):
     print '-' * totallen
 
     # Print the rows
+    tot = [0 for i in range(len(metadata))]
     for row in rset:
         for i in range(len(metadata)):
-            print str(row[metadata[i][3]]).ljust(metadata[i][4]),
+            value = row[metadata[i][3]]
+            print str(value).ljust(metadata[i][4]),
+            if isinstance(value, int ):
+                tot[i] += value
         print ''
     print '-' * totallen
-
+    for i in range(len(metadata)):
+        print str(tot[i]).ljust(metadata[i][4]),    
 
 #
 # genSimple

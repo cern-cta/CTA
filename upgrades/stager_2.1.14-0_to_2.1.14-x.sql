@@ -9,6 +9,9 @@ CREATE GLOBAL TEMPORARY TABLE DeleteDiskCopyHelper
   (dcId INTEGER CONSTRAINT PK_DDCHelper_dcId PRIMARY KEY, rc INTEGER)
   ON COMMIT PRESERVE ROWS;
 
+-- first round :
+--  - change the status of diskCopies to merge STAGED and CANBEMIGR
+--  - add a tapeStatus and nsOpenTime to CastorFile
 
 ALTER TABLE CastorFile ADD (tapeStatus INTEGER, nsOpenTime NUMBER);
 DELETE FROM ObjStatus WHERE object='DiskCopy' AND field='status'
@@ -77,113 +80,131 @@ DROP PROCEDURE getDiskCopiesForJob;
 DROP PROCEDURE processPrepareRequest;
 DROP PROCEDURE recreateCastorFile;
 
-/* bug #101714: RFE: VMGR DB should provide tape statuses independently of table definitions */
-/* For Vmgr_tape_status_view */
-CREATE OR REPLACE FUNCTION createRecallJobs(inCfId IN INTEGER,
-                                            inFileId IN INTEGER,
-                                            inNsHost IN VARCHAR2,
-                                            inFileSize IN INTEGER,
-                                            inFileClassId IN INTEGER,
-                                            inRecallGroupId IN INTEGER,
-                                            inSvcClassId IN INTEGER,
-                                            inEuid IN INTEGER,
-                                            inEgid IN INTEGER,
-                                            inRequestTime IN NUMBER,
-                                            inLogParams IN VARCHAR2) RETURN INTEGER AS
-  -- list of all valid segments, whatever the tape status. Used to trigger remigrations
-  varAllCopyNbs "numList" := "numList"();
-  varAllVIDs strListTable := strListTable();
-  -- whether we found a segment at all (valid or not). Used to detect potentially lost files
-  varFoundSeg boolean := FALSE;
-  varI INTEGER := 1;
-  NO_TAPE_ROUTE EXCEPTION;
-  PRAGMA EXCEPTION_INIT(NO_TAPE_ROUTE, -20100);
-  varErrorMsg VARCHAR2(2048);
+-- end of first round
+
+-- second round :
+--  - add missing constraints on statuses, 
+--  - create Disk2DiskCopyJob table
+--  - drop of stageDiskcopyReplicaRequest table
+--  - drop parent column from SubRequest
+
+ALTER TABLE SubRequest
+  ADD CONSTRAINT CK_SubRequest_Status
+  CHECK (status IN (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13));
+
+ALTER TABLE RecallMount
+  ADD CONSTRAINT CK_RecallMount_Status
+  CHECK (status IN (0, 1, 2));
+
+ALTER TABLE RecallJob
+  ADD CONSTRAINT CK_RecallJob_Status
+  CHECK (status IN (0, 1, 2));
+
+ALTER TABLE MigrationMount
+  ADD CONSTRAINT CK_MigrationMount_Status
+  CHECK (status IN (0, 1, 2, 3));
+
+ALTER TABLE MigrationJob
+  ADD CONSTRAINT CK_MigrationJob_Status
+  CHECK (status IN (0, 1, 3));
+
+ALTER TABLE DiskServer
+  ADD CONSTRAINT CK_DiskServer_Status
+  CHECK (status IN (0, 1, 2, 3));
+
+ALTER TABLE FileSystem
+  ADD CONSTRAINT CK_FileSystem_Status
+  CHECK (status IN (0, 1, 2, 3));
+
+ALTER TABLE DiskCopy
+  ADD CONSTRAINT CK_DiskCopy_Status
+  CHECK (status IN (0, 4, 5, 6, 7, 9, 10, 11));
+
+ALTER TABLE DiskCopy
+  ADD CONSTRAINT CK_DiskCopy_GcType
+  CHECK (gcType IN (0, 1, 2, 3, 4, 5));
+
+ALTER TABLE StageRepackRequest
+  ADD CONSTRAINT CK_StageRepackRequest_Status
+  CHECK (status IN (0, 1, 2, 3, 4, 5, 6));
+
+ALTER TABLE CastorFile
+  ADD CONSTRAINT CK_CastorFile_TapeStatus
+  CHECK (tapeStatus IN (0, 1, 2));
+
+/* Definition of the Disk2DiskCopyJob table. Each line is a disk2diskCopy job to process
+ *   id : unique DB identifier for this job
+ *   transferId : unique identifier for the transfer associated to this job
+ *   creationTime : creation time of this item, allows to compute easily waiting times
+ *   status : status of the job (PENDING, SCHEDULED, RUNNING) 
+ *   retryCounter : number of times the copy was attempted
+ *   ouid : the originator user id
+ *   ogid : the originator group id
+ *   castorFile : the concerned file
+ *   nsOpenTime : the nsOpenTime of the castorFile when this job was created
+ *                Allows to detect if the file has been overwritten during replication
+ *   destSvcClass : the destination service class
+ *   replicationType : the type of replication involved (user, internal or draining)
+ *   replacedDcId : in case of draining, the replaced diskCopy to be dropped
+ *   destDcId : the destination diskCopy
+ */
+CREATE TABLE Disk2DiskCopyJob
+  (id NUMBER CONSTRAINT PK_Disk2DiskCopyJob_Id PRIMARY KEY 
+             CONSTRAINT NN_Disk2DiskCopyJob_Id NOT NULL,
+   transferId VARCHAR2(2048) CONSTRAINT NN_Disk2DiskCopyJob_TId NOT NULL,
+   creationTime INTEGER CONSTRAINT NN_Disk2DiskCopyJob_CTime NOT NULL,
+   status INTEGER CONSTRAINT NN_Disk2DiskCopyJob_Status NOT NULL,
+   retryCounter INTEGER DEFAULT 0 CONSTRAINT NN_Disk2DiskCopyJob_retryCnt NOT NULL,
+   ouid INTEGER CONSTRAINT NN_Disk2DiskCopyJob_ouid NOT NULL,
+   ogid INTEGER CONSTRAINT NN_Disk2DiskCopyJob_ogid NOT NULL,
+   castorFile INTEGER CONSTRAINT NN_Disk2DiskCopyJob_CastorFile NOT NULL,
+   nsOpenTime INTEGER CONSTRAINT NN_Disk2DiskCopyJob_NSOpenTime NOT NULL,
+   destSvcClass INTEGER CONSTRAINT NN_Disk2DiskCopyJob_dstSC NOT NULL,
+   replicationType INTEGER CONSTRAINT NN_Disk2DiskCopyJob_Type NOT NULL,
+   replacedDcId INTEGER,
+   destDcId INTEGER  CONSTRAINT NN_Disk2DiskCopyJob_DCId NOT NULL)
+INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE INDEX I_Disk2DiskCopyJob_Tid ON Disk2DiskCopyJob(transferId);
+CREATE INDEX I_Disk2DiskCopyJob_CfId ON Disk2DiskCopyJob(CastorFile);
+CREATE INDEX I_Disk2DiskCopyJob_CT_Id ON Disk2DiskCopyJob(creationTime, id);
 BEGIN
-  BEGIN
-    -- loop over the existing segments
-    FOR varSeg IN (SELECT s_fileId as fileId, 0 as lastModTime, copyNo, segSize, 0 as comprSize,
-                          Cns_seg_metadata.vid, fseq, blockId, checksum_name, nvl(checksum, 0) as checksum,
-                          Cns_seg_metadata.s_status as segStatus, Vmgr_tape_status_view.status as tapeStatus
-                     FROM Cns_seg_metadata@remotens, Vmgr_tape_status_view@remotens
-                    WHERE Cns_seg_metadata.s_fileid = inFileId
-                      AND Vmgr_tape_status_view.VID = Cns_seg_metadata.VID
-                    ORDER BY copyno, fsec) LOOP
-      varFoundSeg := TRUE;
-      -- Is the segment valid
-      IF varSeg.segStatus = '-' THEN
-        -- remember the copy number and tape
-        varAllCopyNbs.EXTEND;
-        varAllCopyNbs(varI) := varSeg.copyno;
-        varAllVIDs.EXTEND;
-        varAllVIDs(varI) := varSeg.vid;
-        varI := varI + 1;
-        -- Is the segment on a valid tape from recall point of view ?
-        IF BITAND(varSeg.tapeStatus, tconst.TAPE_DISABLED) = 0 AND
-           BITAND(varSeg.tapeStatus, tconst.TAPE_EXPORTED) = 0 AND
-           BITAND(varSeg.tapeStatus, tconst.TAPE_ARCHIVED) = 0 THEN
-          -- create recallJob
-          INSERT INTO RecallJob (id, castorFile, copyNb, recallGroup, svcClass, euid, egid,
-                                 vid, fseq, status, fileSize, creationTime, blockId, fileTransactionId)
-          VALUES (ids_seq.nextval, inCfId, varSeg.copyno, inRecallGroupId, inSvcClassId,
-                  inEuid, inEgid, varSeg.vid, varSeg.fseq, tconst.RECALLJOB_PENDING, inFileSize, inRequestTime,
-                  varSeg.blockId, NULL);
-          -- log "created new RecallJob"
-          logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_CREATING_RECALLJOB, inFileId, inNsHost, 'stagerd',
-                   inLogParams || ' copyNb=' || TO_CHAR(varSeg.copyno) || ' TPVID=' || varSeg.vid ||
-                   ' fseq=' || TO_CHAR(varSeg.fseq || ' FileSize=' || TO_CHAR(inFileSize)));
-        ELSE
-          -- invalid tape found. Log it.
-          -- "createRecallCandidate: found segment on unusable tape"
-          logToDLF(NULL, dlf.LVL_DEBUG, dlf.RECALL_UNUSABLE_TAPE, inFileId, inNsHost, 'stagerd',
-                   inLogParams || ' segStatus=OK tapeStatus=' || tapeStatusToString(varSeg.tapeStatus));
-        END IF;
-      ELSE
-        -- invalid segment tape found. Log it.
-        -- "createRecallCandidate: found unusable segment"
-        logToDLF(NULL, dlf.LVL_NOTICE, dlf.RECALL_INVALID_SEGMENT, inFileId, inNsHost, 'stagerd',
-                 inLogParams || ' segStatus=' ||
-                 CASE varSeg.segStatus WHEN '-' THEN 'OK'
-                                       WHEN 'D' THEN 'DISABLED'
-                                       ELSE 'UNKNOWN:' || varSeg.segStatus END);
-      END IF;
-    END LOOP;
-  EXCEPTION WHEN OTHERS THEN
-    -- log "error when retrieving segments from namespace"
-    logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_UNKNOWN_NS_ERROR, inFileId, inNsHost, 'stagerd',
-             inLogParams || ' ErrorMessage=' || SQLERRM);
-    RETURN serrno.SEINTERNAL;
-  END;
-  -- If we did not find any valid segment to recall, log a critical error as the file is probably lost
-  IF NOT varFoundSeg THEN
-    -- log "createRecallCandidate: no segment found for this file. File is probably lost"
-    logToDLF(NULL, dlf.LVL_CRIT, dlf.RECALL_NO_SEG_FOUND_AT_ALL, inFileId, inNsHost, 'stagerd', inLogParams);
-    RETURN serrno.ESTNOSEGFOUND;
-  END IF;
-  -- If we found no valid segment (but some disabled ones), log a warning
-  IF varAllCopyNbs.COUNT = 0 THEN
-    -- log "createRecallCandidate: no valid segment to recall found"
-    logToDLF(NULL, dlf.LVL_WARNING, dlf.RECALL_NO_SEG_FOUND, inFileId, inNsHost, 'stagerd', inLogParams);
-    RETURN serrno.ESTNOSEGFOUND;
-  END IF;
-  BEGIN
-    -- create missing segments if needed
-    createMJForMissingSegments(inCfId, inFileSize, inFileClassId, varAllCopyNbs,
-                               varAllVIDs, inFileId, inNsHost, inLogParams);
-  EXCEPTION WHEN NO_TAPE_ROUTE THEN
-    -- there's at least a missing segment and we cannot recreate it!
-    -- log a "no route to tape defined for missing copy" error, but don't fail the recall
-    logToDLF(NULL, dlf.LVL_ALERT, dlf.RECALL_MISSING_COPY_NO_ROUTE, inFileId, inNsHost, 'stagerd', inLogParams);
-  WHEN OTHERS THEN
-    -- some other error happened, log "unexpected error when creating missing copy", but don't fail the recall
-    varErrorMsg := 'Oracle error caught : ' || SQLERRM;
-    logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_MISSING_COPY_ERROR, inFileId, inNsHost, 'stagerd',
-      'errorCode=' || to_char(SQLCODE) ||' errorMessage="' || varErrorMsg
-      ||'" stackTrace="' || dbms_utility.format_error_backtrace ||'"');
-  END;
-  RETURN 0;
+  -- PENDING status is when a Disk2DiskCopyJob is created
+  -- It is immediately candidate for being scheduled
+  setObjStatusName('Disk2DiskCopyJob', 'status', dconst.DISK2DISKCOPYJOB_PENDING, 'DISK2DISKCOPYJOB_PENDING');
+  -- SCHEDULED status is when the Disk2DiskCopyJob has been scheduled and is not yet started
+  setObjStatusName('Disk2DiskCopyJob', 'status', dconst.DISK2DISKCOPYJOB_SCHEDULED, 'DISK2DISKCOPYJOB_SCHEDULED');
+  -- RUNNING status is when the disk to disk copy is ongoing
+  setObjStatusName('Disk2DiskCopyJob', 'status', dconst.DISK2DISKCOPYJOB_RUNNING, 'DISK2DISKCOPYJOB_RUNNING');
+  -- USER replication type is when replication is triggered by the user
+  setObjStatusName('Disk2DiskCopyJob', 'replicationType', dconst.REPLICATIONTYPE_USER, 'REPLICATIONTYPE_USER');
+  -- INTERNAL replication type is when replication is triggered internally (e.g. dual copy disk pools)
+  setObjStatusName('Disk2DiskCopyJob', 'replicationType', dconst.REPLICATIONTYPE_INTERNAL, 'REPLICATIONTYPE_INTERNAL');
+  -- DRAINING replication type is when replication is triggered by a drain operation
+  setObjStatusName('Disk2DiskCopyJob', 'replicationType', dconst.REPLICATIONTYPE_DRAINING, 'REPLICATIONTYPE_DRAINING');
 END;
 /
+ALTER TABLE Disk2DiskCopyJob ADD CONSTRAINT FK_Disk2DiskCopyJob_CastorFile
+  FOREIGN KEY (castorFile) REFERENCES CastorFile(id);
+ALTER TABLE Disk2DiskCopyJob ADD CONSTRAINT FK_Disk2DiskCopyJob_SvcClass
+  FOREIGN KEY (destSvcClass) REFERENCES SvcClass(id);
+ALTER TABLE Disk2DiskCopyJob
+  ADD CONSTRAINT CK_Disk2DiskCopyJob_Status
+  CHECK (status IN (0, 1, 2));
+ALTER TABLE Disk2DiskCopyJob
+  ADD CONSTRAINT CK_Disk2DiskCopyJob_type
+  CHECK (replicationType IN (0, 1, 2)
+
+INSERT INTO CastorConfig
+  VALUES ('D2dCopy', 'MaxNbRetries', '2', 'The maximum number of retries for disk to disk copies before it is considered failed. Here 2 means we will do in total 3 attempts.');
+
+DROP TABLE StageDiskCopyReplicaRequest;
+ALTER TABLE SubRequest DROP (parent);
+DROP PROCEDURE makeSubRequestWait;
+DROP PROCEDURE disk2DiskCopyFailed;
+DROP PROCEDURE disk2DiskCopyDone;
+DROP PROCEDURE createDiskCopyReplicaRequest;
+DROP PROCEDURE getBestDiskCopyToReplicate;
+DROP PROCEDURE transferToSchedule;
 
 UPDATE UpgradeLog SET endDate = systimestamp, state = 'COMPLETE'
  WHERE release = '2_1_14_X';

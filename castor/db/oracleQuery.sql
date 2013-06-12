@@ -41,8 +41,7 @@ BEGIN
                    (SELECT /*+ INDEX(Subrequest I_Subrequest_DiskCopy)*/ UNIQUE Req.svcClassName
                       FROM SubRequest,
                         (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id, svcClassName FROM StagePrepareToPutRequest UNION ALL
-                         SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcClassName FROM StagePrepareToUpdateRequest UNION ALL
-                         SELECT /*+ INDEX(StageDiskCopyReplicaRequest PK_StageDiskCopyReplicaRequ_Id) */ id, svcClassName FROM StageDiskCopyReplicaRequest) Req
+                         SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcClassName FROM StagePrepareToUpdateRequest) Req
                           WHERE SubRequest.diskCopy = DC.id
                             AND SubRequest.status IN (5, 6, 13)  -- WAITSUBREQ, READY, READYFORSCHED
                             AND request = Req.id)              
@@ -83,7 +82,14 @@ BEGIN
        WHERE Castorfile.id IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
          AND Subrequest.CastorFile = Castorfile.id
          AND SubRequest.status IN (dconst.SUBREQUEST_WAITTAPERECALL, dconst.SUBREQUEST_START, dconst.SUBREQUEST_RESTART)
-         AND Req.id = SubRequest.request)
+         AND Req.id = SubRequest.request
+     UNION
+      SELECT CastorFile.fileId, CastorFile.nsHost, 0, '', Castorfile.fileSize, 1, -- WAITDISK2DISKCOPY
+             '', '', 0, CastorFile.lastKnownFileName, Disk2DiskCopyJob.creationTime,
+             getSvcClassName(Disk2DiskCopyJob.destSvcClass), Disk2DiskCopyJob.creationTime, -1
+        FROM CastorFile, Disk2DiskCopyJob
+       WHERE Castorfile.id IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
+         AND Disk2DiskCopyJob.CastorFile = Castorfile.id)
     ORDER BY fileid, nshost;
   ELSE
     OPEN result FOR
@@ -107,8 +113,7 @@ BEGIN
                         UNIQUE decode(nvl(SubRequest.status, -1), -1, -1, DC.status)
                           FROM SubRequest,
                             (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id, svcclass, svcClassName FROM StagePrepareToPutRequest UNION ALL
-                             SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcclass, svcClassName FROM StagePrepareToUpdateRequest UNION ALL
-                             SELECT /*+ INDEX(StageDiskCopyReplicaRequest PK_StageDiskCopyReplicaRequ_Id) */ id, svcclass, svcClassName FROM StageDiskCopyReplicaRequest) Req
+                             SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcclass, svcClassName FROM StagePrepareToUpdateRequest) Req
                          WHERE SubRequest.CastorFile = CastorFile.id
                            AND SubRequest.request = Req.id
                            AND SubRequest.status IN (5, 6, 13)  -- WAITSUBREQ, READY, READYFORSCHED
@@ -148,7 +153,15 @@ BEGIN
          AND Subrequest.CastorFile = Castorfile.id
          AND SubRequest.status IN (dconst.SUBREQUEST_WAITTAPERECALL, dconst.SUBREQUEST_START, dconst.SUBREQUEST_RESTART)
          AND Req.id = SubRequest.request
-         AND Req.svcClass = svcClassId)
+         AND Req.svcClass = svcClassId
+     UNION
+      SELECT CastorFile.fileId, CastorFile.nsHost, 0, '', Castorfile.fileSize, 1, -- WAITDISK2DISKCOPY
+             '', '', 0, CastorFile.lastKnownFileName, Disk2DiskCopyJob.creationTime,
+             getSvcClassName(Disk2DiskCopyJob.destSvcClass), Disk2DiskCopyJob.creationTime, -1
+        FROM CastorFile, Disk2DiskCopyJob
+       WHERE Castorfile.id IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
+         AND Disk2DiskCopyJob.CastorFile = Castorfile.id
+         AND Disk2DiskCopyJob.destSvcClass = svcClassId)
     ORDER BY fileid, nshost;
    END IF;
 END;

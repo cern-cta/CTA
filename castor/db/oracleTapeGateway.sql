@@ -852,8 +852,7 @@ BEGIN
            SR.getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED, --  (not strictly correct but the request is over anyway)
            SR.lastModificationTime = getTime(),
            SR.errorCode = serrno.SEINTERNAL,
-           SR.errorMessage = 'File recall from tape has failed (tape not available), please try again later',
-           SR.parent = 0
+           SR.errorMessage = 'File recall from tape has failed (tape not available), please try again later'
      WHERE SR.castorFile = inCfId
        AND SR.status IN (dconst.SUBREQUEST_WAITTAPERECALL, dconst.SUBREQUEST_WAITSUBREQ);
   END IF;

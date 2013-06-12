@@ -30,7 +30,7 @@
 Manages the transfers pending on the different diskServers'''
 
 import threading, socket
-import dlf, time
+import dlf, time, itertools
 import castor_tools, diskserverlistcache, connectionpool
 from transfermanagerdlf import msgs
 from transfer import TransferType, tupleToTransfer
@@ -67,15 +67,16 @@ class RecentSchedules(object):
     '''Checks whether the given job has been already scheduled on the given machine recently'''
     return (transferid in self.schedulesInCurrentSlot and self.schedulesInCurrentSlot[transferid] == diskServer) or \
            (transferid in self.schedulesInPreviousSlot and self.schedulesInPreviousSlot[transferid] == diskServer)
- 
 
-class QueueingTransfer(object):
-  '''little container describing a queueing transfer'''
-  def __init__(self, transfer, isSrcRunning):
+
+class SrcRunningTransfer(object):
+  '''little container describing a running source d2d transfer'''
+  def __init__(self, srcTransfer, startTime):
     '''constructor'''
-    self.transfer = transfer
-    self.isSrcRunning = isSrcRunning
+    self.srcTransfer = srcTransfer
+    self.startTime = startTime
 
+    
 class ServerQueue(dict):
   '''a dictionnary of queueing transfers, with the list of machines to which they were sent
   and a reverse lookup facility by machine'''
@@ -85,13 +86,12 @@ class ServerQueue(dict):
     dict.__init__(self)
     # a global lock for this queue
     self.lock = threading.Lock()
-    # dictionnary containing the set of machines on which each transfer is queueing
+    # dictionnary containing the set of machines on which transfer is queueing.
+    # Keys are tuple (transferid, transferType), values are sets of diskServer names
     self.transfersLocations = {}
-    # list of source d2d transfers pending
-    self.d2dsrcpending = set()
-    # list of source d2d transfers running
+    # dictionnary of SrcRunningTransfer running, by transferId
     self.d2dsrcrunning = {}
-    # memory of recently scheduled jobs
+    # memory of recently scheduled jobs (d2ddst and std only)
     self.recentlyScheduled = RecentSchedules()
     # get configuration
     self.config = castor_tools.castorConf()
@@ -102,47 +102,48 @@ class ServerQueue(dict):
     try:
       # in case we put back a d2ddest transfer, check that source is still around
       if putBack and transfer.transferType == TransferType.D2DDST and \
-         transfer.transferId not in self.d2dsrcpending and transfer.transferId not in self.d2dsrcrunning:
+         (transfer.transferId, TransferType.D2DSRC) not in self.transfersLocations and \
+         transfer.transferId not in self.d2dsrcrunning:
         # a d2ddest wants to (re)start but no source exists in the queuing nor in the running lists:
         # we probably have a race condition with a d2ddest that was put back in the queue too late
         dlf.writenotice(msgs.D2DDESTRESTARTERROR, subreqId=transfer.transferId)
         return
+
+      # in case we put back a d2dsrc transfer, drop source from running job if it's already
+      # running on the concerned machine.
+      # It may be there if we agreed that its start and our answer never made it
+      # to the diskServer, which then called transferBackToQueue
+      if putBack and transfer.transferType == TransferType.D2DSRC and \
+         transfer.transferId in self.d2dsrcrunning and \
+         transfer.diskServer == self.d2dsrcrunning[transfer.transferId].srcTransfer.diskServer:
+        del self.d2dsrcrunning[transfer.transferId]
+        # reset flag of the destinations that believe source is running
+        if (transfer.transferId, TransferType.D2DDST) in self.transfersLocations:
+          for ds in self.transfersLocations[(transfer.transferId, TransferType.D2DDST)]:
+            self[ds][transfer.transferId].isSrcRunning = False
+
       # add transfer to the list of queueing transfers on the diskServer
-      # note the d2dsrcrunning aregument, used only for d2ddest transfers and telling whether the source is ready
-      # As it could be that the source has already started when the destinations are entered, we have
-      # to infer this argument from the transferId, looking into the list of running sources
       if transfer.diskServer not in self:
         self[transfer.diskServer] = {}
-      self[transfer.diskServer][transfer.transferId] = QueueingTransfer(transfer,
-                                                                        transfer.transferId in self.d2dsrcrunning)
-      # add the diskServer to the transfersLocations list for this transfer (except for sources)
-      if transfer.transferType != TransferType.D2DSRC:
-        if transfer.transferId not in self.transfersLocations:
-          self.transfersLocations[transfer.transferId] = set()
-        self.transfersLocations[transfer.transferId].add(transfer.diskServer)
-      else:
-        # in case, drop source from running job. It may be there id we agreed we its start and
-        # our answer never made it to the diskServer, which then called transferBackToQueue
-        if transfer.transferId in self.d2dsrcrunning:
-          del self.d2dsrcrunning[transfer.transferId]
-        # put back source to pending
-        self.d2dsrcpending.add(transfer.transferId)
-        # reset flag of the destinations that believe source is running
-        if transfer.transferId in self.transfersLocations:
-          for ds in self.transfersLocations[transfer.transferId]:
-            self[ds][transfer.transferId].isSrcRunning = False
+      self[transfer.diskServer][transfer.transferId] = transfer
+
+      # add the diskServer to the transfersLocations list for this transfer
+      locKey = (transfer.transferId, transfer.transferType)
+      if locKey not in self.transfersLocations:
+        self.transfersLocations[locKey] = set()
+      self.transfersLocations[locKey].add(transfer.diskServer)
     finally:
       self.lock.release()
 
-  def _removetransfer(self, transferId, transfersPerMachine):
+  def _removetransfer(self, transferId, transferType, transfersPerMachine):
     '''internal method removing a given transfer from the queue, adding its locations
     to the given dictionnary and calling d2dend if needed. Returns the deleted transfer.
     Note that the locking is not handled here, it is left to the responsability of the caller'''
     try:
       # get the list of machines potentially running the transfer
-      machines = self.transfersLocations[transferId]
+      machines = self.transfersLocations[(transferId, transferType)]
       # clean up transfersLocations
-      del self.transfersLocations[transferId]
+      del self.transfersLocations[(transferId, transferType)]
       # for each machine, cleanup the server queue and note down where the transfer was sent
       transfer = None
       for machine in machines:
@@ -171,8 +172,8 @@ class ServerQueue(dict):
     # first cleanup our own queue
     self.lock.acquire()
     try:
-      for transferId in transferIds:
-        transfer = self._removetransfer(transferId, transfersPerMachine)
+      for transferId, transferType in transferIds:
+        transfer = self._removetransfer(transferId, transferType, transfersPerMachine)
         if transfer:
           results.append(transfer)
     finally:
@@ -183,9 +184,14 @@ class ServerQueue(dict):
         connectionpool.connections.killtransfers(machine, tuple(transfersPerMachine[machine]))
       except Exception:
         # ignore, we've tried, there is not much more we can do
-        None
+        pass
     # return
     return results
+
+  def removeAnyType(self, transferIds):
+    '''drops transfers from the queues and return the dropped transfers. Handles transfers
+       without knowning their type. In other words, it's trying to drop STD, D2DSRC and D2DDST'''
+    self.remove(itertools.product(transferIds, [TransferType.STD, TransferType.D2DSRC, TransferType.D2DDST]))
 
   def removeall(self, requser):
     '''drops transfers from the queues return a dictionnary "transferId => fileId" listing
@@ -197,21 +203,21 @@ class ServerQueue(dict):
     try:
       transferstodrop = []
       # Go through all transfers
-      for transferId in self.transfersLocations:
+      for transferId, transferType in self.transfersLocations:
         # ignore if not the right user
         if requser:
           # get user of for first location. For + break is used as set has no access to a random item
-          for ds in self.transfersLocations[transferId]:
+          for ds in self.transfersLocations[(transferId, transferType)]:
             transfer = self[ds][transferId].transfer
             break
           if transfer.user != requser:
             continue
         # else put in the list of transfers to really drop
         # note that we can not drop here as we are looping on transfersLocations that would be modified
-        transferstodrop.append(transfer.transferId)
+        transferstodrop.append((transfer.transferId, transfer.transferType))
       # now remove selected transfers
-      for transferId in transferstodrop:
-        transfer = self._removetransfer(transferId, transfersPerMachine)
+      for transferId, transferType in transferstodrop:
+        transfer = self._removetransfer(transferId, transferType, transfersPerMachine)
         if transfer:
           results.append(transfer)
     finally:
@@ -225,24 +231,36 @@ class ServerQueue(dict):
 
   def transferStarting(self, transfer):
     '''Removes a transfer and gives back the list of other nodes where it was pending.
-    Raises ValueError when not found'''
+    Raises ValueError when not found.
+    In case of D2DSRC transfers, remember where it started.
+    In case of D2DDST transfers, returns the place where the corresponding source started,
+    or raises EnvironmentError if the source did not yet start'''
     if transfer.transferType == TransferType.D2DSRC:
       self.lock.acquire()
       try:
         # the source transfer is starting, mark all destinations (and the source) ready
         try :
-          # check whether the source transfer was canceled in the meantime
-          if transfer.transferId not in self.d2dsrcpending:
-            # source was canceled. This only happens when all desctinations were canceled too
-            # log 'denying start of source transfer as it has been canceled'
-            dlf.writedebug(msgs.TRANSFERSRCCANCELED, DiskServer=transfer.diskServer,
-                           subreqId=transfer.transferId, reqId=transfer.reqId)
-            raise ValueError
+          # check whether the source transfer is pending
+          if (transfer.transferId, transfer.transferType) not in self.transfersLocations:
+            # it is not. It may be running or it may have been canceled in the meantime
+            if transfer.transferId not in self.d2dsrcrunning:
+              # source was canceled. This only happens when all destinations were canceled too
+              # log 'denying start of source transfer as it has been canceled'
+              dlf.writedebug(msgs.TRANSFERSRCCANCELED, DiskServer=transfer.diskServer,
+                             subreqId=transfer.transferId, reqId=transfer.reqId)
+              raise ValueError('canceled while queuing')
+            else:
+              # source has really started somewhere else. Let the diskServer know by raising an exception
+              # "Transfer had already started. Cancel start" message
+              dlf.writedebug(msgs.TRANSFERALREADYSTARTED, DiskServer=transfer.diskServer,
+                             subreqId=transfer.transferId, reqId=transfer.reqId)
+              raise ValueError('already started on another host')
           # remember where the source is running
-          self.d2dsrcrunning[transfer.transferId] = transfer.diskServer
-          self.d2dsrcpending.remove(transfer.transferId)
+          self.d2dsrcrunning[transfer.transferId] = SrcRunningTransfer(transfer, time.time())
+          machines = self.transfersLocations[(transfer.transferId, transfer.transferType)]
+          del self.transfersLocations[(transfer.transferId, transfer.transferType)]
           # and make the destinations (if any) aware that it can now start this transfer
-          for ds in self.transfersLocations[transfer.transferId]:
+          for ds in self.transfersLocations[(transfer.transferId, TransferType.D2DDST)]:
             self[ds][transfer.transferId].isSrcRunning = True
             try:
               connectionpool.connections.retryD2dDest(ds, transfer.transferId, transfer.reqId)
@@ -258,7 +276,7 @@ class ServerQueue(dict):
       self.lock.acquire()
       try:
         # check whether the transfer has already been started somewhere else
-        if transfer.transferId not in self.transfersLocations or \
+        if (transfer.transferId, transfer.transferType) not in self.transfersLocations or \
            transfer.transferId not in self[transfer.diskServer]:
           # this transfer is supposed to be running. Let's check that it is not suppose to be
           # running on the very machine that wants to start it. That would mean that our answer
@@ -269,12 +287,15 @@ class ServerQueue(dict):
             # "Transfer starting reconfirmed" message
             dlf.writedebug(msgs.TRANSFERSTARTCONFIRMED, DiskServer=transfer.diskServer,
                            subreqId=transfer.transferId, reqId=transfer.reqId)
-            return
+            if transfer.transferType == TransferType.D2DDST:
+              return self.d2dsrcrunning[transfer.transferId]
+            else:
+              return
           # The transfer has really started somewhere else. Let the diskServer know by raising an exception
           # "Transfer had already started. Cancel start" message
           dlf.writedebug(msgs.TRANSFERALREADYSTARTED, DiskServer=transfer.diskServer,
                          subreqId=transfer.transferId, reqId=transfer.reqId)
-          raise ValueError
+          raise ValueError('already started on another host')
         # We are now sure that the transfer has not yet started
         # if a destination transfer wants to start, check whether the source is ready
         if transfer.transferType == TransferType.D2DDST and \
@@ -288,27 +309,30 @@ class ServerQueue(dict):
         # by the diskServers from the queues seen by the central manager. In case of a
         # restart of a diskServer manager, its queue will be magically "cleaned up"
         # However, the diskServers concerned will be notified.
-        machines = self.transfersLocations[transfer.transferId]
-        del self.transfersLocations[transfer.transferId]
+        machines = self.transfersLocations[(transfer.transferId, transfer.transferType)]
+        del self.transfersLocations[(transfer.transferId, transfer.transferType)]
         for machine in machines:
           del self[machine][transfer.transferId]
         # Add this transfer to the recently scheduled ones
         self.recentlyScheduled.add(transfer.transferId, transfer.diskServer)
+        # if return source transfer
+        if transfer.transferType == TransferType.D2DDST:
+          return self.d2dsrcrunning[transfer.transferId].srcTransfer
       finally:
         self.lock.release()
-      # inform all other machines that this job has been handled
-      for machine in machines:
-        if machine != transfer.diskServer:
-          try:
-            # "Informing diskServer that job started somewhere else" message
-            dlf.writedebug(msgs.INFODSJOBSTARTED, DiskServer=machine,
-                           subreqId=transfer.transferId, reqId=transfer.reqId)
-            connectionpool.connections.transferAlreadyStarted(machine, transfer.transferId, transfer.reqId)
-          except Exception, e:
-            # "Failed to inform diskServer that job started elsewhere" message
-            dlf.writenotice(msgs.INFODSJOBSTARTEDFAILED, DiskServer=machine,
-                            subreqId=transfer.transferId, reqId=transfer.reqId,
-                            Type=str(e.__class__), Message=str(e))
+    # inform all other machines that this job has been handled
+    for machine in machines:
+      if machine != transfer.diskServer:
+        try:
+          # "Informing diskServer that job started somewhere else" message
+          dlf.writedebug(msgs.INFODSJOBSTARTED, DiskServer=machine, startedOn=transfer.diskServer,
+                         subreqId=transfer.transferId, reqId=transfer.reqId)
+          connectionpool.connections.transferAlreadyStarted(machine, transfer.transferId, transfer.reqId)
+        except Exception, e:
+          # "Failed to inform diskServer that job started elsewhere" message
+          dlf.writenotice(msgs.INFODSJOBSTARTEDFAILED, DiskServer=machine,
+                          subreqId=transfer.transferId, reqId=transfer.reqId,
+                          Type=str(e.__class__), Message=str(e))
 
   def d2dend(self, transfer, transferCancelation=False):
     '''called when a d2d copy ends in order to inform the source.
@@ -320,21 +344,22 @@ class ServerQueue(dict):
       if transfer.transferId not in self.d2dsrcrunning:
         # the transfer has already disappeared (or was never started). This
         # can happen due to raise conditions, e.g when we get a timeout on the
-        # start of the transfer when it has started already but the acknoledgement
+        # start of the transfer when it has started already but the acknowledgement
         # did not yet come.
         # We can ignore these cases, but we still log
         # "Unable to end d2d as it's not in the server list. Probable race condition" message
         dlf.writewarning(msgs.D2DENDEXCEPTION, subreqId=transfer.transferId, reqId=transfer.reqId)
         # in case, discard the src transfer from the pending list
-        self.d2dsrcpending.discard(transfer.transferId)
+        del self.transfersLocations[(transfer.transferId, TransferType.D2DSRC)]
         return
-      # get the source location
-      diskServer = self.d2dsrcrunning[transfer.transferId]
+      # get the source transfer
+      srcTransfer = self.d2dsrcrunning[transfer.transferId]
+      srcDiskServer = srcTransfer.srcTransfer.diskServer
       # remember the transfer
-      qTransfer = self[diskServer][transfer.transferId]
+      transfer = self[srcDiskServer][transfer.transferId]
       # remove d2dsrc transfer from the queue
       if not transferCancelation:
-        del self[diskServer][transfer.transferId]
+        del self[srcDiskServer][transfer.transferId]
       # remove from list of d2dsrcs
       del self.d2dsrcrunning[transfer.transferId]
     finally:
@@ -342,38 +367,47 @@ class ServerQueue(dict):
         self.lock.release()
     # inform the source diskServer
     try:
-      connectionpool.connections.d2dend(diskServer, transfer.asTuple())
+      connectionpool.connections.d2dend(srcDiskServer, transfer.asTuple())
     except Exception, e:
       # "Failed to inform diskServer that a d2d copy is over"
-      dlf.writenotice(msgs.D2DOVERINFORMFAILED, DiskServer=diskServer, subreqId=transfer.transferId,
+      dlf.writenotice(msgs.D2DOVERINFORMFAILED, DiskServer=srcDiskServer, subreqId=transfer.transferId,
                       reqId=transfer.reqId, fileId=transfer.fileId, Type=str(e.__class__), Message=str(e))
       # add back the transfer to the local lists
       if not transferCancelation:
         self.lock.acquire()
       try:
-        self[diskServer][qTransfer.transferId] = qTransfer
-        self.d2dsrcrunning[qTransfer.transferId] = diskServer
+        self[srcDiskServer][transfer.transferId] = transfer
+        self.d2dsrcrunning[transfer.transferId] = srcTransfer
       finally:
         if not transferCancelation:
           self.lock.release()
 
-
-  def putRunningD2dSource(self, diskServer, transfer):
+  def d2dendById(self, transferId):
+    '''Equivalent to d2dend but taking only the transferId rather than the transfer object'''
+    if transferId in self.d2dsrcrunning:
+      # if source is running, call regular d2dend
+      self.d2dend(self.d2dsrcrunning[transferId].srcTransfer)
+    else:
+      # else discard the src transfer from the pending list in case
+      del self.transfersLocations[(transferId, TransferType.D2DSRC)]
+    
+  def putRunningD2dSource(self, transfer):
     '''Adds a new d2dsrc transfer to the list of runnign ones'''
     self.lock.acquire()
     try:
       # add transfer to the list of running d2dsrc transfers on the diskServer
-      if diskServer not in self:
-        self[diskServer] = {}
-      self[diskServer][transfer.transferId] = QueueingTransfer(transfer, 'True')
-      self.d2dsrcrunning[transfer.transferId] = diskServer
+      if transfer.diskServer not in self:
+        self[transfer.diskServer] = {}
+      self[transfer.diskServer][transfer.transferId] = transfer
+      self.d2dsrcrunning[transfer.transferId] = SrcRunningTransfer(transfer, time.time())
     finally:
       self.lock.release()
 
-  def _isTransferMatchingAndGetPool(self, transferId, diskServerList, reqdiskpool=None, reqUser=None):
+  def _isTransferMatchingAndGetPool(self, transferId, transferType, diskServerList,
+                                    reqdiskpool=None, reqUser=None):
     '''checks whether a given transfer matches the given filter on diskpool and user'''
     # pick a random machine (we loop and break straight, due to lack of "getrandomitem" on a set
-    for diskServer in self.transfersLocations[transferId]:
+    for diskServer in self.transfersLocations[(transferId, transferType)]:
       # get diskpool
       try:
         diskpool = diskServerList.getDiskServerPool(diskServer)
@@ -388,7 +422,7 @@ class ServerQueue(dict):
         diskpool = '???'
       # are we interested in this user ?
       if reqUser:
-        if reqUser != self[diskServer][transferId].transfer.user:
+        if reqUser != self[diskServer][transferId].user:
           return False
       break
     # transfer matches the filter
@@ -400,15 +434,16 @@ class ServerQueue(dict):
     self.lock.acquire()
     try:
       # for each transfer
-      for transferId in self.transfersLocations:
+      for transferId, transferType in self.transfersLocations:
         # check that we are interested in it
-        diskpool = self._isTransferMatchingAndGetPool(transferId, diskserverlistcache.diskServerList,
+        diskpool = self._isTransferMatchingAndGetPool(transferId, transferType,
+                                                      diskserverlistcache.diskServerList,
                                                       reqdiskpool, reqUser)
         if diskpool:
           # go through the different instances of this transfer
-          for diskServer in self.transfersLocations[transferId]:
+          for diskServer in self.transfersLocations[(transferId, transferType)]:
             # get information about the transfer
-            transfer = self[diskServer][transferId].transfer
+            transfer = self[diskServer][transferId]
             try:
               protocol = transfer.protocol
             except AttributeError:
@@ -429,9 +464,10 @@ class ServerQueue(dict):
     self.lock.acquire()
     try:
       # for each transfer
-      for transferId in self.transfersLocations:
+      for transferId, transferType in self.transfersLocations:
         # check that we are interested in it
-        diskpool = self._isTransferMatchingAndGetPool(transferId, diskserverlistcache.diskServerList,
+        diskpool = self._isTransferMatchingAndGetPool(transferId, transferType,
+                                                      diskserverlistcache.diskServerList,
                                                       reqdiskpool, requser)
         if diskpool:
           # increase counter for corresponding diskpool
@@ -447,9 +483,9 @@ class ServerQueue(dict):
     if diskServer in self:
       self.lock.acquire()
       try:
-        res = [qTransfer.transfer.asTuple() for qTransfer in self[diskServer].values()
-               if (qTransfer.transfer.transferId not in self.d2dsrcrunning) or
-               self.d2dsrcrunning[qTransfer.transfer.transferId] != diskServer]
+        res = [transfer.asTuple() for transfer in self[diskServer].values()
+               if (transfer.transferId not in self.d2dsrcrunning) or
+               self.d2dsrcrunning[transfer.transferId].srcTransfer.diskServer != diskServer]
         return res
       finally:
         self.lock.release()
@@ -462,8 +498,8 @@ class ServerQueue(dict):
     self.lock.acquire()
     try:
       for transferId in self.d2dsrcrunning:
-        diskServer = self.d2dsrcrunning[transferId]
-        transfer = self[diskServer][transferId].transfer
+        srcTransfer = self.d2dsrcrunning[transferId]
+        transfer = srcTransfer.srcTransfer
         res.append((transferId, transfer.reqId, transfer.fileId))
       return tuple(res)
     finally:
@@ -475,9 +511,9 @@ class ServerQueue(dict):
     self.lock.acquire()
     try:
       for transferId in [transferId for transferId in self.d2dsrcrunning
-                         if self.d2dsrcrunning[transferId] == diskServer]:
-        qTransfer = self[diskServer][transferId]
-        res.append((qTransfer.transfer.asTuple(), qTransfer.startTime))
+                         if self.d2dsrcrunning[transferId].srcTransfer.diskServer == diskServer]:
+        srcTransfer = self.d2dsrcrunning[transferId]
+        res.append((srcTransfer.srcTransfer.asTuple(), srcTransfer.startTime))
     finally:
       self.lock.release()
     return res
@@ -494,7 +530,7 @@ class ServerQueue(dict):
         dlf.writedebug(msgs.INVOKINGTRANSFERSCANCELED, DiskServer=transfer.diskServer,
                        subreqId=transfer.transferId, reqId=transfer.reqId, fileid=transfer.fileId,
                        ErrorCode=errorCode, ErrorMessage=errorMsg)
-        if transfer.transferId not in self.transfersLocations:
+        if (transfer.transferId, transfer.transferType) not in self.transfersLocations:
           # the transfer has already disappeared (or was never started). This
           # can happen due to raise conditions, e.g when we get a timeout on the
           # start of the transfer when it has started already but the acknowledgement
@@ -506,23 +542,23 @@ class ServerQueue(dict):
           continue
         # cleanup the queue for the given transfer on the given machine
         try:
-          self.transfersLocations[transfer.transferId].remove(transfer.diskServer)
+          self.transfersLocations[(transfer.transferId, transfer.transferType)].remove(transfer.diskServer)
         except KeyError:
           # "Unable to cancel transfer as it's not in the transfer list. Probable race condition" message
           dlf.writewarning(msgs.TRANSFERCANCELEXCEPTION, subreqId=transfer.transferId,
                            reqId=transfer.reqId, fileId=transfer.fileId, machine=transfer.diskServer)
           continue
-        if not self.transfersLocations[transfer.transferId]:
+        if not self.transfersLocations[(transfer.transferId, transfer.transferType)]:
           # no other candidate machine for this transfer. It has to be failed
           transfersKilled.append((transfer.transferId, transfer.fileId[1], errorCode, errorMsg, transfer.reqId))
           # clean up _transfersLocations
-          del self.transfersLocations[transfer.transferId]
+          del self.transfersLocations[(transfer.transferId, transfer.transferType)]
           # if we have a source transfer already running, stop it
           if transfer.transferId in self.d2dsrcrunning:
             self.d2dend(transfer, transferCancelation=True)
           else:
             # if we have a source transfer pending, drop it
-            self.d2dsrcpending.discard(transfer.transferId)
+            del self.transfersLocations[(transfer.transferId, TransferType.D2DSRC)]
         # drop the transfer id from the machine queue
         del self[transfer.diskServer][transfer.transferId]
     finally:
@@ -539,16 +575,16 @@ class ServerQueue(dict):
       for transfer in transfers:
         # it could happen that the transfer has already been started on another machine
         # and is already gone. We can safely ignore
-        if transfer.transferId in self.transfersLocations:
+        if (transfer.transferId, transfer.transferType) in self.transfersLocations:
           # Remove the machine where the transfer could not start from
           # the transfer's locations and machine's queues
-          self.transfersLocations[transfer.transferId].remove(transfer.diskServer)
+          self.transfersLocations[(transfer.transferId, transfer.transferType)].remove(transfer.diskServer)
           del self[transfer.diskServer][transfer.transferId]
-          if not self.transfersLocations[transfer.transferId]:
+          if not self.transfersLocations[(transfer.transferId, transfer.transferType)]:
             # no other candidate machine for this transfer. It has to be failed
             ret = True
             # clean up _transfersLocations
-            del self.transfersLocations[transfer.transferId]
+            del self.transfersLocations[(transfer.transferId, transfer.transferType)]
             # if we have a source transfer already running, stop it
             if transfer.transferId in self.d2dsrcrunning:
               self.d2dend(transfer, transferCancelation=True)

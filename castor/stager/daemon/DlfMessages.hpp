@@ -135,15 +135,12 @@ namespace castor{
         STAGER_JOBSVC_BADSRT = 134, /* "Expected SubRequest in Request but found another type" */
         STAGER_JOBSVC_GETUPDS = 136, /* "Invoking getUpdateStart" */
         STAGER_JOBSVC_PUTS = 137, /* "Invoking putStart" */
-        STAGER_JOBSVC_D2DCBAD = 138 , /* "Invoking disk2DiskCopyFailed" */
-        STAGER_JOBSVC_D2DCOK = 139, /* "Invoking disk2DiskCopyDone" */
         STAGER_JOBSVC_PFMIG = 140, /* "Invoking prepareForMigration" */
         STAGER_JOBSVC_GETUPDO = 141, /* "Invoking getUpdateDone" */
         STAGER_JOBSVC_GETUPFA = 142, /* "Invoking getUpdateFailed" */
         STAGER_JOBSVC_PUTFAIL = 143, /* "Invoking putFailed" */
         STAGER_JOBSVC_NOCLI = 144, /* "No client associated with request ! Cannot answer !" */
         STAGER_JOBSVC_UNKREQ = 145, /* "Unknown Request type" */
-        STAGER_JOBSVC_D2DCS = 146, /* Invoking disk2DiskCopyStart" */
         STAGER_JOBSVC_1STBWR = 147, /* "Invoking firstByteWritten"*/
         STAGER_JOBSVC_DELWWR = 148, /* "File was removed by another user while being modified" */
         STAGER_JOBSVC_CHKMISMATCH = 154, /* "Preset checksum mismatch detected, invoking putFailed" */

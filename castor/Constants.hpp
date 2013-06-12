@@ -69,7 +69,6 @@ namespace castor {
     OBJ_DiskCopyForRecall = 58,
     OBJ_GetUpdateStartRequest = 60,
     OBJ_BaseAddress = 62,
-    OBJ_Disk2DiskCopyDoneRequest = 64,
     OBJ_MoverCloseRequest = 65,
     OBJ_StartRequest = 66,
     OBJ_PutStartRequest = 67,
@@ -140,8 +139,6 @@ namespace castor {
     OBJ_NsFilesDeleted = 142,
     OBJ_NsFilesDeletedResponse = 143,
 
-    OBJ_Disk2DiskCopyStartRequest = 144,
-    OBJ_Disk2DiskCopyStartResponse = 145,
     OBJ_ThreadNotification = 146,
     OBJ_FirstByteWritten = 147,
 
