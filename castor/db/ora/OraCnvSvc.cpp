@@ -392,7 +392,8 @@ void castor::db::ora::OraCnvSvc::handleException(std::exception& e) throw() {
       errcode == 32102 || errcode == 3135 || errcode == 12170 ||
       errcode == 12541 || errcode == 1012 || errcode == 1003  ||
       errcode == 12571 || errcode == 1033 || errcode == 1089  ||
-      errcode == 12537 || (errcode >= 25401 && errcode <= 25409)) {
+      errcode == 24338 || errcode == 12537 ||
+      (errcode >= 25401 && errcode <= 25409)) {
     // here we lost the connection due to an Oracle restart or network glitch
     // and this is the current list of errors acknowledged as a lost connection.
     // Notes:
