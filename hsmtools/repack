@@ -166,6 +166,7 @@ def _displaySummary(rows):
     sumTotal = sumSize = 0
     globalStatus = 2  # FINISHED
     shownVids = set()
+    count = 0
     for subTime, lastModTime, user, machine, vid, status, total, totsize in rows:
         if not vids and vid in shownVids:
             # when showing full statistics skip the less recent requests for each VID
@@ -173,6 +174,7 @@ def _displaySummary(rows):
         shownVids.add(vid)
         _printStatusLine(subTime, lastModTime, user, machine, vid, status, total, totsize, '-', '-', '-', '-')
         sumTotal += total
+        count += 1
         if totsize > 0:
             # it may have returned None
             sumSize += totsize
@@ -181,7 +183,7 @@ def _displaySummary(rows):
     print '-'*117
     #  when showing full statistics, print out summary line
     if not vids and sumTotal > 0:
-        _printStatusLine(time.time(), 0, '-', '-', 'TOTAL', globalStatus, sumTotal, sumSize, '-', '-', '-', '-')
+        _printStatusLine(time.time(), 0, '-', 'TOTAL', count, globalStatus, sumTotal, sumSize, '-', '-', '-', '-')
 
 def _displayDetailed(rows):
     '''prints the details of all repack requests according to the given criteria'''
@@ -191,6 +193,7 @@ def _displayDetailed(rows):
     print '-'*165
     sumTotal = sumSize = sumToRecall = sumToMigr = sumFailed = sumMigrated = 0
     shownVids = set()
+    count = 0
     for subTime, lastModTime, user, machine, vid, status, total, totsize, toRecall, toMigr, failed, migrated in rows:
         if not vids and vid in shownVids:
             # when showing full statistics skip the less recent requests for each VID
@@ -201,6 +204,7 @@ def _displayDetailed(rows):
         if totsize > 0:
             # it may have returned None
             sumSize += totsize
+        count += 1
         sumToRecall += toRecall
         sumToMigr += toMigr
         sumFailed += failed
@@ -212,7 +216,7 @@ def _displayDetailed(rows):
             globalStatus = 1  # ONGOING
         else:
             globalStatus = 2  # FINISHED
-        _printStatusLine(time.time(), 0, '-', '-', 'TOTAL', globalStatus, sumTotal, sumSize, sumToRecall, sumToMigr, sumFailed, sumMigrated)
+        _printStatusLine(time.time(), 0, '-', 'TOTAL', count, globalStatus, sumTotal, sumSize, sumToRecall, sumToMigr, sumFailed, sumMigrated)
 
 def displayStatus(detailed):
     '''displays the ongoing repacks. If vids is not empty, the output is limited to these tapes'''
