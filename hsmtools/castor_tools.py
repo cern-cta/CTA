@@ -589,7 +589,7 @@ def printPercentage(portion, total):
     '''converts portion/total couple to a percentage of completion'''
     if total == 0:
         return 'N/A'
-    perc = portion*1.0/total
+    perc = portion*100.0/total
     return "%.2f %%" % perc
 
 def nbToAge(n):
@@ -605,7 +605,12 @@ def nbToAge(n):
         s = s + str(n/60) + 'mn'
         n = n % 60
     if n > 0:
-        s = s + str(n) + 's'
+        if len(s) > 0:
+            # we have minutes, so we round to the second
+            s = s + str(int(n)) + 's'
+        else:
+            # only seconds, we keep 2 digits
+            s = s + "%.2f" % n + 's'
     if len(s) == 0:
         s = '0s'
     return s
