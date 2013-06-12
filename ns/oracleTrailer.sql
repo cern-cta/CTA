@@ -339,13 +339,13 @@ BEGIN
   -- We're done with the pre-checks, try and insert the segment metadata
   -- and deal with the possible unique (vid,fseq) constraint violation exception
   BEGIN
+    varSegCreationTime := getTime();
     INSERT INTO Cns_seg_metadata (s_fileId, copyNo, fsec, segSize, s_status, vid,
       fseq, blockId, compression, side, checksum_name, checksum, gid, creationTime, lastModificationTime)
     VALUES (varFid, inSegEntry.copyNo, 1, inSegEntry.segSize, '-', inSegEntry.vid,
       inSegEntry.fseq, inSegEntry.blockId,
       CASE inSegEntry.comprSize WHEN 0 THEN 100 ELSE trunc(inSegEntry.segSize*100/inSegEntry.comprSize) END,
-      0, inSegEntry.checksum_name, inSegEntry.checksum, varFGid, getTime(), getTime())
-    RETURNING creationTime INTO varSegCreationTime;
+      0, inSegEntry.checksum_name, inSegEntry.checksum, varFGid, varSegCreationTime, varSegCreationTime);
   EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
     -- This can be due to a PK violation or to the unique (vid,fseq) violation. The first
     -- is excluded because of checkAndDropSameCopynbSeg(), thus the second is the case:
@@ -491,7 +491,7 @@ BEGIN
   -- Repack specific: --
   -- Make sure the segment for the given oldCopyNo still exists
   BEGIN
-    SELECT s_status INTO varStatus
+    SELECT s_status, creationTime INTO varStatus, varSegCreationTime
       FROM Cns_seg_metadata
      WHERE s_fileid = varFid AND copyNo = inOldCopyNo;
   EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -566,8 +566,7 @@ BEGIN
     VALUES (varFid, inSegEntry.copyNo, 1, inSegEntry.segSize, '-', inSegEntry.vid,
       inSegEntry.fseq, inSegEntry.blockId,
       CASE inSegEntry.comprSize WHEN 0 THEN 100 ELSE trunc(inSegEntry.segSize*100/inSegEntry.comprSize) END,
-      0, inSegEntry.checksum_name, inSegEntry.checksum, varFGid, getTime(), getTime())
-    RETURNING creationTime INTO varSegCreationTime;
+      0, inSegEntry.checksum_name, inSegEntry.checksum, varFGid, varSegCreationTime, getTime());
   EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
     -- There must already be an existing segment at that fseq position for a different file.
     -- This is forbidden! Abort the entire operation.
