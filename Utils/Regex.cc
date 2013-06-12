@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------
-// File: Exception/Exception.cc
+// File: Utils/Regex.cc
 // Author: Eric Cano - CERN
 // ----------------------------------------------------------------------
 
@@ -20,32 +20,42 @@
  * You should have received a copy of the GNU General Public License    *
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.*
  ************************************************************************/
-#define _XOPEN_SOURCE 600
-#include "Exception.hh"
-#include <errno.h>
-/* We want the thread safe (and portable) version of strerror */
-#include <string.h>
-#include <sstream>
-#include <iosfwd>
-#include <sstream>
 
-Tape::Exceptions::Errnum::Errnum(std::string what):Exception(what) {
-  m_errnum = errno;
-  char s[1000];
-  /* _XOPEN_SOURCE seems not to work.  */
-  char * errorStr = ::strerror_r(m_errnum, s, sizeof(s));
-  if (!errorStr) {
-    int new_errno = errno;
-    std::stringstream w;
-    w << "Errno=" << m_errnum << ". In addition, failed to read the corresponding error string (strerror gave errno="
-            << new_errno << ")";
-    m_strerror = w.str();
-  } else {
-    m_strerror = std::string(errorStr);
+#include "Regex.hh"
+#include "../Exception/Exception.hh"
+#include <regex.h>
+
+Tape::Utils::regex::regex(const char * re_str) : m_set(false) {
+  if (int rc = ::regcomp(&m_re, re_str, REG_EXTENDED)) {
+    std::string error("Could not compile regular expression: \"");
+    error += re_str;
+    error += "\"";
+    char re_err[1024];
+    if (::regerror(rc, &m_re, re_err, sizeof (re_err))) {
+      error += ": ";
+      error += re_err;
+    }
+    throw Tape::Exception(error);
   }
-  std::stringstream w2;
-  w2 << "Errno=" << m_errnum << ": " << m_strerror;
-  if (m_what.size())
-    m_what += " ";
-  m_what += w2.str();
+  m_set = true;
+}
+
+Tape::Utils::regex::~regex() {
+  if (m_set)
+    ::regfree(&m_re);
+}
+
+std::vector<std::string> Tape::Utils::regex::exec(const std::string &s) {
+  regmatch_t matches[100];
+  if (REG_NOMATCH != ::regexec(&m_re, s.c_str(), 100, matches, 0)) {
+    std::vector<std::string> ret;
+    for (int i = 0; i < 100; i++) {
+      if (matches[i].rm_so != -1) {
+        ret.push_back(s.substr(matches[i].rm_so, matches[i].rm_eo - matches[i].rm_so + 1));
+      } else
+        break;
+    }
+    return ret;
+  }
+  return std::vector<std::string>();
 }

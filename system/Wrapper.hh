@@ -26,6 +26,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 #include <gmock/gmock.h>
 #include <map>
@@ -51,6 +52,7 @@ namespace System {
     int open(const char* file, int oflag) { return ::open(file, oflag); }
     ssize_t read(int fd, void* buf, size_t nbytes) { return ::read( fd, buf, nbytes); }
     int close(int fd) { return ::close(fd); }
+    int stat(const char * path, struct stat *buf) { return ::stat(path, buf); }
   };
   
   /**
@@ -67,6 +69,7 @@ namespace System {
     virtual int open(const char* file, int oflag) = 0;
     virtual ssize_t read(int fd, void* buf, size_t nbytes) = 0;
     virtual int close(int fd) = 0;
+    virtual int stat(const char * path, struct stat *buf) = 0;
   };
   
   /**
@@ -85,10 +88,12 @@ namespace System {
     virtual int open(const char* file, int oflag);
     virtual ssize_t read(int fd, void* buf, size_t nbytes);
     virtual int close(int fd);
+    virtual int stat(const char * path, struct stat *buf);
     std::map<std::string, std::vector<std::string> > m_directories;
     std::map<std::string, std::string> m_links;
     std::map<std::string, std::string> m_realpathes;
     std::map<std::string, std::string> m_files;
+    std::map<std::string, struct stat> m_stats;
     void setupSLC5();
   private:
     struct ourDIR {
@@ -122,6 +127,7 @@ namespace System {
     MOCK_METHOD2(open, int(const char* file, int oflag));
     MOCK_METHOD3(read, ssize_t(int fd, void* buf, size_t nbytes));
     MOCK_METHOD1(close, int(int fd));
+    MOCK_METHOD2(stat, int(const char *, struct stat *));
     DIR* m_DIR;
     int m_DIRfake;
     void delegateToFake();

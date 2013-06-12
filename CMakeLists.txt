@@ -54,17 +54,22 @@ set(CTEST_OUTPUT_ON_FAILURE 1)
 # main part
 ###########################################################################
 
+# Prepare tests file list
+#set(TEST_FILES "")
+#set(TEST_LIBS "")
+
 # Add parts first in dependency order
 add_subdirectory(SCSI)
 add_subdirectory(Drive)
 add_subdirectory(system)
 add_subdirectory(Exception)
+add_subdirectory(Utils)
 
 # .. and then tools, tests, and daemon
 # add_subdirectory(tools)
 # add_subdirectory(deamon)
 
-# .. and of course, the tests
+# .. and of course, the tests (last to use the variable definition)
 add_subdirectory(test)
 
 ###########################################################################

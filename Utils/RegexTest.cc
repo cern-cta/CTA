@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------
-// File: Exception/Exception.cc
+// File: Utils/RegexTest.cc
 // Author: Eric Cano - CERN
 // ----------------------------------------------------------------------
 
@@ -20,32 +20,40 @@
  * You should have received a copy of the GNU General Public License    *
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.*
  ************************************************************************/
-#define _XOPEN_SOURCE 600
-#include "Exception.hh"
-#include <errno.h>
-/* We want the thread safe (and portable) version of strerror */
-#include <string.h>
-#include <sstream>
-#include <iosfwd>
-#include <sstream>
 
-Tape::Exceptions::Errnum::Errnum(std::string what):Exception(what) {
-  m_errnum = errno;
-  char s[1000];
-  /* _XOPEN_SOURCE seems not to work.  */
-  char * errorStr = ::strerror_r(m_errnum, s, sizeof(s));
-  if (!errorStr) {
-    int new_errno = errno;
-    std::stringstream w;
-    w << "Errno=" << m_errnum << ". In addition, failed to read the corresponding error string (strerror gave errno="
-            << new_errno << ")";
-    m_strerror = w.str();
-  } else {
-    m_strerror = std::string(errorStr);
-  }
-  std::stringstream w2;
-  w2 << "Errno=" << m_errnum << ": " << m_strerror;
-  if (m_what.size())
-    m_what += " ";
-  m_what += w2.str();
+#include <gtest/gtest.h>
+#include <gmock/gmock.h>
+#include <gmock/gmock-cardinalities.h>
+#include "Regex.hh"
+
+using ::testing::AtLeast;
+using ::testing::Return;
+using ::testing::_;
+
+TEST(Regex, BasicFunctionality) {
+  Tape::Utils::regex re("a(b)");
+  std::vector<std::string> ret1, ret2;
+  ret1 = re.exec("1abc");
+  ret2 = re.exec("xyz");
+
+  ASSERT_EQ(ret1.size(), 2);
+  ASSERT_EQ(ret1[0], "ab");
+  ASSERT_EQ(ret1[1], "b");
+  ASSERT_EQ(ret2.size(), 0);
+}
+
+TEST(Regex, OperationalTest) {
+  Tape::Utils::regex re("^scsi_tape:(st[[:digit:]]+)$");
+  std::vector<std::string> ret1, ret2, ret3;
+  ret1 = re.exec("scsi_tape:st1");
+  ret2 = re.exec("scsi_tape:st124");
+  ret3 = re.exec("scsi_tape:st1a");
+
+  ASSERT_EQ(ret1.size(), 2);
+  ASSERT_EQ(ret1[0], "scsi_tape:st1");
+  ASSERT_EQ(ret1[1], "st1");
+  ASSERT_EQ(ret2.size(), 2);
+  ASSERT_EQ(ret2[0], "scsi_tape:st124");
+  ASSERT_EQ(ret2[1], "st124");
+  ASSERT_EQ(ret3.size(), 0);
 }

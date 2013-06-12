@@ -30,7 +30,7 @@ namespace Tape {
   public:
     Exception(const std::string& what): m_what(what) {};
     virtual ~Exception() throw() {};
-    virtual const char * what() { return m_what.c_str(); } 
+    virtual const char * what() const throw() { return m_what.c_str(); } 
   protected:
     std::string m_what;
   };
@@ -44,7 +44,7 @@ namespace Tape {
       virtual ~Errnum() throw() {};
       int ErrorNumber() { return m_errnum; }
       std::string strError() { return m_strerror; }
-      virtual const char * what() { return m_what.c_str(); }
+      virtual const char * what() const throw() { return m_what.c_str(); }
     protected:
       int m_errnum;
       std::string m_strerror;

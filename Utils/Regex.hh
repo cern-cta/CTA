@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------
-// File: Exception/Exception.cc
+// File: Utils/Regex.hh
 // Author: Eric Cano - CERN
 // ----------------------------------------------------------------------
 
@@ -20,32 +20,28 @@
  * You should have received a copy of the GNU General Public License    *
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.*
  ************************************************************************/
-#define _XOPEN_SOURCE 600
-#include "Exception.hh"
-#include <errno.h>
-/* We want the thread safe (and portable) version of strerror */
-#include <string.h>
-#include <sstream>
-#include <iosfwd>
-#include <sstream>
 
-Tape::Exceptions::Errnum::Errnum(std::string what):Exception(what) {
-  m_errnum = errno;
-  char s[1000];
-  /* _XOPEN_SOURCE seems not to work.  */
-  char * errorStr = ::strerror_r(m_errnum, s, sizeof(s));
-  if (!errorStr) {
-    int new_errno = errno;
-    std::stringstream w;
-    w << "Errno=" << m_errnum << ". In addition, failed to read the corresponding error string (strerror gave errno="
-            << new_errno << ")";
-    m_strerror = w.str();
-  } else {
-    m_strerror = std::string(errorStr);
-  }
-  std::stringstream w2;
-  w2 << "Errno=" << m_errnum << ": " << m_strerror;
-  if (m_what.size())
-    m_what += " ";
-  m_what += w2.str();
-}
+#pragma once
+#include <vector>
+#include <string>
+#include <regex.h>
+
+/**
+ * Semi-trivial wrapper to regex library, mostly 
+ * useful for its destructor which will allow
+ * RAII.
+ */
+namespace Tape {
+  namespace Utils {
+
+    class regex {
+    public:
+      regex(const char * re_str);
+      virtual ~regex();
+      std::vector<std::string> exec(const std::string &s);
+    private:
+      regex_t m_re;
+      bool m_set;
+    }; /* class regex */
+  }; /* namespace Utils */
+}; /* namespace Tape */
