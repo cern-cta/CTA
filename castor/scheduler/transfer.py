@@ -252,6 +252,12 @@ class D2DTransfer(BaseTransfer):
                                       svcClassName, creationTime, transferType, diskServer, mountPoint)
     self.isSrcRunning = isSrcRunning
 
+  @property
+  def protocol(self):
+    '''get protocol name, either taking the actual protocol member or building one from the transferType'''
+    return TransferType.toStr(self.transferType)
+    
+
 class TapeTransfer(object):
   '''little container describing a tape transfer'''
   def __init__(self, transferType, startTime, clientHost, fileId, mountPoint, lastTimeViewed):

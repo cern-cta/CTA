@@ -299,11 +299,10 @@ class LocalQueue(Queue.Queue):
     self.lock.acquire()
     try:
       for qTransfer in self.queueingTransfers.values():
+        protocol = qTransfer.transfer.protocol
         if qTransfer.transfer.transferType in (TransferType.D2DSRC, TransferType.D2DDST):
-          protocol = TransferType.toStr(qTransfer.transfer.transferType)
           user = 'stage'
         else:
-          protocol = qTransfer.transfer.protocol
           try:
             user = pwd.getpwuid(qTransfer.transfer.euid)[0]
           except KeyError:
@@ -332,10 +331,6 @@ class LocalQueue(Queue.Queue):
     self.lock.acquire()
     try:
       for transferId, qTransfer in self.queueingTransfers.items():
-        if qTransfer.transfer.transferType in (TransferType.D2DSRC, TransferType.D2DDST):
-          protocol = TransferType.toStr(qTransfer.transfer.transferType)
-        else:
-          protocol = qTransfer.transfer.protocol
         if qTransfer.transfer.transferType == TransferType.STD:
           try:
             user = pwd.getpwuid(qTransfer.transfer.euid)[0]
@@ -344,7 +339,7 @@ class LocalQueue(Queue.Queue):
         else:
           user = 'stage'
         if not reqUser or user == reqUser:
-          res.append((transferId, qTransfer.transfer.fileId, qTransfer.scheduler, user, 'PEND', protocol, qTransfer.transfer.creationTime, None))
+          res.append((transferId, qTransfer.transfer.fileId, qTransfer.scheduler, user, 'PEND', qTransfer.transfer.protocol, qTransfer.transfer.creationTime, None))
           n = n + 1
           if n >= 100: # give up with full listing if too many transfers
             break

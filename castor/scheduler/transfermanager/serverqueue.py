@@ -444,14 +444,10 @@ class ServerQueue(dict):
           for diskServer in self.transfersLocations[(transferId, transferType)]:
             # get information about the transfer
             transfer = self[diskServer][transferId]
-            try:
-              protocol = transfer.protocol
-            except AttributeError:
-              protocol = TransferType.toStr(transferType)
             # add the transfer to list of results
             res.append((transferId, transfer.fileId, socket.getfqdn(),
                         transfer.user, 'PEND', diskpool, diskServer,
-                        protocol, transfer.creationTime, None))
+                        transfer.protocol, transfer.creationTime, None))
     finally:
       self.lock.release()
     return res

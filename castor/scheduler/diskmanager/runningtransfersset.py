@@ -303,10 +303,7 @@ class RunningTransfersSet(object):
     self.lock.acquire()
     try:
       for rTransfer in self.transfers:
-        if rTransfer.transfer.transferType in (TransferType.D2DDST, TransferType.D2DSRC):
-          n = n + self.config.getValue('DiskManager', TransferType.toStr(rTransfer.transfer.transferType) + 'Weight', 1, int)
-        else:
-          n = n + self.config.getValue('DiskManager', rTransfer.transfer.protocol+'Weight', 1, int)
+        n = n + self.config.getValue('DiskManager', rTransfer.transfer.protocol+'Weight', 1, int)
     finally:
       self.lock.release()
     # and now tape transfers
@@ -451,13 +448,9 @@ class RunningTransfersSet(object):
     try:
       for rTransfer in self.transfers:
         transfer = rTransfer.transfer
-        try:
-          protocol = transfer.protocol
-        except AttributeError:
-          protocol = TransferType.toStr(transferType)
         if not reqUser or transfer.user == transfer.user:
           res.append((transfer.transferId, transfer.fileId, rTransfer.scheduler,
-                      transfer.user, 'RUN', protocol, transfer.creationTime,
+                      transfer.user, 'RUN', transfer.protocol, transfer.creationTime,
                       rTransfer.startTime))
     finally:
       self.lock.release()
