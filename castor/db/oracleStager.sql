@@ -1464,12 +1464,10 @@ BEGIN
   DECLARE
     varFileId INTEGER;
     varNsHost VARCHAR2(2048);
-    varSvcClassName VARCHAR2(2048);
   BEGIN
     SELECT fileid, nsHost INTO varFileId, varNsHost FROM CastorFile WHERE id = inCfId;
-    SELECT name INTO varSvcClassName FROM SvcClass WHERE id = inDestSvcClassId;
     logToDLF(NULL, dlf.LVL_SYSTEM, dlf.D2D_CREATING_JOB, varFileId, varNsHost, 'stagerd',
-             'destSvcClass=' || varSvcClassName || ' nsOpenTime=' || TO_CHAR(inNsOpenTime) ||
+             'destSvcClass=' || getSvcClassName(inDestSvcClassId) || ' nsOpenTime=' || TO_CHAR(inNsOpenTime) ||
              ' uid=' || TO_CHAR(inOuid) || ' gid=' || TO_CHAR(inOgid) || ' replicationType=' ||
              getObjStatusName('Disk2DiskCopyJob', 'replicationType', inReplicationType) ||
              ' TransferId=' || TO_CHAR(varD2dCopyJobId) || ' replacedDcId=' || TO_CHAR(inReplacedDcId ||
