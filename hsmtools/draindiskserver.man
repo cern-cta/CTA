@@ -118,7 +118,10 @@ Supported operations:
 .RS
 .TP
 .B -a, --add
-Add new filesystem(s) or diskserver to the list of those to be drained.
+Add new fileSystem or diskServer to the list of those to be drained.
+Note that that DISABLED fileSystem/diskServer will be refused and that the
+fileSystem status will be set to DRAINING. In case no mountPoint is given,
+the diskServer status will also be set to DRAINING.
 .TP
 .B -q, --query
 Query the filesystems currently being drained. With no option, displays a summary of

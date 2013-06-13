@@ -72,6 +72,52 @@ class FileMask(object):
       return 'All'
     else:
       return 'UNKNOWN'
+  
+class DiskServerStatus(object):
+  '''Constants defining the status for DiskServers'''
+  PRODUCTION = 0
+  DRAINING = 1
+  DISABLED = 2
+  READONLY = 3
+  def __init__(self):
+    '''empty constructor, raises an exception'''
+    raise NotImplementedError
+  @staticmethod
+  def toStr(dsStatus):
+    '''prints a readable version of the diskServer status'''
+    if dsStatus == DiskServerStatus.PRODUCTION:
+      return 'PRODUCTION'
+    elif dsStatus == DiskServerStatus.DRAINING:
+      return 'DRAINING'
+    elif dsStatus == DiskServerStatus.DISABLED:
+      return 'DISABLED'
+    elif dsStatus == DiskServerStatus.READONLY:
+      return 'READONLY'
+    else:
+      return 'UNKNOWN'
+  
+class FileSystemStatus(object):
+  '''Constants defining the status for FileSystems'''
+  PRODUCTION = 0
+  DRAINING = 1
+  DISABLED = 2
+  READONLY = 3
+  def __init__(self):
+    '''empty constructor, raises an exception'''
+    raise NotImplementedError
+  @staticmethod
+  def toStr(dsStatus):
+    '''prints a readable version of the diskServer status'''
+    if dsStatus == FileSystemStatus.PRODUCTION:
+      return 'PRODUCTION'
+    elif dsStatus == FileSystemStatus.DRAINING:
+      return 'DRAINING'
+    elif dsStatus == FileSystemStatus.DISABLED:
+      return 'DISABLED'
+    elif dsStatus == FileSystemStatus.READONLY:
+      return 'READONLY'
+    else:
+      return 'UNKNOWN'
 
 def drainingJobStatusToStr(status):
   '''prints a readable version of the drainingJobStatus'''
@@ -176,9 +222,10 @@ if failuresFlag and (configFlag or runningFlag or scriptFlag):
     usage(1)
 
 def getFileSystems(stcur):
-    '''check the nodeName and mountPoint, and returns the list of filesytem ids concerned'''
+    '''check the nodeName and mountPoint, and returns the list of filesytem concerned
+       in the form of triplets (diskServerId, FileSystemId, mountPoint)'''
     stGetFileSystemIds = '''
-    SELECT FileSystem.id, FileSystem.mountPoint
+    SELECT DiskServer.id, FileSystem.id, FileSystem.mountPoint
       FROM FileSystem, DiskServer
      WHERE DiskServer.name = :nodeName
        AND FileSystem.diskServer = DiskServer.id
@@ -252,13 +299,35 @@ def submitDrain():
         VALUES (ids_seq.nextval, :userName, :euid, :egid, :pid, :machine,
                 getTime(), getTime(), 0, :fsId, :svcClassId, :autoDelete, :fileMask,
                 0, 0, 0, 0, 0, 0, :userComment)'''
-        # check draining job statement
+        # SQL statements
         stCheckDrainingJob = '''
         SELECT username, machine, creationTime
           FROM DrainingJob
          WHERE fileSystem = :fsId'''
-        for fsId, fsMountPoint in fileSystems:
-            # first check that the filesystem is not already draining
+        stCheckFSState = 'SELECT status FROM FileSystem WHERE id = :fsId'
+        stCheckDSState = 'SELECT status FROM DiskServer WHERE id = :dsId'
+        stUpdateFSState = 'UPDATE FileSystem SET status = 1 WHERE id = :fsId' # DRAINING
+        stUpdateDSState = 'UPDATE DiskServer SET status = 1 WHERE id = :dsId' # DRAINING
+        # First check DiskServer status
+        stcur.execute(stCheckDSState, dsId=fileSystems[0][0])
+        dsStatus = stcur.fetchall()[0][0]
+        if dsStatus == DiskServerStatus.DISABLED:
+            print 'DiskServer %s is in DISABLED state. Giving up' % machine
+            return
+        # In case no filesystem is given by the user, switch the status of the
+        # diskserver to DRAINING. In case filesystems are mentionned, the DiskServer
+        # status is not touched
+        if mountPoint == None:
+            stcur.execute(stUpdateDSState, dsId=fileSystems[0][0])
+        # go through all the concerned filesystem
+        for dsId, fsId, fsMountPoint in fileSystems: # pylint: disable=W0612
+            # first check the filesystem status
+            stcur.execute(stCheckFSState, fsId=fsId)
+            dsStatus = stcur.fetchall()[0][0]
+            if dsStatus == FileSystemStatus.DISABLED:
+                print 'Filesystem %s:%s is in DISABLED state. Skipping it' % (machine, fsMountPoint)
+                continue
+            # then check that the filesystem is not already draining
             stcur.execute(stCheckDrainingJob, fsId=fsId)
             drains = stcur.fetchall()
             if (len(drains)) > 0:
@@ -267,6 +336,9 @@ def submitDrain():
                 print '    for info, drain was issued by %s on %s at %s' % \
                   (drains[0][0], drains[0][1], castor_tools.secsToDate(drains[0][2]))
                 continue
+            # change the state of the filesystem to DRAINING, i.e. trigger passive draining
+            stcur.execute(stUpdateFSState, fsId=fsId)
+            # finally start active draining
             stcur.execute(stCreateDrainingJob, userName=userName, euid=euid, egid=egid,
                           pid=pid, machine=machine, fsId=fsId, svcClassId=svcClassId,
                           autoDelete=autoDelete, fileMask=fileMask, userComment=comment)
@@ -378,7 +450,7 @@ def deleteDrain():
           FROM DrainingJob
          WHERE fileSystem = :fsId'''
         drainingJobs = []
-        for fsId, fsMountPoint in fileSystems:
+        for dsId, fsId, fsMountPoint in fileSystems:  # pylint: disable=W0612
             # first check that the filesystem is not already draining
             stcur.execute(stCheckDrainingJob, fsId=fsId)
             drains = stcur.fetchall()
