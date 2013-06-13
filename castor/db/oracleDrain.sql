@@ -43,7 +43,8 @@ BEGIN
                AND ((varFileMask = dconst.DRAIN_FILEMASK_NOTONTAPE AND
                      CastorFile.tapeStatus IN (dconst.CASTORFILE_NOTONTAPE, dconst.CASTORFILE_DISKONLY)) OR
                     (varFileMask = dconst.DRAIN_FILEMASK_ALL))
-               AND DiskCopy.status = dconst.DISKCOPY_VALID) LOOP
+               AND DiskCopy.status = dconst.DISKCOPY_VALID
+             ORDER BY CastorFile.tapeStatus ASC) LOOP  -- NOTONTAPE go before ONTAPE
     createDisk2DiskCopyJob(F.cfId, F.nsOpenTime, varSvcClassId, varEuid, varEgid, dconst.REPLICATIONTYPE_DRAINING,
                            CASE varFileMask WHEN 1 THEN F.dcId ELSE NULL END, inDjId);
     varNbFiles := varNbFiles + 1;
