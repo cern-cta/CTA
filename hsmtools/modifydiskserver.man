@@ -12,8 +12,11 @@ modifydiskserver \- modifies existing disk servers in the stager catalog
 .BI -d|--diskpool
 \<diskPoolName>
 [
-.BI -m|--mountPoints
+.BI -m|--mountpoints
 \<mountPoint>[:...]
+]
+[
+.BI -R|--recursive
 ]
 <diskPoolName>|<diskServerName>
 [...]
@@ -36,10 +39,14 @@ Allows to change the diskservers/filesystems state to the given value.
 .BI \-d,\-\-diskpool\ <diskPoolName>
 Allows to move the filesystems given, or all filesystem of the given diskservers to a new diskPool.
 .TP
-.BI \-m,\-\-mountPoints\ <mountPoint>[:...]
+.BI \-m,\-\-mountpoints\ <mountPoint>[:...]
 If given, applies the changes to this set of mountpoints rather than to the diskservers.
+.TP
+.BI -R,\ --recursive
+If given, then changes will apply to all mountPoint of the concerned DiskServers, on top of the diskServers themselves.
+Incompatible with the --mountpoints option
 
-Note that when -m,--mountPoints is used with -s,--state, the statuses changed will only be the ones of the filesystems. DiskServer states won't be touched.
+Note that when -m,--mountpoints is used with -s,--state, the statuses changed will only be the ones of the filesystems. DiskServer states won't be touched.
 Symmetrically, when it is not given, the fileSystems' states are untouched.
 
 The targeted mountPoints are all mountPoints with the given name accross the given diskServers.
@@ -53,7 +60,7 @@ When diskPools are given, all diskServers of the diskPool are considered.
 .nf
 .ft CW
 
-#printdiskserver
+# printdiskserver
             DSNAME NBMOUNTPOINTS                STATUS ONLINE   FREE   SIZE NBRD NBWR NBMIGR NBREC      DISKPOOL ID
 -------------------------------------------------------------------------------------------------------------------
 lxc2dev1d1.cern.ch            10 DISKSERVER_PRODUCTION    YES 259GiB 275GiB    0    0      0     0       default  6
@@ -61,13 +68,13 @@ lxc2dev1d2.cern.ch            10 DISKSERVER_PRODUCTION    YES 259GiB 275GiB    0
 -------------------------------------------------------------------------------------------------------------------
       TOTAL NB : 2            20                              519GiB 551GiB    0    0      0     0 default,extra   
 
-#modifydiskserver -s Disabled lxc2dev1d1.cern.ch
+# modifydiskserver -s Disabled lxc2dev1d1.cern.ch
 Diskserver(s) modified successfully
 
-#modifydiskserver -s Draining extra
+# modifydiskserver -s Draining extra
 Filesystem(s) modified successfully
 
-#printdiskserver
+# printdiskserver
             DSNAME NBMOUNTPOINTS              STATUS ONLINE   FREE   SIZE NBRD NBWR NBMIGR NBREC      DISKPOOL ID
 -----------------------------------------------------------------------------------------------------------------
 lxc2dev1d1.cern.ch            10 DISKSERVER_DISABLED    YES 259GiB 275GiB    0    0      0     0       default  6
@@ -75,13 +82,13 @@ lxc2dev1d2.cern.ch            10 DISKSERVER_DRAINING    YES 259GiB 275GiB    0  
 -----------------------------------------------------------------------------------------------------------------
       TOTAL NB : 2            20                            519GiB 551GiB    0    0      0     0 default,extra   
 
-#modifydiskserver -s Disabled -m /srv/castor/01/:/srv/castor/02/ extra
+# modifydiskserver -s Disabled -m /srv/castor/01/:/srv/castor/02/ extra
 Filesystem(s) modified successfully
 
-#modifydiskserver -s Production extra
+# modifydiskserver -s Production extra
 Diskserver(s) modified successfully
 
-#printdiskserver -f
+# printdiskserver -f
             DSNAME      MOUNTPOINT                STATUS ONLINE   FREE MINFREE MAXFREE   SIZE NBRD NBWR NBMIGR NBREC      DISKPOOL ID
 -------------------------------------------------------------------------------------------------------------------------------------
 lxc2dev1d1.cern.ch                   DISKSERVER_DISABLED    YES 259GiB      5%     15% 275GiB    0    0      0     0       default  6
@@ -109,13 +116,13 @@ lxc2dev1d2.cern.ch                   DISKSERVER_DRAINING    YES 259GiB      5%  
 -------------------------------------------------------------------------------------------------------------------------------------
       TOTAL NB : 2   TOTAL NB : 20                              519GiB      5%     15% 551GiB    0    0      0     0 default,extra   
 
-#modifydiskserver -d extra default
+# modifydiskserver -d extra default
 Diskserver(s) modified successfully
 
-#modifydiskserver -d default -m /srv/castor/01/:/srv/castor/02/ lxc2dev1d1.cern.ch
+# modifydiskserver -d default -m /srv/castor/01/:/srv/castor/02/ lxc2dev1d1.cern.ch
 Filesystem(s) modified successfully
 
-#printdiskserver -f
+# printdiskserver -f
             DSNAME      MOUNTPOINT                STATUS ONLINE   FREE MINFREE MAXFREE   SIZE NBRD NBWR NBMIGR NBREC      DISKPOOL ID
 -------------------------------------------------------------------------------------------------------------------------------------
 lxc2dev1d1.cern.ch                   DISKSERVER_DISABLED    YES 259GiB      5%     15% 275GiB    0    0      0     0 default,extra  6

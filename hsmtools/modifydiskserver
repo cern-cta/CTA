@@ -33,7 +33,7 @@ def usage(exitCode):
     '''prints usage'''
     print 'Usage : ' + sys.argv[0] + ' [-h|--help] ' + \
           '-s|--state <state>|-d|--diskpool <diskpool> ' + \
-          '[-m|--mountpoints <mountpoint>[:...]] <diskpool>|<diskServerName> [...]]'
+          '[-m|--mountpoints <mountpoint>[:...]] [-r|--recursive] <diskpool>|<diskServerName> [...]]'
     print '  where state can be "Production", "Draining", "Disabled", "Readonly"'
     sys.exit(exitCode)
 
@@ -42,8 +42,8 @@ states = ['Production', 'Draining', 'Disabled', 'Readonly']
 
 # first parse the options
 try:
-    options, args = getopt.getopt(sys.argv[1:], 'hvs:m:d:',
-                                  ['help', 'verbose', 'state=', 'mountpoints=', 'diskpool='])
+    options, args = getopt.getopt(sys.argv[1:], 'hvs:m:d:R',
+                                  ['help', 'verbose', 'state=', 'mountpoints=', 'diskpool=', 'recursive'])
 except Exception, e:
     print e
     usage(1)
@@ -51,6 +51,7 @@ verbose = False
 state = None
 mountPoints = None
 diskPool = None
+isRecursive = False
 for f, v in options:
     if f == '-h' or f == '--help':
         usage(0)
@@ -65,6 +66,8 @@ for f, v in options:
         mountPoints = tuple(v.split(':'))
     elif f == '-d' or f == '--diskpool':
         diskPool = v
+    elif f == '-R' or f == '--recursive':
+        isRecursive = True
     else:
         print "unknown option : " + f
         usage(1)
@@ -76,6 +79,9 @@ if not state and not diskPool:
 if len(args) == 0:
     print 'Nothing to do ! Please give a few diskpools/diskservers'
     usage(1)
+if mountPoints and isRecursive:
+    print '--recursive and --mountPoints options are incompatible. Giving up'
+    usage(1)    
 
 try:
     if state:
@@ -83,8 +89,11 @@ try:
     conf = castor_tools.castorConf()
     rpycconn = rpyc.connect(conf.getValue('DiskManager', 'ServerHosts').split()[0],
                             conf.getValue('TransferManager', 'Port', 15011, int))
-    returnMsg = rpycconn.root.modifyDiskServers(args, state, mountPoints, diskPool)
+    returnMsg = rpycconn.root.modifyDiskServers(args, state, mountPoints, diskPool, isRecursive)
     print returnMsg
+except ValueError, e:
+    print e
+    sys.exit(-1)
 except Exception, e:
     print 'Caught exception : (' + str(e.__class__) + ') : ' + str(e)
     if verbose:

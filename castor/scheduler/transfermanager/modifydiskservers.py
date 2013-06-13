@@ -27,10 +27,9 @@
 '''This module allows to modify the properties of a set of diskservers
 (e.g. state or diskPool) from a remote location such as the diskserver itself.'''
 
-import sys
 import castor_tools
 
-def modifyDiskServers(dbconn, targets, state, mountPoints, diskPool):
+def modifyDiskServers(dbconn, targets, state, mountPoints, diskPool, isRecursive):
     '''modifies the properties of a set of diskservers'''
     stcur = dbconn.cursor()
     # check target diskpool if any
@@ -39,14 +38,9 @@ def modifyDiskServers(dbconn, targets, state, mountPoints, diskPool):
         stcur.execute(sqlStatement, diskPool=diskPool)
         rows = stcur.fetchall()
         if not rows:
-            print 'DiskPool %d does not exist. Giving up' % diskPool
-            try:
-                castor_tools.disconnectDB(dbconn)
-            except Exception:
-                pass
-            sys.exit(1)
+            raise ValueError('DiskPool %s does not exist. Giving up' % diskPool)
         diskPoolId = rows[0][0]
-    # check diskpools
+    # check target diskpools
     sqlStatement = 'SELECT id, name FROM DiskPool WHERE name = :dpname'
     diskPools = set([])
     diskPoolIds = []
@@ -56,7 +50,7 @@ def modifyDiskServers(dbconn, targets, state, mountPoints, diskPool):
         if row:
             diskPoolIds.append(row[0])
             diskPools.add(row[1])
-    # check diskservers
+    # check target diskservers
     sqlStatement = 'SELECT id, name FROM DiskServer WHERE name = :dsname'
     diskServers = set([])
     diskServerIds = []
@@ -68,11 +62,41 @@ def modifyDiskServers(dbconn, targets, state, mountPoints, diskPool):
             diskServers.add(row[1])
     unknownTargets = set(t for t in targets) - diskPools - diskServers
     if not diskPools and not diskServers:
-        returnMsg = 'None of the provided diskpools/diskservers could be found. Giving up'
-        return returnMsg
+         raise ValueError('None of the provided diskpools/diskservers could be found. Giving up')
     # go for the update
-    if mountPoints:
-        # check MountPoints
+    returnMsg = []
+    mountPointIds = []
+    if mountPoints == None:
+        # check DiskServers
+        if diskPools:
+            sqlStatement = '''SELECT UNIQUE DiskServer.id FROM DiskServer, FileSystem
+                               WHERE DiskServer.id = FileSystem.diskServer
+                                 AND FileSystem.diskPool IN (''' + "'" + \
+                           "', '".join([str(x) for x in diskPoolIds]) + "')"
+            stcur.execute(sqlStatement)
+            rows = stcur.fetchall()
+            diskServerIds.extend([row[0] for row in rows])
+            if not diskServerIds:
+                raise ValueError('No diskserver matching your request')
+        # update diskServers for status
+        if state != None:
+            sqlStatement = '''UPDATE DiskServer SET status = :status
+                              WHERE id IN (''' + ', '.join([str(x) for x in diskServerIds]) + ')'
+            stcur.execute(sqlStatement, status=state)
+        # update fileSystems for diskPool
+        if diskPool:
+            sqlStatement = '''UPDATE FileSystem SET diskPool = :diskPoolId
+                               WHERE diskServer IN (''' + ', '.join([str(x) for x in diskServerIds]) + ')'
+            stcur.execute(sqlStatement, diskPoolId=diskPoolId)
+        returnMsg.append('Diskserver(s) modified successfully')
+        # in case we are running in recursive mode, list mountPoints
+        if isRecursive:
+            sqlStatement = 'SELECT id FROM FileSystem WHERE diskserver IN (' + \
+                           ', '.join([str(x) for x in diskServerIds]) + ')'
+            stcur.execute(sqlStatement)
+            mountPointIds = [row[0] for row in stcur.fetchall()]
+    else:
+        # MountPoints were given by the user, check them
         sqlStatement = '''SELECT id, mountPoint FROM FileSystem
                            WHERE mountPoint = :mountPoint'''
         if targets:
@@ -84,7 +108,6 @@ def modifyDiskServers(dbconn, targets, state, mountPoints, diskPool):
                     sqlStatement += ' OR '
                 sqlStatement += 'diskServer IN (' + ', '.join([str(x) for x in diskServerIds]) + ')'
             sqlStatement += ')'
-        mountPointIds = []
         existingMountPoints = set([])
         for mountPoint in mountPoints:
             stcur.execute(sqlStatement, mountPoint=mountPoint)
@@ -93,57 +116,29 @@ def modifyDiskServers(dbconn, targets, state, mountPoints, diskPool):
                 mountPointIds.append(row[0])
                 existingMountPoints.add(row[1])
         unknownMountPoints = set(m for m in mountPoints) - existingMountPoints
-        # update mountPoints
-        varDict = {}
-        sqlStatement = 'UPDATE FileSystem SET '
-        setClause = ''
-        whereClause = ' WHERE id IN (' + ', '.join([str(x) for x in mountPointIds]) + ')'
-        if state != None:
-            setClause = 'status = :status'
-            varDict['status'] = state
+        # and set FileSystems' DiskPool if needed
         if diskPool:
-            if setClause:
-                setClause += ','
-            setClause += ' diskPool = :diskPool'
-            varDict['diskPool'] = diskPoolId
-        stcur.execute(sqlStatement + setClause + whereClause, varDict)
-        # commit update and tell user
-        dbconn.commit()
-        returnMsg = 'Filesystem(s) modified successfully'
-        # mention unknown mountPoints
-        if mountPoints and unknownMountPoints:
-            returnMsg += '\nWARNING : the following mountPoints could not be found : ' + ', '.join(unknownMountPoints)
-    else:
-        # check DiskServers
-        if diskPools:
-            sqlStatement = '''SELECT UNIQUE DiskServer.id FROM DiskServer, FileSystem
-                               WHERE DiskServer.id = FileSystem.diskServer
-                                 AND FileSystem.diskPool IN (''' + "'" + \
-                           "', '".join([str(x) for x in diskPoolIds]) + "')"
-            stcur.execute(sqlStatement)
-            rows = stcur.fetchall()
-            diskServerIds.extend([row[0] for row in rows])
-            if not diskServerIds:
-                returnMsg = 'No diskserver matching your request'
-        # update diskServers for status
-        if diskServerIds:
-            if state != None:
-                varDict = {}
-                sqlStatement = '''UPDATE DiskServer SET status = :status
-                                   WHERE id IN (''' + ', '.join([str(x) for x in diskServerIds]) + ')'
-                varDict['status'] = state
-                stcur.execute(sqlStatement, varDict)
-            # update fileSystems for diskPool
-            if diskPool:
-                varDict = {}
-                sqlStatement = '''UPDATE FileSystem SET diskPool = :diskPoolId
-                                   WHERE diskServer IN (''' + ', '.join([str(x) for x in diskServerIds]) + ')'
-                stcur.execute(sqlStatement, diskPoolId=diskPoolId)
-            # commit update and tell user
-            dbconn.commit()
-            returnMsg = 'Diskserver(s) modified successfully'
+            sqlStatement = 'UPDATE FileSystem SET diskPool = :diskPool WHERE id IN (' + \
+                           ', '.join([str(x) for x in mountPointIds]) + ')'
+            stcur.execute(sqlStatement, diskPool=diskPoolId)
+            returnMsg.append('Filesystem(s)\' diskpools modified successfully')
+    # Now status of mountpoints
+    # they may have been given by the user or created by the handling of the recursive option
+    if mountPointIds:
+        # update mountPoints
+        sqlStatement = 'UPDATE FileSystem SET status = :status WHERE id IN (' + \
+                       ', '.join([str(x) for x in mountPointIds]) + ')'
+        stcur.execute(sqlStatement, status=state)
+        returnMsg.append('Filesystem(s)\' status modified successfully')
+    # commit updates
+    dbconn.commit()
+    # mention unknown mountPoints
+    if mountPoints and unknownMountPoints:
+        returnMsg.append('WARNING : the following mountPoints could not be found : ' + \
+                         ', '.join(unknownMountPoints))
     # mention unknown targets
     if unknownTargets:
-        returnMsg += '\nWARNING : the following diskpools/diskservers do not exist : ' + ', '.join(unknownTargets)
+        returnMsg.append('WARNING : the following diskpools/diskservers do not exist : ' + \
+                         ', '.join(unknownTargets))
     # return collected messages. If any exception, this is forwarded to the caller
-    return returnMsg
+    return '\n'.join(returnMsg)

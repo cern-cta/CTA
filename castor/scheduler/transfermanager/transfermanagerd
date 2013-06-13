@@ -521,13 +521,13 @@ class TransferManagerService(rpyc.Service):
        Returns the status of the diskserver and all its fileSystems'''
     reportmanager.handleStateReport(report)
 
-  def exposed_modifyDiskServers(self, targets, state, mountPoints, diskPool):
+  def exposed_modifyDiskServers(self, targets, state, mountPoints, diskPool, isRecursive):
     '''called by the modifydiskserver CLI to modify a set of diskservers. Returns a user-friendly message .'''
     dlf.write(msgs.INVOKINGMODIFYDISKSERVERS, Targets=str(targets), State=state, MountPoints=str(mountPoints))
     try:
       try:
         self.__class__.acquireDbConnection()
-        return modifydiskservers.modifyDiskServers(self.__class__.dbConnection(), targets, state, mountPoints, diskPool)
+        return modifydiskservers.modifyDiskServers(self.__class__.dbConnection(), targets, state, mountPoints, diskPool, isRecursive)
       except Exception, e:
         # "Exception caught while modifying diskserver(s), giving up" message
         dlf.writeerr(msgs.MODIFYDISKSERVERSEXCEPTION, Message=str(e), Type=str(e.__class__), Targets=str(targets), State=state, MountPoints=str(mountPoints), DiskPool=diskPool)
