@@ -51,7 +51,7 @@ std::vector<std::string> Tape::Utils::regex::exec(const std::string &s) {
     std::vector<std::string> ret;
     for (int i = 0; i < 100; i++) {
       if (matches[i].rm_so != -1) {
-        ret.push_back(s.substr(matches[i].rm_so, matches[i].rm_eo - matches[i].rm_so + 1));
+        ret.push_back(s.substr(matches[i].rm_so, matches[i].rm_eo - matches[i].rm_so));
       } else
         break;
     }

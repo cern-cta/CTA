@@ -144,6 +144,31 @@ namespace SCSI {
       return ret;
     }
 
+    DeviceInfo::DeviceFile readDeviceFile(std::string path) {
+      DeviceInfo::DeviceFile ret;
+      std::string file = readfile(path);
+      if (!::sscanf(file.c_str(), "%d:%d\n", &ret.major, &ret.minor))
+        throw Tape::Exception(std::string("Could not parse file: ") + path);
+      return ret;
+    }
+
+    DeviceInfo::DeviceFile statDeviceFile(std::string path) {
+      struct stat sbuf;
+      if (m_sysWrapper.stat(path.c_str(), &sbuf))
+        throw Tape::Exceptions::Errnum("Could not stat file " + path);
+      if (!S_ISCHR(sbuf.st_mode))
+        throw Tape::Exception("Device file " + path + " is not a character device");
+      DeviceInfo::DeviceFile ret;
+      ret.major = major(sbuf.st_rdev);
+      ret.minor = minor(sbuf.st_rdev);
+      return ret;
+    }
+
+    /**
+     * Part factored out of getDeviceInfo: get the tape specifics
+     * from sysfs.
+     * @param devinfo
+     */
     void getTapeInfo(DeviceInfo & devinfo) {
       /* Find the st and nst devices for this SCSI device */
       Tape::Utils::regex st_re("^scsi_tape:(st[[:digit:]]+)$");
@@ -229,32 +254,23 @@ namespace SCSI {
         ret.sg_dev = std::string("/dev/") + gl.substr(pos + 1);
       }
       /* Get the major and minor number of the device file */
-      /* TODO */
+      ret.sg = readDeviceFile(ret.sysfs_entry + "/generic/dev");
+      /* Check that we have an agreement with the actual device file */
+      DeviceInfo::DeviceFile realFile = statDeviceFile(ret.sg_dev);
+      if (ret.sg != realFile) {
+        std::stringstream err;
+        err << "Mismatch between sysfs info and actual device file: "
+                << ret.sysfs_entry + "/generic/dev" << " indicates "
+                << ret.sg.major << ":" << ret.sg.minor
+                << " while " << ret.sg_dev << " is: "
+                << realFile.major << ":" << realFile.minor;
+        throw Tape::Exception(err.str());
+      }
       /* Handle more if we have a tape device */
       if (Types::tape == ret.type)
         getTapeInfo(ret);
       return ret;
     }
 
-    DeviceInfo::DeviceFile readDeviceFile(std::string path) {
-      DeviceInfo::DeviceFile ret;
-      std::string file = readfile(path);
-      if (!::sscanf(file.c_str(), "%d:%d\n", &ret.major, &ret.minor))
-        throw Tape::Exception(std::string("Could not parse file: ") + path);
-      return ret;
-    }
-
-    DeviceInfo::DeviceFile statDeviceFile(std::string path) {
-      struct stat sbuf;
-      if (m_sysWrapper.stat(path.c_str(), &sbuf))
-        throw Tape::Exceptions::Errnum("Could not stat file " + path);
-      if (!S_ISCHR(sbuf.st_mode))
-        throw Tape::Exception("Device file " + path + " is not a character device");
-      DeviceInfo::DeviceFile ret;
-      ret.major = major(sbuf.st_rdev);
-      ret.minor = minor(sbuf.st_rdev);
-      return ret;
-    }
-
   }; /* class DeviceVector */
-};
+}; /* namespace SCSI */

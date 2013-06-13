@@ -191,6 +191,15 @@ void Tape::System::fakeWrapper::setupSLC5() {
           = "../../../../../../class/scsi_generic/sg0";
   m_links["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0/generic"]
           = "../../../../../../class/scsi_generic/sg1";
+  m_stats["/dev/sg0"].st_rdev = makedev(21, 0);
+  m_stats["/dev/sg0"].st_mode = S_IFCHR;
+  m_stats["/dev/sg1"].st_rdev = makedev(21, 1);
+  m_stats["/dev/sg1"].st_mode = S_IFCHR;
+  m_stats["/dev/sg2"].st_rdev = makedev(21, 2);
+  m_stats["/dev/sg2"].st_mode = S_IFCHR;
+  m_files["/sys/devices/pseudo_0/adapter0/host3/target3:0:0/3:0:0:0/generic/dev"] = "21:2\n";
+  m_files["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0/generic/dev"] = "21:0\n";
+  m_files["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0/generic/dev"] = "21:1\n";
   m_directories["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0"].push_back("bus");
   m_directories["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0"].push_back("delete");
   m_directories["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0"].push_back("device_blocked");
@@ -229,7 +238,9 @@ void Tape::System::fakeWrapper::setupSLC5() {
   m_files["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0/scsi_tape:nst0/dev"] =
           "9:128\n";
   m_stats["/dev/st0"].st_rdev = makedev(9, 0);
+  m_stats["/dev/st0"].st_mode = S_IFCHR;
   m_stats["/dev/nst0"].st_rdev = makedev(9, 128);
+  m_stats["/dev/nst0"].st_mode = S_IFCHR;
   m_directories["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0"].push_back("bus");
   m_directories["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0"].push_back("delete");
   m_directories["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0"].push_back("device_blocked");

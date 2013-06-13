@@ -54,47 +54,50 @@ TEST(DeviceList, ScansCorrectly) {
   EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
   EXPECT_CALL(sysWrapper, closedir(_)).Times(1);
   EXPECT_CALL(sysWrapper, realpath(_, _)).Times(3);
-  EXPECT_CALL(sysWrapper, open(_, _)).Times(3);
-  EXPECT_CALL(sysWrapper, read(_, _, _)).Times(6);
-  EXPECT_CALL(sysWrapper, close(_)).Times(3);
+  EXPECT_CALL(sysWrapper, open(_, _)).Times(10);
+  EXPECT_CALL(sysWrapper, read(_, _, _)).Times(20);
+  EXPECT_CALL(sysWrapper, close(_)).Times(10);
   EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(3);
+  EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
 
   /* Everything should have been found correctly */
 
   SCSI::DeviceVector<Tape::System::virtualWrapper> dl(sysWrapper);
 
-  ASSERT_EQ(dl.size(), 3);
-  ASSERT_EQ(dl[0].type, SCSI::Types::mediumChanger);
-  ASSERT_EQ(dl[1].type, SCSI::Types::tape);
-  ASSERT_EQ(dl[2].type, SCSI::Types::tape);
-  ASSERT_EQ(dl[0].sg_dev, "/dev/sg2");
-  ASSERT_EQ(dl[1].sg_dev, "/dev/sg0");
-  ASSERT_EQ(dl[2].sg_dev, "/dev/sg1");
-  ASSERT_EQ(dl[0].st_dev, "");
-  ASSERT_EQ(dl[1].st_dev, "/dev/st0");
-  ASSERT_EQ(dl[2].st_dev, "/dev/st1");
-  ASSERT_EQ(dl[0].nst_dev, "");
-  ASSERT_EQ(dl[1].nst_dev, "/dev/nst0");
-  ASSERT_EQ(dl[2].nst_dev, "/dev/nst1");
-  ASSERT_EQ(dl[0].sysfs_entry, "/sys/devices/pseudo_0/adapter0/host3/target3:0:0/3:0:0:0");
-  ASSERT_EQ(dl[1].sysfs_entry, "/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0");
-  ASSERT_EQ(dl[2].sysfs_entry, "/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0");
-  ASSERT_EQ(dl[0].sg.major, 21);
-  ASSERT_EQ(dl[0].sg.minor, 2);
-  ASSERT_EQ(dl[1].sg.major, 21);
-  ASSERT_EQ(dl[1].sg.minor, 0);
-  ASSERT_EQ(dl[2].sg.major, 21);
-  ASSERT_EQ(dl[2].sg.minor, 1);
-  ASSERT_EQ(dl[0].st.major, -1);
-  ASSERT_EQ(dl[0].st.minor, -1);
-  ASSERT_EQ(dl[1].st.major, 9);
-  ASSERT_EQ(dl[1].st.minor, 0);
-  ASSERT_EQ(dl[2].st.major, 9);
-  ASSERT_EQ(dl[2].st.minor, 1);
-  ASSERT_EQ(dl[0].nst.major, -1);
-  ASSERT_EQ(dl[0].nst.minor, -1);
-  ASSERT_EQ(dl[1].nst.major, 9);
-  ASSERT_EQ(dl[1].nst.minor, 128);
-  ASSERT_EQ(dl[2].nst.major, 9);
-  ASSERT_EQ(dl[2].nst.minor, 129);
+  ASSERT_EQ(3, dl.size());
+  ASSERT_EQ(SCSI::Types::mediumChanger, dl[0].type);
+  ASSERT_EQ(SCSI::Types::tape,          dl[1].type);
+  ASSERT_EQ(SCSI::Types::tape,          dl[2].type);
+  ASSERT_EQ( "/dev/sg2", dl[0].sg_dev);
+  ASSERT_EQ( "/dev/sg0", dl[1].sg_dev);
+  ASSERT_EQ( "/dev/sg1", dl[2].sg_dev);
+  ASSERT_EQ(         "", dl[0].st_dev);
+  ASSERT_EQ( "/dev/st0", dl[1].st_dev);
+  ASSERT_EQ( "/dev/st1", dl[2].st_dev);
+  ASSERT_EQ(         "", dl[0].nst_dev);
+  ASSERT_EQ("/dev/nst0", dl[1].nst_dev);
+  ASSERT_EQ("/dev/nst1", dl[2].nst_dev);
+  ASSERT_EQ("/sys/devices/pseudo_0/adapter0/host3/target3:0:0/3:0:0:0", dl[0].sysfs_entry);
+  ASSERT_EQ("/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0", dl[1].sysfs_entry);
+  ASSERT_EQ("/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0", dl[2].sysfs_entry);
+  ASSERT_EQ( 21, dl[0].sg.major);
+  ASSERT_EQ(  2, dl[0].sg.minor);
+  ASSERT_EQ( 21, dl[1].sg.major);
+  ASSERT_EQ(  0, dl[1].sg.minor);
+  ASSERT_EQ( 21, dl[2].sg.major);
+  ASSERT_EQ(  1, dl[2].sg.minor);
+  ASSERT_EQ( -1, dl[0].st.major);
+  ASSERT_EQ( -1, dl[0].st.minor);
+  ASSERT_EQ(  9, dl[1].st.major);
+  ASSERT_EQ(  0, dl[1].st.minor);
+  ASSERT_EQ(  9, dl[2].st.major);
+  ASSERT_EQ(  1, dl[2].st.minor);
+  ASSERT_EQ( -1, dl[0].nst.major);
+  ASSERT_EQ( -1, dl[0].nst.minor);
+  ASSERT_EQ(  9, dl[1].nst.major);
+  ASSERT_EQ(128, dl[1].nst.minor);
+  ASSERT_EQ(  9, dl[2].nst.major);
+  ASSERT_EQ(129, dl[2].nst.minor);
 }
+
+
