@@ -51,6 +51,9 @@ def parseMapping(name, svalue):
     except ValueError:
         print 'Invalid %s %s' % (name, svalue)
         usage(1)
+    except castor_tools.ParsingError, e:
+        print e
+        usage(1)
 
 # first parse the options
 try:

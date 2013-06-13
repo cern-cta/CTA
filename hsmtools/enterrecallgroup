@@ -48,24 +48,28 @@ minamountdata = 100*1024*1024*1024  # 100GiB
 minnbfiles = 1000
 maxfileage = 43200 # 12h
 priority = 0
-for f, v in options:
-    if f == '-h' or f == '--help':
-        usage(0)
-    elif f == '-v' or f == '--verbose':
-        verbose = True
-    elif f == '--nbdrives':
-        nbdrives = castor_tools.parsePositiveInt('nbdrives', v)
-    elif f == '--minamountdata':
-        minamountdata = castor_tools.parseDataAmount('minamountdata', v)
-    elif f == '--minnbfiles':
-        minnbfiles = castor_tools.parsePositiveInt('minnbfiles', v)
-    elif f == '--maxfileage':
-        maxfileage = castor_tools.parseTimeDuration('maxfileage', v)
-    elif f == '--priority':
-        priority = castor_tools.parsePositiveInt('priority', v)
-    else:
-        print "unknown option : " + f
-        usage(1)
+try:
+    for f, v in options:
+        if f == '-h' or f == '--help':
+            usage(0)
+        elif f == '-v' or f == '--verbose':
+            verbose = True
+        elif f == '--nbdrives':
+            nbdrives = castor_tools.parsePositiveInt('nbdrives', v)
+        elif f == '--minamountdata':
+            minamountdata = castor_tools.parseDataAmount('minamountdata', v)
+        elif f == '--minnbfiles':
+            minnbfiles = castor_tools.parsePositiveInt('minnbfiles', v)
+        elif f == '--maxfileage':
+            maxfileage = castor_tools.parseTimeDuration('maxfileage', v)
+        elif f == '--priority':
+            priority = castor_tools.parsePositiveInt('priority', v)
+        else:
+            print "unknown option : " + f
+            usage(1)
+except castor_tools.ParsingError, e:
+    print e
+    usage(1)
 
 # Deal with arguments
 if len(args) == 0:

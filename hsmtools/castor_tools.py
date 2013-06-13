@@ -643,6 +643,10 @@ def printUser((uid, gid)):
 #-------------------------------------------------------------------------------
 # useful parsing functions
 #-------------------------------------------------------------------------------
+class ParsingError(Exception):
+    '''base class for parsing errors'''
+    pass
+
 def parseUser(rawUserGroup):
     '''parses input of a given user.
        format must be one of :
@@ -665,8 +669,7 @@ def parseUser(rawUserGroup):
             # suppose a uid is given
             uid = int(rawUser)
             if uid < 0:
-                print 'Invalid uid %d' % uid
-                usage(1)
+                raise ParsingError('Invalid uid %d' % uid)
         except ValueError:
             # was not a uid
             try:
@@ -674,8 +677,7 @@ def parseUser(rawUserGroup):
                 uid = pwdEntry.pw_uid
                 gid = pwdEntry.pw_gid
             except KeyError:
-                print 'Unknown user %s' % rawUser
-                usage(1)
+                raise ParsingError('Unknown user %s' % rawUser)
     # find out the group, if given
     if rawGroup == None:
         gid = None
@@ -684,15 +686,13 @@ def parseUser(rawUserGroup):
             # suppose a gid is given
             gid = int(rawGroup)
             if gid < 0:
-                print 'Invalid gid %d' % uid
-                usage(1)
+                raise ParsingError('Invalid gid %d' % uid)
         except ValueError:
             # was not a gid
             try:
                 gid = grp.getgrnam(rawGroup).gr_gid
             except KeyError:
-                print 'Unknown group %s' % rawGroup
-                usage(1)
+                raise ParsingError('Unknown group %s' % rawGroup)
     return uid,gid
 
 def parsePositiveInt(name, svalue):
@@ -703,29 +703,28 @@ def parsePositiveInt(name, svalue):
             raise ValueError
         return value
     except ValueError:
-        print 'Invalid %s %s' % (name, svalue)
-        usage(1)
+        raise ParsingError('Invalid %s %s' % (name, svalue))
 
 def parsePositiveNonNullInt(name, svalue):
     '''parses a positive, non null int value and exits with proper error message in case the value does not fit'''
     value = parsePositiveInt(name, svalue)
     if value == 0:
-        print '%s cannot be set to 0' % name
-        usage(1)
+        raise ParsingError('%s cannot be set to 0' % name)
     return value
 
-def parseBool(name, svalue):
+def parseBool(name, svalue, default=None):
     '''parses a boolean value and exits with proper error message in case the value does not fit'''
     validTrues = ['true', '1', 't', 'y', 'yes']
     validFalses = ['false', '0', 'f', 'n', 'no']
+    if svalue == '' and default != None:
+        return default
     if svalue.lower() in validTrues:
         return True
     elif svalue.lower() in validFalses:
         return False
     else:
-        print 'Invalid %s %s' % (name, svalue)
-        print 'Note that accepted booleans are %s and %s' % (','.join(validTrues), ','.join(validFalses))
-        usage(1)
+        raise ParsingError('Invalid %s %s\nNote that accepted booleans are %s and %s' % \
+                           (name, svalue, ','.join(validTrues), ','.join(validFalses)))
 
 def parseDataAmount(name, svalue):
     '''parses a value describing an amount of data. Exits with proper error message in case the value does not fit'''
@@ -743,8 +742,7 @@ def parseDataAmount(name, svalue):
             value *= exts[m.group('ext')]
         return value
     except ValueError:
-        print 'Invalid %s %s' % (name, svalue)
-        usage(1)
+        raise ParsingError('Invalid %s %s' % (name, svalue))
 
 def parseTimeDuration(name, svalue):
     '''parses a value describing a time duration. Exits with proper error message in case the value does not fit'''
@@ -763,8 +761,7 @@ def parseTimeDuration(name, svalue):
             value += partvalue
         return value
     except ValueError:
-        print 'Invalid %s %s' % (name, svalue)
-        usage(1)
+        raise ParsingError('Invalid %s %s' % (name, svalue))
 
 #--------------------
 # getCurrentUsername

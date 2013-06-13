@@ -53,7 +53,11 @@ for f, v in options:
 # Deal with arguments
 recallUsers = None
 if len(args) > 0:
-    recallUsers = set(map(castor_tools.parseUser, args))
+    try:
+        recallUsers = set(map(castor_tools.parseUser, args))
+    except castor_tools.ParsingError, e:
+        print e
+        usage(1)
 else:
     print 'missing argument'
     usage(1)

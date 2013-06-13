@@ -461,8 +461,13 @@ def deleteDrain():
             drainingJobs.append((fsMountPoint, drains[0][0]))
         if drainingJobs:
             # get user confirmation
-            confirmation = castor_tools.parseBool('entry', raw_input("Is this ok ? [N/y] "))
+            try:
+                confirmation = castor_tools.parseBool('entry', raw_input("Is this ok ? [N/y] "), False)
+            except castor_tools.ParsingError, e:
+                print e
+                exit(1)
             if not confirmation:
+                print 'Ok, giving up'
                 return
             # create DrainingJob statement
             stDeleteDrainingJob = 'BEGIN deleteDrainingJob(:djId); END;'

@@ -59,33 +59,37 @@ replicateonclose = None
 gcpolicy = None
 adddiskpools = None
 removediskpools = None
-for f, v in options:
-    if f == '-h' or f == '--help':
-        usage(0)
-    elif f == '-v' or f == '--verbose':
-        verbose = True
-    elif f == '--defaultfilesize':
-        defaultfilesize = castor_tools.parseDataAmount('defaultfilesize', v)
-    elif f == '--maxreplicanb':
-        maxreplicanb = castor_tools.parsePositiveNonNullInt('maxreplicanb', v)
-    elif f == '--failjobswhennospace':
-        failjobswhennospace = castor_tools.parseBool('failjobswhennospace', v)
-    elif f == '--disk1behavior':
-        disk1behavior = castor_tools.parseBool('disk1behavior', v)
-    elif f == '--forcedfileclass':
-        forcedfileclass = v
-        forcedfileclassset = True
-    elif f == '--replicateonclose':
-        replicateonclose = castor_tools.parseBool('replicateonclose', v)
-    elif f == '--gcpolicy':
-        gcpolicy = v
-    elif f == '--adddiskpools':
-        adddiskpools = set(v.split(':'))
-    elif f == '--removediskpools':
-        removediskpools = set(v.split(':'))
-    else:
-        print "unknown option : " + f
-        usage(1)
+try:
+    for f, v in options:
+        if f == '-h' or f == '--help':
+            usage(0)
+        elif f == '-v' or f == '--verbose':
+            verbose = True
+        elif f == '--defaultfilesize':
+            defaultfilesize = castor_tools.parseDataAmount('defaultfilesize', v)
+        elif f == '--maxreplicanb':
+            maxreplicanb = castor_tools.parsePositiveNonNullInt('maxreplicanb', v)
+        elif f == '--failjobswhennospace':
+            failjobswhennospace = castor_tools.parseBool('failjobswhennospace', v)
+        elif f == '--disk1behavior':
+            disk1behavior = castor_tools.parseBool('disk1behavior', v)
+        elif f == '--forcedfileclass':
+            forcedfileclass = v
+            forcedfileclassset = True
+        elif f == '--replicateonclose':
+            replicateonclose = castor_tools.parseBool('replicateonclose', v)
+        elif f == '--gcpolicy':
+            gcpolicy = v
+        elif f == '--adddiskpools':
+            adddiskpools = set(v.split(':'))
+        elif f == '--removediskpools':
+            removediskpools = set(v.split(':'))
+        else:
+            print "unknown option : " + f
+            usage(1)
+except castor_tools.ParsingError, e:
+    print e
+    usage(1)
 
 # Deal with arguments
 if len(args) == 0:

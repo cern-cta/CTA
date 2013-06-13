@@ -62,7 +62,12 @@ if recallGroup != None:
         usage(1)
 else:
     if len(args) > 0:
-        recallUsers = set(map(castor_tools.parseUser, args))
+        try:
+            recallUsers = set(map(castor_tools.parseUser, args))
+        except castor_tools.ParsingError, e:
+            print e
+            usage(1)
+
 
 try:
     # connect to stager and prepare statements
