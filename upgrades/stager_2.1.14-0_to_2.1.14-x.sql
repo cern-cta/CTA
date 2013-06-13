@@ -114,6 +114,8 @@ ALTER TABLE FileSystem
   ADD CONSTRAINT CK_FileSystem_Status
   CHECK (status IN (0, 1, 2, 3));
 
+XXX Drop all existing WAITDISK2DISKCOPY DiskCopies
+
 ALTER TABLE DiskCopy
   ADD CONSTRAINT CK_DiskCopy_Status
   CHECK (status IN (0, 4, 5, 6, 7, 9, 10, 11));
@@ -310,6 +312,7 @@ DROP PROCEDURE removeFailedDrainingTransfers;
 DROP PROCEDURE drainFileSystem;
 DROP PROCEDURE startDraining;
 DROP PROCEDURE stopDraining;
+DROP PROCEDURE cancelRecall;
 
 UPDATE UpgradeLog SET endDate = systimestamp, state = 'COMPLETE'
  WHERE release = '2_1_14_X';

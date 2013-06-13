@@ -45,9 +45,9 @@ is the name of the disk server to be queried. It needs to be fully qualified.
 .fi
 Status               Physical FileName
 .fi
-DISKCOPY_CANBEMIGR   lxfsrk60a05.cern.ch:/srv/castor/01/05/61263405@lxs5010.450
+DISKCOPY_VALID   lxfsrk60a05.cern.ch:/srv/castor/01/05/61263405@lxs5010.450
 .fi
-DISKCOPY_CANBEMIGR   lxfsrk60a05.cern.ch:/srv/castor/01/21/61270821@lxs5010.529
+DISKCOPY_VALID   lxfsrk60a05.cern.ch:/srv/castor/01/21/61270821@lxs5010.529
 .fi
 DISKCOPY_STAGEOUT    lxfsrk60a05.cern.ch:/srv/castor/01/46/61312846@lxs5010.718
 .ft
@@ -56,9 +56,9 @@ DISKCOPY_STAGEOUT    lxfsrk60a05.cern.ch:/srv/castor/01/46/61312846@lxs5010.718
 .fi
 FileId     DiskCopyId   Status               Physical FileName                                  Last known FileName
 .fi
-61263405   450          DISKCOPY_CANBEMIGR   lxfsrk60a05.cern.ch:/srv/castor/01/05/61263405@lxs5010.450    /castor/cern.ch/some/hsm/path
+61263405   450          DISKCOPY_VALID   lxfsrk60a05.cern.ch:/srv/castor/01/05/61263405@lxs5010.450    /castor/cern.ch/some/hsm/path
 .fi
-61270821   529          DISKCOPY_CANBEMIGR   lxfsrk60a05.cern.ch:/srv/castor/01/21/61270821@lxs5010.529    /castor/cern.ch/some/hsm/path
+61270821   529          DISKCOPY_VALID   lxfsrk60a05.cern.ch:/srv/castor/01/21/61270821@lxs5010.529    /castor/cern.ch/some/hsm/path
 .fi
 61312846   718          DISKCOPY_STAGEOUT    lxfsrk60a05.cern.ch:/srv/castor/01/46/61312846@lxs5010.718    /castor/cern.ch/some/hsm/path
 .ft

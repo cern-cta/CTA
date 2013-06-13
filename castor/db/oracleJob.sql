@@ -454,11 +454,14 @@ BEGIN
         logToDLF(NULL, dlf.LVL_SYSTEM, dlf.D2D_D2DDONE_RETRIED, varFileId, varNsHost, 'stagerd', varComment ||
                  ' RetryNb=' || TO_CHAR(varRetryCounter+1) || ' maxNbRetries=' || TO_CHAR(varMaxNbD2dRetries));
       ELSE
-        -- no more retries, let's delete the disk to disk job copy and remember the error
+        -- no more retries, let's delete the disk to disk job copy
         BEGIN
           DELETE FROM Disk2DiskCopyjob WHERE transferId = inTransferId;
-          INSERT INTO DrainingErrors (drainingJob, errorMsg, fileId, nsHost)
-          VALUES (varDrainingJob, inErrorMessage, varFileId, varNsHost);
+          -- and remember the error in case of draining
+          IF varDrainingJob IS NOT NULL THEN
+            INSERT INTO DrainingErrors (drainingJob, errorMsg, fileId, nsHost)
+            VALUES (varDrainingJob, inErrorMessage, varFileId, varNsHost);
+          END IF;
         EXCEPTION WHEN NO_DATA_FOUND THEN
           -- the Disk2DiskCopyjob was already dropped (e.g. because of an interrupted draining)
           -- in such a case, forget about the error
@@ -965,6 +968,7 @@ CREATE OR REPLACE FUNCTION selectAllSourceFs(inCfId IN INTEGER)
 RETURN VARCHAR2 AS
   varResult VARCHAR2(2048) := '';
 BEGIN
+  -- in this case we take any non DISABLED hardware
   FOR line IN
     (SELECT candidate FROM
        (SELECT UNIQUE FIRST_VALUE (DiskServer.name || ':' || FileSystem.mountPoint)

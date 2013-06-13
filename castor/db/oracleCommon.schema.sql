@@ -1335,7 +1335,7 @@ ALTER TABLE Disk2DiskCopyJob ADD CONSTRAINT FK_Disk2DiskCopyJob_CastorFile
   FOREIGN KEY (castorFile) REFERENCES CastorFile(id);
 ALTER TABLE Disk2DiskCopyJob ADD CONSTRAINT FK_Disk2DiskCopyJob_SvcClass
   FOREIGN KEY (destSvcClass) REFERENCES SvcClass(id);
-ALTER TABLE Disk2DiskCopyJob ADD CONSTRAINT FK_Disk2DiskCopyJob_DrainingJob
+ALTER TABLE Disk2DiskCopyJob ADD CONSTRAINT FK_Disk2DiskCopyJob_DrainJob
   FOREIGN KEY (drainingJob) REFERENCES DrainingJob(id);
 ALTER TABLE Disk2DiskCopyJob
   ADD CONSTRAINT CK_Disk2DiskCopyJob_Status
