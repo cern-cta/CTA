@@ -403,6 +403,12 @@ class D2DDispatcherThread(AbstractDispatcherThread):
 
   def _scheduleD2d(self, srcTransfer, sourceFileSystems, destFilesystems):
     '''Schedules a disk to disk copy on the source and destinations and handle issues '''
+    # check whether the sources are not empty
+    if sourceFileSystems == None:
+      # fail the transfer immediately as we have nowhere to go. This will log the error too
+      self.updateDBQueue.put((srcTransfer.transferId, srcTransfer.fileId, 1721,   # 1721 = ESTSCHEDERR
+                              'No source found', srcTransfer.reqId))
+      return
     # check whether the destinations are not empty
     if destFilesystems == None:
       # fail the transfer immediately as we have nowhere to go. This will log the error too
