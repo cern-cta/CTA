@@ -513,19 +513,6 @@ def castorConf():
     return globalCastorConf
 
 
-def getIdentity():
-    '''Retrieves identity of the user running this script'''
-    machine = socket.getfqdn()
-    euid = os.getuid()
-    egid = os.getgid()
-    pid = os.getpid()
-    username = pwd.getpwuid(euid)[0]
-    sip = socket.gethostbyname(machine).split('.')
-    ip = (int(sip[0]) << 24 | int(sip[1]) << 16 | int(sip[2]) << 8 | int(sip[3]))
-    if ip & 0x80000000 != 0:
-        ip = ip - 0x100000000
-    return machine, euid, egid, pid, username, ip
-
 #-------------------------------------------------------------------------------
 # prettyPrintTable
 #-------------------------------------------------------------------------------
@@ -775,3 +762,17 @@ def getCurrentUsername():
         return pwd.getpwuid(os.getuid())[0]
     except krbV.Krb5Error:      # no valid token found
         return pwd.getpwuid(os.getuid())[0]
+
+def getIdentity():
+    '''Retrieves identity of the user running this script'''
+    machine = socket.getfqdn()
+    euid = os.getuid()
+    egid = os.getgid()
+    pid = os.getpid()
+    username = getCurrentUsername()
+    sip = socket.gethostbyname(machine).split('.')
+    ip = (int(sip[0]) << 24 | int(sip[1]) << 16 | int(sip[2]) << 8 | int(sip[3]))
+    if ip & 0x80000000 != 0:
+        ip = ip - 0x100000000
+    return machine, euid, egid, pid, username, ip
+
