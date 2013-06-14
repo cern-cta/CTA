@@ -34,7 +34,7 @@ import dlf
 import castor_tools
 import connectionpool
 from diskmanagerdlf import msgs
-from transfer import TransferType
+from transfer import TransferType, D2DTransferType
 
 class QueueingTransfer(object):
   '''little container describing a queueing transfer'''
@@ -45,16 +45,18 @@ class QueueingTransfer(object):
 
 class LocalQueue(Queue.Queue):
   '''Class managing a queue of pending transfers.
-  There are actually 2 queues, a dictionnary and a set involved :
+  There are actually 3 queues, a dictionary and a set involved :
     - the main queue is the object itself and holds all transfers that were not considered so far.
     - _pendingD2dDest is a dictionary of disk2disk destinations transfers that have been considered but could not
       be started because the source was not ready. They will be retried regularly until the source
       becomes ready. They are stored together with the next time when to retry. The interval between
       retries is equal to half the time gone since the arrival of the transfer, with a maximum
       configured in castor.conf (DiskManager/MaxRetryInterval).
-    - _priorityQueue is a queue of transfers to be started as soon as possible. These transfers are the disk2disk
+    - priorityQueue is a queue of transfers to be started as soon as possible. These transfers are the disk2disk
       destination transfers that have been pending on the resdiness of the source and can now be started
-    - finally, all transfers handled are indexed in a dictionnary called queueingTransfers handling detailed
+    - backfillQueue is a queue for non-user-triggered transfers to be executed with lower priority compared
+      to the regular transfers.
+    - finally, all transfers handled are indexed in a dictionary called queueingTransfers handling detailed
       information
   '''
 
@@ -71,23 +73,32 @@ class LocalQueue(Queue.Queue):
     self.pendingD2dDest = {}
     # set of transfers to start with highest priority
     self.priorityQueue = Queue.Queue()
+    # set of transfers to start with lower priority
+    self.backfillQueue = Queue.Queue()
+    # counter of scheduled regular (i.e. user driven) jobs
+    self.countRegularJobs = 0
 
   def put(self, scheduler, transfer):
-    '''Put new transfer in the queue'''
+    '''Put a new transfer in the regular or backfill queue according to the transfer replication type'''
     self.lock.acquire()
     try:
-      # first keep note of the new transfer (index by subreqId)
+      # first keep note of the new transfer (indexed by subreqId)
       self.queueingTransfers[transfer.transferId] = QueueingTransfer(scheduler, transfer)
-      # then add it to the underlying queue
-      Queue.Queue.put(self, transfer.transferId)
+      # then add it to the underlying queue, depending on its type
+      if transfer.transferType == TransferType.STD or \
+         ((transfer.transferType == TransferType.D2DSRC or transfer.transferType == TransferType.D2DDST) \
+          and transfer.replicationType == D2DTransferType.USER):
+         Queue.Queue.put(self, transfer.transferId)
+      else:
+        self.backfillQueue.put(transfer.transferId)
     finally:
       self.lock.release()
 
   def putPriority(self, scheduler, transfer):
-    '''Put new transfer in the queue'''
+    '''Put a new transfer in the priority queue'''
     self.lock.acquire()
     try:
-      # first keep note of the new transfer (index by subreqId)
+      # first keep note of the new transfer (indexed by subreqId)
       self.queueingTransfers[transfer.transferId] = QueueingTransfer(scheduler, transfer)
       # then add it to the underlying priority queue
       self.priorityQueue.put(transfer.transferId)
@@ -98,16 +109,29 @@ class LocalQueue(Queue.Queue):
     '''get a transfer from the queue. Times out after 1s'''
     found = False
     while not found:
-      # try to get a priority transfer first
-      try :
+      try:
+        # try to get a priority transfer first
         transferId = self.priorityQueue.get(False)
       except Queue.Empty:
-        # else get next transfer from the regular queue
-        # timeout after 1s so that we can go back to the priority queue
+        # else get next transfer from either the regular or the backfill queue,
+        # which is guaranteed to be taken at least once
+        # every <maxRegularJobsBeforeBackfill> regular jobs
         try:
-          transferId = Queue.Queue.get(self, timeout=1)
+          if self.countRegularJobs == self.config.getValue('DiskManager', 'MaxRegularJobsBeforeBackfill', 20, int):
+            # give a chance to the backfill queue
+            raise Queue.Empty
+          else:
+            # block and timeout after 1s so that we can go back to the other queues
+            transferId = Queue.Queue.get(self, timeout=1)
+            self.countRegularJobs += 1
         except Queue.Empty:
-          return None
+          try:
+            self.countRegularJobs = 0
+            # don't wait on the backfill queue: in case nothing is found,
+            # we will be back soon and we'll block on the normal queue
+            transferId = self.backfillQueue.get(False)
+          except Queue.Empty:
+            return None
       self.lock.acquire()
       try:
         try:

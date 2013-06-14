@@ -393,29 +393,30 @@ class TransferManagerService(rpyc.Service):
     if transfer.transferType == TransferType.D2DDST:
       try:
         self.__class__.acquireDbConnection()
-        stcur = self.__class__.dbConnection().cursor()
-        srcDcPath = stcur.var(cx_Oracle.STRING)
-        destDcPath = stcur.var(cx_Oracle.STRING)
-        stcur.execute("BEGIN disk2DiskCopyStart(:1, :2, :3, :4, :5, :6, :7, :8, :9); END;",
-                      (transfer.transferId, transfer.fileId[1], transfer.fileId[0],
-                       transfer.diskServer, transfer.mountPoint,
-                       srcTransfer.diskServer, srcTransfer.mountPoint,
-                       destDcPath, srcDcPath))
-        stcur.close()
-        return srcDcPath.getvalue(), destDcPath.getvalue()
-      except Exception, e:
-        # check whether we should reconnect to DB, and do so if needed
-        self.__class__.dbConnection().checkForReconnection(e)
-        # detect special error where the client can give up
-        if isinstance(e, cx_Oracle.Error):
-          error, = e.args
-          if isinstance(error, cx_Oracle._Error):
-            errorcode = error.code
-            if (errorcode == 20110):
-              # raise ValueError to tell the upper layer to give up
-              raise ValueError(e.message)
-        # otherwise reraise for the upper layer
-        raise e
+        try:
+          stcur = self.__class__.dbConnection().cursor()
+          srcDcPath = stcur.var(cx_Oracle.STRING)
+          destDcPath = stcur.var(cx_Oracle.STRING)
+          stcur.execute("BEGIN disk2DiskCopyStart(:1, :2, :3, :4, :5, :6, :7, :8, :9); END;",
+                        (transfer.transferId, transfer.fileId[1], transfer.fileId[0],
+                         transfer.diskServer, transfer.mountPoint,
+                         srcTransfer.diskServer, srcTransfer.mountPoint,
+                         destDcPath, srcDcPath))
+          stcur.close()
+          return srcDcPath.getvalue(), destDcPath.getvalue()
+        except Exception, e:
+          # check whether we should reconnect to DB, and do so if needed
+          self.__class__.dbConnection().checkForReconnection(e)
+          # detect special error where the client can give up
+          if isinstance(e, cx_Oracle.Error):
+            error, = e.args
+            if isinstance(error, cx_Oracle._Error):
+              errorcode = error.code
+              if (errorcode == 20110):
+                # raise ValueError to tell the upper layer to give up
+                raise ValueError(e.message)
+          # otherwise reraise for the upper layer
+          raise e
       finally:
         self.__class__.releaseDbConnection()
     else:

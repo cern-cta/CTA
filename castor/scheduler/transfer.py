@@ -66,6 +66,27 @@ class TapeTransferType(object):
       return 'UNKNOWN'
 
 
+class D2DTransferType(object):
+  '''Constants defining the existing types of d2d transfers'''
+  USER = 0
+  INTERNAL = 1
+  DRAINING = 2
+  def __init__(self):
+    '''empty constructor, raises an exception'''
+    raise NotImplementedError
+  @staticmethod
+  def toStr(tType):
+    '''prints a readable version of the d2d transfer types'''
+    if tType == D2DTransferType.USER:
+      return 'user'
+    elif tType == D2DTransferType.INTERNAL:
+      return 'internal'
+    elif tType == D2DTransferType.DRAINING:
+      return 'draining'
+    else:
+      return 'UNKNOWN'
+
+
 def getProcessStartTime(pid):
   '''Little utility able to get the start time of a process
   Note that this is linux specific code'''
@@ -246,10 +267,11 @@ class Transfer(BaseTransfer):
 class D2DTransfer(BaseTransfer):
   '''little container describing a disk to disk transfer'''
   def __init__(self, transferId, reqId, fileId, euid, egid, svcClassName, creationTime, transferType,
-               diskServer='', mountPoint='', isSrcRunning=False):
+               replicationType, diskServer='', mountPoint='', isSrcRunning=False):
     '''constructor'''
     super(D2DTransfer, self).__init__(transferId, reqId, fileId, euid, egid,
                                       svcClassName, creationTime, transferType, diskServer, mountPoint)
+    self.replicationType = replicationType
     self.isSrcRunning = isSrcRunning
 
   @property

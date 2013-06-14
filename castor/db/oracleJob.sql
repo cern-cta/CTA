@@ -1130,6 +1130,7 @@ PROCEDURE D2dTransferToSchedule(outTransferId OUT VARCHAR2, outReqId OUT VARCHAR
                                 outFileId OUT INTEGER, outNsHost OUT VARCHAR2,
                                 outEuid OUT INTEGER, outEgid OUT INTEGER,
                                 outSvcClassName OUT VARCHAR2, outCreationTime OUT INTEGER,
+                                outreplicationType OUT INTEGER,
                                 outDestFileSystems OUT VARCHAR2, outSourceFileSystems OUT VARCHAR2) AS
   cfId NUMBER;
   -- Cursor to select the next candidate for submission to the scheduler orderd
@@ -1186,8 +1187,10 @@ BEGIN
       UPDATE /*+ INDEX(Disk2DiskCopyJob PK_Disk2DiskCopyJob_Id)*/ Disk2DiskCopyJob
          SET status = dconst.DISK2DISKCOPYJOB_SCHEDULED
        WHERE id = varD2dJId
-      RETURNING transferId, castorFile, ouid, ogid, creationTime, destSvcClass, getSvcClassName(destSvcClass)
-        INTO outTransferId, varCfId, outEuid, outEgid, outCreationTime, varSvcClassId, outSvcClassName;
+      RETURNING transferId, castorFile, ouid, ogid, creationTime, destSvcClass,
+                getSvcClassName(destSvcClass), replicationType
+        INTO outTransferId, varCfId, outEuid, outEgid, outCreationTime, varSvcClassId,
+             outSvcClassName, outReplicationType;
       -- Extract the rest of the information required by transfer manager
       SELECT fileId, nsHost, fileSize INTO outFileId, outNsHost, varFileSize
         FROM CastorFile

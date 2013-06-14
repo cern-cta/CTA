@@ -468,15 +468,16 @@ class D2DDispatcherThread(AbstractDispatcherThread):
           egid = stcur.var(cx_Oracle.NUMBER)
           svcClassName = stcur.var(cx_Oracle.STRING)
           creationTime = stcur.var(cx_Oracle.NUMBER)
+          replicationType = stcur.var(cx_Oracle.NUMBER)
           destFileSystems = stcur.var(cx_Oracle.STRING)
           srcFileSystems = stcur.var(cx_Oracle.STRING)
-          stTransferToSchedule = 'BEGIN D2dTransferToSchedule(:transferId, :reqId, :fileId, :nsHost, :euid, :egid, :svcClassName, :creationTime, :destFileSystems, :srcFileSystems); END;' # pylint: disable=C0301
+          stTransferToSchedule = 'BEGIN D2dTransferToSchedule(:transferId, :reqId, :fileId, :nsHost, :euid, :egid, :svcClassName, :creationTime, :replicationType, :destFileSystems, :srcFileSystems); END;' # pylint: disable=C0301
           # infinite loop over the polling of the DB
           while self.running:
             # see whether there is something to do
             # not that this will hang until something comes or the internal timeout is reached
             stcur.execute(stTransferToSchedule, (transferId, reqId, fileId, nsHost, euid, egid,
-                                                 svcClassName, creationTime,
+                                                 svcClassName, creationTime, replicationType,
                                                  destFileSystems, srcFileSystems))
             # in case of timeout, we may have nothing to do
             if transferId.getvalue() != None:
@@ -485,7 +486,7 @@ class D2DDispatcherThread(AbstractDispatcherThread):
                                                     (nsHost.getvalue(), int(fileId.getvalue())),
                                                     int(euid.getvalue()), int(egid.getvalue()),
                                                     svcClassName.getvalue(), creationTime.getvalue(),
-                                                    TransferType.D2DSRC),
+                                                    TransferType.D2DSRC, replicationType.getvalue()),
                                         srcFileSystems.getvalue(), destFileSystems.getvalue())))
         finally:
           stcur.close()
