@@ -49,11 +49,12 @@ try:
                                    'svcclass=', 'auto-delete', 'file-mask=',
                                    'comment=', 'query', 'config', 'failures',
                                    'running', 'script', 'delete', 'verbose'])
-    # Any positional arguments left over after parsing?
-    if len(arguments):
-        usage(1)
 except Exception, parsingException:
     print parsingException
+    usage(1)
+# Any positional arguments left over after parsing?
+if len(arguments):
+    print 'Unexpected arguments found : %s' % ' '.join(arguments)
     usage(1)
 
 class FileMask(object):
