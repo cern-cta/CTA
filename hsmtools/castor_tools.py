@@ -583,13 +583,13 @@ def nbToAge(n):
     '''converts a number of seconds into a readable age'''
     s = ''
     if n >= 86400:
-        s = s + str(n/86400) + 'd'
+        s = s + str(int(n/86400)) + 'd'
         n = n % 86400
     if n >= 3600:
-        s = s + str(n/3600) + 'h'
+        s = s + str(int(n/3600)) + 'h'
         n = n % 3600
     if n >= 60:
-        s = s + str(n/60) + 'mn'
+        s = s + str(int(n/60)) + 'mn'
         n = n % 60
     if n > 0:
         if len(s) > 0:
