@@ -33,7 +33,7 @@ def usage(exitCode):
     '''prints usage'''
     print 'Usage : ' + sys.argv[0] + ' [-h|--help] ' + \
           '-s|--state <state>|-d|--diskpool <diskpool> ' + \
-          '[-m|--mountpoints <mountpoint>[:...]] [-r|--recursive] <diskpool>|<diskServerName> [...]]'
+          '[-m|--mountpoints <mountpoint>[:...]] [-R|--recursive] <diskpool>|<diskServerName> [...]]'
     print '  where state can be "Production", "Draining", "Disabled", "Readonly"'
     sys.exit(exitCode)
 
