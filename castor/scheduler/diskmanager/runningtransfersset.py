@@ -239,7 +239,7 @@ class RunningTransfersSet(object):
       try:
         for tTransfer in self.tapeTransfers:
           n = n + 1
-          nbslots = self.config.getValue('DiskManager', tTransfer.transfer.transferType+'Weight', 1, int)
+          nbslots = self.config.getValue('DiskManager', tTransfer.transferType+'Weight', 1, int)
           ns = ns + nbslots
           if not detailed:
             continue
@@ -310,7 +310,7 @@ class RunningTransfersSet(object):
     self.tapelock.acquire()
     try:
       for tTransfer in self.tapeTransfers:
-        n = n + self.config.getValue('DiskManager', tTransfer.transfer.transferType+'Weight', 1, int)
+        n = n + self.config.getValue('DiskManager', tTransfer.transferType+'Weight', 1, int)
     finally:
       self.tapelock.release()
     return n
@@ -458,7 +458,7 @@ class RunningTransfersSet(object):
     self.tapelock.acquire()
     try:
       for tTransfer in self.tapeTransfers:
-        res.append(('-', tTransfer.fileId, tTransfer.clienthost, 'stage', 'TAPE',
+        res.append(('-', tTransfer.fileId, tTransfer.clientHost, 'stage', 'TAPE',
                     TransferType.toStr(tTransfer.transferType), tTransfer.startTime,
                     tTransfer.startTime))
     finally:
