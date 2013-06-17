@@ -2329,15 +2329,23 @@ END;
 /* PL/SQL method used by the stager to collect the logging made in the DB */
 CREATE OR REPLACE PROCEDURE dumpDBLogs(logEntries OUT castor.LogEntry_Cur) AS
   rowIds strListTable;
+  SrLocked EXCEPTION;
+  PRAGMA EXCEPTION_INIT (SrLocked, -54);
 BEGIN
-  -- lock whatever we can from the table. This is to prevent deadlocks.
-  SELECT ROWID BULK COLLECT INTO rowIds
-    FROM DLFLogs FOR UPDATE NOWAIT;
-  -- insert data on tmp table and drop selected entries
-  INSERT INTO DLFLogsHelper (timeinfo, uuid, priority, msg, fileId, nsHost, SOURCE, params)
-   (SELECT timeinfo, uuid, priority, msg, fileId, nsHost, SOURCE, params
-    FROM DLFLogs WHERE ROWID IN (SELECT * FROM TABLE(rowIds)));
-  DELETE FROM DLFLogs WHERE ROWID IN (SELECT * FROM TABLE(rowIds));
+  BEGIN
+    -- lock whatever we can from the table. This is to prevent deadlocks.
+    SELECT ROWID BULK COLLECT INTO rowIds
+      FROM DLFLogs FOR UPDATE NOWAIT;
+    -- insert data on tmp table and drop selected entries
+    INSERT INTO DLFLogsHelper (timeinfo, uuid, priority, msg, fileId, nsHost, SOURCE, params)
+     (SELECT timeinfo, uuid, priority, msg, fileId, nsHost, SOURCE, params
+      FROM DLFLogs WHERE ROWID IN (SELECT * FROM TABLE(rowIds)));
+    DELETE FROM DLFLogs WHERE ROWID IN (SELECT * FROM TABLE(rowIds));
+  EXCEPTION WHEN SrLocked THEN
+    -- nothing we can lock, as someone else already has the lock.
+    -- The logs will be taken by this other guy, so just give up
+    NULL;
+  END;
   -- return list of entries by opening a cursor on temp table
   OPEN logEntries FOR
     SELECT timeinfo, uuid, priority, msg, fileId, nsHost, source, params FROM DLFLogsHelper;
