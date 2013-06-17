@@ -1401,6 +1401,31 @@ static void procmountreq(char *req_data,
                             "TPVID"  , TL_MSG_PARAM_TPVID, vid );                        
 	c = 0;
 
+	/* Only local requests for mounts are permitted */
+	{
+		char localHostName[256];
+		if(-1 == gethostname(localHostName, sizeof(localHostName))) {
+			strncpy(localHostName, "localhost.localdomain",
+				sizeof(localHostName));
+		}
+		localHostName[sizeof(localHostName) - 1] = '\0';
+		if(0 != strcmp(clienthost, localHostName)) {
+			usrmsg (func,
+			  "TP002 - Mount of %s aborted: Permission denied\n",
+			  vid);
+			tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 5,
+			  "func"   , TL_MSG_PARAM_STR, func,
+			  "Message", TL_MSG_PARAM_STR,
+			    "TP002 - Mount aborted: Permission denied",
+			  "JobID"  , TL_MSG_PARAM_INT  , jid,
+			  "VID"    , TL_MSG_PARAM_STR  , vid,
+			  "TPVID"  , TL_MSG_PARAM_TPVID, vid );
+
+			c = EACCES; /* Permission denied */
+			goto reply;
+		}
+	}
+
 	/* check if reserv done */
 
 	rrtp = tpdrrt.next;
