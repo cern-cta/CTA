@@ -2,7 +2,7 @@
     compress
     daily
     missingok
-    rotate 200
+    rotate 500
     delaycompress
 }
 
@@ -10,6 +10,6 @@
     compress
     daily
     missingok
-    rotate 200
+    rotate 500
     delaycompress
 }

@@ -2,6 +2,6 @@
     compress
     daily
     missingok
-    rotate 90
+    rotate 500
     delaycompress
 }
