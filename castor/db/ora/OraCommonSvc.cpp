@@ -132,6 +132,10 @@ castor::db::ora::OraCommonSvc::requestToDo(std::string service)
       m_requestToDoStatement->registerOutParam
         (3, oracle::occi::OCCIINT);
       m_requestToDoStatement->setAutoCommit(true);
+      // also register for associated alert
+      oracle::occi::Statement* registerAlertStmt = 
+        createStatement("BEGIN DBMS_ALERT.REGISTER('wakeUp" + service + "'); END;");
+      registerAlertStmt->execute();
     }
     // execute the statement
     m_requestToDoStatement->setString(1, service);

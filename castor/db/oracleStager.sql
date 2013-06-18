@@ -374,16 +374,31 @@ CREATE OR REPLACE PROCEDURE subRequestToDo(service IN VARCHAR2,
   varSrId NUMBER;
   varRName VARCHAR2(100);
   varClientId NUMBER;
+  varUnusedMessage VARCHAR2(2048);
+  varUnusedStatus INTEGER;
 BEGIN
+  -- Open a cursor on potential candidates
   OPEN SRcur;
-  -- Loop on candidates until we can lock one
-  LOOP
-    -- Fetch next candidate
-    FETCH SRcur INTO varSrId;
-    IF SRcur%NOTFOUND THEN
-      -- No candidate, just return
+  -- Retrieve the first candidate
+  FETCH SRCur INTO varSrId;
+  IF SRCur%NOTFOUND THEN
+    -- There is no candidate available. Wait for next alert for a maximum of 3 seconds.
+    -- We do not wait forever in order to to give the control back to the
+    -- caller daemon in case it should exit.
+    CLOSE SRCur;
+    DBMS_ALERT.WAITONE('wakeUp'||service, varUnusedMessage, varUnusedStatus, 3);
+    -- try again to find something now that we waited
+    OPEN SRCur;
+    FETCH SRCur INTO varSrId;
+    IF SRCur%NOTFOUND THEN
+      -- still nothing. We will give back the control to the application
+      -- so that it can handle cases like signals and exit. We will probably
+      -- be back soon :-)
       RETURN;
     END IF;
+  END IF;
+  -- Loop on candidates until we can lock one
+  LOOP
     BEGIN
       -- Try to take a lock on the current candidate, and revalidate its status
       SELECT /*+ INDEX(SR PK_SubRequest_ID) */ id INTO varSrId
@@ -406,6 +421,13 @@ BEGIN
         -- Go to next candidate, this subrequest is being processed by another thread
         NULL;
     END;
+    -- we are here because the current candidate could not be handled
+    -- let's go to the next one
+    FETCH SRcur INTO varSrId;
+    IF SRcur%NOTFOUND THEN
+      -- no next one ? then we can return
+      RETURN;
+    END IF;
   END LOOP;
   CLOSE SRcur;
 
@@ -884,15 +906,33 @@ CREATE OR REPLACE PROCEDURE processBulkRequest(service IN VARCHAR2, requestId OU
                        AND svcHandler IS NOT NULL);
   SrLocked EXCEPTION;
   PRAGMA EXCEPTION_INIT (SrLocked, -54);
+  varUnusedMessage VARCHAR2(2048);
+  varUnusedStatus INTEGER;
 BEGIN
   -- in case we do not find anything, rtype should be 0
   rType := 0;
+  -- Open a cursor on potential candidates
   OPEN Rcur;
+  -- Retrieve the first candidate
+  FETCH Rcur INTO requestId;
+  IF Rcur%NOTFOUND THEN
+    -- There is no candidate available. Wait for next alert for a maximum of 3 seconds.
+    -- We do not wait forever in order to to give the control back to the
+    -- caller daemon in case it should exit.
+    CLOSE Rcur;
+    DBMS_ALERT.WAITONE('wakeUp'||service, varUnusedMessage, varUnusedStatus, 3);
+    -- try again to find something now that we waited
+    OPEN Rcur;
+    FETCH Rcur INTO requestId;
+    IF Rcur%NOTFOUND THEN
+      -- still nothing. We will give back the control to the application
+      -- so that it can handle cases like signals and exit. We will probably
+      -- be back soon :-)
+      RETURN;
+    END IF;
+  END IF;
   -- Loop on candidates until we can lock one
   LOOP
-    -- Fetch next candidate
-    FETCH Rcur INTO requestId;
-    EXIT WHEN Rcur%NOTFOUND;
     BEGIN
       -- Try to take a lock on the current candidate
       SELECT type INTO rType FROM NewRequests WHERE id = requestId FOR UPDATE NOWAIT;
@@ -920,6 +960,13 @@ BEGIN
         -- Go to next candidate, this request is being processed by another thread
         NULL;
     END;
+    -- we are here because the current candidate could not be handled
+    -- let's go to the next one
+    FETCH Rcur INTO requestId;
+    IF Rcur%NOTFOUND THEN
+      -- no next one ? then we can return
+      RETURN;
+    END IF;
   END LOOP;
   CLOSE Rcur;
 END;
@@ -942,11 +989,31 @@ CREATE OR REPLACE PROCEDURE subRequestFailedToDo(srId OUT NUMBER, srFileName OUT
   varSrAnswered INTEGER;
   varRName VARCHAR2(100);
   varClientId NUMBER;
+  varUnusedMessage VARCHAR2(2048);
+  varUnusedStatus INTEGER;
 BEGIN
+  -- Open a cursor on potential candidates
   OPEN c;
-  LOOP
+  -- Retrieve the first candidate
+  FETCH c INTO varSRId;
+  IF c%NOTFOUND THEN
+    -- There is no candidate available. Wait for next alert for a maximum of 3 seconds.
+    -- We do not wait forever in order to to give the control back to the
+    -- caller daemon in case it should exit.
+    CLOSE c;
+    DBMS_ALERT.WAITONE('wakeUpErrorSvc', varUnusedMessage, varUnusedStatus, 3);
+    -- try again to find something now that we waited
+    OPEN c;
     FETCH c INTO varSRId;
-    EXIT WHEN c%NOTFOUND;
+    IF c%NOTFOUND THEN
+      -- still nothing. We will give back the control to the application
+      -- so that it can handle cases like signals and exit. We will probably
+      -- be back soon :-)
+      RETURN;
+    END IF;
+  END IF;
+  -- Loop on candidates until we can lock one
+  LOOP
     BEGIN
       SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ answered INTO varSrAnswered
         FROM SubRequest PARTITION (P_STATUS_7)
@@ -1036,6 +1103,11 @@ BEGIN
         -- Go to next candidate, this subrequest is being processed by another thread
         NULL;
     END;
+    FETCH c INTO varSRId;
+    IF c%NOTFOUND THEN
+      -- no next one ? then we can return
+      RETURN;
+    END IF;
   END LOOP;
   CLOSE c;
 END;
@@ -1044,17 +1116,30 @@ END;
 
 /* PL/SQL method to get the next request to do according to the given service */
 CREATE OR REPLACE PROCEDURE requestToDo(service IN VARCHAR2, rId OUT INTEGER, rType OUT INTEGER) AS
+  varUnusedMessage VARCHAR2(2048);
+  varUnusedStatus INTEGER;
 BEGIN
   DELETE FROM NewRequests
-   WHERE type IN (
-     SELECT type FROM Type2Obj
-      WHERE svcHandler = service
-        AND svcHandler IS NOT NULL
-     )
+   WHERE type IN (SELECT type FROM Type2Obj
+                   WHERE svcHandler = service
+                     AND svcHandler IS NOT NULL)
    AND ROWNUM < 2 RETURNING id, type INTO rId, rType;
 EXCEPTION WHEN NO_DATA_FOUND THEN
-  rId := 0;   -- nothing to do
-  rType := 0;
+  -- There is no candidate available. Wait for next alert for a maximum of 3 seconds.
+  -- We do not wait forever in order to to give the control back to the
+  -- caller daemon in case it should exit.
+  DBMS_ALERT.WAITONE('wakeUp'||service, varUnusedMessage, varUnusedStatus, 3);
+  -- try again to find something now that we waited
+  BEGIN
+    DELETE FROM NewRequests
+     WHERE type IN (SELECT type FROM Type2Obj
+                     WHERE svcHandler = service
+                       AND svcHandler IS NOT NULL)
+     AND ROWNUM < 2 RETURNING id, type INTO rId, rType;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    rId := 0;   -- nothing to do
+    rType := 0;
+  END;
 END;
 /
 

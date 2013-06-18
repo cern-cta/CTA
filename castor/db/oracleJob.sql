@@ -32,7 +32,7 @@ BEGIN
   --     dealing with the same copy.
   SELECT status INTO stat FROM DiskCopy WHERE id = dcId;
   -- First the invalid case
-  IF stat = 7 THEN -- INVALID
+  IF stat = dconst.DISKCOPY_INVALID THEN
     raise_application_error(-20106, 'Could not update an invalid copy of a file (file has been modified by somebody else concurrently)');
   END IF;
   -- Then the disk only check
@@ -82,7 +82,7 @@ BEGIN
     -- If we are not having a STAGEOUT diskCopy, we are the only ones to write,
     -- so we have to setup everything
     -- invalidate all diskcopies
-    UPDATE DiskCopy SET status = 7 -- INVALID
+    UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
      WHERE castorFile = cfId
        AND status IN (0, 10);
     -- except the one we are dealing with that goes to STAGEOUT
@@ -93,7 +93,7 @@ BEGIN
     deleteMigrationJobs(cfId);
   END IF;
   -- Invalidate any ongoing replications
-  UPDATE DiskCopy SET status = 7 -- INVALID
+  UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
    WHERE castorFile = cfId
      AND status = 1; -- WAITDISK2DISKCOPY
 END;
@@ -137,7 +137,7 @@ BEGIN
      AND SubRequest.id = srId
      AND SubRequest.request = Request.id;
   -- Check that we did not cancel the SubRequest in the mean time
-  IF srStatus IN (7, 9) THEN -- FAILED, FAILED_FINISHED
+  IF srStatus IN (dconst.SUBREQUEST_FAILED, dconst.SUBREQUEST_FAILED_FINISHED) THEN
     raise_application_error(-20104, 'SubRequest canceled while queuing in scheduler. Giving up.');
   END IF;
   -- Get selected filesystem
@@ -276,7 +276,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   END IF;
   -- It was not an update creating a file, so we fail
   UPDATE SubRequest
-     SET status = 7, errorCode = 1725, errorMessage='Request canceled while queuing'
+     SET status = dconst.SUBREQUEST_FAILED, errorCode = 1725, errorMessage='Request canceled while queuing'
    WHERE id = srId;
   COMMIT;
   raise_application_error(-20114, 'File invalidated while queuing in the scheduler, please try again');
@@ -694,7 +694,7 @@ CREATE OR REPLACE PROCEDURE getUpdateFailedProcExt
 BEGIN
   -- Fail the subrequest. The stager will try and answer the client
   UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-     SET status = 7, -- FAILED
+     SET status = dconst.SUBREQUEST_FAILED,
          errorCode = errno,
          errorMessage = errmsg
    WHERE id = srId
@@ -726,7 +726,7 @@ BEGIN
    WHERE id = srId;
   -- Fail the subRequest
   UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-     SET status = 7, -- FAILED
+     SET status = dconst.SUBREQUEST_FAILED,
          errorCode = errno,
          errorMessage = errmsg
    WHERE id = srId;
@@ -928,6 +928,22 @@ CREATE OR REPLACE TRIGGER tr_SubRequest_informSchedReady AFTER UPDATE OF status 
 FOR EACH ROW WHEN (new.status = 13) -- SUBREQUEST_READYFORSCHED
 BEGIN
   DBMS_ALERT.SIGNAL('transferReadyToSchedule', '');
+END;
+/
+
+CREATE OR REPLACE TRIGGER tr_SubRequest_informError AFTER UPDATE OF status ON SubRequest
+FOR EACH ROW WHEN (new.status = 7) -- SUBREQUEST_FAILED
+BEGIN
+  DBMS_ALERT.SIGNAL('wakeUpErrorSvc', '');
+END;
+/
+
+CREATE OR REPLACE TRIGGER tr_SubRequest_informRestart AFTER UPDATE OF status ON SubRequest
+FOR EACH ROW WHEN (new.status = 1 OR -- SUBREQUEST_RESTART
+                   new.status = 2 OR -- SUBREQUEST_RETRY
+                   new.status = 0)   -- SUBREQUEST_START
+BEGIN
+  DBMS_ALERT.SIGNAL('wakeUp'||:new.svcHandler, '');
 END;
 /
 

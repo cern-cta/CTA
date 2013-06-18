@@ -354,6 +354,10 @@ castor::db::ora::OraStagerSvc::subRequestToDo
       m_subRequestToDoStatement->registerOutParam
         (29, oracle::occi::OCCIINT);
       m_subRequestToDoStatement->setAutoCommit(true);
+      // also register for associated alert
+      oracle::occi::Statement* registerAlertStmt = 
+        createStatement("BEGIN DBMS_ALERT.REGISTER('wakeUp" + service + "'); END;");
+      registerAlertStmt->execute();
     }
     m_subRequestToDoStatement->setString(1, service);
 
@@ -488,6 +492,10 @@ castor::db::ora::OraStagerSvc::processBulkRequest
       m_processBulkRequestStatement->registerOutParam
         (10, oracle::occi::OCCICURSOR);
       m_processBulkRequestStatement->setAutoCommit(true);
+      // also register for associated alert
+      oracle::occi::Statement* registerAlertStmt = 
+        createStatement("BEGIN DBMS_ALERT.REGISTER('wakeUp" + service + "'); END;");
+      registerAlertStmt->execute();
     }
     m_processBulkRequestStatement->setString(1, service);
 
@@ -569,6 +577,10 @@ castor::db::ora::OraStagerSvc::subRequestFailedToDo()
         (9, oracle::occi::OCCIINT);
       m_subRequestFailedToDoStatement->registerOutParam
         (10, oracle::occi::OCCIDOUBLE);
+      // also register for associated alert
+      oracle::occi::Statement* registerAlertStmt = 
+        createStatement("BEGIN DBMS_ALERT.REGISTER('wakeUpErrorSvc'); END;");
+      registerAlertStmt->execute();
     }
     // execute the statement and see whether we found something
     unsigned int rc =
@@ -1180,6 +1192,7 @@ castor::db::ora::OraStagerSvc::handlePrepareToGet(u_signed64 cfId,
       m_handlePrepareToGetStatement = createStatement
         ("BEGIN :1 := handlePrepareToGet(:2, :3, :4, :5, :6); END;");
       m_handlePrepareToGetStatement->registerOutParam(1, oracle::occi::OCCIINT);
+      m_handlePrepareToGetStatement->setAutoCommit(true);
     }
     // Execute the statement
     m_handlePrepareToGetStatement->setDouble(2, cfId);
@@ -1250,6 +1263,7 @@ bool castor::db::ora::OraStagerSvc::handlePrepareToPut(u_signed64 cfId,
     m_handlePrepareToPutStatement = createStatement
       ("BEGIN :1 := handlePrepareToPut(:2, :3, :4, :5); END;");
     m_handlePrepareToPutStatement->registerOutParam(1, oracle::occi::OCCIINT);
+    m_handlePrepareToPutStatement->setAutoCommit(true);
   }
   // Execute the statement
   m_handlePrepareToPutStatement->setDouble(2, cfId);

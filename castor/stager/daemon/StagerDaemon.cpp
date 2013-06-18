@@ -38,6 +38,7 @@
 #include "castor/PortNumbers.hpp"
 #include "castor/System.hpp"
 #include "castor/server/SignalThreadPool.hpp"
+#include "castor/server/DbAlertedThreadPool.hpp"
 #include "castor/replier/RequestReplier.hpp"
 #include "castor/db/DbCnvSvc.hpp"
 
@@ -73,43 +74,43 @@ int main(int argc, char* argv[]){
     /* thread pools for the stager */
     /*******************************/
     stagerDaemon.addThreadPool
-      (new castor::server::SignalThreadPool
+      (new castor::server::DbAlertedThreadPool
        ("JobRequestSvcThread",
 	new castor::stager::daemon::JobRequestSvcThread()));
 
     stagerDaemon.addThreadPool
-      (new castor::server::SignalThreadPool
+      (new castor::server::DbAlertedThreadPool
        ("PrepRequestSvcThread",
 	new castor::stager::daemon::PrepRequestSvcThread()));
 
     stagerDaemon.addThreadPool
-      (new castor::server::SignalThreadPool
+      (new castor::server::DbAlertedThreadPool
        ("StageRequestSvcThread",
 	new castor::stager::daemon::StageRequestSvcThread()));
 
     stagerDaemon.addThreadPool
-      (new castor::server::SignalThreadPool
+      (new castor::server::DbAlertedThreadPool
        ("BulkStageReqSvcThread",
 	new castor::stager::daemon::BulkStageReqSvcThread()));
 
     stagerDaemon.addThreadPool
-      (new castor::server::SignalThreadPool
+      (new castor::server::DbAlertedThreadPool
        ("QueryRequestSvcThread",
 	new castor::stager::daemon::QueryRequestSvcThread()));
 
     // These threads poll the database every 2 seconds.
     stagerDaemon.addThreadPool
-      (new castor::server::SignalThreadPool
+      (new castor::server::DbAlertedThreadPool
        ("ErrorSvcThread",
 	new castor::stager::daemon::ErrorSvcThread(), 2));
 
     stagerDaemon.addThreadPool
-      (new castor::server::SignalThreadPool
+      (new castor::server::DbAlertedThreadPool
        ("jobSvcThread",
 	new castor::stager::daemon::JobSvcThread()));
 
     stagerDaemon.addThreadPool
-      (new castor::server::SignalThreadPool
+      (new castor::server::DbAlertedThreadPool
        ("GcSvcThread",
 	new castor::stager::daemon::GcSvcThread()));
 
