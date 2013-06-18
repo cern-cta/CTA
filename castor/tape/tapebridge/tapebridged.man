@@ -46,11 +46,87 @@ set and the default should be used.
 .TP
 \fBTAPEBRIDGE RTCPDLOWPORT
 The inclusive low port of the tapebridge's RTCPD callback port number range.
-The default is 30101.
 .TP
 \fBTAPEBRIDGE RTCPDHIGHPORT
 The inclusive high port of the tapebridge's RTCPD callback port number range.
-The default is 30200.
+.TP
+\fBTAPEBRIDGE BULKREQUESTMIGRATIONMAXBYTES
+When the tapebridged daemon requests the tapegatewayd daemon for a set of
+files to migrate to tape, this parameter defines the maximum number of bytes
+the set of files should represent.
+.TP
+\fBTAPEBRIDGE BULKREQUESTMIGRATIONMAXFILES
+When the tapebridged daemon requests the tapegatewayd daemon for a set of
+files to migrate to tape, this parameter defines the maximum number of files
+the set may contain.
+.TP
+\fBTAPEBRIDGE BULKREQUESTRECALLMAXBYTES
+When the tapebridged daemon requests the tapegatewayd daemon for a set of
+files to recall from tape, this parameter defines the maximum number of bytes
+the set of files should represent.
+.TP
+\fBTAPEBRIDGE BULKREQUESTRECALLMAXFILES
+When the tapebridged daemon requests the tapegatewayd daemon for a set of
+files to recall from tape, this parameter defines the maximum number of files
+the set may contain.
+.TP
+\fBTAPEBRIDGE TAPEFLUSHMODE
+The value of this parameter defines the mode of tape-flush behaviour to be
+used when tapegatewayd and writetp are clients of rtcpd (via tapebridged).
+This option is explicitly ignored when rtcpclientd and tpwrite are the
+clients of rtpcd.
+
+The possible case-sensitive values for this option are:
+
+\fBN_FLUSHES_PER_FILE\fP
+.br
+If the AUL tape format is used then data will be flushed to tape
+three times per file, once after the header of the file, once again after the
+end of the data of the file and finally once more after the trailer of the
+file.  If the NL format is used then data will be flushed to tape after the
+end of the data of each file.
+
+\fBONE_FLUSH_PER_N_FILES\fP
+.br
+If the AUL tape format is used then data will be flushed to tape
+after the AUL trailer of the Nth file, where the Nth file is the one that
+reaches either the maximum number of bytes allowed before a flush or the
+maximum number of files before a flush.  If the NL format is used then data
+will be flushed to tape after the end of the data of the Nth file.
+
+The appropriate st driver must be loaded in order to successfully use the
+\fBONE_FLUSH_PER_N_FILES\fP tape-flush mode.
+
+The value of this parameter is read and taken into account by the tapebridged
+daemon when the daemon is started.  The tapebridged daemon must be restarted
+in order for any change in the value of this parameter to be taken into
+account.
+.TP
+\fBTAPEBRIDGE MAXBYTESBEFOREFLUSH
+The value of this parameter defines the maximum number of bytes to be written
+to tape before a flush to tape (synchronised tape-mark).  Please note that a
+flush occurs on a file boundary therefore more bytes will normally be written
+to tape before the actual flush occurs.
+
+The value of this parameter is only used when \fBTAPEBRIDGE/TAPEFLUSHMODE\fP is
+set to \fBONE_FLUSH_PER_N_FILES\fP.
+
+The value of this parameter is read and taken into account by the tapebridged
+daemon when the daemon is started.  The tapebridged daemon must be restarted
+in order for any change in the value of this parameter to be taken into
+account.
+.TP
+\fBTAPEBRIDGE MAXFILESBEFOREFLUSH
+The value of this parameter defines the maximum number of files to be written
+to tape before a flush to tape (synchronised or non-immediate tape-mark).
+
+The value of this parameter is only used when \fBTAPEBRIDGE/TAPEFLUSHMODE\fP is
+set to \fBONE_FLUSH_PER_N_FILES\fP.
+
+The value of this parameter is read and taken into account by the tapebridged
+daemon when the daemon is started.  The tapebridged daemon must be restarted
+in order for any change in the value of this parameter to be taken into
+account.
 .TP
 \fBtapebridged LOGSTANDARD XXXX
 Sets the location of the \fBtapebridged\fP log file to be \fBXXXX\fP.

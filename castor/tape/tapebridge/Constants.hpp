@@ -170,14 +170,14 @@ namespace tapebridge {
    * the resulting set can represent.  This number may be exceeded when the set
    * contains a single file.
    */
-  const uint64_t TAPEBRIDGE_BULKREQUESTMIGRATIONMAXBYTES = 1;
+  const uint64_t TAPEBRIDGE_BULKREQUESTMIGRATIONMAXBYTES = 80000000000;
 
   /**
    * When the tapegatewayd daemon is asked for a set of files to migrate to
    * tape, this is the compile-time default for the maximum number of files
    * that can be in that set.
    */
-  const uint64_t TAPEBRIDGE_BULKREQUESTMIGRATIONMAXFILES = 1;
+  const uint64_t TAPEBRIDGE_BULKREQUESTMIGRATIONMAXFILES = 500;
 
   /**
    * When the tapegatewayd daemon is asked for a set of files to recall from
@@ -185,14 +185,14 @@ namespace tapebridge {
    * the resulting set can represent.  This number may be exceeded when the set
    * contains a single file.
    */
-  const uint64_t TAPEBRIDGE_BULKREQUESTRECALLMAXBYTES = 1;
+  const uint64_t TAPEBRIDGE_BULKREQUESTRECALLMAXBYTES = 80000000000;
 
   /**
    * When the tapegatewayd daemon is asked for a set of files to recall from
    * tape, this is the compile-time default for the maximum number of files
    * that can be in that set.
    */
-  const uint64_t TAPEBRIDGE_BULKREQUESTRECALLMAXFILES = 1;
+  const uint64_t TAPEBRIDGE_BULKREQUESTRECALLMAXFILES = 500;
 
 } // namespace tapebridge
 } // namespace tape
