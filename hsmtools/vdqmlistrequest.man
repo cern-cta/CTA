@@ -18,7 +18,7 @@ vdqmlistrequest \- list volume requests
 
 .SH DESCRIPTION
 .B vdqmlistrequest
-lists the volume requests within the VDQM database order by their priority.
+lists the volume requests within the VDQM database ordered by their priority.
 
 .SH OPTIONS
 .TP
