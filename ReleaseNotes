@@ -150,6 +150,16 @@
     version number : 
       + on the head node: /usr/lib64/libXrdxCastor2Fs.so.2.1 
       + on the disk servers: /usr/lib64/libXrdxCastor2Ofs.so.2.1 and /usr/lib64/libXrdxCastor2ServerAcc.so.2.1
+  - tape operators should no longer explicitly set the following tapebridged
+    configuration-parameters.  The compile-time defaults have been set for good
+    performance and they have been tested at CERN.
+      + TAPEBRIDGE BULKREQUESTMIGRATIONMAXBYTES
+      + TAPEBRIDGE BULKREQUESTMIGRATIONMAXFILES
+      + TAPEBRIDGE BULKREQUESTRECALLMAXBYTES
+      + TAPEBRIDGE BULKREQUESTRECALLMAXFILES
+      + TAPEBRIDGE MAXBYTESBEFOREFLUSH
+      + TAPEBRIDGE MAXFILESBEFOREFLUSH
+      + TAPEBRIDGE TAPEFLUSHMODE
 
 
   Upgrade Instructions from 2.1.13-9
