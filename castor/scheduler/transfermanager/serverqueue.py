@@ -191,7 +191,8 @@ class ServerQueue(dict):
   def removeAnyType(self, transferIds):
     '''drops transfers from the queues and return the dropped transfers. Handles transfers
        without knowning their type. In other words, it's trying to drop STD, D2DSRC and D2DDST'''
-    self.remove(itertools.product(transferIds, [TransferType.STD, TransferType.D2DSRC, TransferType.D2DDST]))
+    return self.remove(itertools.product(transferIds,
+                                         [TransferType.STD, TransferType.D2DSRC, TransferType.D2DDST]))
 
   def removeall(self, requser):
     '''drops transfers from the queues return a dictionnary "transferId => fileId" listing
