@@ -48,7 +48,7 @@ minamountdata = None
 minnbfiles = None
 maxfileage = None
 priority = None
-    try:
+try:
     for f, v in options:
         if f == '-h' or f == '--help':
             usage(0)
