@@ -1478,6 +1478,9 @@ static void procmountreq(char *req_data,
 		  "TPVID"  , TL_MSG_PARAM_TPVID, vid );
 		errflg++;
 	}
+/********************************************************************
+ Please note that if we ever support the BLP label type then we must
+ include the following if statement
 	if (lblcode == BLP && mode == WRITE_ENABLE) {
 		usrmsg (func, TP017);
                 tl_tpdaemon.tl_log( &tl_tpdaemon, 17, 2,
@@ -1485,6 +1488,7 @@ static void procmountreq(char *req_data,
                                     "JobID", TL_MSG_PARAM_INT, jid );                
 		errflg++;
 	}
+*********************************************************************/
 	if (errflg) {
 		c = EINVAL;
 		goto reply;
