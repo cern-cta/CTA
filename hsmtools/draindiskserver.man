@@ -33,12 +33,6 @@ draindiskserver \- management of draining filesystems and diskservers
 .BI -a\c
 |\c
 .BI --add
-.BI -n
-<diskServer>
-[
-.BI -m
-<mountpoint>
-]
 [
 .BI -S
 <serviceclass>
@@ -54,19 +48,22 @@ draindiskserver \- management of draining filesystems and diskservers
 .BI --comment\c
 =comment
 ]
+[
+.BI -m\c
+|\c
+.BI --mountpoints
+.BI <mountPoint>\c
+[:...]
+]
+.BI \<diskPoolName>\c
+|\c
+.BI <diskServerName>
+[...]
 .br
 .B draindiskserver
 .BI -q\c
 |\c
 .BI --query
-[
-.BI -n
-<diskServer>
-[
-.BI -m
-<mountpoint>
-]
-]
 [
 .BI -c\c
 |\c
@@ -80,33 +77,56 @@ draindiskserver \- management of draining filesystems and diskservers
 [
 .BI --script
 ]
+[
+[
+.BI -m\c
+|\c
+.BI --mountpoints
+.BI <mountPoint>\c
+[:...]
+]
+.BI \<diskPoolName>\c
+|\c
+.BI <diskServerName>
+[...]
+]
 .br
 .B draindiskserver
 .BI -q\c
 |\c
 .BI --query
-[
-.BI -n
-<diskServer>
-[
-.BI -m
-<mountpoint>
-]
-]
 .BI -f\c
 |\c
 .BI --failures
+[
+[
+.BI -m\c
+|\c
+.BI --mountpoints
+.BI <mountPoint>\c
+[:...]
+]
+.BI \<diskPoolName>\c
+|\c
+.BI <diskServerName>
+[...]
+]
 .br
 .B draindiskserver
 .BI -d\c
 |\c
 .BI --delete
-.BI -n
-<diskServer>
 [
-.BI -m
-<mountpoint>
+.BI -m\c
+|\c
+.BI --mountpoints
+.BI <mountPoint>\c
+[:...]
 ]
+.BI \<diskPoolName>\c
+|\c
+.BI <diskServerName>
+[...]
 
 .SH DESCRIPTION
 .B draindiskserver
@@ -132,19 +152,20 @@ Delete/Cancel the draining process of a given filesystem or diskserver.
 .RE
 
 .TP
-Common options:
+Common options and arguments:
 .RS
 .TP
 .B -h, --help
 Display this help and exit
 .TP
-.B -n, --nodename=<DiskServer>
-The name of the diskserver to perform the operation on.
-.TP
-.B -m, --mountpoint=<MountPoint>
-The name of the mountpoint to perform the operation on. Note: if the mountpoint
+.B -m, --mountpoints=<MountPoint>[:...]
+The name of the mountpoints to perform the operation on. Note: if the mountpoint
 option is omitted, the operation will apply to all filesystems associated with
-the diskserver.
+the selected diskservers.
+.TP
+.BI <diskPoolName>|<diskServerName> [...]
+The name of the diskservers/diskpools to perform the operation on.
+Note that at least one argument is expected in case the --mountpoints option is used
 .RE
 
 .TP
@@ -153,8 +174,8 @@ Add options (\fB-a\fR or \fB--add\fR):
 .TP
 .B -S,\ \-\-svcclass=<svcClassName>
 The name of the service class that files should be replicated to. This option
-can be omitted if the filesystems to be added belong to a diskpool which is
-linked to only one service class.
+can be omitted if the filesystems to be added all belong to a single unique
+service class.
 .TP
 .B --auto-delete
 Delete files automatically after replication. (Default: NO). Files deleted as a
@@ -236,8 +257,8 @@ The status of the draining process. One of: \fBSUBMITTED\fR, \fBSTARTING\fR,
 .SH EXAMPLES
 .nf
 .ft CW
-# draindiskserver -a -n lxc2dev1d2.cern.ch -m /srv/castor/10/  -S default --comment="first test"
-Started draining for lxc2dev1.cern.ch:/srv/castor/10/
+# draindiskserver -a -S default --comment="first test" -m /srv/castor/10/ lxc2dev1d2.cern.ch 
+Started draining for lxc2dev1d2.cern.ch:/srv/castor/10/
 
 # draindiskserver -q
         DiskServer      MountPoint              Created TFiles TSize RFiles RSize Failed RunTime Progress ETC  Status

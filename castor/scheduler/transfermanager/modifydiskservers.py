@@ -73,12 +73,12 @@ def modifyDiskServers(dbconn, targets, state, mountPoints, diskPool, isRecursive
         # MountPoints were given by the user, check them
         sqlStatement = '''SELECT id, mountPoint FROM FileSystem
                            WHERE mountPoint = :mountPoint
-                             AND (diskServer IN (''' + ', '.join([str(x) for x in diskServerIds]) + '))'
+                             AND diskServer IN (''' + ', '.join([str(x) for x in diskServerIds]) + ')'
         existingMountPoints = set([])
         for mountPoint in mountPoints:
             stcur.execute(sqlStatement, mountPoint=mountPoint)
-            row = stcur.fetchone()
-            if row:
+            rows = stcur.fetchall()
+            for row in rows:
                 mountPointIds.append(row[0])
                 existingMountPoints.add(row[1])
         unknownMountPoints = set(m for m in mountPoints) - existingMountPoints

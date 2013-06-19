@@ -792,15 +792,15 @@ def parseAndCheckTargets(targets, stcur):
 def parseAndCheckMountPoints(diskServerIds, mountPoints, stcur):
     '''extracts list of concerned mountPoints from a list of diskserver ids
        and a set of mountPoints. Checks them and returns a list of triplets
-       (diskServerId, FileSystemId, mountPoint)'''
+       (diskServerId, diskServerName, FileSystemId, mountPoint)'''
     # build select statement
     stGetFileSystemIds = '''
-    SELECT DiskServer.id, FileSystem.id, FileSystem.mountPoint
+    SELECT DiskServer.id, DiskServer.name, FileSystem.id, FileSystem.mountPoint
       FROM FileSystem, DiskServer
      WHERE DiskServer.id IN (''' + ", ".join([str(x) for x in diskServerIds]) + ''')
        AND FileSystem.diskServer = DiskServer.id'''
     if mountPoints:
-        stGetFileSystemIds += ' AND FileSystem.mountPoint IN (' + "', '".join(mountPoints) + "')"
+        stGetFileSystemIds += " AND FileSystem.mountPoint IN ('" + "', '".join(mountPoints) + "')"
     # execute statement
     stcur.execute(stGetFileSystemIds)
     # and return result

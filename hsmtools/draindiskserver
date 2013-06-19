@@ -36,26 +36,12 @@ def usage(exitCode):
     '''prints usage'''
     print 'Usage :'
     print '  draindiskserver -h/--help'
-    print '  draindiskserver -a/--add -n diskServer [-m mountpoint] [-S serviceclass] [--auto-delete] [--file-mask=(NOTONTAPE|ALL)] [--comment=comment]'
-    print '  draindiskserver -q/--query [-n diskServer [-m mountpoint]] [-c/--config] [-r/--running] [--script]'
-    print '  draindiskserver -q/--query [-n diskServer [-m mountpoint]] -f/--failures'
-    print '  draindiskserver -d/--delete -n diskServer [-m mountpoint]'
+    print '  draindiskserver -a/--add [-S serviceclass] [--auto-delete] [--file-mask=(NOTONTAPE|ALL)] [--comment=comment] <targets>'
+    print '  draindiskserver -q/--query [-c/--config] [-r/--running] [--script] [<targets>]'
+    print '  draindiskserver -q/--query -f/--failures [<targets>]'
+    print '  draindiskserver -d/--delete <targets>'
+    print 'where <targets> = [-m|--mountpoints <mountpoint>[:...]] <diskpool>|<diskServerName> [...]'
     sys.exit(exitCode)
-
-# first parse the options
-try:
-    options, arguments = getopt.getopt(sys.argv[1:], 'han:m:S:qcfrdv',
-                                  ['help', 'add', 'nodename=', 'mountpoint=',
-                                   'svcclass=', 'auto-delete', 'file-mask=',
-                                   'comment=', 'query', 'config', 'failures',
-                                   'running', 'script', 'delete', 'verbose'])
-except Exception, parsingException:
-    print parsingException
-    usage(1)
-# Any positional arguments left over after parsing?
-if len(arguments):
-    print 'Unexpected arguments found : %s' % ' '.join(arguments)
-    usage(1)
 
 class FileMask(object):
   '''Constants defining the existing types of transfer'''
@@ -134,12 +120,22 @@ def drainingJobStatusToStr(status):
     return 'FINISHED'
   else:
     return 'UNKNOWN'
+
+# first parse the options
+try:
+    options, arguments = getopt.getopt(sys.argv[1:], 'ham:S:qcfrdv',
+                                  ['help', 'add', 'mountpoints=',
+                                   'svcclass=', 'auto-delete', 'file-mask=',
+                                   'comment=', 'query', 'config', 'failures',
+                                   'running', 'script', 'delete', 'verbose'])
+except Exception, parsingException:
+    print parsingException
+    usage(1)
     
 addFlag = False
 queryFlag = False
 deleteFlag = False
-nodeName = None
-mountPoint = None
+mountPoints = None
 svcClass = None
 fileMask = 1 # default is ALL
 fileMaskFlag = False
@@ -160,10 +156,8 @@ for opt, arg in options:
         queryFlag = True
     elif opt in ('-d', '--delete'):
         deleteFlag = True
-    elif opt in ('-n', '--nodename'):
-        nodeName = arg
-    elif opt in ('-m', '--mountpoint'):
-        mountPoint = arg
+    elif opt in ('-m', '--mountpoints'):
+        mountPoints = tuple(arg.split(':'))
     elif opt in ('-S', '--svcclass'):
         svcClass = arg
     elif opt == '--file-mask':
@@ -183,7 +177,7 @@ for opt, arg in options:
     elif opt in ('-f', '--failures'):
         failuresFlag = True
     elif opt in ('-r', '--running'):
-        runningFalg = True
+        runningFlag = True
     elif opt == '--script':
         scriptFlag = True
     elif opt == '--comment':
@@ -194,10 +188,7 @@ for opt, arg in options:
         print "unknown option : " + opt
         usage(1)
 
-# If any arg, complain and stop
-if len(arguments) != 0:
-    print "Unknown arguments : " + ' '.join(arguments) + "\n"
-    usage(1)
+targets = arguments
 
 # Check consistency of arguments
 if not (addFlag or queryFlag or deleteFlag):
@@ -206,11 +197,11 @@ if not (addFlag or queryFlag or deleteFlag):
 if [addFlag, queryFlag, deleteFlag].count(True) > 1:
     print 'options --add, --delete and --query are mutually exclusive'
     usage(1)
-if nodeName == None and (addFlag or deleteFlag):
-    print 'missing -n, --nodename option'
+if len(targets) == 0 and (addFlag or deleteFlag):
+    print 'Nothing to do ! Please give a few diskpools/diskservers'
     usage(1)
-if mountPoint != None and nodeName == None:
-    print '--nodename option is needed when --mountPoint is used'
+if mountPoints != None and not targets:
+    print 'targets are mandatory when --mountPoints is used'
     usage(1)
 if (addFlag or deleteFlag) and (configFlag or failuresFlag or runningFlag or scriptFlag):
     print 'incompatible set of options : --config, --failures, --running and --script are only valid with --query'
@@ -222,25 +213,35 @@ if failuresFlag and (configFlag or runningFlag or scriptFlag):
     print 'option --running, --config and --scripts can not be used with --failures'
     usage(1)
 
-def getFileSystems(stcur):
-    '''check the nodeName and mountPoint, and returns the list of filesytem concerned
-       in the form of triplets (diskServerId, FileSystemId, mountPoint)'''
-    stGetFileSystemIds = '''
-    SELECT DiskServer.id, FileSystem.id, FileSystem.mountPoint
-      FROM FileSystem, DiskServer
-     WHERE DiskServer.name = :nodeName
-       AND FileSystem.diskServer = DiskServer.id
-       AND (FileSystem.mountPoint = :mountPoint OR :mountPoint IS NULL)'''
-    stcur.execute(stGetFileSystemIds, nodeName=nodeName, mountPoint=mountPoint)
-    fileSystems = stcur.fetchall()
-    if len(fileSystems) == 0:
-        print 'Unable to find concerned filesystems. Please check node name and/or mount point'
-        print 'in particular make sur that diskserver name is fully qualified and that mountPoint ends with /'
+    
+def getFileSystems(stcur, shouldNotBeEmpty=False):
+    '''check the targets and mountPoints, and returns the list of filesytems concerned
+       in the form of tuples (diskServerId, diskServerName, FileSystemId, mountPoint)'''
+    # get list of target diskservers from the mix diskpool/diskserver targets
+    unknownTargets, diskServerIds = castor_tools.parseAndCheckTargets(targets, stcur)
+    # and complain if some are unknown
+    if unknownTargets:
+        print 'WARNING : the following diskpools/diskservers do not exist : ' + \
+              ', '.join(unknownTargets)
+        if not diskServerIds:
+            sys.exit(1)
+    if not diskServerIds:
+        if shouldNotBeEmpty:
+            print 'None of the provided diskpools/diskservers could be found. Giving up'
+            sys.exit(1)
+        else:
+            return None
+    # get the list of filesystems from the diskservers and the mounpoints given
+    fileSystems = castor_tools.parseAndCheckMountPoints(diskServerIds, mountPoints, stcur)
+    # and complain if nothing was found
+    if not fileSystems:
+        print 'Unable to find concerned filesystems. Please check node name and/or mount point.'
+        print 'In particular make sur that diskserver name is fully qualified and that mountPoint ends with /'
         sys.exit(1)
     return fileSystems
 
 
-def getSvcClassId(stcur):
+def getSvcClassId(stcur, fileSystemIds):
     '''checks the given svcClass if any and gets its id. Else find out
        the service class to be used, that is the one of the involved filesytems'''
     # if any service class is given, get its id
@@ -261,15 +262,13 @@ def getSvcClassId(stcur):
         # no service class given, get the one of the involved filesystems
         stGetSvcClass = '''
         SELECT DiskPool2SvcClass.child
-          FROM FileSystem, DiskServer, DiskPool2SvcClass
-         WHERE DiskServer.name = :nodeName
-           AND FileSystem.diskServer = DiskServer.id
-           AND (FileSystem.mountPoint = :mountPoint OR :mountPoint IS NULL)
+          FROM FileSystem, DiskPool2SvcClass
+         WHERE FileSystem.id IN (''' + ', '.join([str(x) for x in fileSystemIds]) + ''')
            AND FileSystem.diskpool = DiskPool2SvcClass.parent'''
-        stcur.execute(stGetSvcClass, nodeName=nodeName, mountPoint=mountPoint)
+        stcur.execute(stGetSvcClass)
         svcClassIds = stcur.fetchall()
         if len(svcClassIds) == 0:
-            print 'Unable to find service class of the given node. Giving up'
+            print 'Unable to find service class. Giving up'
             sys.exit(1)
         elif len(svcClassIds) > 1:
             print 'Found several possible service classes for this drain. Please specify --svcclass option'
@@ -286,10 +285,10 @@ def submitDrain():
         stcur.arraysize = 50
         # precompute some useful values about us
         machine, euid, egid, pid, userName = castor_tools.getIdentity()[0:5]
-        # check the nodeName and mountPoint, and get the list of filesytem ids concerned
-        fileSystems = getFileSystems(stcur)
+        # check the targets and mountPoints, and get the list of filesytem ids concerned
+        fileSystems = getFileSystems(stcur, True)
         # check the service class and gets its id
-        svcClassId = getSvcClassId(stcur)
+        svcClassId = getSvcClassId(stcur, [fs[2] for fs in fileSystems])
         # create DrainingJob statement
         stCreateDrainingJob = '''
         INSERT INTO DrainingJob (id, userName, euid, egid, pid, machine,
@@ -300,40 +299,43 @@ def submitDrain():
         VALUES (ids_seq.nextval, :userName, :euid, :egid, :pid, :machine,
                 getTime(), getTime(), 0, :fsId, :svcClassId, :autoDelete, :fileMask,
                 0, 0, 0, 0, 0, 0, :userComment)'''
+        # First check DiskServers status
+        stCheckDSState = 'SELECT name, status FROM DiskServer WHERE id IN (' + \
+                         ', '.join([str(fs[0]) for fs in fileSystems]) + ')'
+        stcur.execute(stCheckDSState)
+        for dsName, dsStatus in stcur.fetchall():
+            if dsStatus == DiskServerStatus.DISABLED:
+                print 'DiskServer %s is in DISABLED state. Skiping it' % dsName
+                fileSystems = [fs for fs in fileSystems if fs[1] != dsName]
+        # In case no filesystem are given by the user, switch the status of the
+        # diskservers to DRAINING. In case filesystems are mentionned, the DiskServer
+        # status is not touched
+        if mountPoints == None:
+            # status 1 is DRAINING
+            stUpdateDSState = 'UPDATE DiskServer SET status = 1 WHERE id IN (' + \
+                              ', '.join([str(fs[0]) for fs in fileSystems]) + ')'
+            stcur.execute(stUpdateDSState)
         # SQL statements
         stCheckDrainingJob = '''
         SELECT username, machine, creationTime
           FROM DrainingJob
          WHERE fileSystem = :fsId'''
-        stCheckFSState = 'SELECT status FROM FileSystem WHERE id = :fsId'
-        stCheckDSState = 'SELECT status FROM DiskServer WHERE id = :dsId'
         stUpdateFSState = 'UPDATE FileSystem SET status = 1 WHERE id = :fsId' # DRAINING
-        stUpdateDSState = 'UPDATE DiskServer SET status = 1 WHERE id = :dsId' # DRAINING
-        # First check DiskServer status
-        stcur.execute(stCheckDSState, dsId=fileSystems[0][0])
-        dsStatus = stcur.fetchall()[0][0]
-        if dsStatus == DiskServerStatus.DISABLED:
-            print 'DiskServer %s is in DISABLED state. Giving up' % machine
-            return
-        # In case no filesystem is given by the user, switch the status of the
-        # diskserver to DRAINING. In case filesystems are mentionned, the DiskServer
-        # status is not touched
-        if mountPoint == None:
-            stcur.execute(stUpdateDSState, dsId=fileSystems[0][0])
+        stCheckFSState = 'SELECT status FROM FileSystem WHERE id = :fsId'
         # go through all the concerned filesystem
-        for dsId, fsId, fsMountPoint in fileSystems: # pylint: disable=W0612
+        for dsId, dsName, fsId, fsMountPoint in fileSystems: # pylint: disable=W0612
             # first check the filesystem status
             stcur.execute(stCheckFSState, fsId=fsId)
             dsStatus = stcur.fetchall()[0][0]
             if dsStatus == FileSystemStatus.DISABLED:
-                print 'Filesystem %s:%s is in DISABLED state. Skipping it' % (machine, fsMountPoint)
+                print 'Filesystem %s:%s is in DISABLED state. Skipping it' % (dsName, fsMountPoint)
                 continue
             # then check that the filesystem is not already draining
             stcur.execute(stCheckDrainingJob, fsId=fsId)
             drains = stcur.fetchall()
             if (len(drains)) > 0:
                 print 'Filesystem %s:%s already has a draining session. Use --delete to cancel it' % \
-                  (machine, fsMountPoint)
+                  (dsName, fsMountPoint)
                 print '    for info, drain was issued by %s on %s at %s' % \
                   (drains[0][0], drains[0][1], castor_tools.secsToDate(drains[0][2]))
                 continue
@@ -343,7 +345,7 @@ def submitDrain():
             stcur.execute(stCreateDrainingJob, userName=userName, euid=euid, egid=egid,
                           pid=pid, machine=machine, fsId=fsId, svcClassId=svcClassId,
                           autoDelete=autoDelete, fileMask=fileMask, userComment=comment)
-            print 'Started draining for %s:%s' % (machine, fsMountPoint)
+            print 'Started draining for %s:%s' % (dsName, fsMountPoint)
         stconn.commit()
     finally:
         # close DB connection
@@ -356,17 +358,22 @@ def queryFailures():
     try:
         stcur = stconn.cursor()
         stcur.arraysize = 50
+        # check the targets and mountPoints, and get the list of filesytem ids concerned
+        fileSystems = getFileSystems(stcur)
+        # build SQL statement
         stGetFailures = '''
         SELECT DiskServer.name, fileSystem.mountPoint,
                DrainingErrors.fileId, DrainingErrors.errorMsg
           FROM DiskServer, FileSystem, DrainingJob, DrainingErrors
-         WHERE (DiskServer.name = :nodeName OR :nodeName IS NULL)
-           AND FileSystem.diskServer = DiskServer.id
-           AND (FileSystem.mountPoint = :mountPoint OR :mountPoint IS NULL)
+         WHERE FileSystem.diskServer = DiskServer.id
            AND DrainingJob.fileSystem = FileSystem.id
            AND DrainingErrors.drainingJob = DrainingJob.id'''
-        stcur.execute(stGetFailures, nodeName=nodeName, mountPoint=mountPoint)
+        if fileSystems:
+            stGetFailures += ' AND FileSystem.id IN (' + ', '.join([str(fs[2]) for fs in fileSystems]) + ')'
+        # get data
+        stcur.execute(stGetFailures)
         data = stcur.fetchall()
+        # pretty printing
         titles = ('DiskServer', 'MountPoint', 'fileId', 'Error')
         castor_tools.prettyPrintTable(titles, data)
     finally:
@@ -380,6 +387,9 @@ def queryDrain():
     try:
         stcur = stconn.cursor()
         stcur.arraysize = 50
+        # check the targets and mountPoints, and get the list of filesytem ids concerned
+        fileSystems = getFileSystems(stcur)
+        # build SQL statement
         stGetDrains = '''
         SELECT DiskServer.name, FileSystem.mountPoint,
                DrainingJob.username, DrainingJob.machine, DrainingJob.userComment,
@@ -389,13 +399,14 @@ def queryDrain():
                DrainingJob.nbFailedFiles, DrainingJob.nbSuccessFiles, getTime()
           FROM DrainingJob, FileSystem, DiskServer
          WHERE DrainingJob.fileSystem = FileSystem.id
-           AND FileSystem.diskServer = DiskServer.id
-           AND (DiskServer.name = :nodeName OR :nodeName IS NULL)
-           AND (FileSystem.mountPoint = :mountPoint OR :mountPoint IS NULL)'''
+           AND FileSystem.diskServer = DiskServer.id'''
+        if fileSystems:
+            stGetDrains += ' AND FileSystem.id IN (' + ', '.join([str(fs[2]) for fs in fileSystems]) + ')'        
         if runningFlag:
             stGetDrains += ' AND DrainingJob.status = 2'  # RUNNING
         stGetDrains += ' ORDER BY DiskServer.name, FileSystem.mountPoint'
-        stcur.execute(stGetDrains, nodeName=nodeName, mountPoint=mountPoint)
+        # get data
+        stcur.execute(stGetDrains)
         results = stcur.fetchall()
         # Check if we've found something
         if len(results) == 0:
@@ -443,23 +454,23 @@ def deleteDrain():
     try:
         stcur = stconn.cursor()
         stcur.arraysize = 50
-        # check the nodeName and mountPoint, and get the list of filesytem ids concerned
-        fileSystems = getFileSystems(stcur)
+        # check the targets and mountPoints, and get the list of filesytem ids concerned
+        fileSystems = getFileSystems(stcur, True)
         # check draining job statement
         stCheckDrainingJob = '''
         SELECT id
           FROM DrainingJob
          WHERE fileSystem = :fsId'''
         drainingJobs = []
-        for dsId, fsId, fsMountPoint in fileSystems:  # pylint: disable=W0612
+        for dsId, dsName, fsId, fsMountPoint in fileSystems:  # pylint: disable=W0612
             # first check that the filesystem is not already draining
             stcur.execute(stCheckDrainingJob, fsId=fsId)
             drains = stcur.fetchall()
             if len(drains) == 0:
-                print 'No draining activity found for %s:%s. Ignoring it' % (nodeName, fsMountPoint)
+                print 'No draining activity found for %s:%s. Ignoring it' % (dsName, fsMountPoint)
                 continue
-            print 'Draining activity for %s:%s will be stopped' % (nodeName, fsMountPoint)
-            drainingJobs.append((fsMountPoint, drains[0][0]))
+            print 'Draining activity for %s:%s will be stopped' % (dsName, fsMountPoint)
+            drainingJobs.append((dsName, fsMountPoint, drains[0][0]))
         if drainingJobs:
             # get user confirmation
             try:
@@ -473,8 +484,8 @@ def deleteDrain():
             # create DrainingJob statement
             stDeleteDrainingJob = 'BEGIN deleteDrainingJob(:djId); END;'
             # call it for each filesystem
-            for fsMountPoint, djId in drainingJobs:
-                print 'Stopping drain for %s:%s' % (nodeName, fsMountPoint)
+            for dsName, fsMountPoint, djId in drainingJobs:
+                print 'Stopping drain for %s:%s' % (dsName, fsMountPoint)
                 stcur.execute(stDeleteDrainingJob, djId=djId)
             stconn.commit()
     finally:
