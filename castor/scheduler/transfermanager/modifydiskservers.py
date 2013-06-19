@@ -31,8 +31,11 @@ import castor_tools
 
 def modifyDiskServers(dbconn, targets, state, mountPoints, diskPool, isRecursive):
     '''modifies the properties of a set of diskservers'''
-    stcur = dbconn.cursor()
+    # consistency check
+    if len(targets) == 0 and len(mountPoints) > 0:
+        raise ValueError('targets are mandatory when mountPoints are given')
     # check target diskpool if any
+    stcur = dbconn.cursor()
     if diskPool:
         sqlStatement = "SELECT id, name FROM DiskPool WHERE name = :diskPool"
         stcur.execute(sqlStatement, diskPool=diskPool)
@@ -40,44 +43,15 @@ def modifyDiskServers(dbconn, targets, state, mountPoints, diskPool, isRecursive
         if not rows:
             raise ValueError('DiskPool %s does not exist. Giving up' % diskPool)
         diskPoolId = rows[0][0]
-    # check target diskpools
-    sqlStatement = 'SELECT id, name FROM DiskPool WHERE name = :dpname'
-    diskPools = set([])
-    diskPoolIds = []
-    for target in targets:
-        stcur.execute(sqlStatement, dpname=target)
-        row = stcur.fetchone()
-        if row:
-            diskPoolIds.append(row[0])
-            diskPools.add(row[1])
-    # check target diskservers
-    sqlStatement = 'SELECT id, name FROM DiskServer WHERE name = :dsname'
-    diskServers = set([])
-    diskServerIds = []
-    for target in targets:
-        stcur.execute(sqlStatement, dsname=target)
-        row = stcur.fetchone()
-        if row:
-            diskServerIds.append(row[0])
-            diskServers.add(row[1])
-    unknownTargets = set(t for t in targets) - diskPools - diskServers
-    if not diskPools and not diskServers:
+    # get list of target diskservers rfom the mix diskpool/diskserver targets
+    unknownTargets, diskServerIds = castor_tools.parseAndCheckTargets(targets, stcur)
+    # and complain in case of problem
+    if not diskServerIds:
          raise ValueError('None of the provided diskpools/diskservers could be found. Giving up')
     # go for the update
     returnMsg = []
     mountPointIds = []
     if mountPoints == None:
-        # check DiskServers
-        if diskPools:
-            sqlStatement = '''SELECT UNIQUE DiskServer.id FROM DiskServer, FileSystem
-                               WHERE DiskServer.id = FileSystem.diskServer
-                                 AND FileSystem.diskPool IN (''' + "'" + \
-                           "', '".join([str(x) for x in diskPoolIds]) + "')"
-            stcur.execute(sqlStatement)
-            rows = stcur.fetchall()
-            diskServerIds.extend([row[0] for row in rows])
-            if not diskServerIds:
-                raise ValueError('No diskserver matching your request')
         # update diskServers for status
         if state != None:
             sqlStatement = '''UPDATE DiskServer SET status = :status
@@ -98,16 +72,8 @@ def modifyDiskServers(dbconn, targets, state, mountPoints, diskPool, isRecursive
     else:
         # MountPoints were given by the user, check them
         sqlStatement = '''SELECT id, mountPoint FROM FileSystem
-                           WHERE mountPoint = :mountPoint'''
-        if targets:
-            sqlStatement += ' AND ('
-            if diskPoolIds:
-                sqlStatement += 'diskPool IN (' + ', '.join([str(x) for x in diskPoolIds]) + ')'
-            if diskServerIds:
-                if diskPoolIds:
-                    sqlStatement += ' OR '
-                sqlStatement += 'diskServer IN (' + ', '.join([str(x) for x in diskServerIds]) + ')'
-            sqlStatement += ')'
+                           WHERE mountPoint = :mountPoint
+                             AND (diskServer IN (''' + ', '.join([str(x) for x in diskServerIds]) + '))'
         existingMountPoints = set([])
         for mountPoint in mountPoints:
             stcur.execute(sqlStatement, mountPoint=mountPoint)

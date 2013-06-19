@@ -25,7 +25,7 @@
 
 """utility functions for castor tools written in python"""
 
-import os, sys, time, thread, subprocess, re, socket, pwd
+import os, sys, time, thread, subprocess, re, socket, pwd, grp
 import dlf
 
 def _checkValueFound(name, value, instance, configFile):
@@ -249,6 +249,7 @@ def getNSDBConnectParam(filename):
 # connectTo_ methods
 #-------------------------------------------------------------------------------
 def connectToVdqm():
+    '''Connects to the VDQM database'''
     VDQMSCHEMAVERSION = "2_1_12_0"
     user, passwd, dbname = getVdqmDBConnectParams()
     return connectToDB(user, passwd, dbname, VDQMSCHEMAVERSION)
@@ -680,7 +681,7 @@ def parseUser(rawUserGroup):
                 gid = grp.getgrnam(rawGroup).gr_gid
             except KeyError:
                 raise ParsingError('Unknown group %s' % rawGroup)
-    return uid,gid
+    return uid, gid
 
 def parsePositiveInt(name, svalue):
     '''parses a positive int value and exits with proper error message in case the value does not fit'''
@@ -749,6 +750,61 @@ def parseTimeDuration(name, svalue):
         return value
     except ValueError:
         raise ParsingError('Invalid %s %s' % (name, svalue))
+
+def parseAndCheckTargets(targets, stcur):
+    '''extracts list of concerned diskservers from a list of targets that can mix diskservers
+       and diskpools. Checks them and returns a tuple of a set and a list :
+         - a set of unknown targets
+         - a list of diskServer ids'''
+    # check target diskpools
+    sqlStatement = 'SELECT id, name FROM DiskPool WHERE name = :dpname'
+    diskPools = set([])
+    diskPoolIds = []
+    for target in targets:
+        stcur.execute(sqlStatement, dpname=target)
+        row = stcur.fetchone()
+        if row:
+            diskPoolIds.append(row[0])
+            diskPools.add(row[1])
+    # check target diskservers
+    sqlStatement = 'SELECT id, name FROM DiskServer WHERE name = :dsname'
+    diskServers = set([])
+    diskServerIds = []
+    for target in targets:
+        stcur.execute(sqlStatement, dsname=target)
+        row = stcur.fetchone()
+        if row:
+            diskServerIds.append(row[0])
+            diskServers.add(row[1])
+    unknownTargets = set(t for t in targets) - diskPools - diskServers
+    # get diskservers of the diskpools
+    if diskPools:
+        sqlStatement = '''SELECT UNIQUE DiskServer.id FROM DiskServer, FileSystem
+                           WHERE DiskServer.id = FileSystem.diskServer
+                             AND FileSystem.diskPool IN (''' + \
+                       ', '.join([str(x) for x in diskPoolIds]) + ')'
+        stcur.execute(sqlStatement)
+        rows = stcur.fetchall()
+        diskServerIds.extend([row[0] for row in rows])
+    # return
+    return (unknownTargets, diskServerIds)
+
+def parseAndCheckMountPoints(diskServerIds, mountPoints, stcur):
+    '''extracts list of concerned mountPoints from a list of diskserver ids
+       and a set of mountPoints. Checks them and returns a list of triplets
+       (diskServerId, FileSystemId, mountPoint)'''
+    # build select statement
+    stGetFileSystemIds = '''
+    SELECT DiskServer.id, FileSystem.id, FileSystem.mountPoint
+      FROM FileSystem, DiskServer
+     WHERE DiskServer.id IN (''' + ", ".join([str(x) for x in diskServerIds]) + ''')
+       AND FileSystem.diskServer = DiskServer.id'''
+    if mountPoints:
+        stGetFileSystemIds += ' AND FileSystem.mountPoint IN (' + "', '".join(mountPoints) + "')"
+    # execute statement
+    stcur.execute(stGetFileSystemIds)
+    # and return result
+    return stcur.fetchall()
 
 #--------------------
 # getCurrentUsername
