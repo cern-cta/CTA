@@ -223,6 +223,7 @@ namespace SCSI {
           }
         }
       }
+      m_sysWrapper.closedir(dirp);
     }
 
     /**

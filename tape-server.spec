@@ -14,6 +14,7 @@ BuildRequires: gtest >= 1.5.0
 BuildRequires: gmock >= 1.5.0
 BuildRequires: gtest-devel >= 1.5.0
 BuildRequires: gmock-devel  >= 1.5.0
+BuildRequires: valgrind >= 3.5.0
 
 %description
 The CERN tape server project.
@@ -50,6 +51,7 @@ echo "Installed!"
 %check
 cd build
 test/unitTest
+valgrind --leak-check=full --show-reachable=yes --error-exitcode=1 test/unitTest
 
 %clean
 rm -rf $RPM_BUILD_ROOT

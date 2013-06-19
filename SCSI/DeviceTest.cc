@@ -52,7 +52,7 @@ TEST(DeviceList, ScansCorrectly) {
   /* We expect the following calls: */
   EXPECT_CALL(sysWrapper, opendir(_)).Times(3);
   EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
-  EXPECT_CALL(sysWrapper, closedir(_)).Times(1);
+  EXPECT_CALL(sysWrapper, closedir(_)).Times(3);
   EXPECT_CALL(sysWrapper, realpath(_, _)).Times(3);
   EXPECT_CALL(sysWrapper, open(_, _)).Times(10);
   EXPECT_CALL(sysWrapper, read(_, _, _)).Times(20);
