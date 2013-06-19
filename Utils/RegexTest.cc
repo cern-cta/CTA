@@ -57,8 +57,3 @@ TEST(Regex, OperationalTest) {
   ASSERT_EQ(ret2[1], "st124");
   ASSERT_EQ(ret3.size(), 0);
 }
-
-TEST(Regex,MemoryLeak) {
-  char * oops = new char[10];
-  oops[0] = '\0';
-}
