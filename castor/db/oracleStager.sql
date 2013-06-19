@@ -3433,6 +3433,9 @@ BEGIN
       -- some available diskcopy was found.
       logToDLF(varReqUUID, dlf.LVL_DEBUG, dlf.STAGER_DISKCOPY_FOUND, inFileId, inNsHost, 'stagerd',
               'SUBREQID=' || varSrUUID);
+      -- last thing, check whether we should recreate missing copies
+      handleReplication(inSrId, inFileId, inNsHost, inCfId, varNsOpenTime, varSvcClassId,
+                        varEuid, varEgid, varReqUUID, varSrUUID);
       RETURN dconst.SUBREQUEST_FINISHED;
     END IF;
   END;
