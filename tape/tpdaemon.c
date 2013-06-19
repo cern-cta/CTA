@@ -1351,7 +1351,6 @@ static void procmountreq(char *req_data,
 	unsigned int i, j;
 	int jid;
 	char *lbltype;
-	int lblcode = 0;
 	int mode;
 	char *path;
 	int pid;
@@ -1465,17 +1464,18 @@ static void procmountreq(char *req_data,
                                     "JobID",   TL_MSG_PARAM_INT, jid );                
 		errflg++;
 	}
-	if (! strcmp (lbltype, "al")) lblcode = AL;
-	else if (! strcmp (lbltype, "nl")) lblcode = NL;
-	else if (! strcmp (lbltype, "sl")) lblcode = SL;
-	else if (! strcmp (lbltype, "blp")) lblcode = BLP;
-	else if (! strcmp (lbltype, "aul")) lblcode = AUL;
-	else {
-		usrmsg (func, TP006, "lbltype");
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 6, 3,
-                                    "func",    TL_MSG_PARAM_STR, func,
-                                    "Message", TL_MSG_PARAM_STR, "lbltype",
-                                    "JobID",   TL_MSG_PARAM_INT, jid );                
+
+	/* Only the AUL label type is supported */
+	if (strcmp (lbltype, "aul")) {
+		usrmsg (func,
+		  "TP006 - Invalid value for lbltype: actual %s,"
+		  " expected aul\n", lbltype);
+		tl_tpdaemon.tl_log( &tl_tpdaemon, 6, 5,
+		  "func"   , TL_MSG_PARAM_STR, func,
+		  "Message", TL_MSG_PARAM_STR, "lbltype",
+		  "JobID"  , TL_MSG_PARAM_INT  , jid,
+		  "VID"    , TL_MSG_PARAM_STR  , vid,
+		  "TPVID"  , TL_MSG_PARAM_TPVID, vid );
 		errflg++;
 	}
 	if (lblcode == BLP && mode == WRITE_ENABLE) {
@@ -1682,6 +1682,7 @@ static void procmountreq(char *req_data,
 		char arg_prelabel[3], arg_rpfd[3], arg_side[2];
 		char arg_tpmounted[2], arg_uid[11], arg_ux[3], arg_vdqmid[10];
 		char progfullpath[CA_MAXPATHLEN+1];
+		const int lblcode = AUL; /* Only the AUL label type is supported */
 
 		sprintf (progfullpath, "%s/mounttape", BIN);
 		sprintf (arg_rpfd, "%d", rpfd);

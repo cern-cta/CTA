@@ -134,15 +134,10 @@ VOL1 and HDR1 are written (this is the default); if
 .BR 2 ,
 VOL1, HDR1 and HDR2 are written to tape.
 .TP
-.BI \-l " lab_type"
-Label type:
-.BR al ,
-.BR aul ,
-.B nl
-or
-.BR sl .
-It must match the label type specified in VMGR (if installed).
-Default is sl.
+.BI \-l " label_type"
+Only the
+.BR aul
+label type is supported.
 .TP
 .B \-T
 Forces writing of 2 tapemarks at the end of a label.
