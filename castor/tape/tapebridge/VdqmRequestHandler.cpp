@@ -503,6 +503,17 @@ void castor::tape::tapebridge::VdqmRequestHandler::exceptionThrowingRun(
   if(NULL == volume.get()) {
     const uint64_t tapebridgeTransId =
       tapebridgeTransactionCounter.next();
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("mountTransactionId", jobRequest.volReqId ),
+        castor::dlf::Param("volReqId"          , jobRequest.volReqId ),
+        castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId   ),
+        castor::dlf::Param("driveUnit"         , jobRequest.driveUnit),
+        castor::dlf::Param("clientAddress"     ,
+          clientAddress.getDescription())};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING,
+        TAPEBRIDGE_NO_MOUNT_DUE_TO_NO_TAPE, params);
+    }
     try {
       clientProxy.notifyEndOfSession(tapebridgeTransId);
     } catch(castor::exception::Exception &ex) {

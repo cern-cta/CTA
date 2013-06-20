@@ -114,7 +114,8 @@ castor::tape::tapebridge::BridgeProtocolEngine::BridgeProtocolEngine(
   m_checkRtcpdIsConnectingFromLocalHost(checkRtcpdIsConnectingFromLocalHost),
   m_clientProxy(clientProxy),
   m_legacyTxRx(legacyTxRx),
-  m_sessionErrors(cuuid, jobRequest, volume) {
+  m_sessionErrors(cuuid, jobRequest, volume),
+  m_clientHasRequestedAtLeastOneTransfer(false) {
 
   // Store the listen socket and initial rtcpd connection in the socket
   // catalogue
@@ -958,19 +959,36 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::startMigrationSession()
     castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
       TAPEBRIDGE_RECEIVED_FILESTOMIGRATELIST, params);
   } else {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
-      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
-      castor::dlf::Param("TPVID"             , m_volume.vid()         ),
-      castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
-      castor::dlf::Param("dgn"               , m_jobRequest.dgn       ),
-      castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
-      castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
-      castor::dlf::Param("clientType",
-        utils::volumeClientTypeToString(m_volume.clientType())),
-      castor::dlf::Param("clientSock"        , closedClientSock       )};
-    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG,
-      TAPEBRIDGE_RECEIVED_NOMOREFILES, params);
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+        castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
+        castor::dlf::Param("TPVID"             , m_volume.vid()         ),
+        castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+        castor::dlf::Param("dgn"               , m_jobRequest.dgn       ),
+        castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
+        castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+        castor::dlf::Param("clientType",
+          utils::volumeClientTypeToString(m_volume.clientType())),
+        castor::dlf::Param("clientSock"        , closedClientSock       )};
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG,
+        TAPEBRIDGE_RECEIVED_NOMOREFILES, params);
+    }
+    {
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
+        castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
+        castor::dlf::Param("TPVID"             , m_volume.vid()         ),
+        castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
+        castor::dlf::Param("dgn"               , m_jobRequest.dgn       ),
+        castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
+        castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
+        castor::dlf::Param("clientType",
+          utils::volumeClientTypeToString(m_volume.clientType())),
+        castor::dlf::Param("clientSock"        , closedClientSock       )};
+      castor::dlf::dlf_writep(m_cuuid, DLF_LVL_WARNING,
+        TAPEBRIDGE_EMPTY_MIGRATION_MOUNT, params);
+    }
   }
 
   // If there is no file to migrate then don't start the tape-session with the
@@ -990,6 +1008,10 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::startMigrationSession()
   }
   const tapegateway::FileToMigrateStruct *const firstFileToMigrate =
     filesFromClient->filesToMigrate()[0];
+
+  // At this point the client has requested at least one transfer for the
+  // current mount
+  m_clientHasRequestedAtLeastOneTransfer = true;
 
   if(firstFileToMigrate->fseq() != m_nextDestinationTapeFSeq) {
     castor::exception::Exception ex(ECANCELED);
@@ -3197,6 +3219,10 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
       ": FilesToRecallList contains 0 files to recall");
   }
 
+  // At this point the client has requested at least one transfer for the
+  // current mount
+  m_clientHasRequestedAtLeastOneTransfer = true;
+
   addFilesToRecallToCache(reply->filesToRecall());
 
   // Write the first file of the cache to the rtcpd disk/tape IO
@@ -3289,6 +3315,24 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
      getMoreWorkConnection.clientSock)};
   castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
     TAPEBRIDGE_RECEIVED_NOMOREFILES, params);
+
+  if(!m_clientHasRequestedAtLeastOneTransfer) {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("tapebridgeTransId" ,reply->aggregatorTransactionId()),
+      castor::dlf::Param("mountTransactionId",reply->mountTransactionId()     ),
+      castor::dlf::Param("volReqId"          ,m_jobRequest.volReqId           ),
+      castor::dlf::Param("TPVID"             ,m_volume.vid()                  ),
+      castor::dlf::Param("driveUnit"         ,m_jobRequest.driveUnit          ),
+      castor::dlf::Param("dgn"               ,m_jobRequest.dgn                ),
+      castor::dlf::Param("clientHost"        ,m_jobRequest.clientHost         ),
+      castor::dlf::Param("clientPort"        ,m_jobRequest.clientPort         ),
+      castor::dlf::Param("clientType",
+        utils::volumeClientTypeToString(m_volume.clientType())),
+      castor::dlf::Param("clientSock"        ,
+       getMoreWorkConnection.clientSock)};
+    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_WARNING,
+      TAPEBRIDGE_EMPTY_RECALL_MOUNT, params);
+  }
 
   m_clientProxy.checkTransactionIds(
     "NoMoreFiles",

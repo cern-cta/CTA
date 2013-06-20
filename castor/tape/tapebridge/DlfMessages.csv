@@ -150,3 +150,6 @@
 149,TAPEBRIDGE_DROPPING_RTCP_FINISHED_DUE_TO_SHUTTING_DOWN,"Dropping RTCP_FINISHED message from rtcpd daemon because the rtcpd session is being shutdown"
 150,TAPEBRIDGE_DROPPING_TAPEBRIDGE_FLUSHEDTOTAPE_DUE_TO_SHUTTING_DOWN,"Dropping TAPEBRIDGE_FLUSHEDTOTAPE message from rtcpd daemon because the rtcpd session is being shutdown"
 151,TAPEBRIDGE_FIRST_SESSION_ERROR,"The first session-error has occurred"
+152,TAPEBRIDGE_NO_MOUNT_DUE_TO_NO_TAPE,"Mount not started because the client did not give the tape to be mounted"
+153,TAPEBRIDGE_EMPTY_MIGRATION_MOUNT,"Empty migration mount"
+154,TAPEBRIDGE_EMPTY_RECALL_MOUNT,"Empty recall mount"

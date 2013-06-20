@@ -304,6 +304,12 @@ private:
    */
   SessionErrorList m_sessionErrors;
 
+  /**
+   * True if the client has requested at least one file transfer for the
+   * current mount.
+   */
+  bool m_clientHasRequestedAtLeastOneTransfer;
+
 protected:
 
   /**
