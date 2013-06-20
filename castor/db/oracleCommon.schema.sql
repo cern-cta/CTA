@@ -892,20 +892,6 @@ ALTER TABLE DiskCopy MODIFY (nbCopyAccesses DEFAULT 0);
 
 ALTER TABLE DiskCopy MODIFY (gcType DEFAULT NULL);
 
-ALTER TABLE DiskCopy ADD CONSTRAINT FK_DiskCopy_CastorFile
-  FOREIGN KEY (castorFile) REFERENCES CastorFile (id)
-  INITIALLY DEFERRED DEFERRABLE;
-
-/* CastorFile constraints */
-ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_FileClass
-  FOREIGN KEY (fileClass) REFERENCES FileClass (id)
-  INITIALLY DEFERRED DEFERRABLE;
-CREATE INDEX I_CastorFile_FileClass ON CastorFile(FileClass);
-
-ALTER TABLE CastorFile ADD CONSTRAINT UN_CastorFile_LKFileName UNIQUE (LastKnownFileName);
-
-ALTER TABLE CastorFile MODIFY (LastKnownFileName CONSTRAINT NN_CastorFile_LKFileName NOT NULL);
-
 /* DiskPool2SvcClass constraints */
 ALTER TABLE DiskPool2SvcClass ADD CONSTRAINT PK_DiskPool2SvcClass_PC
   PRIMARY KEY (parent, child);
