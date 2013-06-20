@@ -887,10 +887,6 @@ CREATE OR REPLACE TYPE strListTable AS TABLE OF VARCHAR2(2048);
 /* SvcClass constraints */
 ALTER TABLE SvcClass MODIFY (gcPolicy DEFAULT 'default');
 
-ALTER TABLE SvcClass MODIFY (lastEditor CONSTRAINT NN_SvcClass_LastEditor NOT NULL);
-
-ALTER TABLE SvcClass MODIFY (lastEditionTime CONSTRAINT NN_SvcClass_LastEditionTime NOT NULL);
-
 /* DiskCopy constraints */
 ALTER TABLE DiskCopy MODIFY (nbCopyAccesses DEFAULT 0);
 
