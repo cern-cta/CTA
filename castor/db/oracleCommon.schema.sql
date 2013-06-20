@@ -872,9 +872,6 @@ CREATE INDEX I_QueryParameter_Query ON QueryParameter (query);
 ALTER TABLE FileClass ADD CONSTRAINT UN_FileClass_Name UNIQUE (name);
 ALTER TABLE FileClass MODIFY (classid CONSTRAINT NN_FileClass_Name NOT NULL);
 
-/* Add unique constraint on svcClass name */
-ALTER TABLE SvcClass ADD CONSTRAINT UN_SvcClass_Name UNIQUE (name);
-
 /* Custom type to handle int arrays */
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
 /
