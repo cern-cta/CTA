@@ -382,7 +382,8 @@ CREATE INDEX I_SubRequest_RT_CT_ID ON SubRequest(svcHandler, creationTime, id) L
   PARTITION P_STATUS_9_10,
   PARTITION P_STATUS_11,
   PARTITION P_STATUS_12,
-  PARTITION P_STATUS_13_14);
+  PARTITION P_STATUS_13_14,
+  PARTITION P_STATUS_OTHER);
 
 /* this index is dedicated to archivesubreq */
 CREATE INDEX I_SubRequest_Req_Stat_no89 ON SubRequest (request, decode(status,8,NULL,9,NULL,status));
