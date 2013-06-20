@@ -131,8 +131,6 @@ INSERT INTO CastorConfig
 INSERT INTO CastorConfig
   VALUES ('D2dCopy', 'MaxNbRetries', '2', 'The maximum number of retries for disk to disk copies before it is considered failed. Here 2 means we will do in total 3 attempts.');
 INSERT INTO CastorConfig
-  VALUES ('Recall', 'MaxNbRetriesWithinMount', '2', 'The maximum number of retries for recalling a file within the same tape mount. When exceeded, the recall may still be retried in another mount. See Recall/MaxNbMount entry');
-INSERT INTO CastorConfig
   VALUES ('DiskServer', 'HeartbeatTimeout', '180', 'The maximum amount of time in seconds that a diskserver can spend without sending any hearbeat before it is automatically set to offline.');
 
 /* Create the AdminUsers table */
