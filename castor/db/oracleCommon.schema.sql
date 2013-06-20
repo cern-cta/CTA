@@ -886,8 +886,6 @@ CREATE OR REPLACE TYPE strListTable AS TABLE OF VARCHAR2(2048);
 
 /* SvcClass constraints */
 ALTER TABLE SvcClass MODIFY (gcPolicy DEFAULT 'default');
-ALTER TABLE SvcClass ADD CONSTRAINT FK_SvcClass_GCPolicy
-  FOREIGN KEY (gcPolicy) REFERENCES GcPolicy (name);
 CREATE INDEX I_SvcClass_GcPolicy ON SvcClass (gcPolicy);
 
 ALTER TABLE SvcClass MODIFY (lastEditor CONSTRAINT NN_SvcClass_LastEditor NOT NULL);
