@@ -885,9 +885,6 @@ CREATE OR REPLACE TYPE strListTable AS TABLE OF VARCHAR2(2048);
 /
 
 /* SvcClass constraints */
-ALTER TABLE SvcClass
-  MODIFY (name CONSTRAINT NN_SvcClass_Name NOT NULL);
-
 ALTER TABLE SvcClass 
   MODIFY (forcedFileClass CONSTRAINT NN_SvcClass_ForcedFileClass NOT NULL);
 
