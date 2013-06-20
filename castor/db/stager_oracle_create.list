@@ -1,5 +1,5 @@
-oracleCommon.schema.sql
 oracleConstants.sql
+oracleCommon.schema.sql
 oracleCommon.sql
 oraclePerm.sql
 oracleRepack.sql
