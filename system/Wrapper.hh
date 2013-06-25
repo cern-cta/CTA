@@ -27,6 +27,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/ioctl.h>
+#include <sys/mtio.h>
 
 #include <gmock/gmock.h>
 #include <map>
@@ -34,27 +36,34 @@
 #include <string>
 #include <fstream>
 
+#include "FileWrappers.hh"
+
 namespace Tape {
 namespace System {
+
   /**
    * Wrapper class the all system calls used, allowing writing of test harnesses
    * for unit testing.
    * The member functions are purposedly non-virtual, allowing full
    * performance with inline member functions.
    */
-  class realWrapper{
+  class realWrapper {
   public:
+
     DIR* opendir(const char *name) { return ::opendir(name); }
     struct dirent * readdir(DIR* dirp) { return ::readdir(dirp); }
     int closedir(DIR* dirp) { return ::closedir(dirp); }
-    int readlink(const char* path, char* buf, size_t len)  { return ::readlink(path, buf, len); }
+    int readlink(const char* path, char* buf, size_t len) { return ::readlink(path, buf, len); }
     char * realpath(const char* name, char* resolved) { return ::realpath(name, resolved); }
     int open(const char* file, int oflag) { return ::open(file, oflag); }
-    ssize_t read(int fd, void* buf, size_t nbytes) { return ::read( fd, buf, nbytes); }
+    int ioctl(int fd, unsigned long int request, struct mtget * mt_status) {
+      ::ioctl(fd, request, mt_status);
+    }
+    ssize_t read(int fd, void* buf, size_t nbytes) { return ::read(fd, buf, nbytes); }
     int close(int fd) { return ::close(fd); }
     int stat(const char * path, struct stat *buf) { return ::stat(path, buf); }
   };
-  
+
   /**
    * Intermediate class definition, allowing common ancestor between
    * mockWrapper and fakeWrapper (pure virtual)
@@ -62,60 +71,66 @@ namespace System {
   class virtualWrapper {
   public:
     virtual DIR* opendir(const char *name) = 0;
-    virtual struct dirent * readdir(DIR* dirp) = 0; 
+    virtual struct dirent * readdir(DIR* dirp) = 0;
     virtual int closedir(DIR* dirp) = 0;
     virtual int readlink(const char* path, char* buf, size_t len) = 0;
     virtual char * realpath(const char* name, char* resolved) = 0;
     virtual int open(const char* file, int oflag) = 0;
     virtual ssize_t read(int fd, void* buf, size_t nbytes) = 0;
+    /* The ... (variable arguments) notation will not work with GMock.
+     * We have to create one overload for each case we encounter. */
+    virtual int ioctl(int fd, unsigned long int request, struct mtget * mt_status) = 0;
     virtual int close(int fd) = 0;
     virtual int stat(const char * path, struct stat *buf) = 0;
   };
-  
+
   /**
    * Fake class for system wrapper. Allows recording of pre-cooked filesystem elements,
    * once for each call separately.
    * Each test can then delegate (from mock) and configure 
    */
-  class fakeWrapper: public virtualWrapper {
+  class fakeWrapper : public virtualWrapper {
   public:
-    fakeWrapper(): m_nextFD(0) {};
+
+    fakeWrapper() : m_nextFD(0) {
+    };
     virtual DIR* opendir(const char *name);
-    virtual struct dirent * readdir(DIR* dirp); 
+    virtual struct dirent * readdir(DIR* dirp);
     virtual int closedir(DIR* dirp);
     virtual int readlink(const char* path, char* buf, size_t len);
     virtual char * realpath(const char* name, char* resolved);
     virtual int open(const char* file, int oflag);
+    virtual int ioctl(int fd, unsigned long int request, struct mtget * mt_status);
     virtual ssize_t read(int fd, void* buf, size_t nbytes);
     virtual int close(int fd);
     virtual int stat(const char * path, struct stat *buf);
     std::map<std::string, std::vector<std::string> > m_directories;
     std::map<std::string, std::string> m_links;
     std::map<std::string, std::string> m_realpathes;
-    std::map<std::string, std::string> m_files;
+    std::map<std::string, vfsFile *> m_files;
     std::map<std::string, struct stat> m_stats;
+    std::map<std::string, regularFile> m_regularFiles;
     void setupSLC5();
+    void referenceRegularFiles();
   private:
+
     struct ourDIR {
       std::string path;
       int nextIdx;
       struct dirent dent;
       std::string dent_name;
     };
-    struct outFD {
-      std::string data;
-      size_t read_pointer;
-    };
-    std::map<int, outFD> m_openFiles;
+    std::map<int, vfsFile *> m_openFiles;
     int m_nextFD;
   };
-  
-    /**
+
+  /**
    * Mock class for system wrapper, used to develop tests.
    */
-  class mockWrapper: public virtualWrapper {
+  class mockWrapper : public virtualWrapper {
   public:
-    mockWrapper(): m_DIR((DIR*)&m_DIRfake) {
+
+    mockWrapper() : m_DIR((DIR*) & m_DIRfake) {
       ON_CALL(*this, opendir(::testing::_))
               .WillByDefault(::testing::Return(m_DIR));
     }
@@ -126,6 +141,7 @@ namespace System {
     MOCK_METHOD2(realpath, char *(const char* name, char* resolved));
     MOCK_METHOD2(open, int(const char* file, int oflag));
     MOCK_METHOD3(read, ssize_t(int fd, void* buf, size_t nbytes));
+    MOCK_METHOD3(ioctl, int(int fd, unsigned long int request, struct mtget * mt_status));
     MOCK_METHOD1(close, int(int fd));
     MOCK_METHOD2(stat, int(const char *, struct stat *));
     DIR* m_DIR;

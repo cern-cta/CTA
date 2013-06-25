@@ -100,8 +100,8 @@ int Tape::System::fakeWrapper::open(const char* file, int oflag) {
     return -1;
   }
   int ret = m_nextFD++;
-  m_openFiles[ret].data = m_files[std::string(file)];
-  m_openFiles[ret].read_pointer = 0;
+  m_openFiles[ret] = m_files[std::string(file)];
+  m_openFiles[ret]->reset();
   return ret;
 }
 
@@ -113,17 +113,18 @@ ssize_t Tape::System::fakeWrapper::read(int fd, void* buf, size_t nbytes) {
     errno = EBADF;
     return -1;
   }
+  return m_openFiles[fd]->read(buf, nbytes);
+}
+
+int Tape::System::fakeWrapper::ioctl(int fd, unsigned long int request, mtget* mt_status) {
   /*
-   * Read. std::string::copy nicely does the heavy lifting.
+   * Mimic ioctl. Actually delegate the job to a vfsFile
    */
-  try {
-    size_t ret;
-    ret = m_openFiles[fd].data.copy((char *) buf, nbytes, m_openFiles[fd].read_pointer);
-    m_openFiles[fd].read_pointer += ret;
-    return ret;
-  } catch (std::out_of_range & e) {
-    return 0;
+  if (m_openFiles.end() == m_openFiles.find(fd)) {
+    errno = EBADF;
+    return -1;
   }
+  return m_openFiles[fd]->ioctl(request, mt_status);
 }
 
 int Tape::System::fakeWrapper::close(int fd) {
@@ -150,6 +151,13 @@ int Tape::System::fakeWrapper::stat(const char* path, struct stat* buf) {
   return 0;
 }
 
+void Tape::System::fakeWrapper::referenceRegularFiles() {
+  for (std::map<std::string, regularFile>::iterator i = m_regularFiles.begin();
+          i != m_regularFiles.end(); i++) {
+    m_files[i->first] = &m_regularFiles[i->first];
+  }
+}
+
 void Tape::System::mockWrapper::delegateToFake() {
   ON_CALL(*this, opendir(_)).WillByDefault(Invoke(&fake, &fakeWrapper::opendir));
   ON_CALL(*this, readdir(_)).WillByDefault(Invoke(&fake, &fakeWrapper::readdir));
@@ -158,6 +166,7 @@ void Tape::System::mockWrapper::delegateToFake() {
   ON_CALL(*this, realpath(_, _)).WillByDefault(Invoke(&fake, &fakeWrapper::realpath));
   ON_CALL(*this, open(_, _)).WillByDefault(Invoke(&fake, &fakeWrapper::open));
   ON_CALL(*this, read(_, _, _)).WillByDefault(Invoke(&fake, &fakeWrapper::read));
+  ON_CALL(*this, ioctl(_, _, _)).WillByDefault(Invoke(&fake, &fakeWrapper::ioctl));
   ON_CALL(*this, close(_)).WillByDefault(Invoke(&fake, &fakeWrapper::close));
   ON_CALL(*this, stat(_, _)).WillByDefault(Invoke(&fake, &fakeWrapper::stat));
 }
@@ -182,9 +191,9 @@ void Tape::System::fakeWrapper::setupSLC5() {
           = "/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0";
   m_realpathes["/sys/bus/scsi/devices/3:0:2:0"]
           = "/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0";
-  m_files["/sys/devices/pseudo_0/adapter0/host3/target3:0:0/3:0:0:0/type"] = "8\n";
-  m_files["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0/type"] = "1\n";
-  m_files["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0/type"] = "1\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:0/3:0:0:0/type"] = "8\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0/type"] = "1\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0/type"] = "1\n";
   m_links["/sys/devices/pseudo_0/adapter0/host3/target3:0:0/3:0:0:0/generic"]
           = "../../../../../../class/scsi_generic/sg2";
   m_links["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0/generic"]
@@ -197,9 +206,9 @@ void Tape::System::fakeWrapper::setupSLC5() {
   m_stats["/dev/sg1"].st_mode = S_IFCHR;
   m_stats["/dev/sg2"].st_rdev = makedev(21, 2);
   m_stats["/dev/sg2"].st_mode = S_IFCHR;
-  m_files["/sys/devices/pseudo_0/adapter0/host3/target3:0:0/3:0:0:0/generic/dev"] = "21:2\n";
-  m_files["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0/generic/dev"] = "21:0\n";
-  m_files["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0/generic/dev"] = "21:1\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:0/3:0:0:0/generic/dev"] = "21:2\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0/generic/dev"] = "21:0\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0/generic/dev"] = "21:1\n";
   m_directories["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0"].push_back("bus");
   m_directories["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0"].push_back("delete");
   m_directories["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0"].push_back("device_blocked");
@@ -233,9 +242,9 @@ void Tape::System::fakeWrapper::setupSLC5() {
   m_directories["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0"].push_back("type");
   m_directories["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0"].push_back("uevent");
   m_directories["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0"].push_back("vendor");
-  m_files["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0/scsi_tape:st0/dev"] =
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0/scsi_tape:st0/dev"] =
           "9:0\n";
-  m_files["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0/scsi_tape:nst0/dev"] =
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0/scsi_tape:nst0/dev"] =
           "9:128\n";
   m_stats["/dev/st0"].st_rdev = makedev(9, 0);
   m_stats["/dev/st0"].st_mode = S_IFCHR;
@@ -274,12 +283,13 @@ void Tape::System::fakeWrapper::setupSLC5() {
   m_directories["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0"].push_back("type");
   m_directories["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0"].push_back("uevent");
   m_directories["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0"].push_back("vendor");
-  m_files["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0/scsi_tape:st1/dev"] =
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0/scsi_tape:st1/dev"] =
           "9:1\n";
-  m_files["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0/scsi_tape:nst1/dev"] =
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0/scsi_tape:nst1/dev"] =
           "9:129\n";
   m_stats["/dev/st1"].st_rdev = makedev(9, 1);
   m_stats["/dev/st1"].st_mode = S_IFCHR;
   m_stats["/dev/nst1"].st_rdev = makedev(9, 129);
   m_stats["/dev/nst1"].st_mode = S_IFCHR;
+  referenceRegularFiles();
 }
