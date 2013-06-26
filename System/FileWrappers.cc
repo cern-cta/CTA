@@ -71,9 +71,19 @@ int Tape::System::stDeviceFile::ioctl(unsigned long int request, mtget* mt_statu
     case MTIOCGET:
       *mt_status = m_mtStat;
       return 0;
-    default:
-      errno = EINVAL;
-      return -1;
   }
+  errno = EINVAL;
+  return -1;
 }
 
+ssize_t Tape::System::genericDeviceFile::read(void* buf, size_t nbytes)
+{
+  errno = EIO;
+  return -1;
+}
+
+int Tape::System::genericDeviceFile::ioctl(unsigned long int request, mtget* mt_status)
+{
+  errno = EINVAL;
+  return -1;
+}

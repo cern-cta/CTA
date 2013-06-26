@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------
-// File: Drive/DriveList.hh
+// File: SCSI/DriveTest.cc
 // Author: Eric Cano - CERN
 // ----------------------------------------------------------------------
 
@@ -21,29 +21,41 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.*
  ************************************************************************/
 
-#pragma once
-#include <vector>
+#include <gtest/gtest.h>
+#include <gmock/gmock-cardinalities.h>
+#include "../SCSI/Device.hh"
+#include "../System/Wrapper.hh"
+#include "Drive.hh"
 
+using ::testing::AtLeast;
+using ::testing::Return;
+using ::testing::_;
 
-namespace Tape{
-/**
- * Contains data about a tape drive
- */
-  struct DriveInfo: public SCSI::Device {
-    
-  };
+TEST(TapeDrive, OpensCorrectly) {
+  /* Prepare the test harness */
+  Tape::System::mockWrapper sysWrapper;
+  sysWrapper.fake.setupSLC5();
+  sysWrapper.delegateToFake();
   
-/**
- * Detects the present tape drives on the system and gathers the basic
- * information about them.
- */
-  class DriveList {
-  public:
-    DriveList();
-    virtual ~DriveList();
-  private:
-    listScsi();
-    std::vector<DriveInfo> m_
-  };
+  /* We expect the following calls: */
+  EXPECT_CALL(sysWrapper, opendir(_)).Times(3);
+  EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
+  EXPECT_CALL(sysWrapper, closedir(_)).Times(3);
+  EXPECT_CALL(sysWrapper, realpath(_, _)).Times(3);
+  EXPECT_CALL(sysWrapper, open(_, _)).Times(14);
+  EXPECT_CALL(sysWrapper, read(_, _, _)).Times(20);
+  EXPECT_CALL(sysWrapper, ioctl(_,_,_)).Times(2);
+  EXPECT_CALL(sysWrapper, close(_)).Times(14);
+  EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(3);
+  EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
   
-}; // namespace Tape
+  /* Test: detect devices, then open the device files */
+  SCSI::DeviceVector<Tape::System::mockWrapper> dl(sysWrapper);
+  for (std::vector<SCSI::DeviceInfo>::iterator i = dl.begin();
+      i != dl.end(); i++) {
+    if (SCSI::Types::tape == i->type) {
+      Tape::Drive<Tape::System::mockWrapper> drive(*i, sysWrapper);
+      int i;
+    }
+  }
+}

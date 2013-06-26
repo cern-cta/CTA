@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------
-// File: System/Wrapper.hh
+// File: System/Wrapper.cc
 // Author: Eric Cano - CERN
 // ----------------------------------------------------------------------
 
@@ -157,13 +157,14 @@ int Tape::System::fakeWrapper::stat(const char* path, struct stat* buf) {
  */
 void Tape::System::fakeWrapper::referenceFiles() {
   for (std::map<std::string, regularFile>::iterator i = m_regularFiles.begin();
-          i != m_regularFiles.end(); i++) {
+          i != m_regularFiles.end(); i++)
     m_files[i->first] = &m_regularFiles[i->first];
-  }
   for (std::map<std::string, stDeviceFile>::iterator i = m_stFiles.begin();
-          i != m_stFiles.end(); i++) {
+          i != m_stFiles.end(); i++)
     m_files[i->first] = &m_stFiles[i->first];
-  }
+  for (std::map<std::string, genericDeviceFile>::iterator i = m_genericFiles.begin();
+      i != m_genericFiles.end(); i++)
+    m_files[i->first] = &m_genericFiles[i->first];
 }
 
 void Tape::System::mockWrapper::delegateToFake() {
@@ -301,5 +302,8 @@ void Tape::System::fakeWrapper::setupSLC5() {
   m_stats["/dev/nst1"].st_mode = S_IFCHR;
   m_stFiles["/dev/st0"];
   m_stFiles["/dev/st1"];
+  m_genericFiles["/dev/sg0"];
+  m_genericFiles["/dev/sg1"];
+  m_genericFiles["/dev/sg2"];
   referenceFiles();
 }
