@@ -25,7 +25,7 @@
  * Test main program. For development use.
  */
 
-#include "../system/Wrapper.hh"
+#include "../System/Wrapper.hh"
 #include "Device.hh"
 #include <iostream>
 
