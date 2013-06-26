@@ -61,7 +61,7 @@ set(CTEST_OUTPUT_ON_FAILURE 1)
 # Add parts first in dependency order
 add_subdirectory(SCSI)
 add_subdirectory(Drive)
-add_subdirectory(system)
+add_subdirectory(System)
 add_subdirectory(Exception)
 add_subdirectory(Utils)
 
