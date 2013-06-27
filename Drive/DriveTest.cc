@@ -44,6 +44,7 @@ TEST(TapeDrive, OpensCorrectly) {
   EXPECT_CALL(sysWrapper, realpath(_, _)).Times(3);
   EXPECT_CALL(sysWrapper, open(_, _)).Times(14);
   EXPECT_CALL(sysWrapper, read(_, _, _)).Times(20);
+  EXPECT_CALL(sysWrapper, write(_, _, _)).Times(0);
   EXPECT_CALL(sysWrapper, ioctl(_,_,_)).Times(2);
   EXPECT_CALL(sysWrapper, close(_)).Times(14);
   EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(3);
@@ -55,7 +56,6 @@ TEST(TapeDrive, OpensCorrectly) {
       i != dl.end(); i++) {
     if (SCSI::Types::tape == i->type) {
       Tape::Drive<Tape::System::mockWrapper> drive(*i, sysWrapper);
-      int i;
     }
   }
 }

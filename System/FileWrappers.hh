@@ -30,13 +30,14 @@
 namespace Tape {
 namespace System {
 /**
- * An abstract class allowing simple open/read/close/ioctl interface simlating
+ * An abstract class allowing simple open/read/close/ioctl interface simulating
  * different types of files (regular files, device files (like tape devices)
  */
   class vfsFile {
   public:
     virtual ~vfsFile() {};
     virtual ssize_t read(void* buf, size_t nbytes) = 0;
+    virtual ssize_t write(const void *buf, size_t nbytes) = 0;
     virtual int ioctl(unsigned long int request, struct mtget * mt_status) = 0;
     /** Reset the read/write pointers at open. With this, we can use the trivial copy operator. */
     virtual void reset() = 0;
@@ -52,6 +53,7 @@ namespace System {
     virtual void reset() { m_read_pointer = 0; };
     void operator = (const std::string & s) { m_content = s; m_read_pointer = 0; }
     virtual ssize_t read(void* buf, size_t nbytes);
+    virtual ssize_t write(const void *buf, size_t nbytes);
     virtual int ioctl(unsigned long int request, struct mtget * mt_status);
   private:
     std::string m_content;
@@ -65,6 +67,7 @@ namespace System {
     stDeviceFile();
     virtual void reset() {};
     virtual ssize_t read(void* buf, size_t nbytes);
+    virtual ssize_t write(const void *buf, size_t nbytes);
     virtual int ioctl(unsigned long int request, struct mtget * mt_status);
   private:
     struct mtget m_mtStat;
@@ -78,6 +81,7 @@ namespace System {
     genericDeviceFile() {};
     virtual void reset() {};
     virtual ssize_t read(void* buf, size_t nbytes);
+    virtual ssize_t write(const void *buf, size_t nbytes);
     virtual int ioctl(unsigned long int request, struct mtget * mt_status);
   };
 } // namespace System

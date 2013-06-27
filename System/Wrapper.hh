@@ -60,6 +60,7 @@ namespace System {
       ::ioctl(fd, request, mt_status);
     }
     ssize_t read(int fd, void* buf, size_t nbytes) { return ::read(fd, buf, nbytes); }
+    ssize_t write(int fd, const void *buf, size_t nbytes) { return ::write(fd, buf, nbytes); }
     int close(int fd) { return ::close(fd); }
     int stat(const char * path, struct stat *buf) { return ::stat(path, buf); }
   };
@@ -77,6 +78,7 @@ namespace System {
     virtual char * realpath(const char* name, char* resolved) = 0;
     virtual int open(const char* file, int oflag) = 0;
     virtual ssize_t read(int fd, void* buf, size_t nbytes) = 0;
+    virtual ssize_t write(int fd, const void *buf, size_t nbytes) = 0;
     /* The ... (variable arguments) notation will not work with GMock.
      * We have to create one overload for each case we encounter. */
     virtual int ioctl(int fd, unsigned long int request, struct mtget * mt_status) = 0;
@@ -102,6 +104,7 @@ namespace System {
     virtual int open(const char* file, int oflag);
     virtual int ioctl(int fd, unsigned long int request, struct mtget * mt_status);
     virtual ssize_t read(int fd, void* buf, size_t nbytes);
+    virtual ssize_t write(int fd, const void *buf, size_t nbytes);
     virtual int close(int fd);
     virtual int stat(const char * path, struct stat *buf);
     std::map<std::string, std::vector<std::string> > m_directories;
@@ -143,6 +146,7 @@ namespace System {
     MOCK_METHOD2(realpath, char *(const char* name, char* resolved));
     MOCK_METHOD2(open, int(const char* file, int oflag));
     MOCK_METHOD3(read, ssize_t(int fd, void* buf, size_t nbytes));
+    MOCK_METHOD3(write, ssize_t(int fd, const void *buf, size_t nbytes));
     MOCK_METHOD3(ioctl, int(int fd, unsigned long int request, struct mtget * mt_status));
     MOCK_METHOD1(close, int(int fd));
     MOCK_METHOD2(stat, int(const char *, struct stat *));

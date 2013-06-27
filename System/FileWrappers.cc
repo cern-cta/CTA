@@ -47,6 +47,18 @@ ssize_t Tape::System::regularFile::read(void* buf, size_t nbytes)
   }
 }
 
+ssize_t Tape::System::regularFile::write(const void *buf, size_t nbytes)
+{
+  try {
+    m_content.assign((const char *) buf, nbytes);
+    return nbytes;
+  } catch (std::length_error & e) {
+    return -1;
+  } catch (std::bad_alloc & e) {
+    return -1;
+  }
+}
+
 /**
  * Constructor for fake tape server: fill up status registers.
  */
@@ -60,6 +72,12 @@ Tape::System::stDeviceFile::stDeviceFile()
 }
 
 ssize_t Tape::System::stDeviceFile::read(void* buf, size_t nbytes)
+{
+  errno = EIO;
+  return -1;
+}
+
+ssize_t Tape::System::stDeviceFile::write(const void *buf, size_t nbytes)
 {
   errno = EIO;
   return -1;
@@ -79,6 +97,12 @@ int Tape::System::stDeviceFile::ioctl(unsigned long int request, mtget* mt_statu
 ssize_t Tape::System::genericDeviceFile::read(void* buf, size_t nbytes)
 {
   errno = EIO;
+  return -1;
+}
+
+ssize_t Tape::System::genericDeviceFile::write(const void *buf, size_t nbytes)
+{
+  errno = EINVAL;
   return -1;
 }
 

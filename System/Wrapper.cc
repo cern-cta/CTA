@@ -116,6 +116,14 @@ ssize_t Tape::System::fakeWrapper::read(int fd, void* buf, size_t nbytes) {
   return m_openFiles[fd]->read(buf, nbytes);
 }
 
+ssize_t Tape::System::fakeWrapper::write(int fd, const void *buf, size_t nbytes) {
+  if (m_openFiles.end() == m_openFiles.find(fd)) {
+    errno = EBADF;
+    return -1;
+  }
+  return m_openFiles[fd]->write(buf, nbytes);
+}
+
 int Tape::System::fakeWrapper::ioctl(int fd, unsigned long int request, mtget* mt_status) {
   /*
    * Mimic ioctl. Actually delegate the job to a vfsFile
@@ -175,6 +183,7 @@ void Tape::System::mockWrapper::delegateToFake() {
   ON_CALL(*this, realpath(_, _)).WillByDefault(Invoke(&fake, &fakeWrapper::realpath));
   ON_CALL(*this, open(_, _)).WillByDefault(Invoke(&fake, &fakeWrapper::open));
   ON_CALL(*this, read(_, _, _)).WillByDefault(Invoke(&fake, &fakeWrapper::read));
+  ON_CALL(*this, write(_, _, _)).WillByDefault(Invoke(&fake, &fakeWrapper::write));
   ON_CALL(*this, ioctl(_, _, _)).WillByDefault(Invoke(&fake, &fakeWrapper::ioctl));
   ON_CALL(*this, close(_)).WillByDefault(Invoke(&fake, &fakeWrapper::close));
   ON_CALL(*this, stat(_, _)).WillByDefault(Invoke(&fake, &fakeWrapper::stat));
