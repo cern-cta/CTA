@@ -163,10 +163,10 @@ int rtcpd_tpdump(rtcpClientInfo_t *client, tape_list_t *tape) {
     CHECK_PROC_ERR(tape,NULL,"rtcpd_Reserv() error");
 
     /*
-     * Mount the volume, temporary change label to "blp"
+     * Mount the volume
      */
     strcpy(lbltyp,tape->tapereq.label);
-    strcpy(tape->tapereq.label,"blp");
+    strcpy(tape->tapereq.label,"aul");
     TP_STATUS(RTCP_PS_MOUNT);
     rc = rtcpd_Mount(tape);
     TP_STATUS(RTCP_PS_NOBLOCKING);
