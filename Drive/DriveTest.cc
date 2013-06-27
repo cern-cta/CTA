@@ -56,6 +56,7 @@ TEST(TapeDrive, OpensCorrectly) {
     if (SCSI::Types::tape == i->type) {
       Tape::Drive<Tape::System::mockWrapper> drive(*i, sysWrapper);
       int i;
+#error This is just as test.
     }
   }
 }
