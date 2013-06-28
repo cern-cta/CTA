@@ -2252,6 +2252,52 @@ int rtcpd_GetRequestList(int *client_socket,
            */
         }
       }
+
+      /*
+       * If migrating to tape and then get the default migration block-size
+       * from taped and set it as the vlock-size of the current file
+       */
+      if(WRITE_ENABLE == nexttape->tapereq.mode &&
+        nextfile->filereq.check_fid != CHECK_FILE) {
+        struct devinfo migrationDevInfo;
+        if(-1 == Ctape_drvinfo(nexttape->tapereq.unit, &migrationDevInfo)) {
+          rtcp_log(LOG_ERR,"rtcpd_GetRequestList() Ctape_drvinfo() failed\n");
+          tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
+            "func"   , TL_MSG_PARAM_STR  , "rtcpd_MainCntl",
+            "Message", TL_MSG_PARAM_STR  , "Ctape_drvinfo failed",
+            "TPVID"  , TL_MSG_PARAM_TPVID, nexttape->tapereq.vid);
+
+          errno = ECANCELED;
+          serrno = ECANCELED;
+          save_serrno = ECANCELED;
+          break;
+        }
+        if(0 >= migrationDevInfo.defblksize) {
+          rtcp_log(LOG_ERR,
+            "rtcpd_GetRequestList() Invalid migration defblksize=%d\n",
+            migrationDevInfo.defblksize);
+          tl_rtcpd.tl_log( &tl_rtcpd, 3, 4,
+            "func"      , TL_MSG_PARAM_STR  , "rtcpd_MainCntl",
+            "Message"   , TL_MSG_PARAM_STR  , "Invalid migration defblksize",
+            "defblksize", TL_MSG_PARAM_INT  , migrationDevInfo.defblksize,
+            "TPVID"     , TL_MSG_PARAM_TPVID, nexttape->tapereq.vid);
+        
+          errno = ECANCELED;
+          serrno = ECANCELED;
+          save_serrno = ECANCELED;
+          break;
+        }
+        nextfile->filereq.blocksize = migrationDevInfo.defblksize;
+        rtcp_log(LOG_INFO, "rtcpd_GetRequestList()"
+          " set migration block-size of file to %d\n",
+          nextfile->filereq.blocksize);
+        tl_rtcpd.tl_log( &tl_rtcpd, 10, 4,
+          "func"     , TL_MSG_PARAM_STR  , "rtcpd_GetRequestList",
+          "Message"  , TL_MSG_PARAM_STR  , "set migration blocksize",
+          "blocksize", TL_MSG_PARAM_INT  , nextfile->filereq.blocksize,
+          "TPVID"    , TL_MSG_PARAM_TPVID, nexttape->tapereq.vid);
+      }
+
       rtcp_log(LOG_DEBUG,"   File: %s, FSEQ %d, Blksz %d, proc_status %d\n",
                filereq.file_path,filereq.tape_fseq,filereq.blocksize,
                filereq.proc_status);
@@ -2264,21 +2310,6 @@ int rtcpd_GetRequestList(int *client_socket,
       nextfile = NULL;
     }
   } /* End while ( reqtype != RTCP_NOMORE_REQ ) */
-
-    /*
-     * Get default blocksize if not already set by client
-     * Error is not fatal
-     */
-  if ( rc != -1 ) {
-    if ( rtcpd_drvinfo(tape) == -1 ) {
-      rtcp_log(LOG_ERR,"rtcpd_GetRequestList() rtcpd_drvinfo(): %s\n",
-               sstrerror(serrno));
-      tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
-                       "func"   , TL_MSG_PARAM_STR, "rtcpd_GetRequestList",
-                       "Message", TL_MSG_PARAM_STR, "rtcpd_drvinfo",
-                       "Error"  , TL_MSG_PARAM_STR, sstrerror(save_serrno) );
-    }
-  }
 
   *rootTape = tape;
   if ( rc == -1 ) serrno = save_serrno;

@@ -242,7 +242,6 @@ int rtcpd_Mount  (tape_list_t *);
 int rtcpd_Position  (tape_list_t *, file_list_t *);
 int rtcpd_Release  (tape_list_t *, file_list_t *);
 int rtcpd_Info  (tape_list_t *, file_list_t *);
-int rtcpd_drvinfo  (tape_list_t *);
 int rtcpd_DmpInit (tape_list_t *);
 int rtcpd_DmpFile (tape_list_t *, file_list_t *, char *);
 int rtcpd_DmpEnd (void);
