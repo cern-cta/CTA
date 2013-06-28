@@ -386,27 +386,22 @@ int castor::tape::tapebridge::BridgeSocketCatalogue::
 void castor::tape::tapebridge::BridgeSocketCatalogue::checkForTimeout() const
   throw(castor::exception::TimeOut) {
 
-  if(!m_clientReqHistory.empty()) {
-
+  // If the "get more work" socket-descriptor has already been set
+  if(0 <= m_getMoreWorkConnection.clientSock) {
     // Get the current time
     struct timeval now = {0, 0};
-    
     gettimeofday(&now, NULL);
 
-    // Get the oldest client request
-    const ClientReqHistoryElement &clientRequest = m_clientReqHistory.front();
-
     // Calculate the age in seconds
-    const int ageSecs = clientRequest.clientReqTimeStamp.tv_sec - now.tv_sec;
+    const int ageSecs = now.tv_sec -
+      m_getMoreWorkConnection.clientReqTimeStamp.tv_sec;
 
     // Throw an exception if the oldest client-request has been around too long
     if(ageSecs > CLIENTNETRWTIMEOUT) {
-
       castor::exception::TimeOut te;
-
       te.getMessage() <<
         "Timed out waiting for client reply"
-        ": clientSock=" << clientRequest.clientSock <<
+        ": clientSock=" << m_getMoreWorkConnection.clientSock <<
         ": ageSecs=" << ageSecs <<
         ": clientNetRWTimeout=" << CLIENTNETRWTIMEOUT;
 
@@ -530,10 +525,6 @@ void castor::tape::tapebridge::BridgeSocketCatalogue::
   m_getMoreWorkConnection.clientSock        = clientSock;
   m_getMoreWorkConnection.tapebridgeTransId = tapebridgeTransId;
   gettimeofday(&(m_getMoreWorkConnection.clientReqTimeStamp), NULL);
-
-  // Store an entry in the client request history
-  m_clientReqHistory.push_back(ClientReqHistoryElement(clientSock,
-    m_getMoreWorkConnection.clientReqTimeStamp));
 }
 
 

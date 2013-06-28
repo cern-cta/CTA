@@ -468,39 +468,6 @@ private:
   std::set<int> m_rtcpdIOControlConns;
 
   /**
-   * Information about a single client request to be used to create a history
-   * about sent and pending client requests.
-   */
-  struct ClientReqHistoryElement {
-    const int            clientSock;
-    const struct timeval clientReqTimeStamp;
-
-    /**
-     * Constructor.
-     */
-    ClientReqHistoryElement(
-      const int            cSock,
-      const struct timeval cReqTimeStamp) :
-      clientSock(cSock),
-      clientReqTimeStamp(cReqTimeStamp) {
-    }
-  };
-
-  /**
-   * Type used to define a list of client request history elements.
-   */
-  typedef std::list<ClientReqHistoryElement> ClientReqHistoryList;
-
-  /**
-   * The history of pending client requests implemented as a time-ordered FIFO,
-   * where the oldest request is at the front and the youngest at the back.
-   *
-   * This history is used to efficiently determine if an rtcpd-connection has
-   * timed out waiting for a reply from a client.
-   */
-  ClientReqHistoryList m_clientReqHistory;
-
-  /**
    * The pending client migration-report connection.
    */
   MigrationReportConnection m_migrationReportConnection;
