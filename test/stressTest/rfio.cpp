@@ -915,7 +915,7 @@ int issueCommand(const std::string &dirpath,
 //------------------------------------------------------------------------------
 // Construct the directory path
 //------------------------------------------------------------------------------
-std::string buildDirPath(const int tid, char* hostname, struct timeval &tv) {
+std::string buildDirPath(const int tid, const char* hostname, struct timeval &tv) {
   // build base directory
   std::ostringstream dirpath("");
   dirpath << baseDirectory;              // Base directory
@@ -1168,6 +1168,7 @@ void usage(const std::string programname) {
     << std::endl << "     --buffer-size <size>  the size of the buffer to be used for rfio transfers"
     << std::endl << "     --daemonize           Run in the background"
     << std::endl << " -n, --nbiterations <count>The number of iterations in each thread, set to 0 for infinite"
+    << std::endl << "     --xrd                 Use xroot for transfering files rather than the default rfio"
     << std::endl << "modes :"
     << std::endl << "     --racecond            Switch to race condition mode"
     << std::endl << "     --random              Switch to random mode"
