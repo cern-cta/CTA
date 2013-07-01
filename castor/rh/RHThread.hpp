@@ -98,12 +98,6 @@ namespace castor {
       unsigned int handleRequest(castor::stager::Request* fr)
         throw (castor::exception::Exception);
 
-      /// Stager host
-      std::string m_stagerHost;
-
-      /// Stager notify port
-      unsigned m_stagerPort;
-
       /// Hash table for mapping requests to svc handlers
       std::map<int, std::string> m_svcHandler;
 

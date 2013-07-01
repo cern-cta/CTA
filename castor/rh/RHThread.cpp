@@ -65,29 +65,6 @@ castor::rh::RHThread::RHThread()
   throw (castor::exception::Exception) :
   BaseObject() {
 
-  // Determine the stager host and notification port on which to send UDP
-  // messages too wake up stager services to reduce processing latencies.
-  const char *value = NULL;
-
-  // First the host
-  m_stagerHost = "";
-  if ((value = getconfent("STAGER", "NOTIFYHOST", 0))) {
-    m_stagerHost = value;
-  }
-
-  // Second the port
-  m_stagerPort = castor::STAGER_DEFAULT_NOTIFYPORT;
-  if ((value = getconfent("STAGER", "NOTIFYPORT", 0))) {
-    try {
-      m_stagerPort = castor::System::porttoi((char *)value);
-    } catch (castor::exception::Exception& ex) {
-      castor::exception::InvalidArgument e;
-      e.getMessage() << "Invalid STAGER/NOTIFYPORT value: "
-		     << ex.getMessage().str() << std::endl;
-      throw e;
-    }
-  }
-
   // Statically initialize the list of stager service handlers for each
   // request type.
   // XXX This knowledge is already in the db, cf. the Type2Obj table,
@@ -476,16 +453,6 @@ void castor::rh::RHThread::run(void* param) {
   try {
     sock->sendObject(ack);
     svcs()->commit(&ad);
-
-    if (ack.status()) {
-      // Notify the appropriate stager service
-      std::map<int, std::string>::const_iterator it =
-        m_svcHandler.find(fr->type());
-      if (it != m_svcHandler.end()) {
-        castor::server::BaseServer::sendNotification
-          (m_stagerHost, m_stagerPort, it->second[0], nbThreads);
-      }
-    }
 
     // Calculate elapsed time
     timeval tv;

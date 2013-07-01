@@ -130,23 +130,6 @@ int main(int argc, char* argv[]){
     stagerDaemon.getThreadPool('G')->setNbThreads(4);
     stagerDaemon.getThreadPool('L')->setNbThreads(1);
 
-    // Determine the notification port for the notifier thread pool. The port
-    // will be used to recieve UDP notifications from the request handler to
-    // wake up the various stager services.
-    int notifyPort = castor::STAGER_DEFAULT_NOTIFYPORT;
-    const char *value = getconfent("STAGER", "NOTIFYPORT", 0);
-    if (value) {
-      try {
-	notifyPort = castor::System::porttoi((char *)value);
-      } catch (castor::exception::Exception& ex) {
-	castor::exception::InvalidArgument e;
-	e.getMessage() << "Invalid STAGER/NOTIFYPORT value: "
-		       << ex.getMessage().str() << std::endl;
-	throw e;
-      }
-    }
-    stagerDaemon.addNotifierThreadPool(notifyPort);
-
     stagerDaemon.parseCommandLine(argc, argv);
 
     stagerDaemon.start();
