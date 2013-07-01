@@ -1,22 +1,60 @@
+
+
+- Added gid and timestamps to cns_seg_metadata
+  Added stagerTime to cns_file_metadata
+- Preserve segment.creationTime on repack
+
+=>  To be explained by Giuseppe and needs details explanations on the upgrade instructions
+with the compatibility mode thing
+
+
 ------------
-- 2.1.14-x -
+- 2.1.14-2 -
 ------------
 
   Summary of major features
   -------------------------
 
-  - support for Read-Only hardware. DiskServers and FileSystems can be marked as Read-Only so that only
-    read transfers are scheduled, without having to put them in draining and triggering replications
+  - support for Read-Only hardware.
+    DiskServers and FileSystems can be marked as Read-Only so that only read transfers are
+    scheduled, without having to put them in draining and triggering replications
   - replacement on rmnode/rmmaster infrastructure. They have been integrated to transfermanager and
     diskmanager. Also the command lines moveDiskServer, rmGetNodes and rmAdminNodes are replaced by
     modify/printdiskserver
   - the CASTOR plugin to XROOT has been integrated into the CASTOR code so that it is build/tested/
     distributed with the core CASTOR software. It comes under the form of a new RPM called
-    castor-xroot-plugin which replaces previous both xrootd-xcastor2fs and xrootd-libtransfermanager
+    castor-xroot-plugin which replaces previous both xrootd-xcastor2fs and xrootd-libtransfermanager.
+    The new version of the plugin was also modified to use the asynchronous API of CASTOR (see
+    bug #101710: RFE: add support for the asynchronous API in the xrootd plugin for CASTOR)
   - the Nameserver client API has been made secure by default, without falling back to attempting
     a non-secure connection. To disable security access, the CNS_DISABLE variable needs to be set
     to YES in castor.conf.
+  - the disk to disk copy mechanism and the associated draining tools have been completely
+    reviewed in order to optimize their efficiency. In particular :
+      + the WAITDISK2DISKCOPY status of DiskCopies no longer exists and StageReplicaRequest
+        has been replace by the Disk2DiskCopyJob concept, similar to the recall and migration
+        cases
+      + draining and internal replications are now handled separately by the scheduler and
+        obey to new rules :
+          . user activity has priority over them
+          . but a minimum activity is garanted (see DiskManager/MaxRegularJobsBeforeBackfill
+            option in castor.conf)
+          . in case user activity does not fill all slots, replications will use them
+      + draindiskserver has been largely improved, in particular with the possibility to
+        give several nodes, filesystems or even disk pools in one line. It also has changed
+        its default to ALL for the file selection
+      + the d2dtransfer executable has been merged into the diskmanager
+  - a rebalancing feature has been added that rebalances at the level of service classes the
+    fileSystems that are too fool. Rebalancing is triggered based on the Rebalancing/Sensibility
+    option in the CastorConfig table of the stager DB. The default is 5, that is rebalancing
+    is running if the filesystem is more than 5% fuller than the average in the service class.
   - major cleanup of castor.conf.example. See notes below.
+  - the ORACLE alerting mechanism has been introduced in the stager (it was laredy used by the
+    scheduler) and reduces dramatically the latency of request processing
+  - the handling of DiskCopy statuses has been improved by merging STAGED and CANBEMIGR into
+    VALID and creating a tapeStatus entry in the CastorFile table with possible values ONTAPE,
+    NOTONTAPE and DISKONLY. However, the output of the client side commands was kept backward
+    compatible and will still show CANBEMIGR and STAGED files
 
   Notes
   -----
@@ -65,6 +103,11 @@
        touch_updateFileModification
     see details in the release notes of release 2.1.12-1
 
+  - the default configuration of the log rotation of CASTOR logs has been changed so that 500 days
+    of logs are kept on the machines rather than 200
+
+  - the old DLF components have been dropped, and the DLF databases can be dismantled.
+
 
   CASTOR Core Framework
   ---------------------
@@ -86,9 +129,16 @@
 
   [Bug]
 
+     #43521  cross stager file consistency
+     #74409  RFE: "bulk drain" mode for draindiskserver, cope with lots of small files
+     #90077  RFE : schedule d2d transfers to all sources
+     #92408  rmAdminNode - auto-connect to correct rmMaster
+     #92671  RFE: monitoring output from command line tools: rmGetNodes
      #95189  Time discrepencies between disk servers and name servers can lead to silent data loss on input
+     #96652  PrepareToGet should trigger d2d replication when copies are missing
      #100992 stuck xrootd threads on stage_rm
      #100941 Bad reaction of scheduler to empty set of diskserver
+     #101811 Introduce ORACLE alerting mechanism in the stager
 
   [Features]
 
@@ -102,6 +152,7 @@
 
      #91038  RFE: add transfer time to rfiod logs
      #100899 Problems accessing CASTOR files via xrootd when using "?tried=..."
+     #101710 RFE: add support for the asynchronous API in the xrootd plugin for CASTOR
 
   [Features]
 
@@ -112,12 +163,41 @@
 
   [Bug]
 
-     #99222 Divide by zero in tape gateway code
-     #98430 rtcpd coredumps in case of dumptp
+     #99222  Divide by zero in tape gateway code
+     #98430  rtcpd coredumps in case of dumptp
+     #100246 Mount statistics broken
+     #101361 Remove unused C functions() from rtcpapi.c
+     #101366 The TapeFlushConfigParams class of the tape bridge gives an incorrect value for the compile-time default
+     #101396 LVL=Info to be converted to LVL=error
+     #101536 The tapebridged daemon does not handle zero length files for migration correctly.
+     #101408 The request processing functions of the tape daemon should static
+     #101632 printrecallstatus should report the status of recall groups and not tape pools
+     #101691 vmgrmodifypool causes a bad address error if passed no arguments
 
   [Features]
 
-     #98275 RFE: rtcpd should support an xroot protocol for data transfers
+     #98275  RFE: rtcpd should support an xroot protocol for data transfers
+     #101657 RFE: Define constant parameters of posittape() as const
+     #101714 RFE: VMGR DB should provide tape statuses independently of table definitions
+     #101789 RFE: for even more security taped should only permit local mount requests
+     #101794 RFE: Add a CLIENTMACHINE column to the output of vdqmlistrequest
+     #101798 RFE: Set the default tapebridge bulk parameters to those tested at CERN
+     #101807 RFE: taped should only permit labelling tapes with the AUL label format
+
+  CASTOR NS
+  ---------
+
+  [Features]
+
+     #101725 RFE: implement namespace statistics reporting in the Nameserver
+
+  CASTOR Repack
+  -------------
+
+  [Features]
+
+     #101372 Incorrect cleaning of old requests leading to wrong final reported statuses of repack -s
+     #101722 RFE: provide a fast repack -s without details
 
 
   Package Changes
