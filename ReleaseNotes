@@ -173,6 +173,8 @@ with the compatibility mode thing
      #101408 The request processing functions of the tape daemon should static
      #101632 printrecallstatus should report the status of recall groups and not tape pools
      #101691 vmgrmodifypool causes a bad address error if passed no arguments
+     #101858 Tape writing speed decreases as a function of the number of files already migrated
+     #101907 The 55 second timeouts of tapebridged are not working
 
   [Features]
 
@@ -183,6 +185,8 @@ with the compatibility mode thing
      #101794 RFE: Add a CLIENTMACHINE column to the output of vdqmlistrequest
      #101798 RFE: Set the default tapebridge bulk parameters to those tested at CERN
      #101807 RFE: taped should only permit labelling tapes with the AUL label format
+     #101868 RFE: Remove dead wood from rtcpc_BuildReq.c
+     #101881 RFE: Remove unused stager DB reference from tape server code
 
   CASTOR NS
   ---------
