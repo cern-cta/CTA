@@ -132,6 +132,8 @@ INSERT INTO CastorConfig
   VALUES ('D2dCopy', 'MaxNbRetries', '2', 'The maximum number of retries for disk to disk copies before it is considered failed. Here 2 means we will do in total 3 attempts.');
 INSERT INTO CastorConfig
   VALUES ('DiskServer', 'HeartbeatTimeout', '180', 'The maximum amount of time in seconds that a diskserver can spend without sending any hearbeat before it is automatically set to offline.');
+INSERT INTO CastorConfig
+  VALUES ('Rebalancing', 'Sensibility', '5', 'The rebalancing sensibility (in percent) : if a fileSystem is at least this percentage fuller than the average of the diskpool where is lives, rebalancing will fire.');
 
 /* Create the AdminUsers table */
 CREATE TABLE AdminUsers (euid NUMBER, egid NUMBER);
@@ -1284,6 +1286,7 @@ CREATE INDEX I_Disk2DiskCopyJob_Tid ON Disk2DiskCopyJob(transferId);
 CREATE INDEX I_Disk2DiskCopyJob_CfId ON Disk2DiskCopyJob(CastorFile);
 CREATE INDEX I_Disk2DiskCopyJob_CT_Id ON Disk2DiskCopyJob(creationTime, id);
 CREATE INDEX I_Disk2DiskCopyJob_drainJob ON Disk2DiskCopyJob(drainingJob);
+CREATE INDEX I_Disk2DiskCopyJob_SC_type ON Disk2DiskCopyJob(destSvcClass, replicationType);
 BEGIN
   -- PENDING status is when a Disk2DiskCopyJob is created
   -- It is immediately candidate for being scheduled
@@ -1298,6 +1301,8 @@ BEGIN
   setObjStatusName('Disk2DiskCopyJob', 'replicationType', dconst.REPLICATIONTYPE_INTERNAL, 'REPLICATIONTYPE_INTERNAL');
   -- DRAINING replication type is when replication is triggered by a drain operation
   setObjStatusName('Disk2DiskCopyJob', 'replicationType', dconst.REPLICATIONTYPE_DRAINING, 'REPLICATIONTYPE_DRAINING');
+  -- REBALANCE replication type is when replication is triggered by a rebalancing of data on different filesystems
+  setObjStatusName('Disk2DiskCopyJob', 'replicationType', dconst.REPLICATIONTYPE_REBALANCE, 'REPLICATIONTYPE_REBALANCE');
 END;
 /
 ALTER TABLE Disk2DiskCopyJob ADD CONSTRAINT FK_Disk2DiskCopyJob_CastorFile
