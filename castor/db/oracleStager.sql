@@ -365,7 +365,7 @@ CREATE OR REPLACE PROCEDURE subRequestToDo(service IN VARCHAR2,
                                            rRepackVid OUT VARCHAR2, rGCWeight OUT INTEGER,
                                            clIpAddress OUT INTEGER, clPort OUT INTEGER, clVersion OUT INTEGER) AS
   CURSOR SRcur IS
-    SELECT /*+ FIRST_ROWS_10 INDEX(SR I_SubRequest_RT_CT_ID) */ SR.id
+    SELECT /*+ FIRST_ROWS_10 INDEX_RS_ASC(SR I_SubRequest_RT_CT_ID) */ SR.id
       FROM SubRequest PARTITION (P_STATUS_0_1_2) SR  -- START, RESTART, RETRY
      WHERE SR.svcHandler = service
      ORDER BY SR.creationTime ASC;
