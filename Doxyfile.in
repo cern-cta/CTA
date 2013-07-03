@@ -5,7 +5,8 @@ PROJECT_NAME           = "@CMAKE_PROJECT_NAME@"
 PROJECT_NUMBER         = "@VERSION_MAJOR@.@VERSION_MINOR@.@VERSION_PATCH@-@VERSION_TWEAK@"
 OUTPUT_DIRECTORY       = dox
 CREATE_SUBDIRS         = NO
-INPUT                  = @CMAKE_SOURCE_DIR@/disk_transfer @CMAKE_SOURCE_DIR@/main @CMAKE_SOURCE_DIR@/bandwidth_simulation  
+INPUT                  = @CMAKE_SOURCE_DIR@/Drive @CMAKE_SOURCE_DIR@/Exception @CMAKE_SOURCE_DIR@/SCSI  \
+                          @CMAKE_SOURCE_DIR@/System @CMAKE_SOURCE_DIR@/test @CMAKE_SOURCE_DIR@/Utils
 
 CLASS_GRAPH            = YES
 HAVE_DOT               = YES

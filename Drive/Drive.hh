@@ -52,6 +52,8 @@ namespace Tape {
       /* Read drive status */
       if (-1 == m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &m_mtInfo))
         throw Tape::Exceptions::Errnum(std::string("Could not read drive status: "+ m_SCSIInfo.st_dev));
+      /* Read Generic SCSI information (INQUIRY) */
+      
     }
     virtual ~Drive() {
       if(-1 != m_tapeFD)

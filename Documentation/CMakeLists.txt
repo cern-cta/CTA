@@ -1,0 +1,6 @@
+ADD_LATEX_DOCUMENT(
+TapeServer.tex
+INPUTS ProgrammersManual.tex
+IMAGE_DIRS images
+NO_DEFAULT MANGLE_TARGET_NAMES)
+

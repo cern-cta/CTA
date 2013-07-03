@@ -31,6 +31,8 @@ using ::testing::AtLeast;
 using ::testing::Return;
 using ::testing::_;
 
+namespace UnitTests {
+
 TEST(TapeDrive, OpensCorrectly) {
   /* Prepare the test harness */
   Tape::System::mockWrapper sysWrapper;
@@ -58,4 +60,6 @@ TEST(TapeDrive, OpensCorrectly) {
       Tape::Drive<Tape::System::mockWrapper> drive(*i, sysWrapper);
     }
   }
+}
+
 }

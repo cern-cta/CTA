@@ -30,6 +30,8 @@ using ::testing::AtLeast;
 using ::testing::Return;
 using ::testing::_;
 
+namespace UnitTests {
+
 TEST(Regex, BasicFunctionality) {
   Tape::Utils::regex re("a(b)");
   std::vector<std::string> ret1, ret2;
@@ -57,3 +59,6 @@ TEST(Regex, OperationalTest) {
   ASSERT_EQ(ret2[1], "st124");
   ASSERT_EQ(ret3.size(), 0);
 }
+
+};
+

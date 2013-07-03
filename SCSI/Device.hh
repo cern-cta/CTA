@@ -30,33 +30,9 @@
 #include "../System/Wrapper.hh"
 #include "../Exception/Exception.hh"
 #include "../Utils/Regex.hh"
+#include "Constants.hh"
 
 namespace SCSI {
-
-  /* Extracted from linux kernel's include/scsi/scsi.h. System-level include 
-   is less complete */
-  class Types {
-  public:
-
-    enum {
-      disk = 0x00,
-      tape = 0x01,
-      printer = 0x02,
-      processor = 0x03, /* HP scanners use this */
-      worm = 0x04, /* Treated as ROM by our system */
-      rom = 0x05,
-      scanner = 0x06,
-      mod = 0x07, /* Magneto-optical disk -
-                          * - treated as TYPE_DISK */
-      mediumChanger = 0x08,
-      comm = 0x09, /* Communications device */
-      raid = 0x0c,
-      enclosure = 0x0d, /* Enclosure Services Device */
-      rbc = 0x0e,
-      noLun = 0x7f
-    };
-  };
-
   /**
    * Bare-bones representation of a SCSI device
    */
@@ -274,4 +250,12 @@ namespace SCSI {
     }
 
   }; /* class DeviceVector */
+
+  class Device {
+  public:
+    Device(int fd): m_fd(fd) {};
+    
+  private:
+    int m_fd;
+  }; // class Device
 }; /* namespace SCSI */

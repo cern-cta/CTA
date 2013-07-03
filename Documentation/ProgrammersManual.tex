@@ -1,0 +1,66 @@
+\chapter*{Preface}
+
+The Tape server project is targeted at replacing the CASTOR tape server with a new drop-{}in reimplementation. The reimplementation will replace a legacy implementation that is written in C.
+
+% ------- 
+% Chapter 
+% ------- 
+
+\chapter{Developer's manual}
+
+\section{Targeted environment}
+
+CERN SLC5 and SLC6, 64bits. Although it should compile in theory, the 32 bits version is not tested. [ TODO: prevent 32 bits compilation ]
+
+\section{Reference documentations}
+
+The SCSI commands can be found in the SCSI section of hackipedia:
+ \href{http://hackipedia.org/Hardware/SCSI/}{http://hackipedia.org/Hardware/SCSI/}. 
+The most significant sections for tape server development are the stream commands
+ \href{http://hackipedia.org/Hardware/SCSI/Stream%20Commands/SCSI%20Stream%20Commands%20-%203.pdf}{
+    http://hackipedia.org/Hardware/SCSI/Stream Commands/SCSI Stream Commands - 3.pdf} and the 
+\href{http://hackipedia.org/Hardware/SCSI/Primary%20Commands/SCSI%20Primary%20Commands%20-%204.pdf}{SCSI primary commands}.
+
+On the Linux side, the main references are the Linux SCSI Generic (sg) HOWTO 
+ \href{http://tldp.org/HOWTO/SCSI-Generic-HOWTO/index.html}{  http://tldp.org/\-HOWTO/\-SCSI-{}Generic-{}HOWTO/\-index.html  }    , and ... TBC.
+
+http://sg.danny.cz/sg/sg\_io.html
+
+http://sg.danny.cz/sg/index.html
+
+\section{Tools used during development}
+
+\subsection{ Required tools for build}
+\begin{itemize}
+
+\item{}GCC/G++ (Basic SLC version)
+
+
+\item{}CMake (Basic SLC version)
+
+
+\item{}rpmbuild (Basic SLC version)
+
+\end{itemize}
+
+Google Mock/Google test (GTest is provided in EPEL repository for SLC. GMock requires recompilation (TODO: link to source)
+
+Valgrind (Basic SLC version)
+
+Docbook (Basic SLC version)
+
+Doxygen for code documentation
+
+\subsection{Tools used during development}
+\begin{itemize}
+
+\item{}TeamCity for continuous integration
+
+
+\item{}NetBeans as an IDE, including for remote development
+
+Syntext Serna Free for docbook documents edition
+
+\end{itemize}
+
+\end{document}

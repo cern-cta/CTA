@@ -15,6 +15,8 @@ BuildRequires: gmock >= 1.5.0
 BuildRequires: gtest-devel >= 1.5.0
 BuildRequires: gmock-devel  >= 1.5.0
 BuildRequires: valgrind >= 3.5.0
+BuildRequires: tetex-latex
+BuildRequires: latex2html
 
 %description
 The CERN tape server project.
@@ -41,7 +43,7 @@ test -e $RPM_BUILD_ROOT && rm -r $RPM_BUILD_ROOT
 mkdir -p build
 cd build
 cmake ../ -DRELEASE=%{release} -DCMAKE_BUILD_TYPE=RelWithDebInfo
-%{__make} %{_smp_mflags} 
+%{__make} %{_smp_mflags} all doxygen TapeServer_pdf 
 
 %install
 cd build

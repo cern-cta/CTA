@@ -30,6 +30,7 @@ using ::testing::AtLeast;
 using ::testing::Return;
 using ::testing::_;
 
+namespace UnitTests {
 Tape::System::mockWrapper sysWrapper;
 
 TEST(DeviceList, TriesToFind) {
@@ -101,4 +102,4 @@ TEST(DeviceList, ScansCorrectly) {
   ASSERT_EQ(129, dl[2].nst.minor);
 }
 
-
+};
