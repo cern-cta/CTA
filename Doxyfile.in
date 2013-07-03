@@ -7,7 +7,6 @@ OUTPUT_DIRECTORY       = dox
 CREATE_SUBDIRS         = NO
 INPUT                  = @CMAKE_SOURCE_DIR@/Drive @CMAKE_SOURCE_DIR@/Exception @CMAKE_SOURCE_DIR@/SCSI  \
                           @CMAKE_SOURCE_DIR@/System @CMAKE_SOURCE_DIR@/test @CMAKE_SOURCE_DIR@/Utils
-
 CLASS_GRAPH            = YES
 HAVE_DOT               = YES
 CALL_GRAPH             = YES

@@ -17,6 +17,7 @@ BuildRequires: gmock-devel  >= 1.5.0
 BuildRequires: valgrind >= 3.5.0
 BuildRequires: tetex-latex
 BuildRequires: latex2html
+BuildRequires: ImageMagick
 
 %description
 The CERN tape server project.
