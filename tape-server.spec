@@ -18,6 +18,7 @@ BuildRequires: valgrind >= 3.5.0
 BuildRequires: tetex-latex
 BuildRequires: latex2html
 BuildRequires: ImageMagick
+BuildRequires: doxygen
 
 %description
 The CERN tape server project.
