@@ -18,7 +18,7 @@
 #include "u64subr.h"
 
 static sql_context ctx[CNS_MAXNBTHREADS];
-static const char *const CNSSCHEMAVERSION = "2_1_14_0";
+static const char *const CNSSCHEMAVERSION = "2_1_14_2";
 
 int Cns_init_dbpkg()
 {
