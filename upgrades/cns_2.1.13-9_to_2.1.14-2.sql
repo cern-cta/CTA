@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 cns_2.1.13-9_to_2.1.14-X.sql
+ *                 cns_2.1.13-9_to_2.1.14-2.sql
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * This script upgrades a CASTOR v2.1.13-9 CNS database to v2.1.14-X 
+ * This script upgrades a CASTOR v2.1.13-9 CNS database to v2.1.14-2
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -32,7 +32,7 @@ BEGIN
   UPDATE UpgradeLog
      SET failureCount = failureCount + 1
    WHERE schemaVersion = '2_1_14_0'
-     AND release = '2_1_14_X'
+     AND release = '2_1_14_2'
      AND state != 'COMPLETE';
   COMMIT;
 END;
@@ -52,7 +52,7 @@ END;
 /
 
 INSERT INTO UpgradeLog (schemaVersion, release, type)
-VALUES ('2_1_14_0', '2_1_14_X', 'NON TRANSPARENT');
+VALUES ('2_1_14_2', '2_1_14_2', 'NON TRANSPARENT');
 COMMIT;
 
 /* Schema changes go here */
@@ -101,6 +101,7 @@ ALTER TABLE UsageStats ADD CONSTRAINT PK_UsageStats_gid_ts PRIMARY KEY (gid, tim
 /* Update and revalidation of PL-SQL code */
 /******************************************/
 
+
 /* Package holding type declarations for the NameServer PL/SQL API */
 CREATE OR REPLACE PACKAGE castorns AS
   TYPE cnumList IS TABLE OF INTEGER INDEX BY BINARY_INTEGER;
@@ -120,6 +121,28 @@ CREATE OR REPLACE PACKAGE castorns AS
     lastModificationTime NUMBER
   );
   TYPE Segment_Cur IS REF CURSOR RETURN Segment_Rec;
+  TYPE Stats_Rec IS RECORD (
+    gid INTEGER,
+    maxFileId INTEGER,
+    fileCount INTEGER,
+    fileSize INTEGER,
+    segCount INTEGER,
+    segSize INTEGER,
+    segCompressedSize INTEGER,
+    seg2Count INTEGER,
+    seg2Size INTEGER,
+    seg2CompressedSize INTEGER,
+    fileIdDelta INTEGER,
+    fileCountDelta INTEGER,
+    fileSizeDelta INTEGER,
+    segCountDelta INTEGER,
+    segSizeDelta INTEGER,
+    segCompressedSizeDelta INTEGER,
+    seg2CountDelta INTEGER,
+    seg2SizeDelta INTEGER,
+    seg2CompressedSizeDelta INTEGER
+  );
+  TYPE Stats IS TABLE OF Stats_Rec;
 END castorns;
 /
 
@@ -835,35 +858,40 @@ BEGIN
 END;
 /
 
-CREATE OR REPLACE PROCEDURE weeklyReport(Stats OUT SYS_REFCURSOR) AS
-  varOldTime NUMBER;
-  varNewTime NUMBER;
+/* This pipelined function returns a report of namespace statistics over the given number of days */
+CREATE OR REPLACE FUNCTION NSStatsReport(inDays INTEGER) RETURN castorns.Stats PIPELINED IS
 BEGIN
-  -- Pick the right time stamps
-  SELECT MAX(timestamp) INTO varNewTime FROM UsageStats;
-  SELECT MAX(timestamp) INTO varOldTime FROM UsageStats
-   WHERE timestamp <= varNewTime - 86400*7;
-  -- Extract a cursor with the relevant statistics for all groups
-  OPEN Stats FOR
-    SELECT NewStats.gid,
-           NewStats.maxFileId, NewStats.fileCount, NewStats.fileSize,
-           NewStats.segCount, NewStats.segSize, NewStats.segCompressedSize,
-           NewStats.maxFileId-OldStats.maxFileId fileIdDelta, NewStats.fileCount-OldStats.fileCount fileCountDelta,
-           NewStats.fileSize-OldStats.fileSize fileSizeDelta,
-           NewStats.segCount-OldStats.segCount segCountDelta, NewStats.segSize-OldStats.segSize segSizeDelta,
-           NewStats.segCompressedSize-OldStats.segCompressedSize segCompressedSizeDelta,
-           NewStats.seg2Count-OldStats.seg2Count seg2CountDelta, NewStats.seg2Size-OldStats.seg2Size seg2SizeDelta,
-           NewStats.seg2CompressedSize-OldStats.seg2CompressedSize seg2CompressedSizeDelta
-      FROM
-        (SELECT gid, timestamp, maxFileId, fileCount, fileSize, segCount, segSize, segCompressedSize,
-                seg2Count, seg2Size, seg2CompressedSize
-           FROM UsageStats WHERE timestamp = varOldTime) OldStats,
-        (SELECT gid, timestamp, maxFileId, fileCount, fileSize, segCount, segSize, segCompressedSize,
-                seg2Count, seg2Size, seg2CompressedSize
-           FROM UsageStats WHERE timestamp = varNewTime) NewStats
-     WHERE OldStats.gid = NewStats.gid;
+  FOR l IN (
+        SELECT NewStats.gid,
+               NewStats.maxFileId, NewStats.fileCount, NewStats.fileSize,
+               NewStats.segCount, NewStats.segSize, NewStats.segCompressedSize,
+               NewStats.seg2Count, NewStats.seg2Size, NewStats.seg2CompressedSize,
+               NewStats.maxFileId-OldStats.maxFileId fileIdDelta, NewStats.fileCount-OldStats.fileCount fileCountDelta,
+               NewStats.fileSize-OldStats.fileSize fileSizeDelta,
+               NewStats.segCount-OldStats.segCount segCountDelta, NewStats.segSize-OldStats.segSize segSizeDelta,
+               NewStats.segCompressedSize-OldStats.segCompressedSize segCompressedSizeDelta,
+               NewStats.seg2Count-OldStats.seg2Count seg2CountDelta, NewStats.seg2Size-OldStats.seg2Size seg2SizeDelta,
+               NewStats.seg2CompressedSize-OldStats.seg2CompressedSize seg2CompressedSizeDelta
+          FROM
+            (SELECT gid, timestamp, maxFileId, fileCount, fileSize, segCount, segSize, segCompressedSize,
+                    seg2Count, seg2Size, seg2CompressedSize
+               FROM UsageStats
+              WHERE timestamp = (SELECT MAX(timestamp) FROM UsageStats
+                                  WHERE timestamp < getTime() - 86400*inDays)) OldStats,
+            (SELECT gid, timestamp, maxFileId, fileCount, fileSize, segCount, segSize, segCompressedSize,
+                    seg2Count, seg2Size, seg2CompressedSize
+               FROM UsageStats
+              WHERE timestamp = (SELECT MAX(timestamp) FROM UsageStats)) NewStats
+         WHERE OldStats.gid = NewStats.gid
+         ORDER BY NewStats.gid DESC) LOOP    -- gid = -1, i.e. the totals line, comes last
+    PIPE ROW(l);
+  END LOOP;
 END;
 /
+
+/* A convenience view to get weekly statistics */
+CREATE OR REPLACE VIEW WeeklyReportView AS
+  SELECT * FROM TABLE(NSStatsReport(7));
 
 /*
  * Database jobs
@@ -889,28 +917,8 @@ BEGIN
 END;
 /
 
-
-/* Recompile all invalid procedures, triggers and functions */
-/************************************************************/
-BEGIN
-  FOR a IN (SELECT object_name, object_type
-              FROM user_objects
-             WHERE object_type IN ('PROCEDURE', 'TRIGGER', 'FUNCTION', 'VIEW', 'PACKAGE BODY')
-               AND status = 'INVALID')
-  LOOP
-    IF a.object_type = 'PACKAGE BODY' THEN a.object_type := 'PACKAGE'; END IF;
-    BEGIN
-      EXECUTE IMMEDIATE 'ALTER ' ||a.object_type||' '||a.object_name||' COMPILE';
-    EXCEPTION WHEN OTHERS THEN
-      -- ignore, so that we continue compiling the other invalid items
-      NULL;
-    END;
-  END LOOP;
-END;
-/
-
 /* Flag the schema upgrade as COMPLETE */
 /***************************************/
 UPDATE UpgradeLog SET endDate = sysdate, state = 'COMPLETE'
- WHERE release = '2_1_14_X';
+ WHERE release = '2_1_14_2';
 COMMIT;

@@ -18,7 +18,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  * This script switches the Open mode from Compatibility to New.
- * It is only applicable on a CASTOR v2.1.14-X CNS database. 
+ * It is applicable on any CASTOR v2.1.14-x CNS database.
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -33,7 +33,7 @@ BEGIN
   BEGIN
     SELECT release INTO unused FROM CastorVersion
      WHERE schemaName = 'CNS'
-       AND release = '2_1_14_X';
+       AND release LIKE '2_1_14_%';
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- Error, we cannot apply this script
     raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts for the CNS before this one.');
