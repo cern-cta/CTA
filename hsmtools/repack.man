@@ -96,14 +96,14 @@ in the stager database. The default value is 5.
 shows the status of all ongoing and finished repacks. If multiple repack requests were issued for a given
 tape, only the last request is shown. Note that old completed repacks are automatically removed
 from the database and are not shown any longer.
-.BI \-d,\ \-\-detailed
-shows the status of all ongoing and finished repacks with detailed figures for the count of ongoing
-recalls and migrations and a completion percentage. If multiple repack requests were issued for a given
-tape, only the last request is shown.
 .TP
 .BI \-S,\ \-\-status
 shows the status of ongoing and finished repacks for the given tape(s). The tape(s) is(are) given by their
 VID and the list is colon separated. As opposed to the \-s option, here the entire history is shown.
+.TP
+.BI \-d,\ \-\-detailed
+shows the status of ongoing and finished repacks as requested with the -s or -S options, including detailed
+figures for the count of ongoing or failed recalls and migrations, and a completion percentage.
 .TP
 .BI \-e,\ \-\-errors
 displays the errors that occured during the repack of a given tape, file by file. By default, the number of
