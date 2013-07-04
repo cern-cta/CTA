@@ -1,4 +1,5 @@
 \chapter*{Preface}
+\addcontentsline{toc}{chapter}{Preface}
 
 The Tape server project is targeted at replacing the CASTOR tape server with a new drop-{}in reimplementation. The reimplementation will replace a legacy implementation that is written in C.
 
@@ -13,54 +14,62 @@ The Tape server project is targeted at replacing the CASTOR tape server with a n
 CERN SLC5 and SLC6, 64bits. Although it should compile in theory, the 32 bits version is not tested. [ TODO: prevent 32 bits compilation ]
 
 \section{Reference documentations}
+\subsection{SCSI specifications}
 
 The SCSI commands can be found in the SCSI section of hackipedia:
- \href{http://hackipedia.org/Hardware/SCSI/}{http://hackipedia.org/Hardware/SCSI/}. 
-The most significant sections for tape server development are the stream commands
- \href{http://hackipedia.org/Hardware/SCSI/Stream%20Commands/SCSI%20Stream%20Commands%20-%203.pdf}{
-    http://hackipedia.org/Hardware/SCSI/Stream Commands/SCSI Stream Commands - 3.pdf} and the 
-\href{http://hackipedia.org/Hardware/SCSI/Primary%20Commands/SCSI%20Primary%20Commands%20-%204.pdf}{SCSI primary commands}.
+ \href{http://hackipedia.org/Hardware/SCSI/}{http://hackipedia.org/Hardware/SCSI/}   The most significant sections for tape server development are the stream commands
+ \href{http://hackipedia.org/Hardware/SCSI/Stream%20Commands/SCSI%20Stream%20Commands%20-%203.pdf}
+    {http://hackipedia.org/Hardware/SCSI/Stream Commands/SCSI Stream Commands - 3.pdf} 
+ and the SCSI primary commands
+    \href{http://hackipedia.org/Hardware/SCSI/Primary%20Commands/SCSI%20Primary%20Commands%20-%204.pdf}
+      {http://hackipedia.org/Hardware/SCSI/Primary Commands/SCSI Primary Commands - 4.pdf}.
 
-On the Linux side, the main references are the Linux SCSI Generic (sg) HOWTO 
- \href{http://tldp.org/HOWTO/SCSI-Generic-HOWTO/index.html}{  http://tldp.org/\-HOWTO/\-SCSI-{}Generic-{}HOWTO/\-index.html  }    , and ... TBC.
+\subsection{SCSI support in Linux}
+On the Linux side, the main references are the Linux 2.4 SCSI subsystem HOWTO
+\href{http://mirrors.kernel.org/LDP/HOWTO/pdf/SCSI-2.4-HOWTO.pdf}{http://mirrors.kernel.org/LDP/HOWTO/pdf/SCSI-2.4-HOWTO.pdf},
+especially for is section 9.3 on the st driver,
+and the Linux SCSI Generic (sg) HOWTO 
+ \href{http://mirrors.kernel.org/LDP/HOWTO/pdf/SCSI-Generic-HOWTO.pdf}{http://mirrors.kernel.org/LDP/HOWTO/pdf/SCSI-Generic-HOWTO.pdf}.
 
-http://sg.danny.cz/sg/sg\_io.html
+More details regarding the Generic SCSI driver can be found in this web site: 
+\href{http://sg.danny.cz/sg/}{http://sg.danny.cz/sg/}.
 
-http://sg.danny.cz/sg/index.html
+The section on the SG\_IO ioctl, \href{sg.danny.cz/sg/sg\_io.html}{sg.danny.cz/sg/sg\_io.html} details the usage of the 
+simples ioctl for the generic SCSI driver, which allows the invocation of a SCSI command and the collection of the 
+result in a single system call.
+
+\subsection{Unsorted CASTOR docs}
+There is a collection of links to various documentations written in the past on this page:
+\href{http://castorwww.web.cern.ch/castorwww/links.htm}{http://castorwww.web.cern.ch/castorwww/links.htm}.
 
 \section{Tools used during development}
-
 \subsection{ Required tools for build}
 \begin{itemize}
-
 \item{}GCC/G++ (Basic SLC version)
-
-
 \item{}CMake (Basic SLC version)
-
-
 \item{}rpmbuild (Basic SLC version)
-
+\item{}Google Mock/Google test (GTest is provided in EPEL repository for SLC. 
+  GMock requires recompilation (TODO: link to source)
+\item{}Valgrind (Basic SLC version)
+\item{}\LaTeX (Basic SLC version)
+\item{}Doxygen for code documentation (Basic SLC version)
 \end{itemize}
-
-Google Mock/Google test (GTest is provided in EPEL repository for SLC. GMock requires recompilation (TODO: link to source)
-
-Valgrind (Basic SLC version)
-
-Docbook (Basic SLC version)
-
-Doxygen for code documentation
 
 \subsection{Tools used during development}
 \begin{itemize}
-
 \item{}TeamCity for continuous integration
-
-
-\item{}NetBeans as an IDE, including for remote development
-
-Syntext Serna Free for docbook documents edition
-
+\item{}NetBeans as an IDE, including for remote development\
 \end{itemize}
 
-\end{document}
+\section{Classes layout}
+
+\begin{lstlisting}[caption=Code example,label=code1]
+namespace Test {
+  class Test {
+  public:
+    Test() {}
+  };
+} // namespace Test
+\end{lstlisting}
+
+

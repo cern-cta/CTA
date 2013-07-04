@@ -51,8 +51,8 @@
       \let\footnotesize\small
       \let\footnoterule\relax
       \let \footnote \thanks
-      \includegraphics{images/cern_logo} \hfill
-      \includegraphics{images/CASTOR_logo_250}
+      \includegraphics[width=2cm]{images/CERNLogo} \hfill
+      \includegraphics[width=4cm]{images/CASTOR_logo_250}
       \null\vfil
       \vskip 60\p@
       \begin{center}%
@@ -151,14 +151,14 @@
 \renewcommand{\sectionmark}[1]{\markright{\thesection\ #1}}
 \rhead[\fancyplain{}{\bfseries\scriptsize\mbox{%
               \begin{tabular}{@{}l@{}}
-              Title: \@title \@author\\%
+              Title: \@title\\%
               \@doctyp\\%
               Issue: \@dociss\\%
               \leftmark\end{tabular}}}]
         {\fancyplain{}{\bfseries\scriptsize\mbox{%
               \begin{tabular}{@{}l@{}}
               \setlength{\tabcolsep}{0pt}%
-              \@title\\%
+              Title: \@title\\%
               \@doctyp\\%
               Issue: \@dociss\\%
               \leftmark\end{tabular}}}}
