@@ -669,36 +669,39 @@ int main(int argc, char** argv) {
       // "manually" catch the NoValue exception
       // Nothing to be done in such a case, an error was already logged
       // and the error service will answer automatically to the client
-    } else if (e.code() == ESTREQCANCELED) {
-      // "manually" catch the RequestCanceled exception these are converted
-      // to regular Exception objects by the internal remote procedure call
-      // mechanism
-      castor::dlf::Param params[] =
-        {castor::dlf::Param(arguments->subRequestUuid),
-         castor::dlf::Param("Message", e.getMessage().str())};
-      castor::dlf::dlf_writep
-        (arguments->requestUuid, DLF_LVL_SYSTEM,
-         castor::job::stagerjob::REQCANCELED, 2, params, &arguments->fileId);
     } else {
-      // "Job failed"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("Error", sstrerror(e.code())),
-         castor::dlf::Param("Message", e.getMessage().str()),
-         castor::dlf::Param(arguments->subRequestUuid)};
-      // A priori, we log an error
-      int loglevel = DLF_LVL_ERROR;
-      // But in some cases, it's actually a use error
-      if (e.code() == ECONNREFUSED || // in case we can not connect to the client
-          e.code() == SETIMEDOUT   || // in case the client never answered
-          e.code() == EHOSTUNREACH || // the client is not visible
-          e.code() == SENOVALUE    || // no data was transfered
-          e.code() == SECHECKSUM   || // bad checksum
-          e.code() == ENOENT) {       // file was removed while being modified
-        loglevel = DLF_LVL_USER_ERROR;
+      if (e.code() == ESTREQCANCELED) {
+        // "manually" catch the RequestCanceled exception these are converted
+        // to regular Exception objects by the internal remote procedure call
+        // mechanism
+        castor::dlf::Param params[] =
+          {castor::dlf::Param(arguments->subRequestUuid),
+           castor::dlf::Param("Message", e.getMessage().str())};
+        // "Request canceled"
+        castor::dlf::dlf_writep
+          (arguments->requestUuid, DLF_LVL_SYSTEM,
+           castor::job::stagerjob::REQCANCELED, 2, params, &arguments->fileId);
+      } else {
+        // "Job failed"
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("Error", sstrerror(e.code())),
+           castor::dlf::Param("Message", e.getMessage().str()),
+           castor::dlf::Param(arguments->subRequestUuid)};
+        // A priori, we log an error
+        int loglevel = DLF_LVL_ERROR;
+        // But in some cases, it's actually a use error
+        if (e.code() == ECONNREFUSED || // in case we can not connect to the client
+            e.code() == SETIMEDOUT   || // in case the client never answered
+            e.code() == EHOSTUNREACH || // the client is not visible
+            e.code() == SENOVALUE    || // no data was transfered
+            e.code() == SECHECKSUM   || // bad checksum
+            e.code() == ENOENT) {       // file was removed while being modified
+          loglevel = DLF_LVL_USER_ERROR;
+        }
+        castor::dlf::dlf_writep
+          (arguments->requestUuid, loglevel,
+           castor::job::stagerjob::JOBFAILED, 3, params, &arguments->fileId);
       }
-      castor::dlf::dlf_writep
-        (arguments->requestUuid, loglevel,
-         castor::job::stagerjob::JOBFAILED, 3, params, &arguments->fileId);
       // Try to answer the client
       try {
         castor::rh::IOResponse ioResponse;
