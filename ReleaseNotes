@@ -1,13 +1,3 @@
-
-
-- Added gid and timestamps to cns_seg_metadata
-  Added stagerTime to cns_file_metadata
-- Preserve segment.creationTime on repack
-
-=>  To be explained by Giuseppe and needs details explanations on the upgrade instructions
-with the compatibility mode thing
-
-
 ------------
 - 2.1.14-2 -
 ------------
@@ -15,21 +5,25 @@ with the compatibility mode thing
   Summary of major features
   -------------------------
 
-  - support for Read-Only hardware.
-    DiskServers and FileSystems can be marked as Read-Only so that only read transfers are
-    scheduled, without having to put them in draining and triggering replications
-  - replacement on rmnode/rmmaster infrastructure. They have been integrated to transfermanager and
-    diskmanager. Also the command lines moveDiskServer, rmGetNodes and rmAdminNodes are replaced by
-    modify/printdiskserver
-  - the CASTOR plugin to XROOT has been integrated into the CASTOR code so that it is build/tested/
+  - Replacement of rmnode/rmmaster infrastructure. They have been integrated to transfermanager and
+    diskmanager. The command line tools moveDiskServer, rmGetNodes and rmAdminNodes are replaced by
+    modify/printdiskserver.
+  - Support for Read-Only hardware. DiskServers and FileSystems can be marked as Read-Only so that
+    only read transfers are scheduled, without having to put them in draining and triggering
+    replications.
+  - The handling of FileSystem and DiskServer states has changed: the adminStatus field
+    has been replaced by a hwOnline flag on the DiskServer, which is automatically updated by
+    the system and cannot be changed by modifydiskserver. However, the output of stager_qry
+    remains backward compatible and a status DISABLED is displayed when hwOnline is false.
+    Moreover, the hardware status is now immediately respected: in case it is modified, or when
+    a node does not report itself as bein online for too long, all pending jobs on the changed
+    node are immediately killed if they are not allowed to run in the new status.
+  - The CASTOR plugin to XROOT has been integrated into the CASTOR code so that it is build/tested/
     distributed with the core CASTOR software. It comes under the form of a new RPM called
     castor-xroot-plugin which replaces previous both xrootd-xcastor2fs and xrootd-libtransfermanager.
     The new version of the plugin was also modified to use the asynchronous API of CASTOR (see
-    bug #101710: RFE: add support for the asynchronous API in the xrootd plugin for CASTOR)
-  - the Nameserver client API has been made secure by default, without falling back to attempting
-    a non-secure connection. To disable security access, the CNS_DISABLE variable needs to be set
-    to YES in castor.conf.
-  - the disk to disk copy mechanism and the associated draining tools have been completely
+    bug #101710: RFE: add support for the asynchronous API in the xrootd plugin for CASTOR).
+  - The disk to disk copy mechanism and the associated draining tools have been completely
     reviewed in order to optimize their efficiency. In particular :
       + the WAITDISK2DISKCOPY status of DiskCopies no longer exists and StageReplicaRequest
         has been replace by the Disk2DiskCopyJob concept, similar to the recall and migration
@@ -44,22 +38,32 @@ with the compatibility mode thing
         give several nodes, filesystems or even disk pools in one line. It also has changed
         its default to ALL for the file selection
       + the d2dtransfer executable has been merged into the diskmanager
-  - a rebalancing feature has been added that rebalances at the level of service classes the
+  - A rebalancing feature has been added that rebalances at the level of service classes the
     fileSystems that are too fool. Rebalancing is triggered based on the Rebalancing/Sensibility
     option in the CastorConfig table of the stager DB. The default is 5, that is rebalancing
     is running if the filesystem is more than 5% fuller than the average in the service class.
-  - major cleanup of castor.conf.example. See notes below.
-  - the ORACLE alerting mechanism has been introduced in the stager (it was laredy used by the
-    scheduler) and reduces dramatically the latency of request processing
-  - the handling of DiskCopy statuses has been improved by merging STAGED and CANBEMIGR into
+  - The Nameserver client API has been made secure by default, without falling back to attempting
+    a non-secure connection. To disable security access, the CNS_DISABLE variable needs to be set
+    to YES in castor.conf.
+  - The Nameserver file metadata has been extended to include an extra timestamp to handle cross
+    stager consistency (see bug #95189). This impacts the upgrade procedure as explained below.
+  - The Nameserver segment metadata has been extended to also include creation and last modification
+    times of the segment, plus the gid of the user owning the tape segment. The creation time
+    is overridden each time a file is overwritten and a new segment get migrated, however a repack
+    operation will preserve the creation time and update only the last modification time.
+    The gid is only used for statistical purposes (see bug #101725).
+  - Major cleanup of castor.conf.example. See notes below.
+  - The ORACLE alerting mechanism has been introduced in the stager (it was already used by the
+    scheduler) and reduces dramatically the latency of request processing.
+  - The handling of DiskCopy statuses has been improved by merging STAGED and CANBEMIGR into
     VALID and creating a tapeStatus entry in the CastorFile table with possible values ONTAPE,
     NOTONTAPE and DISKONLY. However, the output of the client side commands was kept backward
-    compatible and will still show CANBEMIGR and STAGED files
+    compatible and will still show CANBEMIGR and STAGED files.
 
   Notes
   -----
 
-  - the castor.conf.example file has been cleaned up in this release so that all its lines
+  - The castor.conf.example file has been cleaned up in this release so that all its lines
     can be left commented in a default setup. This means that in most cases, the castor.conf
     file can be written from scratch and should contain only a handful of lines (mostly
     given host names where the different components are running).
@@ -98,15 +102,19 @@ with the compatibility mode thing
       + TAPE    ACS_MOUNT_LIBRARY_FAILURE_HANDLING    retry 3 300  # retry 1 300
       + TAPE    ACS_UNMOUNT_LIBRARY_FAILURE_HANDLING  retry 3 300  # retry 1 300
 
-  - similarly to release 2.1.12-* and 2.1.13-*, in the test suite some test cases will still fail, namely :
+  - The number of targets for a Put request has been reduced from 5 to 3 diskservers to improve
+    performances, provided that the probability that 3 diskservers chosen at random all fail to accept
+    and schedule a write job is acceptably low.
+
+  - Similarly to release 2.1.12-* and 2.1.13-*, in the test suite some test cases will still fail, namely :
        touch_updateFileAccess,
        touch_updateFileModification
     see details in the release notes of release 2.1.12-1
 
-  - the default configuration of the log rotation of CASTOR logs has been changed so that 500 days
-    of logs are kept on the machines rather than 200
+  - The default configuration of the log rotation of CASTOR logs has been changed so that 500 days
+    of logs are kept on the machines rather than 200.
 
-  - the old DLF components have been dropped, and the DLF databases can be dismantled.
+  - The old DLF components have been dropped, and the DLF databases can be dismantled.
 
 
   CASTOR Core Framework
@@ -225,10 +233,6 @@ with the compatibility mode thing
   - rmmasterd and rmnoded are gone and thus should not be monitored anymore
   - rmGetNodes, rmAdminNode and moveDiskServer are replaced by modifydiskserver and printdiskserver.
     So scripts should be adapted
-  - handling of fileSystem and diskServer state has slightly changed with the introduction of the
-    READONLY state and the drop of the adminStatus field replaced by a hwOnline flag on the diskServer
-    that cannot be changed by command line tools. However, the output of stager_qry remains backward
-    compatible with staus DISABLED being displayed when hwOnline is false.
   - the DLF database has gone. Thus no upgrade script is given and the database can be safely dismantled.
   - one needs to modify the declaration of the plugin libraries in /etc/xrd.cf by adding the major
     version number : 
@@ -247,10 +251,56 @@ with the compatibility mode thing
 
 
   Upgrade Instructions from 2.1.13-9
-  -----------------------------------
+  ----------------------------------
 
-  To be filled for the first production release. For the moment, only installation from scratch is
-  supported.
+  Stager
+  ------
+  The upgrade of the STAGER database to 2.1.14-2 cannot be performed online.
+  As a result all daemons accessing the STAGER database MUST be stopped!
+  The expected downtime for the upgrade is ...
+
+  Notes:
+    - Prior to upgrading the STAGER database please verify that your nameserver
+      database has been upgraded to 2.1.14-2.
+
+  It is recommended to stop all draining activities as any pending disk-to-disk copy request will be failed
+  and any existing draining job will be canceled. Outstanding migrations and recalls are preserved.
+
+      Instructions
+      ------------
+
+       1. Stop all daemons on the stager headnodes which have direct
+          connections to the STAGER database. This includes: rhd, stagerd,
+          transfermanagerd, tapegatewayd, and rmmasterd.
+
+          Note: It is not necessary to stop any daemons on the diskservers.
+
+       2. Upgrade the STAGER database using the stager_2.1.13-9_to_2.1.14-2.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-2/dbupgrades
+
+       4. Upgrade the software on the headnodes and diskservers to 2.1.14-2.
+
+       5. If you have an independent monitoring system to monitor CASTOR such
+          as LEMON. Please make sure to update the monitoring configuration to
+          reflect any changes in this release.
+
+       6. Start all the daemons which were stopped in step 2.
+
+          Note: If you have a concept of private and public request handlers
+                you should start only the private ones to test/validate the
+                installation without user interference.
+
+       7. Wait a few seconds to give time for the diskservers to send a heartbeat
+          message to the transfermanager daemon.
+
+       8. Test the instance by running the test suite available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.13-*/2.1.13-0/testsuite
+
+       9. Start the public request handlers (if applicable)
+
+      10. Congratulations you have successfully upgraded to the 2.1.13-0 release
+          of CASTOR.
 
   VMGR
   ----
@@ -259,6 +309,37 @@ with the compatibility mode thing
     into the VMGR database schema:
 
          GRANT SELECT ON VMGR_TAPE_STATUS_VIEW TO <CastorNsAccount>;
+
+  Nameserver
+  ----------
+
+  - The upgrade of the Nameserver requires a short downtime of all the nsd daemons. However, if you
+    already applied the schema upgrade to version 2.1.14-0pre, the rest of the upgrade can be performed online.
+    In all cases, the Nameserver database must be upgraded first, before any stager instance be upgraded.
+
+      Instructions
+      ------------
+
+       1. Apply the cns_2.1.13-9_to_2.1.14-2.sql database upgrade script from:
+          http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-2/dbupgrades
+
+       2. Update the software to use the 2.1.14-2 RPMs on the central nodes. Restart the daemons if applicable.
+
+       3. Upgrade complete.
+       
+      Post-installation instructions
+      ------------------------------
+
+       1. Once all stagers have been upgraded to version 2.1.14-2, a post-upgrade script needs to be run from: 
+          http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-2/dbupgrades/cns_2.1.14-2_postUpgrade.sql
+          This script includes a one-off job to populate the new fields added to the Nameserver schema.
+          This operation may take several days and is performed as a background activity while the system is running.
+
+       2. As a separate intervention, and only after the job has completed, run the following script:
+          http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-2/dbupgrades/cns_2.1.14_switch_openmode.sql
+          This script enables the stagers to fully exploit the new logic to provide cross stager consistency
+          (see bug #95189), and it is required to be executed before the upgrade to the next major version (2.1.15).
+          The script fails if the update job had been interrupted and the new fields are not fully populated yet.
 
 
 ------------
