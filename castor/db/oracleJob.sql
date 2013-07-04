@@ -718,6 +718,8 @@ BEGIN
      WHERE reqType = 39  -- PutDone
        AND castorFile = cfId
        AND status = dconst.SUBREQUEST_WAITSUBREQ;
+    -- and wake up the stager for processing it
+    DBMS_ALERT.SIGNAL('wakeUpStageReqSvc', '');
   END IF;
   -- Archive Subrequest
   archiveSubReq(srId, 8);  -- FINISHED

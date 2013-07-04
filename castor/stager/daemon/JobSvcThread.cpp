@@ -58,7 +58,6 @@
 #include "castor/replier/RequestReplier.hpp"
 #include "castor/stager/daemon/DlfMessages.hpp"
 #include "castor/stager/daemon/JobSvcThread.hpp"
-#include "castor/server/NotifierThread.hpp"
 
 //-----------------------------------------------------------------------------
 // constructor
@@ -223,8 +222,6 @@ void castor::stager::daemon::JobSvcThread::handleMoverCloseRequest
                             fileId, nsHost, 4, params);
     jobSvc->prepareForMigration(mcReq->subReqId(), mcReq->fileSize(), mcReq->timeStamp(),
                                 fileId, nsHost, mcReq->csumType(), mcReq->csumValue());
-    // process any potential putDone waiting for this call by waking up a "Stage" thread
-    castor::server::NotifierThread::getInstance()->doNotify('S');
   } catch (castor::exception::Exception& e) {
     // For "Bad checksum" (1037) and ENOENT errors call putFailed() to invalidate the
     // DiskCopy. If we don't do this the file remains stuck in STAGEOUT until
