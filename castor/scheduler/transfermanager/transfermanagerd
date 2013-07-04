@@ -414,7 +414,7 @@ class TransferManagerService(rpyc.Service):
               errorcode = error.code
               if (errorcode == 20110):
                 # raise ValueError to tell the upper layer to give up
-                raise ValueError(e.message)
+                raise ValueError(error.message)
           # otherwise reraise for the upper layer
           raise e
       finally:
