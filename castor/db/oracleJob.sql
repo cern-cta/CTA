@@ -122,6 +122,9 @@ CREATE OR REPLACE PROCEDURE putStart
   srStatus INTEGER;
   srSvcClass INTEGER;
   fsId INTEGER;
+  fsStatus INTEGER;
+  dsStatus INTEGER;
+  varHwOnline INTEGER;
   prevFsId INTEGER;
 BEGIN
   -- Get diskCopy and subrequest related information
@@ -140,8 +143,9 @@ BEGIN
   IF srStatus IN (dconst.SUBREQUEST_FAILED, dconst.SUBREQUEST_FAILED_FINISHED) THEN
     raise_application_error(-20104, 'SubRequest canceled while queuing in scheduler. Giving up.');
   END IF;
-  -- Get selected filesystem
-  SELECT FileSystem.id INTO fsId
+  -- Get selected filesystem and its status
+  SELECT FileSystem.id, FileSystem.status, DiskServer.status, DiskServer.hwOnline
+    INTO fsId, fsStatus, dsStatus, varHwOnline
     FROM DiskServer, FileSystem
    WHERE FileSystem.diskserver = DiskServer.id
      AND DiskServer.name = selectedDiskServer
@@ -149,7 +153,10 @@ BEGIN
   -- Check that a job has not already started for this diskcopy. Refer to
   -- bug #14358
   IF prevFsId > 0 AND prevFsId <> fsId THEN
-    raise_application_error(-20107, 'This job has already started for this DiskCopy. Giving up.');
+    raise_application_error(-20104, 'This job has already started for this DiskCopy. Giving up.');
+  END IF;
+  IF fsStatus != dconst.FILESYSTEM_PRODUCTION OR dsStatus != dconst.DISKSERVER_PRODUCTION OR varHwOnline = 0 THEN
+    raise_application_error(-20104, 'The selected diskserver/filesystem is not in PRODUCTION any longer. Giving up.');
   END IF;
   -- In case the DiskCopy was in WAITFS_SCHEDULING,
   -- restart the waiting SubRequests
@@ -188,6 +195,9 @@ CREATE OR REPLACE PROCEDURE getUpdateStart
   gcw NUMBER;
   gcwProc VARCHAR2(2048);
   cTime NUMBER;
+  fsStatus INTEGER;
+  dsStatus INTEGER;
+  varHwOnline INTEGER;
 BEGIN
   -- Get data
   SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ euid, egid, svcClass, upd, diskCopy
@@ -203,12 +213,18 @@ BEGIN
     FROM CastorFile, SubRequest
    WHERE CastorFile.id = SubRequest.castorFile
      AND SubRequest.id = srId FOR UPDATE OF CastorFile;
-  -- Get selected filesystem
-  SELECT FileSystem.id INTO fsId
+  -- Get selected filesystem and its status
+  SELECT FileSystem.id, FileSystem.status, DiskServer.status, DiskServer.hwOnline INTO fsId, fsStatus, dsStatus, varHwOnline
     FROM DiskServer, FileSystem
    WHERE FileSystem.diskserver = DiskServer.id
      AND DiskServer.name = selectedDiskServer
      AND FileSystem.mountPoint = selectedMountPoint;
+  -- Now check that the hardware status is still valid for a Get request
+  IF NOT (fsStatus IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY) AND
+          dsStatus IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY) AND
+          varHwOnline = 1) THEN
+    raise_application_error(-20114, 'The selected diskserver/filesystem is not in PRODUCTION or READONLY any longer. Giving up.');
+  END IF;
   -- Try to find local DiskCopy
   SELECT /*+ INDEX(DiskCopy I_DiskCopy_Castorfile) */ id, nbCopyAccesses, gcWeight, creationTime
     INTO dcId, nbac, gcw, cTime
@@ -218,8 +234,8 @@ BEGIN
      AND DiskCopy.status IN (dconst.DISKCOPY_VALID, dconst.DISKCOPY_STAGEOUT)
      AND ROWNUM < 2;
   -- We found it, so we are settled and we'll use the local copy.
-  -- It might happen that we have more than one, because the scheduling may have
-  -- scheduled a replication on a fileSystem which already had a previous diskcopy.
+  -- For the ROWNUM < 2 condition: it might happen that we have more than one, because
+  -- the scheduling may have scheduled a replication on a fileSystem which already had a previous diskcopy.
   -- We don't care and we randomly took the first one.
   -- First we will compute the new gcWeight of the diskcopy
   IF nbac = 0 THEN
@@ -502,6 +518,12 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyStart
   varSrcDcId INTEGER;
   varSrcFsId INTEGER;
   varNbCopies INTEGER;
+  varSrcFsStatus INTEGER;
+  varSrcDsStatus INTEGER;
+  varSrcHwOnline INTEGER;
+  varDestFsStatus INTEGER;
+  varDestDsStatus INTEGER;
+  varDestHwOnline INTEGER;
 BEGIN
   -- check the Disk2DiskCopyJob status and check that it was not canceled in the mean time
   BEGIN
@@ -519,9 +541,10 @@ BEGIN
     raise_application_error(-20110, dlf.D2D_CANCELED_AT_START || '');
   END;
 
-  -- identify the source DiskCopy and check that it is still valid
+  -- identify the source DiskCopy and diskserver/filesystem and check that it is still valid
   BEGIN
-    SELECT FileSystem.id, DiskCopy.id INTO varSrcFsId, varSrcDcId
+    SELECT FileSystem.id, DiskCopy.id, FileSystem.status, DiskServer.status, DiskServer.hwOnline
+      INTO varSrcFsId, varSrcDcId, varSrcFsStatus, varSrcDsStatus, varSrcHwOnline
       FROM DiskServer, FileSystem, DiskCopy
      WHERE DiskServer.name = inSrcDiskServerName
        AND DiskServer.id = FileSystem.diskServer
@@ -542,11 +565,35 @@ BEGIN
     -- raise exception for the scheduling part
     raise_application_error(-20110, dlf.D2D_SOURCE_GONE);
   END;
+  IF (varSrcDsStatus = dconst.DISKSERVER_DISABLED OR varSrcFsStatus = dconst.FILESYSTEM_DISABLED
+      OR varSrcHwOnline = 0) THEN
+    -- log "disk2DiskCopyStart : Source diskserver/filesystem was DISABLED meanwhile"
+    logToDLF(NULL, dlf.LVL_ERROR, dlf.D2D_SRC_DISABLED, inFileId, inNsHost, 'stagerd',
+             'TransferId=' || TO_CHAR(inTransferId) || ' diskServer=' || inSrcDiskServerName ||
+             ' fileSystem=' || inSrcMountPoint);
+    -- fail d2d transfer
+    disk2DiskCopyEnded(inTransferId, '', '', 0, 'Source was disabled');
+    -- raise exception
+    raise_application_error(-20110, dlf.D2D_SRC_DISABLED);
+  END IF;
 
-  -- get destination diskServer
-  SELECT DiskServer.id INTO varDestDsId
-    FROM DiskServer
-   WHERE DiskServer.name = inDestDiskServerName;
+  -- get destination diskServer/filesystem and check its status
+  SELECT DiskServer.id, DiskServer.status, FileSystem.status, DiskServer.hwOnline
+    INTO varDestDsId, varDestDsStatus, varDestFsStatus, varDestHwOnline
+    FROM DiskServer, FileSystem
+   WHERE DiskServer.name = inDestDiskServerName
+     AND FileSystem.mountPoint = inDestMountPoint
+     AND FileSystem.diskServer = DiskServer.id;
+  IF (varDestDsStatus != dconst.DISKSERVER_PRODUCTION OR varDestFsStatus != dconst.FILESYSTEM_PRODUCTION
+      OR varDestHwOnline = 0) THEN
+    -- log "disk2DiskCopyStart : Destination diskserver/filesystem not in PRODUCTION any longer"
+    logToDLF(NULL, dlf.LVL_ERROR, dlf.D2D_DEST_NOT_PRODUCTION, inFileId, inNsHost, 'stagerd',
+             'TransferId=' || TO_CHAR(inTransferId) || ' diskServer=' || inDestDiskServerName);
+    -- fail d2d transfer
+    disk2DiskCopyEnded(inTransferId, '', '', 0, 'Destination not in production');
+    -- raise exception
+    raise_application_error(-20110, dlf.D2D_DEST_NOT_PRODUCTION);
+  END IF;
 
   -- Prevent multiple copies of the file to be created on the same diskserver
   SELECT count(*) INTO varNbCopies
@@ -699,11 +746,12 @@ BEGIN
          errorMessage = errmsg
    WHERE id = srId
   RETURNING castorFile INTO varCfId;
-  -- Wake up other subrequests waiting on it
+  -- Wake up other waiting subrequests
   UPDATE SubRequest
      SET status = dconst.SUBREQUEST_RESTART,
          lastModificationTime = getTime()
-   WHERE castorFile = varCfId;
+   WHERE castorFile = varCfId
+     AND status = dconst.SUBREQUEST_WAITSUBREQ;
 END;
 /
 

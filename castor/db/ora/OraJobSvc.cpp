@@ -288,8 +288,7 @@ castor::db::ora::OraJobSvc::putStart
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     // Application specific errors
-    if ((e.getErrorCode() == 20104) ||
-        (e.getErrorCode() == 20107)) {
+    if (e.getErrorCode() == 20104) {
       castor::exception::RequestCanceled ex;
       std::string error = e.what();
       ex.getMessage() << error.substr(error.find("ORA-") + 11,
