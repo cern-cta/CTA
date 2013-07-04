@@ -26,20 +26,22 @@
 #include <string>
 #include <sys/types.h>
 #include <sys/mtio.h>
+#include <scsi/sg.h>
 
 namespace Tape {
 namespace System {
 /**
- * An abstract class allowing simple open/read/close/ioctl interface simulating
+ * A dummy class allowing simple open/read/close/ioctl interface simulating
  * different types of files (regular files, device files (like tape devices)
  */
   class vfsFile {
   public:
     virtual ~vfsFile() {};
-    virtual ssize_t read(void* buf, size_t nbytes) = 0;
-    virtual ssize_t write(const void *buf, size_t nbytes) = 0;
-    virtual int ioctl(unsigned long int request, struct mtget * mt_status) = 0;
-    /** Reset the read/write pointers at open. With this, we can use the trivial copy operator. */
+    virtual ssize_t read(void* buf, size_t nbytes);
+    virtual ssize_t write(const void *buf, size_t nbytes);
+    virtual int ioctl(unsigned long int request, struct mtget * mt_status);
+    virtual int ioctl(unsigned long int request, sg_io_hdr_t * sgio_h);
+    /** Reset the read/write pointers at open. This ensures coherent behavior on multiple access */
     virtual void reset() = 0;
   };
   
@@ -54,7 +56,6 @@ namespace System {
     void operator = (const std::string & s) { m_content = s; m_read_pointer = 0; }
     virtual ssize_t read(void* buf, size_t nbytes);
     virtual ssize_t write(const void *buf, size_t nbytes);
-    virtual int ioctl(unsigned long int request, struct mtget * mt_status);
   private:
     std::string m_content;
     int m_read_pointer;
@@ -66,23 +67,16 @@ namespace System {
   public:
     stDeviceFile();
     virtual void reset() {};
-    virtual ssize_t read(void* buf, size_t nbytes);
-    virtual ssize_t write(const void *buf, size_t nbytes);
     virtual int ioctl(unsigned long int request, struct mtget * mt_status);
   private:
     struct mtget m_mtStat;
   };
   
-  /**
-   * Generic SCSI devices
-   */
-  class genericDeviceFile: public vfsFile {
+  class tapeGenericDeviceFile: public vfsFile {
   public:
-    genericDeviceFile() {};
+    tapeGenericDeviceFile() {};
     virtual void reset() {};
-    virtual ssize_t read(void* buf, size_t nbytes);
-    virtual ssize_t write(const void *buf, size_t nbytes);
-    virtual int ioctl(unsigned long int request, struct mtget * mt_status);
+    virtual int ioctl(unsigned long int request, sg_io_hdr_t * sgio_h);
   };
 } // namespace System
 } // namespace Tape

@@ -4,4 +4,6 @@ target_link_libraries(unitTest Exception SCSI System Utils ${GTEST_LIBRARY} gmoc
 install(TARGETS unitTest
   RUNTIME DESTINATION bin)
 
+# TODO: consider removing.
 add_test("Unit_tests" unitTest)
+

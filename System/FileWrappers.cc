@@ -28,9 +28,30 @@
 
 #include "FileWrappers.hh"
 
-int Tape::System::regularFile::ioctl(unsigned long int request, mtget* mt_status)
+ssize_t Tape::System::vfsFile::read(void* buf, size_t nbytes)
 {
-  /* Standard "no such operation" reply. */
+  /* The vfsFile's operations always fail */
+  errno = EINVAL;
+  return -1;
+}
+
+ssize_t Tape::System::vfsFile::write(const void* buf, size_t nbytes)
+{
+  /* The vfsFile's operations always fail */
+  errno = EINVAL;
+  return -1;
+}
+
+int Tape::System::vfsFile::ioctl(unsigned long int request, mtget* mt_status)
+{
+  /* The vfsFile's operations always fail */
+  errno = EINVAL;
+  return -1;
+}
+
+int Tape::System::vfsFile::ioctl(unsigned long int request, sg_io_hdr_t * sgio_h)
+{
+  /* The vfsFile's operations always fail */
   errno = EINVAL;
   return -1;
 }
@@ -71,18 +92,6 @@ Tape::System::stDeviceFile::stDeviceFile()
   m_mtStat.mt_gstat = GMT_EOT(~0) | GMT_BOT(~0);
 }
 
-ssize_t Tape::System::stDeviceFile::read(void* buf, size_t nbytes)
-{
-  errno = EIO;
-  return -1;
-}
-
-ssize_t Tape::System::stDeviceFile::write(const void *buf, size_t nbytes)
-{
-  errno = EIO;
-  return -1;
-}
-
 int Tape::System::stDeviceFile::ioctl(unsigned long int request, mtget* mt_status)
 {
   switch (request) {
@@ -94,20 +103,19 @@ int Tape::System::stDeviceFile::ioctl(unsigned long int request, mtget* mt_statu
   return -1;
 }
 
-ssize_t Tape::System::genericDeviceFile::read(void* buf, size_t nbytes)
+int Tape::System::tapeGenericDeviceFile::ioctl(unsigned long int request, sg_io_hdr_t * sgio_h)
 {
-  errno = EIO;
-  return -1;
-}
-
-ssize_t Tape::System::genericDeviceFile::write(const void *buf, size_t nbytes)
-{
+  /* for the moment, just implement the SG_IO ioctl */
+  switch (request) {
+    case SG_IO:
+      if (sgio_h->interface_id != 'S') {
+        errno = ENOSYS;
+        return -1;
+      }
+      /* TODO */
+      return 0;
+  }
   errno = EINVAL;
   return -1;
 }
 
-int Tape::System::genericDeviceFile::ioctl(unsigned long int request, mtget* mt_status)
-{
-  errno = EINVAL;
-  return -1;
-}

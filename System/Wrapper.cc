@@ -170,7 +170,7 @@ void Tape::System::fakeWrapper::referenceFiles() {
   for (std::map<std::string, stDeviceFile>::iterator i = m_stFiles.begin();
           i != m_stFiles.end(); i++)
     m_files[i->first] = &m_stFiles[i->first];
-  for (std::map<std::string, genericDeviceFile>::iterator i = m_genericFiles.begin();
+  for (std::map<std::string, tapeGenericDeviceFile>::iterator i = m_genericFiles.begin();
       i != m_genericFiles.end(); i++)
     m_files[i->first] = &m_genericFiles[i->first];
 }
@@ -200,6 +200,8 @@ void Tape::System::fakeWrapper::setupSLC5() {
    * future, we'll have to provide /proc/mounts (and use it).
    * SLC6 is similar, so this is not necessary at the time of writing.
    */
+  m_directories["/sys/bus/scsi/devices"].push_back(".");
+  m_directories["/sys/bus/scsi/devices"].push_back("..");
   m_directories["/sys/bus/scsi/devices"].push_back("3:0:0:0");
   m_directories["/sys/bus/scsi/devices"].push_back("3:0:1:0");
   m_directories["/sys/bus/scsi/devices"].push_back("3:0:2:0");
@@ -227,6 +229,8 @@ void Tape::System::fakeWrapper::setupSLC5() {
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:0/3:0:0:0/generic/dev"] = "21:2\n";
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0/generic/dev"] = "21:0\n";
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0/generic/dev"] = "21:1\n";
+  m_directories["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0"].push_back(".");
+  m_directories["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0"].push_back("..");
   m_directories["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0"].push_back("bus");
   m_directories["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0"].push_back("delete");
   m_directories["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0"].push_back("device_blocked");
@@ -268,6 +272,8 @@ void Tape::System::fakeWrapper::setupSLC5() {
   m_stats["/dev/st0"].st_mode = S_IFCHR;
   m_stats["/dev/nst0"].st_rdev = makedev(9, 128);
   m_stats["/dev/nst0"].st_mode = S_IFCHR;
+  m_directories["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0"].push_back(".");
+  m_directories["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0"].push_back("..");
   m_directories["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0"].push_back("bus");
   m_directories["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0"].push_back("delete");
   m_directories["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0"].push_back("device_blocked");

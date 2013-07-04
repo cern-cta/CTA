@@ -53,7 +53,6 @@ namespace Tape {
       if (-1 == m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &m_mtInfo))
         throw Tape::Exceptions::Errnum(std::string("Could not read drive status: "+ m_SCSIInfo.st_dev));
       /* Read Generic SCSI information (INQUIRY) */
-      
     }
     virtual ~Drive() {
       if(-1 != m_tapeFD)
@@ -74,5 +73,38 @@ namespace Tape {
     sysWrapperClass & m_sysWrapper;
 #endif
     struct mtget m_mtInfo;
+    public:
+    void SCSI_inquiry() {
+      unsigned char dataBuff[512];
+      unsigned char senseBuff[256];
+      unsigned char cdb[6];
+      memset(&cdb, 0, sizeof (cdb));
+      /* Build command */
+      cdb[0] = SCSI::Commands::INQUIRY;
+
+      sg_io_hdr_t sgh;
+      memset(&sgh, 0, sizeof (sgh));
+      sgh.interface_id = 'S';
+      sgh.cmdp = cdb;
+      sgh.cmd_len = sizeof (cdb);
+      sgh.sbp = senseBuff;
+      sgh.mx_sb_len = 255;
+      sgh.dxfer_direction = SG_DXFER_FROM_DEV;
+      sgh.dxferp = dataBuff;
+      sgh.dxfer_len = 512;
+      sgh.timeout = 30000;
+      if (-1 == m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh))
+        throw Tape::Exceptions::Errnum("Failed SG_IO ioctl");
+      std::cout << "INQUIRY result: " << std::endl
+              << "sgh.dxfer_len=" << sgh.dxfer_len
+              << " sgh.sb_len_wr=" << sgh.sb_len_wr
+              << " sgh.status=" << sgh.status
+              << std::endl;
+      std::stringstream hex;
+      hex << std::hex;
+      for (int i =0; i<100; i++)
+        hex << i<< " " << dataBuff[i] << std::endl;
+      std::cout << hex.str();
+    }
   };
 }

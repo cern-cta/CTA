@@ -81,6 +81,8 @@ namespace SCSI {
       DIR* dirp = m_sysWrapper.opendir(sysDevsPath.c_str());
       if (!dirp) throw Tape::Exceptions::Errnum("Error opening sysfs scsi devs");
       while (struct dirent * dent = m_sysWrapper.readdir(dirp)) {
+        std::string dn(dent->d_name);
+        if ("." == dn || ".." == dn) continue;
         std::string fullpath = sysDevsPath + "/" + std::string(dent->d_name);
         /* We expect only symbolic links in this directory, */
         char rp[PATH_MAX];

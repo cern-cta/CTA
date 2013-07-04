@@ -59,6 +59,9 @@ namespace System {
     int ioctl(int fd, unsigned long int request, struct mtget * mt_status) {
       ::ioctl(fd, request, mt_status);
     }
+    int ioctl(int fd, unsigned long int request, sg_io_hdr_t * sgh) {
+      ::ioctl(fd, request, sgh);
+    }
     ssize_t read(int fd, void* buf, size_t nbytes) { return ::read(fd, buf, nbytes); }
     ssize_t write(int fd, const void *buf, size_t nbytes) { return ::write(fd, buf, nbytes); }
     int close(int fd) { return ::close(fd); }
@@ -114,7 +117,7 @@ namespace System {
     std::map<std::string, struct stat> m_stats;
     std::map<std::string, regularFile> m_regularFiles;
     std::map<std::string, stDeviceFile> m_stFiles;
-    std::map<std::string, genericDeviceFile> m_genericFiles;
+    std::map<std::string, tapeGenericDeviceFile> m_genericFiles;
     void setupSLC5();
     void referenceFiles();
   private:
