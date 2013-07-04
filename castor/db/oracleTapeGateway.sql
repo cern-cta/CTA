@@ -389,7 +389,7 @@ BEGIN
   UPDATE SubRequest
      SET status = dconst.SUBREQUEST_RESTART, answered = 0
    WHERE castorFile = inCfId
-     AND status IN (dconst.SUBREQUEST_WAITTAPERECALL);
+     AND status = dconst.SUBREQUEST_WAITTAPERECALL;
 END;
 /
 
