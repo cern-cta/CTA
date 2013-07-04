@@ -2834,8 +2834,7 @@ BEGIN
       -- basically only files on tape may be dropped in case no data loss is provoked,
       -- or files already dropped from the namespace. The rest is forbidden.
       IF (varStatus = dconst.DISKCOPY_VALID AND (varNbRemaining > 0 OR varFStatus = 'm'))
-         OR varFStatus = 'd'
-         OR varStatus = dconst.DISKCOPY_FAILED THEN    -- this will eventually disappear
+         OR varFStatus = 'd' THEN
         INSERT INTO DeleteDiskCopyHelper (dcId, rc)
           VALUES (inDcIds(i), dconst.DELDC_GC);
         IF NOT inDryRun THEN
@@ -2858,7 +2857,7 @@ BEGIN
     COMMIT;   -- release locks file by file
   END LOOP;
   -- return back all results for the python script to post-process them,
-  -- including performing all required acations
+  -- including performing all required actions
   OPEN outRes FOR
     SELECT dcId, rc FROM DeleteDiskCopyHelper;
 END;

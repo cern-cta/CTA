@@ -179,7 +179,12 @@ CREATE GLOBAL TEMPORARY TABLE DeleteDiskCopyHelper
   (dcId INTEGER CONSTRAINT PK_DDCHelper_dcId PRIMARY KEY, rc INTEGER)
   ON COMMIT PRESERVE ROWS;
 
+ALTER TABLE MigrationJob ADD CONSTRAINT CK_MigrationJob_FS_Positive CHECK (fileSize > 0);
+
+-- Update CastorFile and DiskCopy:
 --  - change the status of diskCopies to merge STAGED and CANBEMIGR
+--  - invalidate existing FAILED
+--  - drop WAITDISK2DISKCOPY
 --  - add a tapeStatus and nsOpenTime to CastorFile
 
 ALTER TABLE CastorFile ADD (tapeStatus INTEGER, nsOpenTime NUMBER);
@@ -188,11 +193,13 @@ DELETE FROM ObjStatus WHERE object='DiskCopy' AND field='status'
 BEGIN setObjStatusName('DiskCopy', 'status', 0, 'DISKCOPY_VALID'); END;
 /
 
+-- temporary index on DiskCopy.status to speed up the next block
+CREATE INDEX I_DC_status ON DiskCopy(status);
 
-ALTER TABLE MigrationJob ADD CONSTRAINT CK_MigrationJob_FS_Positive CHECK (fileSize > 0);
-
-
+DECLARE
+  srIds "numList";
 BEGIN
+  -- merge STAGED and CANBEMIGR
   FOR cf IN (SELECT unique castorFile, status, nbCopies
                FROM DiskCopy, CastorFile, FileClass
               WHERE DiskCopy.castorFile = CastorFile.id
@@ -206,9 +213,22 @@ BEGIN
                                       dconst.CASTORFILE_ONTAPE))
      WHERE id = cf.castorFile;
   END LOOP;
+  UPDATE DiskCopy SET status = dconst.DISKCOPY_VALID WHERE status = 10;
   COMMIT;
+
+  -- invalidate all FAILED diskcopies on disk so that they're properly garbage collected
+  UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
+   WHERE status = dconst.DISKCOPY_FAILED AND fileSystem != 0;
+  -- drop all existing WAITDISK2DISKCOPY DiskCopies and fail corresponding requests
+  DELETE FROM DiskCopy WHERE status = dconst.DISKCOPY_WAITDISK2DISKCOPY
+  RETURNING subrequest BULK COLLECT INTO srIds;
+  FORALL i IN srIds.FIRST .. srIds.LAST
+    archiveSubReq(srIds(i), dconst.SUBREQUEST_FAILED_FINISHED);
 END;
 /
+
+-- drop temporary index
+DROP INDEX I_DC_status;
 
 -- temporary function-based index to speed up the following update
 CREATE INDEX I_CF_OpenTimeNull
@@ -238,7 +258,7 @@ ALTER TABLE CastorFile MODIFY (nsOpenTime CONSTRAINT NN_CastorFile_NsOpenTime NO
 
 
 ALTER TABLE StageRepackRequest ADD (fileCount INTEGER, totalSize INTEGER);
-UPDATE StageRepackRequest SET fileCount = 0, totalSize = 0;  -- XXX do we need to recompute those figures? probably not...
+UPDATE StageRepackRequest SET fileCount = 0, totalSize = 0;  -- those figures are only used for statistical purposes, assume no need to compute them for existing requests
 ALTER TABLE StageRepackRequest MODIFY (fileCount CONSTRAINT NN_StageRepackReq_fileCount NOT NULL, totalSize CONSTRAINT NN_StageRepackReq_totalSize NOT NULL, status CONSTRAINT NN_StageRepackReq_status NOT NULL, repackVid CONSTRAINT NN_StageRepackReq_repackVid NOT NULL);
 
 DROP TRIGGER tr_DiskCopy_Online;
@@ -280,8 +300,6 @@ ALTER TABLE DiskServer
 ALTER TABLE FileSystem
   ADD CONSTRAINT CK_FileSystem_Status
   CHECK (status IN (0, 1, 2, 3));
-
-XXX Drop all existing WAITDISK2DISKCOPY DiskCopies
 
 ALTER TABLE DiskCopy
   ADD CONSTRAINT CK_DiskCopy_Status
