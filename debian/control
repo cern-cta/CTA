@@ -280,19 +280,19 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-cockpit
 Architecture: any
-Depends: logrotate, python, python-rpyc, Django
+Depends: logrotate, python >= 2.6, python-rpyc, Django < 1.4, Django-south, mysql-server, MySQL-python, httpd, mod_wsgi, thrift
 Description: castor (Cern Advanced STORage system)
  Castor monitoring Cockpit
 
 Package: castor-mae
 Architecture: any
-Depends: python, python-rpyc, python-dirq, python-messaging, python-simplejson
+Depends: python, python-rpyc, python-dirq, python-messaging, python-simplejson, hadoop-client
 Description: castor (Cern Advanced STORage system)
  AI messaging consumer for the Metric Analysis Engine.
 
 Package: castor-hbase-consumer
 Architecture: any
-Depends: python, python-dirq, python-messaging, python-simplejson
+Depends: python, python-dirq, python-messaging, python-simplejson, happybase, thrift
 Description: castor (Cern Advanced STORage system)
  AI messaging consumer for HBase.
 
