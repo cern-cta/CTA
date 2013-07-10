@@ -24,6 +24,7 @@
 #pragma once
 
 #include "../SCSI/Device.hh"
+#include "../SCSI/Structures.hh"
 #include "../System/Wrapper.hh"
 #include "../Exception/Exception.hh"
 
@@ -63,7 +64,11 @@ namespace Tape {
       if (-1 != m_genericFD)
         m_sysWrapper.close(m_genericFD);
     }
-    void SCSI_inquiry() { SCSI_inquiry(m_genericFD); SCSI_inquiry(m_tapeFD); }
+    void SCSI_inquiry() { 
+      std::cout << "Doing a SCSI inquiry via generic device:" << std::endl;
+      SCSI_inquiry(m_genericFD);
+      std::cout << "Re-doing a SCSI inquiry via st device:" << std::endl;
+      SCSI_inquiry(m_tapeFD); }
   private:
     SCSI::DeviceInfo m_SCSIInfo;
     int m_tapeFD;
@@ -119,72 +124,40 @@ namespace Tape {
         pos += 8;
       }
       std::cout << hex.str();
-      
-      /*
-       * Inquiry data as described in SPC-4.
-       */
-      typedef struct  {
-        unsigned char perifDevType  : 5;
-        unsigned char perifQualifyer: 3;
-        
-        unsigned char               : 7;
-        unsigned char RMB           : 1;
-        
-        unsigned char version       : 8;
-        
-        unsigned char respDataFmt   : 4;
-        unsigned char HiSup         : 1;
-        unsigned char normACA       : 1;
-        unsigned char               : 2;
-        
-        unsigned char addLength     : 8;
-        
-        unsigned char protect       : 1;
-        unsigned char               : 2;
-        unsigned char threePC       : 1;
-        unsigned char TPGS          : 2;
-        unsigned char ACC           : 1;
-        unsigned char SCCS          : 1;
 
-        unsigned char addr16        : 1;
-        unsigned char               : 3;
-        unsigned char multiP        : 1;
-        unsigned char VS1            : 1;
-        unsigned char encServ       : 1;
-        unsigned char               : 1;
-        
-        unsigned char VS2            : 1;
-        unsigned char cmdQue        : 1;
-        unsigned char               : 2;
-        unsigned char sync          : 1;
-        unsigned char wbus16        : 1;
-        unsigned char               : 2;
-        
-        char T10Vendor[8];
-        char prodId[16];
-        char prodRevLvl[4];
-        char vendorSpecific1[20];
-        
-        unsigned char IUS           : 1;
-        unsigned char QAS           : 1;
-        unsigned char clocking      : 2;
-        unsigned char               : 4;
-        
-        unsigned char reserved1;
-        
-        unsigned char vendorDescriptior[8][2];
-        
-        unsigned char reserved2[22];
-        unsigned char vendorSpecific2[1];
-      } inquiryData_t;
-      inquiryData_t & inq = *((inquiryData_t *) dataBuff);
+      SCSI::Structures::inquiryData_t & inq = *((SCSI::Structures::inquiryData_t *) dataBuff);
       std::stringstream inqDump;
-      inqDump << std::hex << "inq.perifDevType=" << (int) inq.perifDevType << std::endl;
-      inqDump << "inq.perifQualifyer=" << (int) inq.perifQualifyer << std::endl;
-      
-      inqDump << "inq.T10Vendor=";
-      inqDump.write(inq.T10Vendor, std::find(inq.T10Vendor, inq.T10Vendor + 8, '\0') - inq.T10Vendor);
-      inqDump << std::endl;
+      inqDump << std::hex << std::showbase << std::nouppercase
+              << "inq.perifDevType=" << (int) inq.perifDevType << std::endl
+              << "inq.perifQualifyer=" << (int) inq.perifQualifyer << std::endl
+              << "inq.RMB="            << (int) inq.RMB << std::endl
+              << "inq.version="        << (int) inq.version << std::endl
+              << "inq.respDataFmt="    << (int) inq.respDataFmt << std::endl
+              << "inq.HiSup="          << (int) inq.HiSup << std::endl
+              << "inq.normACA="        << (int) inq.normACA << std::endl
+              << "inq.addLength="      << (int) inq.addLength << std::endl
+              << "inq.protect="        << (int) inq.protect << std::endl
+              << "inq.threePC="        << (int) inq.threePC << std::endl
+              << "inq.TPGS="           << (int) inq.TPGS << std::endl
+              << "inq.ACC="            << (int) inq.ACC << std::endl
+              << "inq.SCCS="           << (int) inq.SCCS << std::endl         
+              << "inq.addr16="         << (int) inq.addr16 << std::endl       
+              << "inq.multiP="         << (int) inq.multiP << std::endl
+              << "inq.VS1="            << (int) inq.VS1 << std::endl
+              << "inq.encServ="        << (int) inq.encServ << std::endl
+              << "inq.VS2="            << (int) inq.VS2 << std::endl
+              << "inq.cmdQue="         << (int) inq.cmdQue << std::endl
+              << "inq.sync="           << (int) inq.sync << std::endl
+              << "inq.wbus16="         << (int) inq.wbus16  << std::endl 
+              << "inq.T10Vendor="      << SCSI::Structures::toString(inq.T10Vendor) << std::endl
+              << "inq.prodId="         << SCSI::Structures::toString(inq.prodId) << std::endl
+              << "inq.prodRevLv="      << SCSI::Structures::toString(inq.prodRevLvl) << std::endl
+              << "inq.vendorSpecific1="<< SCSI::Structures::toString(inq.vendorSpecific1)<< std::endl
+              << "inq.IUS="            << (int) inq.IUS << std::endl
+              << "inq.QAS="            << (int) inq.QAS << std::endl
+              << "inq.clocking="       << (int) inq.clocking << std::endl;
+      for (int i=0; i < 8; i++)
+        inqDump << "inq.versionDescriptor[" << i << "]=" << SCSI::Structures::toU16(inq.versionDescriptor[i]) << std::endl;
       std::cout << inqDump.str();
     }
   };
