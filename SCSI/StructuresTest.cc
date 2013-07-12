@@ -32,7 +32,7 @@ using ::testing::Return;
 using ::testing::_;
 
 namespace UnitTests {
-  TEST(SCSIStructures, inquiryData_t_and_multi_byte_numbers) {
+  TEST(SCSI_Structures, inquiryData_t_multi_byte_numbers_strings) {
     /* Validate the bit field behavior of the struct inquiryData_t,
      which represents the standard INQUIRY data format as defined in 
      SPC-4. This test also validates the handling of multi-bytes numbers,
@@ -61,7 +61,7 @@ namespace UnitTests {
     inqBuff[7] |= (0x1 & 0x1) << 4;
     ASSERT_EQ(1, inq.sync);
     
-    /* Test of strings */
+    /* Test of strings: empty/full/boundary effect with next record */
     ASSERT_EQ("", SCSI::Structures::toString(inq.T10Vendor));
     inqBuff[8] = 'V';
     inqBuff[9] = 'i';
@@ -70,9 +70,27 @@ namespace UnitTests {
     inqBuff[12] = 'u';
     inqBuff[13] = 'a';
     inqBuff[14] = 'l';
-    inqBuff[15] = '\0';
-    ASSERT_EQ("Virtual", SCSI::Structures::toString(inq.T10Vendor));
+    inqBuff[15] = 's';
+    ASSERT_EQ("Virtuals", SCSI::Structures::toString(inq.T10Vendor));
     
+    /* Check there is no side effect from next record */
+    inqBuff[16] = 'X';
+    inqBuff[17] = 'X';
+    inqBuff[18] = 'X';
+    ASSERT_EQ("Virtuals", SCSI::Structures::toString(inq.T10Vendor));
+    ASSERT_EQ("XXX", SCSI::Structures::toString(inq.prodId));
+            
+    /* Check that non-full record does not yield too long a string */
+    inqBuff[8] = 'T';
+    inqBuff[9] = 'a';
+    inqBuff[10] = 'p';
+    inqBuff[11] = 'e';
+    inqBuff[12] = 's';
+    inqBuff[13] = '\0';
+    inqBuff[14] = '\0';
+    inqBuff[15] = '\0';
+    ASSERT_EQ("Tapes", SCSI::Structures::toString(inq.T10Vendor));
+
     /* Test of endian conversion */
     ASSERT_EQ(0, SCSI::Structures::toU16(inq.versionDescriptor[7]));
     inqBuff[72] = 0xCA;

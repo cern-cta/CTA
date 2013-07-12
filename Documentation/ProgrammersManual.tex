@@ -35,8 +35,11 @@ More details regarding the Generic SCSI driver can be found in this web site:
 \href{http://sg.danny.cz/sg/}{http://sg.danny.cz/sg/}.
 
 The section on the SG\_IO ioctl, \href{sg.danny.cz/sg/sg\_io.html}{sg.danny.cz/sg/sg\_io.html} details the usage of the 
-simples ioctl for the generic SCSI driver, which allows the invocation of a SCSI command and the collection of the 
+simplest ioctl for the generic SCSI driver, which allows the invocation of a SCSI command and the collection of the 
 result in a single system call.
+
+This ioctl is provided in the middle layer of the SCSI subsystem of Linux. In practice for us, it means that this 
+ioctl is available also to the st driver device files. That means there is no need to open the matching generic SCSI.
 
 \subsection{Unsorted CASTOR docs}
 There is a collection of links to various documentations written in the past on this page:
@@ -52,7 +55,7 @@ There is a collection of links to various documentations written in the past on 
 \item{}Google Mock/Google test (GTest is provided in EPEL repository for SLC. 
   GMock requires recompilation (TODO: link to source)
 \item{}Valgrind (Basic SLC version)
-\item{}\LaTeX (Basic SLC version)
+\item{}\LaTeX (Basic SLC version) to compile this document
 \item{}Doxygen for code documentation (Basic SLC version)
 \end{itemize}
 
@@ -62,15 +65,80 @@ There is a collection of links to various documentations written in the past on 
 \item{}NetBeans as an IDE, including for remote development\
 \end{itemize}
 
-\section{Classes layout}
+\section{Software layout}
 
-\begin{lstlisting}[caption=Code example,label=code1]
-namespace Test {
-  class Test {
+\subsection{The Tape::Drive object}
+
+This first deliverable is a tape drive object. This tape drive object abstracts all
+SCSI and technical details and provides a high level interface, to be used by the 
+file structure layer.
+
+It will provide as much data safety as possible by blocking writes in situations
+where they are not safe (to be defined in details, but the most obvious is right
+after positioning, as we should double check where we are before writing).
+
+The SCSI commands and st driver's functions used in previous software (CASTOR's taped/rtcpd) are:
+\begin{itemize}
+\item Individual SCSI commands sent using generic SCSI.
+  \begin{itemize}
+    \item Read status (inquiry SCSI command in ????)
+    \item Read serial number (inquiry SCSI command, asking for vital product data page 0x80)
+    \item Locate (locate(10) SCSI command: 32 bits logical object identifiers)
+                      \footnote{There is also a locate(16) command allowing 64 bis addresses.
+                      This might become necessary as tapes grow. Discounting the per-file overhead,
+                      with 256kB block, it still takes 1PB to get $2^{32}$ blocks.}
+    \item Read position (read position SCSI command -- short form): get the current logical object
+          location (a.k.a. block ID).
+    \item Log select (for clearing compression stats page. The function clear\_compression\_stats
+          actually does a blanket reset of all statistics. It sets the PCR/SP/PC combination
+          to 1/0/3, which is strange as the spec indicates 1/0/xx (xx for don't care).
+    \item Log sense, to read the compression pages. This is device dependant. The code covers
+          5 blocks of device types: DAT, DLT-SDLT-LTO, IBM(3490, 3590, 3592), StorageTek RedWood(SD3),
+          StorageTek(9840, 9940, T10000).
+    \item Log sense for page 0x2E (???) on all modern tape drives to detect tape alerts (TBD, see SSC-3).
+    \item
+  \end{itemize}
+\item st driver's commands, leading to internal variables setting or SCSI actions
+  \begin{itemize}
+    \item Get internal driver state via the MTIOGET ioctl (for drivre ready, write protection, 
+          get some error condition, when MTIOSENSE failed, to get the EOD, BOT bits (readlbl)).
+    \item Try and get the sense data for the last-ish command with MTIOSENSE. This can
+          relies on a CERN-made patch.
+    \item Setup the driver's buffers (MTIOCTOP/MTSETDRVBUFFER) for setting on or off 
+          buffered writes and asynchronous writes (in confdrive, a child of taped).
+    \item Jump to end of media (before rewinding, as a mean to rebuild the MIR) (MTIOCTOP/MTEOM, 
+          with some MTIOCTOP/MTSETDRVBUFFER before, in repairbadmir). TODO: find undelying SCSI.
+    \item Rewind (MTIOCTOP/MTREW, in rwndtape).
+    \item Skip to end of data (MTIOCTOP/MTEOM, in skip2eod, without the trick of repairbadmir).
+    \item Skip n files backwards (MTIOCTOP/MTBSF, in skiptpfb).
+    \item Skip n files forward (MTIOCTOP/MTFSF, in skiptpff).
+    \item Skip n files forward (MTIOCTOP/MTFSF, in skiptpfff). skiptpfff and skiptpff differ only 
+          by error reporting. Both functions exists since CASTOR has been put in SVN (20/07/1999)
+    \item Skip n blocks backwards (MTIOCTOP/MTBSR, in skiptprb).
+    \item Skip n blocks forward (MTIOCTOP/MTFSR, in skiptprf).
+    \item Unload the tape (MTIOCTOP/MTOFFL, in unldtape).
+    \item Write synchronous file mark(s) (tape marks in CASTOR jargon) (MTIOCTOP/MTWEOF, in wrttpmrk).
+    \item Write immediate (asynchronous file marks (MTIOCTOP/MTWEOFI, also in wrttpmrk).
+    \item Clear the EOT condition by calling MTIOGET. This is done in wrttrllbl, 3 times. 
+          TODO: investigate the effect in st driver.
+    \item Write is used in 2 places only : twrite and writelbl (which is a specialized 
+          function to write 80 bytes blocks). twrite is not checking the size of blocks,
+          which is determined in the calling functions.
+    \item Read is used in tread, which is used in a single place of TapeToMemory. It is 
+          also used in readlbl. The latter uses a trick to detect that a tape is blank.
+          This could be turned into a specialized function.
+  \end{itemize}
+\end{itemize}
+The interface is shown in \ref{drive_if}.
+
+\begin{lstlisting}[caption=Tape::Drive interface,label=drive_if]
+namespace Tape {
+  class Drive {
   public:
-    Test() {}
+    Drive();
+    
   };
-} // namespace Test
+} // namespace Tape
 \end{lstlisting}
 
 

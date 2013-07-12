@@ -28,6 +28,14 @@
 #include <sstream>
 #include <iosfwd>
 #include <sstream>
+#include <execinfo.h>
+#include <cxxabi.h>
+
+const char * Tape::Exception::what() const throw () {
+  std::stringstream w;
+  w << m_what << std::endl << std::string(backtrace);
+  return w.str().c_str();
+}
 
 Tape::Exceptions::Errnum::Errnum(std::string what):Exception(what) {
   m_errnum = errno;
@@ -49,3 +57,40 @@ Tape::Exceptions::Errnum::Errnum(std::string what):Exception(what) {
     m_what += " ";
   m_what += w2.str();
 }
+
+Tape::Exceptions::Backtrace::Backtrace() {
+  void * array[200];
+  size_t depth = ::backtrace(array, sizeof(array)/sizeof(void*));
+  char ** strings = ::backtrace_symbols(array, depth);
+  if (!strings)
+    m_trace = "";
+  else {
+    std::stringstream trc;
+    for (int i=0; i<depth; i++) {
+      std::string line(strings[i]);
+      /* Demangle the c++, if possible. We expect the c++ function name's to live
+       * between a '(' and a +
+       * line format: /usr/lib/somelib.so.1(_Mangle2Mangle3Ev+0x123) [0x12345] */
+      if ((std::string::npos != line.find("(")) && (std::string::npos != line.find("+"))) {
+        std::string before, theFunc, after;
+        before = line.substr(0, line.find("(")+1);
+        theFunc = line.substr(line.find("(")+1, line.find("+") - (line.find("(") + 1));
+        after = line.substr(line.find("+"), std::string::npos);
+        int status(-1);
+        char demangled[200];
+        size_t length(sizeof(demangled));
+        abi::__cxa_demangle(theFunc.c_str(), demangled, &length, &status);
+        if (0 == status)
+          trc << before << demangled << after << " (C++ demangled)" << std::endl;
+        else
+          trc << strings[i] << std::endl;
+      } else {
+        trc << strings[i] << std::endl;
+      }  
+    }
+    free (strings);
+    m_trace = trc.str();
+  }
+}
+
+

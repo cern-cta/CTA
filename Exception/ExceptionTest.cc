@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------
-// File: Exception/Exception.hh
+// File: Exception/ExceptionTest.cc
 // Author: Eric Cano - CERN
 // ----------------------------------------------------------------------
 
@@ -21,44 +21,43 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.*
  ************************************************************************/
 
-#pragma once
-#include <exception>
-#include <string>
+#include "Exception.hh"
+#include <errno.h>
 
-namespace Tape {
+#include <gtest/gtest.h>
+#include <gmock/gmock-cardinalities.h>
+
+namespace UnitTests {
+  class Nested {
+  public:
+    void f1();
+    void f2();
+    Nested();
+  };
   
-  namespace Exceptions {
-    class Backtrace {
-    public:
-      Backtrace();
-      operator std::string() const { return m_trace; }
-    private:
-      std::string m_trace;
-    };
+  /* Prevent inlining: it makes this test fail! */
+  void __attribute__((noinline)) Nested::f1() {
+    throw Tape::Exception("");
   }
   
-  class Exception: public std::exception {
-  public:
-    Exception(const std::string& what): m_what(what) {};
-    virtual ~Exception() throw() {};
-    virtual const char * what() const throw();
-    Tape::Exceptions::Backtrace backtrace;
-  protected:
-    std::string m_what;
-  };
+  /* Prevent inlining: it makes this test fail!
+   * Even with that, f2 does not show up in the trace */
+  void __attribute__((noinline)) Nested::f2() {
+    f1();
+  }
+  
+  /* Prevent inlining: it makes this test fail! */
+  __attribute__((noinline))  Nested::Nested() {
+    f2();
+  }
 
-  namespace Exceptions {
-    class Errnum: public Tape::Exception {
-    public:
-      Errnum(std::string what = "");
-      virtual ~Errnum() throw() {};
-      int ErrorNumber() { return m_errnum; }
-      std::string strError() { return m_strerror; }
-      /* We rely on base version:
-       *  virtual const char * what() const throw() */
-    protected:
-      int m_errnum;
-      std::string m_strerror;
-    };
+  TEST(Exceptions, stacktrace_with_demangling) {
+    try {
+      Nested x;
+    } catch (Tape::Exception & e) {
+      std::string bt = e.backtrace;
+      ASSERT_NE(std::string::npos, bt.find("Nested::f1"));
+      ASSERT_NE(std::string::npos, bt.find("Tape::Exceptions::Backtrace::Backtrace"));
+    }
   }
 }
