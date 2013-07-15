@@ -22,6 +22,7 @@
  ************************************************************************/
 #define _XOPEN_SOURCE 600
 #include "Exception.hh"
+#include <stdlib.h>
 #include <errno.h>
 /* We want the thread safe (and portable) version of strerror */
 #include <string.h>
