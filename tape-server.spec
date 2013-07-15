@@ -19,6 +19,7 @@ BuildRequires: tetex-latex
 BuildRequires: latex2html
 BuildRequires: ImageMagick
 BuildRequires: doxygen
+BuildRequires: graphviz
 
 %description
 The CERN tape server project.
