@@ -502,6 +502,7 @@ DROP PROCEDURE startDraining;
 DROP PROCEDURE stopDraining;
 DROP PROCEDURE cancelRecall;
 
+CREATE INDEX I_FileMigrationResultsHelper_ReqId ON FileMigrationResultsHelper(ReqId);
 
 /* PL/SQL code revalidation */
 /****************************/
