@@ -224,6 +224,11 @@ BEGIN
   RETURNING subrequest BULK COLLECT INTO srIds;
   FORALL i IN srIds.FIRST .. srIds.LAST
     archiveSubReq(srIds(i), dconst.SUBREQUEST_FAILED_FINISHED);
+  -- fail any remaining pending subrequest
+  SELECT id BULK COLLECT INTO srIds FROM SubRequest
+   WHERE status IN (dconst.SUBREQUEST_READY, dconst.SUBREQUEST_WAITSUBREQ);
+  FORALL i IN srIds.FIRST .. srIds.LAST
+     archiveSubReq(srIds(i), dconst.SUBREQUEST_FAILED_FINISHED);
 END;
 /
 
@@ -502,7 +507,6 @@ DROP PROCEDURE startDraining;
 DROP PROCEDURE stopDraining;
 DROP PROCEDURE cancelRecall;
 
-CREATE INDEX I_FileMigrationResultsHelper_ReqId ON FileMigrationResultsHelper(ReqId);
 
 /* PL/SQL code revalidation */
 /****************************/
