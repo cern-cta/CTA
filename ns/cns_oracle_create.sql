@@ -29,13 +29,23 @@ CREATE TABLE Cns_class_metadata (classid NUMBER(5), name VARCHAR2(15), owner_uid
 
 CREATE TABLE Cns_tp_pool (classid NUMBER(5), tape_pool VARCHAR2(15));
 
-CREATE TABLE Cns_file_metadata (fileid NUMBER, parent_fileid NUMBER, guid CHAR(36), name VARCHAR2(255), filemode NUMBER(6), nlink NUMBER, owner_uid NUMBER(6), gid NUMBER(6), filesize NUMBER, atime NUMBER(10), mtime NUMBER(10), ctime NUMBER(10), fileclass NUMBER(5), status CHAR(1), csumtype VARCHAR2(2), csumvalue VARCHAR2(32), acl VARCHAR2(3900)) STORAGE (INITIAL 5M NEXT 5M PCTINCREASE 0);
+CREATE TABLE Cns_file_metadata (fileid NUMBER, parent_fileid NUMBER, guid CHAR(36), name VARCHAR2(255), filemode NUMBER(6), nlink NUMBER, owner_uid NUMBER(6), gid NUMBER(6), filesize NUMBER, atime NUMBER(10), mtime NUMBER(10), ctime NUMBER(10), stagertime NUMBER DEFAULT 0 NOT NULL, fileclass NUMBER(5), status CHAR(1), csumtype VARCHAR2(2), csumvalue VARCHAR2(32), acl VARCHAR2(3900)) STORAGE (INITIAL 5M NEXT 5M PCTINCREASE 0);
 
 CREATE TABLE Cns_user_metadata (u_fileid NUMBER, comments VARCHAR2(255));
 
-CREATE TABLE Cns_seg_metadata (s_fileid NUMBER, copyno NUMBER(1),fsec NUMBER(3), segsize NUMBER, compression NUMBER, s_status CHAR(1), vid VARCHAR2(6), side NUMBER (1), fseq NUMBER(10), blockid RAW(4), checksum_name VARCHAR2(16), checksum NUMBER);
+CREATE TABLE Cns_seg_metadata (s_fileid NUMBER, copyno NUMBER(1),fsec NUMBER(3), segsize NUMBER, compression NUMBER, s_status CHAR(1), vid VARCHAR2(6), side NUMBER (1), fseq NUMBER(10), blockid RAW(4), checksum_name VARCHAR2(16), checksum NUMBER, gid NUMBER(6), creationTime NUMBER, lastModificationTime NUMBER);
 
 CREATE TABLE Cns_symlinks (fileid NUMBER, linkname VARCHAR2(1023));
+
+-- Table for NS statistics
+CREATE TABLE UsageStats (
+  gid NUMBER(6) DEFAULT 0 CONSTRAINT NN_UsageStats_gid NOT NULL,
+  timestamp NUMBER  DEFAULT 0 CONSTRAINT NN_UsageStats_ts NOT NULL,
+  maxFileId INTEGER, fileCount INTEGER, fileSize INTEGER,
+  segCount INTEGER, segSize INTEGER, segCompressedSize INTEGER,
+  seg2Count INTEGER, seg2Size INTEGER, seg2CompressedSize INTEGER);
+
+ALTER TABLE UsageStats ADD CONSTRAINT PK_UsageStats_gid_ts PRIMARY KEY (gid, timestamp);
 
 CREATE SEQUENCE Cns_unique_id START WITH 3 INCREMENT BY 1 CACHE 1000;
 
@@ -92,13 +102,26 @@ ALTER TABLE Cns_file_metadata
 -- Create indexes on Cns_file_metadata
 CREATE INDEX Parent_FileId_Idx ON Cns_file_metadata (parent_fileid);
 CREATE INDEX I_file_metadata_fileclass ON Cns_file_metadata (fileclass);
+CREATE INDEX I_file_metadata_gid ON Cns_file_metadata (gid);
 
 -- Create indexes on Cns_seg_metadata
 CREATE INDEX I_seg_metadata_tapesum ON Cns_seg_metadata (vid, s_fileid, segsize, compression);
+CREATE INDEX I_seg_metadata_gid ON Cns_Seg_metadata (gid);
 
 -- Temporary table to support Cns_bulkexist calls
 CREATE GLOBAL TEMPORARY TABLE Cns_files_exist_tmp
   (tmpFileId NUMBER) ON COMMIT DELETE ROWS;
+
+-- Table to store configuration items at the DB level
+CREATE TABLE CastorConfig
+  (class VARCHAR2(50) CONSTRAINT NN_CastorConfig_class NOT NULL,
+   key VARCHAR2(50) CONSTRAINT NN_CastorConfig_key NOT NULL,
+   value VARCHAR2(100) CONSTRAINT NN_CastorConfig_value NOT NULL,
+   description VARCHAR2(1000));
+
+-- Provide a default configuration
+INSERT INTO CastorConfig (class, key, value, description)
+  VALUES ('stager', 'openmode', 'C', 'Mode for stager open/close operations: C for Compatibility (pre 2.1.14), N for New (from 2.1.14 onwards)');
 
 -- A synonym allowing to acces the VMGR_TAPE_SIDE table from within the nameserver DB.
 -- Note that the VMGR schema shall grant read access to the NS account with something like:
@@ -106,6 +129,13 @@ CREATE GLOBAL TEMPORARY TABLE Cns_files_exist_tmp
 UNDEF vmgrSchema
 ACCEPT vmgrSchema CHAR DEFAULT 'castor_vmgr' PROMPT 'Enter the name of the VMGR schema (default castor_vmgr): ';
 CREATE OR REPLACE SYNONYM Vmgr_tape_side FOR &vmgrSchema..Vmgr_tape_side;
+
+-- A synonym allowing access to the VMGR_TAPE_STATUS_VIEW view of the VMGR
+-- schema from within the nameserver DB.
+-- Note that the VMGR schema shall grant read access to the NS account with
+-- something like:
+-- GRANT SELECT ON VMGR_TAPE_STATUS_VIEW TO <CastorNsAccount>;
+CREATE OR REPLACE SYNONYM Vmgr_tape_status_view FOR &vmgrSchema..VMGR_TAPE_STATUS_VIEW;
 
 -- Tables to store intermediate data to be passed from/to the stager.
 -- Note that we cannot use temporary tables with distributed transactions.
@@ -120,12 +150,12 @@ CREATE TABLE SetSegsForFilesResultsHelper
  * - Create a default 'system' fileclass. Pre-requisite to next step.
  * - Create the root directory.
  */
-INSERT INTO cns_class_metadata (classid, name, owner_uid, gid, min_filesize, max_filesize, flags, maxdrives,
-  max_segsize, migr_time_interval, mintime_beforemigr, nbcopies, retenp_on_disk) 
+INSERT INTO Cns_class_metadata (classid, name, owner_uid, gid, min_filesize, max_filesize, flags, maxdrives,
+  max_segsize, migr_time_interval, mintime_beforemigr, nbcopies, retenp_on_disk)
   VALUES (1, 'system', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 INSERT INTO cns_file_metadata (fileid, parent_fileid, guid, name, filemode, nlink, owner_uid, gid, filesize,
-  atime, mtime, ctime, fileclass, status, csumtype, csumvalue, acl) 
-  VALUES (2, 0, NULL,  '/', 16877, 0, 0, 0, 0,  0, 0, 0, 1, '-', NULL, NULL, NULL);
+  atime, mtime, ctime, stagertime, fileclass, status, csumtype, csumvalue, acl)
+  VALUES (2, 0, NULL,  '/', 16877, 0, 0, 0, 0, 0,  0, 0, 0, 1, '-', NULL, NULL, NULL);
 COMMIT;
 
 /* SQL statements for table UpgradeLog */
@@ -141,7 +171,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_14_1');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_14_2');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -178,14 +208,14 @@ AS
  *****************************************************************************/
 
 /* SQL statement to populate the intial schema version */
-UPDATE UpgradeLog SET schemaVersion = '2_1_13_0';
+UPDATE UpgradeLog SET schemaVersion = '2_1_14_2';
 
 /* Package holding type declarations for the NameServer PL/SQL API */
 CREATE OR REPLACE PACKAGE castorns AS
   TYPE cnumList IS TABLE OF INTEGER INDEX BY BINARY_INTEGER;
   TYPE Segment_Rec IS RECORD (
     fileId NUMBER,
-    lastModTime NUMBER,
+    lastOpenTime NUMBER,
     copyNo INTEGER,
     segSize INTEGER,
     comprSize INTEGER,
@@ -193,9 +223,34 @@ CREATE OR REPLACE PACKAGE castorns AS
     fseq INTEGER,
     blockId RAW(4),
     checksum_name VARCHAR2(16),
-    checksum INTEGER
+    checksum INTEGER,
+    gid INTEGER,
+    creationTime NUMBER,
+    lastModificationTime NUMBER
   );
   TYPE Segment_Cur IS REF CURSOR RETURN Segment_Rec;
+  TYPE Stats_Rec IS RECORD (
+    gid INTEGER,
+    maxFileId INTEGER,
+    fileCount INTEGER,
+    fileSize INTEGER,
+    segCount INTEGER,
+    segSize INTEGER,
+    segCompressedSize INTEGER,
+    seg2Count INTEGER,
+    seg2Size INTEGER,
+    seg2CompressedSize INTEGER,
+    fileIdDelta INTEGER,
+    fileCountDelta INTEGER,
+    fileSizeDelta INTEGER,
+    segCountDelta INTEGER,
+    segSizeDelta INTEGER,
+    segCompressedSizeDelta INTEGER,
+    seg2CountDelta INTEGER,
+    seg2SizeDelta INTEGER,
+    seg2CompressedSizeDelta INTEGER
+  );
+  TYPE Stats IS TABLE OF Stats_Rec;
 END castorns;
 /
 
@@ -288,6 +343,23 @@ BEGIN
 END;
 /
 
+/* Function to extract a configuration option from the castor config table.
+ */
+CREATE OR REPLACE FUNCTION getConfigOption(className VARCHAR2, optionName VARCHAR2, defaultValue VARCHAR2)
+RETURN VARCHAR2 IS
+  returnValue VARCHAR2(2048) := defaultValue;
+BEGIN
+  SELECT value INTO returnValue
+    FROM CastorConfig
+   WHERE class = className
+     AND key = optionName
+     AND value != 'undefined';
+  RETURN returnValue;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  RETURN returnValue;
+END;
+/
+
 /* A small procedure to add a line to the temporary SetSegsForFilesResultsHelper table.
  * The table is ultimately NOT a temporary table because Oracle does not support temporary tables
  * with distributed transactions, but it is used as such: see castor/db/oracleTapeGateway.sql.
@@ -340,16 +412,20 @@ BEGIN
   -- even on fresh migrations when the stager fails to commit a previous migration attempt
   DELETE FROM Cns_seg_metadata
    WHERE s_fileid = inFid AND copyNo = inCopyNo
-  RETURNING copyNo, segSize, compression, vid, fseq, blockId, checksum_name, checksum
+  RETURNING copyNo, segSize, compression, vid, fseq, blockId, checksum_name, checksum,
+            gid, creationTime, lastModificationTime
        INTO varRepSeg.copyNo, varRepSeg.segSize, varRepSeg.comprSize, varRepSeg.vid,
-            varRepSeg.fseq, varRepSeg.blockId, varRepSeg.checksum_name, varRepSeg.checksum;
+            varRepSeg.fseq, varRepSeg.blockId, varRepSeg.checksum_name, varRepSeg.checksum,
+            varRepSeg.gid, varRepSeg.creationTime, varRepSeg.lastModificationTime;
   IF varRepSeg.vid IS NOT NULL THEN
     -- we have some data, log
     SELECT varRepSeg.blockId INTO varBlockId FROM Dual;  -- to_char() of a RAW type does not work. This does the trick...
-    varParams := 'copyNb='|| varRepSeg.copyNo ||' SegmentSize='|| varRepSeg.segSize
-      ||' Compression='|| varRepSeg.comprSize ||' TPVID='|| varRepSeg.vid
-      ||' fseq='|| varRepSeg.fseq ||' BlockId="' || varBlockId
-      ||'" ChecksumType="'|| varRepSeg.checksum_name ||'" ChecksumValue=' || varRepSeg.checksum;
+    varParams := 'copyNb=' || varRepSeg.copyNo ||' gid=' || varRepSeg.gid ||' SegmentSize=' || varRepSeg.segSize
+      ||' Compression=' || varRepSeg.comprSize ||' TPVID=' || varRepSeg.vid
+      ||' fseq=' || varRepSeg.fseq ||' BlockId="' || varBlockId
+      ||'" ChecksumType="' || varRepSeg.checksum_name ||'" ChecksumValue=' || varRepSeg.checksum
+      ||' creationTime=' || trunc(varRepSeg.creationTime, 6)
+      ||' lastModificationTime=' || trunc(varRepSeg.lastModificationTime, 6);
     addSegResult(1, inReqId, 0, 'Unlinking segment (replaced)', inFid, varParams);
   END IF;
   -- Now that no previous segment exists with the same copyNo, prevent 2nd copy in the same tape
@@ -384,6 +460,7 @@ CREATE OR REPLACE PROCEDURE setSegmentForFile(inSegEntry IN castorns.Segment_Rec
   varFmode NUMBER(6);
   varFLastMTime NUMBER;
   varFSize NUMBER;
+  varFGid INTEGER;
   varFClassId NUMBER;
   varFCNbCopies NUMBER;
   varFCksumName VARCHAR2(2);
@@ -391,17 +468,39 @@ CREATE OR REPLACE PROCEDURE setSegmentForFile(inSegEntry IN castorns.Segment_Rec
   varNb INTEGER;
   varBlockId VARCHAR2(8);
   varParams VARCHAR2(2048);
+  varOpenMode CHAR(1);
+  varLastOpenTimeFromClient NUMBER;
+  varSegCreationTime NUMBER;
   -- Trap `ORA-00001: unique constraint violated` errors
   CONSTRAINT_VIOLATED EXCEPTION;
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -00001);
 BEGIN
   rc := 0;
   msg := '';
+  -- Retrieve open mode flag. To be dropped after v2.1.14 is in production.
+  varOpenMode := getConfigOption('stager', 'openmode', NULL);
   -- Get file data and lock the entry, exit if not found
-  SELECT fileId, filemode, mtime, fileClass, fileSize, csumType, csumValue
-    INTO varFid, varFmode, varFLastMTime, varFClassId, varFSize, varFCksumName, varFCksum
-    FROM Cns_file_metadata
-   WHERE fileId = inSegEntry.fileId FOR UPDATE;
+  IF varOpenMode = 'C' THEN
+    SELECT fileId, filemode, mtime, fileClass, fileSize, csumType, csumValue, gid
+      INTO varFid, varFmode, varFLastMTime, varFClassId, varFSize, varFCksumName, varFCksum, varFGid
+      FROM Cns_file_metadata
+     WHERE fileId = inSegEntry.fileId FOR UPDATE;
+    -- in compatibility mode we only have second precision, thus we have to ceil
+    -- the given lastOpenTime for a safe comparison with mtime
+    varLastOpenTimeFromClient := CEIL(inSegEntry.lastOpenTime);
+  ELSIF varOpenMode = 'N' THEN
+    SELECT fileId, filemode, stagertime, fileClass, fileSize, csumType, csumValue, gid
+      INTO varFid, varFmode, varFLastMTime, varFClassId, varFSize, varFCksumName, varFCksum, varFGid
+      FROM Cns_file_metadata
+     WHERE fileId = inSegEntry.fileId FOR UPDATE;
+    varLastOpenTimeFromClient := inSegEntry.lastOpenTime;
+  ELSE
+    -- sanity check, should never happen
+    rc := serrno.EINVAL;
+    msg := 'Incorrect value found for openmode in CastorConfig: found '
+            || varOpenMode ||', expected either C or N';
+    RETURN;
+  END IF;
   -- Is it a directory?
   IF bitand(varFmode, 4*8*8*8*8) > 0 THEN  -- 040000 == S_IFDIR
     rc := serrno.EISDIR;
@@ -410,10 +509,10 @@ BEGIN
     RETURN;
   END IF;
   -- Has the file been changed meanwhile?
-  IF varFLastMTime > inSegEntry.lastModTime AND inSegEntry.lastModTime > 0 THEN
+  IF varFLastMTime > varLastOpenTimeFromClient THEN
     rc := serrno.ENSFILECHG;
-    msg := serrno.ENSFILECHG_MSG ||' : NSLastModTime='|| to_char(varFLastMTime)
-      ||', StagerLastModTime='|| to_char(inSegEntry.lastModTime);
+    msg := serrno.ENSFILECHG_MSG ||' : NSLastOpenTime='|| TRUNC(varFLastMTime, 6)
+      ||', StagerLastOpenTime='|| TRUNC(varLastOpenTimeFromClient, 6);
     ROLLBACK;
     RETURN;
   END IF;
@@ -423,7 +522,7 @@ BEGIN
      inSegEntry.checksum != to_number(varFCksum, 'XXXXXXXX') THEN
     rc := serrno.SECHECKSUM;
     msg := serrno.SECHECKSUM_MSG ||' : '
-      || varFCksum ||' vs '|| to_char(inSegEntry.checksum, 'XXXXXXXX');
+      || upper(varFCksum) ||' vs '|| to_char(inSegEntry.checksum, 'XXXXXXXX');
     ROLLBACK;
     RETURN;
   END IF;
@@ -440,7 +539,7 @@ BEGIN
   -- fully idempotent and allows to compensate from possible errors in the tapegateway
   -- after a segment had been committed in the namespace.
   rc := checkAndDropSameCopynbSeg(inReqId, varFid, inSegEntry.vid, inSegEntry.copyNo);
-  IF rc != 0 THEN
+  IF rc = serrno.EEXIST THEN
     msg := 'File already has a copy on VID '|| inSegEntry.vid;
     ROLLBACK;
     RETURN;
@@ -449,12 +548,13 @@ BEGIN
   -- We're done with the pre-checks, try and insert the segment metadata
   -- and deal with the possible unique (vid,fseq) constraint violation exception
   BEGIN
-    INSERT INTO Cns_seg_metadata (s_fileId, copyNo, fsec, segSize, s_status,
-      vid, fseq, blockId, compression, side, checksum_name, checksum)
-    VALUES (varFid, inSegEntry.copyNo, 1, inSegEntry.segSize, '-',
-      inSegEntry.vid, inSegEntry.fseq, inSegEntry.blockId,
+    varSegCreationTime := getTime();
+    INSERT INTO Cns_seg_metadata (s_fileId, copyNo, fsec, segSize, s_status, vid,
+      fseq, blockId, compression, side, checksum_name, checksum, gid, creationTime, lastModificationTime)
+    VALUES (varFid, inSegEntry.copyNo, 1, inSegEntry.segSize, '-', inSegEntry.vid,
+      inSegEntry.fseq, inSegEntry.blockId,
       CASE inSegEntry.comprSize WHEN 0 THEN 100 ELSE trunc(inSegEntry.segSize*100/inSegEntry.comprSize) END,
-      0, inSegEntry.checksum_name, inSegEntry.checksum);
+      0, inSegEntry.checksum_name, inSegEntry.checksum, varFGid, varSegCreationTime, varSegCreationTime);
   EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
     -- This can be due to a PK violation or to the unique (vid,fseq) violation. The first
     -- is excluded because of checkAndDropSameCopynbSeg(), thus the second is the case:
@@ -484,9 +584,10 @@ BEGIN
   COMMIT;
   SELECT inSegEntry.blockId INTO varBlockId FROM Dual;  -- to_char() of a RAW type does not work. This does the trick...
   varParams := 'copyNb='|| inSegEntry.copyNo ||' SegmentSize='|| inSegEntry.segSize
-    ||' Compression='|| CASE inSegEntry.comprSize WHEN 0 THEN 'inf' ELSE trunc(inSegEntry.segSize*100/inSegEntry.comprSize) END ||' TPVID='|| inSegEntry.vid
-    ||' fseq='|| inSegEntry.fseq ||' BlockId="' || varBlockId
-    ||'" ChecksumType="'|| inSegEntry.checksum_name ||'" ChecksumValue=' || varFCksum;
+    ||' Compression='|| CASE inSegEntry.comprSize WHEN 0 THEN 'inf' ELSE trunc(inSegEntry.segSize*100/inSegEntry.comprSize) END
+    ||' TPVID='|| inSegEntry.vid ||' fseq='|| inSegEntry.fseq ||' BlockId="' || varBlockId
+    ||'" gid=' || varFGid ||' ChecksumType="'|| inSegEntry.checksum_name ||'" ChecksumValue=' || varFCksum
+    ||' creationTime=' || trunc(varSegCreationTime, 6);
   addSegResult(0, inReqId, 0, 'New segment information', varFid, varParams);
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- The file entry was not found, just give up
@@ -519,6 +620,7 @@ CREATE OR REPLACE PROCEDURE replaceSegmentForFile(inOldCopyNo IN INTEGER, inSegE
   varFmode NUMBER(6);
   varFLastMTime NUMBER;
   varFSize NUMBER;
+  varFGid INTEGER;
   varFClassId NUMBER;
   varFCNbCopies NUMBER;
   varFCksumName VARCHAR2(2);
@@ -527,18 +629,41 @@ CREATE OR REPLACE PROCEDURE replaceSegmentForFile(inOldCopyNo IN INTEGER, inSegE
   varBlockId VARCHAR2(8);
   varOwSeg castorns.Segment_Rec;
   varRepSeg castorns.Segment_Rec;
+  varStatus CHAR(1);
   varParams VARCHAR2(2048);
+  varOpenMode CHAR(1);
+  varLastOpenTimeFromClient NUMBER;
+  varSegCreationTime NUMBER;
   -- Trap `ORA-00001: unique constraint violated` errors
   CONSTRAINT_VIOLATED EXCEPTION;
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -00001);
 BEGIN
   rc := 0;
   msg := '';
+  -- Retrieve open mode flag
+  varOpenMode := getConfigOption('stager', 'openmode', NULL);
   -- Get file data and lock the entry, exit if not found
-  SELECT fileId, filemode, mtime, fileClass, csumType, csumValue
-    INTO varFid, varFmode, varFLastMTime, varFClassId, varFCksumName, varFCksum
-    FROM Cns_file_metadata
-   WHERE fileId = inSegEntry.fileId FOR UPDATE;
+  IF varOpenMode = 'C' THEN
+    SELECT fileId, filemode, mtime, fileClass, fileSize, csumType, csumValue, gid
+      INTO varFid, varFmode, varFLastMTime, varFClassId, varFSize, varFCksumName, varFCksum, varFGid
+      FROM Cns_file_metadata
+     WHERE fileId = inSegEntry.fileId FOR UPDATE;
+    -- in compatibility mode we only have second precision, thus we have to ceil
+    -- the given lastOpenTime for a safe comparison with mtime
+    varLastOpenTimeFromClient := CEIL(inSegEntry.lastOpenTime);
+  ELSIF varOpenMode = 'N' THEN
+    SELECT fileId, filemode, stagertime, fileClass, fileSize, csumType, csumValue, gid
+      INTO varFid, varFmode, varFLastMTime, varFClassId, varFSize, varFCksumName, varFCksum, varFGid
+      FROM Cns_file_metadata
+     WHERE fileId = inSegEntry.fileId FOR UPDATE;
+    varLastOpenTimeFromClient := inSegEntry.lastOpenTime;
+  ELSE
+    -- sanity check, should never happen
+    rc := serrno.EINVAL;
+    msg := 'Incorrect value found for openmode in CastorConfig: found '
+            || varOpenMode ||', expected either C or N';
+    RETURN;
+  END IF;
   -- Is it a directory?
   IF bitand(varFmode, 4*8*8*8*8) > 0 THEN  -- 040000 == S_IFDIR
     rc := serrno.EISDIR;
@@ -547,10 +672,10 @@ BEGIN
     RETURN;
   END IF;
   -- Has the file been changed meanwhile?
-  IF varFLastMTime > inSegEntry.lastModTime AND inSegEntry.lastModTime > 0 THEN
+  IF varFLastMTime > varLastOpenTimeFromClient THEN
     rc := serrno.ENSFILECHG;
-    msg := serrno.ENSFILECHG_MSG ||' : NSLastModTime='|| to_char(varFLastMTime)
-      ||', StagerLastModTime='|| to_char(inSegEntry.lastModTime);
+    msg := serrno.ENSFILECHG_MSG ||' : NSLastOpenTime='|| TRUNC(varFLastMTime, 6)
+      ||', StagerLastOpenTime='|| TRUNC(varLastOpenTimeFromClient, 6);
     ROLLBACK;
     RETURN;
   END IF;
@@ -573,16 +698,25 @@ BEGIN
     RETURN;
   END IF;
   -- Repack specific: --
-  -- Make sure a segment exists for the given copyNo. There can only be one segment
-  -- as we don't support multi-segmented files any longer.
-  DECLARE
-    varStatus CHAR(1);
+  -- Make sure the segment for the given oldCopyNo still exists
   BEGIN
-    SELECT s_status INTO varStatus
+    SELECT s_status, creationTime INTO varStatus, varSegCreationTime
       FROM Cns_seg_metadata
-     WHERE s_fileid = varFid AND copyNo = inSegEntry.copyNo;
-    -- Check status of segment to be replaced in case it has a different copyNo
-    IF inSegEntry.copyNo != inOldCopyNo THEN
+     WHERE s_fileid = varFid AND copyNo = inOldCopyNo;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- Previous segment not found, give up
+    rc := serrno.ENSNOSEG;
+    msg := serrno.ENSNOSEG_MSG;
+    ROLLBACK;
+    RETURN;
+  END;
+  -- Check if a segment exists with the target copyNo, in case this is different from the
+  -- old copyNo: such a segment is about to be overwritten
+  IF inSegEntry.copyNo != inOldCopyNo THEN
+    BEGIN
+      SELECT s_status INTO varStatus
+        FROM Cns_seg_metadata
+       WHERE s_fileid = varFid AND copyNo = inSegEntry.copyNo;
       IF varStatus = '-' THEN
         -- We are asked to overwrite a valid segment and replace another one.
         -- This is forbidden.
@@ -591,47 +725,57 @@ BEGIN
         ROLLBACK;
         RETURN;
       END IF;
-      -- OK, the segment being overwritten is invalid
+      -- OK, the segment being overwritten is invalid, we can drop it
       DELETE FROM Cns_seg_metadata
        WHERE s_fileid = varFid AND copyNo = inSegEntry.copyNo
-      RETURNING copyNo, segSize, compression, vid, fseq, blockId, checksum_name, checksum
+      RETURNING copyNo, segSize, compression, vid, fseq, blockId, checksum_name, checksum,
+                gid, creationTime, lastModificationTime
            INTO varOwSeg.copyNo, varOwSeg.segSize, varOwSeg.comprSize, varOwSeg.vid,
-                varOwSeg.fseq, varOwSeg.blockId, varOwSeg.checksum_name, varOwSeg.checksum;
+                varOwSeg.fseq, varOwSeg.blockId, varOwSeg.checksum_name, varOwSeg.checksum,
+                varOwSeg.gid, varOwSeg.creationTime, varOwSeg.lastModificationTime;
       -- Log overwritten segment metadata
       SELECT varOwSeg.blockId INTO varBlockId FROM Dual;
       varParams := 'copyNb='|| varOwSeg.copyNo ||' SegmentSize='|| varOwSeg.segSize
         ||' Compression='|| varOwSeg.comprSize ||' TPVID='|| varOwSeg.vid
-        ||' fseq='|| varOwSeg.fseq ||' BlockId="' || varBlockId
-        ||'" ChecksumType="'|| varOwSeg.checksum_name ||'" ChecksumValue=' || varOwSeg.checksum;
+        ||' fseq='|| varOwSeg.fseq ||' BlockId="' || varBlockId ||'" gid=' || varOwSeg.gid
+        ||' ChecksumType="'|| varOwSeg.checksum_name ||'" ChecksumValue=' || varOwSeg.checksum
+        ||' creationTime=' || trunc(varOwSeg.creationTime, 6)
+        ||' lastModificationTime=' || trunc(varOwSeg.lastModificationTime, 6);
       addSegResult(1, inReqId, 0, 'Unlinking segment (overwritten)', varFid, varParams);
-    END IF;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- Previous segment not found, give up
-    rc := serrno.ENSNOSEG;
-    msg := serrno.ENSNOSEG_MSG;
-    ROLLBACK;
-    RETURN;
-  END;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- Nothing found with the target copyNo: this means the existing segment we're repacking
+      -- actually had an incorrect copyNo (e.g. it was 2 but no copyNo=1 existed). In such a case
+      -- we want to fix the existing segment so that it gets properly replaced.
+      -- Note that we won't throw CONSTRAINT_VIOLATED because we know inSegEntry.copyNo
+      -- does not exist, and we won't throw NO_DATA_FOUND because inOldCopyNo does exist.
+      UPDATE Cns_seg_metadata
+         SET copyNo = inSegEntry.copyNo
+       WHERE s_fileid = varFid
+         AND copyNo = inOldCopyNo;
+      addSegResult(1, inReqId, 0, 'Updating copy number', varFid, 'oldCopyNb='|| inOldCopyNo
+                   ||' newCopyNb='|| inSegEntry.copyNo);
+    END;
+  END IF;
   -- Prevent to write a second copy of this file on a tape that already holds a valid copy,
   -- whilst allowing the overwrite of a same copyNo segment: this makes the NS operation
   -- fully idempotent and allows to compensate from possible errors in the tapegateway
   -- after a segment had been committed in the namespace.
   rc := checkAndDropSameCopynbSeg(inReqId, varFid, inSegEntry.vid, inSegEntry.copyNo);
-  IF rc != 0 THEN
+  IF rc = serrno.EEXIST THEN
     msg := 'File already has a copy on VID '|| inSegEntry.vid;
     ROLLBACK;
     RETURN;
   END IF;
-  
+
   -- We're done with the pre-checks, try and insert the segment metadata
   -- and deal with the possible unique (vid,fseq) constraint violation exception
   BEGIN
-    INSERT INTO Cns_seg_metadata (s_fileId, copyNo, fsec, segSize, s_status,
-      vid, fseq, blockId, compression, side, checksum_name, checksum)
-    VALUES (varFid, inSegEntry.copyNo, 1, inSegEntry.segSize, '-',
-      inSegEntry.vid, inSegEntry.fseq, inSegEntry.blockId,
+    INSERT INTO Cns_seg_metadata (s_fileId, copyNo, fsec, segSize, s_status, vid,
+      fseq, blockId, compression, side, checksum_name, checksum, gid, creationTime, lastModificationTime)
+    VALUES (varFid, inSegEntry.copyNo, 1, inSegEntry.segSize, '-', inSegEntry.vid,
+      inSegEntry.fseq, inSegEntry.blockId,
       CASE inSegEntry.comprSize WHEN 0 THEN 100 ELSE trunc(inSegEntry.segSize*100/inSegEntry.comprSize) END,
-      0, inSegEntry.checksum_name, inSegEntry.checksum);
+      0, inSegEntry.checksum_name, inSegEntry.checksum, varFGid, varSegCreationTime, getTime());
   EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
     -- There must already be an existing segment at that fseq position for a different file.
     -- This is forbidden! Abort the entire operation.
@@ -662,8 +806,9 @@ BEGIN
   varParams := 'copyNb='|| inSegEntry.copyNo ||' SegmentSize='|| inSegEntry.segSize
     ||' Compression='|| CASE inSegEntry.comprSize WHEN 0 THEN 'inf' ELSE trunc(inSegEntry.segSize*100/inSegEntry.comprSize) END
     ||' TPVID='|| inSegEntry.vid
-    ||' fseq='|| inSegEntry.fseq ||' blockId="' || varBlockId
-    ||'" ChecksumType="'|| inSegEntry.checksum_name ||'" ChecksumValue=' || varFCksum || ' Repack=True';
+    ||' fseq='|| inSegEntry.fseq ||' blockId="' || varBlockId ||'" gid=' || varFGid
+    ||' ChecksumType="'|| inSegEntry.checksum_name ||'" ChecksumValue=' || varFCksum
+    ||' creationTime=' || trunc(varSegCreationTime, 6) ||' Repack=True';
   addSegResult(0, inReqId, 0, 'New segment information', varFid, varParams);
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- The file entry was not found, just give up
@@ -695,7 +840,7 @@ BEGIN
               FROM SetSegsForFilesInputHelper
              WHERE reqId = inReqId) LOOP
     varSeg.fileId := s.fileId;
-    varSeg.lastModTime := s.lastModTime;
+    varSeg.lastOpenTime := s.lastModTime;
     varSeg.copyNo := s.copyNo;
     varSeg.segSize := s.transfSize;
     varSeg.comprSize := s.comprSize;
@@ -712,7 +857,6 @@ BEGIN
     IF varRC != 0 THEN
       varParams := 'ErrorCode='|| to_char(varRC) ||' ErrorMessage="'|| varParams ||'"';
       addSegResult(0, inReqId, varRC, 'Error creating/replacing segment', s.fileId, varParams);
-      COMMIT;
     END IF;
     varCount := varCount + 1;
   END LOOP;
@@ -730,8 +874,18 @@ BEGIN
   -- Return results and logs to the stager. Unfortunately we can't OPEN CURSOR FOR ...
   -- because we would get ORA-24338: 'statement handle not executed' at run time.
   -- Moreover, temporary tables are not supported with distributed transactions,
-  -- so the stager will remotely open the ResultsLogHelper table, and we clean
-  -- the tables by hand using the reqId key.
+  -- so the stager will remotely open the SetSegsForFilesResultsHelper table, and
+  -- we clean the tables by hand using the reqId key.
+EXCEPTION WHEN OTHERS THEN
+  -- In case of an uncaught exception, log it and preserve the SetSegsForFilesResultsHelper
+  -- content for the stager as other files may have already been committed. Any other
+  -- remaining file from the input will have to be migrated again.
+  varParams := 'Function="setOrReplaceSegmentsForFiles" errorMessage="' || SQLERRM
+        ||'" stackTrace="' || dbms_utility.format_error_backtrace ||'"';
+  addSegResult(1, inReqId, SQLCODE, 'Uncaught exception', 0, varParams);
+  DELETE FROM SetSegsForFilesInputHelper
+   WHERE reqId = inReqId;
+  COMMIT;
 END;
 /
 
@@ -748,6 +902,126 @@ BEGIN
    WHERE s_fileid = fid AND copyno = copyNb AND fsec = 1
      AND checksum_name IS NULL AND checksum IS NULL;
   COMMIT;
+END;
+/
+
+CREATE OR REPLACE PROCEDURE insertNSStats(inGid IN INTEGER, inTimestamp IN NUMBER,
+                                          inMaxFileId IN INTEGER, inFileCount IN INTEGER, inFileSize IN INTEGER,
+                                          inSegCount IN INTEGER, inSegSize IN INTEGER, inSegCompressedSize IN INTEGER,
+                                          inSeg2Count IN INTEGER, inSeg2Size IN INTEGER, inSeg2CompressedSize IN INTEGER) AS
+  CONSTRAINT_VIOLATED EXCEPTION;
+  PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
+BEGIN
+  INSERT INTO UsageStats (gid, timestamp, maxFileId, fileCount, fileSize, segCount, segSize,
+                          segCompressedSize, seg2Count, seg2Size, seg2CompressedSize)
+    VALUES (inGid, inTimestamp, inMaxFileId, inFileCount, inFileSize, inSegCount, inSegSize,
+            inSegCompressedSize, inSeg2Count, inSeg2Size, inSeg2CompressedSize);
+EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
+  UPDATE UsageStats SET
+    maxFileId = CASE WHEN inMaxFileId > maxFileId THEN inMaxFileId ELSE maxFileId END,
+    fileCount = fileCount + inFileCount,
+    fileSize = fileSize + inFileSize,
+    segCount = segCount + inSegCount,
+    segSize = segSize + inSegSize,
+    segCompressedSize = segCompressedSize + inSegCompressedSize,
+    seg2Count = seg2Count + inSeg2Count,
+    seg2Size = seg2Size + inSeg2Size,
+    seg2CompressedSize = seg2CompressedSize + inSeg2CompressedSize
+  WHERE gid = inGid AND timestamp = inTimestamp;
+END;
+/
+
+/* This procedure is run as a database job to generate statistics from the namespace */
+CREATE OR REPLACE PROCEDURE gatherNSStats AS
+  varTimestamp NUMBER := getTime();
+BEGIN
+  -- File-level statistics
+  FOR g IN (SELECT gid, MAX(fileid) maxId, COUNT(*) fileCount, SUM(filesize) fileSize
+              FROM Cns_file_metadata
+             GROUP BY gid) LOOP
+    insertNSStats(g.gid, varTimestamp, g.maxId, g.fileCount, g.fileSize, 0, 0, 0, 0, 0, 0);
+  END LOOP;
+  COMMIT;
+  -- Tape-level statistics
+  FOR g IN (SELECT gid, copyNo, SUM(segSize * 100 / decode(compression,0,100,compression)) segComprSize,
+                   SUM(segSize) segSize, COUNT(*) segCount
+              FROM Cns_seg_metadata
+             GROUP BY gid, copyNo) LOOP
+    IF g.copyNo = 1 THEN
+      insertNSStats(g.gid, varTimestamp, 0, 0, 0, g.segCount, g.segSize, g.segComprSize, 0, 0, 0);
+    ELSE
+      insertNSStats(g.gid, varTimestamp, 0, 0, 0, 0, 0, 0, g.segCount, g.segSize, g.segComprSize);
+    END IF;
+  END LOOP;
+  COMMIT;
+  -- Also compute totals
+  INSERT INTO UsageStats (gid, timestamp, maxFileId, fileCount, fileSize, segCount, segSize,
+                          segCompressedSize, seg2Count, seg2Size, seg2CompressedSize)
+    (SELECT -1, varTimestamp, MAX(maxFileId), SUM(fileCount), SUM(fileSize),
+            SUM(segCount), SUM(segSize), SUM(segCompressedSize),
+            SUM(seg2Count), SUM(seg2Size), SUM(seg2CompressedSize)
+       FROM UsageStats
+      WHERE timestamp = varTimestamp);
+  COMMIT;
+END;
+/
+
+/* This pipelined function returns a report of namespace statistics over the given number of days */
+CREATE OR REPLACE FUNCTION NSStatsReport(inDays INTEGER) RETURN castorns.Stats PIPELINED IS
+BEGIN
+  FOR l IN (
+        SELECT NewStats.gid,
+               NewStats.maxFileId, NewStats.fileCount, NewStats.fileSize,
+               NewStats.segCount, NewStats.segSize, NewStats.segCompressedSize,
+               NewStats.seg2Count, NewStats.seg2Size, NewStats.seg2CompressedSize,
+               NewStats.maxFileId-OldStats.maxFileId fileIdDelta, NewStats.fileCount-OldStats.fileCount fileCountDelta,
+               NewStats.fileSize-OldStats.fileSize fileSizeDelta,
+               NewStats.segCount-OldStats.segCount segCountDelta, NewStats.segSize-OldStats.segSize segSizeDelta,
+               NewStats.segCompressedSize-OldStats.segCompressedSize segCompressedSizeDelta,
+               NewStats.seg2Count-OldStats.seg2Count seg2CountDelta, NewStats.seg2Size-OldStats.seg2Size seg2SizeDelta,
+               NewStats.seg2CompressedSize-OldStats.seg2CompressedSize seg2CompressedSizeDelta
+          FROM
+            (SELECT gid, timestamp, maxFileId, fileCount, fileSize, segCount, segSize, segCompressedSize,
+                    seg2Count, seg2Size, seg2CompressedSize
+               FROM UsageStats
+              WHERE timestamp = (SELECT MAX(timestamp) FROM UsageStats
+                                  WHERE timestamp < getTime() - 86400*inDays)) OldStats,
+            (SELECT gid, timestamp, maxFileId, fileCount, fileSize, segCount, segSize, segCompressedSize,
+                    seg2Count, seg2Size, seg2CompressedSize
+               FROM UsageStats
+              WHERE timestamp = (SELECT MAX(timestamp) FROM UsageStats)) NewStats
+         WHERE OldStats.gid = NewStats.gid
+         ORDER BY NewStats.gid DESC) LOOP    -- gid = -1, i.e. the totals line, comes last
+    PIPE ROW(l);
+  END LOOP;
+END;
+/
+
+/* A convenience view to get weekly statistics */
+CREATE OR REPLACE VIEW WeeklyReportView AS
+  SELECT * FROM TABLE(NSStatsReport(7));
+
+/*
+ * Database jobs
+ */
+BEGIN
+  -- Remove database jobs before recreating them
+  FOR j IN (SELECT job_name FROM user_scheduler_jobs
+             WHERE job_name = 'NSSTATSJOB')
+  LOOP
+    DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
+  END LOOP;
+
+  -- Create a db job to be run every day executing the gatherNSStats procedure
+  DBMS_SCHEDULER.CREATE_JOB(
+      JOB_NAME        => 'NSStatsJob',
+      JOB_TYPE        => 'PLSQL_BLOCK',
+      JOB_ACTION      => 'BEGIN gatherNSStats(); END;',
+      JOB_CLASS       => 'CASTOR_JOB_CLASS',
+      START_DATE      => SYSDATE + 60/1440,
+      REPEAT_INTERVAL => 'FREQ=DAILY; INTERVAL=1',
+      ENABLED         => TRUE,
+      COMMENTS        => 'Gathering of Nameserver usage statistics');
 END;
 /
 

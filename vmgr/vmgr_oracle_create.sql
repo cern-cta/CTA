@@ -120,7 +120,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_14_1');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_14_2');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -388,6 +388,7 @@ BEGIN
 END VMGR_UPDATE_POOL_OWNER;
 /
 
+
 /*
  * Create and populate the table VMGR_TAPE_STATUS_CODE.
  *
@@ -466,6 +467,23 @@ BEGIN
 END;
 /
 
+
+/**
+ * View to be used by other schemas via database links to
+ * determine the status bit-set of each tape currently recorded
+ * within the VMGR database.
+ *
+ * Database links should be avoided where possible.
+ *
+ * Database links should never access any of the VMGR database
+ * tables directly.  They should access purposely developed
+ * PL/SQL procedures and database views such as this one.
+ */
+CREATE OR REPLACE VIEW VMGR_TAPE_STATUS_VIEW AS
+  SELECT vid,
+         status
+    FROM VMGR_TAPE_SIDE
+   WHERE side = 0;
 
 /* Flag the schema creation as COMPLETE */
 UPDATE UpgradeLog SET endDate = systimestamp, state = 'COMPLETE';
