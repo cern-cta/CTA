@@ -22,13 +22,13 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>          /* arpa internet routines               */
-#include "dmc.h"
-#include "net.h"
-#include "rmc_api.h"
-#include "smc.h"
-#include "Ctape.h"
-#include "Ctape_api.h"
-#include "tplogger_api.h"
+#include "h/net.h"
+#include "h/rmc_api.h"
+#include "h/smc.h"
+#include "h/Ctape.h"
+#include "h/Ctape_api.h"
+#include "h/tplogger_api.h"
+#include "h/serrno.h"
 extern char msg[];
 
 static char action[8];
@@ -60,17 +60,13 @@ struct rbterr_codact {
 /*
 ** Protoypes
 */
-int acsmount( char*, char*, int );
-int acsdismount( char*, char*, unsigned int );
+#if defined(CDK)
+static int acsmount( char*, char*, int );
+static int acsdismount( char*, char*, unsigned int );
+#endif
 
-int dmcmount( char*, char*, char* );
-int dmcdismount( char*, char*, char*, unsigned int );
-
-int smcmount( char*, int, char* );
-int smcdismount( char*, char*, int, int );
-
-int send2dmc( int*, DMCrequest_t * );
-int fromdmc( int*, DMCreply_t * );
+static int smcmount( char*, int, char* );
+static int smcdismount( char*, char*, int, int );
 
 static int istapemounted( char*, int, char* );
 static int show_element_info( struct smc_element_info* );
@@ -97,50 +93,6 @@ int rbtmount (char *vid,
 #else
 	(void)ring;
 #endif
-
-	if (*loader == 'd')
-		return(dmcmount(vid,unm,loader));
-
-	if (*loader == 'n'
-	    || *loader == 'R'
-			     ) {
-		char buf[256];
-		FILE *f, *popen();
-
-		ENTRY (rbtmount);
-		if (*loader == 'n')
-			sprintf (buf, "nsrjb -l -n -f %s %s 2>&1", dvn, vid);
-		else
-			sprintf (buf, "/dms/fbs/bin/dmscmv C%s %s 2>&1", vid, loader);
-		tplogit (func, "%s\n", buf);
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
-                                    "func",    TL_MSG_PARAM_STR, func,
-                                    "Message", TL_MSG_PARAM_STR, buf );
-		if ((f = popen (buf, "r")) == NULL) {
-			usrmsg (func, TP042, "", "popen", strerror(errno));
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
-                                            "func",    TL_MSG_PARAM_STR, func,
-                                            "Message", TL_MSG_PARAM_STR, "popen",
-                                            "Error",   TL_MSG_PARAM_STR, strerror(errno),
-                                            "Drive"  , TL_MSG_PARAM_STR, cur_unm );
-			RETURN (-errno);
-		}
-		while (fgets (buf, sizeof(buf), f) != NULL) {
-			usrmsg (func, "TP041 - %s of %s on %s failed : %s\n",
-			    action, cur_vid, cur_unm, buf);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
-                                            "func",    TL_MSG_PARAM_STR, func,
-                                            "action",  TL_MSG_PARAM_STR, action,
-                                            "cur_vid", TL_MSG_PARAM_STR, cur_vid,
-                                            "Drive",   TL_MSG_PARAM_STR, cur_unm,
-                                            "Message", TL_MSG_PARAM_STR, buf );
-                }
-		if (pclose (f)) {
-			RETURN (-EIO);
-		} else {
-			RETURN (0);
-		}
-	}
 	if (*loader == 's') {
 		int c;
 		c = smcmount (vid, side, loader);
@@ -182,51 +134,6 @@ int rbtdemount (char *vid,
 		return (acsdismount (vid, loader, force));
 	}
 #endif
-
-	if (*loader == 'd')
-		return(dmcdismount(vid, unm, loader, force));
-
-	if (*loader == 'n'
-	    || *loader == 'R'
-			     ) {
-		char buf[256];
-		FILE *f, *popen();
-
-		ENTRY (rbtdemount);
-
-		if (*loader == 'n')
-			sprintf (buf, "nsrjb -u -f %s 2>&1", dvn);
-		else
-			sprintf (buf, "/dms/fbs/bin/dmscmv C%s 2>&1", vid);
-		tplogit (func, "%s\n", buf);
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
-                                    "func",    TL_MSG_PARAM_STR, func,
-                                    "Message", TL_MSG_PARAM_STR, buf );
-		if ((f = popen (buf, "r")) == NULL) {
-			usrmsg (func, TP042, "", "popen", strerror(errno));
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
-                                            "func",    TL_MSG_PARAM_STR, func,
-                                            "Message", TL_MSG_PARAM_STR, "popen",
-                                            "Error",   TL_MSG_PARAM_STR, strerror(errno),
-                                            "Drive",   TL_MSG_PARAM_STR, cur_unm );
-			RETURN (-errno);
-		}
-		while (fgets (buf, sizeof(buf), f) != NULL) {
-			usrmsg (func, "TP041 - %s of %s on %s failed : %s\n",
-			    action, cur_vid, cur_unm, buf);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
-                                            "func",    TL_MSG_PARAM_STR, func,
-                                            "action",  TL_MSG_PARAM_STR, action,
-                                            "cur_vid", TL_MSG_PARAM_STR, cur_vid,
-                                            "Drive",   TL_MSG_PARAM_STR, cur_unm,
-                                            "Message", TL_MSG_PARAM_STR, buf );
-                }
-		if (pclose (f)) {
-			RETURN (-EIO);
-		} else {
-			RETURN (0);
-		}
-	}
 	if (*loader == 's') {
 		int c;
 		c = smcdismount (vid, loader, force, vsnretry);
@@ -250,7 +157,7 @@ int rbtdemount (char *vid,
 /*	acssubr - I/O control routines for Storage Tek silos */
 /*	loader should be of the form "acs"acs_id,lsm,panel,drive */
 
-char acsloader[14];
+static char acsloader[14];
 ALIGNED_BYTES rbuf[MAX_MESSAGE_SIZE/sizeof(ALIGNED_BYTES)];
 
 extern int getconfent_multi();
@@ -299,7 +206,7 @@ static int actionChanged(int cc, int rt, short *act, int *slp, int *rtr) {
 }
 
 
-int acserr2act(int req_type,	/* 0 --> mount, 1 --> dismount */
+static int acserr2act(int req_type,	/* 0 --> mount, 1 --> dismount */
 	       int cc)		/* error returned by the mount/dismount routine */
 {
 	struct rbterr_codact acserr_acttbl[] = {
@@ -370,7 +277,7 @@ int acserr2act(int req_type,	/* 0 --> mount, 1 --> dismount */
 	RETURN (RBT_NORETRY);
 }
 
-char *
+static char *
 acsstatus(status)
 STATUS status;
 {
@@ -383,7 +290,7 @@ STATUS status;
 	return (p);
 }
 
-int acsmount(char *vid,
+static int acsmount(char *vid,
              char *loader,
              int ring)
 {
@@ -438,7 +345,7 @@ int acsmount(char *vid,
 	RETURN (0);
 }
 
-int acsdismount(char *vid,
+static int acsdismount(char *vid,
                 char *loader,
                 unsigned int force)
 {
@@ -705,240 +612,6 @@ int wait4acsfinalresp()
 }
 
 #endif
-/*
- * Code for DEC Media Changer (TL820) robots. Works together with
- * the dmcserv server. Depends on the "dmc.h" include file.
- */
-extern char *getconfent();
-int dmcmount(char *vid,
-             char *unm,
-             char *loader)
-{
-	DMCrequest_t req;
-	DMCreply_t rep;
-	char func[16];
-	int s,rc;
-
-	ENTRY(dmcmount);
-	memset(&req,'\0',sizeof(DMCrequest_t));
-	memset(&rep,'\0',sizeof(DMCreply_t));
-	req.reqtype = DMC_MOUNT;
-	strcpy(req.vid,vid);
-	strcpy(req.loader,loader);
-	strcat(req.loader,",");
-	strcat(req.loader,unm);
-	rc = send2dmc(&s,&req);
-	if ( rc ) RETURN(rc);
-	rc = fromdmc(&s,&rep);
-	if ( rc ) RETURN(rc);
-	if  ( rep.log_info != NULL && rep.status && rep.log_info_l ) {
-		char *p = strtok(rep.log_info,"\n");
-		char *last = rep.log_info;
-		/* Print only the last line. Otherwise tplogit may truncate the output. */
-		while (p != NULL && (p=strtok(NULL,"\n")) != NULL ) last = p; 
-		if ( last != NULL && *last != '\0' ) {
-			sprintf(msg,TP041,action, cur_vid, cur_unm, last);
-			usrmsg(func,"%s\n",msg); 
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
-                                            "func",    TL_MSG_PARAM_STR, func,
-                                            "action",  TL_MSG_PARAM_STR, action,
-                                            "cur_vid", TL_MSG_PARAM_STR, cur_vid,
-                                            "Drive",   TL_MSG_PARAM_STR, cur_unm,
-                                            "last",    TL_MSG_PARAM_STR, last );
-		}
-	}
-	if ( rep.log_info != NULL && rep.log_info_l ) free(rep.log_info);
-	RETURN(rep.status);
-}
-
-int dmcdismount(char *vid,
-                char *unm,
-                char *loader,
-                unsigned int force)
-{
-	DMCrequest_t req;
-	DMCreply_t rep;
-	char func[16];
-	int s,rc;
-
-	ENTRY(dmcdismount);
-	memset(&req,'\0',sizeof(DMCrequest_t));
-	memset(&rep,'\0',sizeof(DMCreply_t));
-	req.reqtype = DMC_UNMOUNT;
-	req.jid = getpid();
-	if ( !force ) strcpy(req.vid,vid);
-	strcpy(req.loader,loader);
-	strcat(req.loader,",");
-	strcat(req.loader,unm);
-	tplogit(func,"vol_id = %s drive_id = %s %s\n",req.vid,req.loader,force ? "force" : "");
-        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 4,
-                            "func",     TL_MSG_PARAM_STR, func,
-                            "vol_id",   TL_MSG_PARAM_STR, req.vid,
-                            "drive_id", TL_MSG_PARAM_STR, req.loader,
-                            "Message",  TL_MSG_PARAM_STR, force ? "force" : "" );
-	rc = send2dmc(&s,&req);
-	if ( rc ) RETURN(rc);
-	rc = fromdmc(&s,&rep);
-	if ( rc ) RETURN(rc);
-	if ( rep.log_info != NULL && rep.status && rep.log_info_l ) {
-		char *p = strtok(rep.log_info,"\n");
-		char *last = rep.log_info;
-		/* Print only the last line. Otherwise tplogit may truncate the output. */
-		while (p != NULL && (p=strtok(NULL,"\n")) != NULL ) last = p; 
-		if ( last != NULL && *last != '\0' ) {
-			sprintf(msg, TP041, action, cur_vid, cur_unm, last);
-			usrmsg(func,"%s\n",msg);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
-                                            "func",    TL_MSG_PARAM_STR, func,
-                                            "action",  TL_MSG_PARAM_STR, action,
-                                            "cur_vid", TL_MSG_PARAM_STR, cur_vid,
-                                            "Drive",   TL_MSG_PARAM_STR, cur_unm,
-                                            "last",    TL_MSG_PARAM_STR, last );
-		}
-	}
-	if ( rep.log_info != NULL && rep.log_info_l ) free(rep.log_info);
-	RETURN(rep.status);
-}
-int send2dmc(int *sock,
-             DMCrequest_t *req)
-{
-	struct hostent *hp;
-	struct sockaddr_in sin;
-	int s,j;
-	char *p;
-	char *dmc_host;
-	char func[16];
-	int dmc_port = DMC_PORT;
-
-	ENTRY(send2dmc);
-	req->magic = C_MAGIC;
-	req->jid = getpid();
-	req->cartridge_side = 1;
-	dmc_host = NULL;
-	if ( (p = getenv("DMC_HOST")) == NULL ) {
-		if ( (p = getconfent("DMC","HOST",0)) == NULL ) {
-			dmc_host = (char *)malloc(strlen(DMC_HOST)+1);
-			strcpy(dmc_host,DMC_HOST);
-		}
-	}
-	if ( dmc_host == NULL ) {
-		dmc_host = (char *)malloc(strlen(p)+1);
-		strcpy(dmc_host,p);
-	}
-	if ( (p = getenv("DMC_PORT")) != NULL ) dmc_port = atoi(p);
-        memset(&sin, 0, sizeof(sin));
-	sin.sin_family = AF_INET;
-	if ( (hp = gethostbyname(dmc_host)) == NULL ) {
-		tplogit(func,"gethostbyname: %s\n",neterror());
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 3,
-                                    "func",    TL_MSG_PARAM_STR, func,
-                                    "Message", TL_MSG_PARAM_STR, "gethostbyname",
-                                    "Error",   TL_MSG_PARAM_STR, neterror() );
-		free(dmc_host);
-		RETURN(RBT_FAST_RETRY);
-	}
-	sin.sin_addr.s_addr = ((struct in_addr *)(hp->h_addr))->s_addr;
-	sin.sin_port = htons(dmc_port);
-	if ((s = socket(AF_INET,SOCK_STREAM,0)) == -1) {
-		tplogit(func,"socket: %s\n",neterror());
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 3,
-                                    "func",    TL_MSG_PARAM_STR, func,
-                                    "Message", TL_MSG_PARAM_STR, "socket",
-                                    "Error",   TL_MSG_PARAM_STR, neterror() );
-		free(dmc_host);
-		RETURN(RBT_FAST_RETRY);
-	}
-	if ( connect(s,(struct sockaddr *)&sin,sizeof(struct sockaddr_in)) == -1 ){
-		tplogit(func,"connect: %s\n",neterror());
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 3,
-                                    "func",    TL_MSG_PARAM_STR, func,
-                                    "Message", TL_MSG_PARAM_STR, "connect",
-                                    "Error",   TL_MSG_PARAM_STR, neterror() );
-		shutdown(s,2);
-		close(s);
-		free(dmc_host);
-		RETURN(RBT_FAST_RETRY);
-	}
-	req->magic = htonl(req->magic);
-	req->jid = htonl(req->jid);
-	req->reqtype = htonl(req->reqtype);
-	req->cartridge_side = htons(req->cartridge_side);
-	j = sizeof(DMCrequest_t);
-	if ( send(s,(char *)req,j,0) != j ) {
-		tplogit(func,"send: %s\n",neterror());
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 3,
-                                    "func",    TL_MSG_PARAM_STR, func,
-                                    "Message", TL_MSG_PARAM_STR, "send",
-                                    "Error",   TL_MSG_PARAM_STR, neterror() );
-		shutdown(s,2);
-		close(s);
-		free(dmc_host);
-		RETURN(RBT_FAST_RETRY);
-	}
-	free(dmc_host);
-	*sock = s;
-	RETURN(0);
-}
-
-int fromdmc(int *sock,
-            DMCreply_t *rep)
-{
-	int s = *sock;
-	int j,ntot;
-	char func[16];
-
-	ENTRY(fromdmc);
-	if ( (j = recv(s,(char *)rep,sizeof(DMCreply_t),0)) != sizeof(DMCreply_t) ) {
-		tplogit(func,"recv: %s\n",neterror());
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 3,
-                                    "func",    TL_MSG_PARAM_STR, func,
-                                    "Message", TL_MSG_PARAM_STR, "recv",
-                                    "Error",   TL_MSG_PARAM_STR, neterror() );
-		shutdown(s,2);
-		close(s);
-		RETURN(RBT_FAST_RETRY);
-	}
-	rep->magic = ntohl(rep->magic);
-	rep->status = ntohl(rep->status);
-	rep->log_info_l = ntohl(rep->log_info_l);
-	if ( rep->log_info_l ) {
-		rep->log_info = (char *)malloc(sizeof(char)*(rep->log_info_l+1));
-		memset(rep->log_info,'\0',sizeof(char)*rep->log_info_l+1);
-		ntot = 0;
-		do {
-			if ( (j = recv(s,(char *)&rep->log_info[ntot],rep->log_info_l-ntot,0)) < 0 ) {
-	tplogit(func,"recv: %s\n",neterror());
-        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 3,
-                            "func",    TL_MSG_PARAM_STR, func,
-                            "Message", TL_MSG_PARAM_STR, "recv",
-                            "Error",   TL_MSG_PARAM_STR, neterror() );
-	free(rep->log_info);
-	shutdown(s,2);
-	close(s);
-	RETURN(RBT_FAST_RETRY);
-			}
-			ntot+=j;
-		} while (ntot < rep->log_info_l);
-	}
-	shutdown(s,2);
-	close(s);
-	if ( rep->magic != S_MAGIC ) {
-		tplogit(func,"Wrong magic number (0x%x) from DMC server. Should be 0x%x\n",rep->magic,S_MAGIC);
-                {
-                        char cur[16], exp[16];
-                        sprintf( cur, "0x%x", rep->magic );
-                        sprintf( exp, "0x%x", S_MAGIC );
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 4,
-                                            "func",     TL_MSG_PARAM_STR, func,
-                                            "Message",  TL_MSG_PARAM_STR, "Wrong magic number from DMC server",
-                                            "Current",  TL_MSG_PARAM_STR, cur,
-                                            "Expected", TL_MSG_PARAM_STR, exp );
-                }
-		if ( rep->log_info_l ) free(rep->log_info);
-		RETURN(RBT_NORETRY);
-	}
-	RETURN(0);
-}
 
 static int drvord;
 static int got_robot_info = 0;
@@ -948,7 +621,7 @@ static char rmc_errbuf[256];
 static char smc_ldr[CA_MAXRBTNAMELEN+6];
 static struct robot_info robot_info;
 
-int opensmc(char *loader)
+static int opensmc(char *loader)
 {
 	int c;
 	char *dp;
@@ -1031,7 +704,7 @@ int opensmc(char *loader)
 	RETURN (0);
 }
 
-int smcmount(char *vid,
+static int smcmount(char *vid,
              int side,
              char *loader)
 {
@@ -1311,10 +984,10 @@ int smcmount(char *vid,
 	RETURN (0);
 }
 
-int smcdismount(char *vid,
-                char *loader,
-                int force,
-                int vsnretry)
+static int smcdismount(char *vid,
+        char *loader,
+        int force,
+        int vsnretry)
 {
 	struct smc_element_info element_info;
 	char func[16];
