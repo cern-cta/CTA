@@ -149,16 +149,10 @@ or
 .B down
 .TP
 robot/manual
-if the drive is defined as part of a
-.BR robot ,
-there will be no check on the ring status. This field may also be set to
-.BI lmcp xxxx
-(Library Manager Control Point as defined in /dev)
-if the IBM 3494/3495 robot is driven directly from an RS 6000,
+This field may be set to
 .BI acs a,l,p,d [,noro]
-for an STK robot driven by ACSLS ("noro" disables the use of the acs_mount read-only flag, when mounting tapes for reading; This is useful for the L700 library that does not support this flag),
-.BI R x
-for a SONY DMS-24 or
+for an STK robot driven by ACSLS ("noro" disables the use of the acs_mount read-only flag, when mounting tapes for reading; This is useful for the L700 library that does not support this flag).
+This field may also be set to
 .BI smc x,d
 for a SCSI robot (
 .BI smc x
