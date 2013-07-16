@@ -1,4 +1,4 @@
 /usr/sbin/groupadd -g 1474 st > /dev/null 2>&1 || :
-/usr/sbin/useradd -M -o -d /afs/cern.ch/user/s/stage -s /bin/tcsh -c "Stager Staging System" -u 14029 -g 1474 stage > /dev/null 2>&1 || :
+/usr/sbin/useradd -s /bin/nologin -c "Stager Staging System" -u 14029 -g 1474 stage > /dev/null 2>&1 || :
 /sbin/chkconfig --add rtcpd
 /sbin/service rtcpd condrestart > /dev/null 2>&1 || :
