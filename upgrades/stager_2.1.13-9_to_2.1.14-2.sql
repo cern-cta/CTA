@@ -507,22 +507,23 @@ DROP PROCEDURE startDraining;
 DROP PROCEDURE stopDraining;
 DROP PROCEDURE cancelRecall;
 
+CREATE INDEX I_FileMigResultsHelper_ReqId ON FileMigrationResultsHelper(ReqId);
 
 /* PL/SQL code revalidation */
 /****************************/
 
-@castor/db/oracleCommon.sql
-@castor/db/oraclePerm.sql
-@castor/db/oracleRepack.sql
-@castor/db/oracleStager.sql
-@castor/db/oracleJob.sql
-@castor/db/oracleQuery.sql
-@castor/db/oracleTapeGateway.sql
-@castor/db/oracleGC.sql
-@castor/db/oracleDrain.sql
-@castor/db/oracleDebug.sql
-@castor/db/oracleMonitoring.sql
-@castor/db/oracleRH.sql
+@../castor/db/oracleCommon.sql
+@../castor/db/oraclePerm.sql
+@../castor/db/oracleRepack.sql
+@../castor/db/oracleStager.sql
+@../castor/db/oracleJob.sql
+@../castor/db/oracleQuery.sql
+@../castor/db/oracleTapeGateway.sql
+@../castor/db/oracleGC.sql
+@../castor/db/oracleDrain.sql
+@../castor/db/oracleDebug.sql
+@../castor/db/oracleMonitoring.sql
+@../castor/db/oracleRH.sql
 
 
 /* Recompile all invalid procedures, triggers and functions */
