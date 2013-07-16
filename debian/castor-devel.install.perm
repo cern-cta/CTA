@@ -39,7 +39,6 @@
 %attr(0644,root,root) usr/include/shift/RfioTURL.h
 %attr(0644,root,root) usr/include/shift/common.h
 %attr(0644,root,root) usr/include/shift/dlf_api.h
-%attr(0644,root,root) usr/include/shift/dmc.h
 %attr(0644,root,root) usr/include/shift/getacct.h
 %attr(0644,root,root) usr/include/shift/getacctent.h
 %attr(0644,root,root) usr/include/shift/getconfent.h

@@ -1616,8 +1616,6 @@ egrep -v 'HPP|MAX|IMPORT|EXPORT|VALID_PORT|EMONBASEOFF' > ports.txt
 ./h/rfio_constants.h:#define SRFIO_PORT 5501
 ./h/Cupv_constants.h:#define SCUPV_PORT 5520
 ./h/Cupv_constants.h:#define CUPV_PORT 56013
-./h/dmc.h:#define DMC_PORT 8888
-./h/dmc.h:#define DMC_OP_PORT 8889
 ./h/vmgr_constants.h:#define SVMGR_PORT 5513
 ./h/vmgr_constants.h:#define VMGR_PORT 5013
 ./h/rtcpcld_constants.h:#define RTCPCLD_NOTIFY_PORT (5050)     /* rtcpclientd
