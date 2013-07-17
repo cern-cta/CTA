@@ -3,6 +3,16 @@
 
 The Tape server project is targeted at replacing the CASTOR tape server with a new drop-{}in reimplementation. The reimplementation will replace a legacy implementation that is written in C.
 
+The reimplementation will be done using the latest tools available to us in the current Scientific Linux distribution. The language will be C++, to group concept and variables in self-contained
+(and unit testable) objects.
+
+The interface to the mounting deamons might still change with repect to castor 2.1.14 as the mounting daemons are being reviewed in parallel.
+
+This documentation itself currently references the older tape server this project is intending to replace. The references will have to be removed as they become unnecessary. 
+Likewise, the layout of the document will be adapted.
+
+The initial focus is to provide access to the tape drive primitives, so the current version of this documentation is limited to this subject.
+
 % ------- 
 % Chapter 
 % ------- 
@@ -23,37 +33,43 @@ The SCSI commands can be found in the SCSI section of hackipedia:
  and the SCSI primary commands
     \href{http://hackipedia.org/Hardware/SCSI/Primary%20Commands/SCSI%20Primary%20Commands%20-%204.pdf}
       {http://hackipedia.org/Hardware/SCSI/Primary Commands/SCSI Primary Commands - 4.pdf}.
+      \footnote{The official site for SCSI standard is \href{http://T10.org}{http://T10.org}. All specifications
+      can be found there in their approved version, but behind a paywall. Nevertheless all previous drafts were
+      public and can conveniently be found on the web. Hackipedia hold a very nice collection of such
+      documentations.}
 
 \subsection{SCSI support in Linux}
 On the Linux side, the main references are the Linux 2.4 SCSI subsystem HOWTO
 \href{http://mirrors.kernel.org/LDP/HOWTO/pdf/SCSI-2.4-HOWTO.pdf}{http://mirrors.kernel.org/LDP/HOWTO/pdf/SCSI-2.4-HOWTO.pdf},
 especially for is section 9.3 on the st driver,
 and the Linux SCSI Generic (sg) HOWTO 
- \href{http://mirrors.kernel.org/LDP/HOWTO/pdf/SCSI-Generic-HOWTO.pdf}{http://mirrors.kernel.org/LDP/HOWTO/pdf/SCSI-Generic-HOWTO.pdf}.
+ \href{http://mirrors.kernel.org/LDP/HOWTO/pdf/SCSI-Generic-HOWTO.pdf}{http://mirrors.kernel.org/LDP/HOWTO/pdf/SCSI-Generic-HOWTO.pdf}. 
 
 More details regarding the Generic SCSI driver can be found in this web site: 
 \href{http://sg.danny.cz/sg/}{http://sg.danny.cz/sg/}.
 
-The section on the SG\_IO ioctl, \href{sg.danny.cz/sg/sg\_io.html}{sg.danny.cz/sg/sg\_io.html} details the usage of the 
+The section on the SG\_IO ioctl, \href{http://sg.danny.cz/sg/sg\_io.html}{http://sg.danny.cz/sg/sg\_io.html} details the usage of the 
 simplest ioctl for the generic SCSI driver, which allows the invocation of a SCSI command and the collection of the 
 result in a single system call.
 
-This ioctl is provided in the middle layer of the SCSI subsystem of Linux. In practice for us, it means that this 
-ioctl is available also to the st driver device files. That means there is no need to open the matching generic SCSI.
+This ioctl is provided in the middle layer of the SCSI subsystem of Linux. All SCSI drivers, including st, fall back
+to the middle layer when encountering an unknown ioctl. This means there is no need to open the matching generic SCSI,
+unless we want to control command queueing with separate sending of commands and result collection.
 
 \subsection{Unsorted CASTOR docs}
 There is a collection of links to various documentations written in the past on this page:
 \href{http://castorwww.web.cern.ch/castorwww/links.htm}{http://castorwww.web.cern.ch/castorwww/links.htm}.
 
 \section{Tools used during development}
-\subsection{ Required tools for build}
+\subsection{Required tools for build}
 \begin{itemize}
-\item{}mhvtl (\href{https://sites.google.com/site/linuxvtl2/}{https://sites.google.com/site/linuxvtl2/}) for developing against virtual drives and libraries.
 \item{}GCC/G++ (Basic SLC version)
 \item{}CMake (Basic SLC version)
 \item{}rpmbuild (Basic SLC version)
 \item{}Google Mock/Google test (GTest is provided in EPEL repository for SLC. 
-  GMock requires recompilation (TODO: link to source)
+  GMock requires recompilation. The source RPMs can be found for newer versions of RPM based distributions, for example from rpmfind: 
+  \href{http://rpmfind.net/linux/rpm2html/search.php?query=gmock}{http://rpmfind.net/linux/rpm2html/search.php?query=gmock}. For convenience, 
+  they are also available here as a temporary solution: \href{file:///afs/cern.ch/user/c/canoc3/public/GoogleTest-Mock}{/afs/cern.ch/user/c/canoc3/public/GoogleTest-Mock}
 \item{}Valgrind (Basic SLC version)
 \item{}\LaTeX (Basic SLC version) to compile this document
 \item{}Doxygen for code documentation (Basic SLC version)
@@ -61,11 +77,20 @@ There is a collection of links to various documentations written in the past on 
 
 \subsection{Tools used during development}
 \begin{itemize}
+\item{}mhvtl (\href{https://sites.google.com/site/linuxvtl2/}{https://sites.google.com/site/linuxvtl2/}) for developing against virtual drives and libraries.
 \item{}TeamCity for continuous integration
 \item{}NetBeans as an IDE, including for remote development\
 \end{itemize}
 
 \section{Software layout}
+
+\subsection{SCSI structures}
+
+TODO: describe bit fields structures.
+
+\subsection{SCSI constants}
+
+TODO: broad description.
 
 \subsection{The Tape::Drive object}
 
@@ -75,11 +100,12 @@ file structure layer.
 
 It will provide as much data safety as possible by blocking writes in situations
 where they are not safe (to be defined in details, but the most obvious is right
-after positioning, as we should double check where we are before writing).
+after positioning, as the file layer is expected to check the position by reading
+the trailer of the previous file before writing.
 
 The SCSI commands and st driver's functions used in previous software (CASTOR's taped/rtcpd) are:
 \begin{itemize}
-\item Individual SCSI commands sent using generic SCSI.
+\item Individual SCSI commands sent using generic SCSI:
   \begin{itemize}
     \item Read status (inquiry SCSI command in ????)
     \item Read serial number (inquiry SCSI command, asking for vital product data page 0x80)
@@ -98,18 +124,24 @@ The SCSI commands and st driver's functions used in previous software (CASTOR's 
     \item Log sense for page 0x2E (???) on all modern tape drives to detect tape alerts (TBD, see SSC-3).
     \item
   \end{itemize}
-\item st driver's commands, leading to internal variables setting or SCSI actions
+\item st driver's commands, leading to internal variables setting or SCSI actions:
   \begin{itemize}
     \item Get internal driver state via the MTIOGET ioctl (for drivre ready, write protection, 
           get some error condition, when MTIOSENSE failed, to get the EOD, BOT bits (readlbl)).
     \item Try and get the sense data for the last-ish command with MTIOSENSE. This can
           relies on a CERN-made patch.
-    \item Setup the driver's buffers (MTIOCTOP/MTSETDRVBUFFER) for setting on or off 
-          buffered writes and asynchronous writes (in confdrive, a child of taped).
+    \item Setup the driver's parameters (MTIOCTOP/MTSETDRVBUFFER) for (un)buffered 
+          writes and asynchronous writes (in confdrive, a child of taped).
+          TODO: check underlying.
     \item Jump to end of media (before rewinding, as a mean to rebuild the MIR) (MTIOCTOP/MTEOM, 
-          with some MTIOCTOP/MTSETDRVBUFFER before, in repairbadmir). TODO: find undelying SCSI.
+          with some MTIOCTOP/MTSETDRVBUFFER before, in repairbadmir). The setting of the driver
+          buffer is used to set the boolean flag MT\_ST\_FAST\_MTEOM to 0. If not, the mt driver uses
+          a nasty trick asks the device to skip 0x7fffff files forward. The comment in the CASTor code
+          claims it's 32k files, but $2^{23}-1$ is indeed 8M files. Anyway, after turning off the 
+          option, the st driver reverts to telling the SCSI device to space to end of data.
+          TODO: find why fast forward followed by rewind rebuilds the MIR.
     \item Rewind (MTIOCTOP/MTREW, in rwndtape).
-    \item Skip to end of data (MTIOCTOP/MTEOM, in skip2eod, without the trick of repairbadmir).
+    \item Skip to \item Skip to end of data (MTIOCTOP/MTEOM, in skip2eod, without the trick of repairbadmir).
     \item Skip n files backwards (MTIOCTOP/MTBSF, in skiptpfb).
     \item Skip n files forward (MTIOCTOP/MTFSF, in skiptpff).
     \item Skip n files forward (MTIOCTOP/MTFSF, in skiptpfff). skiptpfff and skiptpff differ only 
@@ -119,8 +151,9 @@ The SCSI commands and st driver's functions used in previous software (CASTOR's 
     \item Unload the tape (MTIOCTOP/MTOFFL, in unldtape).
     \item Write synchronous file mark(s) (tape marks in CASTOR jargon) (MTIOCTOP/MTWEOF, in wrttpmrk).
     \item Write immediate (asynchronous file marks (MTIOCTOP/MTWEOFI, also in wrttpmrk).
-    \item Clear the EOT condition by calling MTIOGET. This is done in wrttrllbl, 3 times. 
-          TODO: investigate the effect in st driver.
+    \item Clear the EOT condition by calling MTIOGET. This is done in wrttrllbl, 3 times.
+          In MTIOGET, indeed, a member of the scsi\_tape structure called recover\_reg is reset to 0.
+          This clearing is used to properly report errors in label wrinting functions.
     \item Write is used in 2 places only : twrite and writelbl (which is a specialized 
           function to write 80 bytes blocks). twrite is not checking the size of blocks,
           which is determined in the calling functions.
@@ -141,4 +174,5 @@ namespace Tape {
 } // namespace Tape
 \end{lstlisting}
 
-
+\subsection{Exceptions hierarchy}
+TODO: std::exeception inheritance, Errno/strerror wrapper, automatic stack trace.
