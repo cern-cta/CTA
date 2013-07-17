@@ -75,7 +75,7 @@ END;
 /******************/
 
 -- First update constants
-@oracleConstants.sql
+@../castor/db/oracleConstants.sql
 
 -- Drop the I_SubRequest_CT_ID index in case it was not dropped when deploying 2.1.13-6.
 -- See SR #133974 for more details.
@@ -94,7 +94,9 @@ DROP INDEX I_DiskCopy_Status_7;
 CREATE INDEX I_DiskCopy_Status_7_FS ON DiskCopy (decode(status,7,status,NULL), fileSystem);
 
 /* new rating of filesystems */
-CREATE OR REPLACE FUNCTION fileSystemRate(nbReadStreams IN NUMBER, nbWriteStreams IN NUMBER)
+CREATE OR REPLACE FUNCTION fileSystemRate
+(nbReadStreams IN NUMBER,
+ nbWriteStreams IN NUMBER)
 RETURN NUMBER DETERMINISTIC IS
 BEGIN
   RETURN - nbReadStreams - nbWriteStreams;
@@ -104,6 +106,40 @@ END;
 /* change index on filesystem rating. */
 DROP INDEX I_FileSystem_Rate;
 CREATE INDEX I_FileSystem_Rate ON FileSystem(fileSystemRate(nbReadStreams, nbWriteStreams));
+
+/* we need to revalidate this procedure early otherwise, the dropping of columns in the
+  DiskServer table in the next statement will fail as it won't be able to revalidate the
+  tr_DiskServer_Update trigger that is using checkFSBackInProd */
+CREATE OR REPLACE
+PROCEDURE checkFSBackInProd(fsId NUMBER) AS
+BEGIN
+  -- Flag the filesystem for processing in a bulk operation later.
+  -- We need to do this because some operations are database intensive
+  -- and therefore it is often better to process several filesystems
+  -- simultaneous with one query as opposed to one by one. Especially
+  -- where full table scans are involved.
+  UPDATE FileSystemsToCheck SET toBeChecked = 1
+   WHERE fileSystem = fsId;
+  -- Look for files that are STAGEOUT on the filesystem coming back to life
+  -- but already VALID/WAITFS/STAGEOUT/
+  -- WAITFS_SCHEDULING somewhere else
+  FOR cf IN (SELECT /*+ USE_NL(D E) INDEX(D I_DiskCopy_Status6) */
+                    UNIQUE D.castorfile, D.id dcId
+               FROM DiskCopy D, DiskCopy E
+              WHERE D.castorfile = E.castorfile
+                AND D.fileSystem = fsId
+                AND E.fileSystem != fsId
+                AND decode(D.status,6,D.status,NULL) = dconst.DISKCOPY_STAGEOUT
+                AND E.status IN (dconst.DISKCOPY_VALID,
+                                 dconst.DISKCOPY_WAITFS, dconst.DISKCOPY_STAGEOUT,
+                                 dconst.DISKCOPY_WAITFS_SCHEDULING)) LOOP
+    -- Invalidate the DiskCopy
+    UPDATE DiskCopy
+       SET status = dconst.DISKCOPY_INVALID
+     WHERE id = cf.dcId;
+  END LOOP;
+END;
+/
 
 /* amend FileSystem and DiskServer tables */
 ALTER TABLE FileSystem DROP (minFreeSpace, readRate, writeRate, nbReadWriteStreams);
@@ -198,6 +234,8 @@ CREATE INDEX I_DC_status ON DiskCopy(status);
 
 DECLARE
   srIds "numList";
+  srId INTEGER;
+  dcId INTEGER;
 BEGIN
   -- merge STAGED and CANBEMIGR
   FOR cf IN (SELECT unique castorFile, status, nbCopies
@@ -219,16 +257,27 @@ BEGIN
   -- invalidate all FAILED diskcopies on disk so that they're properly garbage collected
   UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
    WHERE status = dconst.DISKCOPY_FAILED AND fileSystem != 0;
-  -- drop all existing WAITDISK2DISKCOPY DiskCopies and fail corresponding requests
-  DELETE FROM DiskCopy WHERE status = dconst.DISKCOPY_WAITDISK2DISKCOPY
-  RETURNING subrequest BULK COLLECT INTO srIds;
-  FORALL i IN srIds.FIRST .. srIds.LAST
-    archiveSubReq(srIds(i), dconst.SUBREQUEST_FAILED_FINISHED);
+  COMMIT;
+
+  -- drop all disk to disk copy activity. Note that StageDiskCopyReplicaRequests are
+  -- dropped with the table itself
+  FOR req IN (SELECT client, id FROM StageDiskCopyReplicaRequest) LOOP
+    DELETE FROM Client WHERE id = req.client;
+    SELECT id, diskCopy INTO srId, dcId FROM SubRequest WHERE request = req.id;
+    DELETE FROM DiskCopy WHERE id = dcId;
+    UPDATE SubRequest SET status = dconst.SUBREQUEST_RESTART, parent = NULL
+     WHERE parent = srId AND status = dconst.SUBREQUEST_WAITSUBREQ;
+    DELETE FROM SubRequest WHERE id = srId;
+  END LOOP;
+  COMMIT;
+
   -- fail any remaining pending subrequest
   SELECT id BULK COLLECT INTO srIds FROM SubRequest
    WHERE status IN (dconst.SUBREQUEST_READY, dconst.SUBREQUEST_WAITSUBREQ);
-  FORALL i IN srIds.FIRST .. srIds.LAST
+  FOR i IN 1 .. srIds.COUNT LOOP
      archiveSubReq(srIds(i), dconst.SUBREQUEST_FAILED_FINISHED);
+  END LOOP;
+  COMMIT;
 END;
 /
 
@@ -260,10 +309,11 @@ END;
 DROP INDEX I_CF_OpenTimeNull;
 
 ALTER TABLE CastorFile MODIFY (nsOpenTime CONSTRAINT NN_CastorFile_NsOpenTime NOT NULL);
-
+ALTER TABLE SvcClass DROP (recallerPolicy);
 
 ALTER TABLE StageRepackRequest ADD (fileCount INTEGER, totalSize INTEGER);
-UPDATE StageRepackRequest SET fileCount = 0, totalSize = 0;  -- those figures are only used for statistical purposes, assume no need to compute them for existing requests
+-- those figures are only used for statistical purposes, assume no need to compute them for existing requests
+UPDATE StageRepackRequest SET fileCount = 0, totalSize = 0;
 ALTER TABLE StageRepackRequest MODIFY (fileCount CONSTRAINT NN_StageRepackReq_fileCount NOT NULL, totalSize CONSTRAINT NN_StageRepackReq_totalSize NOT NULL, status CONSTRAINT NN_StageRepackReq_status NOT NULL, repackVid CONSTRAINT NN_StageRepackReq_repackVid NOT NULL);
 
 DROP TRIGGER tr_DiskCopy_Online;
@@ -321,6 +371,9 @@ ALTER TABLE StageRepackRequest
 ALTER TABLE CastorFile
   ADD CONSTRAINT CK_CastorFile_TapeStatus
   CHECK (tapeStatus IN (0, 1, 2));
+
+ALTER TABLE FileClass MODIFY (name CONSTRAINT NN_FileClass_Name NOT NULL);
+ALTER TABLE FileClass MODIFY (classId CONSTRAINT NN_FileClass_ClassId NOT NULL);
 
 /* Creation of the DrainingJob table
  *   - id : unique identifier of the DrainingJob
@@ -455,7 +508,7 @@ INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE INDEX I_Disk2DiskCopyJob_Tid ON Disk2DiskCopyJob(transferId);
 CREATE INDEX I_Disk2DiskCopyJob_CfId ON Disk2DiskCopyJob(CastorFile);
 CREATE INDEX I_Disk2DiskCopyJob_CT_Id ON Disk2DiskCopyJob(creationTime, id);
-CREATE INDEX I_Disk2DiskCopyJob_drainingJob ON Disk2DiskCopyJob(drainingJob);
+CREATE INDEX I_Disk2DiskCopyJob_drainJob ON Disk2DiskCopyJob(drainingJob);
 CREATE INDEX I_Disk2DiskCopyJob_SC_type ON Disk2DiskCopyJob(destSvcClass, replicationType);
 BEGIN
   -- PENDING status is when a Disk2DiskCopyJob is created
@@ -505,7 +558,13 @@ DROP PROCEDURE removeFailedDrainingTransfers;
 DROP PROCEDURE drainFileSystem;
 DROP PROCEDURE startDraining;
 DROP PROCEDURE stopDraining;
-DROP PROCEDURE cancelRecall;
+DROP VIEW DrainingFailures;
+DROP VIEW DrainingOverview;
+DROP FUNCTION getInterval;
+DROP FUNCTION getTimeString;
+DROP FUNCTION sizeOfFmtSI;
+DROP PROCEDURE insertD2dRequest;
+DROP PROCEDURE storeClusterStatus;
 
 CREATE INDEX I_FileMigResultsHelper_ReqId ON FileMigrationResultsHelper(ReqId);
 
