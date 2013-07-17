@@ -82,8 +82,6 @@ int rbtmount (char *vid,
 {
 	char func[16];
 
-	if (*loader == 'r')
-		return (0);
 	strcpy (action, "mount");
 	strcpy (cur_unm, unm);
 	strcpy (cur_vid, vid);
@@ -122,8 +120,6 @@ int rbtdemount (char *vid,
 {
 	char func[16];
 
-	if (*loader == 'r')
-		return (0);
 	strcpy (action, "demount");
 	strcpy (cur_unm, unm);
 	strcpy (cur_vid, vid);
