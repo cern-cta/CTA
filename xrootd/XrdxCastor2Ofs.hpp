@@ -26,6 +26,7 @@
 #define __XCASTOR_OFS_HH__
 
 /*-----------------------------------------------------------------------------*/
+#include <map>
 #include "pwd.h"
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -44,6 +45,14 @@
 #include "XrdxCastorLogging.hpp"
 #include "XrdTransferManager.hpp"
 /*-----------------------------------------------------------------------------*/
+
+
+//! TpcInfo structure containing informationn about a third-party transfer
+struct TpcInfo
+{
+  std::string path;  ///< castor lfn path
+  time_t expire;     ///< time when entry was created
+};
 
 
 //------------------------------------------------------------------------------
@@ -273,7 +282,7 @@ class XrdxCastor2OfsFile : public XrdOfsFile, public LogId
     XrdOucString     DiskChecksum;   ///<
     XrdOucString     DiskChecksumAlgorithm; ///<
     bool             verifyChecksum; ///<
-
+    std::string      mTpcKey;        ///< tpc key allocated to this file
 };
 
 
@@ -477,7 +486,11 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
     XrdOucString        ThirdPartyCopyStateDirectory; ///< default from Configure
     int                 mLogLevel; ///< log level from configuration file
 
+    XrdSysMutex mTpcMapMutex;  ///< mutex to protect access to the TPC map
+    std::map<std::string, struct TpcInfo> mTpcMap;  ///< TPC map of kety to lfn 
+
   private:
+
 
     vecString procUsers;   ///< vector of users ( reduced tidents <user>@host 
                            ///< which can write into /proc )

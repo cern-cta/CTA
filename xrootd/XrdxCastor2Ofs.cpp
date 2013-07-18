@@ -503,6 +503,7 @@ XrdxCastor2OfsFile::XrdxCastor2OfsFile( const char* user, int MonID ) :
   isRW = false;
   isTruncate = false;
   viaDestructor = false;
+  mTpcKey = "";
 }
 
 
@@ -551,7 +552,7 @@ XrdxCastor2OfsFile::open( const char*         path,
   XrdOucString newopaque = opaque;
 
   // If there is explicit user opaque information we find two ?, 
-  //so we just replace it with a seperator.
+  // so we just replace it with a seperator.
   newopaque.replace( "?", "&" );
   newopaque.replace( "&&", "&" );
 
@@ -571,7 +572,7 @@ XrdxCastor2OfsFile::open( const char*         path,
     newopaque.erase( firstpos, lastpos - 2 - firstpos );
   }
 
-  //Erase the tried parameter from the opaque information
+  // Erase the tried parameter from the opaque information
   int tried_pos = newopaque.find( "tried=" );
   int amp_pos = newopaque.find ( '&', tried_pos );
 
@@ -584,7 +585,7 @@ XrdxCastor2OfsFile::open( const char*         path,
     firstWrite = false;
   }
 
-  // This prevents 'clever' users faking internal opaque information
+  // This prevents 'clever' users from faking internal opaque information
   newopaque.replace( "ofsgranted=", "notgranted=" );
   newopaque.replace( "source=", "nosource=" );
   envOpaque = new XrdOucEnv( newopaque.c_str() );
@@ -605,7 +606,6 @@ XrdxCastor2OfsFile::open( const char*         path,
       newopaque += "&target=";
     }
 
-    newopaque += "&target=";
     newopaque += newpath.c_str();
   }
 
@@ -711,6 +711,73 @@ XrdxCastor2OfsFile::open( const char*         path,
     // We have to open the rerooted proc path!
     int rc = XrdOfsFile::open( prependedspath.c_str(), open_mode, create_mode, client, newopaque.c_str() );
     return rc;
+  }
+
+  // Deal with native TPC transfers which are passed directly to the OFS layer 
+  if (newopaque.find("tpc.dst") != STR_NPOS)
+  {
+    // This is a source TPC file and we just received the second open reuqest from the initiator.
+    // We save the mapping between the tpc.key and the castor lfn for future open requests from 
+    // the destination of the TPC transfer.
+    if ((val = envOpaque->Get("tpc.key")))
+    {    
+      mTpcKey = val;
+      struct TpcInfo transfer = (struct TpcInfo) { std::string(newpath.c_str()), time(NULL) };
+      XrdxCastor2OfsFS.mTpcMapMutex.Lock();     // -->
+      std::pair< std::map<std::string, struct TpcInfo>::iterator, bool> pair =
+        XrdxCastor2OfsFS.mTpcMap.insert(std::make_pair(mTpcKey, transfer));
+      
+      if (pair.second == false)
+      {
+        xcastor_err("tpc.key:%s is already in the map", mTpcKey.c_str());
+        XrdxCastor2OfsFS.mTpcMap.erase(pair.first);
+        XrdxCastor2OfsFS.mTpcMapMutex.UnLock(); // <--
+        return XrdxCastor2OfsFS.Emsg( "open", error, EINVAL, 
+                                      "tpc.key already in the map for file:  ",
+                                      newpath.c_str() );
+      }
+      
+      XrdxCastor2OfsFS.mTpcMapMutex.UnLock();   // <--
+      int rc = XrdOfsFile::open( newpath.c_str(), open_mode, create_mode, client, newopaque.c_str() );
+      return rc;
+    }
+
+    xcastor_err("no tpc.key in the opaque information");
+    return XrdxCastor2OfsFS.Emsg( "open", error, ENOENT, 
+                                  "no tpc.key in the opaque info for file: ",
+                                  newpath.c_str() );
+  }
+  else if (newopaque.find("tpc.org") != STR_NPOS)
+  {
+    // This is a source TPC file and we just received the third open request which
+    // comes directly from the destination of the transfer. Here we need to retrieve
+    // the castor lfn from the map which we saved previously as the destination has 
+    // no knowledge of the castor mapping. 
+    if ((val = envOpaque->Get("tpc.key")))
+    {
+      std::string key = val;   
+      XrdxCastor2OfsFS.mTpcMapMutex.Lock();     // -->
+      std::map<std::string, struct TpcInfo>::iterator iter = XrdxCastor2OfsFS.mTpcMap.find(key);
+
+      if (iter != XrdxCastor2OfsFS.mTpcMap.end())
+      { 
+        std::string saved_lfn = iter->second.path;
+        XrdxCastor2OfsFS.mTpcMapMutex.UnLock(); // <--
+        int rc = XrdOfsFile::open(saved_lfn.c_str(), open_mode, create_mode, 
+                                  client, newopaque.c_str() );
+        return rc;
+      }
+
+      XrdxCastor2OfsFS.mTpcMapMutex.UnLock(); // <--
+      return XrdxCastor2OfsFS.Emsg( "open", error, EINVAL, 
+                                    "can not find tpc.key in map for file: ",
+                                    newpath.c_str() );
+    }
+   
+    xcastor_err("no tpc.key in the opaque information");
+    return XrdxCastor2OfsFS.Emsg( "open", error, ENOENT, 
+                                  "no tpc.key in the opaque info for file: ",
+                                  newpath.c_str() );
   }
 
   TIMING("PROCBLOCK", &opentiming);
@@ -963,6 +1030,32 @@ XrdxCastor2OfsFile::close()
 
   if ( IsClosed )
     return true;
+
+  // If this is a TPC transfer then we can drop the key from the map
+  if (mTpcKey != "")
+  {
+    xcastor_debug("drop from map tpc.key:%s", mTpcKey.c_str());
+    XrdSysMutexHelper lock(XrdxCastor2OfsFS.mTpcMapMutex);
+    XrdxCastor2OfsFS.mTpcMap.erase(mTpcKey);
+    mTpcKey = "";
+
+    // Remove keys which are older than one hour
+    std::map<std::string, struct TpcInfo>::iterator iter = XrdxCastor2OfsFS.mTpcMap.begin();
+    time_t now = time(NULL);
+    
+    while (iter != XrdxCastor2OfsFS.mTpcMap.end())
+    {
+      if (now - iter->second.expire > 3600)
+      {
+        xcastor_info("expire tpc.key:%s", iter->first.c_str());
+        XrdxCastor2OfsFS.mTpcMap.erase(iter++);
+      }
+      else 
+      {
+        ++iter;
+      }
+    }
+  }
 
   IsClosed = true;
   XrdOucString spath = FName();
@@ -1547,13 +1640,14 @@ XrdxCastor2Ofs2StagerJob::~XrdxCastor2Ofs2StagerJob()
 bool
 XrdxCastor2Ofs2StagerJob::Open()
 {
-  // If no port is specified then we don't inform anybode
+  // If no port is specified then we don't inform anybody
   if ( !Port )
     return true;
 
   Socket = new XrdNetSocket();
 
   if ( ( Socket->Open( "localhost", Port, 0, 0 ) ) < 0 ) {
+    xcastor_debug("can not open socket");
     return false;
   }
 
