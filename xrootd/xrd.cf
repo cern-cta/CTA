@@ -43,5 +43,8 @@ xcastor2.procuser root@localhost
 #xcastor2.thirdparty.slots 5
 #xcastor2.thirdparty.slotrate  25
 
+# Enable native third-party copy support using xrdcp
+ofs.tpc pgm /usr/bin/xrdcp -f --nopbar
+
 
 
