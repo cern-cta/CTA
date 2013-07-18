@@ -126,11 +126,12 @@
 
   [Features]
 
-     #99888 CM: replace rmmaster/rmnode infrastructure
+     #44802: command line interface to list/modify the CastorConfig table
 
   [Code Maintenance]
 
      #98774 Remove deadwood class DbRepackRequestCnv from SVN
+     #99888 CM: replace rmmaster/rmnode infrastructure
 
   CASTOR Stager
   -------------
@@ -195,6 +196,10 @@
      #101807 RFE: taped should only permit labelling tapes with the AUL label format
      #101868 RFE: Remove dead wood from rtcpc_BuildReq.c
      #101881 RFE: Remove unused stager DB reference from tape server code
+
+  [Code Maintenance]
+
+     #102044 RFE: Drop support for unused tape mounting systems
 
   CASTOR NS
   ---------
