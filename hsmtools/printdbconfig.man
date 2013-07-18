@@ -1,0 +1,74 @@
+.TH PRINTDBCONFIG 1 "2011" CASTOR "Prints out the CASTOR DB configuration"
+.SH NAME
+printdbconfig
+.SH SYNOPSIS
+.B printdbconfig
+[
+.BI -h
+]
+[
+.BI -x
+]
+
+.SH DESCRIPTION
+.B printdbconfig
+prints out content of the CASTOR DB configuration
+.LP
+.BI \-h,\ \-\-help
+Get usage information
+.LP
+.BI \-x,\ \-\-extra
+Prints description of the parameters on top of their values
+
+.SH EXAMPLES
+.nf
+.ft CW
+# printdbconfig
+     CLASS                         KEY         VALUE
+----------------------------------------------------
+DiskServer            HeartbeatTimeout           180
+   D2dCopy                MaxNbRetries             2
+ Migration               SizeThreshold     300000000
+ Migration                 MaxNbMounts             7
+   general                    instance lxcastordev01
+    stager                      nsHost        cnsdev
+   general                       owner  STAGER_DEV01
+  cleaning   terminatedRequestsTimeout           120
+  cleaning outOfDateStageOutDCsTimeout            72
+  cleaning            failedDCsTimeout            72
+    Repack                    Protocol          rfio
+    Repack      MaxNbConcurrentClients             3
+    Recall     MaxNbRetriesWithinMount             2
+    Recall                 MaxNbMounts             2
+
+# printdbconfig -x
+     CLASS                         KEY         VALUE DESCRIPTION
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+DiskServer            HeartbeatTimeout           180 The maximum amount of time in seconds that a diskserver can spend without sending any hearbeat before it is automatically set to disabled state.
+   D2dCopy                MaxNbRetries             2 The maximum number of retries for disk to disk copies before it is considered failed. Here 2 means we will do in total 3 attempts.
+ Migration               SizeThreshold     300000000 The threshold to consider a file "small" or "large" when routing it to tape
+ Migration                 MaxNbMounts             7 The maximum number of mounts for migrating a given file. When exceeded, the migration will be considered failed: the MigrationJob entry will be dropped and the corresponding diskcopy left in status CANBEMIGR. An operator intervention is required to resume the migration.
+   general                    instance lxcastordev01 Name of this Castor instance
+    stager                      nsHost        cnsdev The name of the name server host to set in the CastorFile table overriding the CNS/HOST option defined in castor.conf
+   general                       owner  STAGER_DEV01 The database owner of the schema
+  cleaning   terminatedRequestsTimeout           120 Maximum timeout for successful and failed requests in hours
+  cleaning outOfDateStageOutDCsTimeout            72 Timeout for STAGEOUT diskCopies in hours
+  cleaning            failedDCsTimeout            72 Timeout for failed diskCopies in hours
+    Repack                    Protocol          rfio The protocol that repack should use for writing files to disk
+    Repack      MaxNbConcurrentClients             3 The maximum number of repacks clients that are able to start or abort concurrently. This are either clients starting repacks or aborting running repacks. Providing that each of them will take a DB core, this number should not exceed ~50% of the number of cores of the stager DB server
+    Recall     MaxNbRetriesWithinMount             2 The maximum number of retries for recaling a file within the same tape mount. When exceeded, the recall may still be retried in another mount. See Recall/MaxNbMount entry
+    Recall                 MaxNbMounts             2 The maximum number of mounts for recaling a given file. When exceeded, the recall will be fail in no other tapecopy can be used. See also Recall/MaxNbRetriesWithinMount entry
+
+.SH NOTES
+This command requires database client access to the stager catalogue.
+Configuration for the database access is taken from castor.conf.
+
+.SH SEE ALSO
+.BR enterdiskpool
+.BR deletediskpool
+.BR printsvcclass
+.BR printdiskserver
+.BR adminMultiInstance
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

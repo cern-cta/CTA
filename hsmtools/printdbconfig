@@ -1,0 +1,87 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                      printdbconfig
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+
+'''command line printing the CASTOR database configuration'''
+
+import sys
+import getopt
+import castor_tools
+
+# usage function
+def usage(exitCode):
+    '''prints usage'''
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help]'
+    sys.exit(exitCode)
+
+# first parse the options
+try:
+    options, args = getopt.getopt(sys.argv[1:], 'hvx', ['help', 'verbose', 'extra'])
+except Exception, e:
+    print e
+    usage(1)
+verbose = False
+extra = False
+for f, v in options:
+    if f == '-h' or f == '--help':
+        usage(0)
+    elif f == '-v' or f == '--verbose':
+        verbose = True
+    elif f == '-x' or f == '--extra':
+        extra = True
+    else:
+        print "unknown option : " + f
+        usage(1)
+
+# Deal with arguments
+if len(args) != 0:
+    print 'Unexpected argument'
+    usage(1)
+
+try:
+    # connect to stager and prepare statements
+    stconn = castor_tools.connectToStager()
+    stcur = stconn.cursor()
+    sqlStatement = 'SELECT class, key, value, description FROM CastorConfig'
+    stcur.execute(sqlStatement)
+    # get results
+    rows = stcur.fetchall()
+    # loop over configs and print them
+    titles = ['CLASS', 'KEY', 'VALUE']
+    if extra:
+        titles.append('DESCRIPTION')
+    data = [row[0:len(titles)] for row in rows]
+    if extra:
+        castor_tools.prettyPrintTable(titles, data, lineFormat="%*s %*s %*s %-*s")
+    else:
+        castor_tools.prettyPrintTable(titles, data)
+    # close DB connections
+    try:
+        castor_tools.disconnectDB(stconn)
+    except Exception:
+        pass
+except Exception, e:
+    print e
+    if verbose:
+        import traceback
+        traceback.print_exc()
+    sys.exit(-1)

@@ -1,0 +1,83 @@
+.TH MODIFYDBCONFIG 1 "2011" CASTOR "Modifies out the CASTOR DB configuration"
+.SH NAME
+modifydbconfig
+.SH SYNOPSIS
+.B modifydbconfig
+[
+.BI -h
+]
+.BI <class>
+.BI <key>
+.BI <value>
+
+.SH DESCRIPTION
+.B modifydbconfig
+modifies an entry of the CASTOR DB configuration
+.LP
+.BI \-h,\ \-\-help
+Get usage information
+.LP
+.BI <class>
+The class of the DB entry
+.LP
+.BI <key>
+The key of the DB entry
+.LP
+.BI <value>
+The value of the DB entry
+
+.SH EXAMPLES
+.nf
+.ft CW
+# printdbconfig
+     CLASS                         KEY         VALUE
+----------------------------------------------------
+DiskServer            HeartbeatTimeout           180
+   D2dCopy                MaxNbRetries             2
+ Migration               SizeThreshold     300000000
+ Migration                 MaxNbMounts             7
+   general                    instance lxcastordev01
+    stager                      nsHost        cnsdev
+   general                       owner  STAGER_DEV01
+  cleaning   terminatedRequestsTimeout           120
+  cleaning outOfDateStageOutDCsTimeout            72
+  cleaning            failedDCsTimeout            72
+    Repack                    Protocol          rfio
+    Repack      MaxNbConcurrentClients             3
+    Recall     MaxNbRetriesWithinMount             2
+    Recall                 MaxNbMounts             2
+
+# modifydbconfig DiskServer HeartbeatTimeout 200
+DB config updated
+
+# printdbconfig
+     CLASS                         KEY         VALUE
+----------------------------------------------------
+DiskServer            HeartbeatTimeout           200
+   D2dCopy                MaxNbRetries             2
+ Migration               SizeThreshold     300000000
+ Migration                 MaxNbMounts             7
+   general                    instance lxcastordev01
+    stager                      nsHost        cnsdev
+   general                       owner  STAGER_DEV01
+  cleaning   terminatedRequestsTimeout           120
+  cleaning outOfDateStageOutDCsTimeout            72
+  cleaning            failedDCsTimeout            72
+    Repack                    Protocol          rfio
+    Repack      MaxNbConcurrentClients             3
+    Recall     MaxNbRetriesWithinMount             2
+    Recall                 MaxNbMounts             2
+
+.SH NOTES
+This command requires database client access to the stager catalogue.
+Configuration for the database access is taken from castor.conf.
+
+.SH SEE ALSO
+.BR enterdiskpool
+.BR deletediskpool
+.BR printsvcclass
+.BR printdiskserver
+.BR adminMultiInstance
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

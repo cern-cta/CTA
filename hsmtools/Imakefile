@@ -62,6 +62,9 @@ InstallTarget(modifydiskserver,755)
 InstallTarget(deletediskserver,755)
 InstallTarget(printdiskserver,755)
 
+InstallTarget(modifydbconfig,755)
+InstallTarget(printdbconfig,755)
+
 InstallTarget(fixFileSize,755)
 InstallTarget(deletediskcopy,755)
 InstallTarget(diskServer_qry,755)
@@ -120,6 +123,9 @@ EXEMANPAGE(printmigrationroute)
 EXEMANPAGE(modifydiskserver)
 EXEMANPAGE(deletediskserver)
 EXEMANPAGE(printdiskserver)
+
+EXEMANPAGE(modifydbconfig)
+EXEMANPAGE(printdbconfig)
 
 EXEMANPAGE(reclaim)
 EXEMANPAGE(deletediskcopy)

@@ -521,7 +521,7 @@ def _interleaveIter(it1, it2):
     ''' interleaves 2 iterables, e.g. (1,3), (2,4) -> (1,2,3,4)'''
     return tuple([item for pair in map(None, it1, it2) for item in pair])
 
-def prettyPrintTable(titles, data, hasSummary=False):
+def prettyPrintTable(titles, data, hasSummary=False, lineFormat=None):
     '''Prints the given data in a table form.
     data must be an iterable of lines, themselves iterable of values matching the title
     data will be printed using their str function'''
@@ -531,7 +531,8 @@ def prettyPrintTable(titles, data, hasSummary=False):
         if len(data[i]) != nbCols:
             raise ValueError, "Wrong number of data compared to title in row %d : %d/%d" % (i, len(data[i]), nbCols)
     widths = [max([len(titles[i])] + [len(str(row[i])) for row in data]) for i in range(nbCols)]
-    lineFormat = ('%*s ' * nbCols)[:-1]
+    if not lineFormat:
+        lineFormat = ('%*s ' * nbCols)[:-1]
     headerContent = _interleaveIter(widths, titles)
     headerWidth = sum(widths)+nbCols-1  # do not forget spaces
     print lineFormat % headerContent
