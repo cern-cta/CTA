@@ -38,6 +38,23 @@ The SCSI commands can be found in the SCSI section of hackipedia:
       public and can conveniently be found on the web. Hackipedia hold a very nice collection of such
       documentations.}
 
+\subsubsection{Manufacturer's specificities}
+\label{Manufacturer's specificities}
+The SCSI specification allows for some flexibility for the manufacturers of tape drives, and 
+each of them has differences in details. The detailed can be found in the following documentations:
+
+\begin{itemize}
+\item{}StorageTek\texttrademark T10000 Tape Drive \href{http://docs.oracle.com/cd/E19957-01/96174E/96174E.pdf}{http://docs.oracle.com/cd/E19957-01/96174E/96174E.pdf}
+\item{}Sun StorageTek\texttrademark T10000 Tape Drive Fibre Channel Interface Reference Manual
+       \href{http://docs.oracle.com/cd/E19772-01/MT9259L/MT9259L.pdf}{http://docs.oracle.com/cd/E19772-01/MT9259L/MT9259L.pdf}
+\item{}IBM System Storage TS1120 and TS1130 Tape Drives and TS1120 ControllerOperator Guide3592 Models J1A, E05, E06, EU6, J70 and C06
+       \href{ftp://ftp.software.ibm.com/storage/TS1130/a86opg02.pdf}{ftp://ftp.software.ibm.com/storage/TS1130/a86opg02.pdf}
+\item{}IBM System Storage Tape Drive 3592 SCSI Reference
+       \href{http://www-01.ibm.com/support/docview.wss?uid=ssg1S7003248\&aid=1}{http://www-01.ibm.com/support/docview.wss?uid=ssg1S7003248\&aid=1}
+\end{itemize}
+
+TODO: find LTO documentations.
+
 \subsection{SCSI support in Linux}
 On the Linux side, the main references are the Linux 2.4 SCSI subsystem HOWTO
 \href{http://mirrors.kernel.org/LDP/HOWTO/pdf/SCSI-2.4-HOWTO.pdf}{http://mirrors.kernel.org/LDP/HOWTO/pdf/SCSI-2.4-HOWTO.pdf},
@@ -84,13 +101,124 @@ There is a collection of links to various documentations written in the past on 
 
 \section{Software layout}
 
-\subsection{SCSI structures}
+\subsection{SCSI structures, constants and endianness}
 
-TODO: describe bit fields structures.
+In order to make the code readable, and to avoid heavy mask-and-shift usage (which one would tend
+to code using litterals in order to avoid many constants definitions), we use bit field structures.
+The unused fields can be left anonymous.
+The definition is shown in listing \ref{SCSI_struct}, and usage in listing \ref{SCSI_struct_usage}.
+As there could be endianness issues, we limit this usage to within bytes. Fortunately, the SCSI 
+standard nicely adheres to this rule.
 
-\subsection{SCSI constants}
+\begin{table}[h]
+\begin{lstlisting}[caption=SCSI::Structures example,label=SCSI_struct]
+namespace SCSI {
+  namespace Structures {
 
-TODO: broad description.
+    /*
+     * Inquiry data as described in SPC-4.
+     */
+    typedef struct {
+      unsigned char perifDevType : 5;
+      unsigned char perifQualifyer : 3;
+
+      unsigned char : 7;
+      unsigned char RMB : 1;
+
+      unsigned char version : 8;
+
+      unsigned char respDataFmt : 4;
+      unsigned char HiSup : 1;
+      unsigned char normACA : 1;
+      unsigned char : 2;
+[...]
+    } inquiryData_t;
+  }
+}
+\end{lstlisting}
+\end{table}
+
+\begin{table}[h]
+\begin{lstlisting}[caption=SCSI::Structures usage example,label=SCSI_struct_usage]
+      SCSI::Structures::inquiryData_t & inq = *((SCSI::Structures::inquiryData_t *) dataBuff);
+      std::stringstream inqDump;
+      inqDump << std::hex << std::showbase << std::nouppercase
+              << "inq.perifDevType=" << (int) inq.perifDevType << std::endl
+              << "inq.perifQualifyer=" << (int) inq.perifQualifyer << std::endl
+[...]
+              << "inq.T10Vendor="      << SCSI::Structures::toString(inq.T10Vendor) << std::endl
+              << "inq.prodId="         << SCSI::Structures::toString(inq.prodId) << std::endl
+              << "inq.prodRevLv="      << SCSI::Structures::toString(inq.prodRevLvl) << std::endl
+              << "inq.vendorSpecific1="<< SCSI::Structures::toString(inq.vendorSpecific1)<< std::endl
+\end{lstlisting}
+\end{table}
+
+The unit test resorts to shift and mask, once and only once, to validate the bit fields in
+another way. There is an example for this validation in \verb#SCSI/StructureTest.cc#; an excerpt is in listing \ref{SCSI_struct_testing}.
+
+\begin{table}
+\begin{lstlisting}[caption=SCSI::Structures usage example,label=SCSI_struct_testing]
+namespace UnitTests {
+  TEST(SCSI_Structures, inquiryData_t_multi_byte_numbers_strings) {
+    /* Validate the bit field behavior of the struct inquiryData_t,
+     which represents the standard INQUIRY data format as defined in 
+     SPC-4. This test also validates the handling of multi-bytes numbers,
+     as SCSI structures are big endian (and main development target is 
+     little endian.  */
+    unsigned char inqBuff [100];
+    memset(inqBuff, 0, sizeof(inqBuff));
+    SCSI::Structures::inquiryData_t & inq = *((SCSI::Structures::inquiryData_t *) inqBuff);
+    /* Peripheral device type */
+    ASSERT_EQ(0, inq.perifDevType);
+    inqBuff[0] |= (0x1A & 0x1F) << 0;
+    ASSERT_EQ(0x1A, inq.perifDevType);
+    
+    /* Peripheral qualifier */
+    ASSERT_EQ(0, inq.perifQualifyer);
+    inqBuff[0] |= (0x5 & 0x7) << 5;
+    ASSERT_EQ(0x5, inq.perifQualifyer);
+[...]
+  }
+}
+\end{lstlisting}
+\end{table}
+
+Other common types in the SCSI specification are multi-bytes
+number, which are represented by \verb#unsigned char[2/* (or 4)*/]# and handled by helper functions 
+\verb#SCSI::Structures::uint32_t toU32(const char(& t)[4])#, and same for 16 bits. The helper functions
+conveniently uses \verb#ntoh{l|s}#, as SCSI and netowrk orders are the same.
+  
+Another helper function takes care of string extraction from fixed fields like: \verb#unsigned char field[n]#.
+Those strings are 0-padded, but not 0 terminated. It is seen in listing \ref{SCSI_struct_usage}.
+
+To avoid literals in the code, which forces anyone reading it to do tedious lookups,
+the SCSI constants are also defined as constants in the code. See listing \ref{SCSI_consts}.
+
+\begin{table}
+\begin{lstlisting}[caption=SCSI::Constants,label=SCSI_consts]
+namespace SCSI {
+  class Commands {
+  public:
+    enum {
+      /*
+       *      SCSI opcodes, taken from linux kernel sources
+       *      Linux kernel's is more complete than system's
+       *      includes.
+       */
+      TEST_UNIT_READY                               = 0x00,
+      REZERO_UNIT                                   = 0x01,
+      REQUEST_SENSE                                 = 0x03,
+[...]
+\end{lstlisting}
+\end{table}
+
+\subsection{Exceptions hierarchy}
+
+There is a small class hierarchy for exceptions: \verb#Tape::Exception# inherits from
+\verb#std::exception#, and \verb#Tape::Exceptions::Errnum# inherits from the latter.
+\verb#Tape::Exceptions::Errnum# manages the errnos. It collects the errno value and turns it
+into a string automatically at construction time.  \verb#Tape::Exception# and all inheriting
+classes collect a stack trace at construction time.
 
 \subsection{The Tape::Drive object}
 
@@ -107,7 +235,7 @@ The SCSI commands and st driver's functions used in previous software (CASTOR's 
 \begin{itemize}
 \item Individual SCSI commands sent using generic SCSI:
   \begin{itemize}
-    \item Read status (inquiry SCSI command in ????)
+    \item Read status (inquiry SCSI command used by posovl)
     \item Read serial number (inquiry SCSI command, asking for vital product data page 0x80)
     \item Locate (locate(10) SCSI command: 32 bits logical object identifiers)
                       \footnote{There is also a locate(16) command allowing 64 bis addresses.
@@ -122,13 +250,13 @@ The SCSI commands and st driver's functions used in previous software (CASTOR's 
           5 blocks of device types: DAT, DLT-SDLT-LTO, IBM(3490, 3590, 3592), StorageTek RedWood(SD3),
           StorageTek(9840, 9940, T10000).
     \item Log sense for page 0x2E (???) on all modern tape drives to detect tape alerts (TBD, see SSC-3).
-    \item
+    \item Mode sense was used in an unreferenced funciton called setdens.
   \end{itemize}
 \item st driver's commands, leading to internal variables setting or SCSI actions:
   \begin{itemize}
     \item Get internal driver state via the MTIOGET ioctl (for drivre ready, write protection, 
           get some error condition, when MTIOSENSE failed, to get the EOD, BOT bits (readlbl)).
-    \item Try and get the sense data for the last-ish command with MTIOSENSE. This can
+    \item Try and get the sense data for the last-ish command with MTIOSENSE. This
           relies on a CERN-made patch.
     \item Setup the driver's parameters (MTIOCTOP/MTSETDRVBUFFER) for (un)buffered 
           writes and asynchronous writes (in confdrive, a child of taped).
@@ -139,9 +267,16 @@ The SCSI commands and st driver's functions used in previous software (CASTOR's 
           a nasty trick asks the device to skip 0x7fffff files forward. The comment in the CASTor code
           claims it's 32k files, but $2^{23}-1$ is indeed 8M files. Anyway, after turning off the 
           option, the st driver reverts to telling the SCSI device to space to end of data.
-          TODO: find why fast forward followed by rewind rebuilds the MIR.
+          This behavior is documented in the IBM's operator manual mentioned in \ref{Manufacturer's specificities},
+          on page 53 for tape alert 18 (Tape directory corrupted on load).
+
+          It is not mentioned for other tape server's documentations. Specifically, StorageTek
+          only lists operator-initiated methods for MIR rebuild.
+
+          Nevertheless, we will still issue this operation in all drives as it is not known
+          if it works in practice for StorageTek drives (or others).
     \item Rewind (MTIOCTOP/MTREW, in rwndtape).
-    \item Skip to \item Skip to end of data (MTIOCTOP/MTEOM, in skip2eod, without the trick of repairbadmir).
+    \item Skip to end of data (MTIOCTOP/MTEOM, in skip2eod, without the trick of repairbadmir).
     \item Skip n files backwards (MTIOCTOP/MTBSF, in skiptpfb).
     \item Skip n files forward (MTIOCTOP/MTFSF, in skiptpff).
     \item Skip n files forward (MTIOCTOP/MTFSF, in skiptpfff). skiptpfff and skiptpff differ only 
@@ -162,17 +297,18 @@ The SCSI commands and st driver's functions used in previous software (CASTOR's 
           This could be turned into a specialized function.
   \end{itemize}
 \end{itemize}
-The interface is shown in \ref{drive_if}.
 
+The interface is shown in listing \ref{drive_if}.
+
+\begin{table}
 \begin{lstlisting}[caption=Tape::Drive interface,label=drive_if]
 namespace Tape {
   class Drive {
   public:
     Drive();
-    
+    /* TODO */
   };
 } // namespace Tape
 \end{lstlisting}
+\end{table}
 
-\subsection{Exceptions hierarchy}
-TODO: std::exeception inheritance, Errno/strerror wrapper, automatic stack trace.
