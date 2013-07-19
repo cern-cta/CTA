@@ -48,4 +48,3 @@ include LOCAL_PATH/tapebridge/Makefile
 include LOCAL_PATH/monitoring/Makefile
 include LOCAL_PATH/traffic-shaping/Makefile
 include LOCAL_PATH/xrootd/Makefile
-include LOCAL_PATH/test/unittest/Makefile
