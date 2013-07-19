@@ -176,7 +176,7 @@ void *unittest::readInAndAckRtcopyMsgHeaderAndBody(void *sockFdPtr) {
     // Read the RTCOPY message body into the raw data-block immediately after
     // the header
     if(bodyLen !=
-      read(sockFd, headerAndBody + sizeof(headerBuf), bodyLen)) {
+      (uint32_t)read(sockFd, headerAndBody + sizeof(headerBuf), bodyLen)) {
       delete[] headerAndBody;
       return NULL; // There was an error reading
     }
