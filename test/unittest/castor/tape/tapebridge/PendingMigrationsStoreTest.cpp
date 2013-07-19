@@ -141,7 +141,7 @@ public:
       TAPEBRIDGE_ONE_FLUSH_PER_N_FILES,
       ConfigParamSource::COMPILE_TIME_DEFAULT);
     tapeFlushConfigParams.setMaxBytesBeforeFlush(
-      8589934592UL,
+      8589934592ULL,
       ConfigParamSource::COMPILE_TIME_DEFAULT);
     tapeFlushConfigParams.setMaxFilesBeforeFlush(
       4,
