@@ -204,7 +204,7 @@ int send_scsi_cmd (int tapefd,
 		    sg_big_buff_val - sizeof(struct sg_header) - cdblen);
 		*msgaddr = tp_err_msgbuf;
 #else
-		sprintf (err_msgbuf, "blocksize too large (max %lu)",
+		sprintf (err_msgbuf, "blocksize too large (max %zd)",
 		    sg_big_buff_val - sizeof(struct sg_header) - cdblen);
 		*msgaddr = err_msgbuf;
 #endif
