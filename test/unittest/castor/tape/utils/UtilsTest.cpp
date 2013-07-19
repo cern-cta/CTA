@@ -553,7 +553,7 @@ public:
     testDuration = timevalAbsDiff(startTime, endTime);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Test duration is accuracte to the second",
-      true, sleepDuration == testDuration.tv_sec);
+      true, sleepDuration == (unsigned int)testDuration.tv_sec);
   }
 
   void testSingleSpaceStringWithEmptyString() {
