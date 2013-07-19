@@ -26,6 +26,8 @@
 %attr(0755,root,root) usr/bin/printmigrationroute
 %attr(0755,root,root) usr/bin/deletediskserver
 %attr(0755,root,root) usr/bin/printdiskserver
+%attr(0755,root,root) usr/bin/modifydbconfig
+%attr(0755,root,root) usr/bin/printdbconfig
 %attr(0755,root,root) usr/bin/deletediskcopy
 %attr(0755,root,root) usr/bin/diskServer_qry
 %attr(0755,root,root) usr/bin/draindiskserver

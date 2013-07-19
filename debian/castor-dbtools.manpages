@@ -26,6 +26,8 @@ debian/castor/usr/share/man/man1/deletemigrationroute.1castor.gz
 debian/castor/usr/share/man/man1/printmigrationroute.1castor.gz
 debian/castor/usr/share/man/man1/deletediskserver.1castor.gz
 debian/castor/usr/share/man/man1/printdiskserver.1castor.gz
+debian/castor/usr/share/man/man1/modifydbconfig.1castor.gz
+debian/castor/usr/share/man/man1/printdbconfig.1castor.gz
 debian/castor/usr/share/man/man1/deletediskcopy.1castor.gz
 debian/castor/usr/share/man/man1/diskServer_qry.1castor.gz
 debian/castor/usr/share/man/man1/draindiskserver.1castor.gz
