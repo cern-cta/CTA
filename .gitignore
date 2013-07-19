@@ -185,6 +185,7 @@ tape/tpdump
 tape/tplabel
 tape/tprstat
 tape/tpstat
+test/unittest/rununittests
 vdqm/showqueues
 vdqm/vdqm_admin
 vmgr/vmgr_oracle_ifce.c
