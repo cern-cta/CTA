@@ -25,6 +25,7 @@
 #include "castor/tape/utils/SmartFILEPtr.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/Services.hpp"
+#include "h/Castor_limits.h"
 #include "h/net.h"
 
 #include <cppunit/extensions/HelperMacros.h>
@@ -32,6 +33,13 @@
 #include <stdio.h>
 
 extern "C" int rtcp_InitLog (char *, FILE *, FILE *, int *);
+
+extern "C" int rpfd;
+int rpfd = -1;
+extern "C" int jid;
+int jid = 0;
+extern "C" char devtype[CA_MAXDVTLEN+1];
+char devtype[CA_MAXDVTLEN+1] = "DEVTYPE";
 
 int main() {
   char rtcpLogErrTxt[1024];

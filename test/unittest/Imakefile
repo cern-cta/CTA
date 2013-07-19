@@ -102,6 +102,20 @@ RUNUNITTESTBIN_OBJS = $(RUNUNITTESTBIN_SRCS:.cpp=.o) \
   $(ROOT_DIR)/castor/io/StreamAddress.o \
   $(ROOT_DIR)/castor/io/StreamBaseCnv.o \
   $(ROOT_DIR)/castor/io/StreamCnvSvc.o \
+  $(ROOT_DIR)/castor/io/StreamEndNotificationErrorReportCnv.o \
+  $(ROOT_DIR)/castor/io/StreamFileErrorReportStructCnv.o \
+  $(ROOT_DIR)/castor/io/StreamFileMigratedNotificationStructCnv.o \
+  $(ROOT_DIR)/castor/io/StreamFileMigrationReportListCnv.o \
+  $(ROOT_DIR)/castor/io/StreamFileRecalledNotificationStructCnv.o \
+  $(ROOT_DIR)/castor/io/StreamFileRecallReportListCnv.o \
+  $(ROOT_DIR)/castor/io/StreamFilesListRequestCnv.o \
+  $(ROOT_DIR)/castor/io/StreamFilesToMigrateListCnv.o \
+  $(ROOT_DIR)/castor/io/StreamFilesToMigrateListRequestCnv.o \
+  $(ROOT_DIR)/castor/io/StreamFilesToRecallListCnv.o \
+  $(ROOT_DIR)/castor/io/StreamFilesToRecallListRequestCnv.o \
+  $(ROOT_DIR)/castor/io/StreamFileToMigrateStructCnv.o \
+  $(ROOT_DIR)/castor/io/StreamFileToRecallStructCnv.o \
+  $(ROOT_DIR)/castor/io/StreamNoMoreFilesCnv.o \
   $(ROOT_DIR)/castor/io/StreamPtrCnv.o \
   $(ROOT_DIR)/castor/io/StreamVolumeCnv.o \
   $(ROOT_DIR)/castor/io/StreamVolumeRequestCnv.o \

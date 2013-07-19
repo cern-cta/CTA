@@ -33,7 +33,8 @@ test_exception::test_exception(std::string msg): m_msg(msg) {
 //-----------------------------------------------------------------------------
 // copy constructor
 //-----------------------------------------------------------------------------
-test_exception::test_exception(const test_exception &tx) : m_msg(tx.m_msg) {
+test_exception::test_exception(const test_exception &tx): std::exception(),
+  m_msg(tx.m_msg) {
 }
 
 //-----------------------------------------------------------------------------
