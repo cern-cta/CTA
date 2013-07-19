@@ -18,7 +18,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  * This script switches the Open mode from Compatibility to New.
- * It is applicable on any CASTOR v2.1.14-x CNS database.
+ * It is applicable on any CASTOR v2.1.14-x CNS database. See release notes
+ * for version 2.1.14-2 for more details.
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -40,7 +41,7 @@ BEGIN
   END;
   BEGIN
     SELECT 1 INTO unused FROM Cns_file_metadata
-     WHERE stagerTime IS NOT NULL
+     WHERE stagerTime IS NULL
        AND ROWNUM < 2;
     -- we found at least one file with stagerTime not set, complain
     raise_application_error(-20000, 'Cannot proceed, at least one file has its stagertime field set to NULL');
@@ -51,7 +52,7 @@ BEGIN
 END;
 /
 
--- add constraint now that data is populated
+-- add constraint now that all rows are populated
 ALTER TABLE Cns_file_metadata ADD CONSTRAINT NN_File_stagerTime (stagerTime NOT NULL);
 
 -- update configuration
