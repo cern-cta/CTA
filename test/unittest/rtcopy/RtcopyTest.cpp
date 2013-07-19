@@ -32,6 +32,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include <errno.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 
