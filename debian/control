@@ -257,6 +257,7 @@ Package: castor-tapebridge-server
 Architecture: any
 Depends: logrotate, castor-rtcopy-server, castor-lib-tape = %{version}-%{release}
 XBS-Obsoletes: castor-aggregator-server
+Build-Depends: cppunit-devel
 Description: castor (Cern Advanced STORage system)
  Tape Bridge Daemon
 
@@ -315,3 +316,9 @@ Build-Depends: xrootd-server, xrootd-client, xrootd-libs-devel, xrootd-client-de
 Description: castor (Cern Advanced STORage system)
  Xrootd support of Castor
 XBS-Obsoletes: xrootd-libtransfermanager, xrootd-xcastor2fs
+
+Package: castor-unittest
+Architecture: any
+Build-Depends: cppunit-devel
+Description: castor (Cern Advanced STORage system)
+ Unit tests

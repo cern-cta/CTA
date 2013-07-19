@@ -1,5 +1,5 @@
 COMM
-COMM                      castor/tape/mounttp/Imakefile
+COMM                      test/unittest/Imakefile
 COMM
 COMM This file is part of the Castor project.
 COMM See http://castor.web.cern.ch/castor
@@ -23,7 +23,7 @@ COMM
 
 AddLdFlags(-lstdc++ -lcppunit -luuid -lz)
 
-RUNUNITTESTBIN_SRCS = \
+CASTORUNITTESTBIN_SRCS = \
   castor/tape/net/NetTest.cpp \
   castor/tape/tapebridge/BridgeClientInfo2SenderTest.cpp \
   castor/tape/tapebridge/BridgeProtocolEngineTest.cpp \
@@ -58,7 +58,7 @@ RUNUNITTESTBIN_SRCS = \
   unittest.cpp
 
 ROOT_DIR=../..
-RUNUNITTESTBIN_OBJS = $(RUNUNITTESTBIN_SRCS:.cpp=.o) \
+CASTORUNITTESTBIN_OBJS = $(CASTORUNITTESTBIN_SRCS:.cpp=.o) \
   $(ROOT_DIR)/castor/BaseAddress.o \
   $(ROOT_DIR)/castor/BaseCnvSvc.o \
   $(ROOT_DIR)/castor/BaseObject.o \
@@ -375,4 +375,4 @@ RUNUNITTESTBIN_OBJS = $(RUNUNITTESTBIN_SRCS:.cpp=.o) \
   $(ROOT_DIR)/vmgr/vmgr_querypool.o \
   $(ROOT_DIR)/vmgr/vmgr_querytape_byte_u64.o
 
-NormalProgramTarget(rununittests,$(RUNUNITTESTBIN_OBJS),,,755)
+NormalProgramTarget(castorunittest,$(CASTORUNITTESTBIN_OBJS),,,755)
