@@ -2147,7 +2147,7 @@ public:
       true,
       m_engine->continueProcessingSocks());
 
-    const uint64_t i               = 0xdeadfacedeadface;
+    const uint64_t i               = 0xdeadfacedeadfaceULL;
     const char     *expectedResult =  "DEADFACEDEADFACE";
     char dst[CA_MAXPATHLEN+1];
     memset(dst, '\0', sizeof(dst));
