@@ -119,7 +119,7 @@ int XrdxCastor2Ofs::Configure( XrdSysError& Eroute )
   XrdxCastor2OfsFS.ThirdPartyCopy = true;
   XrdxCastor2OfsFS.ThirdPartyCopySlots = 5;
   XrdxCastor2OfsFS.ThirdPartyCopySlotRate = 25;
-  XrdxCastor2OfsFS.ThirdPartyCopyStateDirectory = "/var/log/xroot/server/transfer";
+  XrdxCastor2OfsFS.ThirdPartyCopyStateDirectory = "/var/log/xrootd/server/transfer";
   Procfilesystem = "/tmp/xcastor2-ofs/";
   ProcfilesystemSync = false;
 

@@ -297,6 +297,11 @@ XrdxCastor2Fs::GetAllGroups(const char*   name,
       passwdinfo = pwdcpy;
       XrdxCastor2Fs::passwdstore->Add(name, pwdcpy, 60);
     }
+    else 
+    {
+      xcastor_debug("passwdinfo is NULL");
+      return;
+    }
   }
 
   setgrent();

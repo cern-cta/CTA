@@ -34,7 +34,7 @@ xcastor2.ratelimiter true
 
 xcastor2.posc false
 #-------------------------------------------------------------------------------
-xcastor2.proc /var/log/xroot/server/
+xcastor2.proc /var/log/xrootd/server/
 xcastor2.procuser root@localhost.localdomain
 xcastor2.procuser root@localhost
 #-------------------------------------------------------------------------------

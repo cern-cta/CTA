@@ -3,14 +3,17 @@
 %attr(0755,root,root) usr/lib/libXrdxCastor2Fs.so*
 %attr(0755,root,root) usr/bin/x2proc
 %attr(0755,root,root) usr/bin/x2cp
-%attr(0644,root,root) etc/sysconfig/xrd.example
-%attr(0644,root,root) etc/xrd.cf.example
+%attr(0644,root,root) etc/sysconfig/xrootd.server.example
+%attr(0644,root,root) etc/sysconfig/xrootd.manager.example
+%attr(0644,root,root) etc/xrd.cf.server.example
+%attr(0644,root,root) etc/xrd.cf.manager.example
 %attr(0755,root,root) etc/cron.d/xrd-logs
-%attr(0755,root,root) etc/rc.d/init.d/xrd
-%attr(0755,stage,st) var/log/xroot/manager
-%attr(0755,stage,st) var/log/xroot/server
-%attr(0755,stage,st) var/log/xroot/server/proc
-%attr(0755,stage,st) var/spool/xroot/core
-%attr(0755,stage,st) var/spool/xroot/admin
+%attr(0755,stage,st) var/log/xrootd/manager
+%attr(0755,stage,st) var/log/xrootd/server
+%attr(0755,stage,st) var/log/xrootd/server/proc
+%attr(0755,root,st) var/spool/xrootd/core
+%attr(0755,root,st) var/spool/xrootd/admin
+%attr(0775,stage,st) var/run/xrootd/
+
 
 

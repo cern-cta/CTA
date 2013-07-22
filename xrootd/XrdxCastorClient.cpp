@@ -218,7 +218,7 @@ XrdxCastorClient::SendAsyncRequest(const std::string& userId,
     throw e;
   }
 
-  xcastor_info("ack for reqid=%s", ack->requestId().c_str());
+  xcastor_debug("ack for reqid=%s", ack->requestId().c_str());
 
   // Save the request id returned by the stager and add it to the map
   std::string req_id = ack->requestId();
@@ -310,7 +310,7 @@ XrdxCastorClient::GetResponse(const std::string& userId,
         // We have a hint this means we a querying for a response right after
         // submitting the request. Let's give the stager some headroom ...
         mMutexMaps.UnLock();    // <--
-        xcastor_info("wait for response");
+        xcastor_debug("wait for response");
         timeout = mCondResponse.Wait(wait_time);
         mMutexMaps.Lock();    // -->    
 
@@ -362,7 +362,7 @@ XrdxCastorClient::GetResponse(const std::string& userId,
 void 
 XrdxCastorClient::DoCleanup()
 {
-  xcastor_info("info=try a cleanup of old requests");
+  xcastor_debug("try a cleanup of old requests");
   AsyncUserMap::iterator user_iter;
 
   for (user_iter = mMapUsers.begin(); user_iter != mMapUsers.end(); /*no increment*/)
@@ -460,7 +460,7 @@ XrdxCastorClient::PollResponses()
       // Is the listening descriptor readable? If so, this indicates that there
       // is a new incoming connection
       if (mFds[i].fd == mCallbackSocket->socket()) {
-        xcastor_info("accepted incoming connection");
+        xcastor_debug("accepted incoming connection");
         // Accept the incoming connection, and set a short transfer timeout:
         // we don't want to get stuck and we know that the sender is either
         // the stager or a job, so they will normally send the data in one go.
@@ -475,7 +475,7 @@ XrdxCastorClient::PollResponses()
       }
       else 
       {
-        xcastor_info("got new data to read");
+        xcastor_debug("got new data to read");
         
         // This is not the listening socket therefore we have new data to read.
         // Locate the socket in the list of accepted connections
@@ -549,7 +549,7 @@ XrdxCastorClient::PollResponses()
           mMutexMaps.UnLock();  // <--
 
           // Signal that we received a response
-          xcastor_info("signal received response");
+          xcastor_debug("signal received response");
           mCondResponse.Broadcast();  
         }
       }

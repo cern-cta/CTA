@@ -1,0 +1,61 @@
+xrootd.fslib /usr/lib64/libXrdxCastor2Fs.so.2.1
+xrd.async off
+xrd.sched mint 16 maxt 512 idle 128
+all.export /
+all.role manager
+all.manager localhost 2131
+oss.fdlimit 16384 32768
+############################################################################
+# Namespace Mapping - don't touch
+xcastor2.nsmap / /
+xcastor2.fs /
+
+############################################################################
+# Scheduling Policies
+# note: syntax is <stagerhost>::<serviceclass> schedall|schedread|schedwrite[,nohsm][,mkpath]
+xcastor2.stagerpolicy localhost::* schedall
+
+############################################################################
+# plugin configuration - don't touch
+xcastor2.targetport 1095
+xcastor2.capability true
+xcastor2.privatekey /opt/xrootd/keys/key.pem
+xcastor2.tokenlocktime 60
+xcastor2.proc /var/log/xroot/manager
+
+############################################################################
+# Debug level
+xcastor2.debuglevel 7
+
+############################################################################
+# - Security Plugins
+xrootd.seclib /usr/lib64/libXrdSec.so
+
+# UNIX authentication
+sec.protocol /usr/lib64/ unix
+
+# KRB authentication
+sec.protocol /usr/lib64 krb5 host/<host>@CERN.CH
+
+# GSI authentication
+sec.protocol gsi -crl:1 -cert:/etc/grid-security/xrootd-server/xrootd-server-cert.pem -key:/etc/grid-security/xrootd-server/xrootd-server-key.pem -gridmap:/etc/grid-security/grid-mapfile -d:0 -gmapopt:2
+
+# configure krb5 as the default
+sec.protbind * only krb5
+
+# configure unix authentication for diskservers to communicate back with the
+# redirector. Note: This should really use strong authentication!
+sec.protbind lxc2dev*.cern.ch only unix
+sec.protbind lxc2cert*.cern.ch only unix
+sec.protbind lxfs*.cern.ch only unix
+
+# configure gsi+krb5 only at CERN
+sec.protbind *.cern.ch only krb5 gsi
+
+# Gridmap and VOMS
+#xcastor2.gridmapfile /etc/grid-security/grid-mapfile
+#xcastor2.vomsmapfile /etc/grid-security/voms-mapfile
+
+############################################################################
+xcastor2.stagermap /castor/cern.ch/dev/  localhost::default,localhost::dev,localhost::diskonly
+xcastor2.stagermap default               localhost::default

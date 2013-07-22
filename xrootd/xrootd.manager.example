@@ -1,0 +1,24 @@
+#-------------------------------------------------------------------------------
+# Define the user account name which will be used to start the daemons.
+# These may have many unexpected side effects, so be sure you know what you're
+# doing before playing with them.
+#-------------------------------------------------------------------------------
+DAEMON_COREFILE_LIMIT=unlimited
+XROOTD_USER=root
+XROOTD_GROUP=st
+#-------------------------------------------------------------------------------
+# Define the commandline options for the instances of the daemons.
+# The format is:
+# DAEMON_NAME_OPTIONS, where:
+#   DAEMON - the daemon name, the valid values are: XROOTD, CMSD or FRMD
+#   NAME   - the name of the instance, any uppercase alphanumeric string
+#            without whitespaces is valid
+#-------------------------------------------------------------------------------
+XROOTD_MANAGER_OPTIONS="-l /var/log/xrootd/xrootd.log -c /etc/xrd.cf.manager -R stage"
+
+#-------------------------------------------------------------------------------
+# Names of the instances to be started by default, the case doesn't matter,
+# the names will be converted to lowercase automatically, use space as a
+# separator
+#-------------------------------------------------------------------------------
+XROOTD_INSTANCES="manager"
