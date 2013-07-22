@@ -796,7 +796,7 @@ void castor::stager::daemon::QueryRequestSvcThread::handleChangePrivilege
          it != uReq->requestTypes().end();
          it++) {
       if (it != uReq->requestTypes().begin()) requestTypes << ',';
-      requestTypes << castor::ObjectsIdStrings[(*it)->reqType()];
+      requestTypes << ((*it)->reqType() == 0 ? "*" : castor::ObjectsIdStrings[(*it)->reqType()]);
     }
     // "Processing ChangePrivilege"
     castor::dlf::Param params[] =
