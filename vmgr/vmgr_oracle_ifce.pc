@@ -16,7 +16,7 @@
 #include "vmgr_server.h"
 
 static sql_context ctx[VMGR_MAXNBTHREADS];
-static const char *const VMGRSCHEMAVERSION = "2_1_10_1";
+static const char *const VMGRSCHEMAVERSION = "2_1_14_2";
 
 int vmgr_init_dbpkg()
 {
