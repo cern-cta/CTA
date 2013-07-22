@@ -30,6 +30,7 @@ COMMONLIB_OBJS = $(SYSDEP_OBJS) \
                  ../castor/exception/NotSupported.o \
                  ../castor/exception/OutOfMemory.o \
                  ../castor/exception/Communication.o \
+                 ../castor/exception/MissingOperand.o \
                  ../castor/exception/NoEntry.o \
                  ../castor/exception/NoPortInRange.o \
                  ../castor/exception/NoSegmentFound.o \

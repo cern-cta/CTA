@@ -65,6 +65,7 @@ char    *sys_serrlist[SEMAXERR-SEBASEOFF+2]=
    "No value",
    "Invalid configuration",
    "Failed to execute Python",
+   "Missing operand",
    "BAD ERROR NUMBER"
   };
 
