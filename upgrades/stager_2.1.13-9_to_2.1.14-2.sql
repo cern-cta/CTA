@@ -452,6 +452,8 @@ ALTER TABLE DrainingJob
   ADD CONSTRAINT CK_DrainingJob_FileMask
   CHECK (fileMask IN (0, 1));
 
+CREATE INDEX I_DrainingJob_SvcClass ON DrainingJob (svcClass);
+
 /* Creation of the DrainingErrors table
  *   - drainingJob : identifier of the concerned DrainingJob
  *   - errorMsg : the error that occured
