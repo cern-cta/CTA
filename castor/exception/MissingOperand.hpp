@@ -27,9 +27,6 @@
 
 #include "castor/exception/Exception.hpp"
 
-#include <string>
-
-
 namespace castor { namespace exception {
 
     /**
