@@ -76,8 +76,9 @@
 #define SENOVALUE       SEBASEOFF+42    /* No value                     */
 #define SEINVALIDCONFIG SEBASEOFF+43    /* Invalid configuration        */
 #define SEPYTHONEXEC    SEBASEOFF+44    /* Failed to execute Python     */
+#define SEMISSINGOPER   SEBASEOFF+45    /* Missing operand              */
 
-#define SEMAXERR        SEBASEOFF+44    /* Maximum error number         */
+#define SEMAXERR        SEBASEOFF+45    /* Maximum error number         */
 
 #define SERRNO  (serrno - SEBASEOFF)    /* User convenience             */
 /*
