@@ -239,8 +239,11 @@
   - rmGetNodes, rmAdminNode and moveDiskServer are replaced by modifydiskserver and printdiskserver.
     So scripts should be adapted
   - the DLF database has gone. Thus no upgrade script is given and the database can be safely dismantled.
-  - one needs to modify the declaration of the plugin libraries in /etc/xrd.cf by adding the major
-    version number : 
+  - the configuration of the xroot plugin needs to be adapted:
+      + on the head node, the file is /etc/xrd.cf.manager and a xrd.cf.manager.example is provided.
+      + on the disk servers, the file is /etc/xrd.cf.server and a xrd.cf.server.example is provided.
+    In both cases, adapt the provided example to your setup and make sure the declaration of the
+    plugin libraries includes the major version number:
       + on the head node: /usr/lib64/libXrdxCastor2Fs.so.2.1 
       + on the disk servers: /usr/lib64/libXrdxCastor2Ofs.so.2.1 and /usr/lib64/libXrdxCastor2ServerAcc.so.2.1
   - tape operators should no longer explicitly set the following tapebridged

@@ -139,7 +139,7 @@ int XrdxCastor2Ofs::Configure( XrdSysError& Eroute )
         var += 9;
 
         // Get the debug level
-        if ( !strcmp( "debuglevel", var ) ) {
+        if ( !strcmp( "loglevel", var ) ) {
           if ( !( val = config_stream.GetWord() ) ) {
             Eroute.Emsg( "Config", "argument for debug level invalid set to INFO." );
             mLogLevel = LOG_INFO;
@@ -154,7 +154,7 @@ int XrdxCastor2Ofs::Configure( XrdSysError& Eroute )
               mLogLevel = Logging::GetPriorityByString(val);
             }
             Logging::SetLogPriority(mLogLevel);
-            Eroute.Say( "=====> xcastor2.debuglevel: ", 
+            Eroute.Say( "=====> xcastor2.loglevel: ", 
                         Logging::GetPriorityString(mLogLevel), "" );
           }
         }
