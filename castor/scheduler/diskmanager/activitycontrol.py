@@ -140,7 +140,7 @@ class ActivityControlThread(threading.Thread):
           except ValueError, e:
             # 'Transfer start canceled' message
             dlf.writedebug(msgs.TRANSFERSTARTCANCELED, reason=e.args, subreqid=transfer.transferId,
-                           reqid=transfer.reqId, fileId=transfer.fileId)
+                           fileId=transfer.fileId)
             # the transfer has already started somewhere else, or has been canceled, so give up
           except EnvironmentError:
             # we have tried to start a disk to disk copy and the source is not yet ready
