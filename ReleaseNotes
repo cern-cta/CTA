@@ -235,10 +235,12 @@
   Deployment Changes
   ------------------
 
-  - rmmasterd and rmnoded are gone and thus should not be monitored anymore
+  - rmmasterd and rmnoded are gone and thus should not be monitored anymore.
   - rmGetNodes, rmAdminNode and moveDiskServer are replaced by modifydiskserver and printdiskserver.
     So scripts should be adapted
   - the DLF database has gone. Thus no upgrade script is given and the database can be safely dismantled.
+  - the xrd daemon has been replaced by the xrootd daemon, thus you need to adapt your monitoring
+    infrastructure to monitor an xrootd process in both the head nodes and the disk servers.
   - the configuration of the xroot plugin needs to be adapted:
       + on the head node, the file is /etc/xrd.cf.manager and a xrd.cf.manager.example is provided.
       + on the disk servers, the file is /etc/xrd.cf.server and a xrd.cf.server.example is provided.
