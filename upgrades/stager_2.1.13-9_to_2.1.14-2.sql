@@ -232,28 +232,31 @@ BEGIN setObjStatusName('DiskCopy', 'status', 0, 'DISKCOPY_VALID'); END;
 -- temporary index on DiskCopy.status to speed up the next block
 CREATE INDEX I_DC_status ON DiskCopy(status);
 
+-- merge STAGED and CANBEMIGR. This is done in 4 steps :
+--  - set all CastorFiles to tapeStatus CASTORFILE_ONTAPE
+--  - set all CastorFiles beloging to FileClasses with 0 copies to CASTORFILE_DISKONLY
+--  - loop over CANBEMIGR DiskCopies, and set corresponding CastorFiles to CASTORFILE_NOTONTAPE
+--  - finally set all CANBEMIGR DiskCopies to DISKCOPY_VALID
+BEGIN
+  UPDATE CastorFile SET tapeStatus = dconst.CASTORFILE_ONTAPE;
+  COMMIT;
+  UPDATE /*+ FULL(CastorFile) */ CastorFile
+     SET tapeStatus = dconst.CASTORFILE_DISKONLY
+   WHERE fileClass IN (SELECT id FROM FileClass WHERE nbCopies = 0);
+  COMMIT;
+  FOR DC IN (SELECT castorFile, id FROM DiskCopy WHERE status = 10) LOOP  -- old CANBEMIGR
+    UPDATE CastorFile SET tapeStatus = CASTORFILE_NOTONTAPE WHERE id = DC.castorFile;
+    UPDATE DiskCopy SET status = dconst.DISKCOPY_VALID WHERE id = DC.id;
+  END LOOP;
+  COMMIT;
+END;
+/
+
 DECLARE
   srIds "numList";
   srId INTEGER;
   dcId INTEGER;
 BEGIN
-  -- merge STAGED and CANBEMIGR
-  FOR cf IN (SELECT unique castorFile, status, nbCopies
-               FROM DiskCopy, CastorFile, FileClass
-              WHERE DiskCopy.castorFile = CastorFile.id
-                AND CastorFile.fileClass = FileClass.id
-                AND DiskCopy.status IN (0, 10)) LOOP
-    UPDATE CastorFile
-       SET tapeStatus = DECODE(cf.status,
-                               10, dconst.CASTORFILE_NOTONTAPE,
-                               DECODE(cf.nbCopies,
-                                      0, dconst.CASTORFILE_DISKONLY,
-                                      dconst.CASTORFILE_ONTAPE))
-     WHERE id = cf.castorFile;
-  END LOOP;
-  UPDATE DiskCopy SET status = dconst.DISKCOPY_VALID WHERE status = 10;
-  COMMIT;
-
   -- invalidate all FAILED diskcopies on disk so that they're properly garbage collected
   UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
    WHERE status = dconst.DISKCOPY_FAILED AND fileSystem != 0;
