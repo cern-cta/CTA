@@ -25,7 +25,7 @@ xcastor2.proc /var/log/xroot/manager
 
 ############################################################################
 # Debug level
-xcastor2.debuglevel 7
+xcastor2.debuglevel 6
 
 ############################################################################
 # - Security Plugins

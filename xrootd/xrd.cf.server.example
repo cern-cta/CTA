@@ -21,6 +21,9 @@ xcastor2.capability true
 xcastor2.publickey /opt/xrootd/keys/pkey.pem
 xcastor2.ratelimiter true
 
+# Debug level
+xcastor.debuglevel 6
+
 #-------------------------------------------------------------------------------
 # Set the debug level and a filter. The debug levels are similar to the ones used
 # by syslog. The debug filter prints out only the messages from a certain function.

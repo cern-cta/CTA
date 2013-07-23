@@ -141,8 +141,8 @@ int XrdxCastor2Ofs::Configure( XrdSysError& Eroute )
         // Get the debug level
         if ( !strcmp( "debuglevel", var ) ) {
           if ( !( val = config_stream.GetWord() ) ) {
-            Eroute.Emsg( "Config", "argument for debug level invalid set to ERR." );
-            mLogLevel = LOG_ERR;
+            Eroute.Emsg( "Config", "argument for debug level invalid set to INFO." );
+            mLogLevel = LOG_INFO;
           } else {
             std::string str_val(val);
             if (isdigit(str_val[0])) {
