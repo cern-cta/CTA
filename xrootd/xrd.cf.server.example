@@ -5,7 +5,7 @@ xrootd.trace emsg login
 xrd.network keepalive
 xrd.trace conn net
 #-------------------------------------------------------------------------------
-xrootd.seclib /usr/lib64/libXrdSec.so.2.1
+xrootd.seclib /usr/lib64/libXrdSec.so
 sec.protocol /usr/lib64 unix
 #-------------------------------------------------------------------------------
 all.export / nolock
