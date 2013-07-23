@@ -4547,27 +4547,27 @@ CREATE OR REPLACE PROCEDURE requestToDo(service IN VARCHAR2, rId OUT INTEGER, rT
   varUnusedMessage VARCHAR2(2048);
   varUnusedStatus INTEGER;
 BEGIN
-  DELETE FROM NewRequests
+  DELETE /*+ INDEX_RS_ASC(NewRequests PK_NewRequests_Type_Id) LEADING(Type2Obj NewRequests) */ FROM NewRequests
    WHERE type IN (SELECT type FROM Type2Obj
                    WHERE svcHandler = service
                      AND svcHandler IS NOT NULL)
    AND ROWNUM < 2 RETURNING id, type INTO rId, rType;
-EXCEPTION WHEN NO_DATA_FOUND THEN
-  -- There is no candidate available. Wait for next alert for a maximum of 3 seconds.
-  -- We do not wait forever in order to to give the control back to the
-  -- caller daemon in case it should exit.
-  DBMS_ALERT.WAITONE('wakeUp'||service, varUnusedMessage, varUnusedStatus, 3);
-  -- try again to find something now that we waited
-  BEGIN
+  IF rId IS NULL THEN
+    -- There is no candidate available. Wait for next alert for a maximum of 3 seconds.
+    -- We do not wait forever in order to to give the control back to the
+    -- caller daemon in case it should exit.
+    DBMS_ALERT.WAITONE('wakeUp'||service, varUnusedMessage, varUnusedStatus, 3);
+    -- try again to find something now that we waited
     DELETE FROM NewRequests
      WHERE type IN (SELECT type FROM Type2Obj
                      WHERE svcHandler = service
                        AND svcHandler IS NOT NULL)
      AND ROWNUM < 2 RETURNING id, type INTO rId, rType;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    rId := 0;   -- nothing to do
-    rType := 0;
-  END;
+    IF rId IS NULL THEN
+      rId := 0;   -- nothing to do
+      rType := 0;
+    END IF;
+  END IF;
 END;
 /
 
