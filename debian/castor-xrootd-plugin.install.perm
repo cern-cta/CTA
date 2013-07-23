@@ -13,6 +13,8 @@
 %attr(0755,stage,st) var/log/xrootd/server/proc
 %attr(0755,root,st) var/spool/xrootd/core
 %attr(0755,root,st) var/spool/xrootd/admin
+%attr(0755,root,st) var/spool/xrootd/manager
+%attr(0755,root,st) var/spool/xrootd/server
 %attr(0775,stage,st) var/run/xrootd/
 
 

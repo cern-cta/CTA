@@ -95,5 +95,7 @@ MakeDir(/var/log/xrootd/server,755)
 MakeDir(/var/log/xrootd/server/proc,755)
 MakeDir(/var/spool/xrootd/admin,755)
 MakeDir(/var/spool/xrootd/core,755)
+MakeDir(/var/spool/xrootd/manager,755)
+MakeDir(/var/spool/xrootd/server,755)
 MakeDir(/var/run/xrootd,775)
 
