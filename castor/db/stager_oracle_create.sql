@@ -11759,7 +11759,7 @@ BEGIN
   FOR SC IN (SELECT id FROM SvcClass) LOOP
     -- check if we are already rebalancing
     SELECT count(*) INTO varAlreadyRebalancing
-      FROM Disk2DiskCopy
+      FROM Disk2DiskCopyJob
      WHERE destSvcClass = SC.id
        AND replicationType = dconst.REPLICATIONTYPE_REBALANCE
        AND ROWNUM < 2;
@@ -11770,15 +11770,15 @@ BEGIN
     -- compute average filling of filesystems
     SELECT AVG(free/totalSize) INTO varFreeRef
       FROM FileSystem, DiskPool2SvcClass
-     WHERE DiskPool2SvcClass.child = FileSystem.DiskPool
-       AND DiskPool2SvcClass.parent=SC.id GROUP BY SC;
+     WHERE DiskPool2SvcClass.parent = FileSystem.DiskPool
+       AND DiskPool2SvcClass.child = SC.id GROUP BY SC.id;
     -- get sensibility of the rebalancing
     varSensibility := TO_NUMBER(getConfigOption('Rebalancing', 'Sensibility', '5'))/100;
     -- for each filesystem too full compared to average, rebalance
     FOR FS IN (SELECT id, varFreeRef*totalSize-free dataToMove
                  FROM FileSystem, DiskPool2SvcClass
-                WHERE DiskPool2SvcClass.child = FileSystem.DiskPool
-                  AND DiskPool2SvcClass.parent=SC.id
+                WHERE DiskPool2SvcClass.parent = FileSystem.DiskPool
+                  AND DiskPool2SvcClass.child = SC.id
                   AND varFreeRef - free/totalSize > varSensibility) LOOP
       rebalance(FS.id, FS.dataToMove, SC.id);
     END LOOP;
