@@ -36,9 +36,6 @@ if $fromhost-ip == '127.0.0.1' and \
 # respect the timestamps given in local messages
 $SystemLogSocketIgnoreMsgTimestamp off
 
-# Logprocessor input file
-local3.*;local3.!=debug;local2.info        -/var/log/dlf/syslog.input
-
 # If the message has been processed by one of the filters above stop
 # any further processing. This avoids duplicate logging!
 & ~
