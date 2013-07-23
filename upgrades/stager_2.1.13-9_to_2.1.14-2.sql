@@ -563,7 +563,6 @@ DROP PROCEDURE stopDraining;
 DROP VIEW DrainingFailures;
 DROP VIEW DrainingOverview;
 DROP FUNCTION getInterval;
-DROP FUNCTION getTimeString;
 DROP FUNCTION sizeOfFmtSI;
 DROP PROCEDURE insertD2dRequest;
 DROP PROCEDURE storeClusterStatus;

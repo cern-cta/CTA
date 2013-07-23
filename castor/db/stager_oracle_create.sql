@@ -11897,6 +11897,20 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- nothing found
 END; END; END; END; END;
 /
 
+/* Function to convert seconds into a time string using the format:
+ * DD-MON-YYYY HH24:MI:SS. If seconds is not defined then the current time
+ * will be returned.
+ */
+CREATE OR REPLACE FUNCTION getTimeString
+(seconds IN NUMBER DEFAULT NULL,
+ format  IN VARCHAR2 DEFAULT 'DD-MON-YYYY HH24:MI:SS')
+RETURN VARCHAR2 AS
+BEGIN
+  RETURN (to_char(to_date('01-JAN-1970', 'DD-MON-YYYY') +
+          nvl(seconds, getTime()) / (60 * 60 * 24), format));
+END;
+/
+
 
 /* Get the diskcopys associated with the reference number */
 CREATE OR REPLACE FUNCTION getDCs(ref number) RETURN castorDebug.DiskCopyDebug PIPELINED AS
