@@ -1248,7 +1248,10 @@ XrdxCastor2FsFile::open(const char*         path,
   if (delay) 
   {
     TIMING("RETURN", &opentiming);
-    opentiming.Print();
+    
+    if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+      opentiming.Print();
+    
     return XrdxCastor2FS->Stall(error, delay, msg_delay.c_str());
   }
 
@@ -1558,20 +1561,29 @@ XrdxCastor2FsFile::open(const char*         path,
       if (error.getErrInfo() == EBUSY)
       {
         TIMING("RETURN", &opentiming);
-        opentiming.Print();
+
+        if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+          opentiming.Print();
+      
         return XrdxCastor2FS->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()) , 
                                     "file is still busy, please wait");
       }
 
       TIMING("RETURN", &opentiming);
-      opentiming.Print();
+
+      if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+        opentiming.Print();
+
       return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "async request failed");
 
     }
     else if (status >= SFS_STALL)
     {
       TIMING("RETURN", &opentiming);
-      opentiming.Print();
+
+      if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+        opentiming.Print();
+
       return XrdxCastor2FS->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()) , 
                                   "request queue full or response not ready yet");
     }
@@ -1582,7 +1594,10 @@ XrdxCastor2FsFile::open(const char*         path,
     if (resp_info.mStageStatus != "READY")
     {
       TIMING("RETURN", &opentiming);
-      opentiming.Print();
+      
+      if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+        opentiming.Print();
+
       return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "access file in stager (Put request failed)  fn = ",
                                  map_path.c_str());
     }
@@ -1654,7 +1669,10 @@ XrdxCastor2FsFile::open(const char*         path,
           // Check if we want transparent staging
           if (policy && ((strstr(policy->c_str(), "nohsm"))))
           {
-            opentiming.Print();
+            
+            if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+              opentiming.Print();
+
             continue;
           }
         }
@@ -1666,7 +1684,10 @@ XrdxCastor2FsFile::open(const char*         path,
                                             resp_info))
         {
           TIMING("RETURN", &opentiming);
-          opentiming.Print();
+          
+          if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+            opentiming.Print();
+
           continue;
         }
 
@@ -1686,14 +1707,20 @@ XrdxCastor2FsFile::open(const char*         path,
         if (resp_info.mStageStatus == "READY")
         {
           TIMING("RETURN", &opentiming);
-          opentiming.Print();
+          
+          if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+            opentiming.Print();
+
           return XrdxCastor2FS->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()) , 
                                       "file is being staged in");
         }
         else
         {
           TIMING("RETURN", &opentiming);
-          opentiming.Print();
+          
+          if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+            opentiming.Print();
+
           continue;
         }
       }
@@ -1742,13 +1769,19 @@ XrdxCastor2FsFile::open(const char*         path,
       if (status == SFS_ERROR)
       {
         TIMING("RETURN", &opentiming);
-        opentiming.Print();
+
+        if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+          opentiming.Print();
+
         return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "async req failed fn=", map_path.c_str());
       }
       else if (status >= SFS_STALL)
       {
         TIMING("RETURN", &opentiming);
-        opentiming.Print();
+
+        if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+          opentiming.Print();
+
         return XrdxCastor2FS->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()) , 
                                     "request queue full or response not ready");
       }
@@ -1756,7 +1789,10 @@ XrdxCastor2FsFile::open(const char*         path,
       if (resp_info.mStageStatus != "READY")
       {
         TIMING("RETURN", &opentiming);
-        opentiming.Print();
+        
+        if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+          opentiming.Print();
+
         return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "access stager (Get request failed) fn=", 
                                    map_path.c_str());
       }
@@ -1956,7 +1992,10 @@ XrdxCastor2FsFile::open(const char*         path,
   }
 
   TIMING("PROC/DONE", &opentiming);
-  opentiming.Print();
+  
+  if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+    opentiming.Print();
+
   xcastor_debug("redirection to:%s", resp_info.mRedirectionHost.c_str());
   return rcode;
 }
@@ -2374,7 +2413,7 @@ XrdxCastor2Fs::XrdxCastor2Fs(XrdSysError* ep):
 {
   eDest = ep;
   ConfigFN  = 0;
-  mLogLevel = LOG_ERR; // log everything above error
+  mLogLevel = LOG_INFO; // log info
 }
 
 
@@ -2938,12 +2977,18 @@ XrdxCastor2Fs::stageprepare(const char*         path,
                                       resp_info))
   {
     TIMING("END", &preparetiming);
-    preparetiming.Print();
+    
+    if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+      preparetiming.Print();
+
     return SFS_ERROR;
   }
 
   TIMING("END", &preparetiming);
-  preparetiming.Print();
+  
+  if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+    preparetiming.Print();
+
   return SFS_OK;
 }
 
@@ -3074,13 +3119,19 @@ XrdxCastor2Fs::prepare(XrdSfsPrep&         pargs,
                                        oenv.Get("serviceclass")))
     {
       TIMING("END", &preparetiming);
-      preparetiming.Print();
+      
+      if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+        preparetiming.Print();
+
       return SFS_ERROR;
     }
   }
 
   TIMING("END", &preparetiming);
-  preparetiming.Print();
+  
+  if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+    preparetiming.Print();
+
   return SFS_OK;
 }
 
@@ -3257,7 +3308,10 @@ XrdxCastor2Fs::rem(const char*         path,
                                stagehost.c_str(), serviceclass.c_str()))
     {
       TIMING("END", &rmtiming);
-      rmtiming.Print();
+      
+      if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+        rmtiming.Print();
+      
       return SFS_ERROR;
     }
 
@@ -3267,7 +3321,10 @@ XrdxCastor2Fs::rem(const char*         path,
   int retc = 0;
   retc = _rem(map_path.c_str(), error, &mappedclient, info);
   TIMING("RemoveNamespace", &rmtiming);
-  rmtiming.Print();
+  
+  if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+    rmtiming.Print();
+      
   return retc;
 }
 
@@ -3568,7 +3625,10 @@ XrdxCastor2Fs::stat(const char*         path,
   }
 
   TIMING("END", &stattiming);
-  stattiming.Print();
+
+  if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+    stattiming.Print();
+
   return SFS_OK;
 }
 
@@ -3669,7 +3729,10 @@ XrdxCastor2Fs::lstat(const char*         path,
   buf->st_mtime   = cstat.mtime;
   buf->st_ctime   = cstat.ctime;
   TIMING("END", &stattiming);
-  stattiming.Print();
+
+  if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+    stattiming.Print();
+
   return SFS_OK;
 }
 
@@ -4193,9 +4256,9 @@ XrdxCastor2Fs::SetLogLevel(int logLevel)
 {
   if (mLogLevel != logLevel)
   {
-    xcastor_info("update log level from:%s to:%s",
-                 Logging::GetPriorityString(mLogLevel),
-                 Logging::GetPriorityString(logLevel));
+    xcastor_notice("update log level from:%s to:%s",
+                   Logging::GetPriorityString(mLogLevel),
+                   Logging::GetPriorityString(logLevel));
     
     mLogLevel = logLevel;
     Logging::SetLogPriority(mLogLevel);

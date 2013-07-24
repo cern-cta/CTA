@@ -177,7 +177,7 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
               // The level is given as a string
               mLogLevel = Logging::GetPriorityByString(val);
             }
-            Logging::SetLogPriority(mLogLevel);
+
             Eroute.Say( "=====> xcastor2.loglevel: ", 
                         Logging::GetPriorityString(mLogLevel), "" );
           }
