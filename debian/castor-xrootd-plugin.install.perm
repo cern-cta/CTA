@@ -10,6 +10,7 @@
 %attr(0755,root,root) etc/cron.d/xrd-logs
 %attr(0755,stage,st) var/log/xrootd/manager
 %attr(0755,stage,st) var/log/xrootd/server
+%attr(0755,stage,st) var/log/xrootd/manager/proc
 %attr(0755,stage,st) var/log/xrootd/server/proc
 %attr(0755,root,st) var/spool/xrootd/core
 %attr(0755,root,st) var/spool/xrootd/admin
