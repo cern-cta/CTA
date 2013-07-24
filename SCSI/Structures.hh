@@ -25,6 +25,7 @@
 
 #include <sstream>
 #include <iomanip>
+#include <algorithm>
 #include <arpa/inet.h>
 
 namespace SCSI {
