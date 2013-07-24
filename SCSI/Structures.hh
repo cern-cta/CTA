@@ -24,6 +24,7 @@
 #pragma once
 
 #include <sstream>
+#include <iomanip>
 #include <arpa/inet.h>
 
 namespace SCSI {
@@ -92,6 +93,37 @@ namespace SCSI {
       std::stringstream r;
       r.write(t, std::find(t, t + n, '\0') - t);
       return r.str();
+    }
+    
+    std::string toString(const inquiryData_t &);
+    
+    template <size_t n>
+    std::string hexDump(const unsigned char(& d)[n]) {
+      std::stringstream hex;
+      hex << std::hex << std::setfill('0');
+      int pos = 0;
+      while (pos < (8* (n / 8))) {
+        hex << std::setw(4) << pos << " | ";
+        for (int i=0; i<8; i++)
+          hex << std::setw(2) << ((int) d[pos + i]) << " ";
+        hex << "| ";
+        for (int i=0; i<8; i++)
+          hex << std::setw(0) << d[pos + i];
+        hex << std::endl;
+        pos += 8;
+      }
+      if (n % 8) {
+        hex << std::setw(4) << pos << " | ";
+        for (int i=0; i<(n % 8); i++)
+          hex << std::setw(2) << ((int) d[pos + i]) << " ";
+        for (int i=(n % 8); i<8; i++)
+          hex << "   ";
+        hex << "| ";
+        for (int i=0; i<(n % 8); i++)
+          hex << std::setw(0) << d[pos + i];
+        hex << std::endl;
+      }
+      return hex.str();
     }
 
     inline uint32_t toU32(const char(& t)[4])

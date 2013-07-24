@@ -44,6 +44,8 @@ namespace Tape {
     virtual const char * what() const throw();
     Tape::Exceptions::Backtrace backtrace;
   protected:
+    void setWhat(const std::string &w);
+  private:
     std::string m_what;
   };
 

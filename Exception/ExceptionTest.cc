@@ -60,4 +60,15 @@ namespace UnitTests {
       ASSERT_NE(std::string::npos, bt.find("Tape::Exceptions::Backtrace::Backtrace"));
     }
   }
+  
+  TEST(Exceptions, errnum_throwing) {
+    /* Mickey Mouse test as we had trouble which throwing Errnum (with errno=ENOENT)*/
+    errno = ENOENT;
+    try {
+      throw Tape::Exceptions::Errnum("Test ENOENT");
+    } catch (std::exception & e) {
+      std::string temp = e.what();
+      temp += " ";
+    }
+  }
 }

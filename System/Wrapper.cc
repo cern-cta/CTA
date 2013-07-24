@@ -315,8 +315,8 @@ void Tape::System::fakeWrapper::setupSLC5() {
   m_stats["/dev/st1"].st_mode = S_IFCHR;
   m_stats["/dev/nst1"].st_rdev = makedev(9, 129);
   m_stats["/dev/nst1"].st_mode = S_IFCHR;
-  m_stFiles["/dev/st0"];
-  m_stFiles["/dev/st1"];
+  m_stFiles["/dev/nst0"];
+  m_stFiles["/dev/nst1"];
   m_genericFiles["/dev/sg0"];
   m_genericFiles["/dev/sg1"];
   m_genericFiles["/dev/sg2"];

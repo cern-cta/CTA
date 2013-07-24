@@ -32,13 +32,21 @@
 #include <execinfo.h>
 #include <cxxabi.h>
 
+
+/* TODO remove me: it should be temporary */
+#include <iostream>
+
 const char * Tape::Exception::what() const throw () {
-  std::stringstream w;
-  w << m_what << std::endl << std::string(backtrace);
-  return w.str().c_str();
+  return m_what.c_str();
 }
 
-Tape::Exceptions::Errnum::Errnum(std::string what):Exception(what) {
+void Tape::Exception::setWhat(const std::string& what) {
+  std::stringstream w;
+  w << what << std::endl << std::string(backtrace);
+  m_what = w.str();
+}
+
+Tape::Exceptions::Errnum::Errnum(std::string what):Exception("") {
   m_errnum = errno;
   char s[1000];
   /* _XOPEN_SOURCE seems not to work.  */
@@ -50,13 +58,13 @@ Tape::Exceptions::Errnum::Errnum(std::string what):Exception(what) {
             << new_errno << ")";
     m_strerror = w.str();
   } else {
-    m_strerror = std::string(errorStr);
+    m_strerror = errorStr;
   }
   std::stringstream w2;
+  if (what.size())
+    w2 << what << " ";
   w2 << "Errno=" << m_errnum << ": " << m_strerror;
-  if (m_what.size())
-    m_what += " ";
-  m_what += w2.str();
+  setWhat(w2.str());
 }
 
 Tape::Exceptions::Backtrace::Backtrace() {
