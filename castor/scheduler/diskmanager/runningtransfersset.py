@@ -239,7 +239,7 @@ class RunningTransfersSet(object):
       try:
         for tTransfer in self.tapeTransfers:
           n = n + 1
-          nbslots = self.config.getValue('DiskManager', tTransfer.transferType+'Weight', 1, int)
+          nbslots = self.config.getValue('DiskManager', TransferType.toStr(tTransfer.transferType)+'Weight', 1, int)
           ns = ns + nbslots
           if not detailed:
             continue

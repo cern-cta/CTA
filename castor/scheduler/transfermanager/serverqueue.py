@@ -547,7 +547,7 @@ class ServerQueue(dict):
           continue
         if not self.transfersLocations[(transfer.transferId, transfer.transferType)]:
           # no other candidate machine for this transfer. It has to be failed
-          transfersKilled.append((transfer.transferId, transfer.fileId[1], errorCode, errorMsg, transfer.reqId))
+          transfersKilled.append((transfer.transferId, transfer.fileId, errorCode, errorMsg, transfer.reqId))
           # clean up _transfersLocations
           del self.transfersLocations[(transfer.transferId, transfer.transferType)]
           # if we have a source transfer already running, stop it
@@ -555,7 +555,11 @@ class ServerQueue(dict):
             self.d2dend(transfer, transferCancelation=True)
           else:
             # if we have a source transfer pending, drop it
-            del self.transfersLocations[(transfer.transferId, TransferType.D2DSRC)]
+            try:
+              del self.transfersLocations[(transfer.transferId, TransferType.D2DSRC)]
+            except KeyError:
+              # already gone ? Fine !
+              pass
         # drop the transfer id from the machine queue
         del self[transfer.diskServer][transfer.transferId]
     finally:
