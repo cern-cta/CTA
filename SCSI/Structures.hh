@@ -54,6 +54,7 @@ namespace SCSI {
       
       unsigned char control;
     } inquiryCDB_t;
+    
     /*
      * Inquiry data as described in SPC-4.
      */

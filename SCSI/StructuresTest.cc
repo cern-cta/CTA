@@ -103,4 +103,22 @@ namespace UnitTests {
     ASSERT_EQ(0x12, *inq.vendorSpecific2);
   }
 
+  TEST(SCSI_Structures, inquiryCDB_t) {
+    SCSI::Structures::inquiryCDB_t inqCDB;
+    unsigned char *buff = (unsigned char *)&inqCDB;
+    
+    ASSERT_EQ(6, sizeof(inqCDB));
+    
+    ASSERT_EQ(0, inqCDB.opCode);
+    buff[0] = SCSI::Commands::INQUIRY;
+    ASSERT_EQ(SCSI::Commands::INQUIRY, inqCDB.opCode);
+    
+    ASSERT_EQ(0, inqCDB.EVPD);
+    buff[1] = 0x1;
+    ASSERT_EQ(1, inqCDB.EVPD);
+    
+    ASSERT_EQ(0, inqCDB.control);
+    buff[5] = 0xCA;
+    ASSERT_EQ(0xCA, inqCDB.control);
+  }
 };
