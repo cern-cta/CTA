@@ -68,7 +68,7 @@ try:
         diskPoolIds = []
         diskPools = set([])
         for target in targets:
-            stcur.execute(sqlStatement, target)
+            stcur.execute(sqlStatement, dpname=target)
             row = stcur.fetchone()
             if row:
                 diskPoolIds.append(row[0])
@@ -78,7 +78,7 @@ try:
         diskServerIds = []
         diskServers = set([])
         for target in targets:
-            stcur.execute(sqlStatement, target)
+            stcur.execute(sqlStatement, dsname=target)
             row = stcur.fetchone()
             if row:
                 diskServerIds.append(row[0])
