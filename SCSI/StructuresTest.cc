@@ -105,6 +105,7 @@ namespace UnitTests {
 
   TEST(SCSI_Structures, inquiryCDB_t) {
     SCSI::Structures::inquiryCDB_t inqCDB;
+    memset(&inqCDB, 0, sizeof(inqCDB));
     unsigned char *buff = (unsigned char *)&inqCDB;
     
     ASSERT_EQ(6, sizeof(inqCDB));
