@@ -29,8 +29,31 @@
 #include <arpa/inet.h>
 
 namespace SCSI {
+  /**
+   * Structures as defined in the SCSI specifications, and helper functions for them.
+   * SPC-4 (SCSI primary commands) can be found at:
+   * http://hackipedia.org/Hardware/SCSI/Primary%20Commands/SCSI%20Primary%20Commands%20-%204.pdf
+   * 
+   * and SSC-3 (SCSI stream commands, i.e. tape drives) at:
+   * http://hackipedia.org/Hardware/SCSI/Stream%20Commands/SCSI%20Stream%20Commands%20-%203.pdf
+   */
   namespace Structures {
 
+    /*
+     * Inquiry CDB as described in SPC-4.
+     */
+    typedef struct {
+      unsigned char opCode;
+      
+      unsigned char EVPD : 1;
+      unsigned char : 7;
+      
+      unsigned char pageCode;
+      
+      char allocationLength[2];
+      
+      unsigned char control;
+    } inquiryCDB_t;
     /*
      * Inquiry data as described in SPC-4.
      */

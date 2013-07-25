@@ -87,16 +87,16 @@ namespace Tape {
     void SCSI_inquiry(int fd) {
       unsigned char dataBuff[130];
       unsigned char senseBuff[256];
-      unsigned char cdb[6];
+      SCSI::Structures::inquiryCDB_t cdb; 
       memset(&cdb, 0, sizeof (cdb));
       memset(&dataBuff, 0, sizeof (dataBuff));
       /* Build command */
-      cdb[0] = SCSI::Commands::INQUIRY;
+      cdb.opCode = SCSI::Commands::INQUIRY;
 
       sg_io_hdr_t sgh;
       memset(&sgh, 0, sizeof (sgh));
       sgh.interface_id = 'S';
-      sgh.cmdp = cdb;
+      sgh.cmdp = (unsigned char *)&cdb;
       sgh.cmd_len = sizeof (cdb);
       sgh.sbp = senseBuff;
       sgh.mx_sb_len = 255;
