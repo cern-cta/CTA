@@ -1673,7 +1673,7 @@ BEGIN
   LOOP
     BEGIN
       -- Trigger a replication request.
-      createDisk2DiskCopyJob(cfId, varNsOpenTime, a.id, ouid, ogid, dconst.REPLICATIONTYPE_INTERNAL, NULL, NULL);
+      createDisk2DiskCopyJob(cfId, varNsOpenTime, a.id, ouid, ogid, dconst.REPLICATIONTYPE_USER, NULL, NULL);
     EXCEPTION WHEN NO_DATA_FOUND THEN
       NULL;  -- No copies to replicate from
     END;
