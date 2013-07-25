@@ -105,14 +105,17 @@ namespace UnitTests {
 
   TEST(SCSI_Structures, inquiryCDB_t) {
     SCSI::Structures::inquiryCDB_t inqCDB;
-    memset(&inqCDB, 0, sizeof(inqCDB));
     unsigned char *buff = (unsigned char *)&inqCDB;
     
+    /*
+     * Make sure this struct is a POD (plain old data without virtual table)
+     * (and has the right size).
+     */
     ASSERT_EQ(6, sizeof(inqCDB));
     
-    ASSERT_EQ(0, inqCDB.opCode);
-    buff[0] = SCSI::Commands::INQUIRY;
     ASSERT_EQ(SCSI::Commands::INQUIRY, inqCDB.opCode);
+    buff[0] = 0;
+    ASSERT_EQ(0, inqCDB.opCode);
     
     ASSERT_EQ(0, inqCDB.EVPD);
     buff[1] = 0x1;

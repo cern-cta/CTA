@@ -88,10 +88,8 @@ namespace Tape {
       unsigned char dataBuff[130];
       unsigned char senseBuff[256];
       SCSI::Structures::inquiryCDB_t cdb; 
-      memset(&cdb, 0, sizeof (cdb));
       memset(&dataBuff, 0, sizeof (dataBuff));
-      /* Build command */
-      cdb.opCode = SCSI::Commands::INQUIRY;
+      /* Build command: nothing to do. We go with defaults. */
 
       sg_io_hdr_t sgh;
       memset(&sgh, 0, sizeof (sgh));

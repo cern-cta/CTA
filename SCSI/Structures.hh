@@ -28,6 +28,8 @@
 #include <algorithm>
 #include <arpa/inet.h>
 
+#include "Constants.hh"
+
 namespace SCSI {
   /**
    * Structures as defined in the SCSI specifications, and helper functions for them.
@@ -38,11 +40,11 @@ namespace SCSI {
    * http://hackipedia.org/Hardware/SCSI/Stream%20Commands/SCSI%20Stream%20Commands%20-%203.pdf
    */
   namespace Structures {
-
     /*
      * Inquiry CDB as described in SPC-4.
      */
-    typedef struct {
+    class inquiryCDB_t {
+    public:
       unsigned char opCode;
       
       unsigned char EVPD : 1;
@@ -53,7 +55,8 @@ namespace SCSI {
       char allocationLength[2];
       
       unsigned char control;
-    } inquiryCDB_t;
+      inquiryCDB_t() { memset(this, 0, sizeof(*this)); opCode = SCSI::Commands::INQUIRY; }
+    };
     
     /*
      * Inquiry data as described in SPC-4.
