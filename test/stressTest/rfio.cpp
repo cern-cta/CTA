@@ -477,7 +477,8 @@ int writeFileUsingXROOTD(const std::string &filepath,
 
   XrdCl::File f; 
   XrdCl::XRootDStatus status;
-  std::string file_url = stagerHost + "/"; file_url += filepath;
+  std::string file_url = stagerHost + "/";
+  file_url += filepath + "?svcClass=" + stagerSvcClass;
   XrdCl::URL url(file_url);
 
   if (!url.IsValid()) {
