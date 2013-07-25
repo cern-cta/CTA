@@ -122,6 +122,7 @@ STRINGSTORE(const char* __charptr__)
 void
 XrdxCastor2Fs::GetId(const char* path, XrdSecEntity client, uid_t& uid, gid_t& gid)
 {
+  xcastor_debug("get id");
   MapMutex.Lock();
   uid = 99;
   gid = 99;
@@ -195,6 +196,7 @@ XrdxCastor2Fs::GetId(const char* path, XrdSecEntity client, uid_t& uid, gid_t& g
 void
 XrdxCastor2Fs::SetAcl(const char* path, XrdSecEntity client, bool isLink)
 {
+  xcastor_debug("set acl");
   MapMutex.Lock();  // -->
   uid_t uid = 99;
   uid_t gid = 0;
@@ -271,6 +273,7 @@ XrdxCastor2Fs::GetAllGroups(const char*   name,
                             XrdOucString& allGroups,
                             XrdOucString& defaultGroup)
 {
+  xcastor_debug("get all groups");
   allGroups = ":";
   defaultGroup = "";
   XrdxCastor2FsGroupInfo* ginfo = NULL;
@@ -615,6 +618,7 @@ XrdxCastor2Fs::RoleMap(const XrdSecEntity* client,
 void
 XrdxCastor2Fs::ReloadGridMapFile()
 {
+  xcastor_debug("reload grid map file");
   static time_t GridMapMtime = 0;
   static time_t GridMapCheckTime = 0;
   time_t now = time(NULL);
