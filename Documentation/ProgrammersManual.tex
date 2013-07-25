@@ -1,12 +1,12 @@
 \chapter*{Preface}
 \addcontentsline{toc}{chapter}{Preface}
 
-The Tape server project is targeted at replacing the CASTOR tape server with a new drop-{}in reimplementation. The reimplementation will replace a legacy implementation that is written in C.
+The Tape server project is targeted at replacing the CAStor tape server with a new drop-{}in reimplementation. The reimplementation will replace a legacy implementation that is written in C.
 
 The reimplementation will be done using the latest tools available to us in the current Scientific Linux distribution. The language will be C++, to group concept and variables in self-contained
 (and unit testable) objects.
 
-The interface to the mounting deamons might still change with repect to castor 2.1.14 as the mounting daemons are being reviewed in parallel.
+The interface to the mounting deamons might still change with repect to CAStor 2.1.14 as the mounting daemons are being reviewed in parallel.
 
 This documentation itself currently references the older tape server this project is intending to replace. The references will have to be removed as they become unnecessary. 
 Likewise, the layout of the document will be adapted.
@@ -26,13 +26,14 @@ CERN SLC5 and SLC6, 64bits. Although it should compile in theory, the 32 bits ve
 \section{Reference documentations}
 \subsection{SCSI specifications}
 
-The SCSI commands can be found in the SCSI section of hackipedia:
- \href{http://hackipedia.org/Hardware/SCSI/}{http://hackipedia.org/Hardware/SCSI/}   The most significant sections for tape server development are the stream commands
- \href{http://hackipedia.org/Hardware/SCSI/Stream%20Commands/SCSI%20Stream%20Commands%20-%203.pdf}
-    {http://hackipedia.org/Hardware/SCSI/Stream Commands/SCSI Stream Commands - 3.pdf} 
+The SCSI commands can be found in the SCSI section of hackipedia
+      \footnote{ \href{http://hackipedia.org/Hardware/SCSI/}{http://hackipedia.org/Hardware/SCSI/} }.
+ The most significant documents for tape server development are the stream commands
+      \footnote{ \href{http://hackipedia.org/Hardware/SCSI/Stream\%20Commands/SCSI\%20Stream\%20Commands\%20-\%203.pdf}
+                      {http://hackipedia.org/Hardware/SCSI/Stream\%20Commands/SCSI\%20Stream\%20Commands\%20-\%203.pdf} }
  and the SCSI primary commands
-    \href{http://hackipedia.org/Hardware/SCSI/Primary%20Commands/SCSI%20Primary%20Commands%20-%204.pdf}
-      {http://hackipedia.org/Hardware/SCSI/Primary Commands/SCSI Primary Commands - 4.pdf}.
+      \footnote{ \href{http://hackipedia.org/Hardware/SCSI/Primary\%20Commands/SCSI\%20Primary\%20Commands\%20-\%204.pdf}
+                      {http://hackipedia.org/Hardware/SCSI/Primary\%20Commands/SCSI\%20Primary\%20Commands\%20-\%204.pdf} }).
       \footnote{The official site for SCSI standard is \href{http://T10.org}{http://T10.org}. All specifications
       can be found there in their approved version, but behind a paywall. Nevertheless all previous drafts were
       public and can conveniently be found on the web. Hackipedia hold a very nice collection of such
@@ -44,28 +45,36 @@ The SCSI specification allows for some flexibility for the manufacturers of tape
 each of them has differences in details. The detailed can be found in the following documentations:
 
 \begin{itemize}
-\item{}StorageTek\texttrademark T10000 Tape Drive \href{http://docs.oracle.com/cd/E19957-01/96174E/96174E.pdf}{http://docs.oracle.com/cd/E19957-01/96174E/96174E.pdf}
+\item{}StorageTek\texttrademark T10000 Tape Drive
+       \footnote{ \href{http://docs.oracle.com/cd/E19957-01/96174E/96174E.pdf}
+                       {http://docs.oracle.com/cd/E19957-01/96174E/96174E.pdf} }
 \item{}Sun StorageTek\texttrademark T10000 Tape Drive Fibre Channel Interface Reference Manual
-       \href{http://docs.oracle.com/cd/E19772-01/MT9259L/MT9259L.pdf}{http://docs.oracle.com/cd/E19772-01/MT9259L/MT9259L.pdf}
+       \footnote{ \href{http://docs.oracle.com/cd/E19772-01/MT9259L/MT9259L.pdf}
+                       {http://docs.oracle.com/cd/E19772-01/MT9259L/MT9259L.pdf} }
 \item{}IBM System Storage TS1120 and TS1130 Tape Drives and TS1120 ControllerOperator Guide3592 Models J1A, E05, E06, EU6, J70 and C06
-       \href{ftp://ftp.software.ibm.com/storage/TS1130/a86opg02.pdf}{ftp://ftp.software.ibm.com/storage/TS1130/a86opg02.pdf}
+       \footnote{ \href{ftp://ftp.software.ibm.com/storage/TS1130/a86opg02.pdf}
+                       {ftp://ftp.software.ibm.com/storage/TS1130/a86opg02.pdf} }
 \item{}IBM System Storage Tape Drive 3592 SCSI Reference
-       \href{http://www-01.ibm.com/support/docview.wss?uid=ssg1S7003248\&aid=1}{http://www-01.ibm.com/support/docview.wss?uid=ssg1S7003248\&aid=1}
+       \footnote{ \href{http://www-01.ibm.com/support/docview.wss?uid=ssg1S7003248\&aid=1}
+                       {http://www-01.ibm.com/support/docview.wss?uid=ssg1S7003248\&aid=1} }
 \item{}IBM TotalStorage LTO Ultrium Tape Drive SCSI Reference  (LTO-5 through LTO-6)
-       \href{http://www-01.ibm.com/support/docview.wss?uid=ssg1S7003556\&aid=1}{http://www-01.ibm.com/support/docview.wss?uid=ssg1S7003556\&aid=1}
+       \footnote{ \href{http://www-01.ibm.com/support/docview.wss?uid=ssg1S7003556\&aid=1}
+                       {http://www-01.ibm.com/support/docview.wss?uid=ssg1S7003556\&aid=1} }
 \end{itemize}
 
 \subsection{SCSI support in Linux}
 On the Linux side, the main references are the Linux 2.4 SCSI subsystem HOWTO
-\href{http://mirrors.kernel.org/LDP/HOWTO/pdf/SCSI-2.4-HOWTO.pdf}{http://mirrors.kernel.org/LDP/HOWTO/pdf/SCSI-2.4-HOWTO.pdf},
+       \footnote{ \href{http://mirrors.kernel.org/LDP/HOWTO/pdf/SCSI-2.4-HOWTO.pdf}
+                       {http://mirrors.kernel.org/LDP/HOWTO/pdf/SCSI-2.4-HOWTO.pdf} },
 especially for is section 9.3 on the st driver,
 and the Linux SCSI Generic (sg) HOWTO 
- \href{http://mirrors.kernel.org/LDP/HOWTO/pdf/SCSI-Generic-HOWTO.pdf}{http://mirrors.kernel.org/LDP/HOWTO/pdf/SCSI-Generic-HOWTO.pdf}. 
+       \footnote{ \href{http://mirrors.kernel.org/LDP/HOWTO/pdf/SCSI-Generic-HOWTO.pdf}
+                       {http://mirrors.kernel.org/LDP/HOWTO/pdf/SCSI-Generic-HOWTO.pdf} }. 
 
-More details regarding the Generic SCSI driver can be found in this web site: 
-\href{http://sg.danny.cz/sg/}{http://sg.danny.cz/sg/}.
+More details regarding the Generic SCSI driver can be found on the SCSI subsystem maintainer's web site 
+       \footnote{ \href{http://sg.danny.cz/sg/}{http://sg.danny.cz/sg/} }.
 
-The section on the SG\_IO ioctl, \href{http://sg.danny.cz/sg/sg\_io.html}{http://sg.danny.cz/sg/sg\_io.html} details the usage of the 
+The section on the SG\_IO ioctl, \footnote{ \href{http://sg.danny.cz/sg/sg\_io.html}{http://sg.danny.cz/sg/sg\_io.html} } details the usage of the 
 simplest ioctl for the generic SCSI driver, which allows the invocation of a SCSI command and the collection of the 
 result in a single system call.
 
@@ -73,9 +82,9 @@ This ioctl is provided in the middle layer of the SCSI subsystem of Linux. All S
 to the middle layer when encountering an unknown ioctl. This means there is no need to open the matching generic SCSI,
 unless we want to control command queueing with separate sending of commands and result collection.
 
-\subsection{Unsorted CASTOR docs}
-There is a collection of links to various documentations written in the past on this page:
-\href{http://castorwww.web.cern.ch/castorwww/links.htm}{http://castorwww.web.cern.ch/castorwww/links.htm}.
+\subsection{Unsorted CAStor docs}
+A collection of links to various documentations written in the past is available on one of CAStor's web pages
+       \footnote{ \href{http://castorwww.web.cern.ch/castorwww/links.htm}{http://castorwww.web.cern.ch/castorwww/links.htm} }.
 
 \section{Tools used during development}
 \subsection{Required tools for build}
@@ -84,9 +93,11 @@ There is a collection of links to various documentations written in the past on 
 \item{}CMake (Basic SLC version)
 \item{}rpmbuild (Basic SLC version)
 \item{}Google Mock/Google test (GTest is provided in EPEL repository for SLC. 
-  GMock requires recompilation. The source RPMs can be found for newer versions of RPM based distributions, for example from rpmfind: 
-  \href{http://rpmfind.net/linux/rpm2html/search.php?query=gmock}{http://rpmfind.net/linux/rpm2html/search.php?query=gmock}. For convenience, 
-  they are also available here as a temporary solution: \href{file:///afs/cern.ch/user/c/canoc3/public/GoogleTest-Mock}{/afs/cern.ch/user/c/canoc3/public/GoogleTest-Mock}
+  GMock requires recompilation. The source RPMs can be found for newer versions of RPM based distributions, for example from rpmfind 
+  \footnote{ \href{http://rpmfind.net/linux/rpm2html/search.php?query=gmock}{http://rpmfind.net/linux/rpm2html/search.php?query=gmock} }.
+ For convenience, 
+  they are also available on AFS as a temporary solution
+      \footnote{ \href{file:///afs/cern.ch/user/c/canoc3/public/GoogleTest-Mock}{/afs/cern.ch/user/c/canoc3/public/GoogleTest-Mock} }.
 \item{}Valgrind (Basic SLC version)
 \item{}\LaTeX (Basic SLC version) to compile this document
 \item{}Doxygen for code documentation (Basic SLC version)
@@ -94,7 +105,7 @@ There is a collection of links to various documentations written in the past on 
 
 \subsection{Tools used during development}
 \begin{itemize}
-\item{}mhvtl (\href{https://sites.google.com/site/linuxvtl2/}{https://sites.google.com/site/linuxvtl2/}) for developing against virtual drives and libraries.
+\item{}mhvtl \footnote{ \href{https://sites.google.com/site/linuxvtl2/}{https://sites.google.com/site/linuxvtl2/} } for developing against virtual drives and libraries.
 \item{}TeamCity for continuous integration
 \item{}NetBeans as an IDE, including for remote development\
 \end{itemize}
@@ -185,11 +196,21 @@ namespace UnitTests {
 
 Other common types in the SCSI specification are multi-bytes
 number, which are represented by \verb#unsigned char[2/* (or 4)*/]# and handled by helper functions 
-\verb#SCSI::Structures::uint32_t toU32(const char(& t)[4])#, and same for 16 bits. The helper functions
-conveniently uses \verb#ntoh{l|s}#, as SCSI and netowrk orders are the same.
-  
-Another helper function takes care of string extraction from fixed fields like: \verb#unsigned char field[n]#.
-Those strings are 0-padded, but not 0 terminated. It is seen in listing \ref{SCSI_struct_usage}.
+\verb#toU16()# and \verb#toU32()#. The helper functions
+conveniently use \verb#ntoh{l|s}#, as SCSI and netowrk orders are the same. Another helper function 
+takes care of string extraction from fixed sized char arrays. See listing \ref{SCSI_data_helpers}.
+
+\begin{table}
+\begin{lstlisting}[caption=SCSI::Structures helper functions,label=SCSI_data_helpers]
+SCSI::Structures::uint32\_t toU32(const char(\& t)\[4\]);
+SCSI::Structures::uint32\_t toU32(const char(\& t)\[4\]);
+
+template <size\_t n>
+std::string toString(const char(\& t)[n]);
+\end{lstlisting}
+\end{table}
+
+Those arrays are 0-padded, but may not be 0 terminated used completely. It is seen in listing \ref{SCSI_struct_usage}.
 
 To avoid literals in the code, which forces anyone reading it to do tedious lookups,
 the SCSI constants are also defined as constants in the code. See listing \ref{SCSI_consts}.
@@ -231,7 +252,7 @@ where they are not safe (to be defined in details, but the most obvious is right
 after positioning, as the file layer is expected to check the position by reading
 the trailer of the previous file before writing.
 
-The SCSI commands and st driver's functions used in previous software (CASTOR's taped/rtcpd) are:
+The SCSI commands and st driver's functions used in previous software (CAStor's taped/rtcpd) are:
 \begin{itemize}
 \item Individual SCSI commands sent using generic SCSI:
   \begin{itemize}
@@ -264,7 +285,7 @@ The SCSI commands and st driver's functions used in previous software (CASTOR's 
     \item Jump to end of media (before rewinding, as a mean to rebuild the MIR) (MTIOCTOP/MTEOM, 
           with some MTIOCTOP/MTSETDRVBUFFER before, in repairbadmir). The setting of the driver
           buffer is used to set the boolean flag MT\_ST\_FAST\_MTEOM to 0. If not, the mt driver uses
-          a nasty trick asks the device to skip 0x7fffff files forward. The comment in the CASTor code
+          a nasty trick asks the device to skip 0x7fffff files forward. The comment in the CAStor code
           claims it's 32k files, but $2^{23}-1$ is indeed 8M files. Anyway, after turning off the 
           option, the st driver reverts to telling the SCSI device to space to end of data.
           This behavior is documented in the IBM's operator manual mentioned in \ref{Manufacturer's specificities},
@@ -280,11 +301,11 @@ The SCSI commands and st driver's functions used in previous software (CASTOR's 
     \item Skip n files backwards (MTIOCTOP/MTBSF, in skiptpfb).
     \item Skip n files forward (MTIOCTOP/MTFSF, in skiptpff).
     \item Skip n files forward (MTIOCTOP/MTFSF, in skiptpfff). skiptpfff and skiptpff differ only 
-          by error reporting. Both functions exists since CASTOR has been put in SVN (20/07/1999)
+          by error reporting. Both functions exists since CAStor has been put in SVN (20/07/1999)
     \item Skip n blocks backwards (MTIOCTOP/MTBSR, in skiptprb).
     \item Skip n blocks forward (MTIOCTOP/MTFSR, in skiptprf).
     \item Unload the tape (MTIOCTOP/MTOFFL, in unldtape).
-    \item Write synchronous file mark(s) (tape marks in CASTOR jargon) (MTIOCTOP/MTWEOF, in wrttpmrk).
+    \item Write synchronous file mark(s) (tape marks in CAStor jargon) (MTIOCTOP/MTWEOF, in wrttpmrk).
     \item Write immediate (asynchronous file marks (MTIOCTOP/MTWEOFI, also in wrttpmrk).
     \item Clear the EOT condition by calling MTIOGET. This is done in wrttrllbl, 3 times.
           In MTIOGET, indeed, a member of the scsi\_tape structure called recover\_reg is reset to 0.
@@ -311,4 +332,3 @@ namespace Tape {
 } // namespace Tape
 \end{lstlisting}
 \end{table}
-
