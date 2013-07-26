@@ -116,6 +116,41 @@ namespace SCSI {
       unsigned char reserved2[22];
       unsigned char vendorSpecific2[1];
     } inquiryData_t;
+    
+    /*
+     * LOG SELECT CDB as described in SPC-4.
+     */
+    class logSelectCDB_t {
+    public:
+      // byte 0
+      unsigned char opCode;                // OPERATION CODE (4Ch)
+      
+      // byte 1
+      unsigned char SP : 1;                // the Save Parameters
+      unsigned char PCR: 1;                // the Parameter Code Reset
+      unsigned char    : 6;                // Reserved 
+      
+      // byte 2
+      unsigned char pageCode: 6;           // PAGE CODE
+      unsigned char PC: 2;                 // the Page Control
+      
+      // byte 3
+      unsigned char subPageCode;           // SUBPAGE CODE (Reserved for T10000)
+      
+      // bytes 4-6
+      unsigned char reserved[3];           // Reserved
+      
+      // bytes 7-8
+      unsigned char parameterListLength[2];// PARAMETER LIST LENGTH
+      
+      // byte 9
+      unsigned char control;               // CONTROL   
+      
+      logSelectCDB_t() {
+        memset(this, 0, sizeof(*this));
+        opCode = SCSI::Commands::LOG_SELECT; 
+      }
+    };
 
     template <size_t n>
     std::string toString(const char(& t)[n]) {

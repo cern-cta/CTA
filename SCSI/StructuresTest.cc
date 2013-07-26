@@ -125,4 +125,34 @@ namespace UnitTests {
     buff[5] = 0xCA;
     ASSERT_EQ(0xCA, inqCDB.control);
   }
+  
+  TEST(SCSI_Structures, logSelectCDB_t) {
+    SCSI::Structures::logSelectCDB_t logSelectCDB;
+    unsigned char *buff = (unsigned char *)&logSelectCDB;
+    
+    /*
+     * Make sure this struct is a POD (plain old data without virtual table)
+     * (and has the right size).
+     */
+    ASSERT_EQ(10, sizeof(logSelectCDB));
+    
+    ASSERT_EQ(SCSI::Commands::LOG_SELECT, logSelectCDB.opCode);
+    buff[0] = 0xAB;
+    ASSERT_EQ(0xAB, logSelectCDB.opCode);
+    buff[1] |= (0x1 & 0x7) << 0;
+    ASSERT_EQ(1, logSelectCDB.SP);
+    buff[1] |= (0x1 & 0xF) << 1;
+    ASSERT_EQ(1, logSelectCDB.PCR);
+    buff[2] |= 0xAB << 2 >> 2;  
+    ASSERT_EQ(0x2B, logSelectCDB.pageCode);
+    buff[2] |= 0x70 << 1;
+    ASSERT_EQ(0x3, logSelectCDB.PC);
+    buff[3] |= 0xBC;
+    ASSERT_EQ(0xBC, logSelectCDB.subPageCode);
+    /* ... */
+    buff[7] |= 0xAB; buff[8] |= 0xCD;
+    ASSERT_EQ(0xABCD, logSelectCDB.parameterListLength[0]<<8|logSelectCDB.parameterListLength[1]);
+    buff[9] |= 0xBC;
+    ASSERT_EQ(0xBC, logSelectCDB.control);
+  }
 };
