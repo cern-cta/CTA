@@ -33,6 +33,46 @@
  * to allow unit testing against system wrapper.
  */
 namespace Tape {
+  
+  /**
+   * Compressions statistics container, returned by Drive::getCompression()
+   */
+  class compressionStats{
+  public:
+    uint64_t fromHost;
+    uint64_t fromTape;
+    uint64_t toHost;
+    uint64_t toTape;
+  };
+  
+  /**
+   * Device information, returned by getDeviceInfo()
+   */
+  class deviceInfo{
+  public:
+    std::string vendor;
+    std::string product;
+    std::string productRevisionLevel;
+  };
+  
+  /**
+   * Position info, returning both the logical position and the 
+   * buffer writing status.
+   * Returned by getPositionInfo()
+   */
+  class positionInfo {
+    uint32_t currentPosition;
+    uint32_t oldestDirtyObject;
+    uint32_t dirtyObjectsCount;
+    uint32_t dirtyBytesCount;
+  };
+  
+  class tapeAlerts {
+    bool hardError;
+    bool mediaError;
+    bool readFailure;
+    bool writeFailure;
+  };
 
   /**
    * Class abstracting the tape drives. Gets initialized from 
@@ -58,6 +98,28 @@ namespace Tape {
         throw Tape::Exceptions::Errnum(std::string("Could not read drive status: "+ m_SCSIInfo.nst_dev));
       /* Read Generic SCSI information (INQUIRY) */
     }
+    
+    /* Operations to be used by the higher levels */
+    virtual compressionStats getCompression()  throw (Exception) { throw Exception("Not implemented"); }
+    virtual void clearCompressionStats() throw (Exception) { throw Exception("Not implemented"); }
+    /**
+     * Information about the drive. The vendor id is used in the user labels of the files.
+     * @return 
+     */
+    virtual deviceInfo getDeviceInfo() throw (Exception) { throw Exception("Not implemented"); }
+    /**
+     * Position to logical object address (i.e. block). This function is non-blocking:
+     * the immediate bit is not set.
+     * @param blockId The blockId, represented in local endianness.
+     */
+    virtual void positionToLogicalObject (uint32_t blockId) { throw Exception("Not implemented"); }
+    /**
+     * Return logical position of the drive. This is the address of the next object
+     * to read or write.
+     * @return positionInfo class. This contains the logical position, plus information
+     * on the dirty data still in the write buffer.
+     */
+    virtual positionInfo getPositionInfo () { throw Exception("Not implemented"); }
     virtual ~Drive() {
       if(-1 != m_tapeFD)
         m_sysWrapper.close(m_tapeFD);
