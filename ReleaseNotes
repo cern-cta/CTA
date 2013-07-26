@@ -57,8 +57,9 @@
     scheduler) and reduces dramatically the latency of request processing.
   - The handling of DiskCopy statuses has been improved by merging STAGED and CANBEMIGR into
     VALID and creating a tapeStatus entry in the CastorFile table with possible values ONTAPE,
-    NOTONTAPE and DISKONLY. However, the output of the client side commands was kept backward
-    compatible and will still show CANBEMIGR and STAGED files.
+    NOTONTAPE and DISKONLY. This affects the output of internal commands (e.g. diskserver_qry),
+    however the output of the client side commands was kept backward compatible and will
+    still show CANBEMIGR and STAGED files.
 
   Notes
   -----
