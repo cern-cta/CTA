@@ -55,7 +55,7 @@ INSERT INTO UpgradeLog (schemaVersion, release, type)
 VALUES ('2_1_14_2', '2_1_14_2', 'NON TRANSPARENT');
 COMMIT;
 
-/* Job management */
+/* Stop and drop all jobs. They will be recreated at the end */
 BEGIN
   FOR a IN (SELECT * FROM user_scheduler_jobs)
   LOOP
@@ -63,10 +63,7 @@ BEGIN
     IF a.state = 'RUNNING' THEN
       dbms_scheduler.stop_job(a.job_name, force=>TRUE);
     END IF;
-    -- Schedule the start date of the job to 15 minutes from now. This
-    -- basically pauses the job for 15 minutes so that the upgrade can
-    -- go through as quickly as possible.
-    dbms_scheduler.set_attribute(a.job_name, 'START_DATE', SYSDATE + 15/1440);
+    dbms_scheduler.drop_job(a.job_name);
   END LOOP;
 END;
 /
@@ -557,6 +554,8 @@ DROP PROCEDURE disk2DiskCopyDone;
 DROP PROCEDURE createDiskCopyReplicaRequest;
 DROP PROCEDURE getBestDiskCopyToReplicate;
 DROP PROCEDURE transferToSchedule;
+DROP TABLE Accounting;
+DROP VIEW AccountingSummary;
 DROP TABLE DrainingDiskCopy;
 DROP TABLE DrainingFileSystem;
 DROP PROCEDURE removeFailedDrainingTransfers;

@@ -1027,39 +1027,6 @@ UPDATE Type2Obj SET svcHandler = 'BulkStageReqSvc' WHERE type IN (50, 119);
 /*********************************************************************/
 CREATE TABLE FileSystemsToCheck (FileSystem NUMBER CONSTRAINT PK_FSToCheck_FS PRIMARY KEY, ToBeChecked NUMBER);
 
-
-/**************/
-/* Accounting */
-/**************/
-
-/* WARNING!!!! Changing this to a materialized view which is refresh at a set
- * frequency causes problems with the disk server draining tools.
- */
-CREATE TABLE Accounting (euid INTEGER CONSTRAINT NN_Accounting_Euid NOT NULL, 
-                         fileSystem INTEGER CONSTRAINT NN_Accounting_Filesystem NOT NULL,
-                         nbBytes INTEGER);
-ALTER TABLE Accounting 
-ADD CONSTRAINT PK_Accounting_EuidFs PRIMARY KEY (euid, fileSystem);
-
-/* SQL statement for the creation of the AccountingSummary view */
-CREATE OR REPLACE VIEW AccountingSummary
-AS
-  SELECT (SELECT cast(last_start_date AS DATE) 
-            FROM dba_scheduler_jobs
-           WHERE job_name = 'ACCOUNTINGJOB'
-             AND owner = 
-              (SELECT value FROM CastorConfig
-                WHERE class = 'general' AND key = 'owner')) timestamp,
-         3600 interval, SvcClass.name SvcClass, Accounting.euid, 
-         sum(Accounting.nbbytes) totalBytes
-    FROM Accounting, FileSystem, DiskPool2SvcClass, svcclass
-   WHERE Accounting.filesystem = FileSystem.id
-     AND FileSystem.diskpool = DiskPool2SvcClass.parent
-     AND DiskPool2SvcClass.child = SvcClass.id
-   GROUP BY SvcClass.name, Accounting.euid
-   ORDER BY SvcClass.name, Accounting.euid;
-
-
 /*********************/
 /* FileSystem rating */
 /*********************/
@@ -1079,7 +1046,6 @@ END;
 /* FileSystem index based on the rate. */
 CREATE INDEX I_FileSystem_Rate
     ON FileSystem(fileSystemRate(nbReadStreams, nbWriteStreams));
-
 
 /************/
 /* Aborting */
@@ -1336,4 +1302,3 @@ BEGIN
   EXECUTE IMMEDIATE 'ALTER SESSION SET REMOTE_DEPENDENCIES_MODE=SIGNATURE';
 END;
 /
-

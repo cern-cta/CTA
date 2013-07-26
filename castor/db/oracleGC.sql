@@ -775,8 +775,7 @@ BEGIN
   FOR j IN (SELECT job_name FROM user_scheduler_jobs
              WHERE job_name IN ('HOUSEKEEPINGJOB',
                                 'CLEANUPJOB',
-                                'BULKCHECKFSBACKINPRODJOB',
-                                'ACCOUNTINGJOB'))
+                                'BULKCHECKFSBACKINPRODJOB'))
   LOOP
     DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
   END LOOP;
@@ -813,26 +812,6 @@ BEGIN
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=5',
       ENABLED         => TRUE,
       COMMENTS        => 'Bulk operation to processing filesystem state changes');
-
-  -- Create a db job to be run every hour that generates the accounting information
-  DBMS_SCHEDULER.CREATE_JOB(
-      JOB_NAME        => 'accountingJob',
-      JOB_TYPE        => 'PLSQL_BLOCK',
-      JOB_ACTION      => 'BEGIN 
-                            DELETE FROM Accounting;
-                            INSERT INTO Accounting (euid, fileSystem, nbBytes)
-                              (SELECT owneruid, fileSystem, sum(diskCopySize)
-                                 FROM DiskCopy
-                                WHERE DiskCopy.status IN (0, 10)
-                                  AND DiskCopy.owneruid IS NOT NULL
-                                  AND DiskCopy.ownergid IS NOT NULL
-                                GROUP BY owneruid, fileSystem);
-                          END;',
-      JOB_CLASS       => 'CASTOR_JOB_CLASS',
-      START_DATE      => SYSDATE + 60/1440,
-      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=60',
-      ENABLED         => TRUE,
-      COMMENTS        => 'Generation of accounting information');
 END;
 /
 
