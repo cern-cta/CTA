@@ -44,14 +44,14 @@ Prints everything as if the commands are really executed, but no change is effec
 committed. In this case the log is not filled.
 .TP
 .BI fullPhysicalPath [...]
-The full path (in the form host:/mountpoint/path/fileid@nameserver.diskcopyid) of the disk copies that are to be deleted. This is the same format returned by diskServer_qry, so that
+The full path (in the form host:/mountpoint/path/fileid@nameserver.diskcopyid) of the disk copies that are to be deleted. This is the same format returned by diskserver_qry, so that
 those commands may be chained.
 
 .SH EXAMPLES
 .nf
 .ft CW
 
-# deletediskcopy -f `diskServer_qry lxc2dev2d1.cern.ch | awk '{print $2}'`
+# deletediskcopy -f `diskserver_qry lxc2dev2d1.cern.ch | awk '{print $2}'`
 incorrect/incomplete value found as argument, ignoring Physical
 1684504 dropped from disk pool, restaging
 1508591 dropped from disk pool, restaging

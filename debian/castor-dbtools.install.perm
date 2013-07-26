@@ -29,7 +29,7 @@
 %attr(0755,root,root) usr/bin/modifydbconfig
 %attr(0755,root,root) usr/bin/printdbconfig
 %attr(0755,root,root) usr/bin/deletediskcopy
-%attr(0755,root,root) usr/bin/diskServer_qry
+%attr(0755,root,root) usr/bin/diskserver_qry
 %attr(0755,root,root) usr/bin/draindiskserver
 %attr(0755,root,root) usr/lib/perl/CASTOR/castor_tools.pm
 %attr(0644,root,root) usr/lib/python*/site-packages/castor_tools.py*

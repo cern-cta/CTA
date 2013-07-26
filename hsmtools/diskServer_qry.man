@@ -3,9 +3,9 @@
 .\"
 .TH DISKSERVER_QRY 1 "$Date: 2006/08/04 14:46:47 $" CASTOR "List files on a DiskServer"
 .SH NAME
-diskServer_qry
+diskserver_qry
 .SH SYNOPSIS
-.B diskServer_qry
+.B diskserver_qry
 [
 .B -h, 
 .B --help
@@ -20,7 +20,7 @@ diskServer_qry
 ]
 diskServerName
 .SH DESCRIPTION
-.B diskServer_qry 
+.B diskserver_qry 
 Lists the files on a given DiskServer and give their internal
 status (fileid, diskCopyId, Status, physical file name and last known filename).
 Note that the last known file name may be a number when not known that will actually
@@ -41,7 +41,7 @@ is the name of the disk server to be queried. It needs to be fully qualified.
 
 
 .SH EXAMPLES
-.BI #\ diskServer_qry\ lxfsrk60a05.cern.ch
+.BI #\ diskserver_qry\ lxfsrk60a05.cern.ch
 .fi
 Status               Physical FileName
 .fi
@@ -52,7 +52,7 @@ DISKCOPY_VALID   lxfsrk60a05.cern.ch:/srv/castor/01/21/61270821@lxs5010.529
 DISKCOPY_STAGEOUT    lxfsrk60a05.cern.ch:/srv/castor/01/46/61312846@lxs5010.718
 .ft
 
-.BI #\ diskServer_qry\ -id\ lxfsrk60a05.cern.ch
+.BI #\ diskserver_qry\ -id\ lxfsrk60a05.cern.ch
 .fi
 FileId     DiskCopyId   Status               Physical FileName                                  Last known FileName
 .fi
@@ -63,7 +63,7 @@ FileId     DiskCopyId   Status               Physical FileName                  
 61312846   718          DISKCOPY_STAGEOUT    lxfsrk60a05.cern.ch:/srv/castor/01/46/61312846@lxs5010.718    /castor/cern.ch/some/hsm/path
 .ft
 
-.BI #\ diskServer_qry\ -id\ lxfsrk60a05
+.BI #\ diskserver_qry\ -id\ lxfsrk60a05
 .fi
 Unknown diskserver lxfsrk60a05. Did you provide a fully qualified name ?
 .fi
