@@ -122,7 +122,6 @@ STRINGSTORE(const char* __charptr__)
 void
 XrdxCastor2Fs::GetId(const char* path, XrdSecEntity client, uid_t& uid, gid_t& gid)
 {
-  xcastor_debug("get id");
   MapMutex.Lock();
   uid = 99;
   gid = 99;
@@ -196,7 +195,6 @@ XrdxCastor2Fs::GetId(const char* path, XrdSecEntity client, uid_t& uid, gid_t& g
 void
 XrdxCastor2Fs::SetAcl(const char* path, XrdSecEntity client, bool isLink)
 {
-  xcastor_debug("set acl");
   MapMutex.Lock();  // -->
   uid_t uid = 99;
   uid_t gid = 0;
@@ -273,7 +271,6 @@ XrdxCastor2Fs::GetAllGroups(const char*   name,
                             XrdOucString& allGroups,
                             XrdOucString& defaultGroup)
 {
-  xcastor_debug("get all groups");
   allGroups = ":";
   defaultGroup = "";
   XrdxCastor2FsGroupInfo* ginfo = NULL;
@@ -1008,9 +1005,7 @@ XrdxCastor2FsDirectory::open(const char*         dir_path,
   xcastor_debug("open directory: %s", map_dir.c_str());
 
   if (map_dir == "")
-  {
     return XrdxCastor2Fs::Emsg(epname, error, ENOMEDIUM, "map filename", dir_path);
-  }
 
   XrdxCastor2FS->RoleMap(client, info, mappedclient, tident);
 
@@ -1052,18 +1047,14 @@ XrdxCastor2FsDirectory::nextEntry()
   if (ateof) return (const char*)0;
 
   if (XrdxCastor2FS->Proc)
-  {
     XrdxCastor2FS->Stats.IncReadd();
-  }
 
   // Read the next directory entry
   if (!(d_pnt = XrdxCastor2FsUFS::ReadDir(dh)))
   {
     if (serrno != 0)
-    {
       XrdxCastor2Fs::Emsg(epname, error, serrno, "read directory", fname);
-    }
-
+    
     return (const char*)0;
   }
 
@@ -1083,10 +1074,8 @@ XrdxCastor2FsDirectory::close()
   static const char* epname = "closedir";
 
   if (XrdxCastor2FS->Proc)
-  {
     XrdxCastor2FS->Stats.IncCmd();
-  }
-
+ 
   // Release the handle
   if (dh && XrdxCastor2FsUFS::CloseDir(dh))
   {
@@ -1127,9 +1116,7 @@ XrdxCastor2FsFile::XrdxCastor2FsFile(const char* user, int MonID) :
 XrdxCastor2FsFile::~XrdxCastor2FsFile()
 {
   if (oh) close();
-
   if (ohp) pclose(ohp);
-
   if (ohperror) pclose(ohperror);
 }
 
@@ -1185,6 +1172,9 @@ XrdxCastor2FsFile::open(const char*         path,
     return SFS_ERROR;
   }
 
+  // Check if user is coming back for a response after a stall
+  bool stall_comeback = XrdxCastor2FS->msCastorClient->HasSubmittedReq(map_path.c_str(), error);
+
   int aop = AOP_Read;
   int retc, open_flag = 0;
   struct Cns_filestatcs buf;
@@ -1192,7 +1182,6 @@ XrdxCastor2FsFile::open(const char*         path,
   int isRewrite = 0;
   int crOpts = (Mode & SFS_O_MKPTH ? XRDOSS_mkpath : 0);
   XrdOucEnv Open_Env(info);
-  int rcode = SFS_ERROR;
   int ecode = 0;
   //TODO: print the open mode in hex
   xcastor_debug("open_mode=%i, fn=%s, tident=%s", Mode, map_path.c_str(), tident);
@@ -1244,7 +1233,7 @@ XrdxCastor2FsFile::open(const char*         path,
   {
     AUTHORIZE(client, &Open_Env, (isRW ? AOP_Update : AOP_Read), "open", map_path.c_str(), error);
   }
-
+  
   // See if the cluster is in maintenance mode and has delays configured for write/read
   XrdOucString msg_delay;
   int64_t delay = XrdxCastor2FS->GetAdminDelay(msg_delay, isRW);
@@ -1252,69 +1241,72 @@ XrdxCastor2FsFile::open(const char*         path,
   if (delay) 
   {
     TIMING("RETURN", &opentiming);
-    
-    if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
-      opentiming.Print();
-    
+    opentiming.Print();
     return XrdxCastor2FS->Stall(error, delay, msg_delay.c_str());
   }
 
   TIMING("DELAYCHECK", &opentiming);
 
-  // Prepare to create or open the file, as needed
-  if (isRW)
+  // Prepare to create or open the file, only if this is the first time the user
+  // comes with this request. If the user comes after a stall we skip this part.
+  if (!stall_comeback)
   {
-    if (!(retc = XrdxCastor2FsUFS::Statfn(map_path.c_str(), &buf)))
+    if (isRW)
     {
-      if (buf.filemode & S_IFDIR)
-        return XrdxCastor2Fs::Emsg(epname, error, EISDIR, "open directory as file", map_path.c_str());
+      if (!(retc = XrdxCastor2FsUFS::Statfn(map_path.c_str(), &buf)))
+      {
+        if (buf.filemode & S_IFDIR)
+          return XrdxCastor2Fs::Emsg(epname, error, EISDIR, "open directory as file", map_path.c_str());
 
-      if (crOpts & XRDOSS_new)
-      {
-        return XrdxCastor2Fs::Emsg(epname, error, EEXIST, "open file in create mode - file exists");
-      }
-      else
-      {
-        if (open_mode == SFS_O_TRUNC)
+        if (crOpts & XRDOSS_new)
         {
-          // We delete the file because the open specified the truncate flag
-          if ((retc = XrdxCastor2FsUFS::Rem(map_path.c_str())))
-          {
-            return XrdxCastor2Fs::Emsg(epname, error, serrno, "remove file as requested by truncate flag",
-                                       map_path.c_str());
-          }
+          return XrdxCastor2Fs::Emsg(epname, error, EEXIST, "open file in create mode - file exists");
         }
         else
         {
-          isRewrite = 1;
+          if (open_mode == SFS_O_TRUNC)
+          {
+            // We delete the file because the open specified the truncate flag
+            if ((retc = XrdxCastor2FsUFS::Unlink(map_path.c_str())))
+            {
+              return XrdxCastor2Fs::Emsg(epname, error, serrno, "remove file as requested by truncate flag",
+                                         map_path.c_str());
+            }
+          }
+          else
+          {
+            isRewrite = 1;
+          }
         }
       }
     }
+    else
+    {
+      // This is the read/stage case
+      if ((retc = XrdxCastor2FsUFS::Statfn(map_path.c_str(), &buf)))
+        return XrdxCastor2Fs::Emsg(epname, error, serrno, "stat file", map_path.c_str());
+      
+      if (!retc && !(buf.filemode & S_IFREG))
+      {
+        if (buf.filemode & S_IFDIR)
+          return XrdxCastor2Fs::Emsg(epname, error, EISDIR, "open directory as file", map_path.c_str());
+        else
+          return XrdxCastor2Fs::Emsg(epname, error, ENOTBLK, "open not regular file", map_path.c_str());
+      }
+      
+      if (buf.filesize == 0)
+      {
+        oh = XrdxCastor2FsUFS::Open(XrdxCastor2FS->zeroProc.c_str(), 0, 0);
+        fname = strdup(XrdxCastor2FS->zeroProc.c_str());
+        return SFS_OK;
+      }
+    }
   }
-  else
+  else 
   {
-    // This is the read/stage case
-    if ((retc = XrdxCastor2FsUFS::Statfn(map_path.c_str(), &buf)))
-    {
-      return XrdxCastor2Fs::Emsg(epname, error, serrno, "stat file", map_path.c_str());
-    }
-
-    if (!retc && !(buf.filemode & S_IFREG))
-    {
-      if (buf.filemode & S_IFDIR)
-        return XrdxCastor2Fs::Emsg(epname, error, EISDIR, "open directory as file", map_path.c_str());
-      else
-        return XrdxCastor2Fs::Emsg(epname, error, ENOTBLK, "open not regular file", map_path.c_str());
-    }
-
-    if (buf.filesize == 0)
-    {
-      oh = XrdxCastor2FsUFS::Open(XrdxCastor2FS->zeroProc.c_str(), 0, 0);
-      fname = strdup(XrdxCastor2FS->zeroProc.c_str());
-      return SFS_OK;
-    }
+    xcastor_debug("skip some checks as request was previously submitted");
   }
-
+  
   TIMING("PREOPEN", &opentiming);
   uid_t client_uid;
   gid_t client_gid;
@@ -1323,10 +1315,7 @@ XrdxCastor2FsFile::open(const char*         path,
   XrdxCastor2FS->GetId(map_path.c_str(), mappedclient, client_uid, client_gid);
   sclient_uid += (int) client_uid;
   sclient_gid += (int) client_gid;
-
-  // response structure
-  struct XrdxCastor2Stager::RespInfo resp_info;
-  
+ 
   XrdOucString stagehost = "";
   XrdOucString serviceclass = "default";
   XrdOucString stagevariables = "";
@@ -1344,18 +1333,11 @@ XrdxCastor2FsFile::open(const char*         path,
 
   if (isRW)
   {
-    const char* val;;
+    const char* val;
 
     // We try the user specified or the first possible setting
-    if ((val = Open_Env.Get("stagerHost")))
-    {
-      stagehost = val;
-    }
-
-    if ((val = Open_Env.Get("svcClass")))
-    {
-      serviceclass = val;
-    }
+    if ((val = Open_Env.Get("stagerHost"))) stagehost = val;
+    if ((val = Open_Env.Get("svcClass"))) serviceclass = val;
 
     if (stagehost.length() && serviceclass.length())
     {
@@ -1384,9 +1366,7 @@ XrdxCastor2FsFile::open(const char*         path,
             policy = XrdxCastor2FS->stagerpolicy->Find(policytag.c_str());
 
         if ((!policy) && (wildcardpolicy))
-        {
           policy = wildcardpolicy;
-        }
 
         if (policy && (strstr(policy->c_str(), "ronly")) && isRW)
         {
@@ -1455,7 +1435,8 @@ XrdxCastor2FsFile::open(const char*         path,
     }
   }
 
-  // Initialize rpfn2 for not scheduled access
+  // Open response structure in which we initialize rpfn2 for not scheduled access
+  struct XrdxCastor2Stager::RespInfo resp_info;
   resp_info.mRedirectionPfn2 = 0;
   resp_info.mRedirectionPfn2 += ":";
   resp_info.mRedirectionPfn2 += stagehost;
@@ -1464,14 +1445,14 @@ XrdxCastor2FsFile::open(const char*         path,
   resp_info.mRedirectionPfn2 += ":0";
   resp_info.mRedirectionPfn2 += ":0";
 
-  // Delay tag used to stall the current client incrementaly
+  // Delay tag used to stall the current client incrementally
   XrdOucString delaytag = tident;
   delaytag += ":";
   delaytag += map_path.c_str();
 
   if (isRW)
   {
-    if (!isRewrite)
+    if (!stall_comeback && !isRewrite)
     {
       // File doesn't exist, we have to create the path - check if we need to mkpath
       if ((Mode & SFS_O_MKPTH) || (policy && (strstr(policy->c_str(), "mkpath"))))
@@ -1493,10 +1474,8 @@ XrdxCastor2FsFile::open(const char*         path,
           {
             // Protect against misconfiguration ( all.export / ) and missing stat result on Cns_stat('/');
             if (rpos < 0)
-            {
               return XrdxCastor2Fs::Emsg(epname, error, serrno , "create path in root directory");
-            }
-
+            
             continue;
           }
           else
@@ -1511,23 +1490,18 @@ XrdxCastor2FsFile::open(const char*         path,
               xcastor_debug("creating path as uid=%i, gid=%i", (int)client_uid, (int)client_gid);
               mode_t cmask = 0;
               Cns_umask(cmask);
+              fpos++;
 
               if (XrdxCastor2FsUFS::Mkdir(createpath.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) && (serrno != EEXIST))
-              {
                 return XrdxCastor2Fs::Emsg(epname, error, serrno , "create path need dir = ", createpath.c_str());
-              }
-
-              fpos++;
             }
 
-            const char* fileClass = 0;
+            const char* file_class = 0;
 
-            if ((fileClass = Open_Env.Get("fileClass")))
+            if ((file_class = Open_Env.Get("fileClass")) &&
+                (Cns_chclass(newpath.c_str(), 0, (char*)file_class)))
             {
-              if (Cns_chclass(newpath.c_str(), 0, (char*)fileClass))
-              {
-                return XrdxCastor2Fs::Emsg(epname, error, serrno , "set fileclass to ", fileClass);
-              }
+              return XrdxCastor2Fs::Emsg(epname, error, serrno , "set fileclass to ", file_class);
             }
 
             break;
@@ -1592,7 +1566,7 @@ XrdxCastor2FsFile::open(const char*         path,
                                   "request queue full or response not ready yet");
     }
 
-    // Cleanup any possible delay tag reamingin 
+    // Clean-up any possible delay tag remainings
     XrdxCastor2Stager::DropDelayTag(delaytag.c_str());
     
     if (resp_info.mStageStatus != "READY")
@@ -1740,7 +1714,7 @@ XrdxCastor2FsFile::open(const char*         path,
                                  map_path.c_str());
     }
 
-    // If there was no stager get we fill request id 0
+    // If there was no stager_get we fill request id 0
     if (!resp_info.mRedirectionPfn2.length())
     {
       resp_info.mRedirectionPfn2 += ":";
@@ -1751,13 +1725,9 @@ XrdxCastor2FsFile::open(const char*         path,
 
     // CANBEMIGR or STAGED, STAGEOUT files can be read ;-)
     if (policy)
-    {
       xcastor_debug("policy for:%s is %s", usedpolicytag.c_str(), policy->c_str());
-    }
     else
-    {
       xcastor_debug("policy for:%s is default [read not scheduled]", usedpolicytag.c_str());
-    }
 
     if (policy && ((strstr(policy->c_str(), "schedread")) || (strstr(policy->c_str(), "schedall"))))
     {
@@ -1804,27 +1774,28 @@ XrdxCastor2FsFile::open(const char*         path,
   }
 
   // Save the redirection host with and without the domain in the host table 
-  XrdOucString nodomainhost = "";
   int pos;
+  XrdOucString nodomainhost = "";
 
   if ((pos = resp_info.mRedirectionHost.find(".")) != STR_NPOS)
   {
     nodomainhost.assign(resp_info.mRedirectionHost, 0, pos - 1);
-    XrdxCastor2FS->filesystemhosttablelock.Lock();
+    XrdxCastor2FS->filesystemhosttablelock.Lock();    // -->
 
     if (!XrdxCastor2FS->filesystemhosttable->Find(nodomainhost.c_str()))
       XrdxCastor2FS->filesystemhosttable->Add(nodomainhost.c_str(), new XrdOucString(nodomainhost.c_str()));
     
-    XrdxCastor2FS->filesystemhosttablelock.UnLock();
+    XrdxCastor2FS->filesystemhosttablelock.UnLock();  // <--
   }
 
-  XrdxCastor2FS->filesystemhosttablelock.Lock();
+  XrdxCastor2FS->filesystemhosttablelock.Lock();   // -->
 
   if (!XrdxCastor2FS->filesystemhosttable->Find(resp_info.mRedirectionHost.c_str()))
     XrdxCastor2FS->filesystemhosttable->Add(resp_info.mRedirectionHost.c_str(), 
                                             new XrdOucString(resp_info.mRedirectionHost.c_str()));
   
-  XrdxCastor2FS->filesystemhosttablelock.UnLock();
+  XrdxCastor2FS->filesystemhosttablelock.UnLock(); // -->
+
 
   TIMING("REDIRECTION", &opentiming);
   xcastor_debug("redirection to:%s", resp_info.mRedirectionHost.c_str());
@@ -1832,157 +1803,127 @@ XrdxCastor2FsFile::open(const char*         path,
   // Save statistics about server read/write operations 
   if (XrdxCastor2FS->Proc)
   {
-    XrdOucString stagersvcclient = "";
-    XrdOucString stagersvcserver = "";
-    stagersvcclient = stagehost;
-    stagersvcclient += "::";
-    stagersvcclient += serviceclass;
-    stagersvcclient += "::";
-    stagersvcclient += mappedclient.name;
-    stagersvcserver = stagehost;
-    stagersvcserver += "::";
-    stagersvcserver += serviceclass;
-    stagersvcserver += "::";
-    stagersvcserver += resp_info.mRedirectionHost.c_str();
+    std::ostringstream ostreamclient;
+    std::ostringstream ostreamserver;
 
-    if (isRW)
-    {
-      XrdxCastor2FS->Stats.IncServerWrite(stagersvcserver.c_str());
-      XrdxCastor2FS->Stats.IncUserWrite(stagersvcclient.c_str());
-    }
-    else
-    {
-      XrdxCastor2FS->Stats.IncServerRead(stagersvcserver.c_str());
-      XrdxCastor2FS->Stats.IncUserRead(stagersvcclient.c_str());
-    }
+    ostreamclient << stagehost << "::" << serviceclass << "::" << mappedclient.name;
+    ostreamserver << stagehost << "::" << serviceclass << "::" 
+                  << resp_info.mRedirectionHost;
+    
+    XrdxCastor2FS->Stats.IncServerRdWr(ostreamserver.str().c_str(), isRW);
+    XrdxCastor2FS->Stats.IncUserRdWr(ostreamclient.str().c_str(), isRW);
   }
 
-  rcode = SFS_REDIRECT;
-
-  if (rcode == SFS_REDIRECT)
+  // Add the opaque authorization information for the server for read & write
+  XrdOucString accopaque = "";
+  XrdxCastor2ServerAcc::AuthzInfo* authz = new XrdxCastor2ServerAcc::AuthzInfo(false);
+  authz->sfn = (char*) origpath;
+  authz->pfn1 = (char*) resp_info.mRedirectionPfn1.c_str();
+  authz->pfn2 = (char*) resp_info.mRedirectionPfn2.c_str();
+  authz->id  = (char*)tident;
+  authz->client_sec_uid = STRINGSTORE(sclient_uid.c_str());
+  authz->client_sec_gid = STRINGSTORE(sclient_gid.c_str());
+  authz->accessop = aop;
+  time_t now = time(NULL);
+  authz->exptime  = (now + XrdxCastor2FS->TokenLockTime);
+  
+  if (XrdxCastor2FS->IssueCapability)
   {
-    // Add the opaque authorization information for the server for read & write
-    XrdOucString accopaque = "";
-    XrdxCastor2ServerAcc::AuthzInfo* authz = new XrdxCastor2ServerAcc::AuthzInfo(false);
-    authz->sfn = (char*) origpath;
-    authz->pfn1 = (char*) resp_info.mRedirectionPfn1.c_str();
-    authz->pfn2 = (char*) resp_info.mRedirectionPfn2.c_str();
-    authz->id  = (char*)tident;
-    authz->client_sec_uid = STRINGSTORE(sclient_uid.c_str());
-    authz->client_sec_gid = STRINGSTORE(sclient_gid.c_str());
-    authz->accessop = aop;
-    time_t now = time(NULL);
-    authz->exptime  = (now + XrdxCastor2FS->TokenLockTime);
-
-    if (XrdxCastor2FS->IssueCapability)
-    {
-      authz->token = NULL;
-      authz->signature = NULL;
-    }
-    else
-    {
-      authz->token = "";
-      authz->signature = "";
-    }
-
-    authz->manager = (char*)XrdxCastor2FS->ManagerId.c_str();
-    XrdOucString authztoken;
-    XrdOucString sb64;
-
-    if (!XrdxCastor2ServerAcc::BuildToken(authz, authztoken))
-    {
-      XrdxCastor2Fs::Emsg(epname, error, retc, "build authorization token for sfn = ", map_path.c_str());
-      delete authz;
-      return SFS_ERROR;
-    }
-
-    authz->token = (char*) authztoken.c_str();
-    TIMING("BUILDTOKEN", &opentiming);
-
-    if (XrdxCastor2FS->IssueCapability)
-    {
-      int sig64len = 0;
-
-      if (!XrdxCastor2FS->ServerAcc->SignBase64((unsigned char*)authz->token,
-          strlen(authz->token), sb64,
-          sig64len, stagehost.c_str()))
-      {
-        XrdxCastor2Fs::Emsg(epname, error, retc, "sign authorization token for sfn = ", map_path.c_str());
-        delete authz;
-        return SFS_ERROR;
-      }
-
-      authz->signature = (char*)sb64.c_str();
-    }
-
-    TIMING("SIGNBASE64", &opentiming);
-
-    if (!XrdxCastor2ServerAcc::BuildOpaque(authz, accopaque))
-    {
-      XrdxCastor2Fs::Emsg(epname, error, retc, "build authorization opaque string for sfn = ", map_path.c_str());
-      delete authz;
-      return SFS_ERROR;
-    }
-
-    TIMING("BUILDOPAQUE", &opentiming);
-    // Add the internal token opaque tag
-    resp_info.mRedirectionHost += "?";
-
-    // We add the user defined stager selection also to the redirection in case
-    // the client comes back from a failure
-    if ((val = Open_Env.Get("svcClass")))
-    {
-      resp_info.mRedirectionHost += "svcClass=";
-      resp_info.mRedirectionHost += val;
-      resp_info.mRedirectionHost += "&";
-    }
-
-    if ((val = Open_Env.Get("stagerHost")))
-    {
-      resp_info.mRedirectionHost += "stagerHost=";
-      resp_info.mRedirectionHost += val;
-      resp_info.mRedirectionHost += "&";
-    }
-
-    // Add the external token opaque tag
-    resp_info.mRedirectionHost += accopaque;
-
-    if (!isRW)
-    {
-      // We always assume adler, but we should check the type here ...
-      if (!strcmp(buf.csumtype, "AD"))
-      {
-        resp_info.mRedirectionHost += "adler32=";
-        resp_info.mRedirectionHost += buf.csumvalue;
-        resp_info.mRedirectionHost += "&";
-      }
-
-      // Add the 0-size create flag
-      if (buf.filesize == 0)
-      {
-        resp_info.mRedirectionHost += "createifnotexist=1&";
-      }
-    }
-
-    ecode = atoi(XrdxCastor2FS->xCastor2FsTargetPort.c_str());
-    error.setErrInfo(ecode, resp_info.mRedirectionHost.c_str());
+    authz->token = NULL;
+    authz->signature = NULL;
+  }
+  else
+  {
+    authz->token = "";
+    authz->signature = "";
+  }
+  
+  authz->manager = (char*)XrdxCastor2FS->ManagerId.c_str();
+  XrdOucString authztoken;
+  XrdOucString sb64;
+  
+  if (!XrdxCastor2ServerAcc::BuildToken(authz, authztoken))
+  {
+    XrdxCastor2Fs::Emsg(epname, error, retc, "build authorization token for sfn = ", map_path.c_str());
     delete authz;
+    return SFS_ERROR;
+  }
+  
+  authz->token = (char*) authztoken.c_str();
+  TIMING("BUILDTOKEN", &opentiming);
+  
+  if (XrdxCastor2FS->IssueCapability)
+  {
+    int sig64len = 0;
+    
+    if (!XrdxCastor2FS->ServerAcc->SignBase64((unsigned char*)authz->token,
+                                              strlen(authz->token), sb64,
+                                              sig64len, stagehost.c_str()))
+    {
+      XrdxCastor2Fs::Emsg(epname, error, retc, "sign authorization token for sfn = ", map_path.c_str());
+      delete authz;
+      return SFS_ERROR;
+    }
+    
+    authz->signature = (char*)sb64.c_str();
+  }
+  
+  TIMING("SIGNBASE64", &opentiming);
+  
+  if (!XrdxCastor2ServerAcc::BuildOpaque(authz, accopaque))
+  {
+    XrdxCastor2Fs::Emsg(epname, error, retc, "build authorization opaque string for sfn = ", map_path.c_str());
+    delete authz;
+    return SFS_ERROR;
   }
 
+  TIMING("BUILDOPAQUE", &opentiming);
+  // Add the internal token opaque tag
+  resp_info.mRedirectionHost += "?";
+  
+  // We add the user defined stager selection also to the redirection in case
+  // the client comes back from a failure
+  if ((val = Open_Env.Get("svcClass")))
+  {
+    resp_info.mRedirectionHost += "svcClass=";
+    resp_info.mRedirectionHost += val;
+    resp_info.mRedirectionHost += "&";
+  }
+
+  if ((val = Open_Env.Get("stagerHost")))
+  {
+    resp_info.mRedirectionHost += "stagerHost=";
+    resp_info.mRedirectionHost += val;
+    resp_info.mRedirectionHost += "&";
+  }
+  
+  // Add the external token opaque tag
+  resp_info.mRedirectionHost += accopaque;
+  
+  if (!isRW)
+  {
+    // We always assume adler, but we should check the type here ...
+    if (!strcmp(buf.csumtype, "AD"))
+    {
+      resp_info.mRedirectionHost += "adler32=";
+      resp_info.mRedirectionHost += buf.csumvalue;
+      resp_info.mRedirectionHost += "&";
+    }
+
+    // Add the 0-size create flag
+    if (buf.filesize == 0)
+      resp_info.mRedirectionHost += "createifnotexist=1&";
+  }
+  
+  ecode = atoi(XrdxCastor2FS->xCastor2FsTargetPort.c_str());
+  error.setErrInfo(ecode, resp_info.mRedirectionHost.c_str());
+  delete authz;
+  
   TIMING("AUTHZ", &opentiming);
 
   // Do the proc statistics if a proc file system is specified
   if (XrdxCastor2FS->Proc)
-  {
-    if (!isRW)
-    {
-      XrdxCastor2FS->Stats.IncRead();
-    }
-    else
-    {
-      XrdxCastor2FS->Stats.IncWrite();
-    }
-  }
+    XrdxCastor2FS->Stats.IncRdWr(isRW);
 
   // Check if a mode was given
   if (Open_Env.Get("mode"))
@@ -2001,7 +1942,7 @@ XrdxCastor2FsFile::open(const char*         path,
     opentiming.Print();
 
   xcastor_debug("redirection to:%s", resp_info.mRedirectionHost.c_str());
-  return rcode;
+  return SFS_REDIRECT;
 }
 
 
@@ -3090,7 +3031,7 @@ XrdxCastor2Fs::prepare(XrdSfsPrep&         pargs,
     // Do the unlink as the authorized user in the open
     XrdxCastor2FsUFS::SetId(atoi(oenv.Get("uid")), atoi(oenv.Get("gid")));
 
-    if (XrdxCastor2FsUFS::Rem(map_path.c_str()))
+    if (XrdxCastor2FsUFS::Unlink(map_path.c_str()))
     {
       return XrdxCastor2Fs::Emsg(epname, error, serrno, "unlink", map_path.c_str());
     }
@@ -3346,7 +3287,7 @@ XrdxCastor2Fs::_rem(const char*         path,
   xcastor_debug("path=%s", path);
 
   // Perform the actual deletion
-  if (XrdxCastor2FsUFS::Rem(path))
+  if (XrdxCastor2FsUFS::Unlink(path))
   {
     return XrdxCastor2Fs::Emsg(epname, error, serrno, "remove", path);
   }

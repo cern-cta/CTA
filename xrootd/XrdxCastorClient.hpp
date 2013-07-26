@@ -45,6 +45,7 @@
 #include "castor/client/IResponseHandler.hpp"
 /*----------------------------------------------------------------------------*/
 #include "XrdSys/XrdSysPthread.hh"
+#include "XrdOuc/XrdOucErrInfo.hh"
 /*----------------------------------------------------------------------------*/
 
 XCASTORNAMESPACE_BEGIN
@@ -108,15 +109,28 @@ public :
   //!
   //! @param userId user id
   //! @param foundReq boolean value to mark if we found the request
-  //! @param userHint if we are looking for a response just after submitting 
-  //!        a request, then we can also pass the hint where the request is in
-  //!        the map so that we save on lookup
+  //! @param isFirstTime boolean value signaling that we are trying to check for
+  //!        a response immediately after submitting the request and not after
+  //         doing a stall
   //!
   //! @return element containing the response, only if the response is 
   //!         available otherwise return 0
   //----------------------------------------------------------------------------
   struct ReqElement*
-  GetResponse(const std::string& userId, bool& foundReq);
+  GetResponse(const std::string& userId, bool& foundReq, bool isFirstTime);
+
+
+  //----------------------------------------------------------------------------
+  //! Check if the user has already submitted the current request. If so, this 
+  //! means it comes back to collect the response after a stall. 
+  //! 
+  //! @param path file path for the request
+  //! @param error error information
+  //!
+  //! @return true if request already submitted, otherwise false
+  //!
+  //----------------------------------------------------------------------------
+  bool HasSubmittedReq(const char* path, XrdOucErrInfo& error);
   
 
   //----------------------------------------------------------------------------
@@ -225,8 +239,8 @@ public :
 
     //--------------------------------------------------------------------------
     //! Delete request if response received but user never turned up to collect 
-    //! it. Here we use a 5 min timeout i.e. all responses older than 5 min are
-    //! discarded.
+    //! it. Here we use XCASTO2FS_RESP_TIMEOUT value to discard responses for
+    //! which the client never showed up to collect them.
     //--------------------------------------------------------------------------
     bool Expired()
     {
@@ -250,7 +264,6 @@ public :
 
       return ret;
     }
-
 
 
     //--------------------------------------------------------------------------

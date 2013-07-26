@@ -218,16 +218,15 @@ XrdxCastor2Stager::DoAsyncReq(XrdOucErrInfo& error,
                       opType.c_str(), reqInfo->mUid, reqInfo->mGid, reqInfo->mPath, 
                       reqInfo->mStageHost, reqInfo->mServiceClass);
   // Build the user id
-  std::string user_tag;
-  const char* tident = error.getErrUser();
   std::stringstream sstr;
+  const char* tident = error.getErrUser();
   sstr << tident << ":" << reqInfo->mPath << ":" << opType;
   std::string user_id = sstr.str();
 
   // Check if we are coming back for an old request
   bool found = false;
   struct xcastor::XrdxCastorClient::ReqElement* elem = 0;
-  elem = XrdxCastor2FS->msCastorClient->GetResponse(user_id, found);
+  elem = XrdxCastor2FS->msCastorClient->GetResponse(user_id, found, false);
   
   // We are looking for a previous request 
   if (found) 
@@ -248,6 +247,7 @@ XrdxCastor2Stager::DoAsyncReq(XrdOucErrInfo& error,
   }
   
   // Build the request and response objects
+  std::string user_tag;
   castor::stager::FileRequest* request;
   
   if (opType == "get")
@@ -331,7 +331,7 @@ XrdxCastor2Stager::DoAsyncReq(XrdOucErrInfo& error,
   // Try to get the response, maybe we are lucky ...
   elem = 0;
   found = false;
-  elem = XrdxCastor2FS->msCastorClient->GetResponse(user_id, found);
+  elem = XrdxCastor2FS->msCastorClient->GetResponse(user_id, found, true);
 
   if (elem)
   {
@@ -753,7 +753,7 @@ XrdxCastor2Stager::GetDelayValue(const char* tag)
   if ((delayval = msDelayStore->Find(tag)))
   {
     float oldval = atoi(delayval->c_str());
-    oldval *= 1.8;
+    oldval *= 1.6;
 
     if (oldval > 3600)
     {
@@ -768,7 +768,7 @@ XrdxCastor2Stager::GetDelayValue(const char* tag)
   else
   {
     delayval = new XrdOucString();
-    *delayval = 5 + (rand() % 5);
+    *delayval = 2 + (rand() % 5);
     msDelayStore->Add(tag, delayval, 3600);
   }
 

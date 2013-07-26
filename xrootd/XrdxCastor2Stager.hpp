@@ -152,7 +152,7 @@ class XrdxCastor2Stager : public LogId
 
 
     //--------------------------------------------------------------------------
-    //! Delete the request and response objects 
+    //! Delete the request and response objects from the maps
     //!
     //! @param req request object 
     //! @param resp response object 

@@ -89,6 +89,19 @@ XrdxCastor2FsStats::SetProc( XrdxCastor2Proc* proc ) {
 
 
 //--------------------------------------------------------------------------
+// Increment number of read or write operations
+//--------------------------------------------------------------------------
+void 
+XrdxCastor2FsStats::IncRdWr(bool isRW)
+{
+  if (isRW)
+    IncWrite();
+  else 
+    IncRead();
+}
+
+
+//--------------------------------------------------------------------------
 // Increment reads
 //--------------------------------------------------------------------------
 void
@@ -181,6 +194,19 @@ XrdxCastor2FsStats::IncCmd( bool lock )
 
 
 //--------------------------------------------------------------------------
+// Increment server read or write operations 
+//--------------------------------------------------------------------------
+void 
+XrdxCastor2FsStats::IncServerRdWr(const char* server, bool isRW)
+{
+  if (isRW)
+    IncServerWrite(server);
+  else 
+    IncServerRead(server);
+}
+
+
+//--------------------------------------------------------------------------
 // Increment server reads
 //--------------------------------------------------------------------------
 void 
@@ -227,6 +253,19 @@ XrdxCastor2FsStats::IncServerWrite( const char* server )
   }
 
   statmutex.UnLock();
+}
+
+
+//--------------------------------------------------------------------------
+// Increment user read or write operations
+//--------------------------------------------------------------------------
+void 
+XrdxCastor2FsStats::IncUserRdWr(const char* user, bool isRW)
+{
+  if (isRW)
+    IncUserWrite(user);
+  else 
+    IncUserRead(user);
 }
 
 

@@ -272,7 +272,8 @@ XrdxCastorClient::SendAsyncRequest(const std::string& userId,
 //------------------------------------------------------------------------------
 struct XrdxCastorClient::ReqElement* 
 XrdxCastorClient::GetResponse(const std::string& userId,
-                              bool& found)
+                              bool& found,
+                              bool isFirstTime)
 {
   int timeout = 0;
   found = false;
@@ -298,8 +299,10 @@ XrdxCastorClient::GetResponse(const std::string& userId,
       mMapRequests.erase(user_iter->second);
       mMapUsers.erase(user_iter);    
     }
-    else 
+    else if (isFirstTime)
     {
+      // If this is the first time we check for a response we give the stager a
+      // wait_time seconds to reply to our request before stalling the client
       int wait_time = 4;
       struct timeval start;
       struct timeval current;
@@ -307,7 +310,7 @@ XrdxCastorClient::GetResponse(const std::string& userId,
 
       while (1)
       {
-        // We have a hint this means we a querying for a response right after
+        // We have a hint this means we are querying for a response right after
         // submitting the request. Let's give the stager some headroom ...
         mMutexMaps.UnLock();    // <--
         xcastor_debug("wait for response");
@@ -349,12 +352,39 @@ XrdxCastorClient::GetResponse(const std::string& userId,
         }
       }
     }
+    else 
+    {
+      xcastor_debug("check after a stall failed, no waiting");
+      elem = 0;
+    }
   }
   
   mMutexMaps.UnLock();   // <--
   return elem;
 }
 
+
+//------------------------------------------------------------------------------
+// Check if the user has already submitted the current request. If so, this 
+// means if comes back to collect the response after a stall. 
+//------------------------------------------------------------------------------
+bool 
+XrdxCastorClient::HasSubmittedReq(const char* path, XrdOucErrInfo& error)
+{
+  // Build the user id for all three possible types of requests
+  xcastor_debug("check if request already submitted");
+  std::ostringstream ostr;
+  ostr << error.getErrUser() << ":" << path << ":";
+  std::string get_req = ostr.str() + "get";
+  std::string put_req = ostr.str() + "put";
+  std::string update_req = ostr.str() + "update";
+
+  XrdSysMutexHelper lock(mMutexMaps);
+  return ((mMapUsers.find(get_req) != mMapUsers.end()) ||
+          (mMapUsers.find(put_req) != mMapUsers.end()) ||
+          (mMapUsers.find(update_req) != mMapUsers.end())) ;
+}
+  
 
 //------------------------------------------------------------------------------
 // Clean up old requests - CALLED WITH LOCK ON THE MAPS

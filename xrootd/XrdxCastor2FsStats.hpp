@@ -130,14 +130,17 @@ class XrdxCastor2FsStats
     virtual ~XrdxCastor2FsStats();
 
     void SetProc( XrdxCastor2Proc* proc ) ;
+    void IncRdWr(bool isRW);
     void IncRead() ;
     void IncWrite();
     void IncStat();
     void IncReadd();
     void IncRm();
     void IncCmd( bool lock = true );
+    void IncServerRdWr(const char* server, bool isRW);
     void IncServerRead( const char* server );
     void IncServerWrite( const char* server );
+    void IncUserRdWr(const char* user, bool isRW);
     void IncUserRead( const char* user );
     void IncUserWrite( const char* user );
     double ReadRate( int nbins );

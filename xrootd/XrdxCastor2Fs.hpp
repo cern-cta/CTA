@@ -116,10 +116,6 @@ class XrdxCastor2FsUFS
       return Cns_creat( path, omode );
     }
 
-    static int Rem( const char* fn ) {
-      return Cns_unlink( fn );
-    }
-
     static int Remdir( const char* fn ) {
       return Cns_rmdir( fn );
     }
