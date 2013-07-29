@@ -66,6 +66,16 @@ namespace Tape {
     uint32_t dirtyObjectsCount;
     uint32_t dirtyBytesCount;
   };
+  
+  /**
+   */
+  class driveStatus {
+    bool ready;
+    bool writeProtection;
+    /* TODO: Error condition */
+    bool eod;
+    bool bot;
+  };
 
   /**
    * Class abstracting the tape drives. Gets initialized from 
@@ -159,6 +169,18 @@ namespace Tape {
       }
       return ret;
     }
+    /**
+     * Set the tape density and compression. This is both driven by parameters and expert system knowing the hardware.
+     * This function is a good candidate for overloading in drive-specific child classes.
+     */
+    virtual void setDensityAndCompression(/* todo: clarify parameters*/) throw (Exception) { throw Exception("Not implemented"); }
+    
+    /**
+     * Get drive status.
+     * @return structure containing various booleans, and error conditions.
+     */
+    virtual driveStatus getDriveStatus() throw (Exception) { throw Exception("Not implemented"); }
+    
     virtual ~Drive() {
       if(-1 != m_tapeFD)
         m_sysWrapper.close(m_tapeFD);

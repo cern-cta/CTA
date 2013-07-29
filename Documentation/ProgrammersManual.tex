@@ -270,8 +270,11 @@ The SCSI commands and st driver's functions used in previous software (CAStor's 
     \item Log sense, to read the compression pages. This is device dependant. The code covers
           5 blocks of device types: DAT, DLT-SDLT-LTO, IBM(3490, 3590, 3592), StorageTek RedWood(SD3),
           StorageTek(9840, 9940, T10000).
-    \item Log sense for page 0x2E (???) on all modern tape drives to detect tape alerts (TBD, see SSC-3).
-    \item Mode sense was used in an unreferenced funciton called setdens.
+    \item Log sense for page 0x2E (tape alert, as defined in SSC-3) on all modern tape drives to detect tape alerts.
+    \item Mode sense was used in setdens called itself by mounttape. It sets density and compression
+          parameters based on the drive type and the density requested by the caller. On all modern tape drives,
+          the compression page is 0x10. This will be replaced by the function \verb#Tape::Drive::setCompressionAndDensity()#.
+          Some work is still needed to fully understand the original function.
   \end{itemize}
 \item st driver's commands, leading to internal variables setting or SCSI actions:
   \begin{itemize}
