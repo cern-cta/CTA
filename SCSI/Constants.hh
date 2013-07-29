@@ -1,4 +1,4 @@
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        // ----------------------------------------------------------------------
+// ----------------------------------------------------------------------
 // File: SCSI/Constants.hh
 // Author: Eric Cano - CERN
 // ----------------------------------------------------------------------
@@ -22,6 +22,8 @@
  ************************************************************************/
 
 #pragma once
+
+#include <string>
 
 namespace SCSI {
   /* Extracted from linux kernel's include/scsi/scsi.h. System-level include 
@@ -197,4 +199,35 @@ namespace SCSI {
       ATA_12		                            = 0xa1	/* 12-byte pass-thru */
     };
   }; // class OtherConstans
+  
+  /**
+   * Helper function turning tape alerts to strings.
+   */
+  std::string tapeAlertToString(uint16_t parameterCode);
+  
+  class Status {
+  public:
+    enum {
+      GOOD = 0x00,
+      CHECK_CONDITION = 0x02,
+      CONDITION_MET = 0x04,
+      BUSY = 0x08,
+      RESERVATION_CONFLICT = 0x18,
+      TASK_SET_FULL = 0x28,
+      ACA_ACTIVE = 0x30,
+      TASK_ABORTED = 0x40
+    };
+  };
+  
+  /**
+   * Helper function turning SCSI status to string
+   */
+  std::string statusToString(unsigned char status);
+  
+  class logSensePages {
+  public:
+    enum {
+      tapeAlert = 0x2e
+    };
+  };
 }; // namespace SCSI

@@ -27,6 +27,8 @@
 #include <stdexcept>
 
 using ::testing::_;
+using ::testing::A;
+using ::testing::An;
 using ::testing::Invoke;
 
 DIR* Tape::System::fakeWrapper::opendir(const char* name) {
@@ -184,7 +186,10 @@ void Tape::System::mockWrapper::delegateToFake() {
   ON_CALL(*this, open(_, _)).WillByDefault(Invoke(&fake, &fakeWrapper::open));
   ON_CALL(*this, read(_, _, _)).WillByDefault(Invoke(&fake, &fakeWrapper::read));
   ON_CALL(*this, write(_, _, _)).WillByDefault(Invoke(&fake, &fakeWrapper::write));
-  ON_CALL(*this, ioctl(_, _, _)).WillByDefault(Invoke(&fake, &fakeWrapper::ioctl));
+  /* We have an overloaded function. Have to use a static_cast trick to indicate
+   the pointer to which function we want.*/
+  ON_CALL(*this, ioctl(_, _, A<struct mtget *>())).WillByDefault(Invoke(&fake, 
+        static_cast<int(fakeWrapper::*)(int , unsigned long int , mtget*)>(&fakeWrapper::ioctl)));
   ON_CALL(*this, close(_)).WillByDefault(Invoke(&fake, &fakeWrapper::close));
   ON_CALL(*this, stat(_, _)).WillByDefault(Invoke(&fake, &fakeWrapper::stat));
 }

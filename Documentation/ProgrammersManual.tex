@@ -74,7 +74,7 @@ and the Linux SCSI Generic (sg) HOWTO
 More details regarding the Generic SCSI driver can be found on the SCSI subsystem maintainer's web site 
        \footnote{ \href{http://sg.danny.cz/sg/}{http://sg.danny.cz/sg/} }.
 
-The section on the SG\_IO ioctl, \footnote{ \href{http://sg.danny.cz/sg/sg\_io.html}{http://sg.danny.cz/sg/sg\_io.html} } details the usage of the 
+The section on the SG\_IO ioctl, \footnote{ \href{http://sg.danny.cz/sg/sg\textunderscore{}io.html}{http://sg.danny.cz/sg/sg\textunderscore{}io.html} } details the usage of the 
 simplest ioctl for the generic SCSI driver, which allows the invocation of a SCSI command and the collection of the 
 result in a single system call.
 
@@ -202,11 +202,11 @@ takes care of string extraction from fixed sized char arrays. See listing \ref{S
 
 \begin{table}
 \begin{lstlisting}[caption=SCSI::Structures helper functions,label=SCSI_data_helpers]
-SCSI::Structures::uint32\_t toU32(const char(\& t)\[4\]);
-SCSI::Structures::uint32\_t toU32(const char(\& t)\[4\]);
+SCSI::Structures::uint32_t toU32(const char(& t)[4]);
+SCSI::Structures::uint32_t toU32(const char(& t)[4]);
 
-template <size\_t n>
-std::string toString(const char(\& t)[n]);
+template <size_t n>
+std::string toString(const char(& t)[n]);
 \end{lstlisting}
 \end{table}
 

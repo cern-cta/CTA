@@ -30,6 +30,7 @@
 using ::testing::AtLeast;
 using ::testing::Return;
 using ::testing::_;
+using ::testing::An;
 
 namespace UnitTests {
 
@@ -47,7 +48,7 @@ TEST(TapeDrive, OpensCorrectly) {
   EXPECT_CALL(sysWrapper, open(_, _)).Times(14);
   EXPECT_CALL(sysWrapper, read(_, _, _)).Times(20);
   EXPECT_CALL(sysWrapper, write(_, _, _)).Times(0);
-  EXPECT_CALL(sysWrapper, ioctl(_,_,_)).Times(2);
+  EXPECT_CALL(sysWrapper, ioctl(_,_,An<mtget*>())).Times(2);
   EXPECT_CALL(sysWrapper, close(_)).Times(14);
   EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(3);
   EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);

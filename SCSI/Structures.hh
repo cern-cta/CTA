@@ -41,7 +41,30 @@ namespace SCSI {
    * http://hackipedia.org/Hardware/SCSI/Stream%20Commands/SCSI%20Stream%20Commands%20-%203.pdf
    */
   namespace Structures {
-    /*
+    
+    /**
+     * Helper function to deal with endianness.
+     * @param t byte array in SCSI order representing a 32 bits number
+     * @return 
+     */
+    inline uint32_t toU32(const char(& t)[4])
+    {
+      /* Like network, SCSI is BigEndian */
+      return ntohl (*((uint32_t *) t));
+    }
+
+    /**
+     * Helper function to deal with endianness.
+     * @param t byte array in SCSI order representing a 16 bits number
+     * @return 
+     */
+    inline uint16_t toU16(const char(& t)[2])
+    {
+      /* Like network, SCSI is BigEndian */
+      return ntohs (*((uint16_t *) t));
+    }
+    
+    /**
      * Inquiry CDB as described in SPC-4.
      */
     class inquiryCDB_t {
@@ -59,7 +82,7 @@ namespace SCSI {
       inquiryCDB_t() { memset(this, 0, sizeof(*this)); opCode = SCSI::Commands::INQUIRY; }
     };
     
-    /*
+    /**
      * Inquiry data as described in SPC-4.
      */
     typedef struct {
@@ -152,6 +175,68 @@ namespace SCSI {
       }
     };
 
+    /**
+     * Log sense CDB as decribed in SPC-4, 
+     */
+    class logSenseCDB_t {
+    public:
+      unsigned char opCode;
+      
+      unsigned char SP : 1;
+      unsigned char : 7;
+      
+      unsigned char pageCode : 6;
+      unsigned char PC : 2;
+      
+      unsigned char subPage;
+      
+      unsigned char parameterPointer[2];
+      
+      unsigned char allocationLength[2];
+      
+      unsigned char control;
+      
+      logSenseCDB_t() { memset(this, 0, sizeof(*this)); opCode = SCSI::Commands::LOG_SENSE; }
+    };
+    
+    class tapeAlertLogParameter_t {
+    public:
+      char parameterCode [2];
+      
+      unsigned char formatAndLinking : 2;
+      unsigned char TMC : 2;
+      unsigned char ETC : 1;
+      unsigned char TSD : 1;
+      unsigned char : 1;
+      unsigned char DU : 1;
+      
+      unsigned char parameterLength;
+      
+      unsigned char flag : 1;
+      unsigned char : 7;
+    };
+    
+    /**
+     * Tape alert log mage, returned by LOG SENSE. Defined in SSC-3, section 8.2.3 TapeAler log page.
+     */
+    class tapeAlertLogPage_t {
+    public:
+      unsigned char pageCode : 6;
+      unsigned char : 2;
+      
+      unsigned char subPageCode;
+      
+      char pageLength[2];
+      
+      tapeAlertLogParameter_t parameters [1];
+      
+      /**
+       * Utility function computing the number of parameters.
+       * @return number of parameters.
+       */
+      int parameterNumber() { return SCSI::Structures::toU16(pageLength) / sizeof (tapeAlertLogPage_t); }
+    };
+    
     template <size_t n>
     std::string toString(const char(& t)[n]) {
       std::stringstream r;
@@ -188,18 +273,6 @@ namespace SCSI {
         hex << std::endl;
       }
       return hex.str();
-    }
-
-    inline uint32_t toU32(const char(& t)[4])
-    {
-      /* Like network, SCSI is BigEndian */
-      return ntohl (*((uint32_t *) t));
-    }
-    
-    inline uint16_t toU16(const char(& t)[2])
-    {
-      /* Like network, SCSI is BigEndian */
-      return ntohs (*((uint16_t *) t));
     }
   };
 

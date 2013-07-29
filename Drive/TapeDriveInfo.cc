@@ -41,6 +41,11 @@ int main ()
     if (dev.type == SCSI::Types::tape) {
       Tape::Drive<Tape::System::realWrapper> drive(dev,sWrapper);
       drive.SCSI_inquiry();
+      std::vector<std::string> Alerts(drive.getTapeAlerts());
+      while (Alerts.size()) {
+        std::cout << "Tape alert: " << Alerts.back() << std::endl;
+        Alerts.pop_back();
+      }
     }
   }
 }

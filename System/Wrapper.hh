@@ -151,6 +151,7 @@ namespace System {
     MOCK_METHOD3(read, ssize_t(int fd, void* buf, size_t nbytes));
     MOCK_METHOD3(write, ssize_t(int fd, const void *buf, size_t nbytes));
     MOCK_METHOD3(ioctl, int(int fd, unsigned long int request, struct mtget * mt_status));
+    MOCK_METHOD3(ioctl, int(int fd, unsigned long int request, sg_io_hdr_t * sg_hdr));
     MOCK_METHOD1(close, int(int fd));
     MOCK_METHOD2(stat, int(const char *, struct stat *));
     DIR* m_DIR;
