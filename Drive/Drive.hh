@@ -66,13 +66,6 @@ namespace Tape {
     uint32_t dirtyObjectsCount;
     uint32_t dirtyBytesCount;
   };
-  
-  class tapeAlerts {
-    bool hardError;
-    bool mediaError;
-    bool readFailure;
-    bool writeFailure;
-  };
 
   /**
    * Class abstracting the tape drives. Gets initialized from 
@@ -112,14 +105,60 @@ namespace Tape {
      * the immediate bit is not set.
      * @param blockId The blockId, represented in local endianness.
      */
-    virtual void positionToLogicalObject (uint32_t blockId) { throw Exception("Not implemented"); }
+    virtual void positionToLogicalObject (uint32_t blockId) throw (Exception) { throw Exception("Not implemented"); }
     /**
      * Return logical position of the drive. This is the address of the next object
      * to read or write.
      * @return positionInfo class. This contains the logical position, plus information
      * on the dirty data still in the write buffer.
      */
-    virtual positionInfo getPositionInfo () { throw Exception("Not implemented"); }
+    virtual positionInfo getPositionInfo () throw (Exception) { throw Exception("Not implemented"); }
+    
+    /**
+     * Get tape alert information from the drive. There is a quite long list of possible tape alerts.
+     * They are described in SSC-4, section 4.2.20: TapeAlert application client interface
+     * @return list of tape alerts descriptions. They are simply used for logging.
+     */
+    virtual std::vector<std::string> getTapeAlerts () throw (Exception) 
+    {
+      /* return vector */
+      std::vector<std::string> ret;
+      /* We don't know how many elements we'll get. Prepare a 1kB buffer. */
+      unsigned char dataBuff[1024];
+      memset (dataBuff, 0, sizeof (dataBuff));
+      unsigned char senseBuff[256];
+      SCSI::Structures::logSenseCDB_t cdb;
+      cdb.pageCode = SCSI::logSensePages::tapeAlert;
+      sg_io_hdr_t sgh;
+      memset(&sgh, 0, sizeof (sgh));
+      sgh.interface_id = 'S';
+      sgh.cmdp = (unsigned char *)&cdb;
+      sgh.cmd_len = sizeof(cdb);
+      sgh.sbp = senseBuff;
+      sgh.mx_sb_len = 255;
+      sgh.dxfer_direction = SG_DXFER_FROM_DEV;
+      sgh.dxferp = dataBuff;
+      sgh.dxfer_len = sizeof(dataBuff);
+      sgh.timeout = 30000;
+      /* Manage both system error and SCSI errors. */
+      if (-1 == m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh))
+        throw Tape::Exceptions::Errnum("Failed SG_IO ioctl");
+      if (SCSI::Status::GOOD != sgh.status)
+        throw Tape::Exception(std::string("SCSI error in getTapeAlerts: ") + 
+                SCSI::statusToString(sgh.status));
+      SCSI::Structures::tapeAlertLogPage_t & tal = 
+              *(SCSI::Structures::tapeAlertLogPage_t *) dataBuff;
+      /* Return the ACTIVE tape alerts (this is indicated but the flag (see 
+       * SSC-4: 8.2.3 TapeAlert log page). As they are simply used for logging,
+       * return strings. */
+      for (int i=0; i< tal.parameterNumber(); i++) {
+        if (tal.parameters[i].flag)
+          ret.push_back(SCSI::tapeAlertToString(
+                  SCSI::Structures::toU16(tal.parameters[i].parameterCode)
+                  ));
+      }
+      return ret;
+    }
     virtual ~Drive() {
       if(-1 != m_tapeFD)
         m_sysWrapper.close(m_tapeFD);
