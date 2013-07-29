@@ -1740,39 +1740,6 @@ UPDATE Type2Obj SET svcHandler = 'BulkStageReqSvc' WHERE type IN (50, 119);
 /*********************************************************************/
 CREATE TABLE FileSystemsToCheck (FileSystem NUMBER CONSTRAINT PK_FSToCheck_FS PRIMARY KEY, ToBeChecked NUMBER);
 
-
-/**************/
-/* Accounting */
-/**************/
-
-/* WARNING!!!! Changing this to a materialized view which is refresh at a set
- * frequency causes problems with the disk server draining tools.
- */
-CREATE TABLE Accounting (euid INTEGER CONSTRAINT NN_Accounting_Euid NOT NULL, 
-                         fileSystem INTEGER CONSTRAINT NN_Accounting_Filesystem NOT NULL,
-                         nbBytes INTEGER);
-ALTER TABLE Accounting 
-ADD CONSTRAINT PK_Accounting_EuidFs PRIMARY KEY (euid, fileSystem);
-
-/* SQL statement for the creation of the AccountingSummary view */
-CREATE OR REPLACE VIEW AccountingSummary
-AS
-  SELECT (SELECT cast(last_start_date AS DATE) 
-            FROM dba_scheduler_jobs
-           WHERE job_name = 'ACCOUNTINGJOB'
-             AND owner = 
-              (SELECT value FROM CastorConfig
-                WHERE class = 'general' AND key = 'owner')) timestamp,
-         3600 interval, SvcClass.name SvcClass, Accounting.euid, 
-         sum(Accounting.nbbytes) totalBytes
-    FROM Accounting, FileSystem, DiskPool2SvcClass, svcclass
-   WHERE Accounting.filesystem = FileSystem.id
-     AND FileSystem.diskpool = DiskPool2SvcClass.parent
-     AND DiskPool2SvcClass.child = SvcClass.id
-   GROUP BY SvcClass.name, Accounting.euid
-   ORDER BY SvcClass.name, Accounting.euid;
-
-
 /*********************/
 /* FileSystem rating */
 /*********************/
@@ -1792,7 +1759,6 @@ END;
 /* FileSystem index based on the rate. */
 CREATE INDEX I_FileSystem_Rate
     ON FileSystem(fileSystemRate(nbReadStreams, nbWriteStreams));
-
 
 /************/
 /* Aborting */
@@ -1948,6 +1914,8 @@ ALTER TABLE DrainingJob
   ADD CONSTRAINT CK_DrainingJob_FileMask
   CHECK (fileMask IN (0, 1));
 
+CREATE INDEX I_DrainingJob_SvcClass ON DrainingJob (svcClass);
+
 /* Creation of the DrainingErrors table
  *   - drainingJob : identifier of the concerned DrainingJob
  *   - errorMsg : the error that occured
@@ -2047,7 +2015,6 @@ BEGIN
   EXECUTE IMMEDIATE 'ALTER SESSION SET REMOTE_DEPENDENCIES_MODE=SIGNATURE';
 END;
 /
-
 /*******************************************************************
  *
  *
@@ -8352,6 +8319,10 @@ BEGIN
   -- is returned, else -1 (INVALID) is returned.
   -- The case of svcClassId = 0 (i.e. '*') is handled separately for performance reasons
   -- and because it may include a check for read permissions.
+  -- Hardware status affects the results as follows:
+  -- - PRODUCTION and READONLY hardware are the same and don't affect the result
+  -- - DRAINING hardware makes any VALID diskcopy be exposed as STAGEABLE
+  -- - DISABLED hardware or diskservers with hwOnline flag = 0 are filtered out
   IF svcClassId = 0 THEN
     OPEN result FOR
      SELECT * FROM (
@@ -8377,12 +8348,13 @@ BEGIN
                             AND request = Req.id)              
                    ELSE DC.svcClass END AS svcClass,
                  DC.machine, DC.mountPoint, DC.nbCopyAccesses, CastorFile.lastKnownFileName,
-                 DC.creationTime, DC.lastAccessTime, nvl(decode(DC.hwStatus, 2, 1, DC.hwStatus), -1) hwStatus
+                 DC.creationTime, DC.lastAccessTime, nvl(decode(DC.hwStatus, 2, dconst.DISKSERVER_DRAINING, DC.hwStatus), -1) hwStatus
             FROM CastorFile,
               (SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, DiskServer.name AS machine, FileSystem.mountPoint,
                       SvcClass.name AS svcClass, DiskCopy.filesystem, DiskCopy.castorFile, 
                       DiskCopy.nbCopyAccesses, DiskCopy.creationTime, DiskCopy.lastAccessTime,
-                      FileSystem.status + DiskServer.status AS hwStatus
+                      decode(FileSystem.status, dconst.DISKSERVER_READONLY, dconst.DISKSERVER_PRODUCTION, FileSystem.status) +  -- READONLY == PRODUCTION
+                      decode(DiskServer.status, dconst.FILESYSTEM_READONLY, dconst.FILESYSTEM_PRODUCTION, DiskServer.status) AS hwStatus
                  FROM FileSystem, DiskServer, DiskPool2SvcClass, SvcClass, DiskCopy
                 WHERE Diskcopy.castorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
                   AND Diskcopy.status IN (0, 1, 4, 5, 6, 7, 10, 11) -- search for diskCopies not BEINGDELETED
@@ -8450,12 +8422,13 @@ BEGIN
                            AND svcClass = svcClassId)
                       END AS status,
                  DC.machine, DC.mountPoint, DC.nbCopyAccesses, CastorFile.lastKnownFileName,
-                 DC.creationTime, DC.lastAccessTime, nvl(decode(DC.hwStatus, 2, 1, DC.hwStatus), -1) hwStatus
+                 DC.creationTime, DC.lastAccessTime, nvl(decode(DC.hwStatus, 2, dconst.DISKSERVER_DRAINING, DC.hwStatus), -1) hwStatus
             FROM CastorFile,
               (SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, DiskServer.name AS machine, FileSystem.mountPoint,
                       DiskPool2SvcClass.child AS dcSvcClass, DiskCopy.filesystem, DiskCopy.CastorFile, 
                       DiskCopy.nbCopyAccesses, DiskCopy.creationTime, DiskCopy.lastAccessTime,
-                      FileSystem.status + DiskServer.status AS hwStatus
+                      decode(FileSystem.status, dconst.DISKSERVER_READONLY, dconst.DISKSERVER_PRODUCTION, FileSystem.status) +  -- READONLY == PRODUCTION
+                      decode(DiskServer.status, dconst.FILESYSTEM_READONLY, dconst.FILESYSTEM_PRODUCTION, DiskServer.status) AS hwStatus
                  FROM FileSystem, DiskServer, DiskPool2SvcClass, DiskCopy
                 WHERE Diskcopy.castorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
                   AND DiskCopy.status IN (0, 1, 4, 5, 6, 7, 10, 11)  -- search for diskCopies not GCCANDIDATE or BEINGDELETED
@@ -11529,8 +11502,7 @@ BEGIN
   FOR j IN (SELECT job_name FROM user_scheduler_jobs
              WHERE job_name IN ('HOUSEKEEPINGJOB',
                                 'CLEANUPJOB',
-                                'BULKCHECKFSBACKINPRODJOB',
-                                'ACCOUNTINGJOB'))
+                                'BULKCHECKFSBACKINPRODJOB'))
   LOOP
     DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
   END LOOP;
@@ -11567,26 +11539,6 @@ BEGIN
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=5',
       ENABLED         => TRUE,
       COMMENTS        => 'Bulk operation to processing filesystem state changes');
-
-  -- Create a db job to be run every hour that generates the accounting information
-  DBMS_SCHEDULER.CREATE_JOB(
-      JOB_NAME        => 'accountingJob',
-      JOB_TYPE        => 'PLSQL_BLOCK',
-      JOB_ACTION      => 'BEGIN 
-                            DELETE FROM Accounting;
-                            INSERT INTO Accounting (euid, fileSystem, nbBytes)
-                              (SELECT owneruid, fileSystem, sum(diskCopySize)
-                                 FROM DiskCopy
-                                WHERE DiskCopy.status IN (0, 10)
-                                  AND DiskCopy.owneruid IS NOT NULL
-                                  AND DiskCopy.ownergid IS NOT NULL
-                                GROUP BY owneruid, fileSystem);
-                          END;',
-      JOB_CLASS       => 'CASTOR_JOB_CLASS',
-      START_DATE      => SYSDATE + 60/1440,
-      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=60',
-      ENABLED         => TRUE,
-      COMMENTS        => 'Generation of accounting information');
 END;
 /
 

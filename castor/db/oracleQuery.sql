@@ -22,6 +22,10 @@ BEGIN
   -- is returned, else -1 (INVALID) is returned.
   -- The case of svcClassId = 0 (i.e. '*') is handled separately for performance reasons
   -- and because it may include a check for read permissions.
+  -- Hardware status affects the results as follows:
+  -- - PRODUCTION and READONLY hardware are the same and don't affect the result
+  -- - DRAINING hardware makes any VALID diskcopy be exposed as STAGEABLE
+  -- - DISABLED hardware or diskservers with hwOnline flag = 0 are filtered out
   IF svcClassId = 0 THEN
     OPEN result FOR
      SELECT * FROM (
@@ -47,12 +51,13 @@ BEGIN
                             AND request = Req.id)              
                    ELSE DC.svcClass END AS svcClass,
                  DC.machine, DC.mountPoint, DC.nbCopyAccesses, CastorFile.lastKnownFileName,
-                 DC.creationTime, DC.lastAccessTime, nvl(decode(DC.hwStatus, 2, 1, DC.hwStatus), -1) hwStatus
+                 DC.creationTime, DC.lastAccessTime, nvl(decode(DC.hwStatus, 2, dconst.DISKSERVER_DRAINING, DC.hwStatus), -1) hwStatus
             FROM CastorFile,
               (SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, DiskServer.name AS machine, FileSystem.mountPoint,
                       SvcClass.name AS svcClass, DiskCopy.filesystem, DiskCopy.castorFile, 
                       DiskCopy.nbCopyAccesses, DiskCopy.creationTime, DiskCopy.lastAccessTime,
-                      FileSystem.status + DiskServer.status AS hwStatus
+                      decode(FileSystem.status, dconst.DISKSERVER_READONLY, dconst.DISKSERVER_PRODUCTION, FileSystem.status) +  -- READONLY == PRODUCTION
+                      decode(DiskServer.status, dconst.FILESYSTEM_READONLY, dconst.FILESYSTEM_PRODUCTION, DiskServer.status) AS hwStatus
                  FROM FileSystem, DiskServer, DiskPool2SvcClass, SvcClass, DiskCopy
                 WHERE Diskcopy.castorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
                   AND Diskcopy.status IN (0, 1, 4, 5, 6, 7, 10, 11) -- search for diskCopies not BEINGDELETED
@@ -120,12 +125,13 @@ BEGIN
                            AND svcClass = svcClassId)
                       END AS status,
                  DC.machine, DC.mountPoint, DC.nbCopyAccesses, CastorFile.lastKnownFileName,
-                 DC.creationTime, DC.lastAccessTime, nvl(decode(DC.hwStatus, 2, 1, DC.hwStatus), -1) hwStatus
+                 DC.creationTime, DC.lastAccessTime, nvl(decode(DC.hwStatus, 2, dconst.DISKSERVER_DRAINING, DC.hwStatus), -1) hwStatus
             FROM CastorFile,
               (SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, DiskServer.name AS machine, FileSystem.mountPoint,
                       DiskPool2SvcClass.child AS dcSvcClass, DiskCopy.filesystem, DiskCopy.CastorFile, 
                       DiskCopy.nbCopyAccesses, DiskCopy.creationTime, DiskCopy.lastAccessTime,
-                      FileSystem.status + DiskServer.status AS hwStatus
+                      decode(FileSystem.status, dconst.DISKSERVER_READONLY, dconst.DISKSERVER_PRODUCTION, FileSystem.status) +  -- READONLY == PRODUCTION
+                      decode(DiskServer.status, dconst.FILESYSTEM_READONLY, dconst.FILESYSTEM_PRODUCTION, DiskServer.status) AS hwStatus
                  FROM FileSystem, DiskServer, DiskPool2SvcClass, DiskCopy
                 WHERE Diskcopy.castorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
                   AND DiskCopy.status IN (0, 1, 4, 5, 6, 7, 10, 11)  -- search for diskCopies not GCCANDIDATE or BEINGDELETED
