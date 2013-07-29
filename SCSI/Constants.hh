@@ -24,6 +24,7 @@
 #pragma once
 
 #include <string>
+#include <stdint.h>
 
 namespace SCSI {
   /* Extracted from linux kernel's include/scsi/scsi.h. System-level include 
