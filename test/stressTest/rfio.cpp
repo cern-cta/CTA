@@ -386,7 +386,9 @@ int readFileUsingXROOTD(const std::string &filepath,
 
   XrdCl::File f; 
   XrdCl::XRootDStatus status;
-  std::string file_url = stagerHost + "/"; file_url += filepath;
+  std::ostringstream os;
+  os << syscall(SYS_gettid) << "@" << stagerHost << "/" << filepath;
+  std::string file_url = os.str();
   XrdCl::URL url(file_url);
 
   if (!url.IsValid()) {
@@ -477,8 +479,9 @@ int writeFileUsingXROOTD(const std::string &filepath,
 
   XrdCl::File f; 
   XrdCl::XRootDStatus status;
-  std::string file_url = stagerHost + "/";
-  file_url += filepath + "?svcClass=" + stagerSvcClass;
+  std::ostringstream os;
+  os << syscall(SYS_gettid) << "@" << stagerHost << "/" << filepath << "?svcClass=" << stagerSvcClass;
+  std::string file_url = os.str();
   XrdCl::URL url(file_url);
 
   if (!url.IsValid()) {
