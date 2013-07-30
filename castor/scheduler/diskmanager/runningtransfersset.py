@@ -238,12 +238,12 @@ class RunningTransfersSet(object):
       self.tapelock.acquire()
       try:
         for tTransfer in self.tapeTransfers:
+          transferType = TransferType.toStr(tTransfer.transferType)
           n = n + 1
-          nbslots = self.config.getValue('DiskManager', TransferType.toStr(tTransfer.transferType)+'Weight', 1, int)
+          nbslots = self.config.getValue('DiskManager', transferType+'Weight', 1, int)
           ns = ns + nbslots
           if not detailed:
             continue
-          transferType = tTransfer.transferType
           if transferType not in nproto:
             nproto[transferType] = 0
           nproto[transferType] = nproto[transferType] + 1
@@ -310,7 +310,7 @@ class RunningTransfersSet(object):
     self.tapelock.acquire()
     try:
       for tTransfer in self.tapeTransfers:
-        n = n + self.config.getValue('DiskManager', tTransfer.transferType+'Weight', 1, int)
+        n = n + self.config.getValue('DiskManager', TransferType.toStr(tTransfer.transferType)+'Weight', 1, int)
     finally:
       self.tapelock.release()
     return n
