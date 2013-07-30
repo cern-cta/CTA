@@ -403,7 +403,7 @@ def queryDrain():
         if fileSystems:
             stGetDrains += ' AND FileSystem.id IN (' + ', '.join([str(fs[2]) for fs in fileSystems]) + ')'        
         if runningFlag:
-            stGetDrains += ' AND DrainingJob.status = 2'  # RUNNING
+            stGetDrains += ' AND DrainingJob.status IN (0, 1, 2)'  # SUBMITTED, STARTING, RUNNING
         stGetDrains += ' ORDER BY DiskServer.name, FileSystem.mountPoint'
         # get data
         stcur.execute(stGetDrains)
@@ -501,7 +501,7 @@ try:
             queryFailures()
         else:
             queryDrain()
-    elif deleteDrain:
+    elif deleteFlag:
         deleteDrain()
     else:
         print "No option specified\n"
