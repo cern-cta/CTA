@@ -49,7 +49,7 @@
 #define MSGIDENTLEN  43
 #define MSGCLOSELEN  10
 
-#define SELECT_TIMEOUT_XROOT_OPEN  30
+#define SELECT_TIMEOUT_XROOT_OPEN  300
 #define SELECT_TIMEOUT_XROOT_CLOSE 7200
 
 // Static instance of the XRootPlugin
