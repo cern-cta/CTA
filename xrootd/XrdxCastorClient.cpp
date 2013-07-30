@@ -194,29 +194,24 @@ XrdxCastorClient::SendAsyncRequest(const std::string& userId,
   // Lock the map as we could receive the answer for our request before registering
   // it to the map. This is fine as the request is processed only after we get the ack.
   mMutexMaps.Lock();    // -->
+  castor::MessageAck* ack;
 
   try
   {
     // Wait for acknowledgment
     castor::IObject* obj = sock.readObject();
-    castor::MessageAck* ack = dynamic_cast<castor::MessageAck*>(obj);
+    ack = dynamic_cast<castor::MessageAck*>(obj);
   
     if (0 == ack) 
     {
-      mMutexMaps.UnLock(); // <--
       castor::exception::InvalidArgument e;
       e.getMessage() << "No Acknowledgement from the server";
-      delete ack;
-      delete elem;
       throw e;
     }
     if (!ack->status()) 
     {
-      mMutexMaps.UnLock(); // <--
       castor::exception::Exception e(ack->errorCode());
       e.getMessage() << ack->errorMessage();
-      delete ack;
-      delete elem;
       throw e;
     }
     
@@ -241,34 +236,28 @@ XrdxCastorClient::SendAsyncRequest(const std::string& userId,
       {
         // If user exists already, remove the request from the map
         mMapRequests.erase(req_insert.first);
-        mMutexMaps.UnLock(); // <--
-        
         castor::exception::Internal e;
         e.getMessage() << "Fatal error: the user we are trying to register "
                        << "exists already in the map ";
-        delete elem;
-        delete ack;
         throw e; 
       }
     }
     else 
     {
-      mMutexMaps.UnLock(); // <--
       castor::exception::Internal e;
       e.getMessage() << "Fatal error: the request we are trying to submit "
                      << "exists already in the map ";
-      delete elem;
-      delete ack;
       throw e; 
     }
 
     mMutexMaps.UnLock();  // <--
     delete ack;
   }
-  catch (castor::exception::Communication e) 
+  catch (castor::exception::Exception& e) 
   {
+    // Unlock the map and forward any exception
     mMutexMaps.UnLock(); // <--
-    e.getMessage() << "Reading object from the socket failed";
+    delete ack;
     delete elem;
     throw e;   
   }
