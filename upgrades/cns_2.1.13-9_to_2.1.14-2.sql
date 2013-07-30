@@ -85,7 +85,7 @@ INSERT INTO CastorConfig (class, key, value, description)
 -- For Vmgr_tape_status_view
 UNDEF vmgrSchema
 ACCEPT vmgrSchema CHAR PROMPT 'Enter the name of the VMGR schema: ';
-CREATE OR REPLACE SYNONYM Vmgr_tape_status_view FOR &vmgrSchema..VMGR_TAPE_STATUS_VIEW;
+CREATE OR REPLACE VIEW Vmgr_tape_status_view AS SELECT * FROM &vmgrSchema..VMGR_TAPE_STATUS_VIEW;
 
 -- Table for NS statistics
 CREATE TABLE UsageStats (
