@@ -98,7 +98,7 @@ extern "C"
 XrdxCastor2Ofs::XrdxCastor2Ofs(): 
   LogId() 
 {
-  mLogLevel = LOG_ERR; // log everything above err
+  mLogLevel = LOG_INFO; // log info
 }
 
 
