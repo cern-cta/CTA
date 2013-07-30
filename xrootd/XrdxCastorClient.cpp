@@ -195,8 +195,19 @@ XrdxCastorClient::SendAsyncRequest(const std::string& userId,
   // it to the map. This is fine as the request is processed only after we get the ack.
   mMutexMaps.Lock();    // -->
 
-  // Wait for acknowledgment
-  castor::IObject* obj = sock.readObject();
+  try
+  {
+    // Wait for acknowledgment
+    castor::IObject* obj = sock.readObject();
+  }
+  catch (castor::exceptio::Communication e) 
+  {
+    mMutexMaps.UnLock(); // <--
+    e.getMessage() << "Reading object from the socket failed";
+    delete elem;
+    throw e;   
+  }
+
   castor::MessageAck* ack = dynamic_cast<castor::MessageAck*>(obj);
 
   if (0 == ack) 
@@ -338,7 +349,7 @@ XrdxCastorClient::GetResponse(const std::string& userId,
           // i.e. with responses for other requests
           gettimeofday(&current, NULL);
           
-          if (current.tv_sec - start.tv_sec > wait_time)
+          if (current.tv_sec - start.tv_sec >= wait_time)
           {
             xcastor_debug("waited for maximum amount of time");
             elem = 0;
