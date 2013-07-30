@@ -199,81 +199,80 @@ XrdxCastorClient::SendAsyncRequest(const std::string& userId,
   {
     // Wait for acknowledgment
     castor::IObject* obj = sock.readObject();
+    castor::MessageAck* ack = dynamic_cast<castor::MessageAck*>(obj);
+  
+    if (0 == ack) 
+    {
+      mMutexMaps.UnLock(); // <--
+      castor::exception::InvalidArgument e;
+      e.getMessage() << "No Acknowledgement from the server";
+      delete ack;
+      delete elem;
+      throw e;
+    }
+    if (!ack->status()) 
+    {
+      mMutexMaps.UnLock(); // <--
+      castor::exception::Exception e(ack->errorCode());
+      e.getMessage() << ack->errorMessage();
+      delete ack;
+      delete elem;
+      throw e;
+    }
+    
+    xcastor_debug("ack for reqid=%s", ack->requestId().c_str());
+    
+    // Save the request id returned by the stager and add it to the map
+    std::string req_id = ack->requestId();
+    req->setReqId(req_id);
+    
+    // Save in map the identity of the user along with the request id and response
+    std::pair<AsyncReqMap::iterator, bool> req_insert;
+    std::pair<AsyncUserMap::iterator, bool> user_insert;
+    
+    req_insert = mMapRequests.insert(std::make_pair(req_id, elem));
+    
+    if (req_insert.second == true)
+    {
+      // The request was inserted in the map, insert also the user in the other map
+      user_insert = mMapUsers.insert(std::make_pair(userId, req_insert.first));
+      
+      if (!user_insert.second) 
+      {
+        // If user exists already, remove the request from the map
+        mMapRequests.erase(req_insert.first);
+        mMutexMaps.UnLock(); // <--
+        
+        castor::exception::Internal e;
+        e.getMessage() << "Fatal error: the user we are trying to register "
+                       << "exists already in the map ";
+        delete elem;
+        delete ack;
+        throw e; 
+      }
+    }
+    else 
+    {
+      mMutexMaps.UnLock(); // <--
+      castor::exception::Internal e;
+      e.getMessage() << "Fatal error: the request we are trying to submit "
+                     << "exists already in the map ";
+      delete elem;
+      delete ack;
+      throw e; 
+    }
+
+    mMutexMaps.UnLock();  // <--
+    delete ack;
   }
-  catch (castor::exceptio::Communication e) 
+  catch (castor::exception::Communication e) 
   {
     mMutexMaps.UnLock(); // <--
     e.getMessage() << "Reading object from the socket failed";
     delete elem;
     throw e;   
   }
-
-  castor::MessageAck* ack = dynamic_cast<castor::MessageAck*>(obj);
-
-  if (0 == ack) 
-  {
-    mMutexMaps.UnLock(); // <--
-    castor::exception::InvalidArgument e;
-    e.getMessage() << "No Acknowledgement from the server";
-    delete ack;
-    delete elem;
-    throw e;
-  }
-  if (!ack->status()) 
-  {
-    mMutexMaps.UnLock(); // <--
-    castor::exception::Exception e(ack->errorCode());
-    e.getMessage() << ack->errorMessage();
-    delete ack;
-    delete elem;
-    throw e;
-  }
-
-  xcastor_debug("ack for reqid=%s", ack->requestId().c_str());
-
-  // Save the request id returned by the stager and add it to the map
-  std::string req_id = ack->requestId();
-  req->setReqId(req_id);
-             
-  // Save in map the identity of the user along with the request id and response
-  std::pair<AsyncReqMap::iterator, bool> req_insert;
-  std::pair<AsyncUserMap::iterator, bool> user_insert;
-
-  req_insert = mMapRequests.insert(std::make_pair(req_id, elem));
-
-  if (req_insert.second == true)
-  {
-    // The request was inserted in the map, insert also the user in the other map
-    user_insert = mMapUsers.insert(std::make_pair(userId, req_insert.first));
-    
-    if (!user_insert.second) 
-    {
-      // If user exists already, remove the request from the map
-      mMapRequests.erase(req_insert.first);
-      mMutexMaps.UnLock(); // <--
-      
-      castor::exception::Internal e;
-      e.getMessage() << "Fatal error: the user we are trying to register "
-                     << "exists already in the map ";
-      delete elem;
-      delete ack;
-      throw e; 
-    }
-  }
-  else 
-  {
-    mMutexMaps.UnLock(); // <--
-    castor::exception::Internal e;
-    e.getMessage() << "Fatal error: the request we are trying to submit "
-                   << "exists already in the map ";
-    delete elem;
-    delete ack;
-    throw e; 
-  }
   
-  mMutexMaps.UnLock();  // <--
-  
-  delete ack;
   return ret;
 }
 
