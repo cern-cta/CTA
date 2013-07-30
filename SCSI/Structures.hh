@@ -28,8 +28,11 @@
 #include <algorithm>
 #include <arpa/inet.h>
 #include <string.h>
+#include <scsi/sg.h>
+#include <climits>
 
 #include "Constants.hh"
+#include "../Exception/Exception.hh"
 
 namespace SCSI {
   /**
@@ -41,6 +44,45 @@ namespace SCSI {
    * http://hackipedia.org/Hardware/SCSI/Stream%20Commands/SCSI%20Stream%20Commands%20-%203.pdf
    */
   namespace Structures {
+
+    /**
+     * Helper template to zero a structure. Small boilerplate reduction.
+     * Should not be used with classes with virtual tables! With a zeroed
+     * out virtual table pointer, this will be detected soon enough.
+     * @param s pointer the struct/class.
+     */
+    template <typename C>
+    void zeroStruct(C * s) {
+      memset (s, 0, sizeof(C));
+    }
+    
+    /**
+     * Class wrapping around Linux' SG_IO struct, providing
+     * zeroing and automatic filling up for the mandatory structures
+     * (cdb, databuffer, sense buffer, magic 'S', and default timeout).
+     * Make it look like a bare sg_io_hdr_t when using & operator.
+     * Another little boilerplate killer.
+     */
+    class LinuxSGIO_t: public sg_io_hdr_t {
+    public:
+      LinuxSGIO_t() { zeroStruct(this); interface_id = 'S'; timeout = 30000; }
+      template <typename T>
+      void setCDB(T * cdb) { cmdp = (unsigned char *)cdb; cmd_len = sizeof(T); }
+      
+      template <typename T>
+      void setSenseBuffer(T * senseBuff) throw (Tape::Exception) 
+      { 
+        if (sizeof(T) > UCHAR_MAX)
+          throw Tape::Exception("sense structure too big in LinuxSGIO_t::setSense");
+        sb_len_wr = (unsigned char) sizeof(T);
+        sbp = (unsigned char *)senseBuff;
+      }
+      
+      template <typename T>
+      void setDataBuffer(T * dataBuff) { dxferp = dataBuff; dxfer_len = sizeof (T); }
+      
+      sg_io_hdr_t * operator & () { return (sg_io_hdr_t *) this; }
+    };
     
     /**
      * Helper function to deal with endianness.
@@ -79,7 +121,7 @@ namespace SCSI {
       char allocationLength[2];
       
       unsigned char control;
-      inquiryCDB_t() { memset(this, 0, sizeof(*this)); opCode = SCSI::Commands::INQUIRY; }
+      inquiryCDB_t() { zeroStruct(this); opCode = SCSI::Commands::INQUIRY; }
     };
     
     /**
@@ -170,7 +212,7 @@ namespace SCSI {
       unsigned char control;               // CONTROL   
       
       logSelectCDB_t() {
-        memset(this, 0, sizeof(*this));
+        zeroStruct(this);
         opCode = SCSI::Commands::LOG_SELECT; 
       }
     };
@@ -196,7 +238,7 @@ namespace SCSI {
       
       unsigned char control;
       
-      logSenseCDB_t() { memset(this, 0, sizeof(*this)); opCode = SCSI::Commands::LOG_SENSE; }
+      logSenseCDB_t() { zeroStruct(this); opCode = SCSI::Commands::LOG_SENSE; }
     };
     
     class tapeAlertLogParameter_t {
@@ -219,6 +261,7 @@ namespace SCSI {
     /**
      * Tape alert log mage, returned by LOG SENSE. Defined in SSC-3, section 8.2.3 TapeAler log page.
      */
+    template <int n>
     class tapeAlertLogPage_t {
     public:
       unsigned char pageCode : 6;
@@ -228,13 +271,19 @@ namespace SCSI {
       
       char pageLength[2];
       
-      tapeAlertLogParameter_t parameters [1];
+      tapeAlertLogParameter_t parameters [n];
       
       /**
        * Utility function computing the number of parameters.
        * @return number of parameters.
        */
-      int parameterNumber() { return SCSI::Structures::toU16(pageLength) / sizeof (tapeAlertLogPage_t); }
+      int parameterNumber() throw (Tape::Exception) {
+        int numFromLength = SCSI::Structures::toU16(pageLength) / sizeof (tapeAlertLogPage_t);
+        if (numFromLength > n)
+          throw Tape::Exception("In tapeAlertLogPage_t::parameterNumber: too many parameters from device");
+        return numFromLength;
+      }
+      tapeAlertLogPage_t() { zeroStruct(this); }
     };
     
     template <size_t n>

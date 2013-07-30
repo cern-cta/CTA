@@ -266,7 +266,8 @@ The SCSI commands and st driver's functions used in previous software (CAStor's 
           location (a.k.a. block ID).
     \item Log select (for clearing compression stats page. The function clear\_compression\_stats
           actually does a blanket reset of all statistics. It sets the PCR/SP/PC combination
-          to 1/0/3, which is strange as the spec indicates 1/0/xx (xx for don't care).
+          to 1/0/3. The basic SCSI specification states that the value pf PC is not important,
+          but for the IBM drives, the documentation recommends PC=11b, which we have for all drives.
     \item Log sense, to read the compression pages. This is device dependant. The code covers
           5 blocks of device types: DAT, DLT-SDLT-LTO, IBM(3490, 3590, 3592), StorageTek RedWood(SD3),
           StorageTek(9840, 9940, T10000).

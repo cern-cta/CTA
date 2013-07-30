@@ -133,31 +133,22 @@ namespace Tape {
     {
       /* return vector */
       std::vector<std::string> ret;
-      /* We don't know how many elements we'll get. Prepare a 1kB buffer. */
-      unsigned char dataBuff[1024];
-      memset (dataBuff, 0, sizeof (dataBuff));
+      /* We don't know how many elements we'll get. Prepare a 100 parameters array */
+      SCSI::Structures::tapeAlertLogPage_t<100> tal;
       unsigned char senseBuff[256];
       SCSI::Structures::logSenseCDB_t cdb;
       cdb.pageCode = SCSI::logSensePages::tapeAlert;
-      sg_io_hdr_t sgh;
-      memset(&sgh, 0, sizeof (sgh));
-      sgh.interface_id = 'S';
-      sgh.cmdp = (unsigned char *)&cdb;
-      sgh.cmd_len = sizeof(cdb);
-      sgh.sbp = senseBuff;
-      sgh.mx_sb_len = 255;
+      SCSI::Structures::LinuxSGIO_t sgh;
+      sgh.setCDB(&cdb);
+      sgh.setDataBuffer(&tal);
+      sgh.setSenseBuffer(&senseBuff);
       sgh.dxfer_direction = SG_DXFER_FROM_DEV;
-      sgh.dxferp = dataBuff;
-      sgh.dxfer_len = sizeof(dataBuff);
-      sgh.timeout = 30000;
       /* Manage both system error and SCSI errors. */
       if (-1 == m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh))
         throw Tape::Exceptions::Errnum("Failed SG_IO ioctl");
       if (SCSI::Status::GOOD != sgh.status)
         throw Tape::Exception(std::string("SCSI error in getTapeAlerts: ") + 
                 SCSI::statusToString(sgh.status));
-      SCSI::Structures::tapeAlertLogPage_t & tal = 
-              *(SCSI::Structures::tapeAlertLogPage_t *) dataBuff;
       /* Return the ACTIVE tape alerts (this is indicated but the flag (see 
        * SSC-4: 8.2.3 TapeAlert log page). As they are simply used for logging,
        * return strings. */
@@ -180,6 +171,12 @@ namespace Tape {
      * @return structure containing various booleans, and error conditions.
      */
     virtual driveStatus getDriveStatus() throw (Exception) { throw Exception("Not implemented"); }
+    
+    /**
+     * 
+     * @return string containing the error description
+     */
+    virtual std::string getTapeError() throw (Exception) { throw Exception("Not implemented"); }
     
     virtual ~Drive() {
       if(-1 != m_tapeFD)
