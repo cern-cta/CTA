@@ -512,6 +512,7 @@ CREATE INDEX I_Disk2DiskCopyJob_CfId ON Disk2DiskCopyJob(CastorFile);
 CREATE INDEX I_Disk2DiskCopyJob_CT_Id ON Disk2DiskCopyJob(creationTime, id);
 CREATE INDEX I_Disk2DiskCopyJob_drainJob ON Disk2DiskCopyJob(drainingJob);
 CREATE INDEX I_Disk2DiskCopyJob_SC_type ON Disk2DiskCopyJob(destSvcClass, replicationType);
+CREATE INDEX I_Disk2DiskCopyJob_status_CT ON Disk2DiskCopyJob(status, creationTime);
 BEGIN
   -- PENDING status is when a Disk2DiskCopyJob is created
   -- It is immediately candidate for being scheduled

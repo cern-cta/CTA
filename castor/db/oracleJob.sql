@@ -1204,7 +1204,7 @@ PROCEDURE D2dTransferToSchedule(outTransferId OUT VARCHAR2, outReqId OUT VARCHAR
   -- Note that the where clause is not strictly needed, but this way Oracle is forced
   -- to use an INDEX RANGE SCAN instead of its preferred (and unstable upon load) FULL SCAN!
   CURSOR c IS
-    SELECT Disk2DiskCopyJob.id
+    SELECT /*+ INDEX_RS_ASC(Disk2DiskCopyJob I_Disk2DiskCopyJob_status_CT) */ Disk2DiskCopyJob.id
       FROM Disk2DiskCopyJob
      WHERE status = dconst.DISK2DISKCOPYJOB_PENDING
      ORDER BY creationTime ASC;
