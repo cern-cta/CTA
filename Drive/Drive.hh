@@ -68,6 +68,7 @@ namespace Tape {
   };
   
   /**
+   * 
    */
   class driveStatus {
     bool ready;
@@ -76,9 +77,19 @@ namespace Tape {
     bool eod;
     bool bot;
   };
+  
+  class tapeError {
+    std::string error;
+    /* TODO: error code. See gettperror and get_sk_msg in CAStor */
+  };
 
   /**
-   * Class abstracting the tape drives. Gets initialized from 
+   * Class abstracting the tape drives. This class is templated to allow the use
+   * of unrelated test harness and real system. The test harness is made up of 
+   * a classes with virtual tables, but the real system wrapper has the real
+   * system call directly into inline functions. This allows testing on a "fake"
+   * system without paying performance price when calling system calls in the 
+   * production system.
    */
   template <class sysWrapperClass>
   class Drive {
@@ -149,8 +160,8 @@ namespace Tape {
       if (SCSI::Status::GOOD != sgh.status)
         throw Tape::Exception(std::string("SCSI error in getTapeAlerts: ") + 
                 SCSI::statusToString(sgh.status));
-      /* Return the ACTIVE tape alerts (this is indicated but the flag (see 
-       * SSC-4: 8.2.3 TapeAlert log page). As they are simply used for logging,
+      /* Return the ACTIVE tape alerts (this is indicated by "flag" (see 
+       * SSC-4: 8.2.3 TapeAlert log page). As they are simply used for logging;
        * return strings. */
       for (int i=0; i< tal.parameterNumber(); i++) {
         if (tal.parameters[i].flag)
@@ -173,10 +184,35 @@ namespace Tape {
     virtual driveStatus getDriveStatus() throw (Exception) { throw Exception("Not implemented"); }
     
     /**
-     * 
-     * @return string containing the error description
+     * getTapeError: get SENSE buffer from patched version of the driver
+     * or fall back to other information and report tape statuses.
+     * Statuses were in CAStor struct sk_info sk_codmsg[] = { 
+     * 	{"No sense", ETNOSNS},
+     *  {"Recovered error", 0},
+     *  {"Not ready", 0},
+     *  {"Medium error", ETPARIT},
+     *  {"Hardware error", ETHWERR},
+     *  {"Illegal request", ETHWERR},
+     *  {"Unit attention", ETHWERR},
+     *  {"Data protect", 0},
+     *  {"Blank check", ETBLANK},
+     *  {"Vendor unique", 0},
+     *  {"Copy aborted", 0},
+     *  {"Aborted command", 0},
+     *  {"Equal", 0},
+     *  {"Volume overflow", ENOSPC},
+     *  {"Miscompare", 0},
+     *  {"Reserved", 0},
+     *  {"SCSI handshake failure", ETHWERR},
+     *  {"Timeout", ETHWERR},
+     *  {"EOF hit", 0},
+     *  {"EOT hit", ETBLANK},
+     *  {"Length error", ETCOMPA},
+     *  {"BOT hit", ETUNREC},
+     *  {"Wrong tape media", ETCOMPA}
+     * @return error code and string containing the error description
      */
-    virtual std::string getTapeError() throw (Exception) { throw Exception("Not implemented"); }
+    virtual tapeError getTapeError() throw (Exception) { throw Exception("Not implemented"); }
     
     virtual ~Drive() {
       if(-1 != m_tapeFD)

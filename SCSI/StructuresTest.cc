@@ -151,8 +151,113 @@ namespace UnitTests {
     ASSERT_EQ(0xBC, logSelectCDB.subPageCode);
     /* ... */
     buff[7] |= 0xAB; buff[8] |= 0xCD;
-    ASSERT_EQ(0xABCD, logSelectCDB.parameterListLength[0]<<8|logSelectCDB.parameterListLength[1]);
+    ASSERT_EQ(0xABCD, SCSI::Structures::toU16(logSelectCDB.parameterListLength));
     buff[9] |= 0xBC;
     ASSERT_EQ(0xBC, logSelectCDB.control);
+  }
+
+  TEST(SCSI_Structures, LinuxSGIO_t) {
+    ASSERT_EQ(sizeof(sg_io_hdr_t), sizeof(SCSI::Structures::LinuxSGIO_t));
+    SCSI::Structures::LinuxSGIO_t lsg;
+    /* Most important part: check that the class does not add data
+     to the original structure (virtual table, for example)*/
+    sg_io_hdr_t & sgio_hdr = *(sg_io_hdr_t *)&lsg;
+    /* Also make sure the constructor does its initialization job */
+    ASSERT_EQ(30000, sgio_hdr.timeout);
+    ASSERT_EQ('S', sgio_hdr.interface_id);
+    /* The rest is safe. It's just a struct with added functions */
+  }
+
+  TEST(SCSI_Structures, logSenseCDB_t) {
+    SCSI::Structures::logSenseCDB_t logSenseCDB;
+    unsigned char *buff = (unsigned char *)&logSenseCDB;
+    
+    /*
+     * Make sure this struct is a POD (plain old data without virtual table)
+     * (and has the right size).
+     */
+    ASSERT_EQ(10, sizeof(logSenseCDB));
+    
+    /* Check proper initialization an location of struct members match
+     the bit/byte locations defined in SPC-4 */
+    ASSERT_EQ(SCSI::Commands::LOG_SENSE, logSenseCDB.opCode);
+    buff[0] = 0xAB;
+    ASSERT_EQ(0xAB, logSenseCDB.opCode);
+    
+    ASSERT_EQ(0, logSenseCDB.SP);
+    buff[1] |= (0x1 &   0x7) << 0;
+    ASSERT_EQ(1, logSenseCDB.SP);
+    
+    ASSERT_EQ(0, logSenseCDB.PPC);
+    buff[1] |= (0x1 &   0xF) << 1;
+    ASSERT_EQ(1, logSenseCDB.PPC);
+    
+    ASSERT_EQ(0, logSenseCDB.pageCode);
+    buff[2] |= (0xAB & 0x3F) << 0;  
+    ASSERT_EQ(0x2B, logSenseCDB.pageCode);
+    
+    ASSERT_EQ(0, logSenseCDB.PC);
+    buff[2] |= (0x2 &   0x3) << 6;
+    ASSERT_EQ(0x2, logSenseCDB.PC);
+    
+    ASSERT_EQ(0, logSenseCDB.subPageCode);
+    buff[3] = 0xBC;
+    ASSERT_EQ(0xBC, logSenseCDB.subPageCode);
+    
+    ASSERT_EQ(0, SCSI::Structures::toU16(logSenseCDB.parameterPointer));
+    buff[5] = 0x12; buff[6] = 0x34;
+    ASSERT_EQ(0x1234, SCSI::Structures::toU16(logSenseCDB.parameterPointer));
+    
+    ASSERT_EQ(0, SCSI::Structures::toU16(logSenseCDB.allocationLength));
+    buff[7] |= 0xAB; buff[8] |= 0xCD;
+    ASSERT_EQ(0xABCD, SCSI::Structures::toU16(logSenseCDB.allocationLength));
+    
+    ASSERT_EQ(0, logSenseCDB.control);
+    buff[9] |= 0xBC;
+    ASSERT_EQ(0xBC, logSenseCDB.control);
+  }
+  
+  TEST(SCSI_Structures, tapeAlertLogPage_t_and_parameters) {
+    SCSI::Structures::tapeAlertLogPage_t<12> tal;
+    unsigned char * buff = (unsigned char *) & tal;
+    
+    /* Check the size of the structure (header is 4 bytes, array elements, 5.*/
+    /* As usual, this ensures we have POD */
+    ASSERT_EQ(4 + 12*5, sizeof(tal));
+    
+    ASSERT_EQ(0, tal.pageCode);
+    buff[0] |= (0x12 & 0x3F) << 0;
+    ASSERT_EQ(0x12, tal.pageCode);
+    
+    ASSERT_EQ(0,tal.subPageCode);
+    buff[1] = 0x34;
+    ASSERT_EQ(0x34, tal.subPageCode);
+    
+    /* Simulate 123 records = 600 bytes = 0x267 */
+    ASSERT_EQ(0, SCSI::Structures::toU16(tal.pageLength));
+    buff[2] = 0x2; buff[3]= 0x67;
+    ASSERT_EQ(0x267, SCSI::Structures::toU16(tal.pageLength));
+    /* The page length is counted in bytes. We are interested in the number of parameters*/
+    ASSERT_EQ(123, tal.parameterNumber());
+    
+    ASSERT_EQ(0, SCSI::Structures::toU16(tal.parameters[0].parameterCode));
+    buff [4] = 0xCA; buff[5] = 0xFE;
+    ASSERT_EQ(0xCAFE, SCSI::Structures::toU16(tal.parameters[0].parameterCode));
+    
+    ASSERT_EQ(0, tal.parameters[11].flag);
+    buff[3+12*5] |= (0x1) << 0;
+    ASSERT_EQ(1, tal.parameters[11].flag);
+  }
+  
+  TEST(SCSI_Structures, toto) {}
+  
+  TEST(SCSI_Structures, toU16) {
+    unsigned char num[2] = { 0x1, 0x2 };
+    ASSERT_EQ( 0x102, SCSI::Structures::toU16(num));
+  }
+  
+  TEST(SCSI_Structures, toU32) {
+    unsigned char num[4] = { 0x1, 0x2, 0x3, 0x4 };
+    ASSERT_EQ( 0x1020304, SCSI::Structures::toU32(num));
   }
 };

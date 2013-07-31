@@ -89,7 +89,7 @@ namespace SCSI {
      * @param t byte array in SCSI order representing a 32 bits number
      * @return 
      */
-    inline uint32_t toU32(const char(& t)[4])
+    inline uint32_t toU32(const unsigned char(& t)[4])
     {
       /* Like network, SCSI is BigEndian */
       return ntohl (*((uint32_t *) t));
@@ -100,7 +100,7 @@ namespace SCSI {
      * @param t byte array in SCSI order representing a 16 bits number
      * @return 
      */
-    inline uint16_t toU16(const char(& t)[2])
+    inline uint16_t toU16(const unsigned char(& t)[2])
     {
       /* Like network, SCSI is BigEndian */
       return ntohs (*((uint16_t *) t));
@@ -176,7 +176,7 @@ namespace SCSI {
 
       unsigned char reserved1;
 
-      char versionDescriptor[8][2];
+      unsigned char versionDescriptor[8][2];
 
       unsigned char reserved2[22];
       unsigned char vendorSpecific2[1];
@@ -231,7 +231,7 @@ namespace SCSI {
       unsigned char pageCode : 6;
       unsigned char PC : 2;
       
-      unsigned char subPage;
+      unsigned char subPageCode;
       
       unsigned char reserved;
       
@@ -246,7 +246,7 @@ namespace SCSI {
     
     class tapeAlertLogParameter_t {
     public:
-      char parameterCode [2];
+      unsigned char parameterCode [2];
       
       unsigned char formatAndLinking : 2;
       unsigned char TMC : 2;
@@ -262,7 +262,7 @@ namespace SCSI {
     };
     
     /**
-     * Tape alert log mage, returned by LOG SENSE. Defined in SSC-3, section 8.2.3 TapeAler log page.
+     * Tape alert log page, returned by LOG SENSE. Defined in SSC-3, section 8.2.3 TapeAler log page.
      */
     template <int n>
     class tapeAlertLogPage_t {
@@ -272,18 +272,17 @@ namespace SCSI {
       
       unsigned char subPageCode;
       
-      char pageLength[2];
+      unsigned char pageLength[2];
       
       tapeAlertLogParameter_t parameters [n];
       
       /**
-       * Utility function computing the number of parameters.
+       * Utility function computing the number of parameters. This converts a
+       * length in bytes (as found in the struct) in a parameter count.
        * @return number of parameters.
        */
       int parameterNumber() throw (Tape::Exception) {
-        int numFromLength = SCSI::Structures::toU16(pageLength) / sizeof (tapeAlertLogPage_t);
-        if (numFromLength > n)
-          throw Tape::Exception("In tapeAlertLogPage_t::parameterNumber: too many parameters from device");
+        int numFromLength = SCSI::Structures::toU16(pageLength) / sizeof (tapeAlertLogParameter_t);
         return numFromLength;
       }
       tapeAlertLogPage_t() { zeroStruct(this); }

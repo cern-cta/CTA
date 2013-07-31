@@ -86,6 +86,12 @@ unless we want to control command queueing with separate sending of commands and
 A collection of links to various documentations written in the past is available on one of CAStor's web pages
        \footnote{ \href{http://castorwww.web.cern.ch/castorwww/links.htm}{http://castorwww.web.cern.ch/castorwww/links.htm} }.
 
+\subsection{SCSI tape support in Linux (st driver)}
+Generic SCSI allows detailed control of the operations, but the bulk of them (including reading and
+writing) can be managed by the higher level SCSI tape (or st) driver provided by the Linux kernel.
+More information on the st driver can be found in the man page "st" and in \verb#Documentation/scsi/st.txt#
+in the sources of the kernel.
+
 \section{Tools used during development}
 \subsection{Required tools for build}
 \begin{itemize}
