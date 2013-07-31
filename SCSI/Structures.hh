@@ -86,6 +86,17 @@ namespace SCSI {
     
     /**
      * Helper function to deal with endianness.
+     * @param t byte array in SCSI order representing a 64 bits number
+     * @return 
+     */
+    inline uint64_t toU64(const unsigned char(& t)[8])
+    {
+      /* Like network, SCSI is BigEndian */
+      return (uint64_t) ntohl ( (*(uint64_t *) t << 32) >> 32)  << 32 | ntohl(*(uint64_t *) t >>32);
+    }  
+           
+    /**
+     * Helper function to deal with endianness.
      * @param t byte array in SCSI order representing a 32 bits number
      * @return 
      */
@@ -218,7 +229,7 @@ namespace SCSI {
     };
 
     /**
-     * Log sense CDB as decribed in SPC-4, 
+     * Log sense CDB as described in SPC-4, 
      */
     class logSenseCDB_t {
     public:
@@ -243,6 +254,65 @@ namespace SCSI {
       
       logSenseCDB_t() { zeroStruct(this); opCode = SCSI::Commands::LOG_SENSE; }
     };
+    
+    /**
+    * Log sense Log Page Parameter Format as described in SPC-4, 
+    */
+    class logSenseParameterHeader_t  {
+    public:
+      // bytes 0-1
+      unsigned char parameterCode [2];
+      
+      // byte 2
+      unsigned char formatAndLinking : 2; // reserved and List Parameter bits
+      unsigned char TMC : 2;              // Threshold Met Criteria
+      unsigned char ETC : 1;              // Enable Threshold Comparison
+      unsigned char TSD : 1;              // Target Save Disable
+      unsigned char : 1;                  // DS Disable Save for T10000
+      unsigned char DU : 1;               // Disable Update 
+      
+      // byte 3
+      unsigned char parameterLength;      // n-3          
+    };
+    
+    class logSenseParameter_t {
+    public:
+      // bytes 0-3
+      logSenseParameterHeader_t header;
+           
+      // bytes 4-n
+      unsigned char parameterValue[1];     // parameters have variable length 
+    };
+    
+    /**
+    * Log sense Log Page Format as described in SPC-4, 
+    */
+    class logSenseLogPageHeader_t {
+    public:
+      // byte 0
+      unsigned char pageCode : 6;
+      unsigned char SPF: 1;          // the Subpage format
+      unsigned char DS: 1;           // the Disable Slave bit
+      
+      // byte 1
+      unsigned char subPageCode;
+      
+      // bytes 2-3
+      unsigned char pageLength[2];   // n-3 number of bytes without header   
+    };
+    /**
+    * Log sense Log Page Format as described in SPC-4, 
+    */
+    class logSenseLogPage_t {
+    public:
+      // bytes 0-3
+      logSenseLogPageHeader_t header;
+      
+      // bytes 4-n      
+      logSenseParameter_t parameters [1]; // parameters have variable length
+    };
+    
+
     
     class tapeAlertLogParameter_t {
     public:

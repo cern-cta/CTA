@@ -228,7 +228,22 @@ namespace SCSI {
   class logSensePages {
   public:
     enum {
-      tapeAlert = 0x2e
+      tapeAlert = 0x2e,
+      sequentialAccessDevicePage = 0x0C
+    };
+  };
+  /**
+   * Sun StorageTekTM T10000 Tape Drive Fibre Channel Interface Reference Manual
+   */
+  class sequentialAccessDevicePage {
+  public:
+    enum {
+      receivedFromInitiator = 0x0000, // write command
+      writtenOnTape         = 0x0001,
+      readFromTape          = 0x0002,
+      readByInitiator       = 0x0003,
+      cleaning              = 0x0100, // 000 no cleaning required, 001 cleaning required
+      leftOnTape            = 0x8000  // number of 4k bytes left on tape from the current position
     };
   };
 }; // namespace SCSI

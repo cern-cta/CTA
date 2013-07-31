@@ -82,7 +82,7 @@ namespace Tape {
     std::string error;
     /* TODO: error code. See gettperror and get_sk_msg in CAStor */
   };
-
+  
   /**
    * Class abstracting the tape drives. This class is templated to allow the use
    * of unrelated test harness and real system. The test harness is made up of 
@@ -226,7 +226,7 @@ namespace Tape {
       std::cout << "Re-doing a SCSI inquiry via st device:" << std::endl;
       SCSI_inquiry(m_tapeFD);
     }
-  private:
+  protected:
     SCSI::DeviceInfo m_SCSIInfo;
     int m_tapeFD;
     int m_genericFD;
@@ -270,4 +270,81 @@ namespace Tape {
               << SCSI::Structures::toString(*((SCSI::Structures::inquiryData_t *) dataBuff));
     }
   };
+  
+template <class sysWrapperClass>
+class DriveT10000 : public Drive<sysWrapperClass> {
+  public:
+    DriveT10000(SCSI::DeviceInfo di, sysWrapperClass & sw): Drive<sysWrapperClass>(di, sw) {}
+    virtual compressionStats getCompression()  throw (Exception) {
+      SCSI::Structures::logSenseCDB_t cdb;
+      compressionStats driveCompressionStats;
+      unsigned char dataBuff[1024];
+      unsigned char senseBuff[255];
+      
+      memset (dataBuff, 0, sizeof (dataBuff));
+      memset (senseBuff, 0, sizeof (senseBuff));
+      
+      cdb.pageCode = SCSI::logSensePages::sequentialAccessDevicePage;
+      cdb.PC       = 0x01; // Current Comulative Values
+      cdb.allocationLength[0] = (sizeof(dataBuff) & 0xFF00) >> 8;
+      cdb.allocationLength[1] =  sizeof(dataBuff) & 0x00FF;
+      
+      SCSI::Structures::LinuxSGIO_t sgh;
+      sgh.setCDB(&cdb);
+      sgh.setDataBuffer(&dataBuff);
+      sgh.setSenseBuffer(&senseBuff);
+      sgh.dxfer_direction = SG_DXFER_FROM_DEV;
+      
+      /* Manage both system error and SCSI errors. */
+      if (-1 == this->m_sysWrapper.ioctl(this->m_tapeFD, SG_IO, &sgh))
+        throw Tape::Exceptions::Errnum("Failed SG_IO ioctl");
+      if (SCSI::Status::GOOD != sgh.status)
+        throw Tape::Exception(std::string("SCSI error in getCompression: ") + 
+                SCSI::statusToString(sgh.status));
+      
+      SCSI::Structures::logSenseLogPageHeader_t & logPageHeader = 
+              *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
+      
+      unsigned char *endPage = dataBuff +
+        SCSI::Structures::toU16(logPageHeader.pageLength)+sizeof(logPageHeader);
+      
+      unsigned char *logParameter = dataBuff+sizeof(logPageHeader);
+      
+      while ( logParameter < endPage ) {      /* values in bytes  */
+        SCSI::Structures::logSenseParameter_t & logPageParam = 
+              *(SCSI::Structures::logSenseParameter_t *) logParameter;
+	switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
+	  case SCSI::sequentialAccessDevicePage::receivedFromInitiator:
+	    driveCompressionStats.fromHost =  SCSI::Structures::toU64(reinterpret_cast<unsigned char(&)[8]>(logPageParam.parameterValue));
+	    break;
+	  case SCSI::sequentialAccessDevicePage::writtenOnTape:
+	    driveCompressionStats.toTape =    SCSI::Structures::toU64(reinterpret_cast<unsigned char(&)[8]>(logPageParam.parameterValue));
+            break;
+	  case SCSI::sequentialAccessDevicePage::readFromTape:
+	    driveCompressionStats.fromTape =  SCSI::Structures::toU64(reinterpret_cast<unsigned char(&)[8]>(logPageParam.parameterValue));
+	    break;
+	  case SCSI::sequentialAccessDevicePage::readByInitiator:
+	    driveCompressionStats.toHost =    SCSI::Structures::toU64(reinterpret_cast<unsigned char(&)[8]>(logPageParam.parameterValue));
+	    break;
+	  }
+        logParameter += logPageParam.header.parameterLength + sizeof(logPageParam.header);
+                                                              
+       }
+      return driveCompressionStats; 
+    }
+  };
+  
+template <class sysWrapperClass>
+class DriveLTO : public Drive<sysWrapperClass> {
+  public:              
+    DriveLTO(SCSI::DeviceInfo di, sysWrapperClass & sw): Drive<sysWrapperClass>(di, sw) {}
+    virtual compressionStats getCompression()  throw (Exception) { throw Exception("Not implemented"); }
+  };
+  
+template <class sysWrapperClass>
+class DriveIBM3592 : public Drive<sysWrapperClass> {
+  public:
+    DriveIBM3592(SCSI::DeviceInfo di, sysWrapperClass & sw): Drive<sysWrapperClass>(di, sw) {}
+    virtual compressionStats getCompression()  throw (Exception) { throw Exception("Not implemented"); }
+  };  
 }
