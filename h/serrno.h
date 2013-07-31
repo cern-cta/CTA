@@ -341,7 +341,8 @@
 #define ETSESSIONERROR	ETBASEOFF+38    /* Tape-session error */
 #define ETINVALIDTFSEQ	ETBASEOFF+39    /* Invalid tape-file sequence-number */
 #define ETINVALIDTFSIZE	ETBASEOFF+40    /* Invalid tape-file file-size */
-#define ETMAXERR        ETBASEOFF+40
+#define ETMOUNTFAILED	ETBASEOFF+41    /* Failed to mount tape */
+#define ETMAXERR        ETBASEOFF+41
 
 /*
  *------------------------------------------------------------------------
