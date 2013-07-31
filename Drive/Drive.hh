@@ -146,7 +146,8 @@ namespace Tape {
       std::vector<std::string> ret;
       /* We don't know how many elements we'll get. Prepare a 100 parameters array */
       SCSI::Structures::tapeAlertLogPage_t<100> tal;
-      unsigned char senseBuff[255];
+      /* Prepare a sense buffer of 255 bytes */
+      SCSI::Structures::senseData_t<255> senseBuff;
       SCSI::Structures::logSenseCDB_t cdb;
       cdb.pageCode = SCSI::logSensePages::tapeAlert;
       SCSI::Structures::LinuxSGIO_t sgh;

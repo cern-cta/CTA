@@ -122,6 +122,7 @@ namespace SCSI {
      */
     class inquiryCDB_t {
     public:
+      inquiryCDB_t() { zeroStruct(this); opCode = SCSI::Commands::INQUIRY; }
       unsigned char opCode;
       
       unsigned char EVPD : 1;
@@ -132,13 +133,14 @@ namespace SCSI {
       char allocationLength[2];
       
       unsigned char control;
-      inquiryCDB_t() { zeroStruct(this); opCode = SCSI::Commands::INQUIRY; }
     };
     
     /**
      * Inquiry data as described in SPC-4.
      */
-    typedef struct {
+    class inquiryData_t {
+    public:
+      inquiryData_t () { zeroStruct(this); }
       unsigned char perifDevType : 5;
       unsigned char perifQualifyer : 3;
 
@@ -191,13 +193,17 @@ namespace SCSI {
 
       unsigned char reserved2[22];
       unsigned char vendorSpecific2[1];
-    } inquiryData_t;
+    };
     
     /*
      * LOG SELECT CDB as described in SPC-4.
      */
     class logSelectCDB_t {
     public:
+      logSelectCDB_t() {
+        zeroStruct(this);
+        opCode = SCSI::Commands::LOG_SELECT; 
+      }
       // byte 0
       unsigned char opCode;                // OPERATION CODE (4Ch)
       
@@ -220,12 +226,7 @@ namespace SCSI {
       unsigned char parameterListLength[2];// PARAMETER LIST LENGTH
       
       // byte 9
-      unsigned char control;               // CONTROL   
-      
-      logSelectCDB_t() {
-        zeroStruct(this);
-        opCode = SCSI::Commands::LOG_SELECT; 
-      }
+      unsigned char control;               // CONTROL
     };
 
     /**
@@ -233,6 +234,7 @@ namespace SCSI {
      */
     class logSenseCDB_t {
     public:
+      logSenseCDB_t() { zeroStruct(this); opCode = SCSI::Commands::LOG_SENSE; }
       unsigned char opCode;
       
       unsigned char SP : 1;
@@ -251,10 +253,8 @@ namespace SCSI {
       unsigned char allocationLength[2];
       
       unsigned char control;
-      
-      logSenseCDB_t() { zeroStruct(this); opCode = SCSI::Commands::LOG_SENSE; }
     };
-    
+
     /**
     * Log sense Log Page Parameter Format as described in SPC-4, 
     */
@@ -313,7 +313,11 @@ namespace SCSI {
     };
     
 
-    
+    /**
+     * Part of a tape alert log page.
+     * This structure does not need to be initialized, as the containing structure
+     * (tapeAlertLogPage_t) will do it while initializing itself.
+     */
     class tapeAlertLogParameter_t {
     public:
       unsigned char parameterCode [2];
@@ -337,6 +341,7 @@ namespace SCSI {
     template <int n>
     class tapeAlertLogPage_t {
     public:
+      tapeAlertLogPage_t() { zeroStruct(this); }
       unsigned char pageCode : 6;
       unsigned char : 2;
       
@@ -355,7 +360,118 @@ namespace SCSI {
         int numFromLength = SCSI::Structures::toU16(pageLength) / sizeof (tapeAlertLogParameter_t);
         return numFromLength;
       }
-      tapeAlertLogPage_t() { zeroStruct(this); }
+    };
+    
+    /**
+     * Sense buffer as defined in SPC-4, 
+     * section 4.5.2 Descriptor format sense data and 
+     * section 4.5.3 Fixed format sense data
+     * The sense buffer size is stored in the form of
+     * a single byte. Therefore, the constructor forbids
+     * creation of a senseData_t structure bigger than
+     * 255 bytes.
+     * As the structure will be different depending on the response code,
+     * everything after the first byte is represented by a union, which
+     * can be any of the 2 forms (fixedFormat/descriptorFormat).
+     * getXXXXX helper member function allow the getting of on of the other
+     * version of the common fields.
+     */
+    template <int n>
+    class senseData_t {
+    public:
+      senseData_t() {
+        if (sizeof(*this) > 255)
+          throw Tape::Exception("In SCSI::Structures::senseData_t::senseData_t(): size too big (> 255>");      
+        zeroStruct(this);
+      }
+      // byte 0
+      unsigned char responseCode: 7;
+      unsigned char : 1;
+      // Following bytes can take 2 versions:
+      union {
+       struct {
+          // byte 1
+          unsigned char senseKey : 4;
+          unsigned char : 4;
+          // Additional sense code (byte 2))
+          unsigned char ASC;
+          // Additional sense code qualifier (byte 3)
+          unsigned char ASCQ;
+          // byte 4
+          unsigned char : 7;
+          unsigned char SDAT_OVFL : 1;
+          // byte 5-6
+          unsigned char reserved[2];
+          // byte 7
+          unsigned char additionalSenseLength;
+          // byte 8 onwards
+          unsigned char additionalSenseBuffer[n - 8];
+       } descriptorFormat;
+       struct {
+         // byte 1
+         unsigned char obsolete;
+         // byte 2
+         unsigned char senseKey : 4;
+         unsigned char SDAT_OVFL : 1;
+         unsigned char ILI : 1;
+         unsigned char EOM : 1;
+         unsigned char filemark : 1;
+         // bytes 3-6
+         unsigned char information[4];
+         // byte 7
+         unsigned char additionalSenseLength;
+         // bytes 8 - 11
+         unsigned char commandSpecificInformation[4];
+         // Additional sense code (byte 12))
+         unsigned char ASC;
+         // Additional sense code qualifier (byte 13)
+         unsigned char ASCQ;
+         // bytes 14
+         unsigned char fieldReplaceableUnitCode;
+         // bytes 15-17
+          unsigned char senseSpecificInformation[3];
+          // bytes 18 onwards
+          unsigned char aditionalSenseBuffer[n - 18];
+        } fixedFormat;
+        // Helper functions for common fields
+        // First make the difference between the fixed/descriptor
+        // and current/deffered
+      };
+      bool isFixedFormat() {
+        return responseCode == 0x70 || responseCode == 0x71;
+      }
+      
+      bool isDescriptorFormat() {
+        return responseCode == 0x72 || responseCode == 0x73;
+      }
+      
+      bool isCurrent() {
+        return responseCode == 0x70 || responseCode == 0x72;
+      }
+
+      bool isDeffered() {
+        return responseCode == 0x71 || responseCode == 0x73;
+      }
+
+      uint8_t getASC() {
+        if (isFixedFormat()) {
+          return fixedFormat.ASC;
+        } else if (isDescriptorFormat()) {
+          return descriptorFormat.ASC;
+        } else {
+          throw Tape::Exception("In senseData_t::getASC: no ACS with this response code or response code not supported");
+        }
+      }
+
+      uint8_t getASCQ() {
+        if (isFixedFormat()) {
+          return fixedFormat.ASCQ;
+        } else if (isDescriptorFormat()) {
+          return descriptorFormat.ASCQ;
+        } else {
+          throw Tape::Exception("In senseData_t::getASCQ: no ACSQ with this response code or response code not supported");
+        }
+      };
     };
     
     template <size_t n>

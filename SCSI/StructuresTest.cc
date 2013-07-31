@@ -249,7 +249,59 @@ namespace UnitTests {
     ASSERT_EQ(1, tal.parameters[11].flag);
   }
   
-  TEST(SCSI_Structures, toto) {}
+  TEST(SCSI_Structures, senseBuffer_t) {
+    SCSI::Structures::senseData_t<255> sense;
+    unsigned char * buff = (unsigned char *) & sense;
+    
+    /* Check the total size of the structure, plus the one of each of the members
+     of the union */
+    ASSERT_EQ(255, sizeof(sense));
+    ASSERT_EQ(255 - 1, sizeof(sense.descriptorFormat));
+    ASSERT_EQ(255 - 1, sizeof(sense.fixedFormat));
+    
+    buff[0] = 0x70;
+    buff[12] = 0x12;
+    buff[13] = 0x34;
+    ASSERT_EQ(true, sense.isCurrent());
+    ASSERT_EQ(false, sense.isDeffered());
+    ASSERT_EQ(true, sense.isFixedFormat());
+    ASSERT_EQ(false, sense.isDescriptorFormat());
+    ASSERT_EQ(0x12, sense.getASC());
+    ASSERT_EQ(0x34, sense.getASCQ());
+    
+    buff[0] = 0x71;
+    buff[12] = 0x12;
+    buff[13] = 0x34;
+    ASSERT_EQ(false, sense.isCurrent());
+    ASSERT_EQ(true, sense.isDeffered());
+    ASSERT_EQ(true, sense.isFixedFormat());
+    ASSERT_EQ(false, sense.isDescriptorFormat());
+    ASSERT_EQ(0x12, sense.getASC());
+    ASSERT_EQ(0x34, sense.getASCQ());
+    
+    buff[0] = 0x72;
+    buff[2] = 0x56;
+    buff[3] = 0x78;
+    ASSERT_EQ(true, sense.isCurrent());
+    ASSERT_EQ(false, sense.isDeffered());
+    ASSERT_EQ(false, sense.isFixedFormat());
+    ASSERT_EQ(true, sense.isDescriptorFormat());
+    ASSERT_EQ(0x56, sense.getASC());
+    ASSERT_EQ(0x78, sense.getASCQ());
+    
+    buff[0] = 0x73;
+    buff[2] = 0x56;
+    buff[3] = 0x78;
+    ASSERT_EQ(false, sense.isCurrent());
+    ASSERT_EQ(true, sense.isDeffered());
+    ASSERT_EQ(false, sense.isFixedFormat());
+    ASSERT_EQ(true, sense.isDescriptorFormat());
+    ASSERT_EQ(0x56, sense.getASC());
+    ASSERT_EQ(0x78, sense.getASCQ());
+    
+    buff[0] = 0x74;
+    ASSERT_THROW(sense.getASC(), Tape::Exception);
+  }
   
   TEST(SCSI_Structures, toU16) {
     unsigned char num[2] = { 0x1, 0x2 };
@@ -259,5 +311,10 @@ namespace UnitTests {
   TEST(SCSI_Structures, toU32) {
     unsigned char num[4] = { 0x1, 0x2, 0x3, 0x4 };
     ASSERT_EQ( 0x1020304, SCSI::Structures::toU32(num));
+  }
+  
+  TEST(SCSI_Structures, toU64) {
+    unsigned char num[8] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE, 0xFA, 0xDE };
+    ASSERT_EQ ( 0xDEADBEEFCAFEFADEULL, SCSI::Structures::toU64(num));
   }
 };
