@@ -225,12 +225,15 @@ namespace SCSI {
       unsigned char opCode;
       
       unsigned char SP : 1;
-      unsigned char : 7;
+      unsigned char PPC: 1;
+      unsigned char :6;
       
       unsigned char pageCode : 6;
       unsigned char PC : 2;
       
       unsigned char subPage;
+      
+      unsigned char reserved;
       
       unsigned char parameterPointer[2];
       
