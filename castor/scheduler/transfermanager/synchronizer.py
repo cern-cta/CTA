@@ -153,7 +153,7 @@ class SynchronizerThread(threading.Thread):
       subReqIdsCur.arraysize = 200
       # list pending and running transfers in the stager database
       stcur.callproc('getSchedulerD2dTransfers', [subReqIdsCur])
-      subReqIds = set(subReqIdsCur.fetchall())
+      subReqIds = set([t[0] for t in subReqIdsCur.fetchall()])
       # find out the set of these d2d source transfers that are no more in the DB
       transfersToEnd = list(allTMD2dSrcSet - subReqIds)
       # and end them
