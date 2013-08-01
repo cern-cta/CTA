@@ -425,7 +425,8 @@ BEGIN
         EXECUTE IMMEDIATE
           'BEGIN :newGcw := ' || varGcwProc || '(:size); END;'
           USING OUT varDcGcWeight, IN varFileSize;
-        SELECT COUNT(*)+1 INTO varDCImportance FROM DiskCopy
+        SELECT /*+ INDEX (DiskCopy I_DiskCopy_CastorFile) */
+               COUNT(*)+1 INTO varDCImportance FROM DiskCopy
          WHERE castorFile=varCfId AND status = dconst.DISKCOPY_VALID;
       END;
     END IF;
@@ -599,7 +600,7 @@ BEGIN
   END IF;
 
   -- Prevent multiple copies of the file to be created on the same diskserver
-  SELECT count(*) INTO varNbCopies
+  SELECT /*+ INDEX(DiskCopy I_DiskCopy_Castorfile) */ count(*) INTO varNbCopies
     FROM DiskCopy, FileSystem
    WHERE DiskCopy.filesystem = FileSystem.id
      AND FileSystem.diskserver = varDestDsId
@@ -1020,7 +1021,7 @@ BEGIN
            AND DiskServer.hwOnline = 1
            AND FileSystem.free - FileSystem.minAllowedFreeSpace * FileSystem.totalSize > inMinFreeSpace
            AND DiskServer.id NOT IN
-               (SELECT diskserver FROM DiskCopy, FileSystem
+               (SELECT /*+ INDEX(DiskCopy I_DiskCopy_Castorfile) */ diskserver FROM DiskCopy, FileSystem
                  WHERE DiskCopy.castorFile = inCfId
                    AND DiskCopy.status = dconst.DISKCOPY_VALID
                    AND FileSystem.id = DiskCopy.fileSystem)
@@ -1040,7 +1041,8 @@ BEGIN
   -- in this case we take any non DISABLED hardware
   FOR line IN
     (SELECT candidate FROM
-       (SELECT UNIQUE FIRST_VALUE (DiskServer.name || ':' || FileSystem.mountPoint)
+       (SELECT /*+ INDEX(DiskCopy I_DiskCopy_Castorfile) */ 
+               UNIQUE FIRST_VALUE (DiskServer.name || ':' || FileSystem.mountPoint)
                  OVER (PARTITION BY DiskServer.id ORDER BY DBMS_Random.value) AS candidate
           FROM DiskServer, FileSystem, DiskCopy
          WHERE DiskCopy.castorFile = inCfId

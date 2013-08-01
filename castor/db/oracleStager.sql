@@ -1655,7 +1655,8 @@ BEGIN
   FOR a IN (SELECT SvcClass.id FROM (
               -- Determine the number of copies of the file in all service classes
               SELECT * FROM (
-                SELECT SvcClass.id, count(*) available
+                SELECT  /*+ INDEX(DiskCopy I_DiskCopy_CastorFile) */
+                       SvcClass.id, count(*) available
                   FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass, SvcClass
                  WHERE DiskCopy.filesystem = FileSystem.id
                    AND DiskCopy.castorfile = cfId

@@ -122,9 +122,12 @@ class ServerQueue(dict):
           for ds in self.transfersLocations[(transfer.transferId, TransferType.D2DDST)]:
             self[ds][transfer.transferId].isSrcRunning = False
 
-      # add transfer to the list of queueing transfers on the diskServer
+      # add transfer to the list of queueing transfers on the diskServer,
+      # with right value for isSrcRunning in case of D2DDST put back
       if transfer.diskServer not in self:
         self[transfer.diskServer] = {}
+      if putBack and transfer.transferType == TransferType.D2DDST:
+        transfer.isSrcRunning = (transfer.transferId in self.d2dsrcrunning)
       self[transfer.diskServer][transfer.transferId] = transfer
 
       # add the diskServer to the transfersLocations list for this transfer

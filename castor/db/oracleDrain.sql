@@ -8,7 +8,7 @@ CREATE OR REPLACE PROCEDURE deleteDrainingJob(inDjId IN INTEGER) AS
   varUnused INTEGER;
 BEGIN
   -- take a lock on the drainingJob
-  SELECT id INTO varUnused FROM DrainingJob WHERE id = inDjId;
+  SELECT id INTO varUnused FROM DrainingJob WHERE id = inDjId FOR UPDATE;
   -- drop ongoing Disk2DiskCopyJobs
   DELETE FROM Disk2DiskCopyJob WHERE drainingJob = inDjId;
   -- delete associated errors
@@ -61,8 +61,8 @@ BEGIN
   -- commit and update counters
   IF varStartedNewJobs THEN
     UPDATE DrainingJob
-       SET totalFiles = varNbFiles,
-           totalBytes = varNbBytes,
+       SET totalFiles = totalFiles + varNbFiles,
+           totalBytes = totalBytes + varNbBytes,
            lastModificationTime = getTime()
      WHERE id = inDjId;
   ELSE

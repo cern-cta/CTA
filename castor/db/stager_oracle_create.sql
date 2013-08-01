@@ -1556,7 +1556,7 @@ CREATE INDEX I_DiskCopy_Status_9 ON DiskCopy (decode(status,9,status,NULL));
 -- to speed up deleteOutOfDateStageOutDCs
 CREATE INDEX I_DiskCopy_Status_Open ON DiskCopy (decode(status,6,status,decode(status,5,status,decode(status,11,status,NULL))));
 -- to speed up draining manager job
-CREATE INDEX I_DiskCopy_FS_ST_Impor_ID ON DiskCopy (filesystem, status, importance, id);
+CREATE INDEX I_DiskCopy_FS_ST_Impor_ID_CF ON DiskCopy (filesystem, status, importance, id, castorFile);
 
 /* DiskCopy constraints */
 ALTER TABLE DiskCopy MODIFY (nbCopyAccesses DEFAULT 0);
@@ -5070,7 +5070,8 @@ BEGIN
   FOR a IN (SELECT SvcClass.id FROM (
               -- Determine the number of copies of the file in all service classes
               SELECT * FROM (
-                SELECT SvcClass.id, count(*) available
+                SELECT  /*+ INDEX(DiskCopy I_DiskCopy_CastorFile) */
+                       SvcClass.id, count(*) available
                   FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass, SvcClass
                  WHERE DiskCopy.filesystem = FileSystem.id
                    AND DiskCopy.castorfile = cfId
@@ -7378,7 +7379,8 @@ BEGIN
         EXECUTE IMMEDIATE
           'BEGIN :newGcw := ' || varGcwProc || '(:size); END;'
           USING OUT varDcGcWeight, IN varFileSize;
-        SELECT COUNT(*)+1 INTO varDCImportance FROM DiskCopy
+        SELECT /*+ INDEX (DiskCopy I_DiskCopy_CastorFile) */
+               COUNT(*)+1 INTO varDCImportance FROM DiskCopy
          WHERE castorFile=varCfId AND status = dconst.DISKCOPY_VALID;
       END;
     END IF;
@@ -7552,7 +7554,7 @@ BEGIN
   END IF;
 
   -- Prevent multiple copies of the file to be created on the same diskserver
-  SELECT count(*) INTO varNbCopies
+  SELECT /*+ INDEX(DiskCopy I_DiskCopy_Castorfile) */ count(*) INTO varNbCopies
     FROM DiskCopy, FileSystem
    WHERE DiskCopy.filesystem = FileSystem.id
      AND FileSystem.diskserver = varDestDsId
@@ -7973,7 +7975,7 @@ BEGIN
            AND DiskServer.hwOnline = 1
            AND FileSystem.free - FileSystem.minAllowedFreeSpace * FileSystem.totalSize > inMinFreeSpace
            AND DiskServer.id NOT IN
-               (SELECT diskserver FROM DiskCopy, FileSystem
+               (SELECT /*+ INDEX(DiskCopy I_DiskCopy_Castorfile) */ diskserver FROM DiskCopy, FileSystem
                  WHERE DiskCopy.castorFile = inCfId
                    AND DiskCopy.status = dconst.DISKCOPY_VALID
                    AND FileSystem.id = DiskCopy.fileSystem)
@@ -7993,7 +7995,8 @@ BEGIN
   -- in this case we take any non DISABLED hardware
   FOR line IN
     (SELECT candidate FROM
-       (SELECT UNIQUE FIRST_VALUE (DiskServer.name || ':' || FileSystem.mountPoint)
+       (SELECT /*+ INDEX(DiskCopy I_DiskCopy_Castorfile) */ 
+               UNIQUE FIRST_VALUE (DiskServer.name || ':' || FileSystem.mountPoint)
                  OVER (PARTITION BY DiskServer.id ORDER BY DBMS_Random.value) AS candidate
           FROM DiskServer, FileSystem, DiskCopy
          WHERE DiskCopy.castorFile = inCfId
@@ -11603,7 +11606,7 @@ CREATE OR REPLACE PROCEDURE deleteDrainingJob(inDjId IN INTEGER) AS
   varUnused INTEGER;
 BEGIN
   -- take a lock on the drainingJob
-  SELECT id INTO varUnused FROM DrainingJob WHERE id = inDjId;
+  SELECT id INTO varUnused FROM DrainingJob WHERE id = inDjId FOR UPDATE;
   -- drop ongoing Disk2DiskCopyJobs
   DELETE FROM Disk2DiskCopyJob WHERE drainingJob = inDjId;
   -- delete associated errors
@@ -11656,8 +11659,8 @@ BEGIN
   -- commit and update counters
   IF varStartedNewJobs THEN
     UPDATE DrainingJob
-       SET totalFiles = varNbFiles,
-           totalBytes = varNbBytes,
+       SET totalFiles = totalFiles + varNbFiles,
+           totalBytes = totalBytes + varNbBytes,
            lastModificationTime = getTime()
      WHERE id = inDjId;
   ELSE

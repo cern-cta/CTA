@@ -272,7 +272,7 @@ DROP INDEX I_DC_CastorFile_status;
 -- add an index
 ALTER TABLE DiskCopy
   MODIFY (importance CONSTRAINT NN_DiskCopy_Importance NOT NULL);
-CREATE INDEX I_DiskCopy_FS_ST_Impor_ID ON DiskCopy (filesystem, status, importance, id);
+CREATE INDEX I_DiskCopy_FS_ST_Impor_ID_CF ON DiskCopy (filesystem, status, importance, id, castorFile);
 
 
 DECLARE
