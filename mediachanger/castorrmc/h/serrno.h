@@ -342,7 +342,8 @@
 #define ETINVALIDTFSEQ	ETBASEOFF+39    /* Invalid tape-file sequence-number */
 #define ETINVALIDTFSIZE	ETBASEOFF+40    /* Invalid tape-file file-size */
 #define ETMOUNTFAILED	ETBASEOFF+41    /* Failed to mount tape */
-#define ETMAXERR        ETBASEOFF+41
+#define ETDISMOUNTFAILED ETBASEOFF+42   /* Failed to dismount tape */
+#define ETMAXERR        ETBASEOFF+42
 
 /*
  *------------------------------------------------------------------------

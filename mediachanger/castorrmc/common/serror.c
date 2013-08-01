@@ -337,6 +337,7 @@ char *sys_terrlist[ETMAXERR-ETBASEOFF+2] =
    "Invalid tape-file sequence-number",
    "Invalid tape-file file-size",
    "Failed to mount tape",
+   "Failed to dismount tape",
    "BAD ERROR NUMBER"
   };
 
