@@ -21,6 +21,7 @@ COMMONLIB_OBJS = $(SYSDEP_OBJS) \
 		 Csecloader.o castor1compat.o \
                  ../castor/exception/BadVersion.o \
                  ../castor/exception/Busy.o \
+                 ../castor/exception/DismountFailed.o \
                  ../castor/exception/Exception.o \
                  ../castor/exception/FailedToExecutePython.o \
                  ../castor/exception/InvalidArgument.o \
