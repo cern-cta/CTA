@@ -116,8 +116,40 @@ namespace Tape {
     }
     
     /* Operations to be used by the higher levels */
-    virtual compressionStats getCompression()  throw (Exception) { throw Exception("Not implemented"); }
-    virtual void clearCompressionStats() throw (Exception) { throw Exception("Not implemented"); }
+    /**
+     * Return comulative log counter values from the log pages related to
+     * the drive statistics about data movements to/from the tape. 
+     * Data fields fromHost, toDrive are related to the write operation and
+     * fields toHost, fromDrive are related to the read operation.
+     * @return compressionStats
+     */
+    virtual compressionStats getCompression()  throw (Exception) { throw Exception("Not implemented"); }   
+    
+    /**
+     * Reset all statistics about data movements on the drive.
+     * All comulative and threshold log counter values will be reset to their
+     * default values as specified in that pages reset behavior section.
+     */
+    virtual void clearCompressionStats() throw (Exception) { 
+      SCSI::Structures::logSelectCDB_t cdb;
+      cdb.PCR = 1;     /* PCR set */
+      cdb.PC  = 0x3;   /* PC = 11b  for T10000 only*/
+      
+      SCSI::Structures::senseData_t<255> senseBuff;
+      SCSI::Structures::LinuxSGIO_t sgh;
+      
+      sgh.setCDB(&cdb);
+      sgh.setSenseBuffer(&senseBuff);  
+      sgh.dxfer_direction = SG_DXFER_NONE;
+
+      /* Manage both system error and SCSI errors. */
+      if (-1 == m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh))
+        throw Tape::Exceptions::Errnum("Failed SG_IO ioctl");
+      if (SCSI::Status::GOOD != sgh.status)
+        throw Tape::Exception(std::string("SCSI error in getTapeAlerts: ") + 
+                SCSI::statusToString(sgh.status));
+    }
+    
     /**
      * Information about the drive. The vendor id is used in the user labels of the files.
      * @return 
