@@ -45,7 +45,7 @@ def usage(exitCode):
 
 # first parse the options
 try:
-  options, args = getopt.getopt(sys.argv[1:], 'hscpqu:vxr:t:', ['help', 'summary', 'clean', 'poolsummary', 'user', 'verbose', 'extra', 'restrict', 'transfermanager'])
+  options, args = getopt.getopt(sys.argv[1:], 'hscpu:vxr:t:', ['help', 'summary', 'clean', 'poolsummary', 'user', 'verbose', 'extra', 'restrict', 'transfermanager'])
 except Exception, parseException:
   print parseException
   usage(1)
