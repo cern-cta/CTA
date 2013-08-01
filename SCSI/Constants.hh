@@ -228,8 +228,10 @@ namespace SCSI {
   class logSensePages {
   public:
     enum {
-      tapeAlert = 0x2e,
-      sequentialAccessDevicePage = 0x0C
+      sequentialAccessDevicePage = 0x0C,
+      tapeAlert                  = 0x2e,
+      dataCompression32h         = 0x32, // for LTO, SDLT. We have Data Compression 1Bh for LTO5,6 and DataComppression 0Fh in SSC-3 
+      blockBytesTransferred      = 0x38  // parameters in this page are reset when a cartridge is loaded
     };
   };
   /**
@@ -246,4 +248,49 @@ namespace SCSI {
       leftOnTape            = 0x8000  // number of 4k bytes left on tape from the current position
     };
   };
+  /**
+   * IBM System Storage Tape Drive 3592 SCSI Reference
+   */
+  class blockBytesTransferred {
+  public:
+    enum {
+      hostWriteBlocksProcessed       = 0x0000,
+      hostWriteKiBProcessed          = 0x0001,
+      hostReadBlocksProcessed        = 0x0002,
+      hostReadKiBProcessed           = 0x0003,
+      deviceWriteDatasetsProcessed   = 0x0004,
+      deviceWriteKiBProcessed        = 0x0005,
+      deviceReadDatasetsProcessed    = 0x0006,
+      deviceReadKiBProcessed         = 0x0007,
+      deviceWriteDatasetsTransferred = 0x0008,
+      deviceWriteKiBTransferred      = 0x0009,
+      deviceReadDatasetsTransferred  = 0x000A,
+      deviceReadKiBTransferred       = 0x000B,
+      nominalCapacityOfPartition     = 0x000C,  // in KiB
+      fractionOfPartitionTraversed   = 0x000D,
+      nominalCapacityOfVolume        = 0x000E,  // in KiB
+      fractionOfVolumeTravesed       = 0x000F,
+      remainingCapacityOfVolume      = 0x0010,  // in KiB
+      remainingCapacityOfPartition   = 0x0011
+    };
+  };
+  /**
+   * IBM TotalStorage LTO Ultrium Tape Drive SCSI Reference
+   */
+  class dataCompression32h {
+  public:
+    enum {
+      readCompressionRatio       = 0x0000, // x100
+      writeCompressionRation     = 0x0001, // x100
+      mbTransferredToServer      = 0x0002, // rounded to the nearest megabyte 10^6
+      bytesTransferredToServer   = 0x0003, // a signed number and may be negative
+      mbReadFromTape             = 0x0004, // rounded to the nearest megabyte 10^6
+      bytesReadFromTape          = 0x0005, // a signed number and may be negative
+      mbTransferredFromServer    = 0x0006, // rounded to the nearest megabyte 10^6
+      bytesTransferredFromServer = 0x0007, // a signed number and may be negative
+      mbWrittenToTape            = 0x0008, // rounded to the nearest megabyte 10^6
+      bytesWrittenToTape         = 0x0009  // a signed number and may be negative
+    };
+  };
+  
 }; // namespace SCSI

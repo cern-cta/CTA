@@ -106,6 +106,18 @@ namespace SCSI {
       return ntohl (*((uint32_t *) t));
     }
 
+     /**
+     * Helper function to deal with endianness.
+     * for signed values
+     * @param t byte array in SCSI order representing a 32 bits number
+     * @return 
+     */
+    inline int32_t toS32(const unsigned char(& t)[4])
+    {
+      /* Like network, SCSI is BigEndian */
+      return (int32_t)(ntohl (*((uint32_t *) t)));
+    }
+    
     /**
      * Helper function to deal with endianness.
      * @param t byte array in SCSI order representing a 16 bits number

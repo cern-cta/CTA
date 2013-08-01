@@ -39,6 +39,8 @@ namespace Tape {
    */
   class compressionStats{
   public:
+    compressionStats():
+      fromHost(0),fromTape(0),toHost(0),toTape(0) {}
     uint64_t fromHost;
     uint64_t fromTape;
     uint64_t toHost;
@@ -328,9 +330,9 @@ class DriveT10000 : public Drive<sysWrapperClass> {
 	    driveCompressionStats.toHost =    SCSI::Structures::toU64(reinterpret_cast<unsigned char(&)[8]>(logPageParam.parameterValue));
 	    break;
 	  }
-        logParameter += logPageParam.header.parameterLength + sizeof(logPageParam.header);
-                                                              
-       }
+        logParameter += logPageParam.header.parameterLength + sizeof(logPageParam.header);                                                         
+      }
+      
       return driveCompressionStats; 
     }
   };
@@ -339,13 +341,144 @@ template <class sysWrapperClass>
 class DriveLTO : public Drive<sysWrapperClass> {
   public:              
     DriveLTO(SCSI::DeviceInfo di, sysWrapperClass & sw): Drive<sysWrapperClass>(di, sw) {}
-    virtual compressionStats getCompression()  throw (Exception) { throw Exception("Not implemented"); }
+    virtual compressionStats getCompression()  throw (Exception) { 
+      SCSI::Structures::logSenseCDB_t cdb;
+      compressionStats driveCompressionStats;
+      unsigned char dataBuff[1024];
+      unsigned char senseBuff[255];
+      
+      memset (dataBuff, 0, sizeof (dataBuff));
+      memset (senseBuff, 0, sizeof (senseBuff));
+      
+      cdb.pageCode = SCSI::logSensePages::dataCompression32h;
+      cdb.PC       = 0x01; // Current Comulative Values
+      cdb.allocationLength[0] = (sizeof(dataBuff) & 0xFF00) >> 8;
+      cdb.allocationLength[1] =  sizeof(dataBuff) & 0x00FF;
+      
+      SCSI::Structures::LinuxSGIO_t sgh;
+      sgh.setCDB(&cdb);
+      sgh.setDataBuffer(&dataBuff);
+      sgh.setSenseBuffer(&senseBuff);
+      sgh.dxfer_direction = SG_DXFER_FROM_DEV;
+      
+      /* Manage both system error and SCSI errors. */
+      if (-1 == this->m_sysWrapper.ioctl(this->m_tapeFD, SG_IO, &sgh))
+        throw Tape::Exceptions::Errnum("Failed SG_IO ioctl");
+      if (SCSI::Status::GOOD != sgh.status)
+        throw Tape::Exception(std::string("SCSI error in getCompression: ") + 
+                SCSI::statusToString(sgh.status));
+      
+            SCSI::Structures::logSenseLogPageHeader_t & logPageHeader = 
+              *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
+      
+      unsigned char *endPage = dataBuff +
+        SCSI::Structures::toU16(logPageHeader.pageLength)+sizeof(logPageHeader);
+      
+      unsigned char *logParameter = dataBuff+sizeof(logPageHeader);
+      const uint64_t mb = 1000000; // Mega bytes as power of 10
+
+      while ( logParameter < endPage ) {      /* values in MB and Bytes */
+        SCSI::Structures::logSenseParameter_t & logPageParam = 
+              *(SCSI::Structures::logSenseParameter_t *) logParameter;
+        
+        std::cout << SCSI::Structures::toU16(logPageParam.header.parameterCode) <<std::endl; 
+	switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
+	  // fromHost
+          case SCSI::dataCompression32h::mbTransferredFromServer :
+	    driveCompressionStats.fromHost  = SCSI::Structures::toU32(reinterpret_cast<unsigned char(&)[4]>(logPageParam.parameterValue)) * mb;
+	    break;
+          case SCSI::dataCompression32h::bytesTransferredFromServer :
+	    driveCompressionStats.fromHost += SCSI::Structures::toS32(reinterpret_cast<unsigned char(&)[4]>(logPageParam.parameterValue));
+	    break;
+          // toTape  
+          case SCSI::dataCompression32h::mbWrittenToTape :
+	    driveCompressionStats.toTape    = SCSI::Structures::toU32(reinterpret_cast<unsigned char(&)[4]>(logPageParam.parameterValue)) * mb;
+            break;
+          case SCSI::dataCompression32h::bytesWrittenToTape :
+	    driveCompressionStats.toTape   += SCSI::Structures::toS32(reinterpret_cast<unsigned char(&)[4]>(logPageParam.parameterValue));
+            break;  
+          // fromTape     
+	  case SCSI::dataCompression32h::mbReadFromTape :
+	    driveCompressionStats.fromTape  = SCSI::Structures::toU32(reinterpret_cast<unsigned char(&)[4]>(logPageParam.parameterValue)) * mb;
+	    break;
+          case SCSI::dataCompression32h::bytesReadFromTape :
+	    driveCompressionStats.fromTape += SCSI::Structures::toS32(reinterpret_cast<unsigned char(&)[4]>(logPageParam.parameterValue));
+	    break;
+          // toHost            
+	  case SCSI::dataCompression32h::mbTransferredToServer :
+	    driveCompressionStats.toHost    = SCSI::Structures::toU32(reinterpret_cast<unsigned char(&)[4]>(logPageParam.parameterValue)) * mb;
+	    break;
+          case SCSI::dataCompression32h::bytesTransferredToServer :
+	    driveCompressionStats.toHost   += SCSI::Structures::toS32(reinterpret_cast<unsigned char(&)[4]>(logPageParam.parameterValue));
+	    break;
+	  }
+        logParameter += logPageParam.header.parameterLength + sizeof(logPageParam.header);                                                     
+      }
+      
+      return driveCompressionStats;	
+    }
   };
   
 template <class sysWrapperClass>
 class DriveIBM3592 : public Drive<sysWrapperClass> {
   public:
     DriveIBM3592(SCSI::DeviceInfo di, sysWrapperClass & sw): Drive<sysWrapperClass>(di, sw) {}
-    virtual compressionStats getCompression()  throw (Exception) { throw Exception("Not implemented"); }
+    virtual compressionStats getCompression()  throw (Exception) { 
+      SCSI::Structures::logSenseCDB_t cdb;
+      compressionStats driveCompressionStats;
+      unsigned char dataBuff[1024];
+      unsigned char senseBuff[255];
+      
+      memset (dataBuff, 0, sizeof (dataBuff));
+      memset (senseBuff, 0, sizeof (senseBuff));
+      
+      cdb.pageCode = SCSI::logSensePages::blockBytesTransferred;
+      cdb.PC       = 0x01; // Current Comulative Values
+      cdb.allocationLength[0] = (sizeof(dataBuff) & 0xFF00) >> 8;
+      cdb.allocationLength[1] =  sizeof(dataBuff) & 0x00FF;
+      
+      SCSI::Structures::LinuxSGIO_t sgh;
+      sgh.setCDB(&cdb);
+      sgh.setDataBuffer(&dataBuff);
+      sgh.setSenseBuffer(&senseBuff);
+      sgh.dxfer_direction = SG_DXFER_FROM_DEV;
+      
+      /* Manage both system error and SCSI errors. */
+      if (-1 == this->m_sysWrapper.ioctl(this->m_tapeFD, SG_IO, &sgh))
+        throw Tape::Exceptions::Errnum("Failed SG_IO ioctl");
+      if (SCSI::Status::GOOD != sgh.status)
+        throw Tape::Exception(std::string("SCSI error in getCompression: ") + 
+                SCSI::statusToString(sgh.status));
+      
+            SCSI::Structures::logSenseLogPageHeader_t & logPageHeader = 
+              *(SCSI::Structures::logSenseLogPageHeader_t *) dataBuff;
+      
+      unsigned char *endPage = dataBuff +
+        SCSI::Structures::toU16(logPageHeader.pageLength)+sizeof(logPageHeader);
+      
+      unsigned char *logParameter = dataBuff+sizeof(logPageHeader);
+      
+      while ( logParameter < endPage ) {      /* values in KiBs and we use shift <<10 to get bytes */
+        SCSI::Structures::logSenseParameter_t & logPageParam = 
+              *(SCSI::Structures::logSenseParameter_t *) logParameter;
+	switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
+	  case SCSI::blockBytesTransferred::hostWriteKiBProcessed :
+	    driveCompressionStats.fromHost = (uint64_t)SCSI::Structures::toU32(reinterpret_cast<unsigned char(&)[4]>(logPageParam.parameterValue))<<10;
+	    break;
+	  case SCSI::blockBytesTransferred::deviceWriteKiBProcessed :
+	    driveCompressionStats.toTape   = (uint64_t)SCSI::Structures::toU32(reinterpret_cast<unsigned char(&)[4]>(logPageParam.parameterValue))<<10;
+            break;
+	  case SCSI::blockBytesTransferred::deviceReadKiBProcessed :
+	    driveCompressionStats.fromTape = (uint64_t)SCSI::Structures::toU32(reinterpret_cast<unsigned char(&)[4]>(logPageParam.parameterValue))<<10;
+	    break;
+	  case SCSI::blockBytesTransferred::hostReadKiBProcessed :
+	    driveCompressionStats.toHost   = (uint64_t)SCSI::Structures::toU32(reinterpret_cast<unsigned char(&)[4]>(logPageParam.parameterValue))<<10;
+	    break;
+	  }
+        logParameter += logPageParam.header.parameterLength + sizeof(logPageParam.header);                                                     
+      }
+      
+      return driveCompressionStats;	
+    }
   };  
 }
