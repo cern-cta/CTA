@@ -813,8 +813,26 @@ ALTER TABLE DiskPool2SvcClass
   ADD CONSTRAINT FK_DiskPool2SvcClass_P FOREIGN KEY (Parent) REFERENCES DiskPool (id)
   ADD CONSTRAINT FK_DiskPool2SvcClass_C FOREIGN KEY (Child) REFERENCES SvcClass (id);
 
-/* SQL statements for type DiskCopy */
-CREATE TABLE DiskCopy (path VARCHAR2(2048), gcWeight NUMBER, creationTime INTEGER, lastAccessTime INTEGER, diskCopySize INTEGER, nbCopyAccesses NUMBER, owneruid NUMBER, ownergid NUMBER, id INTEGER CONSTRAINT PK_DiskCopy_Id PRIMARY KEY, gcType INTEGER, fileSystem INTEGER, castorFile INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+/* DiskCopy Table
+   - importance : the importance of this DiskCopy. The importance is always negative and the
+     algorithm to compute it is -nb_disk_copies-100*at_least_a_tape_copy_exists
+*/
+CREATE TABLE DiskCopy
+ (path VARCHAR2(2048),
+  gcWeight NUMBER,
+  creationTime INTEGER,
+  lastAccessTime INTEGER,
+  diskCopySize INTEGER,
+  nbCopyAccesses NUMBER,
+  owneruid NUMBER,
+  ownergid NUMBER,
+  id INTEGER CONSTRAINT PK_DiskCopy_Id PRIMARY KEY,
+  gcType INTEGER,
+  fileSystem INTEGER,
+  castorFile INTEGER,
+  status INTEGER,
+  importance INTEGER CONSTRAINT NN_DiskCopy_Importance NOT NULL)
+INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 CREATE INDEX I_DiskCopy_Castorfile ON DiskCopy (castorFile);
 CREATE INDEX I_DiskCopy_FileSystem ON DiskCopy (fileSystem);
@@ -825,6 +843,8 @@ CREATE INDEX I_DiskCopy_Status_7_FS ON DiskCopy (decode(status,7,status,NULL), f
 CREATE INDEX I_DiskCopy_Status_9 ON DiskCopy (decode(status,9,status,NULL));
 -- to speed up deleteOutOfDateStageOutDCs
 CREATE INDEX I_DiskCopy_Status_Open ON DiskCopy (decode(status,6,status,decode(status,5,status,decode(status,11,status,NULL))));
+-- to speed up draining manager job
+CREATE INDEX I_DiskCopy_FS_ST_Impor_ID ON DiskCopy (filesystem, status, importance, id);
 
 /* DiskCopy constraints */
 ALTER TABLE DiskCopy MODIFY (nbCopyAccesses DEFAULT 0);

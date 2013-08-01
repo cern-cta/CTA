@@ -280,7 +280,6 @@ AS
 
   DRAINING_JOB_ONGOING         CONSTANT VARCHAR2(2048) := 'drainingManager: Draining jobs still starting, no new ones will be started for this round';
   DRAINING_STARTED             CONSTANT VARCHAR2(2048) := 'drainingManager: Draining process started';
-  DRAINING_JOB_STATS           CONSTANT VARCHAR2(2048) := 'drainingManager: Draining processes statistics';
 
   DELETEDISKCOPY_RECALL        CONSTANT VARCHAR2(2048) := 'deleteDiskCopy: diskCopy was lost, about to recall from tape';
   DELETEDISKCOPY_REPLICATION   CONSTANT VARCHAR2(2048) := 'deleteDiskCopy: diskCopy was lost, about to replicate from another pool';

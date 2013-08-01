@@ -342,6 +342,11 @@ BEGIN
             totalCount := totalCount + 1;
             -- Update freed space
             freed := freed + deltaFree;
+            -- update importance of remianing copies of the file if any
+            UPDATE DiskCopy
+               SET importance = importance + 1
+             WHERE castorFile = dc.castorFile
+               AND status = dconst.DISKCOPY_VALID;
             -- Shall we continue ?
             IF toBeFreed <= freed THEN
               EXIT;

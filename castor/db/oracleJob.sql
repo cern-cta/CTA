@@ -84,18 +84,14 @@ BEGIN
     -- invalidate all diskcopies
     UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
      WHERE castorFile = cfId
-       AND status IN (0, 10);
+       AND status = dconst.DISKCOPY_VALID;
     -- except the one we are dealing with that goes to STAGEOUT
     UPDATE DiskCopy
-       SET status = 6 -- STAGEOUT
+       SET status = dconst.DISKCOPY_STAGEOUT, importance = 0
      WHERE id = dcid;
     -- Suppress all Migration Jobs (avoid migration of previous version of the file)
     deleteMigrationJobs(cfId);
   END IF;
-  -- Invalidate any ongoing replications
-  UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
-   WHERE castorFile = cfId
-     AND status = 1; -- WAITDISK2DISKCOPY
 END;
 /
 
@@ -366,6 +362,7 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyEnded
   varDestPath VARCHAR2(2048);
   varDestFsId INTEGER;
   varDcGcWeight NUMBER := 0;
+  varDcImportance NUMBER := 0;
   varNewDcStatus INTEGER := dconst.DISKCOPY_VALID;
   varLogMsg VARCHAR2(2048);
   varComment VARCHAR2(2048);
@@ -419,7 +416,7 @@ BEGIN
      WHERE DiskServer.name = inDestDsName
        AND FileSystem.diskServer = DiskServer.id
        AND INSTR(inDestPath, FileSystem.mountPoint) = 1;
-    -- compute GcWeight of the new copy
+    -- compute GcWeight and importance of the new copy
     IF varNewDcStatus = dconst.DISKCOPY_VALID THEN
       DECLARE
         varGcwProc VARCHAR2(2048);
@@ -428,14 +425,16 @@ BEGIN
         EXECUTE IMMEDIATE
           'BEGIN :newGcw := ' || varGcwProc || '(:size); END;'
           USING OUT varDcGcWeight, IN varFileSize;
+        SELECT COUNT(*)+1 INTO varDCImportance FROM DiskCopy
+         WHERE castorFile=varCfId AND status = dconst.DISKCOPY_VALID;
       END;
     END IF;
     -- create the new DiskCopy
     INSERT INTO DiskCopy (path, gcWeight, creationTime, lastAccessTime, diskCopySize, nbCopyAccesses,
-                          owneruid, ownergid, id, gcType, fileSystem, castorFile, status)
+                          owneruid, ownergid, id, gcType, fileSystem, castorFile, status, importance)
     VALUES (varDestPath, varDcGcWeight, getTime(), getTime(), varFileSize, 0, varUid, varGid, varDestDcId,
             CASE varNewDcStatus WHEN dconst.DISKCOPY_INVALID THEN dconst.GCTYPE_OVERWRITTEN ELSE NULL END,
-            varDestFsId, varCfId, varNewDcStatus);
+            varDestFsId, varCfId, varNewDcStatus, varDCImportance);
     -- Wake up waiting subrequests
     UPDATE SubRequest
        SET status = dconst.SUBREQUEST_RESTART,
@@ -447,6 +446,10 @@ BEGIN
     DELETE FROM Disk2DiskCopyjob WHERE transferId = inTransferId;
     -- In case of valid new copy
     IF varNewDcStatus = dconst.DISKCOPY_VALID THEN
+      -- update importance of other DiskCopies if it's an additional one
+      IF varReplacedDcId IS NOT NULL THEN
+        UPDATE DiskCopy SET importance = varDCImportance WHERE castorFile=varCfId;
+      END IF;
       -- drop source if requested
       UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID WHERE id = varReplacedDcId;
       -- Trigger the creation of additional copies of the file, if any

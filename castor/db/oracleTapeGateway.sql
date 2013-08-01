@@ -541,6 +541,7 @@ CREATE OR REPLACE PROCEDURE tg_setFileRecalled(inMountTransactionId IN INTEGER,
   varDCPath         VARCHAR2(2048);
   varDcId           INTEGER;
   varFileSize       INTEGER;
+  varFileClassId    INTEGER;
   varNbMigrationsStarted INTEGER;
   varGcWeight       NUMBER;
   varGcWeightProc   VARCHAR2(2048);
@@ -551,9 +552,9 @@ BEGIN
   -- Get RecallJob and lock Castorfile
   BEGIN
     SELECT CastorFile.id, CastorFile.fileId, CastorFile.nsHost, CastorFile.lastUpdateTime,
-           CastorFile.fileSize, RecallMount.VID, RecallJob.copyNb,
+           CastorFile.fileSize, CastorFile.fileClass, RecallMount.VID, RecallJob.copyNb,
            RecallJob.euid, RecallJob.egid
-      INTO varCfId, varFileId, varNsHost, varLastUpdateTime, varFileSize, varVID,
+      INTO varCfId, varFileId, varNsHost, varLastUpdateTime, varFileSize, varFileClassId, varVID,
            varCopyNb, varEuid, varEgid
       FROM RecallMount, RecallJob, CastorFile
      WHERE RecallMount.mountTransactionId = inMountTransactionId
@@ -629,11 +630,17 @@ BEGIN
   varGcWeightProc := castorGC.getRecallWeight(varSvcClassId);
   EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || varGcWeightProc || '(:size); END;'
     USING OUT varGcWeight, IN varFileSize;
-  -- create the DiskCopy
-  INSERT INTO DiskCopy (path, gcWeight, creationTime, lastAccessTime, diskCopySize, nbCopyAccesses,
-                        ownerUid, ownerGid, id, gcType, fileSystem, castorFile, status)
-  VALUES (varDCPath, varGcWeight, getTime(), getTime(), varFileSize, 0,
-          varEuid, varEgid, varDCId, NULL, varFSId, varCfId, dconst.DISKCOPY_VALID);
+  -- create the DiskCopy, after getting how many copies on tape we have, for the importance number
+  DECLARE
+    varNbCopiesOnTape INTEGER;
+  BEGIN
+    SELECT nbCopies INTO varNbCopiesOnTape FROM FileClass WHERE id = varFileClassId;
+    INSERT INTO DiskCopy (path, gcWeight, creationTime, lastAccessTime, diskCopySize, nbCopyAccesses,
+                          ownerUid, ownerGid, id, gcType, fileSystem, castorFile, status, importance)
+    VALUES (varDCPath, varGcWeight, getTime(), getTime(), varFileSize, 0,
+            varEuid, varEgid, varDCId, NULL, varFSId, varCfId, dconst.DISKCOPY_VALID,
+            -1-varNbCopiesOnTape*100);
+  END;
   -- in case there are migrations, update CastorFile's tapeStatus to NOTONTAPE
   IF varNbMigrationsStarted > 0 THEN
     UPDATE CastorFile SET tapeStatus = dconst.CASTORFILE_NOTONTAPE WHERE id = varCfId;

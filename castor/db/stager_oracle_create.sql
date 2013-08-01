@@ -624,7 +624,6 @@ AS
 
   DRAINING_JOB_ONGOING         CONSTANT VARCHAR2(2048) := 'drainingManager: Draining jobs still starting, no new ones will be started for this round';
   DRAINING_STARTED             CONSTANT VARCHAR2(2048) := 'drainingManager: Draining process started';
-  DRAINING_JOB_STATS           CONSTANT VARCHAR2(2048) := 'drainingManager: Draining processes statistics';
 
   DELETEDISKCOPY_RECALL        CONSTANT VARCHAR2(2048) := 'deleteDiskCopy: diskCopy was lost, about to recall from tape';
   DELETEDISKCOPY_REPLICATION   CONSTANT VARCHAR2(2048) := 'deleteDiskCopy: diskCopy was lost, about to replicate from another pool';
@@ -1526,8 +1525,26 @@ ALTER TABLE DiskPool2SvcClass
   ADD CONSTRAINT FK_DiskPool2SvcClass_P FOREIGN KEY (Parent) REFERENCES DiskPool (id)
   ADD CONSTRAINT FK_DiskPool2SvcClass_C FOREIGN KEY (Child) REFERENCES SvcClass (id);
 
-/* SQL statements for type DiskCopy */
-CREATE TABLE DiskCopy (path VARCHAR2(2048), gcWeight NUMBER, creationTime INTEGER, lastAccessTime INTEGER, diskCopySize INTEGER, nbCopyAccesses NUMBER, owneruid NUMBER, ownergid NUMBER, id INTEGER CONSTRAINT PK_DiskCopy_Id PRIMARY KEY, gcType INTEGER, fileSystem INTEGER, castorFile INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+/* DiskCopy Table
+   - importance : the importance of this DiskCopy. The importance is always negative and the
+     algorithm to compute it is -nb_disk_copies-100*at_least_a_tape_copy_exists
+*/
+CREATE TABLE DiskCopy
+ (path VARCHAR2(2048),
+  gcWeight NUMBER,
+  creationTime INTEGER,
+  lastAccessTime INTEGER,
+  diskCopySize INTEGER,
+  nbCopyAccesses NUMBER,
+  owneruid NUMBER,
+  ownergid NUMBER,
+  id INTEGER CONSTRAINT PK_DiskCopy_Id PRIMARY KEY,
+  gcType INTEGER,
+  fileSystem INTEGER,
+  castorFile INTEGER,
+  status INTEGER,
+  importance INTEGER CONSTRAINT NN_DiskCopy_Importance NOT NULL)
+INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 CREATE INDEX I_DiskCopy_Castorfile ON DiskCopy (castorFile);
 CREATE INDEX I_DiskCopy_FileSystem ON DiskCopy (fileSystem);
@@ -1538,6 +1555,8 @@ CREATE INDEX I_DiskCopy_Status_7_FS ON DiskCopy (decode(status,7,status,NULL), f
 CREATE INDEX I_DiskCopy_Status_9 ON DiskCopy (decode(status,9,status,NULL));
 -- to speed up deleteOutOfDateStageOutDCs
 CREATE INDEX I_DiskCopy_Status_Open ON DiskCopy (decode(status,6,status,decode(status,5,status,decode(status,11,status,NULL))));
+-- to speed up draining manager job
+CREATE INDEX I_DiskCopy_FS_ST_Impor_ID ON DiskCopy (filesystem, status, importance, id);
 
 /* DiskCopy constraints */
 ALTER TABLE DiskCopy MODIFY (nbCopyAccesses DEFAULT 0);
@@ -3698,6 +3717,10 @@ BEGIN
          SET status = dconst.DISKCOPY_INVALID,
              gcType = dconst.GCTYPE_TOOMANYREPLICAS
        WHERE id = b.id;
+      -- update importance of remaining diskcopies
+      UPDATE DiskCopy SET importance = importance + 1
+       WHERE castorFile = a.castorfile
+         AND status = dconst.DISKCOPY_VALID;
     END LOOP;
   END LOOP;
   -- cleanup the table so that we do not accumulate lines. This would trigger
@@ -5014,9 +5037,9 @@ BEGIN
     USING OUT gcw;
   -- then create the DiskCopy
   INSERT INTO DiskCopy
-    (path, id, filesystem, castorfile, status,
+    (path, id, filesystem, castorfile, status, importance,
      creationTime, lastAccessTime, gcWeight, diskCopySize, nbCopyAccesses, owneruid, ownergid)
-  VALUES (dcPath, dcId, fsId, cfId, dconst.CASTORFILE_DISKONLY,
+  VALUES (dcPath, dcId, fsId, cfId, dconst.CASTORFILE_DISKONLY, -1,
           getTime(), getTime(), GCw, 0, 0, ouid, ogid);
   -- link to the SubRequest and schedule an access if requested
   IF schedule = 0 THEN
@@ -5128,7 +5151,8 @@ BEGIN
      SET status = dconst.DISKCOPY_VALID,
          lastAccessTime = getTime(),  -- for the GC, effective lifetime of this diskcopy starts now
          gcWeight = gcw,
-         diskCopySize = fs
+         diskCopySize = fs,
+         importance = -1              -- we have a single diskcopy for now
    WHERE castorFile = cfId AND status = dconst.DISKCOPY_STAGEOUT
    RETURNING owneruid, ownergid INTO ouid, ogid;
   -- update the CastorFile
@@ -5509,6 +5533,7 @@ CREATE OR REPLACE PROCEDURE stageRm (srId IN INTEGER,
   dcsToRmStatus "numList";
   dcsToRmCfStatus "numList";
   nbRJsDeleted INTEGER;
+  varNbValidRmed INTEGER;
 BEGIN
   ret := 0;
   -- Get the stager/nsHost configuration option
@@ -5582,7 +5607,12 @@ BEGIN
        SET status = decode(status, dconst.DISKCOPY_WAITFS, dconst.DISKCOPY_FAILED,
                                    dconst.DISKCOPY_WAITFS_SCHEDULING, dconst.DISKCOPY_FAILED,
                                    dconst.DISKCOPY_INVALID)
-     WHERE id IN (SELECT /*+ CARDINALITY(dcidTable 5) */ * FROM TABLE(dcsToRm) dcidTable);
+     WHERE id IN (SELECT /*+ CARDINALITY(dcidTable 5) */ * FROM TABLE(dcsToRm) dcidTable)
+    RETURNING SUM(decode(status, dconst.DISKCOPY_VALID, 1, 0)) INTO varNbValidRmed;
+
+    -- update importance of remaining DiskCopies, if any
+    UPDATE DiskCopy SET importance = importance + varNbValidRmed
+     WHERE castorFile = cfId AND status = dconst.DISKCOPY_VALID;
 
     -- fail the subrequests linked to the deleted diskcopies
     FOR sr IN (SELECT /*+ INDEX(SR I_SubRequest_DiskCopy) */ id, subreqId
@@ -6170,6 +6200,12 @@ BEGIN
      WHERE castorFile = varCfId
        AND status = dconst.DISKCOPY_VALID
        AND id != inDcIds(i);
+    -- and update their importance if needed (other copy exists and dropped one was valid)
+    IF varNbRemaining > 0 AND varStatus = dconst.DISKCOPY_VALID THEN
+      UPDATE DiskCopy SET importance = importance + 1
+       WHERE castorFile = varCfId
+         AND status = dconst.DISKCOPY_VALID;
+    END IF;
     IF inForce = TRUE THEN
       -- the physical diskcopy is deemed lost: delete the diskcopy entry
       -- and potentially drop dangling entities
@@ -6436,8 +6472,8 @@ BEGIN
     varDcId := ids_seq.nextval();
     buildPathFromFileId(inFileId, inNsHost, varDcId, varPath);
     INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status, creationTime, lastAccessTime,
-                          gcWeight, diskCopySize, nbCopyAccesses, owneruid, ownergid)
-    VALUES (varPath, varDcId, 0, inCfId, dconst.DISKCOPY_WAITFS, getTime(), getTime(), 0, 0, 0, inEuid, inEgid);
+                          gcWeight, diskCopySize, nbCopyAccesses, owneruid, ownergid, importance)
+    VALUES (varPath, varDcId, 0, inCfId, dconst.DISKCOPY_WAITFS, getTime(), getTime(), 0, 0, 0, inEuid, inEgid, 0);
     -- update and schedule the subRequest if needed
     IF inDoSchedule THEN
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
@@ -6720,7 +6756,6 @@ BEGIN
       SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ 
              LISTAGG(DiskServer.name || ':' || FileSystem.mountPoint, '|')
              WITHIN GROUP (ORDER BY FileSystemRate(FileSystem.nbReadStreams, FileSystem.nbWriteStreams))
-             OVER (PARTITION BY DiskCopy.castorfile)
         INTO varDcList
         FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
        WHERE DiskCopy.castorfile = inCfId
@@ -7002,18 +7037,14 @@ BEGIN
     -- invalidate all diskcopies
     UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
      WHERE castorFile = cfId
-       AND status IN (0, 10);
+       AND status = dconst.DISKCOPY_VALID;
     -- except the one we are dealing with that goes to STAGEOUT
     UPDATE DiskCopy
-       SET status = 6 -- STAGEOUT
+       SET status = dconst.DISKCOPY_STAGEOUT, importance = 0
      WHERE id = dcid;
     -- Suppress all Migration Jobs (avoid migration of previous version of the file)
     deleteMigrationJobs(cfId);
   END IF;
-  -- Invalidate any ongoing replications
-  UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
-   WHERE castorFile = cfId
-     AND status = 1; -- WAITDISK2DISKCOPY
 END;
 /
 
@@ -7284,6 +7315,7 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyEnded
   varDestPath VARCHAR2(2048);
   varDestFsId INTEGER;
   varDcGcWeight NUMBER := 0;
+  varDcImportance NUMBER := 0;
   varNewDcStatus INTEGER := dconst.DISKCOPY_VALID;
   varLogMsg VARCHAR2(2048);
   varComment VARCHAR2(2048);
@@ -7337,7 +7369,7 @@ BEGIN
      WHERE DiskServer.name = inDestDsName
        AND FileSystem.diskServer = DiskServer.id
        AND INSTR(inDestPath, FileSystem.mountPoint) = 1;
-    -- compute GcWeight of the new copy
+    -- compute GcWeight and importance of the new copy
     IF varNewDcStatus = dconst.DISKCOPY_VALID THEN
       DECLARE
         varGcwProc VARCHAR2(2048);
@@ -7346,14 +7378,16 @@ BEGIN
         EXECUTE IMMEDIATE
           'BEGIN :newGcw := ' || varGcwProc || '(:size); END;'
           USING OUT varDcGcWeight, IN varFileSize;
+        SELECT COUNT(*)+1 INTO varDCImportance FROM DiskCopy
+         WHERE castorFile=varCfId AND status = dconst.DISKCOPY_VALID;
       END;
     END IF;
     -- create the new DiskCopy
     INSERT INTO DiskCopy (path, gcWeight, creationTime, lastAccessTime, diskCopySize, nbCopyAccesses,
-                          owneruid, ownergid, id, gcType, fileSystem, castorFile, status)
+                          owneruid, ownergid, id, gcType, fileSystem, castorFile, status, importance)
     VALUES (varDestPath, varDcGcWeight, getTime(), getTime(), varFileSize, 0, varUid, varGid, varDestDcId,
             CASE varNewDcStatus WHEN dconst.DISKCOPY_INVALID THEN dconst.GCTYPE_OVERWRITTEN ELSE NULL END,
-            varDestFsId, varCfId, varNewDcStatus);
+            varDestFsId, varCfId, varNewDcStatus, varDCImportance);
     -- Wake up waiting subrequests
     UPDATE SubRequest
        SET status = dconst.SUBREQUEST_RESTART,
@@ -7365,6 +7399,10 @@ BEGIN
     DELETE FROM Disk2DiskCopyjob WHERE transferId = inTransferId;
     -- In case of valid new copy
     IF varNewDcStatus = dconst.DISKCOPY_VALID THEN
+      -- update importance of other DiskCopies if it's an additional one
+      IF varReplacedDcId IS NOT NULL THEN
+        UPDATE DiskCopy SET importance = varDCImportance WHERE castorFile=varCfId;
+      END IF;
       -- drop source if requested
       UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID WHERE id = varReplacedDcId;
       -- Trigger the creation of additional copies of the file, if any
@@ -8122,7 +8160,7 @@ PROCEDURE D2dTransferToSchedule(outTransferId OUT VARCHAR2, outReqId OUT VARCHAR
   -- Note that the where clause is not strictly needed, but this way Oracle is forced
   -- to use an INDEX RANGE SCAN instead of its preferred (and unstable upon load) FULL SCAN!
   CURSOR c IS
-    SELECT Disk2DiskCopyJob.id
+    SELECT /*+ INDEX_RS_ASC(Disk2DiskCopyJob I_Disk2DiskCopyJob_status_CT) */ Disk2DiskCopyJob.id
       FROM Disk2DiskCopyJob
      WHERE status = dconst.DISK2DISKCOPYJOB_PENDING
      ORDER BY creationTime ASC;
@@ -9445,6 +9483,7 @@ CREATE OR REPLACE PROCEDURE tg_setFileRecalled(inMountTransactionId IN INTEGER,
   varDCPath         VARCHAR2(2048);
   varDcId           INTEGER;
   varFileSize       INTEGER;
+  varFileClassId    INTEGER;
   varNbMigrationsStarted INTEGER;
   varGcWeight       NUMBER;
   varGcWeightProc   VARCHAR2(2048);
@@ -9455,9 +9494,9 @@ BEGIN
   -- Get RecallJob and lock Castorfile
   BEGIN
     SELECT CastorFile.id, CastorFile.fileId, CastorFile.nsHost, CastorFile.lastUpdateTime,
-           CastorFile.fileSize, RecallMount.VID, RecallJob.copyNb,
+           CastorFile.fileSize, CastorFile.fileClass, RecallMount.VID, RecallJob.copyNb,
            RecallJob.euid, RecallJob.egid
-      INTO varCfId, varFileId, varNsHost, varLastUpdateTime, varFileSize, varVID,
+      INTO varCfId, varFileId, varNsHost, varLastUpdateTime, varFileSize, varFileClassId, varVID,
            varCopyNb, varEuid, varEgid
       FROM RecallMount, RecallJob, CastorFile
      WHERE RecallMount.mountTransactionId = inMountTransactionId
@@ -9533,11 +9572,17 @@ BEGIN
   varGcWeightProc := castorGC.getRecallWeight(varSvcClassId);
   EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || varGcWeightProc || '(:size); END;'
     USING OUT varGcWeight, IN varFileSize;
-  -- create the DiskCopy
-  INSERT INTO DiskCopy (path, gcWeight, creationTime, lastAccessTime, diskCopySize, nbCopyAccesses,
-                        ownerUid, ownerGid, id, gcType, fileSystem, castorFile, status)
-  VALUES (varDCPath, varGcWeight, getTime(), getTime(), varFileSize, 0,
-          varEuid, varEgid, varDCId, NULL, varFSId, varCfId, dconst.DISKCOPY_VALID);
+  -- create the DiskCopy, after getting how many copies on tape we have, for the importance number
+  DECLARE
+    varNbCopiesOnTape INTEGER;
+  BEGIN
+    SELECT nbCopies INTO varNbCopiesOnTape FROM FileClass WHERE id = varFileClassId;
+    INSERT INTO DiskCopy (path, gcWeight, creationTime, lastAccessTime, diskCopySize, nbCopyAccesses,
+                          ownerUid, ownerGid, id, gcType, fileSystem, castorFile, status, importance)
+    VALUES (varDCPath, varGcWeight, getTime(), getTime(), varFileSize, 0,
+            varEuid, varEgid, varDCId, NULL, varFSId, varCfId, dconst.DISKCOPY_VALID,
+            -1-varNbCopiesOnTape*100);
+  END;
   -- in case there are migrations, update CastorFile's tapeStatus to NOTONTAPE
   IF varNbMigrationsStarted > 0 THEN
     UPDATE CastorFile SET tapeStatus = dconst.CASTORFILE_NOTONTAPE WHERE id = varCfId;
@@ -11070,6 +11115,11 @@ BEGIN
             totalCount := totalCount + 1;
             -- Update freed space
             freed := freed + deltaFree;
+            -- update importance of remianing copies of the file if any
+            UPDATE DiskCopy
+               SET importance = importance + 1
+             WHERE castorFile = dc.castorFile
+               AND status = dconst.DISKCOPY_VALID;
             -- Shall we continue ?
             IF toBeFreed <= freed THEN
               EXIT;
@@ -11574,95 +11624,68 @@ CREATE OR REPLACE PROCEDURE handleDrainingJob(inDjId IN INTEGER) AS
   varEgid INTEGER;
   varNbFiles INTEGER := 0;
   varNbBytes INTEGER := 0;
+  varStartedNewJobs BOOLEAN := False;
+  varNbRunningJobs INTEGER;
 BEGIN
-  -- update Draining Job to STARTING, and get its caracteristics
+  -- update Draining Job to STARTING, and get its caracteristics. Note that most of the time,
+  -- it was already in STARTING, but that does not harm and we select what we need
   UPDATE DrainingJob SET status = dconst.DRAININGJOB_STARTING WHERE id = inDjId
   RETURNING fileSystem, svcClass, autoDelete, fileMask, euid, egid
     INTO varFsId, varSvcClassId, varAutoDelete, varFileMask, varEuid, varEgid;
-  COMMIT;
-  -- Loop over the creation of Disk2DiskCopyJobs
-  FOR F IN (SELECT CastorFile.id cfId, Castorfile.nsOpenTime, DiskCopy.id dcId, CastorFile.fileSize
-              FROM DiskCopy, CastorFile
-             WHERE fileSystem = varFsId
-               AND CastorFile.id = DiskCopy.castorFile
-               AND ((varFileMask = dconst.DRAIN_FILEMASK_NOTONTAPE AND
-                     CastorFile.tapeStatus IN (dconst.CASTORFILE_NOTONTAPE, dconst.CASTORFILE_DISKONLY)) OR
-                    (varFileMask = dconst.DRAIN_FILEMASK_ALL))
-               AND DiskCopy.status = dconst.DISKCOPY_VALID
-             ORDER BY CastorFile.tapeStatus ASC) LOOP  -- NOTONTAPE go before ONTAPE
+  -- check how many disk2DiskCopyJobs are already running for this draining job
+  SELECT count(*) INTO varNbRunningJobs FROM Disk2DiskCopyJob WHERE drainingJob = inDjId;
+  -- Loop over the creation of Disk2DiskCopyJobs. Select max 1000 files, taking running
+  -- ones into account. Also Take the most important jobs first
+  FOR F IN (SELECT * FROM
+             (SELECT CastorFile.id cfId, Castorfile.nsOpenTime, DiskCopy.id dcId, CastorFile.fileSize
+                FROM DiskCopy, CastorFile
+               WHERE DiskCopy.fileSystem = varFsId
+                 AND CastorFile.id = DiskCopy.castorFile
+                 AND ((varFileMask = dconst.DRAIN_FILEMASK_NOTONTAPE AND
+                       CastorFile.tapeStatus IN (dconst.CASTORFILE_NOTONTAPE, dconst.CASTORFILE_DISKONLY)) OR
+                      (varFileMask = dconst.DRAIN_FILEMASK_ALL))
+                 AND DiskCopy.status = dconst.DISKCOPY_VALID
+               ORDER BY DiskCopy.importance DESC)
+             WHERE ROWNUM <= 1000-varNbRunningJobs) LOOP
+    varStartedNewJobs := True;
     createDisk2DiskCopyJob(F.cfId, F.nsOpenTime, varSvcClassId, varEuid, varEgid, dconst.REPLICATIONTYPE_DRAINING,
                            CASE varFileMask WHEN 1 THEN F.dcId ELSE NULL END, inDjId);
     varNbFiles := varNbFiles + 1;
     varNbBytes := varNbBytes + F.fileSize;
-    -- commit and update counters from time to time
-    IF MOD(varNbFiles, 1000) = 0 THEN
-      UPDATE DrainingJob
-         SET totalFiles = varNbFiles,
-             totalBytes = varNbBytes,
-             lastModificationTime = getTime()
-       WHERE id = inDjId;
-      COMMIT;
-    END IF;
   END LOOP;
-  -- final update of DrainingJob
-  UPDATE DrainingJob
-     SET status = dconst.DRAININGJOB_RUNNING,
-         totalFiles = varNbFiles,
-         totalBytes = varNbBytes,
-         lastModificationTime = getTime()
-   WHERE id = inDjId;
+  -- commit and update counters
+  IF varStartedNewJobs THEN
+    UPDATE DrainingJob
+       SET totalFiles = varNbFiles,
+           totalBytes = varNbBytes,
+           lastModificationTime = getTime()
+     WHERE id = inDjId;
+  ELSE
+    -- final update of DrainingJob TO RUNNING if there was nothing to do
+    UPDATE DrainingJob SET status = dconst.DRAININGJOB_RUNNING WHERE id = inDjId;
+  END IF;
   COMMIT;
 END;
 /
 
-/* Procedure responsible for managing the draining process */
+/* Procedure responsible for managing the draining process
+ * note the locking that makes sure we are not running twice in parallel
+ * as this will be restarted regularly by an Oracle job, but may take long to conclude
+ */
 CREATE OR REPLACE PROCEDURE drainManager AS
-  varStartTime NUMBER;
-  varNbDrainingJobs INTEGER;
 BEGIN
   -- Delete the COMPLETED jobs older than 7 days
   DELETE FROM DrainingJob
    WHERE status = dconst.DRAININGJOB_FINISHED
      AND lastModificationTime < getTime() - (7 * 86400);
   COMMIT;
-  -- check we do not run twice in parallel the starting of draining jobs
-  SELECT count(*) INTO varNbDrainingJobs
-    FROM DrainingJob
-   WHERE status = dconst.DRAININGJOB_STARTING;
-  IF varNbDrainingJobs > 0 THEN
-    -- this shouldn't happen, possibly this procedure is running in parallel: give up and log
-    -- "drainingManager: Draining jobs still starting, no new ones will be started for this round"
-    logToDLF(NULL, dlf.LVL_NOTICE, dlf.DRAINING_JOB_ONGOING, 0, '', 'draind', '');
-    RETURN;
-  END IF;
-  varStartTime := getTime();
-  WHILE TRUE LOOP
-    DECLARE
-      varDrainStartTime NUMBER;
-      varDjId INTEGER;
-    BEGIN
-      varDrainStartTime := getTime();
-      -- get an outstanding DrainingJob to start
-      SELECT id INTO varDJId
-        FROM (SELECT id
-                FROM DrainingJob
-               WHERE status = dconst.DRAININGJOB_SUBMITTED
-               ORDER BY creationTime ASC)
-       WHERE ROWNUM < 2;
-      -- start the draining: this can take some considerable time and will
-      -- regularly commit after updating the DrainingJob
-      handleDrainingJob(varDjId);
-      varNbDrainingJobs := varNbDrainingJobs + 1;
-    EXCEPTION WHEN NO_DATA_FOUND THEN
-      -- if no new repack is found to start, terminate
-      EXIT;
-    END;
+
+  -- Loop over the Draining Jobs
+  FOR dj IN (SELECT id FROM DrainingJob
+              WHERE status IN (dconst.DRAININGJOB_SUBMITTED, dconst.DRAININGJOB_STARTING)) LOOP
+    -- handle the draining job, that is check whether to start new Disk2DiskCopy for it
+    handleDrainingJob(dj.id);
   END LOOP;
-  IF varNbDrainingJobs > 0 THEN
-    -- log some statistics
-    logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DRAINING_JOB_STATS, 0, '', 'draind',
-      'nbStarted=' || TO_CHAR(varNbDrainingJobs) || ' elapsedTime=' || TO_CHAR(TRUNC(getTime() - varStartTime)));
-  END IF;
 END;
 /
 

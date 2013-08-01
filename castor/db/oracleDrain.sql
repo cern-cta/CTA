@@ -29,95 +29,68 @@ CREATE OR REPLACE PROCEDURE handleDrainingJob(inDjId IN INTEGER) AS
   varEgid INTEGER;
   varNbFiles INTEGER := 0;
   varNbBytes INTEGER := 0;
+  varStartedNewJobs BOOLEAN := False;
+  varNbRunningJobs INTEGER;
 BEGIN
-  -- update Draining Job to STARTING, and get its caracteristics
+  -- update Draining Job to STARTING, and get its caracteristics. Note that most of the time,
+  -- it was already in STARTING, but that does not harm and we select what we need
   UPDATE DrainingJob SET status = dconst.DRAININGJOB_STARTING WHERE id = inDjId
   RETURNING fileSystem, svcClass, autoDelete, fileMask, euid, egid
     INTO varFsId, varSvcClassId, varAutoDelete, varFileMask, varEuid, varEgid;
-  COMMIT;
-  -- Loop over the creation of Disk2DiskCopyJobs
-  FOR F IN (SELECT CastorFile.id cfId, Castorfile.nsOpenTime, DiskCopy.id dcId, CastorFile.fileSize
-              FROM DiskCopy, CastorFile
-             WHERE fileSystem = varFsId
-               AND CastorFile.id = DiskCopy.castorFile
-               AND ((varFileMask = dconst.DRAIN_FILEMASK_NOTONTAPE AND
-                     CastorFile.tapeStatus IN (dconst.CASTORFILE_NOTONTAPE, dconst.CASTORFILE_DISKONLY)) OR
-                    (varFileMask = dconst.DRAIN_FILEMASK_ALL))
-               AND DiskCopy.status = dconst.DISKCOPY_VALID
-             ORDER BY CastorFile.tapeStatus ASC) LOOP  -- NOTONTAPE go before ONTAPE
+  -- check how many disk2DiskCopyJobs are already running for this draining job
+  SELECT count(*) INTO varNbRunningJobs FROM Disk2DiskCopyJob WHERE drainingJob = inDjId;
+  -- Loop over the creation of Disk2DiskCopyJobs. Select max 1000 files, taking running
+  -- ones into account. Also Take the most important jobs first
+  FOR F IN (SELECT * FROM
+             (SELECT CastorFile.id cfId, Castorfile.nsOpenTime, DiskCopy.id dcId, CastorFile.fileSize
+                FROM DiskCopy, CastorFile
+               WHERE DiskCopy.fileSystem = varFsId
+                 AND CastorFile.id = DiskCopy.castorFile
+                 AND ((varFileMask = dconst.DRAIN_FILEMASK_NOTONTAPE AND
+                       CastorFile.tapeStatus IN (dconst.CASTORFILE_NOTONTAPE, dconst.CASTORFILE_DISKONLY)) OR
+                      (varFileMask = dconst.DRAIN_FILEMASK_ALL))
+                 AND DiskCopy.status = dconst.DISKCOPY_VALID
+               ORDER BY DiskCopy.importance DESC)
+             WHERE ROWNUM <= 1000-varNbRunningJobs) LOOP
+    varStartedNewJobs := True;
     createDisk2DiskCopyJob(F.cfId, F.nsOpenTime, varSvcClassId, varEuid, varEgid, dconst.REPLICATIONTYPE_DRAINING,
                            CASE varFileMask WHEN 1 THEN F.dcId ELSE NULL END, inDjId);
     varNbFiles := varNbFiles + 1;
     varNbBytes := varNbBytes + F.fileSize;
-    -- commit and update counters from time to time
-    IF MOD(varNbFiles, 1000) = 0 THEN
-      UPDATE DrainingJob
-         SET totalFiles = varNbFiles,
-             totalBytes = varNbBytes,
-             lastModificationTime = getTime()
-       WHERE id = inDjId;
-      COMMIT;
-    END IF;
   END LOOP;
-  -- final update of DrainingJob
-  UPDATE DrainingJob
-     SET status = dconst.DRAININGJOB_RUNNING,
-         totalFiles = varNbFiles,
-         totalBytes = varNbBytes,
-         lastModificationTime = getTime()
-   WHERE id = inDjId;
+  -- commit and update counters
+  IF varStartedNewJobs THEN
+    UPDATE DrainingJob
+       SET totalFiles = varNbFiles,
+           totalBytes = varNbBytes,
+           lastModificationTime = getTime()
+     WHERE id = inDjId;
+  ELSE
+    -- final update of DrainingJob TO RUNNING if there was nothing to do
+    UPDATE DrainingJob SET status = dconst.DRAININGJOB_RUNNING WHERE id = inDjId;
+  END IF;
   COMMIT;
 END;
 /
 
-/* Procedure responsible for managing the draining process */
+/* Procedure responsible for managing the draining process
+ * note the locking that makes sure we are not running twice in parallel
+ * as this will be restarted regularly by an Oracle job, but may take long to conclude
+ */
 CREATE OR REPLACE PROCEDURE drainManager AS
-  varStartTime NUMBER;
-  varNbDrainingJobs INTEGER;
 BEGIN
   -- Delete the COMPLETED jobs older than 7 days
   DELETE FROM DrainingJob
    WHERE status = dconst.DRAININGJOB_FINISHED
      AND lastModificationTime < getTime() - (7 * 86400);
   COMMIT;
-  -- check we do not run twice in parallel the starting of draining jobs
-  SELECT count(*) INTO varNbDrainingJobs
-    FROM DrainingJob
-   WHERE status = dconst.DRAININGJOB_STARTING;
-  IF varNbDrainingJobs > 0 THEN
-    -- this shouldn't happen, possibly this procedure is running in parallel: give up and log
-    -- "drainingManager: Draining jobs still starting, no new ones will be started for this round"
-    logToDLF(NULL, dlf.LVL_NOTICE, dlf.DRAINING_JOB_ONGOING, 0, '', 'draind', '');
-    RETURN;
-  END IF;
-  varStartTime := getTime();
-  WHILE TRUE LOOP
-    DECLARE
-      varDrainStartTime NUMBER;
-      varDjId INTEGER;
-    BEGIN
-      varDrainStartTime := getTime();
-      -- get an outstanding DrainingJob to start
-      SELECT id INTO varDJId
-        FROM (SELECT id
-                FROM DrainingJob
-               WHERE status = dconst.DRAININGJOB_SUBMITTED
-               ORDER BY creationTime ASC)
-       WHERE ROWNUM < 2;
-      -- start the draining: this can take some considerable time and will
-      -- regularly commit after updating the DrainingJob
-      handleDrainingJob(varDjId);
-      varNbDrainingJobs := varNbDrainingJobs + 1;
-    EXCEPTION WHEN NO_DATA_FOUND THEN
-      -- if no new repack is found to start, terminate
-      EXIT;
-    END;
+
+  -- Loop over the Draining Jobs
+  FOR dj IN (SELECT id FROM DrainingJob
+              WHERE status IN (dconst.DRAININGJOB_SUBMITTED, dconst.DRAININGJOB_STARTING)) LOOP
+    -- handle the draining job, that is check whether to start new Disk2DiskCopy for it
+    handleDrainingJob(dj.id);
   END LOOP;
-  IF varNbDrainingJobs > 0 THEN
-    -- log some statistics
-    logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DRAINING_JOB_STATS, 0, '', 'draind',
-      'nbStarted=' || TO_CHAR(varNbDrainingJobs) || ' elapsedTime=' || TO_CHAR(TRUNC(getTime() - varStartTime)));
-  END IF;
 END;
 /
 

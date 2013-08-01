@@ -90,6 +90,9 @@ END;
 DROP INDEX I_DiskCopy_Status_7;
 CREATE INDEX I_DiskCopy_Status_7_FS ON DiskCopy (decode(status,7,status,NULL), fileSystem);
 
+-- and add importance
+ALTER TABLE DiskCopy ADD (importance INTEGER);
+
 /* new rating of filesystems */
 CREATE OR REPLACE FUNCTION fileSystemRate
 (nbReadStreams IN NUMBER,
@@ -226,28 +229,51 @@ DELETE FROM ObjStatus WHERE object='DiskCopy' AND field='status'
 BEGIN setObjStatusName('DiskCopy', 'status', 0, 'DISKCOPY_VALID'); END;
 /
 
--- temporary index on DiskCopy.status to speed up the next block
+-- temporary indexes to speed up the next block
 CREATE INDEX I_DC_status ON DiskCopy(status);
+CREATE INDEX I_DC_CastorFile_status ON DiskCopy(Castorfile, status);
 
--- merge STAGED and CANBEMIGR. This is done in 4 steps :
+-- merge STAGED and CANBEMIGR, and fill importance column of Disk2DiskCopy.
+-- This is done in several steps :
 --  - set all CastorFiles to tapeStatus CASTORFILE_ONTAPE
---  - set all CastorFiles beloging to FileClasses with 0 copies to CASTORFILE_DISKONLY
+--  - set all DiskCopies'importance to -100-nb_diskCopies for the file
+--  - set all CastorFiles belonging to FileClasses with 0 copies to CASTORFILE_DISKONLY
+--  - add 100 to the DiskCopies for these CastorFiles
 --  - loop over CANBEMIGR DiskCopies, and set corresponding CastorFiles to CASTORFILE_NOTONTAPE
---  - finally set all CANBEMIGR DiskCopies to DISKCOPY_VALID
+--  - finally set all CANBEMIGR DiskCopies to DISKCOPY_VALID and add 100 to their importance
 BEGIN
   UPDATE CastorFile SET tapeStatus = dconst.CASTORFILE_ONTAPE;
+  UPDATE DiskCopy dc
+     SET importance = -100 - (SELECT count(*) FROM DiskCopy
+                               WHERE castorFile = dc.CastorFile
+                                 AND status in (0, 10));
   COMMIT;
-  UPDATE /*+ FULL(CastorFile) */ CastorFile
-     SET tapeStatus = dconst.CASTORFILE_DISKONLY
-   WHERE fileClass IN (SELECT id FROM FileClass WHERE nbCopies = 0);
+  FOR cf IN (SELECT /*+ FULL(CastorFile) */  id FROM CastorFile
+             WHERE fileClass IN (SELECT id FROM FileClass WHERE nbCopies = 0)) LOOP
+    UPDATE CastorFile
+       SET tapeStatus = dconst.CASTORFILE_DISKONLY
+     WHERE id = cf.id;
+    UPDATE DiskCopy
+       SET importance = importance + 100
+     WHERE castorFile = cf.id;
+  END LOOP;
   COMMIT;
   FOR DC IN (SELECT castorFile, id FROM DiskCopy WHERE status = 10) LOOP  -- old CANBEMIGR
     UPDATE CastorFile SET tapeStatus = CASTORFILE_NOTONTAPE WHERE id = DC.castorFile;
-    UPDATE DiskCopy SET status = dconst.DISKCOPY_VALID WHERE id = DC.id;
+    UPDATE DiskCopy SET status = dconst.DISKCOPY_VALID, importance = importance+100 WHERE id = DC.id;
   END LOOP;
   COMMIT;
 END;
 /
+
+DROP INDEX I_DC_CastorFile_status;
+
+-- Now that importance is filled, create non null constraint on it, and
+-- add an index
+ALTER TABLE DiskCopy
+  MODIFY (importance CONSTRAINT NN_DiskCopy_Importance NOT NULL);
+CREATE INDEX I_DiskCopy_FS_ST_Impor_ID ON DiskCopy (filesystem, status, importance, id);
+
 
 DECLARE
   srIds "numList";

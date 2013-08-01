@@ -302,6 +302,10 @@ BEGIN
          SET status = dconst.DISKCOPY_INVALID,
              gcType = dconst.GCTYPE_TOOMANYREPLICAS
        WHERE id = b.id;
+      -- update importance of remaining diskcopies
+      UPDATE DiskCopy SET importance = importance + 1
+       WHERE castorFile = a.castorfile
+         AND status = dconst.DISKCOPY_VALID;
     END LOOP;
   END LOOP;
   -- cleanup the table so that we do not accumulate lines. This would trigger
@@ -1618,9 +1622,9 @@ BEGIN
     USING OUT gcw;
   -- then create the DiskCopy
   INSERT INTO DiskCopy
-    (path, id, filesystem, castorfile, status,
+    (path, id, filesystem, castorfile, status, importance,
      creationTime, lastAccessTime, gcWeight, diskCopySize, nbCopyAccesses, owneruid, ownergid)
-  VALUES (dcPath, dcId, fsId, cfId, dconst.CASTORFILE_DISKONLY,
+  VALUES (dcPath, dcId, fsId, cfId, dconst.CASTORFILE_DISKONLY, -1,
           getTime(), getTime(), GCw, 0, 0, ouid, ogid);
   -- link to the SubRequest and schedule an access if requested
   IF schedule = 0 THEN
@@ -1732,7 +1736,8 @@ BEGIN
      SET status = dconst.DISKCOPY_VALID,
          lastAccessTime = getTime(),  -- for the GC, effective lifetime of this diskcopy starts now
          gcWeight = gcw,
-         diskCopySize = fs
+         diskCopySize = fs,
+         importance = -1              -- we have a single diskcopy for now
    WHERE castorFile = cfId AND status = dconst.DISKCOPY_STAGEOUT
    RETURNING owneruid, ownergid INTO ouid, ogid;
   -- update the CastorFile
@@ -2113,6 +2118,7 @@ CREATE OR REPLACE PROCEDURE stageRm (srId IN INTEGER,
   dcsToRmStatus "numList";
   dcsToRmCfStatus "numList";
   nbRJsDeleted INTEGER;
+  varNbValidRmed INTEGER;
 BEGIN
   ret := 0;
   -- Get the stager/nsHost configuration option
@@ -2186,7 +2192,12 @@ BEGIN
        SET status = decode(status, dconst.DISKCOPY_WAITFS, dconst.DISKCOPY_FAILED,
                                    dconst.DISKCOPY_WAITFS_SCHEDULING, dconst.DISKCOPY_FAILED,
                                    dconst.DISKCOPY_INVALID)
-     WHERE id IN (SELECT /*+ CARDINALITY(dcidTable 5) */ * FROM TABLE(dcsToRm) dcidTable);
+     WHERE id IN (SELECT /*+ CARDINALITY(dcidTable 5) */ * FROM TABLE(dcsToRm) dcidTable)
+    RETURNING SUM(decode(status, dconst.DISKCOPY_VALID, 1, 0)) INTO varNbValidRmed;
+
+    -- update importance of remaining DiskCopies, if any
+    UPDATE DiskCopy SET importance = importance + varNbValidRmed
+     WHERE castorFile = cfId AND status = dconst.DISKCOPY_VALID;
 
     -- fail the subrequests linked to the deleted diskcopies
     FOR sr IN (SELECT /*+ INDEX(SR I_SubRequest_DiskCopy) */ id, subreqId
@@ -2774,6 +2785,12 @@ BEGIN
      WHERE castorFile = varCfId
        AND status = dconst.DISKCOPY_VALID
        AND id != inDcIds(i);
+    -- and update their importance if needed (other copy exists and dropped one was valid)
+    IF varNbRemaining > 0 AND varStatus = dconst.DISKCOPY_VALID THEN
+      UPDATE DiskCopy SET importance = importance + 1
+       WHERE castorFile = varCfId
+         AND status = dconst.DISKCOPY_VALID;
+    END IF;
     IF inForce = TRUE THEN
       -- the physical diskcopy is deemed lost: delete the diskcopy entry
       -- and potentially drop dangling entities
@@ -3040,8 +3057,8 @@ BEGIN
     varDcId := ids_seq.nextval();
     buildPathFromFileId(inFileId, inNsHost, varDcId, varPath);
     INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status, creationTime, lastAccessTime,
-                          gcWeight, diskCopySize, nbCopyAccesses, owneruid, ownergid)
-    VALUES (varPath, varDcId, 0, inCfId, dconst.DISKCOPY_WAITFS, getTime(), getTime(), 0, 0, 0, inEuid, inEgid);
+                          gcWeight, diskCopySize, nbCopyAccesses, owneruid, ownergid, importance)
+    VALUES (varPath, varDcId, 0, inCfId, dconst.DISKCOPY_WAITFS, getTime(), getTime(), 0, 0, 0, inEuid, inEgid, 0);
     -- update and schedule the subRequest if needed
     IF inDoSchedule THEN
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
