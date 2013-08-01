@@ -179,6 +179,8 @@ def _writep(priority, msgnb, **params):
             continue
         except ValueError:
             pass
+        except TypeError:
+            pass
 
         # Floats
         try:
@@ -186,8 +188,11 @@ def _writep(priority, msgnb, **params):
             continue
         except ValueError:
             pass
+        except TypeError:
+            pass
 
-        # Strings
+        # Rest of the logs, converted to Strings
+        value = str(value)
         value = value.replace('\n', ' ') # remove newlines
         value = value.replace('\t', ' ') # remove tabs
         value = value.replace('"', '\'') # escape double quotes
