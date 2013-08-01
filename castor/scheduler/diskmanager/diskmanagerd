@@ -87,7 +87,8 @@ class DiskServerManagerService(rpyc.Service):
     Queues the new transfer.'''
     transfer = tupleToTransfer(transferTuple)
     dlf.writedebug(msgs.INVOKINGSCHEDULETRANSFER, Scheduler=scheduler, subreqId=transfer.transferId,
-                   reqId=transfer.reqId, TransferType=transfer.transferType, fileid=transfer.fileId)
+                   reqId=transfer.reqId, TransferType=TransferType.toStr(transfer.transferType),
+                   fileid=transfer.fileId)
     transferQueue.put(scheduler, transfer)
 
   def exposed_summarizeTransfers(self, user=None, detailed=False):

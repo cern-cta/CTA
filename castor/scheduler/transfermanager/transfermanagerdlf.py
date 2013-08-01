@@ -50,7 +50,9 @@ msgs = dlf.enum('ABORTEREXCEPTION', 'SYNCHROFAILED', 'SYNCHROEXCEPTION',
                 'SYNCDBWITHD2DSRC', 'COULDNOTCONTACTTM', 'TRANSFERSTARTCONFIRMED',
                 'D2DENDEXCEPTION', 'D2DDESTRESTARTERROR', 'INVOKINGTRANSFERBACKTOQUEUE',
                 'TRANSFERSRCCANCELED', 'REPORTMANAGEREXCEPTION', 'INVOKINGMODIFYDISKSERVERS',
-                'MODIFYDISKSERVERSEXCEPTION')
+                'MODIFYDISKSERVERSEXCEPTION', 'INITQUEUES', 'INITQUEUESENDED',
+                'INITQUEUELISTRUNNING', 'INITQUEUELISTPENDING')
+
 
 # initialization of the messages
 dlf.addmessages({msgs.ABORTEREXCEPTION : 'Caught exception in Aborter thread',
@@ -117,6 +119,10 @@ dlf.addmessages({msgs.ABORTEREXCEPTION : 'Caught exception in Aborter thread',
                  msgs.TRANSFERSRCCANCELED : 'denying start of source transfer as it has been canceled',
                  msgs.REPORTMANAGEREXCEPTION : 'Caught exception in Aborter thread',
                  msgs.INVOKINGMODIFYDISKSERVERS : 'Invoking modifyDiskServers',
-                 msgs.MODIFYDISKSERVERSEXCEPTION : 'Exception caught while modifying diskserver(s), giving up'
+                 msgs.MODIFYDISKSERVERSEXCEPTION : 'Exception caught while modifying diskserver(s), giving up',
+                 msgs.INITQUEUES : 'Initializing Queues from the diskmanagers\' ones',
+                 msgs.INITQUEUESENDED : 'Initialization of queues dones',
+                 msgs.INITQUEUELISTRUNNING : 'Queue initialization : Getting running jobs',
+                 msgs.INITQUEUELISTPENDING : 'Queue initialization : Getting pending jobs'
 })
 
