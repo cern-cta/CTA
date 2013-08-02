@@ -36,7 +36,7 @@ def usage(exitCode):
     '''prints usage'''
     print 'Usage :'
     print '  draindiskserver -h/--help'
-    print '  draindiskserver -a/--add [-S serviceclass] [--auto-delete] [--file-mask=(NOTONTAPE|ALL)] [--comment=comment] <targets>'
+    print '  draindiskserver -a/--add [-S serviceclass] [--file-mask=(NOTONTAPE|ALL)] [--comment=comment] <targets>'
     print '  draindiskserver -q/--query [-c/--config] [-r/--running] [--script] [<targets>]'
     print '  draindiskserver -q/--query -f/--failures [<targets>]'
     print '  draindiskserver -d/--delete <targets>'
@@ -125,7 +125,7 @@ def drainingJobStatusToStr(status):
 try:
     options, arguments = getopt.getopt(sys.argv[1:], 'ham:S:qcfrdv',
                                   ['help', 'add', 'mountpoints=',
-                                   'svcclass=', 'auto-delete', 'file-mask=',
+                                   'svcclass=', 'file-mask=',
                                    'comment=', 'query', 'config', 'failures',
                                    'running', 'script', 'delete', 'verbose'])
 except Exception, parsingException:
@@ -139,8 +139,6 @@ mountPoints = None
 svcClass = None
 fileMask = 1 # default is ALL
 fileMaskFlag = False
-autoDelete = 0
-autoDeleteFlag = False
 configFlag = False
 failuresFlag = False
 runningFlag = False
@@ -169,9 +167,6 @@ for opt, arg in options:
             print 'invalid option for --file-mask, must be one of NOTONTAPE or ALL'
             usage(1)
         fileMask = values[arg.upper()]
-    elif opt == '--auto-delete':
-        autoDelete = 1
-        autoDeleteFlag = True
     elif opt in ('-c', '--config'):
         configFlag = True
     elif opt in ('-f', '--failures'):
@@ -206,8 +201,8 @@ if mountPoints != None and not targets:
 if (addFlag or deleteFlag) and (configFlag or failuresFlag or runningFlag or scriptFlag):
     print 'incompatible set of options : --config, --failures, --running and --script are only valid with --query'
     usage(1)
-if (queryFlag or deleteFlag) and (svcClass != None or autoDeleteFlag or fileMaskFlag or comment != None):
-    print 'incompatible set of options : --query. svcclass, auto-delete, file-mask and comment are only valid with --add'
+if (queryFlag or deleteFlag) and (svcClass != None or fileMaskFlag or comment != None):
+    print 'incompatible set of options : --query. svcclass, file-mask and comment are only valid with --add'
     usage(1)
 if failuresFlag and (configFlag or runningFlag or scriptFlag):
     print 'option --running, --config and --scripts can not be used with --failures'
@@ -293,11 +288,11 @@ def submitDrain():
         stCreateDrainingJob = '''
         INSERT INTO DrainingJob (id, userName, euid, egid, pid, machine,
                                  creationTime, lastModificationTime, status, fileSystem,
-                                 svcClass, autoDelete, fileMask, totalFiles, totalBytes,
+                                 svcClass, fileMask, totalFiles, totalBytes,
                                  nbFailedBytes, nbFailedFiles, nbSuccessBytes,
                                  nbSuccessFiles, userComment)
         VALUES (ids_seq.nextval, :userName, :euid, :egid, :pid, :machine,
-                getTime(), getTime(), 0, :fsId, :svcClassId, :autoDelete, :fileMask,
+                getTime(), getTime(), 0, :fsId, :svcClassId, :fileMask,
                 0, 0, 0, 0, 0, 0, :userComment)'''
         # First check DiskServers status
         stCheckDSState = 'SELECT name, status FROM DiskServer WHERE id IN (' + \
@@ -344,7 +339,7 @@ def submitDrain():
             # finally start active draining
             stcur.execute(stCreateDrainingJob, userName=userName, euid=euid, egid=egid,
                           pid=pid, machine=machine, fsId=fsId, svcClassId=svcClassId,
-                          autoDelete=autoDelete, fileMask=fileMask, userComment=comment)
+                          fileMask=fileMask, userComment=comment)
             print 'Started draining for %s:%s' % (dsName, fsMountPoint)
         stconn.commit()
     finally:
@@ -394,7 +389,7 @@ def queryDrain():
         SELECT DiskServer.name, FileSystem.mountPoint,
                DrainingJob.username, DrainingJob.machine, DrainingJob.userComment,
                DrainingJob.creationTime, DrainingJob.totalFiles, DrainingJob.totalBytes,
-               DrainingJob.fileMask, DrainingJob.autoDelete, getSvcClassName(DrainingJob.svcClass),
+               DrainingJob.fileMask, getSvcClassName(DrainingJob.svcClass),
                DrainingJob.status, DrainingJob.nbFailedBytes, DrainingJob.nbSuccessBytes,
                DrainingJob.nbFailedFiles, DrainingJob.nbSuccessFiles, getTime()
           FROM DrainingJob, FileSystem, DiskServer
@@ -416,11 +411,11 @@ def queryDrain():
         # display the same set of columns
         if configFlag:
             titles = ['DiskServer', 'MountPoint', 'UserName', 'Machine', 'SvcClass',
-                      'FileMask', 'AutoDelete', 'Comment']
+                      'FileMask', 'Comment']
             data = [(diskServerName, fsMountPoint, userName, machine, svcClassName,
-                     FileMask.toStr(DJFileMask), castor_tools.intToBool(DJAutoDelete), DJComment)
+                     FileMask.toStr(DJFileMask), DJComment)
                     for diskServerName, fsMountPoint, userName, machine,
-                    DJComment, creationTime, totalFiles, totalBytes, DJFileMask, DJAutoDelete,
+                    DJComment, creationTime, totalFiles, totalBytes, DJFileMask,
                     svcClassName, DJStatus, nbFailedBytes, nbSuccessBytes, nbFailedFiles,
                     nbSuccessFiles, currentTime in results]
         else:
@@ -434,7 +429,7 @@ def queryDrain():
                      castor_tools.printETC(nbSuccessBytes+nbFailedBytes, totalBytes, currentTime-creationTime),
                      drainingJobStatusToStr(DJStatus))
                     for diskServerName, fsMountPoint, userName, machine,
-                    DJComment, creationTime, totalFiles, totalBytes, DJFileMask, DJAutoDelete,
+                    DJComment, creationTime, totalFiles, totalBytes, DJFileMask,
                     svcClassName, DJStatus, nbFailedBytes, nbSuccessBytes, nbFailedFiles,
                     nbSuccessFiles, currentTime in results]
         # depending on the presence of the script flags, we use pretty

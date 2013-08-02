@@ -38,9 +38,6 @@ draindiskserver \- management of draining filesystems and diskservers
 <serviceclass>
 ]
 [
-.BI --auto-delete
-]
-[
 .BI --file-mask\c
 =(NOTONTAPE|ALL)
 ]
@@ -176,10 +173,6 @@ Add options (\fB-a\fR or \fB--add\fR):
 The name of the service class that files should be replicated to. This option
 can be omitted if the filesystems to be added all belong to a single unique
 service class.
-.TP
-.B --auto-delete
-Delete files automatically after replication. (Default: NO). Files deleted as a
-resulted of the draining process will have the GcType: 'Draining filesystem'.
 .TP
 .B --file-mask=(NOTONTAPE|ALL)
 Mask used to decide which files need to be replicated. (Default: \fBALL\fR)

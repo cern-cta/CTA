@@ -1867,8 +1867,6 @@ CREATE GLOBAL TEMPORARY TABLE RepackTapeSegments
  *   - status : current status of the job. One of SUBMITTED, STARTING,
  *              RUNNING, FAILED, COMPLETED
  *   - svcClass : the target service class for the draining
- *   - autoDelete : whether source files should be invalidated after
- *                  their replication. One of 0 (no) and 1 (yes)
  *   - fileMask : indicates which files are concerned by the draining.
  *                One of NOTONTAPE, ALL
  *   - totalFiles, totalBytes : indication of the work to be done. These
@@ -1891,7 +1889,6 @@ CREATE TABLE DrainingJob
    fileSystem     INTEGER CONSTRAINT NN_DrainingJob_FileSystem NOT NULL 
                           CONSTRAINT UN_DrainingJob_FileSystem UNIQUE USING INDEX,
    svcClass       INTEGER CONSTRAINT NN_DrainingJob_SvcClass NOT NULL,
-   autoDelete     INTEGER CONSTRAINT NN_DrainingJob_AutoDelete NOT NULL,
    fileMask       INTEGER CONSTRAINT NN_DrainingJob_FileMask NOT NULL,
    totalFiles     INTEGER CONSTRAINT NN_DrainingJob_TotFiles NOT NULL,
    totalBytes     INTEGER CONSTRAINT NN_DrainingJob_TotBytes NOT NULL,
@@ -1924,10 +1921,6 @@ ALTER TABLE DrainingJob
   ADD CONSTRAINT FK_DrainingJob_SvcClass
   FOREIGN KEY (svcClass)
   REFERENCES SvcClass (id);
-
-ALTER TABLE DrainingJob
-  ADD CONSTRAINT CK_DrainingJob_AutoDelete
-  CHECK (autoDelete IN (0, 1));
 
 ALTER TABLE DrainingJob
   ADD CONSTRAINT CK_DrainingJob_FileMask
