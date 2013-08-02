@@ -294,7 +294,7 @@ class ServerQueue(dict):
             dlf.writedebug(msgs.TRANSFERSTARTCONFIRMED, DiskServer=transfer.diskServer,
                            subreqId=transfer.transferId, reqId=transfer.reqId)
             if transfer.transferType == TransferType.D2DDST:
-              return self.d2dsrcrunning[transfer.transferId]
+              return self.d2dsrcrunning[transfer.transferId].srcTransfer
             else:
               return
           # The transfer has really started somewhere else. Let the diskServer know by raising an exception
