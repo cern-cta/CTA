@@ -217,6 +217,47 @@ namespace UnitTests {
     ASSERT_EQ(0xBC, logSenseCDB.control);
   }
   
+  TEST(SCSI_Structures, locate10CDB_t) {
+    SCSI::Structures::locate10CDB_t locate10CDB;
+    unsigned char *buff = (unsigned char *)&locate10CDB;
+    
+    /*
+     * Make sure this struct is a POD (plain old data without virtual table)
+     * (and has the right size).
+     */
+    ASSERT_EQ(10, sizeof(locate10CDB));  // that is why it called locate 10
+    
+    /* Check proper initialization an location of struct members match
+     the bit/byte locations defined in SPC-4 */
+    ASSERT_EQ(SCSI::Commands::LOCATE_10, locate10CDB.opCode);
+    buff[0] = 0xAB;
+    ASSERT_EQ(0xAB, locate10CDB.opCode);
+    
+    ASSERT_EQ(0, locate10CDB.IMMED);
+    buff[1] |= (0x1 &   0x7) << 0;
+    ASSERT_EQ(1, locate10CDB.IMMED);
+    
+    ASSERT_EQ(0, locate10CDB.CP);
+    buff[1] |= (0x1 &   0xF) << 1;
+    ASSERT_EQ(1, locate10CDB.CP);
+    
+    ASSERT_EQ(0, locate10CDB.BT);
+    buff[1] |= (0x1 &   0xF) << 2;  
+    ASSERT_EQ(1, locate10CDB.BT);
+    
+    ASSERT_EQ(0, SCSI::Structures::toU32(locate10CDB.logicalObjectID));
+    buff[3] |= 0x0A;buff[4] |= 0xBC;buff[5] |= 0xDE;buff[6] |= 0xF0;
+    ASSERT_EQ(0x0ABCDEF0, SCSI::Structures::toU32(locate10CDB.logicalObjectID));
+    
+    ASSERT_EQ(0, locate10CDB.partition);
+    buff[8] = 0xAB;
+    ASSERT_EQ(0xAB, locate10CDB.partition);
+       
+    ASSERT_EQ(0, locate10CDB.control);
+    buff[9] |= 0xBC;
+    ASSERT_EQ(0xBC, locate10CDB.control);
+  }
+  
   TEST(SCSI_Structures, tapeAlertLogPage_t_and_parameters) {
     SCSI::Structures::tapeAlertLogPage_t<12> tal;
     unsigned char * buff = (unsigned char *) & tal;
@@ -311,6 +352,11 @@ namespace UnitTests {
   TEST(SCSI_Structures, toU32) {
     unsigned char num[4] = { 0x1, 0x2, 0x3, 0x4 };
     ASSERT_EQ( 0x1020304, SCSI::Structures::toU32(num));
+  }
+  
+  TEST(SCSI_Structures, toS32) {
+    unsigned char num[4] = { 0xE6, 0x29, 0x66, 0x5B };
+    ASSERT_EQ( -433494437, SCSI::Structures::toS32(num));
   }
   
   TEST(SCSI_Structures, toU64) {

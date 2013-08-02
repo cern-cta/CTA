@@ -207,6 +207,40 @@ namespace SCSI {
       unsigned char vendorSpecific2[1];
     };
     
+     /*
+     * LOCATE(10) CDB as described in SSC-3.
+     */
+    class locate10CDB_t {
+    public:
+      locate10CDB_t() {
+        zeroStruct(this);
+        opCode = SCSI::Commands::LOCATE_10; 
+      }
+      // byte 0
+      unsigned char opCode;                // OPERATION CODE (2Bh)
+      
+      // byte 1
+      unsigned char IMMED : 1;             // Immediate 
+      unsigned char CP    : 1;             // Change Partition
+      unsigned char BT    : 1;             // Block address Type
+      unsigned char       : 5;             // Reserved
+      
+      // byte 2
+      unsigned char       : 8;             // Reserved
+      
+      // bytes 3-6
+      unsigned char logicalObjectID[4] ;   // Logical object identifier or block address
+            
+      // byte 7
+      unsigned char        :8;             // Reserved
+      
+      // byte 8
+      unsigned char partition;             // Partition
+            
+      // byte 9
+      unsigned char control;               // Control byte
+    };
+    
     /*
      * LOG SELECT CDB as described in SPC-4.
      */

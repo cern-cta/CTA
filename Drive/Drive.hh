@@ -146,7 +146,7 @@ namespace Tape {
       if (-1 == m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh))
         throw Tape::Exceptions::Errnum("Failed SG_IO ioctl");
       if (SCSI::Status::GOOD != sgh.status)
-        throw Tape::Exception(std::string("SCSI error in getTapeAlerts: ") + 
+        throw Tape::Exception(std::string("SCSI error in clearCompressionStats: ") + 
                 SCSI::statusToString(sgh.status));
     }
     
@@ -155,12 +155,38 @@ namespace Tape {
      * @return 
      */
     virtual deviceInfo getDeviceInfo() throw (Exception) { throw Exception("Not implemented"); }
+    
     /**
-     * Position to logical object address (i.e. block). This function is non-blocking:
-     * the immediate bit is not set.
+     * Position to logical object identifier (i.e. block address). 
+     * This function is blocking: the immediate bit is not set.
+     * The device server will not return status until the locate operation
+     * has completed.
      * @param blockId The blockId, represented in local endianness.
      */
-    virtual void positionToLogicalObject (uint32_t blockId) throw (Exception) { throw Exception("Not implemented"); }
+    virtual void positionToLogicalObject (uint32_t blockId) throw (Exception) {
+      SCSI::Structures::locate10CDB_t cdb;
+      uint32_t blkId = ntohl(blockId);
+      
+      memcpy (cdb.logicalObjectID, &blkId, sizeof(cdb.logicalObjectID));
+            
+      SCSI::Structures::senseData_t<255> senseBuff;
+      SCSI::Structures::LinuxSGIO_t sgh;
+      
+      sgh.setCDB(&cdb);
+      sgh.setSenseBuffer(&senseBuff);  
+      sgh.dxfer_direction = SG_DXFER_NONE;
+      sgh.timeout = 180000; // TODO castor.conf LOCATE_TIMEOUT or default
+      
+      /* Manage both system error and SCSI errors. */
+      if (-1 == m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh))
+        throw Tape::Exceptions::Errnum("Failed SG_IO ioctl");
+      if (SCSI::Status::GOOD != sgh.status)
+        throw Tape::Exception(std::string("SCSI error in positionToLogicalObject: ") + 
+                SCSI::statusToString(sgh.status));
+    }
+    
+
+    
     /**
      * Return logical position of the drive. This is the address of the next object
      * to read or write.

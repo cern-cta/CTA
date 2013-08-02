@@ -93,6 +93,7 @@ namespace SCSI {
       WRITE_10                                      = 0x2a,
       SEEK_10                                       = 0x2b,
       POSITION_TO_ELEMENT                           = 0x2b,
+      LOCATE_10                                     = 0x2b,
       WRITE_VERIFY                                  = 0x2e,
       VERIFY                                        = 0x2f,
       SEARCH_HIGH                                   = 0x30,
