@@ -8005,7 +8005,8 @@ BEGIN
            AND FileSystem.diskServer = DiskServer.id
            AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING, dconst.DISKSERVER_READONLY)
            AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING, dconst.FILESYSTEM_READONLY)
-           AND DiskServer.hwOnline = 1)
+           AND DiskServer.hwOnline = 1
+         ORDER BY DBMS_Random.value)
       WHERE ROWNUM <= 3) LOOP
     IF LENGTH(varResult) IS NOT NULL THEN varResult := varResult || '|'; END IF;
     varResult := varResult || line.candidate;
