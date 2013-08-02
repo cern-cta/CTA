@@ -434,12 +434,22 @@ def queryDrain():
                     DJComment, creationTime, totalFiles, totalBytes, DJFileMask,
                     svcClassName, DJStatus, nbFailedBytes, nbSuccessBytes, nbFailedFiles,
                     nbSuccessFiles, currentTime in results]
+            if not scriptFlag:
+                zr = zip(*results)
+                totFiles, totBytes, totFailedBytes, totSuccessBytes, totFailedFiles, totSuccessFiles = \
+                  sum(zr[6]), sum(zr[7]), sum(zr[11]), sum(zr[12]), sum(zr[13]), sum(zr[14])
+                data.append(('', '', '', totFiles, castor_tools.nbToDataAmount(totBytes),
+                             totFiles-totFailedFiles-totSuccessFiles,
+                             castor_tools.nbToDataAmount(totBytes-totFailedBytes-totSuccessBytes),
+                             totSuccessFiles, totFailedFiles, '',
+                             castor_tools.printPercentage((totSuccessBytes+totFailedBytes), totBytes),
+                             '', ''))
         # depending on the presence of the script flags, we use pretty
         # printing or script printing
         if scriptFlag:
             castor_tools.scriptPrintTable(data)
         else:
-            castor_tools.prettyPrintTable(titles, data)
+            castor_tools.prettyPrintTable(titles, data, hasSummary=(not configFlag))
     finally:
         # close DB connection
         castor_tools.disconnectDB(stconn)
