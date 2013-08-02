@@ -410,7 +410,7 @@ BEGIN
   -- if success, create new DiskCopy, restart waiting requests, cleanup and handle replicate on close
   IF inErrorMessage IS NULL THEN
     -- get filesystem of the diskcopy and parse diskcopy path
-    SELECT FileSystem.id, SUBSTR(inDestPath, LENGTH(FileSystem.mountPoint))
+    SELECT FileSystem.id, SUBSTR(inDestPath, LENGTH(FileSystem.mountPoint)+1)
       INTO varDestFsId, varDestPath
       FROM DiskServer, FileSystem
      WHERE DiskServer.name = inDestDsName
