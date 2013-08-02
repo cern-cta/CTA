@@ -136,7 +136,7 @@ class ActivityControlThread(threading.Thread):
             except connectionpool.Timeout:
               # 'Failed to start transfer and got timeout when putting back to queue'
               dlf.writenotice(msgs.TRANSFERBACKTOQUEUEFAILED, subreqid=transfer.transferId,
-                              reqid=transfer.reqId, fileId=transfer.fileId)
+                              reqid=transfer.reqId, fileId=transfer.fileId, originalError='Timeout')
           except ValueError, e:
             # 'Transfer start canceled' message
             dlf.writedebug(msgs.TRANSFERSTARTCANCELED, reason=e.args, subreqid=transfer.transferId,
@@ -150,7 +150,7 @@ class ActivityControlThread(threading.Thread):
                       reqid=transfer.reqId, fileId=transfer.fileId)
             # put the transfer into the pending queue
             self.transferQueue.d2dDestReady(scheduler, transfer)
-          except Exception:
+          except Exception, e:
             # startup of the transfer failed with unexpected error
             # We need to try again thus we put the transfer into the priority queue and inform the scheduler
             try:
@@ -158,14 +158,14 @@ class ActivityControlThread(threading.Thread):
               connectionpool.connections.transferBackToQueue(scheduler, transfer.asTuple())
               # 'Failed to start transfer. Putting it back to the queue' message
               dlf.writeerr(msgs.TRANSFERSTARTINGFAILED, subreqid=transfer.transferId,
-                           reqid=transfer.reqId, fileId=transfer.fileId)
+                           reqid=transfer.reqId, fileId=transfer.fileId, error=e)
               time.sleep(1)
             except connectionpool.Timeout:
               # clear this exception context, i.e. the Timeout, so that we log the original error
               sys.exc_clear()
               # 'Failed to start transfer and got timeout when putting back to queue'
               dlf.writeerr(msgs.TRANSFERBACKTOQUEUEFAILED, subreqid=transfer.transferId,
-                           reqid=transfer.reqId, fileId=transfer.fileId)
+                           reqid=transfer.reqId, fileId=transfer.fileId, originalError=e)
         else:
           time.sleep(.05)
       except Exception:
