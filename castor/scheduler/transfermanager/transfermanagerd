@@ -175,7 +175,8 @@ class TransferManagerService(rpyc.Service):
         # 'Could not contact transfer manager' message
         dlf.writenotice(msgs.COULDNOTCONTACTTM, Function='_computeNbTransfersPerPool', TransferManager=scheduler,
                         Type=str(e.__class__), Message=str(e))
-        raise IOError
+        raise IOError(0, 'Could not contact transfer manager on %s' % scheduler,
+                      'See transfermanagerd\'s log for details')
     return nbTransfersPerPool
 
   def exposed_listPendingTransfersCentrally(self, diskPool=None, user=None):
@@ -193,7 +194,8 @@ class TransferManagerService(rpyc.Service):
         # 'Could not contact transfer manager' message
         dlf.writenotice(msgs.COULDNOTCONTACTTM, Function='listPendingTransfersCentrally',
                         TransferManager=scheduler, Type=str(e.__class__), Message=str(e))
-        raise IOError('Could not contact transfer manager on %s' % scheduler)
+        raise IOError(0, 'Could not contact transfer manager on %s' % scheduler,
+                      'See transfermanagerd\'s log for details')
     return tuple(transfers)
 
   def exposed_summarizeTransfersPerPool(self, diskPool=None, user=None, detailed=False):
