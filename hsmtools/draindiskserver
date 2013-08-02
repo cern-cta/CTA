@@ -256,7 +256,7 @@ def getSvcClassId(stcur, fileSystemIds):
     else:
         # no service class given, get the one of the involved filesystems
         stGetSvcClass = '''
-        SELECT DiskPool2SvcClass.child
+        SELECT UNIQUE DiskPool2SvcClass.child
           FROM FileSystem, DiskPool2SvcClass
          WHERE FileSystem.id IN (''' + ', '.join([str(x) for x in fileSystemIds]) + ''')
            AND FileSystem.diskpool = DiskPool2SvcClass.parent'''
