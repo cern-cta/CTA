@@ -1206,6 +1206,14 @@ protected:
     char           (&dst)[CA_MAXPATHLEN+1])
     const throw(castor::exception::Exception);
 
+  /**
+   * Returns the string representation of the specified CASTOR object type.
+   * In the case of the type being unknown, the returned string is "UNKNOWN".
+   *
+   * @param type The type of the CASTOR object.
+   */
+  static const char *objectTypeToString(const unsigned int type) throw();
+
 }; // class BridgeProtocolEngine
 
 } // namespace tapebridge

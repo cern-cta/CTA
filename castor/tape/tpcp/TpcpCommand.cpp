@@ -473,7 +473,7 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
       castor::exception::Exception ex(ECANCELED);
       ex.getMessage() <<
         "Received the wrong type of object from the tapebridge" <<
-        ": Actual=" << utils::objectTypeToString(firstObj->type()) <<
+        ": Actual=" << Helper::objectTypeToString(firstObj->type()) <<
         " Expected=VolumeRequest or EndNotificationErrorReport";
       throw ex;
     }
@@ -685,7 +685,7 @@ bool castor::tape::tpcp::TpcpCommand::waitForMsgAndDispatchHandler()
     std::ostream &os = std::cout;
 
     os << "Received tapebridge message of type = "
-       << utils::objectTypeToString(obj->type()) << std::endl;
+       << Helper::objectTypeToString(obj->type()) << std::endl;
   }
 
   {
@@ -698,7 +698,7 @@ bool castor::tape::tpcp::TpcpCommand::waitForMsgAndDispatchHandler()
 
       oss <<
         "Unexpected object type" <<
-        ": actual=" << utils::objectTypeToString(obj->type()) <<
+        ": actual=" << Helper::objectTypeToString(obj->type()) <<
         " expected=Subclass of GatewayMessage";
 
       const uint64_t tapebridgeTransactionId = 0; // Unknown transaction ID

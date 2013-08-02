@@ -23,7 +23,6 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/Constants.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/tape/Constants.hpp"
@@ -485,18 +484,6 @@ void castor::tape::utils::checkDgnSyntax(const char *dgn)
   }
 
   checkIdSyntax(dgn);
-}
-
-
-//------------------------------------------------------------------------------
-// objectTypeToString
-//------------------------------------------------------------------------------
-const char *castor::tape::utils::objectTypeToString(const unsigned int type) {
-  if(type >= castor::ObjectsIdsNb) {
-    return "UNKNOWN";
-  }
-
-  return castor::ObjectsIdStrings[type];
 }
 
 

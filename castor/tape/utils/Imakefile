@@ -36,5 +36,4 @@ TAPEUTILSLIB_SRCS = \
 TAPEUTILSLIB_OBJS = $(TAPEUTILSLIB_SRCS:.cpp=.o)
 
 DependsOnLibrary(common,castorcommon)
-DependsOnLibrary(castor,castorclient)
 SharedLibraryTarget(castortapeutils,$(TAPEUTILSLIB_OBJS),,)

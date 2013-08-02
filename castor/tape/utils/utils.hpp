@@ -367,14 +367,6 @@ void checkDgnSyntax(const char *dgn)
   throw(castor::exception::InvalidArgument);
 
 /**
- * Returns the string representation of the specified CASTOR object type.
- * In the case of the type being unknown, the returned string is "UNKNOWN".
- *
- * @param type The type of the CASTOR object.
- */
-const char *objectTypeToString(const unsigned int type);
-
-/**
  * Appends each line of the specified file to the specified list of lines.
  * The new-line characters are extracted from the file, but they are not
  * stored in the lines appended to the list.

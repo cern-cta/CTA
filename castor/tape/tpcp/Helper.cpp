@@ -22,6 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
  
+#include "castor/Constants.hpp"
 #include "castor/tape/tpcp/Helper.hpp"
 
 
@@ -30,4 +31,16 @@
 //------------------------------------------------------------------------------
 castor::tape::tpcp::Helper::~Helper() {
   // Do nothing
+}
+
+//------------------------------------------------------------------------------
+// objectTypeToString
+//------------------------------------------------------------------------------
+const char *castor::tape::tpcp::Helper::objectTypeToString(
+  const unsigned int type) throw() {
+  if(type >= castor::ObjectsIdsNb) {
+    return "UNKNOWN";
+  }
+
+  return castor::ObjectsIdStrings[type];
 }

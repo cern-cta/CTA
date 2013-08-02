@@ -54,7 +54,7 @@ public:
       std::ostream &os = std::cout;
 
       os <<
-        "Received " << utils::objectTypeToString(msg.type()) <<
+        "Received " << objectTypeToString(msg.type()) <<
         " from tapebridge" << std::endl <<
         msg << std::endl;
     }
@@ -72,11 +72,19 @@ public:
       std::ostream &os = std::cout;
 
       os <<
-        "Sent " << utils::objectTypeToString(msg.type()) <<
+        "Sent " << objectTypeToString(msg.type()) <<
         " to tapebridge" << std::endl <<
         msg << std::endl;
     }
   }
+
+  /**
+   * Returns the string representation of the specified CASTOR object type.
+   * In the case of the type being unknown, the returned string is "UNKNOWN".
+   *
+   * @param type The type of the CASTOR object.
+   */
+  static const char *objectTypeToString(const unsigned int type) throw();
 
 private:
 

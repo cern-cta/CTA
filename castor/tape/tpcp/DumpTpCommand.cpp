@@ -451,7 +451,7 @@ bool castor::tape::tpcp::DumpTpCommand::dispatchMsgHandler(
 
       oss <<
         "Received unexpected tapebridge message"
-        ": Message type = " << utils::objectTypeToString(obj->type());
+        ": Message type = " << Helper::objectTypeToString(obj->type());
 
       const uint64_t tapebridgeTransactionId = 0; // Unknown transaction ID
       sendEndNotificationErrorReport(tapebridgeTransactionId, EBADMSG,
@@ -459,7 +459,7 @@ bool castor::tape::tpcp::DumpTpCommand::dispatchMsgHandler(
 
       TAPE_THROW_CODE(EBADMSG,
         ": Received unexpected tapebridge message "
-        ": Message type = " << utils::objectTypeToString(obj->type()));
+        ": Message type = " << Helper::objectTypeToString(obj->type()));
     }
   }
 }

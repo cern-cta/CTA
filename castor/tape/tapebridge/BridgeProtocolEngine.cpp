@@ -692,7 +692,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
     }
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ECANCELED,
-      ": message type=" << utils::objectTypeToString(obj->type()) <<
+      ": message type=" << objectTypeToString(obj->type()) <<
       ": " << ex.getMessage().str());
   }
 }
@@ -3863,4 +3863,17 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
     dst[d] = backwardsHexDigits[nbDigits-1-d];
   }
   dst[nbDigits] = '\0';
+}
+
+
+//------------------------------------------------------------------------------
+// objectTypeToString
+//------------------------------------------------------------------------------
+const char *castor::tape::tapebridge::BridgeProtocolEngine::objectTypeToString(
+  const unsigned int type) throw() {
+  if(type >= castor::ObjectsIdsNb) {
+    return "UNKNOWN";
+  }
+
+  return castor::ObjectsIdStrings[type];
 }

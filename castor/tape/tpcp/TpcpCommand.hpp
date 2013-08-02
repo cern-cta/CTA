@@ -33,6 +33,7 @@
 #include "castor/tape/tapegateway/FileErrorReportStruct.hpp"
 #include "castor/tape/tapegateway/VolumeRequest.hpp"
 #include "castor/tape/tpcp/FilenameList.hpp"
+#include "castor/tape/tpcp/Helper.hpp"
 #include "castor/tape/tpcp/ParsedCommandLine.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/Castor_limits.h"
@@ -382,8 +383,8 @@ protected:
 
       oss <<
         "Unexpected object type" <<
-        ": Actual=" << utils::objectTypeToString(obj->type()) <<
-        " Expected=" << utils::objectTypeToString(T().type());
+        ": Actual=" << Helper::objectTypeToString(obj->type()) <<
+        " Expected=" << Helper::objectTypeToString(T().type());
 
       const uint64_t tapebridgeTransactionId = 0; // Transaction Id unknown
       sendEndNotificationErrorReport(tapebridgeTransactionId, SEINTERNAL,
