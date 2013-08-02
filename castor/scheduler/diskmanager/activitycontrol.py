@@ -128,8 +128,8 @@ class ActivityControlThread(threading.Thread):
             # we timed out in the call to transfersCanceled or transferStarting. We need to try again
             # thus we put the transfer into the priority queue and inform the scheduler
             try:
-              connectionpool.connections.transferBackToQueue(scheduler, transfer.asTuple())
               self.transferQueue.putPriority(scheduler, transfer)
+              connectionpool.connections.transferBackToQueue(scheduler, transfer.asTuple())
               # 'Timeout when trying to start/cancel transfer. Putting it back to the queue' message
               dlf.writenotice(msgs.TRANSFERSTARTTIMEOUT, subreqid=transfer.transferId,
                               reqid=transfer.reqId, fileId=transfer.fileId)
@@ -154,8 +154,8 @@ class ActivityControlThread(threading.Thread):
             # startup of the transfer failed with unexpected error
             # We need to try again thus we put the transfer into the priority queue and inform the scheduler
             try:
-              connectionpool.connections.transferBackToQueue(scheduler, transfer.asTuple())
               self.transferQueue.putPriority(scheduler, transfer)
+              connectionpool.connections.transferBackToQueue(scheduler, transfer.asTuple())
               # 'Failed to start transfer. Putting it back to the queue' message
               dlf.writeerr(msgs.TRANSFERSTARTINGFAILED, subreqid=transfer.transferId,
                            reqid=transfer.reqId, fileId=transfer.fileId)
