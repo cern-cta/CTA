@@ -845,6 +845,8 @@ INSERT INTO CastorConfig
 INSERT INTO CastorConfig
   VALUES ('DiskServer', 'HeartbeatTimeout', '180', 'The maximum amount of time in seconds that a diskserver can spend without sending any hearbeat before it is automatically set to offline.');
 INSERT INTO CastorConfig
+  VALUES ('Draining', 'MaxNbSchedD2dPerDrain', '1000', 'The maximum number of disk to disk copies that each draining job should send to the scheduler concurrently.');
+INSERT INTO CastorConfig
   VALUES ('Rebalancing', 'Sensibility', '5', 'The rebalancing sensibility (in percent) : if a fileSystem is at least this percentage fuller than the average of the diskpool where is lives, rebalancing will fire.');
 
 /* Create the AdminUsers table */
@@ -11612,58 +11614,47 @@ BEGIN
 END;
 /
 
-/* handle the creation of the Disk2DiskCopyJobs related to a given
- * DrainingJob */
-CREATE OR REPLACE PROCEDURE handleDrainingJob(inDjId IN INTEGER) AS
-  varFsId INTEGER;
-  varSvcClassId INTEGER;
-  varAutoDelete INTEGER;
-  varFileMask INTEGER;
-  varEuid INTEGER;
-  varEgid INTEGER;
+/* handle the creation of the Disk2DiskCopyJobs for the running drainingJobs */
+CREATE OR REPLACE PROCEDURE drainRunner AS
   varNbFiles INTEGER := 0;
   varNbBytes INTEGER := 0;
-  varStartedNewJobs BOOLEAN := False;
   varNbRunningJobs INTEGER;
+  varMaxNbOfSchedD2dPerDrain INTEGER;
 BEGIN
-  -- update Draining Job to STARTING, and get its caracteristics. Note that most of the time,
-  -- it was already in STARTING, but that does not harm and we select what we need
-  UPDATE DrainingJob SET status = dconst.DRAININGJOB_STARTING WHERE id = inDjId
-  RETURNING fileSystem, svcClass, autoDelete, fileMask, euid, egid
-    INTO varFsId, varSvcClassId, varAutoDelete, varFileMask, varEuid, varEgid;
-  -- check how many disk2DiskCopyJobs are already running for this draining job
-  SELECT count(*) INTO varNbRunningJobs FROM Disk2DiskCopyJob WHERE drainingJob = inDjId;
-  -- Loop over the creation of Disk2DiskCopyJobs. Select max 1000 files, taking running
-  -- ones into account. Also Take the most important jobs first
-  FOR F IN (SELECT * FROM
-             (SELECT CastorFile.id cfId, Castorfile.nsOpenTime, DiskCopy.id dcId, CastorFile.fileSize
-                FROM DiskCopy, CastorFile
-               WHERE DiskCopy.fileSystem = varFsId
-                 AND CastorFile.id = DiskCopy.castorFile
-                 AND ((varFileMask = dconst.DRAIN_FILEMASK_NOTONTAPE AND
-                       CastorFile.tapeStatus IN (dconst.CASTORFILE_NOTONTAPE, dconst.CASTORFILE_DISKONLY)) OR
-                      (varFileMask = dconst.DRAIN_FILEMASK_ALL))
-                 AND DiskCopy.status = dconst.DISKCOPY_VALID
-               ORDER BY DiskCopy.importance DESC)
-             WHERE ROWNUM <= 1000-varNbRunningJobs) LOOP
-    varStartedNewJobs := True;
-    createDisk2DiskCopyJob(F.cfId, F.nsOpenTime, varSvcClassId, varEuid, varEgid, dconst.REPLICATIONTYPE_DRAINING,
-                           CASE varFileMask WHEN 1 THEN F.dcId ELSE NULL END, inDjId);
-    varNbFiles := varNbFiles + 1;
-    varNbBytes := varNbBytes + F.fileSize;
-  END LOOP;
-  -- commit and update counters
-  IF varStartedNewJobs THEN
+  -- get maxNbOfSchedD2dPerDrain
+  varMaxNbOfSchedD2dPerDrain := TO_NUMBER(getConfigOption('Draining', 'MaxNbSchedD2dPerDrain', '1000'));
+  -- loop over draining jobs
+  FOR dj IN (SELECT id, fileSystem, svcClass, fileMask, euid, egid
+               FROM DrainingJob WHERE status = dconst.DRAININGJOB_RUNNING) LOOP
+    -- check how many disk2DiskCopyJobs are already running for this draining job
+    SELECT count(*) INTO varNbRunningJobs FROM Disk2DiskCopyJob WHERE drainingJob = dj.id;
+    -- Loop over the creation of Disk2DiskCopyJobs. Select max 1000 files, taking running
+    -- ones into account. Also Take the most important jobs first
+    FOR F IN (SELECT * FROM
+               (SELECT CastorFile.id cfId, Castorfile.nsOpenTime, DiskCopy.id dcId, CastorFile.fileSize
+                  FROM DiskCopy, CastorFile
+                 WHERE DiskCopy.fileSystem = dj.fileSystem
+                   AND CastorFile.id = DiskCopy.castorFile
+                   AND ((dj.fileMask = dconst.DRAIN_FILEMASK_NOTONTAPE AND
+                         CastorFile.tapeStatus IN (dconst.CASTORFILE_NOTONTAPE, dconst.CASTORFILE_DISKONLY)) OR
+                        (dj.fileMask = dconst.DRAIN_FILEMASK_ALL))
+                   AND DiskCopy.status = dconst.DISKCOPY_VALID
+                   AND NOT EXISTS (SELECT 1 FROM Disk2DiskCopyJob WHERE castorFile=CastorFile.id)
+                 ORDER BY DiskCopy.importance DESC)
+               WHERE ROWNUM <= varMaxNbOfSchedD2dPerDrain-varNbRunningJobs) LOOP
+      createDisk2DiskCopyJob(F.cfId, F.nsOpenTime, dj.svcClass, dj.euid, dj.egid,
+                             dconst.REPLICATIONTYPE_DRAINING, F.dcId, dj.id);
+      varNbFiles := varNbFiles + 1;
+      varNbBytes := varNbBytes + F.fileSize;
+    END LOOP;
+    -- commit and update counters
     UPDATE DrainingJob
        SET totalFiles = totalFiles + varNbFiles,
            totalBytes = totalBytes + varNbBytes,
            lastModificationTime = getTime()
-     WHERE id = inDjId;
-  ELSE
-    -- final update of DrainingJob TO RUNNING if there was nothing to do
-    UPDATE DrainingJob SET status = dconst.DRAININGJOB_RUNNING WHERE id = inDjId;
-  END IF;
-  COMMIT;
+     WHERE id = dj.id;
+    COMMIT;
+  END LOOP;
 END;
 /
 
@@ -11672,6 +11663,8 @@ END;
  * as this will be restarted regularly by an Oracle job, but may take long to conclude
  */
 CREATE OR REPLACE PROCEDURE drainManager AS
+  varTFiles INTEGER;
+  varTBytes INTEGER;
 BEGIN
   -- Delete the COMPLETED jobs older than 7 days
   DELETE FROM DrainingJob
@@ -11679,11 +11672,18 @@ BEGIN
      AND lastModificationTime < getTime() - (7 * 86400);
   COMMIT;
 
-  -- Loop over the Draining Jobs
-  FOR dj IN (SELECT id FROM DrainingJob
-              WHERE status IN (dconst.DRAININGJOB_SUBMITTED, dconst.DRAININGJOB_STARTING)) LOOP
-    -- handle the draining job, that is check whether to start new Disk2DiskCopy for it
-    handleDrainingJob(dj.id);
+  -- Start new DrainingJobs if needed
+  FOR dj IN (SELECT id, fileSystem FROM DrainingJob WHERE status = dconst.DRAININGJOB_SUBMITTED) LOOP
+    UPDATE DrainingJob SET status = dconst.DRAININGJOB_STARTING WHERE id = dj.id;
+    COMMIT;
+    SELECT count(*), SUM(diskCopySize) INTO varTFiles, varTBytes
+      FROM DiskCopy
+     WHERE fileSystem = dj.fileSystem
+       AND status = dconst.DISKCOPY_VALID;
+    UPDATE DrainingJob
+       SET totalFiles=varTFiles, totalBytes=varTBytes, status = dconst.DRAININGJOB_RUNNING
+     WHERE id = dj.id;
+    COMMIT;
   END LOOP;
 END;
 /
@@ -11765,18 +11765,31 @@ END;
 BEGIN
   -- Remove jobs related to the draining logic before recreating them
   FOR j IN (SELECT job_name FROM user_scheduler_jobs
-             WHERE job_name IN ('DRAINMANAGERJOB', 'REBALANCINGJOB'))
+             WHERE job_name IN ('DRAINMANAGERJOB', 'DRAINRUNNERJOB', 'REBALANCINGJOB'))
   LOOP
     DBMS_SCHEDULER.DROP_JOB(j.job_name, TRUE);
   END LOOP;
 
-  -- Create the drain manager job to be executed every minute
+
+  -- Create the drain manager job to be executed every minute. This one starts and clean up draining jobs
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'drainManagerJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'BEGIN startDbJob(''BEGIN drainManager(); END;'', ''stagerd''); END;',
       JOB_CLASS       => 'CASTOR_JOB_CLASS',
-      START_DATE      => SYSDATE + 5/1440,
+      START_DATE      => SYSDATE + 1/1440,
+      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=1',
+      ENABLED         => TRUE,
+      COMMENTS        => 'Database job to manage the draining process');
+
+  -- Create the drain runner job to be executed every minute. This one checks whether new
+  -- disk2diskCopies need to be created for a given draining job
+  DBMS_SCHEDULER.CREATE_JOB(
+      JOB_NAME        => 'drainRunnerJob',
+      JOB_TYPE        => 'PLSQL_BLOCK',
+      JOB_ACTION      => 'BEGIN startDbJob(''BEGIN drainRunner(); END;'', ''stagerd''); END;',
+      JOB_CLASS       => 'CASTOR_JOB_CLASS',
+      START_DATE      => SYSDATE + 1/1440,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=1',
       ENABLED         => TRUE,
       COMMENTS        => 'Database job to manage the draining process');

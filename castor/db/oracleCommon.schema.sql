@@ -133,6 +133,8 @@ INSERT INTO CastorConfig
 INSERT INTO CastorConfig
   VALUES ('DiskServer', 'HeartbeatTimeout', '180', 'The maximum amount of time in seconds that a diskserver can spend without sending any hearbeat before it is automatically set to offline.');
 INSERT INTO CastorConfig
+  VALUES ('Draining', 'MaxNbSchedD2dPerDrain', '1000', 'The maximum number of disk to disk copies that each draining job should send to the scheduler concurrently.');
+INSERT INTO CastorConfig
   VALUES ('Rebalancing', 'Sensibility', '5', 'The rebalancing sensibility (in percent) : if a fileSystem is at least this percentage fuller than the average of the diskpool where is lives, rebalancing will fire.');
 
 /* Create the AdminUsers table */

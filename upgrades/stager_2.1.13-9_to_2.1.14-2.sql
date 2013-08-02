@@ -492,6 +492,12 @@ ALTER TABLE DrainingErrors
   FOREIGN KEY (drainingJob)
   REFERENCES DrainingJob (id);
 
+INSERT INTO CastorConfig
+  VALUES ('Draining', 'MaxNbSchedD2dPerDrain', '1000', 'The maximum number of disk to disk copies that each draining job should send to the scheduler concurrently.');
+
+INSERT INTO CastorConfig
+  VALUES ('Rebalancing', 'Sensibility', '5', 'The rebalancing sensibility (in percent) : if a fileSystem is at least this percentage fuller than the average of the diskpool where is lives, rebalancing will fire.');
+
 /* Definition of the Disk2DiskCopyJob table. Each line is a disk2diskCopy job to process
  *   id : unique DB identifier for this job
  *   transferId : unique identifier for the transfer associated to this job
