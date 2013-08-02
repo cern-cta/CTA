@@ -123,10 +123,12 @@ class ServerQueue(dict):
             self[ds][transfer.transferId].isSrcRunning = False
 
       # add transfer to the list of queueing transfers on the diskServer,
-      # with right value for isSrcRunning in case of D2DDST put back
+      # with right value for isSrcRunning for D2DDST (it can be a put back
+      # where src is running for long or simply that the source had already
+      # enough time to start (race condition)
       if transfer.diskServer not in self:
         self[transfer.diskServer] = {}
-      if putBack and transfer.transferType == TransferType.D2DDST:
+      if transfer.transferType == TransferType.D2DDST:
         transfer.isSrcRunning = (transfer.transferId in self.d2dsrcrunning)
       self[transfer.diskServer][transfer.transferId] = transfer
 
