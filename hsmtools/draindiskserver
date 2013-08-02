@@ -421,10 +421,11 @@ def queryDrain():
                     nbSuccessFiles, currentTime in results]
         else:
             titles = ['DiskServer', 'MountPoint', 'Created', 'TFiles', 'TSize',
-                      'RFiles', 'RSize', 'Failed', 'RunTime', 'Progress', 'ETC', 'Status']
+                      'RFiles', 'RSize', 'Done', 'Failed', 'RunTime', 'Progress', 'ETC', 'Status']
             data = [(diskServerName, fsMountPoint, castor_tools.secsToDate(creationTime), totalFiles,
                      castor_tools.nbToDataAmount(totalBytes), totalFiles-nbFailedFiles-nbSuccessFiles,
-                     castor_tools.nbToDataAmount(totalBytes-nbFailedBytes-nbSuccessBytes), nbFailedFiles,
+                     castor_tools.nbToDataAmount(totalBytes-nbFailedBytes-nbSuccessBytes),
+                     nbSuccessFiles, nbFailedFiles,
                      castor_tools.nbToAge(int(currentTime-creationTime)),
                      castor_tools.printPercentage((nbSuccessBytes+nbFailedBytes), totalBytes),
                      castor_tools.printETC(nbSuccessBytes+nbFailedBytes, totalBytes, currentTime-creationTime),
