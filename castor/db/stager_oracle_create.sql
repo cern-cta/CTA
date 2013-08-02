@@ -7494,7 +7494,8 @@ BEGIN
 
   -- identify the source DiskCopy and diskserver/filesystem and check that it is still valid
   BEGIN
-    SELECT FileSystem.id, DiskCopy.id, FileSystem.status, DiskServer.status, DiskServer.hwOnline
+    SELECT /*+ INDEX(DiskCopy I_DiskCopy_CastorFile) */
+           FileSystem.id, DiskCopy.id, FileSystem.status, DiskServer.status, DiskServer.hwOnline
       INTO varSrcFsId, varSrcDcId, varSrcFsStatus, varSrcDsStatus, varSrcHwOnline
       FROM DiskServer, FileSystem, DiskCopy
      WHERE DiskServer.name = inSrcDiskServerName
