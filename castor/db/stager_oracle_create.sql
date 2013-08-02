@@ -4691,7 +4691,7 @@ BEGIN
   -- access too.
   SELECT id, srcSvcClassId INTO dcId, srcSvcClassId
     FROM (
-      SELECT DiskCopy.id, SvcClass.id srcSvcClassId
+      SELECT /*+ INDEX (DiskCopy I_DiskCopy_CastorFile) */ DiskCopy.id, SvcClass.id srcSvcClassId
         FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass, SvcClass
        WHERE DiskCopy.castorfile = cfId
          AND DiskCopy.status = dconst.DISKCOPY_VALID
@@ -4772,7 +4772,7 @@ BEGIN
   -- and group id to -1 this effectively disables the later privilege checks
   -- to see if the user can trigger a d2d or recall. (#55745)
   BEGIN
-    SELECT -1, -1 INTO userid, groupid
+    SELECT /*+ INDEX (DiskCopy I_DiskCopy_CastorFile) */ -1, -1 INTO userid, groupid
       FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
      WHERE DiskCopy.fileSystem = FileSystem.id
        AND DiskCopy.castorFile = cfId
@@ -6688,7 +6688,7 @@ BEGIN
   DECLARE
     varDcIds "numList";
   BEGIN
-    SELECT DiskCopy.id BULK COLLECT INTO varDcIds
+    SELECT /*+ INDEX (DiskCopy I_DiskCopy_CastorFile) */ DiskCopy.id BULK COLLECT INTO varDcIds
       FROM DiskCopy, FileSystem, DiskServer
      WHERE inCfId = DiskCopy.castorFile
        AND FileSystem.id(+) = DiskCopy.fileSystem
@@ -6715,7 +6715,8 @@ BEGIN
   -- the min() function does not represent anything here.
   -- Note that we accept copies in READONLY hardware here as we're processing Get
   -- and Update requests, and we would deny Updates switching to write mode in that case.
-  SELECT COUNT(DiskCopy.id), min(DiskCopy.status) INTO varNbDCs, varDcStatus
+  SELECT /*+ INDEX (DiskCopy I_DiskCopy_CastorFile) */
+         COUNT(DiskCopy.id), min(DiskCopy.status) INTO varNbDCs, varDcStatus
     FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
    WHERE DiskCopy.castorfile = inCfId
      AND DiskCopy.fileSystem = FileSystem.id
@@ -6751,7 +6752,7 @@ BEGIN
       varDcList VARCHAR2(2048);
     BEGIN
       -- List available diskcopies for job scheduling
-      SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ 
+      SELECT /*+ INDEX (DiskCopy I_DiskCopy_CastorFile) INDEX(Subrequest PK_Subrequest_Id)*/ 
              LISTAGG(DiskServer.name || ':' || FileSystem.mountPoint, '|')
              WITHIN GROUP (ORDER BY FileSystemRate(FileSystem.nbReadStreams, FileSystem.nbWriteStreams))
         INTO varDcList
@@ -6841,7 +6842,7 @@ BEGIN
     varNbDCs INTEGER;
   BEGIN
     SELECT COUNT(*) INTO varNbDCs FROM (
-      SELECT DiskCopy.id
+      SELECT /*+ INDEX (DiskCopy I_DiskCopy_CastorFile) */ DiskCopy.id
         FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
        WHERE DiskCopy.castorfile = inCfId
          AND DiskCopy.fileSystem = FileSystem.id
