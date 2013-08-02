@@ -415,6 +415,8 @@ class TransferManagerService(rpyc.Service):
             if isinstance(error, cx_Oracle._Error):
               errorcode = error.code
               if (errorcode == 20110):
+                # cleanup source
+                queueingTransfers.d2dendById(transfer.transferId)
                 # raise ValueError to tell the upper layer to give up
                 raise ValueError(error.message)
           # otherwise reraise for the upper layer

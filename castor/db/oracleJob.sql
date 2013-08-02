@@ -563,10 +563,9 @@ BEGIN
              'TransferId=' || TO_CHAR(inTransferId) || ' destDiskServer=' || inDestDiskServerName ||
              ' destMountPoint=' || inDestMountPoint || ' srcDiskServer=' || inSrcDiskServerName ||
              ' srcMountPoint=' || inSrcMountPoint);
-    -- restart the disktodisk copy
-    UPDATE Disk2DiskCopyJob
-       SET status = dconst.DISK2DISKCOPYJOB_PENDING
-     WHERE transferId = inTransferId;
+    -- end the disktodisk copy (may be retried)
+    disk2DiskCopyEnded(inTransferId, '', '', 0, dlf.D2D_SOURCE_GONE);
+    COMMIT; -- commit or raise_application_error will roll back for us :-(
     -- raise exception for the scheduling part
     raise_application_error(-20110, dlf.D2D_SOURCE_GONE);
   END;
@@ -578,6 +577,7 @@ BEGIN
              ' fileSystem=' || inSrcMountPoint);
     -- fail d2d transfer
     disk2DiskCopyEnded(inTransferId, '', '', 0, 'Source was disabled');
+    COMMIT; -- commit or raise_application_error will roll back for us :-(
     -- raise exception
     raise_application_error(-20110, dlf.D2D_SRC_DISABLED);
   END IF;
@@ -596,6 +596,7 @@ BEGIN
              'TransferId=' || TO_CHAR(inTransferId) || ' diskServer=' || inDestDiskServerName);
     -- fail d2d transfer
     disk2DiskCopyEnded(inTransferId, '', '', 0, 'Destination not in production');
+    COMMIT; -- commit or raise_application_error will roll back for us :-(
     -- raise exception
     raise_application_error(-20110, dlf.D2D_DEST_NOT_PRODUCTION);
   END IF;
@@ -613,6 +614,7 @@ BEGIN
              'TransferId=' || TO_CHAR(inTransferId) || ' diskServer=' || inDestDiskServerName);
     -- fail d2d transfer
     disk2DiskCopyEnded(inTransferId, '', '', 0, 'Copy found on diskserver');
+    COMMIT; -- commit or raise_application_error will roll back for us :-(
     -- raise exception
     raise_application_error(-20110, dlf.D2D_MULTIPLE_COPIES_ON_DS);
   END IF;
