@@ -391,7 +391,8 @@ def queryDrain():
                DrainingJob.creationTime, DrainingJob.totalFiles, DrainingJob.totalBytes,
                DrainingJob.fileMask, getSvcClassName(DrainingJob.svcClass),
                DrainingJob.status, DrainingJob.nbFailedBytes, DrainingJob.nbSuccessBytes,
-               DrainingJob.nbFailedFiles, DrainingJob.nbSuccessFiles, getTime()
+               DrainingJob.nbFailedFiles, DrainingJob.nbSuccessFiles,
+               CASE DrainingJob.status WHEN 5 THEN lastModificationTime ELSE getTime() END
           FROM DrainingJob, FileSystem, DiskServer
          WHERE DrainingJob.fileSystem = FileSystem.id
            AND FileSystem.diskServer = DiskServer.id'''
