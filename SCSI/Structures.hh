@@ -108,6 +108,21 @@ namespace SCSI {
 
      /**
      * Helper function to deal with endianness.
+     * for 3 bytes! fields in SCSI replies 
+     * @param t byte array in SCSI order representing a 32 bits number
+     * @return 
+     */
+    inline uint32_t toU32(const unsigned char(& t)[3])
+    {
+      unsigned char tmp[4];
+      tmp[0]=0;tmp[1]=t[0];tmp[2]=t[1]; tmp[3]=t[2];
+      
+      /* Like network, SCSI is BigEndian */
+      return ntohl (*((uint32_t *) tmp));
+    }
+    
+     /**
+     * Helper function to deal with endianness.
      * for signed values
      * @param t byte array in SCSI order representing a 32 bits number
      * @return 
@@ -239,6 +254,71 @@ namespace SCSI {
             
       // byte 9
       unsigned char control;               // Control byte
+    };
+    
+     /*
+     * READ POSITION CDB as described in SSC-3.
+     */
+    class readPositionCDB_t {
+    public:
+      readPositionCDB_t() {
+        zeroStruct(this);
+        opCode = SCSI::Commands::READ_POSITION; 
+      }
+      // byte 0
+      unsigned char opCode;                // OPERATION CODE (34h)
+      
+      // byte 1 
+      // *note* for T10000 we have BT:1, LONG:1, TCLP:1, Reserved:5
+      unsigned char serviceAction: 5;      // Service action to choice FORM
+      unsigned char              : 3;      // Reserved
+      
+      // bytes 2-6
+      unsigned char reserved[5];           // Reserved
+      
+      // bytes 7-8 
+      unsigned char allocationLenght[2] ;  // used for EXTENDENT FORM
+            
+      // byte 9
+      unsigned char control;               // Control byte
+    };
+    
+         /*
+     * READ POSITION  data format, short form as described in SSC-3.
+     */
+    class readPositionDataShortForm_t {
+    public:
+      readPositionDataShortForm_t() { zeroStruct(this); }
+      // byte 0
+      unsigned char BPEW :1;                // Beyond Programmable Early Warning
+      unsigned char PERR :1;                // Position ERroR
+      unsigned char LOLU :1;                // Logical Object Location Unknown or Block Position Unknown(BPU) for T10000 
+      unsigned char      :1;                // Reserved
+      unsigned char BYCU :1;                // BYte Count Unknown 
+      unsigned char LOCU :1;                // Logical Object Count Unknown or Block Count Unknown(BCU) for T10000 
+      unsigned char EOP  :1;                // End Of Partition
+      unsigned char BOP  :1;                // Beginning of Partition
+      
+      // byte 1 
+      unsigned char partitionNumber;        // Service action to choice FORM
+      
+      // bytes 2-3
+      unsigned char reserved[2];            // Reserved
+      
+      // bytes 4-7 
+      unsigned char firstBlockLocation[4];  // First Logical object location in SSC3,IBM,LTO
+      
+      // bytes 8-11
+      unsigned char lastBlockLocation[4];   // Last Logical object location in SSC3,IBM,LTO 
+      
+      // byte 12
+      unsigned char    :8;                  // Reserved
+      
+      // bytes 13-15
+      unsigned char blocksInBuffer[3];      // Number of logical objects in object buffer 
+      
+      // bytes 16-19
+      unsigned char bytesInBuffer[4];       // Number if bytes in object buffer
     };
     
     /*

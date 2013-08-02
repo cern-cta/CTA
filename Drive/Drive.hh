@@ -63,6 +63,7 @@ namespace Tape {
    * Returned by getPositionInfo()
    */
   class positionInfo {
+  public:  
     uint32_t currentPosition;
     uint32_t oldestDirtyObject;
     uint32_t dirtyObjectsCount;
@@ -193,7 +194,39 @@ namespace Tape {
      * @return positionInfo class. This contains the logical position, plus information
      * on the dirty data still in the write buffer.
      */
-    virtual positionInfo getPositionInfo () throw (Exception) { throw Exception("Not implemented"); }
+    virtual positionInfo getPositionInfo () throw (Exception) {
+      SCSI::Structures::readPositionCDB_t cdb;
+      SCSI::Structures::readPositionDataShortForm_t positionData;
+      SCSI::Structures::senseData_t<255> senseBuff;
+      SCSI::Structures::LinuxSGIO_t sgh;
+      
+      positionInfo posInfo;
+      
+      sgh.setCDB(&cdb);
+      sgh.setDataBuffer(&positionData);
+      sgh.setSenseBuffer(&senseBuff);  
+      sgh.dxfer_direction = SG_DXFER_FROM_DEV;
+      
+      /* Manage both system error and SCSI errors. */
+      if (-1 == m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh))
+        throw Tape::Exceptions::Errnum("Failed SG_IO ioctl");
+      if (SCSI::Status::GOOD != sgh.status)
+        throw Tape::Exception(std::string("SCSI error in getPositionInfo: ") +  
+                SCSI::statusToString(sgh.status));
+      
+      if ( 0 == positionData.PERR ) {              // Location fields are valid
+        posInfo.currentPosition   = SCSI::Structures::toU32(positionData.firstBlockLocation);
+        posInfo.oldestDirtyObject = SCSI::Structures::toU32(positionData.lastBlockLocation);
+        posInfo.dirtyObjectsCount = SCSI::Structures::toU32(positionData.blocksInBuffer);
+        posInfo.dirtyBytesCount   = SCSI::Structures::toU32(positionData.bytesInBuffer);          
+      } else {
+        posInfo.currentPosition   = 0;
+        posInfo.oldestDirtyObject = 0;
+        posInfo.dirtyObjectsCount = 0;
+        posInfo.dirtyBytesCount   = 0;    
+      }
+      return posInfo;
+    }
     
     /**
      * Get tape alert information from the drive. There is a quite long list of possible tape alerts.

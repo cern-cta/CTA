@@ -258,6 +258,87 @@ namespace UnitTests {
     ASSERT_EQ(0xBC, locate10CDB.control);
   }
   
+  TEST(SCSI_Structures, readPositionCDB_t) {
+    SCSI::Structures::readPositionCDB_t readPositionCDB;
+    unsigned char *buff = (unsigned char *)&readPositionCDB;  
+    /*
+     * Make sure this struct is a POD (plain old data without virtual table)
+     * (and has the right size).
+     */
+    ASSERT_EQ(10, sizeof(readPositionCDB)); 
+    
+    /* Check proper initialization an location of struct members match
+     the bit/byte locations defined in SPC-4 */
+    ASSERT_EQ(SCSI::Commands::READ_POSITION, readPositionCDB.opCode);
+    buff[0] = 0xAB;
+    ASSERT_EQ(0xAB, readPositionCDB.opCode);
+    
+    ASSERT_EQ(0, readPositionCDB.serviceAction);
+    buff[1] |= (0x15 &   0xFF) << 0;
+    ASSERT_EQ(0x15, readPositionCDB.serviceAction);
+    
+    buff[2] |= 0xFF; buff[3] = 0xFF; buff[4] = 0xFF; buff[5] = 0xFF; buff[6] = 0xFF;
+    
+    ASSERT_EQ(0, SCSI::Structures::toU16(readPositionCDB.allocationLenght));
+    buff[7] |= 0x0A;buff[8] |= 0xBC;
+    ASSERT_EQ(0x0ABC, SCSI::Structures::toU16(readPositionCDB.allocationLenght));
+           
+    ASSERT_EQ(0, readPositionCDB.control);
+    buff[9] |= 0xBC;
+    ASSERT_EQ(0xBC, readPositionCDB.control);
+  }
+  
+   TEST(SCSI_Structures, readPositionDataShortForm_t) {
+    SCSI::Structures::readPositionDataShortForm_t readPositionData;
+    unsigned char *buff = (unsigned char *)&readPositionData;  
+
+    ASSERT_EQ(20, sizeof(readPositionData)); 
+    
+    ASSERT_EQ(0, readPositionData.BPEW);
+    buff[0] |= (0x1 &   0xFF) << 0;
+    ASSERT_EQ(0x1, readPositionData.BPEW);
+    ASSERT_EQ(0, readPositionData.PERR);
+    buff[0] |= (0x2 &   0xFF) << 0;
+    ASSERT_EQ(0x1, readPositionData.PERR);
+    ASSERT_EQ(0, readPositionData.LOLU);
+    buff[0] |= (0x4 &   0xFF) << 0;
+    ASSERT_EQ(0x1, readPositionData.LOLU);
+    ASSERT_EQ(0, readPositionData.BYCU);
+    buff[0] |= (0x10 &   0xFF) << 0;
+    ASSERT_EQ(0x1, readPositionData.BYCU);
+    ASSERT_EQ(0, readPositionData.LOCU);
+    buff[0] |= (0x20 &   0xFF) << 0;
+    ASSERT_EQ(0x1, readPositionData.LOCU);
+    ASSERT_EQ(0, readPositionData.EOP);
+    buff[0] |= (0x40 &   0xFF) << 0;
+    ASSERT_EQ(0x1, readPositionData.EOP);
+    ASSERT_EQ(0, readPositionData.BOP);
+    buff[0] |= (0x80 &   0xFF) << 0;
+    ASSERT_EQ(0x1, readPositionData.BOP);
+    
+    ASSERT_EQ(0, readPositionData.partitionNumber);
+    buff[1] |= 0xBC;
+    ASSERT_EQ(0xBC, readPositionData.partitionNumber);
+        
+    buff[2] |= 0xFF; buff[3] = 0xFF;
+    
+    ASSERT_EQ(0, SCSI::Structures::toU32(readPositionData.firstBlockLocation));
+    buff[4] |= 0x0A;buff[5] |= 0xBC;buff[6] |= 0xDE;buff[7] |= 0xF0;
+    ASSERT_EQ(0x0ABCDEF0, SCSI::Structures::toU32(readPositionData.firstBlockLocation));
+    
+    ASSERT_EQ(0, SCSI::Structures::toU32(readPositionData.lastBlockLocation));
+    buff[8] |= 0x9A;buff[9] |= 0xBC;buff[10] |= 0xDE;buff[11] |= 0xF9;
+    ASSERT_EQ(0x9ABCDEF9, SCSI::Structures::toU32(readPositionData.lastBlockLocation));
+    buff[12] |= 0xFF;
+    ASSERT_EQ(0, SCSI::Structures::toU32(readPositionData.blocksInBuffer));
+    buff[13] |= 0x9A;buff[14] |= 0xBC;buff[15] |= 0xDE;
+    ASSERT_EQ(0x009ABCDE, SCSI::Structures::toU32(readPositionData.blocksInBuffer));
+           
+    ASSERT_EQ(0, SCSI::Structures::toU32(readPositionData.bytesInBuffer));
+    buff[16] |= 0x7A;buff[17] |= 0xBC;buff[18] |= 0xDE;buff[19] |= 0xF7;
+    ASSERT_EQ(0x7ABCDEF7, SCSI::Structures::toU32(readPositionData.bytesInBuffer));
+  }
+  
   TEST(SCSI_Structures, tapeAlertLogPage_t_and_parameters) {
     SCSI::Structures::tapeAlertLogPage_t<12> tal;
     unsigned char * buff = (unsigned char *) & tal;
@@ -352,6 +433,11 @@ namespace UnitTests {
   TEST(SCSI_Structures, toU32) {
     unsigned char num[4] = { 0x1, 0x2, 0x3, 0x4 };
     ASSERT_EQ( 0x1020304, SCSI::Structures::toU32(num));
+  }
+  
+  TEST(SCSI_Structures, toU32_3byte) {
+    unsigned char num[3] = { 0xAA, 0xBB, 0xCC };
+    ASSERT_EQ( 0x00AABBCC, SCSI::Structures::toU32(num));
   }
   
   TEST(SCSI_Structures, toS32) {
