@@ -318,6 +318,8 @@ AS
   D2D_D2DDONE_RETRIED          CONSTANT VARCHAR2(2048) := 'disk2DiskCopyEnded : Retrying disk to disk copy';
   D2D_D2DDONE_NORETRY          CONSTANT VARCHAR2(2048) := 'disk2DiskCopyEnded : Exhausted retries, giving up';
   D2D_D2DFAILED                CONSTANT VARCHAR2(2048) := 'disk2DiskCopyEnded : replication failed';
+  REBALANCING_START            CONSTANT VARCHAR2(2048) := 'rebalancing : starting';
+  REBALANCING_STOP             CONSTANT VARCHAR2(2048) := 'rebalancing : stopping';
 END dlf;
 /
 

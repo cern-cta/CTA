@@ -95,7 +95,8 @@ END;
 /* Procedure responsible for rebalancing one given filesystem by moving away
  * the given amount of data */
 CREATE OR REPLACE PROCEDURE rebalance(inFsId IN INTEGER, inDataAmount IN INTEGER,
-                                      inDestSvcClassId IN INTEGER) AS
+                                      inDestSvcClassId IN INTEGER,
+                                      inDiskServerName IN VARCHAR2, inMountPoint IN VARCHAR2) AS
   CURSOR DCcur IS
     SELECT /*+ FIRST_ROWS_10 */
            DiskCopy.id, DiskCopy.diskCopySize, DiskCopy.owneruid, DiskCopy.ownergid,
@@ -111,13 +112,20 @@ CREATE OR REPLACE PROCEDURE rebalance(inFsId IN INTEGER, inDataAmount IN INTEGER
   varCfId INTEGER;
   varNsOpenTime INTEGER;
   varTotalRebalanced INTEGER := 0;
+  varNbFilesRebalanced INTEGER := 0;
 BEGIN
   -- disk to disk copy files out of this node until we reach inDataAmount
-    -- Loop on candidates until we can lock one
+  -- "rebalancing : starting" message
+  logToDLF(NULL, dlf.LVL_SYSTEM, dlf.REBALANCING_START, 0, '', 'stagerd',
+           'DiskServer=' || inDiskServerName || ' mountPoint=' || inMountPoint ||
+           ' dataTomove=' || TO_CHAR(inDataAmount));
+  -- Loop on candidates until we can lock one
+  OPEN DCcur;
   LOOP
     -- Fetch next candidate
     FETCH DCcur INTO varDcId, varDcSize, varEuid, varEgid, varCfId, varNsOpenTime;
     varTotalRebalanced := varTotalRebalanced + varDcSize;
+    varNbFilesRebalanced := varNbFilesRebalanced + 1;
     -- stop if it would be too much
     IF varTotalRebalanced > inDataAmount THEN RETURN; END IF;
     -- create disk2DiskCopyJob for this diskCopy
@@ -125,6 +133,11 @@ BEGIN
                            varEuid, varEgid, dconst.REPLICATIONTYPE_REBALANCE,
                            varDcId, NULL);
   END LOOP;
+  -- "rebalancing : stopping" message
+  logToDLF(NULL, dlf.LVL_SYSTEM, dlf.REBALANCING_STOP, 0, '', 'stagerd',
+           'DiskServer=' || inDiskServerName || ' mountPoint=' || inMountPoint ||
+           ' dataMoved=' || TO_CHAR(varTotalRebalanced) ||
+           ' nbFilesMoved=' || TO_CHAR(varNbFilesRebalanced));
 END;
 /
 
@@ -146,20 +159,33 @@ BEGIN
     IF varAlreadyRebalancing > 0 THEN
       CONTINUE;
     END IF;
-    -- compute average filling of filesystems
+    -- compute average filling of filesystems on production machines
+    -- note that read only ones are not taken into account as they cannot
+    -- be filled anymore
     SELECT AVG(free/totalSize) INTO varFreeRef
-      FROM FileSystem, DiskPool2SvcClass
+      FROM FileSystem, DiskPool2SvcClass, DiskServer
      WHERE DiskPool2SvcClass.parent = FileSystem.DiskPool
-       AND DiskPool2SvcClass.child = SC.id GROUP BY SC.id;
+       AND DiskPool2SvcClass.child = SC.id
+       AND DiskServer.id = FileSystem.diskServer
+       AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
+       AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+       AND DiskServer.hwOnline = 1
+     GROUP BY SC.id;
     -- get sensibility of the rebalancing
     varSensibility := TO_NUMBER(getConfigOption('Rebalancing', 'Sensibility', '5'))/100;
     -- for each filesystem too full compared to average, rebalance
-    FOR FS IN (SELECT id, varFreeRef*totalSize-free dataToMove
-                 FROM FileSystem, DiskPool2SvcClass
+    -- note that we take the read only ones into account here
+    FOR FS IN (SELECT FileSystem.id, varFreeRef*totalSize-free dataToMove,
+                      DiskServer.name ds, FileSystem.mountPoint
+                 FROM FileSystem, DiskPool2SvcClass, DiskServer
                 WHERE DiskPool2SvcClass.parent = FileSystem.DiskPool
                   AND DiskPool2SvcClass.child = SC.id
-                  AND varFreeRef - free/totalSize > varSensibility) LOOP
-      rebalance(FS.id, FS.dataToMove, SC.id);
+                  AND varFreeRef - free/totalSize > varSensibility
+                  AND DiskServer.id = FileSystem.diskServer
+                  AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
+                  AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
+                  AND DiskServer.hwOnline = 1) LOOP
+      rebalance(FS.id, FS.dataToMove, SC.id, FS.ds, FS.mountPoint);
     END LOOP;
   END LOOP;
 END;
