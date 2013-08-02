@@ -846,7 +846,7 @@ CREATE INDEX I_DiskCopy_Status_9 ON DiskCopy (decode(status,9,status,NULL));
 -- to speed up deleteOutOfDateStageOutDCs
 CREATE INDEX I_DiskCopy_Status_Open ON DiskCopy (decode(status,6,status,decode(status,5,status,decode(status,11,status,NULL))));
 -- to speed up draining manager job
-CREATE INDEX I_DiskCopy_FS_ST_Impor_ID_CF ON DiskCopy (filesystem, status, importance, id, castorFile);
+CREATE INDEX I_DiskCopy_FS_ST_Impor_ID_CF_S ON DiskCopy (filesystem, status, importance, id, castorFile, diskCopySize);
 
 /* DiskCopy constraints */
 ALTER TABLE DiskCopy MODIFY (nbCopyAccesses DEFAULT 0);
