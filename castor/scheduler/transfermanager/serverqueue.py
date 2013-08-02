@@ -38,7 +38,7 @@ from transfer import TransferType, tupleToTransfer
 class RecentSchedules(object):
   '''This class remembers the latest schedules and is thus able to detect double scheduling.
      It actually keeps in memory the transfers of the current and lst time slots, where a slot
-     is 10s long.'''
+     is 60s long.'''
 
   def __init__(self):
     '''constructor'''
@@ -52,7 +52,7 @@ class RecentSchedules(object):
   def add(self, transferid, diskServer):
     '''adds a new job to the recently scheduled ones. Also drops old jobs when needed'''
     # get slot of this transfer
-    slot = int(time.time())/10
+    slot = int(time.time())/60
     # in case we start a new slot, cleanup
     if slot != self.currentSlot:
       # rotate slots
