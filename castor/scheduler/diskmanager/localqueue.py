@@ -284,7 +284,7 @@ class LocalQueue(Queue.Queue):
     # Inform the schedulers of canceled transfers
     timeout = self.config.getValue('TransferManager', 'AdminTimeout', 5, float)
     for scheduler, transfers in canceledTransfers.iteritems():
-      connectionpool.connections.transfersCanceled(scheduler, transfers, timeout=timeout)
+      connectionpool.connections.transfersCanceled(scheduler, tuple(transfers), timeout=timeout)
 
   def FSDisabled(self, mountPoints):
     '''cancels queuing jobs when some filesystems are disabled.
