@@ -1328,7 +1328,6 @@ void castor::tape::tapegateway::WorkerThread::logMigrationBulkVmgrUpdate (Cuuid_
       castor::dlf::Param("tapePool",tapePool),
       castor::dlf::Param("filesCount",filesCount),
       castor::dlf::Param("highestFseq",highestFseq),
-      castor::dlf::Param("filesCount",filesCount),
       castor::dlf::Param("TPVID",vid),
       castor::dlf::Param("totalSize",totalBytes),
       castor::dlf::Param("compressedTotalSize",totalCompressedBytes),
