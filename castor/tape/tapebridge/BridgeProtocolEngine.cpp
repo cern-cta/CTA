@@ -914,24 +914,6 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::startMigrationSession()
   const uint64_t maxBytes = 1;
   utils::SmartFd clientSock(m_clientProxy.sendFilesToMigrateListRequest(
     tapebridgeTransId, maxFiles, maxBytes));
-  {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId      ),
-      castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
-      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
-      castor::dlf::Param("TPVID"             , m_volume.vid()         ),
-      castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
-      castor::dlf::Param("dgn"               , m_jobRequest.dgn       ),
-      castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
-      castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
-      castor::dlf::Param("maxFiles"          , maxFiles               ),
-      castor::dlf::Param("maxBytes"          , maxBytes               ),
-      castor::dlf::Param("clientType"        ,
-        utils::volumeClientTypeToString(m_volume.clientType())),
-      castor::dlf::Param("clientSock"        , clientSock.get()       )};
-    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-      TAPEBRIDGE_SENT_FILESTOMIGRATELISTREQUEST, params);
-  }
 
   // Receive the reply
   const int closedClientSock = clientSock.release();
@@ -1713,24 +1695,6 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
       1;
   utils::SmartFd clientSock(m_clientProxy.sendFilesToMigrateListRequest(
     tapebridgeTransId, maxFiles, maxBytes));
-  {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId      ),
-    castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId  ),
-      castor::dlf::Param("volReqId"          , m_jobRequest.volReqId  ),
-      castor::dlf::Param("TPVID"             , m_volume.vid()         ),
-      castor::dlf::Param("driveUnit"         , m_jobRequest.driveUnit ),
-      castor::dlf::Param("dgn"               , m_jobRequest.dgn       ),
-      castor::dlf::Param("clientHost"        , m_jobRequest.clientHost),
-      castor::dlf::Param("clientPort"        , m_jobRequest.clientPort),
-      castor::dlf::Param("maxFiles"          , maxFiles               ),
-      castor::dlf::Param("maxBytes"          , maxBytes               ),
-      castor::dlf::Param("clientType",
-        utils::volumeClientTypeToString(m_volume.clientType())),
-      castor::dlf::Param("clientSock"        , clientSock.get()       )};
-    castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
-      TAPEBRIDGE_SENT_FILESTOMIGRATELISTREQUEST, params);
-  }
 
   try {
     // Add the client connection to the socket catalogue so that the
