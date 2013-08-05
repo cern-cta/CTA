@@ -166,7 +166,7 @@ namespace Tape {
      */
     virtual void positionToLogicalObject (uint32_t blockId) throw (Exception) {
       SCSI::Structures::locate10CDB_t cdb;
-      uint32_t blkId = ntohl(blockId);
+      uint32_t blkId = SCSI::Structures::fromLtoB32(blockId);
       
       memcpy (cdb.logicalObjectID, &blkId, sizeof(cdb.logicalObjectID));
             
@@ -220,10 +220,13 @@ namespace Tape {
         posInfo.dirtyObjectsCount = SCSI::Structures::toU32(positionData.blocksInBuffer);
         posInfo.dirtyBytesCount   = SCSI::Structures::toU32(positionData.bytesInBuffer);          
       } else {
-        posInfo.currentPosition   = 0;
-        posInfo.oldestDirtyObject = 0;
-        posInfo.dirtyObjectsCount = 0;
-        posInfo.dirtyBytesCount   = 0;    
+        /* An overflow has occurred in at least one of the returned position
+         * data fields. The application should use the LONG FORM to obtain the 
+         * current position or the application should use the EXTENDED FORM to
+         * obtain the current position and number of bytes in the object buffer.
+         * (note) For T10000 we have only SHORT FORM.
+         */
+        throw Tape::Exception(std::string("An overflow has occurred in getPostitionInfo"));
       }
       return posInfo;
     }

@@ -134,6 +134,17 @@ namespace SCSI {
     }
     
     /**
+     * Helper function to convert from little-endian to big-endian.
+     * @param t a 32 bit number in the little-endian form
+     * @return  a 32 bit number in the big-endian form
+     */
+    inline uint32_t fromLtoB32(uint32_t t)
+    {
+      /* Like network, SCSI is BigEndian */
+      return htonl(t);
+    }
+    
+    /**
      * Helper function to deal with endianness.
      * @param t byte array in SCSI order representing a 16 bits number
      * @return 
