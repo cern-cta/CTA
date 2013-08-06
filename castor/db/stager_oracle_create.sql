@@ -2330,6 +2330,24 @@ END;
 
 /* automatic logging procedure. The logs are then processed by the stager and sent to the rsyslog streams.
    Note that the log will be commited at the same time as the rest of the transaction */
+CREATE OR REPLACE PROCEDURE logToDLFWithTime(logTime NUMBER,
+                                             uuid VARCHAR2,
+                                             priority INTEGER,
+                                             msg VARCHAR2,
+                                             fileId NUMBER,
+                                             nsHost VARCHAR2,
+                                             source VARCHAR2,
+                                             params VARCHAR2) AS
+  PRAGMA AUTONOMOUS_TRANSACTION;
+BEGIN
+  INSERT INTO DLFLogs (timeinfo, uuid, priority, msg, fileId, nsHost, source, params)
+         VALUES (logTime, uuid, priority, msg, fileId, nsHost, source, params);
+  COMMIT;
+END;
+/
+
+/* automatic logging procedure. The logs are then processed by the stager and sent to the rsyslog streams.
+   Note that the log will be commited at the same time as the rest of the transaction */
 CREATE OR REPLACE PROCEDURE logToDLF(uuid VARCHAR2,
                                      priority INTEGER,
                                      msg VARCHAR2,
@@ -2337,11 +2355,8 @@ CREATE OR REPLACE PROCEDURE logToDLF(uuid VARCHAR2,
                                      nsHost VARCHAR2,
                                      source VARCHAR2,
                                      params VARCHAR2) AS
-  PRAGMA AUTONOMOUS_TRANSACTION;
 BEGIN
-  INSERT INTO DLFLogs (timeinfo, uuid, priority, msg, fileId, nsHost, source, params)
-         VALUES (getTime(), uuid, priority, msg, fileId, nsHost, source, params);
-  COMMIT;
+  logToDLFWithTime(getTime(), uuid, priority, msg, fileId, nsHost, source, params);
 END;
 /
 
