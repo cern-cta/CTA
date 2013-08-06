@@ -1316,6 +1316,7 @@ CREATE OR REPLACE PROCEDURE tg_setBulkFileMigrationResult(inLogContext IN VARCHA
   varNSFileIds "numList";
   varNSParams strListTable;
   varParams VARCHAR2(4000);
+  varNbSentToNS INTEGER := 0;
 BEGIN
   varStartTime := SYSTIMESTAMP;
   varReqId := uuidGen();
@@ -1345,6 +1346,7 @@ BEGIN
         VALUES (varReqId, inFileIds(i), varNsOpenTime, varCopyNo, varOldCopyNo,
                 inTransferredSizes(i), CASE inComprSizes(i) WHEN 0 THEN 1 ELSE inComprSizes(i) END, varVid, inFseqs(i),
                 strtoRaw4(inBlockIds(i)), inChecksumTypes(i), inChecksums(i));
+        varNbSentToNS := varNbSentToNS + 1;
       ELSE
         -- Fail/retry this migration, log 'migration failed, will retry if allowed'
         varParams := 'mountTransactionId='|| to_char(inMountTrId) ||' ErrorCode='|| to_char(inErrorCodes(i))
@@ -1424,7 +1426,10 @@ BEGIN
   END;
   -- Final log, "setBulkFileMigrationResult: bulk migration completed"
   varParams := 'mountTransactionId='|| to_char(inMountTrId)
-               ||' NbFiles='|| inFileIds.COUNT ||' '|| inLogContext
+               ||' NbInputFiles='|| inFileIds.COUNT
+               ||' NbSentToNS='|| varNbSentToNS
+               ||' NbFilesBackFromNS='|| varNSFileIds.COUNT
+               ||' '|| inLogContext
                ||' ElapsedTime='|| getSecs(varStartTime, SYSTIMESTAMP)
                ||' AvgProcessingTime='|| trunc(getSecs(varStartTime, SYSTIMESTAMP)/inFileIds.COUNT, 6);
   logToDLF(varReqid, dlf.LVL_SYSTEM, dlf.BULK_MIGRATION_COMPLETED, 0, '', 'tapegatewayd', varParams);
