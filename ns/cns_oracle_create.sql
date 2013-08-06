@@ -583,7 +583,6 @@ BEGIN
   -- Update file status
   UPDATE Cns_file_metadata SET status = 'm' WHERE fileid = varFid;
   -- Commit and log
-  COMMIT;
   SELECT inSegEntry.blockId INTO varBlockId FROM Dual;  -- to_char() of a RAW type does not work. This does the trick...
   varParams := 'copyNb='|| inSegEntry.copyNo ||' SegmentSize='|| inSegEntry.segSize
     ||' Compression='|| CASE inSegEntry.comprSize WHEN 0 THEN 'inf' ELSE trunc(inSegEntry.segSize*100/inSegEntry.comprSize) END
@@ -591,6 +590,7 @@ BEGIN
     ||'" gid=' || varFGid ||' ChecksumType="'|| inSegEntry.checksum_name ||'" ChecksumValue=' || varFCksum
     ||' creationTime=' || trunc(varSegCreationTime, 6);
   addSegResult(0, inReqId, 0, 'New segment information', varFid, varParams);
+  COMMIT;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- The file entry was not found, just give up
   rc := serrno.ENOENT;
@@ -832,10 +832,10 @@ CREATE OR REPLACE PROCEDURE setOrReplaceSegmentsForFiles(inReqId IN VARCHAR2) AS
   varParams VARCHAR2(1000);
   varStartTime TIMESTAMP;
   varSeg castorns.Segment_Rec;
-  varCount INTEGER;
+  varCount INTEGER := 0;
+  varErrCount INTEGER := 0;
 BEGIN
   varStartTime := SYSTIMESTAMP;
-  varCount := 0;
   -- Loop over all files. Each call commits or rollbacks each file.
   FOR s IN (SELECT fileId, lastModTime, copyNo, oldCopyNo, transfSize, comprSize,
                    vid, fseq, blockId, checksumType, checksum
@@ -859,12 +859,14 @@ BEGIN
     IF varRC != 0 THEN
       varParams := 'ErrorCode='|| to_char(varRC) ||' ErrorMessage="'|| varParams ||'"';
       addSegResult(0, inReqId, varRC, 'Error creating/replacing segment', s.fileId, varParams);
+      varErrCount := varErrCount + 1;
     END IF;
     varCount := varCount + 1;
   END LOOP;
   IF varCount > 0 THEN
     -- Final logging
     varParams := 'Function="setOrReplaceSegmentsForFiles" NbFiles='|| varCount
+      || ' NbErrors=' || varErrCount
       ||' ElapsedTime='|| getSecs(varStartTime, SYSTIMESTAMP)
       ||' AvgProcessingTime='|| trunc(getSecs(varStartTime, SYSTIMESTAMP)/varCount, 6);
     addSegResult(1, inReqId, 0, 'Bulk processing complete', 0, varParams);
