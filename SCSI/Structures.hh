@@ -30,6 +30,7 @@
 #include <string.h>
 #include <scsi/sg.h>
 #include <climits>
+#include <cstdio>
 
 #include "Constants.hh"
 #include "../Exception/Exception.hh"
