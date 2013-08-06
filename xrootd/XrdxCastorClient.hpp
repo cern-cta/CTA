@@ -280,12 +280,8 @@ private:
 
   //----------------------------------------------------------------------------
   //! Constructor
-  //! 
-  //! @param callbackPort callback port
-  //!
   //----------------------------------------------------------------------------
-  XrdxCastorClient(unsigned int callbackPort) 
-    throw (castor::exception::Exception);
+  XrdxCastorClient() throw (castor::exception::Exception);
 
 
   //----------------------------------------------------------------------------
@@ -295,8 +291,6 @@ private:
   //----------------------------------------------------------------------------
   virtual void DoCleanup();
 
-
-  unsigned int mCallbackPort; ///< callback port used to listen for responses
   castor::io::ServerSocket* mCallbackSocket; ///< callback socket
   struct pollfd mFds[1024]; ///< set of file descriptors to wait on 
   nfds_t mNfds; ///< number of pollfs structs in the mFds array

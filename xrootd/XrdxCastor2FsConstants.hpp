@@ -31,7 +31,6 @@
 #define XCASTOR2FS_MAXDISTINCTUSERS       8192
 
 //! Constants dealing with async requests for the stager 
-#define XCASTOR2FS_CALLBACKPORT          30000 ///< async requests callback port
 #define XCASTOR2FS_RESP_TIMEOUT            600 ///< timeout for async responses 
 #define XCASTOR2FS_MAX_REQUESTS           2000 ///< max no. of requests on-the-fly
 

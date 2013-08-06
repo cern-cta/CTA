@@ -42,6 +42,9 @@
 #include "castor/io/ClientSocket.hpp"
 #include "castor/io/ServerSocket.hpp"
 #include "castor/Constants.hpp"
+#include "castor/client/BaseClient.hpp"
+/*-----------------------------------------------------------------------------*/
+#include "h/getconfent.h"
 /*-----------------------------------------------------------------------------*/
 
 XCASTORNAMESPACE_BEGIN
@@ -49,15 +52,27 @@ XCASTORNAMESPACE_BEGIN
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-XrdxCastorClient::XrdxCastorClient(unsigned int callbackPort) 
+XrdxCastorClient::XrdxCastorClient() 
   throw(castor::exception::Exception):
   LogId(),
-  mCallbackPort(callbackPort),
   mNfds(0),
   mDoStop(false),
   mIsZombie(false)
 {
   mCallbackSocket = new castor::io::ServerSocket(true);
+
+  // Get the port range to be used
+  int low_port  = castor::client::LOW_CLIENT_PORT_RANGE;
+  int high_port = castor::client::HIGH_CLIENT_PORT_RANGE;
+  char* sport;
+  if ((sport = getconfent((char *)castor::client::CLIENT_CONF,
+                          (char *)castor::client::LOWPORT_CONF, 0)) != 0) {
+    low_port = castor::System::porttoi(sport);
+  }
+  if ((sport = getconfent((char *)castor::client::CLIENT_CONF,
+                          (char *)castor::client::HIGHPORT_CONF, 0)) != 0) {
+    high_port = castor::System::porttoi(sport);
+  }
 
   // Set the socket to non blocking
   int rc;
@@ -70,7 +85,7 @@ XrdxCastorClient::XrdxCastorClient(unsigned int callbackPort)
   }
 
   // Bind the socket
-  mCallbackSocket->bind(mCallbackPort, mCallbackPort);
+  mCallbackSocket->bind(low_port, high_port);
   mCallbackSocket->listen();
 
   // Start the poller thread
@@ -100,7 +115,7 @@ XrdxCastorClient::~XrdxCastorClient() throw ()
 XrdxCastorClient* 
 XrdxCastorClient::Create()
 {
-  XrdxCastorClient* client = new XrdxCastorClient(XCASTOR2FS_CALLBACKPORT);
+  XrdxCastorClient* client = new XrdxCastorClient();
   
   if (client->IsZombie())
   {
