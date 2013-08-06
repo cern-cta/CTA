@@ -245,67 +245,54 @@ CREATE OR REPLACE PROCEDURE deleteCastorFile(cfId IN NUMBER) AS
   nb NUMBER;
   LockError EXCEPTION;
   PRAGMA EXCEPTION_INIT (LockError, -54);
+  CONSTRAINT_VIOLATED EXCEPTION;
+  PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -2292);
 BEGIN
   -- First try to lock the castorFile
   SELECT id INTO nb FROM CastorFile
    WHERE id = cfId FOR UPDATE NOWAIT;
-  -- See whether it has any DiskCopy
-  SELECT count(*) INTO nb FROM DiskCopy
-   WHERE castorFile = cfId;
-  -- If any DiskCopy, give up
+
+  -- See whether pending SubRequests exist
+  SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ count(*) INTO nb
+    FROM SubRequest
+   WHERE castorFile = cfId
+     AND status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13);   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+  -- If any SubRequest, give up
   IF nb = 0 THEN
-    -- See whether it has any RecallJob
-    SELECT /*+ INDEX_RS_ASC(RecallJob I_RECALLJOB_CASTORFILE_VID) */ count(*) INTO nb FROM RecallJob
-     WHERE castorFile = cfId;
-    -- If any RecallJob, give up
-    IF nb = 0 THEN
-      -- See whether it has any MigrationJob
-      SELECT count(*) INTO nb FROM MigrationJob
-       WHERE castorFile = cfId;
-      -- If any MigrationJob, give up
+    DECLARE
+      fid NUMBER;
+      fc NUMBER;
+      nsh VARCHAR2(2048);
+    BEGIN
+      -- Delete the CastorFile
+      -- this will raise a constraint violation if any DiskCopy, MigrationJob, RecallJob or Disk2DiskCopyJob
+      -- still exists for this CastorFile. It is caught and we give up with the deletion in such a case.
+      DELETE FROM CastorFile WHERE id = cfId
+        RETURNING fileId, nsHost, fileClass
+        INTO fid, nsh, fc;
+      -- check whether this file potentially had copies on tape
+      SELECT nbCopies INTO nb FROM FileClass WHERE id = fc;
       IF nb = 0 THEN
-        -- See whether pending SubRequests exist
-        SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ count(*) INTO nb
-          FROM SubRequest
-         WHERE castorFile = cfId
-           AND status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13);   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
-        -- If any SubRequest, give up
-        IF nb = 0 THEN
-          DECLARE
-            fid NUMBER;
-            fc NUMBER;
-            nsh VARCHAR2(2048);
-          BEGIN
-            -- Delete the failed Recalls
-            deleteRecallJobs(cfId);
-            -- Delete the failed Migrations
-            deleteMigrationJobs(cfId);
-            -- Delete the CastorFile
-            DELETE FROM CastorFile WHERE id = cfId
-              RETURNING fileId, nsHost, fileClass
-              INTO fid, nsh, fc;
-            -- check whether this file potentially had copies on tape
-            SELECT nbCopies INTO nb FROM FileClass WHERE id = fc;
-            IF nb = 0 THEN
-              -- This castorfile was created with no copy on tape
-              -- So removing it from the stager means erasing
-              -- it completely. We should thus also remove it
-              -- from the name server
-              INSERT INTO FilesDeletedProcOutput (fileId, nsHost) VALUES (fid, nsh);
-            END IF;
-          END;
-        END IF;
+        -- This castorfile was created with no copy on tape
+        -- So removing it from the stager means erasing
+        -- it completely. We should thus also remove it
+        -- from the name server
+        INSERT INTO FilesDeletedProcOutput (fileId, nsHost) VALUES (fid, nsh);
       END IF;
-    END IF;
+    END;
   END IF;
-EXCEPTION WHEN NO_DATA_FOUND THEN
-  -- ignore, this means that the castorFile did not exist.
-  -- There is thus no way to find out whether to remove the
-  -- file from the nameserver. For safety, we thus keep it
-  NULL;
-WHEN LockError THEN
-  -- ignore, somebody else is dealing with this castorFile
-  NULL;
+EXCEPTION
+  WHEN CONSTRAINT_VIOLATED THEN
+    -- ignore, this means we still have some DiskCopy or Job around
+    NULL;
+  WHEN NO_DATA_FOUND THEN
+    -- ignore, this means that the castorFile did not exist.
+    -- There is thus no way to find out whether to remove the
+    -- file from the nameserver. For safety, we thus keep it
+    NULL;
+  WHEN LockError THEN
+    -- ignore, somebody else is dealing with this castorFile
+    NULL;
 END;
 /
 
