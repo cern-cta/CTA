@@ -93,6 +93,16 @@ CREATE INDEX I_DiskCopy_Status_7_FS ON DiskCopy (decode(status,7,status,NULL), f
 -- and add importance
 ALTER TABLE DiskCopy ADD (importance INTEGER);
 
+-- recreate foreign key DiskCopy-Castorfile, in non deferrable mode
+ALTER TABLE DiskCopy DROP CONSTRAINT FK_DiskCopy_CastorFile;
+ALTER TABLE DiskCopy ADD CONSTRAINT FK_DiskCopy_CastorFile
+  FOREIGN KEY (castorFile) REFERENCES CastorFile (id);
+
+-- recreate foreign key Castorfile-FileClass, in non deferrable mode
+ALTER TABLE CastorFile DROP CONSTRAINT FK_CastorFile_FileClass;
+ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_FileClass
+  FOREIGN KEY (fileClass) REFERENCES FileClass (id);
+
 /* new rating of filesystems */
 CREATE OR REPLACE FUNCTION fileSystemRate
 (nbReadStreams IN NUMBER,

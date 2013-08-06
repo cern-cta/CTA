@@ -1047,8 +1047,7 @@ CREATE TABLE CastorFile (fileId INTEGER,
                          nsOpenTime NUMBER CONSTRAINT NN_CastorFile_NsOpenTime NOT NULL)  -- timestamp given by the Nameserver at Cns_openx()
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 ALTER TABLE CastorFile ADD CONSTRAINT FK_CastorFile_FileClass
-  FOREIGN KEY (fileClass) REFERENCES FileClass (id)
-  INITIALLY DEFERRED DEFERRABLE;
+  FOREIGN KEY (fileClass) REFERENCES FileClass (id);
 CREATE UNIQUE INDEX I_CastorFile_LastKnownFileName ON CastorFile (lastKnownFileName);
 ALTER TABLE CastorFile ADD CONSTRAINT UN_CastorFile_LKFileName UNIQUE (lastKnownFileName);
 CREATE INDEX I_CastorFile_FileClass ON CastorFile(FileClass);
@@ -1566,8 +1565,7 @@ CREATE INDEX I_DiskCopy_FS_ST_Impor_ID_CF_S ON DiskCopy (filesystem, status, imp
 ALTER TABLE DiskCopy MODIFY (nbCopyAccesses DEFAULT 0);
 ALTER TABLE DiskCopy MODIFY (gcType DEFAULT NULL);
 ALTER TABLE DiskCopy ADD CONSTRAINT FK_DiskCopy_CastorFile
-  FOREIGN KEY (castorFile) REFERENCES CastorFile (id)
-  INITIALLY DEFERRED DEFERRABLE;
+  FOREIGN KEY (castorFile) REFERENCES CastorFile (id);
 ALTER TABLE DiskCopy
   MODIFY (status CONSTRAINT NN_DiskCopy_Status NOT NULL);
 
