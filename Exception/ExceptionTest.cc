@@ -58,6 +58,9 @@ namespace UnitTests {
       std::string bt = e.backtrace;
       ASSERT_NE(std::string::npos, bt.find("Nested::f1"));
       ASSERT_NE(std::string::npos, bt.find("Tape::Exceptions::Backtrace::Backtrace"));
+      ASSERT_EQ("", std::string(e.shortWhat()));
+      std::string fullWhat(e.what());
+      ASSERT_NE(std::string::npos, fullWhat.find("Nested::f1"));
     }
   }
   

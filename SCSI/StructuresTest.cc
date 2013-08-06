@@ -26,6 +26,7 @@
 #include "Device.hh"
 #include "Structures.hh"
 #include "../System/Wrapper.hh"
+#include "Exception.hh"
 
 using ::testing::AtLeast;
 using ::testing::Return;
@@ -459,5 +460,27 @@ namespace UnitTests {
   TEST(SCSI_Structures, toU64) {
     unsigned char num[8] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE, 0xFA, 0xDE };
     ASSERT_EQ ( 0xDEADBEEFCAFEFADEULL, SCSI::Structures::toU64(num));
+  }
+  
+  TEST(SCSI_Strucutres, Exception) {
+    SCSI::Structures::senseData_t<255> sense;
+    SCSI::Structures::LinuxSGIO_t sgio;
+    sgio.setSenseBuffer(&sense);
+    sgio.status = SCSI::Status::GOOD;
+    ASSERT_NO_THROW(SCSI::ExceptionLauncher(sgio));
+    sgio.status = SCSI::Status::CHECK_CONDITION;
+    /* fill up the ASC part of the */
+    sense.responseCode = 0x70;
+    sense.fixedFormat.ASC = 0x14;
+    sense.fixedFormat.ASCQ = 0x04;
+    ASSERT_THROW(SCSI::ExceptionLauncher(sgio), SCSI::Exception);
+    try { SCSI::ExceptionLauncher(sgio, "In exception validation:"); }
+    catch (SCSI::Exception & ex) {
+      std::string what(ex.shortWhat());
+      ASSERT_NE(std::string::npos, what.find("Block sequence error"));
+      /* We check here that the formatting is also done correctly (space added when context
+       not empty */
+      ASSERT_NE(std::string::npos, what.find("In exception validation: "));
+    }
   }
 };

@@ -39,14 +39,16 @@ namespace Tape {
   
   class Exception: public std::exception {
   public:
-    Exception(const std::string& what): m_what(what) {};
+    Exception(const std::string& what) { setWhat(what); }
     virtual ~Exception() throw() {};
     virtual const char * what() const throw();
+    virtual const char * shortWhat() const throw();
     Tape::Exceptions::Backtrace backtrace;
   protected:
     void setWhat(const std::string &w);
   private:
     std::string m_what;
+    std::string m_shortWhat;
   };
 
   namespace Exceptions {

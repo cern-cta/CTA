@@ -25,6 +25,7 @@
 
 #include "../SCSI/Device.hh"
 #include "../SCSI/Structures.hh"
+#include "../SCSI/Exception.hh"
 #include "../System/Wrapper.hh"
 #include "../Exception/Exception.hh"
 
@@ -146,9 +147,7 @@ namespace Tape {
       /* Manage both system error and SCSI errors. */
       if (-1 == m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh))
         throw Tape::Exceptions::Errnum("Failed SG_IO ioctl");
-      if (SCSI::Status::GOOD != sgh.status)
-        throw Tape::Exception(std::string("SCSI error in clearCompressionStats: ") + 
-                SCSI::statusToString(sgh.status));
+      SCSI::ExceptionLauncher(sgh, "SCSI error in clearCompressionStats:");
     }
     
     /**
@@ -181,9 +180,7 @@ namespace Tape {
       /* Manage both system error and SCSI errors. */
       if (-1 == m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh))
         throw Tape::Exceptions::Errnum("Failed SG_IO ioctl");
-      if (SCSI::Status::GOOD != sgh.status)
-        throw Tape::Exception(std::string("SCSI error in positionToLogicalObject: ") + 
-                SCSI::statusToString(sgh.status));
+      SCSI::ExceptionLauncher(sgh, "SCSI error in positionToLogicalObject:");
     }
     
 
@@ -210,8 +207,7 @@ namespace Tape {
       /* Manage both system error and SCSI errors. */
       if (-1 == m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh))
         throw Tape::Exceptions::Errnum("Failed SG_IO ioctl");
-      if (SCSI::Status::GOOD != sgh.status)
-        throw Tape::Exception(std::string("SCSI error in getPositionInfo: ") +  
+      SCSI::ExceptionLauncher(sgh, std::string("SCSI error in getPositionInfo: ") +  
                 SCSI::statusToString(sgh.status));
       
       if ( 0 == positionData.PERR ) {              // Location fields are valid
@@ -254,8 +250,7 @@ namespace Tape {
       /* Manage both system error and SCSI errors. */
       if (-1 == m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh))
         throw Tape::Exceptions::Errnum("Failed SG_IO ioctl");
-      if (SCSI::Status::GOOD != sgh.status)
-        throw Tape::Exception(std::string("SCSI error in getTapeAlerts: ") + 
+      SCSI::ExceptionLauncher(sgh, std::string("SCSI error in getTapeAlerts: ") + 
                 SCSI::statusToString(sgh.status));
       /* Return the ACTIVE tape alerts (this is indicated by "flag" (see 
        * SSC-4: 8.2.3 TapeAlert log page). As they are simply used for logging;
@@ -395,8 +390,7 @@ class DriveT10000 : public Drive<sysWrapperClass> {
       /* Manage both system error and SCSI errors. */
       if (-1 == this->m_sysWrapper.ioctl(this->m_tapeFD, SG_IO, &sgh))
         throw Tape::Exceptions::Errnum("Failed SG_IO ioctl");
-      if (SCSI::Status::GOOD != sgh.status)
-        throw Tape::Exception(std::string("SCSI error in getCompression: ") + 
+      SCSI::ExceptionLauncher(sgh, std::string("SCSI error in getCompression: ") + 
                 SCSI::statusToString(sgh.status));
       
       SCSI::Structures::logSenseLogPageHeader_t & logPageHeader = 
@@ -458,8 +452,7 @@ class DriveLTO : public Drive<sysWrapperClass> {
       /* Manage both system error and SCSI errors. */
       if (-1 == this->m_sysWrapper.ioctl(this->m_tapeFD, SG_IO, &sgh))
         throw Tape::Exceptions::Errnum("Failed SG_IO ioctl");
-      if (SCSI::Status::GOOD != sgh.status)
-        throw Tape::Exception(std::string("SCSI error in getCompression: ") + 
+      SCSI::ExceptionLauncher(sgh, std::string("SCSI error in getCompression: ") + 
                 SCSI::statusToString(sgh.status));
       
             SCSI::Structures::logSenseLogPageHeader_t & logPageHeader = 
@@ -540,8 +533,7 @@ class DriveIBM3592 : public Drive<sysWrapperClass> {
       /* Manage both system error and SCSI errors. */
       if (-1 == this->m_sysWrapper.ioctl(this->m_tapeFD, SG_IO, &sgh))
         throw Tape::Exceptions::Errnum("Failed SG_IO ioctl");
-      if (SCSI::Status::GOOD != sgh.status)
-        throw Tape::Exception(std::string("SCSI error in getCompression: ") + 
+      SCSI::ExceptionLauncher(sgh, std::string("SCSI error in getCompression: ") + 
                 SCSI::statusToString(sgh.status));
       
             SCSI::Structures::logSenseLogPageHeader_t & logPageHeader = 

@@ -40,10 +40,15 @@ const char * Tape::Exception::what() const throw () {
   return m_what.c_str();
 }
 
+const char * Tape::Exception::shortWhat() const throw () {
+  return m_shortWhat.c_str();
+}
+
 void Tape::Exception::setWhat(const std::string& what) {
   std::stringstream w;
   w << what << std::endl << std::string(backtrace);
   m_what = w.str();
+  m_shortWhat = what;
 }
 
 Tape::Exceptions::Errnum::Errnum(std::string what):Exception("") {

@@ -239,13 +239,29 @@ namespace SCSI {
 \end{lstlisting}
 \end{table}
 
-\subsection{Exceptions hierarchy}
+\subsection{Exceptions hierarchy and error handling strategy}
 
 There is a small class hierarchy for exceptions: \verb#Tape::Exception# inherits from
 \verb#std::exception#, and \verb#Tape::Exceptions::Errnum# inherits from the latter.
 \verb#Tape::Exceptions::Errnum# manages the errnos. It collects the errno value and turns it
 into a string automatically at construction time.  \verb#Tape::Exception# and all inheriting
 classes collect a stack trace at construction time.
+
+\verb#Tape::Exception# and all its heirs automatically generate a stack trace at creation time.
+This allows easy tracing of unhandled exceptions, as the stack trace embedded in the content
+of the \verb#what()# method. For the cases where the exception is indeed handled, a shorter version
+called \verb#shortWhat()# allows the logging of the problem without bloating the logs with long stack 
+traces.
+
+Another exception class, \verb#SCSI::Exception#, turns the SCSI status and sense buffer into a
+user readable string.
+
+Throughout the project, the error handling strategy is to throw an exception when any
+error condition occurs. This ensures that any returned value is valid, and prevents the 
+calling function from testing for error conditions. The default exception throwing is
+coming from a narrow set of exceptions types. This gives a crude exception handling capacity
+to the user of the functions. When finer grained exceptions will turn out to be required,
+we will add them on an as needed basis.
 
 \subsection{The Tape::Drive object}
 

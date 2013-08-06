@@ -218,7 +218,7 @@ namespace SCSI {
       TASK_SET_FULL = 0x28,
       ACA_ACTIVE = 0x30,
       TASK_ABORTED = 0x40
-    };
+    } Status_t;
   };
   
   /**
