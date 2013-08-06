@@ -366,9 +366,11 @@ END;
  */
 CREATE OR REPLACE PROCEDURE addSegResult(inIsOnlyLog IN INTEGER, inReqId IN VARCHAR2, inErrorCode IN INTEGER,
                                          inMsg IN VARCHAR2, inFileId IN NUMBER, inParams IN VARCHAR2) AS
+PRAGMA AUTONOMOUS_TRANSACTION;
 BEGIN
   INSERT INTO SetSegsForFilesResultsHelper (isOnlyLog, reqId, timeinfo, errorCode, msg, fileId, params)
     VALUES (inIsOnlyLog, inReqId, getTime(), inErrorCode, inMsg, inFileId, inParams);
+  COMMIT;
 END;
 /
 
