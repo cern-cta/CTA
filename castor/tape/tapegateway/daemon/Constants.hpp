@@ -42,8 +42,7 @@ namespace tapegateway {
   /**
    * The default time in seconds between two polls on a VDQM request
    */
-
-  const uint64_t VDQM_TIME_OUT_INTERVAL=600;
+  const uint64_t VDQM_TIME_OUT_INTERVAL=30;
   
   /**
    * Default parameters to initialize the Dynamic Thread pool
