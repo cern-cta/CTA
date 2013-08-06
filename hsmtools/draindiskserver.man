@@ -254,15 +254,15 @@ The status of the draining process. One of: \fBSUBMITTED\fR, \fBSTARTING\fR,
 Started draining for lxc2dev1d2.cern.ch:/srv/castor/10/
 
 # draindiskserver -q
-        DiskServer      MountPoint              Created TFiles TSize RFiles RSize Failed RunTime Progress ETC  Status
----------------------------------------------------------------------------------------------------------------------
-lxc2dev1d2.cern.ch /srv/castor/10/ 12-Jun-2013 14:03:12      4 2878B      4 2878B      0   4.00s   0.00 % N/A RUNNING
-
+        DiskServer      MountPoint              Created TFiles TSize RFiles RSize Done Failed RunTime Progress ETC  Status
+--------------------------------------------------------------------------------------------------------------------------
+lxc2dev1d2.cern.ch /srv/castor/10/ 12-Jun-2013 14:03:12      4 2878B      4 2878B    0      0   4.00s   0.00 % N/A RUNNING
 
 # draindiskserver -q
-        DiskServer      MountPoint              Created TFiles TSize RFiles RSize Failed RunTime Progress ETC Status
---------------------------------------------------------------------------------------------------------------------
-lxc2dev1d2.cern.ch /srv/castor/10/ 12-Jun-2013 14:03:12      4 2878B      0    0B      4  12.00s 100.00 %  0s FAILED
+        DiskServer      MountPoint              Created TFiles TSize RFiles RSize Done Failed RunTime Progress ETC Status
+-------------------------------------------------------------------------------------------------------------------------
+lxc2dev1d2.cern.ch /srv/castor/10/ 12-Jun-2013 14:03:12      4 2878B      0    0B    0      4  12.00s 100.00 %  0s FAILED
+
 
 # draindiskserver -qf
         DiskServer      MountPoint     fileId                                                                                                                      Error
@@ -288,6 +288,53 @@ Stopping drain for lxc2dev1d2.cern.ch:/srv/castor/10/
 
 # draindiskserver -q
 Nothing found
+
+
+.B More realistic
+
+# draindiskserver -q
+         DiskServer      MountPoint              Created  TFiles   TSize  RFiles   RSize  Done Failed RunTime Progress          ETC  Status
+-------------------------------------------------------------------------------------------------------------------------------------------
+lxfsrc48a06.cern.ch /srv/castor/01/ 02-Aug-2013 17:07:51  550504 1592MiB  543045 1570MiB  7459      0 33mn15s   1.36 %  1d16h4mn39s RUNNING
+lxfsrc48a06.cern.ch /srv/castor/02/ 02-Aug-2013 17:07:51  679996 1965MiB  672729 1944MiB  7267      0 33mn15s   1.06 %  2d3h48mn57s RUNNING
+lxfsrc48a06.cern.ch /srv/castor/03/ 02-Aug-2013 17:07:51  686182 1982MiB  677788 1958MiB  8394      0 33mn15s   1.22 %   1d21h4mn3s RUNNING
+lxfsrc48a06.cern.ch /srv/castor/04/ 02-Aug-2013 17:07:51  697358 2015MiB  688536 1989MiB  8822      0 33mn15s   1.26 % 1d19h30mn34s RUNNING
+lxfsrc48a06.cern.ch /srv/castor/05/ 02-Aug-2013 17:07:51  702091 2028MiB  695549 2009MiB  6542      0 33mn15s   0.92 %  2d11h28mn0s RUNNING
+lxfsrc48a06.cern.ch /srv/castor/06/ 02-Aug-2013 17:07:51  709821 2050MiB  702667 2030MiB  7154      0 33mn15s   1.00 %  2d6h52mn39s RUNNING
+lxfsrc48a06.cern.ch /srv/castor/07/ 02-Aug-2013 17:07:51  716472 2069MiB  708598 2047MiB  7874      0 33mn15s   1.09 %  2d2h10mn44s RUNNING
+lxfsrc48a06.cern.ch /srv/castor/08/ 02-Aug-2013 17:07:51  725884 2096MiB  718661 2076MiB  7223      0 33mn15s   0.99 %  2d7h33mn16s RUNNING
+lxfsrc48a06.cern.ch /srv/castor/09/ 02-Aug-2013 17:07:51  728824 2105MiB  721965 2085MiB  6859      0 33mn15s   0.94 %  2d10h30mn3s RUNNING
+lxfsrc48a06.cern.ch /srv/castor/10/ 02-Aug-2013 17:07:51  736654 2127MiB  730337 2109MiB  6317      0 33mn15s   0.85 % 2d16h32mn35s RUNNING
+-------------------------------------------------------------------------------------------------------------------------------------------
+                                                         6933786   19GiB 6859875   19GiB 73911      0           1.06 %                     
+
+# draindiskserver -q --script
+lxfsrc48a06.cern.ch:/srv/castor/01/:02-Aug-2013 17:07:51:552228:1597MiB:543047:1570MiB:9181:0:39mn15s:1.68 %:1d14h23mn34s:RUNNING
+lxfsrc48a06.cern.ch:/srv/castor/02/:02-Aug-2013 17:07:51:683343:1974MiB:674451:1949MiB:8892:0:39mn15s:1.29 %:2d2h18s:RUNNING
+lxfsrc48a06.cern.ch:/srv/castor/03/:02-Aug-2013 17:07:51:691131:1997MiB:681136:1968MiB:9995:0:39mn15s:1.44 %:1d20h49mn5s:RUNNING
+lxfsrc48a06.cern.ch:/srv/castor/04/:02-Aug-2013 17:07:51:703827:2033MiB:693484:2004MiB:10343:0:39mn15s:1.46 %:1d20h1mn0s:RUNNING
+lxfsrc48a06.cern.ch:/srv/castor/05/:02-Aug-2013 17:07:51:709910:2051MiB:702017:2028MiB:7893:0:39mn15s:1.10 %:2d10h36mn10s:RUNNING
+lxfsrc48a06.cern.ch:/srv/castor/06/:02-Aug-2013 17:07:51:719144:2077MiB:710484:2053MiB:8660:0:39mn15s:1.20 %:2d5h59mn43s:RUNNING
+lxfsrc48a06.cern.ch:/srv/castor/07/:02-Aug-2013 17:07:51:727335:2101MiB:717944:2074MiB:9391:0:39mn15s:1.29 %:2d2h13mn59s:RUNNING
+lxfsrc48a06.cern.ch:/srv/castor/08/:02-Aug-2013 17:07:51:738129:2132MiB:729529:2107MiB:8600:0:39mn15s:1.16 %:2d7h48mn14s:RUNNING
+lxfsrc48a06.cern.ch:/srv/castor/09/:02-Aug-2013 17:07:51:742410:2144MiB:734157:2121MiB:8253:0:39mn15s:1.11 %:2d10h12mn29s:RUNNING
+lxfsrc48a06.cern.ch:/srv/castor/10/:02-Aug-2013 17:07:51:751546:2171MiB:743923:2149MiB:7623:0:39mn15s:1.01 %:2d16h10mn57s:RUNNING
+
+# draindiskserver -qc
+
+         DiskServer      MountPoint         UserName           Machine   SvcClass FileMask Comment
+--------------------------------------------------------------------------------------------------
+lxfsrc48a06.cern.ch /srv/castor/01/ sponcec3@CERN.CH lxbrl2708.cern.ch largedisk2      All    None
+lxfsrc48a06.cern.ch /srv/castor/02/ sponcec3@CERN.CH lxbrl2708.cern.ch largedisk2      All    None
+lxfsrc48a06.cern.ch /srv/castor/03/ sponcec3@CERN.CH lxbrl2708.cern.ch largedisk2      All    None
+lxfsrc48a06.cern.ch /srv/castor/04/ sponcec3@CERN.CH lxbrl2708.cern.ch largedisk2      All    None
+lxfsrc48a06.cern.ch /srv/castor/05/ sponcec3@CERN.CH lxbrl2708.cern.ch largedisk2      All    None
+lxfsrc48a06.cern.ch /srv/castor/06/ sponcec3@CERN.CH lxbrl2708.cern.ch largedisk2      All    None
+lxfsrc48a06.cern.ch /srv/castor/07/ sponcec3@CERN.CH lxbrl2708.cern.ch largedisk2      All    None
+lxfsrc48a06.cern.ch /srv/castor/08/ sponcec3@CERN.CH lxbrl2708.cern.ch largedisk2      All    None
+lxfsrc48a06.cern.ch /srv/castor/09/ sponcec3@CERN.CH lxbrl2708.cern.ch largedisk2      All    None
+lxfsrc48a06.cern.ch /srv/castor/10/ sponcec3@CERN.CH lxbrl2708.cern.ch largedisk2      All    None
+
 
 .SH NOTES
 This command requires database client access to the stager catalog DB.
