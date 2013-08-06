@@ -24,6 +24,7 @@
 #include "Structures.hh"
 
 #include <sstream>
+#include <cstdio>
 
 std::string SCSI::Structures::toString(const inquiryData_t& inq) {
   std::stringstream inqDump;
@@ -60,4 +61,3 @@ std::string SCSI::Structures::toString(const inquiryData_t& inq) {
     inqDump << "inq.versionDescriptor[" << i << "]=" << SCSI::Structures::toU16(inq.versionDescriptor[i]) << std::endl;
   return inqDump.str();
 }
-

@@ -293,5 +293,24 @@ namespace SCSI {
       bytesWrittenToTape         = 0x0009  // a signed number and may be negative
     };
   };
-  
+
+  class senseConstants {
+  public:
+
+    /* Structures from the Linux Kernel. It holds ASC/ASCQ to string 
+     * translations (from http://www.t10.org/lists/asc-num.txt) */
+    struct error_info {
+      uint16_t code12; /* 0x0302 looks better than 0x03,0x02 */
+      const char * text;
+    };
+    static const struct error_info ascStrings[];
+
+    struct error_range_info {
+      uint8_t asc;
+      uint8_t ascq_min;
+      uint8_t ascq_max;
+      const char * text;
+    };
+    static const struct error_range_info ascRangesStrings[];
+  };
 }; // namespace SCSI

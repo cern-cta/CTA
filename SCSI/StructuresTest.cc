@@ -412,17 +412,28 @@ namespace UnitTests {
     ASSERT_EQ(0x78, sense.getASCQ());
     
     buff[0] = 0x73;
-    buff[2] = 0x56;
-    buff[3] = 0x78;
+    buff[2] = 0x0b;
+    buff[3] = 0x08;
     ASSERT_EQ(false, sense.isCurrent());
     ASSERT_EQ(true, sense.isDeffered());
     ASSERT_EQ(false, sense.isFixedFormat());
     ASSERT_EQ(true, sense.isDescriptorFormat());
-    ASSERT_EQ(0x56, sense.getASC());
-    ASSERT_EQ(0x78, sense.getASCQ());
+    ASSERT_EQ(0x0b, sense.getASC());
+    ASSERT_EQ(0x08, sense.getASCQ());
+    ASSERT_EQ("Warning - power loss expected", sense.getACSString());
+    
+    buff[2] = 0x40;
+    buff[3] = 0xab;
+    ASSERT_EQ("Diagnostic failure on component (ab)", sense.getACSString());
+    
+    buff[2] = 0x00;
+    buff[3] = 0x1F;
+    ASSERT_EQ("Unknown ASC/ASCQ:00/1f", sense.getACSString());
     
     buff[0] = 0x74;
     ASSERT_THROW(sense.getASC(), Tape::Exception);
+    
+    ASSERT_THROW(sense.getACSString(), Tape::Exception);
   }
   
   TEST(SCSI_Structures, toU16) {

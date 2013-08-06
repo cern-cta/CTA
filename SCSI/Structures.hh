@@ -608,7 +608,33 @@ namespace SCSI {
         } else {
           throw Tape::Exception("In senseData_t::getASCQ: no ACSQ with this response code or response code not supported");
         }
-      };
+      }
+      /**
+       * Function turning the ACS/ACSQ contents into a string.
+       * This function is taken from the Linux kernel sources.
+       * see scsi_extd_sense_format.
+       * @return the error string as defined by SCSI specifications.
+       */
+      std::string getACSString() {
+        SCSI::senseConstants sc;
+        uint8_t asc = getASC();
+        uint8_t ascq = getASCQ();
+        uint16_t code = (asc << 8) | ascq;
+        for (int i = 0; sc.ascStrings[i].text; i++)
+          if (sc.ascStrings[i].code12 == code)
+            return std::string(sc.ascStrings[i].text);
+        for (int i = 0; sc.ascRangesStrings[i].text; i++)
+          if (sc.ascRangesStrings[i].asc == asc &&
+                  sc.ascRangesStrings[i].ascq_min <= ascq &&
+                  sc.ascRangesStrings[i].ascq_max >= ascq) {
+            char buff[100];
+            snprintf(buff, sizeof (buff), sc.ascRangesStrings[i].text, ascq);
+            return std::string(buff);
+          }
+        char buff[100];
+        snprintf(buff, sizeof (buff), "Unknown ASC/ASCQ:%02x/%02x", asc, ascq);
+        return std::string(buff);
+      }
     };
     
     template <size_t n>
@@ -649,6 +675,5 @@ namespace SCSI {
       return hex.str();
     }
   };
-
-
 };
+
