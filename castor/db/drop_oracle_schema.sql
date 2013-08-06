@@ -42,6 +42,8 @@ BEGIN
         DBMS_SCHEDULER.DROP_JOB(JOB_NAME => rec.object_name, FORCE => TRUE);
       ELSIF rec.object_type = 'DATABASE LINK' THEN
         EXECUTE IMMEDIATE 'DROP DATABASE LINK '||rec.object_name;
+      ELSIF rec.object_type = 'SYNONYM' THEN
+        EXECUTE IMMEDIATE 'DROP SYNONYM '||rec.object_name;
       END IF;
     EXCEPTION WHEN OTHERS THEN
       -- Ignore: ORA-04043: "object string does not exist" or
