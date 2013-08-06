@@ -11086,7 +11086,7 @@ BEGIN
       -- Calculate the amount of space that would be freed on the filesystem
       -- if the files selected above were to be deleted.
       IF dcIds.COUNT > 0 THEN
-        SELECT freed + sum(diskCopySize) INTO freed
+        SELECT /*+ INDEX(DiskCopy PK_DiskCopy_Id) */ freed + sum(diskCopySize) INTO freed
           FROM DiskCopy
          WHERE DiskCopy.id IN
              (SELECT /*+ CARDINALITY(fsidTable 5) */ *
@@ -11323,7 +11323,7 @@ BEGIN
   OPEN stgOrphans FOR
     SELECT diskCopyId FROM StgFilesDeletedOrphans
      WHERE NOT EXISTS (
-        SELECT 'x' FROM DiskCopy
+        SELECT /*+ INDEX(DiskCopy PK_DiskCopy_Id */ 'x' FROM DiskCopy
          WHERE id = diskCopyId);
 END;
 /
