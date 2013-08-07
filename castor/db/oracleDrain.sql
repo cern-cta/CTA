@@ -145,6 +145,7 @@ END;
 CREATE OR REPLACE PROCEDURE rebalancingManager AS
   varFreeRef NUMBER;
   varSensibility NUMBER;
+  varNbDS INTEGER;
   varAlreadyRebalancing INTEGER;
 BEGIN
   -- go through all service classes
@@ -157,6 +158,19 @@ BEGIN
        AND ROWNUM < 2;
     -- if yes, do nothing for this round
     IF varAlreadyRebalancing > 0 THEN
+      CONTINUE;
+    END IF;
+    -- check that we have more than one diskserver online
+    SELECT count(unique DiskServer.name) INTO varNbDS
+      FROM FileSystem, DiskPool2SvcClass, DiskServer
+     WHERE DiskPool2SvcClass.parent = FileSystem.DiskPool
+       AND DiskPool2SvcClass.child = SC.id
+       AND DiskServer.id = FileSystem.diskServer
+       AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
+       AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+       AND DiskServer.hwOnline = 1;
+    -- if only 1 diskserver available, do nothing for this round
+    IF varNbDS < 2 THEN
       CONTINUE;
     END IF;
     -- compute average filling of filesystems on production machines
