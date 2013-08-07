@@ -577,7 +577,7 @@ ALTER TABLE Disk2DiskCopyJob
   CHECK (status IN (0, 1, 2));
 ALTER TABLE Disk2DiskCopyJob
   ADD CONSTRAINT CK_Disk2DiskCopyJob_type
-  CHECK (replicationType IN (0, 1, 2));
+  CHECK (replicationType IN (0, 1, 2, 3));
 
 INSERT INTO CastorConfig
   VALUES ('D2dCopy', 'MaxNbRetries', '2', 'The maximum number of retries for disk to disk copies before it is considered failed. Here 2 means we will do in total 3 attempts.');

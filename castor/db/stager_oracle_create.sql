@@ -2018,7 +2018,7 @@ ALTER TABLE Disk2DiskCopyJob
   CHECK (status IN (0, 1, 2));
 ALTER TABLE Disk2DiskCopyJob
   ADD CONSTRAINT CK_Disk2DiskCopyJob_type
-  CHECK (replicationType IN (0, 1, 2));
+  CHECK (replicationType IN (0, 1, 2, 3));
 
 /*****************/
 /* logon trigger */
