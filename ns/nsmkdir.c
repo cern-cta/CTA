@@ -63,7 +63,9 @@ int main(int argc,
     case 'm':
       mflag++;
       mode = strtol (Coptarg, &dp, 8);
-      if (*dp != '\0' || mode > 4095) {
+      // Check that only expected bits are set in the mode.
+      // Allowed bits are the ones to set permissions to directories
+      if (*dp != '\0' || ((mode & S_PERMDIR) != mode)) {
         fprintf (stderr, "invalid value for option -m\n");
         errflg++;
       }

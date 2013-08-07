@@ -17,6 +17,13 @@
 #define CNS_SEC_PORT 5510
 #define CNS_PORT 5010
 
+                /* constants used for checking mode bits of files */
+
+#define S_ONLYPERM	(S_IXOTH|S_IWOTH|S_IROTH|S_IXGRP|S_IWGRP|S_IRGRP|S_IXUSR|S_IWUSR|S_IRUSR)
+#define S_PERMDIR	(S_ONLYPERM|S_IFDIR)
+#define S_PERMFILE	(S_ONLYPERM|S_IFREG)
+#define S_PERM		(S_ONLYPERM|S_IFREG|S_IFDIR)
+
 		/* constants used for setting retention period on disk */
 
 #define	AS_LONG_AS_POSSIBLE	0x7FFFFFFF
