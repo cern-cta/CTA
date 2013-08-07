@@ -76,11 +76,13 @@ namespace SCSI {
       INQUIRY                                       = 0x12,
       RECOVER_BUFFERED_DATA                         = 0x14,
       MODE_SELECT                                   = 0x15,
+      MODE_SELECT_6                                 = 0x15,
       RESERVE                                       = 0x16,
       RELEASE                                       = 0x17,
       COPY                                          = 0x18,
       ERASE                                         = 0x19,
       MODE_SENSE                                    = 0x1a,
+      MODE_SENSE_6                                  = 0x1a, 
       START_STOP                                    = 0x1b,
       RECEIVE_DIAGNOSTIC                            = 0x1c,
       SEND_DIAGNOSTIC                               = 0x1d,
@@ -233,6 +235,13 @@ namespace SCSI {
       tapeAlert                  = 0x2e,
       dataCompression32h         = 0x32, // for LTO, SDLT. We have Data Compression 1Bh for LTO5,6 and DataComppression 0Fh in SSC-3 
       blockBytesTransferred      = 0x38  // parameters in this page are reset when a cartridge is loaded
+    };
+  };
+  
+  class modeSensePages {
+  public:
+    enum {
+      deviceConfiguration = 0x10
     };
   };
   /**

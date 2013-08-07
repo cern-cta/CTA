@@ -264,10 +264,67 @@ namespace Tape {
       return ret;
     }
     /**
-     * Set the tape density and compression. This is both driven by parameters and expert system knowing the hardware.
-     * This function is a good candidate for overloading in drive-specific child classes.
+     * Set the tape density and compression. 
+     * We use MODE SENSE/SELECT Device Configuration (10h) mode page.
+     * As soon as there is no definition in SPC-4 or SSC-3 it depends on the 
+     * drives documentation. 
+     * 
+     * @param densityCode  The tape specific density code.
+     *                     If it is 0 (default) than we use the density code 
+     *                     detected by the drive itself means no changes.
+     *                                
+     * @param compression  The boolean variable to enable or disable compression
+     *                     on the drive for the tape. By default it is enabled.
      */
-    virtual void setDensityAndCompression(/* todo: clarify parameters*/) throw (Exception) { throw Exception("Not implemented"); }
+    virtual void setDensityAndCompression(unsigned char densityCode = 0,
+                                          bool compression = true) throw (Exception) {      
+      SCSI::Structures::modeSenseDeviceConfiguration_t devConfig;
+      { // get info from the drive
+        SCSI::Structures::modeSense6CDB_t cdb;
+        SCSI::Structures::senseData_t<255> senseBuff;
+        SCSI::Structures::LinuxSGIO_t sgh;
+      
+        cdb.pageCode = SCSI::modeSensePages::deviceConfiguration;
+        cdb.allocationLenght = sizeof(devConfig);
+      
+        sgh.setCDB(&cdb);
+        sgh.setDataBuffer(&devConfig);
+        sgh.setSenseBuffer(&senseBuff);  
+        sgh.dxfer_direction = SG_DXFER_FROM_DEV;
+      
+        /* Manage both system error and SCSI errors. */
+        if (-1 == m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh))
+          throw Tape::Exceptions::Errnum("Failed SG_IO ioctl");
+        SCSI::ExceptionLauncher(sgh, 
+                  std::string("SCSI error in setDensityAndCompression: ") +  
+                  SCSI::statusToString(sgh.status));
+      }
+      
+      { // set parameters and we use filled structure devConfig from the previous SCSI call
+        SCSI::Structures::modeSelect6CDB_t cdb;
+        SCSI::Structures::senseData_t<255> senseBuff;
+        SCSI::Structures::LinuxSGIO_t sgh;
+        
+        cdb.PF = 1; // means nothing for IBM, LTO, T10000
+        cdb.paramListLength = sizeof(devConfig);
+
+        devConfig.header.modeDataLength = 0 ; // must be 0 for IBM, LTO ignored by T10000
+        if (0 != densityCode) devConfig.blockDescriptor.densityCode = densityCode; 
+        if (compression)      devConfig.modePage.selectDataComprAlgorithm = 1;
+                        
+        sgh.setCDB(&cdb);
+        sgh.setDataBuffer(&devConfig);
+        sgh.setSenseBuffer(&senseBuff);  
+        sgh.dxfer_direction = SG_DXFER_TO_DEV;
+        
+        /* Manage both system error and SCSI errors. */
+        if (-1 == m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh))
+          throw Tape::Exceptions::Errnum("Failed SG_IO ioctl");
+        SCSI::ExceptionLauncher(sgh, 
+                  std::string("SCSI error in setDensityAndCompression: ") +  
+                  SCSI::statusToString(sgh.status));
+      }
+    }
     
     /**
      * Get drive status.

@@ -340,6 +340,108 @@ namespace UnitTests {
     ASSERT_EQ(0x7ABCDEF7, SCSI::Structures::toU32(readPositionData.bytesInBuffer));
   }
   
+  TEST(SCSI_Structures, modeSelect6CDB_t) {
+    SCSI::Structures::modeSelect6CDB_t modeSelect6CDB;
+    unsigned char *buff = (unsigned char *)&modeSelect6CDB;  
+    /*
+     * Make sure this struct is a POD (plain old data without virtual table)
+     * (and has the right size).
+     */
+    ASSERT_EQ(6, sizeof(modeSelect6CDB)); 
+    
+    /* Check proper initialization an location of struct members match
+     the bit/byte locations defined in SPC-4 */
+    ASSERT_EQ(SCSI::Commands::MODE_SELECT_6, modeSelect6CDB.opCode);
+    buff[0] = 0xAB;
+    ASSERT_EQ(0xAB, modeSelect6CDB.opCode);
+    
+    ASSERT_EQ(0, modeSelect6CDB.SP);
+    buff[1] |= (0x1 &   0xFF) << 0;
+    ASSERT_EQ(0x1, modeSelect6CDB.SP);
+    
+    ASSERT_EQ(0, modeSelect6CDB.PF);
+    buff[1] |= (0x10 &   0xFF) << 0;
+    ASSERT_EQ(0x1, modeSelect6CDB.PF);
+    
+    buff[2] |= 0xFF; buff[3] = 0xFF; 
+    
+    ASSERT_EQ(0, modeSelect6CDB.paramListLength);
+    buff[4] |= 0xBC;
+    ASSERT_EQ(0xBC, modeSelect6CDB.paramListLength);
+           
+    ASSERT_EQ(0, modeSelect6CDB.control);
+    buff[5] |= 0xAB;
+    ASSERT_EQ(0xAB, modeSelect6CDB.control);
+  }
+  
+  TEST(SCSI_Structures, modeSense6CDB_t) {
+    SCSI::Structures::modeSense6CDB_t modeSense6CDB;
+    unsigned char *buff = (unsigned char *)&modeSense6CDB;  
+    /*
+     * Make sure this struct is a POD (plain old data without virtual table)
+     * (and has the right size).
+     */
+    ASSERT_EQ(6, sizeof(modeSense6CDB)); 
+    
+    /* Check proper initialization an location of struct members match
+     the bit/byte locations defined in SPC-4 */
+    ASSERT_EQ(SCSI::Commands::MODE_SENSE_6, modeSense6CDB.opCode);
+    buff[0] = 0xAB;
+    ASSERT_EQ(0xAB, modeSense6CDB.opCode);
+    
+    ASSERT_EQ(0, modeSense6CDB.DBD);
+    buff[1] |= (0x8 &   0xFF) << 0;
+    ASSERT_EQ(0x1, modeSense6CDB.DBD);
+    
+    ASSERT_EQ(0, modeSense6CDB.pageCode);
+    buff[2] |= (0x2A &   0xFF) << 0;
+    ASSERT_EQ(0x2A,  modeSense6CDB.pageCode);
+    
+    ASSERT_EQ(0, modeSense6CDB.PC);
+    buff[2] |= (0x8B &   0xFF) << 0;
+    ASSERT_EQ(0x2,  modeSense6CDB.PC);
+    
+    ASSERT_EQ(0,  modeSense6CDB.subPageCode);
+    buff[3] |= 0xBC;
+    ASSERT_EQ(0xBC, modeSense6CDB.subPageCode);
+           
+    ASSERT_EQ(0, modeSense6CDB.allocationLenght);
+    buff[4] |= 0xAB;
+    ASSERT_EQ(0xAB, modeSense6CDB.allocationLenght);
+    
+    ASSERT_EQ(0, modeSense6CDB.control);
+    buff[5] |= 0xCD;
+    ASSERT_EQ(0xCD, modeSense6CDB.control);
+  }  
+  
+  TEST(SCSI_Structures, modeSenseDeviceConfiguration_t) {
+    SCSI::Structures::modeSenseDeviceConfiguration_t devConfig;
+    unsigned char *buff = (unsigned char *)&devConfig;  
+    /*
+     * Make sure this struct is a POD (plain old data without virtual table)
+     * (and has the right size).
+     */
+    ASSERT_EQ(28, sizeof(devConfig));
+    ASSERT_EQ(4, sizeof(devConfig.header));
+    ASSERT_EQ(8, sizeof(devConfig.blockDescriptor));
+    ASSERT_EQ(16, sizeof(devConfig.modePage));
+    
+    /* We will only check used by us parameters */
+    ASSERT_EQ(0, devConfig.header.modeDataLength);
+    buff[0] |= 0xAB;
+    ASSERT_EQ(0xAB, devConfig.header.modeDataLength);
+    
+    buff[1] = buff[2] = buff[3] = 0xFF;
+    ASSERT_EQ(0, devConfig.blockDescriptor.densityCode);
+    buff[4] |= 0xCD;
+    ASSERT_EQ(0xCD, devConfig.blockDescriptor.densityCode);
+    
+    for(int i=5;i<26;i++) buff[i] = 0xFF; // fill the space
+    ASSERT_EQ(0, devConfig.modePage.selectDataComprAlgorithm );
+    buff[26] |= 0xEF;
+    ASSERT_EQ(0xEF, devConfig.modePage.selectDataComprAlgorithm);
+  }  
+  
   TEST(SCSI_Structures, tapeAlertLogPage_t_and_parameters) {
     SCSI::Structures::tapeAlertLogPage_t<12> tal;
     unsigned char * buff = (unsigned char *) & tal;

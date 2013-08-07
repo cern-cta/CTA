@@ -234,7 +234,7 @@ namespace SCSI {
       unsigned char vendorSpecific2[1];
     };
     
-     /*
+    /**
      * LOCATE(10) CDB as described in SSC-3.
      */
     class locate10CDB_t {
@@ -268,7 +268,7 @@ namespace SCSI {
       unsigned char control;               // Control byte
     };
     
-     /*
+    /**
      * READ POSITION CDB as described in SSC-3.
      */
     class readPositionCDB_t {
@@ -295,7 +295,7 @@ namespace SCSI {
       unsigned char control;               // Control byte
     };
     
-         /*
+    /**
      * READ POSITION  data format, short form as described in SSC-3.
      */
     class readPositionDataShortForm_t {
@@ -333,7 +333,7 @@ namespace SCSI {
       unsigned char bytesInBuffer[4];       // Number if bytes in object buffer
     };
     
-    /*
+    /**
      * LOG SELECT CDB as described in SPC-4.
      */
     class logSelectCDB_t {
@@ -394,8 +394,8 @@ namespace SCSI {
     };
 
     /**
-    * Log sense Log Page Parameter Format as described in SPC-4, 
-    */
+     * Log sense Log Page Parameter Format as described in SPC-4, 
+     */
     class logSenseParameterHeader_t  {
     public:
       // bytes 0-1
@@ -423,8 +423,8 @@ namespace SCSI {
     };
     
     /**
-    * Log sense Log Page Format as described in SPC-4, 
-    */
+     * Log sense Log Page Format as described in SPC-4, 
+     */
     class logSenseLogPageHeader_t {
     public:
       // byte 0
@@ -439,8 +439,8 @@ namespace SCSI {
       unsigned char pageLength[2];   // n-3 number of bytes without header   
     };
     /**
-    * Log sense Log Page Format as described in SPC-4, 
-    */
+     * Log sense Log Page Format as described in SPC-4, 
+     */
     class logSenseLogPage_t {
     public:
       // bytes 0-3
@@ -450,7 +450,186 @@ namespace SCSI {
       logSenseParameter_t parameters [1]; // parameters have variable length
     };
     
+    /**
+     * MODE SENSE(6) CDB as described in SPC-4.
+     */
+    class modeSense6CDB_t {
+    public:
+      modeSense6CDB_t() {
+        zeroStruct(this);
+        opCode = SCSI::Commands::MODE_SENSE_6; 
+      }
+      // byte 0
+      unsigned char opCode;           // OPERATION CODE (1Ah)
+      
+      // byte 1 
+      unsigned char     : 3;          // Reserved
+      unsigned char DBD : 1;          // Disable Block Descriptors
+      unsigned char     : 4;          // Reserved  
+      
+      // byte 2
+      unsigned char pageCode : 6;     // Page code
+      unsigned char PC       : 2;     // Page Control
+            
+      // byte3  
+      unsigned char subPageCode ;     // Subpage code
+      
+      // byte4  
+      unsigned char allocationLenght; // The maximum number of bytes to be transferred
+            
+      // byte 5
+      unsigned char control;          // Control byte
+    };
 
+    /**
+     * MODE SENSE(6) MODE SELECT(6) parameter header as described in SPC-4.
+     */
+    class modeParameterHeader6_t {
+    public:
+      // byte 0
+      unsigned char modeDataLength;   // The mode data length does not include itself 
+      
+      // byte 1 
+      unsigned char mediumType;       // The medium type in the drive
+      
+      // byte 2
+      /* in SPC-4 we have device-specific parameter byte here
+       * but from all drive specifications the fields are the same
+       * so we use them here.
+       */
+      unsigned char speed        : 4; // Read/write speed
+      unsigned char bufferedMode : 3; // Returns after data is in the buffer or on the medium
+      unsigned char WP           : 1; // Write Protect
+            
+      // byte3  
+      unsigned char blockDescriptorLength ; //  (08h) or (00h)
+    };
+    
+    /**
+     * MODE SENSE(6,10) and MODE SELECT(6,10) block descriptor as described in SPC-4.
+     */
+    class modeParameterBlockDecriptor_t {
+    public:
+      // byte 0
+      unsigned char densityCode;       // Density code
+      
+      // bytes 1-3 
+      unsigned char numberOfBlocks[3]; // Number of block or block count
+      
+      // byte 4
+      unsigned char : 8;               // Reserved
+                 
+      // bytes 5-7 
+      unsigned char blockLength[3] ;   //  Block length
+    };
+    
+    /**
+     * MODE SENSE(6) or MODE SENSE(10) mode page 10h: Device Configuration.
+     * There is no description in SPC-4 or SSC-3.
+     * We use descriptions from: 
+     * IBM System Storage Tape Drive 3592 SCSI Reference,
+     * Sun StorageTekTM T10000 Tape Drive Fibre Channel Interface Reference Manual,
+     * IBM TotalStorage LTO Ultrium Tape Drive SCSI Reference.
+    */
+    class modePageDeviceConfiguration_t {
+    public:
+      // byte 0
+      unsigned char pageCode :6;          // Page code (10h)
+      unsigned char SPF      :1;          // SubPage Format (0b)
+      unsigned char PS       :1;          // Parameters Savable
+      
+      // byte 1 
+      unsigned char pageLength;           // (0Eh)
+      
+      // byte 2
+      unsigned char activeFormat : 5;     // Active Format
+      unsigned char CAF          : 1;     // Change Active Format 
+      unsigned char CAP          : 1;     // Change Active Partition 
+      unsigned char              : 1;     // Reserved
+                 
+      // byte 3
+      unsigned char activePartition ;     //  Active Partition
+      
+      // byte 4
+      unsigned char writeBufferFullRatio; // Write object buffer full ratio
+      
+      // byte 5
+      unsigned char readBufferEmptyRatio; // Read object buffer empty ratio
+      
+      // bytes 6-7
+      unsigned char writeDelayTime[2];    // Write delay time in 100ms for IBM, LTO and in sec for T1000
+      
+      // byte 8
+      unsigned char REW : 1;  // Report Early Warning
+      unsigned char RBO : 1;  // Recover Buffer Order
+      unsigned char SOCF: 2;  // Stop On Consecutive Filemarks
+      unsigned char AVC : 1;  // Automatic Velocity Control
+      unsigned char RSMK : 1; // Report SetMarKs (obsolete for IBM,LTO)
+      unsigned char LOIS : 1; // Logical Object ID Supported or Block IDs Supported for T10000
+      unsigned char OBR  : 1; // Object Buffer Recovery or Data Buffer Recovery for T10000
+      
+      // byte 9
+      unsigned char gapSize;  // Obsolete for IBM, LTO
+      
+      // byte 10
+      unsigned char BAM : 1;  // Block Address Mode or reserved for T10000
+      unsigned char BAML: 1;  // Block Address Mode Lock or reserved for T10000
+      unsigned char SWP : 1;  // Soft Write Protect
+      unsigned char SEW : 1;  // Synchronize at Early Warning 
+      unsigned char EEG : 1;  // EOD Enabled Generation
+      unsigned char eodDefined :3; // End Of Data
+      
+      // bytes 11-13
+      unsigned char bufSizeAtEarlyWarning[3]; // Object buffer size at early warning
+      
+      // byte 14
+      unsigned char selectDataComprAlgorithm; // Select data compression algorithm
+      
+      // byte 15
+      unsigned char PRMWP  : 1;        // PeRManent Write Protect
+      unsigned char PERSWP : 1;        // PERSistent Write Protect
+      unsigned char ASOCWP : 1;        // ASsOCiated Write Protect
+      unsigned char rewindOnReset : 2; // Reserved for T10000
+      unsigned char OIR  : 1;          // Only If Reserved  or reserved for T10000
+      unsigned char WTRE : 2;          // WORM Tamper Read Enable
+    };
+    
+    class modeSenseDeviceConfiguration_t {
+    public:
+      modeSenseDeviceConfiguration_t() { zeroStruct(this); }
+      modeParameterHeader6_t header;
+      modeParameterBlockDecriptor_t blockDescriptor;
+      modePageDeviceConfiguration_t modePage;
+    };
+    
+     /**
+     * MODE SELECT(6) CDB as described in SPC-4.
+     */
+    class modeSelect6CDB_t {
+    public:
+      modeSelect6CDB_t() {
+        zeroStruct(this);
+        opCode = SCSI::Commands::MODE_SELECT_6; 
+      }
+      // byte 0
+      unsigned char opCode;          // OPERATION CODE (15h)
+      
+      // byte 1 
+      unsigned char SP : 1;          // Save Parameters
+      unsigned char    : 3;          // Reserved
+      unsigned char PF : 1;          // Page Format
+      unsigned char    : 3;          // Reserved
+      
+      // bytes 2-3
+      unsigned char reserved[2];     // Reserved
+                  
+      // byte 4
+      unsigned char paramListLength; // Parameter list length
+            
+      // byte 5
+      unsigned char control;         // Control byte
+    };
+    
     /**
      * Part of a tape alert log page.
      * This structure does not need to be initialized, as the containing structure
