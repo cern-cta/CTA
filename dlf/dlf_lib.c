@@ -44,26 +44,12 @@ static const char* progname = 0;
 static int   LogFile = -1;           /* fd for log */
 static int   connected;              /* have done connect */
 static pthread_mutex_t syslog_lock;  /* synchronization of syslog clients */
-static pthread_key_t  reg_key;
-static pthread_once_t reg_key_once = PTHREAD_ONCE_INIT;
 static struct sockaddr_un SyslogAddr;	/* AF_UNIX address of local logger */
 
 /* local functions */
 static void dlf_openlog();
 static void dlf_closelog();
 static void dlf_syslog(char* msg, int msglen);
-
-/*---------------------------------------------------------------------------
- * _tls_reg_key_alloc & _tls_req_data_free
- *---------------------------------------------------------------------------*/
-void _tls_req_data_free(void *data) {
-  free(data);
-}
-
-static void _tls_reg_key_alloc() {
-  pthread_key_create(&reg_key, &_tls_req_data_free);
-}
-
 
 /*---------------------------------------------------------------------------
  * _clean_string
@@ -193,8 +179,6 @@ int dlf_init(const char *ident) {
     maxmsglen = size;
   }
 
-  /* Create the thread-specific data key */
-  pthread_once(&reg_key_once, _tls_reg_key_alloc);
   /* create the syslog serialization lock */
   if (pthread_mutex_init(&syslog_lock, NULL)) {
     errno = ENOMEM;
@@ -232,8 +216,6 @@ int dlf_shutdown(void) {
   /* Close syslog */
   closelog();
 
-  /* Delete the thread-specific data key */
-  pthread_key_delete(reg_key);
   /* destroy the syslog serialization lock */
   pthread_mutex_destroy(&syslog_lock);
 
@@ -442,37 +424,6 @@ int dlf_writep(Cuuid_t reqid,
     }
   } else {
     msg = messages[msgno];
-    // If this is the first time the current thread has processed a message of type
-    // msgno then record a registration message. (See #77741)
-    // Deprecated : this can be dropped once the DLF DB is revisited
-    {
-      unsigned int *registered = pthread_getspecific(reg_key);
-      if (registered == NULL) {
-        unsigned int *tls = (unsigned int *)
-          calloc(DLF_MAX_MSGTEXTS, sizeof(unsigned int));
-        if (tls == NULL) {
-          return (-1);
-        }
-        pthread_setspecific(reg_key, (void *)tls);
-        registered = pthread_getspecific(reg_key);
-      }
-
-      /* Sanity check: This should never happen! */
-      if (registered == NULL) {
-        return (-1);
-      }
-      if (registered[msgno] == 0) {
-        char tmpbuffer[DLF_MAX_LINELEN * 2];
-        int tmpbuflen;
-        struct timeval tv;
-        gettimeofday(&tv, NULL);
-        tmpbuflen = build_syslog_header(tmpbuffer, DLF_MAX_LINELEN * 2, LOG_INFO | LOG_LOCAL2, &tv,0,getpid());
-        tmpbuflen += snprintf(tmpbuffer + tmpbuflen, DLF_MAX_LINELEN * 2 - tmpbuflen,
-                              "MSGNO=%u MSGTEXT=\"%s\"\n", msgno, msg);
-        dlf_syslog(tmpbuffer, tmpbuflen);
-        registered[msgno] = 1;
-      }
-    }
   }
   // and call actual logging method
   int ret = dlf_writepm(reqid, priority, msg, ns, numparams, params);
