@@ -115,6 +115,7 @@ CREATE TABLE CastorConfig
    key VARCHAR2(50) CONSTRAINT NN_CastorConfig_key NOT NULL,
    value VARCHAR2(100) CONSTRAINT NN_CastorConfig_value NOT NULL,
    description VARCHAR2(1000));
+ALTER TABLE CastorConfig ADD CONSTRAINT UN_CastorConfig_class_key UNIQUE (class, key);
 
 -- Provide a default configuration
 INSERT INTO CastorConfig (class, key, value, description)
