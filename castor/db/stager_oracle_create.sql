@@ -6334,7 +6334,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
          AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
          AND DiskServer.hwOnline = 1
          AND DiskServer.id NOT IN (
-           SELECT DISTINCT(DiskServer.id)
+           SELECT /*+ INDEX(DiskCopy I_DiskCopy_CastorFile) */ DISTINCT(DiskServer.id)
              FROM DiskCopy, FileSystem, DiskServer
             WHERE DiskCopy.castorfile = inCfId
               AND DiskCopy.fileSystem = FileSystem.id
