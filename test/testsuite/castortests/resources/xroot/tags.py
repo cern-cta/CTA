@@ -32,6 +32,12 @@ def xrootRootURLparam(self, nb=0):
                            'root://'+os.environ['STAGE_HOST']+'/'+ self.getTag(test,'noTapeFileName'+snb)+'?stagerHost='+os.environ['STAGE_HOST']+'&'])
 Setup.getTag_xrootRootURLparam = xrootRootURLparam
 
+def simpleXrdcpTapeURL(self, nb=0):
+    snb = ''
+    if nb > 0: snb = str(nb)
+    return (lambda test : 'root://'+os.environ['STAGE_HOST']+'/'+ self.getTag(test,'tapeFileName'+snb))
+Setup.getTag_simpleXrdcpTapeURL = simpleXrdcpTapeURL
+
 def simpleXrdcpURL(self, nb=0):
     snb = ''
     if nb > 0: snb = str(nb)
