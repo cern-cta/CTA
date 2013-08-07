@@ -115,11 +115,14 @@ namespace SCSI {
      */
     inline uint32_t toU32(const unsigned char(& t)[3])
     {
-      unsigned char tmp[4];
-      tmp[0]=0;tmp[1]=t[0];tmp[2]=t[1]; tmp[3]=t[2];
+      union {
+	unsigned char tmp[4];
+	uint32_t val;
+      } u;
+      u.tmp[0]=0;u.tmp[1]=t[0];u.tmp[2]=t[1];u.tmp[3]=t[2];
       
       /* Like network, SCSI is BigEndian */
-      return ntohl (*((uint32_t *) tmp));
+      return ntohl (u.val);
     }
     
      /**
