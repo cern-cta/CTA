@@ -6341,23 +6341,18 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
               AND FileSystem.diskserver = DiskServer.id
               AND DiskCopy.status = dconst.DISKCOPY_VALID);
       IF varNbDSs > 0 THEN
-        DECLARE
-          varSrcDcId NUMBER;
-          varSrcSvcClassId NUMBER;
         BEGIN
           -- yes, we can replicate, create a replication request without waiting on it.
-          createDisk2DiskCopyJob(inCfId, inNsOpenTime, varSrcSvcClassId, inEuid, inEgid,
+          createDisk2DiskCopyJob(inCfId, inNsOpenTime, inSvcClassId, inEuid, inEgid,
                                  dconst.REPLICATIONTYPE_INTERNAL, NULL, NULL);
           -- log it
           logToDLF(inReqUUID, dlf.LVL_SYSTEM, dlf.STAGER_GET_REPLICATION, inFileId, inNsHost, 'stagerd',
                    'SUBREQID=' || inSrUUID || ' svcClassId=' || getSvcClassName(inSvcClassId) ||
-                   ' srcDcId=' || TO_CHAR(varSrcDcId) || ' srcSvcClassId=' || getSvcClassName(varSrcSvcClassId) ||
                    ' euid=' || TO_CHAR(inEuid) || ' egid=' || TO_CHAR(inEgid));
         EXCEPTION WHEN NO_DATA_FOUND THEN
           logToDLF(inReqUUID, dlf.LVL_WARNING, dlf.STAGER_GET_REPLICATION_FAIL, inFileId, inNsHost, 'stagerd',
                    'SUBREQID=' || inSrUUID || ' svcClassId=' || getSvcClassName(inSvcClassId) ||
-                   ' srcDcId=' || TO_CHAR(varSrcDcId) || ' euid=' || TO_CHAR(inEuid) ||
-                   ' egid=' || TO_CHAR(inEgid));
+                   ' euid=' || TO_CHAR(inEuid) || ' egid=' || TO_CHAR(inEgid));
         END;
       END IF;
     END IF;
