@@ -776,7 +776,10 @@ namespace SCSI {
         } else if (isDescriptorFormat()) {
           return descriptorFormat.ASC;
         } else {
-          throw Tape::Exception("In senseData_t::getASC: no ACS with this response code or response code not supported");
+          std::stringstream err;
+          err << "In senseData_t::getASC: no ACS with this response code or response code not supported ("
+                  << std::hex << std::showbase << (int)responseCode << ")";
+          throw Tape::Exception(err.str());
         }
       }
 
@@ -786,7 +789,10 @@ namespace SCSI {
         } else if (isDescriptorFormat()) {
           return descriptorFormat.ASCQ;
         } else {
-          throw Tape::Exception("In senseData_t::getASCQ: no ACSQ with this response code or response code not supported");
+          std::stringstream err;
+          err << "In senseData_t::getASCQ: no ACSQ with this response code or response code not supported ("
+                  << std::hex << std::showbase << (int)responseCode << ")";
+          throw Tape::Exception(err.str());
         }
       }
       /**
@@ -815,6 +821,7 @@ namespace SCSI {
         snprintf(buff, sizeof (buff), "Unknown ASC/ASCQ:%02x/%02x", asc, ascq);
         return std::string(buff);
       }
+      /* TODO: add support for sense key */
     };
     
     template <size_t n>

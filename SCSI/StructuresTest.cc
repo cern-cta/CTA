@@ -537,6 +537,12 @@ namespace UnitTests {
     ASSERT_THROW(sense.getASC(), Tape::Exception);
     
     ASSERT_THROW(sense.getACSString(), Tape::Exception);
+    
+    try { sense.getACSString(); ASSERT_TRUE(false); }
+    catch (Tape::Exception & ex) {
+      std::string what(ex.shortWhat());
+      ASSERT_NE(std::string::npos, what.find("response code not supported (0x74)"));
+    }
   }
   
   TEST(SCSI_Structures, toU16) {
@@ -576,7 +582,7 @@ namespace UnitTests {
     sense.fixedFormat.ASC = 0x14;
     sense.fixedFormat.ASCQ = 0x04;
     ASSERT_THROW(SCSI::ExceptionLauncher(sgio), SCSI::Exception);
-    try { SCSI::ExceptionLauncher(sgio, "In exception validation:"); }
+    try { SCSI::ExceptionLauncher(sgio, "In exception validation:"); ASSERT_TRUE(false); }
     catch (SCSI::Exception & ex) {
       std::string what(ex.shortWhat());
       ASSERT_NE(std::string::npos, what.find("Block sequence error"));
