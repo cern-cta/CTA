@@ -43,6 +43,11 @@ project (CERN_Tape)
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 ###########################################################################
+# compiler options
+###########################################################################
+set (CMAKE_CXX_FLAGS "-g3 -Wall -Werror -pedantic")
+
+###########################################################################
 # dependancies
 ###########################################################################
 find_package(GTest REQUIRED)
@@ -71,12 +76,6 @@ add_subdirectory(Utils)
 
 # .. and of course, the tests (last to use the variable definition)
 add_subdirectory(test)
-
-###########################################################################
-# compiler options
-###########################################################################
-set (CMAKE_CXX_FLAGS “${CMAKE_CXX_FLAGS} -Wall -Werror -pedantic”)
-
 
 ###########################################################################
 # documentation

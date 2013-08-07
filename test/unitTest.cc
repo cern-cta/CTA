@@ -30,7 +30,7 @@ namespace UnitTests {
    * and not supported. */
   TEST(Architecture, 64bits) {
     size_t pointerSizeInBits = 8*sizeof(void *);
-    ASSERT_EQ(64, pointerSizeInBits);
+    ASSERT_EQ(64U, pointerSizeInBits);
   }
 }
 

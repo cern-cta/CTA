@@ -43,5 +43,5 @@ namespace Tape {
       regex_t m_re;
       bool m_set;
     }; /* class regex */
-  }; /* namespace Utils */
-}; /* namespace Tape */
+  } /* namespace Utils */
+} /* namespace Tape */

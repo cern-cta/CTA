@@ -98,8 +98,8 @@ namespace Tape {
   template <class sysWrapperClass>
   class Drive {
   public:
-    Drive(SCSI::DeviceInfo di, sysWrapperClass & sw): m_sysWrapper(sw),
-            m_SCSIInfo(di), m_tapeFD(-1), m_genericFD(-1)
+    Drive(SCSI::DeviceInfo di, sysWrapperClass & sw): m_SCSIInfo(di),
+            m_tapeFD(-1), m_genericFD(-1), m_sysWrapper(sw)
     {
       /* Open the device files */
       /* We open the tape device file non-blocking as blocking open on rewind tapes (at least)
@@ -255,7 +255,7 @@ namespace Tape {
       /* Return the ACTIVE tape alerts (this is indicated by "flag" (see 
        * SSC-4: 8.2.3 TapeAlert log page). As they are simply used for logging;
        * return strings. */
-      for (int i=0; i< tal.parameterNumber(); i++) {
+      for (size_t i=0; i< tal.parameterNumber(); i++) {
         if (tal.parameters[i].flag)
           ret.push_back(SCSI::tapeAlertToString(
                   SCSI::Structures::toU16(tal.parameters[i].parameterCode)
@@ -362,6 +362,10 @@ namespace Tape {
      * @return error code and string containing the error description
      */
     virtual tapeError getTapeError() throw (Exception) { throw Exception("Not implemented"); }
+    
+    /**
+     * 
+     */
     
     virtual ~Drive() {
       if(-1 != m_tapeFD)

@@ -57,10 +57,10 @@ namespace System {
     char * realpath(const char* name, char* resolved) { return ::realpath(name, resolved); }
     int open(const char* file, int oflag) { return ::open(file, oflag); }
     int ioctl(int fd, unsigned long int request, struct mtget * mt_status) {
-      ::ioctl(fd, request, mt_status);
+      return ::ioctl(fd, request, mt_status);
     }
     int ioctl(int fd, unsigned long int request, sg_io_hdr_t * sgh) {
-      ::ioctl(fd, request, sgh);
+      return ::ioctl(fd, request, sgh);
     }
     ssize_t read(int fd, void* buf, size_t nbytes) { return ::read(fd, buf, nbytes); }
     ssize_t write(int fd, const void *buf, size_t nbytes) { return ::write(fd, buf, nbytes); }
@@ -87,6 +87,7 @@ namespace System {
     virtual int ioctl(int fd, unsigned long int request, struct mtget * mt_status) = 0;
     virtual int close(int fd) = 0;
     virtual int stat(const char * path, struct stat *buf) = 0;
+    virtual ~virtualWrapper() {};
   };
 
   /**
@@ -124,7 +125,7 @@ namespace System {
 
     struct ourDIR {
       std::string path;
-      int nextIdx;
+      unsigned int nextIdx;
       struct dirent dent;
       std::string dent_name;
     };

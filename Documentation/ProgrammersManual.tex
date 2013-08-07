@@ -301,10 +301,11 @@ The SCSI commands and st driver's functions used in previous software (CAStor's 
   \end{itemize}
 \item st driver's commands, leading to internal variables setting or SCSI actions:
   \begin{itemize}
-    \item Get internal driver state via the MTIOGET ioctl (for drivre ready, write protection, 
+    \item Get internal driver state via the MTIOGET ioctl (for drive ready, write protection, 
           get some error condition, when MTIOSENSE failed, to get the EOD, BOT bits (readlbl)).
+          This functionality is covered by \verb#Drive::getDriveStatus#.
     \item Try and get the sense data for the last-ish command with MTIOSENSE. This
-          relies on a CERN-made patch.
+          relies on a CERN-made patch. This is also covered \verb#Drive::getDriveStatus#.
     \item Setup the driver's parameters (MTIOCTOP/MTSETDRVBUFFER) for (un)buffered 
           writes and asynchronous writes (in confdrive, a child of taped).
           TODO: check underlying.

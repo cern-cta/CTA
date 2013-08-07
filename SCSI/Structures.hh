@@ -673,8 +673,8 @@ namespace SCSI {
        * length in bytes (as found in the struct) in a parameter count.
        * @return number of parameters.
        */
-      int parameterNumber() throw (Tape::Exception) {
-        int numFromLength = SCSI::Structures::toU16(pageLength) / sizeof (tapeAlertLogParameter_t);
+      unsigned int parameterNumber() throw (Tape::Exception) {
+        unsigned int numFromLength = SCSI::Structures::toU16(pageLength) / sizeof (tapeAlertLogParameter_t);
         return numFromLength;
       }
     };
@@ -838,7 +838,7 @@ namespace SCSI {
     std::string hexDump(const unsigned char(& d)[n]) {
       std::stringstream hex;
       hex << std::hex << std::setfill('0');
-      int pos = 0;
+      size_t pos = 0;
       while (pos < (8* (n / 8))) {
         hex << std::setw(4) << pos << " | ";
         for (int i=0; i<8; i++)
@@ -851,17 +851,17 @@ namespace SCSI {
       }
       if (n % 8) {
         hex << std::setw(4) << pos << " | ";
-        for (int i=0; i<(n % 8); i++)
+        for (size_t i=0; i<(n % 8); i++)
           hex << std::setw(2) << ((int) d[pos + i]) << " ";
-        for (int i=(n % 8); i<8; i++)
+        for (size_t i=(n % 8); i<8; i++)
           hex << "   ";
         hex << "| ";
-        for (int i=0; i<(n % 8); i++)
+        for (size_t i=0; i<(n % 8); i++)
           hex << std::setw(0) << d[pos + i];
         hex << std::endl;
       }
       return hex.str();
     }
-  };
-};
+  }
+}
 

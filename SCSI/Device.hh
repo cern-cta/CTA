@@ -260,4 +260,4 @@ namespace SCSI {
   private:
     int m_fd;
   }; // class Device
-}; /* namespace SCSI */
+} /* namespace SCSI */

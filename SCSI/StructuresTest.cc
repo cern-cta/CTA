@@ -112,7 +112,7 @@ namespace UnitTests {
      * Make sure this struct is a POD (plain old data without virtual table)
      * (and has the right size).
      */
-    ASSERT_EQ(6, sizeof(inqCDB));
+    ASSERT_EQ(6U, sizeof(inqCDB));
     
     ASSERT_EQ(SCSI::Commands::INQUIRY, inqCDB.opCode);
     buff[0] = 0;
@@ -135,7 +135,7 @@ namespace UnitTests {
      * Make sure this struct is a POD (plain old data without virtual table)
      * (and has the right size).
      */
-    ASSERT_EQ(10, sizeof(logSelectCDB));
+    ASSERT_EQ(10U, sizeof(logSelectCDB));
     
     ASSERT_EQ(SCSI::Commands::LOG_SELECT, logSelectCDB.opCode);
     buff[0] = 0xAB;
@@ -164,7 +164,7 @@ namespace UnitTests {
      to the original structure (virtual table, for example)*/
     sg_io_hdr_t & sgio_hdr = *(sg_io_hdr_t *)&lsg;
     /* Also make sure the constructor does its initialization job */
-    ASSERT_EQ(30000, sgio_hdr.timeout);
+    ASSERT_EQ(30000U, sgio_hdr.timeout);
     ASSERT_EQ('S', sgio_hdr.interface_id);
     /* The rest is safe. It's just a struct with added functions */
   }
@@ -177,7 +177,7 @@ namespace UnitTests {
      * Make sure this struct is a POD (plain old data without virtual table)
      * (and has the right size).
      */
-    ASSERT_EQ(10, sizeof(logSenseCDB));
+    ASSERT_EQ(10U, sizeof(logSenseCDB));
     
     /* Check proper initialization an location of struct members match
      the bit/byte locations defined in SPC-4 */
@@ -226,7 +226,7 @@ namespace UnitTests {
      * Make sure this struct is a POD (plain old data without virtual table)
      * (and has the right size).
      */
-    ASSERT_EQ(10, sizeof(locate10CDB));  // that is why it called locate 10
+    ASSERT_EQ(10U, sizeof(locate10CDB));  // that is why it called locate 10
     
     /* Check proper initialization an location of struct members match
      the bit/byte locations defined in SPC-4 */
@@ -246,9 +246,9 @@ namespace UnitTests {
     buff[1] |= (0x1 &   0xF) << 2;  
     ASSERT_EQ(1, locate10CDB.BT);
     
-    ASSERT_EQ(0, SCSI::Structures::toU32(locate10CDB.logicalObjectID));
+    ASSERT_EQ(0U, SCSI::Structures::toU32(locate10CDB.logicalObjectID));
     buff[3] |= 0x0A;buff[4] |= 0xBC;buff[5] |= 0xDE;buff[6] |= 0xF0;
-    ASSERT_EQ(0x0ABCDEF0, SCSI::Structures::toU32(locate10CDB.logicalObjectID));
+    ASSERT_EQ(0x0ABCDEF0U, SCSI::Structures::toU32(locate10CDB.logicalObjectID));
     
     ASSERT_EQ(0, locate10CDB.partition);
     buff[8] = 0xAB;
@@ -266,7 +266,7 @@ namespace UnitTests {
      * Make sure this struct is a POD (plain old data without virtual table)
      * (and has the right size).
      */
-    ASSERT_EQ(10, sizeof(readPositionCDB)); 
+    ASSERT_EQ(10U, sizeof(readPositionCDB)); 
     
     /* Check proper initialization an location of struct members match
      the bit/byte locations defined in SPC-4 */
@@ -293,7 +293,7 @@ namespace UnitTests {
     SCSI::Structures::readPositionDataShortForm_t readPositionData;
     unsigned char *buff = (unsigned char *)&readPositionData;  
 
-    ASSERT_EQ(20, sizeof(readPositionData)); 
+    ASSERT_EQ(20U, sizeof(readPositionData)); 
     
     ASSERT_EQ(0, readPositionData.BPEW);
     buff[0] |= (0x1 &   0xFF) << 0;
@@ -323,21 +323,21 @@ namespace UnitTests {
         
     buff[2] |= 0xFF; buff[3] = 0xFF;
     
-    ASSERT_EQ(0, SCSI::Structures::toU32(readPositionData.firstBlockLocation));
+    ASSERT_EQ(0U, SCSI::Structures::toU32(readPositionData.firstBlockLocation));
     buff[4] |= 0x0A;buff[5] |= 0xBC;buff[6] |= 0xDE;buff[7] |= 0xF0;
-    ASSERT_EQ(0x0ABCDEF0, SCSI::Structures::toU32(readPositionData.firstBlockLocation));
+    ASSERT_EQ(0x0ABCDEF0U, SCSI::Structures::toU32(readPositionData.firstBlockLocation));
     
-    ASSERT_EQ(0, SCSI::Structures::toU32(readPositionData.lastBlockLocation));
+    ASSERT_EQ(0U, SCSI::Structures::toU32(readPositionData.lastBlockLocation));
     buff[8] |= 0x9A;buff[9] |= 0xBC;buff[10] |= 0xDE;buff[11] |= 0xF9;
-    ASSERT_EQ(0x9ABCDEF9, SCSI::Structures::toU32(readPositionData.lastBlockLocation));
+    ASSERT_EQ(0x9ABCDEF9U, SCSI::Structures::toU32(readPositionData.lastBlockLocation));
     buff[12] |= 0xFF;
-    ASSERT_EQ(0, SCSI::Structures::toU32(readPositionData.blocksInBuffer));
+    ASSERT_EQ(0U, SCSI::Structures::toU32(readPositionData.blocksInBuffer));
     buff[13] |= 0x9A;buff[14] |= 0xBC;buff[15] |= 0xDE;
-    ASSERT_EQ(0x009ABCDE, SCSI::Structures::toU32(readPositionData.blocksInBuffer));
+    ASSERT_EQ(0x009ABCDEU, SCSI::Structures::toU32(readPositionData.blocksInBuffer));
            
-    ASSERT_EQ(0, SCSI::Structures::toU32(readPositionData.bytesInBuffer));
+    ASSERT_EQ(0U, SCSI::Structures::toU32(readPositionData.bytesInBuffer));
     buff[16] |= 0x7A;buff[17] |= 0xBC;buff[18] |= 0xDE;buff[19] |= 0xF7;
-    ASSERT_EQ(0x7ABCDEF7, SCSI::Structures::toU32(readPositionData.bytesInBuffer));
+    ASSERT_EQ(0x7ABCDEF7U, SCSI::Structures::toU32(readPositionData.bytesInBuffer));
   }
   
   TEST(SCSI_Structures, modeSelect6CDB_t) {
@@ -347,27 +347,27 @@ namespace UnitTests {
      * Make sure this struct is a POD (plain old data without virtual table)
      * (and has the right size).
      */
-    ASSERT_EQ(6, sizeof(modeSelect6CDB)); 
+    ASSERT_EQ(6U, sizeof(modeSelect6CDB)); 
     
     /* Check proper initialization an location of struct members match
      the bit/byte locations defined in SPC-4 */
     ASSERT_EQ(SCSI::Commands::MODE_SELECT_6, modeSelect6CDB.opCode);
     buff[0] = 0xAB;
-    ASSERT_EQ(0xAB, modeSelect6CDB.opCode);
+    ASSERT_EQ(0xABU, modeSelect6CDB.opCode);
     
     ASSERT_EQ(0, modeSelect6CDB.SP);
     buff[1] |= (0x1 &   0xFF) << 0;
-    ASSERT_EQ(0x1, modeSelect6CDB.SP);
+    ASSERT_EQ(0x1U, modeSelect6CDB.SP);
     
-    ASSERT_EQ(0, modeSelect6CDB.PF);
+    ASSERT_EQ(0U, modeSelect6CDB.PF);
     buff[1] |= (0x10 &   0xFF) << 0;
-    ASSERT_EQ(0x1, modeSelect6CDB.PF);
+    ASSERT_EQ(0x1U, modeSelect6CDB.PF);
     
     buff[2] |= 0xFF; buff[3] = 0xFF; 
     
-    ASSERT_EQ(0, modeSelect6CDB.paramListLength);
+    ASSERT_EQ(0U, modeSelect6CDB.paramListLength);
     buff[4] |= 0xBC;
-    ASSERT_EQ(0xBC, modeSelect6CDB.paramListLength);
+    ASSERT_EQ(0xBCU, modeSelect6CDB.paramListLength);
            
     ASSERT_EQ(0, modeSelect6CDB.control);
     buff[5] |= 0xAB;
@@ -381,37 +381,37 @@ namespace UnitTests {
      * Make sure this struct is a POD (plain old data without virtual table)
      * (and has the right size).
      */
-    ASSERT_EQ(6, sizeof(modeSense6CDB)); 
+    ASSERT_EQ(6U, sizeof(modeSense6CDB)); 
     
     /* Check proper initialization an location of struct members match
      the bit/byte locations defined in SPC-4 */
     ASSERT_EQ(SCSI::Commands::MODE_SENSE_6, modeSense6CDB.opCode);
     buff[0] = 0xAB;
-    ASSERT_EQ(0xAB, modeSense6CDB.opCode);
+    ASSERT_EQ(0xABU, modeSense6CDB.opCode);
     
     ASSERT_EQ(0, modeSense6CDB.DBD);
     buff[1] |= (0x8 &   0xFF) << 0;
-    ASSERT_EQ(0x1, modeSense6CDB.DBD);
+    ASSERT_EQ(0x1U, modeSense6CDB.DBD);
     
-    ASSERT_EQ(0, modeSense6CDB.pageCode);
+    ASSERT_EQ(0U, modeSense6CDB.pageCode);
     buff[2] |= (0x2A &   0xFF) << 0;
-    ASSERT_EQ(0x2A,  modeSense6CDB.pageCode);
+    ASSERT_EQ(0x2AU,  modeSense6CDB.pageCode);
     
-    ASSERT_EQ(0, modeSense6CDB.PC);
+    ASSERT_EQ(0u, modeSense6CDB.PC);
     buff[2] |= (0x8B &   0xFF) << 0;
-    ASSERT_EQ(0x2,  modeSense6CDB.PC);
+    ASSERT_EQ(0x2U,  modeSense6CDB.PC);
     
-    ASSERT_EQ(0,  modeSense6CDB.subPageCode);
+    ASSERT_EQ(0U,  modeSense6CDB.subPageCode);
     buff[3] |= 0xBC;
-    ASSERT_EQ(0xBC, modeSense6CDB.subPageCode);
+    ASSERT_EQ(0xBCU, modeSense6CDB.subPageCode);
            
-    ASSERT_EQ(0, modeSense6CDB.allocationLenght);
+    ASSERT_EQ(0U, modeSense6CDB.allocationLenght);
     buff[4] |= 0xAB;
-    ASSERT_EQ(0xAB, modeSense6CDB.allocationLenght);
+    ASSERT_EQ(0xABU, modeSense6CDB.allocationLenght);
     
-    ASSERT_EQ(0, modeSense6CDB.control);
+    ASSERT_EQ(0U, modeSense6CDB.control);
     buff[5] |= 0xCD;
-    ASSERT_EQ(0xCD, modeSense6CDB.control);
+    ASSERT_EQ(0xCDU, modeSense6CDB.control);
   }  
   
   TEST(SCSI_Structures, modeSenseDeviceConfiguration_t) {
@@ -421,25 +421,25 @@ namespace UnitTests {
      * Make sure this struct is a POD (plain old data without virtual table)
      * (and has the right size).
      */
-    ASSERT_EQ(28, sizeof(devConfig));
-    ASSERT_EQ(4, sizeof(devConfig.header));
-    ASSERT_EQ(8, sizeof(devConfig.blockDescriptor));
-    ASSERT_EQ(16, sizeof(devConfig.modePage));
+    ASSERT_EQ(28U, sizeof(devConfig));
+    ASSERT_EQ(4U, sizeof(devConfig.header));
+    ASSERT_EQ(8U, sizeof(devConfig.blockDescriptor));
+    ASSERT_EQ(16U, sizeof(devConfig.modePage));
     
     /* We will only check used by us parameters */
-    ASSERT_EQ(0, devConfig.header.modeDataLength);
+    ASSERT_EQ(0U, devConfig.header.modeDataLength);
     buff[0] |= 0xAB;
-    ASSERT_EQ(0xAB, devConfig.header.modeDataLength);
+    ASSERT_EQ(0xABU, devConfig.header.modeDataLength);
     
     buff[1] = buff[2] = buff[3] = 0xFF;
-    ASSERT_EQ(0, devConfig.blockDescriptor.densityCode);
+    ASSERT_EQ(0U, devConfig.blockDescriptor.densityCode);
     buff[4] |= 0xCD;
-    ASSERT_EQ(0xCD, devConfig.blockDescriptor.densityCode);
+    ASSERT_EQ(0xCDU, devConfig.blockDescriptor.densityCode);
     
     for(int i=5;i<26;i++) buff[i] = 0xFF; // fill the space
-    ASSERT_EQ(0, devConfig.modePage.selectDataComprAlgorithm );
+    ASSERT_EQ(0U, devConfig.modePage.selectDataComprAlgorithm );
     buff[26] |= 0xEF;
-    ASSERT_EQ(0xEF, devConfig.modePage.selectDataComprAlgorithm);
+    ASSERT_EQ(0xEFU, devConfig.modePage.selectDataComprAlgorithm);
   }  
   
   TEST(SCSI_Structures, tapeAlertLogPage_t_and_parameters) {
@@ -448,30 +448,30 @@ namespace UnitTests {
     
     /* Check the size of the structure (header is 4 bytes, array elements, 5.*/
     /* As usual, this ensures we have POD */
-    ASSERT_EQ(4 + 12*5, sizeof(tal));
+    ASSERT_EQ(4U + 12U*5U, sizeof(tal));
     
-    ASSERT_EQ(0, tal.pageCode);
+    ASSERT_EQ(0U, tal.pageCode);
     buff[0] |= (0x12 & 0x3F) << 0;
-    ASSERT_EQ(0x12, tal.pageCode);
+    ASSERT_EQ(0x12U, tal.pageCode);
     
-    ASSERT_EQ(0,tal.subPageCode);
+    ASSERT_EQ(0U,tal.subPageCode);
     buff[1] = 0x34;
-    ASSERT_EQ(0x34, tal.subPageCode);
+    ASSERT_EQ(0x34U, tal.subPageCode);
     
     /* Simulate 123 records = 600 bytes = 0x267 */
-    ASSERT_EQ(0, SCSI::Structures::toU16(tal.pageLength));
+    ASSERT_EQ(0U, SCSI::Structures::toU16(tal.pageLength));
     buff[2] = 0x2; buff[3]= 0x67;
-    ASSERT_EQ(0x267, SCSI::Structures::toU16(tal.pageLength));
+    ASSERT_EQ(0x267U, SCSI::Structures::toU16(tal.pageLength));
     /* The page length is counted in bytes. We are interested in the number of parameters*/
-    ASSERT_EQ(123, tal.parameterNumber());
+    ASSERT_EQ(123U, tal.parameterNumber());
     
-    ASSERT_EQ(0, SCSI::Structures::toU16(tal.parameters[0].parameterCode));
+    ASSERT_EQ(0U, SCSI::Structures::toU16(tal.parameters[0].parameterCode));
     buff [4] = 0xCA; buff[5] = 0xFE;
-    ASSERT_EQ(0xCAFE, SCSI::Structures::toU16(tal.parameters[0].parameterCode));
+    ASSERT_EQ(0xCAFEU, SCSI::Structures::toU16(tal.parameters[0].parameterCode));
     
-    ASSERT_EQ(0, tal.parameters[11].flag);
+    ASSERT_EQ(0U, tal.parameters[11].flag);
     buff[3+12*5] |= (0x1) << 0;
-    ASSERT_EQ(1, tal.parameters[11].flag);
+    ASSERT_EQ(1U, tal.parameters[11].flag);
   }
   
   TEST(SCSI_Structures, senseBuffer_t) {
@@ -480,9 +480,9 @@ namespace UnitTests {
     
     /* Check the total size of the structure, plus the one of each of the members
      of the union */
-    ASSERT_EQ(255, sizeof(sense));
-    ASSERT_EQ(255 - 1, sizeof(sense.descriptorFormat));
-    ASSERT_EQ(255 - 1, sizeof(sense.fixedFormat));
+    ASSERT_EQ(255U, sizeof(sense));
+    ASSERT_EQ(255U - 1U, sizeof(sense.descriptorFormat));
+    ASSERT_EQ(255U - 1U, sizeof(sense.fixedFormat));
     
     buff[0] = 0x70;
     buff[12] = 0x12;
@@ -552,12 +552,12 @@ namespace UnitTests {
   
   TEST(SCSI_Structures, toU32) {
     unsigned char num[4] = { 0x1, 0x2, 0x3, 0x4 };
-    ASSERT_EQ( 0x1020304, SCSI::Structures::toU32(num));
+    ASSERT_EQ( 0x1020304U, SCSI::Structures::toU32(num));
   }
   
   TEST(SCSI_Structures, toU32_3byte) {
     unsigned char num[3] = { 0xAA, 0xBB, 0xCC };
-    ASSERT_EQ( 0x00AABBCC, SCSI::Structures::toU32(num));
+    ASSERT_EQ( 0x00AABBCCU, SCSI::Structures::toU32(num));
   }
   
   TEST(SCSI_Structures, toS32) {
@@ -567,7 +567,7 @@ namespace UnitTests {
   
   TEST(SCSI_Structures, toU64) {
     unsigned char num[8] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE, 0xFA, 0xDE };
-    ASSERT_EQ ( 0xDEADBEEFCAFEFADEULL, SCSI::Structures::toU64(num));
+    ASSERT_EQ ( 0xDEADBEEFCAFEFADEU, SCSI::Structures::toU64(num));
   }
   
   TEST(SCSI_Strucutres, Exception) {
@@ -591,4 +591,4 @@ namespace UnitTests {
       ASSERT_NE(std::string::npos, what.find("In exception validation: "));
     }
   }
-};
+}

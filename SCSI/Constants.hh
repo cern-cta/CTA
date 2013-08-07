@@ -322,4 +322,4 @@ namespace SCSI {
     };
     static const struct error_range_info ascRangesStrings[];
   };
-}; // namespace SCSI
+} // namespace SCSI

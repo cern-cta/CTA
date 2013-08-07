@@ -80,7 +80,7 @@ Tape::Exceptions::Backtrace::Backtrace() {
     m_trace = "";
   else {
     std::stringstream trc;
-    for (int i=0; i<depth; i++) {
+    for (size_t i=0; i<depth; i++) {
       std::string line(strings[i]);
       /* Demangle the c++, if possible. We expect the c++ function name's to live
        * between a '(' and a +

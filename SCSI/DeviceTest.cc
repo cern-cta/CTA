@@ -66,7 +66,7 @@ TEST(DeviceList, ScansCorrectly) {
 
   SCSI::DeviceVector<Tape::System::virtualWrapper> dl(sysWrapper);
 
-  ASSERT_EQ(3, dl.size());
+  ASSERT_EQ(3U, dl.size());
   ASSERT_EQ(SCSI::Types::mediumChanger, dl[0].type);
   ASSERT_EQ(SCSI::Types::tape,          dl[1].type);
   ASSERT_EQ(SCSI::Types::tape,          dl[2].type);
@@ -102,4 +102,4 @@ TEST(DeviceList, ScansCorrectly) {
   ASSERT_EQ(129, dl[2].nst.minor);
 }
 
-};
+}

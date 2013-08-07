@@ -38,10 +38,10 @@ TEST(Regex, BasicFunctionality) {
   ret1 = re.exec("1abc");
   ret2 = re.exec("xyz");
 
-  ASSERT_EQ(ret1.size(), 2);
+  ASSERT_EQ(ret1.size(), 2U);
   ASSERT_EQ(ret1[0], "ab");
   ASSERT_EQ(ret1[1], "b");
-  ASSERT_EQ(ret2.size(), 0);
+  ASSERT_EQ(ret2.size(), 0U);
 }
 
 TEST(Regex, OperationalTest) {
@@ -51,14 +51,14 @@ TEST(Regex, OperationalTest) {
   ret2 = re.exec("scsi_tape:st124");
   ret3 = re.exec("scsi_tape:st1a");
 
-  ASSERT_EQ(ret1.size(), 2);
+  ASSERT_EQ(ret1.size(), 2U);
   ASSERT_EQ(ret1[0], "scsi_tape:st1");
   ASSERT_EQ(ret1[1], "st1");
-  ASSERT_EQ(ret2.size(), 2);
+  ASSERT_EQ(ret2.size(), 2U);
   ASSERT_EQ(ret2[0], "scsi_tape:st124");
   ASSERT_EQ(ret2[1], "st124");
-  ASSERT_EQ(ret3.size(), 0);
+  ASSERT_EQ(ret3.size(), 0U);
 }
 
-};
+}
 
