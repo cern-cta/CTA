@@ -71,7 +71,7 @@ try:
     stconn = castor_tools.connectToStager()
     stcur = stconn.cursor()
     stcur.arraysize = 50
-    stCheckDCSQL = '''SELECT UNIQUE Castorfile.Id, CastorFile.fileSize, CastorFile.tapetatus
+    stCheckDCSQL = '''SELECT UNIQUE Castorfile.Id, CastorFile.fileSize, CastorFile.tapeStatus
                         FROM DiskCopy, CastorFile
                        WHERE fileId = :fid
                          AND Castorfile.Id = DiskCopy.castorfile
