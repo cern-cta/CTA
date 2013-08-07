@@ -821,7 +821,8 @@ namespace SCSI {
         snprintf(buff, sizeof (buff), "Unknown ASC/ASCQ:%02x/%02x", asc, ascq);
         return std::string(buff);
       }
-      /* TODO: add support for sense key */
+      /* TODO: add support for sense key, and other bits. See section 4.5.6
+       * of SPC-4 for sense key = NO SENSE. */
     };
     
     template <size_t n>
