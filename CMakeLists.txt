@@ -45,7 +45,7 @@ LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 ###########################################################################
 # compiler options
 ###########################################################################
-set (CMAKE_CXX_FLAGS "-g3 -Wall -Werror -pedantic")
+set (CMAKE_CXX_FLAGS "-g3 -Wall -Werror -pedantic -O2")
 
 ###########################################################################
 # dependancies

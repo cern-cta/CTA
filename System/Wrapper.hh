@@ -138,8 +138,8 @@ namespace System {
    */
   class mockWrapper : public virtualWrapper {
   public:
-
-    mockWrapper() : m_DIR((DIR*) & m_DIRfake) {
+    mockWrapper() {
+      m_DIR = reinterpret_cast<DIR*> (& m_DIRfake);
       ON_CALL(*this, opendir(::testing::_))
               .WillByDefault(::testing::Return(m_DIR));
     }
