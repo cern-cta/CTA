@@ -316,7 +316,7 @@ AS
   D2D_D2DDONE_BADSIZE          CONSTANT VARCHAR2(2048) := 'disk2DiskCopyEnded : File replication size mismatch';
   D2D_D2DDONE_OK               CONSTANT VARCHAR2(2048) := 'disk2DiskCopyEnded : Replication successful';
   D2D_D2DDONE_RETRIED          CONSTANT VARCHAR2(2048) := 'disk2DiskCopyEnded : Retrying disk to disk copy';
-  D2D_D2DDONE_NORETRY          CONSTANT VARCHAR2(2048) := 'disk2DiskCopyEnded : Exhausted retries, giving up';
+  D2D_D2DDONE_NORETRY          CONSTANT VARCHAR2(2048) := 'disk2DiskCopyEnded : no retry, giving up';
   D2D_D2DFAILED                CONSTANT VARCHAR2(2048) := 'disk2DiskCopyEnded : replication failed';
   REBALANCING_START            CONSTANT VARCHAR2(2048) := 'rebalancing : starting';
   REBALANCING_STOP             CONSTANT VARCHAR2(2048) := 'rebalancing : stopping';
@@ -344,6 +344,7 @@ CREATE OR REPLACE PACKAGE serrno AS
   ENSTOOMANYSEGS  CONSTANT PLS_INTEGER := 1406; /* Too many copies on tape */
   ENSOVERWHENREP  CONSTANT PLS_INTEGER := 1407; /* Cannot overwrite valid segment when replacing */
   ERTWRONGSIZE    CONSTANT PLS_INTEGER := 1613; /* (Recalled) file size incorrect */
+  ESTKILLED       CONSTANT PLS_INTEGER := 1713; /* aborted by kill */
   ESTNOTAVAIL     CONSTANT PLS_INTEGER := 1718; /* File is currently not available */
   ESTNOSEGFOUND   CONSTANT PLS_INTEGER := 1723; /* File has no copy on tape or no diskcopies are accessible */
   ESTNOTAPEROUTE  CONSTANT PLS_INTEGER := 1727; /* File recreation canceled since the file cannot be routed to tape */

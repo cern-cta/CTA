@@ -344,10 +344,12 @@ END;
 
 /* PL/SQL method implementing disk2DiskCopyEnded
  * Note that inDestDsName, inDestPath and inReplicaFileSize are not used when inErrorMessage is not NULL
+ * inErrorCode is used in case of error to decide whether to retry and also to invalidate
+ * the source diskCopy if the error is an ENOENT
  */
 CREATE OR REPLACE PROCEDURE disk2DiskCopyEnded
 (inTransferId IN VARCHAR2, inDestDsName IN VARCHAR2, inDestPath IN VARCHAR2,
- inReplicaFileSize IN INTEGER, inErrorMessage IN VARCHAR2) AS
+ inReplicaFileSize IN INTEGER, inErrorCode IN INTEGER, inErrorMessage IN VARCHAR2) AS
   varCfId INTEGER;
   varUid INTEGER := -1;
   varGid INTEGER := -1;
@@ -465,7 +467,9 @@ BEGIN
       varMaxNbD2dRetries INTEGER := TO_NUMBER(getConfigOption('D2dCopy', 'MaxNbRetries', 2));
     BEGIN
       -- shall we try again ?
-      IF varRetryCounter < varMaxNbD2dRetries THEN
+      -- we should not when the job was deliberately killed, neither when we reach the maximum
+      -- number of attempts
+      IF varRetryCounter < varMaxNbD2dRetries AND inErrorCode != serrno.ESTKILLED THEN
         -- yes, so let's restart the Disk2DiskCopyJob
         UPDATE Disk2DiskCopyJob
            SET status = dconst.DISK2DISKCOPYJOB_PENDING,
@@ -474,7 +478,7 @@ BEGIN
         logToDLF(NULL, dlf.LVL_SYSTEM, dlf.D2D_D2DDONE_RETRIED, varFileId, varNsHost, 'stagerd', varComment ||
                  ' RetryNb=' || TO_CHAR(varRetryCounter+1) || ' maxNbRetries=' || TO_CHAR(varMaxNbD2dRetries));
       ELSE
-        -- no more retries, let's delete the disk to disk job copy
+        -- no retry, let's delete the disk to disk job copy
         BEGIN
           DELETE FROM Disk2DiskCopyjob WHERE transferId = inTransferId;
           -- and remember the error in case of draining
@@ -564,7 +568,7 @@ BEGIN
              ' destMountPoint=' || inDestMountPoint || ' srcDiskServer=' || inSrcDiskServerName ||
              ' srcMountPoint=' || inSrcMountPoint);
     -- end the disktodisk copy (may be retried)
-    disk2DiskCopyEnded(inTransferId, '', '', 0, dlf.D2D_SOURCE_GONE);
+    disk2DiskCopyEnded(inTransferId, '', '', 0, 0, dlf.D2D_SOURCE_GONE);
     COMMIT; -- commit or raise_application_error will roll back for us :-(
     -- raise exception for the scheduling part
     raise_application_error(-20110, dlf.D2D_SOURCE_GONE);
@@ -576,7 +580,7 @@ BEGIN
              'TransferId=' || TO_CHAR(inTransferId) || ' diskServer=' || inSrcDiskServerName ||
              ' fileSystem=' || inSrcMountPoint);
     -- fail d2d transfer
-    disk2DiskCopyEnded(inTransferId, '', '', 0, 'Source was disabled');
+    disk2DiskCopyEnded(inTransferId, '', '', 0, 0, 'Source was disabled');
     COMMIT; -- commit or raise_application_error will roll back for us :-(
     -- raise exception
     raise_application_error(-20110, dlf.D2D_SRC_DISABLED);
@@ -595,7 +599,7 @@ BEGIN
     logToDLF(NULL, dlf.LVL_ERROR, dlf.D2D_DEST_NOT_PRODUCTION, inFileId, inNsHost, 'stagerd',
              'TransferId=' || TO_CHAR(inTransferId) || ' diskServer=' || inDestDiskServerName);
     -- fail d2d transfer
-    disk2DiskCopyEnded(inTransferId, '', '', 0, 'Destination not in production');
+    disk2DiskCopyEnded(inTransferId, '', '', 0, 0, 'Destination not in production');
     COMMIT; -- commit or raise_application_error will roll back for us :-(
     -- raise exception
     raise_application_error(-20110, dlf.D2D_DEST_NOT_PRODUCTION);
@@ -613,7 +617,7 @@ BEGIN
     logToDLF(NULL, dlf.LVL_ERROR, dlf.D2D_MULTIPLE_COPIES_ON_DS, inFileId, inNsHost, 'stagerd',
              'TransferId=' || TO_CHAR(inTransferId) || ' diskServer=' || inDestDiskServerName);
     -- fail d2d transfer
-    disk2DiskCopyEnded(inTransferId, '', '', 0, 'Copy found on diskserver');
+    disk2DiskCopyEnded(inTransferId, '', '', 0, 0, 'Copy found on diskserver');
     COMMIT; -- commit or raise_application_error will roll back for us :-(
     -- raise exception
     raise_application_error(-20110, dlf.D2D_MULTIPLE_COPIES_ON_DS);
@@ -931,8 +935,7 @@ BEGIN
       EXCEPTION WHEN NO_DATA_FOUND THEN
         CONTINUE;  -- The SubRequest/disk2DiskCopyJob may have be removed, nothing to be done.
       END;
-      -- found it, call disk2DiskCopyEnded
-      disk2DiskCopyEnded(subReqIds(i), '', '', 0, errmsgs(i));
+      disk2DiskCopyEnded(subReqIds(i), '', '', 0, errnos(i), errmsgs(i));
     END;
     -- Release locks
     COMMIT;
@@ -975,7 +978,7 @@ BEGIN
         CONTINUE;  -- The SubRequest/disk2DiskCopyJob may have be removed, nothing to be done.
       END;
       -- found it, call disk2DiskCopyEnded
-      disk2DiskCopyEnded(subReqId(i), '', '', 0, errmsgs(i));
+      disk2DiskCopyEnded(subReqId(i), '', '', 0, errnos(i), errmsgs(i));
     END;
   END LOOP;
 END;

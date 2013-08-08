@@ -468,10 +468,10 @@ class TransferManagerService(rpyc.Service):
                          path=localPath, size=fileSize, errMsg=errMsg)
           # cleanup source in our queues
           queueingTransfers.d2dendById(transferId)
-          # then end them in the stager DB
+          # then end them in the stager DB, allowing retry (the 1 in 5th place)
           # the order is important as the synchronizer will remove d2dsrc with no entry in the DB
-          stcur.execute("BEGIN disk2DiskCopyEnded(:1, :2, :3, :4, :5); END;",
-                        (transferId, diskServerName, localPath, fileSize, errMsg))
+          stcur.execute("BEGIN disk2DiskCopyEnded(:1, :2, :3, :4, :5, :6); END;",
+                        (transferId, diskServerName, localPath, fileSize, errCode, errMsg))
         # close cursor
         stcur.close()
       except Exception, e:
