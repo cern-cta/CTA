@@ -154,7 +154,7 @@ class ServerQueue(dict):
       for machine in machines:
         # if first one, found out fileId
         if not transfer:
-          transfer = self[machine][transferId].transfer
+          transfer = self[machine][transferId]
         # note where transfer was sent
         if machine not in transfersPerMachine:
           transfersPerMachine[machine] = []
