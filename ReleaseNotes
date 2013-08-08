@@ -264,18 +264,70 @@
   Upgrade Instructions from 2.1.13-9
   ----------------------------------
 
+    The upgrade path for the new major version 2.1.14-2 is pretty complex. Not repecting
+    the order of upgrades may lead to severe data loss. So make sure you have well
+    understood the procedure before starting. Do not hesitate to contact developers in
+    case of doubt.
+
+    Short summary of steps :
+      - upgrade the central nodes :
+        + upgrade the databases. Take care to update the VMGR DB first,
+          and only then the NS one. VDQM and CUPV can be done at any time
+        + upgrade the central daemons' RPMs (nsd, vmgrd, vdqmd, cupvd)
+          . this should be done just after the DB upgrade, as any daemon restart
+            between the two would fail and impact the service.
+        + after this upgrade, the nameserver runs in 2.1.13 compatibility mode
+      - upgrade the stagers one by one, with downtime
+      - once all stagers have been updated, switch the nameserver to 2.1.14 mode
+
+    Detailed instructions for each step follow.
+
+  Central Daemons
+  ---------------
+
+  - The upgrade of the central daemons can be done almost online, the daemons will only
+    be restarted when the new RPMs are installed.
+    The VMGR database must be upgraded before the nameserver one.
+    This upgrade must be done, before any stager instance be upgraded
+
+      Instructions
+      ------------
+
+       1. Ask your DBA to grant the following select privilege to the nameserver account when logged
+          into the VMGR database schema:
+
+          GRANT SELECT ON VMGR_TAPE_STATUS_VIEW TO <CastorNsAccount>;
+
+       2. Apply the vmgr_2.1.13-9_to_2.1.14-2.sql database upgrade script to the VMGR DB from:
+          http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-2/dbupgrades
+
+       3. Apply the cns_2.1.13-9_to_2.1.14-2.sql database upgrade script to the NS DB from:
+          http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-2/dbupgrades
+
+       4. Apply the cupv_2.1.13-9_to_2.1.14-2.sql database upgrade script to the CUPV DB from:
+          http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-2/dbupgrades
+
+       5. Apply the vdqm_2.1.13-9_to_2.1.14-2.sql database upgrade script to the VDQM DB from:
+          http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-2/dbupgrades
+
+       6. Update the software to use the 2.1.14-2 RPMs on the central nodes. Restart the daemons if applicable.
+
+       7. Upgrade complete.
+
+
   Stager
   ------
-  The upgrade of the STAGER database to 2.1.14-2 cannot be performed online.
-  As a result all daemons accessing the STAGER database MUST be stopped!
-  The expected downtime for the upgrade is ...
 
-  Notes:
-    - Prior to upgrading the STAGER database please verify that your nameserver
-      database has been upgraded to 2.1.14-2.
+  - The upgrade of the STAGER database to 2.1.14-2 cannot be performed online.
+    As a result all daemons accessing the STAGER database MUST be stopped!
+    The expected downtime for the upgrade is of a few hours.
 
-  It is recommended to stop all draining activities as any pending disk-to-disk copy request will be failed
-  and any existing draining job will be canceled. Outstanding migrations and recalls are preserved.
+    Notes:
+      - Prior to upgrading the STAGER database please verify that your nameserver
+        database has been upgraded to 2.1.14-2 (see above)
+
+    It is recommended to stop all draining activities as any pending disk-to-disk copy request will be failed
+    and any existing draining job will be canceled. Outstanding migrations and recalls are preserved.
 
       Instructions
       ------------
@@ -310,46 +362,36 @@
 
        9. Start the public request handlers (if applicable)
 
-      10. Congratulations you have successfully upgraded to the 2.1.13-0 release
+      10. Congratulations you have successfully upgraded to the 2.1.14-2 release
           of CASTOR.
 
-  VMGR
-  ----
-  
-  - Ask your DBA to grant the following select privilege to the nameserver account when logged
-    into the VMGR database schema:
 
-         GRANT SELECT ON VMGR_TAPE_STATUS_VIEW TO <CastorNsAccount>;
-
-  Nameserver
-  ----------
-
-  - The upgrade of the Nameserver requires a short downtime of all the nsd daemons. However, if you
-    already applied the schema upgrade to version 2.1.14-0pre, the rest of the upgrade can be performed online.
-    In all cases, the Nameserver database must be upgraded first, before any stager instance be upgraded.
+  Switching Nameserver's mode
+  ---------------------------
+       
+    Notes:
+      - ALL stagers must be running 2.1.14-2 before this step is taken.
+        Not respecting this requirement exposes the instance to data losses.
+      - This switching is transparent, but may take several days.
 
       Instructions
       ------------
 
-       1. Apply the cns_2.1.13-9_to_2.1.14-2.sql database upgrade script from:
+       1. Once all stagers have been upgraded to version 2.1.14-2, run the cns_2.1.14-2_postUpgrade.sql
+          post-upgrade script from: 
           http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-2/dbupgrades
 
-       2. Update the software to use the 2.1.14-2 RPMs on the central nodes. Restart the daemons if applicable.
-
-       3. Upgrade complete.
-       
-      Post-installation instructions
-      ------------------------------
-
-       1. Once all stagers have been upgraded to version 2.1.14-2, a post-upgrade script needs to be run from: 
-          http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-2/dbupgrades/cns_2.1.14-2_postUpgrade.sql
           This script includes a one-off job to populate the new fields added to the Nameserver schema.
-          This operation may take several days and is performed as a background activity while the system is running.
+          This operation may take several days and is performed as a background activity while
+          the system is running.
 
-       2. As a separate intervention, and only after the job has completed, run the following script:
-          http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-2/dbupgrades/cns_2.1.14_switch_openmode.sql
+       2. As a separate intervention, and only after the job has completed, run the
+          cns_2.1.14_switch_openmode.sql script from:
+          http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-2/dbupgrades
+
           This script enables the stagers to fully exploit the new logic to provide cross stager consistency
-          (see bug #95189), and it is required to be executed before the upgrade to the next major version (2.1.15).
+          (see bug #95189), and it is required to be executed before the upgrade to the next major
+          version (2.1.15).
           The script fails if the update job had been interrupted and the new fields are not fully populated yet.
 
 
