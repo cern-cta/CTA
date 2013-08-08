@@ -25,6 +25,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <stdexcept>
+#include <scsi/sg.h>
 
 using ::testing::_;
 using ::testing::A;
@@ -137,6 +138,17 @@ int Tape::System::fakeWrapper::ioctl(int fd, unsigned long int request, mtget* m
   return m_openFiles[fd]->ioctl(request, mt_status);
 }
 
+int Tape::System::fakeWrapper::ioctl(int fd, unsigned long int request, sg_io_hdr_t * sgh) {
+  /*
+   * Mimic ioctl. Actually delegate the job to a vfsFile
+   */
+  if (m_openFiles.end() == m_openFiles.find(fd)) {
+    errno = EBADF;
+    return -1;
+  }
+  return m_openFiles[fd]->ioctl(request, sgh);
+}
+
 int Tape::System::fakeWrapper::close(int fd) {
   /*
    * Mimic close. See man 2 close
@@ -190,6 +202,8 @@ void Tape::System::mockWrapper::delegateToFake() {
    the pointer to which function we want.*/
   ON_CALL(*this, ioctl(_, _, A<struct mtget *>())).WillByDefault(Invoke(&fake, 
         static_cast<int(fakeWrapper::*)(int , unsigned long int , mtget*)>(&fakeWrapper::ioctl)));
+  ON_CALL(*this, ioctl(_, _, A<struct sg_io_hdr *>())).WillByDefault(Invoke(&fake, 
+        static_cast<int(fakeWrapper::*)(int , unsigned long int , sg_io_hdr_t*)>(&fakeWrapper::ioctl)));
   ON_CALL(*this, close(_)).WillByDefault(Invoke(&fake, &fakeWrapper::close));
   ON_CALL(*this, stat(_, _)).WillByDefault(Invoke(&fake, &fakeWrapper::stat));
 }

@@ -27,6 +27,7 @@
 #include <sys/mtio.h>
 
 #include "FileWrappers.hh"
+#include "../SCSI/Structures.hh"
 
 ssize_t Tape::System::vfsFile::read(void* buf, size_t nbytes)
 {
@@ -98,6 +99,53 @@ int Tape::System::stDeviceFile::ioctl(unsigned long int request, mtget* mt_statu
     case MTIOCGET:
       *mt_status = m_mtStat;
       return 0;
+  }
+  errno = EINVAL;
+  return -1;
+}
+
+int Tape::System::stDeviceFile::ioctl(unsigned long int request, sg_io_hdr_t * sgio_h)
+{
+  /* for the moment, just implement the SG_IO ioctl */
+  switch (request) {
+    case SG_IO:
+      if (sgio_h->interface_id != 'S') {
+        errno = ENOSYS;
+        return -1;
+      }
+      switch (sgio_h->cmdp[0]) { // Operation Code for CDB
+        case SCSI::Commands::READ_POSITION:
+          SCSI::Structures::readPositionDataShortForm_t & positionData = 
+              *(SCSI::Structures::readPositionDataShortForm_t *) sgio_h->dxferp;
+          if (sizeof (positionData) > sgio_h->dxfer_len) {
+            errno = EINVAL;
+            return -1;
+          }
+          /* fill the replay with random data */
+          srandom(SCSI::Commands::READ_POSITION);
+          memset(sgio_h->dxferp, random(),sizeof (positionData)) ;
+          
+          /* we need this field to make the replay valid*/
+          positionData.PERR = 0; 
+          /* fill with expected values */
+          positionData.firstBlockLocation[0] = 0xAB;
+          positionData.firstBlockLocation[1] = 0xCD;
+          positionData.firstBlockLocation[2] = 0xEF;
+          positionData.firstBlockLocation[3] = 0x12;
+          positionData.lastBlockLocation[3]  = 0xAB;
+          positionData.lastBlockLocation[2]  = 0xCD;
+          positionData.lastBlockLocation[1]  = 0xEF;
+          positionData.lastBlockLocation[0]  = 0x12;
+          positionData.blocksInBuffer[0]     = 0xAB;
+          positionData.blocksInBuffer[1]     = 0xCD;
+          positionData.blocksInBuffer[2]     = 0xEF;
+          positionData.bytesInBuffer[3]      = 0xAB;
+          positionData.bytesInBuffer[2]      = 0xCD;
+          positionData.bytesInBuffer[1]      = 0xEF;
+          positionData.bytesInBuffer[0]      = 0x12;       
+          break;
+        }
+        return 0;
   }
   errno = EINVAL;
   return -1;

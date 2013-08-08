@@ -85,6 +85,7 @@ namespace System {
     /* The ... (variable arguments) notation will not work with GMock.
      * We have to create one overload for each case we encounter. */
     virtual int ioctl(int fd, unsigned long int request, struct mtget * mt_status) = 0;
+    virtual int ioctl(int fd, unsigned long int request, sg_io_hdr_t * sgh) = 0;
     virtual int close(int fd) = 0;
     virtual int stat(const char * path, struct stat *buf) = 0;
     virtual ~virtualWrapper() {};
@@ -107,6 +108,7 @@ namespace System {
     virtual char * realpath(const char* name, char* resolved);
     virtual int open(const char* file, int oflag);
     virtual int ioctl(int fd, unsigned long int request, struct mtget * mt_status);
+    virtual int ioctl(int fd, unsigned long int request, sg_io_hdr_t * sgh);
     virtual ssize_t read(int fd, void* buf, size_t nbytes);
     virtual ssize_t write(int fd, const void *buf, size_t nbytes);
     virtual int close(int fd);
@@ -152,7 +154,7 @@ namespace System {
     MOCK_METHOD3(read, ssize_t(int fd, void* buf, size_t nbytes));
     MOCK_METHOD3(write, ssize_t(int fd, const void *buf, size_t nbytes));
     MOCK_METHOD3(ioctl, int(int fd, unsigned long int request, struct mtget * mt_status));
-    MOCK_METHOD3(ioctl, int(int fd, unsigned long int request, sg_io_hdr_t * sg_hdr));
+    MOCK_METHOD3(ioctl, int(int fd, unsigned long int request, sg_io_hdr_t * sgh));
     MOCK_METHOD1(close, int(int fd));
     MOCK_METHOD2(stat, int(const char *, struct stat *));
     DIR* m_DIR;

@@ -68,6 +68,7 @@ namespace System {
     stDeviceFile();
     virtual void reset() {};
     virtual int ioctl(unsigned long int request, struct mtget * mt_status);
+    virtual int ioctl(unsigned long int request, sg_io_hdr_t * sgio_h);
   private:
     struct mtget m_mtStat;
   };
