@@ -11701,16 +11701,13 @@ CREATE OR REPLACE PROCEDURE rebalance(inFsId IN INTEGER, inDataAmount IN INTEGER
                                       inDiskServerName IN VARCHAR2, inMountPoint IN VARCHAR2) AS
   CURSOR DCcur IS
     SELECT /*+ FIRST_ROWS_10 */
-           DiskCopy.id, DiskCopy.diskCopySize, DiskCopy.owneruid, DiskCopy.ownergid,
-           CastorFile.id, CastorFile.nsOpenTime
+           DiskCopy.id, DiskCopy.diskCopySize, CastorFile.id, CastorFile.nsOpenTime
       FROM DiskCopy, CastorFile
      WHERE DiskCopy.fileSystem = inFsId
        AND DiskCopy.status = dconst.DISKCOPY_VALID
        AND CastorFile.id = DiskCopy.castorFile;
   varDcId INTEGER;
   varDcSize INTEGER;
-  varEuid INTEGER;
-  varEgid INTEGER;
   varCfId INTEGER;
   varNsOpenTime INTEGER;
   varTotalRebalanced INTEGER := 0;
@@ -11725,21 +11722,22 @@ BEGIN
   OPEN DCcur;
   LOOP
     -- Fetch next candidate
-    FETCH DCcur INTO varDcId, varDcSize, varEuid, varEgid, varCfId, varNsOpenTime;
+    FETCH DCcur INTO varDcId, varDcSize, varCfId, varNsOpenTime;
     varTotalRebalanced := varTotalRebalanced + varDcSize;
     varNbFilesRebalanced := varNbFilesRebalanced + 1;
     -- stop if it would be too much
-    IF varTotalRebalanced > inDataAmount THEN RETURN; END IF;
+    IF varTotalRebalanced > inDataAmount THEN EXIT; END IF;
     -- create disk2DiskCopyJob for this diskCopy
     createDisk2DiskCopyJob(varCfId, varNsOpenTime, inDestSvcClassId,
-                           varEuid, varEgid, dconst.REPLICATIONTYPE_REBALANCE,
+                           0, 0, dconst.REPLICATIONTYPE_REBALANCE,
                            varDcId, NULL);
   END LOOP;
+  CLOSE DCcur;
   -- "rebalancing : stopping" message
   logToDLF(NULL, dlf.LVL_SYSTEM, dlf.REBALANCING_STOP, 0, '', 'stagerd',
            'DiskServer=' || inDiskServerName || ' mountPoint=' || inMountPoint ||
-           ' dataMoved=' || TO_CHAR(varTotalRebalanced) ||
-           ' nbFilesMoved=' || TO_CHAR(varNbFilesRebalanced));
+           ' dataMoveTriggered=' || TO_CHAR(varTotalRebalanced) ||
+           ' nbFileMovesTriggered=' || TO_CHAR(varNbFilesRebalanced));
 END;
 /
 
