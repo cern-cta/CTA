@@ -11325,7 +11325,7 @@ BEGIN
   OPEN stgOrphans FOR
     SELECT diskCopyId FROM StgFilesDeletedOrphans
      WHERE NOT EXISTS (
-        SELECT /*+ INDEX(DiskCopy PK_DiskCopy_Id */ 'x' FROM DiskCopy
+        SELECT /*+ INDEX_RS_ASC(DiskCopy PK_DiskCopy_Id */ 'x' FROM DiskCopy
          WHERE id = diskCopyId);
 END;
 /
