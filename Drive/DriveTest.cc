@@ -92,10 +92,10 @@ TEST(TapeDrive, getPositionInfo) {
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(1);      
       Tape::positionInfo posInfo = drive.getPositionInfo();
 
-      ASSERT_EQ(0xABCDEF12,posInfo.currentPosition);
-      ASSERT_EQ(0x12EFCDAB,posInfo.oldestDirtyObject);
-      ASSERT_EQ(0xABCDEF,posInfo.dirtyObjectsCount);
-      ASSERT_EQ(0x12EFCDAB,posInfo.dirtyBytesCount);
+      ASSERT_EQ(0xABCDEF12U,posInfo.currentPosition);
+      ASSERT_EQ(0x12EFCDABU,posInfo.oldestDirtyObject);
+      ASSERT_EQ(0xABCDEFU,posInfo.dirtyObjectsCount);
+      ASSERT_EQ(0x12EFCDABU,posInfo.dirtyBytesCount);
     }
   }
 } 
