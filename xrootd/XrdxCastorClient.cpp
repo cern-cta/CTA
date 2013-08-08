@@ -504,6 +504,13 @@ XrdxCastorClient::PollResponses()
       // Is the listening descriptor readable? If so, this indicates that there
       // is a new incoming connection
       if (mFds[i].fd == mCallbackSocket->socket()) {
+        if (mNfds >= 1024)
+        {
+          xcastor_warning("warning=reached maximum number of connections(1024), " 
+                          "delay accepting new ones until pending ones are dealt with");
+          continue;
+        }
+
         xcastor_debug("accepted incoming connection");
         // Accept the incoming connection, and set a short transfer timeout:
         // we don't want to get stuck and we know that the sender is either
@@ -596,6 +603,22 @@ XrdxCastorClient::PollResponses()
           xcastor_debug("signal received response");
           mCondResponse.Broadcast();  
         }
+      }
+    }
+
+    // Compress the pollfd structure removing entries where the file descriptor
+    // is negative. We do not need to move back the events and revents fields
+    // because the events will always be POLLIN in this case, and revents is
+    // output.
+    for (i = 0; i < mNfds; i++) 
+    {
+      if (mFds[i].fd == -1) 
+      {
+        for (j = i; j < mNfds; j++) 
+        {
+          mFds[j].fd = mFds[j + 1].fd;
+        }
+        mNfds--;
       }
     }
   }
