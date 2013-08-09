@@ -5335,24 +5335,57 @@ BEGIN
 END;
 /
 
-/* PL/SQL method implementing selectCastorFile
- * This is only a wrapper on selectCastorFileInternal
- */
-CREATE OR REPLACE PROCEDURE selectCastorFile (fId IN INTEGER,
-                                              nh IN VARCHAR2,
-                                              fc IN INTEGER,
-                                              fs IN INTEGER,
-                                              fn IN VARCHAR2,
-                                              srId IN NUMBER,
-                                              lut IN NUMBER,
-                                              rid OUT INTEGER,
-                                              rfs OUT INTEGER) AS
-  nsHostName VARCHAR2(2048);
+
+/* this function tries to create a CastorFile and deals with the associated race conditions
+   In case race conditions are really bad, the method can fail and return False */
+CREATE OR REPLACE FUNCTION createCastorFile (fId IN INTEGER,
+                                             nh IN VARCHAR2,
+                                             fcId IN INTEGER,
+                                             fs IN INTEGER,
+                                             fn IN VARCHAR2,
+                                             srId IN NUMBER,
+                                             inNsOpenTime IN NUMBER,
+                                             waitForLock IN BOOLEAN,
+                                             rid OUT INTEGER,
+                                             rfs OUT INTEGER) RETURN BOOLEAN AS
+  CONSTRAINT_VIOLATED EXCEPTION;
+  PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
 BEGIN
-  -- Get the stager/nsHost configuration option
-  nsHostName := getConfigOption('stager', 'nsHost', nh);
-  -- call internal method
-  selectCastorFileInternal(fId, nsHostName, fc, fs, fn, srId, lut, TRUE, rid, rfs);
+  -- take care that the name of the new file is not already the lastKnownFileName
+  -- of another file, that was renamed but for which the lastKnownFileName has
+  -- not been updated.
+  -- We actually reset the lastKnownFileName of such a file if needed
+  -- Note that this procedure will run in an autonomous transaction so that
+  -- no dead lock can result from taking a second lock within this transaction
+  dropReusedLastKnownFileName(fn);
+  -- insert new row (see selectCastorFile inline comments for the TRUNC() operation)
+  INSERT INTO CastorFile (id, fileId, nsHost, fileClass, fileSize, creationTime,
+                          lastAccessTime, lastUpdateTime, nsOpenTime, lastKnownFileName, tapeStatus)
+    VALUES (ids_seq.nextval, fId, nh, fcId, fs, getTime(), getTime(),
+            TRUNC(inNsOpenTime), inNsOpenTime, normalizePath(fn), NULL)
+    RETURNING id, fileSize INTO rid, rfs;
+  UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET castorFile = rid
+   WHERE id = srId;
+  RETURN True;
+EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
+  -- the violated constraint indicates that the file was created by another client
+  -- while we were trying to create it ourselves. We can thus use the newly created file
+  BEGIN
+    IF waitForLock THEN
+      SELECT id, fileSize INTO rid, rfs FROM CastorFile
+        WHERE fileId = fid AND nsHost = nh FOR UPDATE;
+    ELSE
+      SELECT id, fileSize INTO rid, rfs FROM CastorFile
+        WHERE fileId = fid AND nsHost = nh FOR UPDATE NOWAIT;
+    END IF;
+    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET castorFile = rid
+     WHERE id = srId;
+    RETURN True;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- damn, the file created by the other client already disappeared before we could use it !
+    -- give up for this round
+    RETURN False;
+  END;
 END;
 /
 
@@ -5367,8 +5400,6 @@ CREATE OR REPLACE PROCEDURE selectCastorFileInternal (fId IN INTEGER,
                                                       waitForLock IN BOOLEAN,
                                                       rid OUT INTEGER,
                                                       rfs OUT INTEGER) AS
-  CONSTRAINT_VIOLATED EXCEPTION;
-  PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
   previousLastKnownFileName VARCHAR2(2048);
   fcId NUMBER;
   varReqType INTEGER;
@@ -5428,35 +5459,38 @@ BEGIN
       NULL;
     END IF;
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- we did not find the file, let's create a new one:
-    -- take care that the name of the new file is not already the lastKnownFileName
-    -- of another file, that was renamed but for which the lastKnownFileName has
-    -- not been updated.
-    -- We actually reset the lastKnownFileName of such a file if needed
-    -- Note that this procedure will run in an autonomous transaction so that
-    -- no dead lock can result from taking a second lock within this transaction
-    dropReusedLastKnownFileName(fn);
-    -- insert new row (see above for the TRUNC() operation)
-    INSERT INTO CastorFile (id, fileId, nsHost, fileClass, fileSize, creationTime,
-                            lastAccessTime, lastUpdateTime, nsOpenTime, lastKnownFileName, tapeStatus)
-      VALUES (ids_seq.nextval, fId, nh, fcId, fs, getTime(), getTime(),
-              TRUNC(inNsOpenTime), inNsOpenTime, normalizePath(fn), NULL)
-      RETURNING id, fileSize INTO rid, rfs;
-    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET castorFile = rid
-     WHERE id = srId;
+    -- we did not find the file, let's try to create a new one.
+    -- This may fail with a low probability (subtle race condition, see comments
+    -- in the method), so we try in a loop
+    DECLARE
+      varSuccess BOOLEAN := False;
+    BEGIN
+      WHILE NOT varSuccess LOOP
+        varSuccess := createCastorFile(fId, nh, fcId, fs, fn, srId, inNsOpenTime, waitForLock, rid, rfs);
+      END LOOP;
+    END;
   END;
-EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
-  -- the violated constraint indicates that the file was created by another client
-  -- while we were trying to create it ourselves. We can thus use the newly created file
-  IF waitForLock THEN
-    SELECT id, fileSize INTO rid, rfs FROM CastorFile
-      WHERE fileId = fid AND nsHost = nh FOR UPDATE;
-  ELSE
-    SELECT id, fileSize INTO rid, rfs FROM CastorFile
-      WHERE fileId = fid AND nsHost = nh FOR UPDATE NOWAIT;
-  END IF;
-  UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET castorFile = rid
-   WHERE id = srId;
+END;
+/
+
+/* PL/SQL method implementing selectCastorFile
+ * This is only a wrapper on selectCastorFileInternal
+ */
+CREATE OR REPLACE PROCEDURE selectCastorFile (fId IN INTEGER,
+                                              nh IN VARCHAR2,
+                                              fc IN INTEGER,
+                                              fs IN INTEGER,
+                                              fn IN VARCHAR2,
+                                              srId IN NUMBER,
+                                              lut IN NUMBER,
+                                              rid OUT INTEGER,
+                                              rfs OUT INTEGER) AS
+  nsHostName VARCHAR2(2048);
+BEGIN
+  -- Get the stager/nsHost configuration option
+  nsHostName := getConfigOption('stager', 'nsHost', nh);
+  -- call internal method
+  selectCastorFileInternal(fId, nsHostName, fc, fs, fn, srId, lut, TRUE, rid, rfs);
 END;
 /
 
