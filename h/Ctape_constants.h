@@ -20,7 +20,7 @@
 #define TAPE_PORT 5011
 
 /* From Castor_limits.h */
-#define CA_MAXDENNUM   35    /* Maximum number of known densities for tapes */
+#define CA_MAXDENNUM   34    /* Maximum number of known densities for tapes */
 
 			/* tape daemon request options */
 
