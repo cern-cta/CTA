@@ -7396,17 +7396,20 @@ BEGIN
            varReplacedDcId, varRetryCounter, varDrainingJob
       FROM Disk2DiskCopyjob
      WHERE transferId = inTransferId;
+    -- lock the castor file (and get logging info)
+    SELECT fileid, nsHost, fileSize INTO varFileId, varNsHost, varFileSize
+      FROM CastorFile
+     WHERE id = varCfId
+       FOR UPDATE;
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- disk2diskCopyJob not found. It was probably canceled.
+    -- two possibilities here :
+    --   - disk2diskCopyJob not found. It was probably canceled.
+    --   - the castorFile has disappeared before we locked it, ant the
+    --     disk2diskCopyJob too as we have a foreign key constraint.
     -- So our brand new copy has to be created as invalid to trigger GC.
     varNewDcStatus := dconst.DISKCOPY_INVALID;
     varLogMsg := dlf.D2D_D2DDONE_CANCEL;
   END;
-  -- lock the castor file (and get logging info)
-  SELECT fileid, nsHost, fileSize INTO varFileId, varNsHost, varFileSize
-    FROM CastorFile
-   WHERE id = varCfId
-     FOR UPDATE;
   -- check the filesize
   IF inReplicaFileSize != varFileSize THEN
     -- replication went wrong !
