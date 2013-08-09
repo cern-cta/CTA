@@ -311,6 +311,7 @@ namespace Tape {
         devConfig.header.modeDataLength = 0 ; // must be 0 for IBM, LTO ignored by T10000
         if (0 != densityCode) devConfig.blockDescriptor.densityCode = densityCode; 
         if (compression)      devConfig.modePage.selectDataComprAlgorithm = 1;
+        else                  devConfig.modePage.selectDataComprAlgorithm = 0;
                         
         sgh.setCDB(&cdb);
         sgh.setDataBuffer(&devConfig);
@@ -529,7 +530,6 @@ class DriveLTO : public Drive<sysWrapperClass> {
         SCSI::Structures::logSenseParameter_t & logPageParam = 
               *(SCSI::Structures::logSenseParameter_t *) logParameter;
         
-        std::cout << SCSI::Structures::toU16(logPageParam.header.parameterCode) <<std::endl; 
 	switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
 	  // fromHost
           case SCSI::dataCompression32h::mbTransferredFromServer :

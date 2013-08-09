@@ -27,6 +27,7 @@
 #include <sys/types.h>
 #include <sys/mtio.h>
 #include <scsi/sg.h>
+#include <stdint.h>
 
 namespace Tape {
 namespace System {
@@ -66,11 +67,13 @@ namespace System {
   class stDeviceFile : public vfsFile {
   public:
     stDeviceFile();
-    virtual void reset() {};
+    virtual void reset() {clearCompressionStats = false; blockID=0xFFFFFFFF;};
     virtual int ioctl(unsigned long int request, struct mtget * mt_status);
     virtual int ioctl(unsigned long int request, sg_io_hdr_t * sgio_h);
   private:
     struct mtget m_mtStat;
+    uint32_t blockID;  
+    bool clearCompressionStats;
   };
   
   class tapeGenericDeviceFile: public vfsFile {
