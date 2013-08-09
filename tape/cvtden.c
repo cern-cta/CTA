@@ -23,13 +23,13 @@ static char *adens[CA_MAXDENNUM] = {
        "0",    "800",   "1600",   "6250", "38000",  "8200",  "8500",  "38KD",    "2G",     "6G",
      "10G",    "FMT",    "RAW",    "DDS",   "20G",   "25G",   "35G",   "50G",   "40G",    "60G",
     "100G",   "200G",   "110G",   "160G",  "300G",  "400G",  "500G",  "700G",  "800G",  "1000G",
-   "1500G",  "5000G",  "1600G",  "4000G"};
+   "1500G",  "5000G",  "1600G",  "4000G", "8000G"};
 /* List of the compressed tape densities (the preferred type in CASTOR as of may 2011) */
 static char *adensc[CA_MAXDENNUM] = {
-        "",       "",       "",       "",  "38KC", "8200C", "8500C", "38KDC",      "",       "",
-    "10GC",       "",       "",   "DDSC",  "20GC",  "25GC",  "35GC",  "50GC",  "40GC",   "60GC",
-   "100GC",  "200GC",  "110GC",  "160GC", "300GC", "400GC", "500GC", "700GC", "800GC", "1000GC",
-  "1500GC", "5000GC", "1600GC", "4000GC"};
+        "",       "",       "",       "",   "38KC", "8200C", "8500C", "38KDC",      "",       "",
+    "10GC",       "",       "",   "DDSC",   "20GC",  "25GC",  "35GC",  "50GC",  "40GC",   "60GC",
+   "100GC",  "200GC",  "110GC",  "160GC",  "300GC", "400GC", "500GC", "700GC", "800GC", "1000GC",
+  "1500GC", "5000GC", "1600GC", "4000GC", "8000GC"};
 int cvtden(const char *const aden)
 {
 	int i;
