@@ -134,7 +134,14 @@ void castor::stager::daemon::JobSvcThread::handleStartRequest
          castor::dlf::Param(suuid)};
       castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_JOBSVC_GETUPDS,
                               fileId, nsHost, 3, params);
-      dcPath = jobSvc->getUpdateStart(subreq, sReq->diskServer(), sReq->fileSystem(), &emptyFile, fileId, nsHost);
+      try {
+        dcPath = jobSvc->getUpdateStart(subreq, sReq->diskServer(), sReq->fileSystem(), &emptyFile, fileId, nsHost);
+      } catch (castor::exception::RequestCanceled& e) {
+        // special case of canceled requests, don't log
+        res.setErrorCode(e.code());
+        res.setErrorMessage(e.getMessage().str());
+        failed = true;
+      }
     } else {
       // "Invoking PutStart"
       castor::dlf::Param params[] =
