@@ -126,6 +126,8 @@ class DiskServerManagerService(rpyc.Service):
     dlf.writedebug(msgs.INVOKINGKILLTRANSFERS, TransferIds=', '.join(transferIds))
     # remove transfers from the local queue
     transferQueue.remove(transferIds)
+    # in case it's running, remove it from the running queue
+    runningTransfers.remove(transferIds)
 
   def exposed_transferAlreadyStarted(self, transferId, reqId):
     '''Called when a job has started on another diskServer and can be canceled on this one'''
@@ -151,7 +153,7 @@ class DiskServerManagerService(rpyc.Service):
     '''called when a d2d copy is over and we are the source'''
     transfer = tupleToTransfer(transferTuple)
     dlf.writedebug(msgs.INVOKINGD2DEND, subreqId=transfer.transferId, reqId=transfer.reqId)
-    runningTransfers.d2dend(transfer.transferId)
+    runningTransfers.remove([transfer.transferId])
 
   def exposed_anyTransfersFromScheduler(self, scheduler):
     '''Tells whether any transfer is queueing/ongoing that is handled

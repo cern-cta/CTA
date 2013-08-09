@@ -167,8 +167,23 @@ class ServerQueue(dict):
         del self[machine][transfer.transferId]
       return transfer
     except KeyError:
-      # we are not handling this transfer, fine, ignore it then
-      return None
+      # not found in queues
+      pass
+    # this transfer may be a running d2d source
+    if transferType == TransferType.D2DSRC:
+      try:
+        srcTransfer = self.d2dsrcrunning[transferId]
+        del self.d2dsrcrunning[transferId]
+        diskServer = srcTransfer.srcTransfer.diskServer
+        if diskServer not in transfersPerMachine:
+          transfersPerMachine[diskServer] = []
+        transfersPerMachine[diskServer].append(transferId)
+        return srcTransfer.srcTransfer
+      except KeyError:
+        # nope
+        pass
+    # we are not handling this transfer, fine, ignore it then
+    return None
 
   def remove(self, transferIds):
     '''drops transfers from the queues and return the dropped transfers'''

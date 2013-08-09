@@ -202,6 +202,20 @@ class RunningTransfersSet(object):
     finally:
       self.lock.release()
 
+  def remove(self, transferIds):
+    '''removes a transfer from the list, and kills corresponding process, when possible'''
+    self.lock.acquire()
+    try:
+      # kill what can be killed
+      toBeKilled = set(rTransfer for rTransfer in self.transfers if rTransfer.transfer.transferId in transferIds)
+      for rTransfer in toBeKilled:
+        if rTransfer.process != None:
+          rTransfer.process.terminate()
+      # cleanup list of running transfers
+      self.transfers = set(rTransfer for rTransfer in self.transfers if rTransfer.transfer.transferId not in transferIds)
+    finally:
+      self.lock.release()
+
   def nbTransfers(self, reqUser=None, detailed=False):
     '''returns number of running transfers and number of running slots, plus details
     per protocol if the detailed parameter is true.
@@ -372,8 +386,9 @@ class RunningTransfersSet(object):
               replicaFileSize = 0
               if errMsg == '':
                 errMsg = 'Not able to stat new file : %s' % str(e)
+                rc = errno.ENOENT
             d2dEnded[rTransfer.scheduler].append((rTransfer.transfer, rTransfer.localPath,
-                                                  replicaFileSize, errMsg))
+                                                  replicaFileSize, rc, errMsg))
           else:
             # in case of transfers killed by a signal, remember to inform the DB
             if rc < 0:
@@ -396,23 +411,23 @@ class RunningTransfersSet(object):
       try:
         connectionpool.connections.d2dended(scheduler,
                                             tuple([(transfer.transferId, transfer.reqId, transfer.fileId,
-                                                    socket.getfqdn(), localPath, fileSize, errMsg)
-                                                    for transfer, localPath, fileSize, errMsg
+                                                    socket.getfqdn(), localPath, fileSize, errCode, errMsg)
+                                                    for transfer, localPath, fileSize, errCode, errMsg
                                                      in d2dEnded[scheduler]]), timeout=timeout)
       except connectionpool.Timeout, e:
-        for transfer, localPath, fileSize, errMsg in d2dEnded[scheduler]:
+        for transfer, localPath, fileSize, errCode, errMsg in d2dEnded[scheduler]:
           # "Failed to inform scheduler that a d2d transfer is over" message
           dlf.writenotice(msgs.INFORMTRANSFERISOVERFAILED, Scheduler=scheduler,
                           subreqId=transfer.transferId, reqId=transfer.reqId,
                           fileid=transfer.fileId, localPath=localPath,
-                          Type=str(e.__class__), Message=str(e))
+                          Type=str(e.__class__), errCode=errCode, errMessage=str(e))
       except Exception, e:
-        for transfer, localPath, fileSize, errMsg in d2dEnded[scheduler]:
+        for transfer, localPath, fileSize, errCode, errMsg in d2dEnded[scheduler]:
           # "Failed to inform scheduler that a d2d transfer is over" message
           dlf.writeerr(msgs.INFORMTRANSFERISOVERFAILED, Scheduler=scheduler,
                        subreqId=transfer.transferId, reqId=transfer.reqId,
                        fileid=transfer.fileId,  localPath=localPath,
-                       Type=str(e.__class__), Message=str(e))
+                       Type=str(e.__class__), errCode=errCode, errMessage=str(e))
     # inform schedulers of transfers killed
     for scheduler in killedTransfers:
       try:
@@ -431,14 +446,6 @@ class RunningTransfersSet(object):
           # "Failed to inform scheduler that transfer was killed by a signal" message
           dlf.writeerr(msgs.INFORMTRANSFERKILLEDFAILED, Scheduler=scheduler,
                        subreqId=transferId, reqId=reqId, fileid=fileId, Message=msg)
-
-  def d2dend(self, transferId):
-    '''called when a disk to disk copy ends and we are the source of it'''
-    self.lock.acquire()
-    try:
-      self.transfers = set(rTransfer for rTransfer in self.transfers if rTransfer.transfer.transferId != transferId)
-    finally:
-      self.lock.release()
 
   def listTransfers(self, reqUser=None):
     '''lists running transfers'''
