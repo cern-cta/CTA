@@ -6350,7 +6350,8 @@ BEGIN
   -- check whether there's already an ongoing replication
   SELECT id INTO varUnused
     FROM Disk2DiskCopyJob
-   WHERE castorfile = inCfId;
+   WHERE castorfile = inCfId
+     AND ROWNUM < 2;
   -- there is an ongoing replication, so just let it go and do nothing more
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- no ongoing replication, let's see whether we need to trigger one
@@ -6462,6 +6463,29 @@ CREATE OR REPLACE FUNCTION handleRawPutOrPPut(inCfId IN INTEGER, inSrId IN INTEG
                                               inReqUUID IN VARCHAR2, inSrUUID IN VARCHAR2,
                                               inDoSchedule IN BOOLEAN) RETURN INTEGER AS
 BEGIN
+  -- check that no concurrent put is already running
+  DECLARE
+    varAnyStageoutDC INTEGER;
+  BEGIN
+    SELECT /*+ INDEX(DiskCopy I_DiskCopy_Castorfile) */
+           COUNT(*) INTO varAnyStageoutDC FROM DiskCopy
+     WHERE status IN (dconst.DISKCOPY_WAITFS, dconst.DISKCOPY_STAGEOUT)
+       AND castorFile = inCfId
+       AND ROWNUM < 2;
+    IF varAnyStageoutDC > 0 THEN
+      -- the file is already being recreated -> EBUSY
+      UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
+         SET status = dconst.SUBREQUEST_FAILED,
+             errorCode = serrno.EBUSY,
+             errorMessage = 'File recreation canceled since file is being recreated by another request'
+       WHERE id = inSrId;
+      logToDLF(inReqUUID, dlf.LVL_USER_ERROR, dlf.STAGER_RECREATION_IMPOSSIBLE, inFileId, inNsHost, 'stagerd',
+               'SUBREQID=' || inSrUUID || ' svcClassId=' || getSvcClassName(inSvcClassId) ||
+               ' fileClassId=' || getFileClassName(inFileClassId) || ' reason="file being recreated"');
+      RETURN 0;
+    END IF;
+  END;
+
   -- check if the file can be routed to tape
   IF checkNoTapeRouting(inFileClassId) = 1 THEN
     -- We could not route the file to tape, so we fail the opening
