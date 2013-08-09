@@ -544,7 +544,7 @@ BEGIN
        AND status = dconst.DISK2DISKCOPYJOB_SCHEDULED;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- log "disk2DiskCopyStart : Replication request canceled while queuing in scheduler or transfer already started"
-    logToDLF(NULL, dlf.LVL_ERROR, dlf.D2D_CANCELED_AT_START, inFileId, inNsHost, 'stagerd',
+    logToDLF(NULL, dlf.LVL_USER_ERROR, dlf.D2D_CANCELED_AT_START, inFileId, inNsHost, 'stagerd',
              'TransferId=' || TO_CHAR(inTransferId) || ' destDiskServer=' || inDestDiskServerName ||
              ' destMountPoint=' || inDestMountPoint || ' srcDiskServer=' || inSrcDiskServerName ||
              ' srcMountPoint=' || inSrcMountPoint);
@@ -579,7 +579,7 @@ BEGIN
   IF (varSrcDsStatus = dconst.DISKSERVER_DISABLED OR varSrcFsStatus = dconst.FILESYSTEM_DISABLED
       OR varSrcHwOnline = 0) THEN
     -- log "disk2DiskCopyStart : Source diskserver/filesystem was DISABLED meanwhile"
-    logToDLF(NULL, dlf.LVL_ERROR, dlf.D2D_SRC_DISABLED, inFileId, inNsHost, 'stagerd',
+    logToDLF(NULL, dlf.LVL_WARNING, dlf.D2D_SRC_DISABLED, inFileId, inNsHost, 'stagerd',
              'TransferId=' || TO_CHAR(inTransferId) || ' diskServer=' || inSrcDiskServerName ||
              ' fileSystem=' || inSrcMountPoint);
     -- fail d2d transfer
@@ -599,7 +599,7 @@ BEGIN
   IF (varDestDsStatus != dconst.DISKSERVER_PRODUCTION OR varDestFsStatus != dconst.FILESYSTEM_PRODUCTION
       OR varDestHwOnline = 0) THEN
     -- log "disk2DiskCopyStart : Destination diskserver/filesystem not in PRODUCTION any longer"
-    logToDLF(NULL, dlf.LVL_ERROR, dlf.D2D_DEST_NOT_PRODUCTION, inFileId, inNsHost, 'stagerd',
+    logToDLF(NULL, dlf.LVL_WARNING, dlf.D2D_DEST_NOT_PRODUCTION, inFileId, inNsHost, 'stagerd',
              'TransferId=' || TO_CHAR(inTransferId) || ' diskServer=' || inDestDiskServerName);
     -- fail d2d transfer
     disk2DiskCopyEnded(inTransferId, '', '', 0, 0, 'Destination not in production');
