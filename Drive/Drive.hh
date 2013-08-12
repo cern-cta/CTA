@@ -365,8 +365,21 @@ namespace Tape {
     virtual tapeError getTapeError() throw (Exception) { throw Exception("Not implemented"); }
     
     /**
-     * 
+     * Set the buffer write switch in the st driver. This is directly matching a configuration
+     * paramerter in CASTOR, so this function has to be public and useable by a higher level
+     * layer, unless the parameter turns out to be disused.
+     * @param bufWrite: value of the buffer write switch
      */
+    virtual void setSTBufferWrite(bool bufWrite) throw (Exception) { throw Exception("Not implemented"); }
+    
+    /**
+     * Set the MTFastEOM option of the ST driver. This function is used only internally in 
+     * mounttape (in CAStor), so it could be a private function, not visible to 
+     * the higher levels of the software (TODO: protected?).
+     * @param fastMTEOM the option switch.
+     */
+    virtual void setSTFastMTEOM(bool fastMTEOM) throw (Exception) { throw Exception("Not implemented"); }
+
     
     virtual ~Drive() {
       if(-1 != m_tapeFD)

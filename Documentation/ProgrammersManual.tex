@@ -307,8 +307,8 @@ The SCSI commands and st driver's functions used in previous software (CAStor's 
     \item Try and get the sense data for the last-ish command with MTIOSENSE. This
           relies on a CERN-made patch. This is also covered \verb#Drive::getDriveStatus#.
     \item Setup the driver's parameters (MTIOCTOP/MTSETDRVBUFFER) for (un)buffered 
-          writes and asynchronous writes (in confdrive, a child of taped).
-          TODO: check underlying.
+          writes and asynchronous writes (in confdrive, a child process of taped).
+          This option is currently not set in production environments.
     \item Jump to end of media (before rewinding, as a mean to rebuild the MIR) (MTIOCTOP/MTEOM, 
           with some MTIOCTOP/MTSETDRVBUFFER before, in repairbadmir). The setting of the driver
           buffer is used to set the boolean flag MT\_ST\_FAST\_MTEOM to 0. If not, the mt driver uses
