@@ -366,11 +366,17 @@ namespace Tape {
     
     /**
      * Set the buffer write switch in the st driver. This is directly matching a configuration
-     * paramerter in CASTOR, so this function has to be public and useable by a higher level
+     * parameter in CASTOR, so this function has to be public and usable by a higher level
      * layer, unless the parameter turns out to be disused.
      * @param bufWrite: value of the buffer write switch
      */
-    virtual void setSTBufferWrite(bool bufWrite) throw (Exception) { throw Exception("Not implemented"); }
+    virtual void setSTBufferWrite(bool bufWrite) throw (Exception) {
+      struct mtop m_mtCmd;
+      m_mtCmd.mt_op = MTSETDRVBUFFER;
+      m_mtCmd.mt_count = bufWrite ? (MT_ST_SETBOOLEANS | MT_ST_BUFFER_WRITES) : (MT_ST_CLEARBOOLEANS | MT_ST_BUFFER_WRITES);
+      if (-1 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd))
+        throw Tape::Exceptions::Errnum("Failed to (un)set ST Driver Option: MT_ST_BUFFER_WRITES");
+    }
     
     /**
      * Set the MTFastEOM option of the ST driver. This function is used only internally in 
@@ -378,7 +384,13 @@ namespace Tape {
      * the higher levels of the software (TODO: protected?).
      * @param fastMTEOM the option switch.
      */
-    virtual void setSTFastMTEOM(bool fastMTEOM) throw (Exception) { throw Exception("Not implemented"); }
+    virtual void setSTFastMTEOM(bool fastMTEOM) throw (Exception) {
+      struct mtop m_mtCmd;
+      m_mtCmd.mt_op = MTSETDRVBUFFER;
+      m_mtCmd.mt_count = fastMTEOM ? (MT_ST_SETBOOLEANS | MT_ST_FAST_MTEOM) : (MT_ST_CLEARBOOLEANS | MT_ST_FAST_MTEOM);
+      if (-1 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd))
+        throw Tape::Exceptions::Errnum("Failed to (un)set ST Driver Option: MT_ST_FAST_EOM");      
+    }
 
     
     virtual ~Drive() {

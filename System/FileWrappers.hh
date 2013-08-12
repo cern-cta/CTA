@@ -40,6 +40,7 @@ namespace System {
     virtual ~vfsFile() {};
     virtual ssize_t read(void* buf, size_t nbytes);
     virtual ssize_t write(const void *buf, size_t nbytes);
+    virtual int ioctl(unsigned long int request, struct mtop * mt_cmd);
     virtual int ioctl(unsigned long int request, struct mtget * mt_status);
     virtual int ioctl(unsigned long int request, sg_io_hdr_t * sgio_h);
     /** Reset the read/write pointers at open. This ensures coherent behavior on multiple access */
@@ -68,10 +69,12 @@ namespace System {
   public:
     stDeviceFile();
     virtual void reset() {clearCompressionStats = false; blockID=0xFFFFFFFF;};
+    virtual int ioctl(unsigned long int request, struct mtop * mt_cmd);
     virtual int ioctl(unsigned long int request, struct mtget * mt_status);
     virtual int ioctl(unsigned long int request, sg_io_hdr_t * sgio_h);
   private:
     struct mtget m_mtStat;
+    struct mtop m_mtCmd;
     uint32_t blockID;  
     bool clearCompressionStats;
   };

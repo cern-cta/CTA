@@ -127,6 +127,17 @@ ssize_t Tape::System::fakeWrapper::write(int fd, const void *buf, size_t nbytes)
   return m_openFiles[fd]->write(buf, nbytes);
 }
 
+int Tape::System::fakeWrapper::ioctl(int fd, unsigned long int request, mtop * mt_cmd) {
+  /*
+   * Mimic ioctl. Actually delegate the job to a vfsFile
+   */
+  if (m_openFiles.end() == m_openFiles.find(fd)) {
+    errno = EBADF;
+    return -1;
+  }
+  return m_openFiles[fd]->ioctl(request, mt_cmd);
+}
+
 int Tape::System::fakeWrapper::ioctl(int fd, unsigned long int request, mtget* mt_status) {
   /*
    * Mimic ioctl. Actually delegate the job to a vfsFile
@@ -200,6 +211,8 @@ void Tape::System::mockWrapper::delegateToFake() {
   ON_CALL(*this, write(_, _, _)).WillByDefault(Invoke(&fake, &fakeWrapper::write));
   /* We have an overloaded function. Have to use a static_cast trick to indicate
    the pointer to which function we want.*/
+  ON_CALL(*this, ioctl(_, _, A<struct mtop *>())).WillByDefault(Invoke(&fake, 
+        static_cast<int(fakeWrapper::*)(int , unsigned long int , mtop*)>(&fakeWrapper::ioctl)));
   ON_CALL(*this, ioctl(_, _, A<struct mtget *>())).WillByDefault(Invoke(&fake, 
         static_cast<int(fakeWrapper::*)(int , unsigned long int , mtget*)>(&fakeWrapper::ioctl)));
   ON_CALL(*this, ioctl(_, _, A<struct sg_io_hdr *>())).WillByDefault(Invoke(&fake, 

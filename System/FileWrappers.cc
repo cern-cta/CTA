@@ -43,6 +43,13 @@ ssize_t Tape::System::vfsFile::write(const void* buf, size_t nbytes)
   return -1;
 }
 
+int Tape::System::vfsFile::ioctl(unsigned long int request, mtop * mt_cmd)
+{
+  /* The vfsFile's operations always fail */
+  errno = EINVAL;
+  return -1;
+}
+
 int Tape::System::vfsFile::ioctl(unsigned long int request, mtget* mt_status)
 {
   /* The vfsFile's operations always fail */
@@ -96,6 +103,17 @@ Tape::System::stDeviceFile::stDeviceFile()
   blockID = 0xFFFFFFFF; // Logical Object ID - position on tape 
   
   clearCompressionStats = false;
+}
+
+int Tape::System::stDeviceFile::ioctl(unsigned long int request, struct mtop * mt_cmd)
+{
+  switch (request) {
+    case MTIOCTOP:
+      *mt_cmd = m_mtCmd;
+      return 0;
+  }
+  errno = EINVAL;
+  return -1;
 }
 
 int Tape::System::stDeviceFile::ioctl(unsigned long int request, mtget* mt_status)

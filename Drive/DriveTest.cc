@@ -153,7 +153,48 @@ TEST(TapeDrive, setDensityAndCompression) {
       drive.setDensityAndCompression(0x46,false);
     }
   }
-} 
+}
+
+TEST(TapeDrive, setStDriverOptions) {
+  /* Prepare the test harness */
+  Tape::System::mockWrapper sysWrapper;
+  sysWrapper.fake.setupSLC5();
+  sysWrapper.delegateToFake();
+  
+  /* We expect the following calls: */
+  EXPECT_CALL(sysWrapper, opendir(_)).Times(3);
+  EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
+  EXPECT_CALL(sysWrapper, closedir(_)).Times(3);
+  EXPECT_CALL(sysWrapper, realpath(_, _)).Times(3);
+  EXPECT_CALL(sysWrapper, open(_, _)).Times(14);
+  EXPECT_CALL(sysWrapper, read(_, _, _)).Times(20);
+  EXPECT_CALL(sysWrapper, write(_, _, _)).Times(0);
+  EXPECT_CALL(sysWrapper, ioctl(_,_,An<mtget*>())).Times(2);
+  EXPECT_CALL(sysWrapper, close(_)).Times(14);
+  EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(3);
+  EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
+  
+  /* Test: detect devices, then open the device files */
+  SCSI::DeviceVector<Tape::System::mockWrapper> dl(sysWrapper);
+  for (std::vector<SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
+    if (SCSI::Types::tape == i->type) {
+      Tape::Drive<Tape::System::mockWrapper> drive(*i, sysWrapper);
+      
+      EXPECT_CALL(sysWrapper, ioctl(_,_,An<struct mtop *>())).Times(1);
+      drive.setSTBufferWrite(true);
+      
+      EXPECT_CALL(sysWrapper, ioctl(_,_,An<struct mtop *>())).Times(1);
+      drive.setSTBufferWrite(false);
+      
+      EXPECT_CALL(sysWrapper, ioctl(_,_,An<struct mtop *>())).Times(1);
+      drive.setSTFastMTEOM(true);
+      
+      EXPECT_CALL(sysWrapper, ioctl(_,_,An<struct mtop *>())).Times(1);
+      drive.setSTFastMTEOM(false);
+    }
+  }
+}
+
 TEST(TapeDrive, getCompressionAndClearCompressionStats) {
   /* Prepare the test harness */
   Tape::System::mockWrapper sysWrapper;
