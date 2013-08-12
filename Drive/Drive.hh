@@ -392,7 +392,17 @@ namespace Tape {
         throw Tape::Exceptions::Errnum("Failed to (un)set ST Driver Option: MT_ST_FAST_EOM");      
     }
 
+    /**
+     * Jump to end of media. This will use setSTFastMTEOM() to disable MT_ST_FAST_MTEOM.
+     * (See TapeServer's handbook for details).
+     * TODO: synchronous? Timeout?
+     */
+    virtual void jumpToEOM(void) throw (Exception) { throw Exception("Not implemented"); }
     
+    /**
+     * 
+     */
+    virtual void rewind(void) throw (Exception) { throw Exception("Not implemented"); }
     virtual ~Drive() {
       if(-1 != m_tapeFD)
         m_sysWrapper.close(m_tapeFD);

@@ -116,6 +116,41 @@ in the sources of the kernel.
 \item{}NetBeans as an IDE, including for remote development\
 \end{itemize}
 
+\subsection{Code coverage using lcov}
+Although the code coverage is not integrated in the build process, it is
+straightforward to run on the code. The following recipe will deliver a set of 
+web pages indicating which parts of the code are covered or not in the unit tests.
+The lcov package is required. It is only available on SLC6, and can be installed via yum.
+\begin{itemize}
+\item{}Change the main CMakeFiles.txt as in this diff:
+\begin{small}
+\begin{verbatim}
+Index: CMakeLists.txt
+===================================================================
+--- CMakeLists.txt      (revision 76)
++++ CMakeLists.txt      (working copy)
+@@ -45,7 +45,8 @@
+ ###########################################################################
+ # compiler options
+ ###########################################################################
+-set (CMAKE_CXX_FLAGS "-g3 -Wall -Werror -pedantic -O2")
++set (CMAKE_CXX_FLAGS "-g3 -Wall -Werror -pedantic -O2 --coverage")
++set (CMAKE_LD_FLAGS "--coverage")
+
+ ###########################################################################
+ # dependancies
+\end{verbatim}
+\end{small}
+
+\item{}Re-run cmake and recompile as usual.
+\item{}Capture the result:
+
+        \small{}\verb#lcov --capture --directory 00build/ --output-file 00build/coverage.info#.
+\item{}\normalsize{}Generate the resulting html pages: 
+        
+        \small{}\verb#genhtml 00build/coverage.info --output-directory 00build/coverage#.
+\end{itemize}
+
 \section{Software layout}
 
 \subsection{SCSI structures, constants and endianness}
