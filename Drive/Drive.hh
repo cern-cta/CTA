@@ -125,7 +125,9 @@ namespace Tape {
      * fields toHost, fromDrive are related to the read operation.
      * @return compressionStats
      */
-    virtual compressionStats getCompression()  throw (Exception) { throw Exception("Not implemented"); }   
+    virtual compressionStats getCompression()  throw (Exception) { 
+      throw Exception("getCompression unavailable in Tape::Drive generic version"); 
+    }   
     
     /**
      * Reset all statistics about data movements on the drive.
