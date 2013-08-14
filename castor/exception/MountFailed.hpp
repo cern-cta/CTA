@@ -30,7 +30,7 @@
 namespace castor { namespace exception {
 
     /**
-     * Failed to mount tape.
+     * Failed to mount volume.
      */
     class MountFailed : public castor::exception::Exception {
       
