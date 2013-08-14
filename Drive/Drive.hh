@@ -29,6 +29,8 @@
 #include "../System/Wrapper.hh"
 #include "../Exception/Exception.hh"
 
+#include "mtio_add.hh"
+
 /**
  * Class wrapping the tape server. Has to be templated (and hence fully in .hh)
  * to allow unit testing against system wrapper.
@@ -224,14 +226,6 @@ namespace Tape {
     virtual void setSTBufferWrite(bool bufWrite) throw (Exception);
 
     /**
-     * Set the MTFastEOM option of the ST driver. This function is used only internally in 
-     * mounttape (in CAStor), so it could be a private function, not visible to 
-     * the higher levels of the software (TODO: protected?).
-     * @param fastMTEOM the option switch.
-     */
-    virtual void setSTFastMTEOM(bool fastMTEOM) throw (Exception);
-
-    /**
      * Jump to end of media. This will use setSTFastMTEOM() to disable MT_ST_FAST_MTEOM.
      * (See TapeServer's handbook for details). This is used to rebuild the MIR (StorageTek)
      * or tape directory (IBM).
@@ -239,107 +233,81 @@ namespace Tape {
      * all tape drives.
      * TODO: synchronous? Timeout?
      */
-    virtual void fastSpaceToEOM(void) throw (Exception) {
-      throw Exception("Not implemented");
-    }
+    virtual void fastSpaceToEOM(void) throw (Exception);
 
     /**
      * Rewind tape.
      */
-    virtual void rewind(void) throw (Exception) {
-      throw Exception("Not implemented");
-    }
+    virtual void rewind(void) throw (Exception);
 
     /**
      * Jump to end of data. EOM in ST driver jargon, end of data (which is more accurate)
      * in SCSI terminology).
      */
-    virtual void spaceToEOM(void) throw (Exception) {
-      throw Exception("Not implemented");
-    }
+    virtual void spaceToEOM(void) throw (Exception);
 
     /**
      * Space count files backwards.
      * @param count
      */
-    virtual void spaceFilesBackward(size_t count) throw (Exception) {
-      throw Exception("Not implemented");
-    }
+    virtual void spaceFilesBackwards(size_t count) throw (Exception);
 
     /**
      * Space count files forward.
      * @param count
      */
-    virtual void spaceFilesForward(size_t count) throw (Exception) {
-      throw Exception("Not implemented");
-    }
+    virtual void spaceFilesForward(size_t count) throw (Exception);
 
     /**
      * Space count blocks backwards.
      * @param count
      */
-    virtual void spaceBlocksBackwards(size_t count) throw (Exception) {
-      throw Exception("Not implemented");
-    }
+    virtual void spaceBlocksBackwards(size_t count) throw (Exception);
 
     /**
      * Space count blocks forward.
      * @param count
      */
-    virtual void spaceBlocksForward(size_t count) throw (Exception) {
-      throw Exception("Not implemented");
-    }
+    virtual void spaceBlocksForward(size_t count) throw (Exception);
 
     /**
      * Unload the tape.
      */
-    virtual void unloadTape(void) throw (Exception) {
-      throw Exception("Not implemented");
-    }
+    virtual void unloadTape(void) throw (Exception);
 
     /**
      * Synch call to the tape drive. This function will not return before the 
      * data in the drive's buffer is actually comitted to the medium.
      */
-    virtual void sync(void) throw (Exception) {
-      throw Exception("Not implemented");
-    }
+    virtual void sync(void) throw (Exception);
 
     /**
      * Write count file marks. The function does not return before the file marks 
      * are committed to medium.
      * @param count
      */
-    virtual void writeSyncFileMarks(size_t count) throw (Exception) {
-      throw Exception("Not implemented");
-    }
+    virtual void writeSyncFileMarks(size_t count) throw (Exception);
 
     /**
      * Write count file marks asynchronously. The file marks are just added to the drive's
      * buffer and the function return immediately.
      * @param count
      */
-    virtual void writeImmediateFileMarks(size_t count) throw (Exception) {
-      throw Exception("Not implemented");
-    }
+    virtual void writeImmediateFileMarks(size_t count) throw (Exception);
 
     /**
      * Write a data block to tape.
      * @param data pointer the the data block
      * @param count size of the data block
      */
-    virtual void writeBlock(const unsigned char * data, size_t count) throw (Exception) {
-      throw Exception("Not implemented");
-    }
+    virtual void writeBlock(const unsigned char * data, size_t count) throw (Exception);
 
     /**
      * Read a data block from tape.
      * @param data pointer the the data block
      * @param count size of the data block
      */
-    virtual void readBlock(unsigned char * data, size_t count) throw (Exception) {
-      throw Exception("Not implemented");
-    }
+    virtual void readBlock(unsigned char * data, size_t count) throw (Exception);
 
     virtual ~Drive() {
       if (-1 != m_tapeFD)
@@ -356,7 +324,13 @@ namespace Tape {
     Tape::System::virtualWrapper & m_sysWrapper;
     struct mtget m_mtInfo;
   private:
-
+    /**
+     * Set the MTFastEOM option of the ST driver. This function is used only internally in 
+     * mounttape (in CAStor), so it could be a private function, not visible to 
+     * the higher levels of the software (TODO: protected?).
+     * @param fastMTEOM the option switch.
+     */
+    virtual void setSTFastMTEOM(bool fastMTEOM) throw (Exception);
     void SCSI_inquiry(int fd);
   };
 

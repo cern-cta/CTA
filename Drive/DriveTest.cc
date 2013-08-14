@@ -185,12 +185,6 @@ TEST(TapeDrive, setStDriverOptions) {
       
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<struct mtop *>())).Times(1);
       drive.setSTBufferWrite(false);
-      
-      EXPECT_CALL(sysWrapper, ioctl(_,_,An<struct mtop *>())).Times(1);
-      drive.setSTFastMTEOM(true);
-      
-      EXPECT_CALL(sysWrapper, ioctl(_,_,An<struct mtop *>())).Times(1);
-      drive.setSTFastMTEOM(false);
     }
   }
 }

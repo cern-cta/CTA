@@ -307,7 +307,24 @@ void Tape::Drive::setSTBufferWrite(bool bufWrite) throw (Tape::Exception) {
   m_mtCmd.mt_op = MTSETDRVBUFFER;
   m_mtCmd.mt_count = bufWrite ? (MT_ST_SETBOOLEANS | MT_ST_BUFFER_WRITES) : (MT_ST_CLEARBOOLEANS | MT_ST_BUFFER_WRITES);
   if (-1 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd))
-    throw Tape::Exceptions::Errnum("Failed to (un)set ST Driver Option: MT_ST_BUFFER_WRITES");
+    throw Tape::Exceptions::Errnum("Failed ST ioctl (MTSETDRVBUFFER)");
+}
+
+/**
+ * Jump to end of recorded media. This will use setSTFastMTEOM() to disable MT_ST_FAST_MTEOM.
+ * (See TapeServer's handbook for details). This is used to rebuild the MIR (StorageTek)
+ * or tape directory (IBM).
+ * Tape directory rebuild is described only for IBM but currently applied to 
+ * all tape drives.
+ * TODO: synchronous? Timeout?
+ */    
+void Tape::Drive::spaceToEOM(void) throw (Tape::Exception) {
+  setSTFastMTEOM(false);
+  struct mtop m_mtCmd;
+  m_mtCmd.mt_op = MTEOM;
+  m_mtCmd.mt_count = 1;
+  if (-1 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd))
+    throw Tape::Exceptions::Errnum("Failed ST ioctl (MTEOM)");
 }
 
 /**
@@ -321,7 +338,148 @@ void Tape::Drive::setSTFastMTEOM(bool fastMTEOM) throw (Tape::Exception) {
   m_mtCmd.mt_op = MTSETDRVBUFFER;
   m_mtCmd.mt_count = fastMTEOM ? (MT_ST_SETBOOLEANS | MT_ST_FAST_MTEOM) : (MT_ST_CLEARBOOLEANS | MT_ST_FAST_MTEOM);
   if (-1 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd))
-    throw Tape::Exceptions::Errnum("Failed to (un)set ST Driver Option: MT_ST_FAST_EOM");
+    throw Tape::Exceptions::Errnum("Failed ST ioctl (MTSETDRVBUFFER)");
+}
+
+/**
+ * Jump to end of data. EOM in ST driver jargon, end of data (which is more accurate)
+ * in SCSI terminology). This uses the fast setting (not to be used for MIR rebuild) 
+ */
+void Tape::Drive::fastSpaceToEOM(void) throw (Tape::Exception) {
+  setSTFastMTEOM(true);
+  struct mtop m_mtCmd;
+  m_mtCmd.mt_op = MTEOM;
+  m_mtCmd.mt_count = 1;
+  if (-1 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd))
+    throw Tape::Exceptions::Errnum("Failed ST ioctl (MTEOM)");
+}
+
+/**
+ * Rewind tape.
+ */
+void Tape::Drive::rewind(void) throw (Tape::Exception) {
+  struct mtop m_mtCmd;
+  m_mtCmd.mt_op = MTREW;
+  m_mtCmd.mt_count = 1;
+  if (-1 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd))
+    throw Tape::Exceptions::Errnum("Failed ST ioctl (MTREW)");
+}
+
+/**
+ * Space count files backwards.
+ * @param count
+ */
+void Tape::Drive::spaceFilesBackwards(size_t count) throw (Tape::Exception) {
+  struct mtop m_mtCmd;
+  m_mtCmd.mt_op = MTBSF;
+  m_mtCmd.mt_count = (int)count;
+  if (-1 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd))
+    throw Tape::Exceptions::Errnum("Failed ST ioctl (MTBSF)");
+}
+
+/**
+ * Space count files forward.
+ * @param count
+ */
+void Tape::Drive::spaceFilesForward(size_t count) throw (Tape::Exception) {
+  struct mtop m_mtCmd;
+  m_mtCmd.mt_op = MTFSF;
+  m_mtCmd.mt_count = (int)count;
+  if (-1 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd))
+    throw Tape::Exceptions::Errnum("Failed ST ioctl (MTFSF)");
+}
+
+/**
+ * Space count blocks backwards.
+ * @param count
+ */
+void Tape::Drive::spaceBlocksBackwards(size_t count) throw (Tape::Exception) {
+  struct mtop m_mtCmd;
+  m_mtCmd.mt_op = MTBSR;
+  m_mtCmd.mt_count = (int)count;
+  if (-1 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd))
+    throw Tape::Exceptions::Errnum("Failed ST ioctl (MTBSR)");
+}
+
+/**
+ * Space count blocks forward.
+ * @param count
+ */
+void Tape::Drive::spaceBlocksForward(size_t count) throw (Tape::Exception) {
+  struct mtop m_mtCmd;
+  m_mtCmd.mt_op = MTFSR;
+  m_mtCmd.mt_count = (int)count;
+  if (-1 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd))
+    throw Tape::Exceptions::Errnum("Failed ST ioctl (MTFSR)");
+}
+
+/**
+ * Unload the tape.
+ */
+void Tape::Drive::unloadTape(void) throw (Tape::Exception) {
+  struct mtop m_mtCmd;
+  m_mtCmd.mt_op = MTUNLOAD;
+  m_mtCmd.mt_count = 1;
+  if (-1 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd))
+    throw Tape::Exceptions::Errnum("Failed ST ioctl (MTUNLOAD)");
+}
+
+/**
+ * Synch call to the tape drive. This function will not return before the 
+ * data in the drive's buffer is actually comitted to the medium.
+ */
+void Tape::Drive::sync(void) throw (Tape::Exception) {
+  struct mtop m_mtCmd;
+  m_mtCmd.mt_op = MTNOP; //The side effect of the no-op is to actually flush the driver's buffer to tape (see "man st").
+  m_mtCmd.mt_count = 1;
+  if (-1 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd))
+    throw Tape::Exceptions::Errnum("Failed ST ioctl (MTNOP)");
+}
+
+/**
+ * Write count file marks. The function does not return before the file marks 
+ * are committed to medium.
+ * @param count
+ */
+void Tape::Drive::writeSyncFileMarks(size_t count) throw (Tape::Exception) {
+  struct mtop m_mtCmd;
+  m_mtCmd.mt_op = MTWEOF;
+  m_mtCmd.mt_count = (int)count;
+  if (-1 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd))
+    throw Tape::Exceptions::Errnum("Failed ST ioctl (MTWEOF)");
+}
+
+/**
+ * Write count file marks asynchronously. The file marks are just added to the drive's
+ * buffer and the function return immediately.
+ * @param count
+ */
+void Tape::Drive::writeImmediateFileMarks(size_t count) throw (Tape::Exception) {
+  struct mtop m_mtCmd;
+  m_mtCmd.mt_op = MTWEOFI; //Undocumented in "man st" needs the mtio_add.hh header file (see above)
+  m_mtCmd.mt_count = (int)count;
+  if (-1 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd))
+    throw Tape::Exceptions::Errnum("Failed ST ioctl (MTWEOFI)");
+}
+
+/**
+ * Write a data block to tape.
+ * @param data pointer the the data block
+ * @param count size of the data block
+ */
+void Tape::Drive::writeBlock(const unsigned char * data, size_t count) throw (Tape::Exception) {
+  if (-1 == m_sysWrapper.write(m_tapeFD, data, count))
+    throw Tape::Exceptions::Errnum("Failed ST write");
+}
+
+/**
+ * Read a data block from tape.
+ * @param data pointer the the data block
+ * @param count size of the data block
+ */
+void Tape::Drive::readBlock(unsigned char * data, size_t count) throw (Tape::Exception) {
+  if (-1 == m_sysWrapper.read(m_tapeFD, data, count))
+    throw Tape::Exceptions::Errnum("Failed ST read");
 }
 
 void Tape::Drive::SCSI_inquiry() {
