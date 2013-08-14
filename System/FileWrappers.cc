@@ -373,6 +373,57 @@ int Tape::System::stDeviceFile::ioctl(unsigned long int request, sg_io_hdr_t * s
           }
           break;
         } // end MODE_SELECT_6
+        case SCSI::Commands::INQUIRY:
+        { // start INQUIRY
+          if (SG_DXFER_FROM_DEV != sgio_h->dxfer_direction) {
+            errno = EINVAL;
+            return -1;          
+          }
+          SCSI::Structures::inquiryCDB_t & cdb = 
+              *(SCSI::Structures::inquiryCDB_t *) sgio_h->cmdp;
+          
+          if (0 == cdb.EVPD  && 0 == cdb.pageCode) {
+            /* the Standard Inquiry Data is returned*/
+            SCSI::Structures::inquiryData_t & inqData = 
+              *(SCSI::Structures::inquiryData_t *) sgio_h->dxferp;
+            if (sizeof (inqData) > sgio_h->dxfer_len) {
+              errno = EINVAL;
+              return -1;
+            }
+            /* fill the replay with random data */
+            srandom(SCSI::Commands::INQUIRY);
+            memset(sgio_h->dxferp, random(), sizeof (inqData));
+            /* We fill only fields we need.
+             * The emptiness in the strings fields we fill with spaces.
+             * And we do not need '\0' in the end of strings. For the tests
+             * there are mhvtl data.
+             */
+            const char *prodId = "T10000B                       ";
+            memcpy(inqData.prodId,prodId, sizeof(inqData.prodId));
+            const char *prodRevLvl = "0104                      ";
+            memcpy(inqData.prodRevLvl,prodRevLvl, sizeof(inqData.prodRevLvl));
+            const char *T10Vendor = "STK                        ";
+            memcpy(inqData.T10Vendor,T10Vendor, sizeof(inqData.T10Vendor));
+          } else if (1 == cdb.EVPD  && SCSI::inquiryVPDPages::unitSerialNumber == cdb.pageCode) {
+            /* the unit serial number VPD page is returned*/
+            SCSI::Structures::inquiryUnitSerialNumberData_t & inqSerialData = 
+              *(SCSI::Structures::inquiryUnitSerialNumberData_t *) sgio_h->dxferp;
+            if (sizeof (inqSerialData) > sgio_h->dxfer_len) {
+              errno = EINVAL;
+              return -1;
+            }
+             /* fill the replay with random data */
+            srandom(SCSI::Commands::INQUIRY);
+            memset(sgio_h->dxferp, random(), sgio_h->dxfer_len);
+            const char serialNumber[11] = "XYZZY_A2  ";
+            memcpy(inqSerialData.productSerialNumber,serialNumber, 10);
+            inqSerialData.pageLength = 10;
+          } else {
+            errno = EINVAL;
+            return -1;
+          }
+          break;
+        } // end INQURY
       }
       return 0;
   }

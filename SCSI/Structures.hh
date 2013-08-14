@@ -238,6 +238,29 @@ namespace SCSI {
     };
     
     /**
+     * Inquiry unit serial number vital product data as described in SPC-4.
+     */
+    class inquiryUnitSerialNumberData_t {
+    public:
+      inquiryUnitSerialNumberData_t() { zeroStruct(this); }
+      // byte 0
+      unsigned char peripheralDeviceType: 5; // (000b) connected to this LUN
+      unsigned char peripheralQualifier : 3; // (01h) tape drive  
+      
+      // byte 1
+      unsigned char pageCode;                // (80h) Vital Product Data page for serial
+      
+      // byte 2
+      unsigned char :8;                      // Reserved
+      
+      // byte 3
+      unsigned char pageLength;              // n-3
+      
+      // bytes 4-n
+      char productSerialNumber[12];          // 12 bytes for T10000&IBM, 10 for LTO
+    };
+    
+    /**
      * LOCATE(10) CDB as described in SSC-3.
      */
     class locate10CDB_t {

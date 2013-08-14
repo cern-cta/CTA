@@ -127,6 +127,39 @@ namespace UnitTests {
     ASSERT_EQ(0xCA, inqCDB.control);
   }
   
+    TEST(SCSI_Structures, inquiryUnitSerialNumberData_t) {
+    SCSI::Structures::inquiryUnitSerialNumberData_t inqSerialNumber;
+    unsigned char *buff = (unsigned char *)&inqSerialNumber;
+    
+    /*
+     * Make sure this struct is a POD (plain old data without virtual table)
+     * (and has the right size).
+     */
+    ASSERT_EQ(16U, sizeof(inqSerialNumber));
+       
+    ASSERT_EQ(0, inqSerialNumber.peripheralDeviceType);
+    buff[0] |= (0x15 & 0x1F) << 0;
+    ASSERT_EQ(0x15, inqSerialNumber.peripheralDeviceType);
+    
+    ASSERT_EQ(0, inqSerialNumber.peripheralQualifier);
+    buff[0] |= (0x5 & 0x7) <<5;
+    ASSERT_EQ(0x5,inqSerialNumber.peripheralQualifier);
+    
+    ASSERT_EQ(0, inqSerialNumber.pageCode);
+    buff[1] |= 0xAB ;
+    ASSERT_EQ(0xAB, inqSerialNumber.pageCode);
+    
+    buff[2] |= 0xFF;
+    ASSERT_EQ(0, inqSerialNumber.pageLength);
+    buff[3] |= 0xCD ;
+    ASSERT_EQ(0xCD, inqSerialNumber.pageLength);
+    
+    ASSERT_EQ("", SCSI::Structures::toString(inqSerialNumber.productSerialNumber));
+    const char serialNumber[13] = "XYZZY_A2    ";
+    memcpy(&buff[4],serialNumber,12);
+    ASSERT_EQ("XYZZY_A2    ", SCSI::Structures::toString(inqSerialNumber.productSerialNumber));
+  }
+  
   TEST(SCSI_Structures, logSelectCDB_t) {
     SCSI::Structures::logSelectCDB_t logSelectCDB;
     unsigned char *buff = (unsigned char *)&logSelectCDB;

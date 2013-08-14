@@ -56,6 +56,7 @@ namespace Tape {
     std::string vendor;
     std::string product;
     std::string productRevisionLevel;
+    std::string serialNumber;
   };
   
   /**
@@ -154,9 +155,64 @@ namespace Tape {
     
     /**
      * Information about the drive. The vendor id is used in the user labels of the files.
-     * @return 
+     * @return    The deviceInfo structure with the information about the drive.
      */
-    virtual deviceInfo getDeviceInfo() throw (Exception) { throw Exception("Not implemented"); }
+    virtual deviceInfo getDeviceInfo() throw (Exception) { 
+      SCSI::Structures::inquiryCDB_t cdb;
+      SCSI::Structures::inquiryData_t inquiryData;
+      SCSI::Structures::senseData_t<255> senseBuff;
+      SCSI::Structures::LinuxSGIO_t sgh;
+      deviceInfo devInfo;
+
+      sgh.setCDB(&cdb);
+      sgh.setDataBuffer(&inquiryData);
+      sgh.setSenseBuffer(&senseBuff);
+      sgh.dxfer_direction = SG_DXFER_FROM_DEV;
+
+      /* Manage both system error and SCSI errors. */
+      if (-1 == m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh))
+        throw Tape::Exceptions::Errnum("Failed SG_IO ioctl");
+      SCSI::ExceptionLauncher(sgh, std::string("SCSI error in getDeviceInfo: ") +
+              SCSI::statusToString(sgh.status));
+
+      devInfo.product = SCSI::Structures::toString(inquiryData.prodId);
+      devInfo.productRevisionLevel = SCSI::Structures::toString(inquiryData.prodRevLvl);
+      devInfo.vendor = SCSI::Structures::toString(inquiryData.T10Vendor);
+      devInfo.serialNumber = getSerialNumber();
+      
+      return devInfo;
+    }
+    
+    /**
+     * Information about the serial number of the drive. 
+     * @return   Right-aligned ASCII data for the vendor-assigned serial number.
+     */
+    virtual std::string getSerialNumber() throw (Exception) { 
+      SCSI::Structures::inquiryCDB_t cdb;
+      SCSI::Structures::inquiryUnitSerialNumberData_t inquirySerialData;
+      SCSI::Structures::senseData_t<255> senseBuff;
+      SCSI::Structures::LinuxSGIO_t sgh;
+        
+      cdb.EVPD = 1; /* Enable Vital Product Data */
+      cdb.pageCode = SCSI::inquiryVPDPages::unitSerialNumber;
+      cdb.allocationLength[0] = 0;
+      cdb.allocationLength[1] = sizeof (SCSI::Structures::inquiryUnitSerialNumberData_t);
+      
+      sgh.setCDB(&cdb);
+      sgh.setDataBuffer(&inquirySerialData);
+      sgh.setSenseBuffer(&senseBuff);
+      sgh.dxfer_direction = SG_DXFER_FROM_DEV;
+      
+      /* Manage both system error and SCSI errors. */
+      if (-1 == m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh))
+        throw Tape::Exceptions::Errnum("Failed SG_IO ioctl");
+      SCSI::ExceptionLauncher(sgh, std::string("SCSI error in getSerialInfo: ") +
+              SCSI::statusToString(sgh.status));
+      std::string serialNumber;
+      serialNumber.append(inquirySerialData.productSerialNumber,inquirySerialData.pageLength);
+      
+      return serialNumber;
+    }
     
     /**
      * Position to logical object identifier (i.e. block address). 
