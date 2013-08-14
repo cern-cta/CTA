@@ -338,6 +338,7 @@ char *sys_terrlist[ETMAXERR-ETBASEOFF+2] =
    "Invalid tape-file file-size",
    "Failed to mount volume",
    "Failed to dismount volume",
+   "Failed to query volume",
    "BAD ERROR NUMBER"
   };
 

@@ -343,7 +343,8 @@
 #define ETINVALIDTFSIZE	ETBASEOFF+40    /* Invalid tape-file file-size */
 #define ETMOUNTFAILED	ETBASEOFF+41    /* Failed to mount volume */
 #define ETDISMOUNTFAILED ETBASEOFF+42   /* Failed to dismount volume */
-#define ETMAXERR        ETBASEOFF+42
+#define ETQUERYVOLFAILED ETBASEOFF+43   /* Failed to query volume */
+#define ETMAXERR        ETBASEOFF+43
 
 /*
  *------------------------------------------------------------------------
