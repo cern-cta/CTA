@@ -63,8 +63,8 @@ namespace System {
     int m_read_pointer;
   };
   /**
-     * Class representing a tape device
-     */
+    * Class representing a tape device
+    */
   class stDeviceFile : public vfsFile {
   public:
     stDeviceFile();
@@ -77,6 +77,117 @@ namespace System {
     struct mtop m_mtCmd;
     uint32_t blockID;  
     bool clearCompressionStats;
+    /**
+     * This function handles READ_POSITION CDB and prepares the replay.
+     * 
+     * @param sgio_h  The pointer to the sg_io_hdr_t structure with 
+     *                ioctl call data
+     * @return        Returns 0 in success and 
+     *                -1 with appropriate  errno if an error occurred.
+     */
+    int ioctlReadPosition(sg_io_hdr_t * sgio_h);
+    
+    /**
+     * This function handles LOG_SELECT CDB and only checks the CDB for the 
+     * correct values and sets internal trigger for 0 compression as true.
+     * 
+     * @param sgio_h  The pointer to the sg_io_hdr_t structure with 
+     *                ioctl call data
+     * @return        Returns 0 in success and 
+     *                -1 with appropriate  errno if an error occurred.
+     */
+    int ioctlLogSelect(sg_io_hdr_t * sgio_h);
+    
+    /**
+     * This function handles LOCATE_10 CDB and only checks the CDB for the 
+     * correct values and sets internal blockID variable (logical seek).
+     * 
+     * @param sgio_h  The pointer to the sg_io_hdr_t structure with 
+     *                ioctl call data
+     * @return        Returns 0 in success and 
+     *                -1 with appropriate  errno if an error occurred.
+     */
+    int ioctlLocate10(sg_io_hdr_t * sgio_h);
+    
+    /**
+     * This function handles LOG_SENSE CDB and prepares the replay with
+     * compression data.
+     * 
+     * @param sgio_h  The pointer to the sg_io_hdr_t structure with 
+     *                ioctl call data
+     * @return        Returns 0 in success and 
+     *                -1 with appropriate  errno if an error occurred.
+     */
+    int ioctlLogSense(sg_io_hdr_t * sgio_h);
+    
+    /**
+     * This function handles MODE_SENSE_6 CDB and prepares the replay with
+     * random data.
+     * 
+     * @param sgio_h  The pointer to the sg_io_hdr_t structure with 
+     *                ioctl call data
+     * @return        Returns 0 in success and 
+     *                -1 with appropriate  errno if an error occurred.
+     */
+    int ioctlModSense6(sg_io_hdr_t * sgio_h);
+    
+    /**
+     * This function handles MODE_SELECT_6 CDB and only checks the CDB for the
+     * correct values.
+     * 
+     * @param sgio_h  The pointer to the sg_io_hdr_t structure with 
+     *                ioctl call data
+     * @return        Returns 0 in success and 
+     *                -1 with appropriate  errno if an error occurred.
+     */
+    int ioctlModSelect6(sg_io_hdr_t * sgio_h);
+    
+    /**
+     * This function handles INQUIRY CDB and prepares the standart inquiry
+     * replay or the unit serial number vital product data replay.
+     * 
+     * @param sgio_h  The pointer to the sg_io_hdr_t structure with 
+     *                ioctl call data
+     * @return        Returns 0 in success and 
+     *                -1 with appropriate  errno if an error occurred.
+     */
+    int ioctlInquiry(sg_io_hdr_t * sgio_h);
+    
+    /**
+     * This function prepares the replay with compression statistics for 
+     * LOG SENSE CDB with log page Sequential Access Device Page. We use this 
+     * log page for T10000 drives.
+     * 
+     * @param sgio_h  The pointer to the sg_io_hdr_t structure with 
+     *                ioctl call data
+     * @return        Returns 0 in success and 
+     *                -1 with appropriate  errno if an error occurred.
+     */
+    int logSenseSequentialAccessDevicePage(sg_io_hdr_t * sgio_h);
+    
+    /**
+     * This function prepares the replay with compression statistics for 
+     * LOG SENSE CDB with log page Data Compression (32h). We use this 
+     * log page for LTO drives.
+     * 
+     * @param sgio_h  The pointer to the sg_io_hdr_t structure with 
+     *                ioctl call data
+     * @return        Returns 0 in success and 
+     *                -1 with appropriate  errno if an error occurred.
+     */
+    int logSenseDataCompression32h(sg_io_hdr_t * sgio_h);
+    
+    /**
+     * This function prepares the replay with compression statistics for 
+     * LOG SENSE CDB with log page Block Bytes Transferred. We use this 
+     * log page for IBM drives.
+     * 
+     * @param sgio_h  The pointer to the sg_io_hdr_t structure with 
+     *                ioctl call data
+     * @return        Returns 0 in success and 
+     *                -1 with appropriate  errno if an error occurred.
+     */
+    int logSenseBlockBytesTransferred(sg_io_hdr_t * sgio_h);
   };
   
   class tapeGenericDeviceFile: public vfsFile {

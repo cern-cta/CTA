@@ -206,7 +206,7 @@ namespace Tape {
       /* Manage both system error and SCSI errors. */
       if (-1 == m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh))
         throw Tape::Exceptions::Errnum("Failed SG_IO ioctl");
-      SCSI::ExceptionLauncher(sgh, std::string("SCSI error in getSerialInfo: ") +
+      SCSI::ExceptionLauncher(sgh, std::string("SCSI error in getSerialNumber: ") +
               SCSI::statusToString(sgh.status));
       std::string serialNumber;
       serialNumber.append(inquirySerialData.productSerialNumber,inquirySerialData.pageLength);
