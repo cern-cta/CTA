@@ -1,4 +1,7 @@
 add_library(TapeDrive Drive.cc)
+set_property(SOURCE Drive.cc
+  PROPERTY COMPILE_FLAGS -fno-strict-aliasing
+)
 
 add_executable(TapeDriveInfo TapeDriveInfo.cc)
 

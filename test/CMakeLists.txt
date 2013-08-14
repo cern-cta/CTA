@@ -5,6 +5,9 @@ add_executable(unitTest unitTest.cc
   ../Drive/DriveTest.cc
   ../Exception/ExceptionTest.cc
 )
+set_property(SOURCE ../SCSI/StructuresTest.cc
+  PROPERTY COMPILE_FLAGS -fno-strict-aliasing
+)
 
 target_link_libraries(unitTest TapeDrive Exception SCSI System Utils ${GTEST_LIBRARY} gmock pthread)
 
