@@ -40,40 +40,9 @@
 
 namespace Tape {
 namespace System {
-
   /**
-   * Wrapper class the all system calls used, allowing writing of test harnesses
-   * for unit testing.
-   * The member functions are purposedly non-virtual, allowing full
-   * performance with inline member functions.
-   */
-  class realWrapper {
-  public:
-
-    DIR* opendir(const char *name) { return ::opendir(name); }
-    struct dirent * readdir(DIR* dirp) { return ::readdir(dirp); }
-    int closedir(DIR* dirp) { return ::closedir(dirp); }
-    int readlink(const char* path, char* buf, size_t len) { return ::readlink(path, buf, len); }
-    char * realpath(const char* name, char* resolved) { return ::realpath(name, resolved); }
-    int open(const char* file, int oflag) { return ::open(file, oflag); }
-    int ioctl(int fd, unsigned long int request, struct mtop * mt_cmd) {
-      return ::ioctl(fd, request, mt_cmd);
-    }
-    int ioctl(int fd, unsigned long int request, struct mtget * mt_status) {
-      return ::ioctl(fd, request, mt_status);
-    }
-    int ioctl(int fd, unsigned long int request, sg_io_hdr_t * sgh) {
-      return ::ioctl(fd, request, sgh);
-    }
-    ssize_t read(int fd, void* buf, size_t nbytes) { return ::read(fd, buf, nbytes); }
-    ssize_t write(int fd, const void *buf, size_t nbytes) { return ::write(fd, buf, nbytes); }
-    int close(int fd) { return ::close(fd); }
-    int stat(const char * path, struct stat *buf) { return ::stat(path, buf); }
-  };
-
-  /**
-   * Intermediate class definition, allowing common ancestor between
-   * mockWrapper and fakeWrapper (pure virtual)
+   * Interface class definition, allowing common ancestor between
+   * realWrapper, mockWrapper and fakeWrapper
    */
   class virtualWrapper {
   public:
@@ -95,6 +64,38 @@ namespace System {
     virtual ~virtualWrapper() {};
   };
 
+  
+  /**
+   * Wrapper class the all system calls used, allowing writing of test harnesses
+   * for unit testing. For simplicity, the members are virtual functions, and
+   * the class implements the same interface as the unit test versions.
+   * This add a virtual table lookup + function call for each system call,
+   * but it is assumed to be affordable.
+   */
+  class realWrapper: public virtualWrapper {
+  public:
+
+    virtual DIR* opendir(const char *name) { return ::opendir(name); }
+    virtual struct dirent * readdir(DIR* dirp) { return ::readdir(dirp); }
+    virtual int closedir(DIR* dirp) { return ::closedir(dirp); }
+    virtual int readlink(const char* path, char* buf, size_t len) { return ::readlink(path, buf, len); }
+    virtual char * realpath(const char* name, char* resolved) { return ::realpath(name, resolved); }
+    virtual int open(const char* file, int oflag) { return ::open(file, oflag); }
+    virtual int ioctl(int fd, unsigned long int request, struct mtop * mt_cmd) {
+      return ::ioctl(fd, request, mt_cmd);
+    }
+    virtual int ioctl(int fd, unsigned long int request, struct mtget * mt_status) {
+      return ::ioctl(fd, request, mt_status);
+    }
+    virtual int ioctl(int fd, unsigned long int request, sg_io_hdr_t * sgh) {
+      return ::ioctl(fd, request, sgh);
+    }
+    virtual ssize_t read(int fd, void* buf, size_t nbytes) { return ::read(fd, buf, nbytes); }
+    virtual ssize_t write(int fd, const void *buf, size_t nbytes) { return ::write(fd, buf, nbytes); }
+    virtual int close(int fd) { return ::close(fd); }
+    virtual int stat(const char * path, struct stat *buf) { return ::stat(path, buf); }
+  };
+  
   /**
    * Fake class for system wrapper. Allows recording of pre-cooked filesystem elements,
    * once for each call separately.
@@ -145,11 +146,7 @@ namespace System {
    */
   class mockWrapper : public virtualWrapper {
   public:
-    mockWrapper() {
-      m_DIR = reinterpret_cast<DIR*> (& m_DIRfake);
-      ON_CALL(*this, opendir(::testing::_))
-              .WillByDefault(::testing::Return(m_DIR));
-    }
+    mockWrapper();
     MOCK_METHOD1(opendir, DIR*(const char *name));
     MOCK_METHOD1(readdir, dirent*(DIR* dirp));
     MOCK_METHOD1(closedir, int(DIR* dirp));

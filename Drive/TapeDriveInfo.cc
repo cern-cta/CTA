@@ -33,13 +33,13 @@
 int main ()
 {
   Tape::System::realWrapper sWrapper;
-  SCSI::DeviceVector<Tape::System::realWrapper> dl(sWrapper);
-  for(SCSI::DeviceVector<Tape::System::realWrapper>::iterator i = dl.begin();
+  SCSI::DeviceVector dl(sWrapper);
+  for(SCSI::DeviceVector::iterator i = dl.begin();
           i != dl.end(); i++) {
     SCSI::DeviceInfo & dev = (*i);
     std::cout << dev.sg_dev << std::endl;
     if (dev.type == SCSI::Types::tape) {
-      Tape::Drive<Tape::System::realWrapper> drive(dev,sWrapper);
+      Tape::Drive drive(dev,sWrapper);
       drive.SCSI_inquiry();
       std::vector<std::string> Alerts(drive.getTapeAlerts());
       while (Alerts.size()) {

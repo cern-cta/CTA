@@ -200,6 +200,12 @@ void Tape::System::fakeWrapper::referenceFiles() {
     m_files[i->first] = &m_genericFiles[i->first];
 }
 
+Tape::System::mockWrapper::mockWrapper() {
+  m_DIR = reinterpret_cast<DIR*> (& m_DIRfake);
+  ON_CALL(*this, opendir(::testing::_))
+      .WillByDefault(::testing::Return(m_DIR));
+}
+
 void Tape::System::mockWrapper::delegateToFake() {
   ON_CALL(*this, opendir(_)).WillByDefault(Invoke(&fake, &fakeWrapper::opendir));
   ON_CALL(*this, readdir(_)).WillByDefault(Invoke(&fake, &fakeWrapper::readdir));

@@ -54,11 +54,11 @@ TEST(TapeDrive, OpensCorrectly) {
   EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
   
   /* Test: detect devices, then open the device files */
-  SCSI::DeviceVector<Tape::System::mockWrapper> dl(sysWrapper);
+  SCSI::DeviceVector dl(sysWrapper);
   for (std::vector<SCSI::DeviceInfo>::iterator i = dl.begin();
       i != dl.end(); i++) {
     if (SCSI::Types::tape == i->type) {
-      Tape::Drive<Tape::System::mockWrapper> drive(*i, sysWrapper);
+      Tape::Drive drive(*i, sysWrapper);
     }
   }
 }
@@ -83,11 +83,11 @@ TEST(TapeDrive, getPositionInfoAndPositionToLogicalObject) {
   EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
   
   /* Test: detect devices, then open the device files */
-  SCSI::DeviceVector<Tape::System::mockWrapper> dl(sysWrapper);
+  SCSI::DeviceVector dl(sysWrapper);
   for (std::vector<SCSI::DeviceInfo>::iterator i = dl.begin();
       i != dl.end(); i++) {
     if (SCSI::Types::tape == i->type) {
-      Tape::Drive<Tape::System::mockWrapper> drive(*i, sysWrapper);
+      Tape::Drive drive(*i, sysWrapper);
       Tape::positionInfo posInfo;
       
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(1);      
@@ -131,11 +131,11 @@ TEST(TapeDrive, setDensityAndCompression) {
   EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
   
   /* Test: detect devices, then open the device files */
-  SCSI::DeviceVector<Tape::System::mockWrapper> dl(sysWrapper);
+  SCSI::DeviceVector dl(sysWrapper);
   for (std::vector<SCSI::DeviceInfo>::iterator i = dl.begin();
       i != dl.end(); i++) {
     if (SCSI::Types::tape == i->type) {
-      Tape::Drive<Tape::System::mockWrapper> drive(*i, sysWrapper);
+      Tape::Drive drive(*i, sysWrapper);
 
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(2);      
       drive.setDensityAndCompression();
@@ -175,10 +175,10 @@ TEST(TapeDrive, setStDriverOptions) {
   EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
   
   /* Test: detect devices, then open the device files */
-  SCSI::DeviceVector<Tape::System::mockWrapper> dl(sysWrapper);
+  SCSI::DeviceVector dl(sysWrapper);
   for (std::vector<SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
     if (SCSI::Types::tape == i->type) {
-      Tape::Drive<Tape::System::mockWrapper> drive(*i, sysWrapper);
+      Tape::Drive drive(*i, sysWrapper);
       
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<struct mtop *>())).Times(1);
       drive.setSTBufferWrite(true);
@@ -215,11 +215,11 @@ TEST(TapeDrive, getDeviceInfo) {
   EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
   
   /* Test: detect devices, then open the device files */
-  SCSI::DeviceVector<Tape::System::mockWrapper> dl(sysWrapper);
+  SCSI::DeviceVector dl(sysWrapper);
   for (std::vector<SCSI::DeviceInfo>::iterator i = dl.begin();
       i != dl.end(); i++) {
     if (SCSI::Types::tape == i->type) {
-      Tape::Drive<Tape::System::mockWrapper> drive(*i, sysWrapper);
+      Tape::Drive drive(*i, sysWrapper);
       Tape::deviceInfo devInfo;
       
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(2);      
@@ -253,15 +253,15 @@ TEST(TapeDrive, getCompressionAndClearCompressionStats) {
   EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
   
   /* Test: detect devices, then open the device files */
-  SCSI::DeviceVector<Tape::System::mockWrapper> dl(sysWrapper);
+  SCSI::DeviceVector dl(sysWrapper);
   for (std::vector<SCSI::DeviceInfo>::iterator i = dl.begin();
       i != dl.end(); i++) {
     if (SCSI::Types::tape == i->type) {
-      Tape::Drive<Tape::System::mockWrapper> *drive;
+      Tape::Drive *drive;
       Tape::compressionStats comp;
       
         {
-          drive = new Tape::DriveT10000<Tape::System::mockWrapper>(*i, sysWrapper);
+          drive = new Tape::DriveT10000(*i, sysWrapper);
 
           EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
           comp = drive->getCompression();
@@ -283,7 +283,7 @@ TEST(TapeDrive, getCompressionAndClearCompressionStats) {
           delete drive;
         }
         {
-          drive = new Tape::DriveIBM3592<Tape::System::mockWrapper>(*i, sysWrapper);
+          drive = new Tape::DriveIBM3592(*i, sysWrapper);
 
           EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
           comp = drive->getCompression();
@@ -305,7 +305,7 @@ TEST(TapeDrive, getCompressionAndClearCompressionStats) {
           delete drive;
         }
         {
-          drive = new Tape::DriveLTO<Tape::System::mockWrapper>(*i, sysWrapper);
+          drive = new Tape::DriveLTO(*i, sysWrapper);
 
           EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
           comp = drive->getCompression();

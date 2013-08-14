@@ -41,7 +41,7 @@ TEST(DeviceList, TriesToFind) {
   EXPECT_CALL(sysWrapper, readdir(sysWrapper.m_DIR)).Times(1);
   EXPECT_CALL(sysWrapper, closedir(sysWrapper.m_DIR)).Times(1);
 
-  SCSI::DeviceVector<Tape::System::virtualWrapper> dl(sysWrapper);
+  SCSI::DeviceVector dl(sysWrapper);
 }
 
 TEST(DeviceList, ScansCorrectly) {
@@ -64,7 +64,7 @@ TEST(DeviceList, ScansCorrectly) {
 
   /* Everything should have been found correctly */
 
-  SCSI::DeviceVector<Tape::System::virtualWrapper> dl(sysWrapper);
+  SCSI::DeviceVector dl(sysWrapper);
 
   ASSERT_EQ(3U, dl.size());
   ASSERT_EQ(SCSI::Types::mediumChanger, dl[0].type);
