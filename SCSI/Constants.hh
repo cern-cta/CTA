@@ -244,6 +244,14 @@ namespace SCSI {
       deviceConfiguration = 0x10
     };
   };
+  
+  class inquiryVPDPages {
+  public:
+    enum {
+      unitSerialNumber = 0x80 
+    };
+  };
+  
   /**
    * Sun StorageTekTM T10000 Tape Drive Fibre Channel Interface Reference Manual
    */
