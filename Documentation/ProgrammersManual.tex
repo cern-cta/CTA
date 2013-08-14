@@ -336,7 +336,7 @@ The SCSI commands and st driver's functions used in previous software (CAStor's 
   \end{itemize}
 \item st driver's commands, leading to internal variables setting or SCSI actions:
   \begin{itemize}
-    \item Get internal driver state via the MTIOGET ioctl (for drive ready, write protection, 
+    \item Get internal driver state via the MTIOCGET ioctl (for drive ready, write protection, 
           get some error condition, when MTIOSENSE failed, to get the EOD, BOT bits (readlbl)).
           This functionality is covered by \verb#Drive::getDriveStatus#.
     \item Try and get the sense data for the last-ish command with MTIOSENSE. This
@@ -369,9 +369,11 @@ The SCSI commands and st driver's functions used in previous software (CAStor's 
     \item Unload the tape (MTIOCTOP/MTOFFL, in unldtape).
     \item Write synchronous file mark(s) (tape marks in CAStor jargon) (MTIOCTOP/MTWEOF, in wrttpmrk).
     \item Write immediate (asynchronous file marks (MTIOCTOP/MTWEOFI, also in wrttpmrk).
-    \item Clear the EOT condition by calling MTIOGET. This is done in wrttrllbl, 3 times.
-          In MTIOGET, indeed, a member of the scsi\_tape structure called recover\_reg is reset to 0.
-          This clearing is used to properly report errors in label wrinting functions.
+    \item Clear the EOT condition by calling MTIOCGET. This is done in wrttrllbl, 3 times.
+          In MTIOCGET, indeed, a member of the scsi\_tape structure called recover\_reg is reset to 0.
+          This clearing is used to properly report errors in label writing functions.
+          The usefulness of this function is dubious and it is not included in the current
+          API.
     \item Write is used in 2 places only : twrite and writelbl (which is a specialized 
           function to write 80 bytes blocks). twrite is not checking the size of blocks,
           which is determined in the calling functions.

@@ -452,15 +452,87 @@ namespace Tape {
 
     /**
      * Jump to end of media. This will use setSTFastMTEOM() to disable MT_ST_FAST_MTEOM.
-     * (See TapeServer's handbook for details).
+     * (See TapeServer's handbook for details). This is used to rebuild the MIR (StorageTek)
+     * or tape directory (IBM).
+     * Tape directory rebuild is described only for IBM but currently applied to 
+     * all tape drives.
      * TODO: synchronous? Timeout?
      */
-    virtual void jumpToEOM(void) throw (Exception) { throw Exception("Not implemented"); }
+    virtual void fastSpaceToEOM(void) throw (Exception) { throw Exception("Not implemented"); }
     
     /**
-     * 
+     * Rewind tape.
      */
     virtual void rewind(void) throw (Exception) { throw Exception("Not implemented"); }
+    
+    /**
+     * Jump to end of data. EOM in ST driver jargon, end of data (which is more accurate)
+     * in SCSI terminology).
+     */
+    virtual void spaceToEOM(void) throw (Exception) { throw Exception("Not implemented"); }
+    
+    /**
+     * Space count files backwards.
+     * @param count
+     */
+    virtual void spaceFilesBackward(size_t count) throw (Exception) { throw Exception("Not implemented"); }
+    
+    /**
+     * Space count files forward.
+     * @param count
+     */
+    virtual void spaceFilesForward(size_t count) throw (Exception) { throw Exception("Not implemented"); }
+    
+    /**
+     * Space count blocks backwards.
+     * @param count
+     */
+    virtual void spaceBlocksBackwards(size_t count) throw (Exception) { throw Exception("Not implemented"); }
+    
+    /**
+     * Space count blocks forward.
+     * @param count
+     */
+    virtual void spaceBlocksForward(size_t count) throw (Exception) { throw Exception("Not implemented"); }
+    /**
+     * Unload the tape.
+     */
+    virtual void unloadTape(void) throw (Exception) { throw Exception("Not implemented"); }
+    
+    /**
+     * Synch call to the tape drive. This function will not return before the 
+     * data in the drive's buffer is actually comitted to the medium.
+     */
+    virtual void sync(void) throw (Exception) { throw Exception("Not implemented"); }
+    
+    /**
+     * Write count file marks. The function does not return before the file marks 
+     * are committed to medium.
+     * @param count
+     */
+    virtual void writeSyncFileMarks(size_t count) throw (Exception) { throw Exception("Not implemented"); }
+    
+    /**
+     * Write count file marks asynchronously. The file marks are just added to the drive's
+     * buffer and the function return immediately.
+     * @param count
+     */
+    virtual void writeImmediateFileMarks(size_t count) throw (Exception) { throw Exception("Not implemented"); }
+
+    /**
+     * Write a data block to tape.
+     * @param data pointer the the data block
+     * @param count size of the data block
+     */
+    virtual void writeBlock(const unsigned char * data, size_t count) throw (Exception) { throw Exception("Not implemented"); }
+    
+    /**
+     * Read a data block from tape.
+     * @param data pointer the the data block
+     * @param count size of the data block
+     */
+    virtual void readBlock(unsigned char * data, size_t count) throw (Exception) { throw Exception("Not implemented"); }
+    
     virtual ~Drive() {
       if(-1 != m_tapeFD)
         m_sysWrapper.close(m_tapeFD);
