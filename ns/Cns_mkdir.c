@@ -49,8 +49,8 @@ Cns_mkdirg(const char *path, const char *guid, mode_t mode)
     return (-1);
   }
 
-  // Check that only expected bits are set in the mode.
-  // Allowed bits are the ones to set permissions to directories
+  /* Check that only expected bits are set in the mode.          */
+  /* Allowed bits are the ones to set permissions to directories */
   if ((mode & S_PERMDIR) != mode) {
     serrno = EINVAL;
     return (-1);
