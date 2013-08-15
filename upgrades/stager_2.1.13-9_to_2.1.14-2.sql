@@ -51,6 +51,18 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 END;
 /
 
+DECLARE
+  unused VARCHAR(100);
+BEGIN
+  SELECT release INTO unused FROM CastorVersion@remotens
+   WHERE schemaName = 'CNS'
+     AND release LIKE '2_1_14%';
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- Error, we cannot apply this script
+  raise_application_error(-20000, 'PL/SQL release mismatch. Please upgrade your Nameserver before upgrading this STAGER database.');
+END;
+/
+
 INSERT INTO UpgradeLog (schemaVersion, release, type)
 VALUES ('2_1_14_2', '2_1_14_2', 'NON TRANSPARENT');
 COMMIT;
