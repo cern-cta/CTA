@@ -4079,10 +4079,6 @@ int Cns_srv_setfsize(int magic,
                         reqinfo->clienthost))
     RETURN (EACCES);
 
-  /* Check for concurrent modifications */
-  if (Cns_is_concurrent_open(&thip->dbfd, &filentry, last_mod_time, reqinfo->logbuf))
-    RETURN (serrno);
-
   /* Update entry */
   filentry.filesize = filesize;
   if (magic >= CNS_MAGIC2) {
@@ -4198,10 +4194,6 @@ int Cns_srv_setfsizecs(int magic,
       Cns_chkentryperm (&filentry, S_IWRITE, reqinfo->uid, reqinfo->gid,
                         reqinfo->clienthost))
     RETURN (EACCES);
-
-  /* Check for concurrent modifications */
-  if (Cns_is_concurrent_open(&thip->dbfd, &filentry, last_mod_time, reqinfo->logbuf))
-    RETURN (serrno);
 
   if ((strcmp(filentry.csumtype, "PA") == 0 && strcmp(csumtype, "AD") == 0)) {
     /* We have predefined checksums then should check them with new ones */
@@ -5496,9 +5488,15 @@ int Cns_srv_closex(char *req_data,
   if (fmd_entry.filemode & S_IFDIR) /* Operation not permitted on directories */
     RETURN (EISDIR);
   
-  /* Check for concurrent modifications */
-  if (Cns_is_concurrent_open(&thip->dbfd, &fmd_entry, last_stagertime, reqinfo->logbuf))
-    RETURN (serrno);
+  /* Check for concurrent modifications: we assume the calling stager runs the same version as
+   * the nameserver, so we only implement the new check here based on the stagertime field.
+   * Note that we allow 1usec of tolerance because the stagertime is sent over the wire as
+   * as an integer number of usecs.
+   */
+  if (fmd_entry->stagertime - last_stagertime > 1E-6) {
+    sprintf (reqinfo->logbuf + strlen(reqinfo->logbuf), " NSLastOpenTime=%.6f", fmd_entry->stagertime);
+    RETURN (ENSFILECHG);
+  }
 
   /* Check for end-to-end checksum mismatch */
   if ((strcmp (fmd_entry.csumtype, "PA") == 0) &&

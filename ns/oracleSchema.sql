@@ -117,10 +117,6 @@ CREATE TABLE CastorConfig
    description VARCHAR2(1000));
 ALTER TABLE CastorConfig ADD CONSTRAINT UN_CastorConfig_class_key UNIQUE (class, key);
 
--- Provide a default configuration
-INSERT INTO CastorConfig (class, key, value, description)
-  VALUES ('stager', 'openmode', 'C', 'Mode for stager open/close operations: C for Compatibility (pre 2.1.14), N for New (from 2.1.14 onwards)');
-
 -- A synonym allowing to acces the VMGR_TAPE_SIDE table from within the nameserver DB.
 -- Note that the VMGR schema shall grant read access to the NS account with something like:
 -- GRANT SELECT ON Vmgr_Tape_Side TO <CastorNsAccount>;
@@ -128,7 +124,7 @@ UNDEF vmgrSchema
 ACCEPT vmgrSchema CHAR DEFAULT 'castor_vmgr' PROMPT 'Enter the name of the VMGR schema (default castor_vmgr): ';
 CREATE OR REPLACE SYNONYM Vmgr_tape_side FOR &vmgrSchema..Vmgr_tape_side;
 
--- A synonym allowing access to the VMGR_TAPE_STATUS_VIEW view of the VMGR
+-- A local view allowing access to the VMGR_TAPE_STATUS_VIEW remote view of the VMGR
 -- schema from within the nameserver DB.
 -- Note that the VMGR schema shall grant read access to the NS account with
 -- something like:

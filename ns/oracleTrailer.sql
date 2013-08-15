@@ -273,7 +273,7 @@ CREATE OR REPLACE PROCEDURE setSegmentForFile(inSegEntry IN castorns.Segment_Rec
                                               rc OUT INTEGER, msg OUT NOCOPY VARCHAR2) AS
   varFid NUMBER;
   varFmode NUMBER(6);
-  varFLastMTime NUMBER;
+  varFStagerTime NUMBER;
   varFSize NUMBER;
   varFGid INTEGER;
   varFClassId NUMBER;
@@ -283,38 +283,32 @@ CREATE OR REPLACE PROCEDURE setSegmentForFile(inSegEntry IN castorns.Segment_Rec
   varNb INTEGER;
   varBlockId VARCHAR2(8);
   varParams VARCHAR2(2048);
-  varOpenMode CHAR(1);
-  varLastOpenTimeFromClient NUMBER;
   varSegCreationTime NUMBER;
+  -- the following are to be dropped in 2.1.15
+  varFLastMTime NUMBER;
+  varCompatMode BOOLEAN;
+  varLastOpenTimeFromStager NUMBER;
   -- Trap `ORA-00001: unique constraint violated` errors
   CONSTRAINT_VIOLATED EXCEPTION;
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -00001);
 BEGIN
   rc := 0;
   msg := '';
-  -- Retrieve open mode flag. To be dropped after v2.1.14 is in production.
-  varOpenMode := getConfigOption('stager', 'openmode', NULL);
   -- Get file data and lock the entry, exit if not found
-  IF varOpenMode = 'C' THEN
-    SELECT fileId, filemode, mtime, fileClass, fileSize, csumType, csumValue, gid
-      INTO varFid, varFmode, varFLastMTime, varFClassId, varFSize, varFCksumName, varFCksum, varFGid
-      FROM Cns_file_metadata
-     WHERE fileId = inSegEntry.fileId FOR UPDATE;
-    -- in compatibility mode we only have second precision, thus we have to ceil
-    -- the given lastOpenTime for a safe comparison with mtime
-    varLastOpenTimeFromClient := CEIL(inSegEntry.lastOpenTime);
-  ELSIF varOpenMode = 'N' THEN
-    SELECT fileId, filemode, stagertime, fileClass, fileSize, csumType, csumValue, gid
-      INTO varFid, varFmode, varFLastMTime, varFClassId, varFSize, varFCksumName, varFCksum, varFGid
-      FROM Cns_file_metadata
-     WHERE fileId = inSegEntry.fileId FOR UPDATE;
-    varLastOpenTimeFromClient := inSegEntry.lastOpenTime;
+  SELECT fileId, filemode, mtime, stagertime, fileClass, fileSize, csumType, csumValue, gid
+    INTO varFid, varFmode, varFLastMTime, varFStagerTime, varFClassId, varFSize, varFCksumName, varFCksum, varFGid
+    FROM Cns_file_metadata
+   WHERE fileId = inSegEntry.fileId FOR UPDATE;
+  -- handle the case of files opened with a pre-2.1.14 stager. This part shall be dropped on version 2.1.15.
+  IF varFStagerTime IS NULL THEN
+    varCompatMode := TRUE;
+    -- yes, file was opened with a pre-2.1.14 stager, and as the reference modification time
+    -- only has second precision, we have to ceil the given lastOpenTime for a safe comparison with it
+    varLastOpenTimeFromStager := CEIL(inSegEntry.lastOpenTime);
+    varFStagerTime := varFLastMTime;
   ELSE
-    -- sanity check, should never happen
-    rc := serrno.EINVAL;
-    msg := 'Incorrect value found for openmode in CastorConfig: found '
-            || varOpenMode ||', expected either C or N';
-    RETURN;
+    varCompatMode := FALSE;
+    varLastOpenTimeFromStager := inSegEntry.lastOpenTime;
   END IF;
   -- Is it a directory?
   IF bitand(varFmode, 4*8*8*8*8) > 0 THEN  -- 040000 == S_IFDIR
@@ -324,10 +318,10 @@ BEGIN
     RETURN;
   END IF;
   -- Has the file been changed meanwhile?
-  IF varFLastMTime > varLastOpenTimeFromClient THEN
+  IF varFStagerTime > varLastOpenTimeFromStager THEN
     rc := serrno.ENSFILECHG;
-    msg := serrno.ENSFILECHG_MSG ||' : NSLastOpenTime='|| TRUNC(varFLastMTime, 6)
-      ||', StagerLastOpenTime='|| TRUNC(varLastOpenTimeFromClient, 6);
+    msg := serrno.ENSFILECHG_MSG ||' : NSLastOpenTime='|| TRUNC(varFStagerTime, 6)
+      ||', StagerLastOpenTime='|| TRUNC(varLastOpenTimeFromStager, 6);
     ROLLBACK;
     RETURN;
   END IF;
@@ -433,7 +427,7 @@ CREATE OR REPLACE PROCEDURE replaceSegmentForFile(inOldCopyNo IN INTEGER, inSegE
                                                   rc OUT INTEGER, msg OUT NOCOPY VARCHAR2) AS
   varFid NUMBER;
   varFmode NUMBER(6);
-  varFLastMTime NUMBER;
+  varFStagerTime NUMBER;
   varFSize NUMBER;
   varFGid INTEGER;
   varFClassId NUMBER;
@@ -446,38 +440,32 @@ CREATE OR REPLACE PROCEDURE replaceSegmentForFile(inOldCopyNo IN INTEGER, inSegE
   varRepSeg castorns.Segment_Rec;
   varStatus CHAR(1);
   varParams VARCHAR2(2048);
-  varOpenMode CHAR(1);
-  varLastOpenTimeFromClient NUMBER;
   varSegCreationTime NUMBER;
+  -- the following are to be dropped in 2.1.15
+  varFLastMTime NUMBER;
+  varCompatMode BOOLEAN;
+  varLastOpenTimeFromStager NUMBER;
   -- Trap `ORA-00001: unique constraint violated` errors
   CONSTRAINT_VIOLATED EXCEPTION;
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -00001);
 BEGIN
   rc := 0;
   msg := '';
-  -- Retrieve open mode flag
-  varOpenMode := getConfigOption('stager', 'openmode', NULL);
   -- Get file data and lock the entry, exit if not found
-  IF varOpenMode = 'C' THEN
-    SELECT fileId, filemode, mtime, fileClass, fileSize, csumType, csumValue, gid
-      INTO varFid, varFmode, varFLastMTime, varFClassId, varFSize, varFCksumName, varFCksum, varFGid
-      FROM Cns_file_metadata
-     WHERE fileId = inSegEntry.fileId FOR UPDATE;
-    -- in compatibility mode we only have second precision, thus we have to ceil
-    -- the given lastOpenTime for a safe comparison with mtime
-    varLastOpenTimeFromClient := CEIL(inSegEntry.lastOpenTime);
-  ELSIF varOpenMode = 'N' THEN
-    SELECT fileId, filemode, stagertime, fileClass, fileSize, csumType, csumValue, gid
-      INTO varFid, varFmode, varFLastMTime, varFClassId, varFSize, varFCksumName, varFCksum, varFGid
-      FROM Cns_file_metadata
-     WHERE fileId = inSegEntry.fileId FOR UPDATE;
-    varLastOpenTimeFromClient := inSegEntry.lastOpenTime;
+  SELECT fileId, filemode, mtime, stagertime, fileClass, fileSize, csumType, csumValue, gid
+    INTO varFid, varFmode, varFLastMTime, varFStagerTime, varFClassId, varFSize, varFCksumName, varFCksum, varFGid
+    FROM Cns_file_metadata
+   WHERE fileId = inSegEntry.fileId FOR UPDATE;
+  -- handle the case of files opened with a pre-2.1.14 stager. This part shall be dropped on version 2.1.15.
+  IF varFStagerTime IS NULL THEN
+    varCompatMode := TRUE;
+    -- yes, file was opened with a pre-2.1.14 stager, and as the reference modification time
+    -- only has second precision, we have to ceil the given lastOpenTime for a safe comparison with it
+    varLastOpenTimeFromStager := CEIL(inSegEntry.lastOpenTime);
+    varFStagerTime := varFLastMTime;
   ELSE
-    -- sanity check, should never happen
-    rc := serrno.EINVAL;
-    msg := 'Incorrect value found for openmode in CastorConfig: found '
-            || varOpenMode ||', expected either C or N';
-    RETURN;
+    varCompatMode := FALSE;
+    varLastOpenTimeFromStager := inSegEntry.lastOpenTime;
   END IF;
   -- Is it a directory?
   IF bitand(varFmode, 4*8*8*8*8) > 0 THEN  -- 040000 == S_IFDIR
@@ -487,10 +475,10 @@ BEGIN
     RETURN;
   END IF;
   -- Has the file been changed meanwhile?
-  IF varFLastMTime > varLastOpenTimeFromClient THEN
+  IF varFLastMTime > varLastOpenTimeFromStager THEN
     rc := serrno.ENSFILECHG;
     msg := serrno.ENSFILECHG_MSG ||' : NSLastOpenTime='|| TRUNC(varFLastMTime, 6)
-      ||', StagerLastOpenTime='|| TRUNC(varLastOpenTimeFromClient, 6);
+      ||', StagerLastOpenTime='|| TRUNC(varLastOpenTimeFromStager, 6);
     ROLLBACK;
     RETURN;
   END IF;
@@ -582,7 +570,14 @@ BEGIN
     RETURN;
   END IF;
 
-  -- We're done with the pre-checks, try and insert the segment metadata
+  -- We're done with the pre-checks.
+  -- Update stager open time in case this file was opened with a pre-2.1.14 stager.
+  -- This step shall be dropped once either all files have been repacked with 2.1.14+ or
+  -- the stagertime values been populated by hand on all files.
+  IF varCompatMode THEN
+    UPDATE Cns_file_metadata SET stagertime = mtime WHERE fileid = varFid;
+  END IF;
+  -- Try and insert the segment metadata
   -- and deal with the possible unique (vid,fseq) constraint violation exception
   BEGIN
     INSERT INTO Cns_seg_metadata (s_fileId, copyNo, fsec, segSize, s_status, vid,
