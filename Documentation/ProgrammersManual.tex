@@ -251,7 +251,10 @@ std::string toString(const char(& t)[n]);
 \end{lstlisting}
 \end{table}
 
-Those arrays are 0-padded, but may not be 0 terminated used completely. It is seen in listing \ref{SCSI_struct_usage}.
+Those arrays are space-padded, and may not be 0 terminated. It is seen in listing \ref{SCSI_struct_usage}.
+The helper function extracts the string, getting rid of potential zeros at the end,
+and managing the fixed length. They keep the space-padding at the end of the extracted
+function.
 
 To avoid literals in the code, which forces anyone reading it to do tedious lookups,
 the SCSI constants are also defined as constants in the code. See listing \ref{SCSI_consts}.

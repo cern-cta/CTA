@@ -852,6 +852,15 @@ namespace SCSI {
     };
     
     template <size_t n>
+    /**
+     * Extract a string from a fixed size array. This function
+     * gets rid of zeros in array and stops the extracted string
+     * there. In SCSI, the arrays are space padded, so the string
+     * should have a size equal to n usually. This function is templated
+     * to manage the fixed-size array in the SCSI structures conveniently.
+     * @param t array pointer to the char array.
+     * @return the extracted string.
+     */
     std::string toString(const char(& t)[n]) {
       std::stringstream r;
       r.write(t, std::find(t, t + n, '\0') - t);
