@@ -179,11 +179,9 @@ END;
  */
 CREATE OR REPLACE PROCEDURE addSegResult(inIsOnlyLog IN INTEGER, inReqId IN VARCHAR2, inErrorCode IN INTEGER,
                                          inMsg IN VARCHAR2, inFileId IN NUMBER, inParams IN VARCHAR2) AS
-PRAGMA AUTONOMOUS_TRANSACTION;
 BEGIN
   INSERT INTO SetSegsForFilesResultsHelper (isOnlyLog, reqId, timeinfo, errorCode, msg, fileId, params)
     VALUES (inIsOnlyLog, inReqId, getTime(), inErrorCode, inMsg, inFileId, inParams);
-  COMMIT;
 END;
 /
 
@@ -611,7 +609,6 @@ BEGIN
     RETURN;
   END IF;
   -- All right, commit and log
-  COMMIT;
   SELECT inSegEntry.blockId INTO varBlockId FROM Dual;  -- to_char() of a RAW type does not work. This does the trick...
   varParams := 'copyNb='|| inSegEntry.copyNo ||' SegmentSize='|| inSegEntry.segSize
     ||' Compression='|| CASE inSegEntry.comprSize WHEN 0 THEN 'inf' ELSE trunc(inSegEntry.segSize*100/inSegEntry.comprSize) END
@@ -620,6 +617,7 @@ BEGIN
     ||' ChecksumType="'|| inSegEntry.checksum_name ||'" ChecksumValue=' || varFCksum
     ||' creationTime=' || trunc(varSegCreationTime, 6) ||' Repack=True';
   addSegResult(0, inReqId, 0, 'New segment information', varFid, varParams);
+  COMMIT;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- The file entry was not found, just give up
   rc := serrno.ENOENT;
@@ -668,6 +666,7 @@ BEGIN
       varParams := 'ErrorCode='|| to_char(varRC) ||' ErrorMessage="'|| varParams ||'"';
       addSegResult(0, inReqId, varRC, 'Error creating/replacing segment', s.fileId, varParams);
       varErrCount := varErrCount + 1;
+      COMMIT;
     END IF;
     varCount := varCount + 1;
   END LOOP;
