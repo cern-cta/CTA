@@ -188,6 +188,16 @@ namespace System {
      *                -1 with appropriate  errno if an error occurred.
      */
     int logSenseBlockBytesTransferred(sg_io_hdr_t * sgio_h);
+    /**
+     * This function replies with a pre-cooked error record. As with the real devices,
+     * many parameter codes get reported with a flag set to 0, and a few will
+     * show up with the flag set.
+     * @param sgio_h  The pointer to the sg_io_hdr_t structure with 
+     *                ioctl call data
+     * @return        Returns 0 in success and 
+     *                -1 with appropriate  errno if an error occurred.
+     */
+    int logSenseTapeAlerts(sg_io_hdr_t * sgio_h);
   };
   
   class tapeGenericDeviceFile: public vfsFile {

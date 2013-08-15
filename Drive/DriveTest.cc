@@ -322,6 +322,56 @@ TEST(TapeDrive, getCompressionAndClearCompressionStats) {
         }
     }
   }
-} 
+}
+
+TEST(TapeDrive, getTapeAlerts) {
+
+  /**
+   * "Local function" allowing the test to be run twice (for SLC5 and then for 
+   * SLC6).
+   */
+  struct {
+    void operator() (Tape::System::mockWrapper & sysWrapper) {
+      /* We expect the following calls: */
+      EXPECT_CALL(sysWrapper, opendir(_)).Times(3);
+      EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
+      EXPECT_CALL(sysWrapper, closedir(_)).Times(3);
+      EXPECT_CALL(sysWrapper, realpath(_, _)).Times(3);
+      EXPECT_CALL(sysWrapper, open(_, _)).Times(14);
+      EXPECT_CALL(sysWrapper, read(_, _, _)).Times(20);
+      EXPECT_CALL(sysWrapper, write(_, _, _)).Times(0);
+      EXPECT_CALL(sysWrapper, ioctl(_, _, An<mtget*>())).Times(2);
+      EXPECT_CALL(sysWrapper, close(_)).Times(14);
+      EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(3);
+      EXPECT_CALL(sysWrapper, stat(_, _)).Times(7);
+
+      /* Test: detect devices, then open the device files */
+      SCSI::DeviceVector dl(sysWrapper);
+      for (std::vector<SCSI::DeviceInfo>::iterator i = dl.begin();
+          i != dl.end(); i++) {
+        if (SCSI::Types::tape == i->type) {
+          Tape::Drive drive(*i, sysWrapper);
+          EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
+          std::vector<std::string> alerts = drive.getTapeAlerts();
+          ASSERT_EQ(3U, alerts.size());
+          ASSERT_FALSE(alerts.end() == 
+              find(alerts.begin(), alerts.end(), 
+              std::string("Unexpected tapeAlert code: 0x41")));
+          ASSERT_FALSE(alerts.end() == find(alerts.begin(), alerts.end(), 
+              std::string("Obsolete tapeAlert code: 0x28")));
+          ASSERT_FALSE(alerts.end() == find(alerts.begin(), alerts.end(), 
+              std::string("Forced eject")));
+        }
+      }
+    }
+  } test_functor;
+
+
+  /* Prepare the test harness */
+  Tape::System::mockWrapper sysWrapper;
+  sysWrapper.fake.setupSLC5();
+  sysWrapper.delegateToFake();
+  test_functor(sysWrapper);
+}
 
 }

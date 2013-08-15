@@ -253,6 +253,8 @@ int Tape::System::stDeviceFile::ioctlLogSense(sg_io_hdr_t * sgio_h) {
       return logSenseDataCompression32h(sgio_h);
     case SCSI::logSensePages::blockBytesTransferred:
       return logSenseBlockBytesTransferred(sgio_h);
+    case SCSI::logSensePages::tapeAlert:
+      return logSenseTapeAlerts(sgio_h);
   }
   errno = EINVAL;
   return -1;
@@ -362,6 +364,49 @@ int Tape::System::stDeviceFile::logSenseBlockBytesTransferred(sg_io_hdr_t * sgio
     memcpy(sgio_h->dxferp, replay2, sizeof (replay2));
   } else {
     memcpy(sgio_h->dxferp, replay1, sizeof (replay1));
+  }
+  return 0;
+}
+
+int Tape::System::stDeviceFile::logSenseTapeAlerts(sg_io_hdr_t* sgio_h) {
+  size_t remaining = sgio_h->dxfer_len;
+  /* Truncation of any field should yield an error */
+  if (remaining < (4 + 320)) {
+    errno = EINVAL;
+    return -1;
+  }
+  /* Header as-is from mhvtl. */
+  unsigned char * data = (unsigned char *) sgio_h->dxferp;
+  data[0] = 0x2eU;
+  /* 145h bytes, with parameters of 5 bytes means 65 parameters */
+  data[2] = 0x1U;
+  data[3] = 0x45U;
+  data += 4; remaining -= 4;
+  /* This array was extracted from p/x in gdb of the tape alert log page from
+   * mhvtl, then processed through:
+   * cat mhvtlAlerts.txt  | tr -d "\n" | perl -p -e 's/\},/}\n/g' |  grep parameterCode | 
+   * perl -e 'while (<>) { if ( /\{\s*(0x[[:xdigit:]]+),\s*(0x[[:xdigit:]]+)\}/ ) { print (hex($1) * 256 + hex($2)); print ", " } }'*/
+  /* We also add an out-of-range 65 */
+  uint16_t parameterCodes[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 
+  15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 
+  34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 
+  53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65 };
+  size_t i = 0;
+  while (remaining > 5 && i < 65) {
+    /* small gymnastic to turn a bare buffer into a SCSI u16 storage */
+    struct u16wrap { unsigned char u16[2]; };
+    struct u16wrap * s((struct u16wrap *) &(data[0]));
+    SCSI::Structures::setU16(s->u16, parameterCodes[i]);
+    data[2] = 0U;
+    data[3] = 1U;
+    data[4] = 0U; /* TODO: at least some parameters should get set */
+    switch (parameterCodes[i]) {
+      case 0x28:
+      case 0x10:
+      case 65:
+        data[4] |= 1; /* Set flag */
+    }
+    i++; data += 5; remaining -=5;
   }
   return 0;
 }

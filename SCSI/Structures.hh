@@ -149,6 +149,16 @@ namespace SCSI {
     }
     
     /**
+     * Helper function setting in place a 16 bits SCSI number from a value
+     * expressed in the local endianness.
+     * @param t pointer to the char array at the 16 bits value position.
+     * @param val the value.
+     */
+    inline void setU16(unsigned char(& t)[2], uint16_t val) {
+      *((uint16_t *) t) = htons(val);
+    }
+    
+    /**
      * Helper function to deal with endianness.
      * @param t byte array in SCSI order representing a 16 bits number
      * @return 

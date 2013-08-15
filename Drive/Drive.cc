@@ -198,7 +198,8 @@ throw (Tape::Exception) {
 
 /**
  * Get tape alert information from the drive. There is a quite long list of possible tape alerts.
- * They are described in SSC-4, section 4.2.20: TapeAlert application client interface
+ * They are described in SSC-4, section 4.2.20: TapeAlert application client interface.
+ * Section is 4.2.17 in SSC-3.
  * @return list of tape alerts descriptions. They are simply used for logging.
  */
 std::vector<std::string> Tape::Drive::getTapeAlerts() throw (Tape::Exception) {
@@ -210,9 +211,11 @@ std::vector<std::string> Tape::Drive::getTapeAlerts() throw (Tape::Exception) {
   SCSI::Structures::senseData_t<255> senseBuff;
   SCSI::Structures::logSenseCDB_t cdb;
   cdb.pageCode = SCSI::logSensePages::tapeAlert;
+  cdb.PC = 0x01; // Current Comulative Values
   SCSI::Structures::LinuxSGIO_t sgh;
   sgh.setCDB(&cdb);
   sgh.setDataBuffer(&tal);
+  SCSI::Structures::setU16(cdb.allocationLength, sizeof(tal));
   sgh.setSenseBuffer(&senseBuff);
   sgh.dxfer_direction = SG_DXFER_FROM_DEV;
   /* Manage both system error and SCSI errors. */
