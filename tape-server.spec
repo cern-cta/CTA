@@ -46,7 +46,7 @@ test -e $RPM_BUILD_ROOT && rm -r $RPM_BUILD_ROOT
 mkdir -p build
 cd build
 cmake ../ -DRELEASE=%{release} -DCMAKE_BUILD_TYPE=Debug
-%{__make} %{_smp_mflags} all doxygen TapeServer_pdf VERBOSE=1
+%{__make} %{_smp_mflags} all doxygen TapeServer_pdf
 
 %install
 cd build
