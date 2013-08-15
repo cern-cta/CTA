@@ -18,20 +18,20 @@
     Moreover, the hardware status is now immediately respected: in case it is modified, or when
     a node does not report itself as bein online for too long, all pending jobs on the changed
     node are immediately killed if they are not allowed to run in the new status.
-  - The CASTOR plugin to XROOT has been integrated into the CASTOR code so that it is build/tested/
-    distributed with the core CASTOR software. It comes under the form of a new RPM called
-    castor-xroot-plugin which replaces previous both xrootd-xcastor2fs and xrootd-libtransfermanager.
+  - The CASTOR plugin to XROOT has been integrated into the CASTOR code so that it is built, tested,
+    and distributed with the core CASTOR software. It comes under the form of a new RPM called
+    castor-xroot-plugin, which replaces both the xrootd-xcastor2fs and xrootd-libtransfermanager RPMs.
     The new version of the plugin was also modified to use the asynchronous API of CASTOR (see
     bug #101710: RFE: add support for the asynchronous API in the xrootd plugin for CASTOR).
   - The disk to disk copy mechanism and the associated draining tools have been completely
     reviewed in order to optimize their efficiency. In particular :
       + the WAITDISK2DISKCOPY status of DiskCopies no longer exists and StageReplicaRequest
-        has been replace by the Disk2DiskCopyJob concept, similar to the recall and migration
+        has been replaced by the Disk2DiskCopyJob concept, similar to the recall and migration
         cases
       + draining and internal replications are now handled separately by the scheduler and
         obey to new rules :
           . user activity has priority over them
-          . but a minimum activity is garanted (see DiskManager/MaxRegularJobsBeforeBackfill
+          . but a minimum activity is guaranteed (see DiskManager/MaxRegularJobsBeforeBackfill
             option in castor.conf)
           . in case user activity does not fill all slots, replications will use them
       + draindiskserver has been largely improved, in particular with the possibility to
@@ -39,12 +39,12 @@
         its default to ALL for the file selection
       + the d2dtransfer executable has been merged into the diskmanager
   - A rebalancing feature has been added that rebalances at the level of service classes the
-    fileSystems that are too fool. Rebalancing is triggered based on the Rebalancing/Sensibility
+    fileSystems that are too full. Rebalancing is triggered based on the Rebalancing/Sensibility
     option in the CastorConfig table of the stager DB. The default is 5, that is rebalancing
     is running if the filesystem is more than 5% fuller than the average in the service class.
   - The Nameserver client API has been made secure by default, without falling back to attempting
     a non-secure connection. To disable security access, the CNS_DISABLE variable needs to be set
-    to YES in castor.conf.
+    to YES in castor.conf (see below).
   - The Nameserver file metadata has been extended to include an extra timestamp to handle cross
     stager consistency (see bug #95189). This impacts the upgrade procedure as explained below.
   - The Nameserver segment metadata has been extended to also include creation and last modification
@@ -73,32 +73,40 @@
 
     Here are first the changes that may have an impact on your setup and that you want to
     review and understand :
-      + CLIENT   HIGHPORT    30100
+      + CLIENT        HIGHPORT          30100
         This used to be 40000 in the castor.conf and needs to stay so on disk servers and very
         active clients, so make sure you overwrite it.
+      + CNS           DISABLE           NO
+        Two variables used to exist, CSEC MECH and CSEC AUTHMECH, to control how secure access is offered.
+        Now it is a simple flag to fully disable secure (kerberos-based) authentication. As the
+        default value enables security, you need to explicitly set it:
+        . in the head nodes for the daemons inter-communication; remote access may be
+          denied by firewall rules as only the stager and tapegateway daemons connect
+          via localhost to the nameserver
+        . everywhere if your setup does not support kerberos authentication
       + TransferManager   MaxNbTransfersScheduledPerSecond     -1
         This used to be 25, limiting the rate of scheduled transfer. The new default is to not
         limit rates, which could hit your stager DB. So make sure you're overwriting this if
         you fear for your DB
-      + DiskManager     NbSlots       0
+      + DiskManager   NbSlots           0
         This used to be 60. However, you were very probably already changing it
       + DiskManager     [xroot,root,rfio,rfio3,gsiftp,d2dsrc,d2ddest,recall,migr]Weight   1
         Previous values had more variation (1 to 10, 3 for rfio). This may imply that you review
         your number of slots.
-      + ACCT    RTCOPY          NO
-        ACCT    TAPE            NO
+      + ACCT          RTCOPY            NO
+        ACCT          TAPE              NO
         Previous values were YES in both cases. This disables tape accounting.
         If you are using it, you will need to reenable it.
-      + TAPE    DOWN_ON_TPALERT         NO
+      + TAPE          DOWN_ON_TPALERT   NO
         Used to be YES
-      + TAPE    BADMIR_HANDLING         REPAIR
+      + TAPE          BADMIR_HANDLING   REPAIR
         Used to be CANCEL
 
     This is the list of other changes that should not have a big impact. You may still want to
     review them quickly :
-      + DiskManager          FSMaxFreeSpace           .10   # .15
-      + RFIO                 CONRETRY                 3     # 10
-      + RFIO                 CONRETRYINT              10    # 1
+      + DiskManager   FSMaxFreeSpace                  .10   # .15
+      + RFIO          CONRETRY                        3     # 10
+      + RFIO          CONRETRYINT                     10    # 1
       + TAPE    CRASHED_RLS_HANDLING_RETRY_DELAY      300   # 60
       + TAPE    ACS_MOUNT_LIBRARY_FAILURE_HANDLING    retry 3 300  # retry 1 300
       + TAPE    ACS_UNMOUNT_LIBRARY_FAILURE_HANDLING  retry 3 300  # retry 1 300
@@ -264,21 +272,23 @@
   Upgrade Instructions from 2.1.13-9
   ----------------------------------
 
-    The upgrade path for the new major version 2.1.14-2 is pretty complex. Not repecting
+    The upgrade path for the new major version 2.1.14-2 is pretty complex. Not respecting
     the order of upgrades may lead to severe data loss. So make sure you have well
     understood the procedure before starting. Do not hesitate to contact developers in
     case of doubt.
 
     Short summary of steps :
+      - if applicable, drain and shutdown the repack instance, and make sure it does not
+        operate during the upgrade period. If an old and a newly upgraded stager access
+        the same files at the same time, there is a risk of data loss (see #95189).
       - upgrade the central nodes :
         + upgrade the databases. Take care to update the VMGR DB first,
           and only then the NS one. VDQM and CUPV can be done at any time
         + upgrade the central daemons' RPMs (nsd, vmgrd, vdqmd, cupvd)
           . this should be done just after the DB upgrade, as any daemon restart
-            between the two would fail and impact the service.
-        + after this upgrade, the nameserver runs in 2.1.13 compatibility mode
+            between the two would fail and impact the service
       - upgrade the stagers one by one, with downtime
-      - once all stagers have been updated, switch the nameserver to 2.1.14 mode
+      - once all stagers have been upgraded, if applicable upgrade your repack service.
 
     Detailed instructions for each step follow.
 
@@ -288,7 +298,7 @@
   - The upgrade of the central daemons can be done almost online, the daemons will only
     be restarted when the new RPMs are installed.
     The VMGR database must be upgraded before the nameserver one.
-    This upgrade must be done, before any stager instance be upgraded
+    This upgrade must be done before any stager instance be upgraded.
 
       Instructions
       ------------
@@ -323,8 +333,8 @@
     The expected downtime for the upgrade is of a few hours.
 
     Notes:
-      - Prior to upgrading the STAGER database please verify that your nameserver
-        database has been upgraded to 2.1.14-2 (see above)
+      - Prior to upgrading the STAGER database please verify that your nameserver database
+        has been upgraded to 2.1.14-2 (see above). The database upgrade will fail otherwise.
 
     It is recommended to stop all draining activities as any pending disk-to-disk copy request will be failed
     and any existing draining job will be canceled. Outstanding migrations and recalls are preserved.
@@ -358,41 +368,12 @@
           message to the transfermanager daemon.
 
        8. Test the instance by running the test suite available from:
-          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.13-*/2.1.13-0/testsuite
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-2/testsuite
 
        9. Start the public request handlers (if applicable)
 
       10. Congratulations you have successfully upgraded to the 2.1.14-2 release
           of CASTOR.
-
-
-  Switching Nameserver's mode
-  ---------------------------
-       
-    Notes:
-      - ALL stagers must be running 2.1.14-2 before this step is taken.
-        Not respecting this requirement exposes the instance to data losses.
-      - This switching is transparent, but may take several days.
-
-      Instructions
-      ------------
-
-       1. Once all stagers have been upgraded to version 2.1.14-2, run the cns_2.1.14-2_postUpgrade.sql
-          post-upgrade script from: 
-          http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-2/dbupgrades
-
-          This script includes a one-off job to populate the new fields added to the Nameserver schema.
-          This operation may take several days and is performed as a background activity while
-          the system is running.
-
-       2. As a separate intervention, and only after the job has completed, run the
-          cns_2.1.14_switch_openmode.sql script from:
-          http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-2/dbupgrades
-
-          This script enables the stagers to fully exploit the new logic to provide cross stager consistency
-          (see bug #95189), and it is required to be executed before the upgrade to the next major
-          version (2.1.15).
-          The script fails if the update job had been interrupted and the new fields are not fully populated yet.
 
 
 ------------
