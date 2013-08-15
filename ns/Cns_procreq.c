@@ -5493,8 +5493,8 @@ int Cns_srv_closex(char *req_data,
    * Note that we allow 1usec of tolerance because the stagertime is sent over the wire as
    * as an integer number of usecs.
    */
-  if (fmd_entry->stagertime - last_stagertime > 1E-6) {
-    sprintf (reqinfo->logbuf + strlen(reqinfo->logbuf), " NSLastOpenTime=%.6f", fmd_entry->stagertime);
+  if (fmd_entry.stagertime - last_stagertime > 1E-6) {
+    sprintf (reqinfo->logbuf + strlen(reqinfo->logbuf), " NSLastOpenTime=%.6f", fmd_entry.stagertime);
     RETURN (ENSFILECHG);
   }
 
