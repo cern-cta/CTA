@@ -564,3 +564,4 @@ void Tape::System::fakeWrapper::setupSLC6() {
   m_genericFiles["/dev/sg3"];
   referenceFiles();
 }
+
