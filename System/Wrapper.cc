@@ -360,3 +360,207 @@ void Tape::System::fakeWrapper::setupSLC5() {
   m_genericFiles["/dev/sg2"];
   referenceFiles();
 }
+
+void Tape::System::fakeWrapper::setupSLC6() {
+  /*
+   * Setup an tree similar to what we'll find in
+   * and SLC6 system with mvhtl library (one media exchanger, 2 drives).
+   * There is also one SCSI device present /dev/sg0 as HDD.
+   */
+  /*
+   * First of, the description of all devices in sysfs.
+   * In SLC6, sysfs is mounted on /sys/. If other mount point appear in the
+   * future, we'll have to provide /proc/mounts (and use it).
+   */
+  m_directories["/sys/bus/scsi/devices"].push_back(".");
+  m_directories["/sys/bus/scsi/devices"].push_back("..");
+  m_directories["/sys/bus/scsi/devices"].push_back("0:0:0:0"); /* disk */
+  m_directories["/sys/bus/scsi/devices"].push_back("6:0:0:0"); /* mediumx */
+  m_directories["/sys/bus/scsi/devices"].push_back("6:0:1:0"); /* tape */
+  m_directories["/sys/bus/scsi/devices"].push_back("6:0:2:0"); /* tape */
+  
+  m_directories["/sys/bus/scsi/devices"].push_back("host0");
+  m_directories["/sys/bus/scsi/devices"].push_back("host1");
+  m_directories["/sys/bus/scsi/devices"].push_back("host2");
+  m_directories["/sys/bus/scsi/devices"].push_back("host3");
+  m_directories["/sys/bus/scsi/devices"].push_back("host4");
+  m_directories["/sys/bus/scsi/devices"].push_back("host5");
+  m_directories["/sys/bus/scsi/devices"].push_back("host6");
+  m_directories["/sys/bus/scsi/devices"].push_back("target0:0:0");
+  m_directories["/sys/bus/scsi/devices"].push_back("target6:0:0");
+  m_directories["/sys/bus/scsi/devices"].push_back("target6:0:1");
+  m_directories["/sys/bus/scsi/devices"].push_back("target6:0:2");
+  
+  m_realpathes["/sys/bus/scsi/devices/0:0:0:0"]
+          = "/sys/devices/pci0000:00/0000:00:1f.2/host0/target0:0:0/0:0:0:0";
+  m_realpathes["/sys/bus/scsi/devices/6:0:0:0"]
+          = "/sys/devices/pseudo_0/adapter0/host6/target6:0:0/6:0:0:0";
+  m_realpathes["/sys/bus/scsi/devices/6:0:1:0"]
+          = "/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0";
+  m_realpathes["/sys/bus/scsi/devices/6:0:2:0"]
+          = "/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0";
+  m_realpathes["/sys/bus/scsi/devices/host0"]
+          = "/sys/devices/pci0000:00/0000:00:1f.2/host0";
+  m_realpathes["/sys/bus/scsi/devices/host1"]
+          = "/sys/devices/pci0000:00/0000:00:1f.2/host1";
+  m_realpathes["/sys/bus/scsi/devices/host2"]
+          = "/sys/devices/pci0000:00/0000:00:1f.2/host2";
+  m_realpathes["/sys/bus/scsi/devices/host3"]
+          = "/sys/devices/pci0000:00/0000:00:1f.2/host3";
+  m_realpathes["/sys/bus/scsi/devices/host4"]
+          = "/sys/devices/pci0000:00/0000:00:1f.2/host4";
+  m_realpathes["/sys/bus/scsi/devices/host5"]
+          = "/sys/devices/pci0000:00/0000:00:1f.2/host5";
+  m_realpathes["/sys/bus/scsi/devices/host6"]
+          = "/sys/devices/pseudo_0/adapter0/host6";
+  m_realpathes["/sys/bus/scsi/devices/target0:0:0"]
+          = "/sys/devices/pci0000:00/0000:00:1f.2/host0/target0:0:0";
+  m_realpathes["/sys/bus/scsi/devices/target6:0:0"]
+          = "/sys/devices/pseudo_0/adapter0/host6/target6:0:0";
+  m_realpathes["/sys/bus/scsi/devices/target6:0:1"]
+          = "/sys/devices/pseudo_0/adapter0/host6/target6:0:1";
+  m_realpathes["/sys/bus/scsi/devices/target6:0:2"]
+          = "/sys/devices/pseudo_0/adapter0/host6/target6:0:2";
+  
+  m_regularFiles["/sys/devices/pci0000:00/0000:00:1f.2/host0/target0:0:0/0:0:0:0/type"] = "0\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:0/6:0:0:0/type"] = "8\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0/type"] = "1\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/type"] = "1\n";
+  
+  m_links["/sys/devices/pci0000:00/0000:00:1f.2/host0/target0:0:0/0:0:0:0/generic"]
+          = "scsi_generic/sg0";
+  m_links["/sys/devices/pseudo_0/adapter0/host6/target6:0:0/6:0:0:0/generic"]
+          = "scsi_generic/sg3";
+  m_links["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0/generic"]
+          = "scsi_generic/sg1";
+    m_links["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/generic"]
+          = "scsi_generic/sg2";
+    
+  m_stats["/dev/sg0"].st_rdev = makedev(21, 0);
+  m_stats["/dev/sg0"].st_mode = S_IFCHR;
+  m_stats["/dev/sg1"].st_rdev = makedev(21, 1);
+  m_stats["/dev/sg1"].st_mode = S_IFCHR;
+  m_stats["/dev/sg2"].st_rdev = makedev(21, 2);
+  m_stats["/dev/sg2"].st_mode = S_IFCHR;
+  m_stats["/dev/sg3"].st_rdev = makedev(21, 3);
+  m_stats["/dev/sg3"].st_mode = S_IFCHR;
+
+  m_regularFiles["/sys/devices/pci0000:00/0000:00:1f.2/host0/target0:0:0/0:0:0:0/generic/dev"]  = "21:0\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:0/6:0:0:0/generic/dev"]  = "21:3\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0/generic/dev"] = "21:1\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/generic/dev"] = "21:2\n";
+
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0"].push_back(".");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0"].push_back("..");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0"].push_back("bsg");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0"].push_back("delete");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0"].push_back("device_blocked");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0"].push_back("dh_state");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0"].push_back("driver");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0"].push_back("evt_media_change");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0"].push_back("generic");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0"].push_back("iocounterbits");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0"].push_back("iodone_cnt");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0"].push_back("ioerr_cnt");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0"].push_back("iorequest_cnt");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0"].push_back("modalias");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0"].push_back("model");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0"].push_back("power");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0"].push_back("queue_depth");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0"].push_back("queue_ramp_up_period");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0"].push_back("queue_type");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0"].push_back("rescan");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0"].push_back("rev");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0"].push_back("scsi_device");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0"].push_back("scsi_generic");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0"].push_back("scsi_level");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0"].push_back("scsi_tape");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0"].push_back("state");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0"].push_back("subsystem");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0"].push_back("tape");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0"].push_back("timeout");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0"].push_back("type");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0"].push_back("uevent");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0"].push_back("vendor");
+
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0/scsi_tape"].push_back(".");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0/scsi_tape"].push_back("..");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0/scsi_tape"].push_back("nst0");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0/scsi_tape"].push_back("nst0a");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0/scsi_tape"].push_back("nst0l");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0/scsi_tape"].push_back("nst0m");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0/scsi_tape"].push_back("st0");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0/scsi_tape"].push_back("st0a");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0/scsi_tape"].push_back("st0l");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0/scsi_tape"].push_back("st0m");
+
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0/scsi_tape/st0/dev"] =
+          "9:0\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0/scsi_tape/nst0/dev"] =
+          "9:128\n";
+  m_stats["/dev/st0"].st_rdev = makedev(9, 0);
+  m_stats["/dev/st0"].st_mode = S_IFCHR;
+  m_stats["/dev/nst0"].st_rdev = makedev(9, 128);
+  m_stats["/dev/nst0"].st_mode = S_IFCHR;
+  
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back(".");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("..");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("bsg");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("delete");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("device_blocked");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("dh_state");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("driver");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("evt_media_change");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("generic");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("iocounterbits");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("iodone_cnt");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("ioerr_cnt");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("iorequest_cnt");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("modalias");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("model");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("power");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("queue_depth");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("queue_ramp_up_period");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("queue_type");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("rescan");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("rev");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("scsi_device");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("scsi_generic");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("scsi_level");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("scsi_tape");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("state");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("subsystem");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("tape");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("timeout");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("type");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("uevent");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("vendor");
+
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/scsi_tape"].push_back(".");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/scsi_tape"].push_back("..");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/scsi_tape"].push_back("nst1");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/scsi_tape"].push_back("nst1a");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/scsi_tape"].push_back("nst1l");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/scsi_tape"].push_back("nst1m");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/scsi_tape"].push_back("st1");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/scsi_tape"].push_back("st1a");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/scsi_tape"].push_back("st1l");
+  m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/scsi_tape"].push_back("st1m");
+
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/scsi_tape/st1/dev"] =
+          "9:1\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/scsi_tape/nst1/dev"] =
+          "9:129\n";
+  m_stats["/dev/st1"].st_rdev = makedev(9, 1);
+  m_stats["/dev/st1"].st_mode = S_IFCHR;
+  m_stats["/dev/nst1"].st_rdev = makedev(9, 129);
+  m_stats["/dev/nst1"].st_mode = S_IFCHR;
+
+  m_stFiles["/dev/nst0"];
+  m_stFiles["/dev/nst1"];
+  m_genericFiles["/dev/sg0"];
+  m_genericFiles["/dev/sg1"];
+  m_genericFiles["/dev/sg2"];
+  m_genericFiles["/dev/sg3"];
+  referenceFiles();
+}

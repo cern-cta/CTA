@@ -128,6 +128,7 @@ namespace System {
     std::map<std::string, stDeviceFile> m_stFiles;
     std::map<std::string, tapeGenericDeviceFile> m_genericFiles;
     void setupSLC5();
+    void setupSLC6();
     void referenceFiles();
   private:
 
