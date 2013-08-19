@@ -29,6 +29,34 @@
 #include "../SCSI/Device.hh"
 #include "Drive.hh"
 #include <iostream>
+#include <assert.h>
+
+/*
+ * Prints and compares the current position with the expected one. Returns on
+ * success (expected value is the same as the actual value), or else fails the 
+ * assertion and exits.
+ * @param expected_position expected position
+ */
+void print_and_assert_position(Tape::Drive *drive, int expected_position)
+{
+  int curPos = (int)drive->getPositionInfo().currentPosition;
+  std::cout << "CurrentPosition: "  << curPos << " (Expected: " << expected_position << ")" << std::endl;
+  assert(expected_position == curPos);
+  return;
+}
+
+/*
+ * Prints and compares the current data read with the expected one. Returns on
+ * success (expected value is the same as the actual value), or else fails the 
+ * assertion and exits.
+ * @param expected_data expected data
+ */
+void print_and_assert_data(const char * expected_data, const char * actual_data)
+{
+  std::cout << "Data Read: "  << actual_data << " (Expected: " << expected_data << ")" << std::endl;
+  assert(0 == strcmp(expected_data, actual_data));
+  return;
+}
 
 int main ()
 {
@@ -138,7 +166,203 @@ int main ()
         Alerts.pop_back();
       }
       
-      //drive->SCSI_inquiry();  we use INQUIRY for tapes in getDeviceInfo
+      /**
+       * Rewind/Read/Write/Skip Test (needs a tape mounted on /dev/nst0) 
+       */
+      if (0 == dev.nst_dev.compare("/dev/nst0")) {
+        try {
+
+          const size_t count = 10;
+          unsigned char data[count];          
+          memset(data, 0, count);
+
+          std::cout << "************** BEGIN: Rewind/Read/Write/Skip Test *************" << std::endl;
+          
+          std::cout << "Rewinding..." << std::endl;
+          drive->rewind(); // go back to the beginning of tape after Victor's positioning
+          print_and_assert_position(drive, 0);
+          
+          memset(data, 'a', count-1);
+          std::cout << "Writing 1st block (9 a's)..." << std::endl;
+          drive->writeBlock(data, count); // write 9 a's + string term
+          print_and_assert_position(drive, 1);
+          
+          std::cout << "Writing 1st Synchronous filemark..." << std::endl;
+          drive->writeSyncFileMarks(1); // filemark and flush
+          print_and_assert_position(drive, 2);
+          
+          memset(data, 'b', count-1);
+          std::cout << "Writing 2nd block (9 b's)..." << std::endl;
+          drive->writeBlock(data, count); // write 9 b's + string term
+          print_and_assert_position(drive, 3);
+          
+          std::cout << "Writing 2nd Synchronous filemark..." << std::endl;
+          drive->writeSyncFileMarks(1); // filemark and flush
+          print_and_assert_position(drive, 4);
+          
+          memset(data, 'c', count-1);
+          std::cout << "Writing 3rd block (9 c's)..." << std::endl;
+          drive->writeBlock(data, count); // write 9 c's + string term
+          print_and_assert_position(drive, 5);
+          
+          std::cout << "Writing EOD (2 filemarks)..." << std::endl;
+          drive->writeSyncFileMarks(2); // EOD and flush  
+          print_and_assert_position(drive, 7);
+          
+          std::cout << "Rewinding..." << std::endl;
+          drive->rewind(); // go back to the beginning of tape
+          print_and_assert_position(drive, 0);
+          
+          std::cout << "Reading back 1st block 9 a's)..." << std::endl;                    
+          memset(data, 0, count);
+          drive->readBlock(data, count); // read 9 a's + string term
+          print_and_assert_position(drive, 1);
+          print_and_assert_data("aaaaaaaaa", (const char *)data);
+          
+          std::cout << "Skipping first file mark..." << std::endl;                    
+          memset(data, 0, count);
+          drive->readBlock(data, count);
+          print_and_assert_position(drive, 2);
+          
+          std::cout << "Reading back 2nd block (9 b's)..." << std::endl;                    
+          memset(data, 0, count);
+          drive->readBlock(data, count); // read 9 b's + string term
+          print_and_assert_position(drive, 3);
+          print_and_assert_data("bbbbbbbbb", (const char *)data);
+          
+          std::cout << "Skipping first file mark..." << std::endl;                    
+          memset(data, 0, count);
+          drive->readBlock(data, count);
+          print_and_assert_position(drive, 4);
+          
+          std::cout << "Reading back 3rd block (9 c's)..." << std::endl;          
+          memset(data, 0, count);
+          drive->readBlock(data, count); // read 9 c's + string term
+          print_and_assert_position(drive, 5);
+          print_and_assert_data("ccccccccc", (const char *)data);
+          
+          std::cout << "Skipping the last two file marks..." << std::endl;          
+          memset(data, 0, count);
+          drive->readBlock(data, count);
+          memset(data, 0, count);
+          drive->readBlock(data, count);
+          print_and_assert_position(drive, 7);
+          
+          std::cout << "Rewinding..." << std::endl;
+          drive->rewind(); // go back to the beginning of tape
+          print_and_assert_position(drive, 0);
+          
+          std::cout << "Spacing to the end of media..." << std::endl;
+          drive->spaceToEOM();
+          print_and_assert_position(drive, 7);
+          
+          std::cout << "Rewinding..." << std::endl;
+          drive->rewind(); // go back to the beginning of tape
+          print_and_assert_position(drive, 0);
+          
+          std::cout << "Fast spacing to the end of media..." << std::endl;
+          drive->fastSpaceToEOM();
+          print_and_assert_position(drive, 7);
+          
+          std::cout << "Rewinding..." << std::endl;
+          drive->rewind(); // go back to the beginning of tape
+          print_and_assert_position(drive, 0);
+          
+          std::cout << "Spacing 2 file marks forward..." << std::endl;
+          drive->spaceFileMarksForward(2);
+          print_and_assert_position(drive, 4);
+          
+          std::cout << "Spacing 1 file mark backwards..." << std::endl;
+          drive->spaceFileMarksBackwards(1);
+          print_and_assert_position(drive, 3);
+          
+          std::cout << "Rewinding..." << std::endl;
+          drive->rewind(); // go back to the beginning of tape
+          print_and_assert_position(drive, 0);
+          
+          std::cout << "Spacing 3 file marks forward..." << std::endl;
+          drive->spaceFileMarksForward(3);
+          print_and_assert_position(drive, 6);
+          
+          memset(data, 'd', count-1);
+          std::cout << "Writing 9 d's..." << std::endl;
+          drive->writeBlock(data, count); // write 9 d's + string term
+          print_and_assert_position(drive, 7);
+          
+          std::cout << "Writing Asynchronous filemark..." << std::endl;
+          drive->writeImmediateFileMarks(1); // buffered filemark
+          print_and_assert_position(drive, 8);
+          
+          memset(data, 'e', count-1);
+          std::cout << "Writing 9 e's..." << std::endl;
+          drive->writeBlock(data, count); // write 9 e's + string term
+          print_and_assert_position(drive, 9);
+          
+          std::cout << "Writing Asynchronous EOD..." << std::endl;
+          drive->writeImmediateFileMarks(2); // buffered filemarks
+          print_and_assert_position(drive, 11);
+          
+          std::cout << "Synch-ing..." << std::endl;
+          drive->sync(); // flush buffer with no-op
+          print_and_assert_position(drive, 11);
+          
+          std::cout << "Rewinding..." << std::endl;
+          drive->rewind(); // go back to the beginning of tape
+          print_and_assert_position(drive, 0);
+          
+          for(int i=0; i<9; i++) {
+            memset(data, '0'+i, count-1);
+            std::cout << "Writing 9 " << i << "'s..." << std::endl;
+            drive->writeBlock(data, count);
+            print_and_assert_position(drive, i+1);
+          }
+          
+          std::cout << "Rewinding..." << std::endl;
+          drive->rewind(); // go back to the beginning of tape
+          print_and_assert_position(drive, 0);
+          
+          std::cout << "Spacing 2 logical blocks forward..." << std::endl;
+          drive->spaceBlocksForward(2);
+          print_and_assert_position(drive, 2);
+          
+          std::cout << "Reading..." << std::endl;                    
+          memset(data, 0, count);
+          drive->readBlock(data, count);
+          print_and_assert_position(drive, 3);
+          print_and_assert_data("222222222", (const char *)data);
+          
+          std::cout << "Spacing 1 logical block backwards..." << std::endl;
+          drive->spaceBlocksBackwards(1);
+          print_and_assert_position(drive, 2);
+          
+          std::cout << "Spacing 5 logical blocks forward..." << std::endl;
+          drive->spaceBlocksForward(5);
+          print_and_assert_position(drive, 7);
+          
+          std::cout << "Spacing 3 logical blocks backwards..." << std::endl;
+          drive->spaceBlocksBackwards(3);
+          print_and_assert_position(drive, 4);
+          
+          std::cout << "Reading..." << std::endl;                    
+          memset(data, 0, count);
+          drive->readBlock(data, count);
+          print_and_assert_position(drive, 5);
+          print_and_assert_data("444444444", (const char *)data);
+          
+          std::cout << "Rewinding..." << std::endl;
+          drive->rewind(); // go back to the beginning of tape
+          print_and_assert_position(drive, 0);
+          
+          std::cout << "TEST PASSED!" << std::endl;
+          
+          std::cout << "************** END: Rewind/Read/Write/Skip Test *************" << std::endl;
+
+        } catch (std::exception & e) {
+          std::cout << "-- EXCEPTION ---------------------------------" << std::endl
+                    << e.what() << std::endl
+                    << "----------------------------------------------" << std::endl;
+        }
+      }
     }  
   }
 }

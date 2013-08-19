@@ -247,16 +247,16 @@ namespace Tape {
     virtual void spaceToEOM(void) throw (Exception);
 
     /**
-     * Space count files backwards.
+     * Space count file marks backwards.
      * @param count
      */
-    virtual void spaceFilesBackwards(size_t count) throw (Exception);
+    virtual void spaceFileMarksBackwards(size_t count) throw (Exception);
 
     /**
-     * Space count files forward.
+     * Space count file marks forward.
      * @param count
      */
-    virtual void spaceFilesForward(size_t count) throw (Exception);
+    virtual void spaceFileMarksForward(size_t count) throw (Exception);
 
     /**
      * Space count blocks backwards.

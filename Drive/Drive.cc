@@ -369,10 +369,10 @@ void Tape::Drive::rewind(void) throw (Tape::Exception) {
 }
 
 /**
- * Space count files backwards.
+ * Space count file marks backwards.
  * @param count
  */
-void Tape::Drive::spaceFilesBackwards(size_t count) throw (Tape::Exception) {
+void Tape::Drive::spaceFileMarksBackwards(size_t count) throw (Tape::Exception) {
   struct mtop m_mtCmd;
   m_mtCmd.mt_op = MTBSF;
   m_mtCmd.mt_count = (int)count;
@@ -381,10 +381,10 @@ void Tape::Drive::spaceFilesBackwards(size_t count) throw (Tape::Exception) {
 }
 
 /**
- * Space count files forward.
+ * Space count file marks forward.
  * @param count
  */
-void Tape::Drive::spaceFilesForward(size_t count) throw (Tape::Exception) {
+void Tape::Drive::spaceFileMarksForward(size_t count) throw (Tape::Exception) {
   struct mtop m_mtCmd;
   m_mtCmd.mt_op = MTFSF;
   m_mtCmd.mt_count = (int)count;
@@ -393,7 +393,10 @@ void Tape::Drive::spaceFilesForward(size_t count) throw (Tape::Exception) {
 }
 
 /**
- * Space count blocks backwards.
+ * Space count logical blocks backwards.
+ * A logical block is the smallest user data unit accessible on tape and its 
+ * length is defined at write time. This function will throw an exception if the 
+ * next logical object is not a logical block (i.e. if it is a file mark instead).
  * @param count
  */
 void Tape::Drive::spaceBlocksBackwards(size_t count) throw (Tape::Exception) {
@@ -405,7 +408,10 @@ void Tape::Drive::spaceBlocksBackwards(size_t count) throw (Tape::Exception) {
 }
 
 /**
- * Space count blocks forward.
+ * Space count logical blocks forward.
+ * A logical block is the smallest user data unit accessible on tape and its 
+ * length is defined at write time. This function will throw an exception if the 
+ * next logical object is not a logical block (i.e. if it is a file mark instead).
  * @param count
  */
 void Tape::Drive::spaceBlocksForward(size_t count) throw (Tape::Exception) {
