@@ -277,6 +277,13 @@ namespace SCSI {
 \end{lstlisting}
 \end{table}
 
+Finally all structures have a constructor, which at least zeroes all the data.
+Some structures (typically the CDBs, where the first byte is the operation's code)
+automatically set the value of fields which can only take one value. Helper
+functions are created as needed, where accessing/setting the data in the structure
+requires non-trivial processing (and when the case is not covered by the common
+tools handling strings that endianness).
+
 \subsection{Exceptions hierarchy and error handling strategy}
 
 There is a small class hierarchy for exceptions: \verb#Tape::Exception# inherits from
@@ -300,6 +307,19 @@ calling function from testing for error conditions. The default exception throwi
 coming from a narrow set of exceptions types. This gives a crude exception handling capacity
 to the user of the functions. When finer grained exceptions will turn out to be required,
 we will add them on an as needed basis.
+
+\subsection{Non-fatal warnings strategy}
+
+
+We want to deliver an interface (possible common) to most object where the non-fatal
+problems as recorded (with time of occurrence) and stored for further retrieval by
+upstream caller. This allow developers to deal with the logging interface only in the 
+top "application" class which glues all the bricks of the project together.
+
+A lower level failure (exception) could also be turned into a warning by a higher level
+retry.
+
+TODO: define API.
 
 \subsection{The Tape::Drive object}
 
@@ -343,7 +363,8 @@ The SCSI commands and st driver's functions used in previous software (CAStor's 
           get some error condition, when MTIOSENSE failed, to get the EOD, BOT bits (readlbl)).
           This functionality is covered by \verb#Drive::getDriveStatus#.
     \item Try and get the sense data for the last-ish command with MTIOSENSE. This
-          relies on a CERN-made patch. This is also covered \verb#Drive::getDriveStatus#.
+          relies on a CERN-made patch. As the patch is not available in SLC6, 
+          MTIOSENSE will not be used in this project. This is also covered \verb#Drive::getDriveStatus#.
     \item Setup the driver's parameters (MTIOCTOP/MTSETDRVBUFFER) for (un)buffered 
           writes and asynchronous writes (in confdrive, a child process of taped).
           This option is currently not set in production environments.
@@ -393,9 +414,158 @@ The interface is shown in listing \ref{drive_if}.
 namespace Tape {
   class Drive {
   public:
-    Drive();
-    /* TODO */
+    Drive(SCSI::DeviceInfo di, System::virtualWrapper & sw);
+    /* Direct SCSI operations */
+    virtual compressionStats getCompression() throw (Exception);
+    virtual void clearCompressionStats() throw (Exception);
+    virtual deviceInfo getDeviceInfo() throw (Exception);
+    virtual std::string getSerialNumber() throw (Exception);
+    virtual void positionToLogicalObject(uint32_t blockId) throw (Exception);
+    virtual positionInfo getPositionInfo() throw (Exception);
+    virtual std::vector<std::string> getTapeAlerts() throw (Exception);
+    virtual void setDensityAndCompression(unsigned char densityCode = 0,
+            bool compression = true) throw (Exception);
+    virtual driveStatus getDriveStatus() throw (Exception);
+    virtual tapeError getTapeError() throw (Exception);
+    /* ST driver based operations */
+    virtual void setSTBufferWrite(bool bufWrite) throw (Exception);
+    virtual void fastSpaceToEOM(void) throw (Exception);
+    virtual void rewind(void) throw (Exception);
+    virtual void spaceToEOM(void) throw (Exception);
+    virtual void spaceFilesBackwards(size_t count) throw (Exception);
+    virtual void spaceFilesForward(size_t count) throw (Exception);
+    virtual void spaceBlocksBackwards(size_t count) throw (Exception);
+    virtual void spaceBlocksForward(size_t count) throw (Exception);
+    virtual void unloadTape(void) throw (Exception);
+    virtual void sync(void) throw (Exception);
+    virtual void writeSyncFileMarks(size_t count) throw (Exception);
+    virtual void writeImmediateFileMarks(size_t count) throw (Exception);
+    virtual void writeBlock(const unsigned char * data, size_t count) throw (Exception);
+    virtual void readBlock(unsigned char * data, size_t count) throw (Exception);
+    virtual ~Drive()
   };
 } // namespace Tape
 \end{lstlisting}
 \end{table}
+
+\subsection{The Tape::File class}
+
+\subsubsection{CAStor file format}
+Over time, CAStor used several file formats, but as of 2013, only one file format
+is used, called AUL. This format is described an old CERN web site
+\footnote{ \href{http://it-dep-fio-ds.web.cern.ch/it-dep-fio-ds/Documentation/tapedrive/labels.html}{http://it-dep-fio-ds.web.cern.ch/it-dep-fio-ds/Documentation/tapedrive/labels.html} },
+and the general description of the ANSI fields can be found in IBM's z/OS documentation
+\footnote{ \href{http://publib.boulder.ibm.com/infocenter/zos/v1r12/index.jsp?topic=\%2Fcom.ibm.zos.r12.idam300\%2Flabdef.htm}{http://publib.boulder.ibm.com/infocenter/zos/v1r12/index.jsp?topic=\%2Fcom.ibm.zos.r12.idam300\%2Flabdef.htm} }.
+
+The AUL format consists of volume label, header blocks and trailer blocks. All those
+descriptors are contained in tape blocks of 80 kilobytes. All data is in ASCII nowadays.
+
+The structure of the volume label is:
+
+\begin{center}
+\begin{tabularx}{\textwidth}{ |c|X| }
+  \hline
+  \multicolumn{2}{|c|}{VOL1} \\
+  \hline
+  Bytes & \multicolumn{1}{c|}{Content} \\
+  \hline \hline
+  0-3 & Volume label indicator: the caracters "VOL1" \\
+  \hline
+  4-9 & Volume serial number (VSN) (ex: "AB1234") \\
+  \hline
+  10 (0x0A) & Accessibility (In CAStor, left as space) \\
+  \hline
+  11-23 (0x0B-0x17) & Reserved for future (spaces) \\
+  \hline
+  24-36 (0x18-0x24) & Implementation identifier (left as spaces by CAStor) \\
+  \hline
+  37-50 (0x25-0x32) & Owner identifier (in CAStor, the string "CASTOR" padded with spaces)\\
+  \hline
+  51-78 (0x33-0x4E) & Reserved (spaces) \\
+  \hline
+  79 (0x4F) & Label standard level (1,3 and 4 are listed as valid in IBM's documentation. CAStor uses ASCII '3') \\
+  \hline
+
+\end{tabularx}
+\end{center}
+
+TODO: finish the descriptions (remaining: HDR1, HDR2, UHL1, EOF1, EOF2, UTL1).
+
+\subsubsection{File block management}
+
+TODO: define block sizes strategy. Some files tapes have mixed block sizes,
+some files used to have mixed block sizes. Current proposal is to have a fixed
+block size per tape, and to have operators choose the optimal block size for 
+drive performance (too small blocks reduce performance).
+
+Ideally, only the Tape::File class should handle all aspects of cutting the disk
+file, which is a continuous stream, into fixed size blocks. But this would have the 
+downside of having the Tape::File class a client of the FIFOs, and potentially 
+have its own thread, which is far beyond the scope of this class. Therefore, it 
+is the duty of the caller to provide the file cut into fixed size blocks.
+The Tape::File class will require pre-declaration of the block size, and 
+enforce it.
+
+\subsubsection{Responsibilities of the class}
+This class will have the responsibility to check file structure and content,
+including checksum, block sizes and header/trailer content. In case of non-fatal
+errors, the warnings will be reported through the warning interface described in
+\ref{Non-fatal warnings strategy}.
+
+\subsubsection{Checksums}
+TODO.
+
+\subsubsection{Tape::File API}
+TODO.
+
+\subsection{Memory chunk manager}
+
+The memory block manager allocates (usually all at once) a large chunk of memory.
+This memory is then shared between the various FIFOs in the system. Deallocation
+of memory on exit will allow memory leak checks. This class will have to be 
+thread safe.
+
+TODO: Define API.
+
+\subsection{FIFOs}
+
+FIFOs will be used to synchronize the data transfer between the tape thread and 
+disk threads. The Tape thread will manage the block-to-stream transformation. The
+FIFO might not always be able to provide blocks in one piece at chunk boundary.
+The first attempt solution for this case will be a copy of the cut block. With
+a chunk size significantly bigger than the block size, the event should be rare
+enough to not affect performance. FIFOs will probably need some thread safety,
+but as they will be single user, single consumer, some parts might possible 
+be lockless.
+
+\subsection{Disk client library}
+
+\subsection{VDQM client library}
+
+TODO: describe how we will link with the VDQM client library. The VDQM is also 
+the initial client which triggers the tape sessions. It carries a feature
+where the tape drive can recycle a tape mount. This is not very useful today,
+and the first release of the TapeServer will not support it. All sessions
+will be force-closed by the TapeServer.
+
+\subsection{VMGR client library}
+
+\subsection{Stager/TapeGateway client library}
+
+\subsection{Logging system client library}
+
+\subsection{Application architecture}
+
+\subsubsection{Session spawner}
+
+\subsubsection{Session process}
+
+\subsubsection{Tape read thread}
+
+\subsubsection{Tape write thread}
+
+\subsubsection{Disk read thread}
+
+\subsubsection{Disk write thread}
+
+
