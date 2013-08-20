@@ -11,38 +11,46 @@ The interface to the mounting deamons might still change with repect to CAStor 2
 This documentation itself currently references the older tape server this project is intending to replace. The references will have to be removed as they become unnecessary. 
 Likewise, the layout of the document will be adapted.
 
-The initial focus is to provide access to the tape drive primitives, so the current version of this documentation is limited to this subject.
+The tape drive primitives have now been developed, and the rest of the project's
+plan is being laid out.
 
-% ------- 
-% Chapter 
-% ------- 
+% ------------------------------------------------------------------------------ 
+% Chapter: Developer's manual
+% ------------------------------------------------------------------------------
 
 \chapter{Developer's manual}
+
+% Section:  Targeted environment
+% ------------------------------------------------------------------------------
 
 \section{Targeted environment}
 
 CERN SLC5 and SLC6, 64bits. Although it should compile in theory, the 32 bits version is not tested. The unit test purposely returns an error when run on non-64 bits architecture.
 
+
+% Section:  Reference documentations
+% ------------------------------------------------------------------------------
+
 \section{Reference documentations}
 \subsection{SCSI specifications}
 
-The SCSI commands can be found in the SCSI section of hackipedia
-      \footnote{ \href{http://hackipedia.org/Hardware/SCSI/}{http://hackipedia.org/Hardware/SCSI/} }.
- The most significant documents for tape server development are the stream commands
-      \footnote{ \href{http://hackipedia.org/Hardware/SCSI/Stream\%20Commands/SCSI\%20Stream\%20Commands\%20-\%203.pdf}
-                      {http://hackipedia.org/Hardware/SCSI/Stream\%20Commands/SCSI\%20Stream\%20Commands\%20-\%203.pdf} }
- and the SCSI primary commands
-      \footnote{ \href{http://hackipedia.org/Hardware/SCSI/Primary\%20Commands/SCSI\%20Primary\%20Commands\%20-\%204.pdf}
-                      {http://hackipedia.org/Hardware/SCSI/Primary\%20Commands/SCSI\%20Primary\%20Commands\%20-\%204.pdf} }).
+The SCSI commands can be found in the SCSI section of Hackipedia.org
+      \footnote{ \href{http://hackipedia.org/Hardware/SCSI/}{http://hackipedia.org/Hardware/SCSI/} }
       \footnote{The official site for SCSI standard is \href{http://T10.org}{http://T10.org}. All specifications
       can be found there in their approved version, but behind a paywall. Nevertheless all previous drafts were
       public and can conveniently be found on the web. Hackipedia hold a very nice collection of such
-      documentations.}
+      documentations.}.
+ The most significant documents for tape server development are the SCSI stream commands (SSC-3
+      \footnote{ \href{http://hackipedia.org/Hardware/SCSI/Stream\%20Commands/SCSI\%20Stream\%20Commands\%20-\%203.pdf}
+                      {http://hackipedia.org/Hardware/SCSI/Stream\%20Commands/SCSI\%20Stream\%20Commands\%20-\%203.pdf} })
+ and the SCSI primary commands (SPC-4
+      \footnote{ \href{http://hackipedia.org/Hardware/SCSI/Primary\%20Commands/SCSI\%20Primary\%20Commands\%20-\%204.pdf}
+                      {http://hackipedia.org/Hardware/SCSI/Primary\%20Commands/SCSI\%20Primary\%20Commands\%20-\%204.pdf} }).
 
 \subsubsection{Manufacturer's specificities}
 \label{Manufacturer's specificities}
 The SCSI specification allows for some flexibility for the manufacturers of tape drives, and 
-each of them has differences in details. The detailed can be found in the following documentations:
+each of them has differences. The details can be found in the following documentations:
 
 \begin{itemize}
 \item{}StorageTek\texttrademark T10000 Tape Drive
@@ -66,7 +74,7 @@ each of them has differences in details. The detailed can be found in the follow
 On the Linux side, the main references are the Linux 2.4 SCSI subsystem HOWTO
        \footnote{ \href{http://mirrors.kernel.org/LDP/HOWTO/pdf/SCSI-2.4-HOWTO.pdf}
                        {http://mirrors.kernel.org/LDP/HOWTO/pdf/SCSI-2.4-HOWTO.pdf} },
-especially for is section 9.3 on the st driver,
+especially for its section 9.3 on the st driver,
 and the Linux SCSI Generic (sg) HOWTO 
        \footnote{ \href{http://mirrors.kernel.org/LDP/HOWTO/pdf/SCSI-Generic-HOWTO.pdf}
                        {http://mirrors.kernel.org/LDP/HOWTO/pdf/SCSI-Generic-HOWTO.pdf} }. 
@@ -78,9 +86,10 @@ The section on the SG\_IO ioctl, \footnote{ \href{http://sg.danny.cz/sg/sg\textu
 simplest ioctl for the generic SCSI driver, which allows the invocation of a SCSI command and the collection of the 
 result in a single system call.
 
-This ioctl is provided in the middle layer of the SCSI subsystem of Linux. All SCSI drivers, including st, fall back
+This ioctl is provided in the middle layer of the SCSI subsystem of Linux. All SCSI drivers, st included, fall back
 to the middle layer when encountering an unknown ioctl. This means there is no need to open the matching generic SCSI,
-unless we want to control command queueing with separate sending of commands and result collection.
+unless we want to control command queueing with separate sending of commands and result collection, which
+requires the use of read and write calls from the generic SCSI (sg) driver.
 
 \subsection{Unsorted CAStor docs}
 A collection of links to various documentations written in the past is available on one of CAStor's web pages
@@ -142,7 +151,7 @@ Index: CMakeLists.txt
 \end{verbatim}
 \end{small}
 
-\item{}Re-run cmake and recompile as usual.
+\item{}Re-run cmake, recompile as usual and run the unit test.
 \item{}Capture the result:
 
         \small{}\verb#lcov --capture --directory 00build/ --output-file 00build/coverage.info#.
@@ -206,7 +215,7 @@ namespace SCSI {
 \end{table}
 
 The unit test resorts to shift and mask, once and only once, to validate the bit fields in
-another way. There is an example for this validation in \verb#SCSI/StructureTest.cc#; an excerpt is in listing \ref{SCSI_struct_testing}.
+another way. There is an example for this validation in \verb#SCSI/StructureTest.cc# an excerpt is in listing \ref{SCSI_struct_testing}.
 
 \begin{table}
 \begin{lstlisting}[caption=SCSI::Structures usage example,label=SCSI_struct_testing]
@@ -238,7 +247,8 @@ namespace UnitTests {
 Other common types in the SCSI specification are multi-bytes
 number, which are represented by \verb#unsigned char[2/* (or 4)*/]# and handled by helper functions 
 \verb#toU16()# and \verb#toU32()#. The helper functions
-conveniently use \verb#ntoh{l|s}#, as SCSI and netowrk orders are the same. Another helper function 
+conveniently use \verb#ntoh{l|s}#, as SCSI and network orders are the same. The reverse
+is covered by \verb#setU16()# and \verb#setU32()#. Another helper function 
 takes care of string extraction from fixed sized char arrays. See listing \ref{SCSI_data_helpers}.
 
 \begin{table}
@@ -252,9 +262,9 @@ std::string toString(const char(& t)[n]);
 \end{table}
 
 Those arrays are space-padded, and may not be 0 terminated. It is seen in listing \ref{SCSI_struct_usage}.
-The helper function extracts the string, getting rid of potential zeros at the end,
-and managing the fixed length. They keep the space-padding at the end of the extracted
-function.
+The helper function extracts the string, dealing with potential zeros at the end,
+and the fixed length. They keep the space-padding at the end of the extracted
+string.
 
 To avoid literals in the code, which forces anyone reading it to do tedious lookups,
 the SCSI constants are also defined as constants in the code. See listing \ref{SCSI_consts}.
@@ -279,7 +289,7 @@ namespace SCSI {
 
 Finally all structures have a constructor, which at least zeroes all the data.
 Some structures (typically the CDBs, where the first byte is the operation's code)
-automatically set the value of fields which can only take one value. Helper
+automatically set the value of fields which can only have one value. Helper
 functions are created as needed, where accessing/setting the data in the structure
 requires non-trivial processing (and when the case is not covered by the common
 tools handling strings that endianness).
@@ -289,17 +299,17 @@ tools handling strings that endianness).
 There is a small class hierarchy for exceptions: \verb#Tape::Exception# inherits from
 \verb#std::exception#, and \verb#Tape::Exceptions::Errnum# inherits from the latter.
 \verb#Tape::Exceptions::Errnum# manages the errnos. It collects the errno value and turns it
-into a string automatically at construction time.  \verb#Tape::Exception# and all inheriting
-classes collect a stack trace at construction time.
+into a string automatically at construction time.
 
 \verb#Tape::Exception# and all its heirs automatically generate a stack trace at creation time.
-This allows easy tracing of unhandled exceptions, as the stack trace embedded in the content
+This allows easy tracing of unhandled exceptions, as the stack trace is embedded in the content
 of the \verb#what()# method. For the cases where the exception is indeed handled, a shorter version
 called \verb#shortWhat()# allows the logging of the problem without bloating the logs with long stack 
 traces.
 
 Another exception class, \verb#SCSI::Exception#, turns the SCSI status and sense buffer into a
-user readable string.
+user readable string. In addition, a helper exception thrower function avoids code
+repetitions (\verb#ExceptionLauncher()#).
 
 Throughout the project, the error handling strategy is to throw an exception when any
 error condition occurs. This ensures that any returned value is valid, and prevents the 
@@ -309,10 +319,11 @@ to the user of the functions. When finer grained exceptions will turn out to be 
 we will add them on an as needed basis.
 
 \subsection{Non-fatal warnings strategy}
+\label{Non-fatal warnings strategy}
 
 
-We want to deliver an interface (possible common) to most object where the non-fatal
-problems as recorded (with time of occurrence) and stored for further retrieval by
+We want to deliver an interface, preferably common, to most object where the non-fatal
+problems are recorded (with time of occurrence) and stored for further retrieval by
 upstream caller. This allow developers to deal with the logging interface only in the 
 top "application" class which glues all the bricks of the project together.
 
@@ -409,6 +420,10 @@ The SCSI commands and st driver's functions used in previous software (CAStor's 
 
 The interface is shown in listing \ref{drive_if}.
 
+TODO: define end of tape behavior for write (create an exception, and throw it).
+
+TODO: define how detect a blank tape.
+
 \begin{table}
 \begin{lstlisting}[caption=Tape::Drive interface,label=drive_if]
 namespace Tape {
@@ -493,10 +508,14 @@ TODO: finish the descriptions (remaining: HDR1, HDR2, UHL1, EOF1, EOF2, UTL1).
 
 \subsubsection{File block management}
 
-TODO: define block sizes strategy. Some files tapes have mixed block sizes,
+Some files tapes have mixed block sizes,
 some files used to have mixed block sizes. Current proposal is to have a fixed
 block size per tape, and to have operators choose the optimal block size for 
-drive performance (too small blocks reduce performance).
+drive performance (too small blocks reduce performance). 
+
+Currently 256kB is used everywhere, so hardcoding this block size for writing 
+to this value is an acceptable for the time being. On the long run, this should 
+be a configurable parameter by the operators.
 
 Ideally, only the Tape::File class should handle all aspects of cutting the disk
 file, which is a continuous stream, into fixed size blocks. But this would have the 
@@ -513,7 +532,12 @@ errors, the warnings will be reported through the warning interface described in
 \ref{Non-fatal warnings strategy}.
 
 \subsubsection{Checksums}
-TODO.
+The checksum in CAStor uses the Adler32 checksum. Adler32 can be computed 
+incrementally on a stream of data. The zlib contains an implementation of adler32
+\footnote{\href{http://www.zlib.net/manual.html\#Checksum}{http://www.zlib.net/manual.html\#Checksum}}.
+The checksum will be computer automatically when writing or reading the file to
+tape. Reading a file with a wrong checksum will throw an exception.
+TODO: define writing behavior (is the checksum pre-declared?).
 
 \subsubsection{Tape::File API}
 TODO.
