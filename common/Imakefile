@@ -28,6 +28,7 @@ COMMONLIB_OBJS = $(SYSDEP_OBJS) \
                  ../castor/exception/InvalidConfigEntry.o \
                  ../castor/exception/InvalidConfiguration.o \
                  ../castor/exception/Internal.o \
+                 ../castor/exception/Mismatch.o \
                  ../castor/exception/NotSupported.o \
                  ../castor/exception/OutOfMemory.o \
                  ../castor/exception/QueryVolumeFailed.o \
