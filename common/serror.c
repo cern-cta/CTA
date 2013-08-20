@@ -67,6 +67,7 @@ char    *sys_serrlist[SEMAXERR-SEBASEOFF+2]=
    "Failed to execute Python",
    "Missing operand",
    "Mismatch",
+   "Request failed",
    "BAD ERROR NUMBER"
   };
 

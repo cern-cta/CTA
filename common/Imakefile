@@ -41,6 +41,7 @@ COMMONLIB_OBJS = $(SYSDEP_OBJS) \
                  ../castor/exception/NoValue.o \
                  ../castor/exception/PermissionDenied.o \
                  ../castor/exception/RequestCanceled.o \
+                 ../castor/exception/RequestFailed.o \
                  ../castor/exception/Security.o \
                  ../castor/exception/SQLError.o \
                  ../castor/exception/TapeNetAcceptInterrupted.o \

@@ -78,8 +78,9 @@
 #define SEPYTHONEXEC    SEBASEOFF+44    /* Failed to execute Python     */
 #define SEMISSINGOPER   SEBASEOFF+45    /* Missing operand              */
 #define SEMISMATCH      SEBASEOFF+46    /* Mismatch                     */
+#define SEREQUESTFAILED SEBASEOFF+47    /* Request failed               */
 
-#define SEMAXERR        SEBASEOFF+46    /* Maximum error number         */
+#define SEMAXERR        SEBASEOFF+47    /* Maximum error number         */
 
 #define SERRNO  (serrno - SEBASEOFF)    /* User convenience             */
 /*
