@@ -384,9 +384,9 @@ The SCSI commands and st driver's functions used in previous software (CAStor's 
           if it works in practice for StorageTek drives (or others).
     \item Rewind (MTIOCTOP/MTREW, in rwndtape).
     \item Skip to end of data (MTIOCTOP/MTEOM, in skip2eod, without the trick of repairbadmir).
-    \item Skip n files backwards (MTIOCTOP/MTBSF, in skiptpfb).
-    \item Skip n files forward (MTIOCTOP/MTFSF, in skiptpff).
-    \item Skip n files forward (MTIOCTOP/MTFSF, in skiptpfff). skiptpfff and skiptpff differ only 
+    \item Skip n file marks backwards (MTIOCTOP/MTBSF, in skiptpfb).
+    \item Skip n file marks forward (MTIOCTOP/MTFSF, in skiptpff).
+    \item Skip n file marks forward (MTIOCTOP/MTFSF, in skiptpfff). skiptpfff and skiptpff differ only 
           by error reporting. Both functions exists since CAStor has been put in SVN (20/07/1999)
     \item Skip n blocks backwards (MTIOCTOP/MTBSR, in skiptprb).
     \item Skip n blocks forward (MTIOCTOP/MTFSR, in skiptprf).
@@ -432,8 +432,8 @@ namespace Tape {
     virtual void fastSpaceToEOM(void) throw (Exception);
     virtual void rewind(void) throw (Exception);
     virtual void spaceToEOM(void) throw (Exception);
-    virtual void spaceFilesBackwards(size_t count) throw (Exception);
-    virtual void spaceFilesForward(size_t count) throw (Exception);
+    virtual void spaceFileMarksBackwards(size_t count) throw (Exception);
+    virtual void spaceFileMarksForward(size_t count) throw (Exception);
     virtual void spaceBlocksBackwards(size_t count) throw (Exception);
     virtual void spaceBlocksForward(size_t count) throw (Exception);
     virtual void unloadTape(void) throw (Exception);
