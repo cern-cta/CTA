@@ -30,7 +30,7 @@
 namespace castor { namespace exception {
 
     /**
-     * Failed to mount volume.
+     * Mismatch.
      */
     class Mismatch : public castor::exception::Exception {
       
