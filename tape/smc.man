@@ -8,9 +8,7 @@ smc \- command line interface to drive robotic devices through SCSI
 .B smc
 .BI -d
 .BI -D " drive_ordinal"
-[
 .BI -h " rmcserver"
-]
 .BI -l " loader"
 [
 .BI -V " vid"
@@ -20,9 +18,7 @@ smc \- command line interface to drive robotic devices through SCSI
 .br
 .B smc
 .BI -e
-[
 .BI -h " rmcserver"
-]
 .BI -l " loader"
 .BI -V " vid"
 [
@@ -31,9 +27,7 @@ smc \- command line interface to drive robotic devices through SCSI
 .br
 .B smc
 .BI -i
-[
 .BI -h " rmcserver"
-]
 .BI -l " loader"
 [
 .BI -V " vid"
@@ -44,9 +38,8 @@ smc \- command line interface to drive robotic devices through SCSI
 .B smc
 .BI -m
 .BI -D " drive_ordinal"
-[
 .BI -h " rmcserver"
-] [
+[
 .BI -I
 ]
 .BI -l " loader"
@@ -56,9 +49,7 @@ smc \- command line interface to drive robotic devices through SCSI
 ]
 .br
 .B smc
-[
 .BI -h " rmcserver"
-]
 .BI -l " loader"
 .B -q D
 [
@@ -69,9 +60,7 @@ smc \- command line interface to drive robotic devices through SCSI
 ]
 .br
 .B smc
-[
 .BI -h " rmcserver"
-]
 .BI -l " loader"
 .B -q L
 [
@@ -79,9 +68,7 @@ smc \- command line interface to drive robotic devices through SCSI
 ]
 .br
 .B smc
-[
 .BI -h " rmcserver"
-]
 .BI -l " loader"
 .B -q P
 [
@@ -89,9 +76,7 @@ smc \- command line interface to drive robotic devices through SCSI
 ]
 .br
 .B smc
-[
 .BI -h " rmcserver"
-]
 .BI -l " loader"
 .B -q S
 [
@@ -103,9 +88,7 @@ smc \- command line interface to drive robotic devices through SCSI
 ]
 .br
 .B smc
-[
 .BI -h " rmcserver"
-]
 .BI -l " loader"
 .B -q V
 [
@@ -134,7 +117,7 @@ The vid must be specified.
 .TP
 .BI \-h " rmcserver"
 specifies the hostname of the machine where the Remote SCSI Media Changer
-daemon runs.
+daemon runs. This parameter is mandatory.
 .TP
 .BI \-I
 flips media side.
@@ -150,10 +133,6 @@ specifies the picker SCSI device. This parameter is mandatory.
 .BI \-m
 triggers a mount operation. The drive must be free.
 The drive and the vid must be specified.
-.TP
-.BI \-M
-triggers a move medium operation. The target and source slot must be specified.
-The slots must be free.
 .TP
 .BI \-N " nbelem"
 allows to specify the maximum number of entries to be reported.
