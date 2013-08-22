@@ -32,7 +32,7 @@ void usage(char *cmd)
 	fprintf (stderr, "usage: %s ", cmd);
 	fprintf (stderr, "%s%s%s",
 	    "[-D device_name] [-d density] [-g device_group_name]\n",
-	    "[-H number_headers] [-l label_type] [-T] [-V visual_identifier]\n",
+	    "[-l label_type] [-T] [-V visual_identifier]\n",
 	    "[-v volume_serial_number] [--nbsides n] [-f]\n");
 }
 
@@ -56,7 +56,6 @@ int main(int	argc,
 		{"nbsides", REQUIRED_ARGUMENT, 0, TPOPT_NBSIDES},
 		{0, 0, 0, 0}
 	};
-	int nbhdr = -1;
 	int nbsides = 1;
 	int side = 0;
 	char *tempnam();
@@ -66,7 +65,7 @@ int main(int	argc,
 
 	Copterr = 1;
 	Coptind = 1;
-	while ((c = Cgetopt_long (argc, argv, "D:d:g:H:l:TV:v:f", longopts, NULL)) != EOF) {
+	while ((c = Cgetopt_long (argc, argv, "D:d:g:l:TV:v:f", longopts, NULL)) != EOF) {
 		switch (c) {
 		case 'D':
 			if (! drive[0]) {
@@ -104,19 +103,6 @@ int main(int	argc,
 				}
 			} else {
 				fprintf (stderr, TP018, "-g");
-				errflg++;
-			}
-			break;
-		case 'H':
-			if (nbhdr < 0) {
-				nbhdr = strtol (Coptarg, &dp, 10);
-				if (*dp != '\0' ||
-				    nbhdr < 0 || nbhdr > 2) {
-					fprintf (stderr, TP006, "-H");
-					errflg++;
-				}
-			} else {
-				fprintf (stderr, TP018, "-H");
 				errflg++;
 			}
 			break;
@@ -191,7 +177,6 @@ int main(int	argc,
 
 	if (! vid[0])
 		strcpy (vid, vsn);
-	if (nbhdr < 0) nbhdr = 1;
 
 	signal (SIGHUP, cleanup);
 	signal (SIGINT, cleanup);
@@ -226,6 +211,7 @@ int main(int	argc,
 
 	Ctape_kill_needed = 1;
 	for (side = 0; side < nbsides; side++) {
+		const int nbhdr = 1;
 		if (Ctape_label (path, vid, side, dgn, density, drive, vsn,
                                  lbltype, nbhdr, flags, 0)) {
                         fprintf (stderr, "tplabel: tape not labeled.\n");

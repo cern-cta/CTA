@@ -125,15 +125,6 @@ The list can be obtained with
 It must match the device group specified in VMGR (if installed).
 Default is CART.
 .TP
-.BI \-H " number_headers"
-Defines the number of headers included in the prelabel: if
-.BR 0 ,
-only a VOL1 record is written; if
-.BR 1 ,
-VOL1 and HDR1 are written (this is the default); if
-.BR 2 ,
-VOL1, HDR1 and HDR2 are written to tape.
-.TP
 .BI \-l " label_type"
 Only the
 .BR aul
