@@ -464,7 +464,6 @@ namespace Tape {
 \end{table}
 
 \subsection{The Tape::File class}
-
 \subsubsection{CAStor file format}
 Over time, CAStor used several file formats, but as of 2013, only one file format
 is used, called AUL. This format is described an old CERN web site
@@ -475,36 +474,243 @@ and the general description of the ANSI fields can be found in IBM's z/OS docume
 The AUL format consists of volume label, header blocks and trailer blocks. All those
 descriptors are contained in tape blocks of 80 kilobytes. All data is in ASCII nowadays.
 
-The structure of the volume label is:
+
+\begin{table}[H]
+\textbf{\caption{The structure of the volume label}}
 
 \begin{center}
-\begin{tabularx}{\textwidth}{ |c|X| }
+\begin{tabularx}{\textwidth}{ |c|c|c|X| }
   \hline
-  \multicolumn{2}{|c|}{VOL1} \\
+  \multicolumn{4}{|c|}{VOL1} \\
   \hline
-  Bytes & \multicolumn{1}{c|}{Content} \\
+  Bytes & Length & Offset & \multicolumn{1}{c|}{Content} \\
   \hline \hline
-  0-3 & Volume label indicator: the caracters "VOL1" \\
+  0-3 & 4 & 0x00 & Volume label indicator: the caracters "VOL1" \\
   \hline
-  4-9 & Volume serial number (VSN) (ex: "AB1234") \\
+  4-9 & 6 & 0x04 & Volume serial number (VSN) (ex: "AB1234") \\
   \hline
-  10 (0x0A) & Accessibility (In CAStor, left as space) \\
+  10 & 1 & 0x0A & Accessibility (In CAStor, left as space) \\
   \hline
-  11-23 (0x0B-0x17) & Reserved for future (spaces) \\
+  11-23 & 13 & 0x0B & Reserved for future (spaces) \\
   \hline
-  24-36 (0x18-0x24) & Implementation identifier (left as spaces by CAStor) \\
+  24-36 & 13 & 0x18 & Implementation identifier (left as spaces by CAStor) \\
   \hline
-  37-50 (0x25-0x32) & Owner identifier (in CAStor, the string "CASTOR" padded with spaces)\\
+  37-50 & 14 & 0x25 & Owner identifier (in CAStor, the string "CASTOR" or STAGESUPERUSER name padded with spaces)\\
   \hline
-  51-78 (0x33-0x4E) & Reserved (spaces) \\
+  51-78 & 28 & 0x33 & Reserved (spaces) \\
   \hline
-  79 (0x4F) & Label standard level (1,3 and 4 are listed as valid in IBM's documentation. CAStor uses ASCII '3') \\
+  79 & 1 & 0x4F & Label standard level (1,3 and 4 are listed as valid in IBM's documentation. CAStor uses ASCII '3') \\
+  \hline
+\end{tabularx}
+\end{center}
+
+CAStor example for the beginning of the tape:
+\begin{small}
+\begin{verbatim}
+00000000  56 4f 4c 31 56 35 32 30  30 31 20 20 20 20 20 20  |VOL1V52001      |
+00000010  20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20  |                |
+00000020  20 20 20 20 20 43 41 53  54 4f 52 20 20 20 20 20  |     CASTOR     |
+00000030  20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20  |                |
+00000040  20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 33  |               3|
+\end{verbatim}
+\end{small}
+\end{table}
+
+\begin{table}[H]
+\textbf{\caption{The structure of the HDR1, EOF1 labels}}
+\begin{center}
+\begin{tabularx}{\textwidth}{ |c|c|c|X| }
+  \hline
+  \multicolumn{4}{|c|}{HDR1, EOF1} \\
+  \hline
+  Bytes & Length & Offset & \multicolumn{1}{c|}{Content} \\
+  \hline \hline
+  0-3 & 4 & 0x00 & Header label: the caracters "HDR1 or EOF1" \\
+  \hline
+  4-20 & 17 & 0x04 & File identifier: hexadecimal CAStor NS file ID. 
+  nsgetpath -x can be used to find the CASTOR full path name. Aligned to left. \\
+  \hline
+  21-26 & 6 & 0x15 & The volume serial number of the tape.\\
+  \hline
+  27-30 & 4 & 0x1B & File section number:  a number (0001 to 9999) that indicates
+  the order of the volume within the multivolume aggregate.
+  This number is always 0001 for a single volume data set. \\
+  \hline
+  31-34 & 4 & 0x1F & File sequence number: a number that indicates
+  the relative position of the data set within a multiple data set group (aggregate).
+  CAStor uses modulus for fseq by 10000 \\
+  \hline
+  35-38 & 4 & 0x23 & Generation number:  '0001' in CAStor. \\
+  \hline
+  39-40 & 2 & 0x27 & Version number of generation: '00' in CAStor. 
+   \\
+  \hline
+  41-46 & 6 & 0x29 & Creation date:  Date when allocation begins for creating the
+   data set. The date format is  cyyddd, where:
+   c = century (blank=19; 0=20; 1=21; etc.)
+   yy = year (00-99)
+  ddd = day (001-366) \\
+  \hline
+  47-52 & 6 & 0x2F & Expiration date: year and day of the year when the data set may be 
+  scratched or overwritten. The data is shown in the format cyyddd.
+  It is always advisable to set the expiration date when a volume is being initialised 
+  ('prelabelled') to be a date before the current date, so that writing to the tape 
+  is immediately possible.  \\
+  \hline
+  53 & 1 & 0x35 & Accessibility: a code indicating the security status of the data set and
+  'space' means no data set access protection.  \\
+  \hline
+  54-60 & 6 & 0x36 & Block count: This field in the trailer label shows the number of data
+  blocks in the data set on the current volume. This field in the header label is always '000000'. \\
+  \hline
+  60-72 & 13 & 0x3C & System code of creating system: a unique code that identifies the system.
+  CASTOR with CASTOR BASEVERSION number string. \\
+  \hline
+  73-79 & 7 & 0x49 & Reserved \\
   \hline
 
 \end{tabularx}
 \end{center}
+CAStor example for the second file on the tape:
+\begin{small}
+\begin{verbatim}
+00000000  48 44 52 31 31 32 41 31  36 30 43 33 38 20 20 20  |HDR112A160C38   |
+00000010  20 20 20 20 20 56 35 32  30 30 31 30 30 30 31 30  |     V5200100010|
+00000020  30 30 32 30 30 30 31 30  30 30 31 32 30 34 31 30  |0020001000120410|
+00000030  31 32 30 34 31 20 30 30  30 30 30 30 43 41 53 54  |12041 000000CAST|
+00000040  4f 52 20 32 2e 31 2e 31  32 20 20 20 20 20 20 20  |OR 2.1.12       |
+\end{verbatim}
+\end{small}
+\end{table}
 
-TODO: finish the descriptions (remaining: HDR1, HDR2, UHL1, EOF1, EOF2, UTL1).
+
+\begin{table}[H]
+\textbf{\caption{The structure of the HDR2, EOF2 labels}}
+\begin{center}
+\begin{tabularx}{\textwidth}{ |c|c|c|X| }
+  \hline
+  \multicolumn{4}{|c|}{HDR2, EOF2} \\
+  \hline
+  Bytes & Length & Offset & \multicolumn{1}{c|}{Content} \\
+  \hline \hline
+  0-3 & 4 & 0x00 & Header label: the caracters "HDR2 or EOF2" \\
+  \hline
+  4 & 1 & 0x04 & Record format. An alphabetic character that indicates the
+  format of the records in the associated data set. For the AUL it could be only: F - fixed length, U - undefined length(only inside PRELABEL with HDR2).\\
+  \hline
+  5-9 & 5 & 0x05 & Block length in bytes (maximum).  For the block size  greater than 100000 the value is 00000. \\
+  \hline
+  10-14 & 5 & 0x0A & Record length in bytes (maximum). For the record size greater than 100000 the value is 00000. \\
+  \hline
+  15 & 1 & 0x0F & Depends on the tape density values are following: '2' for D800, '3' for D1600, '4' for D6250  \\
+  \hline
+  16-33 & 18 & 0x10 & Reserved \\
+  \hline
+  34 & 1 & 0x22 & 'P' if the drive configured to use compression (i.e. xxxGC) \\
+  \hline
+  35-49 & 15 & 0x23 & Reserved \\
+  \hline
+  50-51 & 2 & 0x32 & '00' for AL and AUL tapes \\
+  \hline
+  52-79 & 28 & 0x34 & Reserved \\
+  \hline
+
+\end{tabularx}
+\end{center}
+CAStor example for the first file on the tape:
+\begin{small}
+\begin{verbatim}
+00000000  48 44 52 32 46 30 30 30  30 30 30 30 30 30 30 20  |HDR2F0000000000 |
+00000010  20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20  |                |
+00000010  20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20  |                |
+00000030  20 20 30 30 20 20 20 20  20 20 20 20 20 20 20 20  |  00            |
+00000040  20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20  |                |
+\end{verbatim}
+\end{small}
+
+\end{table}
+
+\begin{table}[H]
+\textbf{\caption{The structure of the UHL1, UTL1 labels}}
+\begin{center}
+\begin{tabularx}{\textwidth}{ |c|c|c|X| }
+  \hline
+  \multicolumn{4}{|c|}{UHL1, UTL1} \\
+  \hline
+  Bytes & Length & Offset & \multicolumn{1}{c|}{Content} \\
+  \hline \hline
+  0-3 & 4 & 0x00 & User header label: the caracters "UHL1 or UTL1" \\
+  \hline
+  4-13 & 10 & 0x04 & Actual file sequence number \\
+  \hline
+  14-23 & 10 & 0x0E & Actual block size \\
+  \hline
+  24-33 & 10 & 0x18 & Actual record length \\
+  \hline
+  34-41 & 8 & 0x22 & Site : domain name uppercase \\
+  \hline
+  42-51 & 10 & 0x2A & Tape mover host name uppercase \\
+  \hline
+  52-59 & 8 & 0x34 & Drive manufacturer \\
+  \hline
+  60-67 & 8 & 0x3C & Drive model (first 8 bytes from the field PRODUCT IDENTIFICATION in the SCSI INQUIRY replay) \\
+  \hline
+  68-79 & 12 & 0x44 & Drive serial number \\
+  \hline
+\end{tabularx}
+\end{center}
+CAStor example for the second file on the tape:
+\begin{small}
+\begin{verbatim}
+00000000  55 48 4c 31 30 30 30 30  30 30 30 30 30 32 30 30  |UHL1000000000200|
+00000010  30 30 32 36 32 31 34 34  30 30 30 30 32 36 32 31  |0026214400002621|
+00000020  34 34 43 45 52 4e 20 20  20 20 4c 58 43 32 44 45  |44CERN    LXC2DE|
+00000030  56 35 44 32 53 54 4b 20  20 20 20 20 54 31 30 30  |V5D2STK     T100|
+00000040  30 30 42 20 58 59 5a 5a  59 5f 42 31 20 20 20 20  |00B XYZZY_B1    |
+\end{verbatim}
+\end{small}
+\end{table}
+
+\begin{minipage}{\linewidth}
+CAStor example for the empty tape with PRELABEL and one HDR1 is used:
+\begin{small}
+\begin{verbatim}
+00000000  56 4f 4c 31 56 35 32 30  30 31 20 20 20 20 20 20  |VOL1V52001      |
+00000010  20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20  |                |
+00000020  20 20 20 20 20 72 6f 6f  74 20 20 20 20 20 20 20  |     root       |
+00000030  20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20  |                |
+00000040  20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 33  |               3|
+00000050  48 44 52 31 50 52 45 4c  41 42 45 4c 20 20 20 20  |HDR1PRELABEL    |
+00000060  20 20 20 20 20 56 35 32  30 30 31 30 30 30 31 30  |     V5200100010|
+00000070  30 30 31 30 30 30 31 30  30 30 31 33 32 33 34 30  |0010001000132340|
+00000080  31 33 32 33 34 20 30 30  30 30 30 30 43 41 53 54  |13234 000000CAST|
+00000090  4f 52 20 32 2e 31 2e 31  33 20 20 20 20 20 20 20  |OR 2.1.13       |
+\end{verbatim}
+\end{small}
+\end{minipage}
+
+\begin{minipage}{\linewidth}
+CAStor example for the empty tape with PRELABEL and two HDR1 and HDR2 are used:
+\begin{small}
+\begin{verbatim}
+00000000  56 4f 4c 31 56 35 32 30  30 31 20 20 20 20 20 20  |VOL1V52001      |
+00000010  20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20  |                |
+00000020  20 20 20 20 20 72 6f 6f  74 20 20 20 20 20 20 20  |     root       |
+00000030  20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20  |                |
+00000040  20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 33  |               3|
+00000050  48 44 52 31 50 52 45 4c  41 42 45 4c 20 20 20 20  |HDR1PRELABEL    |
+00000060  20 20 20 20 20 56 35 32  30 30 31 30 30 30 31 30  |     V5200100010|
+00000070  30 30 31 30 30 30 31 30  30 30 31 33 32 33 34 30  |0010001000132340|
+00000080  31 33 32 33 34 20 30 30  30 30 30 30 43 41 53 54  |13234 000000CAST|
+00000090  4f 52 20 32 2e 31 2e 31  33 20 20 20 20 20 20 20  |OR 2.1.13       |
+000000a0  48 44 52 32 55 33 32 37  36 30 30 30 30 30 30 20  |HDR2U3276000000 |
+000000b0  20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20  |                |
+000000c0  20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20  |                |
+000000d0  20 20 30 30 20 20 20 20  20 20 20 20 20 20 20 20  |  00            |
+000000e0  20 20 20 20 20 20 20 20  20 20 20 20 20 20 20 20  |                |
+\end{verbatim}
+\end{small}
+\end{minipage}
 
 \subsubsection{File block management}
 
