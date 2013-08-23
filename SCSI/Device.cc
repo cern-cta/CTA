@@ -33,11 +33,15 @@
  */
 SCSI::DeviceVector::DeviceVector(Tape::System::virtualWrapper& sysWrapper) : m_sysWrapper(sysWrapper) {
   std::string sysDevsPath = "/sys/bus/scsi/devices";
+  Tape::Utils::regex ifFirstCharIsDigit("^[[:digit:]]");
+  std::vector<std::string> checkResult;
   DIR* dirp = m_sysWrapper.opendir(sysDevsPath.c_str());
   if (!dirp) throw Tape::Exceptions::Errnum("Error opening sysfs scsi devs");
   while (struct dirent * dent = m_sysWrapper.readdir(dirp)) {
     std::string dn(dent->d_name);
     if ("." == dn || ".." == dn) continue;
+    checkResult = ifFirstCharIsDigit.exec(dn);
+    if (0 == checkResult.size()) continue; /* we only use digital names like 6:0:3:0 */
     std::string fullpath = sysDevsPath + "/" + std::string(dent->d_name);
     /* We expect only symbolic links in this directory, */
     char rp[PATH_MAX];
@@ -92,22 +96,47 @@ SCSI::DeviceInfo::DeviceFile SCSI::DeviceVector::statDeviceFile(std::string path
  */
 void SCSI::DeviceVector::getTapeInfo(DeviceInfo & devinfo) {
   /* Find the st and nst devices for this SCSI device */
-  Tape::Utils::regex st_re("^scsi_tape:(st[[:digit:]]+)$");
-  Tape::Utils::regex nst_re("^scsi_tape:(nst[[:digit:]]+)$");
-  DIR * dirp = m_sysWrapper.opendir(devinfo.sysfs_entry.c_str());
-  if (!dirp) throw Tape::Exceptions::Errnum(std::string("Error opening device directory ") +
-      devinfo.sysfs_entry);
+  Tape::Utils::regex *st_re;
+  Tape::Utils::regex *nst_re;
+  DIR * dirp; 
+  /* SLC6 default tapeDir and scsiPrefix */
+  std::string tapeDir="/scsi_tape"; /* The name of the tape dir inside of
+                                     * devinfo.sysfs_entry. /scsi_tape/ on SLC6.
+                                     */
+  std::string scsiPrefix="^";        /* The prefix for the name for the tape 
+                                      * device name for the regexp.
+                                      * scsi_tape: on SLC5.
+                                      */ 
+  /* we try to open /scsi_tape first for SLC6 */
+  dirp = m_sysWrapper.opendir((devinfo.sysfs_entry+tapeDir).c_str());
+  
+  if (!dirp) {
+    /* here we open sysfs_entry for SLC5 */
+    dirp = m_sysWrapper.opendir(devinfo.sysfs_entry.c_str());
+    if (!dirp) throw Tape::Exceptions::Errnum(
+      std::string("Error opening tape device directory ") +
+      devinfo.sysfs_entry + tapeDir+" or "+devinfo.sysfs_entry);
+    else {
+      /* we are not on SLC6 */
+      scsiPrefix="^scsi_tape:"; 
+      tapeDir ="";
+    }
+  } 
+  
+  st_re = new Tape::Utils::regex((scsiPrefix+"(st[[:digit:]]+)$").c_str());
+  nst_re = new Tape::Utils::regex((scsiPrefix+"(nst[[:digit:]]+)$").c_str());
+  
   while (struct dirent * dent = m_sysWrapper.readdir(dirp)) {
     std::vector<std::string> res;
     /* Check if it's the st information */
-    res = st_re.exec(dent->d_name);
+    res = st_re->exec(dent->d_name);
     if (res.size()) {
       if (!devinfo.st_dev.size()) {
-        devinfo.st_dev = std::string("/dev/") + res[1];
+        devinfo.st_dev = std::string("/dev/") + res[1];     
       } else
         throw Tape::Exception("Matched st device several times!");
       /* Read the major and major number */
-      devinfo.st = readDeviceFile(devinfo.sysfs_entry + "/"
+      devinfo.st = readDeviceFile(devinfo.sysfs_entry + tapeDir+ "/"
           + std::string(dent->d_name) + "/dev");
       /* Check the actual device file */
       DeviceInfo::DeviceFile realFile = statDeviceFile(devinfo.st_dev);
@@ -122,14 +151,14 @@ void SCSI::DeviceVector::getTapeInfo(DeviceInfo & devinfo) {
       }
     }
     /* Check if it's the nst information */
-    res = nst_re.exec(dent->d_name);
+    res = nst_re->exec(dent->d_name);
     if (res.size()) {
       if (!devinfo.nst_dev.size()) {
         devinfo.nst_dev = std::string("/dev/") + res[1];
       } else
         throw Tape::Exception("Matched nst device several times!");
       /* Read the major and major number */
-      devinfo.nst = readDeviceFile(devinfo.sysfs_entry + "/"
+      devinfo.nst = readDeviceFile(devinfo.sysfs_entry + tapeDir + "/"
           + std::string(dent->d_name) + "/dev");
       /* Check the actual device file */
       DeviceInfo::DeviceFile realFile = statDeviceFile(devinfo.nst_dev);
