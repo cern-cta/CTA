@@ -56,16 +56,8 @@ COMPILEC(usrusrmsg.c,-DNOTRACE)
 COMPILEC(usrwritelbl.c,-DNOTRACE)
 COMPILEC(usrwrttpmrk.c,-DNOTRACE)
 
-TapeDependsOnLibrary(common,castorcommon)
-TapeDependsOnLibrary(vdqm,castorvdqm)
-TapeDependsOnLibrary(vmgr,castorvmgr)
-TapeDependsOnLibrary(dlf,castordlf)
-TapeDependsOnLibrary(rfio,castorrfio)
-TapeDependsOnLibrary(upv,castorupv)
-
 TPLIB_OBJS = Ctape_config.o Ctape_devinfo.o Ctape_dmpfil.o Ctape_drvinfo.o Ctape_errmsg.o Ctape_info.o Ctape_kill.o Ctape_label.o Ctape_mount.o Ctape_position.o Ctape_reserve.o Ctape_rls.o Ctape_rstatus.o Ctape_status.o asc2ebc.o chkdirw.o cvtden.o ebc2asc.o findpgrp.o getcompstat.o initlabel.o send2tpd.o usrlbl.o usrlocate.o usrreadlbl.o usrrwndtape.o usrskiptape.o usrsmcsubr.o usrsmcsubr2.o usrtperror.o usrusrmsg.o usrwritelbl.o usrwrttpmrk.o tplogger.o tplogger_messages.o sendscsicmd.o
-RMCLIB_OBJS = ../rmc/rmc_dismount.o ../rmc/rmc_errmsg.o ../rmc/rmc_export.o ../rmc/rmc_find_cartridge.o ../rmc/rmc_get_geometry.o ../rmc/rmc_import.o ../rmc/rmc_mount.o ../rmc/rmc_read_elem_status.o ../rmc/send2rmc.o
-TapeSharedLibraryTarget(castortape,$(TPLIB_OBJS) $(RMCLIB_OBJS),,)
+TapeSharedLibraryTarget(castortape,$(TPLIB_OBJS),,DepSharedLibraryTargetName(common,castorcommon) DepSharedLibraryTargetName(vmgr,castorvmgr) DepSharedLibraryTargetName(dlf,castordlf))
 
 CLIENTLIBMANPAGE(Ctape_dmpfil)
 CLIENTLIBMANPAGE(Ctape_info)
@@ -85,6 +77,7 @@ CLIENTLIBMANPAGE(usrlbl)
 CLIENTLIBMANPAGE(wrttpmrk)
 
 TAPELIB = DepSharedLibraryTargetName(tape,castortape)
+RMCLIB = DepSharedLibraryTargetName(rmc,castorrmc)
 
 TapeProgramTarget(tpconfig,tpconfig.o,$(TAPELIB),$(TAPELIB),755)
 TapeProgramTarget(tprstat,tprstat.o,$(TAPELIB),$(TAPELIB),755)
@@ -100,10 +93,8 @@ POSOVL_OBJS = posovl.o buildhdrlbl.o builduhl.o buildvollbl.o ebc2asc.o getdrvst
 TapeProgramTarget(taped,$(TAPED_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB),755)
 TapeProgramTarget(confdrive,$(CONFDRIVE_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB),755)
 TapeProgramTarget(posovl,$(POSOVL_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB),755)
-TapeProgramTarget(smc,smc.o,$(TAPELIB),$(TAPELIB),6755)
 TapeProgramTarget(tplabel,tplabel.o,$(TAPELIB),$(TAPELIB),755)
 ADMMANPAGE(taped)
-EXEMANPAGE(smc)
 EXEMANPAGE(tplabel)
 EXEMANPAGE(tape_oper)
 LOGROTATE(castor-tape-server,installtape)
@@ -115,8 +106,8 @@ CONFIGFILE(TP,installtape)
 # Compile no STK version
 MOUNTTAPE_NOSTK_OBJS = mounttape.o asc2ebc.o buildhdrlbl.o buildvollbl.o ebc2asc.o getdrvstatus.o inquiry.o rbtsubr.o readlbl.o rwndtape.o send2tpd.o sendrep.o setdens.o skiptape.o smcsubr.o tperror.o tplogit.o unldtape.o usrmsg.o writelbl.o wrttpmrk.o mircheck.o
 RLSTAPE_NOSTK_OBJS = rlstape.o getdrvstatus.o rbtsubr.o send2tpd.o smcsubr.o sendrep.o tperror.o tplogit.o usrmsg.o unldtape.o tapealertcheck.o
-TapeProgramTarget(mounttape-nostk,$(MOUNTTAPE_NOSTK_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB),755)
-TapeProgramTarget(rlstape-nostk,$(RLSTAPE_NOSTK_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB),755)
+TapeProgramTarget(mounttape-nostk,$(MOUNTTAPE_NOSTK_OBJS) $(TAPEACCT),$(TAPELIB) $(RMCLIB),$(TAPELIB) $(RMCLIB),755)
+TapeProgramTarget(rlstape-nostk,$(RLSTAPE_NOSTK_OBJS) $(TAPEACCT),$(TAPELIB) $(RMCLIB),$(TAPELIB) $(RMCLIB),755)
 
 # Compile STK objects. Note: only 2 objects, mounttape and rbtsubr need to be recompiled with STK options
 ifeq ($(CASTOR_NOSTK),)
@@ -139,6 +130,6 @@ COMPILEC(rbtsubr-stk.c, $(CDKFLG) $(CDKINC))
 # Compile STK version
 MOUNTTAPE_STK_OBJS = mounttape-stk.o asc2ebc.o buildhdrlbl.o buildvollbl.o ebc2asc.o getdrvstatus.o inquiry.o rbtsubr-stk.o readlbl.o rwndtape.o send2tpd.o sendrep.o setdens.o skiptape.o smcsubr.o tperror.o tplogit.o unldtape.o usrmsg.o writelbl.o wrttpmrk.o mircheck.o
 RLSTAPE_STK_OBJS = rlstape.o getdrvstatus.o rbtsubr-stk.o send2tpd.o smcsubr.o sendrep.o tperror.o tplogit.o usrmsg.o unldtape.o tapealertcheck.o
-TapeProgramTarget(mounttape,$(MOUNTTAPE_STK_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB) $(LIBCDK),755)
-TapeProgramTarget(rlstape,$(RLSTAPE_STK_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB) $(LIBCDK),755)
+TapeProgramTarget(mounttape,$(MOUNTTAPE_STK_OBJS) $(TAPEACCT),$(TAPELIB) $(RMCLIB),$(TAPELIB) $(RMCLIB) $(LIBCDK),755)
+TapeProgramTarget(rlstape,$(RLSTAPE_STK_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB) $(RMCLIB) $(LIBCDK),755)
 endif
