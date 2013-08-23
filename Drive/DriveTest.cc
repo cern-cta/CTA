@@ -40,9 +40,9 @@ TEST(TapeDrive, OpensCorrectly) {
   sysWrapper.delegateToFake();
   
   /* We expect the following calls: */
-  EXPECT_CALL(sysWrapper, opendir(_)).Times(3);
+  EXPECT_CALL(sysWrapper, opendir(_)).Times(AtLeast(3));
   EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
-  EXPECT_CALL(sysWrapper, closedir(_)).Times(3);
+  EXPECT_CALL(sysWrapper, closedir(_)).Times(AtLeast(3));
   EXPECT_CALL(sysWrapper, realpath(_, _)).Times(3);
   EXPECT_CALL(sysWrapper, open(_, _)).Times(14);
   EXPECT_CALL(sysWrapper, read(_, _, _)).Times(20);
@@ -69,9 +69,9 @@ TEST(TapeDrive, getPositionInfoAndPositionToLogicalObject) {
   sysWrapper.delegateToFake();
   
   /* We expect the following calls: */
-  EXPECT_CALL(sysWrapper, opendir(_)).Times(3);
+  EXPECT_CALL(sysWrapper, opendir(_)).Times(AtLeast(3));
   EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
-  EXPECT_CALL(sysWrapper, closedir(_)).Times(3);
+  EXPECT_CALL(sysWrapper, closedir(_)).Times(AtLeast(3));
   EXPECT_CALL(sysWrapper, realpath(_, _)).Times(3);
   EXPECT_CALL(sysWrapper, open(_, _)).Times(14);
   EXPECT_CALL(sysWrapper, read(_, _, _)).Times(20);
@@ -117,9 +117,9 @@ TEST(TapeDrive, setDensityAndCompression) {
   sysWrapper.delegateToFake();
   
   /* We expect the following calls: */
-  EXPECT_CALL(sysWrapper, opendir(_)).Times(3);
+  EXPECT_CALL(sysWrapper, opendir(_)).Times(AtLeast(3));
   EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
-  EXPECT_CALL(sysWrapper, closedir(_)).Times(3);
+  EXPECT_CALL(sysWrapper, closedir(_)).Times(AtLeast(3));
   EXPECT_CALL(sysWrapper, realpath(_, _)).Times(3);
   EXPECT_CALL(sysWrapper, open(_, _)).Times(14);
   EXPECT_CALL(sysWrapper, read(_, _, _)).Times(20);
@@ -161,9 +161,9 @@ TEST(TapeDrive, setStDriverOptions) {
   sysWrapper.delegateToFake();
   
   /* We expect the following calls: */
-  EXPECT_CALL(sysWrapper, opendir(_)).Times(3);
+  EXPECT_CALL(sysWrapper, opendir(_)).Times(AtLeast(3));
   EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
-  EXPECT_CALL(sysWrapper, closedir(_)).Times(3);
+  EXPECT_CALL(sysWrapper, closedir(_)).Times(AtLeast(3));
   EXPECT_CALL(sysWrapper, realpath(_, _)).Times(3);
   EXPECT_CALL(sysWrapper, open(_, _)).Times(14);
   EXPECT_CALL(sysWrapper, read(_, _, _)).Times(20);
@@ -195,9 +195,9 @@ TEST(TapeDrive, getDeviceInfo) {
   sysWrapper.delegateToFake();
   
   /* We expect the following calls: */
-  EXPECT_CALL(sysWrapper, opendir(_)).Times(3);
+  EXPECT_CALL(sysWrapper, opendir(_)).Times(AtLeast(3));
   EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
-  EXPECT_CALL(sysWrapper, closedir(_)).Times(3);
+  EXPECT_CALL(sysWrapper, closedir(_)).Times(AtLeast(3));
   EXPECT_CALL(sysWrapper, realpath(_, _)).Times(3);
   EXPECT_CALL(sysWrapper, open(_, _)).Times(14);
   EXPECT_CALL(sysWrapper, read(_, _, _)).Times(20);
@@ -233,9 +233,9 @@ TEST(TapeDrive, getCompressionAndClearCompressionStats) {
   sysWrapper.delegateToFake();
   
   /* We expect the following calls: */
-  EXPECT_CALL(sysWrapper, opendir(_)).Times(3);
+  EXPECT_CALL(sysWrapper, opendir(_)).Times(AtLeast(3));
   EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
-  EXPECT_CALL(sysWrapper, closedir(_)).Times(3);
+  EXPECT_CALL(sysWrapper, closedir(_)).Times(AtLeast(3));
   EXPECT_CALL(sysWrapper, realpath(_, _)).Times(3);
   EXPECT_CALL(sysWrapper, open(_, _)).Times(22);
   EXPECT_CALL(sysWrapper, read(_, _, _)).Times(20);
@@ -332,17 +332,17 @@ TEST(TapeDrive, getTapeAlerts) {
   struct {
     void operator() (Tape::System::mockWrapper & sysWrapper) {
       /* We expect the following calls: */
-      EXPECT_CALL(sysWrapper, opendir(_)).Times(3);
+      EXPECT_CALL(sysWrapper, opendir(_)).Times(AtLeast(3));
       EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
-      EXPECT_CALL(sysWrapper, closedir(_)).Times(3);
-      EXPECT_CALL(sysWrapper, realpath(_, _)).Times(3);
-      EXPECT_CALL(sysWrapper, open(_, _)).Times(14);
-      EXPECT_CALL(sysWrapper, read(_, _, _)).Times(20);
+      EXPECT_CALL(sysWrapper, closedir(_)).Times(AtLeast(3));
+      EXPECT_CALL(sysWrapper, realpath(_, _)).Times(AtLeast(3));
+      EXPECT_CALL(sysWrapper, open(_, _)).Times(AtLeast(14));
+      EXPECT_CALL(sysWrapper, read(_, _, _)).Times(AtLeast(20));
       EXPECT_CALL(sysWrapper, write(_, _, _)).Times(0);
       EXPECT_CALL(sysWrapper, ioctl(_, _, An<mtget*>())).Times(2);
-      EXPECT_CALL(sysWrapper, close(_)).Times(14);
-      EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(3);
-      EXPECT_CALL(sysWrapper, stat(_, _)).Times(7);
+      EXPECT_CALL(sysWrapper, close(_)).Times(AtLeast(14));
+      EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(AtLeast(3));
+      EXPECT_CALL(sysWrapper, stat(_, _)).Times(AtLeast(7));
 
       /* Test: detect devices, then open the device files */
       SCSI::DeviceVector dl(sysWrapper);
@@ -367,10 +367,14 @@ TEST(TapeDrive, getTapeAlerts) {
 
 
   /* Prepare the test harness */
-  Tape::System::mockWrapper sysWrapper;
-  sysWrapper.fake.setupSLC5();
-  sysWrapper.delegateToFake();
-  test_functor(sysWrapper);
+  Tape::System::mockWrapper sysWrapperSLC5;
+  Tape::System::mockWrapper sysWrapperSLC6;
+  sysWrapperSLC5.fake.setupSLC5();
+  sysWrapperSLC6.fake.setupSLC6();
+  sysWrapperSLC5.delegateToFake();
+  sysWrapperSLC6.delegateToFake();
+  test_functor(sysWrapperSLC5);
+  test_functor(sysWrapperSLC6);
 }
 
 }
