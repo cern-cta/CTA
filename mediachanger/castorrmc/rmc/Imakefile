@@ -5,13 +5,9 @@ COMM
 
 COMM 	Make SCSI media changer server programs.
 
-TapeDependsOnLibrary(common,castorcommon)
-TapeDependsOnLibrary(upv,castorupv)
-TapeDependsOnLibrary(dlf,castordlf)
-TapeDependsOnLibrary(tape,castortape)
-
+TAPELIB = DepSharedLibraryTargetName(tape,castortape)
 RMCD_OBJS = rmc_serv.o rmc_procreq.o rmclogit.o sendrep.o usrmsg.o
-TapeProgramTarget(rmcd,$(RMCD_OBJS),,,755)
+TapeProgramTarget(rmcd,$(RMCD_OBJS),$(TAPELIB),$(TAPELIB),755)
 ADMMANPAGE(rmcd)
 TapeMakeDir($(LOGPATH),0755)
 LOGROTATE(castor-rmc-server,installtape)
@@ -26,3 +22,10 @@ CLIENTLIBMANPAGE(rmc_import)
 CLIENTLIBMANPAGE(rmc_mount)
 CLIENTLIBMANPAGE(rmc_read_elem_status)
 CLIENTLIBMANPAGE(rmc_seterrbuf)
+
+RMCLIB_OBJS = rmc_dismount.o rmc_errmsg.o rmc_export.o rmc_find_cartridge.o rmc_get_geometry.o rmc_import.o rmc_mount.o rmc_read_elem_status.o send2rmc.o
+TapeSharedLibraryTarget(castorrmc, $(RMCLIB_OBJS),,)
+
+RMCLIB = DepSharedLibraryTargetName(rmc,castorrmc)
+TapeProgramTarget(smc,smc.o,$(RMCLIB),$(RMCLIB),6755)
+EXEMANPAGE(smc)
