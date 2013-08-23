@@ -1,4 +1,3 @@
-%attr(-,root,root) usr/lib/libcastorrmc.so.*
 %attr(-,root,root) usr/lib/libcastortape.so.*
 %attr(-,root,root) usr/lib/libcastortapebridge.so.*
 %attr(-,root,root) usr/lib/libcastortapegatewayprotocol.so.*

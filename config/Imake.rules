@@ -224,23 +224,19 @@ ProgramTarget(program,$(patsubst %,LOCAL_PATH/%,objects),$(PREFIX(COMMONDEPLIB))
 
 #define DependsOnLibrary(directory,libname)                                           \
 PREFIX(DEPLIB) += DepSharedLibraryTargetName(directory,libname)                     @@\
-PREFIX(LIBS) += DepSharedLibraryTargetName(directory,libname) BuildRPath/**/libname @@\
-include $(CASTOR_ROOT)/directory/Makefile
+PREFIX(LIBS) += DepSharedLibraryTargetName(directory,libname) BuildRPath/**/libname
 
 #define ClientDependsOnLibrary(directory,libname)                                           \
 PREFIX(CLIENTDEPLIB) += DepSharedLibraryTargetName(directory,libname)                     @@\
-PREFIX(CLIENTLIBS) += DepSharedLibraryTargetName(directory,libname) BuildRPath/**/libname @@\
-include $(CASTOR_ROOT)/directory/Makefile
+PREFIX(CLIENTLIBS) += DepSharedLibraryTargetName(directory,libname) BuildRPath/**/libname
 
 #define TapeDependsOnLibrary(directory,libname)                                           \
 PREFIX(TAPEDEPLIB) += DepSharedLibraryTargetName(directory,libname)                     @@\
-PREFIX(TAPELIBS) += DepSharedLibraryTargetName(directory,libname) BuildRPath/**/libname @@\
-include $(CASTOR_ROOT)/directory/Makefile
+PREFIX(TAPELIBS) += DepSharedLibraryTargetName(directory,libname) BuildRPath/**/libname
 
 #define CommonDependsOnLibrary(directory,libname)                                           \
 PREFIX(COMMONDEPLIB) += DepSharedLibraryTargetName(directory,libname)                     @@\
-PREFIX(COMMONLIBS) += DepSharedLibraryTargetName(directory,libname) BuildRPath/**/libname @@\
-include $(CASTOR_ROOT)/directory/Makefile
+PREFIX(COMMONLIBS) += DepSharedLibraryTargetName(directory,libname) BuildRPath/**/libname
 
 
 #define LOGROTATE(file,tgt)                             \
