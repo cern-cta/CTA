@@ -173,6 +173,8 @@ void SCSI::DeviceVector::getTapeInfo(DeviceInfo & devinfo) {
       }
     }
   }
+  delete st_re;
+  delete nst_re;
   m_sysWrapper.closedir(dirp);
 }
 
