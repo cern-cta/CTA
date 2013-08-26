@@ -474,6 +474,21 @@ and the general description of the ANSI fields can be found in IBM's z/OS docume
 The AUL format consists of volume label, header blocks and trailer blocks. All those
 descriptors are contained in tape blocks of 80 bytes. All data is in ASCII nowadays and empty bytes are spaces.
 
+\begin{table}[H]
+\textbf{\caption{AUL label format}}
+\begin{center}
+\begin{tabular}{ |c|c|c|c|c|c|c|c|c|c|c| }
+  \hline
+  VOL1 &  \cellcolor{orange}HDR1 & \cellcolor{orange}HDR2 & \cellcolor{orange}UHL1 & \cellcolor{green} TM &
+   \cellcolor{gray} DATA & \cellcolor{green} TM & \cellcolor{orange}EOF1 & \cellcolor{orange}EOF2 & 
+   \cellcolor{orange}UTL1 &  \cellcolor{green} TM \\
+  \hline
+  \multicolumn{1}{c|}{} &\multicolumn{10}{c|}{one data file} \\
+
+\end{tabular}
+\end{center}
+\end{table}
+
 
 \begin{table}[H]
 \textbf{\caption{The structure of the volume label}}
