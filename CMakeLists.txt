@@ -68,7 +68,7 @@ add_subdirectory(Drive)
 add_subdirectory(System)
 add_subdirectory(Exception)
 add_subdirectory(Utils)
-
+add_subdirectory(File)
 # .. and then tools, tests, and daemon
 # add_subdirectory(tools)
 # add_subdirectory(deamon)

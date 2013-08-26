@@ -21,8 +21,38 @@
  ************************************************************************/
 
 #include "Structures.hh"
+#include "../Exception/Exception.hh"
 
 void Tape::AULFile::VOL1::fill(std::string vsn) {
   setString(label, "VOL1");
   setString(VSN, vsn);
+  setString(lblStandart,"3");
+  setString(ownerID, "CASTOR"); /* TODO: check do we need CASTOR's STAGERSUPERUSER */
+}
+
+void Tape::AULFile::VOL1::verify() {
+  if (cmpString(label,"VOL1")) 
+    throw Tape::Exceptions::Errnum(std::string("Failed check for the VOL1: ")+
+            Tape::AULFile::toString(label));
+  if (!cmpString(VSN,""))
+    throw Tape::Exceptions::Errnum(std::string("Failed check for the VSN: ") + 
+            Tape::AULFile::toString(VSN));
+  if (cmpString(lblStandart,"3"))
+    throw Tape::Exceptions::Errnum(
+            std::string("Failed check for the label standart: ") +
+            Tape::AULFile::toString(lblStandart));
+  if (cmpString(ownerID,"CASTOR"))
+    throw Tape::Exceptions::Errnum(
+            std::string("Failed check for the ownerID: ") +
+            Tape::AULFile::toString(ownerID));
+  
+  /* now we check all other fields which must be spaces */
+  if (cmpString(accessibility,""))
+    throw Tape::Exceptions::Errnum("accessibility is not empty");         
+  if (cmpString(reserved1,""))
+    throw Tape::Exceptions::Errnum("reserved1 is not empty");
+  if (cmpString(implID,""))
+    throw Tape::Exceptions::Errnum("implID is not empty");
+  if (cmpString(reserved2,""))
+    throw Tape::Exceptions::Errnum("reserved2 is not empty");  
 }
