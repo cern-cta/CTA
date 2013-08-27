@@ -28,8 +28,8 @@ CLIENTLIBMANPAGE(rmc_mount)
 CLIENTLIBMANPAGE(rmc_read_elem_status)
 CLIENTLIBMANPAGE(rmc_seterrbuf)
 
-COMM The rmc library depends on libcastorcommon.so therefore include the rules
-COMM to make it
+COMM Both the rmc library and the smc command-line tool depend on
+COMM libcastorcommon.so therefore include the rules to make it
 include $(CASTOR_ROOT)/common/Makefile
 
 RMCLIB_DEPLIBS = DepSharedLibraryTargetName(common,castorcommon)
@@ -37,7 +37,7 @@ RMCLIB_LIBS = $(RMCLIB_DEPLIBS)
 RMCLIB_OBJS = rmc_dismount.o rmc_errmsg.o rmc_export.o rmc_find_cartridge.o rmc_get_geometry.o rmc_import.o rmc_mount.o rmc_read_elem_status.o send2rmc.o
 TapeSharedLibraryTarget(castorrmc,$(RMCLIB_OBJS),$(RMCLIB_DEPLIBS),$(RMCLIB_LIBS))
 
-SMC_DEPLIBS = DepSharedLibraryTargetName(rmc,castorrmc)
+SMC_DEPLIBS = DepSharedLibraryTargetName(common,castorcommon) DepSharedLibraryTargetName(rmc,castorrmc)
 SMC_LIBS = $(SMC_DEPLIBS) BuildRPathcastorrmc
 TapeProgramTarget(smc,smc.o,$(SMC_DEPLIBS),$(SMC_LIBS),6755)
 EXEMANPAGE(smc)
