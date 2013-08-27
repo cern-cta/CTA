@@ -47,7 +47,7 @@ int netread(int s, char *buf, int nbytes) {
  return nbytes;
 }
  
-int netwrite (int s, char *buf, int nbytes) {
+int netwrite (const int s, const char *buf, const int nbytes) {
   int n, nb;
   if (nbytes < 0) {
     serrno = EINVAL;
