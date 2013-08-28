@@ -13,9 +13,7 @@
 #include "rmc.h"
 #include "rmc_api.h"
 #include "serrno.h"
-int rmc_import(char *server,
-               char *smc_ldr,
-               char *vid)
+int rmc_import(const char *const server, const char *const vid)
 {
 	int c;
 	gid_t gid;
@@ -42,7 +40,7 @@ int rmc_import(char *server,
 
 	marshall_LONG (sbp, uid);
 	marshall_LONG (sbp, gid);
-	marshall_STRING (sbp, smc_ldr);
+	marshall_STRING (sbp, ""); /* loader field is no longer used */
 	marshall_STRING (sbp, vid);
 
 	msglen = sbp - sendbuf;

@@ -13,11 +13,11 @@
 #include "rmc.h"
 #include "rmc_api.h"
 #include "serrno.h"
-int rmc_mount(char *server,
-              char *smc_ldr,
-              char *vid,
-              int side,
-              int drvord)
+int rmc_mount(
+	const char *const server,
+	const char *const vid,
+	const int side,
+	const int drvord)
 {
 	int c;
 	gid_t gid;
@@ -44,7 +44,7 @@ int rmc_mount(char *server,
 
 	marshall_LONG (sbp, uid);
 	marshall_LONG (sbp, gid);
-	marshall_STRING (sbp, smc_ldr);
+	marshall_STRING (sbp, ""); /* loader field is no longer used */
 	marshall_STRING (sbp, vid);
 	marshall_WORD (sbp, side);
 	marshall_WORD (sbp, drvord);

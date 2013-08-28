@@ -13,9 +13,9 @@
 #include "rmc.h"
 #include "rmc_api.h"
 #include "serrno.h"
-int rmc_get_geometry(char *server,
-                     char *smc_ldr,
-                     struct robot_info *robot_info)
+int rmc_get_geometry(
+	const char *const server,
+	struct robot_info *const robot_info)
 {
 	int c;
 	gid_t gid;
@@ -43,7 +43,7 @@ int rmc_get_geometry(char *server,
 
 	marshall_LONG (sbp, uid);
 	marshall_LONG (sbp, gid);
-	marshall_STRING (sbp, smc_ldr);
+	marshall_STRING (sbp, ""); /* loader field is no longer used */
 
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */

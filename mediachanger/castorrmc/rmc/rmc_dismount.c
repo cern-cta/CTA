@@ -13,11 +13,11 @@
 #include "rmc.h"
 #include "rmc_api.h"
 #include "serrno.h"
-int rmc_dismount(char *server,
-                 char *smc_ldr,
-                 char *vid,
-                 int drvord,
-                 int force)
+int rmc_dismount(
+	const char *const server,
+	const char *const vid,
+	const int drvord,
+	const int force)
 {
 	int c;
 	gid_t gid;
@@ -44,7 +44,7 @@ int rmc_dismount(char *server,
 
 	marshall_LONG (sbp, uid);
 	marshall_LONG (sbp, gid);
-	marshall_STRING (sbp, smc_ldr);
+	marshall_STRING (sbp, ""); /* loader field is no longer used */
 	marshall_STRING (sbp, vid);
 	marshall_WORD (sbp, drvord);
 	marshall_WORD (sbp, force);

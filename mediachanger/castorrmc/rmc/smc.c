@@ -20,26 +20,26 @@
 
 extern char *optarg;
 
-static void usage(char *cmd)
+static void usage(const char *const cmd)
 {
 	fprintf (stderr, "usage: %s ", cmd);
 	fprintf (stderr,
-	    "-d -D drive_ordinal -h rmcserver -l loader [-V vid] [-v]\n"
-	    "\t-e -h rmcserver -l loader -V vid [-v]\n"
-	    "\t-i -h rmcserver -l loader [-V vid] [-v]\n"
-	    "\t-m -D drive_ordinal -h rmcserver [-I] -l loader -V vid [-v]\n"
-	    "\t-q D [-D drive_ordinal] -h rmcserver -l loader [-v]\n"
-	    "\t-q L -h rmcserver -l loader [-v]\n"
-	    "\t-q S -h rmcserver -l loader [-N nbelem] [-S starting_slot] [-v]\n"
-	    "\t-q V -h rmcserver -l loader [-N nbelem] [-V vid] [-v]\n");
+	    "-d -D drive_ordinal -h rmcserver [-V vid] [-v]\n"
+	    "\t-e -h rmcserver -V vid [-v]\n"
+	    "\t-i -h rmcserver [-V vid] [-v]\n"
+	    "\t-m -D drive_ordinal -h rmcserver [-I] -V vid [-v]\n"
+	    "\t-q D [-D drive_ordinal] -h rmcserver [-v]\n"
+	    "\t-q L -h rmcserver [-v]\n"
+	    "\t-q S -h rmcserver [-N nbelem] [-S starting_slot] [-v]\n"
+	    "\t-q V -h rmcserver [-N nbelem] [-V vid] [-v]\n");
 }
 
-static int smc_qdrive (char *rmchost,
-                int fd,
-                char *loader,
-                struct robot_info *robot_info,
-                int drvord,
-                int verbose)
+static int smc_qdrive (
+	const char *const rmchost,
+	const int fd,
+	const struct robot_info *const robot_info,
+	int drvord,
+	const int verbose)
 {
         int c;
         struct smc_element_info *element_info;
@@ -59,7 +59,7 @@ static int smc_qdrive (char *rmchost,
 		fprintf (stderr, SR012);
 		return (USERR);
 	}
-	if ((c = rmc_read_elem_status (rmchost, loader, 4,
+	if ((c = rmc_read_elem_status (rmchost, 4,
 	    robot_info->device_start+drvord, nbelem, element_info)) < 0) {
 		free (element_info);
 		return (c);
@@ -92,7 +92,7 @@ static int smc_qdrive (char *rmchost,
 	return (0);
 }
 
-static int smc_qlib (struct robot_info *robot_info)
+static int smc_qlib (const struct robot_info *const robot_info)
 {
 	printf ("Vendor/Product/Revision = <%s>\n", robot_info->inquiry);
 	printf ("Transport Count = %d, Start = %d\n",
@@ -106,14 +106,14 @@ static int smc_qlib (struct robot_info *robot_info)
 	return (0);
 }
 
-static int smc_qport (char *rmchost,
-               int fd,
-               char *loader,
-               struct robot_info *robot_info,
-               int verbose)
+static int smc_qport (
+	const char *const rmchost,
+	const int fd,
+	const struct robot_info *const robot_info,
+	const int verbose)
 {
-    int c;
-    struct smc_element_info *element_info;
+	int c;
+	struct smc_element_info *element_info;
 	int i;
 	int nbelem;
 	char *pstatus;
@@ -124,7 +124,7 @@ static int smc_qport (char *rmchost,
 		return (USERR);
 	}
 
-	if ((c = rmc_read_elem_status (rmchost, loader, 3,
+	if ((c = rmc_read_elem_status (rmchost, 3,
 	    robot_info->port_start, nbelem, element_info)) < 0) {
 		free (element_info);
 		return (serrno - ERMCRBTERR);
@@ -146,13 +146,13 @@ static int smc_qport (char *rmchost,
 	return (0);
 }
  
-static int smc_qslot (char *rmchost,
-               int fd,
-               char *loader,
-               struct robot_info *robot_info,
-               int slotaddr,
-               int nbelem,
-               int verbose)
+static int smc_qslot (
+	const char *const rmchost,
+	const int fd,
+	const struct robot_info *robot_info,
+	int slotaddr,
+	int nbelem,
+	const int verbose)
 {
         int c;
         struct smc_element_info *element_info;
@@ -171,7 +171,7 @@ static int smc_qslot (char *rmchost,
 		return (USERR);
 	}
 
-	if ((c = rmc_read_elem_status (rmchost, loader, 2, slotaddr,
+	if ((c = rmc_read_elem_status (rmchost, 2, slotaddr,
 	    nbelem, element_info)) < 0) {
 		free (element_info);
 		return (serrno - ERMCRBTERR);
@@ -186,20 +186,20 @@ static int smc_qslot (char *rmchost,
 	return (0);
 }
 
-static int smc_qvid (char *rmchost,
-              int fd,
-              char *loader,
-              struct robot_info *robot_info,
-              char *reqvid,
-              int nbelem,
-              int verbose)
+static int smc_qvid (
+	const char *const rmchost,
+	const int fd,
+	const struct robot_info *const robot_info,
+	const char *reqvid,
+	int nbelem,
+	const int verbose)
 {
         int c;
         struct smc_element_info *element_info;
 	int i;
 	char *ptype;
 	static char ptypes[5][6] = {"", "hand", "slot", "port", "drive"};
-	char *vid;
+	const char *vid;
  
 	if (*reqvid)
 		vid = reqvid;
@@ -217,7 +217,7 @@ static int smc_qvid (char *rmchost,
 		return (USERR);
 	}
 
-	if ((c = rmc_find_cartridge (rmchost, loader, vid, 0, 0, nbelem,
+	if ((c = rmc_find_cartridge (rmchost, vid, 0, 0, nbelem,
 	    element_info)) < 0) {
 		free (element_info);
 		return (serrno - ERMCRBTERR);
@@ -241,7 +241,7 @@ static int smc_qvid (char *rmchost,
 	return (0);
 }
 
-int main(int argc,
+int main(const int argc,
          char **argv)
 {
 	int c;
@@ -250,7 +250,6 @@ int main(int argc,
 	int errflg = 0;
 	const int fd = -1;
 	int invert = 0;
-	char loader[32];
 	int n;
 	int nbelem = 0;
 	char qry_type = 0;
@@ -264,10 +263,9 @@ int main(int argc,
 
 	/* parse and check command options */
 
-        memset(loader, '\0', sizeof(loader));
         memset(rmchost, '\0', sizeof(rmchost));
 	memset (vid, '\0', sizeof(vid));
-	while ((c = getopt (argc, argv, "D:deh:Iil:mN:q:S:V:vT:")) != EOF) {
+	while ((c = getopt (argc, argv, "D:deh:IimN:q:S:V:vT:")) != EOF) {
 		switch (c) {
 		case 'D':	/* drive ordinal */
 			drvord = strtol (optarg, &dp, 10);
@@ -303,16 +301,6 @@ int main(int argc,
 			break;
 		case 'I':	/* invert */
 			invert = 1;
-			break;
-		case 'l':	/* loader */
-			if(strlen(optarg) > (sizeof(loader) - 1)) {
-				fprintf(stderr,
-				  "loader %s must be at most %d characters long\n",
-				  optarg, (int)(sizeof(loader) - 1));
-				errflg++;
-			} else {
-				strncpy (loader, optarg, sizeof(loader) - 1);
-			}
 			break;
 		case 'm':	/* mount */
 			if (req_type) {
@@ -375,10 +363,6 @@ int main(int argc,
 			break;
 		}
 	}
-	if (req_type && *loader == '\0') {
-		fprintf (stderr, SR005);
-		errflg++;
-	}
 	if (req_type && *rmchost == '\0') {
 		fprintf (stderr, "rmcserver must be specified\n");
 		errflg++;
@@ -401,7 +385,7 @@ int main(int argc,
 	}
 
 	/* get robot geometry */
-	if (rmc_get_geometry (rmchost, loader, &robot_info)) {
+	if (rmc_get_geometry (rmchost, &robot_info)) {
 		exit (serrno);
 	}
 
@@ -418,43 +402,43 @@ int main(int argc,
 
 	switch (req_type) {
 	case 'd':
-		if ((c = rmc_dismount (rmchost, loader, vid, drvord, 0)) < 0) {
+		if ((c = rmc_dismount (rmchost, vid, drvord, 0)) < 0) {
 			c = (serrno == SECOMERR) ? RBT_FAST_RETRY : serrno - ERMCRBTERR;
 		}
 		break;	
 	case 'e':
-		if ((c = rmc_export (rmchost, loader, vid)) < 0) {
+		if ((c = rmc_export (rmchost, vid)) < 0) {
 			c = (serrno == SECOMERR) ? RBT_FAST_RETRY : serrno - ERMCRBTERR;
 		}
 		break;
 	case 'i':
-		if ((c = rmc_import (rmchost, loader, vid)) < 0) {
+		if ((c = rmc_import (rmchost, vid)) < 0) {
 			c = (serrno == SECOMERR) ? RBT_FAST_RETRY : serrno - ERMCRBTERR;
 		}
 		break;
 	case 'm':
-		if ((c = rmc_mount (rmchost, loader, vid, invert, drvord)) < 0) {
+		if ((c = rmc_mount (rmchost, vid, invert, drvord)) < 0) {
 			c = (serrno == SECOMERR) ? RBT_FAST_RETRY : serrno - ERMCRBTERR;
 		}
 		break;	
 	case 'q':
 		switch (qry_type) {
 		case 'D':
-			c = smc_qdrive (rmchost, fd, loader, &robot_info, drvord,
+			c = smc_qdrive (rmchost, fd, &robot_info, drvord,
 			    verbose);
 			break;
 		case 'L':
 			c = smc_qlib (&robot_info);
 			break;
 		case 'P':
-			c = smc_qport (rmchost, fd, loader, &robot_info, verbose);
+			c = smc_qport (rmchost, fd, &robot_info, verbose);
 			break;
 		case 'S':
-			c = smc_qslot (rmchost, fd, loader, &robot_info, slotaddr,
+			c = smc_qslot (rmchost, fd, &robot_info, slotaddr,
 			    nbelem, verbose);
 			break;
 		case 'V':
-			c = smc_qvid (rmchost, fd, loader, &robot_info, vid,
+			c = smc_qvid (rmchost, fd, &robot_info, vid,
 			    nbelem, verbose);
 			break;
 		}
