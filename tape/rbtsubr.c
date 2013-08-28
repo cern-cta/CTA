@@ -720,7 +720,7 @@ static int smcmount(char *vid,
 
 	if (rmc_host) {
 
-		const int rmc_mount_rc = rmc_mount (rmc_host, smc_ldr, vid, side, drvord);
+		const int rmc_mount_rc = rmc_mount (rmc_host, vid, side, drvord);
 		const int rmc_mount_serrno = serrno;
 
 		if (0 == rmc_mount_rc) {
@@ -1000,7 +1000,7 @@ static int smcdismount(char *vid,
 	}
 
 	if (rmc_host) {
-		const int rmc_dismount_rc = rmc_dismount (rmc_host, smc_ldr, vid, drvord, force);
+		const int rmc_dismount_rc = rmc_dismount (rmc_host, vid, drvord, force);
 		const int rmc_dismount_serrno = serrno;
 		if (0 == rmc_dismount_rc) {
 			RETURN (0);
@@ -1201,7 +1201,7 @@ static int istapemounted( char *vid, int drvord, char *smc_ldr ) {
                             "func"   , TL_MSG_PARAM_STR, func,
                             "Message", TL_MSG_PARAM_STR, "get robot geometry" );
 
-        if (rmc_get_geometry( rmc_host, smc_ldr, &robot_info) < 0) {
+        if (rmc_get_geometry( rmc_host, &robot_info) < 0) {
                 
                 tplogit( func, "could not get robot geometry\n" );
                 tl_tpdaemon.tl_log( &tl_tpdaemon, 104, 2,
@@ -1218,7 +1218,7 @@ static int istapemounted( char *vid, int drvord, char *smc_ldr ) {
                             "func"   , TL_MSG_PARAM_STR, func,
                             "Message", TL_MSG_PARAM_STR, "read element status" );
 
-        if (rmc_read_elem_status (rmc_host, smc_ldr, 4,
+        if (rmc_read_elem_status (rmc_host, 4,
                                   robot_info.device_start+drvord, 1, &element_info) > 0) {
 
                 if (0 == strcmp( vid, element_info.name)) {

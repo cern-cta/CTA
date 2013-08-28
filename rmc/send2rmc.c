@@ -19,11 +19,12 @@
 
 /* send2tpd - send a request to the SCSI media changer server and wait for the reply */
 
-int send2rmc(char *host,
-             char *reqp,
-             int reql,
-             char *user_repbuf,
-             int user_repbuf_len)
+int send2rmc(
+	const char *const host,
+	const char *const reqp,
+	const int reql,
+	char *const user_repbuf,
+	const int user_repbuf_len)
 {
 	int actual_replen = 0;
 	int c;

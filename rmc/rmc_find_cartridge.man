@@ -11,7 +11,7 @@ rmc_find_cartridge \- send a request to the Remote Media Changer daemon to find 
 .sp
 .BI "int rmc_find_cartridge (char *" server ,
 .BI "char *" smc_ldr ,
-.BI "char *" template ,
+.BI "char *" pattern ,
 .BI "int " type ,
 .BI "int " startaddr ,
 .BI "int " nbelem ,

@@ -13,12 +13,12 @@
 #include "rmc.h"
 #include "rmc_api.h"
 #include "serrno.h"
-int rmc_read_elem_status(char *server,
-                         char *smc_ldr,
-                         int type,
-                         int startaddr,
-                         int nbelem,
-                         struct smc_element_info *element_info)
+int rmc_read_elem_status(
+	const char *const server,
+	const int type,
+	const int startaddr,
+	const int nbelem,
+	struct smc_element_info *const element_info)
 {
 	int c;
 	struct smc_element_info *elemp;
@@ -48,7 +48,7 @@ int rmc_read_elem_status(char *server,
 
 	marshall_LONG (sbp, uid);
 	marshall_LONG (sbp, gid);
-	marshall_STRING (sbp, smc_ldr);
+	marshall_STRING (sbp, ""); /* loader field is no longer used */
 	marshall_LONG (sbp, type);
 	marshall_LONG (sbp, startaddr);
 	marshall_LONG (sbp, nbelem);

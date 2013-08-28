@@ -102,7 +102,6 @@ int rmc_srv_export(char *req_data,
 	gid_t gid;
 	char logbuf[CA_MAXVIDLEN+8];
 	char *rbp;
-	char smc_ldr[CA_MAXRBTNAMELEN+1];
 	uid_t uid;
 	char vid[CA_MAXVIDLEN+1];
 
@@ -117,10 +116,13 @@ int rmc_srv_export(char *req_data,
                              "UID"       , TL_MSG_PARAM_UID, uid,
                              "GID"       , TL_MSG_PARAM_GID, gid,
                              "ClientHost", TL_MSG_PARAM_STR, clienthost );
-	if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1) ||
-	    strcmp (smc_ldr, extended_robot_info.smc_ldr)) {
-		sendrep (rpfd, MSG_ERR, RMC06, "loader");
-		RETURN (ERMCUNREC);
+	/* Unmarshall and ignore the loader field as it is no longer used */
+	{
+		char smc_ldr[CA_MAXRBTNAMELEN+1];
+		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
+			sendrep (rpfd, MSG_ERR, RMC06, "loader");
+			RETURN (ERMCUNREC);
+		}
 	}
 	if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1)) {
 		sendrep (rpfd, MSG_ERR, RMC06, "vid");
@@ -156,7 +158,6 @@ int rmc_srv_findcart(char *req_data,
 	char *rbp;
 	char *repbuf;
 	char *sbp;
-	char smc_ldr[CA_MAXRBTNAMELEN+1];
 	struct smc_status smc_status;
 	int startaddr;
 	char template[40];
@@ -174,10 +175,13 @@ int rmc_srv_findcart(char *req_data,
                              "UID"       , TL_MSG_PARAM_UID, uid,
                              "GID"       , TL_MSG_PARAM_GID, gid,
                              "ClientHost", TL_MSG_PARAM_STR, clienthost );
-	if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1) ||
-	    strcmp (smc_ldr, extended_robot_info.smc_ldr)) {
-		sendrep (rpfd, MSG_ERR, RMC06, "loader");
-		RETURN (ERMCUNREC);
+	/* Unmarshall and ignore the loader fiel as it is no longer used */
+	{
+		char smc_ldr[CA_MAXRBTNAMELEN+1];
+		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
+			sendrep (rpfd, MSG_ERR, RMC06, "loader");
+			RETURN (ERMCUNREC);
+		}
 	}
 	if (unmarshall_STRINGN (rbp, template, 40)) {
 		sendrep (rpfd, MSG_ERR, RMC06, "template");
@@ -238,7 +242,6 @@ int rmc_srv_getgeom(char *req_data,
 	char *rbp;
 	char repbuf[64];
 	char *sbp;
-	char smc_ldr[CA_MAXRBTNAMELEN+1];
 	uid_t uid;
 
 	strncpy (func, "rmc_srv_getgeom", 16);
@@ -252,10 +255,13 @@ int rmc_srv_getgeom(char *req_data,
                              "UID"       , TL_MSG_PARAM_UID, uid,
                              "GID"       , TL_MSG_PARAM_GID, gid,
                              "ClientHost", TL_MSG_PARAM_STR, clienthost );
-	if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1) ||
-	    strcmp (smc_ldr, extended_robot_info.smc_ldr)) {
-		sendrep (rpfd, MSG_ERR, RMC06, "loader");
-		RETURN (ERMCUNREC);
+	/* Unmarshall and ignore the loader field as it is no longer used */
+	{
+		char smc_ldr[CA_MAXRBTNAMELEN+1];
+		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
+			sendrep (rpfd, MSG_ERR, RMC06, "loader");
+			RETURN (ERMCUNREC);
+		}
 	}
 	snprintf (logbuf, 8, "getgeom");
 	rmc_logreq (func, logbuf);
@@ -284,7 +290,6 @@ int rmc_srv_import(char *req_data,
 	gid_t gid;
 	char logbuf[CA_MAXVIDLEN+8];
 	char *rbp;
-	char smc_ldr[CA_MAXRBTNAMELEN+1];
 	uid_t uid;
 	char vid[CA_MAXVIDLEN+1];
 
@@ -299,10 +304,13 @@ int rmc_srv_import(char *req_data,
                              "UID"       , TL_MSG_PARAM_UID, uid,
                              "GID"       , TL_MSG_PARAM_GID, gid,
                              "ClientHost", TL_MSG_PARAM_STR, clienthost );
-	if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1) ||
-	    strcmp (smc_ldr, extended_robot_info.smc_ldr)) {
-		sendrep (rpfd, MSG_ERR, RMC06, "loader");
-		RETURN (ERMCUNREC);
+	/* Unmarshall and ignore the loader field as it is no longer used */
+	{
+		char smc_ldr[CA_MAXRBTNAMELEN+1];
+		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
+			sendrep (rpfd, MSG_ERR, RMC06, "loader");
+			RETURN (ERMCUNREC);
+		}
 	}
 	if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1)) {
 		sendrep (rpfd, MSG_ERR, RMC06, "vid");
@@ -333,7 +341,6 @@ int rmc_srv_mount(char *req_data,
 	int invert;
 	char logbuf[CA_MAXVIDLEN+64];
 	char *rbp;
-	char smc_ldr[CA_MAXRBTNAMELEN+1];
 	uid_t uid;
 	char vid[CA_MAXVIDLEN+1];
 
@@ -348,10 +355,13 @@ int rmc_srv_mount(char *req_data,
                              "UID"       , TL_MSG_PARAM_UID, uid,
                              "GID"       , TL_MSG_PARAM_GID, gid,
                              "ClientHost", TL_MSG_PARAM_STR, clienthost );
-	if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1) ||
-	    strcmp (smc_ldr, extended_robot_info.smc_ldr)) {
-		sendrep (rpfd, MSG_ERR, RMC06, "loader");
-		RETURN (ERMCUNREC);
+	/* Unmarshall and ignore the loader field as it is no longer used */
+	{
+		char smc_ldr[CA_MAXRBTNAMELEN+1];
+		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
+			sendrep (rpfd, MSG_ERR, RMC06, "loader");
+			RETURN (ERMCUNREC);
+		}
 	}
 	if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1)) {
 		sendrep (rpfd, MSG_ERR, RMC06, "vid");
@@ -389,7 +399,6 @@ int rmc_srv_readelem(char *req_data,
 	char *rbp;
 	char *repbuf;
 	char *sbp;
-	char smc_ldr[CA_MAXRBTNAMELEN+1];
 	struct smc_status smc_status;
 	int startaddr;
 	int type;
@@ -406,10 +415,13 @@ int rmc_srv_readelem(char *req_data,
                              "UID"       , TL_MSG_PARAM_UID, uid,
                              "GID"       , TL_MSG_PARAM_GID, gid,
                              "ClientHost", TL_MSG_PARAM_STR, clienthost );
-	if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1) ||
-	    strcmp (smc_ldr, extended_robot_info.smc_ldr)) {
-		sendrep (rpfd, MSG_ERR, RMC06, "loader");
-		RETURN (ERMCUNREC);
+	/* Unmarshall and ignore the loader field as it is no longer used */
+	{
+		char smc_ldr[CA_MAXRBTNAMELEN+1];
+		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
+			sendrep (rpfd, MSG_ERR, RMC06, "loader");
+			RETURN (ERMCUNREC);
+		}
 	}
 	unmarshall_LONG (rbp, type);
 	unmarshall_LONG (rbp, startaddr);
@@ -465,7 +477,6 @@ int rmc_srv_unmount(char *req_data,
 	gid_t gid;
 	char logbuf[CA_MAXVIDLEN+64];
 	char *rbp;
-	char smc_ldr[CA_MAXRBTNAMELEN+1];
 	uid_t uid;
 	char vid[CA_MAXVIDLEN+1];
 
@@ -480,10 +491,13 @@ int rmc_srv_unmount(char *req_data,
                              "UID"       , TL_MSG_PARAM_UID, uid,
                              "GID"       , TL_MSG_PARAM_GID, gid,
                              "ClientHost", TL_MSG_PARAM_STR, clienthost );
-	if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1) ||
-	    strcmp (smc_ldr, extended_robot_info.smc_ldr)) {
-		sendrep (rpfd, MSG_ERR, RMC06, "loader");
-		RETURN (ERMCUNREC);
+	/* Unmarshall and ignore the loader field as it is no longer used */
+	{
+		char smc_ldr[CA_MAXRBTNAMELEN+1];
+		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
+			sendrep (rpfd, MSG_ERR, RMC06, "loader");
+			RETURN (ERMCUNREC);
+		}
 	}
 	if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1)) {
 		sendrep (rpfd, MSG_ERR, RMC06, "vid");
