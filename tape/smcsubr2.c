@@ -33,7 +33,7 @@ int smc_dismount (int fd,
 	const unsigned int dismount_status_read_delay = 1; /* In seconds */
 	unsigned int nb_element_status_reads = 0;
 	int drive_not_unloaded = 1;
-	struct smc_element_info element_info;
+	struct smc_element_info drive_element_info;
 	char func[16];
 	char *msgaddr = 0;
 	struct smc_status smc_status;
@@ -49,17 +49,17 @@ int smc_dismount (int fd,
 	/* point in time eventually indicates the tape is accessible.       */
 	while(drive_not_unloaded && nb_element_status_reads < max_element_status_reads) {
 		if (0 > smc_read_elem_status (fd, loader, 4, robot_info->device_start+drvord,
-		    	1, &element_info)) {
+		    	1, &drive_element_info)) {
 			const int smc_error = smc_lasterror (&smc_status, &msgaddr);
 			usrmsg (func, SR020, "read_elem_status", msgaddr);
 			RETURN (smc_error);
 		}
-		if (0 == (element_info.state & 0x1)) {
+		if (0 == (drive_element_info.state & 0x1)) {
 			usrmsg (func, SR018, "demount", vid, drvord, "Medium Not Present");
 			RETURN (RBT_OK);
 		}
 
-		drive_not_unloaded = (0 == (element_info.state & 0x8));
+		drive_not_unloaded = (0 == (drive_element_info.state & 0x8));
 		if (drive_not_unloaded) {
 			usrmsg (func, "read_elem_status of %s on drive %d detected Drive Not Unloaded\n", vid, drvord);
 		}
@@ -75,26 +75,27 @@ int smc_dismount (int fd,
 		RETURN (RBT_UNLD_DMNT);
 	}
 
-	if (*vid && strcmp (element_info.name, vid)) {
-		usrmsg (func, SR009, vid, element_info.name);
+	if (*vid && strcmp (drive_element_info.name, vid)) {
+		usrmsg (func, SR009, vid, drive_element_info.name);
 		RETURN (RBT_NORETRY);
 	}
 	if (0 > smc_move_medium (fd, loader, robot_info->device_start+drvord,
-	    element_info.source_address, (element_info.flags & 0x40) ? 1 : 0)) {
+	    drive_element_info.source_address, (drive_element_info.flags & 0x40) ? 1 : 0)) {
 		const int smc_error = smc_lasterror (&smc_status, &msgaddr);
 		usrmsg (func, SR018, "demount", vid, drvord, msgaddr);
 		RETURN (smc_error);
 	}
     /* check that the vid is in a slot before returning */
     while (1) {   
-          if (0 > smc_find_cartridge (fd, loader, vid, 0, 0, 1, &element_info)) {
+          struct smc_element_info vol_element_info;
+          if (0 > smc_find_cartridge (fd, loader, drive_element_info.name, 0, 0, 1, &vol_element_info)) {
               const int smc_error = smc_lasterror (&smc_status, &msgaddr);
-              usrmsg (func, SR017, "find_cartridge", vid, msgaddr);
+              usrmsg (func, SR017, "find_cartridge", drive_element_info.name, msgaddr);
               RETURN (smc_error);
           }
          
           /* vid is in a storage slot */  
-          if (element_info.element_type == 2) break; 
+          if (vol_element_info.element_type == 2) break; 
           /* give time for the tape enter the slot */
           sleep (2);
     }
