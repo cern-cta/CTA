@@ -1119,9 +1119,8 @@ static void rtcpd_FreeResources(int **client_socket,
   char dgn[CA_MAXDGNLEN+1];
   char unit[CA_MAXUNMLEN+1];
   u_signed64 totSz = 0;
-  int totKBSz = 0;
+  double totKBSz_d = 0.0;
   double totMBSz_d = 0.0;
-  int totMBSz = 0;
   int Twait = 0;
   int TMount = 0, TUnmount = 0;
   int Tservice = 0;
@@ -1296,11 +1295,10 @@ static void rtcpd_FreeResources(int **client_socket,
   }
   totMBSz_d = (double) totSz / 1024 / 1024;
 
-  totKBSz = (int)(totSz / 1024);
-  totMBSz = totKBSz / 1024;
+  totKBSz_d = (double) totSz / 1024;
 
   if ( (rtcpd_CheckProcError() & RTCP_OK) != 0 ) {
-    rtcp_log(LOG_INFO,"total number of Kbytes transferred is %d\n",totKBSz);
+    rtcp_log(LOG_INFO,"total number of Kbytes transferred is %f\n",totKBSz_d);
     tl_rtcpd.tl_log( &tl_rtcpd, 10, 3,
                      "func"   , TL_MSG_PARAM_STR   , "rtcpd_FreeResources",
                      "Message", TL_MSG_PARAM_STR   , "total number of Mbytes transferred",
@@ -1318,16 +1316,16 @@ static void rtcpd_FreeResources(int **client_socket,
 
     if ( Ttransfer <= 0 ) Ttransfer = 1;
     if ( mode == WRITE_ENABLE ) {
-      rtcp_log(LOG_INFO,"cpdsktp: Data transfer bandwidth (%s) is %d KB/sec\n",
-               ifce,totKBSz/Ttransfer);
+      rtcp_log(LOG_INFO,"cpdsktp: Data transfer bandwidth (%s) is %f KB/sec\n",
+               ifce,totKBSz_d/Ttransfer);
       tl_rtcpd.tl_log( &tl_rtcpd, 41, 4,
                        "func"   , TL_MSG_PARAM_STR, "rtcpd_FreeResources",
                        "Message", TL_MSG_PARAM_STR, "cpdsktp: Data transfer bandwidth",
                        "ifce"   , TL_MSG_PARAM_STR, ifce,
                        "MB/sec" , TL_MSG_PARAM_DOUBLE, (double)totMBSz_d/Ttransfer );
     } else {
-      rtcp_log(LOG_INFO,"cptpdsk: Data transfer bandwidth (%s) is %d KB/sec\n",
-               ifce,totKBSz/Ttransfer);
+      rtcp_log(LOG_INFO,"cptpdsk: Data transfer bandwidth (%s) is %f KB/sec\n",
+               ifce,totKBSz_d/Ttransfer);
       tl_rtcpd.tl_log( &tl_rtcpd, 41, 4,
                        "func"   , TL_MSG_PARAM_STR, "rtcpd_FreeResources",
                        "Message", TL_MSG_PARAM_STR, "cptpdsk: Data transfer bandwidth",
