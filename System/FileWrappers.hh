@@ -142,7 +142,7 @@ namespace System {
     int ioctlModSelect6(sg_io_hdr_t * sgio_h);
     
     /**
-     * This function handles INQUIRY CDB and prepares the standart inquiry
+     * This function handles INQUIRY CDB and prepares the standard inquiry
      * replay or the unit serial number vital product data replay.
      * 
      * @param sgio_h  The pointer to the sg_io_hdr_t structure with 
