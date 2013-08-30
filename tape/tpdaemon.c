@@ -579,9 +579,6 @@ int confdrive(struct tptab *tunp,
 
 	c = 0;
 	strcpy (tunp->dvrname, "tape");
-#if defined(_IBMR2)
-	getdvrnam (tunp->devp->dvn, tunp->dvrname);
-#endif
 	if (status) {	/* tpconfig up */
 		tplogit (func, TP035, tunp->drive, "up");
                 tl_tpdaemon.tl_log( &tl_tpdaemon, 70, 3,
