@@ -578,7 +578,6 @@ int confdrive(struct tptab *tunp,
 	struct tpdev *tdp;
 
 	c = 0;
-	strcpy (tunp->dvrname, "tape");
 	if (status) {	/* tpconfig up */
 		tplogit (func, TP035, tunp->drive, "up");
                 tl_tpdaemon.tl_log( &tl_tpdaemon, 70, 3,
@@ -656,7 +655,7 @@ int confdrive(struct tptab *tunp,
 
 		execlp (progfullpath, "confdrive", tunp->drive,
 			tunp->devp->dvn, arg_rpfd, arg_uid, arg_gid,
-			arg_jid, tunp->dgn, tunp->dvrname, arg_status,
+			arg_jid, tunp->dgn, "tape", arg_status,
 			arg_reason, NULL);
 
 		tplogit (func, "TP002 - confdrive : execlp error : %s\n",
@@ -1704,7 +1703,7 @@ static void procmountreq(char *req_data,
                 tplogit (func, "mounttape %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n",
                          tunp->drive, vid, tunp->cdevp->dvn, arg_rpfd, arg_uid, arg_gid, 
                          rrtp->user, tunp->acctname, arg_jid, arg_ux, tunp->dgn,
-                         tunp->devtype, tunp->dvrname, tunp->loader, arg_mode, arg_lbl,
+                         tunp->devtype, "tape", tunp->loader, arg_mode, arg_lbl,
                          vsn, tunp->filp->path, arg_den, arg_prelabel,
                          arg_vdqmid, arg_tpmounted, arg_side, clienthost, NULL); 
 
@@ -1713,7 +1712,7 @@ static void procmountreq(char *req_data,
 		execlp (progfullpath, "mounttape", tunp->drive, vid, 
 			tunp->cdevp->dvn, arg_rpfd, arg_uid, arg_gid,
 			rrtp->user, tunp->acctname, arg_jid, arg_ux, tunp->dgn,
-			tunp->devtype, tunp->dvrname, tunp->loader, arg_mode,
+			tunp->devtype, "tape", tunp->loader, arg_mode,
 			arg_lbl, vsn, tunp->filp->path, arg_den, arg_prelabel,
 			arg_vdqmid, arg_tpmounted, arg_side, clienthost, NULL);
 		tplogit (func, "TP002 - mounttape : execlp error : %s\n",
@@ -1998,7 +1997,7 @@ static void procposreq(char *req_data,
 
 		execlp (progfullpath, "posovl", tunp->drive, tunp->vid, 
 			arg_rpfd, arg_uid, arg_gid, rrtp->user, arg_jid, arg_ux,
-			tunp->dgn, tunp->devtype, tunp->dvrname, arg_mode, arg_lbl,
+			tunp->dgn, tunp->devtype, "tape", arg_mode, arg_lbl,
 			tunp->vsn, arg_blockid, arg_cfseq, filp->fid, arg_filstat,
 			arg_fsec, arg_fseq, arg_method, filp->path, arg_Qfirst,
 			arg_Qlast, arg_retentd, filp->recfm, arg_blksize, arg_lrecl,
@@ -2673,13 +2672,13 @@ int reldrive(struct tptab *tunp,
                 tplogit (func, "rlstape %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n",
                          tunp->drive, tunp->vid, tunp->cdevp->dvn, arg_rpfd, arg_uid, arg_gid, 
                          user, tunp->acctname, arg_jid, arg_ux, arg_rlsflags, tunp->dgn,
-                         tunp->devtype, tunp->dvrname, tunp->loader, arg_mode, arg_den);
+                         tunp->devtype, "tape", tunp->loader, arg_mode, arg_den);
                 /* tl_log msg wouldn't be seen in the DB due to the execlp() */
 
 		execlp (progfullpath, "rlstape", tunp->drive, tunp->vid,
 			tunp->cdevp->dvn, arg_rpfd, arg_uid, arg_gid, user,
 			tunp->acctname, arg_jid, arg_ux, arg_rlsflags, tunp->dgn,
-			tunp->devtype, tunp->dvrname, tunp->loader, arg_mode,
+			tunp->devtype, "tape", tunp->loader, arg_mode,
 			arg_den, NULL);
 		tplogit (func, "TP002 - rlstape : execlp error : %s\n",
 		    strerror(errno));

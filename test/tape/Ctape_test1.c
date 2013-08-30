@@ -12,7 +12,6 @@
 #include <string.h>
 #include <sys/types.h>
 #include "Ctape_api.h"
-char *dvrname;
 
 main(argc, argv)
 int argc;

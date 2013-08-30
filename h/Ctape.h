@@ -302,7 +302,6 @@ struct tptab {		/* tape drive table */
 	char	drive[CA_MAXUNMLEN+1];	/* drive name */
 	char	dgn[CA_MAXDGNLEN+1];	/* device group name */
 	char	devtype[CA_MAXDVTLEN+1];	/* device type */
-	char	dvrname[7];	/* driver name */
 	char	loader[CA_MAXRBTNAMELEN+1];	/* manual, robot, fhs, acs or lmcp */
 	int	ux;		/* index in drive table tptab */
 	int	devnum;		/* number of devices defined for this drive */

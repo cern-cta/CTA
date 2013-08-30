@@ -23,7 +23,6 @@
 #include <time.h>
 
 char *devtype;
-char *dvrname;
 char errbuf[512];
 char func[16];
 char hostname[CA_MAXHOSTNAMELEN+1];
@@ -102,7 +101,7 @@ int main(int	argc,
 	rlsflags = atoi (argv[11]);
 	dgn = argv[12];
 	devtype = argv[13];
-	dvrname = argv[14];
+	/* The driver name in argv[14] is no longer used */
 	loader = argv[15];
         tapealerts = 0;
         harderror = 0;

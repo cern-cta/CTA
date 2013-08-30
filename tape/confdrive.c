@@ -28,7 +28,6 @@ int main(int	argc,
 	char *dgn;
 	char *drive;
 	char *dvn;
-	char *dvrname;
 	char func[16];
 	int reason;
 	int rpfd;
@@ -67,7 +66,7 @@ int main(int	argc,
 	rpfd = atoi (argv[3]);
 	jid = atoi (argv[6]);
 	dgn = argv[7];
-	dvrname = argv[8];
+	/* The driver name in argv[8] is no longer used */
 	status = atoi (argv[9]);
 	reason = atoi (argv[10]);
 
@@ -76,8 +75,7 @@ int main(int	argc,
 		tapefd = open (dvn, O_RDONLY|O_NDELAY);
 		if (tapefd < 0 &&
 		    (errno == ENOENT || errno == ENXIO || errno == EBUSY ||
-		     errno == ENODEV ||
-		    (strcmp (dvrname, "Atape") == 0 && errno == EIO))) {
+		     errno == ENODEV)) {
 			c = errno;
 		} else {
 			if (tapefd >= 0) {

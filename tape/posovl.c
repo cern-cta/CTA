@@ -20,7 +20,6 @@
 #include "serrno.h"
 #include "tplogger_api.h"
 char *devtype;
-char *dvrname;
 char errbuf[512];
 char func[16];
 gid_t gid;
@@ -109,7 +108,7 @@ int main(int	argc,
 	ux = atoi(argv[8]);
 	dgn = argv[9];
 	devtype = argv[10];
-	dvrname = argv[11];
+	/* The driver name in argv[11] is no longer used */
 	mode = atoi (argv[12]);
 	lblcode = atoi (argv[13]);
 	vsn = argv[14];

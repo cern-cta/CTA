@@ -35,7 +35,6 @@
 char *acctname;
 char *devtype;
 char *drive;
-char *dvrname;
 char errbuf[512];
 char func[16];
 gid_t gid;
@@ -145,7 +144,7 @@ int main(int	argc,
 	ux = atoi(argv[10]);
 	dgn = argv[11];
 	devtype = argv[12];
-	dvrname = argv[13];
+	/* The driver name in argv[13] is no longer used */
 	loader = argv[14];
 	mode = atoi (argv[15]);
 	lblcode = atoi (argv[16]);
