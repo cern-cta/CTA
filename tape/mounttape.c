@@ -272,9 +272,6 @@ int main(int	argc,
                                     "Reason"  , TL_MSG_PARAM_STR  , why,
                                     "TPVID"   , TL_MSG_PARAM_TPVID, vid );
 
-#if defined(CDK)
-remount_loop:
-#endif
 		if (*loader != 'm' && needrbtmnt) {
 			do {
                                 mount_ongoing = 1;
@@ -336,14 +333,20 @@ remount_loop:
 				goto reply;
 			}
 #if defined(CDK)
-			if (*loader == 'a')
+			if (*loader == 'a') {
 				c = acsmountresp();
-#endif
-#if defined(CDK)
+			}
 			if (*loader == 'l' || *loader == 'a') {
-				if ((n = rbtmountchk (&c, drive, vid, dvn, loader)) < 0)
+				if ((n = rbtmountchk (&c, drive, vid, dvn, loader)) < 0) {
 					goto reply;
-				if (n == 1) goto remount_loop;
+				}
+				/* Raise EIO if RBT_FAST_RETRY or RBT_DMNT_FORCE */
+				if (n == 1) {
+					usrmsg (func, "Raising EIO from rbtmountchk return value of 1\n");
+					serrno = EIO;
+					c = EIO;
+					goto reply;
+				}
 			}
 #endif
 			sleep(UCHECKI);
