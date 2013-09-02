@@ -59,7 +59,6 @@ int mount_ongoing = 0;
 
 void configdown( char* );
 int  Ctape_updvsn( uid_t, gid_t, int, int, char*, char*, int, int, int );
-int  Ctape_rslt( uid_t, gid_t, int, char*, char*, int*, char*, char* );
 int  rbtmountchk( int*, char*, char*, char*, char* );
 int  rbtdmntchk( int*, char*, unsigned int* );
 int repairbadmir( int tapefd, char* path );
@@ -851,61 +850,6 @@ reply:
                 tl_tpdaemon.tl_exit( &tl_tpdaemon, 0 );        
         }
 	exit (0);
-}
-
-int Ctape_rslt(uid_t uid,
-               gid_t gid,
-               int jid,
-               char *olddrive,
-               char *newdrive,
-               int *ux,
-               char *loader,
-               char *dvn)
-{
-	int c;
-	int msglen;
-	char *q;
-	char *rbp;
-	char repbuf[REPBUFSZ];
-	char *sbp;
-	char sendbuf[REQBUFSZ];
-
-	/* Build request header */
-
-	sbp = sendbuf;
-	marshall_LONG (sbp, TPMAGIC);
-	marshall_LONG (sbp, RSLT);
-	q = sbp;        /* save pointer. The next field will be updated */
-	msglen = 3 * LONGSIZE;
-	marshall_LONG (sbp, msglen);
-
-	/* Build request body */
- 
-	marshall_LONG (sbp, uid);
-	marshall_LONG (sbp, gid);
-	marshall_LONG (sbp, jid);
-	marshall_STRING (sbp, olddrive);
-	marshall_STRING (sbp, newdrive);
-
-	msglen = sbp - sendbuf;
-	marshall_LONG (q, msglen);      /* update length field */
- 
-	c = send2tpd (NULL, sendbuf, msglen, repbuf, sizeof(repbuf));
-	if (c == 0) {
-		rbp = repbuf;
-		unmarshall_WORD (rbp, *ux);
-		unmarshall_STRING (rbp, loader);
-		unmarshall_STRING (rbp, dvn);
-	} else {
-		usrmsg (func, "%s", errbuf);
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 5,
-                                    "func"   , TL_MSG_PARAM_STR, func,
-                                    "Message", TL_MSG_PARAM_STR, errbuf,
-                                    "JobID"  , TL_MSG_PARAM_INT  , jid,
-                                    "vid"    , TL_MSG_PARAM_STR  , vid,
-                                    "TPVID"  , TL_MSG_PARAM_TPVID, vid );
-        }
-	return (c);
 }
 
 int Ctape_updvsn(uid_t uid,
