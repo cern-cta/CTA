@@ -57,11 +57,13 @@ char *vid;
 int do_cleanup_after_mount = 0;
 int mount_ongoing = 0;
 
-void configdown( char* );
-int  Ctape_updvsn( uid_t, gid_t, int, int, char*, char*, int, int, int );
-int  rbtmountchk( int*, char*, char*, char*, char* );
-int  rbtdmntchk( int*, char*, unsigned int* );
-int repairbadmir( int tapefd, char* path );
+static void configdown( char* );
+static int Ctape_updvsn( uid_t, gid_t, int, int, char*, char*, int, int, int );
+static int rbtmountchk( int*, char*, char*, char*, char* );
+static int rbtdmntchk( int*, char*, unsigned int* );
+static int repairbadmir( int tapefd, char* path );
+static void mountkilled();
+static void cleanup();
 
 int main(int	argc,
          char	**argv)
@@ -111,8 +113,6 @@ int main(int	argc,
         time_t TStartMount, TEndMount, TMount;
 
         char *getconfent();
-	void cleanup();
-	void mountkilled();
 
 	ENTRY (mounttape);
 
@@ -905,7 +905,7 @@ int Ctape_updvsn(uid_t uid,
 	return (c);
 }
 
-void cleanup()
+static void cleanup()
 {
 	int flags;
 	int msglen;
@@ -977,7 +977,7 @@ void cleanup()
         tl_tpdaemon.tl_exit( &tl_tpdaemon, 0 );        
 }
 
-void configdown(char *drive)
+static void configdown(char *drive)
 {
 	sprintf (msg, TP033, drive, hostname); /* ops msg */
 	usrmsg ("mounttape", "%s\n", msg);
@@ -990,14 +990,14 @@ void configdown(char *drive)
 	(void) Ctape_config (drive, CONF_DOWN, TPCD_SYS);
 }
 
-void mountkilled()
+static void mountkilled()
 {
 	cleanup();
 	if ( do_cleanup_after_mount == 1 ) return;
 	exit (2);
 }
 
-int rbtdmntchk(int *c,
+static int rbtdmntchk(int *c,
                char *drive,
                unsigned int *demountforce)
 {
@@ -1054,7 +1054,7 @@ int rbtdmntchk(int *c,
 	}
 }
 
-int rbtmountchk(int *c,
+static int rbtmountchk(int *c,
                 char *drive,
                 char *vid,
                 char *dvn,
@@ -1134,7 +1134,7 @@ int rbtmountchk(int *c,
 ** Repair a bad MIR (corrupted tape directory) by issuing
 ** a 'SPACE to EOD' and a 'RWND', blocking. 
 */
-int repairbadmir( int tapefd, char* path ) {
+static int repairbadmir( int tapefd, char* path ) {
 
 	char func[16];
 	struct mtop mtop;
