@@ -32,30 +32,27 @@
 #include <time.h>
 #include <Ctape_api.h>
 
-char *acctname;
+static char *acctname;
 char *devtype;
-char *drive;
-char errbuf[512];
-char func[16];
-gid_t gid;
-char hostname[CA_MAXHOSTNAMELEN+1];
+static char *drive;
+static char errbuf[512];
+static char func[16];
+static gid_t gid;
+static char hostname[CA_MAXHOSTNAMELEN+1];
 int jid;
-char *loader;
-int maxfds;
-int mode;
+static char *loader;
+static int mode;
 char msg[OPRMSGSZ];
-int msg_num;
-char *name;
-char orepbuf[OPRMSGSZ];
-char *path;
-fd_set readmask;
+static int msg_num;
+static char *name;
+static char *path;
 int rpfd;
-int tapefd;
-uid_t uid;
-int updvsn_done = -1;
-char *vid;
-int do_cleanup_after_mount = 0;
-int mount_ongoing = 0;
+static int tapefd;
+static uid_t uid;
+static int updvsn_done = -1;
+static char *vid;
+static int do_cleanup_after_mount = 0;
+static int mount_ongoing = 0;
 
 static void configdown( char* );
 static int Ctape_updvsn( uid_t, gid_t, int, int, char*, char*, int, int, int );
@@ -87,7 +84,6 @@ int main(int	argc,
 	int needrbtmnt;
 	char *p;
 	int prelabel;
-	fd_set readfds;
 	char repbuf[REPBUFSZ];
 	char rings[9];
 	char *sbp;
@@ -95,7 +91,6 @@ int main(int	argc,
 	int side;
 	int Tflag = 0;
         int Fflag = 0; /* force flag */
-	struct timeval timeval;
 	int tplbl;
 	int tpmode;
 	int tpmounted;
@@ -172,16 +167,6 @@ int main(int	argc,
 	(void) Ctape_seterrbuf (errbuf, sizeof(errbuf));
 	devinfo = Ctape_devinfo (devtype);
 	gethostname (hostname, CA_MAXHOSTNAMELEN+1);
-
-	/* initialize for select */
-
-#if defined(linux)
-	maxfds = getdtablesize();
-#else
-	maxfds = _NFILE;
-#endif
-	FD_ZERO (&readmask);
-	FD_ZERO (&readfds);
 
         /* signal (SIGINT, mountkilled); */
         {
@@ -361,13 +346,7 @@ remount_loop:
 				if (n == 1) goto remount_loop;
 			}
 #endif
-			memcpy (&readfds, &readmask, sizeof(readmask));
-			timeval.tv_sec = UCHECKI;	/* must set each time for linux */
-			timeval.tv_usec = 0;
-			if (select (maxfds, &readfds, (fd_set *)0, (fd_set *)0,
-				&timeval) < 0) {
-				FD_ZERO (&readfds);
-			}
+			sleep(UCHECKI);
 		}
 
 		/* tape is ready */
@@ -1001,9 +980,6 @@ static int rbtdmntchk(int *c,
                char *drive,
                unsigned int *demountforce)
 {
-	fd_set readfds;
-	struct timeval rbttimeval;
-
 	switch (*c) {
 	case 0:
 		return (0);
@@ -1017,21 +993,7 @@ static int rbtdmntchk(int *c,
                                     "func",    TL_MSG_PARAM_STR, func,
                                     "Message", TL_MSG_PARAM_STR, msg );        
 
-
-		rbttimeval.tv_sec = RBTFASTRI;
-		rbttimeval.tv_usec = 0;                
-		memcpy (&readfds, &readmask, sizeof(readmask));
-                if (select (maxfds, &readfds, (fd_set *)0,
-                            (fd_set *)0, &rbttimeval) > 0) {
-                        /* usually the operator's reply was 
-                           checked here; should not happen,
-                           retry none the less ... */
-                        tplogit (func, "select returned >0\n");
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
-                                            "func",    TL_MSG_PARAM_STR, func,
-                                            "Message", TL_MSG_PARAM_STR, "select returned >0" );
-                        return (1);
-                }         
+		sleep(RBTFASTRI);
                 /* retry after timeout */
                 return (1);
 	case RBT_DMNT_FORCE:
@@ -1062,8 +1024,6 @@ static int rbtmountchk(int *c,
 {
 	unsigned int demountforce;
 	int n;
-	fd_set readfds;
-	struct timeval rbttimeval;
 	int tapefd;
         int vsnretry=0;
     
@@ -1082,21 +1042,7 @@ static int rbtmountchk(int *c,
                                     "func",    TL_MSG_PARAM_STR, func,
                                     "Message", TL_MSG_PARAM_STR, msg );        
 
-		rbttimeval.tv_sec = RBTFASTRI;
-		rbttimeval.tv_usec = 0;
-		memcpy (&readfds, &readmask, sizeof(readmask));
-                if (select (maxfds, &readfds, (fd_set *)0,
-                            (fd_set *)0, &rbttimeval) > 0) {
-                        /* usually the operator's reply was 
-                           checked here; should not happen,
-                           retry none the less ... */
-                        tplogit (func, "select returned >0\n");
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
-                                            "func",    TL_MSG_PARAM_STR, func,
-                                            "Message", TL_MSG_PARAM_STR, "select returned >0" );
-                        return (1);
-                }            
-                /* retry after timeout */
+		sleep(RBTFASTRI);
                 return (1);  
 	case RBT_DMNT_FORCE:
 		if ((tapefd = open (dvn, O_RDONLY|O_NDELAY)) < 0) {
