@@ -23,15 +23,13 @@
 #include <time.h>
 
 char *devtype;
-char errbuf[512];
-char func[16];
-char hostname[CA_MAXHOSTNAMELEN+1];
+static char errbuf[512];
+static char func[16];
+static char hostname[CA_MAXHOSTNAMELEN+1];
 int jid;
-int maxfds;
+static int maxfds;
 char msg[OPRMSGSZ];
-char orepbuf[OPRMSGSZ];
-fd_set readmask;
-char repbuf[133];
+static fd_set readmask;
 int rpfd;
 
 /*
