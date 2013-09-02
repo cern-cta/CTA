@@ -27,9 +27,7 @@ static char errbuf[512];
 static char func[16];
 static char hostname[CA_MAXHOSTNAMELEN+1];
 int jid;
-static int maxfds;
 char msg[OPRMSGSZ];
-static fd_set readmask;
 int rpfd;
 
 /*
@@ -262,15 +260,6 @@ int main(int	argc,
 
 	gethostname (hostname, CA_MAXHOSTNAMELEN+1);
 
-        /* initialize for select */
-
-#if defined(linux)
-        maxfds = getdtablesize();
-#else
-        maxfds = _NFILE;
-#endif
-        FD_ZERO (&readmask);
-
 unload_loop:
 	while ((tapefd = open (dvn, O_RDONLY|O_NDELAY)) < 0 && errno == EBUSY)
 		sleep (UCHECKI);
@@ -430,9 +419,6 @@ static int rbtdmntchk(int *c,
                char *drive,
                unsigned int *demountforce)
 {
-	fd_set readfds;
-	struct timeval rbttimeval;
-
 	switch (*c) {
 	case 0:
 		return (0);
@@ -442,21 +428,7 @@ static int rbtdmntchk(int *c,
                                     "func",    TL_MSG_PARAM_STR, func,
                                     "Message", TL_MSG_PARAM_STR, msg );        
 
-		rbttimeval.tv_sec = RBTFASTRI;
-		rbttimeval.tv_usec = 0;
-		memcpy (&readfds, &readmask, sizeof(readmask));
-                if (select (maxfds, &readfds, (fd_set *)0,
-                            (fd_set *)0, &rbttimeval) > 0) {
-                        /* usually the operator's reply was 
-                           checked here; should not happen,
-                           retry none the less ... */
-                        tplogit (func, "select returned >0\n");
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
-                                            "func",    TL_MSG_PARAM_STR, func,
-                                            "Message", TL_MSG_PARAM_STR, "select returned >0" );
-                        return (1);
-                }
-                /* retry after timeout */
+		sleep(RBTFASTRI);
                 return (1);	
 	case RBT_DMNT_FORCE:
 		if (*demountforce) {
@@ -478,19 +450,8 @@ static int rbtdmntchk(int *c,
                                     "func",    TL_MSG_PARAM_STR, func,
                                     "Message", TL_MSG_PARAM_STR, msg );        
 
-		rbttimeval.tv_sec = RBTUNLDDMNTI;
-		rbttimeval.tv_usec = 0;
-		memcpy (&readfds, &readmask, sizeof(readmask));
-                if (select (maxfds, &readfds, (fd_set *)0,
-                            (fd_set *)0, &rbttimeval) > 0) {
-                        tplogit (func, "select returned >0\n");
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
-                                            "func",    TL_MSG_PARAM_STR, func,
-                                            "Message", TL_MSG_PARAM_STR, "select returned >0" );
-                        return (2);
-                }
-                /* unload and retry after timeout */
-		return (2);	
+		sleep(RBTUNLDDMNTI);
+		return (2);
 	default:
 		configdown (drive);
 		return (-1);	/* unrecoverable error */
