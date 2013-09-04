@@ -1136,7 +1136,7 @@ CREATE INDEX I_StageRepackRequest_ReqId ON StageRepackRequest (reqId);
 /* Temporary table used for listing segments of a tape */
 /* efficiently via DB link when repacking              */
 CREATE GLOBAL TEMPORARY TABLE RepackTapeSegments
- (fileId NUMBER, blockid RAW(4), fseq NUMBER, segSize NUMBER,
+ (fileId NUMBER, lastOpenTime NUMBER, blockid RAW(4), fseq NUMBER, segSize NUMBER,
   copyNb NUMBER, fileClass NUMBER, allSegments VARCHAR2(2048))
  ON COMMIT PRESERVE ROWS;
 

@@ -296,7 +296,6 @@ ALTER TABLE DiskCopy
   MODIFY (importance CONSTRAINT NN_DiskCopy_Importance NOT NULL);
 CREATE INDEX I_DiskCopy_FS_ST_Impor_ID_CF_S ON DiskCopy (filesystem, status, importance, id, castorFile, diskCopySize);
 
-
 DECLARE
   srIds "numList";
   srId INTEGER;
@@ -363,6 +362,14 @@ ALTER TABLE StageRepackRequest ADD (fileCount INTEGER, totalSize INTEGER);
 -- those figures are only used for statistical purposes, assume no need to compute them for existing requests
 UPDATE StageRepackRequest SET fileCount = 0, totalSize = 0;
 ALTER TABLE StageRepackRequest MODIFY (fileCount CONSTRAINT NN_StageRepackReq_fileCount NOT NULL, totalSize CONSTRAINT NN_StageRepackReq_totalSize NOT NULL, status CONSTRAINT NN_StageRepackReq_status NOT NULL, repackVid CONSTRAINT NN_StageRepackReq_repackVid NOT NULL);
+
+-- Recreate RepackTapeSegments with the addition of lastOpenTime
+DROP TABLE RepackTapeSegments;
+CREATE GLOBAL TEMPORARY TABLE RepackTapeSegments
+ (fileId NUMBER, lastOpenTime NUMBER, blockid RAW(4), fseq NUMBER, segSize NUMBER,
+  copyNb NUMBER, fileClass NUMBER, allSegments VARCHAR2(2048))
+ ON COMMIT PRESERVE ROWS;
+
 
 DROP TRIGGER tr_DiskCopy_Online;
 DROP PROCEDURE getDiskCopiesForJob;

@@ -120,7 +120,6 @@ CREATE OR REPLACE PROCEDURE handleRepackRequest(inReqUUID IN VARCHAR2,
   varEgid INTEGER;
   svcClassId INTEGER;
   varRepackVID VARCHAR2(10);
-  varCreationTime NUMBER;
   varReqId INTEGER;
   cfId INTEGER;
   dcId INTEGER;
@@ -129,6 +128,7 @@ CREATE OR REPLACE PROCEDURE handleRepackRequest(inReqUUID IN VARCHAR2,
   lastKnownFileName VARCHAR2(2048);
   varRecallGroupId INTEGER;
   varRecallGroupName VARCHAR2(2048);
+  varCreationTime NUMBER;
   unused INTEGER;
   firstCF boolean := True;
   isOngoing boolean := False;
@@ -144,17 +144,20 @@ BEGIN
   outNbFailures := 0;
   -- Check which protocol should be used for writing files to disk
   repackProtocol := getConfigOption('Repack', 'Protocol', 'rfio');
+  -- creation time for the subrequests
+  varCreationTime := getTime();
   -- name server host name
   nsHostName := getConfigOption('stager', 'nsHost', '');
-  -- creation time given to new CastorFile entries
-  varCreationTime := getTime();
   -- find out the recallGroup to be used for this request
   getRecallGroup(varEuid, varEgid, varRecallGroupId, varRecallGroupName);
+  -- update potentially missing Cns_file_metadata.stagertime. This will be dropped in 2.1.15.
+  updateStagerTime@RemoteNS(varRepackVID);
+  COMMIT;
   -- Get the list of files to repack from the NS DB via DBLink and store them in memory
   -- in a temporary table. We do that so that we do not keep an open cursor for too long
   -- in the nameserver DB
-  INSERT INTO RepackTapeSegments (fileId, blockId, fseq, segSize, copyNb, fileClass, allSegments)
-    (SELECT s_fileid, blockid, fseq, segSize,
+  INSERT INTO RepackTapeSegments (fileId, lastOpenTime, blockId, fseq, segSize, copyNb, fileClass, allSegments)
+    (SELECT s_fileid, stagertime, blockid, fseq, segSize,
             copyno, fileclass,
             (SELECT LISTAGG(TO_CHAR(oseg.copyno)||','||oseg.vid, ',')
              WITHIN GROUP (ORDER BY copyno)
@@ -200,14 +203,14 @@ BEGIN
         -- Note that we pass 0 for the subrequest id, thus the subrequest will not be attached to the
         -- CastorFile. We actually attach it when we create it.
         selectCastorFileInternal(segment.fileid, nsHostName, segment.fileclass,
-                                 segment.segSize, lastKnownFileName, 0, varCreationTime, firstCF, cfid, unused);
+                                 segment.segSize, lastKnownFileName, 0, segment.lastOpenTime, firstCF, cfid, unused);
         firstCF := FALSE;
       EXCEPTION WHEN locked THEN
         -- commit what we've done so far
         COMMIT;
         -- And lock the castorfile (waiting this time)
         selectCastorFileInternal(segment.fileid, nsHostName, segment.fileclass,
-                                 segment.segSize, lastKnownFileName, 0, varCreationTime, TRUE, cfid, unused);
+                                 segment.segSize, lastKnownFileName, 0, segment.lastOpenTime, TRUE, cfid, unused);
       END;
       -- create  subrequest for this file.
       -- Note that the svcHandler is not set. It will actually never be used as repacks are handled purely in PL/SQL
