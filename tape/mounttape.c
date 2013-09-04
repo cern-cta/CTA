@@ -10,9 +10,7 @@
 #include <pwd.h>
 #include <signal.h>
 #include <fcntl.h>
-#if linux
 #include <sys/mtio.h>
-#endif
 #include <netinet/in.h>
 #include <string.h>
 #include <sys/time.h>
@@ -76,9 +74,7 @@ int main(int	argc,
 	char hdr2[81];
 	static char labels[6][4] = {"", "al", "nl", "sl", "blp", "aul"};
 	int lblcode;
-#if linux
 	struct mtop mtop;
-#endif
 	int n;
 	int needrbtmnt;
 	char *p;
@@ -384,11 +380,9 @@ int main(int	argc,
 			tapeacct (TPUNLOAD, uid, gid, jid, dgn, drive, vid, 0, TPU_WNGR);
 			continue;
 		}
-#if linux
 		mtop.mt_op = MTSETBLK;
 		mtop.mt_count = 0;
 		ioctl (tapefd, MTIOCTOP, &mtop);	/* set variable block size */
-#endif
 
 		/* position tape at BOT */
 
@@ -396,9 +390,7 @@ int main(int	argc,
 
 		/* set density and compression mode */
 
-#if linux
 		(void) setdens (tapefd, path, devtype, den);
-#endif
 
 		/* check VOL1 label if not blp */
 
