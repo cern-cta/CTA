@@ -909,6 +909,21 @@ BEGIN
 END;
 /
 
+/* This procedure is used by repack to update Cns_file_metadata.stagertime values
+ * should they be missing. It shall be dropped on 2.1.15 after we drop the compatibility mode code.
+ */
+CREATE OR REPLACE PROCEDURE updateStagerTime(inVid IN VARCHAR2) AS
+  PRAGMA AUTONOMOUS_TRANSACTION;
+BEGIN
+  FOR f IN (SELECT fileid FROM Cns_file_metadata f, Cns_seg_metadata s
+                         WHERE f.fileid = s.s_fileid AND s.vid = inVid
+                           AND f.stagertime IS NULL) LOOP
+    UPDATE Cns_file_metadata SET stagertime = mtime WHERE fileid = f.fileid;
+    COMMIT;
+  END LOOP;
+END;
+/
+
 CREATE OR REPLACE PROCEDURE insertNSStats(inGid IN INTEGER, inTimestamp IN NUMBER,
                                           inMaxFileId IN INTEGER, inFileCount IN INTEGER, inFileSize IN INTEGER,
                                           inSegCount IN INTEGER, inSegSize IN INTEGER, inSegCompressedSize IN INTEGER,

@@ -1851,7 +1851,7 @@ CREATE INDEX I_StageRepackRequest_ReqId ON StageRepackRequest (reqId);
 /* Temporary table used for listing segments of a tape */
 /* efficiently via DB link when repacking              */
 CREATE GLOBAL TEMPORARY TABLE RepackTapeSegments
- (fileId NUMBER, blockid RAW(4), fseq NUMBER, segSize NUMBER,
+ (fileId NUMBER, lastOpenTime NUMBER, blockid RAW(4), fseq NUMBER, segSize NUMBER,
   copyNb NUMBER, fileClass NUMBER, allSegments VARCHAR2(2048))
  ON COMMIT PRESERVE ROWS;
 
@@ -3031,7 +3031,6 @@ CREATE OR REPLACE PROCEDURE handleRepackRequest(inReqUUID IN VARCHAR2,
   varEgid INTEGER;
   svcClassId INTEGER;
   varRepackVID VARCHAR2(10);
-  varCreationTime NUMBER;
   varReqId INTEGER;
   cfId INTEGER;
   dcId INTEGER;
@@ -3040,6 +3039,7 @@ CREATE OR REPLACE PROCEDURE handleRepackRequest(inReqUUID IN VARCHAR2,
   lastKnownFileName VARCHAR2(2048);
   varRecallGroupId INTEGER;
   varRecallGroupName VARCHAR2(2048);
+  varCreationTime NUMBER;
   unused INTEGER;
   firstCF boolean := True;
   isOngoing boolean := False;
@@ -3055,17 +3055,20 @@ BEGIN
   outNbFailures := 0;
   -- Check which protocol should be used for writing files to disk
   repackProtocol := getConfigOption('Repack', 'Protocol', 'rfio');
+  -- creation time for the subrequests
+  varCreationTime := getTime();
   -- name server host name
   nsHostName := getConfigOption('stager', 'nsHost', '');
-  -- creation time given to new CastorFile entries
-  varCreationTime := getTime();
   -- find out the recallGroup to be used for this request
   getRecallGroup(varEuid, varEgid, varRecallGroupId, varRecallGroupName);
+  -- update potentially missing Cns_file_metadata.stagertime. This will be dropped in 2.1.15.
+  updateStagerTime@RemoteNS(varRepackVID);
+  COMMIT;
   -- Get the list of files to repack from the NS DB via DBLink and store them in memory
   -- in a temporary table. We do that so that we do not keep an open cursor for too long
   -- in the nameserver DB
-  INSERT INTO RepackTapeSegments (fileId, blockId, fseq, segSize, copyNb, fileClass, allSegments)
-    (SELECT s_fileid, blockid, fseq, segSize,
+  INSERT INTO RepackTapeSegments (fileId, lastOpenTime, blockId, fseq, segSize, copyNb, fileClass, allSegments)
+    (SELECT s_fileid, stagertime, blockid, fseq, segSize,
             copyno, fileclass,
             (SELECT LISTAGG(TO_CHAR(oseg.copyno)||','||oseg.vid, ',')
              WITHIN GROUP (ORDER BY copyno)
@@ -3111,14 +3114,14 @@ BEGIN
         -- Note that we pass 0 for the subrequest id, thus the subrequest will not be attached to the
         -- CastorFile. We actually attach it when we create it.
         selectCastorFileInternal(segment.fileid, nsHostName, segment.fileclass,
-                                 segment.segSize, lastKnownFileName, 0, varCreationTime, firstCF, cfid, unused);
+                                 segment.segSize, lastKnownFileName, 0, segment.lastOpenTime, firstCF, cfid, unused);
         firstCF := FALSE;
       EXCEPTION WHEN locked THEN
         -- commit what we've done so far
         COMMIT;
         -- And lock the castorfile (waiting this time)
         selectCastorFileInternal(segment.fileid, nsHostName, segment.fileclass,
-                                 segment.segSize, lastKnownFileName, 0, varCreationTime, TRUE, cfid, unused);
+                                 segment.segSize, lastKnownFileName, 0, segment.lastOpenTime, TRUE, cfid, unused);
       END;
       -- create  subrequest for this file.
       -- Note that the svcHandler is not set. It will actually never be used as repacks are handled purely in PL/SQL
@@ -10369,23 +10372,33 @@ CREATE OR REPLACE PROCEDURE tg_setBulkFileMigrationResult(inLogContext IN VARCHA
   varNSParams strListTable;
   varParams VARCHAR2(4000);
   varNbSentToNS INTEGER := 0;
+  -- for the compatibility mode, to be dropped in 2.1.15
+  varOpenMode CHAR(1);
+  varLastUpdateTime INTEGER;
 BEGIN
   varStartTime := SYSTIMESTAMP;
   varReqId := uuidGen();
   -- Get the NS host name
   varNsHost := getConfigOption('stager', 'nsHost', '');
+  -- Get the NS open mode: if compatibility, then CF.lastUpdTime is to be used for the
+  -- concurrent modifications check like in 2.1.13, else the new CF.nsOpenTime column is used.
+  varOpenMode := getConfigOption@RemoteNS('stager', 'openmode', NULL);
   FOR i IN inFileTrIds.FIRST .. inFileTrIds.LAST LOOP
     BEGIN
       -- Collect additional data. Note that this is NOT bulk
       -- to preserve the order in the input arrays.
-      SELECT CF.nsOpenTime, nvl(MJ.originalCopyNb, 0), MJ.vid, MJ.destCopyNb
-        INTO varNsOpenTime, varOldCopyNo, varVid, varCopyNo
+      SELECT CF.nsOpenTime, CF.lastUpdateTime, nvl(MJ.originalCopyNb, 0), MJ.vid, MJ.destCopyNb
+        INTO varNsOpenTime, varLastUpdateTime, varOldCopyNo, varVid, varCopyNo
         FROM CastorFile CF, MigrationJob MJ
        WHERE MJ.castorFile = CF.id
          AND CF.fileid = inFileIds(i)
          AND MJ.mountTransactionId = inMountTrId
          AND MJ.fileTransactionId = inFileTrIds(i)
          AND status = tconst.MIGRATIONJOB_SELECTED;
+      -- Use the correct timestamp in case of compatibility mode
+      IF varOpenMode = 'C' THEN
+        varNsOpenTime := varLastUpdateTime;
+      END IF;
         -- Store in a temporary table, to be transfered to the NS DB.
         -- Note that this is an ON COMMIT DELETE table and we never take locks or commit until
         -- after the NS call: if anything goes bad (including the db link being broken) we bail out
