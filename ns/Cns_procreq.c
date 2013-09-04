@@ -4079,10 +4079,6 @@ int Cns_srv_setfsize(int magic,
                         reqinfo->clienthost))
     RETURN (EACCES);
 
-  /* Check for concurrent modifications */
-  if (Cns_is_concurrent_open(&thip->dbfd, &filentry, last_mod_time, reqinfo->logbuf))
-    RETURN (serrno);
-
   /* Update entry */
   filentry.filesize = filesize;
   if (magic >= CNS_MAGIC2) {
@@ -4198,10 +4194,6 @@ int Cns_srv_setfsizecs(int magic,
       Cns_chkentryperm (&filentry, S_IWRITE, reqinfo->uid, reqinfo->gid,
                         reqinfo->clienthost))
     RETURN (EACCES);
-
-  /* Check for concurrent modifications */
-  if (Cns_is_concurrent_open(&thip->dbfd, &filentry, last_mod_time, reqinfo->logbuf))
-    RETURN (serrno);
 
   if ((strcmp(filentry.csumtype, "PA") == 0 && strcmp(csumtype, "AD") == 0)) {
     /* We have predefined checksums then should check them with new ones */
