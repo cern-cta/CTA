@@ -1317,23 +1317,33 @@ CREATE OR REPLACE PROCEDURE tg_setBulkFileMigrationResult(inLogContext IN VARCHA
   varNSParams strListTable;
   varParams VARCHAR2(4000);
   varNbSentToNS INTEGER := 0;
+  -- for the compatibility mode, to be dropped in 2.1.15
+  varOpenMode CHAR(1);
+  varLastUpdateTime INTEGER;
 BEGIN
   varStartTime := SYSTIMESTAMP;
   varReqId := uuidGen();
   -- Get the NS host name
   varNsHost := getConfigOption('stager', 'nsHost', '');
+  -- Get the NS open mode: if compatibility, then CF.lastUpdTime is to be used for the
+  -- concurrent modifications check like in 2.1.13, else the new CF.nsOpenTime column is used.
+  varOpenMode := getConfigOption@RemoteNS('stager', 'openmode', NULL);
   FOR i IN inFileTrIds.FIRST .. inFileTrIds.LAST LOOP
     BEGIN
       -- Collect additional data. Note that this is NOT bulk
       -- to preserve the order in the input arrays.
-      SELECT CF.nsOpenTime, nvl(MJ.originalCopyNb, 0), MJ.vid, MJ.destCopyNb
-        INTO varNsOpenTime, varOldCopyNo, varVid, varCopyNo
+      SELECT CF.nsOpenTime, CF.lastUpdateTime, nvl(MJ.originalCopyNb, 0), MJ.vid, MJ.destCopyNb
+        INTO varNsOpenTime, varLastUpdateTime, varOldCopyNo, varVid, varCopyNo
         FROM CastorFile CF, MigrationJob MJ
        WHERE MJ.castorFile = CF.id
          AND CF.fileid = inFileIds(i)
          AND MJ.mountTransactionId = inMountTrId
          AND MJ.fileTransactionId = inFileTrIds(i)
          AND status = tconst.MIGRATIONJOB_SELECTED;
+      -- Use the correct timestamp in case of compatibility mode
+      IF varOpenMode = 'C' THEN
+        varNsOpenTime := varLastUpdateTime;
+      END IF;
         -- Store in a temporary table, to be transfered to the NS DB.
         -- Note that this is an ON COMMIT DELETE table and we never take locks or commit until
         -- after the NS call: if anything goes bad (including the db link being broken) we bail out
