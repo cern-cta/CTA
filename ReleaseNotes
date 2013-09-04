@@ -278,17 +278,15 @@
     case of doubt.
 
     Short summary of steps :
-      - if applicable, drain and shutdown the repack instance, and make sure it does not
-        operate during the upgrade period. If an old and a newly upgraded stager access
-        the same files at the same time, there is a risk of data loss (see #95189).
       - upgrade the central nodes :
         + upgrade the databases. Take care to update the VMGR DB first,
           and only then the NS one. VDQM and CUPV can be done at any time
-        + upgrade the central daemons' RPMs (nsd, vmgrd, vdqmd, cupvd)
-          . this should be done just after the DB upgrade, as any daemon restart
-            between the two would fail and impact the service
+        + upgrade the central daemons' RPMs (nsd, vmgrd, vdqmd, cupvd):
+          this should be done just after the DB upgrade, as any daemon restart
+          between the two would fail and impact the service
+        + after this upgrade, the Nameserver runs in 2.1.13 compatibility mode .
       - upgrade the stagers one by one, with downtime
-      - once all stagers have been upgraded, if applicable upgrade your repack service.
+      - once all stagers have been upgraded, switch the Nameserver to 2.1.14 native mode.
 
     Detailed instructions for each step follow.
 
@@ -374,6 +372,34 @@
 
       10. Congratulations you have successfully upgraded to the 2.1.14-2 release
           of CASTOR.
+
+ Switching Nameserver's mode
+ ---------------------------
+      
+   Notes:
+     - ALL stagers must be running 2.1.14-2 before this step is taken. Not respecting
+       this requirement exposes the system to data losses.
+     - This switching is transparent, but may take several days.
+
+     Instructions
+     ------------
+
+      1. Once all stagers have been upgraded to version 2.1.14-2, run the cns_2.1.14-2_postUpgrade.sql
+         post-upgrade script from: 
+         http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-2/dbupgrades
+
+         This script includes a one-off job to populate the new fields added to the Nameserver schema.
+         This operation may take several days and is performed as a background activity while
+         the system is running.
+
+      2. As a separate intervention, and only after the job has completed, run the
+         cns_2.1.14_switch_openmode.sql script from:
+         http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-2/dbupgrades
+
+         This script enables the stagers to fully exploit the new logic to provide cross stager consistency
+         (see bug #95189), and it is required to be executed before the upgrade to the next major
+         version (2.1.15).
+         The script fails if the update job had been interrupted and the new fields are not fully populated yet.
 
 
 ------------
