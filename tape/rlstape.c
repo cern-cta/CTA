@@ -27,7 +27,6 @@ static char errbuf[512];
 static char func[16];
 static char hostname[CA_MAXHOSTNAMELEN+1];
 int jid;
-char msg[OPRMSGSZ];
 int rpfd;
 
 /*
@@ -404,7 +403,9 @@ freedrv:
 
 static void configdown(char *drive)
 {
-	sprintf (msg, TP033, drive, hostname); /* ops msg */
+	char msg[OPRMSGSZ];
+	snprintf (msg, sizeof(msg), TP033, drive, hostname); /* ops msg */
+	msg[sizeof(msg) - 1] = '\0';
 	usrmsg ("rlstape", "%s\n", msg);
         tl_tpdaemon.tl_log( &tl_tpdaemon, 33, 4,
                             "func",     TL_MSG_PARAM_STR, "rlstape",
@@ -423,10 +424,10 @@ static int rbtdmntchk(int *c,
 	case 0:
 		return (0);
 	case RBT_FAST_RETRY:
-                tplogit (func, "RBT_FAST_RETRY %s\n", msg);
+                tplogit (func, "RBT_FAST_RETRY\n");
                 tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
                                     "func",    TL_MSG_PARAM_STR, func,
-                                    "Message", TL_MSG_PARAM_STR, msg );        
+                                    "Message", TL_MSG_PARAM_STR, "RBT_FAST_RETRY");        
 
 		sleep(RBTFASTRI);
                 return (1);	
@@ -445,10 +446,10 @@ static int rbtdmntchk(int *c,
 		return (-1);
 	case RBT_UNLD_DMNT:
                 /* add a delay of  RBTUNLDDMNTI */
-                tplogit (func, "RBT_UNLD_DMNT %s\n", msg);
+                tplogit (func, "RBT_UNLD_DMNT\n");
                 tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
                                     "func",    TL_MSG_PARAM_STR, func,
-                                    "Message", TL_MSG_PARAM_STR, msg );        
+                                    "Message", TL_MSG_PARAM_STR, "RBT_UNLD_DMNT");        
 
 		sleep(RBTUNLDDMNTI);
 		return (2);

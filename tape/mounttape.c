@@ -42,7 +42,6 @@ static char hostname[CA_MAXHOSTNAMELEN+1];
 int jid;
 static char *loader;
 static int mode;
-char msg[OPRMSGSZ];
 static int msg_num;
 static char *name;
 static char *path;
@@ -253,12 +252,14 @@ int main(int	argc,
 		needrbtmnt = 1;
 
 	while (1) {
-
-                sprintf (msg, TP020, vid, labels[lblcode], rings, drive, hostname, 	 
+		{
+			char msg[OPRMSGSZ];
+                	snprintf (msg, sizeof(msg), TP020, vid, labels[lblcode], rings, drive, hostname, 	 
                          name, jid, why);
+			msg[sizeof(msg) - 1] = '\0';
                 
-                tplogit (func, "%s\n", msg);
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 78, 12,
+                	tplogit (func, "%s\n", msg);
+                	tl_tpdaemon.tl_log( &tl_tpdaemon, 78, 12,
                                     "func"    , TL_MSG_PARAM_STR  , func,
                                     "Message" , TL_MSG_PARAM_STR  , msg,
                                     "VID"     , TL_MSG_PARAM_STR  , vid,
@@ -271,6 +272,7 @@ int main(int	argc,
                                     "JobID"   , TL_MSG_PARAM_INT  , jid,
                                     "Reason"  , TL_MSG_PARAM_STR  , why,
                                     "TPVID"   , TL_MSG_PARAM_TPVID, vid );
+		}
 
 		if (*loader != 'm' && needrbtmnt) {
 			do {
@@ -357,7 +359,9 @@ int main(int	argc,
 		/* check if the volume is write protected */
 
 		if (tpmode != mode && tpmode == WRITE_DISABLE && *loader != 'm') {
-			sprintf (msg, TP041, "mount", vid, drive, "write protected");
+			char msg[OPRMSGSZ];
+			snprintf (msg, sizeof(msg), TP041, "mount", vid, drive, "write protected");
+			msg[sizeof(msg) - 1] = '\0';
 			usrmsg (func, "%s\n", msg);
                         tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 7,
                                             "func"   , TL_MSG_PARAM_STR  , func,
@@ -419,10 +423,13 @@ int main(int	argc,
 			if ((p = strchr (tpvsn, ' ')) != NULL) *p = '\0';
 		}
 		if (prelabel >= 0) {
-			if (tplbl == NL)
-				sprintf (msg, TP062, vid, "is an NL tape", "");
-			else
-				sprintf (msg, TP062, vid, "has vsn ", tpvsn);
+			char msg[OPRMSGSZ];
+			if (tplbl == NL) {
+				snprintf (msg, sizeof(msg), TP062, vid, "is an NL tape", "");
+			} else {
+				snprintf (msg, sizeof(msg), TP062, vid, "has vsn ", tpvsn);
+			}
+			msg[sizeof(msg) - 1] = '\0';
 			usrmsg (func, "%s\n", msg);
                         tl_tpdaemon.tl_log( &tl_tpdaemon, 62, 5,
                                             "func"   , TL_MSG_PARAM_STR  , func,
@@ -961,7 +968,9 @@ static void cleanup()
 
 static void configdown(char *drive)
 {
-	sprintf (msg, TP033, drive, hostname); /* ops msg */
+	char msg[OPRMSGSZ];
+	snprintf (msg, sizeof(msg), TP033, drive, hostname); /* ops msg */
+	msg[sizeof(msg) - 1] = '\0';
 	usrmsg ("mounttape", "%s\n", msg);
         tl_tpdaemon.tl_log( &tl_tpdaemon, 33, 4,
                             "func",     TL_MSG_PARAM_STR, "mounttape",
@@ -991,10 +1000,10 @@ static int rbtdmntchk(int *c,
 		*c = EIO;
 		return (-1);
 	case RBT_FAST_RETRY:
-                tplogit (func, "RBT_FAST_RETRY: %s\n", msg);
+                tplogit (func, "RBT_FAST_RETRY\n");
                 tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
                                     "func",    TL_MSG_PARAM_STR, func,
-                                    "Message", TL_MSG_PARAM_STR, msg );        
+                                    "Message", TL_MSG_PARAM_STR, "RBT_FAST_RETRY");        
 
 		sleep(RBTFASTRI);
                 /* retry after timeout */
@@ -1040,10 +1049,10 @@ static int rbtmountchk(int *c,
 		*c = ETVBSY;	/* volume in use */
 		return (-1);
 	case RBT_FAST_RETRY:
-                tplogit (func, "RBT_FAST_RETRY %s\n", msg);
+                tplogit (func, "RBT_FAST_RETRY\n");
                 tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
                                     "func",    TL_MSG_PARAM_STR, func,
-                                    "Message", TL_MSG_PARAM_STR, msg );        
+                                    "Message", TL_MSG_PARAM_STR, "RBT_FAST_RETRY");        
 
 		sleep(RBTFASTRI);
                 return (1);  

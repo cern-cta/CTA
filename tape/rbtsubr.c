@@ -29,7 +29,6 @@
 #include "h/Ctape_api.h"
 #include "h/tplogger_api.h"
 #include "h/serrno.h"
-extern char msg[];
 
 static char action[8];
 static char cur_unm[9];
@@ -321,7 +320,9 @@ static int acsmount(char *vid,
                             "R0flag",     TL_MSG_PARAM_INT, use_read_only_flag );
 	if ((status = acs_mount (++myseqnum, NO_LOCK_ID, vol_id, drive_id,
                                 (ring || !use_read_only_flag) ? FALSE : TRUE, 0))) {
-                        sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (status));
+			char msg[OPRMSGSZ];
+                        snprintf (msg, sizeof(msg), TP041, action, cur_vid, cur_unm, acsstatus (status));
+			msg[sizeof(msg) - 1] = '\0';
                         usrmsg (func, "%s\n", msg);
                         tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
                                             "func",      TL_MSG_PARAM_STR, func,
@@ -374,7 +375,9 @@ static int acsdismount(char *vid,
                             "drive_id_3", TL_MSG_PARAM_INT, drive_id.drive,
                             "Message",    TL_MSG_PARAM_STR, force ? "force" : "" );
 	if ((status = acs_dismount (++myseqnum, NO_LOCK_ID, vol_id, drive_id, force))) {
-		sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (status));
+		char msg[OPRMSGSZ];
+		snprintf (msg, sizeof(msg), TP041, action, cur_vid, cur_unm, acsstatus (status));
+		msg[sizeof(msg) - 1] = '\0';
 		usrmsg (func, "%s\n", msg);
                 tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
                                     "func",      TL_MSG_PARAM_STR, func,
@@ -413,7 +416,9 @@ static int acsdismount(char *vid,
 	} while (rtype != RT_FINAL);
 	dismount_req_id = 0;
 	if (status) {
-	        sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (status));
+		char msg[OPRMSGSZ];
+	        snprintf (msg, sizeof(msg), TP041, action, cur_vid, cur_unm, acsstatus (status));
+		msg[sizeof(msg) - 1] = '\0';
 		usrmsg (func, "%s\n", msg);
                 tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
                                     "func",      TL_MSG_PARAM_STR, func,
@@ -432,7 +437,9 @@ static int acsdismount(char *vid,
 	  dr = (ACS_DISMOUNT_RESPONSE *)rbuf;
 
 	  if (dr->dismount_status) {
-	    sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (dr->dismount_status));
+	    char msg[OPRMSGSZ];
+	    snprintf (msg, sizeof(msg), TP041, action, cur_vid, cur_unm, acsstatus (dr->dismount_status));
+	    msg[sizeof(msg) - 1] = '\0';
 	    usrmsg (func, "%s\n", msg);
             tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
                                 "func",             TL_MSG_PARAM_STR, func,
@@ -484,7 +491,9 @@ int acsmountresp()
 	mount_req_id = 0;
 
 	if (status) {
-		sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (status));
+		char msg[OPRMSGSZ];
+		snprintf (msg, sizeof(msg), TP041, action, cur_vid, cur_unm, acsstatus (status));
+		msg[sizeof(msg) - 1] = '\0';
 		usrmsg (func, "%s\n", msg);
                 tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
                                     "func",      TL_MSG_PARAM_STR, func,
@@ -503,7 +512,9 @@ int acsmountresp()
 	  dr = (ACS_MOUNT_RESPONSE *)rbuf;
 
 	  if (dr->mount_status) {
-	    sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (dr->mount_status));
+	    char msg[OPRMSGSZ];
+	    snprintf (msg, sizeof(msg), TP041, action, cur_vid, cur_unm, acsstatus (dr->mount_status));
+	    msg[sizeof(msg) - 1] = '\0';
 	    usrmsg (func, "%s\n", msg);
             tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
                                 "func",             TL_MSG_PARAM_STR, func,
@@ -553,7 +564,9 @@ int wait4acsfinalresp()
 	mount_req_id = 0;
 	dismount_req_id = 0;
 	if (status) {
-		sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (status));
+		char msg[OPRMSGSZ];
+		snprintf (msg, sizeof(msg), TP041, action, cur_vid, cur_unm, acsstatus (status));
+		msg[sizeof(msg) - 1] = '\0';
 		usrmsg (func, "%s\n", msg);
                 tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
                                     "func",      TL_MSG_PARAM_STR, func,
@@ -573,7 +586,9 @@ int wait4acsfinalresp()
                 dr = (ACS_MOUNT_RESPONSE *)rbuf;
                 
                 if (dr->mount_status) {
-                        sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (dr->mount_status));
+			char msg[OPRMSGSZ];
+                        snprintf (msg, sizeof(msg), TP041, action, cur_vid, cur_unm, acsstatus (dr->mount_status));
+			msg[sizeof(msg) - 1] = '\0';
                         usrmsg (func, "%s\n", msg);
                         tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
                                             "func",             TL_MSG_PARAM_STR, func,
@@ -591,7 +606,9 @@ int wait4acsfinalresp()
                 dr = (ACS_DISMOUNT_RESPONSE *)rbuf;
                 
                 if (dr->dismount_status) {
-                        sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (dr->dismount_status));
+			char msg[OPRMSGSZ];
+                        snprintf (msg, sizeof(msg), TP041, action, cur_vid, cur_unm, acsstatus (dr->dismount_status));
+			msg[sizeof(msg) - 1] = '\0';
                         usrmsg (func, "%s\n", msg);
                         tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
                                             "func",             TL_MSG_PARAM_STR, func,
@@ -667,10 +684,10 @@ static int opensmc(char *loader)
 		if ((c = smc_get_geometry (smc_fd, smc_ldr, &robot_info))) {
 			c = smc_lasterror (&smc_status, &msgaddr);
 			if (smc_status.rc == -1 || smc_status.rc == -2) {
-				usrmsg (func, "%s\n", msg);
+				usrmsg (func, "Media changer error\n");
                                 tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
                                                     "func",    TL_MSG_PARAM_STR, func,
-                                                    "Message", TL_MSG_PARAM_STR, msg ); 
+                                                    "Message", TL_MSG_PARAM_STR, "Media changer error"); 
                         } else {
 				usrmsg (func, TP042, smc_ldr, "get_geometry",
 					strrchr (msgaddr, ':') + 2);
@@ -739,17 +756,20 @@ static int smcmount(char *vid,
 
                         const int RETRIES = 3;
 			int retryCtr = 0;
- 
-                        const char *const p = strrchr (rmc_errbuf, ':');
-			sprintf (msg, TP041, "mount", vid, cur_unm,
-                                 p ? p + 2 : rmc_errbuf);
-                        tplogit (func, "%s", msg);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+			{
+				char msg[OPRMSGSZ];
+                        	const char *const p = strrchr (rmc_errbuf, ':');
+				snprintf (msg, sizeof(msg), TP041, "mount", vid, cur_unm,
+                                 	p ? p + 2 : rmc_errbuf);
+				msg[sizeof(msg) - 1] = '\0';
+                        	tplogit (func, "%s", msg);
+                        	tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
                                             "func",    TL_MSG_PARAM_STR, func,
                                             "action",  TL_MSG_PARAM_STR, "mount",
                                             "cur_vid", TL_MSG_PARAM_STR, vid,
                                             "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                             "Message", TL_MSG_PARAM_STR, p ? p + 2 : rmc_errbuf );
+			}
                         
                         while (retryCtr < RETRIES) {
                                 
@@ -807,16 +827,20 @@ static int smcmount(char *vid,
                         const int RETRIES = 3;
 			int retryCtr = 0;
 
-                        const char *const p = strrchr (rmc_errbuf, ':');
-			sprintf (msg, TP041, "mount", vid, cur_unm,
-                                 p ? p + 2 : rmc_errbuf);
-                        tplogit (func, "%s", msg);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+			{
+				char msg[OPRMSGSZ];
+                        	const char *const p = strrchr (rmc_errbuf, ':');
+				snprintf (msg, sizeof(msg), TP041, "mount", vid, cur_unm,
+                                 	p ? p + 2 : rmc_errbuf);
+				msg[sizeof(msg) -1] = '\0';
+                        	tplogit (func, "%s", msg);
+                        	tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
                                             "func",    TL_MSG_PARAM_STR, func,
                                             "action",  TL_MSG_PARAM_STR, "mount",
                                             "cur_vid", TL_MSG_PARAM_STR, vid,
                                             "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                             "Message", TL_MSG_PARAM_STR, p ? p + 2 : rmc_errbuf );
+			}
                         
                         while (retryCtr < RETRIES) {
                                 
@@ -874,17 +898,21 @@ static int smcmount(char *vid,
                                                     "serrno"             , TL_MSG_PARAM_INT, rmc_mount_serrno, 
                                                     "(serrno-ERMCRBTERR)", TL_MSG_PARAM_INT, (rmc_mount_serrno - ERMCRBTERR) );
                         }                        
-                        const char *const p = strrchr (rmc_errbuf, ':');
-			sprintf (msg, TP041, "mount", vid, cur_unm,
-                                 p ? p + 2 : rmc_errbuf);
-                        /* Just send message to operator after two retries*/ 
-                        tplogit (func, "%s", msg);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+			{
+				char msg[OPRMSGSZ];
+                        	const char *const p = strrchr (rmc_errbuf, ':');
+				snprintf (msg, sizeof(msg), TP041, "mount", vid, cur_unm,
+                                 	p ? p + 2 : rmc_errbuf);
+				msg[sizeof(msg) - 1] = '\0';
+                        	/* Just send message to operator after two retries*/ 
+                        	tplogit (func, "%s", msg);
+                        	tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
                                             "func",    TL_MSG_PARAM_STR, func,
                                             "action",  TL_MSG_PARAM_STR, "mount",
                                             "cur_vid", TL_MSG_PARAM_STR, vid,
                                             "Drive",   TL_MSG_PARAM_STR, cur_unm,
                                             "Message", TL_MSG_PARAM_STR, p ? p + 2 : rmc_errbuf );
+			}
 
 			if (SECOMERR == rmc_mount_serrno) {
 				RETURN (RBT_FAST_RETRY);
@@ -925,7 +953,9 @@ static int smcmount(char *vid,
 			RETURN (smc_error);
 		}
 		if (0 == smc_find_cartridge_rc) {
-			sprintf (msg, TP041, "mount", vid, cur_unm, "volume not in library");
+			char msg[OPRMSGSZ];
+			snprintf (msg, sizeof(msg), TP041, "mount", vid, cur_unm, "volume not in library");
+			msg[sizeof(msg) - 1] = '\0';
 			usrmsg (func, "%s\n", msg);
                 	tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
                                     "func",    TL_MSG_PARAM_STR, func,
@@ -937,7 +967,9 @@ static int smcmount(char *vid,
 		}
 	}
 	if (element_info.element_type != 2) {
-		sprintf (msg, TP041, "mount", vid, cur_unm, "volume in use");
+		char msg[OPRMSGSZ];
+		snprintf (msg, sizeof(msg), TP041, "mount", vid, cur_unm, "volume in use");
+		msg[sizeof(msg) - 1] = '\0';
 		usrmsg (func, "%s\n", msg);
                 tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
                                     "func",    TL_MSG_PARAM_STR, func,
@@ -964,9 +996,11 @@ static int smcmount(char *vid,
                                             "func",    TL_MSG_PARAM_STR, func,
                                             "msgaddr", TL_MSG_PARAM_STR, msgaddr ); 
 		} else {
+			char msg[OPRMSGSZ];
 			const char *const p = strrchr (msgaddr, ':');
-			sprintf (msg, TP041, "mount", vid, cur_unm,
+			snprintf (msg, sizeof(msg), TP041, "mount", vid, cur_unm,
 				p ? p + 2 : msgaddr);
+			msg[sizeof(msg) - 1] = '\0';
 			usrmsg (func, "%s\n", msg);
                         tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
                                             "func",    TL_MSG_PARAM_STR, func,
@@ -1012,9 +1046,11 @@ static int smcdismount(char *vid,
 
                         /* this should trigger a retry on a busy error       */ 
 
+			char msg[OPRMSGSZ];
                         const char *const p = strrchr (rmc_errbuf, ':');
-                        sprintf (msg, TP041, "demount", vid, cur_unm,
+                        snprintf (msg, sizeof(msg), TP041, "demount", vid, cur_unm,
                                  p ? p + 2 : rmc_errbuf);
+			msg[sizeof(msg) - 1] = '\0';
                         tplogit (func, "%s", msg);
                         tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
                                             "func",    TL_MSG_PARAM_STR, func,
@@ -1043,9 +1079,11 @@ static int smcdismount(char *vid,
                                                     "(serrno-ERMCRBTERR)", TL_MSG_PARAM_INT, (rmc_dismount_serrno - ERMCRBTERR) );
                         }
 			{
+				char msg[OPRMSGSZ];
                         	const char *const p = strrchr (rmc_errbuf, ':');
-                        	sprintf (msg, TP041, "demount", vid, cur_unm,
+                        	snprintf (msg, sizeof(msg), TP041, "demount", vid, cur_unm,
                                  	p ? p + 2 : rmc_errbuf);
+				msg[sizeof(msg) - 1] = '\0';
                         	/* Just send message to operator after two retries on connection reset*/ 
                         	if (vsnretry > 3 && (rmc_dismount_serrno == SECOMERR)) {
                                 	usrmsg (func, "%s\n", msg);
@@ -1156,9 +1194,11 @@ static int smcdismount(char *vid,
                                             "msgaddr", TL_MSG_PARAM_STR, msgaddr ); 
                 
                 } else {
+			char msg[OPRMSGSZ];
                         const char *const p = strrchr (msgaddr, ':');
-                        sprintf (msg, TP041, "demount", vid, cur_unm,
+                        snprintf (msg, sizeof(msg), TP041, "demount", vid, cur_unm,
                                  p ? p + 2 : msgaddr);
+			msg[sizeof(msg) - 1] = '\0';
                         usrmsg (func, "%s\n", msg);
                         tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
                                             "func",    TL_MSG_PARAM_STR, func,
