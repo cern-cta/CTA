@@ -310,16 +310,13 @@ namespace Tape {
 
     virtual ~Drive() {
       if (-1 != m_tapeFD)
-        m_sysWrapper.close(m_tapeFD);
-      if (-1 != m_genericFD)
-        m_sysWrapper.close(m_genericFD);
+        m_sysWrapper.close(m_tapeFD);      
     }
 
     void SCSI_inquiry();
   protected:
     SCSI::DeviceInfo m_SCSIInfo;
-    int m_tapeFD;
-    int m_genericFD;
+    int m_tapeFD; 
     Tape::System::virtualWrapper & m_sysWrapper;
     struct mtget m_mtInfo;
   private:

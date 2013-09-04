@@ -44,11 +44,11 @@ TEST(TapeDrive, OpensCorrectly) {
   EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
   EXPECT_CALL(sysWrapper, closedir(_)).Times(AtLeast(3));
   EXPECT_CALL(sysWrapper, realpath(_, _)).Times(3);
-  EXPECT_CALL(sysWrapper, open(_, _)).Times(14);
+  EXPECT_CALL(sysWrapper, open(_, _)).Times(12);
   EXPECT_CALL(sysWrapper, read(_, _, _)).Times(20);
   EXPECT_CALL(sysWrapper, write(_, _, _)).Times(0);
   EXPECT_CALL(sysWrapper, ioctl(_,_,An<mtget*>())).Times(2);
-  EXPECT_CALL(sysWrapper, close(_)).Times(14);
+  EXPECT_CALL(sysWrapper, close(_)).Times(12);
   EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(3);
   EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
   
@@ -73,11 +73,11 @@ TEST(TapeDrive, getPositionInfoAndPositionToLogicalObject) {
   EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
   EXPECT_CALL(sysWrapper, closedir(_)).Times(AtLeast(3));
   EXPECT_CALL(sysWrapper, realpath(_, _)).Times(3);
-  EXPECT_CALL(sysWrapper, open(_, _)).Times(14);
+  EXPECT_CALL(sysWrapper, open(_, _)).Times(12);
   EXPECT_CALL(sysWrapper, read(_, _, _)).Times(20);
   EXPECT_CALL(sysWrapper, write(_, _, _)).Times(0);
   EXPECT_CALL(sysWrapper, ioctl(_,_,An<mtget*>())).Times(2);
-  EXPECT_CALL(sysWrapper, close(_)).Times(14);
+  EXPECT_CALL(sysWrapper, close(_)).Times(12);
   EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(3);
   EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
   
@@ -121,11 +121,11 @@ TEST(TapeDrive, setDensityAndCompression) {
   EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
   EXPECT_CALL(sysWrapper, closedir(_)).Times(AtLeast(3));
   EXPECT_CALL(sysWrapper, realpath(_, _)).Times(3);
-  EXPECT_CALL(sysWrapper, open(_, _)).Times(14);
+  EXPECT_CALL(sysWrapper, open(_, _)).Times(12);
   EXPECT_CALL(sysWrapper, read(_, _, _)).Times(20);
   EXPECT_CALL(sysWrapper, write(_, _, _)).Times(0);
   EXPECT_CALL(sysWrapper, ioctl(_,_,An<mtget*>())).Times(2);
-  EXPECT_CALL(sysWrapper, close(_)).Times(14);
+  EXPECT_CALL(sysWrapper, close(_)).Times(12);
   EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(3);
   EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
   
@@ -165,11 +165,11 @@ TEST(TapeDrive, setStDriverOptions) {
   EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
   EXPECT_CALL(sysWrapper, closedir(_)).Times(AtLeast(3));
   EXPECT_CALL(sysWrapper, realpath(_, _)).Times(3);
-  EXPECT_CALL(sysWrapper, open(_, _)).Times(14);
+  EXPECT_CALL(sysWrapper, open(_, _)).Times(12);
   EXPECT_CALL(sysWrapper, read(_, _, _)).Times(20);
   EXPECT_CALL(sysWrapper, write(_, _, _)).Times(0);
   EXPECT_CALL(sysWrapper, ioctl(_,_,An<mtget*>())).Times(2);
-  EXPECT_CALL(sysWrapper, close(_)).Times(14);
+  EXPECT_CALL(sysWrapper, close(_)).Times(12);
   EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(3);
   EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
   
@@ -199,11 +199,11 @@ TEST(TapeDrive, getDeviceInfo) {
   EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
   EXPECT_CALL(sysWrapper, closedir(_)).Times(AtLeast(3));
   EXPECT_CALL(sysWrapper, realpath(_, _)).Times(3);
-  EXPECT_CALL(sysWrapper, open(_, _)).Times(14);
+  EXPECT_CALL(sysWrapper, open(_, _)).Times(12);
   EXPECT_CALL(sysWrapper, read(_, _, _)).Times(20);
   EXPECT_CALL(sysWrapper, write(_, _, _)).Times(0);
   EXPECT_CALL(sysWrapper, ioctl(_,_,An<mtget*>())).Times(2);
-  EXPECT_CALL(sysWrapper, close(_)).Times(14);
+  EXPECT_CALL(sysWrapper, close(_)).Times(12);
   EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(3);
   EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
   
@@ -237,11 +237,11 @@ TEST(TapeDrive, getCompressionAndClearCompressionStats) {
   EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
   EXPECT_CALL(sysWrapper, closedir(_)).Times(AtLeast(3));
   EXPECT_CALL(sysWrapper, realpath(_, _)).Times(3);
-  EXPECT_CALL(sysWrapper, open(_, _)).Times(22);
+  EXPECT_CALL(sysWrapper, open(_, _)).Times(16);
   EXPECT_CALL(sysWrapper, read(_, _, _)).Times(20);
   EXPECT_CALL(sysWrapper, write(_, _, _)).Times(0);
   EXPECT_CALL(sysWrapper, ioctl(_,_,An<mtget*>())).Times(6);
-  EXPECT_CALL(sysWrapper, close(_)).Times(22);
+  EXPECT_CALL(sysWrapper, close(_)).Times(16);
   EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(3);
   EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
   
@@ -336,11 +336,11 @@ TEST(TapeDrive, getTapeAlerts) {
       EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
       EXPECT_CALL(sysWrapper, closedir(_)).Times(AtLeast(3));
       EXPECT_CALL(sysWrapper, realpath(_, _)).Times(AtLeast(3));
-      EXPECT_CALL(sysWrapper, open(_, _)).Times(AtLeast(14));
+      EXPECT_CALL(sysWrapper, open(_, _)).Times(AtLeast(12));
       EXPECT_CALL(sysWrapper, read(_, _, _)).Times(AtLeast(20));
       EXPECT_CALL(sysWrapper, write(_, _, _)).Times(0);
       EXPECT_CALL(sysWrapper, ioctl(_, _, An<mtget*>())).Times(2);
-      EXPECT_CALL(sysWrapper, close(_)).Times(AtLeast(14));
+      EXPECT_CALL(sysWrapper, close(_)).Times(AtLeast(12));
       EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(AtLeast(3));
       EXPECT_CALL(sysWrapper, stat(_, _)).Times(AtLeast(7));
 

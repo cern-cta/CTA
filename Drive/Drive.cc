@@ -23,7 +23,7 @@
 #include "Drive.hh"
 
 Tape::Drive::Drive(SCSI::DeviceInfo di, System::virtualWrapper& sw) : m_SCSIInfo(di),
-m_tapeFD(-1), m_genericFD(-1), m_sysWrapper(sw) {
+m_tapeFD(-1),  m_sysWrapper(sw) {
   /* Open the device files */
   /* We open the tape device file non-blocking as blocking open on rewind tapes (at least)
    * will fail after a long timeout when no tape is present (at least with mhvtl) 
@@ -31,13 +31,9 @@ m_tapeFD(-1), m_genericFD(-1), m_sysWrapper(sw) {
   m_tapeFD = m_sysWrapper.open(m_SCSIInfo.nst_dev.c_str(), O_RDWR | O_NONBLOCK);
   if (-1 == m_tapeFD)
     throw Tape::Exceptions::Errnum(std::string("Could not open device file: " + m_SCSIInfo.nst_dev));
-  m_genericFD = m_sysWrapper.open(m_SCSIInfo.sg_dev.c_str(), O_RDWR);
-  if (-1 == m_genericFD)
-    throw Tape::Exceptions::Errnum(std::string("Could not open device file: " + m_SCSIInfo.sg_dev));
   /* Read drive status */
   if (-1 == m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &m_mtInfo))
     throw Tape::Exceptions::Errnum(std::string("Could not read drive status: " + m_SCSIInfo.nst_dev));
-  /* Read Generic SCSI information (INQUIRY) */
 }
 
 /**
@@ -491,8 +487,6 @@ void Tape::Drive::readBlock(unsigned char * data, size_t count) throw (Tape::Exc
 }
 
 void Tape::Drive::SCSI_inquiry() {
-  std::cout << "Doing a SCSI inquiry via generic device:" << std::endl;
-  SCSI_inquiry(m_genericFD);
   std::cout << "Re-doing a SCSI inquiry via st device:" << std::endl;
   SCSI_inquiry(m_tapeFD);
 }

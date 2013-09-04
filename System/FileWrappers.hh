@@ -198,12 +198,5 @@ namespace System {
      */
     int logSenseTapeAlerts(sg_io_hdr_t * sgio_h);
   };
-  
-  class tapeGenericDeviceFile: public vfsFile {
-  public:
-    tapeGenericDeviceFile() {};
-    virtual void reset() {};
-    virtual int ioctl(unsigned long int request, sg_io_hdr_t * sgio_h);
-  };
 } // namespace System
 } // namespace Tape

@@ -124,8 +124,7 @@ namespace System {
     std::map<std::string, vfsFile *> m_files;
     std::map<std::string, struct stat> m_stats;
     std::map<std::string, regularFile> m_regularFiles;
-    std::map<std::string, stDeviceFile> m_stFiles;
-    std::map<std::string, tapeGenericDeviceFile> m_genericFiles;
+    std::map<std::string, stDeviceFile> m_stFiles;    
     void setupSLC5();
     void setupSLC6();
     void referenceFiles();

@@ -193,10 +193,7 @@ void Tape::System::fakeWrapper::referenceFiles() {
     m_files[i->first] = &m_regularFiles[i->first];
   for (std::map<std::string, stDeviceFile>::iterator i = m_stFiles.begin();
           i != m_stFiles.end(); i++)
-    m_files[i->first] = &m_stFiles[i->first];
-  for (std::map<std::string, tapeGenericDeviceFile>::iterator i = m_genericFiles.begin();
-      i != m_genericFiles.end(); i++)
-    m_files[i->first] = &m_genericFiles[i->first];
+    m_files[i->first] = &m_stFiles[i->first]; 
 }
 
 Tape::System::mockWrapper::mockWrapper() {
@@ -354,9 +351,6 @@ void Tape::System::fakeWrapper::setupSLC5() {
   m_stats["/dev/nst1"].st_mode = S_IFCHR;
   m_stFiles["/dev/nst0"];
   m_stFiles["/dev/nst1"];
-  m_genericFiles["/dev/sg0"];
-  m_genericFiles["/dev/sg1"];
-  m_genericFiles["/dev/sg2"];
   referenceFiles();
 }
 
@@ -557,10 +551,6 @@ void Tape::System::fakeWrapper::setupSLC6() {
 
   m_stFiles["/dev/nst0"];
   m_stFiles["/dev/nst1"];
-  m_genericFiles["/dev/sg0"];
-  m_genericFiles["/dev/sg1"];
-  m_genericFiles["/dev/sg2"];
-  m_genericFiles["/dev/sg3"];
   referenceFiles();
 }
 

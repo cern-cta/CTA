@@ -512,20 +512,3 @@ int Tape::System::stDeviceFile::ioctlInquiry(sg_io_hdr_t * sgio_h) {
   }
   return 0;
 }
-
-int Tape::System::tapeGenericDeviceFile::ioctl(unsigned long int request, sg_io_hdr_t * sgio_h)
-{
-  /* for the moment, just implement the SG_IO ioctl */
-  switch (request) {
-    case SG_IO:
-      if (sgio_h->interface_id != 'S') {
-        errno = ENOSYS;
-        return -1;
-      }
-      /* TODO */
-      return 0;
-  }
-  errno = EINVAL;
-  return -1;
-}
-
