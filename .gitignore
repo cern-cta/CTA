@@ -1,5 +1,6 @@
 *~
 *.bak
+.*.swp
 castor/gc/gcd
 castor/gc/Makefile
 castor/infoPolicy/Makefile
