@@ -193,6 +193,8 @@
      #101691 vmgrmodifypool causes a bad address error if passed no arguments
      #101858 Tape writing speed decreases as a function of the number of files already migrated
      #101907 The 55 second timeouts of tapebridged are not working
+     #102410 rmcd blocks forever when dismounting a tape and no vid has been specified
+     #102415 rtcpd total number of Kbytes transfered log wraps at around 2TBytes
 
   [Features]
 
@@ -205,6 +207,10 @@
      #101807 RFE: taped should only permit labelling tapes with the AUL label format
      #101868 RFE: Remove dead wood from rtcpc_BuildReq.c
      #101881 RFE: Remove unused stager DB reference from tape server code
+     #102340 RFE: Remove the unused -H option from the tplabel command
+     #102344 RFE: smc should be made a pure client of rmcd
+     #102374 RFE: Create a separate rmc client library called libcastorrmc.so
+     #102367 RFE: Remove the -l option from smc
 
   [Code Maintenance]
 
