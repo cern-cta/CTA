@@ -2032,7 +2032,7 @@ BEGIN
   -- Get the stager/nsHost configuration option
   nsHostName := getConfigOption('stager', 'nsHost', nh);
   -- call internal method
-  selectCastorFileInternal(fId, nsHostName, fc, fs, fn, srId, lut/1000000, TRUE, rid, rfs);
+  selectCastorFileInternal(fId, nsHostName, fc, fs, fn, srId, inNsOpenTimeInUsec/1000000, TRUE, rid, rfs);
 END;
 /
 
