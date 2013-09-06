@@ -1502,57 +1502,6 @@ int Cns_insert_fmd_entry(struct Cns_dbfd *dbfd,
 {
   char fileid_str[21];
   char filesize_str[21];
-  char func[21];
-  char parent_fileid_str[21];
-  struct sqlca sqlca;
-  short fileclass_indicator = 0;
-
-  /* handle the case of NULL fileclasses */
-  if (0 == fmd_entry->fileclass)
-    fileclass_indicator = -1;
-  strncpy (func, "Cns_insert_fmd_entry", 21);
-  (void) u64tostr (fmd_entry->fileid, fileid_str, -1);
-  (void) u64tostr (fmd_entry->parent_fileid, parent_fileid_str, -1);
-  (void) u64tostr (fmd_entry->filesize, filesize_str, -1);
-  EXEC SQL INSERT INTO Cns_file_metadata
-    (FILEID, PARENT_FILEID,
-     GUID, NAME, FILEMODE, NLINK,
-     OWNER_UID, GID, FILESIZE,
-     ATIME, MTIME, CTIME, STAGERTIME,
-     FILECLASS, STATUS, CSUMTYPE,
-     CSUMVALUE, ACL)
-    VALUES
-    (TO_NUMBER(:fileid_str), TO_NUMBER(:parent_fileid_str),
-     :fmd_entry->guid,
-     :fmd_entry->name, :fmd_entry->filemode, :fmd_entry->nlink,
-     :fmd_entry->uid, :fmd_entry->gid, TO_NUMBER(:filesize_str),
-     :fmd_entry->atime, :fmd_entry->mtime, :fmd_entry->ctime,
-     0,
-     :fmd_entry->fileclass INDICATOR :fileclass_indicator,
-     :fmd_entry->status, :fmd_entry->csumtype,
-     :fmd_entry->csumvalue, :fmd_entry->acl);
-  switch (sqlca.sqlcode) {
-  case 0:
-    return (0);
-  case -1:
-    serrno = EEXIST;
-    break;
-  case -1631:
-  case -1632:
-  case -1654:
-    serrno = ENOSPC;
-    break;
-  default:
-    Cns_oracle_error (func, "INSERT", dbfd, &sqlca);
-  }
-  return (-1);
-}
-
-int Cns_insert_fmd_entry_open(struct Cns_dbfd *dbfd,
-                              struct Cns_file_metadata *fmd_entry)
-{
-  char fileid_str[21];
-  char filesize_str[21];
   char func[26];
   char parent_fileid_str[21];
   struct sqlca sqlca;

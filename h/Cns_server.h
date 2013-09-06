@@ -187,7 +187,6 @@ EXTERN_C int Cns_get_umd_by_fileid (struct Cns_dbfd *, u_signed64, struct Cns_us
 EXTERN_C int Cns_getpath_by_fileid (struct Cns_dbfd *, u_signed64, char **);
 EXTERN_C int Cns_insert_class_entry (struct Cns_dbfd *, struct Cns_class_metadata *);
 EXTERN_C int Cns_insert_fmd_entry (struct Cns_dbfd *, struct Cns_file_metadata *);
-EXTERN_C int Cns_insert_fmd_entry_open (struct Cns_dbfd *, struct Cns_file_metadata *);
 EXTERN_C int Cns_insert_lnk_entry (struct Cns_dbfd *, struct Cns_symlinks *);
 EXTERN_C int Cns_insert_tppool_entry (struct Cns_dbfd *, struct Cns_tp_pool *);
 EXTERN_C int Cns_insert_umd_entry (struct Cns_dbfd *, struct Cns_user_metadata *);

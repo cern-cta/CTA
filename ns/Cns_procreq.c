@@ -745,7 +745,6 @@ int Cns_srv_creat(int magic,
     filentry.filesize = 0;
     filentry.mtime = time (0);
     filentry.ctime = filentry.mtime;
-    filentry.stagertime_usec = 0;
     filentry.status = '-';
     if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &filentry))
       RETURN (serrno);
@@ -5179,7 +5178,7 @@ int Cns_srv_openx(char *req_data,
       Cns_acl_inherit (&parent_dir, &fmd_entry, mode);
 
     /* Write the new file entry and retrieve stagertime from db */
-    if (Cns_insert_fmd_entry_open (&thip->dbfd, &fmd_entry))
+    if (Cns_insert_fmd_entry (&thip->dbfd, &fmd_entry))
       RETURN (serrno);
 
     /* Update the parent directory entry */
