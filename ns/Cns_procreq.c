@@ -784,7 +784,7 @@ int Cns_srv_creat(int magic,
 
     /* Update parent directory entry */
     parent_dir.nlink++;
-    parent_dir.mtime = time (0);
+    parent_dir.mtime = filentry.mtime;
     parent_dir.ctime = parent_dir.mtime;
     if (Cns_update_fmd_entry (&thip->dbfd, &rec_addrp, &parent_dir))
       RETURN (serrno);
@@ -2365,7 +2365,7 @@ int Cns_srv_mkdir(int magic,
 
   /* Update parent directory entry */
   parent_dir.nlink++;
-  parent_dir.mtime = time (0);
+  parent_dir.mtime = direntry.mtime;
   parent_dir.ctime = parent_dir.mtime;
   if (Cns_update_fmd_entry (&thip->dbfd, &rec_addrp, &parent_dir))
     RETURN (serrno);
@@ -2970,6 +2970,7 @@ int Cns_srv_rename(char *req_data,
   Cns_dbrec_addr rec_addru; /* Comment record address */
   struct Cns_file_metadata tmp_fmd_entry;
   struct Cns_user_metadata umd_entry;
+  time_t cur_time;
 
   /* Unmarshall message body */
   rbp = req_data;
@@ -3103,6 +3104,9 @@ int Cns_srv_rename(char *req_data,
       RETURN (serrno);
   }
 
+  /* get time to be used when updating entries */
+  cur_time = time(0);
+
   /* Update directory nlink value */
   if (old_parent_dir.fileid != new_parent_dir.fileid) {
 
@@ -3111,7 +3115,7 @@ int Cns_srv_rename(char *req_data,
     if (!new_exists) {
       new_parent_dir.nlink++;
     }
-    new_parent_dir.mtime = time (0);
+    new_parent_dir.mtime = cur_time;
     new_parent_dir.ctime = new_parent_dir.mtime;
     if (Cns_update_fmd_entry (&thip->dbfd, &new_rec_addrp, &new_parent_dir))
       RETURN (serrno);
@@ -3124,12 +3128,12 @@ int Cns_srv_rename(char *req_data,
   /* Update 'old' basename entry */
   old_fmd_entry.parent_fileid = new_parent_dir.fileid;
   strcpy (old_fmd_entry.name, new_fmd_entry.name);
-  old_fmd_entry.ctime = time (0);
+  old_fmd_entry.ctime = cur_time;
   if (Cns_update_fmd_entry (&thip->dbfd, &old_rec_addr, &old_fmd_entry))
     RETURN (serrno);
 
   /* Update parent directory entry */
-  old_parent_dir.mtime = time (0);
+  old_parent_dir.mtime = cur_time;
   old_parent_dir.ctime = old_parent_dir.mtime;
   if (Cns_update_fmd_entry (&thip->dbfd, &old_rec_addrp, &old_parent_dir))
     RETURN (serrno);
@@ -4562,7 +4566,7 @@ int Cns_srv_symlink(char *req_data,
 
   /* Update parent directory entry */
   parent_dir.nlink++;
-  parent_dir.mtime = time (0);
+  parent_dir.mtime = fmd_entry.mtime;
   parent_dir.ctime = parent_dir.mtime;
   if (Cns_update_fmd_entry (&thip->dbfd, &rec_addrp, &parent_dir))
     RETURN (serrno);
@@ -5180,7 +5184,7 @@ int Cns_srv_openx(char *req_data,
 
     /* Update the parent directory entry */
     parent_dir.nlink++;
-    parent_dir.mtime = time (0);
+    parent_dir.mtime = fmd_entry.mtime;
     parent_dir.ctime = parent_dir.mtime;
     if (Cns_update_fmd_entry (&thip->dbfd, &rec_addrp, &parent_dir))
       RETURN (serrno);
