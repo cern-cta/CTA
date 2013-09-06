@@ -657,7 +657,7 @@ CREATE OR REPLACE PROCEDURE prepareForMigration (srId IN INTEGER,
                                                  outFileId OUT NUMBER,
                                                  outNsHost OUT VARCHAR2,
                                                  outRC OUT INTEGER,
-                                                 outNsOpenTime OUT NUMBER) AS
+                                                 outNsOpenTimeInUsec OUT INTEGER) AS
   cfId INTEGER;
   dcId INTEGER;
   svcId INTEGER;
@@ -671,8 +671,8 @@ BEGIN
   SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ castorFile, diskCopy INTO cfId, dcId
     FROM SubRequest WHERE id = srId;
   -- Lock the CastorFile and get the fileid and name server host
-  SELECT id, fileid, nsHost, nvl(lastUpdateTime, 0), nsOpenTime
-    INTO cfId, outFileId, outNsHost, lastUpdTime, outNsOpenTime
+  SELECT id, fileid, nsHost, nvl(lastUpdateTime, 0), TRUNC(nsOpenTime*1000000)
+    INTO cfId, outFileId, outNsHost, lastUpdTime, outNsOpenTimeInUsec
     FROM CastorFile WHERE id = cfId FOR UPDATE;
   -- Determine the context (Put inside PrepareToPut or not)
   BEGIN

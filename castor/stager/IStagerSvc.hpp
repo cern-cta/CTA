@@ -151,7 +151,7 @@ namespace castor {
        * @param subreq the subRequest concerning this file
        * @param cnsFileId the NS fileid structure of the CastorFile
        * @param cnsFilestat the NS filestat structure of the file
-       * @param nsOpenTime the NS timestamp returned by Cns_openx
+       * @param nsOpenTimeInUsec the NS timestamp returned by Cns_openx
        * Used only in case of creation of a new castor file.
        * @return the CastorFile instance.
        * @exception Exception in case of error
@@ -159,7 +159,7 @@ namespace castor {
       virtual castor::stager::CastorFile* selectCastorFile
         (castor::stager::SubRequest* subreq,
          const Cns_fileid* cnsFileId, const Cns_filestatcs* cnsFileStat,
-         const double nsOpenTime)
+         const u_signed64 nsOpenTimeInUsec)
         throw (castor::exception::Exception) = 0;
 
       /**

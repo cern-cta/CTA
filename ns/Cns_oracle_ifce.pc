@@ -370,7 +370,7 @@ int Cns_get_fmd_by_fileid(struct Cns_dbfd *dbfd,
     TO_CHAR(FILEID), TO_CHAR(PARENT_FILEID),
     GUID, NAME, FILEMODE, NLINK,
     OWNER_UID, GID, TO_CHAR(FILESIZE),
-    ATIME, MTIME, CTIME, NVL(STAGERTIME, 0),
+    ATIME, MTIME, CTIME, TRUNC(NVL(STAGERTIME, 0)*1000000),
     FILECLASS, STATUS, CSUMTYPE,
     CSUMVALUE, ACL
     FROM Cns_file_metadata
@@ -380,7 +380,7 @@ int Cns_get_fmd_by_fileid(struct Cns_dbfd *dbfd,
     TO_CHAR(FILEID), TO_CHAR(PARENT_FILEID),
     GUID, NAME, FILEMODE, NLINK,
     OWNER_UID, GID, TO_CHAR(FILESIZE),
-    ATIME, MTIME, CTIME, NVL(STAGERTIME, 0),
+    ATIME, MTIME, CTIME, TRUNC(NVL(STAGERTIME, 0)*1000000),
     FILECLASS, STATUS, CSUMTYPE,
     CSUMVALUE, ACL
     FROM Cns_file_metadata
@@ -401,7 +401,7 @@ int Cns_get_fmd_by_fileid(struct Cns_dbfd *dbfd,
       :fmd_entry->name, :fmd_entry->filemode, :fmd_entry->nlink,
       :fmd_entry->uid, :fmd_entry->gid, :filesize_str,
       :fmd_entry->atime, :fmd_entry->mtime, :fmd_entry->ctime,
-      :fmd_entry->stagertime,
+      :fmd_entry->stagertime_usec,
       :fmd_entry->fileclass INDICATOR :fileclass_indicator,
       :fmd_entry->status,
       :fmd_entry->csumtype:ct_ind, :fmd_entry->csumvalue:cv_ind,
@@ -418,7 +418,7 @@ int Cns_get_fmd_by_fileid(struct Cns_dbfd *dbfd,
       :fmd_entry->name, :fmd_entry->filemode, :fmd_entry->nlink,
       :fmd_entry->uid, :fmd_entry->gid, :filesize_str,
       :fmd_entry->atime, :fmd_entry->mtime, :fmd_entry->ctime,
-      :fmd_entry->stagertime,
+      :fmd_entry->stagertime_usec,
       :fmd_entry->fileclass INDICATOR :fileclass_indicator,
       :fmd_entry->status,
       :fmd_entry->csumtype:ct_ind, :fmd_entry->csumvalue:cv_ind,
@@ -474,7 +474,7 @@ int Cns_get_fmd_by_fullid(struct Cns_dbfd *dbfd,
     TO_CHAR(FILEID), TO_CHAR(PARENT_FILEID),
     GUID, NAME, FILEMODE, NLINK,
     OWNER_UID, GID, TO_CHAR(FILESIZE),
-    ATIME, MTIME, CTIME, NVL(STAGERTIME, 0),
+    ATIME, MTIME, CTIME, TRUNC(NVL(STAGERTIME, 0)*1000000),
     FILECLASS, STATUS, CSUMTYPE,
     CSUMVALUE, ACL
     FROM Cns_file_metadata
@@ -485,7 +485,7 @@ int Cns_get_fmd_by_fullid(struct Cns_dbfd *dbfd,
     TO_CHAR(FILEID), TO_CHAR(PARENT_FILEID),
     GUID, NAME, FILEMODE, NLINK,
     OWNER_UID, GID, TO_CHAR(FILESIZE),
-    ATIME, MTIME, CTIME, NVL(STAGERTIME, 0),
+    ATIME, MTIME, CTIME, TRUNC(NVL(STAGERTIME, 0)*1000000),
     FILECLASS, STATUS, CSUMTYPE,
     CSUMVALUE, ACL
     FROM Cns_file_metadata
@@ -507,7 +507,7 @@ int Cns_get_fmd_by_fullid(struct Cns_dbfd *dbfd,
       :fmd_entry->name, :fmd_entry->filemode, :fmd_entry->nlink,
       :fmd_entry->uid, :fmd_entry->gid, :filesize_str,
       :fmd_entry->atime, :fmd_entry->mtime, :fmd_entry->ctime,
-      :fmd_entry->stagertime,
+      :fmd_entry->stagertime_usec,
       :fmd_entry->fileclass INDICATOR :fileclass_indicator,
       :fmd_entry->status,
       :fmd_entry->csumtype:ct_ind, :fmd_entry->csumvalue:cv_ind,
@@ -524,7 +524,7 @@ int Cns_get_fmd_by_fullid(struct Cns_dbfd *dbfd,
       :fmd_entry->name, :fmd_entry->filemode, :fmd_entry->nlink,
       :fmd_entry->uid, :fmd_entry->gid, :filesize_str,
       :fmd_entry->atime, :fmd_entry->mtime, :fmd_entry->ctime,
-      :fmd_entry->stagertime,
+      :fmd_entry->stagertime_usec,
       :fmd_entry->fileclass INDICATOR :fileclass_indicator,
       :fmd_entry->status,
       :fmd_entry->csumtype:ct_ind, :fmd_entry->csumvalue:cv_ind,
@@ -580,7 +580,7 @@ int Cns_get_fmd_by_guid(struct Cns_dbfd *dbfd,
     TO_CHAR(FILEID), TO_CHAR(PARENT_FILEID),
     GUID, NAME, FILEMODE, NLINK,
     OWNER_UID, GID, TO_CHAR(FILESIZE),
-    ATIME, MTIME, CTIME, NVL(STAGERTIME, 0),
+    ATIME, MTIME, CTIME, TRUNC(NVL(STAGERTIME, 0)*1000000),
     FILECLASS, STATUS, CSUMTYPE,
     CSUMVALUE, ACL
     FROM Cns_file_metadata
@@ -590,7 +590,7 @@ int Cns_get_fmd_by_guid(struct Cns_dbfd *dbfd,
     TO_CHAR(FILEID), TO_CHAR(PARENT_FILEID),
     GUID, NAME, FILEMODE, NLINK,
     OWNER_UID, GID, TO_CHAR(FILESIZE),
-    ATIME, MTIME, CTIME, NVL(STAGERTIME, 0),
+    ATIME, MTIME, CTIME, TRUNC(NVL(STAGERTIME, 0)*1000000),
     FILECLASS, STATUS, CSUMTYPE,
     CSUMVALUE, ACL
     FROM Cns_file_metadata
@@ -610,7 +610,7 @@ int Cns_get_fmd_by_guid(struct Cns_dbfd *dbfd,
       :fmd_entry->name, :fmd_entry->filemode, :fmd_entry->nlink,
       :fmd_entry->uid, :fmd_entry->gid, :filesize_str,
       :fmd_entry->atime, :fmd_entry->mtime, :fmd_entry->ctime,
-      :fmd_entry->stagertime,
+      :fmd_entry->stagertime_usec,
       :fmd_entry->fileclass INDICATOR :fileclass_indicator,
       :fmd_entry->status,
       :fmd_entry->csumtype:ct_ind, :fmd_entry->csumvalue:cv_ind,
@@ -627,7 +627,7 @@ int Cns_get_fmd_by_guid(struct Cns_dbfd *dbfd,
       :fmd_entry->name, :fmd_entry->filemode, :fmd_entry->nlink,
       :fmd_entry->uid, :fmd_entry->gid, :filesize_str,
       :fmd_entry->atime, :fmd_entry->mtime, :fmd_entry->ctime,
-      :fmd_entry->stagertime,
+      :fmd_entry->stagertime_usec,
       :fmd_entry->fileclass INDICATOR :fileclass_indicator,
       :fmd_entry->status,
       :fmd_entry->csumtype:ct_ind, :fmd_entry->csumvalue:cv_ind,
@@ -683,7 +683,7 @@ int Cns_get_fmd_by_pfid(struct Cns_dbfd *dbfd,
     TO_CHAR(FILEID), TO_CHAR(PARENT_FILEID),
     GUID, NAME, FILEMODE, NLINK,
     OWNER_UID, GID, TO_CHAR(FILESIZE),
-    ATIME, MTIME, CTIME, NVL(STAGERTIME, 0),
+    ATIME, MTIME, CTIME, TRUNC(NVL(STAGERTIME, 0)*1000000),
     FILECLASS, STATUS, CSUMTYPE,
     CSUMVALUE, ACL
     FROM Cns_file_metadata
@@ -720,7 +720,7 @@ int Cns_get_fmd_by_pfid(struct Cns_dbfd *dbfd,
       :fmd_entry->name, :fmd_entry->filemode, :fmd_entry->nlink,
       :fmd_entry->uid, :fmd_entry->gid, :filesize_str,
       :fmd_entry->atime, :fmd_entry->mtime, :fmd_entry->ctime,
-      :fmd_entry->stagertime,
+      :fmd_entry->stagertime_usec,
       :fmd_entry->fileclass INDICATOR :fileclass_indicator,
       :fmd_entry->status,
       :fmd_entry->csumtype:ct_ind, :fmd_entry->csumvalue:cv_ind,
@@ -1580,11 +1580,11 @@ int Cns_insert_fmd_entry_open(struct Cns_dbfd *dbfd,
      :fmd_entry->name, :fmd_entry->filemode, :fmd_entry->nlink,
      :fmd_entry->uid, :fmd_entry->gid, TO_NUMBER(:filesize_str),
      :fmd_entry->atime, :fmd_entry->mtime, :fmd_entry->ctime,
-     TRUNC(GETTIME(), 5),
+     getTime(),
      :fmd_entry->fileclass INDICATOR :fileclass_indicator,
      :fmd_entry->status, :fmd_entry->csumtype,
      :fmd_entry->csumvalue, :fmd_entry->acl)
-    RETURNING STAGERTIME INTO :fmd_entry->stagertime;
+    RETURNING TRUNC(STAGERTIME*1000000) INTO :fmd_entry->stagertime_usec;
   switch (sqlca.sqlcode) {
   case 0:
     return (0);
@@ -1991,8 +1991,7 @@ int Cns_update_fmd_entry_open(struct Cns_dbfd *dbfd,
   memcpy (rowid_value, rec_addr, sizeof(rowid_value));
   (void) u64tostr (fmd_entry->parent_fileid, parent_fileid_str, -1);
   (void) u64tostr (fmd_entry->filesize, filesize_str, -1);
-  /* update db entry and get a new stagertime. We truncate it
-     to make it fit on an integer without loss of precision */
+  /* update db entry and get a new stagertime */
   EXEC SQL UPDATE Cns_file_metadata SET
     PARENT_FILEID = TO_NUMBER(:parent_fileid_str),
     GUID          = :fmd_entry->guid,
@@ -2005,14 +2004,14 @@ int Cns_update_fmd_entry_open(struct Cns_dbfd *dbfd,
     ATIME         = :fmd_entry->atime,
     MTIME         = :fmd_entry->mtime,
     CTIME         = :fmd_entry->ctime,
-    STAGERTIME    = TRUNC(GETTIME(), 5),
+    STAGERTIME    = getTime(),
     FILECLASS     = :fmd_entry->fileclass INDICATOR :fileclass_indicator,
     STATUS        = :fmd_entry->status,
     CSUMTYPE      = :fmd_entry->csumtype,
     CSUMVALUE     = :fmd_entry->csumvalue,
     ACL           = :fmd_entry->acl
     WHERE ROWID   = :rowid_value
-    RETURNING STAGERTIME INTO :fmd_entry->stagertime;
+    RETURNING TRUNC(STAGERTIME*1000000) INTO :fmd_entry->stagertime_usec;
   switch (sqlca.sqlcode) {
   case 0:
     return (0);
@@ -2081,7 +2080,7 @@ int Cns_update_umd_entry(struct Cns_dbfd *dbfd,
 
 int Cns_is_concurrent_open(struct Cns_dbfd *dbfd,
                            struct Cns_file_metadata *fmd_entry,
-                           double last_stagertime,
+                           u_signed64 last_stagertime_usec,
                            char* logbuf)
 {
   char open_mode[50];
@@ -2117,12 +2116,12 @@ int Cns_is_concurrent_open(struct Cns_dbfd *dbfd,
    * in the name server is newer than the last known stager modification time.
    * Note that in compatibility mode we only have seconds precision, thus we have
    * to ceil the given last_stagertime for a safe comparison with mtime.
-   * After deploying 2.1.14, only the check with fmd_entry.stagertime shall stay.
+   * After deploying 2.1.14, only the check with fmd_entry.stagertime_usec shall stay.
    */
-  if (  ((open_mode[0] == 'C') && (fmd_entry->mtime > ceil(last_stagertime)))
-     || ((open_mode[0] == 'N') && (fmd_entry->stagertime - last_stagertime > 1E-6)) ) {
+  if (  ((open_mode[0] == 'C') && (fmd_entry->mtime > ceil(((double)last_stagertime_usec)/1E6)))
+     || ((open_mode[0] == 'N') && (fmd_entry->stagertime_usec > last_stagertime_usec)) ) {
     sprintf (logbuf + strlen(logbuf), " NSLastOpenTime=%.6f",
-             (open_mode[0] == 'C' ? fmd_entry->mtime : fmd_entry->stagertime));
+             (open_mode[0] == 'C' ? fmd_entry->mtime : (((double)fmd_entry->stagertime_usec)/1E6)));
     serrno = ENSFILECHG;
     return (-1);
   }

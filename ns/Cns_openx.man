@@ -20,7 +20,7 @@ Cns_openx \- open and possibly create a new CASTOR file
 .BI "int * " newfile,
 .BI "struct Cns_fileid * " file_uniqueid,
 .BI "struct Cns_filestatcs * " statbuf,
-.BI "double * " stagertime)
+.BI "u_signed64 * " stagertime_usec)
 .SH DESCRIPTION
 .B ---- FOR INTERNAL USE ONLY! ----
 .LP
@@ -86,10 +86,10 @@ parameter will be set to 1 if the call resulted in the creation of a new file
 otherwise 0.
 .LP
 The
-.I stagertime
+.I stagertime_usec
 parameter will be set to the database timestamp of this open call and shall be passed
 again back at closex time to dobule check that no other user opened the file meanwhile.
-Note that this value is marshalled on the wire as an integer at microsecond precision.
+Note that this value is a number of microsecond since the Epoch.
 .LP
 The structure pointed to by
 .IR file_uniqueid

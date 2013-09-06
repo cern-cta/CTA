@@ -75,7 +75,7 @@ struct Cns_file_metadata {
         time_t             atime;              /* last access to file */
         time_t             mtime;              /* last file modification */
         time_t             ctime;              /* last metadata modification */
-        double             stagertime;         /* last openx time from a stager */
+        u_signed64         stagertime_usec;    /* last openx time from a stager in microseconds since the Epoch */
         short              fileclass;
         char               status;             /* '-' --> online, 'm' --> migrated, 'D' --> deleted */
         char               csumtype[3];
@@ -202,7 +202,7 @@ EXTERN_C int Cns_update_fmd_entry (struct Cns_dbfd *, Cns_dbrec_addr *, struct C
 EXTERN_C int Cns_update_fmd_entry_open (struct Cns_dbfd *, Cns_dbrec_addr *, struct Cns_file_metadata *);
 EXTERN_C int Cns_update_smd_entry (struct Cns_dbfd *, Cns_dbrec_addr *, struct Cns_seg_metadata *);
 EXTERN_C int Cns_update_umd_entry (struct Cns_dbfd *, Cns_dbrec_addr *, struct Cns_user_metadata *);
-EXTERN_C int Cns_is_concurrent_open (struct Cns_dbfd *, struct Cns_file_metadata *, double, char *);
+EXTERN_C int Cns_is_concurrent_open (struct Cns_dbfd *, struct Cns_file_metadata *, u_signed64, char *);
 
 EXTERN_C int Cns_srv_aborttrans (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_access (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);

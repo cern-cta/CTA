@@ -745,7 +745,7 @@ int Cns_srv_creat(int magic,
     filentry.filesize = 0;
     filentry.mtime = time (0);
     filentry.ctime = filentry.mtime;
-    filentry.stagertime = 0.0;
+    filentry.stagertime_usec = 0;
     filentry.status = '-';
     if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &filentry))
       RETURN (serrno);
@@ -5124,7 +5124,7 @@ int Cns_srv_openx(char *req_data,
 
       /* Amend logging parameters */
       sprintf (reqinfo->logbuf + strlen(reqinfo->logbuf),
-               " NSOpenTime=%.6f Truncated=\"True\"", fmd_entry.stagertime);
+               " NSOpenTime=%.6f Truncated=\"True\"", ((double)fmd_entry.stagertime_usec)/1E6);
     }
   } else {  /* New file */
     if ((flags & O_CREAT) == 0)
@@ -5187,7 +5187,7 @@ int Cns_srv_openx(char *req_data,
 
     /* Amend logging parameters */
     sprintf (reqinfo->logbuf + strlen(reqinfo->logbuf),
-             " NSOpenTime=%.6f NewFile=\"True\"", fmd_entry.stagertime);
+             " NSOpenTime=%.6f NewFile=\"True\"", ((double)fmd_entry.stagertime_usec)/1E6);
 
     /* Marshall the newfile flag */
     marshall_LONG (sbp, 1);
@@ -5211,7 +5211,7 @@ int Cns_srv_openx(char *req_data,
   marshall_BYTE (sbp, fmd_entry.status);
   marshall_STRING (sbp, fmd_entry.csumtype);
   marshall_STRING (sbp, fmd_entry.csumvalue);
-  marshall_HYPER (sbp, fmd_entry.stagertime*1E6);  /* time in usecs as integer */
+  marshall_HYPER (sbp, fmd_entry.stagertime_usec);
   sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
   RETURN (0);
 }
@@ -5229,7 +5229,7 @@ int Cns_srv_closex(char *req_data,
   char         *rbp;
   char         csumtype[3];
   char         csumvalue[CA_MAXCKSUMLEN + 1];
-  double       last_stagertime = 0;
+  u_signed64   last_stagertime_usec = 0;
   time_t       new_mtime = 0;
   u_signed64   fileid;
   u_signed64   filesize;
@@ -5252,8 +5252,7 @@ int Cns_srv_closex(char *req_data,
   if (unmarshall_STRINGN (rbp, csumvalue, CA_MAXCKSUMLEN + 1))
     RETURN (EINVAL);
   unmarshall_TIME_T (rbp, new_mtime);
-  unmarshall_HYPER (rbp, last_stagertime);
-  last_stagertime *= 1E-6;   /* we get usecs, convert back to secs */
+  unmarshall_HYPER (rbp, last_stagertime_usec);
 
   /* Check if namespace is in 'readonly' mode */
   if (rdonly)
@@ -5264,7 +5263,7 @@ int Cns_srv_closex(char *req_data,
            "FileSize=%llu ChecksumType=\"%s\" ChecksumValue=\"%s\" "
            "NewModTime=%lld StagerLastOpenTime=%.6f",
            filesize, csumtype, csumvalue,
-           (long long int)new_mtime, last_stagertime);
+           (long long int)new_mtime, (((double)last_stagertime_usec)/1E6));
 
   /* Check that the checksum type and value are valid. For now only adler32 (AD)
    * and pre-adler32 (PA) are supported.
@@ -5301,7 +5300,7 @@ int Cns_srv_closex(char *req_data,
     RETURN (EISDIR);
   
   /* Check for concurrent modifications */
-  if (Cns_is_concurrent_open(&thip->dbfd, &fmd_entry, last_stagertime, reqinfo->logbuf))
+  if (Cns_is_concurrent_open(&thip->dbfd, &fmd_entry, last_stagertime_usec, reqinfo->logbuf))
     RETURN (serrno);
 
   /* Check for end-to-end checksum mismatch */

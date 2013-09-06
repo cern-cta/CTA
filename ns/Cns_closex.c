@@ -24,7 +24,7 @@ Cns_closex(const struct Cns_fileid *file_uniqueid,
            const char *csumtype,
            const char *csumvalue,
            const time_t new_mod_time,
-           const double last_stagertime,
+           const u_signed64 last_stagertime_usec,
            struct Cns_filestatcs *statbuf)
 {
   /* Variables */
@@ -75,7 +75,7 @@ Cns_closex(const struct Cns_fileid *file_uniqueid,
   marshall_STRING (sbp, csumtype);
   marshall_STRING (sbp, csumvalue);
   marshall_TIME_T (sbp, new_mod_time);
-  marshall_HYPER (sbp, last_stagertime*1E6);  /* time in usec as integer */
+  marshall_HYPER (sbp, last_stagertime_usec);  /* time in usec as integer */
 
   msglen = sbp - sendbuf;
   marshall_LONG (q, msglen);  /* Update length field */

@@ -2024,7 +2024,7 @@ CREATE OR REPLACE PROCEDURE selectCastorFile (fId IN INTEGER,
                                               fs IN INTEGER,
                                               fn IN VARCHAR2,
                                               srId IN NUMBER,
-                                              lut IN NUMBER,
+                                              inNsOpenTimeInUsec IN INTEGER,
                                               rid OUT INTEGER,
                                               rfs OUT INTEGER) AS
   nsHostName VARCHAR2(2048);
@@ -2032,7 +2032,7 @@ BEGIN
   -- Get the stager/nsHost configuration option
   nsHostName := getConfigOption('stager', 'nsHost', nh);
   -- call internal method
-  selectCastorFileInternal(fId, nsHostName, fc, fs, fn, srId, lut, TRUE, rid, rfs);
+  selectCastorFileInternal(fId, nsHostName, fc, fs, fn, srId, lut/1000000, TRUE, rid, rfs);
 END;
 /
 

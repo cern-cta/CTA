@@ -315,7 +315,7 @@ void castor::db::ora::OraJobSvc::prepareForMigration
  const std::string csumtype,
  const std::string csumvalue)
   throw (castor::exception::Exception) {
-  double lastNsOpenTime;
+  u_signed64 lastNsOpenTimeInUsec;
   try {
     // Check whether the statements are ok
     if (0 == m_prepareForMigrationStatement) {
@@ -361,7 +361,7 @@ void castor::db::ora::OraJobSvc::prepareForMigration
                               DLF_BASE_ORACLELIB, 0, 0, &fileid);
       return;
     }
-    lastNsOpenTime = m_prepareForMigrationStatement->getDouble(7);
+    lastNsOpenTimeInUsec = (u_signed64)m_prepareForMigrationStatement->getDouble(7);
 
     // If we got this far we need to update the file size and checksum
     // information related to the file in the name server. By updating the
@@ -392,9 +392,9 @@ void castor::db::ora::OraJobSvc::prepareForMigration
     int rc = 0;
     if (useChkSum) {
       rc = Cns_closex(&fileid, fileSize, csumtype.c_str(), csumvalue.c_str(),
-                      timeStamp, lastNsOpenTime, NULL);
+                      timeStamp, lastNsOpenTimeInUsec, NULL);
     } else {
-      rc = Cns_closex(&fileid, fileSize, "", "", timeStamp, lastNsOpenTime, NULL);
+      rc = Cns_closex(&fileid, fileSize, "", "", timeStamp, lastNsOpenTimeInUsec, NULL);
     }
 
     if (rc != 0) {

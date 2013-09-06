@@ -5485,7 +5485,7 @@ CREATE OR REPLACE PROCEDURE selectCastorFile (fId IN INTEGER,
                                               fs IN INTEGER,
                                               fn IN VARCHAR2,
                                               srId IN NUMBER,
-                                              lut IN NUMBER,
+                                              inNsOpenTimeInUsec IN INTEGER,
                                               rid OUT INTEGER,
                                               rfs OUT INTEGER) AS
   nsHostName VARCHAR2(2048);
@@ -5493,7 +5493,7 @@ BEGIN
   -- Get the stager/nsHost configuration option
   nsHostName := getConfigOption('stager', 'nsHost', nh);
   -- call internal method
-  selectCastorFileInternal(fId, nsHostName, fc, fs, fn, srId, lut, TRUE, rid, rfs);
+  selectCastorFileInternal(fId, nsHostName, fc, fs, fn, srId, lut/1000000, TRUE, rid, rfs);
 END;
 /
 
@@ -7711,7 +7711,7 @@ CREATE OR REPLACE PROCEDURE prepareForMigration (srId IN INTEGER,
                                                  outFileId OUT NUMBER,
                                                  outNsHost OUT VARCHAR2,
                                                  outRC OUT INTEGER,
-                                                 outNsOpenTime OUT NUMBER) AS
+                                                 outNsOpenTimeInUsec OUT INTEGER) AS
   cfId INTEGER;
   dcId INTEGER;
   svcId INTEGER;
@@ -7725,8 +7725,8 @@ BEGIN
   SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ castorFile, diskCopy INTO cfId, dcId
     FROM SubRequest WHERE id = srId;
   -- Lock the CastorFile and get the fileid and name server host
-  SELECT id, fileid, nsHost, nvl(lastUpdateTime, 0), nsOpenTime
-    INTO cfId, outFileId, outNsHost, lastUpdTime, outNsOpenTime
+  SELECT id, fileid, nsHost, nvl(lastUpdateTime, 0), TRUNC(nsOpenTime*1000000)
+    INTO cfId, outFileId, outNsHost, lastUpdTime, outNsOpenTimeInUsec
     FROM CastorFile WHERE id = cfId FOR UPDATE;
   -- Determine the context (Put inside PrepareToPut or not)
   BEGIN

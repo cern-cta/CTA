@@ -831,7 +831,9 @@ castor::db::ora::OraStagerSvc::createRecallCandidate(u_signed64 srId)
 //------------------------------------------------------------------------------
 castor::stager::CastorFile*
 castor::db::ora::OraStagerSvc::selectCastorFile(castor::stager::SubRequest* subreq,
-  const Cns_fileid* cnsFileId, const Cns_filestatcs* cnsFileStat, const double nsOpenTime)
+						const Cns_fileid* cnsFileId,
+						const Cns_filestatcs* cnsFileStat,
+						const u_signed64 nsOpenTimeInUsec)
   throw (castor::exception::Exception) {
   // Check whether the statements are ok
   if (0 == m_selectCastorFileStatement) {
@@ -851,7 +853,7 @@ castor::db::ora::OraStagerSvc::selectCastorFile(castor::stager::SubRequest* subr
     m_selectCastorFileStatement->setDouble(4, cnsFileStat->filesize);
     m_selectCastorFileStatement->setString(5, subreq->fileName());
     m_selectCastorFileStatement->setDouble(6, subreq->id());
-    m_selectCastorFileStatement->setDouble(7, nsOpenTime);
+    m_selectCastorFileStatement->setDouble(7, nsOpenTimeInUsec);
 
     int nb  = m_selectCastorFileStatement->executeUpdate();
     if (0 == nb) {
