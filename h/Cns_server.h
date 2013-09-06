@@ -177,7 +177,6 @@ EXTERN_C int Cns_get_fmd_by_pfid (struct Cns_dbfd *, int, u_signed64, struct Cns
 EXTERN_C int Cns_get_last_smd_by_vid (struct Cns_dbfd *, char *, int, struct Cns_seg_metadata *);
 EXTERN_C int Cns_get_lnk_by_fileid (struct Cns_dbfd *, u_signed64, struct Cns_symlinks *, int, Cns_dbrec_addr *);
 EXTERN_C int Cns_get_max_copyno (struct Cns_dbfd *, u_signed64, int *);
-EXTERN_C int Cns_get_smd_by_copyno (struct Cns_dbfd *, int, u_signed64, int,struct Cns_seg_metadata *, int, Cns_dbrec_addr *, int);
 EXTERN_C int Cns_get_smd_by_fullid (struct Cns_dbfd *, u_signed64, int, int, struct Cns_seg_metadata *, int, Cns_dbrec_addr *);
 EXTERN_C int Cns_get_smd_by_pfid (struct Cns_dbfd *, int, u_signed64, struct Cns_seg_metadata *, int,  Cns_dbrec_addr *, int);
 EXTERN_C int Cns_get_smd_by_vid (struct Cns_dbfd *, int, char *, int, struct Cns_seg_metadata *, int);
@@ -190,7 +189,6 @@ EXTERN_C int Cns_insert_class_entry (struct Cns_dbfd *, struct Cns_class_metadat
 EXTERN_C int Cns_insert_fmd_entry (struct Cns_dbfd *, struct Cns_file_metadata *);
 EXTERN_C int Cns_insert_fmd_entry_open (struct Cns_dbfd *, struct Cns_file_metadata *);
 EXTERN_C int Cns_insert_lnk_entry (struct Cns_dbfd *, struct Cns_symlinks *);
-EXTERN_C int Cns_insert_smd_entry (struct Cns_dbfd *, struct Cns_seg_metadata *);
 EXTERN_C int Cns_insert_tppool_entry (struct Cns_dbfd *, struct Cns_tp_pool *);
 EXTERN_C int Cns_insert_umd_entry (struct Cns_dbfd *, struct Cns_user_metadata *);
 EXTERN_C int Cns_list_class_entry (struct Cns_dbfd *, int, struct Cns_class_metadata *, int);
@@ -217,7 +215,6 @@ EXTERN_C int Cns_srv_chown (char *, struct Cns_srv_thread_info *, struct Cns_srv
 EXTERN_C int Cns_srv_closex (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_creat (int, char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_delcomment (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
-EXTERN_C int Cns_srv_delete (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_deleteclass (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_delsegbycopyno (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_dropsegs (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
@@ -256,7 +253,6 @@ EXTERN_C int Cns_srv_statcs (char *, struct Cns_srv_thread_info *, struct Cns_sr
 EXTERN_C int Cns_srv_statg (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_symlink (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_tapesum (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
-EXTERN_C int Cns_srv_undelete (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_unlink (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_unlinkbyvid (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_updatefile_checksum (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);

@@ -10,7 +10,6 @@ debian/castor/usr/share/man/man3/Cns_chown.3castor.gz
 debian/castor/usr/share/man/man3/Cns_closedir.3castor.gz
 debian/castor/usr/share/man/man3/Cns_creat.3castor.gz
 debian/castor/usr/share/man/man3/Cns_delcomment.3castor.gz
-debian/castor/usr/share/man/man3/Cns_delete.3castor.gz
 debian/castor/usr/share/man/man3/Cns_deleteclass.3castor.gz
 debian/castor/usr/share/man/man3/Cns_delsegbycopyno.3castor.gz
 debian/castor/usr/share/man/man3/Cns_enterclass.3castor.gz
@@ -40,7 +39,6 @@ debian/castor/usr/share/man/man3/Cns_setfsize.3castor.gz
 debian/castor/usr/share/man/man3/Cns_stat.3castor.gz
 debian/castor/usr/share/man/man3/Cns_tapesum.3castor.gz
 debian/castor/usr/share/man/man3/Cns_umask.3castor.gz
-debian/castor/usr/share/man/man3/Cns_undelete.3castor.gz
 debian/castor/usr/share/man/man3/Cns_unlink.3castor.gz
 debian/castor/usr/share/man/man3/Cns_unlinkbyvid.3castor.gz
 debian/castor/usr/share/man/man3/Cns_updateseg_checksum.3castor.gz

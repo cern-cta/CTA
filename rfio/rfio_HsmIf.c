@@ -203,14 +203,6 @@ int rfio_HsmIf_closedir(DIR *dirp) {
   return(rc);
 }
 
-int rfio_HsmIf_creat(const char *path, mode_t mode) {
-  int rc = -1;
-  if ( rfio_HsmIf_IsCnsFile(path) ) {
-    rc = Cns_creat(path,mode);
-  }
-  return(rc);
-}
-
 char *rfio_HsmIf_getcwd(char *buf, int size) {
   char *cwd = NULL;
   if ( rfio_HsmIf_GetCwdType() == RFIO_HSM_CNS )

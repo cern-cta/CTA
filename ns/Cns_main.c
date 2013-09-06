@@ -545,9 +545,6 @@ int procreq(int magic,
   case CNS_DELCOMMENT:
     c = Cns_srv_delcomment (req_data, thip, &thip->reqinfo);
     break;
-  case CNS_DELETE:
-    c = Cns_srv_delete (req_data, thip, &thip->reqinfo);
-    break;
   case CNS_DROPSEGS:
     c = Cns_srv_dropsegs (req_data, thip, &thip->reqinfo);
     break;
@@ -631,9 +628,6 @@ int procreq(int magic,
     break;
   case CNS_SYMLINK:
     c = Cns_srv_symlink (req_data, thip, &thip->reqinfo);
-    break;
-  case CNS_UNDELETE:
-    c = Cns_srv_undelete (req_data, thip, &thip->reqinfo);
     break;
   case CNS_UNLINK:
     c = Cns_srv_unlink (req_data, thip, &thip->reqinfo);

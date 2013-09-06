@@ -70,8 +70,6 @@
 #define CNS_LISTTAPE            20
 #define CNS_ENDLIST             21
 #define CNS_GETPATH             22
-#define CNS_DELETE              23
-#define CNS_UNDELETE            24
 #define CNS_CHCLASS             25
 #define CNS_DELCLASS            26
 #define CNS_ENTCLASS            27

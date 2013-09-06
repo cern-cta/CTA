@@ -256,7 +256,6 @@ EXTERN_C int rfio_HsmIf_chmod (const char *, mode_t);
 EXTERN_C int rfio_HsmIf_chown (const char *, uid_t, gid_t);
 EXTERN_C int rfio_HsmIf_close (int);
 EXTERN_C int rfio_HsmIf_closedir (DIR *);
-EXTERN_C int rfio_HsmIf_creat (const char *, mode_t);
 EXTERN_C char *rfio_HsmIf_getcwd (char *, int);
 EXTERN_C int rfio_HsmIf_getipath (int, char *);
 EXTERN_C int rfio_HsmIf_mkdir (const char *, mode_t);
