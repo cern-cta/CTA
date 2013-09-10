@@ -197,6 +197,7 @@
      #102415 rtcpd total number of Kbytes transfered log wraps at around 2TBytes
 
   [Features]
+
      #101657 RFE: Define constant parameters of posittape() as const
      #101714 RFE: VMGR DB should provide tape statuses independently of table definitions
      #101789 RFE: for even more security taped should only permit local mount requests
