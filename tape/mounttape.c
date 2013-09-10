@@ -805,8 +805,6 @@ reply:
 		if (*loader == 'a')
 			wait4acsfinalresp();
 #endif
-		if (*loader == 's')
-			closesmc ();
 	}
 	sendrep (rpfd, TAPERC, c);
 
@@ -907,7 +905,6 @@ static void cleanup()
 #endif
 	if ((*loader == 's') && (do_cleanup_after_mount == 0)) {
                 do_cleanup_after_mount = 1;
-		closesmc();
                 /* 
                    check if the SIGINT hit us in a mount;
                    in that case we need to do the cleanup

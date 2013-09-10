@@ -93,7 +93,6 @@ int rbtmount (char *vid,
 	if (*loader == 's') {
 		int c;
 		c = smcmount (vid, side, loader);
-		closesmc();
 		return (c);
 	}
 	ENTRY (rbtmount);
@@ -132,7 +131,6 @@ int rbtdemount (char *vid,
 	if (*loader == 's') {
 		int c;
 		c = smcdismount (vid, loader, force, vsnretry);
-		closesmc();
 		return (c);
 	}
 	ENTRY (rbtdemount);
@@ -627,24 +625,19 @@ int wait4acsfinalresp()
 #endif
 
 static int drvord;
-static int got_robot_info = 0;
-static char *rmc_host = NULL;
-static int smc_fd = -1;
+static const char *rmc_host = NULL;
 static char rmc_errbuf[256];
 static char smc_ldr[CA_MAXRBTNAMELEN+6];
 static struct robot_info robot_info;
 
-static int opensmc(char *loader)
-{
-	int c;
+static int parseloader(const char *const loader) {
 	char *dp;
 	char func[16];
-	char *msgaddr;
 	char *p;
-	struct smc_status smc_status;
 
-	ENTRY (opensmc);
-	sprintf (smc_ldr, "/dev/%s", loader);
+	ENTRY (parseloader);
+	snprintf (smc_ldr, sizeof(smc_ldr), "/dev/%s", loader);
+	smc_ldr[sizeof(smc_ldr) - 1] = '\0';
 	if ((p = strchr (smc_ldr, ',')) == 0) {
 		usrmsg (func, "TP041 - %s of %s on %s failed : %s\n", action,
 		    cur_vid, cur_unm, "invalid loader");
@@ -673,47 +666,18 @@ static int opensmc(char *loader)
 		*p = '\0';
 		rmc_host = p + 1;
 	}
-	if (rmc_host) {
-		(void) rmc_seterrbuf (rmc_errbuf, sizeof(rmc_errbuf));
-		RETURN (0);
-	}
-
-	/* get robot geometry */
-
-	if (! got_robot_info) {
-		if ((c = smc_get_geometry (smc_fd, smc_ldr, &robot_info))) {
-			c = smc_lasterror (&smc_status, &msgaddr);
-			if (smc_status.rc == -1 || smc_status.rc == -2) {
-				usrmsg (func, "Media changer error\n");
-                                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
-                                                    "func",    TL_MSG_PARAM_STR, func,
-                                                    "Message", TL_MSG_PARAM_STR, "Media changer error"); 
-                        } else {
-				usrmsg (func, TP042, smc_ldr, "get_geometry",
-					strrchr (msgaddr, ':') + 2);
-                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 5,
-                                                    "func",    TL_MSG_PARAM_STR, func,
-                                                    "smc_ldr", TL_MSG_PARAM_STR, smc_ldr,
-                                                    "Message", TL_MSG_PARAM_STR, "get_geometry", 
-                                                    "Error",   TL_MSG_PARAM_STR, strrchr (msgaddr, ':') + 2,
-                                                    "Drive",   TL_MSG_PARAM_STR, cur_unm );
-                        }
-			RETURN (c);
-		}
-		got_robot_info = 1;
-	}
-
-	if (drvord >= robot_info.device_count) {
+	if (!rmc_host) {
 		usrmsg (func, "TP041 - %s of %s on %s failed : %s\n", action,
-		    cur_vid, cur_unm, "invalid loader");
+                    cur_vid, cur_unm, "rmc host must be specified");
                 tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
-                                    "func",    TL_MSG_PARAM_STR, func,
-                                    "action",  TL_MSG_PARAM_STR, action,
-                                    "cur_vid", TL_MSG_PARAM_STR, cur_vid,
-                                    "Drive",   TL_MSG_PARAM_STR, cur_unm,
-                                    "Message", TL_MSG_PARAM_STR, "invalid loader" );
-		RETURN (RBT_NORETRY);
-	}
+                  "func",    TL_MSG_PARAM_STR, func,
+                  "action",  TL_MSG_PARAM_STR, action,
+                  "cur_vid", TL_MSG_PARAM_STR, cur_vid,
+                  "Drive",   TL_MSG_PARAM_STR, cur_unm,
+                  "Message", TL_MSG_PARAM_STR, "rmc host must be specified" );
+                RETURN (RBT_NORETRY);
+        }
+
 	RETURN (0);
 }
 
@@ -729,13 +693,14 @@ static int smcmount(char *vid,
 	memset(&element_info, '\0', sizeof(element_info));
         
 	{
-		const int opensmc_rc = opensmc (loader);
-		if (0 != opensmc_rc) {
-			RETURN (opensmc_rc);
+		const int parseloader_rc = parseloader(loader);
+		if(0 != parseloader_rc) {
+			RETURN (parseloader_rc);
 		}
 	}
+	(void) rmc_seterrbuf (rmc_errbuf, sizeof(rmc_errbuf));
 
-	if (rmc_host) {
+	{
 
 		const int rmc_mount_rc = rmc_mount (rmc_host, vid, side, drvord);
 		const int rmc_mount_serrno = serrno;
@@ -921,97 +886,6 @@ static int smcmount(char *vid,
 			}
                 }
 	}
-	{
-		const int smc_find_cartridge_rc = smc_find_cartridge (smc_fd, smc_ldr, vid, 0, 0, 1, &element_info);
-		if (0 > smc_find_cartridge_rc) {
-			struct smc_status smc_status;
-			char *msgaddr = NULL;
-			memset(&smc_status, '\0', sizeof(smc_status));
-			const int smc_error = smc_lasterror (&smc_status, &msgaddr);
-			if (EBUSY == smc_error) {
-                        	usrmsg (func, "%s\n", msgaddr);
-                        	tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
-                                            	"func",    TL_MSG_PARAM_STR, func,
-                                            	"msgaddr", TL_MSG_PARAM_STR, msgaddr ); 
-                        	RETURN(RBT_FAST_RETRY);
-			} else if (smc_status.rc == -1 || smc_status.rc == -2) {
-				usrmsg (func, "%s\n", msgaddr);
-                        	tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
-                                            	"func",    TL_MSG_PARAM_STR, func,
-                                            	"msgaddr", TL_MSG_PARAM_STR, msgaddr ); 
-			} else {
-				const char *const p = strrchr (msgaddr, ':');
-				usrmsg (func, TP042, smc_ldr, "find_cartridge",
-					p ? p + 2 : msgaddr);
-                        	tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 5,
-                                            	"func",    TL_MSG_PARAM_STR, func,
-                                            	"smc_ldr", TL_MSG_PARAM_STR, smc_ldr,
-                                            	"Message", TL_MSG_PARAM_STR, "find_cartridge", 
-                                            	"Error",   TL_MSG_PARAM_STR, p ? p + 2 : msgaddr,
-                                            	"Drive",   TL_MSG_PARAM_STR, cur_unm );
-			}
-			RETURN (smc_error);
-		}
-		if (0 == smc_find_cartridge_rc) {
-			char msg[OPRMSGSZ];
-			snprintf (msg, sizeof(msg), TP041, "mount", vid, cur_unm, "volume not in library");
-			msg[sizeof(msg) - 1] = '\0';
-			usrmsg (func, "%s\n", msg);
-                	tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
-                                    "func",    TL_MSG_PARAM_STR, func,
-                                    "action",  TL_MSG_PARAM_STR, "mount",
-                                    "cur_vid", TL_MSG_PARAM_STR, vid,
-                                    "Drive",   TL_MSG_PARAM_STR, cur_unm,
-                                    "Message", TL_MSG_PARAM_STR, "volume not in library" );
-			RETURN (RBT_NORETRY);
-		}
-	}
-	if (element_info.element_type != 2) {
-		char msg[OPRMSGSZ];
-		snprintf (msg, sizeof(msg), TP041, "mount", vid, cur_unm, "volume in use");
-		msg[sizeof(msg) - 1] = '\0';
-		usrmsg (func, "%s\n", msg);
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
-                                    "func",    TL_MSG_PARAM_STR, func,
-                                    "action",  TL_MSG_PARAM_STR, "mount",
-                                    "cur_vid", TL_MSG_PARAM_STR, vid,
-                                    "Drive",   TL_MSG_PARAM_STR, cur_unm,
-                                    "Message", TL_MSG_PARAM_STR, "volume in use" );
-		RETURN (RBT_SLOW_RETRY);
-	}
-	if (0 > smc_move_medium (smc_fd, smc_ldr, element_info.element_address, robot_info.device_start+drvord, side)) {
-		struct smc_status smc_status;
-		char *msgaddr = NULL;
-		memset(&smc_status, '\0', sizeof(smc_status));
-		const int smc_error = smc_lasterror (&smc_status, &msgaddr);
-        	if (EBUSY == smc_error) {
-			usrmsg (func, "%s\n", msgaddr);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
-                                        "func",    TL_MSG_PARAM_STR, func,
-                                        "msgaddr", TL_MSG_PARAM_STR, msgaddr ); 
-                        RETURN (RBT_FAST_RETRY);
-		} else if (smc_status.rc == -1 || smc_status.rc == -2){
-			usrmsg (func, "%s\n", msgaddr);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
-                                            "func",    TL_MSG_PARAM_STR, func,
-                                            "msgaddr", TL_MSG_PARAM_STR, msgaddr ); 
-		} else {
-			char msg[OPRMSGSZ];
-			const char *const p = strrchr (msgaddr, ':');
-			snprintf (msg, sizeof(msg), TP041, "mount", vid, cur_unm,
-				p ? p + 2 : msgaddr);
-			msg[sizeof(msg) - 1] = '\0';
-			usrmsg (func, "%s\n", msg);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
-                                            "func",    TL_MSG_PARAM_STR, func,
-                                            "action",  TL_MSG_PARAM_STR, "mount",
-                                            "cur_vid", TL_MSG_PARAM_STR, vid,
-                                            "Drive",   TL_MSG_PARAM_STR, cur_unm,
-                                            "Message", TL_MSG_PARAM_STR, p ? p + 2 : msgaddr );
-                }
-		RETURN (smc_error);
-	}
-	RETURN (0);
 }
 
 static int smcdismount(char *vid,
@@ -1027,13 +901,14 @@ static int smcdismount(char *vid,
 	memset(&element_info, '\0', sizeof(element_info));
 
 	{
-		const int opensmc_rc = opensmc (loader);
-		if(0 != opensmc_rc) {
-			RETURN (opensmc_rc);
+		const int parseloader_rc = parseloader(loader);
+		if(0 != parseloader_rc) {
+			RETURN (parseloader_rc);
 		}
 	}
+	(void) rmc_seterrbuf (rmc_errbuf, sizeof(rmc_errbuf));
 
-	if (rmc_host) {
+	{
 		const int rmc_dismount_rc = rmc_dismount (rmc_host, vid, drvord, force);
 		const int rmc_dismount_serrno = serrno;
 		if (0 == rmc_dismount_rc) {
@@ -1119,104 +994,6 @@ static int smcdismount(char *vid,
 			}
                 }
 	}
-	if (0 > smc_read_elem_status (smc_fd, smc_ldr, 4, robot_info.device_start+drvord, 1, &element_info)) {
-		char *msgaddr = NULL;
-		struct smc_status smc_status;
-		memset(&smc_status, '\0', sizeof(smc_status));
-		const int smc_error = smc_lasterror (&smc_status, &msgaddr);
-                if (EBUSY == smc_error) {
-                        usrmsg (func, "%s\n", msgaddr);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
-                                            "func",    TL_MSG_PARAM_STR, func,
-                                            "msgaddr", TL_MSG_PARAM_STR, msgaddr );             
-                        RETURN (RBT_FAST_RETRY);
-		} else if (smc_status.rc == -1 || smc_status.rc == -2) {
-			usrmsg (func, "%s\n", msgaddr);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
-                                            "func",    TL_MSG_PARAM_STR, func,
-                                            "msgaddr", TL_MSG_PARAM_STR, msgaddr ); 
-		} else {
-			const char *const p = strrchr (msgaddr, ':');
-			usrmsg (func, TP042, smc_ldr, "read_elem_status",
-				p ? p + 2 : msgaddr);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 5,
-                                            "func",    TL_MSG_PARAM_STR, func,
-                                            "smc_ldr", TL_MSG_PARAM_STR, smc_ldr,
-                                            "Message", TL_MSG_PARAM_STR, "read_elem_status", 
-                                            "Error",   TL_MSG_PARAM_STR, p ? p + 2 : msgaddr,
-                                            "Drive",   TL_MSG_PARAM_STR, cur_unm );
-		}
-		RETURN (smc_error);
-	}
-	if ((element_info.state & 0x1) == 0) {
-		usrmsg (func, TP041, "demount", vid, cur_unm, "Medium Not Present");
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
-                                    "func",    TL_MSG_PARAM_STR, func,
-                                    "action",  TL_MSG_PARAM_STR, "demount",
-                                    "cur_vid", TL_MSG_PARAM_STR, vid,
-                                    "Drive",   TL_MSG_PARAM_STR, cur_unm,
-                                    "Message", TL_MSG_PARAM_STR, "Medium Not Present" );
-		RETURN (RBT_OK);
-	}
-	if ((element_info.state & 0x8) == 0) {
-		usrmsg (func, TP041, "demount", vid, cur_unm, "Drive Not Unloaded");
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
-                                    "func",    TL_MSG_PARAM_STR, func,
-                                    "action",  TL_MSG_PARAM_STR, "demount",
-                                    "cur_vid", TL_MSG_PARAM_STR, vid,
-                                    "Drive",   TL_MSG_PARAM_STR, cur_unm,
-                                    "Message", TL_MSG_PARAM_STR, "Drive Not Unloaded" );
-		RETURN (RBT_UNLD_DMNT);
-	}
-	if (*vid && !force && strcmp (element_info.name, vid)) {
-		usrmsg (func, TP050, vid, element_info.name);
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 50, 3,
-                                    "func",  TL_MSG_PARAM_STR, func,
-                                    "vid_1", TL_MSG_PARAM_STR, vid,
-                                    "vid_2", TL_MSG_PARAM_STR, element_info.name );
-		RETURN (RBT_DMNT_FORCE);
-	}
-	if (0 > smc_move_medium (smc_fd, smc_ldr, robot_info.device_start+drvord, element_info.source_address, (element_info.flags & 0x40) ? 1 : 0)) {
-		char *msgaddr = NULL;
-		struct smc_status smc_status;
-		memset(&smc_status, '\0', sizeof(smc_status));
-		const int smc_error = smc_lasterror (&smc_status, &msgaddr);
-                if (EBUSY == smc_error) {
-			usrmsg (func, "%s\n", msgaddr);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
-                                            "func",    TL_MSG_PARAM_STR, func,
-                                            "msgaddr", TL_MSG_PARAM_STR, msgaddr ); 
-                        RETURN(RBT_FAST_RETRY);
-                } else if (smc_status.rc == -1 || smc_status.rc == -2) {
-                        usrmsg (func, "%s\n", msgaddr);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
-                                            "func",    TL_MSG_PARAM_STR, func,
-                                            "msgaddr", TL_MSG_PARAM_STR, msgaddr ); 
-                
-                } else {
-			char msg[OPRMSGSZ];
-                        const char *const p = strrchr (msgaddr, ':');
-                        snprintf (msg, sizeof(msg), TP041, "demount", vid, cur_unm,
-                                 p ? p + 2 : msgaddr);
-			msg[sizeof(msg) - 1] = '\0';
-                        usrmsg (func, "%s\n", msg);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
-                                            "func",    TL_MSG_PARAM_STR, func,
-                                            "action",  TL_MSG_PARAM_STR, "demount",
-                                            "cur_vid", TL_MSG_PARAM_STR, vid,
-                                            "Drive",   TL_MSG_PARAM_STR, cur_unm,
-                                            "Message", TL_MSG_PARAM_STR, p ? p + 2 : msgaddr );
-                }
-                RETURN (smc_error);
-	}
-	RETURN (0);
-}
-
-void closesmc ()
-{
-	if (smc_fd >= 0)
-		close (smc_fd);
-	smc_fd = -1;
 }
 
 
