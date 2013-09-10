@@ -21,7 +21,8 @@
  *****************************************************************************/
 
 /* SQL statement to populate the intial schema version */
-UPDATE UpgradeLog SET schemaVersion = '2_1_14_2';
+UPDATE UpgradeLog SET schemaVersion = '2_1_14_2'
+ WHERE startDate = (SELECT max(startDate) FROM UpgradeLog);
 
 /* Package holding type declarations for the NameServer PL/SQL API */
 CREATE OR REPLACE PACKAGE castorns AS
