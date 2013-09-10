@@ -303,7 +303,10 @@ BEGIN
     -- the given lastOpenTime for a safe comparison with mtime
     varLastOpenTimeFromClient := CEIL(inSegEntry.lastOpenTime);
   ELSIF varOpenMode = 'N' THEN
-    SELECT fileId, filemode, stagertime, fileClass, fileSize, csumType, csumValue, gid
+    -- We truncate to 5 decimal digits, which is the precision of the lastOpenTime we get from the stager.
+    -- Note this is just fitting the mantissa precision of a double, and it is due to the fact
+    -- that those numbers go through OCI as double.
+    SELECT fileId, filemode, TRUNC(stagertime, 5), fileClass, fileSize, csumType, csumValue, gid
       INTO varFid, varFmode, varFLastMTime, varFClassId, varFSize, varFCksumName, varFCksum, varFGid
       FROM Cns_file_metadata
      WHERE fileId = inSegEntry.fileId FOR UPDATE;
@@ -325,8 +328,8 @@ BEGIN
   -- Has the file been changed meanwhile?
   IF varFLastMTime > varLastOpenTimeFromClient THEN
     rc := serrno.ENSFILECHG;
-    msg := serrno.ENSFILECHG_MSG ||' : NSLastOpenTime='|| TRUNC(varFLastMTime, 6)
-      ||', StagerLastOpenTime='|| TRUNC(varLastOpenTimeFromClient, 6);
+    msg := serrno.ENSFILECHG_MSG ||' : NSLastOpenTime='|| varFLastMTime
+      ||', StagerLastOpenTime='|| varLastOpenTimeFromClient;
     ROLLBACK;
     RETURN;
   END IF;
@@ -466,6 +469,9 @@ BEGIN
     -- the given lastOpenTime for a safe comparison with mtime
     varLastOpenTimeFromClient := CEIL(inSegEntry.lastOpenTime);
   ELSIF varOpenMode = 'N' THEN
+    -- We truncate to 5 decimal digits, which is the precision of the lastOpenTime we get from the stager.
+    -- Note this is just fitting the mantissa precision of a double, and it is due to the fact
+    -- that those numbers go through OCI as double.
     SELECT fileId, filemode, stagertime, fileClass, fileSize, csumType, csumValue, gid
       INTO varFid, varFmode, varFLastMTime, varFClassId, varFSize, varFCksumName, varFCksum, varFGid
       FROM Cns_file_metadata
@@ -488,8 +494,8 @@ BEGIN
   -- Has the file been changed meanwhile?
   IF varFLastMTime > varLastOpenTimeFromClient THEN
     rc := serrno.ENSFILECHG;
-    msg := serrno.ENSFILECHG_MSG ||' : NSLastOpenTime='|| TRUNC(varFLastMTime, 6)
-      ||', StagerLastOpenTime='|| TRUNC(varLastOpenTimeFromClient, 6);
+    msg := serrno.ENSFILECHG_MSG ||' : NSLastOpenTime='|| varFLastMTime
+      ||', StagerLastOpenTime='|| varLastOpenTimeFromClient;
     ROLLBACK;
     RETURN;
   END IF;
