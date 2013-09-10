@@ -700,7 +700,8 @@ BEGIN
      AND VID = inVID
      AND nbMounts >= TO_NUMBER(getConfigOption('Recall', 'MaxNbMounts', 3));
   -- check whether other RecallJobs are still around for this file (other copies on tape)
-  SELECT count(*) INTO varRecallStillAlive
+  SELECT /*+ INDEX_RS_ASC(RecallJob I_RecallJob_CastorFile_VID) */
+         count(*) INTO varRecallStillAlive
     FROM RecallJob
    WHERE castorFile = inCfId
      AND ROWNUM < 2;
@@ -843,7 +844,9 @@ BEGIN
   -- remove recallJobs that need the non existing tape
   DELETE FROM RecallJob WHERE castorfile = inCfId AND VID=inVID;
   -- check if other recallJobs remain (typically dual copy tapes)
-  SELECT COUNT(*) INTO varNbRecalls FROM RecallJob WHERE castorfile = inCfId;
+  SELECT /*+ INDEX_RS_ASC(RecallJob I_RecallJob_CastorFile_VID) */
+         count(*) INTO varNbRecalls
+    FROM RecallJob WHERE castorfile = inCfId;
   -- if no remaining recalls, fail requests and cleanup
   IF varNbRecalls = 0 THEN
     -- log "Failing Recall(s)"
@@ -1470,7 +1473,8 @@ BEGIN
   RETURNING destCopyNb, VID, originalVID, creationTime
     INTO varCopyNb, varVID, varOrigVID, varMigStartTime;
   -- check if another migration should be performed
-  SELECT count(*) INTO varMigJobCount
+  SELECT /*+ INDEX_RS_ASC(MigrationJob I_MigrationJob_CFVID) */
+         count(*) INTO varMigJobCount
     FROM MigrationJob
    WHERE castorFile = varCfId;
   IF varMigJobCount = 0 THEN
@@ -1532,7 +1536,8 @@ BEGIN
    WHERE castorFile = varCFId AND mountTransactionId = inMountTrId
   RETURNING originalCopyNb INTO varOriginalCopyNb;
   -- check if another migration should be performed
-  SELECT count(*) INTO varMigJobCount
+  SELECT /*+ INDEX_RS_ASC(MigrationJob I_MigrationJob_CFVID) */
+         count(*) INTO varMigJobCount
     FROM MigrationJob
    WHERE castorfile = varCfId;
   IF varMigJobCount = 0 THEN
