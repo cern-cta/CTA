@@ -197,8 +197,6 @@
      #102415 rtcpd total number of Kbytes transfered log wraps at around 2TBytes
 
   [Features]
-
-     #98275  RFE: rtcpd should support an xroot protocol for data transfers
      #101657 RFE: Define constant parameters of posittape() as const
      #101714 RFE: VMGR DB should provide tape statuses independently of table definitions
      #101789 RFE: for even more security taped should only permit local mount requests
@@ -211,6 +209,7 @@
      #102344 RFE: smc should be made a pure client of rmcd
      #102374 RFE: Create a separate rmc client library called libcastorrmc.so
      #102367 RFE: Remove the -l option from smc
+     #102545 RFE: taped should always use rmcd for access to SCSI libraries
 
   [Code Maintenance]
 
