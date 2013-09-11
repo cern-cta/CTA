@@ -35,7 +35,6 @@
 #include "serrno.h"
 #include "Ctape.h"
 static char tp_err_msgbuf[132];
-/*static char nosensekey[] = "no sense key available";*/
 static char *sk_msg[] = {
         "No sense",
         "Recovered error",
@@ -156,7 +155,6 @@ int send_scsi_cmd (int tapefd,
                    int *nb_sense_ret,
                    char **msgaddr)
 {
-	/* int i;*/
 	int fd;
 	FILE *fopen();
 	int n;
