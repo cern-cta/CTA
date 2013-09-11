@@ -309,22 +309,3 @@ int send_scsi_cmd (int tapefd,
 		memcpy (buffer, sg_buffer+sizeof(struct sg_header), n);
 	return ((flags & SCSI_IN) ? n : buflen - resid);
 }
-
-
-void get_ss_msg(int scsi_status,
-                char **msgaddr)
-{
-	int i;
-
-	for (i = 0; i < 256; i++) {
-		if (scsi_codmsg[i].status == 0xFF) {
-			sprintf (err_msgbuf,
-			    "Undefined SCSI status %02X", scsi_status);
-			*msgaddr = err_msgbuf;
-			break;
-		} else if (scsi_status == scsi_codmsg[i].status) {
-			*msgaddr = scsi_codmsg[i].text;
-			break;
-		}
-	}
-}
