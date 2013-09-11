@@ -284,12 +284,12 @@ int send_scsi_cmd (int tapefd,
 	if ((sg_hd->sense_buffer[0] & 0x70) &&
 	    ((sg_hd->sense_buffer[2] & 0xE0) == 0 ||
 	    (sg_hd->sense_buffer[2] & 0xF) != 0)) {
-		char err_msgbuf[132];
-		snprintf (err_msgbuf, sizeof(err_msgbuf), "%s ASC=%X ASCQ=%X",
+		char tmp_msgbuf[132];
+		snprintf (tmp_msgbuf, sizeof(tmp_msgbuf), "%s ASC=%X ASCQ=%X",
 		    sk_msg[*(sense+2) & 0xF], *(sense+12), *(sense+13));
-		err_msgbuf[sizeof(err_msgbuf) - 1] = '\0';
+		tmp_msgbuf[sizeof(tmp_msgbuf) - 1] = '\0';
 		serrno = EIO;
-		snprintf (tp_err_msgbuf, sizeof(tp_err_msgbuf), TP042, sgpath, "scsi", err_msgbuf);
+		snprintf (tp_err_msgbuf, sizeof(tp_err_msgbuf), TP042, sgpath, "scsi", tmp_msgbuf);
 		tp_err_msgbuf[sizeof(tp_err_msgbuf) - 1] = '\0';
 		*msgaddr = tp_err_msgbuf;
 		return (-4);
