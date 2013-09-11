@@ -144,7 +144,8 @@ get_element_info(char opcode,
         int pause_mode = 1;
         int nretries = 0;
 
-	strncpy (func, "get_elem_info", 16);
+	strncpy (func, "get_elem_info", sizeof(func));
+	func[sizeof(func) - 1] = '\0';
 	if (type) {
 		element_size = get_element_size (fd, rbtdev, type);
 		if (element_size < 0) return (-1);
@@ -250,7 +251,9 @@ int smc_get_geometry(int fd,
         int pause_mode = 1;        
         int nretries = 0;     
 
-	ENTRY (get_geometry);
+	strncpy(func, "get_geometry", sizeof(func));
+	func[sizeof(func) - 1] = '\0';
+
 	memset (cdb, 0, sizeof(cdb));
 	cdb[0] = 0x12;		/* inquiry */
 	cdb[4] = 36;
@@ -274,7 +277,7 @@ int smc_get_geometry(int fd,
 
 	if (rc < 0) {
 		save_error (rc, nb_sense_ret, sense, msgaddr);
-		RETURN (-1);
+		return (-1);
 	}
 	memcpy (robot_info->inquiry, buf+8, 28);
 	robot_info->inquiry[28] = '\0';
@@ -305,7 +308,7 @@ int smc_get_geometry(int fd,
 
 	if (rc < 0) {
 		save_error (rc, nb_sense_ret, sense, msgaddr);
-		RETURN (-1);
+		return (-1);
 	}
 	robot_info->transport_start = buf[6] * 256 + buf[7];
 	robot_info->transport_count = buf[8] * 256 + buf[9];
@@ -315,7 +318,7 @@ int smc_get_geometry(int fd,
 	robot_info->port_count = buf[16] * 256 + buf[17];
 	robot_info->device_start = buf[18] * 256 + buf[19];
 	robot_info->device_count = buf[20] * 256 + buf[21];
-	RETURN (0);
+	return (0);
 }
 
 int smc_read_elem_status(int fd,
@@ -328,9 +331,11 @@ int smc_read_elem_status(int fd,
 	char func[16];
 	int rc;
 
-	ENTRY (read_elem_statu);
+	strncpy(func, "read_elem_statu", sizeof(func));
+	func[sizeof(func) - 1] = '\0';
+
 	rc = get_element_info (0xB8, fd, rbtdev, type, start, nbelem, element_info);
-	RETURN (rc);
+	return (rc);
 }
 
 int smc_find_cartridge2 (int fd,
@@ -353,7 +358,9 @@ int smc_find_cartridge2 (int fd,
 	int tot_nbelem;
 
   (void)nbelem;
-	ENTRY (find_cartridge2);
+	strncpy(func, "find_cartridge2", sizeof(func));
+	func[sizeof(func) - 1] = '\0';
+
 	if ((c = smc_get_geometry (fd, rbtdev, &robot_info)))
 		return (c);
 
@@ -393,7 +400,7 @@ int smc_find_cartridge2 (int fd,
 			}
 		}
 	free (inventory_info);
-	RETURN (found);
+	return (found);
 }
 
 
@@ -416,7 +423,8 @@ int smc_find_cartridge(int fd,
         int nretries = 0;
         char *smcLibraryType;
 
-	ENTRY (find_cartridge);
+	strncpy(func, "find_cartridge", sizeof(func));
+	func[sizeof(func) - 1] = '\0';
         
         /* for Spectra like library we will skip 0xB6 cdb command as soon as
            is does not supported to speed up the function */
@@ -426,8 +434,8 @@ int smc_find_cartridge(int fd,
           rc = smc_find_cartridge2 (fd, rbtdev, template, type, start, nbelem,
                                     element_info);
           if (rc >= 0)
-            RETURN (rc);
-          RETURN (-1);  
+            return (rc);
+          return (-1);  
         }
 
 	memset (cdb, 0, sizeof(cdb));
@@ -463,12 +471,12 @@ int smc_find_cartridge(int fd,
 			rc = smc_find_cartridge2 (fd, rbtdev, template, type,
 			    start, nbelem, element_info);
 			if (rc >= 0)
-				RETURN (rc);
+				return (rc);
 		}
-		RETURN (-1);
+		return (-1);
 	}
 	rc = get_element_info (0xB5, fd, rbtdev, type, start, nbelem, element_info);
-	RETURN (rc);
+	return (rc);
 }
 
 
@@ -562,7 +570,9 @@ int smc_move_medium(int fd,
         int pause_mode = 1;
         int nretries = 0;         
 
-	ENTRY (move_medium);
+	strncpy(func, "move_medium", sizeof(func));
+	func[sizeof(func) - 1] = '\0';
+
 	memset (cdb, 0, sizeof(cdb));
 	cdb[0] = 0xA5;		/* move medium */
 	cdb[4] = from >> 8;
@@ -589,7 +599,7 @@ int smc_move_medium(int fd,
 
 	if (rc < 0) {
 		save_error (rc, nb_sense_ret, sense, msgaddr);
-		RETURN (-1);
+		return (-1);
 	}
-	RETURN (0);
+	return (0);
 }
