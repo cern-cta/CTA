@@ -33,7 +33,6 @@
 #include <sys/stat.h>
 #include "scsictl.h"
 #include "serrno.h"
-#if defined(TAPE)
 #include "Ctape.h"
 #define USRMSG(fmt,p,f,msg) \
 	{ \
@@ -41,9 +40,6 @@
 	*msgaddr = tp_err_msgbuf; \
 	}
 static char tp_err_msgbuf[132];
-#else
-#define USRMSG(fmt,p,f,msg) {}
-#endif
 /*static char nosensekey[] = "no sense key available";*/
 static char *sk_msg[] = {
         "No sense",
@@ -199,15 +195,9 @@ int send_scsi_cmd (int tapefd,
 	}
 
 	if ((int)sizeof(struct sg_header) + cdblen + buflen > sg_big_buff_val) {
-#if defined(TAPE)
 		sprintf (tp_err_msgbuf, "blocksize too large (max %zd)\n",
 		    sg_big_buff_val - sizeof(struct sg_header) - cdblen);
 		*msgaddr = tp_err_msgbuf;
-#else
-		sprintf (err_msgbuf, "blocksize too large (max %zd)",
-		    sg_big_buff_val - sizeof(struct sg_header) - cdblen);
-		*msgaddr = err_msgbuf;
-#endif
 		serrno = EINVAL;
 		return (-1);
 	}
@@ -215,13 +205,8 @@ int send_scsi_cmd (int tapefd,
 		if (sg_bufsiz > 0) free (sg_buffer);
 		if ((sg_buffer = malloc (sizeof(struct sg_header)+cdblen+buflen)) == NULL) {
 			serrno = errno;
-#if defined(TAPE)
 			sprintf (tp_err_msgbuf, TP005);
 			*msgaddr = tp_err_msgbuf;
-#else
-			sprintf (err_msgbuf, "malloc error: %s", strerror(errno));
-			*msgaddr = err_msgbuf;
-#endif
 			return (-1);
 		}
 		sg_bufsiz = sizeof(struct sg_header) + cdblen + buflen;
@@ -232,24 +217,14 @@ int send_scsi_cmd (int tapefd,
 	} else {
 		if (stat (path, &sbuf) < 0) {
 			serrno = errno;
-#if defined(TAPE)
 			USRMSG (TP042, path, "stat", strerror(errno));
-#else
-			sprintf (err_msgbuf, "stat error: %s", strerror(errno));
-			*msgaddr = err_msgbuf;
-#endif
 			return (-1);
 		}
 
                 /* get the major device ID of the sg devices ... */
 		if (stat ("/dev/sg0", &sbufa) < 0) {
 			serrno = errno;
-#if defined(TAPE)
 			USRMSG (TP042, "/dev/sg0", "stat", strerror(errno));
-#else
-			sprintf (err_msgbuf, "stat error: %s", strerror(errno));
-			*msgaddr = err_msgbuf;
-#endif
 			return (-1);
 		}
                 /* ... to detect links and use the path directly! */
@@ -261,12 +236,7 @@ int send_scsi_cmd (int tapefd,
 
 		if ((fd = open (sgpath, O_RDWR)) < 0) {
 			serrno = errno;
-#if defined(TAPE)
 			USRMSG (TP042, sgpath, "open", strerror(errno));
-#else
-			sprintf (err_msgbuf, "open error: %s", strerror(errno));
-			*msgaddr = err_msgbuf;
-#endif
 			return (-1);
 		}
 	}

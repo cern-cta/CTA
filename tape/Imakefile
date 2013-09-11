@@ -44,7 +44,7 @@ LOCAL_PATH/usrwrttpmrk.c: LOCAL_PATH/wrttpmrk.c
 
 PREFIX(FilesToClean) += LOCAL_PATH/usrlocate.c LOCAL_PATH/usrreadlbl.c LOCAL_PATH/usrrwndtape.c LOCAL_PATH/usrskiptape.c LOCAL_PATH/usrsmcsubr.c LOCAL_PATH/usrsmcsubr2.c LOCAL_PATH/usrtperror.c LOCAL_PATH/usrusrmsg.c LOCAL_PATH/usrwritelbl.c LOCAL_PATH/usrwrttpmrk.c
 
-COMPILEC(sendscsicmd.c,-DTAPE)
+COMPILEC(sendscsicmd.c,)
 COMPILEC(usrlocate.c,-DNOTRACE)
 COMPILEC(usrreadlbl.c,-DNOTRACE)
 COMPILEC(usrrwndtape.c,-DNOTRACE)

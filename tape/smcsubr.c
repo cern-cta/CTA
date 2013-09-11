@@ -362,11 +362,7 @@ int smc_find_cartridge2 (int fd,
 
 	if ((inventory_info = malloc (tot_nbelem * sizeof(struct smc_element_info))) == NULL) {
 		serrno = errno;
-#if defined(TAPE)
-		sprintf (err_msgbuf, TP005);
-#else
 		sprintf (err_msgbuf, "malloc error: %s", strerror(errno));
-#endif
 		msgaddr = err_msgbuf;
 		save_error (-1, 0, NULL, msgaddr);
 		return (-1);
