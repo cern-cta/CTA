@@ -20,13 +20,28 @@ plan is being laid out.
 
 \chapter{Developer's manual}
 
-% Section:  Targeted environment
+% Section:  Requirements
 % ------------------------------------------------------------------------------
+\section{Requirements}
 
-\section{Targeted environment}
+\subsection{Targeted environment}
 
 CERN SLC5 and SLC6, 64bits. Although it should compile in theory, the 32 bits version is not tested. The unit test purposely returns an error when run on non-64 bits architecture.
 
+\subsection{User requirements}
+
+The new tape server (software) will have to replace the software running on a tape server
+(computer). Specifically, it will have to interface with VDQM, VMGR and tape gateway.
+
+Additional requirements, arising from the current practices of operators are:
+
+\begin{itemize}
+\item{}A tape sessions should be preemptable by the operator. This is currently achieved 
+by killing the tape process. Closing the session on a kill (-1) could be a solution.
+\item{}The operator should be able to specify values in different SCSI code pages in
+order to setup the tape drive. This setting will be defined differently for each tape
+drive type.
+\end{itemize}
 
 % Section:  Reference documentations
 % ------------------------------------------------------------------------------
