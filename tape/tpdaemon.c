@@ -793,6 +793,15 @@ int initdrvtab()
                                             "Message", TL_MSG_PARAM_STR, "invalid device type" );                        
 			errflag++;
 		}
+
+		if(!deviceTypeIsSupported(p_dvt)) {
+		       tplogit (func, TP032, lineno, "unsupported device type");
+		       tl_tpdaemon.tl_log( &tl_tpdaemon, 32, 3,
+			                    "func",    TL_MSG_PARAM_STR, func,
+			                    "Line",    TL_MSG_PARAM_INT, lineno,
+			                    "Message", TL_MSG_PARAM_STR, "unsupported device type" );
+			errflag++;
+		}
 	}
 	if (errflag) {
           fclose(s);
