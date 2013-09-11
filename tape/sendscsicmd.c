@@ -34,11 +34,6 @@
 #include "scsictl.h"
 #include "serrno.h"
 #include "Ctape.h"
-#define USRMSG(fmt,p,f,msg) \
-	{ \
-	sprintf (tp_err_msgbuf, fmt, p, f, msg); \
-	*msgaddr = tp_err_msgbuf; \
-	}
 static char tp_err_msgbuf[132];
 /*static char nosensekey[] = "no sense key available";*/
 static char *sk_msg[] = {
@@ -217,14 +212,18 @@ int send_scsi_cmd (int tapefd,
 	} else {
 		if (stat (path, &sbuf) < 0) {
 			serrno = errno;
-			USRMSG (TP042, path, "stat", strerror(errno));
+        		snprintf (tp_err_msgbuf, sizeof(tp_err_msgbuf), TP042, path, "stat", strerror(errno));
+			tp_err_msgbuf[sizeof(tp_err_msgbuf) - 1] = '\0';
+        		*msgaddr = tp_err_msgbuf;
 			return (-1);
 		}
 
                 /* get the major device ID of the sg devices ... */
 		if (stat ("/dev/sg0", &sbufa) < 0) {
 			serrno = errno;
-			USRMSG (TP042, "/dev/sg0", "stat", strerror(errno));
+			snprintf (tp_err_msgbuf, sizeof(tp_err_msgbuf), TP042, "/dev/sg0", "stat", strerror(errno));
+			tp_err_msgbuf[sizeof(tp_err_msgbuf) - 1] = '\0';
+			*msgaddr = tp_err_msgbuf;
 			return (-1);
 		}
                 /* ... to detect links and use the path directly! */
@@ -236,7 +235,9 @@ int send_scsi_cmd (int tapefd,
 
 		if ((fd = open (sgpath, O_RDWR)) < 0) {
 			serrno = errno;
-			USRMSG (TP042, sgpath, "open", strerror(errno));
+			snprintf (tp_err_msgbuf, sizeof(tp_err_msgbuf), TP042, sgpath, "open", strerror(errno));
+			tp_err_msgbuf[sizeof(tp_err_msgbuf) - 1] = '\0';
+			*msgaddr = tp_err_msgbuf;
 			return (-1);
 		}
 	}
@@ -258,7 +259,9 @@ int send_scsi_cmd (int tapefd,
 	if (write (fd, sg_buffer, n) < 0) {
 		*msgaddr = (char *) strerror(errno);
 		serrno = errno;
-		USRMSG (TP042, sgpath, "write", *msgaddr);
+		snprintf (tp_err_msgbuf, sizeof(tp_err_msgbuf), TP042, sgpath, "write", *msgaddr);
+		tp_err_msgbuf[sizeof(tp_err_msgbuf) - 1] = '\0';
+		*msgaddr = tp_err_msgbuf;
 		if (! do_not_open) close (fd);
 		return (-2);
 	}
@@ -266,7 +269,9 @@ int send_scsi_cmd (int tapefd,
 	    ((flags & SCSI_IN) ? buflen : 0))) < 0) {
 		*msgaddr = (char *) strerror(errno);
 		serrno = errno;
-		USRMSG (TP042, sgpath, "read", *msgaddr);
+		snprintf (tp_err_msgbuf, sizeof(tp_err_msgbuf), TP042, sgpath, "read", *msgaddr);
+		tp_err_msgbuf[sizeof(tp_err_msgbuf) - 1] = '\0';
+		*msgaddr = tp_err_msgbuf;
 		if (! do_not_open) close (fd);
 		return (-2);
 	}
@@ -286,12 +291,16 @@ int send_scsi_cmd (int tapefd,
 		    sk_msg[*(sense+2) & 0xF], *(sense+12), *(sense+13));
 		*msgaddr = err_msgbuf;
 		serrno = EIO;
-		USRMSG (TP042, sgpath, "scsi", *msgaddr);
+		snprintf (tp_err_msgbuf, sizeof(tp_err_msgbuf), TP042, sgpath, "scsi", *msgaddr);
+		tp_err_msgbuf[sizeof(tp_err_msgbuf) - 1] = '\0';
+		*msgaddr = tp_err_msgbuf;
 		return (-4);
 	} else if (sg_hd->result) {
 		*msgaddr = (char *) strerror(sg_hd->result);
 		serrno = sg_hd->result;
-		USRMSG (TP042, sgpath, "read", *msgaddr);
+		snprintf (tp_err_msgbuf, sizeof(tp_err_msgbuf), TP042, sgpath, "read", *msgaddr);
+		tp_err_msgbuf[sizeof(tp_err_msgbuf) - 1] = '\0';
+		*msgaddr = tp_err_msgbuf;
 		return (-2);
 	}
 	if (n)
