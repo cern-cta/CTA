@@ -1977,8 +1977,7 @@ BEGIN
     END IF;
     -- The file is still there, so update timestamps
     UPDATE CastorFile SET lastAccessTime = getTime(),
-                          lastKnownFileName = normalizePath(fn),
-                          nsOpenTime = inNsOpenTime
+                          lastKnownFileName = normalizePath(fn)
      WHERE id = rid;
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET castorFile = rid
      WHERE id = srId
@@ -1987,7 +1986,9 @@ BEGIN
       -- reset lastUpdateTime: this is used to prevent parallel Put operations from
       -- overtaking each other. As it is still relying on diskservers' timestamps
       -- with seconds precision, we truncate the usec-precision nameserver timestamp
-      UPDATE CastorFile SET lastUpdateTime = TRUNC(inNsOpenTime)
+      UPDATE CastorFile
+         SET lastUpdateTime = TRUNC(inNsOpenTime),
+             nsOpenTime = inNsOpenTime
        WHERE id = rid;
     ELSE
       -- On pure read operations, we should actually check whether our disk cache is stale,
