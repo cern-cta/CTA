@@ -63,7 +63,6 @@ struct scsi_info scsi_codmsg[] = {
 	{ SCSI_STATUS_RESERVATION_CONFLICT, "Reservation conflict" },
 	{ 0xFF,				    NULL }
 };
-static char err_msgbuf[132];
 #define PROCBUFSZ 80
 
 static void find_sgpath(char *sgpath, int maj, int min) {
@@ -285,11 +284,12 @@ int send_scsi_cmd (int tapefd,
 	if ((sg_hd->sense_buffer[0] & 0x70) &&
 	    ((sg_hd->sense_buffer[2] & 0xE0) == 0 ||
 	    (sg_hd->sense_buffer[2] & 0xF) != 0)) {
-		sprintf (err_msgbuf, "%s ASC=%X ASCQ=%X",
+		char err_msgbuf[132];
+		snprintf (err_msgbuf, sizeof(err_msgbuf), "%s ASC=%X ASCQ=%X",
 		    sk_msg[*(sense+2) & 0xF], *(sense+12), *(sense+13));
-		*msgaddr = err_msgbuf;
+		err_msgbuf[sizeof(err_msgbuf) - 1] = '\0';
 		serrno = EIO;
-		snprintf (tp_err_msgbuf, sizeof(tp_err_msgbuf), TP042, sgpath, "scsi", *msgaddr);
+		snprintf (tp_err_msgbuf, sizeof(tp_err_msgbuf), TP042, sgpath, "scsi", err_msgbuf);
 		tp_err_msgbuf[sizeof(tp_err_msgbuf) - 1] = '\0';
 		*msgaddr = tp_err_msgbuf;
 		return (-4);
