@@ -66,7 +66,7 @@ struct scsi_info scsi_codmsg[] = {
 static char err_msgbuf[132];
 #define PROCBUFSZ 80
 
-void find_sgpath(char *sgpath, int maj, int min) {
+static void find_sgpath(char *sgpath, int maj, int min) {
         
         /*
           Find the sg device for a pair of major and minor device IDs
