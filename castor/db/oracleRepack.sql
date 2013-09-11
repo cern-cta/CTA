@@ -156,8 +156,11 @@ BEGIN
   -- Get the list of files to repack from the NS DB via DBLink and store them in memory
   -- in a temporary table. We do that so that we do not keep an open cursor for too long
   -- in the nameserver DB
+  -- Note the truncation of stagerTime to 5 digits. This is needed for consistency with
+  -- the stager code that uses the OCCI api and thus loses precision when recuperating
+  -- 64 bits integers into doubles (lack of support for 64 bits numbers in OCCI)
   INSERT INTO RepackTapeSegments (fileId, lastOpenTime, blockId, fseq, segSize, copyNb, fileClass, allSegments)
-    (SELECT s_fileid, stagertime, blockid, fseq, segSize,
+    (SELECT s_fileid, TRUNC(stagertime,5), blockid, fseq, segSize,
             copyno, fileclass,
             (SELECT LISTAGG(TO_CHAR(oseg.copyno)||','||oseg.vid, ',')
              WITHIN GROUP (ORDER BY copyno)
