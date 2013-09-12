@@ -27,7 +27,8 @@
 /* Stop on errors */
 WHENEVER SQLERROR EXIT FAILURE;
 
-/* Verify that the script is running against the correct schema and version */
+/* Verify that the script is running against the correct schema and version,
+   and check that it is safe to switch the Open mode. */
 DECLARE
   unused VARCHAR(100);
 BEGIN
