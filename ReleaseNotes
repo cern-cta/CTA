@@ -210,7 +210,9 @@
      #102344 RFE: smc should be made a pure client of rmcd
      #102374 RFE: Create a separate rmc client library called libcastorrmc.so
      #102367 RFE: Remove the -l option from smc
+     #102529 RFE: Remove support for unused drive types
      #102545 RFE: taped should always use rmcd for access to SCSI libraries
+     #102560 RFE: Move all SCSI media device-file code to the rmcd daemon
 
   [Code Maintenance]
 
