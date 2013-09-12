@@ -146,7 +146,7 @@ def _printStatusLine(subTime, lastModTime, user, machine, vid, status, total, si
     size = castor_tools.nbToDataAmount(size)
     # actual printing
     try:
-      if total > 0:
+      if total > 0 and status != 'STARTING':
         # Completion % takes into account each operation (recall and migration) as 1, so that e.g. a tape with half files recalled and none migrated counts as 25% done;
         # no weight is given to recalls vs. migrations nor is the file size taken into account.
         print '%-18s%10s%17s%29s%9s%11d%12s%10d%10d%10d%10d%7d%%%11s' % (subTime, repackTime, user, machine, vid, total, size, toRecall, toMigr, failed, migrated, 100-(2*toRecall+toMigr)*50.0/total, status)
@@ -178,7 +178,9 @@ def _displaySummary(rows):
         if totsize > 0:
             # it may have returned None
             sumSize += totsize
-        if status != 2 and status != 3 and status != 5:
+        if status == 0 or status == 6:
+            globalStatus = 0  # STARTING
+        if (status == 1 or status == 4) and globalStatus == 2:
             globalStatus = 1  # ONGOING
     print '-'*117
     #  when showing full statistics, print out summary line
@@ -192,6 +194,7 @@ def _displayDetailed(rows):
     print 'SubmitTime        RepackTime             User                      Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated  Compl%     Status'
     print '-'*165
     sumTotal = sumSize = sumToRecall = sumToMigr = sumFailed = sumMigrated = 0
+    globalStatus = 2  # FINISHED
     shownVids = set()
     count = 0
     for subTime, lastModTime, user, machine, vid, status, total, totsize, toRecall, toMigr, failed, migrated in rows:
@@ -209,13 +212,13 @@ def _displayDetailed(rows):
         sumToMigr += toMigr
         sumFailed += failed
         sumMigrated += migrated
+        if status == 0 or status == 6:
+            globalStatus = 0  # STARTING
+        if (status == 1 or status == 4) and globalStatus == 2:
+            globalStatus = 1  # ONGOING
     print '-'*165
     #  when showing full statistics, print out summary line
     if not vids and sumTotal > 0:
-        if sumToRecall + sumToMigr > 0:
-            globalStatus = 1  # ONGOING
-        else:
-            globalStatus = 2  # FINISHED
         _printStatusLine(time.time(), 0, '-', 'TOTAL', count, globalStatus, sumTotal, sumSize, sumToRecall, sumToMigr, sumFailed, sumMigrated)
 
 def displayStatus(detailed):
