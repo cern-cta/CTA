@@ -150,8 +150,8 @@ BEGIN
   nsHostName := getConfigOption('stager', 'nsHost', '');
   -- find out the recallGroup to be used for this request
   getRecallGroup(varEuid, varEgid, varRecallGroupId, varRecallGroupName);
-  -- update potentially missing Cns_file_metadata.stagertime. This will be dropped in 2.1.15.
-  updateStagerTime@RemoteNS(varRepackVID);
+  -- update potentially missing metadata introduced with v2.1.14. This will be dropped in 2.1.15.
+  update2114Data@RemoteNS(varRepackVID);
   COMMIT;
   -- Get the list of files to repack from the NS DB via DBLink and store them in memory
   -- in a temporary table. We do that so that we do not keep an open cursor for too long
@@ -185,13 +185,13 @@ BEGIN
       varWasRecalled NUMBER;
       varMigrationTriggered BOOLEAN := False;
     BEGIN
-      outNbFilesProcessed := outNbFilesProcessed + 1;
-      varTotalSize := varTotalSize + segment.segSize;
       -- Commit from time to time
       IF MOD(outNbFilesProcessed, 1000) = 0 THEN
         COMMIT;
         firstCF := TRUE;
       END IF;
+      outNbFilesProcessed := outNbFilesProcessed + 1;
+      varTotalSize := varTotalSize + segment.segSize;
       -- lastKnownFileName we will have in the DB
       lastKnownFileName := CONCAT('Repack_', TO_CHAR(segment.fileid));
       -- find the Castorfile (and take a lock on it)
@@ -221,7 +221,8 @@ BEGIN
       VALUES (0, lastKnownFileName, repackProtocol, segment.segSize, 0, uuidGen(), 0, 0, varCreationTime, varCreationTime, 1, 0, '', NULL, 'NotNullNeeded', ids_seq.nextval, 0, cfId, dconst.SUBREQUEST_START, varReqId, 0, 119)
       RETURNING id, subReqId INTO varSubreqId, varSubreqUUID;
       -- if the file is being overwritten, fail
-      SELECT count(DiskCopy.id) INTO varNbCopies
+      SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */
+             count(DiskCopy.id) INTO varNbCopies
         FROM DiskCopy
        WHERE DiskCopy.castorfile = cfId
          AND DiskCopy.status = dconst.DISKCOPY_STAGEOUT;
@@ -232,8 +233,8 @@ BEGIN
         outNbFailures := outNbFailures + 1;
       ELSE
         -- find out whether this file is already on disk
-        SELECT /*+ INDEX(DC I_DiskCopy_CastorFile) */ count(DC.id)
-          INTO varNbCopies
+        SELECT /*+ INDEX_RS_ASC(DC I_DiskCopy_CastorFile) */
+               count(DC.id) INTO varNbCopies
           FROM DiskCopy DC, FileSystem, DiskServer
          WHERE DC.castorfile = cfId
            AND DC.fileSystem = FileSystem.id

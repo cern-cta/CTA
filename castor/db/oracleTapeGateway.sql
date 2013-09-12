@@ -194,7 +194,7 @@ BEGIN
     -- Even if we optimize by cancelling remaining unneeded tape recalls when a
     -- fileSystem comes back, the ones running at the time of the come back will have
     -- the problem.
-    SELECT count(*) INTO nb
+    SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */ count(*) INTO nb
       FROM DiskCopy
      WHERE fileSystem = f.id
        AND castorfile = inCfid
@@ -1316,7 +1316,7 @@ CREATE OR REPLACE PROCEDURE tg_setBulkFileMigrationResult(inLogContext IN VARCHA
   varNSTimeInfos floatList;
   varNSErrorCodes "numList";
   varNSMsgs strListTable;
-  varNSFileIds "numList";
+  varNSFileIds "numList" := "numList"();
   varNSParams strListTable;
   varParams VARCHAR2(4000);
   varNbSentToNS INTEGER := 0;
@@ -1347,10 +1347,7 @@ BEGIN
       IF varOpenMode = 'C' THEN
         varNsOpenTime := varLastUpdateTime;
       END IF;
-        -- Store in a temporary table, to be transfered to the NS DB.
-        -- Note that this is an ON COMMIT DELETE table and we never take locks or commit until
-        -- after the NS call: if anything goes bad (including the db link being broken) we bail out
-        -- without needing to rollback.
+        -- Store in a temporary table, to be transfered to the NS DB
       IF inErrorCodes(i) = 0 THEN
         -- Successful migration
         INSERT INTO FileMigrationResultsHelper
