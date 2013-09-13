@@ -637,7 +637,7 @@ BEGIN
   SELECT repackVID INTO varOriginalVID FROM StageRepackRequest WHERE id = origReqId;
   -- Gather the list of subrequests to abort
   INSERT INTO ProcessBulkAbortFileReqsHelper (srId, cfId, fileId, nsHost, uuid) (
-    SELECT /*+ INDEX(Subrequest I_Subrequest_CastorFile)*/
+    SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_CastorFile)*/
            SubRequest.id, CastorFile.id, CastorFile.fileId, CastorFile.nsHost, SubRequest.subreqId
       FROM SubRequest, CastorFile
      WHERE SubRequest.castorFile = CastorFile.id
