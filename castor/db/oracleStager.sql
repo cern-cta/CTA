@@ -3146,8 +3146,20 @@ CREATE OR REPLACE PROCEDURE handlePutInsidePrepareToPut(inCfId IN INTEGER, inSrI
   varFsId INTEGER;
   varStatus INTEGER;
 BEGIN
-  -- Retrieve the infos about the DiskCopy to be used
-  SELECT fileSystem, status INTO varFsId, varStatus FROM DiskCopy WHERE id = inDcId;
+  BEGIN
+    -- Retrieve the infos about the DiskCopy to be used
+    SELECT fileSystem, status INTO varFsId, varStatus FROM DiskCopy WHERE id = inDcId;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- The DiskCopy has disappeared in the mean time, removed by another request
+    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
+       SET status = dconst.SUBREQUEST_FAILED,
+           errorCode = serrno.ESTKILLED,
+           errorMessage = 'SubRequest canceled while being handled.'
+     WHERE id = inSrId;
+    logToDLF(inReqUUID, dlf.LVL_USER_ERROR, dlf.STAGER_RECREATION_IMPOSSIBLE, inFileId, inNsHost, 'stagerd',
+             'SUBREQID=' || inSrUUID || ' reason="canceled"');
+    RETURN;
+  END;
 
   -- handle the case where another concurrent Put|Update request overtook us
   IF varStatus = dconst.DISKCOPY_WAITFS_SCHEDULING THEN
