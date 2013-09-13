@@ -168,6 +168,8 @@ BEGIN
    WHERE id = rdcId
    RETURNING status, path
    INTO rdcStatus, rdcPath;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+   raise_application_error(-20104, 'SubRequest canceled while queuing in scheduler. Giving up.');
 END;
 /
 
