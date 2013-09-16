@@ -1,4 +1,8 @@
 export KRB5RCACHETYPE=none
 #workaround for ORACLE11g shipping own GSSAPI
-export LD_PRELOAD=libgssapi.so.2:libgssapi_krb5.so.2:libkrb5.so.3:libkrb5support.so.0:libcom_err.so.2
+export LD_PRELOAD=libgssapi_krb5.so.2:libkrb5.so.3:libkrb5support.so.0:libcom_err.so.2
+# extra preloads in case libgssapi is installed
+if [[ -x /usr/lib64/libgssapi.so.2 || -x /usr/lib/libgssapi.so.2 ]]; then LD_PRELOAD=libgssapi.so.2:${LD_PRELOAD}; fi
+# extra preloads in case libgssglue is installed
+if [[ -x /lib64/libgssglue.so.1 || -x /lib/libgssglue.so.1 ]]; then LD_PRELOAD=libgssglue.so.1:${LD_PRELOAD}:libk5crypto.so.3; fi
 NSD_OPTIONS="-s -t 15"
