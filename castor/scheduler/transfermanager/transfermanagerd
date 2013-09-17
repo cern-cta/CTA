@@ -463,9 +463,9 @@ class TransferManagerService(rpyc.Service):
         stcur = self.__class__.dbConnection().cursor()
         stcur.arraysize = 50
         # loop over the transfers to be ended
-        for transferId, reqId, fileId, diskServerName, localPath, fileSize, errMsg in transferTuples:
+        for transferId, reqId, fileId, diskServerName, localPath, fileSize, errCode, errMsg in transferTuples:
           dlf.writedebug(msgs.INVOKINGD2DEND, subreqid=transferId, reqid=reqId, fileid=fileId,
-                         path=localPath, size=fileSize, errMsg=errMsg)
+                         path=localPath, size=fileSize, errCode=errCode, errMsg=errMsg)
           # cleanup source in our queues
           queueingTransfers.d2dendById(transferId)
           # then end them in the stager DB, allowing retry (the 1 in 5th place)
@@ -475,11 +475,11 @@ class TransferManagerService(rpyc.Service):
         # close cursor
         stcur.close()
       except Exception, e:
-        for transferId, reqId, fileId, diskserverName, localPath, fileSize, errMsg in transferTuples:
+        for transferId, reqId, fileId, diskserverName, localPath, fileSize, errCode, errMsg in transferTuples:
           # "Exception caught while failing transfer" message
           dlf.writeerr(msgs.FAILTRANSFEREXCEPTION, subreqid=transferId,
                        reqid=reqId, fileid=fileId, diskserver=diskserverName,
-                       path=localPath, originalError=errMsg,
+                       path=localPath, originalErrCode=errCode, originalError=errMsg,
                        Type=str(e.__class__), Message=str(e))
           # check whether we should reconnect to DB, and do so if needed
           self.__class__.dbConnection().checkForReconnection(e)
