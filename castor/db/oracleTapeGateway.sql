@@ -153,7 +153,7 @@ CREATE OR REPLACE PROCEDURE bestFileSystemForRecall(inCfId IN INTEGER, outFilePa
   nb NUMBER;
 BEGIN
   -- try and select a good FileSystem for this recall
-  FOR f IN (SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/
+  FOR f IN (SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/
                    DiskServer.name ||':'|| FileSystem.mountPoint AS remotePath, FileSystem.id,
                    FileSystem.diskserver, CastorFile.fileSize, CastorFile.fileId, CastorFile.nsHost
               FROM DiskServer, FileSystem, DiskPool2SvcClass,
@@ -402,7 +402,7 @@ CREATE OR REPLACE PROCEDURE archiveOrFailRepackSubreq(inCfId INTEGER, inErrorCod
   varSrIds "numList";
 BEGIN
   -- find and archive any repack subrequest(s)
-  SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile) */
+  SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile) */
          SubRequest.id BULK COLLECT INTO varSrIds
     FROM SubRequest
    WHERE SubRequest.castorfile = inCfId
@@ -606,7 +606,7 @@ BEGIN
   -- Note that we reset the creation time as if the MigrationJob was created right now
   -- this is because "creationTime" is actually the time of entering the "PENDING" state
   -- in the cases where the migrationJob went through a WAITINGONRECALL state
-  UPDATE /*+ INDEX (MigrationJob I_MigrationJob_CFVID) */ MigrationJob
+  UPDATE /*+ INDEX_RS_ASC (MigrationJob I_MigrationJob_CFVID) */ MigrationJob
      SET status = tconst.MIGRATIONJOB_PENDING,
          creationTime = getTime()
    WHERE status = tconst.MIGRATIONJOB_WAITINGONRECALL
@@ -707,7 +707,7 @@ BEGIN
      AND ROWNUM < 2;
   -- if no remaining recallJobs, the subrequests are failed
   IF varRecallStillAlive = 0 THEN
-    UPDATE /*+ INDEX(Subrequest I_Subrequest_Castorfile) */ SubRequest 
+    UPDATE /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile) */ SubRequest 
        SET status = dconst.SUBREQUEST_FAILED,
            lastModificationTime = getTime(),
            errorCode = serrno.SEINTERNAL,
@@ -857,7 +857,7 @@ BEGIN
     -- delete potential migration jobs waiting on recalls
     deleteMigrationJobsForRecall(inCfId);
     -- Fail the associated subrequest(s)
-    UPDATE /*+ INDEX(SR I_Subrequest_Castorfile)*/ SubRequest SR
+    UPDATE /*+ INDEX_RS_ASC(SR I_Subrequest_Castorfile)*/ SubRequest SR
        SET SR.status = dconst.SUBREQUEST_FAILED,
            SR.getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED, --  (not strictly correct but the request is over anyway)
            SR.lastModificationTime = getTime(),
@@ -1492,7 +1492,7 @@ BEGIN
     -- Yes we do, then archive the repack subrequest associated
     -- Note that there may be several if we are dealing with old bad tapes
     -- that have 2 copies of the same file on them. Thus we take one at random
-    SELECT /*+ INDEX(SR I_Subrequest_CastorFile) */ SR.id INTO varSrId
+    SELECT /*+ INDEX_RS_ASC(SR I_Subrequest_CastorFile) */ SR.id INTO varSrId
       FROM SubRequest SR, StageRepackRequest Req
       WHERE SR.castorfile = varCfId
         AND SR.status = dconst.SUBREQUEST_REPACK

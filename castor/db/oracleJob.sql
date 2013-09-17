@@ -58,14 +58,14 @@ BEGIN
   IF stat = 6 THEN -- STAGEOUT
     BEGIN
       -- do we have other ongoing requests ?
-      SELECT /*+ INDEX(Subrequest I_Subrequest_DiskCopy)*/ count(*) INTO nbRes
+      SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_DiskCopy)*/ count(*) INTO nbRes
         FROM SubRequest
        WHERE diskCopy = dcId AND id != srId;
       IF (nbRes > 0) THEN
         -- do we have a prepareTo Request ? There can be only a single one
         -- or none. If there was a PrepareTo, any subsequent PPut would be rejected and any
         -- subsequent PUpdate would be directly archived (cf. processPrepareRequest).
-        SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest.id INTO nbRes
+        SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/ SubRequest.id INTO nbRes
           FROM (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id FROM StagePrepareToPutRequest UNION ALL
                 SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id FROM StagePrepareToUpdateRequest) PrepareRequest,
                SubRequest
@@ -224,7 +224,7 @@ BEGIN
     raise_application_error(-20114, 'The selected diskserver/filesystem is not in PRODUCTION or READONLY any longer. Giving up.');
   END IF;
   -- Try to find local DiskCopy
-  SELECT /*+ INDEX(DiskCopy I_DiskCopy_Castorfile) */ id, nbCopyAccesses, gcWeight, creationTime
+  SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_Castorfile) */ id, nbCopyAccesses, gcWeight, creationTime
     INTO dcId, nbac, gcw, cTime
     FROM DiskCopy
    WHERE DiskCopy.castorfile = cfId
@@ -432,7 +432,7 @@ BEGIN
         EXECUTE IMMEDIATE
           'BEGIN :newGcw := ' || varGcwProc || '(:size); END;'
           USING OUT varDcGcWeight, IN varFileSize;
-        SELECT /*+ INDEX (DiskCopy I_DiskCopy_CastorFile) */
+        SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_CastorFile) */
                COUNT(*)+1 INTO varDCImportance FROM DiskCopy
          WHERE castorFile=varCfId AND status = dconst.DISKCOPY_VALID;
       END;
@@ -556,7 +556,7 @@ BEGIN
 
   -- identify the source DiskCopy and diskserver/filesystem and check that it is still valid
   BEGIN
-    SELECT /*+ INDEX(DiskCopy I_DiskCopy_CastorFile) */
+    SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */
            FileSystem.id, DiskCopy.id, FileSystem.status, DiskServer.status, DiskServer.hwOnline
       INTO varSrcFsId, varSrcDcId, varSrcFsStatus, varSrcDsStatus, varSrcHwOnline
       FROM DiskServer, FileSystem, DiskCopy
@@ -611,7 +611,7 @@ BEGIN
   END IF;
 
   -- Prevent multiple copies of the file to be created on the same diskserver
-  SELECT /*+ INDEX(DiskCopy I_DiskCopy_Castorfile) */ count(*) INTO varNbCopies
+  SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_Castorfile) */ count(*) INTO varNbCopies
     FROM DiskCopy, FileSystem
    WHERE DiskCopy.filesystem = FileSystem.id
      AND FileSystem.diskserver = varDestDsId
@@ -682,7 +682,7 @@ BEGIN
     -- single one or none. If there was a PrepareTo, any subsequent PPut would
     -- be rejected and any subsequent PUpdate would be directly archived (cf.
     -- processPrepareRequest).
-    SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile) */ SubRequest.id INTO unused
+    SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile) */ SubRequest.id INTO unused
       FROM SubRequest,
        (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id FROM StagePrepareToPutRequest UNION ALL
         SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id FROM StagePrepareToUpdateRequest) Request
@@ -729,7 +729,7 @@ BEGIN
   ELSE
     -- If put inside PrepareToPut/Update, restart any PutDone currently
     -- waiting on this put/update
-    UPDATE /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest
+    UPDATE /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/ SubRequest
        SET status = dconst.SUBREQUEST_RESTART
      WHERE reqType = 39  -- PutDone
        AND castorFile = cfId
@@ -801,7 +801,7 @@ BEGIN
     -- Check that there is a PrepareToPut/Update going on. There can be only a single one
     -- or none. If there was a PrepareTo, any subsequent PPut would be rejected and any
     -- subsequent PUpdate would be directly archived (cf. processPrepareRequest).
-    SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest.id INTO unused
+    SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/ SubRequest.id INTO unused
       FROM (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id FROM StagePrepareToPutRequest UNION ALL
             SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id FROM StagePrepareToUpdateRequest) PrepareRequest, SubRequest
      WHERE SubRequest.castorFile = cfId
@@ -880,7 +880,7 @@ CREATE OR REPLACE PROCEDURE getFileIdsForSrs
 BEGIN
   FOR i IN subReqIds.FIRST .. subReqIds.LAST LOOP
     BEGIN
-      SELECT /*+ INDEX(Subrequest I_Subrequest_SubreqId)*/ fileid, nsHost INTO fid, nh
+      SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_SubreqId)*/ fileid, nsHost INTO fid, nh
         FROM Castorfile, SubRequest
        WHERE SubRequest.subreqId = subReqIds(i)
          AND SubRequest.castorFile = CastorFile.id;
@@ -915,7 +915,7 @@ BEGIN
   FOR i IN subReqIds.FIRST .. subReqIds.LAST LOOP
     BEGIN
       -- Get the necessary information needed about the request.
-      SELECT /*+ INDEX(Subrequest I_Subrequest_SubreqId)*/ id, diskCopy, reqType, castorFile
+      SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_SubreqId)*/ id, diskCopy, reqType, castorFile
         INTO srId, dcId, rType, cfId
         FROM SubRequest
        WHERE subReqId = subReqIds(i)
@@ -1032,7 +1032,7 @@ BEGIN
            AND DiskServer.hwOnline = 1
            AND FileSystem.free - FileSystem.minAllowedFreeSpace * FileSystem.totalSize > inMinFreeSpace
            AND DiskServer.id NOT IN
-               (SELECT /*+ INDEX(DiskCopy I_DiskCopy_Castorfile) */ diskserver FROM DiskCopy, FileSystem
+               (SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_Castorfile) */ diskserver FROM DiskCopy, FileSystem
                  WHERE DiskCopy.castorFile = inCfId
                    AND DiskCopy.status = dconst.DISKCOPY_VALID
                    AND FileSystem.id = DiskCopy.fileSystem)
@@ -1052,7 +1052,7 @@ BEGIN
   -- in this case we take any non DISABLED hardware
   FOR line IN
     (SELECT candidate FROM
-       (SELECT /*+ INDEX(DiskCopy I_DiskCopy_Castorfile) */ 
+       (SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_Castorfile) */ 
                UNIQUE FIRST_VALUE (DiskServer.name || ':' || FileSystem.mountPoint)
                  OVER (PARTITION BY DiskServer.id ORDER BY DBMS_Random.value) AS candidate
           FROM DiskServer, FileSystem, DiskCopy

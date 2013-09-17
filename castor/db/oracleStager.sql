@@ -268,7 +268,7 @@ BEGIN
     -- online.
     FOR b IN (SELECT id FROM (
                 SELECT rownum ind, id FROM (
-                  SELECT /*+ INDEX (DiskCopy I_DiskCopy_Castorfile) */ DiskCopy.id
+                  SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_Castorfile) */ DiskCopy.id
                     FROM DiskCopy, FileSystem, DiskPool2SvcClass, SvcClass,
                          DiskServer
                    WHERE DiskCopy.filesystem = FileSystem.id
@@ -285,7 +285,7 @@ BEGIN
                WHERE ind > maxReplicaNb)
     LOOP
       -- Sanity check, make sure that the last copy is never dropped!
-      SELECT /*+ INDEX(DiskCopy I_DiskCopy_CastorFile) */ count(*) INTO nbFiles
+      SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */ count(*) INTO nbFiles
         FROM DiskCopy, FileSystem, DiskPool2SvcClass, SvcClass, DiskServer
        WHERE DiskCopy.filesystem = FileSystem.id
          AND FileSystem.diskpool = DiskPool2SvcClass.parent
@@ -764,7 +764,7 @@ BEGIN
   IF fileIds.count() = 0 THEN
     -- handle the case of an empty request, meaning that all files should be aborted
     INSERT INTO ProcessBulkAbortFileReqsHelper (srId, cfId, fileId, nsHost, uuid) (
-      SELECT /*+ INDEX(Subrequest I_Subrequest_Request)*/
+      SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Request)*/
              SubRequest.id, CastorFile.id, CastorFile.fileId, CastorFile.nsHost, SubRequest.subreqId
         FROM SubRequest, CastorFile
        WHERE SubRequest.castorFile = CastorFile.id
@@ -777,7 +777,7 @@ BEGIN
         cfId NUMBER;
         srUuid VARCHAR(2048);
       BEGIN
-        SELECT /*+ INDEX(Subrequest I_Subrequest_CastorFile)*/
+        SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_CastorFile)*/
                SubRequest.id, CastorFile.id, SubRequest.subreqId INTO srId, cfId, srUuid
           FROM SubRequest, CastorFile
          WHERE request = origReqId
@@ -1178,7 +1178,7 @@ BEGIN
     -- drop the associated Client entity
     DELETE FROM Client WHERE id = clientId;
     -- archive the successful subrequests
-    UPDATE /*+ INDEX(SubRequest I_SubRequest_Request) */ SubRequest
+    UPDATE /*+ INDEX_RS_ASC(SubRequest I_SubRequest_Request) */ SubRequest
        SET status = dconst.SUBREQUEST_ARCHIVED
      WHERE request = rId
        AND status = dconst.SUBREQUEST_FINISHED;
@@ -1279,7 +1279,7 @@ BEGIN
   -- access too.
   SELECT id, srcSvcClassId INTO dcId, srcSvcClassId
     FROM (
-      SELECT /*+ INDEX (DiskCopy I_DiskCopy_CastorFile) */ DiskCopy.id, SvcClass.id srcSvcClassId
+      SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_CastorFile) */ DiskCopy.id, SvcClass.id srcSvcClassId
         FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass, SvcClass
        WHERE DiskCopy.castorfile = cfId
          AND DiskCopy.status = dconst.DISKCOPY_VALID
@@ -1360,7 +1360,7 @@ BEGIN
   -- and group id to -1 this effectively disables the later privilege checks
   -- to see if the user can trigger a d2d or recall. (#55745)
   BEGIN
-    SELECT /*+ INDEX (DiskCopy I_DiskCopy_CastorFile) */ -1, -1 INTO userid, groupid
+    SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_CastorFile) */ -1, -1 INTO userid, groupid
       FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
      WHERE DiskCopy.fileSystem = FileSystem.id
        AND DiskCopy.castorFile = cfId
@@ -1655,7 +1655,7 @@ BEGIN
   FOR a IN (SELECT SvcClass.id FROM (
               -- Determine the number of copies of the file in all service classes
               SELECT * FROM (
-                SELECT  /*+ INDEX(DiskCopy I_DiskCopy_CastorFile) */
+                SELECT  /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */
                        SvcClass.id, count(*) available
                   FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass, SvcClass
                  WHERE DiskCopy.filesystem = FileSystem.id
@@ -1761,7 +1761,7 @@ BEGIN
     DECLARE
       srId NUMBER;
     BEGIN
-      SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest.id INTO srId
+      SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/ SubRequest.id INTO srId
         FROM SubRequest,
          (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id
             FROM StagePrepareToPutRequest UNION ALL
@@ -1820,7 +1820,7 @@ BEGIN
   -- Check whether there is a Put|Update going on
   -- If any, we'll wait on one of them
   BEGIN
-    SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ id INTO putSubReq
+    SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/ id INTO putSubReq
       FROM SubRequest
      WHERE castorfile = cfId
        AND reqType IN (40, 44)  -- Put, Update
@@ -1870,7 +1870,7 @@ END;
 CREATE OR REPLACE PROCEDURE dropReusedLastKnownFileName(fileName IN VARCHAR2) AS
   PRAGMA AUTONOMOUS_TRANSACTION;
 BEGIN
-  UPDATE /*+ INDEX (I_CastorFile_lastKnownFileName) */ CastorFile
+  UPDATE /*+ INDEX_RS_ASC (CastorFile I_CastorFile_lastKnownFileName) */ CastorFile
      SET lastKnownFileName = TO_CHAR(id)
    WHERE lastKnownFileName = normalizePath(fileName);
   COMMIT;
@@ -2054,7 +2054,8 @@ BEGIN
   SELECT id INTO cfId FROM CastorFile
    WHERE fileId = fid AND nsHost = nsHostName FOR UPDATE;
   -- list diskcopies
-  SELECT id BULK COLLECT INTO dcsToRm
+  SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */ id
+    BULK COLLECT INTO dcsToRm
     FROM DiskCopy
    WHERE castorFile = cfId
      AND status IN (dconst.DISKCOPY_VALID, dconst.DISKCOPY_WAITFS,
@@ -2065,7 +2066,7 @@ BEGIN
   -- mark all get/put requests for those diskcopies
   -- and the ones waiting on them as failed
   -- so that clients eventually get an answer
-  FOR sr IN (SELECT /*+ INDEX(Subrequest I_Subrequest_DiskCopy)*/ id, status FROM SubRequest
+  FOR sr IN (SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_DiskCopy)*/ id, status FROM SubRequest
               WHERE diskcopy IN
                 (SELECT /*+ CARDINALITY(dcidTable 5) */ *
                    FROM TABLE(dcsToRm) dcidTable)
@@ -2096,7 +2097,7 @@ CREATE OR REPLACE PROCEDURE renamedFileCleanup(inFileName IN VARCHAR2,
   varNsPath VARCHAR2(2048);
 BEGIN
   -- try to find a file with the right name
-  SELECT /*+ INDEX(CastorFile I_CastorFile_LastKnownFileName) */ fileId, nshost, id
+  SELECT /*+ INDEX_RS_ASC(CastorFile I_CastorFile_LastKnownFileName) */ fileId, nshost, id
     INTO varFileId, varNsHost, varCfId
     FROM CastorFile
    WHERE lastKnownFileName = inFileName;
@@ -2179,7 +2180,7 @@ BEGIN
   -- select the list of DiskCopies to be deleted
   SELECT id, status, tapeStatus BULK COLLECT INTO dcsToRm, dcsToRmStatus, dcsToRmCfStatus FROM (
     -- first physical diskcopies
-    SELECT /*+ INDEX(DC I_DiskCopy_CastorFile) */ DC.id, DC.status, CastorFile.tapeStatus
+    SELECT /*+ INDEX_RS_ASC(DC I_DiskCopy_CastorFile) */ DC.id, DC.status, CastorFile.tapeStatus
       FROM DiskCopy DC, FileSystem, DiskPool2SvcClass DP2SC, CastorFile
      WHERE DC.castorFile = cfId
        AND DC.status IN (dconst.DISKCOPY_VALID, dconst.DISKCOPY_STAGEOUT)
@@ -2190,7 +2191,7 @@ BEGIN
   UNION ALL
     -- and then diskcopies resulting from ongoing requests, for which the previous
     -- query wouldn't return any entry because of e.g. missing filesystem
-    SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ DC.id, DC.status, CastorFile.tapeStatus
+    SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/ DC.id, DC.status, CastorFile.tapeStatus
       FROM (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id
               FROM StagePrepareToPutRequest WHERE svcClass = svcClassId UNION ALL
             SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */ id
@@ -2236,7 +2237,7 @@ BEGIN
      WHERE castorFile = cfId AND status = dconst.DISKCOPY_VALID;
 
     -- fail the subrequests linked to the deleted diskcopies
-    FOR sr IN (SELECT /*+ INDEX(SR I_SubRequest_DiskCopy) */ id, subreqId
+    FOR sr IN (SELECT /*+ INDEX_RS_ASC(SR I_SubRequest_DiskCopy) */ id, subreqId
                  FROM SubRequest SR
                 WHERE diskcopy IN (SELECT /*+ CARDINALITY(dcidTable 5) */ * FROM TABLE(dcsToRm) dcidTable)
                   AND status IN (dconst.SUBREQUEST_START, dconst.SUBREQUEST_RESTART,
@@ -2355,7 +2356,7 @@ BEGIN
     'BEGIN SELECT id INTO :reqId FROM '|| rName ||' WHERE id = :reqId FOR UPDATE; END;'
     USING IN OUT reqId;
   -- Check whether it was the last subrequest in the request
-  SELECT /*+ INDEX(Subrequest I_Subrequest_Request)*/ id INTO result FROM SubRequest
+  SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Request)*/ id INTO result FROM SubRequest
    WHERE request = reqId
      AND status IN (0, 1, 2, 3, 4, 5, 7, 10, 12, 13)   -- all but FINISHED, FAILED_FINISHED, ARCHIVED
      AND answered = 0
@@ -3044,7 +3045,7 @@ BEGIN
   DECLARE
     varAnyStageoutDC INTEGER;
   BEGIN
-    SELECT /*+ INDEX(DiskCopy I_DiskCopy_Castorfile) */
+    SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_Castorfile) */
            COUNT(*) INTO varAnyStageoutDC FROM DiskCopy
      WHERE status IN (dconst.DISKCOPY_WAITFS, dconst.DISKCOPY_STAGEOUT)
        AND castorFile = inCfId
@@ -3245,7 +3246,7 @@ BEGIN
     varPrepSvcClassId INTEGER;
   BEGIN
     -- look for the (eventual) prepare request and get its service class
-    SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ PrepareRequest.svcClass, SubRequest.diskCopy
+    SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/ PrepareRequest.svcClass, SubRequest.diskCopy
       INTO varPrepSvcClassId, varPrepDcid
       FROM (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */
                    id, svcClass FROM StagePrepareToPutRequest UNION ALL
@@ -3342,7 +3343,7 @@ BEGIN
   DECLARE
     varDcIds "numList";
   BEGIN
-    SELECT /*+ INDEX (DiskCopy I_DiskCopy_CastorFile) */ DiskCopy.id BULK COLLECT INTO varDcIds
+    SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_CastorFile) */ DiskCopy.id BULK COLLECT INTO varDcIds
       FROM DiskCopy, FileSystem, DiskServer
      WHERE inCfId = DiskCopy.castorFile
        AND FileSystem.id(+) = DiskCopy.fileSystem
@@ -3369,7 +3370,7 @@ BEGIN
   -- the min() function does not represent anything here.
   -- Note that we accept copies in READONLY hardware here as we're processing Get
   -- and Update requests, and we would deny Updates switching to write mode in that case.
-  SELECT /*+ INDEX (DiskCopy I_DiskCopy_CastorFile) */
+  SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_CastorFile) */
          COUNT(DiskCopy.id), min(DiskCopy.status) INTO varNbDCs, varDcStatus
     FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
    WHERE DiskCopy.castorfile = inCfId
@@ -3406,7 +3407,7 @@ BEGIN
       varDcList VARCHAR2(2048);
     BEGIN
       -- List available diskcopies for job scheduling
-      SELECT /*+ INDEX (DiskCopy I_DiskCopy_CastorFile) INDEX(Subrequest PK_Subrequest_Id)*/ 
+      SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_CastorFile) INDEX(Subrequest PK_Subrequest_Id)*/ 
              LISTAGG(DiskServer.name || ':' || FileSystem.mountPoint, '|')
              WITHIN GROUP (ORDER BY FileSystemRate(FileSystem.nbReadStreams, FileSystem.nbWriteStreams))
         INTO varDcList
@@ -3496,7 +3497,7 @@ BEGIN
     varNbDCs INTEGER;
   BEGIN
     SELECT COUNT(*) INTO varNbDCs FROM (
-      SELECT /*+ INDEX (DiskCopy I_DiskCopy_CastorFile) */ DiskCopy.id
+      SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_CastorFile) */ DiskCopy.id
         FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
        WHERE DiskCopy.castorfile = inCfId
          AND DiskCopy.fileSystem = FileSystem.id
@@ -3565,7 +3566,7 @@ BEGIN
     varNbPReqs INTEGER;
   BEGIN
     -- Note that we do not select ourselves as we are in status SUBREQUEST_WAITSCHED
-    SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/
+    SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/
            count(SubRequest.diskCopy) INTO varNbPReqs
       FROM (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id
               FROM StagePrepareToPutRequest UNION ALL

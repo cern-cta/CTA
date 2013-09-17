@@ -42,7 +42,7 @@ BEGIN
                       ELSE DC.status
                       END AS status,
                  CASE WHEN DC.svcClass IS NULL THEN
-                   (SELECT /*+ INDEX(Subrequest I_Subrequest_DiskCopy)*/ UNIQUE Req.svcClassName
+                   (SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_DiskCopy)*/ UNIQUE Req.svcClassName
                       FROM SubRequest,
                         (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id, svcClassName FROM StagePrepareToPutRequest UNION ALL
                          SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcClassName FROM StagePrepareToUpdateRequest) Req
@@ -114,7 +114,7 @@ BEGIN
                                 ELSE DC.status
                                 END
                       WHEN DC.fileSystem = 0 THEN
-                       (SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/
+                       (SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/
                         UNIQUE decode(nvl(SubRequest.status, -1), -1, -1, DC.status)
                           FROM SubRequest,
                             (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id, svcclass, svcClassName FROM StagePrepareToPutRequest UNION ALL
@@ -187,7 +187,7 @@ CREATE OR REPLACE PROCEDURE fileNameStageQuery
   cfIds "numList";
 BEGIN
   IF substr(fn, -1, 1) = '/' THEN  -- files in a 'subdirectory'
-    SELECT /*+ INDEX(CastorFile I_CastorFile_LastKnownFileName) INDEX(DiskCopy I_DiskCopy_CastorFile) */ 
+    SELECT /*+ INDEX_RS_ASC(CastorFile I_CastorFile_LastKnownFileName) INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */ 
            CastorFile.id
       BULK COLLECT INTO cfIds
       FROM DiskCopy, FileSystem, DiskPool2SvcClass, CastorFile
@@ -360,7 +360,7 @@ BEGIN
            WHERE reqid = rid
           );
   IF reqs.COUNT > 0 THEN
-    UPDATE /*+ INDEX(Subrequest I_Subrequest_Request)*/ SubRequest 
+    UPDATE /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Request)*/ SubRequest 
        SET getNextStatus = 2  -- GETNEXTSTATUS_NOTIFIED
      WHERE getNextStatus = 1  -- GETNEXTSTATUS_FILESTAGED
        AND request IN (SELECT * FROM TABLE(reqs))
@@ -394,7 +394,7 @@ BEGIN
            WHERE userTag LIKE tag
           );
   IF reqs.COUNT > 0 THEN
-    UPDATE /*+ INDEX(Subrequest I_Subrequest_Request)*/ SubRequest 
+    UPDATE /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Request)*/ SubRequest 
        SET getNextStatus = 2  -- GETNEXTSTATUS_NOTIFIED
      WHERE getNextStatus = 1  -- GETNEXTSTATUS_FILESTAGED
        AND request IN (SELECT * FROM TABLE(reqs))

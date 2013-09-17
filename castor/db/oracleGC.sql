@@ -272,7 +272,7 @@ BEGIN
      WHERE s.sql_id = t.sql_id AND t.sql_text LIKE '%I_DiskCopy_FS_GCW%';
 
     -- Process diskcopies that are in an INVALID state.
-    UPDATE /*+ INDEX(DiskCopy I_DiskCopy_Status_7_FS)) */ DiskCopy
+    UPDATE /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_Status_7_FS)) */ DiskCopy
        SET status = 9, -- BEINGDELETED
            gcType = decode(gcType, NULL, dconst.GCTYPE_USER, gcType)
      WHERE fileSystem = fs.id
@@ -323,7 +323,7 @@ BEGIN
       -- removing VALID files until we are below the free space watermark
       IF freed < toBeFreed THEN
         -- Loop on file deletions
-        FOR dc IN (SELECT /*+ INDEX(DiskCopy I_DiskCopy_FS_GCW) */ DiskCopy.id, castorFile
+        FOR dc IN (SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_FS_GCW) */ DiskCopy.id, castorFile
                      FROM DiskCopy, CastorFile
                     WHERE fileSystem = fs.id
                       AND status = dconst.DISKCOPY_VALID
@@ -435,7 +435,7 @@ BEGIN
         IF nb > 0 THEN
           CONTINUE;
         END IF;
-        SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ count(*) INTO nb
+        SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/ count(*) INTO nb
           FROM SubRequest
          WHERE castorFile = cf.cfId
            AND status = dconst.SUBREQUEST_WAITTAPERECALL;
@@ -443,7 +443,7 @@ BEGIN
           CONTINUE;
         END IF;
         -- Nothing found, check for any other subrequests
-        SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ count(*) INTO nb
+        SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/ count(*) INTO nb
           FROM SubRequest
          WHERE castorFile = cf.cfId
            AND status IN (1, 2, 3, 4, 5, 6, 7, 10, 12, 13);  -- all but START, FINISHED, FAILED_FINISHED, ARCHIVED
@@ -452,7 +452,7 @@ BEGIN
           DELETE FROM CastorFile WHERE id = cf.cfId;
         ELSE
           -- Fail existing subrequests for this file
-          UPDATE /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ SubRequest
+          UPDATE /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/ SubRequest
              SET status = dconst.SUBREQUEST_FAILED
            WHERE castorFile = cf.cfId
              AND status IN (1, 2, 3, 4, 5, 6, 12, 13);  -- same as above
@@ -545,7 +545,7 @@ BEGIN
   OPEN stgOrphans FOR
     SELECT diskCopyId FROM StgFilesDeletedOrphans
      WHERE NOT EXISTS (
-        SELECT /*+ INDEX_RS_ASC(DiskCopy PK_DiskCopy_Id */ 'x' FROM DiskCopy
+        SELECT /*+ INDEX(DiskCopy PK_DiskCopy_Id) */ 'x' FROM DiskCopy
          WHERE id = diskCopyId);
 END;
 /
@@ -737,7 +737,7 @@ BEGIN
        WHERE id = f.dcid;
       -- and we also fail the correspondent prepareToPut/Update request if it exists
       BEGIN
-        SELECT /*+ INDEX(Subrequest I_Subrequest_Diskcopy)*/ id
+        SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Diskcopy)*/ id
           INTO srId   -- there can only be one outstanding PrepareToPut/Update, if any
           FROM SubRequest
          WHERE status = 6 AND diskCopy = f.dcid;
