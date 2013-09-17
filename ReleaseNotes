@@ -125,6 +125,7 @@
 
   - The old DLF components have been dropped, and the DLF databases can be dismantled.
 
+  - the sysconfig files for the nameserver have been adapted for the SLC6 case
 
   CASTOR Core Framework
   ---------------------
