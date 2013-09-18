@@ -54,7 +54,8 @@ namespace castor{
         try {
           bool replyNeeded = reqHelper->stagerService->handlePrepareToPut(reqHelper->castorFile->id(),
                                                                           reqHelper->subrequest->id(),
-                                                                          reqHelper->cnsFileid);
+                                                                          reqHelper->cnsFileid,
+                                                                          reqHelper->m_stagerOpenTimeInUsec);
           if (replyNeeded) {
             /* we are gonna replyToClient so we dont  updateRep on DB explicitly */
             reqHelper->subrequest->setStatus(SUBREQUEST_READY);

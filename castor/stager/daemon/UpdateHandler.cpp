@@ -57,13 +57,15 @@ namespace castor{
           // call PL/SQL handlePut method
           reqHelper->stagerService->handlePut(reqHelper->castorFile->id(),
                                               reqHelper->subrequest->id(),
-                                              reqHelper->cnsFileid);
+                                              reqHelper->cnsFileid,
+                                              reqHelper->m_stagerOpenTimeInUsec);
         } else {
           // call PL/SQL handleGet method
           reqHelper->stagerService->handleGet(reqHelper->castorFile->id(),
                                               reqHelper->subrequest->id(),
                                               reqHelper->cnsFileid,
-                                              reqHelper->cnsFilestat.filesize);
+                                              reqHelper->cnsFilestat.filesize,
+                                              reqHelper->m_stagerOpenTimeInUsec);
         }
         return true;
       }

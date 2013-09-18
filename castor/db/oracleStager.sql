@@ -1994,25 +1994,6 @@ BEGIN
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET castorFile = rid
      WHERE id = srId
      RETURNING reqType INTO varReqType;
-    IF varReqType IN (37, 38, 40, 44) THEN  -- all write operations
-      -- reset lastUpdateTime: this is used to prevent parallel Put operations from
-      -- overtaking each other. As it is still relying on diskservers' timestamps
-      -- with seconds precision, we truncate the usec-precision nameserver timestamp
-      UPDATE CastorFile
-         SET lastUpdateTime = TRUNC(inNsOpenTime),
-             nsOpenTime = inNsOpenTime
-       WHERE id = rid;
-    ELSE
-      -- On pure read operations, we should actually check whether our disk cache is stale,
-      -- that is IF CF.nsOpenTime < inNsOpenTime THEN invalidate our diskcopies.
-      -- This is pending the full deployment of the 'new open mode' as implemented
-      -- in the fix of bug #95189: Time discrepencies between
-      -- disk servers and name servers can lead to silent data loss on input.
-      -- The problem being that in 'Compatibility' mode inNsOpenTime is the
-      -- namespace's mtime, which can be modified by nstouch,
-      -- hence nstouch followed by a Get would destroy the data on disk!
-      NULL;
-    END IF;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- we did not find the file, let's try to create a new one.
     -- This may fail with a low probability (subtle race condition, see comments
@@ -3037,7 +3018,8 @@ CREATE OR REPLACE FUNCTION handleRawPutOrPPut(inCfId IN INTEGER, inSrId IN INTEG
                                               inFileClassId IN INTEGER, inSvcClassId IN INTEGER,
                                               inEuid IN INTEGER, inEgid IN INTEGER,
                                               inReqUUID IN VARCHAR2, inSrUUID IN VARCHAR2,
-                                              inDoSchedule IN BOOLEAN) RETURN INTEGER AS
+                                              inDoSchedule IN BOOLEAN, inNsOpenTime IN INTEGER)
+RETURN INTEGER AS
 BEGIN
   -- check that no concurrent put is already running
   DECLARE
@@ -3130,8 +3112,12 @@ BEGIN
              status = dconst.SUBREQUEST_READY
        WHERE id = inSrId;
     END IF;
-    -- reset the castorfile size as the file was truncated
-    UPDATE CastorFile SET fileSize = 0 WHERE id = inCfId;
+    -- reset the castorfile size, lastUpdateTime and nsOpenTime as the file was truncated
+    UPDATE CastorFile
+       SET fileSize = 0,
+           lastUpdateTime = TRUNC(inNsOpenTime),
+           nsOpenTime = inNsOpenTime
+     WHERE id = inCfId;
   END;
   RETURN (CASE WHEN inDoSchedule THEN 0 ELSE 1 END);
 END;
@@ -3141,7 +3127,8 @@ END;
 CREATE OR REPLACE PROCEDURE handlePutInsidePrepareToPut(inCfId IN INTEGER, inSrId IN INTEGER,
                                                         inFileId IN INTEGER, inNsHost IN VARCHAR2,
                                                         inDcId IN INTEGER, inSvcClassId IN INTEGER,
-                                                        inReqUUID IN VARCHAR2, inSrUUID IN VARCHAR2) AS
+                                                        inReqUUID IN VARCHAR2, inSrUUID IN VARCHAR2,
+                                                        inNsOpenTime IN INTEGER) AS
   varFsId INTEGER;
   varStatus INTEGER;
 BEGIN
@@ -3204,15 +3191,20 @@ BEGIN
            status = dconst.SUBREQUEST_READYFORSCHED,
            getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED
      WHERE id = inSrId;
-    -- reset the castorfile size as the file was truncated
-    UPDATE CastorFile SET fileSize = 0 WHERE id = inCfId;
+    -- reset the castorfile size, lastUpdateTime and nsOpenTime as the file was truncated
+    UPDATE CastorFile
+       SET fileSize = 0,
+           lastUpdateTime = TRUNC(inNsOpenTime),
+           nsOpenTime = inNsOpenTime
+     WHERE id = inCfId;
   END;
 END;
 /
 
 /* PL/SQL method implementing handlePut */
 CREATE OR REPLACE PROCEDURE handlePut(inCfId IN INTEGER, inSrId IN INTEGER,
-                                      inFileId IN INTEGER, inNsHost IN VARCHAR2) AS
+                                      inFileId IN INTEGER, inNsHost IN VARCHAR2,
+                                      inNsOpenTimeInUsec IN INTEGER) AS
   varFileClassId INTEGER;
   varSvcClassId INTEGER;
   varEuid INTEGER;
@@ -3292,14 +3284,15 @@ BEGIN
   -- core processing of the request
   IF varHasPrepareReq THEN
     handlePutInsidePrepareToPut(inCfId, inSrId, inFileId, inNsHost, varPrepDcid, varSvcClassId,
-                                varReqUUID, varSrUUID);
+                                varReqUUID, varSrUUID, inNsOpentimeInUsec/1000000);
   ELSE
     DECLARE
       varIgnored INTEGER;
     BEGIN
       varIgnored := handleRawPutOrPPut(inCfId, inSrId, inFileId, inNsHost,
                                        varFileClassId, varSvcClassId,
-                                       varEuid, varEgid, varReqUUID, varSrUUID, True);
+                                       varEuid, varEgid, varReqUUID, varSrUUID,
+                                       True, inNsOpentimeInUsec/1000000);
     END;
   END IF;
 END;
@@ -3308,7 +3301,7 @@ END;
 /* PL/SQL method implementing handleGet */
 CREATE OR REPLACE PROCEDURE handleGet(inCfId IN INTEGER, inSrId IN INTEGER,
                                       inFileId IN INTEGER, inNsHost IN VARCHAR2,
-                                      inFileSize IN INTEGER) AS
+                                      inFileSize IN INTEGER, inNsOpenTimeInUsec IN INTEGER) AS
   varNsOpenTime INTEGER;
   varEuid NUMBER;
   varEgid NUMBER;
@@ -3363,6 +3356,15 @@ BEGIN
     END IF;
   END;
 
+  -- We should actually check whether our disk cache is stale,
+  -- that is IF CF.nsOpenTime < inNsOpenTime THEN invalidate our diskcopies.
+  -- This is pending the full deployment of the 'new open mode' as implemented
+  -- in the fix of bug #95189: Time discrepencies between
+  -- disk servers and name servers can lead to silent data loss on input.
+  -- The problem being that in 'Compatibility' mode inNsOpenTime is the
+  -- namespace's mtime, which can be modified by nstouch,
+  -- hence nstouch followed by a Get would destroy the data on disk!
+
   -- Look for available diskcopies. The status is needed for the
   -- internal replication processing, and only if count = 1, hence
   -- the min() function does not represent anything here.
@@ -3389,7 +3391,7 @@ BEGIN
        AND DiskCopy.status = dconst.DISKCOPY_WAITFS;
     IF varNbDCs = 1 THEN
       -- we are the first update, so we actually need to behave as a Put
-      handlePut(inCfId, inSrId, inFileId, inNsHost);
+      handlePut(inCfId, inSrId, inFileId, inNsHost, inNsOpenTimeInUsec);
       RETURN;
     END IF;
   END IF;
@@ -3463,7 +3465,8 @@ END;
  */
 CREATE OR REPLACE FUNCTION handlePrepareToGet(inCfId IN INTEGER, inSrId IN INTEGER,
                                               inFileId IN INTEGER, inNsHost IN VARCHAR2,
-                                              inFileSize IN INTEGER) RETURN INTEGER AS
+                                              inFileSize IN INTEGER, inNsOpenTimeInUsec IN INTEGER)
+RETURN INTEGER AS
   varNsOpenTime INTEGER;
   varEuid NUMBER;
   varEgid NUMBER;
@@ -3488,6 +3491,15 @@ BEGIN
   -- log
   logToDLF(varReqUUID, dlf.LVL_DEBUG, dlf.STAGER_PREPARETOGET, inFileId, inNsHost, 'stagerd',
            'SUBREQID=' || varSrUUID);
+
+  -- We should actually check whether our disk cache is stale,
+  -- that is IF CF.nsOpenTime < inNsOpenTime THEN invalidate our diskcopies.
+  -- This is pending the full deployment of the 'new open mode' as implemented
+  -- in the fix of bug #95189: Time discrepencies between
+  -- disk servers and name servers can lead to silent data loss on input.
+  -- The problem being that in 'Compatibility' mode inNsOpenTime is the
+  -- namespace's mtime, which can be modified by nstouch,
+  -- hence nstouch followed by a Get would destroy the data on disk!
 
   -- First look for available diskcopies. Note that we never wait on other requests.
   -- and we include Disk2DiskCopyJobs as they are going to produce available DiskCopies.
@@ -3535,7 +3547,9 @@ END;
  * return 1 if the client needs to be replied to, else 0
  */
 CREATE OR REPLACE FUNCTION handlePrepareToPut(inCfId IN INTEGER, inSrId IN INTEGER,
-                                              inFileId IN INTEGER, inNsHost IN VARCHAR2) RETURN INTEGER AS
+                                              inFileId IN INTEGER, inNsHost IN VARCHAR2,
+                                              inNsOpenTimeInUsec IN INTEGER)
+RETURN INTEGER AS
   varFileClassId INTEGER;
   varSvcClassId INTEGER;
   varEuid INTEGER;
@@ -3600,6 +3614,7 @@ BEGIN
 
   -- core processing of the request
   RETURN handleRawPutOrPPut(inCfId, inSrId, inFileId, inNsHost, varFileClassId,
-                             varSvcClassId, varEuid, varEgid, varReqUUID, varSrUUID, False);
+                             varSvcClassId, varEuid, varEgid, varReqUUID, varSrUUID,
+                             False, inNsOpenTimeInUsec/1000000);
 END;
 /

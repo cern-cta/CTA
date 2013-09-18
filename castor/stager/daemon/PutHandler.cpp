@@ -50,7 +50,8 @@ namespace castor{
         // call PL/SQL handlePut method
         reqHelper->stagerService->handlePut(reqHelper->castorFile->id(),
                                             reqHelper->subrequest->id(),
-                                            reqHelper->cnsFileid);
+                                            reqHelper->cnsFileid,
+                                            reqHelper->m_stagerOpenTimeInUsec);
         return true;
       }
       

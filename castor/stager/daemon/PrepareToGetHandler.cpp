@@ -58,7 +58,8 @@ namespace castor{
             reqHelper->stagerService->handlePrepareToGet(reqHelper->castorFile->id(),
                                                          reqHelper->subrequest->id(),
                                                          reqHelper->cnsFileid,
-                                                         reqHelper->cnsFilestat.filesize);
+                                                         reqHelper->cnsFilestat.filesize,
+                                                         reqHelper->m_stagerOpenTimeInUsec);
           reqHelper->subrequest->setStatus(srStatus);
           if (srStatus == SUBREQUEST_WAITTAPERECALL) { 
             // reset the filesize to the nameserver one, as we don't have anything in the db

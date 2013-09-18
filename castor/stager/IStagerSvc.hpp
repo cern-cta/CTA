@@ -308,11 +308,13 @@ namespace castor {
        * @param srId the id of the subrequest concerned
        * @param fileId the fileId of the file concerned
        * @param fileSize the size of the file concerned
+       * @param nsOpenTimeInUsec the nsOpenTime of the file concerned, in microseconds since the Epoch
        */
       virtual void handleGet(u_signed64 cfId,
                              u_signed64 srId,
                              struct Cns_fileid &fileId,
-                             u_signed64 fileSize)
+                             u_signed64 fileSize,
+                             u_signed64 nsOpenTimeInUsec)
         throw (castor::exception::Exception) = 0;
 
       /**
@@ -323,12 +325,14 @@ namespace castor {
        * @param srId the id of the subrequest concerned
        * @param fileId the fileId of the file concerned
        * @param fileSize the size of the file concerned
+       * @param nsOpenTimeInUsec the nsOpenTime of the file concerned, in microseconds since the Epoch
        */
       virtual castor::stager::SubRequestStatusCodes
       handlePrepareToGet(u_signed64 cfId,
                          u_signed64 srId,
                          struct Cns_fileid &fileId,
-                         u_signed64 fileSize)
+                         u_signed64 fileSize,
+                         u_signed64 nsOpenTimeInUsec)
         throw (castor::exception::Exception) = 0;
 
       /**
@@ -336,10 +340,12 @@ namespace castor {
        * @param cfId the id of the castorFile concerned
        * @param srId the id of the subrequest concerned
        * @param fileId the fileId of the file concerned
+       * @param nsOpenTimeInUsec the nsOpenTime of the file concerned, in microseconds since the Epoch
        */
       virtual void handlePut(u_signed64 cfId,
                              u_signed64 srId,
-                             struct Cns_fileid &fileId)
+                             struct Cns_fileid &fileId,
+                             u_signed64 nsOpenTimeInUsec)
         throw (castor::exception::Exception) = 0;
 
       /**
@@ -349,10 +355,12 @@ namespace castor {
        * @param srId the id of the subrequest concerned
        * @param fileId the fileId of the file concerned
        * @param fileSize the size of the file concerned
+       * @param nsOpenTimeInUsec the nsOpenTime of the file concerned, in microseconds since the Epoch
        */
       virtual bool handlePrepareToPut(u_signed64 cfId,
                                       u_signed64 srId,
-                                      struct Cns_fileid &fileId)
+                                      struct Cns_fileid &fileId,
+                                      u_signed64 nsOpenTimeInUsec)
         throw (castor::exception::Exception) = 0;
 
       /**

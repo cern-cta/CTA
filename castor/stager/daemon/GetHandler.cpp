@@ -52,7 +52,8 @@ namespace castor{
         reqHelper->stagerService->handleGet(reqHelper->castorFile->id(),
                                             reqHelper->subrequest->id(),
                                             reqHelper->cnsFileid,
-                                            reqHelper->cnsFilestat.filesize);
+                                            reqHelper->cnsFilestat.filesize,
+                                            reqHelper->m_stagerOpenTimeInUsec);
         return true;
       }
 

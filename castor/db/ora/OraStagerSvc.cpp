@@ -1148,13 +1148,14 @@ std::string castor::db::ora::OraStagerSvc::getConfigOption(std::string confClass
 void castor::db::ora::OraStagerSvc::handleGet(u_signed64 cfId,
                                               u_signed64 srId,
                                               struct Cns_fileid &fileId,
-                                              u_signed64 fileSize)
+                                              u_signed64 fileSize,
+                                              u_signed64 nsOpenTimeInUsec)
   throw (castor::exception::Exception) {
   try {
     // get statement if needed
     if (0 == m_handleGetStatement) {
       m_handleGetStatement = createStatement
-        ("BEGIN handleGet(:1, :2, :3, :4, :5); END;");
+        ("BEGIN handleGet(:1, :2, :3, :4, :5, :6); END;");
       m_handleGetStatement->setAutoCommit(true);
     }
     // Execute the statement
@@ -1163,6 +1164,7 @@ void castor::db::ora::OraStagerSvc::handleGet(u_signed64 cfId,
     m_handleGetStatement->setDouble(3, fileId.fileid);
     m_handleGetStatement->setString(4, fileId.server);
     m_handleGetStatement->setDouble(5, fileSize);
+    m_handleGetStatement->setDouble(6, nsOpenTimeInUsec);
     m_handleGetStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
@@ -1186,13 +1188,14 @@ castor::stager::SubRequestStatusCodes
 castor::db::ora::OraStagerSvc::handlePrepareToGet(u_signed64 cfId,
                                                   u_signed64 srId,
                                                   struct Cns_fileid &fileId,
-                                                  u_signed64 fileSize)
+                                                  u_signed64 fileSize,
+                                                  u_signed64 nsOpenTimeInUsec)
   throw (castor::exception::Exception) {
   try {
     // get statement if needed
     if (0 == m_handlePrepareToGetStatement) {
       m_handlePrepareToGetStatement = createStatement
-        ("BEGIN :1 := handlePrepareToGet(:2, :3, :4, :5, :6); END;");
+        ("BEGIN :1 := handlePrepareToGet(:2, :3, :4, :5, :6, :7); END;");
       m_handlePrepareToGetStatement->registerOutParam(1, oracle::occi::OCCIINT);
       m_handlePrepareToGetStatement->setAutoCommit(true);
     }
@@ -1202,6 +1205,7 @@ castor::db::ora::OraStagerSvc::handlePrepareToGet(u_signed64 cfId,
     m_handlePrepareToGetStatement->setDouble(4, fileId.fileid);
     m_handlePrepareToGetStatement->setString(5, fileId.server);
     m_handlePrepareToGetStatement->setDouble(6, fileSize);
+    m_handlePrepareToGetStatement->setDouble(7, nsOpenTimeInUsec);
     m_handlePrepareToGetStatement->executeUpdate();
     return (castor::stager::SubRequestStatusCodes)m_handlePrepareToGetStatement->getInt(1);
   } catch (oracle::occi::SQLException e) {
@@ -1224,12 +1228,13 @@ castor::db::ora::OraStagerSvc::handlePrepareToGet(u_signed64 cfId,
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStagerSvc::handlePut(u_signed64 cfId,
                                               u_signed64 srId,
-                                              struct Cns_fileid &fileId)
+                                              struct Cns_fileid &fileId,
+                                              u_signed64 nsOpenTimeInUsec)
   throw (castor::exception::Exception) {
   try {
     // get statement if needed
     if (0 == m_handlePutStatement) {
-      m_handlePutStatement = createStatement("BEGIN handlePut(:1, :2, :3, :4); END;");
+      m_handlePutStatement = createStatement("BEGIN handlePut(:1, :2, :3, :4, :5); END;");
       m_handlePutStatement->setAutoCommit(true);
     }
     // Execute the statement
@@ -1237,6 +1242,7 @@ void castor::db::ora::OraStagerSvc::handlePut(u_signed64 cfId,
     m_handlePutStatement->setDouble(2, srId);
     m_handlePutStatement->setDouble(3, fileId.fileid);
     m_handlePutStatement->setString(4, fileId.server);
+    m_handlePutStatement->setDouble(5, nsOpenTimeInUsec);
     m_handlePutStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
@@ -1258,12 +1264,13 @@ void castor::db::ora::OraStagerSvc::handlePut(u_signed64 cfId,
 //------------------------------------------------------------------------------
 bool castor::db::ora::OraStagerSvc::handlePrepareToPut(u_signed64 cfId,
                                                        u_signed64 srId,
-                                                       struct Cns_fileid &fileId)
+                                                       struct Cns_fileid &fileId,
+                                                       u_signed64 nsOpenTimeInUsec)
   throw (castor::exception::Exception) {
   // get statement if needed
   if (0 == m_handlePrepareToPutStatement) {
     m_handlePrepareToPutStatement = createStatement
-      ("BEGIN :1 := handlePrepareToPut(:2, :3, :4, :5); END;");
+      ("BEGIN :1 := handlePrepareToPut(:2, :3, :4, :5, :6); END;");
     m_handlePrepareToPutStatement->registerOutParam(1, oracle::occi::OCCIINT);
     m_handlePrepareToPutStatement->setAutoCommit(true);
   }
@@ -1272,6 +1279,7 @@ bool castor::db::ora::OraStagerSvc::handlePrepareToPut(u_signed64 cfId,
   m_handlePrepareToPutStatement->setDouble(3, srId);
   m_handlePrepareToPutStatement->setDouble(4, fileId.fileid);
   m_handlePrepareToPutStatement->setString(5, fileId.server);
+  m_handlePrepareToPutStatement->setDouble(6, nsOpenTimeInUsec);
   m_handlePrepareToPutStatement->executeUpdate();
   return (0 != m_handlePrepareToPutStatement->getInt(1));
   try {
