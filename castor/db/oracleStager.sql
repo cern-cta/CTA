@@ -1877,6 +1877,25 @@ BEGIN
 END;
 /
 
+/* PL/SQL method implementing fixLastKnownFileName */
+CREATE OR REPLACE PROCEDURE fixLastKnownFileName(inFileName IN VARCHAR2, inCfId IN INTEGER) AS
+  CONSTRAINT_VIOLATED EXCEPTION;
+  PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
+BEGIN
+  UPDATE CastorFile SET lastKnownFileName = inFileName
+   WHERE id = inCfId;
+EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
+  -- we have another file that already uses the new name of this one...
+  -- It has probably changed name in the namespace before its na
+  -- let's fix this, but we won't put the right name there
+  -- Note that this procedure will run in an autonomous transaction so that
+  -- no dead lock can result from taking a second lock within this transaction
+  dropReusedLastKnownFileName(inFileName);
+  UPDATE CastorFile SET lastKnownFileName = inFileName
+   WHERE id = inCfId;
+END;
+/
+
 
 /* this function tries to create a CastorFile and deals with the associated race conditions
    In case race conditions are really bad, the method can fail and return False */
@@ -1958,14 +1977,9 @@ BEGIN
       INTO rid, rfs, previousLastKnownFileName
       FROM CastorFile
      WHERE fileId = fid AND nsHost = nh;
-    -- In case its filename has changed, take care that the new name is
-    -- not already the lastKnownFileName of another file, that was also
-    -- renamed but for which the lastKnownFileName has not been updated
-    -- We actually reset the lastKnownFileName of such a file if needed
-    -- Note that this procedure will run in an autonomous transaction so that
-    -- no dead lock can result from taking a second lock within this transaction
+    -- In case its filename has changed, fix it
     IF fn != previousLastKnownFileName THEN
-      dropReusedLastKnownFileName(fn);
+      fixLastKnownFileName(fn, rid);
     END IF;
     -- take a lock on the file. Note that the file may have disappeared in the
     -- meantime, this is why we first select (potentially having a NO_DATA_FOUND
@@ -1976,9 +1990,7 @@ BEGIN
       SELECT id INTO rid FROM CastorFile WHERE id = rid FOR UPDATE NOWAIT;
     END IF;
     -- The file is still there, so update timestamps
-    UPDATE CastorFile SET lastAccessTime = getTime(),
-                          lastKnownFileName = normalizePath(fn)
-     WHERE id = rid;
+    UPDATE CastorFile SET lastAccessTime = getTime() WHERE id = rid;
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET castorFile = rid
      WHERE id = srId
      RETURNING reqType INTO varReqType;
@@ -2087,7 +2099,6 @@ BEGIN
 END;
 /
 
-
 /* PL/SQL method implementing renamedFileCleanup */
 CREATE OR REPLACE PROCEDURE renamedFileCleanup(inFileName IN VARCHAR2,
                                                inSrId IN INTEGER) AS
@@ -2110,20 +2121,7 @@ BEGIN
     -- with a different name than the stager. Obviously the
     -- file got renamed and the requested deletion cannot succeed;
     -- anyway we update the stager catalogue with the new name
-    DECLARE
-      CONSTRAINT_VIOLATED EXCEPTION;
-      PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
-    BEGIN
-      UPDATE CastorFile SET lastKnownFileName = varNsPath
-       WHERE id = varCfId;
-    EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
-      -- we have another file that already uses the new name of this one...
-      -- let's fix this, but we won't put the right name there
-      UPDATE CastorFile SET lastKnownFileName = TO_CHAR(id)
-       WHERE lastKnownFileName = varNsPath;
-      UPDATE CastorFile SET lastKnownFileName = varNsPath
-       WHERE id = varCfId;
-    END;
+    fixLastKnownFileName(inFileName, varCfId);
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- the file exists only in the stager db,
     -- execute stageForcedRm (cf. ns synch performed in GC daemon)

@@ -234,8 +234,7 @@ BEGIN
       FROM CastorFile
      WHERE id = cfs(cfs.FIRST);
     IF currentFileName != fileName THEN
-      UPDATE CastorFile SET lastKnownFileName = fileName
-       WHERE id = cfs(cfs.FIRST);
+      fixLastKnownFileName(fileName, cfs(cfs.FIRST));
       COMMIT;
     END IF;
   END IF;
