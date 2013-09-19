@@ -102,8 +102,18 @@
       + TAPE          BADMIR_HANDLING   REPAIR
         Used to be CANCEL
 
-    This is the list of other changes that should not have a big impact. You may still want to
-    review them quickly :
+    In addition, the following tapebridged configuration-parameters have new defaults that have been
+    set and tested for good performance. Tape operators should no longer explicitly configure them.
+      + TAPEBRIDGE    BULKREQUESTMIGRATIONMAXBYTES    80000000000
+      + TAPEBRIDGE    BULKREQUESTMIGRATIONMAXFILES    500
+      + TAPEBRIDGE    BULKREQUESTRECALLMAXBYTES       80000000000
+      + TAPEBRIDGE    BULKREQUESTRECALLMAXFILES       500
+      + TAPEBRIDGE    MAXBYTESBEFOREFLUSH             32000000000
+      + TAPEBRIDGE    MAXFILESBEFOREFLUSH             200
+      + TAPEBRIDGE    TAPEFLUSHMODE                   N_FLUSHES_PER_FILE
+
+    Finally this is the list of other changes that should not have a big impact. You may still
+    want to review them :
       + DiskManager   FSMaxFreeSpace                  .10   # .15
       + RFIO          CONRETRY                        3     # 10
       + RFIO          CONRETRYINT                     10    # 1
@@ -266,16 +276,6 @@
     plugin libraries includes the major version number:
       + on the head node: /usr/lib64/libXrdxCastor2Fs.so.2.1 
       + on the disk servers: /usr/lib64/libXrdxCastor2Ofs.so.2.1 and /usr/lib64/libXrdxCastor2ServerAcc.so.2.1
-  - tape operators should no longer explicitly set the following tapebridged
-    configuration-parameters.  The compile-time defaults have been set for good
-    performance and they have been tested at CERN.
-      + TAPEBRIDGE BULKREQUESTMIGRATIONMAXBYTES
-      + TAPEBRIDGE BULKREQUESTMIGRATIONMAXFILES
-      + TAPEBRIDGE BULKREQUESTRECALLMAXBYTES
-      + TAPEBRIDGE BULKREQUESTRECALLMAXFILES
-      + TAPEBRIDGE MAXBYTESBEFOREFLUSH
-      + TAPEBRIDGE MAXFILESBEFOREFLUSH
-      + TAPEBRIDGE TAPEFLUSHMODE
 
 
   Upgrade Instructions from 2.1.13-9
@@ -393,22 +393,26 @@
      Instructions
      ------------
 
-      1. Once all stagers have been upgraded to version 2.1.14-2, run the cns_2.1.14-2_postUpgrade.sql
-         post-upgrade script from: 
+      1. Ask your DBA to grant the following privilege to your Nameserver account:
+
+         GRANT EXECUTE ON DBMS_LOCK TO <castorNsAccount>;
+
+      2. Once all stagers have been upgraded to version 2.1.14-2, run the cns_2.1.14-2_post-upgrade.sql
+         post-upgrade script from:
          http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-2/dbupgrades
 
          This script includes a one-off job to populate the new fields added to the Nameserver schema.
-         This operation may take several days and is performed as a background activity while
-         the system is running.
+         This operation may take several days to complete (about 5 days for 300M files) and it is
+         performed as a background activity while the system is running.
 
-      2. As a separate intervention, and only after the job has completed, run the
-         cns_2.1.14_switch_openmode.sql script from:
+      3. As a separate intervention, run the cns_2.1.14_switch-open-mode.sql script from:
          http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-2/dbupgrades
 
          This script enables the stagers to fully exploit the new logic to provide cross stager consistency
          (see bug #95189), and it is required to be executed before the upgrade to the next major
          version (2.1.15).
-         The script fails if the update job had been interrupted and the new fields are not fully populated yet.
+         The script fails if the previous job had not completed or had been interrupted and the new
+         fields are not fully populated yet.
 
 
 ------------
