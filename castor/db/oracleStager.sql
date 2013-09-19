@@ -1838,7 +1838,7 @@ BEGIN
     -- regardless their status, accepting Disabled ones
     -- as there's no real IO activity involved. However the
     -- risk is that the file might not come back and it's lost!
-    SELECT COUNT(DiskCopy.id) INTO nbDCs
+    SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */ COUNT(DiskCopy.id) INTO nbDCs
       FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
      WHERE DiskCopy.castorfile = cfId
        AND DiskCopy.fileSystem = FileSystem.id
