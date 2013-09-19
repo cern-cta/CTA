@@ -1,0 +1,7 @@
+digraph rlstape_ssi {
+rankdir=LR;
+node [shape = circle];
+rlstape -> ssi     [ label =  "1 acs_dismount"                        ];
+rlstape -> rlstape [ label =  "2 while not received RF_FINAL from ssi"];
+rlstape -> ssi     [ label =    "2.1 acs_response"                    ];
+}
