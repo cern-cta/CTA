@@ -1,4 +1,4 @@
-digraph mounttape_rmcd_scsi_mount {
+digraph mounttape_rmcd_scsi {
 rankdir=LR;
 node [shape = circle];
 mounttape -> rmcd      [ label =  "1 mount volume"                        ];
@@ -12,7 +12,7 @@ mounttape -> mounttape [ label =    "5.1 MTIOCGET"                        ];
 mounttape -> mounttape [ label =  "6 Check drive access mode"             ];
 mounttape -> mounttape [ label =  "7 Set drive block size to variable"    ];
 mounttape -> mounttape [ label =  "8 Rewind drive"                        ];
-mounttape -> mounttape [ label =  "9 Set denisty and compresssion"        ];
-mounttape -> mounttape [ label = "10 Read volume label"                   ];
+mounttape -> mounttape [ label =  "9 Set density and compresssion"        ];
+mounttape -> mounttape [ label = "10 Read and check volume label"         ];
 mounttape -> mounttape [ label = "11 Check MIR"                           ];
 }
