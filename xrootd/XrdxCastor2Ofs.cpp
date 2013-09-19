@@ -96,8 +96,7 @@ extern "C"
 // Constructor
 //------------------------------------------------------------------------------
 XrdxCastor2Ofs::XrdxCastor2Ofs(): 
-  LogId(),
-  mIsUpdate(false)
+  LogId()
 {
   mLogLevel = LOG_INFO; // log info
 }
@@ -505,6 +504,7 @@ XrdxCastor2OfsFile::XrdxCastor2OfsFile( const char* user, int MonID ) :
   isTruncate = false;
   viaDestructor = false;
   mTpcKey = "";
+  mIsUpdate = false;
 }
 
 

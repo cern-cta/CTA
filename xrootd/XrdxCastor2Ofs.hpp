@@ -283,6 +283,7 @@ class XrdxCastor2OfsFile : public XrdOfsFile, public LogId
     XrdOucString     DiskChecksumAlgorithm; ///<
     bool             verifyChecksum; ///<
     std::string      mTpcKey;        ///< tpc key allocated to this file
+    bool             mIsUpdate;      ///< mark if file is opened for update
 };
 
 
@@ -485,7 +486,6 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
     int                 ThirdPartyCopySlotRate;       ///< default from Configure
     XrdOucString        ThirdPartyCopyStateDirectory; ///< default from Configure
     int                 mLogLevel; ///< log level from configuration file
-    bool                mIsUpdate; ///< mark if file is opened for update
 
     XrdSysMutex mTpcMapMutex;  ///< mutex to protect access to the TPC map
     std::map<std::string, struct TpcInfo> mTpcMap;  ///< TPC map of kety to lfn 
