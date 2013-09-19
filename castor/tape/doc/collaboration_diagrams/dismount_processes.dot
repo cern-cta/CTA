@@ -1,6 +1,7 @@
 digraph dismount_processes {
 rankdir=LR;
-node [shape = circle];
+node [shape = oval];
+edge [weight = 1];
 rtcpd     -> taped     [ label =  "1 release volume"                      ];
 taped     -> rlstape   [ label =  "2 fork and exec"                       ];
 rlstape   -> rlstape   [ label =  "3 check SCSI tape-alerts page\n\n "    ];

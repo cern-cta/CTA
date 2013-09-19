@@ -1,6 +1,7 @@
 digraph mounttape_rmcd_scsi {
 rankdir=LR;
-node [shape = circle];
+node [shape = oval];
+edge [weight = 1];
 mounttape -> rmcd      [ label =  "1 mount volume"                        ];
 rmcd      -> rmcd      [ label =  "2 find cartridge"                      ];
 rmcd      -> rmcd      [ label =  "3 move medium"                         ];

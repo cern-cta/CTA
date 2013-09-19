@@ -1,6 +1,7 @@
 digraph mount_processes {
 rankdir=LR;
-node [shape = circle];
+node [shape = oval];
+edge [weight = 1];
 gateway   -> vmgr      [ label =  "1 get volume"                          ];
 gateway   -> vdqm      [ label =  "2 get drive"                           ];
 vdqm      -> vdqm      [ label =  "3 drive up -> starting\n\n\n "         ];

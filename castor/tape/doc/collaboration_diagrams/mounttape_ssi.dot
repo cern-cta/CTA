@@ -1,6 +1,7 @@
 digraph mounttape_ssi {
 rankdir=LR;
-node [shape = circle];
+node [shape = oval];
+edge [weight = 1];
 mounttape -> ssi       [ label =  "1 acs_mount"                           ];
 mounttape -> mounttape [ label =  "2 While drive does not see volume"     ];
 mounttape -> mounttape [ label =    "2.1 MTIOCGET\n\n\n\n\n\n\n\n "       ];
