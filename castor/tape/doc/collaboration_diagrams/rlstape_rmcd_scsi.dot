@@ -1,0 +1,10 @@
+digraph rlstape_rmcd_scsi {
+rankdir=LR;
+node [shape = circle];
+rlstape -> rmcd      [ label =  "1 unmount volume"                      ];
+rmcd    -> rmcd      [ label =  "2 While lib not unloaded"              ];
+rmcd    -> rmcd      [ label =    "2.1 Read drive element status"       ];
+rmcd    -> rmcd      [ label =  "3 move medium"                         ];
+rmcd    -> rmcd      [ label =  "4 While volume not in a slot"          ];
+rmcd    -> rmcd      [ label =    "4.1 find cartridge"                  ];
+}
