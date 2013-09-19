@@ -96,7 +96,8 @@ extern "C"
 // Constructor
 //------------------------------------------------------------------------------
 XrdxCastor2Ofs::XrdxCastor2Ofs(): 
-  LogId() 
+  LogId(),
+  mIsUpdate(false)
 {
   mLogLevel = LOG_INFO; // log info
 }
@@ -622,7 +623,10 @@ XrdxCastor2OfsFile::open( const char*         path,
        ( verifytag == "off" ) ) {
     verifyChecksum = false;
   }
-
+  
+  if (open_mode & SFS_O_RDWR)
+    mIsUpdate = true;
+  
   open_mode |= SFS_O_MKPTH;
   create_mode |= SFS_O_MKPTH;
 
@@ -1567,7 +1571,7 @@ XrdxCastor2OfsFile::UpdateMeta()
 
   preparename += "?";
 
-  if ( firstWrite && hasWrite )
+  if ( mIsUpdate && firstWrite && hasWrite )
     preparename += "&firstbytewritten=true";
   else {
     return SFS_OK;
