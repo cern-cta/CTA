@@ -410,15 +410,12 @@ BEGIN
   IF dcIds.COUNT > 0 THEN
     -- List the castorfiles to be cleaned up afterwards
     FORALL i IN dcIds.FIRST .. dcIds.LAST
-      INSERT INTO FilesDeletedProcHelper (cfId) (
-        SELECT castorFile FROM DiskCopy
+      INSERT INTO FilesDeletedProcHelper (cfId, dcId) (
+        SELECT castorFile, id FROM DiskCopy
          WHERE id = dcIds(i));
-    -- Loop over the deleted files; first use FORALL for bulk operation
-    FORALL i IN dcIds.FIRST .. dcIds.LAST
-      DELETE FROM DiskCopy WHERE id = dcIds(i);
-    -- Then use a normal loop to clean castorFiles. Note: We order the list to
+    -- Use a normal loop to clean castorFiles. Note: We order the list to
     -- prevent a deadlock
-    FOR cf IN (SELECT DISTINCT(cfId)
+    FOR cf IN (SELECT cfId, dcId
                  FROM filesDeletedProcHelper
                 ORDER BY cfId ASC) LOOP
       BEGIN
@@ -427,6 +424,8 @@ BEGIN
           INTO fid, nsh, fc
           FROM CastorFile
          WHERE id = cf.cfId FOR UPDATE;
+        -- delete the original diskcopy to be dropped
+        DELETE FROM DiskCopy WHERE id = cf.dcId;
         -- Cleanup:
         -- See whether it has any other DiskCopy or any new Recall request:
         -- if so, skip the rest

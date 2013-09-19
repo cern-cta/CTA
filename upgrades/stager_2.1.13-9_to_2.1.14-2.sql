@@ -237,6 +237,13 @@ CREATE GLOBAL TEMPORARY TABLE DeleteDiskCopyHelper
   (dcId INTEGER CONSTRAINT PK_DDCHelper_dcId PRIMARY KEY, rc INTEGER)
   ON COMMIT PRESERVE ROWS;
 
+/* For filesDeletedProc */
+DROP TABLE FilesDeletedProcHelper;
+CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcHelper
+  (cfId NUMBER, dcId NUMBER)
+  ON COMMIT DELETE ROWS;
+
+
 ALTER TABLE MigrationJob ADD CONSTRAINT CK_MigrationJob_FS_Positive CHECK (fileSize > 0);
 
 -- Update CastorFile and DiskCopy:

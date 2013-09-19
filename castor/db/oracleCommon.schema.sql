@@ -930,9 +930,9 @@ CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcOutput
   (fileId NUMBER, nsHost VARCHAR2(2048))
   ON COMMIT PRESERVE ROWS;
 
-/* Global temporary table to store castor file ids temporarily in the filesDeletedProc procedure */
+/* Global temporary table to store castorfile and diskcopy ids temporarily in the filesDeletedProc procedure */
 CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcHelper
-  (cfId NUMBER)
+  (cfId NUMBER, dcId NUMBER)
   ON COMMIT DELETE ROWS;
 
 /* Global temporary table to handle output of the nsFilesDeletedProc procedure */

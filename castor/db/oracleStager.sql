@@ -1977,10 +1977,6 @@ BEGIN
       INTO rid, rfs, previousLastKnownFileName
       FROM CastorFile
      WHERE fileId = fid AND nsHost = nh;
-    -- In case its filename has changed, fix it
-    IF fn != previousLastKnownFileName THEN
-      fixLastKnownFileName(fn, rid);
-    END IF;
     -- take a lock on the file. Note that the file may have disappeared in the
     -- meantime, this is why we first select (potentially having a NO_DATA_FOUND
     -- exception) before we update.
@@ -1988,6 +1984,10 @@ BEGIN
       SELECT id INTO rid FROM CastorFile WHERE id = rid FOR UPDATE;
     ELSE
       SELECT id INTO rid FROM CastorFile WHERE id = rid FOR UPDATE NOWAIT;
+    END IF;
+    -- In case its filename has changed, fix it
+    IF fn != previousLastKnownFileName THEN
+      fixLastKnownFileName(fn, rid);
     END IF;
     -- The file is still there, so update timestamps
     UPDATE CastorFile SET lastAccessTime = getTime() WHERE id = rid;
@@ -3166,7 +3166,7 @@ BEGIN
     END IF;
   END IF;
 
-  -- schedule the request 
+  -- schedule the request
   DECLARE
     varReqFileSystem VARCHAR(2048) := '';
   BEGIN
