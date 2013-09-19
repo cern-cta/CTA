@@ -400,9 +400,8 @@ void castor::db::ora::OraJobSvc::prepareForMigration
     if (rc != 0) {
       if (serrno == ENSFILECHG) {
         // Special case where the Cns_closex was not taken into account due to
-        // concurrent modifications on the same file on another stager. This is
-        // ok, but we still log something.
-        // "Cns_closex ignored by name server due to concurrent file modification on another stager"
+        // concurrent modifications of the same file. This is ok, but we still log something.
+        // "Cns_closex ignored by name server due to a concurrent file modification"
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, DLF_BASE_ORACLELIB + 35, 0, 0, &fileid);
       } else {
         castor::exception::Exception ex(serrno);
