@@ -133,6 +133,7 @@ rfio/rfrename
 rfio/rfrm
 rfio/rfstat
 rmc/rmcd
+rmc/smc
 rtcopy/killjid
 rtcopy/migrator
 rtcopy/recaller
@@ -159,7 +160,6 @@ tape/posovl
 tape/rbtsubr-stk.c
 tape/rlstape
 tape/rlstape-nostk
-tape/smc
 tape/taped
 tape/tpconfig
 tape/tpdump
