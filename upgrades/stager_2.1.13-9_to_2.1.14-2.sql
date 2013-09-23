@@ -288,7 +288,7 @@ BEGIN
   END LOOP;
   COMMIT;
   FOR DC IN (SELECT castorFile, id FROM DiskCopy WHERE status = 10) LOOP  -- old CANBEMIGR
-    UPDATE CastorFile SET tapeStatus = CASTORFILE_NOTONTAPE WHERE id = DC.castorFile;
+    UPDATE CastorFile SET tapeStatus = dconst.CASTORFILE_NOTONTAPE WHERE id = DC.castorFile;
     UPDATE DiskCopy SET status = dconst.DISKCOPY_VALID, importance = importance+100 WHERE id = DC.id;
   END LOOP;
   COMMIT;
