@@ -748,7 +748,7 @@ int
 XrdxCastor2Stager::GetDelayValue(const char* tag)
 {
   XrdOucString* delayval;
-  XrdSysRWLockHelper rd_lock(msLockDelay);
+  msLockDelay.ReadLock(); // -->
 
   if ((delayval = msDelayStore->Find(tag)))
   {
@@ -767,11 +767,14 @@ XrdxCastor2Stager::GetDelayValue(const char* tag)
   }
   else
   {
+    msLockDelay.UnLock(); // <--
     delayval = new XrdOucString();
     *delayval = 2 + (rand() % 5);
+    msLockDelay.WriteLock(); // -->
     msDelayStore->Add(tag, delayval, 3600);
   }
 
+  msLockDelay.UnLock(); // <--
   return atoi(delayval->c_str());
 }
 
