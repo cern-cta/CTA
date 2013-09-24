@@ -3579,7 +3579,7 @@ BEGIN
   BEGIN
     -- Note that we do not select ourselves as we are in status SUBREQUEST_WAITSCHED
     SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/
-           count(SubRequest.diskCopy) INTO varNbPReqs
+           count(SubRequest.status) INTO varNbPReqs
       FROM (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id
               FROM StagePrepareToPutRequest UNION ALL
             SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id
