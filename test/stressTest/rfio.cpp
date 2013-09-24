@@ -387,7 +387,7 @@ int readFileUsingXROOTD(const std::string &filepath,
   XrdCl::File f; 
   XrdCl::XRootDStatus status;
   std::ostringstream os;
-  os << syscall(SYS_gettid) << "@" << stagerHost << "/" << filepath;
+  os << syscall(SYS_gettid) << "@" << stagerHost << "/" << filepath << "?svcClass=" << stagerSvcClass;
   std::string file_url = os.str();
   XrdCl::URL url(file_url);
 
