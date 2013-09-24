@@ -1,0 +1,2 @@
+nstouch <nsFile>; nschmod 777 <nsFile>; echo $?
+nsls -l <nsFile> | sed "s/  */ /g"
