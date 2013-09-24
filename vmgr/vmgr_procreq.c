@@ -2662,7 +2662,12 @@ int vmgr_srv_qrytapeblksz(
   struct vmgr_tape_dgnmap dgnmap_entry;
   char *func = "qrytapeblksz";
   char *rbp = NULL;
-  char repbuf[177];
+  /* VMGR_QRYTAPE_BYTE_U64 required 177 bytes, therefore in theory           */
+  /* VMGR_QRYTAPEBLKSIZE requires 177 bytes + 4 bytes = 181 bytes due to the */
+  /* addition of the signed 32-bit integer (LONG) representing the blocksize */
+  /* in bytes to be used when transfering data files to and from tape.  To   */
+  /* be safer, setting the reply buffer size to 256 bytes.                   */
+  char repbuf[256];
   char *sbp = NULL;
   int side = 0;
   struct vmgr_tape_side_byte_u64 side_entry;
