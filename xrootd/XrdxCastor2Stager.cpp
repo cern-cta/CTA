@@ -322,7 +322,7 @@ XrdxCastor2Stager::DoAsyncReq(XrdOucErrInfo& error,
   }
   catch (castor::exception::Exception e)
   {
-    xcastor_static_debug("% request exception: %s", opType.c_str(),
+    xcastor_static_debug("%s request exception: %s", opType.c_str(),
                          e.getMessage().str().c_str());
     error.setErrInfo(ECOMM, e.getMessage().str().c_str());
     return SFS_ERROR;
