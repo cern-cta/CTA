@@ -3586,7 +3586,7 @@ BEGIN
               FROM StagePrepareToUpdateRequest) PrepareRequest, SubRequest
      WHERE SubRequest.castorFile = inCfId
        AND PrepareRequest.id = SubRequest.request
-       AND SubRequest.status = dconst.SUBREQUEST_READY;
+       AND SubRequest.status IN (dconst.SUBREQUEST_READY, dconst.SUBREQUEST_READYFORSCHED);
     IF varNbPReqs > 0 THEN
       -- this means that another PrepareTo request is already running. This is forbidden
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
