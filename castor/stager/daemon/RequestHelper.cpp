@@ -23,6 +23,7 @@
  * @author castor dev team
  *****************************************************************************/
 
+#include <string.h>
 #include "castor/System.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/Services.hpp"
@@ -150,19 +151,19 @@ namespace castor {
 
           if ((this_passwd = Cgetpwuid(euid)) == NULL) {
             castor::exception::Exception ex(serrno);
-            ex.getMessage() << "RequestHelper: Cgetpwuid failed for uid " << euid << " : " << strerror(errno);
+            ex.getMessage() << "Cgetpwuid failed for uid " << euid << " : " << strerror(errno);
             throw ex;
           }
 
           if (egid != this_passwd->pw_gid) {
             castor::exception::Exception ex(SEINTERNAL);
-            ex.getMessage() << "RequestHelper: given egid does not match passwd.gid";
+            ex.getMessage() << "The given egid does not match passwd.gid";
             throw ex;
           }
 
           if ((this_gr = Cgetgrgid(egid)) == NULL) {
             castor::exception::Exception ex(serrno);
-            ex.getMessage() << "RequestHelper: Cgetgrgid failed for gid " << egid << " : " << strerror(errno);
+            ex.getMessage() << "Cgetgrgid failed for gid " << egid << " : " << strerror(errno);
             throw ex;
           }
 
@@ -173,8 +174,9 @@ namespace castor {
             castor::dlf::Param("Filename", subrequest->fileName()),
             castor::dlf::Param("Euid", fileRequest->euid()),
             castor::dlf::Param("Egid", fileRequest->egid()),
-            castor::dlf::Param("Function", "RequestHelper::setUsernameAndGroupname")};
-          castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR, STAGER_USER_INVALID, 4, params);
+            castor::dlf::Param("Function", "RequestHelper::setUsernameAndGroupname"),
+            castor::dlf::Param("PreciseMessage", e.getMessage().str())};
+          castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR, STAGER_USER_INVALID, 5, params);
           e.getMessage() << "Invalid user";
           throw e;
         }
