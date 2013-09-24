@@ -2237,8 +2237,6 @@ BEGIN
       -- make the scheduler aware so that it can remove the transfer from the queues if needed
       INSERT INTO TransfersToAbort (uuid) VALUES (sr.subreqId);
     END LOOP;
-    -- wake up the scheduler so that it can remove the transfer from the queues now
-    DBMS_ALERT.SIGNAL('transfersToAbort', '');
   END IF;
 
   -- delete RecallJobs that should be canceled
@@ -2274,6 +2272,16 @@ BEGIN
                                ELSE 'File not found on this service class' END
      WHERE id = srId;
     RETURN;
+  END IF;
+
+  -- In case of something to abort, first commit and then signal the service. The
+  -- commit is needed to avoid to deadlock with the DBMS_ALERT_INFO table, as
+  -- seen during stress tests. Moreover this procedure is called by the stager
+  -- with autocommit=TRUE, hence committing here is safe.
+  IF dcsToRmStatus.COUNT > 0 THEN
+    COMMIT;
+    -- wake up the scheduler so that it can remove the transfer from the queues now
+    DBMS_ALERT.SIGNAL('transfersToAbort', '');
   END IF;
 
   ret := 1;  -- ok
