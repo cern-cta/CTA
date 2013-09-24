@@ -96,8 +96,6 @@ SCSI::DeviceInfo::DeviceFile SCSI::DeviceVector::statDeviceFile(std::string path
  */
 void SCSI::DeviceVector::getTapeInfo(DeviceInfo & devinfo) {
   /* Find the st and nst devices for this SCSI device */
-  Tape::Utils::regex *st_re;
-  Tape::Utils::regex *nst_re;
   DIR * dirp; 
   /* SLC6 default tapeDir and scsiPrefix */
   std::string tapeDir="/scsi_tape"; /* The name of the tape dir inside of
@@ -123,13 +121,13 @@ void SCSI::DeviceVector::getTapeInfo(DeviceInfo & devinfo) {
     }
   } 
   
-  st_re = new Tape::Utils::regex((scsiPrefix+"(st[[:digit:]]+)$").c_str());
-  nst_re = new Tape::Utils::regex((scsiPrefix+"(nst[[:digit:]]+)$").c_str());
+  Tape::Utils::regex st_re((scsiPrefix+"(st[[:digit:]]+)$").c_str());
+  Tape::Utils::regex nst_re((scsiPrefix+"(nst[[:digit:]]+)$").c_str());
   
   while (struct dirent * dent = m_sysWrapper.readdir(dirp)) {
     std::vector<std::string> res;
     /* Check if it's the st information */
-    res = st_re->exec(dent->d_name);
+    res = st_re.exec(dent->d_name);
     if (res.size()) {
       if (!devinfo.st_dev.size()) {
         devinfo.st_dev = std::string("/dev/") + res[1];     
@@ -151,7 +149,7 @@ void SCSI::DeviceVector::getTapeInfo(DeviceInfo & devinfo) {
       }
     }
     /* Check if it's the nst information */
-    res = nst_re->exec(dent->d_name);
+    res = nst_re.exec(dent->d_name);
     if (res.size()) {
       if (!devinfo.nst_dev.size()) {
         devinfo.nst_dev = std::string("/dev/") + res[1];
@@ -173,8 +171,6 @@ void SCSI::DeviceVector::getTapeInfo(DeviceInfo & devinfo) {
       }
     }
   }
-  delete st_re;
-  delete nst_re;
   m_sysWrapper.closedir(dirp);
 }
 

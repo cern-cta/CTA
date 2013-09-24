@@ -4,3 +4,5 @@ INPUTS ProgrammersManual.tex AdministratorsManual.tex
 IMAGE_DIRS images
 NO_DEFAULT USE_INDEX MANGLE_TARGET_NAMES)
 
+INSTALL(FILES ${CMAKE_BINARY_DIR}/Documentation/TapeServer.pdf
+DESTINATION /usr/share/doc/tape-server/)

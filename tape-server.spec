@@ -33,6 +33,27 @@ Group: Applications/File
 %description -n tape-server-utils
 The CERN tape server utilities
 
+#######################################################################################
+%package -n tape-server-docs
+#######################################################################################
+Summary: The CERN tape server documentation
+Group: Applications/File
+
+%description -n tape-server-docs
+The CERN tape server documentation
+
+#######################################################################################
+%package -n tape-server-system-tests
+#######################################################################################
+Summary: The CERN tape server system tests
+Group: Applications/File
+Requires: kmod-st-driver
+Requires: kmod-mhvtl-1.4.4
+Requires: mhvtl-utils-1.4.4
+
+%description -n tape-server-system-tests
+The CERN tape server system tests. Those tests are potentially destructive and should be used with care.
+
 %prep
 
 %setup -n %{name}-%{version}-%{release}
@@ -63,4 +84,17 @@ rm -rf $RPM_BUILD_ROOT
 
 %files -n tape-server-utils
 %defattr(-,root,root)
-/usr/local/bin/*
+/usr/local/bin/TapeDriveInfo
+/usr/local/bin/unitTest
+
+%files -n tape-server-docs
+%defattr(-,root,root)
+/usr/share/doc/*
+
+%files -n tape-server-system-tests
+%defattr(-,root,root)
+/etc/*
+/usr/local/bin/tape-server-system-test.sh
+
+
+

@@ -1,0 +1,70 @@
+
+Drive 1:
+Drive 2:
+Drive 3:
+Drive 4:
+
+Picker 1:
+
+MAP 1:
+MAP 2:
+MAP 3:
+MAP 4:
+
+# Slot 1 - ?, no gaps
+# Slot N: [barcode]
+# [barcode]
+# a barcode is comprised of three fields: [Leading] [identifier] [Trailing]
+# Leading "CLN" -- cleaning tape
+# Leading "W" -- WORM tape
+# Leading "NOBAR" -- will appear to have no barcode
+# If the barcode is at least 8 character long, then the last two characters are Trailing
+# Trailing "S3" - SDLT600
+# Trailing "X4" - AIT-4
+# Trailing "L1" - LTO 1, "L2" - LTO 2, "L3" - LTO 3, "L4" - LTO 4, "L5" - LTO 5
+# Training "LT" - LTO 3 WORM, "LU" LTO 4 WORM, "LV" LTO 5 WORM
+# Trailing "TA" - T10000+
+# Trailing "JA" - 3592+
+# Trailing "JB" - 3592E05+
+# Trailing "JW" - WORM 3592+
+# Trailing "JX" - WORM 3592E05+
+#
+Slot 1: E01001L4
+Slot 2: E01002L4
+Slot 3: E01003L4
+Slot 4: E01004L4
+Slot 5: E01005L4
+Slot 6: E01006L4
+Slot 7: E01007L4
+Slot 8: E01008L4
+Slot 9: E01009L4
+Slot 10: E01010L4
+Slot 11: E01011L4
+Slot 12: E01012L4
+Slot 13: E01013L4
+Slot 14: E01014L4
+Slot 15: E01015L4
+Slot 16: E01016L4
+Slot 17: E01017L4
+Slot 18: E01018L4
+Slot 19: E01019L4
+Slot 20: E01020L4
+Slot 21:
+Slot 22: CLN101L4
+Slot 23: CLN102L5
+Slot 24:
+Slot 25:
+Slot 26:
+Slot 27:
+Slot 28:
+Slot 29:
+Slot 30: F01030L5
+Slot 31: F01031L5
+Slot 32: F01032L5
+Slot 33: F01033L5
+Slot 34: F01034L5
+Slot 35: F01035L5
+Slot 36: F01036L5
+Slot 37: F01037L5
+Slot 38: F01038L5
+Slot 39: F01039L5
