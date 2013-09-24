@@ -87,7 +87,8 @@ AS
  *****************************************************************************/
 
 /* SQL statement to populate the intial schema version */
-UPDATE UpgradeLog SET schemaVersion = '2_1_9_3';
+UPDATE UpgradeLog SET schemaVersion = '2_1_9_3'
+ WHERE startDate = (SELECT max(startDate) FROM UpgradeLog);
 
 /* Flag the schema creation as COMPLETE */
 UPDATE UpgradeLog SET endDate = systimestamp, state = 'COMPLETE';
