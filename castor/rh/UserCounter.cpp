@@ -26,6 +26,7 @@
 
 // Local includes
 #include <errno.h>
+#include <string.h>
 #include "Cpwd.h"
 #include "Cgrp.h"
 #include "castor/stager/Request.hpp"

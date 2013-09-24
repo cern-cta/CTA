@@ -679,7 +679,7 @@ void castor::client::BaseClient::pollAnswersFromStager
                 << ((ip & 0x000000FF));
         struct tms buf;
         clock_t endTime = times(&buf);
-        stage_trace(3, "%s CBK %.2f s before callback from %s was received",
+        stage_trace(2, "%s CBK %.2f s before callback from %s was received",
                     requestId().c_str(),
                     ((float)(endTime - m_sendAckTime)) / ((float)sysconf(_SC_CLK_TCK)),
                     ipToStr.str().c_str());
