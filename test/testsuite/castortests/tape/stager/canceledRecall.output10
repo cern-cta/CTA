@@ -12,4 +12,4 @@
     stager: Waiting for callback from castor
     stager: <uuid10> CBK <answer duration10> s before callback from <server ip10> was received
 Received 1 responses
-<tapeFileName> <fileid@ns> INVALID
+Error 2/No such file or directory (File <tapeFileName> (<fileid@ns>) not on this service class)
