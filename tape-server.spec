@@ -48,8 +48,7 @@ The CERN tape server documentation
 Summary: The CERN tape server system tests
 Group: Applications/File
 Requires: kmod-st-driver
-Requires: kmod-mhvtl-1.4.4
-Requires: mhvtl-utils-1.4.4
+Requires: kmod-mhvtl >= 1.4.4, mhvtl-utils >= 1.4.4
 
 %description -n tape-server-system-tests
 The CERN tape server system tests. Those tests are potentially destructive and should be used with care.
