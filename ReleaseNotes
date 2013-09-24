@@ -402,9 +402,10 @@
          post-upgrade script from:
          http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-2/dbupgrades
 
-         This script includes a one-off job to populate the new fields added to the Nameserver schema.
-         This operation may take several days to complete (about 5 days for 300M files) and it is
-         performed as a background activity while the system is running.
+         This script can be run online while the system is running. It should take less than 30 minutes
+         and it starts a one-off job to populate the new fields added to the Nameserver schema.
+         The job may take several days to complete (about two weeks for 300M files) and it is
+         performed as a background activity.
 
       3. As a separate intervention, run the cns_2.1.14_switch-open-mode.sql script from:
          http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-2/dbupgrades
