@@ -62,10 +62,12 @@ castor::rh::UserCounter::UserCounter(castor::IObject* obj) :
   m_gid = r->egid();  
   if ((pwd = Cgetpwuid(m_uid)) == 0) {
     castor::exception::Exception ex(serrno);
+    ex.getMessage() << "rh::UserCounter: Cgetpwuid failed for uid " << m_uid << " : " << strerror(errno);
     throw ex;
   }
   if ((gr = Cgetgrgid(m_gid)) == 0) {
     castor::exception::Exception ex(serrno);
+    ex.getMessage() << "rh::UserCounter: Cgetgrgid failed for gid " << m_gid << " : " << strerror(errno);
     throw ex;
   }
 

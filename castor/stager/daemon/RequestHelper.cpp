@@ -150,16 +150,19 @@ namespace castor {
 
           if ((this_passwd = Cgetpwuid(euid)) == NULL) {
             castor::exception::Exception ex(serrno);
+            ex.getMessage() << "RequestHelper: Cgetpwuid failed for uid " << euid << " : " << strerror(errno);
             throw ex;
           }
 
           if (egid != this_passwd->pw_gid) {
             castor::exception::Exception ex(SEINTERNAL);
+            ex.getMessage() << "RequestHelper: given egid does not match passwd.gid";
             throw ex;
           }
 
           if ((this_gr = Cgetgrgid(egid)) == NULL) {
             castor::exception::Exception ex(serrno);
+            ex.getMessage() << "RequestHelper: Cgetgrgid failed for gid " << egid << " : " << strerror(errno);
             throw ex;
           }
 
