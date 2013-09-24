@@ -76,6 +76,12 @@
 #define VMGR_LISTDENMAP_BYTE_U64 41
 #define VMGR_LISTTAPE_BYTE_U64   42
 
+/* VMGR_QRYTAPEBLKSIZE is an extended version of VMGR_QRYTAPE_BYTE_U64 in  */
+/* that VMGR_QRYTAPEBLKSIZE returns the same description plus blocksize in */
+/* bytes to be used when transfering data files to and from the tape in    */
+/*  question                                                               */
+#define VMGR_QRYTAPEBLKSIZE 43
+
                         /* volume manager reply types */
 
 #define MSG_ERR              1

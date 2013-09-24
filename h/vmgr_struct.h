@@ -70,6 +70,36 @@ struct vmgr_tape_info_byte_u64 {
 	int		nbfiles;
 };
 
+struct vmgr_tape_info_byte_u64_with_blksz {
+        char            vid[CA_MAXVIDLEN+1];
+        char            vsn[CA_MAXVSNLEN+1];
+        char            library[CA_MAXTAPELIBLEN+1];
+        char            density[CA_MAXDENLEN+1];
+        char            lbltype[CA_MAXLBLTYPLEN+1];
+        char            model[CA_MAXMODELLEN+1];
+        char            media_letter[CA_MAXMLLEN+1];
+        char            manufacturer[CA_MAXMANUFLEN+1];
+        char            sn[CA_MAXSNLEN+1];      /* serial number */
+        int             nbsides;
+        time_t          etime;
+        int             rcount;
+        int             wcount;
+        char            rhost[CA_MAXSHORTHOSTLEN+1];
+        char            whost[CA_MAXSHORTHOSTLEN+1];
+        int             rjid;
+        int             wjid;
+        time_t          rtime;          /* last access to tape in read mode */
+        time_t          wtime;          /* last access to tape in write mode */
+        int             side;
+        char            poolname[CA_MAXPOOLNAMELEN+1];
+        short           status;         /* TAPE_FULL, DISABLED, EXPORTED */
+        u_signed64      estimated_free_space_byte_u64;
+        int             nbfiles;
+        /* The blocksize in bytes to be used when transfer data files to and */
+        /* from the tape                                                     */
+        int             blocksize;
+};
+
 struct vmgr_tape_library {
 	char		name[CA_MAXTAPELIBLEN+1];
 	int		capacity;	/* number of slots */

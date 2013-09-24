@@ -2648,3 +2648,85 @@ int vmgr_srv_updatetape(int magic,
 
   RETURN (0);
 }
+
+/*  vmgr_srv_qrytapeblksize - query about a tape volume where the result    */
+/*  includes the blocksize in bytes to be used when transfering data files  */
+/*  to and from the tape in question                                        */
+
+int vmgr_srv_qrytapeblksz(
+  const int magic,
+  char *const req_data,
+  struct vmgr_srv_thread_info *const thip,
+  struct vmgr_srv_request_info *const reqinfo)
+{
+  struct vmgr_tape_dgnmap dgnmap_entry;
+  char *func = "qrytapeblksz";
+  char *rbp = NULL;
+  char repbuf[177];
+  char *sbp = NULL;
+  int side = 0;
+  struct vmgr_tape_side_byte_u64 side_entry;
+  struct vmgr_tape_info_byte_u64 tape;
+  char vid[CA_MAXVIDLEN+1];
+
+  /* Unmarshall message body */
+  rbp = req_data;
+  unmarshall_LONG (rbp, reqinfo->uid);
+  unmarshall_LONG (rbp, reqinfo->gid);
+  get_client_actual_id (thip);
+
+  /* Only VMGR_MAGIC2 is supported */
+  if (magic != VMGR_MAGIC2)
+    RETURN (EINVAL);
+
+  if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1) < 0)
+    RETURN (EINVAL);
+  unmarshall_WORD (rbp, side);
+
+  /* Construct log message */
+  sprintf (reqinfo->logbuf, "TPVID=%s Side=%d", vid, side);
+
+  memset((void *) &tape, 0, sizeof(tape));
+  if (vmgr_get_tape_by_vid_byte_u64 (&thip->dbfd, vid, &tape, 0, NULL))
+    RETURN (serrno);
+
+  /* Get side specific info */
+  if (vmgr_get_side_by_fullid_byte_u64 (&thip->dbfd, vid, side, &side_entry,
+					0, NULL))
+    RETURN (serrno);
+
+  /* Get dgn */
+  if (vmgr_get_dgnmap_entry (&thip->dbfd, tape.model, tape.library,
+			     &dgnmap_entry, 0, NULL))
+    RETURN (serrno);
+
+  sbp = repbuf;
+  marshall_STRING (sbp, tape.vsn);
+  marshall_STRING (sbp, tape.library);
+  marshall_STRING (sbp, dgnmap_entry.dgn);
+  marshall_STRING (sbp, tape.density);
+  marshall_STRING (sbp, tape.lbltype);
+  marshall_STRING (sbp, tape.model);
+  marshall_STRING (sbp, tape.media_letter);
+  marshall_STRING (sbp, tape.manufacturer);
+  marshall_STRING (sbp, tape.sn);
+  marshall_WORD (sbp, tape.nbsides);
+  marshall_TIME_T (sbp, tape.etime);
+  marshall_WORD (sbp, side_entry.side);
+  marshall_STRING (sbp, side_entry.poolname);
+  marshall_HYPER (sbp, side_entry.estimated_free_space_byte_u64);
+  marshall_LONG (sbp, side_entry.nbfiles);
+  marshall_LONG (sbp, tape.rcount);
+  marshall_LONG (sbp, tape.wcount);
+  marshall_STRING (sbp, tape.rhost);
+  marshall_STRING (sbp, tape.whost);
+  marshall_LONG (sbp, tape.rjid);
+  marshall_LONG (sbp, tape.wjid);
+  marshall_TIME_T (sbp, tape.rtime);
+  marshall_TIME_T (sbp, tape.wtime);
+  marshall_LONG (sbp, side_entry.status);
+  const int blocksizeInBytes = 262144; /* 256 KB */
+  marshall_LONG (sbp, blocksizeInBytes);
+  sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
+  RETURN (0);
+}

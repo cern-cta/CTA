@@ -543,6 +543,9 @@ void procreq(const int magic,
   case VMGR_DELTAPEAFTERCHK:
     c = vmgr_srv_deletetape (req_data, thip, &thip->reqinfo);
     break;
+  case VMGR_QRYTAPEBLKSIZE:
+    c = vmgr_srv_qrytapeblksz (magic, req_data, thip, &thip->reqinfo);
+    break;
   default:
     sendrep (thip->s, MSG_ERR, VMG03, req_type);
     c = SEINTERNAL;

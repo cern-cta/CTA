@@ -177,4 +177,5 @@ EXTERN_C int vmgr_srv_settag (char *, struct vmgr_srv_thread_info *, struct vmgr
 EXTERN_C int vmgr_srv_shutdown (int, char *, struct vmgr_srv_thread_info *, struct vmgr_srv_request_info *);
 EXTERN_C int vmgr_srv_tpmounted (int, char *, struct vmgr_srv_thread_info *, struct vmgr_srv_request_info *);
 EXTERN_C int vmgr_srv_updatetape (int, char *, struct vmgr_srv_thread_info *, struct vmgr_srv_request_info *);
+EXTERN_C int vmgr_srv_qrytapeblksz (const int, char *const, struct vmgr_srv_thread_info *const, struct vmgr_srv_request_info *);
 #endif

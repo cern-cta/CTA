@@ -71,6 +71,7 @@ EXTERN_C int vmgr_modifylibrary (const char *, int, int);
 EXTERN_C int vmgr_modifymodel (const char *, char *, int);
 EXTERN_C int vmgr_modifypool (const char *, uid_t, gid_t);
 EXTERN_C int vmgr_modifytape (const char *, char *, char *, char *, char *, char *, char *, char *, int);
+EXTERN_C int vmgr_qrytapeblksize(const char *const vid, const int side, struct vmgr_tape_info_byte_u64_with_blksz *const tape_info, char *const dgn);
 EXTERN_C int vmgr_querylibrary (const char *, int *, int *, int *);
 EXTERN_C int vmgr_querymodel (const char *, char *, int *);
 EXTERN_C int vmgr_querypool (const char *, uid_t *, gid_t *, u_signed64 *, u_signed64 *);
