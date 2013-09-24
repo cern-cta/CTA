@@ -39,20 +39,23 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 END;
 /
 
-/* Create a dedicated index to speed up the job. This takes ~20 minutes. */
-CREATE INDEX I_fmd_stagertime_null ON Cns_file_metadata (decode(nvl(stagertime, 1), 1, 1, NULL));
+/* Create a dedicated index to speed up the job. This takes ~25 minutes. ONLINE makes this intervention transparent. */
+CREATE INDEX I_fmd_stagertime_null ON Cns_file_metadata (decode(nvl(stagertime, 1), 1, 1, NULL)) ONLINE;
 
 /* Create a temporary procedure for updating the new metadata on all files. */
 CREATE OR REPLACE PROCEDURE updateAll2114Data AS
+  stop BOOLEAN := FALSE;
 BEGIN
-  LOOP
-    -- go for a run of 10,000 files. This takes about 15 seconds
+  WHILE NOT stop LOOP
+    stop := TRUE;
+    -- go for a run of 100,000 files: this takes about 8 minutes
     FOR f IN (SELECT /*+ INDEX(f I_fmd_stagertime_null) INDEX_RS_ASC(s pk_s_fileid) */
                      fileid, mtime, f.gid
                 FROM Cns_file_metadata f, Cns_seg_metadata s
                WHERE f.fileid = s.s_fileid
                  AND decode(nvl(f.stagertime, 1), 1, 1, NULL) = 1
-                 AND ROWNUM <= 10000) LOOP
+                 AND ROWNUM <= 100000) LOOP
+      stop := FALSE;
       UPDATE Cns_file_metadata
          SET stagerTime = mtime
        WHERE fileid = f.fileid;
@@ -69,8 +72,8 @@ BEGIN
 END;
 /
 
-/* Create a job to run the above procedure.
- * This is expected to take ~30,000 runs or ~5 days with 300M files.
+/* Create a one-off job to run the above procedure.
+ * This is expected to take about two weeks with 300M files.
  */
 DECLARE
   jobno NUMBER;

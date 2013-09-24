@@ -61,15 +61,12 @@ UPDATE CastorConfig SET value = 'N' WHERE class = 'stager' AND key = 'openmode';
 COMMIT;
 
 -- not needed any longer
-BEGIN
-  DBMS_SCHEDULER.DROP_JOB('updateAll2114DataJob', TRUE);
-END;
-/
 DROP PROCEDURE updateAll2114Data;
 DROP INDEX I_fmd_stagertime_null;
 
 CREATE OR REPLACE PROCEDURE update2114Data(inVid IN VARCHAR2) AS
 BEGIN
-  -- no op, to be dropped on next release
+  -- no op, to be dropped on next release once its call
+  -- is removed from handleRepackRequest() in the Stager DB
 END;
 /
