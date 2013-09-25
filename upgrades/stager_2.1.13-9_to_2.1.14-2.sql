@@ -736,6 +736,7 @@ DROP PROCEDURE recreateCastorFile;
 --  - drop of stageDiskcopyReplicaRequest table
 --  - drop parent column from SubRequest
 
+DELETE FROM SubRequest WHERE status > 13;
 ALTER TABLE SubRequest
   ADD CONSTRAINT CK_SubRequest_Status
   CHECK (status IN (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13));
@@ -962,8 +963,6 @@ DROP PROCEDURE disk2DiskCopyDone;
 DROP PROCEDURE createDiskCopyReplicaRequest;
 DROP PROCEDURE getBestDiskCopyToReplicate;
 DROP PROCEDURE transferToSchedule;
-DROP TABLE Accounting;
-DROP VIEW AccountingSummary;
 DROP TABLE DrainingDiskCopy;
 DROP TABLE DrainingFileSystem;
 DROP PROCEDURE removeFailedDrainingTransfers;
@@ -976,10 +975,20 @@ DROP FUNCTION getInterval;
 DROP FUNCTION sizeOfFmtSI;
 DROP PROCEDURE insertD2dRequest;
 DROP PROCEDURE storeClusterStatus;
+DECLARE
+  colName VARCHAR2(100);
+BEGIN
+  SELECT column_name INTO colName FROM all_tab_cols WHERE table_name = 'ACCOUNTING' AND ROWNUM < 2;
+  EXECUTE IMMEDIATE 'DROP TABLE Accounting;';
+  EXECUTE IMMEDIATE 'DROP VIEW AccountingSummary;';
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- already dropped by a previous intervention, ignore
+  NULL;
+END;
+/
 
 CREATE INDEX I_FileMigResultsHelper_ReqId ON FileMigrationResultsHelper(ReqId);
 
-COMMIT;
 
 /* PL/SQL code revalidation */
 /****************************/
