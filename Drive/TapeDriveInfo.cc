@@ -59,6 +59,7 @@ void print_and_assert_data(const char * expected_data, const char * actual_data)
 
 int main ()
 {
+  int fail = 0;
   Tape::System::realWrapper sWrapper;
   SCSI::DeviceVector dl(sWrapper);
   for(SCSI::DeviceVector::iterator i = dl.begin();
@@ -79,6 +80,7 @@ int main ()
                   << "  devInfo.serialNumber         : '" << devInfo.serialNumber << "'" << std::endl
                   << "----------------------------------------------" << std::endl;
       } catch (std::exception & e) {
+        fail = 1;
         std::string temp = e.what();
         std::cout << "----------------------------------------------" << std::endl
                   << temp 
@@ -98,6 +100,7 @@ int main ()
          */
         drive->positionToLogicalObject(2);
       } catch (std::exception & e) {
+        fail = 1;
         std::string temp = e.what();
         std::cout << "-- EXCEPTION ---------------------------------" << std::endl
                   << temp 
@@ -113,6 +116,7 @@ int main ()
                   << "  posInfo.dirtyBytesCount   : "  << posInfo.dirtyBytesCount <<std::endl
                   << "----------------------------------------------" << std::endl;
       } catch (std::exception & e) {
+        fail = 1;
         std::string temp = e.what();
         std::cout << "-- EXCEPTION ---------------------------------" << std::endl
                   << temp 
@@ -123,6 +127,7 @@ int main ()
         std::cout << "** set density and compression" << std::endl;
         drive->setDensityAndCompression(false);
       } catch (std::exception & e) {
+        fail = 1;
         std::string temp = e.what();
         std::cout << "-- EXCEPTION ---------------------------------" << std::endl
                   << temp 
@@ -153,6 +158,7 @@ int main ()
                 << "  toTape   : " << comp.toTape << std::endl
                 << "----------------------------------------------" << std::endl;
       } catch (std::exception & e) {
+        fail = 1;
         std::string temp = e.what();
         std::cout << "-- EXCEPTION ---------------------------------" << std::endl
                 << temp
@@ -357,6 +363,7 @@ int main ()
           std::cout << "************** END: Rewind/Read/Write/Skip Test *************" << std::endl;
 
         } catch (std::exception & e) {
+          fail = 1;
           std::cout << "-- EXCEPTION ---------------------------------" << std::endl
                     << e.what() << std::endl
                     << "----------------------------------------------" << std::endl;
@@ -365,4 +372,5 @@ int main ()
     delete drive;  
     }  
   }
+  return fail;
 }
