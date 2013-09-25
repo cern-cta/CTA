@@ -326,9 +326,18 @@ void castor::rh::RHThread::run(void* param) {
       castor::metrics::MetricsCollector* mc =
         castor::metrics::MetricsCollector::getInstance();
       if(mc) {
+        // catch and ignore any exception at this stage
         mc->updateHistograms(fr);
       }
+    } catch (castor::exception::Exception& e) {
+      // "Exception caught"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Standard Message", sstrerror(e.code())),
+         castor::dlf::Param("Precise Message", e.getMessage().str())};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 9, 2, params);
+    }
 
+    try {
       // Look for the client host: if it is SRM, then
       // try to reuse the user tag as a UUID. This enables full tracing
       // of requests coming from SRM. In any case ignore any failure.
@@ -338,7 +347,6 @@ void castor::rh::RHThread::run(void* param) {
         strncpy(uuid, fr->userTag().c_str(), CUUID_STRING_LEN);
       }
       fr->setReqId(uuid);
-
 
       // Log now "New Request Arrival" with the resolved UUID
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 1, 1, peerParams);
