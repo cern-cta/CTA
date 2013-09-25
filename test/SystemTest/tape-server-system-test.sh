@@ -1,6 +1,8 @@
 #!/bin/bash
 echo "## Attempting to stop mhvtl"
 service mhvtl stop
+echo "###  Waiting 5 seconds to let the durst settle"
+sleep 5
 
 echo "## Remonving old mhvtl configuration"
 rm -rf /etc/mhvtl

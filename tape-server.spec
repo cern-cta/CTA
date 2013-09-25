@@ -93,7 +93,7 @@ rm -rf $RPM_BUILD_ROOT
 %files -n tape-server-system-tests
 %defattr(-,root,root)
 /etc/*
-/usr/local/bin/tape-server-system-test.sh
+%attr(755,-,-) /usr/local/bin/tape-server-system-test.sh
 
 
 
