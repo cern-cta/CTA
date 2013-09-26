@@ -1,7 +1,7 @@
 Summary: The CERN tape server project
 Name: tape-server
 Version: 0.0.0
-Release: svn120M
+Release: 1
 Prefix: /usr
 License: GPL
 Group: Applications/File
