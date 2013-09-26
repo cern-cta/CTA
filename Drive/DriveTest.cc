@@ -44,11 +44,11 @@ TEST(TapeDrive, OpensCorrectly) {
   EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
   EXPECT_CALL(sysWrapper, closedir(_)).Times(AtLeast(3));
   EXPECT_CALL(sysWrapper, realpath(_, _)).Times(3);
-  EXPECT_CALL(sysWrapper, open(_, _)).Times(12);
-  EXPECT_CALL(sysWrapper, read(_, _, _)).Times(20);
+  EXPECT_CALL(sysWrapper, open(_, _)).Times(21);
+  EXPECT_CALL(sysWrapper, read(_, _, _)).Times(38);
   EXPECT_CALL(sysWrapper, write(_, _, _)).Times(0);
   EXPECT_CALL(sysWrapper, ioctl(_,_,An<mtget*>())).Times(2);
-  EXPECT_CALL(sysWrapper, close(_)).Times(12);
+  EXPECT_CALL(sysWrapper, close(_)).Times(21);
   EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(3);
   EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
   
@@ -73,11 +73,11 @@ TEST(TapeDrive, getPositionInfoAndPositionToLogicalObject) {
   EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
   EXPECT_CALL(sysWrapper, closedir(_)).Times(AtLeast(3));
   EXPECT_CALL(sysWrapper, realpath(_, _)).Times(3);
-  EXPECT_CALL(sysWrapper, open(_, _)).Times(12);
-  EXPECT_CALL(sysWrapper, read(_, _, _)).Times(20);
+  EXPECT_CALL(sysWrapper, open(_, _)).Times(21);
+  EXPECT_CALL(sysWrapper, read(_, _, _)).Times(38);
   EXPECT_CALL(sysWrapper, write(_, _, _)).Times(0);
   EXPECT_CALL(sysWrapper, ioctl(_,_,An<mtget*>())).Times(2);
-  EXPECT_CALL(sysWrapper, close(_)).Times(12);
+  EXPECT_CALL(sysWrapper, close(_)).Times(21);
   EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(3);
   EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
   
@@ -86,7 +86,10 @@ TEST(TapeDrive, getPositionInfoAndPositionToLogicalObject) {
   for (std::vector<SCSI::DeviceInfo>::iterator i = dl.begin();
       i != dl.end(); i++) {
     if (SCSI::Types::tape == i->type) {
-      Tape::Drive drive(*i, sysWrapper);
+      Tape::Drive dContainer(*i, sysWrapper);
+      /* Compiler cannot implicitly use the conversion operator. Create an 
+       * intermediate reference*/
+      Tape::DriveGeneric & drive = dContainer;
       Tape::positionInfo posInfo;
       
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(1);      
@@ -121,11 +124,11 @@ TEST(TapeDrive, setDensityAndCompression) {
   EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
   EXPECT_CALL(sysWrapper, closedir(_)).Times(AtLeast(3));
   EXPECT_CALL(sysWrapper, realpath(_, _)).Times(3);
-  EXPECT_CALL(sysWrapper, open(_, _)).Times(12);
-  EXPECT_CALL(sysWrapper, read(_, _, _)).Times(20);
+  EXPECT_CALL(sysWrapper, open(_, _)).Times(21);
+  EXPECT_CALL(sysWrapper, read(_, _, _)).Times(38);
   EXPECT_CALL(sysWrapper, write(_, _, _)).Times(0);
   EXPECT_CALL(sysWrapper, ioctl(_,_,An<mtget*>())).Times(2);
-  EXPECT_CALL(sysWrapper, close(_)).Times(12);
+  EXPECT_CALL(sysWrapper, close(_)).Times(21);
   EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(3);
   EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
   
@@ -134,7 +137,10 @@ TEST(TapeDrive, setDensityAndCompression) {
   for (std::vector<SCSI::DeviceInfo>::iterator i = dl.begin();
       i != dl.end(); i++) {
     if (SCSI::Types::tape == i->type) {
-      Tape::Drive drive(*i, sysWrapper);
+      Tape::Drive dContainer(*i, sysWrapper);
+      /* Compiler cannot implicitly use the conversion operator. Create an 
+       * intermediate reference*/
+      Tape::DriveGeneric & drive = dContainer;
 
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(2);      
       drive.setDensityAndCompression();
@@ -165,11 +171,11 @@ TEST(TapeDrive, setStDriverOptions) {
   EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
   EXPECT_CALL(sysWrapper, closedir(_)).Times(AtLeast(3));
   EXPECT_CALL(sysWrapper, realpath(_, _)).Times(3);
-  EXPECT_CALL(sysWrapper, open(_, _)).Times(12);
-  EXPECT_CALL(sysWrapper, read(_, _, _)).Times(20);
+  EXPECT_CALL(sysWrapper, open(_, _)).Times(21);
+  EXPECT_CALL(sysWrapper, read(_, _, _)).Times(38);
   EXPECT_CALL(sysWrapper, write(_, _, _)).Times(0);
   EXPECT_CALL(sysWrapper, ioctl(_,_,An<mtget*>())).Times(2);
-  EXPECT_CALL(sysWrapper, close(_)).Times(12);
+  EXPECT_CALL(sysWrapper, close(_)).Times(21);
   EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(3);
   EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
   
@@ -177,7 +183,10 @@ TEST(TapeDrive, setStDriverOptions) {
   SCSI::DeviceVector dl(sysWrapper);
   for (std::vector<SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
     if (SCSI::Types::tape == i->type) {
-      Tape::Drive drive(*i, sysWrapper);
+      Tape::Drive dContainer(*i, sysWrapper);
+      /* Compiler cannot implicitly use the conversion operator. Create an 
+       * intermediate reference*/
+      Tape::DriveGeneric & drive = dContainer;
       
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<struct mtop *>())).Times(1);
       drive.setSTBufferWrite(true);
@@ -199,11 +208,11 @@ TEST(TapeDrive, getDeviceInfo) {
   EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
   EXPECT_CALL(sysWrapper, closedir(_)).Times(AtLeast(3));
   EXPECT_CALL(sysWrapper, realpath(_, _)).Times(3);
-  EXPECT_CALL(sysWrapper, open(_, _)).Times(12);
-  EXPECT_CALL(sysWrapper, read(_, _, _)).Times(20);
+  EXPECT_CALL(sysWrapper, open(_, _)).Times(21);
+  EXPECT_CALL(sysWrapper, read(_, _, _)).Times(38);
   EXPECT_CALL(sysWrapper, write(_, _, _)).Times(0);
   EXPECT_CALL(sysWrapper, ioctl(_,_,An<mtget*>())).Times(2);
-  EXPECT_CALL(sysWrapper, close(_)).Times(12);
+  EXPECT_CALL(sysWrapper, close(_)).Times(21);
   EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(3);
   EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
   
@@ -212,7 +221,10 @@ TEST(TapeDrive, getDeviceInfo) {
   for (std::vector<SCSI::DeviceInfo>::iterator i = dl.begin();
       i != dl.end(); i++) {
     if (SCSI::Types::tape == i->type) {
-      Tape::Drive drive(*i, sysWrapper);
+      Tape::Drive dContainer(*i, sysWrapper);
+      /* Compiler cannot implicitly use the conversion operator. Create an 
+       * intermediate reference*/
+      Tape::DriveGeneric & drive = dContainer;
       Tape::deviceInfo devInfo;
       
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(2);      
@@ -237,11 +249,11 @@ TEST(TapeDrive, getCompressionAndClearCompressionStats) {
   EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
   EXPECT_CALL(sysWrapper, closedir(_)).Times(AtLeast(3));
   EXPECT_CALL(sysWrapper, realpath(_, _)).Times(3);
-  EXPECT_CALL(sysWrapper, open(_, _)).Times(16);
-  EXPECT_CALL(sysWrapper, read(_, _, _)).Times(20);
+  EXPECT_CALL(sysWrapper, open(_, _)).Times(25);
+  EXPECT_CALL(sysWrapper, read(_, _, _)).Times(38);
   EXPECT_CALL(sysWrapper, write(_, _, _)).Times(0);
   EXPECT_CALL(sysWrapper, ioctl(_,_,An<mtget*>())).Times(6);
-  EXPECT_CALL(sysWrapper, close(_)).Times(16);
+  EXPECT_CALL(sysWrapper, close(_)).Times(25);
   EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(3);
   EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
   
@@ -250,7 +262,7 @@ TEST(TapeDrive, getCompressionAndClearCompressionStats) {
   for (std::vector<SCSI::DeviceInfo>::iterator i = dl.begin();
       i != dl.end(); i++) {
     if (SCSI::Types::tape == i->type) {
-      Tape::Drive *drive;
+      Tape::DriveGeneric *drive;
       Tape::compressionStats comp;
       
         {
@@ -336,11 +348,11 @@ TEST(TapeDrive, getTapeAlerts) {
       EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
       EXPECT_CALL(sysWrapper, closedir(_)).Times(AtLeast(3));
       EXPECT_CALL(sysWrapper, realpath(_, _)).Times(AtLeast(3));
-      EXPECT_CALL(sysWrapper, open(_, _)).Times(AtLeast(12));
-      EXPECT_CALL(sysWrapper, read(_, _, _)).Times(AtLeast(20));
+      EXPECT_CALL(sysWrapper, open(_, _)).Times(AtLeast(21));
+      EXPECT_CALL(sysWrapper, read(_, _, _)).Times(AtLeast(38));
       EXPECT_CALL(sysWrapper, write(_, _, _)).Times(0);
       EXPECT_CALL(sysWrapper, ioctl(_, _, An<mtget*>())).Times(2);
-      EXPECT_CALL(sysWrapper, close(_)).Times(AtLeast(12));
+      EXPECT_CALL(sysWrapper, close(_)).Times(AtLeast(21));
       EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(AtLeast(3));
       EXPECT_CALL(sysWrapper, stat(_, _)).Times(AtLeast(7));
 
@@ -349,7 +361,10 @@ TEST(TapeDrive, getTapeAlerts) {
       for (std::vector<SCSI::DeviceInfo>::iterator i = dl.begin();
           i != dl.end(); i++) {
         if (SCSI::Types::tape == i->type) {
-          Tape::Drive drive(*i, sysWrapper);
+          Tape::Drive dContainer(*i, sysWrapper);
+          /* Compiler cannot implicitly use the conversion operator. Create an 
+           * intermediate reference*/
+          Tape::DriveGeneric & drive = dContainer;
           EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
           std::vector<std::string> alerts = drive.getTapeAlerts();
           ASSERT_EQ(3U, alerts.size());

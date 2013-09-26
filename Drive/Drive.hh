@@ -99,9 +99,9 @@ namespace Tape {
    * system without paying performance price when calling system calls in the 
    * production system.
    */
-  class Drive {
+  class DriveGeneric {
   public:
-    Drive(SCSI::DeviceInfo di, System::virtualWrapper & sw);
+    DriveGeneric(SCSI::DeviceInfo di, System::virtualWrapper & sw);
 
     /* Operations to be used by the higher levels */
 
@@ -112,9 +112,7 @@ namespace Tape {
      * fields toHost, fromDrive are related to the read operation.
      * @return compressionStats
      */
-    virtual compressionStats getCompression() throw (Exception) {
-      throw Exception("getCompression unavailable in Tape::Drive generic version");
-    }
+    virtual compressionStats getCompression() throw (Exception) = 0;
 
     /**
      * Reset all statistics about data movements on the drive.
@@ -308,12 +306,15 @@ namespace Tape {
      */
     virtual void readBlock(unsigned char * data, size_t count) throw (Exception);
 
-    virtual ~Drive() {
+    virtual ~DriveGeneric() {
       if (-1 != m_tapeFD)
         m_sysWrapper.close(m_tapeFD);      
     }
 
     void SCSI_inquiry();
+    
+    /**
+     */
   protected:
     SCSI::DeviceInfo m_SCSIInfo;
     int m_tapeFD; 
@@ -330,30 +331,54 @@ namespace Tape {
     void SCSI_inquiry(int fd);
   };
 
-  class DriveT10000 : public Drive {
+  class DriveT10000 : public DriveGeneric {
   public:
 
-    DriveT10000(SCSI::DeviceInfo di, System::virtualWrapper & sw) : Drive(di, sw) {
+    DriveT10000(SCSI::DeviceInfo di, System::virtualWrapper & sw) : DriveGeneric(di, sw) {
     }
 
     virtual compressionStats getCompression() throw (Exception);
   };
 
-  class DriveLTO : public Drive {
+  class DriveLTO : public DriveGeneric {
   public:
 
-    DriveLTO(SCSI::DeviceInfo di, System::virtualWrapper & sw) : Drive(di, sw) {
+    DriveLTO(SCSI::DeviceInfo di, System::virtualWrapper & sw) : DriveGeneric(di, sw) {
     }
 
     virtual compressionStats getCompression() throw (Exception);
   };
 
-  class DriveIBM3592 : public Drive {
+  class DriveIBM3592 : public DriveGeneric {
   public:
 
-    DriveIBM3592(SCSI::DeviceInfo di, System::virtualWrapper & sw) : Drive(di, sw) {
+    DriveIBM3592(SCSI::DeviceInfo di, System::virtualWrapper & sw) : DriveGeneric(di, sw) {
     }
 
     virtual compressionStats getCompression() throw (Exception);
   };
+  
+  class Drive {
+  public:
+    Drive(SCSI::DeviceInfo di, System::virtualWrapper & sw): m_drive(NULL) {
+      if (di.product.find("T10000")) {
+        m_drive = new DriveT10000(di, sw);
+      } else if (di.product.find("ULT" || di.product.find("Ultrium"))) {
+        m_drive = new DriveLTO(di, sw);
+      } else if (di.product.find("03592")) {
+        m_drive = new DriveIBM3592(di, sw);
+      } else {
+        throw Tape::Exception(std::string("Unsupported drive type: ")+di.product);
+      }
+    }
+    ~Drive() {
+      delete m_drive;
+    }
+    operator DriveGeneric &() {
+      return *m_drive;
+    }
+  private:
+    DriveGeneric * m_drive;
+  };
+  
 }

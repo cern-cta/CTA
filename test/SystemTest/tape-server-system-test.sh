@@ -32,10 +32,9 @@ MC_DEVS=`for i in ${SCSI_DEVS}; do if [ -e $i/type ] && grep -q 8 $i/type; then 
 echo ${MC_DEVS}
 
 for i in $MC_DEVS; do
-  mtx -f /dev/$i load 10 0
-  mtx -f /dev/$i load 1 1
-  mtx -f /dev/$i load 2 2
-  mtx -f /dev/$i load 3 3
+  for t in `seq \`mtx -f /dev/$i status | grep Transfer | wc -l\` `
+    mtx -f /dev/$i load $(($t + 1)) $t
+  done
   mtx -f /dev/$i status | grep Transfer
 done
 

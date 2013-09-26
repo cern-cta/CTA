@@ -60,8 +60,12 @@ namespace SCSI {
     DeviceFile sg;
     DeviceFile st;
     DeviceFile nst;
+    
+    std::string vendor;
+    std::string product;
+    std::string productRevisionLevel;
   };
-
+  
   /**
    * Automatic lister of the system's SCSI devices 
    */
@@ -85,7 +89,7 @@ namespace SCSI {
     DeviceInfo::DeviceFile readDeviceFile(std::string path);
 
     DeviceInfo::DeviceFile statDeviceFile(std::string path);
-
+    
     /**
      * Part factored out of getDeviceInfo: get the tape specifics
      * from sysfs.

@@ -248,6 +248,15 @@ void Tape::System::fakeWrapper::setupSLC5() {
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:0/3:0:0:0/type"] = "8\n";
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0/type"] = "1\n";
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0/type"] = "1\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:0/3:0:0:0/vendor"] = "STK     \n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0/vendor"] = "STK     \n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0/vendor"] = "STK     \n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:0/3:0:0:0/model"] = "VL32STK1        \n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0/model"] = "T10000B         \n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0/model"] = "T10000B         \n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:0/3:0:0:0/rev"] = "0104\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0/rev"] = "0104\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host3/target3:0:2/3:0:2:0/rev"] = "0104\n";
   m_links["/sys/devices/pseudo_0/adapter0/host3/target3:0:0/3:0:0:0/generic"]
           = "../../../../../../class/scsi_generic/sg2";
   m_links["/sys/devices/pseudo_0/adapter0/host3/target3:0:1/3:0:1:0/generic"]
@@ -414,11 +423,23 @@ void Tape::System::fakeWrapper::setupSLC6() {
           = "/sys/devices/pseudo_0/adapter0/host6/target6:0:1";
   m_realpathes["/sys/bus/scsi/devices/target6:0:2"]
           = "/sys/devices/pseudo_0/adapter0/host6/target6:0:2";
-  
   m_regularFiles["/sys/devices/pci0000:00/0000:00:1f.2/host0/target0:0:0/0:0:0:0/type"] = "0\n";
+  m_regularFiles["/sys/devices/pci0000:00/0000:00:1f.2/host0/target0:0:0/0:0:0:0/vendor"] = "ATA     \n";
+  m_regularFiles["/sys/devices/pci0000:00/0000:00:1f.2/host0/target0:0:0/0:0:0:0/model"] = "TOSHIBA THNSNF12\n";
+  m_regularFiles["/sys/devices/pci0000:00/0000:00:1f.2/host0/target0:0:0/0:0:0:0/rev"] = "FSLA\n";
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:0/6:0:0:0/type"] = "8\n";
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0/type"] = "1\n";
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/type"] = "1\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:0/6:0:0:0/vendor"] = "STK     \n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0/vendor"] = "STK     \n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/vendor"] = "STK     \n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:0/6:0:0:0/model"] = "VL32STK1        \n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0/model"] = "T10000B         \n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/model"] = "T10000B         \n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:0/6:0:0:0/rev"] = "0104\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0/rev"] = "0104\n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/rev"] = "0104\n";
+  
   
   m_links["/sys/devices/pci0000:00/0000:00:1f.2/host0/target0:0:0/0:0:0:0/generic"]
           = "scsi_generic/sg0";

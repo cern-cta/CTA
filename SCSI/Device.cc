@@ -189,6 +189,27 @@ SCSI::DeviceInfo SCSI::DeviceVector::getDeviceInfo(const char * path) {
     if (!sscanf(buf.c_str(), "%d", &ret.type))
       throw Tape::Exception(std::string("Could not parse file: ") + ret.sysfs_entry + "/type");
   }
+  /* Get vendor (trimmed of trailing newline, not of spaces) */
+  {
+    buf = readfile(ret.sysfs_entry + "/vendor");
+    size_t endpos  = buf.find_first_not_of("\n");
+    if (std::string::npos != endpos) endpos++;
+    ret.vendor = buf.substr(0, endpos);
+  }
+  /* Get model (trimmed of trailing newline, not of spaces) */
+  {
+    buf = readfile(ret.sysfs_entry + "/model");
+    size_t endpos  = buf.find_first_not_of("\n");
+    if (std::string::npos != endpos) endpos++;
+    ret.product = buf.substr(0, endpos);
+  }
+  /* Get revision (trimmed of trailing newline, not of spaces) */
+  {
+    buf = readfile(ret.sysfs_entry + "/rev");
+    size_t endpos  = buf.find_first_not_of("\n");
+    if (std::string::npos != endpos) endpos++;
+    ret.productRevisionLevel = buf.substr(0, endpos);
+  }
   /* Get name of sg device */
   {
     char rl[PATH_MAX];

@@ -54,10 +54,10 @@ TEST(DeviceList, ScansCorrectly) {
   EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
   EXPECT_CALL(sysWrapper, closedir(_)).Times(AtLeast(3));
   EXPECT_CALL(sysWrapper, realpath(_, _)).Times(3);
-  EXPECT_CALL(sysWrapper, open(_, _)).Times(10);
-  EXPECT_CALL(sysWrapper, read(_, _, _)).Times(20);
+  EXPECT_CALL(sysWrapper, open(_, _)).Times(19);
+  EXPECT_CALL(sysWrapper, read(_, _, _)).Times(38);
   EXPECT_CALL(sysWrapper, write(_, _, _)).Times(0);
-  EXPECT_CALL(sysWrapper, close(_)).Times(10);
+  EXPECT_CALL(sysWrapper, close(_)).Times(19);
   EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(3);
   EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
 
