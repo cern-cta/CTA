@@ -1,7 +1,7 @@
 Summary: The CERN tape server project
 Name: tape-server
 Version: 0.0.0
-Release: 1
+Release: svn120M
 Prefix: /usr
 License: GPL
 Group: Applications/File
@@ -66,7 +66,7 @@ test -e $RPM_BUILD_ROOT && rm -r $RPM_BUILD_ROOT
 mkdir -p build
 cd build
 cmake ../ -DRELEASE=%{release} -DCMAKE_BUILD_TYPE=Debug
-%{__make} %{_smp_mflags} all doxygen TapeServer_pdf
+%{__make} %{_smp_mflags} all TapeServer_pdf
 
 %install
 cd build
