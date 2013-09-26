@@ -74,7 +74,7 @@ namespace SCSI {
       { 
         if (sizeof(T) > UCHAR_MAX)
           throw Tape::Exception("sense structure too big in LinuxSGIO_t::setSense");
-        sb_len_wr = (unsigned char) sizeof(T);
+        mx_sb_len = (unsigned char) sizeof(T);
         sbp = (unsigned char *)senseBuff;
       }
       
