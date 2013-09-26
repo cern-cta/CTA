@@ -94,9 +94,18 @@ int main ()
       }
       
       try {
+        /** 
+         * We will write on the tape, so prepare 2 blocks
+         */
+        std::cout << "-- INFO --------------------------------------" << std::endl             
+                  << " Rewinding, writing 2 blocks and repositioning on block 2" << std::endl  
+                  << "----------------------------------------------" << std::endl;
+        drive->rewind();
+        /* For some unexplained (TODO) reason, mhvtl does not accept blocks smaller than 4 bytes */
+        drive->writeBlock((unsigned char *)"X123", 4);
+        drive->writeBlock((unsigned char *)"Y123", 4);
         /**
          * trying to do position to the block 2.
-         * The tape should be mounted and have at least 2 blocks written.
          */
         drive->positionToLogicalObject(2);
       } catch (std::exception & e) {
