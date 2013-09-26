@@ -83,7 +83,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %files -n tape-server-utils
 %defattr(-,root,root)
-/usr/local/bin/TapeDriveInfo
+/usr/local/bin/TapeDriveReadWriteTest
 /usr/local/bin/unitTest
 
 %files -n tape-server-docs

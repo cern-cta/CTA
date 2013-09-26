@@ -40,5 +40,5 @@ for i in $MC_DEVS; do
 done
 
 echo "## Starting system test program"
-/usr/local/bin/TapeDriveInfo
+/usr/local/bin/TapeDriveReadWriteTest
 
