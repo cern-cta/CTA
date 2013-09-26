@@ -33,7 +33,7 @@ echo ${MC_DEVS}
 
 for i in $MC_DEVS; do
   for t in `seq \`mtx -f /dev/$i status | grep Transfer | wc -l\` `; do
-    mtx -f /dev/$i load $(($t + 1)) $t
+    mtx -f /dev/$i load $t $(($t - 1))
   done
   mtx -f /dev/$i status | grep Transfer
 done
@@ -41,3 +41,6 @@ done
 echo "## Starting system test program"
 /usr/local/bin/TapeDriveReadWriteTest
 
+echo "## Shutting down mhvtl"
+service mhvtl stop
+rmmod mhvtl
