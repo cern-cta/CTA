@@ -177,9 +177,8 @@ int main ()
       }
       
       /**
-       * Rewind/Read/Write/Skip Test (needs a tape mounted on /dev/nst0) 
+       * Rewind/Read/Write/Skip Test
        */
-      if (0 == dev.nst_dev.compare("/dev/nst0")) {
         try {
 
           const size_t count = 10;
@@ -373,7 +372,6 @@ int main ()
                     << e.what() << std::endl
                     << "----------------------------------------------" << std::endl;
         }
-      }
     }  
   }
   return fail;
