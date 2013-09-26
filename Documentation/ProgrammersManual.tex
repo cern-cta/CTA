@@ -135,7 +135,8 @@ in the sources of the kernel.
 
 \subsection{Tools used during development}
 \begin{itemize}
-\item{}mhvtl \footnote{ \href{https://sites.google.com/site/linuxvtl2/}{https://sites.google.com/site/linuxvtl2/} } for developing against virtual drives and libraries.
+\item{}mhvtl \footnote{ \href{https://sites.google.com/site/linuxvtl2/}{https://sites.google.com/site/linuxvtl2/} } for developing against virtual drives and libraries (to enable mhvtl kernel debug output to dmesg opts=3 have to be used for kernel module options, i.e.
+\small{}\verb#modprobe mhvtl opts=3# ).
 \item{}TeamCity for continuous integration
 \item{}NetBeans as an IDE, including for remote development\
 \end{itemize}
