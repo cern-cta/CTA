@@ -2,20 +2,20 @@
 echo "## Attempting to stop mhvtl"
 service mhvtl stop
 
-echo "###  Waiting 5 seconds to let the durst settle"
+echo "###  Waiting 5 seconds to let the dust settle"
 sleep 5
 
-echo "## Remonving old mhvtl configuration"
-rm -rf /etc/mhvtl
+echo "### Stopping leftover processes"
+killall vtltape
+killall vtllibrary
+rmmod mhvtl
+
+echo "## Removing old mhvtl tapes"
 rm -rf /opt/mhvtl
 
 echo "## Re-creting /opt/mhvtl"
 mkdir /opt/mhvtl
 chown vtl.vtl /opt/mhvtl
-
-echo "## Populating mhvtl configuration"
-mkdir /etc/mhvtl
-cp /root/etc-mhvtl/{mhvtl.conf,library_contents.10,library_contents.30,device.conf} /etc/mhvtl
 
 echo "## Starting mhvtl."
 service mhvtl start
@@ -32,7 +32,7 @@ MC_DEVS=`for i in ${SCSI_DEVS}; do if [ -e $i/type ] && grep -q 8 $i/type; then 
 echo ${MC_DEVS}
 
 for i in $MC_DEVS; do
-  for t in `seq \`mtx -f /dev/$i status | grep Transfer | wc -l\` `
+  for t in `seq \`mtx -f /dev/$i status | grep Transfer | wc -l\` `; do
     mtx -f /dev/$i load $(($t + 1)) $t
   done
   mtx -f /dev/$i status | grep Transfer
