@@ -40,7 +40,10 @@ done
 
 echo "## Starting system test program"
 /usr/local/bin/TapeDriveReadWriteTest
+ret=$?
 
 echo "## Shutting down mhvtl"
 service mhvtl stop
 rmmod mhvtl
+
+exit $ret
