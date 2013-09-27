@@ -19,7 +19,6 @@
 #define CA_MAXACLENTRIES 300	/* maximum number of ACL entries for a file/dir */
 #define CA_MAXCLASNAMELEN 15	/* maximum length for a fileclass name */
 #define	CA_MAXCOMMENTLEN 255	/* maximum length for user comments in metadata */
-#define	CA_MAXDENFIELDS    9	/* maximum number of density values in devinfo */
 #define	CA_MAXDENLEN       8	/* maximum length for a alphanumeric density */
 #define	CA_MAXDGNLEN       6	/* maximum length for a device group name */
 #define CA_MAXDVNLEN      63	/* maximum length for a device name */
