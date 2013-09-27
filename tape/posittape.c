@@ -131,7 +131,6 @@ int posittape(const int tapefd,
 	char buf[7];
 	int c;
 	time_t current_time;
-	struct devinfo *devinfo;
 	char func[16];
 	struct tm *localtime(), *tm;
 	int n;
@@ -153,7 +152,6 @@ int posittape(const int tapefd,
 	sprintf (sfseq, "%d", fseq);
 	pfseq = *cfseq;		/* save current file sequence number */
 	if (Qfirst && fseq > 0) fseq += Qfirst - 1;
-	devinfo = Ctape_devinfo (devtype);
 	if (strcmp (devtype, "8200") && den != D8200 && den != D8200C)
 		rewritetm = 0;
 	if (lblcode == NL || lblcode == BLP) {
@@ -183,8 +181,7 @@ int posittape(const int tapefd,
 		if (fseq == 1 && (filstat == NEW_FILE || filstat == NOFILECHECK))
 			goto reply;
 #if defined(linux)
-		if (devinfo->fastpos &&
-		    (fseq > 2 || fseq == -1)) {	/* fast positionning */
+		if (fseq > 2 || fseq == -1) {	/* fast positionning */
 			if (fseq > 0)
 				n = fseq - 1;
 			else {		/* -q n */
@@ -448,9 +445,8 @@ int posittape(const int tapefd,
 					goto reply;
 		}
 #if defined(linux)
-		if (devinfo->fastpos &&
-		    (fseq > *cfseq + 1 || fseq == -1 ||
-		    (fseq == -2 && Qfirst > *cfseq + 1))) { /* fast positionning */
+		if (fseq > *cfseq + 1 || fseq == -1 ||
+		    (fseq == -2 && Qfirst > *cfseq + 1)) { /* fast positionning */
 			if (fseq > 0)
 				n = (fseq - *cfseq - 1) * 3 + 1;
 			else if (fseq == -2)

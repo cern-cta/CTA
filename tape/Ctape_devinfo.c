@@ -12,26 +12,13 @@
 #include "Ctape_api.h"
 
 static struct devinfo devinfo[] = {
-  { "LTO",    1, 1, 1,-1, 1,    16777215, 262144, 0x10, { {D100G, 0x40}, {D100GC, 0x40}, {D200G,  0x42}, {D200GC, 0x42}, {D400G, 0x42}, {D400GC, 0x42}, {D800G, 0x42}, {D800GC, 0x42}, {0,         0} } }, 
-  { "3592",   1, 1, 1, 1, 1,     2097152, 262144, 0x10, { {D300G,    0}, {D300GC,    0}, {D500G,     0}, {D500GC,    0}, {0,        0}, {0,         0}, {0,        0}, {0,         0}, {0,         0} } },
-  { "T10000", 1, 1, 1, 0, 1,      262144, 262144, 0x10, { {D500G,    0}, {D500GC,    0}, {0,         0}, {0,         0}, {0,        0}, {0,         0}, {0,        0}, {0,         0}, {0,         0} } },
-  /* new devices should be added here */
+  { "LTO" }, 
+  { "3592" },
+  { "T10000" },
+  /* new device types should be added here */
   
-  /* last line corresponds to unknown device */
-
-  { "",       1, 2, 0, -1, 1,     262144,  32760, 0x00, { {0,        0}, {0,         0}, {0,         0}, {0,         0}, {0,        0}, {0,         0}, {0,        0}, {0,         0}, {0,         0} } }
+  { "" }
 };
-
-struct devinfo * Ctape_devinfo(const char *const devtype)
-{
-	char devtype_local[CA_MAXMODELLEN+1];
-	int i;
-
-	strcpy (devtype_local, devtype);
-	for (i = 0; *devinfo[i].devtype; i++)
-		if (strstr (devtype_local, devinfo[i].devtype) == devtype_local) break;
-	return (&devinfo[i]);
-}
 
 /**
  * This function checks if the specified device type is in the list of

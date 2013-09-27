@@ -30,11 +30,6 @@ maximum length for user comments in metadata
 .br
 Default value: 255
 .TP
-.B CA_MAXDENFIELDS
-maximum number of density values in devinfo
-.br
-Default value: 8
-.TP
 .B CA_MAXDENLEN
 maximum length for a alphanumeric density
 .br

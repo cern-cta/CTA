@@ -85,7 +85,6 @@ int setdevinfo (const char *const path,
                 const int den,
                 const int lblcode)
 {
-	const struct devinfo *const devinfo = Ctape_devinfo (devtype);
 
 	/* Cannot set the info if the static variable s_devlblinfo already */
 	/* has a value for another path */
@@ -100,8 +99,6 @@ int setdevinfo (const char *const path,
 
 	strncpy (s_devlblinfo.devtype, devtype, sizeof(s_devlblinfo.devtype));
 	s_devlblinfo.devtype[sizeof(s_devlblinfo.devtype) - 1] = '\0';
-
-	s_devlblinfo.dev1tm = (devinfo->eoitpmrks == 1) ? 1 : 0;
 
 	if (strcmp (devtype, "8200") == 0 || den == D8200 || den == D8200C) {
 		/* An Exabyte 8200 must be positionned */

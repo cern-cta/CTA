@@ -15,41 +15,24 @@
 #include "serrno.h"
 #include "sendscsicmd.h"
 
-int setdens(int tapefd,
+int setCompression(int tapefd,
             char *path,
-            char *devtype,
             int den)
 {
 	unsigned char cdb[6];
-	unsigned char comppage;
-	unsigned char dencode;
-	struct devinfo *devinfo;
 	char func[16];
-	int j;
 	unsigned char mscmd[28];
 	char *msgaddr;
 	int nb_sense_ret;
 	char sense[MAXSENSE];
 
-	ENTRY (setdens);
-
-	/* find density code and code page for compression */
-
-	devinfo = Ctape_devinfo (devtype);
-	if (*devinfo->devtype == 0) RETURN (0);	/* unknown device */
-	comppage = devinfo->comppage;
-	for (j = 0; j < CA_MAXDENFIELDS; j++)
-		if (den == devinfo->dencodes[j].den) break;
-	if (j < CA_MAXDENFIELDS)
-		dencode = devinfo->dencodes[j].code;
-	else
-		dencode = 0;
+	ENTRY (setCompression);
 
 	/* do a mode sense first */
 
 	memset (cdb, 0, sizeof(cdb));
 	cdb[0] = 0x1A;
-	cdb[2] = comppage;
+	cdb[2] = 0x10; /* device configuration mode page */
 	cdb[4] = sizeof (mscmd);
 	memset (mscmd, 0, sizeof(mscmd));
 	if (send_scsi_cmd (tapefd, path, 0, cdb, 6, mscmd, cdb[4],
@@ -61,28 +44,15 @@ int setdens(int tapefd,
 	/* change cdb to issue a mode select */
 
 	cdb[0] = 0x15;
-	cdb[1] = comppage ? 0x10 : 0;	/* PF bit */
+	cdb[1] = 0x10; /* PF bit means nothing for IBM, LTO, T10000 */
 	cdb[2] = 0;
 	cdb[3] = 0;
-	if (comppage == 0) cdb[4] = 0x0C;
-	mscmd[0] = 0;
-	if (dencode) {
-		mscmd[4] = dencode;
-	}
+	mscmd[0] = 0;  /* header.modeDataLength 
+                          must be 0 for IBM, LTO ignored by T10000 */
 	if (den & IDRC) {	/* enable data compression */
-		if (comppage == 0x0F) {
-			mscmd[14] = 0x80;
-			mscmd[15] = 0x80;
-		} else if (comppage == 0x10) {
-			mscmd[26] = 1;
-		}
+          mscmd[26] = 1; /* modePage.selectDataComprAlgorithm */
 	} else {		/* disable data compression */
-		if (comppage == 0x0F) {
-			mscmd[14] = 0;
-			mscmd[15] = 0;
-		} else if (comppage == 0x10) {
-			mscmd[26] = 0;
-		}
+          mscmd[26] = 0; /* modePage.selectDataComprAlgorithm */
 	}
 	if (send_scsi_cmd (tapefd, path, 0, cdb, 6, mscmd, cdb[4],
 	    sense, 38, 30000, SCSI_OUT, &nb_sense_ret, &msgaddr) < 0) {

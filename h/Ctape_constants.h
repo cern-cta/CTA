@@ -99,4 +99,10 @@ enum PositionCommandCode {
 /* acs loader type to prevent CASTOR from using the read-only option */
 #define ACS_NO_READ_ONLY "noro"
 
+/* The default blocksize in bytes to be used when dumping a tape. */
+#define DMP_DEFAULTBLOCKSIZE 262144
+
+/* The default blocksize in bytes to be used when migrating to a tape */
+#define DEFAULTMIGRATIONBLOCKSIZE 262144
+
 #endif
