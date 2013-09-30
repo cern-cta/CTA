@@ -40,7 +40,6 @@ int main(int	argc,
 	int c;
 	int cfseq;
 	int den;
-	struct devinfo *devinfo;
 	char *dgn;
 	char *domainname;
 	char *drive;
@@ -254,23 +253,11 @@ int main(int	argc,
 	if (recfm[0] == '\0')
 		strcpy (recfm, "U");
 	if (blksize == 0) {
-		if (strcmp (devtype, "SD3")) {
 			if (lrecl == 0) {
-				devinfo = Ctape_devinfo (devtype);
-				blksize = devinfo->defblksize;
+				blksize = DEFAULTMIGRATIONBLOCKSIZE;
 			} else {
 				blksize = lrecl;
                         }
-		} else {
-			if (lrecl == 0) {
-				blksize = 262144;
-			} else if (strcmp (recfm, "F") == 0) {
-				blksize = (262144 / lrecl) * lrecl;
-				strcpy (recfm, "FB");
-			} else {
-				blksize = lrecl;
-                        }
-		}
         }
 	if (lrecl == 0 && strcmp (recfm, "U")) lrecl = blksize;
 

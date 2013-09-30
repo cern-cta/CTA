@@ -139,17 +139,8 @@ int wrteotmrk(
 
 	if (getlabelinfo (path, &dlip) < 0)
 		return (-1);
-	if (! dlip->dev1tm) {
-		/* write 2 buffered tape-marks */
-		if ((c = wrttpmrk (tapefd, path, 1, 1)) < 0) return (c);
-		if ((c = wrttpmrk (tapefd, path, 1, 1)) < 0) return (c);
-		/* for Exabytes in 8200 mode, position in front of the 2 tapemarks,
-		   otherwise position between the 2 tapemarks */
-		if ((c = skiptpfb (tapefd, path, dlip->rewritetm+1)) < 0) return (c);
-	} else {
-		/* write 1 buffered tape-mark */
-		if ((c = wrttpmrk (tapefd, path, 1, 1)) < 0) return (c);
-	}
+	/* write 1 buffered tape-mark */
+	if ((c = wrttpmrk (tapefd, path, 1, 1)) < 0) return (c);
 
 	/* Flush to tape if necessary */
         {

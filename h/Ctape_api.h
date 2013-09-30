@@ -23,18 +23,6 @@ typedef struct {
 } COMPRESSION_STATS;
 struct devinfo {	/* device characteristics */
 	char	devtype[CA_MAXDVTLEN+1];
-	int	bsr;		/* support backspace block */
-	int	eoitpmrks;	/* number of tapemarks at EOI */
-	int	fastpos;	/* use fast positionning because of directory */
-	int	lddtype;	/* load display type */
-	int	minblksize;
-	int	maxblksize;
-	int	defblksize;
-	unsigned char	comppage;	/* compression page 0x0F or 0x10 */
-	struct {
-		short den;		/* density code */
-		unsigned char code;	/* code to send to the drive */
-	} dencodes[CA_MAXDENFIELDS];
 };
 struct dgn_rsv {		/* device group reservation */
 	char	name[CA_MAXDGNLEN+1];
@@ -76,7 +64,6 @@ EXTERN_C int Ctape_dmpend();
 EXTERN_C int Ctape_dmpfil (char *, char *, int *, char *, int *, int *, int *, char *, u_signed64 *);
 EXTERN_C int Ctape_dmpinit (char *, char *, char *, char *, char *, int, int, int, int, int, int, int, int);
 EXTERN_C void (*Ctape_dmpmsg) (int, const char *, ...);
-EXTERN_C int Ctape_drvinfo (char *, struct devinfo *);
 EXTERN_C int Ctape_errmsg (const char *const, const char *const, ...);
 EXTERN_C int Ctape_info (char *, int *, unsigned char *, char *, char *, char *, char *, int *, int *, char *);
 EXTERN_C int Ctape_kill (char *);
@@ -177,7 +164,7 @@ EXTERN_C int rwndtape      (const int, const char *const);
 EXTERN_C int sendrep       (int, int, ...);
 
 /* tape/setdens.c      */
-EXTERN_C int setdens       (int, char*, char*, int);
+EXTERN_C int setCompression       (int, char*, int);
 
 /* tape/skiptape.c     */
 EXTERN_C int skiptpfb      (const int, const char *const, const int);

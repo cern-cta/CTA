@@ -25,7 +25,6 @@ static char *buffer;
 static char codes[4][7] = {"", "ASCII", "", "EBCDIC"};
 static int den;		/* density code */
 static int density;	/* nb bytes/inch for 3420/3480/3490 */
-static int dev1tm = 0;	/* by default 2 tapemarks are written at EOI */
 static struct {
 	char vid[CA_MAXVIDLEN+1];
 	char devtype[CA_MAXDVTLEN+1];
@@ -56,7 +55,6 @@ int Ctape_dmpinit(char *path,
                   int code,
                   int flags)
 {
-	struct devinfo *devinfo;
 	int errflg = 0;
 
 	if (! vid || *vid == '\0') {
@@ -167,11 +165,8 @@ int Ctape_dmpinit(char *path,
 		return (-1);
 	}
 
-	devinfo = Ctape_devinfo (devtype);
-	dev1tm = (devinfo->eoitpmrks == 1) ? 1 : 0;
-
 	if (maxblksize < 0)
-		maxblksize = devinfo->maxblksize;
+		maxblksize = DMP_DEFAULTBLOCKSIZE;
 	if (maxbyte < 0) maxbyte = 320;
 	if (maxfile < 0) {
 		if ((den & 0xFF) <= D38000 || (den & 0xFF) == D38KD) {
@@ -645,7 +640,7 @@ int Ctape_dmpfil(char *path,
 		} else if (nbytes == 0) {	/* tape mark found */
 #if defined(sun) || defined(linux)
 			if (gettperror (infd, path, &msgaddr) == ETBLANK) {
-				if (dev1tm && !qbov && irec == 0) break;
+				if (!qbov && irec == 0) break;
 				fflush (stdout);
 				Ctape_dmpmsg (MSG_ERR, " DUMP ! READ ERROR: %s (BLOCK # %d)\n",
 					"Blank check", irec+1);
@@ -727,7 +722,7 @@ int Ctape_dmpfil(char *path,
 				errcat = gettperror (infd, path, &msgaddr);
 			else
 					msgaddr = (char *) strerror(errno);
-			if (errcat == ETBLANK && dev1tm && !qbov && irec == 0) break;
+			if (errcat == ETBLANK && !qbov && irec == 0) break;
 			irec++;
 			fflush (stdout);
 			Ctape_dmpmsg (MSG_ERR, " DUMP ! READ ERROR: %s (BLOCK # %d)\n",

@@ -2252,40 +2252,11 @@ int rtcpd_GetRequestList(int *client_socket,
       }
 
       /*
-       * If migrating to tape and then get the default migration block-size
-       * from taped and set it as the vlock-size of the current file
+       * If migrating to tape then set the block size of the current file. 
        */
       if(WRITE_ENABLE == nexttape->tapereq.mode &&
         nextfile->filereq.check_fid != CHECK_FILE) {
-        struct devinfo migrationDevInfo;
-        if(-1 == Ctape_drvinfo(nexttape->tapereq.unit, &migrationDevInfo)) {
-          rtcp_log(LOG_ERR,"rtcpd_GetRequestList() Ctape_drvinfo() failed\n");
-          tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
-            "func"   , TL_MSG_PARAM_STR  , "rtcpd_MainCntl",
-            "Message", TL_MSG_PARAM_STR  , "Ctape_drvinfo failed",
-            "TPVID"  , TL_MSG_PARAM_TPVID, nexttape->tapereq.vid);
-
-          errno = ECANCELED;
-          serrno = ECANCELED;
-          save_serrno = ECANCELED;
-          break;
-        }
-        if(0 >= migrationDevInfo.defblksize) {
-          rtcp_log(LOG_ERR,
-            "rtcpd_GetRequestList() Invalid migration defblksize=%d\n",
-            migrationDevInfo.defblksize);
-          tl_rtcpd.tl_log( &tl_rtcpd, 3, 4,
-            "func"      , TL_MSG_PARAM_STR  , "rtcpd_MainCntl",
-            "Message"   , TL_MSG_PARAM_STR  , "Invalid migration defblksize",
-            "defblksize", TL_MSG_PARAM_INT  , migrationDevInfo.defblksize,
-            "TPVID"     , TL_MSG_PARAM_TPVID, nexttape->tapereq.vid);
-        
-          errno = ECANCELED;
-          serrno = ECANCELED;
-          save_serrno = ECANCELED;
-          break;
-        }
-        nextfile->filereq.blocksize = migrationDevInfo.defblksize;
+        nextfile->filereq.blocksize = DEFAULTMIGRATIONBLOCKSIZE;
         rtcp_log(LOG_INFO, "rtcpd_GetRequestList()"
           " set migration block-size of file to %d\n",
           nextfile->filereq.blocksize);

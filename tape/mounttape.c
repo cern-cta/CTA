@@ -67,7 +67,6 @@ int main(int	argc,
 	unsigned int demountforce;
 	int den;
 	char density [CA_MAXDENLEN+1];
-	struct devinfo *devinfo;
 	char *dgn;
 	char *dvn;
 	char hdr1[81];
@@ -160,7 +159,6 @@ int main(int	argc,
 
 	c = 0;
 	(void) Ctape_seterrbuf (errbuf, sizeof(errbuf));
-	devinfo = Ctape_devinfo (devtype);
 	gethostname (hostname, CA_MAXHOSTNAMELEN+1);
 
         /* signal (SIGINT, mountkilled); */
@@ -388,9 +386,9 @@ int main(int	argc,
 
 		if ((c = rwndtape (tapefd, path))) goto reply;
 
-		/* set density and compression mode */
+		/* set compression mode */
 
-		(void) setdens (tapefd, path, devtype, den);
+		(void) setCompression (tapefd, path, den);
 
 		/* check VOL1 label if not blp */
 
@@ -762,11 +760,7 @@ mounted:
 			if (lblcode == SL) asc2ebc (vol1, 80);
 			if ((c = writelbl (tapefd, path, vol1)) < 0) goto reply;
 			if (prelabel > 0) {
-				int blksize;
-				if (strcmp (devtype, "SD3"))
-					blksize = 32760;
-				else
-					blksize = 262144;
+				const int blksize = DEFAULTMIGRATIONBLOCKSIZE;
 				buildhdrlbl(hdr1, hdr2,
 					"PRELABEL", vsn, 1, 1, 0,
 					"U", blksize, 0, den, lblcode);
@@ -781,7 +775,7 @@ mounted:
 			}
 		}
 		if  ((c = wrttpmrk (tapefd, path, 1, 0)) < 0) goto reply;
-		if (devinfo->eoitpmrks == 2 || Tflag)
+		if (Tflag)
 			if  ((c = wrttpmrk (tapefd, path, 1, 0)) < 0) goto reply;
 		if (strcmp (devtype, "SD3") == 0 && ! Tflag)	/* flush buffer */
 			if  ((c = wrttpmrk (tapefd, path, 0, 0)) < 0) goto reply;

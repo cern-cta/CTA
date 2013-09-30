@@ -335,7 +335,6 @@ struct tptab {		/* tape drive table */
 struct devlblinfo {
 	char	path[CA_MAXPATHLEN+1];	/* pathname */
 	char	devtype[CA_MAXDVTLEN+1];	/* device type */
-	int	dev1tm;		/* one or two tapemarks at end of data */
 	int	rewritetm;	/* tapemark must be rewritten on Exabytes 8200 */
 	int	lblcode;	/* label code: AL, NL, SL or BLP */
 	int	flags;		/* options like NOTRLCHK */

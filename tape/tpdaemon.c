@@ -84,7 +84,6 @@ int initrrt( void );
 
 static void procreq( int, char*, char* );
 static void procconfreq( char*, char* );
-static void procdinforeq( char*, char* );
 static void procfrdrvreq( char*, char* );
 static void procinforeq( char*, char* );
 static void procuvsnreq( char*, char* );
@@ -951,9 +950,6 @@ static void procreq(int req_type,
 	case TPPOS:
 		procposreq (req_data, clienthost);
 		break;
-	case DRVINFO:
-		procdinforeq (req_data, clienthost);
-		break;
 	default:
 		usrmsg (func, TP003, req_type);
                 tl_tpdaemon.tl_log( &tl_tpdaemon, 3, 2,
@@ -1039,75 +1035,6 @@ reply:
 		sendrep (rpfd, TAPERC, c);
 	else
 		close (rpfd);
-}
-
-static void procdinforeq(char *req_data,
-                  char *clienthost)
-{
-	int c;
-	struct devinfo *devinfo;
-	char *drive;
-	int found;
-	gid_t gid;
-	unsigned int i;
-	char *rbp;
-	char repbuf[REPBUFSZ];
-	char *sbp;
-	struct tptab *tunp;
-	uid_t uid;
-
-	rbp = req_data;
-	unmarshall_LONG (rbp, uid);
-	unmarshall_LONG (rbp, gid);
-
-	RESETID(uid,gid);
-
-	tplogit (func, TP056, "drvinfo", uid, gid, clienthost);
-        tl_tpdaemon.tl_log( &tl_tpdaemon, 56, 5,
-                            "func",       TL_MSG_PARAM_STR, func,
-                            "Message",    TL_MSG_PARAM_STR, "drvinfo",
-                            "UID",        TL_MSG_PARAM_UID, uid,
-                            "GID",        TL_MSG_PARAM_GID, gid,
-                            "Clienthost", TL_MSG_PARAM_STR, clienthost );                        
-	unmarshall_STRING (rbp, drive);
-
-	c = 0;
-	found = 0;
-	tunp = tptabp;
-	for (i = 0; i < nbtpdrives; i++) {
-		if (strcmp (tunp->drive, drive) == 0) {
-			found = 1;
-			break;
-		}
-		tunp++;
-	}
-	if (! found) {
-		usrmsg (func, TP015);
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 15, 2,
-                                    "func"  , TL_MSG_PARAM_STR, func,
-                                     "Drive", TL_MSG_PARAM_STR, drive );
-		c = ENOENT;
-		goto reply;
-	} else {
-		devinfo = Ctape_devinfo (tunp->devtype);
-		sbp = repbuf;
-		marshall_STRING (sbp, devinfo->devtype);
-		marshall_WORD (sbp, devinfo->bsr);
-		marshall_WORD (sbp, devinfo->eoitpmrks);
-		marshall_WORD (sbp, devinfo->fastpos);
-		marshall_WORD (sbp, devinfo->lddtype);
-		marshall_LONG (sbp, devinfo->minblksize);
-		marshall_LONG (sbp, devinfo->maxblksize);
-		marshall_LONG (sbp, devinfo->defblksize);
-		marshall_BYTE (sbp, devinfo->comppage);
-		for (i = 0; i < CA_MAXDENFIELDS; i++) {
-			marshall_WORD (sbp, devinfo->dencodes[i].den);
-			marshall_BYTE (sbp, devinfo->dencodes[i].code);
-		}
-		sendrep (rpfd, MSG_DATA, sbp - repbuf, repbuf);
-	}
-reply:
-	sendrep (rpfd, TAPERC, c);
 }
 
 static void procfrdrvreq(char *req_data,
