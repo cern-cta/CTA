@@ -64,9 +64,8 @@ DECLARE
 BEGIN
   SELECT column_name INTO colName FROM all_tab_cols WHERE table_name = 'CNS_FILE_METADATA' AND column_name = 'STAGERTIME';
 EXCEPTION WHEN NO_DATA_FOUND THEN
-  EXECUTE IMMEDIATE 'ALTER TABLE Cns_seg_metadata ADD (
-     gid NUMBER(6), creationTime NUMBER, lastModificationTime NUMBER);';
-  EXECUTE IMMEDIATE 'ALTER TABLE Cns_file_metadata ADD (stagerTime NUMBER);';
+  EXECUTE IMMEDIATE 'ALTER TABLE Cns_seg_metadata ADD (gid NUMBER(6), creationTime NUMBER, lastModificationTime NUMBER)';
+  EXECUTE IMMEDIATE 'ALTER TABLE Cns_file_metadata ADD (stagerTime NUMBER)';
 END;
 /
 

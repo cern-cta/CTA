@@ -979,8 +979,8 @@ DECLARE
   colName VARCHAR2(100);
 BEGIN
   SELECT column_name INTO colName FROM all_tab_cols WHERE table_name = 'ACCOUNTING' AND ROWNUM < 2;
-  EXECUTE IMMEDIATE 'DROP TABLE Accounting;';
-  EXECUTE IMMEDIATE 'DROP VIEW AccountingSummary;';
+  EXECUTE IMMEDIATE 'DROP TABLE Accounting';
+  EXECUTE IMMEDIATE 'DROP VIEW AccountingSummary';
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- already dropped by a previous intervention, ignore
   NULL;
