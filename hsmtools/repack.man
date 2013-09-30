@@ -41,10 +41,10 @@ repack \- Move files from tape(s) to other tape destination
 .BI \-\-bulkdelete\ <file>
 .br
 .B repack
-.BI \-s|--statusAll\ [-d|--detailed]
+.BI \-s|--statusAll\ [-x|--extra]
 .br
 .B repack
-.BI \-S\ <VID>[:<VID>[...]]\ [-d|--detailed]
+.BI \-S\ <VID>[:<VID>[...]]\ [-x|--extra]
 .br
 .B repack
 .BI \-e\ <VID>[:<VID>[...]]\ [\-n\ <nbErrorsDisplayed>]
@@ -101,9 +101,9 @@ from the database and are not shown any longer.
 shows the status of ongoing and finished repacks for the given tape(s). The tape(s) is(are) given by their
 VID and the list is colon separated. As opposed to the \-s option, here the entire history is shown.
 .TP
-.BI \-d,\ \-\-detailed
-shows the status of ongoing and finished repacks as requested with the -s or -S options, including detailed
-figures for the count of ongoing or failed recalls and migrations, and a completion percentage.
+.BI \-x,\ \-\-extra
+shows the status of ongoing and finished repacks as requested with the -s or -S options, including extra
+detailed figures for the count of ongoing or failed recalls and migrations, and a completion percentage.
 .TP
 .BI \-e,\ \-\-errors
 displays the errors that occured during the repack of a given tape, file by file. By default, the number of
@@ -134,7 +134,7 @@ SubmitTime        RepackTime             User                      Machine      
 ---------------------------------------------------------------------------------------------------------------------
 11-Jun-13 19:29            -                -                        TOTAL        2          5     6.22KiB   FINISHED
 
-> repack -s -d
+> repack -sx
 =====================================================================================================================================================================
 SubmitTime        RepackTime             User                      Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated  Compl%     Status
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -143,7 +143,7 @@ SubmitTime        RepackTime             User                      Machine      
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 11-Jun-13 19:29            -                -                        TOTAL        2          5     6.22KiB         0         0         0         5    100%   FINISHED
 
-> repack -S V21002 -d
+> repack -S V21002 -x
 =====================================================================================================================================================================
 SubmitTime        RepackTime             User                      Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated  Compl%     Status
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -167,7 +167,7 @@ SubmitTime        RepackTime             User                      Machine      
 11-Jun-13 17:43       1mn15s    itglp@CERN.CH             lxc2dev2.cern.ch   V21003          4     3.29KiB   ABORTING
 ---------------------------------------------------------------------------------------------------------------------
 
-> repack -S V21003 -d
+> repack -S V21003 -x
 =====================================================================================================================================================================
 SubmitTime        RepackTime             User                      Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated  Compl%     Status
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------

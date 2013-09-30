@@ -41,8 +41,8 @@ def usage(exitCode):
     print '  repack --bulkvolumeid <filename> -o serviceclass'
     print '  repack -R <VID>[:<VID>[:...]]'
     print '  repack --bulkdelete <filename>'
-    print '  repack -s|--statusAll [-d|--detailed]'
-    print '  repack -S <VID>:<VID>[:...]] [-d|--detailed]'
+    print '  repack -s|--statusAll [-x|--extra]'
+    print '  repack -S <VID>:<VID>[:...]] [-x|--extra]'
     print '  repack -e <VID>[:<VID>[:...]] [-n <nbErrorsDisplayed>]'
     sys.exit(exitCode)
 
@@ -52,7 +52,7 @@ def parseInputFile(fileName):
     
 # first parse the options
 try:
-    options, arguments = getopt.getopt(sys.argv[1:], 'V:o:sdS:R:e:hn:v', ['volumeid=', 'bulkvolumeid=', 'svcclass=', 'statusAll', 'detailed', 'status=', 'delete=', 'bulkdelete=', 'errors=', 'help', 'nbErrorsDisplayed=', 'verbose'])
+    options, arguments = getopt.getopt(sys.argv[1:], 'V:o:sxS:R:e:hn:v', ['volumeid=', 'bulkvolumeid=', 'svcclass=', 'statusAll', 'extra', 'status=', 'delete=', 'bulkdelete=', 'errors=', 'help', 'nbErrorsDisplayed=', 'verbose'])
 except Exception, parsingException:
     print parsingException
     usage(1)
@@ -76,7 +76,7 @@ for f, v in options:
         vflag = True
     elif f == '-s' or f == '--statusAll':
         sflag = True
-    elif f == '-d' or f == '--detailed':
+    elif f == '-x' or f == '--extra':
         detailFlag = True
     elif f == '-S' or f == '--status':
         vids.extend(v.split(':'))
