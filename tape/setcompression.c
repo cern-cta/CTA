@@ -4,7 +4,6 @@
  */
  
  
-/*	setdens - set density and compression flag */
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -14,6 +13,19 @@
 #include "scsictl.h"
 #include "serrno.h"
 #include "sendscsicmd.h"
+
+/**
+ * This function switch on or swith off comression on the drive denends on 
+ * the density code for the drive in TPCONFIG. 'GC' - means compression will be
+ * switched on  and 'G' means to switch it off.
+ *
+ * @param  tapefd       A tapefd to pass to the send_scsi_cmd.
+ * @param  path         A path to pass to the send_scsi_cmd
+ * @param  den          A density for the tape from TPCONFIG.
+ * 
+ * @return 0 if there was not any error inside send_scsi_cmd else -1.
+ * In case of error serrno is set by send_scis_cmd.                    
+ */
 
 int setCompression(int tapefd,
             char *path,
