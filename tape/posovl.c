@@ -255,9 +255,6 @@ int main(int	argc,
 	if (blksize == 0) {
 			if (lrecl == 0) {
 				blksize = DEFAULTMIGRATIONBLOCKSIZE;
-			} else if (strcmp (recfm, "F") == 0) {
-				blksize = (DEFAULTMIGRATIONBLOCKSIZE / lrecl) * lrecl;
-				strcpy (recfm, "FB");
 			} else {
 				blksize = lrecl;
                         }
