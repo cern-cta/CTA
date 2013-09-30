@@ -318,7 +318,7 @@
        2. Ask your DBA to grant the following select privilege to the nameserver account when logged
           into the VMGR database schema:
 
-          GRANT SELECT ON VMGR_TAPE_STATUS_VIEW TO <CastorNsAccount>;
+          GRANT SELECT ON <CastorVmgrAccount>.VMGR_TAPE_STATUS_VIEW TO <CastorNsAccount>;
 
        3. Apply the cns_2.1.13-9_to_2.1.14-2.sql database upgrade script to the NS DB from:
           http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-2/dbupgrades
