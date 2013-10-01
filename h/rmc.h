@@ -23,10 +23,4 @@
 
 int rmclogit(const char *const func, const char *const msg, ...);
 
-#define RETURN(x) \
-	{ \
-	rmclogit (func, "returns %d\n", (x)); \
-	return ((x)); \
-	}
-
 #endif
