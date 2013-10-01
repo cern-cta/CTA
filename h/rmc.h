@@ -17,7 +17,6 @@
 
 #include "osdep.h"
 #include "rmc_constants.h"
-#define	LOGBUFSZ 1024
 
 int rmclogit(const char *const func, const char *const msg, ...);
 
