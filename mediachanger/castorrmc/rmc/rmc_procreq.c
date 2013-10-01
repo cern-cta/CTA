@@ -19,10 +19,10 @@
 #include "h/rmc_logit.h"
 #include "h/rmc_logreq.h"
 #include "h/rmc_marshall_element.h"
+#include "h/rmc_procreq.h"
 #include "h/rmc_smcsubr.h"
 #include "h/rmc_smcsubr2.h"
 #include "h/rmc_sendrep.h"
-#include "h/rmc_server_api.h"
 #include "h/tplogger_api.h"
 #include <string.h>
 #include <Ctape_api.h>
