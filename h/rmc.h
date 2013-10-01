@@ -20,8 +20,6 @@
 #define	MAXRETRY 5
 #define	RETRYI	60
 #define	LOGBUFSZ 1024
-#define RMC_MAGIC	0x120D0301
-#define RMC_TIMEOUT	5	/* netread timeout while receiving a request */
 
 int rmclogit(const char *const func, const char *const msg, ...);
 

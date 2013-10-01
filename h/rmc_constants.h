@@ -18,6 +18,8 @@
 #define RMC_PRTBUFSZ 180
 #define RMC_REPBUFSZ 524288 /* must be >= max media changer server reply size */
 #define RMC_REQBUFSZ 256    /* must be >= max media changer server request size */
+#define RMC_MAGIC	0x120D0301
+#define RMC_TIMEOUT	5	/* netread timeout while receiving a request */
 
 #define RMC_PORT 5014
 
