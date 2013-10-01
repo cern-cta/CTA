@@ -99,7 +99,7 @@ protected:
    * @return The volume status of the volume identifier specified on the
    * command-line.
    */
-  QU_VOL_STATUS syncQueryVolume() throw(castor::exception::QueryVolumeFailed);
+  void syncQueryVolume() throw(castor::exception::QueryVolumeFailed);
 
   /**
    * Sends the query volume  request to ACSLS.
@@ -110,49 +110,13 @@ protected:
     throw (castor::exception::QueryVolumeFailed);
 
   /**
-   * Requests responses from ACSLS in a loop until the RT_FINAL response is
-   * received.
+   * Extracts the volume status from the specified query-response message and
+   * writes it in human-readable form to the specified output stream.
    *
-   * @param requestSeqNumber The sequemce number that was sent in the initial
-   * request to the ACSLS.
-   * @param buf Output parameter.  Message buffer into which the RT_FINAL
-   * response shall be written.
-   */
-  void requestResponsesUntilFinal(const SEQ_NO requestSeqNumber,
-    ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
-    throw (castor::exception::QueryVolumeFailed);
-
-  /**
-   * Sends a request for a response to the ACSLS.
-   *
-   * @param timeout The timeout.
-   * @param requestSeqNumber The sequemce number that was sent in the initial
-   * request to the ACSLS.
-   * @param buf Output parameter.  The response message if there is one.
-   * @return The type of the response message if there is one or RT_NONE if
-   * there isn't one.
-   */
-  ACS_RESPONSE_TYPE requestResponse(const int timeout,
-    const SEQ_NO requestSeqNumber,
-    ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
-    throw(castor::exception::QueryVolumeFailed);
-
-  /**
-   * Throws castor::exception::QueryVolumeFailed if the specified request and
-   * response sequence-numbers do not match.
-   *
-   * @param requestSeqNumber Request sequence-number.
-   * @param responseSeqNumber Response sequence-number.
-   */
-  void checkResponseSeqNumber(const SEQ_NO requestSeqNumber,
-    const SEQ_NO responseSeqNumber) throw(castor::exception::QueryVolumeFailed);
-
-  /**
-   * Extracts the volume status from the specified query-response message.
-   *
+   * @param os The output stream.
    * @param buf The query-response message.
    */
-  QU_VOL_STATUS processQueryResponse(
+  void processQueryResponse(std::ostream &os,
     ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
     throw(castor::exception::QueryVolumeFailed);
 

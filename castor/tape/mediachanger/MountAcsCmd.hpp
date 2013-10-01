@@ -106,44 +106,6 @@ protected:
     throw(castor::exception::MountFailed);
 
   /**
-   * Requests responses from ACSLS in a loop until the RT_FINAL response is
-   * received.
-   *
-   * @param requestSeqNumber The sequemce number that was sent in the initial
-   * request to the ACSLS.
-   * @param buf Output parameter.  Message buffer into which the RT_FINAL
-   * response shall be written.
-   */
-  void requestResponsesUntilFinal(const SEQ_NO requestSeqNumber,
-    ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
-    throw (castor::exception::MountFailed);
-
-  /**
-   * Sends a request for a response to the ACSLS.
-   *
-   * @param timeout The timeout.
-   * @param requestSeqNumber The sequemce number that was sent in the initial
-   * request to the ACSLS.
-   * @param buf Output parameter.  The response message if there is one.
-   * @return The type of the response message if there is one or RT_NONE if
-   * there isn't one.
-   */
-  ACS_RESPONSE_TYPE requestResponse(const int timeout,
-    const SEQ_NO requestSeqNumber,
-    ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
-    throw(castor::exception::MountFailed);
-
-  /**
-   * Throws castor::exception::MountFailed if the specified request and
-   * response sequence-numbers do not match.
-   *
-   * @param requestSeqNumber Request sequence-number.
-   * @param responseSeqNumber Response sequence-number.
-   */
-  void checkResponseSeqNumber(const SEQ_NO requestSeqNumber,
-    const SEQ_NO responseSeqNumber) throw(castor::exception::MountFailed);
-
-  /**
    * Throws castor::exception::DismountFailed if the mount was not
    * successful.
    *
