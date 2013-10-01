@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmc/MountAcsCmdLine.hpp
+ *                 castor/tape/rmc/AcsMountCmdLine.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,12 +22,12 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/rmc/MountAcsCmdLine.hpp"
+#include "castor/tape/rmc/AcsMountCmdLine.hpp"
 
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::rmc::MountAcsCmdLine::MountAcsCmdLine() throw():
+castor::tape::rmc::AcsMountCmdLine::AcsMountCmdLine() throw():
   debug(false),
   help(false),
   queryInterval(0),

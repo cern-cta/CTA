@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmc/MountAcsCmd.cpp
+ *                 castor/tape/rmc/AcsMountCmd.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,7 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/rmc/MountAcsCmd.hpp"
+#include "castor/tape/rmc/AcsMountCmd.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 #include <getopt.h>
@@ -31,7 +31,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::rmc::MountAcsCmd::MountAcsCmd(
+castor::tape::rmc::AcsMountCmd::AcsMountCmd(
   std::istream &inStream, std::ostream &outStream, std::ostream &errStream,
   Acs &acs) throw():
   AcsCmd(inStream, outStream, errStream, acs), m_defaultQueryInterval(10),
@@ -41,14 +41,14 @@ castor::tape::rmc::MountAcsCmd::MountAcsCmd(
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::tape::rmc::MountAcsCmd::~MountAcsCmd() throw() {
+castor::tape::rmc::AcsMountCmd::~AcsMountCmd() throw() {
   // Do nothing
 }
 
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int castor::tape::rmc::MountAcsCmd::main(const int argc,
+int castor::tape::rmc::AcsMountCmd::main(const int argc,
   char *const *const argv) throw() {
   try {
     m_cmdLine = parseCmdLine(argc, argv);
@@ -99,8 +99,8 @@ int castor::tape::rmc::MountAcsCmd::main(const int argc,
 //------------------------------------------------------------------------------
 // parseCmdLine
 //------------------------------------------------------------------------------
-castor::tape::rmc::MountAcsCmdLine
-  castor::tape::rmc::MountAcsCmd::parseCmdLine(
+castor::tape::rmc::AcsMountCmdLine
+  castor::tape::rmc::AcsMountCmd::parseCmdLine(
   const int argc, char *const *const argv)
   throw(castor::exception::Internal, castor::exception::InvalidArgument,
     castor::exception::MissingOperand) {
@@ -113,7 +113,7 @@ castor::tape::rmc::MountAcsCmdLine
     {"timeout" , required_argument, NULL, 't'},
     {NULL, 0, NULL, 0}
   };
-  MountAcsCmdLine cmdLine;
+  AcsMountCmdLine cmdLine;
   char c;
 
   // Set the query option to the default value
@@ -216,7 +216,7 @@ castor::tape::rmc::MountAcsCmdLine
 //------------------------------------------------------------------------------
 // usage
 //------------------------------------------------------------------------------
-void castor::tape::rmc::MountAcsCmd::usage(std::ostream &os)
+void castor::tape::rmc::AcsMountCmd::usage(std::ostream &os)
   const throw() {
   os <<
   "Usage:\n"
@@ -248,7 +248,7 @@ void castor::tape::rmc::MountAcsCmd::usage(std::ostream &os)
 //------------------------------------------------------------------------------
 // syncMount
 //------------------------------------------------------------------------------
-void castor::tape::rmc::MountAcsCmd::syncMount()
+void castor::tape::rmc::AcsMountCmd::syncMount()
   throw(castor::exception::MountFailed) {
   const SEQ_NO requestSeqNumber = 1;
   ALIGNED_BYTES buf[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
@@ -269,7 +269,7 @@ void castor::tape::rmc::MountAcsCmd::syncMount()
 //------------------------------------------------------------------------------
 // sendMountRequest
 //------------------------------------------------------------------------------
-void castor::tape::rmc::MountAcsCmd::sendMountRequest(
+void castor::tape::rmc::AcsMountCmd::sendMountRequest(
   const SEQ_NO seqNumber) throw(castor::exception::MountFailed) {
   const LOCKID lockId = 0; // No lock
   const BOOLEAN bypass = FALSE;
@@ -292,7 +292,7 @@ void castor::tape::rmc::MountAcsCmd::sendMountRequest(
 //------------------------------------------------------------------------------
 // processMountResponse
 //------------------------------------------------------------------------------
-void castor::tape::rmc::MountAcsCmd::processMountResponse(
+void castor::tape::rmc::AcsMountCmd::processMountResponse(
   ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
   throw(castor::exception::MountFailed) {
   const ACS_MOUNT_RESPONSE *const msg = (ACS_MOUNT_RESPONSE *)buf;

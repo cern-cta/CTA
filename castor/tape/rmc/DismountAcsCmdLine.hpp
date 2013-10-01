@@ -22,8 +22,8 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_MEDIACHANGER_DISMOUNTACSCMDLINE_HPP
-#define CASTOR_TAPE_MEDIACHANGER_DISMOUNTACSCMDLINE_HPP 1
+#ifndef CASTOR_TAPE_RMC_DISMOUNTACSCMDLINE_HPP
+#define CASTOR_TAPE_RMC_DISMOUNTACSCMDLINE_HPP 1
 
 extern "C" {
 #include "acssys.h"
@@ -93,4 +93,4 @@ struct DismountAcsCmdLine {
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_MEDIACHANGER_DISMOUNTACSCMDLINE_HPP
+#endif // CASTOR_TAPE_RMC_DISMOUNTACSCMDLINE_HPP

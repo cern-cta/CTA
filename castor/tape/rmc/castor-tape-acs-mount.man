@@ -12,14 +12,15 @@
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 .TH MOUNTACS 1 "$Date: 2009/08/07 15:56:38 $" CASTOR "CASTOR"
 .SH NAME
-mountacs \- mount a volume
+castor-tape-acs-mount \- mount a volume
 .SH SYNOPSIS
-.BI "mountacs [options] VID DRIVE"
+.BI "castor-tape-acs-mount [options] VID DRIVE"
 
 .SH DESCRIPTION
-.B mountacs
-mounts the volume with the specfied VID into the drive with the specified DRIVE
-ID. The DRIVE ID format is ACS:LSM:panel:transport.
+.B castor-tape-acs-mount
+mounts the volume with the specfied VID in an ACS compatible tape-library into
+the drive with the specified DRIVE ID. The DRIVE ID format is
+ACS:LSM:panel:transport.
 
 .SH OPTIONS
 .TP

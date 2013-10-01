@@ -22,8 +22,8 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_MEDIACHANGER_QUERYVOLUMEACSCMDLINE_HPP
-#define CASTOR_TAPE_MEDIACHANGER_QUERYVOLUMEACSCMDLINE_HPP 1
+#ifndef CASTOR_TAPE_RMC_QUERYVOLUMEACSCMDLINE_HPP
+#define CASTOR_TAPE_RMC_QUERYVOLUMEACSCMDLINE_HPP 1
 
 extern "C" {
 #include "acssys.h"
@@ -80,4 +80,4 @@ struct QueryVolumeAcsCmdLine {
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_MEDIACHANGER_QUERYVOLUMEACSCMDLINE_HPP
+#endif // CASTOR_TAPE_RMC_QUERYVOLUMEACSCMDLINE_HPP

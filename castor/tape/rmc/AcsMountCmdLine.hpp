@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmc/MountAcsCmdLine.hpp
+ *                 castor/tape/rmc/AcsMountCmdLine.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_MEDIACHANGER_MOUNTACSCMDLINE_HPP
-#define CASTOR_TAPE_MEDIACHANGER_MOUNTACSCMDLINE_HPP 1
+#ifndef CASTOR_TAPE_RMC_ACSMOUNTCMDLINE_HPP
+#define CASTOR_TAPE_RMC_ACSMOUNTCMDLINE_HPP 1
 
 extern "C" {
 #include "acssys.h"
@@ -39,14 +39,14 @@ namespace rmc {
 /**
  * Data type used to store the results of parsing the command-line.
  */
-struct MountAcsCmdLine {
+struct AcsMountCmdLine {
   /**
    * Constructor.
    *
    * Initialises all BOOLEAN member-variables to FALSE, all integer
    * member-variables to 0 and the volume identifier to an empty string.
    */
-  MountAcsCmdLine() throw();
+  AcsMountCmdLine() throw();
 
   /**
    * True if the debug option has been set.
@@ -83,11 +83,11 @@ struct MountAcsCmdLine {
    */
   DRIVEID driveId;
 
-}; // class MountAcsCmdLine
+}; // class AcsMountCmdLine
 
 } // namespace rmc
 } // namespace tape
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_MEDIACHANGER_MOUNTACSCMDLINE_HPP
+#endif // CASTOR_TAPE_RMC_ACSMOUNTCMDLINE_HPP

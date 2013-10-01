@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmc/MountAcsCmd.hpp
+ *                 castor/tape/rmc/AcsMountCmd.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,15 +22,15 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_MEDIACHANGER_MOUNTACSCMD_HPP
-#define CASTOR_TAPE_MEDIACHANGER_MOUNTACSCMD_HPP 1
+#ifndef CASTOR_TAPE_RMC_ACSMOUNTCMD_HPP
+#define CASTOR_TAPE_RMC_ACSMOUNTCMD_HPP 1
 
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/MissingOperand.hpp"
 #include "castor/exception/MountFailed.hpp"
 #include "castor/tape/rmc/AcsCmd.hpp"
-#include "castor/tape/rmc/MountAcsCmdLine.hpp"
+#include "castor/tape/rmc/AcsMountCmdLine.hpp"
 
 #include <stdint.h>
 
@@ -41,7 +41,7 @@ namespace rmc {
 /**
  * The class implementing the mount command.
  */
-class MountAcsCmd: public AcsCmd {
+class AcsMountCmd: public AcsCmd {
 public:
 
   /**
@@ -52,13 +52,13 @@ public:
    * @param errStream Standard error stream.
    * @param acs Wrapper around the ACSLS C-API.
    */
-  MountAcsCmd(std::istream &inStream, std::ostream &outStream,
+  AcsMountCmd(std::istream &inStream, std::ostream &outStream,
     std::ostream &errStream, Acs &acs) throw();
 
   /**
    * Destructor.
    */
-  virtual ~MountAcsCmd() throw();
+  virtual ~AcsMountCmd() throw();
 
   /**
    * The entry function of the command.
@@ -77,7 +77,7 @@ protected:
    * @param argv Argument vector from the executable's entry function: main().
    * @return The parsed command-line.
    */
-  MountAcsCmdLine parseCmdLine(const int argc, char *const *const argv)
+  AcsMountCmdLine parseCmdLine(const int argc, char *const *const argv)
     throw(castor::exception::Internal, castor::exception::InvalidArgument,
       castor::exception::MissingOperand);
 
@@ -123,7 +123,7 @@ private:
    * The value of this member variable is set within the main() method of this
    * class.
    */
-  MountAcsCmdLine m_cmdLine;
+  AcsMountCmdLine m_cmdLine;
 
   /**
    * The default time in seconds to wait between queries to ACS for responses.
@@ -135,10 +135,10 @@ private:
    * success or failure.
    */
   const int m_defaultTimeout;
-}; // class MountAcsCmd
+}; // class AcsMountCmd
 
 } // namespace rmc
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_MEDIACHANGER_MOUNTACSCMD_HPP
+#endif // CASTOR_TAPE_RMC_ACSMOUNTCMD_HPP

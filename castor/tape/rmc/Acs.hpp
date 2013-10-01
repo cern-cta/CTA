@@ -22,8 +22,8 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_MEDIACHANGER_ACS_HPP
-#define CASTOR_TAPE_MEDIACHANGER_ACS_HPP 1
+#ifndef CASTOR_TAPE_RMC_ACS_HPP
+#define CASTOR_TAPE_RMC_ACS_HPP 1
 
 #include "castor/exception/InvalidArgument.hpp"
 
@@ -174,4 +174,4 @@ public:
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_MEDIACHANGER_ACS_HPP
+#endif // CASTOR_TAPE_RMC_ACS_HPP

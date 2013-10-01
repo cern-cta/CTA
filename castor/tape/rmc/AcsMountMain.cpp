@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmc/MountAcsMain.cpp
+ *                 castor/tape/rmc/AcsMountMain.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -23,7 +23,7 @@
  *****************************************************************************/
  
 #include "castor/tape/rmc/AcsImpl.hpp"
-#include "castor/tape/rmc/MountAcsCmd.hpp"
+#include "castor/tape/rmc/AcsMountCmd.hpp"
 
 #include <iostream>
 
@@ -33,7 +33,7 @@
 int main(const int argc, char *const *const argv) {
 
   castor::tape::rmc::AcsImpl acs;
-  castor::tape::rmc::MountAcsCmd
+  castor::tape::rmc::AcsMountCmd
     cmd(std::cin, std::cout, std::cerr, acs);
 
   return cmd.main(argc, argv);

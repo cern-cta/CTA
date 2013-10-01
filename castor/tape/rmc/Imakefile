@@ -52,14 +52,14 @@ COMPILECPP(AcsCmd.cpp, -DLINUX -I/usr/include/CDK)
 MOUNTACSBIN_SRCS = \
   $(ACS_SRCS) \
   $(ACSCOMMAND_SRCS) \
-  MountAcsCmdLine.cpp \
-  MountAcsCmd.cpp \
-  MountAcsMain.cpp
+  AcsMountCmd.cpp \
+  AcsMountCmdLine.cpp \
+  AcsMountMain.cpp
 MOUNTACSBIN_OBJS = $(MOUNTACSBIN_SRCS:.cpp=.o)
 
-COMPILECPP(MountAcsCmdLine.cpp, -DLINUX -I/usr/include/CDK)
-COMPILECPP(MountAcsCmd.cpp, -DLINUX -I/usr/include/CDK)
-COMPILECPP(MountAcsMain.cpp, -DLINUX -I/usr/include/CDK)
+COMPILECPP(AcsMountCmd.cpp, -DLINUX -I/usr/include/CDK)
+COMPILECPP(AcsMountCmdLine.cpp, -DLINUX -I/usr/include/CDK)
+COMPILECPP(AcsMountMain.cpp, -DLINUX -I/usr/include/CDK)
 
 NormalProgramTarget(mountacs,$(MOUNTACSBIN_OBJS),,$(CDKLIB),755)
 EXEMANPAGE(mountacs)

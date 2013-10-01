@@ -22,8 +22,8 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_MEDIACHANGER_DISMOUNTACSCMD_HPP
-#define CASTOR_TAPE_MEDIACHANGER_DISMOUNTACSCMD_HPP 1
+#ifndef CASTOR_TAPE_RMC_DISMOUNTACSCMD_HPP
+#define CASTOR_TAPE_RMC_DISMOUNTACSCMD_HPP 1
 
 #include "castor/exception/DismountFailed.hpp"
 #include "castor/exception/Internal.hpp"
@@ -147,4 +147,4 @@ private:
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_MEDIACHANGER_DISMOUNTACSCMD_HPP
+#endif // CASTOR_TAPE_RMC_DISMOUNTACSCMD_HPP

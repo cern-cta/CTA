@@ -22,8 +22,8 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_MEDIACHANGER_ACSIMPL_HPP
-#define CASTOR_TAPE_MEDIACHANGER_ACSIMPL_HPP 1
+#ifndef CASTOR_TAPE_RMC_ACSIMPL_HPP
+#define CASTOR_TAPE_RMC_ACSIMPL_HPP 1
 
 #include "castor/tape/rmc/Acs.hpp"
 
@@ -126,4 +126,4 @@ public:
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_MEDIACHANGER_ACSIMPL_HPP
+#endif // CASTOR_TAPE_RMC_ACSIMPL_HPP

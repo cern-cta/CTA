@@ -22,8 +22,8 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_MEDIACHANGER_QUERYVOLUMEACSCMD_HPP
-#define CASTOR_TAPE_MEDIACHANGER_QUERYVOLUMEACSCMD_HPP 1
+#ifndef CASTOR_TAPE_RMC_QUERYVOLUMEACSCMD_HPP
+#define CASTOR_TAPE_RMC_QUERYVOLUMEACSCMD_HPP 1
 
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
@@ -156,4 +156,4 @@ private:
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_MEDIACHANGER_QUERYVOLUMEACSCMD_HPP
+#endif // CASTOR_TAPE_RMC_QUERYVOLUMEACSCMD_HPP
