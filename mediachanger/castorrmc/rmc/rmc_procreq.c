@@ -38,7 +38,7 @@ static void rmc_logreq(const char *const func, char *const logbuf)
 	char savechrs1[2];
 	char savechrs2[2];
 
-	n1 = LOGBUFSZ - strlen (func) - 36;
+	n1 = RMC_LOGBUFSZ - strlen (func) - 36;
 	n2 = strlen (logbuf);
 	p = logbuf;
 	while (n2 > n1) {
