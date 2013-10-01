@@ -20,6 +20,7 @@
 #include "h/rmc_smcsubr.h"
 #include "h/rmc_smcsubr2.h"
 #include "h/rmc_sendrep.h"
+#include "h/rmc_server_api.h"
 #include "h/tplogger_api.h"
 #include <string.h>
 #include <Ctape_api.h>
@@ -74,8 +75,9 @@ static void rmc_logreq(const char *const func, char *const logbuf)
 	}
 }
 
-int marshall_ELEMENT (char **sbpp,
-                      struct smc_element_info *element_info)
+static int marshall_ELEMENT (
+	char **const sbpp,
+	const struct smc_element_info *const element_info)
 {
 	char *sbp = *sbpp;
 
@@ -96,7 +98,7 @@ int marshall_ELEMENT (char **sbpp,
 int rmc_srv_export(
   const int rpfd,
   char *const req_data,
-  char *const clienthost)
+  const char *const clienthost)
 {
 	int c;
 	char func[16];
@@ -151,7 +153,7 @@ int rmc_srv_export(
 int rmc_srv_findcart(
   const int rpfd,
   char *const req_data,
-  char *const clienthost)
+  const char *const clienthost)
 {
 	int c;
 	struct smc_element_info *element_info;
@@ -250,7 +252,7 @@ int rmc_srv_findcart(
 int rmc_srv_getgeom(
   const int rpfd,
   char *const req_data,
-  char *const clienthost)
+  const char *const clienthost)
 {
 	char func[16];
 	gid_t gid;
@@ -303,7 +305,7 @@ int rmc_srv_getgeom(
 int rmc_srv_import(
   const int rpfd,
   char *const req_data,
-  char *const clienthost)
+  const char *const clienthost)
 {
 	int c;
 	char func[16];
@@ -358,7 +360,7 @@ int rmc_srv_import(
 int rmc_srv_mount(
   const int rpfd,
   char *const req_data,
-  char *const clienthost)
+  const char *const clienthost)
 {
 	int c;
 	int drvord;
@@ -418,7 +420,7 @@ int rmc_srv_mount(
 int rmc_srv_readelem(
   const int rpfd,
   char *const req_data,
-  char *const clienthost)
+  const char *const clienthost)
 {
 	int c;
 	struct smc_element_info *element_info;
@@ -510,7 +512,7 @@ int rmc_srv_readelem(
 int rmc_srv_unmount(
   const int rpfd,
   char *const req_data,
-  char *const clienthost)
+  const char *const clienthost)
 {
 	int c;
 	int drvord;
@@ -563,4 +565,20 @@ int rmc_srv_unmount(
 	if (c) c += ERMCRBTERR;
 	rmc_logit (func, "returns %d\n", c);
 	return c;
+}
+
+int rmc_srv_genericmount(
+	const int rpfd,
+	char *const req_data,
+	const char *const clienthost)
+{
+	return 0;
+}
+
+int rmc_srv_genericunmount(
+	const int rpfd,
+	char *const req_data,
+	const char *const clienthost)
+{
+	return 0;
 }

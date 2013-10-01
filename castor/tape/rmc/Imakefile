@@ -21,17 +21,24 @@ COMM
 COMM @author Steven.Murray@cern.ch
 COMM
 
+COMM For licencing reasons the castor-tape-acs-dismount, castor-tape-acs-mount
+COMM and castor-tape-acs-queryvolume commands are not statically linked with
+COMM the CDK software provided by Oracle.  However if static linking would be
+COMM used then the following comments show how it could be done.
+COMM
 COMM libutl.a and libapi.a are circularly dependent on each other.  The
 COMM -Wl,--start-group -Wl,--end-group options of gcc are used to encompass a
 COMM list of objects that should be passed several times in order to resolve
 COMM their interdependencies.
-CDKLIB = \
-  -Wl,--start-group \
-  $(LIBDIR)/CDK/libutl.a \
-  $(LIBDIR)/CDK/libapi.a \
-  -Wl,--end-group \
-  $(LIBDIR)/CDK/libipc.a \
-  $(LIBDIR)/CDK/libcl.a
+COMM CDKLIB = \
+COMM  -Wl,--start-group \
+COMM  $(LIBDIR)/CDK/libutl.a \
+COMM  $(LIBDIR)/CDK/libapi.a \
+COMM  -Wl,--end-group \
+COMM  $(LIBDIR)/CDK/libipc.a \
+COMM  $(LIBDIR)/CDK/libcl.a
+
+CDKLIB = -L $(LIBDIR)/CDK -lapi -lutl -lipc -lcl
 
 DependsOnLibrary(castor/tape/utils,castortapeutils)
 DependsOnLibrary(common,castorcommon)
