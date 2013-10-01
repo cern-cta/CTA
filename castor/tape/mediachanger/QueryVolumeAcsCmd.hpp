@@ -110,6 +110,19 @@ protected:
     throw (castor::exception::QueryVolumeFailed);
 
   /**
+   * Requests responses from ACSLS in a loop until the RT_FINAL response is
+   * received.
+   *
+   * @param requestSeqNumber The sequemce number that was sent in the initial
+   * request to the ACSLS.
+   * @param buf Output parameter.  Message buffer into which the RT_FINAL
+   * response shall be written.
+   */
+  void getResponsesUntilFinal(const SEQ_NO requestSeqNumber,
+    ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
+    throw (castor::exception::QueryVolumeFailed);
+
+  /**
    * Sends a request for a response to the ACSLS.
    *
    * @param timeout The timeout.

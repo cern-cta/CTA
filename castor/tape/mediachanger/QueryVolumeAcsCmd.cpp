@@ -235,35 +235,11 @@ void castor::tape::mediachanger::QueryVolumeAcsCmd::usage(std::ostream &os)
 QU_VOL_STATUS castor::tape::mediachanger::QueryVolumeAcsCmd::syncQueryVolume()
   throw(castor::exception::QueryVolumeFailed) {
   const SEQ_NO requestSeqNumber = 1;
+  ALIGNED_BYTES buf[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
+
   sendQueryVolumeRequest(requestSeqNumber);
-
-  // Get all responses until RT_FINAL
-  ALIGNED_BYTES msgBuf[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
-  ACS_RESPONSE_TYPE responseType = RT_NONE;
-  int elapsedTime = 0;
-  do {
-    const int remainingTime = m_cmdLine.timeout - elapsedTime;
-    const int responseTimeout = remainingTime > m_cmdLine.queryInterval ?
-      m_cmdLine.queryInterval : remainingTime;
-
-    const time_t startTime = time(NULL);
-    responseType = requestResponse(responseTimeout, requestSeqNumber, msgBuf);
-    elapsedTime += time(NULL) - startTime;
-
-    if(RT_ACKNOWLEDGE == responseType) {
-      m_dbg << "Received RT_ACKNOWLEDGE" << std::endl;
-    }
-
-    if(elapsedTime >= m_cmdLine.timeout) {
-      castor::exception::QueryVolumeFailed ex;
-      ex.getMessage() << "Timed out after " << m_cmdLine.timeout << " seconds";
-      throw(ex);
-    }
-  } while(RT_FINAL != responseType);
-
-  m_dbg << "Received RT_FINAL" << std::endl;
-
-  return processQueryResponse(msgBuf);
+  getResponsesUntilFinal(requestSeqNumber, buf);
+  return processQueryResponse(buf);
 }
 
 //------------------------------------------------------------------------------
@@ -283,6 +259,38 @@ void castor::tape::mediachanger::QueryVolumeAcsCmd::sendQueryVolumeRequest(
       m_cmdLine.volId.external_label << ": " << acs_status(s);
     throw ex;
   }
+}
+
+//------------------------------------------------------------------------------
+// getResponsesUntilFinal
+//------------------------------------------------------------------------------
+void castor::tape::mediachanger::QueryVolumeAcsCmd::getResponsesUntilFinal(
+  const SEQ_NO requestSeqNumber,
+  ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
+  throw (castor::exception::QueryVolumeFailed) {
+  ACS_RESPONSE_TYPE responseType = RT_NONE;
+  int elapsedTime = 0;
+  do {
+    const int remainingTime = m_cmdLine.timeout - elapsedTime;
+    const int responseTimeout = remainingTime > m_cmdLine.queryInterval ?
+      m_cmdLine.queryInterval : remainingTime;
+
+    const time_t startTime = time(NULL);
+    responseType = requestResponse(responseTimeout, requestSeqNumber, buf);
+    elapsedTime += time(NULL) - startTime;
+  
+    if(RT_ACKNOWLEDGE == responseType) {
+      m_dbg << "Received RT_ACKNOWLEDGE" << std::endl;
+    }
+  
+    if(elapsedTime >= m_cmdLine.timeout) {
+      castor::exception::QueryVolumeFailed ex;
+      ex.getMessage() << "Timed out after " << m_cmdLine.timeout << " seconds";
+      throw(ex);
+    }
+  } while(RT_FINAL != responseType);
+
+  m_dbg << "Received RT_FINAL" << std::endl;
 }
 
 //------------------------------------------------------------------------------

@@ -251,35 +251,11 @@ void castor::tape::mediachanger::MountAcsCmd::usage(std::ostream &os)
 void castor::tape::mediachanger::MountAcsCmd::syncMount()
   throw(castor::exception::MountFailed) {
   const SEQ_NO requestSeqNumber = 1;
+  ALIGNED_BYTES buf[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
+
   sendMountRequest(requestSeqNumber);
-
-  // Get all responses until RT_FINAL
-  ALIGNED_BYTES msgBuf[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
-  ACS_RESPONSE_TYPE responseType = RT_NONE;
-  int elapsedTime = 0;
-  do {
-    const int remainingTime = m_cmdLine.timeout - elapsedTime;
-    const int responseTimeout = remainingTime > m_cmdLine.queryInterval ?
-      m_cmdLine.queryInterval : remainingTime;
-
-    const time_t startTime = time(NULL);
-    responseType = requestResponse(responseTimeout, requestSeqNumber, msgBuf);
-    elapsedTime += time(NULL) - startTime;
-
-    if(RT_ACKNOWLEDGE == responseType) {
-      m_dbg << "Received RT_ACKNOWLEDGE" << std::endl;
-    }
-
-    if(elapsedTime >= m_cmdLine.timeout) {
-      castor::exception::MountFailed ex;
-      ex.getMessage() << "Timed out after " << m_cmdLine.timeout << " seconds";
-      throw(ex);
-    }
-  } while(RT_FINAL != responseType);
-
-  m_dbg << "Received RT_FINAL" << std::endl;
-
-  processMountResponse(msgBuf);
+  getResponsesUntilFinal(requestSeqNumber, buf);
+  processMountResponse(buf);
 }
 
 //------------------------------------------------------------------------------
@@ -303,6 +279,38 @@ void castor::tape::mediachanger::MountAcsCmd::sendMountRequest(
       (m_cmdLine.readOnly ? "TRUE" : "FALSE") << ": " << acs_status(s);
     throw ex;
   }
+}
+
+//------------------------------------------------------------------------------
+// getResponsesUntilFinal
+//------------------------------------------------------------------------------
+void castor::tape::mediachanger::MountAcsCmd::getResponsesUntilFinal(
+  const SEQ_NO requestSeqNumber,
+  ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
+  throw (castor::exception::MountFailed) {
+  ACS_RESPONSE_TYPE responseType = RT_NONE;
+  int elapsedTime = 0;
+  do {
+    const int remainingTime = m_cmdLine.timeout - elapsedTime;
+    const int responseTimeout = remainingTime > m_cmdLine.queryInterval ?
+      m_cmdLine.queryInterval : remainingTime;
+
+    const time_t startTime = time(NULL);
+    responseType = requestResponse(responseTimeout, requestSeqNumber, buf);
+    elapsedTime += time(NULL) - startTime;
+
+    if(RT_ACKNOWLEDGE == responseType) {
+      m_dbg << "Received RT_ACKNOWLEDGE" << std::endl;
+    }
+
+    if(elapsedTime >= m_cmdLine.timeout) {
+      castor::exception::MountFailed ex;
+      ex.getMessage() << "Timed out after " << m_cmdLine.timeout << " seconds";
+      throw(ex);
+    }
+  } while(RT_FINAL != responseType);
+
+  m_dbg << "Received RT_FINAL" << std::endl;
 }
 
 //------------------------------------------------------------------------------
