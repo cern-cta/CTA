@@ -27,11 +27,11 @@
 #include <string.h>
 #include <Ctape_api.h>
 extern struct extended_robot_info extended_robot_info;
-extern char localhost[CA_MAXHOSTNAMELEN+1];
  
 /*	rmc_srv_export - export/eject a cartridge from the robot */
 
 int rmc_srv_export(
+  const char *const localhost,
   const int rpfd,
   char *const req_data,
   const char *const clienthost)
@@ -87,6 +87,7 @@ int rmc_srv_export(
 /*	rmc_srv_findcart - find cartridge(s) */
 
 int rmc_srv_findcart(
+  const char *const localhost,
   const int rpfd,
   char *const req_data,
   const char *const clienthost)
@@ -186,6 +187,7 @@ int rmc_srv_findcart(
 /*	rmc_srv_getgeom - get the robot geometry */
 
 int rmc_srv_getgeom(
+  const char *const localhost,
   const int rpfd,
   char *const req_data,
   const char *const clienthost)
@@ -239,6 +241,7 @@ int rmc_srv_getgeom(
 /*	rmc_srv_import - import/inject a cartridge into the robot */
 
 int rmc_srv_import(
+  const char *const localhost,
   const int rpfd,
   char *const req_data,
   const char *const clienthost)
@@ -294,6 +297,7 @@ int rmc_srv_import(
 /*	rmc_srv_mount - mount a cartridge on a drive */
 
 int rmc_srv_mount(
+  const char *const localhost,
   const int rpfd,
   char *const req_data,
   const char *const clienthost)
@@ -354,6 +358,7 @@ int rmc_srv_mount(
 /*	rmc_srv_readelem - read element status */
 
 int rmc_srv_readelem(
+  const char *const localhost,
   const int rpfd,
   char *const req_data,
   const char *const clienthost)
@@ -446,6 +451,7 @@ int rmc_srv_readelem(
 /*	rmc_srv_unmount - dismount a cartridge from a drive */
 
 int rmc_srv_unmount(
+  const char *const localhost,
   const int rpfd,
   char *const req_data,
   const char *const clienthost)
@@ -504,6 +510,7 @@ int rmc_srv_unmount(
 }
 
 int rmc_srv_genericmount(
+	const char *const localhost,
 	const int rpfd,
 	char *const req_data,
 	const char *const clienthost)
@@ -512,6 +519,7 @@ int rmc_srv_genericmount(
 }
 
 int rmc_srv_genericunmount(
+	const char *const localhost,
 	const int rpfd,
 	char *const req_data,
 	const char *const clienthost)
