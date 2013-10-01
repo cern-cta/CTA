@@ -32,11 +32,12 @@
 #include "sendscsicmd.h"
 
 /* Forward declaration */
-int getreq(int, int*, char*, char**);
-void procreq(int, char*, char*);
+static int getreq(const int s, int *const req_type, char *const req_data,
+  char **const clienthost);
+static void procreq(const int req_type, char *const req_data,
+  char *const clienthost);
+static void doit(const int rqfd);
 
-int being_shutdown;
-char func[16];
 int jid;
 char localhost[CA_MAXHOSTNAMELEN+1];
 int maxfds;
@@ -47,7 +48,6 @@ int rmc_main(struct main_args *main_args)
 {
 	int c;
 	unsigned char cdb[12];
-	void doit(int);
 	char domainname[CA_MAXHOSTNAMELEN+1];
 	struct sockaddr_in from;
 	socklen_t fromlen = sizeof(from);
@@ -55,7 +55,6 @@ int rmc_main(struct main_args *main_args)
 	char *msgaddr;
 	int nb_sense_ret;
 	int on = 1;	/* for REUSEADDR */
-	char *p;
 	char plist[40];
 	fd_set readfd, readmask;
 	char *robot;
@@ -67,22 +66,14 @@ int rmc_main(struct main_args *main_args)
 	struct smc_status smc_status;
 	struct servent *sp;
 	struct timeval timeval;
+	char func[16];
+
+	strncpy (func, "rmc_serv", sizeof(func));
+	func[sizeof(func) - 1] = '\0';
 
         /* init the tplogger interface */
         {
-                mode_t save_mask;
-                /* char *p; */
-                
-                save_mask = umask(0);
-
-                /*
-                p = getconfent ("TAPE", "TPLOGGER", 0);
-                if (p && (0 == strcasecmp(p, "SYSLOG"))) {
-                        tl_init_handle( &tl_rtcpd, "syslog" ); 
-                } else {
-                        tl_init_handle( &tl_rmc, "dlf" );  
-                }
-                */
+                const mode_t save_mask = umask(0);
 
                 /* only syslog support */
                 tl_init_handle( &tl_rmcdaemon, "syslog" );
@@ -95,7 +86,6 @@ int rmc_main(struct main_args *main_args)
         }
 
 	jid = getpid();
-	strncpy (func, "rmc_serv", 16);
 	rmclogit (func, "started\n");
         tl_rmcdaemon.tl_log( &tl_rmcdaemon, 109, 2,
                              "func"   , TL_MSG_PARAM_STR, "rmc_main",
@@ -212,12 +202,15 @@ int rmc_main(struct main_args *main_args)
 	}
 	memset ((char *)&sin, 0, sizeof(struct sockaddr_in)) ;
 	sin.sin_family = AF_INET ;
-	if ((p = getenv ("RMC_PORT")) || (p = getconfent ("RMC", "PORT", 0))) {
-		sin.sin_port = htons ((unsigned short)atoi (p));
-	} else if ((sp = getservbyname ("rmc", "tcp"))) {
-		sin.sin_port = sp->s_port;
-	} else {
-		sin.sin_port = htons ((unsigned short)RMC_PORT);
+	{
+		const char *p;
+		if ((p = getenv ("RMC_PORT")) || (p = getconfent ("RMC", "PORT", 0))) {
+			sin.sin_port = htons ((unsigned short)atoi (p));
+		} else if ((sp = getservbyname ("rmc", "tcp"))) {
+			sin.sin_port = sp->s_port;
+		} else {
+			sin.sin_port = htons ((unsigned short)RMC_PORT);
+		}
 	}
 	sin.sin_addr.s_addr = htonl(INADDR_ANY);
 	if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0) {
@@ -272,7 +265,7 @@ int main(int argc,
 	exit (rmc_main (&main_args));
 }
 
-void doit(int rqfd)
+static void doit(const int rqfd)
 {
 	int c;
 	char *clienthost;
@@ -287,10 +280,11 @@ void doit(int rqfd)
 		close (rqfd);
 }
 
-int getreq(int s,
-           int *req_type,
-           char *req_data,
-           char **clienthost)
+static int getreq(
+  const int s,
+  int *const req_type,
+  char *const req_data,
+  char **const clienthost)
 {
 	struct sockaddr_in from;
 	socklen_t fromlen = sizeof(from);
@@ -301,6 +295,10 @@ int getreq(int s,
 	int n;
 	char *rbp;
 	char req_hdr[3*LONGSIZE];
+	char func[16];
+
+	strncpy (func, "rmc_serv", sizeof(func));
+	func[sizeof(func) - 1] = '\0';
 
 	l = netread_timeout (s, req_hdr, sizeof(req_hdr), RMC_TIMEOUT);
 	if (l == sizeof(req_hdr)) {
@@ -318,9 +316,6 @@ int getreq(int s,
 		}
 		l = msglen - sizeof(req_hdr);
 		n = netread_timeout (s, req_data, l, RMC_TIMEOUT);
-		if (being_shutdown) {
-			return (ERMCNACT);
-		}
 		if (getpeername (s, (struct sockaddr *) &from, &fromlen) < 0) {
 			rmclogit (func, RMC02, "getpeername", neterror());
                         tl_rmcdaemon.tl_log( &tl_rmcdaemon, 2, 4,
@@ -356,9 +351,10 @@ int getreq(int s,
 	}
 }
 
-void procreq(int req_type,
-             char *req_data,
-             char *clienthost)
+static void procreq(
+  const int req_type,
+  char *const req_data,
+  char *const clienthost)
 {
 	int c;
 

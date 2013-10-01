@@ -19,7 +19,6 @@
 #include "tplogger_api.h"
 #include <string.h>
 #include <Ctape_api.h>
-extern int being_shutdown;
 extern struct extended_robot_info extended_robot_info;
 extern char localhost[CA_MAXHOSTNAMELEN+1];
 extern int rpfd;
