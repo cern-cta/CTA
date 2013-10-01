@@ -243,7 +243,7 @@ int rmc_main(struct main_args *main_args)
 			(void) rmc_doit (rpfd);
 		}
 		memcpy (&readfd, &readmask, sizeof(readmask));
-		timeval.tv_sec = CHECKI;
+		timeval.tv_sec = RMC_CHECKI;
 		timeval.tv_usec = 0;
 		if (select (maxfds, &readfd, (fd_set *)0, (fd_set *)0, &timeval) < 0) {
 			FD_ZERO (&readfd);
