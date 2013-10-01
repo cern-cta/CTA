@@ -128,7 +128,7 @@ castor::tape::mediachanger::MountAcsCmdLine
   // Prevent getopt() from printing an error message if it does not recognize
   // an option character
   opterr = 0;
-  while((c = getopt_long(argc, argv, "dhq:rt:", longopts, NULL)) != -1) {
+  while((c = getopt_long(argc, argv, ":dhq:rt:", longopts, NULL)) != -1) {
 
     switch (c) {
     case 'd':
@@ -141,7 +141,7 @@ castor::tape::mediachanger::MountAcsCmdLine
       cmdLine.queryInterval = atoi(optarg);
       if(0 >= cmdLine.queryInterval) {
         castor::exception::InvalidArgument ex;
-        ex.getMessage() << "\tQuery value must be an integer greater than 0"
+        ex.getMessage() << "Query value must be an integer greater than 0"
           ": value=" << cmdLine.queryInterval;
         throw ex;
       }
@@ -153,7 +153,7 @@ castor::tape::mediachanger::MountAcsCmdLine
       cmdLine.timeout = atoi(optarg);
       if(0 >= cmdLine.timeout) {
         castor::exception::InvalidArgument ex;
-        ex.getMessage() << "\tTimeout value must be an integer greater than 0"
+        ex.getMessage() << "Timeout value must be an integer greater than 0"
           ": value=" << cmdLine.timeout;
         throw ex;
       }
@@ -161,7 +161,7 @@ castor::tape::mediachanger::MountAcsCmdLine
     case ':':
       {
         castor::exception::InvalidArgument ex;
-        ex.getMessage() << "\tThe -" << (char)optopt
+        ex.getMessage() << "The -" << (char)optopt
           << " option requires a parameter";
         throw ex;
       }
@@ -171,9 +171,9 @@ castor::tape::mediachanger::MountAcsCmdLine
         castor::exception::InvalidArgument ex;
 
         if(optopt == 0) {
-          ex.getMessage() << "\tUnknown command-line option";
+          ex.getMessage() << "Unknown command-line option";
         } else {
-          ex.getMessage() << "\tUnknown command-line option: -" << (char)optopt;
+          ex.getMessage() << "Unknown command-line option: -" << (char)optopt;
         }
         throw ex;
       }
@@ -182,7 +182,7 @@ castor::tape::mediachanger::MountAcsCmdLine
       {
         castor::exception::Internal ex;
         ex.getMessage() <<
-          "\tgetopt_long returned the following unknown value: 0x" <<
+          "getopt_long returned the following unknown value: 0x" <<
           std::hex << (int)c;
         throw ex;
       }
