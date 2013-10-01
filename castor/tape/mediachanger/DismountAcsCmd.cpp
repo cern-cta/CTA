@@ -76,6 +76,9 @@ int castor::tape::mediachanger::DismountAcsCmd::main(const int argc,
     return 0;
   }
 
+  // Setup debug mode to be on or off depending on the command-line arguments
+  m_debugBuf.setDebug(m_cmdLine.debug);
+
   m_dbg << "force = " << (m_cmdLine.force ? "TRUE" : "FALSE") << std::endl;
   m_dbg << "query = " << m_cmdLine.queryInterval << std::endl;
   m_dbg << "timeout = " << m_cmdLine.timeout << std::endl;

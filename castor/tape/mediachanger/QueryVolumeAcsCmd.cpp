@@ -78,6 +78,9 @@ int castor::tape::mediachanger::QueryVolumeAcsCmd::main(const int argc,
     return 0;
   }
 
+  // Setup debug mode to be on or off depending on the command-line arguments
+  m_debugBuf.setDebug(m_cmdLine.debug);
+
   m_dbg << "query = " << m_cmdLine.queryInterval << std::endl;
   m_dbg << "timeout = " << m_cmdLine.timeout << std::endl;
   m_dbg << "VID = " << m_cmdLine.volId.external_label << std::endl;
