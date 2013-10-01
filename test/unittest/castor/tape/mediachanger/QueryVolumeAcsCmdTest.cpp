@@ -120,7 +120,7 @@ public:
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing query is set to the default",
       1, cmdLine.queryInterval);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing timeout is set to the default",
-      10, cmdLine.timeout);
+      20, cmdLine.timeout);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing volume identfier was parsed",
       std::string("VIDVID"), std::string(cmdLine.volId.external_label));
   }

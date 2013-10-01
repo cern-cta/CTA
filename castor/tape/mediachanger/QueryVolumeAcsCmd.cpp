@@ -36,7 +36,7 @@ castor::tape::mediachanger::QueryVolumeAcsCmd::QueryVolumeAcsCmd(
   std::istream &inStream, std::ostream &outStream, std::ostream &errStream,
   Acs &acs) throw():
   AcsCmd(inStream, outStream, errStream, acs), m_defaultQueryInterval(1),
-  m_defaultTimeout(10) {
+  m_defaultTimeout(20) {
 }
 
 //------------------------------------------------------------------------------
