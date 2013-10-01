@@ -32,7 +32,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <Ctape_api.h>
-#include "h/sendscsicmd.h"
+#include "h/rmc_send_scsi_cmd.h"
 
 /* Forward declaration */
 static int getreq(const int s, int *const req_type, char *const req_data,
@@ -128,7 +128,7 @@ int rmc_main(struct main_args *main_args)
 	cdb[9] = 40;
 	memset (plist, 0, sizeof(plist));
 	strcpy (plist, "DUMMY0");
-	c = send_scsi_cmd (extended_robot_info.smc_fd,
+	c = rmc_send_scsi_cmd (extended_robot_info.smc_fd,
                      extended_robot_info.smc_ldr, 0, cdb, 12, (unsigned char*)plist, 40,
 	    sense, 38, 900000, SCSI_OUT, &nb_sense_ret, &msgaddr);
 	if (c < 0) {

@@ -5,12 +5,18 @@ COMM
 
 COMM 	Make SCSI media changer server programs.
 
-COMM The rmcd daemon depends on libcastortape.so therefore include the rules to
-COMM make it
-include $(CASTOR_ROOT)/tape/Makefile
+COMM The rmcd daemon, the rmc library and the smc command-line tool depend on
+COMM libcastorcommon.so therefore include the rules to make it
+include $(CASTOR_ROOT)/common/Makefile
 
-RMCD_DEPLIBS = DepSharedLibraryTargetName(tape,castortape)
-RMCD_LIBS = $(RMCD_DEPLIBS) BuildRPathcastortape
+COMM The rmcd daemon depends on libcastorupv.so therefore include the rules to
+COMM make it
+include $(CASTOR_ROOT)/upv/Makefile
+
+RMCD_DEPLIBS = \
+  DepSharedLibraryTargetName(common,castorcommon) \
+  DepSharedLibraryTargetName(upv,castorupv)
+RMCD_LIBS = $(RMCD_DEPLIBS) BuildRPathcastorupv
 RMCD_OBJS = \
   rmc_serv.o \
   rmc_procreq.o \
@@ -35,10 +41,6 @@ CLIENTLIBMANPAGE(rmc_import)
 CLIENTLIBMANPAGE(rmc_mount)
 CLIENTLIBMANPAGE(rmc_read_elem_status)
 CLIENTLIBMANPAGE(rmc_seterrbuf)
-
-COMM Both the rmc library and the smc command-line tool depend on
-COMM libcastorcommon.so therefore include the rules to make it
-include $(CASTOR_ROOT)/common/Makefile
 
 RMCLIB_DEPLIBS = DepSharedLibraryTargetName(common,castorcommon)
 RMCLIB_LIBS = $(RMCLIB_DEPLIBS)
