@@ -1,0 +1,68 @@
+COMM
+COMM                      castor/tape/mediachanger/Imakefile
+COMM
+COMM This file is part of the Castor project.
+COMM See http://castor.web.cern.ch/castor
+COMM
+COMM Copyright (C) 2003  CERN
+COMM This program is free software; you can redistribute it and/or
+COMM modify it under the terms of the GNU General Public License
+COMM as published by the Free Software Foundation; either version 2
+COMM of the License, or (at your option) any later version.
+COMM This program is distributed in the hope that it will be useful,
+COMM but WITHOUT ANY WARRANTY; without even the implied warranty of
+COMM MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+COMM GNU General Public License for more details.
+COMM You should have received a copy of the GNU General Public License
+COMM along with this program; if not, write to the Free Software
+COMM Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+COMM
+COMM
+COMM @author Steven.Murray@cern.ch
+COMM
+
+CDKLIB = -L$(LIBDIR)/CDK -lapi -lcl -lipc -lutl
+
+DependsOnLibrary(castor/tape/utils,castortapeutils)
+DependsOnLibrary(common,castorcommon)
+
+ACS_SRCS = \
+  Acs.cpp \
+  AcsImpl.cpp
+
+COMPILECPP(Acs.cpp, -DLINUX -I/usr/include/CDK)
+COMPILECPP(AcsImpl.cpp, -DLINUX -I/usr/include/CDK)
+
+ACSCOMMAND_SRCS = \
+  AcsCmd.cpp
+
+COMPILECPP(AcsCmd.cpp, -DLINUX -I/usr/include/CDK)
+
+MOUNTACSBIN_SRCS = \
+  $(ACS_SRCS) \
+  $(ACSCOMMAND_SRCS) \
+  MountAcsCmdLine.cpp \
+  MountAcsCmd.cpp \
+  MountAcsMain.cpp
+MOUNTACSBIN_OBJS = $(MOUNTACSBIN_SRCS:.cpp=.o)
+
+COMPILECPP(MountAcsCmdLine.cpp, -DLINUX -I/usr/include/CDK)
+COMPILECPP(MountAcsCmd.cpp, -DLINUX -I/usr/include/CDK)
+COMPILECPP(MountAcsMain.cpp, -DLINUX -I/usr/include/CDK)
+
+NormalProgramTarget(mountacs,$(MOUNTACSBIN_OBJS),,$(CDKLIB),755)
+EXEMANPAGE(mountacs)
+
+DISMOUNTACSBIN_SRCS = \
+  $(ACS_SRCS) \
+  $(ACSCOMMAND_SRCS) \
+  DismountAcsCmdLine.cpp \
+  DismountAcsCmd.cpp \
+  DismountAcsMain.cpp
+DISMOUNTACSBIN_OBJS = $(DISMOUNTACSBIN_SRCS:.cpp=.o)
+COMPILECPP(DismountAcsCmdLine.cpp, -DLINUX -I/usr/include/CDK)
+COMPILECPP(DismountAcsCmd.cpp, -DLINUX -I/usr/include/CDK)
+COMPILECPP(DismountAcsMain.cpp, -DLINUX -I/usr/include/CDK)
+
+NormalProgramTarget(dismountacs,$(DISMOUNTACSBIN_OBJS),,$(CDKLIB),755)
+EXEMANPAGE(dismountacs)
