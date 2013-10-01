@@ -28,7 +28,7 @@
 extern struct extended_robot_info extended_robot_info;
 extern char localhost[CA_MAXHOSTNAMELEN+1];
  
-static int marshall_ELEMENT (
+static int rmc_marshall_element (
 	char **const sbpp,
 	const struct smc_element_info *const element_info)
 {
@@ -192,7 +192,7 @@ int rmc_srv_findcart(
 	sbp = repbuf;
 	marshall_LONG (sbp, c);
 	for (i = 0, elemp = element_info; i < c; i++, elemp++)
-		marshall_ELEMENT (&sbp, elemp);
+		rmc_marshall_element (&sbp, elemp);
 	free (element_info);
 	rmc_sendrep (rpfd, MSG_DATA, sbp - repbuf, repbuf);
 	free (repbuf);
@@ -452,7 +452,7 @@ int rmc_srv_readelem(
 	sbp = repbuf;
 	marshall_LONG (sbp, c);
 	for (i = 0, elemp = element_info; i < c; i++, elemp++)
-		marshall_ELEMENT (&sbp, elemp);
+		rmc_marshall_element (&sbp, elemp);
 	free (element_info);
 	rmc_sendrep (rpfd, MSG_DATA, sbp - repbuf, repbuf);
 	free (repbuf);
