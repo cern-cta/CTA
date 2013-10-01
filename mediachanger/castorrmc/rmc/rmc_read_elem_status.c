@@ -27,7 +27,7 @@ int rmc_read_elem_status(
 	int msglen;
 	char *q;
 	char *rbp;
-	char repbuf[REPBUFSZ];
+	char repbuf[RMC_REPBUFSZ];
 	char *sbp;
 	char sendbuf[REQBUFSZ];
 	uid_t uid;

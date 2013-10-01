@@ -37,7 +37,7 @@ int send2rmc(
 	char *p;
 	char prtbuf[RMC_PRTBUFSZ];
 	int rep_type;
-	char repbuf[REPBUFSZ];
+	char repbuf[RMC_REPBUFSZ];
 	char rmchost[CA_MAXHOSTNAMELEN+1];
 	int s;
 	struct sockaddr_in sin; /* internet socket */
