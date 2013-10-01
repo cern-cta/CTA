@@ -141,7 +141,7 @@ static void find_sgpath(char *sgpath, int maj, int min) {
 
 
 int send_scsi_cmd (
-	int tapefd,
+	const int tapefd,
 	const char *const path,
 	const int do_not_open,
 	const unsigned char *const cdb,

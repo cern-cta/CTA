@@ -27,7 +27,7 @@
 #define H_SENDSCSISMD_H 1
 
 int send_scsi_cmd (
-  int tapefd,
+  const int tapefd,
   const char *const path,
   const int do_not_open,
   const unsigned char *const cdb,
