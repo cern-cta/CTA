@@ -11,13 +11,14 @@
 #include <time.h>
 #include <stdarg.h>
 #include <unistd.h>
-#include "rmc.h"
+#include "h/rmc_constants.h"
+#include "h/rmc_logit.h"
 extern int jid;
 
-int rmclogit(char *func, char *msg, ...)
+int rmc_logit(const char *const func, const char *const msg, ...)
 {
 	va_list args;
-	char prtbuf[PRTBUFSZ];
+	char prtbuf[RMC_PRTBUFSZ];
 	int save_errno;
 	struct tm *tm;
 	time_t current_time;
