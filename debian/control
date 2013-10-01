@@ -316,21 +316,3 @@ Build-Depends: xrootd-server, xrootd-client, xrootd-libs-devel, xrootd-client-de
 Description: castor (Cern Advanced STORage system)
  Xrootd support of Castor
 XBS-Obsoletes: xrootd-libtransfermanager, xrootd-xcastor2fs
-
-Package: castor-mountacs
-Architecture: any
-Depends:
-Description: castor (Cern Advanced STORage system)
- Command-line tool for mounting volumes in an ACSLS compatible library
-
-Package: castor-dismountacs
-Architecture: any
-Depends:
-Description: castor (Cern Advanced STORage system)
- Command-line tool for dimounting volumes in an ACSLS compatible library
-
-Package: castor-queryvolumeacs
-Architecture: any
-Depends:
-Description: castor (Cern Advanced STORage system)
- Command-line tool for querying volumes in an ACSLS compatible library

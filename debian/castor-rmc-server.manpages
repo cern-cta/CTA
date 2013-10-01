@@ -1,1 +1,4 @@
+debian/castor/usr/share/man/man1/castor-tape-acs-dismount.1castor.gz
+debian/castor/usr/share/man/man1/castor-tape-acs-mount.1castor.gz
+debian/castor/usr/share/man/man1/castor-tape-acs-queryvolume.1castor.gz
 debian/castor/usr/share/man/man8/rmcd.8castor.gz
