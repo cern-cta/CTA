@@ -12,13 +12,13 @@
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 .TH MOUNTACS 1 "$Date: 2009/08/07 15:56:38 $" CASTOR "CASTOR"
 .SH NAME
-mountacs \- mount a value
+mountacs \- mount a volume
 .SH SYNOPSIS
 .BI "mountacs [options] VID DRIVE"
 
 .SH DESCRIPTION
 .B mountacs
-mounts the value with the specfied VID into the drive with the specified DRIVE
+mounts the volume with the specfied VID into the drive with the specified DRIVE
 ID. The DRIVE ID format is ACS:LSM:panel:transport.
 
 .SH OPTIONS
@@ -32,15 +32,15 @@ Prints the usage message.
 \fB\-q, \-\-query SECONDS
 Time wait between queries to ACLS for responses.
 SECONDS must be an integer value greater than 0.
-The default values of SECONDS is 300.
+The default value of SECONDS is 10.
 .TP
 \fB\-r, \-\-readonly
-Request the value is mounted for read-only access.
+Request the volume is mounted for read-only access.
 .TP
 \fB\-t, \-\-timeout SECONDS
 Time to wait for the mount operation to conclude.  
 SECONDS must be an integer value greater than 0.
-The default value of SECONDS is 10.
+The default value of SECONDS is 600.
 
 .SH "RETURN CODES"
 .TP
