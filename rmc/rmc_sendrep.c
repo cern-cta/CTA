@@ -25,7 +25,7 @@ int rmc_sendrep(const int rpfd, const int rep_type, ...)
 	char prtbuf[RMC_PRTBUFSZ];
 	char *rbp;
 	int rc;
-	char repbuf[REPBUFSZ];
+	char repbuf[RMC_REPBUFSZ];
 	int repsize;
 
 	strncpy (func, "rmc_sendrep", sizeof(func));
