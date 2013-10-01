@@ -32,6 +32,9 @@ castor/rtcopy/rechandler/Makefile
 castor/rtcopy/rechandler/rechandlerd
 castor/scheduler/Makefile
 castor/stager/daemon/stagerd
+castor/tape/mediachanger/dismountacs
+castor/tape/mediachanger/mountacs
+castor/tape/mediachanger/queryvolumeacs
 castor/tape/mighunter/mighunterd
 castor/tape/rechandler/rechandlerd
 castor/tape/tapebridge/tapebridged
