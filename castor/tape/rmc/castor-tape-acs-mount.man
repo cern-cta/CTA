@@ -10,7 +10,7 @@
 .\" You should have received a copy of the GNU General Public License
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-.TH MOUNTACS 1 "$Date: 2009/08/07 15:56:38 $" CASTOR "CASTOR"
+.TH CASTOR-TAPE-ACS-MOUNT 1 "$Date: 2009/08/07 15:56:38 $" CASTOR "CASTOR"
 .SH NAME
 castor-tape-acs-mount \- mount a volume
 .SH SYNOPSIS

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmc/DismountAcsMain.cpp
+ *                 castor/tape/rmc/AcsDismountCmdLine.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -21,19 +21,21 @@
  *
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
- 
-#include "castor/tape/rmc/AcsImpl.hpp"
-#include "castor/tape/rmc/DismountAcsCmd.hpp"
 
-#include <iostream>
+#include "castor/tape/rmc/AcsDismountCmdLine.hpp"
 
-//------------------------------------------------------------------------------
-// main
-//------------------------------------------------------------------------------
-int main(const int argc, char *const *const argv) {
-  castor::tape::rmc::AcsImpl acs;
-  castor::tape::rmc::DismountAcsCmd
-    cmd(std::cin, std::cout, std::cerr, acs);
-
-  return cmd.main(argc, argv);
+//-----------------------------------------------------------------------------
+// constructor
+//-----------------------------------------------------------------------------
+castor::tape::rmc::AcsDismountCmdLine::AcsDismountCmdLine() throw():
+  debug(false),
+  force(FALSE),
+  help(false),
+  queryInterval(0),
+  timeout(0) {
+  driveId.panel_id.lsm_id.acs = (ACS)0;
+  driveId.panel_id.lsm_id.lsm = (LSM)0;
+  driveId.panel_id.panel = (PANEL)0;
+  driveId.drive = (DRIVE)0;
+  memset(volId.external_label, '\0', sizeof(volId.external_label));
 }

@@ -49,34 +49,34 @@ ACSCOMMAND_SRCS = \
 
 COMPILECPP(AcsCmd.cpp, -DLINUX -I/usr/include/CDK)
 
-MOUNTACSBIN_SRCS = \
+ACSMOUNTBIN_SRCS = \
   $(ACS_SRCS) \
   $(ACSCOMMAND_SRCS) \
   AcsMountCmd.cpp \
   AcsMountCmdLine.cpp \
   AcsMountMain.cpp
-MOUNTACSBIN_OBJS = $(MOUNTACSBIN_SRCS:.cpp=.o)
+ACSMOUNTBIN_OBJS = $(ACSMOUNTBIN_SRCS:.cpp=.o)
 
 COMPILECPP(AcsMountCmd.cpp, -DLINUX -I/usr/include/CDK)
 COMPILECPP(AcsMountCmdLine.cpp, -DLINUX -I/usr/include/CDK)
 COMPILECPP(AcsMountMain.cpp, -DLINUX -I/usr/include/CDK)
 
-NormalProgramTarget(mountacs,$(MOUNTACSBIN_OBJS),,$(CDKLIB),755)
-EXEMANPAGE(mountacs)
+NormalProgramTarget(castor-tape-acs-mount,$(ACSMOUNTBIN_OBJS),,$(CDKLIB),755)
+EXEMANPAGE(castor-tape-acs-mount)
 
-DISMOUNTACSBIN_SRCS = \
+ACSDISMOUNTBIN_SRCS = \
   $(ACS_SRCS) \
   $(ACSCOMMAND_SRCS) \
-  DismountAcsCmdLine.cpp \
-  DismountAcsCmd.cpp \
-  DismountAcsMain.cpp
-DISMOUNTACSBIN_OBJS = $(DISMOUNTACSBIN_SRCS:.cpp=.o)
-COMPILECPP(DismountAcsCmdLine.cpp, -DLINUX -I/usr/include/CDK)
-COMPILECPP(DismountAcsCmd.cpp, -DLINUX -I/usr/include/CDK)
-COMPILECPP(DismountAcsMain.cpp, -DLINUX -I/usr/include/CDK)
+  AcsDismountCmd.cpp \
+  AcsDismountCmdLine.cpp \
+  AcsDismountMain.cpp
+ACSDISMOUNTBIN_OBJS = $(ACSDISMOUNTBIN_SRCS:.cpp=.o)
+COMPILECPP(AcsDismountCmd.cpp, -DLINUX -I/usr/include/CDK)
+COMPILECPP(AcsDismountCmdLine.cpp, -DLINUX -I/usr/include/CDK)
+COMPILECPP(AcsDismountMain.cpp, -DLINUX -I/usr/include/CDK)
 
-NormalProgramTarget(dismountacs,$(DISMOUNTACSBIN_OBJS),,$(CDKLIB),755)
-EXEMANPAGE(dismountacs)
+NormalProgramTarget(castor-tape-acs-dismount,$(ACSDISMOUNTBIN_OBJS),,$(CDKLIB),755)
+EXEMANPAGE(castor-tape-acs-dismount)
 
 QUERYVOLUMEACSBIN_SRCS = \
   $(ACS_SRCS) \

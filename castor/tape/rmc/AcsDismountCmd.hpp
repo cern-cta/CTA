@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmc/DismountAcsCmd.hpp
+ *                 castor/tape/rmc/AcsDismountCmd.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,15 +22,15 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_RMC_DISMOUNTACSCMD_HPP
-#define CASTOR_TAPE_RMC_DISMOUNTACSCMD_HPP 1
+#ifndef CASTOR_TAPE_RMC_ACSDISMOUNTCMD_HPP
+#define CASTOR_TAPE_RMC_ACSDISMOUNTCMD_HPP 1
 
 #include "castor/exception/DismountFailed.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/MissingOperand.hpp"
 #include "castor/tape/rmc/AcsCmd.hpp"
-#include "castor/tape/rmc/DismountAcsCmdLine.hpp"
+#include "castor/tape/rmc/AcsDismountCmdLine.hpp"
 
 namespace castor {
 namespace tape {
@@ -39,7 +39,7 @@ namespace rmc {
 /**
  * The class implementing the mount command.
  */
-class DismountAcsCmd: public AcsCmd {
+class AcsDismountCmd: public AcsCmd {
 public:
 
   /**
@@ -50,13 +50,13 @@ public:
    * @param errStream Standard error stream.
    * @param acs Wrapper around the ACSLS C-API.
    */
-  DismountAcsCmd(std::istream &inStream, std::ostream &outStream,
+  AcsDismountCmd(std::istream &inStream, std::ostream &outStream,
     std::ostream &errStream, Acs &acs) throw();
 
   /**
    * Destructor.
    */
-  virtual ~DismountAcsCmd() throw();
+  virtual ~AcsDismountCmd() throw();
 
   /**
    * The entry function of the command.
@@ -84,7 +84,7 @@ protected:
    * @param argv Argument vector from the executable's entry function: main().
    * @return The parsed command-line.
    */
-  DismountAcsCmdLine parseCmdLine(const int argc, char *const *const argv)
+  AcsDismountCmdLine parseCmdLine(const int argc, char *const *const argv)
     throw(castor::exception::Internal, castor::exception::InvalidArgument,
       castor::exception::MissingOperand);
 
@@ -127,7 +127,7 @@ private:
    *
    * This member-variable is set by the main() method of this class.
    */
-  DismountAcsCmdLine m_cmdLine;
+  AcsDismountCmdLine m_cmdLine;
 
   /**
    * The default time in seconds to wait between queries to ACS for responses.
@@ -140,11 +140,11 @@ private:
    */
   const int m_defaultTimeout;
 
-}; // class DismountAcsCmd
+}; // class AcsDismountCmd
 
 } // namespace rmc
 } // namespace tape
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_RMC_DISMOUNTACSCMD_HPP
+#endif // CASTOR_TAPE_RMC_ACSDISMOUNTCMD_HPP

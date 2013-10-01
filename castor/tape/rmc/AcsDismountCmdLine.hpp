@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmc/DismountAcsCmdLine.hpp
+ *                 castor/tape/rmc/AcsDismountCmdLine.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_RMC_DISMOUNTACSCMDLINE_HPP
-#define CASTOR_TAPE_RMC_DISMOUNTACSCMDLINE_HPP 1
+#ifndef CASTOR_TAPE_RMC_ACSDISMOUNTCMDLINE_HPP
+#define CASTOR_TAPE_RMC_ACSDISMOUNTCMDLINE_HPP 1
 
 extern "C" {
 #include "acssys.h"
@@ -39,14 +39,14 @@ namespace rmc {
 /**
  * Data type used to store the results of parsing the command-line.
  */
-struct DismountAcsCmdLine {
+struct AcsDismountCmdLine {
   /**
    * Constructor.
    *
    * Initialises all BOOLEAN member-variables to FALSE, all integer
    * member-variables to 0 and the volume identifier to an empty string.
    */
-  DismountAcsCmdLine() throw();
+  AcsDismountCmdLine() throw();
 
   /**
    * True if the debug option has been set.
@@ -86,11 +86,11 @@ struct DismountAcsCmdLine {
    */
   DRIVEID driveId;
 
-}; // class DismountAcsCmdLine
+}; // class AcsDismountCmdLine
 
 } // namespace rmc
 } // namespace tape
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_RMC_DISMOUNTACSCMDLINE_HPP
+#endif // CASTOR_TAPE_RMC_ACSDISMOUNTCMDLINE_HPP

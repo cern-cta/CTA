@@ -10,11 +10,11 @@
 .\" You should have received a copy of the GNU General Public License
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-.TH DISMOUNTACS 1 "$Date: 2009/08/07 15:56:38 $" CASTOR "CASTOR"
+.TH CASTOR-TAPE-ACS-DISMOUNT 1 "$Date: 2009/08/07 15:56:38 $" CASTOR "CASTOR"
 .SH NAME
-mountacs \- dismount a volume
+castor-tape-acs-dismount \- dismount a volume
 .SH SYNOPSIS
-.BI "dismountacs [options] VID DRIVE"
+.BI "castor-tape-acs-dismount [options] VID DRIVE"
 
 .SH DESCRIPTION
 .B dismountacs
@@ -38,7 +38,7 @@ SECONDS must be an integer value greater than 0.
 The default value of SECONDS is 10.
 .TP
 \fB\-t, \-\-timeout SECONDS
-Time to wait for the mount operation to conclude.
+Time to wait for the dismount operation to conclude.
 SECONDS must be an integer value greater than 0.
 The default value of SECONDS is 600.
 

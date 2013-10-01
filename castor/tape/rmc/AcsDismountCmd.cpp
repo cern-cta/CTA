@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmc/DismountAcsCmd.cpp
+ *                 castor/tape/rmc/AcsDismountCmd.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,7 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/rmc/DismountAcsCmd.hpp"
+#include "castor/tape/rmc/AcsDismountCmd.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 #include <getopt.h>
@@ -30,7 +30,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::rmc::DismountAcsCmd::DismountAcsCmd(
+castor::tape::rmc::AcsDismountCmd::AcsDismountCmd(
   std::istream &inStream, std::ostream &outStream, std::ostream &errStream,
   Acs &acs) throw():
   AcsCmd(inStream, outStream, errStream, acs), m_defaultQueryInterval(10),
@@ -40,14 +40,14 @@ castor::tape::rmc::DismountAcsCmd::DismountAcsCmd(
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::tape::rmc::DismountAcsCmd::~DismountAcsCmd() throw() {
+castor::tape::rmc::AcsDismountCmd::~AcsDismountCmd() throw() {
   // Do nothing
 }
 
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int castor::tape::rmc::DismountAcsCmd::main(const int argc,
+int castor::tape::rmc::AcsDismountCmd::main(const int argc,
   char *const *const argv) throw() {
   try {
     m_cmdLine = parseCmdLine(argc, argv);
@@ -98,7 +98,7 @@ int castor::tape::rmc::DismountAcsCmd::main(const int argc,
 //------------------------------------------------------------------------------
 // usage
 //------------------------------------------------------------------------------
-void castor::tape::rmc::DismountAcsCmd::usage(std::ostream &os)
+void castor::tape::rmc::AcsDismountCmd::usage(std::ostream &os)
   const throw() {
   os <<
   "Usage:\n"
@@ -129,8 +129,8 @@ void castor::tape::rmc::DismountAcsCmd::usage(std::ostream &os)
 //------------------------------------------------------------------------------
 // parseCmdLine
 //------------------------------------------------------------------------------
-castor::tape::rmc::DismountAcsCmdLine
-  castor::tape::rmc::DismountAcsCmd::parseCmdLine(
+castor::tape::rmc::AcsDismountCmdLine
+  castor::tape::rmc::AcsDismountCmd::parseCmdLine(
   const int argc, char *const *const argv)
   throw(castor::exception::Internal, castor::exception::InvalidArgument,
     castor::exception::MissingOperand) {
@@ -143,7 +143,7 @@ castor::tape::rmc::DismountAcsCmdLine
     {"timeout" , required_argument, NULL, 't'},
     {NULL   , 0, NULL,  0 }
   };
-  DismountAcsCmdLine cmdLine;
+  AcsDismountCmdLine cmdLine;
   char c;
 
   // Set the query option to the default value
@@ -249,7 +249,7 @@ castor::tape::rmc::DismountAcsCmdLine
 //------------------------------------------------------------------------------
 // syncDismount
 //------------------------------------------------------------------------------
-void castor::tape::rmc::DismountAcsCmd::syncDismount()
+void castor::tape::rmc::AcsDismountCmd::syncDismount()
   throw(castor::exception::DismountFailed) {
   const SEQ_NO requestSeqNumber = 1;
   ALIGNED_BYTES buf[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
@@ -270,7 +270,7 @@ void castor::tape::rmc::DismountAcsCmd::syncDismount()
 //------------------------------------------------------------------------------
 // sendDismountRequest
 //------------------------------------------------------------------------------
-void castor::tape::rmc::DismountAcsCmd::sendDismountRequest(
+void castor::tape::rmc::AcsDismountCmd::sendDismountRequest(
   const SEQ_NO seqNumber) throw (castor::exception::DismountFailed) {
   const LOCKID lockId = 0; // No lock
 
@@ -291,7 +291,7 @@ void castor::tape::rmc::DismountAcsCmd::sendDismountRequest(
 //------------------------------------------------------------------------------
 // processDismountResponse
 //------------------------------------------------------------------------------
-void castor::tape::rmc::DismountAcsCmd::processDismountResponse(
+void castor::tape::rmc::AcsDismountCmd::processDismountResponse(
   ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
   throw(castor::exception::DismountFailed) {
   const ACS_DISMOUNT_RESPONSE *const msg = (ACS_DISMOUNT_RESPONSE *)buf;
