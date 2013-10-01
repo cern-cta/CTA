@@ -10,12 +10,12 @@
 #include <unistd.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-#include "h/Cnetdb.h"
-#include "h/marshall.h"
-#include "h/net.h"
-#include "h/rmc_api.h"
-#include "h/rmc_constants.h"
-#include "h/serrno.h"
+#include "Cnetdb.h"
+#include "marshall.h"
+#include "net.h"
+#include "rmc.h"
+#include "rmc_api.h"
+#include "serrno.h"
 
 /* send2tpd - send a request to the SCSI media changer server and wait for the reply */
 
@@ -35,9 +35,9 @@ int send2rmc(
 	int magic;
 	int n;
 	char *p;
-	char prtbuf[RMC_PRTBUFSZ];
+	char prtbuf[PRTBUFSZ];
 	int rep_type;
-	char repbuf[RMC_REPBUFSZ];
+	char repbuf[REPBUFSZ];
 	char rmchost[CA_MAXHOSTNAMELEN+1];
 	int s;
 	struct sockaddr_in sin; /* internet socket */

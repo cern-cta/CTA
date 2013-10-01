@@ -9,10 +9,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <netinet/in.h>
-#include "h/marshall.h"
-#include "h/rmc_api.h"
-#include "h/rmc_constants.h"
-#include "h/serrno.h"
+#include "marshall.h"
+#include "rmc.h"
+#include "rmc_api.h"
+#include "serrno.h"
 int rmc_get_geometry(
 	const char *const server,
 	struct robot_info *const robot_info)
@@ -24,7 +24,7 @@ int rmc_get_geometry(
 	char *rbp;
 	char repbuf[64];
 	char *sbp;
-	char sendbuf[RMC_REQBUFSZ];
+	char sendbuf[REQBUFSZ];
 	uid_t uid;
 
 	uid = getuid();
@@ -50,7 +50,7 @@ int rmc_get_geometry(
 
         while ((c = send2rmc (server, sendbuf, msglen, repbuf, sizeof(repbuf))) &&
             serrno == ERMCNACT)
-                sleep (RMC_RETRYI);
+                sleep (RETRYI);
 	if (c == 0) {
 		rbp = repbuf;
         	unmarshall_STRING (rbp, robot_info->inquiry);

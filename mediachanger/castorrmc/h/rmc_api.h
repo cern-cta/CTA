@@ -12,8 +12,7 @@
 
 #ifndef _RMC_API_H
 #define _RMC_API_H
-
-#include "h/smc_struct.h"
+#include "smc.h"
 
                         /*  function prototypes */
 
