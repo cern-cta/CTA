@@ -21,7 +21,17 @@ COMM
 COMM @author Steven.Murray@cern.ch
 COMM
 
-CDKLIB = -L$(LIBDIR)/CDK -lapi -lcl -lipc -lutl
+COMM libutl.a and libapi.a are circularly dependent on each other.  The
+COMM -Wl,--start-group -Wl,--end-group options of gcc are used to encompass a
+COMM list of objects that should be passed several times in order to resolve
+COMM their interdependencies.
+CDKLIB = \
+  -Wl,--start-group \
+  $(LIBDIR)/CDK/libutl.a \
+  $(LIBDIR)/CDK/libapi.a \
+  -Wl,--end-group \
+  $(LIBDIR)/CDK/libipc.a \
+  $(LIBDIR)/CDK/libcl.a
 
 DependsOnLibrary(castor/tape/utils,castortapeutils)
 DependsOnLibrary(common,castorcommon)
