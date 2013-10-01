@@ -130,13 +130,6 @@ Depends: logrotate, castor-lib = %{version}-%{release}
 Description: castor (Cern Advanced STORage system)
  Remote Media Controller server
 
-Package: castor-rmc-acs
-Architecture: any
-Depends: castor-lib = %{version}-%{release}, stk-ssi = 2.3
-Build-Depends: stk-ssi-devel = 2.3
-Description: castor (Cern Advanced STORage system)
- Binaries providing the rmc server with support for Oracle ACS compatible tape-libraries
-
 Package: castor-rtcopy-server
 Architecture: any
 Depends: logrotate, zlib-devel, castor-lib = %{version}-%{release}
