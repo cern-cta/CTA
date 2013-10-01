@@ -60,7 +60,7 @@ int rmc_find_cartridge(
 
         while ((c = send2rmc (server, sendbuf, msglen, repbuf, sizeof(repbuf))) &&
             serrno == ERMCNACT)
-                sleep (RETRYI);
+                sleep (RMC_RETRYI);
 	if (c == 0) {
 		rbp = repbuf;
 		unmarshall_LONG (rbp, c);

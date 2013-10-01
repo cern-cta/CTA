@@ -50,7 +50,7 @@ int rmc_get_geometry(
 
         while ((c = send2rmc (server, sendbuf, msglen, repbuf, sizeof(repbuf))) &&
             serrno == ERMCNACT)
-                sleep (RETRYI);
+                sleep (RMC_RETRYI);
 	if (c == 0) {
 		rbp = repbuf;
         	unmarshall_STRING (rbp, robot_info->inquiry);

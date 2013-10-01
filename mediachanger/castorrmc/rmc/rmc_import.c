@@ -48,6 +48,6 @@ int rmc_import(const char *const server, const char *const vid)
 
         while ((c = send2rmc (server, sendbuf, msglen, repbuf, sizeof(repbuf))) &&
             serrno == ERMCNACT)
-                sleep (RETRYI);
+                sleep (RMC_RETRYI);
 	return (c);
 }
