@@ -358,29 +358,35 @@ static void procreq(
   char *const req_data,
   char *const clienthost)
 {
-	int c;
+	int c = 0;
+	struct rmc_srv_rqst_context rqst_context;
+
+	rqst_context.localhost = localhost;
+	rqst_context.rpfd = rpfd;
+	rqst_context.req_data = req_data;
+	rqst_context.clienthost = clienthost;
 
 	switch (req_type) {
 	case RMC_MOUNT:
-		c = rmc_srv_mount (localhost, rpfd, req_data, clienthost);
+		c = rmc_srv_mount (&rqst_context);
 		break;
 	case RMC_UNMOUNT:
-		c = rmc_srv_unmount (localhost, rpfd, req_data, clienthost);
+		c = rmc_srv_unmount (&rqst_context);
 		break;
 	case RMC_EXPORT:
-		c = rmc_srv_export (localhost, rpfd, req_data, clienthost);
+		c = rmc_srv_export (&rqst_context);
 		break;
 	case RMC_IMPORT:
-		c = rmc_srv_import (localhost, rpfd, req_data, clienthost);
+		c = rmc_srv_import (&rqst_context);
 		break;
 	case RMC_GETGEOM:
-		c = rmc_srv_getgeom (localhost, rpfd, req_data, clienthost);
+		c = rmc_srv_getgeom (&rqst_context);
 		break;
 	case RMC_READELEM:
-		c = rmc_srv_readelem (localhost, rpfd, req_data, clienthost);
+		c = rmc_srv_readelem (&rqst_context);
 		break;
 	case RMC_FINDCART:
-		c = rmc_srv_findcart (localhost, rpfd, req_data, clienthost);
+		c = rmc_srv_findcart (&rqst_context);
 		break;
 /*
 	case RMC_GENERICMOUNT:

@@ -26,13 +26,21 @@
 #ifndef _RMC_PROCREQ_H
 #define _RMC_PROCREQ_H 1
 
-int rmc_srv_export(const char *const localhost, const int rpfd, char *const req_data, const char *const clienthost);
-int rmc_srv_findcart(const char *const localhost, const int rpfd, char *const req_data, const char *const clienthost);
-int rmc_srv_getgeom(const char *const localhost, const int rpfd, char *const req_data, const char *const clienthost);
-int rmc_srv_import(const char *const localhost, const int rpfd, char *const req_data, const char *const clienthost);
-int rmc_srv_mount(const char *const localhost, const int rpfd, char *const req_data, const char *const clienthost);
-int rmc_srv_readelem(const char *const localhost, const int rpfd, char *const req_data, const char *const clienthost);
-int rmc_srv_unmount(const char *const localhost, const int rpfd, char *const req_data, const char *const clienthost);
-int rmc_srv_genericmount(const char *const localhost, const int rpfd, char *const req_data, const char *const clienthost);
-int rmc_srv_genericunmount(const char *const localhost, const int rpfd, char *const req_data, const char *const clienthost);
+struct rmc_srv_rqst_context {
+  const char *localhost;
+  int rpfd;
+  char *req_data;
+  const char *clienthost;
+};
+
+int rmc_srv_export(struct rmc_srv_rqst_context *const rqst_context);
+int rmc_srv_findcart(struct rmc_srv_rqst_context *const rqst_context);
+int rmc_srv_getgeom(struct rmc_srv_rqst_context *const rqst_context);
+int rmc_srv_import(struct rmc_srv_rqst_context *const rqst_context);
+int rmc_srv_mount(struct rmc_srv_rqst_context *const rqst_context);
+int rmc_srv_readelem(struct rmc_srv_rqst_context *const rqst_context);
+int rmc_srv_unmount(struct rmc_srv_rqst_context *const rqst_context);
+int rmc_srv_genericmount(struct rmc_srv_rqst_context *const rqst_context);
+int rmc_srv_genericunmount(struct rmc_srv_rqst_context *const rqst_context);
+
 #endif
