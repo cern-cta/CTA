@@ -36,7 +36,7 @@ static int getreq(const int s, int *const req_type, char *const req_data,
   char **const clienthost);
 static void procreq(const int req_type, char *const req_data,
   char *const clienthost);
-static void doit(const int rqfd);
+static void rmc_doit(const int rqfd);
 
 int jid;
 char localhost[CA_MAXHOSTNAMELEN+1];
@@ -240,7 +240,7 @@ int rmc_main(struct main_args *main_args)
 			FD_CLR (s, &readfd);
 			rqfd = accept (s, (struct sockaddr *) &from, &fromlen);
 			rpfd = rqfd;
-			(void) doit (rqfd);
+			(void) rmc_doit (rqfd);
 		}
 		memcpy (&readfd, &readmask, sizeof(readmask));
 		timeval.tv_sec = CHECKI;
@@ -265,7 +265,7 @@ int main(int argc,
 	exit (rmc_main (&main_args));
 }
 
-static void doit(const int rqfd)
+static void rmc_doit(const int rqfd)
 {
 	int c;
 	char *clienthost;
