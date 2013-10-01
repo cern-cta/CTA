@@ -29,7 +29,7 @@ int rmc_read_elem_status(
 	char *rbp;
 	char repbuf[RMC_REPBUFSZ];
 	char *sbp;
-	char sendbuf[REQBUFSZ];
+	char sendbuf[RMC_REQBUFSZ];
 	uid_t uid;
 
 	uid = getuid();

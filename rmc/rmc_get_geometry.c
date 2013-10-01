@@ -24,7 +24,7 @@ int rmc_get_geometry(
 	char *rbp;
 	char repbuf[64];
 	char *sbp;
-	char sendbuf[REQBUFSZ];
+	char sendbuf[RMC_REQBUFSZ];
 	uid_t uid;
 
 	uid = getuid();

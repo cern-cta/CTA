@@ -269,7 +269,7 @@ static void rmc_doit(const int rpfd)
 {
 	int c;
 	char *clienthost;
-	char req_data[REQBUFSZ-3*LONGSIZE];
+	char req_data[RMC_REQBUFSZ-3*LONGSIZE];
 	int req_type = 0;
 
 	if ((c = getreq (rpfd, &req_type, req_data, &clienthost)) == 0)
@@ -307,11 +307,11 @@ static int getreq(
 		unmarshall_LONG (rbp, n);
 		*req_type = n;
 		unmarshall_LONG (rbp, msglen);
-		if (msglen > REQBUFSZ) {
-			rmclogit (func, RMC46, REQBUFSZ);
+		if (msglen > RMC_REQBUFSZ) {
+			rmclogit (func, RMC46, RMC_REQBUFSZ);
                         tl_rmcdaemon.tl_log( &tl_rmcdaemon, 46, 2,
                                              "func"   , TL_MSG_PARAM_STR, "getreq",
-                                             "MaxSize", TL_MSG_PARAM_INT,  REQBUFSZ);                        
+                                             "MaxSize", TL_MSG_PARAM_INT,  RMC_REQBUFSZ);                        
 			return (-1);
 		}
 		l = msglen - sizeof(req_hdr);
