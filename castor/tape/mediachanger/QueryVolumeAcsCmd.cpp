@@ -234,9 +234,6 @@ void castor::tape::mediachanger::QueryVolumeAcsCmd::usage(std::ostream &os)
 //------------------------------------------------------------------------------
 QU_VOL_STATUS castor::tape::mediachanger::QueryVolumeAcsCmd::syncQueryVolume()
   throw(castor::exception::QueryVolumeFailed) {
-  std::ostringstream action;
-  action << "query volume " << m_cmdLine.volId.external_label;
-
   const SEQ_NO requestSeqNumber = 1;
   sendQueryVolumeRequest(requestSeqNumber);
 
@@ -259,8 +256,7 @@ QU_VOL_STATUS castor::tape::mediachanger::QueryVolumeAcsCmd::syncQueryVolume()
 
     if(elapsedTime >= m_cmdLine.timeout) {
       castor::exception::QueryVolumeFailed ex;
-      ex.getMessage() << "Failed to " << action.str() << ": Timed out:"
-        " mountTimeout=" << m_cmdLine.timeout << " seconds";
+      ex.getMessage() << "Timed out after " << m_cmdLine.timeout << " seconds";
       throw(ex);
     }
   } while(RT_FINAL != responseType);
@@ -332,7 +328,6 @@ void castor::tape::mediachanger::QueryVolumeAcsCmd::checkResponseSeqNumber(
   }
 }
 
-
 //------------------------------------------------------------------------------
 // processQueryResponse
 //------------------------------------------------------------------------------
@@ -345,7 +340,7 @@ QU_VOL_STATUS castor::tape::mediachanger::QueryVolumeAcsCmd::
 
   if(STATUS_SUCCESS != msg->query_vol_status) {
     castor::exception::QueryVolumeFailed ex;
-    ex.getMessage() << "Status of query response is success: " <<
+    ex.getMessage() << "Status of query response is not success: " <<
       acs_status(msg->query_vol_status);
     throw(ex);
   }

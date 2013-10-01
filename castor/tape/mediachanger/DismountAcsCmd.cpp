@@ -336,3 +336,17 @@ void castor::tape::mediachanger::DismountAcsCmd::sendDismountRequest(
     throw(ex);
   }
 }
+
+//------------------------------------------------------------------------------
+// checkSeqNumber
+//------------------------------------------------------------------------------
+void castor::tape::mediachanger::DismountAcsCmd::checkResponseSeqNumber(
+  const SEQ_NO requestSeqNumber, const SEQ_NO responseSeqNumber)
+  throw(castor::exception::DismountFailed) {
+  if(requestSeqNumber != responseSeqNumber) {
+    castor::exception::DismountFailed ex;
+    ex.getMessage() <<  ": Sequence number mismatch: requestSeqNumber="
+      << requestSeqNumber << " responseSeqNumber=" << responseSeqNumber;
+    throw(ex);
+  }
+}

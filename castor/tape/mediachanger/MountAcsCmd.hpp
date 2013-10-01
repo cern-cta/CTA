@@ -105,6 +105,41 @@ protected:
   void sendMountRequest(const SEQ_NO seqNumber)
     throw(castor::exception::MountFailed);
 
+  /**
+   * Sends a request for a response to the ACSLS.
+   *
+   * @param timeout The timeout.
+   * @param requestSeqNumber The sequemce number that was sent in the initial
+   * request to the ACSLS.
+   * @param buf Output parameter.  The response message if there is one.
+   * @return The type of the response message if there is one or RT_NONE if
+   * there isn't one.
+   */
+  ACS_RESPONSE_TYPE requestResponse(const int timeout,
+    const SEQ_NO requestSeqNumber,
+    ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
+    throw(castor::exception::MountFailed);
+
+  /**
+   * Throws castor::exception::MountFailed if the specified request and
+   * response sequence-numbers do not match.
+   *
+   * @param requestSeqNumber Request sequence-number.
+   * @param responseSeqNumber Response sequence-number.
+   */
+  void checkResponseSeqNumber(const SEQ_NO requestSeqNumber,
+    const SEQ_NO responseSeqNumber) throw(castor::exception::MountFailed);
+
+  /**
+   * Throws castor::exception::QueryVolumeFailed if the mount was not
+   * successful.
+   *
+   * @param buf The mount-response message.
+   */
+  void processMountResponse(
+    ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
+    throw(castor::exception::MountFailed);
+
 private:
 
   /**

@@ -110,6 +110,16 @@ protected:
   void sendDismountRequest(const SEQ_NO seqNumber)
     throw(castor::exception::DismountFailed);
 
+  /**
+   * Throws castor::exception::DismountFailed if the specified request and
+   * response sequence-numbers do not match.
+   *
+   * @param requestSeqNumber Request sequence-number.
+   * @param responseSeqNumber Response sequence-number.
+   */
+  void checkResponseSeqNumber(const SEQ_NO requestSeqNumber,
+    const SEQ_NO responseSeqNumber) throw(castor::exception::DismountFailed);
+
 private:
 
   /**

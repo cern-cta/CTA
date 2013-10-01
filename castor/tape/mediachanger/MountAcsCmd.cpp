@@ -250,70 +250,36 @@ void castor::tape::mediachanger::MountAcsCmd::usage(std::ostream &os)
 //------------------------------------------------------------------------------
 void castor::tape::mediachanger::MountAcsCmd::syncMount()
   throw(castor::exception::MountFailed) {
-  std::ostringstream action;
-  action << "mount volume " << m_cmdLine.volId.external_label << " into drive "
-    << m_acs.driveId2Str(m_cmdLine.driveId) << ": readOnly=" <<
-    (m_cmdLine.readOnly ? "TRUE" : "FALSE");
-
-  const SEQ_NO mountSeqNumber = 1;
-  sendMountRequest(mountSeqNumber);
+  const SEQ_NO requestSeqNumber = 1;
+  sendMountRequest(requestSeqNumber);
 
   // Get all responses until RT_FINAL
   ALIGNED_BYTES msgBuf[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
-  SEQ_NO responseSeqNumber = (SEQ_NO)0;
-  REQ_ID reqId = (REQ_ID)0;
   ACS_RESPONSE_TYPE responseType = RT_NONE;
-  int elapsedMountTime = 0;
+  int elapsedTime = 0;
   do {
-    const int remainingTime = m_cmdLine.timeout - elapsedMountTime;
+    const int remainingTime = m_cmdLine.timeout - elapsedTime;
     const int responseTimeout = remainingTime > m_cmdLine.queryInterval ?
       m_cmdLine.queryInterval : remainingTime;
-    {
-      m_dbg << "Calling Acs::response()" << std::endl;
-      const time_t startTime = time(NULL);
-      const STATUS s = m_acs.response(responseTimeout, responseSeqNumber,
-        reqId, responseType, msgBuf);
-      elapsedMountTime += time(NULL) - startTime;
-      m_dbg << "Acs::response() returned " << acs_status(s) << std::endl;
-      if(STATUS_SUCCESS != s && STATUS_PENDING != s) {
-        castor::exception::MountFailed ex;
-        ex.getMessage() << "Failed to " << action.str() <<
-          ": Failed to request library response: " << acs_status(s);
-        throw ex;
-      }
-      if(STATUS_SUCCESS == s && RT_ACKNOWLEDGE == responseType) {
-        m_dbg << "Received RT_ACKNOWLEDGE: seqNumber=" << responseSeqNumber <<
-          " reqId=" << reqId << std::endl;
-      }
+
+    const time_t startTime = time(NULL);
+    responseType = requestResponse(responseTimeout, requestSeqNumber, msgBuf);
+    elapsedTime += time(NULL) - startTime;
+
+    if(RT_ACKNOWLEDGE == responseType) {
+      m_dbg << "Received RT_ACKNOWLEDGE" << std::endl;
     }
 
-    if(elapsedMountTime >= m_cmdLine.timeout) {
+    if(elapsedTime >= m_cmdLine.timeout) {
       castor::exception::MountFailed ex;
-      ex.getMessage() << "Failed to " << action.str() << ": Timed out:"
-        " mountTimeout=" << m_cmdLine.timeout << " seconds";
+      ex.getMessage() << "Timed out after " << m_cmdLine.timeout << " seconds";
       throw(ex);
     }
   } while(RT_FINAL != responseType);
 
-  m_dbg << "Received RT_FINAL: seqNumber=" << responseSeqNumber << " reqId=" <<
-    reqId << std::endl;
+  m_dbg << "Received RT_FINAL" << std::endl;
 
-  if(mountSeqNumber != responseSeqNumber) {
-    castor::exception::MountFailed ex;
-    ex.getMessage() << "Failed to " << action.str() << 
-      ": Invalid RT_FINAL message: Sequence number mismatch: mountSeqNumber=" 
-      << mountSeqNumber << " responseSeqNumber=" << responseSeqNumber;
-    throw(ex);
-  }
-
-  const ACS_MOUNT_RESPONSE *const msg = (ACS_MOUNT_RESPONSE *)msgBuf;
-
-  if(STATUS_SUCCESS != msg->mount_status) {
-    castor::exception::MountFailed ex;
-    ex.getMessage() << "Failed to " << action.str() << ": " <<
-      acs_status(msg->mount_status);
-    throw(ex);
-  }
+  processMountResponse(msgBuf);
 }
 
 //------------------------------------------------------------------------------
@@ -336,5 +302,64 @@ void castor::tape::mediachanger::MountAcsCmd::sendMountRequest(
       m_acs.driveId2Str(m_cmdLine.driveId) << ": readOnly=" <<
       (m_cmdLine.readOnly ? "TRUE" : "FALSE") << ": " << acs_status(s);
     throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// requestResponse
+//------------------------------------------------------------------------------
+ACS_RESPONSE_TYPE castor::tape::mediachanger::MountAcsCmd::
+  requestResponse(const int timeout, const SEQ_NO requestSeqNumber,
+  ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
+  throw(castor::exception::MountFailed) {
+  SEQ_NO responseSeqNumber = 0;
+  REQ_ID reqId = (REQ_ID)0;
+  ACS_RESPONSE_TYPE responseType = RT_NONE;
+
+  m_dbg << "Calling Acs::response()" << std::endl;
+  const STATUS s = m_acs.response(timeout, responseSeqNumber, reqId,
+    responseType, buf);
+  m_dbg << "Acs::response() returned " << acs_status(s) << std::endl;
+
+  switch(s) {
+  case STATUS_SUCCESS:
+    checkResponseSeqNumber(requestSeqNumber, responseSeqNumber);
+    return responseType;
+  case STATUS_PENDING:
+    return RT_NONE;
+  default:
+    castor::exception::MountFailed ex;
+    ex.getMessage() << "Failed to request response: " << acs_status(s);
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// checkSeqNumber
+//------------------------------------------------------------------------------
+void castor::tape::mediachanger::MountAcsCmd::checkResponseSeqNumber(
+  const SEQ_NO requestSeqNumber, const SEQ_NO responseSeqNumber)
+  throw(castor::exception::MountFailed) {
+  if(requestSeqNumber != responseSeqNumber) {
+    castor::exception::MountFailed ex;
+    ex.getMessage() <<  ": Sequence number mismatch: requestSeqNumber="
+      << requestSeqNumber << " responseSeqNumber=" << responseSeqNumber;
+    throw(ex);
+  }
+}
+
+//------------------------------------------------------------------------------
+// processMountResponse
+//------------------------------------------------------------------------------
+void castor::tape::mediachanger::MountAcsCmd::processMountResponse(
+  ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
+  throw(castor::exception::MountFailed) {
+  const ACS_MOUNT_RESPONSE *const msg = (ACS_MOUNT_RESPONSE *)buf;
+
+  if(STATUS_SUCCESS != msg->mount_status) {
+    castor::exception::MountFailed ex;
+    ex.getMessage() << "Status of mount response is not success: " <<
+      acs_status(msg->mount_status);
+    throw(ex);
   }
 }
