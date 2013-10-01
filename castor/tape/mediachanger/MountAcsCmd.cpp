@@ -254,7 +254,7 @@ void castor::tape::mediachanger::MountAcsCmd::syncMount()
   ALIGNED_BYTES buf[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
 
   sendMountRequest(requestSeqNumber);
-  getResponsesUntilFinal(requestSeqNumber, buf);
+  requestResponsesUntilFinal(requestSeqNumber, buf);
   processMountResponse(buf);
 }
 
@@ -282,9 +282,9 @@ void castor::tape::mediachanger::MountAcsCmd::sendMountRequest(
 }
 
 //------------------------------------------------------------------------------
-// getResponsesUntilFinal
+// requestResponsesUntilFinal
 //------------------------------------------------------------------------------
-void castor::tape::mediachanger::MountAcsCmd::getResponsesUntilFinal(
+void castor::tape::mediachanger::MountAcsCmd::requestResponsesUntilFinal(
   const SEQ_NO requestSeqNumber,
   ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
   throw (castor::exception::MountFailed) {

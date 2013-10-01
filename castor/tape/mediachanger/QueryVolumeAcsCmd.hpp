@@ -118,7 +118,7 @@ protected:
    * @param buf Output parameter.  Message buffer into which the RT_FINAL
    * response shall be written.
    */
-  void getResponsesUntilFinal(const SEQ_NO requestSeqNumber,
+  void requestResponsesUntilFinal(const SEQ_NO requestSeqNumber,
     ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
     throw (castor::exception::QueryVolumeFailed);
 

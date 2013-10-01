@@ -252,7 +252,7 @@ void castor::tape::mediachanger::DismountAcsCmd::syncDismount()
   ALIGNED_BYTES buf[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
 
   sendDismountRequest(requestSeqNumber);
-  getResponsesUntilFinal(requestSeqNumber, buf);
+  requestResponsesUntilFinal(requestSeqNumber, buf);
   processDismountResponse(buf);
 }
 
@@ -278,9 +278,9 @@ void castor::tape::mediachanger::DismountAcsCmd::sendDismountRequest(
 }
 
 //------------------------------------------------------------------------------
-// getResponsesUntilFinal
+// requestResponsesUntilFinal
 //------------------------------------------------------------------------------
-void castor::tape::mediachanger::DismountAcsCmd::getResponsesUntilFinal(
+void castor::tape::mediachanger::DismountAcsCmd::requestResponsesUntilFinal(
   const SEQ_NO requestSeqNumber,
   ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
   throw (castor::exception::DismountFailed) {

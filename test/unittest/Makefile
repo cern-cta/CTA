@@ -76,6 +76,7 @@ rununittests: \
   exception_InvalidArgument.o \
   exception_InvalidConfigEntry.o \
   exception_InvalidConfiguration.o \
+  exception_Mismatch.o \
   exception_MissingOperand.o \
   exception_MountFailed.o \
   exception_NoEntry.o \
@@ -84,6 +85,7 @@ rununittests: \
   exception_OutOfMemory.o \
   exception_PermissionDenied.o \
   exception_QueryVolumeFailed.o \
+  exception_RequestFailed.o \
   exception_TapeNetAcceptInterrupted.o \
   exception_TimeOut.o \
   exception_TooBig.o \
@@ -517,6 +519,9 @@ exception_DismountFailed.o: $(ROOT_DIR)/castor/exception/DismountFailed.cpp
 exception_Exception.o: $(ROOT_DIR)/castor/exception/Exception.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
+exception_Mismatch.o: $(ROOT_DIR)/castor/exception/Mismatch.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
 exception_MissingOperand.o: $(ROOT_DIR)/castor/exception/MissingOperand.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
@@ -544,6 +549,9 @@ exception_InvalidConfiguration.o: \
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 exception_QueryVolumeFailed.o: $(ROOT_DIR)/castor/exception/QueryVolumeFailed.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+exception_RequestFailed.o: $(ROOT_DIR)/castor/exception/RequestFailed.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 exception_TimeOut.o: $(ROOT_DIR)/castor/exception/TimeOut.cpp

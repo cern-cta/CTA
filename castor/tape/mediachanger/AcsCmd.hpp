@@ -26,6 +26,8 @@
 #define CASTOR_TAPE_MEDIACHANGER_ACSCMD_HPP 1
 
 #include "castor/exception/InvalidArgument.hpp"
+#include "castor/exception/Mismatch.hpp"
+#include "castor/exception/RequestFailed.hpp"
 #include "castor/tape/mediachanger/Acs.hpp"
 #include "castor/tape/mediachanger/DebugBuf.hpp"
 
@@ -109,6 +111,49 @@ protected:
    * Returns the string representation of the specfied boolean value.
    */
   std::string bool2Str(BOOLEAN &value) const throw();
+
+  /**
+   * Requests responses from ACSLS in a loop until the RT_FINAL response is
+   * received.
+   *
+   * @param requestSeqNumber The sequemce number that was sent in the initial
+   * request to the ACSLS.
+   * @param buf Output parameter.  Message buffer into which the RT_FINAL
+   * response shall be written.
+   * @param queryInterval Time in seconds to wait between queries to ACS for
+   * responses.
+   * @param timeout The time in seconds to spend trying to get the RT_FINAL
+   * response.
+   */
+  void requestResponsesUntilFinal(const SEQ_NO requestSeqNumber,
+    ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)],
+    const int queryInterval, const int timeout)
+    throw (castor::exception::RequestFailed);
+
+  /**
+   * Sends a request for a response to the ACSLS.
+   *
+   * @param timeout The timeout.
+   * @param requestSeqNumber The sequemce number that was sent in the initial
+   * request to the ACSLS.
+   * @param buf Output parameter.  The response message if there is one.
+   * @return The type of the response message if there is one or RT_NONE if
+   * there isn't one.
+   */
+  ACS_RESPONSE_TYPE requestResponse(const int timeout,
+    const SEQ_NO requestSeqNumber,
+    ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
+    throw(castor::exception::RequestFailed);
+
+  /**
+   * Throws castor::exception::Mismatch if the specified request and
+   * response sequence-numbers do not match.
+   *
+   * @param requestSeqNumber Request sequence-number.
+   * @param responseSeqNumber Response sequence-number.
+   */
+  void checkResponseSeqNumber(const SEQ_NO requestSeqNumber,
+    const SEQ_NO responseSeqNumber) throw(castor::exception::Mismatch);
 
 }; // class AcsCmd
 

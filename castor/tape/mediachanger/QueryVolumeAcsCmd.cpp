@@ -238,7 +238,7 @@ QU_VOL_STATUS castor::tape::mediachanger::QueryVolumeAcsCmd::syncQueryVolume()
   ALIGNED_BYTES buf[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
 
   sendQueryVolumeRequest(requestSeqNumber);
-  getResponsesUntilFinal(requestSeqNumber, buf);
+  requestResponsesUntilFinal(requestSeqNumber, buf);
   return processQueryResponse(buf);
 }
 
@@ -262,9 +262,9 @@ void castor::tape::mediachanger::QueryVolumeAcsCmd::sendQueryVolumeRequest(
 }
 
 //------------------------------------------------------------------------------
-// getResponsesUntilFinal
+// requestResponsesUntilFinal
 //------------------------------------------------------------------------------
-void castor::tape::mediachanger::QueryVolumeAcsCmd::getResponsesUntilFinal(
+void castor::tape::mediachanger::QueryVolumeAcsCmd::requestResponsesUntilFinal(
   const SEQ_NO requestSeqNumber,
   ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
   throw (castor::exception::QueryVolumeFailed) {
