@@ -1,0 +1,100 @@
+COMM
+COMM                      castor/tape/mediachanger/Imakefile
+COMM
+COMM This file is part of the Castor project.
+COMM See http://castor.web.cern.ch/castor
+COMM
+COMM Copyright (C) 2003  CERN
+COMM This program is free software; you can redistribute it and/or
+COMM modify it under the terms of the GNU General Public License
+COMM as published by the Free Software Foundation; either version 2
+COMM of the License, or (at your option) any later version.
+COMM This program is distributed in the hope that it will be useful,
+COMM but WITHOUT ANY WARRANTY; without even the implied warranty of
+COMM MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+COMM GNU General Public License for more details.
+COMM You should have received a copy of the GNU General Public License
+COMM along with this program; if not, write to the Free Software
+COMM Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+COMM
+COMM
+COMM @author Steven.Murray@cern.ch
+COMM
+
+COMM For licencing reasons the castor-tape-acs-dismount, castor-tape-acs-mount
+COMM and castor-tape-acs-queryvolume commands are not statically linked with
+COMM the CDK software provided by Oracle.  However if static linking would be
+COMM used then the following comments show how it could be done.
+COMM
+COMM libutl.a and libapi.a are circularly dependent on each other.  The
+COMM -Wl,--start-group -Wl,--end-group options of gcc are used to encompass a
+COMM list of objects that should be passed several times in order to resolve
+COMM their interdependencies.
+COMM CDKLIB = \
+COMM  -Wl,--start-group \
+COMM  $(LIBDIR)/CDK/libutl.a \
+COMM  $(LIBDIR)/CDK/libapi.a \
+COMM  -Wl,--end-group \
+COMM  $(LIBDIR)/CDK/libipc.a \
+COMM  $(LIBDIR)/CDK/libcl.a
+
+CDKLIB = -L $(LIBDIR)/CDK -lapi -lutl -lipc -lcl
+
+DependsOnLibrary(castor/tape/utils,castortapeutils)
+DependsOnLibrary(common,castorcommon)
+
+ACS_SRCS = \
+  Acs.cpp \
+  AcsImpl.cpp
+
+COMPILECPP(Acs.cpp, -DLINUX -I/usr/include/CDK)
+COMPILECPP(AcsImpl.cpp, -DLINUX -I/usr/include/CDK)
+
+ACSCOMMAND_SRCS = \
+  AcsCmd.cpp \
+  DebugBuf.cpp
+
+COMPILECPP(AcsCmd.cpp, -DLINUX -I/usr/include/CDK)
+
+ACSMOUNTBIN_SRCS = \
+  $(ACS_SRCS) \
+  $(ACSCOMMAND_SRCS) \
+  AcsMountCmd.cpp \
+  AcsMountCmdLine.cpp \
+  AcsMountMain.cpp
+ACSMOUNTBIN_OBJS = $(ACSMOUNTBIN_SRCS:.cpp=.o)
+
+COMPILECPP(AcsMountCmd.cpp, -DLINUX -I/usr/include/CDK)
+COMPILECPP(AcsMountCmdLine.cpp, -DLINUX -I/usr/include/CDK)
+COMPILECPP(AcsMountMain.cpp, -DLINUX -I/usr/include/CDK)
+
+NormalProgramTarget(castor-tape-acs-mount,$(ACSMOUNTBIN_OBJS),,$(CDKLIB),755)
+EXEMANPAGE(castor-tape-acs-mount)
+
+ACSDISMOUNTBIN_SRCS = \
+  $(ACS_SRCS) \
+  $(ACSCOMMAND_SRCS) \
+  AcsDismountCmd.cpp \
+  AcsDismountCmdLine.cpp \
+  AcsDismountMain.cpp
+ACSDISMOUNTBIN_OBJS = $(ACSDISMOUNTBIN_SRCS:.cpp=.o)
+COMPILECPP(AcsDismountCmd.cpp, -DLINUX -I/usr/include/CDK)
+COMPILECPP(AcsDismountCmdLine.cpp, -DLINUX -I/usr/include/CDK)
+COMPILECPP(AcsDismountMain.cpp, -DLINUX -I/usr/include/CDK)
+
+NormalProgramTarget(castor-tape-acs-dismount,$(ACSDISMOUNTBIN_OBJS),,$(CDKLIB),755)
+EXEMANPAGE(castor-tape-acs-dismount)
+
+ACSQUERYVOLUMEBIN_SRCS = \
+  $(ACS_SRCS) \
+  $(ACSCOMMAND_SRCS) \
+  AcsQueryVolumeCmd.cpp \
+  AcsQueryVolumeCmdLine.cpp \
+  AcsQueryVolumeMain.cpp
+ACSQUERYVOLUMEBIN_OBJS = $(ACSQUERYVOLUMEBIN_SRCS:.cpp=.o)
+COMPILECPP(AcsQueryVolumeCmd.cpp, -DLINUX -I/usr/include/CDK)
+COMPILECPP(AcsQueryVolumeCmdLine.cpp, -DLINUX -I/usr/include/CDK)
+COMPILECPP(AcsQueryVolumeMain.cpp, -DLINUX -I/usr/include/CDK)
+
+NormalProgramTarget(castor-tape-acs-queryvolume,$(ACSQUERYVOLUMEBIN_OBJS),,$(CDKLIB),755)
+EXEMANPAGE(castor-tape-acs-queryvolume)

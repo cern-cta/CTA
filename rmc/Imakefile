@@ -11,7 +11,15 @@ include $(CASTOR_ROOT)/tape/Makefile
 
 RMCD_DEPLIBS = DepSharedLibraryTargetName(tape,castortape)
 RMCD_LIBS = $(RMCD_DEPLIBS) BuildRPathcastortape
-RMCD_OBJS = rmc_serv.o rmc_procreq.o rmclogit.o sendrep.o usrmsg.o smcsubr.o smcsubr2.o
+RMCD_OBJS = \
+  rmc_serv.o \
+  rmc_procreq.o \
+  rmc_logit.o \
+  rmc_logreq.o \
+  rmc_marshall_element.o \
+  rmc_sendrep.o \
+  rmc_smcsubr.o \
+  rmc_send_scsi_cmd.o
 TapeProgramTarget(rmcd,$(RMCD_OBJS),$(RMCD_DEPLIBS),$(RMCD_LIBS),755)
 ADMMANPAGE(rmcd)
 TapeMakeDir($(LOGPATH),0755)

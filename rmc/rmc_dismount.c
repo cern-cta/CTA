@@ -9,10 +9,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <netinet/in.h>
-#include "marshall.h"
-#include "rmc.h"
-#include "rmc_api.h"
-#include "serrno.h"
+#include "h/marshall.h"
+#include "h/rmc_api.h"
+#include "h/rmc_constants.h"
+#include "h/serrno.h"
 int rmc_dismount(
 	const char *const server,
 	const char *const vid,
@@ -25,7 +25,7 @@ int rmc_dismount(
 	char *q;
 	char repbuf[1];
 	char *sbp;
-	char sendbuf[REQBUFSZ];
+	char sendbuf[RMC_REQBUFSZ];
 	uid_t uid;
 
 	uid = getuid();
@@ -54,6 +54,6 @@ int rmc_dismount(
 
         while ((c = send2rmc (server, sendbuf, msglen, repbuf, sizeof(repbuf))) &&
             serrno == ERMCNACT)
-                sleep (RETRYI);
+                sleep (RMC_RETRYI);
 	return (c);
 }

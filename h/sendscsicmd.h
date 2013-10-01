@@ -26,7 +26,19 @@
 #ifndef H_SENDSCSISMD_H 
 #define H_SENDSCSISMD_H 1
 
-int send_scsi_cmd (int, char *, int, unsigned char *, int, unsigned char *,
-                   int, char *, int, int, int, int *, char **); 
+int send_scsi_cmd (
+  const int tapefd,
+  const char *const path,
+  const int do_not_open,
+  const unsigned char *const cdb,
+  const int cdblen,
+  unsigned char *const buffer,
+  const int buflen,
+  char *const sense,
+  const int senselen,
+  const int timeout,   /* in milliseconds */
+  const int flags,
+  int *const nb_sense_ret,
+  char **const msgaddr);
 
 #endif /* H_SENDSCSISMD_H */
