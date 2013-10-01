@@ -3,7 +3,7 @@
  * All rights reserved
  */
 
-/*	send_scsi_cmd - Send a SCSI command to a device */
+/*	rmc_send_scsi_cmd - Send a SCSI command to a device */
 /*	return	-5	if not supported on this platform (serrno = SEOPNOTSUP)
  *		-4	if SCSI error (serrno = EIO)
  *		-3	if CAM error (serrno = EIO)
@@ -31,10 +31,10 @@
 #endif
 #include "/usr/include/scsi/sg.h"
 #include <sys/stat.h>
-#include "scsictl.h"
-#include "serrno.h"
-#include "Ctape.h"
-static char tp_err_msgbuf[132];
+#include "h/scsictl.h"
+#include "h/serrno.h"
+#include "h/rmc_send_scsi_cmd.h"
+static char rmc_err_msgbuf[132];
 static char *sk_msg[] = {
         "No sense",
         "Recovered error",
@@ -53,19 +53,8 @@ static char *sk_msg[] = {
         "Miscompare",
         "Reserved",
 };
-struct scsi_info {
-        int status;
-        char *text;
-};
-struct scsi_info scsi_codmsg[] = {
-	{ SCSI_STATUS_CHECK_CONDITION,	    "Check condition"      },
-	{ SCSI_STATUS_BUSY,		    "Target busy"          },
-	{ SCSI_STATUS_RESERVATION_CONFLICT, "Reservation conflict" },
-	{ 0xFF,				    NULL }
-};
-#define PROCBUFSZ 80
 
-static void find_sgpath(char *sgpath, int maj, int min) {
+static void find_sgpath(char *const sgpath, const int maj, const int min) {
         
         /*
           Find the sg device for a pair of major and minor device IDs
@@ -140,7 +129,7 @@ static void find_sgpath(char *sgpath, int maj, int min) {
 }
 
 
-int send_scsi_cmd (
+int rmc_send_scsi_cmd (
 	const int tapefd,
 	const char *const path,
 	const int do_not_open,
@@ -168,14 +157,14 @@ int send_scsi_cmd (
 	int timeout_in_jiffies = 0;
 	int sg_big_buff_val =  SG_BIG_BUFF;
 	int procfd, nbread;
-	char procbuf[PROCBUFSZ];
+	char procbuf[80];
 
   (void)senselen;
 	/* First the value in /proc of the max buffer size for the sg driver */
 	procfd = open("/proc/scsi/sg/def_reserved_size", O_RDONLY);
 	if (procfd >= 0) {
-	  memset(procbuf, 0, PROCBUFSZ);
-	  nbread = read(procfd, procbuf, PROCBUFSZ -1);
+	  memset(procbuf, 0, sizeof(procbuf));
+	  nbread = read(procfd, procbuf, sizeof(procbuf) - 1);
 	  if (nbread > 0) {
 	    long int tmp;
 	    char *endptr = NULL;
@@ -188,9 +177,9 @@ int send_scsi_cmd (
 	}
 
 	if ((int)sizeof(struct sg_header) + cdblen + buflen > sg_big_buff_val) {
-		sprintf (tp_err_msgbuf, "blocksize too large (max %zd)\n",
+		sprintf (rmc_err_msgbuf, "blocksize too large (max %zd)\n",
 		    sg_big_buff_val - sizeof(struct sg_header) - cdblen);
-		*msgaddr = tp_err_msgbuf;
+		*msgaddr = rmc_err_msgbuf;
 		serrno = EINVAL;
 		return (-1);
 	}
@@ -198,8 +187,8 @@ int send_scsi_cmd (
 		if (sg_bufsiz > 0) free (sg_buffer);
 		if ((sg_buffer = malloc (sizeof(struct sg_header)+cdblen+buflen)) == NULL) {
 			serrno = errno;
-			sprintf (tp_err_msgbuf, TP005);
-			*msgaddr = tp_err_msgbuf;
+			sprintf (rmc_err_msgbuf, "cannot get memory");
+			*msgaddr = rmc_err_msgbuf;
 			return (-1);
 		}
 		sg_bufsiz = sizeof(struct sg_header) + cdblen + buflen;
@@ -210,18 +199,18 @@ int send_scsi_cmd (
 	} else {
 		if (stat (path, &sbuf) < 0) {
 			serrno = errno;
-        		snprintf (tp_err_msgbuf, sizeof(tp_err_msgbuf), TP042, path, "stat", strerror(errno));
-			tp_err_msgbuf[sizeof(tp_err_msgbuf) - 1] = '\0';
-        		*msgaddr = tp_err_msgbuf;
+        		snprintf (rmc_err_msgbuf, sizeof(rmc_err_msgbuf), "%s : stat error : %s\n", path, strerror(errno));
+			rmc_err_msgbuf[sizeof(rmc_err_msgbuf) - 1] = '\0';
+        		*msgaddr = rmc_err_msgbuf;
 			return (-1);
 		}
 
                 /* get the major device ID of the sg devices ... */
 		if (stat ("/dev/sg0", &sbufa) < 0) {
 			serrno = errno;
-			snprintf (tp_err_msgbuf, sizeof(tp_err_msgbuf), TP042, "/dev/sg0", "stat", strerror(errno));
-			tp_err_msgbuf[sizeof(tp_err_msgbuf) - 1] = '\0';
-			*msgaddr = tp_err_msgbuf;
+			snprintf (rmc_err_msgbuf, sizeof(rmc_err_msgbuf), "/dev/sg0 : stat error : %s\n", strerror(errno));
+			rmc_err_msgbuf[sizeof(rmc_err_msgbuf) - 1] = '\0';
+			*msgaddr = rmc_err_msgbuf;
 			return (-1);
 		}
                 /* ... to detect links and use the path directly! */
@@ -233,9 +222,9 @@ int send_scsi_cmd (
 
 		if ((fd = open (sgpath, O_RDWR)) < 0) {
 			serrno = errno;
-			snprintf (tp_err_msgbuf, sizeof(tp_err_msgbuf), TP042, sgpath, "open", strerror(errno));
-			tp_err_msgbuf[sizeof(tp_err_msgbuf) - 1] = '\0';
-			*msgaddr = tp_err_msgbuf;
+			snprintf (rmc_err_msgbuf, sizeof(rmc_err_msgbuf), "%s : open error : %s\n", sgpath, strerror(errno));
+			rmc_err_msgbuf[sizeof(rmc_err_msgbuf) - 1] = '\0';
+			*msgaddr = rmc_err_msgbuf;
 			return (-1);
 		}
 	}
@@ -257,9 +246,9 @@ int send_scsi_cmd (
 	if (write (fd, sg_buffer, n) < 0) {
 		*msgaddr = (char *) strerror(errno);
 		serrno = errno;
-		snprintf (tp_err_msgbuf, sizeof(tp_err_msgbuf), TP042, sgpath, "write", *msgaddr);
-		tp_err_msgbuf[sizeof(tp_err_msgbuf) - 1] = '\0';
-		*msgaddr = tp_err_msgbuf;
+		snprintf (rmc_err_msgbuf, sizeof(rmc_err_msgbuf), "%s : write error : %s\n", sgpath, *msgaddr);
+		rmc_err_msgbuf[sizeof(rmc_err_msgbuf) - 1] = '\0';
+		*msgaddr = rmc_err_msgbuf;
 		if (! do_not_open) close (fd);
 		return (-2);
 	}
@@ -267,9 +256,9 @@ int send_scsi_cmd (
 	    ((flags & SCSI_IN) ? buflen : 0))) < 0) {
 		*msgaddr = (char *) strerror(errno);
 		serrno = errno;
-		snprintf (tp_err_msgbuf, sizeof(tp_err_msgbuf), TP042, sgpath, "read", *msgaddr);
-		tp_err_msgbuf[sizeof(tp_err_msgbuf) - 1] = '\0';
-		*msgaddr = tp_err_msgbuf;
+		snprintf (rmc_err_msgbuf, sizeof(rmc_err_msgbuf), "%s : read error : %s\n", sgpath, *msgaddr);
+		rmc_err_msgbuf[sizeof(rmc_err_msgbuf) - 1] = '\0';
+		*msgaddr = rmc_err_msgbuf;
 		if (! do_not_open) close (fd);
 		return (-2);
 	}
@@ -290,16 +279,16 @@ int send_scsi_cmd (
 		    sk_msg[*(sense+2) & 0xF], *(sense+12), *(sense+13));
 		tmp_msgbuf[sizeof(tmp_msgbuf) - 1] = '\0';
 		serrno = EIO;
-		snprintf (tp_err_msgbuf, sizeof(tp_err_msgbuf), TP042, sgpath, "scsi", tmp_msgbuf);
-		tp_err_msgbuf[sizeof(tp_err_msgbuf) - 1] = '\0';
-		*msgaddr = tp_err_msgbuf;
+		snprintf (rmc_err_msgbuf, sizeof(rmc_err_msgbuf), "%s : scsi error : %s\n", sgpath, tmp_msgbuf);
+		rmc_err_msgbuf[sizeof(rmc_err_msgbuf) - 1] = '\0';
+		*msgaddr = rmc_err_msgbuf;
 		return (-4);
 	} else if (sg_hd->result) {
 		*msgaddr = (char *) strerror(sg_hd->result);
 		serrno = sg_hd->result;
-		snprintf (tp_err_msgbuf, sizeof(tp_err_msgbuf), TP042, sgpath, "read", *msgaddr);
-		tp_err_msgbuf[sizeof(tp_err_msgbuf) - 1] = '\0';
-		*msgaddr = tp_err_msgbuf;
+		snprintf (rmc_err_msgbuf, sizeof(rmc_err_msgbuf), "%s : read error : %s\n", sgpath, *msgaddr);
+		rmc_err_msgbuf[sizeof(rmc_err_msgbuf) - 1] = '\0';
+		*msgaddr = rmc_err_msgbuf;
 		return (-2);
 	}
 	if (n)
