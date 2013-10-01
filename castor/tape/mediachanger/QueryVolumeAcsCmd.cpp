@@ -341,7 +341,7 @@ QU_VOL_STATUS castor::tape::mediachanger::QueryVolumeAcsCmd::syncQueryVolume()
 void castor::tape::mediachanger::QueryVolumeAcsCmd::writeVolumeStatus(
   const QU_VOL_STATUS &s) throw() {
   m_out << "Volume identifier: " << s.vol_id.external_label << std::endl;
-  m_out << "Media type: " << (int)s.media_type << std::endl;
+  m_out << "Media type (media_types.dat): " << (int)s.media_type << std::endl;
 
   switch(s.location_type) {
   case LOCATION_CELL: {
