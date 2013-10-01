@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/mediachanger/MountAcsCmd.cpp
+ *                 castor/tape/rmcd/MountAcsCmd.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,7 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/mediachanger/MountAcsCmd.hpp"
+#include "castor/tape/rmcd/MountAcsCmd.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 #include <getopt.h>
@@ -31,7 +31,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::mediachanger::MountAcsCmd::MountAcsCmd(
+castor::tape::rmcd::MountAcsCmd::MountAcsCmd(
   std::istream &inStream, std::ostream &outStream, std::ostream &errStream,
   Acs &acs) throw():
   AcsCmd(inStream, outStream, errStream, acs), m_defaultQueryInterval(10),
@@ -41,14 +41,14 @@ castor::tape::mediachanger::MountAcsCmd::MountAcsCmd(
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::tape::mediachanger::MountAcsCmd::~MountAcsCmd() throw() {
+castor::tape::rmcd::MountAcsCmd::~MountAcsCmd() throw() {
   // Do nothing
 }
 
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int castor::tape::mediachanger::MountAcsCmd::main(const int argc,
+int castor::tape::rmcd::MountAcsCmd::main(const int argc,
   char *const *const argv) throw() {
   try {
     m_cmdLine = parseCmdLine(argc, argv);
@@ -99,8 +99,8 @@ int castor::tape::mediachanger::MountAcsCmd::main(const int argc,
 //------------------------------------------------------------------------------
 // parseCmdLine
 //------------------------------------------------------------------------------
-castor::tape::mediachanger::MountAcsCmdLine
-  castor::tape::mediachanger::MountAcsCmd::parseCmdLine(
+castor::tape::rmcd::MountAcsCmdLine
+  castor::tape::rmcd::MountAcsCmd::parseCmdLine(
   const int argc, char *const *const argv)
   throw(castor::exception::Internal, castor::exception::InvalidArgument,
     castor::exception::MissingOperand) {
@@ -216,7 +216,7 @@ castor::tape::mediachanger::MountAcsCmdLine
 //------------------------------------------------------------------------------
 // usage
 //------------------------------------------------------------------------------
-void castor::tape::mediachanger::MountAcsCmd::usage(std::ostream &os)
+void castor::tape::rmcd::MountAcsCmd::usage(std::ostream &os)
   const throw() {
   os <<
   "Usage:\n"
@@ -248,7 +248,7 @@ void castor::tape::mediachanger::MountAcsCmd::usage(std::ostream &os)
 //------------------------------------------------------------------------------
 // syncMount
 //------------------------------------------------------------------------------
-void castor::tape::mediachanger::MountAcsCmd::syncMount()
+void castor::tape::rmcd::MountAcsCmd::syncMount()
   throw(castor::exception::MountFailed) {
   const SEQ_NO requestSeqNumber = 1;
   ALIGNED_BYTES buf[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
@@ -269,7 +269,7 @@ void castor::tape::mediachanger::MountAcsCmd::syncMount()
 //------------------------------------------------------------------------------
 // sendMountRequest
 //------------------------------------------------------------------------------
-void castor::tape::mediachanger::MountAcsCmd::sendMountRequest(
+void castor::tape::rmcd::MountAcsCmd::sendMountRequest(
   const SEQ_NO seqNumber) throw(castor::exception::MountFailed) {
   const LOCKID lockId = 0; // No lock
   const BOOLEAN bypass = FALSE;
@@ -292,7 +292,7 @@ void castor::tape::mediachanger::MountAcsCmd::sendMountRequest(
 //------------------------------------------------------------------------------
 // processMountResponse
 //------------------------------------------------------------------------------
-void castor::tape::mediachanger::MountAcsCmd::processMountResponse(
+void castor::tape::rmcd::MountAcsCmd::processMountResponse(
   ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
   throw(castor::exception::MountFailed) {
   const ACS_MOUNT_RESPONSE *const msg = (ACS_MOUNT_RESPONSE *)buf;

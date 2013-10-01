@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/mediachanger/MountAcsCmdLine.hpp
+ *                 castor/tape/rmcd/MountAcsCmdLine.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -34,7 +34,7 @@ extern "C" {
 
 namespace castor {
 namespace tape {
-namespace mediachanger {
+namespace rmcd {
 
 /**
  * Data type used to store the results of parsing the command-line.
@@ -85,7 +85,7 @@ struct MountAcsCmdLine {
 
 }; // class MountAcsCmdLine
 
-} // namespace mediachanger
+} // namespace rmcd
 } // namespace tape
 } // namespace castor
 

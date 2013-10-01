@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/mediachanger/AcsImpl.hpp
+ *                 castor/tape/rmcd/AcsImpl.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,7 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/mediachanger/AcsImpl.hpp"
+#include "castor/tape/rmcd/AcsImpl.hpp"
 
 #include <errno.h>
 #include <sstream>
@@ -31,13 +31,13 @@
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::tape::mediachanger::AcsImpl::~AcsImpl() throw() {
+castor::tape::rmcd::AcsImpl::~AcsImpl() throw() {
 }
 
 //------------------------------------------------------------------------------
 // mount
 //------------------------------------------------------------------------------
-STATUS castor::tape::mediachanger::AcsImpl::mount(
+STATUS castor::tape::rmcd::AcsImpl::mount(
   const SEQ_NO seqNumber,
   const LOCKID lockId,
   const VOLID &volId,
@@ -51,7 +51,7 @@ STATUS castor::tape::mediachanger::AcsImpl::mount(
 //------------------------------------------------------------------------------
 // dismount
 //------------------------------------------------------------------------------
-STATUS castor::tape::mediachanger::AcsImpl::dismount(
+STATUS castor::tape::rmcd::AcsImpl::dismount(
   const SEQ_NO seqNumber,
   const LOCKID lockId,
   const VOLID &volId,
@@ -64,7 +64,7 @@ STATUS castor::tape::mediachanger::AcsImpl::dismount(
 //------------------------------------------------------------------------------
 // response
 //------------------------------------------------------------------------------
-STATUS castor::tape::mediachanger::AcsImpl::response(
+STATUS castor::tape::rmcd::AcsImpl::response(
   const int timeout,
   SEQ_NO &seqNumber,
   REQ_ID &reqId,
@@ -76,7 +76,7 @@ STATUS castor::tape::mediachanger::AcsImpl::response(
 //------------------------------------------------------------------------------
 // queryVolume
 //------------------------------------------------------------------------------
-STATUS castor::tape::mediachanger::AcsImpl::queryVolume(
+STATUS castor::tape::rmcd::AcsImpl::queryVolume(
   const SEQ_NO seqNumber,
   VOLID (&volIds)[MAX_ID],
   const unsigned short count) throw() {

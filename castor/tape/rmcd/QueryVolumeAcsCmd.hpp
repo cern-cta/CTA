@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/mediachanger/QueryVolumeAcsCmd.hpp
+ *                 castor/tape/rmcd/QueryVolumeAcsCmd.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -29,14 +29,14 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/MissingOperand.hpp"
 #include "castor/exception/QueryVolumeFailed.hpp"
-#include "castor/tape/mediachanger/AcsCmd.hpp"
-#include "castor/tape/mediachanger/QueryVolumeAcsCmdLine.hpp"
+#include "castor/tape/rmcd/AcsCmd.hpp"
+#include "castor/tape/rmcd/QueryVolumeAcsCmdLine.hpp"
 
 #include <stdint.h>
 
 namespace castor  {
 namespace tape    {
-namespace mediachanger {
+namespace rmcd {
 
 /**
  * The class implementing the mount command.
@@ -152,7 +152,7 @@ private:
 
 }; // class QueryVolumeAcsCmd
 
-} // namespace mediachanger
+} // namespace rmcd
 } // namespace tape
 } // namespace castor
 

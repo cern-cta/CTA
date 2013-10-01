@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/mediachanger/DismountAcsCmdLine.hpp
+ *                 castor/tape/rmcd/DismountAcsCmdLine.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,12 +22,12 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/mediachanger/DismountAcsCmdLine.hpp"
+#include "castor/tape/rmcd/DismountAcsCmdLine.hpp"
 
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::mediachanger::DismountAcsCmdLine::DismountAcsCmdLine() throw():
+castor::tape::rmcd::DismountAcsCmdLine::DismountAcsCmdLine() throw():
   debug(false),
   force(FALSE),
   help(false),

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/mediachanger/DismountAcsCmd.hpp
+ *                 castor/tape/rmcd/DismountAcsCmd.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -29,12 +29,12 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/MissingOperand.hpp"
-#include "castor/tape/mediachanger/AcsCmd.hpp"
-#include "castor/tape/mediachanger/DismountAcsCmdLine.hpp"
+#include "castor/tape/rmcd/AcsCmd.hpp"
+#include "castor/tape/rmcd/DismountAcsCmdLine.hpp"
 
 namespace castor {
 namespace tape {
-namespace mediachanger {
+namespace rmcd {
 
 /**
  * The class implementing the mount command.
@@ -142,7 +142,7 @@ private:
 
 }; // class DismountAcsCmd
 
-} // namespace mediachanger
+} // namespace rmcd
 } // namespace tape
 } // namespace castor
 

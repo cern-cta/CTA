@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/mediachanger/Acs.cpp
+ *                 castor/tape/rmcd/Acs.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,7 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/mediachanger/Acs.hpp"
+#include "castor/tape/rmcd/Acs.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 #include <iomanip>
@@ -32,13 +32,13 @@
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::tape::mediachanger::Acs::~Acs() throw() {
+castor::tape::rmcd::Acs::~Acs() throw() {
 }
 
 //------------------------------------------------------------------------------
 // str2DriveId
 //------------------------------------------------------------------------------
-DRIVEID castor::tape::mediachanger::Acs::str2DriveId(const std::string &str)
+DRIVEID castor::tape::rmcd::Acs::str2DriveId(const std::string &str)
   const throw(castor::exception::InvalidArgument) {
   std::vector<std::string> components;
   utils::splitString(str, ':', components);
@@ -117,7 +117,7 @@ DRIVEID castor::tape::mediachanger::Acs::str2DriveId(const std::string &str)
 //------------------------------------------------------------------------------
 // str2Volid
 //------------------------------------------------------------------------------
-VOLID castor::tape::mediachanger::Acs::str2Volid(const std::string &str) const
+VOLID castor::tape::rmcd::Acs::str2Volid(const std::string &str) const
   throw(castor::exception::InvalidArgument) {
   if(EXTERNAL_LABEL_SIZE < str.length()) {
     castor::exception::InvalidArgument ex;
@@ -136,7 +136,7 @@ VOLID castor::tape::mediachanger::Acs::str2Volid(const std::string &str) const
 //------------------------------------------------------------------------------
 // onlyContainsNumerals
 //------------------------------------------------------------------------------
-bool castor::tape::mediachanger::Acs::onlyContainsNumerals(
+bool castor::tape::rmcd::Acs::onlyContainsNumerals(
   const std::string &str) const throw() {
   for(std::string::const_iterator itor = str.begin(); itor != str.end();
     itor++) {
@@ -150,7 +150,7 @@ bool castor::tape::mediachanger::Acs::onlyContainsNumerals(
 //------------------------------------------------------------------------------
 // driveId2Str
 //------------------------------------------------------------------------------
-std::string castor::tape::mediachanger::Acs::driveId2Str(const DRIVEID &driveId)
+std::string castor::tape::rmcd::Acs::driveId2Str(const DRIVEID &driveId)
   const throw() {
   std::ostringstream oss;
   oss << std::setfill('0') <<

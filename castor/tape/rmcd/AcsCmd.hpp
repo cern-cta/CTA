@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/mediachanger/AcsCmd.hpp
+ *                 castor/tape/rmcd/AcsCmd.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -28,8 +28,8 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/Mismatch.hpp"
 #include "castor/exception/RequestFailed.hpp"
-#include "castor/tape/mediachanger/Acs.hpp"
-#include "castor/tape/mediachanger/DebugBuf.hpp"
+#include "castor/tape/rmcd/Acs.hpp"
+#include "castor/tape/rmcd/DebugBuf.hpp"
 
 #include <istream>
 #include <ostream>
@@ -42,7 +42,7 @@ extern "C" {
 
 namespace castor {
 namespace tape {
-namespace mediachanger {
+namespace rmcd {
 
 /**
  * Abstract class implementing common code and data structures for command-line
@@ -157,7 +157,7 @@ protected:
 
 }; // class AcsCmd
 
-} // namespace mediachanger
+} // namespace rmcd
 } // namespace tape
 } // namespace castor
 

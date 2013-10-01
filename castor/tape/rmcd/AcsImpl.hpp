@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/mediachanger/AcsImpl.hpp
+ *                 castor/tape/rmcd/AcsImpl.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -25,11 +25,11 @@
 #ifndef CASTOR_TAPE_MEDIACHANGER_ACSIMPL_HPP
 #define CASTOR_TAPE_MEDIACHANGER_ACSIMPL_HPP 1
 
-#include "castor/tape/mediachanger/Acs.hpp"
+#include "castor/tape/rmcd/Acs.hpp"
 
 namespace castor {
 namespace tape {
-namespace mediachanger {
+namespace rmcd {
 
 /**
  * Concrete class that wraps the ACLS C-API.
@@ -121,7 +121,7 @@ public:
 
 }; // class AcsImpl
 
-} // namespace mediachanger
+} // namespace rmcd
 } // namespace tape
 } // namespace castor
 

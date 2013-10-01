@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/mediachanger/QueryVolumeAcsMain.cpp
+ *                 castor/tape/rmcd/QueryVolumeAcsMain.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
  
-#include "castor/tape/mediachanger/AcsImpl.hpp"
-#include "castor/tape/mediachanger/QueryVolumeAcsCmd.hpp"
+#include "castor/tape/rmcd/AcsImpl.hpp"
+#include "castor/tape/rmcd/QueryVolumeAcsCmd.hpp"
 
 #include <iostream>
 
@@ -32,8 +32,8 @@
 //------------------------------------------------------------------------------
 int main(const int argc, char *const *const argv) {
 
-  castor::tape::mediachanger::AcsImpl acs;
-  castor::tape::mediachanger::QueryVolumeAcsCmd
+  castor::tape::rmcd::AcsImpl acs;
+  castor::tape::rmcd::QueryVolumeAcsCmd
     cmd(std::cin, std::cout, std::cerr, acs);
 
   return cmd.main(argc, argv);

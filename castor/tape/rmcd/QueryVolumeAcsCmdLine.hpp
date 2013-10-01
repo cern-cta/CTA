@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/mediachanger/QueryVolumeAcsCmdLine.hpp
+ *                 castor/tape/rmcd/QueryVolumeAcsCmdLine.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -34,7 +34,7 @@ extern "C" {
 
 namespace castor {
 namespace tape {
-namespace mediachanger {
+namespace rmcd {
 
 /**
  * Data type used to store the results of parsing the command-line.
@@ -75,7 +75,7 @@ struct QueryVolumeAcsCmdLine {
 
 }; // class QueryVolumeAcsCmdLine
 
-} // namespace mediachanger
+} // namespace rmcd
 } // namespace tape
 } // namespace castor
 

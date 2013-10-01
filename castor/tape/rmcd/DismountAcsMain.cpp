@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/mediachanger/DismountAcsMain.cpp
+ *                 castor/tape/rmcd/DismountAcsMain.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
  
-#include "castor/tape/mediachanger/AcsImpl.hpp"
-#include "castor/tape/mediachanger/DismountAcsCmd.hpp"
+#include "castor/tape/rmcd/AcsImpl.hpp"
+#include "castor/tape/rmcd/DismountAcsCmd.hpp"
 
 #include <iostream>
 
@@ -31,8 +31,8 @@
 // main
 //------------------------------------------------------------------------------
 int main(const int argc, char *const *const argv) {
-  castor::tape::mediachanger::AcsImpl acs;
-  castor::tape::mediachanger::DismountAcsCmd
+  castor::tape::rmcd::AcsImpl acs;
+  castor::tape::rmcd::DismountAcsCmd
     cmd(std::cin, std::cout, std::cerr, acs);
 
   return cmd.main(argc, argv);

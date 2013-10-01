@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/mediachanger/MountAcsCmdLine.hpp
+ *                 castor/tape/rmcd/MountAcsCmdLine.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,12 +22,12 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/mediachanger/MountAcsCmdLine.hpp"
+#include "castor/tape/rmcd/MountAcsCmdLine.hpp"
 
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::mediachanger::MountAcsCmdLine::MountAcsCmdLine() throw():
+castor::tape::rmcd::MountAcsCmdLine::MountAcsCmdLine() throw():
   debug(false),
   help(false),
   queryInterval(0),
