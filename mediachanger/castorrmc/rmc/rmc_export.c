@@ -20,7 +20,7 @@ int rmc_export(const char *const server, const char *const vid)
 	char *q;
 	char repbuf[1];
 	char *sbp;
-	char sendbuf[REQBUFSZ];
+	char sendbuf[RMC_REQBUFSZ];
 	uid_t uid;
 
 	uid = getuid();

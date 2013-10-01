@@ -30,7 +30,7 @@ int rmc_find_cartridge(
 	char *rbp;
 	char repbuf[RMC_REPBUFSZ];
 	char *sbp;
-	char sendbuf[REQBUFSZ];
+	char sendbuf[RMC_REQBUFSZ];
 	uid_t uid;
 
 	uid = getuid();
