@@ -17,7 +17,7 @@
 
 #include "osdep.h"
 #include "rmc_constants.h"
-#define	CHECKI  5	/* max interval to check for work to be done */
+#define	RMC_CHECKI  5	/* max interval to check for work to be done */
 #define	MAXRETRY 5
 #define	RETRYI	60
 #define	LOGBUFSZ 1024
