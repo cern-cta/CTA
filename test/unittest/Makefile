@@ -126,15 +126,15 @@ rununittests: \
   metrics_InternalCounter.o \
   metrics_MetricsCollector.o \
   metrics_UpdateThread.o \
-  mediachanger_Acs.o \
-  mediachanger_AcsCmd.o \
-  mediachanger_DebugBuf.o \
-  mediachanger_DismountAcsCmdLine.o \
-  mediachanger_DismountAcsCmd.o \
-  mediachanger_MountAcsCmdLine.o \
-  mediachanger_MountAcsCmd.o \
-  mediachanger_QueryVolumeAcsCmdLine.o \
-  mediachanger_QueryVolumeAcsCmd.o \
+  rmc_Acs.o \
+  rmc_AcsCmd.o \
+  rmc_DebugBuf.o \
+  rmc_AcsDismountCmdLine.o \
+  rmc_AcsDismountCmd.o \
+  rmc_AcsMountCmdLine.o \
+  rmc_AcsMountCmd.o \
+  rmc_AcsQueryVolumeCmdLine.o \
+  rmc_AcsQueryVolumeCmd.o \
   ns_Cns_selectsrvr.o \
   ns_Cns_opendir.o \
   ns_Cns_closedir.o \
@@ -251,7 +251,6 @@ rununittests: \
   tape_Ctape_position.o \
   tape_Ctape_info.o \
   tape_Ctape_devinfo.o \
-  tape_Ctape_drvinfo.o \
   tape_Ctape_rls.o \
   tape_Ctape_reserve.o \
   tape_cvtden.o \
@@ -332,16 +331,16 @@ rununittests: \
   unittest_CvtdenTest.o \
   unittest_InitlabelTest.o \
   unittest_Ctape_reserveTest.o \
-  unittest_DismountAcsCmdLineTest.o \
-  unittest_DismountAcsCmdTest.o \
+  unittest_AcsDismountCmdLineTest.o \
+  unittest_AcsDismountCmdTest.o \
   unittest_RecvTapeBridgeFlushedToTapeAckTest.o \
   unittest_MarshallTapeBridgeFlushedToTapeTest.o \
   unittest_SendTapeBridgeFlushedToTapeTest.o \
   unittest_MarshallTapeBridgeClientInfo2Test.o \
-  unittest_MountAcsCmdLineTest.o \
-  unittest_MountAcsCmdTest.o \
-  unittest_QueryVolumeAcsCmdLineTest.o \
-  unittest_QueryVolumeAcsCmdTest.o \
+  unittest_AcsMountCmdLineTest.o \
+  unittest_AcsMountCmdTest.o \
+  unittest_AcsQueryVolumeCmdLineTest.o \
+  unittest_AcsQueryVolumeCmdTest.o \
   unittest_NetTest.o \
   unittest_FileToRecallTest.o \
   unittest_MigrationReportConnectionTest.o \
@@ -716,31 +715,31 @@ metrics_UpdateThread.o: \
   $(ROOT_DIR)/castor/metrics/UpdateThread.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-mediachanger_Acs.o: $(ROOT_DIR)/castor/tape/mediachanger/Acs.cpp
+rmc_Acs.o: $(ROOT_DIR)/castor/tape/rmc/Acs.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-mediachanger_AcsCmd.o: $(ROOT_DIR)/castor/tape/mediachanger/AcsCmd.cpp
+rmc_AcsCmd.o: $(ROOT_DIR)/castor/tape/rmc/AcsCmd.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-mediachanger_DebugBuf.o: $(ROOT_DIR)/castor/tape/mediachanger/DebugBuf.cpp
+rmc_DebugBuf.o: $(ROOT_DIR)/castor/tape/rmc/DebugBuf.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-mediachanger_DismountAcsCmdLine.o: $(ROOT_DIR)/castor/tape/mediachanger/DismountAcsCmdLine.cpp
+rmc_AcsDismountCmdLine.o: $(ROOT_DIR)/castor/tape/rmc/AcsDismountCmdLine.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-mediachanger_DismountAcsCmd.o: $(ROOT_DIR)/castor/tape/mediachanger/DismountAcsCmd.cpp
+rmc_AcsDismountCmd.o: $(ROOT_DIR)/castor/tape/rmc/AcsDismountCmd.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-mediachanger_MountAcsCmdLine.o: $(ROOT_DIR)/castor/tape/mediachanger/MountAcsCmdLine.cpp
+rmc_AcsMountCmdLine.o: $(ROOT_DIR)/castor/tape/rmc/AcsMountCmdLine.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-mediachanger_MountAcsCmd.o: $(ROOT_DIR)/castor/tape/mediachanger/MountAcsCmd.cpp
+rmc_AcsMountCmd.o: $(ROOT_DIR)/castor/tape/rmc/AcsMountCmd.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-mediachanger_QueryVolumeAcsCmdLine.o: $(ROOT_DIR)/castor/tape/mediachanger/QueryVolumeAcsCmdLine.cpp
+rmc_AcsQueryVolumeCmdLine.o: $(ROOT_DIR)/castor/tape/rmc/AcsQueryVolumeCmdLine.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-mediachanger_QueryVolumeAcsCmd.o: $(ROOT_DIR)/castor/tape/mediachanger/QueryVolumeAcsCmd.cpp
+rmc_AcsQueryVolumeCmd.o: $(ROOT_DIR)/castor/tape/rmc/AcsQueryVolumeCmd.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 ns_Cns_selectsrvr.o: $(ROOT_DIR)/ns/Cns_selectsrvr.c
@@ -1168,9 +1167,6 @@ tape_Ctape_position.o: $(ROOT_DIR)/tape/Ctape_position.c
 tape_Ctape_devinfo.o: $(ROOT_DIR)/tape/Ctape_devinfo.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-tape_Ctape_drvinfo.o: $(ROOT_DIR)/tape/Ctape_drvinfo.c
-	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
 tape_Ctape_info.o: $(ROOT_DIR)/tape/Ctape_info.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
@@ -1567,31 +1563,31 @@ unittest_SessionErrorTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/Se
 unittest_ClientAddressLocalTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/ClientAddressLocalTest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
  
-unittest_AcsCmdTest.o: $(ROOT_DIR)/test/unittest/castor/tape/mediachanger/AcsCmdTest.cpp
+unittest_AcsCmdTest.o: $(ROOT_DIR)/test/unittest/castor/tape/rmc/AcsCmdTest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
  
-unittest_AcsTest.o: $(ROOT_DIR)/test/unittest/castor/tape/mediachanger/AcsTest.cpp
+unittest_AcsTest.o: $(ROOT_DIR)/test/unittest/castor/tape/rmc/AcsTest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-unittest_DismountAcsCmdLineTest.o: $(ROOT_DIR)/test/unittest/castor/tape/mediachanger/DismountAcsCmdLineTest.cpp
+unittest_AcsDismountCmdLineTest.o: $(ROOT_DIR)/test/unittest/castor/tape/rmc/AcsDismountCmdLineTest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-unittest_DismountAcsCmdTest.o: $(ROOT_DIR)/test/unittest/castor/tape/mediachanger/DismountAcsCmdTest.cpp
+unittest_AcsDismountCmdTest.o: $(ROOT_DIR)/test/unittest/castor/tape/rmc/AcsDismountCmdTest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 unittest_NetTest.o: $(ROOT_DIR)/test/unittest/castor/tape/net/NetTest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
  
-unittest_MountAcsCmdLineTest.o: $(ROOT_DIR)/test/unittest/castor/tape/mediachanger/MountAcsCmdLineTest.cpp
+unittest_AcsMountCmdLineTest.o: $(ROOT_DIR)/test/unittest/castor/tape/rmc/AcsMountCmdLineTest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
  
-unittest_MountAcsCmdTest.o: $(ROOT_DIR)/test/unittest/castor/tape/mediachanger/MountAcsCmdTest.cpp
+unittest_AcsMountCmdTest.o: $(ROOT_DIR)/test/unittest/castor/tape/rmc/AcsMountCmdTest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
  
-unittest_QueryVolumeAcsCmdLineTest.o: $(ROOT_DIR)/test/unittest/castor/tape/mediachanger/QueryVolumeAcsCmdLineTest.cpp
+unittest_AcsQueryVolumeCmdLineTest.o: $(ROOT_DIR)/test/unittest/castor/tape/rmc/AcsQueryVolumeCmdLineTest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
  
-unittest_QueryVolumeAcsCmdTest.o: $(ROOT_DIR)/test/unittest/castor/tape/mediachanger/QueryVolumeAcsCmdTest.cpp
+unittest_AcsQueryVolumeCmdTest.o: $(ROOT_DIR)/test/unittest/castor/tape/rmc/AcsQueryVolumeCmdTest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
  
 unittest_FileToMigrateTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/FileToMigrateTest.cpp
