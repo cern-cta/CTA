@@ -72,3 +72,13 @@ STATUS castor::tape::mediachanger::AcsImpl::response(
   ALIGNED_BYTES rBuf) throw() {
   return acs_response(timeout, &seqNumber, &reqId, &rType, rBuf);
 }
+
+//------------------------------------------------------------------------------
+// queryVolume
+//------------------------------------------------------------------------------
+STATUS castor::tape::mediachanger::AcsImpl::queryVolume(
+  const SEQ_NO seqNumber,
+  VOLID volId[MAX_ID],
+  const unsigned short count) throw() {
+  return acs_query_volume(seqNumber, volId, count);
+}

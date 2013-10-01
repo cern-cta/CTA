@@ -1,5 +1,5 @@
 /******************************************************************************
- *             test/unittest/castor/tape/mount/MountAcsCmdTest.hpp
+ *             test/unittest/castor/tape/mediachanger/MountAcsCmdTest.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -82,7 +82,7 @@ public:
     m_argsList.push_back(args);
     args->argc = 1;
     args->argv = new char *[2];
-    args->argv[0] = dupString("mount");
+    args->argv[0] = dupString("mountacs");
     args->argv[1] = NULL;
 
     std::istringstream inStream;
@@ -100,7 +100,7 @@ public:
     m_argsList.push_back(args);
     args->argc = 2;
     args->argv = new char *[3];
-    args->argv[0] = dupString("mount");
+    args->argv[0] = dupString("mountacs");
     args->argv[1] = dupString("VIDVID");
     args->argv[2] = NULL;
 
@@ -120,7 +120,7 @@ public:
     m_argsList.push_back(args);
     args->argc = 4;
     args->argv = new char *[5];
-    args->argv[0] = dupString("mount");
+    args->argv[0] = dupString("mountacs");
     args->argv[1] = dupString("-r");
     args->argv[2] = dupString("VIDVID");
     args->argv[3] = dupString("111:112:113:114");
@@ -153,7 +153,7 @@ public:
     m_argsList.push_back(args);
     args->argc = 4;
     args->argv = new char *[5];
-    args->argv[0] = dupString("mount");
+    args->argv[0] = dupString("mountacs");
     args->argv[1] = dupString("--readonly");
     args->argv[2] = dupString("VIDVID");
     args->argv[3] = dupString("111:112:113:114");
@@ -186,7 +186,7 @@ public:
     m_argsList.push_back(args);
     args->argc = 2;
     args->argv = new char *[3];
-    args->argv[0] = dupString("mount");
+    args->argv[0] = dupString("mountacs");
     args->argv[1] = dupString("-h");
     args->argv[2] = NULL;
 
@@ -207,7 +207,7 @@ public:
     m_argsList.push_back(args);
     args->argc = 2;
     args->argv = new char *[3];
-    args->argv[0] = dupString("mount");
+    args->argv[0] = dupString("mountacs");
     args->argv[1] = dupString("--help");
     args->argv[2] = NULL;
 
@@ -228,7 +228,7 @@ public:
     m_argsList.push_back(args);
     args->argc = 3;
     args->argv = new char *[4];
-    args->argv[0] = dupString("mount");
+    args->argv[0] = dupString("mountacs");
     args->argv[1] = dupString("VIDVID");
     args->argv[2] = dupString("111:112:113:114");
     args->argv[3] = NULL;
@@ -266,7 +266,7 @@ public:
     m_argsList.push_back(args);
     args->argc = 4;
     args->argv = new char *[5];
-    args->argv[0] = dupString("mount");
+    args->argv[0] = dupString("mountacs");
     args->argv[1] = dupString("-d");
     args->argv[2] = dupString("VIDVID");
     args->argv[3] = dupString("111:112:113:114");
@@ -299,7 +299,7 @@ public:
     m_argsList.push_back(args);
     args->argc = 4;
     args->argv = new char *[5];
-    args->argv[0] = dupString("mount");
+    args->argv[0] = dupString("mountacs");
     args->argv[1] = dupString("--debug");
     args->argv[2] = dupString("VIDVID");
     args->argv[3] = dupString("111:112:113:114");
@@ -332,7 +332,7 @@ public:
     m_argsList.push_back(args);
     args->argc = 3;
     args->argv = new char *[4];
-    args->argv[0] = dupString("mount");
+    args->argv[0] = dupString("mountacs");
     args->argv[1] = dupString("VIDVID7");
     args->argv[2] = dupString("111:112:113:114");
     args->argv[3] = NULL;
@@ -352,7 +352,7 @@ public:
     m_argsList.push_back(args);
     args->argc = 3;
     args->argv = new char *[4];
-    args->argv[0] = dupString("mount");
+    args->argv[0] = dupString("mountacs");
     args->argv[1] = dupString("VIDVID");
     args->argv[2] = dupString("INVALID_DRIVE");
     args->argv[3] = NULL;
@@ -373,7 +373,7 @@ public:
     m_argsList.push_back(args);
     args->argc = 5;
     args->argv = new char *[6];
-    args->argv[0] = dupString("mount");
+    args->argv[0] = dupString("mountacs");
     args->argv[1] = dupString("-t");
     args->argv[2] = dupString("2");
     args->argv[3] = dupString("VIDVID");
@@ -407,7 +407,7 @@ public:
     m_argsList.push_back(args);
     args->argc = 5;
     args->argv = new char *[6];
-    args->argv[0] = dupString("mount");
+    args->argv[0] = dupString("mountacs");
     args->argv[1] = dupString("--timeout");
     args->argv[2] = dupString("2");
     args->argv[3] = dupString("VIDVID");
@@ -441,7 +441,7 @@ public:
     m_argsList.push_back(args);
     args->argc = 5;
     args->argv = new char *[6];
-    args->argv[0] = dupString("mount");
+    args->argv[0] = dupString("mountacs");
     args->argv[1] = dupString("--timeout");
     args->argv[2] = dupString("0");
     args->argv[3] = dupString("VIDVID");
@@ -464,7 +464,7 @@ public:
     m_argsList.push_back(args);
     args->argc = 5;
     args->argv = new char *[6];
-    args->argv[0] = dupString("mount");
+    args->argv[0] = dupString("mountacs");
     args->argv[1] = dupString("-q");
     args->argv[2] = dupString("1");
     args->argv[3] = dupString("VIDVID");
@@ -498,7 +498,7 @@ public:
     m_argsList.push_back(args);
     args->argc = 5;
     args->argv = new char *[6];
-    args->argv[0] = dupString("mount");
+    args->argv[0] = dupString("mountacs");
     args->argv[1] = dupString("--query");
     args->argv[2] = dupString("1");
     args->argv[3] = dupString("VIDVID");
@@ -532,7 +532,7 @@ public:
     m_argsList.push_back(args);
     args->argc = 5;
     args->argv = new char *[6];
-    args->argv[0] = dupString("mount");
+    args->argv[0] = dupString("mountacs");
     args->argv[1] = dupString("--query");
     args->argv[2] = dupString("0");
     args->argv[3] = dupString("VIDVID");

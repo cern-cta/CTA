@@ -111,6 +111,17 @@ private:
    */
   DismountAcsCmdLine m_cmdLine;
 
+  /**
+   * The default time in seconds to wait between queries to ACS for responses.
+   */
+  const int m_defaultQueryInterval;
+
+  /**
+   * The default timeout value in seconds for the dismount to conclude either
+   * success or failure.
+   */
+  const int m_defaultTimeout;
+
 }; // class DismountAcsCmd
 
 } // namespace mediachanger

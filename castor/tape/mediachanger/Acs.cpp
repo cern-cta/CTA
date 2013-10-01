@@ -121,9 +121,9 @@ VOLID castor::tape::mediachanger::Acs::str2Volid(const std::string &str) const
   throw(castor::exception::InvalidArgument) {
   if(EXTERNAL_LABEL_SIZE < str.length()) {
     castor::exception::InvalidArgument ex;
-    ex.getMessage() << "Failed to convert string to VOLID: String is too long"
-      ": EXTERNAL_LABEL_SIZE=" << EXTERNAL_LABEL_SIZE << " str.length()="
-      << str.length();
+    ex.getMessage() << "Failed to convert string to volume identifier"
+      ": String is longer than the " << EXTERNAL_LABEL_SIZE <<
+      " character maximum";
     throw ex;
   }
 

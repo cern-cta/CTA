@@ -34,7 +34,8 @@
 castor::tape::mediachanger::MountAcsCmd::MountAcsCmd(
   std::istream &inStream, std::ostream &outStream, std::ostream &errStream,
   Acs &acs) throw():
-  AcsCmd(inStream, outStream, errStream, acs) {
+  AcsCmd(inStream, outStream, errStream, acs), m_defaultQueryInterval(10),
+  m_defaultTimeout(600) {
 }
 
 //------------------------------------------------------------------------------
@@ -119,11 +120,11 @@ castor::tape::mediachanger::MountAcsCmdLine
   MountAcsCmdLine cmdLine;
   char c;
 
-  // Set the query option to default value of 10 seconds.
-  cmdLine.queryInterval = 10;
+  // Set the query option to the default value
+  cmdLine.queryInterval = m_defaultQueryInterval;
 
-  // Set timeout option to the default value of 600 seconds
-  cmdLine.timeout = 600;
+  // Set timeout option to the default value
+  cmdLine.timeout = m_defaultTimeout;
 
   // Prevent getopt() from printing an error message if it does not recognize
   // an option character
@@ -227,8 +228,8 @@ void castor::tape::mediachanger::MountAcsCmd::usage(std::ostream &os)
   "\n"
   "Where:\n"
   "\n"
-  "  VID    The VID of the tape to be mounted.\n"
-  "  DRIVE  The ID of the drive in which the tape is to be mounted.\n"
+  "  VID    The VID of the volume to be mounted.\n"
+  "  DRIVE  The ID of the drive into which the volume is to be mounted.\n"
   "         Drive ID format is ACS:LSM:panel:transport\n"
   "\n"
   "Options:\n"
@@ -237,12 +238,13 @@ void castor::tape::mediachanger::MountAcsCmd::usage(std::ostream &os)
   "  -h|--help             Print this help message and exit.\n"
   "  -q|--query SECONDS    Time to wait between queries to ACS for responses.\n"
   "                        SECONDS must be an integer value greater than 0.\n"
-  "                        The default value of SECONDS in 10.\n"
-  "  -r|--readOnly         Request the tape is mounted for read-only access\n"
-  "  -t|--timeout SECONDS  Time to wait for the mount to conclude.\n"
-  "  -t|--timeout SECONDS  Time to wait for the dismount to conclude. SECONDS\n"
+  "                        The default value of SECONDS is "
+    << m_defaultQueryInterval << ".\n"
+  "  -r|--readOnly         Request the volume is mounted for read-only access\n"
+  "  -t|--timeout SECONDS  Time to wait for the mount to conclude. SECONDS\n"
   "                        must be an integer value greater than 0.  The\n"
-  "                        default value of SECONDS in 300.\n"
+  "                        default value of SECONDS is "
+    << m_defaultTimeout << ".\n"
   "\n"
   "Comments to: Castor.Support@cern.ch" << std::endl;
 }
@@ -253,7 +255,7 @@ void castor::tape::mediachanger::MountAcsCmd::usage(std::ostream &os)
 void castor::tape::mediachanger::MountAcsCmd::syncMount()
   throw(castor::exception::MountFailed) {
   std::ostringstream action;
-  action << "mount tape " << m_cmdLine.volId.external_label << " into drive " <<
+  action << "mount volume " << m_cmdLine.volId.external_label << " into drive " <<
     m_acs.driveId2Str(m_cmdLine.driveId) << ": readOnly=" <<
     (m_cmdLine.readOnly ? "TRUE" : "FALSE");
 
@@ -284,22 +286,22 @@ void castor::tape::mediachanger::MountAcsCmd::syncMount()
     const int responseTimeout = remainingTime > m_cmdLine.queryInterval ?
       m_cmdLine.queryInterval : remainingTime;
     const time_t startTime = time(NULL);
-    const STATUS status = m_acs.response(responseTimeout, responseSeqNumber,
-      reqId, responseType, responseBuf);
+    const STATUS responseStatus = m_acs.response(responseTimeout,
+      responseSeqNumber, reqId, responseType, responseBuf);
     elapsedMountTime += time(NULL) - startTime;
-    if(STATUS_SUCCESS != status && STATUS_PENDING != status) {
+    if(STATUS_SUCCESS != responseStatus && STATUS_PENDING != responseStatus) {
       castor::exception::MountFailed ex;
       ex.getMessage() << "Failed to " << action.str() <<
-        ": Failed to request library response: " << acs_status(status);
+        ": Failed to request library response: " << acs_status(responseStatus);
       throw ex;
     }
-    if(m_cmdLine.debug && STATUS_SUCCESS == status &&
+    if(m_cmdLine.debug && STATUS_SUCCESS == responseStatus &&
       RT_ACKNOWLEDGE == responseType) {
       m_out << "DEBUG: Received RT_ACKNOWLEDGE: responseSeqNumber=" <<
         responseSeqNumber << " reqId=" << reqId << std::endl;
     }
     if(m_cmdLine.debug) m_out << "DEBUG: Acs::response() returned " <<
-      acs_status(status) << std::endl;
+      acs_status(responseStatus) << std::endl;
 
     if(elapsedMountTime >= m_cmdLine.timeout) {
       castor::exception::MountFailed ex;
@@ -323,9 +325,9 @@ void castor::tape::mediachanger::MountAcsCmd::syncMount()
     (ACS_DISMOUNT_RESPONSE *)responseBuf;
 
   if(STATUS_SUCCESS != response->dismount_status) {
-    castor::exception::MountFailed mf;
-    mf.getMessage() << "Failed to " << action.str() << ": " <<
+    castor::exception::MountFailed ex;
+    ex.getMessage() << "Failed to " << action.str() << ": " <<
       acs_status(response->dismount_status);
-    throw(mf);
+    throw(ex);
   }
 }

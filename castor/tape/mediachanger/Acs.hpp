@@ -153,6 +153,20 @@ public:
     REQ_ID &reqId,
     ACS_RESPONSE_TYPE &rType,
     ALIGNED_BYTES rBuf) throw() = 0;
+
+  /**
+   * C++ wrapper around the acs_query_volume() function of the ACSLS C-API.
+   *
+   * @param seqNumber Client supplied sequence number.
+   * @param volId Array of the volume identifiers to be queried.
+   * @param count The number of volume identifiers contained iwthin the volId
+   * parameter.
+   * @return status value returned by acs_response().
+   */
+  virtual STATUS queryVolume(
+    const SEQ_NO seqNumber,
+    VOLID volId[MAX_ID],
+    const unsigned short count) throw() = 0;
 }; // class  Acs
 
 } // namespace mediachanger

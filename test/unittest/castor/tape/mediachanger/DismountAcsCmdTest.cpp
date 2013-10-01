@@ -1,5 +1,5 @@
 /******************************************************************************
- *             test/unittest/castor/tape/dismountacs/DismountAcsCmdTest.hpp
+ *             test/unittest/castor/tape/mediachanger/DismountAcsCmdTest.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor

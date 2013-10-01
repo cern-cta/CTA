@@ -12,13 +12,13 @@
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 .TH MOUNTACS 1 "$Date: 2009/08/07 15:56:38 $" CASTOR "CASTOR"
 .SH NAME
-mountacs \- mount a tape
+mountacs \- mount a value
 .SH SYNOPSIS
 .BI "mountacs [options] VID DRIVE"
 
 .SH DESCRIPTION
 .B mountacs
-mounts the tape with the specfied VID into the drive with the specified DRIVE
+mounts the value with the specfied VID into the drive with the specified DRIVE
 ID. The DRIVE ID format is ACS:LSM:panel:transport.
 
 .SH OPTIONS
@@ -35,7 +35,7 @@ SECONDS must be an integer value greater than 0.
 The default values of SECONDS is 300.
 .TP
 \fB\-r, \-\-readonly
-Request the tape is mounted for read-only access.
+Request the value is mounted for read-only access.
 .TP
 \fB\-t, \-\-timeout SECONDS
 Time to wait for the mount operation to conclude.  

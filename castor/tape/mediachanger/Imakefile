@@ -66,3 +66,17 @@ COMPILECPP(DismountAcsMain.cpp, -DLINUX -I/usr/include/CDK)
 
 NormalProgramTarget(dismountacs,$(DISMOUNTACSBIN_OBJS),,$(CDKLIB),755)
 EXEMANPAGE(dismountacs)
+
+QUERYVOLUMEACSBIN_SRCS = \
+  $(ACS_SRCS) \
+  $(ACSCOMMAND_SRCS) \
+  QueryVolumeAcsCmdLine.cpp \
+  QueryVolumeAcsCmd.cpp \
+  QueryVolumeAcsMain.cpp
+QUERYVOLUMEACSBIN_OBJS = $(QUERYVOLUMEACSBIN_SRCS:.cpp=.o)
+COMPILECPP(QueryVolumeAcsCmdLine.cpp, -DLINUX -I/usr/include/CDK)
+COMPILECPP(QueryVolumeAcsCmd.cpp, -DLINUX -I/usr/include/CDK)
+COMPILECPP(QueryVolumeAcsMain.cpp, -DLINUX -I/usr/include/CDK)
+
+NormalProgramTarget(queryvolumeacs,$(QUERYVOLUMEACSBIN_OBJS),,$(CDKLIB),755)
+EXEMANPAGE(queryvolumeacs)

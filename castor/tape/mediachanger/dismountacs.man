@@ -12,13 +12,13 @@
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 .TH DISMOUNTACS 1 "$Date: 2009/08/07 15:56:38 $" CASTOR "CASTOR"
 .SH NAME
-mountacs \- dismount a tape
+mountacs \- dismount a value
 .SH SYNOPSIS
 .BI "dismountacs [options] VID DRIVE"
 
 .SH DESCRIPTION
 .B dismountacs
-dismounts the tape with the specfied VID from the drive with the specified
+dismounts the value with the specfied VID from the drive with the specified
 DRIVE ID. The DRIVE ID format is ACS:LSM:panel:transport.
 
 .SH OPTIONS

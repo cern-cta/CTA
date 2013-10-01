@@ -109,6 +109,22 @@ public:
     ALIGNED_BYTES rBuf) throw() {
     return STATUS_SUCCESS;
   }
+
+  /**
+   * C++ wrapper around the acs_query_volume() function of the ACSLS C-API.
+   *
+   * @param seqNumber Client supplied sequence number.
+   * @param volId Array of the volume identifiers to be queried.
+   * @param count The number of volume identifiers contained iwthin the volId
+   * parameter.
+   * @return status value returned by acs_response().
+   */
+  STATUS queryVolume(
+    const SEQ_NO seqNumber,
+    VOLID volId[MAX_ID],
+    const unsigned short count) throw() {
+    return STATUS_SUCCESS;
+  }
 }; // class MockAcs
 
 } // namespace mediachanger

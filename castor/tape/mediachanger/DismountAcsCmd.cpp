@@ -33,7 +33,8 @@
 castor::tape::mediachanger::DismountAcsCmd::DismountAcsCmd(
   std::istream &inStream, std::ostream &outStream, std::ostream &errStream,
   Acs &acs) throw():
-  AcsCmd(inStream, outStream, errStream, acs) {
+  AcsCmd(inStream, outStream, errStream, acs), m_defaultQueryInterval(10),
+  m_defaultTimeout(600) {
 }
 
 //------------------------------------------------------------------------------
@@ -109,8 +110,8 @@ void castor::tape::mediachanger::DismountAcsCmd::usage(std::ostream &os)
   "\n"
   "Where:\n"
   "\n"
-  "  VID    The VID of the tape to be dismounted.\n"
-  "  DRIVE  The drive from which the tape is to be dismounted.\n"
+  "  VID    The VID of the volume to be dismounted.\n"
+  "  DRIVE  The drive from which the volume is to be dismounted.\n"
   "\n"
   "Options:\n"
   "\n"
@@ -119,10 +120,12 @@ void castor::tape::mediachanger::DismountAcsCmd::usage(std::ostream &os)
   "  -h|--help             Print this help message and exit.\n"
   "  -q|--query SECONDS    Time to wait between queries to ACS for responses.\n"
   "                        SECONDS must be an integer value greater than 0.\n"
-  "                        The default value of SECONDS in 10.\n"
+  "                        The default value of SECONDS is "
+    << m_defaultQueryInterval << ".\n"
   "  -t|--timeout SECONDS  Time to wait for the dismount to conclude. SECONDS\n"
   "                        must be an integer value greater than 0.  The\n"
-  "                        default value of SECONDS in 300.\n"
+  "                        default value of SECONDS is "
+    << m_defaultTimeout << ".\n"
   "\n"
   "Comments to: Castor.Support@cern.ch" << std::endl;
 }
@@ -147,11 +150,11 @@ castor::tape::mediachanger::DismountAcsCmdLine
   DismountAcsCmdLine cmdLine;
   char c;
 
-  // Set the query option to default value of 10 seconds.
-  cmdLine.queryInterval = 10;
+  // Set the query option to the default value
+  cmdLine.queryInterval = m_defaultQueryInterval;
 
-  // Set timeout option to the default value of 600 seconds
-  cmdLine.timeout = 600;
+  // Set timeout option to the default value
+  cmdLine.timeout = m_defaultTimeout;
 
   // Prevent getopt() from printing an error message if it does not recognize
   // an option character
@@ -253,8 +256,8 @@ castor::tape::mediachanger::DismountAcsCmdLine
 void castor::tape::mediachanger::DismountAcsCmd::syncDismount()
   throw(castor::exception::DismountFailed) {
   std::ostringstream action;
-  action << "dismount tape " << m_cmdLine.volId.external_label << " from drive "
-    << m_acs.driveId2Str(m_cmdLine.driveId) << ": force=" <<
+  action << "dismount volume " << m_cmdLine.volId.external_label <<
+    " from drive " << m_acs.driveId2Str(m_cmdLine.driveId) << ": force=" <<
     (m_cmdLine.force ? "TRUE" : "FALSE");
 
   const SEQ_NO dismountSeqNumber = 1;
@@ -283,22 +286,22 @@ void castor::tape::mediachanger::DismountAcsCmd::syncDismount()
     const int responseTimeout = remainingTime > m_cmdLine.queryInterval ?
       m_cmdLine.queryInterval : remainingTime;
     const time_t startTime = time(NULL);
-    const STATUS status = m_acs.response(responseTimeout, responseSeqNumber,
-      reqId, responseType, responseBuf);
+    const STATUS responseStatus = m_acs.response(responseTimeout,
+      responseSeqNumber, reqId, responseType, responseBuf);
     elapsedMountTime += time(NULL) - startTime;
-    if(STATUS_SUCCESS != status && STATUS_PENDING != status) {
+    if(STATUS_SUCCESS != responseStatus && STATUS_PENDING != responseStatus) {
       castor::exception::DismountFailed ex;
       ex.getMessage() << "Failed to " << action.str() <<
-        ": Failed to request library response: " << acs_status(status);
+        ": Failed to request library response: " << acs_status(responseStatus);
       throw ex;
     }
-    if(m_cmdLine.debug && STATUS_SUCCESS == status &&
+    if(m_cmdLine.debug && STATUS_SUCCESS == responseStatus &&
       RT_ACKNOWLEDGE == responseType) {
       m_out << "DEBUG: Received RT_ACKNOWLEDGE: responseSeqNumber=" <<
         responseSeqNumber << " reqId=" << reqId << std::endl;
     } 
     if(m_cmdLine.debug) m_out << "DEBUG: Acs::response() returned " <<
-      acs_status(status) << std::endl;
+      acs_status(responseStatus) << std::endl;
       
     if(elapsedMountTime >= m_cmdLine.timeout) {
       castor::exception::DismountFailed ex;

@@ -106,6 +106,17 @@ private:
    * class.
    */
   MountAcsCmdLine m_cmdLine;
+
+  /**
+   * The default time in seconds to wait between queries to ACS for responses.
+   */
+  const int m_defaultQueryInterval;
+
+  /**
+   * The default timeout value in seconds for the mount to conclude either
+   * success or failure.
+   */
+  const int m_defaultTimeout;
 }; // class MountAcsCmd
 
 } // namespace mediachanger
