@@ -44,12 +44,6 @@ int rmc_srv_export(struct rmc_srv_rqst_context *const rqst_context) {
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
 	rmc_logit (func, RMC92, "export", uid, gid, rqst_context->clienthost);
-        tl_rmcdaemon.tl_log( &tl_rmcdaemon, 92, 5,
-		"func"      , TL_MSG_PARAM_STR, "rmc_srv_export",
-		"Type"      , TL_MSG_PARAM_STR, "export",
-		"UID"       , TL_MSG_PARAM_UID, uid,
-		"GID"       , TL_MSG_PARAM_GID, gid,
-		"ClientHost", TL_MSG_PARAM_STR, rqst_context->clienthost );
 	/* Unmarshall and ignore the loader field as it is no longer used */
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
@@ -108,13 +102,6 @@ int rmc_srv_findcart(struct rmc_srv_rqst_context *const rqst_context) {
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
 	rmc_logit (func, RMC92, "findcart", uid, gid, rqst_context->clienthost);
-        tl_rmcdaemon.tl_log( &tl_rmcdaemon, 92, 5,
-		"func"      , TL_MSG_PARAM_STR, "rmc_srv_findcart",
-		"Type"      , TL_MSG_PARAM_STR, "findcart",
-		"UID"       , TL_MSG_PARAM_UID, uid,
-		"GID"       , TL_MSG_PARAM_GID, gid,
-		"ClientHost", TL_MSG_PARAM_STR,
-		rqst_context->clienthost);
 	/* Unmarshall and ignore the loader fiel as it is no longer used */
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
@@ -196,12 +183,6 @@ int rmc_srv_getgeom(struct rmc_srv_rqst_context *const rqst_context) {
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
 	rmc_logit (func, RMC92, "getgeom", uid, gid, rqst_context->clienthost);
-        tl_rmcdaemon.tl_log( &tl_rmcdaemon, 92, 5,
-		"func"      , TL_MSG_PARAM_STR, "rmc_srv_getgeom",
-		"Type"      , TL_MSG_PARAM_STR, "getgeom",
-		"UID"       , TL_MSG_PARAM_UID, uid,
-		"GID"       , TL_MSG_PARAM_GID, gid,
-		"ClientHost", TL_MSG_PARAM_STR, rqst_context->clienthost );
 	/* Unmarshall and ignore the loader field as it is no longer used */
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
@@ -246,12 +227,6 @@ int rmc_srv_import(struct rmc_srv_rqst_context *const rqst_context) {
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
 	rmc_logit (func, RMC92, "import", uid, gid, rqst_context->clienthost);
-        tl_rmcdaemon.tl_log( &tl_rmcdaemon, 92, 5,
-		"func"      , TL_MSG_PARAM_STR, "rmc_srv_import",
-		"Type"      , TL_MSG_PARAM_STR, "import",
-		"UID"       , TL_MSG_PARAM_UID, uid,
-		"GID"       , TL_MSG_PARAM_GID, gid,
-		"ClientHost", TL_MSG_PARAM_STR, rqst_context->clienthost );
 	/* Unmarshall and ignore the loader field as it is no longer used */
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
@@ -302,12 +277,6 @@ int rmc_srv_mount(struct rmc_srv_rqst_context *const rqst_context) {
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
 	rmc_logit (func, RMC92, "mount", uid, gid, rqst_context->clienthost);
-        tl_rmcdaemon.tl_log( &tl_rmcdaemon, 92, 5,
-		"func"      , TL_MSG_PARAM_STR, "rmc_srv_mount",
-		"Type"      , TL_MSG_PARAM_STR, "mount",
-		"UID"       , TL_MSG_PARAM_UID, uid,
-		"GID"       , TL_MSG_PARAM_GID, gid,
-		"ClientHost", TL_MSG_PARAM_STR, rqst_context->clienthost );
 	/* Unmarshall and ignore the loader field as it is no longer used */
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
@@ -368,12 +337,6 @@ int rmc_srv_readelem(struct rmc_srv_rqst_context *const rqst_context) {
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
 	rmc_logit (func, RMC92, "readelem", uid, gid, rqst_context->clienthost);
-        tl_rmcdaemon.tl_log( &tl_rmcdaemon, 92, 5,
-		"func"      , TL_MSG_PARAM_STR, "rmc_srv_readelem",
-		"Type"      , TL_MSG_PARAM_STR, "readelem",
-		"UID"       , TL_MSG_PARAM_UID, uid,
-		"GID"       , TL_MSG_PARAM_GID, gid,
-		"ClientHost", TL_MSG_PARAM_STR, rqst_context->clienthost );
 	/* Unmarshall and ignore the loader field as it is no longer used */
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
@@ -451,12 +414,6 @@ int rmc_srv_unmount(struct rmc_srv_rqst_context *const rqst_context) {
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
 	rmc_logit (func, RMC92, "unmount", uid, gid, rqst_context->clienthost);
-        tl_rmcdaemon.tl_log( &tl_rmcdaemon, 92, 5,
-		"func"      , TL_MSG_PARAM_STR, "rmc_srv_unmount",
-		"Type"      , TL_MSG_PARAM_STR, "unmount",
-		"UID"       , TL_MSG_PARAM_UID, uid,
-		"GID"       , TL_MSG_PARAM_GID, gid,
-		"ClientHost", TL_MSG_PARAM_STR, rqst_context->clienthost );
 	/* Unmarshall and ignore the loader field as it is no longer used */
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];

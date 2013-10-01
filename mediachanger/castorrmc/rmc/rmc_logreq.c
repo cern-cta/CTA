@@ -31,9 +31,6 @@ void rmc_logreq(const char *const func, char *const logbuf) {
 		*(p + n1) = '\\';
 		*(p + n1 + 1) = '\0';
 		rmc_logit (func, RMC98, p);
-                tl_rmcdaemon.tl_log( &tl_rmcdaemon, 98, 2,
-                                     "func"   , TL_MSG_PARAM_STR, "rmc_logreq",
-                                     "Request", TL_MSG_PARAM_STR, p );
 		if (p != logbuf) {
 			*p = savechrs2[0];
 			*(p + 1) = savechrs2[1];
@@ -48,9 +45,6 @@ void rmc_logreq(const char *const func, char *const logbuf) {
 		n2 -= n1;
 	}
 	rmc_logit (func, RMC98, p);
-        tl_rmcdaemon.tl_log( &tl_rmcdaemon, 98, 2,
-                             "func"   , TL_MSG_PARAM_STR, "rmc_logreq",
-                             "Request", TL_MSG_PARAM_STR, p );
 	if (p != logbuf) {
 		*p = savechrs2[0];
 		*(p + 1) = savechrs2[1];
