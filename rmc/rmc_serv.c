@@ -362,32 +362,34 @@ static void procreq(
 
 	switch (req_type) {
 	case RMC_MOUNT:
-		c = rmc_srv_mount (rpfd, req_data, clienthost);
+		c = rmc_srv_mount (localhost, rpfd, req_data, clienthost);
 		break;
 	case RMC_UNMOUNT:
-		c = rmc_srv_unmount (rpfd, req_data, clienthost);
+		c = rmc_srv_unmount (localhost, rpfd, req_data, clienthost);
 		break;
 	case RMC_EXPORT:
-		c = rmc_srv_export (rpfd, req_data, clienthost);
+		c = rmc_srv_export (localhost, rpfd, req_data, clienthost);
 		break;
 	case RMC_IMPORT:
-		c = rmc_srv_import (rpfd, req_data, clienthost);
+		c = rmc_srv_import (localhost, rpfd, req_data, clienthost);
 		break;
 	case RMC_GETGEOM:
-		c = rmc_srv_getgeom (rpfd, req_data, clienthost);
+		c = rmc_srv_getgeom (localhost, rpfd, req_data, clienthost);
 		break;
 	case RMC_READELEM:
-		c = rmc_srv_readelem (rpfd, req_data, clienthost);
+		c = rmc_srv_readelem (localhost, rpfd, req_data, clienthost);
 		break;
 	case RMC_FINDCART:
-		c = rmc_srv_findcart (rpfd, req_data, clienthost);
+		c = rmc_srv_findcart (localhost, rpfd, req_data, clienthost);
 		break;
+/*
 	case RMC_GENERICMOUNT:
-		c = rmc_srv_genericmount (rpfd, req_data, clienthost);
+		c = rmc_srv_genericmount (localhost, rpfd, req_data, clienthost);
 		break;
 	case RMC_GENERICUNMOUNT:
-		c = rmc_srv_genericunmount (rpfd, req_data, clienthost);
+		c = rmc_srv_genericunmount (localhost, rpfd, req_data, clienthost);
 		break;
+*/
 	default:
 		rmc_sendrep (rpfd, MSG_ERR, RMC03, req_type);
 		c = ERMCUNREC;
