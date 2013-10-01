@@ -57,13 +57,6 @@ tplogger_t tl_rtcpd = {
         .tl_exit         = tl_exit_dlf
 };
 
-tplogger_t tl_rmcdaemon = {
-
-        .tl_init         = tl_init_dlf,
-        .tl_log          = tl_log_dlf,
-        .tl_exit         = tl_exit_dlf
-};
-
 /*
 ** Generic tplogger.
 */
@@ -137,13 +130,6 @@ int tl_init_dlf( tplogger_t *self, int init ) {
 
                 self->tl_name = strdup( "rtcpd" );
                 tl_set_msg_tbl_dlf( self, tplogger_messages_rtcpd );
-
-                break;
-
-        case 2: /* Facility: rmcd */
-
-                self->tl_name = strdup( "rmcd" );
-                tl_set_msg_tbl_dlf( self, tplogger_messages_rmcdaemon );
 
                 break;
 
@@ -438,12 +424,6 @@ int tl_init_syslog( tplogger_t *self, int init ) {
                 self->tl_name = strdup( "rtcpd" );
                 tl_set_msg_tbl_dlf( self, tplogger_messages_rtcpd );
                 openlog("rtcpd", LOG_PID, LOG_LOCAL1);
-                break;
-
-        case 2:
-                self->tl_name = strdup( "rmcd" );
-                tl_set_msg_tbl_dlf( self, tplogger_messages_rmcdaemon );
-                openlog("rmcd", LOG_PID, LOG_LOCAL1);
                 break;
 
         default:
@@ -755,12 +735,6 @@ int tl_init_stdio( tplogger_t *self, int init ) {
         case 1:
                 self->tl_name = strdup( "rtcpd" );
                 tl_set_msg_tbl_dlf( self, tplogger_messages_rtcpd );
-
-        case 2:
-                self->tl_name = strdup( "rmcd" );
-                tl_set_msg_tbl_dlf( self, tplogger_messages_rmcdaemon );
-
-                break;
 
         default:
                 break;
