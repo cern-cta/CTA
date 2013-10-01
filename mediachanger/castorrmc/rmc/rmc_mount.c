@@ -9,10 +9,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <netinet/in.h>
-#include "marshall.h"
-#include "rmc.h"
-#include "rmc_api.h"
-#include "serrno.h"
+#include "h/marshall.h"
+#include "h/rmc_api.h"
+#include "h/rmc_constants.h"
+#include "h/serrno.h"
 int rmc_mount(
 	const char *const server,
 	const char *const vid,

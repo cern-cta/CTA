@@ -8,7 +8,8 @@
 #include <string.h>
 #include <stdarg.h>
 #include <sys/types.h>
-#include "rmc.h"
+
+#include "h/rmc_constants.h"
 
 static char *errbufp = NULL;
 static int errbuflen;
