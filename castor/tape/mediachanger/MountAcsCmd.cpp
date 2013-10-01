@@ -77,18 +77,14 @@ int castor::tape::mediachanger::MountAcsCmd::main(const int argc,
     return 0;
   }
 
-  if(m_cmdLine.debug) {
-    m_out << "DEBUG: Using a query interval of " << m_cmdLine.queryInterval << 
-      " seconds" << std::endl;
-    m_out << "DEBUG: Using a readOnly value of " << 
-      (m_cmdLine.readOnly ? "TRUE" : "FALSE") << std::endl;
-    m_out << "DEBUG: Using a timeout of " << m_cmdLine.timeout << " seconds" << 
-      std::endl;
-    m_out << "DEBUG: Using volume identifier " << m_cmdLine.volId.external_label
-      << std::endl;
-    m_out << "DEBUG: Using drive " << m_acs.driveId2Str(m_cmdLine.driveId) <<
-      std::endl;
-  }
+  // Setup debug mode to be on or off depending on the command-line arguments
+  m_debugBuf.setDebug(m_cmdLine.debug);
+
+  m_dbg << "query = " << m_cmdLine.queryInterval << std::endl;
+  m_dbg << "readonly = " << bool2Str(m_cmdLine.readOnly) << std::endl;
+  m_dbg << "timeout = " << m_cmdLine.timeout << std::endl;
+  m_dbg << "VID = " << m_cmdLine.volId.external_label << std::endl;
+  m_dbg << "DRIVE = " << m_acs.driveId2Str(m_cmdLine.driveId) << std::endl;
 
   try {
     syncMount();
@@ -133,10 +129,10 @@ castor::tape::mediachanger::MountAcsCmdLine
 
     switch (c) {
     case 'd':
-      cmdLine.debug = TRUE;
+      cmdLine.debug = true;
       break;
     case 'h':
-      cmdLine.help = TRUE;
+      cmdLine.help = true;
       break;
     case 'q':
       cmdLine.queryInterval = atoi(optarg);
@@ -255,18 +251,17 @@ void castor::tape::mediachanger::MountAcsCmd::usage(std::ostream &os)
 void castor::tape::mediachanger::MountAcsCmd::syncMount()
   throw(castor::exception::MountFailed) {
   std::ostringstream action;
-  action << "mount volume " << m_cmdLine.volId.external_label << " into drive " <<
-    m_acs.driveId2Str(m_cmdLine.driveId) << ": readOnly=" <<
+  action << "mount volume " << m_cmdLine.volId.external_label << " into drive "
+    << m_acs.driveId2Str(m_cmdLine.driveId) << ": readOnly=" <<
     (m_cmdLine.readOnly ? "TRUE" : "FALSE");
 
   const SEQ_NO mountSeqNumber = 1;
   const LOCKID mountLockId = 0; // No lock
   const BOOLEAN mountBypass = FALSE;
-  if(m_cmdLine.debug) m_out << "DEBUG: Calling Acs::mount()" << std::endl;
+  m_dbg << "Calling Acs::mount()" << std::endl;
   const STATUS mountStatus = m_acs.mount(mountSeqNumber, mountLockId,
     m_cmdLine.volId, m_cmdLine.driveId, m_cmdLine.readOnly, mountBypass);
-  if(m_cmdLine.debug) m_out << "DEBUG: Acs::mount() returned " <<
-    acs_status(mountStatus) << std::endl;
+  m_dbg << "Acs::mount() returned " << acs_status(mountStatus) << std::endl;
   if(STATUS_SUCCESS != mountStatus) {
     castor::exception::MountFailed ex;
     ex.getMessage() << "Failed to " << action << ": " <<
@@ -300,8 +295,8 @@ void castor::tape::mediachanger::MountAcsCmd::syncMount()
       m_out << "DEBUG: Received RT_ACKNOWLEDGE: responseSeqNumber=" <<
         responseSeqNumber << " reqId=" << reqId << std::endl;
     }
-    if(m_cmdLine.debug) m_out << "DEBUG: Acs::response() returned " <<
-      acs_status(responseStatus) << std::endl;
+    m_dbg << "Acs::response() returned " << acs_status(responseStatus)
+      << std::endl;
 
     if(elapsedMountTime >= m_cmdLine.timeout) {
       castor::exception::MountFailed ex;
@@ -310,8 +305,9 @@ void castor::tape::mediachanger::MountAcsCmd::syncMount()
       throw(ex);
     }
   } while(RT_FINAL != responseType);
-  if(m_cmdLine.debug) m_out << "DEBUG: Received RT_FINAL: responseSeqNumber=" <<
-    responseSeqNumber << " reqId=" << reqId << std::endl;
+
+  m_dbg << "Received RT_FINAL: responseSeqNumber=" << responseSeqNumber
+    << " reqId=" << reqId << std::endl;
 
   if(mountSeqNumber != responseSeqNumber) {
     castor::exception::MountFailed ex;

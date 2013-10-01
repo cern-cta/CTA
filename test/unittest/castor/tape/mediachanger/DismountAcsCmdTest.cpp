@@ -199,7 +199,7 @@ public:
     CPPUNIT_ASSERT_NO_THROW(cmdLine = cmd.parseCmdLine(args->argc, args->argv));
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Testing help is set after command line is parsed",
-      (BOOLEAN)TRUE, cmdLine.help);
+      true, cmdLine.help);
   }
 
  void testParceCmdLineWithLongHelp() {
@@ -220,7 +220,7 @@ public:
     CPPUNIT_ASSERT_NO_THROW(cmdLine = cmd.parseCmdLine(args->argc, args->argv));
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Testing help is set after command line is parsed",
-      (BOOLEAN)TRUE, cmdLine.help);
+      true, cmdLine.help);
   }
 
   void testParceCmdLineWithVolIdAndDrive() {
@@ -242,9 +242,9 @@ public:
     CPPUNIT_ASSERT_NO_THROW_MESSAGE("Testing valid volume identfier and drive",
       cmdLine = cmd.parseCmdLine(args->argc, args->argv));
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing debug is not set",
-      (BOOLEAN)FALSE, cmdLine.debug);
+      false, cmdLine.debug);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing help is not set",
-      (BOOLEAN)FALSE, cmdLine.help);
+      false, cmdLine.help);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing query is set to the default",
       10, cmdLine.queryInterval);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing timeout is set to the default",
@@ -281,7 +281,7 @@ public:
     CPPUNIT_ASSERT_NO_THROW(cmdLine = cmd.parseCmdLine(args->argc, args->argv));
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Testing debug is set after command line is parsed",
-      (BOOLEAN)TRUE, cmdLine.debug);
+      true, cmdLine.debug);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing volume identfier was parsed",
       std::string("VIDVID"), std::string(cmdLine.volId.external_label));
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing ACS number",
@@ -314,7 +314,7 @@ public:
     CPPUNIT_ASSERT_NO_THROW(cmdLine = cmd.parseCmdLine(args->argc, args->argv));
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Testing debug is set after command line is parsed",
-      (BOOLEAN)TRUE, cmdLine.debug);
+      true, cmdLine.debug);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing volume identfier was parsed",
       std::string("VIDVID"), std::string(cmdLine.volId.external_label));
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing ACS number",

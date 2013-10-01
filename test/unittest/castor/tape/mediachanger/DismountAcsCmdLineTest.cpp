@@ -42,11 +42,11 @@ public:
   void testConstructor() {
     const DismountAcsCmdLine cmdLine;
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing debug flag is initialised to FALSE",
-      (BOOLEAN)FALSE, cmdLine.debug);
+      false, cmdLine.debug);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing force flag is initialised to FALSE",
       (BOOLEAN)FALSE, cmdLine.force);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing help flag is initialised to FALSE",
-      (BOOLEAN)FALSE, cmdLine.help);
+      false, cmdLine.help);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing timeout option is initialised to 0",
       0, cmdLine.timeout);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing query option is initialised to 0",

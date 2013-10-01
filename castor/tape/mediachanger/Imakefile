@@ -34,7 +34,8 @@ COMPILECPP(Acs.cpp, -DLINUX -I/usr/include/CDK)
 COMPILECPP(AcsImpl.cpp, -DLINUX -I/usr/include/CDK)
 
 ACSCOMMAND_SRCS = \
-  AcsCmd.cpp
+  AcsCmd.cpp \
+  DebugBuf.cpp
 
 COMPILECPP(AcsCmd.cpp, -DLINUX -I/usr/include/CDK)
 

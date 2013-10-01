@@ -51,7 +51,7 @@ struct DismountAcsCmdLine {
   /**
    * True if the debug option has been set.
    */
-  BOOLEAN debug;
+  bool debug;
 
   /**
    * True if the dismount should be forced.
@@ -64,7 +64,7 @@ struct DismountAcsCmdLine {
   /**
    * True if the help option has been set.
    */
-  BOOLEAN help;
+  bool help;
 
   /**
    * Time in seconds to wait between queries to ACS for responses.

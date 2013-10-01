@@ -27,10 +27,16 @@
 
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/tape/mediachanger/Acs.hpp"
+#include "castor/tape/mediachanger/DebugBuf.hpp"
 
 #include <istream>
 #include <ostream>
 #include <string>
+
+extern "C" {
+#include "acssys.h"
+#include "acsapi.h"
+}
 
 namespace castor {
 namespace tape {
@@ -79,6 +85,31 @@ protected:
    * Wrapper around the ACSLS C-API.
    */
   Acs &m_acs;
+
+  /**
+   * Debug stream buffer that inserts a standard debug preamble before each
+   * message-line written to it.
+   */
+  DebugBuf m_debugBuf;
+
+  /**
+   * Stream used to write debug messages.
+   *
+   * This stream will insert a standard debug preamble before each message-line
+   * written to it.
+   */
+  std::ostream m_dbg;
+
+  /**
+   * Returns the string representation of the specfied boolean value.
+   */
+  std::string bool2Str(bool &value) const throw();
+
+  /**
+   * Returns the string representation of the specfied boolean value.
+   */
+  std::string bool2Str(BOOLEAN &value) const throw();
+
 }; // class AcsCmd
 
 } // namespace mediachanger

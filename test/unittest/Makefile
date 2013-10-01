@@ -126,6 +126,7 @@ rununittests: \
   metrics_UpdateThread.o \
   mediachanger_Acs.o \
   mediachanger_AcsCmd.o \
+  mediachanger_DebugBuf.o \
   mediachanger_DismountAcsCmdLine.o \
   mediachanger_DismountAcsCmd.o \
   mediachanger_MountAcsCmdLine.o \
@@ -711,6 +712,9 @@ mediachanger_Acs.o: $(ROOT_DIR)/castor/tape/mediachanger/Acs.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 mediachanger_AcsCmd.o: $(ROOT_DIR)/castor/tape/mediachanger/AcsCmd.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+mediachanger_DebugBuf.o: $(ROOT_DIR)/castor/tape/mediachanger/DebugBuf.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 mediachanger_DismountAcsCmdLine.o: $(ROOT_DIR)/castor/tape/mediachanger/DismountAcsCmdLine.cpp

@@ -163,13 +163,13 @@ castor::tape::mediachanger::DismountAcsCmdLine
 
     switch (c) {
     case 'd':
-      cmdLine.debug = TRUE;
+      cmdLine.debug = true;
       break;
     case 'f':
       cmdLine.force = TRUE;
       break;
     case 'h':
-      cmdLine.help = TRUE;
+      cmdLine.help = true;
       break;
     case 'q':
       cmdLine.queryInterval = atoi(optarg);

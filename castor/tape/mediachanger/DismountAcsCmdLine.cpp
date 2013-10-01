@@ -28,9 +28,9 @@
 // constructor
 //-----------------------------------------------------------------------------
 castor::tape::mediachanger::DismountAcsCmdLine::DismountAcsCmdLine() throw():
-  debug(FALSE),
+  debug(false),
   force(FALSE),
-  help(FALSE),
+  help(false),
   queryInterval(0),
   timeout(0) {
   driveId.panel_id.lsm_id.acs = (ACS)0;

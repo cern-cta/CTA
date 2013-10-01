@@ -42,9 +42,9 @@ public:
   void testConstructor() {
     const MountAcsCmdLine cmdLine;
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing debug flag is initialised to FALSE",
-      (BOOLEAN)FALSE, cmdLine.debug);
+      false, cmdLine.debug);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing help flag is initialised to FALSE",
-      (BOOLEAN)FALSE, cmdLine.help);
+      false, cmdLine.help);
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Testing readOnly flag is initialised to FALSE",
       (BOOLEAN)FALSE, cmdLine.readOnly);

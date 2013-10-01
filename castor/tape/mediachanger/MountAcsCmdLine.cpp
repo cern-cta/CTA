@@ -28,8 +28,8 @@
 // constructor
 //-----------------------------------------------------------------------------
 castor::tape::mediachanger::MountAcsCmdLine::MountAcsCmdLine() throw():
-  debug(FALSE),
-  help(FALSE),
+  debug(false),
+  help(false),
   queryInterval(0),
   readOnly(FALSE),
   timeout(0) {

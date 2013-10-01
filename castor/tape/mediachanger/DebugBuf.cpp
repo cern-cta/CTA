@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/mediachanger/AcsCmd.cpp
+ *                 castor/tape/mediachanger/DebugBuf.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,46 +22,54 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/mediachanger/AcsCmd.hpp"
-#include "castor/tape/utils/utils.hpp"
-
-#include <stdlib.h>
+#include "castor/tape/mediachanger/DebugBuf.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::mediachanger::AcsCmd::AcsCmd(std::istream &inStream,
-  std::ostream &outStream, std::ostream &errStream, Acs &acs) throw():
-  m_in(inStream), m_out(outStream), m_err(errStream), m_acs(acs),
-  m_debugBuf(outStream), m_dbg(&m_debugBuf) {
+castor::tape::mediachanger::DebugBuf::DebugBuf(std::ostream &os):
+  m_debug(false), m_os(os), m_writePreamble(true) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::tape::mediachanger::AcsCmd::~AcsCmd() throw() {
+castor::tape::mediachanger::DebugBuf::~DebugBuf() {
 }
 
 //------------------------------------------------------------------------------
-// bool2Str
+// setDebug
 //------------------------------------------------------------------------------
-std::string castor::tape::mediachanger::AcsCmd::bool2Str(bool &value) const
-  throw() {
-  if(value) {
-    return "TRUE";
-  } else {
-    return "FALSE";
-  }
+void castor::tape::mediachanger::DebugBuf::setDebug(const bool value) throw() {
+  m_debug = value;
 }
 
 //------------------------------------------------------------------------------
-// bool2Str
+// overflow
 //------------------------------------------------------------------------------
-std::string castor::tape::mediachanger::AcsCmd::bool2Str(BOOLEAN &value) const
-  throw() {
-  if(value) {
-    return "TRUE";
-  } else {
-    return "FALSE";
+std::streambuf::int_type castor::tape::mediachanger::DebugBuf::overflow(
+  const int_type c) {
+  // Only write something if debug mode is on
+  if(m_debug) {
+    if(m_writePreamble) {
+      writePreamble();
+      m_writePreamble = false;
+    }
+    m_os << (char)c;
   }
+
+  // If an end of line was encountered then the next write should be preceeded
+  // with a preamble
+  if('\n' == (char)c) {
+    m_writePreamble = true;
+  }
+
+  return c;
+}
+
+//------------------------------------------------------------------------------
+// writePreamble
+//------------------------------------------------------------------------------
+void castor::tape::mediachanger::DebugBuf::writePreamble() throw() {
+  m_os << "DEBUG: ";
 }
