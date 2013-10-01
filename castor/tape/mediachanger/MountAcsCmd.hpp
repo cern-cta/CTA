@@ -131,7 +131,7 @@ protected:
     const SEQ_NO responseSeqNumber) throw(castor::exception::MountFailed);
 
   /**
-   * Throws castor::exception::QueryVolumeFailed if the mount was not
+   * Throws castor::exception::DismountFailed if the mount was not
    * successful.
    *
    * @param buf The mount-response message.
