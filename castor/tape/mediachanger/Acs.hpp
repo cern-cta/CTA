@@ -95,12 +95,12 @@ public:
    *
    * @param seqNumber Client supplied sequence number.
    * @param lockId Lock identifier or 0 meaning no lock.
-   * @param volId The volume ID of the tape to be mounted.
-   * @param driveId The ID of the drive into which the tape is to be mounted.
-   * @param readOnly Set to true to request the tape be mounted for read-only
+   * @param volId The indentifier of volume to be mounted.
+   * @param driveId The ID of the drive into which the volume is to be mounted.
+   * @param readOnly Set to true to request the volume be mounted for read-only
    * access.
    * @param bypass Set to true to override the ACSLS verification of
-   * compatibility between the tape drive and the media type of the cartridge.
+   * compatibility between the drive and the media type of the volume.
    * @return status value returned by acs_mount().
    */
   virtual STATUS mount(
@@ -117,11 +117,11 @@ public:
    *
    * @param seqNumber Client supplied sequence number.
    * @param lockId Lock identifier or 0 meaning no lock.
-   * @param volId The volume ID of the tape to be mounted.
-   * @param driveId The ID of the drive into which the tape is to be mounted.
+   * @param volId The identifier of the volume to be mounted.
+   * @param driveId The ID of the drive into which the volume is to be mounted.
    * @param force Set to true if the dismount should be forced.  Forcing a
-   * dismount means dismounting the tape in the specified drive without
-   * checking the volume identifier of the tape.
+   * dismount means dismounting the volume from the specified drive without
+   * checking the identifier of the volume.
    * @return status value returned by acs_dismount().
    */
   virtual STATUS dismount(
@@ -158,14 +158,14 @@ public:
    * C++ wrapper around the acs_query_volume() function of the ACSLS C-API.
    *
    * @param seqNumber Client supplied sequence number.
-   * @param volId Array of the volume identifiers to be queried.
+   * @param volIds Array of the volume identifiers to be queried.
    * @param count The number of volume identifiers contained iwthin the volId
    * parameter.
    * @return status value returned by acs_response().
    */
   virtual STATUS queryVolume(
     const SEQ_NO seqNumber,
-    VOLID volId[MAX_ID],
+    VOLID (&volIds)[MAX_ID],
     const unsigned short count) throw() = 0;
 }; // class  Acs
 

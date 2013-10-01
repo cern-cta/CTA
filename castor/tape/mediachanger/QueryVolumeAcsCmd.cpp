@@ -257,10 +257,15 @@ void castor::tape::mediachanger::QueryVolumeAcsCmd::syncQueryVolume()
 //------------------------------------------------------------------------------
 void castor::tape::mediachanger::QueryVolumeAcsCmd::sendQueryVolumeRequest(
   const SEQ_NO seqNumber) throw (castor::exception::QueryVolumeFailed) {
-  VOLID volId[1] = {m_cmdLine.volId};
+  VOLID volIds[MAX_ID];
+
+  memset(volIds, '\0', sizeof(volIds));
+  strncpy(volIds[0].external_label, m_cmdLine.volId.external_label,
+    sizeof(volIds[0].external_label));
+  volIds[0].external_label[sizeof(volIds[0].external_label) - 1]  = '\0';
 
   m_dbg << "Calling Acs::queryVolume()" << std::endl;
-  const STATUS s = m_acs.queryVolume(seqNumber, volId, 1);
+  const STATUS s = m_acs.queryVolume(seqNumber, volIds, 1);
   m_dbg << "Acs::queryVolume() returned " << acs_status(s) << std::endl;
 
   if(STATUS_SUCCESS != s) {
