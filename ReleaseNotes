@@ -226,6 +226,7 @@
      #102560 RFE: Move all SCSI media device-file code to the rmcd daemon
      #102657 RFE: Move default block size from tape server to the vdqm and/or vmgr
      #102699 RFE: Remove set density logic from tape server and fix block size at 256KB
+     #102701 RFE: Remove support for logging rmcd messages to syslog
 
   [Code Maintenance]
 
