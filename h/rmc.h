@@ -17,7 +17,6 @@
 
 #include "osdep.h"
 #include "rmc_constants.h"
-#define	MAXRETRY 5
 #define	RETRYI	60
 #define	LOGBUFSZ 1024
 
