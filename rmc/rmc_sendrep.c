@@ -9,13 +9,14 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include "marshall.h"
-#include "net.h"
-#include "rmc.h"
-#include "tplogger_api.h"
+#include "h/marshall.h"
+#include "h/net.h"
+#include "h/rmc.h"
+#include "h/rmc_sendrep.h"
+#include "h/tplogger_api.h"
 #include <unistd.h>
 
-int sendrep(int rpfd, int rep_type, ...)
+int rmc_sendrep(const int rpfd, const int rep_type, ...)
 {
 	va_list args;
 	char func[16];
@@ -27,7 +28,8 @@ int sendrep(int rpfd, int rep_type, ...)
 	char repbuf[REPBUFSZ];
 	int repsize;
 
-	strncpy (func, "sendrep", 16);
+	strncpy (func, "rmc_sendrep", sizeof(func));
+	func[sizeof(func) - 1] = '\0';
 	rbp = repbuf;
 	marshall_LONG (rbp, RMC_MAGIC);
 	va_start (args, rep_type);

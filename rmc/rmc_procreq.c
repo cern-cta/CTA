@@ -18,6 +18,7 @@
 #include "h/serrno.h"
 #include "h/rmc_smcsubr.h"
 #include "h/rmc_smcsubr2.h"
+#include "h/rmc_sendrep.h"
 #include "h/tplogger_api.h"
 #include <string.h>
 #include <Ctape_api.h>
@@ -119,19 +120,19 @@ int rmc_srv_export(
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
 		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
-			sendrep (rpfd, MSG_ERR, RMC06, "loader");
+			rmc_sendrep (rpfd, MSG_ERR, RMC06, "loader");
 			RETURN (ERMCUNREC);
 		}
 	}
 	if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1)) {
-		sendrep (rpfd, MSG_ERR, RMC06, "vid");
+		rmc_sendrep (rpfd, MSG_ERR, RMC06, "vid");
 		RETURN (ERMCUNREC);
 	}
 	snprintf (logbuf, CA_MAXVIDLEN+8, "export %s", vid);
 	rmc_logreq (func, logbuf);
 
 	if (Cupv_check (uid, gid, clienthost, localhost, P_TAPE_OPERATOR)) {
-		sendrep (rpfd, MSG_ERR, "%s\n", sstrerror(serrno));
+		rmc_sendrep (rpfd, MSG_ERR, "%s\n", sstrerror(serrno));
 		RETURN (ERMCUNREC);
 	}
 	c = smc_export (rpfd, extended_robot_info.smc_fd,
@@ -180,12 +181,12 @@ int rmc_srv_findcart(
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
 		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
-			sendrep (rpfd, MSG_ERR, RMC06, "loader");
+			rmc_sendrep (rpfd, MSG_ERR, RMC06, "loader");
 			RETURN (ERMCUNREC);
 		}
 	}
 	if (unmarshall_STRINGN (rbp, template, 40)) {
-		sendrep (rpfd, MSG_ERR, RMC06, "template");
+		rmc_sendrep (rpfd, MSG_ERR, RMC06, "template");
 		RETURN (ERMCUNREC);
 	}
 	unmarshall_LONG (rbp, type);
@@ -195,11 +196,11 @@ int rmc_srv_findcart(
 	rmc_logreq (func, logbuf);
 
 	if (nbelem < 1) {
-		sendrep (rpfd, MSG_ERR, RMC06, "nbelem");
+		rmc_sendrep (rpfd, MSG_ERR, RMC06, "nbelem");
 		RETURN (ERMCUNREC);
 	}
 	if ((element_info = malloc (nbelem * sizeof(struct smc_element_info))) == NULL) {
-		sendrep (rpfd, MSG_ERR, RMC05);
+		rmc_sendrep (rpfd, MSG_ERR, RMC05);
 		RETURN (ERMCUNREC);
 	}
 	if (extended_robot_info.smc_support_voltag)
@@ -213,12 +214,12 @@ int rmc_srv_findcart(
 	if (c < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
 		free (element_info);
-		sendrep (rpfd, MSG_ERR, RMC02, "smc_find_cartridge", msgaddr);
+		rmc_sendrep (rpfd, MSG_ERR, RMC02, "smc_find_cartridge", msgaddr);
 		c += ERMCRBTERR;
 		RETURN (c);
 	}
 	if ((repbuf = malloc (c * 18 + 4)) == NULL) {
-		sendrep (rpfd, MSG_ERR, RMC05);
+		rmc_sendrep (rpfd, MSG_ERR, RMC05);
 		free (element_info);
 		RETURN (ERMCUNREC);
 	}
@@ -227,7 +228,7 @@ int rmc_srv_findcart(
 	for (i = 0, elemp = element_info; i < c; i++, elemp++)
 		marshall_ELEMENT (&sbp, elemp);
 	free (element_info);
-	sendrep (rpfd, MSG_DATA, sbp - repbuf, repbuf);
+	rmc_sendrep (rpfd, MSG_DATA, sbp - repbuf, repbuf);
 	free (repbuf);
 	RETURN (0);
 }
@@ -262,7 +263,7 @@ int rmc_srv_getgeom(
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
 		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
-			sendrep (rpfd, MSG_ERR, RMC06, "loader");
+			rmc_sendrep (rpfd, MSG_ERR, RMC06, "loader");
 			RETURN (ERMCUNREC);
 		}
 	}
@@ -279,7 +280,7 @@ int rmc_srv_getgeom(
 	marshall_LONG (sbp, extended_robot_info.robot_info.port_count);
 	marshall_LONG (sbp, extended_robot_info.robot_info.device_start);
 	marshall_LONG (sbp, extended_robot_info.robot_info.device_count);
-	sendrep (rpfd, MSG_DATA, sbp - repbuf, repbuf);
+	rmc_sendrep (rpfd, MSG_DATA, sbp - repbuf, repbuf);
 	RETURN (0);
 }
 
@@ -313,19 +314,19 @@ int rmc_srv_import(
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
 		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
-			sendrep (rpfd, MSG_ERR, RMC06, "loader");
+			rmc_sendrep (rpfd, MSG_ERR, RMC06, "loader");
 			RETURN (ERMCUNREC);
 		}
 	}
 	if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1)) {
-		sendrep (rpfd, MSG_ERR, RMC06, "vid");
+		rmc_sendrep (rpfd, MSG_ERR, RMC06, "vid");
 		RETURN (ERMCUNREC);
 	}
 	snprintf (logbuf, CA_MAXVIDLEN+8, "import %s", vid);
 	rmc_logreq (func, logbuf);
 
 	if (Cupv_check (uid, gid, clienthost, localhost, P_TAPE_OPERATOR)) {
-		sendrep (rpfd, MSG_ERR, "%s\n", sstrerror(serrno));
+		rmc_sendrep (rpfd, MSG_ERR, "%s\n", sstrerror(serrno));
 		RETURN (ERMCUNREC);
 	}
 	c = smc_import (rpfd, extended_robot_info.smc_fd,
@@ -366,12 +367,12 @@ int rmc_srv_mount(
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
 		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
-			sendrep (rpfd, MSG_ERR, RMC06, "loader");
+			rmc_sendrep (rpfd, MSG_ERR, RMC06, "loader");
 			RETURN (ERMCUNREC);
 		}
 	}
 	if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1)) {
-		sendrep (rpfd, MSG_ERR, RMC06, "vid");
+		rmc_sendrep (rpfd, MSG_ERR, RMC06, "vid");
 		RETURN (ERMCUNREC);
 	}
 	unmarshall_WORD (rbp, invert);
@@ -380,7 +381,7 @@ int rmc_srv_mount(
 	rmc_logreq (func, logbuf);
 
 	if (Cupv_check (uid, gid, clienthost, localhost, P_TAPE_SYSTEM)) {
-		sendrep (rpfd, MSG_ERR, "%s\n", sstrerror(serrno));
+		rmc_sendrep (rpfd, MSG_ERR, "%s\n", sstrerror(serrno));
 		RETURN (ERMCUNREC);
 	}
 	c = smc_mount (rpfd, extended_robot_info.smc_fd,
@@ -429,7 +430,7 @@ int rmc_srv_readelem(
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
 		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
-			sendrep (rpfd, MSG_ERR, RMC06, "loader");
+			rmc_sendrep (rpfd, MSG_ERR, RMC06, "loader");
 			RETURN (ERMCUNREC);
 		}
 	}
@@ -440,15 +441,15 @@ int rmc_srv_readelem(
 	rmc_logreq (func, logbuf);
 
 	if (type < 0 || type > 4) {
-		sendrep (rpfd, MSG_ERR, RMC06, "type");
+		rmc_sendrep (rpfd, MSG_ERR, RMC06, "type");
 		RETURN (ERMCUNREC);
 	}
 	if (nbelem < 1) {
-		sendrep (rpfd, MSG_ERR, RMC06, "nbelem");
+		rmc_sendrep (rpfd, MSG_ERR, RMC06, "nbelem");
 		RETURN (ERMCUNREC);
 	}
 	if ((element_info = malloc (nbelem * sizeof(struct smc_element_info))) == NULL) {
-		sendrep (rpfd, MSG_ERR, RMC05);
+		rmc_sendrep (rpfd, MSG_ERR, RMC05);
 		RETURN (ERMCUNREC);
 	}
 	if ((c = smc_read_elem_status (extended_robot_info.smc_fd,
@@ -456,12 +457,12 @@ int rmc_srv_readelem(
 	    element_info)) < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
 		free (element_info);
-		sendrep (rpfd, MSG_ERR, RMC02, "smc_read_elem_status", msgaddr);
+		rmc_sendrep (rpfd, MSG_ERR, RMC02, "smc_read_elem_status", msgaddr);
 		c += ERMCRBTERR;
 		RETURN (c);
 	}
 	if ((repbuf = malloc (c * 18 + 4)) == NULL) {
-		sendrep (rpfd, MSG_ERR, RMC05);
+		rmc_sendrep (rpfd, MSG_ERR, RMC05);
 		free (element_info);
 		RETURN (ERMCUNREC);
 	}
@@ -470,7 +471,7 @@ int rmc_srv_readelem(
 	for (i = 0, elemp = element_info; i < c; i++, elemp++)
 		marshall_ELEMENT (&sbp, elemp);
 	free (element_info);
-	sendrep (rpfd, MSG_DATA, sbp - repbuf, repbuf);
+	rmc_sendrep (rpfd, MSG_DATA, sbp - repbuf, repbuf);
 	free (repbuf);
 	RETURN (0);
 }
@@ -507,12 +508,12 @@ int rmc_srv_unmount(
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
 		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
-			sendrep (rpfd, MSG_ERR, RMC06, "loader");
+			rmc_sendrep (rpfd, MSG_ERR, RMC06, "loader");
 			RETURN (ERMCUNREC);
 		}
 	}
 	if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1)) {
-		sendrep (rpfd, MSG_ERR, RMC06, "vid");
+		rmc_sendrep (rpfd, MSG_ERR, RMC06, "vid");
 		RETURN (ERMCUNREC);
 	}
 	unmarshall_WORD (rbp, drvord);
@@ -521,7 +522,7 @@ int rmc_srv_unmount(
 	rmc_logreq (func, logbuf);
 
 	if (Cupv_check (uid, gid, clienthost, localhost, P_TAPE_SYSTEM)) {
-		sendrep (rpfd, MSG_ERR, "%s\n", sstrerror(serrno));
+		rmc_sendrep (rpfd, MSG_ERR, "%s\n", sstrerror(serrno));
 		RETURN (ERMCUNREC);
 	}
 	c = smc_dismount (rpfd, extended_robot_info.smc_fd,

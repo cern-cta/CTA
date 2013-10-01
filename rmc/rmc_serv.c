@@ -21,6 +21,7 @@
 #include "h/marshall.h"
 #include "h/net.h"
 #include "h/rmc.h"
+#include "h/rmc_sendrep.h"
 #include "h/rmc_server_api.h"
 #include "h/rmc_smcsubr.h"
 #include "h/scsictl.h"
@@ -274,7 +275,7 @@ static void rmc_doit(const int rpfd)
 	if ((c = getreq (rpfd, &req_type, req_data, &clienthost)) == 0)
 		procreq (rpfd, req_type, req_data, clienthost);
 	else if (c > 0)
-		sendrep (rpfd, RMC_RC, c);
+		rmc_sendrep (rpfd, RMC_RC, c);
 	else
 		close (rpfd);
 }
@@ -381,8 +382,8 @@ static void procreq(
 		c = rmc_srv_findcart (req_data, clienthost);
 		break;
 	default:
-		sendrep (rpfd, MSG_ERR, RMC03, req_type);
+		rmc_sendrep (rpfd, MSG_ERR, RMC03, req_type);
 		c = ERMCUNREC;
 	}
-	sendrep (rpfd, RMC_RC, c);
+	rmc_sendrep (rpfd, RMC_RC, c);
 }
