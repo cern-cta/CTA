@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmc/QueryVolumeAcsCmdLine.hpp
+ *                 castor/tape/rmc/AcsQueryVolumeCmdLine.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_RMC_QUERYVOLUMEACSCMDLINE_HPP
-#define CASTOR_TAPE_RMC_QUERYVOLUMEACSCMDLINE_HPP 1
+#ifndef CASTOR_TAPE_RMC_ACSQUERYVOLUMECMDLINE_HPP
+#define CASTOR_TAPE_RMC_ACSQUERYVOLUMECMDLINE_HPP 1
 
 extern "C" {
 #include "acssys.h"
@@ -39,14 +39,14 @@ namespace rmc {
 /**
  * Data type used to store the results of parsing the command-line.
  */
-struct QueryVolumeAcsCmdLine {
+struct AcsQueryVolumeCmdLine {
   /**
    * Constructor.
    *
    * Initialises all BOOLEAN member-variables to FALSE, all integer
    * member-variables to 0 and the volume identifier to an empty string.
    */
-  QueryVolumeAcsCmdLine() throw();
+  AcsQueryVolumeCmdLine() throw();
 
   /**
    * True if the debug option has been set.
@@ -73,11 +73,11 @@ struct QueryVolumeAcsCmdLine {
    */
   VOLID volId;
 
-}; // class QueryVolumeAcsCmdLine
+}; // class AcsQueryVolumeCmdLine
 
 } // namespace rmc
 } // namespace tape
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_RMC_QUERYVOLUMEACSCMDLINE_HPP
+#endif // CASTOR_TAPE_RMC_ACSQUERYVOLUMECMDLINE_HPP

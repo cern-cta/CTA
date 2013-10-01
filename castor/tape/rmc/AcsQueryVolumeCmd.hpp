@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmc/QueryVolumeAcsCmd.hpp
+ *                 castor/tape/rmc/AcsQueryVolumeCmd.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,15 +22,15 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_RMC_QUERYVOLUMEACSCMD_HPP
-#define CASTOR_TAPE_RMC_QUERYVOLUMEACSCMD_HPP 1
+#ifndef CASTOR_TAPE_RMC_ACSQUERYVOLUMECMD_HPP
+#define CASTOR_TAPE_RMC_ACSQUERYVOLUMECMD_HPP 1
 
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/MissingOperand.hpp"
 #include "castor/exception/QueryVolumeFailed.hpp"
 #include "castor/tape/rmc/AcsCmd.hpp"
-#include "castor/tape/rmc/QueryVolumeAcsCmdLine.hpp"
+#include "castor/tape/rmc/AcsQueryVolumeCmdLine.hpp"
 
 #include <stdint.h>
 
@@ -41,7 +41,7 @@ namespace rmc {
 /**
  * The class implementing the mount command.
  */
-class QueryVolumeAcsCmd: public AcsCmd {
+class AcsQueryVolumeCmd: public AcsCmd {
 public:
 
   /**
@@ -52,13 +52,13 @@ public:
    * @param errStream Standard error stream.
    * @param acs Wrapper around the ACSLS C-API.
    */
-  QueryVolumeAcsCmd(std::istream &inStream, std::ostream &outStream,
+  AcsQueryVolumeCmd(std::istream &inStream, std::ostream &outStream,
     std::ostream &errStream, Acs &acs) throw();
 
   /**
    * Destructor.
    */
-  virtual ~QueryVolumeAcsCmd() throw();
+  virtual ~AcsQueryVolumeCmd() throw();
 
   /**
    * The entry function of the command.
@@ -77,7 +77,7 @@ protected:
    * @param argv Argument vector from the executable's entry function: main().
    * @return The parsed command-line.
    */
-  QueryVolumeAcsCmdLine parseCmdLine(const int argc, char *const *const argv)
+  AcsQueryVolumeCmdLine parseCmdLine(const int argc, char *const *const argv)
     throw(castor::exception::Internal, castor::exception::InvalidArgument,
       castor::exception::MissingOperand);
 
@@ -137,7 +137,7 @@ private:
    * The value of this member variable is set within the main() method of this
    * class.
    */
-  QueryVolumeAcsCmdLine m_cmdLine;
+  AcsQueryVolumeCmdLine m_cmdLine;
 
   /**
    * The default time in seconds to wait between queries to ACS for responses.
@@ -150,10 +150,10 @@ private:
    */
   const int m_defaultTimeout;
 
-}; // class QueryVolumeAcsCmd
+}; // class AcsQueryVolumeCmd
 
 } // namespace rmc
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_RMC_QUERYVOLUMEACSCMD_HPP
+#endif // CASTOR_TAPE_RMC_ACSQUERYVOLUMECMD_HPP

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmc/QueryVolumeAcsCmd.cpp
+ *                 castor/tape/rmc/AcsQueryVolumeCmd.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,7 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/rmc/QueryVolumeAcsCmd.hpp"
+#include "castor/tape/rmc/AcsQueryVolumeCmd.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 #include <getopt.h>
@@ -32,7 +32,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::rmc::QueryVolumeAcsCmd::QueryVolumeAcsCmd(
+castor::tape::rmc::AcsQueryVolumeCmd::AcsQueryVolumeCmd(
   std::istream &inStream, std::ostream &outStream, std::ostream &errStream,
   Acs &acs) throw():
   AcsCmd(inStream, outStream, errStream, acs), m_defaultQueryInterval(1),
@@ -42,14 +42,14 @@ castor::tape::rmc::QueryVolumeAcsCmd::QueryVolumeAcsCmd(
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::tape::rmc::QueryVolumeAcsCmd::~QueryVolumeAcsCmd() throw() {
+castor::tape::rmc::AcsQueryVolumeCmd::~AcsQueryVolumeCmd() throw() {
   // Do nothing
 }
 
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int castor::tape::rmc::QueryVolumeAcsCmd::main(const int argc,
+int castor::tape::rmc::AcsQueryVolumeCmd::main(const int argc,
   char *const *const argv) throw() {
   try {
     m_cmdLine = parseCmdLine(argc, argv);
@@ -98,8 +98,8 @@ int castor::tape::rmc::QueryVolumeAcsCmd::main(const int argc,
 //------------------------------------------------------------------------------
 // parseCmdLine
 //------------------------------------------------------------------------------
-castor::tape::rmc::QueryVolumeAcsCmdLine
-  castor::tape::rmc::QueryVolumeAcsCmd::parseCmdLine(
+castor::tape::rmc::AcsQueryVolumeCmdLine
+  castor::tape::rmc::AcsQueryVolumeCmd::parseCmdLine(
   const int argc, char *const *const argv)
   throw(castor::exception::Internal, castor::exception::InvalidArgument,
     castor::exception::MissingOperand) {
@@ -111,7 +111,7 @@ castor::tape::rmc::QueryVolumeAcsCmdLine
     {"timeout" , required_argument, NULL, 't'},
     {NULL, 0, NULL, 0}
   };
-  QueryVolumeAcsCmdLine cmdLine;
+  AcsQueryVolumeCmdLine cmdLine;
   char c;
 
   // Set the query option to the default value
@@ -205,7 +205,7 @@ castor::tape::rmc::QueryVolumeAcsCmdLine
 //------------------------------------------------------------------------------
 // usage
 //------------------------------------------------------------------------------
-void castor::tape::rmc::QueryVolumeAcsCmd::usage(std::ostream &os)
+void castor::tape::rmc::AcsQueryVolumeCmd::usage(std::ostream &os)
   const throw() {
   os <<
   "Usage:\n"
@@ -234,7 +234,7 @@ void castor::tape::rmc::QueryVolumeAcsCmd::usage(std::ostream &os)
 //------------------------------------------------------------------------------
 // syncQueryVolume
 //------------------------------------------------------------------------------
-void castor::tape::rmc::QueryVolumeAcsCmd::syncQueryVolume()
+void castor::tape::rmc::AcsQueryVolumeCmd::syncQueryVolume()
   throw(castor::exception::QueryVolumeFailed) {
   const SEQ_NO requestSeqNumber = 1;
   ALIGNED_BYTES buf[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
@@ -255,7 +255,7 @@ void castor::tape::rmc::QueryVolumeAcsCmd::syncQueryVolume()
 //------------------------------------------------------------------------------
 // sendQueryVolumeRequest
 //------------------------------------------------------------------------------
-void castor::tape::rmc::QueryVolumeAcsCmd::sendQueryVolumeRequest(
+void castor::tape::rmc::AcsQueryVolumeCmd::sendQueryVolumeRequest(
   const SEQ_NO seqNumber) throw (castor::exception::QueryVolumeFailed) {
   VOLID volIds[MAX_ID];
 
@@ -279,7 +279,7 @@ void castor::tape::rmc::QueryVolumeAcsCmd::sendQueryVolumeRequest(
 //------------------------------------------------------------------------------
 // processQueryResponse
 //------------------------------------------------------------------------------
-void castor::tape::rmc::QueryVolumeAcsCmd::processQueryResponse(
+void castor::tape::rmc::AcsQueryVolumeCmd::processQueryResponse(
   std::ostream &os,
   ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
   throw(castor::exception::QueryVolumeFailed) {
@@ -318,7 +318,7 @@ void castor::tape::rmc::QueryVolumeAcsCmd::processQueryResponse(
 //------------------------------------------------------------------------------
 // writeVolumeStatus
 //------------------------------------------------------------------------------
-void castor::tape::rmc::QueryVolumeAcsCmd::writeVolumeStatus(
+void castor::tape::rmc::AcsQueryVolumeCmd::writeVolumeStatus(
   std::ostream &os, const QU_VOL_STATUS &s) throw() {
   os << "Volume identifier: " << s.vol_id.external_label << std::endl;
   os << "Media type (media_types.dat): " << (int)s.media_type << std::endl;

@@ -78,16 +78,16 @@ COMPILECPP(AcsDismountMain.cpp, -DLINUX -I/usr/include/CDK)
 NormalProgramTarget(castor-tape-acs-dismount,$(ACSDISMOUNTBIN_OBJS),,$(CDKLIB),755)
 EXEMANPAGE(castor-tape-acs-dismount)
 
-QUERYVOLUMEACSBIN_SRCS = \
+ACSQUERYVOLUMEBIN_SRCS = \
   $(ACS_SRCS) \
   $(ACSCOMMAND_SRCS) \
-  QueryVolumeAcsCmdLine.cpp \
-  QueryVolumeAcsCmd.cpp \
-  QueryVolumeAcsMain.cpp
-QUERYVOLUMEACSBIN_OBJS = $(QUERYVOLUMEACSBIN_SRCS:.cpp=.o)
-COMPILECPP(QueryVolumeAcsCmdLine.cpp, -DLINUX -I/usr/include/CDK)
-COMPILECPP(QueryVolumeAcsCmd.cpp, -DLINUX -I/usr/include/CDK)
-COMPILECPP(QueryVolumeAcsMain.cpp, -DLINUX -I/usr/include/CDK)
+  AcsQueryVolumeCmd.cpp \
+  AcsQueryVolumeCmdLine.cpp \
+  AcsQueryVolumeMain.cpp
+ACSQUERYVOLUMEBIN_OBJS = $(ACSQUERYVOLUMEBIN_SRCS:.cpp=.o)
+COMPILECPP(AcsQueryVolumeCmd.cpp, -DLINUX -I/usr/include/CDK)
+COMPILECPP(AcsQueryVolumeCmdLine.cpp, -DLINUX -I/usr/include/CDK)
+COMPILECPP(AcsQueryVolumeMain.cpp, -DLINUX -I/usr/include/CDK)
 
-NormalProgramTarget(queryvolumeacs,$(QUERYVOLUMEACSBIN_OBJS),,$(CDKLIB),755)
-EXEMANPAGE(queryvolumeacs)
+NormalProgramTarget(castor-tape-acs-queryvolume,$(ACSQUERYVOLUMEBIN_OBJS),,$(CDKLIB),755)
+EXEMANPAGE(castor-tape-acs-queryvolume)

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmc/QueryVolumeAcsMain.cpp
+ *                 castor/tape/rmc/AcsQueryVolumeCmdLine.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -21,20 +21,17 @@
  *
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
- 
-#include "castor/tape/rmc/AcsImpl.hpp"
-#include "castor/tape/rmc/QueryVolumeAcsCmd.hpp"
 
-#include <iostream>
+#include "castor/tape/rmc/AcsQueryVolumeCmdLine.hpp"
 
-//------------------------------------------------------------------------------
-// main
-//------------------------------------------------------------------------------
-int main(const int argc, char *const *const argv) {
-
-  castor::tape::rmc::AcsImpl acs;
-  castor::tape::rmc::QueryVolumeAcsCmd
-    cmd(std::cin, std::cout, std::cerr, acs);
-
-  return cmd.main(argc, argv);
+//-----------------------------------------------------------------------------
+// constructor
+//-----------------------------------------------------------------------------
+castor::tape::rmc::AcsQueryVolumeCmdLine::AcsQueryVolumeCmdLine()
+  throw():
+  debug(FALSE),
+  help(FALSE),
+  queryInterval(0),
+  timeout(0) {
+  memset(volId.external_label, '\0', sizeof(volId.external_label));
 }
