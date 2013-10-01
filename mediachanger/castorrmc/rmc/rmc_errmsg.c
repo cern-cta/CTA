@@ -28,7 +28,7 @@ rmc_seterrbuf(char *buffer,
 int rmc_errmsg(char *func, char *msg, ...)
 {
 	va_list args;
-	char prtbuf[PRTBUFSZ];
+	char prtbuf[RMC_PRTBUFSZ];
 	int save_errno;
 
 	save_errno = errno;

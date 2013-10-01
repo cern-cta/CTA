@@ -35,7 +35,7 @@ int send2rmc(
 	int magic;
 	int n;
 	char *p;
-	char prtbuf[PRTBUFSZ];
+	char prtbuf[RMC_PRTBUFSZ];
 	int rep_type;
 	char repbuf[REPBUFSZ];
 	char rmchost[CA_MAXHOSTNAMELEN+1];

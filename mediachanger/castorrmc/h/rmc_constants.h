@@ -14,6 +14,9 @@
 #define _RMC_CONSTANTS_H
 #include "Castor_limits.h"
 
+#define RMC_CHECKI  5   /* max interval to check for work to be done */
+#define RMC_PRTBUFSZ 180
+
 #define RMC_PORT 5014
 
 			/* SCSI media changer utilities exit codes */

@@ -13,6 +13,7 @@
 #include <sys/types.h>
 
 #include "h/Ctape.h"
+#include "h/rmc_constants.h"
 #include "h/rmc_sendrep.h"
 #include "h/rmc_smcsubr.h"
 #include "h/rmc_smcsubr2.h"
@@ -620,7 +621,7 @@ static int rmc_usrmsg(
 	...)
 {
 	va_list args;
-	char prtbuf[PRTBUFSZ];
+	char prtbuf[RMC_PRTBUFSZ];
 	const int save_errno = errno;
 
 	va_start (args, msg);
