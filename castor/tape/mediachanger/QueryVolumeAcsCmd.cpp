@@ -237,86 +237,37 @@ QU_VOL_STATUS castor::tape::mediachanger::QueryVolumeAcsCmd::syncQueryVolume()
   std::ostringstream action;
   action << "query volume " << m_cmdLine.volId.external_label;
 
-  const SEQ_NO mountSeqNumber = 1;
-  sendQueryVolumeRequest(mountSeqNumber);
+  const SEQ_NO requestSeqNumber = 1;
+  sendQueryVolumeRequest(requestSeqNumber);
 
   // Get all responses until RT_FINAL
-  ALIGNED_BYTES msgBug[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
-  SEQ_NO responseSeqNumber = (SEQ_NO)0;
-  REQ_ID reqId = (REQ_ID)0;
+  ALIGNED_BYTES msgBuf[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
   ACS_RESPONSE_TYPE responseType = RT_NONE;
-  int elapsedMountTime = 0;
+  int elapsedTime = 0;
   do {
-    const int remainingTime = m_cmdLine.timeout - elapsedMountTime;
+    const int remainingTime = m_cmdLine.timeout - elapsedTime;
     const int responseTimeout = remainingTime > m_cmdLine.queryInterval ?
       m_cmdLine.queryInterval : remainingTime;
-    {
-      m_dbg << "Calling Acs::response()" << std::endl;
-      const time_t startTime = time(NULL);
-      const STATUS s = m_acs.response(responseTimeout, responseSeqNumber,
-        reqId, responseType, msgBug);
-      elapsedMountTime += time(NULL) - startTime;
-      m_dbg << "Acs::response() returned " << acs_status(s) << std::endl;
-      if(STATUS_SUCCESS != s && STATUS_PENDING != s) {
-        castor::exception::QueryVolumeFailed ex;
-        ex.getMessage() << "Failed to " << action.str() <<
-          ": Failed to request library response: " << acs_status(s);
-        throw ex;
-      }
-      if(STATUS_SUCCESS == s && RT_ACKNOWLEDGE == responseType) {
-        m_dbg << "Received RT_ACKNOWLEDGE: seqNumber=" << responseSeqNumber <<
-          " reqId=" << reqId << std::endl;
-      }
+
+    const time_t startTime = time(NULL);
+    responseType = requestResponse(responseTimeout, requestSeqNumber, msgBuf);
+    elapsedTime += time(NULL) - startTime;
+
+    if(RT_ACKNOWLEDGE == responseType) {
+      m_dbg << "Received RT_ACKNOWLEDGE" << std::endl;
     }
 
-    if(elapsedMountTime >= m_cmdLine.timeout) {
+    if(elapsedTime >= m_cmdLine.timeout) {
       castor::exception::QueryVolumeFailed ex;
       ex.getMessage() << "Failed to " << action.str() << ": Timed out:"
         " mountTimeout=" << m_cmdLine.timeout << " seconds";
       throw(ex);
     }
   } while(RT_FINAL != responseType);
-  m_dbg << "Received RT_FINAL: seqNumber=" << responseSeqNumber << " reqId=" <<
-    reqId << std::endl;
 
-  if(mountSeqNumber != responseSeqNumber) {
-    castor::exception::QueryVolumeFailed ex;
-    ex.getMessage() << "Failed to " << action.str() << 
-      ": Invalid RT_FINAL message: Sequence number mismatch: mountSeqNumber=" 
-      << mountSeqNumber << " responseSeqNumber=" << responseSeqNumber;
-    throw(ex);
-  }
+  m_dbg << "Received RT_FINAL" << std::endl;
 
-  const ACS_QUERY_VOL_RESPONSE *const msg = (ACS_QUERY_VOL_RESPONSE *)msgBug;
-
-  if(STATUS_SUCCESS != msg->query_vol_status) {
-    castor::exception::QueryVolumeFailed ex;
-    ex.getMessage() << "Failed to " << action.str() << ": " <<
-      acs_status(msg->query_vol_status);
-    throw(ex);
-  }
-
-  if((unsigned short)1 != msg->count) {
-    castor::exception::QueryVolumeFailed ex;
-    ex.getMessage() << "Failed to " << action.str() <<
-      ": Incorrect number of volume statuses"
-      ": expected=1 actual=" << msg->count;
-    throw ex;
-  }
-
-  // count is 1 so it is safe to make a reference to the single volume status
-  const QU_VOL_STATUS &volStatus = msg->vol_status[0];
-
-  if(strcmp(m_cmdLine.volId.external_label, volStatus.vol_id.external_label)) {
-    castor::exception::QueryVolumeFailed ex;
-    ex.getMessage() << "Failed to " << action.str() <<
-      ": Volume identifier mismatch"
-      ": requestVID=" << m_cmdLine.volId.external_label <<
-      " statusVID=" << volStatus.vol_id.external_label;
-    throw ex;
-  }
-
-  return volStatus;
+  return processQueryResponse(msgBuf);
 }
 
 //------------------------------------------------------------------------------
@@ -336,6 +287,89 @@ void castor::tape::mediachanger::QueryVolumeAcsCmd::sendQueryVolumeRequest(
       m_cmdLine.volId.external_label << ": " << acs_status(s);
     throw ex;
   }
+}
+
+//------------------------------------------------------------------------------
+// requestResponse
+//------------------------------------------------------------------------------
+ACS_RESPONSE_TYPE castor::tape::mediachanger::QueryVolumeAcsCmd::
+  requestResponse(const int timeout, const SEQ_NO requestSeqNumber,
+  ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
+  throw(castor::exception::QueryVolumeFailed) {
+  SEQ_NO responseSeqNumber = 0;
+  REQ_ID reqId = (REQ_ID)0;
+  ACS_RESPONSE_TYPE responseType = RT_NONE;
+
+  m_dbg << "Calling Acs::response()" << std::endl;
+  const STATUS s = m_acs.response(timeout, responseSeqNumber, reqId,
+    responseType, buf);
+  m_dbg << "Acs::response() returned " << acs_status(s) << std::endl;
+
+  switch(s) {
+  case STATUS_SUCCESS:
+    checkResponseSeqNumber(requestSeqNumber, responseSeqNumber);
+    return responseType;
+  case STATUS_PENDING:
+    return RT_NONE;
+  default:
+    castor::exception::QueryVolumeFailed ex;
+    ex.getMessage() << "Failed to request response: " << acs_status(s);
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// checkSeqNumber
+//------------------------------------------------------------------------------
+void castor::tape::mediachanger::QueryVolumeAcsCmd::checkResponseSeqNumber(
+  const SEQ_NO requestSeqNumber, const SEQ_NO responseSeqNumber)
+  throw(castor::exception::QueryVolumeFailed) {
+  if(requestSeqNumber != responseSeqNumber) {
+    castor::exception::QueryVolumeFailed ex;
+    ex.getMessage() <<  ": Sequence number mismatch: requestSeqNumber="
+      << requestSeqNumber << " responseSeqNumber=" << responseSeqNumber;
+    throw(ex);
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// processQueryResponse
+//------------------------------------------------------------------------------
+QU_VOL_STATUS castor::tape::mediachanger::QueryVolumeAcsCmd::
+  processQueryResponse(
+  ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
+  throw(castor::exception::QueryVolumeFailed) {
+
+  const ACS_QUERY_VOL_RESPONSE *const msg = (ACS_QUERY_VOL_RESPONSE *)buf;
+
+  if(STATUS_SUCCESS != msg->query_vol_status) {
+    castor::exception::QueryVolumeFailed ex;
+    ex.getMessage() << "Status of query response is success: " <<
+      acs_status(msg->query_vol_status);
+    throw(ex);
+  }
+
+  if((unsigned short)1 != msg->count) {
+    castor::exception::QueryVolumeFailed ex;
+    ex.getMessage() << "Query response does not contain a single volume: count="
+      << msg->count;
+    throw ex;
+  }
+
+  // count is 1 so it is safe to make a reference to the single volume status
+  const QU_VOL_STATUS &volStatus = msg->vol_status[0];
+
+  if(strcmp(m_cmdLine.volId.external_label, volStatus.vol_id.external_label)) {
+    castor::exception::QueryVolumeFailed ex;
+    ex.getMessage() <<
+      "Volume identifier of query response does not match that of request"
+      ": requestVID=" << m_cmdLine.volId.external_label <<
+      " responseVID=" << volStatus.vol_id.external_label;
+    throw ex;
+  }
+
+  return volStatus;
 }
 
 //------------------------------------------------------------------------------

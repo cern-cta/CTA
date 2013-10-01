@@ -259,7 +259,7 @@ void castor::tape::mediachanger::MountAcsCmd::syncMount()
   sendMountRequest(mountSeqNumber);
 
   // Get all responses until RT_FINAL
-  ALIGNED_BYTES msgBug[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
+  ALIGNED_BYTES msgBuf[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
   SEQ_NO responseSeqNumber = (SEQ_NO)0;
   REQ_ID reqId = (REQ_ID)0;
   ACS_RESPONSE_TYPE responseType = RT_NONE;
@@ -272,7 +272,7 @@ void castor::tape::mediachanger::MountAcsCmd::syncMount()
       m_dbg << "Calling Acs::response()" << std::endl;
       const time_t startTime = time(NULL);
       const STATUS s = m_acs.response(responseTimeout, responseSeqNumber,
-        reqId, responseType, msgBug);
+        reqId, responseType, msgBuf);
       elapsedMountTime += time(NULL) - startTime;
       m_dbg << "Acs::response() returned " << acs_status(s) << std::endl;
       if(STATUS_SUCCESS != s && STATUS_PENDING != s) {
@@ -306,7 +306,7 @@ void castor::tape::mediachanger::MountAcsCmd::syncMount()
     throw(ex);
   }
 
-  const ACS_MOUNT_RESPONSE *const msg = (ACS_MOUNT_RESPONSE *)msgBug;
+  const ACS_MOUNT_RESPONSE *const msg = (ACS_MOUNT_RESPONSE *)msgBuf;
 
   if(STATUS_SUCCESS != msg->mount_status) {
     castor::exception::MountFailed ex;
