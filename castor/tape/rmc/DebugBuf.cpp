@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmcd/DebugBuf.cpp
+ *                 castor/tape/rmc/DebugBuf.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,32 +22,32 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/rmcd/DebugBuf.hpp"
+#include "castor/tape/rmc/DebugBuf.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::rmcd::DebugBuf::DebugBuf(std::ostream &os):
+castor::tape::rmc::DebugBuf::DebugBuf(std::ostream &os):
   m_debug(false), m_os(os), m_writePreamble(true) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::tape::rmcd::DebugBuf::~DebugBuf() {
+castor::tape::rmc::DebugBuf::~DebugBuf() {
 }
 
 //------------------------------------------------------------------------------
 // setDebug
 //------------------------------------------------------------------------------
-void castor::tape::rmcd::DebugBuf::setDebug(const bool value) throw() {
+void castor::tape::rmc::DebugBuf::setDebug(const bool value) throw() {
   m_debug = value;
 }
 
 //------------------------------------------------------------------------------
 // overflow
 //------------------------------------------------------------------------------
-std::streambuf::int_type castor::tape::rmcd::DebugBuf::overflow(
+std::streambuf::int_type castor::tape::rmc::DebugBuf::overflow(
   const int_type c) {
   // Only write something if debug mode is on
   if(m_debug) {
@@ -70,6 +70,6 @@ std::streambuf::int_type castor::tape::rmcd::DebugBuf::overflow(
 //------------------------------------------------------------------------------
 // writePreamble
 //------------------------------------------------------------------------------
-void castor::tape::rmcd::DebugBuf::writePreamble() throw() {
+void castor::tape::rmc::DebugBuf::writePreamble() throw() {
   m_os << "DEBUG: ";
 }

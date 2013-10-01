@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmcd/MountAcsCmd.hpp
+ *                 castor/tape/rmc/MountAcsCmd.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -29,14 +29,14 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/MissingOperand.hpp"
 #include "castor/exception/MountFailed.hpp"
-#include "castor/tape/rmcd/AcsCmd.hpp"
-#include "castor/tape/rmcd/MountAcsCmdLine.hpp"
+#include "castor/tape/rmc/AcsCmd.hpp"
+#include "castor/tape/rmc/MountAcsCmdLine.hpp"
 
 #include <stdint.h>
 
 namespace castor  {
 namespace tape    {
-namespace rmcd {
+namespace rmc {
 
 /**
  * The class implementing the mount command.
@@ -137,7 +137,7 @@ private:
   const int m_defaultTimeout;
 }; // class MountAcsCmd
 
-} // namespace rmcd
+} // namespace rmc
 } // namespace tape
 } // namespace castor
 

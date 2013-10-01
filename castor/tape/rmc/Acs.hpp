@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmcd/Acs.hpp
+ *                 castor/tape/rmc/Acs.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -36,7 +36,7 @@ extern "C" {
 
 namespace castor {
 namespace tape {
-namespace rmcd {
+namespace rmc {
 
 /**
  * Abstract class that defines the interface to an object that wraps the ACLS
@@ -169,7 +169,7 @@ public:
     const unsigned short count) throw() = 0;
 }; // class  Acs
 
-} // namespace rmcd
+} // namespace rmc
 } // namespace tape
 } // namespace castor
 

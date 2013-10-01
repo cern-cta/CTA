@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmcd/AcsCmd.cpp
+ *                 castor/tape/rmc/AcsCmd.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,7 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/rmcd/AcsCmd.hpp"
+#include "castor/tape/rmc/AcsCmd.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 #include <stdlib.h>
@@ -30,7 +30,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::rmcd::AcsCmd::AcsCmd(std::istream &inStream,
+castor::tape::rmc::AcsCmd::AcsCmd(std::istream &inStream,
   std::ostream &outStream, std::ostream &errStream, Acs &acs) throw():
   m_in(inStream), m_out(outStream), m_err(errStream), m_acs(acs),
   m_debugBuf(outStream), m_dbg(&m_debugBuf) {
@@ -39,13 +39,13 @@ castor::tape::rmcd::AcsCmd::AcsCmd(std::istream &inStream,
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::tape::rmcd::AcsCmd::~AcsCmd() throw() {
+castor::tape::rmc::AcsCmd::~AcsCmd() throw() {
 }
 
 //------------------------------------------------------------------------------
 // bool2Str
 //------------------------------------------------------------------------------
-std::string castor::tape::rmcd::AcsCmd::bool2Str(bool &value) const
+std::string castor::tape::rmc::AcsCmd::bool2Str(bool &value) const
   throw() {
   if(value) {
     return "TRUE";
@@ -57,7 +57,7 @@ std::string castor::tape::rmcd::AcsCmd::bool2Str(bool &value) const
 //------------------------------------------------------------------------------
 // bool2Str
 //------------------------------------------------------------------------------
-std::string castor::tape::rmcd::AcsCmd::bool2Str(BOOLEAN &value) const
+std::string castor::tape::rmc::AcsCmd::bool2Str(BOOLEAN &value) const
   throw() {
   if(value) {
     return "TRUE";
@@ -69,7 +69,7 @@ std::string castor::tape::rmcd::AcsCmd::bool2Str(BOOLEAN &value) const
 //------------------------------------------------------------------------------
 // requestResponsesUntilFinal
 //------------------------------------------------------------------------------
-void castor::tape::rmcd::AcsCmd::requestResponsesUntilFinal(
+void castor::tape::rmc::AcsCmd::requestResponsesUntilFinal(
   const SEQ_NO requestSeqNumber,
   ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)],
   const int queryInterval, const int timeout)
@@ -102,7 +102,7 @@ void castor::tape::rmcd::AcsCmd::requestResponsesUntilFinal(
 //------------------------------------------------------------------------------
 // requestResponse
 //------------------------------------------------------------------------------
-ACS_RESPONSE_TYPE castor::tape::rmcd::AcsCmd::requestResponse(
+ACS_RESPONSE_TYPE castor::tape::rmc::AcsCmd::requestResponse(
   const int timeout, const SEQ_NO requestSeqNumber,
   ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
   throw(castor::exception::RequestFailed) {
@@ -131,7 +131,7 @@ ACS_RESPONSE_TYPE castor::tape::rmcd::AcsCmd::requestResponse(
 //------------------------------------------------------------------------------
 // checkSeqNumber
 //------------------------------------------------------------------------------
-void castor::tape::rmcd::AcsCmd::checkResponseSeqNumber(
+void castor::tape::rmc::AcsCmd::checkResponseSeqNumber(
   const SEQ_NO requestSeqNumber, const SEQ_NO responseSeqNumber)
   throw(castor::exception::Mismatch) {
   if(requestSeqNumber != responseSeqNumber) {

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmcd/AcsCmd.hpp
+ *                 castor/tape/rmc/AcsCmd.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -28,8 +28,8 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/Mismatch.hpp"
 #include "castor/exception/RequestFailed.hpp"
-#include "castor/tape/rmcd/Acs.hpp"
-#include "castor/tape/rmcd/DebugBuf.hpp"
+#include "castor/tape/rmc/Acs.hpp"
+#include "castor/tape/rmc/DebugBuf.hpp"
 
 #include <istream>
 #include <ostream>
@@ -42,7 +42,7 @@ extern "C" {
 
 namespace castor {
 namespace tape {
-namespace rmcd {
+namespace rmc {
 
 /**
  * Abstract class implementing common code and data structures for command-line
@@ -157,7 +157,7 @@ protected:
 
 }; // class AcsCmd
 
-} // namespace rmcd
+} // namespace rmc
 } // namespace tape
 } // namespace castor
 

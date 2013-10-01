@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmcd/DismountAcsCmdLine.hpp
+ *                 castor/tape/rmc/DismountAcsCmdLine.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,12 +22,12 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/rmcd/DismountAcsCmdLine.hpp"
+#include "castor/tape/rmc/DismountAcsCmdLine.hpp"
 
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::rmcd::DismountAcsCmdLine::DismountAcsCmdLine() throw():
+castor::tape::rmc::DismountAcsCmdLine::DismountAcsCmdLine() throw():
   debug(false),
   force(FALSE),
   help(false),

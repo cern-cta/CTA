@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmcd/QueryVolumeAcsMain.cpp
+ *                 castor/tape/rmc/QueryVolumeAcsMain.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
  
-#include "castor/tape/rmcd/AcsImpl.hpp"
-#include "castor/tape/rmcd/QueryVolumeAcsCmd.hpp"
+#include "castor/tape/rmc/AcsImpl.hpp"
+#include "castor/tape/rmc/QueryVolumeAcsCmd.hpp"
 
 #include <iostream>
 
@@ -32,8 +32,8 @@
 //------------------------------------------------------------------------------
 int main(const int argc, char *const *const argv) {
 
-  castor::tape::rmcd::AcsImpl acs;
-  castor::tape::rmcd::QueryVolumeAcsCmd
+  castor::tape::rmc::AcsImpl acs;
+  castor::tape::rmc::QueryVolumeAcsCmd
     cmd(std::cin, std::cout, std::cerr, acs);
 
   return cmd.main(argc, argv);

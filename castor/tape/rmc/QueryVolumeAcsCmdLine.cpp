@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmcd/QueryVolumeAcsCmdLine.hpp
+ *                 castor/tape/rmc/QueryVolumeAcsCmdLine.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,12 +22,12 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/rmcd/QueryVolumeAcsCmdLine.hpp"
+#include "castor/tape/rmc/QueryVolumeAcsCmdLine.hpp"
 
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::rmcd::QueryVolumeAcsCmdLine::QueryVolumeAcsCmdLine()
+castor::tape::rmc::QueryVolumeAcsCmdLine::QueryVolumeAcsCmdLine()
   throw():
   debug(FALSE),
   help(FALSE),

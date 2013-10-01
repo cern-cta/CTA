@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmcd/QueryVolumeAcsCmdLine.hpp
+ *                 castor/tape/rmc/QueryVolumeAcsCmdLine.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -34,7 +34,7 @@ extern "C" {
 
 namespace castor {
 namespace tape {
-namespace rmcd {
+namespace rmc {
 
 /**
  * Data type used to store the results of parsing the command-line.
@@ -75,7 +75,7 @@ struct QueryVolumeAcsCmdLine {
 
 }; // class QueryVolumeAcsCmdLine
 
-} // namespace rmcd
+} // namespace rmc
 } // namespace tape
 } // namespace castor
 

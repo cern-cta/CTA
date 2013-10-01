@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmcd/AcsImpl.hpp
+ *                 castor/tape/rmc/AcsImpl.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,7 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/rmcd/AcsImpl.hpp"
+#include "castor/tape/rmc/AcsImpl.hpp"
 
 #include <errno.h>
 #include <sstream>
@@ -31,13 +31,13 @@
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::tape::rmcd::AcsImpl::~AcsImpl() throw() {
+castor::tape::rmc::AcsImpl::~AcsImpl() throw() {
 }
 
 //------------------------------------------------------------------------------
 // mount
 //------------------------------------------------------------------------------
-STATUS castor::tape::rmcd::AcsImpl::mount(
+STATUS castor::tape::rmc::AcsImpl::mount(
   const SEQ_NO seqNumber,
   const LOCKID lockId,
   const VOLID &volId,
@@ -51,7 +51,7 @@ STATUS castor::tape::rmcd::AcsImpl::mount(
 //------------------------------------------------------------------------------
 // dismount
 //------------------------------------------------------------------------------
-STATUS castor::tape::rmcd::AcsImpl::dismount(
+STATUS castor::tape::rmc::AcsImpl::dismount(
   const SEQ_NO seqNumber,
   const LOCKID lockId,
   const VOLID &volId,
@@ -64,7 +64,7 @@ STATUS castor::tape::rmcd::AcsImpl::dismount(
 //------------------------------------------------------------------------------
 // response
 //------------------------------------------------------------------------------
-STATUS castor::tape::rmcd::AcsImpl::response(
+STATUS castor::tape::rmc::AcsImpl::response(
   const int timeout,
   SEQ_NO &seqNumber,
   REQ_ID &reqId,
@@ -76,7 +76,7 @@ STATUS castor::tape::rmcd::AcsImpl::response(
 //------------------------------------------------------------------------------
 // queryVolume
 //------------------------------------------------------------------------------
-STATUS castor::tape::rmcd::AcsImpl::queryVolume(
+STATUS castor::tape::rmc::AcsImpl::queryVolume(
   const SEQ_NO seqNumber,
   VOLID (&volIds)[MAX_ID],
   const unsigned short count) throw() {

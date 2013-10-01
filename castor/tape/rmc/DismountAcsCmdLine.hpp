@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmcd/DismountAcsCmdLine.hpp
+ *                 castor/tape/rmc/DismountAcsCmdLine.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -34,7 +34,7 @@ extern "C" {
 
 namespace castor {
 namespace tape {
-namespace rmcd {
+namespace rmc {
 
 /**
  * Data type used to store the results of parsing the command-line.
@@ -88,7 +88,7 @@ struct DismountAcsCmdLine {
 
 }; // class DismountAcsCmdLine
 
-} // namespace rmcd
+} // namespace rmc
 } // namespace tape
 } // namespace castor
 

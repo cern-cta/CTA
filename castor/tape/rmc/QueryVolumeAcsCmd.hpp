@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmcd/QueryVolumeAcsCmd.hpp
+ *                 castor/tape/rmc/QueryVolumeAcsCmd.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -29,14 +29,14 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/MissingOperand.hpp"
 #include "castor/exception/QueryVolumeFailed.hpp"
-#include "castor/tape/rmcd/AcsCmd.hpp"
-#include "castor/tape/rmcd/QueryVolumeAcsCmdLine.hpp"
+#include "castor/tape/rmc/AcsCmd.hpp"
+#include "castor/tape/rmc/QueryVolumeAcsCmdLine.hpp"
 
 #include <stdint.h>
 
 namespace castor  {
 namespace tape    {
-namespace rmcd {
+namespace rmc {
 
 /**
  * The class implementing the mount command.
@@ -152,7 +152,7 @@ private:
 
 }; // class QueryVolumeAcsCmd
 
-} // namespace rmcd
+} // namespace rmc
 } // namespace tape
 } // namespace castor
 
