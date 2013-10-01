@@ -76,18 +76,11 @@ int castor::tape::mediachanger::DismountAcsCmd::main(const int argc,
     return 0;
   }
 
-  if(m_cmdLine.debug) {
-    m_out << "DEBUG: Using a force value of " <<
-      (m_cmdLine.force ? "TRUE" : "FALSE") << std::endl;
-    m_out << "DEBUG: Using a query interval of " << m_cmdLine.queryInterval <<
-      " seconds" << std::endl;
-    m_out << "DEBUG: Using a timeout of " << m_cmdLine.timeout << " seconds" <<
-      std::endl;
-    m_out << "DEBUG: Using volume identifier " << m_cmdLine.volId.external_label
-      << std::endl;
-    m_out << "DEBUG: Using drive " << m_acs.driveId2Str(m_cmdLine.driveId) <<
-      std::endl;
-  }
+  m_dbg << "force = " << (m_cmdLine.force ? "TRUE" : "FALSE") << std::endl;
+  m_dbg << "query = " << m_cmdLine.queryInterval << std::endl;
+  m_dbg << "timeout = " << m_cmdLine.timeout << std::endl;
+  m_dbg << "VID = " << m_cmdLine.volId.external_label << std::endl;
+  m_dbg << "DRIVE = " << m_acs.driveId2Str(m_cmdLine.driveId) << std::endl;
 
   try {
     syncDismount();
@@ -261,47 +254,38 @@ void castor::tape::mediachanger::DismountAcsCmd::syncDismount()
     (m_cmdLine.force ? "TRUE" : "FALSE");
 
   const SEQ_NO dismountSeqNumber = 1;
-  const LOCKID dismountLockId = 0; // No lock
-  if(m_cmdLine.debug) m_out << "DEBUG: Calling Acs::dismount()" << std::endl;
-  const STATUS dismountStatus = m_acs.dismount(dismountSeqNumber,
-    dismountLockId, m_cmdLine.volId, m_cmdLine.driveId, m_cmdLine.force);
-  if(m_cmdLine.debug) m_out << "DEBUG: Acs::dismount() returned " <<
-    acs_status(dismountStatus) << std::endl;
-  if(STATUS_SUCCESS != dismountStatus) {
-    castor::exception::DismountFailed ex;
-    ex.getMessage() << "Failed to " << action.str() << ": " <<
-      acs_status(dismountStatus);
-    throw(ex);
-  }
+  sendDismountRequest(dismountSeqNumber);
 
   // Get all responses until RT_FINAL
-  ALIGNED_BYTES responseBuf[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
+  ALIGNED_BYTES msgBuf[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
   SEQ_NO responseSeqNumber = (SEQ_NO)0;
   REQ_ID reqId = (REQ_ID)0;
   ACS_RESPONSE_TYPE responseType = RT_NONE;
   int elapsedMountTime = 0;
   do {
-    if(m_cmdLine.debug) m_out << "DEBUG: Calling Acs::response()" << std::endl;
     const int remainingTime = m_cmdLine.timeout - elapsedMountTime;
     const int responseTimeout = remainingTime > m_cmdLine.queryInterval ?
       m_cmdLine.queryInterval : remainingTime;
-    const time_t startTime = time(NULL);
-    const STATUS responseStatus = m_acs.response(responseTimeout,
-      responseSeqNumber, reqId, responseType, responseBuf);
-    elapsedMountTime += time(NULL) - startTime;
-    if(STATUS_SUCCESS != responseStatus && STATUS_PENDING != responseStatus) {
-      castor::exception::DismountFailed ex;
-      ex.getMessage() << "Failed to " << action.str() <<
-        ": Failed to request library response: " << acs_status(responseStatus);
-      throw ex;
+    {
+      m_dbg << "Calling Acs::response()" << std::endl;
+      const time_t startTime = time(NULL);
+      const STATUS s = m_acs.response(responseTimeout, responseSeqNumber,
+        reqId, responseType, msgBuf);
+      elapsedMountTime += time(NULL) - startTime;
+      m_dbg << "Acs::response() returned " << acs_status(s) << std::endl;
+
+      if(STATUS_SUCCESS != s && STATUS_PENDING != s) {
+        castor::exception::DismountFailed ex;
+        ex.getMessage() << "Failed to " << action.str() <<
+          ": Failed to request library response: " << acs_status(s);
+        throw ex;
+      }
+
+      if(STATUS_SUCCESS == s && RT_ACKNOWLEDGE == responseType) {
+        m_dbg << "Received RT_ACKNOWLEDGE: seqNumber=" << responseSeqNumber <<
+          " reqId=" << reqId << std::endl;
+      }
     }
-    if(m_cmdLine.debug && STATUS_SUCCESS == responseStatus &&
-      RT_ACKNOWLEDGE == responseType) {
-      m_out << "DEBUG: Received RT_ACKNOWLEDGE: responseSeqNumber=" <<
-        responseSeqNumber << " reqId=" << reqId << std::endl;
-    } 
-    if(m_cmdLine.debug) m_out << "DEBUG: Acs::response() returned " <<
-      acs_status(responseStatus) << std::endl;
       
     if(elapsedMountTime >= m_cmdLine.timeout) {
       castor::exception::DismountFailed ex;
@@ -310,8 +294,9 @@ void castor::tape::mediachanger::DismountAcsCmd::syncDismount()
       throw(ex);
     }
   } while(RT_FINAL != responseType);
-  if(m_cmdLine.debug) m_out << "DEBUG: Received RT_FINAL: responseSeqNumber=" <<
-    responseSeqNumber << " reqId=" << reqId << std::endl;
+
+  m_dbg << "Received RT_FINAL: seqNumber=" << responseSeqNumber << " reqId=" <<
+    reqId << std::endl;
 
   if(dismountSeqNumber != responseSeqNumber) {
     castor::exception::DismountFailed ex;
@@ -321,13 +306,33 @@ void castor::tape::mediachanger::DismountAcsCmd::syncDismount()
     throw(ex);
   }
         
-  const ACS_MOUNT_RESPONSE *const response =
-    (ACS_MOUNT_RESPONSE *)responseBuf;
+  const ACS_DISMOUNT_RESPONSE *const msg = (ACS_DISMOUNT_RESPONSE *)msgBuf;
     
-  if(STATUS_SUCCESS != response->mount_status) {
+  if(STATUS_SUCCESS != msg->dismount_status) {
     castor::exception::DismountFailed ex;
     ex.getMessage() << "Failed to " << action.str() << ": " <<
-      acs_status(response->mount_status);
+      acs_status(msg->dismount_status);
+    throw(ex);
+  }
+}
+
+//------------------------------------------------------------------------------
+// sendDismountRequest
+//------------------------------------------------------------------------------
+void castor::tape::mediachanger::DismountAcsCmd::sendDismountRequest(
+  const SEQ_NO seqNumber) throw (castor::exception::DismountFailed) {
+  const LOCKID lockId = 0; // No lock
+
+  m_dbg << "Calling Acs::dismount()" << std::endl;
+  const STATUS s = m_acs.dismount(seqNumber, lockId, m_cmdLine.volId,
+    m_cmdLine.driveId, m_cmdLine.force);
+  m_dbg << "Acs::dismount() returned " << acs_status(s) << std::endl;
+  if(STATUS_SUCCESS != s) {
+    castor::exception::DismountFailed ex;
+    ex.getMessage() << "Failed to send request to dismount volume " <<
+      m_cmdLine.volId.external_label << " from drive " <<
+      m_acs.driveId2Str(m_cmdLine.driveId) << ": force=" <<
+      (m_cmdLine.force ? "TRUE" : "FALSE") << ": " << acs_status(s);
     throw(ex);
   }
 }

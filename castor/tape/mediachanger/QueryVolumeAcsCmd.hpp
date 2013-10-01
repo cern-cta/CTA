@@ -102,12 +102,21 @@ protected:
   QU_VOL_STATUS syncQueryVolume() throw(castor::exception::QueryVolumeFailed);
 
   /**
-   * Writes a human readable representation of the specified volume status to
-   * m_out.
+   * Sends the query volume  request to ACSLS.
    *
+   * @param seqNumber The sequence number to be used in the request.
+   */
+  void sendQueryVolumeRequest(const SEQ_NO seqNumber)
+    throw (castor::exception::QueryVolumeFailed);
+
+  /**
+   * Writes a human readable representation of the specified volume status to
+   * the specified output stream.
+   *
+   * @param os The output stream.
    * @param s The volume status.
    */
-  void writeVolumeStatus(const QU_VOL_STATUS &s) throw();
+  void writeVolumeStatus(std::ostream &os, const QU_VOL_STATUS &s) throw();
 
 private:
 

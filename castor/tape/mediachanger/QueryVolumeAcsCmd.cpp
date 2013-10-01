@@ -78,18 +78,13 @@ int castor::tape::mediachanger::QueryVolumeAcsCmd::main(const int argc,
     return 0;
   }
 
-  if(m_cmdLine.debug) {
-    m_out << "DEBUG: Using a query interval of " << m_cmdLine.queryInterval << 
-      " seconds" << std::endl;
-    m_out << "DEBUG: Using a timeout of " << m_cmdLine.timeout << " seconds" << 
-      std::endl;
-    m_out << "DEBUG: Using volume identifier " << m_cmdLine.volId.external_label
-      << std::endl;
-  }
+  m_dbg << "query = " << m_cmdLine.queryInterval << std::endl;
+  m_dbg << "timeout = " << m_cmdLine.timeout << std::endl;
+  m_dbg << "VID = " << m_cmdLine.volId.external_label << std::endl;
 
   try {
     const QU_VOL_STATUS volStatus = syncQueryVolume();
-    writeVolumeStatus(volStatus);
+    writeVolumeStatus(m_out, volStatus);
   } catch(castor::exception::QueryVolumeFailed &ex) {
     m_err << "Aborting: " << ex.getMessage().str() << std::endl;
     return 1;
@@ -243,46 +238,36 @@ QU_VOL_STATUS castor::tape::mediachanger::QueryVolumeAcsCmd::syncQueryVolume()
   action << "query volume " << m_cmdLine.volId.external_label;
 
   const SEQ_NO mountSeqNumber = 1;
-  if(m_cmdLine.debug) m_out << "DEBUG: Calling Acs::queryVolume()" << std::endl;
-  VOLID volId[1] = {m_cmdLine.volId};
-  const STATUS queryStatus = m_acs.queryVolume(mountSeqNumber, volId, 1);
-  if(m_cmdLine.debug) m_out << "DEBUG: Acs::queryVolume() returned " <<
-    acs_status(queryStatus) << std::endl;
-  if(STATUS_SUCCESS != queryStatus) {
-    castor::exception::QueryVolumeFailed ex;
-    ex.getMessage() << "Failed to " << action << ": " <<
-      acs_status(queryStatus);
-    throw ex;
-  }
+  sendQueryVolumeRequest(mountSeqNumber);
 
   // Get all responses until RT_FINAL
-  ALIGNED_BYTES responseBuf[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
+  ALIGNED_BYTES msgBug[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
   SEQ_NO responseSeqNumber = (SEQ_NO)0;
   REQ_ID reqId = (REQ_ID)0;
   ACS_RESPONSE_TYPE responseType = RT_NONE;
   int elapsedMountTime = 0;
   do {
-    if(m_cmdLine.debug) m_out << "DEBUG: Calling Acs::response()" << std::endl;
     const int remainingTime = m_cmdLine.timeout - elapsedMountTime;
     const int responseTimeout = remainingTime > m_cmdLine.queryInterval ?
       m_cmdLine.queryInterval : remainingTime;
-    const time_t startTime = time(NULL);
-    const STATUS responseStatus = m_acs.response(responseTimeout,
-      responseSeqNumber, reqId, responseType, responseBuf);
-    elapsedMountTime += time(NULL) - startTime;
-    if(STATUS_SUCCESS != responseStatus && STATUS_PENDING != responseStatus) {
-      castor::exception::QueryVolumeFailed ex;
-      ex.getMessage() << "Failed to " << action.str() <<
-        ": Failed to request library response: " << acs_status(responseStatus);
-      throw ex;
+    {
+      m_dbg << "Calling Acs::response()" << std::endl;
+      const time_t startTime = time(NULL);
+      const STATUS s = m_acs.response(responseTimeout, responseSeqNumber,
+        reqId, responseType, msgBug);
+      elapsedMountTime += time(NULL) - startTime;
+      m_dbg << "Acs::response() returned " << acs_status(s) << std::endl;
+      if(STATUS_SUCCESS != s && STATUS_PENDING != s) {
+        castor::exception::QueryVolumeFailed ex;
+        ex.getMessage() << "Failed to " << action.str() <<
+          ": Failed to request library response: " << acs_status(s);
+        throw ex;
+      }
+      if(STATUS_SUCCESS == s && RT_ACKNOWLEDGE == responseType) {
+        m_dbg << "Received RT_ACKNOWLEDGE: seqNumber=" << responseSeqNumber <<
+          " reqId=" << reqId << std::endl;
+      }
     }
-    if(m_cmdLine.debug && STATUS_SUCCESS == responseStatus &&
-      RT_ACKNOWLEDGE == responseType) {
-      m_out << "DEBUG: Received RT_ACKNOWLEDGE: responseSeqNumber=" <<
-        responseSeqNumber << " reqId=" << reqId << std::endl;
-    }
-    if(m_cmdLine.debug) m_out << "DEBUG: Acs::response() returned " <<
-      acs_status(responseStatus) << std::endl;
 
     if(elapsedMountTime >= m_cmdLine.timeout) {
       castor::exception::QueryVolumeFailed ex;
@@ -291,8 +276,8 @@ QU_VOL_STATUS castor::tape::mediachanger::QueryVolumeAcsCmd::syncQueryVolume()
       throw(ex);
     }
   } while(RT_FINAL != responseType);
-  if(m_cmdLine.debug) m_out << "DEBUG: Received RT_FINAL: responseSeqNumber=" <<
-    responseSeqNumber << " reqId=" << reqId << std::endl;
+  m_dbg << "Received RT_FINAL: seqNumber=" << responseSeqNumber << " reqId=" <<
+    reqId << std::endl;
 
   if(mountSeqNumber != responseSeqNumber) {
     castor::exception::QueryVolumeFailed ex;
@@ -302,26 +287,25 @@ QU_VOL_STATUS castor::tape::mediachanger::QueryVolumeAcsCmd::syncQueryVolume()
     throw(ex);
   }
 
-  const ACS_QUERY_VOL_RESPONSE *const response =
-    (ACS_QUERY_VOL_RESPONSE *)responseBuf;
+  const ACS_QUERY_VOL_RESPONSE *const msg = (ACS_QUERY_VOL_RESPONSE *)msgBug;
 
-  if(STATUS_SUCCESS != response->query_vol_status) {
+  if(STATUS_SUCCESS != msg->query_vol_status) {
     castor::exception::QueryVolumeFailed ex;
     ex.getMessage() << "Failed to " << action.str() << ": " <<
-      acs_status(response->query_vol_status);
+      acs_status(msg->query_vol_status);
     throw(ex);
   }
 
-  if((unsigned short)1 != response->count) {
+  if((unsigned short)1 != msg->count) {
     castor::exception::QueryVolumeFailed ex;
     ex.getMessage() << "Failed to " << action.str() <<
       ": Incorrect number of volume statuses"
-      ": expected=1 actual=" << response->count;
+      ": expected=1 actual=" << msg->count;
     throw ex;
   }
 
   // count is 1 so it is safe to make a reference to the single volume status
-  const QU_VOL_STATUS &volStatus = response->vol_status[0];
+  const QU_VOL_STATUS &volStatus = msg->vol_status[0];
 
   if(strcmp(m_cmdLine.volId.external_label, volStatus.vol_id.external_label)) {
     castor::exception::QueryVolumeFailed ex;
@@ -336,37 +320,56 @@ QU_VOL_STATUS castor::tape::mediachanger::QueryVolumeAcsCmd::syncQueryVolume()
 }
 
 //------------------------------------------------------------------------------
+// sendQueryVolumeRequest
+//------------------------------------------------------------------------------
+void castor::tape::mediachanger::QueryVolumeAcsCmd::sendQueryVolumeRequest(
+  const SEQ_NO seqNumber) throw (castor::exception::QueryVolumeFailed) {
+  VOLID volId[1] = {m_cmdLine.volId};
+
+  m_dbg << "Calling Acs::queryVolume()" << std::endl;
+  const STATUS s = m_acs.queryVolume(seqNumber, volId, 1);
+  m_dbg << "Acs::queryVolume() returned " << acs_status(s) << std::endl;
+
+  if(STATUS_SUCCESS != s) {
+    castor::exception::QueryVolumeFailed ex;
+    ex.getMessage() << "Failed to send query request for volume " <<
+      m_cmdLine.volId.external_label << ": " << acs_status(s);
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
 // writeVolumeStatus
 //------------------------------------------------------------------------------
 void castor::tape::mediachanger::QueryVolumeAcsCmd::writeVolumeStatus(
-  const QU_VOL_STATUS &s) throw() {
-  m_out << "Volume identifier: " << s.vol_id.external_label << std::endl;
-  m_out << "Media type (media_types.dat): " << (int)s.media_type << std::endl;
+  std::ostream &os, const QU_VOL_STATUS &s) throw() {
+  os << "Volume identifier: " << s.vol_id.external_label << std::endl;
+  os << "Media type (media_types.dat): " << (int)s.media_type << std::endl;
 
   switch(s.location_type) {
   case LOCATION_CELL: {
-    m_out << "Location type: cell" << std::endl;
+    os << "Location type: cell" << std::endl;
     const CELLID &cellId = s.location.cell_id;
-    m_out << "ACS: " << (int)cellId.panel_id.lsm_id.acs << std::endl;
-    m_out << "LSM: " << (int)cellId.panel_id.lsm_id.lsm << std::endl;
-    m_out << "Panel: " << (int)cellId.panel_id.panel << std::endl;
-    m_out << "Row: " << (int)cellId.row << std::endl;
-    m_out << "Column: " << (int)cellId.col << std::endl;
+    os << "ACS: " << (int)cellId.panel_id.lsm_id.acs << std::endl;
+    os << "LSM: " << (int)cellId.panel_id.lsm_id.lsm << std::endl;
+    os << "Panel: " << (int)cellId.panel_id.panel << std::endl;
+    os << "Row: " << (int)cellId.row << std::endl;
+    os << "Column: " << (int)cellId.col << std::endl;
     break;
   }
   case LOCATION_DRIVE: {
-    m_out << "Location type: drive" << std::endl;
+    os << "Location type: drive" << std::endl;
     const DRIVEID &driveId = s.location.drive_id;
-    m_out << "ACS: " << (int)driveId.panel_id.lsm_id.acs << std::endl;
-    m_out << "LSM: " << (int)driveId.panel_id.lsm_id.lsm << std::endl;
-    m_out << "Panel: " << (int)driveId.panel_id.panel << std::endl;
-    m_out << "Drive: " << (int)driveId.drive << std::endl;
+    os << "ACS: " << (int)driveId.panel_id.lsm_id.acs << std::endl;
+    os << "LSM: " << (int)driveId.panel_id.lsm_id.lsm << std::endl;
+    os << "Panel: " << (int)driveId.panel_id.panel << std::endl;
+    os << "Drive: " << (int)driveId.drive << std::endl;
     break;
   }
   default:
-    m_out << "Location type: UNKNOWN" << std::endl;
+    os << "Location type: UNKNOWN" << std::endl;
     break;
   }
 
-  m_out << "Status: " << acs_status(s.status) << std::endl;
+  os << "Status: " << acs_status(s.status) << std::endl;
 }

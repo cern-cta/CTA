@@ -97,6 +97,14 @@ protected:
    */
   void syncMount() throw(castor::exception::MountFailed);
 
+  /**
+   * Sends the mount request to ACSLS.
+   *
+   * @param seqNumber The sequence number to be used in the request.
+   */
+  void sendMountRequest(const SEQ_NO seqNumber)
+    throw(castor::exception::MountFailed);
+
 private:
 
   /**

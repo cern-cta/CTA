@@ -102,6 +102,14 @@ protected:
    */
   void syncDismount() throw(castor::exception::DismountFailed);
 
+  /**
+   * Sends the dismount request to ACSLS.
+   *
+   * @param seqNumber The sequence number to be used in the request.
+   */
+  void sendDismountRequest(const SEQ_NO seqNumber)
+    throw(castor::exception::DismountFailed);
+
 private:
 
   /**

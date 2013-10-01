@@ -256,47 +256,36 @@ void castor::tape::mediachanger::MountAcsCmd::syncMount()
     (m_cmdLine.readOnly ? "TRUE" : "FALSE");
 
   const SEQ_NO mountSeqNumber = 1;
-  const LOCKID mountLockId = 0; // No lock
-  const BOOLEAN mountBypass = FALSE;
-  m_dbg << "Calling Acs::mount()" << std::endl;
-  const STATUS mountStatus = m_acs.mount(mountSeqNumber, mountLockId,
-    m_cmdLine.volId, m_cmdLine.driveId, m_cmdLine.readOnly, mountBypass);
-  m_dbg << "Acs::mount() returned " << acs_status(mountStatus) << std::endl;
-  if(STATUS_SUCCESS != mountStatus) {
-    castor::exception::MountFailed ex;
-    ex.getMessage() << "Failed to " << action << ": " <<
-      acs_status(mountStatus);
-    throw ex;
-  }
+  sendMountRequest(mountSeqNumber);
 
   // Get all responses until RT_FINAL
-  ALIGNED_BYTES responseBuf[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
+  ALIGNED_BYTES msgBug[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
   SEQ_NO responseSeqNumber = (SEQ_NO)0;
   REQ_ID reqId = (REQ_ID)0;
   ACS_RESPONSE_TYPE responseType = RT_NONE;
   int elapsedMountTime = 0;
   do {
-    if(m_cmdLine.debug) m_out << "DEBUG: Calling Acs::response()" << std::endl;
     const int remainingTime = m_cmdLine.timeout - elapsedMountTime;
     const int responseTimeout = remainingTime > m_cmdLine.queryInterval ?
       m_cmdLine.queryInterval : remainingTime;
-    const time_t startTime = time(NULL);
-    const STATUS responseStatus = m_acs.response(responseTimeout,
-      responseSeqNumber, reqId, responseType, responseBuf);
-    elapsedMountTime += time(NULL) - startTime;
-    if(STATUS_SUCCESS != responseStatus && STATUS_PENDING != responseStatus) {
-      castor::exception::MountFailed ex;
-      ex.getMessage() << "Failed to " << action.str() <<
-        ": Failed to request library response: " << acs_status(responseStatus);
-      throw ex;
+    {
+      m_dbg << "Calling Acs::response()" << std::endl;
+      const time_t startTime = time(NULL);
+      const STATUS s = m_acs.response(responseTimeout, responseSeqNumber,
+        reqId, responseType, msgBug);
+      elapsedMountTime += time(NULL) - startTime;
+      m_dbg << "Acs::response() returned " << acs_status(s) << std::endl;
+      if(STATUS_SUCCESS != s && STATUS_PENDING != s) {
+        castor::exception::MountFailed ex;
+        ex.getMessage() << "Failed to " << action.str() <<
+          ": Failed to request library response: " << acs_status(s);
+        throw ex;
+      }
+      if(STATUS_SUCCESS == s && RT_ACKNOWLEDGE == responseType) {
+        m_dbg << "Received RT_ACKNOWLEDGE: seqNumber=" << responseSeqNumber <<
+          " reqId=" << reqId << std::endl;
+      }
     }
-    if(m_cmdLine.debug && STATUS_SUCCESS == responseStatus &&
-      RT_ACKNOWLEDGE == responseType) {
-      m_out << "DEBUG: Received RT_ACKNOWLEDGE: responseSeqNumber=" <<
-        responseSeqNumber << " reqId=" << reqId << std::endl;
-    }
-    m_dbg << "Acs::response() returned " << acs_status(responseStatus)
-      << std::endl;
 
     if(elapsedMountTime >= m_cmdLine.timeout) {
       castor::exception::MountFailed ex;
@@ -306,8 +295,8 @@ void castor::tape::mediachanger::MountAcsCmd::syncMount()
     }
   } while(RT_FINAL != responseType);
 
-  m_dbg << "Received RT_FINAL: responseSeqNumber=" << responseSeqNumber
-    << " reqId=" << reqId << std::endl;
+  m_dbg << "Received RT_FINAL: seqNumber=" << responseSeqNumber << " reqId=" <<
+    reqId << std::endl;
 
   if(mountSeqNumber != responseSeqNumber) {
     castor::exception::MountFailed ex;
@@ -317,13 +306,35 @@ void castor::tape::mediachanger::MountAcsCmd::syncMount()
     throw(ex);
   }
 
-  const ACS_DISMOUNT_RESPONSE *const response =
-    (ACS_DISMOUNT_RESPONSE *)responseBuf;
+  const ACS_MOUNT_RESPONSE *const msg = (ACS_MOUNT_RESPONSE *)msgBug;
 
-  if(STATUS_SUCCESS != response->dismount_status) {
+  if(STATUS_SUCCESS != msg->mount_status) {
     castor::exception::MountFailed ex;
     ex.getMessage() << "Failed to " << action.str() << ": " <<
-      acs_status(response->dismount_status);
+      acs_status(msg->mount_status);
     throw(ex);
+  }
+}
+
+//------------------------------------------------------------------------------
+// sendMountRequest
+//------------------------------------------------------------------------------
+void castor::tape::mediachanger::MountAcsCmd::sendMountRequest(
+  const SEQ_NO seqNumber) throw(castor::exception::MountFailed) {
+  const LOCKID lockId = 0; // No lock
+  const BOOLEAN bypass = FALSE;
+
+  m_dbg << "Calling Acs::mount()" << std::endl;
+  const STATUS s = m_acs.mount(seqNumber, lockId, m_cmdLine.volId,
+    m_cmdLine.driveId, m_cmdLine.readOnly, bypass);
+  m_dbg << "Acs::mount() returned " << acs_status(s) << std::endl;
+
+  if(STATUS_SUCCESS != s) {
+    castor::exception::MountFailed ex;
+    ex.getMessage() << "Failed to send request to mount volume " <<
+      m_cmdLine.volId.external_label << " into drive " <<
+      m_acs.driveId2Str(m_cmdLine.driveId) << ": readOnly=" <<
+      (m_cmdLine.readOnly ? "TRUE" : "FALSE") << ": " << acs_status(s);
+    throw ex;
   }
 }
