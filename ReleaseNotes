@@ -403,19 +403,27 @@
          post-upgrade script from:
          http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-2/dbupgrades
 
-         This script can be run online while the system is running. It should take less than 30 minutes
-         and it starts a one-off job to populate the new fields added to the Nameserver schema.
-         The job may take several days to complete (about two weeks for 300M files) and it is
-         performed as a background activity.
+         This script can be run online while the system is running. It should take less than
+         30 minutes and it starts a one-off job to populate the new fields added to the
+         Nameserver schema.
 
-      3. As a separate intervention, run the cns_2.1.14_switch-open-mode.sql script from:
+      3. The job may take several hours to complete (about two days for 300M files) and it is
+         performed as a background activity. You can check whether the job is still running
+         by executing the following query in the Nameserver database:
+
+         SELECT total_time FROM user_jobs;
+
+         If no result is returned, the job is over; otherwise, the total time in seconds since
+         the job was started is displayed.
+
+      4. As a separate intervention, run the cns_2.1.14_switch-open-mode.sql script from:
          http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-2/dbupgrades
 
-         This script enables the stagers to fully exploit the new logic to provide cross stager consistency
-         (see bug #95189), and it is required to be executed before the upgrade to the next major
-         version (2.1.15).
-         The script fails if the previous job had not completed or had been interrupted and the new
-         fields are not fully populated yet.
+         This script enables the stagers to fully exploit the new logic to provide cross stager
+         consistency (see bug #95189), and it is required to be executed before the upgrade
+         to the next major version (2.1.15).
+         The script fails if the previous job had not completed or had been interrupted and
+         the new fields are not fully populated yet.
 
 
 ------------

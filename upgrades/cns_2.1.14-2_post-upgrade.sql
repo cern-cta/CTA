@@ -48,32 +48,34 @@ CREATE OR REPLACE PROCEDURE updateAll2114Data AS
 BEGIN
   WHILE NOT stop LOOP
     stop := TRUE;
-    -- go for a run of 100,000 files: this takes about 8 minutes
-    FOR f IN (SELECT /*+ INDEX(f I_fmd_stagertime_null) INDEX_RS_ASC(s pk_s_fileid) */
-                     fileid, mtime, f.gid
-                FROM Cns_file_metadata f, Cns_seg_metadata s
-               WHERE f.fileid = s.s_fileid
-                 AND decode(nvl(f.stagertime, 1), 1, 1, NULL) = 1
-                 AND ROWNUM <= 100000) LOOP
+    -- go for a run of 10,000 files: this takes about 5 seconds
+    FOR f IN (SELECT /*+ INDEX(f I_fmd_stagertime_null) */
+                     fileid, mtime, gid
+                FROM Cns_file_metadata
+               WHERE decode(nvl(stagertime, 1), 1, 1, NULL) = 1
+                 AND ROWNUM <= 10000) LOOP
       stop := FALSE;
+      -- update stagerTime but skip files that have been updated meanwhile
       UPDATE Cns_file_metadata
          SET stagerTime = mtime
-       WHERE fileid = f.fileid;
+       WHERE fileid = f.fileid
+         AND stagerTime IS NULL;
       UPDATE Cns_seg_metadata
          SET creationTime = f.mtime,
              lastModificationTime = f.mtime,
              gid = f.gid
-       WHERE s_fileid = f.fileid;
+       WHERE s_fileid = f.fileid
+         AND creationTime IS NULL;
       COMMIT;
     END LOOP;
   -- yield to normal activity
-  DBMS_LOCK.SLEEP(5);
+  DBMS_LOCK.SLEEP(1);
   END LOOP;
 END;
 /
 
 /* Create a one-off job to run the above procedure.
- * This is expected to take about two weeks with 300M files.
+ * This is expected to take a few days with 300M files.
  */
 DECLARE
   jobno NUMBER;
