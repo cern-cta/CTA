@@ -17,6 +17,7 @@
 #include "h/serrno.h"
 #include "h/rmc_constants.h"
 #include "h/rmc_logit.h"
+#include "h/rmc_logreq.h"
 #include "h/rmc_smcsubr.h"
 #include "h/rmc_smcsubr2.h"
 #include "h/rmc_sendrep.h"
@@ -27,54 +28,6 @@
 extern struct extended_robot_info extended_robot_info;
 extern char localhost[CA_MAXHOSTNAMELEN+1];
  
-/*	rmc_logreq - log a request */
-
-/*	Split the message into lines so they don't exceed LOGBUFSZ-1 characters
- *	A backslash is appended to a line to be continued
- *	A continuation line is prefixed by '+ '
- */
-static void rmc_logreq(const char *const func, char *const logbuf)
-{
-	int n1, n2;
-	char *p;
-	char savechrs1[2];
-	char savechrs2[2];
-
-	n1 = RMC_LOGBUFSZ - strlen (func) - 36;
-	n2 = strlen (logbuf);
-	p = logbuf;
-	while (n2 > n1) {
-		savechrs1[0] = *(p + n1);
-		savechrs1[1] = *(p + n1 + 1);
-		*(p + n1) = '\\';
-		*(p + n1 + 1) = '\0';
-		rmc_logit (func, RMC98, p);
-                tl_rmcdaemon.tl_log( &tl_rmcdaemon, 98, 2,
-                                     "func"   , TL_MSG_PARAM_STR, "rmc_logreq",
-                                     "Request", TL_MSG_PARAM_STR, p );
-		if (p != logbuf) {
-			*p = savechrs2[0];
-			*(p + 1) = savechrs2[1];
-		}
-		p += n1 - 2;
-		savechrs2[0] = *p;
-		savechrs2[1] = *(p + 1);
-		*p = '+';
-		*(p + 1) = ' ';
-		*(p + 2) = savechrs1[0];
-		*(p + 3) = savechrs1[1];
-		n2 -= n1;
-	}
-	rmc_logit (func, RMC98, p);
-        tl_rmcdaemon.tl_log( &tl_rmcdaemon, 98, 2,
-                             "func"   , TL_MSG_PARAM_STR, "rmc_logreq",
-                             "Request", TL_MSG_PARAM_STR, p );
-	if (p != logbuf) {
-		*p = savechrs2[0];
-		*(p + 1) = savechrs2[1];
-	}
-}
-
 static int marshall_ELEMENT (
 	char **const sbpp,
 	const struct smc_element_info *const element_info)
