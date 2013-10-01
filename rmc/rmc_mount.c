@@ -54,6 +54,6 @@ int rmc_mount(
 
         while ((c = send2rmc (server, sendbuf, msglen, repbuf, sizeof(repbuf))) &&
             serrno == ERMCNACT)
-                sleep (RETRYI);
+                sleep (RMC_RETRYI);
 	return (c);
 }
