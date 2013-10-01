@@ -11,7 +11,8 @@
 #include <stdio.h>
 #include "h/marshall.h"
 #include "h/net.h"
-#include "h/rmc.h"
+#include "h/rmc_constants.h"
+#include "h/rmc_logit.h"
 #include "h/rmc_sendrep.h"
 #include "h/tplogger_api.h"
 #include <unistd.h>
@@ -40,7 +41,7 @@ int rmc_sendrep(const int rpfd, const int rep_type, ...)
 		vsprintf (prtbuf, msg, args);
 		marshall_LONG (rbp, strlen (prtbuf) + 1);
 		marshall_STRING (rbp, prtbuf);
-		rmclogit (func, "%s", prtbuf);
+		rmc_logit (func, "%s", prtbuf);
                 tl_rmcdaemon.tl_log( &tl_rmcdaemon, 103, 2,
                                      "func"   , TL_MSG_PARAM_STR, func,
                                      "Message", TL_MSG_PARAM_STR, prtbuf );
@@ -60,7 +61,7 @@ int rmc_sendrep(const int rpfd, const int rep_type, ...)
 	va_end (args);
 	repsize = rbp - repbuf;
 	if (netwrite (rpfd, repbuf, repsize) != repsize) {
-		rmclogit (func, RMC02, "send", neterror());
+		rmc_logit (func, RMC02, "send", neterror());
                 tl_rmcdaemon.tl_log( &tl_rmcdaemon, 2, 3,
                                      "func" , TL_MSG_PARAM_STR, func,
                                      "On"   , TL_MSG_PARAM_STR, "send",

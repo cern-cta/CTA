@@ -20,7 +20,8 @@
 #include "h/Cinit.h"
 #include "h/marshall.h"
 #include "h/net.h"
-#include "h/rmc.h"
+#include "h/rmc_constants.h"
+#include "h/rmc_logit.h"
 #include "h/rmc_sendrep.h"
 #include "h/rmc_server_api.h"
 #include "h/rmc_smcsubr.h"
@@ -86,7 +87,7 @@ int rmc_main(struct main_args *main_args)
         }
 
 	jid = getpid();
-	rmclogit (func, "started\n");
+	rmc_logit (func, "started\n");
         tl_rmcdaemon.tl_log( &tl_rmcdaemon, 109, 2,
                              "func"   , TL_MSG_PARAM_STR, "rmc_main",
                              "Message", TL_MSG_PARAM_STR, "Daemon started" );        
@@ -94,7 +95,7 @@ int rmc_main(struct main_args *main_args)
 	gethostname (localhost, CA_MAXHOSTNAMELEN+1);
 	if (strchr (localhost, '.') == NULL) {
 		if (Cdomainname (domainname, sizeof(domainname)) < 0) {
-			rmclogit (func, "Unable to get domainname\n");
+			rmc_logit (func, "Unable to get domainname\n");
                         tl_rmcdaemon.tl_log( &tl_rmcdaemon, 103, 2,
                                              "func"   , TL_MSG_PARAM_STR, "rmc_main",
                                              "Message", TL_MSG_PARAM_STR, "Unable to get domainname" );
@@ -104,7 +105,7 @@ int rmc_main(struct main_args *main_args)
 	}
 
 	if (main_args->argc != 2) {
-		rmclogit (func, RMC01);
+		rmc_logit (func, RMC01);
                 tl_rmcdaemon.tl_log( &tl_rmcdaemon, 1, 1,
                                      "func", TL_MSG_PARAM_STR, "rmc_main" );
 		exit (USERR);
@@ -112,7 +113,7 @@ int rmc_main(struct main_args *main_args)
 	robot = main_args->argv[1];
 	if (*robot == '\0' ||
 	    (strlen (robot) + (*robot == '/') ? 0 : 5) > CA_MAXRBTNAMELEN) {
-		rmclogit (func, RMC06, "robot");
+		rmc_logit (func, RMC06, "robot");
                 tl_rmcdaemon.tl_log( &tl_rmcdaemon, 6, 2,
                                      "func", TL_MSG_PARAM_STR, "rmc_main",
                                      "For" , TL_MSG_PARAM_STR, "robot" );
@@ -132,20 +133,20 @@ int rmc_main(struct main_args *main_args)
                                  extended_robot_info.smc_ldr,
                                  &extended_robot_info.robot_info))) {
             c = smc_lasterror (&smc_status, &msgaddr);
-            rmclogit (func, RMC02, "get_geometry", msgaddr);
+            rmc_logit (func, RMC02, "get_geometry", msgaddr);
             tl_rmcdaemon.tl_log( &tl_rmcdaemon, 2, 4,
                                  "func"    , TL_MSG_PARAM_STR, "rmc_main",
                                  "On"      , TL_MSG_PARAM_STR, "get_geometry",
                                  "Message" , TL_MSG_PARAM_STR, msgaddr,
                                  "NextStep", TL_MSG_PARAM_STR, "Retry" );
 
-            rmclogit (func,"trying again get_geometry\n");
+            rmc_logit (func,"trying again get_geometry\n");
             tl_rmcdaemon.tl_log( &tl_rmcdaemon, 110, 2,
                                  "func"   , TL_MSG_PARAM_STR, "rmc_main",
                                  "Message", TL_MSG_PARAM_STR, "trying again get_geometry" );
             n++;
             if (n==2) {
-              rmclogit (func, RMC02, "get_geometry", msgaddr);
+              rmc_logit (func, RMC02, "get_geometry", msgaddr);
               tl_rmcdaemon.tl_log( &tl_rmcdaemon, 2, 4,
                                    "func"    , TL_MSG_PARAM_STR, "rmc_main",
                                    "On"      , TL_MSG_PARAM_STR, "get_geometry",
@@ -175,7 +176,7 @@ int rmc_main(struct main_args *main_args)
 		    sense[12] == 0x20) {
 			extended_robot_info.smc_support_voltag = 0;
 		} else {
-			rmclogit (func, RMC02, "find_cartridge", msgaddr);
+			rmc_logit (func, RMC02, "find_cartridge", msgaddr);
                         tl_rmcdaemon.tl_log( &tl_rmcdaemon, 2, 4,
                                              "func"    , TL_MSG_PARAM_STR, "rmc_main",
                                              "On"      , TL_MSG_PARAM_STR, "find_cartridge",
@@ -192,7 +193,7 @@ int rmc_main(struct main_args *main_args)
 	/* open request socket */
 
 	if ((s = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
-		rmclogit (func, RMC02, "socket", neterror());
+		rmc_logit (func, RMC02, "socket", neterror());
                 tl_rmcdaemon.tl_log( &tl_rmcdaemon, 2, 4,
                                      "func"    , TL_MSG_PARAM_STR, "rmc_main",
                                      "On"      , TL_MSG_PARAM_STR, "socket",
@@ -214,14 +215,14 @@ int rmc_main(struct main_args *main_args)
 	}
 	sin.sin_addr.s_addr = htonl(INADDR_ANY);
 	if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0) {
-		rmclogit (func, RMC02, "setsockopt", neterror());
+		rmc_logit (func, RMC02, "setsockopt", neterror());
                 tl_rmcdaemon.tl_log( &tl_rmcdaemon, 2, 3,
                                      "func"    , TL_MSG_PARAM_STR, "rmc_main",
                                      "On"      , TL_MSG_PARAM_STR, "setsockopt",
                                      "Message" , TL_MSG_PARAM_STR, msgaddr );
         }
 	if (bind (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
-		rmclogit (func, RMC02, "bind", neterror());
+		rmc_logit (func, RMC02, "bind", neterror());
                 tl_rmcdaemon.tl_log( &tl_rmcdaemon, 2, 4,
                                      "func"    , TL_MSG_PARAM_STR, "rmc_main",
                                      "On"      , TL_MSG_PARAM_STR, "bind",
@@ -308,7 +309,7 @@ static int getreq(
 		*req_type = n;
 		unmarshall_LONG (rbp, msglen);
 		if (msglen > RMC_REQBUFSZ) {
-			rmclogit (func, RMC46, RMC_REQBUFSZ);
+			rmc_logit (func, RMC46, RMC_REQBUFSZ);
                         tl_rmcdaemon.tl_log( &tl_rmcdaemon, 46, 2,
                                              "func"   , TL_MSG_PARAM_STR, "getreq",
                                              "MaxSize", TL_MSG_PARAM_INT,  RMC_REQBUFSZ);                        
@@ -317,7 +318,7 @@ static int getreq(
 		l = msglen - sizeof(req_hdr);
 		n = netread_timeout (s, req_data, l, RMC_TIMEOUT);
 		if (getpeername (s, (struct sockaddr *) &from, &fromlen) < 0) {
-			rmclogit (func, RMC02, "getpeername", neterror());
+			rmc_logit (func, RMC02, "getpeername", neterror());
                         tl_rmcdaemon.tl_log( &tl_rmcdaemon, 2, 4,
                                              "func"   , TL_MSG_PARAM_STR, "getreq",
                                              "On"     , TL_MSG_PARAM_STR, "getpeername",
@@ -334,13 +335,13 @@ static int getreq(
 		return (0);
 	} else {
 		if (l > 0) {
-			rmclogit (func, RMC04, l);
+			rmc_logit (func, RMC04, l);
                         tl_rmcdaemon.tl_log( &tl_rmcdaemon, 4, 3,
                                              "func"   , TL_MSG_PARAM_STR, "getreq",
                                              "netread", TL_MSG_PARAM_INT, l,
                                              "Return" , TL_MSG_PARAM_STR, "ERMCUNREC" );
 		} else if (l < 0) {
-			rmclogit (func, RMC02, "netread", strerror(errno));
+			rmc_logit (func, RMC02, "netread", strerror(errno));
                         tl_rmcdaemon.tl_log( &tl_rmcdaemon, 2, 4,
                                              "func"   , TL_MSG_PARAM_STR, "getreq",
                                              "On"     , TL_MSG_PARAM_STR, "netread",

@@ -14,8 +14,9 @@
 #include <netinet/in.h>
 #include "h/Cupv_api.h"
 #include "h/marshall.h"
-#include "h/rmc.h"
 #include "h/serrno.h"
+#include "h/rmc_constants.h"
+#include "h/rmc_logit.h"
 #include "h/rmc_smcsubr.h"
 #include "h/rmc_smcsubr2.h"
 #include "h/rmc_sendrep.h"
@@ -46,7 +47,7 @@ static void rmc_logreq(const char *const func, char *const logbuf)
 		savechrs1[1] = *(p + n1 + 1);
 		*(p + n1) = '\\';
 		*(p + n1 + 1) = '\0';
-		rmclogit (func, RMC98, p);
+		rmc_logit (func, RMC98, p);
                 tl_rmcdaemon.tl_log( &tl_rmcdaemon, 98, 2,
                                      "func"   , TL_MSG_PARAM_STR, "rmc_logreq",
                                      "Request", TL_MSG_PARAM_STR, p );
@@ -63,7 +64,7 @@ static void rmc_logreq(const char *const func, char *const logbuf)
 		*(p + 3) = savechrs1[1];
 		n2 -= n1;
 	}
-	rmclogit (func, RMC98, p);
+	rmc_logit (func, RMC98, p);
         tl_rmcdaemon.tl_log( &tl_rmcdaemon, 98, 2,
                              "func"   , TL_MSG_PARAM_STR, "rmc_logreq",
                              "Request", TL_MSG_PARAM_STR, p );
@@ -109,7 +110,7 @@ int rmc_srv_export(
 	rbp = req_data;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
-	rmclogit (func, RMC92, "export", uid, gid, clienthost);
+	rmc_logit (func, RMC92, "export", uid, gid, clienthost);
         tl_rmcdaemon.tl_log( &tl_rmcdaemon, 92, 5,
                              "func"      , TL_MSG_PARAM_STR, "rmc_srv_export",
                              "Type"      , TL_MSG_PARAM_STR, "export",
@@ -121,13 +122,13 @@ int rmc_srv_export(
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
 		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
 			rmc_sendrep (rpfd, MSG_ERR, RMC06, "loader");
-			rmclogit (func, "returns %d\n", ERMCUNREC);
+			rmc_logit (func, "returns %d\n", ERMCUNREC);
 			return ERMCUNREC;
 		}
 	}
 	if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1)) {
 		rmc_sendrep (rpfd, MSG_ERR, RMC06, "vid");
-		rmclogit (func, "returns %d\n", ERMCUNREC);
+		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
 	}
 	snprintf (logbuf, CA_MAXVIDLEN+8, "export %s", vid);
@@ -135,13 +136,13 @@ int rmc_srv_export(
 
 	if (Cupv_check (uid, gid, clienthost, localhost, P_TAPE_OPERATOR)) {
 		rmc_sendrep (rpfd, MSG_ERR, "%s\n", sstrerror(serrno));
-		rmclogit (func, "returns %d\n", ERMCUNREC);
+		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
 	}
 	c = smc_export (rpfd, extended_robot_info.smc_fd,
           extended_robot_info.smc_ldr, &extended_robot_info.robot_info, vid);
 	if (c) c += ERMCRBTERR;
-	rmclogit (func, "returns %d\n", c);
+	rmc_logit (func, "returns %d\n", c);
 	return c;
 }
 
@@ -174,7 +175,7 @@ int rmc_srv_findcart(
 	rbp = req_data;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
-	rmclogit (func, RMC92, "findcart", uid, gid, clienthost);
+	rmc_logit (func, RMC92, "findcart", uid, gid, clienthost);
         tl_rmcdaemon.tl_log( &tl_rmcdaemon, 92, 5,
                              "func"      , TL_MSG_PARAM_STR, "rmc_srv_findcart",
                              "Type"      , TL_MSG_PARAM_STR, "findcart",
@@ -186,13 +187,13 @@ int rmc_srv_findcart(
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
 		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
 			rmc_sendrep (rpfd, MSG_ERR, RMC06, "loader");
-			rmclogit (func, "returns %d\n", ERMCUNREC);
+			rmc_logit (func, "returns %d\n", ERMCUNREC);
 			return ERMCUNREC;
 		}
 	}
 	if (unmarshall_STRINGN (rbp, template, 40)) {
 		rmc_sendrep (rpfd, MSG_ERR, RMC06, "template");
-		rmclogit (func, "returns %d\n", ERMCUNREC);
+		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
 	}
 	unmarshall_LONG (rbp, type);
@@ -203,12 +204,12 @@ int rmc_srv_findcart(
 
 	if (nbelem < 1) {
 		rmc_sendrep (rpfd, MSG_ERR, RMC06, "nbelem");
-		rmclogit (func, "returns %d\n", ERMCUNREC);
+		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
 	}
 	if ((element_info = malloc (nbelem * sizeof(struct smc_element_info))) == NULL) {
 		rmc_sendrep (rpfd, MSG_ERR, RMC05);
-		rmclogit (func, "returns %d\n", ERMCUNREC);
+		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
 	}
 	if (extended_robot_info.smc_support_voltag)
@@ -224,13 +225,13 @@ int rmc_srv_findcart(
 		free (element_info);
 		rmc_sendrep (rpfd, MSG_ERR, RMC02, "smc_find_cartridge", msgaddr);
 		c += ERMCRBTERR;
-		rmclogit (func, "returns %d\n", c);
+		rmc_logit (func, "returns %d\n", c);
 		return c;
 	}
 	if ((repbuf = malloc (c * 18 + 4)) == NULL) {
 		rmc_sendrep (rpfd, MSG_ERR, RMC05);
 		free (element_info);
-		rmclogit (func, "returns %d\n", ERMCUNREC);
+		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
 	}
 	sbp = repbuf;
@@ -240,7 +241,7 @@ int rmc_srv_findcart(
 	free (element_info);
 	rmc_sendrep (rpfd, MSG_DATA, sbp - repbuf, repbuf);
 	free (repbuf);
-	rmclogit (func, "returns %d\n", 0);
+	rmc_logit (func, "returns %d\n", 0);
 	return 0;
 }
 
@@ -263,7 +264,7 @@ int rmc_srv_getgeom(
 	rbp = req_data;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
-	rmclogit (func, RMC92, "getgeom", uid, gid, clienthost);
+	rmc_logit (func, RMC92, "getgeom", uid, gid, clienthost);
         tl_rmcdaemon.tl_log( &tl_rmcdaemon, 92, 5,
                              "func"      , TL_MSG_PARAM_STR, "rmc_srv_getgeom",
                              "Type"      , TL_MSG_PARAM_STR, "getgeom",
@@ -275,7 +276,7 @@ int rmc_srv_getgeom(
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
 		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
 			rmc_sendrep (rpfd, MSG_ERR, RMC06, "loader");
-			rmclogit (func, "returns %d\n", ERMCUNREC);
+			rmc_logit (func, "returns %d\n", ERMCUNREC);
 			return ERMCUNREC;
 		}
 	}
@@ -293,7 +294,7 @@ int rmc_srv_getgeom(
 	marshall_LONG (sbp, extended_robot_info.robot_info.device_start);
 	marshall_LONG (sbp, extended_robot_info.robot_info.device_count);
 	rmc_sendrep (rpfd, MSG_DATA, sbp - repbuf, repbuf);
-	rmclogit (func, "returns %d\n", 0);
+	rmc_logit (func, "returns %d\n", 0);
 	return 0;
 }
 
@@ -316,7 +317,7 @@ int rmc_srv_import(
 	rbp = req_data;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
-	rmclogit (func, RMC92, "import", uid, gid, clienthost);
+	rmc_logit (func, RMC92, "import", uid, gid, clienthost);
         tl_rmcdaemon.tl_log( &tl_rmcdaemon, 92, 5,
                              "func"      , TL_MSG_PARAM_STR, "rmc_srv_import",
                              "Type"      , TL_MSG_PARAM_STR, "import",
@@ -328,13 +329,13 @@ int rmc_srv_import(
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
 		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
 			rmc_sendrep (rpfd, MSG_ERR, RMC06, "loader");
-			rmclogit (func, "returns %d\n", ERMCUNREC);
+			rmc_logit (func, "returns %d\n", ERMCUNREC);
 			return ERMCUNREC;
 		}
 	}
 	if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1)) {
 		rmc_sendrep (rpfd, MSG_ERR, RMC06, "vid");
-		rmclogit (func, "returns %d\n", ERMCUNREC);
+		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
 	}
 	snprintf (logbuf, CA_MAXVIDLEN+8, "import %s", vid);
@@ -342,13 +343,13 @@ int rmc_srv_import(
 
 	if (Cupv_check (uid, gid, clienthost, localhost, P_TAPE_OPERATOR)) {
 		rmc_sendrep (rpfd, MSG_ERR, "%s\n", sstrerror(serrno));
-		rmclogit (func, "returns %d\n", ERMCUNREC);
+		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
 	}
 	c = smc_import (rpfd, extended_robot_info.smc_fd,
 	  extended_robot_info.smc_ldr, &extended_robot_info.robot_info, vid);
 	if (c) c += ERMCRBTERR;
-	rmclogit (func, "returns %d\n", c);
+	rmc_logit (func, "returns %d\n", c);
 	return c;
 }
 
@@ -373,7 +374,7 @@ int rmc_srv_mount(
 	rbp = req_data;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
-	rmclogit (func, RMC92, "mount", uid, gid, clienthost);
+	rmc_logit (func, RMC92, "mount", uid, gid, clienthost);
         tl_rmcdaemon.tl_log( &tl_rmcdaemon, 92, 5,
                              "func"      , TL_MSG_PARAM_STR, "rmc_srv_mount",
                              "Type"      , TL_MSG_PARAM_STR, "mount",
@@ -385,13 +386,13 @@ int rmc_srv_mount(
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
 		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
 			rmc_sendrep (rpfd, MSG_ERR, RMC06, "loader");
-			rmclogit (func, "returns %d\n", ERMCUNREC);
+			rmc_logit (func, "returns %d\n", ERMCUNREC);
 			return ERMCUNREC;
 		}
 	}
 	if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1)) {
 		rmc_sendrep (rpfd, MSG_ERR, RMC06, "vid");
-		rmclogit (func, "returns %d\n", ERMCUNREC);
+		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
 	}
 	unmarshall_WORD (rbp, invert);
@@ -401,14 +402,14 @@ int rmc_srv_mount(
 
 	if (Cupv_check (uid, gid, clienthost, localhost, P_TAPE_SYSTEM)) {
 		rmc_sendrep (rpfd, MSG_ERR, "%s\n", sstrerror(serrno));
-		rmclogit (func, "returns %d\n", ERMCUNREC);
+		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
 	}
 	c = smc_mount (rpfd, extended_robot_info.smc_fd,
 	  extended_robot_info.smc_ldr, &extended_robot_info.robot_info, drvord,
 	  vid, invert);
 	if (c) c += ERMCRBTERR;
-	rmclogit (func, "returns %d\n", c);
+	rmc_logit (func, "returns %d\n", c);
 	return c;
 }
 
@@ -440,7 +441,7 @@ int rmc_srv_readelem(
 	rbp = req_data;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
-	rmclogit (func, RMC92, "readelem", uid, gid, clienthost);
+	rmc_logit (func, RMC92, "readelem", uid, gid, clienthost);
         tl_rmcdaemon.tl_log( &tl_rmcdaemon, 92, 5,
                              "func"      , TL_MSG_PARAM_STR, "rmc_srv_readelem",
                              "Type"      , TL_MSG_PARAM_STR, "readelem",
@@ -452,7 +453,7 @@ int rmc_srv_readelem(
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
 		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
 			rmc_sendrep (rpfd, MSG_ERR, RMC06, "loader");
-			rmclogit (func, "returns %d\n", ERMCUNREC);
+			rmc_logit (func, "returns %d\n", ERMCUNREC);
 			return ERMCUNREC;
 		}
 	}
@@ -464,17 +465,17 @@ int rmc_srv_readelem(
 
 	if (type < 0 || type > 4) {
 		rmc_sendrep (rpfd, MSG_ERR, RMC06, "type");
-		rmclogit (func, "returns %d\n", ERMCUNREC);
+		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
 	}
 	if (nbelem < 1) {
 		rmc_sendrep (rpfd, MSG_ERR, RMC06, "nbelem");
-		rmclogit (func, "returns %d\n", ERMCUNREC);
+		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
 	}
 	if ((element_info = malloc (nbelem * sizeof(struct smc_element_info))) == NULL) {
 		rmc_sendrep (rpfd, MSG_ERR, RMC05);
-		rmclogit (func, "returns %d\n", ERMCUNREC);
+		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
 	}
 	if ((c = smc_read_elem_status (extended_robot_info.smc_fd,
@@ -484,13 +485,13 @@ int rmc_srv_readelem(
 		free (element_info);
 		rmc_sendrep (rpfd, MSG_ERR, RMC02, "smc_read_elem_status", msgaddr);
 		c += ERMCRBTERR;
-		rmclogit (func, "returns %d\n", c);
+		rmc_logit (func, "returns %d\n", c);
 		return c;
 	}
 	if ((repbuf = malloc (c * 18 + 4)) == NULL) {
 		rmc_sendrep (rpfd, MSG_ERR, RMC05);
 		free (element_info);
-		rmclogit (func, "returns %d\n", ERMCUNREC);
+		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
 	}
 	sbp = repbuf;
@@ -500,7 +501,7 @@ int rmc_srv_readelem(
 	free (element_info);
 	rmc_sendrep (rpfd, MSG_DATA, sbp - repbuf, repbuf);
 	free (repbuf);
-	rmclogit (func, "returns %d\n", 0);
+	rmc_logit (func, "returns %d\n", 0);
 	return 0;
 }
 
@@ -525,7 +526,7 @@ int rmc_srv_unmount(
 	rbp = req_data;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
-	rmclogit (func, RMC92, "unmount", uid, gid, clienthost);
+	rmc_logit (func, RMC92, "unmount", uid, gid, clienthost);
         tl_rmcdaemon.tl_log( &tl_rmcdaemon, 92, 5,
                              "func"      , TL_MSG_PARAM_STR, "rmc_srv_unmount",
                              "Type"      , TL_MSG_PARAM_STR, "unmount",
@@ -537,13 +538,13 @@ int rmc_srv_unmount(
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
 		if (unmarshall_STRINGN (rbp, smc_ldr, CA_MAXRBTNAMELEN+1)) {
 			rmc_sendrep (rpfd, MSG_ERR, RMC06, "loader");
-			rmclogit (func, "returns %d\n", ERMCUNREC);
+			rmc_logit (func, "returns %d\n", ERMCUNREC);
 			return ERMCUNREC;
 		}
 	}
 	if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1)) {
 		rmc_sendrep (rpfd, MSG_ERR, RMC06, "vid");
-		rmclogit (func, "returns %d\n", ERMCUNREC);
+		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
 	}
 	unmarshall_WORD (rbp, drvord);
@@ -553,13 +554,13 @@ int rmc_srv_unmount(
 
 	if (Cupv_check (uid, gid, clienthost, localhost, P_TAPE_SYSTEM)) {
 		rmc_sendrep (rpfd, MSG_ERR, "%s\n", sstrerror(serrno));
-		rmclogit (func, "returns %d\n", ERMCUNREC);
+		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
 	}
 	c = smc_dismount (rpfd, extended_robot_info.smc_fd,
 	  extended_robot_info.smc_ldr, &extended_robot_info.robot_info, drvord,
 	  force == 0 ? vid : "");
 	if (c) c += ERMCRBTERR;
-	rmclogit (func, "returns %d\n", c);
+	rmc_logit (func, "returns %d\n", c);
 	return c;
 }

@@ -11,10 +11,11 @@
 #include <time.h>
 #include <stdarg.h>
 #include <unistd.h>
-#include "h/rmc.h"
+#include "h/rmc_constants.h"
+#include "h/rmc_logit.h"
 extern int jid;
 
-int rmclogit(const char *const func, const char *const msg, ...)
+int rmc_logit(const char *const func, const char *const msg, ...)
 {
 	va_list args;
 	char prtbuf[RMC_PRTBUFSZ];
