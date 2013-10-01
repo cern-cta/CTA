@@ -14,6 +14,7 @@
 
 #include "h/Ctape.h"
 #include "h/rmc_constants.h"
+#include "h/rmc_send_scsi_cmd.h"
 #include "h/rmc_sendrep.h"
 #include "h/rmc_smcsubr.h"
 #include "h/rmc_smcsubr2.h"
@@ -99,7 +100,7 @@ static int get_element_size(
 
         /* IBM library in pause mode  */ 
         while (pause_mode && nretries <= 900) {
- 	     rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 12, buf, 128,
+ 	     rc = rmc_send_scsi_cmd (fd, rbtdev, 0, cdb, 12, buf, 128,
  		  sense, 38, 900000, SCSI_IN, &nb_sense_ret, &msgaddr);
              if (rc < 0) {
                if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04)  && (sense[13] == -0X7B )) {
@@ -185,7 +186,7 @@ static int get_element_info(
 
         /* IBM library in pause mode  */ 
         while (pause_mode && nretries <= 900) {
-	     rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 12, data, len,
+	     rc = rmc_send_scsi_cmd (fd, rbtdev, 0, cdb, 12, data, len,
 		  sense, 38, 900000, SCSI_IN, &nb_sense_ret, &msgaddr);
              if (rc < 0) {
                if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04)  && (sense[13] == -0X7B )) {
@@ -265,7 +266,7 @@ int smc_get_geometry(
 
         /* IBM library in pause mode  */ 
         while (pause_mode && nretries <= 900) { 
-	    rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 6, buf, 36,
+	    rc = rmc_send_scsi_cmd (fd, rbtdev, 0, cdb, 6, buf, 36,
 		sense, 38, 900000, SCSI_IN, &nb_sense_ret, &msgaddr);
             if (rc < 0) {
               if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04)  && (sense[13] == -0X7B )) {
@@ -296,7 +297,7 @@ int smc_get_geometry(
 
         /* IBM library in pause mode  */ 
         while (pause_mode && nretries<=900) { 
-	     rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 6, buf, 24,
+	     rc = rmc_send_scsi_cmd (fd, rbtdev, 0, cdb, 6, buf, 24,
 		 sense, 38, 900000, SCSI_IN, &nb_sense_ret, &msgaddr);
              if (rc < 0) {
                if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04)  && (sense[13] == -0X7B )) {
@@ -458,7 +459,7 @@ int smc_find_cartridge(
    
        /* IBM library in pause mode  */ 
         while (pause_mode && nretries <= 900) {
-          rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 12, (unsigned char*)plist, 40,
+          rc = rmc_send_scsi_cmd (fd, rbtdev, 0, cdb, 12, (unsigned char*)plist, 40,
                            sense, 38, 900000, SCSI_OUT, &nb_sense_ret, &msgaddr);
             if (rc < 0) {
               if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04)  && (sense[13] == -0X7B )) {
@@ -592,7 +593,7 @@ int smc_move_medium(
 	cdb[10] = invert;
         
         while (pause_mode) {
-	     rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 12, NULL, 0,
+	     rc = rmc_send_scsi_cmd (fd, rbtdev, 0, cdb, 12, NULL, 0,
 		sense, 38, 900000, SCSI_NONE, &nb_sense_ret, &msgaddr);
             if (rc < 0) {
               if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04)  && (sense[13] == -0X7B )) {
