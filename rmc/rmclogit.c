@@ -17,7 +17,7 @@ extern int jid;
 int rmclogit(const char *const func, const char *const msg, ...)
 {
 	va_list args;
-	char prtbuf[PRTBUFSZ];
+	char prtbuf[RMC_PRTBUFSZ];
 	int save_errno;
 	struct tm *tm;
 	time_t current_time;

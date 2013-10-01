@@ -17,11 +17,9 @@
 
 #include "osdep.h"
 #include "rmc_constants.h"
-#define	RMC_CHECKI  5	/* max interval to check for work to be done */
 #define	MAXRETRY 5
 #define	RETRYI	60
 #define	LOGBUFSZ 1024
-#define	PRTBUFSZ 180
 #define	REPBUFSZ 524288	/* must be >= max media changer server reply size */
 #define	REQBUFSZ 256	/* must be >= max media changer server request size */
 #define RMC_MAGIC	0x120D0301

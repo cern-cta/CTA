@@ -22,7 +22,7 @@ int rmc_sendrep(const int rpfd, const int rep_type, ...)
 	char func[16];
 	char *msg;
 	int n;
-	char prtbuf[PRTBUFSZ];
+	char prtbuf[RMC_PRTBUFSZ];
 	char *rbp;
 	int rc;
 	char repbuf[REPBUFSZ];
