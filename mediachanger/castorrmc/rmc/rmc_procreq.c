@@ -12,17 +12,17 @@
 #include <time.h>
 #include <sys/types.h>
 #include <netinet/in.h>
-#include "Cupv_api.h"
-#include "marshall.h"
-#include "rmc.h"
-#include "serrno.h"
-#include "tplogger_api.h"
+#include "h/Cupv_api.h"
+#include "h/marshall.h"
+#include "h/rmc.h"
+#include "h/serrno.h"
+#include "h/rmc_smcsubr.h"
+#include "h/rmc_smcsubr2.h"
+#include "h/tplogger_api.h"
 #include <string.h>
 #include <Ctape_api.h>
 extern struct extended_robot_info extended_robot_info;
 extern char localhost[CA_MAXHOSTNAMELEN+1];
-extern int rpfd;
-void procreq(int, char*, char*);
  
 /*	rmc_logreq - log a request */
 
@@ -30,9 +30,7 @@ void procreq(int, char*, char*);
  *	A backslash is appended to a line to be continued
  *	A continuation line is prefixed by '+ '
  */
-void
-rmc_logreq(char *func,
-	   char *logbuf)
+static void rmc_logreq(const char *const func, char *const logbuf)
 {
 	int n1, n2;
 	char *p;
@@ -93,8 +91,10 @@ int marshall_ELEMENT (char **sbpp,
 
 /*	rmc_srv_export - export/eject a cartridge from the robot */
 
-int rmc_srv_export(char *req_data,
-                   char *clienthost)
+int rmc_srv_export(
+  const int rpfd,
+  char *const req_data,
+  char *const clienthost)
 {
 	int c;
 	char func[16];
@@ -134,16 +134,18 @@ int rmc_srv_export(char *req_data,
 		sendrep (rpfd, MSG_ERR, "%s\n", sstrerror(serrno));
 		RETURN (ERMCUNREC);
 	}
-	c = smc_export (extended_robot_info.smc_fd, extended_robot_info.smc_ldr,
-	    &extended_robot_info.robot_info, vid);
+	c = smc_export (rpfd, extended_robot_info.smc_fd,
+          extended_robot_info.smc_ldr, &extended_robot_info.robot_info, vid);
 	if (c) c += ERMCRBTERR;
 	RETURN (c);
 }
 
 /*	rmc_srv_findcart - find cartridge(s) */
 
-int rmc_srv_findcart(char *req_data,
-                     char *clienthost)
+int rmc_srv_findcart(
+  const int rpfd,
+  char *const req_data,
+  char *const clienthost)
 {
 	int c;
 	struct smc_element_info *element_info;
@@ -232,8 +234,10 @@ int rmc_srv_findcart(char *req_data,
 
 /*	rmc_srv_getgeom - get the robot geometry */
 
-int rmc_srv_getgeom(char *req_data,
-                    char *clienthost)
+int rmc_srv_getgeom(
+  const int rpfd,
+  char *const req_data,
+  char *const clienthost)
 {
 	char func[16];
 	gid_t gid;
@@ -281,8 +285,10 @@ int rmc_srv_getgeom(char *req_data,
 
 /*	rmc_srv_import - import/inject a cartridge into the robot */
 
-int rmc_srv_import(char *req_data,
-                   char *clienthost)
+int rmc_srv_import(
+  const int rpfd,
+  char *const req_data,
+  char *const clienthost)
 {
 	int c;
 	char func[16];
@@ -322,16 +328,18 @@ int rmc_srv_import(char *req_data,
 		sendrep (rpfd, MSG_ERR, "%s\n", sstrerror(serrno));
 		RETURN (ERMCUNREC);
 	}
-	c = smc_import (extended_robot_info.smc_fd, extended_robot_info.smc_ldr,
-	    &extended_robot_info.robot_info, vid);
+	c = smc_import (rpfd, extended_robot_info.smc_fd,
+	  extended_robot_info.smc_ldr, &extended_robot_info.robot_info, vid);
 	if (c) c += ERMCRBTERR;
 	RETURN (c);
 }
 
 /*	rmc_srv_mount - mount a cartridge on a drive */
 
-int rmc_srv_mount(char *req_data,
-                  char *clienthost)
+int rmc_srv_mount(
+  const int rpfd,
+  char *const req_data,
+  char *const clienthost)
 {
 	int c;
 	int drvord;
@@ -375,16 +383,19 @@ int rmc_srv_mount(char *req_data,
 		sendrep (rpfd, MSG_ERR, "%s\n", sstrerror(serrno));
 		RETURN (ERMCUNREC);
 	}
-	c = smc_mount (extended_robot_info.smc_fd, extended_robot_info.smc_ldr,
-	    &extended_robot_info.robot_info, drvord, vid, invert);
+	c = smc_mount (rpfd, extended_robot_info.smc_fd,
+	  extended_robot_info.smc_ldr, &extended_robot_info.robot_info, drvord,
+	  vid, invert);
 	if (c) c += ERMCRBTERR;
 	RETURN (c);
 }
 
 /*	rmc_srv_readelem - read element status */
 
-int rmc_srv_readelem(char *req_data,
-                     char *clienthost)
+int rmc_srv_readelem(
+  const int rpfd,
+  char *const req_data,
+  char *const clienthost)
 {
 	int c;
 	struct smc_element_info *element_info;
@@ -466,8 +477,10 @@ int rmc_srv_readelem(char *req_data,
 
 /*	rmc_srv_unmount - dismount a cartridge from a drive */
 
-int rmc_srv_unmount(char *req_data,
-                    char *clienthost)
+int rmc_srv_unmount(
+  const int rpfd,
+  char *const req_data,
+  char *const clienthost)
 {
 	int c;
 	int drvord;
@@ -511,8 +524,9 @@ int rmc_srv_unmount(char *req_data,
 		sendrep (rpfd, MSG_ERR, "%s\n", sstrerror(serrno));
 		RETURN (ERMCUNREC);
 	}
-	c = smc_dismount (extended_robot_info.smc_fd, extended_robot_info.smc_ldr,
-	    &extended_robot_info.robot_info, drvord, force == 0 ? vid : "");
+	c = smc_dismount (rpfd, extended_robot_info.smc_fd,
+	  extended_robot_info.smc_ldr, &extended_robot_info.robot_info, drvord,
+	  force == 0 ? vid : "");
 	if (c) c += ERMCRBTERR;
 	RETURN (c);
 }

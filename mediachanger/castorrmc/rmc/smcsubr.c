@@ -10,23 +10,23 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include "Ctape.h"
-#include "scsictl.h"
-#include "serrno.h"
-#include "smc.h"
-#include "sendscsicmd.h"
-#include "getconfent.h"
+
+#include "h/Ctape.h"
+#include "h/rmc_smcsubr.h"
+#include "h/scsictl.h"
+#include "h/serrno.h"
+#include "h/sendscsicmd.h"
+#include "h/getconfent.h"
 
 #define	RBT_XTRA_PROC 10
 static struct smc_status smc_status;
 static char *smc_msgaddr;
 
-static void
-save_error(rc, nb_sense, sense, msgaddr)
-int rc;
-int nb_sense;
-char *sense;
-char *msgaddr;
+static void save_error(
+	const int rc,
+	const int nb_sense,
+	const char *const sense,
+	char *const msgaddr)
 {
 	smc_msgaddr = msgaddr;
 	smc_status.rc = rc;
@@ -44,11 +44,10 @@ char *msgaddr;
 	}
 }
 
-static int
-vmatch (char *pattern, char *vid)
+static int vmatch (const char *const pattern, const char *const vid)
 {
-	char *p;
-	char *v;
+	const char *p;
+	const char *v;
 
 	for (p = pattern, v = vid; *p; p++, v++) {
 		if (*v == 0 && *p != '*')
@@ -72,10 +71,10 @@ vmatch (char *pattern, char *vid)
 	return (*v != 0);
 }
 
-static int
-get_element_size(int fd,
-                            char *rbtdev,
-                            int type)
+static int get_element_size(
+	const int fd,
+	const char *const rbtdev,
+	const int type)
 {
 	unsigned char buf[128];
 	unsigned char cdb[12];
@@ -117,14 +116,14 @@ get_element_size(int fd,
 	return (buf[10] * 256 + buf[11]);
 }
 
-static int
-get_element_info(char opcode,
-                            int fd,
-                            char *rbtdev,
-                            int type,
-                            int start,
-                            int nbelem,
-                            struct smc_element_info element_info[])
+static int get_element_info(
+	const char opcode,
+	const int fd,
+	const char *const rbtdev,
+	const int type,
+	const int start,
+	const int nbelem,
+	struct smc_element_info element_info[])
 {
 	int avail_elem;
 	unsigned char cdb[12];
@@ -237,9 +236,10 @@ get_element_info(char opcode,
 	return (avail_elem);
 }
 
-int smc_get_geometry(int fd,
-                     char *rbtdev,
-                     struct robot_info *robot_info)
+int smc_get_geometry(
+	const int fd,
+	const char *const rbtdev,
+        struct robot_info *const robot_info)
 {
 	unsigned char buf[36];
 	unsigned char cdb[6];
@@ -321,12 +321,13 @@ int smc_get_geometry(int fd,
 	return (0);
 }
 
-int smc_read_elem_status(int fd,
-			 char *rbtdev,
-			 int type,
-			 int start,
-			 int nbelem,
-			 struct smc_element_info element_info[])
+int smc_read_elem_status(
+	const int fd,
+	const char *const rbtdev,
+	const int type,
+	const int start,
+	const int nbelem,
+	struct smc_element_info element_info[])
 {
 	char func[16];
 	int rc;
@@ -338,13 +339,14 @@ int smc_read_elem_status(int fd,
 	return (rc);
 }
 
-int smc_find_cartridge2 (int fd,
-                         char *rbtdev,
-                         char *template,
-                         int type,
-                         int start,
-                         int nbelem,
-                         struct smc_element_info element_info[])
+int smc_find_cartridge2 (
+	const int fd,
+	const char *const rbtdev,
+	const char *const template,
+	const int type,
+	const int start,
+	const int nbelem,
+	struct smc_element_info element_info[])
 {
 	int c;
 	static char err_msgbuf[132];
@@ -404,13 +406,14 @@ int smc_find_cartridge2 (int fd,
 }
 
 
-int smc_find_cartridge(int fd,
-                       char *rbtdev,
-                       char *template,
-                       int type,
-                       int start,
-                       int nbelem,
-                       struct smc_element_info element_info[])
+int smc_find_cartridge(
+	const int fd,
+	const char *const rbtdev,
+	const char *const template,
+	const int type,
+	const int start,
+	const int nbelem,
+	struct smc_element_info element_info[])
 {
 	unsigned char cdb[12];
 	char func[16];
@@ -488,7 +491,7 @@ struct scsierr_codact {
 	short action;
 	char *txt;
 };
-struct scsierr_codact scsierr_acttbl[] = {
+static struct scsierr_codact scsierr_acttbl[] = {
     {0x02, 0x04, 0x00, RBT_FAST_RETRY, "Logical Unit Not Ready, Cause Not Reportable"},
     {0x02, 0x04, 0x01, RBT_FAST_RETRY, "Logical Unit Is In Process of Becoming Ready"},
     {0x02, 0x04, 0x02, RBT_NORETRY, "Logical Unit Not Ready, initialization required"},
@@ -528,8 +531,9 @@ struct scsierr_codact scsierr_acttbl[] = {
     {0x02, 0x5A, 0x01, RBT_NORETRY, "Operator Medium Removal Request"}
 };
 
-int smc_lasterror(struct smc_status *smc_stat,
-                  char **msgaddr)
+int smc_lasterror(
+	struct smc_status *const smc_stat,
+	char **const msgaddr)
 {
 	unsigned int i;
 
@@ -555,11 +559,12 @@ int smc_lasterror(struct smc_status *smc_stat,
 	return (RBT_NORETRY);
 }
 
-int smc_move_medium(int fd,
-                    char *rbtdev,
-                    int from,
-                    int to,
-                    int invert)
+int smc_move_medium(
+	const int fd,
+	const char *const rbtdev,
+	const int from,
+	const int to,
+	const int invert)
 {
 	unsigned char cdb[12];
 	char func[16];

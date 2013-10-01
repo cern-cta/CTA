@@ -17,32 +17,32 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include "Cinit.h"
-#include "marshall.h"
-#include "net.h"
-#include "rmc.h"
-#include "scsictl.h"
-#include "serrno.h"
-#include "rmc_server_api.h"
-#include "Cdomainname.h"
-#include "tplogger_api.h"
+#include "h/Cinit.h"
+#include "h/marshall.h"
+#include "h/net.h"
+#include "h/rmc.h"
+#include "h/rmc_server_api.h"
+#include "h/rmc_smcsubr.h"
+#include "h/scsictl.h"
+#include "h/serrno.h"
+#include "h/Cdomainname.h"
+#include "h/tplogger_api.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <Ctape_api.h>
-#include "sendscsicmd.h"
+#include "h/sendscsicmd.h"
 
 /* Forward declaration */
 static int getreq(const int s, int *const req_type, char *const req_data,
   char **const clienthost);
-static void procreq(const int req_type, char *const req_data,
+static void procreq(const int rpfd, const int req_type, char *const req_data,
   char *const clienthost);
-static void rmc_doit(const int rqfd);
+static void rmc_doit(const int rpfd);
 
 int jid;
 char localhost[CA_MAXHOSTNAMELEN+1];
 int maxfds;
 struct extended_robot_info extended_robot_info;
-int rpfd;
 
 int rmc_main(struct main_args *main_args)
 {
@@ -58,7 +58,6 @@ int rmc_main(struct main_args *main_args)
 	char plist[40];
 	fd_set readfd, readmask;
 	char *robot;
-	int rqfd;
 	int s;
     int n=0;
 	char sense[MAXSENSE];
@@ -238,9 +237,9 @@ int rmc_main(struct main_args *main_args)
 	while (1) {
 		if (FD_ISSET (s, &readfd)) {
 			FD_CLR (s, &readfd);
-			rqfd = accept (s, (struct sockaddr *) &from, &fromlen);
-			rpfd = rqfd;
-			(void) rmc_doit (rqfd);
+			const int rpfd =
+				accept (s, (struct sockaddr *) &from, &fromlen);
+			(void) rmc_doit (rpfd);
 		}
 		memcpy (&readfd, &readmask, sizeof(readmask));
 		timeval.tv_sec = CHECKI;
@@ -265,19 +264,19 @@ int main(int argc,
 	exit (rmc_main (&main_args));
 }
 
-static void rmc_doit(const int rqfd)
+static void rmc_doit(const int rpfd)
 {
 	int c;
 	char *clienthost;
 	char req_data[REQBUFSZ-3*LONGSIZE];
 	int req_type = 0;
 
-	if ((c = getreq (rqfd, &req_type, req_data, &clienthost)) == 0)
-		procreq (req_type, req_data, clienthost);
+	if ((c = getreq (rpfd, &req_type, req_data, &clienthost)) == 0)
+		procreq (rpfd, req_type, req_data, clienthost);
 	else if (c > 0)
-		sendrep (rqfd, RMC_RC, c);
+		sendrep (rpfd, RMC_RC, c);
 	else
-		close (rqfd);
+		close (rpfd);
 }
 
 static int getreq(
@@ -352,6 +351,7 @@ static int getreq(
 }
 
 static void procreq(
+  const int rpfd,
   const int req_type,
   char *const req_data,
   char *const clienthost)

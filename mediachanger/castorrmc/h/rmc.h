@@ -17,7 +17,6 @@
 
 #include "osdep.h"
 #include "rmc_constants.h"
-#include "smc.h"
 #define	CHECKI  5	/* max interval to check for work to be done */
 #define	MAXRETRY 5
 #define	RETRYI	60
@@ -28,7 +27,7 @@
 #define RMC_MAGIC	0x120D0301
 #define RMC_TIMEOUT	5	/* netread timeout while receiving a request */
 
-int rmclogit(char*, char*, ...);
+int rmclogit(const char *const func, const char *const msg, ...);
 
 #define RETURN(x) \
 	{ \
@@ -66,12 +65,4 @@ int rmclogit(char*, char*, ...);
 #define	RMC92	"RMC92 - %s request by %d,%d from %s\n"
 #define	RMC98	"RMC98 - %s\n"
 
-                        /* SCSI media changer server structures */
-
-struct extended_robot_info {
-	int	smc_fd;
-	char	smc_ldr[CA_MAXRBTNAMELEN+1];
-	int	smc_support_voltag;
-	struct robot_info robot_info;
-};
 #endif
