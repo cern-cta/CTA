@@ -1,5 +1,5 @@
 /******************************************************************************
- *             test/unittest/castor/tape/dismountacs/DismountAcsCmdLineTest.hpp
+ *             test/unittest/castor/tape/dismountacs/AcsDismountCmdLineTest.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,15 +22,15 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/mediachanger/DismountAcsCmdLine.hpp"
+#include "castor/tape/rmc/AcsDismountCmdLine.hpp"
 
 #include <cppunit/extensions/HelperMacros.h>
 
 namespace castor {
 namespace tape {
-namespace mediachanger {
+namespace rmc {
 
-class DismountAcsCmdLineTest: public CppUnit::TestFixture {
+class AcsDismountCmdLineTest: public CppUnit::TestFixture {
 public:
 
   void setUp() {
@@ -40,7 +40,7 @@ public:
   }
 
   void testConstructor() {
-    const DismountAcsCmdLine cmdLine;
+    const AcsDismountCmdLine cmdLine;
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing debug flag is initialised to FALSE",
       false, cmdLine.debug);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing force flag is initialised to FALSE",
@@ -68,13 +68,13 @@ public:
       '\0', cmdLine.volId.external_label[0]);
   }
 
-  CPPUNIT_TEST_SUITE(DismountAcsCmdLineTest);
+  CPPUNIT_TEST_SUITE(AcsDismountCmdLineTest);
   CPPUNIT_TEST(testConstructor);
   CPPUNIT_TEST_SUITE_END();
 };
 
-CPPUNIT_TEST_SUITE_REGISTRATION(DismountAcsCmdLineTest);
+CPPUNIT_TEST_SUITE_REGISTRATION(AcsDismountCmdLineTest);
 
-} // namespace mediachanger
+} // namespace rmc
 } // namespace tape
 } // namespace castor

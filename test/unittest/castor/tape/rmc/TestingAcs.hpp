@@ -1,5 +1,5 @@
 /******************************************************************************
- *    test/unittest/castor/tape/mediachanger/MockAcs.hpp
+ *    test/unittest/castor/tape/rmc/MockAcs.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,14 +22,14 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_UNITTEST_CASTOR_TAPE_MEDIACHANGER_MOCKACS_HPP
-#define TEST_UNITTEST_CASTOR_TAPE_MEDIACHANGER_MOCKACS_HPP 1
+#ifndef TEST_UNITTEST_CASTOR_TAPE_RMC_MOCKACS_HPP
+#define TEST_UNITTEST_CASTOR_TAPE_RMC_MOCKACS_HPP 1
 
-#include "castor/tape/mediachanger/AcsCmd.hpp"
+#include "castor/tape/rmc/AcsCmd.hpp"
 
 namespace castor {
 namespace tape {
-namespace mediachanger {
+namespace rmc {
 
 class MockAcs: public Acs {
 public:
@@ -85,8 +85,8 @@ public:
     throw();
 }; // class MockAcs
 
-} // namespace mediachanger
+} // namespace rmc
 } // namespace tape
 } // namespace castor
 
-#endif // TEST_UNITTEST_CASTOR_TAPE_MEDIACHANGER_MOCKACS_HPP
+#endif // TEST_UNITTEST_CASTOR_TAPE_RMC_MOCKACS_HPP

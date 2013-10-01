@@ -1,5 +1,5 @@
 /******************************************************************************
- *          test/unittest/castor/tape/dismountacs/QueryVolumeAcsCmdLineTest.hpp
+ *          test/unittest/castor/tape/dismountacs/AcsQueryVolumeCmdLineTest.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,15 +22,15 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/mediachanger/QueryVolumeAcsCmdLine.hpp"
+#include "castor/tape/rmc/AcsQueryVolumeCmdLine.hpp"
 
 #include <cppunit/extensions/HelperMacros.h>
 
 namespace castor {
 namespace tape {
-namespace mediachanger {
+namespace rmc {
 
-class QueryVolumeAcsCmdLineTest: public CppUnit::TestFixture {
+class AcsQueryVolumeCmdLineTest: public CppUnit::TestFixture {
 public:
 
   void setUp() {
@@ -40,7 +40,7 @@ public:
   }
 
   void testConstructor() {
-    const QueryVolumeAcsCmdLine cmdLine;
+    const AcsQueryVolumeCmdLine cmdLine;
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing debug flag is initialised to FALSE",
       (BOOLEAN)FALSE, cmdLine.debug);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing help flag is initialised to FALSE",
@@ -54,13 +54,13 @@ public:
       '\0', cmdLine.volId.external_label[0]);
   }
 
-  CPPUNIT_TEST_SUITE(QueryVolumeAcsCmdLineTest);
+  CPPUNIT_TEST_SUITE(AcsQueryVolumeCmdLineTest);
   CPPUNIT_TEST(testConstructor);
   CPPUNIT_TEST_SUITE_END();
 };
 
-CPPUNIT_TEST_SUITE_REGISTRATION(QueryVolumeAcsCmdLineTest);
+CPPUNIT_TEST_SUITE_REGISTRATION(AcsQueryVolumeCmdLineTest);
 
-} // namespace mediachanger
+} // namespace rmc
 } // namespace tape
 } // namespace castor

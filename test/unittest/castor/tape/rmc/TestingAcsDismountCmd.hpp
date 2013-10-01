@@ -1,5 +1,5 @@
 /******************************************************************************
- *    test/unittest/castor/tape/mediachanger/TestingDismountAcsCmd.hpp
+ *    test/unittest/castor/tape/rmc/TestingAcsDismountCmd.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,16 +22,16 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_UNITTEST_CASTOR_TAPE_DISMOUNTACS_TESTINGMOUNTACSCMD_HPP
-#define TEST_UNITTEST_CASTOR_TAPE_DISMOUNTACS_TESTINGMOUNTACSCMD_HPP 1
+#ifndef TEST_UNITTEST_CASTOR_TAPE_ACSDISMOUNT_TESTINGACSMOUNTCMD_HPP
+#define TEST_UNITTEST_CASTOR_TAPE_ACSDISMOUNT_TESTINGACSMOUNTCMD_HPP 1
 
-#include "castor/tape/mediachanger/DismountAcsCmd.hpp"
+#include "castor/tape/rmc/AcsDismountCmd.hpp"
 
 namespace castor {
 namespace tape {
-namespace mediachanger {
+namespace rmc {
 
-class TestingDismountAcsCmd: public DismountAcsCmd {
+class TestingAcsDismountCmd: public AcsDismountCmd {
 public:
 
   /**
@@ -42,17 +42,17 @@ public:
    * @param errStream Standard error stream.
    * @param acs Wrapper around the ACSLS C-API.
    */
-  TestingDismountAcsCmd(std::istream &inStream, std::ostream &outStream,
+  TestingAcsDismountCmd(std::istream &inStream, std::ostream &outStream,
     std::ostream &errStream, Acs &acs) throw():
-    DismountAcsCmd(inStream, outStream, errStream, acs) {
+    AcsDismountCmd(inStream, outStream, errStream, acs) {
   }
 
-  using DismountAcsCmd::parseCmdLine;
+  using AcsDismountCmd::parseCmdLine;
 
-}; // class TestingDismountAcsCmd
+}; // class TestingAcsDismountCmd
 
-} // namespace mediachanger
+} // namespace rmc
 } // namespace tape
 } // namespace castor
 
-#endif // TEST_UNITTEST_CASTOR_TAPE_DISMOUNTACS_TESTINGMOUNTACSCMD_HPP
+#endif // TEST_UNITTEST_CASTOR_TAPE_ACSDISMOUNT_TESTINGACSMOUNTCMD_HPP

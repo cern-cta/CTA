@@ -1,5 +1,5 @@
 /******************************************************************************
- *    test/unittest/castor/tape/mediachanger/TestingQueryVolumeAcsCmd.hpp
+ *    test/unittest/castor/tape/rmc/TestingAcsQueryVolumeCmd.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,16 +22,16 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_UNITTEST_CASTOR_TAPE_MEDIACHANGER_TESTINGQUERYVOLUMEACSCMD_HPP
-#define TEST_UNITTEST_CASTOR_TAPE_MEDIACHANGER_TESTINGQUERYVOLUMEACSCMD_HPP 1
+#ifndef TEST_UNITTEST_CASTOR_TAPE_RMC_TESTINGACSQUERYVOLUMECMD_HPP
+#define TEST_UNITTEST_CASTOR_TAPE_RMC_TESTINGACSQUERYVOLUMECMD_HPP 1
 
-#include "castor/tape/mediachanger/QueryVolumeAcsCmd.hpp"
+#include "castor/tape/rmc/AcsQueryVolumeCmd.hpp"
 
 namespace castor {
 namespace tape {
-namespace mediachanger {
+namespace rmc {
 
-class TestingQueryVolumeAcsCmd: public QueryVolumeAcsCmd {
+class TestingAcsQueryVolumeCmd: public AcsQueryVolumeCmd {
 public:
   /**
    * Constructor.
@@ -41,17 +41,17 @@ public:
    * @param errStream Standard error stream.
    * @param acs Wrapper around the ACSLS C-API.
    */
-  TestingQueryVolumeAcsCmd(std::istream &inStream, std::ostream &outStream,
+  TestingAcsQueryVolumeCmd(std::istream &inStream, std::ostream &outStream,
     std::ostream &errStream, Acs &acs) throw():
-    QueryVolumeAcsCmd(inStream, outStream, errStream, acs) {
+    AcsQueryVolumeCmd(inStream, outStream, errStream, acs) {
   }
 
-  using QueryVolumeAcsCmd::parseCmdLine;
+  using AcsQueryVolumeCmd::parseCmdLine;
 
-}; // class TestingQueryVolumeAcsCmd
+}; // class TestingAcsQueryVolumeCmd
 
-} // namespace mediachanger
+} // namespace rmc
 } // namespace tape
 } // namespace castor
 
-#endif // TEST_UNITTEST_CASTOR_TAPE_MEDIACHANGER_TESTINGQUERYVOLUMEACSCMD_HPP
+#endif // TEST_UNITTEST_CASTOR_TAPE_RMC_TESTINGACSQUERYVOLUMECMD_HPP

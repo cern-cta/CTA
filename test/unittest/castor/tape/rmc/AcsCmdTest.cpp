@@ -22,8 +22,8 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "test/unittest/castor/tape/mediachanger/MockAcs.hpp"
-#include "test/unittest/castor/tape/mediachanger/TestingAcsCmd.hpp"
+#include "test/unittest/castor/tape/rmc/MockAcs.hpp"
+#include "test/unittest/castor/tape/rmc/TestingAcsCmd.hpp"
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <sstream>
@@ -31,7 +31,7 @@
 
 namespace castor {
 namespace tape {
-namespace mediachanger {
+namespace rmc {
 
 class AcsCmdTest: public CppUnit::TestFixture {
 public:
@@ -48,6 +48,6 @@ public:
 
 CPPUNIT_TEST_SUITE_REGISTRATION(AcsCmdTest);
 
-} // namespace mediachanger
+} // namespace rmc
 } // namespace tape
 } // namespace castor

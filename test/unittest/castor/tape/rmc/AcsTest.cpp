@@ -22,13 +22,13 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "test/unittest/castor/tape/mediachanger/MockAcs.hpp"
+#include "test/unittest/castor/tape/rmc/MockAcs.hpp"
 
 #include <cppunit/extensions/HelperMacros.h>
 
 namespace castor {
 namespace tape {
-namespace mediachanger {
+namespace rmc {
 
 class AcsTest: public CppUnit::TestFixture {
 public:
@@ -246,6 +246,6 @@ public:
 
 CPPUNIT_TEST_SUITE_REGISTRATION(AcsTest);
 
-} // namespace mediachanger
+} // namespace rmc
 } // namespace tape
 } // namespace castor

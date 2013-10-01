@@ -1,5 +1,5 @@
 /******************************************************************************
- *           test/unittest/castor/tape/mediachanger/QueryVolumeAcsCmdTest.hpp
+ *           test/unittest/castor/tape/rmc/AcsQueryVolumeCmdTest.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "test/unittest/castor/tape/mediachanger/MockAcs.hpp"
-#include "test/unittest/castor/tape/mediachanger/TestingQueryVolumeAcsCmd.hpp"
+#include "test/unittest/castor/tape/rmc/MockAcs.hpp"
+#include "test/unittest/castor/tape/rmc/TestingAcsQueryVolumeCmd.hpp"
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <list>
@@ -33,9 +33,9 @@
 
 namespace castor {
 namespace tape {
-namespace mediachanger {
+namespace rmc {
 
-class QueryVolumeAcsCmdTest: public CppUnit::TestFixture {
+class AcsQueryVolumeCmdTest: public CppUnit::TestFixture {
 private:
 
   struct Argcv {
@@ -89,7 +89,7 @@ public:
     std::ostringstream outStream;
     std::ostringstream errStream;
     MockAcs acs;
-    TestingQueryVolumeAcsCmd cmd(inStream, outStream, errStream, acs);
+    TestingAcsQueryVolumeCmd cmd(inStream, outStream, errStream, acs);
     CPPUNIT_ASSERT_THROW_MESSAGE("Calling parseCmdLine with no arguments",
       cmd.parseCmdLine(args->argc, args->argv),
       castor::exception::MissingOperand);
@@ -108,8 +108,8 @@ public:
     std::ostringstream outStream;
     std::ostringstream errStream;
     MockAcs acs;
-    TestingQueryVolumeAcsCmd cmd(inStream, outStream, errStream, acs);
-    QueryVolumeAcsCmdLine cmdLine;
+    TestingAcsQueryVolumeCmd cmd(inStream, outStream, errStream, acs);
+    AcsQueryVolumeCmdLine cmdLine;
     CPPUNIT_ASSERT_NO_THROW_MESSAGE(
       "Calling parseCmdLine with valid volume-identfier",
       cmdLine = cmd.parseCmdLine(args->argc, args->argv));
@@ -138,8 +138,8 @@ public:
     std::ostringstream outStream;
     std::ostringstream errStream;
     MockAcs acs;
-    TestingQueryVolumeAcsCmd cmd(inStream, outStream, errStream, acs);
-    QueryVolumeAcsCmdLine cmdLine;
+    TestingAcsQueryVolumeCmd cmd(inStream, outStream, errStream, acs);
+    AcsQueryVolumeCmdLine cmdLine;
     CPPUNIT_ASSERT_NO_THROW(cmdLine = cmd.parseCmdLine(args->argc, args->argv));
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Testing help is set after command line is parsed",
@@ -159,8 +159,8 @@ public:
     std::ostringstream outStream;
     std::ostringstream errStream;
     MockAcs acs;
-    TestingQueryVolumeAcsCmd cmd(inStream, outStream, errStream, acs);
-    QueryVolumeAcsCmdLine cmdLine;
+    TestingAcsQueryVolumeCmd cmd(inStream, outStream, errStream, acs);
+    AcsQueryVolumeCmdLine cmdLine;
     CPPUNIT_ASSERT_NO_THROW(cmdLine = cmd.parseCmdLine(args->argc, args->argv));
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Testing help is set after command line is parsed",
@@ -181,8 +181,8 @@ public:
     std::ostringstream outStream;
     std::ostringstream errStream;
     MockAcs acs;
-    TestingQueryVolumeAcsCmd cmd(inStream, outStream, errStream, acs);
-    QueryVolumeAcsCmdLine cmdLine;
+    TestingAcsQueryVolumeCmd cmd(inStream, outStream, errStream, acs);
+    AcsQueryVolumeCmdLine cmdLine;
     CPPUNIT_ASSERT_NO_THROW(cmdLine = cmd.parseCmdLine(args->argc, args->argv));
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Testing debug is set after command line is parsed",
@@ -205,8 +205,8 @@ public:
     std::ostringstream outStream;
     std::ostringstream errStream;
     MockAcs acs;
-    TestingQueryVolumeAcsCmd cmd(inStream, outStream, errStream, acs);
-    QueryVolumeAcsCmdLine cmdLine;
+    TestingAcsQueryVolumeCmd cmd(inStream, outStream, errStream, acs);
+    AcsQueryVolumeCmdLine cmdLine;
     CPPUNIT_ASSERT_NO_THROW(cmdLine = cmd.parseCmdLine(args->argc, args->argv));
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Testing debug is set after command line is parsed",
@@ -228,7 +228,7 @@ public:
     std::ostringstream outStream;
     std::ostringstream errStream;
     MockAcs acs;
-    TestingQueryVolumeAcsCmd cmd(inStream, outStream, errStream, acs);
+    TestingAcsQueryVolumeCmd cmd(inStream, outStream, errStream, acs);
     CPPUNIT_ASSERT_THROW_MESSAGE("Testing volume identfier that is too long",
       cmd.parseCmdLine(args->argc, args->argv),
       castor::exception::InvalidArgument);
@@ -249,8 +249,8 @@ public:
     std::ostringstream outStream;
     std::ostringstream errStream;
     MockAcs acs;
-    TestingQueryVolumeAcsCmd cmd(inStream, outStream, errStream, acs);
-    QueryVolumeAcsCmdLine cmdLine;
+    TestingAcsQueryVolumeCmd cmd(inStream, outStream, errStream, acs);
+    AcsQueryVolumeCmdLine cmdLine;
     CPPUNIT_ASSERT_NO_THROW(cmdLine = cmd.parseCmdLine(args->argc, args->argv));
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Testing timeout is set after command line is parsed",
@@ -274,8 +274,8 @@ public:
     std::ostringstream outStream;
     std::ostringstream errStream;
     MockAcs acs;
-    TestingQueryVolumeAcsCmd cmd(inStream, outStream, errStream, acs);
-    QueryVolumeAcsCmdLine cmdLine;
+    TestingAcsQueryVolumeCmd cmd(inStream, outStream, errStream, acs);
+    AcsQueryVolumeCmdLine cmdLine;
     CPPUNIT_ASSERT_NO_THROW(cmdLine = cmd.parseCmdLine(args->argc, args->argv));
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Testing timeout is set after command line is parsed",
@@ -299,7 +299,7 @@ public:
     std::ostringstream outStream;
     std::ostringstream errStream;
     MockAcs acs;
-    TestingQueryVolumeAcsCmd cmd(inStream, outStream, errStream, acs);
+    TestingAcsQueryVolumeCmd cmd(inStream, outStream, errStream, acs);
     CPPUNIT_ASSERT_THROW_MESSAGE(
       "Testing valid volume identfier and invalid DRIVE",
       cmd.parseCmdLine(args->argc, args->argv),
@@ -321,8 +321,8 @@ public:
     std::ostringstream outStream;
     std::ostringstream errStream;
     MockAcs acs;
-    TestingQueryVolumeAcsCmd cmd(inStream, outStream, errStream, acs);
-    QueryVolumeAcsCmdLine cmdLine;
+    TestingAcsQueryVolumeCmd cmd(inStream, outStream, errStream, acs);
+    AcsQueryVolumeCmdLine cmdLine;
     CPPUNIT_ASSERT_NO_THROW(cmdLine = cmd.parseCmdLine(args->argc, args->argv));
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Testing query is set after command line is parsed",
@@ -346,8 +346,8 @@ public:
     std::ostringstream outStream;
     std::ostringstream errStream;
     MockAcs acs;
-    TestingQueryVolumeAcsCmd cmd(inStream, outStream, errStream, acs);
-    QueryVolumeAcsCmdLine cmdLine;
+    TestingAcsQueryVolumeCmd cmd(inStream, outStream, errStream, acs);
+    AcsQueryVolumeCmdLine cmdLine;
     CPPUNIT_ASSERT_NO_THROW(cmdLine = cmd.parseCmdLine(args->argc, args->argv));
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Testing query is set after command line is parsed",
@@ -371,14 +371,14 @@ public:
     std::ostringstream outStream;
     std::ostringstream errStream;
     MockAcs acs;
-    TestingQueryVolumeAcsCmd cmd(inStream, outStream, errStream, acs);
+    TestingAcsQueryVolumeCmd cmd(inStream, outStream, errStream, acs);
     CPPUNIT_ASSERT_THROW_MESSAGE(
       "Testing valid volume identfier and invalid DRIVE",
       cmd.parseCmdLine(args->argc, args->argv),
       castor::exception::InvalidArgument);
   }
 
-  CPPUNIT_TEST_SUITE(QueryVolumeAcsCmdTest);
+  CPPUNIT_TEST_SUITE(AcsQueryVolumeCmdTest);
   CPPUNIT_TEST(testParceCmdLineWithNoArgs);
   CPPUNIT_TEST(testParceCmdLineWithValidVolId);
   CPPUNIT_TEST(testParceCmdLineWithShortHelp);
@@ -395,8 +395,8 @@ public:
   CPPUNIT_TEST_SUITE_END();
 };
 
-CPPUNIT_TEST_SUITE_REGISTRATION(QueryVolumeAcsCmdTest);
+CPPUNIT_TEST_SUITE_REGISTRATION(AcsQueryVolumeCmdTest);
 
-} // namespace mediachanger
+} // namespace rmc
 } // namespace tape
 } // namespace castor

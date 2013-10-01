@@ -1,5 +1,5 @@
 /******************************************************************************
- *             test/unittest/castor/tape/dismountacs/MountAcsCmdLineTest.hpp
+ *             test/unittest/castor/tape/dismountacs/AcsMountCmdLineTest.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,15 +22,15 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/mediachanger/MountAcsCmdLine.hpp"
+#include "castor/tape/rmc/AcsMountCmdLine.hpp"
 
 #include <cppunit/extensions/HelperMacros.h>
 
 namespace castor {
 namespace tape {
-namespace mediachanger {
+namespace rmc {
 
-class MountAcsCmdLineTest: public CppUnit::TestFixture {
+class AcsMountCmdLineTest: public CppUnit::TestFixture {
 public:
 
   void setUp() {
@@ -40,7 +40,7 @@ public:
   }
 
   void testConstructor() {
-    const MountAcsCmdLine cmdLine;
+    const AcsMountCmdLine cmdLine;
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing debug flag is initialised to FALSE",
       false, cmdLine.debug);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing help flag is initialised to FALSE",
@@ -69,13 +69,13 @@ public:
       '\0', cmdLine.volId.external_label[0]);
   }
 
-  CPPUNIT_TEST_SUITE(MountAcsCmdLineTest);
+  CPPUNIT_TEST_SUITE(AcsMountCmdLineTest);
   CPPUNIT_TEST(testConstructor);
   CPPUNIT_TEST_SUITE_END();
 };
 
-CPPUNIT_TEST_SUITE_REGISTRATION(MountAcsCmdLineTest);
+CPPUNIT_TEST_SUITE_REGISTRATION(AcsMountCmdLineTest);
 
-} // namespace mediachanger
+} // namespace rmc
 } // namespace tape
 } // namespace castor

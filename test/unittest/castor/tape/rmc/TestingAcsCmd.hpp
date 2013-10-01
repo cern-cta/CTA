@@ -1,5 +1,5 @@
 /******************************************************************************
- *    test/unittest/castor/tape/mediachanger/TestingAcsCmd.hpp
+ *    test/unittest/castor/tape/rmc/TestingAcsCmd.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,14 +22,14 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_UNITTEST_CASTOR_TAPE_MEDIACHANGER_TESTINGMOUNTACSCMD_HPP
-#define TEST_UNITTEST_CASTOR_TAPE_MEDIACHANGER_TESTINGMOUNTACSCMD_HPP 1
+#ifndef TEST_UNITTEST_CASTOR_TAPE_RMC_TESTINGACSMOUNTCMD_HPP
+#define TEST_UNITTEST_CASTOR_TAPE_RMC_TESTINGACSMOUNTCMD_HPP 1
 
-#include "castor/tape/mediachanger/AcsCmd.hpp"
+#include "castor/tape/rmc/AcsCmd.hpp"
 
 namespace castor {
 namespace tape {
-namespace mediachanger {
+namespace rmc {
 
 class TestingAcsCmd: public AcsCmd {
 public:
@@ -52,8 +52,8 @@ public:
 
 }; // class TestingAcsCmd
 
-} // namespace mediachanger
+} // namespace rmc
 } // namespace tape
 } // namespace castor
 
-#endif // TEST_UNITTEST_CASTOR_TAPE_MEDIACHANGER_TESTINGMOUNTACSCMD_HPP
+#endif // TEST_UNITTEST_CASTOR_TAPE_RMC_TESTINGACSMOUNTCMD_HPP

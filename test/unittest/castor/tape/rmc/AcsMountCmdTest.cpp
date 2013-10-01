@@ -1,5 +1,5 @@
 /******************************************************************************
- *             test/unittest/castor/tape/mediachanger/MountAcsCmdTest.hpp
+ *             test/unittest/castor/tape/rmc/AcsMountCmdTest.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "test/unittest/castor/tape/mediachanger/MockAcs.hpp"
-#include "test/unittest/castor/tape/mediachanger/TestingMountAcsCmd.hpp"
+#include "test/unittest/castor/tape/rmc/MockAcs.hpp"
+#include "test/unittest/castor/tape/rmc/TestingAcsMountCmd.hpp"
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <list>
@@ -33,9 +33,9 @@
 
 namespace castor {
 namespace tape {
-namespace mediachanger {
+namespace rmc {
 
-class MountAcsCmdTest: public CppUnit::TestFixture {
+class AcsMountCmdTest: public CppUnit::TestFixture {
 private:
 
   struct Argcv {
@@ -89,7 +89,7 @@ public:
     std::ostringstream outStream;
     std::ostringstream errStream;
     MockAcs acs;
-    TestingMountAcsCmd cmd(inStream, outStream, errStream, acs);
+    TestingAcsMountCmd cmd(inStream, outStream, errStream, acs);
     CPPUNIT_ASSERT_THROW_MESSAGE("Calling parseCmdLine with no arguments",
       cmd.parseCmdLine(args->argc, args->argv),
       castor::exception::MissingOperand);
@@ -108,7 +108,7 @@ public:
     std::ostringstream outStream;
     std::ostringstream errStream;
     MockAcs acs;
-    TestingMountAcsCmd cmd(inStream, outStream, errStream, acs);
+    TestingAcsMountCmd cmd(inStream, outStream, errStream, acs);
     CPPUNIT_ASSERT_THROW_MESSAGE(
       "Calling parseCmdLine with only volume identfier",
       cmd.parseCmdLine(args->argc, args->argv),
@@ -130,8 +130,8 @@ public:
     std::ostringstream outStream;
     std::ostringstream errStream;
     MockAcs acs;
-    TestingMountAcsCmd cmd(inStream, outStream, errStream, acs);
-    MountAcsCmdLine cmdLine;
+    TestingAcsMountCmd cmd(inStream, outStream, errStream, acs);
+    AcsMountCmdLine cmdLine;
     CPPUNIT_ASSERT_NO_THROW(cmdLine = cmd.parseCmdLine(args->argc, args->argv));
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Testing readOnly is set after command line is parsed",
@@ -163,8 +163,8 @@ public:
     std::ostringstream outStream;
     std::ostringstream errStream;
     MockAcs acs;
-    TestingMountAcsCmd cmd(inStream, outStream, errStream, acs);
-    MountAcsCmdLine cmdLine;
+    TestingAcsMountCmd cmd(inStream, outStream, errStream, acs);
+    AcsMountCmdLine cmdLine;
     CPPUNIT_ASSERT_NO_THROW(cmdLine = cmd.parseCmdLine(args->argc, args->argv));
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Testing readOnly is set after command line is parsed",
@@ -194,8 +194,8 @@ public:
     std::ostringstream outStream;
     std::ostringstream errStream;
     MockAcs acs;
-    TestingMountAcsCmd cmd(inStream, outStream, errStream, acs);
-    MountAcsCmdLine cmdLine;
+    TestingAcsMountCmd cmd(inStream, outStream, errStream, acs);
+    AcsMountCmdLine cmdLine;
     CPPUNIT_ASSERT_NO_THROW(cmdLine = cmd.parseCmdLine(args->argc, args->argv));
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Testing help is set after command line is parsed",
@@ -215,8 +215,8 @@ public:
     std::ostringstream outStream;
     std::ostringstream errStream;
     MockAcs acs;
-    TestingMountAcsCmd cmd(inStream, outStream, errStream, acs);
-    MountAcsCmdLine cmdLine;
+    TestingAcsMountCmd cmd(inStream, outStream, errStream, acs);
+    AcsMountCmdLine cmdLine;
     CPPUNIT_ASSERT_NO_THROW(cmdLine = cmd.parseCmdLine(args->argc, args->argv));
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Testing help is set after command line is parsed",
@@ -237,8 +237,8 @@ public:
     std::ostringstream outStream;
     std::ostringstream errStream;
     MockAcs acs;
-    TestingMountAcsCmd cmd(inStream, outStream, errStream, acs);
-    MountAcsCmdLine cmdLine;
+    TestingAcsMountCmd cmd(inStream, outStream, errStream, acs);
+    AcsMountCmdLine cmdLine;
     CPPUNIT_ASSERT_NO_THROW_MESSAGE("Testing valid volume identfier and drive",
       cmdLine = cmd.parseCmdLine(args->argc, args->argv));
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing debug is not set",
@@ -276,8 +276,8 @@ public:
     std::ostringstream outStream;
     std::ostringstream errStream;
     MockAcs acs;
-    TestingMountAcsCmd cmd(inStream, outStream, errStream, acs);
-    MountAcsCmdLine cmdLine;
+    TestingAcsMountCmd cmd(inStream, outStream, errStream, acs);
+    AcsMountCmdLine cmdLine;
     CPPUNIT_ASSERT_NO_THROW(cmdLine = cmd.parseCmdLine(args->argc, args->argv));
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Testing debug is set after command line is parsed",
@@ -309,8 +309,8 @@ public:
     std::ostringstream outStream;
     std::ostringstream errStream;
     MockAcs acs;
-    TestingMountAcsCmd cmd(inStream, outStream, errStream, acs);
-    MountAcsCmdLine cmdLine;
+    TestingAcsMountCmd cmd(inStream, outStream, errStream, acs);
+    AcsMountCmdLine cmdLine;
     CPPUNIT_ASSERT_NO_THROW(cmdLine = cmd.parseCmdLine(args->argc, args->argv));
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Testing debug is set after command line is parsed",
@@ -341,7 +341,7 @@ public:
     std::ostringstream outStream;
     std::ostringstream errStream;
     MockAcs acs;
-    TestingMountAcsCmd cmd(inStream, outStream, errStream, acs);
+    TestingAcsMountCmd cmd(inStream, outStream, errStream, acs);
     CPPUNIT_ASSERT_THROW_MESSAGE("Testing volume identfier that is too long",
       cmd.parseCmdLine(args->argc, args->argv),
       castor::exception::InvalidArgument);
@@ -361,7 +361,7 @@ public:
     std::ostringstream outStream;
     std::ostringstream errStream;
     MockAcs acs;
-    TestingMountAcsCmd cmd(inStream, outStream, errStream, acs);
+    TestingAcsMountCmd cmd(inStream, outStream, errStream, acs);
     CPPUNIT_ASSERT_THROW_MESSAGE(
       "Testing valid volume identfier and invalid DRIVE",
       cmd.parseCmdLine(args->argc, args->argv),
@@ -384,8 +384,8 @@ public:
     std::ostringstream outStream;
     std::ostringstream errStream;
     MockAcs acs;
-    TestingMountAcsCmd cmd(inStream, outStream, errStream, acs);
-    MountAcsCmdLine cmdLine;
+    TestingAcsMountCmd cmd(inStream, outStream, errStream, acs);
+    AcsMountCmdLine cmdLine;
     CPPUNIT_ASSERT_NO_THROW(cmdLine = cmd.parseCmdLine(args->argc, args->argv));
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Testing timeout is set after command line is parsed",
@@ -418,8 +418,8 @@ public:
     std::ostringstream outStream;
     std::ostringstream errStream;
     MockAcs acs;
-    TestingMountAcsCmd cmd(inStream, outStream, errStream, acs);
-    MountAcsCmdLine cmdLine;
+    TestingAcsMountCmd cmd(inStream, outStream, errStream, acs);
+    AcsMountCmdLine cmdLine;
     CPPUNIT_ASSERT_NO_THROW(cmdLine = cmd.parseCmdLine(args->argc, args->argv));
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Testing timeout is set after command line is parsed",
@@ -452,7 +452,7 @@ public:
     std::ostringstream outStream;
     std::ostringstream errStream;
     MockAcs acs;
-    TestingMountAcsCmd cmd(inStream, outStream, errStream, acs);
+    TestingAcsMountCmd cmd(inStream, outStream, errStream, acs);
     CPPUNIT_ASSERT_THROW_MESSAGE(
       "Testing valid volume identfier and invalid DRIVE",
       cmd.parseCmdLine(args->argc, args->argv),
@@ -475,8 +475,8 @@ public:
     std::ostringstream outStream;
     std::ostringstream errStream;
     MockAcs acs;
-    TestingMountAcsCmd cmd(inStream, outStream, errStream, acs);
-    MountAcsCmdLine cmdLine;
+    TestingAcsMountCmd cmd(inStream, outStream, errStream, acs);
+    AcsMountCmdLine cmdLine;
     CPPUNIT_ASSERT_NO_THROW(cmdLine = cmd.parseCmdLine(args->argc, args->argv));
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Testing query is set after command line is parsed",
@@ -509,8 +509,8 @@ public:
     std::ostringstream outStream;
     std::ostringstream errStream;
     MockAcs acs;
-    TestingMountAcsCmd cmd(inStream, outStream, errStream, acs);
-    MountAcsCmdLine cmdLine;
+    TestingAcsMountCmd cmd(inStream, outStream, errStream, acs);
+    AcsMountCmdLine cmdLine;
     CPPUNIT_ASSERT_NO_THROW(cmdLine = cmd.parseCmdLine(args->argc, args->argv));
     CPPUNIT_ASSERT_EQUAL_MESSAGE(
       "Testing query is set after command line is parsed",
@@ -543,14 +543,14 @@ public:
     std::ostringstream outStream;
     std::ostringstream errStream;
     MockAcs acs;
-    TestingMountAcsCmd cmd(inStream, outStream, errStream, acs);
+    TestingAcsMountCmd cmd(inStream, outStream, errStream, acs);
     CPPUNIT_ASSERT_THROW_MESSAGE(
       "Testing valid volume identfier and invalid DRIVE",
       cmd.parseCmdLine(args->argc, args->argv),
       castor::exception::InvalidArgument);
   }
 
-  CPPUNIT_TEST_SUITE(MountAcsCmdTest);
+  CPPUNIT_TEST_SUITE(AcsMountCmdTest);
   CPPUNIT_TEST(testParceCmdLineWithNoArgs);
   CPPUNIT_TEST(testParceCmdLineWithOnlyVolId);
   CPPUNIT_TEST(testParceCmdLineWithShortReadOnly);
@@ -571,8 +571,8 @@ public:
   CPPUNIT_TEST_SUITE_END();
 };
 
-CPPUNIT_TEST_SUITE_REGISTRATION(MountAcsCmdTest);
+CPPUNIT_TEST_SUITE_REGISTRATION(AcsMountCmdTest);
 
-} // namespace mediachanger
+} // namespace rmc
 } // namespace tape
 } // namespace castor

@@ -1,5 +1,5 @@
 /******************************************************************************
- *    test/unittest/castor/tape/mediachanger/TestingMountAcsCmd.hpp
+ *    test/unittest/castor/tape/rmc/TestingAcsMountCmd.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,16 +22,16 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_UNITTEST_CASTOR_TAPE_MEDIACHANGER_TESTINGMOUNTACSCMD_HPP
-#define TEST_UNITTEST_CASTOR_TAPE_MEDIACHANGER_TESTINGMOUNTACSCMD_HPP 1
+#ifndef TEST_UNITTEST_CASTOR_TAPE_RMC_TESTINGACSMOUNTCMD_HPP
+#define TEST_UNITTEST_CASTOR_TAPE_RMC_TESTINGACSMOUNTCMD_HPP 1
 
-#include "castor/tape/mediachanger/MountAcsCmd.hpp"
+#include "castor/tape/rmc/AcsMountCmd.hpp"
 
 namespace castor {
 namespace tape {
-namespace mediachanger {
+namespace rmc {
 
-class TestingMountAcsCmd: public MountAcsCmd {
+class TestingAcsMountCmd: public AcsMountCmd {
 public:
   /**
    * Constructor.
@@ -41,17 +41,17 @@ public:
    * @param errStream Standard error stream.
    * @param acs Wrapper around the ACSLS C-API.
    */
-  TestingMountAcsCmd(std::istream &inStream, std::ostream &outStream,
+  TestingAcsMountCmd(std::istream &inStream, std::ostream &outStream,
     std::ostream &errStream, Acs &acs) throw():
-    MountAcsCmd(inStream, outStream, errStream, acs) {
+    AcsMountCmd(inStream, outStream, errStream, acs) {
   }
 
-  using MountAcsCmd::parseCmdLine;
+  using AcsMountCmd::parseCmdLine;
 
-}; // class TestingMountAcsCmd
+}; // class TestingAcsMountCmd
 
-} // namespace mediachanger
+} // namespace rmc
 } // namespace tape
 } // namespace castor
 
-#endif // TEST_UNITTEST_CASTOR_TAPE_MEDIACHANGER_TESTINGMOUNTACSCMD_HPP
+#endif // TEST_UNITTEST_CASTOR_TAPE_RMC_TESTINGACSMOUNTCMD_HPP
