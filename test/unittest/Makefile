@@ -10,10 +10,8 @@ MACPORTS_CPPUNIT_INCLUDE_OP=
 MACPORTS_CPPUNIT_LIB_OP=
 endif
 
-CDK_OPS=-DLINUX -I/usr/include/CDK
-CDK_LIB_OPS = -L/usr/lib64/CDK -lapi -lcl -lipc -lutl
 ROOT_DIR=../..
-INCLUDE_OPS=-I$(ROOT_DIR) -I$(ROOT_DIR)/h $(MACPORTS_CPPUNIT_INCLUDE_OP) $(CDK_OPS)
+INCLUDE_OPS=-I$(ROOT_DIR) -I$(ROOT_DIR)/h $(MACPORTS_CPPUNIT_INCLUDE_OP)
 LIB_DIR_OPS=$(MACPORTS_CPPUNIT_LIB_OP)
 EXECUTABLES=rununittests
 CSEC_MECHLIST=KRB5 GSI ID
@@ -69,26 +67,20 @@ rununittests: \
   dlf_Dlf.o \
   dlf_Param.o \
   dlf_dlf_lib.o \
-  exception_Communication.o \
-  exception_DismountFailed.o \
   exception_Exception.o \
-  exception_Internal.o \
   exception_InvalidArgument.o \
+  exception_Communication.o \
+  exception_Internal.o \
   exception_InvalidConfigEntry.o \
   exception_InvalidConfiguration.o \
-  exception_Mismatch.o \
-  exception_MissingOperand.o \
-  exception_MountFailed.o \
-  exception_NoEntry.o \
-  exception_NoPortInRange.o \
-  exception_NoValue.o \
-  exception_OutOfMemory.o \
-  exception_PermissionDenied.o \
-  exception_QueryVolumeFailed.o \
-  exception_RequestFailed.o \
-  exception_TapeNetAcceptInterrupted.o \
   exception_TimeOut.o \
   exception_TooBig.o \
+  exception_NoPortInRange.o \
+  exception_NoValue.o \
+  exception_TapeNetAcceptInterrupted.o \
+  exception_PermissionDenied.o \
+  exception_OutOfMemory.o \
+  exception_NoEntry.o \
   io_AbstractSocket.o \
   io_AbstractTCPSocket.o \
   io_AuthClientSocket.o \
@@ -126,15 +118,6 @@ rununittests: \
   metrics_InternalCounter.o \
   metrics_MetricsCollector.o \
   metrics_UpdateThread.o \
-  mediachanger_Acs.o \
-  mediachanger_AcsCmd.o \
-  mediachanger_DebugBuf.o \
-  mediachanger_DismountAcsCmdLine.o \
-  mediachanger_DismountAcsCmd.o \
-  mediachanger_MountAcsCmdLine.o \
-  mediachanger_MountAcsCmd.o \
-  mediachanger_QueryVolumeAcsCmdLine.o \
-  mediachanger_QueryVolumeAcsCmd.o \
   ns_Cns_selectsrvr.o \
   ns_Cns_opendir.o \
   ns_Cns_closedir.o \
@@ -327,21 +310,13 @@ rununittests: \
   tapegateway_VolumeRequest.o \
   test_exception.o \
   unittest.o \
-  unittest_AcsCmdTest.o \
-  unittest_AcsTest.o \
   unittest_CvtdenTest.o \
   unittest_InitlabelTest.o \
   unittest_Ctape_reserveTest.o \
-  unittest_DismountAcsCmdLineTest.o \
-  unittest_DismountAcsCmdTest.o \
   unittest_RecvTapeBridgeFlushedToTapeAckTest.o \
   unittest_MarshallTapeBridgeFlushedToTapeTest.o \
   unittest_SendTapeBridgeFlushedToTapeTest.o \
   unittest_MarshallTapeBridgeClientInfo2Test.o \
-  unittest_MountAcsCmdLineTest.o \
-  unittest_MountAcsCmdTest.o \
-  unittest_QueryVolumeAcsCmdLineTest.o \
-  unittest_QueryVolumeAcsCmdTest.o \
   unittest_NetTest.o \
   unittest_FileToRecallTest.o \
   unittest_MigrationReportConnectionTest.o \
@@ -379,7 +354,7 @@ rununittests: \
   vmgr_vmgr_querypool.o \
   vmgr_send2vmgr.o \
   vmgr_vmgr_querytape_byte_u64.o
-	g++ $(COMMON_OPS) $(LIB_DIR_OPS) $(CDK_LIB_OPS) -lpthread -ldl $(UUID_LIB) -lcppunit -lz -o $@ $^
+	g++ $(COMMON_OPS) $(LIB_DIR_OPS) -lpthread -ldl $(UUID_LIB) -lcppunit -lz -o $@ $^
 
 runUnitTestsMain.o: runUnitTestsMain.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
@@ -513,19 +488,7 @@ dlf_Param.o: $(ROOT_DIR)/castor/dlf/Param.cpp
 dlf_dlf_lib.o: $(ROOT_DIR)/dlf/dlf_lib.c
 	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
 
-exception_DismountFailed.o: $(ROOT_DIR)/castor/exception/DismountFailed.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
 exception_Exception.o: $(ROOT_DIR)/castor/exception/Exception.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-exception_Mismatch.o: $(ROOT_DIR)/castor/exception/Mismatch.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-exception_MissingOperand.o: $(ROOT_DIR)/castor/exception/MissingOperand.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-exception_MountFailed.o: $(ROOT_DIR)/castor/exception/MountFailed.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 exception_NoEntry.o: $(ROOT_DIR)/castor/exception/NoEntry.cpp
@@ -546,12 +509,6 @@ exception_InvalidConfigEntry.o: \
 
 exception_InvalidConfiguration.o: \
   $(ROOT_DIR)/castor/exception/InvalidConfiguration.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-exception_QueryVolumeFailed.o: $(ROOT_DIR)/castor/exception/QueryVolumeFailed.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-exception_RequestFailed.o: $(ROOT_DIR)/castor/exception/RequestFailed.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 exception_TimeOut.o: $(ROOT_DIR)/castor/exception/TimeOut.cpp
@@ -714,33 +671,6 @@ metrics_MetricsCollector.o: \
 
 metrics_UpdateThread.o: \
   $(ROOT_DIR)/castor/metrics/UpdateThread.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-mediachanger_Acs.o: $(ROOT_DIR)/castor/tape/mediachanger/Acs.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-mediachanger_AcsCmd.o: $(ROOT_DIR)/castor/tape/mediachanger/AcsCmd.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-mediachanger_DebugBuf.o: $(ROOT_DIR)/castor/tape/mediachanger/DebugBuf.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-mediachanger_DismountAcsCmdLine.o: $(ROOT_DIR)/castor/tape/mediachanger/DismountAcsCmdLine.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-mediachanger_DismountAcsCmd.o: $(ROOT_DIR)/castor/tape/mediachanger/DismountAcsCmd.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-mediachanger_MountAcsCmdLine.o: $(ROOT_DIR)/castor/tape/mediachanger/MountAcsCmdLine.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-mediachanger_MountAcsCmd.o: $(ROOT_DIR)/castor/tape/mediachanger/MountAcsCmd.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-mediachanger_QueryVolumeAcsCmdLine.o: $(ROOT_DIR)/castor/tape/mediachanger/QueryVolumeAcsCmdLine.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-mediachanger_QueryVolumeAcsCmd.o: $(ROOT_DIR)/castor/tape/mediachanger/QueryVolumeAcsCmd.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 ns_Cns_selectsrvr.o: $(ROOT_DIR)/ns/Cns_selectsrvr.c
@@ -1555,6 +1485,9 @@ unittest_SendTapeBridgeFlushedToTapeTest.o: $(ROOT_DIR)/test/unittest/tapebridge
 unittest_MarshallTapeBridgeClientInfo2Test.o: $(ROOT_DIR)/test/unittest/tapebridge/MarshallTapeBridgeClientInfo2Test.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
  
+unittest_NetTest.o: $(ROOT_DIR)/test/unittest/castor/tape/net/NetTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+ 
 unittest_FileToRecallTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/FileToRecallTest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
  
@@ -1565,33 +1498,6 @@ unittest_SessionErrorTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/Se
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
  
 unittest_ClientAddressLocalTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/ClientAddressLocalTest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
- 
-unittest_AcsCmdTest.o: $(ROOT_DIR)/test/unittest/castor/tape/mediachanger/AcsCmdTest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
- 
-unittest_AcsTest.o: $(ROOT_DIR)/test/unittest/castor/tape/mediachanger/AcsTest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-unittest_DismountAcsCmdLineTest.o: $(ROOT_DIR)/test/unittest/castor/tape/mediachanger/DismountAcsCmdLineTest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-unittest_DismountAcsCmdTest.o: $(ROOT_DIR)/test/unittest/castor/tape/mediachanger/DismountAcsCmdTest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-unittest_NetTest.o: $(ROOT_DIR)/test/unittest/castor/tape/net/NetTest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
- 
-unittest_MountAcsCmdLineTest.o: $(ROOT_DIR)/test/unittest/castor/tape/mediachanger/MountAcsCmdLineTest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
- 
-unittest_MountAcsCmdTest.o: $(ROOT_DIR)/test/unittest/castor/tape/mediachanger/MountAcsCmdTest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
- 
-unittest_QueryVolumeAcsCmdLineTest.o: $(ROOT_DIR)/test/unittest/castor/tape/mediachanger/QueryVolumeAcsCmdLineTest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
- 
-unittest_QueryVolumeAcsCmdTest.o: $(ROOT_DIR)/test/unittest/castor/tape/mediachanger/QueryVolumeAcsCmdTest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
  
 unittest_FileToMigrateTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/FileToMigrateTest.cpp

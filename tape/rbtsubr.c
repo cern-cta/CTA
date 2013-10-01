@@ -24,6 +24,7 @@
 #include <arpa/inet.h>          /* arpa internet routines               */
 #include "h/net.h"
 #include "h/rmc_api.h"
+#include "h/smc.h"
 #include "h/Ctape.h"
 #include "h/Ctape_api.h"
 #include "h/tplogger_api.h"

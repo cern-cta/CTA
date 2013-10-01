@@ -140,20 +140,19 @@ static void find_sgpath(char *sgpath, int maj, int min) {
 }
 
 
-int send_scsi_cmd (
-	const int tapefd,
-	const char *const path,
-	const int do_not_open,
-	const unsigned char *const cdb,
-	const int cdblen,
-	unsigned char *const buffer,
-	const int buflen,
-	char *const sense,
-	const int senselen,
-	const int timeout,   /* in milliseconds */
-	const int flags,
-	int *const nb_sense_ret,
-	char **const msgaddr)
+int send_scsi_cmd (int tapefd,
+                   char *path,
+                   int do_not_open,
+                   unsigned char *cdb,
+                   int cdblen,
+                   unsigned char *buffer,
+                   int buflen,
+                   char *sense,
+                   int senselen,
+                   int timeout,   /* in milliseconds */
+                   int flags,
+                   int *nb_sense_ret,
+                   char **msgaddr)
 {
 	int fd;
 	FILE *fopen();

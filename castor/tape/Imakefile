@@ -29,4 +29,3 @@ include LOCAL_PATH/utils/Makefile
 include LOCAL_PATH/legacymsg/Makefile
 include LOCAL_PATH/net/Makefile
 include LOCAL_PATH/tapebridge/Makefile
-COMM include LOCAL_PATH/rmc/Makefile

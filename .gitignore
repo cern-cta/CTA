@@ -34,9 +34,6 @@ castor/scheduler/Makefile
 castor/stager/daemon/stagerd
 castor/tape/mighunter/mighunterd
 castor/tape/rechandler/rechandlerd
-castor/tape/rmc/castor-tape-acs-dismount
-castor/tape/rmc/castor-tape-acs-mount
-castor/tape/rmc/castor-tape-acs-queryvolume
 castor/tape/tapebridge/tapebridged
 castor/tape/tapegateway/tapegatewayd
 castor/tape/tpcp/dumptp

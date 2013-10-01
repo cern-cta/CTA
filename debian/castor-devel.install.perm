@@ -54,6 +54,9 @@
 %attr(0644,root,root) usr/include/shift/rfio_constants.h
 %attr(0644,root,root) usr/include/shift/rfio_errno.h
 %attr(0644,root,root) usr/include/shift/rfio_lcastorfdt.h
+%attr(0644,root,root) usr/include/shift/rmc.h
+%attr(0644,root,root) usr/include/shift/rmc_api.h
+%attr(0644,root,root) usr/include/shift/rmc_constants.h
 %attr(0644,root,root) usr/include/shift/rtcp.h
 %attr(0644,root,root) usr/include/shift/rtcp_api.h
 %attr(0644,root,root) usr/include/shift/rtcp_constants.h
@@ -61,6 +64,7 @@
 %attr(0644,root,root) usr/include/shift/sacct.h
 %attr(0644,root,root) usr/include/shift/scsictl.h
 %attr(0644,root,root) usr/include/shift/serrno.h
+%attr(0644,root,root) usr/include/shift/smc.h
 %attr(0644,root,root) usr/include/shift/stage_api.h
 %attr(0644,root,root) usr/include/shift/stage_constants.h
 %attr(0644,root,root) usr/include/shift/stage_limits.h

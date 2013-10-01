@@ -8,8 +8,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <sys/types.h>
-
-#include "h/rmc_constants.h"
+#include "rmc.h"
 
 static char *errbufp = NULL;
 static int errbuflen;
@@ -29,7 +28,7 @@ rmc_seterrbuf(char *buffer,
 int rmc_errmsg(char *func, char *msg, ...)
 {
 	va_list args;
-	char prtbuf[RMC_PRTBUFSZ];
+	char prtbuf[PRTBUFSZ];
 	int save_errno;
 
 	save_errno = errno;

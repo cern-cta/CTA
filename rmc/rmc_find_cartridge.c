@@ -9,10 +9,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <netinet/in.h>
-#include "h/marshall.h"
-#include "h/rmc_api.h"
-#include "h/rmc_constants.h"
-#include "h/serrno.h"
+#include "marshall.h"
+#include "rmc.h"
+#include "rmc_api.h"
+#include "serrno.h"
 int rmc_find_cartridge(
 	const char *const server,
 	const char *const pattern,
@@ -28,9 +28,9 @@ int rmc_find_cartridge(
 	int msglen;
 	char *q;
 	char *rbp;
-	char repbuf[RMC_REPBUFSZ];
+	char repbuf[REPBUFSZ];
 	char *sbp;
-	char sendbuf[RMC_REQBUFSZ];
+	char sendbuf[REQBUFSZ];
 	uid_t uid;
 
 	uid = getuid();
@@ -60,7 +60,7 @@ int rmc_find_cartridge(
 
         while ((c = send2rmc (server, sendbuf, msglen, repbuf, sizeof(repbuf))) &&
             serrno == ERMCNACT)
-                sleep (RMC_RETRYI);
+                sleep (RETRYI);
 	if (c == 0) {
 		rbp = repbuf;
 		unmarshall_LONG (rbp, c);
