@@ -23,6 +23,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>          /* arpa internet routines               */
 #include "h/net.h"
+#include "h/rbtsubr_constants.h"
 #include "h/rmc_api.h"
 #include "h/Ctape.h"
 #include "h/Ctape_api.h"

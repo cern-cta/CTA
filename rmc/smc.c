@@ -10,6 +10,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "h/Ctape.h"
+#include "h/rbtsubr_constants.h"
 #include "h/rmc_api.h"
 #include "h/serrno.h"
 #include "h/smc_constants.h"
