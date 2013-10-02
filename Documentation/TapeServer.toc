@@ -1,0 +1,45 @@
+\contentsline {chapter}{Preface}{4}{chapter*.2}
+\contentsline {chapter}{\numberline {1}Developer's manual}{5}{chapter.1}
+\contentsline {section}{\numberline {1.1}Requirements}{5}{section.1.1}
+\contentsline {subsection}{\numberline {1.1.1}Targeted environment}{5}{subsection.1.1.1}
+\contentsline {subsection}{\numberline {1.1.2}Pre-existing requirements}{5}{subsection.1.1.2}
+\contentsline {subsection}{\numberline {1.1.3}Collaboration diagrams and sequences}{5}{subsection.1.1.3}
+\contentsline {subsection}{\numberline {1.1.4}Extra requirements}{6}{subsection.1.1.4}
+\contentsline {section}{\numberline {1.2}Tape server architecture}{6}{section.1.2}
+\contentsline {section}{\numberline {1.3}Reference documentations}{7}{section.1.3}
+\contentsline {subsection}{\numberline {1.3.1}SCSI specifications}{7}{subsection.1.3.1}
+\contentsline {subsubsection}{\numberline {1.3.1.1}Manufacturer's specificities}{7}{subsubsection.1.3.1.1}
+\contentsline {subsection}{\numberline {1.3.2}SCSI support in Linux}{7}{subsection.1.3.2}
+\contentsline {subsection}{\numberline {1.3.3}Unsorted CAStor docs}{8}{subsection.1.3.3}
+\contentsline {subsection}{\numberline {1.3.4}SCSI tape support in Linux (st driver)}{8}{subsection.1.3.4}
+\contentsline {section}{\numberline {1.4}Tools used during development}{9}{section.1.4}
+\contentsline {subsection}{\numberline {1.4.1}Required tools for build}{9}{subsection.1.4.1}
+\contentsline {subsection}{\numberline {1.4.2}Tools used during development}{9}{subsection.1.4.2}
+\contentsline {subsection}{\numberline {1.4.3}Code coverage using lcov}{9}{subsection.1.4.3}
+\contentsline {section}{\numberline {1.5}Software layout}{10}{section.1.5}
+\contentsline {subsection}{\numberline {1.5.1}SCSI structures, constants and endianness}{10}{subsection.1.5.1}
+\contentsline {subsection}{\numberline {1.5.2}Exceptions hierarchy and error handling strategy}{11}{subsection.1.5.2}
+\contentsline {subsection}{\numberline {1.5.3}Non-fatal warnings strategy}{11}{subsection.1.5.3}
+\contentsline {subsection}{\numberline {1.5.4}The Tape::Drive object}{13}{subsection.1.5.4}
+\contentsline {subsection}{\numberline {1.5.5}The Tape::File class}{14}{subsection.1.5.5}
+\contentsline {subsubsection}{\numberline {1.5.5.1}CAStor file format}{14}{subsubsection.1.5.5.1}
+\contentsline {subsubsection}{\numberline {1.5.5.2}File block management}{19}{subsubsection.1.5.5.2}
+\contentsline {subsubsection}{\numberline {1.5.5.3}Responsibilities of the class}{19}{subsubsection.1.5.5.3}
+\contentsline {subsubsection}{\numberline {1.5.5.4}Checksums}{19}{subsubsection.1.5.5.4}
+\contentsline {subsubsection}{\numberline {1.5.5.5}Tape::File API}{20}{subsubsection.1.5.5.5}
+\contentsline {subsection}{\numberline {1.5.6}Memory chunk manager}{20}{subsection.1.5.6}
+\contentsline {subsection}{\numberline {1.5.7}FIFOs}{20}{subsection.1.5.7}
+\contentsline {subsection}{\numberline {1.5.8}Disk client library}{20}{subsection.1.5.8}
+\contentsline {subsection}{\numberline {1.5.9}VDQM client library}{20}{subsection.1.5.9}
+\contentsline {subsection}{\numberline {1.5.10}VMGR client library}{20}{subsection.1.5.10}
+\contentsline {subsection}{\numberline {1.5.11}Stager/TapeGateway client library}{20}{subsection.1.5.11}
+\contentsline {subsection}{\numberline {1.5.12}Logging system client library}{20}{subsection.1.5.12}
+\contentsline {subsection}{\numberline {1.5.13}Application architecture}{20}{subsection.1.5.13}
+\contentsline {subsubsection}{\numberline {1.5.13.1}Session spawner}{20}{subsubsection.1.5.13.1}
+\contentsline {subsubsection}{\numberline {1.5.13.2}Session process}{20}{subsubsection.1.5.13.2}
+\contentsline {subsubsection}{\numberline {1.5.13.3}Tape read thread}{20}{subsubsection.1.5.13.3}
+\contentsline {subsubsection}{\numberline {1.5.13.4}Tape write thread}{20}{subsubsection.1.5.13.4}
+\contentsline {subsubsection}{\numberline {1.5.13.5}Disk read thread}{20}{subsubsection.1.5.13.5}
+\contentsline {subsubsection}{\numberline {1.5.13.6}Disk write thread}{20}{subsubsection.1.5.13.6}
+\contentsline {chapter}{\numberline {2}Administrator's manual}{21}{chapter.2}
+\contentsline {section}{\numberline {2.1}Pending questions}{21}{section.2.1}

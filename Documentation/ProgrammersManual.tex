@@ -28,20 +28,101 @@ plan is being laid out.
 
 CERN SLC5 and SLC6, 64bits. Although it should compile in theory, the 32 bits version is not tested. The unit test purposely returns an error when run on non-64 bits architecture.
 
-\subsection{User requirements}
+\subsection{Pre-existing requirements}
 
 The new tape server (software) will have to replace the software running on a tape server
-(computer). Specifically, it will have to interface with VDQM, VMGR and tape gateway.
+(computer). A previous analysis describes the current software stack of the tape servers
+	\footnote{ \href{http://svn.cern.ch/guest/CASTOR/CASTOR2/trunk/castor/tape/doc/TapeBridge.pdf}
+	{http://svn.cern.ch/guest/CASTOR/CASTOR2/trunk/castor/tape/doc/TapeBridge.pdf}}.
+This new tape server will retain the same external interfaces as the old tape server, replacing 
+the stack of daemons from the tape bridge down to the tape drive hardware.
 
+The tape server will interface with the Volume and Drive Queue Manager daemon (vdqmd), the Volume
+manager daemon (vmgrd), the Castor User Privilege Validation daemon (cupvd) and tape gateway 
+daemon (tapegatewayd) for data transfer management and access control.
+
+It will connect to the CAStor disk servers to transfer the data itself, using one of the supported
+protocols (current candidates are rfio, xroot and ceph) and it will use the services of the Remote 
+Media Changer daemon (rmcd) to mount and unmount tapes.
+
+\subsection{Collaboration diagrams and sequences}
+The collaboration diagrams of the previous version of the tape server (with all its sub components)
+can be found in dot format
+	\footnote{ \href{http://svn.cern.ch/guest/CASTOR/CASTOR2/trunk/castor/tape/doc/collaboration\_diagrams/}
+	{http://svn.cern.ch/guest/CASTOR/CASTOR2/trunk/castor/tape/doc/collaboration\_diagrams/}}.
+	
+The new sequencing of a session start, simplified from the internal component communication is shown here:
+
+\begin{sequencediagram}
+	\newthread{gw}{tapegatewayd}
+	\newthread{vm}{vmgrd}
+	\newthread{vd}{vdqmd}
+	\newthread{ts}{tapeserverd(main)}
+	
+	\begin{call}{gw}{get volume}{vm}{tape VID}
+	\end{call}
+	\begin{call}{gw}{get drive}{vd}{VDQM request ID}
+	\end{call}
+	\begin{call}{vd}{schedule}{vd}{}
+	\end{call}
+	\begin{call}{vd}{client info}{ts}{}
+	\end{call}
+\end{sequencediagram}
+
+TODO: VDQM status reporting sequencing
+
+TODO: Mount time checks
+
+TODO: GW protocol
+
+\subsection{Extra requirements}
 Additional requirements, arising from the current practices of operators are:
 
 \begin{itemize}
+\item{}The tape server's session should gracefully handle an unclean situation where the 
+tape is left in the drive by a previously crashed session. The protocol is to clean anything
+left over before proceeding to the new session.
 \item{}A tape sessions should be preemptable by the operator. This is currently achieved 
 by killing the tape process. Closing the session on a kill (-1) could be a solution.
 \item{}The operator should be able to specify values in different SCSI code pages in
 order to setup the tape drive. This setting will be defined differently for each tape
 drive type.
 \end{itemize}
+
+\section{Tape server architecture}
+To fulfil the requirement for an ability to kill a session, the main tape server daemon
+will be simple, and just report its status to the VDQM and wait for requests from it on
+an open port.
+
+When a session should start, the process will fork a child process, which will reserve the memory
+and instantiate the session machinery.
+
+The layout of the main thread is show in figure \ref{tsParentProcess}. The layout of the child process, which contains all the complexity is shown in figure \ref{tsChildProcess}.
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics{images/TapeServerParentProcess}
+\end{center}
+\caption{\label{tsParentProcess}Tape server parent process: libraries used (purpose built libraries in blue, system libraries in beige, already existing CAStor libraries in green)}
+\end{figure}
+
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics{images/TapeServerChildProcess}
+\end{center}
+\caption{\label{tsChildProcess}Tape server child process: libraries used (purpose built libraries in blue, system libraries in beige, already existing CAStor libraries in green)}
+\end{figure}
+
+The data path will go to/from tape drive, through the generic SCSI interface of st driver (CAStor uses a
+mixture of both in the Tape::Drive class), then through the File structure support class, as controlled by
+the tape thread. The tape thread will communicate the data to (or get from) the disk thread via the 
+data FIFO class. This class will in turn allocate the memory from a preallocated, pool of
+fixed sized blocks. The size of the pool will be controlled by the operators.
+
+Some libraries already exist in CAStor, and will be reused, either by copying or linking from pre-compiled 
+packages. The main parts of the sessions spawner will be taken from the VDQM as well.
+
 
 % Section:  Reference documentations
 % ------------------------------------------------------------------------------
