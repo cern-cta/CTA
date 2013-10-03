@@ -45,7 +45,18 @@ It will connect to the CAStor disk servers to transfer the data itself, using on
 protocols (current candidates are rfio, xroot and ceph) and it will use the services of the Remote 
 Media Changer daemon (rmcd) to mount and unmount tapes.
 
-\subsection{Collaboration diagrams and sequences}
+\subsubsection{Tape session triggering}
+
+The tape server acts as a server only on one occasion, when it receives a client info request from the 
+VDQM. This call triggers a tape session, recall or migrate. The information received at that point
+is only client system information and drive information (request ID, host, port, DGN, tape drive name and user information (user id, etc...)).
+
+The main thread of the tape server will then just forks (and maybe exec, to be decided (TODO)) a new
+process, which will handle the session and quit.
+
+A new session starts with the tape server connecting with the client (it could be the tape gateway, or one of the command line commands of castor (currently packages in castor-tapebridge-client: readtp, writetp, 
+dumptp). In the case of the tape gateway, it can be either a read or a write session.
+
 The collaboration diagrams of the previous version of the tape server (with all its sub components)
 can be found in dot format
 	\footnote{ \href{http://svn.cern.ch/guest/CASTOR/CASTOR2/trunk/castor/tape/doc/collaboration\_diagrams/}
@@ -53,27 +64,72 @@ can be found in dot format
 	
 The new sequencing of a session start, simplified from the internal component communication is shown here:
 
+\begin{center}
 \begin{sequencediagram}
-	\newthread{gw}{tapegatewayd}
 	\newthread{vm}{vmgrd}
 	\newthread{vd}{vdqmd}
 	\newthread{ts}{tapeserverd(main)}
+	\newinst{tsc}{tapeserverd(child process)}
+	\newthread{gw}{client(gateway or command line)}
 	
 	\begin{call}{gw}{get volume}{vm}{tape VID}
 	\end{call}
-	\begin{call}{gw}{get drive}{vd}{VDQM request ID}
+	\begin{call}{gw}{vdqm request/volume stuff}{vd}{VDQM request ID}
 	\end{call}
 	\begin{call}{vd}{schedule}{vd}{}
 	\end{call}
-	\begin{call}{vd}{client info}{ts}{}
+	\begin{call}{ts}{unitStatus(UP)}{vd}{}
 	\end{call}
-\end{sequencediagram}
+	\begin{call}{vd}{schedule}{vd}{}
+	\end{call}
+	\begin{call}{vd}{VDQM\_CLIENTINFO}{ts}{}
+	\end{call}
+	\begin{call}{ts}{fork}{tsc}{}
+		\begin{call}{tsc}{Volume request}{gw}{}
+		\end{call}
+		\begin{call}{tsc}{Proceed with session}{tsc}{}
+		\end{call}
+	\end{call}
 
+\end{sequencediagram}
+\end{center}
+
+At that point, already two client libraries are in use in the tape server: the tape gateway protocol client library and the vdqm client library, and a simple server, answering only one type or requests:
+
+\begin{itemize}
+\item{}The client library for the tape gateway is implemented using the UML/umbrello based serialisation system. It is contained in the \verb#castor::tape::tapebridge::ClientProxy# class in CAStor.
+\item{}The direct C client API in CAStor's \verb#h/vdqm_api.h#.
+\item{}The VDQM request handler is implemented in \verb#castor::tape::tapebridge::VdqmRequestHandler#.
+\end{itemize}
+
+\subsubsection{Tape session startup}
+
+Upon reception of the session request, the tape server checks that it can continue with the session.
+
+Check with VMGR the volume status and block size. A disabled volume can only be mounted by a TP\_OPER.
+
+In case of a write session, queries pool info to know the owner.
+
+If user is not the owner or ADMIN, refuse the mount.
+
+Then reports are sent:
+\begin{itemize}
+\item{}Reports to VDQM that the drive is assigned. (VDQM\_UNITSTATUS).
+\item{}Requests work to be done from the client to prevent useless mounts (and start caching data 
+in case of migration.
+\item{}Mounts the tape, rewinds and validates the volume label.
+\item{}Reports to VMGR that the volume is mounted (\verb#VMGR_TPMOUNTED#).
+\item{}Reports to the VDQM that the tape is mounted (VDQM\_UNITSTATUS).
+\end{itemize}
+
+\subsubsection{Work loop}
 TODO: VDQM status reporting sequencing
 
 TODO: Mount time checks
 
 TODO: GW protocol
+
+\subsubsection{Release tape}
 
 \subsection{Extra requirements}
 Additional requirements, arising from the current practices of operators are:
