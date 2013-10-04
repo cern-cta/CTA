@@ -4,7 +4,7 @@
 # doing before playing with them.
 #-------------------------------------------------------------------------------
 DAEMON_COREFILE_LIMIT=unlimited
-XROOTD_USER=root
+XROOTD_USER=stage
 XROOTD_GROUP=st
 #-------------------------------------------------------------------------------
 # Define the commandline options for the instances of the daemons.
@@ -14,7 +14,7 @@ XROOTD_GROUP=st
 #   NAME   - the name of the instance, any uppercase alphanumeric string
 #            without whitespaces is valid
 #-------------------------------------------------------------------------------
-XROOTD_MANAGER_OPTIONS="-l /var/log/xrootd/xrootd.log -c /etc/xrd.cf.manager -R stage"
+XROOTD_MANAGER_OPTIONS="-l /var/log/xrootd/xrootd.log -c /etc/xrd.cf.manager"
 
 #-------------------------------------------------------------------------------
 # Names of the instances to be started by default, the case doesn't matter,
