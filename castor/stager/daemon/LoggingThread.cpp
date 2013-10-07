@@ -22,9 +22,6 @@
  * @author castor dev team
  *****************************************************************************/
 
-#include "Cthread_api.h"
-#include "Cmutex.h"
-
 #include <vector>
 
 #include "castor/Constants.hpp"

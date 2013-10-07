@@ -23,9 +23,6 @@
  * @author castor dev team
  *****************************************************************************/
 
-#include "Cthread_api.h"
-#include "Cmutex.h"
-
 #include <list>
 #include <vector>
 #include <sstream>
