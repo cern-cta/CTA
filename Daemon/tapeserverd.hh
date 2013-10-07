@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------
-// File: Exception/Exception.hh
+// File: Daemon/tapeserverd.hh
 // ----------------------------------------------------------------------
 
 /************************************************************************
@@ -21,51 +21,23 @@
  ************************************************************************/
 
 #pragma once
-#include <exception>
-#include <string>
+#include "../Exception/Exception.hh"
 
 namespace Tape {
-  
-  namespace Exceptions {
-    class Backtrace {
+  namespace Server {
+    class Daemon {
     public:
-      Backtrace();
-      operator std::string() const { return m_trace; }
+      Daemon (int argc, char ** argv) throw (Tape::Exception);
+      class options {
+      public:
+        options(): daemonize(true), runDirectory("/var/log/castor") {}
+        bool daemonize;
+        std::string runDirectory;
+      };
     private:
-      std::string m_trace;
+      options getCommandLineOptions(int argc, char ** argv) throw (Tape::Exception);
+      void daemonize();
+      options m_options;
     };
   }
-  
-  class Exception: public std::exception {
-  public:
-    Exception(const std::string& what) { setWhat(what); }
-    virtual ~Exception() throw() {};
-    virtual const char * what() const throw();
-    virtual const char * shortWhat() const throw();
-    Tape::Exceptions::Backtrace backtrace;
-  protected:
-    void setWhat(const std::string &w);
-  private:
-    std::string m_what;
-    std::string m_shortWhat;
-  };
-
-  namespace Exceptions {
-    class Errnum: public Tape::Exception {
-    public:
-      Errnum(std::string what = "");
-      virtual ~Errnum() throw() {};
-      int ErrorNumber() { return m_errnum; }
-      std::string strError() { return m_strerror; }
-      /* We rely on base version:
-       *  virtual const char * what() const throw() */
-    protected:
-      int m_errnum;
-      std::string m_strerror;
-    };
-    
-    class InvalidArgument: public Tape::Exception {
-    public: InvalidArgument(std::string what = ""): Tape::Exception(what) {};
-    };
-  }
-}
+}       

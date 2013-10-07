@@ -69,9 +69,7 @@ add_subdirectory(System)
 add_subdirectory(Exception)
 add_subdirectory(Utils)
 add_subdirectory(File)
-# .. and then tools, tests, and daemon
-# add_subdirectory(tools)
-# add_subdirectory(deamon)
+add_subdirectory(Daemon)
 
 # .. and of course, the tests (last to use the variable definition)
 add_subdirectory(test)
