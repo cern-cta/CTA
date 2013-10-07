@@ -1,5 +1,5 @@
 #!/bin/sh
-
+#
 # $Id: makerpm.sh,v 1.2 2005/09/20 12:05:04 jdurand Exp $
 
 #
