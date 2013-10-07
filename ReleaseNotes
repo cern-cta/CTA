@@ -252,7 +252,7 @@
   Package Changes
   ---------------
 
-  - castor-xroot-plugin comes as replacement of previous xrootd-xcastor2fs and xrootd-libtransfermanager
+  - castor-xrootd-plugin comes as replacement of previous xrootd-xcastor2fs and xrootd-libtransfermanager
     that were not distributed with CASTOR. This RPM depends on xrootd-server version 3.3.1.
   - castor-rmmaster-client, castor-rmmaster-server and castor-rmnode-server have been dropped as part
     of the rmmaster/rmnode integration into transfermanager/diskmanager
