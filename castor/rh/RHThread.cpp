@@ -45,7 +45,6 @@
 #include "castor/MessageAck.hpp"
 #include "castor/rh/Server.hpp"
 #include "castor/rh/RHThread.hpp"
-#include "Cthread_api.h"
 
 #include <iostream>
 #include <errno.h>
