@@ -136,8 +136,6 @@ int posittape(const int tapefd,
 	int n;
 	char *p;
 	int pfseq;
-	int rewritetm = 1;	/* An Exabyte 8200 must be positionned on the
-			BOT side of a long filemark before starting to write */
 	char sfseq[11];
 	int tmr;		/* tape mark read */
 	char tpfid[CA_MAXFIDLEN+1];
@@ -152,8 +150,6 @@ int posittape(const int tapefd,
 	sprintf (sfseq, "%d", fseq);
 	pfseq = *cfseq;		/* save current file sequence number */
 	if (Qfirst && fseq > 0) fseq += Qfirst - 1;
-	if (strcmp (devtype, "8200") && den != D8200 && den != D8200C)
-		rewritetm = 0;
 	if (lblcode == NL || lblcode == BLP) {
 		if ((flags & NOPOS) || (flags & LOCATE_DONE)) {	/* tape is already positionned */
 			if (filstat == CHECK_FILE) {	/* must check if the file exist */
@@ -274,7 +270,7 @@ int posittape(const int tapefd,
 				if (fseq == 1) {
 					c = rwndtape (tapefd, path);
 				} else {
-					c = 3 + rewritetm - c;
+					c = 3  - c;
 #if defined(linux)
 					if (c > 0)
 #endif
@@ -288,8 +284,7 @@ int posittape(const int tapefd,
 					if ((c = rwndtape (tapefd, path))) goto reply;
 				} else {
 					if ((c = skiptpfb (tapefd, path, 1))) goto reply;
-					if (mode == WRITE_DISABLE || filstat == APPEND || ! rewritetm)
-						if ((c = skiptpff (tapefd, path, 1))) goto reply;
+					if ((c = skiptpff (tapefd, path, 1))) goto reply;
 				}
 				break;
 			}
@@ -557,7 +552,7 @@ int posittape(const int tapefd,
 					c = ETFSQ;
 					goto reply;
 				}
-				c = 3 + rewritetm - c;
+				c = 3 - c;
 #if defined(linux)
 				if (c > 0)
 #endif
@@ -667,8 +662,7 @@ chkexpdat:
 			} else {
 				if ((c = skiptpfb (tapefd, path, tmr ? 2 : 1)))
 					goto reply;
-				if (! rewritetm)
-					if ((c = skiptpff (tapefd, path, 1))) goto reply;
+				if ((c = skiptpff (tapefd, path, 1))) goto reply;
 			}
 			goto reply;
 		} else {	/* skip to data */

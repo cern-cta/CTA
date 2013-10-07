@@ -497,12 +497,7 @@ int main(int	argc,
 
 	/* tape is mounted */
                 
-    if (strcmp (devtype, "9840") == 0 ||
-        strcmp (devtype, "9940") == 0 ||
-        strcmp (devtype, "994B") == 0 || 
-        strcmp (devtype, "T10000") == 0 ||
-        strcmp (devtype, "LTO") == 0 ||
-        strcmp (devtype, "3592") == 0) {
+    if (deviceTypeIsSupported(devtype)) {
             
             /* Now checking the MIR */
             if (is_mir_invalid_load(tapefd, path, devtype) == 1) {
@@ -778,8 +773,6 @@ mounted:
 		if  ((c = wrttpmrk (tapefd, path, 1, 0)) < 0) goto reply;
 		if (Tflag)
 			if  ((c = wrttpmrk (tapefd, path, 1, 0)) < 0) goto reply;
-		if (strcmp (devtype, "SD3") == 0 && ! Tflag)	/* flush buffer */
-			if  ((c = wrttpmrk (tapefd, path, 0, 0)) < 0) goto reply;
 		goto reply;
 	}
 

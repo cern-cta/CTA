@@ -44,19 +44,7 @@
 
 			/* supported densities */
 
-#define	D800	0x1
-#define	D1600	0x2
-#define	D6250	0x3
-#define	D38000	0x4
-#define	D8200	0x5
-#define	D8500	0x6
-#define	D38KD	0x7
-#define D2G	0x8
-#define D6G	0x9
 #define D10G	0xA
-#define SFMT	0xB
-#define SRAW	0xC
-#define DDS	0xD
 #define D20G	0xE
 #define D25G	0xF
 #define D35G	0x10
@@ -79,12 +67,7 @@
 #define D4000G  0x21
 #define D8000G  0x22
 #define IDRC	0x100
-#define	D38KC	(D38000 | IDRC)
-#define	D38KDC	(D38KD | IDRC)
-#define	D8200C	(D8200 | IDRC)
-#define	D8500C	(D8500 | IDRC)
 #define D10GC	(D10G | IDRC)
-#define DDSC	(DDS | IDRC)
 #define D20GC	(D20G | IDRC)
 #define D25GC	(D25G | IDRC)
 #define D35GC	(D35G | IDRC)
@@ -322,7 +305,6 @@ struct tptab {		/* tape drive table */
 struct devlblinfo {
 	char	path[CA_MAXPATHLEN+1];	/* pathname */
 	char	devtype[CA_MAXDVTLEN+1];	/* device type */
-	int	rewritetm;	/* tapemark must be rewritten on Exabytes 8200 */
 	int	lblcode;	/* label code: AL, NL, SL or BLP */
 	int	flags;		/* options like NOTRLCHK */
 	int	fseq;		/* file sequence number */

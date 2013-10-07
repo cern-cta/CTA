@@ -17,7 +17,7 @@
 static char *func = "tapealertcheck";
 
 
-/* Functions that checks 9840/9940/T10000/LTO/3592 tape flags */
+/* Functions that checks tape flags for supported devices. */
 int
 get_tape_alerts(int tapefd,
                     char *path,
@@ -42,12 +42,7 @@ get_tape_alerts(int tapefd,
 	cdb[0] = 0x4D;	/* LOG SENSE */
 	cdb[7] = (sizeof(buffer) & 0xFF00) >> 8;
 	cdb[8] = sizeof(buffer) & 0x00FF;
-    if (strcmp (devtype, "9840") == 0 ||
-        strcmp (devtype, "9940") == 0 ||
-        strcmp (devtype, "994B") == 0 ||
-        strcmp (devtype, "T10000") == 0 ||
-        strcmp (devtype, "LTO") == 0 ||
-        strcmp (devtype, "3592") == 0) {
+    if (deviceTypeIsSupported(devtype)) {
         cdb[2] = 0x40 | 0x2E;   /* PC = 1, Tape Alerts Page */
 	} else {
 		serrno = SEOPNOTSUP;
@@ -68,12 +63,7 @@ get_tape_alerts(int tapefd,
 	endpage = p + 4 + pagelen;
 	p += 4;
 
-    if (strcmp (devtype, "9840") == 0 ||
-        strcmp (devtype, "9940") == 0 ||
-        strcmp (devtype, "994B") == 0 ||
-        strcmp (devtype, "T10000") == 0 ||
-        strcmp (devtype, "LTO") == 0 ||
-        strcmp (devtype, "3592") == 0) {
+    if (deviceTypeIsSupported(devtype)) {
         
         while (p < endpage) {
             parmcode = *p << 8 | *(p+1);

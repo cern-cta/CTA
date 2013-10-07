@@ -83,8 +83,6 @@ int wrthdrlbl(
 		sscanf (dlip->hdr1 + 27, "%4d", &fsec);
 	else
 		fsec = 1;
-	if (fsec == 1 && dlip->fseq != 1 && dlip->rewritetm)
-		if ((c = wrttpmrk (tapefd, path, 1, 0)) < 0) return (c);
 	if (dlip->lblcode == NL) return (0);	/* tape is unlabelled */
 	if (dlip->fseq == 1 || fsec > 1) {
 		memcpy (vol1, dlip->vol1, 80);

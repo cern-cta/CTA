@@ -100,15 +100,6 @@ int setdevinfo (const char *const path,
 	strncpy (s_devlblinfo.devtype, devtype, sizeof(s_devlblinfo.devtype));
 	s_devlblinfo.devtype[sizeof(s_devlblinfo.devtype) - 1] = '\0';
 
-	if (strcmp (devtype, "8200") == 0 || den == D8200 || den == D8200C) {
-		/* An Exabyte 8200 must be positionned */
-		/* on the BOT side of a long filemark  */
-		/* before starting to write            */
-		s_devlblinfo.rewritetm = 1;
-	} else {
-		s_devlblinfo.rewritetm = 0;
-	}
-
 	s_devlblinfo.lblcode = lblcode;
 
 	s_devlblinfoHasValue = 1;

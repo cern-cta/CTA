@@ -1042,17 +1042,9 @@ int rtcpd_CalcBufSz(tape_list_t *tape, file_list_t *file) {
   if ( blksiz<= 0 ) {
     /*
      * Block size not specified. Assume a default.
-     * For future: get defaults from Ctape
      */
-    if ( strstr(tape->tapereq.dgn,"SD3") != NULL ) {
-      blksiz = 256*1024;
-      if ( lrecl > 0 ) {
-        blksiz = (blksiz/lrecl)*lrecl;
-      }
-    } else {
-      if ( lrecl > 0 ) blksiz = lrecl;
-      else blksiz = 32*1024;
-    }
+     if ( lrecl > 0 ) blksiz = lrecl;
+     else blksiz = DEFAULTMIGRATIONBLOCKSIZE; 
   }
   current_bufsz = (bufsz/blksiz) * blksiz;
   if ( current_bufsz <= 0 ) current_bufsz = blksiz;

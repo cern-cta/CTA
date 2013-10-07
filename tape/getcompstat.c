@@ -18,7 +18,6 @@ int get_compression_stats(int tapefd,
                           char *devtype,
                           COMPRESSION_STATS *comp_stats)
 {
-#if defined(linux)
 	unsigned long kbytes_from_host;
 	unsigned long kbytes_to_tape;
 	unsigned long kbytes_from_tape;
@@ -36,21 +35,11 @@ int get_compression_stats(int tapefd,
 	cdb[0] = 0x4D;	/* LOG SENSE */
 	cdb[7] = (sizeof(buffer) & 0xFF00) >> 8;
 	cdb[8] = sizeof(buffer) & 0x00FF;
-	if (strncmp (devtype, "DAT", 3) == 0)
-		cdb[2] = 0x40 | 0x39;	/* PC = 1, compression page  */
-	else if (strncmp (devtype, "DLT", 3) == 0 ||
-		 strcmp (devtype, "SDLT") == 0 ||
-		 strcmp (devtype, "LTO") == 0)
+	if (strcmp (devtype, "LTO") == 0)
 		cdb[2] = 0x40 | 0x32;	/* PC = 1, compression page  */
-	else if (strcmp (devtype, "3490") == 0 ||
-		 strcmp (devtype, "3590") == 0 ||
-		 strcmp (devtype, "3592") == 0)
+	else if (strcmp (devtype, "3592") == 0)
 		cdb[2] = 0x40 | 0x38;	/* PC = 1, compression page  */
-	else if (strcmp (devtype, "SD3") == 0)
-		cdb[2] = 0x40 | 0x30;	/* PC = 1, compression page  */
-	else if (strcmp (devtype, "9840") == 0 ||
-		 strcmp (devtype, "T10000") == 0 ||
-		 strcmp (devtype, "9940") == 0)
+	else if (strcmp (devtype, "T10000") == 0)
 	        cdb[2] = 0x40 | 0x0C;   /* PC = 1, sequential access device page */
 	else {
 		serrno = SEOPNOTSUP;
@@ -66,32 +55,7 @@ int get_compression_stats(int tapefd,
 	endpage = p + 4 + pagelen;
 	p += 4;
 
-	if (strncmp (devtype, "DAT", 3) == 0) {		/* values in kB */
-		while (p < endpage) {
-			parmcode = *p << 8 | *(p+1);
-			switch (parmcode) {
-			case 0x5:
-				kbytes_from_host =
-				    *(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8 | *(p+7);
-				break;
-			case 0x6:
-				kbytes_to_host =
-				    *(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8 | *(p+7);
-				break;
-			case 0x7:
-				kbytes_to_tape =
-				    *(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8 | *(p+7);
-				break;
-			case 0x8:
-				kbytes_from_tape =
-				    *(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8 | *(p+7);
-				break;
-			}
-			p += *(p+3) + 4;
-		}
-	} else if (strncmp (devtype, "DLT", 3) == 0 ||
-		   strcmp (devtype, "SDLT") == 0 ||
-		   strcmp (devtype, "LTO") == 0) {	/* values in bytes */
+	if (strcmp (devtype, "LTO") == 0) {	/* values in bytes */
 
 /* Fixed by BC 2003/04/22
    On IBM/HP LTO drives, the number of bytes field can be
@@ -136,9 +100,7 @@ int get_compression_stats(int tapefd,
 			}
 			p += *(p+3) + 4;
 		}
-	} else if (strcmp (devtype, "3490") == 0 ||
-		   strcmp (devtype, "3590") == 0 ||
-		   strcmp (devtype, "3592") == 0) {	/* values in kB */
+	} else if (strcmp (devtype, "3592") == 0) {	/* values in kB */
 		while (p < endpage) {
 			parmcode = *p << 8 | *(p+1);
 			switch (parmcode) {
@@ -161,32 +123,7 @@ int get_compression_stats(int tapefd,
 			}
 			p += *(p+3) + 4;
 		}
-	} else if (strcmp (devtype, "SD3") == 0) {	/* values in bytes */
-		while (p < endpage) {
-			parmcode = *p << 8 | *(p+1);
-			switch (parmcode) {
-			case 0xF:
-				kbytes_to_host =
-				    *(p+6) << 30 | *(p+7) << 22 | *(p+8) << 14 | *(p+9) << 6 | *(p+10) >> 2;
-				break;
-			case 0x10:
-				kbytes_from_tape =
-				    *(p+6) << 30 | *(p+7) << 22 | *(p+8) << 14 | *(p+9) << 6 | *(p+10) >> 2;
-				break;
-			case 0x11:
-				kbytes_from_host =
-				    *(p+6) << 30 | *(p+7) << 22 | *(p+8) << 14 | *(p+9) << 6 | *(p+10) >> 2;
-				break;
-			case 0x12:
-				kbytes_to_tape =
-				    *(p+6) << 30 | *(p+7) << 22 | *(p+8) << 14 | *(p+9) << 6 | *(p+10) >> 2;
-				break;
-			}
-			p += *(p+3) + 4;
-		}
-	} else if (strcmp (devtype, "9840") == 0 ||
-		   strcmp (devtype, "9940") == 0 || 
-		   strcmp (devtype, "T10000") == 0) {      /* values in bytes */
+	} else if (strcmp (devtype, "T10000") == 0) {      /* values in bytes */
 		while (p < endpage) {
 			parmcode = *p << 8 | *(p+1);
 			switch (parmcode) {
@@ -209,16 +146,16 @@ int get_compression_stats(int tapefd,
 			}
 			p += *(p+3) + 4;
 		}
+	} else {
+		kbytes_from_host = 0;
+		kbytes_to_tape = 0;
+		kbytes_from_tape = 0;
+		kbytes_to_host = 0;
 	}
 	comp_stats->from_host = kbytes_from_host;
 	comp_stats->to_tape = kbytes_to_tape;
 	comp_stats->from_tape = kbytes_from_tape;
 	comp_stats->to_host = kbytes_to_host;  
-#endif
-	(void)tapefd;
-	(void)path;
-	(void)devtype;
-	(void)comp_stats;
 	return (0);
 }
 

@@ -86,10 +86,7 @@ int buildhdrlbl(char hdr1[],
 		memcpy (hdr2 + 10, buf, 5);
 	} else
 		memcpy (hdr2 + 10, "00000", 5);
-	if (den == D800) hdr2[15] = '2';
-	else if (den == D1600) hdr2[15] = '3';
-	else if (den == D6250) hdr2[15] = '4';
-	else if (den & IDRC) hdr2[34] = 'P';
+	if (den & IDRC) hdr2[34] = 'P';
 	if (lblcode == AL || lblcode == AUL)
 		memcpy (hdr2 + 50, "00", 2);
         return (0);

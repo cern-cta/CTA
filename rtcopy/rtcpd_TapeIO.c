@@ -39,8 +39,6 @@ extern int AbortFlag;
 
 char *getconfent (char *, char *, int);
 int gettperror (const int, const char *const, char **);
-static int read_sony ();
-static int write_sony ();
 
 static char labelid[2][4] = {"EOF","EOV"} ;
 
@@ -306,7 +304,6 @@ int topen(tape_list_t *tape, file_list_t *file) {
   if ( tapereq->mode == WRITE_ENABLE ) tmode = O_RDWR | binmode;
   else {
     tmode = O_RDONLY | binmode;
-    if ( file->sonyraw > 0 ) tmode = O_RDWR;
   }
 
   file->cksumRoutine = (unsigned long (*) (unsigned long,
@@ -537,7 +534,6 @@ int tclose(
                    "Message", TL_MSG_PARAM_STR, "called",
                    "fd"     , TL_MSG_PARAM_INT, fd );
 
-  if ( file->sonyraw == 0 ) {
     if ( tapereq->mode == WRITE_ENABLE && file->trec>0 ) {
       rtcp_log(
                LOG_DEBUG,
@@ -603,7 +599,6 @@ int tclose(
         serrno = save_serrno;
       }
     }
-  }
   if ( (rc != -1) && (file->trec > 0) ) {
     serrno = 0;
     errno = 0;
@@ -773,7 +768,6 @@ int twrite(
   }
   filereq = &file->filereq;
 
-  if ( file->sonyraw == 0 ) {
     /*
      * Writing header labels.
      */
@@ -894,11 +888,6 @@ int twrite(
       file->trec-- ;
       return(0);
     }
-  } else {
-    if ( file->trec == 0 ) filereq->TStartTransferTape = (int)time(NULL);
-    file->trec ++ ;
-    rc = write_sony();
-  }
 
   if ( (rc > 0) && (file->cksumRoutine != 
                     (unsigned long (*) (unsigned long, 
@@ -935,7 +924,6 @@ int tread(int fd,char *ptr,int len,
   /*
    * Reading block.
    */
-  if ( file->sonyraw == 0 ) {
     if ( (rc= read(fd,ptr,len)) == -1 )  {
       /* 
        * trerror returns a code when -E option is set to 
@@ -1037,10 +1025,6 @@ int tread(int fd,char *ptr,int len,
       file->eovflag= 1;           /* tape volume overflow */
       return(0);
     }
-  } else {
-    file->trec ++ ;
-    rc = read_sony();
-  }
   if ( (rc > 0) && (file->cksumRoutine != 
                     (unsigned long (*) (
 					unsigned long,
@@ -1056,13 +1040,3 @@ int tread(int fd,char *ptr,int len,
   return(rc);
 }
 
-/*  tpio_sony - sends scsi commands to support RAW mode on SONY DIR1000
-    using a DFC-1500/1700 controller */
-
-static int read_sony() {
-  return(-1);
-}
-        
-static int write_sony() {
-  return(-1);
-}

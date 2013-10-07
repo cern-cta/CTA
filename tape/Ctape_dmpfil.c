@@ -23,8 +23,6 @@
 void (*Ctape_dmpmsg) (int, const char *, ...) = NULL;
 static char *buffer;
 static char codes[4][7] = {"", "ASCII", "", "EBCDIC"};
-static int den;		/* density code */
-static int density;	/* nb bytes/inch for 3420/3480/3490 */
 static struct {
 	char vid[CA_MAXVIDLEN+1];
 	char devtype[CA_MAXDVTLEN+1];
@@ -37,7 +35,6 @@ static struct {
 	int code;
 	int flags;
 } dmpparm;
-static float gap;	/* inter record gap for 3420/3480/3490 */
 static int infd = -1;
 static int irec;
 
@@ -76,104 +73,11 @@ int Ctape_dmpinit(char *path,
 
 	Ctape_dmpmsg (MSG_OUT, " DUMP - TAPE MOUNTED ON DRIVE %s\n", drive);
 
-	/* Set default values */
-
-	den = cvtden (aden);
-
-	switch (den) {
-	case D800:
-		density = 800;
-		gap = 0.6;
-		break;
-	case D1600:
-		density = 1600;
-		gap = 0.6;
-		break;
-	case D6250:
-		density = 6250;
-		gap = 0.3;
-		break;
-	case D38000:
-		density = 38000;
-		gap = 0.08;
-		break;
-	case D38KC:
-		density = 38000;
-		gap = 0.04;
-		break;
-	case D38KD:
-	case D38KDC:
-		density = 38000;
-		gap = 0.02;
-		break;
-	case D8200:
-	case D8200C:
-	case D8500:
-	case D8500C:
-	case D2G:
-	case D6G:
-	case D10G:
-	case D10GC:
-	case D20G:
-	case D20GC:
-	case D25G:
-	case D25GC:
-	case D35G:
-	case D35GC:
-	case D40G:
-	case D40GC:
-	case D50G:
-	case D50GC:
-	case D60G:
-	case D60GC:
-	case D100G:
-	case D100GC:
-	case D110G:
-	case D110GC:
-	case D160G:
-	case D160GC:
-	case D200G:
-	case D200GC:
-	case D300G:
-	case D300GC:
-	case D400G:
-	case D400GC:
-	case D500G:
-	case D500GC:
-        case D700G:
-	case D700GC:
-        case D800G:
-	case D800GC:
-        case D1000G:
-	case D1000GC:
-        case D1500G:
-	case D1500GC:
-        case D5000G:
-	case D5000GC:
-	case D1600G:
-	case D1600GC:
-	case D4000G:
-	case D4000GC:
-	case D8000G:
-	case D8000GC:
-	case DDS:
-	case DDSC:
-		break;
-	default:
-		Ctape_dmpmsg (MSG_ERR, TP006, "density");
-		serrno = EINVAL;
-		return (-1);
-	}
-
 	if (maxblksize < 0)
 		maxblksize = DMP_DEFAULTBLOCKSIZE;
 	if (maxbyte < 0) maxbyte = 320;
 	if (maxfile < 0) {
-		if ((den & 0xFF) <= D38000 || (den & 0xFF) == D38KD) {
-			maxfile = 0;
-                } else { 
 			maxfile = 1;
-                }
         }
 	if (fromblock < 0) fromblock = 1;
 	if (toblock < 0) toblock = 1;
@@ -486,7 +390,6 @@ int Ctape_dmpfil(char *path,
 	static int nerr = 0;
 	static int nfile = 0;
 	char *p;
-	int perc;
 	static int qbov = 1;
 	int qlab = 0;
 	u_signed64 sum_block_length = 0;
@@ -504,23 +407,7 @@ int Ctape_dmpfil(char *path,
 		nbytes = read (infd, buffer, dmpparm.maxblksize);
 		if (nbytes > 0) {		/* record found */
 			irec++;
-			if (strcmp (dmpparm.devtype, "SD3") == 0 ||
-			    strcmp (dmpparm.devtype, "9840") == 0 ||
-			    strcmp (dmpparm.devtype, "9940") == 0 ||
-			    strcmp (dmpparm.devtype, "3592") == 0 ||
-			    strcmp (dmpparm.devtype, "SDLT") == 0 ||
-			    strcmp (dmpparm.devtype, "T10000") == 0 ||
-			    strcmp (dmpparm.devtype, "LTO") == 0)
-				tape_used = tape_used + (float) nbytes;
-			else if (strncmp (dmpparm.devtype, "DLT", 3) == 0)
-				tape_used = tape_used + ((float) ((nbytes + 4095) / 4096) * 4096.);
-			else if (den == DDS || den == DDSC)
-				tape_used = tape_used + (float) nbytes + 4.0;
-			else if (den != D8200 && den != D8200C &&
-			    den != D8500 && den != D8500C)
-				tape_used = tape_used + ((float) nbytes / (float) density) + gap;
-			else
-				tape_used = tape_used + ((float) ((nbytes + 1023) / 1024) * 1024.);
+			tape_used = tape_used + (float) nbytes;
 			goodrec++;
 			if (min_block_length == 0) min_block_length = nbytes;
 			if (nbytes > max_block_length)
@@ -647,21 +534,6 @@ int Ctape_dmpfil(char *path,
 				break;
 			}
 #endif
-			if (den <= D6250)
-				tape_used += 6.;
-			else if (den == D38000 || den == D38KC ||
-				den == D38KD || den == D38KDC)
-				tape_used += 0.1;
-			else if (den == D8200 || den == D8200C)
-				tape_used += (270. * 8192.);	/* long filemark */
-			else if (den == D8500 || den == D8500C)
-				tape_used += 48000.;
-			else if (strncmp (dmpparm.devtype, "DLT", 3) == 0)
-				tape_used += 4096.;
-			else if (strcmp (dmpparm.devtype, "SD3") == 0)
-				tape_used += 2048.;
-			else if (den == DDS || den == DDSC)
-				tape_used = tape_used + 4.0;
 			if (qbov) {	/* beginning of tape */
 				Ctape_dmpmsg (MSG_OUT, "               %s IS UNLABELLED\n", dmpparm.vid);
 				if (lbltype)
@@ -751,149 +623,9 @@ int Ctape_dmpfil(char *path,
 		return (-1);
 	}
 
-	if (den <= D6250) {
-		perc = (tape_used * 100) / (2400 * 12);
-		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A FULL 2400 FOOT TAPE *****\n",
-			perc);
-	} else if (den == D38000 || den == D38KC) {
-		perc = (tape_used * 100) / (500 * 12);
-		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A STANDARD 3480 CARTRIDGE *****\n",
-			perc);
-	} else if (den == D38KD || den == D38KDC) {
-		perc = (tape_used * 100) / (500 * 4 * 12);
-		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A DOUBLE LENGTH CARTRIDGE *****\n",
-			perc);
-	} else if (den == D8200 || den == D8200C) {
-		perc = tape_used / 23000000;
-		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A STANDARD LENGTH (2.3GB) EXABYTE TAPE *****\n",
-			perc);
-	} else if (den == D8500 || den == D8500C) {
-		perc = tape_used / 50000000;
-		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A STANDARD LENGTH (5GB) EXABYTE TAPE *****\n",
-			perc);
-	} else if (den == D2G) {
-		perc = tape_used / 26000000;
-		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A CompacTapeIII (2.6GB) *****\n",
-			perc);
-	} else if (den == D6G) {
-		perc = tape_used / 60000000;
-		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A CompacTapeIII (6GB) *****\n",
-			perc);
-	} else if (den == D10G || den == D10GC) {
-	    if (strncmp (dmpparm.devtype, "DLT", 3) == 0) {
-		perc = tape_used / 100000000;
-		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A CompacTapeIII (10GB) *****\n",
-			perc);
-	    } else if (strcmp (dmpparm.devtype, "SD3") == 0) {
-		perc = tape_used / 100000000;
-		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A Redwood CARTRIDGE (10GB) *****\n",
-			perc);
-	    }
-	} else if (den == D20G || den == D20GC) {
-	    if (strncmp (dmpparm.devtype, "DLT", 3) == 0) {
-		perc = tape_used / 200000000;
-		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A CompacTapeIV (20GB) *****\n",
-			perc);
-	    } else if (strcmp (dmpparm.devtype, "9840") == 0) {
-		perc = tape_used / 200000000;
-		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF AN STK 9840 CARTRIDGE (20GB) *****\n",
-			perc);
-	    }
-	} else if (den == D25G || den == D25GC) {
-		perc = tape_used / 250000000;
-		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A Redwood CARTRIDGE (25GB) *****\n",
-			perc);
-	} else if (den == D35G || den == D35GC) {
-		perc = tape_used / 350000000;
-		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A CompacTapeIV (35GB) *****\n",
-			perc);
-	} else if (den == D40G || den == D40GC) {
-	    if (strncmp (dmpparm.devtype, "DLT", 3) == 0) {
-		perc = tape_used / 400000000;
-		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A CompacTapeIV (40GB) *****\n",
-			perc);
-	    }
-	} else if (den == D50G || den == D50GC) {
-		perc = tape_used / 500000000;
-		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A Redwood CARTRIDGE (50GB) *****\n",
-			perc);
-	} else if (den == D60G || den == D60GC) {
-		perc = tape_used / 600000000;
-		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF AN STK 9940 CARTRIDGE (60GB) *****\n",
-			perc);
-	} else if (den == D100G || den == D100GC) {
-		perc = tape_used / 1000000000;
-		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF AN LTO CARTRIDGE (100GB) *****\n",
-			perc);
-	} else if (den == D110G || den == D110GC) {
-		perc = tape_used / 1100000000;
-		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF AN SDLT CARTRIDGE (110GB) *****\n",
-			perc);
-	} else if (den == D160G || den == D160GC) {
-		perc = tape_used / 1600000000;
-		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF AN SDLT CARTRIDGE (160GB) *****\n",
-			perc);
-	} else if (den == D200G || den == D200GC) {
-		perc = tape_used / 2000000000;
-		if (strcmp (dmpparm.devtype, "9940") == 0)
-			Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF AN STK 9940 CARTRIDGE (200GB) *****\n",
-				perc);
-		else
-			Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF AN LTO2 CARTRIDGE (200GB) *****\n",
-				perc);
-	} else if (den == D300G || den == D300GC) {
-		perc = tape_used / 3000000000UL;
-		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %u %%  OF AN 3592 CARTRIDGE (300GB) *****\n",
-			perc);
-	} else if (den == D500G || den == D500GC) {
-		perc = tape_used / 5000000000.0;
-		if (strcmp (dmpparm.devtype, "T10000") == 0) {
-		  Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %u %%  OF A T10000 CARTRIDGE (500GB) *****\n",
-				perc);
-		} else {
-		  Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %u %%  OF A 3592B CARTRIDGE (500GB) *****\n",
-				perc);
-		}
-        } else if (den == D700G || den == D700GC) {
-		perc = tape_used / 7000000000.0;
-		if (strcmp (dmpparm.devtype, "3592") == 0) {
-		  Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %u %%  OF A 3592B CARTRIDGE (700GB) *****\n",
-				perc);
-		}
-        } else if (den == D1000G || den == D1000GC) {
-		perc = tape_used / 10000000000.0;
-		if (strcmp (dmpparm.devtype, "3592") == 0) {
-                        Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %u %%  OF A 3592B CARTRIDGE (1000GB) *****\n",
-                                      perc);
-		}
-        } else if (den == D1500G || den == D1500GC) {
-                perc = tape_used / 15000000000.0;
-                Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %u %%  OF A 1.5T CARTRIDGE *****\n", perc);
-        } else if (den == D5000G || den == D5000GC) {
-                perc = tape_used / 50000000000.0;
-                Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %u %%  OF A 5T CARTRIDGE *****\n", perc);
-        } else if (den == D1600G || den == D1600GC) {
-                perc = tape_used / 16000000000.0;
-                Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %u %%  OF A 1.6T CARTRIDGE *****\n", perc);
-        } else if (den == D4000G || den == D4000GC) {
-                perc = tape_used / 40000000000.0;
-                Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %u %%  OF A 4T CARTRIDGE *****\n", perc);
-        } else if (den == D8000G || den == D8000GC) {
-                perc = tape_used / 80000000000.0;
-                Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %u %%  OF A 8T CARTRIDGE *****\n", perc);
-	} else if (den == D400G || den == D400GC) {
-		perc = tape_used / 4000000000UL;
-		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %u %%  OF A LTO3 CARTRIDGE (400GB) *****\n",
-                              perc);
-        } else if (den == D800G || den == D800GC) {
-                perc = tape_used / 8000000000ULL;
-                Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %u %%  OF A LTO4 CARTRIDGE (800GB) *****\n",
-                              perc); 
-	} else if (den == DDS || den == DDSC) {
-		perc = tape_used / 40000000;
-		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A DDS2 CARTRIDGE (4GB) *****\n",
-			perc);
-	}
+	Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED %lu bytes OF A CARTRIDGE  *****\n",
+		(unsigned long)tape_used) ;
+
 	(void) report_comp_stats (infd, path, dmpparm.devtype);
 	Ctape_dmpmsg (MSG_OUT, " DUMP - DUMPING PROGRAM COMPLETE.\n");
 	close (infd);

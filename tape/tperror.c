@@ -169,13 +169,7 @@ int get_sk_msg(char *devtype,
 				sk_codmsg[key].text, asc, ascq);
 			*msgaddr = tp_err_msgbuf;
 		}
-		if ((devtype && strcmp (devtype, "SD3") == 0 &&
-		    key == 3 && asc == 0x30 && ascq == 0x01) ||
-		    (devtype && strcmp (devtype, "3590") == 0 &&
-		    key == 3 && asc == 0x30 && ascq == 0x02))
-			rc = ETBLANK;
-		else
-			rc = sk_codmsg[key].errcat;
+		rc = sk_codmsg[key].errcat;
 	} else {
 		sprintf (tp_err_msgbuf, "Undefined sense key %02X", key);
 		*msgaddr = tp_err_msgbuf;
