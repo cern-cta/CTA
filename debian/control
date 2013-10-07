@@ -40,6 +40,7 @@ Depends: castor-lib-oracle, cx_Oracle >= 5.1.1, castor-lib = %{version}-%{releas
 Recommends: python-krbV
 Description: castor (Cern Advanced STORage system)
  DB Administration tools
+XBS-Obsoletes: castor-rmmaster-client
 
 Package: castor-job
 Architecture: any
@@ -68,6 +69,7 @@ Architecture: any
 Depends: python, logrotate, cx_Oracle >= 5.1.1, python-daemon, python-rpyc, castor-lib = %{version}-%{release}
 Description: castor (Cern Advanced STORage system)
  Transfer manager daemon for Castor, central server package
+XBS-Obsoletes: castor-rmmaster-server
 
 Package: castor-transfer-manager-client
 Architecture: any
@@ -81,6 +83,7 @@ Depends: python, logrotate, python-daemon, python-rpyc, castor-job, castor-lib =
 Conflicts: castor-dbtools, castor-transfer-manager
 Description: castor (Cern Advanced STORage system)
  Disk server manager of CASTOR
+XBS-Obsoletes: castor-rmnode-server
 
 Package: castor-lib-oracle
 Architecture: any
