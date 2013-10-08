@@ -12,7 +12,6 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-#include "h/Ctape.h"
 #include "h/rbtsubr_constants.h"
 #include "h/rmc_constants.h"
 #include "h/rmc_send_scsi_cmd.h"

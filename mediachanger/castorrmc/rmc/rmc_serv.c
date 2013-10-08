@@ -31,7 +31,6 @@
 #include "h/tplogger_api.h"
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <Ctape_api.h>
 #include "h/rmc_send_scsi_cmd.h"
 
 /* Forward declaration */
