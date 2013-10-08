@@ -23,7 +23,6 @@
 #include "h/rmc_smcsubr.h"
 #include "h/rmc_smcsubr2.h"
 #include "h/rmc_sendrep.h"
-#include "h/tplogger_api.h"
 #include <string.h>
 extern struct extended_robot_info extended_robot_info;
  

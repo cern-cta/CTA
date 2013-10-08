@@ -28,7 +28,6 @@
 #include "h/scsictl.h"
 #include "h/serrno.h"
 #include "h/Cdomainname.h"
-#include "h/tplogger_api.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "h/rmc_send_scsi_cmd.h"
@@ -190,8 +189,6 @@ int rmc_main(struct main_args *main_args)
 			FD_ZERO (&readfd);
 		}
 	}
-        /* never reached */
-        tl_rtcpd.tl_exit( &tl_rmcdaemon, 0 );
 }
 
 int main(int argc,
