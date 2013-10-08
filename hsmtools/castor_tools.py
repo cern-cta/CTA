@@ -569,6 +569,8 @@ def nbToDataAmount(n):
     '''converts a number into a readable amount of data'''
     ext = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB']
     magn = 0
+    if n == None:
+        return '-'
     while n / 1024 > 5:
         magn += 1
         n = n / 1024
@@ -584,6 +586,8 @@ def printPercentage(portion, total):
 def nbToAge(n):
     '''converts a number of seconds into a readable age'''
     s = ''
+    if n == None:
+        return '-'
     if n >= 86400:
         s = s + str(int(n/86400)) + 'd'
         n = n % 86400
