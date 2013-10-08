@@ -93,6 +93,12 @@
       + DiskManager     [xroot,root,rfio,rfio3,gsiftp,d2dsrc,d2ddest,recall,migr]Weight   1
         Previous values had more variation (1 to 10, 3 for rfio). This may imply that you review
         your number of slots.
+      + DiskManager   MountPoints       -
+      + DiskManager   FSMinAllowedFreeSpace   .05
+      + DiskManager   FSMaxFreeSpace          .10   # used to be .15
+        Those DiskManager keys used to be under RmNode as MountPoints, MinAllowedFreeSpace,
+        and MaxFreeSpace, respectively. The behavior didn't change but you need to adapt your
+        configuration tools as the previous keys won't be taken into account.
       + ACCT          RTCOPY            NO
         ACCT          TAPE              NO
         Previous values were YES in both cases. This disables tape accounting.
@@ -114,7 +120,6 @@
 
     Finally this is the list of other changes that should not have a big impact. You may still
     want to review them :
-      + DiskManager   FSMaxFreeSpace                  .10   # .15
       + RFIO          CONRETRY                        3     # 10
       + RFIO          CONRETRYINT                     10    # 1
       + TAPE    CRASHED_RLS_HANDLING_RETRY_DELAY      300   # 60
@@ -317,10 +322,22 @@
        1. Apply the vmgr_2.1.13-9_to_2.1.14-2.sql database upgrade script to the VMGR DB from:
           http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-2/dbupgrades
 
-       2. Ask your DBA to grant the following select privilege to the nameserver account when logged
-          into the VMGR database schema:
+       2. Ask your DBA to grant the following privileges to the nameserver account:
 
           GRANT SELECT ON <CastorVmgrAccount>.VMGR_TAPE_STATUS_VIEW TO <CastorNsAccount>;
+          GRANT EXECUTE ON DBMS_SCHEDULER TO <CastorNsAccount>;
+          GRANT MANAGE ON SCHEDULER TO <CastorNsAccount>;
+          GRANT CREATE JOB TO <CastorNsAccount>;
+
+          Moreover, the DBA is required to create a job class, similarly to the one in place
+          on the Stager database. As SYSDBA on the Nameserver database, run:
+
+          BEGIN
+            DBMS_SCHEDULER.create_job_class(
+              job_class_name => 'CASTOR_JOB_CLASS',
+              service => '<YourServiceName>');
+          END;
+          /
 
        3. Apply the cns_2.1.13-9_to_2.1.14-2.sql database upgrade script to the NS DB from:
           http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-2/dbupgrades
@@ -409,9 +426,9 @@
          30 minutes and it starts a one-off job to populate the new fields added to the
          Nameserver schema.
 
-      3. The job may take several hours to complete (about two days for 300M files) and it is
-         performed as a background activity. You can check whether the job is still running
-         by executing the following query in the Nameserver database:
+      3. The job may take several days to complete and it is performed as a background
+         activity. You can check whether the job is still running by executing the following
+         query in the Nameserver database:
 
          SELECT total_time FROM user_jobs;
 
