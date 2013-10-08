@@ -9,19 +9,28 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "h/Ctape.h"
 #include "h/rbtsubr_constants.h"
 #include "h/rmc_api.h"
 #include "h/serrno.h"
 #include "h/smc_constants.h"
 #include "h/getconfent.h"
+
+#include <ctype.h>
 			/* exit codes */
 
 #define	USERR	1
 
 extern char *optarg;
 
-static void usage(const char *const cmd)
+static void smc_str_upper(char *const s) {
+	char *c = NULL;
+
+	for(c = s; *c; c++) {
+		*c = toupper(*c);
+	}
+}
+
+static void smc_usage(const char *const cmd)
 {
 	fprintf (stderr, "usage: %s ", cmd);
 	fprintf (stderr,
@@ -353,7 +362,7 @@ int main(const int argc,
 				errflg++;
 			} else {
 				strcpy (vid, optarg);
-				UPPER (vid);
+				smc_str_upper (vid);
 			}
 			break;
 		case 'v':
@@ -381,7 +390,7 @@ int main(const int argc,
 		errflg++;
 	}
 	if (errflg || req_type == 0) {
-		usage (argv[0]);
+		smc_usage (argv[0]);
 		exit (USERR);
 	}
 
