@@ -25,7 +25,6 @@
 #include "h/rmc_sendrep.h"
 #include "h/tplogger_api.h"
 #include <string.h>
-#include <Ctape_api.h>
 extern struct extended_robot_info extended_robot_info;
  
 /*	rmc_srv_export - export/eject a cartridge from the robot */
