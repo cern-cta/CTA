@@ -48,7 +48,7 @@
 
 // Definitions
 #define DEFAULT_SYNCINTERVAL       3600
-#define DEFAULT_CHUNKINTERVAL      240
+#define DEFAULT_CHUNKINTERVAL      1800
 #define DEFAULT_CHUNKSIZE          2000
 #define DEFAULT_DISABLESTAGERSYNC  false
 

@@ -61,8 +61,8 @@ class ReporterThread(threading.Thread):
     #   freeSpace, nbReadStreams, nbWriteStreams, nbRecalls, nbMigrations), ...)
     # with one tuple per filesystem
     diskServerName = socket.getfqdn()
-    maxFreeSpace = self.configuration.getValue('DiskManager', 'FSMaxFreeSpace', 0.10, float)
-    minAllowedFreeSpace = self.configuration.getValue('DiskManager', 'FSMinAllowedFreeSpace', 0.05, float)
+    maxFreeSpace = self.configuration.getValue('DiskManager', 'FSMaxFreeSpace', 0.05, float)
+    minAllowedFreeSpace = self.configuration.getValue('DiskManager', 'FSMinAllowedFreeSpace', 0.02, float)
     mountPoints = set(self.configuration.getValue('DiskManager', 'MountPoints', '').split())
     streamCount = self.runningTransfers.getStreamCount()
     reports = []
