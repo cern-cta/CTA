@@ -14,7 +14,6 @@
 #include "h/rmc_constants.h"
 #include "h/rmc_logit.h"
 #include "h/rmc_sendrep.h"
-#include "h/tplogger_api.h"
 #include <unistd.h>
 
 int rmc_sendrep(const int rpfd, const int rep_type, ...)

@@ -6,7 +6,6 @@
 #include "h/rmc_constants.h"
 #include "h/rmc_logit.h"
 #include "h/rmc_logreq.h"
-#include "h/tplogger_api.h"
 
 #include <string.h>
  
