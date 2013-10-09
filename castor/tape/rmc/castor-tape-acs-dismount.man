@@ -10,16 +10,18 @@
 .\" You should have received a copy of the GNU General Public License
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-.TH CASTOR-TAPE-ACS-DISMOUNT 1 "$Date: 2009/08/07 15:56:38 $" CASTOR "CASTOR"
+.TH CASTOR-TAPE-ACS-DISMOUNT 1 "$Date: 2013/10/09 14:00:00 $" CASTOR "CASTOR"
 .SH NAME
 castor-tape-acs-dismount \- dismount a volume
 .SH SYNOPSIS
 .BI "castor-tape-acs-dismount [options] VID DRIVE"
 
 .SH DESCRIPTION
-.B dismountacs
+.B castor-tape-acs-dismount
 dismounts the volume with the specfied VID from the drive with the specified
-DRIVE ID. The DRIVE ID format is ACS:LSM:panel:transport.
+DRIVE ID. The DRIVE ID format is:
+
+.B ACS:LSM:panel:transport
 
 .SH OPTIONS
 .TP

@@ -10,7 +10,7 @@
 .\" You should have received a copy of the GNU General Public License
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-.TH CASTOR-TAPE-ACS-MOUNT 1 "$Date: 2009/08/07 15:56:38 $" CASTOR "CASTOR"
+.TH CASTOR-TAPE-ACS-MOUNT 1 "$Date: 2013/10/09 14:00:00 $" CASTOR "CASTOR"
 .SH NAME
 castor-tape-acs-mount \- mount a volume
 .SH SYNOPSIS
@@ -19,8 +19,9 @@ castor-tape-acs-mount \- mount a volume
 .SH DESCRIPTION
 .B castor-tape-acs-mount
 mounts the volume with the specfied VID in an ACS compatible tape-library into
-the drive with the specified DRIVE ID. The DRIVE ID format is
-ACS:LSM:panel:transport.
+the drive with the specified DRIVE ID. The DRIVE ID format is:
+
+.B ACS:LSM:panel:transport
 
 .SH OPTIONS
 .TP

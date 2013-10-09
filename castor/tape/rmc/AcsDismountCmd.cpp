@@ -102,12 +102,15 @@ void castor::tape::rmc::AcsDismountCmd::usage(std::ostream &os)
   const throw() {
   os <<
   "Usage:\n"
-  "  dismountacs [options] VID DRIVE\n"
+  "  castor-tape-acs-dismount [options] VID DRIVE\n"
   "\n"
   "Where:\n"
   "\n"
   "  VID    The VID of the volume to be dismounted.\n"
   "  DRIVE  The drive from which the volume is to be dismounted.\n"
+  "         The format of DRIVE is:\n"
+  "\n"
+  "             ACS:LSM:panel:transport\n"
   "\n"
   "Options:\n"
   "\n"

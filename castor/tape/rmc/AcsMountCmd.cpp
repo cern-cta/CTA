@@ -220,13 +220,15 @@ void castor::tape::rmc::AcsMountCmd::usage(std::ostream &os)
   const throw() {
   os <<
   "Usage:\n"
-  "  mountacs [options] VID DRIVE\n"
+  "  castor-tape-acs-mount [options] VID DRIVE\n"
   "\n"
   "Where:\n"
   "\n"
   "  VID    The VID of the volume to be mounted.\n"
   "  DRIVE  The ID of the drive into which the volume is to be mounted.\n"
-  "         Drive ID format is ACS:LSM:panel:transport\n"
+  "         The format of DRIVE is:\n"
+  "\n"
+  "             ACS:LSM:panel:transport\n"
   "\n"
   "Options:\n"
   "\n"

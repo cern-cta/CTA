@@ -32,8 +32,7 @@
 //------------------------------------------------------------------------------
 int main(const int argc, char *const *const argv) {
   castor::tape::rmc::AcsImpl acs;
-  castor::tape::rmc::AcsDismountCmd
-    cmd(std::cin, std::cout, std::cerr, acs);
+  castor::tape::rmc::AcsDismountCmd cmd(std::cin, std::cout, std::cerr, acs);
 
   return cmd.main(argc, argv);
 }

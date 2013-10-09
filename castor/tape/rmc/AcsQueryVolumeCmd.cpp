@@ -209,7 +209,7 @@ void castor::tape::rmc::AcsQueryVolumeCmd::usage(std::ostream &os)
   const throw() {
   os <<
   "Usage:\n"
-  "  queryvolumeacs [options] VID\n"
+  "  castor-tape-acs-queryvolume [options] VID\n"
   "\n"
   "Where:\n"
   "\n"
