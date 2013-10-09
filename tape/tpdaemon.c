@@ -2677,13 +2677,26 @@ void check_child_exit()
         struct tprrt *rrtp;
 
 	while ((pid = waitpid (-1, &status, WNOHANG)) > 0) {
-        tplogit (func, "process %d exiting with status %x\n",
-                 pid, status & 0xFFFF);
-        tl_tpdaemon.tl_log( &tl_tpdaemon, 108, 4,
-                            "func",    TL_MSG_PARAM_STR, func,
-                            "Message", TL_MSG_PARAM_STR, "Process exiting",
-                            "PID",     TL_MSG_PARAM_INT, pid,
-                            "Status",  TL_MSG_PARAM_INT, status & 0xFFFF );                        
+		if(WIFEXITED(status)) {
+        		tplogit (func, "process %d exiting with status %d\n",
+                		pid, WEXITSTATUS(status));
+        		tl_tpdaemon.tl_log( &tl_tpdaemon, 108, 4,
+				"func",    TL_MSG_PARAM_STR, func,
+				"Message", TL_MSG_PARAM_STR, "Process exiting",
+				"PID",     TL_MSG_PARAM_INT, pid,
+				"Status",  TL_MSG_PARAM_INT,
+					WEXITSTATUS(status));
+		}
+		if(WIFSIGNALED(status)) {
+        		tplogit (func, "process %d terminated by signal %d\n",
+                		pid, WTERMSIG(status));
+        		tl_tpdaemon.tl_log( &tl_tpdaemon, 108, 4,
+				"func",    TL_MSG_PARAM_STR, func,
+				"Message", TL_MSG_PARAM_STR,
+					"Process terminated by signal",
+				"PID",     TL_MSG_PARAM_INT, pid,
+				"Signal",  TL_MSG_PARAM_INT, WTERMSIG(status));
+		}
 
 		/* is it a mountape or a posittape process? */
 
