@@ -1612,18 +1612,19 @@ static void procmountreq(char *req_data,
 		char arg_tpmounted[2], arg_uid[11], arg_ux[3], arg_vdqmid[10];
 		char progfullpath[CA_MAXPATHLEN+1];
 		int lblcode; 
-		if(!strcmp (lbltype, "AUL")) {
+		if(!strcmp (lbltype, "aul")) {
 			lblcode = AUL;
 		} else if (!strcmp (lbltype, "DMP")) {
 			lblcode = DMP;
 		} else {
-			tplogit (func, "TP002 - unknown label : %s\n",
-				lblcode);
+			tplogit (func, "TP002 - unknown label type : %s\n",
+				lbltype);
                 	tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 4,
 				"func",    TL_MSG_PARAM_STR, func,
-				"Message", TL_MSG_PARAM_STR, "unknown label",
+				"Message", TL_MSG_PARAM_STR,
+					"unknown label type",
 				"JobID",   TL_MSG_PARAM_INT, jid,
-				"Error",   TL_MSG_PARAM_STR, lblcode);
+				"Error",   TL_MSG_PARAM_STR, lbltype);
 			tl_tpdaemon.tl_exit( &tl_tpdaemon, 0 );
 			exit (ECANCELED);
 		}
