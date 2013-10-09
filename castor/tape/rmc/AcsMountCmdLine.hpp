@@ -69,7 +69,7 @@ struct AcsMountCmdLine {
   BOOLEAN readOnly;
 
   /**
-   * Time in seconds to wait for the dismount to conclude.
+   * Time in seconds to wait for the mount to conclude.
    */
   int timeout;
 
