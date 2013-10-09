@@ -20,7 +20,7 @@
     node are immediately killed if they are not allowed to run in the new status.
   - The CASTOR plugin to XROOT has been integrated into the CASTOR code so that it is built, tested,
     and distributed with the core CASTOR software. It comes under the form of a new RPM called
-    castor-xroot-plugin, which replaces both the xrootd-xcastor2fs and xrootd-libtransfermanager RPMs.
+    castor-xrootd-plugin, which replaces both the xrootd-xcastor2fs and xrootd-libtransfermanager RPMs.
     The new version of the plugin was also modified to use the asynchronous API of CASTOR (see
     bug #101710: RFE: add support for the asynchronous API in the xrootd plugin for CASTOR).
   - The disk to disk copy mechanism and the associated draining tools have been completely
@@ -326,7 +326,7 @@
 
           GRANT SELECT ON <CastorVmgrAccount>.VMGR_TAPE_STATUS_VIEW TO <CastorNsAccount>;
           GRANT EXECUTE ON DBMS_SCHEDULER TO <CastorNsAccount>;
-          GRANT MANAGE ON SCHEDULER TO <CastorNsAccount>;
+          GRANT MANAGE SCHEDULER TO <CastorNsAccount>;
           GRANT CREATE JOB TO <CastorNsAccount>;
 
           Moreover, the DBA is required to create a job class, similarly to the one in place
