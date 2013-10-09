@@ -106,7 +106,7 @@ COMM build it need to be included
 include $(CASTOR_ROOT)/rmc/Makefile
 
 # Compile no STK version
-MOUNTTAPE_NOSTK_OBJS = mounttape.o asc2ebc.o buildhdrlbl.o buildvollbl.o ebc2asc.o getdrvstatus.o inquiry.o rbtsubr.o readlbl.o rwndtape.o send2tpd.o sendrep.o setcompression.o skiptape.o tperror.o tplogit.o unldtape.o usrmsg.o writelbl.o wrttpmrk.o mircheck.o
+MOUNTTAPE_NOSTK_OBJS = mounttape.o asc2ebc.o buildhdrlbl.o buildvollbl.o ebc2asc.o getdrvstatus.o inquiry.o rbtsubr.o readlbl.o rwndtape.o send2tpd.o sendrep.o setCompression.o skiptape.o tperror.o tplogit.o unldtape.o usrmsg.o writelbl.o wrttpmrk.o mircheck.o
 MOUNTTAPE_NOSTK_DEPLIBS = DepSharedLibraryTargetName(tape,castortape) DepSharedLibraryTargetName(rmc,castorrmc)
 MOUNTTAPE_NOSTK_LIBS = $(MOUNTTAPE_NOSTK_DEPLIBS) BuildRPathcastorrmc
 TapeProgramTarget(mounttape-nostk,$(MOUNTTAPE_NOSTK_OBJS) $(TAPEACCT),$(MOUNTTAPE_NOSTK_DEPLIBS),$(MOUNTTAPE_NOSTK_LIBS),755)
@@ -135,7 +135,7 @@ PREFIX(FilesToClean) += LOCAL_PATH/rbtsubr-stk.c
 COMPILEC(rbtsubr-stk.c, $(CDKFLG) $(CDKINC))
 
 # Compile STK version
-MOUNTTAPE_STK_OBJS = mounttape-stk.o asc2ebc.o buildhdrlbl.o buildvollbl.o ebc2asc.o getdrvstatus.o inquiry.o rbtsubr-stk.o readlbl.o rwndtape.o send2tpd.o sendrep.o setcompression.o skiptape.o tperror.o tplogit.o unldtape.o usrmsg.o writelbl.o wrttpmrk.o mircheck.o
+MOUNTTAPE_STK_OBJS = mounttape-stk.o asc2ebc.o buildhdrlbl.o buildvollbl.o ebc2asc.o getdrvstatus.o inquiry.o rbtsubr-stk.o readlbl.o rwndtape.o send2tpd.o sendrep.o setCompression.o skiptape.o tperror.o tplogit.o unldtape.o usrmsg.o writelbl.o wrttpmrk.o mircheck.o
 MOUNTTAPE_STK_DEPLIBS = DepSharedLibraryTargetName(tape,castortape) DepSharedLibraryTargetName(rmc,castorrmc)
 MOUNTTAPE_STK_LIBS = $(LIBCDK) $(MOUNTTAPE_STK_DEPLIBS) BuildRPathcastorrmc
 TapeProgramTarget(mounttape,$(MOUNTTAPE_STK_OBJS) $(TAPEACCT),$(MOUNTTAPE_STK_DEPLIBS),$(MOUNTTAPE_STK_LIBS),755)
