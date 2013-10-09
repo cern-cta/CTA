@@ -72,7 +72,7 @@ int main(int	argc,
 	char *dvn;
 	char hdr1[81];
 	char hdr2[81];
-	static char labels[6][4] = {"", "al", "nl", "sl", "blp", "aul"};
+	static char labels[7][4] = {"", "al", "nl", "sl", "blp", "aul", "DMP"};
 	int lblcode;
 	struct mtop mtop;
 	int n;
@@ -391,9 +391,11 @@ int main(int	argc,
 
 		(void) setCompression (tapefd, path, den);
 
-		/* check VOL1 label if not blp */
+		/* do not continue if the volume is be dumped */
 
-		if (lblcode == BLP) break;
+		if (lblcode == DMP) break;
+
+		/* the volume is not being dumped so check the VOL1 label */
 
 		if ((c = readlbl (tapefd, path, vol1)) < 0) goto reply;
 		if (prelabel >= 0 && c == 3) break;	/* tape is new. ok to prelabel */

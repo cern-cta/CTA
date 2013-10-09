@@ -166,7 +166,7 @@ int rtcpd_tpdump(rtcpClientInfo_t *client, tape_list_t *tape) {
      * Mount the volume
      */
     strcpy(lbltyp,tape->tapereq.label);
-    strcpy(tape->tapereq.label,"aul");
+    strcpy(tape->tapereq.label,"DMP");
     TP_STATUS(RTCP_PS_MOUNT);
     rc = rtcpd_Mount(tape);
     TP_STATUS(RTCP_PS_NOBLOCKING);

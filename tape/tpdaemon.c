@@ -1397,11 +1397,11 @@ static void procmountreq(char *req_data,
 		errflg++;
 	}
 
-	/* Only the AUL label type is supported */
-	if (strcmp (lbltype, "aul")) {
+	/* Only the AUL and DMP label types are supported */
+	if (strcmp (lbltype, "aul") && strcmp (lbltype, "DMP")) {
 		usrmsg (func,
 		  "TP006 - Invalid value for lbltype: actual %s,"
-		  " expected aul\n", lbltype);
+		  " expected aul or DMP\n", lbltype);
 		tl_tpdaemon.tl_log( &tl_tpdaemon, 6, 5,
 		  "func"   , TL_MSG_PARAM_STR, func,
 		  "Message", TL_MSG_PARAM_STR, "lbltype",
@@ -1410,17 +1410,10 @@ static void procmountreq(char *req_data,
 		  "TPVID"  , TL_MSG_PARAM_TPVID, vid );
 		errflg++;
 	}
-/********************************************************************
- Please note that if we ever support the BLP label type then we must
- include the following if statement
-	if (lblcode == BLP && mode == WRITE_ENABLE) {
-		usrmsg (func, TP017);
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 17, 2,
-                                    "func",  TL_MSG_PARAM_STR, func,
-                                    "JobID", TL_MSG_PARAM_INT, jid );                
+	if (!strcmp (lbltype, "DMP") && mode == WRITE_ENABLE) {
+		usrmsg (func, "Invalid request to dump a tape in write mode\n");
 		errflg++;
 	}
-*********************************************************************/
 	if (errflg) {
 		c = EINVAL;
 		goto reply;
@@ -1618,7 +1611,22 @@ static void procmountreq(char *req_data,
 		char arg_prelabel[3], arg_rpfd[3], arg_side[2];
 		char arg_tpmounted[2], arg_uid[11], arg_ux[3], arg_vdqmid[10];
 		char progfullpath[CA_MAXPATHLEN+1];
-		const int lblcode = AUL; /* Only the AUL label type is supported */
+		int lblcode; 
+		if(!strcmp (lbltype, "AUL")) {
+			lblcode = AUL;
+		} else if (!strcmp (lbltype, "DMP")) {
+			lblcode = DMP;
+		} else {
+			tplogit (func, "TP002 - unknown label : %s\n",
+				lblcode);
+                	tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 4,
+				"func",    TL_MSG_PARAM_STR, func,
+				"Message", TL_MSG_PARAM_STR, "unknown label",
+				"JobID",   TL_MSG_PARAM_INT, jid,
+				"Error",   TL_MSG_PARAM_STR, lblcode);
+			tl_tpdaemon.tl_exit( &tl_tpdaemon, 0 );
+			exit (ECANCELED);
+		}
 
 		sprintf (progfullpath, "%s/mounttape", BIN);
 		sprintf (arg_rpfd, "%d", rpfd);
@@ -2415,7 +2423,7 @@ static void procstatreq(char *req_data,
 {
 	gid_t gid;
 	unsigned int j;
-	static char labels[6][4] = {"", "al", "nl", "sl", "blp", "aul"};
+	static char labels[7][4] = {"", "al", "nl", "sl", "blp", "aul", "DMP"};
 	char *rbp;
 	char repbuf[REPBUFSZ];
 	char *sbp;

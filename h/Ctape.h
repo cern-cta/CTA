@@ -41,6 +41,7 @@
 #define SL	3
 #define BLP	4
 #define AUL	5
+#define DMP	6	/* for the dump tape   */
 
 			/* supported densities */
 

@@ -96,7 +96,7 @@ int vmgrchecki(char *vid, char *vsn, char *dgn, char *den, char *lbl, int mode, 
   }
 
   if (*lbl) {
-    if (strcmp (lbl, "blp") && strcmp (lbl, tape_info.lbltype)) {
+    if (strcmp (lbl, "DMP") && strcmp (lbl, tape_info.lbltype)) {
       vmgr_errmsg (func, VMG64, vid, lbl, tape_info.lbltype);
       errflg++;
     }
