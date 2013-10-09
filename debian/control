@@ -36,7 +36,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-dbtools
 Architecture: any
-Depends: castor-lib-oracle, cx_Oracle >= 5.1.1, castor-lib = %{version}-%{release}
+Depends: cx_Oracle >= 5.1.1, castor-lib-oracle = %{version}-%{release}, castor-lib = %{version}-%{release}
 Recommends: python-krbV
 Description: castor (Cern Advanced STORage system)
  DB Administration tools
@@ -79,7 +79,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-diskserver-manager
 Architecture: any
-Depends: python, logrotate, python-daemon, python-rpyc, castor-job, castor-lib = %{version}-%{release}
+Depends: python, logrotate, python-daemon, python-rpyc, castor-job = %{version}-%{release}, castor-lib = %{version}-%{release}
 Conflicts: castor-dbtools, castor-transfer-manager
 Description: castor (Cern Advanced STORage system)
  Disk server manager of CASTOR
@@ -88,7 +88,7 @@ XBS-Obsoletes: castor-rmnode-server
 Package: castor-lib-oracle
 Architecture: any
 Build-Depends: oracle-instantclient-devel
-Depends: castor-lib = %{version}-%{release}
+Depends: oracle-instantclient-basic >= 11.2, castor-lib = %{version}-%{release}
 Description: castor (Cern Advanced STORage system)
  Static and shared libraries for Oracle access
 
@@ -101,7 +101,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-ns-server
 Architecture: any
-Depends: logrotate, castor-lib = %{version}-%{release}
+Depends: logrotate, oracle-instantclient-basic >= 11.2, castor-lib = %{version}-%{release}
 Build-Depends: oracle-instantclient-precomp
 Description: castor (Cern Advanced STORage system)
  Name server daemon
@@ -122,7 +122,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-rh-server
 Architecture: any
-Depends: logrotate, libmemcached >= 0.34, castor-lib-oracle, castor-lib = %{version}-%{release}
+Depends: logrotate, libmemcached >= 0.34, castor-lib-oracle = %{version}-%{release}, castor-lib = %{version}-%{release}
 Build-Depends: libmemcached-devel >= 0.34
 Description: castor (Cern Advanced STORage system)
  Request Handler server
@@ -154,7 +154,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-stager-server
 Architecture: any
-Depends: logrotate, castor-lib-oracle, castor-lib = %{version}-%{release}
+Depends: logrotate, castor-lib-oracle = %{version}-%{release}, castor-lib = %{version}-%{release}
 Description: castor (Cern Advanced STORage system)
  Stager server
 
@@ -187,7 +187,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-upv-server
 Architecture: any
-Depends: logrotate, castor-lib = %{version}-%{release}
+Depends: logrotate, oracle-instantclient-basic >= 11.2, castor-lib = %{version}-%{release}
 Build-Depends: oracle-instantclient-precomp
 Description: castor (Cern Advanced STORage system)
  User Privilege server
@@ -202,14 +202,14 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-vdqm2-server
 Architecture: any
-Depends: logrotate, castor-lib-oracle, castor-vdqm2-lib-oracle, castor-lib = %{version}-%{release}
+Depends: logrotate, castor-lib-oracle = %{version}-%{release}, castor-vdqm2-lib-oracle = %{version}-%{release}, castor-lib = %{version}-%{release}
 XBS-Obsoletes: castor-vdqm-server
 Description: castor (Cern Advanced STORage system)
  Volume Drive and Queue Manager server version 2
 
 Package: castor-vdqm2-lib-oracle
 Architecture: any
-Depends: logrotate, castor-lib = %{version}-%{release}
+Depends: logrotate, castor-lib-oracle = %{version}-%{release}, castor-lib = %{version}-%{release}
 Description: castor (Cern Advanced STORage system)
  Volume Drive and Queue Manager server version 2 library
 
@@ -222,7 +222,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-vmgr-server
 Architecture: any
-Depends: logrotate, castor-lib = %{version}-%{release}
+Depends: logrotate, oracle-instantclient-basic >= 11.2, castor-lib = %{version}-%{release}
 Build-Depends: oracle-instantclient-precomp
 Description: castor (Cern Advanced STORage system)
  Volume Manager server
@@ -279,7 +279,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-tapegateway-server
 Architecture: any
-Depends: logrotate, castor-lib-oracle, castor-lib-tape = %{version}-%{release}
+Depends: logrotate, castor-lib-oracle = %{version}-%{release}, castor-lib-tape = %{version}-%{release}
 Description: castor (Cern Advanced STORage system)
  Tape Gateway Daemon
 
