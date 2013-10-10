@@ -32,7 +32,12 @@ set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 ###########################################################################
 project(tape-server)
 set(tape-server_VERSION_MAJOR "0.0.0")
-set(tape-server_VERSION_MINOR "1")
+IF(DEFINED VCS_VERSION)
+  message("VCS version present: ${VCS_VERSION}")
+  set(tape-server_VERSION_MINOR ${VCS_VERSION})
+ELSE(DEFINED VCS_VERSION)
+  set(tape-server_VERSION_MINOR "1")
+ENDIF(DEFINED VCS_VERSION)
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 ###########################################################################
