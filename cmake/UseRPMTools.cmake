@@ -158,7 +158,7 @@ rm -rf build_tree
       ADD_CUSTOM_TARGET(${RPMNAME}_srpm
 	COMMAND cpack -G TGZ --config CPackSourceConfig.cmake
 	COMMAND ${CMAKE_COMMAND} -E copy ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz ${RPM_ROOTDIR}/SOURCES    
-	COMMAND ${RPMTools_RPMBUILD_EXECUTABLE} -bs --define=\"_topdir ${RPM_ROOTDIR}\" --buildroot=${RPM_ROOTDIR}/tmp ${RPM_ROOTDIR}/SPECS/${SPECFILE_NAME} 
+	COMMAND ${RPMTools_RPMBUILD_EXECUTABLE} -bs --define=\"_topdir ${RPM_ROOTDIR}\"  --define '_source_filedigest_algorithm md5' --define '_binary_filedigest_algorithm md5' --nodeps --buildroot=${RPM_ROOTDIR}/tmp ${RPM_ROOTDIR}/SPECS/${SPECFILE_NAME} 
 	)
       
       ADD_CUSTOM_TARGET(${RPMNAME}_rpm
