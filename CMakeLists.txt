@@ -48,14 +48,14 @@ set (CMAKE_CXX_FLAGS "-g3 -Wall -Werror -pedantic")
 ###########################################################################
 # dependancies
 ###########################################################################
-IF(DEFINED SKIP_GTest)
-  MESSAGE("Skipping GTest. This is fine for a packaging.")
+IF(DEFINED PackageOnly)
+  MESSAGE("Running CMake in package-only mode")
   SET(GTEST_LIBRARY "")
   SET(GTEST_INCLUDE_DIR "")
   SET(GTEST_MAIN_LIBRARY "")
-ELSE(DEFINED SKIP_GTest)
+ELSE(DEFINED PackageOnly)
   find_package(GTest REQUIRED)
-ENDIF(DEFINED SKIP_GTest)
+ENDIF(DEFINED PackageOnly)
 enable_testing()
 set(CTEST_OUTPUT_ON_FAILURE 1)
 
@@ -83,19 +83,24 @@ add_subdirectory(test)
 # documentation
 ###########################################################################
 # add a target to generate API documentation with Doxygen
-find_package(Doxygen)
-if(DOXYGEN_FOUND)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
-  add_custom_target(doxygen
-    ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    COMMENT "Generating API documentation with Doxygen" VERBATIM
-)
-endif(DOXYGEN_FOUND)
+IF (NOT DEFINED PackageOnly)
+  find_package(Doxygen)
+  if(DOXYGEN_FOUND)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
+    add_custom_target(doxygen
+      ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      COMMENT "Generating API documentation with Doxygen" VERBATIM
+  )
+  endif(DOXYGEN_FOUND)
 
-INCLUDE(cmake/UseLATEX.cmake)
+  INCLUDE(cmake/UseLATEX.cmake)
 
-add_subdirectory(Documentation)
+  add_subdirectory(Documentation)
+
+ENDIF (NOT DEFINED PackageOnly)
+
+
 
 ###########################################################################
 # Packaging step (replacing the maketar)
