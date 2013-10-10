@@ -48,8 +48,14 @@ set (CMAKE_CXX_FLAGS "-g3 -Wall -Werror -pedantic")
 ###########################################################################
 # dependancies
 ###########################################################################
-find_package(GTest REQUIRED)
-
+IF(DEFINED SKIP_GTest)
+  MESSAGE("Skipping GTest. This is fine for a packaging.")
+  SET(GTEST_LIBRARY "")
+  SET(GTEST_INCLUDE_DIR "")
+  SET(GTEST_MAIN_LIBRARY "")
+ELSE(DEFINED SKIP_GTest)
+  find_package(GTest REQUIRED)
+ENDIF(DEFINED SKIP_GTest)
 enable_testing()
 set(CTEST_OUTPUT_ON_FAILURE 1)
 
