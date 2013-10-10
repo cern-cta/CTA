@@ -1,7 +1,7 @@
 Summary: The CERN tape server project
 Name: tape-server
-Version: 0.0.0
-Release: 1
+Version: @tape-server_VERSION_MAJOR@
+Release: @tape-server_VERSION_MINOR@
 Prefix: /usr
 License: GPL
 Group: Applications/File

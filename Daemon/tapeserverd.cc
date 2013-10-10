@@ -118,7 +118,7 @@ void Tape::Server::Daemon::daemonize()
   }
 
   /* At this point we are executing as the child process, and parent process should be init */
-  if (getppid() != 1) {
+  if (getppid() != 1) { 
     Tape::Exception e("Failed to detach from parent process in Tape::Server::Daemon::daemonize");
     throw e;
   }

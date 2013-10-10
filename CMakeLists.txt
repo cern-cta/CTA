@@ -20,14 +20,6 @@
 # * along with this program.  If not, see <http://www.gnu.org/licenses/>.*
 # ************************************************************************
 
-##########################################################################
-# Version Definition
-##########################################################################
-set(VERSION_MAJOR "0" )
-set(VERSION_MINOR "0")
-set(VERSION_PATCH "0")
-set(VERSION_TWEAK "1")
-
 ###########################################################################
 # In source build forbidding
 ###########################################################################
@@ -38,7 +30,9 @@ set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 ###########################################################################
 # project definition section
 ###########################################################################
-project (CERN_Tape)
+project(tape-server)
+set(tape-server_VERSION_MAJOR "0.0.0")
+set(tape-server_VERSION_MINOR "1")
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 ###########################################################################
@@ -91,3 +85,15 @@ endif(DOXYGEN_FOUND)
 INCLUDE(cmake/UseLATEX.cmake)
 
 add_subdirectory(Documentation)
+
+###########################################################################
+# Packaging step (replacing the maketar)
+# See http://www.vtk.org/Wiki/CMakeUserUseRPMTools
+###########################################################################
+SET(CPACK_SOURCE_PACKAGE_FILE_NAME "${PROJECT_NAME}-${tape-server_VERSION_MAJOR}-${tape-server_VERSION_MINOR}")
+INCLUDE(CPack)
+INCLUDE(cmake/UseRPMTools.cmake)
+IF(RPMTools_FOUND)
+  RPMTools_ADD_RPM_TARGETS(tape-server ${CMAKE_SOURCE_DIR}/tape-server.spec.in)
+ENDIF(RPMTools_FOUND)
+
