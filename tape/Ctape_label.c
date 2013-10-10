@@ -11,11 +11,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <netinet/in.h>
-#include "Ctape.h"
-#include "marshall.h"
-#include "serrno.h"
-#include "Ctape_api.h"
-#include "vmgr_api.h"
+#include "h/Ctape.h"
+#include "h/marshall.h"
+#include "h/serrno.h"
+#include "h/Ctape_api.h"
+#include "h/vmgr_api.h"
 
 int Ctape_label(char *path,
                 char *vid,

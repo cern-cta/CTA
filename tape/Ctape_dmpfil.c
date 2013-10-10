@@ -16,10 +16,10 @@
 #if defined(ADSTAR)
 #include <sys/Atape.h>
 #endif
-#include "Ctape.h"
-#include "Ctape_api.h"
-#include "serrno.h"
-#include "u64subr.h"
+#include "h/Ctape.h"
+#include "h/Ctape_api.h"
+#include "h/serrno.h"
+#include "h/u64subr.h"
 void (*Ctape_dmpmsg) (int, const char *, ...) = NULL;
 static char *buffer;
 static char codes[4][7] = {"", "ASCII", "", "EBCDIC"};

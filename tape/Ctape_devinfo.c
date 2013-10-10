@@ -8,8 +8,8 @@
 
 #include <string.h>
 #include <sys/types.h>
-#include "Ctape.h"
-#include "Ctape_api.h"
+#include "h/Ctape.h"
+#include "h/Ctape_api.h"
 
 static struct devinfo devinfo[] = {
   { "LTO" }, 
