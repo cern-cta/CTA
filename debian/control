@@ -133,6 +133,13 @@ Depends: logrotate, castor-lib = %{version}-%{release}
 Description: castor (Cern Advanced STORage system)
  Remote Media Controller server
 
+Package: castor-rmc-client
+Architecture: any
+Depends: castor-lib = %{version}-%{release}
+XBS-Group: Client
+Description: castor (Cern Advanced STORage system)
+ Remote Media Controller clients
+
 Package: castor-rtcopy-server
 Architecture: any
 Depends: logrotate, zlib-devel, castor-lib = %{version}-%{release}
