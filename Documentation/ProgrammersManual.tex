@@ -69,7 +69,7 @@ The new sequencing of a session start, simplified from the internal component co
 	\newthread{vm}{vmgrd}
 	\newthread{vd}{vdqmd}
 	\newthread{ts}{tapeserverd(main)}
-	\newinst{tsc}{tapeserverd(child process)}
+	\newinst{tsc}{tapeserverd(child)}
 	\newthread{gw}{client(gateway or command line)}
 	
 	\begin{call}{gw}{get volume}{vm}{tape VID}
@@ -94,23 +94,21 @@ The new sequencing of a session start, simplified from the internal component co
 \end{sequencediagram}
 \end{center}
 
-At that point, already two client libraries are in use in the tape server: the tape gateway protocol client library and the vdqm client library, and a simple server, answering only one type or requests:
+At that point, already two client libraries are in use in the tape server: the {\bf{}tape gateway protocol client} library and the {\bf{}vdqm client} library, and a simple server, answering only one type or requests:
 
 \begin{itemize}
 \item{}The client library for the tape gateway is implemented using the UML/umbrello based serialisation system. It is contained in the \verb#castor::tape::tapebridge::ClientProxy# class in CAStor.
 \item{}The direct C client API in CAStor's \verb#h/vdqm_api.h#.
-\item{}The VDQM request handler is implemented in \verb#castor::tape::tapebridge::VdqmRequestHandler#.
+\item{}The VDQM request handler is implemented in the server class \verb#castor::tape::tapebridge::VdqmRequestHandler#.
 \end{itemize}
 
 \subsubsection{Tape session startup}
 
-Upon reception of the session request, the tape server checks that it can continue with the session.
-
-Check with VMGR the volume status and block size. A disabled volume can only be mounted by a TP\_OPER.
-
-In case of a write session, queries pool info to know the owner.
-
-If user is not the owner or ADMIN, refuse the mount.
+Upon reception of the session request, the tape server checks that it can continue with the session:
+\begin{itemize}
+\item{}with VMGR the volume status and block size. A disabled volume can only be mounted by a TP\_OPER (this information is retrieved from cupv).
+\item{}In case of a write session, it queries the pool info know the owner. If user is not the owner or ADMIN, refuse the mount.
+\end{itemize}
 
 Then reports are sent:
 \begin{itemize}
@@ -122,12 +120,18 @@ in case of migration.
 \item{}Reports to the VDQM that the tape is mounted (VDQM\_UNITSTATUS).
 \end{itemize}
 
+This part adds the {\bf{}vmgr client} and the {\bf{}rmcd client}.
+
+TODO: bad day scenario.
+
 \subsubsection{Work loop}
-TODO: VDQM status reporting sequencing
-
-TODO: Mount time checks
-
-TODO: GW protocol
+The work loop will be a 4 step pipelined operation where:
+\begin{itemize}
+\item{}The work to be done FIFO gets topped up continuously  by a thread (using bulk)
+\item{}The data FIFO(s) is(are) filled up by the reader (tape thread or disk thread).
+\item{}The data FIFO consumer (opposite)
+\item{}The results are reported by either the control thread or a specialized thread (using bulk).
+\end{itemize}
 
 \subsubsection{Release tape}
 
