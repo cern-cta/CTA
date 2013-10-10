@@ -78,10 +78,8 @@ CLIENTLIBMANPAGE(wrttpmrk)
 TAPELIB = DepSharedLibraryTargetName(tape,castortape)
 
 TapeProgramTarget(tpconfig,tpconfig.o,$(TAPELIB),$(TAPELIB),755)
-TapeProgramTarget(tprstat,tprstat.o,$(TAPELIB),$(TAPELIB),755)
 TapeProgramTarget(tpstat,tpstat.o,$(TAPELIB),$(TAPELIB),755)
 EXEMANPAGE(tpconfig)
-EXEMANPAGE(tprstat)
 EXEMANPAGE(tpstat)
 
 TapeMakeDir($(LOGPATH),0755)

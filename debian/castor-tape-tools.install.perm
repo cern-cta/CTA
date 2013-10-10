@@ -1,4 +1,3 @@
 %attr(6755,root,root) usr/bin/smc
 %attr(0755,root,root) usr/bin/tpconfig
-%attr(0755,root,root) usr/bin/tprstat
 %attr(0755,root,root) usr/bin/tpstat
