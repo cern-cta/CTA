@@ -13,9 +13,6 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <unistd.h>
-#if defined(ADSTAR)
-#include <sys/Atape.h>
-#endif
 #include "h/Ctape.h"
 #include "h/Ctape_api.h"
 #include "h/serrno.h"
