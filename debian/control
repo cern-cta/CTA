@@ -136,7 +136,6 @@ Description: castor (Cern Advanced STORage system)
 Package: castor-rmc-client
 Architecture: any
 Depends: castor-lib = %{version}-%{release}
-XBS-Group: Client
 Description: castor (Cern Advanced STORage system)
  Remote Media Controller clients
 
