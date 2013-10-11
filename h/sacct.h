@@ -128,19 +128,6 @@ struct acctrfio64 {       /* accounting record for rfio64 software */
         char    filename[2*MAXPATH+1];
 };
 
-struct accttape {	/* accounting record for tape software */
-	int	subtype;
-	uid_t	uid;
-	gid_t	gid;
-	int	jid;
-	char	filler[16];
-	char	dgn[CA_MAXDGNLEN+1];	/* CART, 8500, SMCF... */
-	char	drive[CA_MAXUNMLEN+1];	/* drive name */
-	char	vid[CA_MAXVIDLEN+1];
-	int	fseq;
-	int	reason;
-};
-
 			/* subtypes for system records */
 
 #define SYSSHUTDOWN     0
@@ -369,11 +356,5 @@ struct acctstage64 {	/* accounting record for stage 64BITS software */
 #define	STGCMDC		3	/* command completed (with success or not) */
 #define	STGCMDS		4	/* stager started */
 #define	STGFILC		5	/* file cleared */
-
-
-/*
- * Function prototypes
- */
-EXTERN_C int tapeacct (int, uid_t, gid_t, int, char*, char*, char*, int, int);
 
 #endif /* H_SACCT_H */
