@@ -241,8 +241,6 @@ int main(int	argc,
 		goto reply;
 	updvsn_done = 1;
 
-	tapeacct (TP2MOUNT, uid, gid, jid, dgn, drive, vid, 0, why4a);
-
 	if (*loader != 'm')
 		needrbtmnt = 1;
 
@@ -376,7 +374,6 @@ int main(int	argc,
 			close (tapefd);
 			why = "wrong ring status";
 			why4a = TPU_WNGR;
-			tapeacct (TPUNLOAD, uid, gid, jid, dgn, drive, vid, 0, TPU_WNGR);
 			continue;
 		}
 		mtop.mt_op = MTSETBLK;
@@ -481,7 +478,6 @@ int main(int	argc,
 		close (tapefd);
 		why = "wrong vsn";
 		why4a = TPM_WNGV;
-		tapeacct (TPUNLOAD, uid, gid, jid, dgn, drive, vid, 0, TPU_WNGV);
 		if (*loader == 'm')
 			continue;
 		demountforce = 1;
@@ -688,7 +684,6 @@ int main(int	argc,
             }
     }
 
-	tapeacct (TPMOUNTED, uid, gid, jid, dgn, drive, vid, 0, 0);
 	if ((c = Ctape_updvsn (uid, gid, jid, ux, vid, vsn, 0, lblcode, mode)))
 		goto reply;
 	(void) vmgr_seterrbuf (errbuf, sizeof(errbuf));

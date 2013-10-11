@@ -143,7 +143,6 @@ int tpd_main() {
         tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
                             "func",    TL_MSG_PARAM_STR, func,
                             "Message", TL_MSG_PARAM_STR, "tape daemon has started." );
-	tapeacct (TPDSTART, 0, 0, jid, "", "", "", 0, 0);
 
 	if (Cdomainname (domainname, sizeof(domainname)) < 0) {
 
@@ -1103,8 +1102,6 @@ static void procfrdrvreq(char *req_data,
             tunp->vsn[0] = '\0';
         }
         tunp->tobemounted = 0;
-        tapeacct (TPFREE, tunp->uid, tunp->gid, tunp->jid,
-                  tunp->dgn, tunp->drive, "", 0, 0);
         if (tunp->up <= 0) {
             (void) confdrive (tunp, -1, CONF_DOWN, -tunp->up);
             tunp->up = 0;
@@ -1537,9 +1534,6 @@ static void procmountreq(char *req_data,
 	tunp->gid = gid;
 	strcpy (tunp->acctname, acctname);
 	tunp->jid = jid;
-
-	tapeacct (TPASSIGN, tunp->uid, tunp->gid, tunp->jid,
-		tunp->dgn, tunp->drive, vid, 0, 0);
 
 	tunp->filp = (struct tpfil *) calloc (1, sizeof(struct tpfil));
 
@@ -2211,10 +2205,6 @@ static void procrsltreq(char *req_data,
 
 	unlink (tunp->filp->path);	/* delete previous path */
 
-	tapeacct (TPFREE, tunp->uid, tunp->gid, tunp->jid,
-		oldtunp->dgn, oldtunp->drive, "", 0, 0);
-	tapeacct (TPASSIGN, tunp->uid, tunp->gid, tunp->jid,
-		tunp->dgn, tunp->drive, "", 0, 0);
 	if (oldtunp->up <= 0) {
 		(void) confdrive (tunp, -1, CONF_DOWN, -oldtunp->up);
 		oldtunp->up = 0;

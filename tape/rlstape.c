@@ -287,7 +287,6 @@ unload_loop:
                                         }
                                 }
                         }
-			tapeacct (TPUNLOAD, uid, gid, jid, dgn, drive, vid, 0, 0);
 		}
 		close (tapefd);
 	} else {

@@ -203,7 +203,6 @@ int main(int	argc,
 				goto reply;
 
 	/* tape is positionned */
-	tapeacct (TPPOSIT, uid, gid, jid, dgn, drive, vid, cfseq, 0);
 	if (lblcode == AL || lblcode == AUL || lblcode == SL) {
 		if (filstat != NEW_FILE) {	/* set defaults from label */
 			if (fid[0] == '\0') {

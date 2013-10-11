@@ -230,10 +230,6 @@ int main(int	argc,
 				close (tapefd);
 			}
 		}
-		if (c == 0)
-			tapeacct (TPCONFUP, 0, 0, jid, dgn, drive, "", 0, reason);
-	} else {
-		tapeacct (TPCONFDN, 0, 0, jid, dgn, drive, "", 0, reason);
 	}
 	if (c == 0) {
 		vdqm_status = (status == CONF_UP) ? VDQM_UNIT_UP : VDQM_UNIT_DOWN;

@@ -5,8 +5,6 @@ COMM
 
 COMM 	Make tape daemon programs.
 
-TAPEACCT = tapeacct.o
-
 CPPFLAGS += -DBIN=\"$(BINDIR)\"
 
 COMM ######################### FLAGS ##############################
