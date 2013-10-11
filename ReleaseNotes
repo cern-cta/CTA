@@ -1,3 +1,85 @@
+-----------
+- 2.1.14-3 -
+------------
+
+  Summary of major features
+  -------------------------
+
+  Notes
+  -----
+
+  - To install the smc comand-line tool one must install the castor-rmc-client package.
+
+  CASTOR Core Framework
+  ---------------------
+
+  [Bug]
+
+
+  [Features]
+
+
+  [Code Maintenance]
+
+
+  CASTOR Stager
+  -------------
+
+  [Bug]
+
+  [Features]
+
+  [Code Maintenance]
+
+  CASTOR Tape
+  -----------
+
+  [Bug]
+
+     #102804 Tape dump incorrectly reports VOL1 and HDR1
+     #102810 taped parent process does not correctly log child process terminated by a signal
+
+  [Features]
+
+     #102700 RFE: Remove tape-server code that supports unused drive types
+     #102786 RFE: Add the header files of the tapegatewayd protocol to castor-build-headers.rpm
+     #102815 RFE: Remove the tprstat command from CASTOR
+     #102817 RFE: Move smc to a new package called castor-rmc-client
+
+  [Code Maintenance]
+
+
+  CASTOR NS
+  ---------
+
+  [Bug]
+
+  [Features]
+
+  [Code Maintenance]
+
+  CASTOR Repack
+  -------------
+
+  [Bug]
+
+  [Features]
+
+  [Code Maintenance]
+
+  Package Changes
+  ---------------
+
+  - A new tape packaged name castor-rmc-client has been created and the command-line tool smc has
+    been moved into it from the castor-tape-tools package.
+
+  Deployment Changes
+  ------------------
+
+  Upgrade Instructions from 2.1.13-9
+  ----------------------------------
+
+
 ------------
 - 2.1.14-2 -
 ------------
