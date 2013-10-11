@@ -49,7 +49,6 @@ int main(int	argc,
 	static char drive[CA_MAXUNMLEN+1] = "";
 	int errflg = 0;
 	int flags = 0;
-	char *getacct();
 	gid_t gid;
 	static char lbltype[CA_MAXLBLTYPLEN+1] = "";
 	static struct Coptions longopts[] = {

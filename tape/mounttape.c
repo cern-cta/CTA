@@ -20,7 +20,6 @@
 #include "h/Ctape_api.h"
 #include "h/marshall.h"
 #include "h/rbtsubr_constants.h"
-#include "h/sacct.h"
 #include "h/serrno.h"
 #include "h/net.h"
 #include "h/vdqm_api.h"
@@ -98,7 +97,6 @@ int main(int	argc,
 	char vol1[LBLBUFSZ];
 	int vsnretry = 0;
 	char *why;
-	int why4a;
     
         time_t TStartMount, TEndMount, TMount;
 
@@ -232,7 +230,6 @@ int main(int	argc,
 	else
 		strcpy (rings, "write");
 	why = "";
-	why4a = 0;
 	msg_num = 0;
 
 	/* send vid, vsn and flag "to be mounted" to the tape daemon */
@@ -373,7 +370,6 @@ int main(int	argc,
 
 			close (tapefd);
 			why = "wrong ring status";
-			why4a = TPU_WNGR;
 			continue;
 		}
 		mtop.mt_op = MTSETBLK;
@@ -477,7 +473,6 @@ int main(int	argc,
 			}
 		close (tapefd);
 		why = "wrong vsn";
-		why4a = TPM_WNGV;
 		if (*loader == 'm')
 			continue;
 		demountforce = 1;
@@ -952,7 +947,7 @@ static void configdown(char *drive)
                             "Drive",    TL_MSG_PARAM_STR, drive, 
                             "Hostname", TL_MSG_PARAM_STR, hostname );
 
-	(void) Ctape_config (drive, CONF_DOWN, TPCD_SYS);
+	(void) Ctape_config (drive, CONF_DOWN);
 }
 
 static void mountkilled()

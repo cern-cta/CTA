@@ -16,7 +16,6 @@
 #include "Ctape.h"
 #include "Ctape_api.h"
 #include "marshall.h"
-#include "sacct.h"
 #include "serrno.h"
 #include "tplogger_api.h"
 char *devtype;
@@ -398,7 +397,7 @@ void configdown(char *drive)
                             "Drive",    TL_MSG_PARAM_STR, drive, 
                             "Hostname", TL_MSG_PARAM_STR, hostname );
 
-	(void) Ctape_config (drive, CONF_DOWN, TPCD_SYS);
+	(void) Ctape_config (drive, CONF_DOWN);
 }
 
 void positkilled()

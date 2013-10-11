@@ -16,7 +16,6 @@
 #include "h/Ctape_api.h"
 #include "h/marshall.h"
 #include "h/rbtsubr_constants.h"
-#include "h/sacct.h"
 #include "h/serrno.h"
 #include "h/net.h"
 #include "h/vdqm_api.h"
@@ -413,7 +412,7 @@ static void configdown(char *drive)
                             "Drive",    TL_MSG_PARAM_STR, drive, 
                             "Hostname", TL_MSG_PARAM_STR, hostname );
 
-	(void) Ctape_config (drive, CONF_DOWN, TPCD_SYS);
+	(void) Ctape_config (drive, CONF_DOWN);
 }
 
 static int rbtdmntchk(int *c,

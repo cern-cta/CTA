@@ -16,8 +16,7 @@
 #include "h/Ctape_api.h"
 
 int Ctape_config(char *unm,
-                 int status,
-                 int reason)
+                 int status)
 {
 	int c;
 	char drive[CA_MAXUNMLEN+1];
@@ -65,7 +64,6 @@ int Ctape_config(char *unm,
 	marshall_LONG (sbp, gid);
 	marshall_STRING (sbp, drive);
 	marshall_WORD (sbp, status);
-	marshall_WORD (sbp, reason);
 
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */

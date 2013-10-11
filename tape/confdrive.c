@@ -10,7 +10,6 @@
 #include <sys/types.h>
 #include "Ctape.h"
 #include "Ctape_api.h"
-#include "sacct.h"
 #include "serrno.h"
 #include "net.h"
 #include "vdqm_api.h"
@@ -29,7 +28,6 @@ int main(int	argc,
 	char *drive;
 	char *dvn;
 	char func[16];
-	int reason;
 	int rpfd;
 	int status;
 	int tapefd;
@@ -47,11 +45,10 @@ int main(int	argc,
 #endif
 	ENTRY (confdrive);
 
-  if (11 != argc) {
-    printf("Wrong number of arguments\n");
-    exit(-1);
-  }
-  
+	if (10 != argc) {
+		printf("Wrong number of arguments\n");
+		exit(-1);
+	}
 
         p = getconfent ("TAPE", "TPLOGGER", 0);
         if (p && (0 == strcasecmp(p, "SYSLOG"))) {
@@ -68,7 +65,6 @@ int main(int	argc,
 	dgn = argv[7];
 	/* The driver name in argv[8] is no longer used */
 	status = atoi (argv[9]);
-	reason = atoi (argv[10]);
 
 	c = 0;
 	if (status == CONF_UP) {

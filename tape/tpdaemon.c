@@ -28,7 +28,6 @@
 #undef  unmarshall_STRING
 #define unmarshall_STRING(ptr,str)  { str = ptr ; INC_PTR(ptr,strlen(str)+1) ; }
 #include "net.h"
-#include "sacct.h"
 #include "serrno.h"
 #ifdef TPCSEC
 #include "Csec_api.h"
@@ -562,10 +561,10 @@ void clean4jobdied()
 	free (jids);
 }
 
-int confdrive(struct tptab *tunp,
-              int rpfd,
-              int status,
-              int reason)
+static int confdrive(
+	const struct tptab *const tunp,
+	const int rpfd,
+	const int status)
 {
 	int c;
 	int i;
@@ -636,7 +635,7 @@ int confdrive(struct tptab *tunp,
 
 		/* set up the parameters for the process confdrive */
 
-		char arg_gid[11], arg_jid[11], arg_reason[2], arg_rpfd[3];
+		char arg_gid[11], arg_jid[11], arg_rpfd[3];
 		char arg_status[2], arg_uid[11];
 		char progfullpath[CA_MAXPATHLEN+1];
 
@@ -646,15 +645,13 @@ int confdrive(struct tptab *tunp,
 		sprintf (arg_gid, "%d", tunp->gid);
 		sprintf (arg_jid, "%d", tunp->jid);
 		sprintf (arg_status, "%d", status);
-		sprintf (arg_reason, "%d", reason);
 
 		tplogit (func, "execing confdrive, pid=%d\n", getpid());
                 /* tl_log msg wouldn't be seen in the DB due to the execlp() */
 
 		execlp (progfullpath, "confdrive", tunp->drive,
 			tunp->devp->dvn, arg_rpfd, arg_uid, arg_gid,
-			arg_jid, tunp->dgn, "tape", arg_status,
-			arg_reason, NULL);
+			arg_jid, tunp->dgn, "tape", arg_status, NULL);
 
 		tplogit (func, "TP002 - confdrive : execlp error : %s\n",
 		    strerror(errno));
@@ -844,7 +841,7 @@ int initdrvtab()
 			tdp++;
 			j++;
 		}
-		(void) confdrive (tunp, -1, (instat[0] == 'u') ? CONF_UP:CONF_DOWN, 0);
+		(void) confdrive (tunp, -1, (instat[0] == 'u') ? CONF_UP:CONF_DOWN);
 		tunp++;
 	}
 	fclose (s);
@@ -966,7 +963,6 @@ static void procconfreq(char *req_data,
 	gid_t gid;
 	unsigned int j;
 	char *rbp;
-	int reason;
 	int status;
 	struct tptab *tunp;
 	uid_t uid;
@@ -986,7 +982,6 @@ static void procconfreq(char *req_data,
                             "Clienthost", TL_MSG_PARAM_STR, clienthost );                        
         unmarshall_STRING (rbp, drive);
         unmarshall_WORD (rbp, status);
-        unmarshall_WORD (rbp, reason);
 
 	c = 0;
 	tunp = tptabp;
@@ -1002,7 +997,7 @@ static void procconfreq(char *req_data,
                 c = ETIDN;
 		goto reply;
 	}
-	if (tunp->up == status || (status == CONF_DOWN && tunp->up < 0)) {
+	if (tunp->up == status) {
 		sendrep (rpfd, TAPERC, 0);
 		return;
 	}
@@ -1018,7 +1013,7 @@ static void procconfreq(char *req_data,
 			tunp->up = 1;
 			tpdrrt.dg[j].rsvd++;
 		} else {
-			tunp->up = -reason;
+			tunp->up = 0;
 			tpdrrt.dg[j].rsvd--;
 		}
 		c = ETDCA;
@@ -1028,7 +1023,7 @@ static void procconfreq(char *req_data,
 		tunp->up = 0;
 		tpdrrt.dg[j].rsvd--;
 	}
-	c = confdrive (tunp, rpfd, status, reason);
+	c = confdrive (tunp, rpfd, status);
 reply:
 	if (c)
 		sendrep (rpfd, TAPERC, c);
@@ -1103,7 +1098,7 @@ static void procfrdrvreq(char *req_data,
         }
         tunp->tobemounted = 0;
         if (tunp->up <= 0) {
-            (void) confdrive (tunp, -1, CONF_DOWN, -tunp->up);
+            (void) confdrive (tunp, -1, CONF_DOWN);
             tunp->up = 0;
         }
     }
@@ -2040,7 +2035,7 @@ static void procrlsreq(char *req_data,
 				if (tunp->asn == 1) {
 					c = reldrive (tunp, rrtp->user,
 					    (flags & TPRLS_NOWAIT) ? -1 : rpfd,
-					    (tunp->up <= 0) ?
+					    (tunp->up == 0) ?
 						flags | TPRLS_UNLOAD : flags);
 					if (c == 0) rrtp->unldcnt++;
 				} else {	/* rls in progress */
@@ -2059,7 +2054,7 @@ static void procrlsreq(char *req_data,
 				if (tunp->asn == 1) {
 					n = reldrive (tunp, rrtp->user,
 					    (flags & TPRLS_NOWAIT) ? -1 : rpfd,
-					    (tunp->up <= 0) ?
+					    (tunp->up == 0) ?
 						flags | TPRLS_UNLOAD : flags);
 					if (n == 0) rrtp->unldcnt++;
 					else c = n;
@@ -2205,8 +2200,8 @@ static void procrsltreq(char *req_data,
 
 	unlink (tunp->filp->path);	/* delete previous path */
 
-	if (oldtunp->up <= 0) {
-		(void) confdrive (tunp, -1, CONF_DOWN, -oldtunp->up);
+	if (oldtunp->up == 0) {
+		(void) confdrive (tunp, -1, CONF_DOWN);
 		oldtunp->up = 0;
 	}
 
@@ -2811,7 +2806,7 @@ void check_child_exit()
                                 /* reset the rls retry counter */
                                 tunp->rlsrtryctr = 0;
 
-                                c = confdrive (tunp, -1, CONF_DOWN, -tunp->up);
+                                c = confdrive (tunp, -1, CONF_DOWN);
                                 tunp->up = 0;
                                 tplogit (func, "confdrive returned: %d\n", c);
                                 tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 2,
@@ -2848,7 +2843,7 @@ void check_child_exit()
                             /* reset the rls retry counter */
                             tunp->rlsrtryctr = 0;
                                                         
-                            c = confdrive (tunp, -1, CONF_DOWN, -tunp->up);
+                            c = confdrive (tunp, -1, CONF_DOWN);
                             tunp->up = 0;
                             tplogit (func, "confdrive returned: %d\n", c);
                             tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 2,
@@ -2935,7 +2930,7 @@ static int vdqmdrvstate(struct tptab *tunp) {
         }
         
         tplogit( func, "vdqm_UnitStatus failed to query status: %d, giving up, config drive down\n", rc);
-        (void) confdrive (tunp, -1, CONF_DOWN, -tunp->up);
+        (void) confdrive (tunp, -1, CONF_DOWN);
         tunp->up = 0;
         return rc;
 }
