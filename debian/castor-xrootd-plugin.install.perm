@@ -3,6 +3,7 @@
 %attr(0755,root,root) usr/lib/libXrdxCastor2Fs.so*
 %attr(0755,root,root) usr/bin/x2proc
 %attr(0755,root,root) usr/bin/x2cp
+%attr(0755,root,root) usr/bin/XrdTransfer
 %attr(0644,root,root) etc/sysconfig/xrootd.server.example
 %attr(0644,root,root) etc/sysconfig/xrootd.manager.example
 %attr(0644,root,root) etc/xrd.cf.server.example
