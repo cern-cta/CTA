@@ -37,21 +37,22 @@ struct confrsn confuprsn[] = {
         {"ops",	        TPCU_OPS}
 };
 
-void usage(char *cmd)
+static void tpconfig_usage(char *cmd)
 {
 	fprintf (stderr, "usage: %s ", cmd);
-	fprintf (stderr, "unit_name status [reason]\n");
+	fprintf (stderr, "unit_name status\n");
 }
 
 int main(int	argc,
          char	**argv)
 {
-	unsigned int n;
 	int reason;
 	int status;
 
-	if (argc != 3 && argc != 4) {
-		usage (argv[0]);
+	if (argc != 3) {
+		fprintf (stderr, "Wrong number of command-line arguments"
+			": expected 2, actual was %d\n", (argc - 1));
+		tpconfig_usage (argv[0]);
 		exit (USERR);
 	}
 	if (strcmp (argv[2], "up") == 0) {
@@ -61,36 +62,21 @@ int main(int	argc,
 		status = CONF_DOWN;
 		reason = TPCD_OPS;
 	} else {
-		usage (argv[0]);
+		fprintf (stderr, "Invalid status"
+			": expected up or down, actual was %s\n", argv[2]);
+		tpconfig_usage (argv[0]);
 		exit (USERR);
-	}
-	if (argc == 4) {
-		if (status == CONF_UP) {
-			for (n = 0; n < sizeof(confuprsn)/sizeof(struct confrsn); n++)
-				if (strcmp (argv[3], confuprsn[n].text) == 0) break;
-			if (n == sizeof(confuprsn)/sizeof(struct confrsn)) {
-				fprintf (stderr, TP059);
-				exit (USERR);
-			}
-			reason = confuprsn[n].code;
-		} else {
-			for (n = 0; n < sizeof(confdnrsn)/sizeof(struct confrsn); n++)
-				if (strcmp (argv[3], confdnrsn[n].text) == 0) break;
-			if (n == sizeof(confdnrsn)/sizeof(struct confrsn)) {
-				fprintf (stderr, TP059);
-				exit (USERR);
-			}
-			reason = confdnrsn[n].code;
-		}
 	}
 	if (Ctape_config (argv[1], status, reason) < 0) {
 		fprintf (stderr, TP009, argv[1], sstrerror(serrno));
-		if (serrno == EINVAL || serrno == ETIDN)
+		if (serrno == EINVAL || serrno == ETIDN) {
 			exit (USERR);
-		else
+		} else {
 			exit (SYERR);
-	} else
+		}
+	} else {
 		exit (0);
+	}
 }
 
 

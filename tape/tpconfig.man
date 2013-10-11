@@ -7,7 +7,6 @@ tpconfig \- configure tape drive up/down
 .SH SYNOPSIS
 .B tpconfig
 .I drive_name drive_status
-.RI [ reason ]
 .SH DESCRIPTION
 .B tpconfig
 configures drive up or down. This tells the tape daemon if the drive
@@ -26,58 +25,11 @@ can be
 .B up
 or
 .BR down .
-.TP
-.I reason
-is an optional alphanumeric string:
-.LP
-When
-.I drive_status
-is
-.BR down ,
-.I reason
-may be one of the following:
-.RS
-.TP
-.B cleaning
-.TP
-.B test
-.TP
-.B failure
-.TP
-.B system
-.TP
-.B suspect
-.TP
-.B upgrade
-.TP
-.B ops
-.RE
-.LP
-When
-.I drive_status
-is
-.BR up ,
-.I reason
-may be one of the following:
-.RS
-.TP
-.B cleaned
-.TP
-.B replaced
-.TP
-.B repaired
-.TP
-.B preventive
-.TP
-.B upgraded
-.TP
-.B ops
-.RE
 
 .SH EXAMPLE
 .nf
 .ft CW
-tpconfig dlt02@shd34 up cleaned
+tpconfig dlt02@shd34 up
 .ft
 .fi
 .SH EXIT STATUS
