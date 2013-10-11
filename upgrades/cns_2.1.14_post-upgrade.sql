@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 cns_2.1.14-2_post-upgrade.sql
+ *                 cns_2.1.14_post-upgrade.sql
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -71,6 +71,26 @@ BEGIN
   -- yield to normal activity
   DBMS_LOCK.SLEEP(1);
   END LOOP;
+  -- drop temporary job to keep the index healty
+  dbms_scheduler.stop_job('INDEXREBUILDJOB', force=>TRUE);
+  dbms_scheduler.drop_job('INDEXREBUILDJOB');
+END;
+/
+
+/* Create a temporary job to keep the index healty. This is needed to work around
+ * an Oracle 'feature' that makes RANGE SCANs less and less efficient over time,
+ * thus making the above procedure slower and slower.
+ */
+BEGIN
+  DBMS_SCHEDULER.CREATE_JOB(
+      JOB_NAME        => 'INDEXREBUILDJOB',
+      JOB_TYPE        => 'PLSQL_BLOCK',
+      JOB_ACTION      => 'BEGIN EXECUTE IMMEDIATE ''ALTER INDEX I_fmd_stagertime_null REBUILD''; END;',
+      JOB_CLASS       => 'CASTOR_JOB_CLASS',
+      START_DATE      => SYSDATE + 1/3600,
+      REPEAT_INTERVAL => 'FREQ=HOURLY; INTERVAL=12',
+      ENABLED         => TRUE,
+      COMMENTS        => 'Rebuild an index to prevent degradation');
 END;
 /
 
