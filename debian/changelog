@@ -1,6 +1,14 @@
+castor (2.1.14-3) unstable; urgency=low
+
+  * Internal release for now
+
+ -- Giuseppe Lo Presti <giuseppe.lopresti@cern.ch> Fri, 11 Oct 2013 12:00:00 +0100
+
 castor (2.1.14-2) unstable; urgency=low
 
-  * Third 2.1.14 release. Not intended for production.
+  * First 2.1.14 production release
+
+ -- Sebastien Ponce <sebastien.ponce@cern.ch>  Tue,  1 Oct 2013 16:00:00 +0100
 
 castor (2.1.13-3) unstable; urgency=low
 
