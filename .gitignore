@@ -58,6 +58,9 @@ client/src/stager/stager_setfilegcweight
 client/src/stager/stager_update
 client/srm2_*
 clips/Makefile
+CMakeCache.txt
+CMakeFiles
+cmake_install.cmake
 codeGeneration/gencastor/gencastor.bin
 codeGeneration/gencastor/kdesdk-3.5.10
 *.d
