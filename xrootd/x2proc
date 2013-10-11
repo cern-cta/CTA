@@ -28,8 +28,8 @@ chomp $host;
 printf "[x2proc::$host] setting proc entry $key=$val\n";
 if ( ($key eq "") || ($val eq "") ) { usage();}
 
-my $procbase=`cat /etc/xrd.cf | grep -w xcastor2.proc | awk '{print \$2}'`;
-my $port=`cat /etc/xrd.cf | grep -w xrd.port | awk '{print \$2}'`;
+my $procbase=`cat /etc/xrd.cf.server | grep -w xcastor2.proc | awk '{print \$2}'`;
+my $port=`cat /etc/xrd.cf.server | grep -w xrd.port | awk '{print \$2}'`;
 chomp $procbase;
 chomp $port;
 
@@ -38,7 +38,7 @@ if ( $port eq "" ) { $port = "1094";}
 system("echo $val > /tmp/$rand");
 my $pid;
 if (! ($pid=fork())) {
-    system("export LD_LIBRARY_PATH=/opt/xrootd/lib; /opt/xrootd/bin/xrdcp /tmp/$rand root://localhost:$port//proc/$key");
+    system("export LD_LIBRARY_PATH=/usr/lib64/; /usr/bin/xrdcp /tmp/$rand root://localhost:$port//proc/$key");
     exit(0);
 }
 
