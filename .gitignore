@@ -226,4 +226,5 @@ vmgr/vmgrmodifytape
 vmgr/vmgr_oracle_ifce.c
 vmgr/vmgr_oracle_ifce.lis
 vmgr/vmgrsettag
+xrootd/XrdTransfer
 *.xml
